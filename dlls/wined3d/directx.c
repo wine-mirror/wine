@@ -2860,7 +2860,6 @@ static BOOL CheckTextureCapability(struct WineD3DAdapter *adapter,
         case WINED3DFMT_A2R10G10B10:
         case WINED3DFMT_R10G10B10A2_UNORM:
         case WINED3DFMT_R16G16_UNORM:
-        case WINED3DFMT_R16G16B16A16_UNORM:
             TRACE_(d3d_caps)("[OK]\n");
             return TRUE;
 
@@ -2973,6 +2972,7 @@ static BOOL CheckTextureCapability(struct WineD3DAdapter *adapter,
             return FALSE;
 
             /* Not supported */
+        case WINED3DFMT_R16G16B16A16_UNORM:
         case WINED3DFMT_A8R3G3B2:
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
             return FALSE;
