@@ -4,17 +4,10 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winemp3.acm
 IMPORTS   = winmm user32 kernel32
+EXTRALIBS = @LIBMPG123@
 
 C_SRCS = \
-	common.c \
-	dct64_i386.c \
-	decode_i386.c \
-	interface.c \
-	layer1.c \
-	layer2.c \
-	layer3.c \
-	mpegl3.c \
-	tabinit.c
+	mpegl3.c
 
 @MAKE_DLL_RULES@
 

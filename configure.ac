@@ -49,6 +49,8 @@ AC_ARG_WITH(jpeg,      AS_HELP_STRING([--without-jpeg],[do not use JPEG]),
             [if test "x$withval" = "xno"; then ac_cv_header_jpeglib_h=no; fi])
 AC_ARG_WITH(ldap,      AS_HELP_STRING([--without-ldap],[do not use LDAP]),
             [if test "x$withval" = "xno"; then ac_cv_header_ldap_h=no; ac_cv_header_lber_h=no; fi])
+AC_ARG_WITH(mpg123,    AS_HELP_STRING([--without-mpg123],[do not use the mpg123 library]),
+            [if test "x$withval" = "xno"; then ac_cv_header_mpg123_h=no; fi])
 AC_ARG_WITH(nas,       AS_HELP_STRING([--without-nas],[do not use the NAS sound support]),
             [if test "x$withval" = "xno"; then ac_cv_header_audio_audiolib_h=no; fi])
 AC_ARG_WITH(opengl,    AS_HELP_STRING([--without-opengl],[do not use OpenGL]))
@@ -343,6 +345,7 @@ AC_CHECK_HEADERS(\
 	machine/limits.h \
 	machine/soundcard.h \
 	mntent.h \
+	mpg123.h \
 	ncurses.h \
 	netdb.h \
 	netinet/in.h \
@@ -1401,6 +1404,15 @@ then
 fi
 WINE_WARNING_WITH(png,[test "x$ac_cv_lib_soname_png" = "x"],
                  [libpng ${notice_platform}development files not found, PNG won't be supported.])
+
+dnl **** Check for mpg123 ****
+if test "$ac_cv_header_mpg123_h" = "yes"
+then
+    AC_CHECK_LIB(mpg123,mpg123_init,[AC_SUBST(LIBMPG123,"-lmpg123")])
+fi
+WINE_NOTICE_WITH(mpg123,[test "x$ac_cv_lib_mpg123_mpg123_init" != xyes],
+                 [libmpg123 ${notice_platform}development files not found, mp3 codec won't be supported.])
+test "x$ac_cv_lib_mpg123_mpg123_init" = xyes || enable_winemp3_acm=${enable_winemp3_acm:-no}
 
 dnl **** Check for libkstat ****
 if test "$ac_cv_header_kstat_h" = "yes"

@@ -2,6 +2,7 @@
  * MPEG Layer 3 handling
  *
  *      Copyright (C) 2002		Eric Pouech
+ *      Copyright (C) 2009		CodeWeavers, Aric Stewart
  *
  *
  * This library is free software; you can redistribute it and/or
@@ -19,6 +20,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <stdarg.h>
 #include <string.h>
@@ -31,8 +34,10 @@
 #include "mmreg.h"
 #include "msacm.h"
 #include "msacmdrv.h"
-#include "mpg123.h"
-#include "mpglib.h"
+
+#ifdef HAVE_MPG123_H
+#include <mpg123.h>
+#endif
 
 #include "wine/debug.h"
 
@@ -43,6 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mpeg3);
  */
 static LRESULT MPEG3_drvOpen(LPCSTR str)
 {
+    mpg123_init();
     return 1;
 }
 
@@ -51,6 +57,7 @@ static LRESULT MPEG3_drvOpen(LPCSTR str)
  */
 static LRESULT MPEG3_drvClose(DWORD_PTR dwDevID)
 {
+    mpg123_exit();
     return 1;
 }
 
@@ -58,7 +65,7 @@ typedef struct tagAcmMpeg3Data
 {
     void (*convert)(PACMDRVSTREAMINSTANCE adsi,
 		    const unsigned char*, LPDWORD, unsigned char*, LPDWORD);
-    struct mpstr mp;
+    mpg123_handle *mh;
 } AcmMpeg3Data;
 
 /* table to list all supported formats... those are the basic ones. this
@@ -133,68 +140,49 @@ static	DWORD	MPEG3_GetFormatIndex(LPWAVEFORMATEX wfx)
     return 0xFFFFFFFF;
 }
 
-static DWORD get_num_buffered_bytes(struct mpstr *mp)
-{
-    DWORD numBuff = 0;
-    struct buf * p = mp->tail;
-    while (p) {
-        numBuff += p->size - p->pos;
-        p = p->next;
-    }
-    return numBuff;
-}
-
 static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
                       const unsigned char* src, LPDWORD nsrc,
                       unsigned char* dst, LPDWORD ndst)
 {
     AcmMpeg3Data*       amd = (AcmMpeg3Data*)adsi->dwDriver;
-    int                 size, ret;
+    int                 ret;
+    size_t              size;
     DWORD               dpos = 0;
-    DWORD               buffered_before;
-    DWORD               buffered_during;
-    DWORD               buffered_after;
 
-    /* Skip leading ID v3 header */
-    if (amd->mp.fsizeold == -1 && !strncmp("ID3", (char*)src, 3))
+
+    ret = mpg123_feed(amd->mh, src, *nsrc);
+    if (ret != MPG123_OK)
     {
-        UINT length = 10;
-        const char *header = (char *)src;
-
-        TRACE("Found ID3 v2.%d.%d\n", header[3], header[4]);
-        length += (header[6] & 0x7F) << 21;
-        length += (header[7] & 0x7F) << 14;
-        length += (header[8] & 0x7F) << 7;
-        length += (header[9] & 0x7F);
-        TRACE("Length: %u\n", length);
-        *nsrc = length;
-        *ndst = 0;
-        return;
-    }
-
-    buffered_before = get_num_buffered_bytes(&amd->mp);
-    ret = decodeMP3(&amd->mp, src, *nsrc, dst, *ndst, &size);
-    buffered_during = get_num_buffered_bytes(&amd->mp);
-    if (ret != MP3_OK)
-    {
-        if (ret == MP3_ERR)
-            FIXME("Error occurred during decoding!\n");
+        ERR("Error feeding data\n");
         *ndst = *nsrc = 0;
         return;
     }
+
+    ret = mpg123_read(amd->mh, NULL, 0, &size);
+    if (ret == MPG123_NEW_FORMAT)
+    {
+        if TRACE_ON(mpeg3)
+        {
+            long rate;
+            int channels, enc;
+            mpg123_getformat(amd->mh, &rate, &channels, &enc);
+            TRACE("New format: %li Hz, %i channels, encoding value %i\n", rate, channels, enc);
+        }
+    }
+    else if (ret == MPG123_ERR)
+    {
+        FIXME("Error occurred during decoding!\n");
+        *ndst = *nsrc = 0;
+        return;
+    }
+
     do {
         dpos += size;
         if (*ndst - dpos < 4608) break;
-        ret = decodeMP3(&amd->mp, NULL, 0,
-                        dst + dpos, *ndst - dpos, &size);
-    } while (ret == MP3_OK);
+        ret = mpg123_read(amd->mh, dst + dpos, *ndst - dpos, &size);
+    } while (ret == MPG123_OK);
     *ndst = dpos;
-
-    buffered_after = get_num_buffered_bytes(&amd->mp);
-    TRACE("before %d put %d during %d after %d\n", buffered_before, *nsrc, buffered_during, buffered_after);
-
-    *nsrc -= buffered_after;
-    ClearMP3Buffer(&amd->mp);
+    *nsrc = 0;
 }
 
 /***********************************************************************
@@ -217,7 +205,7 @@ static	LRESULT MPEG3_DriverDetails(PACMDRIVERDETAILSW add)
                          add->szShortName, sizeof(add->szShortName)/sizeof(WCHAR) );
     MultiByteToWideChar( CP_ACP, 0, "Wine MPEG3 decoder", -1,
                          add->szLongName, sizeof(add->szLongName)/sizeof(WCHAR) );
-    MultiByteToWideChar( CP_ACP, 0, "Brought to you by the Wine team (based on mpglib by Michael Hipp)...", -1,
+    MultiByteToWideChar( CP_ACP, 0, "Brought to you by the Wine team...", -1,
                          add->szCopyright, sizeof(add->szCopyright)/sizeof(WCHAR) );
     MultiByteToWideChar( CP_ACP, 0, "Refer to LICENSE file", -1,
                          add->szLicensing, sizeof(add->szLicensing)/sizeof(WCHAR) );
@@ -408,8 +396,9 @@ static	LRESULT	MPEG3_FormatSuggest(PACMDRVFORMATSUGGEST adfs)
  */
 static void MPEG3_Reset(PACMDRVSTREAMINSTANCE adsi, AcmMpeg3Data* aad)
 {
-    ClearMP3Buffer(&aad->mp);
-    InitMP3(&aad->mp);
+    mpg123_feedseek(aad->mh, 0, SEEK_SET, NULL);
+    mpg123_close(aad->mh);
+    mpg123_open_feed(aad->mh);
 }
 
 /***********************************************************************
@@ -419,6 +408,7 @@ static void MPEG3_Reset(PACMDRVSTREAMINSTANCE adsi, AcmMpeg3Data* aad)
 static	LRESULT	MPEG3_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
 {
     AcmMpeg3Data*	aad;
+    int err;
 
     assert(!(adsi->fdwOpen & ACM_STREAMOPENF_ASYNC));
 
@@ -447,7 +437,8 @@ static	LRESULT	MPEG3_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
             adsi->pwfxDst->wBitsPerSample != 16)
 	    goto theEnd;
         aad->convert = mp3_horse;
-        InitMP3(&aad->mp);
+        aad->mh = mpg123_new(NULL,&err);
+        mpg123_open_feed(aad->mh);
     }
     /* no encoding yet
     else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
@@ -470,7 +461,8 @@ static	LRESULT	MPEG3_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
  */
 static	LRESULT	MPEG3_StreamClose(PACMDRVSTREAMINSTANCE adsi)
 {
-    ClearMP3Buffer(&((AcmMpeg3Data*)adsi->dwDriver)->mp);
+    mpg123_close(((AcmMpeg3Data*)adsi->dwDriver)->mh);
+    mpg123_delete(((AcmMpeg3Data*)adsi->dwDriver)->mh);
     HeapFree(GetProcessHeap(), 0, (void*)adsi->dwDriver);
     return MMSYSERR_NOERROR;
 }

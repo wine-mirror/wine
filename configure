@@ -616,6 +616,7 @@ LDPATH
 BUILTINFLAG
 EXTRACFLAGS
 LIBKSTAT
+LIBMPG123
 PNGINCL
 FONTCONFIGINCL
 CUPSINCL
@@ -788,6 +789,7 @@ with_hal
 with_jack
 with_jpeg
 with_ldap
+with_mpg123
 with_nas
 with_opengl
 with_openssl
@@ -1469,6 +1471,7 @@ Optional Packages:
   --without-jack          do not use the Jack sound support
   --without-jpeg          do not use JPEG
   --without-ldap          do not use LDAP
+  --without-mpg123        do not use the mpg123 library
   --without-nas           do not use the NAS sound support
   --without-opengl        do not use OpenGL
   --without-openssl       do not use OpenSSL
@@ -2596,6 +2599,12 @@ fi
 # Check whether --with-ldap was given.
 if test "${with_ldap+set}" = set; then :
   withval=$with_ldap; if test "x$withval" = "xno"; then ac_cv_header_ldap_h=no; ac_cv_header_lber_h=no; fi
+fi
+
+
+# Check whether --with-mpg123 was given.
+if test "${with_mpg123+set}" = set; then :
+  withval=$with_mpg123; if test "x$withval" = "xno"; then ac_cv_header_mpg123_h=no; fi
 fi
 
 
@@ -5488,6 +5497,7 @@ for ac_header in \
 	machine/limits.h \
 	machine/soundcard.h \
 	mntent.h \
+	mpg123.h \
 	ncurses.h \
 	netdb.h \
 	netinet/in.h \
@@ -11054,6 +11064,60 @@ if test "x$ac_cv_lib_soname_png" = "x"; then :
 This is an error since --with-png was requested." "$LINENO" 5 ;;
 esac
 fi
+
+if test "$ac_cv_header_mpg123_h" = "yes"
+then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for mpg123_init in -lmpg123" >&5
+$as_echo_n "checking for mpg123_init in -lmpg123... " >&6; }
+if test "${ac_cv_lib_mpg123_mpg123_init+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmpg123  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char mpg123_init ();
+int
+main ()
+{
+return mpg123_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_mpg123_mpg123_init=yes
+else
+  ac_cv_lib_mpg123_mpg123_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mpg123_mpg123_init" >&5
+$as_echo "$ac_cv_lib_mpg123_mpg123_init" >&6; }
+if test "x$ac_cv_lib_mpg123_mpg123_init" = x""yes; then :
+  LIBMPG123="-lmpg123"
+
+fi
+
+fi
+if test "x$ac_cv_lib_mpg123_mpg123_init" != xyes; then :
+  case "x$with_mpg123" in
+  x)   wine_notices="$wine_notices|libmpg123 ${notice_platform}development files not found, mp3 codec won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error "libmpg123 ${notice_platform}development files not found, mp3 codec won't be supported.
+This is an error since --with-mpg123 was requested." "$LINENO" 5 ;;
+esac
+fi
+test "x$ac_cv_lib_mpg123_mpg123_init" = xyes || enable_winemp3_acm=${enable_winemp3_acm:-no}
 
 if test "$ac_cv_header_kstat_h" = "yes"
 then
