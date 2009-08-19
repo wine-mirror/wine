@@ -132,7 +132,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " ドライブのマッピング ",IDC_STATIC,8,4,244,240
-    LTEXT           "Failed to connect to the mount manager, the drive configuration cannot be edited.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
+    LTEXT           "マウントマネージャへの接続に失敗したため、ドライブ設定は変更できません。", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "追加(&A)...",IDC_BUTTON_ADD,15,98,37,14
@@ -162,7 +162,7 @@ BEGIN
     LTEXT           "シリアル番号(&E):",IDC_STATIC_SERIAL,33,225,29,12
     EDITTEXT        IDC_EDIT_SERIAL,63,221,78,13,ES_AUTOHSCROLL | WS_TABSTOP
 
-    CONTROL         "dot ファイルを表示する",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
+    CONTROL         "ドット ファイルを表示する",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
 END
 
 IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -179,7 +179,7 @@ BEGIN
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,228,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "既定のサンプルレート(&S):",IDC_STATIC,15,247,70,8
     COMBOBOX        IDC_DSOUND_RATES,90,245,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Default &Bits Per Sample:",IDC_STATIC,137,247,80,8
+    LTEXT           "既定のサンプルごとのビット数(&B):",IDC_STATIC,137,232,80,8
     COMBOBOX        IDC_DSOUND_BITS,220,245,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
@@ -206,7 +206,7 @@ BEGIN
     GROUPBOX        " シェルフォルダ(&H) ",IDC_STATIC,8,114,244,100
     CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
-    CONTROL         "&Link to:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+    CONTROL         "リンク先(&L):",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
     EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
     PUSHBUTTON      "参照(&R)",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
 END
@@ -216,7 +216,7 @@ BEGIN
     IDS_TAB_APPLICATIONS    "アプリケーション"
     IDS_TAB_DLLS            "ライブラリ"
     IDS_TAB_DRIVES          "ドライブ"
-    IDS_CHOOSE_PATH         "Select the unix target directory, please."
+    IDS_CHOOSE_PATH         "unix の対象ディレクトリを選択してください。"
     IDS_HIDE_ADVANCED       "詳細を隠す"
     IDS_SHOW_ADVANCED       "詳細を表示"
     IDS_NOTHEME             "(テーマ無し)"
@@ -225,17 +225,17 @@ BEGIN
     IDS_TAB_AUDIO           "オーディオ"
     IDS_TAB_ABOUT           "Wineについて"
     IDS_WINECFG_TITLE       "Wine設定"
-    IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
+    IDS_WINECFG_TITLE_APP   "Wine設定 %s用"
     IDS_THEMEFILE           "テーマファイル"
     IDS_THEMEFILE_SELECT    "テーマファイルを選んでください"
-    IDS_AUDIO_MISSING       "There is no audio driver currently specified in the registry.\n\nA recommended driver has been selected for you.\nYou can use this driver or select another driver if available.\n\nYou must click Apply for the selection to take effect."
+    IDS_AUDIO_MISSING       "レジストリでオーディオドライバが指定されていません。\n\n推奨するドライバが自動的に選択されました。\nこのドライバを使うか、利用可能ならば他のドライバを選択できます。\n\n選択を有効にするには [適用] をクリックする必要があります。"
     IDS_SHELL_FOLDER        "シェルフォルダ"
-    IDS_LINKS_TO            "Links to"
+    IDS_LINKS_TO            "リンク先"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DLL_WARNING         "Changing the load order of this library is not recommended.\nAre you sure you want to do this?"
+    IDS_DLL_WARNING         "このライブラリの読み込み順序を変更することは推奨されません。\n本当に変更しますか?"
     IDS_DLL_WARNING_CAPTION "警告: システムライブラリ"
     IDS_DLL_NATIVE          "native"
     IDS_DLL_BUILTIN         "builtin"
@@ -261,12 +261,12 @@ BEGIN
     IDS_DRIVE_REMOTE            "ネットワーク共有"
     IDS_DRIVE_REMOVABLE         "フロッピーディスク"
     IDS_DRIVE_CDROM             "CD-ROM"
-    IDS_DRIVE_LETTERS_EXCEEDED  "You cannot add any more drives.\n\nEach drive must have a letter, from A to Z, so you cannot have more than 26"
+    IDS_DRIVE_LETTERS_EXCEEDED  "これ以上ドライブを追加できません。\n\n各ドライブは A から Z までの 1 字を使う必要があるので、26 を超えることはできません。"
     IDS_SYSTEM_DRIVE_LABEL      "システムドライブ"
-    IDS_CONFIRM_DELETE_C        "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed remember to recreate it!"
+    IDS_CONFIRM_DELETE_C        "C ドライブを本当に削除しますか?\n\n大部分の Windows アプリケーションは、C ドライブが存在することを前提としているので、存在しない場合めちゃくちゃな死に方をするでしょう。続行するならば、再作成するのを忘れないでください!"
     IDS_COL_DRIVELETTER         "レター"
     IDS_COL_DRIVEMAPPING        "ドライブの割り当て"
-    IDS_NO_DRIVE_C              "ドライブ C がありません。これはあまり良くありません。\n\nドライブ C を作成するためにドライブタブ内の [追加] を忘れずにクリックしてください!\n"
+    IDS_NO_DRIVE_C              "C ドライブがありません。これはあまり良くありません。\n\nC ドライブを作成するためにドライブタブ内の [追加] を忘れずにクリックしてください!\n"
 END
 
 STRINGTABLE DISCARDABLE
@@ -275,21 +275,21 @@ BEGIN
     IDS_ACCEL_STANDARD          "標準"
     IDS_ACCEL_BASIC             "基本"
     IDS_ACCEL_EMULATION         "エミュレーション"
-    IDS_DRIVER_ALSA             "ALSA Driver"
-    IDS_DRIVER_ESOUND           "EsounD Driver"
-    IDS_DRIVER_OSS              "OSS Driver"
-    IDS_DRIVER_JACK             "JACK Driver"
-    IDS_DRIVER_NAS              "NAS Driver"
-    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Driver"
-    IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
-    IDS_OPEN_DRIVER_ERROR       "Couldn't open %s!"
+    IDS_DRIVER_ALSA             "ALSA ドライバ"
+    IDS_DRIVER_ESOUND           "EsounD ドライバ"
+    IDS_DRIVER_OSS              "OSS ドライバ"
+    IDS_DRIVER_JACK             "JACK ドライバ"
+    IDS_DRIVER_NAS              "NAS ドライバ"
+    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) ドライバ"
+    IDS_DRIVER_COREAUDIO        "CoreAudio ドライバ"
+    IDS_OPEN_DRIVER_ERROR       "%sをオープンできません!"
     IDS_SOUNDDRIVERS            "サウンドドライバ"
-    IDS_DEVICES_WAVEOUT         "Wave Out Devices"
-    IDS_DEVICES_WAVEIN          "Wave In Devices"
-    IDS_DEVICES_MIDIOUT         "MIDI Out Devices"
-    IDS_DEVICES_MIDIIN          "MIDI In Devices"
-    IDS_DEVICES_AUX             "Aux Devices"
-    IDS_DEVICES_MIXER           "Mixer Devices"
+    IDS_DEVICES_WAVEOUT         "Wave 出力デバイス"
+    IDS_DEVICES_WAVEIN          "Wave 入力デバイス"
+    IDS_DEVICES_MIDIOUT         "MIDI 出力デバイス"
+    IDS_DEVICES_MIDIIN          "MIDI 入力デバイス"
+    IDS_DEVICES_AUX             "補助デバイス"
+    IDS_DEVICES_MIXER           "ミキサーデバイス"
     IDS_UNAVAILABLE_DRIVER      "利用できないドライバをレジストリ内に見つけました!\n\nレジストリから \"%s\" を削除しますか?"
     IDS_WARNING                 "警告"
 END
