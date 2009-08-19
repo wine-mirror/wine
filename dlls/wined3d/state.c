@@ -3833,8 +3833,9 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
         checkGLcall("glOrtho");
 
         /* Window Coord 0 is the middle of the first pixel, so translate by 1/2 pixels */
-        glTranslatef(0.5f, 0.5f, 0.0f);
-        checkGLcall("glTranslatef(0.5f, 0.5f, 0.0f)");
+        glTranslatef(63.0f / 128.0f, 63.0f / 128.0f, 0.0f);
+        checkGLcall("glTranslatef(63.0f / 128.0f, 63.0f / 128.0f, 0.0f)");
+
         /* D3D texture coordinates are flipped compared to OpenGL ones, so
          * render everything upside down when rendering offscreen. */
         if (context->render_offscreen)
@@ -3880,16 +3881,23 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
          * glScalef(1.0, flip, 2.0);
          */
 
+        /* Translate by slightly less than a half pixel to force a top-left
+         * filling convention. We want the difference to be large enough that
+         * it doesn't get lost due to rounding inside the driver, but small
+         * enough to prevent it from interfering with any anti-aliasing. */
+        GLfloat xoffset = (63.0f / 64.0f) / stateblock->viewport.Width;
+        GLfloat yoffset = -(63.0f / 64.0f) / stateblock->viewport.Height;
+
         if (context->render_offscreen)
         {
             /* D3D texture coordinates are flipped compared to OpenGL ones, so
              * render everything upside down when rendering offscreen. */
-            glTranslatef(1.0f / stateblock->viewport.Width, 1.0f / stateblock->viewport.Height, -1.0f);
-            checkGLcall("glTranslatef(1.0f / width, 1.0f / height, -1.0f)");
+            glTranslatef(xoffset, -yoffset, -1.0f);
+            checkGLcall("glTranslatef(xoffset, -yoffset, -1.0f)");
             glScalef(1.0f, -1.0f, 2.0f);
         } else {
-            glTranslatef(1.0f / stateblock->viewport.Width, -1.0f / stateblock->viewport.Height, -1.0f);
-            checkGLcall("glTranslatef(1.0f / width, -1.0f / height, -1.0f)");
+            glTranslatef(xoffset, yoffset, -1.0f);
+            checkGLcall("glTranslatef(xoffset, yoffset, -1.0f)");
             glScalef(1.0f, 1.0f, 2.0f);
         }
         checkGLcall("glScalef");
@@ -4492,9 +4500,11 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, s
         /* This sets the shader output position correction constants.
          * TODO: Move to the viewport state
          */
-        if (useVertexShaderFunction) {
+        if (useVertexShaderFunction)
+        {
+            GLfloat yoffset = -(63.0f / 64.0f) / stateblock->viewport.Height;
             device->posFixup[1] = context->render_offscreen ? -1.0f : 1.0f;
-            device->posFixup[3] = -device->posFixup[1] / stateblock->viewport.Height;
+            device->posFixup[3] = device->posFixup[1] * yoffset;
         }
     }
 
@@ -4639,8 +4649,11 @@ static void viewport_miscpart(DWORD state, IWineD3DStateBlockImpl *stateblock, s
 
 static void viewport_vertexpart(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    stateblock->wineD3DDevice->posFixup[2] = 1.0f / stateblock->viewport.Width;
-    stateblock->wineD3DDevice->posFixup[3] = -stateblock->wineD3DDevice->posFixup[1] / stateblock->viewport.Height;
+    GLfloat yoffset = -(63.0f / 64.0f) / stateblock->viewport.Height;
+
+    stateblock->wineD3DDevice->posFixup[2] = (63.0f / 64.0f) / stateblock->viewport.Width;
+    stateblock->wineD3DDevice->posFixup[3] = stateblock->wineD3DDevice->posFixup[1] * yoffset;
+
     if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION))) {
         transform_projection(STATE_TRANSFORM(WINED3DTS_PROJECTION), stateblock, context);
     }

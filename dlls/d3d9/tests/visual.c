@@ -8526,7 +8526,7 @@ static void pointsize_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 64-9, 64-9);
     ok(color == 0x000000ff, "pSize: Pixel (64-9),(64-9) has color 0x%08x, expected 0x000000ff\n", color);
     color = getPixelColor(device, 64-8, 64-8);
-    todo_wine ok(color == 0x00ffffff, "pSize: Pixel (64-8),(64-8) has color 0x%08x, expected 0x00ffffff\n", color);
+    ok(color == 0x00ffffff, "pSize: Pixel (64-8),(64-8) has color 0x%08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 64-7, 64-7);
     ok(color == 0x00ffffff, "pSize: Pixel (64-7),(64-7) has color 0x%08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 64+7, 64+7);
@@ -8539,7 +8539,7 @@ static void pointsize_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 128-17, 64-17);
     ok(color == 0x000000ff, "pSize: Pixel (128-17),(64-17) has color 0x%08x, expected 0x000000ff\n", color);
     color = getPixelColor(device, 128-16, 64-16);
-    todo_wine ok(color == 0x00ffffff, "pSize: Pixel (128-16),(64-16) has color 0x%08x, expected 0x00ffffff\n", color);
+    ok(color == 0x00ffffff, "pSize: Pixel (128-16),(64-16) has color 0x%08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 128-15, 64-15);
     ok(color == 0x00ffffff, "pSize: Pixel (128-15),(64-15) has color 0x%08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 128+15, 64+15);
@@ -8552,7 +8552,7 @@ static void pointsize_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 192-17, 64-17);
     ok(color == 0x000000ff, "pSize: Pixel (192-17),(64-17) has color 0x%08x, expected 0x000000ff\n", color);
     color = getPixelColor(device, 192-16, 64-16);
-    ok(color == 0x000000ff, "pSize: Pixel (192-16),(64-16) has color 0x%08x, expected 0x000000ff\n", color);
+    todo_wine ok(color == 0x000000ff, "pSize: Pixel (192-16),(64-16) has color 0x%08x, expected 0x000000ff\n", color);
     color = getPixelColor(device, 192-15, 64-15);
     ok(color == 0x00ffffff, "pSize: Pixel (192-15),(64-15) has color 0x%08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 192+15, 64+15);
