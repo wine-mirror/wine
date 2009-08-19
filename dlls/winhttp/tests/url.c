@@ -90,13 +90,6 @@ static const WCHAR url_k9[]  =
 static const WCHAR url_k10[]  =
     {'h','t','t','p',':','/','/','w','i','n','e','h','q','/','p','o','s','t',';','a',0};
 
-static const char *debugstr_w(LPCWSTR str)
-{
-    static char buf[1024];
-    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
-    return buf;
-}
-
 static void fill_url_components( URL_COMPONENTS *uc )
 {
     uc->dwStructSize = sizeof(URL_COMPONENTS);
@@ -537,7 +530,7 @@ static void WinHttpCrackUrl_test( void )
 
     ret = WinHttpCrackUrl( url7, 0, 0, &uc );
     ok( ret, "WinHttpCrackUrl failed\n" );
-    ok( !memcmp( uc.lpszHostName, winehq, sizeof(winehq) ), "unexpected host name: %s\n", debugstr_w(uc.lpszHostName) );
+    ok( !memcmp( uc.lpszHostName, winehq, sizeof(winehq) ), "unexpected host name: %s\n", wine_dbgstr_w(uc.lpszHostName) );
     ok( uc.dwHostNameLength == 14, "unexpected host name length: %d\n", uc.dwHostNameLength );
     ok( uc.nPort == 42, "unexpected port: %u\n", uc.nPort );
 
