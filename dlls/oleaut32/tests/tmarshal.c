@@ -562,6 +562,22 @@ static HRESULT WINAPI Widget_get_prop_with_lcid(
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_get_prop_int(
+    IWidget* iface, INT *i)
+{
+    trace("get_prop_int(%p)\n", i);
+    *i = -13;
+    return S_OK;
+}
+
+static HRESULT WINAPI Widget_get_prop_uint(
+    IWidget* iface, UINT *i)
+{
+    trace("get_prop_uint(%p)\n", i);
+    *i = 42;
+    return S_OK;
+}
+
 static const struct IWidgetVtbl Widget_VTable =
 {
     Widget_QueryInterface,
@@ -591,7 +607,9 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_Error,
     Widget_CloneInterface,
     Widget_put_prop_with_lcid,
-    Widget_get_prop_with_lcid
+    Widget_get_prop_with_lcid,
+    Widget_get_prop_int,
+    Widget_get_prop_uint
 };
 
 static HRESULT WINAPI StaticWidget_QueryInterface(IStaticWidget *iface, REFIID riid, void **ppvObject)
@@ -1297,6 +1315,28 @@ todo_wine
     ok(V_VT(&varresult) == VT_I4, "got %x\n", V_VT(&varresult));
     ok(V_I4(&varresult) == 0x409, "got %x\n", V_I4(&varresult));
 }
+    VariantClear(&varresult);
+
+    /* test propget of INT value */
+    dispparams.cNamedArgs = 0;
+    dispparams.cArgs = 0;
+    dispparams.rgvarg = NULL;
+    dispparams.rgdispidNamedArgs = NULL;
+    hr = IDispatch_Invoke(pDispatch, DISPID_TM_PROP_INT, &IID_NULL, 0x40c, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
+    ok_ole_success(hr, ITypeInfo_Invoke);
+    todo_wine ok(V_VT(&varresult) == VT_I4, "got %x\n", V_VT(&varresult));
+    ok(V_I4(&varresult) == -13, "got %x\n", V_I4(&varresult));
+    VariantClear(&varresult);
+
+    /* test propget of INT value */
+    dispparams.cNamedArgs = 0;
+    dispparams.cArgs = 0;
+    dispparams.rgvarg = NULL;
+    dispparams.rgdispidNamedArgs = NULL;
+    hr = IDispatch_Invoke(pDispatch, DISPID_TM_PROP_UINT, &IID_NULL, 0x40c, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
+    ok_ole_success(hr, ITypeInfo_Invoke);
+    todo_wine ok(V_VT(&varresult) == VT_UI4, "got %x\n", V_VT(&varresult));
+    ok(V_UI4(&varresult) == 42, "got %x\n", V_UI4(&varresult));
     VariantClear(&varresult);
 
     IDispatch_Release(pDispatch);
