@@ -139,15 +139,6 @@ static IWebBrowser2 *wb;
 static HWND container_hwnd, shell_embedding_hwnd;
 static BOOL is_downloading = FALSE;
 
-static const char *debugstr_w(LPCWSTR str)
-{
-    static char buf[1024];
-    if(!str)
-        return "(null)";
-    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
-    return buf;
-}
-
 static const char *debugstr_guid(REFIID riid)
 {
     static char buf[50];
@@ -174,7 +165,7 @@ static void _test_LocationURL(unsigned line, IUnknown *unk, LPCWSTR exurl)
 
     hres = IWebBrowser2_get_LocationURL(wb, &url);
     ok_(__FILE__,line) (hres == (*exurl ? S_OK : S_FALSE), "get_LocationURL failed: %08x\n", hres);
-    ok_(__FILE__,line) (!lstrcmpW(url, exurl), "unexpected URL: %s\n", debugstr_w(url));
+    ok_(__FILE__,line) (!lstrcmpW(url, exurl), "unexpected URL: %s\n", wine_dbgstr_w(url));
 
     SysFreeString(url);
     IWebBrowser2_Release(wb);
@@ -496,7 +487,7 @@ static void test_OnBeforeNavigate(const VARIANT *disp, const VARIANT *url, const
            V_VT(V_VARIANTREF(url)));
         ok(V_BSTR(V_VARIANTREF(url)) != NULL, "V_BSTR(V_VARIANTREF(url)) == NULL\n");
         ok(!lstrcmpW(V_BSTR(V_VARIANTREF(url)), about_blankW), "unexpected url %s\n",
-           debugstr_w(V_BSTR(V_VARIANTREF(url))));
+           wine_dbgstr_w(V_BSTR(V_VARIANTREF(url))));
     }
 
     ok(V_VT(flags) == (VT_BYREF|VT_VARIANT), "V_VT(flags)=%x, expected VT_BYREF|VT_VARIANT\n",
