@@ -2645,7 +2645,7 @@ static void shader_glsl_ret(const struct wined3d_shader_instruction *ins)
 /*********************************************
  * Pixel Shader Specific Code begins here
  ********************************************/
-static void pshader_glsl_tex(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
@@ -2748,7 +2748,7 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
 
     if(!GL_SUPPORT(ARB_SHADER_TEXTURE_LOD)) {
         FIXME("texldd used, but not supported by hardware. Falling back to regular tex\n");
-        return pshader_glsl_tex(ins);
+        return shader_glsl_tex(ins);
     }
 
     sampler_idx = ins->src[1].reg.idx;
@@ -2799,7 +2799,7 @@ static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
             "%s", coord_param.param_str);
 }
 
-static void pshader_glsl_texcoord(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_texcoord(const struct wined3d_shader_instruction *ins)
 {
     /* FIXME: Make this work for more than just 2D textures */
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
@@ -2848,7 +2848,7 @@ static void pshader_glsl_texcoord(const struct wined3d_shader_instruction *ins)
 /** Process the WINED3DSIO_TEXDP3TEX instruction in GLSL:
  * Take a 3-component dot product of the TexCoord[dstreg] and src,
  * then perform a 1D texture lookup from stage dstregnum, place into dst. */
-static void pshader_glsl_texdp3tex(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_texdp3tex(const struct wined3d_shader_instruction *ins)
 {
     glsl_src_param_t src0_param;
     glsl_sample_function_t sample_function;
@@ -2892,7 +2892,7 @@ static void pshader_glsl_texdp3tex(const struct wined3d_shader_instruction *ins)
 
 /** Process the WINED3DSIO_TEXDP3 instruction in GLSL:
  * Take a 3-component dot product of the TexCoord[dstreg] and src. */
-static void pshader_glsl_texdp3(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_texdp3(const struct wined3d_shader_instruction *ins)
 {
     glsl_src_param_t src0_param;
     DWORD dstreg = ins->dst[0].reg.idx;
@@ -2913,7 +2913,7 @@ static void pshader_glsl_texdp3(const struct wined3d_shader_instruction *ins)
 
 /** Process the WINED3DSIO_TEXDEPTH instruction in GLSL:
  * Calculate the depth as dst.x / dst.y   */
-static void pshader_glsl_texdepth(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_texdepth(const struct wined3d_shader_instruction *ins)
 {
     glsl_dst_param_t dst_param;
 
@@ -2934,7 +2934,7 @@ static void pshader_glsl_texdepth(const struct wined3d_shader_instruction *ins)
  * Calculate tmp0.y = TexCoord[dstreg] . src.xyz;  (tmp0.x has already been calculated)
  * depth = (tmp0.y == 0.0) ? 1.0 : tmp0.x / tmp0.y
  */
-static void pshader_glsl_texm3x2depth(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_texm3x2depth(const struct wined3d_shader_instruction *ins)
 {
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     DWORD dstreg = ins->dst[0].reg.idx;
@@ -2948,7 +2948,7 @@ static void pshader_glsl_texm3x2depth(const struct wined3d_shader_instruction *i
 
 /** Process the WINED3DSIO_TEXM3X2PAD instruction in GLSL
  * Calculate the 1st of a 2-row matrix multiplication. */
-static void pshader_glsl_texm3x2pad(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_texm3x2pad(const struct wined3d_shader_instruction *ins)
 {
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     DWORD reg = ins->dst[0].reg.idx;
@@ -2961,7 +2961,7 @@ static void pshader_glsl_texm3x2pad(const struct wined3d_shader_instruction *ins
 
 /** Process the WINED3DSIO_TEXM3X3PAD instruction in GLSL
  * Calculate the 1st or 2nd row of a 3-row matrix multiplication. */
-static void pshader_glsl_texm3x3pad(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_texm3x3pad(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DPixelShaderImpl *shader = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
@@ -2975,7 +2975,7 @@ static void pshader_glsl_texm3x3pad(const struct wined3d_shader_instruction *ins
     current_state->texcoord_w[current_state->current_row++] = reg;
 }
 
-static void pshader_glsl_texm3x2tex(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_texm3x2tex(const struct wined3d_shader_instruction *ins)
 {
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     DWORD reg = ins->dst[0].reg.idx;
@@ -2995,7 +2995,7 @@ static void pshader_glsl_texm3x2tex(const struct wined3d_shader_instruction *ins
 
 /** Process the WINED3DSIO_TEXM3X3TEX instruction in GLSL
  * Perform the 3rd row of a 3x3 matrix multiply, then sample the texture using the calculated coordinates */
-static void pshader_glsl_texm3x3tex(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_texm3x3tex(const struct wined3d_shader_instruction *ins)
 {
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     glsl_src_param_t src0_param;
@@ -3019,7 +3019,7 @@ static void pshader_glsl_texm3x3tex(const struct wined3d_shader_instruction *ins
 
 /** Process the WINED3DSIO_TEXM3X3 instruction in GLSL
  * Perform the 3rd row of a 3x3 matrix multiply */
-static void pshader_glsl_texm3x3(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_texm3x3(const struct wined3d_shader_instruction *ins)
 {
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     glsl_src_param_t src0_param;
@@ -3039,7 +3039,7 @@ static void pshader_glsl_texm3x3(const struct wined3d_shader_instruction *ins)
 
 /** Process the WINED3DSIO_TEXM3X3SPEC instruction in GLSL 
  * Perform the final texture lookup based on the previous 2 3x3 matrix multiplies */
-static void pshader_glsl_texm3x3spec(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_texm3x3spec(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DPixelShaderImpl *shader = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
     DWORD reg = ins->dst[0].reg.idx;
@@ -3070,7 +3070,7 @@ static void pshader_glsl_texm3x3spec(const struct wined3d_shader_instruction *in
 
 /** Process the WINED3DSIO_TEXM3X3VSPEC instruction in GLSL 
  * Perform the final texture lookup based on the previous 2 3x3 matrix multiplies */
-static void pshader_glsl_texm3x3vspec(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_texm3x3vspec(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DPixelShaderImpl *shader = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
     DWORD reg = ins->dst[0].reg.idx;
@@ -3104,7 +3104,7 @@ static void pshader_glsl_texm3x3vspec(const struct wined3d_shader_instruction *i
  * Apply a fake bump map transform.
  * texbem is pshader <= 1.3 only, this saves a few version checks
  */
-static void pshader_glsl_texbem(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_texbem(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
@@ -3163,7 +3163,7 @@ static void pshader_glsl_texbem(const struct wined3d_shader_instruction *ins)
     }
 }
 
-static void pshader_glsl_bem(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_bem(const struct wined3d_shader_instruction *ins)
 {
     glsl_src_param_t src0_param, src1_param;
     DWORD sampler_idx = ins->dst[0].reg.idx;
@@ -3178,7 +3178,7 @@ static void pshader_glsl_bem(const struct wined3d_shader_instruction *ins)
 
 /** Process the WINED3DSIO_TEXREG2AR instruction in GLSL
  * Sample 2D texture at dst using the alpha & red (wx) components of src as texture coordinates */
-static void pshader_glsl_texreg2ar(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_texreg2ar(const struct wined3d_shader_instruction *ins)
 {
     glsl_src_param_t src0_param;
     DWORD sampler_idx = ins->dst[0].reg.idx;
@@ -3194,7 +3194,7 @@ static void pshader_glsl_texreg2ar(const struct wined3d_shader_instruction *ins)
 
 /** Process the WINED3DSIO_TEXREG2GB instruction in GLSL
  * Sample 2D texture at dst using the green & blue (yz) components of src as texture coordinates */
-static void pshader_glsl_texreg2gb(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_texreg2gb(const struct wined3d_shader_instruction *ins)
 {
     glsl_src_param_t src0_param;
     DWORD sampler_idx = ins->dst[0].reg.idx;
@@ -3210,7 +3210,7 @@ static void pshader_glsl_texreg2gb(const struct wined3d_shader_instruction *ins)
 
 /** Process the WINED3DSIO_TEXREG2RGB instruction in GLSL
  * Sample texture at dst using the rgb (xyz) components of src as texture coordinates */
-static void pshader_glsl_texreg2rgb(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_texreg2rgb(const struct wined3d_shader_instruction *ins)
 {
     glsl_src_param_t src0_param;
     DWORD sampler_idx = ins->dst[0].reg.idx;
@@ -3227,7 +3227,7 @@ static void pshader_glsl_texreg2rgb(const struct wined3d_shader_instruction *ins
 
 /** Process the WINED3DSIO_TEXKILL instruction in GLSL.
  * If any of the first 3 components are < 0, discard this pixel */
-static void pshader_glsl_texkill(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_texkill(const struct wined3d_shader_instruction *ins)
 {
     glsl_dst_param_t dst_param;
 
@@ -3248,7 +3248,7 @@ static void pshader_glsl_texkill(const struct wined3d_shader_instruction *ins)
 
 /** Process the WINED3DSIO_DP2ADD instruction in GLSL.
  * dst = dot2(src0, src1) + src2 */
-static void pshader_glsl_dp2add(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_dp2add(const struct wined3d_shader_instruction *ins)
 {
     glsl_src_param_t src0_param;
     glsl_src_param_t src1_param;
@@ -3272,7 +3272,7 @@ static void pshader_glsl_dp2add(const struct wined3d_shader_instruction *ins)
     }
 }
 
-static void pshader_glsl_input_pack(IWineD3DPixelShader *iface, struct wined3d_shader_buffer *buffer,
+static void shader_glsl_input_pack(IWineD3DPixelShader *iface, struct wined3d_shader_buffer *buffer,
         const struct wined3d_shader_signature_element *input_signature, const struct shader_reg_maps *reg_maps,
         enum vertexprocessing_mode vertexprocessing)
 {
@@ -3737,7 +3737,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     /* Pack 3.0 inputs */
     if (reg_maps->shader_version.major >= 3 && args->vp_mode != vertexshader)
     {
-        pshader_glsl_input_pack((IWineD3DPixelShader *) This, buffer, This->input_signature, reg_maps, args->vp_mode);
+        shader_glsl_input_pack((IWineD3DPixelShader *) This, buffer, This->input_signature, reg_maps, args->vp_mode);
     }
 
     /* Base Shader Body */
@@ -4652,7 +4652,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
 {
     /* WINED3DSIH_ABS           */ shader_glsl_map2gl,
     /* WINED3DSIH_ADD           */ shader_glsl_arith,
-    /* WINED3DSIH_BEM           */ pshader_glsl_bem,
+    /* WINED3DSIH_BEM           */ shader_glsl_bem,
     /* WINED3DSIH_BREAK         */ shader_glsl_break,
     /* WINED3DSIH_BREAKC        */ shader_glsl_breakc,
     /* WINED3DSIH_BREAKP        */ NULL,
@@ -4665,7 +4665,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DEF           */ NULL,
     /* WINED3DSIH_DEFB          */ NULL,
     /* WINED3DSIH_DEFI          */ NULL,
-    /* WINED3DSIH_DP2ADD        */ pshader_glsl_dp2add,
+    /* WINED3DSIH_DP2ADD        */ shader_glsl_dp2add,
     /* WINED3DSIH_DP3           */ shader_glsl_dot,
     /* WINED3DSIH_DP4           */ shader_glsl_dot,
     /* WINED3DSIH_DST           */ shader_glsl_dst,
@@ -4711,28 +4711,28 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_SINCOS        */ shader_glsl_sincos,
     /* WINED3DSIH_SLT           */ shader_glsl_compare,
     /* WINED3DSIH_SUB           */ shader_glsl_arith,
-    /* WINED3DSIH_TEX           */ pshader_glsl_tex,
-    /* WINED3DSIH_TEXBEM        */ pshader_glsl_texbem,
-    /* WINED3DSIH_TEXBEML       */ pshader_glsl_texbem,
-    /* WINED3DSIH_TEXCOORD      */ pshader_glsl_texcoord,
-    /* WINED3DSIH_TEXDEPTH      */ pshader_glsl_texdepth,
-    /* WINED3DSIH_TEXDP3        */ pshader_glsl_texdp3,
-    /* WINED3DSIH_TEXDP3TEX     */ pshader_glsl_texdp3tex,
-    /* WINED3DSIH_TEXKILL       */ pshader_glsl_texkill,
+    /* WINED3DSIH_TEX           */ shader_glsl_tex,
+    /* WINED3DSIH_TEXBEM        */ shader_glsl_texbem,
+    /* WINED3DSIH_TEXBEML       */ shader_glsl_texbem,
+    /* WINED3DSIH_TEXCOORD      */ shader_glsl_texcoord,
+    /* WINED3DSIH_TEXDEPTH      */ shader_glsl_texdepth,
+    /* WINED3DSIH_TEXDP3        */ shader_glsl_texdp3,
+    /* WINED3DSIH_TEXDP3TEX     */ shader_glsl_texdp3tex,
+    /* WINED3DSIH_TEXKILL       */ shader_glsl_texkill,
     /* WINED3DSIH_TEXLDD        */ shader_glsl_texldd,
     /* WINED3DSIH_TEXLDL        */ shader_glsl_texldl,
-    /* WINED3DSIH_TEXM3x2DEPTH  */ pshader_glsl_texm3x2depth,
-    /* WINED3DSIH_TEXM3x2PAD    */ pshader_glsl_texm3x2pad,
-    /* WINED3DSIH_TEXM3x2TEX    */ pshader_glsl_texm3x2tex,
-    /* WINED3DSIH_TEXM3x3       */ pshader_glsl_texm3x3,
+    /* WINED3DSIH_TEXM3x2DEPTH  */ shader_glsl_texm3x2depth,
+    /* WINED3DSIH_TEXM3x2PAD    */ shader_glsl_texm3x2pad,
+    /* WINED3DSIH_TEXM3x2TEX    */ shader_glsl_texm3x2tex,
+    /* WINED3DSIH_TEXM3x3       */ shader_glsl_texm3x3,
     /* WINED3DSIH_TEXM3x3DIFF   */ NULL,
-    /* WINED3DSIH_TEXM3x3PAD    */ pshader_glsl_texm3x3pad,
-    /* WINED3DSIH_TEXM3x3SPEC   */ pshader_glsl_texm3x3spec,
-    /* WINED3DSIH_TEXM3x3TEX    */ pshader_glsl_texm3x3tex,
-    /* WINED3DSIH_TEXM3x3VSPEC  */ pshader_glsl_texm3x3vspec,
-    /* WINED3DSIH_TEXREG2AR     */ pshader_glsl_texreg2ar,
-    /* WINED3DSIH_TEXREG2GB     */ pshader_glsl_texreg2gb,
-    /* WINED3DSIH_TEXREG2RGB    */ pshader_glsl_texreg2rgb,
+    /* WINED3DSIH_TEXM3x3PAD    */ shader_glsl_texm3x3pad,
+    /* WINED3DSIH_TEXM3x3SPEC   */ shader_glsl_texm3x3spec,
+    /* WINED3DSIH_TEXM3x3TEX    */ shader_glsl_texm3x3tex,
+    /* WINED3DSIH_TEXM3x3VSPEC  */ shader_glsl_texm3x3vspec,
+    /* WINED3DSIH_TEXREG2AR     */ shader_glsl_texreg2ar,
+    /* WINED3DSIH_TEXREG2GB     */ shader_glsl_texreg2gb,
+    /* WINED3DSIH_TEXREG2RGB    */ shader_glsl_texreg2rgb,
 };
 
 static void shader_glsl_handle_instruction(const struct wined3d_shader_instruction *ins) {
