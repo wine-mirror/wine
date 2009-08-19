@@ -54,23 +54,6 @@
           wine_dbgstr_w(expected), wine_dbgstr_w(value)); \
     } while (0)
 
-/* A simpler version of wine_dbgstr_w. Note that the returned buffer will be
- * invalid after 16 calls to this funciton. */
-static const char *wine_dbgstr_w(LPCWSTR wstr)
-{
-  static char *buffers[16];
-  static int curr_buffer = 0;
-
-  int size;
-
-  curr_buffer = (curr_buffer + 1) % 16;
-  HeapFree(GetProcessHeap(), 0, buffers[curr_buffer]);
-  size = WideCharToMultiByte(CP_ACP, 0, wstr, -1, NULL, 0, NULL, NULL);
-  buffers[curr_buffer] = HeapAlloc(GetProcessHeap(), 0, size);
-  size = WideCharToMultiByte(CP_ACP, 0, wstr, -1, buffers[curr_buffer], size, NULL, NULL);
-  return buffers[curr_buffer];
-}
-
 static HINSTANCE hkernel32;
 static LPVOID (WINAPI *pVirtualAllocEx)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
 static BOOL   (WINAPI *pVirtualFreeEx)(HANDLE, LPVOID, SIZE_T, DWORD);
