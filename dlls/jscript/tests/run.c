@@ -84,17 +84,6 @@ static const CHAR test_valA[] = "testVal";
 static BOOL strict_dispid_check;
 static const char *test_name = "(null)";
 
-static const char *debugstr_w(LPCWSTR str)
-{
-    static char buf[1024];
-
-    if(!str)
-        return "(null)";
-
-    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
-    return buf;
-}
-
 static BSTR a2bstr(const char *str)
 {
     BSTR ret;
@@ -169,7 +158,7 @@ static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
 {
-    ok(0, "unexpected call %s %x\n", debugstr_w(bstrName), grfdex);
+    ok(0, "unexpected call %s %x\n", wine_dbgstr_w(bstrName), grfdex);
     return E_NOTIMPL;
 }
 
@@ -220,7 +209,7 @@ static HRESULT WINAPI testObj_DeleteMemberByName(IDispatchEx *iface, BSTR bstrNa
 {
     CHECK_EXPECT(testobj_delete);
 
-    ok(!strcmp_wa(bstrName, "deleteTest"), "unexpected name %s\n", debugstr_w(bstrName));
+    ok(!strcmp_wa(bstrName, "deleteTest"), "unexpected name %s\n", wine_dbgstr_w(bstrName));
     ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
     return S_OK;
 }
@@ -296,7 +285,7 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
     }
 
     if(strict_dispid_check)
-        ok(0, "unexpected call %s\n", debugstr_w(bstrName));
+        ok(0, "unexpected call %s\n", wine_dbgstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
 }
 
@@ -319,7 +308,7 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         ok(V_VT(pdp->rgvarg) == VT_BSTR, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
         ok(V_VT(pdp->rgvarg+1) == VT_BOOL, "V_VT(psp->rgvargs+1) = %d\n", V_VT(pdp->rgvarg));
-        ok(V_BOOL(pdp->rgvarg+1), "%s: %s\n", test_name, debugstr_w(V_BSTR(pdp->rgvarg)));
+        ok(V_BOOL(pdp->rgvarg+1), "%s: %s\n", test_name, wine_dbgstr_w(V_BSTR(pdp->rgvarg)));
 
         return S_OK;
 
@@ -335,7 +324,7 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         ok(V_VT(pdp->rgvarg) == VT_BSTR, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
         if(V_VT(pdp->rgvarg) == VT_BSTR)
-            trace("%s: %s\n", test_name, debugstr_w(V_BSTR(pdp->rgvarg)));
+            trace("%s: %s\n", test_name, wine_dbgstr_w(V_BSTR(pdp->rgvarg)));
 
         return S_OK;
 
@@ -513,7 +502,7 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
     if(!strcmp_wa(pstrName, test_valA))
         CHECK_EXPECT(GetItemInfo_testVal);
     else if(strcmp_wa(pstrName, testA))
-        ok(0, "unexpected pstrName %s\n", debugstr_w(pstrName));
+        ok(0, "unexpected pstrName %s\n", wine_dbgstr_w(pstrName));
 
     *ppiunkItem = (IUnknown*)&Global;
     return S_OK;
