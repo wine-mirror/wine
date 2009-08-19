@@ -225,7 +225,6 @@ RPC_STATUS WINAPI RpcEpRegisterA( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bind
       RpcBinding* bind = BindingVector->BindingH[i];
       for (j = 0; j < (UuidVector ? UuidVector->Count : 1); j++)
       {
-          int len = strlen((char *)Annotation);
           status = TowerConstruct(&If->InterfaceId, &If->TransferSyntax,
                                   bind->Protseq, bind->Endpoint,
                                   bind->NetworkAddr,
@@ -236,7 +235,9 @@ RPC_STATUS WINAPI RpcEpRegisterA( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bind
               memcpy(&entries[i * UuidVector->Count].object, &UuidVector->Uuid[j], sizeof(GUID));
           else
               memset(&entries[i].object, 0, sizeof(entries[i].object));
-          memcpy(entries[i].annotation, Annotation, min(len + 1, ept_max_annotation_size));
+          if (Annotation)
+              memcpy(entries[i].annotation, Annotation,
+                     min(strlen((char *)Annotation) + 1, ept_max_annotation_size));
       }
   }
 
