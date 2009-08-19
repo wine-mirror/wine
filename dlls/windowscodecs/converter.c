@@ -567,7 +567,7 @@ static HRESULT WINAPI FormatConverter_Initialize(IWICFormatConverter *iface,
     TRACE("(%p,%p,%s,%u,%p,%0.1f,%u)\n", iface, pISource, debugstr_guid(dstFormat),
         dither, pIPalette, alphaThresholdPercent, paletteTranslate);
 
-    if (pIPalette && !fixme++) FIXME("ignoring palette");
+    if (pIPalette && !fixme++) FIXME("ignoring palette\n");
 
     if (This->source) return WINCODEC_ERR_WRONGSTATE;
 
