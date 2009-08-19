@@ -1432,6 +1432,16 @@ static void test_file_monikers(void)
     for (i = 0; i < COUNTOF(wszFile); ++i)
     {
         int j ;
+        if (i == 2)
+        {
+            BOOL used;
+            WideCharToMultiByte( CP_ACP, WC_NO_BEST_FIT_CHARS, wszFile[i], -1, NULL, 0, NULL, &used );
+            if (used)
+            {
+                skip("string 2 doesn't round trip in codepage %u\n", GetACP() );
+                continue;
+            }
+        }
         for (j = lstrlenW(wszFile[i]); j > 0; --j)
         {
             wszFile[i][j] = 0;
