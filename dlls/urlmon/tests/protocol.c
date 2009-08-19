@@ -172,15 +172,6 @@ static const WCHAR binding_urls[][130] = {
     {'t','e','s','t',':','/','/','f','i','l','e','.','h','t','m','l',0}
 };
 
-static const char *debugstr_w(LPCWSTR str)
-{
-    static char buf[512];
-    if(!str)
-        return "(null)";
-    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
-    return buf;
-}
-
 static const char *debugstr_guid(REFIID riid)
 {
     static char buf[50];
@@ -567,7 +558,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
             if(binding_test)
                 ok(!strcmp_ww(szStatusText, expect_wsz), "unexpected szStatusText\n");
             else if(tested_protocol == FILE_TEST)
-                ok(!strcmp_ww(szStatusText, file_name), "szStatusText = \"%s\"\n", debugstr_w(szStatusText));
+                ok(!strcmp_ww(szStatusText, file_name), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
             else
                 ok(szStatusText != NULL, "szStatusText == NULL\n");
         }
@@ -605,28 +596,28 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         break;
     case BINDSTATUS_REDIRECTING:
         CHECK_EXPECT(ReportProgress_REDIRECTING);
-        ok(szStatusText == NULL, "szStatusText = %s\n", debugstr_w(szStatusText));
+        ok(szStatusText == NULL, "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
         break;
     case BINDSTATUS_ENCODING:
         CHECK_EXPECT(ReportProgress_ENCODING);
-        ok(!strcmp_wa(szStatusText, "gzip"), "szStatusText = %s\n", debugstr_w(szStatusText));
+        ok(!strcmp_wa(szStatusText, "gzip"), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
         break;
     case BINDSTATUS_ACCEPTRANGES:
         CHECK_EXPECT(ReportProgress_ACCEPTRANGES);
-        ok(!szStatusText, "szStatusText = %s\n", debugstr_w(szStatusText));
+        ok(!szStatusText, "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
         break;
     case BINDSTATUS_PROXYDETECTING:
         CHECK_EXPECT(ReportProgress_PROXYDETECTING);
         SET_EXPECT(ReportProgress_CONNECTING);
-        ok(!szStatusText, "szStatusText = %s\n", debugstr_w(szStatusText));
+        ok(!szStatusText, "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
         break;
     case BINDSTATUS_LOADINGMIMEHANDLER:
         CHECK_EXPECT(ReportProgress_LOADINGMIMEHANDLER);
-        ok(!szStatusText, "szStatusText = %s\n", debugstr_w(szStatusText));
+        ok(!szStatusText, "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
         break;
     case BINDSTATUS_DECODING:
         CHECK_EXPECT(ReportProgress_DECODING);
-        ok(!strcmp_ww(szStatusText, gzipW), "szStatusText = %s\n", debugstr_w(szStatusText));
+        ok(!strcmp_ww(szStatusText, gzipW), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
         break;
     default:
         ok(0, "Unexpected status %d\n", ulStatusCode);
@@ -829,7 +820,7 @@ static HRESULT WINAPI MimeProtocolSink_ReportResult(IInternetProtocolSink *iface
 
     ok(hrResult == S_OK, "hrResult = %08x\n", hrResult);
     ok(dwError == ERROR_SUCCESS, "dwError = %u\n", dwError);
-    ok(!szResult, "szResult = %s\n", debugstr_w(szResult));
+    ok(!szResult, "szResult = %s\n", wine_dbgstr_w(szResult));
 
     SET_EXPECT(ReportResult);
     hres = IInternetProtocolSink_ReportResult(filtered_sink, hrResult, dwError, szResult);
@@ -1227,7 +1218,7 @@ static HRESULT WINAPI ProtocolEmul_Start(IInternetProtocol *iface, LPCWSTR szUrl
         ok(hres == S_OK, "GetBindString(BINDSTRING_USER_AGETNT) failed: %08x\n", hres);
         ok(fetched == 1, "fetched = %d, expected 254\n", fetched);
         ok(ua != NULL, "ua =  %p\n", ua);
-        ok(!strcmp_ww(ua, user_agentW), "unexpected user agent %s\n", debugstr_w(ua));
+        ok(!strcmp_ww(ua, user_agentW), "unexpected user agent %s\n", wine_dbgstr_w(ua));
         CoTaskMemFree(ua);
 
         fetched = 256;
@@ -1239,7 +1230,7 @@ static HRESULT WINAPI ProtocolEmul_Start(IInternetProtocol *iface, LPCWSTR szUrl
         ok(hres == S_OK,
            "GetBindString(BINDSTRING_ACCEPT_MIMES) failed: %08x\n", hres);
         ok(fetched == 1, "fetched = %d, expected 1\n", fetched);
-        ok(!strcmp_ww(acc_mimeW, accept_mimes[0]), "unexpected mimes %s\n", debugstr_w(accept_mimes[0]));
+        ok(!strcmp_ww(acc_mimeW, accept_mimes[0]), "unexpected mimes %s\n", wine_dbgstr_w(accept_mimes[0]));
 
         hres = IInternetBindInfo_QueryInterface(pOIBindInfo, &IID_IServiceProvider,
                                                 (void**)&service_provider);
@@ -1570,7 +1561,7 @@ static HRESULT WINAPI MimeProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 
     CHECK_EXPECT(MimeFilter_Start);
 
-    ok(!strcmp_ww(szUrl, gzipW), "wrong url %s\n", debugstr_w(szUrl));
+    ok(!strcmp_ww(szUrl, gzipW), "wrong url %s\n", wine_dbgstr_w(szUrl));
     ok(grfPI == (PI_FILTER_MODE|PI_FORCE_ASYNC), "grfPI=%x, expected PI_FILTER_MODE|PI_FORCE_ASYNC\n", grfPI);
     ok(dwReserved, "dwReserved == 0\n");
     ok(pOIProtSink != NULL, "pOIProtSink == NULL\n");
@@ -1630,7 +1621,7 @@ static HRESULT WINAPI MimeProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     hres = IInternetBindInfo_GetBindString(pOIBindInfo, BINDSTRING_URL, &url_str, 1, &fetched);
     ok(hres == S_OK, "GetBindString(BINDSTRING_URL) failed: %08x\n", hres);
     ok(fetched == 1, "fetched = %d\n", fetched);
-    ok(!strcmp_ww(url_str, binding_urls[tested_protocol]), "wrong url_str %s\n", debugstr_w(url_str));
+    ok(!strcmp_ww(url_str, binding_urls[tested_protocol]), "wrong url_str %s\n", wine_dbgstr_w(url_str));
     CoTaskMemFree(url_str);
     CHECK_CALLED(GetBindString_URL);
 
@@ -2699,7 +2690,7 @@ static void test_binding(int prot, DWORD grf_pi, BOOL test_filter)
     ULONG ref;
     HRESULT hres;
 
-    trace("Testing %s binding (grfPI %x%s)...\n", debugstr_w(protocol_names[prot]), grf_pi,
+    trace("Testing %s binding (grfPI %x%s)...\n", wine_dbgstr_w(protocol_names[prot]), grf_pi,
           test_filter ? " testing MIME filter" : "");
     init_test(prot, TEST_BINDING | (test_filter ? TEST_FILTER : 0));
     pi = grf_pi;

@@ -208,13 +208,6 @@ static enum {
     END_DOWNLOAD
 } download_state;
 
-static const char *debugstr_w(LPCWSTR str)
-{
-    static char buf[1024];
-    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
-    return buf;
-}
-
 static const char *debugstr_guid(REFIID riid)
 {
     static char buf[50];
@@ -474,7 +467,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     read = 0;
 
     if(!filedwl_api) /* FIXME */
-        ok(szUrl && !lstrcmpW(szUrl, urls[test_protocol]), "wrong url %s\n", debugstr_w(szUrl));
+        ok(szUrl && !lstrcmpW(szUrl, urls[test_protocol]), "wrong url %s\n", wine_dbgstr_w(szUrl));
     ok(pOIProtSink != NULL, "pOIProtSink == NULL\n");
     ok(pOIBindInfo != NULL, "pOIBindInfo == NULL\n");
     ok(grfPI == 0, "grfPI=%d, expected 0\n", grfPI);
@@ -1300,7 +1293,7 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
             if(filedwl_api) {
                 /* FIXME */
             }else {
-                ok(!lstrcmpW(szStatusText, urls[test_protocol]), "wrong szStatusText %s\n", debugstr_w(szStatusText));
+                ok(!lstrcmpW(szStatusText, urls[test_protocol]), "wrong szStatusText %s\n", wine_dbgstr_w(szStatusText));
             }
         }
         if(!bind_to_object)
@@ -1324,7 +1317,7 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
             if(filedwl_api) {
                 /* FIXME */
             }else {
-                ok(!lstrcmpW(szStatusText, urls[test_protocol]), "wrong szStatusText %s\n", debugstr_w(szStatusText));
+                ok(!lstrcmpW(szStatusText, urls[test_protocol]), "wrong szStatusText %s\n", wine_dbgstr_w(szStatusText));
             }
         }
         ok(download_state == DOWNLOADING, "Download state was %d, expected DOWNLOADING\n",
@@ -1344,7 +1337,7 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
 
         ok(szStatusText != NULL, "szStatusText == NULL\n");
         if(szStatusText && test_protocol == FILE_TEST)
-            ok(!lstrcmpW(file_url+8, szStatusText), "wrong szStatusText %s\n", debugstr_w(szStatusText));
+            ok(!lstrcmpW(file_url+8, szStatusText), "wrong szStatusText %s\n", wine_dbgstr_w(szStatusText));
         break;
     case BINDSTATUS_CLASSIDAVAILABLE:
     {
@@ -1515,10 +1508,10 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallbackEx *iface, DW
     case TYMED_FILE:
         if(test_protocol == FILE_TEST)
             ok(!lstrcmpW(pstgmed->u.lpszFileName, INDEX_HTML+7),
-               "unexpected file name %s\n", debugstr_w(pstgmed->u.lpszFileName));
+               "unexpected file name %s\n", wine_dbgstr_w(pstgmed->u.lpszFileName));
         else if(emulate_protocol)
             ok(!lstrcmpW(pstgmed->u.lpszFileName, cache_fileW),
-               "unexpected file name %s\n", debugstr_w(pstgmed->u.lpszFileName));
+               "unexpected file name %s\n", wine_dbgstr_w(pstgmed->u.lpszFileName));
         else
             ok(pstgmed->u.lpszFileName != NULL, "lpszFileName == NULL\n");
     }
@@ -1596,7 +1589,7 @@ static HRESULT WINAPI MonikerProp_PutProperty(IMonikerProp *iface, MONIKERPROPER
     switch(mkp) {
     case MIMETYPEPROP:
         CHECK_EXPECT(PutProperty_MIMETYPEPROP);
-        ok(!lstrcmpW(val, wszTextHtml), "val = %s\n", debugstr_w(val));
+        ok(!lstrcmpW(val, wszTextHtml), "val = %s\n", wine_dbgstr_w(val));
         break;
     case CLASSIDPROP:
         CHECK_EXPECT(PutProperty_CLASSIDPROP);
@@ -2241,7 +2234,7 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
     hres = IMoniker_GetDisplayName(mon, bctx, NULL, &display_name);
     ok(hres == S_OK, "GetDisplayName failed %08x\n", hres);
     ok(!lstrcmpW(display_name, urls[test_protocol]),
-       "GetDisplayName got wrong name %s\n", debugstr_w(display_name));
+       "GetDisplayName got wrong name %s\n", wine_dbgstr_w(display_name));
     CoTaskMemFree(display_name);
 
     if(tymed == TYMED_FILE && (test_protocol == ABOUT_TEST || test_protocol == ITS_TEST))

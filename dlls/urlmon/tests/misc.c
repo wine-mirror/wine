@@ -63,13 +63,6 @@ DEFINE_EXPECT(QI_IInternetProtocolInfo);
 DEFINE_EXPECT(CreateInstance);
 DEFINE_EXPECT(unk_Release);
 
-static const char *debugstr_w(LPCWSTR str)
-{
-    static char buf[1024];
-    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
-    return buf;
-}
-
 static void test_CreateFormatEnum(void)
 {
     IEnumFORMATETC *fenum = NULL, *fenum2 = NULL;
@@ -653,7 +646,7 @@ static void test_FindMimeFromData(void)
         hres = FindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
                 NULL, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
-        ok(!lstrcmpW(mime, mime_tests2[i].mime), "[%d] wrong mime: %s\n", i, debugstr_w(mime));
+        ok(!lstrcmpW(mime, mime_tests2[i].mime), "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
         CoTaskMemFree(mime);
 
         hres = FindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
@@ -674,7 +667,7 @@ static void test_FindMimeFromData(void)
         else
             ok(!lstrcmpW(mime, mime_tests2[i].mime) ||
                     (mime_tests2[i].mime_alt && !lstrcmpW(mime, mime_tests2[i].mime_alt)),
-                    "[%d] wrong mime, got '%s'\n", i, debugstr_w(mime));
+                    "[%d] wrong mime, got %s\n", i, wine_dbgstr_w(mime));
 
         CoTaskMemFree(mime);
     }
@@ -1307,7 +1300,7 @@ static void test_MkParseDisplayNameEx(void)
 
     hres = IMoniker_GetDisplayName(mon, NULL, 0, &name);
     ok(hres == S_OK, "GetDiasplayName failed: %08x\n", hres);
-    ok(!lstrcmpW(name, url9), "wrong display name %s\n", debugstr_w(name));
+    ok(!lstrcmpW(name, url9), "wrong display name %s\n", wine_dbgstr_w(name));
     CoTaskMemFree(name);
 
     hres = IMoniker_IsSystemMoniker(mon, &issys);
