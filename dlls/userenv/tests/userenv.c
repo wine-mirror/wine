@@ -51,7 +51,8 @@ static BOOL get_env(const WCHAR * env, const char * var, char ** result)
     varlen = strlen(var);
     do
     {
-        envlen = WideCharToMultiByte( CP_ACP, 0, p, -1, buf, sizeof(buf), NULL, NULL ) - 1;
+        if (!WideCharToMultiByte( CP_ACP, 0, p, -1, buf, sizeof(buf), NULL, NULL )) buf[sizeof(buf)-1] = 0;
+        envlen = strlen(buf);
         if (CompareStringA(GetThreadLocale(), NORM_IGNORECASE|LOCALE_USE_CP_ACP, buf, min(envlen, varlen), var, varlen) == CSTR_EQUAL)
         {
             if (buf[varlen] == '=')
@@ -63,7 +64,8 @@ static BOOL get_env(const WCHAR * env, const char * var, char ** result)
                 return TRUE;
             }
         }
-        p = p + envlen + 1;
+        while (*p) p++;
+        p++;
     } while (*p);
     return FALSE;
 }
