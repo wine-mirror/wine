@@ -4579,7 +4579,6 @@ HRESULT BlockChainStream_ReadAt(BlockChainStream* This,
  *      BlockChainStream_WriteAt
  *
  * Writes the specified number of bytes to this chain at the specified offset.
- * bytesWritten may be NULL.
  * Will fail if not all specified number of bytes have been written.
  */
 HRESULT BlockChainStream_WriteAt(BlockChainStream* This,
@@ -4931,6 +4930,7 @@ static ULARGE_INTEGER BlockChainStream_GetSize(BlockChainStream* This)
 
 SmallBlockChainStream* SmallBlockChainStream_Construct(
   StorageImpl* parentStorage,
+  ULONG*         headOfStreamPlaceHolder,
   ULONG          propertyIndex)
 {
   SmallBlockChainStream* newStream;
@@ -4938,6 +4938,7 @@ SmallBlockChainStream* SmallBlockChainStream_Construct(
   newStream = HeapAlloc(GetProcessHeap(), 0, sizeof(SmallBlockChainStream));
 
   newStream->parentStorage      = parentStorage;
+  newStream->headOfStreamPlaceHolder = headOfStreamPlaceHolder;
   newStream->ownerPropertyIndex = propertyIndex;
 
   return newStream;
@@ -4959,6 +4960,9 @@ static ULONG SmallBlockChainStream_GetHeadOfChain(
 {
   StgProperty chainProperty;
   BOOL      readSuccessful;
+
+  if (This->headOfStreamPlaceHolder != NULL)
+    return *(This->headOfStreamPlaceHolder);
 
   if (This->ownerPropertyIndex)
   {
@@ -5322,7 +5326,6 @@ HRESULT SmallBlockChainStream_ReadAt(
  *       SmallBlockChainStream_WriteAt
  *
  * Writes the specified number of bytes to this chain at the specified offset.
- * bytesWritten may be NULL.
  * Will fail if not all specified number of bytes have been written.
  */
 HRESULT SmallBlockChainStream_WriteAt(
@@ -5362,9 +5365,6 @@ HRESULT SmallBlockChainStream_WriteAt(
 
   /*
    * Start writing the buffer.
-   *
-   * Here, I'm casting away the constness on the buffer variable
-   * This is OK since we don't intend to modify that buffer.
    */
   *bytesWritten   = 0;
   bufferWalker = buffer;
@@ -5511,26 +5511,32 @@ static BOOL SmallBlockChainStream_Enlarge(
   blockIndex = SmallBlockChainStream_GetHeadOfChain(This);
 
   /*
-   * Empty chain
+   * Empty chain. Create the head.
    */
   if (blockIndex == BLOCK_END_OF_CHAIN)
   {
-
-    StgProperty chainProp;
-
-    StorageImpl_ReadProperty(This->parentStorage, This->ownerPropertyIndex,
-                               &chainProp);
-
-    chainProp.startingBlock = SmallBlockChainStream_GetNextFreeBlock(This);
-
-    StorageImpl_WriteProperty(This->parentStorage, This->ownerPropertyIndex,
-                                &chainProp);
-
-    blockIndex = chainProp.startingBlock;
+    blockIndex = SmallBlockChainStream_GetNextFreeBlock(This);
     SmallBlockChainStream_SetNextBlockInChain(
-      This,
-      blockIndex,
-      BLOCK_END_OF_CHAIN);
+        This,
+        blockIndex,
+        BLOCK_END_OF_CHAIN);
+
+    if (This->headOfStreamPlaceHolder != NULL)
+    {
+      *(This->headOfStreamPlaceHolder) = blockIndex;
+    }
+    else
+    {
+      StgProperty chainProp;
+
+      StorageImpl_ReadProperty(This->parentStorage, This->ownerPropertyIndex,
+                                   &chainProp);
+
+      chainProp.startingBlock = blockIndex;
+
+      StorageImpl_WriteProperty(This->parentStorage, This->ownerPropertyIndex,
+                                  &chainProp);
+    }
   }
 
   currentBlock = blockIndex;
@@ -5606,6 +5612,32 @@ BOOL SmallBlockChainStream_SetSize(
 }
 
 /******************************************************************************
+ *       SmallBlockChainStream_GetCount
+ *
+ * Returns the number of small blocks that comprises this chain.
+ * This is not the size of the stream as the last block may not be full!
+ *
+ */
+static ULONG SmallBlockChainStream_GetCount(SmallBlockChainStream* This)
+{
+    ULONG blockIndex;
+    ULONG count = 0;
+
+    blockIndex = SmallBlockChainStream_GetHeadOfChain(This);
+
+    while(blockIndex != BLOCK_END_OF_CHAIN)
+    {
+        count++;
+
+        if(FAILED(SmallBlockChainStream_GetNextBlockInChain(This,
+                        blockIndex, &blockIndex)))
+            return 0;
+    }
+
+    return count;
+}
+
+/******************************************************************************
  *      SmallBlockChainStream_GetSize
  *
  * Returns the size of this chain.
@@ -5613,6 +5645,17 @@ BOOL SmallBlockChainStream_SetSize(
 static ULARGE_INTEGER SmallBlockChainStream_GetSize(SmallBlockChainStream* This)
 {
   StgProperty chainProperty;
+
+  if(This->headOfStreamPlaceHolder != NULL)
+  {
+    ULARGE_INTEGER result;
+    result.u.HighPart = 0;
+
+    result.u.LowPart = SmallBlockChainStream_GetCount(This) *
+        This->parentStorage->smallBlockSize;
+
+    return result;
+  }
 
   StorageImpl_ReadProperty(
     This->parentStorage,

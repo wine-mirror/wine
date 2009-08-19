@@ -464,14 +464,16 @@ struct SmallBlockChainStream
 {
   StorageImpl* parentStorage;
   ULONG          ownerPropertyIndex;
+  ULONG*         headOfStreamPlaceHolder;
 };
 
 /*
  * Methods of the SmallBlockChainStream class.
  */
 SmallBlockChainStream* SmallBlockChainStream_Construct(
-	       StorageImpl* parentStorage,
-	       ULONG          propertyIndex);
+           StorageImpl*   parentStorage,
+           ULONG*         headOfStreamPlaceHolder,
+           ULONG          propertyIndex);
 
 void SmallBlockChainStream_Destroy(
 	       SmallBlockChainStream* This);

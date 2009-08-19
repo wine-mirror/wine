@@ -232,6 +232,7 @@ static void StgStreamImpl_OpenBlockChain(
       {
 	This->smallBlockChain = SmallBlockChainStream_Construct(
 								This->parentStorage->ancestorStorage,
+								NULL,
 								This->ownerProperty);
       }
       else
@@ -591,6 +592,7 @@ static HRESULT WINAPI StgStreamImpl_SetSize(
     {
       This->smallBlockChain = SmallBlockChainStream_Construct(
                                     This->parentStorage->ancestorStorage,
+                                    NULL,
                                     This->ownerProperty);
     }
     else
