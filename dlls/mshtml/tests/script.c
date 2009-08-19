@@ -109,13 +109,6 @@ static IHTMLDocument2 *notif_doc;
 static IDispatchEx *window_dispex;
 static BOOL doc_complete;
 
-static const char *debugstr_w(LPCWSTR str)
-{
-    static char buf[1024];
-    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
-    return buf;
-}
-
 static const char *debugstr_guid(REFIID riid)
 {
     static char buf[50];
@@ -240,7 +233,7 @@ static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
 {
-    ok(0, "unexpected call %s %x\n", debugstr_w(bstrName), grfdex);
+    ok(0, "unexpected call %s %x\n", wine_dbgstr_w(bstrName), grfdex);
     return E_NOTIMPL;
 }
 
@@ -876,7 +869,7 @@ static HRESULT WINAPI ActiveScript_AddNamedItem(IActiveScript *iface,
 
     CHECK_EXPECT(AddNamedItem);
 
-    ok(!lstrcmpW(pstrName, windowW), "pstrName=%s\n", debugstr_w(pstrName));
+    ok(!lstrcmpW(pstrName, windowW), "pstrName=%s\n", wine_dbgstr_w(pstrName));
     ok(dwFlags == (SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS), "dwFlags=%x\n", dwFlags);
 
     hres = IActiveScriptSite_GetItemInfo(site, windowW, SCRIPTINFO_IUNKNOWN, &unk, NULL);

@@ -201,17 +201,6 @@ static const char *debugstr_guid(REFIID riid)
     return buf;
 }
 
-static const char *debugstr_w(LPCWSTR str)
-{
-    static char buf[1024];
-
-    if(!str)
-        return "(null)";
-
-    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
-    return buf;
-}
-
 #define EXPECT_UPDATEUI  1
 #define EXPECT_SETTITLE  2
 
@@ -2494,8 +2483,8 @@ static void _test_readyState(unsigned line, IUnknown *unk)
     hres = IHTMLDocument2_get_readyState(htmldoc, &state);
     ok(hres == S_OK, "get_ReadyState failed: %08x\n", hres);
     ok_(__FILE__, line)
-        (!lstrcmpW(state, expected_state[load_state]), "unexpected state \"%s\", expected %d\n",
-         debugstr_w(state), load_state);
+        (!lstrcmpW(state, expected_state[load_state]), "unexpected state %s, expected %d\n",
+         wine_dbgstr_w(state), load_state);
     SysFreeString(state);
 
     dispparams.cArgs = 0;
@@ -3173,7 +3162,7 @@ static void test_exec_fontname(IUnknown *unk, LPCWSTR name, LPCWSTR exname)
        if(V_VT(out) == VT_BSTR) {
            if(exname)
                ok(!lstrcmpW(V_BSTR(out), name ? name : exname),
-                  "unexpected fontname \"%s\"\n", debugstr_w(name));
+                  "unexpected fontname %s\n", wine_dbgstr_w(name));
            else
                ok(V_BSTR(out) == NULL, "V_BSTR(out) != NULL\n");
        }

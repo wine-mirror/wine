@@ -70,13 +70,6 @@ static const WCHAR about_blank_url[] = {'a','b','o','u','t',':','b','l','a','n',
 static const WCHAR about_test_url[] = {'a','b','o','u','t',':','t','e','s','t',0};
 static const WCHAR about_res_url[] = {'r','e','s',':','b','l','a','n','k',0};
 
-static const char *debugstr_w(LPCWSTR str)
-{
-    static char buf[1024];
-    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
-    return buf;
-}
-
 static HRESULT WINAPI ProtocolSink_QueryInterface(IInternetProtocolSink *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IInternetProtocolSink, riid)) {
@@ -278,7 +271,7 @@ static void res_sec_url_cmp(LPCWSTR url, DWORD size, LPCWSTR file)
 
     len += sizeof(fileW)/sizeof(WCHAR)+1;
     ok(len == size, "wrong size %u, expected %u\n", size, len);
-    ok(!lstrcmpW(url + sizeof(fileW)/sizeof(WCHAR), buf), "wrong file part %s\n", debugstr_w(url));
+    ok(!lstrcmpW(url + sizeof(fileW)/sizeof(WCHAR), buf), "wrong file part %s\n", wine_dbgstr_w(url));
 }
 
 static void test_res_protocol(void)
