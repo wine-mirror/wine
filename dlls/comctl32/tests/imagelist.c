@@ -1014,14 +1014,14 @@ static void test_shell_imagelist(void)
         return;
 
     IImageList_GetImageCount(iml, &out);
-    todo_wine ok(out > 0, "IImageList_GetImageCount returned out <= 0");
+    todo_wine ok(out > 0, "IImageList_GetImageCount returned out <= 0\n");
 
     /* right and bottom should be 32x32 for large icons, or 48x48 if larger
        icons enabled in control panel */
     IImageList_GetImageRect(iml, 0, &rect);
     todo_wine ok((((rect.right == 32) && (rect.bottom == 32)) ||
                   ((rect.right == 48) && (rect.bottom == 48))),
-                 "IImageList_GetImageRect returned r:%d,b:%d",
+                 "IImageList_GetImageRect returned r:%d,b:%d\n",
                  rect.right, rect.bottom);
 
     IImageList_Release(iml);
