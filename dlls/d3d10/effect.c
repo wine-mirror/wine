@@ -839,7 +839,21 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
 static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetConstantBufferByName(ID3D10Effect *iface,
         LPCSTR name)
 {
-    FIXME("iface %p, name \"%s\" stub!\n", iface, name);
+    struct d3d10_effect *This = (struct d3d10_effect *)iface;
+    unsigned int i;
+
+    TRACE("iface %p, name \"%s\"\n", iface, name);
+
+    for (i = 0; i < This->local_buffer_count; ++i)
+    {
+        struct d3d10_effect_local_buffer *l = &This->local_buffers[i];
+
+        if (!strcmp(l->name, name))
+        {
+            TRACE("Returning buffer %p.\n", l);
+            return (ID3D10EffectConstantBuffer *)l;
+        }
+    }
 
     return NULL;
 }
