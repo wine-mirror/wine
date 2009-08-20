@@ -249,6 +249,57 @@ static HRESULT IcoFrameDecode_ReadPixels(IcoFrameDecode *This)
         HeapFree(GetProcessHeap(), 0, tempdata);
         break;
     }
+    case 24:
+    {
+        UINT xorBytesPerRow = (width*3+3)/4*4;
+        UINT xorBytes = xorBytesPerRow * height;
+        INT xorStride;
+        BYTE *xorRow;
+        BYTE *bitsRow;
+        UINT x, y;
+
+        tempdata = HeapAlloc(GetProcessHeap(), 0, xorBytes);
+        if (!tempdata)
+        {
+            hr = E_OUTOFMEMORY;
+            goto fail;
+        }
+
+        hr = IStream_Read(This->parent->stream, tempdata, xorBytes, &bytesread);
+        if (FAILED(hr) || bytesread != xorBytes) goto fail;
+
+        if (bih.biHeight > 0) /* bottom-up DIB */
+        {
+            xorStride = -xorBytesPerRow;
+            xorRow = tempdata + (height-1)*xorBytesPerRow;
+        }
+        else /* top-down DIB */
+        {
+            xorStride = xorBytesPerRow;
+            xorRow = tempdata;
+        }
+
+        bits = HeapAlloc(GetProcessHeap(), 0, bitsSize);
+
+        /* copy BGR->BGRA */
+        bitsRow = bits;
+        for (y=0; y<height; y++) {
+            BYTE *xorByte=xorRow;
+            BYTE *bitsByte=bitsRow;
+            for (x=0; x<width; x++)
+            {
+                *bitsByte++ = *xorByte++; /* blue */
+                *bitsByte++ = *xorByte++; /* green */
+                *bitsByte++ = *xorByte++; /* red */
+                bitsByte++; /* alpha */
+            }
+            xorRow += xorStride;
+            bitsRow += bitsStride;
+        }
+
+        HeapFree(GetProcessHeap(), 0, tempdata);
+        break;
+    }
     default:
         FIXME("unsupported bitcount: %u\n", This->entry.wBitCount);
         goto fail;
