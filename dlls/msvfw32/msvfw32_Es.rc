@@ -19,6 +19,8 @@
 
 #include "msvideo_private.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
 
 ICM_CHOOSE_COMPRESSOR DIALOG DISCARDABLE  36, 24, 187, 95
