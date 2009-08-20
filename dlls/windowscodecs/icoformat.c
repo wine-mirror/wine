@@ -203,6 +203,56 @@ static HRESULT IcoFrameDecode_ReadPixels(IcoFrameDecode *This)
     /* read the XOR data */
     switch (This->entry.wBitCount)
     {
+    case 4:
+    {
+        UINT xorBytesPerRow = (width+7)/8*4;
+        UINT xorBytes = xorBytesPerRow * height;
+        INT xorStride;
+        BYTE *xorRow;
+        BYTE *bitsRow;
+        UINT x, y;
+
+        tempdata = HeapAlloc(GetProcessHeap(), 0, xorBytes);
+        if (!tempdata)
+        {
+            hr = E_OUTOFMEMORY;
+            goto fail;
+        }
+
+        hr = IStream_Read(This->parent->stream, tempdata, xorBytes, &bytesread);
+        if (FAILED(hr) || bytesread != xorBytes) goto fail;
+
+        if (bih.biHeight > 0) /* bottom-up DIB */
+        {
+            xorStride = -xorBytesPerRow;
+            xorRow = tempdata + (height-1)*xorBytesPerRow;
+        }
+        else /* top-down DIB */
+        {
+            xorStride = xorBytesPerRow;
+            xorRow = tempdata;
+        }
+
+        bits = HeapAlloc(GetProcessHeap(), 0, bitsSize);
+
+        /* palette-map the 4-bit data */
+        bitsRow = bits;
+        for (y=0; y<height; y++) {
+            BYTE *xorByte=xorRow;
+            DWORD *bitsPixel=(DWORD*)bitsRow;
+            for (x=0; x<width; x+=2) {
+                BYTE xorVal;
+                xorVal=*xorByte++;
+                *bitsPixel++ = colors[xorVal>>4];
+                if (x+1 < width) *bitsPixel++ = colors[xorVal&0xf];
+            }
+            xorRow += xorStride;
+            bitsRow += bitsStride;
+        }
+
+        HeapFree(GetProcessHeap(), 0, tempdata);
+        break;
+    }
     case 8:
     {
         UINT xorBytesPerRow = (width+3)/4*4;
