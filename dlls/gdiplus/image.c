@@ -646,8 +646,8 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromStream(IStream* stream,
         return stat;
 
     if((*bitmap)->image.type != ImageTypeBitmap){
-        IPicture_Release((*bitmap)->image.picture);
-        GdipFree(bitmap);
+        GdipDisposeImage(&(*bitmap)->image);
+        *bitmap = NULL;
         return GenericError; /* FIXME: what error to return? */
     }
 
