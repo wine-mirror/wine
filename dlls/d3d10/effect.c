@@ -249,6 +249,11 @@ static HRESULT parse_shader(struct d3d10_effect_object *o, const char *data)
     return parse_dxbc(ptr, dxbc_size, shader_chunk_handler, s);
 }
 
+static void parse_fx10_annotation(const char **ptr)
+{
+    skip_dword_unknown(ptr, 3);
+}
+
 static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr, const char *data)
 {
     const char *data_ptr;
@@ -325,7 +330,11 @@ static HRESULT parse_fx10_pass(struct d3d10_effect_pass *p, const char **ptr, co
     read_dword(ptr, &p->object_count);
     TRACE("Pass has %u effect objects.\n", p->object_count);
 
-    skip_dword_unknown(ptr, 1);
+    read_dword(ptr, &p->annotation_count);
+    for(i = 0; i < p->annotation_count; ++i)
+    {
+        parse_fx10_annotation(ptr);
+    }
 
     p->objects = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, p->object_count * sizeof(*p->objects));
     if (!p->objects)
@@ -366,7 +375,11 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
     read_dword(ptr, &t->pass_count);
     TRACE("Technique has %u passes\n", t->pass_count);
 
-    skip_dword_unknown(ptr, 1);
+    read_dword(ptr, &t->annotation_count);
+    for(i = 0; i < t->annotation_count; ++i)
+    {
+        parse_fx10_annotation(ptr);
+    }
 
     t->passes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, t->pass_count * sizeof(*t->passes));
     if (!t->passes)
@@ -393,6 +406,7 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
 static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char **ptr, const char *data)
 {
     DWORD offset;
+    unsigned int i;
 
     read_dword(ptr, &offset);
     TRACE("Variable name at offset %#x.\n", offset);
@@ -413,7 +427,13 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
     read_dword(ptr, &v->buffer_offset);
     TRACE("Variable offset in buffer: %#x.\n", v->buffer_offset);
 
-    skip_dword_unknown(ptr, 3);
+    skip_dword_unknown(ptr, 2);
+
+    read_dword(ptr, &v->annotation_count);
+    for(i = 0; i < v->annotation_count; ++i)
+    {
+        parse_fx10_annotation(ptr);
+    }
 
     return S_OK;
 }
@@ -442,7 +462,13 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, cons
     read_dword(ptr, &l->variable_count);
     TRACE("Local buffer variable count: %#x.\n", l->variable_count);
 
-    skip_dword_unknown(ptr, 2);
+    skip_dword_unknown(ptr, 1);
+
+    read_dword(ptr, &l->annotation_count);
+    for(i = 0; i < l->annotation_count; ++i)
+    {
+        parse_fx10_annotation(ptr);
+    }
 
     l->variables = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, l->variable_count * sizeof(*l->variables));
     if (!l->variables)
