@@ -38,6 +38,7 @@ struct BindProtocol {
     const IInternetPriorityVtbl      *lpInternetPriorityVtbl;
     const IServiceProviderVtbl       *lpServiceProviderVtbl;
     const IInternetProtocolSinkVtbl  *lpIInternetProtocolSinkVtbl;
+    const IWinInetHttpInfoVtbl       *lpIWinInetHttpInfoVtbl;
 
     const IInternetProtocolVtbl *lpIInternetProtocolHandlerVtbl;
 
@@ -73,6 +74,7 @@ struct BindProtocol {
 
 #define BINDINFO(x)  ((IInternetBindInfo*) &(x)->lpInternetBindInfoVtbl)
 #define PRIORITY(x)  ((IInternetPriority*) &(x)->lpInternetPriorityVtbl)
+#define HTTPINFO(x)  ((IWinInetHttpInfo*)  &(x)->lpIWinInetHttpInfoVtbl)
 #define SERVPROV(x)  ((IServiceProvider*)  &(x)->lpServiceProviderVtbl)
 
 #define PROTOCOLHANDLER(x)  ((IInternetProtocol*)  &(x)->lpIInternetProtocolHandlerVtbl)
@@ -316,15 +318,41 @@ static HRESULT WINAPI BindProtocol_QueryInterface(IInternetProtocol *iface, REFI
     }else if(IsEqualGUID(&IID_IInternetProtocolSink, riid)) {
         TRACE("(%p)->(IID_IInternetProtocolSink %p)\n", This, ppv);
         *ppv = PROTSINK(This);
+    }else if(IsEqualGUID(&IID_IWinInetInfo, riid)) {
+        TRACE("(%p)->(IID_IWinInetInfo %p)\n", This, ppv);
+
+        if(This->protocol) {
+            IWinInetInfo *inet_info;
+            HRESULT hres;
+
+            hres = IInternetProtocol_QueryInterface(This->protocol, &IID_IWinInetInfo, (void**)&inet_info);
+            if(SUCCEEDED(hres)) {
+                *ppv = HTTPINFO(This);
+                IWinInetInfo_Release(inet_info);
+            }
+        }
+    }else if(IsEqualGUID(&IID_IWinInetHttpInfo, riid)) {
+        TRACE("(%p)->(IID_IWinInetHttpInfo %p)\n", This, ppv);
+
+        if(This->protocol) {
+            IWinInetHttpInfo *http_info;
+            HRESULT hres;
+
+            hres = IInternetProtocol_QueryInterface(This->protocol, &IID_IWinInetHttpInfo, (void**)&http_info);
+            if(SUCCEEDED(hres)) {
+                *ppv = HTTPINFO(This);
+                IWinInetHttpInfo_Release(http_info);
+            }
+        }
+    }else {
+        WARN("not supported interface %s\n", debugstr_guid(riid));
     }
 
-    if(*ppv) {
-        IInternetProtocol_AddRef(iface);
-        return S_OK;
-    }
+    if(!*ppv)
+        return E_NOINTERFACE;
 
-    WARN("not supported interface %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI BindProtocol_AddRef(IInternetProtocol *iface)
@@ -1138,6 +1166,52 @@ static const IInternetProtocolSinkVtbl InternetProtocolSinkVtbl = {
     BPInternetProtocolSink_ReportResult
 };
 
+#define INETINFO_THIS(iface) DEFINE_THIS(BindProtocol, IWinInetHttpInfo, iface)
+
+static HRESULT WINAPI WinInetHttpInfo_QueryInterface(IWinInetHttpInfo *iface, REFIID riid, void **ppv)
+{
+    BindProtocol *This = INETINFO_THIS(iface);
+    return IInternetProtocol_QueryInterface(PROTOCOL(This), riid, ppv);
+}
+
+static ULONG WINAPI WinInetHttpInfo_AddRef(IWinInetHttpInfo *iface)
+{
+    BindProtocol *This = INETINFO_THIS(iface);
+    return IInternetProtocol_AddRef(PROTOCOL(This));
+}
+
+static ULONG WINAPI WinInetHttpInfo_Release(IWinInetHttpInfo *iface)
+{
+    BindProtocol *This = INETINFO_THIS(iface);
+    return IInternetProtocol_Release(PROTOCOL(This));
+}
+
+static HRESULT WINAPI WinInetHttpInfo_QueryOption(IWinInetHttpInfo *iface, DWORD dwOption,
+        void *pBuffer, DWORD *pcbBuffer)
+{
+    BindProtocol *This = INETINFO_THIS(iface);
+    FIXME("(%p)->(%x %p %p)\n", This, dwOption, pBuffer, pcbBuffer);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WinInetHttpInfo_QueryInfo(IWinInetHttpInfo *iface, DWORD dwOption,
+        void *pBuffer, DWORD *pcbBuffer, DWORD *pdwFlags, DWORD *pdwReserved)
+{
+    BindProtocol *This = INETINFO_THIS(iface);
+    FIXME("(%p)->(%x %p %p %p %p)\n", This, dwOption, pBuffer, pcbBuffer, pdwFlags, pdwReserved);
+    return E_NOTIMPL;
+}
+
+#undef INETINFO_THIS
+
+static const IWinInetHttpInfoVtbl WinInetHttpInfoVtbl = {
+    WinInetHttpInfo_QueryInterface,
+    WinInetHttpInfo_AddRef,
+    WinInetHttpInfo_Release,
+    WinInetHttpInfo_QueryOption,
+    WinInetHttpInfo_QueryInfo
+};
+
 #define SERVPROV_THIS(iface) DEFINE_THIS(BindProtocol, ServiceProvider, iface)
 
 static HRESULT WINAPI BPServiceProvider_QueryInterface(IServiceProvider *iface,
@@ -1191,6 +1265,7 @@ HRESULT create_binding_protocol(LPCWSTR url, BOOL from_urlmon, IInternetProtocol
     ret->lpServiceProviderVtbl          = &ServiceProviderVtbl;
     ret->lpIInternetProtocolSinkVtbl    = &InternetProtocolSinkVtbl;
     ret->lpIInternetProtocolHandlerVtbl = &InternetProtocolHandlerVtbl;
+    ret->lpIWinInetHttpInfoVtbl         = &WinInetHttpInfoVtbl;
 
     ret->ref = 1;
     ret->from_urlmon = from_urlmon;
