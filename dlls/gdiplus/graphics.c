@@ -1734,18 +1734,10 @@ GpStatus WINGDIPAPI GdipDrawEllipseI(GpGraphics *graphics, GpPen *pen, INT x,
 
 GpStatus WINGDIPAPI GdipDrawImage(GpGraphics *graphics, GpImage *image, REAL x, REAL y)
 {
+    UINT width, height;
+    GpPointF points[3];
+
     TRACE("(%p, %p, %.2f, %.2f)\n", graphics, image, x, y);
-
-    /* IPicture::Render uses LONG coords */
-    return GdipDrawImageI(graphics,image,roundr(x),roundr(y));
-}
-
-GpStatus WINGDIPAPI GdipDrawImageI(GpGraphics *graphics, GpImage *image, INT x,
-    INT y)
-{
-    UINT width, height, srcw, srch;
-
-    TRACE("(%p, %p, %d, %d)\n", graphics, image, x, y);
 
     if(!graphics || !image)
         return InvalidParameter;
@@ -1753,20 +1745,23 @@ GpStatus WINGDIPAPI GdipDrawImageI(GpGraphics *graphics, GpImage *image, INT x,
     GdipGetImageWidth(image, &width);
     GdipGetImageHeight(image, &height);
 
-    srcw = width * (((REAL) INCH_HIMETRIC) /
-            ((REAL) GetDeviceCaps(graphics->hdc, LOGPIXELSX)));
-    srch = height * (((REAL) INCH_HIMETRIC) /
-            ((REAL) GetDeviceCaps(graphics->hdc, LOGPIXELSY)));
+    /* FIXME: we should use the graphics and image dpi, somehow */
 
-    if(image->type != ImageTypeMetafile){
-        y += height;
-        height *= -1;
-    }
+    points[0].X = points[2].X = x;
+    points[0].Y = points[1].Y = y;
+    points[1].X = x + width;
+    points[2].Y = y + height;
 
-    IPicture_Render(image->picture, graphics->hdc, x, y, width, height,
-                    0, 0, srcw, srch, NULL);
+    return GdipDrawImagePointsRect(graphics, image, points, 3, 0, 0, width, height,
+        UnitPixel, NULL, NULL, NULL);
+}
 
-    return Ok;
+GpStatus WINGDIPAPI GdipDrawImageI(GpGraphics *graphics, GpImage *image, INT x,
+    INT y)
+{
+    TRACE("(%p, %p, %d, %d)\n", graphics, image, x, y);
+
+    return GdipDrawImage(graphics, image, (REAL)x, (REAL)y);
 }
 
 GpStatus WINGDIPAPI GdipDrawImagePointRect(GpGraphics *graphics, GpImage *image,
