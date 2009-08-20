@@ -203,6 +203,62 @@ static HRESULT IcoFrameDecode_ReadPixels(IcoFrameDecode *This)
     /* read the XOR data */
     switch (This->entry.wBitCount)
     {
+    case 1:
+    {
+        UINT xorBytesPerRow = (width+31)/32*4;
+        UINT xorBytes = xorBytesPerRow * height;
+        INT xorStride;
+        BYTE *xorRow;
+        BYTE *bitsRow;
+        UINT x, y;
+
+        tempdata = HeapAlloc(GetProcessHeap(), 0, xorBytes);
+        if (!tempdata)
+        {
+            hr = E_OUTOFMEMORY;
+            goto fail;
+        }
+
+        hr = IStream_Read(This->parent->stream, tempdata, xorBytes, &bytesread);
+        if (FAILED(hr) || bytesread != xorBytes) goto fail;
+
+        if (bih.biHeight > 0) /* bottom-up DIB */
+        {
+            xorStride = -xorBytesPerRow;
+            xorRow = tempdata + (height-1)*xorBytesPerRow;
+        }
+        else /* top-down DIB */
+        {
+            xorStride = xorBytesPerRow;
+            xorRow = tempdata;
+        }
+
+        bits = HeapAlloc(GetProcessHeap(), 0, bitsSize);
+
+        /* palette-map the 1-bit data */
+        bitsRow = bits;
+        for (y=0; y<height; y++) {
+            BYTE *xorByte=xorRow;
+            DWORD *bitsPixel=(DWORD*)bitsRow;
+            for (x=0; x<width; x+=8) {
+                BYTE xorVal;
+                xorVal=*xorByte++;
+                *bitsPixel++ = colors[xorVal>>7];
+                if (x+1 < width) *bitsPixel++ = colors[xorVal>>6&1];
+                if (x+2 < width) *bitsPixel++ = colors[xorVal>>5&1];
+                if (x+3 < width) *bitsPixel++ = colors[xorVal>>4&1];
+                if (x+4 < width) *bitsPixel++ = colors[xorVal>>3&1];
+                if (x+5 < width) *bitsPixel++ = colors[xorVal>>2&1];
+                if (x+6 < width) *bitsPixel++ = colors[xorVal>>1&1];
+                if (x+7 < width) *bitsPixel++ = colors[xorVal&1];
+            }
+            xorRow += xorStride;
+            bitsRow += bitsStride;
+        }
+
+        HeapFree(GetProcessHeap(), 0, tempdata);
+        break;
+    }
     case 4:
     {
         UINT xorBytesPerRow = (width+7)/8*4;
