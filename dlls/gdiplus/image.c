@@ -1364,6 +1364,11 @@ typedef struct image_codec {
 
 typedef enum {
     BMP,
+    JPEG,
+    GIF,
+    EMF,
+    WMF,
+    ICO,
     NUM_CODECS
 } ImageFormat;
 
@@ -1503,6 +1508,41 @@ static const WCHAR bmp_format[] = {'B', 'M', 'P', 0}; /* BMP */
 static const BYTE bmp_sig_pattern[] = { 0x42, 0x4D };
 static const BYTE bmp_sig_mask[] = { 0xFF, 0xFF };
 
+static const WCHAR jpeg_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'J','P','E','G', 0};
+static const WCHAR jpeg_extension[] = {'*','.','J','P','G',';', '*','.','J','P','E','G',';', '*','.','J','P','E',';', '*','.','J','F','I','F',0};
+static const WCHAR jpeg_mimetype[] = {'i','m','a','g','e','/','j','p','e','g', 0};
+static const WCHAR jpeg_format[] = {'J','P','E','G',0};
+static const BYTE jpeg_sig_pattern[] = { 0xFF, 0xD8 };
+static const BYTE jpeg_sig_mask[] = { 0xFF, 0xFF };
+
+static const WCHAR gif_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'G','I','F', 0};
+static const WCHAR gif_extension[] = {'*','.','G','I','F',0};
+static const WCHAR gif_mimetype[] = {'i','m','a','g','e','/','g','i','f', 0};
+static const WCHAR gif_format[] = {'G','I','F',0};
+static const BYTE gif_sig_pattern[4] = "GIF8";
+static const BYTE gif_sig_mask[] = { 0xFF, 0xFF, 0xFF, 0xFF };
+
+static const WCHAR emf_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'E','M','F', 0};
+static const WCHAR emf_extension[] = {'*','.','E','M','F',0};
+static const WCHAR emf_mimetype[] = {'i','m','a','g','e','/','x','-','e','m','f', 0};
+static const WCHAR emf_format[] = {'E','M','F',0};
+static const BYTE emf_sig_pattern[] = { 0x01, 0x00, 0x00, 0x00 };
+static const BYTE emf_sig_mask[] = { 0xFF, 0xFF, 0xFF, 0xFF };
+
+static const WCHAR wmf_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'W','M','F', 0};
+static const WCHAR wmf_extension[] = {'*','.','W','M','F',0};
+static const WCHAR wmf_mimetype[] = {'i','m','a','g','e','/','x','-','w','m','f', 0};
+static const WCHAR wmf_format[] = {'W','M','F',0};
+static const BYTE wmf_sig_pattern[] = { 0xd7, 0xcd };
+static const BYTE wmf_sig_mask[] = { 0xFF, 0xFF };
+
+static const WCHAR ico_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'I','C','O', 0};
+static const WCHAR ico_extension[] = {'*','.','I','C','O',0};
+static const WCHAR ico_mimetype[] = {'i','m','a','g','e','/','x','-','i','c','o','n', 0};
+static const WCHAR ico_format[] = {'I','C','O',0};
+static const BYTE ico_sig_pattern[] = { 0x00, 0x00, 0x01, 0x00 };
+static const BYTE ico_sig_mask[] = { 0xFF, 0xFF, 0xFF, 0xFF };
+
 static const struct image_codec codecs[NUM_CODECS] = {
     {
         { /* BMP */
@@ -1521,7 +1561,97 @@ static const struct image_codec codecs[NUM_CODECS] = {
             /* SigMask */            bmp_sig_mask,
         },
         encode_image_BMP
-    }
+    },
+    {
+        { /* JPEG */
+            /* Clsid */              { 0x557cf401, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } },
+            /* FormatID */           { 0xb96b3caeU, 0x0728U, 0x11d3U, {0x9d, 0x7b, 0x00, 0x00, 0xf8, 0x1e, 0xf3, 0x2e} },
+            /* CodecName */          jpeg_codecname,
+            /* DllName */            NULL,
+            /* FormatDescription */  jpeg_format,
+            /* FilenameExtension */  jpeg_extension,
+            /* MimeType */           jpeg_mimetype,
+            /* Flags */              ImageCodecFlagsDecoder | ImageCodecFlagsSupportBitmap | ImageCodecFlagsBuiltin,
+            /* Version */            1,
+            /* SigCount */           1,
+            /* SigSize */            2,
+            /* SigPattern */         jpeg_sig_pattern,
+            /* SigMask */            jpeg_sig_mask,
+        },
+        NULL
+    },
+    {
+        { /* GIF */
+            /* Clsid */              { 0x557cf402, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } },
+            /* FormatID */           { 0xb96b3cb0U, 0x0728U, 0x11d3U, {0x9d, 0x7b, 0x00, 0x00, 0xf8, 0x1e, 0xf3, 0x2e} },
+            /* CodecName */          gif_codecname,
+            /* DllName */            NULL,
+            /* FormatDescription */  gif_format,
+            /* FilenameExtension */  gif_extension,
+            /* MimeType */           gif_mimetype,
+            /* Flags */              ImageCodecFlagsDecoder | ImageCodecFlagsSupportBitmap | ImageCodecFlagsBuiltin,
+            /* Version */            1,
+            /* SigCount */           1,
+            /* SigSize */            4,
+            /* SigPattern */         gif_sig_pattern,
+            /* SigMask */            gif_sig_mask,
+        },
+        NULL
+    },
+    {
+        { /* EMF */
+            /* Clsid */              { 0x557cf403, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } },
+            /* FormatID */           { 0xb96b3cacU, 0x0728U, 0x11d3U, {0x9d, 0x7b, 0x00, 0x00, 0xf8, 0x1e, 0xf3, 0x2e} },
+            /* CodecName */          emf_codecname,
+            /* DllName */            NULL,
+            /* FormatDescription */  emf_format,
+            /* FilenameExtension */  emf_extension,
+            /* MimeType */           emf_mimetype,
+            /* Flags */              ImageCodecFlagsDecoder | ImageCodecFlagsSupportVector | ImageCodecFlagsBuiltin,
+            /* Version */            1,
+            /* SigCount */           1,
+            /* SigSize */            4,
+            /* SigPattern */         emf_sig_pattern,
+            /* SigMask */            emf_sig_mask,
+        },
+        NULL
+    },
+    {
+        { /* WMF */
+            /* Clsid */              { 0x557cf404, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } },
+            /* FormatID */           { 0xb96b3cadU, 0x0728U, 0x11d3U, {0x9d, 0x7b, 0x00, 0x00, 0xf8, 0x1e, 0xf3, 0x2e} },
+            /* CodecName */          wmf_codecname,
+            /* DllName */            NULL,
+            /* FormatDescription */  wmf_format,
+            /* FilenameExtension */  wmf_extension,
+            /* MimeType */           wmf_mimetype,
+            /* Flags */              ImageCodecFlagsDecoder | ImageCodecFlagsSupportVector | ImageCodecFlagsBuiltin,
+            /* Version */            1,
+            /* SigCount */           1,
+            /* SigSize */            2,
+            /* SigPattern */         wmf_sig_pattern,
+            /* SigMask */            wmf_sig_mask,
+        },
+        NULL
+    },
+    {
+        { /* ICO */
+            /* Clsid */              { 0x557cf407, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } },
+            /* FormatID */           { 0xb96b3cabU, 0x0728U, 0x11d3U, {0x9d, 0x7b, 0x00, 0x00, 0xf8, 0x1e, 0xf3, 0x2e} },
+            /* CodecName */          ico_codecname,
+            /* DllName */            NULL,
+            /* FormatDescription */  ico_format,
+            /* FilenameExtension */  ico_extension,
+            /* MimeType */           ico_mimetype,
+            /* Flags */              ImageCodecFlagsDecoder | ImageCodecFlagsSupportBitmap | ImageCodecFlagsBuiltin,
+            /* Version */            1,
+            /* SigCount */           1,
+            /* SigSize */            4,
+            /* SigPattern */         ico_sig_pattern,
+            /* SigMask */            ico_sig_mask,
+        },
+        NULL
+    },
 };
 
 /*****************************************************************************
