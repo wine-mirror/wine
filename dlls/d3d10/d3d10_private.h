@@ -70,6 +70,8 @@ struct d3d10_effect_variable
 
 struct d3d10_effect_local_buffer
 {
+    const struct ID3D10EffectConstantBufferVtbl *vtbl;
+
     char *name;
     DWORD data_size;
     DWORD variable_count;
