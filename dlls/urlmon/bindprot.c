@@ -1060,6 +1060,10 @@ static HRESULT report_data(BindProtocol *This, DWORD bscf, ULONG progress, ULONG
         if(This->buf_size < MIME_TEST_SIZE && hres != S_FALSE)
             return S_OK;
 
+        bscf = BSCF_FIRSTDATANOTIFICATION;
+        if(hres == S_FALSE)
+            bscf |= BSCF_LASTDATANOTIFICATION|BSCF_DATAFULLYAVAILABLE;
+
         if(!This->reported_mime) {
             hres = FindMimeFromData(NULL, This->url, This->buf, min(This->buf_size, MIME_TEST_SIZE),
                     This->mime, 0, &mime, 0);
