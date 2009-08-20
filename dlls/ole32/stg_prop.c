@@ -1531,7 +1531,7 @@ static BOOL PropertyStorage_DictionaryWriter(const void *key,
          &count);
         if (FAILED(c->hr))
             goto end;
-        c->bytesWritten += keyLen;
+        c->bytesWritten += keyLen * sizeof(WCHAR);
         if (keyLen % sizeof(DWORD))
         {
             c->hr = IStream_Write(This->stm, &pad,
