@@ -406,6 +406,38 @@ static HRESULT IcoFrameDecode_ReadPixels(IcoFrameDecode *This)
         HeapFree(GetProcessHeap(), 0, tempdata);
         break;
     }
+    case 32:
+    {
+        UINT xorBytesPerRow = width*4;
+        UINT xorBytes = xorBytesPerRow * height;
+
+        bits = HeapAlloc(GetProcessHeap(), 0, xorBytes);
+        if (!bits)
+        {
+            hr = E_OUTOFMEMORY;
+            goto fail;
+        }
+
+        if (bih.biHeight > 0) /* bottom-up DIB */
+        {
+            /* read the rows backwards so we get a top-down DIB */
+            UINT i;
+            BYTE *xorRow = bits + xorBytesPerRow * (height-1);
+
+            for (i=0; i<height; i++)
+            {
+                hr = IStream_Read(This->parent->stream, xorRow, xorBytesPerRow, &bytesread);
+                if (FAILED(hr) || bytesread != xorBytesPerRow) goto fail;
+                xorRow -= xorBytesPerRow;
+            }
+        }
+        else /* top-down DIB */
+        {
+            hr = IStream_Read(This->parent->stream, bits, xorBytes, &bytesread);
+            if (FAILED(hr) || bytesread != xorBytes) goto fail;
+        }
+        break;
+    }
     default:
         FIXME("unsupported bitcount: %u\n", This->entry.wBitCount);
         goto fail;
