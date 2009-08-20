@@ -1122,7 +1122,10 @@ static void test_Input_unicode(void)
     wclass.lpszMenuName  = 0;
     wclass.cbClsExtra    = 0;
     wclass.cbWndExtra    = 0;
-    RegisterClassW(&wclass);
+    if(!RegisterClassW(&wclass)){
+        win_skip("Unicode functions not supported\n");
+        return;
+    }
     /* create the test window that will receive the keystrokes */
     hWndTest = CreateWindowW(wclass.lpszClassName, windowNameW,
                              WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, 100, 100,
