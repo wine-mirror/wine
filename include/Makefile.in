@@ -423,6 +423,7 @@ SRCDIR_INCLUDES = \
 	sqltypes.h \
 	srrestoreptapi.h \
 	sspi.h \
+	sti.h \
 	storage.h \
 	svrapi.h \
 	t2embapi.h \
