@@ -123,8 +123,14 @@ static ULONG WINAPI IcoFrameDecode_Release(IWICBitmapFrameDecode *iface)
 static HRESULT WINAPI IcoFrameDecode_GetSize(IWICBitmapFrameDecode *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, puiWidth, puiHeight);
-    return E_NOTIMPL;
+    IcoFrameDecode *This = (IcoFrameDecode*)iface;
+
+    *puiWidth = This->entry.bWidth ? This->entry.bWidth : 256;
+    *puiHeight = This->entry.bHeight ? This->entry.bHeight : 256;
+
+    TRACE("(%p) -> (%i,%i)\n", iface, *puiWidth, *puiHeight);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IcoFrameDecode_GetPixelFormat(IWICBitmapFrameDecode *iface,
