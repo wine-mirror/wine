@@ -338,14 +338,14 @@ HRESULT protocol_read(Protocol *protocol, void *buf, ULONG size, ULONG *read_ret
     BOOL res;
     HRESULT hres = S_FALSE;
 
-    if(!(protocol->flags & FLAG_REQUEST_COMPLETE)) {
-        *read_ret = 0;
-        return E_PENDING;
-    }
-
     if(protocol->flags & FLAG_ALL_DATA_READ) {
         *read_ret = 0;
         return S_FALSE;
+    }
+
+    if(!(protocol->flags & FLAG_REQUEST_COMPLETE)) {
+        *read_ret = 0;
+        return E_PENDING;
     }
 
     while(read < size) {
