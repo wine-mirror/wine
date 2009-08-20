@@ -1354,18 +1354,20 @@ static GpStatus encode_image_BMP(LPVOID bitmap_bits, LPBITMAPINFO bitmap_info,
     return Ok;
 }
 
-typedef GpStatus encode_image_func(LPVOID bitmap_bits, LPBITMAPINFO bitmap_info,
+typedef GpStatus (*encode_image_func)(LPVOID bitmap_bits, LPBITMAPINFO bitmap_info,
                                    void **output, unsigned int *output_size);
+
+typedef struct image_codec {
+    ImageCodecInfo info;
+    encode_image_func encode_func;
+} image_codec;
 
 typedef enum {
     BMP,
     NUM_ENCODERS_SUPPORTED
 } ImageFormat;
 
-static const ImageCodecInfo codecs[NUM_ENCODERS_SUPPORTED];
-static encode_image_func *const encode_image_funcs[NUM_ENCODERS_SUPPORTED] = {
-    encode_image_BMP,
-};
+static const struct image_codec codecs[NUM_ENCODERS_SUPPORTED];
 
 /*****************************************************************************
  * GdipSaveImageToStream [GDIPLUS.@]
@@ -1382,7 +1384,7 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
     int bm_is_selected;
     BITMAPINFO bmp_info;
     LPVOID bmp_bits;
-    encode_image_func* encode_image;
+    encode_image_func encode_image;
     LPVOID output;
     unsigned int output_size;
     unsigned int dummy;
@@ -1407,8 +1409,8 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
     /* select correct encoder */
     encode_image = NULL;
     for (i = 0; i < NUM_ENCODERS_SUPPORTED; i++) {
-        if (IsEqualCLSID(clsid, &codecs[i].Clsid))
-            encode_image = encode_image_funcs[i];
+        if (IsEqualCLSID(clsid, &codecs[i].info.Clsid))
+            encode_image = codecs[i].encode_func;
     }
     if (encode_image == NULL)
         return UnknownImageFormat;
@@ -1500,7 +1502,7 @@ static const WCHAR bmp_format[] = {'B', 'M', 'P', 0}; /* BMP */
 static const BYTE bmp_sig_pattern[] = { 0x42, 0x4D };
 static const BYTE bmp_sig_mask[] = { 0xFF, 0xFF };
 
-static const ImageCodecInfo codecs[NUM_ENCODERS_SUPPORTED] =
+static const struct image_codec codecs[NUM_ENCODERS_SUPPORTED] = {
     {
         { /* BMP */
             /* Clsid */              { 0x557cf400, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } },
@@ -1517,7 +1519,9 @@ static const ImageCodecInfo codecs[NUM_ENCODERS_SUPPORTED] =
             /* SigPattern */         bmp_sig_pattern,
             /* SigMask */            bmp_sig_mask,
         },
-    };
+        encode_image_BMP
+    }
+};
 
 /*****************************************************************************
  * GdipGetImageDecodersSize [GDIPLUS.@]
@@ -1559,7 +1563,7 @@ GpStatus WINGDIPAPI GdipGetImageEncodersSize(UINT *numEncoders, UINT *size)
         return InvalidParameter;
 
     *numEncoders = NUM_ENCODERS_SUPPORTED;
-    *size = sizeof (codecs);
+    *size = NUM_ENCODERS_SUPPORTED * sizeof(ImageCodecInfo);
 
     return Ok;
 }
@@ -1569,14 +1573,16 @@ GpStatus WINGDIPAPI GdipGetImageEncodersSize(UINT *numEncoders, UINT *size)
  */
 GpStatus WINGDIPAPI GdipGetImageEncoders(UINT numEncoders, UINT size, ImageCodecInfo *encoders)
 {
+    int i;
     TRACE("%u %u %p\n", numEncoders, size, encoders);
 
     if (!encoders ||
         (numEncoders != NUM_ENCODERS_SUPPORTED) ||
-        (size != sizeof (codecs)))
+        (size != NUM_ENCODERS_SUPPORTED * sizeof(ImageCodecInfo)))
         return GenericError;
 
-    memcpy(encoders, codecs, sizeof (codecs));
+    for (i=0; i<NUM_ENCODERS_SUPPORTED; i++)
+        memcpy(&encoders[i], &codecs[i].info, sizeof(ImageCodecInfo));
 
     return Ok;
 }
