@@ -58,6 +58,9 @@ typedef struct
 typedef struct {
     const IWICBitmapDecoderVtbl *lpVtbl;
     LONG ref;
+    BOOL initialized;
+    IStream *stream;
+    ICONHEADER header;
 } IcoDecoder;
 
 static HRESULT WINAPI IcoDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID iid,
@@ -101,6 +104,7 @@ static ULONG WINAPI IcoDecoder_Release(IWICBitmapDecoder *iface)
 
     if (ref == 0)
     {
+        if (This->stream) IStream_Release(This->stream);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -117,8 +121,29 @@ static HRESULT WINAPI IcoDecoder_QueryCapability(IWICBitmapDecoder *iface, IStre
 static HRESULT WINAPI IcoDecoder_Initialize(IWICBitmapDecoder *iface, IStream *pIStream,
     WICDecodeOptions cacheOptions)
 {
-    FIXME("(%p,%p,%x): stub\n", iface, pIStream, cacheOptions);
-    return E_NOTIMPL;
+    IcoDecoder *This = (IcoDecoder*)iface;
+    LARGE_INTEGER seek;
+    HRESULT hr;
+    ULONG bytesread;
+    TRACE("(%p,%p,%x)\n", iface, pIStream, cacheOptions);
+
+    if (This->initialized) return WINCODEC_ERR_WRONGSTATE;
+
+    seek.QuadPart = 0;
+    hr = IStream_Seek(pIStream, seek, STREAM_SEEK_SET, NULL);
+    if (FAILED(hr)) return hr;
+
+    hr = IStream_Read(pIStream, &This->header, sizeof(ICONHEADER), &bytesread);
+    if (FAILED(hr)) return hr;
+    if (bytesread != sizeof(ICONHEADER) ||
+        This->header.idReserved != 0 ||
+        This->header.idType != 1) return E_FAIL;
+
+    This->initialized = TRUE;
+    This->stream = pIStream;
+    IStream_AddRef(pIStream);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IcoDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
@@ -217,6 +242,8 @@ HRESULT IcoDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 
     This->lpVtbl = &IcoDecoder_Vtbl;
     This->ref = 1;
+    This->stream = NULL;
+    This->initialized = FALSE;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
