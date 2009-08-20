@@ -831,9 +831,22 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_GetDesc(ID3D10Effect *iface, D3D10
 static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetConstantBufferByIndex(ID3D10Effect *iface,
         UINT index)
 {
-    FIXME("iface %p, index %u stub!\n", iface, index);
+    struct d3d10_effect *This = (struct d3d10_effect *)iface;
+    struct d3d10_effect_local_buffer *l;
 
-    return NULL;
+    TRACE("iface %p, index %u\n", iface, index);
+
+    if (index >= This->local_buffer_count)
+    {
+        WARN("Invalid index specified\n");
+        return NULL;
+    }
+
+    l = &This->local_buffers[index];
+
+    TRACE("Returning buffer %p, \"%s\"\n", l, l->name);
+
+    return (ID3D10EffectConstantBuffer *)l;
 }
 
 static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetConstantBufferByName(ID3D10Effect *iface,
