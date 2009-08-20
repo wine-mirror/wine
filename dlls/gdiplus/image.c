@@ -1364,10 +1364,10 @@ typedef struct image_codec {
 
 typedef enum {
     BMP,
-    NUM_ENCODERS_SUPPORTED
+    NUM_CODECS
 } ImageFormat;
 
-static const struct image_codec codecs[NUM_ENCODERS_SUPPORTED];
+static const struct image_codec codecs[NUM_CODECS];
 
 /*****************************************************************************
  * GdipSaveImageToStream [GDIPLUS.@]
@@ -1408,7 +1408,7 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
 
     /* select correct encoder */
     encode_image = NULL;
-    for (i = 0; i < NUM_ENCODERS_SUPPORTED; i++) {
+    for (i = 0; i < NUM_CODECS; i++) {
         if (IsEqualCLSID(clsid, &codecs[i].info.Clsid))
             encode_image = codecs[i].encode_func;
     }
@@ -1502,7 +1502,7 @@ static const WCHAR bmp_format[] = {'B', 'M', 'P', 0}; /* BMP */
 static const BYTE bmp_sig_pattern[] = { 0x42, 0x4D };
 static const BYTE bmp_sig_mask[] = { 0xFF, 0xFF };
 
-static const struct image_codec codecs[NUM_ENCODERS_SUPPORTED] = {
+static const struct image_codec codecs[NUM_CODECS] = {
     {
         { /* BMP */
             /* Clsid */              { 0x557cf400, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } },
@@ -1528,13 +1528,21 @@ static const struct image_codec codecs[NUM_ENCODERS_SUPPORTED] = {
  */
 GpStatus WINGDIPAPI GdipGetImageDecodersSize(UINT *numDecoders, UINT *size)
 {
-    FIXME("%p %p stub!\n", numDecoders, size);
+    int decoder_count=0;
+    int i;
+    TRACE("%p %p\n", numDecoders, size);
 
     if (!numDecoders || !size)
         return InvalidParameter;
 
-    *numDecoders = 0;
-    *size = 0;
+    for (i=0; i<NUM_CODECS; i++)
+    {
+        if (codecs[i].info.Flags & ImageCodecFlagsDecoder)
+            decoder_count++;
+    }
+
+    *numDecoders = decoder_count;
+    *size = decoder_count * sizeof(ImageCodecInfo);
 
     return Ok;
 }
@@ -1544,12 +1552,26 @@ GpStatus WINGDIPAPI GdipGetImageDecodersSize(UINT *numDecoders, UINT *size)
  */
 GpStatus WINGDIPAPI GdipGetImageDecoders(UINT numDecoders, UINT size, ImageCodecInfo *decoders)
 {
-    FIXME("%u %u %p stub!\n", numDecoders, size, decoders);
+    int i, decoder_count=0;
+    TRACE("%u %u %p\n", numDecoders, size, decoders);
 
-    if (!decoders)
+    if (!decoders ||
+        size != numDecoders * sizeof(ImageCodecInfo))
         return GenericError;
 
-    return NotImplemented;
+    for (i=0; i<NUM_CODECS; i++)
+    {
+        if (codecs[i].info.Flags & ImageCodecFlagsDecoder)
+        {
+            if (decoder_count == numDecoders) return GenericError;
+            memcpy(&decoders[decoder_count], &codecs[i].info, sizeof(ImageCodecInfo));
+            decoder_count++;
+        }
+    }
+
+    if (decoder_count < numDecoders) return GenericError;
+
+    return Ok;
 }
 
 /*****************************************************************************
@@ -1557,13 +1579,21 @@ GpStatus WINGDIPAPI GdipGetImageDecoders(UINT numDecoders, UINT size, ImageCodec
  */
 GpStatus WINGDIPAPI GdipGetImageEncodersSize(UINT *numEncoders, UINT *size)
 {
+    int encoder_count=0;
+    int i;
     TRACE("%p %p\n", numEncoders, size);
 
     if (!numEncoders || !size)
         return InvalidParameter;
 
-    *numEncoders = NUM_ENCODERS_SUPPORTED;
-    *size = NUM_ENCODERS_SUPPORTED * sizeof(ImageCodecInfo);
+    for (i=0; i<NUM_CODECS; i++)
+    {
+        if (codecs[i].info.Flags & ImageCodecFlagsEncoder)
+            encoder_count++;
+    }
+
+    *numEncoders = encoder_count;
+    *size = encoder_count * sizeof(ImageCodecInfo);
 
     return Ok;
 }
@@ -1573,16 +1603,24 @@ GpStatus WINGDIPAPI GdipGetImageEncodersSize(UINT *numEncoders, UINT *size)
  */
 GpStatus WINGDIPAPI GdipGetImageEncoders(UINT numEncoders, UINT size, ImageCodecInfo *encoders)
 {
-    int i;
+    int i, encoder_count=0;
     TRACE("%u %u %p\n", numEncoders, size, encoders);
 
     if (!encoders ||
-        (numEncoders != NUM_ENCODERS_SUPPORTED) ||
-        (size != NUM_ENCODERS_SUPPORTED * sizeof(ImageCodecInfo)))
+        size != numEncoders * sizeof(ImageCodecInfo))
         return GenericError;
 
-    for (i=0; i<NUM_ENCODERS_SUPPORTED; i++)
-        memcpy(&encoders[i], &codecs[i].info, sizeof(ImageCodecInfo));
+    for (i=0; i<NUM_CODECS; i++)
+    {
+        if (codecs[i].info.Flags & ImageCodecFlagsEncoder)
+        {
+            if (encoder_count == numEncoders) return GenericError;
+            memcpy(&encoders[encoder_count], &codecs[i].info, sizeof(ImageCodecInfo));
+            encoder_count++;
+        }
+    }
+
+    if (encoder_count < numEncoders) return GenericError;
 
     return Ok;
 }
