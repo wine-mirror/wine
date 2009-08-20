@@ -1409,7 +1409,8 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
     /* select correct encoder */
     encode_image = NULL;
     for (i = 0; i < NUM_CODECS; i++) {
-        if (IsEqualCLSID(clsid, &codecs[i].info.Clsid))
+        if ((codecs[i].info.Flags & ImageCodecFlagsEncoder) &&
+            IsEqualCLSID(clsid, &codecs[i].info.Clsid))
             encode_image = codecs[i].encode_func;
     }
     if (encode_image == NULL)
