@@ -12,6 +12,7 @@ C_SRCS = \
 	clsfactory.c \
 	converter.c \
 	gifformat.c \
+	icoformat.c \
 	imgfactory.c \
 	info.c \
 	main.c \
