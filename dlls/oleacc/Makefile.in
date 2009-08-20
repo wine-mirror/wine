@@ -17,7 +17,8 @@ RC_SRCS = \
 	oleacc_Lt.rc \
 	oleacc_Nl.rc \
 	oleacc_Pl.rc \
-	oleacc_Pt.rc
+	oleacc_Pt.rc \
+	oleacc_Ro.rc
 
 @MAKE_DLL_RULES@
 
