@@ -126,89 +126,118 @@ static inline NTSTATUS init_teb( TEB *teb )
 
 
 /***********************************************************************
- *           fix_unicode_string
+ *           get_unicode_string
  *
- * Make sure the unicode string doesn't point beyond the end pointer
+ * Copy a unicode string from the startup info.
  */
-static inline void fix_unicode_string( UNICODE_STRING *str, const char *end_ptr )
+static inline void get_unicode_string( UNICODE_STRING *str, WCHAR **src, WCHAR **dst, UINT len )
 {
-    if ((char *)str->Buffer >= end_ptr)
-    {
-        str->Length = str->MaximumLength = 0;
-        str->Buffer = NULL;
-        return;
-    }
-    if ((char *)str->Buffer + str->MaximumLength > end_ptr)
-    {
-        str->MaximumLength = (end_ptr - (char *)str->Buffer) & ~(sizeof(WCHAR) - 1);
-    }
-    if (str->Length >= str->MaximumLength)
-    {
-        if (str->MaximumLength >= sizeof(WCHAR))
-            str->Length = str->MaximumLength - sizeof(WCHAR);
-        else
-            str->Length = str->MaximumLength = 0;
-    }
+    str->Buffer = *dst;
+    str->Length = len;
+    str->MaximumLength = len + sizeof(WCHAR);
+    memcpy( str->Buffer, *src, len );
+    str->Buffer[len / sizeof(WCHAR)] = 0;
+    *src += len / sizeof(WCHAR);
+    *dst += len / sizeof(WCHAR) + 1;
 }
-
 
 /***********************************************************************
  *           init_user_process_params
  *
  * Fill the RTL_USER_PROCESS_PARAMETERS structure from the server.
  */
-static NTSTATUS init_user_process_params( SIZE_T info_size, HANDLE *exe_file )
+static NTSTATUS init_user_process_params( SIZE_T data_size, HANDLE *exe_file )
 {
     void *ptr;
-    SIZE_T env_size;
+    WCHAR *src, *dst;
+    SIZE_T info_size, env_size, size, alloc_size;
     NTSTATUS status;
+    startup_info_t *info;
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
 
-    status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&params, 0, &info_size,
-                                      MEM_COMMIT, PAGE_READWRITE );
-    if (status != STATUS_SUCCESS) return status;
-
-    params->AllocationSize = info_size;
-    NtCurrentTeb()->Peb->ProcessParameters = params;
+    if (!(info = RtlAllocateHeap( GetProcessHeap(), 0, data_size )))
+        return STATUS_NO_MEMORY;
 
     SERVER_START_REQ( get_startup_info )
     {
-        wine_server_set_reply( req, params, info_size );
+        wine_server_set_reply( req, info, data_size );
         if (!(status = wine_server_call( req )))
         {
-            info_size = wine_server_reply_size( reply );
+            data_size = wine_server_reply_size( reply );
+            info_size = reply->info_size;
+            env_size  = data_size - info_size;
             *exe_file = wine_server_ptr_handle( reply->exe_file );
-            params->hStdInput  = wine_server_ptr_handle( reply->hstdin );
-            params->hStdOutput = wine_server_ptr_handle( reply->hstdout );
-            params->hStdError  = wine_server_ptr_handle( reply->hstderr );
         }
     }
     SERVER_END_REQ;
     if (status != STATUS_SUCCESS) return status;
 
-    if (params->Size > info_size) params->Size = info_size;
+    size = sizeof(*params);
+    size += MAX_NT_PATH_LENGTH * sizeof(WCHAR);
+    size += info->dllpath_len + sizeof(WCHAR);
+    size += info->imagepath_len + sizeof(WCHAR);
+    size += info->cmdline_len + sizeof(WCHAR);
+    size += info->title_len + sizeof(WCHAR);
+    size += info->desktop_len + sizeof(WCHAR);
+    size += info->shellinfo_len + sizeof(WCHAR);
+    size += info->runtime_len + sizeof(WCHAR);
 
-    /* make sure the strings are valid */
-    fix_unicode_string( &params->CurrentDirectory.DosPath, (char *)info_size );
-    fix_unicode_string( &params->DllPath, (char *)info_size );
-    fix_unicode_string( &params->ImagePathName, (char *)info_size );
-    fix_unicode_string( &params->CommandLine, (char *)info_size );
-    fix_unicode_string( &params->WindowTitle, (char *)info_size );
-    fix_unicode_string( &params->Desktop, (char *)info_size );
-    fix_unicode_string( &params->ShellInfo, (char *)info_size );
-    fix_unicode_string( &params->RuntimeInfo, (char *)info_size );
+    alloc_size = size;
+    status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&params, 0, &alloc_size,
+                                      MEM_COMMIT, PAGE_READWRITE );
+    if (status != STATUS_SUCCESS) goto done;
+
+    NtCurrentTeb()->Peb->ProcessParameters = params;
+    params->AllocationSize  = alloc_size;
+    params->Size            = size;
+    params->Flags           = PROCESS_PARAMS_FLAG_NORMALIZED;
+    params->DebugFlags      = info->debug_flags;
+    params->ConsoleHandle   = wine_server_ptr_handle( info->console );
+    params->ConsoleFlags    = info->console_flags;
+    params->hStdInput       = wine_server_ptr_handle( info->hstdin );
+    params->hStdOutput      = wine_server_ptr_handle( info->hstdout );
+    params->hStdError       = wine_server_ptr_handle( info->hstderr );
+    params->dwX             = info->x;
+    params->dwY             = info->y;
+    params->dwXSize         = info->xsize;
+    params->dwYSize         = info->ysize;
+    params->dwXCountChars   = info->xchars;
+    params->dwYCountChars   = info->ychars;
+    params->dwFillAttribute = info->attribute;
+    params->dwFlags         = info->flags;
+    params->wShowWindow     = info->show;
+
+    src = (WCHAR *)(info + 1);
+    dst = (WCHAR *)(params + 1);
+
+    /* current directory needs more space */
+    get_unicode_string( &params->CurrentDirectory.DosPath, &src, &dst, info->curdir_len );
+    params->CurrentDirectory.DosPath.MaximumLength = MAX_NT_PATH_LENGTH * sizeof(WCHAR);
+    dst = (WCHAR *)(params + 1) + MAX_NT_PATH_LENGTH;
+
+    get_unicode_string( &params->DllPath, &src, &dst, info->dllpath_len );
+    get_unicode_string( &params->ImagePathName, &src, &dst, info->imagepath_len );
+    get_unicode_string( &params->CommandLine, &src, &dst, info->cmdline_len );
+    get_unicode_string( &params->WindowTitle, &src, &dst, info->title_len );
+    get_unicode_string( &params->Desktop, &src, &dst, info->desktop_len );
+    get_unicode_string( &params->ShellInfo, &src, &dst, info->shellinfo_len );
+
+    /* runtime info isn't a real string */
+    params->RuntimeInfo.Buffer = dst;
+    params->RuntimeInfo.Length = params->RuntimeInfo.MaximumLength = info->runtime_len;
+    memcpy( dst, src, info->runtime_len );
 
     /* environment needs to be a separate memory block */
-    env_size = info_size - params->Size;
-    if (!env_size) env_size = 1;
     ptr = NULL;
-    status = NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 0, &env_size,
+    alloc_size = max( 1, env_size );
+    status = NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 0, &alloc_size,
                                       MEM_COMMIT, PAGE_READWRITE );
-    if (status != STATUS_SUCCESS) return status;
-    memcpy( ptr, (char *)params + params->Size, info_size - params->Size );
+    if (status != STATUS_SUCCESS) goto done;
+    memcpy( ptr, (char *)info + info_size, env_size );
     params->Environment = ptr;
 
-    RtlNormalizeProcessParams( params );
+done:
+    RtlFreeHeap( GetProcessHeap(), 0, info );
     return status;
 }
 

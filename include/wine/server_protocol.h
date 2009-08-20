@@ -213,6 +213,42 @@ typedef __int64 timeout_t;
 
 typedef struct
 {
+    unsigned int debug_flags;
+    unsigned int console_flags;
+    obj_handle_t console;
+    obj_handle_t hstdin;
+    obj_handle_t hstdout;
+    obj_handle_t hstderr;
+    unsigned int x;
+    unsigned int y;
+    unsigned int xsize;
+    unsigned int ysize;
+    unsigned int xchars;
+    unsigned int ychars;
+    unsigned int attribute;
+    unsigned int flags;
+    unsigned int show;
+    data_size_t  curdir_len;
+    data_size_t  dllpath_len;
+    data_size_t  imagepath_len;
+    data_size_t  cmdline_len;
+    data_size_t  title_len;
+    data_size_t  desktop_len;
+    data_size_t  shellinfo_len;
+    data_size_t  runtime_len;
+
+
+
+
+
+
+
+
+} startup_info_t;
+
+
+typedef struct
+{
     atom_t         atom;
     int            string;
     lparam_t       data;
@@ -535,14 +571,12 @@ struct new_process_request
     unsigned int create_flags;
     int          socket_fd;
     obj_handle_t exe_file;
-    obj_handle_t hstdin;
-    obj_handle_t hstdout;
-    obj_handle_t hstderr;
     unsigned int process_access;
     unsigned int process_attr;
     unsigned int thread_access;
     unsigned int thread_attr;
-    /* VARARG(info,startup_info); */
+    data_size_t  info_size;
+    /* VARARG(info,startup_info,info_size); */
     /* VARARG(env,unicode_str); */
 };
 struct new_process_reply
@@ -597,10 +631,8 @@ struct get_startup_info_reply
 {
     struct reply_header __header;
     obj_handle_t exe_file;
-    obj_handle_t hstdin;
-    obj_handle_t hstdout;
-    obj_handle_t hstderr;
-    /* VARARG(info,startup_info); */
+    data_size_t  info_size;
+    /* VARARG(info,startup_info,info_size); */
     /* VARARG(env,unicode_str); */
 };
 
@@ -5315,6 +5347,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 388
+#define SERVER_PROTOCOL_VERSION 389
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

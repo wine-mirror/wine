@@ -226,6 +226,42 @@ struct wake_up_reply
 typedef __int64 timeout_t;
 #define TIMEOUT_INFINITE (((timeout_t)0x7fffffff) << 32 | 0xffffffff)
 
+/* structure for process startup info */
+typedef struct
+{
+    unsigned int debug_flags;
+    unsigned int console_flags;
+    obj_handle_t console;
+    obj_handle_t hstdin;
+    obj_handle_t hstdout;
+    obj_handle_t hstderr;
+    unsigned int x;
+    unsigned int y;
+    unsigned int xsize;
+    unsigned int ysize;
+    unsigned int xchars;
+    unsigned int ychars;
+    unsigned int attribute;
+    unsigned int flags;
+    unsigned int show;
+    data_size_t  curdir_len;
+    data_size_t  dllpath_len;
+    data_size_t  imagepath_len;
+    data_size_t  cmdline_len;
+    data_size_t  title_len;
+    data_size_t  desktop_len;
+    data_size_t  shellinfo_len;
+    data_size_t  runtime_len;
+    /* VARARG(curdir,unicode_str,curdir_len); */
+    /* VARARG(dllpath,unicode_str,dllpath_len); */
+    /* VARARG(imagepath,unicode_str,imagepath_len); */
+    /* VARARG(cmdline,unicode_str,cmdline_len); */
+    /* VARARG(title,unicode_str,title_len); */
+    /* VARARG(desktop,unicode_str,desktop_len); */
+    /* VARARG(shellinfo,unicode_str,shellinfo_len); */
+    /* VARARG(runtime,unicode_str,runtime_len); */
+} startup_info_t;
+
 /* structure returned in the list of window properties */
 typedef struct
 {
@@ -549,14 +585,12 @@ typedef union
     unsigned int create_flags;   /* creation flags */
     int          socket_fd;      /* file descriptor for process socket */
     obj_handle_t exe_file;       /* file handle for main exe */
-    obj_handle_t hstdin;         /* handle for stdin */
-    obj_handle_t hstdout;        /* handle for stdout */
-    obj_handle_t hstderr;        /* handle for stderr */
     unsigned int process_access; /* access rights for process object */
     unsigned int process_attr;   /* attributes for process object */
     unsigned int thread_access;  /* access rights for thread object */
     unsigned int thread_attr;    /* attributes for thread object */
-    VARARG(info,startup_info);   /* startup information */
+    data_size_t  info_size;      /* size of startup info */
+    VARARG(info,startup_info,info_size); /* startup information */
     VARARG(env,unicode_str);     /* environment for new process */
 @REPLY
     obj_handle_t info;           /* new process info handle */
@@ -592,10 +626,8 @@ typedef union
 @REQ(get_startup_info)
 @REPLY
     obj_handle_t exe_file;     /* file handle for main exe */
-    obj_handle_t hstdin;       /* handle for stdin */
-    obj_handle_t hstdout;      /* handle for stdout */
-    obj_handle_t hstderr;      /* handle for stderr */
-    VARARG(info,startup_info); /* startup information */
+    data_size_t  info_size;    /* size of startup info */
+    VARARG(info,startup_info,info_size); /* startup information */
     VARARG(env,unicode_str);   /* environment */
 @END
 

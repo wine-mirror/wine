@@ -102,13 +102,11 @@ static const struct fd_ops process_fd_ops =
 struct startup_info
 {
     struct object       obj;          /* object header */
-    obj_handle_t        hstdin;       /* handle for stdin */
-    obj_handle_t        hstdout;      /* handle for stdout */
-    obj_handle_t        hstderr;      /* handle for stderr */
     struct file        *exe_file;     /* file handle for main exe */
     struct process     *process;      /* created process */
-    data_size_t         data_size;    /* size of startup data */
-    void               *data;         /* data for startup info */
+    data_size_t         info_size;    /* size of startup info */
+    data_size_t         data_size;    /* size of whole startup data */
+    startup_info_t     *data;         /* data for startup info */
 };
 
 static void startup_info_dump( struct object *obj, int verbose );
@@ -478,7 +476,7 @@ static void startup_info_dump( struct object *obj, int verbose )
     assert( obj->ops == &startup_info_ops );
 
     fprintf( stderr, "Startup info in=%04x out=%04x err=%04x\n",
-             info->hstdin, info->hstdout, info->hstderr );
+             info->data->hstdin, info->data->hstdout, info->data->hstderr );
 }
 
 static int startup_info_signaled( struct object *obj, struct thread *thread )
@@ -891,19 +889,46 @@ DECL_HANDLER(new_process)
 
     /* build the startup info for a new process */
     if (!(info = alloc_object( &startup_info_ops ))) return;
-    info->hstdin       = req->hstdin;
-    info->hstdout      = req->hstdout;
-    info->hstderr      = req->hstderr;
-    info->exe_file     = NULL;
-    info->process      = NULL;
-    info->data_size    = get_req_data_size();
-    info->data         = NULL;
+    info->exe_file = NULL;
+    info->process  = NULL;
+    info->data     = NULL;
 
     if (req->exe_file &&
         !(info->exe_file = get_file_obj( current->process, req->exe_file, FILE_READ_DATA )))
         goto done;
 
-    if (!(info->data = memdup( get_req_data(), info->data_size ))) goto done;
+    info->data_size = get_req_data_size();
+    info->info_size = min( req->info_size, info->data_size );
+
+    if (req->info_size < sizeof(*info->data))
+    {
+        /* make sure we have a full startup_info_t structure */
+        data_size_t env_size = info->data_size - info->info_size;
+        data_size_t info_size = min( req->info_size, FIELD_OFFSET( startup_info_t, curdir_len ));
+
+        if (!(info->data = mem_alloc( sizeof(*info->data) + env_size ))) goto done;
+        memcpy( info->data, get_req_data(), info_size );
+        memset( (char *)info->data + info_size, 0, sizeof(*info->data) - info_size );
+        memcpy( info->data + 1, (const char *)get_req_data() + req->info_size, env_size );
+        info->info_size = sizeof(startup_info_t);
+        info->data_size = info->info_size + env_size;
+    }
+    else
+    {
+        data_size_t pos = sizeof(*info->data);
+
+        if (!(info->data = memdup( get_req_data(), info->data_size ))) goto done;
+#define FIXUP_LEN(len) do { (len) = min( (len), info->info_size - pos ); pos += (len); } while(0)
+        FIXUP_LEN( info->data->curdir_len );
+        FIXUP_LEN( info->data->dllpath_len );
+        FIXUP_LEN( info->data->imagepath_len );
+        FIXUP_LEN( info->data->cmdline_len );
+        FIXUP_LEN( info->data->title_len );
+        FIXUP_LEN( info->data->desktop_len );
+        FIXUP_LEN( info->data->shellinfo_len );
+        FIXUP_LEN( info->data->runtime_len );
+#undef FIXUP_LEN
+    }
 
     if (!(thread = create_process( socket_fd, current, req->inherit_all ))) goto done;
     process = thread->process;
@@ -923,17 +948,17 @@ DECL_HANDLER(new_process)
          * like if hConOut and hConIn are console handles, then they should be on the same
          * physical console
          */
-        inherit_console( current, process, req->inherit_all ? req->hstdin : 0 );
+        inherit_console( current, process, req->inherit_all ? info->data->hstdin : 0 );
     }
 
     if (!req->inherit_all && !(req->create_flags & CREATE_NEW_CONSOLE))
     {
-        info->hstdin  = duplicate_handle( parent, req->hstdin, process,
-                                          0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
-        info->hstdout = duplicate_handle( parent, req->hstdout, process,
-                                          0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
-        info->hstderr = duplicate_handle( parent, req->hstderr, process,
-                                          0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
+        info->data->hstdin  = duplicate_handle( parent, info->data->hstdin, process,
+                                                0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
+        info->data->hstdout = duplicate_handle( parent, info->data->hstdout, process,
+                                                0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
+        info->data->hstderr = duplicate_handle( parent, info->data->hstderr, process,
+                                                0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
         /* some handles above may have been invalid; this is not an error */
         if (get_error() == STATUS_INVALID_HANDLE ||
             get_error() == STATUS_OBJECT_TYPE_MISMATCH) clear_error();
@@ -985,11 +1010,8 @@ DECL_HANDLER(get_startup_info)
     if (info->exe_file &&
         !(reply->exe_file = alloc_handle( process, info->exe_file, GENERIC_READ, 0 ))) return;
 
-    reply->hstdin  = info->hstdin;
-    reply->hstdout = info->hstdout;
-    reply->hstderr = info->hstderr;
-
     /* we return the data directly without making a copy so this can only be called once */
+    reply->info_size = info->info_size;
     size = info->data_size;
     if (size > get_reply_max_size()) size = get_reply_max_size();
     set_reply_data_ptr( info->data, size );
