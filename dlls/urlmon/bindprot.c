@@ -703,7 +703,7 @@ static HRESULT WINAPI ProtocolHandler_Read(IInternetProtocol *iface, void *pv,
 
     TRACE("(%p)->(%p %u %p)\n", This, pv, cb, pcbRead);
 
-    if(This->buf) {
+    if(This->buf_size) {
         read = min(cb, This->buf_size);
         memcpy(pv, This->buf, read);
 
@@ -1028,36 +1028,51 @@ static HRESULT report_data(BindProtocol *This, DWORD bscf, ULONG progress, ULONG
         return S_OK;
 
     if((This->pi & PI_MIMEVERIFICATION) && !This->reported_mime) {
+        BYTE buf[BUFFER_SIZE];
         DWORD read = 0;
         LPWSTR mime;
         HRESULT hres;
 
-        if(!This->buf) {
-            This->buf = heap_alloc(BUFFER_SIZE);
-            if(!This->buf)
-                return E_OUTOFMEMORY;
-        }
-
         do {
             read = 0;
-            hres = IInternetProtocol_Read(This->protocol, This->buf+This->buf_size,
-                    BUFFER_SIZE-This->buf_size, &read);
+            hres = IInternetProtocol_Read(This->protocol, buf,
+                    sizeof(buf)-This->buf_size, &read);
             if(FAILED(hres) && hres != E_PENDING)
                 return hres;
+
+            if(!This->buf) {
+                This->buf = heap_alloc(BUFFER_SIZE);
+                if(!This->buf)
+                    return E_OUTOFMEMORY;
+            }else if(read + This->buf_size > BUFFER_SIZE) {
+                BYTE *tmp;
+
+                tmp = heap_realloc(This->buf, read+This->buf_size);
+                if(!tmp)
+                    return E_OUTOFMEMORY;
+                This->buf = tmp;
+            }
+
+            memcpy(This->buf+This->buf_size, buf, read);
             This->buf_size += read;
         }while(This->buf_size < MIME_TEST_SIZE && hres == S_OK);
 
         if(This->buf_size < MIME_TEST_SIZE && hres != S_FALSE)
             return S_OK;
 
-        hres = FindMimeFromData(NULL, This->url, This->buf, min(This->buf_size, MIME_TEST_SIZE),
-                This->mime, 0, &mime, 0);
-        if(FAILED(hres))
-            return hres;
+        if(!This->reported_mime) {
+            hres = FindMimeFromData(NULL, This->url, This->buf, min(This->buf_size, MIME_TEST_SIZE),
+                    This->mime, 0, &mime, 0);
+            if(FAILED(hres))
+                return hres;
 
-        mime_available(This, mime, TRUE);
-        CoTaskMemFree(mime);
+            mime_available(This, mime, TRUE);
+            CoTaskMemFree(mime);
+        }
     }
+
+    if(!This->protocol_sink)
+        return S_OK;
 
     return IInternetProtocolSink_ReportData(This->protocol_sink, bscf, progress, progress_max);
 }
