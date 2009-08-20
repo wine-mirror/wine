@@ -80,6 +80,7 @@ DEFINE_EXPECT(ReportProgress_PROXYDETECTING);
 DEFINE_EXPECT(ReportProgress_LOADINGMIMEHANDLER);
 DEFINE_EXPECT(ReportProgress_DECODING);
 DEFINE_EXPECT(ReportData);
+DEFINE_EXPECT(ReportData2);
 DEFINE_EXPECT(ReportResult);
 DEFINE_EXPECT(GetBindString_ACCEPT_MIMES);
 DEFINE_EXPECT(GetBindString_USER_AGENT);
@@ -88,6 +89,8 @@ DEFINE_EXPECT(GetBindString_URL);
 DEFINE_EXPECT(QueryService_HttpNegotiate);
 DEFINE_EXPECT(QueryService_InternetProtocol);
 DEFINE_EXPECT(QueryService_HttpSecurity);
+DEFINE_EXPECT(QueryInterface_IWinInetInfo);
+DEFINE_EXPECT(QueryInterface_IWinInetHttpInfo);
 DEFINE_EXPECT(BeginningTransaction);
 DEFINE_EXPECT(GetRootSecurityId);
 DEFINE_EXPECT(OnResponse);
@@ -97,6 +100,7 @@ DEFINE_EXPECT(CreateInstance);
 DEFINE_EXPECT(Start);
 DEFINE_EXPECT(Terminate);
 DEFINE_EXPECT(Read);
+DEFINE_EXPECT(Read2);
 DEFINE_EXPECT(SetPriority);
 DEFINE_EXPECT(LockRequest);
 DEFINE_EXPECT(UnlockRequest);
@@ -127,20 +131,19 @@ static const WCHAR gzipW[] = {'g','z','i','p',0};
 static HRESULT expect_hrResult;
 static LPCWSTR file_name, http_url, expect_wsz;
 static IInternetProtocol *async_protocol = NULL;
-static BOOL first_data_notif = FALSE, http_is_first = FALSE,
-    http_post_test = FALSE;
-static int state = 0, prot_state;
+static BOOL first_data_notif, http_is_first, http_post_test;
+static int state = 0, prot_state, read_report_data;
 static DWORD bindf, ex_priority , pi;
 static IInternetProtocol *binding_protocol, *filtered_protocol;
 static IInternetBindInfo *prot_bind_info;
 static IInternetProtocolSink *binding_sink, *filtered_sink;
 static void *expect_pv;
-static HANDLE event_complete, event_complete2;
+static HANDLE event_complete, event_complete2, event_continue, event_continue_done;
 static BOOL binding_test;
-static PROTOCOLDATA protocoldata, *pdata;
+static PROTOCOLDATA protocoldata, *pdata, continue_protdata;
 static DWORD prot_read, pi, filter_state;
-static BOOL security_problem = FALSE;
-static BOOL async_read_pending, mimefilter_test;
+static BOOL security_problem;
+static BOOL async_read_pending, mimefilter_test, direct_read, wait_for_switch, emulate_prot, short_read;
 
 static enum {
     FILE_TEST,
@@ -162,7 +165,8 @@ static const WCHAR protocol_names[][10] = {
 
 static const WCHAR binding_urls[][130] = {
     {'f','i','l','e',':','t','e','s','t','.','h','t','m','l',0},
-    {'h','t','t','p',':','/','/','t','e','s','t','/','t','e','s','t','.','h','t','m','l',0},
+    {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.',
+     'o','r','g','/','s','i','t','e','/','a','b','o','u','t',0},
     {'h','t','t','p','s',':','/','/','w','w','w','.','c','o','d','e','w','e','a','v','e','r','s',
      '.','c','o','m','/','t','e','s','t','.','h','t','m','l',0},
     {'f','t','p',':','/','/','f','t','p','.','w','i','n','e','h','q','.','o','r','g',
@@ -426,37 +430,11 @@ static ULONG WINAPI ProtocolSink_Release(IInternetProtocolSink *iface)
     return 1;
 }
 
-static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOLDATA *pProtocolData)
+static void call_continue(PROTOCOLDATA *protocol_data)
 {
     HRESULT hres;
 
-    if(tested_protocol == FTP_TEST)
-        CHECK_EXPECT2(Switch);
-    else
-        CHECK_EXPECT(Switch);
-
-    ok(pProtocolData != NULL, "pProtocolData == NULL\n");
-    if(binding_test) {
-        ok(pProtocolData != &protocoldata, "pProtocolData == &protocoldata\n");
-        ok(pProtocolData->grfFlags == protocoldata.grfFlags, "grfFlags wrong %x/%x\n",
-           pProtocolData->grfFlags, protocoldata.grfFlags );
-        ok(pProtocolData->dwState == protocoldata.dwState, "dwState wrong %x/%x\n",
-           pProtocolData->dwState, protocoldata.dwState );
-        ok(pProtocolData->pData == protocoldata.pData, "pData wrong %p/%p\n",
-           pProtocolData->pData, protocoldata.pData );
-        ok(pProtocolData->cbData == protocoldata.cbData, "cbData wrong %x/%x\n",
-           pProtocolData->cbData, protocoldata.cbData );
-    }
-
-    pdata = pProtocolData;
-
-    if(binding_test) {
-        SetEvent(event_complete);
-        WaitForSingleObject(event_complete2, INFINITE);
-        return S_OK;
-    }
-
-    if (!state) {
+    if(!state) {
         if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST || tested_protocol == FTP_TEST) {
             if (http_is_first) {
                 CLEAR_CALLED(ReportProgress_FINDINGRESOURCE);
@@ -483,7 +461,7 @@ static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOL
     }
 
     SET_EXPECT(ReportData);
-    hres = IInternetProtocol_Continue(async_protocol, pProtocolData);
+    hres = IInternetProtocol_Continue(async_protocol, protocol_data);
     ok(hres == S_OK, "Continue failed: %08x\n", hres);
     if(tested_protocol == FTP_TEST)
         CLEAR_CALLED(ReportData);
@@ -509,8 +487,42 @@ static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOL
             SET_EXPECT(ReportProgress_CONNECTING);
         }
     }
+}
 
-    SetEvent(event_complete);
+static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOLDATA *pProtocolData)
+{
+    if(tested_protocol == FTP_TEST)
+        CHECK_EXPECT2(Switch);
+    else
+        CHECK_EXPECT(Switch);
+
+    ok(pProtocolData != NULL, "pProtocolData == NULL\n");
+    if(binding_test) {
+        ok(pProtocolData != &protocoldata, "pProtocolData == &protocoldata\n");
+        ok(pProtocolData->grfFlags == protocoldata.grfFlags, "grfFlags wrong %x/%x\n",
+           pProtocolData->grfFlags, protocoldata.grfFlags );
+        ok(pProtocolData->dwState == protocoldata.dwState, "dwState wrong %x/%x\n",
+           pProtocolData->dwState, protocoldata.dwState );
+        ok(pProtocolData->pData == protocoldata.pData, "pData wrong %p/%p\n",
+           pProtocolData->pData, protocoldata.pData );
+        ok(pProtocolData->cbData == protocoldata.cbData, "cbData wrong %x/%x\n",
+           pProtocolData->cbData, protocoldata.cbData );
+    }
+
+    pdata = pProtocolData;
+
+    if(binding_test) {
+        SetEvent(event_complete);
+        WaitForSingleObject(event_complete2, INFINITE);
+        return S_OK;
+    }if(direct_read) {
+        continue_protdata = *pProtocolData;
+        SetEvent(event_continue);
+        WaitForSingleObject(event_continue_done, INFINITE);
+    }else {
+        call_continue(pProtocolData);
+        SetEvent(event_complete);
+    }
 
     return S_OK;
 }
@@ -525,6 +537,12 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
     switch(ulStatusCode) {
     case BINDSTATUS_MIMETYPEAVAILABLE:
         CHECK_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+        if(tested_protocol != FILE_TEST && !mimefilter_test && (pi & PI_MIMEVERIFICATION)) {
+            if(!short_read || !direct_read)
+                CHECK_CALLED(Read); /* set in Continue */
+            else if(short_read)
+                CHECK_CALLED(Read2); /* set in Read */
+        }
         ok(szStatusText != NULL, "szStatusText == NULL\n");
         if(szStatusText) {
             if(tested_protocol == BIND_TEST)
@@ -588,7 +606,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
     case BINDSTATUS_PROTOCOLCLASSID:
         CHECK_EXPECT(ReportProgress_PROTOCOLCLASSID);
         ok(szStatusText != NULL, "szStatusText == NULL\n");
-        ok(!strcmp_ww(szStatusText, null_guid), "unexpected szStatusText\n");
+        ok(!strcmp_ww(szStatusText, null_guid), "unexpected classid %s\n", wine_dbgstr_w(szStatusText));
         break;
     case BINDSTATUS_COOKIE_SENT:
         CHECK_EXPECT(ReportProgress_COOKIE_SENT);
@@ -629,6 +647,11 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
 static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWORD grfBSCF,
         ULONG ulProgress, ULONG ulProgressMax)
 {
+    HRESULT hres;
+
+    static int rec_depth;
+    rec_depth++;
+
     if(!mimefilter_test && tested_protocol == FILE_TEST) {
         CHECK_EXPECT2(ReportData);
 
@@ -639,7 +662,75 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
         ok((grfBSCF == (BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION)) ||
            (grfBSCF == (BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION | BSCF_SKIPDRAINDATAFORFILEURLS)),
                 "grcfBSCF = %08x\n", grfBSCF);
-    }else if(!binding_test && (tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST || tested_protocol == FTP_TEST)) {
+    }else if(direct_read) {
+        BYTE buf[14096];
+        ULONG read;
+
+        if(!read_report_data && rec_depth == 1) {
+            BOOL reported_all_data = called_ReportData2;
+
+            CHECK_EXPECT2(ReportData);
+
+            if(short_read) {
+                ok(grfBSCF == (BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION|BSCF_DATAFULLYAVAILABLE),
+                   "grcfBSCF = %08x\n", grfBSCF);
+                CHECK_CALLED(Read); /* Set in Continue */
+                first_data_notif = FALSE;
+            }else if(first_data_notif) {
+                ok(grfBSCF == BSCF_FIRSTDATANOTIFICATION, "grcfBSCF = %08x\n", grfBSCF);
+                first_data_notif = FALSE;
+            }else if(reported_all_data) {
+                ok(grfBSCF == (BSCF_LASTDATANOTIFICATION|BSCF_INTERMEDIATEDATANOTIFICATION),
+                   "grcfBSCF = %08x\n", grfBSCF);
+            }else if(!direct_read) {
+                ok(grfBSCF == BSCF_INTERMEDIATEDATANOTIFICATION, "grcfBSCF = %08x\n", grfBSCF);
+            }
+
+            do {
+                read = 0;
+                if(emulate_prot)
+                    SET_EXPECT(Read);
+                else
+                    SET_EXPECT(ReportData2);
+                SET_EXPECT(ReportResult);
+                hres = IInternetProtocol_Read(binding_test ? binding_protocol : async_protocol, expect_pv = buf, sizeof(buf), &read);
+                if(hres == S_OK)
+                    ok(read, "read == 0\n");
+                if(reported_all_data) {
+                    ok(hres == S_FALSE, "Read failed: %08x, expected S_FALSE\n", hres);
+                }
+                if(emulate_prot)
+                    CHECK_CALLED(Read);
+                if(!reported_all_data && called_ReportData2) {
+                    if(!emulate_prot)
+                        CHECK_CALLED(ReportData2);
+                    CHECK_CALLED(ReportResult);
+                    ok(hres == S_OK, "Read failed: %08x\n", hres);
+                    reported_all_data = TRUE;
+                }else {
+                    if(!emulate_prot)
+                        CHECK_NOT_CALLED(ReportData2);
+                    CHECK_NOT_CALLED(ReportResult);
+                }
+            }while(hres == S_OK);
+            if(hres == S_FALSE)
+                wait_for_switch = FALSE;
+        }else {
+            CHECK_EXPECT(ReportData2);
+
+            ok(grfBSCF & BSCF_LASTDATANOTIFICATION, "grfBSCF = %08x\n", grfBSCF);
+
+            read = 0xdeadbeef;
+            if(emulate_prot)
+                SET_EXPECT(Read2);
+            hres = IInternetProtocol_Read(binding_test ? binding_protocol : async_protocol, expect_pv = buf, sizeof(buf), &read);
+            if(emulate_prot)
+                CHECK_CALLED(Read2);
+            ok(hres == S_FALSE, "Read returned: %08x, expected E_FALSE\n", hres);
+            ok(!read, "read = %d\n", read);
+        }
+    }else if(!binding_test && (tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST
+            || tested_protocol == FTP_TEST)) {
         if(!(grfBSCF & BSCF_LASTDATANOTIFICATION) || (grfBSCF & BSCF_DATAFULLYAVAILABLE))
             CHECK_EXPECT(ReportData);
         else if (http_post_test)
@@ -676,29 +767,33 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
             }
             SetEvent(event_complete);
         }
-    }else {
+    }else if(!read_report_data) {
         BYTE buf[1000];
         ULONG read;
         HRESULT hres;
 
         CHECK_EXPECT(ReportData);
 
-        if(tested_protocol == BIND_TEST)
-            return S_OK;
-
-        do {
-            if(mimefilter_test)
-                SET_EXPECT(MimeFilter_Read);
-            else
-                SET_EXPECT(Read);
-            hres = IInternetProtocol_Read(binding_protocol, expect_pv=buf, sizeof(buf), &read);
-            if(mimefilter_test)
-                CHECK_CALLED(MimeFilter_Read);
-            else
-                CHECK_CALLED(Read);
-        }while(hres == S_OK);
+        if(tested_protocol != BIND_TEST) {
+            do {
+                if(mimefilter_test)
+                    SET_EXPECT(MimeFilter_Read);
+                else if(rec_depth > 1)
+                    SET_EXPECT(Read2);
+                else
+                    SET_EXPECT(Read);
+                hres = IInternetProtocol_Read(binding_protocol, expect_pv=buf, sizeof(buf), &read);
+                if(mimefilter_test)
+                    CHECK_CALLED(MimeFilter_Read);
+                else if(rec_depth > 1)
+                    CHECK_CALLED(Read2);
+                else
+                    CHECK_CALLED(Read);
+            }while(hres == S_OK);
+        }
     }
 
+    rec_depth--;
     return S_OK;
 }
 
@@ -719,6 +814,9 @@ static HRESULT WINAPI ProtocolSink_ReportResult(IInternetProtocolSink *iface, HR
            broken(tested_protocol == MK_TEST), /* Win9x, WinME and NT4 */
            "dwError == ERROR_SUCCESS\n");
     ok(!szResult, "szResult != NULL\n");
+
+    if(direct_read)
+        SET_EXPECT(ReportData); /* checked after main loop */
 
     return S_OK;
 }
@@ -781,8 +879,6 @@ static HRESULT WINAPI MimeProtocolSink_ReportData(IInternetProtocolSink *iface, 
 
     CHECK_EXPECT(MimeFilter_ReportData);
 
-    ok(ulProgress, "ulProgress == 0\n");
-
     if(!filter_state) {
         SET_EXPECT(Read);
         hres = IInternetProtocol_Read(filtered_protocol, buf, sizeof(buf), &read);
@@ -800,10 +896,12 @@ static HRESULT WINAPI MimeProtocolSink_ReportData(IInternetProtocolSink *iface, 
         /* FIXME: test BINDSTATUS_CACHEFILENAMEAVAILABLE */
     }
 
-    SET_EXPECT(ReportData);
+    if(!read_report_data)
+        SET_EXPECT(ReportData);
     hres = IInternetProtocolSink_ReportData(filtered_sink, grfBSCF, ulProgress, ulProgressMax);
     ok(hres == S_OK, "ReportData failed: %08x\n", hres);
-    CHECK_CALLED(ReportData);
+    if(!read_report_data)
+        CHECK_CALLED(ReportData);
 
     if(!filter_state)
         filter_state = 1;
@@ -1086,6 +1184,18 @@ static HRESULT WINAPI ProtocolEmul_QueryInterface(IInternetProtocol *iface, REFI
         return S_OK;
     }
 
+    if(IsEqualGUID(&IID_IWinInetInfo, riid)) {
+        CHECK_EXPECT(QueryInterface_IWinInetInfo);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    if(IsEqualGUID(&IID_IWinInetHttpInfo, riid)) {
+        CHECK_EXPECT(QueryInterface_IWinInetHttpInfo);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
     ok(0, "unexpected riid %s\n", debugstr_guid(riid));
     *ppv = NULL;
     return E_NOINTERFACE;
@@ -1123,41 +1233,43 @@ static DWORD WINAPI thread_proc(PVOID arg)
     CHECK_CALLED(Switch);
     ok(hres == S_OK, "Switch failed: %08x\n", hres);
 
-    prot_state = 2;
-    if(mimefilter_test)
-        SET_EXPECT(MimeFilter_Switch);
-    else
-        SET_EXPECT(Switch);
-    hres = IInternetProtocolSink_Switch(binding_sink, &protocoldata);
-    ok(hres == S_OK, "Switch failed: %08x\n", hres);
-    if(mimefilter_test)
-        CHECK_CALLED(MimeFilter_Switch);
-    else
-        CHECK_CALLED(Switch);
+    if(!short_read) {
+        prot_state = 2;
+        if(mimefilter_test)
+            SET_EXPECT(MimeFilter_Switch);
+        else
+            SET_EXPECT(Switch);
+        hres = IInternetProtocolSink_Switch(binding_sink, &protocoldata);
+        ok(hres == S_OK, "Switch failed: %08x\n", hres);
+        if(mimefilter_test)
+            CHECK_CALLED(MimeFilter_Switch);
+        else
+            CHECK_CALLED(Switch);
 
-    prot_state = 2;
-    if(mimefilter_test)
-        SET_EXPECT(MimeFilter_Switch);
-    else
-        SET_EXPECT(Switch);
-    hres = IInternetProtocolSink_Switch(binding_sink, &protocoldata);
-    ok(hres == S_OK, "Switch failed: %08x\n", hres);
-    if(mimefilter_test)
-        CHECK_CALLED(MimeFilter_Switch);
-    else
-        CHECK_CALLED(Switch);
+        prot_state = 2;
+        if(mimefilter_test)
+            SET_EXPECT(MimeFilter_Switch);
+        else
+            SET_EXPECT(Switch);
+        hres = IInternetProtocolSink_Switch(binding_sink, &protocoldata);
+        ok(hres == S_OK, "Switch failed: %08x\n", hres);
+        if(mimefilter_test)
+            CHECK_CALLED(MimeFilter_Switch);
+        else
+            CHECK_CALLED(Switch);
 
-    prot_state = 3;
-    if(mimefilter_test)
-        SET_EXPECT(MimeFilter_Switch);
-    else
-        SET_EXPECT(Switch);
-    hres = IInternetProtocolSink_Switch(binding_sink, &protocoldata);
-    ok(hres == S_OK, "Switch failed: %08x\n", hres);
-    if(mimefilter_test)
-        CHECK_CALLED(MimeFilter_Switch);
-    else
-        CHECK_CALLED(Switch);
+        prot_state = 3;
+        if(mimefilter_test)
+            SET_EXPECT(MimeFilter_Switch);
+        else
+            SET_EXPECT(Switch);
+        hres = IInternetProtocolSink_Switch(binding_sink, &protocoldata);
+        ok(hres == S_OK, "Switch failed: %08x\n", hres);
+        if(mimefilter_test)
+            CHECK_CALLED(MimeFilter_Switch);
+        else
+            CHECK_CALLED(Switch);
+    }
 
     SetEvent(event_complete);
 
@@ -1407,9 +1519,10 @@ static HRESULT WINAPI ProtocolEmul_Continue(IInternetProtocol *iface,
         SET_EXPECT(MimeFilter_ReportData);
     }else if(pi & PI_MIMEVERIFICATION) {
         if(pr < 200)
-            SET_EXPECT(Read);
+            SET_EXPECT(Read); /* checked in ReportData for short_read */
         if(pr == 200) {
-            SET_EXPECT(Read);
+            if(!mimefilter_test)
+                SET_EXPECT(Read); /* checked in BINDSTATUS_MIMETYPEAVAILABLE or ReportData */
             SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
         }
         if(pr >= 200)
@@ -1418,16 +1531,15 @@ static HRESULT WINAPI ProtocolEmul_Continue(IInternetProtocol *iface,
         SET_EXPECT(ReportData);
     }
 
-    hres = IInternetProtocolSink_ReportData(binding_sink, bscf, 100, 400);
+    hres = IInternetProtocolSink_ReportData(binding_sink, bscf, pr, 400);
     ok(hres == S_OK, "ReportData failed: %08x\n", hres);
 
     if(mimefilter_test) {
         SET_EXPECT(MimeFilter_ReportData);
     }else if(pi & PI_MIMEVERIFICATION) {
-        if(pr < 200)
+        if(!short_read && pr < 200)
             CHECK_CALLED(Read);
         if(pr == 200) {
-            CLEAR_CALLED(Read);
             CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
         }
     }else {
@@ -1450,10 +1562,15 @@ static HRESULT WINAPI ProtocolEmul_Terminate(IInternetProtocol *iface, DWORD dwO
 static HRESULT WINAPI ProtocolEmul_Read(IInternetProtocol *iface, void *pv,
         ULONG cb, ULONG *pcbRead)
 {
-    if(mimefilter_test) {
-        CHECK_EXPECT2(Read);
+    if(read_report_data)
+        CHECK_EXPECT2(Read2);
+
+    if(mimefilter_test || short_read) {
+        if(!read_report_data)
+            CHECK_EXPECT2(Read);
     }else if((pi & PI_MIMEVERIFICATION)) {
-        CHECK_EXPECT2(Read);
+        if(!read_report_data)
+            CHECK_EXPECT2(Read);
 
         if(prot_read < 300) {
             ok(pv != expect_pv, "pv == expect_pv\n");
@@ -1465,7 +1582,8 @@ static HRESULT WINAPI ProtocolEmul_Read(IInternetProtocol *iface, void *pv,
             ok(expect_pv <= pv && (BYTE*)pv < (BYTE*)expect_pv + cb, "pv != expect_pv\n");
         }
     }else {
-        CHECK_EXPECT(Read);
+        if(!read_report_data)
+            CHECK_EXPECT(Read);
 
         ok(pv == expect_pv, "pv != expect_pv\n");
         ok(cb == 1000, "cb=%d\n", cb);
@@ -1473,8 +1591,29 @@ static HRESULT WINAPI ProtocolEmul_Read(IInternetProtocol *iface, void *pv,
     }
     ok(pcbRead != NULL, "pcbRead == NULL\n");
 
-    if(prot_state == 3) {
+    if(prot_state == 3 || (short_read && prot_state != 4)) {
         HRESULT hres;
+
+        prot_state = 4;
+        if(short_read) {
+            SET_EXPECT(Read2); /* checked in BINDSTATUS_MIMETYPEAVAILABLE */
+            SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+        }
+        if(mimefilter_test)
+            SET_EXPECT(MimeFilter_ReportData);
+        else if(direct_read)
+            SET_EXPECT(ReportData2);
+        read_report_data++;
+        hres = IInternetProtocolSink_ReportData(binding_sink,
+                BSCF_LASTDATANOTIFICATION|BSCF_INTERMEDIATEDATANOTIFICATION, 0, 0);
+        read_report_data--;
+        ok(hres == S_OK, "ReportData failed: %08x\n", hres);
+        if(short_read)
+            CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+        if(mimefilter_test)
+            CHECK_CALLED(MimeFilter_ReportData);
+        else if(direct_read)
+            CHECK_CALLED(ReportData2);
 
         if(mimefilter_test)
             SET_EXPECT(MimeFilter_ReportResult);
@@ -1487,6 +1626,11 @@ static HRESULT WINAPI ProtocolEmul_Read(IInternetProtocol *iface, void *pv,
         else
             CHECK_CALLED(ReportResult);
 
+        memset(pv, 'x', 100);
+        prot_read += *pcbRead = 100;
+        return S_OK;
+    }if(prot_state == 4) {
+        *pcbRead = 0;
         return S_FALSE;
     }
 
@@ -1614,7 +1758,7 @@ static HRESULT WINAPI MimeProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     bindinfo.cbSize = sizeof(bindinfo);
     hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &cbindf, &bindinfo);
     ok(hres == S_OK, "GetBindInfo failed: %08x\n", hres);
-    ok(cbindf == bindf, "cbindf = %x\n", cbindf);
+    ok(cbindf == (bindf|BINDF_FROMURLMON), "cbindf = %x, expected %x\n", cbindf, bindf);
     CHECK_CALLED(GetBindInfo);
 
     SET_EXPECT(GetBindString_URL);
@@ -1664,10 +1808,16 @@ static HRESULT WINAPI MimeProtocol_Read(IInternetProtocol *iface, void *pv,
     ok(cb != 0, "cb == 0\n");
     ok(pcbRead != NULL, "pcbRead == NULL\n");
 
-    SET_EXPECT(Read);
+    if(read_report_data)
+        SET_EXPECT(Read2);
+    else
+        SET_EXPECT(Read);
     hres = IInternetProtocol_Read(filtered_protocol, buf, sizeof(buf), &read);
     ok(hres == S_OK || hres == S_FALSE || hres == E_PENDING, "Read failed: %08x\n", hres);
-    CHECK_CALLED(Read);
+    if(read_report_data)
+        CHECK_CALLED(Read2);
+    else
+        CHECK_CALLED(Read);
 
     if(pcbRead) {
         ok(*pcbRead == 0, "*pcbRead=%d, expected 0\n", *pcbRead);
@@ -1795,6 +1945,10 @@ static IClassFactory mimefilter_cf = { &MimeFilterCFVtbl };
 #define TEST_BINDING     0x01
 #define TEST_FILTER      0x02
 #define TEST_FIRST_HTTP  0x04
+#define TEST_DIRECT_READ 0x08
+#define TEST_POST        0x10
+#define TEST_EMULATEPROT 0x20
+#define TEST_SHORT_READ  0x40
 
 static void init_test(int prot, DWORD flags)
 {
@@ -1808,11 +1962,18 @@ static void init_test(int prot, DWORD flags)
     filter_state = 0;
     ResetEvent(event_complete);
     ResetEvent(event_complete2);
+    ResetEvent(event_continue);
+    ResetEvent(event_continue_done);
     async_protocol = binding_protocol = filtered_protocol = NULL;
     filtered_sink = NULL;
     http_is_first = (flags & TEST_FIRST_HTTP) != 0;
     first_data_notif = TRUE;
     state = 0;
+    direct_read = (flags & TEST_DIRECT_READ) != 0;
+    http_post_test = (flags & TEST_POST) != 0;
+    emulate_prot = (flags & TEST_EMULATEPROT) != 0;
+    wait_for_switch = TRUE;
+    short_read = (flags & TEST_SHORT_READ) != 0;
 }
 
 static void test_priority(IInternetProtocol *protocol)
@@ -2280,46 +2441,57 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags)
         if(!http_protocol_start(url))
             return;
 
-        SET_EXPECT(ReportResult);
+        if(!direct_read)
+            SET_EXPECT(ReportResult);
         expect_hrResult = S_OK;
 
-        hres = IInternetProtocol_Read(async_protocol, buf, 1, &cb);
-        ok((hres == E_PENDING && cb==0) ||
-           (hres == S_OK && cb==1), "Read failed: %08x (%d bytes)\n", hres, cb);
-
-        WaitForSingleObject(event_complete, INFINITE);
-        if(bindf & BINDF_FROMURLMON)
-            CHECK_CALLED(Switch);
-        else
-            CHECK_CALLED(ReportData);
-        if(prot == HTTPS_TEST)
-            CLEAR_CALLED(QueryService_HttpSecurity);
-
-        while(1) {
-            if(bindf & BINDF_FROMURLMON)
+        if(direct_read) {
+            while(wait_for_switch) {
                 SET_EXPECT(Switch);
-            else
-                SET_EXPECT(ReportData);
-            hres = IInternetProtocol_Read(async_protocol, buf, sizeof(buf), &cb);
-            if(hres == E_PENDING) {
-                hres = IInternetProtocol_Read(async_protocol, buf, 1, &cb);
-                ok((hres == E_PENDING && cb==0) ||
-                   (hres == S_OK && cb==1), "Read failed: %08x (%d bytes)\n", hres, cb);
-                WaitForSingleObject(event_complete, INFINITE);
-                if(bindf & BINDF_FROMURLMON)
-                    CHECK_CALLED(Switch);
-                else
-                    CHECK_CALLED(ReportData);
-            }else {
-                if(bindf & BINDF_FROMURLMON)
-                    CHECK_NOT_CALLED(Switch);
-                else
-                    CHECK_NOT_CALLED(ReportData);
-                if(cb == 0) break;
+                WaitForSingleObject(event_continue, INFINITE);
+                CHECK_CALLED(Switch);
+                call_continue(&continue_protdata);
+                SetEvent(event_continue_done);
             }
+        }else {
+            hres = IInternetProtocol_Read(async_protocol, buf, 1, &cb);
+            ok((hres == E_PENDING && cb==0) ||
+               (hres == S_OK && cb==1), "Read failed: %08x (%d bytes)\n", hres, cb);
+
+            WaitForSingleObject(event_complete, INFINITE);
+            if(bindf & BINDF_FROMURLMON)
+                CHECK_CALLED(Switch);
+            else
+                CHECK_CALLED(ReportData);
+            if(prot == HTTPS_TEST)
+                CLEAR_CALLED(QueryService_HttpSecurity);
+
+            while(1) {
+                if(bindf & BINDF_FROMURLMON)
+                    SET_EXPECT(Switch);
+                else
+                    SET_EXPECT(ReportData);
+                hres = IInternetProtocol_Read(async_protocol, buf, sizeof(buf), &cb);
+                if(hres == E_PENDING) {
+                    hres = IInternetProtocol_Read(async_protocol, buf, 1, &cb);
+                    ok((hres == E_PENDING && cb==0) ||
+                       (hres == S_OK && cb==1), "Read failed: %08x (%d bytes)\n", hres, cb);
+                    WaitForSingleObject(event_complete, INFINITE);
+                    if(bindf & BINDF_FROMURLMON)
+                        CHECK_CALLED(Switch);
+                    else
+                        CHECK_CALLED(ReportData);
+                }else {
+                    if(bindf & BINDF_FROMURLMON)
+                        CHECK_NOT_CALLED(Switch);
+                    else
+                        CHECK_NOT_CALLED(ReportData);
+                    if(cb == 0) break;
+                }
+            }
+            ok(hres == S_FALSE, "Read failed: %08x\n", hres);
+            CHECK_CALLED(ReportResult);
         }
-        ok(hres == S_FALSE, "Read failed: %08x\n", hres);
-        CHECK_CALLED(ReportResult);
         if(prot == HTTPS_TEST)
             CLEAR_CALLED(ReportProgress_SENDINGREQUEST);
 
@@ -2354,12 +2526,14 @@ static void test_http_protocol(void)
     test_http_protocol_url(winehq_url, HTTP_TEST, 0);
 
     trace("Testing http protocol (post data)...\n");
-    http_post_test = TRUE;
     /* Without this flag we get a ReportProgress_CACHEFILENAMEAVAILABLE
      * notification with BINDVERB_POST */
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
-    test_http_protocol_url(posttest_url, HTTP_TEST, TEST_FIRST_HTTP);
-    http_post_test = FALSE;
+    test_http_protocol_url(posttest_url, HTTP_TEST, TEST_FIRST_HTTP|TEST_POST);
+
+    trace("Testing http protocol (direct read)...\n");
+    bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON;
+    test_http_protocol_url(winehq_url, HTTP_TEST, TEST_DIRECT_READ);
 }
 
 static void test_https_protocol(void)
@@ -2565,6 +2739,8 @@ static void test_CreateBinding(void)
     IInternetProtocol *protocol;
     IInternetPriority *priority;
     IInternetSession *session;
+    IWinInetHttpInfo *http_info;
+    IWinInetInfo *inet_info;
     LONG p;
     BYTE buf[1000];
     DWORD read;
@@ -2618,6 +2794,9 @@ static void test_CreateBinding(void)
     ok(hres == S_OK, "GetPriority failed: %08x\n", hres);
     ok(p == 100, "p=%d\n", p);
 
+    hres = IInternetProtocol_QueryInterface(protocol, &IID_IWinInetInfo, (void**)&inet_info);
+    ok(hres == E_NOINTERFACE, "Could not get IWinInetInfo protocol: %08x\n", hres);
+
     SET_EXPECT(QueryService_InternetProtocol);
     SET_EXPECT(CreateInstance);
     SET_EXPECT(ReportProgress_PROTOCOLCLASSID);
@@ -2633,6 +2812,21 @@ static void test_CreateBinding(void)
     CHECK_CALLED(ReportProgress_PROTOCOLCLASSID);
     CHECK_CALLED(SetPriority);
     CHECK_CALLED(Start);
+
+    SET_EXPECT(QueryInterface_IWinInetInfo);
+    hres = IInternetProtocol_QueryInterface(protocol, &IID_IWinInetInfo, (void**)&inet_info);
+    ok(hres == E_NOINTERFACE, "Could not get IWinInetInfo protocol: %08x\n", hres);
+    CHECK_CALLED(QueryInterface_IWinInetInfo);
+
+    SET_EXPECT(QueryInterface_IWinInetInfo);
+    hres = IInternetProtocol_QueryInterface(protocol, &IID_IWinInetInfo, (void**)&inet_info);
+    ok(hres == E_NOINTERFACE, "Could not get IWinInetInfo protocol: %08x\n", hres);
+    CHECK_CALLED(QueryInterface_IWinInetInfo);
+
+    SET_EXPECT(QueryInterface_IWinInetHttpInfo);
+    hres = IInternetProtocol_QueryInterface(protocol, &IID_IWinInetHttpInfo, (void**)&http_info);
+    ok(hres == E_NOINTERFACE, "Could not get IWinInetInfo protocol: %08x\n", hres);
+    CHECK_CALLED(QueryInterface_IWinInetHttpInfo);
 
     SET_EXPECT(Read);
     read = 0xdeadbeef;
@@ -2680,30 +2874,34 @@ static void test_CreateBinding(void)
     IInternetPriority_Release(priority);
     IInternetBindInfo_Release(prot_bind_info);
     IInternetProtocol_Release(protocol);
+
+    hres = IInternetSession_UnregisterNameSpace(session, &ClassFactory, wsz_test);
+    ok(hres == S_OK, "UnregisterNameSpace failed: %08x\n", hres);
+
     IInternetSession_Release(session);
 }
 
-static void test_binding(int prot, DWORD grf_pi, BOOL test_filter)
+static void test_binding(int prot, DWORD grf_pi, DWORD test_flags)
 {
     IInternetProtocol *protocol;
     IInternetSession *session;
     ULONG ref;
     HRESULT hres;
 
-    trace("Testing %s binding (grfPI %x%s)...\n", wine_dbgstr_w(protocol_names[prot]), grf_pi,
-          test_filter ? " testing MIME filter" : "");
-    init_test(prot, TEST_BINDING | (test_filter ? TEST_FILTER : 0));
     pi = grf_pi;
+
+    init_test(prot, test_flags|TEST_BINDING);
 
     hres = CoInternetGetSession(0, &session, 0);
     ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
 
-    hres = IInternetSession_RegisterNameSpace(session, &ClassFactory, &IID_NULL, protocol_names[prot], 0, NULL, 0);
-    ok(hres == S_OK, "RegisterNameSpace failed: %08x\n", hres);
+    if(test_flags & TEST_EMULATEPROT) {
+        hres = IInternetSession_RegisterNameSpace(session, &ClassFactory, &IID_NULL, protocol_names[prot], 0, NULL, 0);
+        ok(hres == S_OK, "RegisterNameSpace failed: %08x\n", hres);
+    }
 
     hres = IInternetSession_CreateBinding(session, NULL, binding_urls[prot], NULL, NULL, &protocol, 0);
     binding_protocol = protocol;
-    IInternetSession_Release(session);
     ok(hres == S_OK, "CreateBinding failed: %08x\n", hres);
     ok(protocol != NULL, "protocol == NULL\n");
 
@@ -2744,6 +2942,8 @@ static void test_binding(int prot, DWORD grf_pi, BOOL test_filter)
             }
             SetEvent(event_complete2);
         }
+        if(direct_read)
+            CHECK_CALLED(ReportData); /* Set in ReportResult */
         WaitForSingleObject(event_complete, INFINITE);
     }else {
         if(mimefilter_test)
@@ -2776,7 +2976,7 @@ static void test_binding(int prot, DWORD grf_pi, BOOL test_filter)
     hres = IInternetProtocol_Terminate(protocol, 0);
     ok(hres == S_OK, "Terminate failed: %08x\n", hres);
     if(mimefilter_test)
-        CHECK_CALLED(MimeFilter_Terminate);
+        CLEAR_CALLED(MimeFilter_Terminate);
     else
         CHECK_CALLED(Terminate);
 
@@ -2786,6 +2986,13 @@ static void test_binding(int prot, DWORD grf_pi, BOOL test_filter)
     IInternetProtocolSink_Release(binding_sink);
     ref = IInternetProtocol_Release(protocol);
     ok(!ref, "ref=%u, expected 0\n", ref);
+
+    if(test_flags & TEST_EMULATEPROT) {
+        hres = IInternetSession_UnregisterNameSpace(session, &ClassFactory, protocol_names[prot]);
+        ok(hres == S_OK, "UnregisterNameSpace failed: %08x\n", hres);
+    }
+
+    IInternetSession_Release(session);
 }
 
 static void register_filter(void)
@@ -2809,6 +3016,8 @@ START_TEST(protocol)
 
     event_complete = CreateEvent(NULL, FALSE, FALSE, NULL);
     event_complete2 = CreateEvent(NULL, FALSE, FALSE, NULL);
+    event_continue = CreateEvent(NULL, FALSE, FALSE, NULL);
+    event_continue_done = CreateEvent(NULL, FALSE, FALSE, NULL);
 
     register_filter();
 
@@ -2819,15 +3028,25 @@ START_TEST(protocol)
     test_gopher_protocol();
     test_mk_protocol();
     test_CreateBinding();
-    test_binding(FILE_TEST, 0, FALSE);
-    test_binding(HTTP_TEST, 0, FALSE);
-    test_binding(FILE_TEST, PI_MIMEVERIFICATION, FALSE);
-    test_binding(HTTP_TEST, PI_MIMEVERIFICATION, FALSE);
-    test_binding(FILE_TEST, PI_MIMEVERIFICATION, TRUE);
-    test_binding(HTTP_TEST, PI_MIMEVERIFICATION, TRUE);
+
+    bindf &= ~BINDF_FROMURLMON;
+    trace("Testing file binding (mime verification, emulate prot)...\n");
+    test_binding(FILE_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT);
+    trace("Testing http binding (mime verification, emulate prot)...\n");
+    test_binding(HTTP_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT);
+    trace("Testing http binding (mime verification, emulate prot, short read, direct read)...\n");
+    test_binding(HTTP_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT|TEST_SHORT_READ|TEST_DIRECT_READ);
+    trace("Testing file binding (mime verification, emulate prot, mime filter)...\n");
+    test_binding(FILE_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT|TEST_FILTER);
+    trace("Testing http binding (mime verification, emulate prot, mime filter)...\n");
+    test_binding(HTTP_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT|TEST_FILTER);
+    trace("Testing http binding (mime verification, emulate prot, direct read)...\n");
+    test_binding(HTTP_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT|TEST_DIRECT_READ);
 
     CloseHandle(event_complete);
     CloseHandle(event_complete2);
+    CloseHandle(event_continue);
+    CloseHandle(event_continue_done);
 
     OleUninitialize();
 }
