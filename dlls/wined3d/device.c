@@ -4036,12 +4036,12 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
     BOOL doClip;
     DWORD numTextures;
 
-    if (stream_info->elements[WINED3D_FFP_NORMAL].data)
+    if (stream_info->use_map & (1 << WINED3D_FFP_NORMAL))
     {
         WARN(" lighting state not saved yet... Some strange stuff may happen !\n");
     }
 
-    if (!stream_info->elements[WINED3D_FFP_POSITION].data)
+    if (!(stream_info->use_map & (1 << WINED3D_FFP_POSITION)))
     {
         ERR("Source has no position mask\n");
         return WINED3DERR_INVALIDCALL;
@@ -4274,7 +4274,8 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
         if (DestFVF & WINED3DFVF_DIFFUSE) {
             const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_DIFFUSE];
             const DWORD *color_d = (const DWORD *)(element->data + i * element->stride);
-            if(!color_d) {
+            if (!(stream_info->use_map & (1 << WINED3D_FFP_DIFFUSE)))
+            {
                 static BOOL warned = FALSE;
 
                 if(!warned) {
@@ -4305,7 +4306,8 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
             /* What's the color value in the feedback buffer? */
             const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_SPECULAR];
             const DWORD *color_s = (const DWORD *)(element->data + i * element->stride);
-            if(!color_s) {
+            if (!(stream_info->use_map & (1 << WINED3D_FFP_SPECULAR)))
+            {
                 static BOOL warned = FALSE;
 
                 if(!warned) {
@@ -4335,7 +4337,8 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
         for (tex_index = 0; tex_index < numTextures; tex_index++) {
             const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_TEXCOORD0 + tex_index];
             const float *tex_coord = (const float *)(element->data + i * element->stride);
-            if(!tex_coord) {
+            if (!(stream_info->use_map & (1 << (WINED3D_FFP_TEXCOORD0 + tex_index))))
+            {
                 ERR("No source texture, but destination requests one\n");
                 dest_ptr+=GET_TEXCOORD_SIZE_FROM_FVF(DestFVF, tex_index) * sizeof(float);
                 if(dest_conv) dest_conv += GET_TEXCOORD_SIZE_FROM_FVF(DestFVF, tex_index) * sizeof(float);
@@ -4397,7 +4400,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
          */
         for (i = 0; i < (sizeof(stream_info.elements) / sizeof(*stream_info.elements)); ++i)
         {
-            struct wined3d_stream_info_element *e = &stream_info.elements[i];
+            struct wined3d_stream_info_element *e;
+
+            if (!(stream_info.use_map & (1 << i))) continue;
+
+            e = &stream_info.elements[i];
             if (e->buffer_object)
             {
                 struct wined3d_buffer *vb = (struct wined3d_buffer *)This->stateBlock->streamSource[e->stream_idx];
