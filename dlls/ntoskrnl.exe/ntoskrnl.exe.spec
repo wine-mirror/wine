@@ -440,7 +440,7 @@
 @ stub IoReportDetectedDevice
 @ stub IoReportHalResourceUsage
 @ stub IoReportResourceForDetection
-@ stub IoReportResourceUsage
+@ stdcall IoReportResourceUsage(ptr ptr ptr long ptr ptr long long ptr)
 @ stub IoReportTargetDeviceChange
 @ stub IoReportTargetDeviceChangeAsynchronous
 @ stub IoRequestDeviceEject
