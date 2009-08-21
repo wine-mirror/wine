@@ -37,6 +37,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 typedef struct StreamOnMemory {
     const IStreamVtbl *lpVtbl;
     LONG ref;
+
+    BYTE *pbMemory;
+    DWORD dwMemsize;
+    DWORD dwCurPos;
 } StreamOnMemory;
 
 static HRESULT WINAPI StreamOnMemory_QueryInterface(IStream *iface,
@@ -86,8 +90,18 @@ static ULONG WINAPI StreamOnMemory_Release(IStream *iface)
 static HRESULT WINAPI StreamOnMemory_Read(IStream *iface,
     void *pv, ULONG cb, ULONG *pcbRead)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    StreamOnMemory *This = (StreamOnMemory*)iface;
+    ULONG uBytesRead;
+    TRACE("(%p)\n", This);
+
+    if (!pv) return E_INVALIDARG;
+
+    uBytesRead = min(cb, This->dwMemsize - This->dwCurPos);
+    memcpy(pv, This->pbMemory + This->dwCurPos, uBytesRead);
+    This->dwCurPos += uBytesRead;
+    if (pcbRead) *pcbRead = uBytesRead;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI StreamOnMemory_Write(IStream *iface,
@@ -400,6 +414,9 @@ static HRESULT WINAPI IWICStreamImpl_InitializeFromMemory(IWICStream *iface,
 
     pObject->lpVtbl = &StreamOnMemory_Vtbl;
     pObject->ref = 1;
+    pObject->pbMemory = pbBuffer;
+    pObject->dwMemsize = cbBufferSize;
+    pObject->dwCurPos = 0;
 
     This->pStream = (IStream*)pObject;
     return S_OK;
