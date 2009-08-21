@@ -222,6 +222,64 @@ enum typegen_type typegen_detect_type(const type_t *type, const attr_list_t *att
     return TGT_INVALID;
 }
 
+static type_t *get_user_type(const type_t *t, const char **pname);
+
+static int type_contains_iface(const type_t *type)
+{
+  enum typegen_type typegen_type;
+  var_list_t *fields;
+  const var_t *field;
+
+  typegen_type = typegen_detect_type(type, type->attrs, TDT_IGNORE_STRINGS);
+
+  switch(typegen_type)
+  {
+  case TGT_USER_TYPE:
+    return type_contains_iface(get_user_type(type, NULL));
+
+  case TGT_BASIC:
+  case TGT_ENUM:
+    return FALSE;
+
+  case TGT_POINTER:
+    return type_contains_iface(type_pointer_get_ref(type));
+
+  case TGT_ARRAY:
+    return type_contains_iface(type_array_get_element(type));
+
+  case TGT_IFACE_POINTER:
+    return TRUE;
+
+  case TGT_STRUCT:
+    fields = type_struct_get_fields(type);
+    if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
+    {
+      if(type_contains_iface(field->type))
+        return TRUE;
+    }
+    return FALSE;
+
+  case TGT_UNION:
+    fields = type_union_get_cases(type);
+    if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
+    {
+      if(field->type && type_contains_iface(field->type))
+        return TRUE;
+    }
+    return FALSE;
+
+    case TGT_STRING:
+        /* shouldn't get here because of TDT_IGNORE_STRINGS above. fall through */
+    case TGT_INVALID:
+    case TGT_CTXT_HANDLE:
+    case TGT_CTXT_HANDLE_POINTER:
+        /* checking after parsing should mean that we don't get here. if we do,
+         * it's a checker bug */
+      assert(0);
+  }
+  return FALSE;
+}
+
 unsigned char get_struct_fc(const type_t *type)
 {
   int has_pointer = 0;
@@ -280,8 +338,10 @@ unsigned char get_struct_fc(const type_t *type)
         if (get_enum_fc(t) == RPC_FC_ENUM16)
             return RPC_FC_BOGUS_STRUCT;
         break;
-    case TGT_POINTER:
     case TGT_ARRAY:
+        if(type_contains_iface(type_array_get_element(t)))
+            return RPC_FC_BOGUS_STRUCT;
+    case TGT_POINTER:
         if (get_pointer_fc(t, field->attrs, FALSE) == RPC_FC_RP || pointer_size != 4)
             return RPC_FC_BOGUS_STRUCT;
         has_pointer = 1;
