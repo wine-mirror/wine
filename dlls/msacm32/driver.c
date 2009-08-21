@@ -305,6 +305,8 @@ MMRESULT WINAPI acmDriverDetailsW(HACMDRIVERID hadid, PACMDRIVERDETAILSW padd, D
         paddw.cbStruct = min(padd->cbStruct, sizeof(*padd));
         memcpy(padd, &paddw, paddw.cbStruct);
     }
+    else if (mmr == MMSYSERR_NODRIVER)
+        return MMSYSERR_NOTSUPPORTED;
 
     return mmr;
 }
