@@ -56,11 +56,7 @@ static void state_nogl(DWORD state, IWineD3DStateBlockImpl *stateblock, struct w
 
 static void state_undefined(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    /* Print a WARN, this allows the stateblock code to loop over all states to generate a display
-     * list without causing confusing terminal output. Deliberately no special debug name here
-     * because its undefined.
-     */
-    WARN("undefined state %d\n", state);
+    ERR("Undefined state.\n");
 }
 
 static void state_fillmode(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)

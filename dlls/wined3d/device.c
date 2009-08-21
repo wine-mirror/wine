@@ -7686,7 +7686,6 @@ void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) {
     BYTE shift;
     UINT i;
 
-    if(!rep) return;
     for(i = 0; i < This->numContexts; i++) {
         context = This->contexts[i];
         if(isStateDirty(context, rep)) continue;

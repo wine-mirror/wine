@@ -794,7 +794,7 @@ static void Context_MarkStateDirty(struct wined3d_context *context, DWORD state,
     DWORD idx;
     BYTE shift;
 
-    if(!rep || isStateDirty(context, rep)) return;
+    if (isStateDirty(context, rep)) return;
 
     context->dirtyArray[context->numDirtyEntries++] = rep;
     idx = rep >> 5;
@@ -851,7 +851,8 @@ static struct wined3d_context *AddContextToArray(IWineD3DDeviceImpl *This,
     /* Mark all states dirty to force a proper initialization of the states on the first use of the context
      */
     for(state = 0; state <= STATE_HIGHEST; state++) {
-        Context_MarkStateDirty(This->contexts[This->numContexts], state, This->StateTable);
+        if (This->StateTable[state].representative)
+            Context_MarkStateDirty(This->contexts[This->numContexts], state, This->StateTable);
     }
 
     This->numContexts++;
