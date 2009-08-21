@@ -941,10 +941,11 @@ do {                                          \
 } while(0)
 
 /* Trace vector and strided data information */
-#define TRACE_VECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w);
-#define TRACE_STRIDED(si, name) TRACE( #name "=(data:%p, stride:%d, format:%#x, vbo %d, stream %u)\n", \
+#define TRACE_VECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w)
+#define TRACE_STRIDED(si, name) do { if (si->use_map & (1 << name)) \
+        TRACE( #name "=(data:%p, stride:%d, format:%#x, vbo %d, stream %u)\n", \
         si->elements[name].data, si->elements[name].stride, si->elements[name].format_desc->format, \
-        si->elements[name].buffer_object, si->elements[name].stream_idx);
+        si->elements[name].buffer_object, si->elements[name].stream_idx); } while(0)
 
 /* Defines used for optimizations */
 
