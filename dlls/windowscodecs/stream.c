@@ -107,8 +107,19 @@ static HRESULT WINAPI StreamOnMemory_Read(IStream *iface,
 static HRESULT WINAPI StreamOnMemory_Write(IStream *iface,
     void const *pv, ULONG cb, ULONG *pcbWritten)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    StreamOnMemory *This = (StreamOnMemory*)iface;
+    TRACE("(%p)\n", This);
+
+    if (!pv) return E_INVALIDARG;
+
+    if (cb > This->dwMemsize - This->dwCurPos) return STG_E_MEDIUMFULL;
+    if (cb) {
+        memcpy(This->pbMemory + This->dwCurPos, pv, cb);
+        This->dwCurPos += cb;
+    }
+    if (pcbWritten) *pcbWritten = cb;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI StreamOnMemory_Seek(IStream *iface,
