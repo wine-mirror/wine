@@ -555,6 +555,8 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
         if (!pad->hDrvr)
         {
             ret = adod.dwError;
+            if (ret == MMSYSERR_NOERROR)
+                ret = MMSYSERR_NODRIVER;
             goto gotError;
         }
     }
@@ -578,6 +580,8 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
         if (!pad->pLocalDrvrInst)
         {
             ret = adod.dwError;
+            if (ret == MMSYSERR_NOERROR)
+                ret = MMSYSERR_NODRIVER;
             goto gotError;
         }
     }
