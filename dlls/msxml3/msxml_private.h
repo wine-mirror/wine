@@ -39,7 +39,6 @@
 extern IUnknown         *create_domdoc( xmlNodePtr document );
 extern IUnknown         *create_xmldoc( void );
 extern IXMLDOMNode      *create_node( xmlNodePtr node );
-extern IUnknown         *create_basic_node( xmlNodePtr node, IUnknown *pUnkOuter );
 extern IUnknown         *create_element( xmlNodePtr element, IUnknown *pUnkOuter );
 extern IUnknown         *create_attribute( xmlNodePtr attribute );
 extern IUnknown         *create_text( xmlNodePtr text );
@@ -83,6 +82,13 @@ static inline xmlnode *impl_from_IXMLDOMNode( IXMLDOMNode *iface )
 {
     return (xmlnode *)((char*)iface - FIELD_OFFSET(xmlnode, lpVtbl));
 }
+
+static inline IXMLDOMNode *IXMLDOMNode_from_impl(xmlnode *This)
+{
+    return (IXMLDOMNode*)&This->lpVtbl;
+}
+
+extern xmlnode *create_basic_node(xmlNodePtr,IUnknown*);
 
 extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument2 **document);
 

@@ -1542,7 +1542,7 @@ static const struct IUnknownVtbl internal_unk_vtbl =
     Internal_Release
 };
 
-IUnknown *create_basic_node( xmlNodePtr node, IUnknown *pUnkOuter )
+xmlnode *create_basic_node( xmlNodePtr node, IUnknown *pUnkOuter )
 {
     xmlnode *This;
 
@@ -1564,7 +1564,7 @@ IUnknown *create_basic_node( xmlNodePtr node, IUnknown *pUnkOuter )
     This->ref = 1;
     This->node = node;
 
-    return (IUnknown*)&This->lpInternalUnkVtbl;
+    return This;
 }
 
 IXMLDOMNode *create_node( xmlNodePtr node )
@@ -1599,7 +1599,7 @@ IXMLDOMNode *create_node( xmlNodePtr node )
         break;
     default:
         FIXME("only creating basic node for type %d\n", node->type);
-        pUnk = create_basic_node( node, NULL );
+        pUnk = (IUnknown*)&create_basic_node( node, NULL )->lpInternalUnkVtbl;
     }
 
     hr = IUnknown_QueryInterface(pUnk, &IID_IXMLDOMNode, (LPVOID*)&ret);

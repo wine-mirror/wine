@@ -2198,7 +2198,7 @@ static dispex_static_data_t domdoc_dispex = {
 HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument2 **document)
 {
     domdoc *doc;
-    HRESULT hr;
+    xmlnode *node;
 
     doc = HeapAlloc( GetProcessHeap(), 0, sizeof (*doc) );
     if( !doc )
@@ -2222,25 +2222,17 @@ HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument2 **docu
     doc->safeopt = 0;
     doc->bsc = NULL;
 
-    doc->node_unk = create_basic_node( (xmlNodePtr)xmldoc, (IUnknown*)&doc->lpVtbl );
-    if(!doc->node_unk)
+    node = create_basic_node( (xmlNodePtr)xmldoc, (IUnknown*)&doc->lpVtbl );
+    if(!node)
     {
         HeapFree(GetProcessHeap(), 0, doc);
         return E_FAIL;
     }
 
-    hr = IUnknown_QueryInterface(doc->node_unk, &IID_IXMLDOMNode, (LPVOID*)&doc->node);
-    if(FAILED(hr))
-    {
-        IUnknown_Release(doc->node_unk);
-        HeapFree( GetProcessHeap(), 0, doc );
-        return E_FAIL;
-    }
+    doc->node_unk = (IUnknown*)&node->lpInternalUnkVtbl;
+    doc->node = IXMLDOMNode_from_impl(node);
 
     init_dispex(&doc->dispex, (IUnknown*)&doc->lpVtbl, &domdoc_dispex);
-
-    /* The ref on doc->node is actually looped back into this object, so release it */
-    IXMLDOMNode_Release(doc->node);
 
     *document = (IXMLDOMDocument2*)&doc->lpVtbl;
 

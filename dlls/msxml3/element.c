@@ -790,7 +790,7 @@ static const struct IUnknownVtbl internal_unk_vtbl =
 IUnknown* create_element( xmlNodePtr element, IUnknown *pUnkOuter )
 {
     domelem *This;
-    HRESULT hr;
+    xmlnode *node;
 
     This = HeapAlloc( GetProcessHeap(), 0, sizeof *This );
     if ( !This )
@@ -805,22 +805,15 @@ IUnknown* create_element( xmlNodePtr element, IUnknown *pUnkOuter )
     else
         This->pUnkOuter = (IUnknown *)&This->lpInternalUnkVtbl;
 
-    This->node_unk = create_basic_node( element, (IUnknown*)&This->lpVtbl );
-    if(!This->node_unk)
+    node = create_basic_node( element, (IUnknown*)&This->lpVtbl );
+    if(!node)
     {
         HeapFree(GetProcessHeap(), 0, This);
         return NULL;
     }
 
-    hr = IUnknown_QueryInterface(This->node_unk, &IID_IXMLDOMNode, (LPVOID*)&This->node);
-    if(FAILED(hr))
-    {
-        IUnknown_Release(This->node_unk);
-        HeapFree( GetProcessHeap(), 0, This );
-        return NULL;
-    }
-    /* The ref on This->node is actually looped back into this object, so release it */
-    IXMLDOMNode_Release(This->node);
+    This->node_unk = (IUnknown*)&node->lpInternalUnkVtbl;
+    This->node = IXMLDOMNode_from_impl(node);
 
     return (IUnknown*) &This->lpInternalUnkVtbl;
 }
