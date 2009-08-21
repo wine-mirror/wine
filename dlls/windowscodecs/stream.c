@@ -194,8 +194,16 @@ static HRESULT WINAPI StreamOnMemory_UnlockRegion(IStream *iface,
 static HRESULT WINAPI StreamOnMemory_Stat(IStream *iface,
     STATSTG *pstatstg, DWORD grfStatFlag)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    StreamOnMemory *This = (StreamOnMemory*)iface;
+    TRACE("(%p)\n", This);
+
+    if (!pstatstg) return E_INVALIDARG;
+
+    ZeroMemory(pstatstg, sizeof(STATSTG));
+    pstatstg->type = STGTY_STREAM;
+    pstatstg->cbSize.QuadPart = This->dwMemsize;
+
+    return S_OK;
 }
 
 /* Clone isn't implemented in the native windowscodecs DLL either */
