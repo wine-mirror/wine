@@ -1476,12 +1476,14 @@ static void write_user_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
     unsigned int align = 0, ualign = 0;
     const char *name = NULL;
     type_t *utype = get_user_type(type, &name);
-    unsigned int usize = user_type_has_variable_size(utype) ? 0 : type_memsize(utype, &ualign);
+    unsigned int usize = type_memsize(utype, &ualign);
     unsigned int size = type_memsize(type, &align);
     unsigned short funoff = user_type_offset(name);
     short reloff;
 
     guard_rec(type);
+
+    if(user_type_has_variable_size(utype)) usize = 0;
 
     if (type_get_type(utype) == TYPE_BASIC ||
         type_get_type(utype) == TYPE_ENUM)
@@ -1518,7 +1520,7 @@ static void write_user_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
     print_start_tfs_comment(file, type, start);
     print_file(file, 2, "0x%x,\t/* FC_USER_MARSHAL */\n", RPC_FC_USER_MARSHAL);
     print_file(file, 2, "0x%x,\t/* Alignment= %d, Flags= %02x */\n",
-               flags | (align - 1), align - 1, flags);
+               flags | (ualign - 1), ualign - 1, flags);
     print_file(file, 2, "NdrFcShort(0x%hx),\t/* Function offset= %hu */\n", funoff, funoff);
     print_file(file, 2, "NdrFcShort(0x%hx),\t/* %u */\n", size, size);
     print_file(file, 2, "NdrFcShort(0x%hx),\t/* %u */\n", usize, usize);
