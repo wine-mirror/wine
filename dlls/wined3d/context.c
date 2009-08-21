@@ -1849,7 +1849,7 @@ retry:
 
     if (context->render_offscreen != old_render_offscreen)
     {
-        Context_MarkStateDirty(context, WINED3DTS_PROJECTION, StateTable);
+        Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
         Context_MarkStateDirty(context, STATE_VDECL, StateTable);
         Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
         Context_MarkStateDirty(context, STATE_SCISSORRECT, StateTable);
