@@ -125,8 +125,23 @@ static HRESULT WINAPI StreamOnMemory_Write(IStream *iface,
 static HRESULT WINAPI StreamOnMemory_Seek(IStream *iface,
     LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    StreamOnMemory *This = (StreamOnMemory*)iface;
+    LARGE_INTEGER NewPosition;
+    TRACE("(%p)\n", This);
+
+    if (dlibMove.QuadPart > 0xFFFFFFFF) return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+    if (dwOrigin == STREAM_SEEK_SET) NewPosition.QuadPart = dlibMove.QuadPart;
+    else if (dwOrigin == STREAM_SEEK_CUR) NewPosition.QuadPart = This->dwCurPos + dlibMove.QuadPart;
+    else if (dwOrigin == STREAM_SEEK_END) NewPosition.QuadPart = This->dwMemsize + dlibMove.QuadPart;
+    else return E_INVALIDARG;
+
+    if (NewPosition.QuadPart > This->dwMemsize) return E_INVALIDARG;
+    if (NewPosition.QuadPart < 0) return E_INVALIDARG;
+    This->dwCurPos = NewPosition.LowPart;
+
+    if(plibNewPosition) plibNewPosition->QuadPart = This->dwCurPos;
+    return S_OK;
 }
 
 /* SetSize isn't implemented in the native windowscodecs DLL either */
