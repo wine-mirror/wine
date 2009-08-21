@@ -296,12 +296,38 @@ static BOOL load_wine_gecko(PRUnichar *gre_path)
     return ret;
 }
 
+static void set_bool_pref(nsIPrefBranch *pref, const char *pref_name, BOOL val)
+{
+    nsresult nsres;
+
+    nsres = nsIPrefBranch_SetBoolPref(pref, pref_name, val);
+    if(NS_FAILED(nsres))
+        ERR("Could not set pref %s\n", debugstr_a(pref_name));
+}
+
+static void set_int_pref(nsIPrefBranch *pref, const char *pref_name, int val)
+{
+    nsresult nsres;
+
+    nsres = nsIPrefBranch_SetIntPref(pref, pref_name, val);
+    if(NS_FAILED(nsres))
+        ERR("Could not set pref %s\n", debugstr_a(pref_name));
+}
+
+static void set_string_pref(nsIPrefBranch *pref, const char *pref_name, const char *val)
+{
+    nsresult nsres;
+
+    nsres = nsIPrefBranch_SetCharPref(pref, pref_name, val);
+    if(NS_FAILED(nsres))
+        ERR("Could not set pref %s\n", debugstr_a(pref_name));
+}
+
 static void set_lang(nsIPrefBranch *pref)
 {
     char langs[100];
     DWORD res, size, type;
     HKEY hkey;
-    nsresult nsres;
 
     static const WCHAR international_keyW[] =
         {'S','o','f','t','w','a','r','e',
@@ -321,9 +347,7 @@ static void set_lang(nsIPrefBranch *pref)
 
     TRACE("Setting lang %s\n", debugstr_a(langs));
 
-    nsres = nsIPrefBranch_SetCharPref(pref, "intl.accept_languages", langs);
-    if(NS_FAILED(nsres))
-        ERR("SetCharPref failed: %08x\n", nsres);
+    set_string_pref(pref, "intl.accept_languages", langs);
 }
 
 static void set_proxy(nsIPrefBranch *pref)
@@ -333,7 +357,6 @@ static void set_proxy(nsIPrefBranch *pref)
     int proxy_port_num;
     DWORD enabled = 0, res, size, type;
     HKEY hkey;
-    nsresult nsres;
 
     static const WCHAR proxy_keyW[] =
         {'S','o','f','t','w','a','r','e',
@@ -368,39 +391,12 @@ static void set_proxy(nsIPrefBranch *pref)
     proxy_port_num = atoi(proxy_port + 1);
     TRACE("Setting proxy to %s, port %d\n", debugstr_a(proxy), proxy_port_num);
 
-    nsres = nsIPrefBranch_SetIntPref(pref, "network.proxy.type", 1);
-    if(NS_FAILED(nsres))
-        ERR("SetIntPref network.proxy.type failed: %08x\n", nsres);
-    nsres = nsIPrefBranch_SetCharPref(pref, "network.proxy.http", proxy);
-    if(NS_FAILED(nsres))
-        ERR("SetCharPref network.proxy.http failed: %08x\n", nsres);
-    nsres = nsIPrefBranch_SetIntPref(pref, "network.proxy.http_port", proxy_port_num);
-    if(NS_FAILED(nsres))
-        ERR("SetIntPref network.proxy.http_port failed: %08x\n", nsres);
-    nsres = nsIPrefBranch_SetCharPref(pref, "network.proxy.ssl", proxy);
-    if(NS_FAILED(nsres))
-        ERR("SetCharPref network.proxy.ssl failed: %08x\n", nsres);
-    nsres = nsIPrefBranch_SetIntPref(pref, "network.proxy.ssl_port", proxy_port_num);
-    if(NS_FAILED(nsres))
-        ERR("SetIntPref network.proxy.ssl_port failed: %08x\n", nsres);
-}
+    set_string_pref(pref, "network.proxy.http", proxy);
+    set_string_pref(pref, "network.proxy.ssl", proxy);
 
-static void set_bool_pref(nsIPrefBranch *pref, const char *pref_name, BOOL val)
-{
-    nsresult nsres;
-
-    nsres = nsIPrefBranch_SetBoolPref(pref, pref_name, val);
-    if(NS_FAILED(nsres))
-        ERR("Could not set pref %s\n", debugstr_a(pref_name));
-}
-
-static void set_int_pref(nsIPrefBranch *pref, const char *pref_name, int val)
-{
-    nsresult nsres;
-
-    nsres = nsIPrefBranch_SetIntPref(pref, pref_name, val);
-    if(NS_FAILED(nsres))
-        ERR("Could not set pref %s\n", debugstr_a(pref_name));
+    set_int_pref(pref, "network.proxy.type", 1);
+    set_int_pref(pref, "network.proxy.http_port", proxy_port_num);
+    set_int_pref(pref, "network.proxy.ssl_port", proxy_port_num);
 }
 
 static void set_preferences(void)
