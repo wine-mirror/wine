@@ -3563,7 +3563,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
   {
     resRead = SmallBlockChainStream_ReadAt(*ppsbChain,
                                            offset,
-                                           This->smallBlockSize,
+                                           min(This->smallBlockSize, size.u.LowPart - offset.u.LowPart),
                                            buffer,
                                            &cbRead);
     if (FAILED(resRead))
@@ -3582,7 +3582,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
         if (FAILED(resWrite))
             break;
 
-        offset.u.LowPart += This->smallBlockSize;
+        offset.u.LowPart += cbRead;
     }
   } while (cbTotalRead.QuadPart < size.QuadPart);
   HeapFree(GetProcessHeap(),0,buffer);
@@ -3663,7 +3663,8 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
     do
     {
         resRead = BlockChainStream_ReadAt(*ppbbChain, offset,
-                This->bigBlockSize, buffer, &cbRead);
+                min(This->bigBlockSize, size.u.LowPart - offset.u.LowPart),
+                buffer, &cbRead);
 
         if(FAILED(resRead))
             break;
@@ -3678,7 +3679,7 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
             if(FAILED(resWrite))
                 break;
 
-            offset.u.LowPart += This->bigBlockSize;
+            offset.u.LowPart += cbRead;
         }
     }while(cbTotalRead.QuadPart < size.QuadPart);
     HeapFree(GetProcessHeap(), 0, buffer);
