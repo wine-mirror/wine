@@ -29,6 +29,166 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 /******************************************
+ * StreamOnMemory implementation
+ *
+ * Used by IWICStream_InitializeFromMemory
+ *
+ */
+typedef struct StreamOnMemory {
+    const IStreamVtbl *lpVtbl;
+    LONG ref;
+} StreamOnMemory;
+
+static HRESULT WINAPI StreamOnMemory_QueryInterface(IStream *iface,
+    REFIID iid, void **ppv)
+{
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) || IsEqualIID(&IID_IStream, iid) ||
+        IsEqualIID(&IID_ISequentialStream, iid))
+    {
+        *ppv = iface;
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+}
+
+static ULONG WINAPI StreamOnMemory_AddRef(IStream *iface)
+{
+    StreamOnMemory *This = (StreamOnMemory*)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI StreamOnMemory_Release(IStream *iface)
+{
+    StreamOnMemory *This = (StreamOnMemory*)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (ref == 0) {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI StreamOnMemory_Read(IStream *iface,
+    void *pv, ULONG cb, ULONG *pcbRead)
+{
+    FIXME("(%p): stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI StreamOnMemory_Write(IStream *iface,
+    void const *pv, ULONG cb, ULONG *pcbWritten)
+{
+    FIXME("(%p): stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI StreamOnMemory_Seek(IStream *iface,
+    LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
+{
+    FIXME("(%p): stub\n", iface);
+    return E_NOTIMPL;
+}
+
+/* SetSize isn't implemented in the native windowscodecs DLL either */
+static HRESULT WINAPI StreamOnMemory_SetSize(IStream *iface,
+    ULARGE_INTEGER libNewSize)
+{
+    TRACE("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+/* CopyTo isn't implemented in the native windowscodecs DLL either */
+static HRESULT WINAPI StreamOnMemory_CopyTo(IStream *iface,
+    IStream *pstm, ULARGE_INTEGER cb, ULARGE_INTEGER *pcbRead, ULARGE_INTEGER *pcbWritten)
+{
+    TRACE("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+/* Commit isn't implemented in the native windowscodecs DLL either */
+static HRESULT WINAPI StreamOnMemory_Commit(IStream *iface,
+    DWORD grfCommitFlags)
+{
+    TRACE("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+/* Revert isn't implemented in the native windowscodecs DLL either */
+static HRESULT WINAPI StreamOnMemory_Revert(IStream *iface)
+{
+    TRACE("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+/* LockRegion isn't implemented in the native windowscodecs DLL either */
+static HRESULT WINAPI StreamOnMemory_LockRegion(IStream *iface,
+    ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+{
+    TRACE("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+/* UnlockRegion isn't implemented in the native windowscodecs DLL either */
+static HRESULT WINAPI StreamOnMemory_UnlockRegion(IStream *iface,
+    ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+{
+    TRACE("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI StreamOnMemory_Stat(IStream *iface,
+    STATSTG *pstatstg, DWORD grfStatFlag)
+{
+    FIXME("(%p): stub\n", iface);
+    return E_NOTIMPL;
+}
+
+/* Clone isn't implemented in the native windowscodecs DLL either */
+static HRESULT WINAPI StreamOnMemory_Clone(IStream *iface,
+    IStream **ppstm)
+{
+    TRACE("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+
+const IStreamVtbl StreamOnMemory_Vtbl =
+{
+    /*** IUnknown methods ***/
+    StreamOnMemory_QueryInterface,
+    StreamOnMemory_AddRef,
+    StreamOnMemory_Release,
+    /*** ISequentialStream methods ***/
+    StreamOnMemory_Read,
+    StreamOnMemory_Write,
+    /*** IStream methods ***/
+    StreamOnMemory_Seek,
+    StreamOnMemory_SetSize,
+    StreamOnMemory_CopyTo,
+    StreamOnMemory_Commit,
+    StreamOnMemory_Revert,
+    StreamOnMemory_LockRegion,
+    StreamOnMemory_UnlockRegion,
+    StreamOnMemory_Stat,
+    StreamOnMemory_Clone,
+};
+
+/******************************************
  * IWICStream implementation
  *
  */
@@ -209,11 +369,40 @@ static HRESULT WINAPI IWICStreamImpl_InitializeFromFilename(IWICStream *iface,
     return E_NOTIMPL;
 }
 
+/******************************************
+ * IWICStream_InitializeFromMemory
+ *
+ * Initializes the internal IStream object to retrieve its data from a memory chunk.
+ *
+ * PARAMS
+ *   pbBuffer     [I] pointer to the memory chunk
+ *   cbBufferSize [I] number of bytes to use from the memory chunk
+ *
+ * RETURNS
+ *   SUCCESS: S_OK
+ *   FAILURE: E_INVALIDARG, if pbBuffer is NULL
+ *            E_OUTOFMEMORY, if we run out of memory
+ *            WINCODEC_ERR_WRONGSTATE, if the IStream object has already been initialized before
+ *
+ */
 static HRESULT WINAPI IWICStreamImpl_InitializeFromMemory(IWICStream *iface,
     BYTE *pbBuffer, DWORD cbBufferSize)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    StreamOnMemory *pObject;
+    TRACE("(%p,%p)\n", iface, pbBuffer);
+
+    if (!pbBuffer) return E_INVALIDARG;
+    if (This->pStream) return WINCODEC_ERR_WRONGSTATE;
+
+    pObject = HeapAlloc(GetProcessHeap(), 0, sizeof(StreamOnMemory));
+    if (!pObject) return E_OUTOFMEMORY;
+
+    pObject->lpVtbl = &StreamOnMemory_Vtbl;
+    pObject->ref = 1;
+
+    This->pStream = (IStream*)pObject;
+    return S_OK;
 }
 
 static HRESULT WINAPI IWICStreamImpl_InitializeFromIStreamRegion(IWICStream *iface,
