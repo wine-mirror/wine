@@ -314,17 +314,11 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
         if(post_data_stream)
             nsIInputStream_Release(post_data_stream);
 
-        if(NS_SUCCEEDED(nsres)) {
-            /* FIXME: don't return here (URL Moniker needs to be good enough) */
-
+        if(NS_FAILED(nsres)) {
+            WARN("LoadURI failed: %08x\n", nsres);
             IUnknown_Release((IUnknown*)bscallback);
             CoTaskMemFree(url);
-
-            if(bind_complete)
-                *bind_complete = TRUE;
-            return S_OK;
-        }else if(nsres != WINE_NS_LOAD_FROM_MONIKER) {
-            WARN("LoadURI failed: %08x\n", nsres);
+            return E_FAIL;
         }
     }
 

@@ -608,37 +608,6 @@ static nsresult NSAPI nsChannel_Open(nsIHttpChannel *iface, nsIInputStream **_re
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static BOOL do_load_from_moniker_hack(nsChannel *This)
-{
-    nsACString scheme_str;
-    nsresult nsres;
-    BOOL ret = TRUE;
-
-    /* 
-     * We should always load the page from IMoniker, but Wine is not yet
-     * ready for this. This function is a heuristic, that decides which
-     * way of loading is better (Gecko implementation or IMoniker). The
-     * aim is to always return TRUE.
-     */
-
-    /* Load from moniker if there is no Gecko channel available */
-    if(!This->channel)
-        return TRUE;
-
-    nsACString_Init(&scheme_str, NULL);
-    nsres = nsIWineURI_GetScheme(This->uri, &scheme_str);
-
-    if(NS_SUCCEEDED(nsres)) {
-        const char *scheme;
-
-        nsACString_GetData(&scheme_str, &scheme);
-        ret = !strcmp(scheme, "wine") || !strcmp(scheme, "about");
-    }
-
-    nsACString_Finish(&scheme_str);
-    return ret;
-}
-
 static HRESULT create_mon_for_nschannel(nsChannel *channel, IMoniker **mon)
 {
     nsIWineURI *wine_uri;
@@ -732,8 +701,7 @@ static nsresult async_open_doc_uri(nsChannel *This, NSContainer *container,
             This->content_type = heap_strdupWtoA(container->doc->mime);
         }
 
-        if(do_load_from_moniker_hack(This))
-            return WINE_NS_LOAD_FROM_MONIKER;
+        return NS_OK;
     }else  {
         BOOL cont = before_async_open(This, container);
 
@@ -764,22 +732,8 @@ static nsresult async_open(nsChannel *This, NSContainer *container, nsIStreamLis
 {
     nsChannelBSC *bscallback;
     IMoniker *mon = NULL;
-    nsresult nsres;
     task_t *task;
     HRESULT hres;
-
-    if(This->channel) {
-        nsres = nsIChannel_AsyncOpen(This->channel, listener, context);
-
-        if(mon)
-            IMoniker_Release(mon);
-
-        if(NS_FAILED(nsres) && (This->load_flags & LOAD_INITIAL_DOCUMENT_URI))
-            return WINE_NS_LOAD_FROM_MONIKER;
-        return nsres;
-    }
-
-    TRACE("channel == NULL\n");
 
     hres = create_mon_for_nschannel(This, &mon);
     if(FAILED(hres))

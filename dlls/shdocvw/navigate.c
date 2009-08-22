@@ -513,46 +513,6 @@ static BOOL try_application_url(LPCWSTR url)
     return ShellExecuteExW(&exec_info);
 }
 
-static HRESULT http_load_hack(DocHost *This, IMoniker *mon, IBindStatusCallback *callback, IBindCtx *bindctx)
-{
-    IPersistMoniker *persist;
-    IUnknown *doc;
-    HRESULT hres;
-
-    /*
-     * FIXME:
-     * We should use URLMoniker's BindToObject instead creating HTMLDocument here.
-     * This should be fixed when mshtml.dll and urlmon.dll will be good enough.
-     */
-
-    hres = CoCreateInstance(&CLSID_HTMLDocument, NULL,
-                            CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
-                            &IID_IUnknown, (void**)&doc);
-
-    if(FAILED(hres)) {
-        ERR("Could not create HTMLDocument: %08x\n", hres);
-        return hres;
-    }
-
-    hres = IUnknown_QueryInterface(doc, &IID_IPersistMoniker, (void**)&persist);
-    if(FAILED(hres)) {
-        IUnknown_Release(doc);
-        return hres;
-    }
-
-    hres = IPersistMoniker_Load(persist, FALSE, mon, bindctx, 0);
-    IPersistMoniker_Release(persist);
-
-    if(SUCCEEDED(hres))
-        hres = IBindStatusCallback_OnObjectAvailable(callback, &IID_IUnknown, doc);
-    else
-        WARN("Load failed: %08x\n", hres);
-
-    IUnknown_Release(doc);
-
-    return IBindStatusCallback_OnStopBinding(callback, hres, NULL);
-}
-
 static HRESULT create_moniker(LPCWSTR url, IMoniker **mon)
 {
     WCHAR new_url[INTERNET_MAX_URL_LENGTH];
@@ -585,13 +545,8 @@ static HRESULT create_moniker(LPCWSTR url, IMoniker **mon)
 static HRESULT bind_to_object(DocHost *This, IMoniker *mon, LPCWSTR url, IBindCtx *bindctx,
                               IBindStatusCallback *callback)
 {
-    WCHAR schema[30];
-    DWORD schema_len;
+    IUnknown *unk = NULL;
     HRESULT hres;
-
-    static const WCHAR httpW[] = {'h','t','t','p',0};
-    static const WCHAR httpsW[] = {'h','t','t','p','s',0};
-    static const WCHAR ftpW[]= {'f','t','p',0};
 
     if(mon) {
         IMoniker_AddRef(mon);
@@ -609,24 +564,15 @@ static HRESULT bind_to_object(DocHost *This, IMoniker *mon, LPCWSTR url, IBindCt
     IBindCtx_RegisterObjectParam(bindctx, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM,
                                  (IUnknown*)CLIENTSITE(This));
 
-    hres = CoInternetParseUrl(This->url, PARSE_SCHEMA, 0, schema, sizeof(schema)/sizeof(schema[0]),
-            &schema_len, 0);
-    if(SUCCEEDED(hres) &&
-       (!strcmpW(schema, httpW) || !strcmpW(schema, httpsW) || !strcmpW(schema, ftpW))) {
-        hres = http_load_hack(This, mon, callback, bindctx);
+    hres = IMoniker_BindToObject(mon, bindctx, NULL, &IID_IUnknown, (void**)&unk);
+    if(SUCCEEDED(hres)) {
+        hres = S_OK;
+        if(unk)
+            IUnknown_Release(unk);
+    }else if(try_application_url(url)) {
+        hres = S_OK;
     }else {
-        IUnknown *unk = NULL;
-
-        hres = IMoniker_BindToObject(mon, bindctx, NULL, &IID_IUnknown, (void**)&unk);
-        if(SUCCEEDED(hres)) {
-            hres = S_OK;
-            if(unk)
-                IUnknown_Release(unk);
-        }else if(try_application_url(url)) {
-            hres = S_OK;
-        }else {
-            FIXME("BindToObject failed: %08x\n", hres);
-        }
+        FIXME("BindToObject failed: %08x\n", hres);
     }
 
     IMoniker_Release(mon);

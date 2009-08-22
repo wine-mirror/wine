@@ -2551,16 +2551,12 @@ static void test_BindToObject(int protocol, BOOL emul)
         CHECK_CALLED(Obj_OnStopBinding);
     }
 
-    if(test_protocol != HTTP_TEST || test_protocol == HTTPS_TEST || emul || urls[test_protocol] == SHORT_RESPONSE_URL) {
+    if(test_protocol != HTTP_TEST || emul || urls[test_protocol] == SHORT_RESPONSE_URL || !(bindf & BINDF_ASYNCHRONOUS)) {
         ok(IMoniker_Release(mon) == 0, "mon should be destroyed here\n");
         ok(IBindCtx_Release(bctx) == 0, "bctx should be destroyed here\n");
     }else {
         todo_wine ok(IMoniker_Release(mon) == 0, "mon should be destroyed here\n");
-
-        if(bindf & BINDF_ASYNCHRONOUS)
-            IBindCtx_Release(bctx);
-        else
-            todo_wine ok(IBindCtx_Release(bctx) == 0, "bctx should be destroyed here\n");
+        IBindCtx_Release(bctx);
     }
 
     if(emul)
