@@ -454,6 +454,24 @@ interface nsIHttpChannel : nsIChannel
 
 [
     object,
+    uuid(0eb66361-faaa-4e52-8c7e-6c25f11f8e3c),
+    local
+    /* NOT_FROZEN */
+]
+interface nsIHttpChannelInternal : nsISupports
+{
+    nsresult GetDocumentURI(nsIURI **aDocumentURI);
+    nsresult SetDocumentURI(nsIURI *aDocumentURI);
+    nsresult GetRequestVersion(PRUint32 *major, PRUint32 *minor);
+    nsresult GetResponseVersion(PRUint32 *major, PRUint32 *minor);
+    nsresult SetCookie(const char *aCookieHeader);
+    nsresult SetupFallbackChannel(const char *aFallbackKey);
+    nsresult GetForceAllowThirdPartyCookie(PRBool *aForceAllowThirdPartyCookie);
+    nsresult SetForceAllowThirdPartyCookie(PRBool aForceAllowThirdPartyCookie);
+}
+
+[
+    object,
     uuid(ddf633d8-e9a4-439d-ad88-de636fd9bb75),
     local
     /* FROZEN */

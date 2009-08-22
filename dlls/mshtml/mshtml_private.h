@@ -363,11 +363,13 @@ struct NSContainer {
 typedef struct {
     const nsIHttpChannelVtbl *lpHttpChannelVtbl;
     const nsIUploadChannelVtbl *lpUploadChannelVtbl;
+    const nsIHttpChannelInternalVtbl *lpIHttpChannelInternalVtbl;
 
     LONG ref;
 
     nsIChannel *channel;
     nsIHttpChannel *http_channel;
+    nsIHttpChannelInternal *http_channel_internal;
     nsIWineURI *uri;
     nsIInputStream *post_data_stream;
     nsILoadGroup *load_group;
@@ -467,6 +469,7 @@ typedef struct {
 #define NSCHANNEL(x)     ((nsIChannel*)        &(x)->lpHttpChannelVtbl)
 #define NSHTTPCHANNEL(x) ((nsIHttpChannel*)    &(x)->lpHttpChannelVtbl)
 #define NSUPCHANNEL(x)   ((nsIUploadChannel*)  &(x)->lpUploadChannelVtbl)
+#define NSHTTPINTERNAL(x) ((nsIHttpChannelInternal*)  &(x)->lpIHttpChannelInternalVtbl)
 
 #define HTTPNEG(x)       ((IHttpNegotiate2*)              &(x)->lpHttpNegotiate2Vtbl)
 #define STATUSCLB(x)     ((IBindStatusCallback*)          &(x)->lpBindStatusCallbackVtbl)
