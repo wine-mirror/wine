@@ -25,8 +25,8 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
 MENU_001 MENU DISCARDABLE
 BEGIN
-	MENUITEM "大きなアイコン(&G)",	FCIDM_SHVIEW_BIGICON
-	MENUITEM "小さなアイコン(&M)",	FCIDM_SHVIEW_SMALLICON
+	MENUITEM "大きいアイコン(&G)",	FCIDM_SHVIEW_BIGICON
+	MENUITEM "小さいアイコン(&M)",	FCIDM_SHVIEW_SMALLICON
 	MENUITEM "一覧(&L)",		FCIDM_SHVIEW_LISTVIEW
 	MENUITEM "詳細(&D)",		FCIDM_SHVIEW_REPORTVIEW
 END
@@ -81,7 +81,7 @@ BEGIN
 	POPUP ""
 	BEGIN
 	  MENUITEM "選択(&S)"		FCIDM_SHVIEW_OPEN
-	  MENUITEM "E&xplore",		FCIDM_SHVIEW_EXPLORE
+	  MENUITEM "エクスプローラ(&X)",	FCIDM_SHVIEW_EXPLORE
 	  MENUITEM "開く(&O)",		FCIDM_SHVIEW_OPEN
 	  MENUITEM SEPARATOR
 	  MENUITEM "切り取り(&U)",		FCIDM_SHVIEW_CUT
@@ -105,8 +105,8 @@ BEGIN
 
     POPUP "表示(&V)"
     BEGIN
-        MENUITEM "大きなアイコン(&G)", FCIDM_SHVIEW_BIGICON
-        MENUITEM "小さなアイコン(&M)", FCIDM_SHVIEW_SMALLICON
+        MENUITEM "大きいアイコン(&G)", FCIDM_SHVIEW_BIGICON
+        MENUITEM "小さいアイコン(&M)", FCIDM_SHVIEW_SMALLICON
         MENUITEM "一覧(&L)", FCIDM_SHVIEW_LISTVIEW
         MENUITEM "詳細(&D)", FCIDM_SHVIEW_REPORTVIEW
     END
@@ -184,8 +184,8 @@ CAPTION ""
 FONT 9, "MS Shell Dlg"
 {
  ICON "", IDC_RUNDLG_ICON, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Type the name of a program, folder, document, or Internet resource, and Wine will open it for you.", IDC_RUNDLG_DESCRIPTION, 36, 11, 182, 18
- LTEXT "&Open:", IDC_RUNDLG_LABEL, 7, 39, 24, 10
+ LTEXT "Wine で実行するプログラム、または開くフォルダ名、ドキュメント名、インターネット リソース名を入力してください。", IDC_RUNDLG_DESCRIPTION, 36, 11, 182, 18
+ LTEXT "名前(&O):", IDC_RUNDLG_LABEL, 7, 39, 24, 10
  CONTROL "", IDC_RUNDLG_EDITPATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "キャンセル", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
@@ -203,11 +203,11 @@ STRINGTABLE
 	IDS_SHV_COLUMN6		"合計サイズ"
 	IDS_SHV_COLUMN7		"空き容量"
 	IDS_SHV_COLUMN8		"名前"
-	IDS_SHV_COLUMN9		"Comments"
+	IDS_SHV_COLUMN9		"コメント"
 	IDS_SHV_COLUMN10	"所有者"
 	IDS_SHV_COLUMN11	"グループ"
-	IDS_SHV_COLUMN_DELFROM	"Original location"
-	IDS_SHV_COLUMN_DELDATE	"Date deleted"
+	IDS_SHV_COLUMN_DELFROM	"元の場所"
+	IDS_SHV_COLUMN_DELDATE	"削除日"
 
         /* special folders */
 	IDS_DESKTOP		"デスクトップ"
@@ -223,23 +223,23 @@ STRINGTABLE
 	IDS_SELECT		"選択"
 	IDS_OPEN		"開く"
 
-	IDS_CREATEFOLDER_DENIED "Unable to create new Folder: Permission denied."
-	IDS_CREATEFOLDER_CAPTION "Error during creation of a new folder"
-	IDS_DELETEITEM_CAPTION "Confirm file deletion"
-	IDS_DELETEFOLDER_CAPTION "Confirm folder deletion"
-	IDS_DELETEITEM_TEXT "Are you sure you want to delete '%1'?"
-	IDS_DELETEMULTIPLE_TEXT "Are you sure you want to delete these %1 items?"
-	IDS_DELETESELECTED_TEXT "Are you sure you want to delete the selected item(s)?"
-	IDS_TRASHITEM_TEXT "Are you sure that you want to send '%1' to the Trash?"
-	IDS_TRASHFOLDER_TEXT "Are you sure that you want to send '%1' and all its content to the Trash?"
-	IDS_TRASHMULTIPLE_TEXT "Are you sure that you want to send these %1 items to the Trash?"
-	IDS_CANTTRASH_TEXT "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
-	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
-	IDS_OVERWRITEFILE_CAPTION "Confirm file overwrite"
-	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
-	    "If the files in the destination folder have the same names as files in the\n"\
-	    "selected folder they will be replaced. Do you still want to move or copy\n"\
-	    "the folder?"
+	IDS_CREATEFOLDER_DENIED "新しいフォルダを作成できませんでした。アクセスが拒否されました。"
+	IDS_CREATEFOLDER_CAPTION "フォルダの作成に失敗"
+	IDS_DELETEITEM_CAPTION "ファイルの削除の確認"
+	IDS_DELETEFOLDER_CAPTION "フォルダの削除の確認"
+	IDS_DELETEITEM_TEXT "'%1' を削除しますか?"
+	IDS_DELETEMULTIPLE_TEXT "これら %1 ファイルを削除しますか?"
+	IDS_DELETESELECTED_TEXT "選択されているファイルを削除しますか?"
+	IDS_TRASHITEM_TEXT "'%1' をごみ箱に移しますか?"
+	IDS_TRASHFOLDER_TEXT "'%1' とその中にあるすべてのファイルをごみ箱に移しますか?"
+	IDS_TRASHMULTIPLE_TEXT "これら %1 ファイルをごみ箱に移しますか?"
+	IDS_CANTTRASH_TEXT "'%1' はごみ箱に移せません。代わりに削除しますか?"
+	IDS_OVERWRITEFILE_TEXT "このフォルダにはすでに '%1' というファイルが存在します。\n\nこのファイルを上書きしますか?"
+	IDS_OVERWRITEFILE_CAPTION "ファイルの上書きの確認"
+	IDS_OVERWRITEFOLDER_TEXT "このフォルダにはすでに '%1' というフォルダが存在します。\n\n"\
+	    "移動またはコピー先フォルダに選択されたフォルダ内のファイルと\n"\
+	    "同じ名前のファイルがある場合、新しいファイルで上書きされます。\n"\
+	    "フォルダの移動またはコピーを続けますか?"
 
         /* message box strings */
         IDS_RESTART_TITLE       "再起動"
@@ -248,8 +248,8 @@ STRINGTABLE
         IDS_SHUTDOWN_PROMPT     "Wine セッションをシャットダウンしますか?"
 
         /* Run File dialog */
-        IDS_RUNDLG_ERROR           "Unable to display Run File dialog box (internal error)"
-        IDS_RUNDLG_BROWSE_ERROR    "Unable to display Browse dialog box (internal error)"
+        IDS_RUNDLG_ERROR           "[ファイルを指定して実行]ダイアログを表示できません。(内部エラー)"
+        IDS_RUNDLG_BROWSE_ERROR    "[参照]ダイアログを表示できません (内部エラー)"
         IDS_RUNDLG_BROWSE_CAPTION  "参照"
         IDS_RUNDLG_BROWSE_FILTER   "実行可能ファイル\0*.exe\0すべてのファイル\0*.*\0\0"
 
@@ -282,11 +282,13 @@ STRINGTABLE
 	IDS_COMMON_VIDEO            "Documents\\My Videos"
 	IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
 
-	IDS_NEWFOLDER		"New Folder"
+	IDS_NEWFOLDER		"新しいフォルダ"
 
-	IDS_CPANEL_TITLE            "Wine Control Panel"
-	IDS_CPANEL_NAME             "Name"
-	IDS_CPANEL_DESCRIPTION      "Description"
+	IDS_CPANEL_TITLE            "Wine コントロール パネル"
+	IDS_CPANEL_NAME             "名前"
+	IDS_CPANEL_DESCRIPTION      "説明"
+
+	IDS_SHLEXEC_NOASSOC         "このファイルの種類に関連付けられた Windows プログラムはありません。"
 }
 
 STRINGTABLE
