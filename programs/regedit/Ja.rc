@@ -258,7 +258,7 @@ BEGIN
     ID_EDIT_MODIFY          "値のデータを変更"
     ID_EDIT_NEW_KEY         "新しいキーを追加"
     ID_EDIT_NEW_STRINGVALUE "新しい文字列値を追加"
-    ID_EDIT_NEW_BINARYVALUE "新しいバイナリを追加"
+    ID_EDIT_NEW_BINARYVALUE "新しいバイナリ値を追加"
     ID_EDIT_NEW_DWORDVALUE  "新しいDWORD値を追加"
     ID_EDIT_NEW_MULTI_STRINGVALUE "新しい複数行文字列値を追加"
     ID_REGISTRY_IMPORTREGISTRYFILE "テキストファイルをレジストリにインポート"
@@ -286,13 +286,14 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "選択したキーの名前をクリップボードにコピー"
     ID_EDIT_FIND            "キー、値、データから文字列を検索"
     ID_EDIT_FINDNEXT        "以前の検索条件において次の候補を検索"
+    ID_EDIT_EXPORT          "選択したレジストリ キー以下をテキストファイルに出力"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_ERROR		    "エラー"
-    IDS_BAD_KEY		    "キー '%s'が所得できません"
-    IDS_BAD_VALUE           "値 '%s'が所得できません"
+    IDS_BAD_KEY		    "キー '%s' を削除できません"
+    IDS_BAD_VALUE           "値 '%s' を削除できません"
     IDS_UNSUPPORTED_TYPE    "このタイプのキーは編集できません (%u)"
     IDS_TOO_BIG_VALUE       "値が大きすぎます (%u)"
     IDS_DELETE_BOX_TITLE    "値の削除確認"
