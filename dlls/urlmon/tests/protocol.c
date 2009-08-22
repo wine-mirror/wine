@@ -672,7 +672,8 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
             CHECK_EXPECT2(ReportData);
 
             if(short_read) {
-                ok(grfBSCF == (BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION|BSCF_DATAFULLYAVAILABLE),
+                ok(grfBSCF == (BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION|BSCF_DATAFULLYAVAILABLE)
+                   || grfBSCF == BSCF_FIRSTDATANOTIFICATION, /* < IE8 */
                    "grcfBSCF = %08x\n", grfBSCF);
                 CHECK_CALLED(Read); /* Set in Continue */
                 first_data_notif = FALSE;
