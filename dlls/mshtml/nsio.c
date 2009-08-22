@@ -195,9 +195,6 @@ static nsresult NSAPI nsChannel_QueryInterface(nsIHttpChannel *iface, nsIIDRef r
         return NS_OK;
     }
 
-
-    if(This->channel)
-        return nsIChannel_QueryInterface(This->channel, riid, result);
     return NS_NOINTERFACE;
 }
 
