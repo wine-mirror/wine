@@ -960,7 +960,14 @@ static void output_dependencies(void)
 
     if (tmp_name)
     {
-        if (rename( tmp_name, OutputFileName ) == -1)
+        int ret = rename( tmp_name, OutputFileName );
+        if (ret == -1 && errno == EEXIST)
+        {
+            /* rename doesn't overwrite on windows */
+            unlink( OutputFileName );
+            ret = rename( tmp_name, OutputFileName );
+        }
+        if (ret == -1)
         {
             unlink( tmp_name );
             fatal_error( "failed to rename output file to '%s'\n", OutputFileName );
