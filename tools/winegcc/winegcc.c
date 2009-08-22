@@ -224,7 +224,7 @@ static const enum target_cpu build_cpu = CPU_POWERPC;
 static enum target_platform build_platform = PLATFORM_APPLE;
 #elif defined(__sun)
 static enum target_platform build_platform = PLATFORM_SOLARIS;
-#elif defined(_WINDOWS)
+#elif defined(_WIN32)
 static enum target_platform build_platform = PLATFORM_WINDOWS;
 #else
 static enum target_platform build_platform = PLATFORM_UNSPECIFIED;

@@ -66,7 +66,7 @@ enum target_cpu target_cpu = CPU_POWERPC;
 enum target_platform target_platform = PLATFORM_APPLE;
 #elif defined(__sun)
 enum target_platform target_platform = PLATFORM_SOLARIS;
-#elif defined(_WINDOWS)
+#elif defined(_WIN32)
 enum target_platform target_platform = PLATFORM_WINDOWS;
 #else
 enum target_platform target_platform = PLATFORM_UNSPECIFIED;
