@@ -32,16 +32,16 @@ STRINGTABLE
    IDS_CPL_DESC, "新しいソフトウェアをインストールするか、既存のソフトウェアを削除することができます。"
    IDS_TAB1_TITLE, "アプリケーション"
 
-   IDS_UNINSTALL_FAILED, "アンインストーラーを起動することができません。 '%s'. レジストリからアンインストールできるプログラム登録を削除しますか？"
-   IDS_NOT_SPECIFIED, "指定されません"
+   IDS_UNINSTALL_FAILED, "アンインストーラー '%s' を起動することができません。このプログラムに対するアンインストール項目をレジストリから削除しますか？"
+   IDS_NOT_SPECIFIED, "指定されていません"
 
    IDS_COLUMN_NAME, "名前"
    IDS_COLUMN_PUBLISHER, "発行元"
    IDS_COLUMN_VERSION, "バージョン"
    IDS_INSTALL_FILTER, "インストールプログラム\0*instal*.exe;*setup*.exe;*.msi\0プログラム(*.exe)\0*.exe\0すべてのファイル (*.*)\0*.*\0\0"
 
-   IDS_REMOVE, "削除(&R)…"
-   IDS_MODIFY_REMOVE, "変更/削除(&M)…"
+   IDS_REMOVE, "削除(&R)..."
+   IDS_MODIFY_REMOVE, "変更と削除(&M)..."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
@@ -53,11 +53,11 @@ FONT 9, "MS Shell Dlg"
  CONTROL "インストール(&I)...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
  CONTROL "", -1, "STATIC", SS_LEFT | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 7, 46, 303, 1
  CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
- CONTROL "以下のソフトウェアを自動的に削除できます。プログラムを削除またはインストールされたコンポーネントを変更するには、リストからプログラムを選択し [追加と削除] をクリックしてください。", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
+ CONTROL "以下のソフトウェアを自動的に削除できます。プログラムを削除またはインストールされたコンポーネントを変更するには、リストからプログラムを選択し [変更と削除] をクリックしてください。", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
  CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
  CONTROL "サポート情報(&S)...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 104, 198, 64, 14
- CONTROL "&Modify...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
- CONTROL "&Remove...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 244, 198, 68, 14
+ CONTROL "変更(&M)...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
+ CONTROL "削除(&R)...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 244, 198, 68, 14
  CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
 }
 
