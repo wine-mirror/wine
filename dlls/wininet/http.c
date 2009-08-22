@@ -1545,6 +1545,14 @@ static void HTTPREQ_Destroy(object_header_t *hdr)
         HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders[i].lpszValue);
     }
 
+#ifdef HAVE_ZLIB
+    if(lpwhr->gzip_stream) {
+        if(!lpwhr->gzip_stream->end_of_data)
+            inflateEnd(&lpwhr->gzip_stream->zstream);
+        HeapFree(GetProcessHeap(), 0, lpwhr->gzip_stream);
+    }
+#endif
+
     HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders);
     HeapFree(GetProcessHeap(), 0, lpwhr);
 }
@@ -1554,14 +1562,6 @@ static void HTTPREQ_CloseConnection(object_header_t *hdr)
     http_request_t *lpwhr = (http_request_t*) hdr;
 
     TRACE("%p\n",lpwhr);
-
-#ifdef HAVE_ZLIB
-    if(lpwhr->gzip_stream) {
-        inflateEnd(&lpwhr->gzip_stream->zstream);
-        HeapFree(GetProcessHeap(), 0, lpwhr->gzip_stream);
-        lpwhr->gzip_stream = NULL;
-    }
-#endif
 
     if (!NETCON_connected(&lpwhr->netConnection))
         return;
@@ -2057,6 +2057,7 @@ static DWORD read_gzip_data(http_request_t *req, BYTE *buf, int size, BOOL sync,
         if(zres == Z_STREAM_END) {
             TRACE("end of data\n");
             req->gzip_stream->end_of_data = TRUE;
+            inflateEnd(&req->gzip_stream->zstream);
         }else if(zres != Z_OK) {
             WARN("inflate failed %d\n", zres);
             if(!read)
