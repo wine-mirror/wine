@@ -606,7 +606,7 @@ BOOL symbol_get_line(const char* filename, const char* name, IMAGEHLP_LINE* line
         il.SizeOfStruct = sizeof(il);
         if (!SymGetLineFromAddr(dbg_curr_process->handle, linear, &disp, &il))
             continue;
-        if (filename && strcmp(line->FileName, filename)) continue;
+        if (filename && strcmp(il.FileName, filename)) continue;
         if (found)
         {
             WINE_FIXME("Several found, returning first (may not be what you want)...\n");
