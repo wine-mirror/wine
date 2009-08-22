@@ -220,7 +220,7 @@ static HRESULT WINAPI BindStatusCallback_OnProgress(IBindStatusCallback *iface,
         FIXME("status code %u\n", ulStatusCode);
     }
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *iface,
@@ -357,7 +357,7 @@ static HRESULT WINAPI HttpNegotiate_BeginningTransaction(IHttpNegotiate *iface,
 {
     BindStatusCallback *This = HTTPNEG_THIS(iface);
 
-    FIXME("(%p)->(%s %s %d %p)\n", This, debugstr_w(szURL), debugstr_w(szHeaders),
+    TRACE("(%p)->(%s %s %d %p)\n", This, debugstr_w(szURL), debugstr_w(szHeaders),
           dwReserved, pszAdditionalHeaders);
 
     if(This->headers) {
@@ -374,9 +374,9 @@ static HRESULT WINAPI HttpNegotiate_OnResponse(IHttpNegotiate *iface,
         LPWSTR *pszAdditionalRequestHeaders)
 {
     BindStatusCallback *This = HTTPNEG_THIS(iface);
-    FIXME("(%p)->(%d %s %s %p)\n", This, dwResponseCode, debugstr_w(szResponseHeaders),
+    TRACE("(%p)->(%d %s %s %p)\n", This, dwResponseCode, debugstr_w(szResponseHeaders),
           debugstr_w(szRequestHeaders), pszAdditionalRequestHeaders);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 #undef HTTPNEG_THIS
