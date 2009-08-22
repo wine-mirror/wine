@@ -39,7 +39,7 @@
 extern IUnknown         *create_domdoc( xmlNodePtr document );
 extern IUnknown         *create_xmldoc( void );
 extern IXMLDOMNode      *create_node( xmlNodePtr node );
-extern IUnknown         *create_element( xmlNodePtr element, IUnknown *pUnkOuter );
+extern IUnknown         *create_element( xmlNodePtr element );
 extern IUnknown         *create_attribute( xmlNodePtr attribute );
 extern IUnknown         *create_text( xmlNodePtr text );
 extern IUnknown         *create_pi( xmlNodePtr pi );

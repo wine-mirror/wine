@@ -1043,7 +1043,7 @@ static HRESULT WINAPI domdoc_createElement(
     xmldoc_add_orphan(xmlnode->doc, xmlnode);
 
     TRACE("created xmlptr %p\n", xmlnode);
-    elem_unk = create_element(xmlnode, NULL);
+    elem_unk = create_element(xmlnode);
     HeapFree(GetProcessHeap(), 0, xml_name);
 
     hr = IUnknown_QueryInterface(elem_unk, &IID_IXMLDOMElement, (void **)element);
