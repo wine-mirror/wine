@@ -111,11 +111,10 @@ DIGIT	   [0-9]
 HEXDIGIT   [0-9a-fA-F]
 FORMAT     [ubcdgiswx]
 IDENTIFIER [_a-zA-Z~?][_a-zA-Z0-9~?@]*
-PATHNAME   [\\/-_a-zA-Z0-9\.~@]+
+PATHNAME   [\\/_a-zA-Z0-9\.~@][\\/\-_a-zA-Z0-9\.~@]*
 STRING     \"[^\n"]+\"
 
 %s FORMAT_EXPECTED
-%s PATH_EXPECTED
 %s INFO_CMD
 %s HELP_CMD
 %s BD_CMD
@@ -124,7 +123,9 @@ STRING     \"[^\n"]+\"
 %s MODE_CMD
 %s MAINT_CMD
 %s NOCMD
+%s PATH_ACCEPTED
 
+%x PATH_EXPECTED
 %x ASTRING_EXPECTED
 %x NOPROCESS
 %%
@@ -134,11 +135,6 @@ STRING     \"[^\n"]+\"
 <<EOF>>                                 { return tEOF; }
 <*>\n		                        { BEGIN(INITIAL); syntax_error = 0; return tEOL; }
                                         /* Indicates end of command. Reset state. */
-
-                                        /* This rule must precede the ones below, */
-                                        /* otherwise paths like '/' or '0x9' would */
-                                        /* get parsed as an operator or tNUM */
-<PATH_EXPECTED>{PATHNAME}		{ dbg_lval.string = lexeme_alloc(yytext); return tPATH; }
 
 "||"					{ return OP_LOR; }
 "&&"					{ return OP_LAND; }
@@ -150,7 +146,6 @@ STRING     \"[^\n"]+\"
 ">>"					{ return OP_SHR; }
 "->"					{ return OP_DRF; }
 "::"					{ return OP_SCOPE; }
-[-+<=>|&^()*/%:!~,\.]			{ return *yytext; }
 "["					{ return *yytext; }
 "]"					{ return *yytext; }
 
@@ -172,7 +167,7 @@ STRING     \"[^\n"]+\"
 <INITIAL>up				{ BEGIN(NOCMD); return tUP; }
 <INITIAL>down|dow|do			{ BEGIN(NOCMD); return tDOWN; }
 <INITIAL>frame|fram|fra|fr		{ BEGIN(NOCMD); return tFRAME; }
-<INITIAL>list|lis|li|l			{ BEGIN(PATH_EXPECTED); return tLIST; }
+<INITIAL>list|lis|li|l			{ BEGIN(PATH_ACCEPTED); return tLIST; }
 <INITIAL>enable|enabl|enab|ena		{ BEGIN(BD_CMD); return tENABLE;}
 <INITIAL>disable|disabl|disab|disa|dis  { BEGIN(BD_CMD); return tDISABLE; }
 <INITIAL>disassemble|disassembl|disassemb|disassem|disasse|disass|disas { BEGIN(NOCMD); return tDISASSEMBLE; }
@@ -252,6 +247,10 @@ all                                     { return tALL; }
 
 {IDENTIFIER}				{ dbg_lval.string = lexeme_alloc(yytext); return tIDENTIFIER; }
 "$"{IDENTIFIER}				{ dbg_lval.string = lexeme_alloc(yytext+1); return tINTVAR; }
+
+<PATH_EXPECTED,PATH_ACCEPTED>{PATHNAME}	{ dbg_lval.string = lexeme_alloc(yytext); return tPATH; }
+
+[-+<=>|&^()*/%:!~,\.]			{ return *yytext; }
 
 <*>[ \t\r]+                             /* Eat up whitespace and DOS LF */
 
