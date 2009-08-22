@@ -2186,15 +2186,15 @@ static nsresult NSAPI nsIOService_GetProtocolFlags(nsIIOService *iface, const ch
 
 static BOOL is_gecko_special_uri(const char *spec)
 {
-    static const char chromeW[] = "chrome:";
-    static const char jarW[] = "jar:";
-    static const char resourceW[] = "resource:";
-    static const char javascriptW[] = "javascript:";
+    static const char *special_schemes[] = {"chrome:", "jar:", "resource:", "javascript:", "wyciwyg:"};
+    int i;
 
-    return !strncasecmp(spec, chromeW,     sizeof(chromeW)-1)
-        || !strncasecmp(spec, resourceW,   sizeof(resourceW)-1)
-        || !strncasecmp(spec, jarW,        sizeof(jarW)-1)
-        || !strncasecmp(spec, javascriptW, sizeof(javascriptW)-1);
+    for(i=0; i < sizeof(special_schemes)/sizeof(*special_schemes); i++) {
+        if(!strncasecmp(spec, special_schemes[i], strlen(special_schemes[i])))
+            return TRUE;
+    }
+
+    return FALSE;
 }
 
 static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *aSpec,
