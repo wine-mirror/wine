@@ -4,9 +4,11 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = sti.dll
 IMPORTLIB = sti
-IMPORTS   = kernel32
+IMPORTS   = ole32 advapi32 kernel32
 
-C_SRCS = sti_main.c
+C_SRCS = \
+	regsvr.c \
+	sti_main.c
 
 @MAKE_DLL_RULES@
 
