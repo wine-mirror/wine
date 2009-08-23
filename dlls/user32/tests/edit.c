@@ -2192,11 +2192,35 @@ static void test_dialogmode(void)
     test_dm_messages(0, 0, 0, 0);
     zero_dm_messages();
 
+    r = SendMessage(hwEdit, WM_KEYDOWN, VK_TAB, 0xf0001);
+    ok(1 == r, "expected 1, got %d\n", r);
+    test_dm_messages(0, 0, 0, 0);
+    zero_dm_messages();
+
+    msg.hwnd = hwEdit;
+    msg.message = WM_KEYDOWN;
+    msg.wParam = VK_TAB;
+    msg.lParam = 0xf0001;
+    r = SendMessage(hwEdit, WM_GETDLGCODE, VK_TAB, (LPARAM)&msg);
+    ok(0x89 == r, "expected 0x89, got 0x%x\n", r);
+    test_dm_messages(0, 0, 0, 0);
+    zero_dm_messages();
+
+    r = SendMessage(hwEdit, WM_KEYDOWN, VK_TAB, 0xf0001);
+    ok(1 == r, "expected 1, got %d\n", r);
+    test_dm_messages(0, 0, 0, 0);
+    zero_dm_messages();
+
     destroy_child_editcontrol(hwEdit);
 
     hwEdit = create_child_editcontrol(ES_MULTILINE, 0);
     hwParent = GetParent(hwEdit);
     SetWindowLongPtr(hwParent, GWLP_WNDPROC, (LONG_PTR)dialog_mode_wnd_proc);
+
+    r = SendMessage(hwEdit, WM_KEYDOWN, VK_TAB, 0xf0001);
+    ok(1 == r, "expected 1, got %d\n", r);
+    test_dm_messages(0, 0, 0, 0);
+    zero_dm_messages();
 
     msg.hwnd = hwEdit;
     msg.message = WM_KEYDOWN;
@@ -2210,6 +2234,11 @@ static void test_dialogmode(void)
     r = SendMessage(hwEdit, WM_KEYDOWN, VK_ESCAPE, 0x10001);
     ok(1 == r, "expected 1, got %d\n", r);
     test_dm_messages(0, 0, 0, 0);
+    zero_dm_messages();
+
+    r = SendMessage(hwEdit, WM_KEYDOWN, VK_TAB, 0xf0001);
+    ok(1 == r, "expected 1, got %d\n", r);
+    test_dm_messages(0, 0, 0, 1);
     zero_dm_messages();
 
     destroy_child_editcontrol(hwEdit);
