@@ -24,7 +24,7 @@
 static void test_StreamOnMemory(void)
 {
     IWICImagingFactory *pFactory;
-    IWICStream *pStream;
+    IWICStream *pStream, *pBufStream;
     const BYTE CmpMem[] = {
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
         0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
@@ -33,11 +33,12 @@ static void test_StreamOnMemory(void)
     };
     BYTE Memory[64], MemBuf[64];
     LARGE_INTEGER LargeNull, LargeInt;
-    ULARGE_INTEGER uNewPos;
+    ULARGE_INTEGER uLargeNull, uNewPos;
     ULONG uBytesRead, uBytesWritten;
     HRESULT hr;
 
     LargeNull.QuadPart = 0;
+    uLargeNull.QuadPart = 0;
 
     memcpy(Memory, CmpMem, sizeof(CmpMem));
 
@@ -205,6 +206,86 @@ static void test_StreamOnMemory(void)
     IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
     ok(uNewPos.HighPart == 0 && uNewPos.LowPart == uBytesWritten, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.HighPart, uNewPos.LowPart, 0, uBytesWritten);
     IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_SET, NULL);
+
+
+    /* SetSize */
+    uNewPos.HighPart = 0;
+    uNewPos.LowPart = sizeof(Memory) + 10;
+    hr = IWICStream_SetSize(pStream, uNewPos);
+    ok(hr == E_NOTIMPL, "SetSize returned %#x, expected %#x\n", hr, E_NOTIMPL);
+
+    uNewPos.HighPart = 0;
+    uNewPos.LowPart = sizeof(Memory);
+    hr = IWICStream_SetSize(pStream, uNewPos);
+    ok(hr == E_NOTIMPL, "SetSize returned %#x, expected %#x\n", hr, E_NOTIMPL);
+
+    uNewPos.HighPart = 0;
+    uNewPos.LowPart = sizeof(Memory) - 10;
+    hr = IWICStream_SetSize(pStream, uNewPos);
+    ok(hr == E_NOTIMPL, "SetSize returned %#x, expected %#x\n", hr, E_NOTIMPL);
+
+    uNewPos.HighPart = 0;
+    uNewPos.LowPart = 0;
+    hr = IWICStream_SetSize(pStream, uNewPos);
+    ok(hr == E_NOTIMPL, "SetSize returned %#x, expected %#x\n", hr, E_NOTIMPL);
+
+    uNewPos.QuadPart = -10;
+    hr = IWICStream_SetSize(pStream, uNewPos);
+    ok(hr == E_NOTIMPL, "SetSize returned %#x, expected %#x\n", hr, E_NOTIMPL);
+
+
+    /* CopyTo */
+    uNewPos.HighPart = 0;
+    uNewPos.LowPart = 5;
+    hr = IWICStream_CopyTo(pStream, NULL, uNewPos, NULL, NULL);
+    ok(hr == E_NOTIMPL, "CopyTo returned %#x, expected %#x\n", hr, E_NOTIMPL);
+
+    hr = IWICImagingFactory_CreateStream(pFactory, &pBufStream);
+    ok(hr == S_OK, "CreateStream failed with %#x\n", hr);
+
+    hr = IWICStream_InitializeFromMemory(pBufStream, Memory, sizeof(Memory));
+    ok(hr == S_OK, "InitializeFromMemory returned with %#x, expected %#x\n", hr, S_OK);
+
+    hr = IWICStream_CopyTo(pStream, (IStream*)pBufStream, uNewPos, NULL, NULL);
+    ok(hr == E_NOTIMPL, "CopyTo returned %#x, expected %#x\n", hr, E_NOTIMPL);
+    IWICStream_Release(pBufStream);
+
+
+    /* Commit */
+    hr = IWICStream_Commit(pStream, STGC_DEFAULT);
+    ok(hr == E_NOTIMPL, "Commit returned %#x, expected %#x\n", hr, E_NOTIMPL);
+
+    hr = IWICStream_Commit(pStream, STGC_OVERWRITE);
+    ok(hr == E_NOTIMPL, "Commit returned %#x, expected %#x\n", hr, E_NOTIMPL);
+
+    hr = IWICStream_Commit(pStream, STGC_ONLYIFCURRENT);
+    ok(hr == E_NOTIMPL, "Commit returned %#x, expected %#x\n", hr, E_NOTIMPL);
+
+    hr = IWICStream_Commit(pStream, STGC_DANGEROUSLYCOMMITMERELYTODISKCACHE);
+    ok(hr == E_NOTIMPL, "Commit returned %#x, expected %#x\n", hr, E_NOTIMPL);
+
+    hr = IWICStream_Commit(pStream, STGC_CONSOLIDATE);
+    ok(hr == E_NOTIMPL, "Commit returned %#x, expected %#x\n", hr, E_NOTIMPL);
+
+
+    /* Revert */
+    IWICStream_Write(pStream, &MemBuf[5], 6, NULL);
+    hr = IWICStream_Revert(pStream);
+    ok(hr == E_NOTIMPL, "Revert returned %#x, expected %#x\n", hr, E_NOTIMPL);
+    memcpy(Memory, CmpMem, sizeof(Memory));
+
+
+    /* LockRegion/UnlockRegion */
+    hr = IWICStream_LockRegion(pStream, uLargeNull, uLargeNull, 0);
+    ok(hr == E_NOTIMPL, "LockRegion returned %#x, expected %#x\n", hr, E_NOTIMPL);
+
+    hr = IWICStream_UnlockRegion(pStream, uLargeNull, uLargeNull, 0);
+    ok(hr == E_NOTIMPL, "UnlockRegion returned %#x, expected %#x\n", hr, E_NOTIMPL);
+
+
+    /* Clone */
+    hr = IWICStream_Clone(pStream, (IStream**)&pBufStream);
+    ok(hr == E_NOTIMPL, "UnlockRegion returned %#x, expected %#x\n", hr, E_NOTIMPL);
 
 
     IWICStream_Release(pStream);
