@@ -1319,48 +1319,50 @@ end:
 static HRESULT OLEPictureImpl_LoadWICDecoder(OLEPictureImpl *This, REFCLSID decoder_clsid, BYTE *xbuf, ULONG xread)
 {
     HRESULT hr;
+    IWICImagingFactory *factory;
     IWICBitmapDecoder *decoder;
     IWICBitmapFrameDecode *framedecode;
     HRESULT initresult;
-    HGLOBAL hdata;
-    BYTE *data;
-    IStream *stream;
-
-    hdata = GlobalAlloc(GMEM_MOVEABLE, xread);
-    if (!hdata) return E_OUTOFMEMORY;
-
-    data = GlobalLock(hdata);
-    memcpy(data, xbuf, xread);
-    GlobalUnlock(hdata);
-
-    hr = CreateStreamOnHGlobal(hdata, TRUE, &stream);
-    if (FAILED(hr))
-    {
-        GlobalFree(hdata);
-        return hr;
-    }
+    IWICStream *stream;
 
     initresult = CoInitialize(NULL);
 
-    hr = CoCreateInstance(decoder_clsid, NULL, CLSCTX_INPROC_SERVER,
-        &IID_IWICBitmapDecoder, (void**)&decoder);
-    if (FAILED(hr)) goto end;
-
-    hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnLoad);
-    if (SUCCEEDED(hr))
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICImagingFactory, (void**)&factory);
+    if (SUCCEEDED(hr)) /* created factory */
     {
-        hr = IWICBitmapDecoder_GetFrame(decoder, 0, &framedecode);
-        if (SUCCEEDED(hr))
-        {
-            hr = OLEPictureImpl_LoadWICSource(This, (IWICBitmapSource*)framedecode);
-            IWICBitmapFrameDecode_Release(framedecode);
-        }
+        hr = IWICImagingFactory_CreateStream(factory, &stream);
+        IWICImagingFactory_Release(factory);
     }
 
-    IWICBitmapDecoder_Release(decoder);
+    if (SUCCEEDED(hr)) /* created stream */
+    {
+        hr = IWICStream_InitializeFromMemory(stream, xbuf, xread);
 
-end:
-    IStream_Release(stream);
+        if (SUCCEEDED(hr)) /* initialized stream */
+        {
+            hr = CoCreateInstance(decoder_clsid, NULL, CLSCTX_INPROC_SERVER,
+                &IID_IWICBitmapDecoder, (void**)&decoder);
+            if (SUCCEEDED(hr)) /* created decoder */
+            {
+                hr = IWICBitmapDecoder_Initialize(decoder, (IStream*)stream, WICDecodeMetadataCacheOnLoad);
+
+                if (SUCCEEDED(hr)) /* initialized decoder */
+                    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &framedecode);
+
+                IWICBitmapDecoder_Release(decoder);
+            }
+        }
+
+        IWICStream_Release(stream);
+    }
+
+    if (SUCCEEDED(hr)) /* got framedecode */
+    {
+        hr = OLEPictureImpl_LoadWICSource(This, (IWICBitmapSource*)framedecode);
+        IWICBitmapFrameDecode_Release(framedecode);
+    }
+
     if (SUCCEEDED(initresult)) CoUninitialize();
     return hr;
 }
