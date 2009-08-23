@@ -3637,14 +3637,14 @@ static LRESULT EDIT_WM_KeyDown(EDITSTATE *es, INT key)
 	    }
 	    break;
         case VK_ESCAPE:
-	    if (!(es->style & ES_MULTILINE))
-                SendMessageW(GetParent(es->hwndSelf), WM_COMMAND, IDCANCEL, (LPARAM)GetDlgItem( GetParent(es->hwndSelf), IDCANCEL ) );
+            if ((es->style & ES_MULTILINE) && EDIT_IsInsideDialog(es));
+                PostMessageW(es->hwndParent, WM_CLOSE, 0, 0);
             break;
         case VK_TAB:
             SendMessageW(es->hwndParent, WM_NEXTDLGCTL, shift, 0);
             break;
 	}
-	return 0;
+        return TRUE;
 }
 
 
@@ -5109,17 +5109,6 @@ static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
                             if (vk == VK_RETURN || vk == VK_ESCAPE)
                                 if (SendMessageW(GetParent(hwnd), CB_GETDROPPEDSTATE, 0, 0))
                                     result |= DLGC_WANTMESSAGE;
-                        }
-                        else
-                        {
-                            switch (vk)
-                            {
-                                case VK_ESCAPE:
-                                    SendMessageW(GetParent(hwnd), WM_CLOSE, 0, 0);
-                                    break;
-                                default:
-                                    break;
-                            }
                         }
                   }
                 }

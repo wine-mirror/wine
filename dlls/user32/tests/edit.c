@@ -1817,7 +1817,7 @@ static void test_edit_dialog(void)
 
     /* more tests for WM_KEYDOWN + WM_CHAR */
     r = DialogBoxParam(hinst, "EDIT_READONLY_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 6);
-    todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_READONLY_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 7);
     todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_READONLY_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 8);
@@ -1841,7 +1841,7 @@ static void test_edit_dialog(void)
 
     /* tests for WM_KEYDOWN + WM_CHAR */
     r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 6);
-    todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 7);
     todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 8);
@@ -1891,7 +1891,7 @@ static void test_wantreturn_edit_dialog(void)
 
     /* tests for WM_KEYDOWN + WM_CHAR */
     r = DialogBoxParam(hinst, "EDIT_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_wantreturn_dialog_proc, 6);
-    todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_wantreturn_dialog_proc, 7);
     ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_wantreturn_dialog_proc, 8);
@@ -2081,9 +2081,55 @@ static void test_fontsize(void)
     DeleteObject(hfont);
 }
 
+struct dialog_mode_messages
+{
+    int wm_getdefid, wm_close, wm_command, wm_nextdlgctl;
+};
+
+static struct dialog_mode_messages dm_messages;
+
+static void zero_dm_messages(void)
+{
+    dm_messages.wm_command      = 0;
+    dm_messages.wm_close        = 0;
+    dm_messages.wm_getdefid     = 0;
+    dm_messages.wm_nextdlgctl   = 0;
+}
+
+#define test_dm_messages(wmcommand, wmclose, wmgetdefid, wmnextdlgctl) \
+    ok(dm_messages.wm_command == wmcommand, "expected %d WM_COMMAND messages, " \
+    "got %d\n", wmcommand, dm_messages.wm_command); \
+    ok(dm_messages.wm_close == wmclose, "expected %d WM_CLOSE messages, " \
+    "got %d\n", wmclose, dm_messages.wm_close); \
+    ok(dm_messages.wm_getdefid == wmgetdefid, "expected %d WM_GETDIFID messages, " \
+    "got %d\n", wmgetdefid, dm_messages.wm_getdefid);\
+    ok(dm_messages.wm_nextdlgctl == wmnextdlgctl, "expected %d WM_NEXTDLGCTL messages, " \
+    "got %d\n", wmgetdefid, dm_messages.wm_nextdlgctl)
+
+static LRESULT CALLBACK dialog_mode_wnd_proc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (iMsg)
+    {
+        case WM_COMMAND:
+            dm_messages.wm_command++;
+            break;
+        case DM_GETDEFID:
+            dm_messages.wm_getdefid++;
+            return 0;
+        case WM_NEXTDLGCTL:
+            dm_messages.wm_nextdlgctl++;
+            break;
+        case WM_CLOSE:
+            dm_messages.wm_close++;
+            break;
+    }
+
+    return DefWindowProc(hwnd, iMsg, wParam, lParam);
+}
+
 static void test_dialogmode(void)
 {
-    HWND hwEdit;
+    HWND hwEdit, hwParent;
     MSG msg= {0};
     int len, r;
     hwEdit = create_child_editcontrol(ES_MULTILINE, 0);
@@ -2135,6 +2181,38 @@ static void test_dialogmode(void)
     ok(11 == len, "expected 11, got %d\n", len);
 
     DestroyWindow(hwEdit);
+
+    hwEdit = create_child_editcontrol(0, 0);
+    hwParent = GetParent(hwEdit);
+    SetWindowLongPtr(hwParent, GWLP_WNDPROC, (LONG_PTR)dialog_mode_wnd_proc);
+
+    zero_dm_messages();
+    r = SendMessage(hwEdit, WM_KEYDOWN, VK_ESCAPE, 0x10001);
+    ok(1 == r, "expected 1, got %d\n", r);
+    test_dm_messages(0, 0, 0, 0);
+    zero_dm_messages();
+
+    destroy_child_editcontrol(hwEdit);
+
+    hwEdit = create_child_editcontrol(ES_MULTILINE, 0);
+    hwParent = GetParent(hwEdit);
+    SetWindowLongPtr(hwParent, GWLP_WNDPROC, (LONG_PTR)dialog_mode_wnd_proc);
+
+    msg.hwnd = hwEdit;
+    msg.message = WM_KEYDOWN;
+    msg.wParam = VK_ESCAPE;
+    msg.lParam = 0x10001;
+    r = SendMessage(hwEdit, WM_GETDLGCODE, VK_ESCAPE, (LPARAM)&msg);
+    ok(0x8d == r, "expected 0x8d, got 0x%x\n", r);
+    test_dm_messages(0, 0, 0, 0);
+    zero_dm_messages();
+
+    r = SendMessage(hwEdit, WM_KEYDOWN, VK_ESCAPE, 0x10001);
+    ok(1 == r, "expected 1, got %d\n", r);
+    test_dm_messages(0, 0, 0, 0);
+    zero_dm_messages();
+
+    destroy_child_editcontrol(hwEdit);
 }
 
 START_TEST(edit)
