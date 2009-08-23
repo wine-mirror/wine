@@ -2081,6 +2081,62 @@ static void test_fontsize(void)
     DeleteObject(hfont);
 }
 
+static void test_dialogmode(void)
+{
+    HWND hwEdit;
+    MSG msg= {0};
+    int len, r;
+    hwEdit = create_child_editcontrol(ES_MULTILINE, 0);
+
+    r = SendMessage(hwEdit, WM_CHAR, VK_RETURN, 0x1c0001);
+    ok(1 == r, "expected 1, got %d\n", r);
+    len = SendMessage(hwEdit, WM_GETTEXTLENGTH, 0, 0);
+    ok(11 == len, "expected 11, got %d\n", len);
+
+    r = SendMessage(hwEdit, WM_GETDLGCODE, (WPARAM)NULL, (LPARAM)NULL);
+    ok(0x8d == r, "expected 0x8d, got 0x%x\n", r);
+
+    r = SendMessage(hwEdit, WM_CHAR, VK_RETURN, 0x1c0001);
+    ok(1 == r, "expected 1, got %d\n", r);
+    len = SendMessage(hwEdit, WM_GETTEXTLENGTH, 0, 0);
+    ok(13 == len, "expected 13, got %d\n", len);
+
+    r = SendMessage(hwEdit, WM_GETDLGCODE, (WPARAM)NULL, (LPARAM)&msg);
+    ok(0x8d == r, "expected 0x8d, got 0x%x\n", r);
+    r = SendMessage(hwEdit, WM_CHAR, VK_RETURN, 0x1c0001);
+    ok(1 == r, "expected 1, got %d\n", r);
+    len = SendMessage(hwEdit, WM_GETTEXTLENGTH, 0, 0);
+    ok(13 == len, "expected 13, got %d\n", len);
+
+    r = SendMessage(hwEdit, WM_CHAR, VK_RETURN, 0x1c0001);
+    ok(1 == r, "expected 1, got %d\n", r);
+    len = SendMessage(hwEdit, WM_GETTEXTLENGTH, 0, 0);
+    ok(13 == len, "expected 13, got %d\n", len);
+
+    destroy_child_editcontrol(hwEdit);
+
+    hwEdit = create_editcontrol(ES_MULTILINE, 0);
+
+    r = SendMessage(hwEdit, WM_CHAR, VK_RETURN, 0x1c0001);
+    ok(1 == r, "expected 1, got %d\n", r);
+    len = SendMessage(hwEdit, WM_GETTEXTLENGTH, 0, 0);
+    ok(11 == len, "expected 11, got %d\n", len);
+
+    msg.hwnd = hwEdit;
+    msg.message = WM_KEYDOWN;
+    msg.wParam = VK_BACK;
+    msg.lParam = 0xe0001;
+    r = SendMessage(hwEdit, WM_GETDLGCODE, VK_BACK, (LPARAM)&msg);
+    ok(0x8d == r, "expected 0x8d, got 0x%x\n", r);
+
+    r = SendMessage(hwEdit, WM_CHAR, VK_RETURN, 0x1c0001);
+    ok(1 == r, "expected 1, got %d\n", r);
+    len = SendMessage(hwEdit, WM_GETTEXTLENGTH, 0, 0);
+    ok(11 == len, "expected 11, got %d\n", len);
+
+    DestroyWindow(hwEdit);
+}
+
 START_TEST(edit)
 {
     hinst = GetModuleHandleA(NULL);
@@ -2105,6 +2161,7 @@ START_TEST(edit)
     test_singleline_wantreturn_edit_dialog();
     test_child_edit_wmkeydown();
     test_fontsize();
+    test_dialogmode();
 
     UnregisterWindowClasses();
 }
