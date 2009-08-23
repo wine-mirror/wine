@@ -898,4 +898,6 @@ ok((function (){return 1;})() === 1, "(function (){return 1;})() = " + (function
 
 ok(createNullBSTR() === '', "createNullBSTR() !== ''");
 
+function do_test() {}
+
 reportSuccess();
