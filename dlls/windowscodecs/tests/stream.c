@@ -34,7 +34,7 @@ static void test_StreamOnMemory(void)
     BYTE Memory[64], MemBuf[64];
     LARGE_INTEGER LargeNull, LargeInt;
     ULARGE_INTEGER uNewPos;
-    ULONG uBytesRead;
+    ULONG uBytesRead, uBytesWritten;
     HRESULT hr;
 
     LargeNull.QuadPart = 0;
@@ -165,6 +165,45 @@ static void test_StreamOnMemory(void)
         ok(uBytesRead == sizeof(Memory), "Read %u bytes, expected %u\n", uBytesRead, sizeof(Memory));
         ok(memcmp(Memory, CmpMem, 64) == 0, "Read returned invalid data!\n");
     }
+    IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_SET, NULL);
+
+
+    /* Write */
+    MemBuf[0] = CmpMem[0] + 1;
+    MemBuf[1] = CmpMem[1] + 1;
+    MemBuf[2] = CmpMem[2] + 1;
+    hr = IWICStream_Write(pStream, MemBuf, 3, &uBytesWritten);
+    ok(hr == S_OK, "Write returned with %#x, expected %#x\n", hr, S_OK);
+    if(SUCCEEDED(hr)) {
+        ok(uBytesWritten == 3, "Wrote %u bytes, expected %u\n", uBytesWritten, 3);
+        ok(memcmp(MemBuf, Memory, 3) == 0, "Wrote returned invalid data!\n"); /* make sure we're writing directly */
+
+        /* check whether the seek pointer has moved correctly */
+        IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
+        ok(uNewPos.HighPart == 0 && uNewPos.LowPart == uBytesWritten, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.HighPart, uNewPos.LowPart, 0, uBytesWritten);
+    }
+    IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_SET, NULL);
+
+    hr = IWICStream_Write(pStream, MemBuf, 0, &uBytesWritten);
+    ok(hr == S_OK, "Read returned with %#x, expected %#x\n", hr, S_OK);
+
+    hr = IWICStream_Write(pStream, NULL, 3, &uBytesWritten);
+    ok(hr == E_INVALIDARG, "Write returned with %#x, expected %#x\n", hr, E_INVALIDARG);
+    ok(uBytesWritten == 0, "Wrote %u bytes, expected %u\n", uBytesWritten, 0);
+    IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
+    ok(uNewPos.HighPart == 0 && uNewPos.LowPart == 0, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.HighPart, uNewPos.LowPart, 0, 0);
+
+    hr = IWICStream_Write(pStream, NULL, 0, &uBytesWritten);
+    ok(hr == E_INVALIDARG, "Write returned with %#x, expected %#x\n", hr, E_INVALIDARG);
+    ok(uBytesWritten == 0, "Wrote %u bytes, expected %u\n", uBytesWritten, 0);
+    IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
+    ok(uNewPos.HighPart == 0 && uNewPos.LowPart == 0, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.HighPart, uNewPos.LowPart, 0, 0);
+
+    hr = IWICStream_Write(pStream, CmpMem, sizeof(Memory) + 10, &uBytesWritten);
+    ok(hr == STG_E_MEDIUMFULL, "Write returned with %#x, expected %#x\n", hr, STG_E_MEDIUMFULL);
+    ok(uBytesWritten == 0, "Wrote %u bytes, expected %u\n", uBytesWritten, 0);
+    IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
+    ok(uNewPos.HighPart == 0 && uNewPos.LowPart == uBytesWritten, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.HighPart, uNewPos.LowPart, 0, uBytesWritten);
     IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_SET, NULL);
 
 
