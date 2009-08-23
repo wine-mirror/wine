@@ -1552,4 +1552,10 @@ testFunctions(Object.prototype, [
         ["valueOf", 0]
     ]);
 
+testFunctions(Function.prototype, [
+        ["apply", 2],
+        ["call", 1],
+        ["toString", 0]
+    ]);
+
 reportSuccess();

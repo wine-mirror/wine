@@ -360,8 +360,8 @@ static void Function_destructor(DispatchEx *dispex)
 }
 
 static const builtin_prop_t Function_props[] = {
-    {applyW,                 Function_apply,                 PROPF_METHOD},
-    {callW,                  Function_call,                  PROPF_METHOD},
+    {applyW,                 Function_apply,                 PROPF_METHOD|2},
+    {callW,                  Function_call,                  PROPF_METHOD|1},
     {lengthW,                Function_length,                0},
     {toStringW,              Function_toString,              PROPF_METHOD}
 };
