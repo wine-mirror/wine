@@ -46,7 +46,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "&Копировать фон",        IDM_COPYBACKGROUND
         MENUITEM "Сохранить как &элемент рабочего стола...",      IDM_SETDESKTOPITEM
         MENUITEM SEPARATOR
-        MENUITEM "Выбрать Вс&ё",           IDM_SELECTALL
+        MENUITEM "Выделить вс&ё",           IDM_SELECTALL
         MENUITEM "Вс&тавить",              IDM_PASTE
         MENUITEM SEPARATOR
         MENUITEM "Создать &ярлык",           IDM_CREATESHORTCUT
