@@ -36,6 +36,7 @@ static void test_StreamOnMemory(void)
     ULARGE_INTEGER uLargeNull, uNewPos;
     ULONG uBytesRead, uBytesWritten;
     HRESULT hr;
+    STATSTG Stats;
 
     LargeNull.QuadPart = 0;
     uLargeNull.QuadPart = 0;
@@ -281,6 +282,23 @@ static void test_StreamOnMemory(void)
 
     hr = IWICStream_UnlockRegion(pStream, uLargeNull, uLargeNull, 0);
     ok(hr == E_NOTIMPL, "UnlockRegion returned %#x, expected %#x\n", hr, E_NOTIMPL);
+
+
+    /* Stat */
+    hr = IWICStream_Stat(pStream, NULL, 0);
+    ok(hr == E_INVALIDARG, "Stat returned %#x, expected %#x\n", hr, E_INVALIDARG);
+
+    hr = IWICStream_Stat(pStream, &Stats, 0);
+    ok(hr == S_OK, "Stat returned %#x, expected %#x\n", hr, S_OK);
+    ok(Stats.pwcsName == NULL, "Stat returned name %p, expected %p\n", Stats.pwcsName, NULL);
+    ok(Stats.type == STGTY_STREAM, "Stat returned type %d, expected %d\n", Stats.type, STGTY_STREAM);
+    ok(Stats.cbSize.HighPart == 0 && Stats.cbSize.LowPart == sizeof(Memory), "Stat returned size (%u;%u), expected (%u;%u)\n", Stats.cbSize.HighPart, Stats.cbSize.LowPart, 0, sizeof(Memory));
+    ok(Stats.mtime.dwHighDateTime == 0 && Stats.mtime.dwLowDateTime == 0, "Stat returned mtime (%u;%u), expected (%u;%u)\n", Stats.mtime.dwHighDateTime, Stats.mtime.dwLowDateTime, 0, 0);
+    ok(Stats.ctime.dwHighDateTime == 0 && Stats.ctime.dwLowDateTime == 0, "Stat returned ctime (%u;%u), expected (%u;%u)\n", Stats.ctime.dwHighDateTime, Stats.ctime.dwLowDateTime, 0, 0);
+    ok(Stats.atime.dwHighDateTime == 0 && Stats.atime.dwLowDateTime == 0, "Stat returned atime (%u;%u), expected (%u;%u)\n", Stats.atime.dwHighDateTime, Stats.atime.dwLowDateTime, 0, 0);
+    ok(Stats.grfMode == 0, "Stat returned access mode %d, expected %d\n", Stats.grfMode, 0);
+    ok(Stats.grfLocksSupported == 0, "Stat returned supported locks %#x, expected %#x\n", Stats.grfLocksSupported, 0);
+    ok(Stats.grfStateBits == 0, "Stat returned state bits %#x, expected %#x\n", Stats.grfStateBits, 0);
 
 
     /* Clone */
