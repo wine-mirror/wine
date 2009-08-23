@@ -111,6 +111,10 @@ ok(str.toString() === "", "str.toString() = " + str.toString());
 var str = new String("test", "abc");
 ok(str.toString() === "test", "str.toString() = " + str.toString());
 
+var strObj = new Object();
+strObj.toString = function() { return "abcd" };
+strObj.substr = String.prototype.substr;
+
 tmp = "value " + str;
 ok(tmp === "value test", "'value ' + str = " + tmp);
 
@@ -171,6 +175,25 @@ tmp = "abcd".substring(1,3,2);
 ok(tmp === "bc", "'abcd'.substring(1,3,2) = " + tmp);
 tmp = "abcd".substring();
 ok(tmp === "abcd", "'abcd'.substring() = " + tmp);
+
+tmp = "abcd".substr(1,3);
+ok(tmp === "bcd", "'abcd'.substr(1,3) = " + tmp);
+tmp = "abcd".substr(-1,3);
+ok(tmp === "abc", "'abcd'.substr(-1,3) = " + tmp);
+tmp = "abcd".substr(1,6);
+ok(tmp === "bcd", "'abcd'.substr(1,6) = " + tmp);
+tmp = "abcd".substr(2,-1);
+ok(tmp === "", "'abcd'.substr(3,1) = " + tmp);
+tmp = "abcd".substr(2,0);
+ok(tmp === "", "'abcd'.substr(2,2) = " + tmp);
+tmp = "abcd".substr(true,"3");
+ok(tmp === "bcd", "'abcd'.substr(true,'3') = " + tmp);
+tmp = "abcd".substr(1,3,2);
+ok(tmp === "bcd", "'abcd'.substr(1,3,2) = " + tmp);
+tmp = "abcd".substr();
+ok(tmp === "abcd", "'abcd'.substr() = " + tmp);
+tmp = strObj.substr(1,1);
+ok(tmp === "b", "'abcd'.substr(1,3) = " + tmp);
 
 tmp = "abcd".slice(1,3);
 ok(tmp === "bc", "'abcd'.slice(1,3) = " + tmp);

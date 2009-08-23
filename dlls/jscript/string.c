@@ -1380,11 +1380,85 @@ static HRESULT String_substring(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    B.2.3 */
 static HRESULT String_substr(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR val_str = NULL;
+    const WCHAR *str;
+    INT start=0, len;
+    DWORD length;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(is_class(dispex, JSCLASS_STRING)) {
+        StringInstance *this = (StringInstance*)dispex;
+
+        str = this->str;
+        length = this->length;
+    }else {
+        VARIANT this;
+
+        V_VT(&this) = VT_DISPATCH;
+        V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
+        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        if(FAILED(hres))
+            return hres;
+
+        str = val_str;
+        length = SysStringLen(val_str);
+    }
+
+    if(arg_cnt(dp) >= 1) {
+        hres = to_integer(dispex->ctx, dp->rgvarg + dp->cArgs-1, ei, &v);
+        if(FAILED(hres)) {
+            SysFreeString(val_str);
+            return hres;
+        }
+
+        if(V_VT(&v) == VT_I4) {
+            start = V_I4(&v);
+            if(start < 0)
+                start = 0;
+            else if(start >= length)
+                start = length;
+        }else {
+            start = V_R8(&v) < 0.0 ? 0 : length;
+        }
+    }
+
+    if(arg_cnt(dp) >= 2) {
+        hres = to_integer(dispex->ctx, dp->rgvarg + dp->cArgs-2, ei, &v);
+        if(FAILED(hres)) {
+            SysFreeString(val_str);
+            return hres;
+        }
+
+        if(V_VT(&v) == VT_I4) {
+            len = V_I4(&v);
+            if(len < 0)
+                len = 0;
+            else if(len > length-start)
+                len = length-start;
+        }else {
+            len = V_R8(&v) < 0.0 ? 0 : length-start;
+        }
+    }else {
+        len = length-start;
+    }
+
+    hres = S_OK;
+    if(retv) {
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = SysAllocStringLen(str+start, len);
+        if(!V_BSTR(retv))
+            hres = E_OUTOFMEMORY;
+    }
+
+    SysFreeString(val_str);
+    return hres;
 }
 
 static HRESULT String_sup(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
