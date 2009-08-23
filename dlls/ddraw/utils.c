@@ -325,6 +325,16 @@ PixelFormat_WineD3DtoDD(DDPIXELFORMAT *DDPixelFormat,
             DDPixelFormat->u5.dwLuminanceAlphaBitMask = 0x00000000;
             break;
 
+        case WINED3DFMT_X8L8V8U8:
+            DDPixelFormat->dwFlags = DDPF_BUMPDUDV;
+            DDPixelFormat->dwFourCC = 0;
+            DDPixelFormat->u1.dwBumpBitCount = 32;
+            DDPixelFormat->u2.dwBumpDuBitMask =         0x000000ff;
+            DDPixelFormat->u3.dwBumpDvBitMask =         0x0000ff00;
+            DDPixelFormat->u4.dwBumpLuminanceBitMask =  0x00ff0000;
+            DDPixelFormat->u5.dwLuminanceAlphaBitMask = 0x00000000;
+            break;
+
         default:
             ERR("Can't translate this Pixelformat %d\n", WineD3DFormat);
     }
@@ -619,6 +629,13 @@ PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat)
                   (DDPixelFormat->u4.dwBumpLuminanceBitMask == 0x0000fc00) )
         {
             return WINED3DFMT_L6V5U5;
+        }
+        else if ( (DDPixelFormat->u1.dwBumpBitCount         == 32        ) &&
+                  (DDPixelFormat->u2.dwBumpDuBitMask        == 0x000000ff) &&
+                  (DDPixelFormat->u3.dwBumpDvBitMask        == 0x0000ff00) &&
+                  (DDPixelFormat->u4.dwBumpLuminanceBitMask == 0x00ff0000) )
+        {
+            return WINED3DFMT_X8L8V8U8;
         }
     }
 
