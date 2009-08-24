@@ -2126,7 +2126,8 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         return SOCKET_ERROR;
 
     default:
-        FIXME("Unknown level: 0x%08x\n", level);
+        WARN("Unknown level: 0x%08x\n", level);
+        SetLastError(WSAEINVAL);
         return SOCKET_ERROR;
     } /* end switch(level) */
 }
@@ -3277,7 +3278,8 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         break;
 
     default:
-        FIXME("Unknown level: 0x%08x\n", level);
+        WARN("Unknown level: 0x%08x\n", level);
+        SetLastError(WSAEINVAL);
         return SOCKET_ERROR;
     } /* end switch(level) */
 
