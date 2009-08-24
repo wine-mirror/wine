@@ -170,7 +170,7 @@ static NTSTATUS init_user_process_params( SIZE_T data_size, HANDLE *exe_file )
         }
     }
     SERVER_END_REQ;
-    if (status != STATUS_SUCCESS) return status;
+    if (status != STATUS_SUCCESS) goto done;
 
     size = sizeof(*params);
     size += MAX_NT_PATH_LENGTH * sizeof(WCHAR);
