@@ -60,6 +60,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 static void *libjpeg_handle;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
+MAKE_FUNCPTR(jpeg_CreateDecompress);
+MAKE_FUNCPTR(jpeg_destroy_decompress);
+MAKE_FUNCPTR(jpeg_read_header);
+MAKE_FUNCPTR(jpeg_resync_to_restart);
+MAKE_FUNCPTR(jpeg_start_decompress);
 MAKE_FUNCPTR(jpeg_std_error);
 #undef MAKE_FUNCPTR
 
@@ -73,6 +78,11 @@ static void *load_libjpeg(void)
         return NULL; \
     }
 
+        LOAD_FUNCPTR(jpeg_CreateDecompress);
+        LOAD_FUNCPTR(jpeg_destroy_decompress);
+        LOAD_FUNCPTR(jpeg_read_header);
+        LOAD_FUNCPTR(jpeg_resync_to_restart);
+        LOAD_FUNCPTR(jpeg_start_decompress);
         LOAD_FUNCPTR(jpeg_std_error);
 #undef LOAD_FUNCPTR
     }
@@ -82,7 +92,19 @@ static void *load_libjpeg(void)
 typedef struct {
     const IWICBitmapDecoderVtbl *lpVtbl;
     LONG ref;
+    BOOL initialized;
+    BOOL cinfo_initialized;
+    IStream *stream;
+    struct jpeg_decompress_struct cinfo;
+    struct jpeg_error_mgr jerr;
+    struct jpeg_source_mgr source_mgr;
+    BYTE source_buffer[1024];
 } JpegDecoder;
+
+static inline JpegDecoder *decoder_from_decompress(j_decompress_ptr decompress)
+{
+    return CONTAINING_RECORD(decompress, JpegDecoder, cinfo);
+}
 
 static HRESULT WINAPI JpegDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID iid,
     void **ppv)
@@ -125,6 +147,8 @@ static ULONG WINAPI JpegDecoder_Release(IWICBitmapDecoder *iface)
 
     if (ref == 0)
     {
+        if (This->cinfo_initialized) pjpeg_destroy_decompress(&This->cinfo);
+        if (This->stream) IStream_Release(This->stream);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -138,11 +162,100 @@ static HRESULT WINAPI JpegDecoder_QueryCapability(IWICBitmapDecoder *iface, IStr
     return E_NOTIMPL;
 }
 
+static void source_mgr_init_source(j_decompress_ptr cinfo)
+{
+}
+
+static jpeg_boolean source_mgr_fill_input_buffer(j_decompress_ptr cinfo)
+{
+    JpegDecoder *This = decoder_from_decompress(cinfo);
+    HRESULT hr;
+    ULONG bytesread;
+
+    hr = IStream_Read(This->stream, This->source_buffer, 1024, &bytesread);
+
+    if (hr != S_OK || bytesread == 0)
+    {
+        return FALSE;
+    }
+    else
+    {
+        This->source_mgr.next_input_byte = This->source_buffer;
+        This->source_mgr.bytes_in_buffer = bytesread;
+        return TRUE;
+    }
+}
+
+static void source_mgr_skip_input_data(j_decompress_ptr cinfo, long num_bytes)
+{
+    JpegDecoder *This = decoder_from_decompress(cinfo);
+    LARGE_INTEGER seek;
+
+    if (num_bytes > This->source_mgr.bytes_in_buffer)
+    {
+        seek.QuadPart = num_bytes - This->source_mgr.bytes_in_buffer;
+        IStream_Seek(This->stream, seek, STREAM_SEEK_CUR, NULL);
+        This->source_mgr.bytes_in_buffer = 0;
+    }
+    else if (num_bytes > 0)
+    {
+        This->source_mgr.next_input_byte += num_bytes;
+        This->source_mgr.bytes_in_buffer -= num_bytes;
+    }
+}
+
+static void source_mgr_term_source(j_decompress_ptr cinfo)
+{
+}
+
 static HRESULT WINAPI JpegDecoder_Initialize(IWICBitmapDecoder *iface, IStream *pIStream,
     WICDecodeOptions cacheOptions)
 {
-    FIXME("(%p,%p,%u): stub\n", iface, pIStream, cacheOptions);
-    return E_NOTIMPL;
+    JpegDecoder *This = (JpegDecoder*)iface;
+    int ret;
+    TRACE("(%p,%p,%u)\n", iface, pIStream, cacheOptions);
+
+    if (This->cinfo_initialized) return WINCODEC_ERR_WRONGSTATE;
+
+    This->cinfo.err = pjpeg_std_error(&This->jerr);
+
+    pjpeg_CreateDecompress(&This->cinfo, JPEG_LIB_VERSION, sizeof(struct jpeg_decompress_struct));
+
+    This->cinfo_initialized = TRUE;
+
+    This->stream = pIStream;
+    IStream_AddRef(pIStream);
+
+    This->source_mgr.bytes_in_buffer = 0;
+    This->source_mgr.init_source = source_mgr_init_source;
+    This->source_mgr.fill_input_buffer = source_mgr_fill_input_buffer;
+    This->source_mgr.skip_input_data = source_mgr_skip_input_data;
+    This->source_mgr.resync_to_restart = pjpeg_resync_to_restart;
+    This->source_mgr.term_source = source_mgr_term_source;
+
+    This->cinfo.src = &This->source_mgr;
+
+    ret = pjpeg_read_header(&This->cinfo, TRUE);
+
+    if (ret != JPEG_HEADER_OK) {
+        WARN("Jpeg image in stream has bad format, read header returned %d.\n",ret);
+        return E_FAIL;
+    }
+
+    if (This->cinfo.jpeg_color_space == JCS_GRAYSCALE)
+        This->cinfo.out_color_space = JCS_GRAYSCALE;
+    else
+        This->cinfo.out_color_space = JCS_RGB;
+
+    if (!pjpeg_start_decompress(&This->cinfo))
+    {
+        ERR("jpeg_start_decompress failed\n");
+        return E_FAIL;
+    }
+
+    This->initialized = TRUE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI JpegDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
@@ -248,6 +361,9 @@ HRESULT JpegDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 
     This->lpVtbl = &JpegDecoder_Vtbl;
     This->ref = 1;
+    This->initialized = FALSE;
+    This->cinfo_initialized = FALSE;
+    This->stream = NULL;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
