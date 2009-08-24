@@ -625,47 +625,169 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromGraphics(INT width, INT height,
 
 GpStatus WINGDIPAPI GdipCreateBitmapFromHICON(HICON hicon, GpBitmap** bitmap)
 {
-    HICON icon_copy;
+    GpStatus stat;
     ICONINFO iinfo;
-    PICTDESC desc;
+    BITMAP bm;
+    int ret;
+    UINT width, height;
+    GpRect rect;
+    BitmapData lockeddata;
+    HDC screendc;
+    BOOL has_alpha;
+    int x, y;
+    BYTE *bits;
+    BITMAPINFOHEADER bih;
+    DWORD *src;
+    BYTE *dst_row;
+    DWORD *dst;
 
     TRACE("%p, %p\n", hicon, bitmap);
 
     if(!bitmap || !GetIconInfo(hicon, &iinfo))
-        return InvalidParameter;
-
-    *bitmap = GdipAlloc(sizeof(GpBitmap));
-    if(!*bitmap)    return OutOfMemory;
-
-    icon_copy = CreateIconIndirect(&iinfo);
-
-    if(!icon_copy){
-        GdipFree(*bitmap);
+    {
+        DeleteObject(iinfo.hbmColor);
+        DeleteObject(iinfo.hbmMask);
         return InvalidParameter;
     }
 
-    desc.cbSizeofstruct = sizeof(PICTDESC);
-    desc.picType = PICTYPE_ICON;
-    desc.u.icon.hicon = icon_copy;
-
-    if(OleCreatePictureIndirect(&desc, &IID_IPicture, TRUE,
-                                (LPVOID*) &((*bitmap)->image.picture)) != S_OK){
-        DestroyIcon(icon_copy);
-        GdipFree(*bitmap);
+    /* get the size of the icon */
+    ret = GetObjectA(iinfo.hbmColor ? iinfo.hbmColor : iinfo.hbmMask, sizeof(bm), &bm);
+    if (ret == 0) {
+        DeleteObject(iinfo.hbmColor);
+        DeleteObject(iinfo.hbmMask);
         return GenericError;
     }
 
-    (*bitmap)->format = PixelFormat32bppARGB;
-    (*bitmap)->image.type  = ImageTypeBitmap;
-    (*bitmap)->image.flags = ImageFlagsNone;
-    (*bitmap)->width  = ipicture_pixel_width((*bitmap)->image.picture);
-    (*bitmap)->height = ipicture_pixel_height((*bitmap)->image.picture);
-    (*bitmap)->hbitmap = NULL;
-    (*bitmap)->hdc = NULL;
-    (*bitmap)->bits = NULL;
+    width = bm.bmWidth;
+
+    if (iinfo.hbmColor)
+        height = abs(bm.bmHeight);
+    else /* combined bitmap + mask */
+        height = abs(bm.bmHeight) / 2;
+
+    bits = HeapAlloc(GetProcessHeap(), 0, 4*width*height);
+    if (!bits) {
+        DeleteObject(iinfo.hbmColor);
+        DeleteObject(iinfo.hbmMask);
+        return OutOfMemory;
+    }
+
+    stat = GdipCreateBitmapFromScan0(width, height, 0, PixelFormat32bppARGB, NULL, bitmap);
+    if (stat != Ok) {
+        DeleteObject(iinfo.hbmColor);
+        DeleteObject(iinfo.hbmMask);
+        HeapFree(GetProcessHeap(), 0, bits);
+        return stat;
+    }
+
+    rect.X = 0;
+    rect.Y = 0;
+    rect.Width = width;
+    rect.Height = height;
+
+    stat = GdipBitmapLockBits(*bitmap, &rect, ImageLockModeWrite, PixelFormat32bppARGB, &lockeddata);
+    if (stat != Ok) {
+        DeleteObject(iinfo.hbmColor);
+        DeleteObject(iinfo.hbmMask);
+        HeapFree(GetProcessHeap(), 0, bits);
+        GdipDisposeImage((GpImage*)*bitmap);
+        return stat;
+    }
+
+    bih.biSize = sizeof(bih);
+    bih.biWidth = width;
+    bih.biHeight = -height;
+    bih.biPlanes = 1;
+    bih.biBitCount = 32;
+    bih.biCompression = BI_RGB;
+    bih.biSizeImage = 0;
+    bih.biXPelsPerMeter = 0;
+    bih.biYPelsPerMeter = 0;
+    bih.biClrUsed = 0;
+    bih.biClrImportant = 0;
+
+    screendc = GetDC(0);
+    if (iinfo.hbmColor)
+    {
+        GetDIBits(screendc, iinfo.hbmColor, 0, height, bits, (BITMAPINFO*)&bih, DIB_RGB_COLORS);
+
+        if (bm.bmBitsPixel == 32)
+        {
+            has_alpha = FALSE;
+
+            /* If any pixel has a non-zero alpha, ignore hbmMask */
+            src = (DWORD*)bits;
+            for (x=0; x<width && !has_alpha; x++)
+                for (y=0; y<height && !has_alpha; y++)
+                    if ((*src++ & 0xff000000) != 0)
+                        has_alpha = TRUE;
+        }
+        else has_alpha = FALSE;
+    }
+    else
+    {
+        GetDIBits(screendc, iinfo.hbmMask, 0, height, bits, (BITMAPINFO*)&bih, DIB_RGB_COLORS);
+        has_alpha = FALSE;
+    }
+
+    /* copy the image data to the Bitmap */
+    src = (DWORD*)bits;
+    dst_row = lockeddata.Scan0;
+    for (y=0; y<height; y++)
+    {
+        memcpy(dst_row, src, width*4);
+        src += width;
+        dst_row += lockeddata.Stride;
+    }
+
+    if (!has_alpha)
+    {
+        if (iinfo.hbmMask)
+        {
+            /* read alpha data from the mask */
+            if (iinfo.hbmColor)
+                GetDIBits(screendc, iinfo.hbmMask, 0, height, bits, (BITMAPINFO*)&bih, DIB_RGB_COLORS);
+            else
+                GetDIBits(screendc, iinfo.hbmMask, height, height, bits, (BITMAPINFO*)&bih, DIB_RGB_COLORS);
+
+            src = (DWORD*)bits;
+            dst_row = lockeddata.Scan0;
+            for (y=0; y<height; y++)
+            {
+                dst = (DWORD*)dst_row;
+                for (x=0; x<height; x++)
+                {
+                    DWORD src_value = *src++;
+                    if (src_value)
+                        *dst++ = 0;
+                    else
+                        *dst++ |= 0xff000000;
+                }
+                dst_row += lockeddata.Stride;
+            }
+        }
+        else
+        {
+            /* set constant alpha of 255 */
+            dst_row = bits;
+            for (y=0; y<height; y++)
+            {
+                dst = (DWORD*)dst_row;
+                for (x=0; x<height; x++)
+                    *dst++ |= 0xff000000;
+                dst_row += lockeddata.Stride;
+            }
+        }
+    }
+
+    ReleaseDC(0, screendc);
 
     DeleteObject(iinfo.hbmColor);
     DeleteObject(iinfo.hbmMask);
+
+    GdipBitmapUnlockBits(*bitmap, &lockeddata);
+
+    HeapFree(GetProcessHeap(), 0, bits);
 
     return Ok;
 }
