@@ -43,7 +43,7 @@
 #include <locale.h>
 #include <time.h>
 
-#include <shellapi.h>   /* for ShellExecute() */
+#include <shellapi.h>   /* for ShellExecuteW() */
 #include <shlobj.h>     /* for SHFormatDrive() */
 
 #ifndef _NO_EXTENSIONS
