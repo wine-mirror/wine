@@ -1623,8 +1623,8 @@ static GpStatus decode_image_olepicture_metafile(IStream* stream, REFCLSID clsid
     return Ok;
 }
 
-typedef GpStatus (*encode_image_func)(LPVOID bitmap_bits, LPBITMAPINFO bitmap_info,
-                                   void **output, unsigned int *output_size);
+typedef GpStatus (*encode_image_func)(GpImage *image, IStream* stream,
+    GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params);
 
 typedef GpStatus (*decode_image_func)(IStream *stream, REFCLSID clsid, GpImage** image);
 
@@ -1771,48 +1771,138 @@ GpStatus WINGDIPAPI GdipSaveImageToFile(GpImage *image, GDIPCONST WCHAR* filenam
 #define BITMAP_FORMAT_PNG   0x5089
 #define BITMAP_FORMAT_APM   0xcdd7
 
-static GpStatus encode_image_BMP(LPVOID bitmap_bits, LPBITMAPINFO bitmap_info,
-                                 void **output, unsigned int *output_size)
+static GpStatus encode_image_WIC(GpImage *image, IStream* stream,
+    GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params)
 {
-    int num_palette_entries;
-    BITMAPFILEHEADER *bmp_file_hdr;
-    BITMAPINFO *bmp_info_hdr;
+    GpStatus stat;
+    GpBitmap *bitmap;
+    IWICBitmapEncoder *encoder;
+    IWICBitmapFrameEncode *frameencode;
+    IPropertyBag2 *encoderoptions;
+    HRESULT hr;
+    UINT width, height;
+    PixelFormat gdipformat=0;
+    WICPixelFormatGUID wicformat;
+    GpRect rc;
+    BitmapData lockeddata;
+    HRESULT initresult;
+    UINT i;
 
-    if (bitmap_info->bmiHeader.biClrUsed) {
-        num_palette_entries = bitmap_info->bmiHeader.biClrUsed;
-        if (num_palette_entries > 256) num_palette_entries = 256;
-    } else {
-        if (bitmap_info->bmiHeader.biBitCount <= 8)
-            num_palette_entries = 1 << bitmap_info->bmiHeader.biBitCount;
-        else
-            num_palette_entries = 0;
+    if (image->type != ImageTypeBitmap)
+        return GenericError;
+
+    bitmap = (GpBitmap*)image;
+
+    GdipGetImageWidth(image, &width);
+    GdipGetImageHeight(image, &height);
+
+    rc.X = 0;
+    rc.Y = 0;
+    rc.Width = width;
+    rc.Height = height;
+
+    initresult = CoInitialize(NULL);
+
+    hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICBitmapEncoder, (void**)&encoder);
+    if (FAILED(hr))
+    {
+        if (SUCCEEDED(initresult)) CoUninitialize();
+        return hresult_to_status(hr);
     }
 
-    *output_size =
-        sizeof(BITMAPFILEHEADER) +
-        sizeof(BITMAPINFOHEADER) +
-        num_palette_entries * sizeof(RGBQUAD) +
-        bitmap_info->bmiHeader.biSizeImage;
+    hr = IWICBitmapEncoder_Initialize(encoder, stream, WICBitmapEncoderNoCache);
 
-    *output = GdipAlloc(*output_size);
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frameencode, &encoderoptions);
+    }
 
-    bmp_file_hdr = *output;
-    bmp_file_hdr->bfType = BITMAP_FORMAT_BMP;
-    bmp_file_hdr->bfSize = *output_size;
-    bmp_file_hdr->bfOffBits =
-        sizeof(BITMAPFILEHEADER) +
-        sizeof(BITMAPINFOHEADER) +
-        num_palette_entries * sizeof (RGBQUAD);
+    if (SUCCEEDED(hr)) /* created frame */
+    {
+        hr = IWICBitmapFrameEncode_Initialize(frameencode, encoderoptions);
 
-    bmp_info_hdr = (BITMAPINFO*) ((unsigned char*)(*output) + sizeof(BITMAPFILEHEADER));
-    memcpy(bmp_info_hdr, bitmap_info, sizeof(BITMAPINFOHEADER) + num_palette_entries * sizeof(RGBQUAD));
-    memcpy((unsigned char *)(*output) +
-           sizeof(BITMAPFILEHEADER) +
-           sizeof(BITMAPINFOHEADER) +
-           num_palette_entries * sizeof(RGBQUAD),
-           bitmap_bits, bitmap_info->bmiHeader.biSizeImage);
+        if (SUCCEEDED(hr))
+            hr = IWICBitmapFrameEncode_SetSize(frameencode, width, height);
 
-    return Ok;
+        if (SUCCEEDED(hr))
+            /* FIXME: use the resolution from the image */
+            hr = IWICBitmapFrameEncode_SetResolution(frameencode, 96.0, 96.0);
+
+        if (SUCCEEDED(hr))
+        {
+            for (i=0; wic_pixel_formats[i]; i++)
+            {
+                if (wic_gdip_formats[i] == bitmap->format)
+                    break;
+            }
+            if (wic_pixel_formats[i])
+                memcpy(&wicformat, wic_pixel_formats[i], sizeof(GUID));
+            else
+                memcpy(&wicformat, &GUID_WICPixelFormat32bppBGRA, sizeof(GUID));
+
+            hr = IWICBitmapFrameEncode_SetPixelFormat(frameencode, &wicformat);
+
+            for (i=0; wic_pixel_formats[i]; i++)
+            {
+                if (IsEqualGUID(&wicformat, wic_pixel_formats[i]))
+                    break;
+            }
+            if (wic_pixel_formats[i])
+                gdipformat = wic_gdip_formats[i];
+            else
+            {
+                ERR("cannot provide pixel format %s\n", debugstr_guid(&wicformat));
+                hr = E_FAIL;
+            }
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            stat = GdipBitmapLockBits(bitmap, &rc, ImageLockModeRead, gdipformat,
+                &lockeddata);
+
+            if (stat == Ok)
+            {
+                UINT row_size = (lockeddata.Width * PIXELFORMATBPP(gdipformat) + 7)/8;
+                BYTE *row;
+
+                /* write one row at a time in case stride is negative */
+                row = lockeddata.Scan0;
+                for (i=0; i<lockeddata.Height; i++)
+                {
+                    hr = IWICBitmapFrameEncode_WritePixels(frameencode, 1, row_size, row_size, row);
+                    if (FAILED(hr)) break;
+                    row += lockeddata.Stride;
+                }
+
+                GdipBitmapUnlockBits(bitmap, &lockeddata);
+            }
+            else
+                hr = E_FAIL;
+        }
+
+        if (SUCCEEDED(hr))
+            hr = IWICBitmapFrameEncode_Commit(frameencode);
+
+        IWICBitmapFrameEncode_Release(frameencode);
+        IPropertyBag2_Release(encoderoptions);
+    }
+
+    if (SUCCEEDED(hr))
+        hr = IWICBitmapEncoder_Commit(encoder);
+
+    IWICBitmapEncoder_Release(encoder);
+
+    if (SUCCEEDED(initresult)) CoUninitialize();
+
+    return hresult_to_status(hr);
+}
+
+static GpStatus encode_image_BMP(GpImage *image, IStream* stream,
+    GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params)
+{
+    return encode_image_WIC(image, stream, &CLSID_WICBmpEncoder, params);
 }
 
 /*****************************************************************************
@@ -1822,29 +1912,13 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
     GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params)
 {
     GpStatus stat;
-    HBITMAP hbmp;
-    HBITMAP old_hbmp;
-    HDC hdc;
-    int bm_is_selected;
-    BITMAPINFO bmp_info;
-    LPVOID bmp_bits;
     encode_image_func encode_image;
-    LPVOID output;
-    unsigned int output_size;
-    unsigned int dummy;
     int i;
-
-    old_hbmp = 0;
-    output = NULL;
-    output_size = 0;
 
     TRACE("%p %p %p %p\n", image, stream, clsid, params);
 
     if(!image || !stream)
         return InvalidParameter;
-
-    if (image->type != ImageTypeBitmap)
-        return GenericError;
 
     /* select correct encoder */
     encode_image = NULL;
@@ -1856,40 +1930,7 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
     if (encode_image == NULL)
         return UnknownImageFormat;
 
-    hbmp = ((GpBitmap*)image)->hbitmap;
-    if (!hbmp)
-        return GenericError;
-    hdc = ((GpBitmap*)image)->hdc;
-    bm_is_selected = (hdc != 0);
-    if (!bm_is_selected) {
-        hdc = CreateCompatibleDC(0);
-        old_hbmp = SelectObject(hdc, hbmp);
-    }
-
-    /* get bits from HBITMAP */
-    bmp_info.bmiHeader.biSize = sizeof(bmp_info.bmiHeader);
-    bmp_info.bmiHeader.biBitCount = 0;
-    GetDIBits(hdc, hbmp, 0, 0, NULL, &bmp_info, DIB_RGB_COLORS);
-
-    bmp_bits = GdipAlloc(bmp_info.bmiHeader.biSizeImage);
-
-    if (bmp_bits)
-        GetDIBits(hdc, hbmp, 0, abs(bmp_info.bmiHeader.biHeight), bmp_bits, &bmp_info, DIB_RGB_COLORS);
-
-    if (!bm_is_selected) {
-        SelectObject(hdc, old_hbmp);
-        DeleteDC(hdc);
-    }
-
-    if (!bmp_bits)
-        return OutOfMemory;
-
-    stat = encode_image(bmp_bits, &bmp_info, &output, &output_size);
-    if (stat == Ok)
-        IStream_Write(stream, output, output_size, &dummy);
-
-    GdipFree(output);
-    GdipFree(bmp_bits);
+    stat = encode_image(image, stream, clsid, params);
 
     return stat;
 }
