@@ -85,18 +85,6 @@ LONGLONG CDECL NTDLL__ftol(double fl)
 #endif /* !defined(__GNUC__) && defined(__i386__) */
 
 /*********************************************************************
- *                  _ftol   (NTDLL.@)
- * VERSION
- *	[!i386]
- */
-#ifndef __i386__
-LONG CDECL NTDLL__ftol(double fl)
-{
-	return (LONG) fl;
-}
-#endif /* !defined(__i386__) */
-
-/*********************************************************************
  *                  _CIpow   (NTDLL.@)
  * VERSION
  *	[GNUC && i386]
@@ -128,19 +116,6 @@ double CDECL NTDLL__CIpow(double x,double y)
 	return pow(x,y);
 }
 #endif /* !defined(__GNUC__) && defined(__i386__) */
-
-/*********************************************************************
- *                  _CIpow   (NTDLL.@)
- * VERSION
- *	[!i386]
- */
-#ifndef __i386__
-double CDECL NTDLL__CIpow(double x,double y)
-{
-	return pow(x,y);
-}
-#endif /* !defined(__i386__) */
-
 
 /*********************************************************************
  *                  wine_get_version   (NTDLL.@)

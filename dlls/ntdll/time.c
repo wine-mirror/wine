@@ -332,8 +332,7 @@ NTSTATUS WINAPI RtlSystemTimeToLocalTime( const LARGE_INTEGER *SystemTime,
 BOOLEAN WINAPI RtlTimeToSecondsSince1970( const LARGE_INTEGER *Time, LPDWORD Seconds )
 {
     ULONGLONG tmp = ((ULONGLONG)Time->u.HighPart << 32) | Time->u.LowPart;
-    tmp = RtlLargeIntegerDivide( tmp, TICKSPERSEC, NULL );
-    tmp -= SECS_1601_TO_1970;
+    tmp = tmp / TICKSPERSEC - SECS_1601_TO_1970;
     if (tmp > 0xffffffff) return FALSE;
     *Seconds = (DWORD)tmp;
     return TRUE;
@@ -355,8 +354,7 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1970( const LARGE_INTEGER *Time, LPDWORD Sec
 BOOLEAN WINAPI RtlTimeToSecondsSince1980( const LARGE_INTEGER *Time, LPDWORD Seconds )
 {
     ULONGLONG tmp = ((ULONGLONG)Time->u.HighPart << 32) | Time->u.LowPart;
-    tmp = RtlLargeIntegerDivide( tmp, TICKSPERSEC, NULL );
-    tmp -= SECS_1601_TO_1980;
+    tmp = tmp / TICKSPERSEC - SECS_1601_TO_1980;
     if (tmp > 0xffffffff) return FALSE;
     *Seconds = (DWORD)tmp;
     return TRUE;
@@ -417,15 +415,16 @@ void WINAPI RtlTimeToElapsedTimeFields( const LARGE_INTEGER *Time, PTIME_FIELDS 
     LONGLONG time;
     INT rem;
 
-    time = RtlExtendedLargeIntegerDivide( Time->QuadPart, TICKSPERSEC, &rem );
-    TimeFields->Milliseconds = rem / TICKSPERMSEC;
+    time = Time->QuadPart / TICKSPERSEC;
+    TimeFields->Milliseconds = (Time->QuadPart % TICKSPERSEC) / TICKSPERMSEC;
 
     /* time is now in seconds */
     TimeFields->Year  = 0;
     TimeFields->Month = 0;
-    TimeFields->Day   = RtlExtendedLargeIntegerDivide( time, SECSPERDAY, &rem );
+    TimeFields->Day   = time / SECSPERDAY;
 
     /* rem is now the remaining seconds in the last day */
+    rem = time % SECSPERDAY;
     TimeFields->Second = rem % 60;
     rem /= 60;
     TimeFields->Minute = rem % 60;

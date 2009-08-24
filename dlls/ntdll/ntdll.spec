@@ -145,7 +145,7 @@
 @ stdcall NtCreateTimer(ptr long ptr long)
 @ stub NtCreateToken
 # @ stub NtCreateWaitablePort
-@ stdcall -arch=i386,sparc,alpha,powerpc NtCurrentTeb()
+@ stdcall -arch=win32 NtCurrentTeb()
 # @ stub NtDebugActiveProcess
 # @ stub NtDebugContinue
 @ stdcall NtDelayExecution(long ptr)
@@ -457,13 +457,13 @@
 # @ stub RtlComputePrivatizedDllName_U
 @ stub RtlConsoleMultiByteToUnicodeN
 @ stub RtlConvertExclusiveToShared
-@ stdcall -ret64 RtlConvertLongToLargeInteger(long)
+@ stdcall -arch=win32 -ret64 RtlConvertLongToLargeInteger(long)
 # @ stub RtlConvertPropertyToVariant
 @ stub RtlConvertSharedToExclusive
 @ stdcall RtlConvertSidToUnicodeString(ptr ptr long)
 # @ stub RtlConvertToAutoInheritSecurityObject
 @ stub RtlConvertUiListToApiList
-@ stdcall -ret64 RtlConvertUlongToLargeInteger(long)
+@ stdcall -arch=win32 -ret64 RtlConvertUlongToLargeInteger(long)
 # @ stub RtlConvertVariantToProperty
 @ stdcall RtlCopyLuid(ptr ptr)
 @ stdcall RtlCopyLuidAndAttributesArray(long ptr ptr)
@@ -546,9 +546,9 @@
 # @ stub RtlEnableEarlyCriticalSectionEventCreation
 @ stdcall RtlEncodePointer(ptr)
 # @ stub RtlEncodeSystemPointer
-@ stdcall -ret64 RtlEnlargedIntegerMultiply(long long)
-@ stdcall RtlEnlargedUnsignedDivide(double long ptr)
-@ stdcall -ret64 RtlEnlargedUnsignedMultiply(long long)
+@ stdcall -arch=win32 -ret64 RtlEnlargedIntegerMultiply(long long)
+@ stdcall -arch=win32 RtlEnlargedUnsignedDivide(double long ptr)
+@ stdcall -arch=win32 -ret64 RtlEnlargedUnsignedMultiply(long long)
 @ stdcall RtlEnterCriticalSection(ptr)
 @ stub RtlEnumProcessHeaps
 @ stub RtlEnumerateGenericTable
@@ -568,9 +568,9 @@
 @ stdcall RtlExitUserThread(long)
 @ stdcall RtlExpandEnvironmentStrings_U(ptr ptr ptr ptr)
 @ stub RtlExtendHeap
-@ stdcall -ret64 RtlExtendedIntegerMultiply(double long)
-@ stdcall -ret64 RtlExtendedLargeIntegerDivide(double long ptr)
-@ stdcall -ret64 RtlExtendedMagicDivide(double double long)
+@ stdcall -arch=win32 -ret64 RtlExtendedIntegerMultiply(double long)
+@ stdcall -arch=win32 -ret64 RtlExtendedLargeIntegerDivide(double long ptr)
+@ stdcall -arch=win32 -ret64 RtlExtendedMagicDivide(double double long)
 @ stdcall RtlFillMemory(ptr long long)
 @ stdcall RtlFillMemoryUlong(ptr long long)
 @ stub RtlFinalReleaseOutOfProcessMemoryStream
@@ -711,13 +711,13 @@
 # @ stub RtlIsThreadWithinLoaderCallout
 @ stdcall RtlIsValidHandle(ptr ptr)
 @ stdcall RtlIsValidIndexHandle(ptr long ptr)
-@ stdcall -ret64 RtlLargeIntegerAdd(double double)
-@ stdcall -ret64 RtlLargeIntegerArithmeticShift(double long)
-@ stdcall -ret64 RtlLargeIntegerDivide(double double ptr)
-@ stdcall -ret64 RtlLargeIntegerNegate(double)
-@ stdcall -ret64 RtlLargeIntegerShiftLeft(double long)
-@ stdcall -ret64 RtlLargeIntegerShiftRight(double long)
-@ stdcall -ret64 RtlLargeIntegerSubtract(double double)
+@ stdcall -arch=win32 -ret64 RtlLargeIntegerAdd(double double)
+@ stdcall -arch=win32 -ret64 RtlLargeIntegerArithmeticShift(double long)
+@ stdcall -arch=win32 -ret64 RtlLargeIntegerDivide(double double ptr)
+@ stdcall -arch=win32 -ret64 RtlLargeIntegerNegate(double)
+@ stdcall -arch=win32 -ret64 RtlLargeIntegerShiftLeft(double long)
+@ stdcall -arch=win32 -ret64 RtlLargeIntegerShiftRight(double long)
+@ stdcall -arch=win32 -ret64 RtlLargeIntegerSubtract(double double)
 @ stdcall RtlLargeIntegerToChar(ptr long long ptr)
 @ stdcall RtlLeaveCriticalSection(ptr)
 @ stdcall RtlLengthRequiredSid(long)
@@ -1232,7 +1232,7 @@
 @ stdcall ZwYieldExecution() NtYieldExecution
 # @ stub _CIcos
 # @ stub _CIlog
-@ cdecl -private _CIpow() NTDLL__CIpow
+@ cdecl -private -arch=i386 _CIpow() NTDLL__CIpow
 # @ stub _CIsin
 # @ stub _CIsqrt
 @ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr)
@@ -1240,21 +1240,21 @@
 # @ stub __iscsym
 # @ stub __iscsymf
 # @ stub __toascii
-@ stdcall -private -ret64 _alldiv(double double)
+@ stdcall -private -arch=i386 -ret64 _alldiv(double double)
 # @ stub _alldvrm
-@ stdcall -private -ret64 _allmul(double double)
-@ stdcall -private -i386 -norelay _alloca_probe()
-@ stdcall -private -ret64 _allrem(double double)
+@ stdcall -private -arch=i386 -ret64 _allmul(double double)
+@ stdcall -private -arch=i386 -norelay _alloca_probe()
+@ stdcall -private -arch=i386 -ret64 _allrem(double double)
 # @ stub _allshl
 # @ stub _allshr
 @ cdecl -private -ret64 _atoi64(str)
-@ stdcall -private -ret64 _aulldiv(double double)
+@ stdcall -private -arch=i386 -ret64 _aulldiv(double double)
 # @ stub _aulldvrm
-@ stdcall -private -ret64 _aullrem(double double)
+@ stdcall -private -arch=i386 -ret64 _aullrem(double double)
 # @ stub _aullshr
-@ stdcall -private -i386 -norelay _chkstk()
+@ stdcall -private -arch=i386 -norelay _chkstk()
 @ stub _fltused
-@ cdecl -private -ret64 _ftol() NTDLL__ftol
+@ cdecl -private -arch=i386 -ret64 _ftol() NTDLL__ftol
 @ cdecl -private _i64toa(double ptr long)
 @ cdecl -private _i64tow(double ptr long)
 @ cdecl -private _itoa(long ptr long)

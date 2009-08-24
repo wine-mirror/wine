@@ -1822,7 +1822,6 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
 
             if (info->LastAccessTime.QuadPart || info->LastWriteTime.QuadPart)
             {
-                ULONGLONG sec, nsec;
                 struct timeval tv[2];
 
                 if (!info->LastAccessTime.QuadPart || !info->LastWriteTime.QuadPart)
@@ -1838,15 +1837,17 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
                 }
                 if (info->LastAccessTime.QuadPart)
                 {
-                    sec = RtlLargeIntegerDivide( info->LastAccessTime.QuadPart, 10000000, &nsec );
+                    ULONGLONG sec = info->LastAccessTime.QuadPart / 10000000;
+                    UINT nsec = info->LastAccessTime.QuadPart % 10000000;
                     tv[0].tv_sec = sec - SECS_1601_TO_1970;
-                    tv[0].tv_usec = (UINT)nsec / 10;
+                    tv[0].tv_usec = nsec / 10;
                 }
                 if (info->LastWriteTime.QuadPart)
                 {
-                    sec = RtlLargeIntegerDivide( info->LastWriteTime.QuadPart, 10000000, &nsec );
+                    ULONGLONG sec = info->LastWriteTime.QuadPart / 10000000;
+                    UINT nsec = info->LastWriteTime.QuadPart % 10000000;
                     tv[1].tv_sec = sec - SECS_1601_TO_1970;
-                    tv[1].tv_usec = (UINT)nsec / 10;
+                    tv[1].tv_usec = nsec / 10;
                 }
                 if (futimes( fd, tv ) == -1) io->u.Status = FILE_GetNtStatus();
             }

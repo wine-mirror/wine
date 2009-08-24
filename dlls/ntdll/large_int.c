@@ -26,6 +26,8 @@
 #include "windef.h"
 #include "winternl.h"
 
+#ifndef _WIN64
+
 /*
  * Note: we use LONGLONG instead of LARGE_INTEGER, because
  * the latter is a structure and the calling convention for
@@ -373,6 +375,7 @@ LONGLONG WINAPI RtlExtendedMagicDivide(
     } /* if */
 }
 
+#endif  /* _WIN64 */
 
 /******************************************************************************
  *      RtlLargeIntegerToChar	[NTDLL.@]
@@ -507,6 +510,8 @@ NTSTATUS WINAPI RtlInt64ToUnicodeString(
 }
 
 
+#ifdef __i386__
+
 /******************************************************************************
  *        _alldiv   (NTDLL.@)
  *
@@ -595,3 +600,5 @@ ULONGLONG WINAPI _aullrem( ULONGLONG a, ULONGLONG b )
 {
     return a % b;
 }
+
+#endif  /* __i386__ */
