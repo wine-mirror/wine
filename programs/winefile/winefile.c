@@ -413,7 +413,7 @@ static void read_directory_win(Entry* dir, LPCTSTR path)
 			entry->etype = ET_WINDOWS;
 			entry->bhfi_valid = FALSE;
 
-			lstrcpy(p, entry->data.cFileName);
+			lstrcpyW(p, entry->data.cFileName);
 
 			hFile = CreateFile(buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
 								0, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
@@ -1095,7 +1095,7 @@ static int compareName(const void* arg1, const void* arg2)
 	if (cmp)
 		return cmp;
 
-	return lstrcmpi(fd1->cFileName, fd2->cFileName);
+	return lstrcmpiW(fd1->cFileName, fd2->cFileName);
 }
 
 static int compareExt(const void* arg1, const void* arg2)
@@ -1124,11 +1124,11 @@ static int compareExt(const void* arg1, const void* arg2)
 	else
 		ext2 = sEmpty;
 
-	cmp = lstrcmpi(ext1, ext2);
+	cmp = lstrcmpiW(ext1, ext2);
 	if (cmp)
 		return cmp;
 
-	return lstrcmpi(name1, name2);
+	return lstrcmpiW(name1, name2);
 }
 
 static int compareSize(const void* arg1, const void* arg2)
@@ -1251,7 +1251,7 @@ static void read_directory(Entry* dir, LPCTSTR path, SORT_ORDER sortOrder, HWND 
 
 			for(entry=dir->down; entry; entry=entry->next)
 				if (entry->data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-					lstrcpy(d, entry->data.cFileName);
+					lstrcpyW(d, entry->data.cFileName);
 					read_directory_unix(entry, buffer);
 					SortDirectory(entry, sortOrder);
 				}
@@ -1273,7 +1273,7 @@ static void read_directory(Entry* dir, LPCTSTR path, SORT_ORDER sortOrder, HWND 
 
 			for(entry=dir->down; entry; entry=entry->next)
 				if (entry->data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-					lstrcpy(d, entry->data.cFileName);
+					lstrcpyW(d, entry->data.cFileName);
 					read_directory_win(entry, buffer);
 					SortDirectory(entry, sortOrder);
 				}
@@ -1312,12 +1312,12 @@ static Entry* read_tree(Root* root, LPCTSTR path, LPITEMIDLIST pidl, LPTSTR drv,
 		 /* read unix file system tree */
 		root->drive_type = GetDriveType(path);
 
-		lstrcat(drv, sSlash);
+		lstrcatW(drv, sSlash);
 		load_string(root->volname, sizeof(root->volname)/sizeof(root->volname[0]), IDS_ROOT_FS);
 		root->fs_flags = 0;
 		load_string(root->fs, sizeof(root->fs)/sizeof(root->fs[0]), IDS_UNIXFS);
 
-		lstrcpy(root->path, sSlash);
+		lstrcpyW(root->path, sSlash);
 
 		return read_tree_unix(root, path, sortOrder, hwnd);
 	}
@@ -1326,10 +1326,10 @@ static Entry* read_tree(Root* root, LPCTSTR path, LPITEMIDLIST pidl, LPTSTR drv,
 	 /* read WIN32 file system tree */
 	root->drive_type = GetDriveType(path);
 
-	lstrcat(drv, sBackslash);
+	lstrcatW(drv, sBackslash);
 	GetVolumeInformation(drv, root->volname, _MAX_FNAME, 0, 0, &root->fs_flags, root->fs, _MAX_DIR);
 
-	lstrcpy(root->path, drv);
+	lstrcpyW(root->path, drv);
 
 	return read_tree_win(root, path, sortOrder, hwnd);
 }
@@ -1384,18 +1384,18 @@ static ChildWnd* alloc_child_window(LPCTSTR path, LPITEMIDLIST pidl, HWND hwnd)
 
 	if (path)
 	{
-		lstrcpy(child->path, path);
+		lstrcpyW(child->path, path);
 
 		_wsplitpath(path, drv, dir, name, ext);
 	}
 
-	lstrcpy(child->filter_pattern, sAsterics);
+	lstrcpyW(child->filter_pattern, sAsterics);
 	child->filter_flags = TF_ALL;
 
 	root->entry.level = 0;
 
-	lstrcpy(dir_path, drv);
-	lstrcat(dir_path, dir);
+	lstrcpyW(dir_path, drv);
+	lstrcatW(dir_path, dir);
 	entry = read_tree(root, dir_path, pidl, drv, child->sortOrder, hwnd);
 
 #ifdef _SHELL_FOLDERS
@@ -1403,7 +1403,7 @@ static ChildWnd* alloc_child_window(LPCTSTR path, LPITEMIDLIST pidl, HWND hwnd)
 		load_string(root->entry.data.cFileName, sizeof(root->entry.data.cFileName)/sizeof(root->entry.data.cFileName[0]), IDS_DESKTOP);
 	else
 #endif
-		wsprintf(root->entry.data.cFileName, RS(b1,IDS_TITLEFMT), drv, root->fs);
+		wsprintfW(root->entry.data.cFileName, RS(b1,IDS_TITLEFMT), drv, root->fs);
 
 	root->entry.data.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
 
@@ -1891,7 +1891,7 @@ static void CheckForFileInfo(struct PropertiesDialog* dlg, HWND hwnd, LPCTSTR st
 
 						LPCSTR pInfoString = *p;
 						MultiByteToWideChar(CP_ACP, 0, pInfoString, -1, infoStr, 100);
-						wsprintf(subblock, sStringFileInfo, pTranslate->wLanguage, pTranslate->wCodePage, infoStr);
+						wsprintfW(subblock, sStringFileInfo, pTranslate->wLanguage, pTranslate->wCodePage, infoStr);
 
 						/* Retrieve file description for language and code page */
 						if (VerQueryValue(dlg->pVersionData, subblock, (PVOID)&pTxt, &nValLen)) {
@@ -1923,14 +1923,14 @@ static INT_PTR CALLBACK PropertiesDialogDlgProc(HWND hwnd, UINT nmsg, WPARAM wpa
 			pWFD = (LPWIN32_FIND_DATA) &dlg->entry.data;
 
 			GetWindowText(hwnd, b1, MAX_PATH);
-			wsprintf(b2, b1, pWFD->cFileName);
+			wsprintfW(b2, b1, pWFD->cFileName);
 			SetWindowText(hwnd, b2);
 
 			format_date(&pWFD->ftLastWriteTime, b1, COL_DATE|COL_TIME);
 			SetWindowText(GetDlgItem(hwnd, IDC_STATIC_PROP_LASTCHANGE), b1);
 
                         format_longlong( b1, ((ULONGLONG)pWFD->nFileSizeHigh << 32) | pWFD->nFileSizeLow );
-			wsprintf(b2, sByteFmt, b1);
+			wsprintfW(b2, sByteFmt, b1);
 			SetWindowText(GetDlgItem(hwnd, IDC_STATIC_PROP_SIZE), b2);
 
 			SetWindowText(GetDlgItem(hwnd, IDC_STATIC_PROP_FILENAME), pWFD->cFileName);
@@ -2110,7 +2110,7 @@ static BOOL activate_drive_window(LPCTSTR path)
 		if (child) {
 			_wsplitpath(child->root.path, drv2, 0, 0, 0);
 
-			if (!lstrcmpi(drv2, drv1)) {
+			if (!lstrcmpiW(drv2, drv1)) {
 				SendMessageW(Globals.hmdiclient, WM_MDIACTIVATE, (WPARAM)child_wnd, 0);
 
 				if (IsIconic(child_wnd))
@@ -2133,7 +2133,7 @@ static BOOL activate_fs_window(LPCTSTR filesys)
 		ChildWnd* child = (ChildWnd*) GetWindowLongPtr(child_wnd, GWLP_USERDATA);
 
 		if (child) {
-			if (!lstrcmpi(child->root.fs, filesys)) {
+			if (!lstrcmpiW(child->root.fs, filesys)) {
 				SendMessageW(Globals.hmdiclient, WM_MDIACTIVATE, (WPARAM)child_wnd, 0);
 
 				if (IsIconic(child_wnd))
@@ -2688,8 +2688,8 @@ static BOOL pattern_imatch(LPCTSTR str, LPCTSTR pattern)
 {
 	TCHAR b1[BUFFER_LEN], b2[BUFFER_LEN];
 
-	lstrcpy(b1, str);
-	lstrcpy(b2, pattern);
+	lstrcpyW(b1, str);
+	lstrcpyW(b2, pattern);
 	CharUpper(b1);
 	CharUpper(b2);
 
@@ -2807,9 +2807,9 @@ static void set_space_status(void)
 	if (GetDiskFreeSpaceEx(NULL, &ulFreeBytesToCaller, &ulTotalBytes, &ulFreeBytes)) {
 		format_bytes(b1, ulFreeBytesToCaller.QuadPart);
 		format_bytes(b2, ulTotalBytes.QuadPart);
-		wsprintf(buffer, RS(fmt,IDS_FREE_SPACE_FMT), b1, b2);
+		wsprintfW(buffer, RS(fmt,IDS_FREE_SPACE_FMT), b1, b2);
 	} else
-		lstrcpy(buffer, sQMarks);
+		lstrcpyW(buffer, sQMarks);
 
 	SendMessageW(Globals.hstatusbar, SB_SETTEXTW, 0, (LPARAM)buffer);
 }
@@ -2870,7 +2870,7 @@ static void format_date(const FILETIME* ft, TCHAR* buffer, int visible_cols)
 		return;
 
 	if (!FileTimeToLocalFileTime(ft, &lft))
-		{err: lstrcpy(buffer,sQMarks); return;}
+		{err: lstrcpyW(buffer,sQMarks); return;}
 
 	if (!FileTimeToSystemTime(&lft, &systime))
 		goto err;
@@ -2965,7 +2965,7 @@ static void output_number(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str
 		*d++ = *s++;
 
 	/* insert number separator characters */
-	pos = lstrlen(s) % 3;
+	pos = lstrlenW(s) % 3;
 
 	while(*s)
 		if (pos--)
@@ -3003,7 +3003,7 @@ static BOOL is_exe_file(LPCTSTR ext)
 		d++;
 
 	for(p=executable_extensions; (*p)[0]; p++)
-		if (!lstrcmpi(ext_buffer, *p))
+		if (!lstrcmpiW(ext_buffer, *p))
 			return TRUE;
 
 	return FALSE;
@@ -3277,10 +3277,10 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
                         static const TCHAR fmthigh[] = {'%','X','%','0','8','X',0};
 
                         if (entry->bhfi.nFileIndexHigh)
-                            wsprintf(buffer, fmthigh,
+                            wsprintfW(buffer, fmthigh,
                                      entry->bhfi.nFileIndexHigh, entry->bhfi.nFileIndexLow );
                         else
-                            wsprintf(buffer, fmtlow, entry->bhfi.nFileIndexLow );
+                            wsprintfW(buffer, fmtlow, entry->bhfi.nFileIndexLow );
 
 			if (calcWidthCol == -1)
 				output_text(pane, dis, col, buffer, DT_RIGHT);
@@ -3291,7 +3291,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 		}
 
 		if (visible_cols & COL_LINKS) {
-			wsprintf(buffer, sNumFmt, entry->bhfi.nNumberOfLinks);
+			wsprintfW(buffer, sNumFmt, entry->bhfi.nNumberOfLinks);
 
 			if (calcWidthCol == -1)
 				output_text(pane, dis, col, buffer, DT_CENTER);
@@ -3308,10 +3308,10 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 	if (visible_cols & COL_ATTRIBUTES) {
 #ifdef _NO_EXTENSIONS
 		static const TCHAR s4Tabs[] = {' ','\t',' ','\t',' ','\t',' ','\t',' ','\0'};
-		lstrcpy(buffer, s4Tabs);
+		lstrcpyW(buffer, s4Tabs);
 #else
 		static const TCHAR s11Tabs[] = {' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\0'};
-		lstrcpy(buffer, s11Tabs);
+		lstrcpyW(buffer, s11Tabs);
 #endif
 
 		if (attrs & FILE_ATTRIBUTE_NORMAL)					buffer[ 0] = 'N';
@@ -3353,7 +3353,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 
 		DWORD rights = get_access_mask();
 
-		lstrcpy(buffer, sSecTabs);
+		lstrcpyW(buffer, sSecTabs);
 
 		if (rights & FILE_READ_DATA)			buffer[ 0] = 'R';
 		if (rights & FILE_WRITE_DATA)			buffer[ 2] = 'W';
@@ -3672,7 +3672,7 @@ static void set_curdir(ChildWnd* child, Entry* entry, int idx, HWND hwnd)
 		refresh_right_pane(child);
 
 	get_path(entry, path);
-	lstrcpy(child->path, path);
+	lstrcpyW(child->path, path);
 
 	if (child->hwnd)	/* only change window title, if the window already exists */
 		SetWindowText(child->hwnd, path);
@@ -3752,7 +3752,7 @@ static void create_drive_bar(void)
 #ifdef _SHELL_FOLDERS
 	/* insert shell namespace button */
 	load_string(b1, sizeof(b1)/sizeof(b1[0]), IDS_SHELL);
-	b1[lstrlen(b1)+1] = '\0';
+	b1[lstrlenW(b1)+1] = '\0';
 	SendMessageW(Globals.hdrivebar, TB_ADDSTRINGW, 0, (LPARAM)b1);
 
 	drivebarBtn.idCommand = ID_DRIVE_SHELL_NS;
@@ -4003,14 +4003,14 @@ static BOOL prompt_target(Pane* pane, LPTSTR source, LPTSTR target)
 	/* convert relative targets to absolute paths */
 	if (path[0]!='/' && path[1]!=':') {
 		get_path(pane->cur->up, target);
-		len = lstrlen(target);
+		len = lstrlenW(target);
 
 		if (target[len-1]!='\\' && target[len-1]!='/')
 			target[len++] = '/';
 
-		lstrcpy(target+len, path);
+		lstrcpyW(target+len, path);
 	} else
-		lstrcpy(target, path);
+		lstrcpyW(target, path);
 
 	/* If the target already exists as directory, create a new target below this. */
 	if (is_directory(path)) {
@@ -4019,7 +4019,7 @@ static BOOL prompt_target(Pane* pane, LPTSTR source, LPTSTR target)
 
 		_wsplitpath(source, NULL, NULL, fname, ext);
 
-		wsprintf(target, sAppend, path, fname, ext);
+		wsprintfW(target, sAppend, path, fname, ext);
 	}
 
 	return TRUE;
@@ -4310,8 +4310,8 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					if (prompt_target(pane, source, target)) {
 						SHFILEOPSTRUCT shfo = {hwnd, FO_MOVE, source, target};
 
-						source[lstrlen(source)+1] = '\0';
-						target[lstrlen(target)+1] = '\0';
+						source[lstrlenW(source)+1] = '\0';
+						target[lstrlenW(target)+1] = '\0';
 
 						if (!SHFileOperation(&shfo))
 							refresh_child(child);
@@ -4324,8 +4324,8 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					if (prompt_target(pane, source, target)) {
 						SHFILEOPSTRUCT shfo = {hwnd, FO_COPY, source, target};
 
-						source[lstrlen(source)+1] = '\0';
-						target[lstrlen(target)+1] = '\0';
+						source[lstrlenW(source)+1] = '\0';
+						target[lstrlenW(target)+1] = '\0';
 
 						if (!SHFileOperation(&shfo))
 							refresh_child(child);
@@ -4338,7 +4338,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 					get_path(pane->cur, path);
 
-					path[lstrlen(path)+1] = '\0';
+					path[lstrlenW(path)+1] = '\0';
 
 					if (!SHFileOperation(&shfo))
 						refresh_child(child);
@@ -4364,11 +4364,11 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					struct FilterDialog dlg;
 
 					memset(&dlg, 0, sizeof(struct FilterDialog));
-					lstrcpy(dlg.pattern, child->filter_pattern);
+					lstrcpyW(dlg.pattern, child->filter_pattern);
 					dlg.flags = child->filter_flags;
 
 					if (DialogBoxParam(Globals.hInstance, MAKEINTRESOURCE(IDD_DIALOG_VIEW_TYPE), hwnd, FilterDialogDlgProc, (LPARAM)&dlg) == IDOK) {
-						lstrcpy(child->filter_pattern, dlg.pattern);
+						lstrcpyW(child->filter_pattern, dlg.pattern);
 						child->filter_flags = dlg.flags;
 						refresh_right_pane(child);
 					}
@@ -4737,14 +4737,14 @@ static BOOL show_frame(HWND hwndParent, int cmdshow, LPCTSTR path)
 		if (name[0])
 		{
 			count = SendMessageW(child->right.hwnd, LB_GETCOUNT, 0, 0);
-			lstrcpy(fullname,name);
-			lstrcat(fullname,ext);
+			lstrcpyW(fullname,name);
+			lstrcatW(fullname,ext);
 
 			for (index = 0; index < count; index ++)
 			{
 				Entry* entry = (Entry*)SendMessageW(child->right.hwnd, LB_GETITEMDATA, index, 0);
-				if (lstrcmp(entry->data.cFileName,fullname)==0 ||
-						lstrcmp(entry->data.cAlternateFileName,fullname)==0)
+				if (lstrcmpW(entry->data.cFileName,fullname)==0 ||
+						lstrcmpW(entry->data.cAlternateFileName,fullname)==0)
 				{
 					SendMessageW(child->right.hwnd, LB_SETCURSEL, index, 0);
 					SetFocus(child->right.hwnd);
@@ -4780,7 +4780,7 @@ static BOOL CALLBACK EnumWndProc(HWND hwnd, LPARAM lparam)
 
 	GetClassName(hwnd, cls, 128);
 
-	if (!lstrcmp(cls, (LPCTSTR)lparam)) {
+	if (!lstrcmpW(cls, (LPCWSTR)lparam)) {
 		g_foundPrevInstance++;
 		return FALSE;
 	}
