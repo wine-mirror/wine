@@ -579,51 +579,63 @@ GpStatus WINGDIPAPI GdipCreateRegionRgnData(GDIPCONST BYTE *data, INT size, GpRe
  */
 GpStatus WINGDIPAPI GdipCreateRegionHrgn(HRGN hrgn, GpRegion **region)
 {
-    union {
-        RGNDATA data;
-        char buf[sizeof(RGNDATAHEADER) + sizeof(RECT)];
-    } rdata;
     DWORD size;
-    GpRectF rectf;
-    GpPath *path;
+    LPRGNDATA buf;
+    LPRECT rect;
     GpStatus stat;
+    GpPath* path;
+    GpRegion* local;
+    int i;
 
     TRACE("(%p, %p)\n", hrgn, region);
 
     if(!region || !(size = GetRegionData(hrgn, 0, NULL)))
         return InvalidParameter;
 
-    if(size > sizeof(RGNDATAHEADER) + sizeof(RECT)){
-        FIXME("Only simple rect regions supported.\n");
-        *region = NULL;
-        return NotImplemented;
-    }
+    buf = GdipAlloc(size);
+    if(!buf)
+        return OutOfMemory;
 
-    if(!GetRegionData(hrgn, sizeof(rdata), &rdata.data))
+    if(!GetRegionData(hrgn, size, buf)){
+        GdipFree(buf);
         return GenericError;
+    }
 
-    /* return empty region */
-    if(IsRectEmpty(&rdata.data.rdh.rcBound)){
-        stat = GdipCreateRegion(region);
-        if(stat == Ok)
-            GdipSetEmpty(*region);
+    if(buf->rdh.nCount == 0){
+        if((stat = GdipCreateRegion(&local)) != Ok){
+            GdipFree(buf);
+            return stat;
+        }
+        if((stat = GdipSetEmpty(local)) != Ok){
+            GdipFree(buf);
+            GdipDeleteRegion(local);
+            return stat;
+        }
+        *region = local;
+        GdipFree(buf);
+        return Ok;
+    }
+
+    if((stat = GdipCreatePath(FillModeAlternate, &path)) != Ok){
+        GdipFree(buf);
         return stat;
     }
 
-    rectf.X = (REAL)rdata.data.rdh.rcBound.left;
-    rectf.Y = (REAL)rdata.data.rdh.rcBound.top;
-    rectf.Width  = (REAL)rdata.data.rdh.rcBound.right - rectf.X;
-    rectf.Height = (REAL)rdata.data.rdh.rcBound.bottom - rectf.Y;
-
-    stat = GdipCreatePath(FillModeAlternate, &path);
-    if(stat != Ok)
-        return stat;
-
-    GdipAddPathRectangle(path, rectf.X, rectf.Y, rectf.Width, rectf.Height);
+    rect = (LPRECT)buf->Buffer;
+    for(i = 0; i < buf->rdh.nCount; i++){
+        if((stat = GdipAddPathRectangle(path, (REAL)rect->left, (REAL)rect->top,
+                        (REAL)(rect->right - rect->left), (REAL)(rect->bottom - rect->top))) != Ok){
+            GdipFree(buf);
+            GdipDeletePath(path);
+            return stat;
+        }
+        rect++;
+    }
 
     stat = GdipCreateRegionPath(path, region);
-    GdipDeletePath(path);
 
+    GdipFree(buf);
+    GdipDeletePath(path);
     return stat;
 }
 

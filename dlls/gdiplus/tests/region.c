@@ -704,7 +704,7 @@ static void test_combinereplace(void)
 static void test_fromhrgn(void)
 {
     GpStatus status;
-    GpRegion *region;
+    GpRegion *region = (GpRegion*)0xabcdef01;
     HRGN hrgn;
     UINT needed;
     DWORD buf[220];
@@ -720,6 +720,7 @@ static void test_fromhrgn(void)
     expect(InvalidParameter, status);
     status = GdipCreateRegionHrgn((HRGN)0xdeadbeef, &region);
     expect(InvalidParameter, status);
+    ok(region == (GpRegion*)0xabcdef01, "Expected region not to be created\n");
 
     /* empty rectangle */
     hrgn = CreateRectRgn(0, 0, 0, 0);
@@ -788,21 +789,19 @@ static void test_fromhrgn(void)
     /* ellipse */
     hrgn = CreateEllipticRgn(0, 0, 100, 10);
     status = GdipCreateRegionHrgn(hrgn, &region);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
 
     status = GdipGetRegionDataSize(region, &needed);
-todo_wine{
     expect(Ok, status);
     ok(needed == 216 ||
        needed == 196, /* win98 */
        "Got %.8x\n", needed);
-}
+
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
 
     if(status == Ok && needed == 216) /* Don't try to test win98 layout */
     {
-todo_wine{
     expect(Ok, status);
     expect(216, needed);
     expect_dword(buf, 208);
@@ -812,8 +811,7 @@ todo_wine{
     expect_dword(buf + 5, 0x000000C0);
     expect_magic((DWORD*)(buf + 6));
     expect_dword(buf + 7, 0x00000024);
-    expect_dword(buf + 8, 0x00006000); /* ?? */
-}
+    todo_wine expect_dword(buf + 8, 0x00006000); /* ?? */
     }
 
     GdipDeleteRegion(region);
