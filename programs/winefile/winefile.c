@@ -86,7 +86,7 @@ typedef struct _Entry {
 	BOOL			scanned;
 	int				level;
 
-	WIN32_FIND_DATA	data;
+	WIN32_FIND_DATAW	data;
 
 #ifndef _NO_EXTENSIONS
 	BY_HANDLE_FILE_INFORMATION bhfi;
@@ -263,7 +263,7 @@ static inline void choose_font(HWND hwnd)
         LOGFONTW lFont;
 
         HDC hdc = GetDC(hwnd);
-        chFont.lStructSize = sizeof(CHOOSEFONT);
+        chFont.lStructSize = sizeof(CHOOSEFONTW);
         chFont.hwndOwner = hwnd;
         chFont.hDC = NULL;
         chFont.lpLogFont = &lFont;
@@ -367,7 +367,7 @@ static void read_directory_win(Entry* dir, LPCWSTR path)
 	Entry* entry;
 
 	int level = dir->level + 1;
-	WIN32_FIND_DATA w32fd;
+	WIN32_FIND_DATAW w32fd;
 	HANDLE hFind;
 #ifndef _NO_EXTENSIONS
 	HANDLE hFile;
@@ -402,7 +402,7 @@ static void read_directory_win(Entry* dir, LPCWSTR path)
 			if (last)
 				last->next = entry;
 
-			memcpy(&entry->data, &w32fd, sizeof(WIN32_FIND_DATA));
+			memcpy(&entry->data, &w32fd, sizeof(WIN32_FIND_DATAW));
 			entry->down = NULL;
 			entry->up = dir;
 			entry->expanded = FALSE;
@@ -781,9 +781,9 @@ static LPITEMIDLIST get_to_absolute_pidl(Entry* entry, HWND hwnd)
 
 static HICON extract_icon(IShellFolder* folder, LPCITEMIDLIST pidl)
 {
-	IExtractIcon* pExtract;
+	IExtractIconW* pExtract;
 
-	if (SUCCEEDED(IShellFolder_GetUIObjectOf(folder, 0, 1, (LPCITEMIDLIST*)&pidl, &IID_IExtractIcon, 0, (LPVOID*)&pExtract))) {
+	if (SUCCEEDED(IShellFolder_GetUIObjectOf(folder, 0, 1, (LPCITEMIDLIST*)&pidl, &IID_IExtractIconW, 0, (LPVOID*)&pExtract))) {
 		WCHAR path[_MAX_PATH];
 		unsigned flags;
 		HICON hicon;
@@ -881,7 +881,7 @@ static Entry* read_tree_shell(Root* root, LPITEMIDLIST pidl, SORT_ORDER sortOrde
 }
 
 
-static void fill_w32fdata_shell(IShellFolder* folder, LPCITEMIDLIST pidl, SFGAOF attribs, WIN32_FIND_DATA* w32fdata)
+static void fill_w32fdata_shell(IShellFolder* folder, LPCITEMIDLIST pidl, SFGAOF attribs, WIN32_FIND_DATAW* w32fdata)
 {
 	if (!(attribs & SFGAO_FILESYSTEM) ||
 			FAILED(SHGetDataFromIDListW(folder, pidl, SHGDFIL_FINDDATA, w32fdata, sizeof(WIN32_FIND_DATAW)))) {
@@ -977,7 +977,7 @@ static void read_directory_shell(Entry* dir, HWND hwnd)
 				if (last)
 					last->next = entry;
 
-				memset(&entry->data, 0, sizeof(WIN32_FIND_DATA));
+				memset(&entry->data, 0, sizeof(WIN32_FIND_DATAW));
 				entry->bhfi_valid = FALSE;
 
 				attribs = ~SFGAO_FILESYSTEM;	/*SFGAO_HASSUBFOLDER|SFGAO_FOLDER; SFGAO_FILESYSTEM sorgt dafür, daß "My Documents" anstatt von "Martin's Documents" angezeigt wird */
@@ -1071,7 +1071,7 @@ static int TypeOrderFromDirname(LPCWSTR name)
 }
 
 /* directories first... */
-static int compareType(const WIN32_FIND_DATA* fd1, const WIN32_FIND_DATA* fd2)
+static int compareType(const WIN32_FIND_DATAW* fd1, const WIN32_FIND_DATAW* fd2)
 {
 	int order1 = fd1->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY? TO_DIR: TO_FILE;
 	int order2 = fd2->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY? TO_DIR: TO_FILE;
@@ -1088,8 +1088,8 @@ static int compareType(const WIN32_FIND_DATA* fd1, const WIN32_FIND_DATA* fd2)
 
 static int compareName(const void* arg1, const void* arg2)
 {
-	const WIN32_FIND_DATA* fd1 = &(*(const Entry* const*)arg1)->data;
-	const WIN32_FIND_DATA* fd2 = &(*(const Entry* const*)arg2)->data;
+	const WIN32_FIND_DATAW* fd1 = &(*(const Entry* const*)arg1)->data;
+	const WIN32_FIND_DATAW* fd2 = &(*(const Entry* const*)arg2)->data;
 
 	int cmp = compareType(fd1, fd2);
 	if (cmp)
@@ -1100,8 +1100,8 @@ static int compareName(const void* arg1, const void* arg2)
 
 static int compareExt(const void* arg1, const void* arg2)
 {
-	const WIN32_FIND_DATA* fd1 = &(*(const Entry* const*)arg1)->data;
-	const WIN32_FIND_DATA* fd2 = &(*(const Entry* const*)arg2)->data;
+	const WIN32_FIND_DATAW* fd1 = &(*(const Entry* const*)arg1)->data;
+	const WIN32_FIND_DATAW* fd2 = &(*(const Entry* const*)arg2)->data;
 	const WCHAR *name1, *name2, *ext1, *ext2;
 
 	int cmp = compareType(fd1, fd2);
@@ -1133,8 +1133,8 @@ static int compareExt(const void* arg1, const void* arg2)
 
 static int compareSize(const void* arg1, const void* arg2)
 {
-	const WIN32_FIND_DATA* fd1 = &(*(const Entry* const*)arg1)->data;
-	const WIN32_FIND_DATA* fd2 = &(*(const Entry* const*)arg2)->data;
+	const WIN32_FIND_DATAW* fd1 = &(*(const Entry* const*)arg1)->data;
+	const WIN32_FIND_DATAW* fd2 = &(*(const Entry* const*)arg2)->data;
 
 	int cmp = compareType(fd1, fd2);
 	if (cmp)
@@ -1154,8 +1154,8 @@ static int compareSize(const void* arg1, const void* arg2)
 
 static int compareDate(const void* arg1, const void* arg2)
 {
-	const WIN32_FIND_DATA* fd1 = &(*(const Entry* const*)arg1)->data;
-	const WIN32_FIND_DATA* fd2 = &(*(const Entry* const*)arg2)->data;
+	const WIN32_FIND_DATAW* fd1 = &(*(const Entry* const*)arg1)->data;
+	const WIN32_FIND_DATAW* fd2 = &(*(const Entry* const*)arg2)->data;
 
 	int cmp = compareType(fd1, fd2);
 	if (cmp)
@@ -1508,7 +1508,7 @@ static windowOptions load_registry_settings(void)
 	DWORD type;
 	HKEY hKey;
 	windowOptions opts;
-	LOGFONT logfont;
+	LOGFONTW logfont;
 
         RegOpenKeyExW( HKEY_CURRENT_USER, registry_key,
                        0, KEY_QUERY_VALUE, &hKey );
@@ -1546,7 +1546,7 @@ static void save_registry_settings(void)
 	WINDOWINFO wi;
 	HKEY hKey;
 	INT width, height;
-	LOGFONT logfont;
+	LOGFONTW logfont;
 
 	wi.cbSize = sizeof( WINDOWINFO );
 	GetWindowInfo(Globals.hMainWnd, &wi);
@@ -1576,7 +1576,7 @@ static void save_registry_settings(void)
                         (LPBYTE) &height, sizeof(DWORD) );
         GetObjectW(Globals.hfont, sizeof(logfont), &logfont);
         RegSetValueExW( hKey, reg_logfont, 0, REG_BINARY,
-                        (LPBYTE) &logfont, sizeof(LOGFONT) );
+                        (LPBYTE)&logfont, sizeof(LOGFONTW) );
 
 	/* TODO: Save more settings here (List vs. Detailed View, etc.) */
 	RegCloseKey( hKey );
@@ -1655,7 +1655,7 @@ static LRESULT CALLBACK CBTProc(int code, WPARAM wparam, LPARAM lparam)
 
 static HWND create_child_window(ChildWnd* child)
 {
-	MDICREATESTRUCT mcs;
+	MDICREATESTRUCTW mcs;
 	int idx;
 
 	mcs.szClass = sWINEFILETREE;
@@ -1917,10 +1917,10 @@ static INT_PTR CALLBACK PropertiesDialogDlgProc(HWND hwnd, UINT nmsg, WPARAM wpa
 		case WM_INITDIALOG: {
 			static const WCHAR sByteFmt[] = {'%','s',' ','B','y','t','e','s','\0'};
 			WCHAR b1[BUFFER_LEN], b2[BUFFER_LEN];
-			LPWIN32_FIND_DATA pWFD;
+			LPWIN32_FIND_DATAW pWFD;
 
 			dlg = (struct PropertiesDialog*) lparam;
-			pWFD = (LPWIN32_FIND_DATA) &dlg->entry.data;
+			pWFD = (LPWIN32_FIND_DATAW)&dlg->entry.data;
 
 			GetWindowTextW(hwnd, b1, MAX_PATH);
 			wsprintfW(b2, b1, pWFD->cFileName);
@@ -2464,7 +2464,7 @@ static void resize_tree(ChildWnd* child, int cx, int cy)
 
 static HWND create_header(HWND parent, Pane* pane, UINT id)
 {
-	HD_ITEM hdi;
+	HDITEMW hdi;
 	int idx;
 
 	HWND hwnd = CreateWindowW(WC_HEADERW, 0, WS_CHILD|WS_VISIBLE|HDS_HORZ|HDS_FULLDRAG/*TODO: |HDS_BUTTONS + sort orders*/,
@@ -3430,7 +3430,7 @@ static void draw_splitbar(HWND hwnd, int x)
 
 static void set_header(Pane* pane)
 {
-	HD_ITEM item;
+	HDITEMW item;
 	int scroll_pos = GetScrollPos(pane->hwnd, SB_HORZ);
 	int i=0, x=0;
 
@@ -3458,8 +3458,8 @@ static void set_header(Pane* pane)
 static LRESULT pane_notify(Pane* pane, NMHDR* pnmh)
 {
 	switch(pnmh->code) {
-		case HDN_ITEMCHANGED: {
-			HD_NOTIFY* phdn = (HD_NOTIFY*) pnmh;
+		case HDN_ITEMCHANGEDW: {
+			LPNMHEADERW phdn = (LPNMHEADERW)pnmh;
 			int idx = phdn->iItem;
 			int dx = phdn->pitem->cxy - pane->widths[idx];
 			int i;
@@ -3495,7 +3495,7 @@ static LRESULT pane_notify(Pane* pane, NMHDR* pnmh)
 				rt_clip.right = pane->positions[idx+1];
 				RedrawWindow(pane->hwnd, &rt_clip, 0, RDW_INVALIDATE|RDW_UPDATENOW);
 
-				if (pnmh->code == HDN_ENDTRACK) {
+				if (pnmh->code == HDN_ENDTRACKW) {
 					SendMessageW(pane->hwnd, LB_SETHORIZONTALEXTENT, pane->positions[COLUMNS], 0);
 
 					if (GetScrollPos(pane->hwnd, SB_HORZ) != scroll_pos)
@@ -3506,9 +3506,9 @@ static LRESULT pane_notify(Pane* pane, NMHDR* pnmh)
 			return FALSE;
 		}
 
-		case HDN_DIVIDERDBLCLICK: {
-			HD_NOTIFY* phdn = (HD_NOTIFY*) pnmh;
-			HD_ITEM item;
+		case HDN_DIVIDERDBLCLICKW: {
+			LPNMHEADERW phdn = (LPNMHEADERW)pnmh;
+			HDITEMW item;
 
 			calc_single_width(pane, phdn->iItem);
 			item.mask = HDI_WIDTH;
@@ -3826,9 +3826,9 @@ static BOOL launch_entry(Entry* entry, HWND hwnd, UINT nCmdShow)
 	if (entry->etype == ET_SHELL) {
 		BOOL ret = TRUE;
 
-		SHELLEXECUTEINFO shexinfo;
+		SHELLEXECUTEINFOW shexinfo;
 
-		shexinfo.cbSize = sizeof(SHELLEXECUTEINFO);
+		shexinfo.cbSize = sizeof(SHELLEXECUTEINFOW);
 		shexinfo.fMask = SEE_MASK_IDLIST;
 		shexinfo.hwnd = hwnd;
 		shexinfo.lpVerb = NULL;
@@ -4308,7 +4308,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					WCHAR source[BUFFER_LEN], target[BUFFER_LEN];
 
 					if (prompt_target(pane, source, target)) {
-						SHFILEOPSTRUCT shfo = {hwnd, FO_MOVE, source, target};
+						SHFILEOPSTRUCTW shfo = {hwnd, FO_MOVE, source, target};
 
 						source[lstrlenW(source)+1] = '\0';
 						target[lstrlenW(target)+1] = '\0';
@@ -4322,7 +4322,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					WCHAR source[BUFFER_LEN], target[BUFFER_LEN];
 
 					if (prompt_target(pane, source, target)) {
-						SHFILEOPSTRUCT shfo = {hwnd, FO_COPY, source, target};
+						SHFILEOPSTRUCTW shfo = {hwnd, FO_COPY, source, target};
 
 						source[lstrlenW(source)+1] = '\0';
 						target[lstrlenW(target)+1] = '\0';
@@ -4334,7 +4334,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 				case ID_FILE_DELETE: {
 					WCHAR path[BUFFER_LEN];
-                                        SHFILEOPSTRUCT shfo = {hwnd, FO_DELETE, path, NULL, FOF_ALLOWUNDO};
+					SHFILEOPSTRUCTW shfo = {hwnd, FO_DELETE, path, NULL, FOF_ALLOWUNDO};
 
 					get_path(pane->cur, path);
 
@@ -4532,8 +4532,8 @@ static void InitInstance(HINSTANCE hinstance)
 {
 	static const WCHAR sFont[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
 
-	WNDCLASSEX wcFrame;
-	WNDCLASS wcChild;
+	WNDCLASSEXW wcFrame;
+	WNDCLASSW wcChild;
 	ATOM hChildClass;
 	int col;
 
@@ -4551,7 +4551,7 @@ static void InitInstance(HINSTANCE hinstance)
 
 	/* register frame window class */
 
-	wcFrame.cbSize        = sizeof(WNDCLASSEX);
+	wcFrame.cbSize        = sizeof(WNDCLASSEXW);
 	wcFrame.style         = 0;
 	wcFrame.lpfnWndProc   = FrameWndProc;
 	wcFrame.cbClsExtra    = 0;
