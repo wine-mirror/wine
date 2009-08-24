@@ -1177,8 +1177,6 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
 {
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     GLenum Parm = 0;
-    const struct wined3d_stream_info_element *diffuse = &device->strided_streams.elements[WINED3D_FFP_DIFFUSE];
-    BOOL isDiffuseSupplied;
 
     /* Depends on the decoded vertex declaration to read the existence of diffuse data.
      * The vertex declaration will call this function if the fixed function pipeline is used.
@@ -1188,10 +1186,10 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
         return;
     }
 
-    isDiffuseSupplied = diffuse->data || diffuse->buffer_object;
-
     context->num_untracked_materials = 0;
-    if (isDiffuseSupplied && stateblock->renderState[WINED3DRS_COLORVERTEX]) {
+    if ((device->strided_streams.use_map & (1 << WINED3D_FFP_DIFFUSE))
+            && stateblock->renderState[WINED3DRS_COLORVERTEX])
+    {
         TRACE("diff %d, amb %d, emis %d, spec %d\n",
               stateblock->renderState[WINED3DRS_DIFFUSEMATERIALSOURCE],
               stateblock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE],
