@@ -30,6 +30,7 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "objbase.h"
+#include "oleauto.h"
 #include "oledb.h"
 
 #include "wine/debug.h"
@@ -121,14 +122,29 @@ HRESULT __RPC_STUB IDBProperties_SetProperties_Stub(IDBProperties* This, ULONG c
 
 HRESULT CALLBACK IDBInitialize_Initialize_Proxy(IDBInitialize* This)
 {
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    HRESULT hr;
+    IErrorInfo *error;
+
+    TRACE("(%p)\n", This);
+    hr = IDBInitialize_RemoteInitialize_Proxy(This, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+    return hr;
 }
 
 HRESULT __RPC_STUB IDBInitialize_Initialize_Stub(IDBInitialize* This, IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p, %p): stub\n", This, ppErrorInfoRem);
-    return E_NOTIMPL;
+    HRESULT hr;
+    TRACE("(%p, %p)\n", This, ppErrorInfoRem);
+
+    *ppErrorInfoRem = NULL;
+    hr = IDBInitialize_Initialize(This);
+    if(FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+
+    return hr;
 }
 
 HRESULT CALLBACK IDBInitialize_Uninitialize_Proxy(IDBInitialize* This)
