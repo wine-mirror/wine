@@ -145,13 +145,4 @@ typedef struct
 
 extern WINEFILE_GLOBALS Globals;
 
-#ifdef __WINE__
-
 extern void _wsplitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext);
-#define _tsplitpath _wsplitpath
-
-#else
-
-#include <tchar.h>	/* for _tsplitpath() */
-
-#endif

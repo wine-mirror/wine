@@ -19,8 +19,6 @@
 #include "winefile.h"
 
 
-#ifdef __WINE__
-
 void _wsplitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext)
 {
         const WCHAR* end; /* end of processed string */
@@ -73,25 +71,24 @@ void _wsplitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* 
 		*dir = '\0';
 	}
 }
-#endif /* __WINE__ */
 
 
 /*
 void main()	// test splipath()
 {
-	TCHAR drv[_MAX_DRIVE+1], dir[_MAX_DIR], name[_MAX_FNAME], ext[_MAX_EXT];
+	WCHAR drv[_MAX_DRIVE+1], dir[_MAX_DIR], name[_MAX_FNAME], ext[_MAX_EXT];
 
-	_tsplitpath(L"x\\y", drv, dir, name, ext);
-	_tsplitpath(L"x\\", drv, dir, name, ext);
-	_tsplitpath(L"\\x", drv, dir, name, ext);
-	_tsplitpath(L"x", drv, dir, name, ext);
-	_tsplitpath(L"", drv, dir, name, ext);
-	_tsplitpath(L".x", drv, dir, name, ext);
-	_tsplitpath(L":x", drv, dir, name, ext);
-	_tsplitpath(L"a:x", drv, dir, name, ext);
-	_tsplitpath(L"a.b:x", drv, dir, name, ext);
-	_tsplitpath(L"W:\\/\\abc/Z:~", drv, dir, name, ext);
-	_tsplitpath(L"abc.EFGH:12345", drv, dir, name, ext);
-	_tsplitpath(L"C:/dos/command.com", drv, dir, name, ext);
+	_wsplitpath(L"x\\y", drv, dir, name, ext);
+	_wsplitpath(L"x\\", drv, dir, name, ext);
+	_wsplitpath(L"\\x", drv, dir, name, ext);
+	_wsplitpath(L"x", drv, dir, name, ext);
+	_wsplitpath(L"", drv, dir, name, ext);
+	_wsplitpath(L".x", drv, dir, name, ext);
+	_wsplitpath(L":x", drv, dir, name, ext);
+	_wsplitpath(L"a:x", drv, dir, name, ext);
+	_wsplitpath(L"a.b:x", drv, dir, name, ext);
+	_wsplitpath(L"W:\\/\\abc/Z:~", drv, dir, name, ext);
+	_wsplitpath(L"abc.EFGH:12345", drv, dir, name, ext);
+	_wsplitpath(L"C:/dos/command.com", drv, dir, name, ext);
 }
 */

@@ -1386,7 +1386,7 @@ static ChildWnd* alloc_child_window(LPCTSTR path, LPITEMIDLIST pidl, HWND hwnd)
 	{
 		lstrcpy(child->path, path);
 
-		_tsplitpath(path, drv, dir, name, ext);
+		_wsplitpath(path, drv, dir, name, ext);
 	}
 
 	lstrcpy(child->filter_pattern, sAsterics);
@@ -2101,14 +2101,14 @@ static BOOL activate_drive_window(LPCTSTR path)
 	TCHAR drv1[_MAX_DRIVE], drv2[_MAX_DRIVE];
 	HWND child_wnd;
 
-	_tsplitpath(path, drv1, 0, 0, 0);
+	_wsplitpath(path, drv1, 0, 0, 0);
 
 	/* search for a already open window for the same drive */
 	for(child_wnd=GetNextWindow(Globals.hmdiclient,GW_CHILD); child_wnd; child_wnd=GetNextWindow(child_wnd, GW_HWNDNEXT)) {
 		ChildWnd* child = (ChildWnd*) GetWindowLongPtr(child_wnd, GWLP_USERDATA);
 
 		if (child) {
-			_tsplitpath(child->root.path, drv2, 0, 0, 0);
+			_wsplitpath(child->root.path, drv2, 0, 0, 0);
 
 			if (!lstrcmpi(drv2, drv1)) {
 				SendMessage(Globals.hmdiclient, WM_MDIACTIVATE, (WPARAM)child_wnd, 0);
@@ -2198,7 +2198,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 				if (activate_drive_window(root))
 					return 0;
 
-				_tsplitpath(root, drv, 0, 0, 0);
+				_wsplitpath(root, drv, 0, 0, 0);
 
 				if (!SetCurrentDirectory(drv)) {
 					display_error(hwnd, GetLastError());
@@ -3690,7 +3690,7 @@ static void refresh_child(ChildWnd* child)
 	int idx;
 
 	get_path(child->left.cur, path);
-	_tsplitpath(path, drv, NULL, NULL, NULL);
+	_wsplitpath(path, drv, NULL, NULL, NULL);
 
 	child->right.root = NULL;
 
@@ -4017,7 +4017,7 @@ static BOOL prompt_target(Pane* pane, LPTSTR source, LPTSTR target)
 		TCHAR fname[_MAX_FNAME], ext[_MAX_EXT];
 		static const TCHAR sAppend[] = {'%','s','/','%','s','%','s','\0'};
 
-		_tsplitpath(source, NULL, NULL, fname, ext);
+		_wsplitpath(source, NULL, NULL, fname, ext);
 
 		wsprintf(target, sAppend, path, fname, ext);
 	}
@@ -4733,7 +4733,7 @@ static BOOL show_frame(HWND hwndParent, int cmdshow, LPCTSTR path)
 
 		memset(name,0,sizeof(name));
 		memset(name,0,sizeof(ext));
-		_tsplitpath(path, drv, dir, name, ext);
+		_wsplitpath(path, drv, dir, name, ext);
 		if (name[0])
 		{
 			count = SendMessage(child->right.hwnd, LB_GETCOUNT, 0, 0);
