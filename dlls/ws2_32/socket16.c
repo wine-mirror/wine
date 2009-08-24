@@ -294,8 +294,9 @@ INT16 WINAPI getsockopt16(SOCKET16 s, INT16 level, INT16 optname, char *optval, 
     INT optlen32;
     INT *p = &optlen32;
     INT retVal;
+
     if( optlen ) optlen32 = *optlen; else p = NULL;
-    retVal = WS_getsockopt( s, level, optname, optval, p );
+    retVal = WS_getsockopt( s, (WORD)level, optname, optval, p );
     if( optlen ) *optlen = optlen32;
     return retVal;
 }
@@ -397,7 +398,7 @@ INT16 WINAPI setsockopt16(SOCKET16 s, INT16 level, INT16 optname,
                           char *optval, INT16 optlen)
 {
     if( !optval ) return SOCKET_ERROR;
-    return WS_setsockopt( s, level, optname, optval, optlen );
+    return WS_setsockopt( s, (WORD)level, optname, optval, optlen );
 }
 
 /***********************************************************************
