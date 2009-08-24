@@ -198,17 +198,20 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
     return ret;
 }
 
-static BOOL buffer_check_attribute(struct wined3d_buffer *This,
-        const struct wined3d_stream_info_element *attrib, const BOOL check_d3dcolor, const BOOL is_ffp_position,
-        const BOOL is_ffp_color, DWORD *stride_this_run, BOOL *float16_used)
+static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct wined3d_stream_info *si,
+        UINT attrib_idx, const BOOL check_d3dcolor, const BOOL is_ffp_position, const BOOL is_ffp_color,
+        DWORD *stride_this_run, BOOL *float16_used)
 {
+    const struct wined3d_stream_info_element *attrib = &si->elements[attrib_idx];
     BOOL ret = FALSE;
     WINED3DFORMAT format;
 
     /* Ignore attributes that do not have our vbo. After that check we can be sure that the attribute is
      * there, on nonexistent attribs the vbo is 0.
      */
-    if (attrib->buffer_object != This->buffer_object) return FALSE;
+    if (!(si->use_map & (1 << attrib_idx))
+            || attrib->buffer_object != This->buffer_object)
+        return FALSE;
 
     format = attrib->format_desc->format;
     /* Look for newly appeared conversion */
@@ -306,6 +309,7 @@ static UINT *find_conversion_shift(struct wined3d_buffer *This,
 static BOOL buffer_find_decl(struct wined3d_buffer *This)
 {
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    const struct wined3d_stream_info *si = &device->strided_streams;
     UINT stride_this_run = 0;
     BOOL float16_used = FALSE;
     BOOL ret = FALSE;
@@ -393,8 +397,7 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This)
         }
         for (i = 0; i < MAX_ATTRIBS; ++i)
         {
-            ret = buffer_check_attribute(This, &device->strided_streams.elements[i],
-                    FALSE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
+            ret = buffer_check_attribute(This, si, i, FALSE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
         }
 
         /* Recalculate the conversion shift map if the declaration has changed,
@@ -403,7 +406,7 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This)
         if (ret && (float16_used || This->conversion_map))
         {
             HeapFree(GetProcessHeap(), 0, This->conversion_shift);
-            This->conversion_shift = find_conversion_shift(This, &device->strided_streams, This->stride);
+            This->conversion_shift = find_conversion_shift(This, si, This->stride);
         }
     }
     else
@@ -413,29 +416,29 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This)
          * the attributes that our current fixed function pipeline implementation cares for.
          */
         BOOL support_d3dcolor = GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA);
-        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_POSITION],
+        ret = buffer_check_attribute(This, si, WINED3D_FFP_POSITION,
                 TRUE, TRUE,  FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_NORMAL],
+        ret = buffer_check_attribute(This, si, WINED3D_FFP_NORMAL,
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_DIFFUSE],
+        ret = buffer_check_attribute(This, si, WINED3D_FFP_DIFFUSE,
                 !support_d3dcolor, FALSE, TRUE,  &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_SPECULAR],
+        ret = buffer_check_attribute(This, si, WINED3D_FFP_SPECULAR,
                 !support_d3dcolor, FALSE, TRUE,  &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_TEXCOORD0],
+        ret = buffer_check_attribute(This, si, WINED3D_FFP_TEXCOORD0,
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_TEXCOORD1],
+        ret = buffer_check_attribute(This, si, WINED3D_FFP_TEXCOORD1,
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_TEXCOORD2],
+        ret = buffer_check_attribute(This, si, WINED3D_FFP_TEXCOORD2,
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_TEXCOORD3],
+        ret = buffer_check_attribute(This, si, WINED3D_FFP_TEXCOORD3,
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_TEXCOORD4],
+        ret = buffer_check_attribute(This, si, WINED3D_FFP_TEXCOORD4,
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_TEXCOORD5],
+        ret = buffer_check_attribute(This, si, WINED3D_FFP_TEXCOORD5,
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_TEXCOORD6],
+        ret = buffer_check_attribute(This, si, WINED3D_FFP_TEXCOORD6,
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_TEXCOORD7],
+        ret = buffer_check_attribute(This, si, WINED3D_FFP_TEXCOORD7,
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
 
         if (float16_used) FIXME("Float16 conversion used with fixed function vertex processing\n");
