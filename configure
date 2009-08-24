@@ -17154,6 +17154,15 @@ programs/control/Makefile: programs/control/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/control/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	programs/dxdiag/Makefile"
+test "x$enable_dxdiag" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	dxdiag" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	dxdiag"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+programs/dxdiag/Makefile: programs/dxdiag/Makefile.in programs/Makeprog.rules"
+ac_config_files="$ac_config_files programs/dxdiag/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/eject/Makefile"
 test "x$enable_eject" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
 	eject" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
@@ -18804,6 +18813,7 @@ do
     "programs/cmd/Makefile") CONFIG_FILES="$CONFIG_FILES programs/cmd/Makefile" ;;
     "programs/cmdlgtst/Makefile") CONFIG_FILES="$CONFIG_FILES programs/cmdlgtst/Makefile" ;;
     "programs/control/Makefile") CONFIG_FILES="$CONFIG_FILES programs/control/Makefile" ;;
+    "programs/dxdiag/Makefile") CONFIG_FILES="$CONFIG_FILES programs/dxdiag/Makefile" ;;
     "programs/eject/Makefile") CONFIG_FILES="$CONFIG_FILES programs/eject/Makefile" ;;
     "programs/expand/Makefile") CONFIG_FILES="$CONFIG_FILES programs/expand/Makefile" ;;
     "programs/explorer/Makefile") CONFIG_FILES="$CONFIG_FILES programs/explorer/Makefile" ;;
