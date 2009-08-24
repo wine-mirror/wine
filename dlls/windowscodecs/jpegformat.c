@@ -392,8 +392,11 @@ static ULONG WINAPI JpegDecoder_Frame_Release(IWICBitmapFrameDecode *iface)
 static HRESULT WINAPI JpegDecoder_Frame_GetSize(IWICBitmapFrameDecode *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    FIXME("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
-    return E_NOTIMPL;
+    JpegDecoder *This = decoder_from_frame(iface);
+    *puiWidth = This->cinfo.output_width;
+    *puiHeight = This->cinfo.output_height;
+    TRACE("(%p)->(%u,%u)\n", iface, *puiWidth, *puiHeight);
+    return S_OK;
 }
 
 static HRESULT WINAPI JpegDecoder_Frame_GetPixelFormat(IWICBitmapFrameDecode *iface,
