@@ -2042,6 +2042,43 @@ static void test_extendedSocketOptions(void)
     ok((optval == 65507) || (optval == 65527),
             "SO_MAX_MSG_SIZE reported %d, expected 65507 or 65527\n", optval);
 
+    /* IE 3 use 0xffffffff instead of SOL_SOCKET (0xffff) */
+    SetLastError(0xdeadbeef);
+    optval = 0xdeadbeef;
+    ret = getsockopt(sock, 0xffffffff, SO_MAX_MSG_SIZE, (char *)&optval, &optlen);
+    ok( (ret == SOCKET_ERROR) && (WSAGetLastError() == WSAEINVAL),
+        "got %d with %d and optval: 0x%x/%d (expected SOCKET_ERROR with WSAEINVAL)\n",
+        ret, WSAGetLastError(), optval, optval);
+
+    /* more invalid values for level */
+    SetLastError(0xdeadbeef);
+    optval = 0xdeadbeef;
+    ret = getsockopt(sock, 0x1234ffff, SO_MAX_MSG_SIZE, (char *)&optval, &optlen);
+    ok( (ret == SOCKET_ERROR) && (WSAGetLastError() == WSAEINVAL),
+        "got %d with %d and optval: 0x%x/%d (expected SOCKET_ERROR with WSAEINVAL)\n",
+        ret, WSAGetLastError(), optval, optval);
+
+    SetLastError(0xdeadbeef);
+    optval = 0xdeadbeef;
+    ret = getsockopt(sock, 0x8000ffff, SO_MAX_MSG_SIZE, (char *)&optval, &optlen);
+    ok( (ret == SOCKET_ERROR) && (WSAGetLastError() == WSAEINVAL),
+        "got %d with %d and optval: 0x%x/%d (expected SOCKET_ERROR with WSAEINVAL)\n",
+        ret, WSAGetLastError(), optval, optval);
+
+    SetLastError(0xdeadbeef);
+    optval = 0xdeadbeef;
+    ret = getsockopt(sock, 0x00008000, SO_MAX_MSG_SIZE, (char *)&optval, &optlen);
+    ok( (ret == SOCKET_ERROR) && (WSAGetLastError() == WSAEINVAL),
+        "got %d with %d and optval: 0x%x/%d (expected SOCKET_ERROR with WSAEINVAL)\n",
+        ret, WSAGetLastError(), optval, optval);
+
+    SetLastError(0xdeadbeef);
+    optval = 0xdeadbeef;
+    ret = getsockopt(sock, 0x00000800, SO_MAX_MSG_SIZE, (char *)&optval, &optlen);
+    ok( (ret == SOCKET_ERROR) && (WSAGetLastError() == WSAEINVAL),
+        "got %d with %d and optval: 0x%x/%d (expected SOCKET_ERROR with WSAEINVAL)\n",
+        ret, WSAGetLastError(), optval, optval);
+
     optlen = sizeof(LINGER);
     ret = getsockopt(sock, SOL_SOCKET, SO_LINGER, (char *)&linger_val, &optlen);
     todo_wine{
