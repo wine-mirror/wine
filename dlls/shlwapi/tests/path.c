@@ -690,7 +690,7 @@ static void test_PathAppendA(void)
 {
     char path[MAX_PATH];
     char too_long[LONG_LEN];
-    char one[HALF_LEN], two[HALF_LEN];
+    char half[HALF_LEN];
     BOOL res;
 
     lstrcpy(path, "C:\\one");
@@ -803,16 +803,16 @@ static void test_PathAppendA(void)
        "Expected length of path to be zero, got %i\n", lstrlen(path));
 
     /* both params combined are too long */
-    memset(one, 'a', HALF_LEN);
-    one[HALF_LEN - 1] = '\0';
-    memset(two, 'b', HALF_LEN);
-    two[HALF_LEN - 1] = '\0';
+    memset(path, 'a', HALF_LEN);
+    path[HALF_LEN - 1] = '\0';
+    memset(half, 'b', HALF_LEN);
+    half[HALF_LEN - 1] = '\0';
     SetLastError(0xdeadbeef);
-    res = PathAppendA(one, two);
+    res = PathAppendA(path, half);
     ok(!res, "Expected failure\n");
-    ok(lstrlen(one) == 0 ||
-       broken(lstrlen(one) == (HALF_LEN - 1)), /* Win95 and some W2K */
-       "Expected length of one to be zero, got %i\n", lstrlen(one));
+    ok(lstrlen(path) == 0 ||
+       broken(lstrlen(path) == (HALF_LEN - 1)), /* Win95 and some W2K */
+       "Expected length of path to be zero, got %i\n", lstrlen(path));
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 }
 
