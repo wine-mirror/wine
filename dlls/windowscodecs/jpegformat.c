@@ -63,6 +63,7 @@ static void *libjpeg_handle;
 MAKE_FUNCPTR(jpeg_CreateDecompress);
 MAKE_FUNCPTR(jpeg_destroy_decompress);
 MAKE_FUNCPTR(jpeg_read_header);
+MAKE_FUNCPTR(jpeg_read_scanlines);
 MAKE_FUNCPTR(jpeg_resync_to_restart);
 MAKE_FUNCPTR(jpeg_start_decompress);
 MAKE_FUNCPTR(jpeg_std_error);
@@ -81,6 +82,7 @@ static void *load_libjpeg(void)
         LOAD_FUNCPTR(jpeg_CreateDecompress);
         LOAD_FUNCPTR(jpeg_destroy_decompress);
         LOAD_FUNCPTR(jpeg_read_header);
+        LOAD_FUNCPTR(jpeg_read_scanlines);
         LOAD_FUNCPTR(jpeg_resync_to_restart);
         LOAD_FUNCPTR(jpeg_start_decompress);
         LOAD_FUNCPTR(jpeg_std_error);
@@ -100,6 +102,7 @@ typedef struct {
     struct jpeg_error_mgr jerr;
     struct jpeg_source_mgr source_mgr;
     BYTE source_buffer[1024];
+    BYTE *image_data;
 } JpegDecoder;
 
 static inline JpegDecoder *decoder_from_decompress(j_decompress_ptr decompress)
@@ -155,6 +158,7 @@ static ULONG WINAPI JpegDecoder_Release(IWICBitmapDecoder *iface)
     {
         if (This->cinfo_initialized) pjpeg_destroy_decompress(&This->cinfo);
         if (This->stream) IStream_Release(This->stream);
+        HeapFree(GetProcessHeap(), 0, This->image_data);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -428,8 +432,69 @@ static HRESULT WINAPI JpegDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface
 static HRESULT WINAPI JpegDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
-    FIXME("(%p,%p,%u,%u,%p): stub\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
-    return E_NOTIMPL;
+    JpegDecoder *This = decoder_from_frame(iface);
+    UINT bpp;
+    UINT stride;
+    UINT data_size;
+    UINT max_row_needed;
+    TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
+
+    if (This->cinfo.out_color_space == JCS_GRAYSCALE) bpp = 8;
+    else bpp = 24;
+
+    stride = bpp * This->cinfo.output_width;
+    data_size = stride * This->cinfo.output_height;
+
+    max_row_needed = prc->Y + prc->Height;
+    if (max_row_needed > This->cinfo.output_height) return E_INVALIDARG;
+
+    if (!This->image_data)
+    {
+        This->image_data = HeapAlloc(GetProcessHeap(), 0, data_size);
+        if (!This->image_data) return E_OUTOFMEMORY;
+    }
+
+    while (max_row_needed > This->cinfo.output_scanline)
+    {
+        UINT first_scanline = This->cinfo.output_scanline;
+        UINT max_rows;
+        JSAMPROW out_rows[4];
+        UINT i, j;
+        JDIMENSION ret;
+
+        max_rows = min(This->cinfo.output_height-first_scanline, 4);
+        for (i=0; i<max_rows; i++)
+            out_rows[i] = This->image_data + stride * (first_scanline+i);
+
+        ret = pjpeg_read_scanlines(&This->cinfo, out_rows, max_rows);
+
+        if (ret == 0)
+        {
+            ERR("read_scanlines failed\n");
+            return E_FAIL;
+        }
+
+        if (bpp == 24)
+        {
+            /* libjpeg gives us RGB data and we want BGR, so byteswap the data */
+            for (i=first_scanline; i<This->cinfo.output_scanline; i++)
+            {
+                BYTE *pixel = This->image_data + stride * i;
+                for (j=0; j<This->cinfo.output_width; j++)
+                {
+                    BYTE red=pixel[0];
+                    BYTE blue=pixel[2];
+                    pixel[0]=blue;
+                    pixel[2]=red;
+                    pixel+=3;
+                }
+            }
+        }
+    }
+
+    return copy_pixels(bpp, This->image_data,
+        This->cinfo.output_width, This->cinfo.output_height, stride,
+        prc, cbStride, cbBufferSize, pbBuffer);
 }
 
 static HRESULT WINAPI JpegDecoder_Frame_GetMetadataQueryReader(IWICBitmapFrameDecode *iface,
@@ -493,6 +558,7 @@ HRESULT JpegDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->initialized = FALSE;
     This->cinfo_initialized = FALSE;
     This->stream = NULL;
+    This->image_data = NULL;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
