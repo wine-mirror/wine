@@ -965,7 +965,8 @@ static void test_DialogBoxParamA(void)
     SetLastError(0xdeadbeef);
     ret = DefDlgProcA(0, WM_ERASEBKGND, 0, 0);
     ok(ret == 0, "DefDlgProcA returned %ld, expected 0\n", ret);
-    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE,
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE ||
+       broken(GetLastError() == 0xdeadbeef),
        "got %d, expected ERROR_INVALID_WINDOW_HANDLE\n", GetLastError());
 }
 
