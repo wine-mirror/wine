@@ -1647,7 +1647,7 @@ static LRESULT CALLBACK CBTProc(int code, WPARAM wparam, LPARAM lparam)
 		newchild = NULL;
 
 		child->hwnd = (HWND) wparam;
-		SetWindowLongPtr(child->hwnd, GWLP_USERDATA, (LPARAM)child);
+		SetWindowLongPtrW(child->hwnd, GWLP_USERDATA, (LPARAM)child);
 	}
 
 	return CallNextHookEx(hcbthook, code, wparam, lparam);
@@ -1668,7 +1668,7 @@ static HWND create_child_window(ChildWnd* child)
 	mcs.style   = 0;
 	mcs.lParam  = 0;
 
-	hcbthook = SetWindowsHookEx(WH_CBT, CBTProc, 0, GetCurrentThreadId());
+	hcbthook = SetWindowsHookExW(WH_CBT, CBTProc, 0, GetCurrentThreadId());
 
 	newchild = child;
 	child->hwnd = (HWND)SendMessageW(Globals.hmdiclient, WM_MDICREATE, 0, (LPARAM)&mcs);
@@ -1707,7 +1707,7 @@ static INT_PTR CALLBACK ExecuteDialogDlgProc(HWND hwnd, UINT nmsg, WPARAM wparam
 			int id = (int)wparam;
 
 			if (id == IDOK) {
-				GetWindowText(GetDlgItem(hwnd, 201), dlg->cmd, MAX_PATH);
+				GetWindowTextW(GetDlgItem(hwnd, 201), dlg->cmd, MAX_PATH);
 				dlg->cmdshow = get_check(hwnd,214) ? SW_SHOWMINIMIZED : SW_SHOWNORMAL;
 				EndDialog(hwnd, id);
 			} else if (id == IDCANCEL)
@@ -1726,8 +1726,8 @@ static INT_PTR CALLBACK DestinationDlgProc(HWND hwnd, UINT nmsg, WPARAM wparam, 
 
 	switch(nmsg) {
 		case WM_INITDIALOG:
-			SetWindowLongPtr(hwnd, GWLP_USERDATA, lparam);
-			SetWindowText(GetDlgItem(hwnd, 201), (LPCTSTR)lparam);
+			SetWindowLongPtrW(hwnd, GWLP_USERDATA, lparam);
+			SetWindowTextW(GetDlgItem(hwnd, 201), (LPCWSTR)lparam);
 			return 1;
 
 		case WM_COMMAND: {
@@ -1735,8 +1735,8 @@ static INT_PTR CALLBACK DestinationDlgProc(HWND hwnd, UINT nmsg, WPARAM wparam, 
 
 			switch(id) {
 			  case IDOK: {
-				LPTSTR dest = (LPTSTR) GetWindowLongPtr(hwnd, GWLP_USERDATA);
-				GetWindowText(GetDlgItem(hwnd, 201), dest, MAX_PATH);
+				LPWSTR dest = (LPWSTR)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+				GetWindowTextW(GetDlgItem(hwnd, 201), dest, MAX_PATH);
 				EndDialog(hwnd, id);
 				break;}
 
@@ -1769,7 +1769,7 @@ static INT_PTR CALLBACK FilterDialogDlgProc(HWND hwnd, UINT nmsg, WPARAM wparam,
 	switch(nmsg) {
 		case WM_INITDIALOG:
 			dlg = (struct FilterDialog*) lparam;
-			SetWindowText(GetDlgItem(hwnd, IDC_VIEW_PATTERN), dlg->pattern);
+			SetWindowTextW(GetDlgItem(hwnd, IDC_VIEW_PATTERN), dlg->pattern);
 			set_check(hwnd, IDC_VIEW_TYPE_DIRECTORIES, dlg->flags&TF_DIRECTORIES);
 			set_check(hwnd, IDC_VIEW_TYPE_PROGRAMS, dlg->flags&TF_PROGRAMS);
 			set_check(hwnd, IDC_VIEW_TYPE_DOCUMENTS, dlg->flags&TF_DOCUMENTS);
@@ -1783,7 +1783,7 @@ static INT_PTR CALLBACK FilterDialogDlgProc(HWND hwnd, UINT nmsg, WPARAM wparam,
 			if (id == IDOK) {
 				int flags = 0;
 
-				GetWindowText(GetDlgItem(hwnd, IDC_VIEW_PATTERN), dlg->pattern, MAX_PATH);
+				GetWindowTextW(GetDlgItem(hwnd, IDC_VIEW_PATTERN), dlg->pattern, MAX_PATH);
 
 				flags |= get_check(hwnd, IDC_VIEW_TYPE_DIRECTORIES) ? TF_DIRECTORIES : 0;
 				flags |= get_check(hwnd, IDC_VIEW_TYPE_PROGRAMS) ? TF_PROGRAMS : 0;
@@ -1840,7 +1840,7 @@ static void PropDlg_DisplayValue(HWND hlbox, HWND hedit)
 		LPCWSTR pValue = (LPCWSTR)SendMessageW(hlbox, LB_GETITEMDATA, idx, 0);
 
 		if (pValue)
-			SetWindowText(hedit, pValue);
+			SetWindowTextW(hedit, pValue);
 	}
 }
 
@@ -1922,19 +1922,19 @@ static INT_PTR CALLBACK PropertiesDialogDlgProc(HWND hwnd, UINT nmsg, WPARAM wpa
 			dlg = (struct PropertiesDialog*) lparam;
 			pWFD = (LPWIN32_FIND_DATA) &dlg->entry.data;
 
-			GetWindowText(hwnd, b1, MAX_PATH);
+			GetWindowTextW(hwnd, b1, MAX_PATH);
 			wsprintfW(b2, b1, pWFD->cFileName);
-			SetWindowText(hwnd, b2);
+			SetWindowTextW(hwnd, b2);
 
 			format_date(&pWFD->ftLastWriteTime, b1, COL_DATE|COL_TIME);
-			SetWindowText(GetDlgItem(hwnd, IDC_STATIC_PROP_LASTCHANGE), b1);
+			SetWindowTextW(GetDlgItem(hwnd, IDC_STATIC_PROP_LASTCHANGE), b1);
 
                         format_longlong( b1, ((ULONGLONG)pWFD->nFileSizeHigh << 32) | pWFD->nFileSizeLow );
 			wsprintfW(b2, sByteFmt, b1);
-			SetWindowText(GetDlgItem(hwnd, IDC_STATIC_PROP_SIZE), b2);
+			SetWindowTextW(GetDlgItem(hwnd, IDC_STATIC_PROP_SIZE), b2);
 
-			SetWindowText(GetDlgItem(hwnd, IDC_STATIC_PROP_FILENAME), pWFD->cFileName);
-			SetWindowText(GetDlgItem(hwnd, IDC_STATIC_PROP_PATH), dlg->path);
+			SetWindowTextW(GetDlgItem(hwnd, IDC_STATIC_PROP_FILENAME), pWFD->cFileName);
+			SetWindowTextW(GetDlgItem(hwnd, IDC_STATIC_PROP_PATH), dlg->path);
 
 			set_check(hwnd, IDC_CHECK_READONLY, pWFD->dwFileAttributes&FILE_ATTRIBUTE_READONLY);
 			set_check(hwnd, IDC_CHECK_ARCHIVE, pWFD->dwFileAttributes&FILE_ATTRIBUTE_ARCHIVE);
@@ -2105,7 +2105,7 @@ static BOOL activate_drive_window(LPCTSTR path)
 
 	/* search for a already open window for the same drive */
 	for(child_wnd=GetNextWindow(Globals.hmdiclient,GW_CHILD); child_wnd; child_wnd=GetNextWindow(child_wnd, GW_HWNDNEXT)) {
-		ChildWnd* child = (ChildWnd*) GetWindowLongPtr(child_wnd, GWLP_USERDATA);
+		ChildWnd* child = (ChildWnd*)GetWindowLongPtrW(child_wnd, GWLP_USERDATA);
 
 		if (child) {
 			_wsplitpath(child->root.path, drv2, 0, 0, 0);
@@ -2130,7 +2130,7 @@ static BOOL activate_fs_window(LPCTSTR filesys)
 
 	/* search for a already open window of the given file system name */
 	for(child_wnd=GetNextWindow(Globals.hmdiclient,GW_CHILD); child_wnd; child_wnd=GetNextWindow(child_wnd, GW_HWNDNEXT)) {
-		ChildWnd* child = (ChildWnd*) GetWindowLongPtr(child_wnd, GWLP_USERDATA);
+		ChildWnd* child = (ChildWnd*) GetWindowLongPtrW(child_wnd, GWLP_USERDATA);
 
 		if (child) {
 			if (!lstrcmpiW(child->root.fs, filesys)) {
@@ -2467,7 +2467,7 @@ static HWND create_header(HWND parent, Pane* pane, UINT id)
 	HD_ITEM hdi;
 	int idx;
 
-	HWND hwnd = CreateWindow(WC_HEADER, 0, WS_CHILD|WS_VISIBLE|HDS_HORZ|HDS_FULLDRAG/*TODO: |HDS_BUTTONS + sort orders*/,
+	HWND hwnd = CreateWindowW(WC_HEADERW, 0, WS_CHILD|WS_VISIBLE|HDS_HORZ|HDS_FULLDRAG/*TODO: |HDS_BUTTONS + sort orders*/,
                                  0, 0, 0, 0, parent, (HMENU)ULongToHandle(id), Globals.hInstance, 0);
 	if (!hwnd)
 		return 0;
@@ -2824,12 +2824,12 @@ static void create_tree_window(HWND parent, Pane* pane, UINT id, UINT id_header,
 	static int s_init = 0;
 	Entry* entry = pane->root;
 
-	pane->hwnd = CreateWindow(sListBox, sEmpty, WS_CHILD|WS_VISIBLE|WS_HSCROLL|WS_VSCROLL|
+	pane->hwnd = CreateWindowW(sListBox, sEmpty, WS_CHILD|WS_VISIBLE|WS_HSCROLL|WS_VSCROLL|
                                   LBS_DISABLENOSCROLL|LBS_NOINTEGRALHEIGHT|LBS_OWNERDRAWFIXED|LBS_NOTIFY,
                                   0, 0, 0, 0, parent, (HMENU)ULongToHandle(id), Globals.hInstance, 0);
 
-	SetWindowLongPtr(pane->hwnd, GWLP_USERDATA, (LPARAM)pane);
-	g_orgTreeWndProc = (WNDPROC) SetWindowLongPtr(pane->hwnd, GWLP_WNDPROC, (LPARAM)TreeWndProc);
+	SetWindowLongPtrW(pane->hwnd, GWLP_USERDATA, (LPARAM)pane);
+	g_orgTreeWndProc = (WNDPROC)SetWindowLongPtrW(pane->hwnd, GWLP_WNDPROC, (LPARAM)TreeWndProc);
 
 	SendMessageW(pane->hwnd, WM_SETFONT, (WPARAM)Globals.hfont, FALSE);
 
@@ -3675,7 +3675,7 @@ static void set_curdir(ChildWnd* child, Entry* entry, int idx, HWND hwnd)
 	lstrcpyW(child->path, path);
 
 	if (child->hwnd)	/* only change window title, if the window already exists */
-		SetWindowText(child->hwnd, path);
+		SetWindowTextW(child->hwnd, path);
 
 	if (path[0])
 		if (SetCurrentDirectory(path))
@@ -4118,7 +4118,7 @@ static HRESULT ShellFolderContextMenu(IShellFolder* shell_folder, HWND hwndParen
 
 static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 {
-	ChildWnd* child = (ChildWnd*) GetWindowLongPtr(hwnd, GWLP_USERDATA);
+	ChildWnd* child = (ChildWnd*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
 	ASSERT(child);
 
 	switch(nmsg) {
@@ -4141,7 +4141,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 		case WM_NCDESTROY:
 			free_child_window(child);
-			SetWindowLongPtr(hwnd, GWLP_USERDATA, 0);
+			SetWindowLongPtrW(hwnd, GWLP_USERDATA, 0);
 			break;
 
 		case WM_PAINT: {
@@ -4500,8 +4500,8 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 static LRESULT CALLBACK TreeWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 {
-	ChildWnd* child = (ChildWnd*) GetWindowLongPtr(GetParent(hwnd), GWLP_USERDATA);
-	Pane* pane = (Pane*) GetWindowLongPtr(hwnd, GWLP_USERDATA);
+	ChildWnd* child = (ChildWnd*)GetWindowLongPtrW(GetParent(hwnd), GWLP_USERDATA);
+	Pane* pane = (Pane*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
 	ASSERT(child);
 
 	switch(nmsg) {
@@ -4649,12 +4649,12 @@ static BOOL show_frame(HWND hwndParent, int cmdshow, LPCTSTR path)
 
 
 	/* create main window */
-	Globals.hMainWnd = CreateWindowEx(0, MAKEINTRESOURCE(Globals.hframeClass), RS(b1,IDS_WINE_FILE), WS_OVERLAPPEDWINDOW,
+	Globals.hMainWnd = CreateWindowExW(0, MAKEINTRESOURCEW(Globals.hframeClass), RS(b1,IDS_WINE_FILE), WS_OVERLAPPEDWINDOW,
 					opts.start_x, opts.start_y, opts.width, opts.height,
 					hwndParent, Globals.hMenuFrame, Globals.hInstance, 0/*lpParam*/);
 
 
-	Globals.hmdiclient = CreateWindowEx(0, sMDICLIENT, NULL,
+	Globals.hmdiclient = CreateWindowExW(0, sMDICLIENT, NULL,
 					WS_CHILD|WS_CLIPCHILDREN|WS_VSCROLL|WS_HSCROLL|WS_VISIBLE|WS_BORDER,
 					0, 0, 0, 0,
 					Globals.hMainWnd, 0, Globals.hInstance, &ccs);
@@ -4682,11 +4682,11 @@ static BOOL show_frame(HWND hwndParent, int cmdshow, LPCTSTR path)
 		CheckMenuItem(Globals.hMenuOptions, ID_VIEW_TOOL_BAR, MF_BYCOMMAND|MF_CHECKED);
 	}
 
-	Globals.hstatusbar = CreateStatusWindow(WS_CHILD|WS_VISIBLE, 0, Globals.hMainWnd, IDW_STATUSBAR);
+	Globals.hstatusbar = CreateStatusWindowW(WS_CHILD|WS_VISIBLE, 0, Globals.hMainWnd, IDW_STATUSBAR);
 	CheckMenuItem(Globals.hMenuOptions, ID_VIEW_STATUSBAR, MF_BYCOMMAND|MF_CHECKED);
 
-/* CreateStatusWindow does not accept WS_BORDER
-	Globals.hstatusbar = CreateWindowEx(WS_EX_NOPARENTNOTIFY, STATUSCLASSNAME, 0,
+/* CreateStatusWindowW does not accept WS_BORDER
+	Globals.hstatusbar = CreateWindowExW(WS_EX_NOPARENTNOTIFY, STATUSCLASSNAME, 0,
 					WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_BORDER|CCS_NODIVIDER, 0,0,0,0,
 					Globals.hMainWnd, (HMENU)IDW_STATUSBAR, hinstance, 0);*/
 
