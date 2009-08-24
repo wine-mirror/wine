@@ -57,18 +57,31 @@ HRESULT __RPC_STUB IDBCreateCommand_CreateCommand_Stub(IDBCreateCommand* This, I
 HRESULT CALLBACK IDBCreateSession_CreateSession_Proxy(IDBCreateSession* This, IUnknown *pUnkOuter,
                                                       REFIID riid, IUnknown **ppDBSession)
 {
-    FIXME("(%p, %p, %s, %p): stub\n", This, pUnkOuter, debugstr_guid(riid),
-          ppDBSession);
-    return E_NOTIMPL;
+    HRESULT hr;
+    IErrorInfo *error;
+
+    TRACE("(%p, %p, %s, %p)\n", This, pUnkOuter, debugstr_guid(riid), ppDBSession);
+    hr = IDBCreateSession_RemoteCreateSession_Proxy(This, pUnkOuter, riid, ppDBSession, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+    return hr;
 }
 
 HRESULT __RPC_STUB IDBCreateSession_CreateSession_Stub(IDBCreateSession* This, IUnknown *pUnkOuter,
                                                        REFIID riid, IUnknown **ppDBSession, IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p, %p, %s, %p, %p): stub\n", This, pUnkOuter, debugstr_guid(riid),
+    HRESULT hr;
+    TRACE("(%p, %p, %s, %p, %p)\n", This, pUnkOuter, debugstr_guid(riid),
           ppDBSession, ppErrorInfoRem);
-    return E_NOTIMPL;
 
+    *ppErrorInfoRem = NULL;
+    hr = IDBCreateSession_CreateSession(This, pUnkOuter, riid, ppDBSession);
+    if(FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+
+    return hr;
 }
 
 HRESULT CALLBACK IDBProperties_GetProperties_Proxy(IDBProperties* This, ULONG cPropertyIDSets, const DBPROPIDSET rgPropertyIDSets[],
