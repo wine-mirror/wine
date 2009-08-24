@@ -108,16 +108,56 @@ HRESULT __RPC_STUB IDBProperties_GetPropertyInfo_Stub(IDBProperties* This, ULONG
 
 HRESULT CALLBACK IDBProperties_SetProperties_Proxy(IDBProperties* This, ULONG cPropertySets, DBPROPSET rgPropertySets[])
 {
-    FIXME("(%p, %d, %p): stub\n", This, cPropertySets, rgPropertySets);
-    return E_NOTIMPL;
+    ULONG prop_set, prop, total_props = 0;
+    HRESULT hr;
+    IErrorInfo *error;
+    DBPROPSTATUS *status;
+
+    TRACE("(%p, %d, %p)\n", This, cPropertySets, rgPropertySets);
+
+    for(prop_set = 0; prop_set < cPropertySets; prop_set++)
+        total_props += rgPropertySets[prop_set].cProperties;
+
+    if(total_props == 0) return S_OK;
+
+    status = CoTaskMemAlloc(total_props * sizeof(*status));
+    if(!status) return E_OUTOFMEMORY;
+
+    hr = IDBProperties_RemoteSetProperties_Proxy(This, cPropertySets, rgPropertySets,
+                                                 total_props, status, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+
+    total_props = 0;
+    for(prop_set = 0; prop_set < cPropertySets; prop_set++)
+        for(prop = 0; prop < rgPropertySets[prop_set].cProperties; prop++)
+            rgPropertySets[prop_set].rgProperties[prop].dwStatus = status[total_props++];
+
+    CoTaskMemFree(status);
+    return hr;
 }
 
 HRESULT __RPC_STUB IDBProperties_SetProperties_Stub(IDBProperties* This, ULONG cPropertySets, DBPROPSET *rgPropertySets,
                                                     ULONG cTotalProps, DBPROPSTATUS *rgPropStatus, IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p, %d, %p, %d, %p, %p): stub\n", This, cPropertySets, rgPropertySets, cTotalProps,
+    ULONG prop_set, prop, total_props = 0;
+    HRESULT hr;
+
+    TRACE("(%p, %d, %p, %d, %p, %p)\n", This, cPropertySets, rgPropertySets, cTotalProps,
           rgPropStatus, ppErrorInfoRem);
-    return E_NOTIMPL;
+
+    *ppErrorInfoRem = NULL;
+    hr = IDBProperties_SetProperties(This, cPropertySets, rgPropertySets);
+    if(FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+
+    for(prop_set = 0; prop_set < cPropertySets; prop_set++)
+        for(prop = 0; prop < rgPropertySets[prop_set].cProperties; prop++)
+            rgPropStatus[total_props++] = rgPropertySets[prop_set].rgProperties[prop].dwStatus;
+
+    return hr;
 }
 
 HRESULT CALLBACK IDBInitialize_Initialize_Proxy(IDBInitialize* This)
