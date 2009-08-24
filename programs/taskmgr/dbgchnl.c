@@ -108,7 +108,7 @@ static DWORD    get_selected_pid(void)
 static int     list_channel_CB(HANDLE hProcess, void* addr, struct __wine_debug_channel* channel, void* user)
 {
     int         j;
-    char        val[2];
+    WCHAR       val[2];
     LVITEMA     lvitem;
     int         index;
     HWND        hChannelLV = user;
@@ -125,7 +125,7 @@ static int     list_channel_CB(HANDLE hProcess, void* addr, struct __wine_debug_
     for (j = 0; j < 4; j++)
     {
         val[0] = (channel->flags & (1 << j)) ? 'x' : ' ';
-        ListView_SetItemText(hChannelLV, index, j + 1, val);
+        ListView_SetItemTextW(hChannelLV, index, j + 1, val);
     }
     return 1;
 }
@@ -290,13 +290,13 @@ static void DebugChannels_OnNotify(HWND hDlg, LPARAM lParam)
             SendMessage(hChannelLV, LVM_SUBITEMHITTEST, 0, (LPARAM)&lhti);
             if (nmia->iSubItem >= 1 && nmia->iSubItem <= 4)
             {
-                TCHAR           val[2];
-                TCHAR           name[32];
+                WCHAR           val[2];
+                char            name[32];
                 unsigned        bitmask = 1 << (lhti.iSubItem - 1);
                 struct cce_user user;
 
-                ListView_GetItemText(hChannelLV, lhti.iItem, 0, name, sizeof(name) / sizeof(name[0]));
-                ListView_GetItemText(hChannelLV, lhti.iItem, lhti.iSubItem, val, sizeof(val) / sizeof(val[0]));
+                ListView_GetItemTextA(hChannelLV, lhti.iItem, 0, name, sizeof(name) / sizeof(name[0]));
+                ListView_GetItemTextW(hChannelLV, lhti.iItem, lhti.iSubItem, val, sizeof(val) / sizeof(val[0]));
                 user.name = name;
                 user.value = (val[0] == 'x') ? 0 : bitmask;
                 user.mask = bitmask;
@@ -305,7 +305,7 @@ static void DebugChannels_OnNotify(HWND hDlg, LPARAM lParam)
                 if (user.done)
                 {
                     val[0] ^= ('x' ^ ' ');
-                    ListView_SetItemText(hChannelLV, lhti.iItem, lhti.iSubItem, val);
+                    ListView_SetItemTextW(hChannelLV, lhti.iItem, lhti.iSubItem, val);
                 }
                 if (user.notdone)
                     printf("Some channel instances weren't correctly set\n");

@@ -37,7 +37,6 @@ typedef struct _TIME {
 
 typedef ULARGE_INTEGER	TIME, *PTIME;
 
-/* typedef WCHAR			UNICODE_STRING; */
 typedef struct _UNICODE_STRING {
     USHORT	Length;
     USHORT	MaximumLength;
@@ -347,9 +346,9 @@ ULONG	PerfDataGetProcessCount(void);
 ULONG	PerfDataGetProcessorUsage(void);
 ULONG	PerfDataGetProcessorSystemUsage(void);
 
-BOOL	PerfDataGetImageName(ULONG Index, LPTSTR lpImageName, int nMaxCount);
+BOOL	PerfDataGetImageName(ULONG Index, LPWSTR lpImageName, int nMaxCount);
 ULONG	PerfDataGetProcessId(ULONG Index);
-BOOL	PerfDataGetUserName(ULONG Index, LPTSTR lpUserName, int nMaxCount);
+BOOL	PerfDataGetUserName(ULONG Index, LPWSTR lpUserName, int nMaxCount);
 ULONG	PerfDataGetSessionId(ULONG Index);
 ULONG	PerfDataGetCPUUsage(ULONG Index);
 TIME	PerfDataGetCPUTime(ULONG Index);

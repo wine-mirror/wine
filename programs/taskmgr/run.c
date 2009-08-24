@@ -53,8 +53,9 @@ void TaskManager_OnFileNew(void)
     HMODULE            hShell32;
     RUNFILEDLG        RunFileDlg;
     OSVERSIONINFO    versionInfo;
+    static const WCHAR wszShell32[] = {'S','H','E','L','L','3','2','.','D','L','L',0};
 
-    hShell32 = LoadLibrary(_T("SHELL32.DLL"));
+    hShell32 = LoadLibraryW(wszShell32);
     RunFileDlg = (RUNFILEDLG)(FARPROC)GetProcAddress(hShell32, (char*)((long)0x3D));
 
     /* Show "Run..." dialog */
