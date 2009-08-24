@@ -160,17 +160,7 @@ static void testCursorInfo(HANDLE hCon)
     ok(GetLastError() == 0xdeadbeef, "GetLastError: expecting %u got %u\n",
        0xdeadbeef, GetLastError());
 
-    if (info.dwSize == 12)
-    {
-        win_skip("NULL CONSOLE_CURSOR_INFO will crash on win9x\n");
-        return;
-    }
-
-    SetLastError(0xdeadbeef);
-    ret = GetConsoleCursorInfo(hCon, NULL);
-    ok(!ret, "Expected failure\n");
-    ok(GetLastError() == ERROR_INVALID_ACCESS, "GetLastError: expecting %u got %u\n",
-       ERROR_INVALID_ACCESS, GetLastError());
+    /* Don't test NULL CONSOLE_CURSOR_INFO, it crashes on win9x and win7 */
 }
 
 static void testEmptyWrite(HANDLE hCon)
