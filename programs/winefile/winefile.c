@@ -381,7 +381,7 @@ static void read_directory_win(Entry* dir, LPCTSTR path)
 	p[0] = '*';
 	p[1] = '\0';
 
-	hFind = FindFirstFile(buffer, &w32fd);
+	hFind = FindFirstFileW(buffer, &w32fd);
 
 	if (hFind != INVALID_HANDLE_VALUE) {
 		do {
@@ -415,7 +415,7 @@ static void read_directory_win(Entry* dir, LPCTSTR path)
 
 			lstrcpyW(p, entry->data.cFileName);
 
-			hFile = CreateFile(buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+			hFile = CreateFileW(buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
 								0, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
 
 			if (hFile != INVALID_HANDLE_VALUE) {
@@ -427,7 +427,7 @@ static void read_directory_win(Entry* dir, LPCTSTR path)
 #endif
 
 			last = entry;
-		} while(FindNextFile(hFind, &w32fd));
+		} while(FindNextFileW(hFind, &w32fd));
 
 		if (last)
 			last->next = NULL;
@@ -884,7 +884,7 @@ static Entry* read_tree_shell(Root* root, LPITEMIDLIST pidl, SORT_ORDER sortOrde
 static void fill_w32fdata_shell(IShellFolder* folder, LPCITEMIDLIST pidl, SFGAOF attribs, WIN32_FIND_DATA* w32fdata)
 {
 	if (!(attribs & SFGAO_FILESYSTEM) ||
-		  FAILED(SHGetDataFromIDList(folder, pidl, SHGDFIL_FINDDATA, w32fdata, sizeof(WIN32_FIND_DATA)))) {
+			FAILED(SHGetDataFromIDListW(folder, pidl, SHGDFIL_FINDDATA, w32fdata, sizeof(WIN32_FIND_DATAW)))) {
 		WIN32_FILE_ATTRIBUTE_DATA fad;
 		IDataObject* pDataObj;
 
@@ -902,7 +902,7 @@ static void fill_w32fdata_shell(IShellFolder* folder, LPCITEMIDLIST pidl, SFGAOF
 				LPCTSTR path = (LPCTSTR)GlobalLock(medium.UNION_MEMBER(hGlobal));
 				UINT sem_org = SetErrorMode(SEM_FAILCRITICALERRORS);
 
-				if (GetFileAttributesEx(path, GetFileExInfoStandard, &fad)) {
+				if (GetFileAttributesExW(path, GetFileExInfoStandard, &fad)) {
 					w32fdata->dwFileAttributes = fad.dwFileAttributes;
 					w32fdata->ftCreationTime = fad.ftCreationTime;
 					w32fdata->ftLastAccessTime = fad.ftLastAccessTime;
@@ -1309,8 +1309,8 @@ static Entry* read_tree(Root* root, LPCTSTR path, LPITEMIDLIST pidl, LPTSTR drv,
 #if !defined(_NO_EXTENSIONS) && defined(__WINE__)
 	if (*path == '/')
 	{
-		 /* read unix file system tree */
-		root->drive_type = GetDriveType(path);
+		/* read unix file system tree */
+		root->drive_type = GetDriveTypeW(path);
 
 		lstrcatW(drv, sSlash);
 		load_string(root->volname, sizeof(root->volname)/sizeof(root->volname[0]), IDS_ROOT_FS);
@@ -1324,10 +1324,10 @@ static Entry* read_tree(Root* root, LPCTSTR path, LPITEMIDLIST pidl, LPTSTR drv,
 #endif
 
 	 /* read WIN32 file system tree */
-	root->drive_type = GetDriveType(path);
+       root->drive_type = GetDriveTypeW(path);
 
 	lstrcatW(drv, sBackslash);
-	GetVolumeInformation(drv, root->volname, _MAX_FNAME, 0, 0, &root->fs_flags, root->fs, _MAX_DIR);
+	GetVolumeInformationW(drv, root->volname, _MAX_FNAME, 0, 0, &root->fs_flags, root->fs, _MAX_DIR);
 
 	lstrcpyW(root->path, drv);
 
@@ -1850,12 +1850,12 @@ static void CheckForFileInfo(struct PropertiesDialog* dlg, HWND hwnd, LPCTSTR st
 	static TCHAR sTranslation[] = {'\\','V','a','r','F','i','l','e','I','n','f','o','\\','T','r','a','n','s','l','a','t','i','o','n','\0'};
 	static TCHAR sStringFileInfo[] = {'\\','S','t','r','i','n','g','F','i','l','e','I','n','f','o','\\',
 										'%','0','4','x','%','0','4','x','\\','%','s','\0'};
-	DWORD dwVersionDataLen = GetFileVersionInfoSize(strFilename, NULL);
+	DWORD dwVersionDataLen = GetFileVersionInfoSizeW(strFilename, NULL);
 
 	if (dwVersionDataLen) {
 		dlg->pVersionData = HeapAlloc(GetProcessHeap(), 0, dwVersionDataLen);
 
-		if (GetFileVersionInfo(strFilename, 0, dwVersionDataLen, dlg->pVersionData)) {
+		if (GetFileVersionInfoW(strFilename, 0, dwVersionDataLen, dlg->pVersionData)) {
 			LPVOID pVal;
 			UINT nValLen;
 
@@ -2200,12 +2200,12 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 				_wsplitpath(root, drv, 0, 0, 0);
 
-				if (!SetCurrentDirectory(drv)) {
+				if (!SetCurrentDirectoryW(drv)) {
 					display_error(hwnd, GetLastError());
 					return 0;
 				}
 
-				GetCurrentDirectory(MAX_PATH, path); /*TODO: store last directory per drive */
+				GetCurrentDirectoryW(MAX_PATH, path); /*TODO: store last directory per drive */
 				child = alloc_child_window(path, NULL, hwnd);
 
 				if (!create_child_window(child))
@@ -2219,7 +2219,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					TCHAR path[MAX_PATH];
 					ChildWnd* child;
 
-					GetCurrentDirectory(MAX_PATH, path);
+					GetCurrentDirectoryW(MAX_PATH, path);
 					child = alloc_child_window(path, NULL, hwnd);
 
 					if (!create_child_window(child))
@@ -2346,7 +2346,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					if (activate_fs_window(RS(b1,IDS_SHELL)))
 						break;
 
-					GetCurrentDirectory(MAX_PATH, path);
+					GetCurrentDirectoryW(MAX_PATH, path);
 					child = alloc_child_window(path, get_path_pidl(path,hwnd), hwnd);
 
 					if (!create_child_window(child))
@@ -2804,7 +2804,7 @@ static void set_space_status(void)
 	ULARGE_INTEGER ulFreeBytesToCaller, ulTotalBytes, ulFreeBytes;
 	TCHAR fmt[64], b1[64], b2[64], buffer[BUFFER_LEN];
 
-	if (GetDiskFreeSpaceEx(NULL, &ulFreeBytesToCaller, &ulTotalBytes, &ulFreeBytes)) {
+	if (GetDiskFreeSpaceExW(NULL, &ulFreeBytesToCaller, &ulTotalBytes, &ulFreeBytes)) {
 		format_bytes(b1, ulFreeBytesToCaller.QuadPart);
 		format_bytes(b2, ulTotalBytes.QuadPart);
 		wsprintfW(buffer, RS(fmt,IDS_FREE_SPACE_FMT), b1, b2);
@@ -3678,7 +3678,7 @@ static void set_curdir(ChildWnd* child, Entry* entry, int idx, HWND hwnd)
 		SetWindowTextW(child->hwnd, path);
 
 	if (path[0])
-		if (SetCurrentDirectory(path))
+		if (SetCurrentDirectoryW(path))
 			set_space_status();
 }
 
@@ -3731,7 +3731,7 @@ static void create_drive_bar(void)
 	int btn = 1;
 	PTSTR p;
 
-	GetLogicalDriveStrings(BUFFER_LEN, Globals.drives);
+	GetLogicalDriveStringsW(BUFFER_LEN, Globals.drives);
 
 	Globals.hdrivebar = CreateToolbarEx(Globals.hMainWnd, WS_CHILD|WS_VISIBLE|CCS_NOMOVEY|TBSTYLE_LIST,
 				IDW_DRIVEBAR, 2, Globals.hInstance, IDB_DRIVEBAR, &drivebarBtn,
@@ -3772,7 +3772,7 @@ static void create_drive_bar(void)
 		TCHAR b[3] = {tolower(*p)};
 		SendMessageW(Globals.hdrivebar, TB_ADDSTRINGW, 0, (LPARAM)b);
 #endif
-		switch(GetDriveType(p)) {
+		switch(GetDriveTypeW(p)) {
 			case DRIVE_REMOVABLE:	drivebarBtn.iBitmap = 1;	break;
 			case DRIVE_CDROM:		drivebarBtn.iBitmap = 3;	break;
 			case DRIVE_REMOTE:		drivebarBtn.iBitmap = 4;	break;
@@ -3980,7 +3980,7 @@ static void update_view_menu(ChildWnd* child)
 static BOOL is_directory(LPCTSTR target)
 {
 	/*TODO correctly handle UNIX paths */
-	DWORD target_attr = GetFileAttributes(target);
+	DWORD target_attr = GetFileAttributesW(target);
 
 	if (target_attr == INVALID_FILE_ATTRIBUTES)
 		return FALSE;
@@ -4278,7 +4278,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 #endif /* _NO_EXTENSIONS */
 
 		case WM_SETFOCUS:
-			if (SetCurrentDirectory(child->path))
+			if (SetCurrentDirectoryW(child->path))
 				set_space_status();
 			SetFocus(child->focus_pane? child->right.hwnd: child->left.hwnd);
 			break;
@@ -4313,7 +4313,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 						source[lstrlenW(source)+1] = '\0';
 						target[lstrlenW(target)+1] = '\0';
 
-						if (!SHFileOperation(&shfo))
+						if (!SHFileOperationW(&shfo))
 							refresh_child(child);
 					}
 					break;}
@@ -4327,7 +4327,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 						source[lstrlenW(source)+1] = '\0';
 						target[lstrlenW(target)+1] = '\0';
 
-						if (!SHFileOperation(&shfo))
+						if (!SHFileOperationW(&shfo))
 							refresh_child(child);
 					}
 					break;}
@@ -4340,7 +4340,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 					path[lstrlenW(path)+1] = '\0';
 
-					if (!SHFileOperation(&shfo))
+					if (!SHFileOperationW(&shfo))
 						refresh_child(child);
 					break;}
 
@@ -4688,7 +4688,7 @@ static BOOL show_frame(HWND hwndParent, int cmdshow, LPCTSTR path)
 	/*TODO: read paths from registry */
 
 	if (!path || !*path) {
-		GetCurrentDirectory(MAX_PATH, buffer);
+		GetCurrentDirectoryW(MAX_PATH, buffer);
 		path = buffer;
 	}
 
