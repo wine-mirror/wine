@@ -126,6 +126,17 @@ BEGIN
     PUSHBUTTON      "취소",IDCANCEL,57,74,45,14,WS_GROUP
 END
 
+IDD_DRIVECHOOSE DIALOG DISCARDABLE  60, 70, 170, 60
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "드라이브 문자 선택"
+FONT 8, "MS Shell Dlg"
+BEGIN
+	COMBOBOX IDC_DRIVESA2Z,15,10,75,230,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+	DEFPUSHBUTTON   "확인",IDOK,105,10,45,14,WS_GROUP
+	PUSHBUTTON      "취소",IDCANCEL,105,30,45,14,WS_GROUP
+END
+
+
 IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
@@ -265,7 +276,7 @@ BEGIN
    IDS_CONFIRM_DELETE_C        "당신은 하드 드라이브  C를 지우기를 원합니까?\n\n대부분의 윈도우 프로그램은 C드라이브가 있다고 예상하고,  없으면 다운될것입니다. 만약 당신이 계속 진행하기를 원한다면 반드시 다시 만드십시오!"
    IDS_COL_DRIVELETTER         "문자"
    IDS_COL_DRIVEMAPPING        "드라이브 할당"
-   IDS_NO_DRIVE_C              "당신은  C드라이브를 가지고 있지 않습니다. 이것은 좋은 일이 아닙니다.\n\n드라이브 탭에서 [추가]를 클릭해서 만드는 것을 잊지 마십시오!\n"
+   IDS_NO_DRIVE_C              "당신은  C드라이브를 가지고 있지 않습니다. 이것은 좋은 일이 아닙니다.\n\n드라이브 탭에서 '추가'를 클릭해서 만드는 것을 잊지 마십시오!\n"
 END
 
 STRINGTABLE DISCARDABLE
@@ -289,7 +300,7 @@ BEGIN
    IDS_DEVICES_MIDIIN          "MIDI 입력 장치"
    IDS_DEVICES_AUX             "Aux 장치"
    IDS_DEVICES_MIXER           "Mixer 장치"
-   IDS_UNAVAILABLE_DRIVER      "레지스트리에서 가능하지 않은 드라이버가 발견되었습니다!\n\n %s를 레지스트리에서 지우겠습니까?"
+   IDS_UNAVAILABLE_DRIVER      "레지스트리에서 가능하지 않은 드라이버가 발견되었습니다!\n\n '%s'를 레지스트리에서 지우겠습니까?"
    IDS_WARNING                 "경고"
 END
 
