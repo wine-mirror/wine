@@ -39,6 +39,7 @@ enum pixelformat {
     format_1bppIndexed,
     format_4bppIndexed,
     format_8bppIndexed,
+    format_8bppGray,
     format_16bppBGR555,
     format_16bppBGR565,
     format_24bppBGR,
@@ -179,6 +180,48 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
                         srcval=*srcbyte++;
                         *dstpixel++ = colors[srcval>>4];
                         if (x+1 < prc->Width) *dstpixel++ = colors[srcval&0xf];
+                    }
+                    srcrow += srcstride;
+                    dstrow += cbStride;
+                }
+            }
+
+            HeapFree(GetProcessHeap(), 0, srcdata);
+
+            return res;
+        }
+        return S_OK;
+    case format_8bppGray:
+        if (prc)
+        {
+            HRESULT res;
+            UINT x, y;
+            BYTE *srcdata;
+            UINT srcstride, srcdatasize;
+            const BYTE *srcrow;
+            const BYTE *srcbyte;
+            BYTE *dstrow;
+            DWORD *dstpixel;
+
+            srcstride = prc->Width;
+            srcdatasize = srcstride * prc->Height;
+
+            srcdata = HeapAlloc(GetProcessHeap(), 0, srcdatasize);
+            if (!srcdata) return E_OUTOFMEMORY;
+
+            res = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+
+            if (SUCCEEDED(res))
+            {
+                srcrow = srcdata;
+                dstrow = pbBuffer;
+                for (y=0; y<prc->Height; y++) {
+                    srcbyte=(const BYTE*)srcrow;
+                    dstpixel=(DWORD*)dstrow;
+                    for (x=0; x<prc->Width; x++)
+                    {
+                        *dstpixel++ = 0xff000000|(*srcbyte<<16)|(*srcbyte<<8)|*srcbyte;
+                        srcbyte++;
                     }
                     srcrow += srcstride;
                     dstrow += cbStride;
@@ -425,6 +468,7 @@ static const struct pixelformatinfo supported_formats[] = {
     {format_1bppIndexed, &GUID_WICPixelFormat1bppIndexed, NULL},
     {format_4bppIndexed, &GUID_WICPixelFormat4bppIndexed, NULL},
     {format_8bppIndexed, &GUID_WICPixelFormat8bppIndexed, NULL},
+    {format_8bppGray, &GUID_WICPixelFormat8bppGray, NULL},
     {format_16bppBGR555, &GUID_WICPixelFormat16bppBGR555, NULL},
     {format_16bppBGR565, &GUID_WICPixelFormat16bppBGR565, NULL},
     {format_24bppBGR, &GUID_WICPixelFormat24bppBGR, NULL},
