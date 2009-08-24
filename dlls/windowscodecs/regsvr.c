@@ -753,6 +753,12 @@ static struct regsvr_coclass const coclass_list[] = {
 	"windowscodecs.dll",
 	"Apartment"
     },
+    {   &CLSID_WICJpegDecoder,
+	"WIC JPEG Decoder",
+	NULL,
+	"windowscodecs.dll",
+	"Apartment"
+    },
     {   &CLSID_WICDefaultFormatConverter,
 	"WIC Default Format Converter",
 	NULL,
@@ -813,6 +819,19 @@ static struct decoder_pattern const ico_patterns[] = {
     {0}
 };
 
+static const BYTE jpeg_magic[] = {0xff, 0xd8, 0xff, 0xe0};
+
+static GUID const * const jpeg_formats[] = {
+    &GUID_WICPixelFormat24bppBGR,
+    &GUID_WICPixelFormat8bppGray,
+    NULL
+};
+
+static struct decoder_pattern const jpeg_patterns[] = {
+    {4,0,jpeg_magic,mask_all,0},
+    {0}
+};
+
 static struct regsvr_decoder const decoder_list[] = {
     {   &CLSID_WICBmpDecoder,
 	"The Wine Project",
@@ -843,6 +862,16 @@ static struct regsvr_decoder const decoder_list[] = {
 	".ico",
 	ico_formats,
 	ico_patterns
+    },
+    {   &CLSID_WICJpegDecoder,
+	"The Wine Project",
+	"JPEG Decoder",
+	"1.0.0.0",
+	&GUID_VendorMicrosoft,
+	"image/jpeg",
+	".jpg;.jpeg;.jfif",
+	jpeg_formats,
+	jpeg_patterns
     },
     { NULL }			/* list terminator */
 };

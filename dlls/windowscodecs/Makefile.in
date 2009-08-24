@@ -15,6 +15,7 @@ C_SRCS = \
 	icoformat.c \
 	imgfactory.c \
 	info.c \
+	jpegformat.c \
 	main.c \
 	palette.c \
 	propertybag.c \
