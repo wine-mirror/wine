@@ -128,11 +128,11 @@ typedef struct
   HWND      hdrivebar;
   HFONT     hfont;
 
-  TCHAR     num_sep;
+  WCHAR     num_sep;
   SIZE      spaceSize;
   HIMAGELIST himl;
 
-  TCHAR     drives[BUFFER_LEN];
+  WCHAR     drives[BUFFER_LEN];
   BOOL      prescan_node;   /*TODO*/
   BOOL      saveSettings;
   
