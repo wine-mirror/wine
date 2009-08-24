@@ -170,11 +170,11 @@ typedef struct {
 
 
 
-static void read_directory(Entry* dir, LPCTSTR path, SORT_ORDER sortOrder, HWND hwnd);
+static void read_directory(Entry* dir, LPCWSTR path, SORT_ORDER sortOrder, HWND hwnd);
 static void set_curdir(ChildWnd* child, Entry* entry, int idx, HWND hwnd);
 static void refresh_child(ChildWnd* child);
 static void refresh_drives(void);
-static void get_path(Entry* dir, PTSTR path);
+static void get_path(Entry* dir, PWSTR path);
 static void format_date(const FILETIME* ft, WCHAR* buffer, int visible_cols);
 
 static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam);
@@ -211,7 +211,7 @@ static void format_longlong(LPWSTR ret, ULONGLONG val)
 
 
 /* load resource string */
-static LPTSTR load_string(LPTSTR buffer, DWORD size, UINT id)
+static LPWSTR load_string(LPWSTR buffer, DWORD size, UINT id)
 {
 	LoadStringW(Globals.hInstance, id, buffer, size);
 	return buffer;
@@ -224,10 +224,10 @@ static LPTSTR load_string(LPTSTR buffer, DWORD size, UINT id)
 static void display_error(HWND hwnd, DWORD error)
 {
 	WCHAR b1[BUFFER_LEN], b2[BUFFER_LEN];
-	PTSTR msg;
+	PWSTR msg;
 
 	if (FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
-		0, error, MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT), (PTSTR)&msg, 0, NULL))
+		0, error, MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT), (PWSTR)&msg, 0, NULL))
 		MessageBoxW(hwnd, msg, RS(b2,IDS_WINEFILE), MB_OK);
 	else
 		MessageBoxW(hwnd, RS(b1,IDS_ERROR), RS(b2,IDS_WINEFILE), MB_OK);
@@ -360,7 +360,7 @@ static void free_entries(Entry* dir)
 }
 
 
-static void read_directory_win(Entry* dir, LPCTSTR path)
+static void read_directory_win(Entry* dir, LPCWSTR path)
 {
 	Entry* first_entry = NULL;
 	Entry* last = NULL;
@@ -388,7 +388,7 @@ static void read_directory_win(Entry* dir, LPCTSTR path)
 #ifdef _NO_EXTENSIONS
 			/* hide directory entry "." */
 			if (w32fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-				LPCTSTR name = w32fd.cFileName;
+				LPCWSTR name = w32fd.cFileName;
 
 				if (name[0]=='.' && name[1]=='\0')
 					continue;
@@ -440,13 +440,13 @@ static void read_directory_win(Entry* dir, LPCTSTR path)
 }
 
 
-static Entry* find_entry_win(Entry* dir, LPCTSTR name)
+static Entry* find_entry_win(Entry* dir, LPCWSTR name)
 {
 	Entry* entry;
 
 	for(entry=dir->down; entry; entry=entry->next) {
-		LPCTSTR p = name;
-		LPCTSTR q = entry->data.cFileName;
+		LPCWSTR p = name;
+		LPCWSTR q = entry->data.cFileName;
 
 		do {
 			if (!*p || *p == '\\' || *p == '/')
@@ -466,12 +466,12 @@ static Entry* find_entry_win(Entry* dir, LPCTSTR name)
 }
 
 
-static Entry* read_tree_win(Root* root, LPCTSTR path, SORT_ORDER sortOrder, HWND hwnd)
+static Entry* read_tree_win(Root* root, LPCWSTR path, SORT_ORDER sortOrder, HWND hwnd)
 {
 	WCHAR buffer[MAX_PATH];
 	Entry* entry = &root->entry;
-	LPCTSTR s = path;
-	PTSTR d = buffer;
+	LPCWSTR s = path;
+	PWSTR d = buffer;
 
 	HCURSOR old_cursor = SetCursor(LoadCursorW(0, (LPCWSTR)IDC_WAIT));
 
@@ -527,7 +527,7 @@ static BOOL time_to_filetime(const time_t* t, FILETIME* ftime)
 	return SystemTimeToFileTime(&stime, ftime);
 }
 
-static void read_directory_unix(Entry* dir, LPCTSTR path)
+static void read_directory_unix(Entry* dir, LPCWSTR path)
 {
 	Entry* first_entry = NULL;
 	Entry* last = NULL;
@@ -610,13 +610,13 @@ static void read_directory_unix(Entry* dir, LPCTSTR path)
 	dir->scanned = TRUE;
 }
 
-static Entry* find_entry_unix(Entry* dir, LPCTSTR name)
+static Entry* find_entry_unix(Entry* dir, LPCWSTR name)
 {
 	Entry* entry;
 
 	for(entry=dir->down; entry; entry=entry->next) {
-		LPCTSTR p = name;
-		LPCTSTR q = entry->data.cFileName;
+		LPCWSTR p = name;
+		LPCWSTR q = entry->data.cFileName;
 
 		do {
 			if (!*p || *p == '/')
@@ -627,12 +627,12 @@ static Entry* find_entry_unix(Entry* dir, LPCTSTR name)
 	return 0;
 }
 
-static Entry* read_tree_unix(Root* root, LPCTSTR path, SORT_ORDER sortOrder, HWND hwnd)
+static Entry* read_tree_unix(Root* root, LPCWSTR path, SORT_ORDER sortOrder, HWND hwnd)
 {
 	WCHAR buffer[MAX_PATH];
 	Entry* entry = &root->entry;
-	LPCTSTR s = path;
-	PTSTR d = buffer;
+	LPCWSTR s = path;
+	PWSTR d = buffer;
 
 	HCURSOR old_cursor = SetCursor(LoadCursorW(0, (LPCWSTR)IDC_WAIT));
 
@@ -703,7 +703,7 @@ static void get_strretW(STRRET* str, const SHITEMID* shiid, LPWSTR buffer, int l
 }
 
 
-static HRESULT name_from_pidl(IShellFolder* folder, LPITEMIDLIST pidl, LPTSTR buffer, int len, SHGDNF flags)
+static HRESULT name_from_pidl(IShellFolder* folder, LPITEMIDLIST pidl, LPWSTR buffer, int len, SHGDNF flags)
 {
 	STRRET str;
 
@@ -738,7 +738,7 @@ static HRESULT path_from_pidlW(IShellFolder* folder, LPITEMIDLIST pidl, LPWSTR b
 
  /* create an item id list from a file system path */
 
-static LPITEMIDLIST get_path_pidl(LPTSTR path, HWND hwnd)
+static LPITEMIDLIST get_path_pidl(LPWSTR path, HWND hwnd)
 {
 	LPITEMIDLIST pidl;
 	HRESULT hr;
@@ -899,7 +899,7 @@ static void fill_w32fdata_shell(IShellFolder* folder, LPCITEMIDLIST pidl, SFGAOF
 			IDataObject_Release(pDataObj);
 
 			if (SUCCEEDED(hr)) {
-				LPCTSTR path = (LPCTSTR)GlobalLock(medium.UNION_MEMBER(hGlobal));
+				LPCWSTR path = GlobalLock(medium.UNION_MEMBER(hGlobal));
 				UINT sem_org = SetErrorMode(SEM_FAILCRITICALERRORS);
 
 				if (GetFileAttributesExW(path, GetFileExInfoStandard, &fad)) {
@@ -1057,7 +1057,7 @@ enum TYPE_ORDER {
 };
 
 /* distinguish between ".", ".." and any other directory names */
-static int TypeOrderFromDirname(LPCTSTR name)
+static int TypeOrderFromDirname(LPCWSTR name)
 {
 	if (name[0] == '.') {
 		if (name[1] == '\0')
@@ -1205,12 +1205,12 @@ static void SortDirectory(Entry* dir, SORT_ORDER sortOrder)
 }
 
 
-static void read_directory(Entry* dir, LPCTSTR path, SORT_ORDER sortOrder, HWND hwnd)
+static void read_directory(Entry* dir, LPCWSTR path, SORT_ORDER sortOrder, HWND hwnd)
 {
 	WCHAR buffer[MAX_PATH];
 	Entry* entry;
-	LPCTSTR s;
-	PTSTR d;
+	LPCWSTR s;
+	PWSTR d;
 
 #ifdef _SHELL_FOLDERS
 	if (dir->etype == ET_SHELL)
@@ -1284,7 +1284,7 @@ static void read_directory(Entry* dir, LPCTSTR path, SORT_ORDER sortOrder, HWND 
 }
 
 
-static Entry* read_tree(Root* root, LPCTSTR path, LPITEMIDLIST pidl, LPTSTR drv, SORT_ORDER sortOrder, HWND hwnd)
+static Entry* read_tree(Root* root, LPCWSTR path, LPITEMIDLIST pidl, LPWSTR drv, SORT_ORDER sortOrder, HWND hwnd)
 {
 #if !defined(_NO_EXTENSIONS) && defined(__WINE__)
 	static const WCHAR sSlash[] = {'/', '\0'};
@@ -1346,7 +1346,7 @@ enum TYPE_FILTER {
 };
 
 
-static ChildWnd* alloc_child_window(LPCTSTR path, LPITEMIDLIST pidl, HWND hwnd)
+static ChildWnd* alloc_child_window(LPCWSTR path, LPITEMIDLIST pidl, HWND hwnd)
 {
 	WCHAR drv[_MAX_DRIVE+1], dir[_MAX_DIR], name[_MAX_FNAME], ext[_MAX_EXT];
 	WCHAR dir_path[MAX_PATH];
@@ -1425,7 +1425,7 @@ static void free_child_window(ChildWnd* child)
 
 
 /* get full path of specified directory entry */
-static void get_path(Entry* dir, PTSTR path)
+static void get_path(Entry* dir, PWSTR path)
 {
 	Entry* entry;
 	int len = 0;
@@ -1454,11 +1454,11 @@ static void get_path(Entry* dir, PTSTR path)
 #endif
 	{
 		for(entry=dir; entry; level++) {
-			LPCTSTR name;
+			LPCWSTR name;
 			int l;
 
 			{
-				LPCTSTR s;
+				LPCWSTR s;
 				name = entry->data.cFileName;
 				s = name;
 
@@ -1659,7 +1659,7 @@ static HWND create_child_window(ChildWnd* child)
 	int idx;
 
 	mcs.szClass = sWINEFILETREE;
-	mcs.szTitle = (LPTSTR)child->path;
+	mcs.szTitle = child->path;
 	mcs.hOwner  = Globals.hInstance;
 	mcs.x       = child->pos.rcNormalPosition.left;
 	mcs.y       = child->pos.rcNormalPosition.top;
@@ -1844,7 +1844,7 @@ static void PropDlg_DisplayValue(HWND hlbox, HWND hedit)
 	}
 }
 
-static void CheckForFileInfo(struct PropertiesDialog* dlg, HWND hwnd, LPCTSTR strFilename)
+static void CheckForFileInfo(struct PropertiesDialog* dlg, HWND hwnd, LPCWSTR strFilename)
 {
 	static WCHAR sBackSlash[] = {'\\','\0'};
 	static WCHAR sTranslation[] = {'\\','V','a','r','F','i','l','e','I','n','f','o','\\','T','r','a','n','s','l','a','t','i','o','n','\0'};
@@ -1886,7 +1886,7 @@ static void CheckForFileInfo(struct PropertiesDialog* dlg, HWND hwnd, LPCTSTR st
 					for(p=InfoStrings; *p; ++p) {
 						WCHAR subblock[200];
 						WCHAR infoStr[100];
-						LPCTSTR pTxt;
+						LPCWSTR pTxt;
 						UINT nValLen;
 
 						LPCSTR pInfoString = *p;
@@ -2096,7 +2096,7 @@ static void toggle_child(HWND hwnd, UINT cmd, HWND hchild)
 	resize_frame_client(hwnd);
 }
 
-static BOOL activate_drive_window(LPCTSTR path)
+static BOOL activate_drive_window(LPCWSTR path)
 {
 	WCHAR drv1[_MAX_DRIVE], drv2[_MAX_DRIVE];
 	HWND child_wnd;
@@ -2124,7 +2124,7 @@ static BOOL activate_drive_window(LPCTSTR path)
 	return FALSE;
 }
 
-static BOOL activate_fs_window(LPCTSTR filesys)
+static BOOL activate_fs_window(LPCWSTR filesys)
 {
 	HWND child_wnd;
 
@@ -2188,7 +2188,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 			if (cmd>=ID_DRIVE_FIRST && cmd<=ID_DRIVE_FIRST+0xFF) {
 				WCHAR drv[_MAX_DRIVE], path[MAX_PATH];
 				ChildWnd* child;
-				LPCTSTR root = Globals.drives;
+				LPCWSTR root = Globals.drives;
 				int i;
 
 				for(i=cmd-ID_DRIVE_FIRST; i--; root++)
@@ -2657,7 +2657,7 @@ static void calc_single_width(Pane* pane, int col)
 }
 
 
-static BOOL pattern_match(LPCTSTR str, LPCTSTR pattern)
+static BOOL pattern_match(LPCWSTR str, LPCWSTR pattern)
 {
 	for( ; *str&&*pattern; str++,pattern++) {
 		if (*pattern == '*') {
@@ -2684,7 +2684,7 @@ static BOOL pattern_match(LPCTSTR str, LPCTSTR pattern)
 	return TRUE;
 }
 
-static BOOL pattern_imatch(LPCTSTR str, LPCTSTR pattern)
+static BOOL pattern_imatch(LPCWSTR str, LPCWSTR pattern)
 {
 	WCHAR b1[BUFFER_LEN], b2[BUFFER_LEN];
 
@@ -2703,12 +2703,12 @@ enum FILE_TYPE {
 	FT_DOCUMENT		= 2
 };
 
-static enum FILE_TYPE get_file_type(LPCTSTR filename);
+static enum FILE_TYPE get_file_type(LPCWSTR filename);
 
 
 /* insert listbox entries after index idx */
 
-static int insert_entries(Pane* pane, Entry* dir, LPCTSTR pattern, int filter_flags, int idx)
+static int insert_entries(Pane* pane, Entry* dir, LPCWSTR pattern, int filter_flags, int idx)
 {
 	Entry* entry = dir;
 
@@ -2780,7 +2780,7 @@ static int insert_entries(Pane* pane, Entry* dir, LPCTSTR pattern, int filter_fl
 }
 
 
-static void format_bytes(LPTSTR buffer, LONGLONG bytes)
+static void format_bytes(LPWSTR buffer, LONGLONG bytes)
 {
 	static const WCHAR sFmtGB[] = {'%', '.', '1', 'f', ' ', 'G', 'B', '\0'};
 	static const WCHAR sFmtMB[] = {'%', '.', '1', 'f', ' ', 'M', 'B', '\0'};
@@ -2817,7 +2817,7 @@ static void set_space_status(void)
 
 static WNDPROC g_orgTreeWndProc;
 
-static void create_tree_window(HWND parent, Pane* pane, UINT id, UINT id_header, LPCTSTR pattern, int filter_flags)
+static void create_tree_window(HWND parent, Pane* pane, UINT id, UINT id_header, LPCWSTR pattern, int filter_flags)
 {
 	static const WCHAR sListBox[] = {'L','i','s','t','B','o','x','\0'};
 
@@ -2893,7 +2893,7 @@ static void format_date(const FILETIME* ft, WCHAR* buffer, int visible_cols)
 }
 
 
-static void calc_width(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str)
+static void calc_width(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCWSTR str)
 {
 	RECT rt = {0, 0, 0, 0};
 
@@ -2903,7 +2903,7 @@ static void calc_width(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str)
 		pane->widths[col] = rt.right;
 }
 
-static void calc_tabbed_width(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str)
+static void calc_tabbed_width(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCWSTR str)
 {
 	RECT rt = {0, 0, 0, 0};
 
@@ -2918,7 +2918,7 @@ static void calc_tabbed_width(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR
 }
 
 
-static void output_text(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str, DWORD flags)
+static void output_text(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCWSTR str, DWORD flags)
 {
 	int x = dis->rcItem.left;
 	RECT rt;
@@ -2931,7 +2931,7 @@ static void output_text(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str, 
 	DrawTextW(dis->hDC, str, -1, &rt, DT_SINGLELINE|DT_NOPREFIX|flags);
 }
 
-static void output_tabbed_text(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str)
+static void output_tabbed_text(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCWSTR str)
 {
 	int x = dis->rcItem.left;
 	RECT rt;
@@ -2947,13 +2947,13 @@ static void output_tabbed_text(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTST
 	DrawTextW(dis->hDC, str, -1, &rt, DT_SINGLELINE|DT_EXPANDTABS|DT_TABSTOP|(2<<8));
 }
 
-static void output_number(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str)
+static void output_number(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCWSTR str)
 {
 	int x = dis->rcItem.left;
 	RECT rt;
-	LPCTSTR s = str;
+	LPCWSTR s = str;
 	WCHAR b[128];
-	LPTSTR d = b;
+	LPWSTR d = b;
 	int pos;
 
 	rt.left   = x+pane->positions[col]+Globals.spaceSize.cx;
@@ -2979,7 +2979,7 @@ static void output_number(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str
 }
 
 
-static BOOL is_exe_file(LPCTSTR ext)
+static BOOL is_exe_file(LPCWSTR ext)
 {
 	static const WCHAR executable_extensions[][4] = {
 		{'C','O','M','\0'},
@@ -2996,8 +2996,8 @@ static BOOL is_exe_file(LPCTSTR ext)
 
 	WCHAR ext_buffer[_MAX_EXT];
 	const WCHAR (*p)[4];
-	LPCTSTR s;
-	LPTSTR d;
+	LPCWSTR s;
+	LPWSTR d;
 
 	for(s=ext+1,d=ext_buffer; (*d=tolower(*s)); s++)
 		d++;
@@ -3009,7 +3009,7 @@ static BOOL is_exe_file(LPCTSTR ext)
 	return FALSE;
 }
 
-static BOOL is_registered_type(LPCTSTR ext)
+static BOOL is_registered_type(LPCWSTR ext)
 {
 	/* check if there exists a classname for this file extension in the registry */
 	if (!RegQueryValueW(HKEY_CLASSES_ROOT, ext, NULL, NULL))
@@ -3018,9 +3018,9 @@ static BOOL is_registered_type(LPCTSTR ext)
 	return FALSE;
 }
 
-static enum FILE_TYPE get_file_type(LPCTSTR filename)
+static enum FILE_TYPE get_file_type(LPCWSTR filename)
 {
-	LPCTSTR ext = strrchrW(filename, '.');
+	LPCWSTR ext = strrchrW(filename, '.');
 	if (!ext)
 		ext = sEmpty;
 
@@ -3729,7 +3729,7 @@ static void create_drive_bar(void)
 	WCHAR b1[BUFFER_LEN];
 #endif
 	int btn = 1;
-	PTSTR p;
+	PWSTR p;
 
 	GetLogicalDriveStringsW(BUFFER_LEN, Globals.drives);
 
@@ -3805,7 +3805,7 @@ static void refresh_drives(void)
 }
 
 
-static BOOL launch_file(HWND hwnd, LPCTSTR cmd, UINT nCmdShow)
+static BOOL launch_file(HWND hwnd, LPCWSTR cmd, UINT nCmdShow)
 {
 	HINSTANCE hinst = ShellExecuteW(hwnd, NULL/*operation*/, cmd, NULL/*parameters*/, NULL/*dir*/, nCmdShow);
 
@@ -3977,7 +3977,7 @@ static void update_view_menu(ChildWnd* child)
 }
 
 
-static BOOL is_directory(LPCTSTR target)
+static BOOL is_directory(LPCWSTR target)
 {
 	/*TODO correctly handle UNIX paths */
 	DWORD target_attr = GetFileAttributesW(target);
@@ -3987,8 +3987,8 @@ static BOOL is_directory(LPCTSTR target)
 
 	return target_attr&FILE_ATTRIBUTE_DIRECTORY? TRUE: FALSE;
 }
-	
-static BOOL prompt_target(Pane* pane, LPTSTR source, LPTSTR target)
+
+static BOOL prompt_target(Pane* pane, LPWSTR source, LPWSTR target)
 {
 	WCHAR path[MAX_PATH];
 	int len;
@@ -4617,7 +4617,7 @@ static void InitInstance(HINSTANCE hinstance)
 }
 
 
-static BOOL show_frame(HWND hwndParent, int cmdshow, LPCTSTR path)
+static BOOL show_frame(HWND hwndParent, int cmdshow, LPCWSTR path)
 {
 	static const WCHAR sMDICLIENT[] = {'M','D','I','C','L','I','E','N','T','\0'};
 
@@ -4784,7 +4784,7 @@ static BOOL CALLBACK EnumWndProc(HWND hwnd, LPARAM lparam)
 }
 
 /* search for window of given class name to allow only one running instance */
-static int find_window_class(LPCTSTR classname)
+static int find_window_class(LPCWSTR classname)
 {
 	EnumWindows(EnumWndProc, (LPARAM)classname);
 
@@ -4796,10 +4796,10 @@ static int find_window_class(LPCTSTR classname)
 
 #endif
 
-static int winefile_main(HINSTANCE hinstance, int cmdshow, LPCTSTR path)
+static int winefile_main(HINSTANCE hinstance, int cmdshow, LPCWSTR path)
 {
 	MSG msg;
-  
+
 	InitInstance(hinstance);
 
 	if( !show_frame(0, cmdshow, path) )
