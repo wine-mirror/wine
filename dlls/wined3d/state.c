@@ -4144,11 +4144,11 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
     stateblock->wineD3DDevice->instancedDraw = FALSE;
 
     /* Blend Data ---------------------------------------------- */
-    e = &si->elements[WINED3D_FFP_BLENDWEIGHT];
-    if (e->data || e->buffer_object
-            || si->elements[WINED3D_FFP_BLENDINDICES].data
-            || si->elements[WINED3D_FFP_BLENDINDICES].buffer_object)
+    if ((si->use_map & (1 << WINED3D_FFP_BLENDWEIGHT))
+            || si->use_map & (1 << WINED3D_FFP_BLENDINDICES))
     {
+        e = &si->elements[WINED3D_FFP_BLENDWEIGHT];
+
         if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
             TRACE("Blend %d %p %d\n", e->format_desc->component_count,
                     e->data + stateblock->loadBaseVertexIndex * e->stride, e->stride + offset[e->stream_idx]);
@@ -4175,8 +4175,7 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
 
             checkGLcall("glWeightPointerARB");
 
-            if (si->elements[WINED3D_FFP_BLENDINDICES].data
-                    || (si->elements[WINED3D_FFP_BLENDINDICES].buffer_object))
+            if (si->use_map & (1 << WINED3D_FFP_BLENDINDICES))
             {
                 static BOOL warned;
                 if (!warned)
@@ -4200,8 +4199,7 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
     }
 
     /* Point Size ----------------------------------------------*/
-    e = &si->elements[WINED3D_FFP_PSIZE];
-    if (e->data || e->buffer_object)
+    if (si->use_map & (1 << WINED3D_FFP_PSIZE))
     {
         /* no such functionality in the fixed function GL pipeline */
         TRACE("Cannot change ptSize here in openGl\n");
@@ -4209,11 +4207,11 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
     }
 
     /* Vertex Pointers -----------------------------------------*/
-    e = &si->elements[WINED3D_FFP_POSITION];
-    if (e->data || e->buffer_object)
+    if (si->use_map & (1 << WINED3D_FFP_POSITION))
     {
         VTRACE(("glVertexPointer(%d, GL_FLOAT, %d, %p)\n", e->stride, e->size, e->data));
 
+        e = &si->elements[WINED3D_FFP_POSITION];
         if (curVBO != e->buffer_object)
         {
             GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, e->buffer_object));
@@ -4243,10 +4241,11 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
     }
 
     /* Normals -------------------------------------------------*/
-    e = &si->elements[WINED3D_FFP_NORMAL];
-    if (e->data || e->buffer_object)
+    if (si->use_map & (1 << WINED3D_FFP_NORMAL))
     {
         VTRACE(("glNormalPointer(GL_FLOAT, %d, %p)\n", e->stride, e->data));
+
+        e = &si->elements[WINED3D_FFP_NORMAL];
         if (curVBO != e->buffer_object)
         {
             GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, e->buffer_object));
@@ -4273,11 +4272,11 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
     /* NOTE: Unless we write a vertex shader to swizzle the colour*/
     /* , or the user doesn't care and wants the speed advantage   */
 
-    e = &si->elements[WINED3D_FFP_DIFFUSE];
-    if (e->data || e->buffer_object)
+    if (si->use_map & (1 << WINED3D_FFP_DIFFUSE))
     {
         VTRACE(("glColorPointer(4, GL_UNSIGNED_BYTE, %d, %p)\n", e->stride, e->data));
 
+        e = &si->elements[WINED3D_FFP_DIFFUSE];
         if (curVBO != e->buffer_object)
         {
             GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, e->buffer_object));
@@ -4297,12 +4296,12 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
     }
 
     /* Specular Colour ------------------------------------------*/
-    e = &si->elements[WINED3D_FFP_SPECULAR];
-    if (e->data || e->buffer_object)
+    if (si->use_map & (1 << WINED3D_FFP_SPECULAR))
     {
         TRACE("setting specular colour\n");
         VTRACE(("glSecondaryColorPointer(4, GL_UNSIGNED_BYTE, %d, %p)\n", e->stride, e->data));
 
+        e = &si->elements[WINED3D_FFP_SPECULAR];
         if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
             GLenum type = e->format_desc->gl_vtx_type;
             GLint format = e->format_desc->gl_vtx_format;
