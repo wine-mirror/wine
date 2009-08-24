@@ -1588,14 +1588,14 @@ static void resize_frame_rect(HWND hwnd, PRECT prect)
 	RECT rt;
 
 	if (IsWindowVisible(Globals.htoolbar)) {
-		SendMessage(Globals.htoolbar, WM_SIZE, 0, 0);
+		SendMessageW(Globals.htoolbar, WM_SIZE, 0, 0);
 		GetClientRect(Globals.htoolbar, &rt);
 		prect->top = rt.bottom+3;
 		prect->bottom -= rt.bottom+3;
 	}
 
 	if (IsWindowVisible(Globals.hdrivebar)) {
-		SendMessage(Globals.hdrivebar, WM_SIZE, 0, 0);
+		SendMessageW(Globals.hdrivebar, WM_SIZE, 0, 0);
 		GetClientRect(Globals.hdrivebar, &rt);
 		new_top = --prect->top + rt.bottom+3;
 		MoveWindow(Globals.hdrivebar, 0, prect->top, rt.right, new_top, TRUE);
@@ -1606,8 +1606,8 @@ static void resize_frame_rect(HWND hwnd, PRECT prect)
 	if (IsWindowVisible(Globals.hstatusbar)) {
 		int parts[] = {300, 500};
 
-		SendMessage(Globals.hstatusbar, WM_SIZE, 0, 0);
-		SendMessage(Globals.hstatusbar, SB_SETPARTS, 2, (LPARAM)&parts);
+		SendMessageW(Globals.hstatusbar, WM_SIZE, 0, 0);
+		SendMessageW(Globals.hstatusbar, SB_SETPARTS, 2, (LPARAM)&parts);
 		GetClientRect(Globals.hstatusbar, &rt);
 		prect->bottom -= rt.bottom;
 	}
@@ -1671,7 +1671,7 @@ static HWND create_child_window(ChildWnd* child)
 	hcbthook = SetWindowsHookEx(WH_CBT, CBTProc, 0, GetCurrentThreadId());
 
 	newchild = child;
-	child->hwnd = (HWND) SendMessage(Globals.hmdiclient, WM_MDICREATE, 0, (LPARAM)&mcs);
+	child->hwnd = (HWND)SendMessageW(Globals.hmdiclient, WM_MDICREATE, 0, (LPARAM)&mcs);
 	if (!child->hwnd) {
 		UnhookWindowsHookEx(hcbthook);
 		return 0;
@@ -1679,11 +1679,11 @@ static HWND create_child_window(ChildWnd* child)
 
 	UnhookWindowsHookEx(hcbthook);
 
-	SendMessage(child->left.hwnd, LB_SETITEMHEIGHT, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
-	SendMessage(child->right.hwnd, LB_SETITEMHEIGHT, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
+	SendMessageW(child->left.hwnd, LB_SETITEMHEIGHT, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
+	SendMessageW(child->right.hwnd, LB_SETITEMHEIGHT, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
 
-	idx = SendMessage(child->left.hwnd, LB_FINDSTRING, 0, (LPARAM)child->left.cur);
-	SendMessage(child->left.hwnd, LB_SETCURSEL, idx, 0);
+	idx = SendMessageW(child->left.hwnd, LB_FINDSTRING, 0, (LPARAM)child->left.cur);
+	SendMessageW(child->left.hwnd, LB_SETCURSEL, idx, 0);
 
 	return child->hwnd;
 }
@@ -1834,10 +1834,10 @@ static LPCSTR InfoStrings[] = {
 
 static void PropDlg_DisplayValue(HWND hlbox, HWND hedit)
 {
-	int idx = SendMessage(hlbox, LB_GETCURSEL, 0, 0);
+	int idx = SendMessageW(hlbox, LB_GETCURSEL, 0, 0);
 
 	if (idx != LB_ERR) {
-		LPCTSTR pValue = (LPCTSTR) SendMessage(hlbox, LB_GETITEMDATA, idx, 0);
+		LPCWSTR pValue = (LPCWSTR)SendMessageW(hlbox, LB_GETITEMDATA, idx, 0);
 
 		if (pValue)
 			SetWindowText(hedit, pValue);
@@ -1895,13 +1895,13 @@ static void CheckForFileInfo(struct PropertiesDialog* dlg, HWND hwnd, LPCTSTR st
 
 						/* Retrieve file description for language and code page */
 						if (VerQueryValue(dlg->pVersionData, subblock, (PVOID)&pTxt, &nValLen)) {
-							int idx = SendMessage(hlbox, LB_ADDSTRING, 0L, (LPARAM)infoStr);
-							SendMessage(hlbox, LB_SETITEMDATA, idx, (LPARAM) pTxt);
+							int idx = SendMessageW(hlbox, LB_ADDSTRING, 0L, (LPARAM)infoStr);
+							SendMessageW(hlbox, LB_SETITEMDATA, idx, (LPARAM)pTxt);
 						}
 					}
 				}
 
-				SendMessage(hlbox, LB_SETCURSEL, 0, 0);
+				SendMessageW(hlbox, LB_SETCURSEL, 0, 0);
 
 				PropDlg_DisplayValue(hlbox, GetDlgItem(hwnd,IDC_LIST_PROP_VERSION_VALUES));
 			}
@@ -2111,7 +2111,7 @@ static BOOL activate_drive_window(LPCTSTR path)
 			_wsplitpath(child->root.path, drv2, 0, 0, 0);
 
 			if (!lstrcmpi(drv2, drv1)) {
-				SendMessage(Globals.hmdiclient, WM_MDIACTIVATE, (WPARAM)child_wnd, 0);
+				SendMessageW(Globals.hmdiclient, WM_MDIACTIVATE, (WPARAM)child_wnd, 0);
 
 				if (IsIconic(child_wnd))
 					ShowWindow(child_wnd, SW_SHOWNORMAL);
@@ -2134,7 +2134,7 @@ static BOOL activate_fs_window(LPCTSTR filesys)
 
 		if (child) {
 			if (!lstrcmpi(child->root.fs, filesys)) {
-				SendMessage(Globals.hmdiclient, WM_MDIACTIVATE, (WPARAM)child_wnd, 0);
+				SendMessageW(Globals.hmdiclient, WM_MDIACTIVATE, (WPARAM)child_wnd, 0);
 
 				if (IsIconic(child_wnd))
 					ShowWindow(child_wnd, SW_SHOWNORMAL);
@@ -2172,17 +2172,17 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 			break;
 
 		case WM_INITMENUPOPUP: {
-			HWND hwndClient = (HWND) SendMessage(Globals.hmdiclient, WM_MDIGETACTIVE, 0, 0);
+			HWND hwndClient = (HWND)SendMessageW(Globals.hmdiclient, WM_MDIGETACTIVE, 0, 0);
 
-			if (!SendMessage(hwndClient, WM_INITMENUPOPUP, wparam, lparam))
+			if (!SendMessageW(hwndClient, WM_INITMENUPOPUP, wparam, lparam))
 				return 0;
 			break;}
 
 		case WM_COMMAND: {
 			UINT cmd = LOWORD(wparam);
-			HWND hwndClient = (HWND) SendMessage(Globals.hmdiclient, WM_MDIGETACTIVE, 0, 0);
+			HWND hwndClient = (HWND)SendMessageW(Globals.hmdiclient, WM_MDIGETACTIVE, 0, 0);
 
-			if (SendMessage(hwndClient, WM_DISPATCH_COMMAND, wparam, lparam))
+			if (SendMessageW(hwndClient, WM_DISPATCH_COMMAND, wparam, lparam))
 				break;
 
 			if (cmd>=ID_DRIVE_FIRST && cmd<=ID_DRIVE_FIRST+0xFF) {
@@ -2212,7 +2212,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					HeapFree(GetProcessHeap(), 0, child);
 			} else switch(cmd) {
 				case ID_FILE_EXIT:
-					SendMessage(hwnd, WM_CLOSE, 0, 0);
+					SendMessageW(hwnd, WM_CLOSE, 0, 0);
 					break;
 
 				case ID_WINDOW_NEW: {
@@ -2231,19 +2231,19 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					break;
 
 				case ID_WINDOW_CASCADE:
-					SendMessage(Globals.hmdiclient, WM_MDICASCADE, 0, 0);
+					SendMessageW(Globals.hmdiclient, WM_MDICASCADE, 0, 0);
 					break;
 
 				case ID_WINDOW_TILE_HORZ:
-					SendMessage(Globals.hmdiclient, WM_MDITILE, MDITILE_HORIZONTAL, 0);
+					SendMessageW(Globals.hmdiclient, WM_MDITILE, MDITILE_HORIZONTAL, 0);
 					break;
 
 				case ID_WINDOW_TILE_VERT:
-					SendMessage(Globals.hmdiclient, WM_MDITILE, MDITILE_VERTICAL, 0);
+					SendMessageW(Globals.hmdiclient, WM_MDITILE, MDITILE_VERTICAL, 0);
 					break;
 
 				case ID_WINDOW_ARRANGE:
-					SendMessage(Globals.hmdiclient, WM_MDIICONARRANGE, 0, 0);
+					SendMessageW(Globals.hmdiclient, WM_MDIICONARRANGE, 0, 0);
 					break;
 
 				case ID_SELECT_FONT:
@@ -2379,7 +2379,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 			break;	/* do not pass message to DefFrameProc */
 
 		case WM_DEVICECHANGE:
-			SendMessage(hwnd, WM_COMMAND, MAKELONG(ID_REFRESH,0), 0);
+			SendMessageW(hwnd, WM_COMMAND, MAKELONG(ID_REFRESH,0), 0);
 			break;
 
 #ifndef _NO_EXTENSIONS
@@ -2444,7 +2444,7 @@ static void resize_tree(ChildWnd* child, int cx, int cy)
 		hdl.prc   = &rt;
 		hdl.pwpos = &wp;
 
-		SendMessage(child->left.hwndHeader, HDM_LAYOUT, 0, (LPARAM)&hdl);
+		SendMessageW(child->left.hwndHeader, HDM_LAYOUT, 0, (LPARAM)&hdl);
 
 		DeferWindowPos(hdwp, child->left.hwndHeader, wp.hwndInsertAfter,
 						wp.x-1, wp.y, child->split_pos-SPLIT_WIDTH/2+1, wp.cy, wp.flags);
@@ -2472,7 +2472,7 @@ static HWND create_header(HWND parent, Pane* pane, UINT id)
 	if (!hwnd)
 		return 0;
 
-	SendMessage(hwnd, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), FALSE);
+	SendMessageW(hwnd, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), FALSE);
 
 	hdi.mask = HDI_TEXT|HDI_WIDTH|HDI_FORMAT;
 
@@ -2480,7 +2480,7 @@ static HWND create_header(HWND parent, Pane* pane, UINT id)
 		hdi.pszText = g_pos_names[idx];
 		hdi.fmt = HDF_STRING | g_pos_align[idx];
 		hdi.cxy = pane->widths[idx];
-		SendMessage(hwnd, HDM_INSERTITEM, idx, (LPARAM) &hdi);
+		SendMessageW(hwnd, HDM_INSERTITEMW, idx, (LPARAM)&hdi);
 	}
 
 	return hwnd;
@@ -2515,7 +2515,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 static BOOL calc_widths(Pane* pane, BOOL anyway)
 {
 	int col, x, cx, spc=3*Globals.spaceSize.cx;
-	int entries = SendMessage(pane->hwnd, LB_GETCOUNT, 0, 0);
+	int entries = SendMessageW(pane->hwnd, LB_GETCOUNT, 0, 0);
 	int orgWidths[COLUMNS];
 	int orgPositions[COLUMNS+1];
 	HFONT hfontOld;
@@ -2534,7 +2534,7 @@ static BOOL calc_widths(Pane* pane, BOOL anyway)
 	hfontOld = SelectObject(hdc, Globals.hfont);
 
 	for(cnt=0; cnt<entries; cnt++) {
-		Entry* entry = (Entry*) SendMessage(pane->hwnd, LB_GETITEMDATA, cnt, 0);
+		Entry* entry = (Entry*)SendMessageW(pane->hwnd, LB_GETITEMDATA, cnt, 0);
 
 		DRAWITEMSTRUCT dis;
 
@@ -2576,7 +2576,7 @@ static BOOL calc_widths(Pane* pane, BOOL anyway)
 
 	pane->positions[COLUMNS] = x;
 
-	SendMessage(pane->hwnd, LB_SETHORIZONTALEXTENT, x, 0);
+	SendMessageW(pane->hwnd, LB_SETHORIZONTALEXTENT, x, 0);
 
 	/* no change? */
 	if (!anyway && !memcmp(orgWidths, pane->widths, sizeof(orgWidths)))
@@ -2603,7 +2603,7 @@ static void calc_single_width(Pane* pane, int col)
 {
 	HFONT hfontOld;
 	int x, cx;
-	int entries = SendMessage(pane->hwnd, LB_GETCOUNT, 0, 0);
+	int entries = SendMessageW(pane->hwnd, LB_GETCOUNT, 0, 0);
 	int cnt;
 	HDC hdc;
 
@@ -2613,7 +2613,7 @@ static void calc_single_width(Pane* pane, int col)
 	hfontOld = SelectObject(hdc, Globals.hfont);
 
 	for(cnt=0; cnt<entries; cnt++) {
-		Entry* entry = (Entry*) SendMessage(pane->hwnd, LB_GETITEMDATA, cnt, 0);
+		Entry* entry = (Entry*)SendMessageW(pane->hwnd, LB_GETITEMDATA, cnt, 0);
 		DRAWITEMSTRUCT dis;
 
 		dis.CtlType		  = 0;
@@ -2653,7 +2653,7 @@ static void calc_single_width(Pane* pane, int col)
 		x += pane->widths[col];
 	}
 
-	SendMessage(pane->hwnd, LB_SETHORIZONTALEXTENT, x, 0);
+	SendMessageW(pane->hwnd, LB_SETHORIZONTALEXTENT, x, 0);
 }
 
 
@@ -2768,7 +2768,7 @@ static int insert_entries(Pane* pane, Entry* dir, LPCTSTR pattern, int filter_fl
 		if (idx != -1)
 			idx++;
 
-		SendMessage(pane->hwnd, LB_INSERTSTRING, idx, (LPARAM) entry);
+		SendMessageW(pane->hwnd, LB_INSERTSTRING, idx, (LPARAM)entry);
 
 		if (pane->treePane && entry->expanded)
 			idx = insert_entries(pane, entry->down, pattern, filter_flags, idx);
@@ -2811,7 +2811,7 @@ static void set_space_status(void)
 	} else
 		lstrcpy(buffer, sQMarks);
 
-	SendMessage(Globals.hstatusbar, SB_SETTEXT, 0, (LPARAM)buffer);
+	SendMessageW(Globals.hstatusbar, SB_SETTEXTW, 0, (LPARAM)buffer);
 }
 
 
@@ -2831,7 +2831,7 @@ static void create_tree_window(HWND parent, Pane* pane, UINT id, UINT id_header,
 	SetWindowLongPtr(pane->hwnd, GWLP_USERDATA, (LPARAM)pane);
 	g_orgTreeWndProc = (WNDPROC) SetWindowLongPtr(pane->hwnd, GWLP_WNDPROC, (LPARAM)TreeWndProc);
 
-	SendMessage(pane->hwnd, WM_SETFONT, (WPARAM)Globals.hfont, FALSE);
+	SendMessageW(pane->hwnd, WM_SETFONT, (WPARAM)Globals.hfont, FALSE);
 
 	/* insert entries into listbox */
 	if (entry)
@@ -3439,18 +3439,18 @@ static void set_header(Pane* pane)
 
 	for(; x+pane->widths[i]<scroll_pos && i<COLUMNS; i++) {
 		x += pane->widths[i];
-		SendMessage(pane->hwndHeader, HDM_SETITEM, i, (LPARAM) &item);
+		SendMessageW(pane->hwndHeader, HDM_SETITEMW, i, (LPARAM)&item);
 	}
 
 	if (i < COLUMNS) {
 		x += pane->widths[i];
 		item.cxy = x - scroll_pos;
-		SendMessage(pane->hwndHeader, HDM_SETITEM, i++, (LPARAM) &item);
+		SendMessageW(pane->hwndHeader, HDM_SETITEMW, i++, (LPARAM)&item);
 
 		for(; i<COLUMNS; i++) {
 			item.cxy = pane->widths[i];
 			x += pane->widths[i];
-			SendMessage(pane->hwndHeader, HDM_SETITEM, i, (LPARAM) &item);
+			SendMessageW(pane->hwndHeader, HDM_SETITEMW, i, (LPARAM)&item);
 		}
 	}
 }
@@ -3496,7 +3496,7 @@ static LRESULT pane_notify(Pane* pane, NMHDR* pnmh)
 				RedrawWindow(pane->hwnd, &rt_clip, 0, RDW_INVALIDATE|RDW_UPDATENOW);
 
 				if (pnmh->code == HDN_ENDTRACK) {
-					SendMessage(pane->hwnd, LB_SETHORIZONTALEXTENT, pane->positions[COLUMNS], 0);
+					SendMessageW(pane->hwnd, LB_SETHORIZONTALEXTENT, pane->positions[COLUMNS], 0);
 
 					if (GetScrollPos(pane->hwnd, SB_HORZ) != scroll_pos)
 						set_header(pane);
@@ -3514,7 +3514,7 @@ static LRESULT pane_notify(Pane* pane, NMHDR* pnmh)
 			item.mask = HDI_WIDTH;
 			item.cxy = pane->widths[phdn->iItem];
 
-			SendMessage(pane->hwndHeader, HDM_SETITEM, phdn->iItem, (LPARAM) &item);
+			SendMessageW(pane->hwndHeader, HDM_SETITEMW, phdn->iItem, (LPARAM)&item);
 			InvalidateRect(pane->hwnd, 0, TRUE);
 			break;}
 	}
@@ -3532,17 +3532,17 @@ static void scan_entry(ChildWnd* child, Entry* entry, int idx, HWND hwnd)
 
 	/* delete sub entries in left pane */
 	for(;;) {
-		LRESULT res = SendMessage(child->left.hwnd, LB_GETITEMDATA, idx+1, 0);
+		LRESULT res = SendMessageW(child->left.hwnd, LB_GETITEMDATA, idx+1, 0);
 		Entry* sub = (Entry*) res;
 
 		if (res==LB_ERR || !sub || sub->level<=entry->level)
 			break;
 
-		SendMessage(child->left.hwnd, LB_DELETESTRING, idx+1, 0);
+		SendMessageW(child->left.hwnd, LB_DELETESTRING, idx+1, 0);
 	}
 
 	/* empty right pane */
-	SendMessage(child->right.hwnd, LB_RESETCONTENT, 0, 0);
+	SendMessageW(child->right.hwnd, LB_RESETCONTENT, 0, 0);
 
 	/* release memory */
 	free_entries(entry);
@@ -3597,7 +3597,7 @@ static BOOL expand_entry(ChildWnd* child, Entry* dir)
 	if (!(p->data.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY))
 		return FALSE;
 
-	idx = SendMessage(child->left.hwnd, LB_FINDSTRING, 0, (LPARAM)dir);
+	idx = SendMessageW(child->left.hwnd, LB_FINDSTRING, 0, (LPARAM)dir);
 
 	dir->expanded = TRUE;
 
@@ -3620,19 +3620,19 @@ static BOOL expand_entry(ChildWnd* child, Entry* dir)
 
 static void collapse_entry(Pane* pane, Entry* dir)
 {
-	int idx = SendMessage(pane->hwnd, LB_FINDSTRING, 0, (LPARAM)dir);
+	int idx = SendMessageW(pane->hwnd, LB_FINDSTRING, 0, (LPARAM)dir);
 
 	ShowWindow(pane->hwnd, SW_HIDE);
 
 	/* hide sub entries */
 	for(;;) {
-		LRESULT res = SendMessage(pane->hwnd, LB_GETITEMDATA, idx+1, 0);
+		LRESULT res = SendMessageW(pane->hwnd, LB_GETITEMDATA, idx+1, 0);
 		Entry* sub = (Entry*) res;
 
 		if (res==LB_ERR || !sub || sub->level<=dir->level)
 			break;
 
-		SendMessage(pane->hwnd, LB_DELETESTRING, idx+1, 0);
+		SendMessageW(pane->hwnd, LB_DELETESTRING, idx+1, 0);
 	}
 
 	dir->expanded = FALSE;
@@ -3643,7 +3643,7 @@ static void collapse_entry(Pane* pane, Entry* dir)
 
 static void refresh_right_pane(ChildWnd* child)
 {
-	SendMessage(child->right.hwnd, LB_RESETCONTENT, 0, 0);
+	SendMessageW(child->right.hwnd, LB_RESETCONTENT, 0, 0);
 	insert_entries(&child->right, child->right.root, child->filter_pattern, child->filter_flags, -1);
 	calc_widths(&child->right, FALSE);
 
@@ -3717,8 +3717,8 @@ static void refresh_child(ChildWnd* child)
 
 	set_curdir(child, entry, 0, child->hwnd);
 
-	idx = SendMessage(child->left.hwnd, LB_FINDSTRING, 0, (LPARAM)child->left.cur);
-	SendMessage(child->left.hwnd, LB_SETCURSEL, idx, 0);
+	idx = SendMessageW(child->left.hwnd, LB_FINDSTRING, 0, (LPARAM)child->left.cur);
+	SendMessageW(child->left.hwnd, LB_SETCURSEL, idx, 0);
 }
 
 
@@ -3743,25 +3743,25 @@ static void create_drive_bar(void)
 	b1[0] = '/';
 	b1[1] = '\0';
 	b1[2] = '\0';
-	SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)b1);
+	SendMessageW(Globals.hdrivebar, TB_ADDSTRINGW, 0, (LPARAM)b1);
 
 	drivebarBtn.idCommand = ID_DRIVE_UNIX_FS;
-	SendMessage(Globals.hdrivebar, TB_INSERTBUTTON, btn++, (LPARAM)&drivebarBtn);
+	SendMessageW(Globals.hdrivebar, TB_INSERTBUTTONW, btn++, (LPARAM)&drivebarBtn);
 	drivebarBtn.iString++;
 #endif
 #ifdef _SHELL_FOLDERS
 	/* insert shell namespace button */
 	load_string(b1, sizeof(b1)/sizeof(b1[0]), IDS_SHELL);
 	b1[lstrlen(b1)+1] = '\0';
-	SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)b1);
+	SendMessageW(Globals.hdrivebar, TB_ADDSTRINGW, 0, (LPARAM)b1);
 
 	drivebarBtn.idCommand = ID_DRIVE_SHELL_NS;
-	SendMessage(Globals.hdrivebar, TB_INSERTBUTTON, btn++, (LPARAM)&drivebarBtn);
+	SendMessageW(Globals.hdrivebar, TB_INSERTBUTTONW, btn++, (LPARAM)&drivebarBtn);
 	drivebarBtn.iString++;
 #endif
 
 	/* register windows drive root strings */
-	SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)Globals.drives);
+	SendMessageW(Globals.hdrivebar, TB_ADDSTRINGW, 0, (LPARAM)Globals.drives);
 #endif
 
 	drivebarBtn.idCommand = ID_DRIVE_FIRST;
@@ -3770,7 +3770,7 @@ static void create_drive_bar(void)
 #ifdef _NO_EXTENSIONS
 		/* insert drive letter */
 		TCHAR b[3] = {tolower(*p)};
-		SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)b);
+		SendMessageW(Globals.hdrivebar, TB_ADDSTRINGW, 0, (LPARAM)b);
 #endif
 		switch(GetDriveType(p)) {
 			case DRIVE_REMOVABLE:	drivebarBtn.iBitmap = 1;	break;
@@ -3780,7 +3780,7 @@ static void create_drive_bar(void)
 			default:/*DRIVE_FIXED*/	drivebarBtn.iBitmap = 2;
 		}
 
-		SendMessage(Globals.hdrivebar, TB_INSERTBUTTON, btn++, (LPARAM)&drivebarBtn);
+		SendMessageW(Globals.hdrivebar, TB_INSERTBUTTONW, btn++, (LPARAM)&drivebarBtn);
 		drivebarBtn.idCommand++;
 		drivebarBtn.iString++;
 
@@ -3801,7 +3801,7 @@ static void refresh_drives(void)
 
 	/* update window layout */
 	GetClientRect(Globals.hMainWnd, &rect);
-	SendMessage(Globals.hMainWnd, WM_SIZE, 0, MAKELONG(rect.right, rect.bottom));
+	SendMessageW(Globals.hMainWnd, WM_SIZE, 0, MAKELONG(rect.right, rect.bottom));
 }
 
 
@@ -3869,7 +3869,7 @@ static void activate_entry(ChildWnd* child, Pane* pane, HWND hwnd)
 
 		if (!scanned_old)
 		{
-			int idx = SendMessage(child->left.hwnd, LB_GETCURSEL, 0, 0);
+			int idx = SendMessageW(child->left.hwnd, LB_GETCURSEL, 0, 0);
 			scan_entry(child, entry, idx, hwnd);
 		}
 
@@ -3888,9 +3888,9 @@ static void activate_entry(ChildWnd* child, Pane* pane, HWND hwnd)
 			expand_entry(child, child->left.cur);
 
 			if (!pane->treePane) focus_entry: {
-				int idxstart = SendMessage(child->left.hwnd, LB_GETCURSEL, 0, 0);
-				int idx = SendMessage(child->left.hwnd, LB_FINDSTRING, idxstart, (LPARAM)entry);
-				SendMessage(child->left.hwnd, LB_SETCURSEL, idx, 0);
+				int idxstart = SendMessageW(child->left.hwnd, LB_GETCURSEL, 0, 0);
+				int idx = SendMessageW(child->left.hwnd, LB_FINDSTRING, idxstart, (LPARAM)entry);
+				SendMessageW(child->left.hwnd, LB_SETCURSEL, idx, 0);
 				set_curdir(child, entry, idx, hwnd);
 			}
 		}
@@ -4397,8 +4397,8 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 			switch(HIWORD(wparam)) {
 				case LBN_SELCHANGE: {
-					int idx = SendMessage(pane->hwnd, LB_GETCURSEL, 0, 0);
-					Entry* entry = (Entry*) SendMessage(pane->hwnd, LB_GETITEMDATA, idx, 0);
+					int idx = SendMessageW(pane->hwnd, LB_GETCURSEL, 0, 0);
+					Entry* entry = (Entry*)SendMessageW(pane->hwnd, LB_GETITEMDATA, idx, 0);
 
 					if (pane == &child->left)
 						set_curdir(child, entry, idx, hwnd);
@@ -4429,15 +4429,15 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 			pt_clnt.x = pt.x = (short)LOWORD(lparam);
 			pt_clnt.y = pt.y = (short)HIWORD(lparam);
 			ScreenToClient(hpanel, &pt_clnt);
-			SendMessage(hpanel, WM_LBUTTONDOWN, 0, MAKELONG(pt_clnt.x, pt_clnt.y));
-			SendMessage(hpanel, WM_LBUTTONUP, 0, MAKELONG(pt_clnt.x, pt_clnt.y));
+			SendMessageW(hpanel, WM_LBUTTONDOWN, 0, MAKELONG(pt_clnt.x, pt_clnt.y));
+			SendMessageW(hpanel, WM_LBUTTONUP, 0, MAKELONG(pt_clnt.x, pt_clnt.y));
 
 			 /* now create the popup menu using shell namespace and IContextMenu */
 			pane = GetFocus()==child->left.hwnd? &child->left: &child->right;
-			idx = SendMessage(pane->hwnd, LB_GETCURSEL, 0, 0);
+			idx = SendMessageW(pane->hwnd, LB_GETCURSEL, 0, 0);
 
 			if (idx != -1) {
-				Entry* entry = (Entry*) SendMessage(pane->hwnd, LB_GETITEMDATA, idx, 0);
+				Entry* entry = (Entry*)SendMessageW(pane->hwnd, LB_GETITEMDATA, idx, 0);
 
 				LPITEMIDLIST pidl_abs = get_to_absolute_pidl(entry, hwnd);
 
@@ -4513,7 +4513,7 @@ static LRESULT CALLBACK TreeWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM 
 
 		case WM_SETFOCUS:
 			child->focus_pane = pane==&child->right? 1: 0;
-			SendMessage(hwnd, LB_SETSEL, TRUE, 1);
+			SendMessageW(hwnd, LB_SETSEL, TRUE, 1);
 			/*TODO: check menu items */
 			break;
 
@@ -4736,17 +4736,17 @@ static BOOL show_frame(HWND hwndParent, int cmdshow, LPCTSTR path)
 		_wsplitpath(path, drv, dir, name, ext);
 		if (name[0])
 		{
-			count = SendMessage(child->right.hwnd, LB_GETCOUNT, 0, 0);
+			count = SendMessageW(child->right.hwnd, LB_GETCOUNT, 0, 0);
 			lstrcpy(fullname,name);
 			lstrcat(fullname,ext);
 
 			for (index = 0; index < count; index ++)
 			{
-				Entry* entry = (Entry*) SendMessage(child->right.hwnd, LB_GETITEMDATA, index, 0);
+				Entry* entry = (Entry*)SendMessageW(child->right.hwnd, LB_GETITEMDATA, index, 0);
 				if (lstrcmp(entry->data.cFileName,fullname)==0 ||
 						lstrcmp(entry->data.cAlternateFileName,fullname)==0)
 				{
-					SendMessage(child->right.hwnd, LB_SETCURSEL, index, 0);
+					SendMessageW(child->right.hwnd, LB_SETCURSEL, index, 0);
 					SetFocus(child->right.hwnd);
 					break;
 				}
