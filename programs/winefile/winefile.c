@@ -213,7 +213,7 @@ static void format_longlong(LPWSTR ret, ULONGLONG val)
 /* load resource string */
 static LPTSTR load_string(LPTSTR buffer, DWORD size, UINT id)
 {
-	LoadString(Globals.hInstance, id, buffer, size);
+	LoadStringW(Globals.hInstance, id, buffer, size);
 	return buffer;
 }
 
@@ -473,7 +473,7 @@ static Entry* read_tree_win(Root* root, LPCTSTR path, SORT_ORDER sortOrder, HWND
 	LPCTSTR s = path;
 	PTSTR d = buffer;
 
-	HCURSOR old_cursor = SetCursor(LoadCursor(0, IDC_WAIT));
+	HCURSOR old_cursor = SetCursor(LoadCursorW(0, (LPCWSTR)IDC_WAIT));
 
 #ifndef _NO_EXTENSIONS
 	entry->etype = ET_WINDOWS;
@@ -634,7 +634,7 @@ static Entry* read_tree_unix(Root* root, LPCTSTR path, SORT_ORDER sortOrder, HWN
 	LPCTSTR s = path;
 	PTSTR d = buffer;
 
-	HCURSOR old_cursor = SetCursor(LoadCursor(0, IDC_WAIT));
+	HCURSOR old_cursor = SetCursor(LoadCursorW(0, (LPCWSTR)IDC_WAIT));
 
 	entry->etype = ET_UNIX;
 
@@ -835,7 +835,7 @@ static Entry* read_tree_shell(Root* root, LPITEMIDLIST pidl, SORT_ORDER sortOrde
 	IShellFolder* child = NULL;
 	HRESULT hr;
 
-	HCURSOR old_cursor = SetCursor(LoadCursor(0, IDC_WAIT));
+	HCURSOR old_cursor = SetCursor(LoadCursorW(0, (LPCWSTR)IDC_WAIT));
 
 #ifndef _NO_EXTENSIONS
 	entry->etype = ET_SHELL;
@@ -2359,7 +2359,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 				case ID_ABOUT:
                                         ShellAbout(hwnd, RS(b1,IDS_WINEFILE), NULL,
-                                                   LoadImage( Globals.hInstance, MAKEINTRESOURCE(IDI_WINEFILE),
+                                                   LoadImageW( Globals.hInstance, MAKEINTRESOURCEW(IDI_WINEFILE),
                                                               IMAGE_ICON, 48, 48, LR_SHARED ));
 					break;
 
@@ -3528,7 +3528,7 @@ static LRESULT pane_notify(Pane* pane, NMHDR* pnmh)
 static void scan_entry(ChildWnd* child, Entry* entry, int idx, HWND hwnd)
 {
 	TCHAR path[MAX_PATH];
-	HCURSOR old_cursor = SetCursor(LoadCursor(0, IDC_WAIT));
+	HCURSOR old_cursor = SetCursor(LoadCursorW(0, (LPCWSTR)IDC_WAIT));
 
 	/* delete sub entries in left pane */
 	for(;;) {
@@ -4169,7 +4169,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 				ScreenToClient(hwnd, &pt);
 
 				if (pt.x>=child->split_pos-SPLIT_WIDTH/2 && pt.x<child->split_pos+SPLIT_WIDTH/2+1) {
-					SetCursor(LoadCursor(0, IDC_SIZEWE));
+					SetCursor(LoadCursorW(0, (LPCWSTR)IDC_SIZEWE));
 					return TRUE;
 				}
 			}
@@ -4226,7 +4226,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					resize_tree(child, rt.right, rt.bottom);
 					last_split = -1;
 					ReleaseCapture();
-					SetCursor(LoadCursor(0, IDC_ARROW));
+					SetCursor(LoadCursorW(0, (LPCWSTR)IDC_ARROW));
 				}
 			break;
 
@@ -4557,17 +4557,12 @@ static void InitInstance(HINSTANCE hinstance)
 	wcFrame.cbClsExtra    = 0;
 	wcFrame.cbWndExtra    = 0;
 	wcFrame.hInstance     = hinstance;
-	wcFrame.hIcon         = LoadIcon(hinstance, MAKEINTRESOURCE(IDI_WINEFILE));
-	wcFrame.hCursor       = LoadCursor(0, IDC_ARROW);
+	wcFrame.hIcon         = LoadIconW(hinstance, MAKEINTRESOURCEW(IDI_WINEFILE));
+	wcFrame.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
 	wcFrame.hbrBackground = 0;
 	wcFrame.lpszMenuName  = 0;
 	wcFrame.lpszClassName = sWINEFILEFRAME;
-	wcFrame.hIconSm       = (HICON)LoadImage(hinstance,
-											 MAKEINTRESOURCE(IDI_WINEFILE),
-											 IMAGE_ICON,
-											 GetSystemMetrics(SM_CXSMICON),
-											 GetSystemMetrics(SM_CYSMICON),
-											 LR_SHARED);
+	wcFrame.hIconSm       = LoadImageW(hinstance, MAKEINTRESOURCEW(IDI_WINEFILE), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
 
 	Globals.hframeClass = RegisterClassEx(&wcFrame);
 
@@ -4580,7 +4575,7 @@ static void InitInstance(HINSTANCE hinstance)
 	wcChild.cbWndExtra    = 0;
 	wcChild.hInstance     = hinstance;
 	wcChild.hIcon         = 0;
-	wcChild.hCursor       = LoadCursor(0, IDC_ARROW);
+	wcChild.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
 	wcChild.hbrBackground = 0;
 	wcChild.lpszMenuName  = 0;
 	wcChild.lpszClassName = sWINEFILETREE;
@@ -4588,7 +4583,7 @@ static void InitInstance(HINSTANCE hinstance)
 	hChildClass = RegisterClass(&wcChild);
 
 
-	Globals.haccel = LoadAccelerators(hinstance, MAKEINTRESOURCE(IDA_WINEFILE));
+	Globals.haccel = LoadAcceleratorsW(hinstance, MAKEINTRESOURCEW(IDA_WINEFILE));
 
 	Globals.hfont = CreateFont(-MulDiv(8,GetDeviceCaps(hdc,LOGPIXELSY),72), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, sFont);
 
@@ -4637,7 +4632,7 @@ static BOOL show_frame(HWND hwndParent, int cmdshow, LPCTSTR path)
 		return TRUE;
 
 	opts = load_registry_settings();
-	hMenuFrame = LoadMenu(Globals.hInstance, MAKEINTRESOURCE(IDM_WINEFILE));
+	hMenuFrame = LoadMenuW(Globals.hInstance, MAKEINTRESOURCEW(IDM_WINEFILE));
 	hMenuWindow = GetSubMenu(hMenuFrame, GetMenuItemCount(hMenuFrame)-2);
 
 	Globals.hMenuFrame = hMenuFrame;
@@ -4719,7 +4714,7 @@ static BOOL show_frame(HWND hwndParent, int cmdshow, LPCTSTR path)
 
 	SetWindowPlacement(child->hwnd, &child->pos);
 
-	Globals.himl = ImageList_LoadBitmap(Globals.hInstance, MAKEINTRESOURCE(IDB_IMAGES), 16, 0, RGB(0,255,0));
+	Globals.himl = ImageList_LoadImageW(Globals.hInstance, MAKEINTRESOURCEW(IDB_IMAGES), 16, 0, RGB(0,255,0), IMAGE_BITMAP, 0);
 
 	Globals.prescan_node = FALSE;
 
