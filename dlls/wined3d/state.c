@@ -3140,14 +3140,14 @@ static void loadTexCoords(const struct wined3d_context *context, IWineD3DStateBl
 
     for (textureNo = 0; textureNo < GL_LIMITS(texture_stages); ++textureNo) {
         int coordIdx = stateblock->textureState[textureNo][WINED3DTSS_TEXCOORDINDEX];
-        const struct wined3d_stream_info_element *e;
 
         mapped_stage = stateblock->wineD3DDevice->texUnitMap[textureNo];
         if (mapped_stage == WINED3D_UNMAPPED_STAGE) continue;
 
-        e = &si->elements[WINED3D_FFP_TEXCOORD0 + coordIdx];
-        if (coordIdx < MAX_TEXTURES && (e->data || e->buffer_object))
+        if (coordIdx < MAX_TEXTURES && (si->use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coordIdx))))
         {
+            const struct wined3d_stream_info_element *e = &si->elements[WINED3D_FFP_TEXCOORD0 + coordIdx];
+
             TRACE("Setting up texture %u, idx %d, cordindx %u, data %p\n",
                     textureNo, mapped_stage, coordIdx, e->data);
 
