@@ -91,6 +91,7 @@ static void *load_libjpeg(void)
 
 typedef struct {
     const IWICBitmapDecoderVtbl *lpVtbl;
+    const IWICBitmapFrameDecodeVtbl *lpFrameVtbl;
     LONG ref;
     BOOL initialized;
     BOOL cinfo_initialized;
@@ -104,6 +105,11 @@ typedef struct {
 static inline JpegDecoder *decoder_from_decompress(j_decompress_ptr decompress)
 {
     return CONTAINING_RECORD(decompress, JpegDecoder, cinfo);
+}
+
+static inline JpegDecoder *decoder_from_frame(IWICBitmapFrameDecode *iface)
+{
+    return CONTAINING_RECORD(iface, JpegDecoder, lpFrameVtbl);
 }
 
 static HRESULT WINAPI JpegDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID iid,
@@ -318,8 +324,17 @@ static HRESULT WINAPI JpegDecoder_GetFrameCount(IWICBitmapDecoder *iface,
 static HRESULT WINAPI JpegDecoder_GetFrame(IWICBitmapDecoder *iface,
     UINT index, IWICBitmapFrameDecode **ppIBitmapFrame)
 {
-    FIXME("(%p,%u,%p): stub\n", iface, index, ppIBitmapFrame);
-    return E_NOTIMPL;
+    JpegDecoder *This = (JpegDecoder*)iface;
+    TRACE("(%p,%u,%p)\n", iface, index, ppIBitmapFrame);
+
+    if (!This->initialized) return WINCODEC_ERR_NOTINITIALIZED;
+
+    if (index != 0) return E_INVALIDARG;
+
+    IWICBitmapDecoder_AddRef(iface);
+    *ppIBitmapFrame = (IWICBitmapFrameDecode*)&This->lpFrameVtbl;
+
+    return S_OK;
 }
 
 static const IWICBitmapDecoderVtbl JpegDecoder_Vtbl = {
@@ -337,6 +352,111 @@ static const IWICBitmapDecoderVtbl JpegDecoder_Vtbl = {
     JpegDecoder_GetThumbnail,
     JpegDecoder_GetFrameCount,
     JpegDecoder_GetFrame
+};
+
+static HRESULT WINAPI JpegDecoder_Frame_QueryInterface(IWICBitmapFrameDecode *iface, REFIID iid,
+    void **ppv)
+{
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IWICBitmapSource, iid) ||
+        IsEqualIID(&IID_IWICBitmapFrameDecode, iid))
+    {
+        *ppv = iface;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI JpegDecoder_Frame_AddRef(IWICBitmapFrameDecode *iface)
+{
+    JpegDecoder *This = decoder_from_frame(iface);
+    return IUnknown_AddRef((IUnknown*)This);
+}
+
+static ULONG WINAPI JpegDecoder_Frame_Release(IWICBitmapFrameDecode *iface)
+{
+    JpegDecoder *This = decoder_from_frame(iface);
+    return IUnknown_Release((IUnknown*)This);
+}
+
+static HRESULT WINAPI JpegDecoder_Frame_GetSize(IWICBitmapFrameDecode *iface,
+    UINT *puiWidth, UINT *puiHeight)
+{
+    FIXME("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI JpegDecoder_Frame_GetPixelFormat(IWICBitmapFrameDecode *iface,
+    WICPixelFormatGUID *pPixelFormat)
+{
+    FIXME("(%p,%p)\n", iface, pPixelFormat);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI JpegDecoder_Frame_GetResolution(IWICBitmapFrameDecode *iface,
+    double *pDpiX, double *pDpiY)
+{
+    FIXME("(%p,%p,%p): stub\n", iface, pDpiX, pDpiY);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI JpegDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
+    IWICPalette *pIPalette)
+{
+    FIXME("(%p,%p): stub\n", iface, pIPalette);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI JpegDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
+    const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
+{
+    FIXME("(%p,%p,%u,%u,%p): stub\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI JpegDecoder_Frame_GetMetadataQueryReader(IWICBitmapFrameDecode *iface,
+    IWICMetadataQueryReader **ppIMetadataQueryReader)
+{
+    FIXME("(%p,%p): stub\n", iface, ppIMetadataQueryReader);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+}
+
+static HRESULT WINAPI JpegDecoder_Frame_GetColorContexts(IWICBitmapFrameDecode *iface,
+    UINT cCount, IWICColorContext **ppIColorContexts, UINT *pcActualCount)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, cCount, ppIColorContexts, pcActualCount);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+}
+
+static HRESULT WINAPI JpegDecoder_Frame_GetThumbnail(IWICBitmapFrameDecode *iface,
+    IWICBitmapSource **ppIThumbnail)
+{
+    FIXME("(%p,%p): stub\n", iface, ppIThumbnail);
+    return WINCODEC_ERR_CODECNOTHUMBNAIL;
+}
+
+static const IWICBitmapFrameDecodeVtbl JpegDecoder_Frame_Vtbl = {
+    JpegDecoder_Frame_QueryInterface,
+    JpegDecoder_Frame_AddRef,
+    JpegDecoder_Frame_Release,
+    JpegDecoder_Frame_GetSize,
+    JpegDecoder_Frame_GetPixelFormat,
+    JpegDecoder_Frame_GetResolution,
+    JpegDecoder_Frame_CopyPalette,
+    JpegDecoder_Frame_CopyPixels,
+    JpegDecoder_Frame_GetMetadataQueryReader,
+    JpegDecoder_Frame_GetColorContexts,
+    JpegDecoder_Frame_GetThumbnail
 };
 
 HRESULT JpegDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
@@ -360,6 +480,7 @@ HRESULT JpegDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     if (!This) return E_OUTOFMEMORY;
 
     This->lpVtbl = &JpegDecoder_Vtbl;
+    This->lpFrameVtbl = &JpegDecoder_Frame_Vtbl;
     This->ref = 1;
     This->initialized = FALSE;
     This->cinfo_initialized = FALSE;
