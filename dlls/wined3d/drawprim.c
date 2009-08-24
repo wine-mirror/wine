@@ -451,8 +451,9 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream
             }
         }
 
-        for(i = MAX_ATTRIBS - 1; i >= 0; i--) {
-            if(!si->elements[i].data) continue;
+        for (i = MAX_ATTRIBS - 1; i >= 0; i--)
+        {
+            if (!(si->use_map & (1 << i))) continue;
 
             ptr = si->elements[i].data +
                   si->elements[i].stride * SkipnStrides +
