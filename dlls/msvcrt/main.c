@@ -126,9 +126,3 @@ void CDECL MSVCRT_I10_OUTPUT(void)
   /* also known as 80 bit floating point (long double */
   /* for some compilers, not MSVC) */
 }
-
-/*********************************************************************
- *		_adjust_fdiv (MSVCRT.@)
- * Used by the MSVC compiler to work around the Pentium FDIV bug.
- */
-int MSVCRT__adjust_fdiv = 0;

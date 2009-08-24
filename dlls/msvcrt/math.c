@@ -1030,6 +1030,14 @@ MSVCRT_ldiv_t CDECL MSVCRT_ldiv(MSVCRT_long num, MSVCRT_long denom)
 }
 #endif /* ifdef __i386__ */
 
+#ifdef __i386__
+
+/*********************************************************************
+ *		_adjust_fdiv (MSVCRT.@)
+ * Used by the MSVC compiler to work around the Pentium FDIV bug.
+ */
+int MSVCRT__adjust_fdiv = 0;
+
 /***********************************************************************
  *		_adj_fdiv_m16i (MSVCRT.@)
  *
@@ -1252,3 +1260,5 @@ void _safe_fprem1(void)
 {
   TRACE("(): stub\n");
 }
+
+#endif  /* __i386__ */
