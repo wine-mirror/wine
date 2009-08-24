@@ -147,13 +147,8 @@ extern WINEFILE_GLOBALS Globals;
 
 #ifdef __WINE__
 
-#ifdef UNICODE
 extern void _wsplitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext);
 #define _tsplitpath _wsplitpath
-#else
-extern void _splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ext);
-#define _tsplitpath _splitpath
-#endif
 
 #else
 

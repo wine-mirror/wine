@@ -20,7 +20,6 @@
 
 
 #ifdef __WINE__
-#ifdef UNICODE
 
 void _wsplitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext)
 {
@@ -74,63 +73,6 @@ void _wsplitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* 
 		*dir = '\0';
 	}
 }
-
-#else /* UNICODE */
-
-void _splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ext)
-{
-        const CHAR* end; /* end of processed string */
-	const CHAR* p;	 /* search pointer */
-	const CHAR* s;	 /* copy pointer */
-
-	/* extract drive name */
-	if (path[0] && path[1]==':') {
-		if (drv) {
-			*drv++ = *path++;
-			*drv++ = *path++;
-			*drv = '\0';
-		}
-	} else if (drv)
-		*drv = '\0';
-
-	/* search for end of string or stream separator */
-	for(end=path; *end && *end!=':'; )
-		end++;
-
-	/* search for begin of file extension */
-	for(p=end; p>path && *--p!='\\' && *p!='/'; )
-		if (*p == '.') {
-			end = p;
-			break;
-		}
-
-	if (ext)
-		for(s=end; (*ext=*s++); )
-			ext++;
-
-	/* search for end of directory name */
-	for(p=end; p>path; )
-		if (*--p=='\\' || *p=='/') {
-			p++;
-			break;
-		}
-
-	if (name) {
-		for(s=p; s<end; )
-			*name++ = *s++;
-
-		*name = '\0';
-	}
-
-	if (dir) {
-		for(s=path; s<p; )
-			*dir++ = *s++;
-
-		*dir = '\0';
-	}
-}
-
-#endif /* UNICODE */
 #endif /* __WINE__ */
 
 

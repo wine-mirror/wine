@@ -535,14 +535,9 @@ static void read_directory_unix(Entry* dir, LPCTSTR path)
 	DIR* pdir;
 
 	int level = dir->level + 1;
-#ifdef UNICODE
 	char cpath[MAX_PATH];
 
 	WideCharToMultiByte(CP_UNIXCP, 0, path, -1, cpath, MAX_PATH, NULL, NULL);
-#else
-	const char* cpath = path;
-#endif
-
 	pdir = opendir(cpath);
 
 	if (pdir) {
@@ -569,11 +564,7 @@ static void read_directory_unix(Entry* dir, LPCTSTR path)
 			entry->etype = ET_UNIX;
 
 			strcpy(p, ent->d_name);
-#ifdef UNICODE
 			MultiByteToWideChar(CP_UNIXCP, 0, p, -1, entry->data.cFileName, MAX_PATH);
-#else
-			lstrcpy(entry->data.cFileName, p);
-#endif
 
 			if (!stat(buffer, &st)) {
 				entry->data.dwFileAttributes = p[0]=='.'? FILE_ATTRIBUTE_HIDDEN: 0;
@@ -678,68 +669,11 @@ static Entry* read_tree_unix(Root* root, LPCTSTR path, SORT_ORDER sortOrder, HWN
 
 #ifdef _SHELL_FOLDERS
 
-#ifdef UNICODE
-#define	get_strret get_strretW
-#define	path_from_pidl path_from_pidlW
-#else
-#define	get_strret get_strretA
-#define	path_from_pidl path_from_pidlA
-#endif
-
-
 static void free_strret(STRRET* str)
 {
 	if (str->uType == STRRET_WSTR)
 		IMalloc_Free(Globals.iMalloc, str->UNION_MEMBER(pOleStr));
 }
-
-
-#ifndef UNICODE
-
-static LPSTR strcpyn(LPSTR dest, LPCSTR source, size_t count)
-{
- LPCSTR s;
- LPSTR d = dest;
-
- for(s=source; count&&(*d++=*s++); )
-  count--;
-
- return dest;
-}
-
-static void get_strretA(STRRET* str, const SHITEMID* shiid, LPSTR buffer, int len)
-{
- switch(str->uType) {
-  case STRRET_WSTR:
-	WideCharToMultiByte(CP_ACP, 0, str->UNION_MEMBER(pOleStr), -1, buffer, len, NULL, NULL);
-	break;
-
-  case STRRET_OFFSET:
-	strcpyn(buffer, (LPCSTR)shiid+str->UNION_MEMBER(uOffset), len);
-	break;
-
-  case STRRET_CSTR:
-	strcpyn(buffer, str->UNION_MEMBER(cStr), len);
- }
-}
-
-static HRESULT path_from_pidlA(IShellFolder* folder, LPITEMIDLIST pidl, LPSTR buffer, int len)
-{
-	STRRET str;
-
-	 /* SHGDN_FORPARSING: get full path of id list */
-	HRESULT hr = IShellFolder_GetDisplayNameOf(folder, pidl, SHGDN_FORPARSING, &str);
-
-	if (SUCCEEDED(hr)) {
-		get_strretA(&str, &pidl->mkid, buffer, len);
-		free_strret(&str);
-	} else
-		buffer[0] = '\0';
-
-	return hr;
-}
-
-#endif
 
 static LPWSTR wcscpyn(LPWSTR dest, LPCWSTR source, size_t count)
 {
@@ -776,7 +710,7 @@ static HRESULT name_from_pidl(IShellFolder* folder, LPITEMIDLIST pidl, LPTSTR bu
 	HRESULT hr = IShellFolder_GetDisplayNameOf(folder, pidl, flags, &str);
 
 	if (SUCCEEDED(hr)) {
-		get_strret(&str, &pidl->mkid, buffer, len);
+		get_strretW(&str, &pidl->mkid, buffer, len);
 		free_strret(&str);
 	} else
 		buffer[0] = '\0';
@@ -809,13 +743,7 @@ static LPITEMIDLIST get_path_pidl(LPTSTR path, HWND hwnd)
 	LPITEMIDLIST pidl;
 	HRESULT hr;
 	ULONG len;
-
-#ifdef UNICODE
 	LPWSTR buffer = path;
-#else
-	WCHAR buffer[MAX_PATH];
-	MultiByteToWideChar(CP_ACP, 0, path, -1, buffer, MAX_PATH);
-#endif
 
 	hr = IShellFolder_ParseDisplayName(Globals.iDesktop, hwnd, NULL, buffer, &len, &pidl, NULL);
 	if (FAILED(hr))
@@ -1519,7 +1447,7 @@ static void get_path(Entry* dir, PTSTR path)
 		if (SUCCEEDED(hr) && (attribs&SFGAO_FILESYSTEM)) {
 			IShellFolder* parent = dir->up? dir->up->folder: Globals.iDesktop;
 
-			hr = path_from_pidl(parent, dir->pidl, path, MAX_PATH);
+			hr = path_from_pidlW(parent, dir->pidl, path, MAX_PATH);
 		}
 	}
 	else
@@ -1957,18 +1885,12 @@ static void CheckForFileInfo(struct PropertiesDialog* dlg, HWND hwnd, LPCTSTR st
 
 					for(p=InfoStrings; *p; ++p) {
 						TCHAR subblock[200];
-#ifdef UNICODE
 						TCHAR infoStr[100];
-#endif
 						LPCTSTR pTxt;
 						UINT nValLen;
 
 						LPCSTR pInfoString = *p;
-#ifdef UNICODE
 						MultiByteToWideChar(CP_ACP, 0, pInfoString, -1, infoStr, 100);
-#else
-#define	infoStr pInfoString
-#endif
 						wsprintf(subblock, sStringFileInfo, pTranslate->wLanguage, pTranslate->wCodePage, infoStr);
 
 						/* Retrieve file description for language and code page */
@@ -2402,20 +2324,14 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 #ifdef __WINE__
 				case ID_DRIVE_UNIX_FS: {
 					TCHAR path[MAX_PATH];
-#ifdef UNICODE
 					char cpath[MAX_PATH];
-#endif
 					ChildWnd* child;
 
 					if (activate_fs_window(RS(b1,IDS_UNIXFS)))
 						break;
 
-#ifdef UNICODE
 					getcwd(cpath, MAX_PATH);
 					MultiByteToWideChar(CP_UNIXCP, 0, cpath, -1, path, MAX_PATH);
-#else
-					getcwd(path, MAX_PATH);
-#endif
 					child = alloc_child_window(path, NULL, hwnd);
 
 					if (!create_child_window(child))
@@ -4914,7 +4830,7 @@ static int winefile_main(HINSTANCE hinstance, int cmdshow, LPCTSTR path)
 }
 
 
-#if defined(UNICODE) && defined(_MSC_VER)
+#if defined(_MSC_VER)
 int APIENTRY wWinMain(HINSTANCE hinstance, HINSTANCE previnstance, LPWSTR cmdline, int cmdshow)
 #else
 int APIENTRY WinMain(HINSTANCE hinstance, HINSTANCE previnstance, LPSTR cmdline, int cmdshow)
@@ -4925,15 +4841,11 @@ int APIENTRY WinMain(HINSTANCE hinstance, HINSTANCE previnstance, LPSTR cmdline,
 		return 1;
 #endif
 
-#if defined(UNICODE) && !defined(_MSC_VER)
 	{ /* convert ANSI cmdline into WCS path string */
 	TCHAR buffer[MAX_PATH];
 	MultiByteToWideChar(CP_ACP, 0, cmdline, -1, buffer, MAX_PATH);
 	winefile_main(hinstance, cmdshow, buffer);
 	}
-#else
-	winefile_main(hinstance, cmdshow, cmdline);
-#endif
 
 	return 0;
 }
