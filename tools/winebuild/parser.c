@@ -435,13 +435,20 @@ static const char *parse_spec_flags( ORDDEF *odp )
             char *cpu_name = strtok( args, "," );
             while (cpu_name)
             {
-                enum target_cpu cpu = get_cpu_from_name( cpu_name );
-                if (cpu == -1)
+                if (!strcmp( cpu_name, "win32" ))
+                    odp->flags |= FLAG_CPU_WIN32;
+                else if (!strcmp( cpu_name, "win64" ))
+                    odp->flags |= FLAG_CPU_WIN64;
+                else
                 {
-                    error( "Unknown architecture '%s'\n", cpu_name );
-                    return NULL;
+                    enum target_cpu cpu = get_cpu_from_name( cpu_name );
+                    if (cpu == -1)
+                    {
+                        error( "Unknown architecture '%s'\n", cpu_name );
+                        return NULL;
+                    }
+                    odp->flags |= FLAG_CPU( cpu );
                 }
-                odp->flags |= FLAG_CPU( cpu );
                 cpu_name = strtok( NULL, "," );
             }
             free( args );

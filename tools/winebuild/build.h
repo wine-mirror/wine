@@ -145,6 +145,8 @@ extern enum target_platform target_platform;
 
 #define FLAG_CPU(cpu)  (0x01000 << (cpu))
 #define FLAG_CPU_MASK  0x1f000
+#define FLAG_CPU_WIN64 (FLAG_CPU(CPU_x86_64))
+#define FLAG_CPU_WIN32 (FLAG_CPU_MASK & ~FLAG_CPU_WIN64)
 
 #define MAX_ORDINALS  65535
 
