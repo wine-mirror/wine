@@ -399,8 +399,13 @@ static HRESULT WINAPI JpegDecoder_Frame_GetSize(IWICBitmapFrameDecode *iface,
 static HRESULT WINAPI JpegDecoder_Frame_GetPixelFormat(IWICBitmapFrameDecode *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    FIXME("(%p,%p)\n", iface, pPixelFormat);
-    return E_NOTIMPL;
+    JpegDecoder *This = decoder_from_frame(iface);
+    TRACE("(%p,%p)\n", iface, pPixelFormat);
+    if (This->cinfo.out_color_space == JCS_RGB)
+        memcpy(pPixelFormat, &GUID_WICPixelFormat24bppBGR, sizeof(GUID));
+    else /* This->cinfo.out_color_space == JCS_GRAYSCALE */
+        memcpy(pPixelFormat, &GUID_WICPixelFormat8bppGray, sizeof(GUID));
+    return S_OK;
 }
 
 static HRESULT WINAPI JpegDecoder_Frame_GetResolution(IWICBitmapFrameDecode *iface,
