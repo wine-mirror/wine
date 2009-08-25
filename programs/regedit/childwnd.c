@@ -264,7 +264,7 @@ static void set_last_key(HWND hwndTV)
     if (RegCreateKeyExW(HKEY_CURRENT_USER, wszKeyName, 0, NULL, 0, KEY_WRITE, NULL, &hkey, NULL) == ERROR_SUCCESS)
     {
         wszVal = GetItemFullPath(g_pChildWnd->hTreeWnd, TreeView_GetSelection(g_pChildWnd->hTreeWnd), FALSE);
-        RegSetValueExW(hkey, wszLastKey, 0, REG_SZ, (LPBYTE)wszVal, KEY_MAX_LEN * sizeof(WCHAR));
+        RegSetValueExW(hkey, wszLastKey, 0, REG_SZ, (LPBYTE)wszVal, (lstrlenW(wszVal) + 1) * sizeof(WCHAR));
         HeapFree(GetProcessHeap(), 0, wszVal);
         RegCloseKey(hkey);
     }
