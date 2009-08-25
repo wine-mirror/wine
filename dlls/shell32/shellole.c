@@ -74,6 +74,7 @@ static const struct {
 	{&CLSID_FolderShortcut, FolderShortcut_Constructor},
 	{&CLSID_MyDocuments,    MyDocuments_Constructor},
 	{&CLSID_RecycleBin,     RecycleBin_Constructor},
+	{&CLSID_QueryAssociations, QueryAssociations_Constructor},
 	{NULL,NULL}
 };
 

@@ -6,10 +6,11 @@ VPATH     = @srcdir@
 MODULE    = shell32.dll
 IMPORTLIB = shell32
 IMPORTS   = uuid shlwapi comctl32 user32 gdi32 advapi32 kernel32 ntdll
-DELAYIMPORTS = ole32 oleaut32 shdocvw
+DELAYIMPORTS = ole32 oleaut32 shdocvw version
 
 C_SRCS = \
 	appbar.c \
+	assoc.c \
 	autocomplete.c \
 	brsfolder.c \
 	changenotify.c \
