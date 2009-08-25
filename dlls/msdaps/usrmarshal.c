@@ -40,18 +40,31 @@ WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 HRESULT CALLBACK IDBCreateCommand_CreateCommand_Proxy(IDBCreateCommand* This, IUnknown *pUnkOuter,
                                                       REFIID riid, IUnknown **ppCommand)
 {
-    FIXME("(%p, %p, %s, %p): stub\n", This, pUnkOuter, debugstr_guid(riid),
-          ppCommand);
-    return E_NOTIMPL;
+    HRESULT hr;
+    IErrorInfo *error;
+
+    TRACE("(%p, %p, %s, %p)\n", This, pUnkOuter, debugstr_guid(riid), ppCommand);
+    hr = IDBCreateCommand_RemoteCreateCommand_Proxy(This, pUnkOuter, riid, ppCommand, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+    return hr;
 }
 
 HRESULT __RPC_STUB IDBCreateCommand_CreateCommand_Stub(IDBCreateCommand* This, IUnknown *pUnkOuter,
                                                        REFIID riid, IUnknown **ppCommand, IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p, %p, %s, %p, %p): stub\n", This, pUnkOuter, debugstr_guid(riid),
-          ppCommand, ppErrorInfoRem);
-    return E_NOTIMPL;
+    HRESULT hr;
 
+    TRACE("(%p, %p, %s, %p, %p)\n", This, pUnkOuter, debugstr_guid(riid), ppCommand, ppErrorInfoRem);
+
+    *ppErrorInfoRem = NULL;
+    hr = IDBCreateCommand_CreateCommand(This, pUnkOuter, riid, ppCommand);
+    if(FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+
+    return hr;
 }
 
 HRESULT CALLBACK IDBCreateSession_CreateSession_Proxy(IDBCreateSession* This, IUnknown *pUnkOuter,
