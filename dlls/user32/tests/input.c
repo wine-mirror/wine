@@ -72,6 +72,7 @@ static struct {
     LONG last_hook_syskey_down;
     LONG last_hook_syskey_up;
     BOOL expect_alt;
+    BOOL sendinput_broken;
 } key_status;
 
 static UINT (WINAPI *pSendInput) (UINT, INPUT*, size_t);
@@ -950,6 +951,7 @@ static void reset_key_status(void)
     key_status.last_hook_syskey_down = -1;
     key_status.last_hook_syskey_up = -1;
     key_status.expect_alt = FALSE;
+    key_status.sendinput_broken = FALSE;
 }
 
 static void test_unicode_keys(HWND hwnd, HHOOK hook)
@@ -975,13 +977,15 @@ static void test_unicode_keys(HWND hwnd, HHOOK hook)
         }
         DispatchMessageW(&msg);
     }
-    ok(key_status.last_key_down == VK_PACKET,
-        "Last keydown msg should have been VK_PACKET[0x%04x] (was: 0x%x)\n", VK_PACKET, key_status.last_key_down);
-    ok(key_status.last_char == 0x3c0,
-        "Last char msg wparam should have been 0x3c0 (was: 0x%x)\n", key_status.last_char);
-    if(hook)
-        ok(key_status.last_hook_down == 0x3c0,
-            "Last hookdown msg should have been 0x3c0, was: 0x%x\n", key_status.last_hook_down);
+    if(!key_status.sendinput_broken){
+        ok(key_status.last_key_down == VK_PACKET,
+            "Last keydown msg should have been VK_PACKET[0x%04x] (was: 0x%x)\n", VK_PACKET, key_status.last_key_down);
+        ok(key_status.last_char == 0x3c0,
+            "Last char msg wparam should have been 0x3c0 (was: 0x%x)\n", key_status.last_char);
+        if(hook)
+            ok(key_status.last_hook_down == 0x3c0,
+                "Last hookdown msg should have been 0x3c0, was: 0x%x\n", key_status.last_hook_down);
+    }
 
     inputs[1].u.ki.wVk = 0;
     inputs[1].u.ki.wScan = 0x3c0;
@@ -995,11 +999,13 @@ static void test_unicode_keys(HWND hwnd, HHOOK hook)
         }
         DispatchMessageW(&msg);
     }
-    ok(key_status.last_key_up == VK_PACKET,
-        "Last keyup msg should have been VK_PACKET[0x%04x] (was: 0x%x)\n", VK_PACKET, key_status.last_key_up);
-    if(hook)
-        ok(key_status.last_hook_up == 0x3c0,
-            "Last hookup msg should have been 0x3c0, was: 0x%x\n", key_status.last_hook_up);
+    if(!key_status.sendinput_broken){
+        ok(key_status.last_key_up == VK_PACKET,
+            "Last keyup msg should have been VK_PACKET[0x%04x] (was: 0x%x)\n", VK_PACKET, key_status.last_key_up);
+        if(hook)
+            ok(key_status.last_hook_up == 0x3c0,
+                "Last hookup msg should have been 0x3c0, was: 0x%x\n", key_status.last_hook_up);
+    }
 
     /* holding alt, pressing & releasing a unicode character, releasing alt */
     inputs[0].u.ki.wVk = VK_LMENU;
@@ -1019,13 +1025,15 @@ static void test_unicode_keys(HWND hwnd, HHOOK hook)
         }
         DispatchMessageW(&msg);
     }
-    ok(key_status.last_syskey_down == VK_PACKET,
-        "Last syskeydown msg should have been VK_PACKET[0x%04x] (was: 0x%x)\n", VK_PACKET, key_status.last_syskey_down);
-    ok(key_status.last_syschar == 0x3041,
-        "Last syschar msg should have been 0x3041 (was: 0x%x)\n", key_status.last_syschar);
-    if(hook)
-        ok(key_status.last_hook_syskey_down == 0x3041,
-            "Last hooksysdown msg should have been 0x3041, was: 0x%x\n", key_status.last_hook_syskey_down);
+    if(!key_status.sendinput_broken){
+        ok(key_status.last_syskey_down == VK_PACKET,
+            "Last syskeydown msg should have been VK_PACKET[0x%04x] (was: 0x%x)\n", VK_PACKET, key_status.last_syskey_down);
+        ok(key_status.last_syschar == 0x3041,
+            "Last syschar msg should have been 0x3041 (was: 0x%x)\n", key_status.last_syschar);
+        if(hook)
+            ok(key_status.last_hook_syskey_down == 0x3041,
+                "Last hooksysdown msg should have been 0x3041, was: 0x%x\n", key_status.last_hook_syskey_down);
+    }
 
     inputs[1].u.ki.wVk = 0;
     inputs[1].u.ki.wScan = 0x3041;
@@ -1044,11 +1052,13 @@ static void test_unicode_keys(HWND hwnd, HHOOK hook)
         }
         DispatchMessageW(&msg);
     }
-    ok(key_status.last_key_up == VK_PACKET,
-        "Last keyup msg should have been VK_PACKET[0x%04x] (was: 0x%x)\n", VK_PACKET, key_status.last_key_up);
-    if(hook)
-        ok(key_status.last_hook_up == 0x3041,
-            "Last hook up msg should have been 0x3041, was: 0x%x\n", key_status.last_hook_up);
+    if(!key_status.sendinput_broken){
+        ok(key_status.last_key_up == VK_PACKET,
+            "Last keyup msg should have been VK_PACKET[0x%04x] (was: 0x%x)\n", VK_PACKET, key_status.last_key_up);
+        if(hook)
+            ok(key_status.last_hook_up == 0x3041,
+                "Last hook up msg should have been 0x3041, was: 0x%x\n", key_status.last_hook_up);
+    }
 }
 
 static LRESULT CALLBACK unicode_wnd_proc( HWND hWnd, UINT msg, WPARAM wParam,
@@ -1081,8 +1091,16 @@ static LRESULT CALLBACK llkbd_unicode_hook(int nCode, WPARAM wParam, LPARAM lPar
 {
     if(nCode == HC_ACTION){
         LPKBDLLHOOKSTRUCT info = (LPKBDLLHOOKSTRUCT)lParam;
-        ok(info->vkCode == VK_PACKET || (key_status.expect_alt && info->vkCode == VK_LMENU), "vkCode should have been VK_PACKET[%04x], was: %04x\n", VK_PACKET, info->vkCode);
-        key_status.expect_alt = FALSE;
+        if(!info->vkCode){
+            key_status.sendinput_broken = TRUE;
+            win_skip("SendInput doesn't support unicode on this platform\n");
+        }else{
+            if(key_status.expect_alt){
+                ok(info->vkCode == VK_LMENU, "vkCode should have been VK_LMENU[0x%04x], was: 0x%x\n", VK_LMENU, info->vkCode);
+                key_status.expect_alt = FALSE;
+            }else
+                ok(info->vkCode == VK_PACKET, "vkCode should have been VK_PACKET[0x%04x], was: 0x%x\n", VK_PACKET, info->vkCode);
+        }
         switch(wParam){
         case WM_KEYDOWN:
             key_status.last_hook_down = info->scanCode;
