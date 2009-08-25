@@ -673,7 +673,7 @@ void LOCALE_InitRegistry(void)
         { maccpW, LOCALE_IDEFAULTMACCODEPAGE }
     };
     static const LCTYPE lc_messages_values[] = {
-      LOCALE_SLANGUAGE,
+      LOCALE_SABBREVLANGNAME,
       LOCALE_SCOUNTRY,
       LOCALE_SLIST };
     static const LCTYPE lc_monetary_values[] = {
@@ -1051,7 +1051,7 @@ static const WCHAR *get_locale_value_name( DWORD lctype )
     case LOCALE_ILDATE:           return iLDateW;
     case LOCALE_ITLZERO:          return iTLZeroW;
     case LOCALE_SCOUNTRY:         return sCountryW;
-    case LOCALE_SLANGUAGE:        return sLanguageW;
+    case LOCALE_SABBREVLANGNAME:  return sLanguageW;
 
     /* The following are used in XP and later */
     case LOCALE_IDIGITSUBSTITUTION: return NumShapeW;
