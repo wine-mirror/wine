@@ -221,9 +221,9 @@ static HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 i
     return hr;
 }
 
-static HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceMultiSampleType(LPDIRECT3D8 iface,
-							   UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat,
-							   BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType) {
+static HRESULT WINAPI IDirect3D8Impl_CheckDeviceMultiSampleType(IDirect3D8 *iface, UINT Adapter,
+        D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat, BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType)
+{
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
     HRESULT hr;
     TRACE("(%p)-<(%d, %d, %d, %s, %d)\n", This, Adapter, DeviceType, SurfaceFormat, Windowed ? "true" : "false", MultiSampleType);
@@ -235,9 +235,9 @@ static HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceMultiSampleType(LPDIRECT3D8 if
     return hr;
 }
 
-static HRESULT  WINAPI  IDirect3D8Impl_CheckDepthStencilMatch(LPDIRECT3D8 iface, 
-						       UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
-						       D3DFORMAT RenderTargetFormat, D3DFORMAT DepthStencilFormat) {
+static HRESULT WINAPI IDirect3D8Impl_CheckDepthStencilMatch(IDirect3D8 *iface, UINT Adapter, D3DDEVTYPE DeviceType,
+        D3DFORMAT AdapterFormat, D3DFORMAT RenderTargetFormat, D3DFORMAT DepthStencilFormat)
+{
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
     HRESULT hr;
     TRACE("(%p)-<(%d, %d, %d, %d, %d)\n", This, Adapter, DeviceType, AdapterFormat, RenderTargetFormat, DepthStencilFormat);

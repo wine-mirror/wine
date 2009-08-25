@@ -77,7 +77,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 }
 
 /***********************************************************************
- *		ValidateVertexShader (D3D8.@)
+ *              ValidateVertexShader (D3D8.@)
  *
  * I've seen reserved1 and reserved2 always passed as 0's
  * bool seems always passed as 0 or 1, but other values work as well.... 
@@ -108,7 +108,7 @@ HRESULT WINAPI ValidateVertexShader(DWORD* vertexshader, DWORD* reserved1, DWORD
 }
 
 /***********************************************************************
- *		ValidatePixelShader (D3D8.@)
+ *              ValidatePixelShader (D3D8.@)
  *
  * PARAMS
  * toto       result?

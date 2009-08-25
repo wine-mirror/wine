@@ -310,7 +310,7 @@ static void test_refcount(void)
         D3DVSD_STREAM(0),
         D3DVSD_REG(D3DVSDE_POSITION, D3DVSDT_FLOAT3),  /* D3DVSDE_POSITION, Register v0 */
         D3DVSD_REG(D3DVSDE_DIFFUSE, D3DVSDT_D3DCOLOR), /* D3DVSDE_DIFFUSE, Register v5 */
-	D3DVSD_END()
+        D3DVSD_END()
     };
 
     pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
