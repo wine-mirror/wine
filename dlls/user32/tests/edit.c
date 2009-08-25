@@ -28,6 +28,7 @@
 #define ES_COMBO 0x200
 #endif
 
+#define ID_EDITTESTDBUTTON 0x123
 #define ID_EDITTEST2 99
 #define MAXLEN 200
 
@@ -1819,7 +1820,7 @@ static void test_edit_dialog(void)
     r = DialogBoxParam(hinst, "EDIT_READONLY_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 6);
     ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_READONLY_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 7);
-    todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_READONLY_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 8);
     ok(444 == r, "Expected %d, got %d\n", 444, r);
 
@@ -1843,7 +1844,7 @@ static void test_edit_dialog(void)
     r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 6);
     ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 7);
-    todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 8);
     ok(444 == r, "Expected %d, got %d\n", 444, r);
 
@@ -2115,7 +2116,7 @@ static LRESULT CALLBACK dialog_mode_wnd_proc(HWND hwnd, UINT iMsg, WPARAM wParam
             break;
         case DM_GETDEFID:
             dm_messages.wm_getdefid++;
-            return 0;
+            return MAKELONG(ID_EDITTESTDBUTTON, DC_HASDEFID);
         case WM_NEXTDLGCTL:
             dm_messages.wm_nextdlgctl++;
             break;
@@ -2129,7 +2130,7 @@ static LRESULT CALLBACK dialog_mode_wnd_proc(HWND hwnd, UINT iMsg, WPARAM wParam
 
 static void test_dialogmode(void)
 {
-    HWND hwEdit, hwParent;
+    HWND hwEdit, hwParent, hwButton;
     MSG msg= {0};
     int len, r;
     hwEdit = create_child_editcontrol(ES_MULTILINE, 0);
@@ -2241,6 +2242,21 @@ static void test_dialogmode(void)
     test_dm_messages(0, 0, 0, 1);
     zero_dm_messages();
 
+    r = SendMessage(hwEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(1 == r, "expected 1, got %d\n", r);
+    test_dm_messages(0, 0, 1, 0);
+    zero_dm_messages();
+
+    hwButton = CreateWindow("BUTTON", "OK", WS_VISIBLE|WS_CHILD|BS_PUSHBUTTON,
+        100, 100, 50, 20, hwParent, (HMENU)ID_EDITTESTDBUTTON, hinst, NULL);
+    ok(hwButton!=NULL, "CreateWindow failed with error code %d\n", GetLastError());
+
+    r = SendMessage(hwEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(1 == r, "expected 1, got %d\n", r);
+    test_dm_messages(0, 0, 1, 1);
+    zero_dm_messages();
+
+    DestroyWindow(hwButton);
     destroy_child_editcontrol(hwEdit);
 }
 
