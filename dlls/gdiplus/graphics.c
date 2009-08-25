@@ -4151,15 +4151,6 @@ GpStatus WINGDIPAPI GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT16 
 }
 
 /*****************************************************************************
- * GdipIsVisibleRegionPointI [GDIPLUS.@]
- */
-GpStatus WINGDIPAPI GdipIsVisibleRegionPointI(GpRegion *region, INT x, INT y, GpGraphics *graphics, BOOL *result)
-{
-    FIXME("(%p %d %d %p %p): stub\n", region, x, y, graphics, result);
-    return NotImplemented;
-}
-
-/*****************************************************************************
  * GdipRecordMetafileI [GDIPLUS.@]
  */
 GpStatus WINGDIPAPI GdipRecordMetafileI(HDC hdc, EmfType type, GDIPCONST GpRect *frameRect,

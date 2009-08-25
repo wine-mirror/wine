@@ -1128,6 +1128,45 @@ GpStatus WINGDIPAPI GdipIsInfiniteRegion(GpRegion *region, GpGraphics *graphics,
 }
 
 /*****************************************************************************
+ * GdipIsVisibleRegionPoint [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipIsVisibleRegionPoint(GpRegion* region, REAL x, REAL y, GpGraphics *graphics, BOOL *res)
+{
+    HRGN hrgn;
+    GpStatus stat;
+
+    TRACE("(%p, %.2f, %.2f, %p, %p)\n", region, x, y, graphics, res);
+
+    if(!region || !res)
+        return InvalidParameter;
+
+    if((stat = GdipGetRegionHRgn(region, NULL, &hrgn)) != Ok)
+        return stat;
+
+    /* infinite */
+    if(!hrgn){
+        *res = TRUE;
+        return Ok;
+    }
+
+    *res = PtInRegion(hrgn, roundr(x), roundr(y));
+
+    DeleteObject(hrgn);
+
+    return Ok;
+}
+
+/*****************************************************************************
+ * GdipIsVisibleRegionPointI [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipIsVisibleRegionPointI(GpRegion* region, INT x, INT y, GpGraphics *graphics, BOOL *res)
+{
+    TRACE("(%p, %d, %d, %p, %p)\n", region, x, y, graphics, res);
+
+    return GdipIsVisibleRegionPoint(region, (REAL)x, (REAL)y, graphics, res);
+}
+
+/*****************************************************************************
  * GdipSetEmpty [GDIPLUS.@]
  */
 GpStatus WINGDIPAPI GdipSetEmpty(GpRegion *region)
