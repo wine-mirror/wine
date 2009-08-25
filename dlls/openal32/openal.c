@@ -39,6 +39,42 @@ WINE_DEFAULT_DEBUG_CHANNEL(openal32);
 typedef struct wine_ALCcontext {
     ALCcontext *ctx;
 
+    ALboolean been_current;
+
+    ALvoid (CDECL*alGenFilters)(ALsizei n, ALuint* filters);
+    ALvoid (CDECL*alDeleteFilters)(ALsizei n, const ALuint* filters);
+    ALboolean (CDECL*alIsFilter)(ALuint fid);
+    ALvoid (CDECL*alFilterf)(ALuint fid, ALenum param, ALfloat value);
+    ALvoid (CDECL*alFilterfv)(ALuint fid, ALenum param, const ALfloat* values);
+    ALvoid (CDECL*alFilteri)(ALuint fid, ALenum param, ALint value);
+    ALvoid (CDECL*alFilteriv)(ALuint fid, ALenum param, const ALint* values);
+    ALvoid (CDECL*alGetFilterf)(ALuint fid, ALenum param, ALfloat* value);
+    ALvoid (CDECL*alGetFilterfv)(ALuint fid, ALenum param, ALfloat* values);
+    ALvoid (CDECL*alGetFilteri)(ALuint fid, ALenum param, ALint* value);
+    ALvoid (CDECL*alGetFilteriv)(ALuint fid, ALenum param, ALint* values);
+    ALvoid (CDECL*alGenEffects)(ALsizei n, ALuint* effects);
+    ALvoid (CDECL*alDeleteEffects)(ALsizei n, const ALuint* effects);
+    ALboolean (CDECL*alIsEffect)(ALuint eid);
+    ALvoid (CDECL*alEffectf)(ALuint eid, ALenum param, ALfloat value);
+    ALvoid (CDECL*alEffectfv)(ALuint eid, ALenum param, const ALfloat* values);
+    ALvoid (CDECL*alEffecti)(ALuint eid, ALenum param, ALint value);
+    ALvoid (CDECL*alEffectiv)(ALuint eid, ALenum param, const ALint* values);
+    ALvoid (CDECL*alGetEffectf)(ALuint eid, ALenum param, ALfloat* value);
+    ALvoid (CDECL*alGetEffectfv)(ALuint eid, ALenum param, ALfloat* values);
+    ALvoid (CDECL*alGetEffecti)(ALuint eid, ALenum param, ALint* value);
+    ALvoid (CDECL*alGetEffectiv)(ALuint eid, ALenum param, ALint* values);
+    ALvoid (CDECL*alGenAuxiliaryEffectSlots)(ALsizei n, ALuint* slots);
+    ALvoid (CDECL*alDeleteAuxiliaryEffectSlots)(ALsizei n, const ALuint* slots);
+    ALboolean (CDECL*alIsAuxiliaryEffectSlot)(ALuint sid);
+    ALvoid (CDECL*alAuxiliaryEffectSlotf)(ALuint sid, ALenum param, ALfloat value);
+    ALvoid (CDECL*alAuxiliaryEffectSlotfv)(ALuint sid, ALenum param, const ALfloat* values);
+    ALvoid (CDECL*alAuxiliaryEffectSloti)(ALuint sid, ALenum param, ALint value);
+    ALvoid (CDECL*alAuxiliaryEffectSlotiv)(ALuint sid, ALenum param, const ALint* values);
+    ALvoid (CDECL*alGetAuxiliaryEffectSlotf)(ALuint sid, ALenum param, ALfloat* value);
+    ALvoid (CDECL*alGetAuxiliaryEffectSlotfv)(ALuint sid, ALenum param, ALfloat* values);
+    ALvoid (CDECL*alGetAuxiliaryEffectSloti)(ALuint sid, ALenum param, ALint* value);
+    ALvoid (CDECL*alGetAuxiliaryEffectSlotiv)(ALuint sid, ALenum param, ALint* values);
+
     struct wine_ALCcontext *next;
 } wine_ALCcontext;
 
@@ -150,6 +186,46 @@ ALCboolean CDECL wine_alcMakeContextCurrent(ALCcontext *context)
     }
 
     CurrentCtx = ctx;
+    if(CurrentCtx && !CurrentCtx->been_current)
+    {
+        CurrentCtx->been_current = AL_TRUE;
+
+#define LOADFUNC(x) CurrentCtx->x = alGetProcAddress(#x)
+        LOADFUNC(alGenFilters);
+        LOADFUNC(alDeleteFilters);
+        LOADFUNC(alIsFilter);
+        LOADFUNC(alFilterf);
+        LOADFUNC(alFilterfv);
+        LOADFUNC(alFilteri);
+        LOADFUNC(alFilteriv);
+        LOADFUNC(alGetFilterf);
+        LOADFUNC(alGetFilterfv);
+        LOADFUNC(alGetFilteri);
+        LOADFUNC(alGetFilteriv);
+        LOADFUNC(alGenEffects);
+        LOADFUNC(alDeleteEffects);
+        LOADFUNC(alIsEffect);
+        LOADFUNC(alEffectf);
+        LOADFUNC(alEffectfv);
+        LOADFUNC(alEffecti);
+        LOADFUNC(alEffectiv);
+        LOADFUNC(alGetEffectf);
+        LOADFUNC(alGetEffectfv);
+        LOADFUNC(alGetEffecti);
+        LOADFUNC(alGetEffectiv);
+        LOADFUNC(alGenAuxiliaryEffectSlots);
+        LOADFUNC(alDeleteAuxiliaryEffectSlots);
+        LOADFUNC(alIsAuxiliaryEffectSlot);
+        LOADFUNC(alAuxiliaryEffectSlotf);
+        LOADFUNC(alAuxiliaryEffectSlotfv);
+        LOADFUNC(alAuxiliaryEffectSloti);
+        LOADFUNC(alAuxiliaryEffectSlotiv);
+        LOADFUNC(alGetAuxiliaryEffectSlotf);
+        LOADFUNC(alGetAuxiliaryEffectSlotfv);
+        LOADFUNC(alGetAuxiliaryEffectSloti);
+        LOADFUNC(alGetAuxiliaryEffectSlotiv);
+#undef LOADFUNC
+    }
     LeaveCriticalSection(&openal_cs);
 
     return ALC_TRUE;
@@ -676,6 +752,175 @@ ALvoid CDECL wine_alSpeedOfSound(ALfloat value)
     alSpeedOfSound(value);
 }
 
+/* OpenAL EFX extension functions */
+ALvoid CDECL wine_alGenFilters(ALsizei n, ALuint* filters)
+{
+    CurrentCtx->alGenFilters(n, filters);
+}
+
+ALvoid CDECL wine_alDeleteFilters(ALsizei n, const ALuint* filters)
+{
+    CurrentCtx->alDeleteFilters(n, filters);
+}
+
+ALboolean CDECL wine_alIsFilter(ALuint fid)
+{
+    return CurrentCtx->alIsFilter(fid);
+}
+
+ALvoid CDECL wine_alFilterf(ALuint fid, ALenum param, ALfloat value)
+{
+    CurrentCtx->alFilterf(fid, param, value);
+}
+
+ALvoid CDECL wine_alFilterfv(ALuint fid, ALenum param, const ALfloat* values)
+{
+    CurrentCtx->alFilterfv(fid, param, values);
+}
+
+ALvoid CDECL wine_alFilteri(ALuint fid, ALenum param, ALint value)
+{
+    CurrentCtx->alFilteri(fid, param, value);
+}
+
+ALvoid CDECL wine_alFilteriv(ALuint fid, ALenum param, const ALint* values)
+{
+    CurrentCtx->alFilteriv(fid, param, values);
+}
+
+ALvoid CDECL wine_alGetFilterf(ALuint fid, ALenum param, ALfloat* value)
+{
+    CurrentCtx->alGetFilterf(fid, param, value);
+}
+
+ALvoid CDECL wine_alGetFilterfv(ALuint fid, ALenum param, ALfloat* values)
+{
+    CurrentCtx->alGetFilterfv(fid, param, values);
+}
+
+ALvoid CDECL wine_alGetFilteri(ALuint fid, ALenum param, ALint* value)
+{
+    CurrentCtx->alGetFilteri(fid, param, value);
+}
+
+ALvoid CDECL wine_alGetFilteriv(ALuint fid, ALenum param, ALint* values)
+{
+    CurrentCtx->alGetFilteriv(fid, param, values);
+}
+
+
+ALvoid CDECL wine_alGenEffects(ALsizei n, ALuint* effects)
+{
+    CurrentCtx->alGenEffects(n, effects);
+}
+
+ALvoid CDECL wine_alDeleteEffects(ALsizei n, const ALuint* effects)
+{
+    CurrentCtx->alDeleteEffects(n, effects);
+}
+
+ALboolean CDECL wine_alIsEffect(ALuint eid)
+{
+    return CurrentCtx->alIsEffect(eid);
+}
+
+ALvoid CDECL wine_alEffectf(ALuint eid, ALenum param, ALfloat value)
+{
+    CurrentCtx->alEffectf(eid, param, value);
+}
+
+ALvoid CDECL wine_alEffectfv(ALuint eid, ALenum param, const ALfloat* values)
+{
+    CurrentCtx->alEffectfv(eid, param, values);
+}
+
+ALvoid CDECL wine_alEffecti(ALuint eid, ALenum param, ALint value)
+{
+    CurrentCtx->alEffecti(eid, param, value);
+}
+
+ALvoid CDECL wine_alEffectiv(ALuint eid, ALenum param, const ALint* values)
+{
+    CurrentCtx->alEffectiv(eid, param, values);
+}
+
+ALvoid CDECL wine_alGetEffectf(ALuint eid, ALenum param, ALfloat* value)
+{
+    CurrentCtx->alGetEffectf(eid, param, value);
+}
+
+ALvoid CDECL wine_alGetEffectfv(ALuint eid, ALenum param, ALfloat* values)
+{
+    CurrentCtx->alGetEffectfv(eid, param, values);
+}
+
+ALvoid CDECL wine_alGetEffecti(ALuint eid, ALenum param, ALint* value)
+{
+    CurrentCtx->alGetEffecti(eid, param, value);
+}
+
+ALvoid CDECL wine_alGetEffectiv(ALuint eid, ALenum param, ALint* values)
+{
+    CurrentCtx->alGetEffectiv(eid, param, values);
+}
+
+
+ALvoid CDECL wine_alGenAuxiliaryEffectSlots(ALsizei n, ALuint* slots)
+{
+    CurrentCtx->alGenAuxiliaryEffectSlots(n, slots);
+}
+
+ALvoid CDECL wine_alDeleteAuxiliaryEffectSlots(ALsizei n, const ALuint* slots)
+{
+    CurrentCtx->alDeleteAuxiliaryEffectSlots(n, slots);
+}
+
+ALboolean CDECL wine_alIsAuxiliaryEffectSlot(ALuint sid)
+{
+    return CurrentCtx->alIsAuxiliaryEffectSlot(sid);
+}
+
+ALvoid CDECL wine_alAuxiliaryEffectSlotf(ALuint sid, ALenum param, ALfloat value)
+{
+    CurrentCtx->alAuxiliaryEffectSlotf(sid, param, value);
+}
+
+ALvoid CDECL wine_alAuxiliaryEffectSlotfv(ALuint sid, ALenum param, const ALfloat* values)
+{
+    CurrentCtx->alAuxiliaryEffectSlotfv(sid, param, values);
+}
+
+ALvoid CDECL wine_alAuxiliaryEffectSloti(ALuint sid, ALenum param, ALint value)
+{
+    CurrentCtx->alAuxiliaryEffectSloti(sid, param, value);
+}
+
+ALvoid CDECL wine_alAuxiliaryEffectSlotiv(ALuint sid, ALenum param, const ALint* values)
+{
+    CurrentCtx->alAuxiliaryEffectSlotiv(sid, param, values);
+}
+
+ALvoid CDECL wine_alGetAuxiliaryEffectSlotf(ALuint sid, ALenum param, ALfloat* value)
+{
+    CurrentCtx->alGetAuxiliaryEffectSlotf(sid, param, value);
+}
+
+ALvoid CDECL wine_alGetAuxiliaryEffectSlotfv(ALuint sid, ALenum param, ALfloat* values)
+{
+    CurrentCtx->alGetAuxiliaryEffectSlotfv(sid, param, values);
+}
+
+ALvoid CDECL wine_alGetAuxiliaryEffectSloti(ALuint sid, ALenum param, ALint* value)
+{
+    CurrentCtx->alGetAuxiliaryEffectSloti(sid, param, value);
+}
+
+ALvoid CDECL wine_alGetAuxiliaryEffectSlotiv(ALuint sid, ALenum param, ALint* values)
+{
+    CurrentCtx->alGetAuxiliaryEffectSlotiv(sid, param, values);
+}
+
+
 static const struct FuncList ALCFuncs[] = {
     { "alcCreateContext",           wine_alcCreateContext        },
     { "alcMakeContextCurrent",      wine_alcMakeContextCurrent   },
@@ -773,5 +1018,42 @@ static const struct FuncList ALFuncs[] = {
     { "alDopplerVelocity",          wine_alDopplerVelocity       },
     { "alSpeedOfSound",             wine_alSpeedOfSound          },
     { "alDistanceModel",            wine_alDistanceModel         },
+
+    { "alGenFilters",               wine_alGenFilters            },
+    { "alDeleteFilters",            wine_alDeleteFilters         },
+    { "alIsFilter",                 wine_alIsFilter              },
+    { "alFilterf",                  wine_alFilterf               },
+    { "alFilterfv",                 wine_alFilterfv              },
+    { "alFilteri",                  wine_alFilteri               },
+    { "alFilteriv",                 wine_alFilteriv              },
+    { "alGetFilterf",               wine_alGetFilterf            },
+    { "alGetFilterfv",              wine_alGetFilterfv           },
+    { "alGetFilteri",               wine_alGetFilteri            },
+    { "alGetFilteriv",              wine_alGetFilteriv           },
+
+    { "alGenEffects",               wine_alGenEffects            },
+    { "alDeleteEffects",            wine_alDeleteEffects         },
+    { "alIsEffect",                 wine_alIsEffect              },
+    { "alEffectf",                  wine_alEffectf               },
+    { "alEffectfv",                 wine_alEffectfv              },
+    { "alEffecti",                  wine_alEffecti               },
+    { "alEffectiv",                 wine_alEffectiv              },
+    { "alGetEffectf",               wine_alGetEffectf            },
+    { "alGetEffectfv",              wine_alGetEffectfv           },
+    { "alGetEffecti",               wine_alGetEffecti            },
+    { "alGetEffectiv",              wine_alGetEffectiv           },
+
+    { "alGenAuxiliaryEffectSlots",  wine_alGenAuxiliaryEffectSlots},
+    { "alDeleteAuxiliaryEffectSlots",wine_alDeleteAuxiliaryEffectSlots},
+    { "alIsAuxiliaryEffectSlot",    wine_alIsAuxiliaryEffectSlot },
+    { "alAuxiliaryEffectSlotf",     wine_alAuxiliaryEffectSlotf  },
+    { "alAuxiliaryEffectSlotfv",    wine_alAuxiliaryEffectSlotfv },
+    { "alAuxiliaryEffectSloti",     wine_alAuxiliaryEffectSloti  },
+    { "alAuxiliaryEffectSlotiv",    wine_alAuxiliaryEffectSlotiv },
+    { "alGetAuxiliaryEffectSlotf",  wine_alGetAuxiliaryEffectSlotf},
+    { "alGetAuxiliaryEffectSlotfv", wine_alGetAuxiliaryEffectSlotfv},
+    { "alGetAuxiliaryEffectSloti",  wine_alGetAuxiliaryEffectSloti},
+    { "alGetAuxiliaryEffectSlotiv", wine_alGetAuxiliaryEffectSlotiv},
+
     { NULL,                         NULL                         }
 };
