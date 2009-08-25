@@ -75,10 +75,8 @@ static void testCreateCertChainEngine(void)
     /* Crash
     ret = pCertCreateCertificateChainEngine(NULL, NULL);
     ret = pCertCreateCertificateChainEngine(NULL, &engine);
-     */
     ret = pCertCreateCertificateChainEngine(&config, NULL);
-    ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+     */
     ret = pCertCreateCertificateChainEngine(&config, &engine);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
