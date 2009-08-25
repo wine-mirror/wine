@@ -1426,6 +1426,7 @@ typedef enum {
     GIF,
     EMF,
     WMF,
+    PNG,
     ICO,
     NUM_CODECS
 } ImageFormat;
@@ -1594,6 +1595,13 @@ static const WCHAR wmf_format[] = {'W','M','F',0};
 static const BYTE wmf_sig_pattern[] = { 0xd7, 0xcd };
 static const BYTE wmf_sig_mask[] = { 0xFF, 0xFF };
 
+static const WCHAR png_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'P','N','G', 0};
+static const WCHAR png_extension[] = {'*','.','P','N','G',0};
+static const WCHAR png_mimetype[] = {'i','m','a','g','e','/','p','n','g', 0};
+static const WCHAR png_format[] = {'P','N','G',0};
+static const BYTE png_sig_pattern[] = { 137, 80, 78, 71, 13, 10, 26, 10, };
+static const BYTE png_sig_mask[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+
 static const WCHAR ico_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'I','C','O', 0};
 static const WCHAR ico_extension[] = {'*','.','I','C','O',0};
 static const WCHAR ico_mimetype[] = {'i','m','a','g','e','/','x','-','i','c','o','n', 0};
@@ -1689,6 +1697,24 @@ static const struct image_codec codecs[NUM_CODECS] = {
             /* SigSize */            2,
             /* SigPattern */         wmf_sig_pattern,
             /* SigMask */            wmf_sig_mask,
+        },
+        NULL
+    },
+    {
+        { /* PNG */
+            /* Clsid */              { 0x557cf406, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } },
+            /* FormatID */           { 0xb96b3cafU, 0x0728U, 0x11d3U, {0x9d, 0x7b, 0x00, 0x00, 0xf8, 0x1e, 0xf3, 0x2e} },
+            /* CodecName */          png_codecname,
+            /* DllName */            NULL,
+            /* FormatDescription */  png_format,
+            /* FilenameExtension */  png_extension,
+            /* MimeType */           png_mimetype,
+            /* Flags */              ImageCodecFlagsDecoder | ImageCodecFlagsSupportBitmap | ImageCodecFlagsBuiltin,
+            /* Version */            1,
+            /* SigCount */           1,
+            /* SigSize */            8,
+            /* SigPattern */         png_sig_pattern,
+            /* SigMask */            png_sig_mask,
         },
         NULL
     },
