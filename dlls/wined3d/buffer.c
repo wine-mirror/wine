@@ -258,7 +258,7 @@ static UINT *find_conversion_shift(struct wined3d_buffer *This,
     {
         WINED3DFORMAT format;
 
-        if (strided->elements[i].buffer_object != This->buffer_object) continue;
+        if (!(strided->use_map & (1 << i)) || strided->elements[i].buffer_object != This->buffer_object) continue;
 
         format = strided->elements[i].format_desc->format;
         if (format == WINED3DFMT_R16G16_FLOAT)
