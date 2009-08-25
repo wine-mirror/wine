@@ -449,6 +449,7 @@ static void test_TypeInfo(void)
 {
     ITypeLib *pTypeLib;
     ITypeInfo *pTypeInfo;
+    ITypeInfo2 *pTypeInfo2;
     HRESULT hr;
     static WCHAR wszBogus[] = { 'b','o','g','u','s',0 };
     static WCHAR wszGetTypeInfo[] = { 'G','e','t','T','y','p','e','I','n','f','o',0 };
@@ -458,6 +459,8 @@ static void test_TypeInfo(void)
     OLECHAR* pwszClone = wszClone;
     DISPID dispidMember;
     DISPPARAMS dispparams;
+    GUID bogusguid = {0x806afb4f,0x13f7,0x42d2,{0x89,0x2c,0x6c,0x97,0xc3,0x6a,0x36,0xc1}};
+    VARIANT var;
 
     hr = LoadTypeLib(wszStdOle2, &pTypeLib);
     ok_ole_success(hr, LoadTypeLib);
@@ -502,6 +505,25 @@ static void test_TypeInfo(void)
 
     hr = ITypeInfo_GetIDsOfNames(pTypeInfo, &pwszGetTypeInfo, 1, &dispidMember);
     ok_ole_success(hr, ITypeInfo_GetIDsOfNames);
+
+    hr = ITypeInfo_QueryInterface(pTypeInfo, &IID_ITypeInfo2, (void**)&pTypeInfo2);
+    ok_ole_success(hr, ITypeInfo_QueryInterface);
+
+    if (SUCCEEDED(hr))
+    {
+        VariantInit(&var);
+
+        V_VT(&var) = VT_I4;
+
+        /* test unknown guid passed to GetCustData */
+        hr = ITypeInfo2_GetCustData(pTypeInfo2, &bogusguid, &var);
+        ok_ole_success(hr, ITypeInfo_GetCustData);
+        ok(V_VT(&var) == VT_EMPTY, "got %i, expected VT_EMPTY\n", V_VT(&var));
+
+        ITypeInfo2_Release(pTypeInfo2);
+
+        VariantClear(&var);
+    }
 
     /* test invoking a method with a [restricted] keyword */
     hr = ITypeInfo_Invoke(pTypeInfo, NULL, dispidMember, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);

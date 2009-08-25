@@ -7047,13 +7047,12 @@ static HRESULT WINAPI ITypeInfo2_fnGetCustData(
 
     TRACE("(%p) guid %s %s found!x)\n", This, debugstr_guid(guid), pCData? "" : "NOT");
 
-    if(pCData)
-    {
-        VariantInit( pVarVal);
+    VariantInit( pVarVal);
+    if (pCData)
         VariantCopy( pVarVal, &pCData->data);
-        return S_OK;
-    }
-    return E_INVALIDARG;  /* FIXME: correct? */
+    else
+        VariantClear( pVarVal );
+    return S_OK;
 }
 
 /* ITypeInfo2::GetFuncCustData
