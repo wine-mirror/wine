@@ -383,18 +383,36 @@ HRESULT CALLBACK IBindResource_Bind_Proxy(IBindResource* This, IUnknown *pUnkOut
                                           REFGUID rguid, REFIID riid, IAuthenticate *pAuthenticate, DBIMPLICITSESSION *pImplSession,
                                           DBBINDURLSTATUS *pdwBindStatus, IUnknown **ppUnk)
 {
-    FIXME("(%p, %p, %s, %08x, %s, %s, %p, %p, %p, %p): stub\n", This, pUnkOuter, debugstr_w(pwszURL), dwBindURLFlags,
+    HRESULT hr;
+
+    TRACE("(%p, %p, %s, %08x, %s, %s, %p, %p, %p, %p)\n", This, pUnkOuter, debugstr_w(pwszURL), dwBindURLFlags,
           debugstr_guid(rguid), debugstr_guid(riid), pAuthenticate, pImplSession, pdwBindStatus, ppUnk);
-    return E_NOTIMPL;
+
+    hr = IBindResource_RemoteBind_Proxy(This, pUnkOuter, pwszURL, dwBindURLFlags, rguid, riid, pAuthenticate,
+                                        pImplSession ? pImplSession->pUnkOuter : NULL, pImplSession ? pImplSession->piid : NULL,
+                                        pImplSession ? &pImplSession->pSession : NULL, pdwBindStatus, ppUnk);
+    return hr;
 }
 
 HRESULT __RPC_STUB IBindResource_Bind_Stub(IBindResource* This, IUnknown *pUnkOuter, LPCOLESTR pwszURL, DBBINDURLFLAG dwBindURLFlags,
                                            REFGUID rguid, REFIID riid, IAuthenticate *pAuthenticate, IUnknown *pSessionUnkOuter,
                                            IID *piid, IUnknown **ppSession, DBBINDURLSTATUS *pdwBindStatus, IUnknown **ppUnk)
 {
-    FIXME("(%p, %p, %s, %08x, %s, %s, %p, %p, %p, %p, %p, %p): stub\n", This, pUnkOuter, debugstr_w(pwszURL), dwBindURLFlags,
+    HRESULT hr;
+    DBIMPLICITSESSION impl_session;
+
+    TRACE("(%p, %p, %s, %08x, %s, %s, %p, %p, %p, %p, %p, %p)\n", This, pUnkOuter, debugstr_w(pwszURL), dwBindURLFlags,
           debugstr_guid(rguid), debugstr_guid(riid), pAuthenticate, pSessionUnkOuter, piid, ppSession, pdwBindStatus, ppUnk);
-    return E_NOTIMPL;
+
+    impl_session.pUnkOuter = pSessionUnkOuter;
+    impl_session.piid = piid;
+    impl_session.pSession = NULL;
+
+    hr = IBindResource_Bind(This, pUnkOuter, pwszURL, dwBindURLFlags, rguid, riid, pAuthenticate,
+                            ppSession ? &impl_session : NULL, pdwBindStatus, ppUnk);
+
+    if(ppSession) *ppSession = impl_session.pSession;
+    return hr;
 }
 
 HRESULT CALLBACK ICreateRow_CreateRow_Proxy(ICreateRow* This, IUnknown *pUnkOuter, LPCOLESTR pwszURL, DBBINDURLFLAG dwBindURLFlags,
