@@ -4426,18 +4426,23 @@ static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wi
             device->useDrawStridedSlow = FALSE;
         }
     }
-    else if (fixup || (!dataLocations->elements[WINED3D_FFP_PSIZE].data
-            && !dataLocations->position_transformed
-            && (GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA)
-            || (!dataLocations->elements[WINED3D_FFP_DIFFUSE].data
-            && !dataLocations->elements[WINED3D_FFP_SPECULAR].data))))
+    else
     {
-        /* Load the vertex data using named arrays */
-        load_named = TRUE;
-        device->useDrawStridedSlow = FALSE;
-    } else {
-        TRACE("Not loading vertex data\n");
-        device->useDrawStridedSlow = TRUE;
+        WORD slow_mask = (1 << WINED3D_FFP_PSIZE);
+        slow_mask |= -!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) & ((1 << WINED3D_FFP_DIFFUSE) | (1 << WINED3D_FFP_SPECULAR));
+
+        if (fixup || (!dataLocations->position_transformed
+                && !(dataLocations->use_map & slow_mask)))
+        {
+            /* Load the vertex data using named arrays */
+            load_named = TRUE;
+            device->useDrawStridedSlow = FALSE;
+        }
+        else
+        {
+            TRACE("Not loading vertex data\n");
+            device->useDrawStridedSlow = TRUE;
+        }
     }
 
     if (context->numberedArraysLoaded && !load_numbered)
