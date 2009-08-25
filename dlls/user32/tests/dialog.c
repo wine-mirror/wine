@@ -930,6 +930,19 @@ static INT_PTR CALLBACK DestroyOnCloseDlgWinProc (HWND hDlg, UINT uiMsg,
     return FALSE;
 }
 
+
+static INT_PTR CALLBACK TestDefButtonDlgProc (HWND hDlg, UINT uiMsg,
+                                              WPARAM wParam, LPARAM lParam)
+{
+    switch (uiMsg)
+    {
+    case WM_INITDIALOG:
+        EndDialog(hDlg, LOWORD(SendMessage(hDlg, DM_GETDEFID, 0, 0)));
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static void test_DialogBoxParamA(void)
 {
     INT_PTR ret;
@@ -968,6 +981,9 @@ static void test_DialogBoxParamA(void)
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE ||
        broken(GetLastError() == 0xdeadbeef),
        "got %d, expected ERROR_INVALID_WINDOW_HANDLE\n", GetLastError());
+
+    ret = DialogBoxParamA(GetModuleHandle(NULL), "TEST_EMPTY_DIALOG", 0, TestDefButtonDlgProc, 0);
+    ok(ret == IDOK, "Expected IDOK\n");
 }
 
 static void test_DisabledDialogTest(void)
