@@ -567,6 +567,8 @@ GpStatus WINGDIPAPI GdipIsEqualRegion(GpRegion *, GpRegion *, GpGraphics *, BOOL
 GpStatus WINGDIPAPI GdipIsInfiniteRegion(GpRegion *, GpGraphics *, BOOL *);
 GpStatus WINGDIPAPI GdipIsVisibleRegionPoint(GpRegion *, REAL, REAL, GpGraphics *, BOOL *);
 GpStatus WINGDIPAPI GdipIsVisibleRegionPointI(GpRegion *, INT, INT, GpGraphics *, BOOL *);
+GpStatus WINGDIPAPI GdipIsVisibleRegionRect(GpRegion *, REAL, REAL, REAL, REAL, GpGraphics *, BOOL *);
+GpStatus WINGDIPAPI GdipIsVisibleRegionRectI(GpRegion *, INT, INT, INT, INT, GpGraphics *, BOOL *);
 GpStatus WINGDIPAPI GdipSetEmpty(GpRegion *);
 GpStatus WINGDIPAPI GdipSetInfinite(GpRegion *);
 GpStatus WINGDIPAPI GdipTransformRegion(GpRegion *, GpMatrix *);

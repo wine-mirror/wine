@@ -68,6 +68,11 @@ static inline INT roundr(REAL x)
     return (INT) floorf(x + 0.5);
 }
 
+static inline INT ceilr(REAL x)
+{
+    return (INT) ceilf(x);
+}
+
 static inline REAL deg2rad(REAL degrees)
 {
     return M_PI * degrees / 180.0;

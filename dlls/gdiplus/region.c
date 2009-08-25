@@ -1128,6 +1128,53 @@ GpStatus WINGDIPAPI GdipIsInfiniteRegion(GpRegion *region, GpGraphics *graphics,
 }
 
 /*****************************************************************************
+ * GdipIsVisibleRegionRect [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipIsVisibleRegionRect(GpRegion* region, REAL x, REAL y, REAL w, REAL h, GpGraphics *graphics, BOOL *res)
+{
+    HRGN hrgn;
+    GpStatus stat;
+    RECT rect;
+
+    TRACE("(%p, %.2f, %.2f, %.2f, %.2f, %p, %p)\n", region, x, y, w, h, graphics, res);
+
+    if(!region || !res)
+        return InvalidParameter;
+
+    if((stat = GdipGetRegionHRgn(region, NULL, &hrgn)) != Ok)
+        return stat;
+
+    /* infinite */
+    if(!hrgn){
+        *res = TRUE;
+        return Ok;
+    }
+
+    rect.left = ceilr(x);
+    rect.top = ceilr(y);
+    rect.right = ceilr(x + w);
+    rect.bottom = ceilr(y + h);
+
+    *res = RectInRegion(hrgn, &rect);
+
+    DeleteObject(hrgn);
+
+    return Ok;
+}
+
+/*****************************************************************************
+ * GdipIsVisibleRegionRectI [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipIsVisibleRegionRectI(GpRegion* region, INT x, INT y, INT w, INT h, GpGraphics *graphics, BOOL *res)
+{
+    TRACE("(%p, %d, %d, %d, %d, %p, %p)\n", region, x, y, w, h, graphics, res);
+    if(!region || !res)
+        return InvalidParameter;
+
+    return GdipIsVisibleRegionRect(region, (REAL)x, (REAL)y, (REAL)w, (REAL)h, graphics, res);
+}
+
+/*****************************************************************************
  * GdipIsVisibleRegionPoint [GDIPLUS.@]
  */
 GpStatus WINGDIPAPI GdipIsVisibleRegionPoint(GpRegion* region, REAL x, REAL y, GpGraphics *graphics, BOOL *res)

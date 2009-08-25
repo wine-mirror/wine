@@ -1407,6 +1407,210 @@ static void test_isvisiblepoint(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_isvisiblerect(void)
+{
+    HDC hdc = GetDC(0);
+    GpGraphics* graphics;
+    GpRegion* region;
+    GpPath* path;
+    GpRectF rectf;
+    GpStatus status;
+    BOOL res;
+    REAL x, y, w, h;
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    status = GdipCreateRegion(&region);
+    expect(Ok, status);
+
+    /* null parameters */
+    status = GdipIsVisibleRegionRect(NULL, 0, 0, 0, 0, graphics, &res);
+    expect(InvalidParameter, status);
+    status = GdipIsVisibleRegionRectI(NULL, 0, 0, 0, 0, graphics, &res);
+    expect(InvalidParameter, status);
+
+    status = GdipIsVisibleRegionRect(region, 0, 0, 0, 0, NULL, &res);
+    expect(Ok, status);
+    status = GdipIsVisibleRegionRectI(region, 0, 0, 0, 0, NULL, &res);
+    expect(Ok, status);
+
+    status = GdipIsVisibleRegionRect(region, 0, 0, 0, 0, graphics, NULL);
+    expect(InvalidParameter, status);
+    status = GdipIsVisibleRegionRectI(region, 0, 0, 0, 0, graphics, NULL);
+    expect(InvalidParameter, status);
+
+    /* infinite region */
+    status = GdipIsInfiniteRegion(region, graphics, &res);
+    expect(Ok, status);
+    ok(res == TRUE, "Region should be infinite\n");
+
+    x = 10; w = 10;
+    y = 10; h = 10;
+    status = GdipIsVisibleRegionRect(region, x, y, w, h, graphics, &res);
+    expect(Ok, status);
+    ok(res == TRUE, "Expected (%.2f, %.2f, %.2f, %.2f) to be visible\n", x, y, w, h);
+
+    x = -10; w = 5;
+    y = -10; h = 5;
+    status = GdipIsVisibleRegionRect(region, x, y, w, h, graphics, &res);
+    expect(Ok, status);
+    ok(res == TRUE, "Expected (%.2f, %.2f, %.2f, %.2f) to be visible\n", x, y, w, h);
+
+    /* rectangular region */
+    rectf.X = 10;
+    rectf.Y = 20;
+    rectf.Width = 30;
+    rectf.Height = 40;
+
+    status = GdipCombineRegionRect(region, &rectf, CombineModeIntersect);
+    expect(Ok, status);
+
+    /* entirely within the region */
+    x = 11; w = 10;
+    y = 12; h = 10;
+    status = GdipIsVisibleRegionRect(region, x, y, w, h, graphics, &res);
+    expect(Ok, status);
+    ok(res == TRUE, "Expected (%.2f, %.2f, %.2f, %.2f) to be visible\n", x, y, w, h);
+    status = GdipIsVisibleRegionRectI(region, (INT)x, (INT)y, (INT)w, (INT)h, graphics, &res);
+    expect(Ok, status);
+    ok(res == TRUE, "Expected (%d, %d, %d, %d) to be visible\n", (INT)x, (INT)y, (INT)w, (INT)h);
+
+    /* entirely outside of the region */
+    x = 0; w = 5;
+    y = 0; h = 5;
+    status = GdipIsVisibleRegionRect(region, x, y, w, h, graphics, &res);
+    expect(Ok, status);
+    ok(res == FALSE, "Expected (%.2f, %.2f, %.2f, %.2f) not to be visible\n", x, y, w, h);
+    status = GdipIsVisibleRegionRectI(region, (INT)x, (INT)y, (INT)w, (INT)h, graphics, &res);
+    expect(Ok, status);
+    ok(res == FALSE, "Expected (%d, %d, %d, %d) not to be visible\n", (INT)x, (INT)y, (INT)w, (INT)h);
+
+    /* corner cases */
+    x = 0; w = 10;
+    y = 0; h = 20;
+    status = GdipIsVisibleRegionRect(region, x, y, w, h, graphics, &res);
+    expect(Ok, status);
+    ok(res == FALSE, "Expected (%.2f, %.2f, %.2f, %.2f) not to be visible\n", x, y, w, h);
+
+    x = 0; w = 10.25;
+    y = 0; h = 20.25;
+    status = GdipIsVisibleRegionRect(region, x, y, w, h, graphics, &res);
+    expect(Ok, status);
+    ok(res == TRUE, "Expected (%.2f, %.2f, %.2f, %.2f) to be visible\n", x, y, w, h);
+
+    x = 39; w = 10;
+    y = 59; h = 10;
+    status = GdipIsVisibleRegionRect(region, x, y, w, h, graphics, &res);
+    expect(Ok, status);
+    ok(res == TRUE, "Expected (%.2f, %.2f, %.2f, %.2f) to be visible\n", x, y, w, h);
+
+    x = 39.25; w = 10;
+    y = 59.25; h = 10;
+    status = GdipIsVisibleRegionRect(region, x, y, w, h, graphics, &res);
+    expect(Ok, status);
+    ok(res == FALSE, "Expected (%.2f, %.2f, %.2f, %.2f) not to be visible\n", x, y, w, h);
+
+    /* corners outside, but some intersection */
+    x = 0; w = 100;
+    y = 0; h = 100;
+    status = GdipIsVisibleRegionRect(region, x, y, w, h, graphics, &res);
+    expect(Ok, status);
+    ok(res == TRUE, "Expected (%.2f, %.2f, %.2f, %.2f) to be visible\n", x, y, w, h);
+
+    x = 0; w = 100;
+    y = 0; h = 40;
+    status = GdipIsVisibleRegionRect(region, x, y, w, h, graphics, &res);
+    expect(Ok, status);
+    ok(res == TRUE, "Expected (%.2f, %.2f, %.2f, %.2f) to be visible\n", x, y, w, h);
+
+    x = 0; w = 25;
+    y = 0; h = 100;
+    status = GdipIsVisibleRegionRect(region, x, y, w, h, graphics, &res);
+    expect(Ok, status);
+    ok(res == TRUE, "Expected (%.2f, %.2f, %.2f, %.2f) to be visible\n", x, y, w, h);
+
+    /* translate into the center of the rectangle */
+    status = GdipTranslateWorldTransform(graphics, 25, 40, MatrixOrderAppend);
+    expect(Ok, status);
+
+    /* native ignores the world transform, so treat these as if
+     * no transform exists */
+    x = 0; w = 5;
+    y = 0; h = 5;
+    status = GdipIsVisibleRegionRect(region, x, y, w, h, graphics, &res);
+    expect(Ok, status);
+    ok(res == FALSE, "Expected (%.2f, %.2f, %.2f, %.2f) not to be visible\n", x, y, w, h);
+    status = GdipIsVisibleRegionRectI(region, (INT)x, (INT)y, (INT)w, (INT)h, graphics, &res);
+    expect(Ok, status);
+    ok(res == FALSE, "Expected (%d, %d, %d, %d) not to be visible\n", (INT)x, (INT)y, (INT)w, (INT)h);
+
+    x = 11; w = 10;
+    y = 12; h = 10;
+    status = GdipIsVisibleRegionRect(region, x, y, w, h, graphics, &res);
+    expect(Ok, status);
+    ok(res == TRUE, "Expected (%.2f, %.2f, %.2f, %.2f) to be visible\n", x, y, w, h);
+    status = GdipIsVisibleRegionRectI(region, (INT)x, (INT)y, (INT)w, (INT)h, graphics, &res);
+    expect(Ok, status);
+    ok(res == TRUE, "Expected (%d, %d, %d, %d) to be visible\n", (INT)x, (INT)y, (INT)w, (INT)h);
+
+    /* translate back to origin */
+    status = GdipTranslateWorldTransform(graphics, -25, -40, MatrixOrderAppend);
+    expect(Ok, status);
+
+    /* region from path */
+    status = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, status);
+
+    status = GdipAddPathEllipse(path, 10, 20, 30, 40);
+    expect(Ok, status);
+
+    status = GdipCombineRegionPath(region, path, CombineModeReplace);
+    expect(Ok, status);
+
+    x = 0; w = 12;
+    y = 0; h = 22;
+    status = GdipIsVisibleRegionRect(region, x, y, w, h, graphics, &res);
+    expect(Ok, status);
+    ok(res == FALSE, "Expected (%.2f, %.2f, %.2f, %.2f) not to be visible\n", x, y, w, h);
+    status = GdipIsVisibleRegionRectI(region, (INT)x, (INT)y, (INT)w, (INT)h, graphics, &res);
+    expect(Ok, status);
+    ok(res == FALSE, "Expected (%d, %d, %d, %d) not to be visible\n", (INT)x, (INT)y, (INT)w, (INT)h);
+
+    x = 0; w = 25;
+    y = 0; h = 40;
+    status = GdipIsVisibleRegionRect(region, x, y, w, h, graphics, &res);
+    expect(Ok, status);
+    ok(res == TRUE, "Expected (%.2f, %.2f, %.2f, %.2f) to be visible\n", x, y, w, h);
+    status = GdipIsVisibleRegionRectI(region, (INT)x, (INT)y, (INT)w, (INT)h, graphics, &res);
+    expect(Ok, status);
+    ok(res == TRUE, "Expected (%d, %d, %d, %d) to be visible\n", (INT)x, (INT)y, (INT)w, (INT)h);
+
+    x = 38; w = 10;
+    y = 55; h = 10;
+    status = GdipIsVisibleRegionRect(region, x, y, w, h, graphics, &res);
+    expect(Ok, status);
+    ok(res == FALSE, "Expected (%.2f, %.2f, %.2f, %.2f) not to be visible\n", x, y, w, h);
+    status = GdipIsVisibleRegionRectI(region, (INT)x, (INT)y, (INT)w, (INT)h, graphics, &res);
+    expect(Ok, status);
+    ok(res == FALSE, "Expected (%d, %d, %d, %d) not to be visible\n", (INT)x, (INT)y, (INT)w, (INT)h);
+
+    x = 0; w = 100;
+    y = 0; h = 100;
+    status = GdipIsVisibleRegionRect(region, x, y, w, h, graphics, &res);
+    expect(Ok, status);
+    ok(res == TRUE, "Expected (%.2f, %.2f, %.2f, %.2f) to be visible\n", x, y, w, h);
+    status = GdipIsVisibleRegionRectI(region, (INT)x, (INT)y, (INT)w, (INT)h, graphics, &res);
+    expect(Ok, status);
+    ok(res == TRUE, "Expected (%d, %d, %d, %d) to be visible\n", (INT)x, (INT)y, (INT)w, (INT)h);
+
+    GdipDeletePath(path);
+
+    GdipDeleteRegion(region);
+    GdipDeleteGraphics(graphics);
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(region)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -1429,6 +1633,7 @@ START_TEST(region)
     test_translate();
     test_getbounds();
     test_isvisiblepoint();
+    test_isvisiblerect();
 
     GdiplusShutdown(gdiplusToken);
 }

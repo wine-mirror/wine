@@ -433,8 +433,8 @@
 @ stdcall GdipIsVisibleRectI(ptr long long long long ptr)
 @ stdcall GdipIsVisibleRegionPoint(ptr long long ptr ptr)
 @ stdcall GdipIsVisibleRegionPointI(ptr long long ptr ptr)
-@ stub GdipIsVisibleRegionRect
-@ stub GdipIsVisibleRegionRectI
+@ stdcall GdipIsVisibleRegionRect(ptr long long long long ptr ptr)
+@ stdcall GdipIsVisibleRegionRectI(ptr long long long long ptr ptr)
 @ stdcall GdipLoadImageFromFile(wstr ptr)
 @ stdcall GdipLoadImageFromFileICM(wstr ptr)
 @ stdcall GdipLoadImageFromStream(ptr ptr)
