@@ -290,6 +290,8 @@ AC_SUBST(OPENGL_LIBS,"")
 
 dnl **** Check for header files ****
 
+AC_SYS_LARGEFILE()
+
 AC_CHECK_HEADERS(\
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
