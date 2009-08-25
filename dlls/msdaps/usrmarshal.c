@@ -388,9 +388,15 @@ HRESULT CALLBACK ICreateRow_CreateRow_Proxy(ICreateRow* This, IUnknown *pUnkOute
                                             REFGUID rguid, REFIID riid, IAuthenticate *pAuthenticate, DBIMPLICITSESSION *pImplSession,
                                             DBBINDURLSTATUS *pdwBindStatus, LPOLESTR *ppwszNewURL, IUnknown **ppUnk)
 {
-    FIXME("(%p, %p, %s, %08x, %s, %s, %p, %p, %p, %p, %p): stub\n", This, pUnkOuter, debugstr_w(pwszURL), dwBindURLFlags,
+    HRESULT hr;
+
+    TRACE("(%p, %p, %s, %08x, %s, %s, %p, %p, %p, %p, %p)\n", This, pUnkOuter, debugstr_w(pwszURL), dwBindURLFlags,
           debugstr_guid(rguid), debugstr_guid(riid), pAuthenticate, pImplSession, pdwBindStatus, ppwszNewURL, ppUnk);
-    return E_NOTIMPL;
+
+    hr = ICreateRow_RemoteCreateRow_Proxy(This, pUnkOuter, pwszURL, dwBindURLFlags, rguid, riid, pAuthenticate,
+                                          pImplSession ? pImplSession->pUnkOuter : NULL, pImplSession ? pImplSession->piid : NULL,
+                                          pImplSession ? &pImplSession->pSession : NULL, pdwBindStatus, ppwszNewURL, ppUnk);
+    return hr;
 }
 
 HRESULT __RPC_STUB ICreateRow_CreateRow_Stub(ICreateRow* This, IUnknown *pUnkOuter, LPCOLESTR pwszURL, DBBINDURLFLAG dwBindURLFlags,
@@ -398,8 +404,20 @@ HRESULT __RPC_STUB ICreateRow_CreateRow_Stub(ICreateRow* This, IUnknown *pUnkOut
                                              IID *piid, IUnknown **ppSession, DBBINDURLSTATUS *pdwBindStatus,
                                              LPOLESTR *ppwszNewURL, IUnknown **ppUnk)
 {
-    FIXME("(%p, %p, %s, %08x, %s, %s, %p, %p, %p, %p, %p, %p, %p): stub\n", This, pUnkOuter, debugstr_w(pwszURL), dwBindURLFlags,
+    HRESULT hr;
+    DBIMPLICITSESSION impl_session;
+
+    TRACE("(%p, %p, %s, %08x, %s, %s, %p, %p, %p, %p, %p, %p, %p)\n", This, pUnkOuter, debugstr_w(pwszURL), dwBindURLFlags,
           debugstr_guid(rguid), debugstr_guid(riid), pAuthenticate, pSessionUnkOuter, piid, ppSession, pdwBindStatus, ppwszNewURL,
           ppUnk);
-    return E_NOTIMPL;
+
+    impl_session.pUnkOuter = pSessionUnkOuter;
+    impl_session.piid = piid;
+    impl_session.pSession = NULL;
+
+    hr = ICreateRow_CreateRow(This, pUnkOuter, pwszURL, dwBindURLFlags, rguid, riid, pAuthenticate,
+                              ppSession ? &impl_session : NULL, pdwBindStatus, ppwszNewURL, ppUnk);
+
+    if(ppSession) *ppSession = impl_session.pSession;
+    return hr;
 }
