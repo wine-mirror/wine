@@ -1399,6 +1399,29 @@ static void test_StaticWidget(void)
     ITypeInfo_Release(type_info);
 }
 
+static void test_libattr(void)
+{
+    ITypeLib *pTypeLib;
+    HRESULT hr;
+    TLIBATTR *pattr;
+
+    hr = LoadRegTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL, &pTypeLib);
+    ok_ole_success(hr, LoadRegTypeLib);
+    if (FAILED(hr))
+        return;
+
+    hr = ITypeLib_GetLibAttr(pTypeLib, &pattr);
+    ok_ole_success(hr, GetLibAttr);
+    if (SUCCEEDED(hr))
+    {
+        ok(pattr->lcid == MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), "lcid %x\n", pattr->lcid);
+
+        ITypeLib_ReleaseTLibAttr(pTypeLib, pattr);
+    }
+
+    ITypeLib_Release(pTypeLib);
+}
+
 START_TEST(tmarshal)
 {
     HRESULT hr;
@@ -1411,6 +1434,7 @@ START_TEST(tmarshal)
     test_typelibmarshal();
     test_DispCallFunc();
     test_StaticWidget();
+    test_libattr();
 
     hr = UnRegisterTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL,
                            sizeof(void*) == 8 ? SYS_WIN64 : SYS_WIN32);
