@@ -617,6 +617,7 @@ LDPATH
 BUILTINFLAG
 EXTRACFLAGS
 LIBKSTAT
+LIBOPENAL
 LIBMPG123
 PNGINCL
 FONTCONFIGINCL
@@ -792,6 +793,7 @@ with_jpeg
 with_ldap
 with_mpg123
 with_nas
+with_openal
 with_opengl
 with_openssl
 with_oss
@@ -1476,6 +1478,7 @@ Optional Packages:
   --without-ldap          do not use LDAP
   --without-mpg123        do not use the mpg123 library
   --without-nas           do not use the NAS sound support
+  --without-openal        do not use OpenAL
   --without-opengl        do not use OpenGL
   --without-openssl       do not use OpenSSL
   --without-oss           do not use the OSS sound support
@@ -2614,6 +2617,12 @@ fi
 # Check whether --with-nas was given.
 if test "${with_nas+set}" = set; then :
   withval=$with_nas; if test "x$withval" = "xno"; then ac_cv_header_audio_audiolib_h=no; fi
+fi
+
+
+# Check whether --with-openal was given.
+if test "${with_openal+set}" = set; then :
+  withval=$with_openal; if test "x$withval" = "xno"; then ac_cv_header_AL_al_h=no; fi
 fi
 
 
@@ -5650,6 +5659,7 @@ done
 
 
 for ac_header in \
+	AL/al.h \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
 	CoreAudio/CoreAudio.h \
@@ -11326,6 +11336,60 @@ esac
 fi
 test "x$ac_cv_lib_mpg123_mpg123_feed" = xyes || enable_winemp3_acm=${enable_winemp3_acm:-no}
 
+if test "$ac_cv_header_AL_al_h" = "yes"
+then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for alGetSource3i in -lopenal" >&5
+$as_echo_n "checking for alGetSource3i in -lopenal... " >&6; }
+if test "${ac_cv_lib_openal_alGetSource3i+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lopenal  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char alGetSource3i ();
+int
+main ()
+{
+return alGetSource3i ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_openal_alGetSource3i=yes
+else
+  ac_cv_lib_openal_alGetSource3i=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_openal_alGetSource3i" >&5
+$as_echo "$ac_cv_lib_openal_alGetSource3i" >&6; }
+if test "x$ac_cv_lib_openal_alGetSource3i" = x""yes; then :
+  LIBOPENAL="-lopenal"
+
+fi
+
+fi
+if test "x$ac_cv_lib_openal_alGetSource3i" != xyes; then :
+  case "x$with_openal" in
+  x)   wine_notices="$wine_notices|libopenal ${notice_platform}development files not found (or too old), OpenAL won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error "libopenal ${notice_platform}development files not found (or too old), OpenAL won't be supported.
+This is an error since --with-openal was requested." "$LINENO" 5 ;;
+esac
+fi
+test "x$ac_cv_lib_openal_alGetSource3i" = xyes || enable_openal32=${enable_openal32:-no}
+
 if test "$ac_cv_header_kstat_h" = "yes"
 then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for kstat_open in -lkstat" >&5
@@ -15962,6 +16026,14 @@ dlls/olethk32/Makefile: dlls/olethk32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/olethk32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/openal32/Makefile"
+test "x$enable_openal32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	openal32"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/openal32/Makefile: dlls/openal32/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/openal32/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/opengl32/Makefile"
 test "x$enable_opengl32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	opengl32"
@@ -18855,6 +18927,7 @@ do
     "dlls/olesvr.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olesvr.dll16/Makefile" ;;
     "dlls/olesvr32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olesvr32/Makefile" ;;
     "dlls/olethk32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olethk32/Makefile" ;;
+    "dlls/openal32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/openal32/Makefile" ;;
     "dlls/opengl32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/opengl32/Makefile" ;;
     "dlls/opengl32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/opengl32/tests/Makefile" ;;
     "dlls/pdh/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/pdh/Makefile" ;;

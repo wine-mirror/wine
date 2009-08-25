@@ -14,6 +14,9 @@
 /* Define to 1 if you have the <alsa/asoundlib.h> header file. */
 #undef HAVE_ALSA_ASOUNDLIB_H
 
+/* Define to 1 if you have the <AL/al.h> header file. */
+#undef HAVE_AL_AL_H
+
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
 

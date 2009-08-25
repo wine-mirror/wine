@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = openal32.dll
+IMPORTS   = kernel32 ntdll
+EXTRALIBS = @LIBOPENAL@
+
+C_SRCS = \
+	openal.c
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

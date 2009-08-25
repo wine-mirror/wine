@@ -53,6 +53,8 @@ AC_ARG_WITH(mpg123,    AS_HELP_STRING([--without-mpg123],[do not use the mpg123 
             [if test "x$withval" = "xno"; then ac_cv_header_mpg123_h=no; fi])
 AC_ARG_WITH(nas,       AS_HELP_STRING([--without-nas],[do not use the NAS sound support]),
             [if test "x$withval" = "xno"; then ac_cv_header_audio_audiolib_h=no; fi])
+AC_ARG_WITH(openal,    AS_HELP_STRING([--without-openal],[do not use OpenAL]),
+            [if test "x$withval" = "xno"; then ac_cv_header_AL_al_h=no; fi])
 AC_ARG_WITH(opengl,    AS_HELP_STRING([--without-opengl],[do not use OpenGL]))
 AC_ARG_WITH(openssl,   AS_HELP_STRING([--without-openssl],[do not use OpenSSL]),
             [if test "x$withval" = "xno"; then ac_cv_header_openssl_err_h=no; ac_cv_header_openssl_ssl_h=no; fi])
@@ -294,6 +296,7 @@ dnl **** Check for header files ****
 AC_SYS_LARGEFILE()
 
 AC_CHECK_HEADERS(\
+	AL/al.h \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
 	CoreAudio/CoreAudio.h \
@@ -1417,6 +1420,15 @@ WINE_NOTICE_WITH(mpg123,[test "x$ac_cv_lib_mpg123_mpg123_feed" != xyes],
                  [libmpg123 ${notice_platform}development files not found (or too old), mp3 codec won't be supported.])
 test "x$ac_cv_lib_mpg123_mpg123_feed" = xyes || enable_winemp3_acm=${enable_winemp3_acm:-no}
 
+dnl **** Check for OpenAL 1.1 ****
+if test "$ac_cv_header_AL_al_h" = "yes"
+then
+    AC_CHECK_LIB(openal,alGetSource3i,[AC_SUBST(LIBOPENAL,"-lopenal")])
+fi
+WINE_NOTICE_WITH(openal,[test "x$ac_cv_lib_openal_alGetSource3i" != xyes],
+                 [libopenal ${notice_platform}development files not found (or too old), OpenAL won't be supported.])
+test "x$ac_cv_lib_openal_alGetSource3i" = xyes || enable_openal32=${enable_openal32:-no}
+
 dnl **** Check for libkstat ****
 if test "$ac_cv_header_kstat_h" = "yes"
 then
@@ -2346,6 +2358,7 @@ WINE_CONFIG_MAKEFILE([dlls/olepro32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_D
 WINE_CONFIG_MAKEFILE([dlls/olesvr.dll16/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[enable_win16])
 WINE_CONFIG_MAKEFILE([dlls/olesvr32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/olethk32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
+WINE_CONFIG_MAKEFILE([dlls/openal32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/opengl32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/opengl32/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
 WINE_CONFIG_MAKEFILE([dlls/pdh/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
