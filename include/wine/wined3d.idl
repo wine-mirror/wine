@@ -3468,3 +3468,5 @@ interface IWineD3DDevice : IWineD3DBase
 
 IWineD3D *WineDirect3DCreate(UINT dxVersion, IUnknown *parent);
 IWineD3DClipper *WineDirect3DCreateClipper(IUnknown *parent);
+void wined3d_mutex_lock(void);
+void wined3d_mutex_unlock(void);

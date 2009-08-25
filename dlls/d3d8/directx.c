@@ -71,9 +71,11 @@ static ULONG WINAPI IDirect3D8Impl_Release(LPDIRECT3D8 iface) {
 
     if (ref == 0) {
         TRACE("Releasing wined3d %p\n", This->WineD3D);
-        EnterCriticalSection(&d3d8_cs);
+
+        wined3d_mutex_lock();
         IWineD3D_Release(This->WineD3D);
-        LeaveCriticalSection(&d3d8_cs);
+        wined3d_mutex_unlock();
+
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -86,9 +88,10 @@ static HRESULT WINAPI IDirect3D8Impl_RegisterSoftwareDevice (LPDIRECT3D8 iface, 
     HRESULT hr;
     TRACE("(%p)->(%p)\n", This, pInitializeFunction);
 
-    EnterCriticalSection(&d3d8_cs);
+    wined3d_mutex_lock();
     hr = IWineD3D_RegisterSoftwareDevice(This->WineD3D, pInitializeFunction);
-    LeaveCriticalSection(&d3d8_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -97,9 +100,10 @@ static UINT WINAPI IDirect3D8Impl_GetAdapterCount (LPDIRECT3D8 iface) {
     HRESULT hr;
     TRACE("(%p)\n", This);
 
-    EnterCriticalSection(&d3d8_cs);
+    wined3d_mutex_lock();
     hr = IWineD3D_GetAdapterCount(This->WineD3D);
-    LeaveCriticalSection(&d3d8_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -119,9 +123,9 @@ static HRESULT WINAPI IDirect3D8Impl_GetAdapterIdentifier(LPDIRECT3D8 iface,
     adapter_id.device_name = NULL; /* d3d9 only */
     adapter_id.device_name_size = 0; /* d3d9 only */
 
-    EnterCriticalSection(&d3d8_cs);
+    wined3d_mutex_lock();
     hr = IWineD3D_GetAdapterIdentifier(This->WineD3D, Adapter, Flags, &adapter_id);
-    LeaveCriticalSection(&d3d8_cs);
+    wined3d_mutex_unlock();
 
     pIdentifier->DriverVersion = adapter_id.driver_version;
     pIdentifier->VendorId = adapter_id.vendor_id;
@@ -139,9 +143,10 @@ static UINT WINAPI IDirect3D8Impl_GetAdapterModeCount (LPDIRECT3D8 iface,UINT Ad
     HRESULT hr;
     TRACE("(%p)->(%d)\n", This, Adapter);
 
-    EnterCriticalSection(&d3d8_cs);
+    wined3d_mutex_lock();
     hr = IWineD3D_GetAdapterModeCount(This->WineD3D, Adapter, 0 /* format */);
-    LeaveCriticalSection(&d3d8_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -150,9 +155,9 @@ static HRESULT WINAPI IDirect3D8Impl_EnumAdapterModes (LPDIRECT3D8 iface, UINT A
     HRESULT hr;
     TRACE("(%p)->(%d, %d, %p)\n", This, Adapter, Mode, pMode);
 
-    EnterCriticalSection(&d3d8_cs);
+    wined3d_mutex_lock();
     hr = IWineD3D_EnumAdapterModes(This->WineD3D, Adapter, WINED3DFMT_UNKNOWN, Mode, (WINED3DDISPLAYMODE *) pMode);
-    LeaveCriticalSection(&d3d8_cs);
+    wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr)) pMode->Format = d3dformat_from_wined3dformat(pMode->Format);
 
@@ -164,9 +169,9 @@ static HRESULT WINAPI IDirect3D8Impl_GetAdapterDisplayMode (LPDIRECT3D8 iface, U
     HRESULT hr;
     TRACE("(%p)->(%d,%p)\n", This, Adapter, pMode);
 
-    EnterCriticalSection(&d3d8_cs);
+    wined3d_mutex_lock();
     hr = IWineD3D_GetAdapterDisplayMode(This->WineD3D, Adapter, (WINED3DDISPLAYMODE *) pMode);
-    LeaveCriticalSection(&d3d8_cs);
+    wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr)) pMode->Format = d3dformat_from_wined3dformat(pMode->Format);
 
@@ -180,10 +185,11 @@ static HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceType            (LPDIRECT3D8 i
     HRESULT hr;
     TRACE("(%p)->(%d, %d, %d, %d, %s)\n", This, Adapter, CheckType, DisplayFormat, BackBufferFormat, Windowed ? "true" : "false");
 
-    EnterCriticalSection(&d3d8_cs);
+    wined3d_mutex_lock();
     hr = IWineD3D_CheckDeviceType(This->WineD3D, Adapter, CheckType, wined3dformat_from_d3dformat(DisplayFormat),
             wined3dformat_from_d3dformat(BackBufferFormat), Windowed);
-    LeaveCriticalSection(&d3d8_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -214,10 +220,11 @@ static HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 i
             break;
     }
 
-    EnterCriticalSection(&d3d8_cs);
+    wined3d_mutex_lock();
     hr = IWineD3D_CheckDeviceFormat(This->WineD3D, Adapter, DeviceType, wined3dformat_from_d3dformat(AdapterFormat),
             Usage, WineD3DRType, wined3dformat_from_d3dformat(CheckFormat), SURFACE_OPENGL);
-    LeaveCriticalSection(&d3d8_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -228,10 +235,11 @@ static HRESULT WINAPI IDirect3D8Impl_CheckDeviceMultiSampleType(IDirect3D8 *ifac
     HRESULT hr;
     TRACE("(%p)-<(%d, %d, %d, %s, %d)\n", This, Adapter, DeviceType, SurfaceFormat, Windowed ? "true" : "false", MultiSampleType);
 
-    EnterCriticalSection(&d3d8_cs);
+    wined3d_mutex_lock();
     hr = IWineD3D_CheckDeviceMultiSampleType(This->WineD3D, Adapter, DeviceType,
             wined3dformat_from_d3dformat(SurfaceFormat), Windowed, (WINED3DMULTISAMPLE_TYPE) MultiSampleType, NULL);
-    LeaveCriticalSection(&d3d8_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -242,11 +250,12 @@ static HRESULT WINAPI IDirect3D8Impl_CheckDepthStencilMatch(IDirect3D8 *iface, U
     HRESULT hr;
     TRACE("(%p)-<(%d, %d, %d, %d, %d)\n", This, Adapter, DeviceType, AdapterFormat, RenderTargetFormat, DepthStencilFormat);
 
-    EnterCriticalSection(&d3d8_cs);
+    wined3d_mutex_lock();
     hr = IWineD3D_CheckDepthStencilMatch(This->WineD3D, Adapter, DeviceType,
             wined3dformat_from_d3dformat(AdapterFormat), wined3dformat_from_d3dformat(RenderTargetFormat),
             wined3dformat_from_d3dformat(DepthStencilFormat));
-    LeaveCriticalSection(&d3d8_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -278,9 +287,11 @@ static HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Ada
     if(pWineCaps == NULL){
         return D3DERR_INVALIDCALL; /*well this is what MSDN says to return*/
     }
-    EnterCriticalSection(&d3d8_cs);
+
+    wined3d_mutex_lock();
     hrc = IWineD3D_GetDeviceCaps(This->WineD3D, Adapter, DeviceType, pWineCaps);
-    LeaveCriticalSection(&d3d8_cs);
+    wined3d_mutex_unlock();
+
     fixup_caps(pWineCaps);
     WINECAPSTOD3D8CAPS(pCaps, pWineCaps)
     HeapFree(GetProcessHeap(), 0, pWineCaps);
@@ -294,9 +305,10 @@ static HMONITOR WINAPI  IDirect3D8Impl_GetAdapterMonitor(LPDIRECT3D8 iface, UINT
     HMONITOR ret;
     TRACE("(%p)->(%d)\n", This, Adapter);
 
-    EnterCriticalSection(&d3d8_cs);
+    wined3d_mutex_lock();
     ret = IWineD3D_GetAdapterMonitor(This->WineD3D, Adapter);
-    LeaveCriticalSection(&d3d8_cs);
+    wined3d_mutex_unlock();
+
     return ret;
 }
 
@@ -362,14 +374,15 @@ static HRESULT WINAPI IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapte
     *ppReturnedDeviceInterface = (IDirect3DDevice8 *)object;
 
     /* Allocate an associated WineD3DDevice object */
-    EnterCriticalSection(&d3d8_cs);
+    wined3d_mutex_lock();
     hr = IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags,
             (IUnknown *)object, (IWineD3DDeviceParent *)&object->device_parent_vtbl, &object->WineD3DDevice);
 
     if (hr != D3D_OK) {
         HeapFree(GetProcessHeap(), 0, object);
         *ppReturnedDeviceInterface = NULL;
-        LeaveCriticalSection(&d3d8_cs);
+        wined3d_mutex_unlock();
+
         return hr;
     }
 
@@ -396,7 +409,7 @@ static HRESULT WINAPI IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapte
     }
 
     hr = IWineD3DDevice_Init3D(object->WineD3DDevice, &localParameters);
-    LeaveCriticalSection(&d3d8_cs);
+    wined3d_mutex_unlock();
 
     pPresentationParameters->BackBufferWidth                    = localParameters.BackBufferWidth;
     pPresentationParameters->BackBufferHeight                   = localParameters.BackBufferHeight;
@@ -422,9 +435,11 @@ static HRESULT WINAPI IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapte
     object->decls = HeapAlloc(GetProcessHeap(), 0, object->declArraySize * sizeof(*object->decls));
     if(!object->decls) {
         ERR("Out of memory\n");
-        EnterCriticalSection(&d3d8_cs);
+
+        wined3d_mutex_lock();
         IWineD3DDevice_Release(object->WineD3DDevice);
-        LeaveCriticalSection(&d3d8_cs);
+        wined3d_mutex_unlock();
+
         HeapFree(GetProcessHeap(), 0, object);
         *ppReturnedDeviceInterface = NULL;
         hr = E_OUTOFMEMORY;

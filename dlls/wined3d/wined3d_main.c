@@ -32,6 +32,15 @@ int num_lock = 0;
 void (*CDECL wine_tsx11_lock_ptr)(void) = NULL;
 void (*CDECL wine_tsx11_unlock_ptr)(void) = NULL;
 
+CRITICAL_SECTION wined3d_cs;
+static CRITICAL_SECTION_DEBUG wined3d_cs_debug =
+{
+    0, 0, &wined3d_cs,
+    {&wined3d_cs_debug.ProcessLocksList,
+    &wined3d_cs_debug.ProcessLocksList},
+    0, 0, {(DWORD_PTR)(__FILE__ ": wined3d_cs")}
+};
+CRITICAL_SECTION wined3d_cs = {&wined3d_cs_debug, -1, 0, 0, 0, 0};
 
 /* When updating default value here, make sure to update winecfg as well,
  * where appropriate. */
@@ -323,6 +332,16 @@ static BOOL wined3d_destroy(HINSTANCE hInstDLL)
     UnregisterClassA(WINED3D_OPENGL_WINDOW_CLASS_NAME, hInstDLL);
 
     return TRUE;
+}
+
+void WINAPI wined3d_mutex_lock(void)
+{
+    EnterCriticalSection(&wined3d_cs);
+}
+
+void WINAPI wined3d_mutex_unlock(void)
+{
+    LeaveCriticalSection(&wined3d_cs);
 }
 
 /* At process attach */
