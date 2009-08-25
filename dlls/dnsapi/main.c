@@ -90,6 +90,16 @@ DNS_STATUS WINAPI DnsAcquireContextHandle_W( DWORD flags, PVOID cred,
 }
 
 /******************************************************************************
+ * DnsFlushResolverCache               [DNSAPI.@]
+ *
+ */
+VOID WINAPI DnsFlushResolverCache(void)
+{
+    FIXME(": stub\n");
+}
+
+
+/******************************************************************************
  * DnsReleaseContextHandle                [DNSAPI.@]
  *
  */
