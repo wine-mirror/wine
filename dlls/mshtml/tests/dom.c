@@ -2559,6 +2559,10 @@ static void test_current_style(IHTMLCurrentStyle *current_style)
     ok(hres == S_OK, "get_visibility failed: %08x\n", hres);
     SysFreeString(str);
 
+    hres = IHTMLCurrentStyle_get_overflow(current_style, &str);
+    ok(hres == S_OK, "get_overflow failed: %08x\n", hres);
+    SysFreeString(str);
+
     hres = IHTMLCurrentStyle_get_fontWeight(current_style, &v);
     ok(hres == S_OK, "get_fontWeight failed: %08x\n", hres);
     ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
