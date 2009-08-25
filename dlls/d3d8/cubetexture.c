@@ -82,7 +82,7 @@ static HRESULT WINAPI IDirect3DCubeTexture8Impl_GetDevice(LPDIRECT3DCUBETEXTURE8
         IWineD3DDevice_GetParent(wined3d_device, (IUnknown **)ppDevice);
         IWineD3DDevice_Release(wined3d_device);
     }
-    wined3d_mutex_lock();
+    wined3d_mutex_unlock();
 
     return hr;
 }
