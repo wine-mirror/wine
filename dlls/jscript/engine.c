@@ -2228,11 +2228,8 @@ HRESULT void_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, 
 }
 
 /* ECMA-262 3rd Edition    11.4.3 */
-HRESULT typeof_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT typeof_exprval(exec_ctx_t *ctx, exprval_t *exprval, jsexcept_t *ei, const WCHAR **ret)
 {
-    unary_expression_t *expr = (unary_expression_t*)_expr;
-    const WCHAR *str;
-    exprval_t exprval;
     VARIANT val;
     HRESULT hres;
 
@@ -2243,57 +2240,77 @@ HRESULT typeof_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags
     static const WCHAR stringW[] = {'s','t','r','i','n','g',0};
     static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
 
-    TRACE("\n");
+    if(exprval->type == EXPRVAL_INVALID) {
+        *ret = undefinedW;
+        return S_OK;
+    }
 
-    hres = expr_eval(ctx, expr->expression, 0, ei, &exprval);
-    if(FAILED(hres))
-        return hres;
-
-    hres = exprval_to_value(ctx->parser->script, &exprval, ei, &val);
-    exprval_release(&exprval);
+    hres = exprval_to_value(ctx->parser->script, exprval, ei, &val);
     if(FAILED(hres))
         return hres;
 
     switch(V_VT(&val)) {
     case VT_EMPTY:
-        str = undefinedW;
+        *ret = undefinedW;
         break;
     case VT_NULL:
-        str = objectW;
+        *ret = objectW;
         break;
     case VT_BOOL:
-        str = booleanW;
+        *ret = booleanW;
         break;
     case VT_I4:
     case VT_R8:
-        str = numberW;
+        *ret = numberW;
         break;
     case VT_BSTR:
-        str = stringW;
+        *ret = stringW;
         break;
     case VT_DISPATCH: {
         DispatchEx *dispex;
 
         dispex = iface_to_jsdisp((IUnknown*)V_DISPATCH(&val));
         if(dispex) {
-            str = dispex->builtin_info->class == JSCLASS_FUNCTION ? functionW : objectW;
-            IDispatchEx_Release(_IDispatchEx_(dispex));
+            *ret = is_class(dispex, JSCLASS_FUNCTION) ? functionW : objectW;
+            jsdisp_release(dispex);
         }else {
-            str = objectW;
+            *ret = objectW;
         }
         break;
     }
     default:
         FIXME("unhandled vt %d\n", V_VT(&val));
-        VariantClear(&val);
-        return E_NOTIMPL;
+        hres = E_NOTIMPL;
     }
 
     VariantClear(&val);
+    return S_OK;
+}
+
+HRESULT typeof_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+{
+    unary_expression_t *expr = (unary_expression_t*)_expr;
+    const WCHAR *str = NULL;
+    exprval_t exprval;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, expr->expression, 0, ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = typeof_exprval(ctx, &exprval, ei, &str);
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
 
     ret->type = EXPRVAL_VARIANT;
     V_VT(&ret->u.var) = VT_BSTR;
     V_BSTR(&ret->u.var) = SysAllocString(str);
+    if(!V_BSTR(&ret->u.var))
+        return E_OUTOFMEMORY;
+
     return S_OK;
 }
 

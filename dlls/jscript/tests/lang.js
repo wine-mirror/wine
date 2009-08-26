@@ -905,4 +905,6 @@ function do_test() {}
 function nosemicolon() {} nosemicolon();
 function () {} nosemicolon();
 
+ok(typeof(doesnotexist) === "undefined", "typeof(doesnotexist) = " + typeof(doesnotexist));
+
 reportSuccess();
