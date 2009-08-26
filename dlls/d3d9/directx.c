@@ -176,9 +176,9 @@ static HRESULT WINAPI IDirect3D9Impl_GetAdapterDisplayMode(LPDIRECT3D9EX iface, 
     return hr;
 }
 
-static HRESULT WINAPI IDirect3D9Impl_CheckDeviceType(LPDIRECT3D9EX iface,
-					      UINT Adapter, D3DDEVTYPE CheckType, D3DFORMAT DisplayFormat,
-					      D3DFORMAT BackBufferFormat, BOOL Windowed) {
+static HRESULT WINAPI IDirect3D9Impl_CheckDeviceType(IDirect3D9Ex *iface, UINT Adapter,
+        D3DDEVTYPE CheckType, D3DFORMAT DisplayFormat, D3DFORMAT BackBufferFormat, BOOL Windowed)
+{
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     HRESULT hr;
     TRACE("(%p)->(%d, %d, %d, %d, %s\n", This, Adapter, CheckType, DisplayFormat,
@@ -191,9 +191,9 @@ static HRESULT WINAPI IDirect3D9Impl_CheckDeviceType(LPDIRECT3D9EX iface,
     return hr;
 }
 
-static HRESULT WINAPI IDirect3D9Impl_CheckDeviceFormat(LPDIRECT3D9EX iface,
-						  UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
-						  DWORD Usage, D3DRESOURCETYPE RType, D3DFORMAT CheckFormat) {
+static HRESULT WINAPI IDirect3D9Impl_CheckDeviceFormat(IDirect3D9Ex *iface, UINT Adapter, D3DDEVTYPE DeviceType,
+        D3DFORMAT AdapterFormat, DWORD Usage, D3DRESOURCETYPE RType, D3DFORMAT CheckFormat)
+{
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     HRESULT hr;
     WINED3DRESOURCETYPE WineD3DRType;
@@ -229,9 +229,10 @@ static HRESULT WINAPI IDirect3D9Impl_CheckDeviceFormat(LPDIRECT3D9EX iface,
     return hr;
 }
 
-static HRESULT WINAPI IDirect3D9Impl_CheckDeviceMultiSampleType(LPDIRECT3D9EX iface,
-							   UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat,
-							   BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType, DWORD* pQualityLevels) {
+static HRESULT WINAPI IDirect3D9Impl_CheckDeviceMultiSampleType(IDirect3D9Ex *iface, UINT Adapter,
+        D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat, BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType,
+        DWORD *pQualityLevels)
+{
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     HRESULT hr;
     TRACE("%p\n", This);
@@ -243,9 +244,9 @@ static HRESULT WINAPI IDirect3D9Impl_CheckDeviceMultiSampleType(LPDIRECT3D9EX if
     return hr;
 }
 
-static HRESULT WINAPI IDirect3D9Impl_CheckDepthStencilMatch(LPDIRECT3D9EX iface,
-						       UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
-						       D3DFORMAT RenderTargetFormat, D3DFORMAT DepthStencilFormat) {
+static HRESULT WINAPI IDirect3D9Impl_CheckDepthStencilMatch(IDirect3D9Ex *iface, UINT Adapter,
+        D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat, D3DFORMAT RenderTargetFormat, D3DFORMAT DepthStencilFormat)
+{
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     HRESULT hr;
     TRACE("%p\n", This);

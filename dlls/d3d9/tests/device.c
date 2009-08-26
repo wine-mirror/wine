@@ -388,7 +388,7 @@ static void test_refcount(void)
 
     D3DVERTEXELEMENT9 decl[] =
     {
-	D3DDECL_END()
+        D3DDECL_END()
     };
     static DWORD simple_ps[] = {0xFFFF0101,                                     /* ps_1_1                       */
         0x00000051, 0xA00F0001, 0x3F800000, 0x00000000, 0x00000000, 0x00000000, /* def c1 = 1.0, 0.0, 0.0, 0.0  */
@@ -1830,14 +1830,14 @@ static void test_null_stream(void)
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &decl);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateVertexDeclaration failed (0x%08x)\n", hr);
     if (FAILED(hr)) {
-	skip("Vertex declaration handling not possible.\n");
-	goto cleanup;
+        skip("Vertex declaration handling not possible.\n");
+        goto cleanup;
     }
     hr = IDirect3DDevice9_CreateVertexBuffer(device, 12 * sizeof(float), 0, 0, D3DPOOL_MANAGED, &buffer, NULL);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateVertexBuffer failed (0x%08x)\n", hr);
     if (FAILED(hr)) {
-	skip("Vertex buffer handling not possible.\n");
-	goto cleanup;
+        skip("Vertex buffer handling not possible.\n");
+        goto cleanup;
     }
 
     hr = IDirect3DDevice9_SetStreamSource(device, 0, buffer, 0, sizeof(float) * 3);
