@@ -902,5 +902,7 @@ ok(re.source === "=(\\?|%3F)", "re.source = " + re.source);
 ok(createNullBSTR() === '', "createNullBSTR() !== ''");
 
 function do_test() {}
+function nosemicolon() {} nosemicolon();
+function () {} nosemicolon();
 
 reportSuccess();

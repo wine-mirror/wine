@@ -264,6 +264,8 @@ HtmlComment
 /* ECMA-262 3rd Edition    14 */
 SourceElements
         : /* empty */           { $$ = new_source_elements(ctx); }
+        | SourceElements FunctionExpression
+                                { $$ = $1; }
         | SourceElements Statement
                                 { $$ = source_elements_add_statement($1, $2); }
 
