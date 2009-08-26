@@ -300,6 +300,7 @@ SRCDIR_INCLUDES = \
 	msacmdlg.h \
 	msacmdrv.h \
 	mscat.h \
+	msdaguid.h \
 	mshtmcid.h \
 	mshtmdid.h \
 	msi.h \
