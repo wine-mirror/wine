@@ -2495,6 +2495,8 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetGammaRamp(IWineD3DSwapChain *iface, 
 
 struct wined3d_context *IWineD3DSwapChainImpl_CreateContextForThread(IWineD3DSwapChain *iface);
 
+#define DEFAULT_REFRESH_RATE 0
+
 /*****************************************************************************
  * Utility function prototypes 
  */

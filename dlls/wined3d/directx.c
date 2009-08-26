@@ -2191,7 +2191,7 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
         if (EnumDisplaySettingsExW(NULL, ModeIdx, &DevModeW, 0)) {
             pMode->Width        = DevModeW.dmPelsWidth;
             pMode->Height       = DevModeW.dmPelsHeight;
-            pMode->RefreshRate  = WINED3DADAPTER_DEFAULT;
+            pMode->RefreshRate  = DEFAULT_REFRESH_RATE;
             if (DevModeW.dmFields & DM_DISPLAYFREQUENCY)
                 pMode->RefreshRate = DevModeW.dmDisplayFrequency;
 
@@ -2238,7 +2238,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT A
         pMode->Width        = DevModeW.dmPelsWidth;
         pMode->Height       = DevModeW.dmPelsHeight;
         bpp                 = DevModeW.dmBitsPerPel;
-        pMode->RefreshRate  = WINED3DADAPTER_DEFAULT;
+        pMode->RefreshRate  = DEFAULT_REFRESH_RATE;
         if (DevModeW.dmFields&DM_DISPLAYFREQUENCY)
         {
             pMode->RefreshRate = DevModeW.dmDisplayFrequency;
