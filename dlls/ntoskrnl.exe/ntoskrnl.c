@@ -725,7 +725,7 @@ NTSTATUS WINAPI IoReportResourceUsage(PUNICODE_STRING name, PDRIVER_OBJECT drv_o
                                       ULONG drv_size, PDRIVER_OBJECT dev_obj, PCM_RESOURCE_LIST dev_list,
                                       ULONG dev_size, BOOLEAN overwrite, PBOOLEAN detected)
 {
-    FIXME("(%s %p %p %u %p %p %u %d %p) stub \n", debugstr_w(name? name->Buffer : NULL),
+    FIXME("(%s %p %p %u %p %p %u %d %p) stub\n", debugstr_w(name? name->Buffer : NULL),
           drv_obj, drv_list, drv_size, dev_obj, dev_list, dev_size, overwrite, detected);
     return STATUS_NOT_IMPLEMENTED;
 }
