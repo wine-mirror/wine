@@ -31,7 +31,7 @@ void ME_SetCursorToStart(ME_TextEditor *editor, ME_Cursor *cursor)
   cursor->nOffset = 0;
 }
 
-void ME_SetCursorToEnd(ME_TextEditor *editor, ME_Cursor *cursor)
+static void ME_SetCursorToEnd(ME_TextEditor *editor, ME_Cursor *cursor)
 {
   cursor->pPara = editor->pBuffer->pLast->member.para.prev_para;
   cursor->pRun = ME_FindItemBack(editor->pBuffer->pLast, diRun);
