@@ -428,7 +428,10 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
     read_dword(ptr, &v->buffer_offset);
     TRACE("Variable offset in buffer: %#x.\n", v->buffer_offset);
 
-    skip_dword_unknown(ptr, 2);
+    skip_dword_unknown(ptr, 1);
+
+    read_dword(ptr, &v->flag);
+    TRACE("Variable flag: %#x.\n", v->flag);
 
     read_dword(ptr, &v->annotation_count);
     for(i = 0; i < v->annotation_count; ++i)

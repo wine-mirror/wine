@@ -66,6 +66,7 @@ struct d3d10_effect_variable
     char *name;
     DWORD buffer_offset;
     DWORD annotation_count;
+    DWORD flag;
 };
 
 struct d3d10_effect_local_buffer
