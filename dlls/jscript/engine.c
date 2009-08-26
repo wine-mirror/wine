@@ -57,6 +57,9 @@ static void exprval_release(exprval_t *val)
         if(val->u.nameref.disp)
             IDispatch_Release(val->u.nameref.disp);
         SysFreeString(val->u.nameref.name);
+        return;
+    case EXPRVAL_INVALID:
+        SysFreeString(val->u.identifier);
     }
 }
 
@@ -75,10 +78,14 @@ static HRESULT exprval_value(script_ctx_t *ctx, exprval_t *val, jsexcept_t *ei, 
         }
 
         return disp_propget(val->u.idref.disp, val->u.idref.id, ctx->lcid, ret, ei, NULL/*FIXME*/);
-    default:
-        ERR("type %d\n", val->type);
-        return E_FAIL;
+    case EXPRVAL_NAMEREF:
+        break;
+    case EXPRVAL_INVALID:
+        return throw_type_error(ctx, ei, IDS_UNDEFINED, val->u.identifier);
     }
+
+    ERR("type %d\n", val->type);
+    return E_FAIL;
 }
 
 static HRESULT exprval_to_value(script_ctx_t *ctx, exprval_t *val, jsexcept_t *ei, VARIANT *ret)
@@ -538,7 +545,12 @@ static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, js
         return S_OK;
     }
 
-    return throw_type_error(ctx->var_disp->ctx, ei, IDS_UNDEFINED, identifier);
+    ret->type = EXPRVAL_INVALID;
+    ret->u.identifier = SysAllocString(identifier);
+    if(!ret->u.identifier)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    12.1 */
