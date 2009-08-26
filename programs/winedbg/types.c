@@ -263,8 +263,7 @@ BOOL types_udt_find_element(struct dbg_lvalue* lvalue, const char* name, long in
     char                        tmp[256];
     struct dbg_type             type;
 
-    if (!types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag) ||
-        tag != SymTagUDT)
+    if (!types_get_real_type(&lvalue->type, &tag) || tag != SymTagUDT)
         return FALSE;
 
     if (types_get_info(&lvalue->type, TI_GET_CHILDRENCOUNT, &count))
