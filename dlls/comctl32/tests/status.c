@@ -466,6 +466,34 @@ static void test_status_ownerdraw(void)
     SetWindowLongPtr( g_hMainWnd, GWLP_WNDPROC, (LONG_PTR)g_wndproc_saved );
 }
 
+static void test_gettext(void)
+{
+    HWND hwndStatus = CreateWindow(SUBCLASS_NAME, NULL, WS_CHILD|WS_VISIBLE,
+        0, 0, 300, 20, g_hMainWnd, NULL, NULL, NULL);
+    char buf[5];
+    int r;
+
+    r = SendMessage(hwndStatus, SB_SETTEXT, 0, (LPARAM)"Text");
+    expect(TRUE, r);
+    r = SendMessage(hwndStatus, WM_GETTEXTLENGTH, 0, 0);
+    expect(4, r);
+    /* A size of 0 returns the length of the text */
+    r = SendMessage(hwndStatus, WM_GETTEXT, 0, 0);
+    expect(4, r);
+    /* A size of 1 only stores the NULL terminator */
+    buf[0] = 0xa;
+    r = SendMessage(hwndStatus, WM_GETTEXT, 1, (LPARAM)buf);
+    expect(0, r);
+    ok(!buf[0], "expected empty buffer\n");
+    /* A size of 2 returns a length 1 */
+    r = SendMessage(hwndStatus, WM_GETTEXT, 2, (LPARAM)buf);
+    expect(1, r);
+    r = SendMessage(hwndStatus, WM_GETTEXT, sizeof(buf), (LPARAM)buf);
+    expect(4, r);
+    ok(!strcmp(buf, "Text"), "expected Text, got %s\n", buf);
+    DestroyWindow(hwndStatus);
+}
+
 START_TEST(status)
 {
     hinst = GetModuleHandleA(NULL);
@@ -483,4 +511,5 @@ START_TEST(status)
     test_create();
     test_height();
     test_status_ownerdraw();
+    test_gettext();
 }
