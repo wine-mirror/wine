@@ -547,19 +547,18 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     read_dword(&ptr, &e->local_buffer_count);
     TRACE("Local buffer count: %u.\n", e->local_buffer_count);
 
-    /* Number of variables in local buffers? */
-    read_dword(&ptr, &unknown);
-    FIXME("Unknown 0: %u\n", unknown);
+    read_dword(&ptr, &e->variable_count);
+    TRACE("Variable count: %u\n", e->variable_count);
 
-    read_dword(&ptr, &e->localobjects_count);
-    TRACE("Localobjects count: %u\n", e->localobjects_count);
+    read_dword(&ptr, &e->object_count);
+    TRACE("Object count: %u\n", e->object_count);
 
     read_dword(&ptr, &e->sharedbuffers_count);
     TRACE("Sharedbuffers count: %u\n", e->sharedbuffers_count);
 
     /* Number of variables in shared buffers? */
     read_dword(&ptr, &unknown);
-    FIXME("Unknown 1: %u\n", unknown);
+    FIXME("Unknown 0: %u\n", unknown);
 
     read_dword(&ptr, &e->sharedobjects_count);
     TRACE("Sharedobjects count: %u\n", e->sharedobjects_count);
@@ -571,9 +570,10 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     TRACE("Index offset: %#x\n", e->index_offset);
 
     read_dword(&ptr, &unknown);
-    FIXME("Unknown 2: %u\n", unknown);
-    read_dword(&ptr, &unknown);
-    FIXME("Unknown 3: %u\n", unknown);
+    FIXME("Unknown 1: %u\n", unknown);
+
+    read_dword(&ptr, &e->texture_count);
+    TRACE("Texture count: %u\n", e->texture_count);
 
     read_dword(&ptr, &e->dephstencilstate_count);
     TRACE("Depthstencilstate count: %u\n", e->dephstencilstate_count);
@@ -587,16 +587,17 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     read_dword(&ptr, &e->samplerstate_count);
     TRACE("Samplerstate count: %u\n", e->samplerstate_count);
 
-    read_dword(&ptr, &unknown);
-    FIXME("Unknown 4: %u\n", unknown);
-    read_dword(&ptr, &unknown);
-    FIXME("Unknown 5: %u\n", unknown);
+    read_dword(&ptr, &e->rendertargetview_count);
+    TRACE("Rendertargetview count: %u\n", e->rendertargetview_count);
 
-    /* Number of function calls in all passes? */
-    read_dword(&ptr, &unknown);
-    FIXME("Unknown 6: %u\n", unknown);
-    read_dword(&ptr, &unknown);
-    FIXME("Unknown 7: %u\n", unknown);
+    read_dword(&ptr, &e->depthstencilview_count);
+    TRACE("Depthstencilview count: %u\n", e->depthstencilview_count);
+
+    read_dword(&ptr, &e->shader_call_count);
+    TRACE("Shader call count: %u\n", e->shader_call_count);
+
+    read_dword(&ptr, &e->shader_compile_count);
+    TRACE("Shader compile count: %u\n", e->shader_compile_count);
 
     return parse_fx10_body(e, ptr, data_size - (ptr - data));
 }

@@ -114,15 +114,21 @@ struct d3d10_effect
     ID3D10Device *device;
     DWORD version;
     DWORD local_buffer_count;
-    DWORD localobjects_count;
+    DWORD variable_count;
+    DWORD object_count;
     DWORD sharedbuffers_count;
     DWORD sharedobjects_count;
     DWORD technique_count;
     DWORD index_offset;
+    DWORD texture_count;
     DWORD dephstencilstate_count;
     DWORD blendstate_count;
     DWORD rasterizerstate_count;
     DWORD samplerstate_count;
+    DWORD rendertargetview_count;
+    DWORD depthstencilview_count;
+    DWORD shader_call_count;
+    DWORD shader_compile_count;
 
     struct d3d10_effect_local_buffer *local_buffers;
     struct d3d10_effect_technique *techniques;
