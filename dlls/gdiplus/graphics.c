@@ -3288,6 +3288,50 @@ GpStatus WINGDIPAPI GdipIsVisiblePointI(GpGraphics *graphics, INT x, INT y, BOOL
     return GdipIsVisiblePoint(graphics, (REAL)x, (REAL)y, result);
 }
 
+GpStatus WINGDIPAPI GdipIsVisibleRect(GpGraphics *graphics, REAL x, REAL y, REAL width, REAL height, BOOL *result)
+{
+    GpStatus stat;
+    GpRegion* rgn;
+    GpPointF pts[2];
+
+    TRACE("(%p %.2f %.2f %.2f %.2f %p)\n", graphics, x, y, width, height, result);
+
+    if(!graphics || !result)
+        return InvalidParameter;
+
+    if(graphics->busy)
+        return ObjectBusy;
+
+    pts[0].X = x;
+    pts[0].Y = y;
+    pts[1].X = x + width;
+    pts[1].Y = y + height;
+
+    if((stat = GdipTransformPoints(graphics, CoordinateSpaceDevice,
+                    CoordinateSpaceWorld, pts, 2)) != Ok)
+        return stat;
+
+    pts[1].X -= pts[0].X;
+    pts[1].Y -= pts[0].Y;
+
+    if((stat = GdipCreateRegion(&rgn)) != Ok)
+        return stat;
+
+    if((stat = get_visible_clip_region(graphics, rgn)) != Ok)
+        goto cleanup;
+
+    stat = GdipIsVisibleRegionRect(rgn, pts[0].X, pts[0].Y, pts[1].X, pts[1].Y, graphics, result);
+
+cleanup:
+    GdipDeleteRegion(rgn);
+    return stat;
+}
+
+GpStatus WINGDIPAPI GdipIsVisibleRectI(GpGraphics *graphics, INT x, INT y, INT width, INT height, BOOL *result)
+{
+    return GdipIsVisibleRect(graphics, (REAL)x, (REAL)y, (REAL)width, (REAL)height, result);
+}
+
 GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
         GDIPCONST WCHAR* string, INT length, GDIPCONST GpFont* font,
         GDIPCONST RectF* layoutRect, GDIPCONST GpStringFormat *stringFormat,
@@ -4188,14 +4232,5 @@ GpStatus WINGDIPAPI GdipRecordMetafileI(HDC hdc, EmfType type, GDIPCONST GpRect 
                                         MetafileFrameUnit frameUnit, GDIPCONST WCHAR *desc, GpMetafile **metafile)
 {
     FIXME("(%p %d %p %d %p %p): stub\n", hdc, type, frameRect, frameUnit, desc, metafile);
-    return NotImplemented;
-}
-
-/*****************************************************************************
- * GdipIsVisibleRectI [GDIPLUS.@]
- */
-GpStatus WINGDIPAPI GdipIsVisibleRectI(GpGraphics *graphics, INT x, INT y, INT width, INT height, BOOL *result)
-{
-    FIXME("(%p %d %d %d %d %p): stub\n", graphics, x, y, width, height, result);
     return NotImplemented;
 }

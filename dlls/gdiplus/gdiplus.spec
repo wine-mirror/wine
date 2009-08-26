@@ -429,7 +429,7 @@
 @ stdcall GdipIsVisiblePathPointI(ptr long long ptr ptr)
 @ stdcall GdipIsVisiblePoint(ptr long long ptr)
 @ stdcall GdipIsVisiblePointI(ptr long long ptr)
-@ stub GdipIsVisibleRect
+@ stdcall GdipIsVisibleRect(ptr long long long long ptr)
 @ stdcall GdipIsVisibleRectI(ptr long long long long ptr)
 @ stdcall GdipIsVisibleRegionPoint(ptr long long ptr ptr)
 @ stdcall GdipIsVisibleRegionPointI(ptr long long ptr ptr)
