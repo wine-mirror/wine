@@ -776,7 +776,8 @@ static void test_getters_setters(HWND parent_wnd, INT nTabs)
         tcItem.dwStateMask = TCIS_BUTTONPRESSED;
         selectionIndex = SendMessage(hTab, TCM_GETCURSEL, 0, 0);
         SendMessage(hTab, TCM_GETITEM, selectionIndex, (LPARAM) &tcItem);
-        ok (tcItem.dwState & TCIS_BUTTONPRESSED, "Selected item should have TCIS_BUTTONPRESSED\n");
+        ok (tcItem.dwState & TCIS_BUTTONPRESSED || broken(tcItem.dwState == 0), /* older comctl32 */
+            "Selected item should have TCIS_BUTTONPRESSED\n");
     }
 
     /* Testing ExtendedStyle */
@@ -837,10 +838,6 @@ static void test_getters_setters(HWND parent_wnd, INT nTabs)
         TCITEM tcItem;
         DWORD ret;
         char szText[32] = "New Label";
-
-        /* TCM_GETITEM with null dest pointer */
-        ret = SendMessage(hTab, TCM_GETITEM, 0, (LPARAM)NULL);
-        expect(FALSE, ret);
 
         /* passing invalid index should result in initialization to zero
            for members mentioned in mask requested */
@@ -920,20 +917,24 @@ static void test_getters_setters(HWND parent_wnd, INT nTabs)
         ok ( SendMessage(hTab, TCM_SETITEM, 0, (LPARAM) &tcItem), "Setting new item failed.\n");
         tcItem.dwState = 0;
         ok ( SendMessage(hTab, TCM_GETITEM, 0, (LPARAM) &tcItem), "Getting item failed.\n");
-        ok (tcItem.dwState == TCIS_BUTTONPRESSED, "TCIS_BUTTONPRESSED should be set.\n");
-        /* next highlight item, test that dwStateMask actually masks */
-        tcItem.mask = TCIF_STATE;
-        tcItem.dwStateMask = TCIS_HIGHLIGHTED;
-        tcItem.dwState = TCIS_HIGHLIGHTED;
-        ok ( SendMessage(hTab, TCM_SETITEM, 0, (LPARAM) &tcItem), "Setting new item failed.\n");
-        tcItem.dwState = 0;
-        ok ( SendMessage(hTab, TCM_GETITEM, 0, (LPARAM) &tcItem), "Getting item failed.\n");
-        ok (tcItem.dwState == TCIS_HIGHLIGHTED, "TCIS_HIGHLIGHTED should be set.\n");
-        tcItem.mask = TCIF_STATE;
-        tcItem.dwStateMask = TCIS_BUTTONPRESSED;
-        tcItem.dwState = 0;
-        ok ( SendMessage(hTab, TCM_GETITEM, 0, (LPARAM) &tcItem), "Getting item failed.\n");
-        ok (tcItem.dwState == TCIS_BUTTONPRESSED, "TCIS_BUTTONPRESSED should be set.\n");
+        if (tcItem.dwState)
+        {
+            ok (tcItem.dwState == TCIS_BUTTONPRESSED, "TCIS_BUTTONPRESSED should be set.\n");
+            /* next highlight item, test that dwStateMask actually masks */
+            tcItem.mask = TCIF_STATE;
+            tcItem.dwStateMask = TCIS_HIGHLIGHTED;
+            tcItem.dwState = TCIS_HIGHLIGHTED;
+            ok ( SendMessage(hTab, TCM_SETITEM, 0, (LPARAM) &tcItem), "Setting new item failed.\n");
+            tcItem.dwState = 0;
+            ok ( SendMessage(hTab, TCM_GETITEM, 0, (LPARAM) &tcItem), "Getting item failed.\n");
+            ok (tcItem.dwState == TCIS_HIGHLIGHTED, "TCIS_HIGHLIGHTED should be set.\n");
+            tcItem.mask = TCIF_STATE;
+            tcItem.dwStateMask = TCIS_BUTTONPRESSED;
+            tcItem.dwState = 0;
+            ok ( SendMessage(hTab, TCM_GETITEM, 0, (LPARAM) &tcItem), "Getting item failed.\n");
+            ok (tcItem.dwState == TCIS_BUTTONPRESSED, "TCIS_BUTTONPRESSED should be set.\n");
+        }
+        else win_skip( "Item state mask not supported\n" );
     }
 
     /* Testing GetSet ToolTip */
