@@ -1141,10 +1141,13 @@ void (WINE_GLAPI *glViewport) (GLint x, GLint y, GLsizei width, GLsizei height);
 void (WINE_GLAPI *glPointParameterfv) (GLenum pname, const GLfloat *params);
 
 /* glFinish and glFlush are always loaded from opengl32.dll, thus they always have
- * __stdcall calling convention
+ * __stdcall calling convention.
+ *
+ * They are wgl functions and must not be called inside the gl lock, give them a
+ * name that makes this clear
  */
-void (__stdcall  *glFinish) ();
-void (__stdcall  *glFlush) ();
+void (__stdcall  *wglFinish) ();
+void (__stdcall  *wglFlush) ();
 
 /* WGL functions */
 HGLRC   (WINAPI *pwglCreateContext)(HDC);

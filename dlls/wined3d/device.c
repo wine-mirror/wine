@@ -4854,7 +4854,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface) {
 
     ActivateContext(This, NULL, CTXUSAGE_RESOURCELOAD);
     /* We only have to do this if we need to read the, swapbuffers performs a flush for us */
-    glFlush();
+    wglFlush();
     /* No checkGLcall here to avoid locking the lock just for checking a call that hardly ever
      * fails
      */
@@ -5067,7 +5067,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
 
     if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)target, &IID_IWineD3DSwapChain, (void **)&swapchain))) {
         if (target == (IWineD3DSurfaceImpl*) swapchain->frontBuffer) {
-            glFlush();
+            wglFlush();
         }
         IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
     }

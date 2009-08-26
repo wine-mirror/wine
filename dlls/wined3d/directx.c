@@ -576,7 +576,7 @@ static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
     checkGLcall("Loading the PBO test texture");
 
     GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-    glFinish(); /* just to be sure */
+    wglFinish(); /* just to be sure */
 
     memset(check, 0, sizeof(check));
     glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, check);
@@ -4646,11 +4646,11 @@ BOOL InitAdapters(IWineD3DImpl *This)
      * otherwise because we have to use winex11.drv's override
      */
 #ifdef USE_WIN32_OPENGL
-    glFinish = (void*)GetProcAddress(mod_gl, "glFinish");
-    glFlush = (void*)GetProcAddress(mod_gl, "glFlush");
+    wglFinish = (void*)GetProcAddress(mod_gl, "glFinish");
+    wglFlush = (void*)GetProcAddress(mod_gl, "glFlush");
 #else
-    glFinish = (void*)pwglGetProcAddress("wglFinish");
-    glFlush = (void*)pwglGetProcAddress("wglFlush");
+    wglFinish = (void*)pwglGetProcAddress("wglFinish");
+    wglFlush = (void*)pwglGetProcAddress("wglFlush");
 #endif
 
     glEnableWINE = glEnable;
