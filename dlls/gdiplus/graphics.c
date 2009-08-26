@@ -3252,7 +3252,11 @@ GpStatus WINGDIPAPI GdipIsClipEmpty(GpGraphics *graphics, BOOL *res)
 
 GpStatus WINGDIPAPI GdipIsVisiblePoint(GpGraphics *graphics, REAL x, REAL y, BOOL *result)
 {
-    FIXME("(%p, %.2f, %.2f, %p) stub\n", graphics, x, y, result);
+    GpStatus stat;
+    GpRegion* rgn;
+    GpPointF pt;
+
+    TRACE("(%p, %.2f, %.2f, %p)\n", graphics, x, y, result);
 
     if(!graphics || !result)
         return InvalidParameter;
@@ -3260,20 +3264,28 @@ GpStatus WINGDIPAPI GdipIsVisiblePoint(GpGraphics *graphics, REAL x, REAL y, BOO
     if(graphics->busy)
         return ObjectBusy;
 
-    return NotImplemented;
+    pt.X = x;
+    pt.Y = y;
+    if((stat = GdipTransformPoints(graphics, CoordinateSpaceDevice,
+                   CoordinateSpaceWorld, &pt, 1)) != Ok)
+        return stat;
+
+    if((stat = GdipCreateRegion(&rgn)) != Ok)
+        return stat;
+
+    if((stat = get_visible_clip_region(graphics, rgn)) != Ok)
+        goto cleanup;
+
+    stat = GdipIsVisibleRegionPoint(rgn, pt.X, pt.Y, graphics, result);
+
+cleanup:
+    GdipDeleteRegion(rgn);
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipIsVisiblePointI(GpGraphics *graphics, INT x, INT y, BOOL *result)
 {
-    FIXME("(%p, %d, %d, %p) stub\n", graphics, x, y, result);
-
-    if(!graphics || !result)
-        return InvalidParameter;
-
-    if(graphics->busy)
-        return ObjectBusy;
-
-    return NotImplemented;
+    return GdipIsVisiblePoint(graphics, (REAL)x, (REAL)y, result);
 }
 
 GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
