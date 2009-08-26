@@ -151,39 +151,40 @@ static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
     DWORD               dpos = 0;
 
 
-    ret = mpg123_feed(amd->mh, src, *nsrc);
-    if (ret != MPG123_OK)
+    if (*nsrc > 0)
     {
-        ERR("Error feeding data\n");
-        *ndst = *nsrc = 0;
-        return;
-    }
-
-    ret = mpg123_read(amd->mh, NULL, 0, &size);
-    if (ret == MPG123_NEW_FORMAT)
-    {
-        if TRACE_ON(mpeg3)
+        ret = mpg123_feed(amd->mh, src, *nsrc);
+        if (ret != MPG123_OK)
         {
-            long rate;
-            int channels, enc;
-            mpg123_getformat(amd->mh, &rate, &channels, &enc);
-            TRACE("New format: %li Hz, %i channels, encoding value %i\n", rate, channels, enc);
+            ERR("Error feeding data\n");
+            *ndst = *nsrc = 0;
+            return;
         }
-    }
-    else if (ret == MPG123_ERR)
-    {
-        FIXME("Error occurred during decoding!\n");
-        *ndst = *nsrc = 0;
-        return;
     }
 
     do {
-        dpos += size;
-        if (*ndst - dpos < 4608) break;
+        size = 0;
         ret = mpg123_read(amd->mh, dst + dpos, *ndst - dpos, &size);
+        if (ret == MPG123_ERR)
+        {
+            FIXME("Error occurred during decoding!\n");
+            *ndst = *nsrc = 0;
+            return;
+        }
+
+        if (ret == MPG123_NEW_FORMAT)
+        {
+            if TRACE_ON(mpeg3)
+            {
+                long rate;
+                int channels, enc;
+                mpg123_getformat(amd->mh, &rate, &channels, &enc);
+                TRACE("New format: %li Hz, %i channels, encoding value %i\n", rate, channels, enc);
+            }
+        }
+        dpos += size;
     } while (ret == MPG123_OK);
     *ndst = dpos;
-    *nsrc = 0;
 }
 
 /***********************************************************************
