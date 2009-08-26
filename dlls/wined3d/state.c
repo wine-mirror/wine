@@ -1344,8 +1344,7 @@ static void state_normalize(DWORD state, IWineD3DStateBlockImpl *stateblock, str
      * by zero and is not properly defined in opengl, so avoid it
      */
     if (stateblock->renderState[WINED3DRS_NORMALIZENORMALS]
-            && (stateblock->wineD3DDevice->strided_streams.elements[WINED3D_FFP_NORMAL].data
-            || stateblock->wineD3DDevice->strided_streams.elements[WINED3D_FFP_NORMAL].buffer_object))
+            && (stateblock->wineD3DDevice->strided_streams.use_map & (1 << WINED3D_FFP_NORMAL)))
     {
         glEnable(GL_NORMALIZE);
         checkGLcall("glEnable(GL_NORMALIZE);");
