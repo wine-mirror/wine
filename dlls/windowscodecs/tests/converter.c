@@ -159,7 +159,7 @@ static const IWICBitmapSourceVtbl BitmapTestSrc_Vtbl = {
     BitmapTestSrc_CopyPixels
 };
 
-void CreateTestBitmap(const bitmap_data *data, IWICBitmapSource **bitmap)
+static void CreateTestBitmap(const bitmap_data *data, IWICBitmapSource **bitmap)
 {
     BitmapTestSrc *This = HeapAlloc(GetProcessHeap(), 0, sizeof(BitmapTestSrc));
 
@@ -174,7 +174,7 @@ void CreateTestBitmap(const bitmap_data *data, IWICBitmapSource **bitmap)
         *bitmap = NULL;
 }
 
-void DeleteTestBitmap(IWICBitmapSource *bitmap)
+static void DeleteTestBitmap(IWICBitmapSource *bitmap)
 {
     BitmapTestSrc *This = (BitmapTestSrc*)bitmap;
     ok(This->lpVtbl == &BitmapTestSrc_Vtbl, "test bitmap %p deleted with incorrect vtable\n", bitmap);
@@ -182,7 +182,7 @@ void DeleteTestBitmap(IWICBitmapSource *bitmap)
     HeapFree(GetProcessHeap(), 0, This);
 }
 
-void compare_bitmap_data(const struct bitmap_data *expect, IWICBitmapSource *source, const char *name)
+static void compare_bitmap_data(const struct bitmap_data *expect, IWICBitmapSource *source, const char *name)
 {
     BYTE *converted_bits;
     UINT width, height;
@@ -248,7 +248,7 @@ static const BYTE bits_32bppBGRA[] = {
 static const struct bitmap_data testdata_32bppBGRA = {
     &GUID_WICPixelFormat32bppBGRA, 32, bits_32bppBGRA, 4, 2, 96.0, 96.0};
 
-void test_conversion(const struct bitmap_data *src, const struct bitmap_data *dst, const char *name, BOOL todo)
+static void test_conversion(const struct bitmap_data *src, const struct bitmap_data *dst, const char *name, BOOL todo)
 {
     IWICBitmapSource *src_bitmap, *dst_bitmap;
     HRESULT hr;
@@ -271,7 +271,7 @@ void test_conversion(const struct bitmap_data *src, const struct bitmap_data *ds
     DeleteTestBitmap(src_bitmap);
 }
 
-void test_invalid_conversion(void)
+static void test_invalid_conversion(void)
 {
     IWICBitmapSource *src_bitmap, *dst_bitmap;
     HRESULT hr;
@@ -285,7 +285,7 @@ void test_invalid_conversion(void)
     DeleteTestBitmap(src_bitmap);
 }
 
-void test_default_converter(void)
+static void test_default_converter(void)
 {
     IWICBitmapSource *src_bitmap;
     IWICFormatConverter *converter;
