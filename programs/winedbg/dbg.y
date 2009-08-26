@@ -182,8 +182,9 @@ list_arg:
     | pathname ':' tNUM	        { $$.FileName = $1; $$.LineNumber = $3; }
     | identifier	        { symbol_get_line(NULL, $1, &$$); }
     | pathname ':' identifier   { symbol_get_line($1, $3, &$$); }
-    | '*' expr_lvalue	        { DWORD disp; $$.SizeOfStruct = sizeof($$);
-                                  SymGetLineFromAddr(dbg_curr_process->handle, (unsigned long)memory_to_linear_addr(& $2.addr), &disp, & $$); }
+    | '*' expr_lvalue	        { DWORD disp; ADDRESS64 addr; $$.SizeOfStruct = sizeof($$);
+                                  types_extract_as_address(&$2, &addr);
+                                  SymGetLineFromAddr(dbg_curr_process->handle, (unsigned long)memory_to_linear_addr(& addr), &disp, & $$); }
     ;
 
 run_command:
