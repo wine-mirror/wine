@@ -537,11 +537,11 @@ static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, js
         return S_OK;
 
     if(flags & EXPR_NEWREF) {
-        hres = jsdisp_get_id(ctx->var_disp, identifier, fdexNameEnsure, &id);
+        hres = jsdisp_get_id(ctx->parser->script->script_disp, identifier, fdexNameEnsure, &id);
         if(FAILED(hres))
             return hres;
 
-        exprval_set_idref(ret, (IDispatch*)_IDispatchEx_(ctx->var_disp), id);
+        exprval_set_idref(ret, (IDispatch*)_IDispatchEx_(ctx->parser->script->script_disp), id);
         return S_OK;
     }
 

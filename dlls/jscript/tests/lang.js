@@ -907,4 +907,7 @@ function () {} nosemicolon();
 
 ok(typeof(doesnotexist) === "undefined", "typeof(doesnotexist) = " + typeof(doesnotexist));
 
+(function() { newValue = 1; })();
+ok(newValue === 1, "newValue = " + newValue);
+
 reportSuccess();
