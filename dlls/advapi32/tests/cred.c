@@ -101,8 +101,8 @@ static void test_CredWriteA(void)
     ret = pCredWriteA(&new_cred, 0);
     if (ret)
     {
-        /* Vista */
-        ok(GetLastError() == ERROR_IO_PENDING,
+        ok(GetLastError() == ERROR_SUCCESS ||
+           GetLastError() == ERROR_IO_PENDING, /* Vista */
            "Expected ERROR_IO_PENDING, got %d\n", GetLastError());
     }
     else
