@@ -42,7 +42,8 @@ static void test_create_tooltip(void)
     trace("style = %08x\n", style);
     exp_style = 0x7fffffff | WS_POPUP;
     exp_style &= ~(WS_CHILD | WS_MAXIMIZE | WS_BORDER | WS_DLGFRAME);
-    ok(style == exp_style,"wrong style %08x/%08x\n", style, exp_style);
+    ok(style == exp_style || broken(style == (exp_style | WS_BORDER)), /* nt4 */
+       "wrong style %08x/%08x\n", style, exp_style);
 
     DestroyWindow(hwnd);
 
@@ -142,7 +143,6 @@ static void test_customdraw(void) {
         /* Invalid notification responses */
         {CDRF_NOTIFYITEMDRAW, TEST_CDDS_PREPAINT},
         {CDRF_NOTIFYPOSTERASE, TEST_CDDS_PREPAINT},
-        {CDRF_NOTIFYSUBITEMDRAW, TEST_CDDS_PREPAINT},
         {CDRF_NEWFONT, TEST_CDDS_PREPAINT}
     };
 
@@ -168,6 +168,7 @@ static void test_customdraw(void) {
         iterationNumber++) {
 
        HWND parent, hwndTip;
+       RECT rect;
        TOOLINFO toolInfo = { 0 };
 
        /* Create a main window */
@@ -201,7 +202,7 @@ static void test_customdraw(void) {
              SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
        /* Create a tool */
-       toolInfo.cbSize = sizeof(TOOLINFO);
+       toolInfo.cbSize = TTTOOLINFO_V1_SIZE;
        toolInfo.hwnd = parent;
        toolInfo.hinst = GetModuleHandleA(NULL);
        toolInfo.uFlags = TTF_SUBCLASS;
@@ -216,13 +217,18 @@ static void test_customdraw(void) {
        SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_INITIAL, MAKELPARAM(1,0));
 
        /* Put cursor inside window, tooltip will appear immediately */
-       SetCursorPos(100, 100);
+       GetWindowRect( parent, &rect );
+       SetCursorPos( (rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2 );
        flush_events(200);
 
-       /* Check CustomDraw results */
-       ok(CD_Stages == expectedResults[iterationNumber].ExpectedCalls,
-          "CustomDraw run %d stages %x, expected %x\n", iterationNumber, CD_Stages,
-          expectedResults[iterationNumber].ExpectedCalls);
+       if (CD_Stages)
+       {
+           /* Check CustomDraw results */
+           ok(CD_Stages == expectedResults[iterationNumber].ExpectedCalls ||
+              broken(CD_Stages == (expectedResults[iterationNumber].ExpectedCalls & ~TEST_CDDS_POSTPAINT)), /* nt4 */
+              "CustomDraw run %d stages %x, expected %x\n", iterationNumber, CD_Stages,
+              expectedResults[iterationNumber].ExpectedCalls);
+       }
 
        /* Clean up */
        DestroyWindow(hwndTip);
@@ -296,6 +302,8 @@ static void test_gettext(void)
                            NULL, NULL, NULL, 0);
     assert(hwnd);
 
+    /* use sizeof(TTTOOLINFOA) instead of TTTOOLINFOA_V1_SIZE so that adding it fails on Win9x */
+    /* otherwise it crashes on the NULL lpszText */
     toolinfoA.cbSize = sizeof(TTTOOLINFOA);
     toolinfoA.hwnd = NULL;
     toolinfoA.hinst = GetModuleHandleA(NULL);
@@ -305,7 +313,6 @@ static void test_gettext(void)
     toolinfoA.lParam = 0xdeadbeef;
     GetClientRect(hwnd, &toolinfoA.rect);
     r = SendMessageA(hwnd, TTM_ADDTOOL, 0, (LPARAM)&toolinfoA);
-    ok(r, "Adding the tool to the tooltip failed\n");
     if (r)
     {
         toolinfoA.hwnd = NULL;
@@ -313,6 +320,12 @@ static void test_gettext(void)
         toolinfoA.lpszText = bufA;
         SendMessageA(hwnd, TTM_GETTEXTA, 0, (LPARAM)&toolinfoA);
         ok(strcmp(toolinfoA.lpszText, "") == 0, "lpszText should be an empty string\n");
+    }
+    else
+    {
+        win_skip( "Old comctl32, not testing NULL text\n" );
+        DestroyWindow( hwnd );
+        return;
     }
 
     /* add another tool with text */
