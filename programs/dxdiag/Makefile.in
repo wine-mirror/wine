@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dxdiag.exe
-APPMODE   = -mwindows
+APPMODE   = -mwindows -municode
 IMPORTS   = kernel32
 
 C_SRCS = \

@@ -20,8 +20,9 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include "wine/unicode.h"
 
-int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmdshow)
+int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cmdshow)
 {
     return 0;
 }
