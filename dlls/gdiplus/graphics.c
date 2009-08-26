@@ -1062,6 +1062,33 @@ static GpStatus get_graphics_bounds(GpGraphics* graphics, GpRectF* rect)
     return Ok;
 }
 
+/* on success, rgn will contain the region of the graphics object which
+ * is visible after clipping has been applied */
+static GpStatus get_visible_clip_region(GpGraphics *graphics, GpRegion *rgn)
+{
+    GpStatus stat;
+    GpRectF rectf;
+    GpRegion* tmp;
+
+    if((stat = get_graphics_bounds(graphics, &rectf)) != Ok)
+        return stat;
+
+    if((stat = GdipCreateRegion(&tmp)) != Ok)
+        return stat;
+
+    if((stat = GdipCombineRegionRect(tmp, &rectf, CombineModeReplace)) != Ok)
+        goto end;
+
+    if((stat = GdipCombineRegionRegion(tmp, graphics->clip, CombineModeIntersect)) != Ok)
+        goto end;
+
+    stat = GdipCombineRegionRegion(rgn, tmp, CombineModeReplace);
+
+end:
+    GdipDeleteRegion(tmp);
+    return stat;
+}
+
 GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
 {
     TRACE("(%p, %p)\n", hdc, graphics);
@@ -3123,7 +3150,6 @@ GpStatus WINGDIPAPI GdipGetVisibleClipBounds(GpGraphics *graphics, GpRectF *rect
 {
     GpRegion *clip_rgn;
     GpStatus stat;
-    GpRectF wnd_rect;
 
     TRACE("(%p, %p)\n", graphics, rect);
 
@@ -3133,18 +3159,11 @@ GpStatus WINGDIPAPI GdipGetVisibleClipBounds(GpGraphics *graphics, GpRectF *rect
     if(graphics->busy)
         return ObjectBusy;
 
-    /* get window bounds */
-    if((stat = get_graphics_bounds(graphics, &wnd_rect)) != Ok)
-        return stat;
-
     /* intersect window and graphics clipping regions */
     if((stat = GdipCreateRegion(&clip_rgn)) != Ok)
         return stat;
 
-    if((stat = GdipCombineRegionRect(clip_rgn, &wnd_rect, CombineModeIntersect)) != Ok)
-        goto cleanup;
-
-    if((stat = GdipCombineRegionRegion(clip_rgn, graphics->clip, CombineModeIntersect)) != Ok)
+    if((stat = get_visible_clip_region(graphics, clip_rgn)) != Ok)
         goto cleanup;
 
     /* get bounds of the region */
