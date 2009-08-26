@@ -248,7 +248,7 @@ static ULONG WINAPI IDirect3DDevice9Impl_Release(LPDIRECT3DDEVICE9EX iface) {
       unsigned i;
       This->inDestruction = TRUE;
 
-      EnterCriticalSection(&d3d9_cs);
+      wined3d_mutex_lock();
       for(i = 0; i < This->numConvertedDecls; i++) {
           /* Unless Wine is buggy or the app has a bug the refcount will be 0, because decls hold a reference to the
            * device
@@ -259,7 +259,8 @@ static ULONG WINAPI IDirect3DDevice9Impl_Release(LPDIRECT3DDEVICE9EX iface) {
 
       IWineD3DDevice_Uninit3D(This->WineD3DDevice, D3D9CB_DestroyDepthStencilSurface, D3D9CB_DestroySwapChain);
       IWineD3DDevice_Release(This->WineD3DDevice);
-      LeaveCriticalSection(&d3d9_cs);
+      wined3d_mutex_unlock();
+
       HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -271,9 +272,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_TestCooperativeLevel(LPDIRECT3DDEVI
     HRESULT hr;
     TRACE("(%p)\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_TestCooperativeLevel(This->WineD3DDevice);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     if(hr == WINED3D_OK && This->notreset) {
         TRACE("D3D9 Device is marked not reset\n");
         hr = D3DERR_DEVICENOTRESET;
@@ -287,9 +289,10 @@ static UINT     WINAPI  IDirect3DDevice9Impl_GetAvailableTextureMem(LPDIRECT3DDE
     HRESULT hr;
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetAvailableTextureMem(This->WineD3DDevice);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -298,9 +301,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_EvictManagedResources(LPDIRECT3DDEV
     HRESULT hr;
     TRACE("(%p) : Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_EvictManagedResources(This->WineD3DDevice);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -315,7 +319,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetDirect3D(LPDIRECT3DDEVICE9EX iface
         return D3DERR_INVALIDCALL;
     }
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetDirect3D(This->WineD3DDevice, &pWineD3D);
     if (hr == D3D_OK && pWineD3D != NULL)
     {
@@ -326,7 +330,8 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetDirect3D(LPDIRECT3DDEVICE9EX iface
         *ppD3D9 = NULL;
     }
     TRACE("(%p) returning %p\n", This, *ppD3D9);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -345,9 +350,11 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetDeviceCaps(LPDIRECT3DDEVICE9EX i
     }
 
     memset(pCaps, 0, sizeof(*pCaps));
-    EnterCriticalSection(&d3d9_cs);
+
+    wined3d_mutex_lock();
     hrc = IWineD3DDevice_GetDeviceCaps(This->WineD3DDevice, pWineCaps);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     WINECAPSTOD3D9CAPS(pCaps, pWineCaps)
     HeapFree(GetProcessHeap(), 0, pWineCaps);
 
@@ -365,9 +372,9 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetDisplayMode(LPDIRECT3DDEVICE9EX 
     HRESULT hr;
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetDisplayMode(This->WineD3DDevice, iSwapChain, (WINED3DDISPLAYMODE *) pMode);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr)) pMode->Format = d3dformat_from_wined3dformat(pMode->Format);
 
@@ -379,9 +386,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetCreationParameters(LPDIRECT3DDEV
     HRESULT hr;
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetCreationParameters(This->WineD3DDevice, (WINED3DDEVICE_CREATION_PARAMETERS *) pParameters);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -396,9 +404,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetCursorProperties(LPDIRECT3DDEVIC
         return WINED3DERR_INVALIDCALL;
     }
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetCursorProperties(This->WineD3DDevice, XHotSpot, YHotSpot, pSurface->wineD3DSurface);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -406,9 +415,9 @@ static void     WINAPI  IDirect3DDevice9Impl_SetCursorPosition(LPDIRECT3DDEVICE9
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     IWineD3DDevice_SetCursorPosition(This->WineD3DDevice, XScreenSpace, YScreenSpace, Flags);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 }
 
 static BOOL     WINAPI  IDirect3DDevice9Impl_ShowCursor(LPDIRECT3DDEVICE9EX iface, BOOL bShow) {
@@ -416,9 +425,10 @@ static BOOL     WINAPI  IDirect3DDevice9Impl_ShowCursor(LPDIRECT3DDEVICE9EX ifac
     BOOL ret;
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     ret = IWineD3DDevice_ShowCursor(This->WineD3DDevice, bShow);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return ret;
 }
 
@@ -497,7 +507,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9EX iface, D3
      * Unsetting them is no problem, because the states are supposed to be reset anyway. If the validation
      * below fails, the device is considered "lost", and _Reset and _Release are the only allowed calls
      */
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     IWineD3DDevice_SetIndices(This->WineD3DDevice, NULL, WINED3DFMT_UNKNOWN);
     for(i = 0; i < 16; i++) {
         IWineD3DDevice_SetStreamSource(This->WineD3DDevice, i, NULL, 0, 0);
@@ -510,7 +520,8 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9EX iface, D3
     if(!resources_ok) {
         WARN("The application is holding D3DPOOL_DEFAULT resources, rejecting reset\n");
         This->notreset = TRUE;
-        LeaveCriticalSection(&d3d9_cs);
+        wined3d_mutex_unlock();
+
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -552,7 +563,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9EX iface, D3
         This->notreset = FALSE;
     }
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -563,9 +574,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Present(LPDIRECT3DDEVICE9EX iface, 
     HRESULT hr;
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_Present(This->WineD3DDevice, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
  }
 
@@ -576,13 +588,14 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetBackBuffer(LPDIRECT3DDEVICE9EX i
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     rc = IWineD3DDevice_GetBackBuffer(This->WineD3DDevice, iSwapChain, BackBuffer, (WINED3DBACKBUFFER_TYPE) Type, &retSurface);
     if (rc == D3D_OK && NULL != retSurface && NULL != ppBackBuffer) {
         IWineD3DSurface_GetParent(retSurface, (IUnknown **)ppBackBuffer);
         IWineD3DSurface_Release(retSurface);
     }
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return rc;
 }
 static HRESULT  WINAPI  IDirect3DDevice9Impl_GetRasterStatus(LPDIRECT3DDEVICE9EX iface, UINT iSwapChain, D3DRASTER_STATUS* pRasterStatus) {
@@ -590,9 +603,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetRasterStatus(LPDIRECT3DDEVICE9EX
     HRESULT hr;
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetRasterStatus(This->WineD3DDevice, iSwapChain, (WINED3DRASTER_STATUS *) pRasterStatus);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -601,9 +615,10 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetDialogBoxMode(LPDIRECT3DDEVICE9EX 
     HRESULT hr;
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetDialogBoxMode(This->WineD3DDevice, bEnableDialogs);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -612,20 +627,20 @@ static void WINAPI IDirect3DDevice9Impl_SetGammaRamp(LPDIRECT3DDEVICE9EX iface, 
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
     /* Note: D3DGAMMARAMP is compatible with WINED3DGAMMARAMP */
+    wined3d_mutex_lock();
     IWineD3DDevice_SetGammaRamp(This->WineD3DDevice, iSwapChain, Flags, (CONST WINED3DGAMMARAMP *)pRamp);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 }
 
 static void WINAPI IDirect3DDevice9Impl_GetGammaRamp(LPDIRECT3DDEVICE9EX iface, UINT iSwapChain, D3DGAMMARAMP* pRamp) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
     /* Note: D3DGAMMARAMP is compatible with WINED3DGAMMARAMP */
+    wined3d_mutex_lock();
     IWineD3DDevice_GetGammaRamp(This->WineD3DDevice, iSwapChain, (WINED3DGAMMARAMP *) pRamp);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 }
 
 
@@ -661,11 +676,11 @@ static HRESULT IDirect3DDevice9Impl_CreateSurface(LPDIRECT3DDEVICE9EX iface, UIN
 
     TRACE("(%p) : w(%d) h(%d) fmt(%d) surf@%p\n", This, Width, Height, Format, *ppSurface);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hrc = IWineD3DDevice_CreateSurface(This->WineD3DDevice, Width, Height, wined3dformat_from_d3dformat(Format),
             Lockable, Discard, Level, &object->wineD3DSurface, Usage & WINED3DUSAGE_MASK, (WINED3DPOOL)Pool,
             MultiSample, MultisampleQuality, SURFACE_OPENGL, (IUnknown *)object);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     if (hrc != D3D_OK || NULL == object->wineD3DSurface) {
 
@@ -715,9 +730,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_UpdateSurface(LPDIRECT3DDEVICE9EX i
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_UpdateSurface(This->WineD3DDevice, ((IDirect3DSurface9Impl *)pSourceSurface)->wineD3DSurface, pSourceRect, ((IDirect3DSurface9Impl *)pDestinationSurface)->wineD3DSurface, pDestPoint);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -726,9 +742,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_UpdateTexture(LPDIRECT3DDEVICE9EX i
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_UpdateTexture(This->WineD3DDevice,  ((IDirect3DBaseTexture9Impl *)pSourceTexture)->wineD3DBaseTexture, ((IDirect3DBaseTexture9Impl *)pDestinationTexture)->wineD3DBaseTexture);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -739,9 +756,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetRenderTargetData(LPDIRECT3DDEVIC
     HRESULT hr;
     TRACE("(%p)->(%p,%p)\n" , This, renderTarget, destSurface);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DSurface_BltFast(destSurface->wineD3DSurface, 0, 0, renderTarget->wineD3DSurface, NULL, WINEDDBLTFAST_NOCOLORKEY);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -751,9 +769,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetFrontBufferData(LPDIRECT3DDEVICE
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetFrontBufferData(This->WineD3DDevice, iSwapChain, destSurface->wineD3DSurface);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -764,9 +783,11 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_StretchRect(LPDIRECT3DDEVICE9EX ifa
     HRESULT hr;
 
     TRACE("(%p)->(%p,%p,%p,%p,%d)\n" , This, src, pSourceRect, dst, pDestRect, Filter);
-    EnterCriticalSection(&d3d9_cs);
+
+    wined3d_mutex_lock();
     hr = IWineD3DSurface_Blt(dst->wineD3DSurface, pDestRect, src->wineD3DSurface, pSourceRect, 0, NULL, Filter);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -780,7 +801,8 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_ColorFill(LPDIRECT3DDEVICE9EX iface
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
+
     IWineD3DSurface_GetDesc(surface->wineD3DSurface, &desc);
     usage = desc.usage;
     pool = desc.pool;
@@ -790,7 +812,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_ColorFill(LPDIRECT3DDEVICE9EX iface
      * in D3DPOOL_DEFAULT
      */
     if(!(usage & WINED3DUSAGE_RENDERTARGET) && (pool != WINED3DPOOL_DEFAULT || restype != WINED3DRTYPE_SURFACE)) {
-        LeaveCriticalSection(&d3d9_cs);
+        wined3d_mutex_unlock();
         WARN("Surface is not a render target, or not a stand-alone D3DPOOL_DEFAULT surface\n");
         return D3DERR_INVALIDCALL;
     }
@@ -798,7 +820,9 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_ColorFill(LPDIRECT3DDEVICE9EX iface
     /* Colorfill can only be used on rendertarget surfaces, or offscreen plain surfaces in D3DPOOL_DEFAULT */
     /* Note: D3DRECT is compatible with WINED3DRECT */
     hr = IWineD3DDevice_ColorFill(This->WineD3DDevice, surface->wineD3DSurface, (CONST WINED3DRECT*)pRect, color);
-    LeaveCriticalSection(&d3d9_cs);
+
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -830,9 +854,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetRenderTarget(LPDIRECT3DDEVICE9EX
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetRenderTarget(This->WineD3DDevice, RenderTargetIndex, pSurface ? pSurface->wineD3DSurface : NULL);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -847,7 +872,8 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetRenderTarget(LPDIRECT3DDEVICE9EX
         return D3DERR_INVALIDCALL;
     }
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
+
     hr=IWineD3DDevice_GetRenderTarget(This->WineD3DDevice,RenderTargetIndex,&pRenderTarget);
 
     if (FAILED(hr))
@@ -864,7 +890,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetRenderTarget(LPDIRECT3DDEVICE9EX
         IWineD3DSurface_Release(pRenderTarget);
     }
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -876,9 +902,11 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetDepthStencilSurface(LPDIRECT3DDE
     TRACE("(%p) Relay\n" , This);
 
     pSurface = (IDirect3DSurface9Impl*)pZStencilSurface;
-    EnterCriticalSection(&d3d9_cs);
+
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetDepthStencilSurface(This->WineD3DDevice, NULL==pSurface ? NULL : pSurface->wineD3DSurface);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -892,7 +920,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetDepthStencilSurface(LPDIRECT3DDE
         return D3DERR_INVALIDCALL;
     }
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetDepthStencilSurface(This->WineD3DDevice,&pZStencilSurface);
     if (hr == WINED3D_OK) {
         IWineD3DSurface_GetParent(pZStencilSurface,(IUnknown**)ppZStencilSurface);
@@ -902,7 +930,8 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetDepthStencilSurface(LPDIRECT3DDE
                 WARN("Call to IWineD3DDevice_GetDepthStencilSurface failed with 0x%08x\n", hr);
         *ppZStencilSurface = NULL;
     }
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -911,9 +940,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_BeginScene(LPDIRECT3DDEVICE9EX ifac
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_BeginScene(This->WineD3DDevice);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -922,9 +952,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_EndScene(LPDIRECT3DDEVICE9EX iface)
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_EndScene(This->WineD3DDevice);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -934,9 +965,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Clear(LPDIRECT3DDEVICE9EX iface, DW
     TRACE("(%p) Relay\n" , This);
 
     /* Note: D3DRECT is compatible with WINED3DRECT */
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_Clear(This->WineD3DDevice, Count, (CONST WINED3DRECT*) pRects, Flags, Color, Z, Stencil);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -946,9 +978,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetTransform(LPDIRECT3DDEVICE9EX if
     TRACE("(%p) Relay\n" , This);
 
     /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetTransform(This->WineD3DDevice, State, (CONST WINED3DMATRIX*) lpMatrix);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -958,10 +991,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetTransform(LPDIRECT3DDEVICE9EX if
 
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
     /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetTransform(This->WineD3DDevice, State, (WINED3DMATRIX*) pMatrix);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -972,9 +1005,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_MultiplyTransform(LPDIRECT3DDEVICE9
     TRACE("(%p) Relay\n" , This);
 
     /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_MultiplyTransform(This->WineD3DDevice, State, (CONST WINED3DMATRIX*) pMatrix);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -984,9 +1018,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetViewport(LPDIRECT3DDEVICE9EX ifa
     TRACE("(%p) Relay\n" , This);
 
     /* Note: D3DVIEWPORT9 is compatible with WINED3DVIEWPORT */
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetViewport(This->WineD3DDevice, (const WINED3DVIEWPORT *)pViewport);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -996,9 +1031,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetViewport(LPDIRECT3DDEVICE9EX ifa
     TRACE("(%p) Relay\n" , This);
 
     /* Note: D3DVIEWPORT9 is compatible with WINED3DVIEWPORT */
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetViewport(This->WineD3DDevice, (WINED3DVIEWPORT *)pViewport);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1008,9 +1044,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetMaterial(LPDIRECT3DDEVICE9EX ifa
     TRACE("(%p) Relay\n" , This);
 
     /* Note: D3DMATERIAL9 is compatible with WINED3DMATERIAL */
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetMaterial(This->WineD3DDevice, (const WINED3DMATERIAL *)pMaterial);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1020,9 +1057,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetMaterial(LPDIRECT3DDEVICE9EX ifa
     TRACE("(%p) Relay\n" , This);
 
     /* Note: D3DMATERIAL9 is compatible with WINED3DMATERIAL */
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetMaterial(This->WineD3DDevice, (WINED3DMATERIAL *)pMaterial);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1032,9 +1070,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetLight(LPDIRECT3DDEVICE9EX iface,
     TRACE("(%p) Relay\n" , This);
 
     /* Note: D3DLIGHT9 is compatible with WINED3DLIGHT */
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetLight(This->WineD3DDevice, Index, (const WINED3DLIGHT *)pLight);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1044,9 +1083,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetLight(LPDIRECT3DDEVICE9EX iface,
     TRACE("(%p) Relay\n" , This);
 
     /* Note: D3DLIGHT9 is compatible with WINED3DLIGHT */
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetLight(This->WineD3DDevice, Index, (WINED3DLIGHT *)pLight);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1055,9 +1095,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_LightEnable(LPDIRECT3DDEVICE9EX ifa
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetLightEnable(This->WineD3DDevice, Index, Enable);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1066,9 +1107,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetLightEnable(LPDIRECT3DDEVICE9EX 
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetLightEnable(This->WineD3DDevice, Index, pEnable);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1077,9 +1119,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetClipPlane(LPDIRECT3DDEVICE9EX if
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetClipPlane(This->WineD3DDevice, Index, pPlane);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1088,9 +1131,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetClipPlane(LPDIRECT3DDEVICE9EX if
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetClipPlane(This->WineD3DDevice, Index, pPlane);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1099,9 +1143,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetRenderState(LPDIRECT3DDEVICE9EX 
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetRenderState(This->WineD3DDevice, State, Value);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1110,9 +1155,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetRenderState(LPDIRECT3DDEVICE9EX 
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetRenderState(This->WineD3DDevice, State, pValue);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1121,9 +1167,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetClipStatus(LPDIRECT3DDEVICE9EX i
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetClipStatus(This->WineD3DDevice, (const WINED3DCLIPSTATUS *)pClipStatus);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1132,9 +1179,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetClipStatus(LPDIRECT3DDEVICE9EX i
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetClipStatus(This->WineD3DDevice, (WINED3DCLIPSTATUS *)pClipStatus);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1149,7 +1197,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetTexture(LPDIRECT3DDEVICE9EX ifac
         return D3DERR_INVALIDCALL;
     }
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     rc = IWineD3DDevice_GetTexture(This->WineD3DDevice, Stage, &retTexture);
     if (SUCCEEDED(rc) && NULL != retTexture) {
         IWineD3DBaseTexture_GetParent(retTexture, (IUnknown **)ppTexture);
@@ -1160,7 +1208,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetTexture(LPDIRECT3DDEVICE9EX ifac
         }
         *ppTexture = NULL;
     }
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return rc;
 }
@@ -1170,10 +1218,11 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetTexture(LPDIRECT3DDEVICE9EX ifac
     HRESULT hr;
     TRACE("(%p) Relay %d %p\n" , This, Stage, pTexture);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetTexture(This->WineD3DDevice, Stage,
                                    pTexture==NULL ? NULL:((IDirect3DBaseTexture9Impl *)pTexture)->wineD3DBaseTexture);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1219,9 +1268,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetTextureStageState(LPDIRECT3DDEVI
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetTextureStageState(This->WineD3DDevice, Stage, tss_lookup[Type], pValue);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1230,9 +1280,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetTextureStageState(LPDIRECT3DDEVI
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetTextureStageState(This->WineD3DDevice, Stage, tss_lookup[Type], Value);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1241,9 +1292,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetSamplerState(LPDIRECT3DDEVICE9EX
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetSamplerState(This->WineD3DDevice, Sampler, Type, pValue);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1252,9 +1304,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetSamplerState(LPDIRECT3DDEVICE9EX
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetSamplerState(This->WineD3DDevice, Sampler, Type, Value);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1263,9 +1316,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_ValidateDevice(LPDIRECT3DDEVICE9EX 
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_ValidateDevice(This->WineD3DDevice, pNumPasses);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1274,9 +1328,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetPaletteEntries(LPDIRECT3DDEVICE9
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetPaletteEntries(This->WineD3DDevice, PaletteNumber, pEntries);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1285,9 +1340,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetPaletteEntries(LPDIRECT3DDEVICE9
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetPaletteEntries(This->WineD3DDevice, PaletteNumber, pEntries);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1296,9 +1352,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetCurrentTexturePalette(LPDIRECT3D
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetCurrentTexturePalette(This->WineD3DDevice, PaletteNumber);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1307,9 +1364,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetCurrentTexturePalette(LPDIRECT3D
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetCurrentTexturePalette(This->WineD3DDevice, PaletteNumber);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1318,9 +1376,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetScissorRect(LPDIRECT3DDEVICE9EX 
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetScissorRect(This->WineD3DDevice, pRect);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1329,9 +1388,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetScissorRect(LPDIRECT3DDEVICE9EX 
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetScissorRect(This->WineD3DDevice, pRect);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1340,9 +1400,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetSoftwareVertexProcessing(LPDIREC
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetSoftwareVertexProcessing(This->WineD3DDevice, bSoftware);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1351,9 +1412,10 @@ static BOOL     WINAPI  IDirect3DDevice9Impl_GetSoftwareVertexProcessing(LPDIREC
     BOOL ret;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     ret = IWineD3DDevice_GetSoftwareVertexProcessing(This->WineD3DDevice);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return ret;
 }
 
@@ -1362,9 +1424,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetNPatchMode(LPDIRECT3DDEVICE9EX i
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetNPatchMode(This->WineD3DDevice, nSegments);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1373,9 +1436,10 @@ static float    WINAPI  IDirect3DDevice9Impl_GetNPatchMode(LPDIRECT3DDEVICE9EX i
     float ret;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     ret = IWineD3DDevice_GetNPatchMode(This->WineD3DDevice);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return ret;
 }
 
@@ -1384,11 +1448,12 @@ static HRESULT WINAPI IDirect3DDevice9Impl_DrawPrimitive(LPDIRECT3DDEVICE9EX ifa
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     IWineD3DDevice_SetPrimitiveType(This->WineD3DDevice, PrimitiveType);
     hr = IWineD3DDevice_DrawPrimitive(This->WineD3DDevice, StartVertex,
             vertex_count_from_primitive_count(PrimitiveType, PrimitiveCount));
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1399,12 +1464,13 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_DrawIndexedPrimitive(LPDIRECT3DDEVI
     TRACE("(%p) Relay\n" , This);
 
     /* D3D8 passes the baseVertexIndex in SetIndices, and due to the stateblock functions wined3d has to work that way */
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     IWineD3DDevice_SetBaseVertexIndex(This->WineD3DDevice, BaseVertexIndex);
     IWineD3DDevice_SetPrimitiveType(This->WineD3DDevice, PrimitiveType);
     hr = IWineD3DDevice_DrawIndexedPrimitive(This->WineD3DDevice, MinVertexIndex, NumVertices,
             startIndex, vertex_count_from_primitive_count(PrimitiveType, primCount));
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1413,12 +1479,13 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_DrawPrimitiveUP(LPDIRECT3DDEVICE9EX
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     IWineD3DDevice_SetPrimitiveType(This->WineD3DDevice, PrimitiveType);
     hr = IWineD3DDevice_DrawPrimitiveUP(This->WineD3DDevice,
             vertex_count_from_primitive_count(PrimitiveType, PrimitiveCount),
             pVertexStreamZeroData, VertexStreamZeroStride);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1429,12 +1496,13 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_DrawIndexedPrimitiveUP(LPDIRECT3DDE
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     IWineD3DDevice_SetPrimitiveType(This->WineD3DDevice, PrimitiveType);
     hr = IWineD3DDevice_DrawIndexedPrimitiveUP(This->WineD3DDevice, MinVertexIndex, NumVertexIndices,
             vertex_count_from_primitive_count(PrimitiveType, PrimitiveCount), pIndexData,
             wined3dformat_from_d3dformat(IndexDataFormat), pVertexStreamZeroData, VertexStreamZeroStride);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1445,9 +1513,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_ProcessVertices(LPDIRECT3DDEVICE9EX
     IDirect3DVertexBuffer9Impl *dest = (IDirect3DVertexBuffer9Impl *) pDestBuffer;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_ProcessVertices(This->WineD3DDevice,SrcStartIndex, DestIndex, VertexCount, dest->wineD3DVertexBuffer, Decl ? Decl->wineD3DVertexDeclaration : NULL, Flags, dest->fvf);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1521,9 +1590,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetFVF(LPDIRECT3DDEVICE9EX iface, DWO
         return D3D_OK;
     }
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     decl = getConvertedDecl(This, FVF);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     if (!decl)
     {
@@ -1572,11 +1641,12 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetStreamSource(LPDIRECT3DDEVICE9EX i
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetStreamSource(This->WineD3DDevice, StreamNumber,
                                           pStreamData==NULL ? NULL:((IDirect3DVertexBuffer9Impl *)pStreamData)->wineD3DVertexBuffer, 
                                           OffsetInBytes, Stride);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1591,7 +1661,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetStreamSource(LPDIRECT3DDEVICE9EX i
         return D3DERR_INVALIDCALL;
     }
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     rc = IWineD3DDevice_GetStreamSource(This->WineD3DDevice, StreamNumber, &retStream, OffsetInBytes, pStride);
     if (rc == D3D_OK  && NULL != retStream) {
         IWineD3DBuffer_GetParent(retStream, (IUnknown **)pStream);
@@ -1602,7 +1672,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetStreamSource(LPDIRECT3DDEVICE9EX i
         }
         *pStream = NULL;
     }
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return rc;
 }
@@ -1612,9 +1682,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetStreamSourceFreq(LPDIRECT3DDEVIC
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetStreamSourceFreq(This->WineD3DDevice, StreamNumber, Divider);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1623,9 +1694,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetStreamSourceFreq(LPDIRECT3DDEVIC
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_GetStreamSourceFreq(This->WineD3DDevice, StreamNumber, Divider);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1635,11 +1707,12 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetIndices(LPDIRECT3DDEVICE9EX ifac
     IDirect3DIndexBuffer9Impl *ib = (IDirect3DIndexBuffer9Impl *) pIndexData;
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_SetIndices(This->WineD3DDevice,
             ib ? ib->wineD3DIndexBuffer : NULL,
             ib ? ib->format : WINED3DFMT_UNKNOWN);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1654,7 +1727,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetIndices(LPDIRECT3DDEVICE9EX ifac
         return D3DERR_INVALIDCALL;
     }
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     rc = IWineD3DDevice_GetIndices(This->WineD3DDevice, &retIndexData);
     if (SUCCEEDED(rc) && retIndexData) {
         IWineD3DBuffer_GetParent(retIndexData, (IUnknown **)ppIndexData);
@@ -1663,7 +1736,8 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetIndices(LPDIRECT3DDEVICE9EX ifac
         if (FAILED(rc)) FIXME("Call to GetIndices failed\n");
         *ppIndexData = NULL;
     }
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return rc;
 }
 
@@ -1672,9 +1746,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_DrawRectPatch(LPDIRECT3DDEVICE9EX i
     HRESULT hr;
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_DrawRectPatch(This->WineD3DDevice, Handle, pNumSegs, (CONST WINED3DRECTPATCH_INFO *)pRectPatchInfo);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1683,9 +1758,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_DrawTriPatch(LPDIRECT3DDEVICE9EX if
     HRESULT hr;
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_DrawTriPatch(This->WineD3DDevice, Handle, pNumSegs, (CONST WINED3DTRIPATCH_INFO *)pTriPatchInfo);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -1694,9 +1770,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_DeletePatch(LPDIRECT3DDEVICE9EX ifa
     HRESULT hr;
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DDevice_DeletePatch(This->WineD3DDevice, Handle);
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 

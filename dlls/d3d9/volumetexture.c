@@ -58,9 +58,10 @@ static ULONG WINAPI IDirect3DVolumeTexture9Impl_Release(LPDIRECT3DVOLUMETEXTURE9
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
-        EnterCriticalSection(&d3d9_cs);
+        wined3d_mutex_lock();
         IWineD3DVolumeTexture_Destroy(This->wineD3DVolumeTexture, D3D9CB_DestroyVolume);
-        LeaveCriticalSection(&d3d9_cs);
+        wined3d_mutex_unlock();
+
         IDirect3DDevice9Ex_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -75,14 +76,14 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetDevice(LPDIRECT3DVOLUMETEXT
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
     hr = IWineD3DStateBlock_GetDevice(This->wineD3DVolumeTexture, &wined3d_device);
     if (SUCCEEDED(hr))
     {
         IWineD3DDevice_GetParent(wined3d_device, (IUnknown **)ppDevice);
         IWineD3DDevice_Release(wined3d_device);
     }
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -93,11 +94,11 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_SetPrivateData(LPDIRECT3DVOLUM
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     hr = IWineD3DVolumeTexture_SetPrivateData(This->wineD3DVolumeTexture, refguid, pData, SizeOfData, Flags);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -108,11 +109,11 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetPrivateData(LPDIRECT3DVOLUM
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     hr = IWineD3DVolumeTexture_GetPrivateData(This->wineD3DVolumeTexture, refguid, pData, pSizeOfData);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -123,11 +124,11 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_FreePrivateData(LPDIRECT3DVOLU
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     hr = IWineD3DVolumeTexture_FreePrivateData(This->wineD3DVolumeTexture, refguid);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -138,11 +139,11 @@ static DWORD WINAPI IDirect3DVolumeTexture9Impl_SetPriority(LPDIRECT3DVOLUMETEXT
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     priority = IWineD3DVolumeTexture_SetPriority(This->wineD3DVolumeTexture, PriorityNew);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return priority;
 }
@@ -153,11 +154,11 @@ static DWORD WINAPI IDirect3DVolumeTexture9Impl_GetPriority(LPDIRECT3DVOLUMETEXT
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     priority = IWineD3DVolumeTexture_GetPriority(This->wineD3DVolumeTexture);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return priority;
 }
@@ -167,11 +168,11 @@ static void WINAPI IDirect3DVolumeTexture9Impl_PreLoad(LPDIRECT3DVOLUMETEXTURE9 
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     IWineD3DVolumeTexture_PreLoad(This->wineD3DVolumeTexture);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 }
 
 static D3DRESOURCETYPE WINAPI IDirect3DVolumeTexture9Impl_GetType(LPDIRECT3DVOLUMETEXTURE9 iface) {
@@ -180,11 +181,11 @@ static D3DRESOURCETYPE WINAPI IDirect3DVolumeTexture9Impl_GetType(LPDIRECT3DVOLU
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     type = IWineD3DVolumeTexture_GetType(This->wineD3DVolumeTexture);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return type;
 }
@@ -196,11 +197,11 @@ static DWORD WINAPI IDirect3DVolumeTexture9Impl_SetLOD(LPDIRECT3DVOLUMETEXTURE9 
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     lod = IWineD3DVolumeTexture_SetLOD(This->wineD3DVolumeTexture, LODNew);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return lod;
 }
@@ -211,11 +212,11 @@ static DWORD WINAPI IDirect3DVolumeTexture9Impl_GetLOD(LPDIRECT3DVOLUMETEXTURE9 
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     lod = IWineD3DVolumeTexture_GetLOD(This->wineD3DVolumeTexture);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return lod;
 }
@@ -226,11 +227,11 @@ static DWORD WINAPI IDirect3DVolumeTexture9Impl_GetLevelCount(LPDIRECT3DVOLUMETE
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     level_count = IWineD3DVolumeTexture_GetLevelCount(This->wineD3DVolumeTexture);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return level_count;
 }
@@ -241,11 +242,11 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_SetAutoGenFilterType(LPDIRECT3
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     hr = IWineD3DVolumeTexture_SetAutoGenFilterType(This->wineD3DVolumeTexture, (WINED3DTEXTUREFILTERTYPE) FilterType);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -256,11 +257,11 @@ static D3DTEXTUREFILTERTYPE WINAPI IDirect3DVolumeTexture9Impl_GetAutoGenFilterT
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     filter_type = (D3DTEXTUREFILTERTYPE)IWineD3DVolumeTexture_GetAutoGenFilterType(This->wineD3DVolumeTexture);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return filter_type;
 }
@@ -270,11 +271,11 @@ static void WINAPI IDirect3DVolumeTexture9Impl_GenerateMipSubLevels(LPDIRECT3DVO
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     IWineD3DVolumeTexture_GenerateMipSubLevels(This->wineD3DVolumeTexture);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 }
 
 /* IDirect3DVolumeTexture9 Interface follow: */
@@ -285,11 +286,11 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetLevelDesc(LPDIRECT3DVOLUMET
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     hr = IWineD3DVolumeTexture_GetLevelDesc(This->wineD3DVolumeTexture, Level, &wined3ddesc);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
     {
@@ -312,7 +313,7 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetVolumeLevel(LPDIRECT3DVOLUM
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     hrc = IWineD3DVolumeTexture_GetVolumeLevel(This->wineD3DVolumeTexture, Level, &myVolume);
     if (hrc == D3D_OK && NULL != ppVolumeLevel) {
@@ -320,7 +321,7 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetVolumeLevel(LPDIRECT3DVOLUM
        IWineD3DVolumeTexture_Release(myVolume);
     }
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return hrc;
 }
@@ -331,12 +332,12 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_LockBox(LPDIRECT3DVOLUMETEXTUR
 
     TRACE("(%p) Relay %p %p %p %d\n", This, This->wineD3DVolumeTexture, pLockedVolume, pBox,Flags);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     hr = IWineD3DVolumeTexture_LockBox(This->wineD3DVolumeTexture, Level, (WINED3DLOCKED_BOX *)pLockedVolume,
             (const WINED3DBOX *)pBox, Flags);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -347,11 +348,11 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_UnlockBox(LPDIRECT3DVOLUMETEXT
 
     TRACE("(%p) Relay %p %d\n", This, This->wineD3DVolumeTexture, Level);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     hr = IWineD3DVolumeTexture_UnlockBox(This->wineD3DVolumeTexture, Level);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -362,11 +363,11 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_AddDirtyBox(LPDIRECT3DVOLUMETE
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     hr = IWineD3DVolumeTexture_AddDirtyBox(This->wineD3DVolumeTexture, (CONST WINED3DBOX *)pDirtyBox);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -425,13 +426,13 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVolumeTexture(LPDIRECT3DDEVICE9EX if
     object->lpVtbl = &Direct3DVolumeTexture9_Vtbl;
     object->ref = 1;
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     hrc = IWineD3DDevice_CreateVolumeTexture(This->WineD3DDevice, Width, Height, Depth, Levels,
             Usage & WINED3DUSAGE_MASK, wined3dformat_from_d3dformat(Format),
             Pool, &object->wineD3DVolumeTexture, (IUnknown *)object);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     if (hrc != D3D_OK) {
 

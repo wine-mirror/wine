@@ -72,9 +72,10 @@ static ULONG WINAPI IDirect3DVolume9Impl_Release(LPDIRECT3DVOLUME9 iface) {
         TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
         if (ref == 0) {
-            EnterCriticalSection(&d3d9_cs);
+            wined3d_mutex_lock();
             IWineD3DVolume_Release(This->wineD3DVolume);
-            LeaveCriticalSection(&d3d9_cs);
+            wined3d_mutex_unlock();
+
             HeapFree(GetProcessHeap(), 0, This);
         }
 
@@ -89,13 +90,13 @@ static HRESULT WINAPI IDirect3DVolume9Impl_GetDevice(LPDIRECT3DVOLUME9 iface, ID
 
     TRACE("iface %p, ppDevice %p\n", iface, ppDevice);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     IWineD3DVolume_GetDevice(This->wineD3DVolume, &myDevice);
     IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
     IWineD3DDevice_Release(myDevice);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return D3D_OK;
 }
@@ -106,11 +107,11 @@ static HRESULT WINAPI IDirect3DVolume9Impl_SetPrivateData(LPDIRECT3DVOLUME9 ifac
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     hr = IWineD3DVolume_SetPrivateData(This->wineD3DVolume, refguid, pData, SizeOfData, Flags);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -121,11 +122,11 @@ static HRESULT WINAPI IDirect3DVolume9Impl_GetPrivateData(LPDIRECT3DVOLUME9 ifac
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     hr = IWineD3DVolume_GetPrivateData(This->wineD3DVolume, refguid, pData, pSizeOfData);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -136,11 +137,11 @@ static HRESULT WINAPI IDirect3DVolume9Impl_FreePrivateData(LPDIRECT3DVOLUME9 ifa
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     hr = IWineD3DVolume_FreePrivateData(This->wineD3DVolume, refguid);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -171,11 +172,11 @@ static HRESULT WINAPI IDirect3DVolume9Impl_GetDesc(LPDIRECT3DVOLUME9 iface, D3DV
 
     TRACE("(%p) Relay\n", This);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     hr = IWineD3DVolume_GetDesc(This->wineD3DVolume, &wined3ddesc);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
     {
@@ -197,12 +198,12 @@ static HRESULT WINAPI IDirect3DVolume9Impl_LockBox(LPDIRECT3DVOLUME9 iface, D3DL
 
     TRACE("(%p) relay %p %p %p %d\n", This, This->wineD3DVolume, pLockedVolume, pBox, Flags);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     hr = IWineD3DVolume_LockBox(This->wineD3DVolume, (WINED3DLOCKED_BOX *)pLockedVolume,
             (const WINED3DBOX *)pBox, Flags);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -213,11 +214,11 @@ static HRESULT WINAPI IDirect3DVolume9Impl_UnlockBox(LPDIRECT3DVOLUME9 iface) {
 
     TRACE("(%p) relay %p\n", This, This->wineD3DVolume);
 
-    EnterCriticalSection(&d3d9_cs);
+    wined3d_mutex_lock();
 
     hr = IWineD3DVolume_UnlockBox(This->wineD3DVolume);
 
-    LeaveCriticalSection(&d3d9_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
