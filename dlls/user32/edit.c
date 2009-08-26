@@ -3636,7 +3636,7 @@ static LRESULT EDIT_WM_KeyDown(EDITSTATE *es, INT key)
 	    }
 	    break;
         case VK_ESCAPE:
-            if ((es->style & ES_MULTILINE) && EDIT_IsInsideDialog(es));
+            if ((es->style & ES_MULTILINE) && EDIT_IsInsideDialog(es))
                 PostMessageW(es->hwndParent, WM_CLOSE, 0, 0);
             break;
         case VK_TAB:
