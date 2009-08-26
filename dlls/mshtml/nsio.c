@@ -1856,14 +1856,54 @@ static nsresult NSAPI nsURL_GetQuery(nsIWineURI *iface, nsACString *aQuery)
 static nsresult NSAPI nsURL_SetQuery(nsIWineURI *iface, const nsACString *aQuery)
 {
     nsURI *This = NSURI_THIS(iface);
+    const WCHAR *ptr1, *ptr2;
+    const char *query;
+    WCHAR *new_url, *ptr;
+    DWORD len, size;
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aQuery));
 
     if(This->nsurl)
-        return nsIURL_SetQuery(This->nsurl, aQuery);
+        nsIURL_SetQuery(This->nsurl, aQuery);
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    if(!This->wine_url)
+        return NS_OK;
+
+    nsACString_GetData(aQuery, &query);
+    size = len = MultiByteToWideChar(CP_ACP, 0, query, -1, NULL, 0);
+    ptr1 = strchrW(This->wine_url, '?');
+    if(ptr1) {
+        size += ptr1-This->wine_url;
+        ptr2 = strchrW(ptr1, '#');
+        if(ptr2)
+            size += strlenW(ptr2);
+    }else {
+        ptr1 = This->wine_url + strlenW(This->wine_url);
+        ptr2 = NULL;
+        size += strlenW(This->wine_url);
+    }
+
+    if(*query)
+        size++;
+
+    new_url = heap_alloc(size*sizeof(WCHAR));
+    memcpy(new_url, This->wine_url, (ptr1-This->wine_url)*sizeof(WCHAR));
+    ptr = new_url + (ptr1-This->wine_url);
+    if(*query) {
+        *ptr++ = '?';
+        MultiByteToWideChar(CP_ACP, 0, query, -1, ptr, len);
+        ptr += len-1;
+    }
+    if(ptr2)
+        strcpyW(ptr, ptr2);
+    else
+        *ptr = 0;
+
+    TRACE("setting %s\n", debugstr_w(new_url));
+
+    heap_free(This->wine_url);
+    This->wine_url = new_url;
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURL_GetRef(nsIWineURI *iface, nsACString *aRef)
