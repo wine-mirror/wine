@@ -638,7 +638,7 @@ static string_t *get_buffered_cstring(void)
             parser_error("String %s does not convert identically to Unicode and back in codepage %d. "
                     "Try using a Unicode string instead", str->str.cstr, current_codepage );
         if (check_valid_utf8( str, current_codepage ))
-            parser_warning( "string \"%s\" seems to be UTF-8 but codepage %u is in use.",
+            parser_warning( "string \"%s\" seems to be UTF-8 but codepage %u is in use.\n",
                             str->str.cstr, current_codepage );
         free_string( str );
         return str_w;
