@@ -558,7 +558,11 @@ static inline void remove_vbos(IWineD3DDeviceImpl *This, struct wined3d_stream_i
 
     for (i = 0; i < (sizeof(s->elements) / sizeof(*s->elements)); ++i)
     {
-        struct wined3d_stream_info_element *e = &s->elements[i];
+        struct wined3d_stream_info_element *e;
+
+        if (!(s->use_map & (1 << i))) continue;
+
+        e = &s->elements[i];
         if (e->buffer_object)
         {
             struct wined3d_buffer *vb = (struct wined3d_buffer *)This->stateBlock->streamSource[e->stream_idx];
