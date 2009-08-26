@@ -735,7 +735,7 @@ int parser_lex(void *lval, parser_ctx_t *ctx)
             if(*ctx->ptr == '=') {  /* /= */
                 ctx->ptr++;
                 *(int*)lval = EXPR_ASSIGNDIV;
-                return tAssignOper;
+                return kDIVEQ;
             }
         }
         return '/';
@@ -772,7 +772,10 @@ literal_t *parse_regexp(parser_ctx_t *ctx)
 
     TRACE("\n");
 
-    re = ctx->ptr;
+    while(*ctx->ptr != '/')
+        ctx->ptr--;
+
+    re = ++ctx->ptr;
     while(ctx->ptr < ctx->end && *ctx->ptr != '/') {
         if(*ctx->ptr++ == '\\' && ctx->ptr < ctx->end)
             ctx->ptr++;

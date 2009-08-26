@@ -896,6 +896,9 @@ ok(""+str === "test", "''+str = " + str);
 
 ok((function (){return 1;})() === 1, "(function (){return 1;})() = " + (function (){return 1;})());
 
+var re = /=(\?|%3F)/g;
+ok(re.source === "=(\\?|%3F)", "re.source = " + re.source);
+
 ok(createNullBSTR() === '', "createNullBSTR() !== ''");
 
 function do_test() {}
