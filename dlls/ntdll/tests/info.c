@@ -121,25 +121,23 @@ static void test_query_cpu(void)
 static void test_query_performance(void)
 {
     NTSTATUS status;
-    ULONG FullLength;
     ULONG ReturnLength;
-    SYSTEM_PERFORMANCE_INFORMATION spi;
-    struct SPI_PLUS_EXTRA
-    {
-      SYSTEM_PERFORMANCE_INFORMATION spi;
-      BYTE extra[2];
-    } spi_plus_extra;
+    ULONGLONG buffer[sizeof(SYSTEM_PERFORMANCE_INFORMATION)/sizeof(ULONGLONG) + 1];
 
-    status = pNtQuerySystemInformation(SystemPerformanceInformation, &spi, 0, &FullLength);
+    status = pNtQuerySystemInformation(SystemPerformanceInformation, buffer, 0, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
-    status = pNtQuerySystemInformation(SystemPerformanceInformation, &spi, sizeof(spi), &ReturnLength);
+    status = pNtQuerySystemInformation(SystemPerformanceInformation, buffer,
+                                       sizeof(SYSTEM_PERFORMANCE_INFORMATION), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-    ok( sizeof(spi) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
+    ok( ReturnLength == sizeof(SYSTEM_PERFORMANCE_INFORMATION), "Inconsistent length %d\n", ReturnLength);
 
-    status = pNtQuerySystemInformation(SystemPerformanceInformation, &spi_plus_extra, sizeof(spi_plus_extra), &ReturnLength);
+    status = pNtQuerySystemInformation(SystemPerformanceInformation, buffer,
+                                       sizeof(SYSTEM_PERFORMANCE_INFORMATION) + 2, &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-    ok( ReturnLength == min(FullLength, sizeof(spi_plus_extra)), "Inconsistent length %d\n", ReturnLength);
+    ok( ReturnLength == sizeof(SYSTEM_PERFORMANCE_INFORMATION) ||
+        ReturnLength == sizeof(SYSTEM_PERFORMANCE_INFORMATION) + 2,
+        "Inconsistent length %d\n", ReturnLength);
 
     /* Not return values yet, as struct members are unknown */
 }
