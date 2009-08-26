@@ -1685,6 +1685,7 @@ static void raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
     }
     status = raise_exception( rec, context, TRUE );
     if (status) raise_status( status, rec );
+    set_cpu_context( context );
 }
 
 
@@ -1697,6 +1698,7 @@ static void raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     NTSTATUS status = raise_exception( rec, context, TRUE );
     if (status) raise_status( status, rec );
+    set_cpu_context( context );
 }
 
 
