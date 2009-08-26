@@ -36,6 +36,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(openal32);
 
+typedef struct wine_ALCcontext {
+    ALCcontext *ctx;
+
+    struct wine_ALCcontext *next;
+} wine_ALCcontext;
 
 struct FuncList {
     const char *name;
@@ -45,6 +50,18 @@ struct FuncList {
 static const struct FuncList ALCFuncs[];
 static const struct FuncList ALFuncs[];
 
+static wine_ALCcontext *CtxList;
+static wine_ALCcontext *CurrentCtx;
+
+CRITICAL_SECTION openal_cs;
+static CRITICAL_SECTION_DEBUG openal_cs_debug =
+{
+    0, 0, &openal_cs,
+    {&openal_cs_debug.ProcessLocksList,
+    &openal_cs_debug.ProcessLocksList},
+    0, 0, {(DWORD_PTR)(__FILE__ ": openal_cs")}
+};
+CRITICAL_SECTION openal_cs = {&openal_cs_debug, -1, 0, 0, 0, 0};
 
 /***********************************************************************
  *           OpenAL initialisation routine
@@ -56,9 +73,27 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hinst);
         break;
+    case DLL_PROCESS_DETACH:
+        while(CtxList)
+        {
+            wine_ALCcontext *next = CtxList->next;
+            HeapFree(GetProcessHeap(), 0, CtxList);
+            CtxList = next;
+        }
     }
 
     return TRUE;
+}
+
+
+/* Validates the given context */
+static wine_ALCcontext *ValidateCtx(ALCcontext *ctx)
+{
+    wine_ALCcontext *cur = CtxList;
+
+    while(cur != NULL && cur->ctx != ctx)
+        cur = cur->next;
+    return cur;
 }
 
 
@@ -69,12 +104,55 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 /* OpenAL ALC 1.0 functions */
 ALCcontext* CDECL wine_alcCreateContext(ALCdevice *device, const ALCint* attrlist)
 {
-    return alcCreateContext(device, attrlist);
+    wine_ALCcontext *ctx;
+
+    ctx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(wine_ALCcontext));
+    if(!ctx)
+    {
+        ERR("Out of memory!\n");
+        return NULL;
+    }
+
+    ctx->ctx = alcCreateContext(device, attrlist);
+    if(!ctx->ctx)
+    {
+        HeapFree(GetProcessHeap(), 0, ctx);
+        WARN("Failed to create new context\n");
+        return NULL;
+    }
+    TRACE("Created new context %p\n", ctx->ctx);
+
+    EnterCriticalSection(&openal_cs);
+    ctx->next = CtxList;
+    CtxList = ctx;
+    LeaveCriticalSection(&openal_cs);
+
+    return ctx->ctx;
 }
 
 ALCboolean CDECL wine_alcMakeContextCurrent(ALCcontext *context)
 {
-    return alcMakeContextCurrent(context);
+    wine_ALCcontext *ctx = NULL;
+
+    EnterCriticalSection(&openal_cs);
+    if(context && !(ctx=ValidateCtx(context)))
+    {
+        FIXME("Could not find context %p in context list\n", context);
+        LeaveCriticalSection(&openal_cs);
+        return ALC_FALSE;
+    }
+
+    if(alcMakeContextCurrent(ctx ? ctx->ctx : NULL) == ALC_FALSE)
+    {
+        WARN("Failed to make context %p current\n", ctx->ctx);
+        LeaveCriticalSection(&openal_cs);
+        return ALC_FALSE;
+    }
+
+    CurrentCtx = ctx;
+    LeaveCriticalSection(&openal_cs);
+
+    return ALC_TRUE;
 }
 
 ALvoid CDECL wine_alcProcessContext(ALCcontext *context)
@@ -89,12 +167,43 @@ ALvoid CDECL wine_alcSuspendContext(ALCcontext *context)
 
 ALvoid CDECL wine_alcDestroyContext(ALCcontext *context)
 {
+    wine_ALCcontext **list, *ctx;
+
+    EnterCriticalSection(&openal_cs);
+
+    list = &CtxList;
+    while(*list && (*list)->ctx != context)
+        list = &(*list)->next;
+
+    if(!(*list))
+    {
+        FIXME("Could not find context %p in context list\n", context);
+        LeaveCriticalSection(&openal_cs);
+        return;
+    }
+
+    ctx = *list;
+    *list = (*list)->next;
+
+    if(ctx == CurrentCtx)
+        CurrentCtx = NULL;
+
+    LeaveCriticalSection(&openal_cs);
+
+    HeapFree(GetProcessHeap(), 0, ctx);
     alcDestroyContext(context);
 }
 
 ALCcontext* CDECL wine_alcGetCurrentContext(ALCvoid)
 {
-    return alcGetCurrentContext();
+    ALCcontext *ret = NULL;
+
+    EnterCriticalSection(&openal_cs);
+    if(CurrentCtx)
+        ret = CurrentCtx->ctx;
+    LeaveCriticalSection(&openal_cs);
+
+    return ret;
 }
 
 ALCdevice* CDECL wine_alcGetContextsDevice(ALCcontext *context)
