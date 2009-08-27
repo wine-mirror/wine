@@ -457,9 +457,8 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
             dump_uint64( ",rip=", &ctx.ctl.x86_64_regs.rip );
             dump_uint64( ",rbp=", &ctx.ctl.x86_64_regs.rbp );
             dump_uint64( ",rsp=", &ctx.ctl.x86_64_regs.rsp );
-            fprintf( stderr, ",cs=%04x,ss=%04x,flags=%08x,mxcsr=%08x",
-                     ctx.ctl.x86_64_regs.cs, ctx.ctl.x86_64_regs.ss,
-                     ctx.ctl.x86_64_regs.flags, ctx.ctl.x86_64_regs.mxcsr );
+            fprintf( stderr, ",cs=%04x,ss=%04x,flags=%08x",
+                     ctx.ctl.x86_64_regs.cs, ctx.ctl.x86_64_regs.ss, ctx.ctl.x86_64_regs.flags );
         }
         if (ctx.flags & SERVER_CTX_INTEGER)
         {

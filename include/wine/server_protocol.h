@@ -143,7 +143,7 @@ typedef struct
     {
         struct { unsigned int eip, ebp, esp, eflags, cs, ss; } i386_regs;
         struct { unsigned __int64 rip, rbp, rsp;
-                 unsigned int cs, ss, flags, mxcsr; } x86_64_regs;
+                 unsigned int cs, ss, flags; } x86_64_regs;
         struct { unsigned __int64 fir;
                  unsigned int psr; } alpha_regs;
         struct { unsigned int iar, msr, ctr, lr, dar, dsisr, trap; } powerpc_regs;
@@ -5347,6 +5347,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 389
+#define SERVER_PROTOCOL_VERSION 390
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

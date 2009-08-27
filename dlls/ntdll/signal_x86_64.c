@@ -1019,11 +1019,11 @@ static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
 #else
     __asm__("movw %%ss,%0" : "=m" (context->SegSs));
 #endif
-    context->MxCsr  = 0;  /* FIXME */
     if (FPU_sig(sigcontext))
     {
         context->ContextFlags |= CONTEXT_FLOATING_POINT;
         context->u.FltSave = *FPU_sig(sigcontext);
+        context->MxCsr = context->u.FltSave.MxCsr;
     }
 }
 
@@ -1107,7 +1107,6 @@ void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
         to->SegCs  = from->SegCs;
         to->SegSs  = from->SegSs;
         to->EFlags = from->EFlags;
-        to->MxCsr  = from->MxCsr;
     }
     if (flags & CONTEXT_INTEGER)
     {
@@ -1135,6 +1134,7 @@ void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
     }
     if (flags & CONTEXT_FLOATING_POINT)
     {
+        to->MxCsr = from->MxCsr;
         to->u.FltSave = from->u.FltSave;
     }
     if (flags & CONTEXT_DEBUG_REGISTERS)
@@ -1170,7 +1170,6 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
         to->ctl.x86_64_regs.cs    = from->SegCs;
         to->ctl.x86_64_regs.ss    = from->SegSs;
         to->ctl.x86_64_regs.flags = from->EFlags;
-        to->ctl.x86_64_regs.mxcsr = from->MxCsr;
     }
     if (flags & CONTEXT_INTEGER)
     {
@@ -1236,7 +1235,6 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
         to->SegCs  = from->ctl.x86_64_regs.cs;
         to->SegSs  = from->ctl.x86_64_regs.ss;
         to->EFlags = from->ctl.x86_64_regs.flags;
-        to->MxCsr  = from->ctl.x86_64_regs.mxcsr;
     }
 
     if (from->flags & SERVER_CTX_INTEGER)
@@ -1269,6 +1267,7 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
     {
         to->ContextFlags |= CONTEXT_FLOATING_POINT;
         memcpy( &to->u.FltSave, from->fp.x86_64_regs.fpregs, sizeof(from->fp.x86_64_regs.fpregs) );
+        to->MxCsr = to->u.FltSave.MxCsr;
     }
     if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
     {
