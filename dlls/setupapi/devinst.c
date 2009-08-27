@@ -2916,8 +2916,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
 {
     struct DeviceInfoSet *set = DeviceInfoSet;
     struct InterfaceInfo *info;
-    DWORD bytesNeeded = offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath)
-        + 1;
+    DWORD bytesNeeded = FIELD_OFFSET(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath[1]);
     BOOL ret = FALSE;
 
     TRACE("(%p, %p, %p, %d, %p, %p)\n", DeviceInfoSet,
@@ -2937,8 +2936,8 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    if (DeviceInterfaceDetailData && (DeviceInterfaceDetailData->cbSize !=
-            offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath) + sizeof(char)))
+    if (DeviceInterfaceDetailData &&
+        DeviceInterfaceDetailData->cbSize != sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A))
     {
         SetLastError(ERROR_INVALID_USER_BUFFER);
         return FALSE;
