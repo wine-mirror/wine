@@ -2062,6 +2062,7 @@ static void test_extendedSocketOptions(void)
     /* IE 3 use 0xffffffff instead of SOL_SOCKET (0xffff) */
     SetLastError(0xdeadbeef);
     optval = 0xdeadbeef;
+    optlen = sizeof(int);
     ret = getsockopt(sock, 0xffffffff, SO_MAX_MSG_SIZE, (char *)&optval, &optlen);
     ok( (ret == SOCKET_ERROR) && (WSAGetLastError() == WSAEINVAL),
         "got %d with %d and optval: 0x%x/%d (expected SOCKET_ERROR with WSAEINVAL)\n",
@@ -2070,6 +2071,7 @@ static void test_extendedSocketOptions(void)
     /* more invalid values for level */
     SetLastError(0xdeadbeef);
     optval = 0xdeadbeef;
+    optlen = sizeof(int);
     ret = getsockopt(sock, 0x1234ffff, SO_MAX_MSG_SIZE, (char *)&optval, &optlen);
     ok( (ret == SOCKET_ERROR) && (WSAGetLastError() == WSAEINVAL),
         "got %d with %d and optval: 0x%x/%d (expected SOCKET_ERROR with WSAEINVAL)\n",
@@ -2077,6 +2079,7 @@ static void test_extendedSocketOptions(void)
 
     SetLastError(0xdeadbeef);
     optval = 0xdeadbeef;
+    optlen = sizeof(int);
     ret = getsockopt(sock, 0x8000ffff, SO_MAX_MSG_SIZE, (char *)&optval, &optlen);
     ok( (ret == SOCKET_ERROR) && (WSAGetLastError() == WSAEINVAL),
         "got %d with %d and optval: 0x%x/%d (expected SOCKET_ERROR with WSAEINVAL)\n",
@@ -2084,6 +2087,7 @@ static void test_extendedSocketOptions(void)
 
     SetLastError(0xdeadbeef);
     optval = 0xdeadbeef;
+    optlen = sizeof(int);
     ret = getsockopt(sock, 0x00008000, SO_MAX_MSG_SIZE, (char *)&optval, &optlen);
     ok( (ret == SOCKET_ERROR) && (WSAGetLastError() == WSAEINVAL),
         "got %d with %d and optval: 0x%x/%d (expected SOCKET_ERROR with WSAEINVAL)\n",
@@ -2091,6 +2095,7 @@ static void test_extendedSocketOptions(void)
 
     SetLastError(0xdeadbeef);
     optval = 0xdeadbeef;
+    optlen = sizeof(int);
     ret = getsockopt(sock, 0x00000800, SO_MAX_MSG_SIZE, (char *)&optval, &optlen);
     ok( (ret == SOCKET_ERROR) && (WSAGetLastError() == WSAEINVAL),
         "got %d with %d and optval: 0x%x/%d (expected SOCKET_ERROR with WSAEINVAL)\n",
