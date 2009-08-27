@@ -59,6 +59,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT,INT,INT,PixelFormat,BYTE*,
     GpBitmap**);
 GpStatus WINGDIPAPI GdipCreateBitmapFromStream(IStream*,GpBitmap**);
 GpStatus WINGDIPAPI GdipCreateBitmapFromStreamICM(IStream*,GpBitmap**);
+GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap*,HBITMAP*,ARGB);
 GpStatus WINGDIPAPI GdipCreateHICONFromBitmap(GpBitmap*,HICON*);
 GpStatus WINGDIPAPI GdipDeleteEffect(CGpEffect*);
 

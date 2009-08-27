@@ -741,6 +741,64 @@ static void test_getrawformat(void)
     test_bufferrawformat((void*)jpgimage, sizeof(jpgimage), &ImageFormatJPEG, __LINE__, TRUE);
 }
 
+static void test_createhbitmap(void)
+{
+    GpStatus stat;
+    GpBitmap *bitmap;
+    HBITMAP hbitmap, oldhbitmap;
+    BITMAP bm;
+    int ret;
+    HDC hdc;
+    COLORREF pixel;
+    BYTE bits[640];
+
+    memset(bits, 0x68, 640);
+
+    /* create Bitmap */
+    stat = GdipCreateBitmapFromScan0(10, 20, 32, PixelFormat24bppRGB, bits, &bitmap);
+    expect(Ok, stat);
+
+    /* test NULL values */
+    stat = GdipCreateHBITMAPFromBitmap(NULL, &hbitmap, 0);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipCreateHBITMAPFromBitmap(bitmap, NULL, 0);
+    todo_wine expect(InvalidParameter, stat);
+
+    /* create HBITMAP */
+    stat = GdipCreateHBITMAPFromBitmap(bitmap, &hbitmap, 0);
+    todo_wine expect(Ok, stat);
+
+    if (stat == Ok)
+    {
+        ret = GetObjectA(hbitmap, sizeof(BITMAP), &bm);
+        expect(sizeof(BITMAP), ret);
+
+        expect(0, bm.bmType);
+        expect(10, bm.bmWidth);
+        expect(20, bm.bmHeight);
+        expect(40, bm.bmWidthBytes);
+        expect(1, bm.bmPlanes);
+        expect(32, bm.bmBitsPixel);
+        ok(bm.bmBits != NULL, "got DDB, expected DIB\n");
+
+        hdc = CreateCompatibleDC(NULL);
+
+        oldhbitmap = SelectObject(hdc, hbitmap);
+        pixel = GetPixel(hdc, 5, 5);
+        SelectObject(hdc, oldhbitmap);
+
+        DeleteDC(hdc);
+
+        expect(0x686868, pixel);
+
+        DeleteObject(hbitmap);
+    }
+
+    stat = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, stat);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -766,6 +824,7 @@ START_TEST(image)
     test_testcontrol();
     test_fromhicon();
     test_getrawformat();
+    test_createhbitmap();
 
     GdiplusShutdown(gdiplusToken);
 }
