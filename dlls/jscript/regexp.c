@@ -3646,8 +3646,21 @@ static HRESULT RegExp_exec(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
 static HRESULT RegExp_test(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    match_result_t match;
+    VARIANT_BOOL b;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = run_exec(dispex, arg_cnt(dp) ? get_arg(dp,0) : NULL, lcid, ei, NULL, &match, NULL, NULL, &b);
+    if(FAILED(hres))
+        return hres;
+
+    if(retv) {
+        V_VT(retv) = VT_BOOL;
+        V_BOOL(retv) = b;
+    }
+    return S_OK;
 }
 
 static HRESULT RegExp_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

@@ -71,6 +71,26 @@ m = re.exec();
 ok(m === null, "m is not null");
 ok(re.lastIndex === 0, "re.lastIndex = " + re.lastIndex);
 
+b = re.test("  a ");
+ok(b === true, "re.test('  a ') returned " + b);
+ok(re.lastIndex === 3, "re.lastIndex = " + re.lastIndex);
+
+b = re.test(" a ");
+ok(b === false, "re.test(' a ') returned " + b);
+ok(re.lastIndex === 0, "re.lastIndex = " + re.lastIndex);
+
+re = /\[([^\[]+)\]/g;
+m = re.exec(" [test]  ");
+ok(re.lastIndex === 7, "re.lastIndex = " + re.lastIndex);
+ok(m.index === 1, "m.index = " + m.index);
+ok(m.input === " [test]  ", "m.input = " + m.input);
+ok(m.length === 2, "m.length = " + m.length);
+ok(m[0] === "[test]", "m[0] = " + m[0]);
+ok(m[1] === "test", "m[1] = " + m[1]);
+
+b = /a*/.test();
+ok(b === true, "/a*/.test() returned " + b);
+
 m = "abcabc".match(/ca/);
 ok(typeof(m) === "object", "typeof m is not object");
 ok(m.length === 1, "m.length is not 1");
