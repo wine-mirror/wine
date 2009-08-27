@@ -109,3 +109,7 @@ typedef struct tagDBIMPLICITSESSION
     IID *piid;
     IUnknown *pSession;
 } DBIMPLICITSESSION;
+
+typedef WORD DBTYPE;
+
+typedef DWORD DBSTATUS;

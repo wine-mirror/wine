@@ -30,6 +30,7 @@ import "urlmon.idl";
 
 typedef ULONG DBBYTEOFFSET;
 typedef ULONG DBCOUNTITEM;
+typedef ULONG DBLENGTH;
 
 #include "dbs.idl"
 
