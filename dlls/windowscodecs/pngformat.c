@@ -491,8 +491,12 @@ static HRESULT WINAPI PngDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
 static HRESULT WINAPI PngDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
-    FIXME("(%p,%p,%u,%u,%p): stub\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
-    return E_NOTIMPL;
+    PngDecoder *This = impl_from_frame(iface);
+    TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
+
+    return copy_pixels(This->bpp, This->image_bits,
+        This->width, This->height, This->stride,
+        prc, cbStride, cbBufferSize, pbBuffer);
 }
 
 static HRESULT WINAPI PngDecoder_Frame_GetMetadataQueryReader(IWICBitmapFrameDecode *iface,
