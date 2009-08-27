@@ -447,11 +447,69 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromResource(HINSTANCE hInstance,
 GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
     HBITMAP* hbmReturn, ARGB background)
 {
-    FIXME("stub\n");
+    GpStatus stat;
+    HBITMAP result, oldbitmap;
+    UINT width, height;
+    HDC hdc;
+    GpGraphics *graphics;
+    BITMAPINFOHEADER bih;
+    void *bits;
+    TRACE("(%p,%p,%x)\n", bitmap, hbmReturn, background);
 
-    if (hbmReturn) *hbmReturn = NULL;
+    if (!bitmap || !hbmReturn) return InvalidParameter;
 
-    return NotImplemented;
+    GdipGetImageWidth((GpImage*)bitmap, &width);
+    GdipGetImageHeight((GpImage*)bitmap, &height);
+
+    bih.biSize = sizeof(bih);
+    bih.biWidth = width;
+    bih.biHeight = height;
+    bih.biPlanes = 1;
+    bih.biBitCount = 32;
+    bih.biCompression = BI_RGB;
+    bih.biSizeImage = 0;
+    bih.biXPelsPerMeter = 0;
+    bih.biYPelsPerMeter = 0;
+    bih.biClrUsed = 0;
+    bih.biClrImportant = 0;
+
+    hdc = CreateCompatibleDC(NULL);
+    if (!hdc) return GenericError;
+
+    result = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS, &bits,
+        NULL, 0);
+
+    if (result)
+    {
+        oldbitmap = SelectObject(hdc, result);
+
+        stat = GdipCreateFromHDC(hdc, &graphics);
+        if (stat == Ok)
+        {
+            stat = GdipGraphicsClear(graphics, background);
+
+            if (stat == Ok)
+                stat = GdipDrawImage(graphics, (GpImage*)bitmap, 0, 0);
+
+            GdipDeleteGraphics(graphics);
+        }
+
+        SelectObject(hdc, oldbitmap);
+    }
+    else
+        stat = GenericError;
+
+    DeleteDC(hdc);
+
+    if (stat != Ok && result)
+    {
+        DeleteObject(result);
+        result = NULL;
+    }
+
+    *hbmReturn = result;
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipConvertToEmfPlus(const GpGraphics* ref,

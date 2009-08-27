@@ -760,14 +760,14 @@ static void test_createhbitmap(void)
 
     /* test NULL values */
     stat = GdipCreateHBITMAPFromBitmap(NULL, &hbitmap, 0);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     stat = GdipCreateHBITMAPFromBitmap(bitmap, NULL, 0);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     /* create HBITMAP */
     stat = GdipCreateHBITMAPFromBitmap(bitmap, &hbitmap, 0);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     if (stat == Ok)
     {
