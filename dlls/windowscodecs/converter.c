@@ -39,6 +39,7 @@ enum pixelformat {
     format_1bppIndexed,
     format_4bppIndexed,
     format_8bppIndexed,
+    format_BlackWhite,
     format_8bppGray,
     format_16bppBGR555,
     format_16bppBGR565,
@@ -72,6 +73,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
     switch (source_format)
     {
     case format_1bppIndexed:
+    case format_BlackWhite:
         if (prc)
         {
             HRESULT res;
@@ -86,16 +88,24 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
             IWICPalette *palette;
             UINT actualcolors;
 
-            res = PaletteImpl_Create(&palette);
-            if (FAILED(res)) return res;
+            if (source_format == format_1bppIndexed)
+            {
+                res = PaletteImpl_Create(&palette);
+                if (FAILED(res)) return res;
 
-            res = IWICBitmapSource_CopyPalette(This->source, palette);
-            if (SUCCEEDED(res))
-                res = IWICPalette_GetColors(palette, 2, colors, &actualcolors);
+                res = IWICBitmapSource_CopyPalette(This->source, palette);
+                if (SUCCEEDED(res))
+                    res = IWICPalette_GetColors(palette, 2, colors, &actualcolors);
 
-            IWICPalette_Release(palette);
+                IWICPalette_Release(palette);
 
-            if (FAILED(res)) return res;
+                if (FAILED(res)) return res;
+            }
+            else
+            {
+                colors[0] = 0xff000000;
+                colors[1] = 0xffffffff;
+            }
 
             srcstride = (prc->Width+7)/8;
             srcdatasize = srcstride * prc->Height;
@@ -468,6 +478,7 @@ static const struct pixelformatinfo supported_formats[] = {
     {format_1bppIndexed, &GUID_WICPixelFormat1bppIndexed, NULL},
     {format_4bppIndexed, &GUID_WICPixelFormat4bppIndexed, NULL},
     {format_8bppIndexed, &GUID_WICPixelFormat8bppIndexed, NULL},
+    {format_BlackWhite, &GUID_WICPixelFormatBlackWhite, NULL},
     {format_8bppGray, &GUID_WICPixelFormat8bppGray, NULL},
     {format_16bppBGR555, &GUID_WICPixelFormat16bppBGR555, NULL},
     {format_16bppBGR565, &GUID_WICPixelFormat16bppBGR565, NULL},

@@ -920,6 +920,7 @@ static GUID const * const converter_formats[] = {
     &GUID_WICPixelFormat1bppIndexed,
     &GUID_WICPixelFormat4bppIndexed,
     &GUID_WICPixelFormat8bppIndexed,
+    &GUID_WICPixelFormatBlackWhite,
     &GUID_WICPixelFormat8bppGray,
     &GUID_WICPixelFormat16bppBGR555,
     &GUID_WICPixelFormat16bppBGR565,
