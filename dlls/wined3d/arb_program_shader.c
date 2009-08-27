@@ -265,10 +265,9 @@ struct shader_arb_priv
  * ARB_[vertex/fragment]_program helper functions follow
  ********************************************************/
 
-/** 
- * Loads floating point constants into the currently set ARB_vertex/fragment_program.
+/* Loads floating point constants into the currently set ARB_vertex/fragment_program.
  * When constant_list == NULL, it will load all the constants.
- *  
+ *
  * @target_type should be either GL_VERTEX_PROGRAM_ARB (for vertex shaders)
  *  or GL_FRAGMENT_PROGRAM_ARB (for pixel shaders)
  */
@@ -529,8 +528,8 @@ static inline void shader_arb_vs_local_constants(IWineD3DDeviceImpl* deviceImpl)
 
 /**
  * Loads the app-supplied constants into the currently set ARB_[vertex/fragment]_programs.
- * 
- * We only support float constants in ARB at the moment, so don't 
+ *
+ * We only support float constants in ARB at the moment, so don't
  * worry about the Integers or Booleans
  */
 /* GL locking is done by the caller (state handler) */

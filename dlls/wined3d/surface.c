@@ -2973,7 +2973,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
     }
 
     if(override) {
-        /* DDraw sets this for the X11 surfaces, so don't confuse the user 
+        /* DDraw sets this for the X11 surfaces, so don't confuse the user
          * FIXME("(%p) Target override is not supported by now\n", This);
          * Additionally, it isn't really possible to support triple-buffering
          * properly on opengl at all

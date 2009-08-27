@@ -1,7 +1,7 @@
 /*
  * GLSL pixel and vertex shader implementation
  *
- * Copyright 2006 Jason Green 
+ * Copyright 2006 Jason Green
  * Copyright 2006-2007 Henri Verbeet
  * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
  * Copyright 2009 Henri Verbeet for CodeWeavers
@@ -940,7 +940,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         }
     }
 
-    /* Declare texture samplers */ 
+    /* Declare texture samplers */
     for (i = 0; i < This->baseShader.limits.sampler; i++) {
         if (reg_maps->sampler_type[i])
         {
@@ -1104,22 +1104,22 @@ static void shader_glsl_add_src_param(const struct wined3d_shader_instruction *i
 
 /** Used for opcode modifiers - They multiply the result by the specified amount */
 static const char * const shift_glsl_tab[] = {
-    "",           /*  0 (none) */ 
-    "2.0 * ",     /*  1 (x2)   */ 
-    "4.0 * ",     /*  2 (x4)   */ 
-    "8.0 * ",     /*  3 (x8)   */ 
-    "16.0 * ",    /*  4 (x16)  */ 
-    "32.0 * ",    /*  5 (x32)  */ 
-    "",           /*  6 (x64)  */ 
-    "",           /*  7 (x128) */ 
-    "",           /*  8 (d256) */ 
-    "",           /*  9 (d128) */ 
-    "",           /* 10 (d64)  */ 
-    "",           /* 11 (d32)  */ 
-    "0.0625 * ",  /* 12 (d16)  */ 
-    "0.125 * ",   /* 13 (d8)   */ 
-    "0.25 * ",    /* 14 (d4)   */ 
-    "0.5 * "      /* 15 (d2)   */ 
+    "",           /*  0 (none) */
+    "2.0 * ",     /*  1 (x2)   */
+    "4.0 * ",     /*  2 (x4)   */
+    "8.0 * ",     /*  3 (x8)   */
+    "16.0 * ",    /*  4 (x16)  */
+    "32.0 * ",    /*  5 (x32)  */
+    "",           /*  6 (x64)  */
+    "",           /*  7 (x128) */
+    "",           /*  8 (d256) */
+    "",           /*  9 (d128) */
+    "",           /* 10 (d64)  */
+    "",           /* 11 (d32)  */
+    "0.0625 * ",  /* 12 (d16)  */
+    "0.125 * ",   /* 13 (d8)   */
+    "0.25 * ",    /* 14 (d4)   */
+    "0.5 * "      /* 15 (d2)   */
 };
 
 /* Generate a GLSL parameter that does the input modifier computation and return the input register/mask to use */
@@ -1777,9 +1777,7 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
 }
 
 /*****************************************************************************
- * 
  * Begin processing individual instruction opcodes
- * 
  ****************************************************************************/
 
 /* Generate GLSL arithmetic functions (dst = src1 + src2) */
@@ -2264,8 +2262,8 @@ static void shader_glsl_mad(const struct wined3d_shader_instruction *ins)
             src0_param.param_str, src1_param.param_str, src2_param.param_str);
 }
 
-/** Handles transforming all WINED3DSIO_M?x? opcodes for 
-    Vertex shaders to GLSL codes */
+/* Handles transforming all WINED3DSIO_M?x? opcodes for
+   Vertex shaders to GLSL codes */
 static void shader_glsl_mnxn(const struct wined3d_shader_instruction *ins)
 {
     int i;
@@ -2321,7 +2319,7 @@ static void shader_glsl_mnxn(const struct wined3d_shader_instruction *ins)
 }
 
 /**
-    The LRP instruction performs a component-wise linear interpolation 
+    The LRP instruction performs a component-wise linear interpolation
     between the second and third operands using the first operand as the
     blend factor.  Equation:  (dst = src2 + src0 * (src1 - src2))
     This is equivalent to mix(src2, src1, src0);
@@ -2418,7 +2416,7 @@ static void shader_glsl_dst(const struct wined3d_shader_instruction *ins)
 /** Process the WINED3DSIO_SINCOS instruction in GLSL:
  * VS 2.0 requires that specific cosine and sine constants be passed to this instruction so the hardware
  * can handle it.  But, these functions are built-in for GLSL, so we can just ignore the last 2 params.
- * 
+ *
  * dst.x = cos(src0.?)
  * dst.y = sin(src0.?)
  * dst.z = dst.z
@@ -3037,7 +3035,7 @@ static void shader_glsl_texm3x3(const struct wined3d_shader_instruction *ins)
     current_state->current_row = 0;
 }
 
-/** Process the WINED3DSIO_TEXM3X3SPEC instruction in GLSL 
+/* Process the WINED3DSIO_TEXM3X3SPEC instruction in GLSL
  * Perform the final texture lookup based on the previous 2 3x3 matrix multiplies */
 static void shader_glsl_texm3x3spec(const struct wined3d_shader_instruction *ins)
 {
@@ -3068,7 +3066,7 @@ static void shader_glsl_texm3x3spec(const struct wined3d_shader_instruction *ins
     current_state->current_row = 0;
 }
 
-/** Process the WINED3DSIO_TEXM3X3VSPEC instruction in GLSL 
+/* Process the WINED3DSIO_TEXM3X3VSPEC instruction in GLSL
  * Perform the final texture lookup based on the previous 2 3x3 matrix multiplies */
 static void shader_glsl_texm3x3vspec(const struct wined3d_shader_instruction *ins)
 {

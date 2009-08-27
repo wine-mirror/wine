@@ -4178,7 +4178,7 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
 
             if( !doClip ||
                 ( (-rhw -eps < x) && (-rhw -eps < y) && ( -eps < z) &&
-                  (x <= rhw + eps) && (y <= rhw + eps ) && (z <= rhw + eps) && 
+                  (x <= rhw + eps) && (y <= rhw + eps ) && (z <= rhw + eps) &&
                   ( rhw > eps ) ) ) {
 
                 /* "Normal" viewport transformation (not clipped)
@@ -4303,7 +4303,8 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
             }
         }
 
-        if (DestFVF & WINED3DFVF_SPECULAR) { 
+        if (DestFVF & WINED3DFVF_SPECULAR)
+        {
             /* What's the color value in the feedback buffer? */
             const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_SPECULAR];
             const DWORD *color_s = (const DWORD *)(element->data + i * element->stride);

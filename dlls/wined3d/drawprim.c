@@ -699,7 +699,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT numberOfVertice
 #ifdef SHOW_FRAME_MAKEUP
     {
         static long int primCounter = 0;
-        /* NOTE: set primCounter to the value reported by drawprim 
+        /* NOTE: set primCounter to the value reported by drawprim
            before you want to to write frame makeup to /tmp */
         if (primCounter >= 0) {
             WINED3DLOCKED_RECT r;

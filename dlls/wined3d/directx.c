@@ -2358,10 +2358,9 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
     return WINED3DERR_NOTAVAILABLE;
 }
 
-static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, 
-                                                       WINED3DFORMAT SurfaceFormat,
-                                                       BOOL Windowed, WINED3DMULTISAMPLE_TYPE MultiSampleType, DWORD*   pQualityLevels) {
-
+static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
+        WINED3DFORMAT SurfaceFormat, BOOL Windowed, WINED3DMULTISAMPLE_TYPE MultiSampleType, DWORD *pQualityLevels)
+{
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     const struct GlPixelFormatDesc *glDesc;
     const struct WineD3DAdapter *adapter;
@@ -3045,9 +3044,10 @@ static BOOL CheckVertexTextureCapability(struct WineD3DAdapter *adapter, const s
     return FALSE;
 }
 
-static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, 
+static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
         WINED3DFORMAT AdapterFormat, DWORD Usage, WINED3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat,
-        WINED3DSURFTYPE SurfaceType) {
+        WINED3DSURFTYPE SurfaceType)
+{
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     struct WineD3DAdapter *adapter = &This->adapters[Adapter];
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
@@ -3951,14 +3951,13 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     pCaps->MaxPointSize    = GL_LIMITS(pointsize);
 
 
+    /* FIXME: Add D3DVTXPCAPS_TWEENING, D3DVTXPCAPS_TEXGEN_SPHEREMAP */
     pCaps->VertexProcessingCaps = WINED3DVTXPCAPS_DIRECTIONALLIGHTS |
                                   WINED3DVTXPCAPS_MATERIALSOURCE7   |
                                   WINED3DVTXPCAPS_POSITIONALLIGHTS  |
                                   WINED3DVTXPCAPS_LOCALVIEWER       |
                                   WINED3DVTXPCAPS_VERTEXFOG         |
                                   WINED3DVTXPCAPS_TEXGEN;
-                                  /* FIXME: Add 
-                                     D3DVTXPCAPS_TWEENING, D3DVTXPCAPS_TEXGEN_SPHEREMAP */
 
     pCaps->MaxPrimitiveCount   = 0xFFFFF; /* For now set 2^20-1 which is used by most >=Geforce3/Radeon8500 cards */
     pCaps->MaxVertexIndex      = 0xFFFFF;

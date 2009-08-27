@@ -242,7 +242,7 @@ static inline float float_24_to_32(DWORD in)
 }
 
 /**
- * Settings 
+ * Settings
  */
 #define VS_NONE    0
 #define VS_HW      1
@@ -969,8 +969,8 @@ extern const float identity[16];
 /* Trace information per-vertex: (extremely high amount of trace) */
 #if 0 /* NOTE: Must be 0 in cvs */
 # define VTRACE(A) TRACE A
-#else 
-# define VTRACE(A) 
+#else
+# define VTRACE(A)
 #endif
 
 /* TODO: Confirm each of these works when wined3d move completed */
@@ -983,21 +983,21 @@ extern const float identity[16];
       the file is deleted                                                                            */
 # if 1 /* NOTE: Must be 1 in cvs, as this is mostly more useful than a trace from program start */
 #  define SINGLE_FRAME_DEBUGGING
-# endif  
+# endif
   /* The following, when enabled, lets you see the makeup of the frame, by drawprimitive calls.
-     It can only be enabled when FRAME_DEBUGGING is also enabled                               
-     The contents of the back buffer are written into /tmp/backbuffer_* after each primitive 
+     It can only be enabled when FRAME_DEBUGGING is also enabled
+     The contents of the back buffer are written into /tmp/backbuffer_* after each primitive
      array is drawn.                                                                            */
-# if 0 /* NOTE: Must be 0 in cvs, as this give a lot of ppm files when compiled in */                                                                                       
+# if 0 /* NOTE: Must be 0 in cvs, as this give a lot of ppm files when compiled in */
 #  define SHOW_FRAME_MAKEUP 1
-# endif  
+# endif
   /* The following, when enabled, lets you see the makeup of the all the textures used during each
      of the drawprimitive calls. It can only be enabled when SHOW_FRAME_MAKEUP is also enabled.
-     The contents of the textures assigned to each stage are written into 
+     The contents of the textures assigned to each stage are written into
      /tmp/texture_*_<Stage>.ppm after each primitive array is drawn.                            */
 # if 0 /* NOTE: Must be 0 in cvs, as this give a lot of ppm files when compiled in */
 #  define SHOW_TEXTURE_MAKEUP 0
-# endif  
+# endif
 extern BOOL isOn;
 extern BOOL isDumpingFrames;
 extern LONG primCounter;
@@ -2362,7 +2362,7 @@ typedef struct IWineD3DQueryImpl
 {
     const IWineD3DQueryVtbl  *lpVtbl;
     LONG                      ref;     /* Note: Ref counting not required */
-    
+
     IUnknown                 *parent;
     /*TODO: replace with iface usage */
 #if 0
@@ -2376,8 +2376,6 @@ typedef struct IWineD3DQueryImpl
     WINED3DQUERYTYPE         type;
     /* TODO: Think about using a IUnknown instead of a void* */
     void                     *extendedData;
-    
-  
 } IWineD3DQueryImpl;
 
 extern const IWineD3DQueryVtbl IWineD3DQuery_Vtbl;
@@ -2498,7 +2496,7 @@ struct wined3d_context *IWineD3DSwapChainImpl_CreateContextForThread(IWineD3DSwa
 #define DEFAULT_REFRESH_RATE 0
 
 /*****************************************************************************
- * Utility function prototypes 
+ * Utility function prototypes
  */
 
 /* Trace routines */
@@ -2576,8 +2574,8 @@ typedef struct SHADER_LIMITS {
     unsigned int label;
 } SHADER_LIMITS;
 
-/** Keeps track of details for TEX_M#x# shader opcodes which need to 
-    maintain state information between multiple codes */
+/* Keeps track of details for TEX_M#x# shader opcodes which need to
+ * maintain state information between multiple codes */
 typedef struct SHADER_PARSE_STATE {
     unsigned int current_row;
     DWORD texcoord_w[2];
@@ -2725,7 +2723,7 @@ static inline BOOL shader_constant_is_local(IWineD3DBaseShaderImpl* This, DWORD 
  * IDirect3DVertexShader implementation structures
  */
 typedef struct IWineD3DVertexShaderImpl {
-    /* IUnknown parts*/   
+    /* IUnknown parts */
     const IWineD3DVertexShaderVtbl *lpVtbl;
 
     /* IWineD3DBaseShader */

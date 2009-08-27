@@ -31,11 +31,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
  * Stateblock helper functions follow
  **************************************/
 
-/** Allocates the correct amount of space for pixel and vertex shader constants, 
+/* Allocates the correct amount of space for pixel and vertex shader constants,
  * along with their set/changed flags on the given stateblock object
  */
-HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object) {
-    
+HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object)
+{
     IWineD3DStateBlockImpl *This = object;
 
     /* Allocate space for floating point constants */
@@ -113,11 +113,8 @@ static inline void stateblock_set_bits(DWORD *map, UINT map_size)
 }
 
 /** Set all members of a stateblock savedstate to the given value */
-void stateblock_savedstates_set(
-    IWineD3DStateBlock* iface,
-    SAVEDSTATES* states,
-    BOOL value) {
-    
+void stateblock_savedstates_set(IWineD3DStateBlock *iface, SAVEDSTATES *states, BOOL value)
+{
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
     unsigned bsize = sizeof(BOOL);
 
@@ -228,7 +225,7 @@ void stateblock_copy(
     memcpy(Dest->vertexShaderConstantI, This->vertexShaderConstantI, sizeof(INT) * MAX_CONST_I * 4);
     memcpy(Dest->pixelShaderConstantB, This->pixelShaderConstantB, sizeof(BOOL) * MAX_CONST_B);
     memcpy(Dest->pixelShaderConstantI, This->pixelShaderConstantI, sizeof(INT) * MAX_CONST_I * 4);
-    
+
     memcpy(Dest->streamStride, This->streamStride, sizeof(UINT) * MAX_STREAMS);
     memcpy(Dest->streamOffset, This->streamOffset, sizeof(UINT) * MAX_STREAMS);
     memcpy(Dest->streamSource, This->streamSource, sizeof(IWineD3DBuffer *) * MAX_STREAMS);
