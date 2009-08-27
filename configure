@@ -3960,6 +3960,11 @@ else
 fi
 
 
+cat >>confdefs.h <<_ACEOF
+#define EXEEXT "$ac_exeext"
+_ACEOF
+
+
 case $host in
   *-darwin*)
     if test "x$enable_win64" = "xyes"

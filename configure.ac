@@ -105,6 +105,7 @@ AC_PROG_CC
 AC_PROG_CXX
 dnl We can't use AC_PROG_CPP for winegcc, it uses by default $(CC) -E
 AC_CHECK_TOOL(CPPBIN,cpp,cpp)
+AC_DEFINE_UNQUOTED(EXEEXT,["$ac_exeext"],[Define to the file extension for executables.])
 
 case $host in
   *-darwin*)

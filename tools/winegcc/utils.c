@@ -308,14 +308,16 @@ void spawn(const strarray* prefix, const strarray* args, int ignore_errors)
 
     if (prefix)
     {
+        const char *p = strrchr(argv[0], '/');
+        if (!p) p = argv[0];
+        else p++;
+
         for (i = 0; i < prefix->size; i++)
         {
-            const char* p;
             struct stat st;
 
-            if (!(p = strrchr(argv[0], '/'))) p = argv[0];
             free( prog );
-            prog = strmake("%s/%s", prefix->base[i], p);
+            prog = strmake("%s/%s%s", prefix->base[i], p, EXEEXT);
             if (stat(prog, &st) == 0 && S_ISREG(st.st_mode) && (st.st_mode & 0111))
             {
                 argv[0] = prog;

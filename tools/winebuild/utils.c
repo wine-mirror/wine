@@ -198,7 +198,7 @@ int output( const char *format, ... )
 }
 
 /* find a build tool in the path, trying the various names */
-char *find_tool( const char * const *names )
+static char *find_tool( const char * const *names )
 {
     static char **dirs;
     static unsigned int count, maxlen;
@@ -231,7 +231,7 @@ char *find_tool( const char * const *names )
 
     while (*names)
     {
-        len = strlen(*names) + 1;
+        len = strlen(*names) + sizeof(EXEEXT) + 1;
         file = xmalloc( maxlen + len );
 
         for (i = 0; i < count; i++)
@@ -241,6 +241,7 @@ char *find_tool( const char * const *names )
             if (p == file) *p++ = '.';
             if (p[-1] != '/') *p++ = '/';
             strcpy( p, *names );
+            strcat( p, EXEEXT );
 
             if (!stat( file, &st ) && S_ISREG(st.st_mode) && (st.st_mode & 0111)) return file;
         }
