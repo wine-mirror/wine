@@ -122,6 +122,13 @@ static RTL_CRITICAL_SECTION csVirtual = { &critsect_debug, -1, 0, 0, 0, 0 };
 static void *address_space_limit = (void *)0xc0000000;  /* top of the total available address space */
 static void *user_space_limit    = (void *)0x7fff0000;  /* top of the user address space */
 static void *working_set_limit   = (void *)0x7fff0000;  /* top of the current working set */
+#elif defined(__x86_64__)
+# define page_mask  0xfff
+# define page_shift 12
+# define page_size  0x1000
+static void *address_space_limit = (void *)0x7fffffff0000;
+static void *user_space_limit    = (void *)0x7fffffff0000;
+static void *working_set_limit   = (void *)0x7fffffff0000;
 #else
 static UINT page_shift;
 static UINT_PTR page_size;
