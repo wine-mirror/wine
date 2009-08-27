@@ -182,7 +182,8 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
     const DWORD *streams = declaration->streams;
     unsigned int i;
 
-    memset(stream_info, 0, sizeof(*stream_info));
+    stream_info->use_map = 0;
+    stream_info->swizzle_map = 0;
 
     /* Check for transformed vertices, disable vertex shader if present. */
     stream_info->position_transformed = declaration->position_transformed;
