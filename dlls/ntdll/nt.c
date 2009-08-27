@@ -1038,9 +1038,9 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                     {
                         sppi = RtlAllocateHeap(GetProcessHeap(), 0,
                                                sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
-                        sppi->liIdleTime.QuadPart = idle;
-                        sppi->liKernelTime.QuadPart = sys;
-                        sppi->liUserTime.QuadPart = usr;
+                        sppi->IdleTime.QuadPart = idle;
+                        sppi->KernelTime.QuadPart = sys;
+                        sppi->UserTime.QuadPart = usr;
                         cpus = 1;
                         len = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
                     }
@@ -1057,17 +1057,17 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                             out_cpus --;
                             if (name[3]=='0') /* first cpu */
                             {
-                                sppi->liIdleTime.QuadPart = idle;
-                                sppi->liKernelTime.QuadPart = sys;
-                                sppi->liUserTime.QuadPart = usr;
+                                sppi->IdleTime.QuadPart = idle;
+                                sppi->KernelTime.QuadPart = sys;
+                                sppi->UserTime.QuadPart = usr;
                             }
                             else /* new cpu */
                             {
                                 len = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * (cpus+1);
                                 sppi = RtlReAllocateHeap(GetProcessHeap(), 0, sppi, len);
-                                sppi[cpus].liIdleTime.QuadPart = idle;
-                                sppi[cpus].liKernelTime.QuadPart = sys;
-                                sppi[cpus].liUserTime.QuadPart = usr;
+                                sppi[cpus].IdleTime.QuadPart = idle;
+                                sppi[cpus].KernelTime.QuadPart = sys;
+                                sppi[cpus].UserTime.QuadPart = usr;
                                 cpus++;
                             }
                         }
@@ -1090,9 +1090,9 @@ NTSTATUS WINAPI NtQuerySystemInformation(
 
                 /* many programs expect these values to change so fake change */
                 len = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
-                sppi->liKernelTime.QuadPart = 1 * i;
-                sppi->liUserTime.QuadPart = 2 * i;
-                sppi->liIdleTime.QuadPart = 3 * i;
+                sppi->KernelTime.QuadPart = 1 * i;
+                sppi->UserTime.QuadPart = 2 * i;
+                sppi->IdleTime.QuadPart = 3 * i;
                 i++;
             }
 

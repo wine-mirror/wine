@@ -1187,19 +1187,17 @@ typedef struct _RTL_RWLOCK {
 
 typedef struct _SYSTEM_BASIC_INFORMATION {
 #ifdef __WINESRC__
-    DWORD dwUnknown1;
-    ULONG uKeMaximumIncrement;
-    ULONG uPageSize;
-    ULONG uMmNumberOfPhysicalPages;
-    ULONG uMmLowestPhysicalPage;
-    ULONG uMmHighestPhysicalPage;
-    ULONG uAllocationGranularity;
-    PVOID pLowestUserAddress;
-    PVOID pMmHighestUserAddress;
-    ULONG uKeActiveProcessors;
-    BYTE bKeNumberProcessors;
-    BYTE bUnknown2;
-    WORD wUnknown3;
+    DWORD     unknown;
+    ULONG     KeMaximumIncrement;
+    ULONG     PageSize;
+    ULONG     MmNumberOfPhysicalPages;
+    ULONG     MmLowestPhysicalPage;
+    ULONG     MmHighestPhysicalPage;
+    ULONG_PTR AllocationGranularity;
+    PVOID     LowestUserAddress;
+    PVOID     HighestUserAddress;
+    ULONG_PTR ActiveProcessors;
+    BYTE      NumberOfProcessors;
 #else
     BYTE Reserved1[24];
     PVOID Reserved2[4];
@@ -1260,18 +1258,11 @@ typedef struct _SYSTEM_TIMEOFDAY_INFORMATION {
 /* System Information Class 0x08 */
 
 typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
-#ifdef __WINESRC__
-    LARGE_INTEGER liIdleTime;
-    LARGE_INTEGER liKernelTime;
-    LARGE_INTEGER liUserTime;
-    DWORD dwSpare[5];
-#else
     LARGE_INTEGER IdleTime;
     LARGE_INTEGER KernelTime;
     LARGE_INTEGER UserTime;
     LARGE_INTEGER Reserved1[2];
     ULONG Reserved2;
-#endif
 } SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION, *PSYSTEM_PROCESSOR_PERFORMANCE_INFORMATION;
 
 /* System Information Class 0x0b */

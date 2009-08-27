@@ -379,11 +379,11 @@ VOID WINAPI GetSystemInfo(
 	memset(PF,0,sizeof(PF));
 
         NtQuerySystemInformation( SystemBasicInformation, &sbi, sizeof(sbi), NULL );
-        cachedsi.dwPageSize                  = sbi.uPageSize;
-        cachedsi.lpMinimumApplicationAddress = sbi.pLowestUserAddress;
-        cachedsi.lpMaximumApplicationAddress = sbi.pMmHighestUserAddress;
-        cachedsi.dwNumberOfProcessors        = sbi.uKeActiveProcessors;
-        cachedsi.dwAllocationGranularity     = sbi.uAllocationGranularity;
+        cachedsi.dwPageSize                  = sbi.PageSize;
+        cachedsi.lpMinimumApplicationAddress = sbi.LowestUserAddress;
+        cachedsi.lpMaximumApplicationAddress = sbi.HighestUserAddress;
+        cachedsi.dwNumberOfProcessors        = sbi.ActiveProcessors;
+        cachedsi.dwAllocationGranularity     = sbi.AllocationGranularity;
 
 	/* choose sensible defaults ...
 	 * FIXME: perhaps overridable with precompiler flags?

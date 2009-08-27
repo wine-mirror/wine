@@ -1364,17 +1364,17 @@ void virtual_init_threading(void)
  */
 void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
 {
-    info->dwUnknown1 = 0;
-    info->uKeMaximumIncrement = 0;  /* FIXME */
-    info->uPageSize = page_size;
-    info->uMmLowestPhysicalPage = 1;
-    info->uMmHighestPhysicalPage = 0x7fffffff / page_size;
-    info->uMmNumberOfPhysicalPages = info->uMmHighestPhysicalPage - info->uMmLowestPhysicalPage;
-    info->uAllocationGranularity = get_mask(0) + 1;
-    info->pLowestUserAddress = (void *)0x10000;
-    info->pMmHighestUserAddress = (char *)user_space_limit - 1;
-    info->uKeActiveProcessors = NtCurrentTeb()->Peb->NumberOfProcessors;
-    info->bKeNumberProcessors = info->uKeActiveProcessors;
+    info->unknown                 = 0;
+    info->KeMaximumIncrement      = 0;  /* FIXME */
+    info->PageSize                = page_size;
+    info->MmLowestPhysicalPage    = 1;
+    info->MmHighestPhysicalPage   = 0x7fffffff / page_size;
+    info->MmNumberOfPhysicalPages = info->MmHighestPhysicalPage - info->MmLowestPhysicalPage;
+    info->AllocationGranularity   = get_mask(0) + 1;
+    info->LowestUserAddress       = (void *)0x10000;
+    info->HighestUserAddress      = (char *)user_space_limit - 1;
+    info->ActiveProcessors        = NtCurrentTeb()->Peb->NumberOfProcessors;
+    info->NumberOfProcessors      = NtCurrentTeb()->Peb->NumberOfProcessors;
 }
 
 
