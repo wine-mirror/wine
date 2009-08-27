@@ -82,6 +82,7 @@ typedef struct {
 
     JSRegExp *jsregexp;
     BSTR str;
+    DWORD last_index;
 } RegExpInstance;
 
 static const WCHAR sourceW[] = {'s','o','u','r','c','e',0};
@@ -3471,8 +3472,21 @@ static HRESULT RegExp_multiline(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
 static HRESULT RegExp_lastIndex(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET: {
+        RegExpInstance *regexp = (RegExpInstance*)dispex;
+        V_VT(retv) = VT_I4;
+        V_I4(retv) = regexp->last_index;
+        break;
+    }
+    default:
+        FIXME("unimplemented flags: %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT RegExp_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

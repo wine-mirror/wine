@@ -17,7 +17,10 @@
  */
 
 
-var m;
+var m, re;
+
+re = /a+/;
+ok(re.lastIndex === 0, "re.lastIndex = " + re.lastIndex);
 
 m = "abcabc".match(/ca/);
 ok(typeof(m) === "object", "typeof m is not object");
@@ -207,8 +210,6 @@ r = "1,,2,".split(/,+/);
 ok(r.length === 2, "r.length = " + r.length);
 ok(r[0] === "1", "r[0] = " + r[0]);
 ok(r[1] === "2", "r[1] = " + r[1]);
-
-var re;
 
 re = /abc[^d]/g;
 ok(re.source === "abc[^d]", "re.source = '" + re.source + "', expected 'abc[^d]'");
