@@ -181,7 +181,11 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                 if (ProcessInformationLength > sizeof(PROCESS_BASIC_INFORMATION))
                     ret = STATUS_INFO_LENGTH_MISMATCH;
             }
-            else ret = STATUS_INFO_LENGTH_MISMATCH;
+            else
+            {
+                len = sizeof(PROCESS_BASIC_INFORMATION);
+                ret = STATUS_INFO_LENGTH_MISMATCH;
+            }
         }
         break;
     case ProcessIoCounters:
@@ -207,7 +211,11 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                 if (ProcessInformationLength > sizeof(IO_COUNTERS))
                     ret = STATUS_INFO_LENGTH_MISMATCH;
             }
-            else ret = STATUS_INFO_LENGTH_MISMATCH;
+            else
+            {
+                len = sizeof(IO_COUNTERS);
+                ret = STATUS_INFO_LENGTH_MISMATCH;
+            }
         }
         break;
     case ProcessVmCounters:
@@ -236,7 +244,11 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                     ProcessInformationLength != sizeof(VM_COUNTERS))
                     ret = STATUS_INFO_LENGTH_MISMATCH;
             }
-            else ret = STATUS_INFO_LENGTH_MISMATCH;
+            else
+            {
+                len = sizeof(pvmi);
+                ret = STATUS_INFO_LENGTH_MISMATCH;
+            }
         }
         break;
     case ProcessTimes:
@@ -266,25 +278,27 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                     SERVER_END_REQ;
 
                     memcpy(ProcessInformation, &pti, sizeof(KERNEL_USER_TIMES));
-
                     len = sizeof(KERNEL_USER_TIMES);
                 }
 
                 if (ProcessInformationLength > sizeof(KERNEL_USER_TIMES))
                     ret = STATUS_INFO_LENGTH_MISMATCH;
             }
-            else ret = STATUS_INFO_LENGTH_MISMATCH;
+            else
+            {
+                len = sizeof(KERNEL_USER_TIMES);
+                ret = STATUS_INFO_LENGTH_MISMATCH;
+            }
         }
         break;
     case ProcessDebugPort:
         /* "These are not the debuggers you are looking for." *
          * set it to 0 aka "no debugger" to satisfy copy protections */
-        if (ProcessInformationLength == 4)
-        {
+        len = 4;
+        if (ProcessInformationLength == len)
             memset(ProcessInformation, 0, ProcessInformationLength);
-            len = 4;
-        }
-        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        else
+            ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
     case ProcessHandleCount:
         if (ProcessInformationLength >= 4)
@@ -296,18 +310,21 @@ NTSTATUS WINAPI NtQueryInformationProcess(
             else
             {
                 memset(ProcessInformation, 0, 4);
-
-
                 len = 4;
             }
 
             if (ProcessInformationLength > 4)
                 ret = STATUS_INFO_LENGTH_MISMATCH;
-         }
-         else ret = STATUS_INFO_LENGTH_MISMATCH;
-         break;
+        }
+        else
+        {
+            len = 4;
+            ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
     case ProcessWow64Information:
-        if (ProcessInformationLength == sizeof(DWORD))
+        len = sizeof(DWORD);
+        if (ProcessInformationLength == len)
         {
             DWORD val = 0;
 
@@ -322,7 +339,6 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                 SERVER_END_REQ;
             }
             *(DWORD *)ProcessInformation = val;
-            len = sizeof(DWORD);
         }
         else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
@@ -350,12 +366,11 @@ NTSTATUS WINAPI NtQueryInformationProcess(
         SERVER_END_REQ;
         break;
     case ProcessExecuteFlags:
-        if (ProcessInformationLength == sizeof(ULONG))
-        {
+        len = sizeof(ULONG);
+        if (ProcessInformationLength == len)
             *(ULONG *)ProcessInformation = execute_flags;
-            len = sizeof(ULONG);
-        }
-        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        else
+            ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
     default:
         FIXME("(%p,info_class=%d,%p,0x%08x,%p) Unknown information class\n",
