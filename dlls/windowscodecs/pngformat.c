@@ -55,8 +55,11 @@ MAKE_FUNCPTR(png_get_io_ptr);
 MAKE_FUNCPTR(png_get_PLTE);
 MAKE_FUNCPTR(png_get_tRNS);
 MAKE_FUNCPTR(png_set_bgr);
+MAKE_FUNCPTR(png_set_gray_1_2_4_to_8);
 MAKE_FUNCPTR(png_set_gray_to_rgb);
 MAKE_FUNCPTR(png_set_read_fn);
+MAKE_FUNCPTR(png_set_strip_16);
+MAKE_FUNCPTR(png_set_tRNS_to_alpha);
 MAKE_FUNCPTR(png_read_end);
 MAKE_FUNCPTR(png_read_image);
 MAKE_FUNCPTR(png_read_info);
@@ -83,8 +86,11 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_get_PLTE);
         LOAD_FUNCPTR(png_get_tRNS);
         LOAD_FUNCPTR(png_set_bgr);
+        LOAD_FUNCPTR(png_set_gray_1_2_4_to_8);
         LOAD_FUNCPTR(png_set_gray_to_rgb);
         LOAD_FUNCPTR(png_set_read_fn);
+        LOAD_FUNCPTR(png_set_strip_16);
+        LOAD_FUNCPTR(png_set_tRNS_to_alpha);
         LOAD_FUNCPTR(png_read_end);
         LOAD_FUNCPTR(png_read_image);
         LOAD_FUNCPTR(png_read_info);
@@ -196,6 +202,10 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     UINT image_size;
     UINT i;
     int color_type, bit_depth;
+    png_bytep trans;
+    int num_trans;
+    png_uint_32 transparency;
+    png_color_16p trans_values;
     TRACE("(%p,%p,%x)\n", iface, pIStream, cacheOptions);
 
     /* initialize libpng */
@@ -241,6 +251,25 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     /* choose a pixel format */
     color_type = ppng_get_color_type(This->png_ptr, This->info_ptr);
     bit_depth = ppng_get_bit_depth(This->png_ptr, This->info_ptr);
+
+    /* check for color-keyed alpha */
+    transparency = ppng_get_tRNS(This->png_ptr, This->info_ptr, &trans, &num_trans, &trans_values);
+
+    if (transparency && color_type != PNG_COLOR_TYPE_PALETTE)
+    {
+        /* expand to RGBA */
+        if (color_type == PNG_COLOR_TYPE_GRAY)
+        {
+            if (bit_depth < 8)
+            {
+                ppng_set_gray_1_2_4_to_8(This->png_ptr);
+                bit_depth = 8;
+            }
+            ppng_set_gray_to_rgb(This->png_ptr);
+        }
+        ppng_set_tRNS_to_alpha(This->png_ptr);
+        color_type = PNG_COLOR_TYPE_RGB_ALPHA;
+    }
 
     switch (color_type)
     {
