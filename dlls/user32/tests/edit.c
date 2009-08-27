@@ -2105,7 +2105,7 @@ static void zero_dm_messages(void)
     ok(dm_messages.wm_getdefid == wmgetdefid, "expected %d WM_GETDIFID messages, " \
     "got %d\n", wmgetdefid, dm_messages.wm_getdefid);\
     ok(dm_messages.wm_nextdlgctl == wmnextdlgctl, "expected %d WM_NEXTDLGCTL messages, " \
-    "got %d\n", wmgetdefid, dm_messages.wm_nextdlgctl)
+    "got %d\n", wmnextdlgctl, dm_messages.wm_nextdlgctl)
 
 static LRESULT CALLBACK dialog_mode_wnd_proc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
