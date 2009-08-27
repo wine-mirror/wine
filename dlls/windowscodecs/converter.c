@@ -51,6 +51,7 @@ enum pixelformat {
     format_32bppBGR,
     format_32bppBGRA,
     format_48bppRGB,
+    format_64bppRGBA,
 };
 
 typedef HRESULT (*copyfunc)(struct FormatConverter *This, const WICRect *prc,
@@ -626,6 +627,51 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
             return res;
         }
         return S_OK;
+    case format_64bppRGBA:
+        if (prc)
+        {
+            HRESULT res;
+            UINT x, y;
+            BYTE *srcdata;
+            UINT srcstride, srcdatasize;
+            const BYTE *srcrow;
+            const BYTE *srcpixel;
+            BYTE *dstrow;
+            DWORD *dstpixel;
+
+            srcstride = 8 * prc->Width;
+            srcdatasize = srcstride * prc->Height;
+
+            srcdata = HeapAlloc(GetProcessHeap(), 0, srcdatasize);
+            if (!srcdata) return E_OUTOFMEMORY;
+
+            res = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+
+            if (SUCCEEDED(res))
+            {
+                srcrow = srcdata;
+                dstrow = pbBuffer;
+                for (y=0; y<prc->Height; y++) {
+                    srcpixel=srcrow;
+                    dstpixel=(DWORD*)dstrow;
+                    for (x=0; x<prc->Width; x++) {
+                        BYTE red, green, blue, alpha;
+                        red = *srcpixel++; srcpixel++;
+                        green = *srcpixel++; srcpixel++;
+                        blue = *srcpixel++; srcpixel++;
+                        alpha = *srcpixel++; srcpixel++;
+                        *dstpixel++=alpha<<24|red<<16|green<<8|blue;
+                    }
+                    srcrow += srcstride;
+                    dstrow += cbStride;
+                }
+            }
+
+            HeapFree(GetProcessHeap(), 0, srcdata);
+
+            return res;
+        }
+        return S_OK;
     default:
         return WINCODEC_ERR_UNSUPPORTEDOPERATION;
     }
@@ -662,6 +708,7 @@ static const struct pixelformatinfo supported_formats[] = {
     {format_32bppBGR, &GUID_WICPixelFormat32bppBGR, copypixels_to_32bppBGR},
     {format_32bppBGRA, &GUID_WICPixelFormat32bppBGRA, copypixels_to_32bppBGRA},
     {format_48bppRGB, &GUID_WICPixelFormat48bppRGB, NULL},
+    {format_64bppRGBA, &GUID_WICPixelFormat64bppRGBA, NULL},
     {0}
 };
 
