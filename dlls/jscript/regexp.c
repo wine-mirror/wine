@@ -3496,11 +3496,151 @@ static HRESULT RegExp_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
     return E_NOTIMPL;
 }
 
+static HRESULT create_match_array(script_ctx_t *ctx, BSTR input, const match_result_t *result,
+        const match_result_t *parens, DWORD parens_cnt, LCID lcid, jsexcept_t *ei, IDispatch **ret)
+{
+    DispatchEx *array;
+    VARIANT var;
+    int i;
+    HRESULT hres = S_OK;
+
+    static const WCHAR indexW[] = {'i','n','d','e','x',0};
+    static const WCHAR inputW[] = {'i','n','p','u','t',0};
+    static const WCHAR zeroW[] = {'0',0};
+
+    hres = create_array(ctx, parens_cnt+1, &array);
+    if(FAILED(hres))
+        return hres;
+
+    for(i=0; i < parens_cnt; i++) {
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = SysAllocStringLen(parens[i].str, parens[i].len);
+        if(!V_BSTR(&var)) {
+            hres = E_OUTOFMEMORY;
+            break;
+        }
+
+        hres = jsdisp_propput_idx(array, i+1, lcid, &var, ei, NULL/*FIXME*/);
+        SysFreeString(V_BSTR(&var));
+        if(FAILED(hres))
+            break;
+    }
+
+    while(SUCCEEDED(hres)) {
+        V_VT(&var) = VT_I4;
+        V_I4(&var) = result->str-input;
+        hres = jsdisp_propput_name(array, indexW, lcid, &var, ei, NULL/*FIXME*/);
+        if(FAILED(hres))
+            break;
+
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = input;
+        hres = jsdisp_propput_name(array, inputW, lcid, &var, ei, NULL/*FIXME*/);
+        if(FAILED(hres))
+            break;
+
+        V_BSTR(&var) = SysAllocStringLen(result->str, result->len);
+        if(!V_BSTR(&var)) {
+            hres = E_OUTOFMEMORY;
+            break;
+        }
+        hres = jsdisp_propput_name(array, zeroW, lcid, &var, ei, NULL/*FIXME*/);
+        SysFreeString(V_BSTR(&var));
+        break;
+    }
+
+    if(FAILED(hres)) {
+        jsdisp_release(array);
+        return hres;
+    }
+
+    *ret = (IDispatch*)_IDispatchEx_(array);
+    return S_OK;
+}
+
+static HRESULT run_exec(DispatchEx *dispex, VARIANT *arg, LCID lcid, jsexcept_t *ei, BSTR *input,
+        match_result_t *match, match_result_t **parens, DWORD *parens_cnt, VARIANT_BOOL *ret)
+{
+    RegExpInstance *regexp;
+    DWORD parens_size = 0, last_index = 0, length;
+    const WCHAR *cp;
+    BSTR string;
+    HRESULT hres;
+
+    if(!is_class(dispex, JSCLASS_REGEXP)) {
+        FIXME("Not a RegExp\n");
+        return E_NOTIMPL;
+    }
+
+    regexp = (RegExpInstance*)dispex;
+
+    if(arg) {
+        hres = to_string(regexp->dispex.ctx, arg, ei, &string);
+        if(FAILED(hres))
+            return hres;
+    }else {
+        string = SysAllocStringLen(NULL, 0);
+        if(!string)
+            return E_OUTOFMEMORY;
+    }
+
+    length = SysStringLen(string);
+    if(regexp->jsregexp->flags & JSREG_GLOB)
+        last_index = regexp->last_index;
+
+    cp = string + last_index;
+    hres = regexp_match_next(&regexp->dispex, FALSE, string, length, &cp, parens, parens ? &parens_size : NULL,
+            parens_cnt, match);
+    if(FAILED(hres)) {
+        SysFreeString(string);
+        return hres;
+    }
+
+    if(hres == S_OK) {
+        regexp->last_index = cp-string;
+        *ret = VARIANT_TRUE;
+    }else {
+        regexp->last_index = 0;
+        *ret = VARIANT_FALSE;
+    }
+
+    if(input)
+        *input = string;
+    return S_OK;
+}
+
 static HRESULT RegExp_exec(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    match_result_t *parens = NULL, match;
+    DWORD parens_cnt = 0;
+    VARIANT_BOOL b;
+    BSTR string;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = run_exec(dispex, arg_cnt(dp) ? get_arg(dp,0) : NULL, lcid, ei, &string, &match, &parens, &parens_cnt, &b);
+    if(FAILED(hres))
+        return hres;
+
+    if(retv) {
+        if(b) {
+            IDispatch *ret;
+
+            hres = create_match_array(dispex->ctx, string, &match, parens, parens_cnt, lcid, ei, &ret);
+            if(SUCCEEDED(hres)) {
+                V_VT(retv) = VT_DISPATCH;
+                V_DISPATCH(retv) = ret;
+            }
+        }else {
+            V_VT(retv) = VT_NULL;
+        }
+    }
+
+    heap_free(parens);
+    SysFreeString(string);
+    return hres;
 }
 
 static HRESULT RegExp_test(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
