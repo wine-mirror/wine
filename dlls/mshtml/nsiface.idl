@@ -322,6 +322,34 @@ interface nsIURI : nsISupports
 
 [
     object,
+    uuid(d6116970-8034-11d3-9399-00104ba0fd40),
+    local
+    /* FROZEN */
+]
+interface nsIURL : nsIURI
+{
+    nsresult GetFilePath(nsACString *aFilePath);
+    nsresult SetFilePath(const nsACString *aFilePath);
+    nsresult GetParam(nsACString *aParam);
+    nsresult SetParam(const nsACString *aParam);
+    nsresult GetQuery(nsACString *aQuery);
+    nsresult SetQuery(const nsACString *aQuery);
+    nsresult GetRef(nsACString *aRef);
+    nsresult SetRef(const nsACString *aRef);
+    nsresult GetDirectory(nsACString *aDirectory);
+    nsresult SetDirectory(const nsACString *aDirectory);
+    nsresult GetFileName(nsACString *aFileName);
+    nsresult SetFileName(const nsACString *aFileName);
+    nsresult GetFileBaseName(nsACString *aFileBaseName);
+    nsresult SetFileBaseName(const nsACString *aFileBaseName);
+    nsresult GetFileExtension(nsACString *aFileExtension);
+    nsresult SetFileExtension(const nsACString *aFileExtension);
+    nsresult GetCommonBaseSpec(nsIURI *aURIToCompare, nsACString *_retval);
+    nsresult GetRelativeSpec(nsIURI *aURIToCompare, nsACString *_retval);
+}
+
+[
+    object,
     uuid(ef6bfbd2-fd46-48d8-96b7-9f8f0fd387fe),
     local
     /* FROZEN */
@@ -2552,7 +2580,7 @@ interface nsIDocumentObserver : nsIMutationObserver
     local
     /* INTERNAL */
 ]
-interface nsIWineURI : nsIURI
+interface nsIWineURI : nsIURL
 {
     typedef struct NSContainer NSContainer;
 
