@@ -522,6 +522,8 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, const struct wine
 
     for (i = 0; i < sizeof(si->elements) / sizeof(*si->elements); ++i)
     {
+        if (!(si->use_map & (1 << i))) continue;
+
         if (stateblock->streamFlags[si->elements[i].stream_idx] & WINED3DSTREAMSOURCE_INSTANCEDATA)
         {
             instancedData[numInstancedAttribs] = i;
