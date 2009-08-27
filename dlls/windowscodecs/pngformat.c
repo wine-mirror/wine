@@ -52,6 +52,8 @@ MAKE_FUNCPTR(png_get_color_type);
 MAKE_FUNCPTR(png_get_image_height);
 MAKE_FUNCPTR(png_get_image_width);
 MAKE_FUNCPTR(png_get_io_ptr);
+MAKE_FUNCPTR(png_get_PLTE);
+MAKE_FUNCPTR(png_get_tRNS);
 MAKE_FUNCPTR(png_set_bgr);
 MAKE_FUNCPTR(png_set_gray_to_rgb);
 MAKE_FUNCPTR(png_set_read_fn);
@@ -78,6 +80,8 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_get_image_height);
         LOAD_FUNCPTR(png_get_image_width);
         LOAD_FUNCPTR(png_get_io_ptr);
+        LOAD_FUNCPTR(png_get_PLTE);
+        LOAD_FUNCPTR(png_get_tRNS);
         LOAD_FUNCPTR(png_set_bgr);
         LOAD_FUNCPTR(png_set_gray_to_rgb);
         LOAD_FUNCPTR(png_set_read_fn);
@@ -484,8 +488,45 @@ static HRESULT WINAPI PngDecoder_Frame_GetResolution(IWICBitmapFrameDecode *ifac
 static HRESULT WINAPI PngDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
     IWICPalette *pIPalette)
 {
-    FIXME("(%p,%p): stub\n", iface, pIPalette);
-    return E_NOTIMPL;
+    PngDecoder *This = impl_from_frame(iface);
+    png_uint_32 ret;
+    png_colorp png_palette;
+    int num_palette;
+    WICColor palette[256];
+    png_bytep trans;
+    int num_trans;
+    png_color_16p trans_values;
+    int i;
+
+    TRACE("(%p,%p)\n", iface, pIPalette);
+
+    ret = ppng_get_PLTE(This->png_ptr, This->info_ptr, &png_palette, &num_palette);
+    if (!ret) return WINCODEC_ERR_PALETTEUNAVAILABLE;
+
+    if (num_palette > 256)
+    {
+        ERR("palette has %i colors?!\n", num_palette);
+        return E_FAIL;
+    }
+
+    for (i=0; i<num_palette; i++)
+    {
+        palette[i] = (0xff000000|
+                      png_palette[i].red << 16|
+                      png_palette[i].green << 8|
+                      png_palette[i].blue);
+    }
+
+    ret = ppng_get_tRNS(This->png_ptr, This->info_ptr, &trans, &num_trans, &trans_values);
+    if (ret)
+    {
+        for (i=0; i<num_trans; i++)
+        {
+            palette[trans[i]] = 0x00000000;
+        }
+    }
+
+    return IWICPalette_InitializeCustom(pIPalette, palette, num_palette);
 }
 
 static HRESULT WINAPI PngDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
