@@ -41,6 +41,7 @@ enum pixelformat {
     format_4bppIndexed,
     format_8bppIndexed,
     format_BlackWhite,
+    format_2bppGray,
     format_8bppGray,
     format_16bppBGR555,
     format_16bppBGR565,
@@ -67,6 +68,16 @@ typedef struct FormatConverter {
     double alpha_threshold;
     WICBitmapPaletteType palette_type;
 } FormatConverter;
+
+static void make_grayscale_palette(WICColor *colors, UINT num_colors)
+{
+    int i, v;
+    for (i=0; i<num_colors; i++)
+    {
+        v = i * 255 / (num_colors-1);
+        colors[i] = 0xff000000 | v<<16 | v<<8 | v;
+    }
+}
 
 static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRect *prc,
     UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format)
@@ -146,6 +157,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
         }
         return S_OK;
     case format_2bppIndexed:
+    case format_2bppGray:
         if (prc)
         {
             HRESULT res;
@@ -160,16 +172,21 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
             IWICPalette *palette;
             UINT actualcolors;
 
-            res = PaletteImpl_Create(&palette);
-            if (FAILED(res)) return res;
+            if (source_format == format_2bppIndexed)
+            {
+                res = PaletteImpl_Create(&palette);
+                if (FAILED(res)) return res;
 
-            res = IWICBitmapSource_CopyPalette(This->source, palette);
-            if (SUCCEEDED(res))
-                res = IWICPalette_GetColors(palette, 4, colors, &actualcolors);
+                res = IWICBitmapSource_CopyPalette(This->source, palette);
+                if (SUCCEEDED(res))
+                    res = IWICPalette_GetColors(palette, 4, colors, &actualcolors);
 
-            IWICPalette_Release(palette);
+                IWICPalette_Release(palette);
 
-            if (FAILED(res)) return res;
+                if (FAILED(res)) return res;
+            }
+            else
+                make_grayscale_palette(colors, 4);
 
             srcstride = (prc->Width+3)/4;
             srcdatasize = srcstride * prc->Height;
@@ -540,6 +557,7 @@ static const struct pixelformatinfo supported_formats[] = {
     {format_4bppIndexed, &GUID_WICPixelFormat4bppIndexed, NULL},
     {format_8bppIndexed, &GUID_WICPixelFormat8bppIndexed, NULL},
     {format_BlackWhite, &GUID_WICPixelFormatBlackWhite, NULL},
+    {format_2bppGray, &GUID_WICPixelFormat2bppGray, NULL},
     {format_8bppGray, &GUID_WICPixelFormat8bppGray, NULL},
     {format_16bppBGR555, &GUID_WICPixelFormat16bppBGR555, NULL},
     {format_16bppBGR565, &GUID_WICPixelFormat16bppBGR565, NULL},
