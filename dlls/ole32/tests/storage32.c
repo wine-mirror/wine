@@ -1405,6 +1405,71 @@ static void test_simple(void)
     DeleteFileA(filenameA);
 }
 
+static void test_fmtusertypestg(void)
+{
+    IStorage *stg;
+    IEnumSTATSTG *stat;
+    HRESULT hr;
+    static const WCHAR fileW[] = {'f','m','t','t','e','s','t',0};
+    static WCHAR userTypeW[] = {'S','t','g','U','s','r','T','y','p','e',0};
+    static WCHAR strmNameW[] = {1,'C','o','m','p','O','b','j',0};
+
+    hr = StgCreateDocfile( fileW, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &stg);
+    ok(hr == S_OK, "should succeed, res=%x\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        /* try to write the stream */
+        hr = WriteFmtUserTypeStg(stg, 0, userTypeW);
+        ok(hr == S_OK, "should succeed, res=%x\n", hr);
+
+        /* check that the stream was created */
+        hr = IStorage_EnumElements(stg, 0, NULL, 0, &stat);
+        ok(hr == S_OK, "should succeed, res=%x\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            BOOL found = FALSE;
+            STATSTG statstg;
+            DWORD got;
+            while ((hr = IEnumSTATSTG_Next(stat, 1, &statstg, &got)) == S_OK && got == 1)
+            {
+                if (lstrcmpW(statstg.pwcsName, strmNameW) == 0)
+                    found = TRUE;
+                else
+                    ok(0, "found unexpected stream or storage\n");
+            }
+            ok(found == TRUE, "expected storage to contain stream \\0001CompObj\n");
+            IEnumSTATSTG_Release(stat);
+        }
+
+        /* re-write the stream */
+        hr = WriteFmtUserTypeStg(stg, 0, userTypeW);
+        ok(hr == S_OK, "should succeed, res=%x\n", hr);
+
+        /* check that the stream is still there */
+        hr = IStorage_EnumElements(stg, 0, NULL, 0, &stat);
+        ok(hr == S_OK, "should succeed, res=%x\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            BOOL found = FALSE;
+            STATSTG statstg;
+            DWORD got;
+            while ((hr = IEnumSTATSTG_Next(stat, 1, &statstg, &got)) == S_OK && got == 1)
+            {
+                if (lstrcmpW(statstg.pwcsName, strmNameW) == 0)
+                    found = TRUE;
+                else
+                    ok(0, "found unexpected stream or storage\n");
+            }
+            ok(found == TRUE, "expected storage to contain stream \\0001CompObj\n");
+            IEnumSTATSTG_Release(stat);
+        }
+
+        IStorage_Release(stg);
+        DeleteFileW( fileW );
+    }
+}
+
 START_TEST(storage32)
 {
     CHAR temp[MAX_PATH];
@@ -1431,4 +1496,5 @@ START_TEST(storage32)
     test_writeclassstg();
     test_readonly();
     test_simple();
+    test_fmtusertypestg();
 }

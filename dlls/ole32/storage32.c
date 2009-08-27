@@ -7193,9 +7193,9 @@ static HRESULT STORAGE_WriteCompObj( LPSTORAGE pstg, CLSID *clsid,
            debugstr_w(lpszUserType), debugstr_w(szClipName),
            debugstr_w(szProgIDName));
 
-    /*  Create a CompObj stream if it doesn't exist */
+    /*  Create a CompObj stream */
     r = IStorage_CreateStream(pstg, szwStreamName,
-        STGM_WRITE  | STGM_SHARE_EXCLUSIVE, 0, 0, &pstm );
+        STGM_CREATE | STGM_WRITE  | STGM_SHARE_EXCLUSIVE, 0, 0, &pstm );
     if( FAILED (r) )
         return r;
 
