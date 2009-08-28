@@ -1125,6 +1125,34 @@ ok(testFuncToString.toString() === "function testFuncToString(x,y) {\n    return
 ok("" + testFuncToString === "function testFuncToString(x,y) {\n    return x+y;\n}",
    "'' + testFuncToString = " + testFuncToString);
 
+tmp = new Object();
+
+function callTest(argc) {
+    ok(this === tmp, "this !== tmp\n");
+    ok(arguments.length === argc+1, "arguments.length = " + arguments.length + " expected " + (argc+1));
+    for(var i=1; i <= argc; i++)
+        ok(arguments[i] === i, "arguments[i] = " + arguments[i]);
+}
+
+callTest.call(tmp, 1, 1);
+callTest.call(tmp, 2, 1, 2);
+
+function callTest2() {
+    ok(this === tmp, "this !== tmp\n");
+    ok(arguments.length === 0, "callTest2: arguments.length = " + arguments.length + " expected 0");
+}
+
+callTest2.call(tmp);
+
+function callTest3() {
+    ok(arguments.length === 0, "arguments.length = " + arguments.length + " expected 0");
+}
+
+callTest3.call();
+
+tmp = Number.prototype.toString.call(3);
+ok(tmp === "3", "Number.prototype.toString.call(3) = " + tmp);
+
 var date = new Date();
 
 date = new Date(100);

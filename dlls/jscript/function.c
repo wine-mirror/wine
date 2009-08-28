@@ -254,6 +254,34 @@ static HRESULT invoke_value_proc(FunctionInstance *function, LCID lcid, WORD fla
     return hres;
 }
 
+static HRESULT call_function(FunctionInstance *function, IDispatch *this_obj, LCID lcid, DISPPARAMS *args,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+{
+    HRESULT hres;
+
+    if(function->value_proc) {
+        DispatchEx *jsthis = NULL;
+
+        if(this_obj) {
+            jsthis = iface_to_jsdisp((IUnknown*)this_obj);
+            if(!jsthis)
+                FIXME("this_obj is not DispatchEx\n");
+        }
+
+        hres = function->value_proc(jsthis ? jsthis : function->dispex.ctx->script_disp, lcid,
+                DISPATCH_METHOD, args, retv, ei, caller);
+
+        if(jsthis)
+            jsdisp_release(jsthis);
+    }else {
+        hres = invoke_source(function,
+                this_obj ? this_obj : (IDispatch*)_IDispatchEx_(function->dispex.ctx->script_disp),
+                lcid, args, retv, ei, caller);
+    }
+
+    return hres;
+}
+
 static HRESULT function_to_string(FunctionInstance *function, BSTR *ret)
 {
     BSTR str;
@@ -326,10 +354,39 @@ static HRESULT Function_apply(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
 }
 
 static HRESULT Function_call(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    FunctionInstance *function;
+    DISPPARAMS args = {NULL,NULL,0,0};
+    IDispatch *this_obj = NULL;
+    DWORD argc;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_FUNCTION)) {
+        FIXME("dispex is not a function\n");
+        return E_FAIL;
+    }
+
+    function = (FunctionInstance*)dispex;
+    argc = arg_cnt(dp);
+
+    if(argc) {
+        hres = to_object(dispex->ctx, get_arg(dp,0), &this_obj);
+        if(FAILED(hres))
+            return hres;
+        args.cArgs = argc-1;
+    }
+
+    if(args.cArgs)
+        args.rgvarg = dp->rgvarg + dp->cArgs - args.cArgs-1;
+
+    hres = call_function(function, this_obj, lcid, &args, retv, ei, caller);
+
+    if(this_obj)
+        IDispatch_Release(this_obj);
+    return hres;
 }
 
 HRESULT Function_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
