@@ -1877,8 +1877,8 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
     {
         HDC hdc;
         GpBitmap* bitmap = (GpBitmap*)image;
-        int bm_is_selected;
-        HBITMAP old_hbm=NULL;
+        int temp_hdc=0, temp_bitmap=0;
+        HBITMAP hbitmap, old_hbm=NULL;
 
         if (srcUnit == UnitInch)
             dx = dy = 96.0; /* FIXME: use the image resolution */
@@ -1887,24 +1887,73 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         else
             return NotImplemented;
 
-        hdc = bitmap->hdc;
-        bm_is_selected = (hdc != 0);
-
-        if (!bm_is_selected)
+        if (bitmap->format == PixelFormat32bppARGB)
         {
+            BITMAPINFOHEADER bih;
+            BYTE *temp_bits;
+
+            /* we need a bitmap with premultiplied alpha */
             hdc = CreateCompatibleDC(0);
-            old_hbm = SelectObject(hdc, bitmap->hbitmap);
+            temp_hdc = 1;
+            temp_bitmap = 1;
+
+            bih.biSize = sizeof(BITMAPINFOHEADER);
+            bih.biWidth = bitmap->width;
+            bih.biHeight = -bitmap->height;
+            bih.biPlanes = 1;
+            bih.biBitCount = 32;
+            bih.biCompression = BI_RGB;
+            bih.biSizeImage = 0;
+            bih.biXPelsPerMeter = 0;
+            bih.biYPelsPerMeter = 0;
+            bih.biClrUsed = 0;
+            bih.biClrImportant = 0;
+
+            hbitmap = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS,
+                (void**)&temp_bits, NULL, 0);
+
+            convert_32bppARGB_to_32bppPARGB(bitmap->width, bitmap->height,
+                temp_bits, bitmap->width*4, bitmap->bits, bitmap->stride);
+        }
+        else
+        {
+            hbitmap = bitmap->hbitmap;
+            hdc = bitmap->hdc;
+            temp_hdc = (hdc == 0);
         }
 
-        /* FIXME: maybe alpha blend depending on the format */
-        StretchBlt(graphics->hdc, pti[0].x, pti[0].y, pti[1].x-pti[0].x, pti[2].y-pti[0].y,
-            hdc, srcx*dx, srcy*dy, srcwidth*dx, srcheight*dy, SRCCOPY);
+        if (temp_hdc)
+        {
+            if (!hdc) hdc = CreateCompatibleDC(0);
+            old_hbm = SelectObject(hdc, hbitmap);
+        }
 
-        if (!bm_is_selected)
+        if (bitmap->format == PixelFormat32bppARGB || bitmap->format == PixelFormat32bppPARGB)
+        {
+            BLENDFUNCTION bf;
+
+            bf.BlendOp = AC_SRC_OVER;
+            bf.BlendFlags = 0;
+            bf.SourceConstantAlpha = 255;
+            bf.AlphaFormat = AC_SRC_ALPHA;
+
+            GdiAlphaBlend(graphics->hdc, pti[0].x, pti[0].y, pti[1].x-pti[0].x, pti[2].y-pti[0].y,
+                hdc, srcx*dx, srcy*dy, srcwidth*dx, srcheight*dy, bf);
+        }
+        else
+        {
+            StretchBlt(graphics->hdc, pti[0].x, pti[0].y, pti[1].x-pti[0].x, pti[2].y-pti[0].y,
+                hdc, srcx*dx, srcy*dy, srcwidth*dx, srcheight*dy, SRCCOPY);
+        }
+
+        if (temp_hdc)
         {
             SelectObject(hdc, old_hbm);
             DeleteDC(hdc);
         }
+
+        if (temp_bitmap)
+            DeleteObject(hbitmap);
     }
     else
     {
