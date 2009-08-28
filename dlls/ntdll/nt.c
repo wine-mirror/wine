@@ -1009,9 +1009,9 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                     sppi = RtlAllocateHeap(GetProcessHeap(), 0,len);
                     for (i = 0; i < cpus; i++)
                     {
-                        sppi[i].liIdleTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_IDLE];
-                        sppi[i].liKernelTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_SYSTEM];
-                        sppi[i].liUserTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_USER];
+                        sppi[i].IdleTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_IDLE];
+                        sppi[i].KernelTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_SYSTEM];
+                        sppi[i].UserTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_USER];
                     }
                     vm_deallocate (mach_task_self (), (vm_address_t) pinfo, info_count * sizeof(natural_t));
                 }
