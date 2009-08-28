@@ -989,8 +989,9 @@ static HRESULT WINAPI TextStoreACPSink_OnLockGranted(ITextStoreACPSink *iface,
 {
     TextStoreACPSink *This = (TextStoreACPSink *)iface;
     HRESULT hr;
-    EditCookie *cookie;
+    EditCookie *cookie,*sinkcookie;
     TfEditCookie ec;
+    struct list *cursor;
 
     TRACE("(%p) %x\n",This, dwLockFlags);
 
@@ -1010,11 +1011,34 @@ static HRESULT WINAPI TextStoreACPSink_OnLockGranted(ITextStoreACPSink *iface,
     if (!cookie)
         return E_OUTOFMEMORY;
 
+    sinkcookie = HeapAlloc(GetProcessHeap(),0,sizeof(EditCookie));
+    if (!sinkcookie)
+        return E_OUTOFMEMORY;
+
     cookie->lockType = dwLockFlags;
     cookie->pOwningContext = This->pContext;
     ec = generate_Cookie(COOKIE_MAGIC_EDITCOOKIE, cookie);
 
     hr = ITfEditSession_DoEditSession(This->pContext->currentEditSession, ec);
+
+    if ((dwLockFlags&TS_LF_READWRITE) == TS_LF_READWRITE)
+    {
+        TfEditCookie sc;
+
+        sinkcookie->lockType = TS_LF_READ;
+        sinkcookie->pOwningContext = This->pContext;
+        sc = generate_Cookie(COOKIE_MAGIC_EDITCOOKIE, sinkcookie);
+
+        /*TODO: implement ITfEditRecord */
+        LIST_FOR_EACH(cursor, &This->pContext->pTextEditSink)
+        {
+            ContextSink* sink = LIST_ENTRY(cursor,ContextSink,entry);
+            ITfTextEditSink_OnEndEdit(sink->interfaces.pITfTextEditSink,
+                                      (ITfContext*) &This->pContext, sc, NULL);
+        }
+        sinkcookie = remove_Cookie(sc);
+    }
+    HeapFree(GetProcessHeap(),0,sinkcookie);
 
     ITfEditSession_Release(This->pContext->currentEditSession);
     This->pContext->currentEditSession = NULL;

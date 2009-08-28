@@ -65,6 +65,7 @@ static INT  test_ACP_GetSelection = SINK_UNEXPECTED;
 static INT  test_DoEditSession = SINK_UNEXPECTED;
 static INT  test_ACP_InsertTextAtSelection = SINK_UNEXPECTED;
 static INT  test_ACP_SetSelection = SINK_UNEXPECTED;
+static INT  test_OnEndEdit = SINK_UNEXPECTED;
 
 
 /**********************************************************************
@@ -1181,6 +1182,90 @@ static inline int check_context_refcount(ITfContext *iface)
     return IUnknown_Release(iface);
 }
 
+
+/**********************************************************************
+ * ITfTextEditSink
+ **********************************************************************/
+typedef struct tagTextEditSink
+{
+    const ITfTextEditSinkVtbl *TextEditSinkVtbl;
+    LONG refCount;
+} TextEditSink;
+
+static void TextEditSink_Destructor(TextEditSink *This)
+{
+    HeapFree(GetProcessHeap(),0,This);
+}
+
+static HRESULT WINAPI TextEditSink_QueryInterface(ITfTextEditSink *iface, REFIID iid, LPVOID *ppvOut)
+{
+    TextEditSink *This = (TextEditSink *)iface;
+    *ppvOut = NULL;
+
+    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfTextEditSink))
+    {
+        *ppvOut = This;
+    }
+
+    if (*ppvOut)
+    {
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI TextEditSink_AddRef(ITfTextEditSink *iface)
+{
+    TextEditSink *This = (TextEditSink *)iface;
+    return InterlockedIncrement(&This->refCount);
+}
+
+static ULONG WINAPI TextEditSink_Release(ITfTextEditSink *iface)
+{
+    TextEditSink *This = (TextEditSink *)iface;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&This->refCount);
+    if (ret == 0)
+        TextEditSink_Destructor(This);
+    return ret;
+}
+
+static HRESULT WINAPI TextEditSink_OnEndEdit(ITfTextEditSink *iface,
+    ITfContext *pic, TfEditCookie ecReadOnly, ITfEditRecord *pEditRecord)
+{
+    ok(test_OnEndEdit == SINK_EXPECTED, "Unexpected OnEndEdit\n");
+    test_OnEndEdit = SINK_FIRED;
+    return S_OK;
+}
+
+static const ITfTextEditSinkVtbl TextEditSink_TextEditSinkVtbl =
+{
+    TextEditSink_QueryInterface,
+    TextEditSink_AddRef,
+    TextEditSink_Release,
+
+    TextEditSink_OnEndEdit
+};
+
+static HRESULT TextEditSink_Constructor(ITfTextEditSink **ppOut)
+{
+    TextEditSink *This;
+
+    *ppOut = NULL;
+    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(TextEditSink));
+    if (This == NULL)
+        return E_OUTOFMEMORY;
+
+    This->TextEditSinkVtbl = &TextEditSink_TextEditSinkVtbl;
+    This->refCount = 1;
+
+    *ppOut = (ITfTextEditSink*)This;
+    return S_OK;
+}
+
 static void test_startSession(void)
 {
     HRESULT hr;
@@ -1626,10 +1711,23 @@ static void test_TStoApplicationText(void)
     ITfEditSession *es;
     ITfContext *cxt;
     ITfDocumentMgr *dm;
+    ITfTextEditSink *sink;
+    ITfSource *source = NULL;
+    DWORD editSinkCookie = -1;
 
     ITfThreadMgr_GetFocus(g_tm, &dm);
     EditSession_Constructor(&es);
     ITfDocumentMgr_GetTop(dm,&cxt);
+
+    TextEditSink_Constructor(&sink);
+    hr = ITfContext_QueryInterface(cxt,&IID_ITfSource,(LPVOID*)&source);
+    ok(SUCCEEDED(hr),"Failed to get IID_ITfSource for Context\n");
+    if (source)
+    {
+        hr = ITfSource_AdviseSink(source, &IID_ITfTextEditSink, (LPVOID)sink, &editSinkCookie);
+        ok(SUCCEEDED(hr),"Failed to advise Sink\n");
+        ok(editSinkCookie != -1,"Failed to get sink cookie\n");
+    }
 
     hrSession = 0xfeedface;
     /* Test no premissions flags */
@@ -1655,12 +1753,22 @@ static void test_TStoApplicationText(void)
     test_ACP_RequestLock = SINK_EXPECTED;
     test_DoEditSession = SINK_EXPECTED;
     hrSession = 0xfeedface;
+    test_OnEndEdit = SINK_EXPECTED;
     hr = ITfContext_RequestEditSession(cxt, tid, es, TF_ES_SYNC|TF_ES_READWRITE, &hrSession);
     ok(SUCCEEDED(hr),"ITfContext_RequestEditSession failed\n");
+    ok(test_OnEndEdit == SINK_FIRED, "OnEndEdit not fired as expected\n");
     ok(test_ACP_RequestLock == SINK_FIRED," expected RequestLock not fired\n");
     ok(test_DoEditSession == SINK_FIRED," expected DoEditSession not fired\n");
     ok(test_ACP_GetStatus == SINK_FIRED," expected GetStatus not fired\n");
     ok(hrSession == 0xdeadcafe,"Unexpected hrSession (%x)\n",hrSession);
+
+    if (source)
+    {
+        hr = ITfSource_UnadviseSink(source, editSinkCookie);
+        ok(SUCCEEDED(hr),"Failed to unadvise Sink\n");
+        ITfTextEditSink_Release(sink);
+        ITfSource_Release(source);
+    }
 
     ITfContext_Release(cxt);
     ITfDocumentMgr_Release(dm);
