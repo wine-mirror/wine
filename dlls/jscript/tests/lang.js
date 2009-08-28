@@ -811,6 +811,12 @@ ok((1 instanceof Object) === false, "1 is instance of Object");
 ok((false instanceof Boolean) === false, "false is instance of Boolean");
 ok(("" instanceof Object) === false, "'' is instance of Object");
 
+(function () {
+    ok((arguments instanceof Object) === true, "argument is not instance of Object");
+    ok((arguments instanceof Array) === false, "argument is not instance of Array");
+    ok(arguments.toString() === "[object Object]", "arguments.toString() = " + arguments.toString());
+})(1,2);
+
 ok(isNaN(NaN) === true, "isNaN(NaN) !== true");
 ok(isNaN(0.5) === false, "isNaN(0.5) !== false");
 ok(isNaN(Infinity) === false, "isNaN(Infinity) !== false");

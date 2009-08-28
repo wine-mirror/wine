@@ -85,22 +85,58 @@ static HRESULT init_parameters(DispatchEx *var_disp, FunctionInstance *function,
     return S_OK;
 }
 
-static HRESULT init_arguments(DispatchEx *arg_disp, FunctionInstance *function, LCID lcid, DISPPARAMS *dp,
-        jsexcept_t *ei, IServiceProvider *caller)
+HRESULT Arguments_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static const builtin_info_t Arguments_info = {
+    JSCLASS_ARGUMENTS,
+    {NULL, Arguments_value, 0},
+    0, NULL,
+    NULL,
+    NULL
+};
+
+static HRESULT create_arguments(script_ctx_t *ctx, LCID lcid, DISPPARAMS *dp,
+        jsexcept_t *ei, IServiceProvider *caller, DispatchEx **ret)
+{
+    DispatchEx *args;
     VARIANT var;
     DWORD i;
     HRESULT hres;
 
-    for(i=0; i < dp->cArgs-dp->cNamedArgs; i++) {
-        hres = jsdisp_propput_idx(arg_disp, i, lcid, dp->rgvarg+dp->cArgs-1-i, ei, caller);
-        if(FAILED(hres))
-            return hres;
+    args = heap_alloc_zero(sizeof(DispatchEx));
+    if(!args)
+        return E_OUTOFMEMORY;
+
+    hres = init_dispex_from_constr(args, ctx, &Arguments_info, ctx->object_constr);
+    if(FAILED(hres)) {
+        heap_free(args);
+        return hres;
     }
 
-    V_VT(&var) = VT_I4;
-    V_I4(&var) = dp->cArgs - dp->cNamedArgs;
-    return jsdisp_propput_name(arg_disp, lengthW, lcid, &var, ei, caller);
+    for(i=0; i < arg_cnt(dp); i++) {
+        hres = jsdisp_propput_idx(args, i, lcid, get_arg(dp,i), ei, caller);
+        if(FAILED(hres))
+            break;
+    }
+
+    if(SUCCEEDED(hres)) {
+        V_VT(&var) = VT_I4;
+        V_I4(&var) = arg_cnt(dp);
+        hres = jsdisp_propput_name(args, lengthW, lcid, &var, ei, caller);
+    }
+
+    if(FAILED(hres)) {
+        jsdisp_release(args);
+        return hres;
+    }
+
+    *ret = args;
+    return S_OK;
 }
 
 static HRESULT create_var_disp(FunctionInstance *function, LCID lcid, DISPPARAMS *dp, jsexcept_t *ei,
@@ -115,17 +151,13 @@ static HRESULT create_var_disp(FunctionInstance *function, LCID lcid, DISPPARAMS
     if(FAILED(hres))
         return hres;
 
-    hres = create_dispex(function->dispex.ctx, NULL, NULL, &arg_disp);
+    hres = create_arguments(function->dispex.ctx, lcid, dp, ei, caller, &arg_disp);
     if(SUCCEEDED(hres)) {
-        hres = init_arguments(arg_disp, function, lcid, dp, ei, caller);
-        if(SUCCEEDED(hres)) {
-            VARIANT var;
+        VARIANT var;
 
-            V_VT(&var) = VT_DISPATCH;
-            V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(arg_disp);
-            hres = jsdisp_propput_name(var_disp, argumentsW, lcid, &var, ei, caller);
-        }
-
+        V_VT(&var) = VT_DISPATCH;
+        V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(arg_disp);
+        hres = jsdisp_propput_name(var_disp, argumentsW, lcid, &var, ei, caller);
         jsdisp_release(arg_disp);
     }
 

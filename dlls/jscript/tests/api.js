@@ -1422,6 +1422,8 @@ testObjectInherit(new Error(), Error, false, true, true);
 testObjectInherit(testObjectInherit, Function, false, true, true);
 testObjectInherit(Math, Object, true, true, true);
 
+(function() { testObjectInherit(arguments, Object, true, true, true); })();
+
 function testFunctions(obj, arr) {
     var l;
 
