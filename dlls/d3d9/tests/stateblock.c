@@ -48,7 +48,7 @@ static HRESULT init_d3d9(
     d3d9_create = (void *)GetProcAddress(d3d9_handle, "Direct3DCreate9");
     ok(d3d9_create != NULL, "Failed to get address of Direct3DCreate9\n");
     if (!d3d9_create) return E_FAIL;
-    
+
     d3d9_ptr = d3d9_create(D3D_SDK_VERSION);
     if (!d3d9_ptr)
     {
@@ -88,7 +88,7 @@ static void test_begin_end_state_block(IDirect3DDevice9 *device_ptr)
     /* Should succeed */
     state_block_ptr = (IDirect3DStateBlock9 *)0xdeadbeef;
     hret = IDirect3DDevice9_EndStateBlock(device_ptr, &state_block_ptr);
-    ok(hret == D3D_OK && state_block_ptr != 0 && state_block_ptr != (IDirect3DStateBlock9 *)0xdeadbeef, 
+    ok(hret == D3D_OK && state_block_ptr != 0 && state_block_ptr != (IDirect3DStateBlock9 *)0xdeadbeef,
         "EndStateBlock returned: hret 0x%x, state_block_ptr %p. "
         "Expected hret 0x%x, state_block_ptr != %p, state_block_ptr != 0xdeadbeef.\n", hret, state_block_ptr, D3D_OK, NULL);
     IDirect3DStateBlock9_Release(state_block_ptr);
@@ -96,7 +96,7 @@ static void test_begin_end_state_block(IDirect3DDevice9 *device_ptr)
     /* Calling EndStateBlock while not recording should return D3DERR_INVALIDCALL. state_block_ptr should not be touched. */
     state_block_ptr = (IDirect3DStateBlock9 *)0xdeadbeef;
     hret = IDirect3DDevice9_EndStateBlock(device_ptr, &state_block_ptr);
-    ok(hret == D3DERR_INVALIDCALL && state_block_ptr == (IDirect3DStateBlock9 *)0xdeadbeef, 
+    ok(hret == D3DERR_INVALIDCALL && state_block_ptr == (IDirect3DStateBlock9 *)0xdeadbeef,
         "EndStateBlock returned: hret 0x%x, state_block_ptr %p. "
         "Expected hret 0x%x, state_block_ptr 0xdeadbeef.\n", hret, state_block_ptr, D3DERR_INVALIDCALL);
 }
@@ -124,7 +124,7 @@ typedef struct state_test {
 
     /* The poison data is the data to preinitialize the return buffer to */
     const void* poison_data;
-    
+
     /* Return buffer */
     void* return_data;
 
@@ -150,7 +150,7 @@ typedef struct state_test {
 
 /* See below for explanation of the flags */
 #define EVENT_OK             0x00
-#define EVENT_CHECK_DEFAULT  0x01 
+#define EVENT_CHECK_DEFAULT  0x01
 #define EVENT_CHECK_INITIAL  0x02
 #define EVENT_CHECK_TEST     0x04
 #define EVENT_ERROR          0x08
@@ -216,8 +216,8 @@ static void execute_test_chain(
                     }
                 }
 
-                else if (outcome & EVENT_CHECK_DEFAULT) {
-                  
+                else if (outcome & EVENT_CHECK_DEFAULT)
+                {
                     BOOL test_failed = memcmp(test[i].default_data, test[i].return_data, test[i].data_size);
                     ok (!test_failed, "Test %s, Stage %u: returned data does not match default data [csize=%u]\n",
                         test[i].test_name, j, test[i].data_size);
@@ -230,8 +230,8 @@ static void execute_test_chain(
                     }
                 }
 
-                else if (outcome & EVENT_CHECK_INITIAL) {
-                    
+                else if (outcome & EVENT_CHECK_INITIAL)
+                {
                     BOOL test_failed = memcmp(test[i].initial_data, test[i].return_data, test[i].data_size);
                     ok (!test_failed, "Test %s, Stage %u: returned data does not match initial data [csize=%u]\n",
                         test[i].test_name, j, test[i].data_size);
@@ -263,10 +263,8 @@ typedef struct event_data {
     IDirect3DSwapChain9* new_swap_chain;
 } event_data;
 
-static int switch_render_target(
-    IDirect3DDevice9* device,
-    void* data) {
-  
+static int switch_render_target(IDirect3DDevice9 *device, void *data)
+{
     HRESULT hret;
     D3DPRESENT_PARAMETERS present_parameters;
     event_data* edata = data;
@@ -289,7 +287,7 @@ static int switch_render_target(
     if (hret != D3D_OK) goto error;
 
     /* Save the current render target */
-    hret = IDirect3DDevice9_GetRenderTarget(device, 0, &edata->original_render_target); 
+    hret = IDirect3DDevice9_GetRenderTarget(device, 0, &edata->original_render_target);
     ok (hret == D3D_OK, "GetRenderTarget returned %#x.\n", hret);
     if (hret != D3D_OK) goto error;
 
@@ -308,10 +306,8 @@ static int switch_render_target(
     return EVENT_ERROR;
 }
 
-static int revert_render_target( 
-    IDirect3DDevice9* device,
-    void* data) {
-
+static int revert_render_target(IDirect3DDevice9 *device, void *data)
+{
     HRESULT hret;
     event_data* edata = data;
 
@@ -437,7 +433,7 @@ static void execute_test_chain_all(
     event rendertarget_switch_events[] = {
           { NULL, EVENT_APPLY_DATA },
           { switch_render_target, EVENT_CHECK_TEST },
-          { revert_render_target, EVENT_OK } 
+          { revert_render_target, EVENT_OK }
     };
 
     event rendertarget_stateblock_events[] = {
@@ -470,7 +466,7 @@ static void execute_test_chain_all(
 
     trace("Running stateblock capture/reapply state tests\n");
     execute_test_chain(device, test, ntests, capture_reapply_stateblock_events, 4, &arg);
-  
+
     trace("Running rendertarget switch state tests\n");
     execute_test_chain(device, test, ntests, rendertarget_switch_events, 3, &arg);
 
@@ -592,7 +588,7 @@ static HRESULT shader_constant_setup_handler(
     shader_constant_context *ctx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(shader_constant_context));
     if (ctx == NULL) return E_FAIL;
     test->test_context = ctx;
-     
+
     test->return_data = &ctx->return_data_buffer;
     test->test_data_in = &shader_constant_test_data;
     test->test_data_out = &shader_constant_test_data;
@@ -601,13 +597,12 @@ static HRESULT shader_constant_setup_handler(
     test->poison_data = &shader_constant_poison_data;
 
     test->data_size = sizeof(shader_constant_data);
-    
+
     return D3D_OK;
 }
 
-static void shader_constant_teardown_handler(
-    state_test* test) {
-    
+static void shader_constant_teardown_handler(state_test *test)
+{
     HeapFree(GetProcessHeap(), 0, test->test_context);
 }
 
@@ -704,7 +699,7 @@ static void light_get_handler(
     ldata->get_light_result = hret;
 }
 
-static const light_data light_poison_data = 
+static const light_data light_poison_data =
     { { 0x1337c0de,
         { 7.0, 4.0, 2.0, 1.0 }, { 7.0, 4.0, 2.0, 1.0 }, { 7.0, 4.0, 2.0, 1.0 },
         { 3.3f, 4.4f, 5.5f },{ 6.6f, 7.7f, 8.8f },
@@ -733,19 +728,18 @@ static const light_data light_test_data_in =
         7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0 }, 1, D3D_OK, D3D_OK};
 
 /* SetLight will use 128 as the "enabled" value */
-static const light_data light_test_data_out = 
+static const light_data light_test_data_out =
     { { 1,
         { 2.0, 2.0, 2.0, 2.0 }, { 3.0, 3.0, 3.0, 3.0 }, { 4.0, 4.0, 4.0, 4.0 },
         { 5.0, 5.0, 5.0 }, { 6.0, 6.0, 6.0 },
         7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0 }, 128, D3D_OK, D3D_OK};
 
-static HRESULT light_setup_handler(
-    state_test* test) {
-     
+static HRESULT light_setup_handler(state_test *test)
+{
     light_context *ctx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(light_context));
     if (ctx == NULL) return E_FAIL;
     test->test_context = ctx;
- 
+
     test->return_data = &ctx->return_data_buffer;
     test->test_data_in = &light_test_data_in;
     test->test_data_out = &light_test_data_out;
@@ -754,13 +748,12 @@ static HRESULT light_setup_handler(
     test->poison_data = &light_poison_data;
 
     test->data_size = sizeof(light_data);
-    
+
     return D3D_OK;
 }
 
-static void light_teardown_handler(
-    state_test* test) {
-    
+static void light_teardown_handler(state_test *test)
+{
     HeapFree(GetProcessHeap(), 0, test->test_context);
 }
 
@@ -937,9 +930,8 @@ static HRESULT transform_setup_handler(
     return D3D_OK;
 }
 
-static void transform_teardown_handler(
-    state_test* test) {
-    
+static void transform_teardown_handler(state_test *test)
+{
     HeapFree(GetProcessHeap(), 0, test->test_context);
 }
 
@@ -1192,7 +1184,7 @@ static void render_state_default_data_init(const struct render_state_arg *rsarg,
    data->states[idx++] = to_dword(0.0f);        /* POINTSCALE_C */
    data->states[idx++] = TRUE;                  /* MULTISAMPLEANTIALIAS */
    data->states[idx++] = 0xFFFFFFFF;            /* MULTISAMPLEMASK */
-   data->states[idx++] = D3DPATCHEDGE_DISCRETE; /* PATCHEDGESTYLE */ 
+   data->states[idx++] = D3DPATCHEDGE_DISCRETE; /* PATCHEDGESTYLE */
    data->states[idx++] = 0xbaadcafe;            /* DEBUGMONITORTOKEN */
    data->states[idx++] = to_dword(rsarg->pointsize_max); /* POINTSIZE_MAX */
    data->states[idx++] = FALSE;                 /* INDEXEDVERTEXBLENDENABLE */
@@ -1243,7 +1235,7 @@ static void render_state_poison_data_init(
    for (i = 0; i < D3D9_RENDER_STATES; i++)
        data->states[i] = 0x1337c0de;
 }
- 
+
 static void render_state_test_data_init(
     render_state_data* data) {
 
@@ -1408,7 +1400,7 @@ static void test_state_management(
     HRESULT hret;
     D3DCAPS9 caps;
 
-    /* Test count: 2 for shader constants 
+    /* Test count: 2 for shader constants
                    1 for lights
                    1 for transforms
                    1 for render states

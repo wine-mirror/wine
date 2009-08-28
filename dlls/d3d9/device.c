@@ -622,8 +622,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetDialogBoxMode(LPDIRECT3DDEVICE9EX 
     return hr;
 }
 
-static void WINAPI IDirect3DDevice9Impl_SetGammaRamp(LPDIRECT3DDEVICE9EX iface, UINT iSwapChain, DWORD Flags, CONST D3DGAMMARAMP* pRamp) {
-    
+static void WINAPI IDirect3DDevice9Impl_SetGammaRamp(IDirect3DDevice9Ex *iface, UINT iSwapChain,
+        DWORD Flags, const D3DGAMMARAMP *pRamp)
+{
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p) Relay\n", This);
 
@@ -652,15 +653,11 @@ static HRESULT IDirect3DDevice9Impl_CreateSurface(LPDIRECT3DDEVICE9EX iface, UIN
     IDirect3DSurface9Impl *object;
     IDirect3DDevice9Impl  *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    
-    if(MultisampleQuality > 0){
+
+    if (MultisampleQuality > 0)
+    {
         FIXME("MultisampleQuality set to %d, bstituting 0\n", MultisampleQuality);
-    /*
-    MultisampleQuality
- [in] Quality level. The valid range is between zero and one less than the level returned by pQualityLevels used by IDirect3D9::CheckDeviceMultiSampleType. Passing a larger value returns the error D3DERR_INVALIDCALL. The MultisampleQuality values of paired render targets, depth stencil surfaces, and the MultiSample type must all match.
- */
- 
-        MultisampleQuality=0;
+        MultisampleQuality = 0;
     }
     /*FIXME: Check MAX bounds of MultisampleQuality*/
 
@@ -696,12 +693,10 @@ static HRESULT IDirect3DDevice9Impl_CreateSurface(LPDIRECT3DDEVICE9EX iface, UIN
     return hrc;
 }
 
-
-
-static HRESULT  WINAPI  IDirect3DDevice9Impl_CreateRenderTarget(LPDIRECT3DDEVICE9EX iface, UINT Width, UINT Height,
-                                                         D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, 
-                                                         DWORD MultisampleQuality, BOOL Lockable, 
-                                                         IDirect3DSurface9 **ppSurface, HANDLE* pSharedHandle) {
+static HRESULT WINAPI IDirect3DDevice9Impl_CreateRenderTarget(IDirect3DDevice9Ex *iface, UINT Width, UINT Height,
+        D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality, BOOL Lockable,
+        IDirect3DSurface9 **ppSurface, HANDLE *pSharedHandle)
+{
     HRESULT hr;
     TRACE("Relay\n");
 
@@ -832,13 +827,13 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_CreateOffscreenPlainSurface(LPDIREC
     if(Pool == D3DPOOL_MANAGED ){
         FIXME("Attempting to create a managed offscreen plain surface\n");
         return D3DERR_INVALIDCALL;
-    }    
+    }
         /*
         'Off-screen plain surfaces are always lockable, regardless of their pool types.'
         but then...
         D3DPOOL_DEFAULT is the appropriate pool for use with the IDirect3DDevice9::StretchRect and IDirect3DDevice9::ColorFill.
         Why, their always lockable?
-        should I change the usage to dynamic?        
+        should I change the usage to dynamic?
         */
     hr = IDirect3DDevice9Impl_CreateSurface(iface, Width, Height, Format, TRUE /* Lockable */, FALSE /* Discard */,
             0 /* Level */, ppSurface, 0 /* Usage (undefined/none) */, (WINED3DPOOL)Pool, D3DMULTISAMPLE_NONE,
@@ -1287,8 +1282,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetTextureStageState(LPDIRECT3DDEVI
     return hr;
 }
 
-static HRESULT  WINAPI  IDirect3DDevice9Impl_GetSamplerState(LPDIRECT3DDEVICE9EX iface, DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD* pValue) {
-    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;    
+static HRESULT WINAPI IDirect3DDevice9Impl_GetSamplerState(IDirect3DDevice9Ex *iface, DWORD Sampler,
+        D3DSAMPLERSTATETYPE Type, DWORD *pValue)
+{
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
@@ -1323,8 +1320,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_ValidateDevice(LPDIRECT3DDEVICE9EX 
     return hr;
 }
 
-static HRESULT  WINAPI  IDirect3DDevice9Impl_SetPaletteEntries(LPDIRECT3DDEVICE9EX iface, UINT PaletteNumber, CONST PALETTEENTRY* pEntries) {
-    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;    
+static HRESULT WINAPI IDirect3DDevice9Impl_SetPaletteEntries(IDirect3DDevice9Ex *iface, UINT PaletteNumber,
+        const PALETTEENTRY *pEntries)
+{
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
@@ -1443,8 +1442,10 @@ static float    WINAPI  IDirect3DDevice9Impl_GetNPatchMode(LPDIRECT3DDEVICE9EX i
     return ret;
 }
 
-static HRESULT WINAPI IDirect3DDevice9Impl_DrawPrimitive(LPDIRECT3DDEVICE9EX iface, D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount) {
-    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;    
+static HRESULT WINAPI IDirect3DDevice9Impl_DrawPrimitive(IDirect3DDevice9Ex *iface, D3DPRIMITIVETYPE PrimitiveType,
+        UINT StartVertex, UINT PrimitiveCount)
+{
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
@@ -1474,8 +1475,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_DrawIndexedPrimitive(LPDIRECT3DDEVI
     return hr;
 }
 
-static HRESULT  WINAPI  IDirect3DDevice9Impl_DrawPrimitiveUP(LPDIRECT3DDEVICE9EX iface, D3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, CONST void* pVertexStreamZeroData, UINT VertexStreamZeroStride) {
-    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;    
+static HRESULT WINAPI IDirect3DDevice9Impl_DrawPrimitiveUP(IDirect3DDevice9Ex *iface, D3DPRIMITIVETYPE PrimitiveType,
+        UINT PrimitiveCount, const void *pVertexStreamZeroData, UINT VertexStreamZeroStride)
+{
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
@@ -1643,8 +1646,8 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetStreamSource(LPDIRECT3DDEVICE9EX i
 
     wined3d_mutex_lock();
     hr = IWineD3DDevice_SetStreamSource(This->WineD3DDevice, StreamNumber,
-                                          pStreamData==NULL ? NULL:((IDirect3DVertexBuffer9Impl *)pStreamData)->wineD3DVertexBuffer, 
-                                          OffsetInBytes, Stride);
+            pStreamData ? ((IDirect3DVertexBuffer9Impl *)pStreamData)->wineD3DVertexBuffer : NULL,
+            OffsetInBytes, Stride);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1677,8 +1680,10 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetStreamSource(LPDIRECT3DDEVICE9EX i
     return rc;
 }
 
-static HRESULT  WINAPI  IDirect3DDevice9Impl_SetStreamSourceFreq(LPDIRECT3DDEVICE9EX iface, UINT StreamNumber, UINT Divider) {
-    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;    
+static HRESULT WINAPI IDirect3DDevice9Impl_SetStreamSourceFreq(IDirect3DDevice9Ex *iface, UINT StreamNumber,
+        UINT Divider)
+{
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 

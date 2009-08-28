@@ -87,8 +87,7 @@ HRESULT vdecl_convert_fvf(
 
     /* convert the declaration */
     elements = HeapAlloc(GetProcessHeap(), 0, size * sizeof(D3DVERTEXELEMENT9));
-    if (!elements) 
-        return D3DERR_OUTOFVIDEOMEMORY;
+    if (!elements) return D3DERR_OUTOFVIDEOMEMORY;
 
     elements[size-1] = end_element;
     idx = 0;
@@ -351,8 +350,9 @@ static HRESULT convert_to_wined3d_declaration(const D3DVERTEXELEMENT9* d3d9_elem
 }
 
 /* IDirect3DDevice9 IDirect3DVertexDeclaration9 Methods follow: */
-HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9EX iface, CONST D3DVERTEXELEMENT9* pVertexElements, IDirect3DVertexDeclaration9** ppDecl) {
-    
+HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexDeclaration(IDirect3DDevice9Ex *iface,
+        const D3DVERTEXELEMENT9 *pVertexElements, IDirect3DVertexDeclaration9 **ppDecl)
+{
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IDirect3DVertexDeclaration9Impl *object = NULL;
     WINED3DVERTEXELEMENT* wined3d_elements;

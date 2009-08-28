@@ -357,7 +357,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateTexture(LPDIRECT3DDEVICE9EX iface, U
     IDirect3DTexture9Impl *object;
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hrc = D3D_OK;
-    
+
     TRACE("(%p) : W(%d) H(%d), Lvl(%d) d(%d), Fmt(%#x), Pool(%d)\n", This, Width, Height, Levels, Usage, Format,  Pool);
 
     /* Allocate the storage for the device */

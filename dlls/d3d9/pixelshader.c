@@ -202,7 +202,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShader(LPDIRECT3DDEVICE9EX iface, ID
 HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShaderConstantF(LPDIRECT3DDEVICE9EX iface, UINT Register, CONST float* pConstantData, UINT Vector4fCount) {
    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hr;
-    TRACE("(%p) Relay\n", This);   
+    TRACE("(%p) Relay\n", This);
 
     wined3d_mutex_lock();
     hr = IWineD3DDevice_SetPixelShaderConstantF(This->WineD3DDevice, Register, pConstantData, Vector4fCount);

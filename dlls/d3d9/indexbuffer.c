@@ -232,14 +232,13 @@ static const IDirect3DIndexBuffer9Vtbl Direct3DIndexBuffer9_Vtbl =
 
 
 /* IDirect3DDevice9 IDirect3DIndexBuffer9 Methods follow: */
-HRESULT WINAPI IDirect3DDevice9Impl_CreateIndexBuffer(LPDIRECT3DDEVICE9EX iface,
-                              UINT Length, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool,
-                              IDirect3DIndexBuffer9** ppIndexBuffer, HANDLE* pSharedHandle) {
-    
+HRESULT WINAPI IDirect3DDevice9Impl_CreateIndexBuffer(IDirect3DDevice9Ex *iface, UINT Length, DWORD Usage,
+        D3DFORMAT Format, D3DPOOL Pool, IDirect3DIndexBuffer9 **ppIndexBuffer, HANDLE *pSharedHandle)
+{
     IDirect3DIndexBuffer9Impl *object;
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hrc = D3D_OK;
-    
+
     TRACE("(%p) Relay\n", This);
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));

@@ -405,11 +405,10 @@ static const IDirect3DVolumeTexture9Vtbl Direct3DVolumeTexture9_Vtbl =
 
 
 /* IDirect3DDevice9 IDirect3DVolumeTexture9 Methods follow: */
-HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVolumeTexture(LPDIRECT3DDEVICE9EX iface,
-                                                          UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, 
-                                                          D3DFORMAT Format, D3DPOOL Pool, 
-                                                          IDirect3DVolumeTexture9** ppVolumeTexture, HANDLE* pSharedHandle) {
-
+HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVolumeTexture(IDirect3DDevice9Ex *iface,
+        UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, D3DFORMAT Format,
+        D3DPOOL Pool, IDirect3DVolumeTexture9 **ppVolumeTexture, HANDLE *pSharedHandle)
+{
     IDirect3DVolumeTexture9Impl *object;
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hrc = D3D_OK;

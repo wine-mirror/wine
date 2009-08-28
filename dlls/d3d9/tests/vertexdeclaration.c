@@ -49,7 +49,7 @@ static IDirect3DDevice9 *init_d3d9(void)
     d3d9_create = (void *)GetProcAddress(d3d9_handle, "Direct3DCreate9");
     ok(d3d9_create != NULL, "Failed to get address of Direct3DCreate9\n");
     if (!d3d9_create) return NULL;
-    
+
     d3d9_ptr = d3d9_create(D3D_SDK_VERSION);
     if (!d3d9_ptr)
     {
@@ -168,19 +168,19 @@ static void test_get_set_vertex_declaration(IDirect3DDevice9 *device_ptr, IDirec
     HRESULT hret = 0;
     int decl_refcount = 0;
     int i = 0;
-    
+
     /* SetVertexDeclaration should not touch the declaration's refcount. */
     i = get_refcount((IUnknown *)decl_ptr);
     hret = IDirect3DDevice9_SetVertexDeclaration(device_ptr, decl_ptr);
     decl_refcount = get_refcount((IUnknown *)decl_ptr);
     ok(hret == D3D_OK && decl_refcount == i, "SetVertexDeclaration returned: hret 0x%x, refcount %d. "
         "Expected hret 0x%x, refcount %d.\n", hret, decl_refcount, D3D_OK, i);
-    
+
     /* GetVertexDeclaration should increase the declaration's refcount by one. */
     i = decl_refcount+1;
     hret = IDirect3DDevice9_GetVertexDeclaration(device_ptr, &current_decl_ptr);
     decl_refcount = get_refcount((IUnknown *)decl_ptr);
-    ok(hret == D3D_OK && decl_refcount == i && current_decl_ptr == decl_ptr, 
+    ok(hret == D3D_OK && decl_refcount == i && current_decl_ptr == decl_ptr,
         "GetVertexDeclaration returned: hret 0x%x, current_decl_ptr %p refcount %d. "
         "Expected hret 0x%x, current_decl_ptr %p, refcount %d.\n", hret, current_decl_ptr, decl_refcount, D3D_OK, decl_ptr, i);
     IDirect3DVertexDeclaration9_Release(current_decl_ptr);
@@ -231,13 +231,8 @@ static void test_get_declaration(IDirect3DVertexDeclaration9 *decl_ptr, D3DVERTE
 
 /* FIXME: also write a test, which shows that attempting to set
  * an invalid vertex declaration returns E_FAIL */
-
-static HRESULT test_fvf_to_decl(
-    IDirect3DDevice9* device,
-    IDirect3DVertexDeclaration9* default_decl,
-    DWORD test_fvf,
-    const D3DVERTEXELEMENT9 expected_elements[],
-    char object_should_change) 
+static HRESULT test_fvf_to_decl(IDirect3DDevice9 *device, IDirect3DVertexDeclaration9 *default_decl,
+        DWORD test_fvf, const D3DVERTEXELEMENT9 expected_elements[], char object_should_change)
 {
 
     HRESULT hr;
@@ -267,13 +262,13 @@ static HRESULT test_fvf_to_decl(
 
     /* Declaration content/size test */
     ok(result_decl != NULL, "result declaration was null\n");
-    if (result_decl == NULL) 
+    if (result_decl == NULL)
         goto fail;
     else if (compare_elements(result_decl, expected_elements) != S_OK)
         goto fail;
 
     if (result_decl) IUnknown_Release( result_decl );
-    return S_OK;    
+    return S_OK;
 
     fail:
     if (result_decl) IUnknown_Release( result_decl );
@@ -358,7 +353,7 @@ static void test_fvf_decl_conversion(IDirect3DDevice9 *pDevice)
         VDECL_CHECK(test_decl_to_fvf(pDevice, default_fvf, test_buffer, 0, FALSE));
     }
     {
-        CONST D3DVERTEXELEMENT9 test_buffer[] = 
+        CONST D3DVERTEXELEMENT9 test_buffer[] =
             { { 0, 0, D3DDECLTYPE_UBYTE4, 0, D3DDECLUSAGE_BLENDINDICES, 0}, D3DDECL_END() };
         VDECL_CHECK(test_decl_to_fvf(pDevice, default_fvf, test_buffer, 0, FALSE));
     }
@@ -445,7 +440,7 @@ static void test_fvf_decl_conversion(IDirect3DDevice9 *pDevice)
         VDECL_CHECK(test_decl_to_fvf(pDevice, default_fvf, test_buffer, 0, FALSE));
     }
 
-    /* Test conversions from FVF to a vertex declaration 
+    /* Test conversions from FVF to a vertex declaration
      * These seem to always occur internally. A new declaration object is created if necessary */
 
     {
