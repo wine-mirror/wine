@@ -976,6 +976,17 @@ static inline void *get_signal_stack(void)
 }
 
 /***********************************************************************
+ *           is_inside_signal_stack
+ *
+ * Check if pointer is inside the signal stack.
+ */
+static inline int is_inside_signal_stack( void *ptr )
+{
+    return ((char *)ptr >= (char *)get_signal_stack() &&
+            (char *)ptr < (char *)get_signal_stack() + signal_stack_size);
+}
+
+/***********************************************************************
  *           save_context
  *
  * Set the register values from a sigcontext.
@@ -1316,8 +1327,7 @@ static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func fun
 
     /* stack sanity checks */
 
-    if ((char *)stack >= (char *)get_signal_stack() &&
-        (char *)stack < (char *)get_signal_stack() + signal_stack_size)
+    if (is_inside_signal_stack( stack ))
     {
         ERR( "nested exception on signal stack in thread %04x eip %016lx esp %016lx stack %p-%p\n",
              GetCurrentThreadId(), RIP_sig(sigcontext), RSP_sig(sigcontext),
@@ -2423,6 +2433,14 @@ void WINAPI RtlUnwindEx( ULONG64 end_frame, ULONG64 target_ip, EXCEPTION_RECORD 
         }
 
         if (!dispatch.EstablisherFrame) break;
+
+        if (is_inside_signal_stack( (void *)dispatch.EstablisherFrame ))
+        {
+            TRACE( "frame %lx is inside signal stack (%p-%p)\n", dispatch.EstablisherFrame,
+                   get_signal_stack(), (char *)get_signal_stack() + signal_stack_size );
+            context = new_context;
+            continue;
+        }
 
         if ((dispatch.EstablisherFrame & 7) ||
             dispatch.EstablisherFrame < (ULONG64)NtCurrentTeb()->Tib.StackLimit ||
