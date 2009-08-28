@@ -492,6 +492,19 @@ ok(arr.push(true, 'b', false) === 10, "arr.push(true, 'b', false) !== 10");
 ok(arr[8] === "b", "arr[8] != 'b'");
 ok(arr.length === 10, "arr.length != 10");
 
+var arr = new Object();
+arr.push = Array.prototype.push;
+
+arr.length = 6;
+
+ok(arr.push() === 6, "arr.push() !== 6");
+ok(arr.push(1) === 7, "arr.push(1) !== 7");
+ok(arr[6] === 1, "arr[6] != 1");
+ok(arr.length === 7, "arr.length != 10");
+ok(arr.push(true, 'b', false) === 10, "arr.push(true, 'b', false) !== 10");
+ok(arr[8] === "b", "arr[8] != 'b'");
+ok(arr.length === 10, "arr.length != 10");
+
 arr = [3,4,5];
 tmp = arr.pop();
 ok(arr.length === 2, "arr.length = " + arr.length);

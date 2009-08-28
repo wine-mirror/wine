@@ -46,6 +46,29 @@ static const WCHAR unshiftW[] = {'u','n','s','h','i','f','t',0};
 
 static const WCHAR default_separatorW[] = {',',0};
 
+static HRESULT get_jsdisp_length(DispatchEx *obj, LCID lcid, jsexcept_t *ei, DWORD *ret)
+{
+    VARIANT var;
+    HRESULT hres;
+
+    hres = jsdisp_propget_name(obj, lengthW, lcid, &var, ei, NULL/*FIXME*/);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_uint32(obj->ctx, &var, ei, ret);
+    VariantClear(&var);
+    return hres;
+}
+
+static HRESULT set_jsdisp_length(DispatchEx *obj, LCID lcid, jsexcept_t *ei, DWORD length)
+{
+    VARIANT var;
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = length;
+    return jsdisp_propput_name(obj, lengthW, lcid, &var, ei, NULL/*FIXME*/);
+}
+
 static HRESULT Array_length(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
@@ -380,13 +403,20 @@ static HRESULT Array_push(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS 
     if(dispex->builtin_info->class == JSCLASS_ARRAY) {
         length = ((ArrayInstance*)dispex)->length;
     }else {
-        FIXME("not Array this\n");
-        return E_NOTIMPL;
+        hres = get_jsdisp_length(dispex, lcid, ei, &length);
+        if(FAILED(hres))
+            return hres;
     }
 
-    n = dp->cArgs - dp->cNamedArgs;
+    n = arg_cnt(dp);
     for(i=0; i < n; i++) {
         hres = jsdisp_propput_idx(dispex, length+i, lcid, get_arg(dp, i), ei, sp);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(!is_class(dispex, JSCLASS_ARRAY)) {
+        hres = set_jsdisp_length(dispex, lcid, ei, length+n);
         if(FAILED(hres))
             return hres;
     }
