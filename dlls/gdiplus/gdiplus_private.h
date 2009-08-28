@@ -224,6 +224,8 @@ struct GpBitmap{
     BYTE *bitmapbits;   /* pointer to the buffer we passed in BitmapLockBits */
     HBITMAP hbitmap;
     HDC hdc;
+    BYTE *bits; /* actual image bits if this is a DIB */
+    INT stride; /* stride of bits if this is a DIB */
 };
 
 struct GpCachedBitmap{

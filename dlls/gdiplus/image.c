@@ -167,6 +167,23 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     if(bitmap->lockmode)
         return WrongState;
 
+    if (bitmap->bits && bitmap->format == format)
+    {
+        /* no conversion is necessary; just use the bits directly */
+        lockeddata->Width = act_rect.Width;
+        lockeddata->Height = act_rect.Height;
+        lockeddata->PixelFormat = format;
+        lockeddata->Reserved = flags;
+        lockeddata->Stride = bitmap->stride;
+        lockeddata->Scan0 = bitmap->bits + (bitspp / 8) * act_rect.X +
+                            bitmap->stride * act_rect.Y;
+
+        bitmap->lockmode = flags;
+        bitmap->numlocks++;
+
+        return Ok;
+    }
+
     hbm = bitmap->hbitmap;
     hdc = bitmap->hdc;
     bm_is_selected = (hdc != 0);
@@ -260,6 +277,13 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
 
         GdipFree(bitmap->bitmapbits);
         bitmap->bitmapbits = NULL;
+        return Ok;
+    }
+
+    if (!bitmap->bitmapbits)
+    {
+        /* we passed a direct reference; no need to do anything */
+        bitmap->lockmode = 0;
         return Ok;
     }
 
@@ -638,6 +662,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHICON(HICON hicon, GpBitmap** bitmap)
     (*bitmap)->height = ipicture_pixel_height((*bitmap)->image.picture);
     (*bitmap)->hbitmap = NULL;
     (*bitmap)->hdc = NULL;
+    (*bitmap)->bits = NULL;
 
     DeleteObject(iinfo.hbmColor);
     DeleteObject(iinfo.hbmMask);
@@ -697,6 +722,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     if (!hbitmap) return GenericError;
 
     /* copy bits to the dib if necessary */
+    /* FIXME: should reference the bits instead of copying them */
     if (scan0)
         for (i=0; i<height; i++)
             memcpy(bits+i*dib_stride, scan0+i*stride, row_size);
@@ -716,6 +742,8 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     (*bitmap)->image.picture = NULL;
     (*bitmap)->hbitmap = hbitmap;
     (*bitmap)->hdc = NULL;
+    (*bitmap)->bits = bits;
+    (*bitmap)->stride = dib_stride;
 
     return Ok;
 }
@@ -1293,6 +1321,7 @@ static GpStatus decode_image_olepicture_bitmap(IStream* stream, REFCLSID clsid, 
 
     (*((GpBitmap**) image))->hbitmap = hbm;
     (*((GpBitmap**) image))->hdc = hdc;
+    (*((GpBitmap**) image))->bits = NULL;
 
     bmch = (BITMAPCOREHEADER*) (&pbmi->bmiHeader);
     bmch->bcSize = sizeof(BITMAPCOREHEADER);
