@@ -1376,7 +1376,10 @@ exception_test(function() {eval("while(")}, "SyntaxError", -2146827286);
 exception_test(function() {eval("if(")}, "SyntaxError", -2146827286);
 exception_test(function() {eval("'unterminated")}, "SyntaxError", -2146827273);
 
-function testObjectInherit(obj, ts, tls, vo) {
+function testObjectInherit(obj, constr, ts, tls, vo) {
+    ok(obj instanceof Object, "obj is not instance of Object");
+    ok(obj instanceof constr, "obj is not instance of its constructor");
+
     ok(obj.hasOwnProperty === Object.prototype.hasOwnProperty,
        "obj.hasOwnProperty !== Object.prototype.hasOwnProprty");
     ok(obj.isPrototypeOf === Object.prototype.isPrototypeOf,
@@ -1409,15 +1412,15 @@ function testObjectInherit(obj, ts, tls, vo) {
 }
 
 Object.prototype._test = "test";
-testObjectInherit(new String("test"), false, true, false);
-testObjectInherit(/test/g, false, true, true);
-testObjectInherit(new Number(1), false, false, false);
-testObjectInherit(new Date(), false, false, false);
-testObjectInherit(new Boolean(true), false, true, false);
-testObjectInherit(new Array(), false, false, true);
-testObjectInherit(new Error(), false, true, true);
-testObjectInherit(testObjectInherit, false, true, true);
-testObjectInherit(Math, true, true, true);
+testObjectInherit(new String("test"), String, false, true, false);
+testObjectInherit(/test/g, RegExp, false, true, true);
+testObjectInherit(new Number(1), Number, false, false, false);
+testObjectInherit(new Date(), Date, false, false, false);
+testObjectInherit(new Boolean(true), Boolean, false, true, false);
+testObjectInherit(new Array(), Array, false, false, true);
+testObjectInherit(new Error(), Error, false, true, true);
+testObjectInherit(testObjectInherit, Function, false, true, true);
+testObjectInherit(Math, Object, true, true, true);
 
 function testFunctions(obj, arr) {
     var l;

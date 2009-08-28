@@ -796,6 +796,21 @@ if (true)
     else
         ok(true, "else should be associated with nearest if statement");
 
+function instanceOfTest() {}
+tmp = new instanceOfTest();
+
+ok((tmp instanceof instanceOfTest) === true, "tmp is not instance of instanceOfTest");
+ok((tmp instanceof Object) === true, "tmp is not instance of Object");
+ok((tmp instanceof String) === false, "tmp is instance of String");
+
+instanceOfTest.prototype = new Object();
+ok((tmp instanceof instanceOfTest) === false, "tmp is instance of instanceOfTest");
+ok((tmp instanceof Object) === true, "tmp is not instance of Object");
+
+ok((1 instanceof Object) === false, "1 is instance of Object");
+ok((false instanceof Boolean) === false, "false is instance of Boolean");
+ok(("" instanceof Object) === false, "'' is instance of Object");
+
 ok(isNaN(NaN) === true, "isNaN(NaN) !== true");
 ok(isNaN(0.5) === false, "isNaN(0.5) !== false");
 ok(isNaN(Infinity) === false, "isNaN(Infinity) !== false");

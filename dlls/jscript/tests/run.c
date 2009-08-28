@@ -842,6 +842,8 @@ static void run_tests(void)
 
     parse_script_a("function f() { var testPropGet; }");
 
+    parse_script_a("ok((testObj instanceof Object) === false, 'testObj is instance of Object');");
+
     run_from_res("lang.js");
     run_from_res("api.js");
     run_from_res("regexp.js");

@@ -1954,10 +1954,74 @@ HRESULT binary_and_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD f
 }
 
 /* ECMA-262 3rd Edition    11.8.6 */
-HRESULT instanceof_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT instanceof_eval(exec_ctx_t *ctx, VARIANT *inst, VARIANT *objv, jsexcept_t *ei, VARIANT *retv)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    DispatchEx *obj, *iter, *tmp = NULL;
+    VARIANT_BOOL ret = VARIANT_FALSE;
+    BOOL b;
+    VARIANT var;
+    HRESULT hres;
+
+    static const WCHAR prototypeW[] = {'p','r','o','t','o','t', 'y', 'p','e',0};
+
+    if(V_VT(objv) != VT_DISPATCH) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    obj = iface_to_jsdisp((IUnknown*)V_DISPATCH(objv));
+    if(!obj) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(is_class(obj, JSCLASS_FUNCTION)) {
+        hres = jsdisp_propget_name(obj, prototypeW, ctx->parser->script->lcid, &var, ei, NULL/*FIXME*/);
+    }else {
+        FIXME("throw TypeError\n");
+        hres = E_FAIL;
+    }
+    jsdisp_release(obj);
+    if(FAILED(hres))
+        return hres;
+
+    if(V_VT(&var) == VT_DISPATCH) {
+        if(V_VT(inst) == VT_DISPATCH)
+            tmp = iface_to_jsdisp((IUnknown*)V_DISPATCH(inst));
+        for(iter = tmp; iter; iter = iter->prototype) {
+            hres = disp_cmp(V_DISPATCH(&var), (IDispatch*)_IDispatchEx_(iter), &b);
+            if(FAILED(hres))
+                break;
+            if(b) {
+                ret = VARIANT_TRUE;
+                break;
+            }
+        }
+
+        if(tmp)
+            jsdisp_release(tmp);
+    }else {
+        FIXME("prototype is not an object\n");
+        hres = E_FAIL;
+    }
+
+    VariantClear(&var);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(retv) = VT_BOOL;
+    V_BOOL(retv) = ret;
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    11.8.6 */
+HRESULT instanceof_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+{
+    binary_expression_t *expr = (binary_expression_t*)_expr;
+
+    TRACE("\n");
+
+    return binary_expr_eval(ctx, expr, instanceof_eval, ei, ret);
 }
 
 /* ECMA-262 3rd Edition    11.8.7 */
