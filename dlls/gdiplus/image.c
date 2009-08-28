@@ -168,7 +168,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
         return WrongState;
 
     hbm = bitmap->hbitmap;
-    IPicture_get_CurDC(bitmap->image.picture, &hdc);
+    hdc = bitmap->hdc;
     bm_is_selected = (hdc != 0);
 
     pbmi = GdipAlloc(sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
@@ -264,7 +264,7 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     }
 
     hbm = bitmap->hbitmap;
-    IPicture_get_CurDC(bitmap->image.picture, &hdc);
+    hdc = bitmap->hdc;
     bm_is_selected = (hdc != 0);
 
     pbmi = GdipAlloc(sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
@@ -588,6 +588,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHICON(HICON hicon, GpBitmap** bitmap)
     (*bitmap)->width  = ipicture_pixel_width((*bitmap)->image.picture);
     (*bitmap)->height = ipicture_pixel_height((*bitmap)->image.picture);
     (*bitmap)->hbitmap = NULL;
+    (*bitmap)->hdc = NULL;
 
     DeleteObject(iinfo.hbmColor);
     DeleteObject(iinfo.hbmMask);
@@ -689,6 +690,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     (*bitmap)->height = height;
     (*bitmap)->format = format;
     IPicture_get_Handle((*bitmap)->image.picture, (OLE_HANDLE*)&(*bitmap)->hbitmap);
+    IPicture_get_CurDC((*bitmap)->image.picture, &(*bitmap)->hdc);
 
     return Ok;
 }
@@ -786,18 +788,17 @@ GpStatus WINGDIPAPI GdipEmfToWmfBits(HENHMETAFILE hemf, UINT cbData16,
 
 GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
 {
-    HDC hdc;
-
     TRACE("%p\n", image);
 
     if(!image)
         return InvalidParameter;
 
-    IPicture_get_CurDC(image->picture, &hdc);
-    DeleteDC(hdc);
     IPicture_Release(image->picture);
     if (image->type == ImageTypeBitmap)
+    {
         GdipFree(((GpBitmap*)image)->bitmapbits);
+        DeleteDC(((GpBitmap*)image)->hdc);
+    }
     GdipFree(image);
 
     return Ok;
@@ -889,11 +890,12 @@ GpStatus WINGDIPAPI GdipGetImageGraphicsContext(GpImage *image,
         return NotImplemented;
     }
 
-    IPicture_get_CurDC(image->picture, &hdc);
+    hdc = ((GpBitmap*)image)->hdc;
 
     if(!hdc){
         hdc = CreateCompatibleDC(0);
-        IPicture_SelectPicture(image->picture, hdc, NULL, NULL);
+        SelectObject(hdc, ((GpBitmap*)image)->hbitmap);
+        ((GpBitmap*)image)->hdc = hdc;
     }
 
     return GdipCreateFromHDC(hdc, graphics);
@@ -1264,6 +1266,7 @@ static GpStatus decode_image_olepicture_bitmap(IStream* stream, REFCLSID clsid, 
     IPicture_get_CurDC(pic, &hdc);
 
     (*((GpBitmap**) image))->hbitmap = hbm;
+    (*((GpBitmap**) image))->hdc = hdc;
 
     bmch = (BITMAPCOREHEADER*) (&pbmi->bmiHeader);
     bmch->bcSize = sizeof(BITMAPCOREHEADER);
@@ -1583,9 +1586,7 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
     hbmp = ((GpBitmap*)image)->hbitmap;
     if (!hbmp)
         return GenericError;
-    hr = IPicture_get_CurDC(image->picture, &hdc);
-    if (FAILED(hr))
-        return GenericError;
+    hdc = ((GpBitmap*)image)->hdc;
     bm_is_selected = (hdc != 0);
     if (!bm_is_selected) {
         hdc = CreateCompatibleDC(0);

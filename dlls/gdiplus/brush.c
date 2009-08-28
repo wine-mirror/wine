@@ -672,7 +672,7 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
 
     hbm = ((GpBitmap*)image)->hbitmap;
     if(!hbm)   return GenericError;
-    IPicture_get_CurDC(image->picture, &hdc);
+    hdc = ((GpBitmap*)image)->hdc;
     bm_is_selected = (hdc != 0);
 
     pbmi = GdipAlloc(sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
