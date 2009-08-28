@@ -312,10 +312,6 @@ GpStatus WINGDIPAPI GdipCloneBitmapAreaI(INT x, INT y, INT width, INT height,
 
 GpStatus WINGDIPAPI GdipCloneImage(GpImage *image, GpImage **cloneImage)
 {
-    IStream* stream;
-    HRESULT hr;
-    INT size;
-    LARGE_INTEGER move;
     GpStatus stat = GenericError;
 
     TRACE("%p, %p\n", image, cloneImage);
@@ -323,29 +319,82 @@ GpStatus WINGDIPAPI GdipCloneImage(GpImage *image, GpImage **cloneImage)
     if (!image || !cloneImage)
         return InvalidParameter;
 
-    hr = CreateStreamOnHGlobal(0, TRUE, &stream);
-    if (FAILED(hr))
-        return GenericError;
-
-    hr = IPicture_SaveAsFile(image->picture, stream, FALSE, &size);
-    if(FAILED(hr))
+    if (image->picture)
     {
-        WARN("Failed to save image on stream\n");
-        goto out;
+        IStream* stream;
+        HRESULT hr;
+        INT size;
+        LARGE_INTEGER move;
+
+        hr = CreateStreamOnHGlobal(0, TRUE, &stream);
+        if (FAILED(hr))
+            return GenericError;
+
+        hr = IPicture_SaveAsFile(image->picture, stream, FALSE, &size);
+        if(FAILED(hr))
+        {
+            WARN("Failed to save image on stream\n");
+            goto out;
+        }
+
+        /* Set seek pointer back to the beginning of the picture */
+        move.QuadPart = 0;
+        hr = IStream_Seek(stream, move, STREAM_SEEK_SET, NULL);
+        if (FAILED(hr))
+            goto out;
+
+        stat = GdipLoadImageFromStream(stream, cloneImage);
+        if (stat != Ok) WARN("Failed to load image from stream\n");
+
+    out:
+        IStream_Release(stream);
+        return stat;
     }
+    else if (image->type == ImageTypeBitmap)
+    {
+        GpBitmap *bitmap = (GpBitmap*)image;
+        BitmapData lockeddata_src, lockeddata_dst;
+        int i;
+        UINT row_size;
 
-    /* Set seek pointer back to the beginning of the picture */
-    move.QuadPart = 0;
-    hr = IStream_Seek(stream, move, STREAM_SEEK_SET, NULL);
-    if (FAILED(hr))
-        goto out;
+        stat = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead, bitmap->format,
+            &lockeddata_src);
+        if (stat != Ok) return stat;
 
-    stat = GdipLoadImageFromStream(stream, cloneImage);
-    if (stat != Ok) WARN("Failed to load image from stream\n");
+        stat = GdipCreateBitmapFromScan0(lockeddata_src.Width, lockeddata_src.Height,
+            0, lockeddata_src.PixelFormat, NULL, (GpBitmap**)cloneImage);
+        if (stat == Ok)
+        {
+            stat = GdipBitmapLockBits((GpBitmap*)*cloneImage, NULL, ImageLockModeWrite,
+                lockeddata_src.PixelFormat, &lockeddata_dst);
 
-out:
-    IStream_Release(stream);
-    return stat;
+            if (stat == Ok)
+            {
+                /* copy the image data */
+                row_size = (lockeddata_src.Width * PIXELFORMATBPP(lockeddata_src.PixelFormat) +7)/8;
+                for (i=0; i<lockeddata_src.Height; i++)
+                    memcpy((BYTE*)lockeddata_dst.Scan0+lockeddata_dst.Stride*i,
+                           (BYTE*)lockeddata_src.Scan0+lockeddata_src.Stride*i,
+                           row_size);
+
+                GdipBitmapUnlockBits((GpBitmap*)*cloneImage, &lockeddata_dst);
+            }
+
+            GdipBitmapUnlockBits(bitmap, &lockeddata_src);
+        }
+
+        if (stat != Ok)
+        {
+            GdipDisposeImage(*cloneImage);
+            *cloneImage = NULL;
+        }
+        return stat;
+    }
+    else
+    {
+        ERR("GpImage with no IPicture or bitmap?!\n");
+        return NotImplemented;
+    }
 }
 
 GpStatus WINGDIPAPI GdipCreateBitmapFromFile(GDIPCONST WCHAR* filename,
@@ -599,11 +648,12 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHICON(HICON hicon, GpBitmap** bitmap)
 GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     PixelFormat format, BYTE* scan0, GpBitmap** bitmap)
 {
-    BITMAPFILEHEADER *bmfh;
-    BITMAPINFOHEADER *bmih;
-    BYTE *buff;
-    INT datalen, size;
-    IStream *stream;
+    BITMAPINFOHEADER bmih;
+    HBITMAP hbitmap;
+    INT row_size, dib_stride;
+    HDC hdc;
+    BYTE *bits;
+    int i;
 
     TRACE("%d %d %d %d %p %p\n", width, height, stride, format, scan0, bitmap);
 
@@ -617,71 +667,45 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     if(scan0 && !stride)
         return InvalidParameter;
 
-    *bitmap = GdipAlloc(sizeof(GpBitmap));
-    if(!*bitmap)    return OutOfMemory;
+    row_size = (width * PIXELFORMATBPP(format)+7) / 8;
+    dib_stride = (row_size + 3) & ~3;
 
-    if(stride == 0){
-        stride = width * (PIXELFORMATBPP(format) / 8);
-        stride = (stride + 3) & ~3;
-    }
+    if(stride == 0)
+        stride = dib_stride;
 
-    datalen = abs(stride * height);
-    size = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + datalen;
-    buff = GdipAlloc(size);
-    if(!buff){
-        GdipFree(*bitmap);
-        return OutOfMemory;
-    }
-
-    bmfh = (BITMAPFILEHEADER*) buff;
-    bmih = (BITMAPINFOHEADER*) (bmfh + 1);
-
-    bmfh->bfType    = (((WORD)'M') << 8) + (WORD)'B';
-    bmfh->bfSize    = size;
-    bmfh->bfOffBits = size - datalen;
-
-    bmih->biSize            = sizeof(BITMAPINFOHEADER);
-    bmih->biWidth           = width;
+    bmih.biSize = sizeof(BITMAPINFOHEADER);
+    bmih.biWidth = width;
+    bmih.biHeight = -height;
+    bmih.biPlanes = 1;
     /* FIXME: use the rest of the data from format */
-    bmih->biBitCount        = PIXELFORMATBPP(format);
-    bmih->biCompression     = BI_RGB;
-    bmih->biSizeImage       = datalen;
+    bmih.biBitCount = PIXELFORMATBPP(format);
+    bmih.biCompression = BI_RGB;
+    bmih.biSizeImage = 0;
+    bmih.biXPelsPerMeter = 0;
+    bmih.biYPelsPerMeter = 0;
+    bmih.biClrUsed = 0;
+    bmih.biClrImportant = 0;
 
+    hdc = CreateCompatibleDC(NULL);
+    if (!hdc) return GenericError;
+
+    hbitmap = CreateDIBSection(hdc, (BITMAPINFO*)&bmih, DIB_RGB_COLORS, (void**)&bits,
+        NULL, 0);
+
+    DeleteDC(hdc);
+
+    if (!hbitmap) return GenericError;
+
+    /* copy bits to the dib if necessary */
     if (scan0)
-    {
-        if (stride > 0)
-        {
-            bmih->biHeight = -height;
-            memcpy(bmih + 1, scan0, datalen);
-        }
-        else
-        {
-            bmih->biHeight = height;
-            memcpy(bmih + 1, scan0 + stride * (height - 1), datalen);
-        }
-    }
-    else
-    {
-        bmih->biHeight = height;
-        memset(bmih + 1, 0, datalen);
-    }
+        for (i=0; i<height; i++)
+            memcpy(bits+i*dib_stride, scan0+i*stride, row_size);
 
-    if(CreateStreamOnHGlobal(buff, TRUE, &stream) != S_OK){
-        ERR("could not make stream\n");
-        GdipFree(*bitmap);
-        GdipFree(buff);
-        *bitmap = NULL;
-        return GenericError;
-    }
-
-    if(OleLoadPicture(stream, 0, FALSE, &IID_IPicture,
-        (LPVOID*) &((*bitmap)->image.picture)) != S_OK){
-        TRACE("Could not load picture\n");
-        IStream_Release(stream);
-        GdipFree(*bitmap);
-        GdipFree(buff);
-        *bitmap = NULL;
-        return GenericError;
+    *bitmap = GdipAlloc(sizeof(GpBitmap));
+    if(!*bitmap)
+    {
+        DeleteObject(hbitmap);
+        return OutOfMemory;
     }
 
     (*bitmap)->image.type = ImageTypeBitmap;
@@ -689,8 +713,9 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     (*bitmap)->width = width;
     (*bitmap)->height = height;
     (*bitmap)->format = format;
-    IPicture_get_Handle((*bitmap)->image.picture, (OLE_HANDLE*)&(*bitmap)->hbitmap);
-    IPicture_get_CurDC((*bitmap)->image.picture, &(*bitmap)->hdc);
+    (*bitmap)->image.picture = NULL;
+    (*bitmap)->hbitmap = hbitmap;
+    (*bitmap)->hdc = NULL;
 
     return Ok;
 }
@@ -793,7 +818,8 @@ GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
     if(!image)
         return InvalidParameter;
 
-    IPicture_Release(image->picture);
+    if (image->picture)
+        IPicture_Release(image->picture);
     if (image->type == ImageTypeBitmap)
     {
         GdipFree(((GpBitmap*)image)->bitmapbits);
@@ -1543,8 +1569,6 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
     GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params)
 {
     GpStatus stat;
-    HRESULT hr;
-    short type;
     HBITMAP hbmp;
     HBITMAP old_hbmp;
     HDC hdc;
@@ -1566,11 +1590,7 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
     if(!image || !stream)
         return InvalidParameter;
 
-    if (!image->picture)
-        return GenericError;
-
-    hr = IPicture_get_Type(image->picture, &type);
-    if (FAILED(hr) || type != PICTYPE_BITMAP)
+    if (image->type != ImageTypeBitmap)
         return GenericError;
 
     /* select correct encoder */

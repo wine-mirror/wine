@@ -1838,37 +1838,78 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
     if(!graphics || !image || !points || count != 3)
          return InvalidParameter;
 
-    if(srcUnit == UnitInch)
-        dx = dy = (REAL) INCH_HIMETRIC;
-    else if(srcUnit == UnitPixel){
-        dx = ((REAL) INCH_HIMETRIC) /
-             ((REAL) GetDeviceCaps(graphics->hdc, LOGPIXELSX));
-        dy = ((REAL) INCH_HIMETRIC) /
-             ((REAL) GetDeviceCaps(graphics->hdc, LOGPIXELSY));
-    }
-    else
-        return NotImplemented;
-
     memcpy(ptf, points, 3 * sizeof(GpPointF));
     transform_and_round_points(graphics, pti, ptf, 3);
 
-    /* IPicture renders bitmaps with the y-axis reversed
-     * FIXME: flipping for unknown image type might not be correct. */
-    if(image->type != ImageTypeMetafile){
-        INT temp;
-        temp = pti[0].y;
-        pti[0].y = pti[2].y;
-        pti[2].y = temp;
-    }
+    if (image->picture)
+    {
+        if(srcUnit == UnitInch)
+            dx = dy = (REAL) INCH_HIMETRIC;
+        else if(srcUnit == UnitPixel){
+            dx = ((REAL) INCH_HIMETRIC) /
+                 ((REAL) GetDeviceCaps(graphics->hdc, LOGPIXELSX));
+            dy = ((REAL) INCH_HIMETRIC) /
+                 ((REAL) GetDeviceCaps(graphics->hdc, LOGPIXELSY));
+        }
+        else
+            return NotImplemented;
 
-    if(IPicture_Render(image->picture, graphics->hdc,
-        pti[0].x, pti[0].y, pti[1].x - pti[0].x, pti[2].y - pti[0].y,
-        srcx * dx, srcy * dy,
-        srcwidth * dx, srcheight * dy,
-        NULL) != S_OK){
-        if(callback)
-            callback(callbackData);
-        return GenericError;
+        /* IPicture renders bitmaps with the y-axis reversed
+         * FIXME: flipping for unknown image type might not be correct. */
+        if(image->type != ImageTypeMetafile){
+            INT temp;
+            temp = pti[0].y;
+            pti[0].y = pti[2].y;
+            pti[2].y = temp;
+        }
+
+        if(IPicture_Render(image->picture, graphics->hdc,
+            pti[0].x, pti[0].y, pti[1].x - pti[0].x, pti[2].y - pti[0].y,
+            srcx * dx, srcy * dy,
+            srcwidth * dx, srcheight * dy,
+            NULL) != S_OK){
+            if(callback)
+                callback(callbackData);
+            return GenericError;
+        }
+    }
+    else if (image->type == ImageTypeBitmap && ((GpBitmap*)image)->hbitmap)
+    {
+        HDC hdc;
+        GpBitmap* bitmap = (GpBitmap*)image;
+        int bm_is_selected;
+        HBITMAP old_hbm=NULL;
+
+        if (srcUnit == UnitInch)
+            dx = dy = 96.0; /* FIXME: use the image resolution */
+        else if (srcUnit == UnitPixel)
+            dx = dy = 1.0;
+        else
+            return NotImplemented;
+
+        hdc = bitmap->hdc;
+        bm_is_selected = (hdc != 0);
+
+        if (!bm_is_selected)
+        {
+            hdc = CreateCompatibleDC(0);
+            old_hbm = SelectObject(hdc, bitmap->hbitmap);
+        }
+
+        /* FIXME: maybe alpha blend depending on the format */
+        StretchBlt(graphics->hdc, pti[0].x, pti[0].y, pti[1].x-pti[0].x, pti[2].y-pti[0].y,
+            hdc, srcx*dx, srcy*dy, srcwidth*dx, srcheight*dy, SRCCOPY);
+
+        if (!bm_is_selected)
+        {
+            SelectObject(hdc, old_hbm);
+            DeleteDC(hdc);
+        }
+    }
+    else
+    {
+        ERR("GpImage with no IPicture or HBITMAP?!\n");
+        return NotImplemented;
     }
 
     return Ok;
