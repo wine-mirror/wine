@@ -872,7 +872,7 @@ static HRESULT alloc_array(script_ctx_t *ctx, DispatchEx *object_prototype, Arra
     if(object_prototype)
         hres = init_dispex(&array->dispex, ctx, &Array_info, object_prototype);
     else
-        hres = init_dispex_from_constr(&array->dispex, ctx, &Array_info, ctx->object_constr);
+        hres = init_dispex_from_constr(&array->dispex, ctx, &Array_info, ctx->array_constr);
 
     if(FAILED(hres)) {
         heap_free(array);
