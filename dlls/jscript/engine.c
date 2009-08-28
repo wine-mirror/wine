@@ -1009,7 +1009,7 @@ HRESULT with_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *
     if(FAILED(hres))
         return hres;
 
-    hres = to_object(ctx, &val, &disp);
+    hres = to_object(ctx->parser->script, &val, &disp);
     VariantClear(&val);
     if(FAILED(hres))
         return hres;
@@ -1387,7 +1387,7 @@ HRESULT array_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags,
     }
 
     if(SUCCEEDED(hres))
-        hres = to_object(ctx, &member, &obj);
+        hres = to_object(ctx->parser->script, &member, &obj);
     VariantClear(&member);
     if(SUCCEEDED(hres)) {
         hres = to_string(ctx->parser->script, &val, ei, &str);
@@ -1437,7 +1437,7 @@ HRESULT member_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags
     if(FAILED(hres))
         return hres;
 
-    hres = to_object(ctx, &member, &obj);
+    hres = to_object(ctx->parser->script, &member, &obj);
     VariantClear(&member);
     if(FAILED(hres))
         return hres;

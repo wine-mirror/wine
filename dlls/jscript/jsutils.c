@@ -571,14 +571,14 @@ HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
 }
 
 /* ECMA-262 3rd Edition    9.9 */
-HRESULT to_object(exec_ctx_t *ctx, VARIANT *v, IDispatch **disp)
+HRESULT to_object(script_ctx_t *ctx, VARIANT *v, IDispatch **disp)
 {
     DispatchEx *dispex;
     HRESULT hres;
 
     switch(V_VT(v)) {
     case VT_BSTR:
-        hres = create_string(ctx->parser->script, V_BSTR(v), SysStringLen(V_BSTR(v)), &dispex);
+        hres = create_string(ctx, V_BSTR(v), SysStringLen(V_BSTR(v)), &dispex);
         if(FAILED(hres))
             return hres;
 
@@ -586,7 +586,7 @@ HRESULT to_object(exec_ctx_t *ctx, VARIANT *v, IDispatch **disp)
         break;
     case VT_I4:
     case VT_R8:
-        hres = create_number(ctx->parser->script, v, &dispex);
+        hres = create_number(ctx, v, &dispex);
         if(FAILED(hres))
             return hres;
 
@@ -597,7 +597,7 @@ HRESULT to_object(exec_ctx_t *ctx, VARIANT *v, IDispatch **disp)
         *disp = V_DISPATCH(v);
         break;
     case VT_BOOL:
-        hres = create_bool(ctx->parser->script, V_BOOL(v), &dispex);
+        hres = create_bool(ctx, V_BOOL(v), &dispex);
         if(FAILED(hres))
             return hres;
 
