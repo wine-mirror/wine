@@ -670,7 +670,7 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
        n_y + n_height > ((GpBitmap*)image)->height)
         return InvalidParameter;
 
-    IPicture_get_Handle(image->picture, (OLE_HANDLE*)&hbm);
+    hbm = ((GpBitmap*)image)->hbitmap;
     if(!hbm)   return GenericError;
     IPicture_get_CurDC(image->picture, &hdc);
     bm_is_selected = (hdc != 0);

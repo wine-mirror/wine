@@ -222,6 +222,7 @@ struct GpBitmap{
     ImageLockMode lockmode;
     INT numlocks;
     BYTE *bitmapbits;   /* pointer to the buffer we passed in BitmapLockBits */
+    HBITMAP hbitmap;
 };
 
 struct GpCachedBitmap{

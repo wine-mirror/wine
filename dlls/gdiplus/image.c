@@ -167,7 +167,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     if(bitmap->lockmode)
         return WrongState;
 
-    IPicture_get_Handle(bitmap->image.picture, (OLE_HANDLE*)&hbm);
+    hbm = bitmap->hbitmap;
     IPicture_get_CurDC(bitmap->image.picture, &hdc);
     bm_is_selected = (hdc != 0);
 
@@ -263,7 +263,7 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
         return Ok;
     }
 
-    IPicture_get_Handle(bitmap->image.picture, (OLE_HANDLE*)&hbm);
+    hbm = bitmap->hbitmap;
     IPicture_get_CurDC(bitmap->image.picture, &hdc);
     bm_is_selected = (hdc != 0);
 
@@ -587,6 +587,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHICON(HICON hicon, GpBitmap** bitmap)
     (*bitmap)->image.flags = ImageFlagsNone;
     (*bitmap)->width  = ipicture_pixel_width((*bitmap)->image.picture);
     (*bitmap)->height = ipicture_pixel_height((*bitmap)->image.picture);
+    (*bitmap)->hbitmap = NULL;
 
     DeleteObject(iinfo.hbmColor);
     DeleteObject(iinfo.hbmMask);
@@ -687,6 +688,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     (*bitmap)->width = width;
     (*bitmap)->height = height;
     (*bitmap)->format = format;
+    IPicture_get_Handle((*bitmap)->image.picture, (OLE_HANDLE*)&(*bitmap)->hbitmap);
 
     return Ok;
 }
@@ -1261,6 +1263,8 @@ static GpStatus decode_image_olepicture_bitmap(IStream* stream, REFCLSID clsid, 
     IPicture_get_Handle(pic, (OLE_HANDLE*)&hbm);
     IPicture_get_CurDC(pic, &hdc);
 
+    (*((GpBitmap**) image))->hbitmap = hbm;
+
     bmch = (BITMAPCOREHEADER*) (&pbmi->bmiHeader);
     bmch->bcSize = sizeof(BITMAPCOREHEADER);
 
@@ -1576,9 +1580,8 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
     if (encode_image == NULL)
         return UnknownImageFormat;
 
-    /* extract underlying hbitmap representation from the IPicture */
-    hr = IPicture_get_Handle(image->picture, (OLE_HANDLE*)&hbmp);
-    if (FAILED(hr) || !hbmp)
+    hbmp = ((GpBitmap*)image)->hbitmap;
+    if (!hbmp)
         return GenericError;
     hr = IPicture_get_CurDC(image->picture, &hdc);
     if (FAILED(hr))
