@@ -1327,3 +1327,20 @@ interface IEnumTfDocumentMgrs : IUnknown
     HRESULT Skip(
         [in] ULONG ulCount);
 };
+
+[
+  object,
+  uuid(73131f9c-56a9-49dd-b0ee-d046633f7528),
+  pointer_default(unique)
+]
+interface ITfSourceSingle : IUnknown
+{
+    HRESULT AdviseSingleSink(
+        [in] TfClientId tid,
+        [in] REFIID riid,
+        [in, iid_is(riid)] IUnknown *punk);
+
+    HRESULT UnadviseSingleSink(
+        [in] TfClientId tid,
+        [in] REFIID riid);
+};
