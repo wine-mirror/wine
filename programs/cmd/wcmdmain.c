@@ -457,7 +457,7 @@ WCHAR *WCMD_strtrim_leading_spaces (WCHAR *string) {
  *
  *	Remove first and last quote WCHARacters, preserving all other text
  */
-static void WCMD_opt_s_strip_quotes(WCHAR *cmd) {
+void WCMD_opt_s_strip_quotes(WCHAR *cmd) {
   WCHAR *src = cmd + 1, *dest = cmd, *lastq = NULL;
   while((*dest=*src) != '\0') {
       if (*src=='\"')

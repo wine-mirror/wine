@@ -100,6 +100,7 @@ WCHAR *WCMD_strtrim_leading_spaces (WCHAR *string);
 void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable, WCHAR *forValue, BOOL justFors);
 
 void WCMD_splitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext);
+void WCMD_opt_s_strip_quotes(WCHAR *cmd);
 WCHAR *WCMD_LoadMessage(UINT id);
 WCHAR *WCMD_strdupW(WCHAR *input);
 void WCMD_strsubstW(WCHAR *start, WCHAR* next, WCHAR* insert, int len);
