@@ -812,8 +812,8 @@ Literal
 
 /* ECMA-262 3rd Edition    7.8.2 */
 BooleanLiteral
-        : kTRUE                 { $$ = new_boolean_literal(ctx, TRUE); }
-        | kFALSE                { $$ = new_boolean_literal(ctx, FALSE); }
+        : kTRUE                 { $$ = new_boolean_literal(ctx, VARIANT_TRUE); }
+        | kFALSE                { $$ = new_boolean_literal(ctx, VARIANT_FALSE); }
 
 semicolon_opt
         : ';'
