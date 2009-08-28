@@ -346,11 +346,94 @@ static HRESULT Function_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISP
     return S_OK;
 }
 
-static HRESULT Function_apply(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+static HRESULT array_to_args(DispatchEx *arg_array, LCID lcid, jsexcept_t *ei, IServiceProvider *caller,
+        DISPPARAMS *args)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT var, *argv;
+    DWORD length, i;
+    HRESULT hres;
+
+    hres = jsdisp_propget_name(arg_array, lengthW, lcid, &var, ei, NULL/*FIXME*/);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_uint32(arg_array->ctx, &var, ei, &length);
+    VariantClear(&var);
+    if(FAILED(hres))
+        return hres;
+
+    argv = heap_alloc(length * sizeof(VARIANT));
+    if(FAILED(hres))
+        return E_OUTOFMEMORY;
+
+    for(i=0; i<length; i++) {
+        hres = jsdisp_propget_idx(arg_array, i, lcid, argv+i, ei, caller);
+        if(FAILED(hres)) {
+            while(i--)
+                VariantClear(argv+i);
+            heap_free(argv);
+            return hres;
+        }
+    }
+
+    args->cArgs = length;
+    args->rgvarg = argv;
+    return S_OK;
+}
+
+static HRESULT Function_apply(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+{
+    FunctionInstance *function;
+    DISPPARAMS args = {NULL,NULL,0,0};
+    DWORD argc, i;
+    IDispatch *this_obj;
+    HRESULT hres = S_OK;
+
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_FUNCTION)) {
+        FIXME("dispex is not a function\n");
+        return E_FAIL;
+    }
+
+    function = (FunctionInstance*)dispex;
+    argc = arg_cnt(dp);
+
+    if(argc) {
+        hres = to_object(dispex->ctx, get_arg(dp,0), &this_obj);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(argc >= 2) {
+        DispatchEx *arg_array = NULL;
+
+        if(V_VT(get_arg(dp,1)) == VT_DISPATCH) {
+            arg_array = iface_to_jsdisp((IUnknown*)V_DISPATCH(get_arg(dp,1)));
+            if(!is_class(arg_array, JSCLASS_ARRAY) && !is_class(arg_array, JSCLASS_ARGUMENTS)) {
+                jsdisp_release(arg_array);
+                arg_array = NULL;
+            }
+        }
+
+        if(arg_array) {
+            hres = array_to_args(arg_array, lcid, ei, caller, &args);
+            jsdisp_release(arg_array);
+        }else {
+            FIXME("throw TypeError");
+            hres = E_FAIL;
+        }
+    }
+
+    hres = call_function(function, this_obj, lcid, &args, retv, ei, caller);
+
+    if(this_obj)
+        IDispatch_Release(this_obj);
+    for(i=0; i<args.cArgs; i++)
+        VariantClear(args.rgvarg+i);
+    heap_free(args.rgvarg);
+    return hres;
 }
 
 static HRESULT Function_call(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

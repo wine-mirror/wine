@@ -1137,12 +1137,19 @@ function callTest(argc) {
 callTest.call(tmp, 1, 1);
 callTest.call(tmp, 2, 1, 2);
 
+callTest.apply(tmp, [1, 1]);
+callTest.apply(tmp, [2, 1, 2]);
+(function () { callTest.apply(tmp, arguments); })(2,1,2);
+
 function callTest2() {
     ok(this === tmp, "this !== tmp\n");
     ok(arguments.length === 0, "callTest2: arguments.length = " + arguments.length + " expected 0");
 }
 
 callTest2.call(tmp);
+callTest2.apply(tmp, []);
+callTest2.apply(tmp);
+(function () { callTest2.apply(tmp, arguments); })();
 
 function callTest3() {
     ok(arguments.length === 0, "arguments.length = " + arguments.length + " expected 0");
