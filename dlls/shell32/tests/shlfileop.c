@@ -207,11 +207,11 @@ static void test_get_file_info(void)
         memset(&shfiw, 0xcf, sizeof(shfiw));
         memset(&unset_icon, 0xcf, sizeof(unset_icon));
         rc=pSHGetFileInfoW(NULL, 0, &shfiw, sizeof(shfiw), 0);
-        todo_wine ok(!rc, "SHGetFileInfoW(NULL | 0) should fail\n");
+        ok(!rc, "SHGetFileInfoW(NULL | 0) should fail\n");
         ok(shfiw.hIcon == unset_icon, "SHGetFileInfoW(NULL | 0) should not clear hIcon\n");
-        todo_wine ok(shfiw.szDisplayName[0] == 0xcfcf, "SHGetFileInfoW(NULL | 0) should not clear szDisplayName[0]\n");
-        todo_wine ok(shfiw.szTypeName[0] == 0xcfcf, "SHGetFileInfoW(NULL | 0) should not clear szTypeName[0]\n");
-        todo_wine ok(shfiw.iIcon == 0xcfcfcfcf, "SHGetFileInfoW(NULL | 0) should not clear iIcon\n");
+        ok(shfiw.szDisplayName[0] == 0xcfcf, "SHGetFileInfoW(NULL | 0) should not clear szDisplayName[0]\n");
+        ok(shfiw.szTypeName[0] == 0xcfcf, "SHGetFileInfoW(NULL | 0) should not clear szTypeName[0]\n");
+        ok(shfiw.iIcon == 0xcfcfcfcf, "SHGetFileInfoW(NULL | 0) should not clear iIcon\n");
         ok(shfiw.dwAttributes == 0xcfcfcfcf, "SHGetFileInfoW(NULL | 0) should not clear dwAttributes\n");
     }
     else

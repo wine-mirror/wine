@@ -350,6 +350,9 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
           (flags & SHGFI_PIDL)? "pidl" : debugstr_w(path), dwFileAttributes,
           psfi, psfi->dwAttributes, sizeofpsfi, flags);
 
+    if (!path)
+        return FALSE;
+
     /* windows initializes these values regardless of the flags */
     if (psfi != NULL)
     {
