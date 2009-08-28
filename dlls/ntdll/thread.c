@@ -364,9 +364,9 @@ HANDLE thread_init(void)
 
 
 /***********************************************************************
- *           abort_thread
+ *           terminate_thread
  */
-void abort_thread( int status )
+void terminate_thread( int status )
 {
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
     if (interlocked_xchg_add( &nb_threads, -1 ) <= 1) _exit( status );
@@ -698,7 +698,7 @@ NTSTATUS WINAPI NtAlertThread( HANDLE handle )
 NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
 {
     NTSTATUS ret;
-    BOOL self, last;
+    BOOL self;
 
     SERVER_START_REQ( terminate_thread )
     {
@@ -706,15 +706,10 @@ NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
         req->exit_code = exit_code;
         ret = wine_server_call( req );
         self = !ret && reply->self;
-        last = reply->last;
     }
     SERVER_END_REQ;
 
-    if (self)
-    {
-        if (last) _exit( exit_code );
-        else abort_thread( exit_code );
-    }
+    if (self) abort_thread( exit_code );
     return ret;
 }
 

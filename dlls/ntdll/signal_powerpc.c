@@ -1111,6 +1111,14 @@ void WINAPI RtlExitUserThread( ULONG status )
     exit_thread( status );
 }
 
+/***********************************************************************
+ *           abort_thread
+ */
+void abort_thread( int status )
+{
+    terminate_thread( status );
+}
+
 /**********************************************************************
  *              DbgBreakPoint   (NTDLL.@)
  */
