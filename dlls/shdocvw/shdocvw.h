@@ -102,6 +102,10 @@ struct DocHost {
     VARIANT_BOOL offline;
     VARIANT_BOOL busy;
 
+    READYSTATE ready_state;
+    DWORD prop_notif_cookie;
+    BOOL is_prop_notif;
+
     ConnectionPointContainer cps;
 };
 

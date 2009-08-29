@@ -549,6 +549,8 @@ static HRESULT navigate_bsc(DocHost *This, BindStatusCallback *bsc, IMoniker *mo
     VARIANT_BOOL cancel = VARIANT_FALSE;
     HRESULT hres;
 
+    This->ready_state = READYSTATE_LOADING;
+
     on_before_navigate2(This, bsc->url, bsc->post_data, bsc->post_data_len, bsc->headers, &cancel);
     if(cancel) {
         FIXME("Navigation canceled\n");

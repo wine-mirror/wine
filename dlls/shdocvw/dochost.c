@@ -47,7 +47,7 @@ LRESULT process_dochost_task(DocHost *This, LPARAM lparam)
     return 0;
 }
 
-static void navigate_complete(DocHost *This)
+static void notif_complete(DocHost *This, DISPID dispid)
 {
     DISPPARAMS dispparams;
     VARIANTARG params[2];
@@ -67,8 +67,9 @@ static void navigate_complete(DocHost *This)
     V_VT(&url) = VT_BSTR;
     V_BSTR(&url) = SysAllocString(This->url);
 
-    call_sink(This->cps.wbe2, DISPID_NAVIGATECOMPLETE2, &dispparams);
-    call_sink(This->cps.wbe2, DISPID_DOCUMENTCOMPLETE, &dispparams);
+    TRACE("%d >>>\n", dispid);
+    call_sink(This->cps.wbe2, dispid, &dispparams);
+    TRACE("%d <<<\n", dispid);
 
     SysFreeString(V_BSTR(&url));
     This->busy = VARIANT_FALSE;
@@ -94,12 +95,103 @@ static void object_available(DocHost *This)
 
     hres = IHlinkTarget_Navigate(hlink, 0, NULL);
     IHlinkTarget_Release(hlink);
-    if(FAILED(hres)) {
+    if(FAILED(hres))
         FIXME("Navigate failed\n");
-        return;
+}
+
+static HRESULT get_doc_ready_state(DocHost *This, READYSTATE *ret)
+{
+    DISPPARAMS dp = {NULL,NULL,0,0};
+    IDispatch *disp;
+    EXCEPINFO ei;
+    VARIANT var;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(This->document, &IID_IDispatch, (void**)&disp);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IDispatch_Invoke(disp, DISPID_READYSTATE, &IID_NULL, LOCALE_SYSTEM_DEFAULT, DISPATCH_PROPERTYGET,
+            &dp, &var, &ei, NULL);
+    IDispatch_Release(disp);
+    if(FAILED(hres)) {
+        WARN("Invoke(DISPID_READYSTATE failed: %08x\n", hres);
+        return hres;
     }
 
-    navigate_complete(This);
+    if(V_VT(&var) != VT_I4) {
+        WARN("V_VT(var) = %d\n", V_VT(&var));
+        VariantClear(&var);
+        return E_FAIL;
+    }
+
+    *ret = V_I4(&var);
+    return S_OK;
+}
+
+static void advise_prop_notif(DocHost *This, BOOL set)
+{
+    IConnectionPointContainer *cp_container;
+    IConnectionPoint *cp;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(This->document, &IID_IConnectionPointContainer, (void**)&cp_container);
+    if(FAILED(hres))
+        return;
+
+    hres = IConnectionPointContainer_FindConnectionPoint(cp_container, &IID_IPropertyNotifySink, &cp);
+    IConnectionPointContainer_Release(cp_container);
+    if(FAILED(hres))
+        return;
+
+    if(set)
+        hres = IConnectionPoint_Advise(cp, (IUnknown*)PROPNOTIF(This), &This->prop_notif_cookie);
+    else
+        hres = IConnectionPoint_Unadvise(cp, This->prop_notif_cookie);
+    IConnectionPoint_Release(cp);
+
+    if(SUCCEEDED(hres))
+        This->is_prop_notif = set;
+}
+
+static void update_ready_state(DocHost *This, READYSTATE ready_state)
+{
+    if(ready_state > READYSTATE_LOADING && This->ready_state <= READYSTATE_LOADING) {
+        notif_complete(This, DISPID_NAVIGATECOMPLETE2);
+        This->ready_state = ready_state;
+    }
+
+    if(ready_state == READYSTATE_COMPLETE && This->ready_state < READYSTATE_COMPLETE) {
+        This->ready_state = READYSTATE_COMPLETE;
+        notif_complete(This, DISPID_DOCUMENTCOMPLETE);
+    }
+}
+
+typedef struct {
+    task_header_t header;
+    IUnknown *doc;
+    READYSTATE ready_state;
+} ready_state_task_t;
+
+static void ready_state_proc(DocHost *This, task_header_t *_task)
+{
+    ready_state_task_t *task = (ready_state_task_t*)_task;
+
+    if(task->doc == This->document)
+        update_ready_state(This, task->ready_state);
+
+    IUnknown_Release(task->doc);
+}
+
+static void push_ready_state_task(DocHost *This, READYSTATE ready_state)
+{
+    ready_state_task_t *task = heap_alloc(sizeof(ready_state_task_t));
+
+    IUnknown_AddRef(This->document);
+    task->doc = This->document;
+    task->ready_state = ready_state;
+
+    push_dochost_task(This, &task->header, ready_state_proc, FALSE);
 }
 
 static void object_available_proc(DocHost *This, task_header_t *task)
@@ -109,6 +201,7 @@ static void object_available_proc(DocHost *This, task_header_t *task)
 
 HRESULT dochost_object_available(DocHost *This, IUnknown *doc)
 {
+    READYSTATE ready_state;
     task_header_t *task;
     IOleObject *oleobj;
     HRESULT hres;
@@ -135,10 +228,17 @@ HRESULT dochost_object_available(DocHost *This, IUnknown *doc)
     }
 
     /* FIXME: Call SetAdvise */
-    /* FIXME: Call Invoke(DISPID_READYSTATE) */
 
     task = heap_alloc(sizeof(*task));
     push_dochost_task(This, task, object_available_proc, FALSE);
+
+    hres = get_doc_ready_state(This, &ready_state);
+    if(SUCCEEDED(hres)) {
+        if(ready_state == READYSTATE_COMPLETE)
+            push_ready_state_task(This, READYSTATE_COMPLETE);
+        else
+            advise_prop_notif(This, TRUE);
+    }
 
     return S_OK;
 }
@@ -213,6 +313,9 @@ void deactivate_document(DocHost *This)
     IOleObject *oleobj = NULL;
     IHlinkTarget *hlink = NULL;
     HRESULT hres;
+
+    if(This->is_prop_notif)
+        advise_prop_notif(This, FALSE);
 
     if(This->view)
         IOleDocumentView_UIActivate(This->view, FALSE);
@@ -566,8 +669,30 @@ static ULONG WINAPI PropertyNotifySink_Release(IPropertyNotifySink *iface)
 static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, DISPID dispID)
 {
     DocHost *This = PROPNOTIF_THIS(iface);
-    FIXME("(%p)->(%d)\n", This, dispID);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, dispID);
+
+    switch(dispID) {
+    case DISPID_READYSTATE: {
+        READYSTATE ready_state;
+        HRESULT hres;
+
+        hres = get_doc_ready_state(This, &ready_state);
+        if(FAILED(hres))
+            return hres;
+
+        if(ready_state == READYSTATE_COMPLETE)
+            advise_prop_notif(This, FALSE);
+
+        push_ready_state_task(This, ready_state);
+        break;
+    }
+    default:
+        FIXME("unimplemented dispid %d\n", dispID);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PropertyNotifySink_OnRequestEdit(IPropertyNotifySink *iface, DISPID dispID)
@@ -607,6 +732,9 @@ void DocHost_Init(DocHost *This, IDispatch *disp)
 
     This->silent = VARIANT_FALSE;
     This->offline = VARIANT_FALSE;
+
+    This->ready_state = READYSTATE_UNINITIALIZED;
+    This->is_prop_notif = FALSE;
 
     DocHost_ClientSite_Init(This);
     DocHost_Frame_Init(This);
