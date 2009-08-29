@@ -577,7 +577,6 @@ static DWORD service_start_process(struct service_entry *service_entry, HANDLE *
     }
 
     service_entry->status.dwCurrentState = SERVICE_START_PENDING;
-    service_entry->status.dwProcessId = pi.dwProcessId;
 
     service_unlock(service_entry);
 
@@ -587,11 +586,11 @@ static DWORD service_start_process(struct service_entry *service_entry, HANDLE *
     {
         service_lock_exclusive(service_entry);
         service_entry->status.dwCurrentState = SERVICE_STOPPED;
-        service_entry->status.dwProcessId = 0;
         service_unlock(service_entry);
         return GetLastError();
     }
 
+    service_entry->status.dwProcessId = pi.dwProcessId;
     *process = pi.hProcess;
     CloseHandle( pi.hThread );
 
