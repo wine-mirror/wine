@@ -483,11 +483,11 @@ static void test_gettext(void)
     /* A size of 1 only stores the NULL terminator */
     buf[0] = 0xa;
     r = SendMessage(hwndStatus, WM_GETTEXT, 1, (LPARAM)buf);
-    expect(0, r);
-    ok(!buf[0], "expected empty buffer\n");
+    ok( r == 0 || broken(r == 4), "Expected 0 got %d\n", r );
+    if (!r) ok(!buf[0], "expected empty buffer\n");
     /* A size of 2 returns a length 1 */
     r = SendMessage(hwndStatus, WM_GETTEXT, 2, (LPARAM)buf);
-    expect(1, r);
+    ok( r == 1 || broken(r == 4), "Expected 1 got %d\n", r );
     r = SendMessage(hwndStatus, WM_GETTEXT, sizeof(buf), (LPARAM)buf);
     expect(4, r);
     ok(!strcmp(buf, "Text"), "expected Text, got %s\n", buf);
