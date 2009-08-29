@@ -2880,101 +2880,45 @@ void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 DEFINE_REGS_ENTRYPOINT( RtlRaiseException, 1 )
 
 
-struct topmost_frame
-{
-    EXCEPTION_REGISTRATION_RECORD frame;
-    sigjmp_buf jmp;
-    int exit_code;
-};
-
-static void DECLSPEC_NORETURN topmost_exit_unwind_target(void)
-{
-    struct topmost_frame *topmost_frame = (struct topmost_frame *)__wine_get_frame();
-    __wine_pop_frame( &topmost_frame->frame );
-    siglongjmp( topmost_frame->jmp, 1 );
-}
-
-static void DECLSPEC_NORETURN topmost_abort_unwind_target(void)
-{
-    struct topmost_frame *topmost_frame = (struct topmost_frame *)__wine_get_frame();
-    __wine_pop_frame( &topmost_frame->frame );
-    siglongjmp( topmost_frame->jmp, 2 );
-}
-
-static DWORD topmost_handler( EXCEPTION_RECORD *record,
-                              EXCEPTION_REGISTRATION_RECORD *frame,
-                              CONTEXT *context,
-                              EXCEPTION_REGISTRATION_RECORD **pdispatcher )
-{
-    struct topmost_frame *topmost_frame = (struct topmost_frame *)frame;
-    EXCEPTION_POINTERS ptrs;
-
-    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND | EH_NESTED_CALL))
-        return ExceptionContinueSearch;
-
-    ptrs.ExceptionRecord = record;
-    ptrs.ContextRecord = context;
-    switch (unhandled_exception_filter( &ptrs ))
-    {
-    case EXCEPTION_CONTINUE_SEARCH:
-        return ExceptionContinueSearch;
-    case EXCEPTION_CONTINUE_EXECUTION:
-        return ExceptionContinueExecution;
-    case EXCEPTION_EXECUTE_HANDLER:
-        break;
-    }
-    /* send the exit code to the server */
-    /* we can't simply call NtTerminateThread since it's a WINAPI function */
-    /* and libgcc unwinding doesn't handle those correctly */
-    SERVER_START_REQ( terminate_thread )
-    {
-        req->handle    = wine_server_obj_handle( GetCurrentThread() );
-        req->exit_code = record->ExceptionCode;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    topmost_frame->exit_code = record->ExceptionCode;
-    for (;;) RtlUnwind( frame, topmost_abort_unwind_target, record, 0 );
-}
-
 /***********************************************************************
- *           call_thread_entry_point
+ *           call_thread_func
  */
-void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg )
+void call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg, void *frame )
 {
-    struct topmost_frame frame;
-
-    frame.frame.Handler = topmost_handler;
-    switch (sigsetjmp( frame.jmp, 0 ))
+    ntdll_get_thread_data()->exit_frame = frame;
+    __TRY
     {
-    case 0:
-        __wine_push_frame( &frame.frame );
-        frame.exit_code = entry( arg );
-        __wine_pop_frame( &frame.frame );
-        /* fall through */
-    case 1:
-        exit_thread( frame.exit_code );
-    default:
-        terminate_thread( frame.exit_code );
+        RtlExitUserThread( entry( arg ));
     }
+    __EXCEPT(unhandled_exception_filter)
+    {
+        NtTerminateThread( GetCurrentThread(), GetExceptionCode() );
+    }
+    __ENDTRY
+    abort();  /* should not be reached */
 }
+
+extern void DECLSPEC_NORETURN call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg );
+__ASM_GLOBAL_FUNC( call_thread_entry_point,
+                   "subq $8,%rsp\n\t"
+                   ".cfi_adjust_cfa_offset 8\n\t"
+                   "movq %rsp,%rdx\n\t"
+                   "call " __ASM_NAME("call_thread_func") );
+
+extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), void *frame );
+__ASM_GLOBAL_FUNC( call_thread_exit_func,
+                   "subq $8,%rsp\n\t"
+                   ".cfi_adjust_cfa_offset 8\n\t"
+                   "movq %rdx,%rsp\n\t"
+                   "call *%rsi" );
 
 /***********************************************************************
  *           RtlExitUserThread  (NTDLL.@)
  */
 void WINAPI RtlExitUserThread( ULONG status )
 {
-    EXCEPTION_REGISTRATION_RECORD *teb_frame = NtCurrentTeb()->Tib.ExceptionList;
-
-    /* hack: find the top TEB frame and use it as unwind target */
-    if (teb_frame != (EXCEPTION_REGISTRATION_RECORD *)~0UL)
-    {
-        while (teb_frame->Prev != (EXCEPTION_REGISTRATION_RECORD *)~0UL) teb_frame = teb_frame->Prev;
-        TRACE( "unwinding to frame %p for thread exit\n", teb_frame );
-        ((struct topmost_frame *)teb_frame)->exit_code = status;
-        RtlUnwind( teb_frame, topmost_exit_unwind_target, NULL, 0 );
-    }
-    exit_thread( status );
+    if (!ntdll_get_thread_data()->exit_frame) exit_thread( status );
+    call_thread_exit_func( status, exit_thread, ntdll_get_thread_data()->exit_frame );
 }
 
 /***********************************************************************
@@ -2982,17 +2926,8 @@ void WINAPI RtlExitUserThread( ULONG status )
  */
 void abort_thread( int status )
 {
-    EXCEPTION_REGISTRATION_RECORD *teb_frame = NtCurrentTeb()->Tib.ExceptionList;
-
-    /* hack: find the top TEB frame and use it as unwind target */
-    if (teb_frame != (EXCEPTION_REGISTRATION_RECORD *)~0UL)
-    {
-        while (teb_frame->Prev != (EXCEPTION_REGISTRATION_RECORD *)~0UL) teb_frame = teb_frame->Prev;
-        TRACE( "unwinding to frame %p for thread exit\n", teb_frame );
-        ((struct topmost_frame *)teb_frame)->exit_code = status;
-        RtlUnwind( teb_frame, topmost_abort_unwind_target, NULL, 0 );
-    }
-    terminate_thread( status );
+    if (!ntdll_get_thread_data()->exit_frame) terminate_thread( status );
+    call_thread_exit_func( status, terminate_thread, ntdll_get_thread_data()->exit_frame );
 }
 
 /**********************************************************************

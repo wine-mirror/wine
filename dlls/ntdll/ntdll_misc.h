@@ -201,7 +201,11 @@ struct ntdll_thread_data
     int                reply_fd;      /* 1e4/314 fd for receiving server replies */
     int                wait_fd[2];    /* 1e8/318 fd for sleeping server requests */
     BOOL               wow64_redir;   /* 1f0/320 Wow64 filesystem redirection flag */
+#ifdef __i386__
     void              *vm86_ptr;      /* 1f4/328 data for vm86 mode */
+#else
+    void              *exit_frame;    /* 1f4/328 exit frame pointer */
+#endif
     pthread_t          pthread_id;    /* 1f8/330 pthread thread id */
 };
 
