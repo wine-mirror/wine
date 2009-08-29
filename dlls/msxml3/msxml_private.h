@@ -85,6 +85,7 @@ typedef enum tid_t {
     IXMLDOMParseError_tid,
     IXMLDOMProcessingInstruction_tid,
     IXMLDOMSchemaCollection_tid,
+    IXMLDOMSelection_tid,
     IXMLDOMText_tid,
     IXMLElement_tid,
     IXMLDocument_tid,
