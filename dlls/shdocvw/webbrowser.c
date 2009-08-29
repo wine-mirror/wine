@@ -776,9 +776,10 @@ static HRESULT WINAPI WebBrowser_ShowBrowserBar(IWebBrowser2 *iface, VARIANT *pv
 static HRESULT WINAPI WebBrowser_get_ReadyState(IWebBrowser2 *iface, READYSTATE *lpReadyState)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, lpReadyState);
 
-    *lpReadyState = READYSTATE_COMPLETE;
+    TRACE("(%p)->(%p)\n", This, lpReadyState);
+
+    *lpReadyState = This->doc_host.ready_state;
     return S_OK;
 }
 

@@ -171,6 +171,17 @@ static void _test_LocationURL(unsigned line, IUnknown *unk, LPCWSTR exurl)
     IWebBrowser2_Release(wb);
 }
 
+#define test_ready_state(ex) _test_ready_state(__LINE__,ex);
+static void _test_ready_state(unsigned line, READYSTATE exstate)
+{
+    READYSTATE state;
+    HRESULT hres;
+
+    hres = IWebBrowser2_get_ReadyState(wb, &state);
+    ok_(__FILE__,line)(hres == S_OK, "get_ReadyState failed: %08x\n", hres);
+    ok_(__FILE__,line)(state == exstate, "ReadyState = %d, expected %d\n", state, exstate);
+}
+
 static HRESULT QueryInterface(REFIID,void**);
 
 static HRESULT WINAPI OleCommandTarget_QueryInterface(IOleCommandTarget *iface,
@@ -594,6 +605,7 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
 
         ok(pDispParams->rgvarg == NULL, "rgvarg=%p, expected NULL\n", pDispParams->rgvarg);
         ok(pDispParams->cArgs == 0, "cArgs=%d, expected 0\n", pDispParams->cArgs);
+        test_ready_state(READYSTATE_LOADING);
         break;
 
     case DISPID_BEFORENAVIGATE2:
@@ -604,6 +616,7 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
         test_OnBeforeNavigate(pDispParams->rgvarg+6, pDispParams->rgvarg+5, pDispParams->rgvarg+4,
                               pDispParams->rgvarg+3, pDispParams->rgvarg+2, pDispParams->rgvarg+1,
                               pDispParams->rgvarg);
+        test_ready_state(READYSTATE_LOADING);
         break;
 
     case DISPID_SETSECURELOCKICON:
@@ -635,6 +648,7 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
 
         ok(pDispParams->rgvarg == NULL, "rgvarg=%p, expected NULL\n", pDispParams->rgvarg);
         ok(pDispParams->cArgs == 0, "cArgs=%d, expected 0\n", pDispParams->cArgs);
+        test_ready_state(READYSTATE_LOADING);
         break;
 
     case DISPID_ONMENUBAR:
@@ -680,6 +694,7 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
     case DISPID_NAVIGATECOMPLETE2:
         CHECK_EXPECT(Invoke_NAVIGATECOMPLETE2);
         /* FIXME */
+        test_ready_state(READYSTATE_LOADING);
         break;
 
     case DISPID_PROGRESSCHANGE:
@@ -690,6 +705,7 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
     case DISPID_DOCUMENTCOMPLETE:
         CHECK_EXPECT(Invoke_DOCUMENTCOMPLETE);
         /* FIXME */
+        test_ready_state(READYSTATE_COMPLETE);
         break;
 
     case 282: /* FIXME */
@@ -2094,6 +2110,7 @@ static void test_Navigate2(IUnknown *unk)
         return;
 
     test_LocationURL(unk, emptyW);
+    test_ready_state(READYSTATE_UNINITIALIZED);
 
     V_VT(&url) = VT_BSTR;
     V_BSTR(&url) = SysAllocString(about_blankW);
@@ -2149,6 +2166,8 @@ static void test_Navigate2(IUnknown *unk)
 
     VariantClear(&url);
     IWebBrowser2_Release(webbrowser);
+
+    test_ready_state(READYSTATE_LOADING);
 }
 
 static void test_download(void)
@@ -2156,6 +2175,8 @@ static void test_download(void)
     MSG msg;
 
     is_downloading = TRUE;
+
+    test_ready_state(READYSTATE_LOADING);
 
     SET_EXPECT(Exec_SETPROGRESSMAX);
     SET_EXPECT(Exec_SETPROGRESSPOS);
@@ -2201,6 +2222,8 @@ static void test_download(void)
     todo_wine CHECK_CALLED(GetDropTarget);
     todo_wine CHECK_CALLED(Invoke_PROGRESSCHANGE);
     CHECK_CALLED(Invoke_DOCUMENTCOMPLETE);
+
+    test_ready_state(READYSTATE_COMPLETE);
 }
 
 static void test_olecmd(IUnknown *unk, BOOL loaded)
@@ -2316,6 +2339,7 @@ static void test_WebBrowser(BOOL do_download)
     ok(hres == S_OK, "Could not get IWebBrowser2 iface: %08x\n", hres);
 
     test_QueryInterface(unk);
+    test_ready_state(READYSTATE_UNINITIALIZED);
     test_ClassInfo(unk);
     test_LocationURL(unk, emptyW);
     test_ConnectionPoint(unk, TRUE);
