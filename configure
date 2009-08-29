@@ -11315,7 +11315,7 @@ if test "x$ac_cv_lib_mpg123_mpg123_feed" = x""yes; then :
 fi
 
 fi
-if test "x$ac_cv_lib_mpg123_mpg123_init" != xyes; then :
+if test "x$ac_cv_lib_mpg123_mpg123_feed" != xyes; then :
   case "x$with_mpg123" in
   x)   wine_notices="$wine_notices|libmpg123 ${notice_platform}development files not found (or too old), mp3 codec won't be supported." ;;
   xno) ;;
@@ -11323,7 +11323,7 @@ if test "x$ac_cv_lib_mpg123_mpg123_init" != xyes; then :
 This is an error since --with-mpg123 was requested." "$LINENO" 5 ;;
 esac
 fi
-test "x$ac_cv_lib_mpg123_mpg123_init" = xyes || enable_winemp3_acm=${enable_winemp3_acm:-no}
+test "x$ac_cv_lib_mpg123_mpg123_feed" = xyes || enable_winemp3_acm=${enable_winemp3_acm:-no}
 
 if test "$ac_cv_header_kstat_h" = "yes"
 then
