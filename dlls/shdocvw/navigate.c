@@ -22,7 +22,6 @@
 #include "wine/debug.h"
 
 #include "shdocvw.h"
-#include "mshtml.h"
 #include "exdispid.h"
 #include "shellapi.h"
 #include "winreg.h"
@@ -270,49 +269,14 @@ static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *if
     return E_NOTIMPL;
 }
 
-static void object_available_proc(DocHost *This, task_header_t *task)
-{
-    object_available(This);
-}
-
 static HRESULT WINAPI BindStatusCallback_OnObjectAvailable(IBindStatusCallback *iface,
         REFIID riid, IUnknown *punk)
 {
     BindStatusCallback *This = BINDSC_THIS(iface);
-    task_header_t *task;
-    IOleObject *oleobj;
-    HRESULT hres;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), punk);
 
-    IUnknown_AddRef(punk);
-    This->doc_host->document = punk;
-
-    hres = IUnknown_QueryInterface(punk, &IID_IOleObject, (void**)&oleobj);
-    if(SUCCEEDED(hres)) {
-        CLSID clsid;
-
-        hres = IOleObject_GetUserClassID(oleobj, &clsid);
-        if(SUCCEEDED(hres))
-            TRACE("Got clsid %s\n",
-                  IsEqualGUID(&clsid, &CLSID_HTMLDocument) ? "CLSID_HTMLDocument" : debugstr_guid(&clsid));
-
-        hres = IOleObject_SetClientSite(oleobj, CLIENTSITE(This->doc_host));
-        if(FAILED(hres))
-            FIXME("SetClientSite failed: %08x\n", hres);
-
-        IOleObject_Release(oleobj);
-    }else {
-        FIXME("Could not get IOleObject iface: %08x\n", hres);
-    }
-
-    /* FIXME: Call SetAdvise */
-    /* FIXME: Call Invoke(DISPID_READYSTATE) */
-
-    task = heap_alloc(sizeof(*task));
-    push_dochost_task(This->doc_host, task, object_available_proc, FALSE);
-
-    return S_OK;
+    return dochost_object_available(This->doc_host, punk);
 }
 
 #undef BSC_THIS

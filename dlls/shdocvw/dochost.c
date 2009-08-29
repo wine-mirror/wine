@@ -20,6 +20,7 @@
 #include "shdocvw.h"
 #include "hlink.h"
 #include "exdispid.h"
+#include "mshtml.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
@@ -73,7 +74,7 @@ static void navigate_complete(DocHost *This)
     This->busy = VARIANT_FALSE;
 }
 
-void object_available(DocHost *This)
+static void object_available(DocHost *This)
 {
     IHlinkTarget *hlink;
     HRESULT hres;
@@ -99,8 +100,47 @@ void object_available(DocHost *This)
     }
 
     navigate_complete(This);
+}
 
-    return;
+static void object_available_proc(DocHost *This, task_header_t *task)
+{
+    object_available(This);
+}
+
+HRESULT dochost_object_available(DocHost *This, IUnknown *doc)
+{
+    task_header_t *task;
+    IOleObject *oleobj;
+    HRESULT hres;
+
+    IUnknown_AddRef(doc);
+    This->document = doc;
+
+    hres = IUnknown_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
+    if(SUCCEEDED(hres)) {
+        CLSID clsid;
+
+        hres = IOleObject_GetUserClassID(oleobj, &clsid);
+        if(SUCCEEDED(hres))
+            TRACE("Got clsid %s\n",
+                  IsEqualGUID(&clsid, &CLSID_HTMLDocument) ? "CLSID_HTMLDocument" : debugstr_guid(&clsid));
+
+        hres = IOleObject_SetClientSite(oleobj, CLIENTSITE(This));
+        if(FAILED(hres))
+            FIXME("SetClientSite failed: %08x\n", hres);
+
+        IOleObject_Release(oleobj);
+    }else {
+        FIXME("Could not get IOleObject iface: %08x\n", hres);
+    }
+
+    /* FIXME: Call SetAdvise */
+    /* FIXME: Call Invoke(DISPID_READYSTATE) */
+
+    task = heap_alloc(sizeof(*task));
+    push_dochost_task(This, task, object_available_proc, FALSE);
+
+    return S_OK;
 }
 
 static LRESULT resize_document(DocHost *This, LONG width, LONG height)

@@ -213,7 +213,7 @@ HRESULT WebBrowserV2_Create(IUnknown*,REFIID,void**);
 
 void create_doc_view_hwnd(DocHost*);
 void deactivate_document(DocHost*);
-void object_available(DocHost*);
+HRESULT dochost_object_available(DocHost*,IUnknown*);
 void call_sink(ConnectionPoint*,DISPID,DISPPARAMS*);
 HRESULT navigate_url(DocHost*,LPCWSTR,const VARIANT*,const VARIANT*,VARIANT*,VARIANT*);
 HRESULT go_home(DocHost*);
