@@ -393,7 +393,6 @@ run_ex (char *cmd, HANDLE out_file, const char *tempdir, DWORD ms)
         report (R_ERROR, "Wait for '%s' failed: %d", cmd, GetLastError ());
         break;
     case WAIT_TIMEOUT:
-        report (R_ERROR, "Process '%s' timed out.", cmd);
         break;
     default:
         report (R_ERROR, "Wait returned %d", status);
