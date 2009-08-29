@@ -36,6 +36,12 @@ static const struct ID3D10EffectPassVtbl d3d10_effect_pass_vtbl;
 static const struct ID3D10EffectVariableVtbl d3d10_effect_variable_vtbl;
 static const struct ID3D10EffectConstantBufferVtbl d3d10_effect_constant_buffer_vtbl;
 
+/* null objects - needed for invalid calls */
+static struct d3d10_effect_technique null_technique = {&d3d10_effect_technique_vtbl, NULL, NULL, 0, 0, NULL};
+static struct d3d10_effect_pass null_pass = {&d3d10_effect_pass_vtbl, NULL, NULL, 0, 0, 0, NULL};
+static struct d3d10_effect_local_buffer null_local_buffer = {&d3d10_effect_constant_buffer_vtbl, NULL, 0, 0, 0, NULL};
+static struct d3d10_effect_variable null_variable = {&d3d10_effect_variable_vtbl, NULL, 0, 0};
+
 static inline void read_dword(const char **ptr, DWORD *d)
 {
     memcpy(d, *ptr, sizeof(*d));
@@ -843,7 +849,7 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
     if (index >= This->local_buffer_count)
     {
         WARN("Invalid index specified\n");
-        return NULL;
+        return (ID3D10EffectConstantBuffer *)&null_local_buffer;
     }
 
     l = &This->local_buffers[index];
@@ -872,7 +878,9 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
         }
     }
 
-    return NULL;
+    WARN("Invalid name specified\n");
+
+    return (ID3D10EffectConstantBuffer *)&null_local_buffer;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableByIndex(ID3D10Effect *iface, UINT index)
@@ -906,7 +914,9 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
         }
     }
 
-    return NULL;
+    WARN("Invalid name specified\n");
+
+    return (ID3D10EffectVariable *)&null_variable;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableBySemantic(ID3D10Effect *iface,
@@ -928,7 +938,7 @@ static struct ID3D10EffectTechnique * STDMETHODCALLTYPE d3d10_effect_GetTechniqu
     if (index >= This->technique_count)
     {
         WARN("Invalid index specified\n");
-        return NULL;
+        return (ID3D10EffectTechnique *)&null_technique;
     }
 
     t = &This->techniques[index];
@@ -956,7 +966,9 @@ static struct ID3D10EffectTechnique * STDMETHODCALLTYPE d3d10_effect_GetTechniqu
         }
     }
 
-    return NULL;
+    WARN("Invalid name specified\n");
+
+    return (ID3D10EffectTechnique *)&null_technique;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_Optimize(ID3D10Effect *iface)
@@ -1046,7 +1058,7 @@ static struct ID3D10EffectPass * STDMETHODCALLTYPE d3d10_effect_technique_GetPas
     if (index >= This->pass_count)
     {
         WARN("Invalid index specified\n");
-        return NULL;
+        return (ID3D10EffectPass *)&null_pass;
     }
 
     p = &This->passes[index];
@@ -1074,7 +1086,9 @@ static struct ID3D10EffectPass * STDMETHODCALLTYPE d3d10_effect_technique_GetPas
         }
     }
 
-    return NULL;
+    WARN("Invalid name specified\n");
+
+    return (ID3D10EffectPass *)&null_pass;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_technique_ComputeStateBlockMask(ID3D10EffectTechnique *iface,
