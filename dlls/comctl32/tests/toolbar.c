@@ -83,7 +83,6 @@ static LRESULT MyWnd_Notify(LPARAM lParam)
             nmdisp = (NMTBDISPINFOA *)lParam;
 
             compare(nmdisp->dwMask, g_dwExpectedDispInfoMask, "%x");
-            compare(nmdisp->iImage, -1, "%d");
             ok(nmdisp->pszText == NULL, "pszText is not NULL\n");
         break;
     }
@@ -1002,10 +1001,17 @@ static void test_sizes(void)
     tbinfo.cx = 672;
     tbinfo.cbSize = sizeof(TBBUTTONINFO);
     tbinfo.dwMask = TBIF_SIZE | TBIF_BYINDEX;
-    ok(SendMessageA(hToolbar, TB_SETBUTTONINFO, 0, (LPARAM)&tbinfo) != 0, "TB_SETBUTTONINFO failed\n");
-    ok(SendMessageA(hToolbar, TB_SETBUTTONINFO, 1, (LPARAM)&tbinfo) != 0, "TB_SETBUTTONINFO failed\n");
-    SendMessageA(hToolbar, TB_AUTOSIZE, 0, 0);
-    check_sizes();
+    if (SendMessageA(hToolbar, TB_SETBUTTONINFO, 0, (LPARAM)&tbinfo))
+    {
+        ok(SendMessageA(hToolbar, TB_SETBUTTONINFO, 1, (LPARAM)&tbinfo) != 0, "TB_SETBUTTONINFO failed\n");
+        SendMessageA(hToolbar, TB_AUTOSIZE, 0, 0);
+        check_sizes();
+    }
+    else  /* TBIF_BYINDEX probably not supported, confirm that this was the reason for the failure */
+    {
+        tbinfo.dwMask = TBIF_SIZE;
+        ok(SendMessageA(hToolbar, TB_SETBUTTONINFO, 33, (LPARAM)&tbinfo) != 0, "TB_SETBUTTONINFO failed\n");
+    }
 
     DestroyWindow(hToolbar);
 }
@@ -1061,16 +1067,19 @@ static void test_recalc(void)
     CHAR test[] = "Test";
     const int EX_STYLES_COUNT = 5;
     int i;
+    BOOL recalc;
 
     /* Like TB_ADDBUTTONS tested in test_sized, inserting a button without text
      * results in a relayout, while adding one with text forces a recalc */
     prepare_recalc_test(&hToolbar);
     SendMessage(hToolbar, TB_INSERTBUTTON, 1, (LPARAM)&buttons3[0]);
-    ok(!did_recalc(hToolbar), "Unexpected recalc - adding button without text\n");
+    recalc = did_recalc(hToolbar);
+    ok(!recalc, "Unexpected recalc - adding button without text\n");
 
     prepare_recalc_test(&hToolbar);
     SendMessage(hToolbar, TB_INSERTBUTTON, 1, (LPARAM)&buttons3[3]);
-    ok(did_recalc(hToolbar), "Expected a recalc - adding button with text\n");
+    recalc = did_recalc(hToolbar);
+    ok(recalc, "Expected a recalc - adding button with text\n");
 
     /* TB_SETBUTTONINFO, even when adding a text, results only in a relayout */
     prepare_recalc_test(&hToolbar);
@@ -1078,7 +1087,8 @@ static void test_recalc(void)
     bi.dwMask = TBIF_TEXT;
     bi.pszText = test;
     SendMessage(hToolbar, TB_SETBUTTONINFO, 1, (LPARAM)&bi);
-    ok(!did_recalc(hToolbar), "Unexpected recalc - setting a button text\n");
+    recalc = did_recalc(hToolbar);
+    ok(!recalc, "Unexpected recalc - setting a button text\n");
 
     /* most extended styled doesn't force a recalc (testing all the bits gives
      * the same results, but prints some ERRs while testing) */
@@ -1089,22 +1099,31 @@ static void test_recalc(void)
         prepare_recalc_test(&hToolbar);
         expect(0, (int)SendMessage(hToolbar, TB_GETEXTENDEDSTYLE, 0, 0));
         SendMessage(hToolbar, TB_SETEXTENDEDSTYLE, 0, (1 << i));
-        ok(!did_recalc(hToolbar), "Unexpected recalc - setting bit %d\n", i);
+        recalc = did_recalc(hToolbar);
+        ok(!recalc, "Unexpected recalc - setting bit %d\n", i);
         SendMessage(hToolbar, TB_SETEXTENDEDSTYLE, 0, 0);
-        ok(!did_recalc(hToolbar), "Unexpected recalc - clearing bit %d\n", i);
+        recalc = did_recalc(hToolbar);
+        ok(!recalc, "Unexpected recalc - clearing bit %d\n", i);
         expect(0, (int)SendMessage(hToolbar, TB_GETEXTENDEDSTYLE, 0, 0));
     }
 
     /* TBSTYLE_EX_MIXEDBUTTONS does a recalc on change */
     prepare_recalc_test(&hToolbar);
     SendMessage(hToolbar, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_MIXEDBUTTONS);
-    ok(did_recalc(hToolbar), "Expected a recalc - setting TBSTYLE_EX_MIXEDBUTTONS\n");
-    restore_recalc_state(hToolbar);
-    SendMessage(hToolbar, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_MIXEDBUTTONS);
-    ok(!did_recalc(hToolbar), "Unexpected recalc - setting TBSTYLE_EX_MIXEDBUTTONS again\n");
-    restore_recalc_state(hToolbar);
-    SendMessage(hToolbar, TB_SETEXTENDEDSTYLE, 0, 0);
-    ok(did_recalc(hToolbar), "Expected a recalc - clearing TBSTYLE_EX_MIXEDBUTTONS\n");
+    recalc = did_recalc(hToolbar);
+    if (recalc)
+    {
+        ok(recalc, "Expected a recalc - setting TBSTYLE_EX_MIXEDBUTTONS\n");
+        restore_recalc_state(hToolbar);
+        SendMessage(hToolbar, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_MIXEDBUTTONS);
+        recalc = did_recalc(hToolbar);
+        ok(!recalc, "Unexpected recalc - setting TBSTYLE_EX_MIXEDBUTTONS again\n");
+        restore_recalc_state(hToolbar);
+        SendMessage(hToolbar, TB_SETEXTENDEDSTYLE, 0, 0);
+        recalc = did_recalc(hToolbar);
+        ok(recalc, "Expected a recalc - clearing TBSTYLE_EX_MIXEDBUTTONS\n");
+    }
+    else win_skip( "No recalc on TBSTYLE_EX_MIXEDBUTTONS\n" );
 
     /* undocumented exstyle 0x2 seems to changes the top margin, what
      * interferes with these tests */
@@ -1124,8 +1143,8 @@ static void test_getbuttoninfo(void)
         int ret;
 
         tbi.cbSize = i;
-        tbi.dwMask = TBIF_BYINDEX | TBIF_COMMAND;
-        ret = (int)SendMessage(hToolbar, TB_GETBUTTONINFO, 0, (LPARAM)&tbi);
+        tbi.dwMask = TBIF_COMMAND;
+        ret = (int)SendMessage(hToolbar, TB_GETBUTTONINFO, 1, (LPARAM)&tbi);
         if (i == sizeof(TBBUTTONINFO)) {
             compare(ret, 0, "%d");
         } else {
@@ -1196,7 +1215,7 @@ static void test_dispinfo(void)
     rebuild_toolbar(&hToolbar);
     SendMessageA(hToolbar, TB_LOADIMAGES, IDB_HIST_SMALL_COLOR, (LPARAM)HINST_COMMCTRL);
     SendMessageA(hToolbar, TB_ADDBUTTONS, 2, (LPARAM)buttons_disp);
-    g_dwExpectedDispInfoMask = 1;
+    g_dwExpectedDispInfoMask = TBNF_IMAGE;
     /* Some TBN_GETDISPINFO tests will be done in MyWnd_Notify function.
      * We will receive TBN_GETDISPINFOW even if the control is ANSI */
     compare((BOOL)SendMessageA(hToolbar, CCM_GETUNICODEFORMAT, 0, 0), 0, "%d");
