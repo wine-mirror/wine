@@ -39,7 +39,130 @@
 # include <io.h>
 #endif
 
-#include "fnt2bdf.h"
+#include "windef.h"
+#include "wingdi.h"
+
+enum data_types {dfChar, dfShort, dfLong, dfString};
+
+#define ERROR_DATA	1
+#define ERROR_VERSION	2
+#define ERROR_SIZE	3
+#define ERROR_MEMORY	4
+#define ERROR_FILE	5
+
+#include "pshpack1.h"
+
+typedef struct
+{
+    INT16 dfType;
+    INT16 dfPoints;
+    INT16 dfVertRes;
+    INT16 dfHorizRes;
+    INT16 dfAscent;
+    INT16 dfInternalLeading;
+    INT16 dfExternalLeading;
+    BYTE  dfItalic;
+    BYTE  dfUnderline;
+    BYTE  dfStrikeOut;
+    INT16 dfWeight;
+    BYTE  dfCharSet;
+    INT16 dfPixWidth;
+    INT16 dfPixHeight;
+    BYTE  dfPitchAndFamily;
+    INT16 dfAvgWidth;
+    INT16 dfMaxWidth;
+    BYTE  dfFirstChar;
+    BYTE  dfLastChar;
+    BYTE  dfDefaultChar;
+    BYTE  dfBreakChar;
+    INT16 dfWidthBytes;
+    LONG  dfDevice;
+    LONG  dfFace;
+    LONG  dfBitsPointer;
+    LONG  dfBitsOffset;
+    BYTE  dfReserved;
+    LONG  dfFlags;
+    INT16 dfAspace;
+    INT16 dfBspace;
+    INT16 dfCspace;
+    LONG  dfColorPointer;
+    LONG  dfReserved1[4];
+} FONTINFO16;
+
+typedef struct
+{
+    WORD  offset;
+    WORD  length;
+    WORD  flags;
+    WORD  id;
+    WORD  handle;
+    WORD  usage;
+} NE_NAMEINFO;
+
+typedef struct
+{
+    WORD  type_id;
+    WORD  count;
+    DWORD resloader;
+} NE_TYPEINFO;
+
+#define NE_FFLAGS_SINGLEDATA    0x0001
+#define NE_FFLAGS_MULTIPLEDATA  0x0002
+#define NE_FFLAGS_WIN32         0x0010
+#define NE_FFLAGS_FRAMEBUF      0x0100
+#define NE_FFLAGS_CONSOLE       0x0200
+#define NE_FFLAGS_GUI           0x0300
+#define NE_FFLAGS_SELFLOAD      0x0800
+#define NE_FFLAGS_LINKERROR     0x2000
+#define NE_FFLAGS_CALLWEP       0x4000
+#define NE_FFLAGS_LIBMODULE     0x8000
+
+#define NE_OSFLAGS_WINDOWS      0x02
+
+#define NE_RSCTYPE_FONTDIR            0x8007
+#define NE_RSCTYPE_FONT               0x8008
+#define NE_RSCTYPE_SCALABLE_FONTPATH  0x80cc
+
+#define NE_SEGFLAGS_DATA        0x0001
+#define NE_SEGFLAGS_ALLOCATED   0x0002
+#define NE_SEGFLAGS_LOADED      0x0004
+#define NE_SEGFLAGS_ITERATED    0x0008
+#define NE_SEGFLAGS_MOVEABLE    0x0010
+#define NE_SEGFLAGS_SHAREABLE   0x0020
+#define NE_SEGFLAGS_PRELOAD     0x0040
+#define NE_SEGFLAGS_EXECUTEONLY 0x0080
+#define NE_SEGFLAGS_READONLY    0x0080
+#define NE_SEGFLAGS_RELOC_DATA  0x0100
+#define NE_SEGFLAGS_SELFLOAD    0x0800
+#define NE_SEGFLAGS_DISCARDABLE 0x1000
+#define NE_SEGFLAGS_32BIT       0x2000
+
+typedef struct tagFontHeader
+{
+    SHORT dfVersion;		/* Version */
+    LONG dfSize;		/* Total File Size */
+    char dfCopyright[60];	/* Copyright notice */
+    FONTINFO16 fi;		/* FONTINFO structure */
+} fnt_hdrS;
+
+typedef struct WinCharStruct
+{
+    unsigned int charWidth;
+    long charOffset;
+} WinCharS;
+
+typedef struct fntFontStruct
+{
+    fnt_hdrS 	 	hdr;
+    WinCharS 		*dfCharTable;
+    unsigned char	*dfDeviceP;
+    unsigned char 	*dfFaceP;
+    unsigned char 	*dfBitsPointerP;
+    unsigned char 	*dfBitsOffsetP;
+    short 		*dfColorTableP;
+} fnt_fontS;
+
+#include "poppack.h"
 
 #define FILE_ERROR	0
 #define FILE_DLL	1
