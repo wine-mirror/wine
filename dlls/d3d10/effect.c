@@ -1023,6 +1023,18 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_technique_GetDesc(ID3D10EffectTech
 
     TRACE("iface %p, desc %p\n", iface, desc);
 
+    if(This == &null_technique)
+    {
+        WARN("Null technique specified\n");
+        return E_FAIL;
+    }
+
+    if(!desc)
+    {
+        WARN("Invalid argument specified\n");
+        return E_INVALIDARG;
+    }
+
     desc->Name = This->name;
     desc->Passes = This->pass_count;
     WARN("Annotations not implemented\n");
