@@ -1139,6 +1139,18 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *ifa
 
     FIXME("iface %p, desc %p partial stub!\n", iface, desc);
 
+    if(This == &null_pass)
+    {
+        WARN("Null pass specified\n");
+        return E_FAIL;
+    }
+
+    if(!desc)
+    {
+        WARN("Invalid argument specified\n");
+        return E_INVALIDARG;
+    }
+
     memset(desc, 0, sizeof(*desc));
     desc->Name = This->name;
     for (i = 0; i < This->object_count; ++i)
