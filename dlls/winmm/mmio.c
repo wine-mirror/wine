@@ -314,7 +314,7 @@ LPMMIOPROC MMIO_InstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
 	    }
 	    /* remove it, but only if it isn't builtin */
 	    if ((*ppListNode) >= defaultProcs &&
-		(*ppListNode) < defaultProcs + sizeof(defaultProcs)) {
+		(*ppListNode) < defaultProcs + sizeof(defaultProcs) / sizeof(defaultProcs[0])) {
 		WARN("Tried to remove built-in mmio proc. Skipping\n");
 	    } else {
 		/* Okay, nuke it */
