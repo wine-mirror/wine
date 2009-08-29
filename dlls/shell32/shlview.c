@@ -976,7 +976,7 @@ static void ShellView_DoContextMenu(IShellViewImpl * This, WORD x, WORD y, BOOL 
 	if( ShellView_GetSelections(This) )
 	{
 	  IShellFolder_GetUIObjectOf( This->pSFParent, This->hWndParent, This->cidl, (LPCITEMIDLIST*)This->apidl,
-					(REFIID)&IID_IContextMenu, NULL, (LPVOID *)&pContextMenu);
+                                      &IID_IContextMenu, NULL, (LPVOID *)&pContextMenu);
 
 	  if(pContextMenu)
 	  {

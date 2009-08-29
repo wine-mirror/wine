@@ -521,7 +521,7 @@ static LRESULT BrsFolder_Treeview_Expand( browse_info *info, NMTREEVIEWW *pnmtv 
 
     if (lptvid->lpi && lptvid->lpi->mkid.cb) {
         r = IShellFolder_BindToObject( lptvid->lpsfParent, lptvid->lpi, 0,
-                                      (REFIID)&IID_IShellFolder, (LPVOID *)&lpsf2 );
+                                       &IID_IShellFolder, (LPVOID *)&lpsf2 );
     } else {
         lpsf2 = lptvid->lpsfParent;
         r = IShellFolder_AddRef(lpsf2);

@@ -172,7 +172,7 @@ static int FM_InitMenuPopup(HMENU hmenu, LPCITEMIDLIST pAlternatePidl)
 
 	if (SUCCEEDED (SHGetDesktopFolder(&lpsf)))
 	{
-	  if (SUCCEEDED(IShellFolder_BindToObject(lpsf, pidl,0,(REFIID)&IID_IShellFolder,(LPVOID *)&lpsf2)))
+	  if (SUCCEEDED(IShellFolder_BindToObject(lpsf, pidl,0,&IID_IShellFolder,(LPVOID *)&lpsf2)))
 	  {
 	    IEnumIDList	*lpe = NULL;
 

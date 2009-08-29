@@ -5918,7 +5918,7 @@ HRESULT WINAPI StgCreateDocfile(
    */
   hr = StorageBaseImpl_QueryInterface(
          (IStorage*)newStorage,
-         (REFIID)&IID_IStorage,
+         &IID_IStorage,
          (void**)ppstgOpen);
 end:
   TRACE("<-- %p  r = %08x\n", *ppstgOpen, hr);
@@ -6222,7 +6222,7 @@ HRESULT WINAPI StgOpenStorage(
    */
   hr = StorageBaseImpl_QueryInterface(
          (IStorage*)newStorage,
-         (REFIID)&IID_IStorage,
+         &IID_IStorage,
          (void**)ppstgOpen);
 
 end:
@@ -6276,7 +6276,7 @@ HRESULT WINAPI StgCreateDocfileOnILockBytes(
    */
   hr = StorageBaseImpl_QueryInterface(
          (IStorage*)newStorage,
-         (REFIID)&IID_IStorage,
+         &IID_IStorage,
          (void**)ppstgOpen);
 
   return hr;
@@ -6341,7 +6341,7 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(
    */
   hr = StorageBaseImpl_QueryInterface(
          (IStorage*)newStorage,
-         (REFIID)&IID_IStorage,
+         &IID_IStorage,
          (void**)ppstgOpen);
 
   return hr;
