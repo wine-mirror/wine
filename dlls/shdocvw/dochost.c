@@ -502,10 +502,56 @@ static const IDocHostUIHandler2Vtbl DocHostUIHandler2Vtbl = {
     DocHostUIHandler_GetOverrideKeyPath
 };
 
+#define PROPNOTIF_THIS(iface) DEFINE_THIS(DocHost, IPropertyNotifySink, iface)
+
+static HRESULT WINAPI PropertyNotifySink_QueryInterface(IPropertyNotifySink *iface,
+        REFIID riid, void **ppv)
+{
+    DocHost *This = PROPNOTIF_THIS(iface);
+    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
+}
+
+static ULONG WINAPI PropertyNotifySink_AddRef(IPropertyNotifySink *iface)
+{
+    DocHost *This = PROPNOTIF_THIS(iface);
+    return IOleClientSite_AddRef(CLIENTSITE(This));
+}
+
+static ULONG WINAPI PropertyNotifySink_Release(IPropertyNotifySink *iface)
+{
+    DocHost *This = PROPNOTIF_THIS(iface);
+    return IOleClientSite_Release(CLIENTSITE(This));
+}
+
+static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, DISPID dispID)
+{
+    DocHost *This = PROPNOTIF_THIS(iface);
+    FIXME("(%p)->(%d)\n", This, dispID);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PropertyNotifySink_OnRequestEdit(IPropertyNotifySink *iface, DISPID dispID)
+{
+    DocHost *This = PROPNOTIF_THIS(iface);
+    FIXME("(%p)->(%d)\n", This, dispID);
+    return E_NOTIMPL;
+}
+
+#undef PROPNOTIF_THIS
+
+static const IPropertyNotifySinkVtbl PropertyNotifySinkVtbl = {
+    PropertyNotifySink_QueryInterface,
+    PropertyNotifySink_AddRef,
+    PropertyNotifySink_Release,
+    PropertyNotifySink_OnChanged,
+    PropertyNotifySink_OnRequestEdit
+};
+
 void DocHost_Init(DocHost *This, IDispatch *disp)
 {
     This->lpDocHostUIHandlerVtbl = &DocHostUIHandler2Vtbl;
     This->lpOleCommandTargetVtbl = &OleCommandTargetVtbl;
+    This->lpIPropertyNotifySinkVtbl = &PropertyNotifySinkVtbl;
 
     This->disp = disp;
 

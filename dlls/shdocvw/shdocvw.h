@@ -78,6 +78,7 @@ struct DocHost {
     const IOleDocumentSiteVtbl    *lpOleDocumentSiteVtbl;
     const IOleCommandTargetVtbl   *lpOleCommandTargetVtbl;
     const IDispatchVtbl           *lpDispatchVtbl;
+    const IPropertyNotifySinkVtbl *lpIPropertyNotifySinkVtbl;
     const IServiceProviderVtbl    *lpServiceProviderVtbl;
 
     /* Interfaces of InPlaceFrame object */
@@ -184,6 +185,7 @@ struct InternetExplorer {
 #define DOCHOSTUI2(x)   ((IDocHostUIHandler2*)          &(x)->lpDocHostUIHandlerVtbl)
 #define DOCSITE(x)      ((IOleDocumentSite*)            &(x)->lpOleDocumentSiteVtbl)
 #define CLDISP(x)       ((IDispatch*)                   &(x)->lpDispatchVtbl)
+#define PROPNOTIF(x)    ((IPropertyNotifySink*)         &(x)->lpIPropertyNotifySinkVtbl)
 #define SERVPROV(x)     ((IServiceProvider*)            &(x)->lpServiceProviderVtbl)
 
 #define INPLACEFRAME(x) ((IOleInPlaceFrame*)            &(x)->lpOleInPlaceFrameVtbl)
