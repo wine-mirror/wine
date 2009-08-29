@@ -1411,10 +1411,10 @@ WINE_WARNING_WITH(png,[test "x$ac_cv_lib_soname_png" = "x"],
 dnl **** Check for mpg123 ****
 if test "$ac_cv_header_mpg123_h" = "yes"
 then
-    AC_CHECK_LIB(mpg123,mpg123_init,[AC_SUBST(LIBMPG123,"-lmpg123")])
+    AC_CHECK_LIB(mpg123,mpg123_feed,[AC_SUBST(LIBMPG123,"-lmpg123")])
 fi
 WINE_NOTICE_WITH(mpg123,[test "x$ac_cv_lib_mpg123_mpg123_init" != xyes],
-                 [libmpg123 ${notice_platform}development files not found, mp3 codec won't be supported.])
+                 [libmpg123 ${notice_platform}development files not found (or too old), mp3 codec won't be supported.])
 test "x$ac_cv_lib_mpg123_mpg123_init" = xyes || enable_winemp3_acm=${enable_winemp3_acm:-no}
 
 dnl **** Check for libkstat ****
