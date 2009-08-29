@@ -2444,11 +2444,20 @@ static NTSTATUS attach_process_dlls( void *wm )
 }
 
 
+/***********************************************************************
+ *           start_process
+ */
+static void start_process( void *kernel_start )
+{
+    call_thread_entry_point( kernel_start, NtCurrentTeb()->Peb );
+}
+
 /******************************************************************
  *		LdrInitializeThunk (NTDLL.@)
  *
  */
-void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, ULONG unknown4 )
+void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
+                                ULONG_PTR unknown3, ULONG_PTR unknown4 )
 {
     NTSTATUS status;
     WINE_MODREF *wm;
@@ -2489,7 +2498,7 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
 
     virtual_release_address_space( nt->FileHeader.Characteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE );
     virtual_clear_thread_stack();
-    return;
+    wine_switch_to_stack( start_process, kernel_start, NtCurrentTeb()->Tib.StackBase );
 
 error:
     ERR( "Main exe initialization for %s failed, status %x\n",

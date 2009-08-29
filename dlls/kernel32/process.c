@@ -47,7 +47,6 @@
 #include "wine/winuser16.h"
 #include "winternl.h"
 #include "kernel_private.h"
-#include "wine/exception.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -930,38 +929,29 @@ static void start_wineboot( HANDLE handles[2] )
  *
  * Startup routine of a new process. Runs on the new process stack.
  */
-static void start_process( void *arg )
+static DWORD WINAPI start_process( PEB *peb )
 {
-    __TRY
+    IMAGE_NT_HEADERS *nt;
+    LPTHREAD_START_ROUTINE entry;
+
+    nt = RtlImageNtHeader( peb->ImageBaseAddress );
+    entry = (LPTHREAD_START_ROUTINE)((char *)peb->ImageBaseAddress +
+                                     nt->OptionalHeader.AddressOfEntryPoint);
+
+    if (!nt->OptionalHeader.AddressOfEntryPoint)
     {
-        PEB *peb = NtCurrentTeb()->Peb;
-        IMAGE_NT_HEADERS *nt;
-        LPTHREAD_START_ROUTINE entry;
-
-        nt = RtlImageNtHeader( peb->ImageBaseAddress );
-        entry = (LPTHREAD_START_ROUTINE)((char *)peb->ImageBaseAddress +
-                                         nt->OptionalHeader.AddressOfEntryPoint);
-
-        if (!nt->OptionalHeader.AddressOfEntryPoint)
-        {
-            ERR( "%s doesn't have an entry point, it cannot be executed\n",
-                 debugstr_w(peb->ProcessParameters->ImagePathName.Buffer) );
-            ExitThread( 1 );
-        }
-
-        if (TRACE_ON(relay))
-            DPRINTF( "%04x:Starting process %s (entryproc=%p)\n", GetCurrentThreadId(),
-                     debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), entry );
-
-        SetLastError( 0 );  /* clear error code */
-        if (peb->BeingDebugged) DbgBreakPoint();
-        ExitThread( entry( peb ) );
+        ERR( "%s doesn't have an entry point, it cannot be executed\n",
+             debugstr_w(peb->ProcessParameters->ImagePathName.Buffer) );
+        ExitThread( 1 );
     }
-    __EXCEPT(UnhandledExceptionFilter)
-    {
-        TerminateThread( GetCurrentThread(), GetExceptionCode() );
-    }
-    __ENDTRY
+
+    if (TRACE_ON(relay))
+        DPRINTF( "%04x:Starting process %s (entryproc=%p)\n", GetCurrentThreadId(),
+                 debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), entry );
+
+    SetLastError( 0 );  /* clear error code */
+    if (peb->BeingDebugged) DbgBreakPoint();
+    return entry( peb );
 }
 
 
@@ -1125,9 +1115,7 @@ void CDECL __wine_kernel_init(void)
         ExitProcess( error );
     }
 
-    LdrInitializeThunk( 0, 0, 0, 0 );
-    /* switch to the new stack */
-    wine_switch_to_stack( start_process, NULL, NtCurrentTeb()->Tib.StackBase );
+    LdrInitializeThunk( start_process, 0, 0, 0 );
 
  error:
     ExitProcess( GetLastError() );
