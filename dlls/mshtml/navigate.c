@@ -879,6 +879,38 @@ struct nsChannelBSC {
     nsProtocolStream *nsstream;
 };
 
+static void on_start_nsrequest(nsChannelBSC *This)
+{
+    nsresult nsres;
+
+    /* FIXME: it's needed for http connections from BindToObject. */
+    if(!This->nschannel->response_status)
+        This->nschannel->response_status = 200;
+
+    nsres = nsIStreamListener_OnStartRequest(This->nslistener,
+            (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext);
+    if(NS_FAILED(nsres))
+        FIXME("OnStartRequest failed: %08x\n", nsres);
+}
+
+static void on_stop_nsrequest(nsChannelBSC *This)
+{
+    nsresult nsres;
+
+    if(!This->nslistener)
+        return;
+
+    if(!This->bsc.readed) {
+        TRACE("No data read! Calling OnStartRequest\n");
+        on_start_nsrequest(This);
+    }
+
+    nsres = nsIStreamListener_OnStopRequest(This->nslistener, (nsIRequest*)NSCHANNEL(This->nschannel),
+            This->nscontext, NS_OK);
+    if(NS_FAILED(nsres))
+        WARN("OnStopRequest failed: %08x\n", nsres);
+}
+
 static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
 {
     DWORD read;
@@ -914,14 +946,7 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
                && (BYTE)This->nsstream->buf[1] == 0xfe)
                 This->nschannel->charset = heap_strdupA(UTF16_STR);
 
-            /* FIXME: it's needed for http connections from BindToObject. */
-            if(!This->nschannel->response_status)
-                This->nschannel->response_status = 200;
-
-            nsres = nsIStreamListener_OnStartRequest(This->nslistener,
-                    (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext);
-            if(NS_FAILED(nsres))
-                FIXME("OnStartRequest failed: %08x\n", nsres);
+            on_start_nsrequest(This);
 
             /* events are reset when a new document URI is loaded, so re-initialise them here */
             if(This->bsc.doc && This->bsc.doc->bscallback == This && This->bsc.doc->nscontainer) {
@@ -946,15 +971,6 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
     }while(hres == S_OK);
 
     return S_OK;
-}
-
-static void on_stop_nsrequest(nsChannelBSC *This)
-{
-    if(!This->nslistener)
-        return;
-
-    nsIStreamListener_OnStopRequest(This->nslistener, (nsIRequest*)NSCHANNEL(This->nschannel),
-            This->nscontext, NS_OK);
 }
 
 static void add_nsrequest(nsChannelBSC *This)
