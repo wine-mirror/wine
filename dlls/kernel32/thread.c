@@ -352,7 +352,7 @@ BOOL WINAPI GetThreadPriorityBoost(
     PBOOL pstate)   /* [out] pointer to var that receives the boost state */
 {
     if (pstate) *pstate = FALSE;
-    return NO_ERROR;
+    return TRUE;
 }
 
 
