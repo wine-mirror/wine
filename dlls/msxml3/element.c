@@ -762,7 +762,7 @@ IUnknown* create_element( xmlNodePtr element )
     This->lpVtbl = &domelem_vtbl;
     This->ref = 1;
 
-    This->node = create_basic_node( element, (IUnknown*)&This->lpVtbl );
+    This->node = create_basic_node( element, (IUnknown*)&This->lpVtbl, NULL );
     if(!This->node)
     {
         HeapFree(GetProcessHeap(), 0, This);
