@@ -20,7 +20,7 @@ use strict;
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 #
 
-my $version="0.7.3";
+my $version="0.7.4";
 
 use Cwd;
 use File::Basename;
@@ -525,8 +525,6 @@ sub source_scan_project_file($$$)
 
     # reference to the project for this file. May not be used
     my $project;
-    # list of targets found in the current file
-    my %targets;
     # list of sources found in the current file
     my @sources_c=();
     my @sources_cxx=();
@@ -583,8 +581,7 @@ sub source_scan_project_file($$$)
             }
 
             if (/^\# Microsoft Developer Studio Project File - Name=\"([^\"]+)/) {
-                $prj_name="$1.exe";
-                $targets{$prj_name}=1;
+                $prj_name="$1";
                 #print $prj_name;
                 next;
             } elsif (/^# TARGTYPE/) {
@@ -780,9 +777,7 @@ sub source_scan_project_file($$$)
             } elsif (/^SOURCE=(.*)$/) {
                 my @components=split /[\/\\]+/, $1;
                 $sfilet=search_from($path, \@components);
-                if ($sfilet =~ /\.(exe|dll)$/i) {
-                    $targets{$sfilet}=1;
-                } elsif ($sfilet =~ /\.c$/i and $sfilet !~ /\.(dbg|spec)\.c$/) {
+                if ($sfilet =~ /\.c$/i and $sfilet !~ /\.(dbg|spec)\.c$/) {
                     push @sources_c,$sfilet;
                 } elsif ($sfilet =~ /\.(cpp|cxx)$/i) {
                     if ($sfilet =~ /^stdafx.cpp$/i && !(@$project_settings[$T_FLAGS] & $TF_NOMFC)) {
@@ -856,7 +851,7 @@ sub source_scan_project_file($$$)
         foreach my $vc_project ($project_xml->findnodes('/VisualStudioProject')) {
             foreach my $vc_project_attr ($vc_project->attributes) {
                 if ($vc_project_attr->getName eq "Name") {
-                    $targets{$vc_project_attr->getValue.".exe"}=1;
+                    $prj_name=$vc_project_attr->getValue;
                     last;
                 }
             }
@@ -870,9 +865,7 @@ sub source_scan_project_file($$$)
                         $sfilet=~s/\\\\/\\/g; #remove double backslash
                         $sfilet=~s/^\.\\//; #remove starting 'this directory'
                         $sfilet=~s/\\/\//g; #make slashes out of backslashes
-                        if ($sfilet =~ /\.(exe|dll)$/i) {
-                            $targets{$sfilet}=1;
-                        } elsif ($sfilet =~ /\.c$/i and $sfilet !~ /\.(dbg|spec)\.c$/) {
+                        if ($sfilet =~ /\.c$/i and $sfilet !~ /\.(dbg|spec)\.c$/) {
                             push @sources_c,$sfilet;
                         } elsif ($sfilet =~ /\.(cpp|cxx)$/i) {
                             if ($sfilet =~ /^stdafx.cpp$/i && !(@$project_settings[$T_FLAGS] & $TF_NOMFC)) {
@@ -953,10 +946,6 @@ sub source_scan_project_file($$$)
         push @{@$project_settings[$T_DEFINES]},$prj_target_defines;
     }
 
-    my $target_count;
-    $target_count=keys %targets;
-
-
     # Add this project to the project list, except for
     # the main project which is already in the list.
     if ($is_sub_project == 1) {
@@ -991,105 +980,99 @@ sub source_scan_project_file($$$)
         }
     }
 
-    # - Create the targets
-    # - Check if we have both libraries and programs
-    # - Match each target with source files (sort in reverse
-    #   alphabetical order to get the longest matches first)
     my @local_dlls=();
     my @local_depends=();
     my @exe_list=();
-    foreach my $target_name (map (lc, (sort { $b cmp $a } keys %targets))) {
-        # Create the target...
-        my $target=[];
-        target_init($target);
-        @$target[$T_NAME]=$target_name;
-        @$target[$T_FLAGS]|=@$project_settings[$T_FLAGS];
-        if ($target_name =~ /\.dll$/) {
-            @$target[$T_TYPE]=$TT_DLL;
-            push @local_depends,"$target_name.so";
-            push @local_dlls,$target_name;
-            my $canon=canonize($target_name);
-            push @{@$target[$T_LDFLAGS]},("-shared","\$(${canon}_MODULE:%=%.spec)");
-        } else {
-            @$target[$T_TYPE]=$opt_target_type;
-            push @exe_list,$target;
-            push @{@$target[$T_LDFLAGS]},(@$target[$T_TYPE] == $TT_CUIEXE ? "-mconsole" : "-mwindows");
-        }
-        my $basename=$target_name;
-        $basename=~ s/\.(dll|exe)$//i;
-        # This is the default link list of Visual Studio
-        my @std_imports=qw(odbc32 ole32 oleaut32 winspool odbccp32);
-        my @std_libraries=qw(uuid);
-        if ((@$target[$T_FLAGS] & $TF_NODLLS) == 0) {
-            @$target[$T_DLLS]=\@std_imports;
-            @$target[$T_LIBRARIES]=\@std_libraries;
-        } else {
-            @$target[$T_DLLS]=[];
-            @$target[$T_LIBRARIES]=[];
-        }
-        if ((@$target[$T_FLAGS] & $TF_NOMSVCRT) == 0) {
-            push @{@$target[$T_LDFLAGS]},"-mno-cygwin";
-            push @{@$target[$T_LDFLAGS]},"-m$opt_arch";
-        }
-        push @{@$project[$P_TARGETS]},$target;
 
-        # Ask for target-specific options
-        if ($opt_ask_target_options == $OPT_ASK_YES) {
-            my $flag_desc="";
-            if ((@$target[$T_FLAGS] & $TF_MFC)!=0) {
-                $flag_desc=" (mfc";
-            }
-            if ($flag_desc ne "") {
-                $flag_desc.=")";
-            }
-            print "* Specify any link option (-P/-i/-L/-l/--mfc) specific to the target\n";
-            print "* \"$target_name\"$flag_desc or 'never' to not be asked this question again:\n";
-            while (1) {
-            my $options=<STDIN>;
-            chomp $options;
-            if ($options eq "never") {
-                $opt_ask_target_options=$OPT_ASK_NO;
-                last;
-            } elsif (source_set_options($target,$options)) {
-                last;
-            }
-            print "Please re-enter the options:\n";
-            }
-        }
-        if (@$target[$T_FLAGS] & $TF_MFC) {
-            @$project_settings[$T_FLAGS]|=$TF_MFC;
-            push @{@$target[$T_DLL_PATH]},"\$(MFC_LIBRARY_PATH)";
-            push @{@$target[$T_DLLS]},"mfc.dll";
-            # FIXME: Link with the MFC in the Unix sense, until we
-            # start exporting the functions properly.
-            push @{@$target[$T_LIBRARY_PATH]},"\$(MFC_LIBRARY_PATH)";
-            push @{@$target[$T_LIBRARIES]},"mfc";
-        }
+    # Create the target...
+    my $target=[];
+    target_init($target);
 
-        # Match sources...
-        if ($target_count == 1) {
-            push @{@$target[$T_SOURCES_C]},@{@$project_settings[$T_SOURCES_C]},@sources_c;
-            @$project_settings[$T_SOURCES_C]=[];
-            @sources_c=();
-
-            push @{@$target[$T_SOURCES_CXX]},@{@$project_settings[$T_SOURCES_CXX]},@sources_cxx;
-            @$project_settings[$T_SOURCES_CXX]=[];
-            @sources_cxx=();
-
-            push @{@$target[$T_SOURCES_RC]},@{@$project_settings[$T_SOURCES_RC]},@sources_rc;
-            @$project_settings[$T_SOURCES_RC]=[];
-            @sources_rc=();
-
-            push @{@$target[$T_SOURCES_MISC]},@{@$project_settings[$T_SOURCES_MISC]},@sources_misc;
-            # No need for sorting these sources
-            @$project_settings[$T_SOURCES_MISC]=[];
-            @sources_misc=();
-        }
-        @$target[$T_SOURCES_C]=[sort @{@$target[$T_SOURCES_C]}];
-        @$target[$T_SOURCES_CXX]=[sort @{@$target[$T_SOURCES_CXX]}];
-        @$target[$T_SOURCES_RC]=[sort @{@$target[$T_SOURCES_RC]}];
-        @$target[$T_SOURCES_MISC]=[sort @{@$target[$T_SOURCES_MISC]}];
+    if ($prj_target_type!=3) {
+        $prj_name=lc($prj_name.".exe");
+        @$target[$T_TYPE]=$opt_target_type;
+        push @exe_list,$target;
+        push @{@$target[$T_LDFLAGS]},(@$target[$T_TYPE] == $TT_CUIEXE ? "-mconsole" : "-mwindows");
+    } else {
+        $prj_name=lc($prj_name.".dll");
+        @$target[$T_TYPE]=$TT_DLL;
+        push @local_depends,"$prj_name.so";
+        push @local_dlls,$prj_name;
+        my $canon=canonize($prj_name);
+        push @{@$target[$T_LDFLAGS]},("-shared","\$(${canon}_MODULE:%=%.spec)");
     }
+
+    @$target[$T_NAME]=$prj_name;
+    @$target[$T_FLAGS]|=@$project_settings[$T_FLAGS];
+
+    # This is the default link list of Visual Studio
+    my @std_imports=qw(odbc32 ole32 oleaut32 winspool odbccp32);
+    my @std_libraries=qw(uuid);
+    if ((@$target[$T_FLAGS] & $TF_NODLLS) == 0) {
+        @$target[$T_DLLS]=\@std_imports;
+        @$target[$T_LIBRARIES]=\@std_libraries;
+    } else {
+        @$target[$T_DLLS]=[];
+        @$target[$T_LIBRARIES]=[];
+    }
+    if ((@$target[$T_FLAGS] & $TF_NOMSVCRT) == 0) {
+        push @{@$target[$T_LDFLAGS]},"-mno-cygwin";
+        push @{@$target[$T_LDFLAGS]},"-m$opt_arch";
+    }
+    push @{@$project[$P_TARGETS]},$target;
+
+    # Ask for target-specific options
+    if ($opt_ask_target_options == $OPT_ASK_YES) {
+        my $flag_desc="";
+        if ((@$target[$T_FLAGS] & $TF_MFC)!=0) {
+            $flag_desc=" (mfc";
+        }
+        if ($flag_desc ne "") {
+            $flag_desc.=")";
+        }
+        print "* Specify any link option (-P/-i/-L/-l/--mfc) specific to the target\n";
+        print "* \"$prj_name\"$flag_desc or 'never' to not be asked this question again:\n";
+        while (1) {
+        my $options=<STDIN>;
+        chomp $options;
+        if ($options eq "never") {
+            $opt_ask_target_options=$OPT_ASK_NO;
+            last;
+        } elsif (source_set_options($target,$options)) {
+            last;
+        }
+        print "Please re-enter the options:\n";
+        }
+    }
+    if (@$target[$T_FLAGS] & $TF_MFC) {
+        @$project_settings[$T_FLAGS]|=$TF_MFC;
+        push @{@$target[$T_DLL_PATH]},"\$(MFC_LIBRARY_PATH)";
+        push @{@$target[$T_DLLS]},"mfc.dll";
+        # FIXME: Link with the MFC in the Unix sense, until we
+        # start exporting the functions properly.
+        push @{@$target[$T_LIBRARY_PATH]},"\$(MFC_LIBRARY_PATH)";
+        push @{@$target[$T_LIBRARIES]},"mfc";
+    }
+
+    # Match sources...
+    push @{@$target[$T_SOURCES_C]},@{@$project_settings[$T_SOURCES_C]},@sources_c;
+    @$project_settings[$T_SOURCES_C]=[];
+    @sources_c=();
+    push @{@$target[$T_SOURCES_CXX]},@{@$project_settings[$T_SOURCES_CXX]},@sources_cxx;
+    @$project_settings[$T_SOURCES_CXX]=[];
+    @sources_cxx=();
+    push @{@$target[$T_SOURCES_RC]},@{@$project_settings[$T_SOURCES_RC]},@sources_rc;
+    @$project_settings[$T_SOURCES_RC]=[];
+    @sources_rc=();
+    push @{@$target[$T_SOURCES_MISC]},@{@$project_settings[$T_SOURCES_MISC]},@sources_misc;
+    @$project_settings[$T_SOURCES_MISC]=[];
+    @sources_misc=();
+
+    @$target[$T_SOURCES_C]=[sort @{@$target[$T_SOURCES_C]}];
+    @$target[$T_SOURCES_CXX]=[sort @{@$target[$T_SOURCES_CXX]}];
+    @$target[$T_SOURCES_RC]=[sort @{@$target[$T_SOURCES_RC]}];
+    @$target[$T_SOURCES_MISC]=[sort @{@$target[$T_SOURCES_MISC]}];
+
     if ($opt_ask_target_options == $OPT_ASK_SKIP) {
         $opt_ask_target_options=$OPT_ASK_YES;
     }
