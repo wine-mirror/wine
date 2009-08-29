@@ -2531,8 +2531,8 @@ sub usage()
   print STDERR "                 [--wine64]\n";
   print STDERR "                 work_directory|project_file|workspace_file\n";
   print STDERR "\nWinemaker is designed to recursively convert all the Windows sources found in\n";
-  print STDERR "the specified directory so that they can be compiled with Winelib. During this\n";
-  print STDERR "process it will modify and rename some of the files in that directory.\n";
+  print STDERR "the specified directory or project-file, so that they can be compiled with Winelib.\n";
+  print STDERR "During this process it will modify and rename some of the corresponding files.\n";
   print STDERR "\tPlease read the manual page before use.\n";
   exit (2);
 }
