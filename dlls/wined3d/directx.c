@@ -185,6 +185,14 @@ const struct min_lookup minMipLookup_noFilter[] =
     {{GL_NEAREST,   GL_NEAREST,                 GL_NEAREST}},               /* LINEAR */
 };
 
+const struct min_lookup minMipLookup_noMip[] =
+{
+    /* NONE         POINT                       LINEAR */
+    {{GL_NEAREST,   GL_NEAREST,                 GL_NEAREST}},               /* NONE */
+    {{GL_NEAREST,   GL_NEAREST,                 GL_NEAREST}},               /* POINT */
+    {{GL_LINEAR,    GL_LINEAR,                  GL_LINEAR }},               /* LINEAR */
+};
+
 const GLenum magLookup[] =
 {
     /* NONE     POINT       LINEAR */

@@ -223,7 +223,15 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         texture->baseTexture.pow2Matrix[15] = 1.0f;
         texture->target = GL_TEXTURE_RECTANGLE_ARB;
         texture->cond_np2 = TRUE;
-        texture->baseTexture.minMipLookup = minMipLookup_noFilter;
+
+        if(texture->resource.format_desc->Flags & WINED3DFMT_FLAG_FILTERING)
+        {
+            texture->baseTexture.minMipLookup = minMipLookup_noMip;
+        }
+        else
+        {
+            texture->baseTexture.minMipLookup = minMipLookup_noFilter;
+        }
     }
     else
     {

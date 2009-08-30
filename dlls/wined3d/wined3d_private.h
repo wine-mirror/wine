@@ -178,6 +178,7 @@ struct min_lookup
 
 const struct min_lookup minMipLookup[WINED3DTEXF_LINEAR + 1];
 const struct min_lookup minMipLookup_noFilter[WINED3DTEXF_LINEAR + 1];
+const struct min_lookup minMipLookup_noMip[WINED3DTEXF_LINEAR + 1];
 const GLenum magLookup[WINED3DTEXF_LINEAR + 1];
 const GLenum magLookup_noFilter[WINED3DTEXF_LINEAR + 1];
 
