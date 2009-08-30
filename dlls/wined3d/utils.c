@@ -2531,9 +2531,11 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
     } else {
         settings->sRGB_write = 0;
     }
-    if(device->vs_clipping || !use_vs(stateblock)) {
+    if(device->vs_clipping || !use_vs(stateblock) || !stateblock->renderState[WINED3DRS_CLIPPING] ||
+       !stateblock->renderState[WINED3DRS_CLIPPLANEENABLE]) {
         /* No need to emulate clipplanes if GL supports native vertex shader clipping or if
-         * the fixed function vertex pipeline is used(which always supports clipplanes)
+         * the fixed function vertex pipeline is used(which always supports clipplanes), or
+         * if no clipplane is enabled
          */
         settings->emul_clipplanes = 0;
     } else {

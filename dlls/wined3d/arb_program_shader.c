@@ -125,7 +125,8 @@ struct arb_ps_np2fixup_info
 struct arb_ps_compile_args
 {
     struct ps_compile_args          super;
-    DWORD                           bools; /* WORD is enough, use DWORD for alignment */
+    WORD                            bools;
+    WORD                            clip;  /* only a boolean, use a WORD for alignment */
     unsigned char                   loop_ctrl[MAX_CONST_I][3];
 };
 
@@ -3496,7 +3497,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
         next_local += fixup->super.num_consts;
     }
 
-    if (shader_priv->clipplane_emulation != ~0U)
+    if (shader_priv->clipplane_emulation != ~0U && args->clip)
     {
         shader_addline(buffer, "KIL fragment.texcoord[%u];\n", shader_priv->clipplane_emulation);
     }
@@ -4126,6 +4127,20 @@ static inline void find_arb_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWi
     for(i = 0; i < MAX_CONST_B; i++)
     {
         if(stateblock->pixelShaderConstantB[i]) args->bools |= ( 1 << i);
+    }
+
+    /* Only enable the clip plane emulation KIL if at least one clipplane is enabled. The KIL instruction
+     * is quite expensive because it forces the driver to disable early Z discards. It is cheaper to
+     * duplicate the shader than have a no-op KIL instruction in every shader
+     */
+    if((!((IWineD3DDeviceImpl *) shader->baseShader.device)->vs_clipping) && use_vs(stateblock) &&
+       stateblock->renderState[WINED3DRS_CLIPPING] && stateblock->renderState[WINED3DRS_CLIPPLANEENABLE])
+    {
+        args->clip = 1;
+    }
+    else
+    {
+        args->clip = 0;
     }
 
     /* Skip if unused or local, or supported natively */
