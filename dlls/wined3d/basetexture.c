@@ -432,6 +432,10 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
             } else {
                 glValue = states[WINED3DTEXSTA_MAXMIPLEVEL];
             }
+            /* Note that D3DSAMP_MAXMIPLEVEL specifies the biggest mipmap(default 0), while
+             * GL_TEXTURE_MAX_LEVEL specifies the smallest mimap used(default 1000).
+             * So D3DSAMP_MAXMIPLEVEL is the same as GL_TEXTURE_BASE_LEVEL.
+             */
             glTexParameteri(textureDimensions, GL_TEXTURE_BASE_LEVEL, glValue);
         }
     }
