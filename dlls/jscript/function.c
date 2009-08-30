@@ -85,7 +85,7 @@ static HRESULT init_parameters(DispatchEx *var_disp, FunctionInstance *function,
     return S_OK;
 }
 
-HRESULT Arguments_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Arguments_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     FIXME("\n");
