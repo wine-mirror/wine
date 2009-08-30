@@ -129,18 +129,19 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
         glNormal3f(0, 0, 0);
     }
 
+    num_untracked_materials = context->num_untracked_materials;
     if (si->use_map & (1 << WINED3D_FFP_DIFFUSE))
     {
         element = &si->elements[WINED3D_FFP_DIFFUSE];
         diffuse = element->data + streamOffset[element->stream_idx];
+
+        if (num_untracked_materials && element->format_desc->format != WINED3DFMT_A8R8G8B8)
+            FIXME("Implement diffuse color tracking from %s\n", debug_d3dformat(element->format_desc->format));
     }
     else
     {
         glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     }
-    num_untracked_materials = context->num_untracked_materials;
-    if (num_untracked_materials && element->format_desc->format != WINED3DFMT_A8R8G8B8)
-        FIXME("Implement diffuse color tracking from %s\n", debug_d3dformat(element->format_desc->format));
 
     if (si->use_map & (1 << WINED3D_FFP_SPECULAR))
     {
