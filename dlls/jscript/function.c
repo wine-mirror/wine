@@ -421,7 +421,7 @@ static HRESULT Function_apply(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
             hres = array_to_args(arg_array, lcid, ei, caller, &args);
             jsdisp_release(arg_array);
         }else {
-            FIXME("throw TypeError");
+            FIXME("throw TypeError\n");
             hres = E_FAIL;
         }
     }
