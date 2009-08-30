@@ -352,6 +352,31 @@ static void test_gettexture(IDirect3DDevice9 *device) {
     ok(texture == NULL, "Texture returned is %p, expected NULL\n", texture);
 }
 
+static void test_lod(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    DWORD ret;
+    IDirect3DTexture9 *texture;
+
+    hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 3, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+                                        &texture, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture failed with %08x\n", hr);
+
+    /* SetLOD is only supported on D3DPOOL_MANAGED textures, but it doesn't return a HRESULT,
+     * so it can't return a normal error. Instead, the call is simply ignored
+     */
+    ret = IDirect3DTexture9_SetLOD(texture, 0);
+    ok(ret == 0, "IDirect3DTexture9_SetLOD returned %u, expected 0\n", ret);
+    ret = IDirect3DTexture9_SetLOD(texture, 1);
+    ok(ret == 0, "IDirect3DTexture9_SetLOD returned %u, expected 0\n", ret);
+    ret = IDirect3DTexture9_SetLOD(texture, 2);
+    ok(ret == 0, "IDirect3DTexture9_SetLOD returned %u, expected 0\n", ret);
+    ret = IDirect3DTexture9_GetLOD(texture);
+    ok(ret == 0, "IDirect3DTexture9_GetLOD returned %u, expected 0\n", ret);
+
+    IDirect3DTexture9_Release(texture);
+}
+
 START_TEST(texture)
 {
     D3DCAPS9 caps;
@@ -376,6 +401,7 @@ START_TEST(texture)
     test_mipmap_gen(device_ptr);
     test_filter(device_ptr);
     test_gettexture(device_ptr);
+    test_lod(device_ptr);
 
     refcount = IDirect3DDevice9_Release(device_ptr);
     ok(!refcount, "Device has %u references left\n", refcount);

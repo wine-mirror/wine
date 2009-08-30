@@ -97,8 +97,12 @@ DWORD basetexture_set_lod(IWineD3DBaseTexture *iface, DWORD LODNew)
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     DWORD old = This->baseTexture.LOD;
 
+    /* The d3d9:texture test shows that SetLOD is ignored on non-managed
+     * textures. The call always returns 0, and GetLOD always returns 0
+     */
     if (This->resource.pool != WINED3DPOOL_MANAGED) {
-        return  WINED3DERR_INVALIDCALL;
+        TRACE("Ignoring SetLOD on %s texture, returning 0\n", debug_d3dpool(This->resource.pool));
+        return 0;
     }
 
     if(LODNew >= This->baseTexture.levels)
@@ -122,10 +126,6 @@ DWORD basetexture_set_lod(IWineD3DBaseTexture *iface, DWORD LODNew)
 DWORD basetexture_get_lod(IWineD3DBaseTexture *iface)
 {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-
-    if (This->resource.pool != WINED3DPOOL_MANAGED) {
-        return  WINED3DERR_INVALIDCALL;
-    }
 
     TRACE("(%p) : returning %d\n", This, This->baseTexture.LOD);
 
