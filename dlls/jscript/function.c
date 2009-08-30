@@ -363,7 +363,7 @@ static HRESULT array_to_args(DispatchEx *arg_array, LCID lcid, jsexcept_t *ei, I
         return hres;
 
     argv = heap_alloc(length * sizeof(VARIANT));
-    if(FAILED(hres))
+    if(!argv)
         return E_OUTOFMEMORY;
 
     for(i=0; i<length; i++) {
