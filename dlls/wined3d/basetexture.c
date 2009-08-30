@@ -92,11 +92,10 @@ void basetexture_unload(IWineD3DBaseTexture *iface)
     This->baseTexture.srgbDirty = TRUE;
 }
 
-/* There is no OpenGL equivalent of setLOD, getLOD. All they do anyway is prioritize texture loading
- * so just pretend that they work unless something really needs a failure. */
 DWORD basetexture_set_lod(IWineD3DBaseTexture *iface, DWORD LODNew)
 {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
+    DWORD old = This->baseTexture.LOD;
 
     if (This->resource.pool != WINED3DPOOL_MANAGED) {
         return  WINED3DERR_INVALIDCALL;
@@ -104,11 +103,20 @@ DWORD basetexture_set_lod(IWineD3DBaseTexture *iface, DWORD LODNew)
 
     if(LODNew >= This->baseTexture.levels)
         LODNew = This->baseTexture.levels - 1;
-     This->baseTexture.LOD = LODNew;
 
-    TRACE("(%p) : set bogus LOD to %d\n", This, This->baseTexture.LOD);
+    if(This->baseTexture.LOD != LODNew) {
+        This->baseTexture.LOD = LODNew;
 
-    return This->baseTexture.LOD;
+        This->baseTexture.states[WINED3DTEXSTA_MAXMIPLEVEL] = ~0U;
+        This->baseTexture.srgbstates[WINED3DTEXSTA_MAXMIPLEVEL] = ~0U;
+        if(This->baseTexture.bindCount) {
+            IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(This->baseTexture.sampler));
+        }
+    }
+
+    TRACE("(%p) : set LOD to %d\n", This, This->baseTexture.LOD);
+
+    return old;
 }
 
 DWORD basetexture_get_lod(IWineD3DBaseTexture *iface)
@@ -426,9 +434,12 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
 
         if(!cond_np2) {
             if(states[WINED3DTEXSTA_MIPFILTER] == WINED3DTEXF_NONE) {
-                glValue = 0;
+                glValue = This->baseTexture.LOD;
             } else if(states[WINED3DTEXSTA_MAXMIPLEVEL] >= This->baseTexture.levels) {
                 glValue = This->baseTexture.levels - 1;
+            } else if(states[WINED3DTEXSTA_MAXMIPLEVEL] < This->baseTexture.LOD) {
+                /* baseTexture.LOD is already clamped in the setter */
+                glValue = This->baseTexture.LOD;
             } else {
                 glValue = states[WINED3DTEXSTA_MAXMIPLEVEL];
             }

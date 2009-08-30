@@ -2820,11 +2820,6 @@ static void maxmip_test(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_EndScene(device);
     }
 
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %08x\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %08x\n", hr);
-
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
     /* Max Mip level 0-2 sample from the specified texture level, Max Mip level 3(> levels in texture)
@@ -2839,8 +2834,69 @@ static void maxmip_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 480, 360);
     ok(color == 0x0000FF00, "MapMip 1, point mipfilter has color %08x\n", color);
 
+    hr = IDirect3DDevice9_BeginScene(device);
+    if(SUCCEEDED(hr))
+    {
+        DWORD ret;
+
+        /* Mipmapping OFF, LOD level smaller than MAXMIPLEVEL. LOD level limits */
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %08x\n", hr);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 0);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %08x\n", hr);
+        ret = IDirect3DTexture9_SetLOD(texture, 1);
+        ok(ret == 0, "IDirect3DTexture9_SetLOD returned %u, expected 0\n", ret);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quads[ 0], 5 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        /* Mipmapping ON, LOD level smaller than max mip level. LOD level limits */
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %08x\n", hr);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 1);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %08x\n", hr);
+        ret = IDirect3DTexture9_SetLOD(texture, 2);
+        ok(ret == 1, "IDirect3DTexture9_SetLOD returned %u, expected 1\n", ret);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quads[20], 5 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        /* Mipmapping ON, LOD level bigger than max mip level. MAXMIPLEVEL limits */
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 2);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %08x\n", hr);
+        ret = IDirect3DTexture9_SetLOD(texture, 1);
+        ok(ret == 2, "IDirect3DTexture9_SetLOD returned %u, expected 2\n", ret);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quads[40], 5 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        /* Mipmapping OFF, LOD level bigger than max mip level. LOD level limits */
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %08x\n", hr);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 2);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %08x\n", hr);
+        ret = IDirect3DTexture9_SetLOD(texture, 1);
+        ok(ret == 1, "IDirect3DTexture9_SetLOD returned %u, expected 1\n", ret);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quads[60], 5 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+    }
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+    /* Max Mip level 0-2 sample from the specified texture level, Max Mip level 3(> levels in texture)
+     * samples from the highest level in the texture(level 2)
+     */
+    color = getPixelColor(device, 160, 360);
+    ok(color == 0x0000FF00, "MaxMip 0, LOD 1, none mipfilter has color 0x%08x\n", color);
+    color = getPixelColor(device, 160, 120);
+    ok(color == 0x0000FF00, "MaxMip 1, LOD 2, point mipfilter has color 0x%08x\n", color);
+    color = getPixelColor(device, 480, 120);
+    ok(color == 0x000000FF, "MapMip 2, LOD 1, point mipfilter has color 0x%08x\n", color);
+    color = getPixelColor(device, 480, 360);
+    ok(color == 0x000000FF, "MapMip 2, LOD 1, none mipfilter has color 0x%08x\n", color);
+
     hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed with %08x\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %08x\n", hr);
     hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %08x\n", hr);
     IDirect3DTexture9_Release(texture);
