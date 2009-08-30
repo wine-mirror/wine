@@ -519,14 +519,10 @@ static BOOL match_apple(const struct wined3d_gl_info *gl_info, const char *gl_re
             && gl_info->supported[APPLE_FLUSH_RENDER]
             && gl_info->supported[APPLE_YCBCR_422])
     {
-        TRACE_(d3d_caps)("GL_APPLE_fence, GL_APPLE_client_storage, GL_APPLE_flush_render and GL_ycbcr_422 are supported.\n");
-        TRACE_(d3d_caps)("Activating MacOS fixups.\n");
         return TRUE;
     }
     else
     {
-        TRACE_(d3d_caps)("Apple extensions are not supported.\n");
-        TRACE_(d3d_caps)("Not activating MacOS fixups.\n");
         return FALSE;
     }
 }
