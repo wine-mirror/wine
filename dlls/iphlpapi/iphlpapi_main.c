@@ -42,6 +42,8 @@
 # include <resolv.h>
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -653,8 +655,8 @@ static ULONG adapterAddressesFromIndex(DWORD index, IP_ADAPTER_ADDRESSES *aa, UL
         DWORD buflen, type, status;
 
         memset(aa, 0, sizeof(IP_ADAPTER_ADDRESSES));
-        aa->Length  = sizeof(IP_ADAPTER_ADDRESSES);
-        aa->IfIndex = index;
+        aa->u.s.Length  = sizeof(IP_ADAPTER_ADDRESSES);
+        aa->u.s.IfIndex = index;
 
         getInterfaceNameByIndex(index, name);
         memcpy(ptr, name, IF_NAMESIZE);
@@ -675,16 +677,16 @@ static ULONG adapterAddressesFromIndex(DWORD index, IP_ADAPTER_ADDRESSES *aa, UL
             for (i = 0; i < num_addrs; i++)
             {
                 memset(ua, 0, sizeof(IP_ADAPTER_UNICAST_ADDRESS));
-                ua->Length                  = sizeof(IP_ADAPTER_UNICAST_ADDRESS);
+                ua->u.s.Length              = sizeof(IP_ADAPTER_UNICAST_ADDRESS);
                 ua->Address.iSockaddrLength = sizeof(struct sockaddr_in);
-                ua->Address.lpSockaddr      = (SOCKADDR *)((char *)ua + ua->Length);
+                ua->Address.lpSockaddr      = (SOCKADDR *)((char *)ua + ua->u.s.Length);
 
                 sa = (struct sockaddr_in *)ua->Address.lpSockaddr;
                 sa->sin_family      = AF_INET;
                 sa->sin_addr.s_addr = addrs[i];
                 sa->sin_port        = 0;
 
-                ptr += ua->Length + ua->Address.iSockaddrLength;
+                ptr += ua->u.s.Length + ua->Address.iSockaddrLength;
                 if (i < num_addrs - 1)
                 {
                     ua->Next = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
