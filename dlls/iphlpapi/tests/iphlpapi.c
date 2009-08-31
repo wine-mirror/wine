@@ -840,16 +840,16 @@ static void test_GetAdaptersAddresses(void)
 
     while (!ret && winetest_debug > 1 && aa)
     {
-        trace("Length:                %u\n", aa->Length);
-        trace("IfIndex:               %u\n", aa->IfIndex);
+        trace("Length:                %u\n", S(U(*aa)).Length);
+        trace("IfIndex:               %u\n", S(U(*aa)).IfIndex);
         trace("Next:                  %p\n", aa->Next);
         trace("AdapterName:           %s\n", aa->AdapterName);
         trace("FirstUnicastAddress:   %p\n", aa->FirstUnicastAddress);
         ua = aa->FirstUnicastAddress;
         while (ua)
         {
-            trace("\tLength:                  %u\n", ua->Length);
-            trace("\tFlags:                   0x%08x\n", ua->Flags);
+            trace("\tLength:                  %u\n", S(U(*ua)).Length);
+            trace("\tFlags:                   0x%08x\n", S(U(*ua)).Flags);
             trace("\tNext:                    %p\n", ua->Next);
             trace("\tAddress.lpSockaddr:      %p\n", ua->Address.lpSockaddr);
             trace("\tAddress.iSockaddrLength: %d\n", ua->Address.iSockaddrLength);
