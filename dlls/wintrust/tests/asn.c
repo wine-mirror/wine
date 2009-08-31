@@ -842,7 +842,7 @@ static void test_encodeSpOpusInfo(void)
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     moreInfo.dwLinkChoice = SPC_URL_LINK_CHOICE;
-    moreInfo.pwszUrl = winehq;
+    U(moreInfo).pwszUrl = winehq;
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
      &info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
@@ -910,7 +910,7 @@ static void test_decodeSpOpusInfo(void)
         {
             ok(info->pMoreInfo->dwLinkChoice == SPC_URL_LINK_CHOICE,
              "unexpected link choice %d\n", info->pMoreInfo->dwLinkChoice);
-            ok(!lstrcmpW(info->pMoreInfo->pwszUrl, winehq),
+            ok(!lstrcmpW(U(*info->pMoreInfo).pwszUrl, winehq),
              "unexpected link value\n");
         }
         ok(!info->pPublisherInfo, "expected NULL\n");
@@ -931,7 +931,7 @@ static void test_decodeSpOpusInfo(void)
             ok(info->pPublisherInfo->dwLinkChoice == SPC_URL_LINK_CHOICE,
              "unexpected link choice %d\n",
              info->pPublisherInfo->dwLinkChoice);
-            ok(!lstrcmpW(info->pPublisherInfo->pwszUrl, winehq),
+            ok(!lstrcmpW(U(*info->pPublisherInfo).pwszUrl, winehq),
              "unexpected link value\n");
         }
         LocalFree(info);
