@@ -25,6 +25,7 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <errno.h>
 #include "msvcrt.h"
 #include "wine/debug.h"
 
@@ -249,4 +250,67 @@ int CDECL __STRINGTOLD( MSVCRT__LDOUBLE *value, char **endptr, const char *str, 
     FIXME("%p %p %s %x stub\n", value, endptr, str, flags );
 #endif
     return 0;
+}
+
+/******************************************************************
+ *		strtol (MSVCRT.@)
+ */
+long int MSVCRT_strtol(const char* nptr, char** end, int base)
+{
+    /* wrapper to forward libc error code to msvcrt's error codes */
+    long ret;
+
+    errno = 0;
+    ret = strtol(nptr, end, base);
+    switch (errno)
+    {
+    case ERANGE:        *MSVCRT__errno() = MSVCRT_ERANGE;       break;
+    case EINVAL:        *MSVCRT__errno() = MSVCRT_EINVAL;       break;
+    default:
+        /* cope with the fact that we may use 64bit long integers on libc
+         * while msvcrt always uses 32bit long integers
+         */
+        if (ret > MSVCRT_LONG_MAX)
+        {
+            ret = MSVCRT_LONG_MAX;
+            *MSVCRT__errno() = MSVCRT_ERANGE;
+        }
+        else if (ret < -MSVCRT_LONG_MAX - 1)
+        {
+            ret = -MSVCRT_LONG_MAX - 1;
+            *MSVCRT__errno() = MSVCRT_ERANGE;
+        }
+        break;
+    }
+
+    return ret;
+}
+
+/******************************************************************
+ *		strtoul (MSVCRT.@)
+ */
+unsigned long int MSVCRT_strtoul(const char* nptr, char** end, int base)
+{
+    /* wrapper to forward libc error code to msvcrt's error codes */
+    unsigned long ret;
+
+    errno = 0;
+    ret = strtoul(nptr, end, base);
+    switch (errno)
+    {
+    case ERANGE:        *MSVCRT__errno() = MSVCRT_ERANGE;       break;
+    case EINVAL:        *MSVCRT__errno() = MSVCRT_EINVAL;       break;
+    default:
+        /* cope with the fact that we may use 64bit long integers on libc
+         * while msvcrt always uses 32bit long integers
+         */
+        if (ret > MSVCRT_ULONG_MAX)
+        {
+            ret = MSVCRT_ULONG_MAX;
+            *MSVCRT__errno() = MSVCRT_ERANGE;
+        }
+        break;
+    }
+
+    return ret;
 }

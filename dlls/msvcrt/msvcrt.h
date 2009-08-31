@@ -41,6 +41,9 @@
 #include "windef.h"
 #include "winbase.h"
 
+#define MSVCRT_LONG_MAX    0x7fffffffL
+#define MSVCRT_ULONG_MAX   0xffffffffUL
+
 typedef unsigned short MSVCRT_wchar_t;
 typedef unsigned short MSVCRT_wint_t;
 typedef unsigned short MSVCRT_wctype_t;

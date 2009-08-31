@@ -767,8 +767,8 @@
 @ cdecl strstr(str str) ntdll.strstr
 @ cdecl strtod(str ptr) MSVCRT_strtod
 @ cdecl strtok(str str) MSVCRT_strtok
-@ cdecl strtol(str ptr long) ntdll.strtol
-@ cdecl strtoul(str ptr long) ntdll.strtoul
+@ cdecl strtol(str ptr long) MSVCRT_strtol
+@ cdecl strtoul(str ptr long) MSVCRT_strtoul
 @ cdecl strxfrm(ptr str long) MSVCRT_strxfrm
 @ varargs swprintf(ptr wstr) MSVCRT_swprintf
 @ varargs swscanf(wstr wstr) MSVCRT_swscanf
