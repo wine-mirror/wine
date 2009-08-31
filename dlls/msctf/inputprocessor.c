@@ -491,8 +491,22 @@ static HRESULT WINAPI InputProcessorProfiles_GetCurrentLanguage(
 static HRESULT WINAPI InputProcessorProfiles_ChangeCurrentLanguage(
         ITfInputProcessorProfiles *iface, LANGID langid)
 {
+    struct list *cursor;
     InputProcessorProfiles *This = (InputProcessorProfiles*)iface;
+    BOOL accept;
+
     FIXME("STUB:(%p)\n",This);
+
+    LIST_FOR_EACH(cursor, &This->LanguageProfileNotifySink)
+    {
+        InputProcessorProfilesSink* sink = LIST_ENTRY(cursor,InputProcessorProfilesSink,entry);
+        accept = TRUE;
+        ITfLanguageProfileNotifySink_OnLanguageChange(sink->interfaces.pITfLanguageProfileNotifySink, langid, &accept);
+        if (!accept)
+            return  E_FAIL;
+    }
+
+    /* TODO:  On successful language change call OnLanguageChanged sink */
     return E_NOTIMPL;
 }
 
