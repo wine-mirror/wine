@@ -6241,7 +6241,7 @@ static void test_host_migration(void)
             check( 0,                   lpData->dwLocalDataSize );
             checkLP( NULL,              lpData->lpRemoteData );
             check( 0,                   lpData->dwRemoteDataSize );
-            checkLP( NULL,              lpData->dpnName.lpszShortNameA );
+            checkLP( NULL,              U1(lpData->dpnName).lpszShortNameA );
             check( 0,                   lpData->dpIdParent );
             checkFlags( 0,              lpData->dwFlags,
                         FLAGS_DPPLAYER | FLAGS_DPGROUP );
