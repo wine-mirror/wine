@@ -2492,6 +2492,15 @@ static void test_navigator(IHTMLDocument2 *doc)
     ok(!memcmp(bstr, v40, sizeof(v40)), "appVersion is %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 
+    hres = IOmNavigator_toString(navigator, NULL);
+    ok(hres == E_INVALIDARG, "toString failed: %08x\n", hres);
+
+    bstr = NULL;
+    hres = IOmNavigator_toString(navigator, &bstr);
+    ok(hres == S_OK, "toString failed: %08x\n", hres);
+    ok(!strcmp_wa(bstr, "[object]"), "toString returned %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
     ref = IOmNavigator_Release(navigator);
     ok(!ref, "navigator should be destroyed here\n");
 }

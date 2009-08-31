@@ -226,8 +226,16 @@ static HRESULT WINAPI OmNavigator_get_opsProfile(IOmNavigator *iface, IHTMLOpsPr
 static HRESULT WINAPI OmNavigator_toString(IOmNavigator *iface, BSTR *String)
 {
     OmNavigator *This = OMNAVIGATOR_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, String);
-    return E_NOTIMPL;
+
+    static const WCHAR objectW[] = {'[','o','b','j','e','c','t',']',0};
+
+    TRACE("(%p)->(%p)\n", This, String);
+
+    if(!String)
+        return E_INVALIDARG;
+
+    *String = SysAllocString(objectW);
+    return *String ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI OmNavigator_get_cpuClass(IOmNavigator *iface, BSTR *p)
