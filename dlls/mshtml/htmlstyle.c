@@ -554,6 +554,7 @@ static ULONG WINAPI HTMLStyle_Release(IHTMLStyle *iface)
     if(!ref) {
         if(This->nsstyle)
             nsIDOMCSSStyleDeclaration_Release(This->nsstyle);
+        release_dispex(&This->dispex);
         heap_free(This);
     }
 

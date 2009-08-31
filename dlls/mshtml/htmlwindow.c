@@ -93,6 +93,7 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
 
     if(!ref) {
         list_remove(&This->entry);
+        release_dispex(&This->dispex);
         heap_free(This);
     }
 

@@ -215,6 +215,7 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
         detach_selection(This);
         detach_ranges(This);
         release_nodes(This);
+        release_dispex(&This->dispex);
 
         ConnectionPointContainer_Destroy(&This->cp_container);
 

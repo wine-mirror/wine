@@ -90,6 +90,7 @@ static ULONG WINAPI HTMLCurrentStyle_Release(IHTMLCurrentStyle *iface)
     if(!ref) {
         if(This->nsstyle)
             nsIDOMCSSStyleDeclaration_Release(This->nsstyle);
+        release_dispex(&This->dispex);
         heap_free(This);
     }
 

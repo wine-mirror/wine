@@ -82,6 +82,7 @@ static ULONG WINAPI HTMLLocation_Release(IHTMLLocation *iface)
     if(!ref) {
         if(This->doc && This->doc->location == This)
             This->doc->location = NULL;
+        release_dispex(&This->dispex);
         heap_free(This);
     }
 

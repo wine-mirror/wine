@@ -308,6 +308,7 @@ static ULONG WINAPI HTMLDOMNode_Release(IHTMLDOMNode *iface)
 
     if(!ref) {
         This->vtbl->destructor(This);
+        release_dispex(&This->dispex);
         heap_free(This);
     }
 

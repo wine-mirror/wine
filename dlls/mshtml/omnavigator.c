@@ -84,8 +84,10 @@ static ULONG WINAPI OmNavigator_Release(IOmNavigator *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        release_dispex(&This->dispex);
         heap_free(This);
+    }
 
     return ref;
 }

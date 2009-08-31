@@ -149,6 +149,7 @@ typedef struct {
 } DispatchEx;
 
 void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*);
+void release_dispex(DispatchEx*);
 BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**);
 
