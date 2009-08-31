@@ -430,6 +430,32 @@ static HRESULT dispex_value(DispatchEx *This, LCID lcid, WORD flags, DISPPARAMS 
     return S_OK;
 }
 
+static HRESULT typeinfo_invoke(DispatchEx *This, func_info_t *func, WORD flags, DISPPARAMS *dp, VARIANT *res,
+        EXCEPINFO *ei)
+{
+    ITypeInfo *ti;
+    IUnknown *unk;
+    UINT argerr=0;
+    HRESULT hres;
+
+    hres = get_typeinfo(func->tid, &ti);
+    if(FAILED(hres)) {
+        ERR("Could not get type info: %08x\n", hres);
+        return hres;
+    }
+
+    hres = IUnknown_QueryInterface(This->outer, tid_ids[func->tid], (void**)&unk);
+    if(FAILED(hres)) {
+        ERR("Could not get iface %s: %08x\n", debugstr_guid(tid_ids[func->tid]), hres);
+        return E_FAIL;
+    }
+
+    hres = ITypeInfo_Invoke(ti, unk, func->id, flags, dp, res, ei, &argerr);
+
+    IUnknown_Release(unk);
+    return hres;
+}
+
 #define DISPATCHEX_THIS(iface) DEFINE_THIS(DispatchEx, IDispatchEx, iface)
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
@@ -570,10 +596,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
-    IUnknown *unk;
-    ITypeInfo *ti;
     dispex_data_t *data;
-    UINT argerr=0;
     int min, max, n;
     HRESULT hres;
 
@@ -674,22 +697,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         return DISP_E_UNKNOWNNAME;
     }
 
-    hres = get_typeinfo(data->funcs[n].tid, &ti);
-    if(FAILED(hres)) {
-        ERR("Could not get type info: %08x\n", hres);
-        return hres;
-    }
-
-    hres = IUnknown_QueryInterface(This->outer, tid_ids[data->funcs[n].tid], (void**)&unk);
-    if(FAILED(hres)) {
-        ERR("Could not get iface %s: %08x\n", debugstr_guid(tid_ids[data->funcs[n].tid]), hres);
-        return E_FAIL;
-    }
-
-    hres = ITypeInfo_Invoke(ti, unk, id, wFlags, pdp, pvarRes, pei, &argerr);
-
-    IUnknown_Release(unk);
-    return hres;
+    return typeinfo_invoke(This, data->funcs+n, wFlags, pdp, pvarRes, pei);
 }
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
