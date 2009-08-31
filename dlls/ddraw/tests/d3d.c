@@ -2815,9 +2815,9 @@ static void ComputeSphereVisibility(void)
     IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_VIEW , &view);
     IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_PROJECTION, &proj);
 
-    center[0].x=11.461533;
-    center[0].y=-4.761727;
-    center[0].z=-1.171646;
+    U1(center[0]).x=11.461533;
+    U2(center[0]).y=-4.761727;
+    U3(center[0]).z=-1.171646;
 
     radius[0]=38.252632;
 
@@ -2826,11 +2826,11 @@ static void ComputeSphereVisibility(void)
     ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
     ok(result[0] == 0x3f, "Expected 0x3f, got %x\n", result[0]);
 
-    center[0].x=-3.515620; center[0].y=-1.560661; center[0].z=-12.464638;
+    U1(center[0]).x=-3.515620; U2(center[0]).y=-1.560661; U3(center[0]).z=-12.464638;
     radius[0]=4.354097;
-    center[1].x=14.290396; center[1].y=-2.981143; center[1].z=-24.311312;
+    U1(center[1]).x=14.290396; U2(center[1]).y=-2.981143; U3(center[1]).z=-24.311312;
     radius[1]=12.500704;
-    center[2].x=1.461626; center[2].y=-6.093709, center[2].z=-13.901010;
+    U1(center[2]).x=1.461626; U2(center[2]).y=-6.093709; U3(center[2]).z=-13.901010;
     radius[2]=17.251318;
 
     rc = IDirect3DDevice7_ComputeSphereVisibility(lpD3DDevice, center, radius, 3, 0, result);
@@ -2852,9 +2852,9 @@ static void ComputeSphereVisibility(void)
     proj._31=0.0; proj._32=0.0; proj._33=10.0, proj._34=0.0;
     proj._41=0.0; proj._42=0.0; proj._43=0.0; proj._44=1.0;
 
-    center[0].x=0.0;
-    center[0].y=0.0;
-    center[0].z=0.05;
+    U1(center[0]).x=0.0;
+    U2(center[0]).y=0.0;
+    U3(center[0]).z=0.05;
 
     radius[0]=0.04;
 
@@ -2873,9 +2873,9 @@ static void ComputeSphereVisibility(void)
 
     IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_PROJECTION, &proj);
 
-    center[0].x=0.0;
-    center[0].y=0.0;
-    center[0].z=0.5;
+    U1(center[0]).x=0.0;
+    U2(center[0]).y=0.0;
+    U3(center[0]).z=0.5;
 
     radius[0]=0.5;
 
@@ -2884,9 +2884,9 @@ static void ComputeSphereVisibility(void)
     ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
     ok(result[0] == 0x0, "Expected 0x0, got %x\n", result[0]);
 
-    center[0].x=0.0;
-    center[0].y=0.0;
-    center[0].z=0.0;
+    U1(center[0]).x=0.0;
+    U2(center[0]).y=0.0;
+    U3(center[0]).z=0.0;
 
     radius[0]=0.0;
 
@@ -2895,9 +2895,9 @@ static void ComputeSphereVisibility(void)
     ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
     ok(result[0] == 0x0, "Expected 0x0, got %x\n", result[0]);
 
-    center[0].x=-1.0;
-    center[0].y=-1.0;
-    center[0].z=0.50;
+    U1(center[0]).x=-1.0;
+    U2(center[0]).y=-1.0;
+    U3(center[0]).z=0.50;
 
     radius[0]=0.25;
 
@@ -2906,9 +2906,9 @@ static void ComputeSphereVisibility(void)
     ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
     ok(result[0] == 0x9, "Expected 0x9, got %x\n", result[0]);
 
-    center[0].x=-20.0;
-    center[0].y=0.0;
-    center[0].z=0.50;
+    U1(center[0]).x=-20.0;
+    U2(center[0]).y=0.0;
+    U3(center[0]).z=0.50;
 
     radius[0]=3.0;
 
@@ -2917,9 +2917,9 @@ static void ComputeSphereVisibility(void)
     ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
     ok(result[0] == 0x103d, "Expected 0x103d, got %x\n", result[0]);
 
-    center[0].x=20.0;
-    center[0].y=0.0;
-    center[0].z=0.50;
+    U1(center[0]).x=20.0;
+    U2(center[0]).y=0.0;
+    U3(center[0]).z=0.50;
 
     radius[0]=3.0f;
 
@@ -2928,9 +2928,9 @@ static void ComputeSphereVisibility(void)
     ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
     ok(result[0] == 0x203e, "Expected 0x203e, got %x\n", result[0]);
 
-    center[0].x=0.0;
-    center[0].y=-20.0;
-    center[0].z=0.50;
+    U1(center[0]).x=0.0;
+    U2(center[0]).y=-20.0;
+    U3(center[0]).z=0.50;
 
     radius[0]=3.0;
 
@@ -2939,9 +2939,9 @@ static void ComputeSphereVisibility(void)
     ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
     ok(result[0] == 0x803b, "Expected 0x803b, got %x\n", result[0]);
 
-    center[0].x=0.0;
-    center[0].y=20.0;
-    center[0].z=0.5;
+    U1(center[0]).x=0.0;
+    U2(center[0]).y=20.0;
+    U3(center[0]).z=0.5;
 
     radius[0]=3.0;
 
@@ -2950,9 +2950,9 @@ static void ComputeSphereVisibility(void)
     ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
     ok(result[0] == 0x4037, "Expected 0x4037, got %x\n", result[0]);
 
-    center[0].x=0.0;
-    center[0].y=0.0;
-    center[0].z=-20;
+    U1(center[0]).x=0.0;
+    U2(center[0]).y=0.0;
+    U3(center[0]).z=-20;
 
     radius[0]=3.0;
 
@@ -2961,9 +2961,9 @@ static void ComputeSphereVisibility(void)
     ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
     ok(result[0] == 0x1001f, "Expected 0x1001f, got %x\n", result[0]);
 
-    center[0].x=0.0;
-    center[0].y=0.0;
-    center[0].z=20.0;
+    U1(center[0]).x=0.0;
+    U2(center[0]).y=0.0;
+    U3(center[0]).z=20.0;
 
     radius[0]=3.0;
 
