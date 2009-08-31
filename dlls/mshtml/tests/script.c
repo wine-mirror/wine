@@ -74,6 +74,12 @@ DEFINE_GUID(CLSID_IdentityUnmarshal,0x0000001b,0x0000,0x0000,0xc0,0x00,0x00,0x00
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CHECK_CALLED_BROKEN(func) \
+    do { \
+        ok(called_ ## func || broken(!called_ ## func), "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
 #define CHECK_NOT_CALLED(func) \
     do { \
         ok(!called_ ## func, "unexpected " #func "\n"); \
@@ -89,7 +95,9 @@ DEFINE_EXPECT(GetInterfaceSafetyOptions);
 DEFINE_EXPECT(SetInterfaceSafetyOptions);
 DEFINE_EXPECT(InitNew);
 DEFINE_EXPECT(Close);
-DEFINE_EXPECT(SetProperty);
+DEFINE_EXPECT(SetProperty_HACK_TRIDENTEVENTSINK);
+DEFINE_EXPECT(SetProperty_INVOKEVERSIONING);
+DEFINE_EXPECT(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION);
 DEFINE_EXPECT(SetScriptSite);
 DEFINE_EXPECT(GetScriptState);
 DEFINE_EXPECT(SetScriptState_STARTED);
@@ -504,15 +512,31 @@ static HRESULT WINAPI ActiveScriptProperty_GetProperty(IActiveScriptProperty *if
 static HRESULT WINAPI ActiveScriptProperty_SetProperty(IActiveScriptProperty *iface, DWORD dwProperty,
         VARIANT *pvarIndex, VARIANT *pvarValue)
 {
-    CHECK_EXPECT(SetProperty);
+    switch(dwProperty) {
+    case SCRIPTPROP_HACK_TRIDENTEVENTSINK:
+        CHECK_EXPECT(SetProperty_HACK_TRIDENTEVENTSINK);
+        ok(V_VT(pvarValue) == VT_BOOL, "V_VT(pvarValue)=%d\n", V_VT(pvarValue));
+        ok(V_BOOL(pvarValue) == VARIANT_TRUE, "V_BOOL(pvarValue)=%x\n", V_BOOL(pvarValue));
+        break;
+    case SCRIPTPROP_INVOKEVERSIONING:
+        CHECK_EXPECT(SetProperty_INVOKEVERSIONING);
+        ok(V_VT(pvarValue) == VT_I4, "V_VT(pvarValue)=%d\n", V_VT(pvarValue));
+        ok(V_I4(pvarValue) == 1, "V_I4(pvarValue)=%d\n", V_I4(pvarValue));
+        break;
+    case SCRIPTPROP_ABBREVIATE_GLOBALNAME_RESOLUTION:
+        CHECK_EXPECT(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION);
+        ok(V_VT(pvarValue) == VT_BOOL, "V_VT(pvarValue)=%d\n", V_VT(pvarValue));
+        ok(V_BOOL(pvarValue) == VARIANT_TRUE, "V_BOOL(pvarValue)=%x\n", V_BOOL(pvarValue));
+        break;
+    default:
+        ok(0, "unexpected property %x\n", dwProperty);
+        return E_NOTIMPL;
+    }
 
-    ok(dwProperty == SCRIPTPROP_HACK_TRIDENTEVENTSINK, "unexpected property %d\n", dwProperty);
     ok(!pvarIndex, "pvarIndex != NULL\n");
     ok(pvarValue != NULL, "pvarValue == NULL\n");
-    ok(V_VT(pvarValue) == VT_BOOL, "V_VT(pvarValue)=%d\n", V_VT(pvarValue));
-    ok(V_BOOL(pvarValue) == VARIANT_TRUE, "V_BOOL(pvarValue)=%x\n", V_BOOL(pvarValue));
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const IActiveScriptPropertyVtbl ActiveScriptPropertyVtbl = {
@@ -1028,12 +1052,14 @@ static void test_simple_script(void)
     SET_EXPECT(CreateInstance);
     SET_EXPECT(GetInterfaceSafetyOptions);
     SET_EXPECT(SetInterfaceSafetyOptions);
-    SET_EXPECT(SetProperty);
+    SET_EXPECT(SetProperty_INVOKEVERSIONING); /* IE8 */
+    SET_EXPECT(SetProperty_HACK_TRIDENTEVENTSINK);
     SET_EXPECT(InitNew);
     SET_EXPECT(SetScriptSite);
     SET_EXPECT(GetScriptState);
     SET_EXPECT(SetScriptState_STARTED);
     SET_EXPECT(AddNamedItem);
+    SET_EXPECT(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION); /* IE8 */
     SET_EXPECT(ParseScriptText);
     SET_EXPECT(SetScriptState_CONNECTED);
 
@@ -1043,12 +1069,14 @@ static void test_simple_script(void)
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(GetInterfaceSafetyOptions);
     CHECK_CALLED(SetInterfaceSafetyOptions);
-    CHECK_CALLED(SetProperty);
+    CHECK_CALLED_BROKEN(SetProperty_INVOKEVERSIONING); /* IE8 */
+    CHECK_CALLED(SetProperty_HACK_TRIDENTEVENTSINK);
     CHECK_CALLED(InitNew);
     CHECK_CALLED(SetScriptSite);
     CHECK_CALLED(GetScriptState);
     CHECK_CALLED(SetScriptState_STARTED);
     CHECK_CALLED(AddNamedItem);
+    CHECK_CALLED_BROKEN(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION); /* IE8 */
     CHECK_CALLED(ParseScriptText);
     CHECK_CALLED(SetScriptState_CONNECTED);
 
