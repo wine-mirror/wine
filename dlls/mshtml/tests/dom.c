@@ -3959,6 +3959,7 @@ static void test_window(IHTMLDocument2 *doc)
     IHTMLWindow2 *window, *window2, *self;
     IHTMLDocument2 *doc2 = NULL;
     IDispatch *disp;
+    BSTR str;
     HRESULT hres;
 
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
@@ -3990,6 +3991,15 @@ static void test_window(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_Script failed: %08x\n", hres);
     ok(disp == (void*)window, "disp != window\n");
     IDispatch_Release(disp);
+
+    hres = IHTMLWindow2_toString(window, NULL);
+    ok(hres == E_INVALIDARG, "toString failed: %08x\n", hres);
+
+    str = NULL;
+    hres = IHTMLWindow2_toString(window, &str);
+    ok(hres == S_OK, "toString failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "[object]"), "toString returned %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 
     IHTMLWindow2_Release(window);
 }
