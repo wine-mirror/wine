@@ -43,7 +43,7 @@ static const struct message create_parent_wnd_seq[] = {
     { WM_QUERYNEWPALETTE, sent|optional },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_ACTIVATEAPP, sent|wparam, 1 },
-    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_NCACTIVATE, sent },
     { WM_ACTIVATE, sent|wparam, 1 },
     { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
     { WM_IME_NOTIFY, sent|defwinproc|optional },
@@ -81,12 +81,12 @@ static const struct message parent_create_trackbar_wnd_seq[] = {
 
 static const struct message parent_new_window_test_seq[] = {
     { WM_QUERYNEWPALETTE, sent|optional },
-    { WM_WINDOWPOSCHANGING, sent},
-    { WM_NCACTIVATE, sent},
-    { PBT_APMRESUMECRITICAL, sent},
+    { WM_WINDOWPOSCHANGING, sent|optional},
+    { WM_NCACTIVATE, sent|optional},
+    { PBT_APMRESUMECRITICAL, sent|optional},
     { WM_IME_SETCONTEXT, sent|defwinproc|optional},
     { WM_IME_NOTIFY, sent|defwinproc|optional},
-    { WM_SETFOCUS, sent|defwinproc},
+    { WM_SETFOCUS, sent|defwinproc|optional},
     { WM_NOTIFYFORMAT, sent},
     { WM_QUERYUISTATE, sent|optional},
     {0}
