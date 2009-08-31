@@ -28,8 +28,8 @@
 #include "dplay.h"
 #include "wine/dplaysp.h"
 
-
 WINE_DEFAULT_DEBUG_CHANNEL(dplay);
+
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -53,11 +53,169 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 
 
+static HRESULT WINAPI DPWSCB_EnumSessions( LPDPSP_ENUMSESSIONSDATA data )
+{
+    FIXME( "(%p,%d,%p,%u) stub\n",
+           data->lpMessage, data->dwMessageSize,
+           data->lpISP, data->bReturnStatus );
+    return DPERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI DPWSCB_Reply( LPDPSP_REPLYDATA data )
+{
+    FIXME( "(%p,%p,%d,%d,%p) stub\n",
+           data->lpSPMessageHeader, data->lpMessage, data->dwMessageSize,
+           data->idNameServer, data->lpISP );
+    return DPERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI DPWSCB_Send( LPDPSP_SENDDATA data )
+{
+    FIXME( "(0x%08x,%d,%d,%p,%d,%u,%p) stub\n",
+           data->dwFlags, data->idPlayerTo, data->idPlayerFrom,
+           data->lpMessage, data->dwMessageSize,
+           data->bSystemMessage, data->lpISP );
+    return DPERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI DPWSCB_CreatePlayer( LPDPSP_CREATEPLAYERDATA data )
+{
+    FIXME( "(%d,0x%08x,%p,%p) stub\n",
+           data->idPlayer, data->dwFlags,
+           data->lpSPMessageHeader, data->lpISP );
+    return DPERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI DPWSCB_DeletePlayer( LPDPSP_DELETEPLAYERDATA data )
+{
+    FIXME( "(%d,0x%08x,%p) stub\n",
+           data->idPlayer, data->dwFlags, data->lpISP );
+    return DPERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI DPWSCB_GetAddress( LPDPSP_GETADDRESSDATA data )
+{
+    FIXME( "(%d,0x%08x,%p,%p,%p) stub\n",
+           data->idPlayer, data->dwFlags, data->lpAddress,
+           data->lpdwAddressSize, data->lpISP );
+    return DPERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI DPWSCB_GetCaps( LPDPSP_GETCAPSDATA data )
+{
+    FIXME( "(%d,%p,0x%08x,%p)\n",
+           data->idPlayer, data->lpCaps, data->dwFlags, data->lpISP );
+    return DPERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI DPWSCB_Open( LPDPSP_OPENDATA data )
+{
+    FIXME( "(%u,%p,%p,%u,0x%08x,0x%08x) stub\n",
+           data->bCreate, data->lpSPMessageHeader, data->lpISP,
+           data->bReturnStatus, data->dwOpenFlags, data->dwSessionFlags );
+    return DPERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI DPWSCB_CloseEx( LPDPSP_CLOSEDATA data )
+{
+    FIXME( "(%p) stub\n", data->lpISP );
+    return DPERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI DPWSCB_ShutdownEx( LPDPSP_SHUTDOWNDATA data )
+{
+    FIXME( "(%p) stub\n", data->lpISP );
+    return DPERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI DPWSCB_GetAddressChoices( LPDPSP_GETADDRESSCHOICESDATA data )
+{
+    FIXME( "(%p,%p,%p) stub\n",
+           data->lpAddress, data->lpdwAddressSize, data->lpISP );
+    return DPERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI DPWSCB_SendEx( LPDPSP_SENDEXDATA data )
+{
+    FIXME( "(%p,0x%08x,%d,%d,%p,%d,%d,%d,%d,%p,%p,%u) stub\n",
+           data->lpISP, data->dwFlags, data->idPlayerTo, data->idPlayerFrom,
+           data->lpSendBuffers, data->cBuffers, data->dwMessageSize,
+           data->dwPriority, data->dwTimeout, data->lpDPContext,
+           data->lpdwSPMsgID, data->bSystemMessage );
+    return DPERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI DPWSCB_SendToGroupEx( LPDPSP_SENDTOGROUPEXDATA data )
+{
+    FIXME( "(%p,0x%08x,%d,%d,%p,%d,%d,%d,%d,%p,%p) stub\n",
+           data->lpISP, data->dwFlags, data->idGroupTo, data->idPlayerFrom,
+           data->lpSendBuffers, data->cBuffers, data->dwMessageSize,
+           data->dwPriority, data->dwTimeout, data->lpDPContext,
+           data->lpdwSPMsgID );
+    return DPERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI DPWSCB_Cancel( LPDPSP_CANCELDATA data )
+{
+    FIXME( "(%p,0x%08x,%p,%d,0x%08x,0x%08x) stub\n",
+           data->lpISP, data->dwFlags, data->lprglpvSPMsgID, data->cSPMsgID,
+           data->dwMinPriority, data->dwMaxPriority );
+    return DPERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI DPWSCB_GetMessageQueue( LPDPSP_GETMESSAGEQUEUEDATA data )
+{
+    FIXME( "(%p,0x%08x,%d,%d,%p,%p) stub\n",
+           data->lpISP, data->dwFlags, data->idFrom, data->idTo,
+           data->lpdwNumMsgs, data->lpdwNumBytes );
+    return DPERR_UNSUPPORTED;
+}
+
+static void setup_callbacks( LPDPSP_SPCALLBACKS lpCB )
+{
+    lpCB->EnumSessions           = DPWSCB_EnumSessions;
+    lpCB->Reply                  = DPWSCB_Reply;
+    lpCB->Send                   = DPWSCB_Send;
+    lpCB->CreatePlayer           = DPWSCB_CreatePlayer;
+    lpCB->DeletePlayer           = DPWSCB_DeletePlayer;
+    lpCB->GetAddress             = DPWSCB_GetAddress;
+    lpCB->GetCaps                = DPWSCB_GetCaps;
+    lpCB->Open                   = DPWSCB_Open;
+    lpCB->CloseEx                = DPWSCB_CloseEx;
+    lpCB->ShutdownEx             = DPWSCB_ShutdownEx;
+    lpCB->GetAddressChoices      = DPWSCB_GetAddressChoices;
+    lpCB->SendEx                 = DPWSCB_SendEx;
+    lpCB->SendToGroupEx          = DPWSCB_SendToGroupEx;
+    lpCB->Cancel                 = DPWSCB_Cancel;
+    lpCB->GetMessageQueue        = DPWSCB_GetMessageQueue;
+
+    lpCB->AddPlayerToGroup       = NULL;
+    lpCB->Close                  = NULL;
+    lpCB->CreateGroup            = NULL;
+    lpCB->DeleteGroup            = NULL;
+    lpCB->RemovePlayerFromGroup  = NULL;
+    lpCB->SendToGroup            = NULL;
+    lpCB->Shutdown               = NULL;
+}
+
+
+
 /******************************************************************
  *		SPInit (DPWSOCKX.1)
  */
 HRESULT WINAPI SPInit( LPSPINITDATA lpspData )
 {
-    /* TODO: Initialize callbacks and needed fields in lpspData */
-    return DPERR_UNSUPPORTED;
+    TRACE( "Initializing library for %s (%s)\n",
+           wine_dbgstr_guid(lpspData->lpGuid), debugstr_w(lpspData->lpszName) );
+
+    /* We only support TCP/IP service */
+    if ( !IsEqualGUID(lpspData->lpGuid, &DPSPGUID_TCPIP) )
+    {
+        return DPERR_UNAVAILABLE;
+    }
+
+    /* Assign callback functions */
+    setup_callbacks( lpspData->lpCB );
+
+    return DP_OK;
 }
