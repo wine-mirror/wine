@@ -129,6 +129,25 @@ static const char *debugstr_guid(REFIID riid)
     return buf;
 }
 
+static int strcmp_wa(LPCWSTR strw, const char *stra)
+{
+    CHAR buf[512];
+    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
+    return lstrcmpA(stra, buf);
+}
+
+static BSTR a2bstr(const char *str)
+{
+    BSTR ret;
+    int len;
+
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = SysAllocStringLen(NULL, len);
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+
+    return ret;
+}
+
 static HRESULT WINAPI PropertyNotifySink_QueryInterface(IPropertyNotifySink *iface,
         REFIID riid, void**ppv)
 {
@@ -617,12 +636,76 @@ static HRESULT WINAPI ActiveScriptParse_AddScriptlet(IActiveScriptParse *iface,
     return E_NOTIMPL;
 }
 
+static void test_func(IDispatchEx *obj)
+{
+    DISPID id, propput_arg = DISPID_PROPERTYPUT;
+    IDispatchEx *dispex;
+    IDispatch *disp;
+    EXCEPINFO ei;
+    DISPPARAMS dp;
+    BSTR str;
+    VARIANT var;
+    HRESULT hres;
+
+    str = a2bstr("toString");
+    hres = IDispatchEx_GetDispID(obj, str, fdexNameCaseSensitive, &id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
+    ok(id == DISPID_IOMNAVIGATOR_TOSTRING, "id = %x\n", id);
+
+    memset(&dp, 0, sizeof(dp));
+    memset(&ei, 0, sizeof(ei));
+    VariantInit(&var);
+    hres = IDispatchEx_InvokeEx(obj, id, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dp, &var, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH, "V_VT(var)=%d\n", V_VT(&var));
+    ok(V_DISPATCH(&var) != NULL, "V_DISPATCH(var) == NULL\n");
+    disp = V_DISPATCH(&var);
+
+    memset(&dp, 0, sizeof(dp));
+    memset(&ei, 0, sizeof(ei));
+    VariantInit(&var);
+    hres = IDispatchEx_InvokeEx(obj, id, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dp, &var, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH, "V_VT(var)=%d\n", V_VT(&var));
+    ok(V_DISPATCH(&var) == disp, "V_DISPATCH(var) != disp\n");
+    VariantClear(&var);
+
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    IDispatch_Release(disp);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08x\n", hres);
+
+    /* FIXME: Test InvokeEx(DISPATCH_METHOD) */
+
+    memset(&dp, 0, sizeof(dp));
+    memset(&ei, 0, sizeof(ei));
+    VariantInit(&var);
+    hres = IDispatchEx_Invoke(dispex, DISPID_VALUE, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dp, &var, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "V_VT(var)=%d\n", V_VT(&var));
+    ok(!strcmp_wa(V_BSTR(&var), "[object]"), "V_BSTR(var) = %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    dp.cArgs = 1;
+    dp.rgvarg = &var;
+    dp.cNamedArgs = 1;
+    dp.rgdispidNamedArgs = &propput_arg;
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 100;
+    hres = IDispatchEx_InvokeEx(obj, id, LOCALE_NEUTRAL, DISPATCH_PROPERTYPUT, &dp, NULL, &ei, NULL);
+    ok(hres == E_NOTIMPL, "InvokeEx failed: %08x\n", hres);
+
+    IDispatchEx_Release(dispex);
+}
+
 static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *iface,
         LPCOLESTR pstrCode, LPCOLESTR pstrItemName, IUnknown *punkContext,
         LPCOLESTR pstrDelimiter, CTXARG_T dwSourceContextCookie, ULONG ulStartingLine,
         DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
 {
-    IDispatchEx *document;
+    IDispatchEx *document, *dispex;
+    IHTMLWindow2 *window;
+    IOmNavigator *navigator;
     IUnknown *unk;
     VARIANT var, arg;
     DISPPARAMS dp;
@@ -736,6 +819,20 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
     ok(V_I4(&var) == 100, "V_I4(&var) == NULL\n");
 
     IDispatchEx_Release(document);
+
+    hres = IDispatchEx_QueryInterface(window_dispex, &IID_IHTMLWindow2, (void**)&window);
+    ok(hres == S_OK, "Could not get IHTMLWindow2 iface: %08x\n", hres);
+
+    hres = IHTMLWindow2_get_navigator(window, &navigator);
+    IHTMLWindow2_Release(window);
+    ok(hres == S_OK, "get_navigator failed: %08x\n", hres);
+
+    hres = IOmNavigator_QueryInterface(navigator, &IID_IDispatchEx, (void**)&dispex);
+    IOmNavigator_Release(navigator);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08x\n", hres);
+
+    test_func(dispex);
+    IDispatchEx_Release(dispex);
 
     return S_OK;
 }
