@@ -599,6 +599,8 @@ static void test_domdoc( void )
         IObjectIdentity *ident;
         BSTR tag = NULL;
 
+        test_disp((IUnknown*)element);
+
         r = IXMLDOMElement_QueryInterface( element, &IID_IObjectIdentity, (LPVOID*)&ident );
         ok( r == E_NOINTERFACE, "ret %08x\n", r);
 
