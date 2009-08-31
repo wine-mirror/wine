@@ -1,6 +1,7 @@
 /* Unit test suite for property sheet control.
  *
  * Copyright 2006 Huw Davies
+ * Copyright 2009 Jan de Mooij
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,6 +28,8 @@
 static HWND parent;
 
 static LONG active_page = -1;
+
+#define IDC_APPLY_BUTTON 12321
 
 static int CALLBACK sheet_callback(HWND hwnd, UINT msg, LPARAM lparam)
 {
@@ -341,6 +344,64 @@ static void test_wiznavigation(void)
 
     DestroyWindow(hdlg);
 }
+static void test_buttons(void)
+{
+    HPROPSHEETPAGE hpsp[1];
+    PROPSHEETPAGEA psp;
+    PROPSHEETHEADERA psh;
+    HWND hdlg;
+    HWND button;
+    RECT rc;
+    int prevRight, top;
+
+    memset(&psp, 0, sizeof(psp));
+    psp.dwSize = sizeof(psp);
+    psp.dwFlags = 0;
+    psp.hInstance = GetModuleHandleW(NULL);
+    U(psp).pszTemplate = "prop_page1";
+    U2(psp).pszIcon = NULL;
+    psp.pfnDlgProc = page_dlg_proc;
+    psp.lParam = 0;
+
+    hpsp[0] = CreatePropertySheetPageA(&psp);
+
+    memset(&psh, 0, sizeof(psh));
+    psh.dwSize = sizeof(psh);
+    psh.dwFlags = PSH_MODELESS | PSH_USECALLBACK;
+    psh.pszCaption = "test caption";
+    psh.nPages = 1;
+    psh.hwndParent = GetDesktopWindow();
+    U3(psh).phpage = hpsp;
+    psh.pfnCallback = sheet_callback;
+
+    hdlg = (HWND)PropertySheetA(&psh);
+
+    /* OK button */
+    button = GetDlgItem(hdlg, IDOK);
+    GetWindowRect(button, &rc);
+    prevRight = rc.right;
+    top = rc.top;
+
+    /* Cancel button */
+    button = GetDlgItem(hdlg, IDCANCEL);
+    GetWindowRect(button, &rc);
+    ok(rc.top == top, "Cancel button should have same top as OK button\n");
+    ok(rc.left > prevRight, "Cancel button should be to the right of OK button\n");
+    prevRight = rc.right;
+
+    button = GetDlgItem(hdlg, IDC_APPLY_BUTTON);
+    GetWindowRect(button, &rc);
+    ok(rc.top == top, "Apply button should have same top as OK button\n");
+    ok(rc.left > prevRight, "Apply button should be to the right of Cancel button\n");
+    prevRight = rc.right;
+
+    button = GetDlgItem(hdlg, IDHELP);
+    GetWindowRect(button, &rc);
+    ok(rc.top == top, "Help button should have same top as OK button\n");
+    ok(rc.left > prevRight, "Help button should be to the right of Apply button\n");
+
+    DestroyWindow(hdlg);
+}
 
 START_TEST(propsheet)
 {
@@ -348,4 +409,5 @@ START_TEST(propsheet)
     test_nopage();
     test_disableowner();
     test_wiznavigation();
+    test_buttons();
 }

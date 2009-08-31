@@ -904,7 +904,7 @@ static BOOL PROPSHEET_AdjustButtons(HWND hwndParent, const PropSheetInfo* psInfo
    */
   hwndButton = GetDlgItem(hwndParent, IDCANCEL);
 
-  x = rcSheet.right - ((padding.x + buttonWidth) * (num_buttons - 1));
+  x += padding.x + buttonWidth;
 
   SetWindowPos(hwndButton, 0, x, y, 0, 0,
                SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
@@ -914,34 +914,25 @@ static BOOL PROPSHEET_AdjustButtons(HWND hwndParent, const PropSheetInfo* psInfo
    */
   hwndButton = GetDlgItem(hwndParent, IDC_APPLY_BUTTON);
 
-  if (psInfo->hasApply)
-  {
-    if (psInfo->hasHelp)
-      x = rcSheet.right - ((padding.x + buttonWidth) * 2);
-    else
-      x = rcSheet.right - (padding.x + buttonWidth);
-
-    SetWindowPos(hwndButton, 0, x, y, 0, 0,
-                 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-
-    EnableWindow(hwndButton, FALSE);
-  }
+  if(psInfo->hasApply)
+    x += padding.x + buttonWidth;
   else
     ShowWindow(hwndButton, SW_HIDE);
+
+  SetWindowPos(hwndButton, 0, x, y, 0, 0,
+              SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+  EnableWindow(hwndButton, FALSE);
 
   /*
    * Position Help button.
    */
   hwndButton = GetDlgItem(hwndParent, IDHELP);
 
-  if (psInfo->hasHelp)
-  {
-    x = rcSheet.right - (padding.x + buttonWidth);
+  x += padding.x + buttonWidth;
+  SetWindowPos(hwndButton, 0, x, y, 0, 0,
+              SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 
-    SetWindowPos(hwndButton, 0, x, y, 0, 0,
-                 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-  }
-  else
+  if(!psInfo->hasHelp)
     ShowWindow(hwndButton, SW_HIDE);
 
   return TRUE;
