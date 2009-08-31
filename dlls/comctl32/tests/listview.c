@@ -2770,6 +2770,7 @@ static void test_setredraw(void)
     DWORD_PTR style;
     DWORD ret;
     HDC hdc;
+    RECT rect;
 
     hwnd = create_listview_control(LVS_OWNERDATA);
     ok(hwnd != NULL, "failed to create a listview window\n");
@@ -2789,6 +2790,16 @@ static void test_setredraw(void)
     ok(style & WS_VISIBLE, "Expected WS_VISIBLE to be set\n");
     ret = SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
     expect(0, ret);
+
+    /* check update rect after redrawing */
+    ret = SendMessage(hwnd, WM_SETREDRAW, FALSE, 0);
+    expect(0, ret);
+    InvalidateRect(hwnd, NULL, FALSE);
+    RedrawWindow(hwnd, NULL, NULL, RDW_UPDATENOW);
+    rect.right = rect.bottom = 1;
+    GetUpdateRect(hwnd, &rect, FALSE);
+    expect(0, rect.right);
+    expect(0, rect.bottom);
 
     /* WM_ERASEBKGND */
     hdc = GetWindowDC(hwndparent);

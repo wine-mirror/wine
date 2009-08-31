@@ -9781,7 +9781,8 @@ static inline LRESULT LISTVIEW_WMPaint(LISTVIEW_INFO *infoPtr, HDC hdc)
 {
     TRACE("(hdc=%p)\n", hdc);
 
-    if (!is_redrawing(infoPtr)) return 0;
+    if (!is_redrawing(infoPtr))
+        return DefWindowProcW (infoPtr->hwndSelf, WM_PAINT, (WPARAM)hdc, 0);
 
     return LISTVIEW_Paint(infoPtr, hdc);
 }
