@@ -33,9 +33,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
     quotes are optional around the filename, even if it contains spaces.
 */
 
-static BOOL ProcessCommandLine(LPWSTR cmdline)
+static BOOL ProcessCommandLine(const WCHAR *s)
 {
-    const WCHAR *s = cmdline;
     WCHAR outfile[MAX_PATH+1];
     int opt_t = FALSE;
     int opt_x = FALSE;
