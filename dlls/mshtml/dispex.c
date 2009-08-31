@@ -343,55 +343,56 @@ static inline BOOL is_dynamic_dispid(DISPID id)
     return DISPID_DYNPROP_0 <= id && id <= DISPID_DYNPROP_MAX;
 }
 
+static inline dispex_dynamic_data_t *get_dynamic_data(DispatchEx *This, BOOL alloc)
+{
+    return !alloc || This->dynamic_data
+        ? This->dynamic_data
+        : (This->dynamic_data = heap_alloc_zero(sizeof(dispex_dynamic_data_t)));
+}
+
 static HRESULT get_dynamic_prop(DispatchEx *This, const WCHAR *name, BOOL alloc, dynamic_prop_t **ret)
 {
-    dispex_dynamic_data_t *data = This->dynamic_data;
+    dispex_dynamic_data_t *data = get_dynamic_data(This, alloc);
+    unsigned i;
 
-    if(data) {
-        unsigned i;
+    if(!data) {
+        if(alloc)
+            return E_OUTOFMEMORY;
 
-        for(i=0; i < data->prop_cnt; i++) {
-            if(!strcmpW(data->props[i].name, name)) {
-                *ret = data->props+i;
-                return S_OK;
-            }
+        TRACE("not found %s\n", debugstr_w(name));
+        return DISP_E_UNKNOWNNAME;
+    }
+
+    for(i=0; i < data->prop_cnt; i++) {
+        if(!strcmpW(data->props[i].name, name)) {
+            *ret = data->props+i;
+            return S_OK;
         }
     }
 
-    if(alloc) {
-        TRACE("creating dynamic prop %s\n", debugstr_w(name));
+    TRACE("creating dynamic prop %s\n", debugstr_w(name));
 
-        if(!data) {
-            data = This->dynamic_data = heap_alloc_zero(sizeof(dispex_dynamic_data_t));
-            if(!data)
-                return E_OUTOFMEMORY;
-        }
+    if(!data->buf_size) {
+        data->props = heap_alloc(sizeof(dynamic_prop_t)*4);
+        if(!data->props)
+            return E_OUTOFMEMORY;
+        data->buf_size = 4;
+    }else if(data->buf_size == data->prop_cnt) {
+        dynamic_prop_t *new_props;
 
-        if(!data->buf_size) {
-            data->props = heap_alloc(sizeof(dynamic_prop_t)*4);
-            if(!data->props)
-                return E_OUTOFMEMORY;
-            data->buf_size = 4;
-        }else if(data->buf_size == data->prop_cnt) {
-            dynamic_prop_t *new_props;
+        new_props = heap_realloc(data->props, sizeof(dynamic_prop_t)*(data->buf_size<<1));
+        if(!new_props)
+            return E_OUTOFMEMORY;
 
-            new_props = heap_realloc(data->props, sizeof(dynamic_prop_t)*(data->buf_size<<1));
-            if(!new_props)
-                return E_OUTOFMEMORY;
-
-            data->props = new_props;
-            data->buf_size <<= 1;
-        }
-
-        data->props[data->prop_cnt].name = heap_strdupW(name);
-        VariantInit(&data->props[data->prop_cnt].var);
-        *ret = data->props + data->prop_cnt++;
-
-        return S_OK;
+        data->props = new_props;
+        data->buf_size <<= 1;
     }
 
-    TRACE("not found %s\n", debugstr_w(name));
-    return DISP_E_UNKNOWNNAME;
+    data->props[data->prop_cnt].name = heap_strdupW(name);
+    VariantInit(&data->props[data->prop_cnt].var);
+    *ret = data->props + data->prop_cnt++;
+
+    return S_OK;
 }
 
 HRESULT dispex_get_dprop_ref(DispatchEx *This, const WCHAR *name, BOOL alloc, VARIANT **ret)
