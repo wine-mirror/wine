@@ -20,6 +20,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#define NONAMELESSUNION
 #include "d3d10core_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
@@ -783,14 +784,14 @@ static HRESULT d3d10_device_set_rtdesc_from_resource(D3D10_RENDER_TARGET_VIEW_DE
             if (texture_desc.ArraySize == 1)
             {
                 desc->ViewDimension = D3D10_RTV_DIMENSION_TEXTURE1D;
-                desc->Texture1D.MipSlice = 0;
+                desc->u.Texture1D.MipSlice = 0;
             }
             else
             {
                 desc->ViewDimension = D3D10_RTV_DIMENSION_TEXTURE1DARRAY;
-                desc->Texture1DArray.MipSlice = 0;
-                desc->Texture1DArray.FirstArraySlice = 0;
-                desc->Texture1DArray.ArraySize = 1;
+                desc->u.Texture1DArray.MipSlice = 0;
+                desc->u.Texture1DArray.FirstArraySlice = 0;
+                desc->u.Texture1DArray.ArraySize = 1;
             }
 
             return S_OK;
@@ -817,7 +818,7 @@ static HRESULT d3d10_device_set_rtdesc_from_resource(D3D10_RENDER_TARGET_VIEW_DE
                 if (texture_desc.SampleDesc.Count == 1)
                 {
                     desc->ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2D;
-                    desc->Texture2D.MipSlice = 0;
+                    desc->u.Texture2D.MipSlice = 0;
                 }
                 else
                 {
@@ -829,15 +830,15 @@ static HRESULT d3d10_device_set_rtdesc_from_resource(D3D10_RENDER_TARGET_VIEW_DE
                 if (texture_desc.SampleDesc.Count == 1)
                 {
                     desc->ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2DARRAY;
-                    desc->Texture2DArray.MipSlice = 0;
-                    desc->Texture2DArray.FirstArraySlice = 0;
-                    desc->Texture2DArray.ArraySize = 1;
+                    desc->u.Texture2DArray.MipSlice = 0;
+                    desc->u.Texture2DArray.FirstArraySlice = 0;
+                    desc->u.Texture2DArray.ArraySize = 1;
                 }
                 else
                 {
                     desc->ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2DMSARRAY;
-                    desc->Texture2DMSArray.FirstArraySlice = 0;
-                    desc->Texture2DMSArray.ArraySize = 1;
+                    desc->u.Texture2DMSArray.FirstArraySlice = 0;
+                    desc->u.Texture2DMSArray.ArraySize = 1;
                 }
             }
 
@@ -861,9 +862,9 @@ static HRESULT d3d10_device_set_rtdesc_from_resource(D3D10_RENDER_TARGET_VIEW_DE
 
             desc->Format = texture_desc.Format;
             desc->ViewDimension = D3D10_RTV_DIMENSION_TEXTURE3D;
-            desc->Texture3D.MipSlice = 0;
-            desc->Texture3D.FirstWSlice = 0;
-            desc->Texture3D.WSize = 1;
+            desc->u.Texture3D.MipSlice = 0;
+            desc->u.Texture3D.FirstWSlice = 0;
+            desc->u.Texture3D.WSize = 1;
 
             return S_OK;
         }
