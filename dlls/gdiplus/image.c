@@ -31,6 +31,7 @@
 #include "ole2.h"
 
 #include "initguid.h"
+#include "wincodec.h"
 #include "gdiplus.h"
 #include "gdiplus_private.h"
 #include "wine/debug.h"
@@ -1381,28 +1382,129 @@ GpStatus WINGDIPAPI GdipLoadImageFromFileICM(GDIPCONST WCHAR* filename,GpImage *
     return GdipLoadImageFromFile(filename, image);
 }
 
-static GpStatus decode_image_olepicture_icon(IStream* stream, REFCLSID clsid, GpImage **image)
+static const WICPixelFormatGUID *wic_pixel_formats[] = {
+    &GUID_WICPixelFormat16bppBGR555,
+    &GUID_WICPixelFormat24bppBGR,
+    &GUID_WICPixelFormat32bppBGR,
+    &GUID_WICPixelFormat32bppBGRA,
+    &GUID_WICPixelFormat32bppPBGRA,
+    NULL
+};
+
+static const PixelFormat wic_gdip_formats[] = {
+    PixelFormat16bppRGB555,
+    PixelFormat24bppRGB,
+    PixelFormat32bppRGB,
+    PixelFormat32bppARGB,
+    PixelFormat32bppPARGB,
+};
+
+static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, GpImage **image)
 {
-    IPicture *pic;
+    GpStatus status=Ok;
+    GpBitmap *bitmap;
+    HRESULT hr;
+    IWICBitmapDecoder *decoder;
+    IWICBitmapFrameDecode *frame;
+    IWICBitmapSource *source=NULL;
+    WICPixelFormatGUID wic_format;
+    PixelFormat gdip_format=0;
+    int i;
+    UINT width, height;
+    BitmapData lockeddata;
+    WICRect wrc;
+    HRESULT initresult;
 
-    TRACE("%p %p\n", stream, image);
+    initresult = CoInitialize(NULL);
 
-    if(!stream || !image)
-        return InvalidParameter;
+    hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICBitmapDecoder, (void**)&decoder);
+    if (FAILED(hr)) goto end;
 
-    if(OleLoadPicture(stream, 0, FALSE, &IID_IPicture,
-        (LPVOID*) &pic) != S_OK){
-        TRACE("Could not load picture\n");
-        return GenericError;
+    hr = IWICBitmapDecoder_Initialize(decoder, (IStream*)stream, WICDecodeMetadataCacheOnLoad);
+    if (SUCCEEDED(hr))
+        hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+
+    if (SUCCEEDED(hr)) /* got frame */
+    {
+        hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &wic_format);
+
+        if (SUCCEEDED(hr))
+        {
+            for (i=0; wic_pixel_formats[i]; i++)
+            {
+                if (IsEqualGUID(&wic_format, wic_pixel_formats[i]))
+                {
+                    source = (IWICBitmapSource*)frame;
+                    IWICBitmapSource_AddRef(source);
+                    gdip_format = wic_gdip_formats[i];
+                    break;
+                }
+            }
+            if (!source)
+            {
+                /* unknown format; fall back on 32bppARGB */
+                hr = WICConvertBitmapSource(&GUID_WICPixelFormat32bppBGRA, (IWICBitmapSource*)frame, &source);
+                gdip_format = PixelFormat32bppARGB;
+            }
+        }
+
+        if (SUCCEEDED(hr)) /* got source */
+        {
+            hr = IWICBitmapSource_GetSize(source, &width, &height);
+
+            if (SUCCEEDED(hr))
+                status = GdipCreateBitmapFromScan0(width, height, 0, gdip_format,
+                    NULL, &bitmap);
+
+            if (SUCCEEDED(hr) && status == Ok) /* created bitmap */
+            {
+                status = GdipBitmapLockBits(bitmap, NULL, ImageLockModeWrite,
+                    gdip_format, &lockeddata);
+                if (status == Ok) /* locked bitmap */
+                {
+                    wrc.X = 0;
+                    wrc.Width = width;
+                    wrc.Height = 1;
+                    for (i=0; i<height; i++)
+                    {
+                        wrc.Y = i;
+                        hr = IWICBitmapSource_CopyPixels(source, &wrc, abs(lockeddata.Stride),
+                            abs(lockeddata.Stride), (BYTE*)lockeddata.Scan0+lockeddata.Stride*i);
+                        if (FAILED(hr)) break;
+                    }
+
+                    GdipBitmapUnlockBits(bitmap, &lockeddata);
+                }
+
+                if (SUCCEEDED(hr) && status == Ok)
+                    *image = (GpImage*)bitmap;
+                else
+                {
+                    *image = NULL;
+                    GdipDisposeImage((GpImage*)bitmap);
+                }
+            }
+
+            IWICBitmapSource_Release(source);
+        }
+
+        IWICBitmapFrameDecode_Release(frame);
     }
 
-    *image = GdipAlloc(sizeof(GpImage));
-    if(!*image) return OutOfMemory;
-    (*image)->type = ImageTypeUnknown;
-    (*image)->picture = pic;
-    (*image)->flags   = ImageFlagsNone;
+    IWICBitmapDecoder_Release(decoder);
 
-    return Ok;
+end:
+    if (SUCCEEDED(initresult)) CoUninitialize();
+
+    if (FAILED(hr) && status == Ok) status = hresult_to_status(hr);
+
+    return status;
+}
+
+static GpStatus decode_image_icon(IStream* stream, REFCLSID clsid, GpImage **image)
+{
+    return decode_image_wic(stream, &CLSID_WICIcoDecoder, image);
 }
 
 static GpStatus decode_image_olepicture_bitmap(IStream* stream, REFCLSID clsid, GpImage **image)
@@ -2012,7 +2114,7 @@ static const struct image_codec codecs[NUM_CODECS] = {
             /* SigMask */            ico_sig_mask,
         },
         NULL,
-        decode_image_olepicture_icon
+        decode_image_icon
     },
 };
 
