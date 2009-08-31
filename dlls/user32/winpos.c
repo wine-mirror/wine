@@ -85,9 +85,10 @@ typedef struct
 /***********************************************************************
  *		SwitchToThisWindow (USER32.@)
  */
-void WINAPI SwitchToThisWindow( HWND hwnd, BOOL restore )
+void WINAPI SwitchToThisWindow( HWND hwnd, BOOL alt_tab )
 {
-    ShowWindow( hwnd, restore ? SW_RESTORE : SW_SHOWMINIMIZED );
+    if (IsIconic( hwnd )) ShowWindow( hwnd, SW_RESTORE );
+    else BringWindowToTop( hwnd );
 }
 
 
