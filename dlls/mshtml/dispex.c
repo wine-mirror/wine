@@ -407,6 +407,29 @@ HRESULT dispex_get_dprop_ref(DispatchEx *This, const WCHAR *name, BOOL alloc, VA
     return S_OK;
 }
 
+static HRESULT dispex_value(DispatchEx *This, LCID lcid, WORD flags, DISPPARAMS *params,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    static const WCHAR objectW[] = {'[','o','b','j','e','c','t',']',0};
+
+    if(This->data->vtbl && This->data->vtbl->value)
+        return This->data->vtbl->value(This->outer, lcid, flags, params, res, ei, caller);
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET:
+        V_VT(res) = VT_BSTR;
+        V_BSTR(res) = SysAllocString(objectW);
+        if(!V_BSTR(res))
+            return E_OUTOFMEMORY;
+        break;
+    default:
+        FIXME("Unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 #define DISPATCHEX_THIS(iface) DEFINE_THIS(DispatchEx, IDispatchEx, iface)
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
@@ -555,6 +578,9 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     HRESULT hres;
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+
+    if(id == DISPID_VALUE)
+        return dispex_value(This, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
     if(is_custom_dispid(id) && This->data->vtbl && This->data->vtbl->invoke)
         return This->data->vtbl->invoke(This->outer, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);

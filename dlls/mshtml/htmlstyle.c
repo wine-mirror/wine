@@ -2610,6 +2610,7 @@ static const IHTMLStyleVtbl HTMLStyleVtbl = {
 };
 
 static const dispex_static_data_vtbl_t HTMLStyle_dispex_vtbl = {
+    NULL,
     HTMLStyle_get_dispid,
     NULL
 };
