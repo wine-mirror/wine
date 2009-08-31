@@ -66,7 +66,7 @@ static void test_ValidateVertexShader(void)
 }
 
 static void test_ValidatePixelShader(void)
-{ 
+{
     HRESULT ret;
     static DWORD simple_ps[] = {0xFFFF0101,                                     /* ps_1_1                       */
         0x00000051, 0xA00F0001, 0x3F800000, 0x00000000, 0x00000000, 0x00000000, /* def c1 = 1.0, 0.0, 0.0, 0.0  */

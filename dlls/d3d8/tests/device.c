@@ -96,13 +96,13 @@ static int get_refcount(IUnknown *object)
 static void check_mipmap_levels(IDirect3DDevice8 *device, UINT width, UINT height, UINT count)
 {
     IDirect3DBaseTexture8* texture = NULL;
-    HRESULT hr = IDirect3DDevice8_CreateTexture( device, width, height, 0, 0, 
-        D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, (IDirect3DTexture8**) &texture );
-       
+    HRESULT hr = IDirect3DDevice8_CreateTexture( device, width, height, 0, 0,
+            D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, (IDirect3DTexture8**) &texture );
+
     if (SUCCEEDED(hr)) {
         DWORD levels = IDirect3DBaseTexture8_GetLevelCount(texture);
         ok(levels == count, "Invalid level count. Expected %d got %u\n", count, levels);
-    } else 
+    } else
         trace("CreateTexture failed: %#08x\n", hr);
 
     if (texture) IUnknown_Release( texture );
@@ -118,7 +118,7 @@ static void test_mipmap_levels(void)
     IDirect3DDevice8      *pDevice = NULL;
     D3DPRESENT_PARAMETERS d3dpp;
     D3DDISPLAYMODE        d3ddm;
- 
+
     pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
     hwnd = CreateWindow( "static", "d3d8_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
