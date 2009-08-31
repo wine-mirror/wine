@@ -469,23 +469,50 @@ static BOOL _test_get_dispid(unsigned line, IUnknown *unk, IID *iid)
     return ret;
 }
 
-#define test_disp(u,id) _test_disp(__LINE__,u,id)
-static void _test_disp(unsigned line, IUnknown *unk, const IID *diid)
+#define test_disp_value(u) _test_disp_value(__LINE__,u,v)
+static void _test_disp_value(unsigned line, IUnknown *unk, const char *val)
+{
+    DISPPARAMS dp  = {NULL,NULL,0,0};
+    IDispatchEx *dispex;
+    EXCEPINFO ei;
+    VARIANT var;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IDispatchEx, (void**)&dispex);
+    ok_(__FILE__,line)(hres == S_OK, "Could not get IDispatchEx interface: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IDispatchEx_InvokeEx(dispex, DISPID_VALUE, 0, DISPATCH_PROPERTYGET, &dp, &var, &ei, NULL);
+    IDispatchEx_Release(dispex);
+    ok_(__FILE__,line)(hres == S_OK, "InvokeEx(DISPID_VALUE) returned: %08x\n", hres);
+
+    ok_(__FILE__,line)(V_VT(&var) == VT_BSTR, "V_VT(value) = %d\n", V_VT(&var));
+    ok_(__FILE__,line)(!strcmp_wa(V_BSTR(&var), val), "value = %s, expected %s\n", wine_dbgstr_w(V_BSTR(&var)), val);
+    VariantClear(&var);
+}
+
+#define test_disp(u,id,v) _test_disp(__LINE__,u,id,v)
+static void _test_disp(unsigned line, IUnknown *unk, const IID *diid, const char *val)
 {
     IID iid;
 
     if(_test_get_dispid(line, unk, &iid))
         ok_(__FILE__,line) (IsEqualGUID(&iid, diid), "unexpected guid %s\n", dbgstr_guid(&iid));
+
+    _test_disp_value(line, unk, val);
 }
 
-#define test_disp2(u,id,id2) _test_disp2(__LINE__,u,id,id2)
-static void _test_disp2(unsigned line, IUnknown *unk, const IID *diid, const IID *diid2)
+#define test_disp2(u,id,id2,v) _test_disp2(__LINE__,u,id,id2,v)
+static void _test_disp2(unsigned line, IUnknown *unk, const IID *diid, const IID *diid2, const char *val)
 {
     IID iid;
 
     if(_test_get_dispid(line, unk, &iid))
         ok_(__FILE__,line) (IsEqualGUID(&iid, diid) || broken(IsEqualGUID(&iid, diid2)),
                 "unexpected guid %s\n", dbgstr_guid(&iid));
+
+    _test_disp_value(line, unk, val);
 }
 
 #define get_elem_iface(u) _get_elem_iface(__LINE__,u)
@@ -580,7 +607,7 @@ static void _test_elem_type(unsigned line, IUnknown *unk, elem_type_t type)
     _test_ifaces(line, unk, elem_type_infos[type].iids);
 
     if(elem_type_infos[type].dispiid)
-        _test_disp(line, unk, elem_type_infos[type].dispiid);
+        _test_disp(line, unk, elem_type_infos[type].dispiid, "[object]");
 }
 
 #define get_node_type(n) _get_node_type(__LINE__,n)
@@ -1022,7 +1049,7 @@ static void _test_elem_collection(unsigned line, IUnknown *unk,
     hres = IUnknown_QueryInterface(unk, &IID_IHTMLElementCollection, (void**)&col);
     ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLElementCollection: %08x\n", hres);
 
-    test_disp((IUnknown*)col, &DIID_DispHTMLElementCollection);
+    test_disp((IUnknown*)col, &DIID_DispHTMLElementCollection, "[object]");
 
     hres = IHTMLElementCollection_get_length(col, &len);
     ok_(__FILE__,line) (hres == S_OK, "get_length failed: %08x\n", hres);
@@ -2396,7 +2423,7 @@ static void test_location(IHTMLDocument2 *doc)
     IHTMLLocation_Release(location2);
 
     test_ifaces((IUnknown*)location, location_iids);
-    test_disp2((IUnknown*)location, &DIID_DispHTMLLocation, &IID_IHTMLLocation);
+    test_disp2((IUnknown*)location, &DIID_DispHTMLLocation, &IID_IHTMLLocation, "about:blank");
 
     hres = IHTMLLocation_get_pathname(location, &str);
     ok(hres == S_OK, "get_pathname failed: %08x\n", hres);
@@ -2429,7 +2456,7 @@ static void test_navigator(IHTMLDocument2 *doc)
     hres = IHTMLWindow2_get_navigator(window, &navigator);
     ok(hres == S_OK, "get_navigator failed: %08x\n", hres);
     ok(navigator != NULL, "navigator == NULL\n");
-    test_disp2((IUnknown*)navigator, &DIID_DispHTMLNavigator, &IID_IOmNavigator);
+    test_disp2((IUnknown*)navigator, &DIID_DispHTMLNavigator, &IID_IOmNavigator, "[object]");
 
     hres = IHTMLWindow2_get_navigator(window, &navigator2);
     ok(hres == S_OK, "get_navigator failed: %08x\n", hres);
@@ -2475,7 +2502,7 @@ static void test_current_style(IHTMLCurrentStyle *current_style)
     HRESULT hres;
     VARIANT v;
 
-    test_disp((IUnknown*)current_style, &DIID_DispHTMLCurrentStyle);
+    test_disp((IUnknown*)current_style, &DIID_DispHTMLCurrentStyle, "[object]");
     test_ifaces((IUnknown*)current_style, cstyle_iids);
 
     hres = IHTMLCurrentStyle_get_display(current_style, &str);
@@ -2744,7 +2771,7 @@ static void test_default_style(IHTMLStyle *style)
     BSTR sDefault;
     VARIANT vDefault;
 
-    test_disp((IUnknown*)style, &DIID_DispHTMLStyle);
+    test_disp((IUnknown*)style, &DIID_DispHTMLStyle, "[object]");
     test_ifaces((IUnknown*)style, style_iids);
 
     test_style_csstext(style, NULL);
@@ -3928,7 +3955,7 @@ static void test_window(IHTMLDocument2 *doc)
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
     ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
     test_ifaces((IUnknown*)window, window_iids);
-    test_disp((IUnknown*)window, &DIID_DispHTMLWindow2);
+    test_disp((IUnknown*)window, &DIID_DispHTMLWindow2, "[object]");
 
     hres = IHTMLWindow2_get_document(window, &doc2);
     ok(hres == S_OK, "get_document failed: %08x\n", hres);
@@ -4591,7 +4618,7 @@ static void test_elems(IHTMLDocument2 *doc)
     ok(node != NULL, "node == NULL\n");
     if(node) {
         test_ifaces((IUnknown*)node, text_iids);
-        test_disp((IUnknown*)node, &DIID_DispHTMLDOMTextNode);
+        test_disp((IUnknown*)node, &DIID_DispHTMLDOMTextNode, "[object]");
 
         node2 = get_first_child((IUnknown*)node);
         ok(!node2, "node2 != NULL\n");
@@ -4611,7 +4638,7 @@ static void test_elems(IHTMLDocument2 *doc)
     if(child_col) {
         LONG length = 0;
 
-        test_disp((IUnknown*)child_col, &DIID_DispDOMChildrenCollection);
+        test_disp((IUnknown*)child_col, &DIID_DispDOMChildrenCollection, "[object]");
 
         hres = IHTMLDOMChildrenCollection_get_length(child_col, &length);
         ok(hres == S_OK, "get_length failed: %08x\n", hres);
@@ -4734,7 +4761,7 @@ static void test_create_elems(IHTMLDocument2 *doc)
     type = get_node_type((IUnknown*)elem);
     ok(type == 1, "type=%d\n", type);
     test_ifaces((IUnknown*)elem, elem_iids);
-    test_disp((IUnknown*)elem, &DIID_DispHTMLGenericElement);
+    test_disp((IUnknown*)elem, &DIID_DispHTMLGenericElement, "[object]");
 
     hres = IHTMLDocument2_get_body(doc, &body);
     ok(hres == S_OK, "get_body failed: %08x\n", hres);
@@ -4763,7 +4790,7 @@ static void test_create_elems(IHTMLDocument2 *doc)
 
     node = test_create_text(doc, "test");
     test_ifaces((IUnknown*)node, text_iids);
-    test_disp((IUnknown*)node, &DIID_DispHTMLDOMTextNode);
+    test_disp((IUnknown*)node, &DIID_DispHTMLDOMTextNode, "[object]");
 
     V_VT(&var) = VT_NULL;
     node2 = test_node_insertbefore((IUnknown*)body, node, &var);
