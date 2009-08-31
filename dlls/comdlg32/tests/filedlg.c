@@ -634,9 +634,11 @@ static void test_ok(void)
     OPENFILENAME ofn = { sizeof(OPENFILENAME)};
     char filename[1024] = {0};
     char tmpfilename[ MAX_PATH];
+    char curdir[MAX_PATH];
     int i;
     DWORD ret;
 
+    ok(GetCurrentDirectoryA(sizeof(curdir), curdir) != 0, "Failed to get current dir err %d\n", GetLastError());
     if (!GetTempFileNameA(".", "txt", 0, tmpfilename)) {
         skip("Failed to create a temporary file name\n");
         return;
@@ -659,6 +661,7 @@ static void test_ok(void)
         ok(ret == ok_testcases[i].expclose, "testid %d: GetOpenFileName returned %#x\n", i, ret);
         ret = CommDlgExtendedError();
         ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
+        ok(SetCurrentDirectoryA(curdir), "Failed to restore current dir err %d\n", GetLastError());
     }
     ret =  DeleteFileA( tmpfilename);
     ok( ret, "Failed to delete temporary file %s err %d\n", tmpfilename, GetLastError());
