@@ -161,8 +161,8 @@ static void test_create_rendertarget_view(ID3D10Device *device)
 
     rtv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
     rtv_desc.ViewDimension = D3D10_RTV_DIMENSION_BUFFER;
-    rtv_desc.Buffer.ElementOffset = 0;
-    rtv_desc.Buffer.ElementWidth = 64;
+    U(rtv_desc).Buffer.ElementOffset = 0;
+    U(rtv_desc).Buffer.ElementWidth = 64;
 
     hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)buffer, &rtv_desc, &rtview);
     ok(SUCCEEDED(hr), "Failed to create a rendertarget view, hr %#x\n", hr);
@@ -193,7 +193,7 @@ static void test_create_rendertarget_view(ID3D10Device *device)
     ok(rtv_desc.Format == texture_desc.Format, "Expected format %#x, got %#x\n", texture_desc.Format, rtv_desc.Format);
     ok(rtv_desc.ViewDimension == D3D10_RTV_DIMENSION_TEXTURE2D,
             "Expected view dimension D3D10_RTV_DIMENSION_TEXTURE2D, got %#x\n", rtv_desc.ViewDimension);
-    ok(rtv_desc.Texture2D.MipSlice == 0, "Expected mip slice 0, got %#x\n", rtv_desc.Texture2D.MipSlice);
+    ok(U(rtv_desc).Texture2D.MipSlice == 0, "Expected mip slice 0, got %#x\n", U(rtv_desc).Texture2D.MipSlice);
 
     ID3D10RenderTargetView_Release(rtview);
     ID3D10Texture2D_Release(texture);
