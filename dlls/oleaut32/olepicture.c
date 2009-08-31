@@ -46,21 +46,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef SONAME_LIBJPEG
-/* This is a hack, so jpeglib.h does not redefine INT32 and the like*/
-#define XMD_H
-#define UINT8 JPEG_UINT8
-#define UINT16 JPEG_UINT16
-#define boolean jpeg_boolean
-#undef HAVE_STDLIB_H
-# include <jpeglib.h>
-#undef HAVE_STDLIB_H
-#define HAVE_STDLIB_H 1
-#undef UINT8
-#undef UINT16
-#undef boolean
-#endif
-
 #ifdef HAVE_PNG_H
 #include <png.h>
 #endif
@@ -1002,167 +987,6 @@ static HRESULT WINAPI OLEPictureImpl_IsDirty(
   return E_NOTIMPL;
 }
 
-#ifdef SONAME_LIBJPEG
-
-static void *libjpeg_handle;
-#define MAKE_FUNCPTR(f) static typeof(f) * p##f
-MAKE_FUNCPTR(jpeg_std_error);
-MAKE_FUNCPTR(jpeg_CreateDecompress);
-MAKE_FUNCPTR(jpeg_read_header);
-MAKE_FUNCPTR(jpeg_start_decompress);
-MAKE_FUNCPTR(jpeg_read_scanlines);
-MAKE_FUNCPTR(jpeg_finish_decompress);
-MAKE_FUNCPTR(jpeg_destroy_decompress);
-#undef MAKE_FUNCPTR
-
-static void *load_libjpeg(void)
-{
-    if((libjpeg_handle = wine_dlopen(SONAME_LIBJPEG, RTLD_NOW, NULL, 0)) != NULL) {
-
-#define LOAD_FUNCPTR(f) \
-    if((p##f = wine_dlsym(libjpeg_handle, #f, NULL, 0)) == NULL) { \
-        libjpeg_handle = NULL; \
-        return NULL; \
-    }
-
-        LOAD_FUNCPTR(jpeg_std_error);
-        LOAD_FUNCPTR(jpeg_CreateDecompress);
-        LOAD_FUNCPTR(jpeg_read_header);
-        LOAD_FUNCPTR(jpeg_start_decompress);
-        LOAD_FUNCPTR(jpeg_read_scanlines);
-        LOAD_FUNCPTR(jpeg_finish_decompress);
-        LOAD_FUNCPTR(jpeg_destroy_decompress);
-#undef LOAD_FUNCPTR
-    }
-    return libjpeg_handle;
-}
-
-/* for the jpeg decompressor source manager. */
-static void _jpeg_init_source(j_decompress_ptr cinfo) { }
-
-static jpeg_boolean _jpeg_fill_input_buffer(j_decompress_ptr cinfo) {
-    ERR("(), should not get here.\n");
-    return FALSE;
-}
-
-static void _jpeg_skip_input_data(j_decompress_ptr cinfo,long num_bytes) {
-    TRACE("Skipping %ld bytes...\n", num_bytes);
-    cinfo->src->next_input_byte += num_bytes;
-    cinfo->src->bytes_in_buffer -= num_bytes;
-}
-
-static jpeg_boolean _jpeg_resync_to_restart(j_decompress_ptr cinfo, int desired) {
-    ERR("(desired=%d), should not get here.\n",desired);
-    return FALSE;
-}
-static void _jpeg_term_source(j_decompress_ptr cinfo) { }
-#endif /* SONAME_LIBJPEG */
-
-static HRESULT OLEPictureImpl_LoadJpeg(OLEPictureImpl *This, BYTE *xbuf, ULONG xread)
-{
-#ifdef SONAME_LIBJPEG
-    struct jpeg_decompress_struct	jd;
-    struct jpeg_error_mgr		jerr;
-    int					ret;
-    JDIMENSION				x;
-    JSAMPROW				samprow,oldsamprow;
-    BITMAPINFOHEADER			bmi;
-    LPBYTE				bits;
-    HDC					hdcref;
-    struct jpeg_source_mgr		xjsm;
-    LPBYTE                              oldbits;
-    unsigned int i;
-
-    if(!libjpeg_handle) {
-        if(!load_libjpeg()) {
-            ERR("Failed reading JPEG because unable to find %s\n", SONAME_LIBJPEG);
-            return E_FAIL;
-        }
-    }
-
-    /* This is basically so we can use in-memory data for jpeg decompression.
-     * We need to have all the functions.
-     */
-    xjsm.next_input_byte	= xbuf;
-    xjsm.bytes_in_buffer	= xread;
-    xjsm.init_source		= _jpeg_init_source;
-    xjsm.fill_input_buffer	= _jpeg_fill_input_buffer;
-    xjsm.skip_input_data	= _jpeg_skip_input_data;
-    xjsm.resync_to_restart	= _jpeg_resync_to_restart;
-    xjsm.term_source		= _jpeg_term_source;
-
-    jd.err = pjpeg_std_error(&jerr);
-    /* jpeg_create_decompress is a macro that expands to jpeg_CreateDecompress - see jpeglib.h
-     * jpeg_create_decompress(&jd); */
-    pjpeg_CreateDecompress(&jd, JPEG_LIB_VERSION, sizeof(struct jpeg_decompress_struct));
-    jd.src = &xjsm;
-    ret=pjpeg_read_header(&jd,TRUE);
-    jd.out_color_space = JCS_RGB;
-    pjpeg_start_decompress(&jd);
-    if (ret != JPEG_HEADER_OK) {
-	ERR("Jpeg image in stream has bad format, read header returned %d.\n",ret);
-	HeapFree(GetProcessHeap(),0,xbuf);
-	return E_FAIL;
-    }
-
-    bits = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
-                     (jd.output_height+1) * ((jd.output_width*jd.output_components + 3) & ~3) );
-    samprow=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,jd.output_width*jd.output_components);
-
-    oldbits = bits;
-    oldsamprow = samprow;
-    while ( jd.output_scanline<jd.output_height ) {
-      x = pjpeg_read_scanlines(&jd,&samprow,1);
-      if (x != 1) {
-	ERR("failed to read current scanline?\n");
-	break;
-      }
-      /* We have to convert from RGB to BGR, see MSDN/ BITMAPINFOHEADER */
-      for(i=0;i<jd.output_width;i++,samprow+=jd.output_components) {
-	*(bits++) = *(samprow+2);
-	*(bits++) = *(samprow+1);
-	*(bits++) = *(samprow);
-      }
-      bits = (LPBYTE)(((UINT_PTR)bits + 3) & ~3);
-      samprow = oldsamprow;
-    }
-    bits = oldbits;
-
-    bmi.biSize		= sizeof(bmi);
-    bmi.biWidth		=  jd.output_width;
-    bmi.biHeight	= -jd.output_height;
-    bmi.biPlanes	= 1;
-    bmi.biBitCount	= jd.output_components<<3;
-    bmi.biCompression	= BI_RGB;
-    bmi.biSizeImage	= jd.output_height*jd.output_width*jd.output_components;
-    bmi.biXPelsPerMeter	= 0;
-    bmi.biYPelsPerMeter	= 0;
-    bmi.biClrUsed	= 0;
-    bmi.biClrImportant	= 0;
-
-    HeapFree(GetProcessHeap(),0,samprow);
-    pjpeg_finish_decompress(&jd);
-    pjpeg_destroy_decompress(&jd);
-    hdcref = GetDC(0);
-    This->desc.u.bmp.hbitmap=CreateDIBitmap(
-	    hdcref,
-	    &bmi,
-	    CBM_INIT,
-	    bits,
-	    (BITMAPINFO*)&bmi,
-	    DIB_RGB_COLORS
-    );
-    ReleaseDC(0, hdcref);
-    This->desc.picType = PICTYPE_BITMAP;
-    OLEPictureImpl_SetBitmap(This);
-    HeapFree(GetProcessHeap(),0,bits);
-    return S_OK;
-#else
-    ERR("Trying to load JPEG picture, but JPEG supported not compiled in.\n");
-    return E_FAIL;
-#endif
-}
-
 static HRESULT OLEPictureImpl_LoadDIB(OLEPictureImpl *This, BYTE *xbuf, ULONG xread)
 {
     BITMAPFILEHEADER	*bfh = (BITMAPFILEHEADER*)xbuf;
@@ -1891,7 +1715,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     hr = OLEPictureImpl_LoadWICDecoder(This, &CLSID_WICGifDecoder, xbuf, xread);
     break;
   case BITMAP_FORMAT_JPEG: /* JPEG */
-    hr = OLEPictureImpl_LoadJpeg(This, xbuf, xread);
+    hr = OLEPictureImpl_LoadWICDecoder(This, &CLSID_WICJpegDecoder, xbuf, xread);
     break;
   case BITMAP_FORMAT_BMP: /* Bitmap */
     hr = OLEPictureImpl_LoadDIB(This, xbuf, xread);
