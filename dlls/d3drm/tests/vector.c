@@ -141,7 +141,7 @@ static void VectorTest(void)
     U1(e).x=6.0f; U2(e).y=6.0f; U3(e).z=1.0f;
     expect_vec(e,r);
 
-    U1(self).x=9.0f; U1(self).y=18.0f; U3(self).z=27.0f;
+    U1(self).x=9.0f; U2(self).y=18.0f; U3(self).z=27.0f;
     pD3DRMVectorAdd(&self,&self,&u);
     U1(e).x=11.0f; U2(e).y=20.0f; U3(e).z=28.0f;
     expect_vec(e,self);
@@ -151,7 +151,7 @@ static void VectorTest(void)
     U1(e).x=-2.0f; U2(e).y=-2.0f; U3(e).z=1.0f;
     expect_vec(e,r);
 
-    U1(self).x=9.0f; U1(self).y=18.0f; U3(self).z=27.0f;
+    U1(self).x=9.0f; U2(self).y=18.0f; U3(self).z=27.0f;
     pD3DRMVectorSubtract(&self,&self,&u);
     U1(e).x=7.0f; U2(e).y=16.0f; U3(e).z=26.0f;
     expect_vec(e,self);
@@ -161,7 +161,7 @@ static void VectorTest(void)
     U1(e).x=-4.0f; U2(e).y=4.0f; U3(e).z=0.0f;
     expect_vec(e,r);
 
-    U1(self).x=9.0f; U1(self).y=18.0f; U3(self).z=27.0f;
+    U1(self).x=9.0f; U2(self).y=18.0f; U3(self).z=27.0f;
     pD3DRMVectorCrossProduct(&self,&self,&u);
     U1(e).x=-36.0f; U2(e).y=45.0f; U3(e).z=-18.0f;
     expect_vec(e,self);
@@ -218,7 +218,7 @@ static void VectorTest(void)
     U1(e).x=10.0f; U2(e).y=10.0f; U3(e).z=0.0f;
     expect_vec(e,r);
 
-    U1(self).x=9.0f; U1(self).y=18.0f; U3(self).z=27.0f;
+    U1(self).x=9.0f; U2(self).y=18.0f; U3(self).z=27.0f;
     pD3DRMVectorScale(&self,&self,2);
     U1(e).x=18.0f; U2(e).y=36.0f; U3(e).z=54.0f;
     expect_vec(e,self);
