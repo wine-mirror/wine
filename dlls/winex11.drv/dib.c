@@ -2201,7 +2201,7 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
  *
  * GetDIBits for an 16-bit deep DIB.
  */
-static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
+static void X11DRV_DIB_GetImageBits_16( X11DRV_PDEVICE *physDev, int lines, BYTE *dstbits,
 					DWORD dstwidth, DWORD srcwidth,
 					PALETTEENTRY *srccolors,
 					DWORD rDst, DWORD gDst, DWORD bDst,
@@ -2509,7 +2509,7 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
                 for (x = 0; x < width; x++) {
                     COLORREF srcval;
                     DWORD dstval;
-                    srcval=X11DRV_PALETTE_ToLogical(XGetPixel(bmpImage, x, h));
+                    srcval=X11DRV_PALETTE_ToLogical(physDev, XGetPixel(bmpImage, x, h));
                     dstval=((GetRValue(srcval) << rShift) & rDst) |
                            ((GetGValue(srcval) << gShift) & gDst) |
                            ((GetBValue(srcval) << bShift) & bDst);
@@ -2694,7 +2694,7 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
  *
  * GetDIBits for an 24-bit deep DIB.
  */
-static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
+static void X11DRV_DIB_GetImageBits_24( X11DRV_PDEVICE *physDev, int lines, BYTE *dstbits,
 					DWORD dstwidth, DWORD srcwidth,
 					PALETTEENTRY *srccolors,
                                         DWORD rDst, DWORD gDst, DWORD bDst,
@@ -2891,7 +2891,7 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
                 dstbyte=dstbits;
                 for (x = 0; x < width; x++) {
                     COLORREF srcval=X11DRV_PALETTE_ToLogical
-                        (XGetPixel( bmpImage, x, h ));
+                        (physDev, XGetPixel( bmpImage, x, h ));
                     dstbyte[0]=GetBValue(srcval);
                     dstbyte[1]=GetGValue(srcval);
                     dstbyte[2]=GetRValue(srcval);
@@ -3176,7 +3176,7 @@ static void X11DRV_DIB_SetImageBits_32(int lines, const BYTE *srcbits,
  *
  * GetDIBits for an 32-bit deep DIB.
  */
-static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
+static void X11DRV_DIB_GetImageBits_32( X11DRV_PDEVICE *physDev, int lines, BYTE *dstbits,
 					DWORD dstwidth, DWORD srcwidth,
 					PALETTEENTRY *srccolors,
 					DWORD rDst, DWORD gDst, DWORD bDst,
@@ -3475,7 +3475,7 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
                 dstpixel=(DWORD*)dstbits;
                 for (x = 0; x < width; x++) {
                     COLORREF srcval;
-                    srcval=X11DRV_PALETTE_ToLogical(XGetPixel(bmpImage, x, h));
+                    srcval=X11DRV_PALETTE_ToLogical(physDev, XGetPixel(bmpImage, x, h));
                     *dstpixel++=(GetRValue(srcval) << rShift) |
                                 (GetGValue(srcval) << gShift) |
                                 (GetBValue(srcval) << bShift);
@@ -3798,7 +3798,7 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
         break;
     case 15:
     case 16:
-       X11DRV_DIB_GetImageBits_16( descr->lines, (LPVOID)descr->bits,
+       X11DRV_DIB_GetImageBits_16( descr->physDev, descr->lines, (LPVOID)descr->bits,
 				   descr->infoWidth,descr->width,
 				   descr->palentry,
 				   descr->rMask, descr->gMask, descr->bMask,
@@ -3806,7 +3806,7 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
        break;
 
     case 24:
-       X11DRV_DIB_GetImageBits_24( descr->lines, (LPVOID)descr->bits,
+       X11DRV_DIB_GetImageBits_24( descr->physDev, descr->lines, (LPVOID)descr->bits,
 				   descr->infoWidth,descr->width,
 				   descr->palentry,
 				   descr->rMask, descr->gMask, descr->bMask,
@@ -3814,7 +3814,7 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
        break;
 
     case 32:
-       X11DRV_DIB_GetImageBits_32( descr->lines, (LPVOID)descr->bits,
+       X11DRV_DIB_GetImageBits_32( descr->physDev, descr->lines, (LPVOID)descr->bits,
 				   descr->infoWidth, descr->width,
 				   descr->palentry,
                                    descr->rMask, descr->gMask, descr->bMask,
@@ -4151,7 +4151,7 @@ INT CDECL X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT start
               WORD *index = colorPtr;
               descr.colorMap = rgb = HeapAlloc(GetProcessHeap(), 0, num_colors * sizeof(RGBQUAD));
               for(i = 0; i < num_colors; i++, rgb++, index++) {
-                  colref = X11DRV_PALETTE_ToLogical(X11DRV_PALETTE_ToPhysical(physDev, PALETTEINDEX(*index)));
+                  colref = X11DRV_PALETTE_ToLogical(physDev, X11DRV_PALETTE_ToPhysical(physDev, PALETTEINDEX(*index)));
                   rgb->rgbRed = GetRValue(colref);
                   rgb->rgbGreen = GetGValue(colref);
                   rgb->rgbBlue = GetBValue(colref);

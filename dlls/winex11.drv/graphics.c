@@ -1036,7 +1036,7 @@ X11DRV_SetPixel( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color )
     /* Update the DIBSection from the pixmap */
     X11DRV_UnlockDIBSection(physDev, TRUE);
 
-    return X11DRV_PALETTE_ToLogical(pixel);
+    return X11DRV_PALETTE_ToLogical(physDev, pixel);
 }
 
 
@@ -1083,7 +1083,7 @@ X11DRV_GetPixel( X11DRV_PDEVICE *physDev, INT x, INT y )
     /* Update the DIBSection from the pixmap */
     X11DRV_UnlockDIBSection(physDev, FALSE);
     if( physDev->depth > 1)
-        pixel = X11DRV_PALETTE_ToLogical(pixel);
+        pixel = X11DRV_PALETTE_ToLogical(physDev, pixel);
     else
         /* monochrome bitmaps return black or white */
         if( pixel) pixel = 0xffffff;

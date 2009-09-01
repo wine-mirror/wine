@@ -490,7 +490,7 @@ extern int X11DRV_PALETTE_Init(void);
 extern void X11DRV_PALETTE_Cleanup(void);
 extern BOOL X11DRV_IsSolidColor(COLORREF color);
 
-extern COLORREF X11DRV_PALETTE_ToLogical(int pixel);
+extern COLORREF X11DRV_PALETTE_ToLogical(X11DRV_PDEVICE *physDev, int pixel);
 extern int X11DRV_PALETTE_ToPhysical(X11DRV_PDEVICE *physDev, COLORREF color);
 extern int X11DRV_PALETTE_LookupPixel(COLORREF color);
 
