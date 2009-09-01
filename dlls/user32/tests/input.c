@@ -970,7 +970,7 @@ static void test_unicode_keys(HWND hwnd, HHOOK hook)
     inputs[0].u.ki.dwFlags = KEYEVENTF_UNICODE;
 
     reset_key_status();
-    SendInput(1, (INPUT*)inputs, sizeof(INPUT));
+    pSendInput(1, (INPUT*)inputs, sizeof(INPUT));
     while(PeekMessageW(&msg, hwnd, 0, 0, PM_REMOVE)){
         if(msg.message == WM_KEYDOWN && msg.wParam == VK_PACKET){
             TranslateMessage(&msg);
@@ -992,7 +992,7 @@ static void test_unicode_keys(HWND hwnd, HHOOK hook)
     inputs[1].u.ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
 
     reset_key_status();
-    SendInput(1, (INPUT*)(inputs+1), sizeof(INPUT));
+    pSendInput(1, (INPUT*)(inputs+1), sizeof(INPUT));
     while(PeekMessageW(&msg, hwnd, 0, 0, PM_REMOVE)){
         if(msg.message == WM_KEYDOWN && msg.wParam == VK_PACKET){
             TranslateMessage(&msg);
@@ -1018,7 +1018,7 @@ static void test_unicode_keys(HWND hwnd, HHOOK hook)
 
     reset_key_status();
     key_status.expect_alt = TRUE;
-    SendInput(2, (INPUT*)inputs, sizeof(INPUT));
+    pSendInput(2, (INPUT*)inputs, sizeof(INPUT));
     while(PeekMessageW(&msg, hwnd, 0, 0, PM_REMOVE)){
         if(msg.message == WM_SYSKEYDOWN && msg.wParam == VK_PACKET){
             TranslateMessage(&msg);
@@ -1045,7 +1045,7 @@ static void test_unicode_keys(HWND hwnd, HHOOK hook)
 
     reset_key_status();
     key_status.expect_alt = TRUE;
-    SendInput(2, (INPUT*)inputs, sizeof(INPUT));
+    pSendInput(2, (INPUT*)inputs, sizeof(INPUT));
     while(PeekMessageW(&msg, hwnd, 0, 0, PM_REMOVE)){
         if(msg.message == WM_SYSKEYDOWN && msg.wParam == VK_PACKET){
             TranslateMessage(&msg);
