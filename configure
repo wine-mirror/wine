@@ -612,6 +612,7 @@ EXTRA_BINARIES
 MAIN_BINARY
 SOCKETLIBS
 CRTLIBS
+TOOLSEXT
 LDPATH
 BUILTINFLAG
 EXTRACFLAGS
@@ -11971,6 +11972,8 @@ LDPATH=""
 
 case $build_os in
   cygwin*|mingw32*)
+    TOOLSEXT=".exe"
+
     LDPATH="PATH=\"\$(TOOLSDIR)/libs/wine:\$\$PATH\""
     ;;
   darwin*|macosx*)

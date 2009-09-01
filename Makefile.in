@@ -119,7 +119,7 @@ RECURSE_TARGETS = \
 depend $(RECURSE_TARGETS): $(MAKEDEP)
 
 $(MAKEDEP): include/config.h
-	@cd $(TOOLSDIR)/tools && $(MAKE) makedep
+	@cd $(TOOLSDIR)/tools && $(MAKE) makedep$(TOOLSEXT)
 
 # Test rules
 

@@ -182,6 +182,6 @@ clean::
 	$(RM) libwine.so.$(SOVERSION) libwine.so.$(VERSION) version.c
 
 $(RELPATH):
-	@cd $(TOOLSDIR)/tools && $(MAKE) relpath
+	@cd $(TOOLSDIR)/tools && $(MAKE) relpath$(TOOLSEXT)
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

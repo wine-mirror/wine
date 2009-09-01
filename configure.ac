@@ -1593,6 +1593,7 @@ dnl **** Platform-specific checks ****
 AC_SUBST(LDPATH,"")
 case $build_os in
   cygwin*|mingw32*)
+    AC_SUBST(TOOLSEXT,".exe")
     LDPATH="PATH=\"\$(TOOLSDIR)/libs/wine:\$\$PATH\""
     ;;
   darwin*|macosx*)
