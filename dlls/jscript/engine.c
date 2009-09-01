@@ -174,7 +174,7 @@ void scope_release(scope_chain_t *scope)
     if(scope->next)
         scope_release(scope->next);
 
-    IDispatchEx_Release(_IDispatchEx_(scope->obj));
+    jsdisp_release(scope->obj);
     heap_free(scope);
 }
 
@@ -211,7 +211,7 @@ void exec_release(exec_ctx_t *ctx)
     if(ctx->scope_chain)
         scope_release(ctx->scope_chain);
     if(ctx->var_disp)
-        IDispatchEx_Release(_IDispatchEx_(ctx->var_disp));
+        jsdisp_release(ctx->var_disp);
     if(ctx->this_obj)
         IDispatch_Release(ctx->this_obj);
     heap_free(ctx);

@@ -361,12 +361,12 @@ static HRESULT WINAPI JScript_Close(IActiveScript *iface)
             change_state(This, SCRIPTSTATE_CLOSED);
 
         if(This->ctx->script_disp) {
-            IDispatchEx_Release(_IDispatchEx_(This->ctx->script_disp));
+            jsdisp_release(This->ctx->script_disp);
             This->ctx->script_disp = NULL;
         }
 
         if(This->ctx->global) {
-            IDispatchEx_Release(_IDispatchEx_(This->ctx->global));
+            jsdisp_release(This->ctx->global);
             This->ctx->global = NULL;
         }
     }

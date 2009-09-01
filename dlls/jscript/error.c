@@ -268,7 +268,7 @@ static HRESULT error_constr(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
             V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(err);
         }
         else
-            IDispatchEx_Release(_IDispatchEx_(err));
+            jsdisp_release(err);
 
         return S_OK;
 
@@ -367,7 +367,7 @@ HRESULT init_error_constr(script_ctx_t *ctx, DispatchEx *object_prototype)
         V_VT(&v) = VT_BSTR;
         V_BSTR(&v) = SysAllocString(names[i]);
         if(!V_BSTR(&v)) {
-            IDispatchEx_Release(_IDispatchEx_(&err->dispex));
+            jsdisp_release(&err->dispex);
             return E_OUTOFMEMORY;
         }
 
@@ -377,7 +377,7 @@ HRESULT init_error_constr(script_ctx_t *ctx, DispatchEx *object_prototype)
             hres = create_builtin_function(ctx, constr_val[i], NULL,
                     PROPF_CONSTR, &err->dispex, constr_addr[i]);
 
-        IDispatchEx_Release(_IDispatchEx_(&err->dispex));
+        jsdisp_release(&err->dispex);
         VariantClear(&v);
         if(FAILED(hres))
             return hres;

@@ -924,7 +924,7 @@ HRESULT create_array_constr(script_ctx_t *ctx, DispatchEx *object_prototype, Dis
 
     hres = create_builtin_function(ctx, ArrayConstr_value, NULL, PROPF_CONSTR, &array->dispex, ret);
 
-    IDispatchEx_Release(_IDispatchEx_(&array->dispex));
+    jsdisp_release(&array->dispex);
     return hres;
 }
 

@@ -788,7 +788,7 @@ HRESULT init_dispex_from_constr(DispatchEx *dispex, script_ctx_t *ctx, const bui
     hres = init_dispex(dispex, ctx, builtin_info, prot);
 
     if(prot)
-        IDispatchEx_Release(_IDispatchEx_(prot));
+        jsdisp_release(prot);
     return hres;
 }
 
@@ -871,7 +871,7 @@ HRESULT disp_call(IDispatch *disp, DISPID id, LCID lcid, WORD flags, DISPPARAMS 
     jsdisp = iface_to_jsdisp((IUnknown*)disp);
     if(jsdisp) {
         hres = jsdisp_call(jsdisp, id, lcid, flags, dp, retv, ei, caller);
-        IDispatchEx_Release(_IDispatchEx_(jsdisp));
+        jsdisp_release(jsdisp);
         return hres;
     }
 
@@ -940,7 +940,7 @@ HRESULT disp_propput(IDispatch *disp, DISPID id, LCID lcid, VARIANT *val, jsexce
         else
             hres = DISP_E_MEMBERNOTFOUND;
 
-        IDispatchEx_Release(_IDispatchEx_(jsdisp));
+        jsdisp_release(jsdisp);
         return hres;
     }
 
@@ -1010,7 +1010,7 @@ HRESULT disp_propget(IDispatch *disp, DISPID id, LCID lcid, VARIANT *val, jsexce
     jsdisp = iface_to_jsdisp((IUnknown*)disp);
     if(jsdisp) {
         hres = jsdisp_propget(jsdisp, id, lcid, val, ei, caller);
-        IDispatchEx_Release(_IDispatchEx_(jsdisp));
+        jsdisp_release(jsdisp);
         return hres;
     }
 
