@@ -3131,7 +3131,7 @@ typedef struct
 static HRESULT sltg_get_typelib_ref(const sltg_ref_lookup_t *table, DWORD typeinfo_ref,
 				    HREFTYPE *typelib_ref)
 {
-    if(typeinfo_ref < table->num)
+    if(table && typeinfo_ref < table->num)
     {
         *typelib_ref = table->refs[typeinfo_ref];
         return S_OK;
