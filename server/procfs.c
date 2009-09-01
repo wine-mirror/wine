@@ -39,6 +39,9 @@
 
 #ifdef USE_PROCFS
 
+/* procfs doesn't support large files */
+# undef _FILE_OFFSET_BITS
+# define _FILE_OFFSET_BITS 32
 #include <procfs.h>
 
 static int open_proc_as( struct process *process, int flags )
