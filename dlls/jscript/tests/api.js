@@ -114,6 +114,7 @@ ok(str.toString() === "test", "str.toString() = " + str.toString());
 var strObj = new Object();
 strObj.toString = function() { return "abcd" };
 strObj.substr = String.prototype.substr;
+strObj.lastIndexOf = String.prototype.lastIndexOf;
 
 tmp = "value " + str;
 ok(tmp === "value test", "'value ' + str = " + tmp);
@@ -293,6 +294,25 @@ tmp = "abcd".indexOf("bc",0,"test");
 ok(tmp === 1, "indexOf = " + tmp);
 tmp = "abcd".indexOf();
 ok(tmp == -1, "indexOf = " + tmp);
+
+tmp = "abcd".lastIndexOf("bc",1);
+ok(tmp === 1, "lastIndexOf = " + tmp);
+tmp = "abcd".lastIndexOf("bc",2);
+ok(tmp === 1, "lastIndexOf = " + tmp);
+tmp = "abcd".lastIndexOf("bc");
+ok(tmp === 1, "lastIndexOf = " + tmp);
+tmp = "abcd".lastIndexOf("ac");
+ok(tmp === -1, "lastIndexOf = " + tmp);
+tmp = "abcd".lastIndexOf("d",10);
+ok(tmp === 3, "lastIndexOf = " + tmp);
+tmp = "abcd".lastIndexOf("bc",0,"test");
+ok(tmp === -1, "lastIndexOf = " + tmp);
+tmp = "abcd".lastIndexOf();
+ok(tmp === -1, "lastIndexOf = " + tmp);
+tmp = "aaaa".lastIndexOf("a",2);
+ok(tmp == 2, "lastIndexOf = " + tmp);
+tmp = strObj.lastIndexOf("b");
+ok(tmp === 1, "lastIndexOf = " + tmp);
 
 tmp = "".toLowerCase();
 ok(tmp === "", "''.toLowerCase() = " + tmp);

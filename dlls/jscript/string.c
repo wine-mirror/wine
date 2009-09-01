@@ -562,11 +562,91 @@ static HRESULT String_italics(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
     return do_attributeless_tag_format(dispex, lcid, flags, dp, retv, ei, sp, italicstagW);
 }
 
+/* ECMA-262 3rd Edition    15.5.4.8 */
 static HRESULT String_lastIndexOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR search_str, val_str = NULL;
+    DWORD length, pos, search_len;
+    const WCHAR *str;
+    INT ret = -1;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(is_class(dispex, JSCLASS_STRING)) {
+        StringInstance *this = (StringInstance*)dispex;
+
+        str = this->str;
+        length = this->length;
+    }else {
+        VARIANT this;
+
+        V_VT(&this) = VT_DISPATCH;
+        V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
+
+        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        if(FAILED(hres))
+            return hres;
+
+        str = val_str;
+        length = SysStringLen(val_str);
+    }
+
+    if(!arg_cnt(dp)) {
+        if(retv) {
+            V_VT(retv) = VT_I4;
+            V_I4(retv) = -1;
+        }
+        SysFreeString(val_str);
+        return S_OK;
+    }
+
+    hres = to_string(dispex->ctx, get_arg(dp,0), ei, &search_str);
+    if(FAILED(hres)) {
+        SysFreeString(val_str);
+        return hres;
+    }
+
+    search_len = SysStringLen(search_str);
+
+    if(arg_cnt(dp) >= 2) {
+        VARIANT ival;
+
+        hres = to_integer(dispex->ctx, get_arg(dp,1), ei, &ival);
+        if(SUCCEEDED(hres)) {
+            if(V_VT(&ival) == VT_I4)
+                pos = V_VT(&ival) > 0 ? V_I4(&ival) : 0;
+            else
+                pos = V_R8(&ival) > 0.0 ? length : 0;
+            if(pos > length)
+                pos = length;
+        }
+    }else {
+        pos = length;
+    }
+
+    if(SUCCEEDED(hres) && length >= search_len) {
+        const WCHAR *ptr;
+
+        for(ptr = str+min(pos, length-search_len); ptr >= str; ptr--) {
+            if(!memcmp(ptr, search_str, search_len*sizeof(WCHAR))) {
+                ret = ptr-str;
+                break;
+            }
+        }
+    }
+
+    SysFreeString(search_str);
+    SysFreeString(val_str);
+    if(FAILED(hres))
+        return hres;
+
+    if(retv) {
+        V_VT(retv) = VT_I4;
+        V_I4(retv) = ret;
+    }
+    return S_OK;
 }
 
 static HRESULT String_link(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
