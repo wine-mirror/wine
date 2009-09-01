@@ -662,15 +662,6 @@ static void test_func(IDispatchEx *obj)
     ok(V_DISPATCH(&var) != NULL, "V_DISPATCH(var) == NULL\n");
     disp = V_DISPATCH(&var);
 
-    memset(&dp, 0, sizeof(dp));
-    memset(&ei, 0, sizeof(ei));
-    VariantInit(&var);
-    hres = IDispatchEx_InvokeEx(obj, id, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dp, &var, &ei, NULL);
-    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
-    ok(V_VT(&var) == VT_DISPATCH, "V_VT(var)=%d\n", V_VT(&var));
-    ok(V_DISPATCH(&var) == disp, "V_DISPATCH(var) != disp\n");
-    VariantClear(&var);
-
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     IDispatch_Release(disp);
     ok(hres == S_OK, "Could not get IDispatchEx iface: %08x\n", hres);
@@ -681,10 +672,12 @@ static void test_func(IDispatchEx *obj)
     memset(&ei, 0, sizeof(ei));
     VariantInit(&var);
     hres = IDispatchEx_Invoke(dispex, DISPID_VALUE, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dp, &var, &ei, NULL);
-    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
-    ok(V_VT(&var) == VT_BSTR, "V_VT(var)=%d\n", V_VT(&var));
-    ok(!strcmp_wa(V_BSTR(&var), "[object]"), "V_BSTR(var) = %s\n", wine_dbgstr_w(V_BSTR(&var)));
-    VariantClear(&var);
+    ok(hres == S_OK || broken(E_ACCESSDENIED), "InvokeEx failed: %08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        ok(V_VT(&var) == VT_BSTR, "V_VT(var)=%d\n", V_VT(&var));
+        ok(!strcmp_wa(V_BSTR(&var), "[object]"), "V_BSTR(var) = %s\n", wine_dbgstr_w(V_BSTR(&var)));
+        VariantClear(&var);
+    }
 
     dp.cArgs = 1;
     dp.rgvarg = &var;
@@ -876,6 +869,9 @@ static HRESULT WINAPI ActiveScript_QueryInterface(IActiveScript *iface, REFIID r
         *ppv = &ObjectSafety;
         return S_OK;
     }
+
+    if(IsEqualGUID(&IID_IActiveScriptDebug, riid))
+        return E_NOINTERFACE;
 
     ok(0, "unexpected riid %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
