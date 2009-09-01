@@ -70,12 +70,11 @@ static HRESULT init_parameters(DispatchEx *var_disp, FunctionInstance *function,
     HRESULT hres;
 
     V_VT(&var_empty) = VT_EMPTY;
-    cargs = dp->cArgs - dp->cNamedArgs;
+    cargs = arg_cnt(dp);
 
     for(param = function->parameters; param; param = param->next) {
         hres = jsdisp_propput_name(var_disp, param->identifier, lcid,
-                i < cargs ? dp->rgvarg + dp->cArgs-1 - i : &var_empty,
-                ei, caller);
+                i < cargs ? get_arg(dp,i) : &var_empty, ei, caller);
         if(FAILED(hres))
             return hres;
 

@@ -1066,7 +1066,7 @@ static HRESULT String_slice(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     }
 
     if(arg_cnt(dp)) {
-        hres = to_integer(dispex->ctx, dp->rgvarg + dp->cArgs-1, ei, &v);
+        hres = to_integer(dispex->ctx, get_arg(dp,0), ei, &v);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -1089,7 +1089,7 @@ static HRESULT String_slice(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     }
 
     if(arg_cnt(dp) >= 2) {
-        hres = to_integer(dispex->ctx, dp->rgvarg + dp->cArgs-2, ei, &v);
+        hres = to_integer(dispex->ctx, get_arg(dp,1), ei, &v);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -1325,7 +1325,7 @@ static HRESULT String_substring(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
     }
 
     if(arg_cnt(dp) >= 1) {
-        hres = to_integer(dispex->ctx, dp->rgvarg + dp->cArgs-1, ei, &v);
+        hres = to_integer(dispex->ctx, get_arg(dp,0), ei, &v);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -1343,7 +1343,7 @@ static HRESULT String_substring(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
     }
 
     if(arg_cnt(dp) >= 2) {
-        hres = to_integer(dispex->ctx, dp->rgvarg + dp->cArgs-2, ei, &v);
+        hres = to_integer(dispex->ctx, get_arg(dp,1), ei, &v);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -1412,7 +1412,7 @@ static HRESULT String_substr(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
     }
 
     if(arg_cnt(dp) >= 1) {
-        hres = to_integer(dispex->ctx, dp->rgvarg + dp->cArgs-1, ei, &v);
+        hres = to_integer(dispex->ctx, get_arg(dp,0), ei, &v);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -1430,7 +1430,7 @@ static HRESULT String_substr(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
     }
 
     if(arg_cnt(dp) >= 2) {
-        hres = to_integer(dispex->ctx, dp->rgvarg + dp->cArgs-2, ei, &v);
+        hres = to_integer(dispex->ctx, get_arg(dp,1), ei, &v);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;

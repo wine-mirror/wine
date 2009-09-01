@@ -315,7 +315,7 @@ static HRESULT Array_join(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS 
     if(arg_cnt(dp)) {
         BSTR sep;
 
-        hres = to_string(dispex->ctx, dp->rgvarg + dp->cArgs-1, ei, &sep);
+        hres = to_string(dispex->ctx, get_arg(dp,0), ei, &sep);
         if(FAILED(hres))
             return hres;
 
