@@ -99,6 +99,18 @@ enum x11drv_shm_mode
     X11DRV_SHM_IMAGE,
 };
 
+typedef struct {
+    int shift;
+    int scale;
+    int max;
+} ChannelShift;
+
+typedef struct
+{
+    ChannelShift physicalRed, physicalBlue, physicalGreen;
+    ChannelShift logicalRed, logicalBlue, logicalGreen;
+} ColorShifts;
+
   /* X physical bitmap */
 typedef struct
 {
