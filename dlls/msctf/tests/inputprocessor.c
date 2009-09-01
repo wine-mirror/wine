@@ -43,6 +43,7 @@ static ITextStoreACPSink *ACPSink;
 #define SINK_UNEXPECTED 0
 #define SINK_EXPECTED 1
 #define SINK_FIRED 2
+#define SINK_IGNORE 3
 
 static BOOL test_ShouldActivate = FALSE;
 static BOOL test_ShouldDeactivate = FALSE;
@@ -150,8 +151,11 @@ static HRESULT WINAPI TextStoreACP_RequestLock(ITextStoreACP *iface,
 static HRESULT WINAPI TextStoreACP_GetStatus(ITextStoreACP *iface,
     TS_STATUS *pdcs)
 {
-    ok(test_ACP_GetStatus  == SINK_EXPECTED, "Unexpected TextStoreACP_GetStatus\n");
-    test_ACP_GetStatus = SINK_FIRED;
+    ok(test_ACP_GetStatus  == SINK_EXPECTED || test_ACP_GetStatus == SINK_IGNORE, "Unexpected TextStoreACP_GetStatus\n");
+    if (test_ACP_GetStatus  == SINK_EXPECTED)
+        test_ACP_GetStatus = SINK_FIRED;
+    else if (test_ACP_GetStatus == SINK_IGNORE)
+        trace("Ignoring fired TextStoreACP_GetStatus\n");
     pdcs->dwDynamicFlags = documentStatus;
     return S_OK;
 }
@@ -1855,6 +1859,138 @@ static void test_Compartments(void)
     ITfDocumentMgr_Release(dm);
 }
 
+static void processPendingMessages(void)
+{
+    MSG msg;
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+}
+
+static void test_AssociateFocus(void)
+{
+    ITfDocumentMgr *dm1, *dm2, *olddm, *dmcheck, *dmorig;
+    HWND wnd1, wnd2, wnd3;
+    HRESULT hr;
+
+    ITfThreadMgr_GetFocus(g_tm, &dmorig);
+    test_CurrentFocus = NULL;
+    test_PrevFocus = dmorig;
+    test_OnSetFocus  = SINK_EXPECTED;
+    hr = ITfThreadMgr_SetFocus(g_tm,NULL);
+    ok(test_OnSetFocus == SINK_FIRED,"OnSetFocus not fired as expected\n");
+    ITfDocumentMgr_Release(dmorig);
+
+    hr = ITfThreadMgr_CreateDocumentMgr(g_tm,&dm1);
+    ok(SUCCEEDED(hr),"CreateDocumentMgr failed\n");
+
+    hr = ITfThreadMgr_CreateDocumentMgr(g_tm,&dm2);
+    ok(SUCCEEDED(hr),"CreateDocumentMgr failed\n");
+
+    wnd1 = CreateWindow("edit",NULL,WS_POPUP|WS_VISIBLE,0,0,200,60,NULL,NULL,NULL,NULL);
+    ok(wnd1!=NULL,"Unable to create window 1\n");
+    wnd2 = CreateWindow("edit",NULL,WS_POPUP|WS_VISIBLE,0,0,200,60,NULL,NULL,NULL,NULL);
+    ok(wnd2!=NULL,"Unable to create window 2\n");
+    wnd3 = CreateWindow("edit",NULL,WS_POPUP|WS_VISIBLE,0,0,200,60,NULL,NULL,NULL,NULL);
+    ok(wnd3!=NULL,"Unable to create window 3\n");
+
+    processPendingMessages();
+
+    SetFocus(wnd1);
+    processPendingMessages();
+    test_CurrentFocus = dm1;
+    test_PrevFocus = NULL;
+    test_OnSetFocus  = SINK_EXPECTED;
+    hr = ITfThreadMgr_AssociateFocus(g_tm,wnd1,dm1,&olddm);
+    ok(SUCCEEDED(hr),"AssociateFocus failed\n");
+    ok(test_OnSetFocus == SINK_FIRED,"OnSetFocus not fired as expected\n");
+    ok(olddm == NULL, "unexpected old DocumentMgr\n");
+
+    processPendingMessages();
+
+    ITfThreadMgr_GetFocus(g_tm, &dmcheck);
+    ok(dmcheck == dm1, "Expected DocumentMgr not focused\n");
+    ITfDocumentMgr_Release(dmcheck);
+
+    hr = ITfThreadMgr_AssociateFocus(g_tm,wnd2,dm2,&olddm);
+    ok(SUCCEEDED(hr),"AssociateFocus failed\n");
+    processPendingMessages();
+    ITfThreadMgr_GetFocus(g_tm, &dmcheck);
+    ok(dmcheck == dm1, "Expected DocumentMgr not focused\n");
+    ITfDocumentMgr_Release(dmcheck);
+
+    hr = ITfThreadMgr_AssociateFocus(g_tm,wnd3,dm2,&olddm);
+    ok(SUCCEEDED(hr),"AssociateFocus failed\n");
+    processPendingMessages();
+    ITfThreadMgr_GetFocus(g_tm, &dmcheck);
+    ok(dmcheck == dm1, "Expected DocumentMgr not focused\n");
+    ITfDocumentMgr_Release(dmcheck);
+
+    test_CurrentFocus = dm2;
+    test_PrevFocus = dm1;
+    test_OnSetFocus  = SINK_EXPECTED;
+    SetFocus(wnd2);
+    processPendingMessages();
+    ok(test_OnSetFocus == SINK_FIRED,"OnSetFocus not fired as expected\n");
+
+    SetFocus(wnd3);
+    processPendingMessages();
+
+    test_CurrentFocus = dm1;
+    test_PrevFocus = dm2;
+    test_OnSetFocus = SINK_EXPECTED;
+    SetFocus(wnd1);
+    processPendingMessages();
+    ok(test_OnSetFocus == SINK_FIRED,"OnSetFocus not fired as expected\n");
+
+    hr = ITfThreadMgr_AssociateFocus(g_tm,wnd3,NULL,&olddm);
+    ok(SUCCEEDED(hr),"AssociateFocus failed\n");
+    ok(olddm == dm2, "incorrect old DocumentMgr returned\n");
+    ITfDocumentMgr_Release(olddm);
+
+    test_CurrentFocus = dmorig;
+    test_PrevFocus = dm1;
+    test_OnSetFocus  = SINK_EXPECTED;
+    test_ACP_GetStatus = SINK_EXPECTED;
+    ITfThreadMgr_SetFocus(g_tm,dmorig);
+    ok(test_OnSetFocus == SINK_FIRED,"OnSetFocus not fired as expected\n");
+
+    test_CurrentFocus = NULL;
+    test_PrevFocus = dmorig;
+    test_OnSetFocus  = SINK_EXPECTED;
+    SetFocus(wnd3);
+    processPendingMessages();
+    ok(test_OnSetFocus == SINK_FIRED,"OnSetFocus not fired as expected\n");
+
+    hr = ITfThreadMgr_AssociateFocus(g_tm,wnd2,NULL,&olddm);
+    ok(SUCCEEDED(hr),"AssociateFocus failed\n");
+    ok(olddm == dm2, "incorrect old DocumentMgr returned\n");
+    ITfDocumentMgr_Release(olddm);
+    hr = ITfThreadMgr_AssociateFocus(g_tm,wnd1,NULL,&olddm);
+    ok(SUCCEEDED(hr),"AssociateFocus failed\n");
+    ok(olddm == dm1, "incorrect old DocumentMgr returned\n");
+    ITfDocumentMgr_Release(olddm);
+
+    SetFocus(wnd2);
+    processPendingMessages();
+    SetFocus(wnd1);
+    processPendingMessages();
+
+    ITfDocumentMgr_Release(dm1);
+    ITfDocumentMgr_Release(dm2);
+    DestroyWindow(wnd1);
+    DestroyWindow(wnd2);
+    DestroyWindow(wnd3);
+
+    test_CurrentFocus = dmorig;
+    test_PrevFocus = NULL;
+    test_OnSetFocus  = SINK_EXPECTED;
+    test_ACP_GetStatus = SINK_IGNORE;
+    ITfThreadMgr_SetFocus(g_tm,dmorig);
+    ok(test_OnSetFocus == SINK_FIRED,"OnSetFocus not fired as expected\n");
+}
+
 START_TEST(inputprocessor)
 {
     if (SUCCEEDED(initialize()))
@@ -1871,6 +2007,7 @@ START_TEST(inputprocessor)
         test_KeystrokeMgr();
         test_TStoApplicationText();
         test_Compartments();
+        test_AssociateFocus();
         test_endSession();
         test_EnumLanguageProfiles();
         test_FindClosestCategory();
