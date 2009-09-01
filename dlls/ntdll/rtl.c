@@ -939,141 +939,180 @@ PVOID WINAPI RtlDecodePointer( PVOID ptr )
     return (PVOID)(ptrval ^ get_pointer_obfuscator());
 }
 
-VOID WINAPI RtlInitializeSListHead(PSLIST_HEADER ListHeader)
+/*************************************************************************
+ * RtlInitializeSListHead   [NTDLL.@]
+ */
+VOID WINAPI RtlInitializeSListHead(PSLIST_HEADER list)
 {
-    TRACE("(%p)\n", ListHeader);
 #ifdef _WIN64
-    FIXME("stub\n");
+    list->s.Alignment = list->s.Region = 0;
+    list->Header16.HeaderType = 1;  /* we use the 16-byte header */
 #else
-    ListHeader->Alignment = 0;
+    list->Alignment = 0;
 #endif
 }
 
-WORD WINAPI RtlQueryDepthSList(PSLIST_HEADER ListHeader)
+/*************************************************************************
+ * RtlQueryDepthSList   [NTDLL.@]
+ */
+WORD WINAPI RtlQueryDepthSList(PSLIST_HEADER list)
 {
-    TRACE("(%p)\n", ListHeader);
 #ifdef _WIN64
-    FIXME("stub\n");
-    return 0;
+    return list->Header16.Depth;
 #else
-    return ListHeader->s.Depth;
+    return list->s.Depth;
 #endif
 }
 
-PSLIST_ENTRY WINAPI RtlFirstEntrySList(const SLIST_HEADER* ListHeader)
+/*************************************************************************
+ * RtlFirstEntrySList   [NTDLL.@]
+ */
+PSLIST_ENTRY WINAPI RtlFirstEntrySList(const SLIST_HEADER* list)
 {
-    TRACE("(%p)\n", ListHeader);
 #ifdef _WIN64
-    FIXME("stub\n");
-    return NULL;
+    return (SLIST_ENTRY *)((ULONG_PTR)list->Header16.NextEntry << 4);
 #else
-    return ListHeader->s.Next.Next;
+    return list->s.Next.Next;
 #endif
 }
 
-PSLIST_ENTRY WINAPI RtlInterlockedFlushSList(PSLIST_HEADER ListHeader)
+/*************************************************************************
+ * RtlInterlockedFlushSList   [NTDLL.@]
+ */
+PSLIST_ENTRY WINAPI RtlInterlockedFlushSList(PSLIST_HEADER list)
 {
-    SLIST_HEADER oldHeader, newHeader;
-    TRACE("(%p)\n", ListHeader);
+    SLIST_HEADER old, new;
+
 #ifdef _WIN64
-    FIXME("stub\n");
-    return NULL;
-#else
-    if (ListHeader->s.Depth == 0)
-        return NULL;
-    newHeader.Alignment = 0;
+    if (!list->Header16.Depth) return NULL;
+    new.s.Alignment = new.s.Region = 0;
+    new.Header16.HeaderType = 1;  /* we use the 16-byte header */
     do
     {
-        oldHeader = *ListHeader;
-        newHeader.s.Sequence = ListHeader->s.Sequence + 1;
-    } while (interlocked_cmpxchg64((__int64*)&ListHeader->Alignment,
-                                   newHeader.Alignment,
-                                   oldHeader.Alignment) != oldHeader.Alignment);
-    return oldHeader.s.Next.Next;
-#endif
-}
-
-PSLIST_ENTRY WINAPI RtlInterlockedPushEntrySList(PSLIST_HEADER ListHeader,
-                                                 PSLIST_ENTRY ListEntry)
-{
-    SLIST_HEADER oldHeader, newHeader;
-    TRACE("(%p, %p)\n", ListHeader, ListEntry);
-#ifdef _WIN64
-    FIXME("stub\n");
-    return NULL;
+        old = *list;
+        new.Header16.Sequence = old.Header16.Sequence + 1;
+    } while (!interlocked_cmpxchg128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
+    return (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
 #else
-    newHeader.s.Next.Next = ListEntry;
+    if (!list->s.Depth) return NULL;
+    new.Alignment = 0;
     do
     {
-        oldHeader = *ListHeader;
-        ListEntry->Next = ListHeader->s.Next.Next;
-        newHeader.s.Depth = ListHeader->s.Depth + 1;
-        newHeader.s.Sequence = ListHeader->s.Sequence + 1;
-    } while (interlocked_cmpxchg64((__int64*)&ListHeader->Alignment,
-                                   newHeader.Alignment,
-                                   oldHeader.Alignment) != oldHeader.Alignment);
-    return oldHeader.s.Next.Next;
+        old = *list;
+        new.s.Sequence = old.s.Sequence + 1;
+    } while (interlocked_cmpxchg64((__int64 *)&list->Alignment, new.Alignment,
+                                   old.Alignment) != old.Alignment);
+    return old.s.Next.Next;
 #endif
 }
 
-PSLIST_ENTRY WINAPI RtlInterlockedPopEntrySList(PSLIST_HEADER ListHeader)
+/*************************************************************************
+ * RtlInterlockedPushEntrySList   [NTDLL.@]
+ */
+PSLIST_ENTRY WINAPI RtlInterlockedPushEntrySList(PSLIST_HEADER list, PSLIST_ENTRY entry)
 {
-    SLIST_HEADER oldHeader, newHeader;
+    SLIST_HEADER old, new;
+
+#ifdef _WIN64
+    new.Header16.NextEntry = (ULONG_PTR)entry >> 4;
+    do
+    {
+        old = *list;
+        entry->Next = (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
+        new.Header16.Depth = old.Header16.Depth + 1;
+        new.Header16.Sequence = old.Header16.Sequence + 1;
+    } while (!interlocked_cmpxchg128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
+    return (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
+#else
+    new.s.Next.Next = entry;
+    do
+    {
+        old = *list;
+        entry->Next = old.s.Next.Next;
+        new.s.Depth = old.s.Depth + 1;
+        new.s.Sequence = old.s.Sequence + 1;
+    } while (interlocked_cmpxchg64((__int64 *)&list->Alignment, new.Alignment,
+                                   old.Alignment) != old.Alignment);
+    return old.s.Next.Next;
+#endif
+}
+
+/*************************************************************************
+ * RtlInterlockedPopEntrySList   [NTDLL.@]
+ */
+PSLIST_ENTRY WINAPI RtlInterlockedPopEntrySList(PSLIST_HEADER list)
+{
+    SLIST_HEADER old, new;
     PSLIST_ENTRY entry;
-    TRACE("(%p)\n", ListHeader);
+
 #ifdef _WIN64
-    FIXME("stub\n");
-    return NULL;
-#else
     do
     {
-        oldHeader = *ListHeader;
-        entry = ListHeader->s.Next.Next;
-        if (entry == NULL)
-            return NULL;
+        old = *list;
+        if (!(entry = (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4))) return NULL;
         /* entry could be deleted by another thread */
         __TRY
         {
-            newHeader.s.Next.Next = entry->Next;
-            newHeader.s.Depth = ListHeader->s.Depth - 1;
-            newHeader.s.Sequence = ListHeader->s.Sequence + 1;
+            new.Header16.NextEntry = (ULONG_PTR)entry->Next >> 4;
+            new.Header16.Depth = old.Header16.Depth - 1;
+            new.Header16.Sequence = old.Header16.Sequence + 1;
         }
         __EXCEPT_PAGE_FAULT
         {
         }
         __ENDTRY
-    } while (interlocked_cmpxchg64((__int64*)&ListHeader->Alignment,
-                                   newHeader.Alignment,
-                                   oldHeader.Alignment) != oldHeader.Alignment);
-    return entry;
+    } while (!interlocked_cmpxchg128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
+#else
+    do
+    {
+        old = *list;
+        if (!(entry = old.s.Next.Next)) return NULL;
+        /* entry could be deleted by another thread */
+        __TRY
+        {
+            new.s.Next.Next = entry->Next;
+            new.s.Depth = old.s.Depth - 1;
+            new.s.Sequence = old.s.Sequence + 1;
+        }
+        __EXCEPT_PAGE_FAULT
+        {
+        }
+        __ENDTRY
+    } while (interlocked_cmpxchg64((__int64 *)&list->Alignment, new.Alignment,
+                                   old.Alignment) != old.Alignment);
 #endif
+    return entry;
 }
 
 /*************************************************************************
  * RtlInterlockedPushListSList   [NTDLL.@]
  */
-PSLIST_ENTRY WINAPI RtlInterlockedPushListSList(PSLIST_HEADER ListHeader,
-                                                PSLIST_ENTRY FirstEntry,
-                                                PSLIST_ENTRY LastEntry,
-                                                ULONG Count)
+PSLIST_ENTRY WINAPI RtlInterlockedPushListSList(PSLIST_HEADER list, PSLIST_ENTRY first,
+                                                PSLIST_ENTRY last, ULONG count)
 {
-    SLIST_HEADER oldHeader, newHeader;
-    TRACE("(%p, %p, %p, %d)\n", ListHeader, FirstEntry, LastEntry, Count);
+    SLIST_HEADER old, new;
+
 #ifdef _WIN64
-    FIXME("stub\n");
-    return NULL;
-#else
-    newHeader.s.Next.Next = FirstEntry;
+    new.Header16.NextEntry = (ULONG_PTR)first >> 4;
     do
     {
-        oldHeader = *ListHeader;
-        newHeader.s.Depth = ListHeader->s.Depth + Count;
-        newHeader.s.Sequence = ListHeader->s.Sequence + 1;
-        LastEntry->Next = ListHeader->s.Next.Next;
-    } while (interlocked_cmpxchg64((__int64*)&ListHeader->Alignment,
-                                   newHeader.Alignment,
-                                   oldHeader.Alignment) != oldHeader.Alignment);
-    return oldHeader.s.Next.Next;
+        old = *list;
+        new.Header16.Depth = old.Header16.Depth + count;
+        new.Header16.Sequence = old.Header16.Sequence + 1;
+        last->Next = (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
+    } while (!interlocked_cmpxchg128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
+    return (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
+#else
+    new.s.Next.Next = first;
+    do
+    {
+        old = *list;
+        new.s.Depth = old.s.Depth + count;
+        new.s.Sequence = old.s.Sequence + 1;
+        last->Next = old.s.Next.Next;
+    } while (interlocked_cmpxchg64((__int64 *)&list->Alignment, new.Alignment,
+                                   old.Alignment) != old.Alignment);
+    return old.s.Next.Next;
 #endif
 }
 
