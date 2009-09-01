@@ -94,7 +94,7 @@ static inline WORD d3d_fpu_setup(void)
 }
 
 /*****************************************************************************
- * IUnknown Methods. Common for Version 1, 2, 3 and 7 
+ * IUnknown Methods. Common for Version 1, 2, 3 and 7
  *****************************************************************************/
 
 /*****************************************************************************
@@ -4502,7 +4502,7 @@ IDirect3DDeviceImpl_7_GetTexture(IDirect3DDevice7 *iface,
 
     EnterCriticalSection(&ddraw_cs);
     hr = IWineD3DDevice_GetTexture(This->wineD3DDevice, Stage, &Surf);
-    if( (hr != D3D_OK) || (!Surf) ) 
+    if( (hr != D3D_OK) || (!Surf) )
     {
         *Texture = NULL;
         LeaveCriticalSection(&ddraw_cs);
@@ -5302,7 +5302,7 @@ IDirect3DDeviceImpl_7_GetMaterial(IDirect3DDevice7 *iface,
     TRACE("(%p)->(%p): Relay!\n", This, Mat);
 
     EnterCriticalSection(&ddraw_cs);
-    /* Note: D3DMATERIAL7 is compatible with WINED3DMATERIAL */ 
+    /* Note: D3DMATERIAL7 is compatible with WINED3DMATERIAL */
     hr = IWineD3DDevice_GetMaterial(This->wineD3DDevice,
                                     (WINED3DMATERIAL*) Mat);
     LeaveCriticalSection(&ddraw_cs);

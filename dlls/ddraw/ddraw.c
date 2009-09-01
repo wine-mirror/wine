@@ -816,7 +816,7 @@ IDirectDrawImpl_GetDisplayMode(IDirectDraw7 *iface,
 
     EnterCriticalSection(&ddraw_cs);
     /* This seems sane */
-    if(!DDSD) 
+    if (!DDSD)
     {
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDPARAMS;
@@ -841,7 +841,7 @@ IDirectDrawImpl_GetDisplayMode(IDirectDraw7 *iface,
     DDSD->dwSize = Size;
     DDSD->dwFlags |= DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_PITCH | DDSD_REFRESHRATE;
     DDSD->dwWidth = Mode.Width;
-    DDSD->dwHeight = Mode.Height; 
+    DDSD->dwHeight = Mode.Height;
     DDSD->u2.dwRefreshRate = 60;
     DDSD->ddsCaps.dwCaps = 0;
     DDSD->u4.ddpfPixelFormat.dwSize = sizeof(DDSD->u4.ddpfPixelFormat);
@@ -1101,7 +1101,7 @@ IDirectDrawImpl_FlipToGDISurface(IDirectDraw7 *iface)
  * Returns:
  *  Always returns DD_OK
  *
- *****************************************************************************/ 
+ *****************************************************************************/
 static HRESULT WINAPI
 IDirectDrawImpl_WaitForVerticalBlank(IDirectDraw7 *iface,
                                      DWORD Flags,
@@ -1135,7 +1135,7 @@ IDirectDrawImpl_WaitForVerticalBlank(IDirectDraw7 *iface,
  * Returns:
  *  Always returns DD_OK
  *
- *****************************************************************************/ 
+ *****************************************************************************/
 static HRESULT WINAPI IDirectDrawImpl_GetScanLine(IDirectDraw7 *iface, DWORD *Scanline)
 {
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
@@ -1155,7 +1155,7 @@ static HRESULT WINAPI IDirectDrawImpl_GetScanLine(IDirectDraw7 *iface, DWORD *Sc
                                   &Mode);
 
     /* Fake the line sweeping of the monitor */
-    /* FIXME: We should synchronize with a source to keep the refresh rate */ 
+    /* FIXME: We should synchronize with a source to keep the refresh rate */
     *Scanline = This->cur_scanline++;
     /* Assume 20 scan lines in the vertical blank */
     if (This->cur_scanline >= Mode.Height + 20)
@@ -1176,7 +1176,7 @@ static HRESULT WINAPI IDirectDrawImpl_GetScanLine(IDirectDraw7 *iface, DWORD *Sc
  *  DDERR_NOEXCLUSIVEMODE or DDERR_EXCLUSIVEMODEALREADYSET
  *  if the state is not correct(See below)
  *
- *****************************************************************************/ 
+ *****************************************************************************/
 static HRESULT WINAPI
 IDirectDrawImpl_TestCooperativeLevel(IDirectDraw7 *iface)
 {
@@ -1187,8 +1187,8 @@ IDirectDrawImpl_TestCooperativeLevel(IDirectDraw7 *iface)
     EnterCriticalSection(&ddraw_cs);
     /* Description from MSDN:
      * For fullscreen apps return DDERR_NOEXCLUSIVEMODE if the user switched
-     * away from the app with e.g. alt-tab. Windowed apps receive 
-     * DDERR_EXCLUSIVEMODEALREADYSET if another application created a 
+     * away from the app with e.g. alt-tab. Windowed apps receive
+     * DDERR_EXCLUSIVEMODEALREADYSET if another application created a
      * DirectDraw object in exclusive mode. DDERR_WRONGMODE is returned,
      * when the video mode has changed
      */
@@ -1243,7 +1243,7 @@ IDirectDrawImpl_TestCooperativeLevel(IDirectDraw7 *iface)
  *  DD_OK if the surface was found
  *  DDERR_NOTFOUND if the GDI surface wasn't found
  *
- *****************************************************************************/ 
+ *****************************************************************************/
 static HRESULT WINAPI
 IDirectDrawImpl_GetGDISurface(IDirectDraw7 *iface,
                               IDirectDrawSurface7 **GDISurface)
@@ -1311,7 +1311,7 @@ IDirectDrawImpl_GetGDISurface(IDirectDraw7 *iface,
  *  DD_OK on success
  *  DDERR_INVALIDPARAMS if the callback wasn't set
  *
- *****************************************************************************/ 
+ *****************************************************************************/
 static HRESULT WINAPI
 IDirectDrawImpl_EnumDisplayModes(IDirectDraw7 *iface,
                                  DWORD Flags,
@@ -1886,8 +1886,9 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
     }
     else
     {
-         if((pDDSD->ddsCaps.dwCaps & DDSCAPS_3DDEVICE ) && 
-            (This->ImplType != SURFACE_OPENGL ) && DefaultSurfaceType == SURFACE_UNKNOWN)
+        if ((pDDSD->ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
+                && (This->ImplType != SURFACE_OPENGL)
+                && DefaultSurfaceType == SURFACE_UNKNOWN)
         {
             /* We have to change to OpenGL,
              * and re-create all WineD3DSurfaces
