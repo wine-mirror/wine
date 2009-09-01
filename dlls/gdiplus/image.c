@@ -1512,6 +1512,11 @@ static GpStatus decode_image_jpeg(IStream* stream, REFCLSID clsid, GpImage **ima
     return decode_image_wic(stream, &CLSID_WICJpegDecoder, image);
 }
 
+static GpStatus decode_image_gif(IStream* stream, REFCLSID clsid, GpImage **image)
+{
+    return decode_image_wic(stream, &CLSID_WICGifDecoder, image);
+}
+
 static GpStatus decode_image_olepicture_bitmap(IStream* stream, REFCLSID clsid, GpImage **image)
 {
     IPicture *pic;
@@ -2084,7 +2089,7 @@ static const struct image_codec codecs[NUM_CODECS] = {
             /* SigMask */            gif_sig_mask,
         },
         NULL,
-        decode_image_olepicture_bitmap
+        decode_image_gif
     },
     {
         { /* EMF */
