@@ -255,7 +255,7 @@ int CDECL __STRINGTOLD( MSVCRT__LDOUBLE *value, char **endptr, const char *str, 
 /******************************************************************
  *		strtol (MSVCRT.@)
  */
-long int MSVCRT_strtol(const char* nptr, char** end, int base)
+MSVCRT_long CDECL MSVCRT_strtol(const char* nptr, char** end, int base)
 {
     /* wrapper to forward libc error code to msvcrt's error codes */
     long ret;
@@ -289,7 +289,7 @@ long int MSVCRT_strtol(const char* nptr, char** end, int base)
 /******************************************************************
  *		strtoul (MSVCRT.@)
  */
-unsigned long int MSVCRT_strtoul(const char* nptr, char** end, int base)
+MSVCRT_ulong CDECL MSVCRT_strtoul(const char* nptr, char** end, int base)
 {
     /* wrapper to forward libc error code to msvcrt's error codes */
     unsigned long ret;
