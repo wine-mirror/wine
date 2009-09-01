@@ -29,45 +29,6 @@
 # error You must include config.h to use this header
 #endif
 
-#ifdef HAVE_LIBXML2
-
-#ifdef HAVE_LIBXML_PARSER_H
-#include <libxml/parser.h>
-#endif
-
-/* constructors */
-extern IUnknown         *create_domdoc( xmlNodePtr document );
-extern IUnknown         *create_xmldoc( void );
-extern IXMLDOMNode      *create_node( xmlNodePtr node );
-extern IUnknown         *create_element( xmlNodePtr element );
-extern IUnknown         *create_attribute( xmlNodePtr attribute );
-extern IUnknown         *create_text( xmlNodePtr text );
-extern IUnknown         *create_pi( xmlNodePtr pi );
-extern IUnknown         *create_comment( xmlNodePtr comment );
-extern IUnknown         *create_cdata( xmlNodePtr text );
-extern IXMLDOMNodeList  *create_children_nodelist( xmlNodePtr );
-extern IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node );
-extern IUnknown         *create_doc_Implementation();
-extern IUnknown         *create_doc_fragment( xmlNodePtr fragment );
-extern IUnknown         *create_doc_entity_ref( xmlNodePtr entity );
-
-extern HRESULT queryresult_create( xmlNodePtr, LPWSTR, IXMLDOMNodeList ** );
-
-/* data accessors */
-xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type );
-
-/* helpers */
-extern xmlChar *xmlChar_from_wchar( LPWSTR str );
-
-extern LONG xmldoc_add_ref( xmlDocPtr doc );
-extern LONG xmldoc_release( xmlDocPtr doc );
-extern HRESULT xmldoc_add_orphan( xmlDocPtr doc, xmlNodePtr node );
-extern HRESULT xmldoc_remove_orphan( xmlDocPtr doc, xmlNodePtr node );
-
-extern HRESULT XMLElement_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj );
-
-extern xmlDocPtr parse_xml(char *ptr, int len);
-
 /* typelibs */
 typedef enum tid_t {
     IXMLDOMAttribute_tid,
@@ -138,6 +99,45 @@ typedef struct {
 
 void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*);
 BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
+
+#ifdef HAVE_LIBXML2
+
+#ifdef HAVE_LIBXML_PARSER_H
+#include <libxml/parser.h>
+#endif
+
+/* constructors */
+extern IUnknown         *create_domdoc( xmlNodePtr document );
+extern IUnknown         *create_xmldoc( void );
+extern IXMLDOMNode      *create_node( xmlNodePtr node );
+extern IUnknown         *create_element( xmlNodePtr element );
+extern IUnknown         *create_attribute( xmlNodePtr attribute );
+extern IUnknown         *create_text( xmlNodePtr text );
+extern IUnknown         *create_pi( xmlNodePtr pi );
+extern IUnknown         *create_comment( xmlNodePtr comment );
+extern IUnknown         *create_cdata( xmlNodePtr text );
+extern IXMLDOMNodeList  *create_children_nodelist( xmlNodePtr );
+extern IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node );
+extern IUnknown         *create_doc_Implementation();
+extern IUnknown         *create_doc_fragment( xmlNodePtr fragment );
+extern IUnknown         *create_doc_entity_ref( xmlNodePtr entity );
+
+extern HRESULT queryresult_create( xmlNodePtr, LPWSTR, IXMLDOMNodeList ** );
+
+/* data accessors */
+xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type );
+
+/* helpers */
+extern xmlChar *xmlChar_from_wchar( LPWSTR str );
+
+extern LONG xmldoc_add_ref( xmlDocPtr doc );
+extern LONG xmldoc_release( xmlDocPtr doc );
+extern HRESULT xmldoc_add_orphan( xmlDocPtr doc, xmlNodePtr node );
+extern HRESULT xmldoc_remove_orphan( xmlDocPtr doc, xmlNodePtr node );
+
+extern HRESULT XMLElement_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj );
+
+extern xmlDocPtr parse_xml(char *ptr, int len);
 
 /* IXMLDOMNode Internal Structure */
 typedef struct _xmlnode
