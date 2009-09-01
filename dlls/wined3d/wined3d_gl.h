@@ -1528,6 +1528,12 @@ typedef void (WINE_GLAPI *PGLFNCLAMPCOLORARBPROC) (GLenum target, GLenum clamp);
 #define GL_FLOAT_32_UNSIGNED_INT_24_8_REV 0x8dad
 #endif
 
+/* GL_ARB_depth_clamp */
+#ifndef GL_ARB_depth_clamp
+#define GL_ARB_depth_clamp 1
+#define GL_DEPTH_CLAMP                    0x864f
+#endif
+
 /* GL_ARB_depth_texture */
 #ifndef GL_ARB_depth_texture
 #define GL_ARB_depth_texture 1
@@ -3405,6 +3411,7 @@ typedef enum _GL_SupportedExt {
   /* ARB */
   ARB_COLOR_BUFFER_FLOAT,
   ARB_DEPTH_BUFFER_FLOAT,
+  ARB_DEPTH_CLAMP,
   ARB_DEPTH_TEXTURE,
   ARB_DRAW_BUFFERS,
   ARB_FRAGMENT_PROGRAM,

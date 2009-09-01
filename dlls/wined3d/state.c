@@ -564,16 +564,18 @@ static void state_clipping(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
     if (stateblock->renderState[WINED3DRS_CLIPPING]) {
         enable  = stateblock->renderState[WINED3DRS_CLIPPLANEENABLE];
         disable = ~stateblock->renderState[WINED3DRS_CLIPPLANEENABLE];
-        if(GL_SUPPORT(NV_DEPTH_CLAMP)) {
-            glDisable(GL_DEPTH_CLAMP_NV);
-            checkGLcall("glDisable(GL_DEPTH_CLAMP_NV)");
+        if (GL_SUPPORT(ARB_DEPTH_CLAMP))
+        {
+            glDisable(GL_DEPTH_CLAMP);
+            checkGLcall("glDisable(GL_DEPTH_CLAMP)");
         }
     } else {
         disable = 0xffffffff;
         enable  = 0x00;
-        if(GL_SUPPORT(NV_DEPTH_CLAMP)) {
-            glEnable(GL_DEPTH_CLAMP_NV);
-            checkGLcall("glEnable(GL_DEPTH_CLAMP_NV)");
+        if (GL_SUPPORT(ARB_DEPTH_CLAMP))
+        {
+            glEnable(GL_DEPTH_CLAMP);
+            checkGLcall("glEnable(GL_DEPTH_CLAMP)");
         }
     }
 
