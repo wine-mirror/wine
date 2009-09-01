@@ -229,9 +229,37 @@ HRESULT CALLBACK IDBDataSourceAdmin_CreateDataSource_Proxy(IDBDataSourceAdmin* T
                                                            DBPROPSET rgPropertySets[], IUnknown *pUnkOuter,
                                                            REFIID riid, IUnknown **ppDBSession)
 {
-    FIXME("(%p, %d, %p, %p, %s, %p): stub\n", This, cPropertySets, rgPropertySets, pUnkOuter,
+    ULONG prop_set, prop, total_props = 0;
+    HRESULT hr;
+    IErrorInfo *error;
+    DBPROPSTATUS *status;
+
+    TRACE("(%p, %d, %p, %p, %s, %p)\n", This, cPropertySets, rgPropertySets, pUnkOuter,
           debugstr_guid(riid), ppDBSession);
-    return E_NOTIMPL;
+
+    for(prop_set = 0; prop_set < cPropertySets; prop_set++)
+        total_props += rgPropertySets[prop_set].cProperties;
+
+    if(total_props == 0) return S_OK;
+
+    status = CoTaskMemAlloc(total_props * sizeof(*status));
+    if(!status) return E_OUTOFMEMORY;
+
+    hr = IDBDataSourceAdmin_RemoteCreateDataSource_Proxy(This, cPropertySets, rgPropertySets, pUnkOuter,
+                                                         riid, ppDBSession, total_props, status, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+
+    total_props = 0;
+    for(prop_set = 0; prop_set < cPropertySets; prop_set++)
+        for(prop = 0; prop < rgPropertySets[prop_set].cProperties; prop++)
+            rgPropertySets[prop_set].rgProperties[prop].dwStatus = status[total_props++];
+
+    CoTaskMemFree(status);
+    return hr;
 }
 
 HRESULT __RPC_STUB IDBDataSourceAdmin_CreateDataSource_Stub(IDBDataSourceAdmin* This, ULONG cPropertySets,
@@ -239,9 +267,21 @@ HRESULT __RPC_STUB IDBDataSourceAdmin_CreateDataSource_Stub(IDBDataSourceAdmin* 
                                                             REFIID riid, IUnknown **ppDBSession, ULONG cTotalProps,
                                                             DBPROPSTATUS *rgPropStatus, IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p, %d, %p, %p, %s, %p, %d, %p, %p): stub\n", This, cPropertySets, rgPropertySets, pUnkOuter,
+    ULONG prop_set, prop, total_props = 0;
+    HRESULT hr;
+
+    TRACE("(%p, %d, %p, %p, %s, %p, %d, %p, %p)\n", This, cPropertySets, rgPropertySets, pUnkOuter,
           debugstr_guid(riid), ppDBSession, cTotalProps, rgPropStatus, ppErrorInfoRem);
-    return E_NOTIMPL;
+
+    *ppErrorInfoRem = NULL;
+    hr = IDBDataSourceAdmin_CreateDataSource(This, cPropertySets, rgPropertySets, pUnkOuter, riid, ppDBSession);
+    if(FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+
+    for(prop_set = 0; prop_set < cPropertySets; prop_set++)
+        for(prop = 0; prop < rgPropertySets[prop_set].cProperties; prop++)
+            rgPropStatus[total_props++] = rgPropertySets[prop_set].rgProperties[prop].dwStatus;
+
+    return hr;
 }
 
 HRESULT CALLBACK IDBDataSourceAdmin_DestroyDataSource_Proxy(IDBDataSourceAdmin* This)
