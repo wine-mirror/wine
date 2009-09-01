@@ -1016,6 +1016,70 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 }
 
 /***********************************************************************
+ *           X11DRV_PALETTE_LookupPixel
+ */
+int X11DRV_PALETTE_LookupPixel(COLORREF color )
+{
+    unsigned char spec_type = color >> 24;
+
+    /* Only accept RGB which has spec_type = 0 */
+    if(spec_type)
+        return 0;
+
+    color &= 0xffffff;
+
+    if ( X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_FIXED )
+    {
+        unsigned long red, green, blue;
+        red = GetRValue(color); green = GetGValue(color); blue = GetBValue(color);
+
+        if (X11DRV_PALETTE_Graymax)
+        {
+            /* grayscale only; return scaled value */
+            return ( (red * 30 + green * 59 + blue * 11) * X11DRV_PALETTE_Graymax) / 25500;
+        }
+        else
+        {
+            /* scale each individually and construct the TrueColor pixel value */
+            if (X11DRV_PALETTE_PRed.scale < 8)
+                red = red >> (8-X11DRV_PALETTE_PRed.scale);
+            else if (X11DRV_PALETTE_PRed.scale > 8)
+                red =   red   << (X11DRV_PALETTE_PRed.scale-8) |
+                        red   >> (16-X11DRV_PALETTE_PRed.scale);
+            if (X11DRV_PALETTE_PGreen.scale < 8)
+                green = green >> (8-X11DRV_PALETTE_PGreen.scale);
+            else if (X11DRV_PALETTE_PGreen.scale > 8)
+                green = green << (X11DRV_PALETTE_PGreen.scale-8) |
+                        green >> (16-X11DRV_PALETTE_PGreen.scale);
+            if (X11DRV_PALETTE_PBlue.scale < 8)
+                blue =  blue  >> (8-X11DRV_PALETTE_PBlue.scale);
+            else if (X11DRV_PALETTE_PBlue.scale > 8)
+                blue =  blue  << (X11DRV_PALETTE_PBlue.scale-8) |
+                        blue  >> (16-X11DRV_PALETTE_PBlue.scale);
+
+            return (red << X11DRV_PALETTE_PRed.shift) | (green << X11DRV_PALETTE_PGreen.shift) | (blue << X11DRV_PALETTE_PBlue.shift);
+        }
+    }
+    else
+    {
+        WORD index;
+        HPALETTE hPal = GetStockObject(DEFAULT_PALETTE);
+        int *mapping = palette_get_mapping( hPal );
+
+        if (!mapping)
+            WARN("Palette %p is not realized\n", hPal);
+
+        EnterCriticalSection( &palette_cs );
+        index = X11DRV_SysPaletteLookupPixel( color, FALSE);
+        if (X11DRV_PALETTE_PaletteToXPixel)
+            index = X11DRV_PALETTE_PaletteToXPixel[index];
+        LeaveCriticalSection( &palette_cs );
+        return index;
+    }
+}
+
+
+/***********************************************************************
  *           X11DRV_PALETTE_LookupSystemXPixel
  */
 static int X11DRV_PALETTE_LookupSystemXPixel(COLORREF col)
@@ -1192,8 +1256,7 @@ UINT X11DRV_RealizePalette( X11DRV_PDEVICE *physDev, HPALETTE hpal, BOOL primary
                 }
                 else if ( X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL )
                 {
-                    index = X11DRV_PALETTE_ToPhysical( NULL,
-                                                       RGB( entries[i].peRed, entries[i].peGreen, entries[i].peBlue ));
+                    index = X11DRV_PALETTE_LookupPixel( RGB( entries[i].peRed, entries[i].peGreen, entries[i].peBlue ));
                 }
 
                 /* we have to map to existing entry in the system palette */

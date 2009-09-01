@@ -477,6 +477,7 @@ extern BOOL X11DRV_IsSolidColor(COLORREF color);
 
 extern COLORREF X11DRV_PALETTE_ToLogical(int pixel);
 extern int X11DRV_PALETTE_ToPhysical(X11DRV_PDEVICE *physDev, COLORREF color);
+extern int X11DRV_PALETTE_LookupPixel(COLORREF color);
 
 extern unsigned int depth_to_bpp( unsigned int depth );
 
