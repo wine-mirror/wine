@@ -60,25 +60,25 @@ static const struct dbg_internal_var* be_alpha_init_registers(CONTEXT* ctx)
     return be_alpha_ctx;
 }
 
-static unsigned be_alpha_is_step_over_insn(void* insn)
+static unsigned be_alpha_is_step_over_insn(const void* insn)
 {
     dbg_printf("not done\n");
     return FALSE;
 }
 
-static unsigned be_alpha_is_function_return(void* insn)
+static unsigned be_alpha_is_function_return(const void* insn)
 {
     dbg_printf("not done\n");
     return FALSE;
 }
 
-static unsigned be_alpha_is_break_insn(void* insn)
+static unsigned be_alpha_is_break_insn(const void* insn)
 {
     dbg_printf("not done\n");
     return FALSE;
 }
 
-static unsigned be_alpha_is_func_call(void* insn, void** insn_callee)
+static unsigned be_alpha_is_func_call(const void* insn, ADDRESS64* callee)
 {
     return FALSE;
 }
