@@ -118,6 +118,7 @@ typedef struct
     Pixmap       pixmap;
     XID          glxpixmap;
     int          pixmap_depth;
+    ColorShifts  pixmap_color_shifts;
     /* the following fields are only used for DIB section bitmaps */
     int          status, p_status;  /* mapping status */
     XImage      *image;             /* cached XImage */
@@ -155,6 +156,7 @@ typedef struct
     int           backgroundPixel;
     int           textPixel;
     int           depth;       /* bit depth of the DC */
+    ColorShifts  *color_shifts; /* color shifts of the DC */
     int           exposures;   /* count of graphics exposures operations */
     int           current_pf;
     Drawable      gl_drawable;
@@ -480,6 +482,7 @@ extern UINT16 X11DRV_PALETTE_PaletteFlags;
 
 extern int *X11DRV_PALETTE_PaletteToXPixel;
 extern int *X11DRV_PALETTE_XPixelToPalette;
+extern ColorShifts X11DRV_PALETTE_default_shifts;
 
 extern int X11DRV_PALETTE_mapEGAPixel[16];
 

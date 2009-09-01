@@ -4746,7 +4746,15 @@ HBITMAP CDECL X11DRV_CreateDIBSection( X11DRV_PDEVICE *physDev, HBITMAP hbitmap,
 
     /* create pixmap and X image */
     wine_tsx11_lock();
-    physBitmap->pixmap_depth = (dib.dsBm.bmBitsPixel == 1) ? 1 : screen_depth;
+    if(dib.dsBm.bmBitsPixel == 1)
+    {
+        physBitmap->pixmap_depth = 1;
+    }
+    else
+    {
+        physBitmap->pixmap_depth = screen_depth;
+        physBitmap->pixmap_color_shifts = X11DRV_PALETTE_default_shifts;
+    }
 #ifdef HAVE_LIBXXSHM
     physBitmap->shminfo.shmid = -1;
 

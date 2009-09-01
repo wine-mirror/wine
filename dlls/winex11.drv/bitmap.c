@@ -110,6 +110,10 @@ HBITMAP CDECL X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
     if (physDev->depth != physBitmap->pixmap_depth)
     {
         physDev->depth = physBitmap->pixmap_depth;
+        if(physDev->depth == 1)
+            physDev->color_shifts = NULL;
+        else
+            physDev->color_shifts = &physBitmap->pixmap_color_shifts;
         wine_tsx11_lock();
         XFreeGC( gdi_display, physDev->gc );
         physDev->gc = XCreateGC( gdi_display, physDev->drawable, 0, NULL );
@@ -158,7 +162,15 @@ BOOL CDECL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, LPVOID
 
       /* Create the pixmap */
     wine_tsx11_lock();
-    physBitmap->pixmap_depth = (bitmap.bmBitsPixel == 1) ? 1 : screen_depth;
+    if(bitmap.bmBitsPixel == 1)
+    {
+        physBitmap->pixmap_depth = 1;
+    }
+    else
+    {
+        physBitmap->pixmap_depth = screen_depth;
+        physBitmap->pixmap_color_shifts = X11DRV_PALETTE_default_shifts;
+    }
     physBitmap->pixmap = XCreatePixmap(gdi_display, root_window,
                                        bitmap.bmWidth, bitmap.bmHeight, physBitmap->pixmap_depth);
     wine_tsx11_unlock();

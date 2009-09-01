@@ -60,7 +60,7 @@ Colormap X11DRV_PALETTE_PaletteXColormap = 0;
 UINT16   X11DRV_PALETTE_PaletteFlags     = 0;
 
 /* initialize to zero to handle abortive X11DRV_PALETTE_VIRTUAL visuals */
-static ColorShifts X11DRV_PALETTE_default_shifts = { {0,0,0,}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0} };
+ColorShifts X11DRV_PALETTE_default_shifts = { {0,0,0,}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0} };
 static int X11DRV_PALETTE_Graymax        = 0;
 
 static int palette_size;
@@ -873,6 +873,9 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
     int *mapping = palette_get_mapping( hPal );
     PALETTEENTRY entry;
     ColorShifts *shifts = &X11DRV_PALETTE_default_shifts;
+
+    if(physDev->color_shifts)
+        shifts = physDev->color_shifts;
 
     if ( X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_FIXED )
     {
