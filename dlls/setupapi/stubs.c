@@ -259,6 +259,15 @@ BOOL WINAPI SetupDiGetClassImageList(PSP_CLASSIMAGELIST_DATA ClassImageListData)
 }
 
 /***********************************************************************
+ *      SetupDiGetClassImageList (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetClassImageIndex(PSP_CLASSIMAGELIST_DATA ClassImageListData, const GUID *class, PINT index)
+{
+    FIXME("%p %p %p\n", ClassImageListData, class, index);
+    return FALSE;
+}
+
+/***********************************************************************
  *      CM_Locate_DevNodeA (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Locate_DevNodeA(PDEVINST pdnDevInst, DEVINSTID_A pDeviceID, ULONG ulFlags)

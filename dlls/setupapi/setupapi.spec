@@ -322,7 +322,7 @@
 @ stdcall SetupDiGetClassDevsExA(ptr str ptr long ptr str ptr)
 @ stdcall SetupDiGetClassDevsExW(ptr wstr ptr long ptr wstr ptr)
 @ stdcall SetupDiGetClassDevsW(ptr ptr long long)
-@ stub SetupDiGetClassImageIndex
+@ stdcall SetupDiGetClassImageIndex(ptr ptr ptr)
 @ stdcall SetupDiGetClassImageList(ptr)
 @ stub SetupDiGetClassImageListExA
 @ stub SetupDiGetClassImageListExW
