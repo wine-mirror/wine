@@ -71,6 +71,13 @@ typedef struct tagDocumentMgrs
     ITfDocumentMgr  *docmgr;
 } DocumentMgrEntry;
 
+typedef struct tagAssociatedWindow
+{
+    struct list     entry;
+    HWND            hwnd;
+    ITfDocumentMgr  *docmgr;
+} AssociatedWindow;
+
 typedef struct tagACLMulti {
     const ITfThreadMgrVtbl *ThreadMgrVtbl;
     const ITfSourceVtbl *SourceVtbl;
@@ -98,6 +105,9 @@ typedef struct tagACLMulti {
     struct list CurrentPreservedKeys;
     struct list CreatedDocumentMgrs;
 
+    struct list AssociatedFocusWindows;
+    HHOOK  focusHook;
+
     /* kept as separate lists to reduce unnecessary iterations */
     struct list     ActiveLanguageProfileNotifySink;
     struct list     DisplayAttributeNotifySink;
@@ -116,6 +126,7 @@ typedef struct tagEnumTfDocumentMgr {
 } EnumTfDocumentMgr;
 
 static HRESULT EnumTfDocumentMgr_Constructor(struct list* head, IEnumTfDocumentMgrs **ppOut);
+LRESULT CALLBACK ThreadFocusHookProc(int nCode, WPARAM wParam, LPARAM lParam);
 
 static inline ThreadMgr *impl_from_ITfSourceVtbl(ITfSource *iface)
 {
@@ -142,6 +153,22 @@ static inline ThreadMgr *impl_from_ITfThreadMgrEventSink(ITfThreadMgrEventSink *
     return (ThreadMgr *)((char *)iface - FIELD_OFFSET(ThreadMgr,ThreadMgrEventSinkVtbl));
 }
 
+static HRESULT SetupWindowsHook(ThreadMgr *This)
+{
+    if (!This->focusHook)
+    {
+        This->focusHook = SetWindowsHookExW(WH_CBT, ThreadFocusHookProc, 0,
+                             GetCurrentThreadId());
+        if (!This->focusHook)
+        {
+            ERR("Unable to set focus hook\n");
+            return E_FAIL;
+        }
+        return S_OK;
+    }
+    return S_FALSE;
+}
+
 static void free_sink(ThreadMgrSink *sink)
 {
         IUnknown_Release(sink->interfaces.pIUnknown);
@@ -151,6 +178,10 @@ static void free_sink(ThreadMgrSink *sink)
 static void ThreadMgr_Destructor(ThreadMgr *This)
 {
     struct list *cursor, *cursor2;
+
+    /* unhook right away */
+    if (This->focusHook)
+        UnhookWindowsHookEx(This->focusHook);
 
     TlsSetValue(tlsIndex,NULL);
     TRACE("destroying %p\n", This);
@@ -209,6 +240,13 @@ static void ThreadMgr_Destructor(ThreadMgr *This)
         list_remove(cursor);
         FIXME("Left Over ITfDocumentMgr.  Should we do something with it?\n");
         HeapFree(GetProcessHeap(),0,mgr);
+    }
+
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->AssociatedFocusWindows)
+    {
+        AssociatedWindow *wnd = LIST_ENTRY(cursor,AssociatedWindow,entry);
+        list_remove(cursor);
+        HeapFree(GetProcessHeap(),0,wnd);
     }
 
     CompartmentMgr_Destructor(This->CompartmentMgr);
@@ -406,9 +444,43 @@ static HRESULT WINAPI ThreadMgr_SetFocus( ITfThreadMgr* iface, ITfDocumentMgr *p
 static HRESULT WINAPI ThreadMgr_AssociateFocus( ITfThreadMgr* iface, HWND hwnd,
 ITfDocumentMgr *pdimNew, ITfDocumentMgr **ppdimPrev)
 {
+    struct list *cursor, *cursor2;
     ThreadMgr *This = (ThreadMgr *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    AssociatedWindow *wnd;
+
+    TRACE("(%p) %p %p %p\n",This,hwnd,pdimNew,ppdimPrev);
+
+    if (!ppdimPrev)
+        return E_INVALIDARG;
+
+    *ppdimPrev = NULL;
+
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->AssociatedFocusWindows)
+    {
+        wnd = LIST_ENTRY(cursor,AssociatedWindow,entry);
+        if (wnd->hwnd == hwnd)
+        {
+            if (wnd->docmgr)
+                ITfDocumentMgr_AddRef(wnd->docmgr);
+            *ppdimPrev = wnd->docmgr;
+            wnd->docmgr = pdimNew;
+            if (GetFocus() == hwnd)
+                ThreadMgr_SetFocus(iface,pdimNew);
+            return S_OK;
+        }
+    }
+
+    wnd = HeapAlloc(GetProcessHeap(),0,sizeof(AssociatedWindow));
+    wnd->hwnd = hwnd;
+    wnd->docmgr = pdimNew;
+    list_add_head(&This->AssociatedFocusWindows,&wnd->entry);
+
+    if (GetFocus() == hwnd)
+        ThreadMgr_SetFocus(iface,pdimNew);
+
+    SetupWindowsHook(This);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ThreadMgr_IsThreadFocus( ITfThreadMgr* iface, BOOL *pfThreadFocus)
@@ -1132,6 +1204,7 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
 
     list_init(&This->CurrentPreservedKeys);
     list_init(&This->CreatedDocumentMgrs);
+    list_init(&This->AssociatedFocusWindows);
 
     list_init(&This->ActiveLanguageProfileNotifySink);
     list_init(&This->DisplayAttributeNotifySink);
@@ -1304,4 +1377,40 @@ void ThreadMgr_OnDocumentMgrDestruction(ITfThreadMgr *tm, ITfDocumentMgr *mgr)
         }
     }
     FIXME("ITfDocumenMgr %p not found in this thread\n",mgr);
+}
+
+LRESULT CALLBACK ThreadFocusHookProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    ThreadMgr *This;
+
+    This = TlsGetValue(tlsIndex);
+    if (!This)
+    {
+        ERR("Hook proc but no ThreadMgr for this thread. Serious Error\n");
+        return 0;
+    }
+    if (!This->focusHook)
+    {
+        ERR("Hook proc but no ThreadMgr focus Hook. Serious Error\n");
+        return 0;
+    }
+
+    if (nCode == HCBT_SETFOCUS) /* focus change within our thread */
+    {
+        struct list *cursor;
+
+        LIST_FOR_EACH(cursor, &This->AssociatedFocusWindows)
+        {
+            AssociatedWindow *wnd = LIST_ENTRY(cursor,AssociatedWindow,entry);
+            if (wnd->hwnd == (HWND)wParam)
+            {
+                TRACE("Triggering Associated window focus\n");
+                if (This->focus != wnd->docmgr)
+                    ThreadMgr_SetFocus((ITfThreadMgr*)This, wnd->docmgr);
+                break;
+            }
+        }
+    }
+
+    return CallNextHookEx(This->focusHook, nCode, wParam, lParam);
 }
