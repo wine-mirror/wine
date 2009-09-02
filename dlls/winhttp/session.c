@@ -581,6 +581,10 @@ static BOOL request_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
         hdr->redirect_policy = policy;
         return TRUE;
     }
+    case WINHTTP_OPTION_SECURITY_FLAGS:
+        FIXME("WINHTTP_OPTION_SECURITY_FLAGS unimplemented (%08x)\n",
+              *(DWORD *)buffer);
+        return TRUE;
     default:
         FIXME("unimplemented option %u\n", option);
         set_last_error( ERROR_INVALID_PARAMETER );
