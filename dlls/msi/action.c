@@ -789,6 +789,9 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     static const WCHAR szUILevel[] = {'U','I','L','e','v','e','l',0};
     static const WCHAR szAction[] = {'A','C','T','I','O','N',0};
     static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
+    static const WCHAR szReinstall[] = {'R','E','I','N','S','T','A','L','L',0};
+    static const WCHAR szInstalled[] = {'I','n','s','t','a','l','l','e','d',0};
+    static const WCHAR szAll[] = {'A','L','L',0};
 
     MSI_SetPropertyW(package, szAction, szInstall);
 
@@ -836,6 +839,12 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
 
     msi_apply_transforms( package );
     msi_apply_patches( package );
+
+    if (!szCommandLine && msi_get_property_int( package, szInstalled, 0 ))
+    {
+        TRACE("setting reinstall property\n");
+        MSI_SetPropertyW( package, szReinstall, szAll );
+    }
 
     /* properties may have been added by a transform */
     msi_clone_properties( package );
