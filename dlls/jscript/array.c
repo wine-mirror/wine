@@ -69,6 +69,21 @@ static HRESULT set_jsdisp_length(DispatchEx *obj, LCID lcid, jsexcept_t *ei, DWO
     return jsdisp_propput_name(obj, lengthW, lcid, &var, ei, NULL/*FIXME*/);
 }
 
+static WCHAR *idx_to_str(DWORD idx, WCHAR *ptr)
+{
+    if(!idx) {
+        *ptr = '0';
+        return ptr;
+    }
+
+    while(idx) {
+        *ptr-- = '0' + (idx%10);
+        idx /= 10;
+    }
+
+    return ptr+1;
+}
+
 static HRESULT Array_length(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
@@ -764,10 +779,69 @@ static HRESULT Array_toLocaleString(DispatchEx *dispex, LCID lcid, WORD flags, D
 }
 
 static HRESULT Array_unshift(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    WCHAR buf[14], *buf_end, *str;
+    DWORD argc, i, length;
+    VARIANT var;
+    DISPID id;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(is_class(dispex, JSCLASS_ARRAY)) {
+        length = ((ArrayInstance*)dispex)->length;
+    }else {
+        hres = get_jsdisp_length(dispex, lcid, ei, &length);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    argc = arg_cnt(dp);
+    if(!argc) {
+        if(retv)
+            V_VT(retv) = VT_EMPTY;
+        return S_OK;
+    }
+
+    buf_end = buf + sizeof(buf)/sizeof(WCHAR)-1;
+    *buf_end-- = 0;
+    i = length;
+
+    while(i--) {
+        str = idx_to_str(i, buf_end);
+
+        hres = jsdisp_get_id(dispex, str, 0, &id);
+        if(SUCCEEDED(hres)) {
+            hres = jsdisp_propget(dispex, id, lcid, &var, ei, caller);
+            if(FAILED(hres))
+                return hres;
+
+            hres = jsdisp_propput_idx(dispex, i+argc, lcid, &var, ei, caller);
+            VariantClear(&var);
+        }else if(hres == DISP_E_UNKNOWNNAME) {
+            hres = IDispatchEx_DeleteMemberByDispID(_IDispatchEx_(dispex), id);
+        }
+
+        if(FAILED(hres))
+            return hres;
+    }
+
+    for(i=0; i<argc; i++) {
+        hres = jsdisp_propput_idx(dispex, i, lcid, get_arg(dp,i), ei, caller);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(!is_class(dispex, JSCLASS_ARRAY)) {
+        hres = set_jsdisp_length(dispex, lcid, ei, length+argc);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(retv)
+        V_VT(retv) = VT_EMPTY;
+    return S_OK;
 }
 
 static HRESULT Array_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

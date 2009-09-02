@@ -594,6 +594,35 @@ ok(arr.toString() === "a,b,c", "arr.toString() = " + arr.toString());
 ok(arr.valueOf === Object.prototype.valueOf, "arr.valueOf !== Object.prototype.valueOf");
 ok(arr === arr.valueOf(), "arr !== arr.valueOf");
 
+arr = [1,2,3];
+tmp = arr.unshift(0);
+ok(tmp === undefined, "[1,2,3].unshift(0) returned " +tmp);
+ok(arr.length === 4, "arr.length = " + arr.length);
+ok(arr.toString() === "0,1,2,3", "arr.toString() = " + arr.toString());
+
+arr = new Array(3);
+arr[0] = 1;
+arr[2] = 3;
+tmp = arr.unshift(-1,0);
+ok(tmp === undefined, "unshift returned " +tmp);
+ok(arr.length === 5, "arr.length = " + arr.length);
+ok(arr.toString() === "-1,0,1,,3", "arr.toString() = " + arr.toString());
+
+arr = [1,2,3];
+tmp = arr.unshift();
+ok(tmp === undefined, "unshift returned " +tmp);
+ok(arr.length === 3, "arr.length = " + arr.length);
+ok(arr.toString() === "1,2,3", "arr.toString() = " + arr.toString());
+
+arr = new Object();
+arr.length = 2;
+arr[0] = 1;
+arr[1] = 2;
+tmp = Array.prototype.unshift.call(arr, 0);
+ok(tmp === undefined, "unshift returned " +tmp);
+ok(arr.length === 3, "arr.length = " + arr.length);
+ok(arr[0] === 0 && arr[1] === 1 && arr[2] === 2, "unexpected array");
+
 var num = new Number(6);
 arr = [0,1,2];
 tmp = arr.concat(3, [4,5], num);
