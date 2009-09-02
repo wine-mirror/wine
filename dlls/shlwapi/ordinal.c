@@ -4569,3 +4569,29 @@ free_sids:
 
     return psd;
 }
+
+/***********************************************************************
+ *             SHCreatePropertyBagOnRegKey [SHLWAPI.471]
+ *
+ * Creates a property bag from a registry key
+ *
+ * PARAMS
+ *  hKey       [I] Handle to the desired registry key
+ *  subkey     [I] Name of desired subkey, or NULL to open hKey directly
+ *  grfMode    [I] Optional flags
+ *  riid       [I] IID of requested property bag interface
+ *  ppv        [O] Address to receive pointer to the new interface
+ *
+ * RETURNS
+ *  success: 0
+ *  failure: error code
+ *
+ */
+HRESULT WINAPI SHCreatePropertyBagOnRegKey (HKEY hKey, LPCWSTR subkey,
+    DWORD grfMode, REFIID riid, void **ppv)
+{
+    FIXME("%p %s %d %s %p STUB\n", hKey, debugstr_w(subkey), grfMode,
+          debugstr_guid(riid), ppv);
+
+    return E_NOTIMPL;
+}
