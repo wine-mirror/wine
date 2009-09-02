@@ -1294,9 +1294,6 @@ TRACKBAR_SetThumbLength (TRACKBAR_INFO *infoPtr, UINT iLength)
 static inline LRESULT
 TRACKBAR_SetTic (TRACKBAR_INFO *infoPtr, LONG lPos)
 {
-    if (infoPtr->dwStyle & TBS_AUTOTICKS)
-	return FALSE;
-
     if ((lPos < infoPtr->lRangeMin) || (lPos> infoPtr->lRangeMax))
         return FALSE;
 

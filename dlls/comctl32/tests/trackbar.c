@@ -786,18 +786,22 @@ static void test_thumb_length(HWND hWndTrackbar){
 static void test_tic_settings(HWND hWndTrackbar){
     int r;
 
-    flush_sequences(sequences, NUM_MSG_SEQUENCE);
     /* testing TBM_SETTIC */
     /* Set tics at 5 and 10 */
     /* 0 and 20 are out of range and should not be set */
+    r = SendMessage(hWndTrackbar, TBM_GETRANGEMAX, 0, 0);
+    expect(10, r);
+    r = SendMessage(hWndTrackbar, TBM_GETRANGEMIN, 0, 0);
+    expect(5, r);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
     r = SendMessage(hWndTrackbar, TBM_SETTIC, 0, 0);
     ok(r == FALSE, "Expected FALSE, got %d\n", r);
     r = SendMessage(hWndTrackbar, TBM_SETTIC, 0, 5);
-    todo_wine{
-        ok(r == TRUE, "Expected TRUE, got %d\n", r);
-        r = SendMessage(hWndTrackbar, TBM_SETTIC, 0, 10);
-        ok(r == TRUE, "Expected TRUE, got %d\n", r);
-    }
+    ok(r == TRUE, "Expected TRUE, got %d\n", r);
+    r = SendMessage(hWndTrackbar, TBM_SETTIC, 0, 10);
+    ok(r == TRUE, "Expected TRUE, got %d\n", r);
+
     r = SendMessage(hWndTrackbar, TBM_SETTIC, 0, 20);
     ok(r == FALSE, "Expected False, got %d\n", r);
 
