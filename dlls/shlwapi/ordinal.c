@@ -4595,3 +4595,30 @@ HRESULT WINAPI SHCreatePropertyBagOnRegKey (HKEY hKey, LPCWSTR subkey,
 
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ *             SHGetViewStatePropertyBag [SHLWAPI.515]
+ *
+ * Retrieves a property bag in which the view state information of a folder
+ * can be stored.
+ *
+ * PARAMS
+ *  pidl        [I] PIDL of the folder requested
+ *  bag_name    [I] Name of the property bag requested
+ *  flags       [I] Optional flags
+ *  riid        [I] IID of requested property bag interface
+ *  ppv         [O] Address to receive pointer to the new interface
+ *
+ * RETURNS
+ *  success: S_OK
+ *  failure: error code
+ *
+ */
+HRESULT WINAPI SHGetViewStatePropertyBag(LPCITEMIDLIST pidl, LPWSTR bag_name,
+    DWORD flags, REFIID riid, void **ppv)
+{
+    FIXME("%p %s %d %s %p STUB\n", pidl, debugstr_w(bag_name), flags,
+          debugstr_guid(riid), ppv);
+
+    return E_NOTIMPL;
+}
