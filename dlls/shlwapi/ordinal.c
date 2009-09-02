@@ -4672,3 +4672,28 @@ INT WINAPI SHFormatDateTimeA(const FILETIME UNALIGNED *fileTime, DWORD *flags,
     HeapFree(GetProcessHeap(), 0, bufW);
     return retval;
 }
+
+/***********************************************************************
+ *             ZoneCheckUrlExW [SHLWAPI.231]
+ *
+ * Checks the details of the security zone for the supplied site. (?)
+ *
+ * PARAMS
+ *
+ *  szURL   [I] Pointer to the URL to check
+ *
+ *  Other parameters currently unknown.
+ *
+ * RETURNS
+ *  unknown
+ */
+
+INT WINAPI ZoneCheckUrlExW(LPWSTR szURL, PVOID pUnknown, DWORD dwUnknown2,
+    DWORD dwUnknown3, DWORD dwUnknown4, DWORD dwUnknown5, DWORD dwUnknown6,
+    DWORD dwUnknown7)
+{
+    FIXME("(%s,%p,%x,%x,%x,%x,%x,%x) STUB\n", debugstr_w(szURL), pUnknown, dwUnknown2,
+        dwUnknown3, dwUnknown4, dwUnknown5, dwUnknown6, dwUnknown7);
+
+    return 0;
+}

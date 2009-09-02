@@ -228,7 +228,7 @@
 228 stub -noname ZoneCheckUrlA
 229 stub -noname ZoneCheckUrlW
 230 stub -noname ZoneCheckUrlExA
-231 stub -noname ZoneCheckUrlExW
+231 stdcall -noname ZoneCheckUrlExW(wstr ptr long long long long long long)
 232 stub -noname ZoneCheckUrlExCacheA
 233 stub -noname ZoneCheckUrlExCacheW
 234 stub -noname ZoneCheckHost
