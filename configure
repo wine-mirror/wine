@@ -15914,6 +15914,14 @@ dlls/olecli32/Makefile: dlls/olecli32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/olecli32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/oledb32/Makefile"
+test "x$enable_oledb32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	oledb32"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/oledb32/Makefile: dlls/oledb32/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/oledb32/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/oledlg/Makefile"
 test "x$enable_oledlg" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	oledlg"
@@ -18841,6 +18849,7 @@ do
     "dlls/oleaut32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/oleaut32/tests/Makefile" ;;
     "dlls/olecli.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olecli.dll16/Makefile" ;;
     "dlls/olecli32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olecli32/Makefile" ;;
+    "dlls/oledb32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/oledb32/Makefile" ;;
     "dlls/oledlg/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/oledlg/Makefile" ;;
     "dlls/olepro32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olepro32/Makefile" ;;
     "dlls/olesvr.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olesvr.dll16/Makefile" ;;
