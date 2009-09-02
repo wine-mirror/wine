@@ -3016,6 +3016,14 @@ static GLuint create_arb_blt_vertex_program(const struct wined3d_gl_info *gl_inf
         FIXME("Vertex program error at position %d: %s\n", pos,
             debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
     }
+    else
+    {
+        GLint native;
+
+        GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &native));
+        checkGLcall("glGetProgramivARB()");
+        if (!native) WARN("Program exceeds native resource limits.\n");
+    }
 
     return program_id;
 }
@@ -3069,6 +3077,14 @@ static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_i
     {
         FIXME("Fragment program error at position %d: %s\n", pos,
             debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+    }
+    else
+    {
+        GLint native;
+
+        GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &native));
+        checkGLcall("glGetProgramivARB()");
+        if (!native) WARN("Program exceeds native resource limits.\n");
     }
 
     return program_id;
@@ -3515,6 +3531,14 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
               errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
         retval = 0;
     }
+    else
+    {
+        GLint native;
+
+        GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &native));
+        checkGLcall("glGetProgramivARB()");
+        if (!native) WARN("Program exceeds native resource limits.\n");
+    }
 
     /* Load immediate constants */
     if(lconst_map) {
@@ -3909,7 +3933,15 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
         FIXME("HW VertexShader Error at position %d: %s\n",
               errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
         ret = -1;
-    } else {
+    }
+    else
+    {
+        GLint native;
+
+        GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &native));
+        checkGLcall("glGetProgramivARB()");
+        if (!native) WARN("Program exceeds native resource limits.\n");
+
         /* Load immediate constants */
         if(lconst_map) {
             LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
@@ -5742,6 +5774,15 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
         FIXME("Fragment program error at position %d: %s\n", pos,
               debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
     }
+    else
+    {
+        GLint native;
+
+        GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &native));
+        checkGLcall("glGetProgramivARB()");
+        if (!native) WARN("Program exceeds native resource limits.\n");
+    }
+
     shader_buffer_free(&buffer);
     return ret;
 }
@@ -6433,6 +6474,15 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum yuv_fixup yuv_fixu
         FIXME("Fragment program error at position %d: %s\n", pos,
               debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
     }
+    else
+    {
+        GLint native;
+
+        GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &native));
+        checkGLcall("glGetProgramivARB()");
+        if (!native) WARN("Program exceeds native resource limits.\n");
+    }
+
     shader_buffer_free(&buffer);
     LEAVE_GL();
 
