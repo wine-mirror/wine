@@ -4165,7 +4165,7 @@ static void test_table_elem(IHTMLElement *elem)
     IHTMLTable_Release(table);
 }
 
-static void doc_write(IHTMLDocument2 *doc, const char *text)
+static void doc_write(IHTMLDocument2 *doc, BOOL ln, const char *text)
 {
     SAFEARRAYBOUND dim;
     SAFEARRAY *sa;
@@ -4181,7 +4181,10 @@ static void doc_write(IHTMLDocument2 *doc, const char *text)
     V_BSTR(var) = str = a2bstr(text);
     SafeArrayUnaccessData(sa);
 
-    hres = IHTMLDocument2_write(doc, sa);
+    if(ln)
+        hres = IHTMLDocument2_writeln(doc, sa);
+    else
+        hres = IHTMLDocument2_write(doc, sa);
     ok(hres == S_OK, "write failed: %08x\n", hres);
 
     SysFreeString(str);
@@ -4233,7 +4236,8 @@ static void test_iframe_elem(IHTMLElement *elem)
     ok(iface_cmp((IUnknown*)disp, (IUnknown*)content_window), "disp != content_window\n");
     IDispatch_Release(disp);
 
-    doc_write(content_doc, "<html><head><title>test</title></head><body><br /></body></html>");
+    doc_write(content_doc, FALSE, "<html><head><title>test</title></head><body><br /></body>");
+    doc_write(content_doc, TRUE, "</html>");
 
     hres = IHTMLDocument2_get_all(content_doc, &col);
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
