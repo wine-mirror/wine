@@ -65,6 +65,7 @@ DEFINE_EXPECT(global_success_d);
 DEFINE_EXPECT(global_success_i);
 DEFINE_EXPECT(global_notexists_d);
 DEFINE_EXPECT(testobj_delete);
+DEFINE_EXPECT(testobj_value);
 DEFINE_EXPECT(GetItemInfo_testVal);
 
 #define DISPID_GLOBAL_TESTPROPGET   0x1000
@@ -198,11 +199,30 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+static HRESULT WINAPI testObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    switch(id) {
+    case DISPID_VALUE:
+        CHECK_EXPECT(testobj_value);
+
+        ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg != NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+
+        V_VT(pvarRes) = VT_I4;
+        V_I4(pvarRes) = 1;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call %x\n", id);
+    return DISP_E_MEMBERNOTFOUND;
 }
 
 static HRESULT WINAPI testObj_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
@@ -223,7 +243,7 @@ static IDispatchExVtbl testObjVtbl = {
     DispatchEx_GetIDsOfNames,
     DispatchEx_Invoke,
     DispatchEx_GetDispID,
-    DispatchEx_InvokeEx,
+    testObj_InvokeEx,
     testObj_DeleteMemberByName,
     DispatchEx_DeleteMemberByDispID,
     DispatchEx_GetMemberProperties,
@@ -843,6 +863,10 @@ static void run_tests(void)
     parse_script_a("function f() { var testPropGet; }");
 
     parse_script_a("ok((testObj instanceof Object) === false, 'testObj is instance of Object');");
+
+    SET_EXPECT(testobj_value);
+    parse_script_a("ok(String(testObj) === '1', 'wrong testObj value');");
+    CHECK_CALLED(testobj_value);
 
     run_from_res("lang.js");
     run_from_res("api.js");
