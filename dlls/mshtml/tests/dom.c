@@ -2444,6 +2444,8 @@ static void test_navigator(IHTMLDocument2 *doc)
 {
     IHTMLWindow2 *window;
     IOmNavigator *navigator, *navigator2;
+    char buf[512];
+    DWORD size;
     ULONG ref;
     BSTR bstr;
     HRESULT hres;
@@ -2499,6 +2501,16 @@ static void test_navigator(IHTMLDocument2 *doc)
     hres = IOmNavigator_toString(navigator, &bstr);
     ok(hres == S_OK, "toString failed: %08x\n", hres);
     ok(!strcmp_wa(bstr, "[object]"), "toString returned %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    size = sizeof(buf);
+    hres = ObtainUserAgentString(0, buf, &size);
+    ok(hres == S_OK, "ObtainUserAgentString failed: %08x\n", hres);
+
+    bstr = NULL;
+    hres = IOmNavigator_get_userAgent(navigator, &bstr);
+    ok(hres == S_OK, "get_userAgent failed: %08x\n", hres);
+    ok(!strcmp_wa(bstr, buf), "userAgent returned %s, expected \"%s\"\n", wine_dbgstr_w(bstr), buf);
     SysFreeString(bstr);
 
     ref = IOmNavigator_Release(navigator);

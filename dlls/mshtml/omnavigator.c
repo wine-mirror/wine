@@ -179,8 +179,24 @@ static HRESULT WINAPI OmNavigator_get_appVersion(IOmNavigator *iface, BSTR *p)
 static HRESULT WINAPI OmNavigator_get_userAgent(IOmNavigator *iface, BSTR *p)
 {
     OmNavigator *This = OMNAVIGATOR_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    char user_agent[512];
+    DWORD size;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    size = sizeof(user_agent);
+    hres = ObtainUserAgentString(0, user_agent, &size);
+    if(FAILED(hres))
+        return hres;
+
+    size = MultiByteToWideChar(CP_ACP, 0, user_agent, -1, NULL, 0);
+    *p = SysAllocStringLen(NULL, size-1);
+    if(!*p)
+        return E_OUTOFMEMORY;
+
+    MultiByteToWideChar(CP_ACP, 0, user_agent, -1, *p, size);
+    return S_OK;
 }
 
 static HRESULT WINAPI OmNavigator_javaEnabled(IOmNavigator *iface, VARIANT_BOOL *enabled)
