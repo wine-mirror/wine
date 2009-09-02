@@ -94,6 +94,9 @@ void remove_doc_tasks(const HTMLDocument *doc)
     task_timer_t *timer;
     task_t *iter, *tmp;
 
+    if(!thread_data)
+        return;
+
     LIST_FOR_EACH_SAFE(liter, ltmp, &thread_data->timer_list) {
         timer = LIST_ENTRY(liter, task_timer_t, entry);
         if(timer->doc == doc)
@@ -104,9 +107,6 @@ void remove_doc_tasks(const HTMLDocument *doc)
         timer = LIST_ENTRY(list_head(&thread_data->timer_list), task_timer_t, entry);
         SetTimer(thread_data->thread_hwnd, TIMER_ID, timer->time - GetTickCount(), NULL);
     }
-
-    if(!thread_data)
-        return;
 
     while(thread_data->task_queue_head
           && thread_data->task_queue_head->doc == doc)
