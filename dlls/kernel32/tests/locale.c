@@ -1802,7 +1802,7 @@ static void test_FoldStringA(void)
       {
         ok(ret == 2 || ret == lstrlenA(foldczone_special[j].dst) + 1,
            "Expected ret == 2 or %d, got %d, error %d\n",
-           strlen(foldczone_special[j].dst) + 1, ret, GetLastError());
+           lstrlenA(foldczone_special[j].dst) + 1, ret, GetLastError());
         ok(src[0] == dst[0] || lstrcmpA(foldczone_special[j].dst, dst) == 0,
            "MAP_FOLDCZONE: string mismatch for 0x%02x\n",
            (unsigned char)src[0]);
