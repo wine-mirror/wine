@@ -459,7 +459,7 @@
 459 stdcall -noname SHExpandEnvironmentStringsA(str ptr long) kernel32.ExpandEnvironmentStringsA
 460 stdcall -noname SHExpandEnvironmentStringsW(wstr ptr long) kernel32.ExpandEnvironmentStringsW
 461 stdcall -noname SHGetAppCompatFlags(long)
-462 stub -noname UrlFixupW
+462 stdcall -noname UrlFixupW(wstr wstr long)
 463 stub -noname SHExpandEnvironmentStringsForUserA
 464 stub -noname SHExpandEnvironmentStringsForUserW
 465 stub -noname PathUnExpandEnvStringsForUserA
