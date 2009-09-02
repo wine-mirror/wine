@@ -501,7 +501,7 @@ static UINT msi_apply_substorage_transform( MSIPACKAGE *package,
     return ERROR_SUCCESS;
 }
 
-static UINT msi_check_patch_applicable( MSIPACKAGE *package, MSISUMMARYINFO *si )
+UINT msi_check_patch_applicable( MSIPACKAGE *package, MSISUMMARYINFO *si )
 {
     static const WCHAR szProdCode[] = { 'P','r','o','d','u','c','t','C','o','d','e',0 };
     LPWSTR guid_list, *guids, product_code;
