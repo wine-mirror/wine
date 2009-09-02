@@ -2994,6 +2994,8 @@ static void shader_hw_call(const struct wined3d_shader_instruction *ins)
 static GLuint create_arb_blt_vertex_program(const struct wined3d_gl_info *gl_info)
 {
     GLuint program_id = 0;
+    GLint pos;
+
     const char *blt_vprogram =
         "!!ARBvp1.0\n"
         "PARAM c[1] = { { 1, 0.5 } };\n"
@@ -3004,11 +3006,13 @@ static GLuint create_arb_blt_vertex_program(const struct wined3d_gl_info *gl_inf
 
     GL_EXTCALL(glGenProgramsARB(1, &program_id));
     GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, program_id));
-    GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(blt_vprogram), blt_vprogram));
+    GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+            strlen(blt_vprogram), blt_vprogram));
+    checkGLcall("glProgramStringARB()");
 
-    if (glGetError() == GL_INVALID_OPERATION) {
-        GLint pos;
-        glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
+    glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
+    if (pos != -1)
+    {
         FIXME("Vertex program error at position %d: %s\n", pos,
             debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
     }
@@ -3020,6 +3024,8 @@ static GLuint create_arb_blt_vertex_program(const struct wined3d_gl_info *gl_inf
 static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_info, enum tex_types tex_type)
 {
     GLuint program_id = 0;
+    GLint pos;
+
     static const char * const blt_fprograms[tex_type_count] =
     {
         /* tex_1d */
@@ -3054,11 +3060,13 @@ static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_i
 
     GL_EXTCALL(glGenProgramsARB(1, &program_id));
     GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, program_id));
-    GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(blt_fprograms[tex_type]), blt_fprograms[tex_type]));
+    GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+            strlen(blt_fprograms[tex_type]), blt_fprograms[tex_type]));
+    checkGLcall("glProgramStringARB()");
 
-    if (glGetError() == GL_INVALID_OPERATION) {
-        GLint pos;
-        glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
+    glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
+    if (pos != -1)
+    {
         FIXME("Fragment program error at position %d: %s\n", pos,
             debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
     }
@@ -3214,6 +3222,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
     BOOL dcl_tmp = args->super.srgb_correction, dcl_td = FALSE;
     BOOL want_nv_prog = FALSE;
     struct arb_pshader_private *shader_priv = This->backend_priv;
+    GLint errPos;
     DWORD map;
 
     char srgbtmp[4][4];
@@ -3497,10 +3506,11 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
     /* Create the program and check for errors */
     GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
                buffer->bsize, buffer->buffer));
+    checkGLcall("glProgramStringARB()");
 
-    if (glGetError() == GL_INVALID_OPERATION) {
-        GLint errPos;
-        glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
+    glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
+    if (errPos != -1)
+    {
         FIXME("HW PixelShader Error at position %d: %s\n",
               errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
         retval = 0;
@@ -3781,6 +3791,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
     DWORD next_local, *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This);
     struct shader_arb_ctx_priv priv_ctx;
     unsigned int i;
+    GLint errPos;
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_vs_args = args;
@@ -3890,10 +3901,11 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
     /* Create the program and check for errors */
     GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
                buffer->bsize, buffer->buffer));
+    checkGLcall("glProgramStringARB()");
 
-    if (glGetError() == GL_INVALID_OPERATION) {
-        GLint errPos;
-        glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
+    glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
+    if (errPos != -1)
+    {
         FIXME("HW VertexShader Error at position %d: %s\n",
               errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
         ret = -1;
@@ -5486,6 +5498,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
     BOOL tempreg_used = FALSE, tfactor_used = FALSE;
     BOOL op_equal;
     const char *final_combiner_src = "ret";
+    GLint pos;
 
     /* Find out which textures are read */
     for(stage = 0; stage < MAX_TEXTURES; stage++) {
@@ -5719,11 +5732,13 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
     /* Generate the shader */
     GL_EXTCALL(glGenProgramsARB(1, &ret));
     GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, ret));
-    GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(buffer.buffer), buffer.buffer));
+    GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+            strlen(buffer.buffer), buffer.buffer));
+    checkGLcall("glProgramStringARB()");
 
-    if (glGetError() == GL_INVALID_OPERATION) {
-        GLint pos;
-        glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
+    glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
+    if (pos != -1)
+    {
         FIXME("Fragment program error at position %d: %s\n", pos,
               debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
     }
@@ -6305,6 +6320,7 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum yuv_fixup yuv_fixu
     struct wined3d_shader_buffer buffer;
     char luminance_component;
     struct arbfp_blit_priv *priv = device->blit_priv;
+    GLint pos;
 
     /* Shader header */
     if (!shader_buffer_init(&buffer))
@@ -6407,11 +6423,13 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum yuv_fixup yuv_fixu
     shader_addline(&buffer, "END\n");
 
     ENTER_GL();
-    GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(buffer.buffer), buffer.buffer));
+    GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+            strlen(buffer.buffer), buffer.buffer));
+    checkGLcall("glProgramStringARB()");
 
-    if (glGetError() == GL_INVALID_OPERATION) {
-        GLint pos;
-        glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
+    glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
+    if (pos != -1)
+    {
         FIXME("Fragment program error at position %d: %s\n", pos,
               debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
     }
