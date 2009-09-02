@@ -12,6 +12,7 @@ RC_SRCS = \
 	jscript_Lt.rc \
 	jscript_Nl.rc \
 	jscript_Pt.rc \
+	jscript_Ru.rc \
 	rsrc.rc
 
 C_SRCS = \
