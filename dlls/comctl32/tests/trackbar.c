@@ -34,29 +34,6 @@ HWND hWndParent;
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCE];
 
-static const struct message create_parent_wnd_seq[] = {
-    { WM_GETMINMAXINFO, sent },
-    { WM_NCCREATE, sent },
-    { WM_NCCALCSIZE, sent|wparam, 0 },
-    { WM_CREATE, sent },
-    { WM_SHOWWINDOW, sent|wparam, 1 },
-    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
-    { WM_QUERYNEWPALETTE, sent|optional },
-    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
-    { WM_ACTIVATEAPP, sent|wparam, 1 },
-    { WM_NCACTIVATE, sent },
-    { WM_ACTIVATE, sent|wparam, 1 },
-    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
-    { WM_IME_NOTIFY, sent|defwinproc|optional },
-    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
-    /* Win9x adds SWP_NOZORDER below */
-    { WM_WINDOWPOSCHANGED, sent, /*|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE*/ },
-    { WM_NCCALCSIZE, sent|wparam|optional, 1 },
-    { WM_SIZE, sent },
-    { WM_MOVE, sent },
-    { 0 }
-};
-
 static const struct message create_trackbar_wnd_seq[] = {
     {0}
 };
@@ -993,8 +970,6 @@ START_TEST(trackbar)
     init_msg_sequences(sequences, NUM_MSG_SEQUENCE);
     InitCommonControls();
 
-    flush_sequences(sequences, NUM_MSG_SEQUENCE);
-
     /* create parent window */
     hWndParent = create_parent_window();
     ok(hWndParent != NULL, "Failed to create parent Window!\n");
@@ -1004,7 +979,6 @@ START_TEST(trackbar)
         return;
     }
 
-    ok_sequence(sequences, PARENT_SEQ_INDEX, create_parent_wnd_seq, "create Parent Window", TRUE);
     flush_sequences(sequences, NUM_MSG_SEQUENCE);
 
     /* create trackbar with set styles */
