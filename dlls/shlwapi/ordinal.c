@@ -4622,3 +4622,53 @@ HRESULT WINAPI SHGetViewStatePropertyBag(LPCITEMIDLIST pidl, LPWSTR bag_name,
 
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ *             SHFormatDateTimeW [SHLWAPI.354]
+ *
+ * Produces a string representation of a time.
+ *
+ * PARAMS
+ *  fileTime   [I] Pointer to FILETIME structure specifying the time
+ *  flags      [I] Flags specifying the desired output
+ *  buf        [O] Pointer to buffer for output
+ *  bufSize    [I] Number of characters that can be contained in buffer
+ *
+ * RETURNS
+ *  success: number of characters written to the buffer
+ *  failure: 0
+ *
+ */
+INT WINAPI SHFormatDateTimeW(const FILETIME UNALIGNED *fileTime, DWORD *flags,
+    LPWSTR buf, UINT bufSize)
+{
+    FIXME("%p %p %s %d STUB\n", fileTime, flags, debugstr_w(buf), bufSize);
+    return 0;
+}
+
+/***********************************************************************
+ *             SHFormatDateTimeA [SHLWAPI.353]
+ *
+ * See SHFormatDateTimeW.
+ *
+ */
+INT WINAPI SHFormatDateTimeA(const FILETIME UNALIGNED *fileTime, DWORD *flags,
+    LPCSTR buf, UINT bufSize)
+{
+    WCHAR *bufW;
+    DWORD buflenW, convlen;
+    INT retval;
+
+    if (!buf || !bufSize)
+        return 0;
+
+    buflenW = bufSize;
+    bufW = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * buflenW);
+    retval = SHFormatDateTimeW(fileTime, flags, bufW, buflenW);
+
+    if (retval != 0)
+        convlen = WideCharToMultiByte(CP_ACP, 0, bufW, -1, (LPSTR) buf, bufSize, NULL, NULL);
+
+    HeapFree(GetProcessHeap(), 0, bufW);
+    return retval;
+}

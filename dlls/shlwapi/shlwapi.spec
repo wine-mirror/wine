@@ -350,8 +350,8 @@
 350 stdcall -noname GetFileVersionInfoSizeWrapW(wstr ptr)
 351 stdcall -noname GetFileVersionInfoWrapW(wstr long long ptr)
 352 stdcall -noname VerQueryValueWrapW(ptr wstr ptr ptr)
-353 stub -noname SHFormatDateTimeA
-354 stub -noname SHFormatDateTimeW
+353 stdcall -noname SHFormatDateTimeA(ptr ptr str long)
+354 stdcall -noname SHFormatDateTimeW(ptr ptr wstr long)
 355 stdcall -noname IUnknown_EnableModeless(ptr long)
 356 stdcall -noname CreateAllAccessSecurityAttributes(ptr ptr long)
 357 stdcall -noname SHGetNewLinkInfoWrapW(wstr wstr wstr long long)
