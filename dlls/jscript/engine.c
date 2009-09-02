@@ -1570,15 +1570,18 @@ HRESULT call_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, 
     if(SUCCEEDED(hres)) {
         switch(exprval.type) {
         case EXPRVAL_VARIANT:
-            if(V_VT(&exprval.u.var) != VT_DISPATCH)
-                return throw_type_error(ctx->var_disp->ctx, ei, IDS_NO_PROPERTY, NULL);
-
-            hres = disp_call(V_DISPATCH(&exprval.u.var), DISPID_VALUE, ctx->parser->script->lcid,
-                    DISPATCH_METHOD, &dp, flags & EXPR_NOVAL ? NULL : &var, ei, NULL/*FIXME*/);
+            if(V_VT(&exprval.u.var) == VT_DISPATCH)
+                hres = disp_call(V_DISPATCH(&exprval.u.var), DISPID_VALUE, ctx->parser->script->lcid,
+                        DISPATCH_METHOD, &dp, flags & EXPR_NOVAL ? NULL : &var, ei, NULL/*FIXME*/);
+            else
+                hres = throw_type_error(ctx->var_disp->ctx, ei, IDS_NO_PROPERTY, NULL);
             break;
         case EXPRVAL_IDREF:
             hres = disp_call(exprval.u.idref.disp, exprval.u.idref.id, ctx->parser->script->lcid,
                     DISPATCH_METHOD, &dp, flags & EXPR_NOVAL ? NULL : &var, ei, NULL/*FIXME*/);
+            break;
+        case EXPRVAL_INVALID:
+            hres = throw_type_error(ctx->var_disp->ctx, ei, IDS_OBJECT_EXPECTED, NULL);
             break;
         default:
             FIXME("unimplemented type %d\n", exprval.type);
