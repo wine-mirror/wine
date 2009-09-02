@@ -628,6 +628,15 @@ arr[12] = 2;
 ok(arr.slice(5).toString() === "a,,,,,,,2", "arr.slice(5).toString() = " + arr.slice(5).toString());
 ok(arr.slice(5).length === 8, "arr.slice(5).length = " + arr.slice(5).length);
 
+obj = new Object();
+obj.length = 3;
+obj[0] = 1;
+obj[1] = 2;
+obj[2] = 3;
+tmp = Array.prototype.slice.call(obj, 1, 2);
+ok(tmp.length === 1, "tmp.length = " + tmp.length);
+ok(tmp[0] === 2, "tmp[0] = " + tmp[0]);
+
 var num = new Number(2);
 ok(num.toString() === "2", "num(2).toString !== 2");
 var num = new Number();

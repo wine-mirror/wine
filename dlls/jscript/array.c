@@ -456,8 +456,9 @@ static HRESULT Array_slice(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
     if(is_class(dispex, JSCLASS_ARRAY)) {
         length = ((ArrayInstance*)dispex)->length;
     }else {
-        FIXME("not Array this\n");
-        return E_NOTIMPL;
+        hres = get_jsdisp_length(dispex, lcid, ei, &length);
+        if(FAILED(hres))
+            return hres;
     }
 
     if(arg_cnt(dp)) {
