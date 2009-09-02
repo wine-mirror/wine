@@ -1326,6 +1326,14 @@ static void test_MkParseDisplayNameEx(void)
     IBindCtx_Release(bctx);
 }
 
+static void test_IsValidURL(void)
+{
+    HRESULT hr;
+
+    hr = IsValidURL(NULL, 0, 0);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+}
+
 START_TEST(misc)
 {
     OleInitialize(NULL);
@@ -1345,6 +1353,7 @@ START_TEST(misc)
     test_UrlMkGetSessionOption();
     test_user_agent();
     test_MkParseDisplayNameEx();
+    test_IsValidURL();
 
     OleUninitialize();
 }

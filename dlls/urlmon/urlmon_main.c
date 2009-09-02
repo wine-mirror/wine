@@ -393,10 +393,10 @@ HRESULT WINAPI DllRegisterServerEx(void)
 HRESULT WINAPI IsValidURL(LPBC pBC, LPCWSTR szURL, DWORD dwReserved)
 {
     FIXME("(%p, %s, %d): stub\n", pBC, debugstr_w(szURL), dwReserved);
-    
-    if (pBC != NULL || dwReserved != 0)
+
+    if (pBC || dwReserved || !szURL)
         return E_INVALIDARG;
-    
+
     return S_OK;
 }
 
