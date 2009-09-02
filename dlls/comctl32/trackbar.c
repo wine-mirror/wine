@@ -1408,7 +1408,7 @@ TRACKBAR_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
     infoPtr->lSelMin   = 0;
     infoPtr->lSelMax   = 0;
     infoPtr->lPos      = 0;
-    infoPtr->fLocation = -1;
+    infoPtr->fLocation = TBTS_TOP;
     infoPtr->uNumTics  = 0;    /* start and end tic are not included in count*/
     infoPtr->uTicFreq  = 1;
     infoPtr->tics      = NULL;

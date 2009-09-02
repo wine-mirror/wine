@@ -868,15 +868,13 @@ static void test_tool_tips(HWND hWndTrackbar){
     flush_sequences(sequences, NUM_MSG_SEQUENCE);
     /* testing TBM_SETTIPSIDE */
     r = SendMessage(hWndTrackbar, TBM_SETTIPSIDE, TBTS_TOP, 0);
-    todo_wine{
-        expect(0, r);
-    }
+    expect(TBTS_TOP, r);
     r = SendMessage(hWndTrackbar, TBM_SETTIPSIDE, TBTS_LEFT, 0);
-    expect(0, r);
+    expect(TBTS_TOP, r);
     r = SendMessage(hWndTrackbar, TBM_SETTIPSIDE, TBTS_BOTTOM, 0);
-    expect(1, r);
+    expect(TBTS_LEFT, r);
     r = SendMessage(hWndTrackbar, TBM_SETTIPSIDE, TBTS_RIGHT, 0);
-    expect(2, r);
+    expect(TBTS_BOTTOM, r);
 
     /* testing TBM_SETTOOLTIPS */
     hWndTooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL, 0,
