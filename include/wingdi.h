@@ -151,6 +151,9 @@ typedef LONG FXPT2DOT30, *LPFXPT2DOT30;
 typedef LONG LCSCSTYPE;
 typedef LONG LCSGAMUTMATCH;
 
+#define LCS_sRGB                    0x73524742  /* 'sRGB' */
+#define LCS_WINDOWS_COLOR_SPACE     0x57696e20  /* 'Win ' */
+
 #define LCS_CALIBRATED_RGB    0x00000000L
 #define LCS_DEVICE_RGB        0x00000001L
 #define LCS_DEVICE_CMYK       0x00000002L
