@@ -151,8 +151,12 @@ static void TRACKBAR_RecalculateTics (TRACKBAR_INFO *infoPtr)
     int tic;
     unsigned nrTics, i;
 
-    if (infoPtr->uTicFreq && infoPtr->lRangeMax >= infoPtr->lRangeMin)
-    	nrTics=(infoPtr->lRangeMax - infoPtr->lRangeMin)/infoPtr->uTicFreq;
+    if (infoPtr->uTicFreq && infoPtr->lRangeMax >= infoPtr->lRangeMin) {
+        nrTics=(infoPtr->lRangeMax - infoPtr->lRangeMin)/infoPtr->uTicFreq;
+        /* don't add extra tic if there's no remainder */
+        if ((infoPtr->lRangeMax - infoPtr->lRangeMin) % infoPtr->uTicFreq == 0)
+          nrTics--;
+    }
     else {
         Free (infoPtr->tics);
         infoPtr->tics = NULL;
@@ -1042,10 +1046,7 @@ TRACKBAR_GetNumTics (const TRACKBAR_INFO *infoPtr)
     if (GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE) & TBS_NOTICKS)
         return 0;
 
-    if(infoPtr->uNumTics == 0)
-        return 2;
-    else
-        return infoPtr->uNumTics + 1;
+    return infoPtr->uNumTics + 2;
 }
 
 
