@@ -43,7 +43,7 @@ static void test_startup(void)
     expect(Ok, status);
     GdiplusShutdown(gdiplusToken);
 
-    gdiplusStartupInput.GdiplusVersion = 2;
+    gdiplusStartupInput.GdiplusVersion = 42;
 
     status = GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
     expect(UnsupportedGdiplusVersion, status);
@@ -219,7 +219,8 @@ static void test_dasharray(void)
     /* Try to set with count = 0. */
     GdipSetPenDashStyle(pen, DashStyleDot);
     status = GdipSetPenDashArray(pen, dashes, 0);
-    expect(OutOfMemory, status);
+    ok(status == OutOfMemory || status == InvalidParameter,
+       "Expected OutOfMemory or InvalidParameter, got %.8x\n", status);
     GdipGetPenDashStyle(pen, &style);
     expect(DashStyleDot, style);
 
