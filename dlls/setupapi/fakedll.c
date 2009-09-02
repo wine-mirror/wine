@@ -375,6 +375,7 @@ static void *load_fake_dll( const WCHAR *name, unsigned int *size, void *buf, un
         ptr = prepend( ptr, path, strlen(path) );
         if ((fd = open( ptr, O_RDONLY | O_BINARY )) != -1) goto found;
     }
+    goto done;
 
 found:
     if (!fstat( fd, &st ))
