@@ -576,11 +576,85 @@ static HRESULT JSGlobal_parseFloat(DispatchEx *dispex, LCID lcid, WORD flags, DI
     return S_OK;
 }
 
+static inline int hex_to_int(const WCHAR wch) {
+    if(toupperW(wch)>='A' && toupperW(wch)<='F') return toupperW(wch)-'A'+10;
+    if(isdigitW(wch)) return wch-'0';
+    return -1;
+}
+
 static HRESULT JSGlobal_unescape(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR ret, str;
+    const WCHAR *ptr;
+    DWORD len = 0;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(!arg_cnt(dp)) {
+        if(retv) {
+            ret = SysAllocString(undefinedW);
+            if(!ret)
+                return E_OUTOFMEMORY;
+
+            V_VT(retv) = VT_BSTR;
+            V_BSTR(retv) = ret;
+        }
+
+        return S_OK;
+    }
+
+    hres = to_string(dispex->ctx, get_arg(dp, 0), ei, &str);
+    if(FAILED(hres))
+        return hres;
+
+    for(ptr=str; *ptr; ptr++) {
+        if(*ptr == '%') {
+            if(hex_to_int(*(ptr+1))!=-1 && hex_to_int(*(ptr+2))!=-1)
+                ptr += 2;
+            else if(*(ptr+1)=='u' && hex_to_int(*(ptr+2))!=-1 && hex_to_int(*(ptr+3))!=-1
+                    && hex_to_int(*(ptr+4))!=-1 && hex_to_int(*(ptr+5))!=-1)
+                ptr += 5;
+        }
+
+        len++;
+    }
+
+    ret = SysAllocStringLen(NULL, len);
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    len = 0;
+    for(ptr=str; *ptr; ptr++) {
+        if(*ptr == '%') {
+            if(hex_to_int(*(ptr+1))!=-1 && hex_to_int(*(ptr+2))!=-1) {
+                ret[len] = (hex_to_int(*(ptr+1))<<4) + hex_to_int(*(ptr+2));
+                ptr += 2;
+            }
+            else if(*(ptr+1)=='u' && hex_to_int(*(ptr+2))!=-1 && hex_to_int(*(ptr+3))!=-1
+                    && hex_to_int(*(ptr+4))!=-1 && hex_to_int(*(ptr+5))!=-1) {
+                ret[len] = (hex_to_int(*(ptr+2))<<12) + (hex_to_int(*(ptr+3))<<8)
+                    + (hex_to_int(*(ptr+4))<<4) + hex_to_int(*(ptr+5));
+                ptr += 5;
+            }
+            else
+                ret[len] = *ptr;
+        }
+        else
+            ret[len] = *ptr;
+
+        len++;
+    }
+
+    if(retv) {
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = ret;
+    }
+    else
+        SysFreeString(ret);
+
+    return S_OK;
 }
 
 static HRESULT JSGlobal_GetObject(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

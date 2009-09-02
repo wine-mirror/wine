@@ -58,6 +58,17 @@ ok(tmp === "undefined", "encodeURI() = " + tmp);
 tmp = encodeURI("abc", "test");
 ok(tmp === "abc", "encodeURI('abc') = " + tmp);
 
+tmp = unescape("abc");
+ok(tmp === "abc", "unescape('abc') = " + tmp);
+tmp = unescape("");
+ok(tmp === "", "unescape('') = " + tmp);
+tmp = unescape("%%%");
+ok(tmp === "%%%", "unescape('%%%') = " + tmp);
+tmp = unescape();
+ok(tmp === "undefined", "unescape() = " + tmp);
+tmp = unescape("%54%65s%u0074");
+ok(tmp === "Test", "unescape('%54%65s%u0074') = " + tmp);
+
 tmp = "" + new Object();
 ok(tmp === "[object Object]", "'' + new Object() = " + tmp);
 (tmp = new Array).f = Object.prototype.toString;
