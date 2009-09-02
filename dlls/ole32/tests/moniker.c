@@ -1867,6 +1867,75 @@ static void test_bind_context(void)
     ok(!refs, "bound object should have been destroyed, instead of having %d refs\n", refs);
 }
 
+static void test_save_load_filemoniker(void)
+{
+    IMoniker* pMk;
+    IStream* pStm;
+    HRESULT hr;
+    ULARGE_INTEGER size;
+    LARGE_INTEGER zero_pos, dead_pos, nulls_pos;
+    DWORD some_val = 0xFEDCBA98;
+    int i;
+
+    /* see FileMonikerImpl_Save docs */
+    zero_pos.u.LowPart = 0;
+    dead_pos.u.LowPart = sizeof(WORD) + sizeof(DWORD) + (lstrlenW(wszFileName1) + 1) + sizeof(WORD);
+    nulls_pos.u.LowPart = dead_pos.u.LowPart + sizeof(WORD);
+
+    /* create the stream we're going to write to */
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStm);
+    ok_ole_success(hr, "CreateStreamOnHGlobal");
+
+    size.u.LowPart = 128;
+    hr = IStream_SetSize(pStm, size);
+    ok_ole_success(hr, "IStream_SetSize");
+
+    /* create and save a moniker */
+    hr = CreateFileMoniker(wszFileName1, &pMk);
+    ok_ole_success(hr, "CreateFileMoniker");
+
+    hr = IMoniker_Save(pMk, pStm, TRUE);
+    ok_ole_success(hr, "IMoniker_Save");
+
+    hr = IMoniker_Release(pMk);
+    ok_ole_success(hr, "IMoniker_Release");
+
+    /* overwrite the constants with various values */
+    hr = IStream_Seek(pStm, zero_pos, STREAM_SEEK_SET, NULL);
+    ok_ole_success(hr, "IStream_Seek");
+    hr = IStream_Write(pStm, &some_val, sizeof(WORD), NULL);
+    ok_ole_success(hr, "IStream_Write");
+
+    hr = IStream_Seek(pStm, dead_pos, STREAM_SEEK_SET, NULL);
+    ok_ole_success(hr, "IStream_Seek");
+    hr = IStream_Write(pStm, &some_val, sizeof(WORD), NULL);
+    ok_ole_success(hr, "IStream_Write");
+
+    hr = IStream_Seek(pStm, nulls_pos, STREAM_SEEK_SET, NULL);
+    ok_ole_success(hr, "IStream_Seek");
+    for(i = 0; i < 5; ++i){
+        hr = IStream_Write(pStm, &some_val, sizeof(DWORD), NULL);
+        ok_ole_success(hr, "IStream_Write");
+    }
+
+    /* go back to the start of the stream */
+    hr = IStream_Seek(pStm, zero_pos, STREAM_SEEK_SET, NULL);
+    ok_ole_success(hr, "IStream_Seek");
+
+    /* create a new moniker and load into it */
+    hr = CreateFileMoniker(wszFileName1, &pMk);
+    ok_ole_success(hr, "CreateFileMoniker");
+
+    hr = IMoniker_Load(pMk, pStm);
+    ok_ole_success(hr, "IMoniker_Load");
+
+    hr = IMoniker_Release(pMk);
+    ok_ole_success(hr, "IMoniker_Release");
+
+    hr = IStream_Release(pStm);
+    ok_ole_success(hr, "IStream_Release");
+}
+
 START_TEST(moniker)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -1880,6 +1949,7 @@ START_TEST(moniker)
     test_anti_moniker();
     test_generic_composite_moniker();
     test_pointer_moniker();
+    test_save_load_filemoniker();
 
     /* FIXME: test moniker creation funcs and parsing other moniker formats */
 
