@@ -429,21 +429,38 @@ static WineXRenderFormat *get_xrender_format(WXRFormat format)
 
 static WineXRenderFormat *get_xrender_format_from_pdevice(X11DRV_PDEVICE *physDev)
 {
-    WXRFormat format;
-
-    switch(physDev->depth)
+    if(physDev->depth == 1)
+        return get_xrender_format(WXR_FORMAT_MONO);
+    /* physDevs of a depth <=8, don't have color_shifts set and XRender can't handle those except for 1-bit */
+    else if(!physDev->color_shifts)
+        return default_format;
+    else
     {
-        case 1:
-            format = WXR_FORMAT_MONO;
-            break;
-        default:
-            /* For now fall back to the format of the default visual.
-               In the future we should check if we are using a DDB/DIB and what exact format we need.
-             */
-            return default_format;
-    }
+        int redMask=0, greenMask=0, blueMask=0;
+        int i;
+        ColorShifts *shifts = physDev->color_shifts;
 
-    return get_xrender_format(format);
+        redMask   = shifts->physicalRed.max << shifts->physicalRed.shift;
+        greenMask = shifts->physicalGreen.max << shifts->physicalGreen.shift;
+        blueMask  = shifts->physicalBlue.max << shifts->physicalBlue.shift;
+
+        /* Try to locate a format which matches the specification of the dibsection. */
+        for(i = 0; i < (sizeof(wxr_formats_template) / sizeof(wxr_formats_template[0])); i++)
+        {
+            if( physDev->depth == wxr_formats_template[i].depth &&
+                redMask   == (wxr_formats_template[i].redMask << wxr_formats_template[i].red) &&
+                greenMask == (wxr_formats_template[i].greenMask << wxr_formats_template[i].green) &&
+                blueMask  == (wxr_formats_template[i].blueMask << wxr_formats_template[i].blue) )
+
+            {
+                /* When we reach this stage the format was found in our template table but this doesn't mean that
+                * the Xserver also supports this format (e.g. its depth might be too low). The call below verifies that.
+                */
+                return get_xrender_format(wxr_formats_template[i].wxr_format);
+            }
+        }
+    }
+    return NULL;
 }
 
 static BOOL fontcmp(LFANDSIZE *p1, LFANDSIZE *p2)
