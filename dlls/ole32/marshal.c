@@ -553,9 +553,9 @@ static HRESULT WINAPI ProxyCliSec_SetBlanket(IClientSecurity *iface,
                                              void *pAuthInfo,
                                              DWORD Capabilities)
 {
-    FIXME("(%p, %d, %d, %s, %d, %d, %p, 0x%x): stub\n", pProxy, AuthnSvc,
-          AuthzSvc, debugstr_w(pServerPrincName), AuthnLevel, ImpLevel,
-          pAuthInfo, Capabilities);
+    FIXME("(%p, %d, %d, %s, %d, %d, %p, 0x%x): stub\n", pProxy, AuthnSvc, AuthzSvc,
+          pServerPrincName == (OLECHAR*)COLE_DEFAULT_PRINCIPAL ? "<default principal>" : debugstr_w(pServerPrincName),
+          AuthnLevel, ImpLevel, pAuthInfo, Capabilities);
     return E_NOTIMPL;
 }
 
