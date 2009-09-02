@@ -104,7 +104,7 @@ static void test_StreamOnMemory(void)
     LargeInt.QuadPart = -1;
     hr = IWICStream_Seek(pStream, LargeInt, STREAM_SEEK_END, &uNewPos);
     ok(hr == S_OK, "Seek returned with %#x, expected %#x\n", hr, S_OK);
-    ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == sizeof(Memory) - 1, "bSeek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, sizeof(Memory) - 1);
+    ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == sizeof(Memory) - 1, "bSeek cursor moved to position (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart);
 
     IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_SET, &uNewPos); /* reset seek pointer */
     LargeInt.QuadPart = -sizeof(Memory) - 5;
@@ -140,7 +140,7 @@ static void test_StreamOnMemory(void)
     hr = IWICStream_Read(pStream, Memory, sizeof(Memory) + 10, &uBytesRead);   /* request too many bytes */
     ok(hr == S_OK, "Read returned with %#x, expected %#x\n", hr, S_OK);
     if(SUCCEEDED(hr)) {
-        ok(uBytesRead == sizeof(Memory), "Read %u bytes, expected %u\n", uBytesRead, sizeof(Memory));
+        ok(uBytesRead == sizeof(Memory), "Read %u bytes\n", uBytesRead);
         ok(memcmp(Memory, CmpMem, uBytesRead) == 0, "Read returned invalid data!\n");
     }
 
@@ -164,7 +164,7 @@ static void test_StreamOnMemory(void)
     hr = IWICStream_Read(pStream, MemBuf, sizeof(Memory) + 10, &uBytesRead);
     ok(hr == S_OK, "Read returned with %#x, expected %#x\n", hr, S_OK);
     if(SUCCEEDED(hr)) {
-        ok(uBytesRead == sizeof(Memory), "Read %u bytes, expected %u\n", uBytesRead, sizeof(Memory));
+        ok(uBytesRead == sizeof(Memory), "Read %u bytes\n", uBytesRead);
         ok(memcmp(Memory, CmpMem, 64) == 0, "Read returned invalid data!\n");
     }
     IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_SET, NULL);
@@ -292,7 +292,7 @@ static void test_StreamOnMemory(void)
     ok(hr == S_OK, "Stat returned %#x, expected %#x\n", hr, S_OK);
     ok(Stats.pwcsName == NULL, "Stat returned name %p, expected %p\n", Stats.pwcsName, NULL);
     ok(Stats.type == STGTY_STREAM, "Stat returned type %d, expected %d\n", Stats.type, STGTY_STREAM);
-    ok(Stats.cbSize.u.HighPart == 0 && Stats.cbSize.u.LowPart == sizeof(Memory), "Stat returned size (%u;%u), expected (%u;%u)\n", Stats.cbSize.u.HighPart, Stats.cbSize.u.LowPart, 0, sizeof(Memory));
+    ok(Stats.cbSize.u.HighPart == 0 && Stats.cbSize.u.LowPart == sizeof(Memory), "Stat returned size (%u;%u)\n", Stats.cbSize.u.HighPart, Stats.cbSize.u.LowPart);
     ok(Stats.mtime.dwHighDateTime == 0 && Stats.mtime.dwLowDateTime == 0, "Stat returned mtime (%u;%u), expected (%u;%u)\n", Stats.mtime.dwHighDateTime, Stats.mtime.dwLowDateTime, 0, 0);
     ok(Stats.ctime.dwHighDateTime == 0 && Stats.ctime.dwLowDateTime == 0, "Stat returned ctime (%u;%u), expected (%u;%u)\n", Stats.ctime.dwHighDateTime, Stats.ctime.dwLowDateTime, 0, 0);
     ok(Stats.atime.dwHighDateTime == 0 && Stats.atime.dwLowDateTime == 0, "Stat returned atime (%u;%u), expected (%u;%u)\n", Stats.atime.dwHighDateTime, Stats.atime.dwLowDateTime, 0, 0);
