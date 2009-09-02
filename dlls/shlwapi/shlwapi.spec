@@ -476,7 +476,7 @@
 476 stub -noname SHGetObjectCompatFlags
 477 stub -noname SHCreatePropertyBagOnMemory
 478 stdcall -noname IUnknown_TranslateAcceleratorIO(ptr ptr)
-479 stub -noname IUnknown_UIActivateIO
+479 stdcall -noname IUnknown_UIActivateIO(ptr long ptr)
 480 stdcall -noname UrlCrackW(wstr long long ptr) wininet.InternetCrackUrlW
 481 stdcall -noname IUnknown_HasFocusIO(ptr)
 482 stub -noname SHMessageBoxHelpA

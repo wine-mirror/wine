@@ -1475,6 +1475,43 @@ HRESULT WINAPI IUnknown_QueryService(IUnknown* lpUnknown, REFGUID sid, REFIID ri
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.479]
+ *
+ * Call an object's UIActivateIO method.
+ *
+ * PARAMS
+ *  unknown  [I] Object to call the UIActivateIO method on
+ *  activate [I] Parameter for UIActivateIO call
+ *  msg      [I] Parameter for UIActivateIO call
+ *
+ * RETURNS
+ *  Success: Value of UI_ActivateIO call
+ *  Failure: An HRESULT error code
+ *
+ * NOTES
+ *  unknown is expected to support the IInputObject interface.
+ */
+HRESULT WINAPI IUnknown_UIActivateIO(IUnknown *unknown, BOOL activate, LPMSG msg)
+{
+    IInputObject* object = NULL;
+    HRESULT ret;
+
+    if (!unknown)
+        return E_FAIL;
+
+    /* Get an IInputObject interface from the object */
+    ret = IUnknown_QueryInterface(unknown, &IID_IInputObject, (LPVOID*) &object);
+
+    if (ret == S_OK)
+    {
+        ret = IInputObject_UIActivateIO(object, activate, msg);
+        IUnknown_Release(object);
+    }
+
+    return ret;
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.177]
  *
  * Loads a popup menu.
