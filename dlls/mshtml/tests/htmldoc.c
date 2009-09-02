@@ -201,6 +201,12 @@ static const char *debugstr_guid(REFIID riid)
     return buf;
 }
 
+static BOOL is_english(void)
+{
+    return PRIMARYLANGID(GetSystemDefaultLangID()) == LANG_ENGLISH
+        && PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH;
+}
+
 #define EXPECT_UPDATEUI  1
 #define EXPECT_SETTITLE  2
 
@@ -1193,7 +1199,12 @@ static IOleContainer OleContainer = { &OleContainerVtbl };
 
 static HRESULT WINAPI InPlaceFrame_QueryInterface(IOleInPlaceFrame *iface, REFIID riid, void **ppv)
 {
-    ok(0, "unexpected call\n");
+    static const GUID undocumented_frame_iid = {0xfbece6c9,0x48d7,0x4a37,{0x8f,0xe3,0x6a,0xd4,0x27,0x2f,0xdd,0xac}};
+
+    if(!IsEqualGUID(&undocumented_frame_iid, riid))
+        ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+
+    *ppv = NULL;
     return E_NOINTERFACE;
 }
 
@@ -1249,7 +1260,7 @@ static HRESULT WINAPI InPlaceUIWindow_SetActiveObject(IOleInPlaceFrame *iface,
 
     if(expect_InPlaceUIWindow_SetActiveObject_active) {
         ok(pActiveObject != NULL, "pActiveObject = NULL\n");
-        if(pActiveObject && PRIMARYLANGID(GetSystemDefaultLangID()) == LANG_ENGLISH)
+        if(pActiveObject && is_english())
             ok(!lstrcmpW(wszHTML_Document, pszObjName), "pszObjName != \"HTML Document\"\n");
     }
     else {
@@ -1269,7 +1280,7 @@ static HRESULT WINAPI InPlaceFrame_SetActiveObject(IOleInPlaceFrame *iface,
     if(pActiveObject) {
         CHECK_EXPECT2(SetActiveObject);
 
-        if(pActiveObject && PRIMARYLANGID(GetSystemDefaultLangID()) == LANG_ENGLISH)
+        if(pActiveObject && is_english())
             ok(!lstrcmpW(wszHTML_Document, pszObjName), "pszObjName != \"HTML Document\"\n");
     }else {
         CHECK_EXPECT(SetActiveObject_null);
@@ -2399,6 +2410,7 @@ static IServiceProvider ServiceProvider = { &ServiceProviderVtbl };
 DEFINE_GUID(IID_unk1, 0xD48A6EC6,0x6A4A,0x11CF,0x94,0xA7,0x44,0x45,0x53,0x54,0x00,0x00); /* HTMLWindow2 ? */
 DEFINE_GUID(IID_unk2, 0x7BB0B520,0xB1A7,0x11D2,0xBB,0x23,0x00,0xC0,0x4F,0x79,0xAB,0xCD);
 DEFINE_GUID(IID_unk3, 0x000670BA,0x0000,0x0000,0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
+DEFINE_GUID(IID_unk4, 0x305104a6,0x98b5,0x11cf,0xbb,0x82,0x00,0xaa,0x00,0xbd,0xce,0x0b);
 
 static HRESULT QueryInterface(REFIID riid, void **ppv)
 {
@@ -2433,6 +2445,8 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
     else if(IsEqualGUID(&IID_unk2, riid))
         return E_NOINTERFACE; /* ? */
     else if(IsEqualGUID(&IID_unk3, riid))
+        return E_NOINTERFACE; /* ? */
+    else if(IsEqualGUID(&IID_unk4, riid))
         return E_NOINTERFACE; /* ? */
     else
         ok(0, "unexpected riid %s\n", debugstr_guid(riid));
