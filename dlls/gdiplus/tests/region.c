@@ -364,7 +364,9 @@ static void test_getregiondata(void)
     expect_dword(buf + 5, 12);
     expect_magic((DWORD*)(buf + 6));
     expect_dword(buf + 7, 0);
-    expect_dword(buf + 8, 0x00004000);
+    /* flags 0x4000 means its a path of shorts instead of FLOAT */
+    ok((*(buf + 8) & (~ 0x00004000)) == 0x00000000,
+       "expected 00000000 got %08x\n", *(buf + 8) & (~ 0x00004000));
 
     status = GdipDeleteRegion(region);
     expect(Ok, status);
@@ -503,7 +505,8 @@ static void test_getregiondata(void)
     expect_float(buf + 25, 50);
     expect_float(buf + 26, 70.2);
     expect_dword(buf + 27, 0x01010100);
-    expect_dword(buf + 28, 0x00000101);
+    ok(*(buf + 28) == 0x00000101 || *(buf + 28) == 0x43050101 /* Win 7 */,
+       "expected 00000101 or 43050101 got %08x\n", *(buf + 28));
 
     status = GdipDeletePath(path);
     expect(Ok, status);
