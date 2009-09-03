@@ -1298,6 +1298,7 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
 
     *pcGlyphs = cChars;
     if ((hr = init_script_cache(hdc, psc)) != S_OK) return hr;
+    if (!pwLogClust) return E_FAIL;
 
     if ((get_cache_pitch_family(psc) & TMPF_TRUETYPE) && !psa->fNoGlyphIndex)
     {
@@ -1329,7 +1330,7 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
         psva[i].fReserved      = 0;
         psva[i].fShapeReserved = 0;
 
-        if (pwLogClust) pwLogClust[i] = i;
+        pwLogClust[i] = i;
     }
     return S_OK;
 }
@@ -1366,6 +1367,7 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
 
     if (!psva) return E_INVALIDARG;
     if ((hr = init_script_cache(hdc, psc)) != S_OK) return hr;
+    if (!pGoffset) return E_FAIL;
 
     if (pABC) memset(pABC, 0, sizeof(ABC));
     for (i = 0; i < cGlyphs; i++)
@@ -1394,7 +1396,7 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
             pABC->abcC += abc.abcC;
         }
         /* FIXME: set to more reasonable values */
-        if (pGoffset)  pGoffset[i].du = pGoffset[i].dv = 0;
+        pGoffset[i].du = pGoffset[i].dv = 0;
         if (piAdvance) piAdvance[i] = abc.abcA + abc.abcB + abc.abcC;
     }
 
@@ -1527,6 +1529,7 @@ HRESULT WINAPI ScriptGetGlyphABCWidth(HDC hdc, SCRIPT_CACHE *psc, WORD glyph, AB
 
     TRACE("(%p, %p, 0x%04x, %p)\n", hdc, psc, glyph, abc);
 
+    if (!abc) return E_INVALIDARG;
     if ((hr = init_script_cache(hdc, psc)) != S_OK) return hr;
 
     if (!get_cache_glyph_widths(psc, glyph, abc))
