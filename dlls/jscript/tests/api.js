@@ -1492,7 +1492,7 @@ exception_test(function() {eval("for(i=0;i<10")}, "SyntaxError", -2146827284);
 exception_test(function() {eval("while(")}, "SyntaxError", -2146827286);
 exception_test(function() {eval("if(")}, "SyntaxError", -2146827286);
 exception_test(function() {eval("'unterminated")}, "SyntaxError", -2146827273);
-exception_test(function() {eval("nonexistingfunc()")}, "TypeError", -2146823537);
+exception_test(function() {eval("nonexistingfunc()")}, "TypeError", -2146823281);
 
 function testObjectInherit(obj, constr, ts, tls, vo) {
     ok(obj instanceof Object, "obj is not instance of Object");
