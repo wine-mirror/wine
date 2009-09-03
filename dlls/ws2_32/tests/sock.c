@@ -2332,24 +2332,24 @@ static void test_addr_to_print(void)
     pdst = NULL;
     pdst = pInetNtop(AF_INET, (void*)&in.s_addr, NULL, sizeof(dst));
     ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
-    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER,
-       "Should be STATUS_INVALID_PARAMETER not 0x%x\n", WSAGetLastError());
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER || WSAGetLastError() == WSAEINVAL /* Win7 */,
+       "Should be STATUS_INVALID_PARAMETER or WSAEINVAL not 0x%x\n", WSAGetLastError());
 
     /* Test zero length passed */
     WSASetLastError(0);
     pdst = NULL;
     pdst = pInetNtop(AF_INET, (void*)&in.s_addr, dst, 0);
     ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
-    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER,
-       "Should be STATUS_INVALID_PARAMETER not 0x%x\n", WSAGetLastError());
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER || WSAGetLastError() == WSAEINVAL /* Win7 */,
+       "Should be STATUS_INVALID_PARAMETER or WSAEINVAL not 0x%x\n", WSAGetLastError());
 
     /* Test length one shorter than the address length */
     WSASetLastError(0);
     pdst = NULL;
     pdst = pInetNtop(AF_INET, (void*)&in.s_addr, dst, 6);
     ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
-    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER,
-       "Should be STATUS_INVALID_PARAMETER not 0x%x\n", WSAGetLastError());
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER || WSAGetLastError() == WSAEINVAL /* Win7 */,
+       "Should be STATUS_INVALID_PARAMETER or WSAEINVAL not 0x%x\n", WSAGetLastError());
 
     /* Test longer length is ok */
     WSASetLastError(0);
@@ -2385,24 +2385,24 @@ static void test_addr_to_print(void)
     pdst = NULL;
     pdst = pInetNtop(AF_INET6, (void*)&in6.s6_addr, NULL, sizeof(dst6));
     ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
-    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER,
-       "Should be STATUS_INVALID_PARAMETER not 0x%x\n", WSAGetLastError());
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER || WSAGetLastError() == WSAEINVAL /* Win7 */,
+       "Should be STATUS_INVALID_PARAMETER or WSAEINVAL not 0x%x\n", WSAGetLastError());
 
     /* Test zero length passed */
     WSASetLastError(0);
     pdst = NULL;
     pdst = pInetNtop(AF_INET6, (void*)&in6.s6_addr, dst6, 0);
     ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
-    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER,
-       "Should be STATUS_INVALID_PARAMETER not 0x%x\n", WSAGetLastError());
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER || WSAGetLastError() == WSAEINVAL /* Win7 */,
+       "Should be STATUS_INVALID_PARAMETER or WSAEINVAL not 0x%x\n", WSAGetLastError());
 
     /* Test length one shorter than the address length */
     WSASetLastError(0);
     pdst = NULL;
     pdst = pInetNtop(AF_INET6, (void*)&in6.s6_addr, dst6, 16);
     ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
-    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER,
-       "Should be STATUS_INVALID_PARAMETER not 0x%x\n", WSAGetLastError());
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER || WSAGetLastError() == WSAEINVAL /* Win7 */,
+       "Should be STATUS_INVALID_PARAMETER or WSAEINVAL not 0x%x\n", WSAGetLastError());
 
     /* Test longer length is ok */
     WSASetLastError(0);
