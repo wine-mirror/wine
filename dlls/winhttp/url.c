@@ -368,7 +368,7 @@ BOOL WINAPI WinHttpCreateUrl( LPURL_COMPONENTS uc, DWORD flags, LPWSTR url, LPDW
 
     TRACE("%p, 0x%08x, %p, %p\n", uc, flags, url, required);
 
-    if (!uc || uc->dwStructSize != sizeof(URL_COMPONENTS) || !required)
+    if (!uc || uc->dwStructSize != sizeof(URL_COMPONENTS) || !required || !url)
     {
         set_last_error( ERROR_INVALID_PARAMETER );
         return FALSE;
@@ -376,7 +376,7 @@ BOOL WINAPI WinHttpCreateUrl( LPURL_COMPONENTS uc, DWORD flags, LPWSTR url, LPDW
 
     if (!calc_length( uc, flags, &len )) return FALSE;
 
-    if (!url || *required < len)
+    if (*required < len)
     {
         *required = len + 1;
         set_last_error( ERROR_INSUFFICIENT_BUFFER );

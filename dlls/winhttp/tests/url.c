@@ -144,16 +144,18 @@ static void WinHttpCreateUrl_test( void )
     SetLastError( 0xdeadbeef );
     ret = WinHttpCreateUrl( &uc, 0, NULL, &len );
     ok( !ret, "expected failure\n" );
-    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "expected ERROR_INSUFFICIENT_BUFFER got %u\n", GetLastError() );
-    ok( len == 57, "expected len 57 got %u\n", len );
+    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER ||
+        GetLastError() == ERROR_INVALID_PARAMETER,
+        "expected ERROR_INSUFFICIENT_BUFFER or ERROR_INVALID_PARAMETER got %u\n", GetLastError() );
 
     /* correct size, NULL url */
     fill_url_components( &uc );
     SetLastError( 0xdeadbeef );
     ret = WinHttpCreateUrl( &uc, 0, NULL, &len );
     ok( !ret, "expected failure\n" );
-    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "expected ERROR_INSUFFICIENT_BUFFER got %u\n", GetLastError() );
-    ok( len == 57, "expected len 57 got %u\n", len );
+    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER ||
+        GetLastError() == ERROR_INVALID_PARAMETER,
+        "expected ERROR_INSUFFICIENT_BUFFER or ERROR_INVALID_PARAMETER got %u\n", GetLastError() );
 
     /* valid components, allocated url, short length */
     SetLastError( 0xdeadbeef );
@@ -315,7 +317,7 @@ static void reset_url_components( URL_COMPONENTS *uc )
 static void WinHttpCrackUrl_test( void )
 {
     URL_COMPONENTSW uc;
-    WCHAR scheme[20], user[20], pass[20], host[20], path[40], extra[20];
+    WCHAR scheme[20], user[20], pass[20], host[20], path[80], extra[40];
     DWORD error;
     BOOL ret;
 
@@ -499,17 +501,17 @@ static void WinHttpCrackUrl_test( void )
     uc.dwHostNameLength = 20;
     uc.nPort = 0;
     uc.lpszUrlPath = path;
-    uc.dwUrlPathLength = 40;
+    uc.dwUrlPathLength = 80;
     uc.lpszExtraInfo = extra;
-    uc.dwExtraInfoLength = 20;
+    uc.dwExtraInfoLength = 40;
     path[0] = 0;
 
     ret = WinHttpCrackUrl( url8, 0, ICU_DECODE, &uc );
-    ok( ret, "WinHttpCrackUrl failed\n" );
+    ok( ret, "WinHttpCrackUrl failed %u\n", GetLastError() );
     ok( !memcmp( uc.lpszUrlPath + 11, escape, 21 * sizeof(WCHAR) ), "unexpected path\n" );
-    ok( uc.dwUrlPathLength == 32, "unexpected path length\n" );
+    ok( uc.dwUrlPathLength == 32, "unexpected path length %u\n", uc.dwUrlPathLength );
     ok( !memcmp( uc.lpszExtraInfo, escape + 21, 12 * sizeof(WCHAR) ), "unexpected extra info\n" );
-    ok( uc.dwExtraInfoLength == 12, "unexpected extra info length\n" );
+    ok( uc.dwExtraInfoLength == 12, "unexpected extra info length %u\n", uc.dwExtraInfoLength );
 
     /* Urls with specified port numbers */
     /* decoding with buffers */
