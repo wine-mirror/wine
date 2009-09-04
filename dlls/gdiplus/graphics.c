@@ -1854,15 +1854,6 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         else
             return NotImplemented;
 
-        /* IPicture renders bitmaps with the y-axis reversed
-         * FIXME: flipping for unknown image type might not be correct. */
-        if(image->type != ImageTypeMetafile){
-            INT temp;
-            temp = pti[0].y;
-            pti[0].y = pti[2].y;
-            pti[2].y = temp;
-        }
-
         if(IPicture_Render(image->picture, graphics->hdc,
             pti[0].x, pti[0].y, pti[1].x - pti[0].x, pti[2].y - pti[0].y,
             srcx * dx, srcy * dy,
