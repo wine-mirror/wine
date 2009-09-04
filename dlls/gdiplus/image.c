@@ -1507,6 +1507,11 @@ static GpStatus decode_image_icon(IStream* stream, REFCLSID clsid, GpImage **ima
     return decode_image_wic(stream, &CLSID_WICIcoDecoder, image);
 }
 
+static GpStatus decode_image_bmp(IStream* stream, REFCLSID clsid, GpImage **image)
+{
+    return decode_image_wic(stream, &CLSID_WICBmpDecoder, image);
+}
+
 static GpStatus decode_image_jpeg(IStream* stream, REFCLSID clsid, GpImage **image)
 {
     return decode_image_wic(stream, &CLSID_WICJpegDecoder, image);
@@ -2051,7 +2056,7 @@ static const struct image_codec codecs[NUM_CODECS] = {
             /* SigMask */            bmp_sig_mask,
         },
         encode_image_BMP,
-        decode_image_olepicture_bitmap
+        decode_image_bmp
     },
     {
         { /* JPEG */
