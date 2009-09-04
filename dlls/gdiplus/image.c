@@ -1517,100 +1517,14 @@ static GpStatus decode_image_jpeg(IStream* stream, REFCLSID clsid, GpImage **ima
     return decode_image_wic(stream, &CLSID_WICJpegDecoder, image);
 }
 
+static GpStatus decode_image_png(IStream* stream, REFCLSID clsid, GpImage **image)
+{
+    return decode_image_wic(stream, &CLSID_WICPngDecoder, image);
+}
+
 static GpStatus decode_image_gif(IStream* stream, REFCLSID clsid, GpImage **image)
 {
     return decode_image_wic(stream, &CLSID_WICGifDecoder, image);
-}
-
-static GpStatus decode_image_olepicture_bitmap(IStream* stream, REFCLSID clsid, GpImage **image)
-{
-    IPicture *pic;
-    BITMAPINFO *pbmi;
-    BITMAPCOREHEADER* bmch;
-    HBITMAP hbm;
-    HDC hdc;
-
-    TRACE("%p %p\n", stream, image);
-
-    if(!stream || !image)
-        return InvalidParameter;
-
-    if(OleLoadPicture(stream, 0, FALSE, &IID_IPicture,
-        (LPVOID*) &pic) != S_OK){
-        TRACE("Could not load picture\n");
-        return GenericError;
-    }
-
-    pbmi = GdipAlloc(sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
-    if (!pbmi)
-        return OutOfMemory;
-    *image = GdipAlloc(sizeof(GpBitmap));
-    if(!*image){
-        GdipFree(pbmi);
-        return OutOfMemory;
-    }
-    (*image)->type = ImageTypeBitmap;
-
-    (*((GpBitmap**) image))->width = ipicture_pixel_width(pic);
-    (*((GpBitmap**) image))->height = ipicture_pixel_height(pic);
-
-    /* get the pixel format */
-    IPicture_get_Handle(pic, (OLE_HANDLE*)&hbm);
-    IPicture_get_CurDC(pic, &hdc);
-
-    (*((GpBitmap**) image))->hbitmap = hbm;
-    (*((GpBitmap**) image))->hdc = hdc;
-    (*((GpBitmap**) image))->bits = NULL;
-
-    bmch = (BITMAPCOREHEADER*) (&pbmi->bmiHeader);
-    bmch->bcSize = sizeof(BITMAPCOREHEADER);
-
-    if(!hdc){
-        HBITMAP old;
-        hdc = CreateCompatibleDC(0);
-        old = SelectObject(hdc, hbm);
-        GetDIBits(hdc, hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
-        SelectObject(hdc, old);
-        DeleteDC(hdc);
-    }
-    else
-        GetDIBits(hdc, hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
-
-    switch(bmch->bcBitCount)
-    {
-        case 1:
-            (*((GpBitmap**) image))->format = PixelFormat1bppIndexed;
-            break;
-        case 4:
-            (*((GpBitmap**) image))->format = PixelFormat4bppIndexed;
-            break;
-        case 8:
-            (*((GpBitmap**) image))->format = PixelFormat8bppIndexed;
-            break;
-        case 16:
-            (*((GpBitmap**) image))->format = PixelFormat16bppRGB565;
-            break;
-        case 24:
-            (*((GpBitmap**) image))->format = PixelFormat24bppRGB;
-            break;
-        case 32:
-            (*((GpBitmap**) image))->format = PixelFormat32bppRGB;
-            break;
-        case 48:
-            (*((GpBitmap**) image))->format = PixelFormat48bppRGB;
-            break;
-        default:
-            FIXME("Bit depth %d is not fully supported yet\n", bmch->bcBitCount);
-            (*((GpBitmap**) image))->format = (bmch->bcBitCount << 8) | PixelFormatGDI;
-            break;
-    }
-
-    GdipFree(pbmi);
-
-    (*image)->picture = pic;
-    (*image)->flags   = ImageFlagsNone;
-
-    return Ok;
 }
 
 static GpStatus decode_image_olepicture_metafile(IStream* stream, REFCLSID clsid, GpImage **image)
@@ -2151,7 +2065,7 @@ static const struct image_codec codecs[NUM_CODECS] = {
             /* SigMask */            png_sig_mask,
         },
         NULL,
-        decode_image_olepicture_bitmap
+        decode_image_png
     },
     {
         { /* ICO */
