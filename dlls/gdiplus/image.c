@@ -1509,7 +1509,20 @@ static GpStatus decode_image_icon(IStream* stream, REFCLSID clsid, GpImage **ima
 
 static GpStatus decode_image_bmp(IStream* stream, REFCLSID clsid, GpImage **image)
 {
-    return decode_image_wic(stream, &CLSID_WICBmpDecoder, image);
+    GpStatus status;
+    GpBitmap* bitmap;
+
+    status = decode_image_wic(stream, &CLSID_WICBmpDecoder, image);
+
+    bitmap = (GpBitmap*)*image;
+
+    if (status == Ok && bitmap->format == PixelFormat32bppARGB)
+    {
+        /* WIC supports bmp files with alpha, but gdiplus does not */
+        bitmap->format = PixelFormat32bppRGB;
+    }
+
+    return status;
 }
 
 static GpStatus decode_image_jpeg(IStream* stream, REFCLSID clsid, GpImage **image)
