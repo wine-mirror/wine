@@ -294,9 +294,8 @@ static void test_getgenerics (void)
     expect (Ok, stat);
     stat = GdipGetFamilyName (family, familyName, LANG_NEUTRAL);
     expect (Ok, stat);
-    ok ((lstrcmpiW(familyName, MicrosoftSansSerif) == 0) ||
-        (lstrcmpiW(familyName,MSSansSerif) == 0),
-        "Expected Microsoft Sans Serif or MS Sans Serif, got %s\n",
+    todo_wine ok ((lstrcmpiW(familyName, MicrosoftSansSerif) == 0),
+        "Expected Microsoft Sans Serif, got %s\n",
         wine_dbgstr_w(familyName));
     stat = GdipDeleteFontFamily (family);
     expect (Ok, stat);
