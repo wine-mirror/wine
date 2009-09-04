@@ -1795,16 +1795,25 @@ GpStatus WINGDIPAPI GdipDrawImagePointRect(GpGraphics *graphics, GpImage *image,
     REAL x, REAL y, REAL srcx, REAL srcy, REAL srcwidth, REAL srcheight,
     GpUnit srcUnit)
 {
-    FIXME("(%p, %p, %f, %f, %f, %f, %f, %f, %d): stub\n", graphics, image, x, y, srcx, srcy, srcwidth, srcheight, srcUnit);
-    return NotImplemented;
+    GpPointF points[3];
+    TRACE("(%p, %p, %f, %f, %f, %f, %f, %f, %d)\n", graphics, image, x, y, srcx, srcy, srcwidth, srcheight, srcUnit);
+
+    points[0].X = points[2].X = x;
+    points[0].Y = points[1].Y = y;
+
+    /* FIXME: convert image coordinates to Graphics coordinates? */
+    points[1].X = x + srcwidth;
+    points[2].Y = y + srcheight;
+
+    return GdipDrawImagePointsRect(graphics, image, points, 3, srcx, srcy,
+        srcwidth, srcheight, srcUnit, NULL, NULL, NULL);
 }
 
 GpStatus WINGDIPAPI GdipDrawImagePointRectI(GpGraphics *graphics, GpImage *image,
     INT x, INT y, INT srcx, INT srcy, INT srcwidth, INT srcheight,
     GpUnit srcUnit)
 {
-    FIXME("(%p, %p, %d, %d, %d, %d, %d, %d, %d): stub\n", graphics, image, x, y, srcx, srcy, srcwidth, srcheight, srcUnit);
-    return NotImplemented;
+    return GdipDrawImagePointRect(graphics, image, x, y, srcx, srcy, srcwidth, srcheight, srcUnit);
 }
 
 GpStatus WINGDIPAPI GdipDrawImagePoints(GpGraphics *graphics, GpImage *image,
