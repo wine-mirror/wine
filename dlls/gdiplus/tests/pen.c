@@ -33,21 +33,28 @@ static void test_startup(void)
     Status status;
     struct GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
+    int gpversion;
 
-    gdiplusStartupInput.GdiplusVersion              = 1;
     gdiplusStartupInput.DebugEventCallback          = NULL;
     gdiplusStartupInput.SuppressBackgroundThread    = 0;
     gdiplusStartupInput.SuppressExternalCodecs      = 0;
 
-    status = GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-    expect(Ok, status);
-    GdiplusShutdown(gdiplusToken);
+    for (gpversion=1; gpversion<256; gpversion++)
+    {
+        gdiplusStartupInput.GdiplusVersion = gpversion;
+        status = GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+        ok(status == Ok || status == UnsupportedGdiplusVersion,
+            "GdiplusStartup returned %x\n", status);
+        GdiplusShutdown(gdiplusToken);
+        if (status != Ok)
+        {
+            gpversion--;
+            break;
+        }
+    }
 
-    gdiplusStartupInput.GdiplusVersion = 42;
-
-    status = GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-    expect(UnsupportedGdiplusVersion, status);
-    GdiplusShutdown(gdiplusToken);
+    ok(gpversion > 0 && gpversion < 42, "unexpected gdiplus version %i\n", gpversion);
+    trace("gdiplus version is %i\n", gpversion);
 
     status = GdipCreatePen1((ARGB)0xffff00ff, 10.0f, UnitPixel, &pen);
 
