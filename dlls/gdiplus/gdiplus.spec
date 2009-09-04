@@ -476,7 +476,7 @@
 @ stdcall GdipRemovePropertyItem(ptr long)
 @ stdcall GdipResetClip(ptr)
 @ stub GdipResetImageAttributes
-@ stub GdipResetLineTransform
+@ stdcall GdipResetLineTransform(ptr)
 @ stub GdipResetPageTransform
 @ stdcall GdipResetPath(ptr)
 @ stub GdipResetPathGradientTransform
