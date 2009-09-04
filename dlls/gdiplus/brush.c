@@ -735,7 +735,7 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
 
     /* image is flipped */
     if(pbmi->bmiHeader.biHeight > 0){
-        dibits += pbmi->bmiHeader.biSizeImage;
+        dibits += image_stride * (pbmi->bmiHeader.biHeight - 1);
         image_stride *= -1;
         textbits += stride * (n_height - 1);
         stride *= -1;
