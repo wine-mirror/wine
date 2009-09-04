@@ -108,7 +108,7 @@ static void test_decode_24bpp(void)
             ok(count == 1, "unexpected count %u\n", count);
 
             hr = IWICBitmapDecoder_GetFrame(decoder, 1, &framedecode);
-            ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %x\n", hr);
+            ok(hr == E_INVALIDARG || hr == WINCODEC_ERR_FRAMEMISSING, "GetFrame returned %x\n", hr);
 
             hr = IWICBitmapDecoder_GetFrame(decoder, 0, &framedecode);
             ok(SUCCEEDED(hr), "GetFrame failed, hr=%x\n", hr);
