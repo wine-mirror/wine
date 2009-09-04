@@ -2362,7 +2362,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     HFONT gdifont;
     LOGFONTW lfw;
     TEXTMETRICW textmet;
-    GpPointF pt[2], rectcpy[4];
+    GpPointF pt[3], rectcpy[4];
     POINT corners[4];
     WCHAR* stringdup;
     REAL angle, ang_cos, ang_sin, rel_width, rel_height;
@@ -2409,6 +2409,21 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     SetBkMode(graphics->hdc, TRANSPARENT);
     SetTextColor(graphics->hdc, brush->lb.lbColor);
 
+    pt[0].X = 0.0;
+    pt[0].Y = 0.0;
+    pt[1].X = 1.0;
+    pt[1].Y = 0.0;
+    pt[2].X = 0.0;
+    pt[2].Y = 1.0;
+    GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 3);
+    angle = -gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
+    ang_cos = cos(angle);
+    ang_sin = sin(angle);
+    rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
+                     (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
+    rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
+                      (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
+
     rectcpy[3].X = rectcpy[0].X = rect->X;
     rectcpy[1].Y = rectcpy[0].Y = rect->Y + offsety;
     rectcpy[2].X = rectcpy[1].X = rect->X + rect->Width;
@@ -2416,30 +2431,14 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     transform_and_round_points(graphics, corners, rectcpy, 4);
 
     if (roundr(rect->Width) == 0)
-    {
-        rel_width = 1.0;
         nwidth = INT_MAX;
-    }
     else
-    {
-        rel_width = sqrt((corners[1].x - corners[0].x) * (corners[1].x - corners[0].x) +
-                         (corners[1].y - corners[0].y) * (corners[1].y - corners[0].y))
-                         / rect->Width;
         nwidth = roundr(rel_width * rect->Width);
-    }
 
     if (roundr(rect->Height) == 0)
-    {
-        rel_height = 1.0;
         nheight = INT_MAX;
-    }
     else
-    {
-        rel_height = sqrt((corners[2].x - corners[1].x) * (corners[2].x - corners[1].x) +
-                          (corners[2].y - corners[1].y) * (corners[2].y - corners[1].y))
-                          / rect->Height;
         nheight = roundr(rel_height * rect->Height);
-    }
 
     if (roundr(rect->Width) != 0 && roundr(rect->Height) != 0)
     {
@@ -2457,14 +2456,6 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     lfw.lfHeight = roundr(((REAL)lfw.lfHeight) * rel_height);
     lfw.lfWidth = roundr(textmet.tmAveCharWidth * rel_width);
 
-    pt[0].X = 0.0;
-    pt[0].Y = 0.0;
-    pt[1].X = 1.0;
-    pt[1].Y = 0.0;
-    GdipTransformMatrixPoints(graphics->worldtrans, pt, 2);
-    angle = -gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
-    ang_cos = cos(angle);
-    ang_sin = sin(angle);
     lfw.lfEscapement = lfw.lfOrientation = roundr((angle / M_PI) * 1800.0);
 
     gdifont = CreateFontIndirectW(&lfw);
