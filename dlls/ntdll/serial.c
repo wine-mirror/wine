@@ -851,6 +851,7 @@ typedef struct async_commio
 {
     HANDLE              hDevice;
     DWORD*              events;
+    IO_STATUS_BLOCK*    iosb;
     HANDLE              hEvent;
     DWORD               evtmask;
     DWORD               mstat;
@@ -985,12 +986,13 @@ static DWORD CALLBACK wait_for_event(LPVOID arg)
         }
         if (needs_close) close( fd );
     }
+    if (commio->iosb) commio->iosb->u.Status = *commio->events ? STATUS_SUCCESS : STATUS_CANCELLED;
     if (commio->hEvent) NtSetEvent(commio->hEvent, NULL);
     RtlFreeHeap(GetProcessHeap(), 0, commio);
     return 0;
 }
 
-static NTSTATUS wait_on(HANDLE hDevice, int fd, HANDLE hEvent, DWORD* events)
+static NTSTATUS wait_on(HANDLE hDevice, int fd, HANDLE hEvent, PIO_STATUS_BLOCK piosb, DWORD* events)
 {
     async_commio*       commio;
     NTSTATUS            status;
@@ -1003,6 +1005,7 @@ static NTSTATUS wait_on(HANDLE hDevice, int fd, HANDLE hEvent, DWORD* events)
 
     commio->hDevice = hDevice;
     commio->events  = events;
+    commio->iosb    = piosb;
     commio->hEvent  = hEvent;
     get_wait_mask(commio->hDevice, &commio->evtmask);
 
@@ -1301,7 +1304,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     case IOCTL_SERIAL_WAIT_ON_MASK:
         if (lpOutBuffer && nOutBufferSize == sizeof(DWORD))
         {
-            if (!(status = wait_on(hDevice, fd, hEvent, lpOutBuffer)))
+            if (!(status = wait_on(hDevice, fd, hEvent, piosb, lpOutBuffer)))
                 sz = sizeof(DWORD);
         }
         else
