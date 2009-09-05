@@ -101,7 +101,6 @@ int *X11DRV_PALETTE_XPixelToPalette = NULL;
 
 static BOOL X11DRV_PALETTE_BuildPrivateMap( const PALETTEENTRY *sys_pal_template );
 static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template );
-static void X11DRV_PALETTE_ComputeShifts(unsigned long maskbits, ChannelShift *physical, ChannelShift *to_logical);
 static void X11DRV_PALETTE_FillDefaultColors( const PALETTEENTRY *sys_pal_template );
 static void X11DRV_PALETTE_FormatSystemPalette(void);
 static BOOL X11DRV_PALETTE_CheckSysColor( const PALETTEENTRY *sys_pal_template, COLORREF c);
@@ -223,9 +222,7 @@ int X11DRV_PALETTE_Init(void)
             X11DRV_PALETTE_PaletteXColormap = XCreateColormap(gdi_display, root_window,
                                                               visual, AllocNone);
             X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
-            X11DRV_PALETTE_ComputeShifts(visual->red_mask, &X11DRV_PALETTE_default_shifts.physicalRed, &X11DRV_PALETTE_default_shifts.logicalRed);
-            X11DRV_PALETTE_ComputeShifts(visual->green_mask, &X11DRV_PALETTE_default_shifts.physicalGreen, &X11DRV_PALETTE_default_shifts.logicalGreen);
-            X11DRV_PALETTE_ComputeShifts(visual->blue_mask, &X11DRV_PALETTE_default_shifts.physicalBlue, &X11DRV_PALETTE_default_shifts.logicalBlue);
+            X11DRV_PALETTE_ComputeColorShifts(&X11DRV_PALETTE_default_shifts, visual->red_mask, visual->green_mask, visual->blue_mask);
         }
         XFree(depths);
         wine_tsx11_unlock();
@@ -281,11 +278,11 @@ void X11DRV_PALETTE_Cleanup(void)
 }
 
 /***********************************************************************
- *		X11DRV_PALETTE_ComputeShifts
+ *		X11DRV_PALETTE_ComputeChannelShift
  *
- * Calculate conversion parameters for direct mapped visuals
+ * Calculate conversion parameters for a given color mask
  */
-static void X11DRV_PALETTE_ComputeShifts(unsigned long maskbits, ChannelShift *physical, ChannelShift *to_logical)
+static void X11DRV_PALETTE_ComputeChannelShift(unsigned long maskbits, ChannelShift *physical, ChannelShift *to_logical)
 {
     int i;
 
@@ -324,6 +321,18 @@ static void X11DRV_PALETTE_ComputeShifts(unsigned long maskbits, ChannelShift *p
         to_logical->scale=physical->scale;
         to_logical->max=physical->max;
     }
+}
+
+/***********************************************************************
+ *      X11DRV_PALETTE_ComputeColorShifts
+ *
+ * Calculate conversion parameters for a given color
+ */
+void X11DRV_PALETTE_ComputeColorShifts(ColorShifts *shifts, unsigned long redMask, unsigned long greenMask, unsigned long blueMask)
+{
+    X11DRV_PALETTE_ComputeChannelShift(redMask, &shifts->physicalRed, &shifts->logicalRed);
+    X11DRV_PALETTE_ComputeChannelShift(greenMask, &shifts->physicalGreen, &shifts->logicalGreen);
+    X11DRV_PALETTE_ComputeChannelShift(blueMask, &shifts->physicalBlue, &shifts->logicalBlue);
 }
 
 /***********************************************************************
