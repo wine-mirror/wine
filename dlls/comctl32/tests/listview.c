@@ -265,6 +265,11 @@ static const struct message setredraw_seq[] = {
     { 0 }
 };
 
+static const struct message lvs_ex_transparentbkgnd_seq[] = {
+    { WM_PRINTCLIENT, sent|lparam, 0, PRF_ERASEBKGND },
+    { 0 }
+};
+
 struct subclass_info
 {
     WNDPROC oldproc;
@@ -3950,6 +3955,50 @@ static void test_scrollnotify(void)
     DestroyWindow(hwnd);
 }
 
+static void test_LVS_EX_TRANSPARENTBKGND(void)
+{
+    HWND hwnd;
+    DWORD ret;
+    HDC hdc;
+
+    hwnd = create_listview_control(0);
+
+    ret = SendMessage(hwnd, LVM_SETBKCOLOR, 0, RGB(0, 0, 0));
+    expect(TRUE, ret);
+
+    SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_TRANSPARENTBKGND,
+                                                    LVS_EX_TRANSPARENTBKGND);
+
+    ret = SendMessage(hwnd, LVM_GETBKCOLOR, 0, 0);
+    if (ret != CLR_NONE)
+    {
+        win_skip("LVS_EX_TRANSPARENTBKGND unsupported\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+
+    /* try to set some back color and check this style bit */
+    ret = SendMessage(hwnd, LVM_SETBKCOLOR, 0, RGB(0, 0, 0));
+    expect(TRUE, ret);
+    ret = SendMessage(hwnd, LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0);
+    ok(!(ret & LVS_EX_TRANSPARENTBKGND), "Expected LVS_EX_TRANSPARENTBKGND to unset\n");
+
+    /* now test what this style actually does */
+    SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_TRANSPARENTBKGND,
+                                                    LVS_EX_TRANSPARENTBKGND);
+
+    hdc = GetWindowDC(hwndparent);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    SendMessageA(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, lvs_ex_transparentbkgnd_seq,
+                "LVS_EX_TRANSPARENTBKGND parent", FALSE);
+
+    ReleaseDC(hwndparent, hdc);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -4032,6 +4081,7 @@ START_TEST(listview)
     test_canceleditlabel();
     test_mapidindex();
     test_scrollnotify();
+    test_LVS_EX_TRANSPARENTBKGND();
 
     unload_v6_module(ctx_cookie);
 

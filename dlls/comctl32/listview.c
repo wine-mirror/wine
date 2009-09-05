@@ -7299,7 +7299,10 @@ static BOOL LISTVIEW_SetBkColor(LISTVIEW_INFO *infoPtr, COLORREF clrBk)
 	if (clrBk == CLR_NONE)
 	    infoPtr->hBkBrush = (HBRUSH)GetClassLongPtrW(infoPtr->hwndSelf, GCLP_HBRBACKGROUND);
 	else
+	{
 	    infoPtr->hBkBrush = CreateSolidBrush(clrBk);
+	    infoPtr->dwLvExStyle &= ~LVS_EX_TRANSPARENTBKGND;
+	}
 	LISTVIEW_InvalidateList(infoPtr);
     }
 
@@ -7785,6 +7788,11 @@ static DWORD LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD dwM
         LISTVIEW_UpdateSize(infoPtr);
     }
 
+    if((infoPtr->dwLvExStyle ^ dwOldExStyle) & LVS_EX_TRANSPARENTBKGND)
+    {
+        if (infoPtr->dwLvExStyle & LVS_EX_TRANSPARENTBKGND)
+            LISTVIEW_SetBkColor(infoPtr, CLR_NONE);
+    }
 
     LISTVIEW_InvalidateList(infoPtr);
     return dwOldExStyle;
@@ -8800,7 +8808,13 @@ static inline BOOL LISTVIEW_EraseBkgnd(const LISTVIEW_INFO *infoPtr, HDC hdc)
     if (!GetClipBox(hdc, &rc)) return FALSE;
 
     if (infoPtr->clrBk == CLR_NONE)
-        return SendMessageW(infoPtr->hwndNotify, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    {
+        if (infoPtr->dwLvExStyle & LVS_EX_TRANSPARENTBKGND)
+            return SendMessageW(infoPtr->hwndNotify, WM_PRINTCLIENT,
+                                (WPARAM)hdc, PRF_ERASEBKGND);
+        else
+            return SendMessageW(infoPtr->hwndNotify, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    }
 
     /* for double buffered controls we need to do this during refresh */
     if (infoPtr->dwLvExStyle & LVS_EX_DOUBLEBUFFER) return FALSE;
