@@ -3098,6 +3098,11 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     checkGLcall("glCopyTexSubImage2D");
 
     LEAVE_GL();
+
+    /* The texture is now most up to date - If the surface is a render target and has a drawable, this
+     * path is never entered
+     */
+    IWineD3DSurface_ModifyLocation((IWineD3DSurface *) This, SFLAG_INTEXTURE, TRUE);
 }
 
 /* Uses the hardware to stretch and flip the image */
@@ -3345,6 +3350,11 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     }
 
     LEAVE_GL();
+
+    /* The texture is now most up to date - If the surface is a render target and has a drawable, this
+     * path is never entered
+     */
+    IWineD3DSurface_ModifyLocation((IWineD3DSurface *) This, SFLAG_INTEXTURE, TRUE);
 }
 
 /* Not called from the VTable */
@@ -3615,10 +3625,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         } else {
             This->Flags &= ~SFLAG_INSYSMEM;
         }
-        /* The texture is now most up to date - If the surface is a render target and has a drawable, this
-         * path is never entered
-         */
-        IWineD3DSurface_ModifyLocation((IWineD3DSurface *) This, SFLAG_INTEXTURE, TRUE);
 
         return WINED3D_OK;
     } else if(Src) {
