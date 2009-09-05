@@ -1589,20 +1589,12 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
     if (This->Flags & SFLAG_LOCKED)
         return WINED3DERR_INVALIDCALL;
 
-    /* According to Direct3D9 docs, only these formats are supported */
-    if (((IWineD3DImpl *)This->resource.wineD3DDevice->wineD3D)->dxVersion > 7) {
-        if (This->resource.format_desc->format != WINED3DFMT_R5G6B5
-                && This->resource.format_desc->format != WINED3DFMT_X1R5G5B5
-                && This->resource.format_desc->format != WINED3DFMT_R8G8B8
-                && This->resource.format_desc->format != WINED3DFMT_X8R8G8B8)
-            return WINED3DERR_INVALIDCALL;
-    }
-
     memset(&lock, 0, sizeof(lock)); /* To be sure */
 
     /* Create a DIB section if there isn't a hdc yet */
     if(!This->hDC) {
-        IWineD3DBaseSurfaceImpl_CreateDIBSection(iface);
+        hr = IWineD3DBaseSurfaceImpl_CreateDIBSection(iface);
+        if(FAILED(hr)) return WINED3DERR_INVALIDCALL;
         if(This->Flags & SFLAG_CLIENT) {
             surface_internal_preload(iface, SRGB_RGB);
         }

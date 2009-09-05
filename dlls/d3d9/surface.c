@@ -269,6 +269,13 @@ static HRESULT WINAPI IDirect3DSurface9Impl_GetDC(LPDIRECT3DSURFACE9 iface, HDC*
     HRESULT hr;
     TRACE("(%p) Relay\n", This);
 
+    if(!This->getdc_supported)
+    {
+        WARN("Surface does not support GetDC, returning D3DERR_INVALIDCALL\n");
+        /* Don't touch the DC */
+        return D3DERR_INVALIDCALL;
+    }
+
     wined3d_mutex_lock();
     hr = IWineD3DSurface_GetDC(This->wineD3DSurface, phdc);
     wined3d_mutex_unlock();

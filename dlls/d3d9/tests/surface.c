@@ -378,6 +378,86 @@ static void test_private_data(IDirect3DDevice9 *device)
     ok(ref2 == (ref - 1), "Object reference is %d, expected %d\n", ref2, (ref - 1));
 }
 
+static void test_getdc(IDirect3DDevice9 *device)
+{
+    IDirect3DSurface9 *surface;
+    IDirect3DTexture9 *texture;
+    HRESULT hr;
+    unsigned int i;
+    HDC dc;
+
+    struct
+    {
+        const char *name;
+        D3DFORMAT fmt;
+        BOOL getdc_supported;
+    } testdata[] = {
+        { "D3DFMT_A8R8G8B8",    D3DFMT_A8R8G8B8,    TRUE    },
+        { "D3DFMT_X8R8G8B8",    D3DFMT_X8R8G8B8,    TRUE    },
+        { "D3DFMT_R5G6B5",      D3DFMT_R5G6B5,      TRUE    },
+        { "D3DFMT_X1R5G5B5",    D3DFMT_X1R5G5B5,    TRUE    },
+        { "D3DFMT_A1R5G5B5",    D3DFMT_A1R5G5B5,    TRUE    },
+        { "D3DFMT_R8G8B8",      D3DFMT_R8G8B8,      TRUE    },
+        { "D3DFMT_A2R10G10B10", D3DFMT_A2R10G10B10, FALSE   }, /* Untested, card on windows didn't support it */
+        { "D3DFMT_V8U8",        D3DFMT_V8U8,        FALSE   },
+        { "D3DFMT_Q8W8V8U8",    D3DFMT_Q8W8V8U8,    FALSE   },
+        { "D3DFMT_A8B8G8R8",    D3DFMT_A8B8G8R8,    FALSE   },
+        { "D3DFMT_X8B8G8R8",    D3DFMT_A8B8G8R8,    FALSE   },
+        { "D3DFMT_R3G3B2",      D3DFMT_R3G3B2,      FALSE   },
+        { "D3DFMT_P8",          D3DFMT_P8,          FALSE   },
+        { "D3DFMT_L8",          D3DFMT_L8,          FALSE   },
+        { "D3DFMT_A8L8",        D3DFMT_A8L8,        FALSE   },
+        { "D3DFMT_DXT1",        D3DFMT_DXT1,        FALSE   },
+        { "D3DFMT_DXT2",        D3DFMT_DXT2,        FALSE   },
+        { "D3DFMT_DXT3",        D3DFMT_DXT3,        FALSE   },
+        { "D3DFMT_DXT4",        D3DFMT_DXT4,        FALSE   },
+        { "D3DFMT_DXT5",        D3DFMT_DXT5,        FALSE   },
+    };
+
+    for(i = 0; i < (sizeof(testdata) / sizeof(testdata[0])); i++)
+    {
+        texture = NULL;
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 64, 64, testdata[i].fmt, D3DPOOL_SYSTEMMEM, &surface, NULL);
+        if(FAILED(hr))
+        {
+            hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 1, 0, testdata[i].fmt, D3DPOOL_MANAGED, &texture, NULL);
+            if(FAILED(hr))
+            {
+                skip("IDirect3DDevice9_CreateOffscreenPlainSurface failed, hr = 0x%08x, fmt %s\n", hr, testdata[i].name);
+                continue;
+            }
+            IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+        }
+
+        dc = (void *) 0x1234;
+        hr = IDirect3DSurface9_GetDC(surface, &dc);
+
+        if(testdata[i].getdc_supported)
+        {
+            ok(SUCCEEDED(hr), "GetDC on format %s failed(hr=0x%08x), but was expected to work\n",
+               testdata[i].name, hr);
+        }
+        else
+        {
+            ok(FAILED(hr), "GetDC on format %s worked(hr=0x%08x), but was expected to fail\n",
+               testdata[i].name, hr);
+        }
+
+        if(SUCCEEDED(hr))
+        {
+            hr = IDirect3DSurface9_ReleaseDC(surface, dc);
+            ok(hr == D3D_OK, "IDirect3DSurface9_ReleaseDC failed, hr = 0x%08x\n", hr);
+        }
+        else
+        {
+            ok(dc == (void *) 0x1234, "After failed getDC dc is %p\n", dc);
+        }
+
+        IDirect3DSurface9_Release(surface);
+        if(texture) IDirect3DTexture9_Release(texture);
+    }
+}
+
 START_TEST(surface)
 {
     HMODULE d3d9_handle;
@@ -399,6 +479,7 @@ START_TEST(surface)
     test_lockrect_offset(device_ptr);
     test_lockrect_invalid(device_ptr);
     test_private_data(device_ptr);
+    test_getdc(device_ptr);
 
     refcount = IDirect3DDevice9_Release(device_ptr);
     ok(!refcount, "Device has %u references left\n", refcount);

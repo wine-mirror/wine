@@ -1069,7 +1069,17 @@ IDirectDrawSurfaceImpl_GetDC(IDirectDrawSurface7 *iface,
     hr = IWineD3DSurface_GetDC(This->WineD3DSurface,
                                hdc);
     LeaveCriticalSection(&ddraw_cs);
-    return hr;
+    switch(hr)
+    {
+        /* Some, but not all errors set *hdc to NULL. E.g. DCALREADYCREATED does not
+         * touch *hdc
+         */
+        case WINED3DERR_INVALIDCALL:
+            if(hdc) *hdc = NULL;
+            return DDERR_INVALIDPARAMS;
+
+        default: return hr;
+    }
 }
 
 /*****************************************************************************

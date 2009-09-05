@@ -542,6 +542,12 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
     DWORD *masks;
     UINT usage;
 
+    if(!(format_desc->Flags & WINED3DFMT_FLAG_GETDC))
+    {
+        WARN("Cannot use GetDC on a %s surface\n", debug_d3dformat(format_desc->format));
+        return WINED3DERR_INVALIDCALL;
+    }
+
     switch (format_desc->byte_count)
     {
         case 2:

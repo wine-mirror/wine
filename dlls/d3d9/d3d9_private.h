@@ -308,6 +308,8 @@ typedef struct IDirect3DSurface9Impl
 
     /* Flags an implicit surface */
     BOOL                        isImplicit;
+
+    BOOL                        getdc_supported;
 } IDirect3DSurface9Impl;
 
 /* ---------------------- */

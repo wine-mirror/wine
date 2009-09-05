@@ -671,6 +671,22 @@ static HRESULT IDirect3DDevice9Impl_CreateSurface(LPDIRECT3DDEVICE9EX iface, UIN
     object->lpVtbl = &Direct3DSurface9_Vtbl;
     object->ref = 1;
 
+    switch(Format)
+    {
+        case D3DFMT_A8R8G8B8:
+        case D3DFMT_X8R8G8B8:
+        case D3DFMT_R5G6B5:
+        case D3DFMT_X1R5G5B5:
+        case D3DFMT_A1R5G5B5:
+        case D3DFMT_R8G8B8:
+            object->getdc_supported = TRUE;
+            break;
+
+        default:
+            object->getdc_supported = FALSE;
+            break;
+    }
+
     TRACE("(%p) : w(%d) h(%d) fmt(%d) surf@%p\n", This, Width, Height, Format, *ppSurface);
 
     wined3d_mutex_lock();
