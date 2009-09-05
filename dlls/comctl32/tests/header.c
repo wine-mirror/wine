@@ -24,6 +24,7 @@
 #include <assert.h>
 
 #include "wine/test.h"
+#include "v6util.h"
 #include "msg.h"
 
 typedef struct tagEXPECTEDNOTIFY
@@ -1083,7 +1084,6 @@ static void test_hdm_bitmapmarginMessages(HWND hParent)
 
 static void test_hdm_index_messages(HWND hParent)
 {
-
     HWND hChild;
     int retVal;
     int loopcnt;
@@ -1193,6 +1193,74 @@ static void test_hdm_index_messages(HWND hParent)
     ok(retVal == TRUE, "Aligning 2nd header item to right should return TRUE, got %d\n", retVal);
 
     ok_sequence(sequences, HEADER_SEQ_INDEX, setItem_seq, "setItem sequence testing", FALSE);
+    DestroyWindow(hChild);
+}
+
+static void test_hdf_fixedwidth(HWND hParent)
+{
+    HWND hChild;
+    HDITEM hdItem;
+    DWORD ret;
+    RECT rect;
+    HDHITTESTINFO ht;
+
+    hChild = create_custom_header_control(hParent, FALSE);
+
+    hdItem.mask = HDI_WIDTH | HDI_FORMAT;
+    hdItem.fmt = HDF_FIXEDWIDTH;
+    hdItem.cxy = 80;
+
+    ret = SendMessage(hChild, HDM_INSERTITEM, 0, (LPARAM)&hdItem);
+    expect(0, ret);
+
+    /* try to change width */
+    rect.right = rect.bottom = 0;
+    SendMessage(hChild, HDM_GETITEMRECT, 0, (LPARAM)&rect);
+    ok(rect.right  != 0, "Expected not zero width\n");
+    ok(rect.bottom != 0, "Expected not zero height\n");
+
+    SendMessage(hChild, WM_LBUTTONDOWN, 0, MAKELPARAM(rect.right, rect.bottom / 2));
+    SendMessage(hChild, WM_MOUSEMOVE, 0, MAKELPARAM(rect.right + 20, rect.bottom / 2));
+    SendMessage(hChild, WM_LBUTTONUP, 0, MAKELPARAM(rect.right + 20, rect.bottom / 2));
+
+    SendMessage(hChild, HDM_GETITEMRECT, 0, (LPARAM)&rect);
+
+    if (hdItem.cxy != rect.right)
+    {
+        win_skip("HDF_FIXEDWIDTH format not supported\n");
+        DestroyWindow(hChild);
+        return;
+    }
+
+    /* try to adjust with message */
+    hdItem.mask = HDI_WIDTH;
+    hdItem.cxy = 90;
+
+    ret = SendMessage(hChild, HDM_SETITEM, 0, (LPARAM)&hdItem);
+    expect(TRUE, ret);
+
+    rect.right = 0;
+    SendMessage(hChild, HDM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(90, rect.right);
+
+    /* hittesting doesn't report ondivider flag for HDF_FIXEDWIDTH */
+    ht.pt.x = rect.right - 1;
+    ht.pt.y = rect.bottom / 2;
+    SendMessage(hChild, HDM_HITTEST, 0, (LPARAM)&ht);
+    expect(HHT_ONHEADER, ht.flags);
+
+    /* try to adjust with message */
+    hdItem.mask = HDI_FORMAT;
+    hdItem.fmt  = 0;
+
+    ret = SendMessage(hChild, HDM_SETITEM, 0, (LPARAM)&hdItem);
+    expect(TRUE, ret);
+
+    ht.pt.x = 90;
+    ht.pt.y = rect.bottom / 2;
+    SendMessage(hChild, HDM_HITTEST, 0, (LPARAM)&ht);
+    expect(HHT_ONDIVIDER, ht.flags);
+
     DestroyWindow(hChild);
 }
 
@@ -1558,6 +1626,7 @@ static int init(void)
 START_TEST(header)
 {
     HWND parent_hwnd;
+    ULONG_PTR ctx_cookie;
 
     if (!init())
         return;
@@ -1583,6 +1652,16 @@ START_TEST(header)
     test_hdm_unicodeformatMessages(parent_hwnd);
     test_hdm_bitmapmarginMessages(parent_hwnd);
 
-    DestroyWindow(parent_hwnd);
+    if (!load_v6_module(&ctx_cookie))
+    {
+        DestroyWindow(parent_hwnd);
+        return;
+    }
 
+    /* comctl32 version 6 tests start here */
+    test_hdf_fixedwidth(parent_hwnd);
+
+    unload_v6_module(ctx_cookie);
+
+    DestroyWindow(parent_hwnd);
 }

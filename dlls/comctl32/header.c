@@ -624,6 +624,13 @@ HEADER_InternalHitTest (const HEADER_INFO *infoPtr, const POINT *lpPt, UINT *pFl
 			rcTest = rect;
 			rcTest.right = rcTest.left + DIVIDER_WIDTH;
 			if (PtInRect (&rcTest, *lpPt)) {
+			    if (infoPtr->items[HEADER_PrevItem(infoPtr, iCount)].fmt & HDF_FIXEDWIDTH)
+			    {
+				*pFlags |= HHT_ONHEADER;
+                                *pItem = iCount;
+				TRACE("ON HEADER %d\n", *pItem);
+				return;
+			    }
 			    if (bNoWidth) {
 				*pFlags |= HHT_ONDIVOPEN;
                                 *pItem = HEADER_PrevItem(infoPtr, iCount);
@@ -640,7 +647,9 @@ HEADER_InternalHitTest (const HEADER_INFO *infoPtr, const POINT *lpPt, UINT *pFl
 		    }
 		    rcTest = rect;
 		    rcTest.left = rcTest.right - DIVIDER_WIDTH;
-		    if (PtInRect (&rcTest, *lpPt)) {
+		    if (!(infoPtr->items[iCount].fmt & HDF_FIXEDWIDTH) &&
+			  PtInRect (&rcTest, *lpPt))
+		    {
 			*pFlags |= HHT_ONDIVIDER;
 			*pItem = iCount;
 			TRACE("ON DIVIDER %d\n", *pItem);
@@ -655,21 +664,24 @@ HEADER_InternalHitTest (const HEADER_INFO *infoPtr, const POINT *lpPt, UINT *pFl
 	    }
 
 	    /* check for last divider part (on nowhere) */
-	    rect = infoPtr->items[infoPtr->uNumItem-1].rect;
-	    rect.left = rect.right;
-	    rect.right += DIVIDER_WIDTH;
-	    if (PtInRect (&rect, *lpPt)) {
-		if (bNoWidth) {
-		    *pFlags |= HHT_ONDIVOPEN;
-		    *pItem = infoPtr->uNumItem - 1;
-		    TRACE("ON DIVOPEN %d\n", *pItem);
-		    return;
-		}
-		else {
-		    *pFlags |= HHT_ONDIVIDER;
-		    *pItem = infoPtr->uNumItem-1;
-		    TRACE("ON DIVIDER %d\n", *pItem);
-		    return;
+	    if (!(infoPtr->items[infoPtr->uNumItem-1].fmt & HDF_FIXEDWIDTH))
+	    {
+		rect = infoPtr->items[infoPtr->uNumItem-1].rect;
+		rect.left = rect.right;
+		rect.right += DIVIDER_WIDTH;
+		if (PtInRect (&rect, *lpPt)) {
+		    if (bNoWidth) {
+			*pFlags |= HHT_ONDIVOPEN;
+			*pItem = infoPtr->uNumItem - 1;
+			TRACE("ON DIVOPEN %d\n", *pItem);
+			return;
+		    }
+		    else {
+			*pFlags |= HHT_ONDIVIDER;
+			*pItem = infoPtr->uNumItem-1;
+			TRACE("ON DIVIDER %d\n", *pItem);
+			return;
+		    }
 		}
 	    }
 
