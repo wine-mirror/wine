@@ -66,6 +66,8 @@ DEFINE_EXPECT(global_success_i);
 DEFINE_EXPECT(global_notexists_d);
 DEFINE_EXPECT(testobj_delete);
 DEFINE_EXPECT(testobj_value);
+DEFINE_EXPECT(testobj_prop_d);
+DEFINE_EXPECT(testobj_noprop_d);
 DEFINE_EXPECT(GetItemInfo_testVal);
 
 #define DISPID_GLOBAL_TESTPROPGET   0x1000
@@ -77,6 +79,8 @@ DEFINE_EXPECT(GetItemInfo_testVal);
 #define DISPID_GLOBAL_TESTOBJ       0x1006
 #define DISPID_GLOBAL_NULL_BSTR     0x1007
 #define DISPID_GLOBAL_NULL_DISP     0x1008
+
+#define DISPID_TESTOBJ_PROP         0x2000
 
 static const WCHAR testW[] = {'t','e','s','t',0};
 static const CHAR testA[] = "test";
@@ -194,9 +198,21 @@ static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
+static HRESULT WINAPI testObj_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
-    ok(0, "unexpected call\n");
+    if(!strcmp_wa(bstrName, "prop")) {
+        CHECK_EXPECT(testobj_prop_d);
+        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        *pid = DISPID_TESTOBJ_PROP;
+        return S_OK;
+    }
+    if(!strcmp_wa(bstrName, "noprop")) {
+        CHECK_EXPECT(testobj_noprop_d);
+        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        return DISP_E_UNKNOWNNAME;
+    }
+
+    ok(0, "unexpected name %s\n", wine_dbgstr_w(bstrName));
     return E_NOTIMPL;
 }
 
@@ -243,7 +259,7 @@ static IDispatchExVtbl testObjVtbl = {
     DispatchEx_GetTypeInfo,
     DispatchEx_GetIDsOfNames,
     DispatchEx_Invoke,
-    DispatchEx_GetDispID,
+    testObj_GetDispID,
     testObj_InvokeEx,
     testObj_DeleteMemberByName,
     DispatchEx_DeleteMemberByDispID,
@@ -883,6 +899,14 @@ static void run_tests(void)
     parse_script_a("function f() { var testPropGet; }");
 
     parse_script_a("ok((testObj instanceof Object) === false, 'testObj is instance of Object');");
+
+    SET_EXPECT(testobj_prop_d);
+    parse_script_a("ok(('prop' in testObj) === true, 'prop is not in testObj');");
+    CHECK_CALLED(testobj_prop_d);
+
+    SET_EXPECT(testobj_noprop_d);
+    parse_script_a("ok(('noprop' in testObj) === false, 'noprop is in testObj');");
+    CHECK_CALLED(testobj_noprop_d);
 
     SET_EXPECT(testobj_value);
     parse_script_a("ok(String(testObj) === '1', 'wrong testObj value');");

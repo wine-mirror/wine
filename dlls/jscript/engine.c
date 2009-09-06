@@ -2028,10 +2028,44 @@ HRESULT instanceof_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD f
 }
 
 /* ECMA-262 3rd Edition    11.8.7 */
-HRESULT in_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT in_eval(exec_ctx_t *ctx, VARIANT *lval, VARIANT *obj, jsexcept_t *ei, VARIANT *retv)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT_BOOL ret;
+    DISPID id;
+    BSTR str;
+    HRESULT hres;
+
+    if(V_VT(obj) != VT_DISPATCH) {
+        FIXME("throw TypeError");
+        return E_FAIL;
+    }
+
+    hres = to_string(ctx->parser->script, lval, ei, &str);
+    if(FAILED(hres))
+        return hres;
+
+    hres = disp_get_id(V_DISPATCH(obj), str, 0, &id);
+    SysFreeString(str);
+    if(SUCCEEDED(hres))
+        ret = VARIANT_TRUE;
+    else if(hres == DISP_E_UNKNOWNNAME)
+        ret = VARIANT_FALSE;
+    else
+        return hres;
+
+    V_VT(retv) = VT_BOOL;
+    V_BOOL(retv) = ret;
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    11.8.7 */
+HRESULT in_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+{
+    binary_expression_t *expr = (binary_expression_t*)_expr;
+
+    TRACE("\n");
+
+    return binary_expr_eval(ctx, expr, in_eval, ei, ret);
 }
 
 /* ECMA-262 3rd Edition    11.6.1 */

@@ -817,6 +817,17 @@ ok(("" instanceof Object) === false, "'' is instance of Object");
     ok(arguments.toString() === "[object Object]", "arguments.toString() = " + arguments.toString());
 })(1,2);
 
+obj = new String();
+ok(("length" in obj) === true, "length is not in obj");
+ok(("isPrototypeOf" in obj) === true, "isPrototypeOf is not in obj");
+ok(("abc" in obj) === false, "test is in obj");
+obj.abc = 1;
+ok(("abc" in obj) === true, "test is not in obj");
+ok(("1" in obj) === false, "1 is in obj");
+
+obj = [1,2,3];
+ok((1 in obj) === true, "1 is not in obj");
+
 ok(isNaN(NaN) === true, "isNaN(NaN) !== true");
 ok(isNaN(0.5) === false, "isNaN(0.5) !== false");
 ok(isNaN(Infinity) === false, "isNaN(Infinity) !== false");
