@@ -892,8 +892,37 @@ static HRESULT WINAPI DispatchEx_GetMemberProperties(IDispatchEx *iface, DISPID 
 static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BSTR *pbstrName)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
-    FIXME("(%p)->(%x %p)\n", This, id, pbstrName);
-    return E_NOTIMPL;
+    dispex_data_t *data;
+    func_info_t *func;
+    HRESULT hres;
+
+    TRACE("(%p)->(%x %p)\n", This, id, pbstrName);
+
+    if(is_dynamic_dispid(id)) {
+        DWORD idx = id - DISPID_DYNPROP_0;
+
+        if(!This->dynamic_data || This->dynamic_data->prop_cnt <= idx)
+            return DISP_E_UNKNOWNNAME;
+
+        *pbstrName = SysAllocString(This->dynamic_data->props[idx].name);
+        if(!*pbstrName)
+            return E_OUTOFMEMORY;
+
+        return S_OK;
+    }
+
+    data = get_dispex_data(This);
+    if(!data)
+        return E_FAIL;
+
+    hres = get_builtin_func(data, id, &func);
+    if(FAILED(hres))
+        return hres;
+
+    *pbstrName = SysAllocString(func->name);
+    if(!*pbstrName)
+        return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
