@@ -1264,6 +1264,80 @@ static void test_hdf_fixedwidth(HWND hParent)
     DestroyWindow(hChild);
 }
 
+static void test_hds_nosizing(HWND hParent)
+{
+    HWND hChild;
+    HDITEM hdItem;
+    DWORD ret;
+    RECT rect;
+    HDHITTESTINFO ht;
+
+    hChild = create_custom_header_control(hParent, FALSE);
+
+    hdItem.mask = HDI_WIDTH;
+    hdItem.cxy = 80;
+
+    ret = SendMessage(hChild, HDM_INSERTITEM, 0, (LPARAM)&hdItem);
+    expect(0, ret);
+
+    /* HDS_NOSIZING only blocks hittesting */
+    ret = GetWindowLong(hChild, GWL_STYLE);
+    SetWindowLong(hChild, GWL_STYLE, ret | HDS_NOSIZING);
+
+    /* try to change width with mouse gestures */
+    rect.right = rect.bottom = 0;
+    SendMessage(hChild, HDM_GETITEMRECT, 0, (LPARAM)&rect);
+    ok(rect.right  != 0, "Expected not zero width\n");
+    ok(rect.bottom != 0, "Expected not zero height\n");
+
+    SendMessage(hChild, WM_LBUTTONDOWN, 0, MAKELPARAM(rect.right, rect.bottom / 2));
+    SendMessage(hChild, WM_MOUSEMOVE, 0, MAKELPARAM(rect.right + 20, rect.bottom / 2));
+    SendMessage(hChild, WM_LBUTTONUP, 0, MAKELPARAM(rect.right + 20, rect.bottom / 2));
+
+    SendMessage(hChild, HDM_GETITEMRECT, 0, (LPARAM)&rect);
+
+    if (hdItem.cxy != rect.right)
+    {
+        win_skip("HDS_NOSIZING style not supported\n");
+        DestroyWindow(hChild);
+        return;
+    }
+
+    /* this style doesn't set HDF_FIXEDWIDTH for items */
+    hdItem.mask = HDI_FORMAT;
+    ret = SendMessage(hChild, HDM_GETITEM, 0, (LPARAM)&hdItem);
+    expect(TRUE, ret);
+    ok(!(hdItem.fmt & HDF_FIXEDWIDTH), "Unexpected HDF_FIXEDWIDTH\n");
+
+    /* try to adjust with message */
+    hdItem.mask = HDI_WIDTH;
+    hdItem.cxy = 90;
+
+    ret = SendMessage(hChild, HDM_SETITEM, 0, (LPARAM)&hdItem);
+    expect(TRUE, ret);
+
+    rect.right = 0;
+    SendMessage(hChild, HDM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(90, rect.right);
+
+    /* hittesting doesn't report ondivider flags for HDS_NOSIZING */
+    ht.pt.x = rect.right - 1;
+    ht.pt.y = rect.bottom / 2;
+    SendMessage(hChild, HDM_HITTEST, 0, (LPARAM)&ht);
+    expect(HHT_ONHEADER, ht.flags);
+
+    /* try to adjust with message */
+    ret = GetWindowLong(hChild, GWL_STYLE);
+    SetWindowLong(hChild, GWL_STYLE, ret & ~HDS_NOSIZING);
+
+    ht.pt.x = 90;
+    ht.pt.y = rect.bottom / 2;
+    SendMessage(hChild, HDM_HITTEST, 0, (LPARAM)&ht);
+    expect(HHT_ONDIVIDER, ht.flags);
+
+    DestroyWindow(hChild);
+}
+
 #define TEST_NMCUSTOMDRAW(draw_stage, item_spec, lparam, _left, _top, _right, _bottom) \
     ok(nm->dwDrawStage == draw_stage, "Invalid dwDrawStage %d vs %d\n", draw_stage, nm->dwDrawStage); \
     if (item_spec != -1) \
@@ -1660,6 +1734,7 @@ START_TEST(header)
 
     /* comctl32 version 6 tests start here */
     test_hdf_fixedwidth(parent_hwnd);
+    test_hds_nosizing(parent_hwnd);
 
     unload_v6_module(ctx_cookie);
 
