@@ -7336,6 +7336,9 @@ static void column_fill_hditem(const LISTVIEW_INFO *infoPtr, HDITEMW *lphdi, INT
             lphdi->fmt |= HDF_IMAGE;
             lphdi->iImage = I_IMAGECALLBACK;
         }
+
+        if (lpColumn->fmt & LVCFMT_FIXED_WIDTH)
+            lphdi->fmt |= HDF_FIXEDWIDTH;
     }
 
     if (lpColumn->mask & LVCF_WIDTH)
