@@ -605,8 +605,10 @@ static HRESULT WINAPI HTMLElement2_attachEvent(IHTMLElement2 *iface, BSTR event,
                                                IDispatch *pDisp, VARIANT_BOOL *pfResult)
 {
     HTMLElement *This = HTMLELEM2_THIS(iface);
-    FIXME("(%p)->(%s %p %p)\n", This, debugstr_w(event), pDisp, pfResult);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(event), pDisp, pfResult);
+
+    return attach_event(&This->node.event_target, This->node.doc, event, pDisp, pfResult);
 }
 
 static HRESULT WINAPI HTMLElement2_detachEvent(IHTMLElement2 *iface, BSTR event, IDispatch *pDisp)

@@ -127,6 +127,18 @@ eventid_t str_to_eid(LPCWSTR str)
     return EVENTID_LAST;
 }
 
+static eventid_t attr_to_eid(LPCWSTR str)
+{
+    int i;
+
+    for(i=0; i < sizeof(event_info)/sizeof(event_info[0]); i++) {
+        if(!strcmpW(event_info[i].attr_name, str))
+            return i;
+    }
+
+    return EVENTID_LAST;
+}
+
 typedef struct {
     DispatchEx dispex;
     const IHTMLEventObjVtbl  *lpIHTMLEventObjVtbl;
@@ -670,10 +682,11 @@ static IHTMLEventObj *create_event(HTMLDOMNode *target, eventid_t eid, nsIDOMEve
     return HTMLEVENTOBJ(ret);
 }
 
-static void call_event_handlers(HTMLDocument *doc, event_target_t *event_target,
+static void call_event_handlers(HTMLDocument *doc, IHTMLEventObj *event_obj, event_target_t *event_target,
         eventid_t eid, IDispatch *this_obj)
 {
     handler_vector_t *handler_vector;
+    DWORD i;
     HRESULT hres;
 
     if(!event_target || !(handler_vector = event_target->event_table[eid]))
@@ -693,6 +706,25 @@ static void call_event_handlers(HTMLDocument *doc, event_target_t *event_target,
             TRACE("%s <<<\n", debugstr_w(event_info[eid].name));
         else
             WARN("%s <<< %08x\n", debugstr_w(event_info[eid].name), hres);
+    }
+
+    if(handler_vector->handler_cnt) {
+        VARIANTARG arg;
+        DISPPARAMS dp = {&arg, NULL, 1, 0};
+
+        V_VT(&arg) = VT_DISPATCH;
+        V_DISPATCH(&arg) = (IDispatch*)event_obj;
+
+        for(i=0; i < handler_vector->handler_cnt; i++) {
+            if(handler_vector->handlers[i]) {
+                TRACE("%s [%d] >>>\n", debugstr_w(event_info[eid].name), i);
+                hres = call_disp_func(handler_vector->handlers[i], &dp);
+                if(hres == S_OK)
+                    TRACE("%s [%d] <<<\n", debugstr_w(event_info[eid].name), i);
+                else
+                    WARN("%s [%d] <<< %08x\n", debugstr_w(event_info[eid].name), i, hres);
+            }
+        }
     }
 }
 
@@ -718,7 +750,7 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target, nsIDOMEven
         node = get_node(doc, nsnode, FALSE);
 
         if(node)
-            call_event_handlers(doc, node->event_target, eid, (IDispatch*)HTMLDOMNODE(node));
+            call_event_handlers(doc, event_obj, node->event_target, eid, (IDispatch*)HTMLDOMNODE(node));
 
         if(!(event_info[eid].flags & EVENT_BUBBLE))
             break;
@@ -738,7 +770,7 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target, nsIDOMEven
         nsIDOMNode_Release(nsnode);
 
     if(event_info[eid].flags & EVENT_BUBBLE)
-        call_event_handlers(doc, doc->event_target, eid, (IDispatch*)HTMLDOC(doc));
+        call_event_handlers(doc, event_obj, doc->event_target, eid, (IDispatch*)HTMLDOC(doc));
 
     IHTMLEventObj_Release(event_obj);
     doc->window->event = prev_event;
@@ -838,6 +870,39 @@ HRESULT get_event_handler(event_target_t **event_target, eventid_t eid, VARIANT 
         V_VT(var) = VT_NULL;
     }
 
+    return S_OK;
+}
+
+HRESULT attach_event(event_target_t **event_target_ptr, HTMLDocument *doc, BSTR name, IDispatch *disp, VARIANT_BOOL *res)
+{
+    event_target_t *event_target;
+    eventid_t eid;
+    DWORD i = 0;
+
+    eid = attr_to_eid(name);
+    if(eid == EVENTID_LAST) {
+        WARN("Unknown event\n");
+        *res = VARIANT_TRUE;
+        return S_OK;
+    }
+
+    event_target = get_event_target(event_target_ptr);
+    if(!event_target)
+        return E_OUTOFMEMORY;
+
+    if(event_target->event_table[eid]) {
+        while(i < event_target->event_table[eid]->handler_cnt && event_target->event_table[eid]->handlers[i])
+            i++;
+        if(i == event_target->event_table[eid]->handler_cnt && !alloc_handler_vector(event_target, eid, i+1))
+            return E_OUTOFMEMORY;
+    }else if(!alloc_handler_vector(event_target, eid, i+1)) {
+        return E_OUTOFMEMORY;
+    }
+
+    IDispatch_AddRef(disp);
+    event_target->event_table[eid]->handlers[i] = disp;
+
+    *res = VARIANT_TRUE;
     return S_OK;
 }
 

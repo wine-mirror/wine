@@ -41,6 +41,7 @@ void release_event_target(event_target_t*);
 void fire_event(HTMLDocument*,eventid_t,nsIDOMNode*,nsIDOMEvent*);
 HRESULT set_event_handler(event_target_t**,HTMLDocument*,eventid_t,VARIANT*);
 HRESULT get_event_handler(event_target_t**,eventid_t,VARIANT*);
+HRESULT attach_event(event_target_t**,HTMLDocument*,BSTR,IDispatch*,VARIANT_BOOL*);
 
 static inline HRESULT set_node_event(HTMLDOMNode *node, eventid_t eid, VARIANT *var)
 {
