@@ -128,6 +128,7 @@ typedef struct {
     LONG ref;
 
     HTMLDOMNode *target;
+    const event_info_t *type;
 } HTMLEventObj;
 
 #define HTMLEVENTOBJ(x) ((IHTMLEventObj*) &(x)->lpIHTMLEventObjVtbl)
@@ -315,8 +316,11 @@ static HRESULT WINAPI HTMLEventObj_get_button(IHTMLEventObj *iface, LONG *p)
 static HRESULT WINAPI HTMLEventObj_get_type(IHTMLEventObj *iface, BSTR *p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = SysAllocString(This->type->name);
+    return *p ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_qualifier(IHTMLEventObj *iface, BSTR *p)
@@ -445,13 +449,14 @@ static dispex_static_data_t HTMLEventObj_dispex = {
     HTMLEventObj_iface_tids
 };
 
-static IHTMLEventObj *create_event(HTMLDOMNode *target)
+static IHTMLEventObj *create_event(HTMLDOMNode *target, eventid_t eid)
 {
     HTMLEventObj *ret;
 
     ret = heap_alloc(sizeof(*ret));
     ret->lpIHTMLEventObjVtbl = &HTMLEventObjVtbl;
     ret->ref = 1;
+    ret->type = event_info+eid;
     ret->target = target;
     IHTMLDOMNode_AddRef(HTMLDOMNODE(target));
 
@@ -499,7 +504,7 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target)
     }
 
     prev_event = doc->window->event;
-    event_obj = doc->window->event = create_event(get_node(doc, target, TRUE));
+    event_obj = doc->window->event = create_event(get_node(doc, target, TRUE), eid);
     nsnode = target;
     nsIDOMNode_AddRef(nsnode);
 
