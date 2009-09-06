@@ -2989,6 +2989,7 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVCF_SUBITEM            0x0008
 #define LVCF_IMAGE              0x0010
 #define LVCF_ORDER              0x0020
+#define LVCF_MINWIDTH           0x0040
 
 #define LVCFMT_LEFT             0x0000
 #define LVCFMT_RIGHT            0x0001
