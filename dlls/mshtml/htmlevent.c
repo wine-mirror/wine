@@ -332,8 +332,11 @@ static HRESULT WINAPI HTMLEventObj_put_returnValue(IHTMLEventObj *iface, VARIANT
 static HRESULT WINAPI HTMLEventObj_get_returnValue(IHTMLEventObj *iface, VARIANT *p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+
     FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    V_VT(p) = VT_EMPTY;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_put_cancelBubble(IHTMLEventObj *iface, VARIANT_BOOL v)
@@ -346,22 +349,31 @@ static HRESULT WINAPI HTMLEventObj_put_cancelBubble(IHTMLEventObj *iface, VARIAN
 static HRESULT WINAPI HTMLEventObj_get_cancelBubble(IHTMLEventObj *iface, VARIANT_BOOL *p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+
     FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    *p = VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_fromElement(IHTMLEventObj *iface, IHTMLElement **p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+
     FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    *p = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_toElement(IHTMLEventObj *iface, IHTMLElement **p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+
     FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    *p = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_put_keyCode(IHTMLEventObj *iface, LONG v)
@@ -428,29 +440,41 @@ static HRESULT WINAPI HTMLEventObj_get_type(IHTMLEventObj *iface, BSTR *p)
 static HRESULT WINAPI HTMLEventObj_get_qualifier(IHTMLEventObj *iface, BSTR *p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+
     FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    *p = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_reason(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+
     FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    *p = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_x(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+
     FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    *p = -1;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_y(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+
     FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    *p = -1;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_clientX(IHTMLEventObj *iface, LONG *p)
@@ -500,15 +524,21 @@ static HRESULT WINAPI HTMLEventObj_get_clientY(IHTMLEventObj *iface, LONG *p)
 static HRESULT WINAPI HTMLEventObj_get_offsetX(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+
     FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    *p = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_offsetY(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+
     FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    *p = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_screenX(IHTMLEventObj *iface, LONG *p)
@@ -558,8 +588,11 @@ static HRESULT WINAPI HTMLEventObj_get_screenY(IHTMLEventObj *iface, LONG *p)
 static HRESULT WINAPI HTMLEventObj_get_srcFilter(IHTMLEventObj *iface, IDispatch **p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+
     FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    *p = NULL;
+    return S_OK;
 }
 
 #undef HTMLEVENTOBJ_THIS
