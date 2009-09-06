@@ -13172,7 +13172,7 @@ interface IOmNavigator : IDispatch
     [propget, id(DISPID_IOMNAVIGATOR_SYSTEMLANGUAGE)]
     HRESULT systemLanguage([retval, out] BSTR *p);
 
-    [propget, id(DISPID_IOMNAVIGATOR_BROWSERLANGUAGE)]
+    [propget, id(DISPID_IOMNAVIGATOR_BROWSERLANGUAGE), hidden]
     HRESULT browserLanguage([retval, out] BSTR *p);
 
     [propget, id(DISPID_IOMNAVIGATOR_USERLANGUAGE)]
@@ -13184,7 +13184,7 @@ interface IOmNavigator : IDispatch
     [propget, id(DISPID_IOMNAVIGATOR_APPMINORVERSION)]
     HRESULT appMinorVersion([retval, out] BSTR *p);
 
-    [propget, id(DISPID_IOMNAVIGATOR_CONNECTIONSPEED)]
+    [propget, id(DISPID_IOMNAVIGATOR_CONNECTIONSPEED), hidden]
     HRESULT connectionSpeed([retval, out] LONG *p);
 
     [propget, id(DISPID_IOMNAVIGATOR_ONLINE)]
