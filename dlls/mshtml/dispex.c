@@ -318,11 +318,8 @@ static dispex_data_t *get_dispex_data(DispatchEx *This)
     return This->data->data;
 }
 
-void call_disp_func(HTMLDocument *doc, IDispatch *disp, IDispatch *this_obj)
+HRESULT call_disp_func(IDispatch *disp, DISPPARAMS *dp)
 {
-    DISPID named_arg = DISPID_THIS;
-    VARIANTARG arg;
-    DISPPARAMS params = {&arg, &named_arg, 1, 1};
     EXCEPINFO ei;
     IDispatchEx *dispex;
     VARIANT res;
@@ -331,20 +328,17 @@ void call_disp_func(HTMLDocument *doc, IDispatch *disp, IDispatch *this_obj)
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     if(FAILED(hres)) {
         FIXME("Could not get IDispatchEx interface: %08x\n", hres);
-        return;
+        return hres;
     }
 
-    V_VT(&arg) = VT_DISPATCH;
-    V_DISPATCH(&arg) = this_obj;
     VariantInit(&res);
     memset(&ei, 0, sizeof(ei));
 
-    hres = IDispatchEx_InvokeEx(dispex, 0, GetUserDefaultLCID(), DISPATCH_METHOD, &params, &res, &ei, NULL);
+    hres = IDispatchEx_InvokeEx(dispex, 0, GetUserDefaultLCID(), DISPATCH_METHOD, dp, &res, &ei, NULL);
+
     IDispatchEx_Release(dispex);
-
-    TRACE("%p returned %08x\n", disp, hres);
-
     VariantClear(&res);
+    return hres;
 }
 
 static inline BOOL is_custom_dispid(DISPID id)

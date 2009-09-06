@@ -692,7 +692,7 @@ DWORD set_task_timer(HTMLDocument*,DWORD,BOOL,IDispatch*);
 HRESULT clear_task_timer(HTMLDocument*,BOOL,DWORD);
 
 void release_typelib(void);
-void call_disp_func(HTMLDocument*,IDispatch*,IDispatch*);
+HRESULT call_disp_func(IDispatch*,DISPPARAMS*);
 
 const char *debugstr_variant(const VARIANT*);
 

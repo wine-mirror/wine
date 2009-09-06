@@ -460,6 +460,31 @@ static IHTMLEventObj *create_event(HTMLDOMNode *target)
     return HTMLEVENTOBJ(ret);
 }
 
+static void call_event_handlers(HTMLDocument *doc, event_target_t *event_target,
+        eventid_t eid, IDispatch *this_obj)
+{
+    HRESULT hres;
+
+    if(!event_target || !event_target->event_table[eid])
+        return;
+
+    if(event_target->event_table[eid]) {
+        DISPID named_arg = DISPID_THIS;
+        VARIANTARG arg;
+        DISPPARAMS dp = {&arg, &named_arg, 1, 1};
+
+        V_VT(&arg) = VT_DISPATCH;
+        V_DISPATCH(&arg) = this_obj;
+
+        TRACE("%s >>>\n", debugstr_w(event_info[eid].name));
+        hres = call_disp_func(event_target->event_table[eid], &dp);
+        if(hres == S_OK)
+            TRACE("%s <<<\n", debugstr_w(event_info[eid].name));
+        else
+            WARN("%s <<< %08x\n", debugstr_w(event_info[eid].name), hres);
+    }
+}
+
 void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target)
 {
     IHTMLEventObj *prev_event, *event_obj = NULL;
@@ -480,13 +505,11 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target)
     while(1) {
         node = get_node(doc, nsnode, FALSE);
 
-        if(node && node->event_target && node->event_target->event_table[eid]) {
+        if(node) {
             if(!event_obj)
                 event_obj = doc->window->event = create_event(get_node(doc, target, TRUE));
 
-            TRACE("%s >>>\n", debugstr_w(event_info[eid].name));
-            call_disp_func(doc, node->event_target->event_table[eid], (IDispatch*)HTMLDOMNODE(node));
-            TRACE("%s <<<\n", debugstr_w(event_info[eid].name));
+            call_event_handlers(doc, node->event_target, eid, (IDispatch*)HTMLDOMNODE(node));
         }
 
         if(!(event_info[eid].flags & EVENT_BUBBLE))
@@ -506,13 +529,11 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target)
     if(nsnode)
         nsIDOMNode_Release(nsnode);
 
-    if((event_info[eid].flags & EVENT_BUBBLE) && doc->event_target && doc->event_target->event_table[eid]) {
+    if(event_info[eid].flags & EVENT_BUBBLE) {
         if(!event_obj)
             event_obj = doc->window->event = create_event(get_node(doc, target, TRUE));
 
-        TRACE("doc %s >>>\n", debugstr_w(event_info[eid].name));
-        call_disp_func(doc, doc->event_target->event_table[eid], (IDispatch*)HTMLDOC(doc));
-        TRACE("doc %s <<<\n", debugstr_w(event_info[eid].name));
+        call_event_handlers(doc, doc->event_target, eid, (IDispatch*)HTMLDOC(doc));
     }
 
     if(event_obj) {
