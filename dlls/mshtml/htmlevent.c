@@ -456,15 +456,45 @@ static HRESULT WINAPI HTMLEventObj_get_y(IHTMLEventObj *iface, LONG *p)
 static HRESULT WINAPI HTMLEventObj_get_clientX(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRInt32 x = 0;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->nsevent) {
+        nsIDOMMouseEvent *mouse_event;
+        nsresult nsres;
+
+        nsres = nsIDOMEvent_QueryInterface(This->nsevent, &IID_nsIDOMMouseEvent, (void**)&mouse_event);
+        if(NS_SUCCEEDED(nsres)) {
+            nsIDOMMouseEvent_GetClientX(mouse_event, &x);
+            nsIDOMMouseEvent_Release(mouse_event);
+        }
+    }
+
+    *p = x;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_clientY(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRInt32 y = 0;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->nsevent) {
+        nsIDOMMouseEvent *mouse_event;
+        nsresult nsres;
+
+        nsres = nsIDOMEvent_QueryInterface(This->nsevent, &IID_nsIDOMMouseEvent, (void**)&mouse_event);
+        if(NS_SUCCEEDED(nsres)) {
+            nsIDOMMouseEvent_GetClientY(mouse_event, &y);
+            nsIDOMMouseEvent_Release(mouse_event);
+        }
+    }
+
+    *p = y;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_offsetX(IHTMLEventObj *iface, LONG *p)
