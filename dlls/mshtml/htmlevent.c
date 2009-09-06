@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Jacek Caban for CodeWeavers
+ * Copyright 2008-2009 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,8 +32,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+typedef struct {
+    IDispatch *handler_prop;
+    DWORD handler_cnt;
+    IDispatch *handlers[0];
+} handler_vector_t;
+
 struct event_target_t {
-    IDispatch *event_table[EVENTID_LAST];
+    handler_vector_t *event_table[EVENTID_LAST];
 };
 
 static const WCHAR blurW[] = {'b','l','u','r',0};
@@ -667,12 +673,13 @@ static IHTMLEventObj *create_event(HTMLDOMNode *target, eventid_t eid, nsIDOMEve
 static void call_event_handlers(HTMLDocument *doc, event_target_t *event_target,
         eventid_t eid, IDispatch *this_obj)
 {
+    handler_vector_t *handler_vector;
     HRESULT hres;
 
-    if(!event_target || !event_target->event_table[eid])
+    if(!event_target || !(handler_vector = event_target->event_table[eid]))
         return;
 
-    if(event_target->event_table[eid]) {
+    if(handler_vector->handler_prop) {
         DISPID named_arg = DISPID_THIS;
         VARIANTARG arg;
         DISPPARAMS dp = {&arg, &named_arg, 1, 1};
@@ -681,7 +688,7 @@ static void call_event_handlers(HTMLDocument *doc, event_target_t *event_target,
         V_DISPATCH(&arg) = this_obj;
 
         TRACE("%s >>>\n", debugstr_w(event_info[eid].name));
-        hres = call_disp_func(event_target->event_table[eid], &dp);
+        hres = call_disp_func(handler_vector->handler_prop, &dp);
         if(hres == S_OK)
             TRACE("%s <<<\n", debugstr_w(event_info[eid].name));
         else
@@ -737,14 +744,49 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target, nsIDOMEven
     doc->window->event = prev_event;
 }
 
-static HRESULT set_event_handler_disp(event_target_t **event_target, HTMLDocument *doc, eventid_t eid, IDispatch *disp)
+static inline event_target_t *get_event_target(event_target_t **event_target_ptr)
 {
-    if(!*event_target)
-        *event_target = heap_alloc_zero(sizeof(event_target_t));
-    else if((*event_target)->event_table[eid])
-        IDispatch_Release((*event_target)->event_table[eid]);
+    if(!*event_target_ptr)
+        *event_target_ptr = heap_alloc_zero(sizeof(event_target_t));
+    return *event_target_ptr;
+}
 
-    (*event_target)->event_table[eid] = disp;
+static BOOL alloc_handler_vector(event_target_t *event_target, eventid_t eid, int cnt)
+{
+    handler_vector_t *new_vector, *handler_vector = event_target->event_table[eid];
+
+    if(handler_vector) {
+        if(cnt <= handler_vector->handler_cnt)
+            return TRUE;
+
+        new_vector = heap_realloc_zero(handler_vector, sizeof(handler_vector_t) + sizeof(IDispatch*)*cnt);
+    }else {
+        new_vector = heap_alloc_zero(sizeof(handler_vector_t) + sizeof(IDispatch*)*cnt);
+    }
+
+    if(!new_vector)
+        return FALSE;
+
+    new_vector->handler_cnt = cnt;
+    event_target->event_table[eid] = new_vector;
+    return TRUE;
+}
+
+static HRESULT set_event_handler_disp(event_target_t **event_target_ptr, HTMLDocument *doc, eventid_t eid, IDispatch *disp)
+{
+    event_target_t *event_target;
+
+    event_target = get_event_target(event_target_ptr);
+    if(!event_target)
+        return E_OUTOFMEMORY;
+
+    if(!alloc_handler_vector(event_target, eid, 0))
+        return E_OUTOFMEMORY;
+
+    if(event_target->event_table[eid]->handler_prop)
+        IDispatch_Release(event_target->event_table[eid]->handler_prop);
+
+    event_target->event_table[eid]->handler_prop = disp;
     if(!disp)
         return S_OK;
     IDispatch_AddRef(disp);
@@ -769,9 +811,9 @@ HRESULT set_event_handler(event_target_t **event_target, HTMLDocument *doc, even
 {
     switch(V_VT(var)) {
     case VT_NULL:
-        if(*event_target && (*event_target)->event_table[eid]) {
-            IDispatch_Release((*event_target)->event_table[eid]);
-            (*event_target)->event_table[eid] = NULL;
+        if(*event_target && (*event_target)->event_table[eid] && (*event_target)->event_table[eid]->handler_prop) {
+            IDispatch_Release((*event_target)->event_table[eid]->handler_prop);
+            (*event_target)->event_table[eid]->handler_prop = NULL;
         }
         break;
 
@@ -788,9 +830,9 @@ HRESULT set_event_handler(event_target_t **event_target, HTMLDocument *doc, even
 
 HRESULT get_event_handler(event_target_t **event_target, eventid_t eid, VARIANT *var)
 {
-    if(*event_target && (*event_target)->event_table[eid]) {
+    if(*event_target && (*event_target)->event_table[eid] && (*event_target)->event_table[eid]->handler_prop) {
         V_VT(var) = VT_DISPATCH;
-        V_DISPATCH(var) = (*event_target)->event_table[eid];
+        V_DISPATCH(var) = (*event_target)->event_table[eid]->handler_prop;
         IDispatch_AddRef(V_DISPATCH(var));
     }else {
         V_VT(var) = VT_NULL;
@@ -836,11 +878,15 @@ void check_event_attr(HTMLDocument *doc, nsIDOMElement *nselem)
 
 void release_event_target(event_target_t *event_target)
 {
-    int i;
+    int i, j;
 
     for(i=0; i < EVENTID_LAST; i++) {
-        if(event_target->event_table[i])
-            IDispatch_Release(event_target->event_table[i]);
+        if(event_target->event_table[i]) {
+            if(event_target->event_table[i]->handler_prop)
+                IDispatch_Release(event_target->event_table[i]->handler_prop);
+            for(j=0; j < event_target->event_table[i]->handler_cnt; j++)
+                IDispatch_Release(event_target->event_table[i]->handlers[j]);
+        }
     }
 
     heap_free(event_target);
