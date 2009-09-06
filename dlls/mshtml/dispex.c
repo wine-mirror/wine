@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Jacek Caban for CodeWeavers
+ * Copyright 2008-2009 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -607,6 +607,34 @@ static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
     return hres;
 }
 
+static HRESULT get_builtin_func(dispex_data_t *data, DISPID id, func_info_t **ret)
+{
+    int min, max, n;
+
+    min = 0;
+    max = data->func_cnt-1;
+
+    while(min <= max) {
+        n = (min+max)/2;
+
+        if(data->funcs[n].id == id)
+            break;
+
+        if(data->funcs[n].id < id)
+            min = n+1;
+        else
+            max = n-1;
+    }
+
+    if(min > max) {
+        WARN("invalid id %x\n", id);
+        return DISP_E_UNKNOWNNAME;
+    }
+
+    *ret = data->funcs+n;
+    return S_OK;
+}
+
 #define DISPATCHEX_THIS(iface) DEFINE_THIS(DispatchEx, IDispatchEx, iface)
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
@@ -748,7 +776,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
     dispex_data_t *data;
-    int min, max, n;
+    func_info_t *func;
     HRESULT hres;
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
@@ -828,30 +856,14 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     if(!data)
         return E_FAIL;
 
-    min = 0;
-    max = data->func_cnt-1;
+    hres = get_builtin_func(data, id, &func);
+    if(FAILED(hres))
+        return hres;
 
-    while(min <= max) {
-        n = (min+max)/2;
-
-        if(data->funcs[n].id == id)
-            break;
-
-        if(data->funcs[n].id < id)
-            min = n+1;
-        else
-            max = n-1;
-    }
-
-    if(min > max) {
-        WARN("invalid id %x\n", id);
-        return DISP_E_UNKNOWNNAME;
-    }
-
-    if(data->funcs[n].func_disp_idx == -1)
-        hres = typeinfo_invoke(This, data->funcs+n, wFlags, pdp, pvarRes, pei);
+    if(func->func_disp_idx == -1)
+        hres = typeinfo_invoke(This, func, wFlags, pdp, pvarRes, pei);
     else
-        hres = function_invoke(This, data->funcs+n, wFlags, pdp, pvarRes, pei);
+        hres = function_invoke(This, func, wFlags, pdp, pvarRes, pei);
 
     return hres;
 }
