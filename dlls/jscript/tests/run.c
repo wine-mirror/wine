@@ -76,6 +76,7 @@ DEFINE_EXPECT(GetItemInfo_testVal);
 #define DISPID_GLOBAL_GETVT         0x1005
 #define DISPID_GLOBAL_TESTOBJ       0x1006
 #define DISPID_GLOBAL_NULL_BSTR     0x1007
+#define DISPID_GLOBAL_NULL_DISP     0x1008
 
 static const WCHAR testW[] = {'t','e','s','t',0};
 static const CHAR testA[] = "test";
@@ -298,6 +299,10 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_NULL_BSTR;
         return S_OK;
     }
+    if(!strcmp_wa(bstrName, "nullDisp")) {
+        *pid = DISPID_GLOBAL_NULL_DISP;
+        return S_OK;
+    }
     if(!strcmp_wa(bstrName, "notExists")) {
         CHECK_EXPECT(global_notexists_d);
         ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
@@ -455,6 +460,21 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
             V_VT(pvarRes) = VT_BSTR;
             V_BSTR(pvarRes) = NULL;
         }
+        return S_OK;
+
+    case DISPID_GLOBAL_NULL_DISP:
+        ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg != NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+
+        V_VT(pvarRes) = VT_DISPATCH;
+        V_DISPATCH(pvarRes) = NULL;
         return S_OK;
     }
 

@@ -2336,8 +2336,7 @@ static HRESULT typeof_exprval(exec_ctx_t *ctx, exprval_t *exprval, jsexcept_t *e
     case VT_DISPATCH: {
         DispatchEx *dispex;
 
-        dispex = iface_to_jsdisp((IUnknown*)V_DISPATCH(&val));
-        if(dispex) {
+        if(V_DISPATCH(&val) && (dispex = iface_to_jsdisp((IUnknown*)V_DISPATCH(&val)))) {
             *ret = is_class(dispex, JSCLASS_FUNCTION) ? functionW : objectW;
             jsdisp_release(dispex);
         }else {

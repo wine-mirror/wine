@@ -922,6 +922,9 @@ ok(re.source === "=(\\?|%3F)", "re.source = " + re.source);
 
 ok(createNullBSTR() === '', "createNullBSTR() !== ''");
 
+ok(getVT(nullDisp) === "VT_DISPATCH", "getVT(nullDisp) = " + typeof(nullDisp));
+ok(typeof(nullDisp) === "object", "typeof(nullDisp) = " + typeof(nullDisp));
+
 function do_test() {}
 function nosemicolon() {} nosemicolon();
 function () {} nosemicolon();
