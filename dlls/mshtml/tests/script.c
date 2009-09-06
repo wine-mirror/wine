@@ -636,9 +636,18 @@ static HRESULT WINAPI ActiveScriptParse_AddScriptlet(IActiveScriptParse *iface,
     return E_NOTIMPL;
 }
 
+static HRESULT dispex_propput(IDispatchEx *obj, DISPID id, VARIANT *var)
+{
+    DISPID propput_arg = DISPID_PROPERTYPUT;
+    DISPPARAMS dp = {var, &propput_arg, 1, 1};
+    EXCEPINFO ei = {0};
+
+    return IDispatchEx_InvokeEx(obj, id, LOCALE_NEUTRAL, DISPATCH_PROPERTYPUT, &dp, NULL, &ei, NULL);
+}
+
 static void test_func(IDispatchEx *obj)
 {
-    DISPID id, propput_arg = DISPID_PROPERTYPUT;
+    DISPID id;
     IDispatchEx *dispex;
     IDispatch *disp;
     EXCEPINFO ei;
@@ -679,16 +688,50 @@ static void test_func(IDispatchEx *obj)
         VariantClear(&var);
     }
 
-    dp.cArgs = 1;
-    dp.rgvarg = &var;
-    dp.cNamedArgs = 1;
-    dp.rgdispidNamedArgs = &propput_arg;
     V_VT(&var) = VT_I4;
     V_I4(&var) = 100;
-    hres = IDispatchEx_InvokeEx(obj, id, LOCALE_NEUTRAL, DISPATCH_PROPERTYPUT, &dp, NULL, &ei, NULL);
+    hres = dispex_propput(obj, id, &var);
     ok(hres == E_NOTIMPL, "InvokeEx failed: %08x\n", hres);
 
     IDispatchEx_Release(dispex);
+}
+
+static void test_nextdispid(IDispatchEx *dispex)
+{
+    DISPID last_id = DISPID_STARTENUM, id, dyn_id;
+    BSTR name;
+    VARIANT var;
+    HRESULT hres;
+
+    name = a2bstr("dynVal");
+    hres = IDispatchEx_GetDispID(dispex, name, fdexNameCaseSensitive|fdexNameEnsure, &dyn_id);
+    ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
+    SysFreeString(name);
+
+    V_VT(&var) = VT_EMPTY;
+    hres = dispex_propput(dispex, dyn_id, &var);
+
+    while(last_id != dyn_id) {
+        hres = IDispatchEx_GetNextDispID(dispex, fdexEnumAll, last_id, &id);
+        ok(hres == S_OK, "GetNextDispID returned: %08x\n", hres);
+        ok(id != DISPID_STARTENUM, "id == DISPID_STARTENUM\n");
+        ok(id != DISPID_IOMNAVIGATOR_TOSTRING, "id == DISPID_IOMNAVIGATOR_TOSTRING\n");
+
+        hres = IDispatchEx_GetMemberName(dispex, id, &name);
+        ok(hres == S_OK, "GetMemberName failed: %08x\n", hres);
+
+        if(id == dyn_id)
+            ok(!strcmp_wa(name, "dynVal"), "name = %s\n", wine_dbgstr_w(name));
+        else if(id == DISPID_IOMNAVIGATOR_PLATFORM)
+            ok(!strcmp_wa(name, "platform"), "name = %s\n", wine_dbgstr_w(name));
+
+        SysFreeString(name);
+        last_id = id;
+    }
+
+    hres = IDispatchEx_GetNextDispID(dispex, 0, id, &id);
+    ok(hres == S_FALSE, "GetNextDispID returned: %08x\n", hres);
+    ok(id == DISPID_STARTENUM, "id != DISPID_STARTENUM\n");
 }
 
 static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *iface,
@@ -703,7 +746,7 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
     VARIANT var, arg;
     DISPPARAMS dp;
     EXCEPINFO ei;
-    DISPID id, named_arg = DISPID_PROPERTYPUT;
+    DISPID id;
     BSTR tmp;
     HRESULT hres;
 
@@ -750,14 +793,9 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
     ok(hres == S_OK, "GetDispID(document) failed: %08x\n", hres);
     ok(id, "id == 0\n");
 
-    dp.cArgs = 1;
-    dp.rgvarg = &var;
-    dp.cNamedArgs = 1;
-    dp.rgdispidNamedArgs = &named_arg;
     V_VT(&var) = VT_I4;
     V_I4(&var) = 100;
-
-    hres = IDispatchEx_InvokeEx(document, id, LOCALE_NEUTRAL, INVOKE_PROPERTYPUT, &dp, NULL, &ei, NULL);
+    hres = dispex_propput(document, id, &var);
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
 
     tmp = SysAllocString(testW);
@@ -791,7 +829,6 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
     dp.rgdispidNamedArgs = NULL;
     V_VT(&var) = VT_DISPATCH;
     V_DISPATCH(&var) = (IDispatch*)&funcDisp;
-
     hres = IDispatchEx_InvokeEx(document, id, LOCALE_NEUTRAL, INVOKE_PROPERTYPUT, &dp, NULL, &ei, NULL);
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
 
@@ -825,6 +862,7 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
     ok(hres == S_OK, "Could not get IDispatchEx iface: %08x\n", hres);
 
     test_func(dispex);
+    test_nextdispid(dispex);
     IDispatchEx_Release(dispex);
 
     return S_OK;
