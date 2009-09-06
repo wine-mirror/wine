@@ -129,6 +129,7 @@ typedef struct {
 
     HTMLDOMNode *target;
     const event_info_t *type;
+    nsIDOMEvent *nsevent;
 } HTMLEventObj;
 
 #define HTMLEVENTOBJ(x) ((IHTMLEventObj*) &(x)->lpIHTMLEventObjVtbl)
@@ -178,6 +179,8 @@ static ULONG WINAPI HTMLEventObj_Release(IHTMLEventObj *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        if(This->nsevent)
+            nsIDOMEvent_Release(This->nsevent);
         release_dispex(&This->dispex);
         heap_free(This);
     }
@@ -232,8 +235,31 @@ static HRESULT WINAPI HTMLEventObj_get_srcElement(IHTMLEventObj *iface, IHTMLEle
 static HRESULT WINAPI HTMLEventObj_get_altKey(IHTMLEventObj *iface, VARIANT_BOOL *p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRBool ret = FALSE;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->nsevent) {
+        nsIDOMKeyEvent *key_event;
+        nsresult nsres;
+
+        nsres = nsIDOMEvent_QueryInterface(This->nsevent, &IID_nsIDOMKeyEvent, (void**)&key_event);
+        if(NS_SUCCEEDED(nsres)) {
+            nsIDOMKeyEvent_GetAltKey(key_event, &ret);
+            nsIDOMKeyEvent_Release(key_event);
+        }else {
+            nsIDOMMouseEvent *mouse_event;
+
+            nsres = nsIDOMEvent_QueryInterface(This->nsevent, &IID_nsIDOMMouseEvent, (void**)&mouse_event);
+            if(NS_SUCCEEDED(nsres)) {
+                nsIDOMMouseEvent_GetAltKey(mouse_event, &ret);
+                nsIDOMMouseEvent_Release(mouse_event);
+            }
+        }
+    }
+
+    *p = ret ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_ctrlKey(IHTMLEventObj *iface, VARIANT_BOOL *p)
@@ -449,7 +475,7 @@ static dispex_static_data_t HTMLEventObj_dispex = {
     HTMLEventObj_iface_tids
 };
 
-static IHTMLEventObj *create_event(HTMLDOMNode *target, eventid_t eid)
+static IHTMLEventObj *create_event(HTMLDOMNode *target, eventid_t eid, nsIDOMEvent *nsevent)
 {
     HTMLEventObj *ret;
 
@@ -459,6 +485,10 @@ static IHTMLEventObj *create_event(HTMLDOMNode *target, eventid_t eid)
     ret->type = event_info+eid;
     ret->target = target;
     IHTMLDOMNode_AddRef(HTMLDOMNODE(target));
+
+    ret->nsevent = nsevent;
+    if(nsevent)
+        nsIDOMEvent_AddRef(nsevent);
 
     init_dispex(&ret->dispex, (IUnknown*)HTMLEVENTOBJ(ret), &HTMLEventObj_dispex);
 
@@ -490,7 +520,7 @@ static void call_event_handlers(HTMLDocument *doc, event_target_t *event_target,
     }
 }
 
-void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target)
+void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target, nsIDOMEvent *nsevent)
 {
     IHTMLEventObj *prev_event, *event_obj = NULL;
     nsIDOMNode *parent, *nsnode;
@@ -504,7 +534,7 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target)
     }
 
     prev_event = doc->window->event;
-    event_obj = doc->window->event = create_event(get_node(doc, target, TRUE), eid);
+    event_obj = doc->window->event = create_event(get_node(doc, target, TRUE), eid, nsevent);
     nsnode = target;
     nsIDOMNode_AddRef(nsnode);
 
