@@ -265,8 +265,31 @@ static HRESULT WINAPI HTMLEventObj_get_altKey(IHTMLEventObj *iface, VARIANT_BOOL
 static HRESULT WINAPI HTMLEventObj_get_ctrlKey(IHTMLEventObj *iface, VARIANT_BOOL *p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRBool ret = FALSE;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->nsevent) {
+        nsIDOMKeyEvent *key_event;
+        nsresult nsres;
+
+        nsres = nsIDOMEvent_QueryInterface(This->nsevent, &IID_nsIDOMKeyEvent, (void**)&key_event);
+        if(NS_SUCCEEDED(nsres)) {
+            nsIDOMKeyEvent_GetCtrlKey(key_event, &ret);
+            nsIDOMKeyEvent_Release(key_event);
+        }else {
+            nsIDOMMouseEvent *mouse_event;
+
+            nsres = nsIDOMEvent_QueryInterface(This->nsevent, &IID_nsIDOMMouseEvent, (void**)&mouse_event);
+            if(NS_SUCCEEDED(nsres)) {
+                nsIDOMMouseEvent_GetCtrlKey(mouse_event, &ret);
+                nsIDOMMouseEvent_Release(mouse_event);
+            }
+        }
+    }
+
+    *p = ret ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_shiftKey(IHTMLEventObj *iface, VARIANT_BOOL *p)
