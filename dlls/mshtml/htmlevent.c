@@ -499,18 +499,15 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target)
     }
 
     prev_event = doc->window->event;
+    event_obj = doc->window->event = create_event(get_node(doc, target, TRUE));
     nsnode = target;
     nsIDOMNode_AddRef(nsnode);
 
     while(1) {
         node = get_node(doc, nsnode, FALSE);
 
-        if(node) {
-            if(!event_obj)
-                event_obj = doc->window->event = create_event(get_node(doc, target, TRUE));
-
+        if(node)
             call_event_handlers(doc, node->event_target, eid, (IDispatch*)HTMLDOMNODE(node));
-        }
 
         if(!(event_info[eid].flags & EVENT_BUBBLE))
             break;
@@ -529,17 +526,11 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target)
     if(nsnode)
         nsIDOMNode_Release(nsnode);
 
-    if(event_info[eid].flags & EVENT_BUBBLE) {
-        if(!event_obj)
-            event_obj = doc->window->event = create_event(get_node(doc, target, TRUE));
-
+    if(event_info[eid].flags & EVENT_BUBBLE)
         call_event_handlers(doc, doc->event_target, eid, (IDispatch*)HTMLDOC(doc));
-    }
 
-    if(event_obj) {
-        IHTMLEventObj_Release(event_obj);
-        doc->window->event = prev_event;
-    }
+    IHTMLEventObj_Release(event_obj);
+    doc->window->event = prev_event;
 }
 
 static HRESULT set_event_handler_disp(event_target_t **event_target, HTMLDocument *doc, eventid_t eid, IDispatch *disp)
