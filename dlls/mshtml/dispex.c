@@ -899,8 +899,56 @@ static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BS
 static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
-    FIXME("(%p)->(%x %x %p)\n", This, grfdex, id, pid);
-    return E_NOTIMPL;
+    dispex_data_t *data;
+    func_info_t *func;
+    HRESULT hres;
+
+    TRACE("(%p)->(%x %x %p)\n", This, grfdex, id, pid);
+
+    if(is_dynamic_dispid(id)) {
+        DWORD idx = id - DISPID_DYNPROP_0;
+
+        if(!This->dynamic_data || This->dynamic_data->prop_cnt <= idx)
+            return DISP_E_UNKNOWNNAME;
+
+        if(idx+1 == This->dynamic_data->prop_cnt) {
+            *pid = DISPID_STARTENUM;
+            return S_FALSE;
+        }
+
+        *pid = id+1;
+        return S_OK;
+    }
+
+    data = get_dispex_data(This);
+    if(!data)
+        return E_FAIL;
+
+    if(id == DISPID_STARTENUM) {
+        func = data->funcs;
+    }else {
+        hres = get_builtin_func(data, id, &func);
+        if(FAILED(hres))
+            return hres;
+        func++;
+    }
+
+    while(func < data->funcs+data->func_cnt) {
+        /* FIXME: Skip hidden properties */
+        if(func->func_disp_idx == -1) {
+            *pid = func->id;
+            return S_OK;
+        }
+        func++;
+    }
+
+    if(This->dynamic_data && This->dynamic_data->prop_cnt) {
+        *pid = DISPID_DYNPROP_0;
+        return S_OK;
+    }
+
+    *pid = DISPID_STARTENUM;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)
