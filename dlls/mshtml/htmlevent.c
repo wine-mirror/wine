@@ -374,8 +374,23 @@ static HRESULT WINAPI HTMLEventObj_put_keyCode(IHTMLEventObj *iface, LONG v)
 static HRESULT WINAPI HTMLEventObj_get_keyCode(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRUint32 key_code = 0;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->nsevent) {
+        nsIDOMKeyEvent *key_event;
+        nsresult nsres;
+
+        nsres = nsIDOMEvent_QueryInterface(This->nsevent, &IID_nsIDOMKeyEvent, (void**)&key_event);
+        if(NS_SUCCEEDED(nsres)) {
+            nsIDOMKeyEvent_GetKeyCode(key_event, &key_code);
+            nsIDOMKeyEvent_Release(key_event);
+        }
+    }
+
+    *p = key_code;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_button(IHTMLEventObj *iface, LONG *p)
