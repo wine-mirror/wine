@@ -280,7 +280,8 @@ static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl *This, con
     DWORD i, j;
     unsigned int ret;
 
-    if (TRACE_ON(d3d_shader)) {
+    if (TRACE_ON(d3d_constants))
+    {
         for(i = 0; i < max_constants; i++) {
             if(!dirty_consts[i]) continue;
             TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
