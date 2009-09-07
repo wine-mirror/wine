@@ -99,7 +99,7 @@
 @ stub NetGroupDel
 @ stub NetGroupDelUser
 @ stdcall NetGroupEnum(wstr long ptr long ptr ptr ptr)
-@ stub NetGroupGetInfo
+@ stdcall NetGroupGetInfo(wstr wstr long ptr)
 @ stub NetGroupGetUsers
 @ stub NetGroupSetInfo
 @ stub NetGroupSetUsers

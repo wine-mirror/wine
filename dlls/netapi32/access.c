@@ -731,6 +731,16 @@ NetGroupEnum(LPCWSTR servername, DWORD level, LPBYTE *bufptr, DWORD prefmaxlen,
     return ERROR_ACCESS_DENIED;
 }
 
+/************************************************************
+ *                NetGroupGetInfo  (NETAPI32.@)
+ *
+ */
+NET_API_STATUS WINAPI NetGroupGetInfo(LPCWSTR servername, LPCWSTR groupname, DWORD level, LPBYTE *bufptr)
+{
+    FIXME("(%s, %s, %d, %p) stub!\n", debugstr_w(servername), debugstr_w(groupname), level, bufptr);
+    return ERROR_ACCESS_DENIED;
+}
+
 /******************************************************************************
  * NetUserModalsGet  (NETAPI32.@)
  *
