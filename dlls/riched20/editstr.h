@@ -51,7 +51,7 @@
 #include "wine/debug.h"
 
 #ifdef __i386__
-extern struct ITextHostVtbl itextHostStdcallVtbl;
+extern const struct ITextHostVtbl itextHostStdcallVtbl;
 #endif /* __i386__ */
 
 typedef struct tagME_String

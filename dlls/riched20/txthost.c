@@ -42,7 +42,7 @@ typedef struct ITextHostImpl {
     BOOL bEmulateVersion10;
 } ITextHostImpl;
 
-static ITextHostVtbl textHostVtbl;
+static const ITextHostVtbl textHostVtbl;
 
 ITextHost *ME_CreateTextHost(HWND hwnd, BOOL bEmulateVersion10)
 {
@@ -635,7 +635,7 @@ DEFINE_STDCALL_WRAPPER(39,ITextHostImpl_TxImmGetContext,4)
 DEFINE_STDCALL_WRAPPER(40,ITextHostImpl_TxImmReleaseContext,8)
 DEFINE_STDCALL_WRAPPER(41,ITextHostImpl_TxGetSelectionBarWidth,8)
 
-ITextHostVtbl itextHostStdcallVtbl = {
+const ITextHostVtbl itextHostStdcallVtbl = {
     NULL,
     NULL,
     NULL,
@@ -682,7 +682,7 @@ ITextHostVtbl itextHostStdcallVtbl = {
 
 #endif /* __i386__ */
 
-static ITextHostVtbl textHostVtbl = {
+static const ITextHostVtbl textHostVtbl = {
     ITextHostImpl_QueryInterface,
     ITextHostImpl_AddRef,
     ITextHostImpl_Release,
