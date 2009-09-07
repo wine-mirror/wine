@@ -127,6 +127,13 @@ ULONG WINAPI HalGetBusData(BUS_DATA_TYPE BusDataType, ULONG BusNumber, ULONG Slo
     return 0;
 }
 
+ULONG WINAPI HalGetBusDataByOffset(BUS_DATA_TYPE BusDataType, ULONG BusNumber, ULONG SlotNumber, PVOID Buffer, ULONG Offset, ULONG Length)
+{
+    FIXME("(%u %u %u %p %u %u) stub!\n", BusDataType, BusNumber, SlotNumber, Buffer, Offset, Length);
+    /* Claim that there is no such bus */
+    return 0;
+}
+
 KIRQL WINAPI KeGetCurrentIrql(VOID)
 {
     FIXME( " stub!\n");

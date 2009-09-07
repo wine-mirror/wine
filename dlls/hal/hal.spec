@@ -34,7 +34,7 @@
 @ stub HalFreeCommonBuffer
 @ stub HalGetAdapter
 @ stdcall HalGetBusData(long long long ptr long)
-@ stub HalGetBusDataByOffset
+@ stdcall HalGetBusDataByOffset(long long long ptr long long)
 @ stub HalGetEnvironmentVariable
 @ stub HalGetInterruptVector
 @ stub HalHandleNMI
