@@ -277,7 +277,7 @@ static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl *This, con
         GLuint target_type, unsigned int max_constants, const float *constants, char *dirty_consts)
 {
     local_constant* lconst;
-    DWORD i = 0, j;
+    DWORD i, j;
     unsigned int ret;
 
     if (TRACE_ON(d3d_shader)) {
@@ -288,6 +288,9 @@ static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl *This, con
                         constants[i * 4 + 2], constants[i * 4 + 3]);
         }
     }
+
+    i = 0;
+
     /* In 1.X pixel shaders constants are implicitly clamped in the range [-1;1] */
     if (target_type == GL_FRAGMENT_PROGRAM_ARB && This->baseShader.reg_maps.shader_version.major == 1)
     {
