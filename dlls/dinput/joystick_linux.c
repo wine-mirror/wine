@@ -80,6 +80,8 @@ struct JoyDev
     char device[MAX_PATH];
     char name[MAX_PATH];
 
+    BYTE axis_count;
+    BYTE button_count;
     BYTE dev_axes_map[ABS_MAX + 1];
     int  have_axes_map;
 };
@@ -135,6 +137,20 @@ static INT find_joystick_devices(void)
         if (ioctl(fd, JSIOCGNAME(sizeof(joydev.name)), joydev.name) < 0)
             WARN("ioctl(%s,JSIOCGNAME) failed: %s\n", joydev.device, strerror(errno));
 #endif
+#ifdef JSIOCGAXES
+        if (ioctl(fd, JSIOCGAXES, &joydev.axis_count) < 0)
+        {
+            WARN("ioctl(%s,JSIOCGAXES) failed: %s, defauting to 2\n", joydev.device, strerror(errno));
+            joydev.axis_count = 2;
+        }
+#endif
+#ifdef JSIOCGBUTTONS
+        if (ioctl(fd, JSIOCGBUTTONS, &joydev.button_count) < 0)
+        {
+            WARN("ioctl(%s,JSIOCGBUTTONS) failed: %s, defauting to 2\n", joydev.device, strerror(errno));
+            joydev.button_count = 2;
+        }
+#endif
 
         if (ioctl(fd, JSIOCGAXMAP, joydev.dev_axes_map) < 0)
         {
@@ -167,6 +183,9 @@ static INT find_joystick_devices(void)
             new_joydevs = HeapReAlloc(GetProcessHeap(), 0, joystick_devices,
                                       (joystick_devices_count + 1) * sizeof(struct JoyDev));
         if (!new_joydevs) continue;
+
+        TRACE("Found a joystick on %s: %s\n  with %d axes and %d buttons\n", joydev.device,
+              joydev.name, joydev.axis_count, joydev.button_count);
 
         joystick_devices = new_joydevs;
         joystick_devices[joystick_devices_count++] = joydev;
@@ -279,31 +298,14 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     }
 
     newDevice->joydev = &joystick_devices[index];
-    if ((newDevice->joyfd = open(newDevice->joydev->device, O_RDONLY)) < 0)
-    {
-        WARN("open(%s, O_RDONLY) failed: %s\n", newDevice->joydev->device, strerror(errno));
-        HeapFree(GetProcessHeap(), 0, newDevice);
-        return DIERR_DEVICENOTREG;
-    }
-
+    newDevice->joyfd = -1;
     newDevice->generic.guidInstance = DInput_Wine_Joystick_GUID;
     newDevice->generic.guidInstance.Data3 = index;
     newDevice->generic.guidProduct = DInput_Wine_Joystick_GUID;
     newDevice->generic.joy_polldev = joy_polldev;
     newDevice->generic.name        = newDevice->joydev->name;
-
-#ifdef JSIOCGAXES
-    if (ioctl(newDevice->joyfd, JSIOCGAXES, &newDevice->generic.device_axis_count) < 0) {
-        WARN("ioctl(%s,JSIOCGAXES) failed: %s, defauting to 2\n", newDevice->joydev->device, strerror(errno));
-        newDevice->generic.device_axis_count = 2;
-    }
-#endif
-#ifdef JSIOCGBUTTONS
-    if (ioctl(newDevice->joyfd, JSIOCGBUTTONS, &newDevice->generic.devcaps.dwButtons) < 0) {
-        WARN("ioctl(%s,JSIOCGBUTTONS) failed: %s, defauting to 2\n", newDevice->joydev->device, strerror(errno));
-        newDevice->generic.devcaps.dwButtons = 2;
-    }
-#endif
+    newDevice->generic.device_axis_count = newDevice->joydev->axis_count;
+    newDevice->generic.devcaps.dwButtons = newDevice->joydev->button_count;
 
     if (newDevice->generic.devcaps.dwButtons > 128)
     {
