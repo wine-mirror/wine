@@ -1011,9 +1011,9 @@ const struct ID3D10EffectVtbl d3d10_effect_vtbl =
 
 static BOOL STDMETHODCALLTYPE d3d10_effect_technique_IsValid(ID3D10EffectTechnique *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    TRACE("iface %p\n", iface);
 
-    return FALSE;
+    return (struct d3d10_effect_technique *)iface != &null_technique;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_technique_GetDesc(ID3D10EffectTechnique *iface,
@@ -1127,9 +1127,9 @@ static const struct ID3D10EffectTechniqueVtbl d3d10_effect_technique_vtbl =
 
 static BOOL STDMETHODCALLTYPE d3d10_effect_pass_IsValid(ID3D10EffectPass *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    TRACE("iface %p\n", iface);
 
-    return FALSE;
+    return (struct d3d10_effect_pass *)iface != &null_pass;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *iface, D3D10_PASS_DESC *desc)
@@ -1253,9 +1253,9 @@ static const struct ID3D10EffectPassVtbl d3d10_effect_pass_vtbl =
 
 static BOOL STDMETHODCALLTYPE d3d10_effect_variable_IsValid(ID3D10EffectVariable *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    TRACE("iface %p\n", iface);
 
-    return FALSE;
+    return (struct d3d10_effect_variable *)iface != &null_variable;
 }
 
 static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_variable_GetType(ID3D10EffectVariable *iface)
@@ -1481,9 +1481,9 @@ static const struct ID3D10EffectVariableVtbl d3d10_effect_variable_vtbl =
 /* ID3D10EffectVariable methods */
 static BOOL STDMETHODCALLTYPE d3d10_effect_constant_buffer_IsValid(ID3D10EffectConstantBuffer *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    TRACE("iface %p\n", iface);
 
-    return FALSE;
+    return (struct d3d10_effect_local_buffer *)iface != &null_local_buffer;
 }
 
 static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_constant_buffer_GetType(ID3D10EffectConstantBuffer *iface)
