@@ -1908,6 +1908,7 @@ static void test_emf_clipping(void)
     HENHMETAFILE hemf;
     HRGN hrgn;
     INT ret;
+    RECT rc_res, rc_sclip;
 
     SetLastError(0xdeadbeef);
     hdc = CreateEnhMetaFileA(0, NULL, NULL, NULL);
@@ -1946,6 +1947,22 @@ static void test_emf_clipping(void)
     DeleteEnhMetaFile(hemf);
     ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
+
+    hdc = CreateEnhMetaFileA(0, NULL, NULL, NULL);
+
+    SetRect(&rc_sclip, 100, 100, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+    hrgn = CreateRectRgn(rc_sclip.left, rc_sclip.top, rc_sclip.right, rc_sclip.bottom);
+    SelectClipRgn(hdc, hrgn);
+    GetClipBox(hdc, &rc_res);
+    todo_wine ok(EqualRect(&rc_res, &rc_sclip),
+                 "expected rc_res (%d, %d) - (%d, %d), got (%d, %d) - (%d, %d)\n",
+                 rc_sclip.left, rc_sclip.top, rc_sclip.right, rc_sclip.bottom,
+                 rc_res.left, rc_res.top, rc_res.right, rc_res.bottom);
+
+    hemf = CloseEnhMetaFile(hdc);
+    DeleteEnhMetaFile(hemf);
+    DeleteObject(hrgn);
+    DeleteDC(hdc);
 }
 
 static INT CALLBACK EmfEnumProc(HDC hdc, HANDLETABLE *lpHTable, const ENHMETARECORD *lpEMFR, INT nObj, LPARAM lpData)
