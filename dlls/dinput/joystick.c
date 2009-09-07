@@ -448,7 +448,7 @@ DWORD joystick_map_pov(POINTL *p)
  * Setup the dinput options.
  */
 
-HRESULT setup_dinput_options(JoystickGenericImpl *This, const BYTE *default_axis_map)
+HRESULT setup_dinput_options(JoystickGenericImpl *This, const int *default_axis_map)
 {
     char buffer[MAX_PATH+16];
     HKEY hkey, appkey;

@@ -378,7 +378,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     JoystickImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
     int i, idx = 0;
-    BYTE default_axis_map[WINE_JOYSTICK_MAX_AXES + WINE_JOYSTICK_MAX_POVS*2];
+    int default_axis_map[WINE_JOYSTICK_MAX_AXES + WINE_JOYSTICK_MAX_POVS*2];
 
     newDevice = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(JoystickImpl));
     if (!newDevice) return NULL;
