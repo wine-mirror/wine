@@ -1990,6 +1990,16 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	return MMSYSERR_NOERROR;
     }
 
+    /* nBlockAlign and nAvgBytesPerSec are output variables for dsound */
+    if (lpDesc->lpFormat->nBlockAlign != lpDesc->lpFormat->nChannels*lpDesc->lpFormat->wBitsPerSample/8) {
+        lpDesc->lpFormat->nBlockAlign  = lpDesc->lpFormat->nChannels*lpDesc->lpFormat->wBitsPerSample/8;
+        WARN("Fixing nBlockAlign\n");
+    }
+    if (lpDesc->lpFormat->nAvgBytesPerSec!= lpDesc->lpFormat->nSamplesPerSec*lpDesc->lpFormat->nBlockAlign) {
+        lpDesc->lpFormat->nAvgBytesPerSec = lpDesc->lpFormat->nSamplesPerSec*lpDesc->lpFormat->nBlockAlign;
+        WARN("Fixing nAvgBytesPerSec\n");
+    }
+
     TRACE("OSS_OpenDevice requested this format: %dx%dx%d %s\n",
           lpDesc->lpFormat->nSamplesPerSec,
           lpDesc->lpFormat->wBitsPerSample,
@@ -2064,13 +2074,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwo->waveDesc = *lpDesc;
     copy_format(lpDesc->lpFormat, &wwo->waveFormat);
 
-    if (wwo->waveFormat.Format.wBitsPerSample == 0) {
-	WARN("Resetting zeroed wBitsPerSample\n");
-	wwo->waveFormat.Format.wBitsPerSample = 8 *
-	    (wwo->waveFormat.Format.nAvgBytesPerSec /
-	     wwo->waveFormat.Format.nSamplesPerSec) /
-	    wwo->waveFormat.Format.nChannels;
-    }
     /* Read output space info for future reference */
     if (ioctl(wwo->ossdev.fd, SNDCTL_DSP_GETOSPACE, &info) < 0) {
 	ERR("ioctl(%s, SNDCTL_DSP_GETOSPACE) failed (%s)\n", wwo->ossdev.dev_name, strerror(errno));
@@ -2880,6 +2883,16 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	return MMSYSERR_NOERROR;
     }
 
+    /* nBlockAlign and nAvgBytesPerSec are output variables for dsound */
+    if (lpDesc->lpFormat->nBlockAlign != lpDesc->lpFormat->nChannels*lpDesc->lpFormat->wBitsPerSample/8) {
+        lpDesc->lpFormat->nBlockAlign  = lpDesc->lpFormat->nChannels*lpDesc->lpFormat->wBitsPerSample/8;
+        WARN("Fixing nBlockAlign\n");
+    }
+    if (lpDesc->lpFormat->nAvgBytesPerSec!= lpDesc->lpFormat->nSamplesPerSec*lpDesc->lpFormat->nBlockAlign) {
+        lpDesc->lpFormat->nAvgBytesPerSec = lpDesc->lpFormat->nSamplesPerSec*lpDesc->lpFormat->nBlockAlign;
+        WARN("Fixing nAvgBytesPerSec\n");
+    }
+
     TRACE("OSS_OpenDevice requested this format: %dx%dx%d %s\n",
           lpDesc->lpFormat->nSamplesPerSec,
           lpDesc->lpFormat->wBitsPerSample,
@@ -2950,14 +2963,6 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwi->waveDesc = *lpDesc;
     copy_format(lpDesc->lpFormat, &wwi->waveFormat);
-
-    if (wwi->waveFormat.Format.wBitsPerSample == 0) {
-	WARN("Resetting zeroed wBitsPerSample\n");
-	wwi->waveFormat.Format.wBitsPerSample = 8 *
-	    (wwi->waveFormat.Format.nAvgBytesPerSec /
-	     wwi->waveFormat.Format.nSamplesPerSec) /
-	    wwi->waveFormat.Format.nChannels;
-    }
 
     if (ioctl(wwi->ossdev.fd, SNDCTL_DSP_GETISPACE, &info) < 0) {
         ERR("ioctl(%s, SNDCTL_DSP_GETISPACE) failed (%s)\n",
