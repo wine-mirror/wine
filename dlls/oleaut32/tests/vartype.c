@@ -3438,6 +3438,7 @@ static void test_VarDateFromStr(void)
   /* test a none english data string */
   DFS("02.01.1970 00:00:00"); EXPECT_MISMATCH;
   lcid = MAKELCID(MAKELANGID(LANG_GERMAN,SUBLANG_GERMAN),SORT_DEFAULT);
+  DFS("02.01.1970"); todo_wine EXPECT_DBL(25570.0);
   DFS("02.01.1970 00:00:00"); todo_wine EXPECT_DBL(25570.0);
 }
 
