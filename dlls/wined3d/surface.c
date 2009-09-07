@@ -4851,11 +4851,17 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                     IWineD3DSurfaceImpl_LoadLocation(iface, SFLAG_INSYSMEM, rect);
                 }
             } else {
-                if((This->Flags & SFLAG_LOCATIONS) == SFLAG_INSRGBTEX) {
+                if((This->Flags & (SFLAG_INSRGBTEX | SFLAG_INSYSMEM)) == SFLAG_INSRGBTEX) {
                     /* Performance warning ... */
                     FIXME("%p: Downloading srgb texture to reload it as rgb\n", This);
                     IWineD3DSurfaceImpl_LoadLocation(iface, SFLAG_INSYSMEM, rect);
                 }
+            }
+            if(!(This->Flags & SFLAG_INSYSMEM)) {
+                /* Should not happen */
+                ERR("Trying to load a texture from sysmem, but SFLAG_INSYSMEM is not set\n");
+                /* Lets hope we get it from somewhere... */
+                IWineD3DSurfaceImpl_LoadLocation(iface, SFLAG_INSYSMEM, rect);
             }
 
             if (!device->isInDraw) ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
