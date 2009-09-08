@@ -47,12 +47,14 @@ static const struct ID3D10EffectTechniqueVtbl d3d10_effect_technique_vtbl;
 static const struct ID3D10EffectPassVtbl d3d10_effect_pass_vtbl;
 static const struct ID3D10EffectVariableVtbl d3d10_effect_variable_vtbl;
 static const struct ID3D10EffectConstantBufferVtbl d3d10_effect_constant_buffer_vtbl;
+static const struct ID3D10EffectTypeVtbl d3d10_effect_type_vtbl;
 
 /* null objects - needed for invalid calls */
 static struct d3d10_effect_technique null_technique = {&d3d10_effect_technique_vtbl, NULL, NULL, 0, 0, NULL};
 static struct d3d10_effect_pass null_pass = {&d3d10_effect_pass_vtbl, NULL, NULL, 0, 0, 0, NULL};
-static struct d3d10_effect_local_buffer null_local_buffer = {&d3d10_effect_constant_buffer_vtbl, NULL, 0, 0, 0, NULL};
-static struct d3d10_effect_variable null_variable = {&d3d10_effect_variable_vtbl, NULL, 0, 0};
+static struct d3d10_effect_local_buffer null_local_buffer =
+        {&d3d10_effect_constant_buffer_vtbl, NULL, NULL, 0, 0, 0, NULL};
+static struct d3d10_effect_variable null_variable = {&d3d10_effect_variable_vtbl, NULL, NULL, 0, 0, 0, NULL};
 
 static inline void read_dword(const char **ptr, DWORD *d)
 {
@@ -485,6 +487,39 @@ static void parse_fx10_type(const char *ptr, const char *data)
     }
 }
 
+static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, const char *data, DWORD offset)
+{
+    struct d3d10_effect_type *type;
+    struct wine_rb_entry *entry;
+
+    entry = wine_rb_get(&effect->types, &offset);
+    if (entry)
+    {
+        TRACE("Returning existing type.\n");
+        return WINE_RB_ENTRY_VALUE(entry, struct d3d10_effect_type, entry);
+    }
+
+    type = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*type));
+    if (!type)
+    {
+        ERR("Failed to allocate type memory.\n");
+        return NULL;
+    }
+
+    type->vtbl = &d3d10_effect_type_vtbl;
+    type->id = offset;
+    parse_fx10_type(data + offset, data);
+
+    if (wine_rb_put(&effect->types, &offset, &type->entry) == -1)
+    {
+        ERR("Failed to insert type entry.\n");
+        HeapFree(GetProcessHeap(), 0, type);
+        return NULL;
+    }
+
+    return type;
+}
+
 static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char **ptr, const char *data)
 {
     DWORD offset;
@@ -503,7 +538,12 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
 
     read_dword(ptr, &offset);
     TRACE("Variable type info at offset %#x.\n", offset);
-    parse_fx10_type(data + offset, data);
+    v->type = get_fx10_type(v->buffer->effect, data, offset);
+    if (!v->type)
+    {
+        ERR("Failed to get variable type.\n");
+        return E_FAIL;
+    }
 
     skip_dword_unknown(ptr, 1);
 
@@ -569,6 +609,7 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, cons
         HRESULT hr;
 
         v->vtbl = &d3d10_effect_variable_vtbl;
+        v->buffer = l;
 
         hr = parse_fx10_variable(v, ptr, data);
         if (FAILED(hr)) return hr;
@@ -577,11 +618,42 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, cons
     return S_OK;
 }
 
+static int d3d10_effect_type_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    const struct d3d10_effect_type *t = WINE_RB_ENTRY_VALUE(entry, const struct d3d10_effect_type, entry);
+    const DWORD *id = key;
+
+    return *id - t->id;
+}
+
+static void d3d10_effect_type_destroy(struct wine_rb_entry *entry, void *context)
+{
+    struct d3d10_effect_type *t = WINE_RB_ENTRY_VALUE(entry, struct d3d10_effect_type, entry);
+
+    TRACE("effect type %p.\n", t);
+
+    HeapFree(GetProcessHeap(), 0, t);
+}
+
+static const struct wine_rb_functions d3d10_effect_type_rb_functions =
+{
+    d3d10_rb_alloc,
+    d3d10_rb_realloc,
+    d3d10_rb_free,
+    d3d10_effect_type_compare,
+};
+
 static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD data_size)
 {
     const char *ptr = data + e->index_offset;
     unsigned int i;
     HRESULT hr;
+
+    if (wine_rb_init(&e->types, &d3d10_effect_type_rb_functions) == -1)
+    {
+        ERR("Failed to initialize type rbtree.\n");
+        return E_FAIL;
+    }
 
     e->local_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, e->local_buffer_count * sizeof(*e->local_buffers));
     if (!e->local_buffers)
@@ -601,6 +673,7 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
     {
         struct d3d10_effect_local_buffer *l = &e->local_buffers[i];
         l->vtbl = &d3d10_effect_constant_buffer_vtbl;
+        l->effect = e;
 
         hr = parse_fx10_local_buffer(l, &ptr, data);
         if (FAILED(hr)) return hr;
@@ -871,6 +944,8 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
             }
             HeapFree(GetProcessHeap(), 0, This->local_buffers);
         }
+
+        wine_rb_destroy(&This->types, d3d10_effect_type_destroy, NULL);
 
         ID3D10Device_Release(This->device);
         HeapFree(GetProcessHeap(), 0, This);
@@ -1336,9 +1411,11 @@ static BOOL STDMETHODCALLTYPE d3d10_effect_variable_IsValid(ID3D10EffectVariable
 
 static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_variable_GetType(ID3D10EffectVariable *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
 
-    return NULL;
+    TRACE("iface %p\n", iface);
+
+    return (ID3D10EffectType *)This->type;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_GetDesc(ID3D10EffectVariable *iface,
@@ -1818,4 +1895,68 @@ static const struct ID3D10EffectConstantBufferVtbl d3d10_effect_constant_buffer_
     d3d10_effect_constant_buffer_GetConstantBuffer,
     d3d10_effect_constant_buffer_SetTextureBuffer,
     d3d10_effect_constant_buffer_GetTextureBuffer,
+};
+
+static BOOL STDMETHODCALLTYPE d3d10_effect_type_IsValid(ID3D10EffectType *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return FALSE;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_effect_type_GetDesc(ID3D10EffectType *iface, D3D10_EFFECT_TYPE_DESC *desc)
+{
+    FIXME("iface %p, desc %p stub!\n", iface, desc);
+
+    return E_NOTIMPL;
+}
+
+static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTypeByIndex(ID3D10EffectType *iface,
+        UINT index)
+{
+    FIXME("iface %p, index %u stub!\n", iface, index);
+
+    return NULL;
+}
+
+static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTypeByName(ID3D10EffectType *iface,
+        LPCSTR name)
+{
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
+
+    return NULL;
+}
+
+static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTypeBySemantic(ID3D10EffectType *iface,
+        LPCSTR semantic)
+{
+    FIXME("iface %p, semantic %s stub!\n", iface, debugstr_a(semantic));
+
+    return NULL;
+}
+
+static LPCSTR STDMETHODCALLTYPE d3d10_effect_type_GetMemberName(ID3D10EffectType *iface, UINT index)
+{
+    FIXME("iface %p, index %u stub!\n", iface, index);
+
+    return NULL;
+}
+
+static LPCSTR STDMETHODCALLTYPE d3d10_effect_type_GetMemberSemantic(ID3D10EffectType *iface, UINT index)
+{
+    FIXME("iface %p, index %u stub!\n", iface, index);
+
+    return NULL;
+}
+
+static const struct ID3D10EffectTypeVtbl d3d10_effect_type_vtbl =
+{
+    /* ID3D10EffectType */
+    d3d10_effect_type_IsValid,
+    d3d10_effect_type_GetDesc,
+    d3d10_effect_type_GetMemberTypeByIndex,
+    d3d10_effect_type_GetMemberTypeByName,
+    d3d10_effect_type_GetMemberTypeBySemantic,
+    d3d10_effect_type_GetMemberName,
+    d3d10_effect_type_GetMemberSemantic,
 };

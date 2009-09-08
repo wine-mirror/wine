@@ -41,3 +41,18 @@ const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type)
 }
 
 #undef WINE_D3D10_TO_STR
+
+void *d3d10_rb_alloc(size_t size)
+{
+    return HeapAlloc(GetProcessHeap(), 0, size);
+}
+
+void *d3d10_rb_realloc(void *ptr, size_t size)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
+}
+
+void d3d10_rb_free(void *ptr)
+{
+    HeapFree(GetProcessHeap(), 0, ptr);
+}
