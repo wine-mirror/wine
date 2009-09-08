@@ -31,6 +31,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 #define TAG_FX10 MAKE_TAG('F', 'X', '1', '0')
 #define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
 
+#define D3D10_FX10_TYPE_COLUMN_SHIFT    11
+#define D3D10_FX10_TYPE_COLUMN_MASK     (0x7 << D3D10_FX10_TYPE_COLUMN_SHIFT)
+
+#define D3D10_FX10_TYPE_ROW_SHIFT       8
+#define D3D10_FX10_TYPE_ROW_MASK        (0x7 << D3D10_FX10_TYPE_ROW_SHIFT)
+
 static const struct ID3D10EffectTechniqueVtbl d3d10_effect_technique_vtbl;
 static const struct ID3D10EffectPassVtbl d3d10_effect_pass_vtbl;
 static const struct ID3D10EffectVariableVtbl d3d10_effect_variable_vtbl;
@@ -410,6 +416,40 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
     return S_OK;
 }
 
+static void parse_fx10_type(const char *ptr, const char *data)
+{
+    DWORD unknown0;
+    DWORD tmp;
+
+    read_dword(&ptr, &tmp);
+    TRACE("Type name at offset %#x.\n", tmp);
+    TRACE("Type name: %s.\n", debugstr_a(data + tmp));
+
+    read_dword(&ptr, &unknown0);
+    TRACE("Unknown 0: %u.\n", unknown0);
+
+    read_dword(&ptr, &tmp);
+    TRACE("Element count: %u.\n", tmp);
+
+    read_dword(&ptr, &tmp);
+    TRACE("Unpacked size: %#x.\n", tmp);
+
+    read_dword(&ptr, &tmp);
+    TRACE("Stride: %#x.\n", tmp);
+
+    read_dword(&ptr, &tmp);
+    TRACE("Packed size %#x.\n", tmp);
+
+    if (unknown0 == 1)
+    {
+        read_dword(&ptr, &tmp);
+        TRACE("Type description: %#x.\n", tmp);
+        TRACE("\tcolumns: %u.\n", (tmp & D3D10_FX10_TYPE_COLUMN_MASK) >> D3D10_FX10_TYPE_COLUMN_SHIFT);
+        TRACE("\trows: %u.\n", (tmp & D3D10_FX10_TYPE_ROW_MASK) >> D3D10_FX10_TYPE_ROW_SHIFT);
+        TRACE("\tunknown bits: %#x.\n", tmp & ~(D3D10_FX10_TYPE_COLUMN_MASK | D3D10_FX10_TYPE_ROW_MASK));
+    }
+}
+
 static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char **ptr, const char *data)
 {
     DWORD offset;
@@ -428,6 +468,7 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
 
     read_dword(ptr, &offset);
     TRACE("Variable type info at offset %#x.\n", offset);
+    parse_fx10_type(data + offset, data);
 
     skip_dword_unknown(ptr, 1);
 
