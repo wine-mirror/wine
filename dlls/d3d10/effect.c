@@ -37,6 +37,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 #define D3D10_FX10_TYPE_ROW_SHIFT       8
 #define D3D10_FX10_TYPE_ROW_MASK        (0x7 << D3D10_FX10_TYPE_ROW_SHIFT)
 
+#define D3D10_FX10_TYPE_BASETYPE_SHIFT  3
+#define D3D10_FX10_TYPE_BASETYPE_MASK   (0x1f << D3D10_FX10_TYPE_BASETYPE_SHIFT)
+
+#define D3D10_FX10_TYPE_CLASS_SHIFT     0
+#define D3D10_FX10_TYPE_CLASS_MASK      (0x7 << D3D10_FX10_TYPE_CLASS_SHIFT)
+
 static const struct ID3D10EffectTechniqueVtbl d3d10_effect_technique_vtbl;
 static const struct ID3D10EffectPassVtbl d3d10_effect_pass_vtbl;
 static const struct ID3D10EffectVariableVtbl d3d10_effect_variable_vtbl;
@@ -446,7 +452,10 @@ static void parse_fx10_type(const char *ptr, const char *data)
         TRACE("Type description: %#x.\n", tmp);
         TRACE("\tcolumns: %u.\n", (tmp & D3D10_FX10_TYPE_COLUMN_MASK) >> D3D10_FX10_TYPE_COLUMN_SHIFT);
         TRACE("\trows: %u.\n", (tmp & D3D10_FX10_TYPE_ROW_MASK) >> D3D10_FX10_TYPE_ROW_SHIFT);
-        TRACE("\tunknown bits: %#x.\n", tmp & ~(D3D10_FX10_TYPE_COLUMN_MASK | D3D10_FX10_TYPE_ROW_MASK));
+        TRACE("\tbasetype: %#x.\n", (tmp & D3D10_FX10_TYPE_BASETYPE_MASK) >> D3D10_FX10_TYPE_BASETYPE_SHIFT);
+        TRACE("\tclass: %#x.\n", (tmp & D3D10_FX10_TYPE_CLASS_MASK) >> D3D10_FX10_TYPE_CLASS_SHIFT);
+        TRACE("\tunknown bits: %#x.\n", tmp & ~(D3D10_FX10_TYPE_COLUMN_MASK | D3D10_FX10_TYPE_ROW_MASK
+                | D3D10_FX10_TYPE_BASETYPE_MASK | D3D10_FX10_TYPE_CLASS_MASK));
     }
 }
 
