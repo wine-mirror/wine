@@ -116,6 +116,25 @@ static inline void _sink_fire_ok(INT *sink, const CHAR* name)
 
 #define sink_fire_ok(a,b) (winetest_set_location(__FILE__,__LINE__), 0) ? 0 : _sink_fire_ok(a,b)
 
+inline void _sink_check_ok(INT *sink, const CHAR* name)
+{
+    int action = *sink & SINK_ACTION_MASK;
+
+    switch (action)
+    {
+        case SINK_FIRED:
+        case SINK_OPTIONAL:
+            break;
+        case SINK_IGNORE:
+            return;
+        default:
+            winetest_ok(0, "%s not fired as expected, in state %x\n",name,*sink);
+    }
+    *sink = SINK_UNEXPECTED;
+}
+
+#define sink_check_ok(a,b) (winetest_set_location(__FILE__,__LINE__), 0) ? 0 : _sink_check_ok(a,b)
+
 /**********************************************************************
  * ITextStoreACP
  **********************************************************************/
@@ -1102,10 +1121,8 @@ static void test_KeystrokeMgr(void)
     tfpk.uVKey = 'A';
     tfpk.uModifiers = TF_MOD_SHIFT;
 
-    test_KEV_OnSetFocus = SINK_EXPECTED;
     hr = ITfKeystrokeMgr_AdviseKeyEventSink(keymgr,tid,sink,TRUE);
     ok(SUCCEEDED(hr),"ITfKeystrokeMgr_AdviseKeyEventSink failed\n");
-    ok(test_KEV_OnSetFocus == SINK_FIRED, "KeyEventSink_OnSetFocus not fired as expected\n");
     hr = ITfKeystrokeMgr_AdviseKeyEventSink(keymgr,tid,sink,TRUE);
     ok(hr == CONNECT_E_ADVISELIMIT,"Wrong return, expected CONNECT_E_ADVISELIMIT\n");
     hr = ITfKeystrokeMgr_AdviseKeyEventSink(keymgr,cid,sink,TRUE);
@@ -1351,8 +1368,7 @@ static void test_startSession(void)
     test_OnSetFocus  = SINK_EXPECTED;
     hr = ITfThreadMgr_SetFocus(g_tm,g_dm);
     ok(SUCCEEDED(hr),"SetFocus Failed\n");
-    ok(test_OnSetFocus == SINK_FIRED, "OnSetFocus sink not called\n");
-    test_OnSetFocus  = SINK_UNEXPECTED;
+    sink_check_ok(&test_OnSetFocus,"OnSetFocus");
 
     hr = ITfThreadMgr_GetFocus(g_tm,&dmtest);
     ok(SUCCEEDED(hr),"GetFocus Failed\n");
@@ -1391,9 +1407,9 @@ static void test_startSession(void)
     hr = ITfDocumentMgr_Push(g_dm, cxt);
     ok(SUCCEEDED(hr),"Push Failed\n");
     ok(check_context_refcount(cxt) > cnt, "Ref count did not increase\n");
-    ok(test_OnPushContext == SINK_FIRED, "OnPushContext sink not fired\n");
-    ok(test_OnInitDocumentMgr == SINK_FIRED, "OnInitDocumentMgr sink not fired\n");
-    ok(test_ACP_AdviseSink == SINK_FIRED,"TextStoreACP_AdviseSink not fired\n");
+    sink_check_ok(&test_OnPushContext,"OnPushContext");
+    sink_check_ok(&test_OnInitDocumentMgr,"OnInitDocumentMgr");
+    sink_check_ok(&test_ACP_AdviseSink,"TextStoreACP_AdviseSink");
 
     test_EnumContexts(g_dm, cxt);
 
@@ -1413,7 +1429,7 @@ static void test_startSession(void)
     test_OnPushContext = SINK_EXPECTED;
     hr = ITfDocumentMgr_Push(g_dm, cxt2);
     ok(SUCCEEDED(hr),"Push Failed\n");
-    ok(test_OnPushContext == SINK_FIRED, "OnPushContext sink not fired\n");
+    sink_check_ok(&test_OnPushContext,"OnPushContext");
 
     cnt = check_context_refcount(cxt2);
     hr = ITfDocumentMgr_GetTop(g_dm, &cxtTest);
@@ -1453,7 +1469,7 @@ static void test_startSession(void)
     hr = ITfDocumentMgr_Pop(g_dm, 0);
     ok(SUCCEEDED(hr),"Pop Failed\n");
     ok(check_context_refcount(cxt2) < cnt, "Ref count did not decrease\n");
-    ok(test_OnPopContext == SINK_FIRED, "OnPopContext sink not fired\n");
+    sink_check_ok(&test_OnPopContext,"OnPopContext");
 
     dmtest = (void *)0xfeedface;
     hr = ITfContext_GetDocumentMgr(cxt2,&dmtest);
@@ -1497,7 +1513,7 @@ static void test_endSession(void)
     test_OnSetFocus  = SINK_EXPECTED;
     hr = ITfThreadMgr_Deactivate(g_tm);
     ok(SUCCEEDED(hr),"Failed to Deactivate\n");
-    ok(test_OnSetFocus == SINK_FIRED, "OnSetFocus sink not called\n");
+    sink_check_ok(&test_OnSetFocus,"OnSetFocus");
     test_OnSetFocus  = SINK_UNEXPECTED;
 }
 
@@ -1632,7 +1648,7 @@ static void test_InsertAtSelection(TfEditCookie ec, ITfContext *cxt)
     test_ACP_InsertTextAtSelection = SINK_EXPECTED;
     hr = ITfInsertAtSelection_InsertTextAtSelection(iis, ec, 0, txt, 11, &range);
     ok(SUCCEEDED(hr),"ITfInsertAtSelection_InsertTextAtSelection failed %x\n",hr);
-    ok(test_ACP_InsertTextAtSelection == SINK_FIRED,"expected InsertTextAtSelection not fired\n");
+    sink_check_ok(&test_ACP_InsertTextAtSelection,"InsertTextAtSelection");
     ok(range != NULL,"No range returned\n");
     ITfRange_Release(range);
     ITfInsertAtSelection_Release(iis);
@@ -1649,7 +1665,7 @@ TfEditCookie ec)
     HRESULT hr;
 
     sink_fire_ok(&test_DoEditSession,"EditSession_DoEditSession");
-    ok(test_ACP_RequestLock == SINK_FIRED,"Expected RequestLock not fired\n");
+    sink_check_ok(&test_ACP_RequestLock,"RequestLock");
 
     ITfThreadMgr_GetFocus(g_tm, &dm);
     ITfDocumentMgr_GetTop(dm,&cxt);
@@ -1680,7 +1696,7 @@ TfEditCookie ec)
     hr = ITfContext_GetEnd(cxt,ec,&range);
     ok(SUCCEEDED(hr),"Unexpected return code %x\n",hr);
     ok(range != NULL,"Range set to NULL\n");
-    ok(test_ACP_GetEndACP == SINK_FIRED, "GetEndACP not fired as expected\n");
+    sink_check_ok(&test_ACP_GetEndACP,"GetEndACP");
 
     ITfRange_Release(range);
 
@@ -1690,7 +1706,7 @@ TfEditCookie ec)
     ok(SUCCEEDED(hr),"ITfContext_GetSelection failed\n");
     ok(fetched == 1,"fetched incorrect\n");
     ok(selection.range != NULL,"NULL range\n");
-    ok(test_ACP_GetSelection == SINK_FIRED," expected ACP_GetSepection not fired\n");
+    sink_check_ok(&test_ACP_GetSelection,"ACP_GetSepection");
     ITfRange_Release(selection.range);
 
     test_InsertAtSelection(ec, cxt);
@@ -1699,14 +1715,14 @@ TfEditCookie ec)
     hr = ITfContext_GetEnd(cxt,ec,&range);
     ok(SUCCEEDED(hr),"Unexpected return code %x\n",hr);
     ok(range != NULL,"Range set to NULL\n");
-    ok(test_ACP_GetEndACP == SINK_FIRED, "GetEndACP not fired as expected\n");
+    sink_check_ok(&test_ACP_GetEndACP,"GetEndACP");
 
     selection.range = range;
     selection.style.ase = TF_AE_NONE;
     selection.style.fInterimChar = FALSE;
     test_ACP_SetSelection = SINK_EXPECTED;
     hr = ITfContext_SetSelection(cxt, ec, 1, &selection);
-    ok(test_ACP_SetSelection == SINK_FIRED, "SetSelection not fired as expected\n");
+    sink_check_ok(&test_ACP_SetSelection,"SetSelection");
     ITfRange_Release(range);
 
     ITfContext_Release(cxt);
@@ -1775,13 +1791,13 @@ static void test_TStoApplicationText(void)
     hr = ITfContext_RequestEditSession(cxt, tid, es, TF_ES_SYNC|TF_ES_READWRITE, &hrSession);
     ok(SUCCEEDED(hr),"ITfContext_RequestEditSession failed\n");
     ok(hrSession == TS_E_READONLY,"Unexpected hrSession (%x)\n",hrSession);
-    ok(test_ACP_GetStatus == SINK_FIRED," expected GetStatus not fired\n");
+    sink_check_ok(&test_ACP_GetStatus,"GetStatus");
 
     /* signal a change to allow readwrite sessions */
     documentStatus = 0;
     test_ACP_RequestLock = SINK_EXPECTED;
     ITextStoreACPSink_OnStatusChange(ACPSink,documentStatus);
-    ok(test_ACP_RequestLock == SINK_FIRED," expected RequestLock not fired\n");
+    sink_check_ok(&test_ACP_RequestLock,"RequestLock");
 
     test_ACP_GetStatus = SINK_EXPECTED;
     test_ACP_RequestLock = SINK_EXPECTED;
@@ -1790,10 +1806,9 @@ static void test_TStoApplicationText(void)
     test_OnEndEdit = SINK_EXPECTED;
     hr = ITfContext_RequestEditSession(cxt, tid, es, TF_ES_SYNC|TF_ES_READWRITE, &hrSession);
     ok(SUCCEEDED(hr),"ITfContext_RequestEditSession failed\n");
-    ok(test_OnEndEdit == SINK_FIRED, "OnEndEdit not fired as expected\n");
-    ok(test_ACP_RequestLock == SINK_FIRED," expected RequestLock not fired\n");
-    ok(test_DoEditSession == SINK_FIRED," expected DoEditSession not fired\n");
-    ok(test_ACP_GetStatus == SINK_FIRED," expected GetStatus not fired\n");
+    sink_check_ok(&test_OnEndEdit,"OnEndEdit");
+    sink_check_ok(&test_DoEditSession,"DoEditSession");
+    sink_check_ok(&test_ACP_GetStatus,"GetStatus");
     ok(hrSession == 0xdeadcafe,"Unexpected hrSession (%x)\n",hrSession);
 
     if (source)
@@ -1909,7 +1924,7 @@ static void test_AssociateFocus(void)
     test_PrevFocus = dmorig;
     test_OnSetFocus  = SINK_EXPECTED;
     hr = ITfThreadMgr_SetFocus(g_tm,NULL);
-    ok(test_OnSetFocus == SINK_FIRED,"OnSetFocus not fired as expected\n");
+    sink_check_ok(&test_OnSetFocus,"OnSetFocus");
     ITfDocumentMgr_Release(dmorig);
 
     hr = ITfThreadMgr_CreateDocumentMgr(g_tm,&dm1);
@@ -1934,7 +1949,7 @@ static void test_AssociateFocus(void)
     test_OnSetFocus  = SINK_EXPECTED;
     hr = ITfThreadMgr_AssociateFocus(g_tm,wnd1,dm1,&olddm);
     ok(SUCCEEDED(hr),"AssociateFocus failed\n");
-    ok(test_OnSetFocus == SINK_FIRED,"OnSetFocus not fired as expected\n");
+    sink_check_ok(&test_OnSetFocus,"OnSetFocus");
     ok(olddm == NULL, "unexpected old DocumentMgr\n");
 
     processPendingMessages();
@@ -1962,7 +1977,7 @@ static void test_AssociateFocus(void)
     test_OnSetFocus  = SINK_EXPECTED;
     SetFocus(wnd2);
     processPendingMessages();
-    ok(test_OnSetFocus == SINK_FIRED,"OnSetFocus not fired as expected\n");
+    sink_check_ok(&test_OnSetFocus,"OnSetFocus");
 
     SetFocus(wnd3);
     processPendingMessages();
@@ -1972,7 +1987,7 @@ static void test_AssociateFocus(void)
     test_OnSetFocus = SINK_EXPECTED;
     SetFocus(wnd1);
     processPendingMessages();
-    ok(test_OnSetFocus == SINK_FIRED,"OnSetFocus not fired as expected\n");
+    sink_check_ok(&test_OnSetFocus,"OnSetFocus");
 
     hr = ITfThreadMgr_AssociateFocus(g_tm,wnd3,NULL,&olddm);
     ok(SUCCEEDED(hr),"AssociateFocus failed\n");
@@ -1984,14 +1999,14 @@ static void test_AssociateFocus(void)
     test_OnSetFocus  = SINK_EXPECTED;
     test_ACP_GetStatus = SINK_EXPECTED;
     ITfThreadMgr_SetFocus(g_tm,dmorig);
-    ok(test_OnSetFocus == SINK_FIRED,"OnSetFocus not fired as expected\n");
+    sink_check_ok(&test_OnSetFocus,"OnSetFocus");
 
     test_CurrentFocus = NULL;
     test_PrevFocus = dmorig;
     test_OnSetFocus  = SINK_EXPECTED;
     SetFocus(wnd3);
     processPendingMessages();
-    ok(test_OnSetFocus == SINK_FIRED,"OnSetFocus not fired as expected\n");
+    sink_check_ok(&test_OnSetFocus,"OnSetFocus");
 
     hr = ITfThreadMgr_AssociateFocus(g_tm,wnd2,NULL,&olddm);
     ok(SUCCEEDED(hr),"AssociateFocus failed\n");
@@ -2018,7 +2033,7 @@ static void test_AssociateFocus(void)
     test_OnSetFocus  = SINK_EXPECTED;
     test_ACP_GetStatus = SINK_IGNORE;
     ITfThreadMgr_SetFocus(g_tm,dmorig);
-    ok(test_OnSetFocus == SINK_FIRED,"OnSetFocus not fired as expected\n");
+    sink_check_ok(&test_OnSetFocus,"OnSetFocus");
 }
 
 START_TEST(inputprocessor)
