@@ -4071,6 +4071,7 @@ START_TEST(listview)
     {
         win_skip("FIXME: failed to create ListView window.\n");
         unload_v6_module(ctx_cookie);
+        DestroyWindow(hwndparent);
         return;
     }
     else
