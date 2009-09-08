@@ -76,7 +76,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(monthcal);
 
 typedef struct
 {
-    HWND hwndSelf;
+    HWND	hwndSelf;
+    DWORD	dwStyle; /* cached GWL_STYLE */
     COLORREF	bk;
     COLORREF	txt;
     COLORREF	titlebk;
@@ -1032,7 +1033,7 @@ MONTHCAL_GetCurSel(const MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
   TRACE("%lx\n", lParam);
   if((infoPtr==NULL) ||(lpSel==NULL)) return FALSE;
-  if(GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & MCS_MULTISELECT) return FALSE;
+  if(infoPtr->dwStyle & MCS_MULTISELECT) return FALSE;
 
   MONTHCAL_CopyTime(&infoPtr->minSel, lpSel);
   TRACE("%d/%d/%d\n", lpSel->wYear, lpSel->wMonth, lpSel->wDay);
@@ -1048,7 +1049,7 @@ MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
   TRACE("%lx\n", lParam);
   if((infoPtr==NULL) ||(lpSel==NULL)) return FALSE;
-  if(GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & MCS_MULTISELECT) return FALSE;
+  if(infoPtr->dwStyle & MCS_MULTISELECT) return FALSE;
 
   if(!MONTHCAL_ValidateTime(*lpSel)) return FALSE;
 
@@ -1076,7 +1077,7 @@ MONTHCAL_SetMaxSelCount(MONTHCAL_INFO *infoPtr, WPARAM wParam)
 {
   TRACE("%lx\n", wParam);
 
-  if(GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & MCS_MULTISELECT)  {
+  if(infoPtr->dwStyle & MCS_MULTISELECT)  {
     infoPtr->maxSelCount = wParam;
   }
 
@@ -1095,7 +1096,7 @@ MONTHCAL_GetSelRange(const MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
   if((infoPtr==NULL) ||(lprgSysTimeArray==NULL)) return FALSE;
 
-  if(GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & MCS_MULTISELECT)
+  if(infoPtr->dwStyle & MCS_MULTISELECT)
   {
     MONTHCAL_CopyTime(&infoPtr->maxSel, &lprgSysTimeArray[1]);
     MONTHCAL_CopyTime(&infoPtr->minSel, &lprgSysTimeArray[0]);
@@ -1118,7 +1119,7 @@ MONTHCAL_SetSelRange(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
   if((infoPtr==NULL) ||(lprgSysTimeArray==NULL)) return FALSE;
 
-  if(GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & MCS_MULTISELECT)
+  if(infoPtr->dwStyle & MCS_MULTISELECT)
   {
     MONTHCAL_CopyTime(&lprgSysTimeArray[1], &infoPtr->maxSel);
     MONTHCAL_CopyTime(&lprgSysTimeArray[0], &infoPtr->minSel);
@@ -1282,8 +1283,6 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
 static void MONTHCAL_GoToNextMonth(MONTHCAL_INFO *infoPtr)
 {
-  DWORD dwStyle = GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE);
-
   TRACE("MONTHCAL_GoToNextMonth\n");
 
   infoPtr->currentMonth++;
@@ -1292,7 +1291,7 @@ static void MONTHCAL_GoToNextMonth(MONTHCAL_INFO *infoPtr)
     infoPtr->currentMonth = 1;
   }
 
-  if(dwStyle & MCS_DAYSTATE) {
+  if(infoPtr->dwStyle & MCS_DAYSTATE) {
     NMDAYSTATE nmds;
     int i;
 
@@ -1316,8 +1315,6 @@ static void MONTHCAL_GoToNextMonth(MONTHCAL_INFO *infoPtr)
 
 static void MONTHCAL_GoToPrevMonth(MONTHCAL_INFO *infoPtr)
 {
-  DWORD dwStyle = GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE);
-
   TRACE("\n");
 
   infoPtr->currentMonth--;
@@ -1326,7 +1323,7 @@ static void MONTHCAL_GoToPrevMonth(MONTHCAL_INFO *infoPtr)
     infoPtr->currentMonth = 12;
   }
 
-  if(dwStyle & MCS_DAYSTATE) {
+  if(infoPtr->dwStyle & MCS_DAYSTATE) {
     NMDAYSTATE nmds;
     int i;
 
@@ -1652,7 +1649,7 @@ MONTHCAL_MouseMove(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   infoPtr->curSelDay = selday;
   MONTHCAL_CalcPosFromDay(infoPtr, selday, ht.st. wMonth, &r);
 
-  if(GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & MCS_MULTISELECT)  {
+  if(infoPtr->dwStyle & MCS_MULTISELECT)  {
     SYSTEMTIME selArray[2];
     int i;
 
@@ -1763,7 +1760,6 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
   RECT *todayrect=&infoPtr->todayrect;
   SIZE size;
   TEXTMETRICW tm;
-  DWORD dwStyle = GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE);
   HFONT currentFont;
   int xdiv, left_offset;
   RECT rcClient;
@@ -1781,7 +1777,7 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
   /* recalculate the height and width increments and offsets */
   GetTextExtentPoint32W(hdc, O0W, 2, &size);
 
-  xdiv = (dwStyle & MCS_WEEKNUMBERS) ? 8 : 7;
+  xdiv = (infoPtr->dwStyle & MCS_WEEKNUMBERS) ? 8 : 7;
 
   infoPtr->width_increment = size.cx * 2 + 4;
   infoPtr->height_increment = infoPtr->textHeight;
@@ -1811,7 +1807,7 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
   /* setup the dimensions of the rectangle we draw the names of the */
   /* days of the week in */
   weeknumrect->left = left_offset;
-  if(dwStyle & MCS_WEEKNUMBERS)
+  if(infoPtr->dwStyle & MCS_WEEKNUMBERS)
     weeknumrect->right=prev->right;
   else
     weeknumrect->right=weeknumrect->left;
@@ -1890,6 +1886,19 @@ static LRESULT theme_changed (const MONTHCAL_INFO* infoPtr)
     return 0;
 }
 
+static INT MONTHCAL_StyleChanged(MONTHCAL_INFO *infoPtr, WPARAM wStyleType,
+                                 const STYLESTRUCT *lpss)
+{
+    TRACE("(styletype=%lx, styleOld=0x%08x, styleNew=0x%08x)\n",
+          wStyleType, lpss->styleOld, lpss->styleNew);
+
+    if (wStyleType != GWL_STYLE) return 0;
+
+    infoPtr->dwStyle = lpss->styleNew;
+
+    return 0;
+}
+
 /* FIXME: check whether dateMin/dateMax need to be adjusted. */
 static LRESULT
 MONTHCAL_Create(HWND hwnd, LPARAM lParam)
@@ -1907,6 +1916,7 @@ MONTHCAL_Create(HWND hwnd, LPARAM lParam)
 
   infoPtr->hwndSelf = hwnd;
   infoPtr->hwndNotify = ((LPCREATESTRUCTW)lParam)->hwndParent;
+  infoPtr->dwStyle  = GetWindowLongW(hwnd, GWL_STYLE);
 
   MONTHCAL_SetFont(infoPtr, GetStockObject(DEFAULT_GUI_FONT), FALSE);
 
@@ -2085,6 +2095,9 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case WM_SYSCOLORCHANGE:
     COMCTL32_RefreshSysColors();
     return 0;
+
+  case WM_STYLECHANGED:
+    return MONTHCAL_StyleChanged(infoPtr, wParam, (LPSTYLESTRUCT)lParam);
 
   default:
     if ((uMsg >= WM_USER) && (uMsg < WM_APP) && !COMCTL32_IsReflectedMessage(uMsg))
