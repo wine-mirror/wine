@@ -1,201 +1,198 @@
 1. INTRODUCTION
 
-Wine est un programme qui permet d'exécuter les logiciels écrits
-pour Microsoft Windows (comprenant les exécutables DOS, Windows 3.x
-et Win32) sur un Unix. Il est composé d'un chargeur qui charge et
-exécute un binaire Microsoft Windows, ainsi que d'une bibliothèque (appelée
-Winelib) qui implémente les appels de l'API de Windows par leur
-équivalent Unix ou X11. Cette bibliothèque peut également être utilisée
-pour porter du code Win32 vers un exécutable Unix natif.
+Wine est un programme qui permet d'exÃ©cuter les logiciels Ã©crits
+pour Microsoft Windows (comprenant les exÃ©cutables DOS, Windows 3.x
+et Win32) sur un Unix. Il est composÃ© d'un chargeur qui charge et
+exÃ©cute un binaire Microsoft Windows, ainsi que d'une bibliothÃ¨que (appelÃ©e
+Winelib) qui implÃ©mente les appels de l'API de Windows par leur
+Ã©quivalent Unix ou X11. Cette bibliothÃ¨que peut Ã©galement Ãªtre utilisÃ©e
+pour porter du code Win32 vers un exÃ©cutable Unix natif.
 
-Wine est un logiciel libre, distribué sous GNU LGPL; lisez le fichier
-LICENSE pour les détails.
+Wine est un logiciel libre, distribuÃ© sous GNU LGPL ; lisez le fichier
+LICENSE pour plus de dÃ©tails.
 
-2. DÉMARRAGE RAPIDE
+2. DÃ‰MARRAGE RAPIDE
 
-Quand vous compilez à partir des sources, il est recommandé d'utiliser
-l'Installateur de Wine pour construire et installer Wine. À partir du
-répertoire racine des sources de Wine (qui contient ce fichier),
-exécutez :
+Quand vous compilez Ã  partir des sources, il est recommandÃ© d'utiliser
+l'installeur de Wine pour construire et installer Wine. Ã€ partir du
+rÃ©pertoire racine des sources de Wine, exÃ©cutez :
 
 ./tools/wineinstall
 
-Pour exécuter un programme, tapez "wine [options] programme". Pour des
-informations complémentaires et des résolutions de problèmes, lisez le
-reste de ce fichier, les pages "man" de Wine, et surtout les nombreuses 
+Pour exÃ©cuter un programme, tapez Â« wine [options] programme Â». Pour des
+informations complÃ©mentaires et la rÃ©solutions de problÃ¨mes, lisez le
+reste de ce fichier, les pages de manuel de Wine, et surtout les nombreuses
 informations que vous trouverez sur http://www.winehq.org.
 
-3. CONFIGURATION NÉCESSAIRE
+3. CONFIGURATION NÃ‰CESSAIRE
 
-Pour compiler et exécuter Wine, vous devez avoir un des systèmes
-d'exploitation qui suit :
+Pour compiler et exÃ©cuter Wine, vous devez disposer d'un des systÃ¨mes
+d'exploitation suivants :
 
-	Linux version 2.0.36 ou ultérieur
-	FreeBSD 6.3 ou ultérieur
-	Solaris x86 9 ou ultérieur
+	Linux version 2.0.36 ou ultÃ©rieur
+	FreeBSD 6.3 ou ultÃ©rieur
+	Solaris x86 9 ou ultÃ©rieur
 	NetBSD-current
-	Mac OS X 10.4 ou ultérieur
+	Mac OS X 10.4 ou ultÃ©rieur
 
-Étant donné que Wine nécessite une implémentation des "threads" (processus
-légers) au niveau du noyau, seuls les systèmes d'exploitation mentionnés
-ci-haut sont supportés. D'autres systèmes d'exploitation implémentant les
-threads noyau peuvent être pris en charge dans le futur.
+Ã‰tant donnÃ© que Wine nÃ©cessite une implÃ©mentation des Â« threads Â» (processus
+lÃ©gers) au niveau du noyau, seuls les systÃ¨mes d'exploitation mentionnÃ©s
+ci-haut sont supportÃ©s. D'autres systÃ¨mes d'exploitation implÃ©mentant les
+threads noyau peuvent Ãªtre pris en charge dans le futur.
 
-Information Linux :
-  Bien que Linux 2.2.x devrait encore fonctionner et que Linux 2.0.x pourrait
-  encore marcher (des versions plus anciennes de 2.0.x avaient des plantages
-  dus aux threads), il est préférable d'avoir un noyau récent tel que 2.4.x
+Informations Linux :
+  Bien que Linux 2.2.x doive encore fonctionner et que Linux 2.0.x puisse
+  encore marcher (les versions les plus anciennes de 2.0.x avaient des plantages
+  dus aux threads), il est prÃ©fÃ©rable d'utiliser un noyau rÃ©cent tel que 2.4.x
   ou 2.6.x.
 
-Information FreeBSD :
-  Wine ne fonctionnera généralement pas bien pour les versions FreeBSD
-  antérieures à 6.3 ou 7.0 (certains patches additionnels sont disponibles pour
+Informations FreeBSD :
+  Wine ne fonctionnera gÃ©nÃ©ralement pas bien avec les versions FreeBSD
+  antÃ©rieures Ã  6.3 ou 7.0 (certains patches additionnels sont disponibles pour
   FreeBSD 6.3). Voyez <http://wiki.freebsd.org/Wine> pour plus d'informations.
 
-Information Solaris :
-  Il est plus que probable que vous devrez construire Wine avec la chaîne
+Informations Solaris :
+  Il est plus que probable que vous deviez construire Wine avec la chaÃ®ne
   d'outils GNU (gcc, gas, etc.). Attention : installer gas n'assure pas
-  qu'il sera utilisé par gcc.  Recompiler gcc après l'installation de gas
-  ou créer un lien symbolique de cc, as et ld vers les outils GNU semble
-  nécessaire.
+  qu'il sera utilisÃ© par gcc.  Recompiler gcc aprÃ¨s l'installation de gas
+  ou crÃ©er un lien symbolique de cc, as et ld vers les outils GNU correspondants
+  semble nÃ©cessaire.
 
-Information NetBSD :
+Informations NetBSD :
   Assurez-vous d'avoir les options USER_LDT, SYSVSHM, SYSVSEM et SYSVMSG
-  activées dans votre noyau.
+  activÃ©es dans votre noyau.
 
-Information Mac OS X :
-  Xcode 2.4 ou ultérieur est nécessaire pour compiler Wine sous x86.
+Informations Mac OS X :
+  Xcode 2.4 ou ultÃ©rieur est nÃ©cessaire pour compiler Wine sous x86.
 
 
-Systèmes de fichiers pris en charge :
-  Wine devrait fonctionner sur la plupart des systèmes de fichiers. Certains
-  problèmes de compatibilité ont été rapportés lors de l'utilisation de fichiers
-  accédés via Samba. De plus, NTFS ne fournit pas toutes les fonctionnalités de
-  système de fichiers nécessaires pour certains applications. L'utilisation d'un
-  système de fichiers Linux natif comme ext3 est recommandée.
+SystÃ¨mes de fichiers pris en charge :
+  Wine devrait fonctionner sur la plupart des systÃ¨mes de fichiers. Certains
+  problÃ¨mes de compatibilitÃ© ont Ã©tÃ© rapportÃ©s lors de l'utilisation de fichiers
+  accÃ©dÃ©s via Samba. De plus, NTFS ne fournit pas toutes les fonctionnalitÃ©s de
+  systÃ¨me de fichiers nÃ©cessaires pour certains applications. L'utilisation d'un
+  systÃ¨me de fichiers Linux natif comme ext3 est recommandÃ©e.
 
-Configuration requise de base :
-  Les fichiers "include" de X11 (appelés xlib6g-dev sous Debian et XFree86-devel
-  sous RedHat) doivent être installés.
+Configuration de base requise :
+  Les fichiers Â« include Â» de X11 (appelÃ©s xlib6g-dev sous Debian et XFree86-devel
+  sous RedHat) doivent Ãªtre installÃ©s.
 
-  Bien entendu, vous aurez besoin du programme "make" (très probablement GNU
+  Bien entendu, vous aurez besoin du programme Â« make Â» (trÃ¨s probablement GNU
   make).
 
-  Flex 2.5 ou ultérieur, ainsi que bison, sont également requis.
+  Flex 2.5 ou ultÃ©rieur, ainsi que bison, sont Ã©galement requis.
 
-Bibliothèques optionnelles :
-  "Configure" affichera des messages quand des bibliothèques optionnelles ne
-  sont pas détectées sur votre système. Consultez
-  http://wiki.winehq.org/Recommended_Packages (en anglais) pour des indications
-  sur les paquets logiciels que vous devriez installer.
+BibliothÃ¨ques optionnelles :
+  Â« configure Â» affiche des messages quand des bibliothÃ¨ques optionnelles ne
+  sont pas dÃ©tectÃ©es sur votre systÃ¨me.
+  Consultez http://wiki.winehq.org/Recommended_Packages (en anglais) pour des
+  indications sur les paquets logiciels que vous devriez installer.
 
   Sur les plates-formes 64 bits, vous devez installer les versions 32 bits de
-  ces bibliothèques. Voyez http://wiki.winehq.org/WineOn64bit (en anglais) pour
-  les détails.
+  ces bibliothÃ¨ques. Voyez http://wiki.winehq.org/WineOn64bit (en anglais) pour
+  les dÃ©tails.
 
 4. COMPILATION
 
-Au cas où vous choisiriez de ne pas utiliser wineinstall, exécutez les commandes
+Au cas oÃ¹ vous choisiriez de ne pas utiliser wineinstall, exÃ©cutez les commandes
 suivantes pour construire Wine :
 
 ./configure
 make depend
 make
 
-Cela va construire le programme "wine" et de nombreux binaires/bibliothèques de
-support.
-Le programme "wine" chargera et exécutera les exécutables Windows.
-La bibliothèque "libwine" ("Winelib") peut être utilisée pour compiler et lier
-du code source Windows sous Unix.
+Cela va construire le programme Â« wine Â», ainsi que nombreux binaires/bibliothÃ¨ques
+de support.
+Le programme Â« wine Â» charge et exÃ©cute les exÃ©cutables Windows.
+La bibliothÃ¨que Â« libwine Â» (alias Â« Winelib Â») peut Ãªtre utilisÃ©e pour compiler
+et lier du code source Windows sous Unix.
 
-Pour voir les options de compilation, tapez ./configure --help.
+Pour voir les options de compilation, tapez Â« ./configure --help Â».
 
-Pour mettre à jour vers une nouvelle version en utilisant les fichiers de mise à
-niveau, tout d'abord aller dans le répertoire de plus haut niveau de la version
-actuelle (celui qui contient ce fichier README.fr). Ensuite faire un "make
-clean", et mettre à jour la version avec :
+Pour mettre Ã  jour vers une nouvelle version en utilisant les fichiers de mise Ã 
+niveau, allez tout d'abord dans le rÃ©pertoire de plus haut niveau de la version
+actuelle (le parent de celui qui contient ce fichier README.fr). Faites ensuite
+un Â« make clean Â», et mettez Ã  jour la version avec :
 
     bunzip2 -c fichier-patch | patch -p1
 
-où "fichier-patch" est le nom du fichier de mise à niveau (quelque chose du
-genre wine-1.0.x.diff.bz2). Vous pouvez ensuite réexécuter "./configure", et
-taper ensuite "make depend && make".
+oÃ¹ Â« fichier-patch Â» est le nom du fichier de mise Ã  niveau (quelque chose du
+genre wine-1.0.x.diff.bz2). Vous pouvez alors rÃ©exÃ©cuter Â« ./configure Â», et
+ensuite taper Â« make depend && make Â».
 
 5. INSTALLATION
 
-Une fois Wine a été construit correctement, vous pouvez tapez "make install" :
-cela installera l'exécutable wine, les pages man Wine et quelques autres
-fichiers nécessaires.
+Une fois Wine construit correctement, Â« make install Â» installe l'exÃ©cutable
+wine, les pages de manuel de Wine et quelques autres fichiers nÃ©cessaires.
 
-N'oubliez pas de désinstaller toutes les installations précédentes de wine.
-Essayez soit "dpkg -r wine", "rpm -e wine" ou "make uninstall" avant
-d'installer une nouvelle version.
+N'oubliez pas de dÃ©sinstaller toutes les installations prÃ©cÃ©dentes : essayez
+Â« dpkg -r wine Â», Â« rpm -e wine Â» ou Â« make uninstall Â» avant d'installer
+une nouvelle version.
 
-Une fois l'installation terminée, vous pouvez naviguer dans la section Support à
-http://www.winehq.org/ pour obtenir des astuces de configuration.
+Une fois l'installation terminÃ©e, vous pouvez naviguer dans la section Support
+sur http://www.winehq.org/ pour obtenir des astuces de configuration.
 
 
-6. EXÉCUTER DES PROGRAMMES
+6. EXÃ‰CUTER DES PROGRAMMES
 
-Lorsque l'on invoque Wine, vous pouvez spécifier le chemin entier vers
-l'exécutable ou seulement le nom de fichier.
+Lorsque l'on invoque Wine, vous pouvez spÃ©cifier le chemin entier vers
+l'exÃ©cutable ou seulement le nom de fichier.
 
-Pour exécuter le bloc-notes par exemple :
+Pour exÃ©cuter le bloc-notes par exemple :
 
-	wine notepad		       (en utilisant le chemin d'accès spécifié
-	wine notepad.exe	        dans le fichier "config" pour localiser
-				        le fichier)
+	wine notepad		       (en utilisant le chemin d'accÃ¨s spÃ©cifiÃ©
+	wine notepad.exe	        dans le fichier de configuration pour
+				        localiser le fichier)
 
 	wine c:\\windows\\notepad.exe  (en utilisant la syntaxe de fichiers DOS)
 
 	wine ~/.wine/drive_c/windows/notepad.exe  (en utilisant la syntaxe Unix)
 
-	wine notepad.exe /paramètre1 -paramètre2 paramètre3
-			(en appelant le programme avec des paramètres)
+	wine notepad.exe /paramÃ¨tre1 -paramÃ¨tre2 paramÃ¨tre3
+			(en appelant le programme avec des paramÃ¨tres)
 
-Wine n'est pas encore terminé ; ainsi quelques programmes peuvent planter. Quand
-cela se produit, un débogueur est démarré à l'endroit du plantage pour que vous
-puissiez essayer de résoudre le problème.  Pour plus d'informations sur la
-manière de faire, veuillez lire la section "déboguage" du Guide du développeur
+Wine n'est pas encore terminÃ© ; ainsi quelques programmes peuvent planter. Quand
+cela se produit, un dÃ©bogueur est dÃ©marrÃ© Ã  l'endroit du plantage pour que vous
+puissiez essayer de rÃ©soudre le problÃ¨me.  Pour plus d'informations sur la
+maniÃ¨re de faire, veuillez lire la section Â« dÃ©bogage Â» du Guide du dÃ©veloppeur
 Wine (Wine Developer's Guide).
 
 
-7. INFORMATIONS COMPLÉMENTAIRES
+7. INFORMATIONS COMPLÃ‰MENTAIRES
 
-WWW	Beaucoup d'informations à propos de Wine sont disponibles sur WineHQ à
-	http://www.winehq.org/ : divers guides Wine, base de données
-	d'applications, suivi de bogues. C'est probablement le meilleur point
-	de départ.
+WWW	Beaucoup d'informations Ã  propos de Wine sont disponibles sur WineHQ Ã 
+	http://www.winehq.org : divers guides, base de donnÃ©es d'applications,
+	suivi de bogues. C'est probablement le meilleur point de dÃ©part.
 
-FAQ	La Foire Aux Questions de Wine se trouve sur http://www.winehq.org/FAQ
+FAQ	La Foire aux Questions de Wine se trouve sur http://www.winehq.org/FAQ
 
-Usenet	Vous pouvez parler des problèmes en relation avec Wine
+Usenet	Vous pouvez parler des problÃ¨mes relatifs Ã  Wine
 	ou obtenir de l'aide sur comp.emulators.ms-windows.wine.
 
-Bogues	Rapportez les bogues à Wine Bugzilla à http://bugs.winehq.org
-	SVP cherchez tout d'abord dans la base de données de bugzilla
-	pour contrôler que le problème n'est pas déjà découvert avant
-	de soumettre un rapport de bogue. Vous pouvez également rapporter
-	des rapports de bogue à comp.emulators.ms-windows.wine.
-	SVP lisez le fichier documentation/bugs.sgml pour connaître les
-	informations nécessaires.
+Bogues	Rapportez les bogues sur le Bugzilla Wine sur http://bugs.winehq.org
+	Merci de vÃ©rifier au prÃ©alable dans la base de donnÃ©es de bugzilla
+	que le problÃ¨me n'a pas dÃ©jÃ  Ã©tÃ© dÃ©couvert.
+	Vous pouvez aussi rapporter des bogues sur le forum de
+	discussion comp.emulators.ms-windows.wine.
+	Veuillez Ã©galement lire le fichier documentation/bugs.sgml pour
+	connaÃ®tre les informations indispensables Ã  fournir.
 
 IRC	L'aide en ligne est disponible sur le canal #WineHQ sur
 	irc.freenode.net.
 
-GIT	L'arbre de développement actuel de Wine est disponible au travers de
-	GIT. Voyez http://www.winehq.org/site/git pour plus d'informations.
+Git	L'arbre de dÃ©veloppement actuel de Wine est disponible via Git.
+	Voyez http://www.winehq.org/site/git pour plus d'informations.
 
 Listes de diffusion
-	Il existe de multiples listes de diffusion pour les développeurs Wine ;
+	Il existe plusieurs listes de diffusion pour les dÃ©veloppeurs Wine ;
 	voyez http://www.winehq.org/forums pour de plus amples informations.
 
-Wiki	Le wiki Wine est situé sur http://wiki.winehq.org
+Wiki	Le wiki Wine est situÃ© sur http://wiki.winehq.org
 
 
-Si vous ajoutez quelque chose ou corrigez un bogue, envoyez un correctif (dans le
-format 'diff -u' ) à la liste de diffusion wine-patches@winehq.org pour qu'il
-soit inclus dans la prochaine version.
+Si vous ajoutez quelque chose ou corrigez un bogue, merci d'envoyer un correctif
+(dans le format Â« diff -u Â» ) Ã  la liste de diffusion wine-patches@winehq.org
+pour que cela puisse Ãªtre inclus dans la version suivante.
 
 --
 Alexandre Julliard
