@@ -987,7 +987,7 @@ static GL_Vendors wined3d_guess_vendor(const char *gl_vendor, const char *gl_ren
         return VENDOR_INTEL;
 
     if (strstr(gl_vendor, "Mesa")
-            || strstr(gl_vendor, "Tungsten Graphics, Inc."))
+            || strstr(gl_vendor, "Tungsten Graphics, Inc"))
         return VENDOR_MESA;
 
     FIXME_(d3d_caps)("Received unrecognized GL_VENDOR %s. Returning VENDOR_WINE.\n", debugstr_a(gl_vendor));
