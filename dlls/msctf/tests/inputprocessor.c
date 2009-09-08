@@ -44,6 +44,13 @@ static ITextStoreACPSink *ACPSink;
 #define SINK_EXPECTED 1
 #define SINK_FIRED 2
 #define SINK_IGNORE 3
+#define SINK_OPTIONAL 4
+
+#define SINK_ACTION_MASK 0xff
+#define SINK_OPTION_MASK 0xff00
+#define SINK_EXPECTED_COUNT_MASK 0xff0000
+
+#define SINK_OPTION_TODO      0x0100
 
 static BOOL test_ShouldActivate = FALSE;
 static BOOL test_ShouldDeactivate = FALSE;
@@ -68,6 +75,46 @@ static INT  test_ACP_InsertTextAtSelection = SINK_UNEXPECTED;
 static INT  test_ACP_SetSelection = SINK_UNEXPECTED;
 static INT  test_OnEndEdit = SINK_UNEXPECTED;
 
+
+static inline int expected_count(int *sink)
+{
+    return (*sink & SINK_EXPECTED_COUNT_MASK)>>16;
+}
+
+static inline void _sink_fire_ok(INT *sink, const CHAR* name)
+{
+    int count;
+    int todo = *sink & SINK_OPTION_TODO;
+    int action = *sink & SINK_ACTION_MASK;
+
+    if (winetest_interactive)
+        winetest_trace("firing %s\n",name);
+
+    switch (action)
+    {
+        case SINK_OPTIONAL:
+        case SINK_EXPECTED:
+            count = expected_count(sink);
+            if (count > 1)
+            {
+                count --;
+                *sink = (*sink & ~SINK_EXPECTED_COUNT_MASK) + (count << 16);
+                return;
+            }
+            break;
+        case SINK_IGNORE:
+            winetest_trace("Ignoring %s\n",name);
+            return;
+        default:
+            if (todo) todo_wine
+            {
+                winetest_ok(0, "Unexpected %s sink\n",name);
+            }
+    }
+    *sink = SINK_FIRED;
+}
+
+#define sink_fire_ok(a,b) (winetest_set_location(__FILE__,__LINE__), 0) ? 0 : _sink_fire_ok(a,b)
 
 /**********************************************************************
  * ITextStoreACP
@@ -125,8 +172,7 @@ static HRESULT WINAPI TextStoreACP_AdviseSink(ITextStoreACP *iface,
 {
     HRESULT hr;
 
-    ok(test_ACP_AdviseSink == SINK_EXPECTED, "Unexpected TextStoreACP_AdviseSink sink\n");
-    test_ACP_AdviseSink = SINK_FIRED;
+    sink_fire_ok(&test_ACP_AdviseSink,"TextStoreACP_AdviseSink");
 
     hr = IUnknown_QueryInterface(punk, &IID_ITextStoreACPSink,(LPVOID*)(&ACPSink));
     ok(SUCCEEDED(hr),"Unable to QueryInterface on sink\n");
@@ -143,19 +189,14 @@ static HRESULT WINAPI TextStoreACP_UnadviseSink(ITextStoreACP *iface,
 static HRESULT WINAPI TextStoreACP_RequestLock(ITextStoreACP *iface,
     DWORD dwLockFlags, HRESULT *phrSession)
 {
-    ok(test_ACP_RequestLock == SINK_EXPECTED,"Unexpected TextStoreACP_RequestLock\n");
-    test_ACP_RequestLock = SINK_FIRED;
+    sink_fire_ok(&test_ACP_RequestLock,"TextStoreACP_RequestLock");
     *phrSession = ITextStoreACPSink_OnLockGranted(ACPSink, dwLockFlags);
     return S_OK;
 }
 static HRESULT WINAPI TextStoreACP_GetStatus(ITextStoreACP *iface,
     TS_STATUS *pdcs)
 {
-    ok(test_ACP_GetStatus  == SINK_EXPECTED || test_ACP_GetStatus == SINK_IGNORE, "Unexpected TextStoreACP_GetStatus\n");
-    if (test_ACP_GetStatus  == SINK_EXPECTED)
-        test_ACP_GetStatus = SINK_FIRED;
-    else if (test_ACP_GetStatus == SINK_IGNORE)
-        trace("Ignoring fired TextStoreACP_GetStatus\n");
+    sink_fire_ok(&test_ACP_GetStatus,"TextStoreACP_GetStatus");
     pdcs->dwDynamicFlags = documentStatus;
     return S_OK;
 }
@@ -169,8 +210,7 @@ static HRESULT WINAPI TextStoreACP_QueryInsert(ITextStoreACP *iface,
 static HRESULT WINAPI TextStoreACP_GetSelection(ITextStoreACP *iface,
     ULONG ulIndex, ULONG ulCount, TS_SELECTION_ACP *pSelection, ULONG *pcFetched)
 {
-    ok(test_ACP_GetSelection == SINK_EXPECTED, "Unexpected TextStoreACP_GetSelection\n");
-    test_ACP_GetSelection = SINK_FIRED;
+    sink_fire_ok(&test_ACP_GetSelection,"TextStoreACP_GetSelection");
 
     pSelection->acpStart = 10;
     pSelection->acpEnd = 20;
@@ -183,8 +223,7 @@ static HRESULT WINAPI TextStoreACP_GetSelection(ITextStoreACP *iface,
 static HRESULT WINAPI TextStoreACP_SetSelection(ITextStoreACP *iface,
     ULONG ulCount, const TS_SELECTION_ACP *pSelection)
 {
-    ok(test_ACP_SetSelection == SINK_EXPECTED,"Unexpected TextStoreACP_SetSelection\n");
-    test_ACP_SetSelection = SINK_FIRED;
+    sink_fire_ok(&test_ACP_SetSelection,"TextStoreACP_SetSelection");
     return S_OK;
 }
 static HRESULT WINAPI TextStoreACP_GetText(ITextStoreACP *iface,
@@ -231,8 +270,7 @@ static HRESULT WINAPI TextStoreACP_InsertTextAtSelection(ITextStoreACP *iface,
     DWORD dwFlags, const WCHAR *pchText, ULONG cch, LONG *pacpStart,
     LONG *pacpEnd, TS_TEXTCHANGE *pChange)
 {
-    ok(test_ACP_InsertTextAtSelection == SINK_EXPECTED,"Unexpected TextStoreACP_InsertTextAtSelection\n");
-    test_ACP_InsertTextAtSelection = SINK_FIRED;
+    sink_fire_ok(&test_ACP_InsertTextAtSelection,"TextStoreACP_InsertTextAtSelection");
     return S_OK;
 }
 static HRESULT WINAPI TextStoreACP_InsertEmbeddedAtSelection(ITextStoreACP *iface,
@@ -278,8 +316,7 @@ static HRESULT WINAPI TextStoreACP_RetrieveRequestedAttrs(ITextStoreACP *iface,
 static HRESULT WINAPI TextStoreACP_GetEndACP(ITextStoreACP *iface,
     LONG *pacp)
 {
-    ok(test_ACP_GetEndACP == SINK_EXPECTED,"Unexpected TextStoreACP_GetEndACP\n");
-    test_ACP_GetEndACP = SINK_FIRED;
+    sink_fire_ok(&test_ACP_GetEndACP,"TextStoreACP_GetEndACP");
     return S_OK;
 }
 static HRESULT WINAPI TextStoreACP_GetActiveView(ITextStoreACP *iface,
@@ -419,8 +456,7 @@ static ULONG WINAPI ThreadMgrEventSink_Release(ITfThreadMgrEventSink *iface)
 static HRESULT WINAPI ThreadMgrEventSink_OnInitDocumentMgr(ITfThreadMgrEventSink *iface,
 ITfDocumentMgr *pdim)
 {
-    ok(test_OnInitDocumentMgr == SINK_EXPECTED, "Unexpected OnInitDocumentMgr sink\n");
-    test_OnInitDocumentMgr = SINK_FIRED;
+    sink_fire_ok(&test_OnInitDocumentMgr,"ThreadMgrEventSink_OnInitDocumentMgr");
     return S_OK;
 }
 
@@ -434,10 +470,9 @@ ITfDocumentMgr *pdim)
 static HRESULT WINAPI ThreadMgrEventSink_OnSetFocus(ITfThreadMgrEventSink *iface,
 ITfDocumentMgr *pdimFocus, ITfDocumentMgr *pdimPrevFocus)
 {
-    ok(test_OnSetFocus == SINK_EXPECTED, "Unexpected OnSetFocus sink\n");
+    sink_fire_ok(&test_OnSetFocus,"ThreadMgrEventSink_OnSetFocus");
     ok(pdimFocus == test_CurrentFocus,"Sink reports wrong focus\n");
     ok(pdimPrevFocus == test_PrevFocus,"Sink reports wrong previous focus\n");
-    test_OnSetFocus = SINK_FIRED;
     return S_OK;
 }
 
@@ -458,8 +493,7 @@ ITfContext *pic)
     if (test)
         ITfContext_Release(test);
 
-    ok(test_OnPushContext == SINK_EXPECTED, "Unexpected OnPushContext sink\n");
-    test_OnPushContext = SINK_FIRED;
+    sink_fire_ok(&test_OnPushContext,"ThreadMgrEventSink_OnPushContext");
     return S_OK;
 }
 
@@ -480,8 +514,7 @@ ITfContext *pic)
     if (test)
         ITfContext_Release(test);
 
-    ok(test_OnPopContext == SINK_EXPECTED, "Unexpected OnPopContext sink\n");
-    test_OnPopContext = SINK_FIRED;
+    sink_fire_ok(&test_OnPopContext,"ThreadMgrEventSink_OnPopContext");
     return S_OK;
 }
 
@@ -984,8 +1017,7 @@ static ULONG WINAPI KeyEventSink_Release(ITfKeyEventSink *iface)
 static HRESULT WINAPI KeyEventSink_OnSetFocus(ITfKeyEventSink *iface,
         BOOL fForeground)
 {
-    ok(test_KEV_OnSetFocus == SINK_EXPECTED,"Unexpected KeyEventSink_OnSetFocus\n");
-    test_KEV_OnSetFocus = SINK_FIRED;
+    sink_fire_ok(&test_KEV_OnSetFocus,"KeyEventSink_OnSetFocus");
     return S_OK;
 }
 
@@ -1240,8 +1272,7 @@ static ULONG WINAPI TextEditSink_Release(ITfTextEditSink *iface)
 static HRESULT WINAPI TextEditSink_OnEndEdit(ITfTextEditSink *iface,
     ITfContext *pic, TfEditCookie ecReadOnly, ITfEditRecord *pEditRecord)
 {
-    ok(test_OnEndEdit == SINK_EXPECTED, "Unexpected OnEndEdit\n");
-    test_OnEndEdit = SINK_FIRED;
+    sink_fire_ok(&test_OnEndEdit,"TextEditSink_OnEndEdit");
     return S_OK;
 }
 
@@ -1617,9 +1648,8 @@ TfEditCookie ec)
     ULONG fetched;
     HRESULT hr;
 
-    ok(test_DoEditSession == SINK_EXPECTED, "Unexpected DoEditSession\n");
+    sink_fire_ok(&test_DoEditSession,"EditSession_DoEditSession");
     ok(test_ACP_RequestLock == SINK_FIRED,"Expected RequestLock not fired\n");
-    test_DoEditSession = SINK_FIRED;
 
     ITfThreadMgr_GetFocus(g_tm, &dm);
     ITfDocumentMgr_GetTop(dm,&cxt);
