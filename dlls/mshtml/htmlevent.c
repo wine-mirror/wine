@@ -739,42 +739,47 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target, nsIDOMEven
     HTMLDOMNode *node;
     PRUint16 node_type;
 
-    nsIDOMNode_GetNodeType(target, &node_type);
-    if(node_type != ELEMENT_NODE) {
-        FIXME("node type %d node supported\n", node_type);
-        return;
-    }
+    TRACE("(%p) %s\n", doc, debugstr_w(event_info[eid].name));
 
     prev_event = doc->window->event;
     event_obj = doc->window->event = create_event(get_node(doc, target, TRUE), eid, nsevent);
+
+    nsIDOMNode_GetNodeType(target, &node_type);
     nsnode = target;
     nsIDOMNode_AddRef(nsnode);
 
-    while(1) {
-        node = get_node(doc, nsnode, FALSE);
+    switch(node_type) {
+    case ELEMENT_NODE:
+        do {
+            node = get_node(doc, nsnode, FALSE);
+            if(node)
+                call_event_handlers(doc, event_obj, *get_node_event_target(node), eid, (IDispatch*)HTMLDOMNODE(node));
 
-        if(node)
-            call_event_handlers(doc, event_obj, *get_node_event_target(node), eid, (IDispatch*)HTMLDOMNODE(node));
+            if(!(event_info[eid].flags & EVENT_BUBBLE))
+                break;
+
+            nsIDOMNode_GetParentNode(nsnode, &parent);
+            nsIDOMNode_Release(nsnode);
+            nsnode = parent;
+            if(!nsnode)
+                break;
+
+            nsIDOMNode_GetNodeType(nsnode, &node_type);
+        }while(node_type == ELEMENT_NODE);
 
         if(!(event_info[eid].flags & EVENT_BUBBLE))
             break;
 
-        nsIDOMNode_GetParentNode(nsnode, &parent);
-        nsIDOMNode_Release(nsnode);
-        nsnode = parent;
-        if(!nsnode)
-            break;
+    case DOCUMENT_NODE:
+        call_event_handlers(doc, event_obj, doc->event_target, eid, (IDispatch*)HTMLDOC(doc));
+        break;
 
-        nsIDOMNode_GetNodeType(nsnode, &node_type);
-        if(node_type != ELEMENT_NODE)
-            break;
+    default:
+        FIXME("unimplemented node type %d\n", node_type);
     }
 
     if(nsnode)
         nsIDOMNode_Release(nsnode);
-
-    if(event_info[eid].flags & EVENT_BUBBLE)
-        call_event_handlers(doc, event_obj, doc->event_target, eid, (IDispatch*)HTMLDOC(doc));
 
     IHTMLEventObj_Release(event_obj);
     doc->window->event = prev_event;
