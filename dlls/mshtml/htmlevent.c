@@ -42,6 +42,9 @@ struct event_target_t {
     handler_vector_t *event_table[EVENTID_LAST];
 };
 
+static const WCHAR beforeunloadW[] = {'b','e','f','o','r','e','u','n','l','o','a','d',0};
+static const WCHAR onbeforeunloadW[] = {'o','n','b','e','f','o','r','e','u','n','l','o','a','d',0};
+
 static const WCHAR blurW[] = {'b','l','u','r',0};
 static const WCHAR onblurW[] = {'o','n','b','l','u','r',0};
 
@@ -97,6 +100,7 @@ typedef struct {
 #define EVENT_BUBBLE             0x0002
 
 static const event_info_t event_info[] = {
+    {beforeunloadW, onbeforeunloadW, EVENT_DEFAULTLISTENER},
     {blurW,         onblurW,         EVENT_DEFAULTLISTENER},
     {changeW,       onchangeW,       EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {clickW,        onclickW,        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
