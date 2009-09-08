@@ -1344,3 +1344,16 @@ interface ITfSourceSingle : IUnknown
         [in] TfClientId tid,
         [in] REFIID riid);
 };
+
+[
+  object,
+  local,
+  uuid(c0f1db0c-3a20-405c-a303-96b6010a885f),
+  pointer_default(unique)
+]
+interface ITfThreadFocusSink : IUnknown
+{
+    HRESULT OnSetThreadFocus();
+
+    HRESULT OnKillThreadFocus();
+};
