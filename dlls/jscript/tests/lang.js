@@ -35,7 +35,7 @@ ok(undefined === undefined, "undefined === undefined is false");
 ok(!(undefined === null), "!(undefined === null) is false");
 ok(1E0 === 1, "1E0 === 1 is false");
 ok(1000000*1000000 === 1000000000000, "1000000*1000000 === 1000000000000 is false");
-ok(8.64e15 === 8640000000000000, "8.64e15 !== 8640000000000000"+8.64e15);
+ok(8.64e15 === 8640000000000000, "8.64e15 !== 8640000000000000");
 ok(1e2147483648 === Infinity, "1e2147483648 !== Infinity");
 
 ok(1 !== 2, "1 !== 2 is false");
@@ -63,7 +63,7 @@ ok(ScriptEngine.length === 0, "ScriptEngine.length is not 0");
 
 function testFunc1(x, y) {
     ok(this !== undefined, "this is undefined");
-    ok(x === true, "x is not 1");
+    ok(x === true, "x is not true");
     ok(y === "test", "y is not \"test\"");
     ok(arguments.length === 2, "arguments.length is not 2");
     ok(arguments["0"] === true, "arguments[0] is not true");
@@ -386,9 +386,9 @@ ok(+"0xff" === 255, "+'0xff' !== 255");
 ok(+"3e3" === 3000, "+'3e3' !== 3000");
 
 tmp = new Number(1);
-ok(+tmp === 1, "ToNumber(new Number(1)) = " + (+tmp));
+ok(+tmp === 1, "+(new Number(1)) = " + (+tmp));
 tmp = new String("1");
-ok(+tmp === 1, "ToNumber(new String('1')) = " + (+tmp));
+ok(+tmp === 1, "+(new String('1')) = " + (+tmp));
 
 ok("" + 0 === "0", "\"\" + 0 !== \"0\"");
 ok("" + 123 === "123", "\"\" + 123 !== \"123\"");
@@ -462,7 +462,7 @@ try {
     ok(state === "", "try: state = " + state);
     state = "try";
 }finally {
-    ok(state === "try", "funally: state = " + state);
+    ok(state === "try", "finally: state = " + state);
     state = "finally";
 }
 ok(state === "finally", "state = " + state + " expected finally");
@@ -474,7 +474,7 @@ try {
 }catch(ex) {
     ok(false, "unexpected catch");
 }finally {
-    ok(state === "try", "funally: state = " + state);
+    ok(state === "try", "finally: state = " + state);
     state = "finally";
 }
 ok(state === "finally", "state = " + state + " expected finally");
@@ -501,7 +501,7 @@ try {
     ok(ex === true, "ex is not true");
     state = "catch";
 }finally {
-    ok(state === "catch", "funally: state = " + state);
+    ok(state === "catch", "finally: state = " + state);
     state = "finally";
 }
 ok(state === "finally", "state = " + state + " expected finally");
@@ -516,7 +516,7 @@ try {
     ok(ex === true, "ex is not true");
     state = "catch";
 }finally {
-    ok(state === "catch", "funally: state = " + state);
+    ok(state === "catch", "finally: state = " + state);
     state = "finally";
 }
 ok(state === "finally", "state = " + state + " expected finally");
@@ -531,7 +531,7 @@ try {
     ok(ex === true, "ex is not true");
     state = "catch";
 }finally {
-    ok(state === "catch", "funally: state = " + state);
+    ok(state === "catch", "finally: state = " + state);
     state = "finally";
 }
 ok(state === "finally", "state = " + state + " expected finally");
@@ -550,7 +550,7 @@ try {
     ok(ex === true, "ex is not true");
     state = "catch";
 }finally {
-    ok(state === "catch", "funally: state = " + state);
+    ok(state === "catch", "finally: state = " + state);
     state = "finally";
 }
 ok(state === "finally", "state = " + state + " expected finally");
@@ -622,7 +622,7 @@ try {
     ok(ex === true, "ex is not true");
     state = "catch";
 }finally {
-    ok(state === "catch", "funally: state = " + state);
+    ok(state === "catch", "finally: state = " + state);
     state = "finally";
 }
 ok(state === "finally", "state = " + state + " expected finally");
@@ -837,8 +837,8 @@ ok(isNaN(0.5, NaN) === false, "isNaN(0.5, NaN) !== false");
 ok(isNaN(+undefined) === true, "isNaN(+undefined) !== true");
 
 ok(isFinite(0.5) === true, "isFinite(0.5) !== true");
-ok(isFinite(Infinity) === false, "isFinite(Infinity) !== fals");
-ok(isFinite(-Infinity) === false, "isFinite(Infinity) !== fals");
+ok(isFinite(Infinity) === false, "isFinite(Infinity) !== false");
+ok(isFinite(-Infinity) === false, "isFinite(Infinity) !== false");
 ok(isFinite(NaN) === false, "isFinite(NaN) !== false");
 ok(isFinite(0.5, NaN) === true, "isFinite(0.5, NaN) !== true");
 ok(isFinite(NaN, 0.5) === false, "isFinite(NaN, 0.5) !== false");
@@ -933,7 +933,7 @@ ok(re.source === "=(\\?|%3F)", "re.source = " + re.source);
 
 ok(createNullBSTR() === '', "createNullBSTR() !== ''");
 
-ok(getVT(nullDisp) === "VT_DISPATCH", "getVT(nullDisp) = " + typeof(nullDisp));
+ok(getVT(nullDisp) === "VT_DISPATCH", "getVT(nullDisp) = " + getVT(nullDisp));
 ok(typeof(nullDisp) === "object", "typeof(nullDisp) = " + typeof(nullDisp));
 
 function do_test() {}
