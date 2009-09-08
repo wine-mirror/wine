@@ -953,9 +953,21 @@ static HRESULT WINAPI JSProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPCW
         PARSEACTION ParseAction, DWORD dwParseFlags, LPWSTR pwzResult, DWORD cchResult,
         DWORD* pcchResult, DWORD dwReserved)
 {
-    FIXME("%p)->(%s %d %x %p %d %p %d)\n", iface, debugstr_w(pwzUrl), ParseAction,
+    TRACE("%p)->(%s %d %x %p %d %p %d)\n", iface, debugstr_w(pwzUrl), ParseAction,
           dwParseFlags, pwzResult, cchResult, pcchResult, dwReserved);
-    return E_NOTIMPL;
+
+    switch(ParseAction) {
+    case PARSE_SECURITY_URL:
+        FIXME("PARSE_SECURITY_URL\n");
+        return E_NOTIMPL;
+    case PARSE_DOMAIN:
+        FIXME("PARSE_DOMAIN\n");
+        return E_NOTIMPL;
+    default:
+        return INET_E_DEFAULT_ACTION;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI JSProtocolInfo_QueryInfo(IInternetProtocolInfo *iface, LPCWSTR pwzUrl,
