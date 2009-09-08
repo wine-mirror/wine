@@ -88,7 +88,7 @@ typedef struct tagACLMulti {
     /* const ITfConfigureSystemKeystrokeFeedVtbl *ConfigureSystemKeystrokeFeedVtbl; */
     /* const ITfLangBarItemMgrVtbl *LangBarItemMgrVtbl; */
     /* const ITfUIElementMgrVtbl *UIElementMgrVtbl; */
-    /* const ITfSourceSingleVtbl *SourceSingleVtbl; */
+    const ITfSourceSingleVtbl *SourceSingleVtbl;
     LONG refCount;
 
     /* Aggregation */
@@ -151,6 +151,12 @@ static inline ThreadMgr *impl_from_ITfClientIdVtbl(ITfClientId *iface)
 static inline ThreadMgr *impl_from_ITfThreadMgrEventSink(ITfThreadMgrEventSink *iface)
 {
     return (ThreadMgr *)((char *)iface - FIELD_OFFSET(ThreadMgr,ThreadMgrEventSinkVtbl));
+}
+
+static inline ThreadMgr *impl_from_ITfSourceSingleVtbl(ITfSourceSingle* iface)
+
+{
+    return (ThreadMgr *)((char *)iface - FIELD_OFFSET(ThreadMgr,SourceSingleVtbl));
 }
 
 static HRESULT SetupWindowsHook(ThreadMgr *This)
@@ -282,6 +288,10 @@ static HRESULT WINAPI ThreadMgr_QueryInterface(ITfThreadMgr *iface, REFIID iid, 
     else if (IsEqualIID(iid, &IID_ITfCompartmentMgr))
     {
         *ppvOut = This->CompartmentMgr;
+    }
+    else if (IsEqualIID(iid, &IID_ITfSourceSingle))
+    {
+        *ppvOut = &This->SourceSingleVtbl;
     }
 
     if (*ppvOut)
@@ -1172,6 +1182,53 @@ static const ITfThreadMgrEventSinkVtbl ThreadMgr_ThreadMgrEventSinkVtbl =
     ThreadMgrEventSink_OnPopContext
 };
 
+/*****************************************************
+ * ITfSourceSingle functions
+ *****************************************************/
+static HRESULT WINAPI ThreadMgrSourceSingle_QueryInterface(ITfSourceSingle *iface, REFIID iid, LPVOID *ppvOut)
+{
+    ThreadMgr *This = impl_from_ITfSourceSingleVtbl(iface);
+    return ThreadMgr_QueryInterface((ITfThreadMgr *)This, iid, *ppvOut);
+}
+
+static ULONG WINAPI ThreadMgrSourceSingle_AddRef(ITfSourceSingle *iface)
+{
+    ThreadMgr *This = impl_from_ITfSourceSingleVtbl(iface);
+    return ThreadMgr_AddRef((ITfThreadMgr *)This);
+}
+
+static ULONG WINAPI ThreadMgrSourceSingle_Release(ITfSourceSingle *iface)
+{
+    ThreadMgr *This = impl_from_ITfSourceSingleVtbl(iface);
+    return ThreadMgr_Release((ITfThreadMgr *)This);
+}
+
+static WINAPI HRESULT ThreadMgrSourceSingle_AdviseSingleSink( ITfSourceSingle *iface,
+    TfClientId tid, REFIID riid, IUnknown *punk)
+{
+    ThreadMgr *This = impl_from_ITfSourceSingleVtbl(iface);
+    FIXME("STUB:(%p) %i %s %p\n",This, tid, debugstr_guid(riid),punk);
+    return E_NOTIMPL;
+}
+
+static WINAPI HRESULT ThreadMgrSourceSingle_UnadviseSingleSink( ITfSourceSingle *iface,
+    TfClientId tid, REFIID riid)
+{
+    ThreadMgr *This = impl_from_ITfSourceSingleVtbl(iface);
+    FIXME("STUB:(%p) %i %s\n",This, tid, debugstr_guid(riid));
+    return E_NOTIMPL;
+}
+
+static const ITfSourceSingleVtbl ThreadMgr_SourceSingleVtbl =
+{
+    ThreadMgrSourceSingle_QueryInterface,
+    ThreadMgrSourceSingle_AddRef,
+    ThreadMgrSourceSingle_Release,
+
+    ThreadMgrSourceSingle_AdviseSingleSink,
+    ThreadMgrSourceSingle_UnadviseSingleSink,
+};
+
 HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
 {
     ThreadMgr *This;
@@ -1197,6 +1254,7 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     This->MessagePumpVtbl= &ThreadMgr_MessagePumpVtbl;
     This->ClientIdVtbl = &ThreadMgr_ClientIdVtbl;
     This->ThreadMgrEventSinkVtbl = &ThreadMgr_ThreadMgrEventSinkVtbl;
+    This->SourceSingleVtbl = &ThreadMgr_SourceSingleVtbl;
     This->refCount = 1;
     TlsSetValue(tlsIndex,This);
 
