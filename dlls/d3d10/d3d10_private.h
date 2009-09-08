@@ -70,6 +70,17 @@ struct d3d10_effect_type
 
     DWORD id;
     struct wine_rb_entry entry;
+
+    char *name;
+    DWORD element_count;
+    DWORD size_unpacked;
+    DWORD stride;
+    DWORD size_packed;
+    DWORD member_count;
+    DWORD column_count;
+    DWORD row_count;
+    D3D10_SHADER_VARIABLE_TYPE basetype;
+    D3D10_SHADER_VARIABLE_CLASS type_class;
 };
 
 /* ID3D10EffectVariable */

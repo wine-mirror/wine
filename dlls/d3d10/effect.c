@@ -424,52 +424,100 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
     return S_OK;
 }
 
-static void parse_fx10_type(const char *ptr, const char *data)
+static D3D10_SHADER_VARIABLE_CLASS d3d10_variable_class(DWORD c)
+{
+    switch (c)
+    {
+        case 1: return D3D10_SVC_SCALAR;
+        case 2: return D3D10_SVC_VECTOR;
+        case 3: return D3D10_SVC_MATRIX_ROWS;
+        default:
+            FIXME("Unknown variable class %#x.\n", c);
+            return 0;
+    }
+}
+
+static D3D10_SHADER_VARIABLE_TYPE d3d10_variable_type(DWORD t)
+{
+    switch (t)
+    {
+        case 1: return D3D10_SVT_FLOAT;
+        case 2: return D3D10_SVT_INT;
+        case 3: return D3D10_SVT_UINT;
+        case 4: return D3D10_SVT_BOOL;
+        default:
+            FIXME("Unknown variable type %#x.\n", t);
+            return 0;
+    }
+}
+
+static HRESULT parse_fx10_type(struct d3d10_effect_type *t, const char *ptr, const char *data)
 {
     DWORD unknown0;
-    DWORD tmp;
+    DWORD offset;
 
-    read_dword(&ptr, &tmp);
-    TRACE("Type name at offset %#x.\n", tmp);
-    TRACE("Type name: %s.\n", debugstr_a(data + tmp));
+    read_dword(&ptr, &offset);
+    TRACE("Type name at offset %#x.\n", offset);
+
+    t->name = copy_name(data + offset);
+    if (!t->name)
+    {
+        ERR("Failed to copy name.\n");
+        return E_OUTOFMEMORY;
+    }
+    TRACE("Type name: %s.\n", debugstr_a(t->name));
 
     read_dword(&ptr, &unknown0);
     TRACE("Unknown 0: %u.\n", unknown0);
 
-    read_dword(&ptr, &tmp);
-    TRACE("Element count: %u.\n", tmp);
+    read_dword(&ptr, &t->element_count);
+    TRACE("Element count: %u.\n", t->element_count);
 
-    read_dword(&ptr, &tmp);
-    TRACE("Unpacked size: %#x.\n", tmp);
+    read_dword(&ptr, &t->size_unpacked);
+    TRACE("Unpacked size: %#x.\n", t->size_unpacked);
 
-    read_dword(&ptr, &tmp);
-    TRACE("Stride: %#x.\n", tmp);
+    read_dword(&ptr, &t->stride);
+    TRACE("Stride: %#x.\n", t->stride);
 
-    read_dword(&ptr, &tmp);
-    TRACE("Packed size %#x.\n", tmp);
+    read_dword(&ptr, &t->size_packed);
+    TRACE("Packed size %#x.\n", t->size_packed);
 
     if (unknown0 == 1)
     {
+        DWORD tmp;
+
+        t->member_count = 0;
+
         read_dword(&ptr, &tmp);
+        t->column_count = (tmp & D3D10_FX10_TYPE_COLUMN_MASK) >> D3D10_FX10_TYPE_COLUMN_SHIFT;
+        t->row_count = (tmp & D3D10_FX10_TYPE_ROW_MASK) >> D3D10_FX10_TYPE_ROW_SHIFT;
+        t->basetype = d3d10_variable_type((tmp & D3D10_FX10_TYPE_BASETYPE_MASK) >> D3D10_FX10_TYPE_BASETYPE_SHIFT);
+        t->type_class = d3d10_variable_class((tmp & D3D10_FX10_TYPE_CLASS_MASK) >> D3D10_FX10_TYPE_CLASS_SHIFT);
+
         TRACE("Type description: %#x.\n", tmp);
-        TRACE("\tcolumns: %u.\n", (tmp & D3D10_FX10_TYPE_COLUMN_MASK) >> D3D10_FX10_TYPE_COLUMN_SHIFT);
-        TRACE("\trows: %u.\n", (tmp & D3D10_FX10_TYPE_ROW_MASK) >> D3D10_FX10_TYPE_ROW_SHIFT);
-        TRACE("\tbasetype: %#x.\n", (tmp & D3D10_FX10_TYPE_BASETYPE_MASK) >> D3D10_FX10_TYPE_BASETYPE_SHIFT);
-        TRACE("\tclass: %#x.\n", (tmp & D3D10_FX10_TYPE_CLASS_MASK) >> D3D10_FX10_TYPE_CLASS_SHIFT);
+        TRACE("\tcolumns: %u.\n", t->column_count);
+        TRACE("\trows: %u.\n", t->row_count);
+        TRACE("\tbasetype: %#x.\n", t->basetype);
+        TRACE("\tclass: %#x.\n", t->type_class);
         TRACE("\tunknown bits: %#x.\n", tmp & ~(D3D10_FX10_TYPE_COLUMN_MASK | D3D10_FX10_TYPE_ROW_MASK
                 | D3D10_FX10_TYPE_BASETYPE_MASK | D3D10_FX10_TYPE_CLASS_MASK));
     }
     else if (unknown0 == 3)
     {
-        DWORD member_count;
         unsigned int i;
+        DWORD tmp;
 
         TRACE("Type is a structure.\n");
 
-        read_dword(&ptr, &member_count);
-        TRACE("Member count: %u.\n", member_count);
+        read_dword(&ptr, &t->member_count);
+        TRACE("Member count: %u.\n", t->member_count);
 
-        for (i = 0; i < member_count; ++i)
+        t->column_count = 0;
+        t->row_count = 0;
+        t->basetype = 0;
+        t->type_class = D3D10_SVC_STRUCT;
+
+        for (i = 0; i < t->member_count; ++i)
         {
             read_dword(&ptr, &tmp);
             TRACE("Member %u name at offset %#x.\n", i, tmp);
@@ -485,12 +533,15 @@ static void parse_fx10_type(const char *ptr, const char *data)
             TRACE("Member %u type info at offset %#x.\n", i, tmp);
         }
     }
+
+    return S_OK;
 }
 
 static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, const char *data, DWORD offset)
 {
     struct d3d10_effect_type *type;
     struct wine_rb_entry *entry;
+    HRESULT hr;
 
     entry = wine_rb_get(&effect->types, &offset);
     if (entry)
@@ -508,7 +559,13 @@ static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, cons
 
     type->vtbl = &d3d10_effect_type_vtbl;
     type->id = offset;
-    parse_fx10_type(data + offset, data);
+    hr = parse_fx10_type(type, data + offset, data);
+    if (FAILED(hr))
+    {
+        ERR("Failed to parse type info, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, type);
+        return NULL;
+    }
 
     if (wine_rb_put(&effect->types, &offset, &type->entry) == -1)
     {
@@ -632,6 +689,7 @@ static void d3d10_effect_type_destroy(struct wine_rb_entry *entry, void *context
 
     TRACE("effect type %p.\n", t);
 
+    HeapFree(GetProcessHeap(), 0, t->name);
     HeapFree(GetProcessHeap(), 0, t);
 }
 
@@ -1906,9 +1964,24 @@ static BOOL STDMETHODCALLTYPE d3d10_effect_type_IsValid(ID3D10EffectType *iface)
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_type_GetDesc(ID3D10EffectType *iface, D3D10_EFFECT_TYPE_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d10_effect_type *This = (struct d3d10_effect_type *)iface;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p\n", iface, desc);
+
+    if (!desc) return E_INVALIDARG;
+
+    desc->TypeName = This->name;
+    desc->Class = This->type_class;
+    desc->Type = This->basetype;
+    desc->Elements = This->element_count;
+    desc->Members = This->member_count;
+    desc->Rows = This->row_count;
+    desc->Columns = This->column_count;
+    desc->PackedSize = This->size_packed;
+    desc->UnpackedSize = This->size_unpacked;
+    desc->Stride = This->stride;
+
+    return S_OK;
 }
 
 static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTypeByIndex(ID3D10EffectType *iface,
