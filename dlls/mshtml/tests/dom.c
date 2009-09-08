@@ -3441,6 +3441,16 @@ static void test_default_style(IHTMLStyle *style)
     ok(!strcmp_wa(str, "auto"), "str=%s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
+    str = a2bstr("");
+    hres = IHTMLStyle_put_overflow(style, str);
+    ok(hres == S_OK, "put_overflow failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_get_overflow(style, &str);
+    ok(hres == S_OK, "get_overflow failed: %08x\n", hres);
+    ok(!str, "str=%s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
     /* restore overflow default */
     hres = IHTMLStyle_put_overflow(style, sOverflowDefault);
     ok(hres == S_OK, "put_overflow failed: %08x\n", hres);

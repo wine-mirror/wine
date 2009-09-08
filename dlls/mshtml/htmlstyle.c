@@ -2016,7 +2016,7 @@ static HRESULT WINAPI HTMLStyle_put_overflow(IHTMLStyle *iface, BSTR v)
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
     /* overflow can only be one of the follow values. */
-    if(!v || strcmpiW(szVisible, v) == 0 || strcmpiW(szScroll, v) == 0 ||
+    if(!v || !*v || strcmpiW(szVisible, v) == 0 || strcmpiW(szScroll, v) == 0 ||
              strcmpiW(szHidden, v) == 0  || strcmpiW(szAuto, v) == 0)
     {
         return set_nsstyle_attr(This->nsstyle, STYLEID_OVERFLOW, v, 0);
