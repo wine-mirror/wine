@@ -37,6 +37,7 @@ STRINGTABLE DISCARDABLE
     IDS_NOT_FUNC            "Tikėtasi funkcijos"
     IDS_NOT_DATE            "„[objektas]“ nėra datos objektas"
     IDS_NOT_NUM             "Tikėtasi skaičiaus"
+    IDS_OBJECT_EXPECTED     "Tikėtasi objekto"
     IDS_ILLEGAL_ASSIGN      "Neleistinas priskyrimas"
     IDS_UNDEFINED           "„|“ yra neapibrėžtas"
     IDS_NOT_BOOL            "Tikėtasi loginio objekto"
