@@ -27,7 +27,7 @@
 @ stub TF_InitMlngInfo
 @ stub TF_InitSystem
 @ stub TF_InvalidAssemblyListCache
-@ stub TF_InvalidAssemblyListCacheIfExist
+@ stdcall TF_InvalidAssemblyListCacheIfExist()
 @ stub TF_IsCtfmonRunning
 @ stub TF_IsInMarshaling
 @ stub TF_MlngInfoCount

@@ -608,3 +608,12 @@ HRESULT WINAPI TF_CreateInputProcessorProfiles(
 {
     return InputProcessorProfiles_Constructor(NULL,(IUnknown**)ppipr);
 }
+
+/***********************************************************************
+ *              TF_InvalidAssemblyListCacheIfExist(MSCTF.@)
+ */
+HRESULT WINAPI TF_InvalidAssemblyListCacheIfExist(void)
+{
+    FIXME("Stub\n");
+    return S_OK;
+}
