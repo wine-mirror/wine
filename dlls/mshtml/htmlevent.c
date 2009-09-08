@@ -98,9 +98,10 @@ typedef struct {
 
 #define EVENT_DEFAULTLISTENER    0x0001
 #define EVENT_BUBBLE             0x0002
+#define EVENT_FORWARDBODY        0x0004
 
 static const event_info_t event_info[] = {
-    {beforeunloadW, onbeforeunloadW, EVENT_DEFAULTLISTENER},
+    {beforeunloadW, onbeforeunloadW, EVENT_DEFAULTLISTENER|EVENT_FORWARDBODY},
     {blurW,         onblurW,         EVENT_DEFAULTLISTENER},
     {changeW,       onchangeW,       EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {clickW,        onclickW,        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
@@ -771,6 +772,21 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target, nsIDOMEven
             break;
 
     case DOCUMENT_NODE:
+        if(event_info[eid].flags & EVENT_FORWARDBODY) {
+            nsIDOMHTMLElement *nsbody;
+            nsresult nsres;
+
+            nsres = nsIDOMHTMLDocument_GetBody(doc->nsdoc, &nsbody);
+            if(NS_SUCCEEDED(nsres) && nsbody) {
+                node = get_node(doc, (nsIDOMNode*)nsbody, FALSE);
+                if(node)
+                    call_event_handlers(doc, event_obj, *get_node_event_target(node), eid, (IDispatch*)HTMLDOMNODE(node));
+                nsIDOMHTMLElement_Release(nsbody);
+            }else {
+                ERR("Could not get body: %08x\n", nsres);
+            }
+        }
+
         call_event_handlers(doc, event_obj, doc->event_target, eid, (IDispatch*)HTMLDOC(doc));
         break;
 
