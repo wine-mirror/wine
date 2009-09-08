@@ -718,11 +718,21 @@ static void HTMLBodyElement_destructor(HTMLDOMNode *iface)
     HTMLElement_destructor(&This->textcont.element.node);
 }
 
+static event_target_t **HTMLBodyElement_get_event_target(HTMLDOMNode *iface)
+{
+    HTMLBodyElement *This = HTMLBODY_NODE_THIS(iface);
+
+    return This->textcont.element.node.doc && This->textcont.element.node.doc->window
+        ? &This->textcont.element.node.doc->window->event_target
+        : &This->textcont.element.node.event_target;
+}
+
 #undef HTMLBODY_NODE_THIS
 
 static const NodeImplVtbl HTMLBodyElementImplVtbl = {
     HTMLBodyElement_QI,
-    HTMLBodyElement_destructor
+    HTMLBodyElement_destructor,
+    HTMLBodyElement_get_event_target
 };
 
 static const tid_t HTMLBodyElement_iface_tids[] = {

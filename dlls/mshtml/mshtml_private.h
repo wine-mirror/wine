@@ -164,6 +164,7 @@ typedef struct {
     HTMLDocument *doc;
     nsIDOMWindow *nswindow;
 
+    event_target_t *event_target;
     IHTMLEventObj *event;
 
     struct list entry;
@@ -382,6 +383,7 @@ typedef struct {
 typedef struct {
     HRESULT (*qi)(HTMLDOMNode*,REFIID,void**);
     void (*destructor)(HTMLDOMNode*);
+    event_target_t **(*get_event_target)(HTMLDOMNode*);
     HRESULT (*put_disabled)(HTMLDOMNode*,VARIANT_BOOL);
     HRESULT (*get_disabled)(HTMLDOMNode*,VARIANT_BOOL*);
 } NodeImplVtbl;

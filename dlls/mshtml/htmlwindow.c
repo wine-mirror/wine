@@ -29,6 +29,7 @@
 #include "wine/unicode.h"
 
 #include "mshtml_private.h"
+#include "htmlevent.h"
 #include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
@@ -92,6 +93,8 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        if(This->event_target)
+            release_event_target(This->event_target);
         list_remove(&This->entry);
         release_dispex(&This->dispex);
         heap_free(This);

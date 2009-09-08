@@ -480,6 +480,7 @@ static HRESULT HTMLSelectElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BO
 static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     HTMLSelectElement_QI,
     HTMLSelectElement_destructor,
+    NULL,
     HTMLSelectElementImpl_put_disabled,
     HTMLSelectElementImpl_get_disabled
 };

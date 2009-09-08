@@ -750,7 +750,7 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target, nsIDOMEven
         node = get_node(doc, nsnode, FALSE);
 
         if(node)
-            call_event_handlers(doc, event_obj, node->event_target, eid, (IDispatch*)HTMLDOMNODE(node));
+            call_event_handlers(doc, event_obj, *get_node_event_target(node), eid, (IDispatch*)HTMLDOMNODE(node));
 
         if(!(event_info[eid].flags & EVENT_BUBBLE))
             break;
@@ -931,7 +931,7 @@ void check_event_attr(HTMLDocument *doc, nsIDOMElement *nselem)
             disp = script_parse_event(doc, attr_value);
             if(disp) {
                 node = get_node(doc, (nsIDOMNode*)nselem, TRUE);
-                set_event_handler_disp(&node->event_target, node->doc, i, disp);
+                set_event_handler_disp(get_node_event_target(node), node->doc, i, disp);
                 IDispatch_Release(disp);
             }
         }
