@@ -271,54 +271,20 @@ static inline void MONTHCAL_CalcPosFromDay(const MONTHCAL_INFO *infoPtr,
 /* month is the month value(1 == january, 12 == december) */
 static void MONTHCAL_CircleDay(const MONTHCAL_INFO *infoPtr, HDC hdc, int day, int month)
 {
-  HPEN hRedPen = CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
+  HPEN hRedPen = CreatePen(PS_SOLID, 1, RGB(255, 0, 0));
   HPEN hOldPen2 = SelectObject(hdc, hRedPen);
-  POINT points[13];
-  int x, y;
+  HBRUSH hOldBrush;
   RECT day_rect;
-
 
   MONTHCAL_CalcPosFromDay(infoPtr, day, month, &day_rect);
 
-  x = day_rect.left;
-  y = day_rect.top;
+  hOldBrush = SelectObject(hdc, GetStockObject(NULL_BRUSH));
+  Rectangle(hdc, day_rect.left, day_rect.top, day_rect.right, day_rect.bottom);
 
-  points[0].x = x;
-  points[0].y = y - 1;
-  points[1].x = x + 0.8 * infoPtr->width_increment;
-  points[1].y = y - 1;
-  points[2].x = x + 0.9 * infoPtr->width_increment;
-  points[2].y = y;
-  points[3].x = x + infoPtr->width_increment;
-  points[3].y = y + 0.5 * infoPtr->height_increment;
-
-  points[4].x = x + infoPtr->width_increment;
-  points[4].y = y + 0.9 * infoPtr->height_increment;
-  points[5].x = x + 0.6 * infoPtr->width_increment;
-  points[5].y = y + 0.9 * infoPtr->height_increment;
-  points[6].x = x + 0.5 * infoPtr->width_increment;
-  points[6].y = y + 0.9 * infoPtr->height_increment; /* bring the bottom up just
-				a hair to fit inside the day rectangle */
-
-  points[7].x = x + 0.2 * infoPtr->width_increment;
-  points[7].y = y + 0.8 * infoPtr->height_increment;
-  points[8].x = x + 0.1 * infoPtr->width_increment;
-  points[8].y = y + 0.8 * infoPtr->height_increment;
-  points[9].x = x;
-  points[9].y = y + 0.5 * infoPtr->height_increment;
-
-  points[10].x = x + 0.1 * infoPtr->width_increment;
-  points[10].y = y + 0.2 * infoPtr->height_increment;
-  points[11].x = x + 0.2 * infoPtr->width_increment;
-  points[11].y = y + 0.3 * infoPtr->height_increment;
-  points[12].x = x + 0.4 * infoPtr->width_increment;
-  points[12].y = y + 0.2 * infoPtr->height_increment;
-
-  PolyBezier(hdc, points, 13);
+  SelectObject(hdc, hOldBrush);
   DeleteObject(hRedPen);
   SelectObject(hdc, hOldPen2);
 }
-
 
 static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, int day, int month,
                              int x, int y, int bold)
@@ -326,7 +292,7 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, int day, int
   static const WCHAR fmtW[] = { '%','d',0 };
   WCHAR buf[10];
   RECT r;
-  static int haveBoldFont, haveSelectedDay = FALSE;
+  static BOOL haveBoldFont, haveSelectedDay = FALSE;
   HBRUSH hbr;
   COLORREF oldCol = 0;
   COLORREF oldBk = 0;
@@ -341,16 +307,14 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, int day, int
 
   if((day>=infoPtr->minSel.wDay) && (day<=infoPtr->maxSel.wDay)
        && (month==infoPtr->currentMonth)) {
-    HRGN hrgn;
     RECT r2;
 
     TRACE("%d %d %d\n",day, infoPtr->minSel.wDay, infoPtr->maxSel.wDay);
     TRACE("%s\n", wine_dbgstr_rect(&r));
     oldCol = SetTextColor(hdc, infoPtr->monthbk);
     oldBk = SetBkColor(hdc, infoPtr->trailingtxt);
-    hbr = GetSysColorBrush(COLOR_GRAYTEXT);
-    hrgn = CreateEllipticRgn(r.left, r.top, r.right, r.bottom);
-    FillRgn(hdc, hrgn, hbr);
+    hbr = GetSysColorBrush(COLOR_HIGHLIGHT);
+    FillRect(hdc, &r, hbr);
 
     /* FIXME: this may need to be changed now b/c of the other
 	drawing changes 11/3/99 CMM */
@@ -375,13 +339,13 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, int day, int
     haveBoldFont = FALSE;
   }
 
+  SetBkMode(hdc,TRANSPARENT);
+  DrawTextW(hdc, buf, -1, &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE );
+
   if(haveSelectedDay) {
     SetTextColor(hdc, oldCol);
     SetBkColor(hdc, oldBk);
   }
-
-  SetBkMode(hdc,TRANSPARENT);
-  DrawTextW(hdc, buf, -1, &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE );
 
   /* draw a rectangle around the currently selected days text */
   if((day==infoPtr->curSelDay) && (month==infoPtr->currentMonth))
