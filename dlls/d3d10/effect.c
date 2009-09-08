@@ -87,13 +87,6 @@ static inline void write_dword_unknown(char **ptr, DWORD d)
     write_dword(ptr, d);
 }
 
-static inline void read_tag(const char **ptr, DWORD *t, char t_str[5])
-{
-    read_dword(ptr, t);
-    memcpy(t_str, t, 4);
-    t_str[4] = '\0';
-}
-
 static HRESULT parse_dxbc(const char *data, SIZE_T data_size,
         HRESULT (*chunk_handler)(const char *data, DWORD data_size, DWORD tag, void *ctx), void *ctx)
 {
@@ -101,12 +94,11 @@ static HRESULT parse_dxbc(const char *data, SIZE_T data_size,
     HRESULT hr = S_OK;
     DWORD chunk_count;
     DWORD total_size;
-    char tag_str[5];
     unsigned int i;
     DWORD tag;
 
-    read_tag(&ptr, &tag, tag_str);
-    TRACE("tag: %s\n", tag_str);
+    read_dword(&ptr, &tag);
+    TRACE("tag: %s.\n", debugstr_an((const char *)&tag, 4));
 
     if (tag != TAG_DXBC)
     {
@@ -167,11 +159,8 @@ static char *copy_name(const char *ptr)
 static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
 {
     struct d3d10_effect_shader_variable *s = ctx;
-    char tag_str[5];
 
-    memcpy(tag_str, &tag, 4);
-    tag_str[4] = '\0';
-    TRACE("tag: %s\n", tag_str);
+    TRACE("tag: %s.\n", debugstr_an((const char *)&tag, 4));
 
     TRACE("chunk size: %#x\n", data_size);
 
@@ -221,7 +210,7 @@ static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag
         }
 
         default:
-            FIXME("Unhandled chunk %s\n", tag_str);
+            FIXME("Unhandled chunk %s.\n", debugstr_an((const char *)&tag, 4));
             break;
     }
 
@@ -346,7 +335,7 @@ static HRESULT parse_fx10_pass(struct d3d10_effect_pass *p, const char **ptr, co
         ERR("Failed to copy name.\n");
         return E_OUTOFMEMORY;
     }
-    TRACE("Pass name: %s.\n", p->name);
+    TRACE("Pass name: %s.\n", debugstr_a(p->name));
 
     read_dword(ptr, &p->object_count);
     TRACE("Pass has %u effect objects.\n", p->object_count);
@@ -391,7 +380,7 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
         ERR("Failed to copy name.\n");
         return E_OUTOFMEMORY;
     }
-    TRACE("Technique name: %s.\n", t->name);
+    TRACE("Technique name: %s.\n", debugstr_a(t->name));
 
     read_dword(ptr, &t->pass_count);
     TRACE("Technique has %u passes\n", t->pass_count);
@@ -591,7 +580,7 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
         ERR("Failed to copy name.\n");
         return E_OUTOFMEMORY;
     }
-    TRACE("Variable name: %s.\n", v->name);
+    TRACE("Variable name: %s.\n", debugstr_a(v->name));
 
     read_dword(ptr, &offset);
     TRACE("Variable type info at offset %#x.\n", offset);
@@ -635,7 +624,7 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, cons
         ERR("Failed to copy name.\n");
         return E_OUTOFMEMORY;
     }
-    TRACE("Local buffer name: %s.\n", l->name);
+    TRACE("Local buffer name: %s.\n", debugstr_a(l->name));
 
     read_dword(ptr, &l->data_size);
     TRACE("Local buffer data size: %#x.\n", l->data_size);
@@ -821,11 +810,8 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
 static HRESULT fx10_chunk_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
 {
     struct d3d10_effect *e = ctx;
-    char tag_str[5];
 
-    memcpy(tag_str, &tag, 4);
-    tag_str[4] = '\0';
-    TRACE("tag: %s\n", tag_str);
+    TRACE("tag: %s.\n", debugstr_an((const char *)&tag, 4));
 
     TRACE("chunk size: %#x\n", data_size);
 
@@ -835,7 +821,7 @@ static HRESULT fx10_chunk_handler(const char *data, DWORD data_size, DWORD tag, 
             return parse_fx10(e, data, data_size);
 
         default:
-            FIXME("Unhandled chunk %s\n", tag_str);
+            FIXME("Unhandled chunk %s.\n", debugstr_an((const char *)&tag, 4));
             return S_OK;
     }
 }
@@ -1063,7 +1049,7 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
 
     l = &This->local_buffers[index];
 
-    TRACE("Returning buffer %p, \"%s\"\n", l, l->name);
+    TRACE("Returning buffer %p, %s.\n", l, debugstr_a(l->name));
 
     return (ID3D10EffectConstantBuffer *)l;
 }
@@ -1074,7 +1060,7 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
     struct d3d10_effect *This = (struct d3d10_effect *)iface;
     unsigned int i;
 
-    TRACE("iface %p, name \"%s\"\n", iface, name);
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
 
     for (i = 0; i < This->local_buffer_count; ++i)
     {
@@ -1104,7 +1090,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
     struct d3d10_effect *This = (struct d3d10_effect *)iface;
     unsigned int i;
 
-    TRACE("iface %p, name \"%s\"\n", iface, name);
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
 
     for (i = 0; i < This->local_buffer_count; ++i)
     {
@@ -1131,7 +1117,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableBySemantic(ID3D10Effect *iface,
         LPCSTR semantic)
 {
-    FIXME("iface %p, semantic \"%s\" stub!\n", iface, semantic);
+    FIXME("iface %p, semantic %s stub!\n", iface, debugstr_a(semantic));
 
     return NULL;
 }
@@ -1152,7 +1138,7 @@ static struct ID3D10EffectTechnique * STDMETHODCALLTYPE d3d10_effect_GetTechniqu
 
     t = &This->techniques[index];
 
-    TRACE("Returning technique %p, \"%s\"\n", t, t->name);
+    TRACE("Returning technique %p, %s.\n", t, debugstr_a(t->name));
 
     return (ID3D10EffectTechnique *)t;
 }
@@ -1163,7 +1149,7 @@ static struct ID3D10EffectTechnique * STDMETHODCALLTYPE d3d10_effect_GetTechniqu
     struct d3d10_effect *This = (struct d3d10_effect *)iface;
     unsigned int i;
 
-    TRACE("iface %p, name \"%s\"\n", iface, name);
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
 
     for (i = 0; i < This->technique_count; ++i)
     {
@@ -1263,7 +1249,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_technique_Ge
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_technique_GetAnnotationByName(
         ID3D10EffectTechnique *iface, LPCSTR name)
 {
-    FIXME("iface %p, name \"%s\" stub!\n", iface, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return NULL;
 }
@@ -1284,7 +1270,7 @@ static struct ID3D10EffectPass * STDMETHODCALLTYPE d3d10_effect_technique_GetPas
 
     p = &This->passes[index];
 
-    TRACE("Returning pass %p, \"%s\"\n", p, p->name);
+    TRACE("Returning pass %p, %s.\n", p, debugstr_a(p->name));
 
     return (ID3D10EffectPass *)p;
 }
@@ -1295,7 +1281,7 @@ static struct ID3D10EffectPass * STDMETHODCALLTYPE d3d10_effect_technique_GetPas
     struct d3d10_effect_technique *This = (struct d3d10_effect_technique *)iface;
     unsigned int i;
 
-    TRACE("iface %p, name \"%s\"\n", iface, name);
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
 
     for (i = 0; i < This->pass_count; ++i)
     {
@@ -1412,7 +1398,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_pass_GetAnno
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_pass_GetAnnotationByName(ID3D10EffectPass *iface,
         LPCSTR name)
 {
-    FIXME("iface %p, name \"%s\" stub!\n", iface, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return NULL;
 }
@@ -1495,7 +1481,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetAnnotationByName(
         ID3D10EffectVariable *iface, LPCSTR name)
 {
-    FIXME("iface %p, name \"%s\" stub!\n", iface, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return NULL;
 }
@@ -1511,7 +1497,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetMemberByName(
         ID3D10EffectVariable *iface, LPCSTR name)
 {
-    FIXME("iface %p, name \"%s\" stub!\n", iface, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return NULL;
 }
@@ -1519,7 +1505,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetMemberBySemantic(
         ID3D10EffectVariable *iface, LPCSTR semantic)
 {
-    FIXME("iface %p, semantic \"%s\" stub!\n", iface, semantic);
+    FIXME("iface %p, semantic %s stub!\n", iface, debugstr_a(semantic));
 
     return NULL;
 }
@@ -1723,7 +1709,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_constant_buf
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_constant_buffer_GetAnnotationByName(
         ID3D10EffectConstantBuffer *iface, LPCSTR name)
 {
-    FIXME("iface %p, name \"%s\" stub!\n", iface, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return NULL;
 }
@@ -1739,7 +1725,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_constant_buf
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_constant_buffer_GetMemberByName(
         ID3D10EffectConstantBuffer *iface, LPCSTR name)
 {
-    FIXME("iface %p, name \"%s\" stub!\n", iface, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return NULL;
 }
@@ -1747,7 +1733,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_constant_buf
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_constant_buffer_GetMemberBySemantic(
         ID3D10EffectConstantBuffer *iface, LPCSTR semantic)
 {
-    FIXME("iface %p, semantic \"%s\" stub!\n", iface, semantic);
+    FIXME("iface %p, semantic %s stub!\n", iface, debugstr_a(semantic));
 
     return NULL;
 }
