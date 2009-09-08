@@ -54,6 +54,9 @@ static const WCHAR onchangeW[] = {'o','n','c','h','a','n','g','e',0};
 static const WCHAR clickW[] = {'c','l','i','c','k',0};
 static const WCHAR onclickW[] = {'o','n','c','l','i','c','k',0};
 
+static const WCHAR dblclickW[] = {'d','b','l','c','l','i','c','k',0};
+static const WCHAR ondblclickW[] = {'o','n','d','b','l','c','l','i','c','k',0};
+
 static const WCHAR dragW[] = {'d','r','a','g',0};
 static const WCHAR ondragW[] = {'o','n','d','r','a','g',0};
 
@@ -105,6 +108,7 @@ static const event_info_t event_info[] = {
     {blurW,         onblurW,         EVENT_DEFAULTLISTENER},
     {changeW,       onchangeW,       EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {clickW,        onclickW,        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {dblclickW,     ondblclickW,     EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {dragW,         ondragW,         0},
     {dragstartW,    ondragstartW,    0},
     {focusW,        onfocusW,        EVENT_DEFAULTLISTENER},
