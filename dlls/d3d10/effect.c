@@ -457,6 +457,32 @@ static void parse_fx10_type(const char *ptr, const char *data)
         TRACE("\tunknown bits: %#x.\n", tmp & ~(D3D10_FX10_TYPE_COLUMN_MASK | D3D10_FX10_TYPE_ROW_MASK
                 | D3D10_FX10_TYPE_BASETYPE_MASK | D3D10_FX10_TYPE_CLASS_MASK));
     }
+    else if (unknown0 == 3)
+    {
+        DWORD member_count;
+        unsigned int i;
+
+        TRACE("Type is a structure.\n");
+
+        read_dword(&ptr, &member_count);
+        TRACE("Member count: %u.\n", member_count);
+
+        for (i = 0; i < member_count; ++i)
+        {
+            read_dword(&ptr, &tmp);
+            TRACE("Member %u name at offset %#x.\n", i, tmp);
+            TRACE("Member %u name: %s.\n", i, debugstr_a(data + tmp));
+
+            /* Member semantic? */
+            skip_dword_unknown(&ptr, 1);
+
+            read_dword(&ptr, &tmp);
+            TRACE("Member %u offset in struct: %#x.\n", i, tmp);
+
+            read_dword(&ptr, &tmp);
+            TRACE("Member %u type info at offset %#x.\n", i, tmp);
+        }
+    }
 }
 
 static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char **ptr, const char *data)
