@@ -374,8 +374,14 @@ static void call_timer_disp(IDispatch *disp)
 
     V_VT(&res) = VT_EMPTY;
     memset(&ei, 0, sizeof(ei));
+
+    TRACE(">>>\n");
     hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_METHOD, &dp, &res, &ei, NULL);
-    TRACE("ret %08x %s\n", hres, debugstr_variant(&res));
+    if(hres == S_OK)
+        TRACE("<<<\n");
+    else
+        WARN("<<< %08x\n", hres);
+
     VariantClear(&res);
 }
 
