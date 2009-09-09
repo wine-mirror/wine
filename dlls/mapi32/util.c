@@ -858,8 +858,9 @@ BOOL WINAPI FGetComponentPath(LPCSTR component, LPCSTR qualifier, LPSTR dll_path
     hmsi = LoadLibraryA("msi.dll");
     if (hmsi)
     {
-        FARPROC pMsiProvideQualifiedComponentA = GetProcAddress(hmsi, "MsiProvideQualifiedComponentA");
+        UINT (WINAPI *pMsiProvideQualifiedComponentA)(LPCSTR, LPCSTR, DWORD, LPSTR, LPDWORD);
 
+        pMsiProvideQualifiedComponentA = (void *)GetProcAddress(hmsi, "MsiProvideQualifiedComponentA");
         if (pMsiProvideQualifiedComponentA)
         {
             static const char * const fmt[] = { "%d\\NT", "%d\\95", "%d" };
