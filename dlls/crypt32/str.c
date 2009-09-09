@@ -1034,5 +1034,15 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
         FIXME("unimplemented for type %d\n", dwType);
         ret = 0;
     }
+    if (!ret)
+    {
+        if (!pszNameString)
+            ret = 1;
+        else if (cchNameString)
+        {
+            pszNameString[0] = 0;
+            ret = 1;
+        }
+    }
     return ret;
 }
