@@ -4491,10 +4491,7 @@ static void set_transform_summary_info(void)
     ok(r == ERROR_SUCCESS, "Failed to set summary info\n");
 
     r = MsiSummaryInfoPersist(suminfo);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS , "Failed to make summary info persist\n");
-    }
+    ok(r == ERROR_SUCCESS , "Failed to make summary info persist\n");
 
     r = MsiCloseHandle(suminfo);
     ok(r == ERROR_SUCCESS , "Failed to close suminfo\n");
