@@ -27,7 +27,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 static HRESULT isgn_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
 {
     struct wined3d_shader_signature *is = ctx;
-    char tag_str[5];
 
     switch(tag)
     {
@@ -35,9 +34,7 @@ static HRESULT isgn_handler(const char *data, DWORD data_size, DWORD tag, void *
             return shader_parse_signature(data, data_size, is);
 
         default:
-            memcpy(tag_str, &tag, 4);
-            tag_str[4] = '\0';
-            FIXME("Unhandled chunk %s\n", tag_str);
+            FIXME("Unhandled chunk %s.\n", debugstr_an((const char *)&tag, 4));
             return S_OK;
     }
 }

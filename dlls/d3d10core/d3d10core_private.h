@@ -63,13 +63,6 @@ static inline void read_dword(const char **ptr, DWORD *d)
 
 void skip_dword_unknown(const char **ptr, unsigned int count);
 
-static inline void read_tag(const char **ptr, DWORD *t, char t_str[5])
-{
-    read_dword(ptr, t);
-    memcpy(t_str, t, 4);
-    t_str[4] = '\0';
-}
-
 HRESULT parse_dxbc(const char *data, SIZE_T data_size,
         HRESULT (*chunk_handler)(const char *data, DWORD data_size, DWORD tag, void *ctx), void *ctx);
 

@@ -27,7 +27,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
 {
     struct d3d10_shader_info *shader_info = ctx;
-    char tag_str[5];
     HRESULT hr;
 
     switch(tag)
@@ -42,9 +41,7 @@ static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *
             break;
 
         default:
-            memcpy(tag_str, &tag, 4);
-            tag_str[4] = '\0';
-            FIXME("Unhandled chunk %s\n", tag_str);
+            FIXME("Unhandled chunk %s\n", debugstr_an((const char *)&tag, 4));
             break;
     }
 
@@ -118,8 +115,8 @@ HRESULT shader_parse_signature(const char *data, DWORD data_size, struct wined3d
 
         TRACE("semantic: %s, semantic idx: %u, sysval_semantic %#x, "
                 "type %u, register idx: %u, use_mask %#x, input_mask %#x\n",
-                e[i].semantic_name, e[i].semantic_idx, e[i].sysval_semantic, e[i].component_type,
-                e[i].register_idx, (e[i].mask >> 8) & 0xff, e[i].mask & 0xff);
+                debugstr_a(e[i].semantic_name), e[i].semantic_idx, e[i].sysval_semantic,
+                e[i].component_type, e[i].register_idx, (e[i].mask >> 8) & 0xff, e[i].mask & 0xff);
     }
 
     s->elements = e;

@@ -365,12 +365,11 @@ HRESULT parse_dxbc(const char *data, SIZE_T data_size,
     HRESULT hr = S_OK;
     DWORD chunk_count;
     DWORD total_size;
-    char tag_str[5];
     unsigned int i;
     DWORD tag;
 
-    read_tag(&ptr, &tag, tag_str);
-    TRACE("tag: %s\n", tag_str);
+    read_dword(&ptr, &tag);
+    TRACE("tag: %s.\n", debugstr_an((const char *)&tag, 4));
 
     if (tag != TAG_DXBC)
     {
