@@ -1651,6 +1651,8 @@ static HRESULT WINAPI IShellLinkA_fnSetPath(IShellLinkA * iface, LPCSTR pszFile)
 
     TRACE("(%p)->(path=%s)\n",This, pszFile);
 
+    if (!pszFile) return E_INVALIDARG;
+
     str = HEAP_strdupAtoW(GetProcessHeap(), 0, pszFile);
     if( !str ) 
         return E_OUTOFMEMORY;
@@ -2167,6 +2169,8 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
     UINT len;
 
     TRACE("(%p)->(path=%s)\n",This, debugstr_w(pszFile));
+
+    if (!pszFile) return E_INVALIDARG;
 
     /* quotes at the ends of the string are stripped */
     len = lstrlenW(pszFile);
