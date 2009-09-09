@@ -93,8 +93,13 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        DWORD i;
+
         if(This->event_target)
             release_event_target(This->event_target);
+        for(i=0; i < This->global_prop_cnt; i++)
+            heap_free(This->global_props[i].name);
+        heap_free(This->global_props);
         release_script_hosts(This);
         list_remove(&This->entry);
         release_dispex(&This->dispex);
@@ -840,6 +845,40 @@ static HRESULT WINAPI HTMLWindow2_get_external(IHTMLWindow2 *iface, IDispatch **
     return IDocHostUIHandler_GetExternal(This->doc->hostui, p);
 }
 
+static HRESULT HTMLWindow_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    HTMLWindow *This = HTMLWINDOW2_THIS(iface);
+    IDispatchEx *dispex;
+    IDispatch *disp;
+    DWORD idx;
+    HRESULT hres;
+
+    idx = id - MSHTML_DISPID_CUSTOM_MIN;
+    if(idx >= This->global_prop_cnt)
+        return DISP_E_MEMBERNOTFOUND;
+
+    disp = get_script_disp(This->global_props[idx].script_host);
+    if(!disp)
+        return E_UNEXPECTED;
+
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    if(SUCCEEDED(hres)) {
+        TRACE("%s >>>\n", debugstr_w(This->global_props[idx].name));
+        hres = IDispatchEx_InvokeEx(dispex, This->global_props[idx].id, lcid, flags, params, res, ei, caller);
+        if(hres == S_OK)
+            TRACE("%s <<<\n", debugstr_w(This->global_props[idx].name));
+        else
+            WARN("%s <<< %08x\n", debugstr_w(This->global_props[idx].name), hres);
+        IDispatchEx_Release(dispex);
+    }else {
+        FIXME("No IDispatchEx\n");
+    }
+
+    IDispatch_Release(disp);
+    return hres;
+}
+
 #undef HTMLWINDOW2_THIS
 
 static const IHTMLWindow2Vtbl HTMLWindow2Vtbl = {
@@ -1207,8 +1246,48 @@ static HRESULT WINAPI WindowDispEx_Invoke(IDispatchEx *iface, DISPID dispIdMembe
 static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     HTMLWindow *This = DISPEX_THIS(iface);
+    ScriptHost *script_host;
+    DISPID id;
+    DWORD i;
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
+
+    for(i=0; i < This->global_prop_cnt; i++) {
+        /* FIXME: case sensitivity */
+        if(!strcmpW(This->global_props[i].name, bstrName)) {
+            *pid = MSHTML_DISPID_CUSTOM_MIN+i;
+            return S_OK;
+        }
+    }
+
+    if(find_global_prop(This, bstrName, grfdex, &script_host, &id)) {
+        if(This->global_prop_cnt == This->global_prop_size) {
+            global_prop_t *new_props;
+            DWORD new_size;
+
+            if(This->global_props) {
+                new_size = This->global_prop_size*2;
+                new_props = heap_realloc(This->global_props, new_size*sizeof(global_prop_t));
+            }else {
+                new_size = 16;
+                new_props = heap_alloc(new_size*sizeof(global_prop_t));
+            }
+            if(!new_props)
+                return E_OUTOFMEMORY;
+            This->global_props = new_props;
+            This->global_prop_size = new_size;
+        }
+
+        This->global_props[This->global_prop_cnt].name = heap_strdupW(bstrName);
+        if(!This->global_props[This->global_prop_cnt].name)
+            return E_OUTOFMEMORY;
+
+        This->global_props[This->global_prop_cnt].script_host = script_host;
+        This->global_props[This->global_prop_cnt].id = id;
+
+        *pid = MSHTML_DISPID_CUSTOM_MIN + (This->global_prop_cnt++);
+        return S_OK;
+    }
 
     return IDispatchEx_GetDispID(DISPATCHEX(&This->dispex), bstrName, grfdex, pid);
 }
@@ -1303,8 +1382,15 @@ static const tid_t HTMLWindow_iface_tids[] = {
     IHTMLWindow3_tid,
     0
 };
-static dispex_static_data_t HTMLWindow_dispex = {
+
+static const dispex_static_data_vtbl_t HTMLWindow_dispex_vtbl = {
     NULL,
+    NULL,
+    HTMLWindow_invoke
+};
+
+static dispex_static_data_t HTMLWindow_dispex = {
+    &HTMLWindow_dispex_vtbl,
     DispHTMLWindow2_tid,
     NULL,
     HTMLWindow_iface_tids

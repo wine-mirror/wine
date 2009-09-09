@@ -42,7 +42,7 @@ static const WCHAR emptyW[] = {0};
 static const CLSID CLSID_JScript =
     {0xf414c260,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};
 
-typedef struct {
+struct ScriptHost {
     const IActiveScriptSiteVtbl               *lpIActiveScriptSiteVtbl;
     const IActiveScriptSiteInterruptPollVtbl  *lpIActiveScriptSiteInterruptPollVtbl;
     const IActiveScriptSiteWindowVtbl         *lpIActiveScriptSiteWindowVtbl;
@@ -60,7 +60,7 @@ typedef struct {
 
     GUID guid;
     struct list entry;
-} ScriptHost;
+};
 
 #define ACTSCPSITE(x)  ((IActiveScriptSite*)               &(x)->lpIActiveScriptSiteVtbl)
 #define ACTSCPPOLL(x)  (&(x)->lpIActiveScriptSiteInterruptPollVtbl)
@@ -809,6 +809,52 @@ IDispatch *script_parse_event(HTMLDocument *doc, LPCWSTR text)
 
     TRACE("ret %p\n", disp);
     return disp;
+}
+
+IDispatch *get_script_disp(ScriptHost *script_host)
+{
+    IDispatch *disp;
+    HRESULT hres;
+
+    if(!script_host->script)
+        return NULL;
+
+    hres = IActiveScript_GetScriptDispatch(script_host->script, windowW, &disp);
+    if(FAILED(hres))
+        return NULL;
+
+    return disp;
+}
+
+BOOL find_global_prop(HTMLWindow *window, BSTR name, DWORD flags, ScriptHost **ret_host, DISPID *ret_id)
+{
+    IDispatchEx *dispex;
+    IDispatch *disp;
+    ScriptHost *iter;
+    HRESULT hres;
+
+    LIST_FOR_EACH_ENTRY(iter, &window->script_hosts, ScriptHost, entry) {
+        disp = get_script_disp(iter);
+        if(!disp)
+            continue;
+
+        hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+        if(SUCCEEDED(hres)) {
+            hres = IDispatchEx_GetDispID(dispex, name, flags, ret_id);
+            IDispatchEx_Release(dispex);
+        }else {
+            FIXME("No IDispatchEx\n");
+            hres = E_NOTIMPL;
+        }
+
+        IDispatch_Release(disp);
+        if(SUCCEEDED(hres)) {
+            *ret_host = iter;
+            return TRUE;
+        }
+    }
+
+    return FALSE;
 }
 
 static BOOL is_jscript_available(void)

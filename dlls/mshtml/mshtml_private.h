@@ -158,6 +158,14 @@ typedef enum {
     SCRIPTMODE_ACTIVESCRIPT
 } SCRIPTMODE;
 
+typedef struct ScriptHost ScriptHost;
+
+typedef struct {
+    WCHAR *name;
+    ScriptHost *script_host;
+    DISPID id;
+} global_prop_t;
+
 typedef struct {
     DispatchEx dispex;
     const IHTMLWindow2Vtbl *lpHTMLWindow2Vtbl;
@@ -174,6 +182,10 @@ typedef struct {
 
     SCRIPTMODE scriptmode;
     struct list script_hosts;
+
+    global_prop_t *global_props;
+    DWORD global_prop_cnt;
+    DWORD global_prop_size;
 
     struct list entry;
 } HTMLWindow;
@@ -628,6 +640,8 @@ void connect_scripts(HTMLWindow*);
 void doc_insert_script(HTMLDocument*,nsIDOMHTMLScriptElement*);
 IDispatch *script_parse_event(HTMLDocument*,LPCWSTR);
 void set_script_mode(HTMLWindow*,SCRIPTMODE);
+BOOL find_global_prop(HTMLWindow*,BSTR,DWORD,ScriptHost**,DISPID*);
+IDispatch *get_script_disp(ScriptHost*);
 
 IHTMLElementCollection *create_all_collection(HTMLDOMNode*,BOOL);
 IHTMLElementCollection *create_collection_from_nodelist(HTMLDocument*,IUnknown*,nsIDOMNodeList*);
