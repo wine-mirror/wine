@@ -1554,9 +1554,22 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetPixelShaderDesc(ID3D10Effe
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_pass_GetAnnotationByIndex(ID3D10EffectPass *iface,
         UINT index)
 {
-    FIXME("iface %p, index %u stub!\n", iface, index);
+    struct d3d10_effect_pass *This = (struct d3d10_effect_pass *)iface;
+    struct d3d10_effect_variable *a;
 
-    return NULL;
+    TRACE("iface %p, index %u\n", iface, index);
+
+    if (index >= This->annotation_count)
+    {
+        WARN("Invalid index specified\n");
+        return (ID3D10EffectVariable *)&null_variable;
+    }
+
+    a = &This->annotations[index];
+
+    TRACE("Returning annotation %p, %s\n", a, debugstr_a(a->name));
+
+    return (ID3D10EffectVariable *)a;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_pass_GetAnnotationByName(ID3D10EffectPass *iface,
