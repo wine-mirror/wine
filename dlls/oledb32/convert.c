@@ -37,6 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 typedef struct
 {
     const struct IDataConvertVtbl *lpVtbl;
+    const struct IDCInfoVtbl *lpDCInfoVtbl;
 
     LONG ref;
 } convert;
@@ -44,6 +45,11 @@ typedef struct
 static inline convert *impl_from_IDataConvert(IDataConvert *iface)
 {
     return (convert *)((char*)iface - FIELD_OFFSET(convert, lpVtbl));
+}
+
+static inline convert *impl_from_IDCInfo(IDCInfo *iface)
+{
+    return (convert *)((char*)iface - FIELD_OFFSET(convert, lpDCInfoVtbl));
 }
 
 static HRESULT WINAPI convert_QueryInterface(IDataConvert* iface,
@@ -59,6 +65,10 @@ static HRESULT WINAPI convert_QueryInterface(IDataConvert* iface,
        IsEqualIID(riid, &IID_IDataConvert))
     {
         *obj = iface;
+    }
+    else if(IsEqualIID(riid, &IID_IDCInfo))
+    {
+        *obj = &This->lpDCInfoVtbl;
     }
     else
     {
@@ -131,7 +141,6 @@ static HRESULT WINAPI convert_GetConversionSize(IDataConvert* iface,
     FIXME("(%p)->(%d, %d, %p, %p, %p): stub\n", This, wSrcType, wDstType, pcbSrcLength, pcbDstLength, pSrc);
 
     return E_NOTIMPL;
-
 }
 
 static const struct IDataConvertVtbl convert_vtbl =
@@ -142,6 +151,56 @@ static const struct IDataConvertVtbl convert_vtbl =
     convert_DataConvert,
     convert_CanConvert,
     convert_GetConversionSize
+};
+
+static HRESULT WINAPI dcinfo_QueryInterface(IDCInfo* iface, REFIID riid, void **obj)
+{
+    convert *This = impl_from_IDCInfo(iface);
+
+    return IDataConvert_QueryInterface((IDataConvert *)This, riid, obj);
+}
+
+static ULONG WINAPI dcinfo_AddRef(IDCInfo* iface)
+{
+    convert *This = impl_from_IDCInfo(iface);
+
+    return IDataConvert_AddRef((IDataConvert *)This);
+}
+
+static ULONG WINAPI dcinfo_Release(IDCInfo* iface)
+{
+    convert *This = impl_from_IDCInfo(iface);
+
+    return IDataConvert_Release((IDataConvert *)This);
+}
+
+static HRESULT WINAPI dcinfo_GetInfo(IDCInfo *iface, ULONG num, DCINFOTYPE types[], DCINFO **info)
+{
+    convert *This = impl_from_IDCInfo(iface);
+
+    FIXME("(%p)->(%d, %p, %p): stub\n", This, num, types, info);
+
+    *info = NULL;
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dcinfo_SetInfo(IDCInfo* iface, ULONG num, DCINFO info[])
+{
+    convert *This = impl_from_IDCInfo(iface);
+
+    FIXME("(%p)->(%d, %p): stub\n", This, num, info);
+
+    return E_NOTIMPL;
+}
+
+static const struct IDCInfoVtbl dcinfo_vtbl =
+{
+    dcinfo_QueryInterface,
+    dcinfo_AddRef,
+    dcinfo_Release,
+    dcinfo_GetInfo,
+    dcinfo_SetInfo
 };
 
 HRESULT create_oledb_convert(IUnknown *outer, void **obj)
@@ -158,6 +217,7 @@ HRESULT create_oledb_convert(IUnknown *outer, void **obj)
     if(!This) return E_OUTOFMEMORY;
 
     This->lpVtbl = &convert_vtbl;
+    This->lpDCInfoVtbl = &dcinfo_vtbl;
     This->ref = 1;
 
     *obj = &This->lpVtbl;
