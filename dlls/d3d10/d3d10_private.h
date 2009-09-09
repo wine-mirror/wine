@@ -91,11 +91,14 @@ struct d3d10_effect_variable
     const struct ID3D10EffectVariableVtbl *vtbl;
 
     struct d3d10_effect_local_buffer *buffer;
+    struct d3d10_effect *effect;
+
     char *name;
     DWORD buffer_offset;
     DWORD annotation_count;
     DWORD flag;
     struct d3d10_effect_type *type;
+    struct d3d10_effect_variable *annotations;
 };
 
 struct d3d10_effect_local_buffer
@@ -108,6 +111,7 @@ struct d3d10_effect_local_buffer
     DWORD variable_count;
     DWORD annotation_count;
     struct d3d10_effect_variable *variables;
+    struct d3d10_effect_variable *annotations;
 };
 
 /* ID3D10EffectPass */
@@ -121,6 +125,7 @@ struct d3d10_effect_pass
     DWORD object_count;
     DWORD annotation_count;
     struct d3d10_effect_object *objects;
+    struct d3d10_effect_variable *annotations;
 };
 
 /* ID3D10EffectTechnique */
@@ -133,6 +138,7 @@ struct d3d10_effect_technique
     DWORD pass_count;
     DWORD annotation_count;
     struct d3d10_effect_pass *passes;
+    struct d3d10_effect_variable *annotations;
 };
 
 /* ID3D10Effect */

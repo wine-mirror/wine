@@ -53,17 +53,20 @@ static const struct ID3D10EffectMatrixVariableVtbl d3d10_effect_matrix_variable_
 static const struct ID3D10EffectTypeVtbl d3d10_effect_type_vtbl;
 
 /* null objects - needed for invalid calls */
-static struct d3d10_effect_technique null_technique = {&d3d10_effect_technique_vtbl, NULL, NULL, 0, 0, NULL};
-static struct d3d10_effect_pass null_pass = {&d3d10_effect_pass_vtbl, NULL, NULL, 0, 0, 0, NULL};
+static struct d3d10_effect_technique null_technique =
+        {&d3d10_effect_technique_vtbl, NULL, NULL, 0, 0, NULL, NULL};
+static struct d3d10_effect_pass null_pass =
+        {&d3d10_effect_pass_vtbl, NULL, NULL, 0, 0, 0, NULL, NULL};
 static struct d3d10_effect_local_buffer null_local_buffer =
-        {&d3d10_effect_constant_buffer_vtbl, NULL, NULL, 0, 0, 0, NULL};
-static struct d3d10_effect_variable null_variable = {&d3d10_effect_variable_vtbl, NULL, NULL, 0, 0, 0, NULL};
+        {&d3d10_effect_constant_buffer_vtbl, NULL, NULL, 0, 0, 0, NULL, NULL};
+static struct d3d10_effect_variable null_variable =
+        {&d3d10_effect_variable_vtbl, NULL, NULL, NULL, 0, 0, 0, NULL, NULL};
 static struct d3d10_effect_variable null_scalar_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl, NULL, NULL, 0, 0, 0, NULL};
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl, NULL, NULL, NULL, 0, 0, 0, NULL, NULL};
 static struct d3d10_effect_variable null_vector_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl, NULL, NULL, 0, 0, 0, NULL};
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl, NULL, NULL, NULL, 0, 0, 0, NULL, NULL};
 static struct d3d10_effect_variable null_matrix_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl, NULL, NULL, 0, 0, 0, NULL};
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl, NULL, NULL, NULL, 0, 0, 0, NULL, NULL};
 
 static inline void read_dword(const char **ptr, DWORD *d)
 {
@@ -421,9 +424,44 @@ static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, cons
     return type;
 }
 
-static void parse_fx10_annotation(const char **ptr)
+static HRESULT parse_fx10_variable_head(struct d3d10_effect_variable *v, const char **ptr, const char *data)
 {
-    skip_dword_unknown(ptr, 3);
+    DWORD offset;
+
+    read_dword(ptr, &offset);
+    TRACE("Variable name at offset %#x.\n", offset);
+
+    v->name = copy_name(data + offset);
+    if (!v->name)
+    {
+        ERR("Failed to copy name.\n");
+        return E_OUTOFMEMORY;
+    }
+    TRACE("Variable name: %s.\n", debugstr_a(v->name));
+
+    read_dword(ptr, &offset);
+    TRACE("Variable type info at offset %#x.\n", offset);
+
+    v->type = get_fx10_type(v->effect, data, offset);
+    if (!v->type)
+    {
+        ERR("Failed to get variable type.\n");
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
+static HRESULT parse_fx10_annotation(struct d3d10_effect_variable *a, const char **ptr, const char *data)
+{
+    HRESULT hr;
+
+    hr = parse_fx10_variable_head(a, ptr, data);
+    if (FAILED(hr)) return hr;
+
+    skip_dword_unknown(ptr, 1);
+
+    return S_OK;
 }
 
 static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr, const char *data)
@@ -503,9 +541,24 @@ static HRESULT parse_fx10_pass(struct d3d10_effect_pass *p, const char **ptr, co
     TRACE("Pass has %u effect objects.\n", p->object_count);
 
     read_dword(ptr, &p->annotation_count);
+    TRACE("Pass has %u annotations.\n", p->annotation_count);
+
+    p->annotations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, p->annotation_count * sizeof(*p->annotations));
+    if (!p->annotations)
+    {
+        ERR("Failed to allocate pass annotations memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
     for(i = 0; i < p->annotation_count; ++i)
     {
-        parse_fx10_annotation(ptr);
+        struct d3d10_effect_variable *a = &p->annotations[i];
+
+        a->vtbl = &d3d10_effect_variable_vtbl;
+        a->effect = p->technique->effect;
+
+        hr = parse_fx10_annotation(a, ptr, data);
+        if (FAILED(hr)) return hr;
     }
 
     p->objects = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, p->object_count * sizeof(*p->objects));
@@ -532,6 +585,7 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
 {
     unsigned int i;
     DWORD offset;
+    HRESULT hr;
 
     read_dword(ptr, &offset);
     TRACE("Technique name at offset %#x.\n", offset);
@@ -548,9 +602,24 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
     TRACE("Technique has %u passes\n", t->pass_count);
 
     read_dword(ptr, &t->annotation_count);
+    TRACE("Technique has %u annotations.\n", t->annotation_count);
+
+    t->annotations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, t->annotation_count * sizeof(*t->annotations));
+    if (!t->annotations)
+    {
+        ERR("Failed to allocate technique annotations memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
     for(i = 0; i < t->annotation_count; ++i)
     {
-        parse_fx10_annotation(ptr);
+        struct d3d10_effect_variable *a = &t->annotations[i];
+
+        a->vtbl = &d3d10_effect_variable_vtbl;
+        a->effect = t->effect;
+
+        hr = parse_fx10_annotation(a, ptr, data);
+        if (FAILED(hr)) return hr;
     }
 
     t->passes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, t->pass_count * sizeof(*t->passes));
@@ -563,7 +632,6 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
     for (i = 0; i < t->pass_count; ++i)
     {
         struct d3d10_effect_pass *p = &t->passes[i];
-        HRESULT hr;
 
         p->vtbl = &d3d10_effect_pass_vtbl;
         p->technique = t;
@@ -577,28 +645,11 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
 
 static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char **ptr, const char *data)
 {
-    DWORD offset;
     unsigned int i;
+    HRESULT hr;
 
-    read_dword(ptr, &offset);
-    TRACE("Variable name at offset %#x.\n", offset);
-
-    v->name = copy_name(data + offset);
-    if (!v->name)
-    {
-        ERR("Failed to copy name.\n");
-        return E_OUTOFMEMORY;
-    }
-    TRACE("Variable name: %s.\n", debugstr_a(v->name));
-
-    read_dword(ptr, &offset);
-    TRACE("Variable type info at offset %#x.\n", offset);
-    v->type = get_fx10_type(v->buffer->effect, data, offset);
-    if (!v->type)
-    {
-        ERR("Failed to get variable type.\n");
-        return E_FAIL;
-    }
+    hr = parse_fx10_variable_head(v, ptr, data);
+    if (FAILED(hr)) return hr;
 
     switch (v->type->type_class)
     {
@@ -632,9 +683,25 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
     TRACE("Variable flag: %#x.\n", v->flag);
 
     read_dword(ptr, &v->annotation_count);
+    TRACE("Variable has %u annotations.\n", v->annotation_count);
+
+    v->annotations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, v->annotation_count * sizeof(*v->annotations));
+    if (!v->annotations)
+    {
+        ERR("Failed to allocate variable annotations memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
     for(i = 0; i < v->annotation_count; ++i)
     {
-        parse_fx10_annotation(ptr);
+        struct d3d10_effect_variable *a = &v->annotations[i];
+        HRESULT hr;
+
+        a->vtbl = &d3d10_effect_variable_vtbl;
+        a->effect = v->effect;
+
+        hr = parse_fx10_annotation(a, ptr, data);
+        if (FAILED(hr)) return hr;
     }
 
     return S_OK;
@@ -644,6 +711,7 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, cons
 {
     unsigned int i;
     DWORD offset;
+    HRESULT hr;
 
     read_dword(ptr, &offset);
     TRACE("Local buffer name at offset %#x.\n", offset);
@@ -667,9 +735,24 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, cons
     skip_dword_unknown(ptr, 1);
 
     read_dword(ptr, &l->annotation_count);
+    TRACE("Local buffer has %u annotations.\n", l->annotation_count);
+
+    l->annotations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, l->annotation_count * sizeof(*l->annotations));
+    if (!l->annotations)
+    {
+        ERR("Failed to allocate local buffer annotations memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
     for(i = 0; i < l->annotation_count; ++i)
     {
-        parse_fx10_annotation(ptr);
+        struct d3d10_effect_variable *a = &l->annotations[i];
+
+        a->vtbl = &d3d10_effect_variable_vtbl;
+        a->effect = l->effect;
+
+        hr = parse_fx10_annotation(a, ptr, data);
+        if (FAILED(hr)) return hr;
     }
 
     l->variables = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, l->variable_count * sizeof(*l->variables));
@@ -682,9 +765,9 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, cons
     for (i = 0; i < l->variable_count; ++i)
     {
         struct d3d10_effect_variable *v = &l->variables[i];
-        HRESULT hr;
 
         v->buffer = l;
+        v->effect = l->effect;
 
         hr = parse_fx10_variable(v, ptr, data);
         if (FAILED(hr)) return hr;
@@ -904,58 +987,98 @@ static HRESULT d3d10_effect_object_apply(struct d3d10_effect_object *o)
     }
 }
 
+static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
+{
+    TRACE("variable %p.\n", v);
+
+    HeapFree(GetProcessHeap(), 0, v->name);
+    if (v->annotations)
+    {
+        unsigned int i;
+        for (i = 0; i < v->annotation_count; ++i)
+        {
+            d3d10_effect_variable_destroy(&v->annotations[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, v->annotations);
+    }
+}
+
 static void d3d10_effect_pass_destroy(struct d3d10_effect_pass *p)
 {
+    unsigned int i;
+
     TRACE("pass %p\n", p);
 
     HeapFree(GetProcessHeap(), 0, p->name);
     if (p->objects)
     {
-        unsigned int i;
         for (i = 0; i < p->object_count; ++i)
         {
             d3d10_effect_object_destroy(&p->objects[i]);
         }
         HeapFree(GetProcessHeap(), 0, p->objects);
     }
+
+    if (p->annotations)
+    {
+        for (i = 0; i < p->annotation_count; ++i)
+        {
+            d3d10_effect_variable_destroy(&p->annotations[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, p->annotations);
+    }
+
 }
 
 static void d3d10_effect_technique_destroy(struct d3d10_effect_technique *t)
 {
+    unsigned int i;
+
     TRACE("technique %p\n", t);
 
     HeapFree(GetProcessHeap(), 0, t->name);
     if (t->passes)
     {
-        unsigned int i;
         for (i = 0; i < t->pass_count; ++i)
         {
             d3d10_effect_pass_destroy(&t->passes[i]);
         }
         HeapFree(GetProcessHeap(), 0, t->passes);
     }
-}
 
-static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
-{
-    TRACE("variable %p.\n", v);
-
-    HeapFree(GetProcessHeap(), 0, v->name);
+    if (t->annotations)
+    {
+        for (i = 0; i < t->annotation_count; ++i)
+        {
+            d3d10_effect_variable_destroy(&t->annotations[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, t->annotations);
+    }
 }
 
 static void d3d10_effect_local_buffer_destroy(struct d3d10_effect_local_buffer *l)
 {
+    unsigned int i;
+
     TRACE("local buffer %p.\n", l);
 
     HeapFree(GetProcessHeap(), 0, l->name);
     if (l->variables)
     {
-        unsigned int i;
         for (i = 0; i < l->variable_count; ++i)
         {
             d3d10_effect_variable_destroy(&l->variables[i]);
         }
         HeapFree(GetProcessHeap(), 0, l->variables);
+    }
+
+    if (l->annotations)
+    {
+        for (i = 0; i < l->annotation_count; ++i)
+        {
+            d3d10_effect_variable_destroy(&l->annotations[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, l->annotations);
     }
 }
 
@@ -1261,8 +1384,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_technique_GetDesc(ID3D10EffectTech
 
     desc->Name = This->name;
     desc->Passes = This->pass_count;
-    WARN("Annotations not implemented\n");
-    desc->Annotations = 0;
+    desc->Annotations = This->annotation_count;
 
     return S_OK;
 }
