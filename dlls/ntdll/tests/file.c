@@ -64,6 +64,7 @@ static NTSTATUS (WINAPI *pNtQueryIoCompletion)(HANDLE, IO_COMPLETION_INFORMATION
 static NTSTATUS (WINAPI *pNtRemoveIoCompletion)(HANDLE, PULONG_PTR, PULONG_PTR, PIO_STATUS_BLOCK, PLARGE_INTEGER);
 static NTSTATUS (WINAPI *pNtSetIoCompletion)(HANDLE, ULONG_PTR, ULONG_PTR, NTSTATUS, ULONG);
 static NTSTATUS (WINAPI *pNtSetInformationFile)(HANDLE, PIO_STATUS_BLOCK, PVOID, ULONG, FILE_INFORMATION_CLASS);
+static NTSTATUS (WINAPI *pNtQueryInformationFile)(HANDLE, PIO_STATUS_BLOCK, PVOID, ULONG, FILE_INFORMATION_CLASS);
 
 static inline BOOL is_signaled( HANDLE obj )
 {
@@ -787,6 +788,134 @@ static void test_iocp_fileio(HANDLE h)
     CloseHandle( hPipeClt );
 }
 
+static void test_file_basic_information(void)
+{
+    IO_STATUS_BLOCK io;
+    FILE_BASIC_INFORMATION fbi;
+    HANDLE h;
+    int res;
+
+    if (!(h = create_temp_file(0))) return;
+
+    /* Check default first */
+    memset(&fbi, 0, sizeof(fbi));
+    res = pNtQueryInformationFile(h, &io, &fbi, sizeof fbi, FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't get attributes, res %x\n", res);
+    ok ( fbi.FileAttributes == FILE_ATTRIBUTE_ARCHIVE, "attribute %x not FILE_ATTRIBUTE_ARCHIVE\n", fbi.FileAttributes );
+
+    /* Then SYSTEM */
+    /* Clear fbi to avoid setting times */
+    memset(&fbi, 0, sizeof(fbi));
+    fbi.FileAttributes = FILE_ATTRIBUTE_SYSTEM;
+    res = pNtSetInformationFile(h, &io, &fbi, sizeof fbi, FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't set system attribute\n");
+
+    memset(&fbi, 0, sizeof(fbi));
+    res = pNtQueryInformationFile(h, &io, &fbi, sizeof fbi, FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't get attributes\n");
+    todo_wine ok ( fbi.FileAttributes == FILE_ATTRIBUTE_SYSTEM, "attribute %x not FILE_ATTRIBUTE_SYSTEM\n", fbi.FileAttributes );
+
+    /* Then HIDDEN */
+    memset(&fbi, 0, sizeof(fbi));
+    fbi.FileAttributes = FILE_ATTRIBUTE_HIDDEN;
+    res = pNtSetInformationFile(h, &io, &fbi, sizeof fbi, FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't set system attribute\n");
+
+    memset(&fbi, 0, sizeof(fbi));
+    res = pNtQueryInformationFile(h, &io, &fbi, sizeof fbi, FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't get attributes\n");
+    todo_wine ok ( fbi.FileAttributes == FILE_ATTRIBUTE_HIDDEN, "attribute %x not FILE_ATTRIBUTE_HIDDEN\n", fbi.FileAttributes );
+
+    /* Check NORMAL last of all (to make sure we can clear attributes) */
+    memset(&fbi, 0, sizeof(fbi));
+    fbi.FileAttributes = FILE_ATTRIBUTE_NORMAL;
+    res = pNtSetInformationFile(h, &io, &fbi, sizeof fbi, FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't set normal attribute\n");
+
+    memset(&fbi, 0, sizeof(fbi));
+    res = pNtQueryInformationFile(h, &io, &fbi, sizeof fbi, FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't get attributes\n");
+    todo_wine ok ( fbi.FileAttributes == FILE_ATTRIBUTE_NORMAL, "attribute %x not FILE_ATTRIBUTE_NORMAL\n", fbi.FileAttributes );
+
+    CloseHandle( h );
+}
+
+static void test_file_all_information(void)
+{
+    IO_STATUS_BLOCK io;
+    /* FileAllInformation, like FileNameInformation, has a variable-length pathname
+     * buffer at the end.  Vista objects with STATUS_BUFFER_OVERFLOW if you
+     * don't leave enough room there.
+     */
+    struct {
+      FILE_ALL_INFORMATION fai;
+      WCHAR buf[256];
+    } fai_buf;
+    HANDLE h;
+    int res;
+
+    if (!(h = create_temp_file(0))) return;
+
+    /* Check default first */
+    res = pNtQueryInformationFile(h, &io, &fai_buf.fai, sizeof fai_buf, FileAllInformation);
+    ok ( res == STATUS_SUCCESS, "can't get attributes, res %x\n", res);
+    ok ( fai_buf.fai.BasicInformation.FileAttributes == FILE_ATTRIBUTE_ARCHIVE, "attribute %x not FILE_ATTRIBUTE_ARCHIVE\n", fai_buf.fai.BasicInformation.FileAttributes );
+
+    /* Then SYSTEM */
+    /* Clear fbi to avoid setting times */
+    memset(&fai_buf.fai.BasicInformation, 0, sizeof(fai_buf.fai.BasicInformation));
+    fai_buf.fai.BasicInformation.FileAttributes = FILE_ATTRIBUTE_SYSTEM;
+    res = pNtSetInformationFile(h, &io, &fai_buf.fai, sizeof fai_buf, FileAllInformation);
+    ok ( res == STATUS_NOT_IMPLEMENTED, "shouldn't be able to set FileAllInformation, res %x\n", res);
+    res = pNtSetInformationFile(h, &io, &fai_buf.fai.BasicInformation, sizeof fai_buf.fai.BasicInformation, FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't set system attribute\n");
+
+    memset(&fai_buf.fai, 0, sizeof(fai_buf.fai));
+    res = pNtQueryInformationFile(h, &io, &fai_buf.fai, sizeof fai_buf, FileAllInformation);
+    ok ( res == STATUS_SUCCESS, "can't get attributes, res %x\n", res);
+    todo_wine ok ( fai_buf.fai.BasicInformation.FileAttributes == FILE_ATTRIBUTE_SYSTEM, "attribute %x not FILE_ATTRIBUTE_SYSTEM\n", fai_buf.fai.BasicInformation.FileAttributes );
+
+    /* Then HIDDEN */
+    memset(&fai_buf.fai.BasicInformation, 0, sizeof(fai_buf.fai.BasicInformation));
+    fai_buf.fai.BasicInformation.FileAttributes = FILE_ATTRIBUTE_HIDDEN;
+    res = pNtSetInformationFile(h, &io, &fai_buf.fai.BasicInformation, sizeof fai_buf.fai.BasicInformation, FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't set system attribute\n");
+
+    memset(&fai_buf.fai, 0, sizeof(fai_buf.fai));
+    res = pNtQueryInformationFile(h, &io, &fai_buf.fai, sizeof fai_buf, FileAllInformation);
+    ok ( res == STATUS_SUCCESS, "can't get attributes\n");
+    todo_wine ok ( fai_buf.fai.BasicInformation.FileAttributes == FILE_ATTRIBUTE_HIDDEN, "attribute %x not FILE_ATTRIBUTE_HIDDEN\n", fai_buf.fai.BasicInformation.FileAttributes );
+
+    /* Check NORMAL last of all (to make sure we can clear attributes) */
+    memset(&fai_buf.fai.BasicInformation, 0, sizeof(fai_buf.fai.BasicInformation));
+    fai_buf.fai.BasicInformation.FileAttributes = FILE_ATTRIBUTE_NORMAL;
+    res = pNtSetInformationFile(h, &io, &fai_buf.fai.BasicInformation, sizeof fai_buf.fai.BasicInformation, FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't set normal attribute\n");
+
+    memset(&fai_buf.fai, 0, sizeof(fai_buf.fai));
+    res = pNtQueryInformationFile(h, &io, &fai_buf.fai, sizeof fai_buf, FileAllInformation);
+    ok ( res == STATUS_SUCCESS, "can't get attributes\n");
+    todo_wine ok ( fai_buf.fai.BasicInformation.FileAttributes == FILE_ATTRIBUTE_NORMAL, "attribute %x not FILE_ATTRIBUTE_NORMAL\n", fai_buf.fai.BasicInformation.FileAttributes );
+
+    CloseHandle( h );
+}
+
+static void test_file_both_information(void)
+{
+    IO_STATUS_BLOCK io;
+    FILE_BOTH_DIR_INFORMATION fbi;
+    HANDLE h;
+    int res;
+
+    if (!(h = create_temp_file(0))) return;
+
+    memset(&fbi, 0, sizeof(fbi));
+    res = pNtQueryInformationFile(h, &io, &fbi, sizeof fbi, FileBothDirectoryInformation);
+    ok ( res == STATUS_NOT_IMPLEMENTED, "whoops, vista doesn't implement this one?\n");
+
+    CloseHandle( h );
+}
+
 static void test_iocompletion(void)
 {
     HANDLE h = INVALID_HANDLE_VALUE;
@@ -830,9 +959,13 @@ START_TEST(file)
     pNtRemoveIoCompletion   = (void *)GetProcAddress(hntdll, "NtRemoveIoCompletion");
     pNtSetIoCompletion      = (void *)GetProcAddress(hntdll, "NtSetIoCompletion");
     pNtSetInformationFile   = (void *)GetProcAddress(hntdll, "NtSetInformationFile");
+    pNtQueryInformationFile = (void *)GetProcAddress(hntdll, "NtQueryInformationFile");
 
     delete_file_test();
     read_file_test();
     nt_mailslot_test();
     test_iocompletion();
+    test_file_basic_information();
+    test_file_all_information();
+    test_file_both_information();
 }
