@@ -1154,6 +1154,27 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
              name, szOID_COMMON_NAME, pszNameString, cchNameString);
         break;
     }
+    case CERT_NAME_URL_TYPE:
+    {
+        CERT_ALT_NAME_INFO *info;
+        PCERT_ALT_NAME_ENTRY entry = cert_find_alt_name_entry(pCertContext,
+         altNameOID, CERT_ALT_NAME_URL, &info);
+
+        if (entry)
+        {
+            if (!pszNameString)
+                ret = strlenW(entry->pwszURL) + 1;
+            else
+            {
+                ret = min(strlenW(entry->pwszURL), cchNameString - 1);
+                memcpy(pszNameString, entry->pwszURL, ret * sizeof(WCHAR));
+                pszNameString[ret++] = 0;
+            }
+        }
+        if (info)
+            LocalFree(info);
+        break;
+    }
     default:
         FIXME("unimplemented for type %d\n", dwType);
         ret = 0;
