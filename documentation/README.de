@@ -1,34 +1,34 @@
-1. EINFÜHRUNG
+1. EINFÃœHRUNG
 
-Wine ist ein Programm, das es ermöglicht, Programme, die für Microsoft
+Wine ist ein Programm, das es ermÃ¶glicht, Programme, die fÃ¼r Microsoft
 Windows geschrieben wurden (inklusive DOS-, Windows 3.x- und Win32-
-Binärdateien), unter Unix auszuführen. Es besteht aus einem Programm-
-Lader, der Microsoft Windows-Binärdateien lädt und ausführt, sowie
+BinÃ¤rdateien), unter Unix auszufÃ¼hren. Es besteht aus einem Programm-
+Lader, der Microsoft Windows-BinÃ¤rdateien lÃ¤dt und ausfÃ¼hrt, sowie
 einer Library (Winelib genannt), die Aufrufe der Windows API unter
-Verwendung der entsprechenden Unix- oder X11-Gegenstücke implementiert.
+Verwendung der entsprechenden Unix- oder X11-GegenstÃ¼cke implementiert.
 Die Library kann auch benutzt werden, um Win32-Code nativ nach Unix
 zu portieren.
 
-Wine ist Freie Software, die unter der GNU LGPL veröffentlicht wird; 
+Wine ist Freie Software, die unter der GNU LGPL verÃ¶ffentlicht wird;
 Bitte lesen Sie die Details in der Datei LICENSE nach.
 
 2. SCHNELLSTART
 
 Um den Quelltext zu kompilieren, empfiehlt es sich immer, den Wine-
-Installer für den Build und die Installation von Wine zu verwenden.
+Installer fÃ¼r den Build und die Installation von Wine zu verwenden.
 Rufen Sie dazu aus dem Wurzelverzeichnis des Wine-Quelltextes (das
-diese Datei enthält) das folgende Kommando auf:
+diese Datei enthÃ¤lt) das folgende Kommando auf:
 
 ./tools/wineinstall
 
 Starten Sie Programme mit "wine [Optionen] Programm". Weitere 
-Informationen und Problemlösungen entnehmen Sie bitte dem Rest dieser
+Informationen und ProblemlÃ¶sungen entnehmen Sie bitte dem Rest dieser
 Datei, der Man-Page von Wine und insbesondere der Vielzahl an 
 Informationen, die Sie auf http://www.winehq.org finden.
 
 3. VORAUSSETZUNGEN
 
-Um Wine kompilieren und ausführen zu können, brauchen Sie eines der
+Um Wine kompilieren und ausfÃ¼hren zu kÃ¶nnen, brauchen Sie eines der
 folgenden Betriebssysteme:
 
   Linux version 2.0.36 oder neuer
@@ -37,15 +37,15 @@ folgenden Betriebssysteme:
   NetBSD-current
   Mac OS X 10.4 oder neuer
 
-Da Wine Thread-Support auf Kernelebene benötigt, werden nur die oben
-aufgeführten Betriebssysteme unterstützt.
-Andere Betriebssysteme, die Kernel-Threads unterstützen, werden unter
-Umständen in der Zukunft unterstützt.
+Da Wine Thread-Support auf Kernelebene benÃ¶tigt, werden nur die oben
+aufgefÃ¼hrten Betriebssysteme unterstÃ¼tzt.
+Andere Betriebssysteme, die Kernel-Threads unterstÃ¼tzen, werden unter
+UmstÃ¤nden in der Zukunft unterstÃ¼tzt.
 
 Linux-Info:
   Obwohl Linux 2.2.x immer noch funktionieren sollte und Linux 2.0.x
-  vielleicht auch noch funktioniert (ältere 2.0.x-Versionen verzeichneten
-  Abstürze im Zusammenhang mit Threads), sollte man am besten einen
+  vielleicht auch noch funktioniert (Ã¤ltere 2.0.x-Versionen verzeichneten
+  AbstÃ¼rze im Zusammenhang mit Threads), sollte man am besten einen
   aktuellen Kernel wie 2.4.x oder 2.6.x verwenden.
 
 FreeBSD-Info:
@@ -54,96 +54,96 @@ FreeBSD-Info:
   im Ports-Tree: ftp://ftp.freebsd.org/pub/FreeBSD/ports/ports/emulators/wine/
 
 Solaris-Info:
-  Höchstwahrscheinlich müssen Sie den Wine-Build mit der GNU-Toolchain
-  (gcc, gas etc.) durchführen. Warnung: Die Installation von gas stellt nicht
+  HÃ¶chstwahrscheinlich mÃ¼ssen Sie den Wine-Build mit der GNU-Toolchain
+  (gcc, gas etc.) durchfÃ¼hren. Warnung: Die Installation von gas stellt nicht
   sicher, dass es vom gcc auch verwendet wird. Den gcc neu zu kompilieren, nach
   der Installation von gas, oder die Symbolischen Links von cc, as und ld
-  mit den GNU-Tools zu verknüpfen, soll ausreichend sein.
+  mit den GNU-Tools zu verknÃ¼pfen, soll ausreichend sein.
 
 NetBSD-Info:
   Stellen Sie sicher, dass Sie die Optionen USER_LDT, SYSVSHM, SYSVSEM und
   SYSVMSG in Ihrem Kernel aktiviert haben.
 
 Mac OS X Info:
-  Sie benötigen mindestens Xcode 2.4 um richtig unter x86 kompilieren zu können.
+  Sie benÃ¶tigen mindestens Xcode 2.4 um richtig unter x86 kompilieren zu kÃ¶nnen.
 
-Unterstützte Dateisysteme:
+UnterstÃ¼tzte Dateisysteme:
   Wine sollte auf den meisten Dateisystemen laufen. Jedoch wird Wine nicht
-  starten, wenn umsdos für das Verzeichnis /tmp benutzt wird. Ein paar
-  Kompatibilitäts-Probleme wurden auch gemeldet beim Dateizugriff über Samba.
-  Ausserdem können wir, da NTFS derzeit nur sicher für Lesezugriffe genutzt
+  starten, wenn umsdos fÃ¼r das Verzeichnis /tmp benutzt wird. Ein paar
+  KompatibilitÃ¤ts-Probleme wurden auch gemeldet beim Dateizugriff Ã¼ber Samba.
+  Ausserdem kÃ¶nnen wir, da NTFS derzeit nur sicher fÃ¼r Lesezugriffe genutzt
   werden kann, den Einsatz von NTFS nicht empfehlen; Windows-Programme
-  benötigen fast immer Schreibzugriffe.
+  benÃ¶tigen fast immer Schreibzugriffe.
   Kopieren Sie NTFS-Dateien an einen Ort, an dem Sie Schreibrechte haben.
 
-Grundsätzliche Voraussetzungen:
-  Sie müssen die Include-Dateien für X11-Entwicklung installiert haben
+GrundsÃ¤tzliche Voraussetzungen:
+  Sie mÃ¼ssen die Include-Dateien fÃ¼r X11-Entwicklung installiert haben
   (Debian nennt diese xlib6g-dev, Red Hat XFree86-devel).
 
-  Natürlich benötigen Sie auch "make" (höchstwahrscheinlich GNU make).
+  NatÃ¼rlich benÃ¶tigen Sie auch "make" (hÃ¶chstwahrscheinlich GNU make).
 
-  Des Weiteren benötigen Sie flex in der Version 2.5 oder höher und bison.
+  Des Weiteren benÃ¶tigen Sie flex in der Version 2.5 oder hÃ¶her und bison.
 
 Optionale Support-Bibliotheken:
   Der ./configure Aufruf zeigt am Ende optionale Bibliotheken an,
-  die von Wine benutzt werden können, aber auf dem System nicht vorhanden
+  die von Wine benutzt werden kÃ¶nnen, aber auf dem System nicht vorhanden
   sind.
 
-  Auf 64-Bit Plattformen benötigen Sie die 32-bit
+  Auf 64-Bit Plattformen benÃ¶tigen Sie die 32-bit
   Versionen dieser Bibliotheken; siehe dazu http://wiki.winehq.org/WineOn64bit
 
 4. KOMPILIEREN
 
-Wenn Sie sich dafür entscheiden, wineinstall nicht zu benutzen, führen Sie
-bitte die folgenden Kommandos für den Build von Wine aus:
+Wenn Sie sich dafÃ¼r entscheiden, wineinstall nicht zu benutzen, fÃ¼hren Sie
+bitte die folgenden Kommandos fÃ¼r den Build von Wine aus:
 
 ./configure
 make depend
 make
 
 Das erledigt den Build des Programms "wine" und verschiedener Support-
-Libraries / -Binärdateien.
-Das Programm "wine" lädt ausführbare Windows-Dateien und führt sie aus.
+Libraries / -BinÃ¤rdateien.
+Das Programm "wine" lÃ¤dt ausfÃ¼hrbare Windows-Dateien und fÃ¼hrt sie aus.
 Die Library "libwine" ("WineLib") kann benutzt werden, um Windows-Quelltexte
 unter Unix zu kompilieren und zu verlinken.
 
-Mit ./configure --help können Sie sich die Konfigurations-Optionen für
+Mit ./configure --help kÃ¶nnen Sie sich die Konfigurations-Optionen fÃ¼r
 die Kompilierung anzeigen lassen.
 
 Um mit Hilfe einer Patch-Datei auf ein neueres Release zu aktualisieren,
 wechseln Sie erst mit cd in das Wurzelverzeichnis dieses Releases (eins
-über dem, welches diese README-Datei enthält). Geben Sie dann
+Ã¼ber dem, welches diese README-Datei enthÃ¤lt). Geben Sie dann
 "make clean" ein und patchen Sie das Release mit dem Kommando:
 
     bunzip2 -c Patch-Datei | patch -p1
 
 wobei "Patch-Datei" der Name der Patch-Datei ist (sowas wie
-wine-1.0.x.diff.bz2). Sie können dann erneut "./configure" und danach
+wine-1.0.x.diff.bz2). Sie kÃ¶nnen dann erneut "./configure" und danach
 "make depend && make" aufrufen.
 
 5. SETUP
 
-Nachdem der Build von Wine korrekt durchgelaufen ist, können Sie das
+Nachdem der Build von Wine korrekt durchgelaufen ist, kÃ¶nnen Sie das
 Kommando "make install" aufrufen; Dadurch werden das Wine-Programm, die
-Man-Page und einige andere benötigte Dateien installiert.
+Man-Page und einige andere benÃ¶tigte Dateien installiert.
 
-Vergessen Sie nicht, erst alle früheren Wine-Installationen zu entfernen.
-Führen Sie vor der Installation entweder "dpkg -r wine", "rpm -e wine" oder
+Vergessen Sie nicht, erst alle frÃ¼heren Wine-Installationen zu entfernen.
+FÃ¼hren Sie vor der Installation entweder "dpkg -r wine", "rpm -e wine" oder
 "make uninstall" aus.
 
 Die Konfigurations-Hinweise finden Sie im Support-Bereich
 von http://www.winehq.org.
 
 Im Falle von Library-Ladefehlern (z.B. "Error while loading shared libraries:
-libntdll.so") fügen Sie bitte den Library-Pfad zur Datei /etc/ld.so.conf hinzu 
-und führen Sie ldconfig als root aus.
+libntdll.so") fÃ¼gen Sie bitte den Library-Pfad zur Datei /etc/ld.so.conf hinzu
+und fÃ¼hren Sie ldconfig als root aus.
 
-6. AUSFÜHREN VON PROGRAMMEN
+6. AUSFÃœHREN VON PROGRAMMEN
 
-Wenn Sie Wine aufrufen, können Sie den vollständigen Pfad zur ausführbaren
+Wenn Sie Wine aufrufen, kÃ¶nnen Sie den vollstÃ¤ndigen Pfad zur ausfÃ¼hrbaren
 Datei angeben oder nur einen Dateinamen.
 
-Beispiel: Um Notepad auszuführen:
+Beispiel: Um Notepad auszufÃ¼hren:
 
 	wine notepad		   (den Suchpfad, der in der Konfigurations-Datei
 	wine notepad.exe	   angegeben wurde, benutzend)
@@ -155,28 +155,28 @@ Beispiel: Um Notepad auszuführen:
         wine notepad.exe /parameter1 -parameter2 parameter3
 				   (Programmaufruf mit Parametern)
 
-Hinweis: Der Pfad zur Datei wird auch zum Pfad hinzugefügt, wenn ein vollständiger
+Hinweis: Der Pfad zur Datei wird auch zum Pfad hinzugefÃ¼gt, wenn ein vollstÃ¤ndiger
          Dateiname auf der Kommandozeile angegeben wird.
 
-Die Entwicklung von Wine ist noch nicht abgeschlossen, daher können einige
-Programme abstürzen. Vorausgesetzt, dass Sie winedbg korrekt entsprechend 
+Die Entwicklung von Wine ist noch nicht abgeschlossen, daher kÃ¶nnen einige
+Programme abstÃ¼rzen. Vorausgesetzt, dass Sie winedbg korrekt entsprechend
 documentation/debugger.sgml einrichten, werden Sie dann in einem Debugger landen,
-um das Problem untersuchen und beheben zu können.
+um das Problem untersuchen und beheben zu kÃ¶nnen.
 Weitere Informationen zu diesem Thema entnehmen Sie bitte der Datei
 documentation/debugging.sgml.
 
 Sie sollten Backups von allen wichtigen Dateien machen, auf die Sie Wine 
-Zugriff gewähren, oder spezielle Kopien für Wine anlegen, da Benutzer einige
-Fälle gemeldet haben, in denen Dateien zerstört wurden. Führen Sie zum Beispiel
+Zugriff gewÃ¤hren, oder spezielle Kopien fÃ¼r Wine anlegen, da Benutzer einige
+FÃ¤lle gemeldet haben, in denen Dateien zerstÃ¶rt wurden. FÃ¼hren Sie zum Beispiel
 NICHT den Explorer aus, wenn Sie kein geeignetes Backup haben, da er manchmal
-Verzeichnise verstümmelt / umbenennnt. Selbst andere MS-Applikationen wie z.B
-der Messenger sind nicht sicher, da sie unter Umständen den Explorer aufrufen.
-Diese spezielle Beschädigung (!$!$!$!$.pfr) kann zumindest teilweise durch
+Verzeichnise verstÃ¼mmelt / umbenennnt. Selbst andere MS-Applikationen wie z.B
+der Messenger sind nicht sicher, da sie unter UmstÃ¤nden den Explorer aufrufen.
+Diese spezielle BeschÃ¤digung (!$!$!$!$.pfr) kann zumindest teilweise durch
 http://home.nexgo.de/andi.mohr/download/decorrupt_explorer behoben werden.
 
-7. WEITERFÜHRENDE INFORMATIONEN
+7. WEITERFÃœHRENDE INFORMATIONEN
 
-WWW:	Eine große Anzahl an Informationen findet sich im WineHQ unter
+WWW:	Eine groÃŸe Anzahl an Informationen findet sich im WineHQ unter
 	http://www.winehq.org/ : Verschiedene Wine Guides, Applikations-Datenbank,
 	Fehlerverfolgungs-System. Das ist vermutlich der beste Ausgangspunkt.
 
@@ -188,30 +188,30 @@ Usenet:	Hilfe und Diskussionen zu auf Wine bezogenen Problemen finden Sie unter
 Fehler:	Melden Sie Fehler bitte an Wine-Bugzilla unter http://bugs.winehq.org
 	Schauen Sie bitte erst in der Bugzilla-Datenbank nach, ob Ihr Problem
 	bereits gemeldet wurde, bevor Sie eine Fehlermeldung verfassen. Sie 
-	können Fehlermeldungen auch an comp.emulators.ms-windows.wine schicken.
+	kÃ¶nnen Fehlermeldungen auch an comp.emulators.ms-windows.wine schicken.
 	Lesen Sie bitte die Datei documentation/bugs.sgml um zu sehen, welche
-	Informationen benötigt werden.
+	Informationen benÃ¶tigt werden.
 
-IRC:	Online-Hilfe wird Ihnen im Chat-Kanal #WineHQ unter irc.freenode.net gewährt.
+IRC:	Online-Hilfe wird Ihnen im Chat-Kanal #WineHQ unter irc.freenode.net gewÃ¤hrt.
 
-Git:	Der aktuelle Wine-Entwicklungs-Zweig ist über Git verfügbar.
-	Besuchen Sie http://www.winehq.org/site/git für weitere Informationen.
+Git:	Der aktuelle Wine-Entwicklungs-Zweig ist Ã¼ber Git verfÃ¼gbar.
+	Besuchen Sie http://www.winehq.org/site/git fÃ¼r weitere Informationen.
 
 Mailing-Listen:
-	Es gibt mehrere Mailing-Listen für die Wine-Entwickler; Schauen Sie
+	Es gibt mehrere Mailing-Listen fÃ¼r die Wine-Entwickler; Schauen Sie
 	sich bitte dazu http://www.winehq.org/forums an.
 
 Wiki:	Das Wine-Wiki finden Sie unter http://wiki.winehq.org
 
-Wenn Sie etwas hinzufügen oder einen Fehler beheben, senden Sie den Patch bitte 
-(im 'diff -u'-Format) an die Liste wine-patches@winehq.org, um ihn in die nächste
-Ausgabe aufnehmen zu können.
+Wenn Sie etwas hinzufÃ¼gen oder einen Fehler beheben, senden Sie den Patch bitte
+(im 'diff -u'-Format) an die Liste wine-patches@winehq.org, um ihn in die nÃ¤chste
+Ausgabe aufnehmen zu kÃ¶nnen.
 
 --
 Alexandre Julliard
 julliard@winehq.org
 
-Übersetzung von Christian Britz (Deutschland)
-Auf die Übersetzung bezogene Fehlermeldungen,
+Ãœbersetzung von Christian Britz (Deutschland)
+Auf die Ãœbersetzung bezogene Fehlermeldungen,
 Anregungen und Kommentare senden Sie bite an:
 cbritz@gmx.net
