@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Jacek Caban for CodeWeavers
+ * Copyright 2008-2009 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -107,8 +107,12 @@ DEFINE_EXPECT(AddNamedItem);
 DEFINE_EXPECT(ParseScriptText);
 DEFINE_EXPECT(GetScriptDispatch);
 DEFINE_EXPECT(funcDisp);
+DEFINE_EXPECT(script_testprop_d);
+DEFINE_EXPECT(script_testprop_i);
 
 #define TESTSCRIPT_CLSID "{178fc163-f585-4e24-9c13-4bb7faf80746}"
+
+#define DISPID_SCRIPT_TESTPROP   0x100000
 
 static const GUID CLSID_TestScript =
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x07,0x46}};
@@ -116,6 +120,7 @@ static const GUID CLSID_TestScript =
 static IHTMLDocument2 *notif_doc;
 static IDispatchEx *window_dispex;
 static BOOL doc_complete;
+static IDispatch *script_disp;
 
 static const char *debugstr_guid(REFIID riid)
 {
@@ -343,6 +348,67 @@ static IDispatchExVtbl testObjVtbl = {
 };
 
 static IDispatchEx funcDisp = { &testObjVtbl };
+
+static HRESULT WINAPI scriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
+{
+    if(!strcmp_wa(bstrName, "testProp")) {
+        CHECK_EXPECT(script_testprop_d);
+        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        *pid = DISPID_SCRIPT_TESTPROP;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    switch(id) {
+    case DISPID_SCRIPT_TESTPROP:
+        CHECK_EXPECT(script_testprop_i);
+
+        ok(lcid == 0, "lcid = %x\n", lcid);
+        ok(wFlags == DISPATCH_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->cArgs == 0, "pdp->cArgs = %d\n", pdp->cArgs);
+        ok(pdp->cNamedArgs == 0, "pdp->cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(!pdp->rgdispidNamedArgs, "pdp->rgdispidNamedArgs != NULL\n");
+        ok(!pdp->rgvarg, "rgvarg != NULL\n");
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+        ok(!pspCaller, "pspCaller != NULL\n");
+
+        V_VT(pvarRes) = VT_NULL;
+        break;
+    default:
+        ok(0, "unexpected call\n");
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+static IDispatchExVtbl scriptDispVtbl = {
+    DispatchEx_QueryInterface,
+    DispatchEx_AddRef,
+    DispatchEx_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    scriptDisp_GetDispID,
+    scriptDisp_InvokeEx,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
+static IDispatchEx scriptDisp = { &scriptDispVtbl };
 
 static IHTMLDocument2 *create_document(void)
 {
@@ -764,7 +830,7 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
     ok(hres == S_OK, "GetDispID(document) failed: %08x\n", hres);
     ok(id == DISPID_IHTMLWINDOW2_DOCUMENT, "id=%x\n", id);
 
-    todo_wine CHECK_CALLED(GetScriptDispatch);
+    CHECK_CALLED(GetScriptDispatch);
 
     VariantInit(&var);
     memset(&dp, 0, sizeof(dp));
@@ -864,6 +930,34 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
     test_func(dispex);
     test_nextdispid(dispex);
     IDispatchEx_Release(dispex);
+
+    script_disp = (IDispatch*)&scriptDisp;
+
+    SET_EXPECT(GetScriptDispatch);
+    SET_EXPECT(script_testprop_d);
+    tmp = a2bstr("testProp");
+    hres = IDispatchEx_GetDispID(window_dispex, tmp, fdexNameCaseSensitive, &id);
+    ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
+    ok(id != DISPID_SCRIPT_TESTPROP, "id == DISPID_SCRIPT_TESTPROP\n");
+    CHECK_CALLED(GetScriptDispatch);
+    CHECK_CALLED(script_testprop_d);
+    SysFreeString(tmp);
+
+    tmp = a2bstr("testProp");
+    hres = IDispatchEx_GetDispID(window_dispex, tmp, fdexNameCaseSensitive, &id);
+    ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
+    ok(id != DISPID_SCRIPT_TESTPROP, "id == DISPID_SCRIPT_TESTPROP\n");
+    SysFreeString(tmp);
+
+    SET_EXPECT(GetScriptDispatch);
+    SET_EXPECT(script_testprop_i);
+    memset(&ei, 0, sizeof(ei));
+    memset(&dp, 0, sizeof(dp));
+    hres = IDispatchEx_InvokeEx(window_dispex, id, 0, DISPATCH_PROPERTYGET, &dp, &var, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_NULL, "V_VT(var) = %d\n", V_VT(&var));
+    CHECK_CALLED(GetScriptDispatch);
+    CHECK_CALLED(script_testprop_i);
 
     return S_OK;
 }
@@ -1059,7 +1153,14 @@ static HRESULT WINAPI ActiveScript_GetScriptDispatch(IActiveScript *iface, LPCOL
                                                 IDispatch **ppdisp)
 {
     CHECK_EXPECT(GetScriptDispatch);
-    return E_NOTIMPL;
+
+    ok(!strcmp_wa(pstrItemName, "window"), "pstrItemName = %s\n", wine_dbgstr_w(pstrItemName));
+
+    if(!script_disp)
+        return E_NOTIMPL;
+
+    *ppdisp = script_disp;
+    return S_OK;
 }
 
 static HRESULT WINAPI ActiveScript_GetCurrentScriptThreadID(IActiveScript *iface,
