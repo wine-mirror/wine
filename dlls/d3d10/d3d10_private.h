@@ -31,6 +31,7 @@
 
 /* TRACE helper functions */
 const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type);
+const char *debug_d3d10_shader_variable_class(D3D10_SHADER_VARIABLE_CLASS c);
 
 void *d3d10_rb_alloc(size_t size);
 void *d3d10_rb_realloc(void *ptr, size_t size);

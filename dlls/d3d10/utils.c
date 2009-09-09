@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Henri Verbeet for CodeWeavers
+ * Copyright 2008-2009 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -36,6 +36,22 @@ const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type)
         WINE_D3D10_TO_STR(D3D10_DRIVER_TYPE_SOFTWARE);
         default:
             FIXME("Unrecognized D3D10_DRIVER_TYPE %#x\n", driver_type);
+            return "unrecognized";
+    }
+}
+
+const char *debug_d3d10_shader_variable_class(D3D10_SHADER_VARIABLE_CLASS c)
+{
+    switch (c)
+    {
+        WINE_D3D10_TO_STR(D3D10_SVC_SCALAR);
+        WINE_D3D10_TO_STR(D3D10_SVC_VECTOR);
+        WINE_D3D10_TO_STR(D3D10_SVC_MATRIX_ROWS);
+        WINE_D3D10_TO_STR(D3D10_SVC_MATRIX_COLUMNS);
+        WINE_D3D10_TO_STR(D3D10_SVC_OBJECT);
+        WINE_D3D10_TO_STR(D3D10_SVC_STRUCT);
+        default:
+            FIXME("Unrecognized D3D10_SHADER_VARIABLE_CLASS %#x.\n", c);
             return "unrecognized";
     }
 }
