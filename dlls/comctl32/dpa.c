@@ -241,7 +241,7 @@ BOOL WINAPI DPA_Merge (HDPA hdpa1, HDPA hdpa2, DWORD dwFlags,
     if (IsBadCodePtr ((FARPROC)pfnMerge))
         return FALSE;
 
-    if (!(dwFlags & DPAM_NOSORT)) {
+    if (!(dwFlags & DPAM_SORTED)) {
         TRACE("sorting dpa's!\n");
         if (hdpa1->nItemCount > 0)
         DPA_Sort (hdpa1, pfnCompare, lParam);
@@ -269,14 +269,14 @@ BOOL WINAPI DPA_Merge (HDPA hdpa1, HDPA hdpa2, DWORD dwFlags,
     do
     {
         if (nIndex < 0) {
-            if ((nCount >= 0) && (dwFlags & DPAM_INSERT)) {
+            if ((nCount >= 0) && (dwFlags & DPAM_UNION)) {
                 /* Now insert the remaining new items into DPA 1 */
                 TRACE("%d items to be inserted at start of DPA 1\n",
                       nCount+1);
                 for (i=nCount; i>=0; i--) {
                     PVOID ptr;
 
-                    ptr = (pfnMerge)(3, *pWork2, NULL, lParam);
+                    ptr = (pfnMerge)(DPAMM_INSERT, *pWork2, NULL, lParam);
                     if (!ptr)
                         return FALSE;
                     DPA_InsertPtr (hdpa1, 0, ptr);
@@ -293,7 +293,7 @@ BOOL WINAPI DPA_Merge (HDPA hdpa1, HDPA hdpa2, DWORD dwFlags,
         {
             PVOID ptr;
 
-            ptr = (pfnMerge)(1, *pWork1, *pWork2, lParam);
+            ptr = (pfnMerge)(DPAMM_MERGE, *pWork1, *pWork2, lParam);
             if (!ptr)
                 return FALSE;
 
@@ -306,14 +306,14 @@ BOOL WINAPI DPA_Merge (HDPA hdpa1, HDPA hdpa2, DWORD dwFlags,
         else if (nResult > 0)
         {
             /* item in DPA 1 missing from DPA 2 */
-            if (dwFlags & DPAM_DELETE)
+            if (dwFlags & DPAM_INTERSECT)
             {
                 /* Now delete the extra item in DPA1 */
                 PVOID ptr;
 
                 ptr = DPA_DeletePtr (hdpa1, hdpa1->nItemCount - 1);
 
-                (pfnMerge)(2, ptr, NULL, lParam);
+                (pfnMerge)(DPAMM_DELETE, ptr, NULL, lParam);
             }
             nIndex--;
             pWork1--;
@@ -321,12 +321,12 @@ BOOL WINAPI DPA_Merge (HDPA hdpa1, HDPA hdpa2, DWORD dwFlags,
         else
         {
             /* new item in DPA 2 */
-            if (dwFlags & DPAM_INSERT)
+            if (dwFlags & DPAM_UNION)
             {
                 /* Now insert the new item in DPA 1 */
                 PVOID ptr;
 
-                ptr = (pfnMerge)(3, *pWork2, NULL, lParam);
+                ptr = (pfnMerge)(DPAMM_INSERT, *pWork2, NULL, lParam);
                 if (!ptr)
                     return FALSE;
                 DPA_InsertPtr (hdpa1, nIndex+1, ptr);

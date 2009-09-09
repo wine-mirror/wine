@@ -31,17 +31,12 @@
 
 #include "wine/test.h"
 
-#define DPAM_NOSORT 0x1
-#define DPAM_INSERT 0x4
-#define DPAM_DELETE 0x8
-
 typedef struct _ITEMDATA
 {
     INT   iPos;
     PVOID pvData;
 } ITEMDATA, *LPITEMDATA;
 
-typedef PVOID   (CALLBACK *PFNDPAMERGE)(UINT,PVOID,PVOID,LPARAM);
 typedef HRESULT (CALLBACK *PFNDPASTM)(LPITEMDATA,IStream*,LPARAM);
 
 static HDPA    (WINAPI *pDPA_Clone)(const HDPA,const HDPA);
@@ -388,7 +383,7 @@ static void test_DPA_Merge(void)
     ok(rc, "dw=0x%x\n", dw);
 
     /* Delete all odd entries from dpa2 */
-    pDPA_Merge(dpa2, dpa, DPAM_DELETE,
+    pDPA_Merge(dpa2, dpa, DPAM_INTERSECT,
                CB_CmpLT, CB_MergeDeleteOddSrc, 0xdeadbeef);
     todo_wine
     {
@@ -397,9 +392,9 @@ static void test_DPA_Merge(void)
     }
 
     /* Merge dpa3 into dpa2 and dpa */
-    pDPA_Merge(dpa, dpa3, DPAM_INSERT|DPAM_NOSORT,
+    pDPA_Merge(dpa, dpa3, DPAM_UNION|DPAM_SORTED,
                CB_CmpLT, CB_MergeInsertSrc, 0xdeadbeef);
-    pDPA_Merge(dpa2, dpa3, DPAM_INSERT|DPAM_NOSORT,
+    pDPA_Merge(dpa2, dpa3, DPAM_UNION|DPAM_SORTED,
                CB_CmpLT, CB_MergeInsertSrc, 0xdeadbeef);
 
     rc = CheckDPA(dpa,  0x123456, &dw);
