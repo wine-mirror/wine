@@ -106,10 +106,10 @@ static inline void _sink_fire_ok(INT *sink, const CHAR* name)
             winetest_trace("Ignoring %s\n",name);
             return;
         default:
-            if (todo) todo_wine
-            {
+            if (todo)
+                todo_wine winetest_ok(0, "Unexpected %s sink\n",name);
+            else
                 winetest_ok(0, "Unexpected %s sink\n",name);
-            }
     }
     *sink = SINK_FIRED;
 }
@@ -1121,8 +1121,10 @@ static void test_KeystrokeMgr(void)
     tfpk.uVKey = 'A';
     tfpk.uModifiers = TF_MOD_SHIFT;
 
+    test_KEV_OnSetFocus = SINK_EXPECTED;
     hr = ITfKeystrokeMgr_AdviseKeyEventSink(keymgr,tid,sink,TRUE);
     ok(SUCCEEDED(hr),"ITfKeystrokeMgr_AdviseKeyEventSink failed\n");
+    sink_check_ok(&test_KEV_OnSetFocus,"KeyEventSink_OnSetFocus");
     hr = ITfKeystrokeMgr_AdviseKeyEventSink(keymgr,tid,sink,TRUE);
     ok(hr == CONNECT_E_ADVISELIMIT,"Wrong return, expected CONNECT_E_ADVISELIMIT\n");
     hr = ITfKeystrokeMgr_AdviseKeyEventSink(keymgr,cid,sink,TRUE);
