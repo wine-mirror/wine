@@ -539,7 +539,8 @@ static void test_GetStandardColorSpaceProfileW()
     DWORD size;
     WCHAR oldprofile[MAX_PATH];
     WCHAR newprofile[MAX_PATH];
-    const WCHAR emptyW[] = {0};
+    CHAR newprofileA[MAX_PATH];
+    const CHAR empty[] = "";
     DWORD zero = 0;
     DWORD sizeP = sizeof(newprofile);
 
@@ -557,7 +558,9 @@ static void test_GetStandardColorSpaceProfileW()
 
     SetLastError(0xfaceabee); /* 2nd param, */
     ret = pGetStandardColorSpaceProfileW(NULL, 0, newprofile, &sizeP);
-    ok( !ret && GetLastError() == ERROR_FILE_NOT_FOUND, "GetStandardColorSpaceProfileW() returns %d (GLE=%d)\n", ret, GetLastError() );
+    ok( (!ret && GetLastError() == ERROR_FILE_NOT_FOUND) ||
+        broken(ret), /* Win98 and WinME */
+        "GetStandardColorSpaceProfileW() returns %d (GLE=%d)\n", ret, GetLastError() );
 
     SetLastError(0xfaceabee); /* 3rd param, */
     ret = pGetStandardColorSpaceProfileW(NULL, LCS_sRGB, NULL, &sizeP);
@@ -590,8 +593,9 @@ static void test_GetStandardColorSpaceProfileW()
 
     SetLastError(0xfaceabee); /* maybe 2nd param. */
     ret = pGetStandardColorSpaceProfileW(NULL, 0, newprofile, &sizeP);
+    WideCharToMultiByte(CP_ACP, 0, newprofile, -1, newprofileA, sizeof(newprofileA), NULL, NULL);
     if (!ret) ok( GetLastError() == ERROR_FILE_NOT_FOUND, "GetStandardColorSpaceProfileW() returns %d (GLE=%d)\n", ret, GetLastError() );
-    else ok( !lstrcmpiW( newprofile, emptyW ) && GetLastError() == 0xfaceabee,
+    else ok( !lstrcmpiA( newprofileA, empty ) && GetLastError() == 0xfaceabee,
              "GetStandardColorSpaceProfileW() returns %d (GLE=%d)\n", ret, GetLastError() );
 
     /* Functional checks */
