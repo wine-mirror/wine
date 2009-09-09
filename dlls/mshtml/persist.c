@@ -42,7 +42,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 static BOOL use_gecko_script(LPCWSTR url)
 {
     static const WCHAR fileW[] = {'f','i','l','e',':'};
-    return strncmpiW(fileW, url, sizeof(fileW)/sizeof(WCHAR));
+    static const WCHAR aboutW[] = {'a','b','o','u','t',':'};
+
+    return strncmpiW(fileW, url, sizeof(fileW)/sizeof(WCHAR))
+        && strncmpiW(aboutW, url, sizeof(aboutW)/sizeof(WCHAR));
 }
 
 void set_current_mon(HTMLDocument *This, IMoniker *mon)

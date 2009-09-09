@@ -4755,8 +4755,8 @@ static void test_elems(IHTMLDocument2 *doc)
             DISPID pid = -1;
             BSTR str = a2bstr("Testing");
             hres = IDispatchEx_GetDispID(dispex, str, 1, &pid);
-            todo_wine ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
-            todo_wine ok(pid != -1, "pid == -1\n");
+            ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
+            ok(pid != -1, "pid == -1\n");
             SysFreeString(str);
             IDispatchEx_Release(dispex);
         }
