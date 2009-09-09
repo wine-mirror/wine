@@ -995,21 +995,23 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
          szOID_ORGANIZATIONAL_UNIT_NAME, szOID_ORGANIZATION_NAME,
          szOID_RSA_emailAddr };
         CERT_NAME_INFO *nameInfo = NULL;
-        PCERT_RDN_ATTR nameAttr = NULL;
         DWORD bytes = 0, i;
 
         if (CryptDecodeObjectEx(pCertContext->dwCertEncodingType, X509_NAME,
          name->pbData, name->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &nameInfo,
          &bytes))
         {
+            PCERT_RDN_ATTR nameAttr = NULL;
+
             for (i = 0; !nameAttr && i < sizeof(simpleAttributeOIDs) /
              sizeof(simpleAttributeOIDs[0]); i++)
                 nameAttr = CertFindRDNAttr(simpleAttributeOIDs[i], nameInfo);
+            if (nameAttr)
+                ret = CertRDNValueToStrW(nameAttr->dwValueType,
+                 &nameAttr->Value, pszNameString, cchNameString);
+            LocalFree(nameInfo);
         }
-        if (nameAttr)
-            ret = CertRDNValueToStrW(nameAttr->dwValueType, &nameAttr->Value,
-             pszNameString, cchNameString);
-        else
+        if (!ret)
         {
             CERT_ALT_NAME_INFO *altInfo;
             PCERT_ALT_NAME_ENTRY entry = cert_find_alt_name_entry(pCertContext,
@@ -1035,8 +1037,6 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
                 LocalFree(altInfo);
             }
         }
-        if (nameInfo)
-            LocalFree(nameInfo);
         break;
     }
     case CERT_NAME_FRIENDLY_DISPLAY_TYPE:
