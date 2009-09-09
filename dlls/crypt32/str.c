@@ -930,6 +930,42 @@ DWORD WINAPI CertGetNameStringA(PCCERT_CONTEXT pCertContext, DWORD dwType,
     return ret;
 }
 
+/* Searches cert's extensions for the alternate name extension with OID
+ * altNameOID, and if found, searches it for the alternate name type entryType.
+ * If found, returns a pointer to the entry, otherwise returns NULL.
+ * Regardless of whether an entry of the desired type is found, if the
+ * alternate name extension is present, sets *info to the decoded alternate
+ * name extension, which you must free using LocalFree.
+ * The return value is a pointer within *info, so don't free *info before
+ * you're done with the return value.
+ */
+static PCERT_ALT_NAME_ENTRY cert_find_alt_name_entry(PCCERT_CONTEXT cert,
+ LPCSTR altNameOID, DWORD entryType, PCERT_ALT_NAME_INFO *info)
+{
+    PCERT_ALT_NAME_ENTRY entry = NULL;
+    PCERT_EXTENSION ext = CertFindExtension(altNameOID,
+     cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
+
+    if (ext)
+    {
+        DWORD bytes = 0;
+
+        if (CryptDecodeObjectEx(cert->dwCertEncodingType, X509_ALTERNATE_NAME,
+         ext->Value.pbData, ext->Value.cbData, CRYPT_DECODE_ALLOC_FLAG, NULL,
+         info, &bytes))
+        {
+            DWORD i;
+
+            for (i = 0; !entry && i < (*info)->cAltEntry; i++)
+                if ((*info)->rgAltEntry[i].dwAltNameChoice == entryType)
+                    entry = &(*info)->rgAltEntry[i];
+        }
+    }
+    else
+        *info = NULL;
+    return entry;
+}
+
 DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
  DWORD dwFlags, void *pvTypePara, LPWSTR pszNameString, DWORD cchNameString)
 {
@@ -975,42 +1011,28 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
              pszNameString, cchNameString);
         else
         {
-            PCERT_EXTENSION ext = CertFindExtension(altNameOID,
-             pCertContext->pCertInfo->cExtension,
-             pCertContext->pCertInfo->rgExtension);
+            CERT_ALT_NAME_INFO *altInfo;
+            PCERT_ALT_NAME_ENTRY entry = cert_find_alt_name_entry(pCertContext,
+             altNameOID, CERT_ALT_NAME_RFC822_NAME, &altInfo);
 
-            if (ext)
+            if (altInfo)
             {
-                PCERT_ALT_NAME_INFO altInfo;
-
-                bytes = 0;
-                if (CryptDecodeObjectEx(pCertContext->dwCertEncodingType,
-                 X509_ALTERNATE_NAME, ext->Value.pbData, ext->Value.cbData,
-                 CRYPT_DECODE_ALLOC_FLAG, NULL, &altInfo, &bytes))
+                if (!entry && altInfo->cAltEntry)
+                    entry = &altInfo->rgAltEntry[0];
+                if (entry)
                 {
-                    PCERT_ALT_NAME_ENTRY entry = NULL;
-
-                    for (i = 0; !entry && i < altInfo->cAltEntry; i++)
-                        if (altInfo->rgAltEntry[i].dwAltNameChoice ==
-                         CERT_ALT_NAME_RFC822_NAME)
-                            entry = &altInfo->rgAltEntry[i];
-                    if (!entry && altInfo->cAltEntry)
-                        entry = &altInfo->rgAltEntry[0];
-                    if (entry)
+                    if (!pszNameString)
+                        ret = strlenW(entry->pwszRfc822Name) + 1;
+                    else
                     {
-                        if (!pszNameString)
-                            ret = strlenW(entry->pwszRfc822Name) + 1;
-                        else
-                        {
-                            ret = min(strlenW(entry->pwszRfc822Name),
-                             cchNameString - 1);
-                            memcpy(pszNameString, entry->pwszRfc822Name,
-                             ret * sizeof(WCHAR));
-                            pszNameString[ret++] = 0;
-                        }
+                        ret = min(strlenW(entry->pwszRfc822Name),
+                         cchNameString - 1);
+                        memcpy(pszNameString, entry->pwszRfc822Name,
+                         ret * sizeof(WCHAR));
+                        pszNameString[ret++] = 0;
                     }
-                    LocalFree(altInfo);
                 }
+                LocalFree(altInfo);
             }
         }
         if (nameInfo)
