@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "ole2.h"
 #include "msdadc.h"
+#include "oledberr.h"
 
 #include "oledb_private.h"
 
@@ -40,6 +41,8 @@ typedef struct
     const struct IDCInfoVtbl *lpDCInfoVtbl;
 
     LONG ref;
+
+    UINT version; /* Set by IDCInfo_SetInfo */
 } convert;
 
 static inline convert *impl_from_IDataConvert(IDataConvert *iface)
@@ -174,24 +177,61 @@ static ULONG WINAPI dcinfo_Release(IDCInfo* iface)
     return IDataConvert_Release((IDataConvert *)This);
 }
 
-static HRESULT WINAPI dcinfo_GetInfo(IDCInfo *iface, ULONG num, DCINFOTYPE types[], DCINFO **info)
+static HRESULT WINAPI dcinfo_GetInfo(IDCInfo *iface, ULONG num, DCINFOTYPE types[], DCINFO **info_ptr)
 {
     convert *This = impl_from_IDCInfo(iface);
+    ULONG i;
+    DCINFO *infos;
 
-    FIXME("(%p)->(%d, %p, %p): stub\n", This, num, types, info);
+    TRACE("(%p)->(%d, %p, %p)\n", This, num, types, info_ptr);
 
-    *info = NULL;
+    *info_ptr = infos = CoTaskMemAlloc(num * sizeof(*infos));
+    if(!infos) return E_OUTOFMEMORY;
 
-    return E_NOTIMPL;
+    for(i = 0; i < num; i++)
+    {
+        infos[i].eInfoType = types[i];
+        VariantInit(&infos[i].vData);
+
+        switch(types[i])
+        {
+        case DCINFOTYPE_VERSION:
+            V_VT(&infos[i].vData) = VT_UI4;
+            V_UI4(&infos[i].vData) = This->version;
+            break;
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dcinfo_SetInfo(IDCInfo* iface, ULONG num, DCINFO info[])
 {
     convert *This = impl_from_IDCInfo(iface);
+    ULONG i;
+    HRESULT hr = S_OK;
 
-    FIXME("(%p)->(%d, %p): stub\n", This, num, info);
+    TRACE("(%p)->(%d, %p)\n", This, num, info);
 
-    return E_NOTIMPL;
+    for(i = 0; i < num; i++)
+    {
+        switch(info[i].eInfoType)
+        {
+        case DCINFOTYPE_VERSION:
+            if(V_VT(&info[i].vData) != VT_UI4)
+            {
+                FIXME("VERSION with vt %x\n", V_VT(&info[i].vData));
+                hr = DB_S_ERRORSOCCURRED;
+                break;
+            }
+            This->version = V_UI4(&info[i].vData);
+            break;
+
+        default:
+            FIXME("Unhandled info type %d (vt %x)\n", info[i].eInfoType, V_VT(&info[i].vData));
+        }
+    }
+    return hr;
 }
 
 static const struct IDCInfoVtbl dcinfo_vtbl =
@@ -219,6 +259,7 @@ HRESULT create_oledb_convert(IUnknown *outer, void **obj)
     This->lpVtbl = &convert_vtbl;
     This->lpDCInfoVtbl = &dcinfo_vtbl;
     This->ref = 1;
+    This->version = 0x110;
 
     *obj = &This->lpVtbl;
 
