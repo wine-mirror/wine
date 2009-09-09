@@ -688,8 +688,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDisplayNameOf(IShellFolder2 * iface,
 	    PathAddBackslashW(wszPath);
 	    len = lstrlenW(wszPath);
 
-	    if (!SUCCEEDED
-	      (SHELL32_GetDisplayNameOfChild(iface, pidl, dwFlags | SHGDN_INFOLDER, wszPath + len, MAX_PATH + 1 - len)))
+            if (FAILED(SHELL32_GetDisplayNameOfChild(iface, pidl, dwFlags | SHGDN_INFOLDER, wszPath + len, MAX_PATH + 1 - len)))
 		return E_OUTOFMEMORY;
 	    if (!WideCharToMultiByte(CP_ACP, 0, wszPath, -1, szPath, MAX_PATH, NULL, NULL))
 		wszPath[0] = '\0';
