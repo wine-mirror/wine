@@ -69,7 +69,7 @@ void set_current_mon(HTMLDocument *This, IMoniker *mon)
     if(FAILED(hres))
         WARN("GetDisplayName failed: %08x\n", hres);
 
-    set_script_mode(This, use_gecko_script(This->url) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT);
+    set_script_mode(This->window, use_gecko_script(This->url) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT);
 }
 
 static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BOOL *bind_complete)

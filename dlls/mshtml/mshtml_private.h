@@ -153,6 +153,11 @@ void release_dispex(DispatchEx*);
 BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**);
 
+typedef enum {
+    SCRIPTMODE_GECKO,
+    SCRIPTMODE_ACTIVESCRIPT
+} SCRIPTMODE;
+
 typedef struct {
     DispatchEx dispex;
     const IHTMLWindow2Vtbl *lpHTMLWindow2Vtbl;
@@ -167,6 +172,9 @@ typedef struct {
     event_target_t *event_target;
     IHTMLEventObj *event;
 
+    SCRIPTMODE scriptmode;
+    struct list script_hosts;
+
     struct list entry;
 } HTMLWindow;
 
@@ -175,11 +183,6 @@ typedef enum {
     BROWSEMODE,
     EDITMODE        
 } USERMODE;
-
-typedef enum {
-    SCRIPTMODE_GECKO,
-    SCRIPTMODE_ACTIVESCRIPT
-} SCRIPTMODE;
 
 typedef struct {
     const IConnectionPointContainerVtbl  *lpConnectionPointContainerVtbl;
@@ -265,15 +268,12 @@ struct HTMLDocument {
     LPOLESTR url;
     struct list bindings;
 
-    struct list script_hosts;
-
     HWND hwnd;
     HWND tooltips_hwnd;
 
     DOCHOSTUIINFO hostinfo;
 
     USERMODE usermode;
-    SCRIPTMODE scriptmode;
     READYSTATE readystate;
     BOOL in_place_active;
     BOOL ui_active;
@@ -623,11 +623,11 @@ void HTMLElement_destructor(HTMLDOMNode*);
 HTMLDOMNode *get_node(HTMLDocument*,nsIDOMNode*,BOOL);
 void release_nodes(HTMLDocument*);
 
-void release_script_hosts(HTMLDocument*);
-void connect_scripts(HTMLDocument*);
+void release_script_hosts(HTMLWindow*);
+void connect_scripts(HTMLWindow*);
 void doc_insert_script(HTMLDocument*,nsIDOMHTMLScriptElement*);
 IDispatch *script_parse_event(HTMLDocument*,LPCWSTR);
-void set_script_mode(HTMLDocument*,SCRIPTMODE);
+void set_script_mode(HTMLWindow*,SCRIPTMODE);
 
 IHTMLElementCollection *create_all_collection(HTMLDOMNode*,BOOL);
 IHTMLElementCollection *create_collection_from_nodelist(HTMLDocument*,IUnknown*,nsIDOMNodeList*);

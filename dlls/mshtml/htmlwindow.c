@@ -95,6 +95,7 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
     if(!ref) {
         if(This->event_target)
             release_event_target(This->event_target);
+        release_script_hosts(This);
         list_remove(&This->entry);
         release_dispex(&This->dispex);
         heap_free(This);
@@ -1329,6 +1330,9 @@ HRESULT HTMLWindow_Create(HTMLDocument *doc, nsIDOMWindow *nswindow, HTMLWindow 
         nsIDOMWindow_AddRef(nswindow);
         window->nswindow = nswindow;
     }
+
+    window->scriptmode = SCRIPTMODE_GECKO;
+    list_init(&window->script_hosts);
 
     list_add_head(&window_list, &window->entry);
 

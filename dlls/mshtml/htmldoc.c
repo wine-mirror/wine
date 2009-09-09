@@ -178,7 +178,6 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
 
     if(!ref) {
         remove_doc_tasks(This);
-        release_script_hosts(This);
 
         if(This->client)
             IOleObject_SetClientSite(OLEOBJ(This), NULL);
@@ -1804,10 +1803,8 @@ static HRESULT alloc_doc(HTMLDocument **ret)
     doc->lpSupportErrorInfoVtbl = &SupportErrorInfoVtbl;
     doc->ref = 1;
     doc->readystate = READYSTATE_UNINITIALIZED;
-    doc->scriptmode = SCRIPTMODE_GECKO;
 
     list_init(&doc->bindings);
-    list_init(&doc->script_hosts);
     list_init(&doc->selection_list);
     list_init(&doc->range_list);
 
