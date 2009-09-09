@@ -124,6 +124,7 @@ static const CHAR install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                            "MoveFiles\t\t1700\n"
                                            "InstallFiles\t\t4000\n"
                                            "DuplicateFiles\t\t4500\n"
+                                           "CreateShortcuts\t\t4600\n"
                                            "InstallServices\t\t5000\n"
                                            "InstallFinalize\t\t6600\n"
                                            "InstallInitialize\t\t1500\n"
@@ -158,6 +159,11 @@ static const CHAR property_dat[] = "Property\tValue\n"
                                    "ROOTDRIVE\tC:\\\n"
                                    "SERVNAME\tTestService\n"
                                    "SERVDISP\tTestServiceDisp\n";
+
+static const CHAR shortcut_dat[] = "Shortcut\tDirectory_\tName\tComponent_\tTarget\tArguments\tDescription\tHotkey\tIcon_\tIconIndex\tShowCmd\tWkDir\n"
+                                   "s72\ts72\tl128\ts72\ts72\tS255\tL255\tI2\tS72\tI2\tI2\tS72\n"
+                                   "Shortcut\tShortcut\n"
+                                   "Shortcut\tMSITESTDIR\tShortcut\tcomponent\tShortcut\t\tShortcut\t\t\t\t\t\n";
 
 static const CHAR up_property_dat[] = "Property\tValue\n"
                                       "s72\tl0\n"
@@ -883,6 +889,19 @@ static const msi_table tables[] =
     ADD_TABLE(registry),
     ADD_TABLE(service_install),
     ADD_TABLE(service_control)
+};
+
+static const msi_table sc_tables[] =
+{
+    ADD_TABLE(component),
+    ADD_TABLE(directory),
+    ADD_TABLE(feature),
+    ADD_TABLE(feature_comp),
+    ADD_TABLE(file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(media),
+    ADD_TABLE(property),
+    ADD_TABLE(shortcut)
 };
 
 static const msi_table up_tables[] =
@@ -6181,6 +6200,49 @@ static void test_int_widths( void )
     RemoveDirectoryA(tmpdir);
 }
 
+static void test_shortcut(void)
+{
+    UINT r;
+    HRESULT hr;
+
+    create_test_files();
+    create_database(msifile, sc_tables, sizeof(sc_tables) / sizeof(msi_table));
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    ok(SUCCEEDED(hr), "CoInitialize failed 0x%08x\n", hr);
+
+    r = MsiInstallProductA(msifile, NULL);
+    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    CoUninitialize();
+
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    ok(SUCCEEDED(hr), "CoInitialize failed 0x%08x\n", hr);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    CoUninitialize();
+
+    delete_pf("msitest\\cabout\\new\\five.txt", TRUE);
+    delete_pf("msitest\\cabout\\new", FALSE);
+    delete_pf("msitest\\cabout\\four.txt", TRUE);
+    delete_pf("msitest\\cabout", FALSE);
+    delete_pf("msitest\\changed\\three.txt", TRUE);
+    delete_pf("msitest\\changed", FALSE);
+    delete_pf("msitest\\first\\two.txt", TRUE);
+    delete_pf("msitest\\first", FALSE);
+    delete_pf("msitest\\filename", TRUE);
+    delete_pf("msitest\\one.txt", TRUE);
+    delete_pf("msitest\\service.exe", TRUE);
+    delete_pf("msitest\\Shortcut.lnk", TRUE);
+    delete_pf("msitest", FALSE);
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -6262,6 +6324,7 @@ START_TEST(install)
     test_adminimage();
     test_propcase();
     test_int_widths();
+    test_shortcut();
 
     DeleteFileA(log_file);
 
