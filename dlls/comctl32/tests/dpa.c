@@ -201,7 +201,6 @@ static void test_dpa(void)
     INT ret, i;
     PVOID p;
     DWORD dw, dw2, dw3;
-    HRESULT hRes;
     BOOL rc;
     
     GetSystemInfo(&si);
@@ -336,49 +335,6 @@ static void test_dpa(void)
         ok(j != i, "i=%d\n", i);
     }
 
-    if(pDPA_Merge)
-    {
-        /* Delete all even entries from dpa */
-        p = pDPA_DeletePtr(dpa, 1);
-        p = pDPA_DeletePtr(dpa, 2);
-        p = pDPA_DeletePtr(dpa, 3);
-        rc=CheckDPA(dpa, 0x135, &dw);
-        ok(rc, "dw=0x%x\n", dw);
-    
-        /* Delete all odd entries from dpa2 */
-        pDPA_Merge(dpa2, dpa, DPAM_DELETE, 
-                   CB_CmpLT, CB_MergeDeleteOddSrc, 0xdeadbeef);
-        todo_wine
-        {
-            rc=CheckDPA(dpa2, 0x246, &dw2);
-            ok(rc, "dw=0x%x\n", dw2);
-        }
-    
-        /* Merge dpa3 into dpa2 and dpa */
-        pDPA_Merge(dpa, dpa3, DPAM_INSERT|DPAM_NOSORT, 
-                   CB_CmpLT, CB_MergeInsertSrc, 0xdeadbeef);
-        pDPA_Merge(dpa2, dpa3, DPAM_INSERT|DPAM_NOSORT, 
-                   CB_CmpLT, CB_MergeInsertSrc, 0xdeadbeef);
-    
-        rc=CheckDPA(dpa,  0x123456, &dw);
-        ok(rc, "dw=0x%x\n",  dw);
-        rc=CheckDPA(dpa2, 0x123456, &dw2);
-        ok(rc ||
-           broken(!rc), /* win98 */
-           "dw2=0x%x\n", dw2);
-        rc=CheckDPA(dpa3, 0x123456, &dw3);
-        ok(rc, "dw3=0x%x\n", dw3);
-    }
-
-    if(pDPA_EnumCallback)
-    {
-        nEnum = 0;
-        pDPA_EnumCallback(dpa2, CB_EnumFirstThree, dpa2);
-        rc=CheckDPA(dpa2, 0x777456, &dw2);
-        ok(rc, "dw=0x%x\n", dw2);
-        ok(nEnum == 3, "nEnum=%d\n", nEnum);
-    }
-    
     /* Setting item with huge index should work */
     ok(pDPA_SetPtr(dpa2, 0x12345, (PVOID)0xdeadbeef), "\n");
     ret = pDPA_GetPtrIndex(dpa2, (PVOID)0xdeadbeef);
@@ -388,61 +344,200 @@ static void test_dpa(void)
     rc=CheckDPA(dpa2, 0, &dw2);
     ok(rc, "dw2=0x%x\n", dw2);
     pDPA_Destroy(dpa2);
+    pDPA_Destroy(dpa3);
+}
 
-    if(pDPA_DestroyCallback)
+static void test_DPA_Merge(void)
+{
+    HDPA dpa, dpa2, dpa3;
+    INT ret, i;
+    DWORD dw;
+    BOOL rc;
+
+    if(!pDPA_Merge)
     {
-        nEnum = 0;
-        pDPA_DestroyCallback(dpa3, CB_EnumFirstThree, dpa3);
-        ok(nEnum == 3, "nEnum=%d\n", nEnum);
+        win_skip("DPA_Merge() not available\n");
+        return;
     }
-    else pDPA_Destroy(dpa3);
+
+    dpa  = pDPA_Create(0);
+    dpa2 = pDPA_Create(0);
+    dpa3 = pDPA_Create(0);
+
+    ret = pDPA_InsertPtr(dpa, 0, (PVOID)1);
+    ok(ret == 0, "ret=%d\n", ret);
+    ret = pDPA_InsertPtr(dpa, 1, (PVOID)3);
+    ok(ret == 1, "ret=%d\n", ret);
+    ret = pDPA_InsertPtr(dpa, 2, (PVOID)5);
+    ok(ret == 2, "ret=%d\n", ret);
+
+    rc = CheckDPA(dpa, 0x135, &dw);
+    ok(rc, "dw=0x%x\n", dw);
+
+    for (i = 0; i < 6; i++)
+    {
+        ret = pDPA_InsertPtr(dpa2, i, (PVOID)(6-i));
+        ok(ret == i, "ret=%d\n", ret);
+        ret = pDPA_InsertPtr(dpa3, i, (PVOID)(i+1));
+        ok(ret == i, "ret=%d\n", ret);
+    }
+
+    rc = CheckDPA(dpa2, 0x654321, &dw);
+    ok(rc, "dw=0x%x\n", dw);
+    rc = CheckDPA(dpa3, 0x123456, &dw);
+    ok(rc, "dw=0x%x\n", dw);
+
+    /* Delete all odd entries from dpa2 */
+    pDPA_Merge(dpa2, dpa, DPAM_DELETE,
+               CB_CmpLT, CB_MergeDeleteOddSrc, 0xdeadbeef);
+    todo_wine
+    {
+        rc = CheckDPA(dpa2, 0x246, &dw);
+        ok(rc, "dw=0x%x\n", dw);
+    }
+
+    /* Merge dpa3 into dpa2 and dpa */
+    pDPA_Merge(dpa, dpa3, DPAM_INSERT|DPAM_NOSORT,
+               CB_CmpLT, CB_MergeInsertSrc, 0xdeadbeef);
+    pDPA_Merge(dpa2, dpa3, DPAM_INSERT|DPAM_NOSORT,
+               CB_CmpLT, CB_MergeInsertSrc, 0xdeadbeef);
+
+    rc = CheckDPA(dpa,  0x123456, &dw);
+    ok(rc, "dw=0x%x\n",  dw);
+    rc = CheckDPA(dpa2, 0x123456, &dw);
+    ok(rc ||
+       broken(!rc), /* win98 */
+       "dw=0x%x\n", dw);
+    rc = CheckDPA(dpa3, 0x123456, &dw);
+    ok(rc, "dw=0x%x\n", dw);
+
+    pDPA_Destroy(dpa);
+    pDPA_Destroy(dpa2);
+    pDPA_Destroy(dpa3);
+}
+
+static void test_DPA_EnumCallback(void)
+{
+    HDPA dpa;
+    BOOL rc;
+    DWORD dw;
+    INT i, ret;
+
+    if(!pDPA_EnumCallback)
+    {
+        win_skip("DPA_EnumCallback() not available\n");
+        return;
+    }
+
+    dpa = pDPA_Create(0);
+
+    for (i = 0; i < 6; i++)
+    {
+        ret = pDPA_InsertPtr(dpa, i, (PVOID)(i+1));
+        ok(ret == i, "ret=%d\n", ret);
+    }
+
+    rc = CheckDPA(dpa, 0x123456, &dw);
+    ok(rc, "dw=0x%x\n", dw);
+
+    nEnum = 0;
+    /* test callback sets first 3 items to 7 */
+    pDPA_EnumCallback(dpa, CB_EnumFirstThree, dpa);
+    rc = CheckDPA(dpa, 0x777456, &dw);
+    ok(rc, "dw=0x%x\n", dw);
+    ok(nEnum == 3, "nEnum=%d\n", nEnum);
+
+    pDPA_Destroy(dpa);
+}
+
+static void test_DPA_DestroyCallback(void)
+{
+    HDPA dpa;
+    INT i, ret;
+
+    if(!pDPA_DestroyCallback)
+    {
+        win_skip("DPA_DestroyCallback() not available\n");
+        return;
+    }
+
+    dpa = pDPA_Create(0);
+
+    for (i = 0; i < 3; i++)
+    {
+        ret = pDPA_InsertPtr(dpa, i, (PVOID)(i+1));
+        ok(ret == i, "ret=%d\n", ret);
+    }
+
+    nEnum = 0;
+    pDPA_DestroyCallback(dpa, CB_EnumFirstThree, dpa);
+    ok(nEnum == 3, "nEnum=%d\n", nEnum);
+}
+
+static void test_dpa_stream(void)
+{
+    HDPA dpa;
+    HRESULT hRes;
+    INT ret, i;
+    BOOL rc;
+
+    static const WCHAR szStg[] = { 'S','t','g',0 };
+    IStorage* pStg = NULL;
+    IStream* pStm = NULL;
+    LARGE_INTEGER liZero;
+    DWORD dwMode, dw;
 
     if(!pDPA_SaveStream)
-        goto skip_stream_tests;
+    {
+        win_skip("DPA_SaveStream() not available. Skipping stream tests.\n");
+        return;
+    }
 
     hRes = CoInitialize(NULL);
-    if(hRes == S_OK)
+    if (hRes != S_OK)
     {
-        static const WCHAR szStg[] = { 'S','t','g',0 };
-        IStorage* pStg = NULL;
-        IStream* pStm = NULL;
-        LARGE_INTEGER liZero;
-        DWORD dwMode;
-        liZero.QuadPart = 0;
-
-        dwMode = STGM_DIRECT|STGM_CREATE|STGM_READWRITE|STGM_SHARE_EXCLUSIVE;
-        hRes = StgCreateDocfile(NULL, dwMode|STGM_DELETEONRELEASE, 0, &pStg);
-        ok(hRes == S_OK, "hRes=0x%x\n", hRes);
-
-        hRes = IStorage_CreateStream(pStg, szStg, dwMode, 0, 0, &pStm);
-        ok(hRes == S_OK, "hRes=0x%x\n", hRes);
-
-        hRes = pDPA_SaveStream(dpa, CB_Save, pStm, 0xdeadbeef);
-        todo_wine ok(hRes == S_OK, "hRes=0x%x\n", hRes);
-        pDPA_Destroy(dpa);
-        
-        hRes = IStream_Seek(pStm, liZero, STREAM_SEEK_SET, NULL);
-        ok(hRes == S_OK, "hRes=0x%x\n", hRes);
-        hRes = pDPA_LoadStream(&dpa, CB_Load, pStm, 0xdeadbeef);
-        todo_wine
-        {
-            ok(hRes == S_OK, "hRes=0x%x\n", hRes);
-            rc=CheckDPA(dpa, 0x123456, &dw);
-            ok(rc, "dw=0x%x\n", dw);
-        }
-
-        ret = IStream_Release(pStm);
-        ok(!ret, "ret=%d\n", ret);
-	
-        ret = IStorage_Release(pStg);
-        ok(!ret, "ret=%d\n", ret);
-
-        CoUninitialize();
+        ok(0, "hResult: %d\n", hRes);
+        return;
     }
-    else ok(0, "hResult: %d\n", hRes);
 
-skip_stream_tests:
+    dpa = pDPA_Create(0);
+
+    for (i = 0; i < 6; i++)
+    {
+        ret = pDPA_InsertPtr(dpa, i, (PVOID)(i+1));
+        ok(ret == i, "ret=%d\n", ret);
+    }
+
+    dwMode = STGM_DIRECT|STGM_CREATE|STGM_READWRITE|STGM_SHARE_EXCLUSIVE;
+    hRes = StgCreateDocfile(NULL, dwMode|STGM_DELETEONRELEASE, 0, &pStg);
+    ok(hRes == S_OK, "hRes=0x%x\n", hRes);
+
+    hRes = IStorage_CreateStream(pStg, szStg, dwMode, 0, 0, &pStm);
+    ok(hRes == S_OK, "hRes=0x%x\n", hRes);
+
+    hRes = pDPA_SaveStream(dpa, CB_Save, pStm, 0xdeadbeef);
+    todo_wine ok(hRes == S_OK, "hRes=0x%x\n", hRes);
     pDPA_Destroy(dpa);
+
+    liZero.QuadPart = 0;
+    hRes = IStream_Seek(pStm, liZero, STREAM_SEEK_SET, NULL);
+    ok(hRes == S_OK, "hRes=0x%x\n", hRes);
+    hRes = pDPA_LoadStream(&dpa, CB_Load, pStm, 0xdeadbeef);
+    todo_wine
+    {
+        ok(hRes == S_OK, "hRes=0x%x\n", hRes);
+        rc = CheckDPA(dpa, 0x123456, &dw);
+        ok(rc, "dw=0x%x\n", dw);
+    }
+    pDPA_Destroy(dpa);
+
+    ret = IStream_Release(pStm);
+    ok(!ret, "ret=%d\n", ret);
+
+    ret = IStorage_Release(pStg);
+    ok(!ret, "ret=%d\n", ret);
+
+    CoUninitialize();
 }
 
 START_TEST(dpa)
@@ -451,8 +546,15 @@ START_TEST(dpa)
 
     hcomctl32 = GetModuleHandleA("comctl32.dll");
 
-    if(InitFunctionPtrs(hcomctl32))
-        test_dpa();
-    else
+    if(!InitFunctionPtrs(hcomctl32))
+    {
         win_skip("Needed functions are not available\n");
+        return;
+    }
+
+    test_dpa();
+    test_DPA_Merge();
+    test_DPA_EnumCallback();
+    test_DPA_DestroyCallback();
+    test_dpa_stream();
 }
