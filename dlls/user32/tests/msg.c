@@ -11787,7 +11787,7 @@ static void test_PostMessage(void)
 START_TEST(msg)
 {
     BOOL ret;
-    FARPROC pIsWinEventHookInstalled = 0;/*GetProcAddress(user32, "IsWinEventHookInstalled");*/
+    BOOL (WINAPI *pIsWinEventHookInstalled)(DWORD)= 0;/*GetProcAddress(user32, "IsWinEventHookInstalled");*/
 
     init_procs();
 
