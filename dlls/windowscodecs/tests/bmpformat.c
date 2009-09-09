@@ -70,7 +70,7 @@ static void test_decode_24bpp(void)
     hr = CoCreateInstance(&CLSID_WICBmpDecoder, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICBitmapDecoder, (void**)&decoder);
     ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
-    if (!SUCCEEDED(hr)) return;
+    if (FAILED(hr)) return;
 
     hbmpdata = GlobalAlloc(GMEM_MOVEABLE, sizeof(testbmp_24bpp));
     ok(hbmpdata != 0, "GlobalAlloc failed\n");
@@ -277,7 +277,7 @@ static void test_decode_1bpp(void)
     hr = CoCreateInstance(&CLSID_WICBmpDecoder, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICBitmapDecoder, (void**)&decoder);
     ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
-    if (!SUCCEEDED(hr)) return;
+    if (FAILED(hr)) return;
 
     hbmpdata = GlobalAlloc(GMEM_MOVEABLE, sizeof(testbmp_1bpp));
     ok(hbmpdata != 0, "GlobalAlloc failed\n");
@@ -435,7 +435,7 @@ static void test_decode_4bpp(void)
     hr = CoCreateInstance(&CLSID_WICBmpDecoder, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICBitmapDecoder, (void**)&decoder);
     ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
-    if (!SUCCEEDED(hr)) return;
+    if (FAILED(hr)) return;
 
     hbmpdata = GlobalAlloc(GMEM_MOVEABLE, sizeof(testbmp_4bpp));
     ok(hbmpdata != 0, "GlobalAlloc failed\n");
@@ -614,7 +614,7 @@ static void test_decode_rle8(void)
     hr = CoCreateInstance(&CLSID_WICBmpDecoder, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICBitmapDecoder, (void**)&decoder);
     ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
-    if (!SUCCEEDED(hr)) return;
+    if (FAILED(hr)) return;
 
     hbmpdata = GlobalAlloc(GMEM_MOVEABLE, sizeof(testbmp_rle8));
     ok(hbmpdata != 0, "GlobalAlloc failed\n");
@@ -780,7 +780,7 @@ static void test_decode_rle4(void)
     hr = CoCreateInstance(&CLSID_WICBmpDecoder, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICBitmapDecoder, (void**)&decoder);
     ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
-    if (!SUCCEEDED(hr)) return;
+    if (FAILED(hr)) return;
 
     hbmpdata = GlobalAlloc(GMEM_MOVEABLE, sizeof(testbmp_rle4));
     ok(hbmpdata != 0, "GlobalAlloc failed\n");
@@ -999,7 +999,7 @@ static void test_createfromstream(void)
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICImagingFactory, (void**)&factory);
     ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
-    if (!SUCCEEDED(hr)) return;
+    if (FAILED(hr)) return;
 
     hbmpdata = GlobalAlloc(GMEM_MOVEABLE, sizeof(testbmp_1bpp));
     ok(hbmpdata != 0, "GlobalAlloc failed\n");

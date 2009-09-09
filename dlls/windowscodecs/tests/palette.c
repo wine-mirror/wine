@@ -39,7 +39,7 @@ static void test_custom_palette(void)
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICImagingFactory, (void**)&factory);
     ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
-    if (!SUCCEEDED(hr)) return;
+    if (FAILED(hr)) return;
 
     hr = IWICImagingFactory_CreatePalette(factory, &palette);
     ok(SUCCEEDED(hr), "CreatePalette failed, hr=%x\n", hr);
