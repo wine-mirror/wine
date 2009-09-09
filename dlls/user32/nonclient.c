@@ -1600,7 +1600,9 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
             HMODULE hmodule = LoadLibraryA( "shell32.dll" );
             if (hmodule)
             {
-                FARPROC aboutproc = GetProcAddress( hmodule, "ShellAboutA" );
+                BOOL (WINAPI *aboutproc)(HWND, LPCSTR, LPCSTR, HICON);
+
+                aboutproc = (void *)GetProcAddress( hmodule, "ShellAboutA" );
                 if (aboutproc) aboutproc( hwnd, PACKAGE_STRING, NULL, 0 );
                 FreeLibrary( hmodule );
             }
