@@ -202,6 +202,13 @@ static const char *debugstr_guid(REFIID riid)
     return buf;
 }
 
+static int strcmp_wa(LPCWSTR strw, const char *stra)
+{
+    CHAR buf[512];
+    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
+    return lstrcmpA(stra, buf);
+}
+
 static BOOL is_english(void)
 {
     return PRIMARYLANGID(GetSystemDefaultLangID()) == LANG_ENGLISH
@@ -2553,18 +2560,13 @@ static void _test_readyState(unsigned line, IUnknown *unk)
     VARIANT out;
     HRESULT hres;
 
-    static const WCHAR wszUninitialized[] = {'u','n','i','n','i','t','i','a','l','i','z','e','d',0};
-    static const WCHAR wszLoading[] = {'l','o','a','d','i','n','g',0};
-    static const WCHAR wszInteractive[] = {'i','n','t','e','r','a','c','t','i','v','e',0};
-    static const WCHAR wszComplete[] = {'c','o','m','p','l','e','t','e',0};
-
-    static const LPCWSTR expected_state[] = {
-        wszUninitialized,
-        wszLoading,
+    static const LPCSTR expected_state[] = {
+        "uninitialized",
+        "loading",
         NULL,
-        wszInteractive,
-        wszComplete,
-        wszUninitialized
+        "interactive",
+        "complete",
+        "uninitialized"
     };
 
     if(!unk)
@@ -2581,11 +2583,11 @@ static void _test_readyState(unsigned line, IUnknown *unk)
     hres = IHTMLDocument2_get_readyState(htmldoc, &state);
     ok(hres == S_OK, "get_ReadyState failed: %08x\n", hres);
 
-    if(!lstrcmpW(state, wszInteractive) && load_state == LD_LOADING)
+    if(!strcmp_wa(state, "interactive") && load_state == LD_LOADING)
         load_state = LD_INTERACTIVE;
 
     ok_(__FILE__, line)
-        (!lstrcmpW(state, expected_state[load_state]), "unexpected state %s, expected %d\n",
+        (!strcmp_wa(state, expected_state[load_state]), "unexpected state %s, expected %d\n",
          wine_dbgstr_w(state), load_state);
     SysFreeString(state);
 
