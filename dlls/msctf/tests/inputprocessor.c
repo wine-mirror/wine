@@ -52,6 +52,8 @@ static ITextStoreACPSink *ACPSink;
 
 #define SINK_OPTION_TODO      0x0100
 
+#define FOCUS_IGNORE    (ITfDocumentMgr*)0xffffffff
+
 static BOOL test_ShouldActivate = FALSE;
 static BOOL test_ShouldDeactivate = FALSE;
 
@@ -122,8 +124,10 @@ inline void _sink_check_ok(INT *sink, const CHAR* name)
 
     switch (action)
     {
-        case SINK_FIRED:
         case SINK_OPTIONAL:
+            if (winetest_interactive)
+                winetest_trace("optional sink %s not fired\n",name);
+        case SINK_FIRED:
             break;
         case SINK_IGNORE:
             return;
@@ -490,8 +494,10 @@ static HRESULT WINAPI ThreadMgrEventSink_OnSetFocus(ITfThreadMgrEventSink *iface
 ITfDocumentMgr *pdimFocus, ITfDocumentMgr *pdimPrevFocus)
 {
     sink_fire_ok(&test_OnSetFocus,"ThreadMgrEventSink_OnSetFocus");
-    ok(pdimFocus == test_CurrentFocus,"Sink reports wrong focus\n");
-    ok(pdimPrevFocus == test_PrevFocus,"Sink reports wrong previous focus\n");
+    if (test_CurrentFocus != FOCUS_IGNORE)
+        ok(pdimFocus == test_CurrentFocus,"Sink reports wrong focus\n");
+    if (test_PrevFocus != FOCUS_IGNORE)
+        ok(pdimPrevFocus == test_PrevFocus,"Sink reports wrong previous focus\n");
     return S_OK;
 }
 
@@ -1935,24 +1941,35 @@ static void test_AssociateFocus(void)
     hr = ITfThreadMgr_CreateDocumentMgr(g_tm,&dm2);
     ok(SUCCEEDED(hr),"CreateDocumentMgr failed\n");
 
-    wnd1 = CreateWindow("edit",NULL,WS_POPUP|WS_VISIBLE,0,0,200,60,NULL,NULL,NULL,NULL);
+    wnd1 = CreateWindow("edit",NULL,WS_POPUP,0,0,200,60,NULL,NULL,NULL,NULL);
     ok(wnd1!=NULL,"Unable to create window 1\n");
-    wnd2 = CreateWindow("edit",NULL,WS_POPUP|WS_VISIBLE,0,0,200,60,NULL,NULL,NULL,NULL);
+    wnd2 = CreateWindow("edit",NULL,WS_POPUP,0,65,200,60,NULL,NULL,NULL,NULL);
     ok(wnd2!=NULL,"Unable to create window 2\n");
-    wnd3 = CreateWindow("edit",NULL,WS_POPUP|WS_VISIBLE,0,0,200,60,NULL,NULL,NULL,NULL);
+    wnd3 = CreateWindow("edit",NULL,WS_POPUP,0,130,200,60,NULL,NULL,NULL,NULL);
     ok(wnd3!=NULL,"Unable to create window 3\n");
 
     processPendingMessages();
 
+    test_OnInitDocumentMgr = SINK_OPTIONAL; /* Vista and greater */
+    test_OnPushContext = SINK_OPTIONAL; /* Vista and greater */
+
+    ShowWindow(wnd1,SW_SHOWNORMAL);
     SetFocus(wnd1);
+    sink_check_ok(&test_OnInitDocumentMgr,"OnInitDocumentMgr");
+    sink_check_ok(&test_OnPushContext,"OnPushContext");
+
+    test_OnSetFocus  = SINK_OPTIONAL; /* Vista and greater */
+    ITfThreadMgr_GetFocus(g_tm, &test_PrevFocus);
+    test_CurrentFocus = FOCUS_IGNORE; /* This is a default system context */
     processPendingMessages();
+    sink_check_ok(&test_OnSetFocus,"OnSetFocus");
+
     test_CurrentFocus = dm1;
-    test_PrevFocus = NULL;
+    test_PrevFocus = FOCUS_IGNORE;
     test_OnSetFocus  = SINK_EXPECTED;
     hr = ITfThreadMgr_AssociateFocus(g_tm,wnd1,dm1,&olddm);
     ok(SUCCEEDED(hr),"AssociateFocus failed\n");
     sink_check_ok(&test_OnSetFocus,"OnSetFocus");
-    ok(olddm == NULL, "unexpected old DocumentMgr\n");
 
     processPendingMessages();
 
@@ -1977,10 +1994,12 @@ static void test_AssociateFocus(void)
     test_CurrentFocus = dm2;
     test_PrevFocus = dm1;
     test_OnSetFocus  = SINK_EXPECTED;
+    ShowWindow(wnd2,SW_SHOWNORMAL);
     SetFocus(wnd2);
     processPendingMessages();
     sink_check_ok(&test_OnSetFocus,"OnSetFocus");
 
+    ShowWindow(wnd3,SW_SHOWNORMAL);
     SetFocus(wnd3);
     processPendingMessages();
 
@@ -2003,7 +2022,7 @@ static void test_AssociateFocus(void)
     ITfThreadMgr_SetFocus(g_tm,dmorig);
     sink_check_ok(&test_OnSetFocus,"OnSetFocus");
 
-    test_CurrentFocus = NULL;
+    test_CurrentFocus = FOCUS_IGNORE; /* NULL on XP, system default on Vista */
     test_PrevFocus = dmorig;
     test_OnSetFocus  = SINK_EXPECTED;
     SetFocus(wnd3);
@@ -2026,16 +2045,23 @@ static void test_AssociateFocus(void)
 
     ITfDocumentMgr_Release(dm1);
     ITfDocumentMgr_Release(dm2);
-    DestroyWindow(wnd1);
-    DestroyWindow(wnd2);
-    DestroyWindow(wnd3);
 
     test_CurrentFocus = dmorig;
-    test_PrevFocus = NULL;
+    test_PrevFocus = FOCUS_IGNORE;
     test_OnSetFocus  = SINK_EXPECTED;
     test_ACP_GetStatus = SINK_IGNORE;
     ITfThreadMgr_SetFocus(g_tm,dmorig);
     sink_check_ok(&test_OnSetFocus,"OnSetFocus");
+
+    DestroyWindow(wnd1);
+    DestroyWindow(wnd2);
+    test_OnPopContext = SINK_OPTIONAL; /* Vista and greater */
+    test_OnSetFocus = SINK_OPTIONAL; /* Vista and greater */
+    ITfThreadMgr_GetFocus(g_tm, &test_PrevFocus);
+    test_CurrentFocus = NULL;
+    DestroyWindow(wnd3);
+    sink_check_ok(&test_OnSetFocus,"OnSetFocus");
+    sink_check_ok(&test_OnPopContext,"OnPopContext");
 }
 
 START_TEST(inputprocessor)
@@ -2044,6 +2070,7 @@ START_TEST(inputprocessor)
     {
         test_Register();
         test_RegisterCategory();
+        test_EnumLanguageProfiles();
         test_EnumInputProcessorInfo();
         test_Enable();
         test_ThreadMgrAdviseSinks();
@@ -2056,7 +2083,6 @@ START_TEST(inputprocessor)
         test_Compartments();
         test_AssociateFocus();
         test_endSession();
-        test_EnumLanguageProfiles();
         test_FindClosestCategory();
         test_Disable();
         test_ThreadMgrUnadviseSinks();
