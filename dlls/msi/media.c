@@ -333,11 +333,19 @@ static INT_PTR cabinet_copy_file(FDINOTIFICATIONTYPE fdint,
                          NULL, CREATE_ALWAYS, attrs, NULL);
     if (handle == INVALID_HANDLE_VALUE)
     {
-        if (GetFileAttributesW(path) == INVALID_FILE_ATTRIBUTES)
-            ERR("failed to create %s (error %d)\n",
-                debugstr_w(path), GetLastError());
+        DWORD err = GetLastError();
+        DWORD attrs = GetFileAttributesW(path);
 
-        goto done;
+        if (attrs == INVALID_FILE_ATTRIBUTES)
+            ERR("failed to create %s (error %d)\n", debugstr_w(path), err);
+        else if (err == ERROR_ACCESS_DENIED && (attrs & FILE_ATTRIBUTE_READONLY))
+        {
+            TRACE("removing read-only attribute on %s\n", debugstr_w(path));
+            SetFileAttributesW( path, attrs & ~FILE_ATTRIBUTE_READONLY );
+            handle = CreateFileW(path, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, attrs, NULL);
+        }
+        else
+            WARN("failed to create %s (error %d)\n", debugstr_w(path), err);
     }
 
 done:

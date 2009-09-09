@@ -381,6 +381,16 @@ static const CHAR rof_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\t
                                     "Media\tDiskId\n"
                                     "1\t1\t\t\tDISK1\t\n";
 
+static const CHAR rofc_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                    "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                    "File\tFile\n"
+                                    "maximus\tmaximus\tmaximus\t500\t\t\t16384\t1";
+
+static const CHAR rofc_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
+                                     "i2\ti4\tL64\tS255\tS32\tS72\n"
+                                     "Media\tDiskId\n"
+                                     "1\t1\t\ttest1.cab\tDISK1\t\n";
+
 static const CHAR sdp_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                                "s72\tS255\tI2\n"
                                                "InstallExecuteSequence\tAction\n"
@@ -1075,6 +1085,18 @@ static const msi_table rof_tables[] =
     ADD_TABLE(rof_file),
     ADD_TABLE(install_exec_seq),
     ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table rofc_tables[] =
+{
+    ADD_TABLE(rof_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(rof_feature_comp),
+    ADD_TABLE(rofc_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(rofc_media),
     ADD_TABLE(property),
 };
 
@@ -2573,6 +2595,55 @@ static void test_readonlyfile(void)
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
     /* Delete the files in the temp (current) folder */
+    DeleteFile("msitest\\maximus");
+    RemoveDirectory("msitest");
+    DeleteFile(msifile);
+}
+
+static void test_readonlyfile_cab(void)
+{
+    UINT r;
+    DWORD size;
+    HANDLE file;
+    CHAR path[MAX_PATH];
+    CHAR buf[16];
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("maximus", 500);
+    create_cab_file("test1.cab", MEDIA_SIZE, "maximus\0");
+    DeleteFile("maximus");
+
+    create_database(msifile, rofc_tables, sizeof(rofc_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    lstrcpy(path, PROG_FILES_DIR);
+    lstrcat(path, "\\msitest");
+    CreateDirectory(path, NULL);
+
+    lstrcat(path, "\\maximus");
+    file = CreateFile(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                      NULL, CREATE_NEW, FILE_ATTRIBUTE_READONLY, NULL);
+
+    WriteFile(file, "readonlyfile", strlen("readonlyfile"), &size, NULL);
+    CloseHandle(file);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    memset( buf, 0, sizeof(buf) );
+    if ((file = CreateFile(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                           NULL, OPEN_EXISTING, 0, NULL)) != INVALID_HANDLE_VALUE)
+    {
+        ReadFile(file, buf, sizeof(buf) - 1, &size, NULL);
+        CloseHandle(file);
+    }
+    ok( !lstrcmp( buf, "maximus" ), "Expected file to be overwritten, got '%s'\n", buf );
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    /* Delete the files in the temp (current) folder */
+    delete_cab_files();
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest");
     DeleteFile(msifile);
@@ -6160,6 +6231,7 @@ START_TEST(install)
     test_samesequence();
     test_uiLevelFlags();
     test_readonlyfile();
+    test_readonlyfile_cab();
     test_setdirproperty();
     test_cabisextracted();
     test_concurrentinstall();
