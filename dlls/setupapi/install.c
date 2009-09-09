@@ -875,8 +875,8 @@ static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
 
         initresult = CoInitialize(NULL);
 
-        if (!SUCCEEDED(CoCreateInstance( &CLSID_ShellLink, NULL,
-                                         CLSCTX_INPROC_SERVER, &IID_IShellLinkW, (LPVOID*)&shelllink)))
+        if (FAILED(CoCreateInstance( &CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+                                     &IID_IShellLinkW, (LPVOID*)&shelllink )))
             goto done;
 
         IShellLinkW_SetPath( shelllink, cmdline );
