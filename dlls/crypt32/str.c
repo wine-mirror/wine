@@ -1008,6 +1008,24 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
 
     switch (dwType)
     {
+    case CERT_NAME_RDN_TYPE:
+        if (name->cbData)
+            ret = CertNameToStrW(pCertContext->dwCertEncodingType, name,
+             *(DWORD *)pvTypePara, pszNameString, cchNameString);
+        else
+        {
+            CERT_ALT_NAME_INFO *info;
+            PCERT_ALT_NAME_ENTRY entry = cert_find_alt_name_entry(pCertContext,
+             altNameOID, CERT_ALT_NAME_DIRECTORY_NAME, &info);
+
+            if (entry)
+                ret = CertNameToStrW(pCertContext->dwCertEncodingType,
+                 &entry->DirectoryName, *(DWORD *)pvTypePara, pszNameString,
+                 cchNameString);
+            if (info)
+                LocalFree(info);
+        }
+        break;
     case CERT_NAME_ATTR_TYPE:
         ret = cert_get_name_from_rdn_attr(pCertContext->dwCertEncodingType,
          name, pvTypePara, pszNameString, cchNameString);
