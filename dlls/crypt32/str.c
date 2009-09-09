@@ -1018,7 +1018,7 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
         {
             if (!pszNameString)
                 ret = strlenW(entry->pwszRfc822Name) + 1;
-            else
+            else if (cchNameString)
             {
                 ret = min(strlenW(entry->pwszRfc822Name), cchNameString - 1);
                 memcpy(pszNameString, entry->pwszRfc822Name,
@@ -1103,7 +1103,7 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
                 {
                     if (!pszNameString)
                         ret = strlenW(entry->pwszRfc822Name) + 1;
-                    else
+                    else if (cchNameString)
                     {
                         ret = min(strlenW(entry->pwszRfc822Name),
                          cchNameString - 1);
@@ -1140,7 +1140,7 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
         {
             if (!pszNameString)
                 ret = strlenW(entry->pwszDNSName) + 1;
-            else
+            else if (cchNameString)
             {
                 ret = min(strlenW(entry->pwszDNSName), cchNameString - 1);
                 memcpy(pszNameString, entry->pwszDNSName, ret * sizeof(WCHAR));
@@ -1164,7 +1164,7 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
         {
             if (!pszNameString)
                 ret = strlenW(entry->pwszURL) + 1;
-            else
+            else if (cchNameString)
             {
                 ret = min(strlenW(entry->pwszURL), cchNameString - 1);
                 memcpy(pszNameString, entry->pwszURL, ret * sizeof(WCHAR));
