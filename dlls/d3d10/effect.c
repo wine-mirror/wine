@@ -1413,9 +1413,24 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_technique_Ge
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_technique_GetAnnotationByName(
         ID3D10EffectTechnique *iface, LPCSTR name)
 {
-    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
+    struct d3d10_effect_technique *This = (struct d3d10_effect_technique *)iface;
+    unsigned int i;
 
-    return NULL;
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    for (i = 0; i < This->annotation_count; ++i)
+    {
+        struct d3d10_effect_variable *a = &This->annotations[i];
+        if (!strcmp(a->name, name))
+        {
+            TRACE("Returning annotation %p\n", a);
+            return (ID3D10EffectVariable *)a;
+        }
+    }
+
+    WARN("Invalid name specified\n");
+
+    return (ID3D10EffectVariable *)&null_variable;
 }
 
 static struct ID3D10EffectPass * STDMETHODCALLTYPE d3d10_effect_technique_GetPassByIndex(ID3D10EffectTechnique *iface,
