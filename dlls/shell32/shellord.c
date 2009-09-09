@@ -180,7 +180,7 @@ BOOL WINAPI GetFileNameFromBrowse(
 	LPCSTR lpstrTitle)
 {
     HMODULE hmodule;
-    FARPROC pGetOpenFileNameA;
+    BOOL (WINAPI *pGetOpenFileNameA)(LPOPENFILENAMEA);
     OPENFILENAMEA ofn;
     BOOL ret;
 
@@ -190,7 +190,7 @@ BOOL WINAPI GetFileNameFromBrowse(
 
     hmodule = LoadLibraryA("comdlg32.dll");
     if(!hmodule) return FALSE;
-    pGetOpenFileNameA = GetProcAddress(hmodule, "GetOpenFileNameA");
+    pGetOpenFileNameA = (void *)GetProcAddress(hmodule, "GetOpenFileNameA");
     if(!pGetOpenFileNameA)
     {
 	FreeLibrary(hmodule);
