@@ -1972,9 +1972,24 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_constant_buf
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_constant_buffer_GetAnnotationByName(
         ID3D10EffectConstantBuffer *iface, LPCSTR name)
 {
-    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
+    struct d3d10_effect_local_buffer *This = (struct d3d10_effect_local_buffer *)iface;
+    unsigned int i;
 
-    return NULL;
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    for (i = 0; i < This->annotation_count; ++i)
+    {
+        struct d3d10_effect_variable *a = &This->annotations[i];
+        if (!strcmp(a->name, name))
+        {
+            TRACE("Returning annotation %p\n", a);
+            return (ID3D10EffectVariable *)a;
+        }
+    }
+
+    WARN("Invalid name specified\n");
+
+    return (ID3D10EffectVariable *)&null_variable;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_constant_buffer_GetMemberByIndex(
