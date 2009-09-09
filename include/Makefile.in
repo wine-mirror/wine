@@ -370,6 +370,7 @@ SRCDIR_INCLUDES = \
 	ole2ver.h \
 	oleauto.h \
 	olectl.h \
+	oledberr.h \
 	oledlg.h \
 	opnrst.idl \
 	pdh.h \
