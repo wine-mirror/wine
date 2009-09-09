@@ -190,7 +190,7 @@ typedef I_RPC_HANDLE *RPC_EP_INQ_HANDLE;
 #define RPC_C_HTTP_AUTHN_SCHEME_NEGOTIATE   0x10
 
 typedef RPC_STATUS RPC_ENTRY RPC_IF_CALLBACK_FN( RPC_IF_HANDLE InterfaceUuid, void *Context );
-typedef void (__RPC_USER *RPC_AUTH_KEY_RETRIEVAL_FN)();
+typedef void (__RPC_USER *RPC_AUTH_KEY_RETRIEVAL_FN)(void *, RPC_WSTR, ULONG, void **, RPC_STATUS *);
 
 typedef struct _RPC_POLICY
 {
