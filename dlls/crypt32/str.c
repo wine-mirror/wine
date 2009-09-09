@@ -1008,6 +1008,31 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
 
     switch (dwType)
     {
+    case CERT_NAME_EMAIL_TYPE:
+    {
+        CERT_ALT_NAME_INFO *info;
+        PCERT_ALT_NAME_ENTRY entry = cert_find_alt_name_entry(pCertContext,
+         altNameOID, CERT_ALT_NAME_RFC822_NAME, &info);
+
+        if (entry)
+        {
+            if (!pszNameString)
+                ret = strlenW(entry->pwszRfc822Name) + 1;
+            else
+            {
+                ret = min(strlenW(entry->pwszRfc822Name), cchNameString - 1);
+                memcpy(pszNameString, entry->pwszRfc822Name,
+                 ret * sizeof(WCHAR));
+                pszNameString[ret++] = 0;
+            }
+        }
+        if (info)
+            LocalFree(info);
+        if (!ret)
+            ret = cert_get_name_from_rdn_attr(pCertContext->dwCertEncodingType,
+             name, szOID_RSA_emailAddr, pszNameString, cchNameString);
+        break;
+    }
     case CERT_NAME_RDN_TYPE:
         if (name->cbData)
             ret = CertNameToStrW(pCertContext->dwCertEncodingType, name,
