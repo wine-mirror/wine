@@ -966,6 +966,25 @@ static PCERT_ALT_NAME_ENTRY cert_find_alt_name_entry(PCCERT_CONTEXT cert,
     return entry;
 }
 
+static DWORD cert_get_name_from_rdn_attr(DWORD encodingType,
+ PCERT_NAME_BLOB name, LPCSTR oid, LPWSTR pszNameString, DWORD cchNameString)
+{
+    CERT_NAME_INFO *nameInfo;
+    DWORD bytes = 0, ret = 0;
+
+    if (CryptDecodeObjectEx(encodingType, X509_NAME, name->pbData,
+     name->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &nameInfo, &bytes))
+    {
+        PCERT_RDN_ATTR nameAttr = CertFindRDNAttr(oid, nameInfo);
+
+        if (nameAttr)
+            ret = CertRDNValueToStrW(nameAttr->dwValueType, &nameAttr->Value,
+             pszNameString, cchNameString);
+        LocalFree(nameInfo);
+    }
+    return ret;
+}
+
 DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
  DWORD dwFlags, void *pvTypePara, LPWSTR pszNameString, DWORD cchNameString)
 {
@@ -989,6 +1008,22 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
 
     switch (dwType)
     {
+    case CERT_NAME_ATTR_TYPE:
+        ret = cert_get_name_from_rdn_attr(pCertContext->dwCertEncodingType,
+         name, pvTypePara, pszNameString, cchNameString);
+        if (!ret)
+        {
+            CERT_ALT_NAME_INFO *altInfo;
+            PCERT_ALT_NAME_ENTRY entry = cert_find_alt_name_entry(pCertContext,
+             altNameOID, CERT_ALT_NAME_DIRECTORY_NAME, &altInfo);
+
+            if (entry)
+                ret = cert_name_to_str_with_indent(X509_ASN_ENCODING, 0,
+                 &entry->DirectoryName, 0, pszNameString, cchNameString);
+            if (altInfo)
+                LocalFree(altInfo);
+        }
+        break;
     case CERT_NAME_SIMPLE_DISPLAY_TYPE:
     {
         static const LPCSTR simpleAttributeOIDs[] = { szOID_COMMON_NAME,
