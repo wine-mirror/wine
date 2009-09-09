@@ -1237,7 +1237,7 @@ BOOL WINAPI CommConfigDialogW(
     HWND hWnd,                 /* [in] parent window for the dialog */
     LPCOMMCONFIG lpCommConfig) /* [out] pointer to struct to fill */
 {
-    FARPROC pCommConfigDialog;
+    DWORD (WINAPI *pCommConfigDialog)(LPCWSTR, HWND, LPCOMMCONFIG);
     HMODULE hConfigModule;
     DWORD   res = ERROR_INVALID_PARAMETER;
 
@@ -1245,7 +1245,7 @@ BOOL WINAPI CommConfigDialogW(
     hConfigModule = LoadLibraryW(lpszSerialUI);
 
     if (hConfigModule) {
-        pCommConfigDialog = GetProcAddress(hConfigModule, "drvCommConfigDialogW");
+        pCommConfigDialog = (void *)GetProcAddress(hConfigModule, "drvCommConfigDialogW");
         if (pCommConfigDialog) {
             res = pCommConfigDialog(lpszDevice, hWnd, lpCommConfig);
         }
@@ -1333,7 +1333,7 @@ BOOL WINAPI SetCommConfig(
  */
 BOOL WINAPI SetDefaultCommConfigW(LPCWSTR lpszDevice, LPCOMMCONFIG lpCommConfig, DWORD dwSize)
 {
-    FARPROC lpfnSetDefaultCommConfig;
+    BOOL (WINAPI *lpfnSetDefaultCommConfig)(LPCWSTR, LPCOMMCONFIG, DWORD);
     HMODULE hConfigModule;
     BOOL r = FALSE;
 
@@ -1343,7 +1343,7 @@ BOOL WINAPI SetDefaultCommConfigW(LPCWSTR lpszDevice, LPCOMMCONFIG lpCommConfig,
     if(!hConfigModule)
         return r;
 
-    lpfnSetDefaultCommConfig = GetProcAddress(hConfigModule, "drvSetDefaultCommConfigW");
+    lpfnSetDefaultCommConfig = (void *)GetProcAddress(hConfigModule, "drvSetDefaultCommConfigW");
     if (lpfnSetDefaultCommConfig)
         r = lpfnSetDefaultCommConfig(lpszDevice, lpCommConfig, dwSize);
 
@@ -1398,7 +1398,7 @@ BOOL WINAPI GetDefaultCommConfigW(
                               afterwards the number of bytes copied to the buffer or
                               the needed size of the buffer. */
 {
-    FARPROC pGetDefaultCommConfig;
+    DWORD (WINAPI *pGetDefaultCommConfig)(LPCWSTR, LPCOMMCONFIG, LPDWORD);
     HMODULE hConfigModule;
     DWORD   res = ERROR_INVALID_PARAMETER;
 
@@ -1406,7 +1406,7 @@ BOOL WINAPI GetDefaultCommConfigW(
     hConfigModule = LoadLibraryW(lpszSerialUI);
 
     if (hConfigModule) {
-        pGetDefaultCommConfig = GetProcAddress(hConfigModule, "drvGetDefaultCommConfigW");
+        pGetDefaultCommConfig = (void *)GetProcAddress(hConfigModule, "drvGetDefaultCommConfigW");
         if (pGetDefaultCommConfig) {
             res = pGetDefaultCommConfig(lpszName, lpCC, lpdwSize);
         }
