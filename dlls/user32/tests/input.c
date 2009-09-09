@@ -894,7 +894,7 @@ static void test_Input_blackbox(void)
 
     if (GetKeyboardLayout(0) != (HKL)(ULONG_PTR)0x04090409)
     {
-        win_skip("Skipping Input_blackbox test on non-US keyboard\n");
+        skip("Skipping Input_blackbox test on non-US keyboard\n");
         return;
     }
     window = CreateWindow("Static", NULL, WS_POPUP|WS_HSCROLL|WS_VSCROLL
