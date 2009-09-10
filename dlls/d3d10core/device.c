@@ -205,8 +205,14 @@ static void STDMETHODCALLTYPE d3d10_device_IASetVertexBuffers(ID3D10Device *ifac
 static void STDMETHODCALLTYPE d3d10_device_IASetIndexBuffer(ID3D10Device *iface,
         ID3D10Buffer *buffer, DXGI_FORMAT format, UINT offset)
 {
-    FIXME("iface %p, buffer %p, format %s, offset %u stub!\n",
+    struct d3d10_device *This = (struct d3d10_device *)iface;
+
+    TRACE("iface %p, buffer %p, format %s, offset %u.\n",
             iface, buffer, debug_dxgi_format(format), offset);
+
+    IWineD3DDevice_SetIndices(This->wined3d_device, buffer ? ((struct d3d10_buffer *)buffer)->wined3d_buffer : NULL,
+            wined3dformat_from_dxgi_format(format));
+    if (offset) FIXME("offset %u not supported.\n", offset);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_DrawIndexedInstanced(ID3D10Device *iface,
