@@ -60,13 +60,13 @@ static struct d3d10_effect_pass null_pass =
 static struct d3d10_effect_local_buffer null_local_buffer =
         {&d3d10_effect_constant_buffer_vtbl, NULL, NULL, 0, 0, 0, NULL, NULL};
 static struct d3d10_effect_variable null_variable =
-        {&d3d10_effect_variable_vtbl, NULL, NULL, NULL, 0, 0, 0, NULL, NULL};
+        {&d3d10_effect_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL};
 static struct d3d10_effect_variable null_scalar_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl, NULL, NULL, NULL, 0, 0, 0, NULL, NULL};
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL};
 static struct d3d10_effect_variable null_vector_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl, NULL, NULL, NULL, 0, 0, 0, NULL, NULL};
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL};
 static struct d3d10_effect_variable null_matrix_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl, NULL, NULL, NULL, 0, 0, 0, NULL, NULL};
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL};
 
 static inline void read_dword(const char **ptr, DWORD *d)
 {
@@ -150,22 +150,26 @@ static HRESULT parse_dxbc(const char *data, SIZE_T data_size,
     return hr;
 }
 
-static char *copy_name(const char *ptr)
+static BOOL copy_name(const char *ptr, char **name)
 {
     size_t name_len;
-    char *name;
 
     name_len = strlen(ptr) + 1;
-    name = HeapAlloc(GetProcessHeap(), 0, name_len);
-    if (!name)
+    if( name_len == 1 )
     {
-        ERR("Failed to allocate name memory.\n");
-        return NULL;
+        return TRUE;
     }
 
-    memcpy(name, ptr, name_len);
+    *name = HeapAlloc(GetProcessHeap(), 0, name_len);
+    if (!*name)
+    {
+        ERR("Failed to allocate name memory.\n");
+        return FALSE;
+    }
 
-    return name;
+    memcpy(*name, ptr, name_len);
+
+    return TRUE;
 }
 
 static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
@@ -306,8 +310,7 @@ static HRESULT parse_fx10_type(struct d3d10_effect_type *t, const char *ptr, con
     read_dword(&ptr, &offset);
     TRACE("Type name at offset %#x.\n", offset);
 
-    t->name = copy_name(data + offset);
-    if (!t->name)
+    if (!copy_name(data + offset, &t->name))
     {
         ERR("Failed to copy name.\n");
         return E_OUTOFMEMORY;
@@ -431,8 +434,7 @@ static HRESULT parse_fx10_variable_head(struct d3d10_effect_variable *v, const c
     read_dword(ptr, &offset);
     TRACE("Variable name at offset %#x.\n", offset);
 
-    v->name = copy_name(data + offset);
-    if (!v->name)
+    if (!copy_name(data + offset, &v->name))
     {
         ERR("Failed to copy name.\n");
         return E_OUTOFMEMORY;
@@ -550,8 +552,7 @@ static HRESULT parse_fx10_pass(struct d3d10_effect_pass *p, const char **ptr, co
     read_dword(ptr, &offset);
     TRACE("Pass name at offset %#x.\n", offset);
 
-    p->name = copy_name(data + offset);
-    if (!p->name)
+    if (!copy_name(data + offset, &p->name))
     {
         ERR("Failed to copy name.\n");
         return E_OUTOFMEMORY;
@@ -610,8 +611,7 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
     read_dword(ptr, &offset);
     TRACE("Technique name at offset %#x.\n", offset);
 
-    t->name = copy_name(data + offset);
-    if (!t->name)
+    if (!copy_name(data + offset, &t->name))
     {
         ERR("Failed to copy name.\n");
         return E_OUTOFMEMORY;
@@ -664,13 +664,22 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
 
 static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char **ptr, const char *data)
 {
+    DWORD offset;
     unsigned int i;
     HRESULT hr;
 
     hr = parse_fx10_variable_head(v, ptr, data);
     if (FAILED(hr)) return hr;
 
-    skip_dword_unknown(ptr, 1);
+    read_dword(ptr, &offset);
+    TRACE("Variable semantic at offset %#x.\n", offset);
+
+    if (!copy_name(data + offset, &v->semantic))
+    {
+        ERR("Failed to copy semantic.\n");
+        return E_OUTOFMEMORY;
+    }
+    TRACE("Variable semantic: %s.\n", debugstr_a(v->semantic));
 
     read_dword(ptr, &v->buffer_offset);
     TRACE("Variable offset in buffer: %#x.\n", v->buffer_offset);
@@ -713,8 +722,7 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, cons
     read_dword(ptr, &offset);
     TRACE("Local buffer name at offset %#x.\n", offset);
 
-    l->name = copy_name(data + offset);
-    if (!l->name)
+    if (!copy_name(data + offset, &l->name))
     {
         ERR("Failed to copy name.\n");
         return E_OUTOFMEMORY;
@@ -988,6 +996,7 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
     TRACE("variable %p.\n", v);
 
     HeapFree(GetProcessHeap(), 0, v->name);
+    HeapFree(GetProcessHeap(), 0, v->semantic);
     if (v->annotations)
     {
         unsigned int i;

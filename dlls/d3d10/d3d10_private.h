@@ -94,6 +94,7 @@ struct d3d10_effect_variable
     struct d3d10_effect *effect;
 
     char *name;
+    char *semantic;
     DWORD buffer_offset;
     DWORD annotation_count;
     DWORD flag;
