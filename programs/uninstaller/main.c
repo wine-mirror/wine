@@ -98,7 +98,7 @@ static void RemoveSpecificProgram(WCHAR *nameW)
 
     for (i=0; i < numentries; i++)
     {
-        if (lstrcmpW(entries[i].key, nameW) == 0)
+        if (CompareStringW(GetThreadLocale(), NORM_IGNORECASE, entries[i].key, -1, nameW, -1) == CSTR_EQUAL)
         {
             entries[i].active++;
             break;
