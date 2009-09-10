@@ -142,7 +142,7 @@ static UINT STDMETHODCALLTYPE dxgi_adapter_get_ordinal(IWineDXGIAdapter *iface)
     return This->ordinal;
 }
 
-const struct IWineDXGIAdapterVtbl dxgi_adapter_vtbl =
+static const struct IWineDXGIAdapterVtbl dxgi_adapter_vtbl =
 {
     /* IUnknown methods */
     dxgi_adapter_QueryInterface,
@@ -160,3 +160,11 @@ const struct IWineDXGIAdapterVtbl dxgi_adapter_vtbl =
     /* IWineDXGIAdapter methods */
     dxgi_adapter_get_ordinal,
 };
+
+void dxgi_adapter_init(struct dxgi_adapter *adapter, IDXGIFactory *parent, UINT ordinal)
+{
+    adapter->vtbl = &dxgi_adapter_vtbl;
+    adapter->parent = parent;
+    adapter->refcount = 1;
+    adapter->ordinal = ordinal;
+}

@@ -64,7 +64,6 @@ struct dxgi_device
 };
 
 /* IDXGIAdapter */
-extern const struct IWineDXGIAdapterVtbl dxgi_adapter_vtbl;
 struct dxgi_adapter
 {
     const struct IWineDXGIAdapterVtbl *vtbl;
@@ -72,6 +71,8 @@ struct dxgi_adapter
     LONG refcount;
     UINT ordinal;
 };
+
+void dxgi_adapter_init(struct dxgi_adapter *adapter, IDXGIFactory *parent, UINT ordinal);
 
 /* IDXGISwapChain */
 extern const struct IDXGISwapChainVtbl dxgi_swapchain_vtbl;
