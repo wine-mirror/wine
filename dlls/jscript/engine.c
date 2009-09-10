@@ -2036,7 +2036,7 @@ static HRESULT in_eval(exec_ctx_t *ctx, VARIANT *lval, VARIANT *obj, jsexcept_t 
     HRESULT hres;
 
     if(V_VT(obj) != VT_DISPATCH) {
-        FIXME("throw TypeError");
+        FIXME("throw TypeError\n");
         return E_FAIL;
     }
 
