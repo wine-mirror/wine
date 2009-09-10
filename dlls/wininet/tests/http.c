@@ -1162,13 +1162,20 @@ static void test_http_cache(void)
     ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
 
     size = sizeof(file_name);
+    file_name[0] = 0;
     ret = InternetQueryOptionA(request, INTERNET_OPTION_DATAFILE_NAME, file_name, &size);
-    ok(ret, "InternetQueryOptionA(INTERNET_OPTION_DATAFILE_NAME) failed %u\n", GetLastError());
-
-    file = CreateFile(file_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+    if (ret)
+    {
+        file = CreateFile(file_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                       FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "Could not create file: %u\n", GetLastError());
-    CloseHandle(file);
+        ok(file != INVALID_HANDLE_VALUE, "Could not create file: %u\n", GetLastError());
+        CloseHandle(file);
+    }
+    else
+    {
+        /* < IE8 */
+        ok(file_name[0] == 0, "Didn't expect a file name\n");
+    }
 
     ok(InternetCloseHandle(request), "Close request handle failed\n");
     ok(InternetCloseHandle(connect), "Close connect handle failed\n");
