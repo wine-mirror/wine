@@ -449,6 +449,27 @@ static HRESULT parse_fx10_variable_head(struct d3d10_effect_variable *v, const c
         return E_FAIL;
     }
 
+    switch (v->type->type_class)
+    {
+        case D3D10_SVC_SCALAR:
+            v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl;
+            break;
+
+        case D3D10_SVC_VECTOR:
+            v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl;
+            break;
+
+        case D3D10_SVC_MATRIX_ROWS:
+        case D3D10_SVC_MATRIX_COLUMNS:
+            v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl;
+            break;
+
+        default:
+            FIXME("Unhandled type class %s.\n", debug_d3d10_shader_variable_class(v->type->type_class));
+            v->vtbl = &d3d10_effect_variable_vtbl;
+            break;
+    }
+
     return S_OK;
 }
 
@@ -554,7 +575,6 @@ static HRESULT parse_fx10_pass(struct d3d10_effect_pass *p, const char **ptr, co
     {
         struct d3d10_effect_variable *a = &p->annotations[i];
 
-        a->vtbl = &d3d10_effect_variable_vtbl;
         a->effect = p->technique->effect;
 
         hr = parse_fx10_annotation(a, ptr, data);
@@ -615,7 +635,6 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
     {
         struct d3d10_effect_variable *a = &t->annotations[i];
 
-        a->vtbl = &d3d10_effect_variable_vtbl;
         a->effect = t->effect;
 
         hr = parse_fx10_annotation(a, ptr, data);
@@ -651,27 +670,6 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
     hr = parse_fx10_variable_head(v, ptr, data);
     if (FAILED(hr)) return hr;
 
-    switch (v->type->type_class)
-    {
-        case D3D10_SVC_SCALAR:
-            v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl;
-            break;
-
-        case D3D10_SVC_VECTOR:
-            v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl;
-            break;
-
-        case D3D10_SVC_MATRIX_ROWS:
-        case D3D10_SVC_MATRIX_COLUMNS:
-            v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl;
-            break;
-
-        default:
-            FIXME("Unhandled type class %s.\n", debug_d3d10_shader_variable_class(v->type->type_class));
-            v->vtbl = &d3d10_effect_variable_vtbl;
-            break;
-    }
-
     skip_dword_unknown(ptr, 1);
 
     read_dword(ptr, &v->buffer_offset);
@@ -697,7 +695,6 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
         struct d3d10_effect_variable *a = &v->annotations[i];
         HRESULT hr;
 
-        a->vtbl = &d3d10_effect_variable_vtbl;
         a->effect = v->effect;
 
         hr = parse_fx10_annotation(a, ptr, data);
@@ -748,7 +745,6 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, cons
     {
         struct d3d10_effect_variable *a = &l->annotations[i];
 
-        a->vtbl = &d3d10_effect_variable_vtbl;
         a->effect = l->effect;
 
         hr = parse_fx10_annotation(a, ptr, data);
