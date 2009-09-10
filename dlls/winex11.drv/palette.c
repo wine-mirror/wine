@@ -791,10 +791,6 @@ BOOL X11DRV_IsSolidColor( COLORREF color )
 COLORREF X11DRV_PALETTE_ToLogical(X11DRV_PDEVICE *physDev, int pixel)
 {
     XColor color;
-    ColorShifts *shifts = &X11DRV_PALETTE_default_shifts;
-
-    if(physDev->color_shifts)
-        shifts = physDev->color_shifts;
 
 #if 0
     /* truecolor visual */
@@ -806,6 +802,11 @@ COLORREF X11DRV_PALETTE_ToLogical(X11DRV_PDEVICE *physDev, int pixel)
 
     if ( (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_FIXED) && !X11DRV_PALETTE_Graymax )
     {
+         ColorShifts *shifts = &X11DRV_PALETTE_default_shifts;
+
+         if(physDev->color_shifts)
+             shifts = physDev->color_shifts;
+
          color.red = (pixel >> shifts->logicalRed.shift) & shifts->logicalRed.max;
          if (shifts->logicalRed.scale<8)
              color.red=  color.red   << (8-shifts->logicalRed.scale) |
