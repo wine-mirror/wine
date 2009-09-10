@@ -396,11 +396,9 @@ static void test_DPA_Merge(void)
     memset(nMessages, 0, sizeof(nMessages));
     pDPA_Merge(dpa2, dpa, DPAM_INTERSECT,
                CB_CmpLT, CB_MergeDeleteOddSrc, 0xdeadbeef);
-    todo_wine
-    {
-        rc = CheckDPA(dpa2, 0x246, &dw);
-        ok(rc, "dw=0x%x\n", dw);
-    }
+    rc = CheckDPA(dpa2, 0x246, &dw);
+    ok(rc, "dw=0x%x\n", dw);
+
     expect(3, nMessages[DPAMM_MERGE]);
     expect(3, nMessages[DPAMM_DELETE]);
     expect(0, nMessages[DPAMM_INSERT]);
@@ -415,11 +413,9 @@ static void test_DPA_Merge(void)
     memset(nMessages, 0, sizeof(nMessages));
     pDPA_Merge(dpa2, dpa, DPAM_INTERSECT,
                CB_CmpLT, CB_MergeInsertSrc, 0xdeadbeef);
-    todo_wine
-    {
-        rc = CheckDPA(dpa2, 0x135, &dw);
-        ok(rc, "dw=0x%x\n", dw);
-    }
+    rc = CheckDPA(dpa2, 0x135, &dw);
+    ok(rc, "dw=0x%x\n", dw);
+
     expect(3, nMessages[DPAMM_MERGE]);
     expect(6, nMessages[DPAMM_DELETE]);
     expect(0, nMessages[DPAMM_INSERT]);

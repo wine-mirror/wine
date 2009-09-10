@@ -311,7 +311,7 @@ BOOL WINAPI DPA_Merge (HDPA hdpa1, HDPA hdpa2, DWORD dwFlags,
                 /* Now delete the extra item in DPA1 */
                 PVOID ptr;
 
-                ptr = DPA_DeletePtr (hdpa1, hdpa1->nItemCount - 1);
+                ptr = DPA_DeletePtr (hdpa1, nIndex);
 
                 (pfnMerge)(DPAMM_DELETE, ptr, NULL, lParam);
             }
