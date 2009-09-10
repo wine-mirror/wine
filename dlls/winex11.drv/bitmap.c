@@ -102,6 +102,7 @@ HBITMAP CDECL X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 
     physDev->bitmap = physBitmap;
     physDev->drawable = physBitmap->pixmap;
+    physDev->color_shifts = physBitmap->trueColor ? &physBitmap->pixmap_color_shifts : NULL;
     SetRect( &physDev->drawable_rect, 0, 0, bitmap.bmWidth, bitmap.bmHeight );
     physDev->dc_rect = physDev->drawable_rect;
 
@@ -118,11 +119,6 @@ HBITMAP CDECL X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
         XFlush( gdi_display );
         wine_tsx11_unlock();
     }
-
-    if(physDev->depth == 1)
-        physDev->color_shifts = NULL;
-    else
-        physDev->color_shifts = &physBitmap->pixmap_color_shifts;
 
     return hbitmap;
 }
@@ -167,11 +163,13 @@ BOOL CDECL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, LPVOID
     if(bitmap.bmBitsPixel == 1)
     {
         physBitmap->pixmap_depth = 1;
+        physBitmap->trueColor = FALSE;
     }
     else
     {
         physBitmap->pixmap_depth = screen_depth;
         physBitmap->pixmap_color_shifts = X11DRV_PALETTE_default_shifts;
+        physBitmap->trueColor = (visual->class == TrueColor || visual->class == DirectColor);
     }
     physBitmap->pixmap = XCreatePixmap(gdi_display, root_window,
                                        bitmap.bmWidth, bitmap.bmHeight, physBitmap->pixmap_depth);

@@ -4749,11 +4749,13 @@ HBITMAP CDECL X11DRV_CreateDIBSection( X11DRV_PDEVICE *physDev, HBITMAP hbitmap,
     if(dib.dsBm.bmBitsPixel == 1)
     {
         physBitmap->pixmap_depth = 1;
+        physBitmap->trueColor = FALSE;
     }
     else
     {
         physBitmap->pixmap_depth = screen_depth;
         physBitmap->pixmap_color_shifts = X11DRV_PALETTE_default_shifts;
+        physBitmap->trueColor = (visual->class == TrueColor || visual->class == DirectColor);
     }
 #ifdef HAVE_LIBXXSHM
     physBitmap->shminfo.shmid = -1;
