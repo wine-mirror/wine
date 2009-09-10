@@ -617,7 +617,6 @@ LDPATH
 BUILTINFLAG
 EXTRACFLAGS
 LIBKSTAT
-LIBOPENAL
 LIBMPG123
 PNGINCL
 FONTCONFIGINCL
@@ -655,6 +654,7 @@ CROSSTARGETFLAGS
 CROSSTEST
 CROSSCC
 CARBONLIB
+LIBOPENAL
 COREAUDIO
 DISKARBITRATIONLIB
 LDEXECFLAGS
@@ -2622,7 +2622,7 @@ fi
 
 # Check whether --with-openal was given.
 if test "${with_openal+set}" = set; then :
-  withval=$with_openal; if test "x$withval" = "xno"; then ac_cv_header_AL_al_h=no; fi
+  withval=$with_openal; if test "x$withval" = "xno"; then ac_cv_header_AL_al_h=no; ac_cv_header_OpenAL_al_h=no; fi
 fi
 
 
@@ -5666,6 +5666,7 @@ for ac_header in \
 	DiskArbitration/DiskArbitration.h \
 	IOKit/IOKitLib.h \
 	IOKit/hid/IOHIDLib.h \
+	OpenAL/al.h \
 	alias.h \
 	alsa/asoundlib.h \
 	arpa/inet.h \
@@ -6495,6 +6496,12 @@ fi
     then
                 COREAUDIO="-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI"
 
+    fi
+    if test "$ac_cv_header_OpenAL_al_h" = "yes"
+    then
+        LIBOPENAL="-framework OpenAL"
+
+        ac_cv_lib_openal_alGetSource3i=yes
     fi
     if test "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes"
     then

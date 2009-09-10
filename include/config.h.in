@@ -555,6 +555,9 @@
 /* Define if mkdir takes only one argument */
 #undef HAVE_ONE_ARG_MKDIR
 
+/* Define to 1 if you have the <OpenAL/al.h> header file. */
+#undef HAVE_OPENAL_AL_H
+
 /* Define if OpenGL is present on the system */
 #undef HAVE_OPENGL
 

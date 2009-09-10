@@ -54,7 +54,7 @@ AC_ARG_WITH(mpg123,    AS_HELP_STRING([--without-mpg123],[do not use the mpg123 
 AC_ARG_WITH(nas,       AS_HELP_STRING([--without-nas],[do not use the NAS sound support]),
             [if test "x$withval" = "xno"; then ac_cv_header_audio_audiolib_h=no; fi])
 AC_ARG_WITH(openal,    AS_HELP_STRING([--without-openal],[do not use OpenAL]),
-            [if test "x$withval" = "xno"; then ac_cv_header_AL_al_h=no; fi])
+            [if test "x$withval" = "xno"; then ac_cv_header_AL_al_h=no; ac_cv_header_OpenAL_al_h=no; fi])
 AC_ARG_WITH(opengl,    AS_HELP_STRING([--without-opengl],[do not use OpenGL]))
 AC_ARG_WITH(openssl,   AS_HELP_STRING([--without-openssl],[do not use OpenSSL]),
             [if test "x$withval" = "xno"; then ac_cv_header_openssl_err_h=no; ac_cv_header_openssl_ssl_h=no; fi])
@@ -303,6 +303,7 @@ AC_CHECK_HEADERS(\
 	DiskArbitration/DiskArbitration.h \
 	IOKit/IOKitLib.h \
 	IOKit/hid/IOHIDLib.h \
+	OpenAL/al.h \
 	alias.h \
 	alsa/asoundlib.h \
 	arpa/inet.h \
@@ -627,6 +628,11 @@ case $host_os in
     then
         dnl CoreServices needed by AudioUnit
         AC_SUBST(COREAUDIO,"-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI")
+    fi
+    if test "$ac_cv_header_OpenAL_al_h" = "yes"
+    then
+        AC_SUBST(LIBOPENAL,"-framework OpenAL")
+        ac_cv_lib_openal_alGetSource3i=yes
     fi
     if test "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes"
     then
