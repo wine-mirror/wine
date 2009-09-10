@@ -427,39 +427,40 @@ static WineXRenderFormat *get_xrender_format(WXRFormat format)
     return NULL;
 }
 
-static WineXRenderFormat *get_xrender_format_from_pdevice(X11DRV_PDEVICE *physDev)
+static WineXRenderFormat *get_xrender_format_from_color_shifts(int depth, ColorShifts *shifts)
 {
-    if(physDev->depth == 1)
+    int redMask, greenMask, blueMask;
+    unsigned int i;
+
+    if(depth == 1)
         return get_xrender_format(WXR_FORMAT_MONO);
+
     /* physDevs of a depth <=8, don't have color_shifts set and XRender can't handle those except for 1-bit */
-    else if(!physDev->color_shifts)
+    if(!shifts)
         return default_format;
-    else
+
+    redMask   = shifts->physicalRed.max << shifts->physicalRed.shift;
+    greenMask = shifts->physicalGreen.max << shifts->physicalGreen.shift;
+    blueMask  = shifts->physicalBlue.max << shifts->physicalBlue.shift;
+
+    /* Try to locate a format which matches the specification of the dibsection. */
+    for(i = 0; i < (sizeof(wxr_formats_template) / sizeof(wxr_formats_template[0])); i++)
     {
-        int redMask=0, greenMask=0, blueMask=0;
-        int i;
-        ColorShifts *shifts = physDev->color_shifts;
+        if( depth     == wxr_formats_template[i].depth &&
+            redMask   == (wxr_formats_template[i].redMask << wxr_formats_template[i].red) &&
+            greenMask == (wxr_formats_template[i].greenMask << wxr_formats_template[i].green) &&
+            blueMask  == (wxr_formats_template[i].blueMask << wxr_formats_template[i].blue) )
 
-        redMask   = shifts->physicalRed.max << shifts->physicalRed.shift;
-        greenMask = shifts->physicalGreen.max << shifts->physicalGreen.shift;
-        blueMask  = shifts->physicalBlue.max << shifts->physicalBlue.shift;
-
-        /* Try to locate a format which matches the specification of the dibsection. */
-        for(i = 0; i < (sizeof(wxr_formats_template) / sizeof(wxr_formats_template[0])); i++)
         {
-            if( physDev->depth == wxr_formats_template[i].depth &&
-                redMask   == (wxr_formats_template[i].redMask << wxr_formats_template[i].red) &&
-                greenMask == (wxr_formats_template[i].greenMask << wxr_formats_template[i].green) &&
-                blueMask  == (wxr_formats_template[i].blueMask << wxr_formats_template[i].blue) )
-
-            {
-                /* When we reach this stage the format was found in our template table but this doesn't mean that
-                * the Xserver also supports this format (e.g. its depth might be too low). The call below verifies that.
-                */
-                return get_xrender_format(wxr_formats_template[i].wxr_format);
-            }
+            /* When we reach this stage the format was found in our template table but this doesn't mean that
+            * the Xserver also supports this format (e.g. its depth might be too low). The call below verifies that.
+            */
+            return get_xrender_format(wxr_formats_template[i].wxr_format);
         }
     }
+
+    /* This should not happen because when we reach 'shifts' must have been set and we only allows shifts which are backed by X */
+    ERR("No XRender format found!\n");
     return NULL;
 }
 
@@ -1398,7 +1399,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     unsigned int idx;
     double cosEsc, sinEsc;
     LOGFONTW lf;
-    WineXRenderFormat *dst_format = get_xrender_format_from_pdevice(physDev);
+    WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDev->depth, physDev->color_shifts);
     Picture tile_pict = 0;
 
     /* Do we need to disable antialiasing because of palette mode? */
@@ -1804,7 +1805,7 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     POINT pts[2];
     BOOL top_down = FALSE;
     RGNDATA *rgndata;
-    WineXRenderFormat *dst_format = get_xrender_format_from_pdevice(devDst);
+    WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(devDst->depth, devDst->color_shifts);
     WineXRenderFormat *src_format;
     int repeat_src;
 
@@ -1994,8 +1995,8 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
     int height = visRectDst->bottom - visRectDst->top;
     int x_src = physDevSrc->dc_rect.left + visRectSrc->left;
     int y_src = physDevSrc->dc_rect.top + visRectSrc->top;
-    WineXRenderFormat *src_format = get_xrender_format_from_pdevice(physDevSrc);
-    WineXRenderFormat *dst_format = get_xrender_format_from_pdevice(physDevDst);
+    WineXRenderFormat *src_format = get_xrender_format_from_color_shifts(physDevSrc->depth, physDevSrc->color_shifts);
+    WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDevDst->depth, physDevDst->color_shifts);
     Picture src_pict=0, dst_pict=0, mask_pict=0;
 
     double xscale = widthSrc/(double)widthDst;
