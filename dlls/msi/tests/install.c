@@ -6212,7 +6212,7 @@ static void test_shortcut(void)
     ok(SUCCEEDED(hr), "CoInitialize failed 0x%08x\n", hr);
 
     r = MsiInstallProductA(msifile, NULL);
-    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     CoUninitialize();
 

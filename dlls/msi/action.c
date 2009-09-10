@@ -3387,16 +3387,12 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
         return ERROR_SUCCESS;
 
     res = CoInitialize( NULL );
-    if (FAILED (res))
-    {
-        ERR("CoInitialize failed\n");
-        return ERROR_FUNCTION_FAILED;
-    }
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_CreateShortcuts, package);
     msiobj_release(&view->hdr);
 
-    CoUninitialize();
+    if (SUCCEEDED(res))
+        CoUninitialize();
 
     return rc;
 }
