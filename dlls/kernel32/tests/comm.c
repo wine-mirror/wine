@@ -1643,6 +1643,15 @@ static void  test_WaitBreak(HANDLE hcom)
     ok(ClearCommBreak(hcom), "ClearCommBreak failed\n");
 }
 
+static void test_stdio(void)
+{
+    DCB dcb;
+
+    /* cygwin tries this to determine the stdin handle type */
+    ok( !GetCommState( GetStdHandle(STD_INPUT_HANDLE), &dcb ), "GetCommState succeeded on stdin\n" );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %u\n", GetLastError() );
+}
+
 START_TEST(comm)
 {
     HANDLE hcom;
@@ -1735,4 +1744,5 @@ START_TEST(comm)
 	test_WaitBreak(hcom);
 	CloseHandle(hcom);
     }
+    test_stdio();
 }

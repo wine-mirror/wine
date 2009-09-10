@@ -1110,8 +1110,17 @@ static inline NTSTATUS io_control(HANDLE hDevice,
 
     if (dwIoControlCode != IOCTL_SERIAL_GET_TIMEOUTS &&
         dwIoControlCode != IOCTL_SERIAL_SET_TIMEOUTS)
-        if ((status = server_get_unix_fd( hDevice, access, &fd, &needs_close, NULL, NULL )))
+    {
+        enum server_fd_type type;
+        if ((status = server_get_unix_fd( hDevice, access, &fd, &needs_close, &type, NULL )))
             goto error;
+        if (type != FD_TYPE_SERIAL)
+        {
+            if (needs_close) close( fd );
+            status = STATUS_OBJECT_TYPE_MISMATCH;
+            goto error;
+        }
+    }
 
     switch (dwIoControlCode)
     {
