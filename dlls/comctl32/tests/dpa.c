@@ -33,14 +33,6 @@
 
 #define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
 
-typedef struct _ITEMDATA
-{
-    INT   iPos;
-    PVOID pvData;
-} ITEMDATA, *LPITEMDATA;
-
-typedef HRESULT (CALLBACK *PFNDPASTM)(LPITEMDATA,IStream*,LPARAM);
-
 static HDPA    (WINAPI *pDPA_Clone)(const HDPA,const HDPA);
 static HDPA    (WINAPI *pDPA_Create)(INT);
 static HDPA    (WINAPI *pDPA_CreateEx)(INT,HANDLE);
@@ -53,9 +45,9 @@ static INT     (WINAPI *pDPA_GetPtr)(const HDPA,INT);
 static INT     (WINAPI *pDPA_GetPtrIndex)(const HDPA,PVOID);
 static BOOL    (WINAPI *pDPA_Grow)(HDPA,INT);
 static INT     (WINAPI *pDPA_InsertPtr)(const HDPA,INT,PVOID);
-static HRESULT (WINAPI *pDPA_LoadStream)(HDPA*,PFNDPASTM,IStream*,LPARAM);
+static HRESULT (WINAPI *pDPA_LoadStream)(HDPA*,PFNDPASTREAM,IStream*,LPARAM);
 static BOOL    (WINAPI *pDPA_Merge)(const HDPA,const HDPA,DWORD,PFNDPACOMPARE,PFNDPAMERGE,LPARAM);
-static HRESULT (WINAPI *pDPA_SaveStream)(HDPA,PFNDPASTM,IStream*,LPARAM);
+static HRESULT (WINAPI *pDPA_SaveStream)(HDPA,PFNDPASTREAM,IStream*,LPARAM);
 static INT     (WINAPI *pDPA_Search)(HDPA,PVOID,INT,PFNDPACOMPARE,LPARAM,UINT);
 static BOOL    (WINAPI *pDPA_SetPtr)(const HDPA,INT,PVOID);
 static BOOL    (WINAPI *pDPA_Sort)(const HDPA,PFNDPACOMPARE,LPARAM);
@@ -140,29 +132,29 @@ static INT CALLBACK CB_EnumFirstThree(PVOID pItem, PVOID lp)
     return pItem != (PVOID)3;
 }
 
-static HRESULT CALLBACK CB_Save(LPITEMDATA pInfo, IStream *pStm, LPARAM lp)
+static HRESULT CALLBACK CB_Save(DPASTREAMINFO *pInfo, IStream *pStm, LPVOID lp)
 {
     HRESULT hRes;
     
-    ok(lp == 0xdeadbeef, "lp=%ld\n", lp);
+    ok(lp == (LPVOID)0xdeadbeef, "lp=%p\n", lp);
     hRes = IStream_Write(pStm, &pInfo->iPos, sizeof(INT), NULL);
     ok(hRes == S_OK, "hRes=0x%x\n", hRes);
-    hRes = IStream_Write(pStm, &pInfo->pvData, sizeof(PVOID), NULL);
+    hRes = IStream_Write(pStm, &pInfo->pvItem, sizeof(PVOID), NULL);
     ok(hRes == S_OK, "hRes=0x%x\n", hRes);
     return S_OK;
 }
 
-static HRESULT CALLBACK CB_Load(LPITEMDATA pInfo, IStream *pStm, LPARAM lp)
+static HRESULT CALLBACK CB_Load(DPASTREAMINFO *pInfo, IStream *pStm, LPVOID lp)
 {
     HRESULT hRes;
     INT iOldPos;
     
     iOldPos = pInfo->iPos;
-    ok(lp == 0xdeadbeef, "lp=%ld\n", lp);
+    ok(lp == (LPVOID)0xdeadbeef, "lp=%p\n", lp);
     hRes = IStream_Read(pStm, &pInfo->iPos, sizeof(INT), NULL);
     ok(hRes == S_OK, "hRes=0x%x\n", hRes);
     ok(pInfo->iPos == iOldPos, "iPos=%d iOldPos=%d\n", pInfo->iPos, iOldPos);
-    hRes = IStream_Read(pStm, &pInfo->pvData, sizeof(PVOID), NULL);
+    hRes = IStream_Read(pStm, &pInfo->pvItem, sizeof(PVOID), NULL);
     ok(hRes == S_OK, "hRes=0x%x\n", hRes);
     return S_OK;
 }

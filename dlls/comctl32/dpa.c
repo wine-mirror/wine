@@ -61,15 +61,6 @@ typedef struct _STREAMDATA
     DWORD dwItems;
 } STREAMDATA, *PSTREAMDATA;
 
-typedef struct _LOADDATA
-{
-    INT   nCount;
-    PVOID ptr;
-} LOADDATA, *LPLOADDATA;
-
-typedef HRESULT (CALLBACK *DPALOADPROC)(LPLOADDATA,IStream*,LPARAM);
-
-
 /**************************************************************************
  * DPA_LoadStream [COMCTL32.9]
  *
@@ -79,29 +70,29 @@ typedef HRESULT (CALLBACK *DPALOADPROC)(LPLOADDATA,IStream*,LPARAM);
  *     phDpa    [O] pointer to a handle to a dynamic pointer array
  *     loadProc [I] pointer to a callback function
  *     pStream  [I] pointer to a stream
- *     lParam   [I] application specific value
+ *     pData    [I] pointer to callback data
  *
  * RETURNS
  *     Success: TRUE
- *     Failure: FALSE 
+ *     Failure: FALSE
  *
  * NOTES
  *     No more information available yet!
  */
-HRESULT WINAPI DPA_LoadStream (HDPA *phDpa, DPALOADPROC loadProc,
-                               IStream *pStream, LPARAM lParam)
+HRESULT WINAPI DPA_LoadStream (HDPA *phDpa, PFNDPASTREAM loadProc,
+                               IStream *pStream, LPVOID pData)
 {
     HRESULT errCode;
     LARGE_INTEGER position;
     ULARGE_INTEGER newPosition;
     STREAMDATA  streamData;
-    LOADDATA loadData;
+    DPASTREAMINFO streamInfo;
     ULONG ulRead;
     HDPA hDpa;
     PVOID *ptr;
 
-    FIXME ("phDpa=%p loadProc=%p pStream=%p lParam=%lx\n",
-           phDpa, loadProc, pStream, lParam);
+    FIXME ("phDpa=%p loadProc=%p pStream=%p pData=%p\n",
+           phDpa, loadProc, pStream, pData);
 
     if (!phDpa || !loadProc || !pStream)
         return E_INVALIDARG;
@@ -127,7 +118,7 @@ HRESULT WINAPI DPA_LoadStream (HDPA *phDpa, DPALOADPROC loadProc,
            streamData.dwSize, streamData.dwData2, streamData.dwItems);
 
     if ( ulRead < sizeof(STREAMDATA) ||
-    lParam < sizeof(STREAMDATA) ||
+    (DWORD)pData < sizeof(STREAMDATA) ||
         streamData.dwSize < sizeof(STREAMDATA) ||
         streamData.dwData2 < 1) {
         errCode = E_FAIL;
@@ -146,19 +137,19 @@ HRESULT WINAPI DPA_LoadStream (HDPA *phDpa, DPALOADPROC loadProc,
 
     /* load data from the stream into the dpa */
     ptr = hDpa->ptrs;
-    for (loadData.nCount = 0; loadData.nCount < streamData.dwItems; loadData.nCount++) {
-        errCode = (loadProc)(&loadData, pStream, lParam);
+    for (streamInfo.iPos = 0; streamInfo.iPos < streamData.dwItems; streamInfo.iPos++) {
+        errCode = (loadProc)(&streamInfo, pStream, pData);
         if (errCode != S_OK) {
             errCode = S_FALSE;
             break;
         }
 
-        *ptr = loadData.ptr;
+        *ptr = streamInfo.pvItem;
         ptr++;
     }
 
     /* set the number of items */
-    hDpa->nItemCount = loadData.nCount;
+    hDpa->nItemCount = streamInfo.iPos;
 
     /* store the handle to the dpa */
     *phDpa = hDpa;
@@ -177,21 +168,21 @@ HRESULT WINAPI DPA_LoadStream (HDPA *phDpa, DPALOADPROC loadProc,
  *     hDpa     [I] handle to a dynamic pointer array
  *     loadProc [I] pointer to a callback function
  *     pStream  [I] pointer to a stream
- *     lParam   [I] application specific value
+ *     pData    [I] pointer to callback data
  *
  * RETURNS
  *     Success: TRUE
- *     Failure: FALSE 
+ *     Failure: FALSE
  *
  * NOTES
  *     No more information available yet!
  */
-HRESULT WINAPI DPA_SaveStream (const HDPA hDpa, DPALOADPROC loadProc,
-                               IStream *pStream, LPARAM lParam)
+HRESULT WINAPI DPA_SaveStream (const HDPA hDpa, PFNDPASTREAM loadProc,
+                               IStream *pStream, LPVOID pData)
 {
 
-    FIXME ("hDpa=%p loadProc=%p pStream=%p lParam=%lx\n",
-           hDpa, loadProc, pStream, lParam);
+    FIXME ("hDpa=%p loadProc=%p pStream=%p pData=%p\n",
+           hDpa, loadProc, pStream, pData);
 
     return E_FAIL;
 }

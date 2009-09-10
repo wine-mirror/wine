@@ -5011,6 +5011,19 @@ void   WINAPI DPA_DestroyCallback(HDPA, PFNDPAENUMCALLBACK, LPVOID);
 INT    WINAPI DPA_Search(HDPA, LPVOID, INT, PFNDPACOMPARE, LPARAM, UINT);
 BOOL   WINAPI DPA_Merge(HDPA, HDPA, DWORD, PFNDPACOMPARE, PFNDPAMERGE, LPARAM);
 
+/* save/load from stream */
+typedef struct _DPASTREAMINFO
+{
+    INT    iPos;   /* item index */
+    LPVOID pvItem;
+} DPASTREAMINFO;
+
+struct IStream;
+typedef HRESULT (CALLBACK *PFNDPASTREAM)(DPASTREAMINFO*, struct IStream*, LPVOID);
+
+HRESULT WINAPI DPA_LoadStream(HDPA*, PFNDPASTREAM, struct IStream*, LPVOID);
+HRESULT WINAPI DPA_SaveStream(HDPA, PFNDPASTREAM, struct IStream*, LPVOID);
+
 BOOL WINAPI Str_SetPtrW (LPWSTR *, LPCWSTR);
 
 /**************************************************************************
