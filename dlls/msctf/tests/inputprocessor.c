@@ -118,7 +118,7 @@ static inline void _sink_fire_ok(INT *sink, const CHAR* name)
 
 #define sink_fire_ok(a,b) (winetest_set_location(__FILE__,__LINE__), 0) ? 0 : _sink_fire_ok(a,b)
 
-inline void _sink_check_ok(INT *sink, const CHAR* name)
+static inline void _sink_check_ok(INT *sink, const CHAR* name)
 {
     int action = *sink & SINK_ACTION_MASK;
 
