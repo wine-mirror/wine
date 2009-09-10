@@ -175,7 +175,7 @@ ALCboolean CDECL wine_alcMakeContextCurrent(ALCcontext *context)
 
     EnterCriticalSection(&openal_cs);
     if(context && !(ctx=ValidateCtx(context)))
-        FIXME("Could not find context %p in context list\n", context);
+        WARN("Could not find context %p in context list\n", context);
 
     if(alcMakeContextCurrent(context) == ALC_FALSE)
     {
@@ -252,7 +252,7 @@ ALvoid CDECL wine_alcDestroyContext(ALCcontext *context)
 
     if(!(*list))
     {
-        FIXME("Could not find context %p in context list\n", context);
+        WARN("Could not find context %p in context list\n", context);
         alcDestroyContext(context);
         LeaveCriticalSection(&openal_cs);
         return;
