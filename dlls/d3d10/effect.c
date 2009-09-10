@@ -344,8 +344,8 @@ static HRESULT parse_fx10_type(struct d3d10_effect_type *t, const char *ptr, con
         TRACE("Type description: %#x.\n", tmp);
         TRACE("\tcolumns: %u.\n", t->column_count);
         TRACE("\trows: %u.\n", t->row_count);
-        TRACE("\tbasetype: %#x.\n", t->basetype);
-        TRACE("\tclass: %#x.\n", t->type_class);
+        TRACE("\tbasetype: %s.\n", debug_d3d10_shader_variable_type(t->basetype));
+        TRACE("\tclass: %s.\n", debug_d3d10_shader_variable_class(t->type_class));
         TRACE("\tunknown bits: %#x.\n", tmp & ~(D3D10_FX10_TYPE_COLUMN_MASK | D3D10_FX10_TYPE_ROW_MASK
                 | D3D10_FX10_TYPE_BASETYPE_MASK | D3D10_FX10_TYPE_CLASS_MASK));
     }
