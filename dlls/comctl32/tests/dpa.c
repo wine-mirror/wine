@@ -31,6 +31,8 @@
 
 #include "wine/test.h"
 
+#define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
+
 typedef struct _ITEMDATA
 {
     INT   iPos;
@@ -105,14 +107,22 @@ static INT CALLBACK CB_CmpGT(PVOID p1, PVOID p2, LPARAM lp)
     return p1 > p2 ? -1 : p1 < p2 ? 1 : 0;
 }
 
+/* merge callback messages counter
+   DPAMM_MERGE     1
+   DPAMM_DELETE    2
+   DPAMM_INSERT    3  */
+static INT nMessages[4];
+
 static PVOID CALLBACK CB_MergeInsertSrc(UINT op, PVOID p1, PVOID p2, LPARAM lp)
 {
+    nMessages[op]++;
     ok(lp == 0xdeadbeef, "lp=%ld\n", lp);
     return p1;
 }        
 
 static PVOID CALLBACK CB_MergeDeleteOddSrc(UINT op, PVOID p1, PVOID p2, LPARAM lp)
 {
+    nMessages[op]++;
     ok(lp == 0xdeadbeef, "lp=%ld\n", lp);
     return ((PCHAR)p2)+1;
 }
@@ -383,6 +393,7 @@ static void test_DPA_Merge(void)
     ok(rc, "dw=0x%x\n", dw);
 
     /* Delete all odd entries from dpa2 */
+    memset(nMessages, 0, sizeof(nMessages));
     pDPA_Merge(dpa2, dpa, DPAM_INTERSECT,
                CB_CmpLT, CB_MergeDeleteOddSrc, 0xdeadbeef);
     todo_wine
@@ -390,12 +401,69 @@ static void test_DPA_Merge(void)
         rc = CheckDPA(dpa2, 0x246, &dw);
         ok(rc, "dw=0x%x\n", dw);
     }
+    expect(3, nMessages[DPAMM_MERGE]);
+    expect(3, nMessages[DPAMM_DELETE]);
+    expect(0, nMessages[DPAMM_INSERT]);
+
+    for (i = 0; i < 6; i++)
+    {
+        ret = pDPA_InsertPtr(dpa2, i, (PVOID)(6-i));
+        ok(ret == i, "ret=%d\n", ret);
+    }
+
+    /* DPAM_INTERSECT - returning source while merging */
+    memset(nMessages, 0, sizeof(nMessages));
+    pDPA_Merge(dpa2, dpa, DPAM_INTERSECT,
+               CB_CmpLT, CB_MergeInsertSrc, 0xdeadbeef);
+    todo_wine
+    {
+        rc = CheckDPA(dpa2, 0x135, &dw);
+        ok(rc, "dw=0x%x\n", dw);
+    }
+    expect(3, nMessages[DPAMM_MERGE]);
+    expect(6, nMessages[DPAMM_DELETE]);
+    expect(0, nMessages[DPAMM_INSERT]);
+
+    /* DPAM_UNION */
+    pDPA_DeleteAllPtrs(dpa);
+    pDPA_InsertPtr(dpa, 0, (PVOID)1);
+    pDPA_InsertPtr(dpa, 1, (PVOID)3);
+    pDPA_InsertPtr(dpa, 2, (PVOID)5);
+    pDPA_DeleteAllPtrs(dpa2);
+    pDPA_InsertPtr(dpa2, 0, (PVOID)2);
+    pDPA_InsertPtr(dpa2, 1, (PVOID)4);
+    pDPA_InsertPtr(dpa2, 2, (PVOID)6);
+
+    memset(nMessages, 0, sizeof(nMessages));
+    pDPA_Merge(dpa2, dpa, DPAM_UNION,
+               CB_CmpLT, CB_MergeInsertSrc, 0xdeadbeef);
+    rc = CheckDPA(dpa2, 0x123456, &dw);
+    ok(rc, "dw=0x%x\n", dw);
+
+    expect(0, nMessages[DPAMM_MERGE]);
+    expect(0, nMessages[DPAMM_DELETE]);
+    expect(3, nMessages[DPAMM_INSERT]);
 
     /* Merge dpa3 into dpa2 and dpa */
+    memset(nMessages, 0, sizeof(nMessages));
     pDPA_Merge(dpa, dpa3, DPAM_UNION|DPAM_SORTED,
                CB_CmpLT, CB_MergeInsertSrc, 0xdeadbeef);
+    expect(3, nMessages[DPAMM_MERGE]);
+    expect(0, nMessages[DPAMM_DELETE]);
+    expect(3, nMessages[DPAMM_INSERT]);
+
+
+    pDPA_DeleteAllPtrs(dpa2);
+    pDPA_InsertPtr(dpa2, 0, (PVOID)2);
+    pDPA_InsertPtr(dpa2, 1, (PVOID)4);
+    pDPA_InsertPtr(dpa2, 2, (PVOID)6);
+
+    memset(nMessages, 0, sizeof(nMessages));
     pDPA_Merge(dpa2, dpa3, DPAM_UNION|DPAM_SORTED,
                CB_CmpLT, CB_MergeInsertSrc, 0xdeadbeef);
+    expect(3, nMessages[DPAMM_MERGE]);
+    expect(0, nMessages[DPAMM_DELETE]);
+    expect(3, nMessages[DPAMM_INSERT]);
 
     rc = CheckDPA(dpa,  0x123456, &dw);
     ok(rc, "dw=0x%x\n",  dw);
