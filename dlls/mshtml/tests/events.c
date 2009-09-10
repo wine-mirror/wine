@@ -105,9 +105,9 @@ static const char *debugstr_guid(REFIID riid)
 
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
-    WCHAR buf[512];
-    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(WCHAR));
-    return lstrcmpW(strw, buf);
+    CHAR buf[512];
+    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
+    return lstrcmpA(stra, buf);
 }
 
 static BSTR a2bstr(const char *str)
@@ -1357,12 +1357,10 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
         BSTR state;
         HRESULT hres;
 
-        static const WCHAR completeW[] = {'c','o','m','p','l','e','t','e',0};
-
         hres = IHTMLDocument2_get_readyState(notif_doc, &state);
         ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
 
-        if(!lstrcmpW(state, completeW))
+        if(!strcmp_wa(state, "complete"))
             doc_complete = TRUE;
 
         SysFreeString(state);
@@ -1524,19 +1522,18 @@ static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 static HWND create_container_window(void)
 {
-    static const WCHAR wszHTMLDocumentTest[] =
-        {'H','T','M','L','D','o','c','u','m','e','n','t','T','e','s','t',0};
-    static WNDCLASSEXW wndclass = {
-        sizeof(WNDCLASSEXW),
+    static const CHAR szHTMLDocumentTest[] = "HTMLDocumentTest";
+    static WNDCLASSEXA wndclass = {
+        sizeof(WNDCLASSEXA),
         0,
         wnd_proc,
         0, 0, NULL, NULL, NULL, NULL, NULL,
-        wszHTMLDocumentTest,
+        szHTMLDocumentTest,
         NULL
     };
 
-    RegisterClassExW(&wndclass);
-    return CreateWindowW(wszHTMLDocumentTest, wszHTMLDocumentTest,
+    RegisterClassExA(&wndclass);
+    return CreateWindowA(szHTMLDocumentTest, szHTMLDocumentTest,
             WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
             300, 300, NULL, NULL, NULL, NULL);
 }
