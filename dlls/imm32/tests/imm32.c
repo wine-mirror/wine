@@ -191,10 +191,12 @@ static void test_ImmNotifyIME(void) {
     imc = ImmGetContext(hwnd);
     msg_spy_flush_msgs();
 
+    ret = ImmNotifyIME(imc, NI_COMPOSITIONSTR, CPS_CANCEL, 0);
     todo_wine
     {
-        ok(!ImmNotifyIME(imc, NI_COMPOSITIONSTR, CPS_CANCEL, 0), "Canceling an "
-           "empty composition string should fail.\n");
+        ok(!ret ||
+           broken(ret), /* Vista and W2K8 */
+           "Canceling an empty composition string should fail.\n");
     }
     ok(!msg_spy_find_msg(WM_IME_COMPOSITION), "Windows does not post "
        "WM_IME_COMPOSITION in response to NI_COMPOSITIONSTR / CPS_CANCEL, if "
@@ -214,10 +216,12 @@ static void test_ImmNotifyIME(void) {
 
     msg_spy_flush_msgs();
 
+    ret = ImmNotifyIME(imc, NI_COMPOSITIONSTR, CPS_CANCEL, 0);
     todo_wine
     {
-        ok(!ImmNotifyIME(imc, NI_COMPOSITIONSTR, CPS_CANCEL, 0), "Canceling an "
-           "empty composition string should fail.\n");
+        ok(!ret ||
+           broken(ret), /* Vista and W2K8 */
+           "Canceling an empty composition string should fail.\n");
     }
     ok(!msg_spy_find_msg(WM_IME_COMPOSITION), "Windows does not post "
        "WM_IME_COMPOSITION in response to NI_COMPOSITIONSTR / CPS_CANCEL, if "
@@ -264,7 +268,9 @@ static void test_ImmSetCompositionString(void)
 
     ret = ImmSetCompositionStringW(imc, SCS_SETSTR, NULL, 0, NULL, 0);
     todo_wine
-    ok(!ret, "ImmSetCompositionStringW() succeeded.\n");
+    ok(!ret ||
+       broken(ret), /* Vista and W2K8 */
+       "ImmSetCompositionStringW() succeeded.\n");
 
     ret = ImmSetCompositionStringW(imc, SCS_SETSTR | SCS_CHANGEATTR,
         NULL, 0, NULL, 0);
