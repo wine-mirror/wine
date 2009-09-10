@@ -23,6 +23,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winsock2.h"
 #include "dpwsockx_dll.h"
 #include "wine/debug.h"
 #include "dplay.h"
@@ -205,6 +206,9 @@ static void setup_callbacks( LPDPSP_SPCALLBACKS lpCB )
  */
 HRESULT WINAPI SPInit( LPSPINITDATA lpspData )
 {
+    WSADATA wsaData;
+    DPWS_DATA dpwsData;
+
     TRACE( "Initializing library for %s (%s)\n",
            wine_dbgstr_guid(lpspData->lpGuid), debugstr_w(lpspData->lpszName) );
 
@@ -216,6 +220,22 @@ HRESULT WINAPI SPInit( LPSPINITDATA lpspData )
 
     /* Assign callback functions */
     setup_callbacks( lpspData->lpCB );
+
+    /* Load Winsock 2.0 DLL */
+    if ( WSAStartup( MAKEWORD(2, 0), &wsaData ) != 0 )
+    {
+        ERR( "WSAStartup() failed\n" );
+        return DPERR_UNAVAILABLE;
+    }
+
+    /* Initialize internal data */
+    memset( &dpwsData, 0, sizeof(DPWS_DATA) );
+    dpwsData.lpISP = lpspData->lpISP;
+    IDirectPlaySP_SetSPData( lpspData->lpISP, &dpwsData, sizeof(DPWS_DATA),
+                             DPSET_LOCAL );
+
+    /* dplay needs to know the size of the header */
+    lpspData->dwSPHeaderSize = sizeof(DPSP_MSG_HEADER);
 
     return DP_OK;
 }
