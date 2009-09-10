@@ -126,7 +126,6 @@ typedef struct tagEnumTfDocumentMgr {
 } EnumTfDocumentMgr;
 
 static HRESULT EnumTfDocumentMgr_Constructor(struct list* head, IEnumTfDocumentMgrs **ppOut);
-LRESULT CALLBACK ThreadFocusHookProc(int nCode, WPARAM wParam, LPARAM lParam);
 
 static inline ThreadMgr *impl_from_ITfSourceVtbl(ITfSource *iface)
 {
@@ -157,22 +156,6 @@ static inline ThreadMgr *impl_from_ITfSourceSingleVtbl(ITfSourceSingle* iface)
 
 {
     return (ThreadMgr *)((char *)iface - FIELD_OFFSET(ThreadMgr,SourceSingleVtbl));
-}
-
-static HRESULT SetupWindowsHook(ThreadMgr *This)
-{
-    if (!This->focusHook)
-    {
-        This->focusHook = SetWindowsHookExW(WH_CBT, ThreadFocusHookProc, 0,
-                             GetCurrentThreadId());
-        if (!This->focusHook)
-        {
-            ERR("Unable to set focus hook\n");
-            return E_FAIL;
-        }
-        return S_OK;
-    }
-    return S_FALSE;
 }
 
 static void free_sink(ThreadMgrSink *sink)
@@ -449,6 +432,58 @@ static HRESULT WINAPI ThreadMgr_SetFocus( ITfThreadMgr* iface, ITfDocumentMgr *p
 
     This->focus = check;
     return S_OK;
+}
+
+LRESULT CALLBACK ThreadFocusHookProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    ThreadMgr *This;
+
+    This = TlsGetValue(tlsIndex);
+    if (!This)
+    {
+        ERR("Hook proc but no ThreadMgr for this thread. Serious Error\n");
+        return 0;
+    }
+    if (!This->focusHook)
+    {
+        ERR("Hook proc but no ThreadMgr focus Hook. Serious Error\n");
+        return 0;
+    }
+
+    if (nCode == HCBT_SETFOCUS) /* focus change within our thread */
+    {
+        struct list *cursor;
+
+        LIST_FOR_EACH(cursor, &This->AssociatedFocusWindows)
+        {
+            AssociatedWindow *wnd = LIST_ENTRY(cursor,AssociatedWindow,entry);
+            if (wnd->hwnd == (HWND)wParam)
+            {
+                TRACE("Triggering Associated window focus\n");
+                if (This->focus != wnd->docmgr)
+                    ThreadMgr_SetFocus((ITfThreadMgr*)This, wnd->docmgr);
+                break;
+            }
+        }
+    }
+
+    return CallNextHookEx(This->focusHook, nCode, wParam, lParam);
+}
+
+static HRESULT SetupWindowsHook(ThreadMgr *This)
+{
+    if (!This->focusHook)
+    {
+        This->focusHook = SetWindowsHookExW(WH_CBT, ThreadFocusHookProc, 0,
+                             GetCurrentThreadId());
+        if (!This->focusHook)
+        {
+            ERR("Unable to set focus hook\n");
+            return E_FAIL;
+        }
+        return S_OK;
+    }
+    return S_FALSE;
 }
 
 static HRESULT WINAPI ThreadMgr_AssociateFocus( ITfThreadMgr* iface, HWND hwnd,
@@ -1435,40 +1470,4 @@ void ThreadMgr_OnDocumentMgrDestruction(ITfThreadMgr *tm, ITfDocumentMgr *mgr)
         }
     }
     FIXME("ITfDocumenMgr %p not found in this thread\n",mgr);
-}
-
-LRESULT CALLBACK ThreadFocusHookProc(int nCode, WPARAM wParam, LPARAM lParam)
-{
-    ThreadMgr *This;
-
-    This = TlsGetValue(tlsIndex);
-    if (!This)
-    {
-        ERR("Hook proc but no ThreadMgr for this thread. Serious Error\n");
-        return 0;
-    }
-    if (!This->focusHook)
-    {
-        ERR("Hook proc but no ThreadMgr focus Hook. Serious Error\n");
-        return 0;
-    }
-
-    if (nCode == HCBT_SETFOCUS) /* focus change within our thread */
-    {
-        struct list *cursor;
-
-        LIST_FOR_EACH(cursor, &This->AssociatedFocusWindows)
-        {
-            AssociatedWindow *wnd = LIST_ENTRY(cursor,AssociatedWindow,entry);
-            if (wnd->hwnd == (HWND)wParam)
-            {
-                TRACE("Triggering Associated window focus\n");
-                if (This->focus != wnd->docmgr)
-                    ThreadMgr_SetFocus((ITfThreadMgr*)This, wnd->docmgr);
-                break;
-            }
-        }
-    }
-
-    return CallNextHookEx(This->focusHook, nCode, wParam, lParam);
 }
