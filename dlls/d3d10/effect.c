@@ -1677,9 +1677,39 @@ static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_variable_GetType
 static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_GetDesc(ID3D10EffectVariable *iface,
         D3D10_EFFECT_VARIABLE_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p\n", iface, desc);
+
+    if(This == &null_variable)
+    {
+        WARN("Null variable specified\n");
+        return E_FAIL;
+    }
+
+    if(!desc)
+    {
+        WARN("Invalid argument specified\n");
+        return E_INVALIDARG;
+    }
+
+    memset(desc, 0, sizeof(*desc));
+    desc->Name = This->name;
+    desc->Semantic = This->semantic;
+    desc->Flags = This->flag;
+    desc->Annotations = This->annotation_count;
+    desc->BufferOffset = This->buffer_offset;
+
+    if( This->flag == D3D10_EFFECT_VARIABLE_EXPLICIT_BIND_POINT)
+    {
+        desc->ExplicitBindPoint = This->buffer_offset;
+    }
+    else if(This->flag)
+    {
+        FIXME("Unhandled flag %#x!\n", This->flag);
+    }
+
+    return S_OK;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetAnnotationByIndex(
