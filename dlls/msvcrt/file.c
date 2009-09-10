@@ -349,18 +349,19 @@ void msvcrt_init_io(void)
   InitializeCriticalSection(&MSVCRT_file_cs);
   MSVCRT_file_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": MSVCRT_file_cs");
   GetStartupInfoA(&si);
-  if (si.cbReserved2 != 0 && si.lpReserved2 != NULL)
+  if (si.cbReserved2 >= sizeof(unsigned int) && si.lpReserved2 != NULL)
   {
-    char*       wxflag_ptr;
+    BYTE*       wxflag_ptr;
     HANDLE*     handle_ptr;
+    unsigned int count;
 
-    MSVCRT_fdend = *(unsigned*)si.lpReserved2;
+    count = *(unsigned*)si.lpReserved2;
+    wxflag_ptr = si.lpReserved2 + sizeof(unsigned);
+    handle_ptr = (HANDLE*)(wxflag_ptr + count);
 
-    wxflag_ptr = (char*)(si.lpReserved2 + sizeof(unsigned));
-    handle_ptr = (HANDLE*)(wxflag_ptr + MSVCRT_fdend * sizeof(char));
-
-    MSVCRT_fdend = min(MSVCRT_fdend, sizeof(MSVCRT_fdesc) / sizeof(MSVCRT_fdesc[0]));
-    for (i = 0; i < MSVCRT_fdend; i++)
+    count = min(count, (si.cbReserved2 - sizeof(unsigned)) / (sizeof(HANDLE) + 1));
+    count = min(count, sizeof(MSVCRT_fdesc) / sizeof(MSVCRT_fdesc[0]));
+    for (i = 0; i < count; i++)
     {
       if ((*wxflag_ptr & WX_OPEN) && *handle_ptr != INVALID_HANDLE_VALUE)
       {
@@ -374,6 +375,7 @@ void msvcrt_init_io(void)
       }
       wxflag_ptr++; handle_ptr++;
     }
+    MSVCRT_fdend = max( 3, count );
     for (MSVCRT_fdstart = 3; MSVCRT_fdstart < MSVCRT_fdend; MSVCRT_fdstart++)
         if (MSVCRT_fdesc[MSVCRT_fdstart].handle == INVALID_HANDLE_VALUE) break;
   }
