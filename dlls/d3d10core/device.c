@@ -153,8 +153,13 @@ static void STDMETHODCALLTYPE d3d10_device_VSSetShader(ID3D10Device *iface, ID3D
 static void STDMETHODCALLTYPE d3d10_device_DrawIndexed(ID3D10Device *iface,
         UINT index_count, UINT start_index_location, INT base_vertex_location)
 {
-    FIXME("iface %p, index_count %u, start_index_location %u, base_vertex_location %d stub!\n",
+    struct d3d10_device *This = (struct d3d10_device *)iface;
+
+    TRACE("iface %p, index_count %u, start_index_location %u, base_vertex_location %d.\n",
             iface, index_count, start_index_location, base_vertex_location);
+
+    IWineD3DDevice_SetBaseVertexIndex(This->wined3d_device, base_vertex_location);
+    IWineD3DDevice_DrawIndexedPrimitive(This->wined3d_device, start_index_location, index_count);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_Draw(ID3D10Device *iface,
