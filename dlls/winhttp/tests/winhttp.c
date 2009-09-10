@@ -267,8 +267,13 @@ static void test_SendRequest (void)
     {
         bytes_rw = -1;
         ret = WinHttpWriteData(request, &post_data[i], 1, &bytes_rw);
-        ok(ret == TRUE, "WinHttpWriteData failed: %u.\n", GetLastError());
-        ok(bytes_rw == 1, "WinHttpWriteData failed, wrote %u bytes instead of 1 byte.\n", bytes_rw);
+        if (ret)
+          ok(bytes_rw == 1, "WinHttpWriteData failed, wrote %u bytes instead of 1 byte.\n", bytes_rw);
+        else /* Since we already passed all optional data in WinHttpSendRequest Win7 fails our WinHttpWriteData call */
+        {
+          ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER got %u.\n", GetLastError());
+          ok(bytes_rw == -1, "Expected bytes_rw to remain unchanged.\n");
+        }
     }
 
     ret = WinHttpReceiveResponse(request, NULL);
@@ -331,7 +336,7 @@ static void test_WinHttpTimeToSystemTime(void)
 static void test_WinHttpAddHeaders(void)
 {
     HINTERNET session, request, connection;
-    BOOL ret;
+    BOOL ret, reverse;
     WCHAR buffer[MAX_PATH];
     WCHAR check_buffer[MAX_PATH];
     DWORD index, len, oldlen;
@@ -349,13 +354,19 @@ static void test_WinHttpAddHeaders(void)
     static const WCHAR test_header_name[] = {'W','a','r','n','i','n','g',0};
 
     static const WCHAR test_flag_coalesce[] = {'t','e','s','t','2',',',' ','t','e','s','t','4',0};
+    static const WCHAR test_flag_coalesce_reverse[] = {'t','e','s','t','3',',',' ','t','e','s','t','4',0};
     static const WCHAR test_flag_coalesce_comma[] =
         {'t','e','s','t','2',',',' ','t','e','s','t','4',',',' ','t','e','s','t','5',0};
+    static const WCHAR test_flag_coalesce_comma_reverse[] =
+        {'t','e','s','t','3',',',' ','t','e','s','t','4',',',' ','t','e','s','t','5',0};
     static const WCHAR test_flag_coalesce_semicolon[] =
         {'t','e','s','t','2',',',' ','t','e','s','t','4',',',' ','t','e','s','t','5',';',' ','t','e','s','t','6',0};
+    static const WCHAR test_flag_coalesce_semicolon_reverse[] =
+        {'t','e','s','t','3',',',' ','t','e','s','t','4',',',' ','t','e','s','t','5',';',' ','t','e','s','t','6',0};
 
     static const WCHAR field[] = {'f','i','e','l','d',0};
     static const WCHAR value[] = {'v','a','l','u','e',' ',0};
+    static const WCHAR value_nospace[] = {'v','a','l','u','e',0};
 
     static const WCHAR test_headers[][14] =
         {
@@ -539,14 +550,15 @@ static void test_WinHttpAddHeaders(void)
         test_header_name, buffer, &len, &index);
     ok(ret == TRUE, "WinHttpQueryHeaders failed: %u\n", GetLastError());
     ok(index == 1, "WinHttpQueryHeaders failed to increment index.\n");
-    ok(memcmp(buffer, test_indices[1], sizeof(test_indices[1])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
+    reverse = (memcmp(buffer, test_indices[1], sizeof(test_indices[1])) != 0); /* Win7 returns values in reverse order of adding */
+    ok(memcmp(buffer, test_indices[reverse ? 2 : 1], sizeof(test_indices[reverse ? 2 : 1])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
 
     len = sizeof(buffer);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
         test_header_name, buffer, &len, &index);
     ok(ret == TRUE, "WinHttpQueryHeaders failed: %u\n", GetLastError());
     ok(index == 2, "WinHttpQueryHeaders failed to increment index.\n");
-    ok(memcmp(buffer, test_indices[2], sizeof(test_indices[2])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
+    ok(memcmp(buffer, test_indices[reverse ? 1 : 2], sizeof(test_indices[reverse ? 1 : 2])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
 
     /* add if new flag */
     ret = WinHttpAddRequestHeaders(request, test_headers[3], -1L, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW);
@@ -558,14 +570,14 @@ static void test_WinHttpAddHeaders(void)
         test_header_name, buffer, &len, &index);
     ok(ret == TRUE, "WinHttpQueryHeaders failed: %u\n", GetLastError());
     ok(index == 1, "WinHttpQueryHeaders failed to increment index.\n");
-    ok(memcmp(buffer, test_indices[1], sizeof(test_indices[1])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
+    ok(memcmp(buffer, test_indices[reverse ? 2 : 1], sizeof(test_indices[reverse ? 2 : 1])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
 
     len = sizeof(buffer);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
         test_header_name, buffer, &len, &index);
     ok(ret == TRUE, "WinHttpQueryHeaders failed: %u\n", GetLastError());
     ok(index == 2, "WinHttpQueryHeaders failed to increment index.\n");
-    ok(memcmp(buffer, test_indices[2], sizeof(test_indices[2])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
+    ok(memcmp(buffer, test_indices[reverse ? 1 : 2], sizeof(test_indices[reverse ? 1 : 2])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
 
     len = sizeof(buffer);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
@@ -582,14 +594,14 @@ static void test_WinHttpAddHeaders(void)
         test_header_name, buffer, &len, &index);
     ok(ret == TRUE, "WinHttpQueryHeaders failed: %u\n", GetLastError());
     ok(index == 1, "WinHttpQueryHeaders failed to increment index.\n");
-    ok(memcmp(buffer, test_flag_coalesce, sizeof(test_flag_coalesce)) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
+    ok(memcmp(buffer, reverse ? test_flag_coalesce_reverse : test_flag_coalesce, sizeof(reverse ? test_flag_coalesce_reverse : test_flag_coalesce)) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
 
     len = sizeof(buffer);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
         test_header_name, buffer, &len, &index);
     ok(ret == TRUE, "WinHttpQueryHeaders failed: %u\n", GetLastError());
     ok(index == 2, "WinHttpQueryHeaders failed to increment index.\n");
-    ok(memcmp(buffer, test_indices[2], sizeof(test_indices[2])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
+    ok(memcmp(buffer, test_indices[reverse ? 1 : 2], sizeof(test_indices[reverse ? 1 : 2])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
 
     len = sizeof(buffer);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
@@ -606,7 +618,7 @@ static void test_WinHttpAddHeaders(void)
         test_header_name, buffer, &len, &index);
     ok(ret == TRUE, "WinHttpQueryHeaders failed: %u\n", GetLastError());
     ok(index == 1, "WinHttpQueryHeaders failed to increment index.\n");
-    ok(memcmp(buffer, test_flag_coalesce_comma, sizeof(test_flag_coalesce_comma)) == 0,
+    ok(memcmp(buffer, reverse ? test_flag_coalesce_comma_reverse : test_flag_coalesce_comma, sizeof(reverse ? test_flag_coalesce_comma_reverse : test_flag_coalesce_comma)) == 0,
         "WinHttpQueryHeaders returned incorrect string.\n");
 
     len = sizeof(buffer);
@@ -614,7 +626,7 @@ static void test_WinHttpAddHeaders(void)
         test_header_name, buffer, &len, &index);
     ok(ret == TRUE, "WinHttpQueryHeaders failed: %u\n", GetLastError());
     ok(index == 2, "WinHttpQueryHeaders failed to increment index.\n");
-    ok(memcmp(buffer, test_indices[2], sizeof(test_indices[2])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
+    ok(memcmp(buffer, test_indices[reverse ? 1 : 2], sizeof(test_indices[reverse ? 1 : 2])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
 
     len = sizeof(buffer);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
@@ -632,7 +644,7 @@ static void test_WinHttpAddHeaders(void)
         test_header_name, buffer, &len, &index);
     ok(ret == TRUE, "WinHttpQueryHeaders failed: %u\n", GetLastError());
     ok(index == 1, "WinHttpQueryHeaders failed to increment index.\n");
-    ok(memcmp(buffer, test_flag_coalesce_semicolon, sizeof(test_flag_coalesce_semicolon)) == 0,
+    ok(memcmp(buffer, reverse ? test_flag_coalesce_semicolon_reverse : test_flag_coalesce_semicolon, sizeof(reverse ? test_flag_coalesce_semicolon_reverse : test_flag_coalesce_semicolon)) == 0,
             "WinHttpQueryHeaders returned incorrect string.\n");
 
     len = sizeof(buffer);
@@ -640,7 +652,7 @@ static void test_WinHttpAddHeaders(void)
         test_header_name, buffer, &len, &index);
     ok(ret == TRUE, "WinHttpQueryHeaders failed: %u\n", GetLastError());
     ok(index == 2, "WinHttpQueryHeaders failed to increment index.\n");
-    ok(memcmp(buffer, test_indices[2], sizeof(test_indices[2])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
+    ok(memcmp(buffer, test_indices[reverse ? 1 : 2], sizeof(test_indices[reverse ? 1 : 2])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
 
     len = sizeof(buffer);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
@@ -657,14 +669,14 @@ static void test_WinHttpAddHeaders(void)
         test_header_name, buffer, &len, &index);
     ok(ret == TRUE, "WinHttpQueryHeaders failed: %u\n", GetLastError());
     ok(index == 1, "WinHttpQueryHeaders failed to increment index.\n");
-    ok(memcmp(buffer, test_indices[2], sizeof(test_indices[2])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
+    ok(memcmp(buffer, test_indices[reverse ? 3 : 2], sizeof(test_indices[reverse ? 3 : 2])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
 
     len = sizeof(buffer);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
         test_header_name, buffer, &len, &index);
     ok(ret == TRUE, "WinHttpQueryHeaders failed: %u\n", GetLastError());
     ok(index == 2, "WinHttpQueryHeaders failed to increment index.\n");
-    ok(memcmp(buffer, test_indices[3], sizeof(test_indices[2])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
+    ok(memcmp(buffer, test_indices[reverse ? 1 : 3], sizeof(test_indices[reverse ? 1 : 3])) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
 
     len = sizeof(buffer);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
@@ -695,7 +707,7 @@ static void test_WinHttpAddHeaders(void)
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
         field, buffer, &len, &index);
     ok(ret, "WinHttpQueryHeaders failed: %u\n", GetLastError());
-    ok(!memcmp(buffer, value, sizeof(value)), "unexpected result\n");
+    ok(!memcmp(buffer, value, sizeof(value)) || ! memcmp(buffer, value_nospace, sizeof(value_nospace)), "unexpected result\n");
 
     ret = WinHttpCloseHandle(request);
     ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);
