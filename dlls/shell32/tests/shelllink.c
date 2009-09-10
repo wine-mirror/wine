@@ -165,7 +165,9 @@ static void test_get_set(void)
     {
         IShellLinkW_Release(slW);
         r = IShellLinkA_SetPath(sl, NULL);
-        ok(r==E_INVALIDARG, "SetPath failed (0x%08x)\n", r);
+        ok(r==E_INVALIDARG ||
+           broken(r==S_OK), /* Some Win95 and NT4 */
+           "SetPath failed (0x%08x)\n", r);
     }
 
     r = IShellLinkA_SetPath(sl, "");
