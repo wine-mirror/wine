@@ -3398,8 +3398,6 @@ interface IWineD3DDevice : IWineD3DBase
         [in] UINT vertex_count
     );
     HRESULT DrawIndexedPrimitive(
-        [in] UINT min_vertex_idx,
-        [in] UINT vertex_count,
         [in] UINT start_idx,
         [in] UINT index_count
     );
@@ -3409,8 +3407,6 @@ interface IWineD3DDevice : IWineD3DBase
         [in] UINT stream_stride
     );
     HRESULT DrawIndexedPrimitiveUP(
-        [in] UINT min_vertex_idx,
-        [in] UINT vertex_count,
         [in] UINT index_count,
         [in] const void *index_data,
         [in] WINED3DFORMAT index_data_format,

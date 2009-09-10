@@ -1725,8 +1725,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DrawIndexedPrimitive(LPDIRECT3DDEVICE
 
     wined3d_mutex_lock();
     IWineD3DDevice_SetPrimitiveType(This->WineD3DDevice, PrimitiveType);
-    hr = IWineD3DDevice_DrawIndexedPrimitive(This->WineD3DDevice, MinVertexIndex, NumVertices,
-            startIndex, vertex_count_from_primitive_count(PrimitiveType, primCount));
+    hr = IWineD3DDevice_DrawIndexedPrimitive(This->WineD3DDevice, startIndex,
+            vertex_count_from_primitive_count(PrimitiveType, primCount));
     wined3d_mutex_unlock();
 
     return hr;
@@ -1757,7 +1757,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DrawIndexedPrimitiveUP(LPDIRECT3DDEVI
 
     wined3d_mutex_lock();
     IWineD3DDevice_SetPrimitiveType(This->WineD3DDevice, PrimitiveType);
-    hr = IWineD3DDevice_DrawIndexedPrimitiveUP(This->WineD3DDevice, MinVertexIndex, NumVertexIndices,
+    hr = IWineD3DDevice_DrawIndexedPrimitiveUP(This->WineD3DDevice,
             vertex_count_from_primitive_count(PrimitiveType, PrimitiveCount), pIndexData,
             wined3dformat_from_d3dformat(IndexDataFormat), pVertexStreamZeroData, VertexStreamZeroStride);
     wined3d_mutex_unlock();

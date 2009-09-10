@@ -3603,9 +3603,8 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
     }
 
     IWineD3DDevice_SetPrimitiveType(This->wineD3DDevice, PrimitiveType);
-    hr = IWineD3DDevice_DrawIndexedPrimitiveUP(This->wineD3DDevice, 0 /* MinVertexIndex */,
-            VertexCount /* UINT NumVertexIndex */, IndexCount, Indices, WINED3DFMT_R16_UINT,
-            Vertices, get_flexible_vertex_size(VertexType));
+    hr = IWineD3DDevice_DrawIndexedPrimitiveUP(This->wineD3DDevice, IndexCount, Indices,
+            WINED3DFMT_R16_UINT, Vertices, get_flexible_vertex_size(VertexType));
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -4285,8 +4284,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
 
 
     IWineD3DDevice_SetPrimitiveType(This->wineD3DDevice, PrimitiveType);
-    hr = IWineD3DDevice_DrawIndexedPrimitive(This->wineD3DDevice,
-            0 /* minIndex */, NumVertices, 0 /* StartIndex */, IndexCount);
+    hr = IWineD3DDevice_DrawIndexedPrimitive(This->wineD3DDevice, 0 /* StartIndex */, IndexCount);
 
     LeaveCriticalSection(&ddraw_cs);
     return hr;

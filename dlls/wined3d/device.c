@@ -9,6 +9,7 @@
  * Copyright 2006-2008 Stefan Dösinger for CodeWeavers
  * Copyright 2006-2008 Henri Verbeet
  * Copyright 2007 Andrew Riedi
+ * Copyright 2009 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -5143,13 +5144,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, UI
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
     }
     /* Account for the loading offset due to index buffers. Instead of reloading all sources correct it with the startvertex parameter */
-    drawPrimitive(iface, vertex_count, 0/* NumVertices */, StartVertex /* start_idx */,
-                  0 /* indxSize */, NULL /* indxData */, 0 /* minIndex */);
+    drawPrimitive(iface, vertex_count, StartVertex /* start_idx */, 0 /* indxSize */, NULL /* indxData */);
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *iface,
-        UINT minIndex, UINT NumVertices, UINT startIndex, UINT index_count)
+static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *iface, UINT startIndex, UINT index_count)
 {
     IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;
     UINT                 idxStride = 2;
@@ -5177,8 +5176,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *if
     }
     vbo = ((struct wined3d_buffer *) pIB)->buffer_object;
 
-    TRACE("(%p) : min %u, vertex count %u, startIdx %u, index count %u\n",
-            This, minIndex, NumVertices, startIndex, index_count);
+    TRACE("(%p) : startIndex %u, index count %u.\n", This, startIndex, index_count);
 
     if (This->stateBlock->IndexFmt == WINED3DFMT_R16_UINT) {
         idxStride = 2;
@@ -5191,8 +5189,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *if
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
     }
 
-    drawPrimitive(iface, index_count, NumVertices, startIndex, idxStride,
-            vbo ? NULL : ((struct wined3d_buffer *) pIB)->resource.allocatedMemory, minIndex);
+    drawPrimitive(iface, index_count, startIndex, idxStride,
+            vbo ? NULL : ((struct wined3d_buffer *)pIB)->resource.allocatedMemory);
 
     return WINED3D_OK;
 }
@@ -5223,8 +5221,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
     /* TODO: Only mark dirty if drawing from a different UP address */
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
 
-    drawPrimitive(iface, vertex_count, 0 /* NumVertices */, 0 /* start_idx */,
-            0 /* indxSize*/, NULL /* indxData */, 0 /* indxMin */);
+    drawPrimitive(iface, vertex_count, 0 /* start_idx */, 0 /* indxSize*/, NULL /* indxData */);
 
     /* MSDN specifies stream zero settings must be set to NULL */
     This->stateBlock->streamStride[0] = 0;
@@ -5236,8 +5233,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, UINT MinVertexIndex,
-        UINT NumVertices, UINT index_count, const void *pIndexData, WINED3DFORMAT IndexDataFormat,
+static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface,
+        UINT index_count, const void *pIndexData, WINED3DFORMAT IndexDataFormat,
         const void *pVertexStreamZeroData, UINT VertexStreamZeroStride)
 {
     int                 idxStride;
@@ -5245,9 +5242,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     IWineD3DBuffer *vb;
     IWineD3DBuffer *ib;
 
-    TRACE("(%p) : MinVtxIdx %u, NumVIdx %u, index count %u, pidxdata %p, IdxFmt %u, pVtxdata %p, stride=%u\n",
-            This, MinVertexIndex, NumVertices, index_count, pIndexData,
-            IndexDataFormat, pVertexStreamZeroData, VertexStreamZeroStride);
+    TRACE("(%p) : index count %u, pidxdata %p, IdxFmt %u, pVtxdata %p, stride=%u.\n",
+            This, index_count, pIndexData, IndexDataFormat, pVertexStreamZeroData, VertexStreamZeroStride);
 
     if(!This->stateBlock->vertexDecl) {
         WARN("(%p) : Called without a valid vertex declaration set\n", This);
@@ -5275,8 +5271,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
 
-    drawPrimitive(iface, index_count, NumVertices, 0 /* start_idx */,
-            idxStride, pIndexData, MinVertexIndex);
+    drawPrimitive(iface, index_count, 0 /* start_idx */, idxStride, pIndexData);
 
     /* MSDN specifies stream zero settings and index buffer must be set to NULL */
     This->stateBlock->streamSource[0] = NULL;
@@ -5306,7 +5301,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveStrided(IWineD3DDevice *if
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
     This->stateBlock->baseVertexIndex = 0;
     This->up_strided = DrawPrimStrideData;
-    drawPrimitive(iface, vertex_count, 0, 0, 0, NULL, 0);
+    drawPrimitive(iface, vertex_count, 0, 0, NULL);
     This->up_strided = NULL;
     return WINED3D_OK;
 }
@@ -5327,7 +5322,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveStrided(IWineD3DDev
     This->stateBlock->streamIsUP = TRUE;
     This->stateBlock->baseVertexIndex = 0;
     This->up_strided = DrawPrimStrideData;
-    drawPrimitive(iface, vertex_count, 0 /* numindices */, 0 /* start_idx */, idxSize, pIndexData, 0 /* minindex */);
+    drawPrimitive(iface, 0 /* numindices */, 0 /* start_idx */, idxSize, pIndexData);
     This->up_strided = NULL;
     return WINED3D_OK;
 }
