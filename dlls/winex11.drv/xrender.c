@@ -1984,6 +1984,40 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     return TRUE;
 }
 
+void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap, int width, int height)
+{
+    /* At depths >1, the depth of physBitmap and physDev might not be the same e.g. the physbitmap might be a 16-bit DIB while the physdev uses 24-bit */
+    int depth = physBitmap->pixmap_depth == 1 ? 1 : physDev->depth;
+
+    wine_tsx11_lock();
+    physDev->brush.pixmap = XCreatePixmap(gdi_display, root_window, width, height, depth);
+
+    /* Use XCopyArea when the physBitmap and brush.pixmap have the same depth. */
+    if(physBitmap->pixmap_depth == 1 || physDev->depth == physBitmap->pixmap_depth)
+    {
+        XCopyArea( gdi_display, physBitmap->pixmap, physDev->brush.pixmap,
+                   get_bitmap_gc(physBitmap->pixmap_depth), 0, 0, width, height, 0, 0 );
+    }
+    else /* We meed depth conversion */
+    {
+        WineXRenderFormat *src_format = get_xrender_format_from_color_shifts(physBitmap->pixmap_depth, &physBitmap->pixmap_color_shifts);
+        WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDev->depth, physDev->color_shifts);
+
+        Picture src_pict, dst_pict;
+        XRenderPictureAttributes pa;
+        pa.subwindow_mode = IncludeInferiors;
+        pa.repeat = RepeatNone;
+
+        src_pict = pXRenderCreatePicture(gdi_display, physBitmap->pixmap, src_format->pict_format, CPSubwindowMode|CPRepeat, &pa);
+        dst_pict = pXRenderCreatePicture(gdi_display, physDev->brush.pixmap, dst_format->pict_format, CPSubwindowMode|CPRepeat, &pa);
+
+        xrender_blit(src_pict, 0, dst_pict, 0, 0, 1.0, 1.0, width, height);
+        pXRenderFreePicture(gdi_display, src_pict);
+        pXRenderFreePicture(gdi_display, dst_pict);
+    }
+    wine_tsx11_unlock();
+}
+
 BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
                                       Pixmap pixmap, GC gc,
                                       INT widthSrc, INT heightSrc,
@@ -2123,6 +2157,16 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
 {
   FIXME("not supported - XRENDER headers were missing at compile time\n");
   return FALSE;
+}
+
+void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap, int width, int height)
+{
+    wine_tsx11_lock();
+    physDev->brush.pixmap = XCreatePixmap(gdi_display, root_window, width, height, physBitmap->pixmap_depth);
+
+    XCopyArea( gdi_display, physBitmap->pixmap, physDev->brush.pixmap,
+               get_bitmap_gc(physBitmap->pixmap_depth), 0, 0, width, height, 0, 0 );
+    wine_tsx11_unlock();
 }
 
 BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,

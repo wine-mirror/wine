@@ -286,6 +286,7 @@ extern void X11DRV_XRender_Init(void);
 extern void X11DRV_XRender_Finalize(void);
 extern BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE*, HFONT);
 extern void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE*);
+extern void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap, int width, int height);
 extern BOOL X11DRV_XRender_ExtTextOut(X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 				      const RECT *lprect, LPCWSTR wstr,
 				      UINT count, const INT *lpDx);
