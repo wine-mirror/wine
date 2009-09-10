@@ -2329,6 +2329,7 @@ NTSTATUS DIR_get_unix_cwd( char **cwd )
         else status = FILE_GetNtStatus();
 
         RtlLeaveCriticalSection( &dir_section );
+        if (old_cwd != -1) close( old_cwd );
         if (needs_close) close( unix_fd );
     }
     if (!curdir->Handle) NtClose( handle );
