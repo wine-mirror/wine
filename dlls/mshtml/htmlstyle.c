@@ -292,6 +292,9 @@ HRESULT set_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, 
     case VT_BSTR:
         return set_nsstyle_attr(nsstyle, sid, V_BSTR(value), flags);
 
+    case VT_BSTR|VT_BYREF:
+        return set_nsstyle_attr(nsstyle, sid, *V_BSTRREF(value), flags);
+
     case VT_I4: {
         WCHAR str[14];
         static const WCHAR format[] = {'%','d',0};
