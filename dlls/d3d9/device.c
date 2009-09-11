@@ -644,69 +644,36 @@ static void WINAPI IDirect3DDevice9Impl_GetGammaRamp(LPDIRECT3DDEVICE9EX iface, 
     wined3d_mutex_unlock();
 }
 
-
 static HRESULT IDirect3DDevice9Impl_CreateSurface(LPDIRECT3DDEVICE9EX iface, UINT Width, UINT Height,
         D3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IDirect3DSurface9 **ppSurface,
         UINT Usage, D3DPOOL Pool, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality)
 {
-    HRESULT hrc;
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IDirect3DSurface9Impl *object;
-    IDirect3DDevice9Impl  *This = (IDirect3DDevice9Impl *)iface;
-    TRACE("(%p) Relay\n", This);
-
-    if (MultisampleQuality > 0)
-    {
-        FIXME("MultisampleQuality set to %d, bstituting 0\n", MultisampleQuality);
-        MultisampleQuality = 0;
-    }
-    /*FIXME: Check MAX bounds of MultisampleQuality*/
-
-    /* Allocate the storage for the device */
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface9Impl));
-    if (NULL == object) {
-        FIXME("Allocation of memory failed\n");
-        return D3DERR_OUTOFVIDEOMEMORY;
-    }
-
-    object->lpVtbl = &Direct3DSurface9_Vtbl;
-    object->ref = 1;
-
-    switch(Format)
-    {
-        case D3DFMT_A8R8G8B8:
-        case D3DFMT_X8R8G8B8:
-        case D3DFMT_R5G6B5:
-        case D3DFMT_X1R5G5B5:
-        case D3DFMT_A1R5G5B5:
-        case D3DFMT_R8G8B8:
-            object->getdc_supported = TRUE;
-            break;
-
-        default:
-            object->getdc_supported = FALSE;
-            break;
-    }
+    HRESULT hr;
 
     TRACE("(%p) : w(%d) h(%d) fmt(%d) surf@%p\n", This, Width, Height, Format, *ppSurface);
 
-    wined3d_mutex_lock();
-    hrc = IWineD3DDevice_CreateSurface(This->WineD3DDevice, Width, Height, wined3dformat_from_d3dformat(Format),
-            Lockable, Discard, Level, &object->wineD3DSurface, Usage & WINED3DUSAGE_MASK, (WINED3DPOOL)Pool,
-            MultiSample, MultisampleQuality, SURFACE_OPENGL, (IUnknown *)object);
-    wined3d_mutex_unlock();
-
-    if (hrc != D3D_OK || NULL == object->wineD3DSurface) {
-
-       /* free up object */
-        FIXME("(%p) call to IWineD3DDevice_CreateSurface failed\n", This);
-        HeapFree(GetProcessHeap(), 0, object);
-    } else {
-        IDirect3DDevice9Ex_AddRef(iface);
-        object->parentDevice = iface;
-        TRACE("(%p) : Created surface %p\n", This, object);
-        *ppSurface = (LPDIRECT3DSURFACE9) object;
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface9Impl));
+    if (!object)
+    {
+        FIXME("Failed to allocate surface memory.\n");
+        return D3DERR_OUTOFVIDEOMEMORY;
     }
-    return hrc;
+
+    hr = surface_init(object, This, Width, Height, Format, Lockable, Discard,
+            Level, Usage, Pool, MultiSample, MultisampleQuality);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize surface, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created surface %p.\n", object);
+    *ppSurface = (IDirect3DSurface9 *)object;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DDevice9Impl_CreateRenderTarget(IDirect3DDevice9Ex *iface, UINT Width, UINT Height,

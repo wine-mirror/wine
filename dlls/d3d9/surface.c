@@ -298,8 +298,7 @@ static HRESULT WINAPI IDirect3DSurface9Impl_ReleaseDC(LPDIRECT3DSURFACE9 iface, 
     }
 }
 
-
-const IDirect3DSurface9Vtbl Direct3DSurface9_Vtbl =
+static const IDirect3DSurface9Vtbl Direct3DSurface9_Vtbl =
 {
     /* IUnknown */
     IDirect3DSurface9Impl_QueryInterface,
@@ -322,3 +321,52 @@ const IDirect3DSurface9Vtbl Direct3DSurface9_Vtbl =
     IDirect3DSurface9Impl_GetDC,
     IDirect3DSurface9Impl_ReleaseDC
 };
+
+HRESULT surface_init(IDirect3DSurface9Impl *surface, IDirect3DDevice9Impl *device,
+        UINT width, UINT height, D3DFORMAT format, BOOL lockable, BOOL discard, UINT level,
+        DWORD usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality)
+{
+    HRESULT hr;
+
+    surface->lpVtbl = &Direct3DSurface9_Vtbl;
+    surface->ref = 1;
+
+    switch (format)
+    {
+        case D3DFMT_A8R8G8B8:
+        case D3DFMT_X8R8G8B8:
+        case D3DFMT_R5G6B5:
+        case D3DFMT_X1R5G5B5:
+        case D3DFMT_A1R5G5B5:
+        case D3DFMT_R8G8B8:
+            surface->getdc_supported = TRUE;
+            break;
+
+        default:
+            surface->getdc_supported = FALSE;
+            break;
+    }
+
+    /* FIXME: Check MAX bounds of MultisampleQuality. */
+    if (multisample_quality > 0)
+    {
+        FIXME("Multisample quality set to %u, substituting 0.\n", multisample_quality);
+        multisample_quality = 0;
+    }
+
+    wined3d_mutex_lock();
+    hr = IWineD3DDevice_CreateSurface(device->WineD3DDevice, width, height, wined3dformat_from_d3dformat(format),
+            lockable, discard, level, &surface->wineD3DSurface, usage & WINED3DUSAGE_MASK, (WINED3DPOOL)pool,
+            multisample_type, multisample_quality, SURFACE_OPENGL, (IUnknown *)surface);
+    wined3d_mutex_unlock();
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d surface, hr %#x.\n", hr);
+        return hr;
+    }
+
+    surface->parentDevice = (IDirect3DDevice9Ex *)device;
+    IDirect3DDevice9Ex_AddRef(surface->parentDevice);
+
+    return D3D_OK;
+}

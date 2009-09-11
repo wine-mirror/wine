@@ -281,11 +281,6 @@ typedef struct IDirect3DSwapChain9Impl
 /* ----------------- */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DSurface9Vtbl Direct3DSurface9_Vtbl;
-
-/*****************************************************************************
  * IDirect3DSurface9 implementation structure
  */
 typedef struct IDirect3DSurface9Impl
@@ -311,6 +306,10 @@ typedef struct IDirect3DSurface9Impl
 
     BOOL                        getdc_supported;
 } IDirect3DSurface9Impl;
+
+HRESULT surface_init(IDirect3DSurface9Impl *surface, IDirect3DDevice9Impl *device,
+        UINT width, UINT height, D3DFORMAT format, BOOL lockable, BOOL discard, UINT level,
+        DWORD usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality);
 
 /* ---------------------- */
 /* IDirect3DVertexBuffer9 */
