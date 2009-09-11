@@ -33,6 +33,13 @@
 
 #define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
 
+typedef struct _STREAMDATA
+{
+    DWORD dwSize;
+    DWORD dwData2;
+    DWORD dwItems;
+} STREAMDATA, *PSTREAMDATA;
+
 static HDPA    (WINAPI *pDPA_Clone)(const HDPA,const HDPA);
 static HDPA    (WINAPI *pDPA_Create)(INT);
 static HDPA    (WINAPI *pDPA_CreateEx)(INT,HANDLE);
@@ -45,9 +52,9 @@ static INT     (WINAPI *pDPA_GetPtr)(const HDPA,INT);
 static INT     (WINAPI *pDPA_GetPtrIndex)(const HDPA,PVOID);
 static BOOL    (WINAPI *pDPA_Grow)(HDPA,INT);
 static INT     (WINAPI *pDPA_InsertPtr)(const HDPA,INT,PVOID);
-static HRESULT (WINAPI *pDPA_LoadStream)(HDPA*,PFNDPASTREAM,IStream*,LPARAM);
+static HRESULT (WINAPI *pDPA_LoadStream)(HDPA*,PFNDPASTREAM,IStream*,LPVOID);
 static BOOL    (WINAPI *pDPA_Merge)(const HDPA,const HDPA,DWORD,PFNDPACOMPARE,PFNDPAMERGE,LPARAM);
-static HRESULT (WINAPI *pDPA_SaveStream)(HDPA,PFNDPASTREAM,IStream*,LPARAM);
+static HRESULT (WINAPI *pDPA_SaveStream)(HDPA,PFNDPASTREAM,IStream*,LPVOID);
 static INT     (WINAPI *pDPA_Search)(HDPA,PVOID,INT,PFNDPACOMPARE,LPARAM,UINT);
 static BOOL    (WINAPI *pDPA_SetPtr)(const HDPA,INT,PVOID);
 static BOOL    (WINAPI *pDPA_Sort)(const HDPA,PFNDPACOMPARE,LPARAM);
@@ -525,6 +532,117 @@ static void test_DPA_DestroyCallback(void)
     ok(nEnum == 3, "nEnum=%d\n", nEnum);
 }
 
+static void test_DPA_LoadStream(void)
+{
+    static const WCHAR szStg[] = { 'S','t','g',0 };
+    IStorage* pStg = NULL;
+    IStream* pStm = NULL;
+    LARGE_INTEGER li;
+    ULARGE_INTEGER uli;
+    DWORD dwMode;
+    HRESULT hRes;
+    STREAMDATA header;
+    ULONG written, ret;
+    HDPA dpa;
+
+    hRes = CoInitialize(NULL);
+    if (hRes != S_OK)
+    {
+        ok(0, "hResult: %d\n", hRes);
+        return;
+    }
+
+    dwMode = STGM_DIRECT|STGM_CREATE|STGM_READWRITE|STGM_SHARE_EXCLUSIVE;
+    hRes = StgCreateDocfile(NULL, dwMode|STGM_DELETEONRELEASE, 0, &pStg);
+    expect(S_OK, hRes);
+
+    hRes = IStorage_CreateStream(pStg, szStg, dwMode, 0, 0, &pStm);
+    expect(S_OK, hRes);
+
+    /* write less than header size */
+    li.QuadPart = 0;
+    hRes = IStream_Seek(pStm, li, STREAM_SEEK_SET, NULL);
+    expect(S_OK, hRes);
+
+    memset(&header, 0, sizeof(header));
+    written = 0;
+    uli.QuadPart = sizeof(header)-1;
+    hRes = IStream_SetSize(pStm, uli);
+    expect(S_OK, hRes);
+    hRes = IStream_Write(pStm, &header, sizeof(header)-1, &written);
+    expect(S_OK, hRes);
+    written -= sizeof(header)-1;
+    expect(0, written);
+
+    li.QuadPart = 0;
+    hRes = IStream_Seek(pStm, li, STREAM_SEEK_SET, NULL);
+    expect(S_OK, hRes);
+
+    hRes = pDPA_LoadStream(&dpa, CB_Load, pStm, NULL);
+    expect(E_FAIL, hRes);
+
+    /* check stream position after header read failed */
+    li.QuadPart = 0;
+    uli.QuadPart = 1;
+    hRes = IStream_Seek(pStm, li, STREAM_SEEK_CUR, &uli);
+    expect(S_OK, hRes);
+    todo_wine ok(uli.QuadPart == 0, "Expected to position reset\n");
+
+    /* write valid header for empty DPA */
+    header.dwSize = sizeof(header);
+    header.dwData2 = 1;
+    header.dwItems = 0;
+    written = 0;
+
+    li.QuadPart = 0;
+    hRes = IStream_Seek(pStm, li, STREAM_SEEK_SET, NULL);
+    expect(S_OK, hRes);
+
+    uli.QuadPart = sizeof(header);
+    hRes = IStream_SetSize(pStm, uli);
+    expect(S_OK, hRes);
+
+    hRes = IStream_Write(pStm, &header, sizeof(header), &written);
+    expect(S_OK, hRes);
+    written -= sizeof(header);
+    expect(0, written);
+
+    li.QuadPart = 0;
+    hRes = IStream_Seek(pStm, li, STREAM_SEEK_SET, NULL);
+    expect(S_OK, hRes);
+
+    hRes = pDPA_LoadStream(&dpa, CB_Load, pStm, NULL);
+    todo_wine expect(S_OK, hRes);
+
+    /* try with altered dwData2 field */
+    header.dwSize = sizeof(header);
+    header.dwData2 = 2;
+    header.dwItems = 0;
+
+    li.QuadPart = 0;
+    hRes = IStream_Seek(pStm, li, STREAM_SEEK_SET, NULL);
+    expect(S_OK, hRes);
+    hRes = IStream_Write(pStm, &header, sizeof(header), &written);
+    expect(S_OK, hRes);
+    written -= sizeof(header);
+    expect(0, written);
+
+    li.QuadPart = 0;
+    hRes = IStream_Seek(pStm, li, STREAM_SEEK_SET, NULL);
+    expect(S_OK, hRes);
+
+    hRes = pDPA_LoadStream(&dpa, CB_Load, pStm, (void*)0xdeadbeef);
+    todo_wine expect(E_FAIL, hRes);
+
+    ret = IStream_Release(pStm);
+    ok(!ret, "ret=%d\n", ret);
+
+    ret = IStorage_Release(pStg);
+    ok(!ret, "ret=%d\n", ret);
+
+    CoUninitialize();
+}
+
 static void test_dpa_stream(void)
 {
     HDPA dpa;
@@ -566,14 +684,14 @@ static void test_dpa_stream(void)
     hRes = IStorage_CreateStream(pStg, szStg, dwMode, 0, 0, &pStm);
     ok(hRes == S_OK, "hRes=0x%x\n", hRes);
 
-    hRes = pDPA_SaveStream(dpa, CB_Save, pStm, 0xdeadbeef);
+    hRes = pDPA_SaveStream(dpa, CB_Save, pStm, (void*)0xdeadbeef);
     todo_wine ok(hRes == S_OK, "hRes=0x%x\n", hRes);
     pDPA_Destroy(dpa);
 
     liZero.QuadPart = 0;
     hRes = IStream_Seek(pStm, liZero, STREAM_SEEK_SET, NULL);
     ok(hRes == S_OK, "hRes=0x%x\n", hRes);
-    hRes = pDPA_LoadStream(&dpa, CB_Load, pStm, 0xdeadbeef);
+    hRes = pDPA_LoadStream(&dpa, CB_Load, pStm, (void*)0xdeadbeef);
     todo_wine
     {
         ok(hRes == S_OK, "hRes=0x%x\n", hRes);
@@ -607,5 +725,6 @@ START_TEST(dpa)
     test_DPA_Merge();
     test_DPA_EnumCallback();
     test_DPA_DestroyCallback();
+    test_DPA_LoadStream();
     test_dpa_stream();
 }
