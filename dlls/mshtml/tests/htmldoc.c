@@ -2763,7 +2763,12 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
     test_readyState((IUnknown*)persist);
 }
 
-static void test_download(BOOL verb_done, BOOL css_dwl, BOOL css_try_dwl)
+#define DWL_VERBDONE  0x0001
+#define DWL_CSS       0x0002
+#define DWL_TRYCSS    0x0004
+#define DWL_HTTP      0x0008
+
+static void test_download(DWORD flags)
 {
     HWND hwnd;
     MSG msg;
@@ -2773,17 +2778,16 @@ static void test_download(BOOL verb_done, BOOL css_dwl, BOOL css_try_dwl)
 
     test_readyState(NULL);
 
-    if(verb_done) {
+    if(flags & (DWL_VERBDONE|DWL_HTTP))
         SET_EXPECT(Exec_SETPROGRESSMAX);
-        if(!load_from_stream)
-            SET_EXPECT(GetHostInfo);
-    }
+    if((flags & DWL_VERBDONE) && !load_from_stream)
+        SET_EXPECT(GetHostInfo);
     SET_EXPECT(SetStatusText);
     SET_EXPECT(Exec_SETDOWNLOADSTATE_1);
     SET_EXPECT(GetDropTarget);
-    if(css_try_dwl)
+    if(flags & DWL_TRYCSS)
         SET_EXPECT(Exec_ShellDocView_84);
-    if(css_dwl) {
+    if(flags & DWL_CSS) {
         SET_EXPECT(CreateInstance);
         SET_EXPECT(Start);
         SET_EXPECT(LockRequest);
@@ -2817,17 +2821,18 @@ static void test_download(BOOL verb_done, BOOL css_dwl, BOOL css_try_dwl)
         DispatchMessage(&msg);
     }
 
-    if(verb_done) {
+    if(flags & DWL_VERBDONE)
         CHECK_CALLED(Exec_SETPROGRESSMAX);
-        if(!load_from_stream)
-            CHECK_CALLED(GetHostInfo);
-    }
+    if(flags & DWL_HTTP)
+        SET_CALLED(Exec_SETPROGRESSMAX);
+    if((flags & DWL_VERBDONE) && !load_from_stream)
+        CHECK_CALLED(GetHostInfo);
     CHECK_CALLED(SetStatusText);
     CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
     CHECK_CALLED(GetDropTarget);
-    if(css_try_dwl)
+    if(flags & DWL_TRYCSS)
         SET_CALLED(Exec_ShellDocView_84);
-    if(css_dwl) {
+    if(flags & DWL_CSS) {
         if(called_CreateInstance) {
             CHECK_CALLED(CreateInstance);
             CHECK_CALLED(Start);
@@ -3878,7 +3883,7 @@ static void test_HTMLDocument(BOOL do_load)
     test_Activate(unk, CLIENTSITE_EXPECTPATH);
 
     if(do_load) {
-        test_download(FALSE, TRUE, TRUE);
+        test_download(DWL_CSS|DWL_TRYCSS);
         test_GetCurMoniker(unk, &Moniker, NULL);
     }
 
@@ -3973,7 +3978,7 @@ static void test_HTMLDocument_hlink(void)
         return;
     }
 
-    test_download(FALSE, TRUE, TRUE);
+    test_download(DWL_CSS|DWL_TRYCSS);
 
     test_IsDirty(unk, S_FALSE);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
@@ -4025,7 +4030,7 @@ static void test_HTMLDocument_http(void)
         return;
     }
 
-    test_download(FALSE, FALSE, FALSE);
+    test_download(DWL_HTTP);
 
     test_IsDirty(unk, S_FALSE);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
@@ -4077,7 +4082,7 @@ static void test_HTMLDocument_StreamLoad(void)
 
     test_GetCurMoniker(unk, NULL, NULL);
     test_StreamLoad(unk);
-    test_download(TRUE, FALSE, TRUE);
+    test_download(DWL_VERBDONE|DWL_TRYCSS);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
 
     test_UIDeactivate();
@@ -4158,7 +4163,7 @@ static void test_editing_mode(BOOL do_load)
     IOleObject_Release(oleobj);
 
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
-    test_download(TRUE, do_load, do_load);
+    test_download(DWL_VERBDONE | (do_load ? DWL_CSS|DWL_TRYCSS : 0));
 
     SET_EXPECT(SetStatusText); /* ignore race in native mshtml */
     test_timer(EXPECT_UPDATEUI);
