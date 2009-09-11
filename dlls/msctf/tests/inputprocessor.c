@@ -121,6 +121,7 @@ static inline void _sink_fire_ok(INT *sink, const CHAR* name)
 static inline void _sink_check_ok(INT *sink, const CHAR* name)
 {
     int action = *sink & SINK_ACTION_MASK;
+    int todo = *sink & SINK_OPTION_TODO;
 
     switch (action)
     {
@@ -132,7 +133,10 @@ static inline void _sink_check_ok(INT *sink, const CHAR* name)
         case SINK_IGNORE:
             return;
         default:
-            winetest_ok(0, "%s not fired as expected, in state %x\n",name,*sink);
+            if (todo)
+                todo_wine winetest_ok(0, "%s not fired as expected, in state %x\n",name,*sink);
+            else
+                winetest_ok(0, "%s not fired as expected, in state %x\n",name,*sink);
     }
     *sink = SINK_UNEXPECTED;
 }
