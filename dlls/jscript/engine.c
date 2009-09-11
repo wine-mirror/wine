@@ -245,6 +245,11 @@ static HRESULT put_value(script_ctx_t *ctx, exprval_t *ref, VARIANT *v, jsexcept
     return disp_propput(ref->u.idref.disp, ref->u.idref.id, ctx->lcid, v, ei, NULL/*FIXME*/);
 }
 
+static inline BOOL is_null(const VARIANT *v)
+{
+    return V_VT(v) == VT_NULL || (V_VT(v) == VT_DISPATCH && !V_DISPATCH(v));
+}
+
 static HRESULT disp_cmp(IDispatch *disp1, IDispatch *disp2, BOOL *ret)
 {
     IObjectIdentity *identity;
@@ -253,6 +258,11 @@ static HRESULT disp_cmp(IDispatch *disp1, IDispatch *disp2, BOOL *ret)
 
     if(disp1 == disp2) {
         *ret = TRUE;
+        return S_OK;
+    }
+
+    if(!disp1) {
+        *ret = !disp2;
         return S_OK;
     }
 
@@ -290,12 +300,12 @@ static HRESULT equal2_values(VARIANT *lval, VARIANT *rval, BOOL *ret)
     TRACE("\n");
 
     if(V_VT(lval) != V_VT(rval)) {
-        if(is_num_vt(V_VT(lval)) && is_num_vt(V_VT(rval))) {
+        if(is_num_vt(V_VT(lval)) && is_num_vt(V_VT(rval)))
             *ret = num_val(lval) == num_val(rval);
-            return S_OK;
-        }
-
-        *ret = FALSE;
+        else if(is_null(lval))
+            *ret = is_null(rval);
+        else
+            *ret = FALSE;
         return S_OK;
     }
 

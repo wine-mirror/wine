@@ -935,6 +935,13 @@ ok(createNullBSTR() === '', "createNullBSTR() !== ''");
 
 ok(getVT(nullDisp) === "VT_DISPATCH", "getVT(nullDisp) = " + getVT(nullDisp));
 ok(typeof(nullDisp) === "object", "typeof(nullDisp) = " + typeof(nullDisp));
+ok(nullDisp === nullDisp, "nullDisp !== nullDisp");
+ok(nullDisp !== re, "nullDisp === re");
+ok(nullDisp === null, "nullDisp === null");
+ok(nullDisp == null, "nullDisp == null");
+ok(getVT(true && nullDisp) === "VT_DISPATCH",
+   "getVT(0 && nullDisp) = " + getVT(true && nullDisp));
+ok(!nullDisp === true, "!nullDisp = " + !nullDisp);
 
 function do_test() {}
 function nosemicolon() {} nosemicolon();
