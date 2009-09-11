@@ -14,6 +14,7 @@ C_SRCS = \
 IDL_P_SRCS = \
 	actxprxy_activscp.idl \
 	actxprxy_comcat.idl \
+	actxprxy_docobj.idl \
 	actxprxy_servprov.idl
 
 @MAKE_DLL_RULES@

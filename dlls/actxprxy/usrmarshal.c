@@ -33,6 +33,7 @@
 #include "objbase.h"
 #include "servprov.h"
 #include "comcat.h"
+#include "docobj.h"
 
 #include "wine/debug.h"
 
@@ -114,4 +115,56 @@ HRESULT __RPC_STUB ICatInformation_IsClassOfCategories_Stub(
     TRACE("(%p)\n", This);
     return ICatInformation_IsClassOfCategories( This, rclsid, cImplemented, rgcatidImpl,
                                                 cRequired, rgcatidReq );
+}
+
+HRESULT CALLBACK IPrint_Print_Proxy(
+    IPrint *This,
+    DWORD grfFlags,
+    DVTARGETDEVICE **pptd,
+    PAGESET **ppPageSet,
+    STGMEDIUM *pstgmOptions,
+    IContinueCallback *pcallback,
+    LONG nFirstPage,
+    LONG *pcPagesPrinted,
+    LONG *pnLastPage )
+{
+    TRACE("(%p)\n", This);
+    return IPrint_RemotePrint_Proxy( This, grfFlags, pptd, ppPageSet, (RemSTGMEDIUM *)pstgmOptions,
+                                     pcallback, nFirstPage, pcPagesPrinted, pnLastPage );
+}
+
+HRESULT __RPC_STUB IPrint_Print_Stub(
+    IPrint *This,
+    DWORD grfFlags,
+    DVTARGETDEVICE **pptd,
+    PAGESET **ppPageSet,
+    RemSTGMEDIUM *pstgmOptions,
+    IContinueCallback *pcallback,
+    LONG nFirstPage,
+    LONG *pcPagesPrinted,
+    LONG *pnLastPage )
+{
+    TRACE("(%p)\n", This);
+    return IPrint_Print( This, grfFlags, pptd, ppPageSet, (STGMEDIUM *)pstgmOptions,
+                         pcallback, nFirstPage, pcPagesPrinted, pnLastPage );
+}
+
+HRESULT CALLBACK IEnumOleDocumentViews_Next_Proxy(
+    IEnumOleDocumentViews *This,
+    ULONG cViews,
+    IOleDocumentView **rgpView,
+    ULONG *pcFetched )
+{
+    TRACE("(%p)\n", This);
+    return IEnumOleDocumentViews_RemoteNext_Proxy( This, cViews, rgpView, pcFetched );
+}
+
+HRESULT __RPC_STUB IEnumOleDocumentViews_Next_Stub(
+    IEnumOleDocumentViews *This,
+    ULONG cViews,
+    IOleDocumentView **rgpView,
+    ULONG *pcFetched )
+{
+    TRACE("(%p)\n", This);
+    return IEnumOleDocumentViews_Next( This, cViews, rgpView, pcFetched );
 }
