@@ -285,6 +285,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     }else if(IsEqualGUID(&CGID_ShellDocView, pguidCmdGroup)) {
         switch(nCmdID) {
         case 105: /* TODO */
+        case 140: /* TODO (Win7) */
             return E_FAIL;
         default:
             ok(0, "unexpected nCmdID %d\n", nCmdID);
