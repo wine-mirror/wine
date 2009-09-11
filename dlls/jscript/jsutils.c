@@ -198,6 +198,11 @@ HRESULT to_primitive(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret
         static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
         static const WCHAR valueOfW[] = {'v','a','l','u','e','O','f',0};
 
+        if(!V_DISPATCH(v)) {
+            V_VT(ret) = VT_NULL;
+            break;
+        }
+
         jsdisp = iface_to_jsdisp((IUnknown*)V_DISPATCH(v));
         if(!jsdisp) {
             V_VT(ret) = VT_EMPTY;
