@@ -37,7 +37,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
-static ULONG execute_flags = MEM_EXECUTE_OPTION_ENABLE;
+static ULONG execute_flags = MEM_EXECUTE_OPTION_DISABLE;
 
 /*
  *	Process object

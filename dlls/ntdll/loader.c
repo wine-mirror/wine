@@ -809,8 +809,9 @@ static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
 
     if (!(nt->OptionalHeader.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_NX_COMPAT))
     {
+        ULONG flags = MEM_EXECUTE_OPTION_ENABLE;
         WARN( "disabling no-exec because of %s\n", debugstr_w(wm->ldr.BaseDllName.Buffer) );
-        VIRTUAL_SetForceExec( TRUE );
+        NtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &flags, sizeof(flags) );
     }
     return wm;
 }
