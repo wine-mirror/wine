@@ -20,7 +20,8 @@ IDL_P_SRCS = \
 	actxprxy_objsafe.idl \
 	actxprxy_ocmm.idl \
 	actxprxy_servprov.idl \
-	actxprxy_shobjidl.idl
+	actxprxy_shobjidl.idl \
+	actxprxy_urlhist.idl
 
 @MAKE_DLL_RULES@
 
