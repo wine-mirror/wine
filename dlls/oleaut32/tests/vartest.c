@@ -1647,7 +1647,9 @@ static void test_VarDateFromUdate(void)
   UD2T(1,1,10000,0,0,0,0,0,0,0,E_INVALIDARG,0.0); /* > 31 Dec 9999 => err  */
 
   UD2T(1,1,1980,18,1,16,0,2,1,0,S_OK,29221.75087962963); /* 6:18:02 PM */
+  todo_wine UD2T(0,1,1980,42,1,16,0,2,1,0,S_OK,29221.75087962963); /* Test rolled hours */
   todo_wine UD2T(1,1,1980,17,61,16,0,2,1,0,S_OK,29221.75087962963); /* Test rolled minutes */
+  todo_wine UD2T(1,1,1980,18,0,76,0,2,1,0,S_OK,29221.75087962963); /* Test rolled seconds */
 
   UD2T(0,1,1980,0,0,0,0,2,1,0,S_OK,29220.0);      /* Rolls back to 31 Dec 1899 */
   UD2T(1,13,1980,0,0,0,0,2,1,0,S_OK,29587.0);     /* Rolls fwd to 1/1/1981 */
