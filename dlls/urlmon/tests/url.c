@@ -86,9 +86,11 @@ DEFINE_EXPECT(QueryInterface_IBindStatusCallbackHolder);
 DEFINE_EXPECT(QueryInterface_IInternetBindInfo);
 DEFINE_EXPECT(QueryInterface_IAuthenticate);
 DEFINE_EXPECT(QueryInterface_IInternetProtocol);
+DEFINE_EXPECT(QueryInterface_IWindowForBindingUI);
 DEFINE_EXPECT(QueryService_IAuthenticate);
 DEFINE_EXPECT(QueryService_IInternetProtocol);
 DEFINE_EXPECT(QueryService_IInternetBindInfo);
+DEFINE_EXPECT(QueryService_IWindowForBindingUI);
 DEFINE_EXPECT(BeginningTransaction);
 DEFINE_EXPECT(OnResponse);
 DEFINE_EXPECT(QueryInterface_IHttpNegotiate2);
@@ -1099,6 +1101,11 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
         return E_NOTIMPL;
     }
 
+    if(IsEqualGUID(&IID_IWindowForBindingUI, guidService)) {
+        CHECK_EXPECT(QueryService_IWindowForBindingUI);
+        return E_NOTIMPL;
+    }
+
     ok(0, "unexpected service %s\n", debugstr_guid(guidService));
     return E_NOINTERFACE;
 }
@@ -1173,6 +1180,11 @@ static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallbackEx *iface, REF
     {
         /* TODO */
         CHECK_EXPECT2(QueryInterface_IInternetBindInfo);
+    }
+    else if(IsEqualGUID(&IID_IWindowForBindingUI, riid))
+    {
+        CHECK_EXPECT2(QueryInterface_IWindowForBindingUI);
+        return E_NOINTERFACE;
     }
     else
     {
@@ -2259,6 +2271,8 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
             SET_EXPECT(QueryInterface_IInternetBindInfo);
             SET_EXPECT(QueryService_IInternetBindInfo);
             SET_EXPECT(QueryInterface_IHttpNegotiate);
+            SET_EXPECT(QueryInterface_IWindowForBindingUI);
+            SET_EXPECT(QueryService_IWindowForBindingUI);
             SET_EXPECT(BeginningTransaction);
             SET_EXPECT(QueryInterface_IHttpNegotiate2);
             SET_EXPECT(GetRootSecurityId);
@@ -2338,6 +2352,8 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
             CLEAR_CALLED(QueryInterface_IInternetBindInfo);
             CLEAR_CALLED(QueryService_IInternetBindInfo);
             CHECK_CALLED(QueryInterface_IHttpNegotiate);
+            CLEAR_CALLED(QueryInterface_IWindowForBindingUI);
+            CLEAR_CALLED(QueryService_IWindowForBindingUI);
             CHECK_CALLED(BeginningTransaction);
             if (have_IHttpNegotiate2)
             {
@@ -2443,6 +2459,8 @@ static void test_BindToObject(int protocol, BOOL emul)
             SET_EXPECT(GetRootSecurityId);
             SET_EXPECT(Obj_OnProgress_FINDINGRESOURCE);
             SET_EXPECT(Obj_OnProgress_CONNECTING);
+            SET_EXPECT(QueryInterface_IWindowForBindingUI);
+            SET_EXPECT(QueryService_IWindowForBindingUI);
         }
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FILE_TEST)
             SET_EXPECT(Obj_OnProgress_SENDINGREQUEST);
@@ -2526,6 +2544,8 @@ static void test_BindToObject(int protocol, BOOL emul)
                 /* IE7 does call this */
                 CLEAR_CALLED(Obj_OnProgress_CONNECTING);
             }
+            CLEAR_CALLED(QueryInterface_IWindowForBindingUI);
+            CLEAR_CALLED(QueryService_IWindowForBindingUI);
         }
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FILE_TEST) {
             if(urls[test_protocol] == SHORT_RESPONSE_URL)
@@ -2591,6 +2611,7 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
             SET_EXPECT(BeginningTransaction);
             SET_EXPECT(QueryInterface_IHttpNegotiate2);
             SET_EXPECT(GetRootSecurityId);
+            SET_EXPECT(QueryInterface_IWindowForBindingUI);
         }
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FILE_TEST)
             SET_EXPECT(OnProgress_SENDINGREQUEST);
@@ -2633,6 +2654,7 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
                 CHECK_CALLED(QueryInterface_IHttpNegotiate2);
                 CHECK_CALLED(GetRootSecurityId);
             }
+            CLEAR_CALLED(QueryInterface_IWindowForBindingUI);
         }
         if(test_protocol == FILE_TEST)
             CHECK_CALLED(OnProgress_SENDINGREQUEST);
