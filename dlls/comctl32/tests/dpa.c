@@ -586,7 +586,7 @@ static void test_DPA_LoadStream(void)
     uli.QuadPart = 1;
     hRes = IStream_Seek(pStm, li, STREAM_SEEK_CUR, &uli);
     expect(S_OK, hRes);
-    todo_wine ok(uli.QuadPart == 0, "Expected to position reset\n");
+    ok(uli.QuadPart == 0, "Expected to position reset\n");
 
     /* write valid header for empty DPA */
     header.dwSize = sizeof(header);
@@ -612,7 +612,7 @@ static void test_DPA_LoadStream(void)
     expect(S_OK, hRes);
 
     hRes = pDPA_LoadStream(&dpa, CB_Load, pStm, NULL);
-    todo_wine expect(S_OK, hRes);
+    expect(S_OK, hRes);
 
     /* try with altered dwData2 field */
     header.dwSize = sizeof(header);
@@ -632,7 +632,7 @@ static void test_DPA_LoadStream(void)
     expect(S_OK, hRes);
 
     hRes = pDPA_LoadStream(&dpa, CB_Load, pStm, (void*)0xdeadbeef);
-    todo_wine expect(E_FAIL, hRes);
+    expect(E_FAIL, hRes);
 
     ret = IStream_Release(pStm);
     ok(!ret, "ret=%d\n", ret);

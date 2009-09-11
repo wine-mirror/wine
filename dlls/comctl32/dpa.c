@@ -84,7 +84,7 @@ HRESULT WINAPI DPA_LoadStream (HDPA *phDpa, PFNDPASTREAM loadProc,
 {
     HRESULT errCode;
     LARGE_INTEGER position;
-    ULARGE_INTEGER newPosition;
+    ULARGE_INTEGER initial_pos;
     STREAMDATA  streamData;
     DPASTREAMINFO streamInfo;
     ULONG ulRead;
@@ -101,15 +101,11 @@ HRESULT WINAPI DPA_LoadStream (HDPA *phDpa, PFNDPASTREAM loadProc,
 
     position.QuadPart = 0;
 
-    /*
-     * Zero out our streamData
-     */
-    memset(&streamData,0,sizeof(STREAMDATA));
-
-    errCode = IStream_Seek (pStream, position, STREAM_SEEK_CUR, &newPosition);
+    errCode = IStream_Seek (pStream, position, STREAM_SEEK_CUR, &initial_pos);
     if (errCode != S_OK)
         return errCode;
 
+    memset(&streamData, 0, sizeof(STREAMDATA));
     errCode = IStream_Read (pStream, &streamData, sizeof(STREAMDATA), &ulRead);
     if (errCode != S_OK)
         return errCode;
@@ -117,11 +113,12 @@ HRESULT WINAPI DPA_LoadStream (HDPA *phDpa, PFNDPASTREAM loadProc,
     FIXME ("dwSize=%u dwData2=%u dwItems=%u\n",
            streamData.dwSize, streamData.dwData2, streamData.dwItems);
 
-    if ( ulRead < sizeof(STREAMDATA) ||
-    (DWORD)pData < sizeof(STREAMDATA) ||
-        streamData.dwSize < sizeof(STREAMDATA) ||
-        streamData.dwData2 < 1) {
-        errCode = E_FAIL;
+    if (ulRead < sizeof(STREAMDATA) ||
+        streamData.dwSize < sizeof(STREAMDATA) || streamData.dwData2 != 1) {
+        /* back to initial position */
+        position.QuadPart = initial_pos.QuadPart;
+        IStream_Seek (pStream, position, STREAM_SEEK_SET, NULL);
+        return E_FAIL;
     }
 
     if (streamData.dwItems > (UINT_MAX / 2 / sizeof(VOID*))) /* 536870911 */
