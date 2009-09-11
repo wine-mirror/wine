@@ -229,7 +229,7 @@ static HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface)
     }
 }
 
-const IDirect3DSurface8Vtbl Direct3DSurface8_Vtbl =
+static const IDirect3DSurface8Vtbl Direct3DSurface8_Vtbl =
 {
     /* IUnknown */
     IDirect3DSurface8Impl_QueryInterface,
@@ -246,3 +246,36 @@ const IDirect3DSurface8Vtbl Direct3DSurface8_Vtbl =
     IDirect3DSurface8Impl_LockRect,
     IDirect3DSurface8Impl_UnlockRect
 };
+
+HRESULT surface_init(IDirect3DSurface8Impl *surface, IDirect3DDevice8Impl *device,
+        UINT width, UINT height, D3DFORMAT format, BOOL lockable, BOOL discard, UINT level,
+        DWORD usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality)
+{
+    HRESULT hr;
+
+    surface->lpVtbl = &Direct3DSurface8_Vtbl;
+    surface->ref = 1;
+
+    /* FIXME: Check MAX bounds of MultisampleQuality. */
+    if (multisample_quality > 0)
+    {
+        FIXME("Multisample quality set to %u, substituting 0.\n", multisample_quality);
+        multisample_quality = 0;
+    }
+
+    wined3d_mutex_lock();
+    hr = IWineD3DDevice_CreateSurface(device->WineD3DDevice, width, height, wined3dformat_from_d3dformat(format),
+            lockable, discard, level, &surface->wineD3DSurface, usage & WINED3DUSAGE_MASK, (WINED3DPOOL)pool,
+            multisample_type, multisample_quality, SURFACE_OPENGL, (IUnknown *)surface);
+    wined3d_mutex_unlock();
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d surface, hr %#x.\n", hr);
+        return hr;
+    }
+
+    surface->parentDevice = (IDirect3DDevice8 *)device;
+    IUnknown_AddRef(surface->parentDevice);
+
+    return D3D_OK;
+}

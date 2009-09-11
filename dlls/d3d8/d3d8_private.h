@@ -265,11 +265,6 @@ struct IDirect3DSwapChain8Impl
 /* ----------------- */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DSurface8Vtbl Direct3DSurface8_Vtbl;
-
-/*****************************************************************************
  * IDirect3DSurface8 implementation structure
  */
 struct IDirect3DSurface8Impl
@@ -293,6 +288,10 @@ struct IDirect3DSurface8Impl
     /* Flags an implicit surface */
     BOOL                        isImplicit;
 };
+
+HRESULT surface_init(IDirect3DSurface8Impl *surface, IDirect3DDevice8Impl *device,
+        UINT width, UINT height, D3DFORMAT format, BOOL lockable, BOOL discard, UINT level,
+        DWORD usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality);
 
 /* ------------------ */
 /* IDirect3DResource8 */

@@ -858,51 +858,32 @@ static HRESULT IDirect3DDevice8Impl_CreateSurface(LPDIRECT3DDEVICE8 iface, UINT 
         D3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IDirect3DSurface8 **ppSurface,
         UINT Usage, D3DPOOL Pool, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality)
 {
-    HRESULT hrc;
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IDirect3DSurface8Impl *object;
-    IDirect3DDevice8Impl  *This = (IDirect3DDevice8Impl *)iface;
-    TRACE("(%p) Relay\n", This);
-
-    if(MultisampleQuality > 0){
-        FIXME("MultisampleQuality set to %d, substituting 0\n" , MultisampleQuality);
-        /*
-        MultisampleQuality
-        [in] Quality level. The valid range is between zero and one less than the level returned by pQualityLevels used by IDirect3D8::CheckDeviceMultiSampleType. Passing a larger value returns the error D3DERR_INVALIDCALL. The MultisampleQuality values of paired render targets, depth stencil surfaces, and the MultiSample type must all match.
-        */
-        MultisampleQuality=0;
-    }
-    /*FIXME: Check MAX bounds of MultisampleQuality*/
-
-    /* Allocate the storage for the device */
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface8Impl));
-    if (NULL == object) {
-        FIXME("Allocation of memory failed\n");
-        *ppSurface = NULL;
-        return D3DERR_OUTOFVIDEOMEMORY;
-    }
-
-    object->lpVtbl = &Direct3DSurface8_Vtbl;
-    object->ref = 1;
+    HRESULT hr;
 
     TRACE("(%p) : w(%d) h(%d) fmt(%d) surf@%p\n", This, Width, Height, Format, *ppSurface);
 
-    wined3d_mutex_lock();
-    hrc = IWineD3DDevice_CreateSurface(This->WineD3DDevice, Width, Height, wined3dformat_from_d3dformat(Format),
-            Lockable, Discard, Level, &object->wineD3DSurface, Usage & WINED3DUSAGE_MASK, (WINED3DPOOL)Pool,
-            MultiSample, MultisampleQuality, SURFACE_OPENGL, (IUnknown *)object);
-    wined3d_mutex_unlock();
-
-    if (hrc != D3D_OK || NULL == object->wineD3DSurface) {
-       /* free up object */
-        FIXME("(%p) call to IWineD3DDevice_CreateSurface failed\n", This);
-        HeapFree(GetProcessHeap(), 0, object);
-        *ppSurface = NULL;
-    } else {
-        IUnknown_AddRef(iface);
-        object->parentDevice = iface;
-        *ppSurface = (LPDIRECT3DSURFACE8) object;
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface8Impl));
+    if (!object)
+    {
+        FIXME("Failed to allocate surface memory.\n");
+        return D3DERR_OUTOFVIDEOMEMORY;
     }
-    return hrc;
+
+    hr = surface_init(object, This, Width, Height, Format, Lockable, Discard,
+            Level, Usage, Pool, MultiSample, MultisampleQuality);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize surface, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created surface %p.\n", object);
+    *ppSurface = (IDirect3DSurface8 *)object;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_CreateRenderTarget(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, BOOL Lockable, IDirect3DSurface8** ppSurface) {
