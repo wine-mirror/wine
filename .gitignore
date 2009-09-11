@@ -31,6 +31,8 @@ dlls/actxprxy/actxprxy_hlink.h
 dlls/actxprxy/actxprxy_hlink_p.c
 dlls/actxprxy/actxprxy_htiframe.h
 dlls/actxprxy/actxprxy_htiframe_p.c
+dlls/actxprxy/actxprxy_objsafe.h
+dlls/actxprxy/actxprxy_objsafe_p.c
 dlls/actxprxy/actxprxy_servprov.h
 dlls/actxprxy/actxprxy_servprov_p.c
 dlls/advapi32/svcctl.h
