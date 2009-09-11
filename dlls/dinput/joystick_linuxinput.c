@@ -779,7 +779,8 @@ static void joy_polldev(JoystickGenericImpl *iface)
             axis = This->generic.axis_map[axis];
             if (axis < 0) break;
 
-            inst_id = DIDFT_MAKEINSTANCE(axis) | (axis < 8 ? DIDFT_ABSAXIS : DIDFT_POV);
+            inst_id = axis < 8 ?  DIDFT_MAKEINSTANCE(axis) | DIDFT_ABSAXIS :
+                                  DIDFT_MAKEINSTANCE(axis - 8) | DIDFT_POV;
             value = joystick_map_axis(&This->generic.props[id_to_object(This->generic.base.data_format.wine_df, inst_id)], ie.value);
 
 	    switch (axis) {

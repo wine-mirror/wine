@@ -582,7 +582,8 @@ static void joy_polldev(JoystickGenericImpl *This_in) {
             int number = This->generic.axis_map[jse.number];	/* wine format object index */
 
             if (number < 0) return;
-            inst_id = DIDFT_MAKEINSTANCE(number) | (number < 8 ? DIDFT_ABSAXIS : DIDFT_POV);
+            inst_id = number < 8 ?  DIDFT_MAKEINSTANCE(number) | DIDFT_ABSAXIS :
+                                    DIDFT_MAKEINSTANCE(number - 8) | DIDFT_POV;
             value = joystick_map_axis(&This->generic.props[id_to_object(This->generic.base.data_format.wine_df, inst_id)], jse.value);
 
             TRACE("changing axis %d => %d\n", jse.number, number);
