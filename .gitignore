@@ -23,6 +23,8 @@ dlls/Makeimplib.rules
 dlls/Maketest.rules
 dlls/actxprxy/actxprxy_activscp.h
 dlls/actxprxy/actxprxy_activscp_p.c
+dlls/actxprxy/actxprxy_comcat.h
+dlls/actxprxy/actxprxy_comcat_p.c
 dlls/actxprxy/actxprxy_servprov.h
 dlls/actxprxy/actxprxy_servprov_p.c
 dlls/advapi32/svcctl.h
