@@ -40,8 +40,12 @@
 #include "wingdi.h"
 #include "winerror.h"
 #include "mmddk.h"
+#include "mmreg.h"
 #include "dsound.h"
 #include "dsdriver.h"
+#include "ks.h"
+#include "ksguid.h"
+#include "ksmedia.h"
 #include "coreaudio.h"
 #include "wine/unicode.h"
 #include "wine/library.h"
@@ -441,10 +445,32 @@ static BOOL supportedFormat(LPWAVEFORMATEX wf)
             if (wf->wBitsPerSample==8||wf->wBitsPerSample==16)
                 return TRUE;
 	}
+    } else if (wf->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
+        WAVEFORMATEXTENSIBLE * wfex = (WAVEFORMATEXTENSIBLE *)wf;
+
+        if (wf->cbSize == 22 && IsEqualGUID(&wfex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)) {
+            if (wf->nChannels >=1 && wf->nChannels <= 2) {
+                if (wf->wBitsPerSample==wfex->Samples.wValidBitsPerSample) {
+                    if (wf->wBitsPerSample==8||wf->wBitsPerSample==16)
+                        return TRUE;
+                } else
+                    WARN("wBitsPerSample != wValidBitsPerSample not supported yet\n");
+            }
+        } else
+            WARN("only KSDATAFORMAT_SUBTYPE_PCM supported\n");
     } else
         WARN("only WAVE_FORMAT_PCM supported\n");
 
     return FALSE;
+}
+
+void copyFormat(LPWAVEFORMATEX wf1, LPPCMWAVEFORMAT wf2)
+{
+    memcpy(wf2, wf1, sizeof(PCMWAVEFORMAT));
+    /* Downgrade WAVE_FORMAT_EXTENSIBLE KSDATAFORMAT_SUBTYPE_PCM
+     * to smaller yet compatible WAVE_FORMAT_PCM structure */
+    if (wf2->wf.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        wf2->wf.wFormatTag = WAVE_FORMAT_PCM;
 }
 
 /**************************************************************************
@@ -915,7 +941,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwo->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
     wwo->waveDesc = *lpDesc;
-    memcpy(&wwo->format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
+    copyFormat(lpDesc->lpFormat, &wwo->format);
     
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
@@ -1941,7 +1967,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwi->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
     wwi->waveDesc = *lpDesc;
-    memcpy(&wwi->format,   lpDesc->lpFormat,    sizeof(PCMWAVEFORMAT));
+    copyFormat(lpDesc->lpFormat, &wwi->format);
 
     wwi->dwTotalRecorded = 0;
 
