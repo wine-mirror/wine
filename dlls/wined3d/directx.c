@@ -789,7 +789,7 @@ struct driver_quirk
     const char *description;
 };
 
-struct driver_quirk quirk_table[] =
+static const struct driver_quirk quirk_table[] =
 {
     {
         match_ati_r300_to_500,

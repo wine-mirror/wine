@@ -4442,7 +4442,7 @@ static int sig_tree_compare(const void *key, const struct wine_rb_entry *entry)
     return compare_sig(key, e->sig);
 }
 
-struct wine_rb_functions sig_tree_functions =
+static const struct wine_rb_functions sig_tree_functions =
 {
     wined3d_rb_alloc,
     wined3d_rb_realloc,
