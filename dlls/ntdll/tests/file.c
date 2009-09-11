@@ -801,7 +801,8 @@ static void test_file_basic_information(void)
     memset(&fbi, 0, sizeof(fbi));
     res = pNtQueryInformationFile(h, &io, &fbi, sizeof fbi, FileBasicInformation);
     ok ( res == STATUS_SUCCESS, "can't get attributes, res %x\n", res);
-    ok ( fbi.FileAttributes == FILE_ATTRIBUTE_ARCHIVE, "attribute %x not FILE_ATTRIBUTE_ARCHIVE\n", fbi.FileAttributes );
+    ok ( (fbi.FileAttributes & FILE_ATTRIBUTE_ARCHIVE) == FILE_ATTRIBUTE_ARCHIVE,
+         "attribute %x not expected\n", fbi.FileAttributes );
 
     /* Then SYSTEM */
     /* Clear fbi to avoid setting times */
@@ -859,14 +860,16 @@ static void test_file_all_information(void)
     /* Check default first */
     res = pNtQueryInformationFile(h, &io, &fai_buf.fai, sizeof fai_buf, FileAllInformation);
     ok ( res == STATUS_SUCCESS, "can't get attributes, res %x\n", res);
-    ok ( fai_buf.fai.BasicInformation.FileAttributes == FILE_ATTRIBUTE_ARCHIVE, "attribute %x not FILE_ATTRIBUTE_ARCHIVE\n", fai_buf.fai.BasicInformation.FileAttributes );
+    ok ( (fai_buf.fai.BasicInformation.FileAttributes & FILE_ATTRIBUTE_ARCHIVE) == FILE_ATTRIBUTE_ARCHIVE,
+         "attribute %x not expected\n", fai_buf.fai.BasicInformation.FileAttributes );
 
     /* Then SYSTEM */
     /* Clear fbi to avoid setting times */
     memset(&fai_buf.fai.BasicInformation, 0, sizeof(fai_buf.fai.BasicInformation));
     fai_buf.fai.BasicInformation.FileAttributes = FILE_ATTRIBUTE_SYSTEM;
     res = pNtSetInformationFile(h, &io, &fai_buf.fai, sizeof fai_buf, FileAllInformation);
-    ok ( res == STATUS_NOT_IMPLEMENTED, "shouldn't be able to set FileAllInformation, res %x\n", res);
+    todo_wine
+    ok ( res == STATUS_INVALID_INFO_CLASS, "shouldn't be able to set FileAllInformation, res %x\n", res);
     res = pNtSetInformationFile(h, &io, &fai_buf.fai.BasicInformation, sizeof fai_buf.fai.BasicInformation, FileBasicInformation);
     ok ( res == STATUS_SUCCESS, "can't set system attribute\n");
 
@@ -911,7 +914,8 @@ static void test_file_both_information(void)
 
     memset(&fbi, 0, sizeof(fbi));
     res = pNtQueryInformationFile(h, &io, &fbi, sizeof fbi, FileBothDirectoryInformation);
-    ok ( res == STATUS_NOT_IMPLEMENTED, "whoops, vista doesn't implement this one?\n");
+    todo_wine
+    ok ( res == STATUS_INVALID_INFO_CLASS, "shouldn't be able to query FileBothDirectoryInformation, res %x\n", res);
 
     CloseHandle( h );
 }
