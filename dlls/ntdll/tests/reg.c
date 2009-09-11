@@ -140,7 +140,7 @@ static NTSTATUS (WINAPI * pRtlUnicodeStringToAnsiString)(PSTRING, PUNICODE_STRIN
 static NTSTATUS (WINAPI * pRtlFreeHeap)(PVOID, ULONG, PVOID);
 static LPVOID   (WINAPI * pRtlAllocateHeap)(PVOID,ULONG,ULONG);
 static NTSTATUS (WINAPI * pRtlZeroMemory)(PVOID, ULONG);
-static NTSTATUS (WINAPI * pRtlpNtQueryValueKey)(HANDLE,ULONG*,PBYTE,DWORD*);
+static NTSTATUS (WINAPI * pRtlpNtQueryValueKey)(HANDLE,ULONG*,PBYTE,DWORD*,void *);
 
 static HMODULE hntdll = 0;
 static int CurrentTest = 0;
@@ -593,7 +593,7 @@ static void test_RtlpNtQueryValueKey(void)
 {
     NTSTATUS status;
 
-    status = pRtlpNtQueryValueKey(NULL, NULL, NULL, NULL);
+    status = pRtlpNtQueryValueKey(NULL, NULL, NULL, NULL, NULL);
     ok(status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got: 0x%08x\n", status);
 }
 

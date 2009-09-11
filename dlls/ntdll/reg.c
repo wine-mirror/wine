@@ -530,7 +530,7 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
  *
  */
 NTSTATUS WINAPI RtlpNtQueryValueKey( HANDLE handle, ULONG *result_type, PBYTE dest,
-                                     DWORD *result_len )
+                                     DWORD *result_len, void *unknown )
 {
     KEY_VALUE_PARTIAL_INFORMATION *info;
     UNICODE_STRING name;
