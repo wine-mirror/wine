@@ -431,6 +431,22 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
     return MMSYSERR_NOERROR;
 }
 
+static BOOL supportedFormat(LPWAVEFORMATEX wf)
+{
+    if (wf->nSamplesPerSec == 0)
+        return FALSE;
+
+    if (wf->wFormatTag == WAVE_FORMAT_PCM) {
+        if (wf->nChannels >= 1 && wf->nChannels <= 2) {
+            if (wf->wBitsPerSample==8||wf->wBitsPerSample==16)
+                return TRUE;
+	}
+    } else
+        WARN("only WAVE_FORMAT_PCM supported\n");
+
+    return FALSE;
+}
+
 /**************************************************************************
 * 			CoreAudio_GetDevCaps            [internal]
 */
@@ -793,10 +809,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
           lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
           lpDesc->lpFormat->nSamplesPerSec, lpDesc->lpFormat->wBitsPerSample);
     
-    if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
-        lpDesc->lpFormat->nChannels == 0 ||
-        lpDesc->lpFormat->nSamplesPerSec == 0
-         )
+    if (!supportedFormat(lpDesc->lpFormat))
     {
         WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%d wBitsPerSample=%d !\n",
              lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
@@ -893,14 +906,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwo->waveDesc = *lpDesc;
     memcpy(&wwo->format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
-
-    if (wwo->format.wBitsPerSample == 0) {
-	WARN("Resetting zeroed wBitsPerSample\n");
-	wwo->format.wBitsPerSample = 8 *
-	    (wwo->format.wf.nAvgBytesPerSec /
-	     wwo->format.wf.nSamplesPerSec) /
-	    wwo->format.wf.nChannels;
-    }
     
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
@@ -1884,9 +1889,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
           lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
           lpDesc->lpFormat->nSamplesPerSec, lpDesc->lpFormat->wBitsPerSample);
 
-    if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
-        lpDesc->lpFormat->nChannels == 0 ||
-        lpDesc->lpFormat->nSamplesPerSec == 0 ||
+    if (!supportedFormat(lpDesc->lpFormat) ||
         lpDesc->lpFormat->nSamplesPerSec != AudioUnit_GetInputDeviceSampleRate()
         )
     {
@@ -1919,15 +1922,6 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwi->waveDesc = *lpDesc;
     memcpy(&wwi->format,   lpDesc->lpFormat,    sizeof(PCMWAVEFORMAT));
-
-    if (wwi->format.wBitsPerSample == 0)
-    {
-        WARN("Resetting zeroed wBitsPerSample\n");
-        wwi->format.wBitsPerSample = 8 *
-            (wwi->format.wf.nAvgBytesPerSec /
-            wwi->format.wf.nSamplesPerSec) /
-            wwi->format.wf.nChannels;
-    }
 
     wwi->dwTotalRecorded = 0;
 
