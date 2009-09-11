@@ -82,7 +82,6 @@ struct d3d10_device
 };
 
 /* ID3D10Texture2D */
-extern const struct ID3D10Texture2DVtbl d3d10_texture2d_vtbl;
 struct d3d10_texture2d
 {
     const struct ID3D10Texture2DVtbl *vtbl;
@@ -92,6 +91,9 @@ struct d3d10_texture2d
     IWineD3DSurface *wined3d_surface;
     D3D10_TEXTURE2D_DESC desc;
 };
+
+HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_device *device,
+        const D3D10_TEXTURE2D_DESC *desc);
 
 /* ID3D10Buffer */
 extern const struct ID3D10BufferVtbl d3d10_buffer_vtbl;

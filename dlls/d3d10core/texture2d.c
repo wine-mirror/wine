@@ -161,7 +161,7 @@ static void STDMETHODCALLTYPE d3d10_texture2d_GetDesc(ID3D10Texture2D *iface, D3
     *desc = This->desc;
 }
 
-const struct ID3D10Texture2DVtbl d3d10_texture2d_vtbl =
+static const struct ID3D10Texture2DVtbl d3d10_texture2d_vtbl =
 {
     /* IUnknown methods */
     d3d10_texture2d_QueryInterface,
@@ -181,3 +181,50 @@ const struct ID3D10Texture2DVtbl d3d10_texture2d_vtbl =
     d3d10_texture2d_Unmap,
     d3d10_texture2d_GetDesc,
 };
+
+HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_device *device,
+        const D3D10_TEXTURE2D_DESC *desc)
+{
+    HRESULT hr;
+
+    texture->vtbl = &d3d10_texture2d_vtbl;
+    texture->refcount = 1;
+    texture->desc = *desc;
+
+    if (desc->MipLevels == 1 && desc->ArraySize == 1)
+    {
+        IWineDXGIDevice *wine_device;
+
+        hr = ID3D10Device_QueryInterface((ID3D10Device *)device, &IID_IWineDXGIDevice, (void **)&wine_device);
+        if (FAILED(hr))
+        {
+            ERR("Device should implement IWineDXGIDevice\n");
+            return E_FAIL;
+        }
+
+        hr = IWineDXGIDevice_create_surface(wine_device, NULL, 0, NULL,
+                (IUnknown *)texture, (void **)&texture->dxgi_surface);
+        IWineDXGIDevice_Release(wine_device);
+        if (FAILED(hr))
+        {
+            ERR("Failed to create DXGI surface, returning %#x\n", hr);
+            return hr;
+        }
+
+        FIXME("Implement DXGI<->wined3d usage conversion\n");
+
+        hr = IWineD3DDevice_CreateSurface(device->wined3d_device, desc->Width, desc->Height,
+                wined3dformat_from_dxgi_format(desc->Format), FALSE, FALSE, 0,
+                &texture->wined3d_surface, desc->Usage, WINED3DPOOL_DEFAULT,
+                desc->SampleDesc.Count > 1 ? desc->SampleDesc.Count : WINED3DMULTISAMPLE_NONE,
+                desc->SampleDesc.Quality, SURFACE_OPENGL, (IUnknown *)texture);
+        if (FAILED(hr))
+        {
+            ERR("CreateSurface failed, returning %#x\n", hr);
+            IDXGISurface_Release(texture->dxgi_surface);
+            return hr;
+        }
+    }
+
+    return S_OK;
+}

@@ -682,46 +682,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device *ifac
         return E_OUTOFMEMORY;
     }
 
-    object->vtbl = &d3d10_texture2d_vtbl;
-    object->refcount = 1;
-    object->desc = *desc;
-
-    if (desc->MipLevels == 1 && desc->ArraySize == 1)
+    hr = d3d10_texture2d_init(object, This, desc);
+    if (FAILED(hr))
     {
-        IWineDXGIDevice *wine_device;
-
-        hr = ID3D10Device_QueryInterface(iface, &IID_IWineDXGIDevice, (void **)&wine_device);
-        if (FAILED(hr))
-        {
-            ERR("Device should implement IWineDXGIDevice\n");
-            HeapFree(GetProcessHeap(), 0, object);
-            return E_FAIL;
-        }
-
-        hr = IWineDXGIDevice_create_surface(wine_device, NULL, 0, NULL,
-                (IUnknown *)object, (void **)&object->dxgi_surface);
-        IWineDXGIDevice_Release(wine_device);
-        if (FAILED(hr))
-        {
-            ERR("Failed to create DXGI surface, returning %#x\n", hr);
-            HeapFree(GetProcessHeap(), 0, object);
-            return hr;
-        }
-
-        FIXME("Implement DXGI<->wined3d usage conversion\n");
-
-        hr = IWineD3DDevice_CreateSurface(This->wined3d_device, desc->Width, desc->Height,
-                wined3dformat_from_dxgi_format(desc->Format), FALSE, FALSE, 0,
-                &object->wined3d_surface, desc->Usage, WINED3DPOOL_DEFAULT,
-                desc->SampleDesc.Count > 1 ? desc->SampleDesc.Count : WINED3DMULTISAMPLE_NONE,
-                desc->SampleDesc.Quality, SURFACE_OPENGL, (IUnknown *)object);
-        if (FAILED(hr))
-        {
-            ERR("CreateSurface failed, returning %#x\n", hr);
-            IDXGISurface_Release(object->dxgi_surface);
-            HeapFree(GetProcessHeap(), 0, object);
-            return hr;
-        }
+        WARN("Failed to initialize texture, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
     }
 
     *texture = (ID3D10Texture2D *)object;
