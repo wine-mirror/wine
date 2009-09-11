@@ -133,6 +133,12 @@ static void test_GetAcceptLanguagesA(void)
             ok(buffersize2 == strlen(buffer),
                "buffer content (length) wrong: got %08x, expected %08x\n", lstrlenA(buffer), buffersize2);
             break;
+        case __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER): /* Win7 */
+            ok(buffersize == 0,
+               "buffersize wrong: got %08x, expected 0 (2nd parameter;Win2k)\n", buffersize);
+            ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
+               "last error wrong: got %u; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
+            break;
         default:
             ok( 0, "retval %08x, size %08x, buffer (%s), last error %u\n",
                 retval, buffersize, buffer, GetLastError());
@@ -162,6 +168,12 @@ static void test_GetAcceptLanguagesA(void)
                "last error wrong: got %u; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
             ok(buffersize2 == strlen(buffer),
                "buffer content (length) wrong: got %08x, expected %08x\n", lstrlenA(buffer), buffersize2);
+            break;
+	case __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER): /* Win 7 */
+            ok(buffersize == 0,
+               "buffersize wrong: got %08x, expected 0 (2nd parameter;Win2k)\n", buffersize);
+            ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
+               "last error wrong: got %u; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
             break;
         default:
             ok( 0, "retval %08x, size %08x, buffer (%s), last error %u\n",
