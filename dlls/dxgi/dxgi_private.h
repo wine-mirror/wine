@@ -63,6 +63,15 @@ struct dxgi_device
     IWineDXGIFactory *factory;
 };
 
+/* IDXGIOutput */
+struct dxgi_output
+{
+    const struct IDXGIOutputVtbl *vtbl;
+    LONG refcount;
+};
+
+void dxgi_output_init(struct dxgi_output *output);
+
 /* IDXGIAdapter */
 struct dxgi_adapter
 {
@@ -70,9 +79,10 @@ struct dxgi_adapter
     IDXGIFactory *parent;
     LONG refcount;
     UINT ordinal;
+    IDXGIOutput *output;
 };
 
-void dxgi_adapter_init(struct dxgi_adapter *adapter, IDXGIFactory *parent, UINT ordinal);
+HRESULT dxgi_adapter_init(struct dxgi_adapter *adapter, IDXGIFactory *parent, UINT ordinal);
 
 /* IDXGISwapChain */
 extern const struct IDXGISwapChainVtbl dxgi_swapchain_vtbl;

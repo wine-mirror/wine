@@ -11,6 +11,7 @@ C_SRCS = \
 	device.c \
 	dxgi_main.c \
 	factory.c \
+	output.c \
 	surface.c \
 	swapchain.c \
 	utils.c

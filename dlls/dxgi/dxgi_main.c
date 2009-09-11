@@ -129,7 +129,21 @@ HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
             goto fail;
         }
 
-        dxgi_adapter_init(adapter, (IDXGIFactory *)object, i);
+        hr = dxgi_adapter_init(adapter, (IDXGIFactory *)object, i);
+        if (FAILED(hr))
+        {
+            UINT j;
+
+            ERR("Failed to initialize adapter, hr %#x.\n", hr);
+
+            HeapFree(GetProcessHeap(), 0, adapter);
+            for (j = 0; j < i; ++j)
+            {
+                IDXGIAdapter_Release(object->adapters[j]);
+            }
+            goto fail;
+        }
+
         object->adapters[i] = (IDXGIAdapter *)adapter;
     }
 
