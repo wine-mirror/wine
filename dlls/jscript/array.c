@@ -750,11 +750,118 @@ static HRESULT Array_sort(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS 
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    15.4.4.12 */
 static HRESULT Array_splice(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    DWORD length, start=0, delete_cnt=0, argc, i, add_args = 0;
+    DispatchEx *ret_array = NULL;
+    VARIANT v;
+    HRESULT hres = S_OK;
+
+    TRACE("\n");
+
+    if(is_class(dispex, JSCLASS_ARRAY)) {
+        length = ((ArrayInstance*)dispex)->length;
+    }else {
+        hres = get_jsdisp_length(dispex, lcid, ei, &length);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    argc = arg_cnt(dp);
+    if(argc >= 1) {
+        hres = to_integer(dispex->ctx, get_arg(dp,0), ei, &v);
+        if(FAILED(hres))
+            return hres;
+
+        if(V_VT(&v) == VT_I4) {
+            if(V_I4(&v) >= 0)
+                start = min(V_I4(&v), length);
+            else
+                start = -V_I4(&v) > length ? 0 : length + V_I4(&v);
+        }else {
+            start = V_R8(&v) < 0.0 ? 0 : length;
+        }
+    }
+
+    if(argc >= 2) {
+        hres = to_integer(dispex->ctx, get_arg(dp,1), ei, &v);
+        if(FAILED(hres))
+            return hres;
+
+        if(V_VT(&v) == VT_I4) {
+            if(V_I4(&v) > 0)
+                delete_cnt = min(V_I4(&v), length-start);
+        }else if(V_R8(&v) > 0.0) {
+            delete_cnt = length-start;
+        }
+
+        add_args = argc-2;
+    }
+
+    if(retv) {
+        hres = create_array(dispex->ctx, 0, &ret_array);
+        if(FAILED(hres))
+            return hres;
+
+        for(i=0; SUCCEEDED(hres) && i < delete_cnt; i++) {
+            hres = jsdisp_propget_idx(dispex, start+i, lcid, &v, ei, caller);
+            if(hres == DISP_E_UNKNOWNNAME)
+                hres = S_OK;
+            else if(SUCCEEDED(hres))
+                hres = jsdisp_propput_idx(ret_array, i, lcid, &v, ei, caller);
+        }
+
+        if(SUCCEEDED(hres)) {
+            V_VT(&v) = VT_I4;
+            V_I4(&v) = delete_cnt;
+
+            hres = jsdisp_propput_name(ret_array, lengthW, lcid, &v, ei, caller);
+        }
+    }
+
+    if(add_args < delete_cnt) {
+        for(i = start; SUCCEEDED(hres) && i < length-delete_cnt; i++) {
+            hres = jsdisp_propget_idx(dispex, i+delete_cnt, lcid, &v, ei, caller);
+            if(hres == DISP_E_UNKNOWNNAME)
+                hres = jsdisp_delete_idx(dispex, i+add_args);
+            else if(SUCCEEDED(hres))
+                hres = jsdisp_propput_idx(dispex, i+add_args, lcid, &v, ei, caller);
+        }
+
+        for(i=length; SUCCEEDED(hres) && i != length-delete_cnt+add_args; i--)
+            hres = jsdisp_delete_idx(dispex, i-1);
+    }else if(add_args > delete_cnt) {
+        for(i=length-delete_cnt; SUCCEEDED(hres) && i != start; i--) {
+            hres = jsdisp_propget_idx(dispex, i+delete_cnt-1, lcid, &v, ei, caller);
+            if(hres == DISP_E_UNKNOWNNAME)
+                hres = jsdisp_delete_idx(dispex, i+add_args-1);
+            else if(SUCCEEDED(hres))
+                hres = jsdisp_propput_idx(dispex, i+add_args-1, lcid, &v, ei, caller);
+        }
+    }
+
+    for(i=0; SUCCEEDED(hres) && i < add_args; i++)
+        hres = jsdisp_propput_idx(dispex, start+i, lcid, get_arg(dp,i+2), ei, caller);
+
+    if(SUCCEEDED(hres)) {
+        V_VT(&v) = VT_I4;
+        V_I4(&v) = length-delete_cnt+add_args;
+        hres = jsdisp_propput_name(dispex, lengthW, lcid, &v, ei, caller);
+    }
+
+    if(FAILED(hres)) {
+        if(ret_array)
+            jsdisp_release(ret_array);
+        return hres;
+    }
+
+    if(retv) {
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(ret_array);
+    }
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.4.4.2 */
@@ -778,6 +885,7 @@ static HRESULT Array_toLocaleString(DispatchEx *dispex, LCID lcid, WORD flags, D
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.4.4.13 */
 static HRESULT Array_unshift(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {

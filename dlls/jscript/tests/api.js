@@ -668,6 +668,78 @@ arr[12] = 2;
 ok(arr.slice(5).toString() === "a,,,,,,,2", "arr.slice(5).toString() = " + arr.slice(5).toString());
 ok(arr.slice(5).length === 8, "arr.slice(5).length = " + arr.slice(5).length);
 
+arr = [1,2,3,4,5];
+tmp = arr.splice(2,2);
+ok(tmp.toString() == "3,4", "arr.splice(2,2) returned " + tmp.toString());
+ok(arr.toString() == "1,2,5", "arr.splice(2,2) is " + arr.toString());
+
+arr = [1,2,3,4,5];
+tmp = arr.splice(2,2,"a");
+ok(tmp.toString() == "3,4", "arr.splice(2,2,'a') returned " + tmp.toString());
+ok(arr.toString() == "1,2,a,5", "arr.splice(2,2,'a') is " + arr.toString());
+
+arr = [1,2,3,4,5];
+tmp = arr.splice(2,2,'a','b','c');
+ok(tmp.toString() == "3,4", "arr.splice(2,2,'a','b','c') returned " + tmp.toString());
+ok(arr.toString() == "1,2,a,b,c,5", "arr.splice(2,2,'a','b','c') is " + arr.toString());
+
+arr = [1,2,3,4,];
+tmp = arr.splice(2,2,'a','b','c');
+ok(tmp.toString() == "3,4", "arr.splice(2,2,'a','b','c') returned " + tmp.toString());
+ok(arr.toString() == "1,2,a,b,c,", "arr.splice(2,2,'a','b','c') is " + arr.toString());
+
+arr = [1,2,3,4,];
+arr.splice(2,2,'a','b','c');
+ok(arr.toString() == "1,2,a,b,c,", "arr.splice(2,2,'a','b','c') is " + arr.toString());
+
+arr = [1,2,3,4,5];
+tmp = arr.splice(2,2,'a','b');
+ok(tmp.toString() == "3,4", "arr.splice(2,2,'a','b') returned " + tmp.toString());
+ok(arr.toString() == "1,2,a,b,5", "arr.splice(2,2,'a','b') is " + arr.toString());
+
+arr = [1,2,3,4,5];
+tmp = arr.splice(-1,2);
+ok(tmp.toString() == "5", "arr.splice(-1,2) returned " + tmp.toString());
+ok(arr.toString() == "1,2,3,4", "arr.splice(-1,2) is " + arr.toString());
+
+arr = [1,2,3,4,5];
+tmp = arr.splice(-10,3);
+ok(tmp.toString() == "1,2,3", "arr.splice(-10,3) returned " + tmp.toString());
+ok(arr.toString() == "4,5", "arr.splice(-10,3) is " + arr.toString());
+
+arr = [1,2,3,4,5];
+tmp = arr.splice(-10,100);
+ok(tmp.toString() == "1,2,3,4,5", "arr.splice(-10,100) returned " + tmp.toString());
+ok(arr.toString() == "", "arr.splice(-10,100) is " + arr.toString());
+
+arr = [1,2,3,4,5];
+tmp = arr.splice(2,-1);
+ok(tmp.toString() == "", "arr.splice(2,-1) returned " + tmp.toString());
+ok(arr.toString() == "1,2,3,4,5", "arr.splice(2,-1) is " + arr.toString());
+
+arr = [1,2,3,4,5];
+tmp = arr.splice(2);
+ok(tmp.toString() == "", "arr.splice(2,-1) returned " + tmp.toString());
+ok(arr.toString() == "1,2,3,4,5", "arr.splice(2,-1) is " + arr.toString());
+
+arr = [1,2,3,4,5];
+tmp = arr.splice();
+ok(tmp.toString() == "", "arr.splice(2,-1) returned " + tmp.toString());
+ok(arr.toString() == "1,2,3,4,5", "arr.splice(2,-1) is " + arr.toString());
+
+obj = new Object();
+obj.length = 3;
+obj[0] = 1;
+obj[1] = 2;
+obj[2] = 3;
+tmp = Array.prototype.splice.call(obj, 1, 1, 'a', 'b');
+ok(tmp.toString() === "2", "obj.splice returned " + tmp);
+ok(obj.length === 4, "obj.length = " + obj.length);
+ok(obj[0] === 1, "obj[0] = " + obj[0]);
+ok(obj[1] === 'a', "obj[1] = " + obj[1]);
+ok(obj[2] === 'b', "obj[2] = " + obj[2]);
+ok(obj[3] === 3, "obj[3] = " + obj[3]);
+
 obj = new Object();
 obj.length = 3;
 obj[0] = 1;
