@@ -19,7 +19,8 @@ IDL_P_SRCS = \
 	actxprxy_htiframe.idl \
 	actxprxy_objsafe.idl \
 	actxprxy_ocmm.idl \
-	actxprxy_servprov.idl
+	actxprxy_servprov.idl \
+	actxprxy_shobjidl.idl
 
 @MAKE_DLL_RULES@
 
