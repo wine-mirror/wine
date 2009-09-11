@@ -825,6 +825,16 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         return MMSYSERR_NOERROR;
     }
 
+    /* nBlockAlign and nAvgBytesPerSec are output variables for dsound */
+    if (lpDesc->lpFormat->nBlockAlign != lpDesc->lpFormat->nChannels*lpDesc->lpFormat->wBitsPerSample/8) {
+        lpDesc->lpFormat->nBlockAlign  = lpDesc->lpFormat->nChannels*lpDesc->lpFormat->wBitsPerSample/8;
+        WARN("Fixing nBlockAlign\n");
+    }
+    if (lpDesc->lpFormat->nAvgBytesPerSec!= lpDesc->lpFormat->nSamplesPerSec*lpDesc->lpFormat->nBlockAlign) {
+        lpDesc->lpFormat->nAvgBytesPerSec = lpDesc->lpFormat->nSamplesPerSec*lpDesc->lpFormat->nBlockAlign;
+        WARN("Fixing nAvgBytesPerSec\n");
+    }
+
     /* We proceed in three phases:
      * o Reserve the device for us, marking it as unavailable (not closed)
      * o Create, configure, and start the Audio Unit.  To avoid deadlock,
@@ -1905,6 +1915,16 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
               lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
               lpDesc->lpFormat->nSamplesPerSec);
         return MMSYSERR_NOERROR;
+    }
+
+    /* nBlockAlign and nAvgBytesPerSec are output variables for dsound */
+    if (lpDesc->lpFormat->nBlockAlign != lpDesc->lpFormat->nChannels*lpDesc->lpFormat->wBitsPerSample/8) {
+        lpDesc->lpFormat->nBlockAlign  = lpDesc->lpFormat->nChannels*lpDesc->lpFormat->wBitsPerSample/8;
+        WARN("Fixing nBlockAlign\n");
+    }
+    if (lpDesc->lpFormat->nAvgBytesPerSec!= lpDesc->lpFormat->nSamplesPerSec*lpDesc->lpFormat->nBlockAlign) {
+        lpDesc->lpFormat->nAvgBytesPerSec = lpDesc->lpFormat->nSamplesPerSec*lpDesc->lpFormat->nBlockAlign;
+        WARN("Fixing nAvgBytesPerSec\n");
     }
 
     wwi = &WInDev[wDevID];
