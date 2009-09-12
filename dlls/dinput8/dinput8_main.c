@@ -50,7 +50,7 @@ static void UnlockModule(void)
 /******************************************************************************
  *	DirectInput8Create (DINPUT8.@)
  */
-HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riid, LPVOID *ppDI, LPUNKNOWN punkOuter) {
+HRESULT WINAPI DECLSPEC_HOTPATCH DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riid, LPVOID *ppDI, LPUNKNOWN punkOuter) {
     HRESULT hr;
 
     TRACE("hInst (%p), dwVersion: %d, riid (%s), punkOuter (%p))\n", hinst, dwVersion, debugstr_guid(riid), punkOuter);
