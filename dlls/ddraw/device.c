@@ -1704,13 +1704,13 @@ IDirect3DDeviceImpl_7_EndScene(IDirect3DDevice7 *iface)
     else return D3DERR_SCENE_NOT_IN_SCENE;
 }
 
-static HRESULT WINAPI
+static HRESULT WINAPI DECLSPEC_HOTPATCH
 IDirect3DDeviceImpl_7_EndScene_FPUSetup(IDirect3DDevice7 *iface)
 {
     return IDirect3DDeviceImpl_7_EndScene(iface);
 }
 
-static HRESULT WINAPI
+static HRESULT WINAPI DECLSPEC_HOTPATCH
 IDirect3DDeviceImpl_7_EndScene_FPUPreserve(IDirect3DDevice7 *iface)
 {
     HRESULT hr;
@@ -1723,7 +1723,7 @@ IDirect3DDeviceImpl_7_EndScene_FPUPreserve(IDirect3DDevice7 *iface)
     return hr;
 }
 
-static HRESULT WINAPI
+static HRESULT WINAPI DECLSPEC_HOTPATCH
 Thunk_IDirect3DDeviceImpl_3_EndScene(IDirect3DDevice3 *iface)
 {
     IDirect3DDeviceImpl *This = device_from_device3(iface);
@@ -1731,7 +1731,7 @@ Thunk_IDirect3DDeviceImpl_3_EndScene(IDirect3DDevice3 *iface)
     return IDirect3DDevice7_EndScene((IDirect3DDevice7 *)This);
 }
 
-static HRESULT WINAPI
+static HRESULT WINAPI DECLSPEC_HOTPATCH
 Thunk_IDirect3DDeviceImpl_2_EndScene(IDirect3DDevice2 *iface)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
@@ -1739,7 +1739,7 @@ Thunk_IDirect3DDeviceImpl_2_EndScene(IDirect3DDevice2 *iface)
     return IDirect3DDevice7_EndScene((IDirect3DDevice7 *)This);
 }
 
-static HRESULT WINAPI
+static HRESULT WINAPI DECLSPEC_HOTPATCH
 Thunk_IDirect3DDeviceImpl_1_EndScene(IDirect3DDevice *iface)
 {
     IDirect3DDeviceImpl *This = device_from_device1(iface);
