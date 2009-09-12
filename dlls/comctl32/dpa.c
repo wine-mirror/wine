@@ -45,14 +45,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dpa);
 
-struct _DPA
+typedef struct _DPA
 {
     INT    nItemCount;
     LPVOID   *ptrs;
     HANDLE hHeap;
     INT    nGrow;
     INT    nMaxCount;
-};
+} DPA;
 
 typedef struct _STREAMDATA
 {
@@ -996,4 +996,24 @@ void WINAPI DPA_DestroyCallback (HDPA hdpa, PFNDPAENUMCALLBACK enumProc,
 
     DPA_EnumCallback (hdpa, enumProc, lParam);
     DPA_Destroy (hdpa);
+}
+
+/**************************************************************************
+ * DPA_GetSize [COMCTL32.@]
+ *
+ * Returns all array allocated memory size
+ *
+ * PARAMS
+ *     hdpa     [I] handle to the dynamic pointer array
+ *
+ * RETURNS
+ *     Size in bytes
+ */
+ULONGLONG WINAPI DPA_GetSize(HDPA hdpa)
+{
+    TRACE("(%p)\n", hdpa);
+
+    if (!hdpa) return 0;
+
+    return sizeof(DPA) + hdpa->nMaxCount*sizeof(PVOID);
 }
