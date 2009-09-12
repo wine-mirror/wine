@@ -303,7 +303,7 @@ err_out:
  * Arguments, return values: See DDRAW_Create
  *
  ***********************************************************************/
-HRESULT WINAPI
+HRESULT WINAPI DECLSPEC_HOTPATCH
 DirectDrawCreate(GUID *GUID,
                  LPDIRECTDRAW *DD,
                  IUnknown *UnkOuter)
@@ -326,7 +326,7 @@ DirectDrawCreate(GUID *GUID,
  * Arguments, return values: See DDRAW_Create
  *
  ***********************************************************************/
-HRESULT WINAPI
+HRESULT WINAPI DECLSPEC_HOTPATCH
 DirectDrawCreateEx(GUID *GUID,
                    LPVOID *DD,
                    REFIID iid,
