@@ -35,7 +35,7 @@ void WINAPI DebugSetMute(void) {
     /* nothing to do */
 }
 
-IDirect3D8* WINAPI Direct3DCreate8(UINT SDKVersion) {
+IDirect3D8* WINAPI DECLSPEC_HOTPATCH Direct3DCreate8(UINT SDKVersion) {
     IDirect3D8Impl* object;
     TRACE("SDKVersion = %x\n", SDKVersion);
 
