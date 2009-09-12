@@ -1505,6 +1505,21 @@ then
   then
       WINE_TRY_CFLAGS([-Werror])
   fi
+
+  dnl Check for ms_hook_prologue support
+  saved_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS -Werror"
+  AC_CACHE_CHECK([for ms_hook_prologue attribute], ac_cv_have_ms_hook_prologue,
+                 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[int __attribute__((__ms_hook_prologue__)) test(void) { return 0; }]])],
+                                   [ac_cv_have_ms_hook_prologue="yes"],[ac_cv_have_ms_hook_prologue="no"]))
+  CFLAGS="$saved_CFLAGS"
+  if test "$ac_cv_have_ms_hook_prologue" = "yes"
+  then
+      AC_DEFINE(DECLSPEC_HOTPATCH, [__attribute__((__ms_hook_prologue__))],
+                [Define to a function attribute for Microsoft hotpatch assembly prefix.])
+  else
+      AC_DEFINE(DECLSPEC_HOTPATCH, [/* */])
+  fi
 fi
 
 dnl **** Check for underscore on external symbols ****
