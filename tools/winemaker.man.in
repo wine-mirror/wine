@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINEMAKER 1 "Aug 2009" "@PACKAGE_STRING@" "Wine Developers Manual"
+.TH WINEMAKER 1 "Sep 2009" "@PACKAGE_STRING@" "Wine Developers Manual"
 .SH NAME
 winemaker \- generate a build infrastructure for compiling Windows programs on Unix
 .SH SYNOPSIS
@@ -17,7 +17,7 @@ winemaker \- generate a build infrastructure for compiling Windows programs on U
 ]
 .br
   [
-.IR               "--guiexe " "| " "--windows " "| " "--cuiexe " "| " "--console " "| " "--dll " "| " "--nodlls "
+.IR               "--guiexe " "| " "--windows " "| " "--cuiexe " "| " "--console " "| " "--dll "
 ]
 .br
   [
@@ -25,7 +25,7 @@ winemaker \- generate a build infrastructure for compiling Windows programs on U
 ]
 .br
   [
-.IR               "--interactive " "] [ " "--single-target name "
+.IR               "--nodlls " "] [ " "--nomsvcrt " "] [ " "--interactive " "] [ " "--single-target name "
 ]
 .br
   [
@@ -123,14 +123,6 @@ This option tells winemaker that whenever it finds a target of unknown type,
 i.e. for which it does not know whether it is an executable or a library,
 it should assume it is a library.
 .TP
-.I --nodlls
-This option tells winemaker not to use the standard set of winelib libraries
-for imports. That is, any DLL your code uses must be explicitly passed to
-winemaker with -i options.
-The standard set of libraries is: advapi32.dll, comdlg32.dll, gdi32.dll,
-kernel32.dll, odbc32.dll, ole32.dll, oleaut32.dll, shell32.dll, user32.dll,
-winspool.drv.
-.TP
 .I --mfc
 Specifies that the targets are MFC based. In such a case winemaker the include 
 and library paths accordingly, and links the target with the MFC library.
@@ -157,6 +149,17 @@ Appends the specified directory to the global library path.
 .TP
 .I -llibrary
 Adds the specified library to the global list of libraries to link with.
+.TP
+.I --nodlls
+This option tells winemaker not to use the standard set of winelib libraries
+for imports. That is, any DLL your code uses must be explicitly passed to
+winemaker with -i options.
+The standard set of libraries is: odbc32.dll, odbccp32.dll, ole32.dll,
+oleaut32.dll and winspool.drv.
+.TP
+.I --nomsvcrt
+Sets some options to tell winegcc not to compile against msvcrt.
+Use this option if you have cpp-files that include <string>.
 .TP
 .I --interactive
 Puts winemaker in interactive mode. In this mode winemaker will ask you to
@@ -204,7 +207,7 @@ $ make
 .PP
 For an existing project-file you would have to run the following commands:
 .PP
-$ winemaker --lower-all myproject.dsp
+$ winemaker myproject.dsp
 .br
 $ make
 .PP
@@ -235,5 +238,10 @@ http://www.winehq.org/docs/winelib-guide/index
 .BR wine (1)
 .PP
 
-.SH AUTHOR
-Francois Gouget <fgouget@codeweavers.com> for CodeWeavers
+.SH AUTHORS
+François Gouget for CodeWeavers
+.PP
+Dimitrie O. Paun
+.PP
+André Hentschel
+.PP
