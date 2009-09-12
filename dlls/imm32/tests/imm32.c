@@ -212,7 +212,7 @@ static void test_ImmNotifyIME(void) {
 
     /* behavior differs between win9x and NT */
     ret = ImmGetCompositionString(imc, GCS_COMPSTR, resstr, sizeof(resstr));
-    ok(ret || !ret, "You'll never read this.\n");
+    ok(!ret, "After being cancelled the composition string is empty.\n");
 
     msg_spy_flush_msgs();
 
