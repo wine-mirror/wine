@@ -24,57 +24,7 @@
 
 #ifdef __i386__
 
-#ifdef __GNUC__
-
-__ASM_GLOBAL_FUNC(interlocked_cmpxchg,
-                  "movl 12(%esp),%eax\n\t"
-                  "movl 8(%esp),%ecx\n\t"
-                  "movl 4(%esp),%edx\n\t"
-                  "lock; cmpxchgl %ecx,(%edx)\n\t"
-                  "ret")
-__ASM_GLOBAL_FUNC(interlocked_cmpxchg_ptr,
-                  "movl 12(%esp),%eax\n\t"
-                  "movl 8(%esp),%ecx\n\t"
-                  "movl 4(%esp),%edx\n\t"
-                  "lock; cmpxchgl %ecx,(%edx)\n\t"
-                  "ret")
- __ASM_GLOBAL_FUNC(interlocked_cmpxchg64,
-                   "push %ebx\n\t"
-                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                   __ASM_CFI(".cfi_rel_offset %ebx,0\n\t")
-                   "push %esi\n\t"
-                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                   __ASM_CFI(".cfi_rel_offset %esi,0\n\t")
-                   "movl 12(%esp),%esi\n\t"
-                   "movl 16(%esp),%ebx\n\t"
-                   "movl 20(%esp),%ecx\n\t"
-                   "movl 24(%esp),%eax\n\t"
-                   "movl 28(%esp),%edx\n\t"
-                   "lock; cmpxchg8b (%esi)\n\t"
-                   "pop %esi\n\t"
-                   __ASM_CFI(".cfi_same_value %esi\n\t")
-                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
-                   "pop %ebx\n\t"
-                   __ASM_CFI(".cfi_same_value %ebx\n\t")
-                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
-                   "ret")
-__ASM_GLOBAL_FUNC(interlocked_xchg,
-                  "movl 8(%esp),%eax\n\t"
-                  "movl 4(%esp),%edx\n\t"
-                  "lock; xchgl %eax,(%edx)\n\t"
-                  "ret")
-__ASM_GLOBAL_FUNC(interlocked_xchg_ptr,
-                  "movl 8(%esp),%eax\n\t"
-                  "movl 4(%esp),%edx\n\t"
-                  "lock; xchgl %eax,(%edx)\n\t"
-                  "ret")
-__ASM_GLOBAL_FUNC(interlocked_xchg_add,
-                  "movl 8(%esp),%eax\n\t"
-                  "movl 4(%esp),%edx\n\t"
-                  "lock; xaddl %eax,(%edx)\n\t"
-                  "ret")
-
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER)
 
 __declspec(naked) int interlocked_cmpxchg( int *dest, int xchg, int compare )
 {
@@ -134,7 +84,56 @@ __declspec(naked) int interlocked_xchg_add( int *dest, int incr )
 }
 
 #else
-# error You must implement the interlocked* functions for your compiler
+/* use gcc compatible asm code as default for __i386__ */
+
+__ASM_GLOBAL_FUNC(interlocked_cmpxchg,
+                  "movl 12(%esp),%eax\n\t"
+                  "movl 8(%esp),%ecx\n\t"
+                  "movl 4(%esp),%edx\n\t"
+                  "lock; cmpxchgl %ecx,(%edx)\n\t"
+                  "ret")
+__ASM_GLOBAL_FUNC(interlocked_cmpxchg_ptr,
+                  "movl 12(%esp),%eax\n\t"
+                  "movl 8(%esp),%ecx\n\t"
+                  "movl 4(%esp),%edx\n\t"
+                  "lock; cmpxchgl %ecx,(%edx)\n\t"
+                  "ret")
+ __ASM_GLOBAL_FUNC(interlocked_cmpxchg64,
+                   "push %ebx\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebx,0\n\t")
+                   "push %esi\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %esi,0\n\t")
+                   "movl 12(%esp),%esi\n\t"
+                   "movl 16(%esp),%ebx\n\t"
+                   "movl 20(%esp),%ecx\n\t"
+                   "movl 24(%esp),%eax\n\t"
+                   "movl 28(%esp),%edx\n\t"
+                   "lock; cmpxchg8b (%esi)\n\t"
+                   "pop %esi\n\t"
+                   __ASM_CFI(".cfi_same_value %esi\n\t")
+                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
+                   "pop %ebx\n\t"
+                   __ASM_CFI(".cfi_same_value %ebx\n\t")
+                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
+                   "ret")
+__ASM_GLOBAL_FUNC(interlocked_xchg,
+                  "movl 8(%esp),%eax\n\t"
+                  "movl 4(%esp),%edx\n\t"
+                  "lock; xchgl %eax,(%edx)\n\t"
+                  "ret")
+__ASM_GLOBAL_FUNC(interlocked_xchg_ptr,
+                  "movl 8(%esp),%eax\n\t"
+                  "movl 4(%esp),%edx\n\t"
+                  "lock; xchgl %eax,(%edx)\n\t"
+                  "ret")
+__ASM_GLOBAL_FUNC(interlocked_xchg_add,
+                  "movl 8(%esp),%eax\n\t"
+                  "movl 4(%esp),%edx\n\t"
+                  "lock; xaddl %eax,(%edx)\n\t"
+                  "ret")
+
 #endif
 
 #elif defined(__x86_64__)
