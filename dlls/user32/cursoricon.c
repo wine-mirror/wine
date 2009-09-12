@@ -1803,7 +1803,7 @@ DWORD WINAPI DumpIcon16( SEGPTR pInfo, WORD *lpLen,
  * RETURNS
  *	A handle to the previous cursor shape.
  */
-HCURSOR WINAPI SetCursor( HCURSOR hCursor /* [in] Handle of cursor to show */ )
+HCURSOR WINAPI DECLSPEC_HOTPATCH SetCursor( HCURSOR hCursor /* [in] Handle of cursor to show */ )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
     HCURSOR hOldCursor;
@@ -1824,7 +1824,7 @@ HCURSOR WINAPI SetCursor( HCURSOR hCursor /* [in] Handle of cursor to show */ )
 /***********************************************************************
  *		ShowCursor (USER32.@)
  */
-INT WINAPI ShowCursor( BOOL bShow )
+INT WINAPI DECLSPEC_HOTPATCH ShowCursor( BOOL bShow )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
 
@@ -1858,7 +1858,7 @@ HCURSOR WINAPI GetCursor(void)
 /***********************************************************************
  *		ClipCursor (USER32.@)
  */
-BOOL WINAPI ClipCursor( const RECT *rect )
+BOOL WINAPI DECLSPEC_HOTPATCH ClipCursor( const RECT *rect )
 {
     RECT virt;
 
@@ -1881,7 +1881,7 @@ BOOL WINAPI ClipCursor( const RECT *rect )
 /***********************************************************************
  *		GetClipCursor (USER32.@)
  */
-BOOL WINAPI GetClipCursor( RECT *rect )
+BOOL WINAPI DECLSPEC_HOTPATCH GetClipCursor( RECT *rect )
 {
     /* If this is first time - initialize the rect */
     if (IsRectEmpty( &CURSOR_ClipRect )) ClipCursor( NULL );

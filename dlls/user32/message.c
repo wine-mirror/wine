@@ -3059,7 +3059,7 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
  *
  * See DispatchMessageW.
  */
-LRESULT WINAPI DispatchMessageA( const MSG* msg )
+LRESULT WINAPI DECLSPEC_HOTPATCH DispatchMessageA( const MSG* msg )
 {
     LRESULT retval;
 
@@ -3130,7 +3130,7 @@ LRESULT WINAPI DispatchMessageA( const MSG* msg )
  *   ECMA-234, Win32
  *
  */
-LRESULT WINAPI DispatchMessageW( const MSG* msg )
+LRESULT WINAPI DECLSPEC_HOTPATCH DispatchMessageW( const MSG* msg )
 {
     LRESULT retval;
 
