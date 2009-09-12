@@ -539,28 +539,28 @@ static int compare_menuex_item(menuex_item_t *menuex_item1, menuex_item_t *menue
 					different = 1;
 			} else if(!different &&
 				  ((menuex_item1->gotid && !menuex_item2->gotid) ||
-				  (!menuex_item2->gotid && menuex_item2->gotid)))
+				  (!menuex_item1->gotid && menuex_item2->gotid)))
 					different = 1;
 			if(!different && menuex_item1->gottype && menuex_item2->gottype) {
 				if(menuex_item1->type != menuex_item2->type)
 					different = 1;
 			} else if(!different &&
 				  ((menuex_item1->gottype && !menuex_item2->gottype) ||
-				  (!menuex_item2->gottype && menuex_item2->gottype)))
+				  (!menuex_item1->gottype && menuex_item2->gottype)))
 					different = 1;
 			if(!different && menuex_item1->gotstate && menuex_item2->gotstate) {
 				if(menuex_item1->state != menuex_item2->state)
 					different = 1;
 			} else if(!different &&
 				  ((menuex_item1->gotstate && !menuex_item2->gotstate) ||
-				  (!menuex_item2->gotstate && menuex_item2->gotstate)))
+				  (!menuex_item1->gotstate && menuex_item2->gotstate)))
 					different = 1;
 			if(!different && menuex_item1->gothelpid && menuex_item2->gothelpid) {
 				if(menuex_item1->helpid != menuex_item2->helpid)
 					different = 1;
 			} else if(!different &&
 				  ((menuex_item1->gothelpid && !menuex_item2->gothelpid) ||
-				  (!menuex_item2->gothelpid && menuex_item2->gothelpid)))
+				  (!menuex_item1->gothelpid && menuex_item2->gothelpid)))
 					different = 1;
 			if(!different)
 				different = compare_menuex_item(menuex_item1->popup, menuex_item2->popup);
@@ -571,28 +571,28 @@ static int compare_menuex_item(menuex_item_t *menuex_item1, menuex_item_t *menue
 						different = 1;
 				} else if(!different &&
 					  ((menuex_item1->gotid && !menuex_item2->gotid) ||
-					  (!menuex_item2->gotid && menuex_item2->gotid)))
+					  (!menuex_item1->gotid && menuex_item2->gotid)))
 						different = 1;
 				if(!different && menuex_item1->gottype && menuex_item2->gottype) {
 					if(menuex_item1->type != menuex_item2->type)
 						different = 1;
 				} else if(!different &&
 					  ((menuex_item1->gottype && !menuex_item2->gottype) ||
-					  (!menuex_item2->gottype && menuex_item2->gottype)))
+					  (!menuex_item1->gottype && menuex_item2->gottype)))
 						different = 1;
 				if(!different && menuex_item1->gotstate && menuex_item2->gotstate) {
 					if(menuex_item1->state != menuex_item2->state)
 						different = 1;
 				} else if(!different &&
 					  ((menuex_item1->gotstate && !menuex_item2->gotstate) ||
-					  (!menuex_item2->gotstate && menuex_item2->gotstate)))
+					  (!menuex_item1->gotstate && menuex_item2->gotstate)))
 						different = 1;
 				if(!different && menuex_item1->gothelpid && menuex_item2->gothelpid) {
 					if(menuex_item1->helpid != menuex_item2->helpid)
 						different = 1;
 				} else if(!different &&
 					  ((menuex_item1->gothelpid && !menuex_item2->gothelpid) ||
-					  (!menuex_item2->gothelpid && menuex_item2->gothelpid)))
+					  (!menuex_item1->gothelpid && menuex_item2->gothelpid)))
 						different = 1;
 			} else if((menuex_item1->name && !menuex_item2->name) ||
 				  (!menuex_item1->name && menuex_item2->name))
