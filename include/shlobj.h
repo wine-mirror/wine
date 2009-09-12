@@ -217,7 +217,7 @@ static const WCHAR CFSTR_FILEDESCRIPTORW[] =
 static const WCHAR CFSTR_FILECONTENTSW[] =
     { 'F','i','l','e','C','o','n','t','e','n','t','s',0 };
 static const WCHAR CFSTR_FILENAMEW[] =
-    { 'F','i','l','e','N','a','m','e','W',0 }
+    { 'F','i','l','e','N','a','m','e','W',0 };
 static const WCHAR CFSTR_FILENAMEMAPW[] =
     { 'F','i','l','e','N','a','m','e','M','a','p','W',0 };
 static const WCHAR CFSTR_PRINTERGROUPW[] =
