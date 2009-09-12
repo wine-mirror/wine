@@ -394,10 +394,10 @@ ULONG WINAPI D3D9CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain) {
     return IDirect3DSwapChain9_Release((IDirect3DSwapChain9*) swapChainParent);
 }
 
-static HRESULT WINAPI IDirect3D9Impl_CreateDevice(LPDIRECT3D9EX iface, UINT Adapter, D3DDEVTYPE DeviceType,
-                                                  HWND hFocusWindow, DWORD BehaviourFlags,
-                                                  D3DPRESENT_PARAMETERS* pPresentationParameters,
-                                                  IDirect3DDevice9** ppReturnedDeviceInterface) {
+static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3D9Impl_CreateDevice(LPDIRECT3D9EX iface, UINT Adapter, D3DDEVTYPE DeviceType,
+                                                            HWND hFocusWindow, DWORD BehaviourFlags,
+                                                            D3DPRESENT_PARAMETERS* pPresentationParameters,
+                                                            IDirect3DDevice9** ppReturnedDeviceInterface) {
 
     IDirect3D9Impl       *This   = (IDirect3D9Impl *)iface;
     IDirect3DDevice9Impl *object = NULL;
@@ -524,7 +524,7 @@ static HRESULT WINAPI IDirect3D9ExImpl_GetAdapterDisplayModeEx(IDirect3D9Ex *ifa
     return D3DERR_DRIVERINTERNALERROR;
 }
 
-static HRESULT WINAPI IDirect3D9ExImpl_CreateDeviceEx(IDirect3D9Ex *iface, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, D3DDISPLAYMODEEX* pFullscreenDisplayMode, struct IDirect3DDevice9Ex **ppReturnedDeviceInterface) {
+static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3D9ExImpl_CreateDeviceEx(IDirect3D9Ex *iface, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, D3DDISPLAYMODEEX* pFullscreenDisplayMode, struct IDirect3DDevice9Ex **ppReturnedDeviceInterface) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     FIXME("(%p)->(%d, %d, %p, 0x%08x, %p, %p, %p): Stub!\n", This, Adapter, DeviceType, hFocusWindow, BehaviorFlags, pPresentationParameters, pFullscreenDisplayMode, ppReturnedDeviceInterface);
     *ppReturnedDeviceInterface = NULL;
