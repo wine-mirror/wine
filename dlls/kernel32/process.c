@@ -1895,10 +1895,10 @@ static LPWSTR get_file_name( LPCWSTR appname, LPWSTR cmdline, LPWSTR buffer,
 /**********************************************************************
  *       CreateProcessA          (KERNEL32.@)
  */
-BOOL WINAPI CreateProcessA( LPCSTR app_name, LPSTR cmd_line, LPSECURITY_ATTRIBUTES process_attr,
-                            LPSECURITY_ATTRIBUTES thread_attr, BOOL inherit,
-                            DWORD flags, LPVOID env, LPCSTR cur_dir,
-                            LPSTARTUPINFOA startup_info, LPPROCESS_INFORMATION info )
+BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessA( LPCSTR app_name, LPSTR cmd_line, LPSECURITY_ATTRIBUTES process_attr,
+                                              LPSECURITY_ATTRIBUTES thread_attr, BOOL inherit,
+                                              DWORD flags, LPVOID env, LPCSTR cur_dir,
+                                              LPSTARTUPINFOA startup_info, LPPROCESS_INFORMATION info )
 {
     BOOL ret = FALSE;
     WCHAR *app_nameW = NULL, *cmd_lineW = NULL, *cur_dirW = NULL;
@@ -1937,10 +1937,10 @@ done:
 /**********************************************************************
  *       CreateProcessW          (KERNEL32.@)
  */
-BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIBUTES process_attr,
-                            LPSECURITY_ATTRIBUTES thread_attr, BOOL inherit, DWORD flags,
-                            LPVOID env, LPCWSTR cur_dir, LPSTARTUPINFOW startup_info,
-                            LPPROCESS_INFORMATION info )
+BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIBUTES process_attr,
+                                              LPSECURITY_ATTRIBUTES thread_attr, BOOL inherit, DWORD flags,
+                                              LPVOID env, LPCWSTR cur_dir, LPSTARTUPINFOW startup_info,
+                                              LPPROCESS_INFORMATION info )
 {
     BOOL retv = FALSE;
     HANDLE hFile = 0;

@@ -919,7 +919,7 @@ done:
  * ignore the parameter because it would be extremely difficult to
  * integrate this with different types of module representations.
  */
-HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
+HMODULE WINAPI DECLSPEC_HOTPATCH LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 {
     WCHAR *libnameW;
 
@@ -932,7 +932,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
  *
  * Unicode version of LoadLibraryExA.
  */
-HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW, HANDLE hfile, DWORD flags)
+HMODULE WINAPI DECLSPEC_HOTPATCH LoadLibraryExW(LPCWSTR libnameW, HANDLE hfile, DWORD flags)
 {
     UNICODE_STRING      wstr;
     HMODULE             res;
@@ -974,7 +974,7 @@ HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW, HANDLE hfile, DWORD flags)
  * NOTES
  * See LoadLibraryExA().
  */
-HMODULE WINAPI LoadLibraryA(LPCSTR libname)
+HMODULE WINAPI DECLSPEC_HOTPATCH LoadLibraryA(LPCSTR libname)
 {
     return LoadLibraryExA(libname, 0, 0);
 }
@@ -984,7 +984,7 @@ HMODULE WINAPI LoadLibraryA(LPCSTR libname)
  *
  * Unicode version of LoadLibraryA.
  */
-HMODULE WINAPI LoadLibraryW(LPCWSTR libnameW)
+HMODULE WINAPI DECLSPEC_HOTPATCH LoadLibraryW(LPCWSTR libnameW)
 {
     return LoadLibraryExW(libnameW, 0, 0);
 }
@@ -1001,7 +1001,7 @@ HMODULE WINAPI LoadLibraryW(LPCWSTR libnameW)
  *  Success: TRUE. The dll is removed if it is not still in use.
  *  Failure: FALSE. Use GetLastError() to determine the cause.
  */
-BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
+BOOL WINAPI DECLSPEC_HOTPATCH FreeLibrary(HINSTANCE hLibModule)
 {
     BOOL                retv = FALSE;
     NTSTATUS            nts;
