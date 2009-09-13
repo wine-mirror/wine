@@ -247,6 +247,7 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
             return DSERR_OUTOFMEMORY;
 
         snd_pcm_format_set_silence(format, buf, pdbi->mmap_buflen_frames);
+        pdbi->mmap_pos = 0;
     }
     else
     {
