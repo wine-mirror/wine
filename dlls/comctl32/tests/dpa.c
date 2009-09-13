@@ -433,11 +433,15 @@ static void test_DPA_Merge(void)
     pDPA_Merge(dpa2, dpa, DPAM_UNION,
                CB_CmpLT, CB_MergeInsertSrc, 0xdeadbeef);
     rc = CheckDPA(dpa2, 0x123456, &dw);
-    ok(rc, "dw=0x%x\n", dw);
+    ok(rc ||
+       broken(!rc && dw == 0x23456), /* 4.7x */
+       "dw=0x%x\n", dw);
 
     expect(0, nMessages[DPAMM_MERGE]);
     expect(0, nMessages[DPAMM_DELETE]);
-    expect(3, nMessages[DPAMM_INSERT]);
+    ok(nMessages[DPAMM_INSERT] == 3 ||
+       broken(nMessages[DPAMM_INSERT] == 2), /* 4.7x */
+       "Expected 3, got %d\n", nMessages[DPAMM_INSERT]);
 
     /* Merge dpa3 into dpa2 and dpa */
     memset(nMessages, 0, sizeof(nMessages));
@@ -458,7 +462,9 @@ static void test_DPA_Merge(void)
                CB_CmpLT, CB_MergeInsertSrc, 0xdeadbeef);
     expect(3, nMessages[DPAMM_MERGE]);
     expect(0, nMessages[DPAMM_DELETE]);
-    expect(3, nMessages[DPAMM_INSERT]);
+    ok(nMessages[DPAMM_INSERT] == 3 ||
+       broken(nMessages[DPAMM_INSERT] == 2), /* 4.7x */
+       "Expected 3, got %d\n", nMessages[DPAMM_INSERT]);
 
     rc = CheckDPA(dpa,  0x123456, &dw);
     ok(rc, "dw=0x%x\n",  dw);
