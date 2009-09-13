@@ -893,20 +893,20 @@ static void on_start_nsrequest(nsChannelBSC *This)
         FIXME("OnStartRequest failed: %08x\n", nsres);
 }
 
-static void on_stop_nsrequest(nsChannelBSC *This)
+static void on_stop_nsrequest(nsChannelBSC *This, HRESULT result)
 {
     nsresult nsres;
 
     if(!This->nslistener)
         return;
 
-    if(!This->bsc.readed) {
+    if(!This->bsc.readed && SUCCEEDED(result)) {
         TRACE("No data read! Calling OnStartRequest\n");
         on_start_nsrequest(This);
     }
 
     nsres = nsIStreamListener_OnStopRequest(This->nslistener, (nsIRequest*)NSCHANNEL(This->nschannel),
-            This->nscontext, NS_OK);
+             This->nscontext, SUCCEEDED(result) ? NS_OK : NS_ERROR_FAILURE);
     if(NS_FAILED(nsres))
         WARN("OnStopRequest failed: %08x\n", nsres);
 }
@@ -1030,7 +1030,7 @@ static HRESULT nsChannelBSC_stop_binding(BSCallback *bsc, HRESULT result)
 {
     nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
 
-    on_stop_nsrequest(This);
+    on_stop_nsrequest(This, result);
 
     if(This->nslistener) {
         if(This->nschannel->load_group) {
