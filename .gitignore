@@ -53,6 +53,7 @@ dlls/jscript/parser.tab.h
 dlls/kernel32/nls/winerr_deu.mc.rc
 dlls/kernel32/nls/winerr_enu.mc.rc
 dlls/kernel32/nls/winerr_fra.mc.rc
+dlls/kernel32/nls/winerr_jpn.mc.rc
 dlls/kernel32/nls/winerr_kor.mc.rc
 dlls/kernel32/nls/winerr_lth.mc.rc
 dlls/kernel32/nls/winerr_nld.mc.rc
