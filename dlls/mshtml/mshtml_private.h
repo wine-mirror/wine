@@ -554,7 +554,7 @@ void init_nsio(nsIComponentManager*,nsIComponentRegistrar*);
 void release_nsio(void);
 BOOL install_wine_gecko(BOOL);
 
-HRESULT nsuri_to_url(LPCWSTR,BSTR*);
+HRESULT nsuri_to_url(LPCWSTR,BOOL,BSTR*);
 
 void hlink_frame_navigate(HTMLDocument*,IHlinkFrame*,LPCWSTR,nsIInputStream*,DWORD);
 

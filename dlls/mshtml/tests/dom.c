@@ -1586,6 +1586,35 @@ static void _test_input_put_value(unsigned line, IUnknown *unk, const char *val)
     IHTMLInputElement_Release(input);
 }
 
+#define test_input_src(i,s) _test_input_src(__LINE__,i,s)
+static void _test_input_src(unsigned line, IHTMLInputElement *input, const char *exsrc)
+{
+    BSTR src;
+    HRESULT hres;
+
+    hres = IHTMLInputElement_get_src(input, &src);
+    ok_(__FILE__,line) (hres == S_OK, "get_src failed: %08x\n", hres);
+    if(exsrc)
+        ok_(__FILE__,line) (!strcmp_wa(src, exsrc), "get_src returned %s expected %s\n", wine_dbgstr_w(src), exsrc);
+    else
+        ok_(__FILE__,line) (!src, "get_src returned %s expected NULL\n", wine_dbgstr_w(src));
+    SysFreeString(src);
+}
+
+#define test_input_set_src(u,s) _test_input_set_src(__LINE__,u,s)
+static void _test_input_set_src(unsigned line, IHTMLInputElement *input, const char *src)
+{
+    BSTR tmp;
+    HRESULT hres;
+
+    tmp = a2bstr(src);
+    hres = IHTMLInputElement_put_src(input, tmp);
+    SysFreeString(tmp);
+    ok_(__FILE__,line) (hres == S_OK, "put_src failed: %08x\n", hres);
+
+    _test_input_src(line, input, src);
+}
+
 #define test_elem_class(u,c) _test_elem_class(__LINE__,u,c)
 static void _test_elem_class(unsigned line, IUnknown *unk, const char *exclass)
 {
@@ -4621,6 +4650,9 @@ static void test_elems(IHTMLDocument2 *doc)
         test_input_get_checked(input, VARIANT_FALSE);
         test_input_set_checked(input, VARIANT_TRUE);
         test_input_set_checked(input, VARIANT_FALSE);
+
+        test_input_src(input, NULL);
+        test_input_set_src(input, "about:blank");
 
         IHTMLInputElement_Release(input);
         IHTMLElement_Release(elem);

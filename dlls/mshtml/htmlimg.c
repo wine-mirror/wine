@@ -295,7 +295,7 @@ static HRESULT WINAPI HTMLImgElement_get_src(IHTMLImgElement *iface, BSTR *p)
     }
 
     nsAString_GetData(&src_str, &src);
-    hres = nsuri_to_url(src, p);
+    hres = nsuri_to_url(src, TRUE, p);
     nsAString_Finish(&src_str);
 
     return hres;

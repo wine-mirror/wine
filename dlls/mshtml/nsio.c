@@ -77,7 +77,7 @@ static const char *debugstr_nsacstr(const nsACString *nsstr)
     return debugstr_a(data);
 }
 
-HRESULT nsuri_to_url(LPCWSTR nsuri, BSTR *ret)
+HRESULT nsuri_to_url(LPCWSTR nsuri, BOOL ret_empty, BSTR *ret)
 {
     const WCHAR *ptr = nsuri;
 
@@ -86,9 +86,13 @@ HRESULT nsuri_to_url(LPCWSTR nsuri, BSTR *ret)
     if(!strncmpW(nsuri, wine_prefixW, sizeof(wine_prefixW)/sizeof(WCHAR)))
         ptr += sizeof(wine_prefixW)/sizeof(WCHAR);
 
-    *ret = SysAllocString(ptr);
-    if(!*ret)
-        return E_OUTOFMEMORY;
+    if(*ptr || ret_empty) {
+        *ret = SysAllocString(ptr);
+        if(!*ret)
+            return E_OUTOFMEMORY;
+    }else {
+        *ret = NULL;
+    }
 
     TRACE("%s -> %s\n", debugstr_w(nsuri), debugstr_w(*ret));
     return S_OK;
