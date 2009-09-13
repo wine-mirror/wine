@@ -36,6 +36,8 @@ static BOOL (WINAPI *pInternetTimeFromSystemTimeW)(CONST SYSTEMTIME *,DWORD ,LPW
 static BOOL (WINAPI *pInternetTimeToSystemTimeA)(LPCSTR ,SYSTEMTIME *,DWORD);
 static BOOL (WINAPI *pInternetTimeToSystemTimeW)(LPCWSTR ,SYSTEMTIME *,DWORD);
 static BOOL (WINAPI *pIsDomainLegalCookieDomainW)(LPCWSTR, LPCWSTR);
+static DWORD (WINAPI *pPrivacyGetZonePreferenceW)(DWORD, DWORD, LPDWORD, LPWSTR, LPDWORD);
+static DWORD (WINAPI *pPrivacySetZonePreferenceW)(DWORD, DWORD, DWORD, LPCWSTR);
 
 /* ############################### */
 
@@ -801,24 +803,24 @@ static void test_PrivacyGetSetZonePreferenceW(void)
 
     zone = 3;
     type = 0;
-    ret = PrivacyGetZonePreferenceW(zone, type, NULL, NULL, NULL);
+    ret = pPrivacyGetZonePreferenceW(zone, type, NULL, NULL, NULL);
     ok(ret == 0, "expected ret == 0, got %u\n", ret);
 
     old_template = 0;
-    ret = PrivacyGetZonePreferenceW(zone, type, &old_template, NULL, NULL);
+    ret = pPrivacyGetZonePreferenceW(zone, type, &old_template, NULL, NULL);
     ok(ret == 0, "expected ret == 0, got %u\n", ret);
 
     template = 5;
-    ret = PrivacySetZonePreferenceW(zone, type, template, NULL);
+    ret = pPrivacySetZonePreferenceW(zone, type, template, NULL);
     ok(ret == 0, "expected ret == 0, got %u\n", ret);
 
     template = 0;
-    ret = PrivacyGetZonePreferenceW(zone, type, &template, NULL, NULL);
+    ret = pPrivacyGetZonePreferenceW(zone, type, &template, NULL, NULL);
     ok(ret == 0, "expected ret == 0, got %u\n", ret);
     ok(template == 5, "expected template == 5, got %u\n", template);
 
     template = 5;
-    ret = PrivacySetZonePreferenceW(zone, type, old_template, NULL);
+    ret = pPrivacySetZonePreferenceW(zone, type, old_template, NULL);
     ok(ret == 0, "expected ret == 0, got %u\n", ret);
 }
 
@@ -835,6 +837,8 @@ START_TEST(internet)
     pInternetTimeToSystemTimeA = (void*)GetProcAddress(hdll, "InternetTimeToSystemTimeA");
     pInternetTimeToSystemTimeW = (void*)GetProcAddress(hdll, "InternetTimeToSystemTimeW");
     pIsDomainLegalCookieDomainW = (void*)GetProcAddress(hdll, (LPCSTR)117);
+    pPrivacyGetZonePreferenceW = (void*)GetProcAddress(hdll, "PrivacyGetZonePreferenceW");
+    pPrivacySetZonePreferenceW = (void*)GetProcAddress(hdll, "PrivacySetZonePreferenceW");
 
     test_InternetCanonicalizeUrlA();
     test_InternetQueryOptionA();
@@ -861,5 +865,8 @@ START_TEST(internet)
     else
         test_IsDomainLegalCookieDomainW();
 
-    test_PrivacyGetSetZonePreferenceW();
+    if (pPrivacyGetZonePreferenceW && pPrivacySetZonePreferenceW)
+        test_PrivacyGetSetZonePreferenceW();
+    else
+        win_skip("Privacy[SG]etZonePreferenceW are not available\n");
 }
