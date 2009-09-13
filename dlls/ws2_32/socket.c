@@ -4959,7 +4959,7 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
         ptrPort = strchr(workBuffer, ':');
         if(ptrPort)
         {
-            ((LPSOCKADDR_IN)lpAddress)->sin_port = (WS_u_short)atoi(ptrPort+1);
+            ((LPSOCKADDR_IN)lpAddress)->sin_port = htons(atoi(ptrPort+1));
             *ptrPort = '\0';
         }
         else
@@ -5002,7 +5002,7 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
         ptrPort = strchr(workBuffer, ']');
         if(ptrPort && *(++ptrPort) == ':')
         {
-            ((LPSOCKADDR_IN6)lpAddress)->sin6_port = (WS_u_short)atoi(ptrPort+1);
+            ((LPSOCKADDR_IN6)lpAddress)->sin6_port = htons(atoi(ptrPort+1));
             *ptrPort = '\0';
         }
         else
