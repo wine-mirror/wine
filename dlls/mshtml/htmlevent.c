@@ -90,6 +90,9 @@ static const WCHAR onmouseupW[] = {'o','n','m','o','u','s','e','u','p',0};
 static const WCHAR pasteW[] = {'p','a','s','t','e',0};
 static const WCHAR onpasteW[] = {'o','n','p','a','s','t','e',0};
 
+static const WCHAR readystatechangeW[] = {'r','e','a','d','y','s','t','a','t','e','c','h','a','n','g','e',0};
+static const WCHAR onreadystatechangeW[] = {'o','n','r','e','a','d','y','s','t','a','t','e','c','h','a','n','g','e',0};
+
 static const WCHAR selectstartW[] = {'s','e','l','e','c','t','s','t','a','r','t',0};
 static const WCHAR onselectstartW[] = {'o','n','s','e','l','e','c','t','s','t','a','r','t',0};
 
@@ -104,23 +107,24 @@ typedef struct {
 #define EVENT_FORWARDBODY        0x0004
 
 static const event_info_t event_info[] = {
-    {beforeunloadW, onbeforeunloadW, EVENT_DEFAULTLISTENER|EVENT_FORWARDBODY},
-    {blurW,         onblurW,         EVENT_DEFAULTLISTENER},
-    {changeW,       onchangeW,       EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {clickW,        onclickW,        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {dblclickW,     ondblclickW,     EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {dragW,         ondragW,         0},
-    {dragstartW,    ondragstartW,    0},
-    {focusW,        onfocusW,        EVENT_DEFAULTLISTENER},
-    {keydownW,      onkeydownW,      EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {keyupW,        onkeyupW,        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {loadW,         onloadW,         0},
-    {mousedownW,    onmousedownW,    EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {mouseoutW,     onmouseoutW,     EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {mouseoverW,    onmouseoverW,    EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {mouseupW,      onmouseupW,      EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {pasteW,        onpasteW,        0},
-    {selectstartW,  onselectstartW,  0}
+    {beforeunloadW,      onbeforeunloadW,      EVENT_DEFAULTLISTENER|EVENT_FORWARDBODY},
+    {blurW,              onblurW,              EVENT_DEFAULTLISTENER},
+    {changeW,            onchangeW,            EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {clickW,             onclickW,             EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {dblclickW,          ondblclickW,          EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {dragW,              ondragW,              0},
+    {dragstartW,         ondragstartW,         0},
+    {focusW,             onfocusW,             EVENT_DEFAULTLISTENER},
+    {keydownW,           onkeydownW,           EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {keyupW,             onkeyupW,             EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {loadW,              onloadW,              0},
+    {mousedownW,         onmousedownW,         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {mouseoutW,          onmouseoutW,          EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {mouseoverW,         onmouseoverW,         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {mouseupW,           onmouseupW,           EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {pasteW,             onpasteW,             0},
+    {readystatechangeW,  onreadystatechangeW,  0},
+    {selectstartW,       onselectstartW,       0}
 };
 
 eventid_t str_to_eid(LPCWSTR str)
