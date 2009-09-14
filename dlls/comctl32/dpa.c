@@ -73,8 +73,8 @@ typedef struct _STREAMDATA
  *     pData    [I] pointer to callback data
  *
  * RETURNS
- *     Success: TRUE
- *     Failure: FALSE
+ *     Success: S_OK, S_FALSE - partial success
+ *     Failure: HRESULT error code
  *
  * NOTES
  *     No more information available yet!
@@ -91,7 +91,7 @@ HRESULT WINAPI DPA_LoadStream (HDPA *phDpa, PFNDPASTREAM loadProc,
     HDPA hDpa;
     PVOID *ptr;
 
-    FIXME ("phDpa=%p loadProc=%p pStream=%p pData=%p\n",
+    TRACE ("phDpa=%p loadProc=%p pStream=%p pData=%p\n",
            phDpa, loadProc, pStream, pData);
 
     if (!phDpa || !loadProc || !pStream)
@@ -110,7 +110,7 @@ HRESULT WINAPI DPA_LoadStream (HDPA *phDpa, PFNDPASTREAM loadProc,
     if (errCode != S_OK)
         return errCode;
 
-    FIXME ("dwSize=%u dwData2=%u dwItems=%u\n",
+    TRACE ("dwSize=%u dwData2=%u dwItems=%u\n",
            streamData.dwSize, streamData.dwData2, streamData.dwItems);
 
     if (ulRead < sizeof(STREAMDATA) ||
@@ -150,7 +150,7 @@ HRESULT WINAPI DPA_LoadStream (HDPA *phDpa, PFNDPASTREAM loadProc,
 
     /* store the handle to the dpa */
     *phDpa = hDpa;
-    FIXME ("new hDpa=%p, errorcode=%x\n", hDpa, errCode);
+    TRACE ("new hDpa=%p, errorcode=%x\n", hDpa, errCode);
 
     return errCode;
 }
@@ -163,25 +163,80 @@ HRESULT WINAPI DPA_LoadStream (HDPA *phDpa, PFNDPASTREAM loadProc,
  *
  * PARAMS
  *     hDpa     [I] handle to a dynamic pointer array
- *     loadProc [I] pointer to a callback function
+ *     saveProc [I] pointer to a callback function
  *     pStream  [I] pointer to a stream
  *     pData    [I] pointer to callback data
  *
  * RETURNS
- *     Success: TRUE
- *     Failure: FALSE
+ *     Success: S_OK, S_FALSE - partial success
+ *     Failure: HRESULT error code
  *
  * NOTES
  *     No more information available yet!
  */
-HRESULT WINAPI DPA_SaveStream (const HDPA hDpa, PFNDPASTREAM loadProc,
+HRESULT WINAPI DPA_SaveStream (const HDPA hDpa, PFNDPASTREAM saveProc,
                                IStream *pStream, LPVOID pData)
 {
+    LARGE_INTEGER position;
+    ULARGE_INTEGER initial_pos, curr_pos;
+    STREAMDATA  streamData;
+    DPASTREAMINFO streamInfo;
+    HRESULT hr;
+    PVOID *ptr;
 
-    FIXME ("hDpa=%p loadProc=%p pStream=%p pData=%p\n",
-           hDpa, loadProc, pStream, pData);
+    TRACE ("hDpa=%p saveProc=%p pStream=%p pData=%p\n",
+            hDpa, saveProc, pStream, pData);
 
-    return E_FAIL;
+    if (!hDpa || !saveProc || !pStream) return E_INVALIDARG;
+
+    /* save initial position to write header after completion */
+    position.QuadPart = 0;
+    hr = IStream_Seek (pStream, position, STREAM_SEEK_CUR, &initial_pos);
+    if (hr != S_OK)
+        return hr;
+
+    /* write empty header */
+    streamData.dwSize  = sizeof(streamData);
+    streamData.dwData2 = 1;
+    streamData.dwItems = 0;
+
+    hr = IStream_Write (pStream, &streamData, sizeof(streamData), NULL);
+    if (hr != S_OK) {
+        position.QuadPart = initial_pos.QuadPart;
+        IStream_Seek (pStream, position, STREAM_SEEK_SET, NULL);
+        return hr;
+    }
+
+    /* no items - we're done */
+    if (hDpa->nItemCount == 0) return S_OK;
+
+    ptr = hDpa->ptrs;
+    for (streamInfo.iPos = 0; streamInfo.iPos < hDpa->nItemCount; streamInfo.iPos++) {
+        streamInfo.pvItem = *ptr;
+        hr = (saveProc)(&streamInfo, pStream, pData);
+        if (hr != S_OK) {
+            hr = S_FALSE;
+            break;
+        }
+        ptr++;
+    }
+
+    /* write updated header */
+    position.QuadPart = 0;
+    IStream_Seek (pStream, position, STREAM_SEEK_CUR, &curr_pos);
+
+    streamData.dwSize  = curr_pos.QuadPart - initial_pos.QuadPart;
+    streamData.dwData2 = 1;
+    streamData.dwItems = streamInfo.iPos;
+
+    position.QuadPart = initial_pos.QuadPart;
+    IStream_Seek (pStream, position, STREAM_SEEK_SET, NULL);
+    IStream_Write (pStream, &streamData, sizeof(streamData), NULL);
+
+    position.QuadPart = curr_pos.QuadPart;
+    IStream_Seek (pStream, position, STREAM_SEEK_SET, NULL);
+
+    return hr;
 }
 
 

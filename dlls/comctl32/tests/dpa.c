@@ -142,12 +142,12 @@ static INT CALLBACK CB_EnumFirstThree(PVOID pItem, PVOID lp)
 static HRESULT CALLBACK CB_Save(DPASTREAMINFO *pInfo, IStream *pStm, LPVOID lp)
 {
     HRESULT hRes;
-    
+
     ok(lp == (LPVOID)0xdeadbeef, "lp=%p\n", lp);
     hRes = IStream_Write(pStm, &pInfo->iPos, sizeof(INT), NULL);
-    ok(hRes == S_OK, "hRes=0x%x\n", hRes);
+    expect(S_OK, hRes);
     hRes = IStream_Write(pStm, &pInfo->pvItem, sizeof(PVOID), NULL);
-    ok(hRes == S_OK, "hRes=0x%x\n", hRes);
+    expect(S_OK, hRes);
     return S_OK;
 }
 
@@ -159,10 +159,10 @@ static HRESULT CALLBACK CB_Load(DPASTREAMINFO *pInfo, IStream *pStm, LPVOID lp)
     iOldPos = pInfo->iPos;
     ok(lp == (LPVOID)0xdeadbeef, "lp=%p\n", lp);
     hRes = IStream_Read(pStm, &pInfo->iPos, sizeof(INT), NULL);
-    ok(hRes == S_OK, "hRes=0x%x\n", hRes);
+    expect(S_OK, hRes);
     ok(pInfo->iPos == iOldPos, "iPos=%d iOldPos=%d\n", pInfo->iPos, iOldPos);
     hRes = IStream_Read(pStm, &pInfo->pvItem, sizeof(PVOID), NULL);
-    ok(hRes == S_OK, "hRes=0x%x\n", hRes);
+    expect(S_OK, hRes);
     return S_OK;
 }
 
@@ -643,6 +643,62 @@ static void test_DPA_LoadStream(void)
     CoUninitialize();
 }
 
+static void test_DPA_SaveStream(void)
+{
+    HDPA dpa;
+    static const WCHAR szStg[] = { 'S','t','g',0 };
+    IStorage* pStg = NULL;
+    IStream* pStm = NULL;
+    DWORD dwMode;
+    HRESULT hRes;
+    ULONG ret;
+
+    if(!pDPA_SaveStream)
+    {
+        win_skip("DPA_SaveStream() not available. Skipping stream tests.\n");
+        return;
+    }
+
+    hRes = CoInitialize(NULL);
+    if (hRes != S_OK)
+    {
+        ok(0, "hResult: %d\n", hRes);
+        return;
+    }
+
+    dwMode = STGM_DIRECT|STGM_CREATE|STGM_READWRITE|STGM_SHARE_EXCLUSIVE;
+    hRes = StgCreateDocfile(NULL, dwMode|STGM_DELETEONRELEASE, 0, &pStg);
+    expect(S_OK, hRes);
+
+    hRes = IStorage_CreateStream(pStg, szStg, dwMode, 0, 0, &pStm);
+    expect(S_OK, hRes);
+
+    dpa = pDPA_Create(0);
+
+    /* simple parameter check */
+    hRes = pDPA_SaveStream(dpa, NULL, pStm, NULL);
+    ok(hRes == E_INVALIDARG ||
+       broken(hRes == S_OK) /* XP and below */, "Wrong result, %d\n", hRes);
+if (0) {
+    /* crashes on XP */
+    hRes = pDPA_SaveStream(NULL, CB_Save, pStm, NULL);
+    expect(E_INVALIDARG, hRes);
+
+    hRes = pDPA_SaveStream(dpa, CB_Save, NULL, NULL);
+    expect(E_INVALIDARG, hRes);
+}
+
+    pDPA_Destroy(dpa);
+
+    ret = IStream_Release(pStm);
+    ok(!ret, "ret=%d\n", ret);
+
+    ret = IStorage_Release(pStg);
+    ok(!ret, "ret=%d\n", ret);
+
+    CoUninitialize();
+}
+
 static void test_dpa_stream(void)
 {
     HDPA dpa;
@@ -679,25 +735,22 @@ static void test_dpa_stream(void)
 
     dwMode = STGM_DIRECT|STGM_CREATE|STGM_READWRITE|STGM_SHARE_EXCLUSIVE;
     hRes = StgCreateDocfile(NULL, dwMode|STGM_DELETEONRELEASE, 0, &pStg);
-    ok(hRes == S_OK, "hRes=0x%x\n", hRes);
+    expect(S_OK, hRes);
 
     hRes = IStorage_CreateStream(pStg, szStg, dwMode, 0, 0, &pStm);
-    ok(hRes == S_OK, "hRes=0x%x\n", hRes);
+    expect(S_OK, hRes);
 
     hRes = pDPA_SaveStream(dpa, CB_Save, pStm, (void*)0xdeadbeef);
-    todo_wine ok(hRes == S_OK, "hRes=0x%x\n", hRes);
+    ok(hRes == S_OK, "hRes=0x%x\n", hRes);
     pDPA_Destroy(dpa);
 
     liZero.QuadPart = 0;
     hRes = IStream_Seek(pStm, liZero, STREAM_SEEK_SET, NULL);
-    ok(hRes == S_OK, "hRes=0x%x\n", hRes);
+    expect(S_OK, hRes);
     hRes = pDPA_LoadStream(&dpa, CB_Load, pStm, (void*)0xdeadbeef);
-    todo_wine
-    {
-        ok(hRes == S_OK, "hRes=0x%x\n", hRes);
-        rc = CheckDPA(dpa, 0x123456, &dw);
-        ok(rc, "dw=0x%x\n", dw);
-    }
+    expect(S_OK, hRes);
+    rc = CheckDPA(dpa, 0x123456, &dw);
+    ok(rc, "dw=0x%x\n", dw);
     pDPA_Destroy(dpa);
 
     ret = IStream_Release(pStm);
@@ -726,5 +779,6 @@ START_TEST(dpa)
     test_DPA_EnumCallback();
     test_DPA_DestroyCallback();
     test_DPA_LoadStream();
+    test_DPA_SaveStream();
     test_dpa_stream();
 }
