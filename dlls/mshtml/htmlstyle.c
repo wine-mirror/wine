@@ -117,6 +117,8 @@ static const WCHAR attrOverflow[] =
     {'o','v','e','r','f','l','o','w',0};
 static const WCHAR attrPaddingLeft[] =
     {'p','a','d','d','i','n','g','-','l','e','f','t',0};
+static const WCHAR attrPaddingRight[] =
+    {'p','a','d','d','i','n','g','-','r','i','g','h','t',0};
 static const WCHAR attrPaddingTop[] =
     {'p','a','d','d','i','n','g','-','t','o','p',0};
 static const WCHAR attrPosition[] =
@@ -185,6 +187,7 @@ static const struct{
     {attrMinHeight,            DISPID_IHTMLSTYLE4_MINHEIGHT},
     {attrOverflow,             DISPID_IHTMLSTYLE_OVERFLOW},
     {attrPaddingLeft,          DISPID_IHTMLSTYLE_PADDINGLEFT},
+    {attrPaddingRight,         DISPID_IHTMLSTYLE_PADDINGRIGHT},
     {attrPaddingTop,           DISPID_IHTMLSTYLE_PADDINGTOP},
     {attrPosition,             DISPID_IHTMLSTYLE2_POSITION},
     {attrTextAlign,            DISPID_IHTMLSTYLE_TEXTALIGN},
