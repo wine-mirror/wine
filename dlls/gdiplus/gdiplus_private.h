@@ -166,6 +166,9 @@ struct GpLineGradient{
     REAL* blendfac;  /* blend factors */
     REAL* blendpos;  /* blend positions */
     INT blendcount;
+    ARGB* pblendcolor; /* preset blend colors */
+    REAL* pblendpos; /* preset blend positions */
+    INT pblendcount;
 };
 
 struct GpTexture{
