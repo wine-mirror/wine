@@ -304,8 +304,8 @@
 @ stdcall GdipGetLineBlendCount(ptr ptr)
 @ stdcall GdipGetLineColors(ptr ptr)
 @ stdcall GdipGetLineGammaCorrection(ptr ptr)
-@ stub GdipGetLinePresetBlend
-@ stub GdipGetLinePresetBlendCount
+@ stdcall GdipGetLinePresetBlend(ptr ptr ptr long)
+@ stdcall GdipGetLinePresetBlendCount(ptr ptr)
 @ stdcall GdipGetLineRect(ptr ptr)
 @ stdcall GdipGetLineRectI(ptr ptr)
 @ stdcall GdipGetLineSpacing(ptr long ptr)

@@ -1582,6 +1582,28 @@ GpStatus WINGDIPAPI GdipSetLinePresetBlend(GpLineGradient *brush,
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipGetLinePresetBlend(GpLineGradient *brush,
+    ARGB *blend, REAL* positions, INT count)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipGetLinePresetBlendCount(GpLineGradient *brush,
+    INT *count)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipResetLineTransform(GpLineGradient *brush)
 {
     static int calls;
