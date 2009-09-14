@@ -544,6 +544,68 @@ EnumTestFileProc (HMODULE hModule, LPCTSTR lpszType,
     return TRUE;
 }
 
+static const struct clsid_mapping
+{
+    const char *name;
+    CLSID clsid;
+} clsid_list[] =
+{
+    {"oledb32", {0xc8b522d1, 0x5cf3, 0x11ce, {0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d}}},
+    {NULL, {0, 0, 0, {0,0,0,0,0,0,0,0}}}
+};
+
+
+static BOOL get_main_clsid(const char *name, CLSID *clsid)
+{
+    const struct clsid_mapping *mapping;
+
+    for(mapping = clsid_list; mapping->name; mapping++)
+    {
+        if(!strcasecmp(name, mapping->name))
+        {
+            *clsid = mapping->clsid;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static HMODULE load_com_dll(const char *name)
+{
+    HMODULE dll = NULL;
+    HKEY hkey;
+    char keyname[100];
+    char dllname[MAX_PATH];
+    CLSID clsid;
+
+    if(!get_main_clsid(name, &clsid)) return NULL;
+
+    sprintf(keyname, "CLSID\\{%08x-%04x-%04x-%02x%2x-%02x%2x%02x%2x%02x%2x}\\InprocServer32",
+            clsid.Data1, clsid.Data2, clsid.Data3, clsid.Data4[0], clsid.Data4[1],
+            clsid.Data4[2], clsid.Data4[3], clsid.Data4[4], clsid.Data4[5],
+            clsid.Data4[6], clsid.Data4[7]);
+
+    if(RegOpenKeyA(HKEY_CLASSES_ROOT, keyname, &hkey) == ERROR_SUCCESS)
+    {
+        LONG size = sizeof(dllname);
+        if(RegQueryValueA(hkey, NULL, dllname, &size) == ERROR_SUCCESS)
+            dll = LoadLibraryExA(dllname, NULL, LOAD_LIBRARY_AS_DATAFILE);
+        RegCloseKey(hkey);
+    }
+
+    return dll;
+}
+
+static void get_dll_path(HMODULE dll, char **path, char *filename)
+{
+    char dllpath[MAX_PATH];
+
+    GetModuleFileNameA(dll, dllpath, MAX_PATH);
+    strcpy(filename, dllpath);
+    *strrchr(dllpath, '\\') = '\0';
+    *path = heap_strdup( dllpath );
+}
+
 static BOOL CALLBACK
 extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
                    LPTSTR lpszName, LONG_PTR lParam)
@@ -565,27 +627,24 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
     wine_tests[nr_of_files].maindllpath = NULL;
     strcpy(filename, dllname);
     dll = LoadLibraryExA(dllname, NULL, LOAD_LIBRARY_AS_DATAFILE);
+
+    if(!dll)
+    {
+        dll = load_com_dll(dllname);
+        if(dll) get_dll_path(dll, &wine_tests[nr_of_files].maindllpath, filename);
+    }
+
     if (!dll && pLoadLibraryShim)
     {
         MultiByteToWideChar(CP_ACP, 0, dllname, -1, dllnameW, MAX_PATH);
         if (FAILED( pLoadLibraryShim(dllnameW, NULL, NULL, &dll) ))
             dll = 0;
         else
-        {
-            char dllpath[MAX_PATH];
-
-            /* We have a dll that cannot be found through LoadLibraryExA. This
-             * is the case for .NET provided dll's. We will add the directory
-             * where the dll resides to the PATH variable when dealing with
-             * the tests for this dll.
-             */
-            GetModuleFileNameA(dll, dllpath, MAX_PATH);
-            strcpy(filename, dllpath);
-            *strrchr(dllpath, '\\') = '\0';
-            wine_tests[nr_of_files].maindllpath = heap_strdup( dllpath );
-        }
+            get_dll_path(dll, &wine_tests[nr_of_files].maindllpath, filename);
     }
-    if (!dll) {
+
+    if (!dll)
+    {
         xprintf ("    %s=dll is missing\n", dllname);
         return TRUE;
     }
