@@ -49,6 +49,8 @@ static const WCHAR attrBackgroundRepeat[] =
     {'b','a','c','k','g','r','o','u','n','d','-','r','e','p','e','a','t',0};
 static const WCHAR attrBorder[] =
     {'b','o','r','d','e','r',0};
+static const WCHAR attrBorderBottomColor[] =
+    {'b','o','r','d','e','r','-','b','o','t','t','o','m','-','c','o','l','o','r',0};
 static const WCHAR attrBorderBottomStyle[] =
     {'b','o','r','d','e','r','-','b','o','t','t','o','m','-','s','t','y','l','e',0};
 static const WCHAR attrBorderBottomWidth[] =
@@ -147,6 +149,7 @@ static const struct{
     {attrBackgroundPositionY,  DISPID_IHTMLSTYLE_BACKGROUNDPOSITIONY},
     {attrBackgroundRepeat,     DISPID_IHTMLSTYLE_BACKGROUNDREPEAT},
     {attrBorder,               DISPID_IHTMLSTYLE_BORDER},
+    {attrBorderBottomColor,    DISPID_IHTMLSTYLE_BORDERBOTTOMCOLOR},
     {attrBorderBottomStyle,    DISPID_IHTMLSTYLE_BORDERBOTTOMSTYLE},
     {attrBorderBottomWidth,    DISPID_IHTMLSTYLE_BORDERBOTTOMWIDTH},
     {attrBorderColor,          DISPID_IHTMLSTYLE_BORDERCOLOR},
