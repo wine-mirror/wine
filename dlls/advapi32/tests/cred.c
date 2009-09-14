@@ -154,12 +154,13 @@ static void test_CredReadDomainCredentialsA(void)
 
     /* these two tests would crash on both native and Wine. Implementations
      * does not check for NULL output pointers and try to zero them out early */
-#if 0
+if(0)
+{
     ok(!pCredReadDomainCredentialsA(&info, 0, NULL, &creds) &&
             GetLastError() == ERROR_INVALID_PARAMETER, "!\n");
     ok(!pCredReadDomainCredentialsA(&info, 0, &count, NULL) &&
             GetLastError() == ERROR_INVALID_PARAMETER, "!\n");
-#endif
+}
 
     SetLastError(0xdeadbeef);
     ret = pCredReadDomainCredentialsA(NULL, 0, &count, &creds);
