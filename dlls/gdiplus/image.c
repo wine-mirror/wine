@@ -413,6 +413,9 @@ GpStatus WINGDIPAPI GdipCloneImage(GpImage *image, GpImage **cloneImage)
             GdipDisposeImage(*cloneImage);
             *cloneImage = NULL;
         }
+
+        memcpy(&(*cloneImage)->format, &image->format, sizeof(GUID));
+
         return stat;
     }
     else
@@ -858,6 +861,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     }
 
     (*bitmap)->image.type = ImageTypeBitmap;
+    memcpy(&(*bitmap)->image.format, &ImageFormatMemoryBMP, sizeof(GUID));
     (*bitmap)->image.flags = ImageFlagsNone;
     (*bitmap)->width = width;
     (*bitmap)->height = height;
@@ -1144,23 +1148,11 @@ GpStatus WINGDIPAPI GdipGetImagePixelFormat(GpImage *image, PixelFormat *format)
 
 GpStatus WINGDIPAPI GdipGetImageRawFormat(GpImage *image, GUID *format)
 {
-    static int calls;
-
     if(!image || !format)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("stub\n");
+    memcpy(format, &image->format, sizeof(GUID));
 
-    /* FIXME: should be detected from embedded picture or stored separately */
-    switch (image->type)
-    {
-    case ImageTypeBitmap:   *format = ImageFormatBMP; break;
-    case ImageTypeMetafile: *format = ImageFormatEMF; break;
-    default:
-        WARN("unknown type %u\n", image->type);
-        *format = ImageFormatUndefined;
-    }
     return Ok;
 }
 
@@ -1647,7 +1639,15 @@ GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
     if (FAILED(hr)) return hresult_to_status(hr);
 
     /* call on the image decoder to do the real work */
-    return codec->decode_func(stream, &codec->info.Clsid, image);
+    stat = codec->decode_func(stream, &codec->info.Clsid, image);
+
+    /* take note of the original data format */
+    if (stat == Ok)
+    {
+        memcpy(&(*image)->format, &codec->info.FormatID, sizeof(GUID));
+    }
+
+    return stat;
 }
 
 /* FIXME: no ICM */

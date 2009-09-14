@@ -486,7 +486,7 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     stat = GdipCreateBitmapFromHBITMAP(hbm, NULL, &gpbm);
     expect(Ok, stat);
     /* raw format */
-    expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)gpbm, __LINE__, TRUE);
+    expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)gpbm, __LINE__, FALSE);
 
     expect(Ok, GdipGetImageDimension((GpImage*) gpbm, &width, &height));
     expectf(WIDTH2,  width);
@@ -564,12 +564,12 @@ static void test_GdipCloneImage(void)
     /* Create an image, clone it, delete the original, make sure the copy works */
     stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat24bppRGB, NULL, &bm);
     expect(Ok, stat);
-    expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)bm, __LINE__, TRUE);
+    expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)bm, __LINE__, FALSE);
 
     image_src = ((GpImage*)bm);
     stat = GdipCloneImage(image_src, &image_dest);
     expect(Ok, stat);
-    expect_rawformat(&ImageFormatMemoryBMP, image_dest, __LINE__, TRUE);
+    expect_rawformat(&ImageFormatMemoryBMP, image_dest, __LINE__, FALSE);
 
     stat = GdipDisposeImage((GpImage*)bm);
     expect(Ok, stat);
@@ -646,7 +646,7 @@ static void test_fromhicon(void)
        stat = GdipGetImagePixelFormat((GpImage*)bitmap, &format);
        expect(PixelFormat32bppARGB, format);
        /* raw format */
-       expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)bitmap, __LINE__, TRUE);
+       expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)bitmap, __LINE__, FALSE);
        GdipDisposeImage((GpImage*)bitmap);
     }
     DestroyIcon(hIcon);
@@ -682,7 +682,7 @@ static void test_fromhicon(void)
         stat = GdipGetImagePixelFormat((GpImage*)bitmap, &format);
         expect(PixelFormat32bppARGB, format);
         /* raw format */
-        expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)bitmap, __LINE__, TRUE);
+        expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)bitmap, __LINE__, FALSE);
         GdipDisposeImage((GpImage*)bitmap);
     }
     DestroyIcon(hIcon);
@@ -735,10 +735,10 @@ static const unsigned char jpgimage[285] = {
 };
 static void test_getrawformat(void)
 {
-    test_bufferrawformat((void*)pngimage, sizeof(pngimage), &ImageFormatPNG,  __LINE__, TRUE);
-    test_bufferrawformat((void*)gifimage, sizeof(gifimage), &ImageFormatGIF,  __LINE__, TRUE);
+    test_bufferrawformat((void*)pngimage, sizeof(pngimage), &ImageFormatPNG,  __LINE__, FALSE);
+    test_bufferrawformat((void*)gifimage, sizeof(gifimage), &ImageFormatGIF,  __LINE__, FALSE);
     test_bufferrawformat((void*)bmpimage, sizeof(bmpimage), &ImageFormatBMP,  __LINE__, FALSE);
-    test_bufferrawformat((void*)jpgimage, sizeof(jpgimage), &ImageFormatJPEG, __LINE__, TRUE);
+    test_bufferrawformat((void*)jpgimage, sizeof(jpgimage), &ImageFormatJPEG, __LINE__, FALSE);
 }
 
 static void test_createhbitmap(void)
