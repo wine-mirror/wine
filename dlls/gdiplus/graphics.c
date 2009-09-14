@@ -220,7 +220,27 @@ static ARGB blend_line_gradient(GpLineGradient* brush, REAL position)
         blendfac = (left_blendfac * (right_blendpos - position) +
                     right_blendfac * (position - left_blendpos)) / range;
     }
-    return blend_colors(brush->startcolor, brush->endcolor, blendfac);
+
+    if (brush->pblendcount == 0)
+        return blend_colors(brush->startcolor, brush->endcolor, blendfac);
+    else
+    {
+        int i=1;
+        ARGB left_blendcolor, right_blendcolor;
+        REAL left_blendpos, right_blendpos;
+
+        /* locate the blend colors surrounding this position */
+        while (blendfac > brush->pblendpos[i])
+            i++;
+
+        /* interpolate between the blend colors */
+        left_blendpos = brush->pblendpos[i-1];
+        left_blendcolor = brush->pblendcolor[i-1];
+        right_blendpos = brush->pblendpos[i];
+        right_blendcolor = brush->pblendcolor[i];
+        blendfac = (blendfac - left_blendpos) / (right_blendpos - left_blendpos);
+        return blend_colors(left_blendcolor, right_blendcolor, blendfac);
+    }
 }
 
 static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
