@@ -773,7 +773,7 @@ NTSTATUS WINAPI NtSetIntervalProfile(
 }
 
 static  SYSTEM_CPU_INFORMATION cached_sci;
-static  DWORD cpuHz;
+static  ULONGLONG cpuHz = 1000000000; /* default to a 1GHz */
 
 #define AUTH	0x68747541	/* "Auth" */
 #define ENTI	0x69746e65	/* "enti" */
@@ -1798,6 +1798,20 @@ NTSTATUS WINAPI NtPowerInformation(
 			*ExecutionState = ES_USER_PRESENT;
 			return STATUS_SUCCESS;
 		}
+                case ProcessorInformation: {
+			PPROCESSOR_POWER_INFORMATION cpu_power = lpOutputBuffer;
+
+			WARN("semi-stub: ProcessorInformation\n");
+			if (nOutputBufferSize < sizeof(PROCESSOR_POWER_INFORMATION))
+				return STATUS_BUFFER_TOO_SMALL;
+                        cpu_power->Number = NtCurrentTeb()->Peb->NumberOfProcessors;
+                        cpu_power->MaxMhz = cpuHz / 1000000;
+                        cpu_power->CurrentMhz = cpuHz / 1000000;
+                        cpu_power->MhzLimit = cpuHz / 1000000;
+                        cpu_power->MaxIdleState = 0; /* FIXME */
+                        cpu_power->CurrentIdleState = 0; /* FIXME */
+                        return STATUS_SUCCESS;
+                }
 		default:
 			/* FIXME: Needed by .NET Framework */
 			WARN("Unimplemented NtPowerInformation action: %d\n", InformationLevel);
