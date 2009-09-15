@@ -124,6 +124,7 @@ static const CHAR install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                            "MoveFiles\t\t1700\n"
                                            "InstallFiles\t\t4000\n"
                                            "DuplicateFiles\t\t4500\n"
+                                           "WriteEnvironmentStrings\t\t4550\n"
                                            "CreateShortcuts\t\t4600\n"
                                            "InstallServices\t\t5000\n"
                                            "InstallFinalize\t\t6600\n"
@@ -164,6 +165,15 @@ static const CHAR shortcut_dat[] = "Shortcut\tDirectory_\tName\tComponent_\tTarg
                                    "s72\ts72\tl128\ts72\ts72\tS255\tL255\tI2\tS72\tI2\tI2\tS72\n"
                                    "Shortcut\tShortcut\n"
                                    "Shortcut\tMSITESTDIR\tShortcut\tcomponent\tShortcut\t\tShortcut\t\t\t\t\t\n";
+
+static const CHAR environment_dat[] = "Environment\tName\tValue\tComponent_\n"
+                                      "s72\tl255\tL255\ts72\n"
+                                      "Environment\tEnvironment\n"
+                                      "Var1\t=-MSITESTVAR1\t1\tOne\n"
+                                      "Var2\tMSITESTVAR2\t1\tOne\n"
+                                      "Var3\t=-MSITESTVAR3\t1\tOne\n"
+                                      "Var4\tMSITESTVAR4\t1\tOne\n";
+
 
 static const CHAR up_property_dat[] = "Property\tValue\n"
                                       "s72\tl0\n"
@@ -902,6 +912,19 @@ static const msi_table sc_tables[] =
     ADD_TABLE(media),
     ADD_TABLE(property),
     ADD_TABLE(shortcut)
+};
+
+static const msi_table env_tables[] =
+{
+    ADD_TABLE(component),
+    ADD_TABLE(directory),
+    ADD_TABLE(feature),
+    ADD_TABLE(feature_comp),
+    ADD_TABLE(file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(media),
+    ADD_TABLE(property),
+    ADD_TABLE(environment)
 };
 
 static const msi_table up_tables[] =
@@ -6240,6 +6263,74 @@ static void test_shortcut(void)
     delete_test_files();
 }
 
+static void test_envvar(void)
+{
+    UINT r;
+    HKEY env;
+    LONG res;
+    DWORD type, size;
+    char buffer[16];
+
+    create_test_files();
+    create_database(msifile, env_tables, sizeof(env_tables) / sizeof(msi_table));
+
+    res = RegCreateKeyExA(HKEY_CURRENT_USER, "Environment", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &env, NULL);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    res = RegSetValueExA(env, "MSITESTVAR1", 0, REG_SZ, (const BYTE *)"0", 2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    res = RegSetValueExA(env, "MSITESTVAR2", 0, REG_SZ, (const BYTE *)"0", 2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    type = REG_NONE;
+    size = sizeof(buffer);
+    buffer[0] = 0;
+    res = RegQueryValueExA(env, "MSITESTVAR1", NULL, &type, (LPBYTE)buffer, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(type == REG_SZ, "Expected REG_SZ, got %u\n", type);
+    ok(!lstrcmp(buffer, "1"), "Expected \"1\", got %s\n", buffer);
+
+    res = RegDeleteValueA(env, "MSITESTVAR1");
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    type = REG_NONE;
+    size = sizeof(buffer);
+    buffer[0] = 0;
+    res = RegQueryValueExA(env, "MSITESTVAR2", NULL, &type, (LPBYTE)buffer, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(type == REG_SZ, "Expected REG_SZ, got %u\n", type);
+    ok(!lstrcmp(buffer, "1"), "Expected \"1\", got %s\n", buffer);
+
+    res = RegDeleteValueA(env, "MSITESTVAR2");
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    res = RegDeleteValueA(env, "MSITESTVAR3");
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    res = RegDeleteValueA(env, "MSITESTVAR4");
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    RegCloseKey(env);
+
+    delete_pf("msitest\\cabout\\new\\five.txt", TRUE);
+    delete_pf("msitest\\cabout\\new", FALSE);
+    delete_pf("msitest\\cabout\\four.txt", TRUE);
+    delete_pf("msitest\\cabout", FALSE);
+    delete_pf("msitest\\changed\\three.txt", TRUE);
+    delete_pf("msitest\\changed", FALSE);
+    delete_pf("msitest\\first\\two.txt", TRUE);
+    delete_pf("msitest\\first", FALSE);
+    delete_pf("msitest\\filename", TRUE);
+    delete_pf("msitest\\one.txt", TRUE);
+    delete_pf("msitest\\service.exe", TRUE);
+    delete_pf("msitest", FALSE);
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -6322,6 +6413,7 @@ START_TEST(install)
     test_propcase();
     test_int_widths();
     test_shortcut();
+    test_envvar();
 
     DeleteFileA(log_file);
 
