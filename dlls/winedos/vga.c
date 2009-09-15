@@ -1824,7 +1824,7 @@ void VGA_ioport_out( WORD port, BYTE val )
               FIXME("Unsupported value, VGA register 0x3d8: 0x%02x (bit 5) - blink is not supported.\n", val);
            }
            /* Enable Video Signal (bit 3) - Set the enabled bit */
-           VGA_SetEnabled((val & 0x08) && 1);
+           VGA_SetEnabled((val & 0x08) != 0);
 
            /* xxx1x010 - Detect 160x200, 16 color mode (CGA composite) */
            if( (val & 0x17) == 0x12 )
@@ -1885,10 +1885,10 @@ void VGA_ioport_out( WORD port, BYTE val )
         /* Colour control register (CGA) */
         case 0x3d9:
            /* Set bright */
-           VGA_SetBright((val & 0x10) && 1);
+           VGA_SetBright((val & 0x10) != 0);
 
            /* Set palette index */
-           VGA_SetPaletteIndex((val & 0x20) && 1);
+           VGA_SetPaletteIndex((val & 0x20) != 0);
 
            /* Now update the palette */
            VGA_UpdatePalette();
