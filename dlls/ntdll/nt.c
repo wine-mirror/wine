@@ -857,6 +857,152 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
     }
 }
 
+static void create_system_registry_keys( void )
+{
+    static const WCHAR SystemW[] = {'M','a','c','h','i','n','e','\\',
+                                    'H','a','r','d','w','a','r','e','\\',
+                                    'D','e','s','c','r','i','p','t','i','o','n','\\',
+                                    'S','y','s','t','e','m',0};
+    static const WCHAR fpuW[] = {'F','l','o','a','t','i','n','g','P','o','i','n','t','P','r','o','c','e','s','s','o','r',0};
+    static const WCHAR cpuW[] = {'C','e','n','t','r','a','l','P','r','o','c','e','s','s','o','r',0};
+    static const WCHAR IdentifierW[] = {'I','d','e','n','t','i','f','i','e','r',0};
+    static const WCHAR SysidW[] = {'A','T',' ','c','o','m','p','a','t','i','b','l','e',0};
+    static const WCHAR mhzKeyW[] = {'~','M','H','z',0};
+    static const WCHAR VendorIdentifierW[] = {'V','e','n','d','o','r','I','d','e','n','t','i','f','i','e','r',0};
+    static const WCHAR VenidIntelW[] = {'G','e','n','u','i','n','e','I','n','t','e','l',0};
+    /* static const WCHAR VenidAMDW[] = {'A','u','t','h','e','n','t','i','c','A','M','D',0}; */
+    static const WCHAR PercentDW[] = {'%','d',0};
+    static const WCHAR IntelCpuDescrW[] = {'x','8','6',' ','F','a','m','i','l','y',' ','%','d',' ','M','o','d','e','l',' ','%','d',
+                                           ' ','S','t','e','p','p','i','n','g',' ','%','d',0};
+    unsigned int i;
+    HANDLE hkey, system_key, cpu_key;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW, valueW;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    RtlInitUnicodeString( &nameW, SystemW );
+    if (NtCreateKey( &system_key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) return;
+
+    RtlInitUnicodeString( &valueW, IdentifierW );
+    NtSetValueKey( system_key, &valueW, 0, REG_SZ, SysidW, sizeof(SysidW) );
+
+    attr.RootDirectory = system_key;
+    RtlInitUnicodeString( &nameW, fpuW );
+    if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) NtClose( hkey );
+
+    RtlInitUnicodeString( &nameW, cpuW );
+    if (!NtCreateKey( &cpu_key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
+    {
+        for (i = 0; i < NtCurrentTeb()->Peb->NumberOfProcessors; i++)
+        {
+            WCHAR numW[10], idW[60];
+
+            attr.RootDirectory = cpu_key;
+            sprintfW( numW, PercentDW, i );
+            RtlInitUnicodeString( &nameW, numW );
+            if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
+            {
+                PROCESSOR_POWER_INFORMATION power_info;
+                DWORD cpuMHz;
+
+                if (NtPowerInformation(ProcessorInformation, NULL, 0,
+                                       &power_info, sizeof(power_info)) == STATUS_SUCCESS)
+                    cpuMHz = power_info.MaxMhz;
+                else
+                    cpuMHz = 0;
+
+                /*TODO: report 64bit processors properly*/
+                RtlInitUnicodeString( &valueW, IdentifierW );
+                sprintfW( idW, IntelCpuDescrW,
+                         cached_sci.Level, HIBYTE(cached_sci.Revision), LOBYTE(cached_sci.Revision) );
+                NtSetValueKey( hkey, &valueW, 0, REG_SZ, idW, (strlenW(idW) + 1) * sizeof(WCHAR) );
+
+                /*TODO; report amd's properly*/
+                RtlInitUnicodeString( &valueW, VendorIdentifierW );
+                NtSetValueKey( hkey, &valueW, 0, REG_SZ, VenidIntelW, sizeof(VenidIntelW) );
+
+                RtlInitUnicodeString( &valueW, mhzKeyW );
+                NtSetValueKey( hkey, &valueW, 0, REG_DWORD, &cpuMHz, sizeof(DWORD) );
+                NtClose( hkey );
+            }
+        }
+        NtClose( cpu_key );
+    }
+    NtClose( system_key );
+}
+
+static void create_env_registry_keys( void )
+{
+    static const WCHAR EnvironW[]  = {'M','a','c','h','i','n','e','\\',
+                                      'S','y','s','t','e','m','\\',
+                                      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                      'C','o','n','t','r','o','l','\\',
+                                      'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
+                                      'E','n','v','i','r','o','n','m','e','n','t',0};
+    static const WCHAR NumProcW[]  = {'N','U','M','B','E','R','_','O','F','_','P','R','O','C','E','S','S','O','R','S',0};
+    static const WCHAR ProcArchW[] = {'P','R','O','C','E','S','S','O','R','_','A','R','C','H','I','T','E','C','T','U','R','E',0};
+    static const WCHAR x86W[]      = {'x','8','6',0};
+    static const WCHAR ProcIdW[]   = {'P','R','O','C','E','S','S','O','R','_','I','D','E','N','T','I','F','I','E','R',0};
+    static const WCHAR ProcLvlW[]  = {'P','R','O','C','E','S','S','O','R','_','L','E','V','E','L',0};
+    static const WCHAR ProcRevW[]  = {'P','R','O','C','E','S','S','O','R','_','R','E','V','I','S','I','O','N',0};
+    static const WCHAR PercentDW[] = {'%','d',0};
+    static const WCHAR Percent04XW[] = {'%','0','4','x',0};
+    static const WCHAR IntelCpuDescrW[]  = {'x','8','6',' ','F','a','m','i','l','y',' ','%','d',' ','M','o','d','e','l',' ','%','d',
+                                            ' ','S','t','e','p','p','i','n','g',' ','%','d',',',' ','G','e','n','u','i','n','e','I','n','t','e','l',0};
+
+    HANDLE env_key;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW, valueW;
+
+    WCHAR nProcW[10],idW[60],procLevelW[10],revW[10];
+
+    /* Create some keys under HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment.
+     * All these environment variables are processor related and will be read during process initialization and hence
+     * show up in the environment of that process.
+     */
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    RtlInitUnicodeString( &nameW, EnvironW );
+    if (NtCreateKey( &env_key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) return;
+
+    sprintfW( nProcW, PercentDW, NtCurrentTeb()->Peb->NumberOfProcessors );
+    RtlInitUnicodeString( &valueW, NumProcW );
+    NtSetValueKey( env_key, &valueW, 0, REG_SZ, nProcW, (strlenW(nProcW) + 1) * sizeof(WCHAR) );
+
+    /* TODO: currently hardcoded x86, add different processors */
+    RtlInitUnicodeString( &valueW, ProcArchW );
+    NtSetValueKey( env_key, &valueW, 0, REG_SZ, x86W, sizeof(x86W) );
+
+    /* TODO: currently hardcoded Intel, add different processors */
+    sprintfW(idW, IntelCpuDescrW,
+             cached_sci.Level, HIBYTE(cached_sci.Revision), LOBYTE(cached_sci.Revision) );
+    RtlInitUnicodeString( &valueW, ProcIdW );
+    NtSetValueKey( env_key, &valueW, 0, REG_SZ, idW, (strlenW(idW) + 1) * sizeof(WCHAR) );
+
+    sprintfW( procLevelW, PercentDW, cached_sci.Level );
+    RtlInitUnicodeString( &valueW, ProcLvlW );
+    NtSetValueKey( env_key, &valueW, 0, REG_SZ, procLevelW, (strlenW(procLevelW) + 1) * sizeof(WCHAR) );
+
+    /* Properly report model/stepping */
+    sprintfW( revW, Percent04XW, cached_sci.Revision);
+    RtlInitUnicodeString( &valueW, ProcRevW );
+    NtSetValueKey( env_key, &valueW, 0, REG_SZ, revW, (strlenW(revW) + 1) * sizeof(WCHAR) );
+
+    NtClose( env_key );
+}
+
 /******************************************************************
  *		fill_cpu_info
  *
@@ -864,6 +1010,15 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
  * - cached_sci & cpuHZ in this file
  * - Peb->NumberOfProcessors
  * - SharedUserData->ProcessFeatures[] array
+ *
+ * It creates a registry subhierarchy, looking like:
+ * "\HARDWARE\DESCRIPTION\System\CentralProcessor\<processornumber>\Identifier (CPU x86)".
+ * Note that there is a hierarchy for every processor installed, so this
+ * supports multiprocessor systems. This is done like Win95 does it, I think.
+ *
+ * It creates some registry entries in the environment part:
+ * "\HKLM\System\CurrentControlSet\Control\Session Manager\Environment". These are
+ * always present. When deleted, Windows will add them again.
  */
 void fill_cpu_info(void)
 {
@@ -1222,6 +1377,8 @@ void fill_cpu_info(void)
     TRACE("<- CPU arch %d, level %d, rev %d, features 0x%x\n",
           cached_sci.Architecture, cached_sci.Level, cached_sci.Revision, cached_sci.FeatureSet);
 
+    create_env_registry_keys();
+    create_system_registry_keys();
 }
 
 /******************************************************************************

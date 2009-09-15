@@ -315,7 +315,6 @@ HANDLE thread_init(void)
 
     signal_init_thread( teb );
     virtual_init_threading();
-    fill_cpu_info();
 
     debug_info.str_pos = debug_info.strings;
     debug_info.out_pos = debug_info.output;
@@ -358,6 +357,8 @@ HANDLE thread_init(void)
     user_shared_data->u.TickCount.High2Time = user_shared_data->u.TickCount.High1Time;
     user_shared_data->TickCountLowDeprecated = user_shared_data->u.TickCount.LowPart;
     user_shared_data->TickCountMultiplier = 1 << 24;
+
+    fill_cpu_info();
 
     return exe_file;
 }

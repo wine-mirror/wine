@@ -113,13 +113,8 @@ static void set_entry_point( HMODULE module, const char *name, DWORD rva )
  */
 static BOOL process_attach( HMODULE module )
 {
-    SYSTEM_INFO si;
     SYSTEM_TIMEOFDAY_INFORMATION ti;
     RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
-
-    /* FIXME: should probably be done in ntdll */
-    GetSystemInfo( &si );
-    NtCurrentTeb()->Peb->NumberOfProcessors = si.dwNumberOfProcessors;
 
     NtQuerySystemInformation( SystemTimeOfDayInformation, &ti, sizeof(ti), NULL );
     server_start_time = ti.liKeBootTime.QuadPart;
