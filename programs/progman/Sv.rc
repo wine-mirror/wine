@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#pragma code_page(65001)
+
 #include "progman.h"
 
 /* Menu */
@@ -26,32 +28,32 @@ MAIN_MENU MENU LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 {
  POPUP "&Arkiv" {
    MENUITEM "&Ny...",              PM_NEW
-   MENUITEM "Ö&ppna\tEnter",             PM_OPEN
+   MENUITEM "Ã–&ppna\tEnter",             PM_OPEN
    MENUITEM "&Flytta...\tF7",             PM_MOVE,      GRAYED
    MENUITEM "&Kopiera...\tF8",             PM_COPY,      GRAYED
    MENUITEM "&Ta bort\tEntf",           PM_DELETE
    MENUITEM "&Attribut...\tAlt+Enter",       PM_ATTRIBUTES
    MENUITEM SEPARATOR
-   MENUITEM "K&ör...",          PM_EXECUTE
+   MENUITEM "K&Ã¶r...",          PM_EXECUTE
    MENUITEM SEPARATOR
    MENUITEM "A&vsluta Windows...",             PM_EXIT
  }
- POPUP "&Inställningar" {
+ POPUP "&InstÃ¤llningar" {
    MENUITEM "Ordna &automatiskt",  PM_AUTO_ARRANGE
    MENUITEM "&Minimera vid start",    PM_MIN_ON_RUN
-   MENUITEM "Spara ändringar vid &stängning", PM_SAVE_SETTINGS
+   MENUITEM "Spara Ã¤ndringar vid &stÃ¤ngning", PM_SAVE_SETTINGS
  }
- POPUP "&Fönster" {
-   MENUITEM "&Överlappande\tShift+F5",       PM_OVERLAP
+ POPUP "&FÃ¶nster" {
+   MENUITEM "&Ã–verlappande\tShift+F5",       PM_OVERLAP
    MENUITEM "&Sida vid sida\tShift+F4",  PM_SIDE_BY_SIDE
    MENUITEM "Ordna &ikoner",       PM_ARRANGE
  }
 
-POPUP "&Hjälp" {
-   MENUITEM "&Innehåll",         PM_CONTENTS
-   MENUITEM "&Sök...",           PM_SEARCH
+POPUP "&HjÃ¤lp" {
+   MENUITEM "&InnehÃ¥ll",         PM_CONTENTS
+   MENUITEM "&SÃ¶k...",           PM_SEARCH
    MENUITEM SEPARATOR
-   MENUITEM "&Hjälp om hjälp",     PM_HELPONHELP
+   MENUITEM "&HjÃ¤lp om hjÃ¤lp",     PM_HELPONHELP
    MENUITEM "&Guide",         PM_TUTORIAL
    MENUITEM SEPARATOR
 
@@ -76,7 +78,7 @@ RADIOBUTTON   "",                 PM_NEW_PROGRAM,  10, 35,  10, 15
 LTEXT         "&Program", -1,  20, 38,  80, 15
 DEFPUSHBUTTON "OK",          IDOK,           105,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Avbryt",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Hjälp",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&HjÃ¤lp",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Move' */
@@ -88,13 +90,13 @@ CAPTION "Flytta program"
 {
 LTEXT         "Flytta program:",    -1,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "Från grupp:", -1,            5, 13,  90, 15
+LTEXT         "FrÃ¥n grupp:", -1,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
 LTEXT         "&Till grupp:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
 DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Avbryt",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Hjälp",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&HjÃ¤lp",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Copy' */
@@ -106,13 +108,13 @@ CAPTION "Kopiera program"
 {
 LTEXT         "Kopiera program:",    -1,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "Från grupp:", -1,            5, 13,  90, 15
+LTEXT         "FrÃ¥n grupp:", -1,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
 LTEXT         "&Till grupp:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
 DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Avbryt",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Hjälp",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&HjÃ¤lp",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Group attributes' */
@@ -128,7 +130,7 @@ LTEXT     "&Gruppfil:",        PM_FILE_TXT,          05, 38,  50, 10
 EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
 DEFPUSHBUTTON "OK",            IDOK,                155,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Avbryt",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Hjälp",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&HjÃ¤lp",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Program attributes' */
@@ -151,9 +153,9 @@ CHECKBOX      "",                          PM_SYMBOL,            80, 75,  10, 10
 LTEXT         "&Minimera vid start",       -1,             95, 75,  75, 10
 DEFPUSHBUTTON "OK",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Avbryt",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "B&läddra...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Ändra &ikon...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Hjälp",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
+PUSHBUTTON    "B&lÃ¤ddra...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Ã„ndra &ikon...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&HjÃ¤lp",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Symbol' */
@@ -161,7 +163,7 @@ PUSHBUTTON    "&Hjälp",                 PM_HELP,             185, 85,  60, 15, W
 DIALOG_SYMBOL DIALOG 0, 0, 200, 85
 LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Ändra ikon"
+CAPTION "Ã„ndra ikon"
 {
 LTEXT     "&Filnamn:",    PM_ICON_FILE_TXT,    5, 15,  40, 10
 EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
@@ -170,8 +172,8 @@ COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
    CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
 DEFPUSHBUTTON "OK",         IDOK,              135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Avbryt",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "B&läddra...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Hjälp",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "B&lÃ¤ddra...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&HjÃ¤lp",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Execute' */
@@ -179,7 +181,7 @@ PUSHBUTTON    "&Hjälp",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
 DIALOG_EXECUTE DIALOG 0, 0, 200, 85
 LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Kör program"
+CAPTION "KÃ¶r program"
 {
 LTEXT     "&Kommandorad:", -1,   05, 15, 120, 10
 EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
@@ -187,8 +189,8 @@ CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
 LTEXT         "&Minimera vid start",   -1,   20, 45, 120, 10
 DEFPUSHBUTTON "OK",               IDOK,      135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Avbryt",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "B&läddra...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Hjälp",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "B&lÃ¤ddra...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&HjÃ¤lp",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
 }
 
 /* Strings */
@@ -203,16 +205,16 @@ IDS_DELETE,			"Ta bort"
 IDS_DELETE_GROUP_s,		"Ta bort gruppen '%s'?"
 IDS_DELETE_PROGRAM_s,		"Ta bort programmet '%s'?"
 IDS_NOT_IMPLEMENTED,		"Ej implementerat"
-IDS_FILE_READ_ERROR_s,		"Fel vid läsning av '%s'."
+IDS_FILE_READ_ERROR_s,		"Fel vid lÃ¤sning av '%s'."
 IDS_FILE_WRITE_ERROR_s,		"Fel vid skrivning til '%s'."
 IDS_GRPFILE_READ_ERROR_s,	"\
-Kunde inte öppna gruppfilen '%s'.\n\
-Ska vidare försök göras?"
-IDS_OUT_OF_MEMORY,		"För lite minne."
-IDS_WINHELP_ERROR,		"Ingen hjälp finns tillgänglig."
-IDS_UNKNOWN_FEATURE_s,		"Okänd egenskap i '%s'"
-IDS_FILE_NOT_OVERWRITTEN_s,	"Filen '%s' fanns redan, och skrevs ej över."
-IDS_SAVE_GROUP_AS_s,		"Spara grupp som '%s' för å undvika att skriva över filer."
+Kunde inte Ã¶ppna gruppfilen '%s'.\n\
+Ska vidare fÃ¶rsÃ¶k gÃ¶ras?"
+IDS_OUT_OF_MEMORY,		"FÃ¶r lite minne."
+IDS_WINHELP_ERROR,		"Ingen hjÃ¤lp finns tillgÃ¤nglig."
+IDS_UNKNOWN_FEATURE_s,		"OkÃ¤nd egenskap i '%s'"
+IDS_FILE_NOT_OVERWRITTEN_s,	"Filen '%s' fanns redan, och skrevs ej Ã¶ver."
+IDS_SAVE_GROUP_AS_s,		"Spara grupp som '%s' fÃ¶r Ã¥ undvika att skriva Ã¶ver filer."
 IDS_NO_HOT_KEY,			"Ingen"
 IDS_ALL_FILES,			"Alla filer (*.*)"
 IDS_PROGRAMS,			"Program"
@@ -225,23 +227,23 @@ STRINGTABLE DISCARDABLE LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 {
 IDS_LICENSE_CAPTION,            "LICENS"
 IDS_LICENSE,
-"Detta program är fri programvara. Du kan distribuera det och/eller \
-modifiera det under villkoren i GNU General Public License, publicerad \
-av Free Software Foundation, antingen version 2.1 eller (om du så vill) \
-någon senare version. Detta program distribueras i hopp om att det ska \
-vara användbart,men UTAN NÅGON SOM HELST GARANTI, även utan \
-underförstådd garanti om SÄLJBARHET eller LÄMPLIGHET FÖR NÅGOT \
-SPECIELLT ÄNDAMÅL. Se GNU General Public License för ytterligare \
+"Detta program Ã¤r fri programvara. Du kan distribuera det och/eller modifiera \
+det under villkoren i GNU Lesser General Public License, publicerad \
+av Free Software Foundation, antingen version 2.1 eller (om du sÃ¥ vill) \
+nÃ¥gon senare version. Detta program distribueras i hopp om att det ska \
+vara anvÃ¤ndbart,men UTAN NÃ…GON SOM HELST GARANTI, Ã¤ven utan \
+underfÃ¶rstÃ¥dd garanti om SÃ„LJBARHET eller LÃ„MPLIGHET FÃ–R NÃ…GOT \
+SPECIELLT Ã„NDAMÃ…L. Se GNU Lesser General Public License fÃ¶r ytterligare \
 information.\
-Du bör ha fått en kopia av GNU General Public License tillsammans \
+Du bÃ¶r ha fÃ¥tt en kopia av GNU Lesser General Public License tillsammans \
 med detta program. Om inte, skriv till Free Software Foundation, \
 Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
 IDS_WARRANTY_CAPTION, "INGEN GARANTI"
 IDS_WARRANTY,
 "Detta program distribueras i hopp om att det ska \
-vara användbart,men UTAN NÅGON SOM HELST GARANTI, även utan \
-underförstådd garanti om SÄLJBARHET eller LÄMPLIGHET FÖR NÅGOT \
-SPECIELLT ÄNDAMÅL. Se GNU General Public License för ytterligare \
+vara anvÃ¤ndbart,men UTAN NÃ…GON SOM HELST GARANTI, Ã¤ven utan \
+underfÃ¶rstÃ¥dd garanti om SÃ„LJBARHET eller LÃ„MPLIGHET FÃ–R NÃ…GOT \
+SPECIELLT Ã„NDAMÃ…L. Se GNU Lesser General Public License fÃ¶r ytterligare \
 information."
 }
