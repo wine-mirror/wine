@@ -9573,7 +9573,7 @@ static void texop_test(IDirect3DDevice9 *device)
         {D3DTOP_MODULATEINVALPHA_ADDCOLOR, "MODULATEINVALPHA_ADDCOLOR", D3DTEXOPCAPS_MODULATEINVALPHA_ADDCOLOR, D3DCOLOR_ARGB(0x00, 0x14, 0xff, 0x14)},
         {D3DTOP_MODULATEINVCOLOR_ADDALPHA, "MODULATEINVCOLOR_ADDALPHA", D3DTEXOPCAPS_MODULATEINVCOLOR_ADDALPHA, D3DCOLOR_ARGB(0x00, 0xcc, 0x99, 0xcc)},
         /* BUMPENVMAP & BUMPENVMAPLUMINANCE have their own tests */
-        {D3DTOP_DOTPRODUCT3,               "DOTPRODUCT2",               D3DTEXOPCAPS_DOTPRODUCT3,               D3DCOLOR_ARGB(0x00, 0x99, 0x99, 0x99)},
+        {D3DTOP_DOTPRODUCT3,               "DOTPRODUCT3",               D3DTEXOPCAPS_DOTPRODUCT3,               D3DCOLOR_ARGB(0x00, 0x99, 0x99, 0x99)},
         {D3DTOP_MULTIPLYADD,               "MULTIPLYADD",               D3DTEXOPCAPS_MULTIPLYADD,               D3DCOLOR_ARGB(0x00, 0xff, 0x33, 0x00)},
         {D3DTOP_LERP,                      "LERP",                      D3DTEXOPCAPS_LERP,                      D3DCOLOR_ARGB(0x00, 0x00, 0x33, 0x33)},
     };
@@ -9593,7 +9593,7 @@ static void texop_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "LockRect failed with 0x%08x\n", hr);
     *((DWORD *)locked_rect.pBits) = D3DCOLOR_ARGB(0x99, 0x00, 0xff, 0x00);
     hr = IDirect3DTexture9_UnlockRect(texture, 0);
-    ok(SUCCEEDED(hr), "LockRect failed with 0x%08x\n", hr);
+    ok(SUCCEEDED(hr), "UnlockRect failed with 0x%08x\n", hr);
     hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
     ok(SUCCEEDED(hr), "SetTexture failed with 0x%08x\n", hr);
 
@@ -9790,9 +9790,11 @@ static void texop_range_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "GetDeviceCaps failed with 0x%08x\n", hr);
     if (!(caps.TextureOpCaps & D3DTEXOPCAPS_ADD)) {
         skip("D3DTOP_ADD is not supported, skipping value range test\n");
+        return;
     }
     if (!(caps.TextureOpCaps & D3DTEXOPCAPS_SUBTRACT)) {
         skip("D3DTEXOPCAPS_SUBTRACT is not supported, skipping value range test\n");
+        return;
     }
 
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
@@ -9834,7 +9836,7 @@ static void texop_range_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "LockRect failed with 0x%08x\n", hr);
     *((DWORD *)locked_rect.pBits) = D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0x00);
     hr = IDirect3DTexture9_UnlockRect(texture, 0);
-    ok(SUCCEEDED(hr), "LockRect failed with 0x%08x\n", hr);
+    ok(SUCCEEDED(hr), "UnlockRect failed with 0x%08x\n", hr);
     hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
     ok(SUCCEEDED(hr), "SetTexture failed with 0x%08x\n", hr);
 
@@ -9873,7 +9875,7 @@ static void texop_range_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
     hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLOROP, D3DTOP_DISABLE);
     ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
-    hr = IDirect3DDevice9_SetTexture(device, 1, NULL);
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
     ok(SUCCEEDED(hr), "SetTexture failed with 0x%08x\n", hr);
     IDirect3DTexture9_Release(texture);
 }
@@ -9905,7 +9907,7 @@ static void alphareplicate_test(IDirect3DDevice9 *device) {
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
         ok(SUCCEEDED(hr), "DrawPrimitiveUP failed with 0x%08x\n", hr);
         hr = IDirect3DDevice9_EndScene(device);
-        ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with 0x%08x\n", hr);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with 0x%08x\n", hr);
     }
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
@@ -9978,7 +9980,7 @@ static void dp3_alpha_test(IDirect3DDevice9 *device) {
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
         ok(SUCCEEDED(hr), "DrawPrimitiveUP failed with 0x%08x\n", hr);
         hr = IDirect3DDevice9_EndScene(device);
-        ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with 0x%08x\n", hr);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with 0x%08x\n", hr);
     }
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
