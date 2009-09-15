@@ -597,7 +597,6 @@ static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
         {
             /* FIXME: what about SourceDir */
             lstrcpyW(mi->source, source);
-            lstrcatW(mi->source, mi->cabinet);
             return ERROR_SUCCESS;
         }
     }
