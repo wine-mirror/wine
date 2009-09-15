@@ -23,4 +23,6 @@
 #define IDD_BITMAPDATA_1x1   11
 #define IDS_STRING           12
 
+#define IDB_ASMSHADER        20
+
 #endif  /* __WINE_D3DX9_36_TEST_RESOURCES_H */

@@ -26,3 +26,6 @@ STRINGTABLE
 /* @makedep: bmp1x1.bmp */
 IDB_BITMAP_1x1 BITMAP bmp1x1.bmp
 IDD_BITMAPDATA_1x1 RCDATA bmp1x1.bmp
+
+/* @makedep: res.vsh */
+IDB_ASMSHADER RCDATA res.vsh
