@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "d3dx9.h"
+#include "d3dx9_36_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
@@ -178,4 +179,44 @@ HRESULT WINAPI D3DXAssembleShaderFromFileW(LPCWSTR filename,
 {
     FIXME("stub\n");
     return D3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI D3DXAssembleShaderFromResourceA(HMODULE module,
+                                               LPCSTR resource,
+                                               CONST D3DXMACRO* defines,
+                                               LPD3DXINCLUDE include,
+                                               DWORD flags,
+                                               LPD3DXBUFFER* shader,
+                                               LPD3DXBUFFER* error_messages)
+{
+    HRSRC res;
+    LPCSTR buffer;
+    DWORD len;
+
+    if (!(res = FindResourceA(module, resource, (LPCSTR)RT_RCDATA)))
+        return D3DXERR_INVALIDDATA;
+    if (FAILED(load_resource_into_memory(module, res, (LPVOID *)&buffer, &len)))
+        return D3DXERR_INVALIDDATA;
+    return D3DXAssembleShader(buffer, len, defines, include, flags,
+                              shader, error_messages);
+}
+
+HRESULT WINAPI D3DXAssembleShaderFromResourceW(HMODULE module,
+                                               LPCWSTR resource,
+                                               CONST D3DXMACRO* defines,
+                                               LPD3DXINCLUDE include,
+                                               DWORD flags,
+                                               LPD3DXBUFFER* shader,
+                                               LPD3DXBUFFER* error_messages)
+{
+    HRSRC res;
+    LPCSTR buffer;
+    DWORD len;
+
+    if (!(res = FindResourceW(module, resource, (LPCWSTR)RT_RCDATA)))
+        return D3DXERR_INVALIDDATA;
+    if (FAILED(load_resource_into_memory(module, res, (LPVOID *)&buffer, &len)))
+        return D3DXERR_INVALIDDATA;
+    return D3DXAssembleShader(buffer, len, defines, include, flags,
+                              shader, error_messages);
 }
