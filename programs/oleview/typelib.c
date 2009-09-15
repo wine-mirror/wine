@@ -984,8 +984,7 @@ static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wsz
     }
     if(pTypeAttr->wTypeFlags)
     {
-#define ENUM_FLAGS(x) if(pTypeAttr->wTypeFlags & x &&\
-        (pTypeAttr->typekind != TKIND_DISPATCH || x != TYPEFLAG_FDISPATCHABLE))\
+#define ENUM_FLAGS(x) if(pTypeAttr->wTypeFlags & x)\
         {\
             AddToTLDataStrW(pTLData, wszComa);\
             AddToTLDataStrW(pTLData, wszNewLine);\
