@@ -1139,7 +1139,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                to I/O address 0x3d9 bit 4  */
             if(data->VideoMode >= 4 && data->VideoMode <= 6)
             {
-              VGA_SetBright((BL_reg(context) & 0x10) && 1);
+              VGA_SetBright((BL_reg(context) & 0x10) != 0);
               VGA_UpdatePalette();
             }
             else FIXME("Set Background/Border Color: %d/%d\n",
