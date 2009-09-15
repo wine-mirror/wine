@@ -679,7 +679,7 @@ static DWORD ACTION_CallDllFunction( const GUID *guid )
     hModule = LoadLibraryW( dll );
     if (!hModule)
     {
-        ERR("failed to load dll %s\n", debugstr_w( dll ) );
+        ERR("failed to load dll %s (%u)\n", debugstr_w( dll ), GetLastError() );
         return r;
     }
 
