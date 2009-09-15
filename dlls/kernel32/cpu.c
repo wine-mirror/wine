@@ -47,14 +47,19 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnt.h"
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "ddk/wdm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
+
+#define SHARED_DATA     ((KSHARED_USER_DATA*)0x7ffe0000)
 
 #define AUTH	0x68747541	/* "Auth" */
 #define ENTI	0x69746e65	/* "enti" */
@@ -98,7 +103,6 @@ static inline int have_cpuid(void)
 #endif
 }
 
-static BYTE PF[64] = {0,};
 static ULONGLONG cpuHz = 1000000000; /* default to a 1GHz */
 
 static void create_system_registry_keys( const SYSTEM_INFO *info )
@@ -279,10 +283,10 @@ static inline void get_cpuinfo( SYSTEM_INFO *info )
                   (regs2[0] >> 8)&0xf);
             break;
         }
-        PF[PF_FLOATING_POINT_EMULATED]     = !(regs2[3] & 1);
-        PF[PF_RDTSC_INSTRUCTION_AVAILABLE] = (regs2[3] & (1 << 4 )) >> 4;
-        PF[PF_COMPARE_EXCHANGE_DOUBLE]     = (regs2[3] & (1 << 8 )) >> 8;
-        PF[PF_MMX_INSTRUCTIONS_AVAILABLE]  = (regs2[3] & (1 << 23)) >> 23;
+        SHARED_DATA->ProcessorFeatures[PF_FLOATING_POINT_EMULATED]     = !(regs2[3] & 1);
+        SHARED_DATA->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = (regs2[3] & (1 << 4 )) >> 4;
+        SHARED_DATA->ProcessorFeatures[PF_COMPARE_EXCHANGE_DOUBLE]     = (regs2[3] & (1 << 8 )) >> 8;
+        SHARED_DATA->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE]  = (regs2[3] & (1 << 23)) >> 23;
 
         if (regs[1] == AUTH &&
             regs[3] == ENTI &&
@@ -290,7 +294,7 @@ static inline void get_cpuinfo( SYSTEM_INFO *info )
             do_cpuid(0x80000000, regs);  /* get vendor cpuid level */
             if (regs[0]>=0x80000001) {
                 do_cpuid(0x80000001, regs2);  /* get vendor features */
-                PF[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = (regs2[3] & (1 << 31 )) >> 31;
+                SHARED_DATA->ProcessorFeatures[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = (regs2[3] & (1 << 31 )) >> 31;
             }
         }
     }
@@ -376,7 +380,7 @@ VOID WINAPI GetSystemInfo(
 		*si = cachedsi;
 		return;
 	}
-	memset(PF,0,sizeof(PF));
+	memset(SHARED_DATA->ProcessorFeatures,0,sizeof(SHARED_DATA->ProcessorFeatures));
 
         NtQuerySystemInformation( SystemBasicInformation, &sbi, sizeof(sbi), NULL );
         cachedsi.dwPageSize                  = sbi.PageSize;
@@ -510,34 +514,34 @@ VOID WINAPI GetSystemInfo(
 		}
 		if (!strcasecmp(line,"fdiv_bug")) {
 			if (!strncasecmp(value,"yes",3))
-				PF[PF_FLOATING_POINT_PRECISION_ERRATA] = TRUE;
+				SHARED_DATA->ProcessorFeatures[PF_FLOATING_POINT_PRECISION_ERRATA] = TRUE;
 
 			continue;
 		}
 		if (!strcasecmp(line,"fpu")) {
 			if (!strncasecmp(value,"no",2))
-				PF[PF_FLOATING_POINT_EMULATED] = TRUE;
+				SHARED_DATA->ProcessorFeatures[PF_FLOATING_POINT_EMULATED] = TRUE;
 
 			continue;
 		}
 		if (	!strcasecmp(line,"flags")	||
 			!strcasecmp(line,"features")) {
 			if (strstr(value,"cx8"))
-				PF[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
+				SHARED_DATA->ProcessorFeatures[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
 			if (strstr(value,"mmx"))
-				PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+				SHARED_DATA->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
 			if (strstr(value,"tsc"))
-				PF[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
+				SHARED_DATA->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
 			if (strstr(value,"3dnow"))
-				PF[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = TRUE;
+				SHARED_DATA->ProcessorFeatures[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = TRUE;
 			/* This will also catch sse2, but we have sse itself
 			 * if we have sse2, so no problem */
 			if (strstr(value,"sse"))
-				PF[PF_XMMI_INSTRUCTIONS_AVAILABLE] = TRUE;
+				SHARED_DATA->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE] = TRUE;
 			if (strstr(value,"sse2"))
-				PF[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
+				SHARED_DATA->ProcessorFeatures[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
 			if (strstr(value,"pae"))
-				PF[PF_PAE_ENABLED] = TRUE;
+				SHARED_DATA->ProcessorFeatures[PF_PAE_ENABLED] = TRUE;
 			
 			continue;
 		}
@@ -559,19 +563,19 @@ VOID WINAPI GetSystemInfo(
              mib[1] = CPU_FPU_PRESENT;
              val_len = sizeof(value);
              if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
-                 PF[PF_FLOATING_POINT_EMULATED] = !value;
+                 SHARED_DATA->ProcessorFeatures[PF_FLOATING_POINT_EMULATED] = !value;
 #endif
 #ifdef CPU_SSE
              mib[1] = CPU_SSE;   /* this should imply MMX */
              val_len = sizeof(value);
              if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
-                 if (value) PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+                 if (value) SHARED_DATA->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
 #endif
 #ifdef CPU_SSE2
              mib[1] = CPU_SSE2;  /* this should imply MMX */
              val_len = sizeof(value);
              if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
-                 if (value) PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+                 if (value) SHARED_DATA->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
 #endif
              mib[0] = CTL_HW;
              mib[1] = HW_NCPU;
@@ -602,7 +606,7 @@ VOID WINAPI GetSystemInfo(
                             cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
                             cachedsi.wProcessorLevel= 6;
                             /* this should imply MMX */
-                            PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+                            SHARED_DATA->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
                        }
                   }
              }
@@ -619,13 +623,13 @@ VOID WINAPI GetSystemInfo(
                             /* we could scan the string but it is easier
                                to test the bits directly */
                             if (features & 0x1)
-                                PF[PF_FLOATING_POINT_EMULATED] = TRUE;
+                                SHARED_DATA->ProcessorFeatures[PF_FLOATING_POINT_EMULATED] = TRUE;
                             if (features & 0x10)
-                                PF[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
+                                SHARED_DATA->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
                             if (features & 0x100)
-                                PF[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
+                                SHARED_DATA->ProcessorFeatures[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
                             if (features & 0x800000)
-                                PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+                                SHARED_DATA->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
 
                             break;
                         }
@@ -645,7 +649,7 @@ VOID WINAPI GetSystemInfo(
         /*len = sizeof(num);
           ret = sysctlbyname("hw.instruction_sse", &num, &len, NULL, 0);
           if (!ret)
-          PF[PF_XMMI_INSTRUCTIONS_AVAILABLE] = num;*/
+          SHARED_DATA->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE] = num;*/
 
 	len = sizeof(num);
 	ret = sysctlbyname("hw.ncpu", &num, &len, NULL, 0);
@@ -672,9 +676,9 @@ VOID WINAPI GetSystemInfo(
 	if (sysctlbyname ("hw.optional.floatingpoint", &value, &valSize, NULL, 0) == 0)
 	{
 	    if (value)
-		PF[PF_FLOATING_POINT_EMULATED] = FALSE;
+		SHARED_DATA->ProcessorFeatures[PF_FLOATING_POINT_EMULATED] = FALSE;
 	    else
-		PF[PF_FLOATING_POINT_EMULATED] = TRUE;
+		SHARED_DATA->ProcessorFeatures[PF_FLOATING_POINT_EMULATED] = TRUE;
 	}
 	valSize = sizeof(int);
 	if (sysctlbyname ("hw.ncpu", &value, &valSize, NULL, 0) == 0)
@@ -732,7 +736,7 @@ VOID WINAPI GetSystemInfo(
 			    case CPU_SUBTYPE_POWERPC_970:
 				cachedsi.dwProcessorType = PROCESSOR_PPC_604;
 				cachedsi.wProcessorLevel = 9;
-				/* :o) PF[PF_ALTIVEC_INSTRUCTIONS_AVAILABLE] ;-) */
+				/* :o) SHARED_DATA->ProcessorFeatures[PF_ALTIVEC_INSTRUCTIONS_AVAILABLE] ;-) */
 				break;
 			    default: break;
 			}
@@ -761,13 +765,13 @@ VOID WINAPI GetSystemInfo(
                 if (sysctlbyname ("machdep.cpu.features", buffer, &valSize, NULL, 0) == 0)
                 {
                     cachedsi.wProcessorRevision |= value;
-                    if (strstr(buffer,"CX8"))  PF[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
-                    if (strstr(buffer,"MMX"))   PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    if (strstr(buffer,"TSC"))   PF[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
-                    if (strstr(buffer,"3DNOW")) PF[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    if (strstr(buffer,"SSE"))   PF[PF_XMMI_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    if (strstr(buffer,"SSE2"))  PF[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    if (strstr(buffer,"PAE"))   PF[PF_PAE_ENABLED] = TRUE;
+                    if (strstr(buffer,"CX8"))  SHARED_DATA->ProcessorFeatures[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
+                    if (strstr(buffer,"MMX"))   SHARED_DATA->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    if (strstr(buffer,"TSC"))   SHARED_DATA->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
+                    if (strstr(buffer,"3DNOW")) SHARED_DATA->ProcessorFeatures[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    if (strstr(buffer,"SSE"))   SHARED_DATA->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    if (strstr(buffer,"SSE2"))  SHARED_DATA->ProcessorFeatures[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    if (strstr(buffer,"PAE"))   SHARED_DATA->ProcessorFeatures[PF_PAE_ENABLED] = TRUE;
                 }
                 break; /* CPU_TYPE_I386 */
             default: break;
@@ -828,7 +832,7 @@ BOOL WINAPI IsProcessorFeaturePresent (
   GetSystemInfo (&si); /* To ensure the information is loaded and cached */
 
   if (feature < 64)
-    return PF[feature];
+    return SHARED_DATA->ProcessorFeatures[feature];
   else
     return FALSE;
 }
