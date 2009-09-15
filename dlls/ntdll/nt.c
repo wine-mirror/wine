@@ -21,10 +21,30 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
+#ifdef HAVE_MACHINE_CPU_H
+# include <machine/cpu.h>
+#endif
+#ifdef HAVE_MACH_MACHINE_H
+# include <mach/machine.h>
+#endif
+
+#include <ctype.h>
+#include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif
 #include <time.h>
 
 #define NONAMELESSUNION
@@ -36,6 +56,7 @@
 #include "winternl.h"
 #include "ntdll_misc.h"
 #include "wine/server.h"
+#include "ddk/wdm.h"
 
 #ifdef __APPLE__
 #include <mach/mach_init.h>
@@ -751,6 +772,458 @@ NTSTATUS WINAPI NtSetIntervalProfile(
     return STATUS_SUCCESS;
 }
 
+static  SYSTEM_CPU_INFORMATION cached_sci;
+static  DWORD cpuHz;
+
+#define AUTH	0x68747541	/* "Auth" */
+#define ENTI	0x69746e65	/* "enti" */
+#define CAMD	0x444d4163	/* "cAMD" */
+
+/* Calls cpuid with an eax of 'ax' and returns the 16 bytes in *p
+ * We are compiled with -fPIC, so we can't clobber ebx.
+ */
+static inline void do_cpuid(unsigned int ax, unsigned int *p)
+{
+#ifdef __i386__
+	__asm__("pushl %%ebx\n\t"
+                "cpuid\n\t"
+                "movl %%ebx, %%esi\n\t"
+                "popl %%ebx"
+                : "=a" (p[0]), "=S" (p[1]), "=c" (p[2]), "=d" (p[3])
+                :  "0" (ax));
+#endif
+}
+
+/* From xf86info havecpuid.c 1.11 */
+static inline int have_cpuid(void)
+{
+#ifdef __i386__
+	unsigned int f1, f2;
+	__asm__("pushfl\n\t"
+                "pushfl\n\t"
+                "popl %0\n\t"
+                "movl %0,%1\n\t"
+                "xorl %2,%0\n\t"
+                "pushl %0\n\t"
+                "popfl\n\t"
+                "pushfl\n\t"
+                "popl %0\n\t"
+                "popfl"
+                : "=&r" (f1), "=&r" (f2)
+                : "ir" (0x00200000));
+	return ((f1^f2) & 0x00200000) != 0;
+#else
+        return 0;
+#endif
+}
+
+static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
+{
+    unsigned int regs[4], regs2[4];
+
+    if (!have_cpuid()) return;
+
+    do_cpuid(0x00000000, regs);  /* get standard cpuid level and vendor name */
+    if (regs[0]>=0x00000001)   /* Check for supported cpuid version */
+    {
+        do_cpuid(0x00000001, regs2); /* get cpu features */
+        switch ((regs2[0] >> 8) & 0xf)  /* cpu family */
+        {
+        case 3: info->Level = 3;        break;
+        case 4: info->Level = 4;        break;
+        case 5: info->Level = 5;        break;
+        case 15: /* PPro/2/3/4 has same info as P1 */
+        case 6: info->Level = 6;         break;
+        default:
+            FIXME("unknown cpu family %d, please report! (-> setting to 386)\n",
+                  (regs2[0] >> 8)&0xf);
+            info->Level = 3;
+            break;
+        }
+        user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_EMULATED]     = !(regs2[3] & 1);
+        user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = (regs2[3] & (1 << 4 )) >> 4;
+        user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE_DOUBLE]     = (regs2[3] & (1 << 8 )) >> 8;
+        user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE]  = (regs2[3] & (1 << 23)) >> 23;
+
+        if (regs[1] == AUTH && regs[3] == ENTI && regs[2] == CAMD)
+        {
+            do_cpuid(0x80000000, regs);  /* get vendor cpuid level */
+            if (regs[0] >= 0x80000001)
+            {
+                do_cpuid(0x80000001, regs2);  /* get vendor features */
+                user_shared_data->ProcessorFeatures[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = (regs2[3] & (1 << 31 )) >> 31;
+            }
+        }
+    }
+}
+
+/******************************************************************
+ *		fill_cpu_info
+ *
+ * inits a couple of places with CPU related information:
+ * - cached_sci & cpuHZ in this file
+ * - Peb->NumberOfProcessors
+ * - SharedUserData->ProcessFeatures[] array
+ */
+void fill_cpu_info(void)
+{
+    memset(&cached_sci, 0, sizeof(cached_sci));
+    /* choose sensible defaults ...
+     * FIXME: perhaps overridable with precompiler flags?
+     */
+    cached_sci.Architecture     = PROCESSOR_ARCHITECTURE_INTEL;
+    cached_sci.Level		= 5; /* 586 */
+    cached_sci.Revision   	= 0;
+    cached_sci.Reserved         = 0;
+    cached_sci.FeatureSet       = 0x1fff; /* FIXME: set some sensible defaults out of ProcessFeatures[] */
+
+    NtCurrentTeb()->Peb->NumberOfProcessors = 1;
+
+    /* Hmm, reasonable processor feature defaults? */
+
+#ifdef linux
+    {
+	char line[200];
+	FILE *f = fopen ("/proc/cpuinfo", "r");
+
+	if (!f)
+		return;
+	while (fgets(line,200,f) != NULL)
+        {
+            char	*s,*value;
+
+            /* NOTE: the ':' is the only character we can rely on */
+            if (!(value = strchr(line,':')))
+                continue;
+
+            /* terminate the valuename */
+            s = value - 1;
+            while ((s >= line) && ((*s == ' ') || (*s == '\t'))) s--;
+            *(s + 1) = '\0';
+
+            /* and strip leading spaces from value */
+            value += 1;
+            while (*value==' ') value++;
+            if ((s = strchr(value,'\n')))
+                *s='\0';
+
+            if (!strcasecmp(line, "processor"))
+            {
+                /* processor number counts up... */
+                unsigned int x;
+
+                if (sscanf(value, "%d",&x))
+                    if (x + 1 > NtCurrentTeb()->Peb->NumberOfProcessors)
+                        NtCurrentTeb()->Peb->NumberOfProcessors = x + 1;
+
+                continue;
+            }
+            if (!strcasecmp(line, "model"))
+            {
+                /* First part of Revision */
+                int	x;
+
+                if (sscanf(value, "%d",&x))
+                    cached_sci.Revision = cached_sci.Revision | (x << 8);
+
+                continue;
+            }
+
+            /* 2.1 method */
+            if (!strcasecmp(line, "cpu family"))
+            {
+                if (isdigit(value[0]))
+                {
+                    cached_sci.Level = atoi(value);
+                }
+                continue;
+            }
+            /* old 2.0 method */
+            if (!strcasecmp(line, "cpu"))
+            {
+                if (isdigit(value[0]) && value[1] == '8' && value[2] == '6' && value[3] == 0)
+                {
+                    switch (cached_sci.Level = value[0] - '0')
+                    {
+                    case 3:
+                    case 4:
+                    case 5:
+                    case 6:
+                        break;
+                    default:
+                        FIXME("unknown Linux 2.0 cpu family '%s', please report ! (-> setting to 386)\n", value);
+                        cached_sci.Level = 3;
+                        break;
+                    }
+                }
+                continue;
+            }
+            if (!strcasecmp(line, "stepping"))
+            {
+                /* Second part of Revision */
+                int	x;
+
+                if (sscanf(value, "%d",&x))
+                    cached_sci.Revision = cached_sci.Revision | x;
+                continue;
+            }
+            if (!strcasecmp(line, "cpu MHz"))
+            {
+                double cmz;
+                if (sscanf( value, "%lf", &cmz ) == 1)
+                {
+                    /* SYSTEMINFO doesn't have a slot for cpu speed, so store in a global */
+                    cpuHz = cmz * 1000 * 1000;
+                }
+                continue;
+            }
+            if (!strcasecmp(line, "fdiv_bug"))
+            {
+                if (!strncasecmp(value, "yes",3))
+                    user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_PRECISION_ERRATA] = TRUE;
+                continue;
+            }
+            if (!strcasecmp(line, "fpu"))
+            {
+                if (!strncasecmp(value, "no",2))
+                    user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_EMULATED] = TRUE;
+                continue;
+            }
+            if (!strcasecmp(line, "flags") || !strcasecmp(line, "features"))
+            {
+                if (strstr(value, "cx8"))
+                    user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
+                if (strstr(value, "mmx"))
+                    user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+                if (strstr(value, "tsc"))
+                    user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
+                if (strstr(value, "3dnow"))
+                    user_shared_data->ProcessorFeatures[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = TRUE;
+                /* This will also catch sse2, but we have sse itself
+                 * if we have sse2, so no problem */
+                if (strstr(value, "sse"))
+                    user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE] = TRUE;
+                if (strstr(value, "sse2"))
+                    user_shared_data->ProcessorFeatures[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
+                if (strstr(value, "pae"))
+                    user_shared_data->ProcessorFeatures[PF_PAE_ENABLED] = TRUE;
+
+                continue;
+            }
+	}
+	fclose(f);
+    }
+#elif defined (__NetBSD__)
+    {
+        int mib[2];
+        int value;
+        size_t val_len;
+        char model[256];
+        char *cpuclass;
+        FILE *f = fopen("/var/run/dmesg.boot", "r");
+
+        /* first deduce as much as possible from the sysctls */
+        mib[0] = CTL_MACHDEP;
+#ifdef CPU_FPU_PRESENT
+        mib[1] = CPU_FPU_PRESENT;
+        val_len = sizeof(value);
+        if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
+            user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_EMULATED] = !value;
+#endif
+#ifdef CPU_SSE
+        mib[1] = CPU_SSE;   /* this should imply MMX */
+        val_len = sizeof(value);
+        if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
+            if (value) user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+#endif
+#ifdef CPU_SSE2
+        mib[1] = CPU_SSE2;  /* this should imply MMX */
+        val_len = sizeof(value);
+        if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
+            if (value) user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+#endif
+        mib[0] = CTL_HW;
+        mib[1] = HW_NCPU;
+        val_len = sizeof(value);
+        if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
+            if (value > NtCurrentTeb()->Peb->NumberOfProcessors)
+                NtCurrentTeb()->Peb->NumberOfProcessors = value;
+        mib[1] = HW_MODEL;
+        val_len = sizeof(model)-1;
+        if (sysctl(mib, 2, model, &val_len, NULL, 0) >= 0)
+        {
+            model[val_len] = '\0'; /* just in case */
+            cpuclass = strstr(model, "-class");
+            if (cpuclass != NULL) {
+                while(cpuclass > model && cpuclass[0] != '(') cpuclass--;
+                if (!strncmp(cpuclass+1, "386", 3))
+                {
+                    cached_sci.Level= 3;
+                }
+                if (!strncmp(cpuclass+1, "486", 3))
+                {
+                    cached_sci.Level= 4;
+                }
+                if (!strncmp(cpuclass+1, "586", 3))
+                {
+                    cached_sci.Level= 5;
+                }
+                if (!strncmp(cpuclass+1, "686", 3))
+                {
+                    cached_sci.Level= 6;
+                    /* this should imply MMX */
+                    user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+                }
+            }
+        }
+
+        /* it may be worth reading from /var/run/dmesg.boot for
+           additional information such as CX8, MMX and TSC
+           (however this information should be considered less
+           reliable than that from the sysctl calls) */
+        if (f != NULL)
+        {
+            while (fgets(model, 255, f) != NULL)
+            {
+                int cpu, features;
+                if (sscanf(model, "cpu%d: features %x<", &cpu, &features) == 2)
+                {
+                    /* we could scan the string but it is easier
+                       to test the bits directly */
+                    if (features & 0x1)
+                        user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_EMULATED] = TRUE;
+                    if (features & 0x10)
+                        user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
+                    if (features & 0x100)
+                        user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
+                    if (features & 0x800000)
+                        user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+
+                    break;
+                }
+            }
+            fclose(f);
+        }
+    }
+#elif defined(__FreeBSD__)
+    {
+        int ret, num;
+        size_t len;
+
+        get_cpuinfo( &cached_sci );
+
+        /* Check for OS support of SSE -- Is this used, and should it be sse1 or sse2? */
+        /*len = sizeof(num);
+          ret = sysctlbyname("hw.instruction_sse", &num, &len, NULL, 0);
+          if (!ret)
+          user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE] = num;*/
+
+        len = sizeof(num);
+        ret = sysctlbyname("hw.ncpu", &num, &len, NULL, 0);
+        if (!ret)
+            NtCurrentTeb()->Peb->NumberOfProcessors = num;
+    }
+#elif defined(__sun)
+    {
+        int num = sysconf( _SC_NPROCESSORS_ONLN );
+
+        if (num == -1) num = 1;
+        get_cpuinfo( &cached_sci );
+        NtCurrentTeb()->Peb->NumberOfProcessors = num;
+    }
+#elif defined (__APPLE__)
+    {
+        size_t valSize;
+        unsigned long long longVal;
+        int value;
+        int cputype;
+        char buffer[256];
+
+        valSize = sizeof(int);
+        if (sysctlbyname ("hw.optional.floatingpoint", &value, &valSize, NULL, 0) == 0)
+        {
+            if (value)
+                user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_EMULATED] = FALSE;
+            else
+                user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_EMULATED] = TRUE;
+        }
+        valSize = sizeof(int);
+        if (sysctlbyname ("hw.ncpu", &value, &valSize, NULL, 0) == 0)
+            NtCurrentTeb()->Peb->NumberOfProcessors = value;
+
+        /* FIXME: we don't use the "hw.activecpu" value... but the cached one */
+
+        valSize = sizeof(int);
+        if (sysctlbyname ("hw.cputype", &cputype, &valSize, NULL, 0) == 0)
+        {
+            switch (cputype)
+            {
+            case CPU_TYPE_POWERPC:
+                cached_sci.ProcessorArchitecture = PROCESSOR_ARCHITECTURE_PPC;
+                valSize = sizeof(int);
+                if (sysctlbyname ("hw.cpusubtype", &value, &valSize, NULL, 0) == 0)
+                {
+                    switch (value)
+                    {
+                    case CPU_SUBTYPE_POWERPC_601:
+                    case CPU_SUBTYPE_POWERPC_602:       cached_sci.Level = 1;   break;
+                    case CPU_SUBTYPE_POWERPC_603:       cached_sci.Level = 3;   break;
+                    case CPU_SUBTYPE_POWERPC_603e:
+                    case CPU_SUBTYPE_POWERPC_603ev:     cached_sci.Level = 6;   break;
+                    case CPU_SUBTYPE_POWERPC_604:       cached_sci.Level = 4;   break;
+                    case CPU_SUBTYPE_POWERPC_604e:      cached_sci.Level = 9;   break;
+                    case CPU_SUBTYPE_POWERPC_620:       cached_sci.Level = 20;  break;
+                    case CPU_SUBTYPE_POWERPC_750:       /* G3/G4 derive from 603 so ... */
+                    case CPU_SUBTYPE_POWERPC_7400:
+                    case CPU_SUBTYPE_POWERPC_7450:      cached_sci.Level = 6;   break;
+                    case CPU_SUBTYPE_POWERPC_970:       cached_sci.Level = 9;
+                        /* :o) user_shared_data->ProcessorFeatures[PF_ALTIVEC_INSTRUCTIONS_AVAILABLE] ;-) */
+                        break;
+                    default: break;
+                    }
+                }
+                break; /* CPU_TYPE_POWERPC */
+            case CPU_TYPE_I386:
+                cached_sci.Architecture = PROCESSOR_ARCHITECTURE_INTEL;
+                valSize = sizeof(int);
+                if (sysctlbyname ("machdep.cpu.family", &value, &valSize, NULL, 0) == 0)
+                {
+                    cached_sci.Level = value;
+                }
+                valSize = sizeof(int);
+                if (sysctlbyname ("machdep.cpu.model", &value, &valSize, NULL, 0) == 0)
+                    cached_sci.Revision = (value << 8);
+                valSize = sizeof(int);
+                if (sysctlbyname ("machdep.cpu.stepping", &value, &valSize, NULL, 0) == 0)
+                    cached_sci.Revision |= value;
+                valSize = sizeof(buffer);
+                if (sysctlbyname ("machdep.cpu.features", buffer, &valSize, NULL, 0) == 0)
+                {
+                    cached_sci.Revision |= value;
+                    if (strstr(buffer, "CX8"))   user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
+                    if (strstr(buffer, "MMX"))   user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    if (strstr(buffer, "TSC"))   user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
+                    if (strstr(buffer, "3DNOW")) user_shared_data->ProcessorFeatures[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    if (strstr(buffer, "SSE"))   user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    if (strstr(buffer, "SSE2"))  user_shared_data->ProcessorFeatures[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    if (strstr(buffer, "PAE"))   user_shared_data->ProcessorFeatures[PF_PAE_ENABLED] = TRUE;
+                }
+                break; /* CPU_TYPE_I386 */
+            default: break;
+            } /* switch (cputype) */
+        }
+        valSize = sizeof(longVal);
+        if (!sysctlbyname("hw.cpufrequency", &longVal, &valSize, NULL, 0))
+            cpuHz = longVal;
+    }
+#else
+    FIXME("not yet supported on this system\n");
+#endif
+    TRACE("<- CPU arch %d, level %d, rev %d, features 0x%x\n",
+          cached_sci.Architecture, cached_sci.Level, cached_sci.Revision, cached_sci.FeatureSet);
+
+}
+
 /******************************************************************************
  * NtQuerySystemInformation [NTDLL.@]
  * ZwQuerySystemInformation [NTDLL.@]
@@ -800,24 +1273,12 @@ NTSTATUS WINAPI NtQuerySystemInformation(
         }
         break;
     case SystemCpuInformation:
+        if (Length >= (len = sizeof(cached_sci)))
         {
-            SYSTEM_CPU_INFORMATION sci;
-
-            /* FIXME: move some code from kernel/cpu.c to process this */
-            sci.Architecture = PROCESSOR_ARCHITECTURE_INTEL;
-            sci.Level = 6; /* 686, aka Pentium II+ */
-            sci.Revision = 0;
-            sci.Reserved = 0;
-            sci.FeatureSet = 0x1fff;
-            len = sizeof(sci);
-
-            if ( Length >= len)
-            {
-                if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
-                else memcpy( SystemInformation, &sci, len);
-            }
-            else ret = STATUS_INFO_LENGTH_MISMATCH;
+            if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
+            else memcpy(SystemInformation, &cached_sci, len);
         }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
     case SystemPerformanceInformation:
         {
@@ -1018,7 +1479,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             }
 #else
             {
-                FILE *cpuinfo = fopen("/proc/stat","r");
+                FILE *cpuinfo = fopen("/proc/stat", "r");
                 if (cpuinfo)
                 {
                     unsigned usr,nice,sys;
@@ -1029,12 +1490,12 @@ NTSTATUS WINAPI NtQuerySystemInformation(
 
                     /* first line is combined usage */
                     if (fgets(line,255,cpuinfo))
-                        count = sscanf(line,"%s %u %u %u %lu",name, &usr, &nice,
-                                   &sys, &idle);
+                        count = sscanf(line, "%s %u %u %u %lu", name, &usr, &nice,
+                                       &sys, &idle);
                     else
                         count = 0;
                     /* we set this up in the for older non-smp enabled kernels */
-                    if (count == 5 && strcmp(name,"cpu")==0)
+                    if (count == 5 && strcmp(name, "cpu") == 0)
                     {
                         sppi = RtlAllocateHeap(GetProcessHeap(), 0,
                                                sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
@@ -1047,12 +1508,12 @@ NTSTATUS WINAPI NtQuerySystemInformation(
 
                     do
                     {
-                        if (fgets(line,255,cpuinfo))
-                            count = sscanf(line,"%s %u %u %u %lu",name, &usr,
-                                       &nice, &sys, &idle);
+                        if (fgets(line, 255, cpuinfo))
+                            count = sscanf(line, "%s %u %u %u %lu", name, &usr,
+                                           &nice, &sys, &idle);
                         else
                             count = 0;
-                        if (count == 5 && strncmp(name,"cpu",3)==0)
+                        if (count == 5 && strncmp(name, "cpu", 3)==0)
                         {
                             out_cpus --;
                             if (name[3]=='0') /* first cpu */

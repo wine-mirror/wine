@@ -68,6 +68,7 @@ extern HANDLE thread_init(void);
 extern void actctx_init(void);
 extern void virtual_init(void);
 extern void virtual_init_threading(void);
+extern void fill_cpu_info(void);
 
 /* server support */
 extern timeout_t server_start_time;

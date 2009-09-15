@@ -277,7 +277,6 @@ HANDLE thread_init(void)
                              MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE );
     peb = addr;
 
-    peb->NumberOfProcessors = 1;
     peb->ProcessParameters  = &params;
     peb->TlsBitmap          = &tls_bitmap;
     peb->TlsExpansionBitmap = &tls_expansion_bitmap;
@@ -316,6 +315,7 @@ HANDLE thread_init(void)
 
     signal_init_thread( teb );
     virtual_init_threading();
+    fill_cpu_info();
 
     debug_info.str_pos = debug_info.strings;
     debug_info.out_pos = debug_info.output;
