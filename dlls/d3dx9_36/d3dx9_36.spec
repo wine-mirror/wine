@@ -1,6 +1,6 @@
-@ stub D3DXAssembleShader
-@ stub D3DXAssembleShaderFromFileA
-@ stub D3DXAssembleShaderFromFileW
+@ stdcall D3DXAssembleShader(ptr long ptr ptr long ptr ptr)
+@ stdcall D3DXAssembleShaderFromFileA(str ptr ptr long ptr ptr)
+@ stdcall D3DXAssembleShaderFromFileW(wstr ptr ptr long ptr ptr)
 @ stub D3DXAssembleShaderFromResourceA
 @ stub D3DXAssembleShaderFromResourceW
 @ stdcall D3DXBoxBoundProbe(ptr ptr ptr ptr)

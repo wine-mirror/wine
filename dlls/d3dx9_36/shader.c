@@ -19,6 +19,7 @@
 #include "config.h"
 #include "wine/port.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "d3dx9.h"
@@ -130,4 +131,51 @@ LPCSTR WINAPI D3DXGetVertexShaderProfile(LPDIRECT3DDEVICE9 device)
     }
 
     return NULL;
+}
+
+HRESULT WINAPI D3DXAssembleShader(LPCSTR data,
+                                  UINT data_len,
+                                  CONST D3DXMACRO* defines,
+                                  LPD3DXINCLUDE include,
+                                  DWORD flags,
+                                  LPD3DXBUFFER* shader,
+                                  LPD3DXBUFFER* error_messages)
+{
+    FIXME("stub\n");
+    return D3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI D3DXAssembleShaderFromFileA(LPCSTR filename,
+                                           CONST D3DXMACRO* defines,
+                                           LPD3DXINCLUDE include,
+                                           DWORD flags,
+                                           LPD3DXBUFFER* shader,
+                                           LPD3DXBUFFER* error_messages)
+{
+    LPWSTR filename_w = NULL;
+    DWORD len;
+    HRESULT ret;
+
+    if (!filename) return D3DXERR_INVALIDDATA;
+
+    len = MultiByteToWideChar(CP_ACP, 0, filename, -1, NULL, 0);
+    filename_w = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!filename_w) return E_OUTOFMEMORY;
+    MultiByteToWideChar(CP_ACP, 0, filename, -1, filename_w, len);
+
+    ret = D3DXAssembleShaderFromFileW(filename_w, defines, include, flags, shader, error_messages);
+
+    HeapFree(GetProcessHeap(), 0, filename_w);
+    return ret;
+}
+
+HRESULT WINAPI D3DXAssembleShaderFromFileW(LPCWSTR filename,
+                                           CONST D3DXMACRO* defines,
+                                           LPD3DXINCLUDE include,
+                                           DWORD flags,
+                                           LPD3DXBUFFER* shader,
+                                           LPD3DXBUFFER* error_messages)
+{
+    FIXME("stub\n");
+    return D3DERR_INVALIDCALL;
 }
