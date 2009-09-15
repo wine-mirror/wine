@@ -1196,7 +1196,7 @@ typedef struct _SYSTEM_BASIC_INFORMATION {
     ULONG_PTR AllocationGranularity;
     PVOID     LowestUserAddress;
     PVOID     HighestUserAddress;
-    ULONG_PTR ActiveProcessors;
+    ULONG_PTR ActiveProcessorsAffinityMask;
     BYTE      NumberOfProcessors;
 #else
     BYTE Reserved1[24];

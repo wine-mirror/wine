@@ -382,7 +382,7 @@ VOID WINAPI GetSystemInfo(
         cachedsi.dwPageSize                  = sbi.PageSize;
         cachedsi.lpMinimumApplicationAddress = sbi.LowestUserAddress;
         cachedsi.lpMaximumApplicationAddress = sbi.HighestUserAddress;
-        cachedsi.dwNumberOfProcessors        = sbi.ActiveProcessors;
+        cachedsi.dwNumberOfProcessors        = sbi.NumberOfProcessors;
         cachedsi.dwAllocationGranularity     = sbi.AllocationGranularity;
 
 	/* choose sensible defaults ...

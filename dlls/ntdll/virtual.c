@@ -1380,7 +1380,7 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
     info->AllocationGranularity   = get_mask(0) + 1;
     info->LowestUserAddress       = (void *)0x10000;
     info->HighestUserAddress      = (char *)user_space_limit - 1;
-    info->ActiveProcessors        = NtCurrentTeb()->Peb->NumberOfProcessors;
+    info->ActiveProcessorsAffinityMask = (1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
     info->NumberOfProcessors      = NtCurrentTeb()->Peb->NumberOfProcessors;
 }
 
