@@ -247,7 +247,6 @@ struct ConnectionPoint {
 };
 
 struct HTMLDocument {
-    DispatchEx dispex;
     const IHTMLDocument2Vtbl              *lpHTMLDocument2Vtbl;
     const IHTMLDocument3Vtbl              *lpHTMLDocument3Vtbl;
     const IHTMLDocument4Vtbl              *lpHTMLDocument4Vtbl;
@@ -271,6 +270,7 @@ struct HTMLDocument {
     const ISupportErrorInfoVtbl           *lpSupportErrorInfoVtbl;
 
     IUnknown *unk_impl;
+    IDispatchEx *dispex;
 
     HTMLDocumentObj *doc_obj;
     HTMLDocumentNode *doc_node;
@@ -302,6 +302,7 @@ static inline ULONG htmldoc_release(HTMLDocument *This)
 
 struct HTMLDocumentObj {
     HTMLDocument basedoc;
+    DispatchEx dispex;
     const ICustomDocVtbl  *lpCustomDocVtbl;
 
     LONG ref;

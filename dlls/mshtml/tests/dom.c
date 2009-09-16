@@ -4109,7 +4109,10 @@ static void test_window(IHTMLDocument2 *doc)
     ok(doc2 != NULL, "doc2 == NULL\n");
 
     test_ifaces((IUnknown*)doc2, doc_node_iids);
+    test_disp((IUnknown*)doc2, &DIID_DispHTMLDocument, "[object]");
+
     test_ifaces((IUnknown*)doc, doc_obj_iids);
+    test_disp((IUnknown*)doc2, &DIID_DispHTMLDocument, "[object]");
 
     unk = (void*)0xdeadbeef;
     hres = IHTMLDocument2_QueryInterface(doc2, &IID_ICustomDoc, (void**)&unk);
