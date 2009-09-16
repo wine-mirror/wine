@@ -289,8 +289,6 @@ struct HTMLDocument {
     LPOLESTR url;
     struct list bindings;
 
-    DOCHOSTUIINFO hostinfo;
-
     USERMODE usermode;
     READYSTATE readystate;
     BOOL in_place_active;
@@ -349,6 +347,8 @@ struct HTMLDocumentObj {
     IOleInPlaceSite *ipsite;
     IOleInPlaceFrame *frame;
     IOleInPlaceUIWindow *ip_window;
+
+    DOCHOSTUIINFO hostinfo;
 
     IOleUndoManager *undomgr;
 

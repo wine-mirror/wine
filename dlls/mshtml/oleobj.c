@@ -111,7 +111,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
         This->doc_obj->hostui = NULL;
     }
 
-    memset(&This->hostinfo, 0, sizeof(DOCHOSTUIINFO));
+    memset(&This->doc_obj->hostinfo, 0, sizeof(DOCHOSTUIINFO));
 
     if(!pClientSite)
         return S_OK;
@@ -130,7 +130,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
                     hostinfo.cbSize, hostinfo.dwFlags, hostinfo.dwDoubleClick,
                     debugstr_w(hostinfo.pchHostCss), debugstr_w(hostinfo.pchHostNS));
             update_hostinfo(This->doc_obj, &hostinfo);
-            This->hostinfo = hostinfo;
+            This->doc_obj->hostinfo = hostinfo;
         }
 
         if(!This->has_key_path) {

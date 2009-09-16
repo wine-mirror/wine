@@ -60,7 +60,7 @@ static void paint_document(HTMLDocumentObj *This)
 
     hdc = BeginPaint(This->hwnd, &ps);
 
-    if(!(This->basedoc.hostinfo.dwFlags & (DOCHOSTUIFLAG_NO3DOUTERBORDER|DOCHOSTUIFLAG_NO3DBORDER)))
+    if(!(This->hostinfo.dwFlags & (DOCHOSTUIFLAG_NO3DOUTERBORDER|DOCHOSTUIFLAG_NO3DBORDER)))
         DrawEdge(hdc, &rect, EDGE_SUNKEN, BF_RECT|BF_ADJUST);
 
     if(!This->nscontainer) {
@@ -204,7 +204,7 @@ static LRESULT WINAPI serverwnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
         if(This->nscontainer) {
             INT ew=0, eh=0;
 
-            if(!(This->basedoc.hostinfo.dwFlags & (DOCHOSTUIFLAG_NO3DOUTERBORDER|DOCHOSTUIFLAG_NO3DBORDER))) {
+            if(!(This->hostinfo.dwFlags & (DOCHOSTUIFLAG_NO3DOUTERBORDER|DOCHOSTUIFLAG_NO3DBORDER))) {
                 ew = GetSystemMetrics(SM_CXEDGE);
                 eh = GetSystemMetrics(SM_CYEDGE);
             }
