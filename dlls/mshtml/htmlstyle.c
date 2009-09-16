@@ -129,6 +129,8 @@ static const WCHAR attrPaddingTop[] =
     {'p','a','d','d','i','n','g','-','t','o','p',0};
 static const WCHAR attrPosition[] =
     {'p','o','s','i','t','i','o','n',0};
+static const WCHAR attrRight[] =
+    {'r','i','g','h','t',0};
 static const WCHAR attrTextAlign[] =
     {'t','e','x','t','-','a','l','i','g','n',0};
 static const WCHAR attrTextDecoration[] =
@@ -199,6 +201,7 @@ static const struct{
     {attrPaddingRight,         DISPID_IHTMLSTYLE_PADDINGRIGHT},
     {attrPaddingTop,           DISPID_IHTMLSTYLE_PADDINGTOP},
     {attrPosition,             DISPID_IHTMLSTYLE2_POSITION},
+    {attrRight,                DISPID_IHTMLSTYLE2_RIGHT},
     {attrTextAlign,            DISPID_IHTMLSTYLE_TEXTALIGN},
     {attrTextDecoration,       DISPID_IHTMLSTYLE_TEXTDECORATION},
     {attrTop,                  DISPID_IHTMLSTYLE_TOP},
