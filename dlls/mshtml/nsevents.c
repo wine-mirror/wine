@@ -155,7 +155,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
 
     nsIDOMHTMLDocument_GetBody(This->doc->basedoc.nsdoc, &nsbody);
     if(nsbody) {
-        fire_event(&This->doc->basedoc, EVENTID_LOAD, (nsIDOMNode*)nsbody, event);
+        fire_event(This->doc->basedoc.doc_node, EVENTID_LOAD, (nsIDOMNode*)nsbody, event);
         nsIDOMHTMLElement_Release(nsbody);
     }
 
@@ -191,7 +191,7 @@ static nsresult NSAPI handle_htmlevent(nsIDOMEventListener *iface, nsIDOMEvent *
         return NS_OK;
     }
 
-    fire_event(&This->doc->basedoc, eid, nsnode, event);
+    fire_event(This->doc->basedoc.doc_node, eid, nsnode, event);
 
     nsIDOMNode_Release(nsnode);
 

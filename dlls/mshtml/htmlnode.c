@@ -32,7 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-static HTMLDOMNode *get_node_obj(HTMLDocument*,IUnknown*);
+static HTMLDOMNode *get_node_obj(HTMLDocumentNode*,IUnknown*);
 
 typedef struct {
     DispatchEx dispex;
@@ -41,7 +41,7 @@ typedef struct {
     LONG ref;
 
     /* FIXME: implement weak reference */
-    HTMLDocument *doc;
+    HTMLDocumentNode *doc;
 
     nsIDOMNodeList *nslist;
 } HTMLDOMChildrenCollection;
@@ -262,7 +262,7 @@ static dispex_static_data_t HTMLDOMChildrenCollection_dispex = {
     HTMLDOMChildrenCollection_iface_tids
 };
 
-static IHTMLDOMChildrenCollection *create_child_collection(HTMLDocument *doc, nsIDOMNodeList *nslist)
+static IHTMLDOMChildrenCollection *create_child_collection(HTMLDocumentNode *doc, nsIDOMNodeList *nslist)
 {
     HTMLDOMChildrenCollection *ret;
 
@@ -875,7 +875,7 @@ static const NodeImplVtbl HTMLDOMNodeImplVtbl = {
     HTMLDOMNode_destructor
 };
 
-void HTMLDOMNode_Init(HTMLDocument *doc, HTMLDOMNode *node, nsIDOMNode *nsnode)
+void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsnode)
 {
     node->lpHTMLDOMNodeVtbl = &HTMLDOMNodeVtbl;
     node->lpHTMLDOMNode2Vtbl = &HTMLDOMNode2Vtbl;
@@ -889,7 +889,7 @@ void HTMLDOMNode_Init(HTMLDocument *doc, HTMLDOMNode *node, nsIDOMNode *nsnode)
     doc->nodes = node;
 }
 
-static HTMLDOMNode *create_node(HTMLDocument *doc, nsIDOMNode *nsnode)
+static HTMLDOMNode *create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode)
 {
     HTMLDOMNode *ret;
     PRUint16 node_type;
@@ -923,7 +923,7 @@ static HTMLDOMNode *create_node(HTMLDocument *doc, nsIDOMNode *nsnode)
  * (better) find a way to store HTMLDOMelement pointer in nsIDOMNode.
  */
 
-HTMLDOMNode *get_node(HTMLDocument *This, nsIDOMNode *nsnode, BOOL create)
+HTMLDOMNode *get_node(HTMLDocumentNode *This, nsIDOMNode *nsnode, BOOL create)
 {
     HTMLDOMNode *iter = This->nodes;
 
@@ -944,7 +944,7 @@ HTMLDOMNode *get_node(HTMLDocument *This, nsIDOMNode *nsnode, BOOL create)
  * We should use better way for getting node object (like private interface)
  * or avoid it at all.
  */
-static HTMLDOMNode *get_node_obj(HTMLDocument *This, IUnknown *iface)
+static HTMLDOMNode *get_node_obj(HTMLDocumentNode *This, IUnknown *iface)
 {
     HTMLDOMNode *iter = This->nodes;
     IHTMLDOMNode *node;
@@ -962,7 +962,7 @@ static HTMLDOMNode *get_node_obj(HTMLDocument *This, IUnknown *iface)
     return NULL;
 }
 
-void release_nodes(HTMLDocument *This)
+void release_nodes(HTMLDocumentNode *This)
 {
     HTMLDOMNode *iter, *next;
 

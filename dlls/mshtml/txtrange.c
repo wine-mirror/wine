@@ -1201,7 +1201,7 @@ static HRESULT WINAPI HTMLTxtRange_parentElement(IHTMLTxtRange *iface, IHTMLElem
         return S_OK;
     }
 
-    node = get_node(&This->doc->basedoc, nsnode, TRUE);
+    node = get_node(This->doc, nsnode, TRUE);
     nsIDOMNode_Release(nsnode);
 
     return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)parent);

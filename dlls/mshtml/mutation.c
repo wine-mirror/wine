@@ -545,7 +545,7 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
 
     nsres = nsISupports_QueryInterface(aContent, &IID_nsIDOMElement, (void**)&nselem);
     if(NS_SUCCEEDED(nsres)) {
-        check_event_attr(&This->doc->basedoc, nselem);
+        check_event_attr(This->doc->basedoc.doc_node, nselem);
         nsIDOMElement_Release(nselem);
     }
 

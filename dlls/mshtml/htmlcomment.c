@@ -186,7 +186,7 @@ static dispex_static_data_t HTMLCommentElement_dispex = {
     HTMLCommentElement_iface_tids
 };
 
-HTMLElement *HTMLCommentElement_Create(HTMLDocument *doc, nsIDOMNode *nsnode)
+HTMLElement *HTMLCommentElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode)
 {
     HTMLCommentElement *ret = heap_alloc_zero(sizeof(*ret));
 

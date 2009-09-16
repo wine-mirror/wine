@@ -289,8 +289,6 @@ struct HTMLDocument {
     ConnectionPoint cp_htmldocevents;
     ConnectionPoint cp_htmldocevents2;
     ConnectionPoint cp_propnotif;
-
-    HTMLDOMNode *nodes;
 };
 
 static inline HRESULT htmldoc_query_interface(HTMLDocument *This, REFIID riid, void **ppv)
@@ -312,6 +310,8 @@ struct HTMLDocumentNode {
     HTMLDocument basedoc;
 
     LONG ref;
+
+    HTMLDOMNode *nodes;
 
     struct list selection_list;
     struct list range_list;
@@ -452,7 +452,7 @@ struct HTMLDOMNode {
     LONG ref;
 
     nsIDOMNode *nsnode;
-    HTMLDocument *doc;
+    HTMLDocumentNode *doc;
     event_target_t *event_target;
 
     HTMLDOMNode *next;
@@ -647,10 +647,10 @@ void detach_selection(HTMLDocumentNode*);
 void detach_ranges(HTMLDocumentNode*);
 HRESULT get_node_text(HTMLDOMNode*,BSTR*);
 
-HTMLDOMNode *HTMLDOMTextNode_Create(HTMLDocument*,nsIDOMNode*);
+HTMLDOMNode *HTMLDOMTextNode_Create(HTMLDocumentNode*,nsIDOMNode*);
 
-HTMLElement *HTMLElement_Create(HTMLDocument*,nsIDOMNode*,BOOL);
-HTMLElement *HTMLCommentElement_Create(HTMLDocument*,nsIDOMNode*);
+HTMLElement *HTMLElement_Create(HTMLDocumentNode*,nsIDOMNode*,BOOL);
+HTMLElement *HTMLCommentElement_Create(HTMLDocumentNode*,nsIDOMNode*);
 HTMLElement *HTMLAnchorElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLIFrame_Create(nsIDOMHTMLElement*);
@@ -664,7 +664,7 @@ HTMLElement *HTMLTableRow_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLGenericElement_Create(nsIDOMHTMLElement*);
 
-void HTMLDOMNode_Init(HTMLDocument*,HTMLDOMNode*,nsIDOMNode*);
+void HTMLDOMNode_Init(HTMLDocumentNode*,HTMLDOMNode*,nsIDOMNode*);
 void HTMLElement_Init(HTMLElement*);
 void HTMLElement2_Init(HTMLElement*);
 void HTMLElement3_Init(HTMLElement*);
@@ -676,8 +676,8 @@ void HTMLDOMNode_destructor(HTMLDOMNode*);
 HRESULT HTMLElement_QI(HTMLDOMNode*,REFIID,void**);
 void HTMLElement_destructor(HTMLDOMNode*);
 
-HTMLDOMNode *get_node(HTMLDocument*,nsIDOMNode*,BOOL);
-void release_nodes(HTMLDocument*);
+HTMLDOMNode *get_node(HTMLDocumentNode*,nsIDOMNode*,BOOL);
+void release_nodes(HTMLDocumentNode*);
 
 void release_script_hosts(HTMLWindow*);
 void connect_scripts(HTMLWindow*);
@@ -688,8 +688,8 @@ BOOL find_global_prop(HTMLWindow*,BSTR,DWORD,ScriptHost**,DISPID*);
 IDispatch *get_script_disp(ScriptHost*);
 
 IHTMLElementCollection *create_all_collection(HTMLDOMNode*,BOOL);
-IHTMLElementCollection *create_collection_from_nodelist(HTMLDocument*,IUnknown*,nsIDOMNodeList*);
-IHTMLElementCollection *create_collection_from_htmlcol(HTMLDocument*,IUnknown*,nsIDOMHTMLCollection*);
+IHTMLElementCollection *create_collection_from_nodelist(HTMLDocumentNode*,IUnknown*,nsIDOMNodeList*);
+IHTMLElementCollection *create_collection_from_htmlcol(HTMLDocumentNode*,IUnknown*,nsIDOMHTMLCollection*);
 
 /* commands */
 typedef struct {

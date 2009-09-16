@@ -606,12 +606,12 @@ static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, I
 
     TRACE("(%p)->(%p)\n", This, range);
 
-    if(!This->textcont.element.node.doc->nsdoc) {
+    if(!This->textcont.element.node.doc->basedoc.nsdoc) {
         WARN("No nsdoc\n");
         return E_UNEXPECTED;
     }
 
-    nsres = nsIDOMDocument_QueryInterface(This->textcont.element.node.doc->nsdoc, &IID_nsIDOMDocumentRange,
+    nsres = nsIDOMDocument_QueryInterface(This->textcont.element.node.doc->basedoc.nsdoc, &IID_nsIDOMDocumentRange,
             (void**)&nsdocrange);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIDOMDocumentRabge iface: %08x\n", nsres);
@@ -629,7 +629,7 @@ static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, I
 
     nsIDOMDocumentRange_Release(nsdocrange);
 
-    hres = HTMLTxtRange_Create(This->textcont.element.node.doc->doc_node, nsrange, range);
+    hres = HTMLTxtRange_Create(This->textcont.element.node.doc->basedoc.doc_node, nsrange, range);
 
     nsIDOMRange_Release(nsrange);
     return hres;
@@ -725,8 +725,8 @@ static event_target_t **HTMLBodyElement_get_event_target(HTMLDOMNode *iface)
 {
     HTMLBodyElement *This = HTMLBODY_NODE_THIS(iface);
 
-    return This->textcont.element.node.doc && This->textcont.element.node.doc->window
-        ? &This->textcont.element.node.doc->window->event_target
+    return This->textcont.element.node.doc && This->textcont.element.node.doc->basedoc.window
+        ? &This->textcont.element.node.doc->basedoc.window->event_target
         : &This->textcont.element.node.event_target;
 }
 

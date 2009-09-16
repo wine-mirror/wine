@@ -171,7 +171,7 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
             WCHAR buffer[256];
             DWORD len;
             BSTR bstrBaseUrl;
-            hres = IHTMLDocument2_get_URL(HTMLDOC(This->node.doc), &bstrBaseUrl);
+            hres = IHTMLDocument2_get_URL(HTMLDOC(&This->node.doc->basedoc), &bstrBaseUrl);
             if(SUCCEEDED(hres)) {
                 hres = CoInternetCombineUrl(bstrBaseUrl, value,
                                             URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,
@@ -589,7 +589,7 @@ static HRESULT WINAPI HTMLElement_get_document(IHTMLElement *iface, IDispatch **
     if(!p)
         return E_POINTER;
 
-    *p = (IDispatch*)HTMLDOC(This->node.doc);
+    *p = (IDispatch*)HTMLDOC(&This->node.doc->basedoc);
     IDispatch_AddRef(*p);
 
     return S_OK;
@@ -899,7 +899,7 @@ static HRESULT WINAPI HTMLElement_put_innerText(IHTMLElement *iface, BSTR v)
     }
 
     nsAString_Init(&text_str, v);
-    nsres = nsIDOMHTMLDocument_CreateTextNode(This->node.doc->nsdoc, &text_str, &text_node);
+    nsres = nsIDOMHTMLDocument_CreateTextNode(This->node.doc->basedoc.nsdoc, &text_str, &text_node);
     nsAString_Finish(&text_str);
     if(NS_FAILED(nsres)) {
         ERR("CreateTextNode failed: %08x\n", nsres);
@@ -1055,12 +1055,12 @@ static HRESULT WINAPI HTMLElement_insertAdjacentHTML(IHTMLElement *iface, BSTR w
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(where), debugstr_w(html));
 
-    if(!This->node.doc->nsdoc) {
+    if(!This->node.doc->basedoc.nsdoc) {
         WARN("NULL nsdoc\n");
         return E_UNEXPECTED;
     }
 
-    nsres = nsIDOMDocument_QueryInterface(This->node.doc->nsdoc, &IID_nsIDOMDocumentRange, (void **)&nsdocrange);
+    nsres = nsIDOMDocument_QueryInterface(This->node.doc->basedoc.nsdoc, &IID_nsIDOMDocumentRange, (void **)&nsdocrange);
     if(NS_FAILED(nsres))
     {
         ERR("getting nsIDOMDocumentRange failed: %08x\n", nsres);
@@ -1113,14 +1113,14 @@ static HRESULT WINAPI HTMLElement_insertAdjacentText(IHTMLElement *iface, BSTR w
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(where), debugstr_w(text));
 
-    if(!This->node.doc->nsdoc) {
+    if(!This->node.doc->basedoc.nsdoc) {
         WARN("NULL nsdoc\n");
         return E_UNEXPECTED;
     }
 
 
     nsAString_Init(&ns_text, text);
-    nsres = nsIDOMDocument_CreateTextNode(This->node.doc->nsdoc, &ns_text, (nsIDOMText **)&nsnode);
+    nsres = nsIDOMDocument_CreateTextNode(This->node.doc->basedoc.nsdoc, &ns_text, (nsIDOMText **)&nsnode);
     nsAString_Finish(&ns_text);
 
     if(NS_FAILED(nsres) || !nsnode)
@@ -1520,7 +1520,7 @@ void HTMLElement_Init(HTMLElement *This)
         init_dispex(&This->node.dispex, (IUnknown*)HTMLELEM(This), &HTMLElement_dispex);
 }
 
-HTMLElement *HTMLElement_Create(HTMLDocument *doc, nsIDOMNode *nsnode, BOOL use_generic)
+HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_generic)
 {
     nsIDOMHTMLElement *nselem;
     HTMLElement *ret = NULL;

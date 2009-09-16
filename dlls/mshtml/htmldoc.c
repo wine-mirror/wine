@@ -124,7 +124,7 @@ static HRESULT WINAPI HTMLDocument_get_all(IHTMLDocument2 *iface, IHTMLElementCo
     }
 
     if(nselem) {
-        *p = create_all_collection(get_node(This, (nsIDOMNode*)nselem, TRUE), TRUE);
+        *p = create_all_collection(get_node(This->doc_node, (nsIDOMNode*)nselem, TRUE), TRUE);
         nsIDOMElement_Release(nselem);
     }else {
         *p = NULL;
@@ -154,7 +154,7 @@ static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement 
     }
 
     if(nsbody) {
-        node = get_node(This, (nsIDOMNode*)nsbody, TRUE);
+        node = get_node(This->doc_node, (nsIDOMNode*)nsbody, TRUE);
         nsIDOMHTMLElement_Release(nsbody);
 
         IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)p);
@@ -198,7 +198,7 @@ static HRESULT WINAPI HTMLDocument_get_images(IHTMLDocument2 *iface, IHTMLElemen
     }
 
     if(nscoll) {
-        *p = create_collection_from_htmlcol(This, (IUnknown*)HTMLDOC(This), nscoll);
+        *p = create_collection_from_htmlcol(This->doc_node, (IUnknown*)HTMLDOC(This), nscoll);
         nsIDOMElement_Release(nscoll);
     }
 
@@ -230,7 +230,7 @@ static HRESULT WINAPI HTMLDocument_get_applets(IHTMLDocument2 *iface, IHTMLEleme
     }
 
     if(nscoll) {
-        *p = create_collection_from_htmlcol(This, (IUnknown*)HTMLDOC(This), nscoll);
+        *p = create_collection_from_htmlcol(This->doc_node, (IUnknown*)HTMLDOC(This), nscoll);
         nsIDOMElement_Release(nscoll);
     }
 
@@ -262,7 +262,7 @@ static HRESULT WINAPI HTMLDocument_get_links(IHTMLDocument2 *iface, IHTMLElement
     }
 
     if(nscoll) {
-        *p = create_collection_from_htmlcol(This, (IUnknown*)HTMLDOC(This), nscoll);
+        *p = create_collection_from_htmlcol(This->doc_node, (IUnknown*)HTMLDOC(This), nscoll);
         nsIDOMElement_Release(nscoll);
     }
 
@@ -294,7 +294,7 @@ static HRESULT WINAPI HTMLDocument_get_forms(IHTMLDocument2 *iface, IHTMLElement
     }
 
     if(nscoll) {
-        *p = create_collection_from_htmlcol(This, (IUnknown*)HTMLDOC(This), nscoll);
+        *p = create_collection_from_htmlcol(This->doc_node, (IUnknown*)HTMLDOC(This), nscoll);
         nsIDOMElement_Release(nscoll);
     }
 
@@ -326,7 +326,7 @@ static HRESULT WINAPI HTMLDocument_get_anchors(IHTMLDocument2 *iface, IHTMLEleme
     }
 
     if(nscoll) {
-        *p = create_collection_from_htmlcol(This, (IUnknown*)HTMLDOC(This), nscoll);
+        *p = create_collection_from_htmlcol(This->doc_node, (IUnknown*)HTMLDOC(This), nscoll);
         nsIDOMElement_Release(nscoll);
     }
 
@@ -930,7 +930,7 @@ static HRESULT WINAPI HTMLDocument_createElement(IHTMLDocument2 *iface, BSTR eTa
         return E_FAIL;
     }
 
-    elem = HTMLElement_Create(This, (nsIDOMNode*)nselem, TRUE);
+    elem = HTMLElement_Create(This->doc_node, (nsIDOMNode*)nselem, TRUE);
     nsIDOMElement_Release(nselem);
 
     *newElem = HTMLELEM(elem);
@@ -1763,7 +1763,6 @@ static void destroy_htmldoc(HTMLDocument *This)
     if(This->event_target)
         release_event_target(This->event_target);
 
-    release_nodes(This);
     release_dispex(&This->dispex);
 
     ConnectionPointContainer_Destroy(&This->cp_container);
@@ -1801,6 +1800,7 @@ static ULONG HTMLDocumentNode_Release(HTMLDocument *base)
     if(!ref) {
         detach_selection(This);
         detach_ranges(This);
+        release_nodes(This);
         destroy_htmldoc(&This->basedoc);
         heap_free(This);
     }

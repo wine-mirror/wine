@@ -123,7 +123,7 @@ static HRESULT WINAPI HTMLDocument3_createTextNode(IHTMLDocument3 *iface, BSTR t
         return E_FAIL;
     }
 
-    node = HTMLDOMTextNode_Create(This, (nsIDOMNode*)nstext);
+    node = HTMLDOMTextNode_Create(This->doc_node, (nsIDOMNode*)nstext);
     nsIDOMElement_Release(nstext);
 
     *newTextNode = HTMLDOMNODE(node);
@@ -152,7 +152,7 @@ static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, I
     }
 
     if(nselem) {
-        node = get_node(This, (nsIDOMNode *)nselem, TRUE);
+        node = get_node(This->doc_node, (nsIDOMNode *)nselem, TRUE);
         nsIDOMElement_Release(nselem);
         IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)p);
     }else {
@@ -442,7 +442,7 @@ static HRESULT WINAPI HTMLDocument3_getElementById(IHTMLDocument3 *iface, BSTR v
     }
 
     if(nselem) {
-        node = get_node(This, (nsIDOMNode*)nselem, TRUE);
+        node = get_node(This->doc_node, (nsIDOMNode*)nselem, TRUE);
         nsIDOMElement_Release(nselem);
 
         IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)pel);
@@ -480,7 +480,7 @@ static HRESULT WINAPI HTMLDocument3_getElementsByTagName(IHTMLDocument3 *iface, 
         return E_FAIL;
     }
 
-    *pelColl = (IHTMLElementCollection*)create_collection_from_nodelist(This, (IUnknown*)HTMLDOC3(This), nslist);
+    *pelColl = (IHTMLElementCollection*)create_collection_from_nodelist(This->doc_node, (IUnknown*)HTMLDOC3(This), nslist);
     nsIDOMNodeList_Release(nslist);
 
     return S_OK;

@@ -130,13 +130,13 @@ static HRESULT WINAPI HTMLIFrameBase2_get_contentWindow(IHTMLFrameBase2 *iface, 
             return E_FAIL;
         }
 
-        hres = HTMLWindow_Create(This->element.node.doc->doc_obj, NULL, &window);
+        hres = HTMLWindow_Create(This->element.node.doc->basedoc.doc_obj, NULL, &window);
         if(FAILED(hres)) {
             nsIDOMDocument_Release(nsdoc);
             return hres;
         }
 
-        hres = create_doc_from_nsdoc(nshtmldoc, This->element.node.doc->doc_obj, window, &content_doc);
+        hres = create_doc_from_nsdoc(nshtmldoc, This->element.node.doc->basedoc.doc_obj, window, &content_doc);
         nsIDOMHTMLDocument_Release(nshtmldoc);
         if(SUCCEEDED(hres))
             window_set_docnode(window, content_doc);
