@@ -1682,9 +1682,6 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IPersistStreamInit, riid)) {
         TRACE("(%p)->(IID_IPersistStreamInit %p)\n", This, ppv);
         *ppv = PERSTRINIT(This);
-    }else if(IsEqualGUID(&IID_ICustomDoc, riid)) {
-        TRACE("(%p)->(IID_ICustomDoc %p)\n", This, ppv);
-        *ppv = CUSTOMDOC(This);
     }else if(IsEqualGUID(&DIID_DispHTMLDocument, riid)) {
         TRACE("(%p)->(DIID_DispHTMLDocument %p)\n", This, ppv);
         *ppv = HTMLDOC(This);
@@ -1860,6 +1857,46 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     return S_OK;
 }
 
+/**********************************************************
+ * ICustomDoc implementation
+ */
+
+#define CUSTOMDOC_THIS(iface) DEFINE_THIS(HTMLDocumentObj, CustomDoc, iface)
+
+static HRESULT WINAPI CustomDoc_QueryInterface(ICustomDoc *iface, REFIID riid, void **ppv)
+{
+    HTMLDocumentObj *This = CUSTOMDOC_THIS(iface);
+    return IHTMLDocument2_QueryInterface(HTMLDOC(&This->basedoc), riid, ppv);
+}
+
+static ULONG WINAPI CustomDoc_AddRef(ICustomDoc *iface)
+{
+    HTMLDocumentObj *This = CUSTOMDOC_THIS(iface);
+    return IHTMLDocument2_AddRef(HTMLDOC(&This->basedoc));
+}
+
+static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
+{
+    HTMLDocumentObj *This = CUSTOMDOC_THIS(iface);
+    return IHTMLDocument_Release(HTMLDOC(&This->basedoc));
+}
+
+static HRESULT WINAPI CustomDoc_SetUIHandler(ICustomDoc *iface, IDocHostUIHandler *pUIHandler)
+{
+    HTMLDocumentObj *This = CUSTOMDOC_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pUIHandler);
+    return E_NOTIMPL;
+}
+
+#undef CUSTOMDOC_THIS
+
+static const ICustomDocVtbl CustomDocVtbl = {
+    CustomDoc_QueryInterface,
+    CustomDoc_AddRef,
+    CustomDoc_Release,
+    CustomDoc_SetUIHandler
+};
+
 #define HTMLDOCOBJ_THIS(base) DEFINE_THIS2(HTMLDocumentObj, basedoc, base)
 
 static HRESULT HTMLDocumentObj_QueryInterface(HTMLDocument *base, REFIID riid, void **ppv)
@@ -1869,9 +1906,17 @@ static HRESULT HTMLDocumentObj_QueryInterface(HTMLDocument *base, REFIID riid, v
     if(htmldoc_qi(&This->basedoc, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
 
-    FIXME("Unimplemented interface %s\n", debugstr_guid(riid));
-    *ppv = NULL;
-    return E_NOINTERFACE;
+    if(IsEqualGUID(&IID_ICustomDoc, riid)) {
+        TRACE("(%p)->(IID_ICustomDoc %p)\n", This, ppv);
+        *ppv = CUSTOMDOC(This);
+    }else {
+        FIXME("Unimplemented interface %s\n", debugstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG HTMLDocumentObj_AddRef(HTMLDocument *base)
@@ -1952,6 +1997,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
 
     init_doc(&doc->basedoc, &HTMLDocumentObjVtbl);
 
+    doc->lpCustomDocVtbl = &CustomDocVtbl;
     doc->ref = 1;
     doc->basedoc.doc_obj = doc;
 

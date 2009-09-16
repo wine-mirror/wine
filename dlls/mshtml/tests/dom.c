@@ -4095,6 +4095,7 @@ static void test_window(IHTMLDocument2 *doc)
     IHTMLWindow2 *window, *window2, *self;
     IHTMLDocument2 *doc2 = NULL;
     IDispatch *disp;
+    IUnknown *unk;
     BSTR str;
     HRESULT hres;
 
@@ -4109,6 +4110,11 @@ static void test_window(IHTMLDocument2 *doc)
 
     test_ifaces((IUnknown*)doc2, doc_node_iids);
     test_ifaces((IUnknown*)doc, doc_obj_iids);
+
+    unk = (void*)0xdeadbeef;
+    hres = IHTMLDocument2_QueryInterface(doc2, &IID_ICustomDoc, (void**)&unk);
+    ok(hres == E_NOINTERFACE, "QueryInterface(IID_ICustomDoc) returned: %08x\n", hres);
+    ok(!unk, "unk = %p\n", unk);
 
     IHTMLDocument_Release(doc2);
 

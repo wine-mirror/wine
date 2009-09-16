@@ -274,7 +274,6 @@ struct HTMLDocument {
     const IOleControlVtbl                 *lpOleControlVtbl;
     const IHlinkTargetVtbl                *lpHlinkTargetVtbl;
     const IPersistStreamInitVtbl          *lpPersistStreamInitVtbl;
-    const ICustomDocVtbl                  *lpCustomDocVtbl;
     const IDispatchExVtbl                 *lpIDispatchExVtbl;
     const ISupportErrorInfoVtbl           *lpSupportErrorInfoVtbl;
 
@@ -308,6 +307,7 @@ static inline ULONG htmldoc_release(HTMLDocument *This)
 
 struct HTMLDocumentObj {
     HTMLDocument basedoc;
+    const ICustomDocVtbl  *lpCustomDocVtbl;
 
     LONG ref;
 
