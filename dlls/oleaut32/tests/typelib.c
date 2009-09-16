@@ -915,6 +915,16 @@ if(use_midl_tlb) {
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(pFD->memid == 0x1236, "memid %08x\n", pFD->memid);
     ok(pFD->oVft == 9 * sizeof(void *), "oVft %d\n", pFD->oVft);
+
+    /* first argument to 10th function is an HREFTYPE from the impl type */
+    ok(pFD->cParams == 1, "cParams %i\n", pFD->cParams);
+    ok(pFD->lprgelemdescParam[0].tdesc.vt == VT_USERDEFINED,
+        "vt 0x%x\n", pFD->lprgelemdescParam[0].tdesc.vt);
+    href = U(pFD->lprgelemdescParam[0].tdesc).hreftype;
+    ok((href & 0xff000000) == 0x04000000, "href 0x%08x\n", href);
+    hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
+    todo_wine ok(SUCCEEDED(hr), "hr %08x\n", hr);
+    if (SUCCEEDED(hr)) ITypeInfo_Release(pTI_p);
     ITypeInfo_ReleaseFuncDesc(pTI, pFD);
 }
     ITypeInfo_Release(pTI);

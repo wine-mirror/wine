@@ -285,7 +285,7 @@ library TestTypelib
     ]
     interface ItestIF7 : ItestIF6
     {
-        [id(0x1236)] HRESULT fn6([in] int a);
+        [id(0x1236)] HRESULT fn6([in] GUID a);
     }
 
     [
