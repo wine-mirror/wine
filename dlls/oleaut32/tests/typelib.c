@@ -923,7 +923,7 @@ if(use_midl_tlb) {
     href = U(pFD->lprgelemdescParam[0].tdesc).hreftype;
     ok((href & 0xff000000) == 0x04000000, "href 0x%08x\n", href);
     hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
-    todo_wine ok(SUCCEEDED(hr), "hr %08x\n", hr);
+    ok(SUCCEEDED(hr), "hr %08x\n", hr);
     if (SUCCEEDED(hr)) ITypeInfo_Release(pTI_p);
     ITypeInfo_ReleaseFuncDesc(pTI, pFD);
 }

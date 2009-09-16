@@ -6722,8 +6722,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
 	  result = S_OK;
 
     } else if ((hRefType != -1) && (hRefType & DISPATCH_HREF_MASK) &&
-        (This->TypeAttr.typekind   == TKIND_DISPATCH) &&
-	(This->TypeAttr.wTypeFlags &  TYPEFLAG_FDUAL))
+        (This->TypeAttr.typekind   == TKIND_DISPATCH))
     {
         HREFTYPE href_dispatch = hRefType;
         result = ITypeInfoImpl_GetDispatchRefTypeInfo((ITypeInfo *)iface, &href_dispatch, ppTInfo);
