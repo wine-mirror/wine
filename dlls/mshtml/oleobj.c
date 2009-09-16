@@ -103,7 +103,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
     if(This->doc_obj->client) {
         IOleClientSite_Release(This->doc_obj->client);
         This->doc_obj->client = NULL;
-        This->usermode = UNKNOWN_USERMODE;
+        This->doc_obj->usermode = UNKNOWN_USERMODE;
     }
 
     if(This->doc_obj->hostui) {
@@ -195,7 +195,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
     This->doc_obj->client = pClientSite;
     This->doc_obj->hostui = pDocHostUIHandler;
 
-    if(This->usermode == UNKNOWN_USERMODE)
+    if(This->doc_obj->usermode == UNKNOWN_USERMODE)
         IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_USERMODE);
 
     IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_OFFLINEIFNOTCONNECTED); 
@@ -618,10 +618,10 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
 
         if(V_VT(&res) == VT_BOOL) {
             if(V_BOOL(&res)) {
-                This->usermode = BROWSEMODE;
+                This->doc_obj->usermode = BROWSEMODE;
             }else {
                 FIXME("edit mode is not supported\n");
-                This->usermode = EDITMODE;
+                This->doc_obj->usermode = EDITMODE;
             }
         }else {
             FIXME("V_VT(res)=%d\n", V_VT(&res));
@@ -767,6 +767,4 @@ void HTMLDocument_OleObj_Init(HTMLDocument *This)
     This->lpOleDocumentVtbl = &OleDocumentVtbl;
     This->lpOleControlVtbl = &OleControlVtbl;
     This->lpCustomDocVtbl = &CustomDocVtbl;
-
-    This->usermode = UNKNOWN_USERMODE;
 }

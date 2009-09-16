@@ -1940,6 +1940,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
 
     doc->nscontainer = NSContainer_Create(doc, NULL);
     list_init(&doc->bindings);
+    doc->usermode = UNKNOWN_USERMODE;
 
     if(doc->nscontainer) {
         nsresult nsres;

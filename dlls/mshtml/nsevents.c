@@ -121,7 +121,7 @@ static nsresult NSAPI handle_keypress(nsIDOMEventListener *iface,
     TRACE("(%p)->(%p)\n", This, event);
 
     update_doc(&This->doc->basedoc, UPDATE_UI);
-    if(This->doc->basedoc.usermode == EDITMODE)
+    if(This->doc->usermode == EDITMODE)
         handle_edit_event(&This->doc->basedoc, event);
 
     return NS_OK;
@@ -145,7 +145,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
         This->editor_controller = NULL;
     }
 
-    if(This->doc->basedoc.usermode == EDITMODE)
+    if(This->doc->usermode == EDITMODE)
         handle_edit_load(&This->doc->basedoc);
 
     if(!This->doc->basedoc.nsdoc) {

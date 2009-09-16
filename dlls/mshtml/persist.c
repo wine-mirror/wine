@@ -529,7 +529,7 @@ static HRESULT WINAPI PersistStreamInit_IsDirty(IPersistStreamInit *iface)
 
     TRACE("(%p)\n", This);
 
-    if(This->usermode == EDITMODE)
+    if(This->doc_obj->usermode == EDITMODE)
         return editor_is_dirty(This);
 
     return S_FALSE;

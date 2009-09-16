@@ -254,7 +254,7 @@ static void set_parsecomplete(HTMLDocument *doc)
 
     TRACE("(%p)\n", doc);
 
-    if(doc->usermode == EDITMODE)
+    if(doc->doc_obj->usermode == EDITMODE)
         init_editor(doc);
 
     call_explorer_69(doc->doc_obj);
@@ -324,7 +324,7 @@ static void set_progress(HTMLDocument *doc)
                                &progress, NULL);
     }
 
-    if(doc->usermode == EDITMODE && doc->doc_obj->hostui) {
+    if(doc->doc_obj->usermode == EDITMODE && doc->doc_obj->hostui) {
         DOCHOSTUIINFO hostinfo;
 
         memset(&hostinfo, 0, sizeof(DOCHOSTUIINFO));
