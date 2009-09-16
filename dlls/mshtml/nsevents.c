@@ -93,7 +93,7 @@ static nsresult NSAPI handle_blur(nsIDOMEventListener *iface, nsIDOMEvent *event
 
     if(!This->reset_focus && This->doc && This->doc->basedoc.doc_obj->basedoc.focus && !is_doc_child_focus(This)) {
         This->doc->basedoc.doc_obj->basedoc.focus = FALSE;
-        notif_focus(&This->doc->basedoc);
+        notif_focus(This->doc->basedoc.doc_obj);
     }
 
     return NS_OK;
@@ -107,7 +107,7 @@ static nsresult NSAPI handle_focus(nsIDOMEventListener *iface, nsIDOMEvent *even
 
     if(!This->reset_focus && This->doc && !This->doc->basedoc.focus) {
         This->doc->basedoc.focus = TRUE;
-        notif_focus(&This->doc->basedoc);
+        notif_focus(This->doc->basedoc.doc_obj);
     }
 
     return NS_OK;

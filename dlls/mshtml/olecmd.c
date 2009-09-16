@@ -552,15 +552,15 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         }
     }
 
-    if(This->frame)
-        IOleInPlaceFrame_SetStatusText(This->frame, NULL);
+    if(This->doc_obj->frame)
+        IOleInPlaceFrame_SetStatusText(This->doc_obj->frame, NULL);
 
     This->readystate = READYSTATE_UNINITIALIZED;
 
-    if(This->client) {
+    if(This->doc_obj->client) {
         IOleCommandTarget *cmdtrg;
 
-        hres = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget,
+        hres = IOleClientSite_QueryInterface(This->doc_obj->client, &IID_IOleCommandTarget,
                 (void**)&cmdtrg);
         if(SUCCEEDED(hres)) {
             VARIANT var;
@@ -573,12 +573,12 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         }
     }
 
-    if(This->hostui) {
+    if(This->doc_obj->hostui) {
         DOCHOSTUIINFO hostinfo;
 
         memset(&hostinfo, 0, sizeof(DOCHOSTUIINFO));
         hostinfo.cbSize = sizeof(DOCHOSTUIINFO);
-        hres = IDocHostUIHandler_GetHostInfo(This->hostui, &hostinfo);
+        hres = IDocHostUIHandler_GetHostInfo(This->doc_obj->hostui, &hostinfo);
         if(SUCCEEDED(hres))
             /* FIXME: use hostinfo */
             TRACE("hostinfo = {%u %08x %08x %s %s}\n",
@@ -610,10 +610,10 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         return hres;
 
     if(This->ui_active) {
-        if(This->ip_window)
-            call_set_active_object(This->ip_window, NULL);
-        if(This->hostui)
-            IDocHostUIHandler_HideUI(This->hostui);
+        if(This->doc_obj->ip_window)
+            call_set_active_object(This->doc_obj->ip_window, NULL);
+        if(This->doc_obj->hostui)
+            IDocHostUIHandler_HideUI(This->doc_obj->hostui);
     }
 
     if(This->doc_obj->nscontainer)
@@ -622,16 +622,16 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
     if(This->ui_active) {
         RECT rcBorderWidths;
 
-        if(This->hostui)
-            IDocHostUIHandler_ShowUI(This->hostui, DOCHOSTUITYPE_AUTHOR, ACTOBJ(This), CMDTARGET(This),
-                This->frame, This->ip_window);
+        if(This->doc_obj->hostui)
+            IDocHostUIHandler_ShowUI(This->doc_obj->hostui, DOCHOSTUITYPE_AUTHOR, ACTOBJ(This), CMDTARGET(This),
+                This->doc_obj->frame, This->doc_obj->ip_window);
 
-        if(This->ip_window)
-            call_set_active_object(This->ip_window, ACTOBJ(This));
+        if(This->doc_obj->ip_window)
+            call_set_active_object(This->doc_obj->ip_window, ACTOBJ(This));
 
         memset(&rcBorderWidths, 0, sizeof(rcBorderWidths));
-        if (This->frame)
-            IOleInPlaceFrame_SetBorderSpace(This->frame, &rcBorderWidths);
+        if(This->doc_obj->frame)
+            IOleInPlaceFrame_SetBorderSpace(This->doc_obj->frame, &rcBorderWidths);
     }
 
     return S_OK;
@@ -792,8 +792,8 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
                     OLECMD olecmd;
 
                     prgCmds[i].cmdf = OLECMDF_SUPPORTED;
-                    if(This->client) {
-                        hr = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget,
+                    if(This->doc_obj->client) {
+                        hr = IOleClientSite_QueryInterface(This->doc_obj->client, &IID_IOleCommandTarget,
                                 (void**)&cmdtrg);
                         if(SUCCEEDED(hr)) {
                             olecmd.cmdID = prgCmds[i].cmdID;
@@ -897,14 +897,14 @@ static const IOleCommandTargetVtbl OleCommandTargetVtbl = {
     OleCommandTarget_Exec
 };
 
-void show_context_menu(HTMLDocument *This, DWORD dwID, POINT *ppt, IDispatch *elem)
+void show_context_menu(HTMLDocumentObj *This, DWORD dwID, POINT *ppt, IDispatch *elem)
 {
     HMENU menu_res, menu;
     DWORD cmdid;
     HRESULT hres;
 
     hres = IDocHostUIHandler_ShowContextMenu(This->hostui, dwID, ppt,
-            (IUnknown*)CMDTARGET(This), elem);
+            (IUnknown*)CMDTARGET(&This->basedoc), elem);
     if(hres == S_OK)
         return;
 
@@ -912,11 +912,11 @@ void show_context_menu(HTMLDocument *This, DWORD dwID, POINT *ppt, IDispatch *el
     menu = GetSubMenu(menu_res, dwID);
 
     cmdid = TrackPopupMenu(menu, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
-            ppt->x, ppt->y, 0, This->hwnd, NULL);
+            ppt->x, ppt->y, 0, This->basedoc.hwnd, NULL);
     DestroyMenu(menu_res);
 
     if(cmdid)
-        IOleCommandTarget_Exec(CMDTARGET(This), &CGID_MSHTML, cmdid, 0, NULL, NULL);
+        IOleCommandTarget_Exec(CMDTARGET(&This->basedoc), &CGID_MSHTML, cmdid, 0, NULL, NULL);
 }
 
 void HTMLDocument_OleCmd_Init(HTMLDocument *This)

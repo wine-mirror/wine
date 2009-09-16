@@ -284,12 +284,6 @@ struct HTMLDocument {
     HTMLWindow *window;
     nsIDOMHTMLDocument *nsdoc;
 
-    IOleClientSite *client;
-    IDocHostUIHandler *hostui;
-    IOleInPlaceSite *ipsite;
-    IOleInPlaceFrame *frame;
-    IOleInPlaceUIWindow *ip_window;
-
     IOleUndoManager *undomgr;
 
     nsChannelBSC *bscallback;
@@ -354,6 +348,12 @@ struct HTMLDocumentObj {
     LONG ref;
 
     NSContainer *nscontainer;
+
+    IOleClientSite *client;
+    IDocHostUIHandler *hostui;
+    IOleInPlaceSite *ipsite;
+    IOleInPlaceFrame *frame;
+    IOleInPlaceUIWindow *ip_window;
 };
 
 typedef struct {
@@ -580,9 +580,9 @@ void init_mutation(NSContainer*);
 void set_mutation_observer(NSContainer*,nsIDOMHTMLDocument*);
 void remove_mutation_observer(NSContainer*,nsIDOMHTMLDocument*);
 
-void HTMLDocument_LockContainer(HTMLDocument*,BOOL);
-void show_context_menu(HTMLDocument*,DWORD,POINT*,IDispatch*);
-void notif_focus(HTMLDocument*);
+void HTMLDocument_LockContainer(HTMLDocumentObj*,BOOL);
+void show_context_menu(HTMLDocumentObj*,DWORD,POINT*,IDispatch*);
+void notif_focus(HTMLDocumentObj*);
 
 void show_tooltip(HTMLDocument*,DWORD,DWORD,LPCWSTR);
 void hide_tooltip(HTMLDocument*);
@@ -706,7 +706,7 @@ void do_ns_command(HTMLDocument*,const char*,nsICommandParams*);
 #define UPDATE_TITLE    0x0002
 
 void update_doc(HTMLDocument *This, DWORD flags);
-void update_title(HTMLDocument*);
+void update_title(HTMLDocumentObj*);
 
 /* editor */
 void init_editor(HTMLDocument*);

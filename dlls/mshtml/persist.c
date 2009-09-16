@@ -117,7 +117,7 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
     call_property_onchanged(&This->cp_propnotif, DISPID_READYSTATE);
     update_doc(This, UPDATE_TITLE);
 
-    HTMLDocument_LockContainer(This, TRUE);
+    HTMLDocument_LockContainer(This->doc_obj, TRUE);
     
     hres = IMoniker_GetDisplayName(mon, pibc, NULL, &url);
     if(FAILED(hres)) {
@@ -129,11 +129,11 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
 
     set_current_mon(This, mon);
 
-    if(This->client) {
+    if(This->doc_obj->client) {
         VARIANT silent, offline;
         IOleCommandTarget *cmdtrg = NULL;
 
-        hres = get_client_disp_property(This->client, DISPID_AMBIENT_SILENT, &silent);
+        hres = get_client_disp_property(This->doc_obj->client, DISPID_AMBIENT_SILENT, &silent);
         if(SUCCEEDED(hres)) {
             if(V_VT(&silent) != VT_BOOL)
                 WARN("V_VT(silent) = %d\n", V_VT(&silent));
@@ -141,7 +141,7 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
                 FIXME("silent == true\n");
         }
 
-        hres = get_client_disp_property(This->client,
+        hres = get_client_disp_property(This->doc_obj->client,
                 DISPID_AMBIENT_OFFLINEIFNOTCONNECTED, &offline);
         if(SUCCEEDED(hres)) {
             if(V_VT(&silent) != VT_BOOL)
@@ -150,7 +150,7 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
                 FIXME("offline == true\n");
         }
 
-        hres = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget,
+        hres = IOleClientSite_QueryInterface(This->doc_obj->client, &IID_IOleCommandTarget,
                 (void**)&cmdtrg);
         if(SUCCEEDED(hres)) {
             VARIANT var;
@@ -165,7 +165,7 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
 
     bscallback = create_channelbsc(mon);
 
-    if(This->frame) {
+    if(This->doc_obj->frame) {
         task = heap_alloc(sizeof(task_t));
 
         task->doc = This;

@@ -98,8 +98,8 @@ static HRESULT WINAPI OleInPlaceActiveObject_OnFrameWindowActivate(IOleInPlaceAc
 
     TRACE("(%p)->(%x)\n", This, fActivate);
 
-    if(This->hostui)
-        IDocHostUIHandler_OnFrameWindowActivate(This->hostui, fActivate);
+    if(This->doc_obj->hostui)
+        IDocHostUIHandler_OnFrameWindowActivate(This->doc_obj->hostui, fActivate);
 
     return S_OK;
 }
@@ -193,8 +193,8 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceOb
     if(!This->in_place_active)
         return S_OK;
 
-    if(This->frame)
-        IOleInPlaceFrame_Release(This->frame);
+    if(This->doc_obj->frame)
+        IOleInPlaceFrame_Release(This->doc_obj->frame);
 
     if(This->hwnd) {
         ShowWindow(This->hwnd, SW_HIDE);
@@ -202,19 +202,19 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceOb
     }
 
     This->focus = FALSE;
-    notif_focus(This);
+    notif_focus(This->doc_obj);
 
     This->in_place_active = FALSE;
-    if(This->ipsite) {
+    if(This->doc_obj->ipsite) {
         IOleInPlaceSiteEx *ipsiteex;
         HRESULT hres;
 
-        hres = IOleInPlaceSite_QueryInterface(This->ipsite, &IID_IOleInPlaceSiteEx, (void**)&ipsiteex);
+        hres = IOleInPlaceSite_QueryInterface(This->doc_obj->ipsite, &IID_IOleInPlaceSiteEx, (void**)&ipsiteex);
         if(SUCCEEDED(hres)) {
             IOleInPlaceSiteEx_OnInPlaceDeactivateEx(ipsiteex, TRUE);
             IOleInPlaceSiteEx_Release(ipsiteex);
         }else {
-            IOleInPlaceSite_OnInPlaceDeactivate(This->ipsite);
+            IOleInPlaceSite_OnInPlaceDeactivate(This->doc_obj->ipsite);
         }
     }
 

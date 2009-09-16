@@ -97,18 +97,18 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
 
     TRACE("(%p)->(%p)\n", This, pClientSite);
 
-    if(pClientSite == This->client)
+    if(pClientSite == This->doc_obj->client)
         return S_OK;
 
-    if(This->client) {
-        IOleClientSite_Release(This->client);
-        This->client = NULL;
+    if(This->doc_obj->client) {
+        IOleClientSite_Release(This->doc_obj->client);
+        This->doc_obj->client = NULL;
         This->usermode = UNKNOWN_USERMODE;
     }
 
-    if(This->hostui) {
-        IDocHostUIHandler_Release(This->hostui);
-        This->hostui = NULL;
+    if(This->doc_obj->hostui) {
+        IDocHostUIHandler_Release(This->doc_obj->hostui);
+        This->doc_obj->hostui = NULL;
     }
 
     memset(&This->hostinfo, 0, sizeof(DOCHOSTUIINFO));
@@ -192,15 +192,15 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
     }
 
     IOleClientSite_AddRef(pClientSite);
-    This->client = pClientSite;
-    This->hostui = pDocHostUIHandler;
+    This->doc_obj->client = pClientSite;
+    This->doc_obj->hostui = pDocHostUIHandler;
 
     if(This->usermode == UNKNOWN_USERMODE)
         IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_USERMODE);
 
     IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_OFFLINEIFNOTCONNECTED); 
 
-    hres = get_client_disp_property(This->client, DISPID_AMBIENT_SILENT, &silent);
+    hres = get_client_disp_property(This->doc_obj->client, DISPID_AMBIENT_SILENT, &silent);
     if(SUCCEEDED(hres)) {
         if(V_VT(&silent) != VT_BOOL)
             WARN("V_VT(silent) = %d\n", V_VT(&silent));
@@ -223,9 +223,9 @@ static HRESULT WINAPI OleObject_GetClientSite(IOleObject *iface, IOleClientSite 
     if(!ppClientSite)
         return E_INVALIDARG;
 
-    if(This->client)
-        IOleClientSite_AddRef(This->client);
-    *ppClientSite = This->client;
+    if(This->doc_obj->client)
+        IOleClientSite_AddRef(This->doc_obj->client);
+    *ppClientSite = This->doc_obj->client;
 
     return S_OK;
 }
@@ -249,7 +249,7 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
     if(This->in_place_active)
         IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(This));
 
-    HTMLDocument_LockContainer(This, FALSE);
+    HTMLDocument_LockContainer(This->doc_obj, FALSE);
     
     return S_OK;
 }
@@ -298,11 +298,11 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, LPMSG lpms
     }
 
     if(!pActiveSite)
-        pActiveSite = This->client;
+        pActiveSite = This->doc_obj->client;
 
     hres = IOleClientSite_QueryInterface(pActiveSite, &IID_IOleDocumentSite, (void**)&pDocSite);
     if(SUCCEEDED(hres)) {
-        HTMLDocument_LockContainer(This, TRUE);
+        HTMLDocument_LockContainer(This->doc_obj, TRUE);
 
         /* FIXME: Create new IOleDocumentView. See CreateView for more info. */
         hres = IOleDocumentSite_ActivateMe(pDocSite, DOCVIEW(This));
@@ -589,7 +589,7 @@ static HRESULT on_change_dlcontrol(HTMLDocument *This)
     VARIANT res;
     HRESULT hres;
     
-    hres = get_client_disp_property(This->client, DISPID_AMBIENT_DLCONTROL, &res);
+    hres = get_client_disp_property(This->doc_obj->client, DISPID_AMBIENT_DLCONTROL, &res);
     if(SUCCEEDED(hres))
         FIXME("unsupported dlcontrol %08x\n", V_I4(&res));
 
@@ -599,18 +599,20 @@ static HRESULT on_change_dlcontrol(HTMLDocument *This)
 static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DISPID dispID)
 {
     HTMLDocument *This = CONTROL_THIS(iface);
+    IOleClientSite *client;
     VARIANT res;
     HRESULT hres;
 
-    if(!This->client) {
-        TRACE("This->client = NULL\n");
+    client = This->doc_obj->client;
+    if(!client) {
+        TRACE("client = NULL\n");
         return S_OK;
     }
 
     switch(dispID) {
     case DISPID_AMBIENT_USERMODE:
         TRACE("(%p)->(DISPID_AMBIENT_USERMODE)\n", This);
-        hres = get_client_disp_property(This->client, DISPID_AMBIENT_USERMODE, &res);
+        hres = get_client_disp_property(client, DISPID_AMBIENT_USERMODE, &res);
         if(FAILED(hres))
             return S_OK;
 
@@ -631,7 +633,7 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
     case DISPID_AMBIENT_OFFLINEIFNOTCONNECTED:
         TRACE("(%p)->(DISPID_AMBIENT_OFFLINEIFNOTCONNECTED)\n", This);
         on_change_dlcontrol(This);
-        hres = get_client_disp_property(This->client, DISPID_AMBIENT_OFFLINEIFNOTCONNECTED, &res);
+        hres = get_client_disp_property(client, DISPID_AMBIENT_OFFLINEIFNOTCONNECTED, &res);
         if(FAILED(hres))
             return S_OK;
 
@@ -647,7 +649,7 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
     case DISPID_AMBIENT_SILENT:
         TRACE("(%p)->(DISPID_AMBIENT_SILENT)\n", This);
         on_change_dlcontrol(This);
-        hres = get_client_disp_property(This->client, DISPID_AMBIENT_SILENT, &res);
+        hres = get_client_disp_property(client, DISPID_AMBIENT_SILENT, &res);
         if(FAILED(hres))
             return S_OK;
 
@@ -662,7 +664,7 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
         return S_OK;
     case DISPID_AMBIENT_USERAGENT:
         TRACE("(%p)->(DISPID_AMBIENT_USERAGENT)\n", This);
-        hres = get_client_disp_property(This->client, DISPID_AMBIENT_USERAGENT, &res);
+        hres = get_client_disp_property(client, DISPID_AMBIENT_USERAGENT, &res);
         if(FAILED(hres))
             return S_OK;
 
@@ -671,7 +673,7 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
         return S_OK;
     case DISPID_AMBIENT_PALETTE:
         TRACE("(%p)->(DISPID_AMBIENT_PALETTE)\n", This);
-        hres = get_client_disp_property(This->client, DISPID_AMBIENT_PALETTE, &res);
+        hres = get_client_disp_property(client, DISPID_AMBIENT_PALETTE, &res);
         if(FAILED(hres))
             return S_OK;
 
@@ -743,18 +745,18 @@ static const ICustomDocVtbl CustomDocVtbl = {
     CustomDoc_SetUIHandler
 };
 
-void HTMLDocument_LockContainer(HTMLDocument *This, BOOL fLock)
+void HTMLDocument_LockContainer(HTMLDocumentObj *This, BOOL fLock)
 {
     IOleContainer *container;
     HRESULT hres;
 
-    if(!This->client || This->container_locked == fLock)
+    if(!This->client || This->basedoc.container_locked == fLock)
         return;
 
     hres = IOleClientSite_GetContainer(This->client, &container);
     if(SUCCEEDED(hres)) {
         IOleContainer_LockContainer(container, fLock);
-        This->container_locked = fLock;
+        This->basedoc.container_locked = fLock;
         IOleContainer_Release(container);
     }
 }
@@ -767,12 +769,4 @@ void HTMLDocument_OleObj_Init(HTMLDocument *This)
     This->lpCustomDocVtbl = &CustomDocVtbl;
 
     This->usermode = UNKNOWN_USERMODE;
-
-    This->client = NULL;
-    This->hostui = NULL;
-
-    This->has_key_path = FALSE;
-    This->container_locked = FALSE;
-
-    memset(&This->hostinfo, 0, sizeof(DOCHOSTUIINFO));
 }

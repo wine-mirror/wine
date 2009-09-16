@@ -1139,7 +1139,7 @@ static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuList
         FIXME("aContextFlags=%08x\n", aContextFlags);
     };
 
-    show_context_menu(&This->doc->basedoc, dwID, &pt, (IDispatch*)HTMLDOMNODE(get_node(&This->doc->basedoc, aNode, TRUE)));
+    show_context_menu(This->doc, dwID, &pt, (IDispatch*)HTMLDOMNODE(get_node(&This->doc->basedoc, aNode, TRUE)));
 
     return NS_OK;
 }
@@ -1178,7 +1178,7 @@ static nsrefcnt NSAPI nsURIContentListener_Release(nsIURIContentListener *iface)
     return nsIWebBrowserChrome_Release(NSWBCHROME(This));
 }
 
-static BOOL translate_url(HTMLDocument *doc, nsIWineURI *nsuri)
+static BOOL translate_url(HTMLDocumentObj *doc, nsIWineURI *nsuri)
 {
     OLECHAR *new_url = NULL, *url;
     BOOL ret = FALSE;
@@ -1251,7 +1251,7 @@ static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener 
 
         *_retval = FALSE;
     }else if(This->doc) {
-        *_retval = translate_url(&This->doc->basedoc.doc_obj->basedoc, wine_uri);
+        *_retval = translate_url(This->doc->basedoc.doc_obj, wine_uri);
     }
 
     nsIWineURI_Release(wine_uri);

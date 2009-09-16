@@ -1764,12 +1764,6 @@ static void destroy_htmldoc(HTMLDocument *This)
 {
     remove_doc_tasks(This);
 
-    if(This->client)
-        IOleObject_SetClientSite(OLEOBJ(This), NULL);
-    if(This->in_place_active)
-        IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(This));
-    if(This->ipsite)
-        IOleDocumentView_SetInPlaceSite(DOCVIEW(This), NULL);
     if(This->undomgr)
         IOleUndoManager_Release(This->undomgr);
 
@@ -1899,6 +1893,12 @@ static ULONG HTMLDocumentObj_Release(HTMLDocument *base)
             IHTMLWindow2_Release(HTMLWINDOW2(This->basedoc.window));
         }
 
+        if(This->client)
+            IOleObject_SetClientSite(OLEOBJ(&This->basedoc), NULL);
+        if(This->basedoc.in_place_active)
+            IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(&This->basedoc));
+        if(This->ipsite)
+            IOleDocumentView_SetInPlaceSite(DOCVIEW(&This->basedoc), NULL);
         destroy_htmldoc(&This->basedoc);
         if(This->basedoc.nsdoc)
             remove_mutation_observer(This->nscontainer, This->basedoc.nsdoc);

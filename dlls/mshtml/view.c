@@ -103,15 +103,15 @@ void update_doc(HTMLDocument *This, DWORD flags)
     This->update |= flags;
 }
 
-void update_title(HTMLDocument *This)
+void update_title(HTMLDocumentObj *This)
 {
     IOleCommandTarget *olecmd;
     HRESULT hres;
 
-    if(!(This->update & UPDATE_TITLE))
+    if(!(This->basedoc.update & UPDATE_TITLE))
         return;
 
-    This->update &= ~UPDATE_TITLE;
+    This->basedoc.update &= ~UPDATE_TITLE;
 
     if(!This->client)
         return;
@@ -131,16 +131,16 @@ void update_title(HTMLDocument *This)
     }
 }
 
-static LRESULT on_timer(HTMLDocument *This)
+static LRESULT on_timer(HTMLDocumentObj *This)
 {
-    TRACE("(%p) %x\n", This, This->update);
+    TRACE("(%p) %x\n", This, This->basedoc.update);
 
-    KillTimer(This->hwnd, TIMER_ID);
+    KillTimer(This->basedoc.hwnd, TIMER_ID);
 
-    if(!This->update)
+    if(!This->basedoc.update)
         return 0;
 
-    if(This->update & UPDATE_UI) {
+    if(This->basedoc.update & UPDATE_UI) {
         if(This->hostui)
             IDocHostUIHandler_UpdateUI(This->hostui);
 
@@ -159,11 +159,11 @@ static LRESULT on_timer(HTMLDocument *This)
     }
 
     update_title(This);
-    This->update = 0;
+    This->basedoc.update = 0;
     return 0;
 }
 
-void notif_focus(HTMLDocument *This)
+void notif_focus(HTMLDocumentObj *This)
 {
     IOleControlSite *site;
     HRESULT hres;
@@ -175,7 +175,7 @@ void notif_focus(HTMLDocument *This)
     if(FAILED(hres))
         return;
 
-    IOleControlSite_OnFocus(site, This->focus);
+    IOleControlSite_OnFocus(site, This->basedoc.focus);
     IOleControlSite_Release(site);
 }
 
@@ -215,7 +215,7 @@ static LRESULT WINAPI serverwnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
         }
         break;
     case WM_TIMER:
-        return on_timer(This);
+        return on_timer(This->doc_obj);
     case WM_MOUSEACTIVATE:
         return MA_ACTIVATE;
     }
@@ -237,7 +237,7 @@ static void register_serverwnd_class(void)
     serverwnd_class = RegisterClassExW(&wndclass);
 }
 
-static HRESULT activate_window(HTMLDocument *This)
+static HRESULT activate_window(HTMLDocumentObj *This)
 {
     IOleInPlaceFrame *pIPFrame;
     IOleCommandTarget *cmdtrg;
@@ -276,10 +276,10 @@ static HRESULT activate_window(HTMLDocument *This)
 
     TRACE("got parent window %p\n", parent_hwnd);
 
-    if(This->hwnd) {
-        if(GetParent(This->hwnd) != parent_hwnd)
-            SetParent(This->hwnd, parent_hwnd);
-        SetWindowPos(This->hwnd, HWND_TOP,
+    if(This->basedoc.hwnd) {
+        if(GetParent(This->basedoc.hwnd) != parent_hwnd)
+            SetParent(This->basedoc.hwnd, parent_hwnd);
+        SetWindowPos(This->basedoc.hwnd, HWND_TOP,
                 posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
                 SWP_NOACTIVATE | SWP_SHOWWINDOW);
     }else {
@@ -288,23 +288,23 @@ static HRESULT activate_window(HTMLDocument *This)
                 posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
                 parent_hwnd, NULL, hInst, This);
 
-        TRACE("Created window %p\n", This->hwnd);
+        TRACE("Created window %p\n", This->basedoc.hwnd);
 
-        SetWindowPos(This->hwnd, NULL, 0, 0, 0, 0,
+        SetWindowPos(This->basedoc.hwnd, NULL, 0, 0, 0, 0,
                 SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE | SWP_SHOWWINDOW);
-        RedrawWindow(This->hwnd, NULL, NULL, RDW_INVALIDATE | RDW_NOERASE | RDW_ALLCHILDREN);
+        RedrawWindow(This->basedoc.hwnd, NULL, NULL, RDW_INVALIDATE | RDW_NOERASE | RDW_ALLCHILDREN);
 
         /* NOTE:
          * Windows implementation calls:
          * RegisterWindowMessage("MSWHEEL_ROLLMSG");
          */
-        SetTimer(This->hwnd, TIMER_ID, 100, NULL);
+        SetTimer(This->basedoc.hwnd, TIMER_ID, 100, NULL);
     }
 
-    if(This->doc_obj->nscontainer)
-        activate_gecko(This->doc_obj->nscontainer);
+    if(This->nscontainer)
+        activate_gecko(This->nscontainer);
 
-    This->in_place_active = TRUE;
+    This->basedoc.in_place_active = TRUE;
     hres = IOleInPlaceSite_QueryInterface(This->ipsite, &IID_IOleInPlaceSiteEx, (void**)&ipsiteex);
     if(SUCCEEDED(hres)) {
         BOOL redraw = FALSE;
@@ -318,7 +318,7 @@ static HRESULT activate_window(HTMLDocument *This)
     }
     if(FAILED(hres)) {
         WARN("OnInPlaceActivate failed: %08x\n", hres);
-        This->in_place_active = FALSE;
+        This->basedoc.in_place_active = FALSE;
         return hres;
     }
 
@@ -342,7 +342,7 @@ static HRESULT activate_window(HTMLDocument *This)
         IOleInPlaceFrame_Release(This->frame);
     This->frame = pIPFrame;
 
-    This->window_active = TRUE;
+    This->basedoc.window_active = TRUE;
 
     return S_OK;
 }
@@ -462,10 +462,10 @@ static HRESULT WINAPI OleDocumentView_SetInPlaceSite(IOleDocumentView *iface, IO
     if(pIPSite)
         IOleInPlaceSite_AddRef(pIPSite);
 
-    if(This->ipsite)
-        IOleInPlaceSite_Release(This->ipsite);
+    if(This->doc_obj->ipsite)
+        IOleInPlaceSite_Release(This->doc_obj->ipsite);
 
-    This->ipsite = pIPSite;
+    This->doc_obj->ipsite = pIPSite;
     return S_OK;
 }
 
@@ -477,10 +477,10 @@ static HRESULT WINAPI OleDocumentView_GetInPlaceSite(IOleDocumentView *iface, IO
     if(!ppIPSite)
         return E_INVALIDARG;
 
-    if(This->ipsite)
-        IOleInPlaceSite_AddRef(This->ipsite);
+    if(This->doc_obj->ipsite)
+        IOleInPlaceSite_AddRef(This->doc_obj->ipsite);
 
-    *ppIPSite = This->ipsite;
+    *ppIPSite = This->doc_obj->ipsite;
     return S_OK;
 }
 
@@ -549,7 +549,7 @@ static HRESULT WINAPI OleDocumentView_Show(IOleDocumentView *iface, BOOL fShow)
 
     if(fShow) {
         if(!This->ui_active) {
-            hres = activate_window(This);
+            hres = activate_window(This->doc_obj);
             if(FAILED(hres))
                 return hres;
         }
@@ -557,9 +557,9 @@ static HRESULT WINAPI OleDocumentView_Show(IOleDocumentView *iface, BOOL fShow)
         ShowWindow(This->hwnd, SW_SHOW);
     }else {
         ShowWindow(This->hwnd, SW_HIDE);
-        if(This->ip_window) {
-            IOleInPlaceUIWindow_Release(This->ip_window);
-            This->ip_window = NULL;
+        if(This->doc_obj->ip_window) {
+            IOleInPlaceUIWindow_Release(This->doc_obj->ip_window);
+            This->doc_obj->ip_window = NULL;
         }
     }
 
@@ -573,7 +573,7 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
 
     TRACE("(%p)->(%x)\n", This, fUIActivate);
 
-    if(!This->ipsite) {
+    if(!This->doc_obj->ipsite) {
         FIXME("This->ipsite = NULL\n");
         return E_FAIL;
     }
@@ -585,7 +585,7 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
             return S_OK;
 
         if(!This->window_active) {
-            hres = activate_window(This);
+            hres = activate_window(This->doc_obj);
             if(FAILED(hres))
                 return hres;
         }
@@ -593,47 +593,47 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
         This->focus = TRUE;
         if(This->doc_obj->nscontainer)
             nsIWebBrowserFocus_Activate(This->doc_obj->nscontainer->focus);
-        notif_focus(This);
+        notif_focus(This->doc_obj);
 
         update_doc(This, UPDATE_UI);
 
-        hres = IOleInPlaceSite_OnUIActivate(This->ipsite);
+        hres = IOleInPlaceSite_OnUIActivate(This->doc_obj->ipsite);
         if(SUCCEEDED(hres)) {
-            call_set_active_object((IOleInPlaceUIWindow*)This->frame, ACTOBJ(This));
+            call_set_active_object((IOleInPlaceUIWindow*)This->doc_obj->frame, ACTOBJ(This));
         }else {
             FIXME("OnUIActivate failed: %08x\n", hres);
-            IOleInPlaceFrame_Release(This->frame);
-            This->frame = NULL;
+            IOleInPlaceFrame_Release(This->doc_obj->frame);
+            This->doc_obj->frame = NULL;
             This->ui_active = FALSE;
             return hres;
         }
 
-        if(This->hostui) {
-            hres = IDocHostUIHandler_ShowUI(This->hostui,
+        if(This->doc_obj->hostui) {
+            hres = IDocHostUIHandler_ShowUI(This->doc_obj->hostui,
                     This->usermode == EDITMODE ? DOCHOSTUITYPE_AUTHOR : DOCHOSTUITYPE_BROWSE,
-                    ACTOBJ(This), CMDTARGET(This), This->frame, This->ip_window);
+                    ACTOBJ(This), CMDTARGET(This), This->doc_obj->frame, This->doc_obj->ip_window);
             if(FAILED(hres))
-                IDocHostUIHandler_HideUI(This->hostui);
+                IDocHostUIHandler_HideUI(This->doc_obj->hostui);
         }
 
-        if(This->ip_window)
-            call_set_active_object(This->ip_window, ACTOBJ(This));
+        if(This->doc_obj->ip_window)
+            call_set_active_object(This->doc_obj->ip_window, ACTOBJ(This));
 
         memset(&rcBorderWidths, 0, sizeof(rcBorderWidths));
-        IOleInPlaceFrame_SetBorderSpace(This->frame, &rcBorderWidths);
+        IOleInPlaceFrame_SetBorderSpace(This->doc_obj->frame, &rcBorderWidths);
 
         This->ui_active = TRUE;
     }else {
         if(This->ui_active) {
             This->ui_active = FALSE;
-            if(This->ip_window)
-                call_set_active_object(This->ip_window, NULL);
-            if(This->frame)
-                call_set_active_object((IOleInPlaceUIWindow*)This->frame, NULL);
-            if(This->hostui)
-                IDocHostUIHandler_HideUI(This->hostui);
-            if(This->ipsite)
-                IOleInPlaceSite_OnUIDeactivate(This->ipsite, FALSE);
+            if(This->doc_obj->ip_window)
+                call_set_active_object(This->doc_obj->ip_window, NULL);
+            if(This->doc_obj->frame)
+                call_set_active_object((IOleInPlaceUIWindow*)This->doc_obj->frame, NULL);
+            if(This->doc_obj->hostui)
+                IDocHostUIHandler_HideUI(This->doc_obj->hostui);
+            if(This->doc_obj->ipsite)
+                IOleInPlaceSite_OnUIDeactivate(This->doc_obj->ipsite, FALSE);
         }
     }
     return S_OK;
@@ -805,17 +805,4 @@ void HTMLDocument_View_Init(HTMLDocument *This)
 {
     This->lpOleDocumentViewVtbl = &OleDocumentViewVtbl;
     This->lpViewObject2Vtbl = &ViewObjectVtbl;
-
-    This->ipsite = NULL;
-    This->frame = NULL;
-    This->ip_window = NULL;
-    This->hwnd = NULL;
-    This->tooltips_hwnd = NULL;
-
-    This->in_place_active = FALSE;
-    This->ui_active = FALSE;
-    This->window_active = FALSE;
-    This->focus = FALSE;
-
-    This->update = 0;
 }

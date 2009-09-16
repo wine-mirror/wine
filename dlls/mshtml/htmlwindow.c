@@ -869,10 +869,10 @@ static HRESULT WINAPI HTMLWindow2_get_external(IHTMLWindow2 *iface, IDispatch **
 
     *p = NULL;
 
-    if(!This->doc_obj->basedoc.hostui)
+    if(!This->doc_obj->hostui)
         return S_OK;
 
-    return IDocHostUIHandler_GetExternal(This->doc_obj->basedoc.hostui, p);
+    return IDocHostUIHandler_GetExternal(This->doc_obj->hostui, p);
 }
 
 static HRESULT HTMLWindow_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,

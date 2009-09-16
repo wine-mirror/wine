@@ -103,8 +103,7 @@ static BOOL exec_shldocvw_67(HTMLDocumentObj *doc, LPCWSTR url)
     IOleCommandTarget *cmdtrg = NULL;
     HRESULT hres;
 
-    hres = IOleClientSite_QueryInterface(doc->basedoc.client, &IID_IOleCommandTarget,
-                                         (void**)&cmdtrg);
+    hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
     if(SUCCEEDED(hres)) {
         VARIANT varUrl, varRes;
 
@@ -149,13 +148,13 @@ static BOOL before_async_open(nsChannel *channel, NSContainer *container)
         doc = container_iter->doc;
     }
 
-    if(!doc->basedoc.client)
+    if(!doc->client)
         return TRUE;
 
     if(!hlnf && !exec_shldocvw_67(doc, uri))
         return FALSE;
 
-    hres = IOleClientSite_QueryInterface(doc->basedoc.client, &IID_IServiceProvider,
+    hres = IOleClientSite_QueryInterface(doc->client, &IID_IServiceProvider,
                                          (void**)&service_provider);
     if(SUCCEEDED(hres)) {
         IHlinkFrame *hlink_frame;

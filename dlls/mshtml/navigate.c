@@ -615,7 +615,7 @@ static void init_bscallback(BSCallback *This, const BSCallbackVtbl *vtbl, IMonik
 }
 
 /* Calls undocumented 84 cmd of CGID_ShellDocView */
-static void call_docview_84(HTMLDocument *doc)
+static void call_docview_84(HTMLDocumentObj *doc)
 {
     IOleCommandTarget *olecmd;
     VARIANT var;
@@ -714,7 +714,7 @@ HRESULT start_binding(HTMLDocument *doc, BSCallback *bscallback, IBindCtx *bctx)
 
     /* NOTE: IE7 calls IsSystemMoniker here*/
 
-    call_docview_84(doc);
+    call_docview_84(doc->doc_obj);
 
     if(bctx) {
         RegisterBindStatusCallback(bctx, STATUSCLB(bscallback), NULL, 0);
