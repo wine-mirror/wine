@@ -81,6 +81,8 @@ static const WCHAR attrBorderTopWidth[] =
     {'b','o','r','d','e','r','-','t','o','p','-','w','i','d','t','h',0};
 static const WCHAR attrBorderWidth[] =
     {'b','o','r','d','e','r','-','w','i','d','t','h',0};
+static const WCHAR attrBottom[] =
+    {'b','o','t','t','o','m',0};
 static const WCHAR attrColor[] =
     {'c','o','l','o','r',0};
 static const WCHAR attrCursor[] =
@@ -177,6 +179,7 @@ static const struct{
     {attrBorderTopStyle,       DISPID_IHTMLSTYLE_BORDERTOPSTYLE},
     {attrBorderTopWidth,       DISPID_IHTMLSTYLE_BORDERTOPWIDTH},
     {attrBorderWidth,          DISPID_IHTMLSTYLE_BORDERWIDTH},
+    {attrBottom,               DISPID_IHTMLSTYLE2_BOTTOM},
     {attrColor,                DISPID_IHTMLSTYLE_COLOR},
     {attrCursor,               DISPID_IHTMLSTYLE_CURSOR},
     {attrDisplay,              DISPID_IHTMLSTYLE_DISPLAY},
