@@ -284,11 +284,6 @@ struct HTMLDocument {
     HTMLWindow *window;
     nsIDOMHTMLDocument *nsdoc;
 
-    nsChannelBSC *bscallback;
-    IMoniker *mon;
-    LPOLESTR url;
-    struct list bindings;
-
     USERMODE usermode;
     READYSTATE readystate;
     LPWSTR mime;
@@ -354,6 +349,12 @@ struct HTMLDocumentObj {
     BOOL has_key_path;
     BOOL container_locked;
     BOOL focus;
+
+    /* FIXME: probably should be in document node object */
+    nsChannelBSC *bscallback;
+    IMoniker *mon;
+    LPOLESTR url;
+    struct list bindings;
 };
 
 typedef struct {

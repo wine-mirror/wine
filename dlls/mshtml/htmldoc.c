@@ -588,8 +588,8 @@ static HRESULT WINAPI HTMLDocument_get_URL(IHTMLDocument2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", iface, p);
 
-    *p = SysAllocString(This->url ? This->url : about_blank_url);
-    return S_OK;
+    *p = SysAllocString(This->doc_obj->url ? This->doc_obj->url : about_blank_url);
+    return *p ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI HTMLDocument_put_domain(IHTMLDocument2 *iface, BSTR v)
@@ -1739,8 +1739,6 @@ static void init_doc(HTMLDocument *doc, const htmldoc_vtbl_t *vtbl)
     doc->lpSupportErrorInfoVtbl = &SupportErrorInfoVtbl;
     doc->readystate = READYSTATE_UNINITIALIZED;
 
-    list_init(&doc->bindings);
-
     HTMLDocument_HTMLDocument3_Init(doc);
     HTMLDocument_HTMLDocument5_Init(doc);
     HTMLDocument_Persist_Init(doc);
@@ -1762,9 +1760,6 @@ static void init_doc(HTMLDocument *doc, const htmldoc_vtbl_t *vtbl)
 static void destroy_htmldoc(HTMLDocument *This)
 {
     remove_doc_tasks(This);
-
-    set_document_bscallback(This, NULL);
-    set_current_mon(This, NULL);
 
     if(This->event_target)
         release_event_target(This->event_target);
@@ -1876,6 +1871,8 @@ static ULONG HTMLDocumentObj_Release(HTMLDocument *base)
     TRACE("(%p) ref = %u\n", This, ref);
 
     if(!ref) {
+        set_document_bscallback(&This->basedoc, NULL);
+        set_current_mon(&This->basedoc, NULL);
         if(This->basedoc.doc_node) {
             This->basedoc.doc_node->basedoc.doc_obj = NULL;
             IHTMLDocument2_Release(HTMLDOC(&This->basedoc.doc_node->basedoc));
@@ -1942,6 +1939,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
         return hres;
 
     doc->nscontainer = NSContainer_Create(doc, NULL);
+    list_init(&doc->bindings);
 
     if(doc->nscontainer) {
         nsresult nsres;

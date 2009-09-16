@@ -52,27 +52,27 @@ void set_current_mon(HTMLDocument *This, IMoniker *mon)
 {
     HRESULT hres;
 
-    if(This->mon) {
-        IMoniker_Release(This->mon);
-        This->mon = NULL;
+    if(This->doc_obj->mon) {
+        IMoniker_Release(This->doc_obj->mon);
+        This->doc_obj->mon = NULL;
     }
 
-    if(This->url) {
-        CoTaskMemFree(This->url);
-        This->url = NULL;
+    if(This->doc_obj->url) {
+        CoTaskMemFree(This->doc_obj->url);
+        This->doc_obj->url = NULL;
     }
 
     if(!mon)
         return;
 
     IMoniker_AddRef(mon);
-    This->mon = mon;
+    This->doc_obj->mon = mon;
 
-    hres = IMoniker_GetDisplayName(mon, NULL, NULL, &This->url);
+    hres = IMoniker_GetDisplayName(mon, NULL, NULL, &This->doc_obj->url);
     if(FAILED(hres))
         WARN("GetDisplayName failed: %08x\n", hres);
 
-    set_script_mode(This->window, use_gecko_script(This->url) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT);
+    set_script_mode(This->window, use_gecko_script(This->doc_obj->url) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT);
 }
 
 static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BOOL *bind_complete)
@@ -292,7 +292,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         return hres;
 
     if(!bind_complete)
-        return start_binding(This, (BSCallback*)This->bscallback, pibc);
+        return start_binding(This, (BSCallback*)This->doc_obj->bscallback, pibc);
 
     return S_OK;
 }
@@ -318,11 +318,11 @@ static HRESULT WINAPI PersistMoniker_GetCurMoniker(IPersistMoniker *iface, IMoni
 
     TRACE("(%p)->(%p)\n", This, ppimkName);
 
-    if(!This->mon)
+    if(!This->doc_obj->mon)
         return E_UNEXPECTED;
 
-    IMoniker_AddRef(This->mon);
-    *ppimkName = This->mon;
+    IMoniker_AddRef(This->doc_obj->mon);
+    *ppimkName = This->doc_obj->mon;
     return S_OK;
 }
 
@@ -556,7 +556,7 @@ static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, LPSTREAM
     if(FAILED(hres))
         return hres;
 
-    return channelbsc_load_stream(This->bscallback, pStm);
+    return channelbsc_load_stream(This->doc_obj->bscallback, pStm);
 }
 
 static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, LPSTREAM pStm,
@@ -692,9 +692,4 @@ void HTMLDocument_Persist_Init(HTMLDocument *This)
     This->lpMonikerPropVtbl = &MonikerPropVtbl;
     This->lpPersistStreamInitVtbl = &PersistStreamInitVtbl;
     This->lpPersistHistoryVtbl = &PersistHistoryVtbl;
-
-    This->bscallback = NULL;
-    This->mon = NULL;
-    This->url = NULL;
-    This->mime = NULL;
 }
