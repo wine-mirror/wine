@@ -36,6 +36,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static struct list window_list = LIST_INIT(window_list);
 
+void window_set_docnode(HTMLWindow *window, HTMLDocumentNode *doc_node)
+{
+    if(window->doc) {
+        window->doc->basedoc.window = NULL;
+        htmldoc_release(&window->doc->basedoc);
+    }
+    window->doc = doc_node;
+    if(doc_node)
+        htmldoc_addref(&doc_node->basedoc);
+}
+
 #define HTMLWINDOW2_THIS(iface) DEFINE_THIS(HTMLWindow, HTMLWindow2, iface)
 
 static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID riid, void **ppv)
@@ -94,6 +105,8 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
 
     if(!ref) {
         DWORD i;
+
+        window_set_docnode(This, NULL);
 
         if(This->option_factory) {
             This->option_factory->window = NULL;

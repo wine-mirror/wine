@@ -844,13 +844,13 @@ void update_nsdocument(HTMLDocumentObj *doc)
         doc_node->basedoc.doc_obj = NULL;
         IHTMLDocument2_Release(HTMLDOC(&doc_node->basedoc));
         doc->basedoc.doc_node = NULL;
-
-        doc->basedoc.window->doc = NULL;
     }
 
     doc->basedoc.nsdoc = nsdoc;
-    if(!nsdoc)
+    if(!nsdoc) {
+        window_set_docnode(doc->basedoc.window, NULL);
         return;
+    }
 
     set_mutation_observer(doc->basedoc.nscontainer, nsdoc);
 
@@ -861,7 +861,7 @@ void update_nsdocument(HTMLDocumentObj *doc)
     }
 
     doc->basedoc.doc_node = doc_node;
-    doc->basedoc.window->doc = doc_node;
+    window_set_docnode(doc->basedoc.window, doc_node);
 }
 
 void close_gecko(void)

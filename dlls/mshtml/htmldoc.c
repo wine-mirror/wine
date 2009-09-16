@@ -1783,9 +1783,6 @@ static void destroy_htmldoc(HTMLDocument *This)
     if(This->hwnd)
         DestroyWindow(This->hwnd);
 
-    if(This->window)
-        IHTMLWindow2_Release(HTMLWINDOW2(This->window));
-
     if(This->event_target)
         release_event_target(This->event_target);
 
@@ -1864,7 +1861,6 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     nsIDOMHTMLDocument_AddRef(nsdoc);
     doc->basedoc.nsdoc = nsdoc;
 
-    IHTMLWindow2_AddRef(HTMLWINDOW2(window));
     doc->basedoc.window = window;
 
     *ret = doc;
@@ -1902,6 +1898,11 @@ static ULONG HTMLDocumentObj_Release(HTMLDocument *base)
             This->basedoc.doc_node->basedoc.doc_obj = NULL;
             IHTMLDocument2_Release(HTMLDOC(&This->basedoc.doc_node->basedoc));
         }
+        if(This->basedoc.window) {
+            This->basedoc.window->doc_obj = NULL;
+            IHTMLWindow2_Release(HTMLWINDOW2(This->basedoc.window));
+        }
+
         destroy_htmldoc(&This->basedoc);
         heap_free(This);
     }

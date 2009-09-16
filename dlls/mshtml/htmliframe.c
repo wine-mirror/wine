@@ -38,7 +38,7 @@ typedef struct {
     LONG ref;
 
     nsIDOMHTMLIFrameElement *nsiframe;
-    HTMLDocumentNode *content_doc;
+    HTMLWindow *content_window;
 } HTMLIFrame;
 
 #define HTMLFRAMEBASE2(x)  (&(x)->lpIHTMLFrameBase2Vtbl)
@@ -104,8 +104,9 @@ static HRESULT WINAPI HTMLIFrameBase2_get_contentWindow(IHTMLFrameBase2 *iface, 
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->content_doc) {
+    if(!This->content_window) {
         nsIDOMHTMLDocument *nshtmldoc;
+        HTMLDocumentNode *content_doc;
         nsIDOMDocument *nsdoc;
         HTMLWindow *window;
         nsresult nsres;
@@ -135,16 +136,22 @@ static HRESULT WINAPI HTMLIFrameBase2_get_contentWindow(IHTMLFrameBase2 *iface, 
             return hres;
         }
 
-        hres = create_doc_from_nsdoc(nshtmldoc, This->element.node.doc->doc_obj, window, &This->content_doc);
-        if(SUCCEEDED(hres))
-            window->doc = This->content_doc;
-        IHTMLWindow2_Release(HTMLWINDOW2(window));
+        hres = create_doc_from_nsdoc(nshtmldoc, This->element.node.doc->doc_obj, window, &content_doc);
         nsIDOMHTMLDocument_Release(nshtmldoc);
+        if(SUCCEEDED(hres))
+            window_set_docnode(window, content_doc);
+        else
+            IHTMLWindow2_Release(HTMLWINDOW2(window));
+        htmldoc_release(&content_doc->basedoc);
         if(FAILED(hres))
             return hres;
+
+        This->content_window = window;
     }
 
-    return IHTMLDocument2_get_parentWindow(HTMLDOC(&This->content_doc->basedoc), p);
+    IHTMLWindow2_AddRef(HTMLWINDOW2(This->content_window));
+    *p = HTMLWINDOW2(This->content_window);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLIFrameBase2_put_onload(IHTMLFrameBase2 *iface, VARIANT v)
@@ -239,8 +246,8 @@ static void HTMLIFrame_destructor(HTMLDOMNode *iface)
 {
     HTMLIFrame *This = HTMLIFRAME_NODE_THIS(iface);
 
-    if(This->content_doc)
-        htmldoc_release(&This->content_doc->basedoc);
+    if(This->content_window)
+        IHTMLWindow2_Release(HTMLWINDOW2(This->content_window));
     if(This->nsiframe)
         nsIDOMHTMLIFrameElement_Release(This->nsiframe);
 
