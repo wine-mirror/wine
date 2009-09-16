@@ -961,7 +961,7 @@ void check_event_attr(HTMLDocument *doc, nsIDOMElement *nselem)
 
             TRACE("%p.%s = %s\n", nselem, debugstr_w(event_info[i].attr_name), debugstr_w(attr_value));
 
-            disp = script_parse_event(doc, attr_value);
+            disp = script_parse_event(doc->window, attr_value);
             if(disp) {
                 node = get_node(doc, (nsIDOMNode*)nselem, TRUE);
                 set_event_handler_disp(get_node_event_target(node), node->doc, i, disp);

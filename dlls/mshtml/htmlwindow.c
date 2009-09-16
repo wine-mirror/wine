@@ -223,7 +223,7 @@ static HRESULT WINAPI HTMLWindow2_clearTimeout(IHTMLWindow2 *iface, LONG timerID
 
     TRACE("(%p)->(%d)\n", This, timerID);
 
-    return clear_task_timer(This->doc, FALSE, timerID);
+    return clear_task_timer(&This->doc->basedoc, FALSE, timerID);
 }
 
 static HRESULT WINAPI HTMLWindow2_alert(IHTMLWindow2 *iface, BSTR message)
@@ -239,7 +239,7 @@ static HRESULT WINAPI HTMLWindow2_alert(IHTMLWindow2 *iface, BSTR message)
         return S_OK;
     }
 
-    MessageBoxW(This->doc->hwnd, message, wszTitle, MB_ICONWARNING);
+    MessageBoxW(This->doc_obj->basedoc.hwnd, message, wszTitle, MB_ICONWARNING);
     return S_OK;
 }
 
@@ -260,7 +260,7 @@ static HRESULT WINAPI HTMLWindow2_confirm(IHTMLWindow2 *iface, BSTR message,
         return S_OK;
     }
 
-    if(MessageBoxW(This->doc->hwnd, message, wszTitle,
+    if(MessageBoxW(This->doc_obj->basedoc.hwnd, message, wszTitle,
                 MB_OKCANCEL|MB_ICONQUESTION)==IDOK)
         *confirmed = VARIANT_TRUE;
     else *confirmed = VARIANT_FALSE;
@@ -353,7 +353,7 @@ static HRESULT WINAPI HTMLWindow2_prompt(IHTMLWindow2 *iface, BSTR message,
     arg.textdata = textdata;
 
     DialogBoxParamW(hInst, MAKEINTRESOURCEW(ID_PROMPT_DIALOG),
-            This->doc->hwnd, prompt_dlgproc, (LPARAM)&arg);
+            This->doc_obj->basedoc.hwnd, prompt_dlgproc, (LPARAM)&arg);
     return S_OK;
 }
 
@@ -632,7 +632,7 @@ static HRESULT WINAPI HTMLWindow2_get_document(IHTMLWindow2 *iface, IHTMLDocumen
 
     if(This->doc) {
         /* FIXME: We should return a wrapper object here */
-        *p = HTMLDOC(This->doc);
+        *p = HTMLDOC(&This->doc->basedoc);
         IHTMLDocument2_AddRef(*p);
     }else {
         *p = NULL;
@@ -752,7 +752,7 @@ static HRESULT WINAPI HTMLWindow2_clearInterval(IHTMLWindow2 *iface, LONG timerI
 
     TRACE("(%p)->(%d)\n", This, timerID);
 
-    return clear_task_timer(This->doc, TRUE, timerID);
+    return clear_task_timer(&This->doc->basedoc, TRUE, timerID);
 }
 
 static HRESULT WINAPI HTMLWindow2_put_offscreenBuffering(IHTMLWindow2 *iface, VARIANT v)
@@ -856,10 +856,10 @@ static HRESULT WINAPI HTMLWindow2_get_external(IHTMLWindow2 *iface, IDispatch **
 
     *p = NULL;
 
-    if(!This->doc->hostui)
+    if(!This->doc_obj->basedoc.hostui)
         return S_OK;
 
-    return IDocHostUIHandler_GetExternal(This->doc->hostui, p);
+    return IDocHostUIHandler_GetExternal(This->doc_obj->basedoc.hostui, p);
 }
 
 static HRESULT HTMLWindow_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
@@ -1055,7 +1055,7 @@ static HRESULT WINAPI HTMLWindow3_attachEvent(IHTMLWindow3 *iface, BSTR event, I
 
     TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(event), pDisp, pfResult);
 
-    return attach_event(&This->event_target, This->doc, event, pDisp, pfResult);
+    return attach_event(&This->event_target, &This->doc_obj->basedoc, event, pDisp, pfResult);
 }
 
 static HRESULT WINAPI HTMLWindow3_detachEvent(IHTMLWindow3 *iface, BSTR event, IDispatch *pDisp)
@@ -1077,7 +1077,7 @@ static HRESULT window_set_timer(HTMLWindow *This, VARIANT *expr, LONG msec, VARI
         break;
 
     case VT_BSTR:
-        disp = script_parse_event(This->doc, V_BSTR(expr));
+        disp = script_parse_event(This, V_BSTR(expr));
         break;
 
     default:
@@ -1088,7 +1088,7 @@ static HRESULT window_set_timer(HTMLWindow *This, VARIANT *expr, LONG msec, VARI
     if(!disp)
         return E_FAIL;
 
-    *timer_id = set_task_timer(This->doc, msec, interval, disp);
+    *timer_id = set_task_timer(&This->doc->basedoc, msec, interval, disp);
     IDispatch_Release(disp);
 
     return S_OK;
@@ -1413,7 +1413,7 @@ static dispex_static_data_t HTMLWindow_dispex = {
     HTMLWindow_iface_tids
 };
 
-HRESULT HTMLWindow_Create(nsIDOMWindow *nswindow, HTMLWindow **ret)
+HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTMLWindow **ret)
 {
     HTMLWindow *window;
 
@@ -1425,6 +1425,7 @@ HRESULT HTMLWindow_Create(nsIDOMWindow *nswindow, HTMLWindow **ret)
     window->lpHTMLWindow3Vtbl = &HTMLWindow3Vtbl;
     window->lpIDispatchExVtbl = &WindowDispExVtbl;
     window->ref = 1;
+    window->doc_obj = doc_obj;
 
     init_dispex(&window->dispex, (IUnknown*)HTMLWINDOW2(window), &HTMLWindow_dispex);
 

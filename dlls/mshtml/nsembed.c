@@ -844,6 +844,8 @@ void update_nsdocument(HTMLDocumentObj *doc)
         doc_node->basedoc.doc_obj = NULL;
         IHTMLDocument2_Release(HTMLDOC(&doc_node->basedoc));
         doc->basedoc.doc_node = NULL;
+
+        doc->basedoc.window->doc = NULL;
     }
 
     doc->basedoc.nsdoc = nsdoc;
@@ -859,6 +861,7 @@ void update_nsdocument(HTMLDocumentObj *doc)
     }
 
     doc->basedoc.doc_node = doc_node;
+    doc->basedoc.window->doc = doc_node;
 }
 
 void close_gecko(void)

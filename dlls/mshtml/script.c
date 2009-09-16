@@ -593,7 +593,7 @@ static void parse_extern_script(ScriptHost *script_host, LPCWSTR src)
     if(FAILED(hres))
         return;
 
-    hres = bind_mon_to_buffer(script_host->window->doc, mon, (void**)&buf, &size);
+    hres = bind_mon_to_buffer(&script_host->window->doc_obj->basedoc, mon, (void**)&buf, &size);
     IMoniker_Release(mon);
     if(FAILED(hres))
         return;
@@ -762,7 +762,7 @@ void doc_insert_script(HTMLDocument *doc, nsIDOMHTMLScriptElement *nsscript)
         parse_script_elem(script_host, nsscript);
 }
 
-IDispatch *script_parse_event(HTMLDocument *doc, LPCWSTR text)
+IDispatch *script_parse_event(HTMLWindow *window, LPCWSTR text)
 {
     ScriptHost *script_host;
     GUID guid = CLSID_JScript;
@@ -795,7 +795,7 @@ IDispatch *script_parse_event(HTMLDocument *doc, LPCWSTR text)
         ptr = text;
     }
 
-    script_host = get_script_host(doc->window, &guid);
+    script_host = get_script_host(window, &guid);
     if(!script_host || !script_host->parse_proc)
         return NULL;
 
@@ -890,10 +890,10 @@ void set_script_mode(HTMLWindow *window, SCRIPTMODE mode)
 
     window->scriptmode = mode;
 
-    if(!window->doc->nscontainer || !window->doc->nscontainer->webbrowser)
+    if(!window->doc_obj->basedoc.nscontainer || !window->doc_obj->basedoc.nscontainer->webbrowser)
         return;
 
-    nsres = nsIWebBrowser_QueryInterface(window->doc->nscontainer->webbrowser,
+    nsres = nsIWebBrowser_QueryInterface(window->doc_obj->basedoc.nscontainer->webbrowser,
             &IID_nsIWebBrowserSetup, (void**)&setup);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIWebBrowserSetup_SetProperty(setup, SETUP_ALLOW_JAVASCRIPT,

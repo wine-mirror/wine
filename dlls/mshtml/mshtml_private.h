@@ -154,6 +154,8 @@ BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**);
 
 typedef struct HTMLWindow HTMLWindow;
+typedef struct HTMLDocumentNode HTMLDocumentNode;
+typedef struct HTMLDocumentObj HTMLDocumentObj;
 
 typedef enum {
     SCRIPTMODE_GECKO,
@@ -193,7 +195,8 @@ struct HTMLWindow {
 
     LONG ref;
 
-    HTMLDocument *doc;
+    HTMLDocumentNode *doc;
+    HTMLDocumentObj *doc_obj;
     nsIDOMWindow *nswindow;
 
     event_target_t *event_target;
@@ -248,9 +251,6 @@ typedef struct {
     ULONG (*addref)(HTMLDocument*);
     ULONG (*release)(HTMLDocument*);
 } htmldoc_vtbl_t;
-
-typedef struct HTMLDocumentNode HTMLDocumentNode;
-typedef struct HTMLDocumentObj HTMLDocumentObj;
 
 struct HTMLDocument {
     DispatchEx dispex;
@@ -548,7 +548,7 @@ HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**);
 HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument*,HTMLDocumentObj*,HTMLWindow*,HTMLDocumentNode**);
 
-HRESULT HTMLWindow_Create(nsIDOMWindow*,HTMLWindow**);
+HRESULT HTMLWindow_Create(HTMLDocumentObj*,nsIDOMWindow*,HTMLWindow**);
 HTMLWindow *nswindow_to_window(const nsIDOMWindow*);
 HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLWindow*);
 HRESULT HTMLLocation_Create(HTMLWindow*,HTMLLocation**);
@@ -678,7 +678,7 @@ void release_nodes(HTMLDocument*);
 void release_script_hosts(HTMLWindow*);
 void connect_scripts(HTMLWindow*);
 void doc_insert_script(HTMLDocument*,nsIDOMHTMLScriptElement*);
-IDispatch *script_parse_event(HTMLDocument*,LPCWSTR);
+IDispatch *script_parse_event(HTMLWindow*,LPCWSTR);
 void set_script_mode(HTMLWindow*,SCRIPTMODE);
 BOOL find_global_prop(HTMLWindow*,BSTR,DWORD,ScriptHost**,DISPID*);
 IDispatch *get_script_disp(ScriptHost*);

@@ -1949,7 +1949,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
             ERR("GetContentDOMWindow failed: %08x\n", nsres);
     }
 
-    hres = HTMLWindow_Create(nswindow, &doc->basedoc.window);
+    hres = HTMLWindow_Create(doc, nswindow, &doc->basedoc.window);
     if(nswindow)
         nsIDOMWindow_Release(nswindow);
     if(FAILED(hres)) {
@@ -1958,7 +1958,6 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     }
 
     update_nsdocument(doc);
-    doc->basedoc.window->doc = &doc->basedoc;
     get_thread_hwnd();
 
     return S_OK;

@@ -246,7 +246,7 @@ void add_nsevent_listener(HTMLWindow *window, LPCWSTR type)
         return;
     }
 
-    init_event(target, type, NSEVENTLIST(&window->doc->nscontainer->htmlevent_listener), TRUE);
+    init_event(target, type, NSEVENTLIST(&window->doc_obj->basedoc.nscontainer->htmlevent_listener), TRUE);
     nsIDOMEventTarget_Release(target);
 }
 

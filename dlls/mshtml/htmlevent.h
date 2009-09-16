@@ -73,7 +73,7 @@ static inline HRESULT get_doc_event(HTMLDocument *doc, eventid_t eid, VARIANT *v
 
 static inline HRESULT set_window_event(HTMLWindow *window, eventid_t eid, VARIANT *var)
 {
-    return set_event_handler(&window->event_target, window->doc, eid, var);
+    return set_event_handler(&window->event_target, &window->doc_obj->basedoc, eid, var);
 }
 
 static inline HRESULT get_window_event(HTMLWindow *window, eventid_t eid, VARIANT *var)
