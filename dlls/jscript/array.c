@@ -1101,11 +1101,13 @@ HRESULT create_array_constr(script_ctx_t *ctx, DispatchEx *object_prototype, Dis
     ArrayInstance *array;
     HRESULT hres;
 
+    static const WCHAR ArrayW[] = {'A','r','r','a','y',0};
+
     hres = alloc_array(ctx, object_prototype, &array);
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_function(ctx, ArrayConstr_value, NULL, PROPF_CONSTR, &array->dispex, ret);
+    hres = create_builtin_function(ctx, ArrayConstr_value, ArrayW, NULL, PROPF_CONSTR, &array->dispex, ret);
 
     jsdisp_release(&array->dispex);
     return hres;

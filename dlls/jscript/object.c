@@ -192,7 +192,9 @@ static HRESULT ObjectConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DIS
 
 HRESULT create_object_constr(script_ctx_t *ctx, DispatchEx *object_prototype, DispatchEx **ret)
 {
-    return create_builtin_function(ctx, ObjectConstr_value, NULL, PROPF_CONSTR,
+    static const WCHAR ObjectW[] = {'O','b','j','e','c','t',0};
+
+    return create_builtin_function(ctx, ObjectConstr_value, ObjectW, NULL, PROPF_CONSTR,
             object_prototype, ret);
 }
 

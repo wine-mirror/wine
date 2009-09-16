@@ -1869,11 +1869,14 @@ HRESULT create_string_constr(script_ctx_t *ctx, DispatchEx *object_prototype, Di
     StringInstance *string;
     HRESULT hres;
 
+    static const WCHAR StringW[] = {'S','t','r','i','n','g',0};
+
     hres = string_alloc(ctx, object_prototype, &string);
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_function(ctx, StringConstr_value, &StringConstr_info, PROPF_CONSTR, &string->dispex, ret);
+    hres = create_builtin_function(ctx, StringConstr_value, StringW, &StringConstr_info,
+            PROPF_CONSTR, &string->dispex, ret);
 
     jsdisp_release(&string->dispex);
     return hres;

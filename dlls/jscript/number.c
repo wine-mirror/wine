@@ -330,12 +330,14 @@ HRESULT create_number_constr(script_ctx_t *ctx, DispatchEx *object_prototype, Di
     NumberInstance *number;
     HRESULT hres;
 
+    static const WCHAR NumberW[] = {'N','u','m','b','e','r',0};
+
     hres = alloc_number(ctx, object_prototype, &number);
     if(FAILED(hres))
         return hres;
 
     V_VT(&number->num) = VT_I4;
-    hres = create_builtin_function(ctx, NumberConstr_value, NULL, PROPF_CONSTR, &number->dispex, ret);
+    hres = create_builtin_function(ctx, NumberConstr_value, NumberW, NULL, PROPF_CONSTR, &number->dispex, ret);
 
     jsdisp_release(&number->dispex);
     return hres;

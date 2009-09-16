@@ -26,6 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 typedef struct {
     DispatchEx dispex;
     builtin_invoke_t value_proc;
+    const WCHAR *name;
     DWORD flags;
     source_elements_t *source;
     parameter_t *parameters;
@@ -285,14 +286,26 @@ static HRESULT function_to_string(FunctionInstance *function, BSTR *ret)
 {
     BSTR str;
 
-    if(function->value_proc) {
-        FIXME("Builtin functions not implemented\n");
-        return E_NOTIMPL;
-    }
+    static const WCHAR native_prefixW[] = {'\n','f','u','n','c','t','i','o','n',' '};
+    static const WCHAR native_suffixW[] =
+        {'(',')',' ','{','\n',' ',' ',' ',' ','[','n','a','t','i','v','e',' ','c','o','d','e',']','\n','}','\n'};
 
-    str = SysAllocStringLen(function->src_str, function->src_len);
-    if(!str)
-        return E_OUTOFMEMORY;
+    if(function->value_proc) {
+        DWORD name_len;
+
+        name_len = strlenW(function->name);
+        str = SysAllocStringLen(NULL, sizeof(native_prefixW) + name_len*sizeof(WCHAR) + sizeof(native_suffixW));
+        if(!str)
+            return E_OUTOFMEMORY;
+
+        memcpy(str, native_prefixW, sizeof(native_prefixW));
+        memcpy(str + sizeof(native_prefixW)/sizeof(WCHAR), function->name, name_len*sizeof(WCHAR));
+        memcpy(str + sizeof(native_prefixW)/sizeof(WCHAR) + name_len, native_suffixW, sizeof(native_suffixW));
+    }else {
+        str = SysAllocStringLen(function->src_str, function->src_len);
+        if(!str)
+            return E_OUTOFMEMORY;
+    }
 
     *ret = str;
     return S_OK;
@@ -598,7 +611,7 @@ static HRESULT set_prototype(script_ctx_t *ctx, DispatchEx *dispex, DispatchEx *
     return jsdisp_propput_name(dispex, prototypeW, ctx->lcid, &var, &jsexcept, NULL/*FIXME*/);
 }
 
-HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc,
+HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, const WCHAR *name,
         const builtin_info_t *builtin_info, DWORD flags, DispatchEx *prototype, DispatchEx **ret)
 {
     FunctionInstance *function;
@@ -615,6 +628,7 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc,
     }
 
     function->value_proc = value_proc;
+    function->name = name;
 
     *ret = &function->dispex;
     return S_OK;
@@ -670,15 +684,19 @@ HRESULT init_function_constr(script_ctx_t *ctx, DispatchEx *object_prototype)
     FunctionInstance *prot, *constr;
     HRESULT hres;
 
+    static const WCHAR FunctionW[] = {'F','u','n','c','t','i','o','n',0};
+
     hres = create_function(ctx, NULL, PROPF_CONSTR, TRUE, object_prototype, &prot);
     if(FAILED(hres))
         return hres;
 
     prot->value_proc = FunctionProt_value;
+    prot->name = prototypeW;
 
     hres = create_function(ctx, NULL, PROPF_CONSTR, TRUE, &prot->dispex, &constr);
     if(SUCCEEDED(hres)) {
         constr->value_proc = FunctionConstr_value;
+        constr->name = FunctionW;
         hres = set_prototype(ctx, &constr->dispex, &prot->dispex);
         if(FAILED(hres))
             jsdisp_release(&constr->dispex);

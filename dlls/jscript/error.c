@@ -374,7 +374,7 @@ HRESULT init_error_constr(script_ctx_t *ctx, DispatchEx *object_prototype)
         hres = jsdisp_propput_name(&err->dispex, nameW, ctx->lcid, &v, NULL/*FIXME*/, NULL/*FIXME*/);
 
         if(SUCCEEDED(hres))
-            hres = create_builtin_function(ctx, constr_val[i], NULL,
+            hres = create_builtin_function(ctx, constr_val[i], names[i], NULL,
                     PROPF_CONSTR, &err->dispex, constr_addr[i]);
 
         jsdisp_release(&err->dispex);

@@ -2603,11 +2603,13 @@ HRESULT create_date_constr(script_ctx_t *ctx, DispatchEx *object_prototype, Disp
     DispatchEx *date;
     HRESULT hres;
 
+    static const WCHAR DateW[] = {'D','a','t','e',0};
+
     hres = create_date(ctx, object_prototype, 0.0, &date);
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_function(ctx, DateConstr_value, &DateConstr_info, PROPF_CONSTR, date, ret);
+    hres = create_builtin_function(ctx, DateConstr_value, DateW, &DateConstr_info, PROPF_CONSTR, date, ret);
 
     jsdisp_release(date);
     return hres;

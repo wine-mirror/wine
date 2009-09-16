@@ -179,11 +179,13 @@ HRESULT create_bool_constr(script_ctx_t *ctx, DispatchEx *object_prototype, Disp
     BoolInstance *bool;
     HRESULT hres;
 
+    static const WCHAR BooleanW[] = {'B','o','o','l','e','a','n',0};
+
     hres = alloc_bool(ctx, object_prototype, &bool);
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_function(ctx, BoolConstr_value, NULL, PROPF_CONSTR, &bool->dispex, ret);
+    hres = create_builtin_function(ctx, BoolConstr_value, BooleanW, NULL, PROPF_CONSTR, &bool->dispex, ret);
 
     jsdisp_release(&bool->dispex);
     return hres;

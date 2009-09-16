@@ -3845,11 +3845,13 @@ HRESULT create_regexp_constr(script_ctx_t *ctx, DispatchEx *object_prototype, Di
     RegExpInstance *regexp;
     HRESULT hres;
 
+    static const WCHAR RegExpW[] = {'R','e','g','E','x','p',0};
+
     hres = alloc_regexp(ctx, object_prototype, &regexp);
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_function(ctx, RegExpConstr_value, NULL, PROPF_CONSTR, &regexp->dispex, ret);
+    hres = create_builtin_function(ctx, RegExpConstr_value, RegExpW, NULL, PROPF_CONSTR, &regexp->dispex, ret);
 
     jsdisp_release(&regexp->dispex);
     return hres;
