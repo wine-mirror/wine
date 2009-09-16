@@ -97,10 +97,10 @@ static void activate_gecko(NSContainer *This)
 
 void update_doc(HTMLDocument *This, DWORD flags)
 {
-    if(!This->update && This->doc_obj->hwnd)
+    if(!This->doc_obj->update && This->doc_obj->hwnd)
         SetTimer(This->doc_obj->hwnd, TIMER_ID, 100, NULL);
 
-    This->update |= flags;
+    This->doc_obj->update |= flags;
 }
 
 void update_title(HTMLDocumentObj *This)
@@ -108,10 +108,10 @@ void update_title(HTMLDocumentObj *This)
     IOleCommandTarget *olecmd;
     HRESULT hres;
 
-    if(!(This->basedoc.update & UPDATE_TITLE))
+    if(!(This->update & UPDATE_TITLE))
         return;
 
-    This->basedoc.update &= ~UPDATE_TITLE;
+    This->update &= ~UPDATE_TITLE;
 
     if(!This->client)
         return;
@@ -133,14 +133,14 @@ void update_title(HTMLDocumentObj *This)
 
 static LRESULT on_timer(HTMLDocumentObj *This)
 {
-    TRACE("(%p) %x\n", This, This->basedoc.update);
+    TRACE("(%p) %x\n", This, This->update);
 
     KillTimer(This->hwnd, TIMER_ID);
 
-    if(!This->basedoc.update)
+    if(!This->update)
         return 0;
 
-    if(This->basedoc.update & UPDATE_UI) {
+    if(This->update & UPDATE_UI) {
         if(This->hostui)
             IDocHostUIHandler_UpdateUI(This->hostui);
 
@@ -159,7 +159,7 @@ static LRESULT on_timer(HTMLDocumentObj *This)
     }
 
     update_title(This);
-    This->basedoc.update = 0;
+    This->update = 0;
     return 0;
 }
 

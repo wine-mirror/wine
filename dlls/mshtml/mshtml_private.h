@@ -284,8 +284,6 @@ struct HTMLDocument {
     HTMLWindow *window;
     nsIDOMHTMLDocument *nsdoc;
 
-    DWORD update;
-
     event_target_t *event_target;
     ConnectionPointContainer cp_container;
     ConnectionPoint cp_htmldocevents;
@@ -349,6 +347,8 @@ struct HTMLDocumentObj {
     USERMODE usermode;
     READYSTATE readystate;
     LPWSTR mime;
+
+    DWORD update;
 
     /* FIXME: probably should be in document node object */
     nsChannelBSC *bscallback;
