@@ -107,6 +107,7 @@ static HRESULT WINAPI HTMLIFrameBase2_get_contentWindow(IHTMLFrameBase2 *iface, 
     if(!This->content_doc) {
         nsIDOMHTMLDocument *nshtmldoc;
         nsIDOMDocument *nsdoc;
+        HTMLWindow *window;
         nsresult nsres;
         HRESULT hres;
 
@@ -128,7 +129,16 @@ static HRESULT WINAPI HTMLIFrameBase2_get_contentWindow(IHTMLFrameBase2 *iface, 
             return E_FAIL;
         }
 
-        hres = create_doc_from_nsdoc(nshtmldoc, &This->content_doc);
+        hres = HTMLWindow_Create(NULL, &window);
+        if(FAILED(hres)) {
+            nsIDOMDocument_Release(nsdoc);
+            return hres;
+        }
+
+        hres = create_doc_from_nsdoc(nshtmldoc, window, &This->content_doc);
+        if(SUCCEEDED(hres))
+            window->doc = &This->content_doc->basedoc;
+        IHTMLWindow2_Release(HTMLWINDOW2(window));
         nsIDOMHTMLDocument_Release(nshtmldoc);
         if(FAILED(hres))
             return hres;

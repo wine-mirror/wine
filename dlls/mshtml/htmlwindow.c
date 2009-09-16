@@ -1413,7 +1413,7 @@ static dispex_static_data_t HTMLWindow_dispex = {
     HTMLWindow_iface_tids
 };
 
-HRESULT HTMLWindow_Create(HTMLDocument *doc, nsIDOMWindow *nswindow, HTMLWindow **ret)
+HRESULT HTMLWindow_Create(nsIDOMWindow *nswindow, HTMLWindow **ret)
 {
     HTMLWindow *window;
 
@@ -1425,7 +1425,6 @@ HRESULT HTMLWindow_Create(HTMLDocument *doc, nsIDOMWindow *nswindow, HTMLWindow 
     window->lpHTMLWindow3Vtbl = &HTMLWindow3Vtbl;
     window->lpIDispatchExVtbl = &WindowDispExVtbl;
     window->ref = 1;
-    window->doc = doc;
 
     init_dispex(&window->dispex, (IUnknown*)HTMLWINDOW2(window), &HTMLWindow_dispex);
 

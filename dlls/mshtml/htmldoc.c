@@ -1847,10 +1847,9 @@ static const htmldoc_vtbl_t HTMLDocumentNodeVtbl = {
     HTMLDocumentNode_Release
 };
 
-HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentNode **ret)
+HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLWindow *window, HTMLDocumentNode **ret)
 {
     HTMLDocumentNode *doc;
-    HRESULT hres;
 
     doc = heap_alloc_zero(sizeof(HTMLDocumentNode));
     if(!doc)
@@ -1862,11 +1861,8 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentNode **ret)
     nsIDOMHTMLDocument_AddRef(nsdoc);
     doc->basedoc.nsdoc = nsdoc;
 
-    hres = HTMLWindow_Create(&doc->basedoc, NULL, &doc->basedoc.window);
-    if(FAILED(hres)) {
-        htmldoc_release(&doc->basedoc);
-        return hres;
-    }
+    IHTMLWindow2_AddRef(HTMLWINDOW2(window));
+    doc->basedoc.window = window;
 
     *ret = doc;
     return S_OK;
@@ -1946,7 +1942,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
             ERR("GetContentDOMWindow failed: %08x\n", nsres);
     }
 
-    hres = HTMLWindow_Create(&doc->basedoc, nswindow, &doc->basedoc.window);
+    hres = HTMLWindow_Create(nswindow, &doc->basedoc.window);
     if(nswindow)
         nsIDOMWindow_Release(nswindow);
     if(FAILED(hres)) {
@@ -1954,6 +1950,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
         return hres;
     }
 
+    doc->basedoc.window->doc = &doc->basedoc;
     get_thread_hwnd();
 
     return S_OK;

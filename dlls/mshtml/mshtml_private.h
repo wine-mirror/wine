@@ -540,9 +540,9 @@ typedef struct {
 
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**);
-HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument*,HTMLDocumentNode**);
+HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument*,HTMLWindow*,HTMLDocumentNode**);
 
-HRESULT HTMLWindow_Create(HTMLDocument*,nsIDOMWindow*,HTMLWindow**);
+HRESULT HTMLWindow_Create(nsIDOMWindow*,HTMLWindow**);
 HTMLWindow *nswindow_to_window(const nsIDOMWindow*);
 HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLWindow*);
 HRESULT HTMLLocation_Create(HTMLWindow*,HTMLLocation**);
