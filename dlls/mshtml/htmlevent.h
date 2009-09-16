@@ -63,12 +63,12 @@ static inline HRESULT get_node_event(HTMLDOMNode *node, eventid_t eid, VARIANT *
 
 static inline HRESULT set_doc_event(HTMLDocument *doc, eventid_t eid, VARIANT *var)
 {
-    return set_event_handler(&doc->event_target, doc, eid, var);
+    return set_node_event(&doc->doc_node->node, eid, var);
 }
 
 static inline HRESULT get_doc_event(HTMLDocument *doc, eventid_t eid, VARIANT *var)
 {
-    return get_event_handler(&doc->event_target, eid, var);
+    return get_node_event(&doc->doc_node->node, eid, var);
 }
 
 static inline HRESULT set_window_event(HTMLWindow *window, eventid_t eid, VARIANT *var)

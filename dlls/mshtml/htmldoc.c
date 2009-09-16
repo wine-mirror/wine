@@ -1741,9 +1741,6 @@ static void destroy_htmldoc(HTMLDocument *This)
 {
     remove_doc_tasks(This);
 
-    if(This->event_target)
-        release_event_target(This->event_target);
-
     ConnectionPointContainer_Destroy(&This->cp_container);
 
     if(This->nsdoc)
