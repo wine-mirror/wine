@@ -200,6 +200,11 @@ static UINT_PTR CALLBACK create_view_window2_hook(HWND dlg, UINT msg, WPARAM wPa
             view_params.hwndView = NULL;
 
             hr = IShellView2_CreateViewWindow2(shell_view2, &view_params);
+            if (hr == E_FAIL)
+            {
+                win_skip("CreateViewWindow2 is broken on Vista/W2K8\n");
+                goto cleanup;
+            }
             ok(SUCCEEDED(hr), "CreateViewWindow2 returned %#x\n", hr);
             if (FAILED(hr)) goto cleanup;
 
