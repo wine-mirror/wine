@@ -261,8 +261,8 @@ FONT 8, "MS Shell Dlg"
     CONTROL         "&Выделение",     rad2,"Button",BS_AUTORADIOBUTTON,16,138,64,12
     EDITTEXT                          edt1,  85,122,  20,12, WS_GROUP | ES_NUMBER
     EDITTEXT                          edt2, 120,122,  20,12, WS_GROUP | ES_NUMBER
-    RTEXT           "&от:",         stc2,  70,124,  10,8
-    RTEXT           "&до:",           stc3, 106,124,  10,8
+    RTEXT           "&от:",         stc2,  72,124,  12,8
+    RTEXT           "&до:",           stc3, 108,124,  12,8
 }
 
 PRINT32_SETUP DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 178
