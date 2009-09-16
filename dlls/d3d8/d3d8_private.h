@@ -218,7 +218,6 @@ struct IDirect3DDevice8Impl
 /*****************************************************************************
  * IDirect3DVolume8 implementation structure
  */
-extern const IDirect3DVolume8Vtbl Direct3DVolume8_Vtbl;
 struct IDirect3DVolume8Impl
 {
     /* IUnknown fields */
@@ -234,6 +233,9 @@ struct IDirect3DVolume8Impl
     /* If set forward refcounting to this object */
     IUnknown                    *forwardReference;
 };
+
+HRESULT volume_init(IDirect3DVolume8Impl *volume, IDirect3DDevice8Impl *device, UINT width, UINT height,
+        UINT depth, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool);
 
 /* ------------------- */
 /* IDirect3DSwapChain8 */

@@ -202,7 +202,7 @@ static HRESULT WINAPI IDirect3DVolume8Impl_UnlockBox(LPDIRECT3DVOLUME8 iface) {
     return hr;
 }
 
-const IDirect3DVolume8Vtbl Direct3DVolume8_Vtbl =
+static const IDirect3DVolume8Vtbl Direct3DVolume8_Vtbl =
 {
     /* IUnknown */
     IDirect3DVolume8Impl_QueryInterface,
@@ -227,4 +227,23 @@ ULONG WINAPI D3D8CB_DestroyVolume(IWineD3DVolume *pVolume) {
      * Releasing it here again would cause an endless recursion. */
     volumeParent->forwardReference = NULL;
     return IDirect3DVolume8_Release((IDirect3DVolume8*) volumeParent);
+}
+
+HRESULT volume_init(IDirect3DVolume8Impl *volume, IDirect3DDevice8Impl *device, UINT width, UINT height,
+        UINT depth, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool)
+{
+    HRESULT hr;
+
+    volume->lpVtbl = &Direct3DVolume8_Vtbl;
+    volume->ref = 1;
+
+    hr = IWineD3DDevice_CreateVolume(device->WineD3DDevice, width, height, depth, usage,
+            format, pool, &volume->wineD3DVolume, (IUnknown *)volume);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d volume, hr %#x.\n", hr);
+        return hr;
+    }
+
+    return D3D_OK;
 }
