@@ -807,16 +807,18 @@ void set_ns_editmode(NSContainer *This)
     nsIWebBrowser_SetParentURIContentListener(This->webbrowser, NSURICL(This));
 }
 
-void update_nsdocument(HTMLDocument *doc)
+void update_nsdocument(HTMLDocumentObj *doc)
 {
+    HTMLDocumentNode *doc_node;
     nsIDOMHTMLDocument *nsdoc;
     nsIDOMDocument *nsdomdoc;
     nsresult nsres;
+    HRESULT hres;
 
-    if(!doc->nscontainer || !doc->nscontainer->navigation)
+    if(!doc->basedoc.nscontainer || !doc->basedoc.nscontainer->navigation)
         return;
 
-    nsres = nsIWebNavigation_GetDocument(doc->nscontainer->navigation, &nsdomdoc);
+    nsres = nsIWebNavigation_GetDocument(doc->basedoc.nscontainer->navigation, &nsdomdoc);
     if(NS_FAILED(nsres) || !nsdomdoc) {
         ERR("GetDocument failed: %08x\n", nsres);
         return;
@@ -829,20 +831,34 @@ void update_nsdocument(HTMLDocument *doc)
         return;
     }
 
-    if(nsdoc == doc->nsdoc) {
+    if(nsdoc == doc->basedoc.nsdoc) {
         nsIDOMHTMLDocument_Release(nsdoc);
         return;
     }
 
-    if(doc->nsdoc) {
-        remove_mutation_observer(doc->nscontainer, doc->nsdoc);
-        nsIDOMHTMLDocument_Release(doc->nsdoc);
+    if(doc->basedoc.nsdoc) {
+        remove_mutation_observer(doc->basedoc.nscontainer, doc->basedoc.nsdoc);
+        nsIDOMHTMLDocument_Release(doc->basedoc.nsdoc);
+
+        doc_node = doc->basedoc.doc_node;
+        doc_node->basedoc.doc_obj = NULL;
+        IHTMLDocument2_Release(HTMLDOC(&doc_node->basedoc));
+        doc->basedoc.doc_node = NULL;
     }
 
-    doc->nsdoc = nsdoc;
+    doc->basedoc.nsdoc = nsdoc;
+    if(!nsdoc)
+        return;
 
-    if(nsdoc)
-        set_mutation_observer(doc->nscontainer, nsdoc);
+    set_mutation_observer(doc->basedoc.nscontainer, nsdoc);
+
+    hres = create_doc_from_nsdoc(nsdoc, doc, doc->basedoc.window, &doc_node);
+    if(FAILED(hres)) {
+        ERR("Could not create document: %08x\n", hres);
+        return;
+    }
+
+    doc->basedoc.doc_node = doc_node;
 }
 
 void close_gecko(void)
@@ -949,7 +965,7 @@ static nsresult NSAPI nsWebBrowserChrome_SetStatus(nsIWebBrowserChrome *iface,
 
     /* FIXME: This hack should be removed when we'll load all pages by URLMoniker */
     if(This->doc)
-        update_nsdocument(This->doc);
+        update_nsdocument(This->doc->doc_obj);
 
     return NS_OK;
 }

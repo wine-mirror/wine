@@ -249,6 +249,9 @@ typedef struct {
     ULONG (*release)(HTMLDocument*);
 } htmldoc_vtbl_t;
 
+typedef struct HTMLDocumentNode HTMLDocumentNode;
+typedef struct HTMLDocumentObj HTMLDocumentObj;
+
 struct HTMLDocument {
     DispatchEx dispex;
     const htmldoc_vtbl_t                  *vtbl;
@@ -274,6 +277,9 @@ struct HTMLDocument {
     const ICustomDocVtbl                  *lpCustomDocVtbl;
     const IDispatchExVtbl                 *lpIDispatchExVtbl;
     const ISupportErrorInfoVtbl           *lpSupportErrorInfoVtbl;
+
+    HTMLDocumentObj *doc_obj;
+    HTMLDocumentNode *doc_node;
 
     NSContainer *nscontainer;
     HTMLWindow *window;
@@ -336,17 +342,17 @@ static inline ULONG htmldoc_release(HTMLDocument *This)
     return This->vtbl->release(This);
 }
 
-typedef struct {
+struct HTMLDocumentNode {
     HTMLDocument basedoc;
 
     LONG ref;
-} HTMLDocumentNode;
+};
 
-typedef struct {
+struct HTMLDocumentObj {
     HTMLDocument basedoc;
 
     LONG ref;
-} HTMLDocumentObj;
+};
 
 typedef struct {
     const nsIDOMEventListenerVtbl      *lpDOMEventListenerVtbl;
@@ -540,7 +546,7 @@ typedef struct {
 
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**);
-HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument*,HTMLWindow*,HTMLDocumentNode**);
+HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument*,HTMLDocumentObj*,HTMLWindow*,HTMLDocumentNode**);
 
 HRESULT HTMLWindow_Create(nsIDOMWindow*,HTMLWindow**);
 HTMLWindow *nswindow_to_window(const nsIDOMWindow*);
@@ -614,7 +620,7 @@ void get_editor_controller(NSContainer*);
 void init_nsevents(NSContainer*);
 void add_nsevent_listener(HTMLWindow*,LPCWSTR);
 nsresult get_nsinterface(nsISupports*,REFIID,void**);
-void update_nsdocument(HTMLDocument*);
+void update_nsdocument(HTMLDocumentObj*);
 
 void set_document_bscallback(HTMLDocument*,nsChannelBSC*);
 void set_current_mon(HTMLDocument*,IMoniker*);

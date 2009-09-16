@@ -135,7 +135,7 @@ static HRESULT WINAPI HTMLIFrameBase2_get_contentWindow(IHTMLFrameBase2 *iface, 
             return hres;
         }
 
-        hres = create_doc_from_nsdoc(nshtmldoc, window, &This->content_doc);
+        hres = create_doc_from_nsdoc(nshtmldoc, This->element.node.doc->doc_obj, window, &This->content_doc);
         if(SUCCEEDED(hres))
             window->doc = &This->content_doc->basedoc;
         IHTMLWindow2_Release(HTMLWINDOW2(window));

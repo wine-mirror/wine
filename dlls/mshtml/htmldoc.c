@@ -1847,13 +1847,16 @@ static const htmldoc_vtbl_t HTMLDocumentNodeVtbl = {
     HTMLDocumentNode_Release
 };
 
-HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLWindow *window, HTMLDocumentNode **ret)
+HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_obj, HTMLWindow *window, HTMLDocumentNode **ret)
 {
     HTMLDocumentNode *doc;
 
     doc = heap_alloc_zero(sizeof(HTMLDocumentNode));
     if(!doc)
         return E_OUTOFMEMORY;
+
+    doc->basedoc.doc_node = doc;
+    doc->basedoc.doc_obj = doc_obj;
 
     init_doc(&doc->basedoc, &HTMLDocumentNodeVtbl);
     doc->ref = 1;
@@ -1895,6 +1898,10 @@ static ULONG HTMLDocumentObj_Release(HTMLDocument *base)
     TRACE("(%p) ref = %u\n", This, ref);
 
     if(!ref) {
+        if(This->basedoc.doc_node) {
+            This->basedoc.doc_node->basedoc.doc_obj = NULL;
+            IHTMLDocument2_Release(HTMLDOC(&This->basedoc.doc_node->basedoc));
+        }
         destroy_htmldoc(&This->basedoc);
         heap_free(This);
     }
@@ -1925,6 +1932,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     init_doc(&doc->basedoc, &HTMLDocumentObjVtbl);
 
     doc->ref = 1;
+    doc->basedoc.doc_obj = doc;
 
     hres = htmldoc_query_interface(&doc->basedoc, riid, ppvObject);
     htmldoc_release(&doc->basedoc);
@@ -1932,7 +1940,6 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
         return hres;
 
     doc->basedoc.nscontainer = NSContainer_Create(&doc->basedoc, NULL);
-    update_nsdocument(&doc->basedoc);
 
     if(doc->basedoc.nscontainer) {
         nsresult nsres;
@@ -1950,6 +1957,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
         return hres;
     }
 
+    update_nsdocument(doc);
     doc->basedoc.window->doc = &doc->basedoc;
     get_thread_hwnd();
 
