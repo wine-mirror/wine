@@ -2149,15 +2149,11 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent
         return D3DERR_OUTOFVIDEOMEMORY;
     }
 
-    object->lpVtbl = &Direct3DVolume9_Vtbl;
-    object->ref = 1;
-    hr = IWineD3DDevice_CreateVolume(This->WineD3DDevice, width, height, depth, usage & WINED3DUSAGE_MASK,
-            format, pool, &object->wineD3DVolume, (IUnknown *)object);
+    hr = volume_init(object, This, width, height, depth, usage, format, pool);
     if (FAILED(hr))
     {
-        ERR("(%p) CreateVolume failed, returning %#x\n", iface, hr);
+        WARN("Failed to initialize volume, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        *volume = NULL;
         return hr;
     }
 
@@ -2165,7 +2161,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent
     object->container = superior;
     object->forwardReference = superior;
 
-    TRACE("(%p) Created volume %p\n", iface, *volume);
+    TRACE("(%p) Created volume %p\n", iface, object);
 
     return hr;
 }

@@ -236,7 +236,6 @@ extern HRESULT  WINAPI  IDirect3DDevice9Impl_CreateQuery(LPDIRECT3DDEVICE9EX ifa
 /*****************************************************************************
  * IDirect3DVolume9 implementation structure
  */
-extern const IDirect3DVolume9Vtbl Direct3DVolume9_Vtbl;
 typedef struct IDirect3DVolume9Impl
 {
     /* IUnknown fields */
@@ -252,6 +251,9 @@ typedef struct IDirect3DVolume9Impl
     /* If set forward refcounting to this object */
     IUnknown                    *forwardReference;
 } IDirect3DVolume9Impl;
+
+HRESULT volume_init(IDirect3DVolume9Impl *volume, IDirect3DDevice9Impl *device, UINT width, UINT height,
+        UINT depth, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool);
 
 /* ------------------- */
 /* IDirect3DSwapChain9 */
