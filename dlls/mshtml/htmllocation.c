@@ -35,6 +35,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+static HRESULT get_url(HTMLLocation *This, const WCHAR **ret)
+{
+    if(!This->window || !This->window->doc || !This->window->doc->url) {
+        FIXME("No current URL\n");
+        return E_NOTIMPL;
+    }
+
+    *ret = This->window->doc->url;
+    return S_OK;
+}
+
+
 #define HTMLLOCATION_THIS(iface) DEFINE_THIS(HTMLLocation, HTMLLocation, iface)
 
 static HRESULT WINAPI HTMLLocation_QueryInterface(IHTMLLocation *iface, REFIID riid, void **ppv)
@@ -80,8 +92,8 @@ static ULONG WINAPI HTMLLocation_Release(IHTMLLocation *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        if(This->doc && This->doc->location == This)
-            This->doc->location = NULL;
+        if(This->window)
+            This->window->location = NULL;
         release_dispex(&This->dispex);
         heap_free(This);
     }
@@ -129,20 +141,20 @@ static HRESULT WINAPI HTMLLocation_put_href(IHTMLLocation *iface, BSTR v)
 static HRESULT WINAPI HTMLLocation_get_href(IHTMLLocation *iface, BSTR *p)
 {
     HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    const WCHAR *url;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     if(!p)
         return E_POINTER;
 
-    if(!This->doc || !This->doc->url) {
-        FIXME("No current URL\n");
-        return E_NOTIMPL;
-    }
+    hres = get_url(This, &url);
+    if(FAILED(hres))
+        return hres;
 
-    *p = SysAllocString(This->doc->url);
-
-    return S_OK;
+    *p = SysAllocString(url);
+    return *p ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI HTMLLocation_put_protocol(IHTMLLocation *iface, BSTR v)
@@ -213,17 +225,17 @@ static HRESULT WINAPI HTMLLocation_get_pathname(IHTMLLocation *iface, BSTR *p)
     HTMLLocation *This = HTMLLOCATION_THIS(iface);
     WCHAR buf[INTERNET_MAX_PATH_LENGTH];
     URL_COMPONENTSW url = {sizeof(url)};
+    const WCHAR *doc_url;
     DWORD size = 0;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->doc || !This->doc->url) {
-        FIXME("No current URL\n");
-        return E_NOTIMPL;
-    }
+    hres = get_url(This, &doc_url);
+    if(FAILED(hres))
+        return hres;
 
-    hres = CoInternetParseUrl(This->doc->url, PARSE_PATH_FROM_URL, 0, buf, sizeof(buf), &size, 0);
+    hres = CoInternetParseUrl(doc_url, PARSE_PATH_FROM_URL, 0, buf, sizeof(buf), &size, 0);
     if(SUCCEEDED(hres)) {
         *p = SysAllocString(buf);
         if(!*p)
@@ -232,7 +244,7 @@ static HRESULT WINAPI HTMLLocation_get_pathname(IHTMLLocation *iface, BSTR *p)
     }
 
     url.dwUrlPathLength = 1;
-    if(!InternetCrackUrlW(This->doc->url, 0, 0, &url)) {
+    if(!InternetCrackUrlW(doc_url, 0, 0, &url)) {
         FIXME("InternetCrackUrl failed\n");
         return E_FAIL;
     }
@@ -382,15 +394,20 @@ static dispex_static_data_t HTMLLocation_dispex = {
 };
 
 
-HTMLLocation *HTMLLocation_Create(HTMLDocument *doc)
+HRESULT HTMLLocation_Create(HTMLWindow *window, HTMLLocation **ret)
 {
-    HTMLLocation *ret = heap_alloc(sizeof(*ret));
+    HTMLLocation *location;
 
-    ret->lpHTMLLocationVtbl = &HTMLLocationVtbl;
-    ret->ref = 1;
-    ret->doc = doc;
+    location = heap_alloc(sizeof(*location));
+    if(!location)
+        return E_OUTOFMEMORY;
 
-    init_dispex(&ret->dispex, (IUnknown*)HTMLLOCATION(ret),  &HTMLLocation_dispex);
+    location->lpHTMLLocationVtbl = &HTMLLocationVtbl;
+    location->ref = 1;
+    location->window = window;
 
-    return ret;
+    init_dispex(&location->dispex, (IUnknown*)HTMLLOCATION(location),  &HTMLLocation_dispex);
+
+    *ret = location;
+    return S_OK;
 }

@@ -100,6 +100,11 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
             IHTMLOptionElementFactory_Release(HTMLOPTFACTORY(This->option_factory));
         }
 
+        if(This->location) {
+            This->location->window = NULL;
+            IHTMLLocation_Release(HTMLLOCATION(This->location));
+        }
+
         if(This->event_target)
             release_event_target(This->event_target);
         for(i=0; i < This->global_prop_cnt; i++)
@@ -364,12 +369,18 @@ static HRESULT WINAPI HTMLWindow2_get_location(IHTMLWindow2 *iface, IHTMLLocatio
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->doc) {
-        FIXME("This->doc is NULL\n");
-        return E_FAIL;
+    if(This->location) {
+        IHTMLLocation_AddRef(HTMLLOCATION(This->location));
+    }else {
+        HRESULT hres;
+
+        hres = HTMLLocation_Create(This, &This->location);
+        if(FAILED(hres))
+            return hres;
     }
 
-    return IHTMLDocument2_get_location(HTMLDOC(This->doc), p);
+    *p = HTMLLOCATION(This->location);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_get_history(IHTMLWindow2 *iface, IOmHistory **p)

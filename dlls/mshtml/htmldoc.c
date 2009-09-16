@@ -196,9 +196,6 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
         if(This->hwnd)
             DestroyWindow(This->hwnd);
 
-        if(This->location)
-            This->location->doc = NULL;
-
         if(This->window)
             IHTMLWindow2_Release(HTMLWINDOW2(This->window));
 
@@ -733,13 +730,7 @@ static HRESULT WINAPI HTMLDocument_get_location(IHTMLDocument2 *iface, IHTMLLoca
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->location)
-        IHTMLLocation_AddRef(HTMLLOCATION(This->location));
-    else
-        This->location = HTMLLocation_Create(This);
-
-    *p = HTMLLOCATION(This->location);
-    return S_OK;
+    return IHTMLWindow2_get_location(HTMLWINDOW2(This->window), p);
 }
 
 static HRESULT WINAPI HTMLDocument_get_lastModified(IHTMLDocument2 *iface, BSTR *p)

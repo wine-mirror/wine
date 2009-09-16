@@ -176,6 +176,15 @@ typedef struct {
     HTMLWindow *window;
 } HTMLOptionElementFactory;
 
+struct HTMLLocation {
+    DispatchEx dispex;
+    const IHTMLLocationVtbl *lpHTMLLocationVtbl;
+
+    LONG ref;
+
+    HTMLWindow *window;
+};
+
 struct HTMLWindow {
     DispatchEx dispex;
     const IHTMLWindow2Vtbl *lpHTMLWindow2Vtbl;
@@ -194,6 +203,7 @@ struct HTMLWindow {
     struct list script_hosts;
 
     HTMLOptionElementFactory *option_factory;
+    HTMLLocation *location;
 
     global_prop_t *global_props;
     DWORD global_prop_cnt;
@@ -230,15 +240,6 @@ struct ConnectionPoint {
     const IID *iid;
 
     ConnectionPoint *next;
-};
-
-struct HTMLLocation {
-    DispatchEx dispex;
-    const IHTMLLocationVtbl *lpHTMLLocationVtbl;
-
-    LONG ref;
-
-    HTMLDocument *doc;
 };
 
 struct HTMLDocument {
@@ -306,8 +307,6 @@ struct HTMLDocument {
     ConnectionPoint cp_htmldocevents;
     ConnectionPoint cp_htmldocevents2;
     ConnectionPoint cp_propnotif;
-
-    HTMLLocation *location;
 
     struct list selection_list;
     struct list range_list;
@@ -514,7 +513,7 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument*,HTMLDocument**);
 HRESULT HTMLWindow_Create(HTMLDocument*,nsIDOMWindow*,HTMLWindow**);
 HTMLWindow *nswindow_to_window(const nsIDOMWindow*);
 HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLWindow*);
-HTMLLocation *HTMLLocation_Create(HTMLDocument*);
+HRESULT HTMLLocation_Create(HTMLWindow*,HTMLLocation**);
 IOmNavigator *OmNavigator_Create(void);
 
 void HTMLDocument_HTMLDocument3_Init(HTMLDocument*);
