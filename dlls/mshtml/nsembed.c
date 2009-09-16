@@ -1441,7 +1441,7 @@ static nsresult NSAPI nsEmbeddingSiteWindow_GetVisibility(nsIEmbeddingSiteWindow
 
     TRACE("(%p)->(%p)\n", This, aVisibility);
 
-    *aVisibility = This->doc && This->doc->basedoc.hwnd && IsWindowVisible(This->doc->basedoc.hwnd);
+    *aVisibility = This->doc && This->doc->hwnd && IsWindowVisible(This->doc->hwnd);
     return NS_OK;
 }
 
@@ -1523,7 +1523,7 @@ static nsresult NSAPI nsTooltipListener_OnShowTooltip(nsITooltipListener *iface,
     NSContainer *This = NSTOOLTIP_THIS(iface);
 
     if (This->doc)
-        show_tooltip(&This->doc->basedoc, aXCoord, aYCoord, aTipText);
+        show_tooltip(This->doc, aXCoord, aYCoord, aTipText);
 
     return NS_OK;
 }
@@ -1533,7 +1533,7 @@ static nsresult NSAPI nsTooltipListener_OnHideTooltip(nsITooltipListener *iface)
     NSContainer *This = NSTOOLTIP_THIS(iface);
 
     if (This->doc)
-        hide_tooltip(&This->doc->basedoc);
+        hide_tooltip(This->doc);
 
     return NS_OK;
 }

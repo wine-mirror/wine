@@ -252,7 +252,7 @@ static HRESULT WINAPI HTMLWindow2_alert(IHTMLWindow2 *iface, BSTR message)
         return S_OK;
     }
 
-    MessageBoxW(This->doc_obj->basedoc.hwnd, message, wszTitle, MB_ICONWARNING);
+    MessageBoxW(This->doc_obj->hwnd, message, wszTitle, MB_ICONWARNING);
     return S_OK;
 }
 
@@ -273,7 +273,7 @@ static HRESULT WINAPI HTMLWindow2_confirm(IHTMLWindow2 *iface, BSTR message,
         return S_OK;
     }
 
-    if(MessageBoxW(This->doc_obj->basedoc.hwnd, message, wszTitle,
+    if(MessageBoxW(This->doc_obj->hwnd, message, wszTitle,
                 MB_OKCANCEL|MB_ICONQUESTION)==IDOK)
         *confirmed = VARIANT_TRUE;
     else *confirmed = VARIANT_FALSE;
@@ -366,7 +366,7 @@ static HRESULT WINAPI HTMLWindow2_prompt(IHTMLWindow2 *iface, BSTR message,
     arg.textdata = textdata;
 
     DialogBoxParamW(hInst, MAKEINTRESOURCEW(ID_PROMPT_DIALOG),
-            This->doc_obj->basedoc.hwnd, prompt_dlgproc, (LPARAM)&arg);
+            This->doc_obj->hwnd, prompt_dlgproc, (LPARAM)&arg);
     return S_OK;
 }
 

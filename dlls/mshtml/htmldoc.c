@@ -1767,11 +1767,6 @@ static void destroy_htmldoc(HTMLDocument *This)
     set_document_bscallback(This, NULL);
     set_current_mon(This, NULL);
 
-    if(This->tooltips_hwnd)
-        DestroyWindow(This->tooltips_hwnd);
-    if(This->hwnd)
-        DestroyWindow(This->hwnd);
-
     if(This->event_target)
         release_event_target(This->event_target);
 
@@ -1898,7 +1893,14 @@ static ULONG HTMLDocumentObj_Release(HTMLDocument *base)
             IOleDocumentView_SetInPlaceSite(DOCVIEW(&This->basedoc), NULL);
         if(This->undomgr)
             IOleUndoManager_Release(This->undomgr);
+        if(This->tooltips_hwnd)
+            DestroyWindow(This->tooltips_hwnd);
+
+        if(This->hwnd)
+            DestroyWindow(This->hwnd);
+
         destroy_htmldoc(&This->basedoc);
+
         if(This->basedoc.nsdoc)
             remove_mutation_observer(This->nscontainer, This->basedoc.nsdoc);
         if(This->nscontainer)

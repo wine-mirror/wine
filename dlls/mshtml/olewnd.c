@@ -73,7 +73,7 @@ static HRESULT WINAPI OleInPlaceActiveObject_GetWindow(IOleInPlaceActiveObject *
         return E_FAIL;
     }
 
-    *phwnd = This->hwnd;
+    *phwnd = This->doc_obj->hwnd;
     return S_OK;
 }
 
@@ -196,9 +196,9 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceOb
     if(This->doc_obj->frame)
         IOleInPlaceFrame_Release(This->doc_obj->frame);
 
-    if(This->hwnd) {
-        ShowWindow(This->hwnd, SW_HIDE);
-        SetWindowPos(This->hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
+    if(This->doc_obj->hwnd) {
+        ShowWindow(This->doc_obj->hwnd, SW_HIDE);
+        SetWindowPos(This->doc_obj->hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
     }
 
     This->focus = FALSE;

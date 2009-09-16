@@ -912,7 +912,7 @@ void show_context_menu(HTMLDocumentObj *This, DWORD dwID, POINT *ppt, IDispatch 
     menu = GetSubMenu(menu_res, dwID);
 
     cmdid = TrackPopupMenu(menu, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
-            ppt->x, ppt->y, 0, This->basedoc.hwnd, NULL);
+            ppt->x, ppt->y, 0, This->hwnd, NULL);
     DestroyMenu(menu_res);
 
     if(cmdid)

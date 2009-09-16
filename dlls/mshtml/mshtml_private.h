@@ -289,9 +289,6 @@ struct HTMLDocument {
     LPOLESTR url;
     struct list bindings;
 
-    HWND hwnd;
-    HWND tooltips_hwnd;
-
     DOCHOSTUIINFO hostinfo;
 
     USERMODE usermode;
@@ -354,6 +351,9 @@ struct HTMLDocumentObj {
     IOleInPlaceUIWindow *ip_window;
 
     IOleUndoManager *undomgr;
+
+    HWND hwnd;
+    HWND tooltips_hwnd;
 };
 
 typedef struct {
@@ -584,8 +584,8 @@ void HTMLDocument_LockContainer(HTMLDocumentObj*,BOOL);
 void show_context_menu(HTMLDocumentObj*,DWORD,POINT*,IDispatch*);
 void notif_focus(HTMLDocumentObj*);
 
-void show_tooltip(HTMLDocument*,DWORD,DWORD,LPCWSTR);
-void hide_tooltip(HTMLDocument*);
+void show_tooltip(HTMLDocumentObj*,DWORD,DWORD,LPCWSTR);
+void hide_tooltip(HTMLDocumentObj*);
 HRESULT get_client_disp_property(IOleClientSite*,DISPID,VARIANT*);
 
 HRESULT ProtocolFactory_Create(REFCLSID,REFIID,void**);
@@ -705,7 +705,7 @@ void do_ns_command(HTMLDocument*,const char*,nsICommandParams*);
 #define UPDATE_UI       0x0001
 #define UPDATE_TITLE    0x0002
 
-void update_doc(HTMLDocument *This, DWORD flags);
+void update_doc(HTMLDocument*,DWORD);
 void update_title(HTMLDocumentObj*);
 
 /* editor */

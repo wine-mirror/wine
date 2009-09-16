@@ -80,7 +80,7 @@ static BOOL is_doc_child_focus(NSContainer *This)
     if(!This->doc)
         return FALSE;
 
-    for(hwnd = GetFocus(); hwnd && hwnd != This->doc->basedoc.doc_obj->basedoc.hwnd; hwnd = GetParent(hwnd));
+    for(hwnd = GetFocus(); hwnd && hwnd != This->doc->basedoc.doc_obj->hwnd; hwnd = GetParent(hwnd));
 
     return hwnd != NULL;
 }

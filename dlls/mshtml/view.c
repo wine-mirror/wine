@@ -46,7 +46,7 @@ static const WCHAR wszTooltipData[] = {'t','o','o','l','t','i','p','_','d','a','
 static ATOM serverwnd_class = 0;
 
 typedef struct {
-    HTMLDocument *doc;
+    HTMLDocumentObj *doc;
     WNDPROC proc;
 } tooltip_data;
 
@@ -56,9 +56,9 @@ static void paint_document(HTMLDocumentObj *This)
     RECT rect;
     HDC hdc;
 
-    GetClientRect(This->basedoc.hwnd, &rect);
+    GetClientRect(This->hwnd, &rect);
 
-    hdc = BeginPaint(This->basedoc.hwnd, &ps);
+    hdc = BeginPaint(This->hwnd, &ps);
 
     if(!(This->basedoc.hostinfo.dwFlags & (DOCHOSTUIFLAG_NO3DOUTERBORDER|DOCHOSTUIFLAG_NO3DBORDER)))
         DrawEdge(hdc, &rect, EDGE_SUNKEN, BF_RECT|BF_ADJUST);
@@ -80,14 +80,14 @@ static void paint_document(HTMLDocumentObj *This)
         DeleteObject(font);
     }
 
-    EndPaint(This->basedoc.hwnd, &ps);
+    EndPaint(This->hwnd, &ps);
 }
 
 static void activate_gecko(NSContainer *This)
 {
     TRACE("(%p) %p\n", This, This->window);
 
-    SetParent(This->hwnd, This->doc->basedoc.hwnd);
+    SetParent(This->hwnd, This->doc->hwnd);
     ShowWindow(This->hwnd, SW_SHOW);
 
     nsIBaseWindow_SetVisibility(This->window, TRUE);
@@ -97,8 +97,8 @@ static void activate_gecko(NSContainer *This)
 
 void update_doc(HTMLDocument *This, DWORD flags)
 {
-    if(!This->update && This->hwnd)
-        SetTimer(This->doc_obj->basedoc.hwnd, TIMER_ID, 100, NULL);
+    if(!This->update && This->doc_obj->hwnd)
+        SetTimer(This->doc_obj->hwnd, TIMER_ID, 100, NULL);
 
     This->update |= flags;
 }
@@ -135,7 +135,7 @@ static LRESULT on_timer(HTMLDocumentObj *This)
 {
     TRACE("(%p) %x\n", This, This->basedoc.update);
 
-    KillTimer(This->basedoc.hwnd, TIMER_ID);
+    KillTimer(This->hwnd, TIMER_ID);
 
     if(!This->basedoc.update)
         return 0;
@@ -181,12 +181,12 @@ void notif_focus(HTMLDocumentObj *This)
 
 static LRESULT WINAPI serverwnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    HTMLDocument *This;
+    HTMLDocumentObj *This;
 
     static const WCHAR wszTHIS[] = {'T','H','I','S',0};
 
     if(msg == WM_CREATE) {
-        This = *(HTMLDocument**)lParam;
+        This = *(HTMLDocumentObj**)lParam;
         SetPropW(hwnd, wszTHIS, This);
     }else {
         This = GetPropW(hwnd, wszTHIS);
@@ -197,25 +197,25 @@ static LRESULT WINAPI serverwnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
         This->hwnd = hwnd;
         break;
     case WM_PAINT:
-        paint_document(This->doc_obj);
+        paint_document(This);
         break;
     case WM_SIZE:
         TRACE("(%p)->(WM_SIZE)\n", This);
-        if(This->doc_obj->nscontainer) {
+        if(This->nscontainer) {
             INT ew=0, eh=0;
 
-            if(!(This->doc_obj->basedoc.hostinfo.dwFlags & (DOCHOSTUIFLAG_NO3DOUTERBORDER|DOCHOSTUIFLAG_NO3DBORDER))) {
+            if(!(This->basedoc.hostinfo.dwFlags & (DOCHOSTUIFLAG_NO3DOUTERBORDER|DOCHOSTUIFLAG_NO3DBORDER))) {
                 ew = GetSystemMetrics(SM_CXEDGE);
                 eh = GetSystemMetrics(SM_CYEDGE);
             }
 
-            SetWindowPos(This->doc_obj->nscontainer->hwnd, NULL, ew, eh,
+            SetWindowPos(This->nscontainer->hwnd, NULL, ew, eh,
                          LOWORD(lParam) - 2*ew, HIWORD(lParam) - 2*eh,
                          SWP_NOZORDER | SWP_NOACTIVATE);
         }
         break;
     case WM_TIMER:
-        return on_timer(This->doc_obj);
+        return on_timer(This);
     case WM_MOUSEACTIVATE:
         return MA_ACTIVATE;
     }
@@ -276,10 +276,10 @@ static HRESULT activate_window(HTMLDocumentObj *This)
 
     TRACE("got parent window %p\n", parent_hwnd);
 
-    if(This->basedoc.hwnd) {
-        if(GetParent(This->basedoc.hwnd) != parent_hwnd)
-            SetParent(This->basedoc.hwnd, parent_hwnd);
-        SetWindowPos(This->basedoc.hwnd, HWND_TOP,
+    if(This->hwnd) {
+        if(GetParent(This->hwnd) != parent_hwnd)
+            SetParent(This->hwnd, parent_hwnd);
+        SetWindowPos(This->hwnd, HWND_TOP,
                 posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
                 SWP_NOACTIVATE | SWP_SHOWWINDOW);
     }else {
@@ -288,17 +288,17 @@ static HRESULT activate_window(HTMLDocumentObj *This)
                 posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
                 parent_hwnd, NULL, hInst, This);
 
-        TRACE("Created window %p\n", This->basedoc.hwnd);
+        TRACE("Created window %p\n", This->hwnd);
 
-        SetWindowPos(This->basedoc.hwnd, NULL, 0, 0, 0, 0,
+        SetWindowPos(This->hwnd, NULL, 0, 0, 0, 0,
                 SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE | SWP_SHOWWINDOW);
-        RedrawWindow(This->basedoc.hwnd, NULL, NULL, RDW_INVALIDATE | RDW_NOERASE | RDW_ALLCHILDREN);
+        RedrawWindow(This->hwnd, NULL, NULL, RDW_INVALIDATE | RDW_NOERASE | RDW_ALLCHILDREN);
 
         /* NOTE:
          * Windows implementation calls:
          * RegisterWindowMessage("MSWHEEL_ROLLMSG");
          */
-        SetTimer(This->basedoc.hwnd, TIMER_ID, 100, NULL);
+        SetTimer(This->hwnd, TIMER_ID, 100, NULL);
     }
 
     if(This->nscontainer)
@@ -369,7 +369,7 @@ static LRESULT WINAPI tooltips_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
     return CallWindowProcW(data->proc, hwnd, msg, wParam, lParam);
 }
 
-static void create_tooltips_window(HTMLDocument *This)
+static void create_tooltips_window(HTMLDocumentObj *This)
 {
     tooltip_data *data = heap_alloc(sizeof(*data));
 
@@ -388,7 +388,7 @@ static void create_tooltips_window(HTMLDocument *This)
 
 }
 
-void show_tooltip(HTMLDocument *This, DWORD x, DWORD y, LPCWSTR text)
+void show_tooltip(HTMLDocumentObj *This, DWORD x, DWORD y, LPCWSTR text)
 {
     TTTOOLINFOW toolinfo = {
         sizeof(TTTOOLINFOW), 0, This->hwnd, 0xdeadbeef,
@@ -406,7 +406,7 @@ void show_tooltip(HTMLDocument *This, DWORD x, DWORD y, LPCWSTR text)
     SendMessageW(This->tooltips_hwnd, TTM_RELAYEVENT, 0, (LPARAM)&msg);
 }
 
-void hide_tooltip(HTMLDocument *This)
+void hide_tooltip(HTMLDocumentObj *This)
 {
     TTTOOLINFOW toolinfo = {
         sizeof(TTTOOLINFOW), 0, This->hwnd, 0xdeadbeef,
@@ -507,11 +507,11 @@ static HRESULT WINAPI OleDocumentView_SetRect(IOleDocumentView *iface, LPRECT pr
     if(!prcView)
         return E_INVALIDARG;
 
-    if(This->hwnd) {
-        GetClientRect(This->hwnd, &rect);
+    if(This->doc_obj->hwnd) {
+        GetClientRect(This->doc_obj->hwnd, &rect);
         if(memcmp(prcView, &rect, sizeof(RECT))) {
-            InvalidateRect(This->hwnd,NULL,TRUE);
-            SetWindowPos(This->hwnd, NULL, prcView->left, prcView->top, prcView->right,
+            InvalidateRect(This->doc_obj->hwnd, NULL, TRUE);
+            SetWindowPos(This->doc_obj->hwnd, NULL, prcView->left, prcView->top, prcView->right,
                     prcView->bottom, SWP_NOZORDER | SWP_NOACTIVATE);
         }
     }
@@ -528,7 +528,7 @@ static HRESULT WINAPI OleDocumentView_GetRect(IOleDocumentView *iface, LPRECT pr
     if(!prcView)
         return E_INVALIDARG;
 
-    GetClientRect(This->hwnd, prcView);
+    GetClientRect(This->doc_obj->hwnd, prcView);
     return S_OK;
 }
 
@@ -554,9 +554,9 @@ static HRESULT WINAPI OleDocumentView_Show(IOleDocumentView *iface, BOOL fShow)
                 return hres;
         }
         update_doc(This, UPDATE_UI);
-        ShowWindow(This->hwnd, SW_SHOW);
+        ShowWindow(This->doc_obj->hwnd, SW_SHOW);
     }else {
-        ShowWindow(This->hwnd, SW_HIDE);
+        ShowWindow(This->doc_obj->hwnd, SW_HIDE);
         if(This->doc_obj->ip_window) {
             IOleInPlaceUIWindow_Release(This->doc_obj->ip_window);
             This->doc_obj->ip_window = NULL;
