@@ -983,8 +983,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    object->lpVtbl = &IWineD3DTexture_Vtbl;
-
     hr = texture_init(object, Width, Height, Levels, This, Usage, Format, Pool, parent);
     if (FAILED(hr))
     {
@@ -1020,7 +1018,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    object->lpVtbl = &IWineD3DVolumeTexture_Vtbl;
     hr = volumetexture_init(object, Width, Height, Depth, Levels, This, Usage, Format, Pool, parent);
     if (FAILED(hr))
     {
@@ -1085,7 +1082,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    object->lpVtbl = &IWineD3DCubeTexture_Vtbl;
     hr = cubetexture_init(object, EdgeLength, Levels, This, Usage, Format, Pool, parent);
     if (FAILED(hr))
     {

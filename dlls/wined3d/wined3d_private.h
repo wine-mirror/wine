@@ -1825,8 +1825,6 @@ typedef struct IWineD3DTextureImpl
 
 } IWineD3DTextureImpl;
 
-extern const IWineD3DTextureVtbl IWineD3DTexture_Vtbl DECLSPEC_HIDDEN;
-
 HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT levels, IWineD3DDeviceImpl *device,
         DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool, IUnknown *parent) DECLSPEC_HIDDEN;
 
@@ -1843,8 +1841,6 @@ typedef struct IWineD3DCubeTextureImpl
     /* IWineD3DCubeTexture */
     IWineD3DSurface          *surfaces[6][MAX_MIP_LEVELS];
 } IWineD3DCubeTextureImpl;
-
-extern const IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl DECLSPEC_HIDDEN;
 
 HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UINT levels, IWineD3DDeviceImpl *device,
         DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool, IUnknown *parent) DECLSPEC_HIDDEN;
@@ -1894,8 +1890,6 @@ typedef struct IWineD3DVolumeTextureImpl
     /* IWineD3DVolumeTexture */
     IWineD3DVolume           *volumes[MAX_MIP_LEVELS];
 } IWineD3DVolumeTextureImpl;
-
-extern const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl DECLSPEC_HIDDEN;
 
 HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT height,
         UINT depth, UINT levels, IWineD3DDeviceImpl *device, DWORD usage,
