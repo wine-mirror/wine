@@ -1545,23 +1545,20 @@ static HRESULT WINAPI HTMLTxtRange_moveEnd(IHTMLTxtRange *iface, BSTR Unit,
 static HRESULT WINAPI HTMLTxtRange_select(IHTMLTxtRange *iface)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    nsISelection *nsselection;
+    nsresult nsres;
 
     TRACE("(%p)\n", This);
 
-    if(This->doc->nscontainer) {
-        nsIDOMWindow *dom_window = NULL;
-        nsISelection *nsselection;
-
-        nsIWebBrowser_GetContentDOMWindow(This->doc->nscontainer->webbrowser, &dom_window);
-        nsIDOMWindow_GetSelection(dom_window, &nsselection);
-        nsIDOMWindow_Release(dom_window);
-
-        nsISelection_RemoveAllRanges(nsselection);
-        nsISelection_AddRange(nsselection, This->nsrange);
-
-        nsISelection_Release(nsselection);
+    nsres = nsIDOMWindow_GetSelection(This->doc->window->nswindow, &nsselection);
+    if(NS_FAILED(nsres)) {
+        ERR("GetSelection failed: %08x\n", nsres);
+        return E_FAIL;
     }
 
+    nsISelection_RemoveAllRanges(nsselection);
+    nsISelection_AddRange(nsselection, This->nsrange);
+    nsISelection_Release(nsselection);
     return S_OK;
 }
 
