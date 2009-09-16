@@ -551,6 +551,12 @@ static void test_DPA_LoadStream(void)
     ULONG written, ret;
     HDPA dpa;
 
+    if(!pDPA_LoadStream)
+    {
+        win_skip("DPA_LoadStream() not available. Skipping stream tests.\n");
+        return;
+    }
+
     hRes = CoInitialize(NULL);
     if (hRes != S_OK)
     {
@@ -655,9 +661,12 @@ static void test_DPA_SaveStream(void)
     static const WCHAR szStg[] = { 'S','t','g',0 };
     IStorage* pStg = NULL;
     IStream* pStm = NULL;
-    DWORD dwMode;
+    DWORD dwMode, dw;
     HRESULT hRes;
     ULONG ret;
+    INT i;
+    BOOL rc;
+    LARGE_INTEGER liZero;
 
     if(!pDPA_SaveStream)
     {
@@ -694,60 +703,19 @@ if (0) {
     expect(E_INVALIDARG, hRes);
 }
 
-    pDPA_Destroy(dpa);
-
-    ret = IStream_Release(pStm);
-    ok(!ret, "ret=%d\n", ret);
-
-    ret = IStorage_Release(pStg);
-    ok(!ret, "ret=%d\n", ret);
-
-    CoUninitialize();
-}
-
-static void test_dpa_stream(void)
-{
-    HDPA dpa;
-    HRESULT hRes;
-    INT ret, i;
-    BOOL rc;
-
-    static const WCHAR szStg[] = { 'S','t','g',0 };
-    IStorage* pStg = NULL;
-    IStream* pStm = NULL;
-    LARGE_INTEGER liZero;
-    DWORD dwMode, dw;
-
-    if(!pDPA_SaveStream)
-    {
-        win_skip("DPA_SaveStream() not available. Skipping stream tests.\n");
-        return;
-    }
-
-    hRes = CoInitialize(NULL);
-    if (hRes != S_OK)
-    {
-        ok(0, "hResult: %d\n", hRes);
-        return;
-    }
-
-    dpa = pDPA_Create(0);
-
+    /* saving/loading */
     for (i = 0; i < 6; i++)
     {
         ret = pDPA_InsertPtr(dpa, i, (PVOID)(i+1));
         ok(ret == i, "ret=%d\n", ret);
     }
 
-    dwMode = STGM_DIRECT|STGM_CREATE|STGM_READWRITE|STGM_SHARE_EXCLUSIVE;
-    hRes = StgCreateDocfile(NULL, dwMode|STGM_DELETEONRELEASE, 0, &pStg);
-    expect(S_OK, hRes);
-
-    hRes = IStorage_CreateStream(pStg, szStg, dwMode, 0, 0, &pStm);
+    liZero.QuadPart = 0;
+    hRes = IStream_Seek(pStm, liZero, STREAM_SEEK_SET, NULL);
     expect(S_OK, hRes);
 
     hRes = pDPA_SaveStream(dpa, CB_Save, pStm, (void*)0xdeadbeef);
-    ok(hRes == S_OK, "hRes=0x%x\n", hRes);
+    expect(S_OK, hRes);
     pDPA_Destroy(dpa);
 
     liZero.QuadPart = 0;
@@ -786,5 +754,4 @@ START_TEST(dpa)
     test_DPA_DestroyCallback();
     test_DPA_LoadStream();
     test_DPA_SaveStream();
-    test_dpa_stream();
 }
