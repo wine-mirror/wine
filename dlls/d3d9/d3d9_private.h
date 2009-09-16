@@ -301,9 +301,6 @@ typedef struct IDirect3DSurface9Impl
     /* If set forward refcounting to this object */
     IUnknown                    *forwardReference;
 
-    /* Flags an implicit surface */
-    BOOL                        isImplicit;
-
     BOOL                        getdc_supported;
 } IDirect3DSurface9Impl;
 
@@ -539,9 +536,6 @@ typedef struct IDirect3DQuery9Impl {
 
 /* Callbacks */
 extern ULONG WINAPI D3D9CB_DestroySwapChain (IWineD3DSwapChain *pSwapChain);
-extern ULONG WINAPI D3D9CB_DestroyDepthStencilSurface (IWineD3DSurface *pSurface);
-extern ULONG WINAPI D3D9CB_DestroyRenderTarget (IWineD3DSurface *pSurface);
-extern ULONG WINAPI D3D9CB_DestroySurface(IWineD3DSurface *pSurface);
 extern ULONG WINAPI D3D9CB_DestroyVolume(IWineD3DVolume *pVolume);
 
 #endif /* __WINE_D3D9_PRIVATE_H */

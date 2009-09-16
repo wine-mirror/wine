@@ -110,7 +110,7 @@ static void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3
     *dirty = FALSE;
 }
 
-static void cubetexture_cleanup(IWineD3DCubeTextureImpl *This, D3DCB_DESTROYSURFACEFN surface_destroy_cb)
+static void cubetexture_cleanup(IWineD3DCubeTextureImpl *This)
 {
     unsigned int i, j;
 
@@ -130,7 +130,7 @@ static void cubetexture_cleanup(IWineD3DCubeTextureImpl *This, D3DCB_DESTROYSURF
                 surface_set_texture_name(surface, 0, FALSE);
                 surface_set_texture_target(surface, 0);
                 IWineD3DSurface_SetContainer(surface, NULL);
-                surface_destroy_cb(surface);
+                IWineD3DSurface_Release(surface);
             }
         }
     }
@@ -237,7 +237,7 @@ HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UIN
             {
                 FIXME("(%p) Failed to create surface, hr %#x.\n", texture, hr);
                 texture->surfaces[j][i] = NULL;
-                cubetexture_cleanup(texture, D3DCB_DefaultDestroySurface);
+                cubetexture_cleanup(texture);
                 return hr;
             }
 
@@ -289,7 +289,7 @@ static ULONG WINAPI IWineD3DCubeTextureImpl_Release(IWineD3DCubeTexture *iface) 
     TRACE("(%p) : Releasing from %d\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
-        IWineD3DCubeTexture_Destroy(iface, D3DCB_DefaultDestroySurface);
+        IWineD3DCubeTexture_Destroy(iface);
     }
     return ref;
 }
@@ -432,10 +432,11 @@ static BOOL WINAPI IWineD3DCubeTextureImpl_IsCondNP2(IWineD3DCubeTexture *iface)
 /* *******************************************
    IWineD3DCubeTexture IWineD3DCubeTexture parts follow
    ******************************************* */
-static void WINAPI IWineD3DCubeTextureImpl_Destroy(IWineD3DCubeTexture *iface, D3DCB_DESTROYSURFACEFN D3DCB_DestroySurface) {
+static void WINAPI IWineD3DCubeTextureImpl_Destroy(IWineD3DCubeTexture *iface)
+{
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
 
-    cubetexture_cleanup(This, D3DCB_DestroySurface);
+    cubetexture_cleanup(This);
     /* finally delete the object */
     HeapFree(GetProcessHeap(), 0, This);
 }

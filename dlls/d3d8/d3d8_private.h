@@ -284,9 +284,6 @@ struct IDirect3DSurface8Impl
 
     /* If set forward refcounting to this object */
     IUnknown                    *forwardReference;
-
-    /* Flags an implicit surface */
-    BOOL                        isImplicit;
 };
 
 HRESULT surface_init(IDirect3DSurface8Impl *surface, IDirect3DDevice8Impl *device,
@@ -650,9 +647,6 @@ size_t parse_token(const DWORD* pToken);
 
 /* Callbacks */
 extern ULONG WINAPI D3D8CB_DestroySwapChain (IWineD3DSwapChain *pSwapChain);
-extern ULONG WINAPI D3D8CB_DestroyDepthStencilSurface (IWineD3DSurface *pSurface);
-extern ULONG WINAPI D3D8CB_DestroyRenderTarget (IWineD3DSurface *pSurface);
-extern ULONG WINAPI D3D8CB_DestroySurface(IWineD3DSurface *pSurface);
 extern ULONG WINAPI D3D8CB_DestroyVolume(IWineD3DVolume *pVolume);
 
 #endif /* __WINE_D3DX8_PRIVATE_H */

@@ -309,7 +309,7 @@ static ULONG WINAPI IDirect3DDevice8Impl_Release(LPDIRECT3DDEVICE8 iface) {
         }
         HeapFree(GetProcessHeap(), 0, This->decls);
 
-        IWineD3DDevice_Uninit3D(This->WineD3DDevice, D3D8CB_DestroyDepthStencilSurface, D3D8CB_DestroySwapChain);
+        IWineD3DDevice_Uninit3D(This->WineD3DDevice, D3D8CB_DestroySwapChain);
         IWineD3DDevice_Release(This->WineD3DDevice);
         HeapFree(GetProcessHeap(), 0, This->handle_table.entries);
         HeapFree(GetProcessHeap(), 0, This);
@@ -2602,17 +2602,6 @@ const IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl =
     IDirect3DDevice8Impl_DeletePatch
 };
 
-ULONG WINAPI D3D8CB_DestroySurface(IWineD3DSurface *pSurface) {
-    IDirect3DSurface8Impl* surfaceParent;
-    TRACE("(%p) call back\n", pSurface);
-
-    IWineD3DSurface_GetParent(pSurface, (IUnknown **) &surfaceParent);
-    /* GetParent's AddRef was forwarded to an object in destruction.
-     * Releasing it here again would cause an endless recursion. */
-    surfaceParent->forwardReference = NULL;
-    return IDirect3DSurface8_Release((IDirect3DSurface8*) surfaceParent);
-}
-
 /* IWineD3DDeviceParent IUnknown methods */
 
 static inline struct IDirect3DDevice8Impl *device_from_device_parent(IWineD3DDeviceParent *iface)
@@ -2672,9 +2661,13 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
     }
 
     *surface = d3d_surface->wineD3DSurface;
+    IWineD3DSurface_AddRef(*surface);
+
     d3d_surface->container = superior;
     IUnknown_Release(d3d_surface->parentDevice);
     d3d_surface->parentDevice = NULL;
+
+    IDirect3DSurface8_Release((IDirect3DSurface8 *)d3d_surface);
     d3d_surface->forwardReference = superior;
 
     return hr;
@@ -2701,8 +2694,9 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
     }
 
     *surface = d3d_surface->wineD3DSurface;
+    IWineD3DSurface_AddRef(*surface);
+
     d3d_surface->container = (IUnknown *)This;
-    d3d_surface->isImplicit = TRUE;
     /* Implicit surfaces are created with an refcount of 0 */
     IUnknown_Release((IUnknown *)d3d_surface);
 
@@ -2730,8 +2724,9 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
     }
 
     *surface = d3d_surface->wineD3DSurface;
+    IWineD3DSurface_AddRef(*surface);
+
     d3d_surface->container = (IUnknown *)This;
-    d3d_surface->isImplicit = TRUE;
     /* Implicit surfaces are created with an refcount of 0 */
     IUnknown_Release((IUnknown *)d3d_surface);
 

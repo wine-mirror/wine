@@ -1379,6 +1379,8 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
     }
 
     *surface = texture->wined3d_surface;
+    IWineD3DSurface_AddRef(*surface);
+    ID3D10Texture2D_Release((ID3D10Texture2D *)texture);
 
     return S_OK;
 }
@@ -1418,6 +1420,8 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
     }
 
     *surface = texture->wined3d_surface;
+    IWineD3DSurface_AddRef(*surface);
+    ID3D10Texture2D_Release((ID3D10Texture2D *)texture);
 
     return S_OK;
 }
@@ -1457,6 +1461,8 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
     }
 
     *surface = texture->wined3d_surface;
+    IWineD3DSurface_AddRef(*surface);
+    ID3D10Texture2D_Release((ID3D10Texture2D *)texture);
 
     return S_OK;
 }

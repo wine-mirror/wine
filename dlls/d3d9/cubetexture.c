@@ -62,7 +62,7 @@ static ULONG WINAPI IDirect3DCubeTexture9Impl_Release(LPDIRECT3DCUBETEXTURE9 ifa
         TRACE("Releasing child %p\n", This->wineD3DCubeTexture);
 
         wined3d_mutex_lock();
-        IWineD3DCubeTexture_Destroy(This->wineD3DCubeTexture, D3D9CB_DestroySurface);
+        IWineD3DCubeTexture_Destroy(This->wineD3DCubeTexture);
         IDirect3DDevice9Ex_Release(This->parentDevice);
         wined3d_mutex_unlock();
 

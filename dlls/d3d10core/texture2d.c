@@ -61,7 +61,17 @@ static ULONG STDMETHODCALLTYPE d3d10_texture2d_AddRef(ID3D10Texture2D *iface)
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
 
+    if (refcount == 1 && This->wined3d_surface) IWineD3DSurface_AddRef(This->wined3d_surface);
+
     return refcount;
+}
+
+static void STDMETHODCALLTYPE d3d10_texture2d_wined3d_object_released(void *parent)
+{
+    struct d3d10_texture2d *This = parent;
+
+    if (This->dxgi_surface) IDXGISurface_Release(This->dxgi_surface);
+    HeapFree(GetProcessHeap(), 0, This);
 }
 
 static ULONG STDMETHODCALLTYPE d3d10_texture2d_Release(ID3D10Texture2D *iface)
@@ -73,9 +83,8 @@ static ULONG STDMETHODCALLTYPE d3d10_texture2d_Release(ID3D10Texture2D *iface)
 
     if (!refcount)
     {
-        if (This->dxgi_surface) IDXGISurface_Release(This->dxgi_surface);
         if (This->wined3d_surface) IWineD3DSurface_Release(This->wined3d_surface);
-        HeapFree(GetProcessHeap(), 0, This);
+        else d3d10_texture2d_wined3d_object_released(This);
     }
 
     return refcount;
@@ -182,6 +191,11 @@ static const struct ID3D10Texture2DVtbl d3d10_texture2d_vtbl =
     d3d10_texture2d_GetDesc,
 };
 
+static const struct wined3d_parent_ops d3d10_texture2d_wined3d_parent_ops =
+{
+    d3d10_texture2d_wined3d_object_released,
+};
+
 HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_device *device,
         const D3D10_TEXTURE2D_DESC *desc)
 {
@@ -217,7 +231,8 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
                 wined3dformat_from_dxgi_format(desc->Format), FALSE, FALSE, 0,
                 &texture->wined3d_surface, desc->Usage, WINED3DPOOL_DEFAULT,
                 desc->SampleDesc.Count > 1 ? desc->SampleDesc.Count : WINED3DMULTISAMPLE_NONE,
-                desc->SampleDesc.Quality, SURFACE_OPENGL, (IUnknown *)texture);
+                desc->SampleDesc.Quality, SURFACE_OPENGL, (IUnknown *)texture,
+                &d3d10_texture2d_wined3d_parent_ops);
         if (FAILED(hr))
         {
             ERR("CreateSurface failed, returning %#x\n", hr);

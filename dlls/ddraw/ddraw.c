@@ -62,6 +62,13 @@ static const DDDEVICEIDENTIFIER2 deviceidentifier =
     0
 };
 
+static void STDMETHODCALLTYPE ddraw_null_wined3d_object_destroyed(void *parent) {}
+
+static const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops =
+{
+    ddraw_null_wined3d_object_destroyed,
+};
+
 /*****************************************************************************
  * IUnknown Methods
  *****************************************************************************/
@@ -1655,11 +1662,9 @@ IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
     IDirectDrawSurfaceImpl *surfImpl = (IDirectDrawSurfaceImpl *)surf;
     IDirectDrawImpl *This = surfImpl->ddraw;
     IUnknown *Parent;
-    IParentImpl *parImpl = NULL;
     IWineD3DSurface *wineD3DSurface;
     IWineD3DSwapChain *swapchain;
     HRESULT hr;
-    void *tmp;
     IWineD3DClipper *clipper = NULL;
 
     WINED3DSURFACE_DESC     Desc;
@@ -1683,18 +1688,6 @@ IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
     swapchain = surfImpl->wineD3DSwapChain;
     surfImpl->wineD3DSwapChain = NULL;
     wineD3DSurface = surfImpl->WineD3DSurface;
-    IWineD3DSurface_GetParent(wineD3DSurface, &Parent);
-    IUnknown_Release(Parent); /* For the getParent */
-
-    /* Is the parent an IParent interface? */
-    if(IUnknown_QueryInterface(Parent, &IID_IParent, &tmp) == S_OK)
-    {
-        /* It is a IParent interface! */
-        IUnknown_Release(Parent); /* For the QueryInterface */
-        parImpl = (IParentImpl *)Parent;
-        /* Release the reference the parent interface is holding */
-        IWineD3DSurface_Release(wineD3DSurface);
-    }
 
     /* get the clipper */
     IWineD3DSurface_GetClipper(wineD3DSurface, &clipper);
@@ -1711,34 +1704,19 @@ IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
     Width = Desc.width;
     Height = Desc.height;
 
-    if(swapchain) {
-        /* If there's a swapchain, it owns the IParent interface. Create a new one for the
-         * new surface
-         */
-        parImpl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*parImpl));
-        parImpl->lpVtbl = &IParent_Vtbl;
-        parImpl->ref = 1;
-
-        Parent = (IUnknown *) parImpl;
-    }
+    IWineD3DSurface_GetParent(wineD3DSurface, &Parent);
 
     /* Create the new surface */
     hr = IWineD3DDevice_CreateSurface(This->wineD3DDevice, Width, Height, Format,
-            TRUE /* Lockable */, FALSE /* Discard */, surfImpl->mipmap_level, &surfImpl->WineD3DSurface,
-            Usage, Pool, MultiSampleType, MultiSampleQuality, This->ImplType, Parent);
+            TRUE /* Lockable */, FALSE /* Discard */, surfImpl->mipmap_level, &surfImpl->WineD3DSurface, Usage, Pool,
+            MultiSampleType, MultiSampleQuality, This->ImplType, Parent, &ddraw_null_wined3d_parent_ops);
+    IUnknown_Release(Parent);
 
     if(hr != D3D_OK)
         return hr;
 
     IWineD3DSurface_SetClipper(surfImpl->WineD3DSurface, clipper);
 
-    /* Update the IParent if it exists */
-    if(parImpl)
-    {
-        parImpl->child = (IUnknown *) surfImpl->WineD3DSurface;
-        /* Add a reference for the IParent */
-        IWineD3DSurface_AddRef(surfImpl->WineD3DSurface);
-    }
     /* TODO: Copy the surface content, except for render targets */
 
     /* If there's a swapchain, it owns the wined3d surfaces. So Destroy
@@ -1787,7 +1765,7 @@ IDirectDrawImpl_RecreateAllSurfaces(IDirectDrawImpl *This)
         /* Should happen almost never */
         FIXME("(%p) Switching to non-opengl surfaces with d3d started. Is this a bug?\n", This);
         /* Shutdown d3d */
-        IWineD3DDevice_Uninit3D(This->wineD3DDevice, D3D7CB_DestroyDepthStencilSurface, D3D7CB_DestroySwapChain);
+        IWineD3DDevice_Uninit3D(This->wineD3DDevice, D3D7CB_DestroySwapChain);
     }
     /* Contrary: D3D starting is handled by the caller, because it knows the render target */
 
@@ -1804,15 +1782,6 @@ ULONG WINAPI D3D7CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain) {
     IWineD3DSwapChain_GetParent(pSwapChain, &swapChainParent);
     IUnknown_Release(swapChainParent);
     return IUnknown_Release(swapChainParent);
-}
-
-ULONG WINAPI D3D7CB_DestroyDepthStencilSurface(IWineD3DSurface *pSurface) {
-    IUnknown* surfaceParent;
-    TRACE("(%p) call back\n", pSurface);
-
-    IWineD3DSurface_GetParent(pSurface, &surfaceParent);
-    IUnknown_Release(surfaceParent);
-    return IUnknown_Release(surfaceParent);
 }
 
 /*****************************************************************************
@@ -1841,8 +1810,6 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
     DWORD Usage = 0;
     WINED3DSURFTYPE ImplType = This->ImplType;
     WINED3DSURFACE_DESC Desc;
-    IUnknown *Parent;
-    IParentImpl *parImpl = NULL;
     WINED3DPOOL Pool = WINED3DPOOL_DEFAULT;
 
     if (TRACE_ON(ddraw))
@@ -1990,49 +1957,16 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
     /* A trace message for debugging */
     TRACE("(%p) Created IDirectDrawSurface implementation structure at %p\n", This, *ppSurf);
 
-    if(pDDSD->ddsCaps.dwCaps & ( DDSCAPS_PRIMARYSURFACE | DDSCAPS_TEXTURE | DDSCAPS_3DDEVICE) )
-    {
-        /* Render targets and textures need a IParent interface,
-         * because WineD3D will destroy them when the swapchain
-         * is released
-         */
-        parImpl = HeapAlloc(GetProcessHeap(), 0, sizeof(IParentImpl));
-        if(!parImpl)
-        {
-            ERR("Out of memory when allocating memory for a IParent implementation\n");
-            return DDERR_OUTOFMEMORY;
-        }
-        parImpl->ref = 1;
-        parImpl->lpVtbl = &IParent_Vtbl;
-        Parent = (IUnknown *)parImpl;
-        TRACE("Using IParent interface %p as parent\n", parImpl);
-    }
-    else
-    {
-        /* Use the surface as parent */
-        Parent = (IUnknown *)*ppSurf;
-        TRACE("Using Surface interface %p as parent\n", *ppSurf);
-    }
-
     /* Now create the WineD3D Surface */
     hr = IWineD3DDevice_CreateSurface(This->wineD3DDevice, pDDSD->dwWidth, pDDSD->dwHeight, Format,
             TRUE /* Lockable */, FALSE /* Discard */, level, &(*ppSurf)->WineD3DSurface,
-            Usage, Pool, WINED3DMULTISAMPLE_NONE, 0 /* MultiSampleQuality */, ImplType, Parent);
+            Usage, Pool, WINED3DMULTISAMPLE_NONE, 0 /* MultiSampleQuality */, ImplType,
+            (IUnknown *)*ppSurf, &ddraw_null_wined3d_parent_ops);
 
     if(hr != D3D_OK)
     {
         ERR("IWineD3DDevice::CreateSurface failed. hr = %08x\n", hr);
         return hr;
-    }
-
-    /* Set the child of the parent implementation if it exists */
-    if(parImpl)
-    {
-        parImpl->child = (IUnknown *) (*ppSurf)->WineD3DSurface;
-        /* The IParent releases the WineD3DSurface, and
-         * the ddraw surface does that too. Hold a reference
-         */
-        IWineD3DSurface_AddRef((*ppSurf)->WineD3DSurface);
     }
 
     /* Increase the surface counter, and attach the surface */
@@ -3032,9 +2966,7 @@ IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *This,
     {
         ERR("Error allocating an array for the converted vertex decls\n");
         This->declArraySize = 0;
-        hr = IWineD3DDevice_Uninit3D(This->wineD3DDevice,
-                                     D3D7CB_DestroyDepthStencilSurface,
-                                     D3D7CB_DestroySwapChain);
+        hr = IWineD3DDevice_Uninit3D(This->wineD3DDevice, D3D7CB_DestroySwapChain);
         return E_OUTOFMEMORY;
     }
 
@@ -3436,6 +3368,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
 
     /* Return the surface */
     *surface = surf->WineD3DSurface;
+    IWineD3DSurface_AddRef(*surface);
 
     TRACE("Returning wineD3DSurface %p, it belongs to surface %p\n", *surface, surf);
 
@@ -3472,6 +3405,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
     /* TODO: Return failure if the dimensions do not match, but this shouldn't happen */
 
     *surface = target->WineD3DSurface;
+    IWineD3DSurface_AddRef(*surface);
     target->isRenderTarget = TRUE;
 
     TRACE("Returning wineD3DSurface %p, it belongs to surface %p\n", *surface, d3d_surface);
@@ -3484,7 +3418,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
         DWORD multisample_quality, BOOL discard, IWineD3DSurface **surface)
 {
     struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
-    /* Create a Depth Stencil surface to make WineD3D happy */
+    IDirectDrawSurfaceImpl *ddraw_surface;
     DDSURFACEDESC2 ddsd;
     HRESULT hr;
 
@@ -3512,8 +3446,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
     }
 
     This->depthstencil = TRUE;
-    hr = IDirectDraw7_CreateSurface((IDirectDraw7 *)This,
-            &ddsd, (IDirectDrawSurface7 **)&This->DepthStencilBuffer, NULL);
+    hr = IDirectDraw7_CreateSurface((IDirectDraw7 *)This, &ddsd, (IDirectDrawSurface7 **)&ddraw_surface, NULL);
     This->depthstencil = FALSE;
     if(FAILED(hr))
     {
@@ -3521,7 +3454,9 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
         return hr;
     }
 
-    *surface = This->DepthStencilBuffer->WineD3DSurface;
+    *surface = ddraw_surface->WineD3DSurface;
+    IWineD3DSurface_AddRef(*surface);
+    IDirectDrawSurface7_Release((IDirectDrawSurface7 *)ddraw_surface);
 
     return D3D_OK;
 }

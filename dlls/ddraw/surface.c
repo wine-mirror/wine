@@ -159,6 +159,13 @@ IDirectDrawSurfaceImpl_AddRef(IDirectDrawSurface7 *iface)
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
+    if (refCount == 1 && This->WineD3DSurface)
+    {
+        EnterCriticalSection(&ddraw_cs);
+        IWineD3DSurface_AddRef(This->WineD3DSurface);
+        LeaveCriticalSection(&ddraw_cs);
+    }
+
     TRACE("(%p) : AddRef increasing from %d\n", This, refCount - 1);
     return refCount;
 }
@@ -320,7 +327,7 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
                 HeapFree(GetProcessHeap(), 0, ddraw->decls);
                 ddraw->numConvertedDecls = 0;
 
-                if(IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice, D3D7CB_DestroyDepthStencilSurface, D3D7CB_DestroySwapChain) != D3D_OK)
+                if (FAILED(IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice, D3D7CB_DestroySwapChain)))
                 {
                     /* Not good */
                     ERR("(%p) Failed to uninit 3D\n", This);

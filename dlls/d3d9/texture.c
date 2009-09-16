@@ -60,7 +60,7 @@ static ULONG WINAPI IDirect3DTexture9Impl_Release(LPDIRECT3DTEXTURE9 iface) {
 
     if (ref == 0) {
         wined3d_mutex_lock();
-        IWineD3DTexture_Destroy(This->wineD3DTexture, D3D9CB_DestroySurface);
+        IWineD3DTexture_Destroy(This->wineD3DTexture);
         wined3d_mutex_unlock();
 
         IDirect3DDevice9Ex_Release(This->parentDevice);

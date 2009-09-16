@@ -53,7 +53,13 @@ static ULONG WINAPI IDirect3DSurface9Impl_AddRef(LPDIRECT3DSURFACE9 iface) {
     } else {
         /* No container, handle our own refcounting */
         ULONG ref = InterlockedIncrement(&This->ref);
-        if(ref == 1 && This->parentDevice) IDirect3DDevice9Ex_AddRef(This->parentDevice);
+        if (ref == 1)
+        {
+            if (This->parentDevice) IDirect3DDevice9Ex_AddRef(This->parentDevice);
+            wined3d_mutex_lock();
+            IWineD3DSurface_AddRef(This->wineD3DSurface);
+            wined3d_mutex_unlock();
+        }
         TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
         return ref;
@@ -77,13 +83,9 @@ static ULONG WINAPI IDirect3DSurface9Impl_Release(LPDIRECT3DSURFACE9 iface) {
 
         if (ref == 0) {
             if (This->parentDevice) IDirect3DDevice9Ex_Release(This->parentDevice);
-            if (!This->isImplicit) {
-                wined3d_mutex_lock();
-                IWineD3DSurface_Release(This->wineD3DSurface);
-                wined3d_mutex_unlock();
-
-                HeapFree(GetProcessHeap(), 0, This);
-            }
+            wined3d_mutex_lock();
+            IWineD3DSurface_Release(This->wineD3DSurface);
+            wined3d_mutex_unlock();
         }
 
         return ref;
@@ -322,6 +324,16 @@ static const IDirect3DSurface9Vtbl Direct3DSurface9_Vtbl =
     IDirect3DSurface9Impl_ReleaseDC
 };
 
+static void STDMETHODCALLTYPE surface_wined3d_object_destroyed(void *parent)
+{
+    HeapFree(GetProcessHeap(), 0, parent);
+}
+
+static const struct wined3d_parent_ops d3d9_surface_wined3d_parent_ops =
+{
+    surface_wined3d_object_destroyed,
+};
+
 HRESULT surface_init(IDirect3DSurface9Impl *surface, IDirect3DDevice9Impl *device,
         UINT width, UINT height, D3DFORMAT format, BOOL lockable, BOOL discard, UINT level,
         DWORD usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality)
@@ -357,7 +369,8 @@ HRESULT surface_init(IDirect3DSurface9Impl *surface, IDirect3DDevice9Impl *devic
     wined3d_mutex_lock();
     hr = IWineD3DDevice_CreateSurface(device->WineD3DDevice, width, height, wined3dformat_from_d3dformat(format),
             lockable, discard, level, &surface->wineD3DSurface, usage & WINED3DUSAGE_MASK, (WINED3DPOOL)pool,
-            multisample_type, multisample_quality, SURFACE_OPENGL, (IUnknown *)surface);
+            multisample_type, multisample_quality, SURFACE_OPENGL, (IUnknown *)surface,
+            &d3d9_surface_wined3d_parent_ops);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {

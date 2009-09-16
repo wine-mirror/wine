@@ -2143,6 +2143,11 @@ struct wined3d_shader_signature
     char *string_data;
 };
 
+struct wined3d_parent_ops
+{
+    void (*wined3d_object_destroyed)(void *parent);
+};
+
 interface IWineD3DResource;
 interface IWineD3DSurface;
 interface IWineD3DVolume;
@@ -2210,7 +2215,6 @@ interface IWineD3DDeviceParent : IUnknown
         [out] IWineD3DSwapChain **swapchain
     );
 }
-typedef ULONG (*D3DCB_DESTROYSURFACEFN)(IWineD3DSurface *pSurface);
 typedef ULONG (*D3DCB_DESTROYVOLUMEFN)(IWineD3DVolume *pVolume);
 typedef ULONG (*D3DCB_DESTROYSWAPCHAINFN)(IWineD3DSwapChain *pSwapChain);
 typedef HRESULT (*D3DCB_ENUMRESOURCES)(IWineD3DResource *resource, void *pData);
@@ -2619,7 +2623,6 @@ interface IWineD3DBaseTexture : IWineD3DResource
 interface IWineD3DTexture : IWineD3DBaseTexture
 {
     void Destroy(
-        [in] D3DCB_DESTROYSURFACEFN destroy_surface_callback
     );
     HRESULT GetLevelDesc(
         [in] UINT level,
@@ -2651,7 +2654,6 @@ interface IWineD3DTexture : IWineD3DBaseTexture
 interface IWineD3DCubeTexture : IWineD3DBaseTexture
 {
     void Destroy(
-        [in] D3DCB_DESTROYSURFACEFN destroy_surface_callback
     );
     HRESULT GetLevelDesc(
         [in] UINT level,
@@ -2773,7 +2775,6 @@ interface IWineD3DQuery : IWineD3DBase
 interface IWineD3DSwapChain : IWineD3DBase
 {
     void Destroy(
-        [in] D3DCB_DESTROYSURFACEFN destroy_surface_callback
     );
     HRESULT GetDevice(
         [out] IWineD3DDevice **device
@@ -2930,7 +2931,8 @@ interface IWineD3DDevice : IWineD3DBase
         [in] WINED3DMULTISAMPLE_TYPE multisample_type,
         [in] DWORD multisample_quality,
         [in] WINED3DSURFTYPE surface_type,
-        [in] IUnknown *parent
+        [in] IUnknown *parent,
+        [in] const struct wined3d_parent_ops *parent_ops
     );
     HRESULT CreateRendertargetView(
         [in] IWineD3DResource *resource,
@@ -3024,7 +3026,6 @@ interface IWineD3DDevice : IWineD3DBase
         [in] WINED3DPRESENT_PARAMETERS *present_parameters
     );
     HRESULT Uninit3D(
-        [in] D3DCB_DESTROYSURFACEFN destroy_surface_callback,
         [in] D3DCB_DESTROYSWAPCHAINFN destroy_swapchain_callback
     );
     HRESULT UninitGDI(

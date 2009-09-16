@@ -901,7 +901,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Width, UINT Height,
         WINED3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IWineD3DSurface **ppSurface,
         DWORD Usage, WINED3DPOOL Pool, WINED3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality,
-        WINED3DSURFTYPE Impl, IUnknown *parent)
+        WINED3DSURFTYPE Impl, IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSurfaceImpl *object;
@@ -924,7 +924,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UI
     }
 
     hr = surface_init(object, Impl, This->surface_alignment, Width, Height, Level, Lockable,
-            Discard, MultiSample, MultisampleQuality, This, Usage, Format, Pool, parent);
+            Discard, MultiSample, MultisampleQuality, This, Usage, Format, Pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize surface, returning %#x.\n", hr);
@@ -1343,7 +1343,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
     HDC                     hDc;
     IWineD3DSwapChainImpl  *object; /** NOTE: impl ref allowed since this is a create function **/
     HRESULT                 hr;
-    IUnknown               *bufferParent;
     BOOL                    displaymode_set = FALSE;
     WINED3DDISPLAYMODE      Mode;
     const struct GlPixelFormatDesc *format_desc;
@@ -1604,26 +1603,14 @@ error:
     if (object->backBuffer) {
         UINT i;
         for(i = 0; i < object->presentParms.BackBufferCount; i++) {
-            if(object->backBuffer[i]) {
-                IWineD3DSurface_GetParent(object->backBuffer[i], &bufferParent);
-                IUnknown_Release(bufferParent); /* once for the get parent */
-                if (IUnknown_Release(bufferParent) > 0) {
-                    FIXME("(%p) Something's still holding the back buffer\n",This);
-                }
-            }
+            if (object->backBuffer[i]) IWineD3DSurface_Release(object->backBuffer[i]);
         }
         HeapFree(GetProcessHeap(), 0, object->backBuffer);
         object->backBuffer = NULL;
     }
     if(object->context && object->context[0])
         DestroyContext(This, object->context[0]);
-    if(object->frontBuffer) {
-        IWineD3DSurface_GetParent(object->frontBuffer, &bufferParent);
-        IUnknown_Release(bufferParent); /* once for the get parent */
-        if (IUnknown_Release(bufferParent) > 0) {
-            FIXME("(%p) Something's still holding the front buffer\n",This);
-        }
-    }
+    if (object->frontBuffer) IWineD3DSurface_Release(object->frontBuffer);
     HeapFree(GetProcessHeap(), 0, object);
     return hr;
 }
@@ -1983,7 +1970,8 @@ static void IWineD3DDeviceImpl_LoadLogo(IWineD3DDeviceImpl *This, const char *fi
     }
 
     hr = IWineD3DDevice_CreateSurface((IWineD3DDevice *) This, bm.bmWidth, bm.bmHeight, WINED3DFMT_R5G6B5, TRUE,
-            FALSE, 0, &This->logo_surface, 0, WINED3DPOOL_DEFAULT, WINED3DMULTISAMPLE_NONE, 0, SURFACE_OPENGL, NULL);
+            FALSE, 0, &This->logo_surface, 0, WINED3DPOOL_DEFAULT, WINED3DMULTISAMPLE_NONE, 0, SURFACE_OPENGL,
+            NULL, &wined3d_null_parent_ops);
     if(FAILED(hr)) {
         ERR("Wine logo requested, but failed to create surface\n");
         goto out;
@@ -2287,7 +2275,9 @@ static HRESULT WINAPI device_unload_resource(IWineD3DResource *resource, void *c
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_DESTROYSURFACEFN D3DCB_DestroyDepthStencilSurface, D3DCB_DESTROYSWAPCHAINFN D3DCB_DestroySwapChain) {
+static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
+        D3DCB_DESTROYSWAPCHAINFN D3DCB_DestroySwapChain)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     int sampler;
     UINT i;
@@ -2399,7 +2389,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
     This->render_targets[0] = NULL;
 
     if (This->auto_depth_stencil_buffer) {
-        if(D3DCB_DestroyDepthStencilSurface(This->auto_depth_stencil_buffer) > 0) {
+        if (IWineD3DSurface_Release(This->auto_depth_stencil_buffer) > 0)
+        {
             FIXME("(%p) Something's still holding the auto depth stencil buffer\n", This);
         }
         This->auto_depth_stencil_buffer = NULL;

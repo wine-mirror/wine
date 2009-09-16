@@ -79,8 +79,6 @@ typedef struct IParentImpl                IParentImpl;
 /* Callbacks for implicit object destruction */
 extern ULONG WINAPI D3D7CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain);
 
-extern ULONG WINAPI D3D7CB_DestroyDepthStencilSurface(IWineD3DSurface *pSurface);
-
 /* Global critical section */
 extern CRITICAL_SECTION ddraw_cs;
 
@@ -115,7 +113,6 @@ struct IDirectDrawImpl
     /* WineD3D linkage */
     IWineD3D                *wineD3D;
     IWineD3DDevice          *wineD3DDevice;
-    IDirectDrawSurfaceImpl  *DepthStencilBuffer;
     BOOL                    d3d_initialized;
 
     /* Misc ddraw fields */

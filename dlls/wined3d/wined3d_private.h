@@ -1337,8 +1337,6 @@ HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwapChain *
 #define WINE_D3D9_CAPABLE(gl_info) WINE_D3D8_CAPABLE(gl_info) && (gl_info->supported[ARB_FRAGMENT_PROGRAM] && gl_info->supported[ARB_VERTEX_SHADER])
 
 /* Default callbacks for implicit object destruction */
-extern ULONG WINAPI D3DCB_DefaultDestroySurface(IWineD3DSurface *pSurface) DECLSPEC_HIDDEN;
-
 extern ULONG WINAPI D3DCB_DefaultDestroyVolume(IWineD3DVolume *pSurface) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
@@ -1467,6 +1465,7 @@ struct ffp_frag_desc
 };
 
 extern const struct wine_rb_functions wined3d_ffp_frag_program_rb_functions DECLSPEC_HIDDEN;
+extern const struct wined3d_parent_ops wined3d_null_parent_ops DECLSPEC_HIDDEN;
 
 void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_settings *settings,
         BOOL ignore_textype) DECLSPEC_HIDDEN;
@@ -1958,6 +1957,7 @@ struct IWineD3DSurfaceImpl
     IWineD3DResourceClass     resource;
 
     /* IWineD3DSurface fields */
+    const struct wined3d_parent_ops *parent_ops;
     IWineD3DBase              *container;
     WINED3DSURFACET_DESC      currentDesc;
     IWineD3DPaletteImpl       *palette; /* D3D7 style palette handling */
@@ -2023,7 +2023,7 @@ void surface_gdi_cleanup(IWineD3DSurfaceImpl *This) DECLSPEC_HIDDEN;
 HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type, UINT alignment,
         UINT width, UINT height, UINT level, BOOL lockable, BOOL discard, WINED3DMULTISAMPLE_TYPE multisample_type,
         UINT multisample_quality, IWineD3DDeviceImpl *device, DWORD usage, WINED3DFORMAT format,
-        WINED3DPOOL pool, IUnknown *parent) DECLSPEC_HIDDEN;
+        WINED3DPOOL pool, IUnknown *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 /* Predeclare the shared Surface functions */
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_QueryInterface(IWineD3DSurface *iface,

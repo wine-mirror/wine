@@ -36,7 +36,8 @@ WINE_DECLARE_DEBUG_CHANNEL(fps);
 #define GLINFO_LOCATION This->wineD3DDevice->adapter->gl_info
 
 /*IWineD3DSwapChain parts follow: */
-static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface, D3DCB_DESTROYSURFACEFN D3DCB_DestroyRenderTarget) {
+static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
+{
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     WINED3DDISPLAYMODE mode;
     unsigned int i;
@@ -50,9 +51,9 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface, D3DCB
     if (This->frontBuffer)
     {
         IWineD3DSurface_SetContainer(This->frontBuffer, 0);
-        if (D3DCB_DestroyRenderTarget(This->frontBuffer))
+        if (IWineD3DSurface_Release(This->frontBuffer))
         {
-            FIXME("(%p) Something's still holding the front buffer (%p).\n",
+            WARN("(%p) Something's still holding the front buffer (%p).\n",
                     This, This->frontBuffer);
         }
         This->frontBuffer = NULL;
@@ -65,8 +66,8 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface, D3DCB
         while (i--)
         {
             IWineD3DSurface_SetContainer(This->backBuffer[i], 0);
-            if (D3DCB_DestroyRenderTarget(This->backBuffer[i]))
-                FIXME("(%p) Something's still holding back buffer %u (%p).\n",
+            if (IWineD3DSurface_Release(This->backBuffer[i]))
+                WARN("(%p) Something's still holding back buffer %u (%p).\n",
                         This, i, This->backBuffer[i]);
         }
         HeapFree(GetProcessHeap(), 0, This->backBuffer);

@@ -6,6 +6,7 @@
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
  * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
+ * Copyright 2009 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -4316,16 +4317,6 @@ static HRESULT WINAPI IWineD3DImpl_GetParent(IWineD3D *iface, IUnknown **pParent
     return WINED3D_OK;
 }
 
-ULONG WINAPI D3DCB_DefaultDestroySurface(IWineD3DSurface *pSurface) {
-    IUnknown* surfaceParent;
-    TRACE("(%p) call back\n", pSurface);
-
-    /* Now, release the parent, which will take care of cleaning up the surface for us */
-    IWineD3DSurface_GetParent(pSurface, &surfaceParent);
-    IUnknown_Release(surfaceParent);
-    return IUnknown_Release(surfaceParent);
-}
-
 ULONG WINAPI D3DCB_DefaultDestroyVolume(IWineD3DVolume *pVolume) {
     IUnknown* volumeParent;
     TRACE("(%p) call back\n", pVolume);
@@ -4829,4 +4820,11 @@ const IWineD3DVtbl IWineD3D_Vtbl =
     IWineD3DImpl_CheckDeviceFormatConversion,
     IWineD3DImpl_GetDeviceCaps,
     IWineD3DImpl_CreateDevice
+};
+
+static void STDMETHODCALLTYPE wined3d_null_wined3d_object_destroyed(void *parent) {}
+
+const struct wined3d_parent_ops wined3d_null_parent_ops =
+{
+    wined3d_null_wined3d_object_destroyed,
 };

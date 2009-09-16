@@ -56,18 +56,6 @@ static ULONG STDMETHODCALLTYPE dxgi_swapchain_AddRef(IDXGISwapChain *iface)
     return refcount;
 }
 
-static ULONG STDMETHODCALLTYPE destroy_surface(IWineD3DSurface *surface)
-{
-    IDXGISurface *dxgi_surface;
-
-    TRACE("surface %p\n", surface);
-
-    IWineD3DSurface_GetParent(surface, (IUnknown **)&dxgi_surface);
-    IDXGISurface_Release(dxgi_surface);
-
-    return IDXGISurface_Release(dxgi_surface);
-}
-
 static ULONG STDMETHODCALLTYPE destroy_swapchain(IWineD3DSwapChain *swapchain)
 {
     TRACE("swapchain %p\n", swapchain);
@@ -96,7 +84,7 @@ static ULONG STDMETHODCALLTYPE dxgi_swapchain_Release(IDXGISwapChain *iface)
         }
         else
         {
-            hr = IWineD3DDevice_Uninit3D(wined3d_device, destroy_surface, destroy_swapchain);
+            hr = IWineD3DDevice_Uninit3D(wined3d_device, destroy_swapchain);
             IWineD3DDevice_Release(wined3d_device);
             if (FAILED(hr))
             {

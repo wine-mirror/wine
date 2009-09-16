@@ -10,6 +10,7 @@
  * Copyright 2006-2008 Stefan Dösinger for CodeWeavers
  * Copyright 2007 Henri Verbeet
  * Copyright 2006-2007 Roderick Colenbrander
+ * Copyright 2009 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -799,7 +800,8 @@ static IWineD3DSurfaceImpl *surface_convert_format(IWineD3DSurfaceImpl *source, 
     IWineD3DDevice_CreateSurface((IWineD3DDevice *)source->resource.wineD3DDevice, source->currentDesc.Width,
             source->currentDesc.Height, to_fmt, TRUE /* lockable */, TRUE /* discard  */, 0 /* level */, &ret,
             0 /* usage */, WINED3DPOOL_SCRATCH, WINED3DMULTISAMPLE_NONE /* TODO: Multisampled conversion */,
-            0 /* MultiSampleQuality */, IWineD3DSurface_GetImplType((IWineD3DSurface *) source), NULL /* parent */);
+            0 /* MultiSampleQuality */, IWineD3DSurface_GetImplType((IWineD3DSurface *) source),
+            NULL /* parent */, &wined3d_null_parent_ops);
     if(!ret) {
         ERR("Failed to create a destination surface for conversion\n");
         return NULL;

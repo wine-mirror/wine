@@ -100,7 +100,7 @@ static void texture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRG
     *dirty = FALSE;
 }
 
-static void texture_cleanup(IWineD3DTextureImpl *This, D3DCB_DESTROYSURFACEFN surface_destroy_cb)
+static void texture_cleanup(IWineD3DTextureImpl *This)
 {
     unsigned int i;
 
@@ -116,7 +116,7 @@ static void texture_cleanup(IWineD3DTextureImpl *This, D3DCB_DESTROYSURFACEFN su
             surface_set_texture_name(This->surfaces[i], 0, FALSE);
             surface_set_texture_target(This->surfaces[i], 0);
             IWineD3DSurface_SetContainer(This->surfaces[i], 0);
-            surface_destroy_cb(This->surfaces[i]);
+            IWineD3DSurface_Release(This->surfaces[i]);
         }
     }
 
@@ -266,7 +266,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         {
             FIXME("Failed to create surface %p, hr %#x\n", texture, hr);
             texture->surfaces[i] = NULL;
-            texture_cleanup(texture, D3DCB_DefaultDestroySurface);
+            texture_cleanup(texture);
             return hr;
         }
 
@@ -319,7 +319,7 @@ static ULONG WINAPI IWineD3DTextureImpl_Release(IWineD3DTexture *iface) {
     TRACE("(%p) : Releasing from %d\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
-        IWineD3DTexture_Destroy(iface, D3DCB_DefaultDestroySurface);
+        IWineD3DTexture_Destroy(iface);
     }
     return ref;
 }
@@ -480,10 +480,11 @@ static BOOL WINAPI IWineD3DTextureImpl_IsCondNP2(IWineD3DTexture *iface) {
 /* *******************************************
    IWineD3DTexture IWineD3DTexture parts follow
    ******************************************* */
-static void WINAPI IWineD3DTextureImpl_Destroy(IWineD3DTexture *iface, D3DCB_DESTROYSURFACEFN D3DCB_DestroySurface) {
+static void WINAPI IWineD3DTextureImpl_Destroy(IWineD3DTexture *iface)
+{
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
 
-    texture_cleanup(This, D3DCB_DestroySurface);
+    texture_cleanup(This);
     /* free the object */
     HeapFree(GetProcessHeap(), 0, This);
 }
