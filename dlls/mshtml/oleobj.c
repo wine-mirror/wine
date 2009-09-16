@@ -61,7 +61,7 @@ static ULONG WINAPI OleObject_Release(IOleObject *iface)
     return IHTMLDocument2_Release(HTMLDOC(This));
 }
 
-static void update_hostinfo(HTMLDocument *This, DOCHOSTUIINFO *hostinfo)
+static void update_hostinfo(HTMLDocumentObj *This, DOCHOSTUIINFO *hostinfo)
 {
     nsIScrollable *scrollable;
     nsresult nsres;
@@ -129,7 +129,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
             TRACE("hostinfo = {%u %08x %08x %s %s}\n",
                     hostinfo.cbSize, hostinfo.dwFlags, hostinfo.dwDoubleClick,
                     debugstr_w(hostinfo.pchHostCss), debugstr_w(hostinfo.pchHostNS));
-            update_hostinfo(This, &hostinfo);
+            update_hostinfo(This->doc_obj, &hostinfo);
             This->hostinfo = hostinfo;
         }
 

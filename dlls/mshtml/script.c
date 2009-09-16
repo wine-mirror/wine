@@ -744,7 +744,7 @@ static ScriptHost *get_script_host(HTMLWindow *window, const GUID *guid)
     return create_script_host(window, guid);
 }
 
-void doc_insert_script(HTMLDocument *doc, nsIDOMHTMLScriptElement *nsscript)
+void doc_insert_script(HTMLWindow *window, nsIDOMHTMLScriptElement *nsscript)
 {
     ScriptHost *script_host;
     GUID guid;
@@ -754,7 +754,7 @@ void doc_insert_script(HTMLDocument *doc, nsIDOMHTMLScriptElement *nsscript)
         return;
     }
 
-    script_host = get_script_host(doc->window, &guid);
+    script_host = get_script_host(window, &guid);
     if(!script_host)
         return;
 
@@ -890,10 +890,10 @@ void set_script_mode(HTMLWindow *window, SCRIPTMODE mode)
 
     window->scriptmode = mode;
 
-    if(!window->doc_obj->basedoc.nscontainer || !window->doc_obj->basedoc.nscontainer->webbrowser)
+    if(!window->doc_obj->nscontainer || !window->doc_obj->nscontainer->webbrowser)
         return;
 
-    nsres = nsIWebBrowser_QueryInterface(window->doc_obj->basedoc.nscontainer->webbrowser,
+    nsres = nsIWebBrowser_QueryInterface(window->doc_obj->nscontainer->webbrowser,
             &IID_nsIWebBrowserSetup, (void**)&setup);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIWebBrowserSetup_SetProperty(setup, SETUP_ALLOW_JAVASCRIPT,

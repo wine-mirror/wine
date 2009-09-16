@@ -117,7 +117,7 @@ static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
             SetFocus(This->reset_focus);
             This->reset_focus = NULL;
             if(This->doc)
-                This->doc->focus = FALSE;
+                This->doc->basedoc.focus = FALSE;
         }
     }
 
@@ -744,7 +744,7 @@ void get_editor_controller(NSContainer *This)
     }
 
     nsres = nsIEditingSession_GetEditorForWindow(editing_session,
-            This->doc->window->nswindow, &This->editor);
+            This->doc->basedoc.window->nswindow, &This->editor);
     nsIEditingSession_Release(editing_session);
     if(NS_FAILED(nsres)) {
         ERR("Could not get editor: %08x\n", nsres);
@@ -815,10 +815,10 @@ void update_nsdocument(HTMLDocumentObj *doc)
     nsresult nsres;
     HRESULT hres;
 
-    if(!doc->basedoc.nscontainer || !doc->basedoc.nscontainer->navigation)
+    if(!doc->nscontainer || !doc->nscontainer->navigation)
         return;
 
-    nsres = nsIWebNavigation_GetDocument(doc->basedoc.nscontainer->navigation, &nsdomdoc);
+    nsres = nsIWebNavigation_GetDocument(doc->nscontainer->navigation, &nsdomdoc);
     if(NS_FAILED(nsres) || !nsdomdoc) {
         ERR("GetDocument failed: %08x\n", nsres);
         return;
@@ -837,7 +837,7 @@ void update_nsdocument(HTMLDocumentObj *doc)
     }
 
     if(doc->basedoc.nsdoc) {
-        remove_mutation_observer(doc->basedoc.nscontainer, doc->basedoc.nsdoc);
+        remove_mutation_observer(doc->nscontainer, doc->basedoc.nsdoc);
         nsIDOMHTMLDocument_Release(doc->basedoc.nsdoc);
 
         doc_node = doc->basedoc.doc_node;
@@ -852,7 +852,7 @@ void update_nsdocument(HTMLDocumentObj *doc)
         return;
     }
 
-    set_mutation_observer(doc->basedoc.nscontainer, nsdoc);
+    set_mutation_observer(doc->nscontainer, nsdoc);
 
     hres = create_doc_from_nsdoc(nsdoc, doc, doc->basedoc.window, &doc_node);
     if(FAILED(hres)) {
@@ -968,7 +968,7 @@ static nsresult NSAPI nsWebBrowserChrome_SetStatus(nsIWebBrowserChrome *iface,
 
     /* FIXME: This hack should be removed when we'll load all pages by URLMoniker */
     if(This->doc)
-        update_nsdocument(This->doc->doc_obj);
+        update_nsdocument(This->doc);
 
     return NS_OK;
 }
@@ -1139,7 +1139,7 @@ static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuList
         FIXME("aContextFlags=%08x\n", aContextFlags);
     };
 
-    show_context_menu(This->doc, dwID, &pt, (IDispatch*)HTMLDOMNODE(get_node(This->doc, aNode, TRUE)));
+    show_context_menu(&This->doc->basedoc, dwID, &pt, (IDispatch*)HTMLDOMNODE(get_node(&This->doc->basedoc, aNode, TRUE)));
 
     return NS_OK;
 }
@@ -1251,7 +1251,7 @@ static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener 
 
         *_retval = FALSE;
     }else if(This->doc) {
-        *_retval = translate_url(This->doc, wine_uri);
+        *_retval = translate_url(&This->doc->basedoc.doc_obj->basedoc, wine_uri);
     }
 
     nsIWineURI_Release(wine_uri);
@@ -1441,7 +1441,7 @@ static nsresult NSAPI nsEmbeddingSiteWindow_GetVisibility(nsIEmbeddingSiteWindow
 
     TRACE("(%p)->(%p)\n", This, aVisibility);
 
-    *aVisibility = This->doc && This->doc->hwnd && IsWindowVisible(This->doc->hwnd);
+    *aVisibility = This->doc && This->doc->basedoc.hwnd && IsWindowVisible(This->doc->basedoc.hwnd);
     return NS_OK;
 }
 
@@ -1523,7 +1523,7 @@ static nsresult NSAPI nsTooltipListener_OnShowTooltip(nsITooltipListener *iface,
     NSContainer *This = NSTOOLTIP_THIS(iface);
 
     if (This->doc)
-        show_tooltip(This->doc, aXCoord, aYCoord, aTipText);
+        show_tooltip(&This->doc->basedoc, aXCoord, aYCoord, aTipText);
 
     return NS_OK;
 }
@@ -1533,7 +1533,7 @@ static nsresult NSAPI nsTooltipListener_OnHideTooltip(nsITooltipListener *iface)
     NSContainer *This = NSTOOLTIP_THIS(iface);
 
     if (This->doc)
-        hide_tooltip(This->doc);
+        hide_tooltip(&This->doc->basedoc);
 
     return NS_OK;
 }
@@ -1671,7 +1671,7 @@ static const nsISupportsWeakReferenceVtbl nsSupportsWeakReferenceVtbl = {
 };
 
 
-NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
+NSContainer *NSContainer_Create(HTMLDocumentObj *doc, NSContainer *parent)
 {
     nsIWebBrowserSetup *wbsetup;
     nsIScrollable *scrollable;

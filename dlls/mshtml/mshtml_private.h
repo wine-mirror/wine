@@ -281,7 +281,6 @@ struct HTMLDocument {
     HTMLDocumentObj *doc_obj;
     HTMLDocumentNode *doc_node;
 
-    NSContainer *nscontainer;
     HTMLWindow *window;
     nsIDOMHTMLDocument *nsdoc;
 
@@ -352,6 +351,8 @@ struct HTMLDocumentObj {
     HTMLDocument basedoc;
 
     LONG ref;
+
+    NSContainer *nscontainer;
 };
 
 typedef struct {
@@ -397,7 +398,7 @@ struct NSContainer {
     LONG ref;
 
     NSContainer *parent;
-    HTMLDocument *doc;
+    HTMLDocumentObj *doc;
 
     nsIURIContentListener *content_listener;
 
@@ -571,7 +572,7 @@ void ConnectionPoint_Init(ConnectionPoint*,ConnectionPointContainer*,REFIID);
 void ConnectionPointContainer_Init(ConnectionPointContainer*,IUnknown*);
 void ConnectionPointContainer_Destroy(ConnectionPointContainer*);
 
-NSContainer *NSContainer_Create(HTMLDocument*,NSContainer*);
+NSContainer *NSContainer_Create(HTMLDocumentObj*,NSContainer*);
 void NSContainer_Release(NSContainer*);
 
 void init_mutation(NSContainer*);
@@ -678,7 +679,7 @@ void release_nodes(HTMLDocument*);
 
 void release_script_hosts(HTMLWindow*);
 void connect_scripts(HTMLWindow*);
-void doc_insert_script(HTMLDocument*,nsIDOMHTMLScriptElement*);
+void doc_insert_script(HTMLWindow*,nsIDOMHTMLScriptElement*);
 IDispatch *script_parse_event(HTMLWindow*,LPCWSTR);
 void set_script_mode(HTMLWindow*,SCRIPTMODE);
 BOOL find_global_prop(HTMLWindow*,BSTR,DWORD,ScriptHost**,DISPID*);
@@ -697,7 +698,7 @@ typedef struct {
 
 extern const cmdtable_t editmode_cmds[];
 
-void do_ns_command(NSContainer*,const char*,nsICommandParams*);
+void do_ns_command(HTMLDocument*,const char*,nsICommandParams*);
 
 /* timer */
 #define UPDATE_UI       0x0001

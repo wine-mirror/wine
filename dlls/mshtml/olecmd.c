@@ -39,20 +39,23 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define NSCMD_COPY "cmd_copy"
 
-void do_ns_command(NSContainer *This, const char *cmd, nsICommandParams *nsparam)
+void do_ns_command(HTMLDocument *This, const char *cmd, nsICommandParams *nsparam)
 {
     nsICommandManager *cmdmgr;
     nsresult nsres;
 
     TRACE("(%p)\n", This);
 
-    nsres = get_nsinterface((nsISupports*)This->webbrowser, &IID_nsICommandManager, (void**)&cmdmgr);
+    if(!This->doc_obj || !This->doc_obj->nscontainer)
+        return;
+
+    nsres = get_nsinterface((nsISupports*)This->doc_obj->nscontainer->webbrowser, &IID_nsICommandManager, (void**)&cmdmgr);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsICommandManager: %08x\n", nsres);
         return;
     }
 
-    nsres = nsICommandManager_DoCommand(cmdmgr, cmd, nsparam, This->doc->window->nswindow);
+    nsres = nsICommandManager_DoCommand(cmdmgr, cmd, nsparam, This->window->nswindow);
     if(NS_FAILED(nsres))
         ERR("DoCommand(%s) failed: %08x\n", debugstr_a(cmd), nsres);
 
@@ -221,10 +224,10 @@ static HRESULT exec_print(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn,
     if(pvaOut)
         FIXME("unsupported pvaOut\n");
 
-    if(!This->nscontainer)
+    if(!This->doc_obj->nscontainer)
         return S_OK;
 
-    nsres = get_nsinterface((nsISupports*)This->nscontainer->webbrowser, &IID_nsIWebBrowserPrint,
+    nsres = get_nsinterface((nsISupports*)This->doc_obj->nscontainer->webbrowser, &IID_nsIWebBrowserPrint,
             (void**)&nsprint);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIWebBrowserPrint: %08x\n", nsres);
@@ -473,7 +476,7 @@ static HRESULT exec_mshtml_copy(HTMLDocument *This, DWORD cmdexecopt, VARIANT *i
     if(This->usermode == EDITMODE)
         return editor_exec_copy(This, cmdexecopt, in, out);
 
-    do_ns_command(This->nscontainer, NSCMD_COPY, NULL);
+    do_ns_command(This, NSCMD_COPY, NULL);
     return S_OK;
 }
 
@@ -613,8 +616,8 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
             IDocHostUIHandler_HideUI(This->hostui);
     }
 
-    if(This->nscontainer)
-        set_ns_editmode(This->nscontainer);
+    if(This->doc_obj->nscontainer)
+        set_ns_editmode(This->doc_obj->nscontainer);
 
     if(This->ui_active) {
         RECT rcBorderWidths;

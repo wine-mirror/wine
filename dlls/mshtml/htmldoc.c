@@ -1794,12 +1794,8 @@ static void destroy_htmldoc(HTMLDocument *This)
 
     ConnectionPointContainer_Destroy(&This->cp_container);
 
-    if(This->nsdoc) {
-        remove_mutation_observer(This->nscontainer, This->nsdoc);
+    if(This->nsdoc)
         nsIDOMHTMLDocument_Release(This->nsdoc);
-    }
-    if(This->nscontainer)
-        NSContainer_Release(This->nscontainer);
 }
 
 #define HTMLDOCNODE_THIS(base) DEFINE_THIS2(HTMLDocumentNode, basedoc, base)
@@ -1904,6 +1900,10 @@ static ULONG HTMLDocumentObj_Release(HTMLDocument *base)
         }
 
         destroy_htmldoc(&This->basedoc);
+        if(This->basedoc.nsdoc)
+            remove_mutation_observer(This->nscontainer, This->basedoc.nsdoc);
+        if(This->nscontainer)
+            NSContainer_Release(This->nscontainer);
         heap_free(This);
     }
 
@@ -1940,12 +1940,12 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     if(FAILED(hres))
         return hres;
 
-    doc->basedoc.nscontainer = NSContainer_Create(&doc->basedoc, NULL);
+    doc->nscontainer = NSContainer_Create(doc, NULL);
 
-    if(doc->basedoc.nscontainer) {
+    if(doc->nscontainer) {
         nsresult nsres;
 
-        nsres = nsIWebBrowser_GetContentDOMWindow(doc->basedoc.nscontainer->webbrowser, &nswindow);
+        nsres = nsIWebBrowser_GetContentDOMWindow(doc->nscontainer->webbrowser, &nswindow);
         if(NS_FAILED(nsres))
             ERR("GetContentDOMWindow failed: %08x\n", nsres);
     }

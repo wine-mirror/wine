@@ -183,11 +183,11 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
 
     push_task(task);
 
-    if(This->nscontainer) {
-        This->nscontainer->bscallback = bscallback;
-        nsres = nsIWebNavigation_LoadURI(This->nscontainer->navigation, url,
+    if(This->doc_obj->nscontainer) {
+        This->doc_obj->nscontainer->bscallback = bscallback;
+        nsres = nsIWebNavigation_LoadURI(This->doc_obj->nscontainer->navigation, url,
                 LOAD_FLAGS_NONE, NULL, NULL, NULL);
-        This->nscontainer->bscallback = NULL;
+        This->doc_obj->nscontainer->bscallback = NULL;
         if(NS_FAILED(nsres)) {
             WARN("LoadURI failed: %08x\n", nsres);
             IUnknown_Release((IUnknown*)bscallback);

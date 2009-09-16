@@ -949,9 +949,9 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
             on_start_nsrequest(This);
 
             /* events are reset when a new document URI is loaded, so re-initialise them here */
-            if(This->bsc.doc && This->bsc.doc->bscallback == This && This->bsc.doc->nscontainer) {
+            if(This->bsc.doc && This->bsc.doc->bscallback == This && This->bsc.doc->doc_obj->nscontainer) {
                 update_nsdocument(This->bsc.doc->doc_obj);
-                init_nsevents(This->bsc.doc->nscontainer);
+                init_nsevents(This->bsc.doc->doc_obj->nscontainer);
             }
         }
 

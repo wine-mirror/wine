@@ -98,12 +98,12 @@ HRESULT nsuri_to_url(LPCWSTR nsuri, BOOL ret_empty, BSTR *ret)
     return S_OK;
 }
 
-static BOOL exec_shldocvw_67(HTMLDocument *doc, LPCWSTR url)
+static BOOL exec_shldocvw_67(HTMLDocumentObj *doc, LPCWSTR url)
 {
     IOleCommandTarget *cmdtrg = NULL;
     HRESULT hres;
 
-    hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget,
+    hres = IOleClientSite_QueryInterface(doc->basedoc.client, &IID_IOleCommandTarget,
                                          (void**)&cmdtrg);
     if(SUCCEEDED(hres)) {
         VARIANT varUrl, varRes;
@@ -128,8 +128,8 @@ static BOOL exec_shldocvw_67(HTMLDocument *doc, LPCWSTR url)
 
 static BOOL before_async_open(nsChannel *channel, NSContainer *container)
 {
+    HTMLDocumentObj *doc = container->doc;
     IServiceProvider *service_provider;
-    HTMLDocument *doc = container->doc;
     DWORD hlnf = 0;
     LPCWSTR uri;
     HRESULT hres;
@@ -149,13 +149,13 @@ static BOOL before_async_open(nsChannel *channel, NSContainer *container)
         doc = container_iter->doc;
     }
 
-    if(!doc->client)
+    if(!doc->basedoc.client)
         return TRUE;
 
     if(!hlnf && !exec_shldocvw_67(doc, uri))
         return FALSE;
 
-    hres = IOleClientSite_QueryInterface(doc->client, &IID_IServiceProvider,
+    hres = IOleClientSite_QueryInterface(doc->basedoc.client, &IID_IServiceProvider,
                                          (void**)&service_provider);
     if(SUCCEEDED(hres)) {
         IHlinkFrame *hlink_frame;
@@ -164,7 +164,7 @@ static BOOL before_async_open(nsChannel *channel, NSContainer *container)
                                              &IID_IHlinkFrame, (void**)&hlink_frame);
         IServiceProvider_Release(service_provider);
         if(SUCCEEDED(hres)) {
-            hlink_frame_navigate(doc, hlink_frame, uri, channel->post_data_stream, hlnf);
+            hlink_frame_navigate(&doc->basedoc, hlink_frame, uri, channel->post_data_stream, hlnf);
             IHlinkFrame_Release(hlink_frame);
 
             return FALSE;
@@ -709,9 +709,9 @@ static nsresult async_open_doc_uri(nsChannel *This, NSContainer *container,
     if(container->bscallback) {
         channelbsc_set_channel(container->bscallback, This, listener, context);
 
-        if(container->doc && container->doc->mime) {
+        if(container->doc && container->doc->basedoc.mime) {
             heap_free(This->content_type);
-            This->content_type = heap_strdupWtoA(container->doc->mime);
+            This->content_type = heap_strdupWtoA(container->doc->basedoc.mime);
         }
 
         return NS_OK;
@@ -733,7 +733,7 @@ static nsresult async_open_doc_uri(nsChannel *This, NSContainer *container,
         if(FAILED(hres)) {
             return NS_ERROR_UNEXPECTED;
         }
-        set_current_mon(container->doc, mon);
+        set_current_mon(&container->doc->basedoc, mon);
     }
 
     *open = TRUE;
@@ -759,7 +759,7 @@ static nsresult async_open(nsChannel *This, NSContainer *container, nsIStreamLis
 
     task = heap_alloc(sizeof(task_t));
 
-    task->doc = container->doc;
+    task->doc = &container->doc->basedoc;
     task->task_id = TASK_START_BINDING;
     task->next = NULL;
     task->bscallback = bscallback;

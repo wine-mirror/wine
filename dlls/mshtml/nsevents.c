@@ -80,9 +80,9 @@ static BOOL is_doc_child_focus(NSContainer *This)
     if(!This->doc)
         return FALSE;
 
-    for(hwnd = GetFocus(); hwnd && hwnd != This->doc->hwnd; hwnd = GetParent(hwnd));
+    for(hwnd = GetFocus(); hwnd && hwnd != This->doc->basedoc.doc_obj->basedoc.hwnd; hwnd = GetParent(hwnd));
 
-    return hwnd == This->doc->hwnd;
+    return hwnd != NULL;
 }
 
 static nsresult NSAPI handle_blur(nsIDOMEventListener *iface, nsIDOMEvent *event)
@@ -91,9 +91,9 @@ static nsresult NSAPI handle_blur(nsIDOMEventListener *iface, nsIDOMEvent *event
 
     TRACE("(%p)\n", This);
 
-    if(!This->reset_focus && This->doc && This->doc->focus && !is_doc_child_focus(This)) {
-        This->doc->focus = FALSE;
-        notif_focus(This->doc);
+    if(!This->reset_focus && This->doc && This->doc->basedoc.doc_obj->basedoc.focus && !is_doc_child_focus(This)) {
+        This->doc->basedoc.doc_obj->basedoc.focus = FALSE;
+        notif_focus(&This->doc->basedoc);
     }
 
     return NS_OK;
@@ -105,9 +105,9 @@ static nsresult NSAPI handle_focus(nsIDOMEventListener *iface, nsIDOMEvent *even
 
     TRACE("(%p)\n", This);
 
-    if(!This->reset_focus && This->doc && !This->doc->focus) {
-        This->doc->focus = TRUE;
-        notif_focus(This->doc);
+    if(!This->reset_focus && This->doc && !This->doc->basedoc.focus) {
+        This->doc->basedoc.focus = TRUE;
+        notif_focus(&This->doc->basedoc);
     }
 
     return NS_OK;
@@ -120,9 +120,9 @@ static nsresult NSAPI handle_keypress(nsIDOMEventListener *iface,
 
     TRACE("(%p)->(%p)\n", This, event);
 
-    update_doc(This->doc, UPDATE_UI);
-    if(This->doc->usermode == EDITMODE)
-        handle_edit_event(This->doc, event);
+    update_doc(&This->doc->basedoc, UPDATE_UI);
+    if(This->doc->basedoc.usermode == EDITMODE)
+        handle_edit_event(&This->doc->basedoc, event);
 
     return NS_OK;
 }
@@ -137,25 +137,25 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     if(!This->doc)
         return NS_OK;
 
-    update_nsdocument(This->doc->doc_obj);
-    connect_scripts(This->doc->window);
+    update_nsdocument(This->doc);
+    connect_scripts(This->doc->basedoc.window);
 
     if(This->editor_controller) {
         nsIController_Release(This->editor_controller);
         This->editor_controller = NULL;
     }
 
-    if(This->doc->usermode == EDITMODE)
-        handle_edit_load(This->doc);
+    if(This->doc->basedoc.usermode == EDITMODE)
+        handle_edit_load(&This->doc->basedoc);
 
-    if(!This->doc->nsdoc) {
+    if(!This->doc->basedoc.nsdoc) {
         ERR("NULL nsdoc\n");
         return NS_ERROR_FAILURE;
     }
 
-    nsIDOMHTMLDocument_GetBody(This->doc->nsdoc, &nsbody);
+    nsIDOMHTMLDocument_GetBody(This->doc->basedoc.nsdoc, &nsbody);
     if(nsbody) {
-        fire_event(This->doc, EVENTID_LOAD, (nsIDOMNode*)nsbody, event);
+        fire_event(&This->doc->basedoc, EVENTID_LOAD, (nsIDOMNode*)nsbody, event);
         nsIDOMHTMLElement_Release(nsbody);
     }
 
@@ -191,7 +191,7 @@ static nsresult NSAPI handle_htmlevent(nsIDOMEventListener *iface, nsIDOMEvent *
         return NS_OK;
     }
 
-    fire_event(This->doc, eid, nsnode, event);
+    fire_event(&This->doc->basedoc, eid, nsnode, event);
 
     nsIDOMNode_Release(nsnode);
 
@@ -246,7 +246,7 @@ void add_nsevent_listener(HTMLWindow *window, LPCWSTR type)
         return;
     }
 
-    init_event(target, type, NSEVENTLIST(&window->doc_obj->basedoc.nscontainer->htmlevent_listener), TRUE);
+    init_event(target, type, NSEVENTLIST(&window->doc_obj->nscontainer->htmlevent_listener), TRUE);
     nsIDOMEventTarget_Release(target);
 }
 

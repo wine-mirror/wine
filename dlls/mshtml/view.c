@@ -50,17 +50,17 @@ typedef struct {
     WNDPROC proc;
 } tooltip_data;
 
-static void paint_document(HTMLDocument *This)
+static void paint_document(HTMLDocumentObj *This)
 {
     PAINTSTRUCT ps;
     RECT rect;
     HDC hdc;
 
-    GetClientRect(This->hwnd, &rect);
+    GetClientRect(This->basedoc.hwnd, &rect);
 
-    hdc = BeginPaint(This->hwnd, &ps);
+    hdc = BeginPaint(This->basedoc.hwnd, &ps);
 
-    if(!(This->hostinfo.dwFlags & (DOCHOSTUIFLAG_NO3DOUTERBORDER|DOCHOSTUIFLAG_NO3DBORDER)))
+    if(!(This->basedoc.hostinfo.dwFlags & (DOCHOSTUIFLAG_NO3DOUTERBORDER|DOCHOSTUIFLAG_NO3DBORDER)))
         DrawEdge(hdc, &rect, EDGE_SUNKEN, BF_RECT|BF_ADJUST);
 
     if(!This->nscontainer) {
@@ -80,14 +80,14 @@ static void paint_document(HTMLDocument *This)
         DeleteObject(font);
     }
 
-    EndPaint(This->hwnd, &ps);
+    EndPaint(This->basedoc.hwnd, &ps);
 }
 
 static void activate_gecko(NSContainer *This)
 {
     TRACE("(%p) %p\n", This, This->window);
 
-    SetParent(This->hwnd, This->doc->hwnd);
+    SetParent(This->hwnd, This->doc->basedoc.hwnd);
     ShowWindow(This->hwnd, SW_SHOW);
 
     nsIBaseWindow_SetVisibility(This->window, TRUE);
@@ -98,7 +98,7 @@ static void activate_gecko(NSContainer *This)
 void update_doc(HTMLDocument *This, DWORD flags)
 {
     if(!This->update && This->hwnd)
-        SetTimer(This->hwnd, TIMER_ID, 100, NULL);
+        SetTimer(This->doc_obj->basedoc.hwnd, TIMER_ID, 100, NULL);
 
     This->update |= flags;
 }
@@ -197,19 +197,19 @@ static LRESULT WINAPI serverwnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
         This->hwnd = hwnd;
         break;
     case WM_PAINT:
-        paint_document(This);
+        paint_document(This->doc_obj);
         break;
     case WM_SIZE:
         TRACE("(%p)->(WM_SIZE)\n", This);
-        if(This->nscontainer) {
+        if(This->doc_obj->nscontainer) {
             INT ew=0, eh=0;
 
-            if(!(This->hostinfo.dwFlags & (DOCHOSTUIFLAG_NO3DOUTERBORDER|DOCHOSTUIFLAG_NO3DBORDER))) {
+            if(!(This->doc_obj->basedoc.hostinfo.dwFlags & (DOCHOSTUIFLAG_NO3DOUTERBORDER|DOCHOSTUIFLAG_NO3DBORDER))) {
                 ew = GetSystemMetrics(SM_CXEDGE);
                 eh = GetSystemMetrics(SM_CYEDGE);
             }
 
-            SetWindowPos(This->nscontainer->hwnd, NULL, ew, eh,
+            SetWindowPos(This->doc_obj->nscontainer->hwnd, NULL, ew, eh,
                          LOWORD(lParam) - 2*ew, HIWORD(lParam) - 2*eh,
                          SWP_NOZORDER | SWP_NOACTIVATE);
         }
@@ -301,8 +301,8 @@ static HRESULT activate_window(HTMLDocument *This)
         SetTimer(This->hwnd, TIMER_ID, 100, NULL);
     }
 
-    if(This->nscontainer)
-        activate_gecko(This->nscontainer);
+    if(This->doc_obj->nscontainer)
+        activate_gecko(This->doc_obj->nscontainer);
 
     This->in_place_active = TRUE;
     hres = IOleInPlaceSite_QueryInterface(This->ipsite, &IID_IOleInPlaceSiteEx, (void**)&ipsiteex);
@@ -591,8 +591,8 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
         }
 
         This->focus = TRUE;
-        if(This->nscontainer)
-            nsIWebBrowserFocus_Activate(This->nscontainer->focus);
+        if(This->doc_obj->nscontainer)
+            nsIWebBrowserFocus_Activate(This->doc_obj->nscontainer->focus);
         notif_focus(This);
 
         update_doc(This, UPDATE_UI);
