@@ -38,7 +38,7 @@ typedef struct {
     LONG ref;
 
     nsIDOMHTMLIFrameElement *nsiframe;
-    HTMLDocument *content_doc;
+    HTMLDocumentNode *content_doc;
 } HTMLIFrame;
 
 #define HTMLFRAMEBASE2(x)  (&(x)->lpIHTMLFrameBase2Vtbl)
@@ -134,7 +134,7 @@ static HRESULT WINAPI HTMLIFrameBase2_get_contentWindow(IHTMLFrameBase2 *iface, 
             return hres;
     }
 
-    return IHTMLDocument2_get_parentWindow(HTMLDOC(This->content_doc), p);
+    return IHTMLDocument2_get_parentWindow(HTMLDOC(&This->content_doc->basedoc), p);
 }
 
 static HRESULT WINAPI HTMLIFrameBase2_put_onload(IHTMLFrameBase2 *iface, VARIANT v)
@@ -230,7 +230,7 @@ static void HTMLIFrame_destructor(HTMLDOMNode *iface)
     HTMLIFrame *This = HTMLIFRAME_NODE_THIS(iface);
 
     if(This->content_doc)
-        IHTMLDocument2_Release(HTMLDOC(This->content_doc));
+        htmldoc_release(&This->content_doc->basedoc);
     if(This->nsiframe)
         nsIDOMHTMLIFrameElement_Release(This->nsiframe);
 

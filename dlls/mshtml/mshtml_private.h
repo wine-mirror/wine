@@ -242,8 +242,15 @@ struct ConnectionPoint {
     ConnectionPoint *next;
 };
 
+typedef struct {
+    HRESULT (*query_interface)(HTMLDocument*,REFIID,void**);
+    ULONG (*addref)(HTMLDocument*);
+    ULONG (*release)(HTMLDocument*);
+} htmldoc_vtbl_t;
+
 struct HTMLDocument {
     DispatchEx dispex;
+    const htmldoc_vtbl_t                  *vtbl;
     const IHTMLDocument2Vtbl              *lpHTMLDocument2Vtbl;
     const IHTMLDocument3Vtbl              *lpHTMLDocument3Vtbl;
     const IHTMLDocument4Vtbl              *lpHTMLDocument4Vtbl;
@@ -266,7 +273,6 @@ struct HTMLDocument {
     const ICustomDocVtbl                  *lpCustomDocVtbl;
     const IDispatchExVtbl                 *lpIDispatchExVtbl;
     const ISupportErrorInfoVtbl           *lpSupportErrorInfoVtbl;
-    LONG ref;
 
     NSContainer *nscontainer;
     HTMLWindow *window;
@@ -313,6 +319,33 @@ struct HTMLDocument {
 
     HTMLDOMNode *nodes;
 };
+
+static inline HRESULT htmldoc_query_interface(HTMLDocument *This, REFIID riid, void **ppv)
+{
+    return This->vtbl->query_interface(This, riid, ppv);
+}
+
+static inline ULONG htmldoc_addref(HTMLDocument *This)
+{
+    return This->vtbl->addref(This);
+}
+
+static inline ULONG htmldoc_release(HTMLDocument *This)
+{
+    return This->vtbl->release(This);
+}
+
+typedef struct {
+    HTMLDocument basedoc;
+
+    LONG ref;
+} HTMLDocumentNode;
+
+typedef struct {
+    HTMLDocument basedoc;
+
+    LONG ref;
+} HTMLDocumentObj;
 
 typedef struct {
     const nsIDOMEventListenerVtbl      *lpDOMEventListenerVtbl;
@@ -508,7 +541,7 @@ typedef struct {
 
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**);
-HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument*,HTMLDocument**);
+HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument*,HTMLDocumentNode**);
 
 HRESULT HTMLWindow_Create(HTMLDocument*,nsIDOMWindow*,HTMLWindow**);
 HTMLWindow *nswindow_to_window(const nsIDOMWindow*);

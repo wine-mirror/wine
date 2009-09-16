@@ -38,189 +38,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define HTMLDOC_THIS(iface) DEFINE_THIS(HTMLDocument, HTMLDocument2, iface)
 
-static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID riid, void **ppvObject)
+static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID riid, void **ppv)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
 
-    *ppvObject = NULL;
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown, %p)\n", This, ppvObject);
-        *ppvObject = HTMLDOC(This);
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch, %p)\n", This, ppvObject);
-        *ppvObject = DISPATCHEX(This);
-    }else if(IsEqualGUID(&IID_IDispatchEx, riid)) {
-        TRACE("(%p)->(IID_IDispatchEx, %p)\n", This, ppvObject);
-        *ppvObject = DISPATCHEX(This);
-    }else if(IsEqualGUID(&IID_IHTMLDocument, riid)) {
-        TRACE("(%p)->(IID_IHTMLDocument, %p)\n", This, ppvObject);
-        *ppvObject = HTMLDOC(This);
-    }else if(IsEqualGUID(&IID_IHTMLDocument2, riid)) {
-        TRACE("(%p)->(IID_IHTMLDocument2, %p)\n", This, ppvObject);
-        *ppvObject = HTMLDOC(This);
-    }else if(IsEqualGUID(&IID_IHTMLDocument3, riid)) {
-        TRACE("(%p)->(IID_IHTMLDocument3, %p)\n", This, ppvObject);
-        *ppvObject = HTMLDOC3(This);
-    }else if(IsEqualGUID(&IID_IHTMLDocument4, riid)) {
-        TRACE("(%p)->(IID_IHTMLDocument4, %p)\n", This, ppvObject);
-        *ppvObject = HTMLDOC4(This);
-    }else if(IsEqualGUID(&IID_IHTMLDocument5, riid)) {
-        TRACE("(%p)->(IID_IHTMLDocument5, %p)\n", This, ppvObject);
-        *ppvObject = HTMLDOC5(This);
-    }else if(IsEqualGUID(&IID_IPersist, riid)) {
-        TRACE("(%p)->(IID_IPersist, %p)\n", This, ppvObject);
-        *ppvObject = PERSIST(This);
-    }else if(IsEqualGUID(&IID_IPersistMoniker, riid)) {
-        TRACE("(%p)->(IID_IPersistMoniker, %p)\n", This, ppvObject);
-        *ppvObject = PERSISTMON(This);
-    }else if(IsEqualGUID(&IID_IPersistFile, riid)) {
-        TRACE("(%p)->(IID_IPersistFile, %p)\n", This, ppvObject);
-        *ppvObject = PERSISTFILE(This);
-    }else if(IsEqualGUID(&IID_IMonikerProp, riid)) {
-        TRACE("(%p)->(IID_IMonikerProp, %p)\n", This, ppvObject);
-        *ppvObject = MONPROP(This);
-    }else if(IsEqualGUID(&IID_IOleObject, riid)) {
-        TRACE("(%p)->(IID_IOleObject, %p)\n", This, ppvObject);
-        *ppvObject = OLEOBJ(This);
-    }else if(IsEqualGUID(&IID_IOleDocument, riid)) {
-        TRACE("(%p)->(IID_IOleDocument, %p)\n", This, ppvObject);
-        *ppvObject = OLEDOC(This);
-    }else if(IsEqualGUID(&IID_IOleDocumentView, riid)) {
-        TRACE("(%p)->(IID_IOleDocumentView, %p)\n", This, ppvObject);
-        *ppvObject = DOCVIEW(This);
-    }else if(IsEqualGUID(&IID_IOleInPlaceActiveObject, riid)) {
-        TRACE("(%p)->(IID_IOleInPlaceActiveObject, %p)\n", This, ppvObject);
-        *ppvObject = ACTOBJ(This);
-    }else if(IsEqualGUID(&IID_IViewObject, riid)) {
-        TRACE("(%p)->(IID_IViewObject, %p)\n", This, ppvObject);
-        *ppvObject = VIEWOBJ(This);
-    }else if(IsEqualGUID(&IID_IViewObject2, riid)) {
-        TRACE("(%p)->(IID_IViewObject2, %p)\n", This, ppvObject);
-        *ppvObject = VIEWOBJ2(This);
-    }else if(IsEqualGUID(&IID_IOleWindow, riid)) {
-        TRACE("(%p)->(IID_IOleWindow, %p)\n", This, ppvObject);
-        *ppvObject = OLEWIN(This);
-    }else if(IsEqualGUID(&IID_IOleInPlaceObject, riid)) {
-        TRACE("(%p)->(IID_IOleInPlaceObject, %p)\n", This, ppvObject);
-        *ppvObject = INPLACEOBJ(This);
-    }else if(IsEqualGUID(&IID_IOleInPlaceObjectWindowless, riid)) {
-        TRACE("(%p)->(IID_IOleInPlaceObjectWindowless, %p)\n", This, ppvObject);
-        *ppvObject = INPLACEWIN(This);
-    }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
-        TRACE("(%p)->(IID_IServiceProvider, %p)\n", This, ppvObject);
-        *ppvObject = SERVPROV(This);
-    }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
-        TRACE("(%p)->(IID_IOleCommandTarget, %p)\n", This, ppvObject);
-        *ppvObject = CMDTARGET(This);
-    }else if(IsEqualGUID(&IID_IOleControl, riid)) {
-        TRACE("(%p)->(IID_IOleControl, %p)\n", This, ppvObject);
-        *ppvObject = CONTROL(This);
-    }else if(IsEqualGUID(&IID_IHlinkTarget, riid)) {
-        TRACE("(%p)->(IID_IHlinkTarget, %p)\n", This, ppvObject);
-        *ppvObject = HLNKTARGET(This);
-    }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
-        TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppvObject);
-        *ppvObject = CONPTCONT(&This->cp_container);
-    }else if(IsEqualGUID(&IID_IPersistStreamInit, riid)) {
-        TRACE("(%p)->(IID_IPersistStreamInit %p)\n", This, ppvObject);
-        *ppvObject = PERSTRINIT(This);
-    }else if(IsEqualGUID(&IID_ICustomDoc, riid)) {
-        TRACE("(%p)->(IID_ICustomDoc %p)\n", This, ppvObject);
-        *ppvObject = CUSTOMDOC(This);
-    }else if(IsEqualGUID(&DIID_DispHTMLDocument, riid)) {
-        TRACE("(%p)->(DIID_DispHTMLDocument %p)\n", This, ppvObject);
-        *ppvObject = HTMLDOC(This);
-    }else if(IsEqualGUID(&IID_ISupportErrorInfo, riid)) {
-        TRACE("(%p)->(IID_ISupportErrorInfo %p)\n", This, ppvObject);
-        *ppvObject = SUPPERRINFO(This);
-    }else if(IsEqualGUID(&IID_IPersistHistory, riid)) {
-        TRACE("(%p)->(IID_IPersistHistory %p)\n", This, ppvObject);
-        *ppvObject = PERSISTHIST(This);
-    }else if(IsEqualGUID(&CLSID_CMarkup, riid)) {
-        FIXME("(%p)->(CLSID_CMarkup %p)\n", This, ppvObject);
-        return E_NOINTERFACE;
-    }else if(IsEqualGUID(&IID_IRunnableObject, riid)) {
-        TRACE("(%p)->(IID_IRunnableObject %p) returning NULL\n", This, ppvObject);
-        return E_NOINTERFACE;
-    }else if(IsEqualGUID(&IID_IPersistPropertyBag, riid)) {
-        TRACE("(%p)->(IID_IPersistPropertyBag %p) returning NULL\n", This, ppvObject);
-        return E_NOINTERFACE;
-    }else if(IsEqualGUID(&IID_IMarshal, riid)) {
-        TRACE("(%p)->(IID_IMarshal %p) returning NULL\n", This, ppvObject);
-        return E_NOINTERFACE;
-    }else if(dispex_query_interface(&This->dispex, riid, ppvObject)) {
-        return *ppvObject ? S_OK : E_NOINTERFACE;
-    }
-
-    if(*ppvObject) {
-        IHTMLDocument2_AddRef(iface);
-        return S_OK;
-    }
-
-    FIXME("(%p)->(%s %p) interface not supported\n", This, debugstr_guid(riid), ppvObject);
-    return E_NOINTERFACE;
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI HTMLDocument_AddRef(IHTMLDocument2 *iface)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) ref = %u\n", This, ref);
-    return ref;
+
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref = %u\n", This, ref);
-
-    if(!ref) {
-        remove_doc_tasks(This);
-
-        if(This->client)
-            IOleObject_SetClientSite(OLEOBJ(This), NULL);
-        if(This->in_place_active)
-            IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(This));
-        if(This->ipsite)
-            IOleDocumentView_SetInPlaceSite(DOCVIEW(This), NULL);
-        if(This->undomgr)
-            IOleUndoManager_Release(This->undomgr);
-
-        set_document_bscallback(This, NULL);
-        set_current_mon(This, NULL);
-
-        if(This->tooltips_hwnd)
-            DestroyWindow(This->tooltips_hwnd);
-        if(This->hwnd)
-            DestroyWindow(This->hwnd);
-
-        if(This->window)
-            IHTMLWindow2_Release(HTMLWINDOW2(This->window));
-
-        if(This->event_target)
-            release_event_target(This->event_target);
-
-        heap_free(This->mime);
-        detach_selection(This);
-        detach_ranges(This);
-        release_nodes(This);
-        release_dispex(&This->dispex);
-
-        ConnectionPointContainer_Destroy(&This->cp_container);
-
-        if(This->nsdoc) {
-            remove_mutation_observer(This->nscontainer, This->nsdoc);
-            nsIDOMHTMLDocument_Release(This->nsdoc);
-        }
-        if(This->nscontainer)
-            NSContainer_Release(This->nscontainer);
-
-        heap_free(This);
-    }
-
-    return ref;
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI HTMLDocument_GetTypeInfoCount(IHTMLDocument2 *iface, UINT *pctinfo)
@@ -1765,6 +1601,126 @@ static const IDispatchExVtbl DocDispatchExVtbl = {
     DocDispatchEx_GetNameSpaceParent
 };
 
+static HRESULT htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown, %p)\n", This, ppv);
+        *ppv = HTMLDOC(This);
+    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
+        TRACE("(%p)->(IID_IDispatch, %p)\n", This, ppv);
+        *ppv = DISPATCHEX(This);
+    }else if(IsEqualGUID(&IID_IDispatchEx, riid)) {
+        TRACE("(%p)->(IID_IDispatchEx, %p)\n", This, ppv);
+        *ppv = DISPATCHEX(This);
+    }else if(IsEqualGUID(&IID_IHTMLDocument, riid)) {
+        TRACE("(%p)->(IID_IHTMLDocument, %p)\n", This, ppv);
+        *ppv = HTMLDOC(This);
+    }else if(IsEqualGUID(&IID_IHTMLDocument2, riid)) {
+        TRACE("(%p)->(IID_IHTMLDocument2, %p)\n", This, ppv);
+        *ppv = HTMLDOC(This);
+    }else if(IsEqualGUID(&IID_IHTMLDocument3, riid)) {
+        TRACE("(%p)->(IID_IHTMLDocument3, %p)\n", This, ppv);
+        *ppv = HTMLDOC3(This);
+    }else if(IsEqualGUID(&IID_IHTMLDocument4, riid)) {
+        TRACE("(%p)->(IID_IHTMLDocument4, %p)\n", This, ppv);
+        *ppv = HTMLDOC4(This);
+    }else if(IsEqualGUID(&IID_IHTMLDocument5, riid)) {
+        TRACE("(%p)->(IID_IHTMLDocument5, %p)\n", This, ppv);
+        *ppv = HTMLDOC5(This);
+    }else if(IsEqualGUID(&IID_IPersist, riid)) {
+        TRACE("(%p)->(IID_IPersist, %p)\n", This, ppv);
+        *ppv = PERSIST(This);
+    }else if(IsEqualGUID(&IID_IPersistMoniker, riid)) {
+        TRACE("(%p)->(IID_IPersistMoniker, %p)\n", This, ppv);
+        *ppv = PERSISTMON(This);
+    }else if(IsEqualGUID(&IID_IPersistFile, riid)) {
+        TRACE("(%p)->(IID_IPersistFile, %p)\n", This, ppv);
+        *ppv = PERSISTFILE(This);
+    }else if(IsEqualGUID(&IID_IMonikerProp, riid)) {
+        TRACE("(%p)->(IID_IMonikerProp, %p)\n", This, ppv);
+        *ppv = MONPROP(This);
+    }else if(IsEqualGUID(&IID_IOleObject, riid)) {
+        TRACE("(%p)->(IID_IOleObject, %p)\n", This, ppv);
+        *ppv = OLEOBJ(This);
+    }else if(IsEqualGUID(&IID_IOleDocument, riid)) {
+        TRACE("(%p)->(IID_IOleDocument, %p)\n", This, ppv);
+        *ppv = OLEDOC(This);
+    }else if(IsEqualGUID(&IID_IOleDocumentView, riid)) {
+        TRACE("(%p)->(IID_IOleDocumentView, %p)\n", This, ppv);
+        *ppv = DOCVIEW(This);
+    }else if(IsEqualGUID(&IID_IOleInPlaceActiveObject, riid)) {
+        TRACE("(%p)->(IID_IOleInPlaceActiveObject, %p)\n", This, ppv);
+        *ppv = ACTOBJ(This);
+    }else if(IsEqualGUID(&IID_IViewObject, riid)) {
+        TRACE("(%p)->(IID_IViewObject, %p)\n", This, ppv);
+        *ppv = VIEWOBJ(This);
+    }else if(IsEqualGUID(&IID_IViewObject2, riid)) {
+        TRACE("(%p)->(IID_IViewObject2, %p)\n", This, ppv);
+        *ppv = VIEWOBJ2(This);
+    }else if(IsEqualGUID(&IID_IOleWindow, riid)) {
+        TRACE("(%p)->(IID_IOleWindow, %p)\n", This, ppv);
+        *ppv = OLEWIN(This);
+    }else if(IsEqualGUID(&IID_IOleInPlaceObject, riid)) {
+        TRACE("(%p)->(IID_IOleInPlaceObject, %p)\n", This, ppv);
+        *ppv = INPLACEOBJ(This);
+    }else if(IsEqualGUID(&IID_IOleInPlaceObjectWindowless, riid)) {
+        TRACE("(%p)->(IID_IOleInPlaceObjectWindowless, %p)\n", This, ppv);
+        *ppv = INPLACEWIN(This);
+    }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
+        TRACE("(%p)->(IID_IServiceProvider, %p)\n", This, ppv);
+        *ppv = SERVPROV(This);
+    }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
+        TRACE("(%p)->(IID_IOleCommandTarget, %p)\n", This, ppv);
+        *ppv = CMDTARGET(This);
+    }else if(IsEqualGUID(&IID_IOleControl, riid)) {
+        TRACE("(%p)->(IID_IOleControl, %p)\n", This, ppv);
+        *ppv = CONTROL(This);
+    }else if(IsEqualGUID(&IID_IHlinkTarget, riid)) {
+        TRACE("(%p)->(IID_IHlinkTarget, %p)\n", This, ppv);
+        *ppv = HLNKTARGET(This);
+    }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
+        TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
+        *ppv = CONPTCONT(&This->cp_container);
+    }else if(IsEqualGUID(&IID_IPersistStreamInit, riid)) {
+        TRACE("(%p)->(IID_IPersistStreamInit %p)\n", This, ppv);
+        *ppv = PERSTRINIT(This);
+    }else if(IsEqualGUID(&IID_ICustomDoc, riid)) {
+        TRACE("(%p)->(IID_ICustomDoc %p)\n", This, ppv);
+        *ppv = CUSTOMDOC(This);
+    }else if(IsEqualGUID(&DIID_DispHTMLDocument, riid)) {
+        TRACE("(%p)->(DIID_DispHTMLDocument %p)\n", This, ppv);
+        *ppv = HTMLDOC(This);
+    }else if(IsEqualGUID(&IID_ISupportErrorInfo, riid)) {
+        TRACE("(%p)->(IID_ISupportErrorInfo %p)\n", This, ppv);
+        *ppv = SUPPERRINFO(This);
+    }else if(IsEqualGUID(&IID_IPersistHistory, riid)) {
+        TRACE("(%p)->(IID_IPersistHistory %p)\n", This, ppv);
+        *ppv = PERSISTHIST(This);
+    }else if(IsEqualGUID(&CLSID_CMarkup, riid)) {
+        FIXME("(%p)->(CLSID_CMarkup %p)\n", This, ppv);
+        return E_NOINTERFACE;
+    }else if(IsEqualGUID(&IID_IRunnableObject, riid)) {
+        TRACE("(%p)->(IID_IRunnableObject %p) returning NULL\n", This, ppv);
+        return E_NOINTERFACE;
+    }else if(IsEqualGUID(&IID_IPersistPropertyBag, riid)) {
+        TRACE("(%p)->(IID_IPersistPropertyBag %p) returning NULL\n", This, ppv);
+        return E_NOINTERFACE;
+    }else if(IsEqualGUID(&IID_IMarshal, riid)) {
+        TRACE("(%p)->(IID_IMarshal %p) returning NULL\n", This, ppv);
+        return E_NOINTERFACE;
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+        return *ppv ? S_OK : E_NOINTERFACE;
+    }else {
+        FIXME("(%p)->(%s %p) interface not supported\n", This, debugstr_guid(riid), ppv);
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
 static const tid_t HTMLDocument_iface_tids[] = {
     IHTMLDocument2_tid,
     IHTMLDocument3_tid,
@@ -1779,15 +1735,12 @@ static dispex_static_data_t HTMLDocument_dispex = {
     HTMLDocument_iface_tids
 };
 
-static HRESULT alloc_doc(HTMLDocument **ret)
+static void init_doc(HTMLDocument *doc, const htmldoc_vtbl_t *vtbl)
 {
-    HTMLDocument *doc;
-
-    doc = heap_alloc_zero(sizeof(HTMLDocument));
+    doc->vtbl = vtbl;
     doc->lpHTMLDocument2Vtbl = &HTMLDocumentVtbl;
     doc->lpIDispatchExVtbl = &DocDispatchExVtbl;
     doc->lpSupportErrorInfoVtbl = &SupportErrorInfoVtbl;
-    doc->ref = 1;
     doc->readystate = READYSTATE_UNINITIALIZED;
 
     list_init(&doc->bindings);
@@ -1810,26 +1763,111 @@ static HRESULT alloc_doc(HTMLDocument **ret)
     ConnectionPoint_Init(&doc->cp_htmldocevents2, &doc->cp_container, &DIID_HTMLDocumentEvents2);
 
     init_dispex(&doc->dispex, (IUnknown*)HTMLDOC(doc), &HTMLDocument_dispex);
-
-    *ret = doc;
-    return S_OK;
 }
 
-HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocument **ret)
+static void destroy_htmldoc(HTMLDocument *This)
 {
-    HTMLDocument *doc;
+    remove_doc_tasks(This);
+
+    if(This->client)
+        IOleObject_SetClientSite(OLEOBJ(This), NULL);
+    if(This->in_place_active)
+        IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(This));
+    if(This->ipsite)
+        IOleDocumentView_SetInPlaceSite(DOCVIEW(This), NULL);
+    if(This->undomgr)
+        IOleUndoManager_Release(This->undomgr);
+
+    set_document_bscallback(This, NULL);
+    set_current_mon(This, NULL);
+
+    if(This->tooltips_hwnd)
+        DestroyWindow(This->tooltips_hwnd);
+    if(This->hwnd)
+        DestroyWindow(This->hwnd);
+
+    if(This->window)
+        IHTMLWindow2_Release(HTMLWINDOW2(This->window));
+
+    if(This->event_target)
+        release_event_target(This->event_target);
+
+    heap_free(This->mime);
+    detach_selection(This);
+    detach_ranges(This);
+    release_nodes(This);
+    release_dispex(&This->dispex);
+
+    ConnectionPointContainer_Destroy(&This->cp_container);
+
+    if(This->nsdoc) {
+        remove_mutation_observer(This->nscontainer, This->nsdoc);
+        nsIDOMHTMLDocument_Release(This->nsdoc);
+    }
+    if(This->nscontainer)
+        NSContainer_Release(This->nscontainer);
+}
+
+#define HTMLDOCNODE_THIS(base) DEFINE_THIS2(HTMLDocumentNode, basedoc, base)
+
+static HRESULT HTMLDocumentNode_QueryInterface(HTMLDocument *base, REFIID riid, void **ppv)
+{
+    HTMLDocumentNode *This = HTMLDOCNODE_THIS(base);
+
+    return htmldoc_qi(&This->basedoc, riid, ppv);
+}
+
+static ULONG HTMLDocumentNode_AddRef(HTMLDocument *base)
+{
+    HTMLDocumentNode *This = HTMLDOCNODE_THIS(base);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref = %u\n", This, ref);
+
+    return ref;
+}
+
+static ULONG HTMLDocumentNode_Release(HTMLDocument *base)
+{
+    HTMLDocumentNode *This = HTMLDOCNODE_THIS(base);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref = %u\n", This, ref);
+
+    if(!ref) {
+        destroy_htmldoc(&This->basedoc);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+#undef HTMLDOCNODE_THIS
+
+static const htmldoc_vtbl_t HTMLDocumentNodeVtbl = {
+    HTMLDocumentNode_QueryInterface,
+    HTMLDocumentNode_AddRef,
+    HTMLDocumentNode_Release
+};
+
+HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentNode **ret)
+{
+    HTMLDocumentNode *doc;
     HRESULT hres;
 
-    hres = alloc_doc(&doc);
-    if(FAILED(hres))
-        return hres;
+    doc = heap_alloc_zero(sizeof(HTMLDocumentNode));
+    if(!doc)
+        return E_OUTOFMEMORY;
+
+    init_doc(&doc->basedoc, &HTMLDocumentNodeVtbl);
+    doc->ref = 1;
 
     nsIDOMHTMLDocument_AddRef(nsdoc);
-    doc->nsdoc = nsdoc;
+    doc->basedoc.nsdoc = nsdoc;
 
-    hres = HTMLWindow_Create(doc, NULL, &doc->window);
+    hres = HTMLWindow_Create(&doc->basedoc, NULL, &doc->basedoc.window);
     if(FAILED(hres)) {
-        IHTMLDocument_Release(HTMLDOC(doc));
+        htmldoc_release(&doc->basedoc);
         return hres;
     }
 
@@ -1837,39 +1875,85 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocument **ret)
     return S_OK;
 }
 
+#define HTMLDOCOBJ_THIS(base) DEFINE_THIS2(HTMLDocumentObj, basedoc, base)
+
+static HRESULT HTMLDocumentObj_QueryInterface(HTMLDocument *base, REFIID riid, void **ppv)
+{
+    HTMLDocumentObj *This = HTMLDOCOBJ_THIS(base);
+
+    return htmldoc_qi(&This->basedoc, riid, ppv);
+}
+
+static ULONG HTMLDocumentObj_AddRef(HTMLDocument *base)
+{
+    HTMLDocumentObj *This = HTMLDOCOBJ_THIS(base);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref = %u\n", This, ref);
+
+    return ref;
+}
+
+static ULONG HTMLDocumentObj_Release(HTMLDocument *base)
+{
+    HTMLDocumentObj *This = HTMLDOCOBJ_THIS(base);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref = %u\n", This, ref);
+
+    if(!ref) {
+        destroy_htmldoc(&This->basedoc);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+#undef HTMLDOCOBJ_THIS
+
+static const htmldoc_vtbl_t HTMLDocumentObjVtbl = {
+    HTMLDocumentObj_QueryInterface,
+    HTMLDocumentObj_AddRef,
+    HTMLDocumentObj_Release
+};
+
 HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
 {
-    HTMLDocument *doc;
+    HTMLDocumentObj *doc;
     nsIDOMWindow *nswindow = NULL;
     HRESULT hres;
 
     TRACE("(%p %s %p)\n", pUnkOuter, debugstr_guid(riid), ppvObject);
 
-    hres = alloc_doc(&doc);
+    doc = heap_alloc_zero(sizeof(HTMLDocumentObj));
+    if(!doc)
+        return E_OUTOFMEMORY;
+
+    init_doc(&doc->basedoc, &HTMLDocumentObjVtbl);
+
+    doc->ref = 1;
+
+    hres = htmldoc_query_interface(&doc->basedoc, riid, ppvObject);
+    htmldoc_release(&doc->basedoc);
     if(FAILED(hres))
         return hres;
 
-    hres = IHTMLDocument_QueryInterface(HTMLDOC(doc), riid, ppvObject);
-    IHTMLDocument_Release(HTMLDOC(doc));
-    if(FAILED(hres))
-        return hres;
+    doc->basedoc.nscontainer = NSContainer_Create(&doc->basedoc, NULL);
+    update_nsdocument(&doc->basedoc);
 
-    doc->nscontainer = NSContainer_Create(doc, NULL);
-    update_nsdocument(doc);
-
-    if(doc->nscontainer) {
+    if(doc->basedoc.nscontainer) {
         nsresult nsres;
 
-        nsres = nsIWebBrowser_GetContentDOMWindow(doc->nscontainer->webbrowser, &nswindow);
+        nsres = nsIWebBrowser_GetContentDOMWindow(doc->basedoc.nscontainer->webbrowser, &nswindow);
         if(NS_FAILED(nsres))
             ERR("GetContentDOMWindow failed: %08x\n", nsres);
     }
 
-    hres = HTMLWindow_Create(doc, nswindow, &doc->window);
+    hres = HTMLWindow_Create(&doc->basedoc, nswindow, &doc->basedoc.window);
     if(nswindow)
         nsIDOMWindow_Release(nswindow);
     if(FAILED(hres)) {
-        IHTMLDocument_Release(HTMLDOC(doc));
+        IHTMLDocument_Release(HTMLDOC(&doc->basedoc));
         return hres;
     }
 
