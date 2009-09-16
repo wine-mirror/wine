@@ -695,45 +695,35 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_CreateVolumeTexture(IDirect3DDevice8 *iface,
-        UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, D3DFORMAT Format,
-        D3DPOOL Pool, IDirect3DVolumeTexture8 **ppVolumeTexture)
+        UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format,
+        D3DPOOL pool, IDirect3DVolumeTexture8 **texture)
 {
-    IDirect3DVolumeTexture8Impl *object;
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-    HRESULT hrc = D3D_OK;
+    IDirect3DVolumeTexture8Impl *object;
+    HRESULT hr;
 
-    TRACE("(%p) Relay\n", This);
+    TRACE("iface %p, width %u, height %u, depth %u, levels %u, usage %#x, format %#x, pool %#x, texture %p.\n",
+            iface, width, height, depth, levels, usage, format, pool, texture);
 
-    /* Allocate the storage for the device */
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVolumeTexture8Impl));
-    if (NULL == object) {
-        FIXME("(%p) allocation of memory failed\n", This);
-        *ppVolumeTexture = NULL;
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate volume texture memory.\n");
         return D3DERR_OUTOFVIDEOMEMORY;
     }
 
-    object->lpVtbl = &Direct3DVolumeTexture8_Vtbl;
-    object->ref = 1;
-
-    wined3d_mutex_lock();
-    hrc = IWineD3DDevice_CreateVolumeTexture(This->WineD3DDevice, Width, Height, Depth, Levels,
-            Usage & WINED3DUSAGE_MASK, wined3dformat_from_d3dformat(Format),
-            Pool, &object->wineD3DVolumeTexture, (IUnknown *)object);
-    wined3d_mutex_unlock();
-
-    if (hrc != D3D_OK) {
-
-        /* free up object */
-        FIXME("(%p) call to IWineD3DDevice_CreateVolumeTexture failed\n", This);
+    hr = volumetexture_init(object, This, width, height, depth, levels, usage, format, pool);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize volume texture, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppVolumeTexture = NULL;
-    } else {
-        IUnknown_AddRef(iface);
-        object->parentDevice = iface;
-        *ppVolumeTexture = (LPDIRECT3DVOLUMETEXTURE8) object;
+        return hr;
     }
-    TRACE("(%p)  returning %p\n", This , *ppVolumeTexture);
-    return hrc;
+
+    TRACE("Created volume texture %p.\n", object);
+    *texture = (IDirect3DVolumeTexture8 *)object;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_CreateCubeTexture(IDirect3DDevice8 *iface, UINT EdgeLength,

@@ -440,11 +440,6 @@ struct IDirect3DTexture8Impl
 /* ----------------------- */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DVolumeTexture8Vtbl Direct3DVolumeTexture8_Vtbl;
-
-/*****************************************************************************
  * IDirect3DVolumeTexture8 implementation structure
  */
 struct IDirect3DVolumeTexture8Impl
@@ -459,6 +454,9 @@ struct IDirect3DVolumeTexture8Impl
     /* Parent reference */
     LPDIRECT3DDEVICE8                  parentDevice;
 };
+
+HRESULT volumetexture_init(IDirect3DVolumeTexture8Impl *texture, IDirect3DDevice8Impl *device,
+        UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool);
 
 /* ----------------------- */
 /* IDirect3DStateBlockImpl */
