@@ -1888,12 +1888,13 @@ typedef struct IWineD3DVolumeTextureImpl
     IWineD3DBaseTextureClass  baseTexture;
 
     /* IWineD3DVolumeTexture */
+    const struct wined3d_parent_ops *parent_ops;
     IWineD3DVolume           *volumes[MAX_MIP_LEVELS];
 } IWineD3DVolumeTextureImpl;
 
 HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT height,
-        UINT depth, UINT levels, IWineD3DDeviceImpl *device, DWORD usage,
-        WINED3DFORMAT format, WINED3DPOOL pool, IUnknown *parent) DECLSPEC_HIDDEN;
+        UINT depth, UINT levels, IWineD3DDeviceImpl *device, DWORD usage, WINED3DFORMAT format,
+        WINED3DPOOL pool, IUnknown *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 typedef struct _WINED3DSURFACET_DESC
 {

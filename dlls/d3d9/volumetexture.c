@@ -48,6 +48,14 @@ static ULONG WINAPI IDirect3DVolumeTexture9Impl_AddRef(LPDIRECT3DVOLUMETEXTURE9 
 
     TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
+    if (ref == 1)
+    {
+        IDirect3DDevice9Ex_AddRef(This->parentDevice);
+        wined3d_mutex_lock();
+        IWineD3DVolumeTexture_AddRef(This->wineD3DVolumeTexture);
+        wined3d_mutex_unlock();
+    }
+
     return ref;
 }
 
@@ -58,12 +66,10 @@ static ULONG WINAPI IDirect3DVolumeTexture9Impl_Release(LPDIRECT3DVOLUMETEXTURE9
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
-        wined3d_mutex_lock();
-        IWineD3DVolumeTexture_Destroy(This->wineD3DVolumeTexture);
-        wined3d_mutex_unlock();
-
         IDirect3DDevice9Ex_Release(This->parentDevice);
-        HeapFree(GetProcessHeap(), 0, This);
+        wined3d_mutex_lock();
+        IWineD3DVolumeTexture_Release(This->wineD3DVolumeTexture);
+        wined3d_mutex_unlock();
     }
     return ref;
 }
@@ -403,6 +409,16 @@ static const IDirect3DVolumeTexture9Vtbl Direct3DVolumeTexture9_Vtbl =
     IDirect3DVolumeTexture9Impl_AddDirtyBox
 };
 
+static void STDMETHODCALLTYPE volumetexture_wined3d_object_destroyed(void *parent)
+{
+    HeapFree(GetProcessHeap(), 0, parent);
+}
+
+static const struct wined3d_parent_ops d3d9_volumetexture_wined3d_parent_ops =
+{
+    volumetexture_wined3d_object_destroyed,
+};
+
 HRESULT volumetexture_init(IDirect3DVolumeTexture9Impl *texture, IDirect3DDevice9Impl *device,
         UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
 {
@@ -413,8 +429,8 @@ HRESULT volumetexture_init(IDirect3DVolumeTexture9Impl *texture, IDirect3DDevice
 
     wined3d_mutex_lock();
     hr = IWineD3DDevice_CreateVolumeTexture(device->WineD3DDevice, width, height, depth, levels,
-            usage & WINED3DUSAGE_MASK, wined3dformat_from_d3dformat(format),
-            pool, &texture->wineD3DVolumeTexture, (IUnknown *)texture);
+            usage & WINED3DUSAGE_MASK, wined3dformat_from_d3dformat(format), pool,
+            &texture->wineD3DVolumeTexture, (IUnknown *)texture, &d3d9_volumetexture_wined3d_parent_ops);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {

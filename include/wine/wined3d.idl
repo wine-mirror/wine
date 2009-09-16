@@ -2687,8 +2687,6 @@ interface IWineD3DCubeTexture : IWineD3DBaseTexture
 ]
 interface IWineD3DVolumeTexture : IWineD3DBaseTexture
 {
-    void Destroy(
-    );
     HRESULT GetLevelDesc(
         [in] UINT level,
         [out] WINED3DVOLUME_DESC *desc
@@ -2956,7 +2954,8 @@ interface IWineD3DDevice : IWineD3DBase
         [in] WINED3DFORMAT format,
         [in] WINED3DPOOL pool,
         [out] IWineD3DVolumeTexture **texture,
-        [in] IUnknown *parent
+        [in] IUnknown *parent,
+        [in] const struct wined3d_parent_ops *parent_ops
     );
     HRESULT CreateVolume(
         [in] UINT width,

@@ -133,8 +133,11 @@ static ULONG WINAPI IWineD3DVolumeTextureImpl_Release(IWineD3DVolumeTexture *ifa
     ULONG ref;
     TRACE("(%p) : Releasing from %d\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
-    if (ref == 0) {
-        IWineD3DVolumeTexture_Destroy(iface);
+    if (!ref)
+    {
+        volumetexture_cleanup(This);
+        This->parent_ops->wined3d_object_destroyed(This->resource.parent);
+        HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
 }
@@ -254,15 +257,6 @@ static BOOL WINAPI IWineD3DVolumeTextureImpl_IsCondNP2(IWineD3DVolumeTexture *if
 /* *******************************************
    IWineD3DVolumeTexture IWineD3DVolumeTexture parts follow
    ******************************************* */
-static void WINAPI IWineD3DVolumeTextureImpl_Destroy(IWineD3DVolumeTexture *iface)
-{
-    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-
-    volumetexture_cleanup(This);
-
-    HeapFree(GetProcessHeap(), 0, This);
-}
-
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetLevelDesc(IWineD3DVolumeTexture *iface, UINT Level,WINED3DVOLUME_DESC *pDesc) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
     if (Level < This->baseTexture.levels) {
@@ -356,7 +350,6 @@ static const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
     IWineD3DVolumeTextureImpl_GetTextureDimensions,
     IWineD3DVolumeTextureImpl_IsCondNP2,
     /* volume texture */
-    IWineD3DVolumeTextureImpl_Destroy,
     IWineD3DVolumeTextureImpl_GetLevelDesc,
     IWineD3DVolumeTextureImpl_GetVolumeLevel,
     IWineD3DVolumeTextureImpl_LockBox,
@@ -364,8 +357,9 @@ static const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
     IWineD3DVolumeTextureImpl_AddDirtyBox
 };
 
-HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT height, UINT depth, UINT levels,
-        IWineD3DDeviceImpl *device, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool, IUnknown *parent)
+HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT height,
+        UINT depth, UINT levels, IWineD3DDeviceImpl *device, DWORD usage, WINED3DFORMAT format,
+        WINED3DPOOL pool, IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(format, gl_info);
@@ -419,6 +413,8 @@ HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT 
         WARN("Failed to initialize basetexture, returning %#x.\n", hr);
         return hr;
     }
+
+    texture->parent_ops = parent_ops;
 
     /* Is NP2 support for volumes needed? */
     texture->baseTexture.pow2Matrix[0] = 1.0f;
