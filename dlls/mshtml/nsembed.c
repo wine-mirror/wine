@@ -117,7 +117,7 @@ static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
             SetFocus(This->reset_focus);
             This->reset_focus = NULL;
             if(This->doc)
-                This->doc->basedoc.focus = FALSE;
+                This->doc->focus = FALSE;
         }
     }
 

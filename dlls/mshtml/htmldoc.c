@@ -1887,7 +1887,7 @@ static ULONG HTMLDocumentObj_Release(HTMLDocument *base)
 
         if(This->client)
             IOleObject_SetClientSite(OLEOBJ(&This->basedoc), NULL);
-        if(This->basedoc.in_place_active)
+        if(This->in_place_active)
             IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(&This->basedoc));
         if(This->ipsite)
             IOleDocumentView_SetInPlaceSite(DOCVIEW(&This->basedoc), NULL);

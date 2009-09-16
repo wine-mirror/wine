@@ -68,7 +68,7 @@ static HRESULT WINAPI OleInPlaceActiveObject_GetWindow(IOleInPlaceActiveObject *
     if(!phwnd)
         return E_INVALIDARG;
 
-    if(!This->in_place_active) {
+    if(!This->doc_obj->in_place_active) {
         *phwnd = NULL;
         return E_FAIL;
     }
@@ -186,11 +186,11 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceOb
 
     TRACE("(%p)\n", This);
 
-    if(This->ui_active)
+    if(This->doc_obj->ui_active)
         IOleDocumentView_UIActivate(DOCVIEW(This), FALSE);
-    This->window_active = FALSE;
+    This->doc_obj->window_active = FALSE;
 
-    if(!This->in_place_active)
+    if(!This->doc_obj->in_place_active)
         return S_OK;
 
     if(This->doc_obj->frame)
@@ -201,10 +201,10 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceOb
         SetWindowPos(This->doc_obj->hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
     }
 
-    This->focus = FALSE;
+    This->doc_obj->focus = FALSE;
     notif_focus(This->doc_obj);
 
-    This->in_place_active = FALSE;
+    This->doc_obj->in_place_active = FALSE;
     if(This->doc_obj->ipsite) {
         IOleInPlaceSiteEx *ipsiteex;
         HRESULT hres;

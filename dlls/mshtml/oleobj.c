@@ -133,7 +133,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
             This->doc_obj->hostinfo = hostinfo;
         }
 
-        if(!This->has_key_path) {
+        if(!This->doc_obj->has_key_path) {
             hres = IDocHostUIHandler_GetOptionKeyPath(pDocHostUIHandler, &key_path, 0);
             if(hres == S_OK && key_path) {
                 if(key_path[0]) {
@@ -157,7 +157,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
                 IDocHostUIHandler2_Release(pDocHostUIHandler2);
             }
 
-            This->has_key_path = TRUE;
+            This->doc_obj->has_key_path = TRUE;
         }
     }
 
@@ -246,7 +246,7 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
     if(dwSaveOption == OLECLOSE_PROMPTSAVE)
         FIXME("OLECLOSE_PROMPTSAVE not implemented\n");
 
-    if(This->in_place_active)
+    if(This->doc_obj->in_place_active)
         IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(This));
 
     HTMLDocument_LockContainer(This->doc_obj, FALSE);
@@ -750,13 +750,13 @@ void HTMLDocument_LockContainer(HTMLDocumentObj *This, BOOL fLock)
     IOleContainer *container;
     HRESULT hres;
 
-    if(!This->client || This->basedoc.container_locked == fLock)
+    if(!This->client || This->container_locked == fLock)
         return;
 
     hres = IOleClientSite_GetContainer(This->client, &container);
     if(SUCCEEDED(hres)) {
         IOleContainer_LockContainer(container, fLock);
-        This->basedoc.container_locked = fLock;
+        This->container_locked = fLock;
         IOleContainer_Release(container);
     }
 }

@@ -609,7 +609,7 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
     if(FAILED(hres))
         return hres;
 
-    if(This->ui_active) {
+    if(This->doc_obj->ui_active) {
         if(This->doc_obj->ip_window)
             call_set_active_object(This->doc_obj->ip_window, NULL);
         if(This->doc_obj->hostui)
@@ -619,7 +619,7 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
     if(This->doc_obj->nscontainer)
         set_ns_editmode(This->doc_obj->nscontainer);
 
-    if(This->ui_active) {
+    if(This->doc_obj->ui_active) {
         RECT rcBorderWidths;
 
         if(This->doc_obj->hostui)

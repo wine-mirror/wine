@@ -175,7 +175,7 @@ void notif_focus(HTMLDocumentObj *This)
     if(FAILED(hres))
         return;
 
-    IOleControlSite_OnFocus(site, This->basedoc.focus);
+    IOleControlSite_OnFocus(site, This->focus);
     IOleControlSite_Release(site);
 }
 
@@ -304,7 +304,7 @@ static HRESULT activate_window(HTMLDocumentObj *This)
     if(This->nscontainer)
         activate_gecko(This->nscontainer);
 
-    This->basedoc.in_place_active = TRUE;
+    This->in_place_active = TRUE;
     hres = IOleInPlaceSite_QueryInterface(This->ipsite, &IID_IOleInPlaceSiteEx, (void**)&ipsiteex);
     if(SUCCEEDED(hres)) {
         BOOL redraw = FALSE;
@@ -318,7 +318,7 @@ static HRESULT activate_window(HTMLDocumentObj *This)
     }
     if(FAILED(hres)) {
         WARN("OnInPlaceActivate failed: %08x\n", hres);
-        This->basedoc.in_place_active = FALSE;
+        This->in_place_active = FALSE;
         return hres;
     }
 
@@ -342,7 +342,7 @@ static HRESULT activate_window(HTMLDocumentObj *This)
         IOleInPlaceFrame_Release(This->frame);
     This->frame = pIPFrame;
 
-    This->basedoc.window_active = TRUE;
+    This->window_active = TRUE;
 
     return S_OK;
 }
@@ -548,7 +548,7 @@ static HRESULT WINAPI OleDocumentView_Show(IOleDocumentView *iface, BOOL fShow)
     TRACE("(%p)->(%x)\n", This, fShow);
 
     if(fShow) {
-        if(!This->ui_active) {
+        if(!This->doc_obj->ui_active) {
             hres = activate_window(This->doc_obj);
             if(FAILED(hres))
                 return hres;
@@ -581,16 +581,16 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
     if(fUIActivate) {
         RECT rcBorderWidths;
 
-        if(This->ui_active)
+        if(This->doc_obj->ui_active)
             return S_OK;
 
-        if(!This->window_active) {
+        if(!This->doc_obj->window_active) {
             hres = activate_window(This->doc_obj);
             if(FAILED(hres))
                 return hres;
         }
 
-        This->focus = TRUE;
+        This->doc_obj->focus = TRUE;
         if(This->doc_obj->nscontainer)
             nsIWebBrowserFocus_Activate(This->doc_obj->nscontainer->focus);
         notif_focus(This->doc_obj);
@@ -604,7 +604,7 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
             FIXME("OnUIActivate failed: %08x\n", hres);
             IOleInPlaceFrame_Release(This->doc_obj->frame);
             This->doc_obj->frame = NULL;
-            This->ui_active = FALSE;
+            This->doc_obj->ui_active = FALSE;
             return hres;
         }
 
@@ -622,10 +622,10 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
         memset(&rcBorderWidths, 0, sizeof(rcBorderWidths));
         IOleInPlaceFrame_SetBorderSpace(This->doc_obj->frame, &rcBorderWidths);
 
-        This->ui_active = TRUE;
+        This->doc_obj->ui_active = TRUE;
     }else {
-        if(This->ui_active) {
-            This->ui_active = FALSE;
+        if(This->doc_obj->ui_active) {
+            This->doc_obj->ui_active = FALSE;
             if(This->doc_obj->ip_window)
                 call_set_active_object(This->doc_obj->ip_window, NULL);
             if(This->doc_obj->frame)

@@ -291,12 +291,6 @@ struct HTMLDocument {
 
     USERMODE usermode;
     READYSTATE readystate;
-    BOOL in_place_active;
-    BOOL ui_active;
-    BOOL window_active;
-    BOOL has_key_path;
-    BOOL container_locked;
-    BOOL focus;
     LPWSTR mime;
 
     DWORD update;
@@ -354,6 +348,13 @@ struct HTMLDocumentObj {
 
     HWND hwnd;
     HWND tooltips_hwnd;
+
+    BOOL in_place_active;
+    BOOL ui_active;
+    BOOL window_active;
+    BOOL has_key_path;
+    BOOL container_locked;
+    BOOL focus;
 };
 
 typedef struct {
