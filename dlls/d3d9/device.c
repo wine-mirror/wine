@@ -644,6 +644,40 @@ static void WINAPI IDirect3DDevice9Impl_GetGammaRamp(LPDIRECT3DDEVICE9EX iface, 
     wined3d_mutex_unlock();
 }
 
+static HRESULT WINAPI IDirect3DDevice9Impl_CreateVolumeTexture(IDirect3DDevice9Ex *iface,
+        UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format,
+        D3DPOOL pool, IDirect3DVolumeTexture9 **texture, HANDLE *shared_handle)
+{
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    IDirect3DVolumeTexture9Impl *object;
+    HRESULT hr;
+
+    TRACE("iface %p, width %u, height %u, depth %u, levels %u\n",
+            iface, width, height, depth, levels);
+    TRACE("usage %#x, format %#x, pool %#x, texture %p, shared_handle %p.\n",
+            usage, format, pool, texture, shared_handle);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate volume texture memory.\n");
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    hr = volumetexture_init(object, This, width, height, depth, levels, usage, format, pool);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize volume texture, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created volume texture %p.\n", object);
+    *texture = (IDirect3DVolumeTexture9 *)object;
+
+    return D3D_OK;
+}
+
 static HRESULT IDirect3DDevice9Impl_CreateSurface(LPDIRECT3DDEVICE9EX iface, UINT Width, UINT Height,
         D3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IDirect3DSurface9 **ppSurface,
         UINT Usage, D3DPOOL Pool, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality)
