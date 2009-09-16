@@ -417,18 +417,15 @@ static HRESULT WINAPI HTMLDocument_get_designMode(IHTMLDocument2 *iface, BSTR *p
 static HRESULT WINAPI HTMLDocument_get_selection(IHTMLDocument2 *iface, IHTMLSelectionObject **p)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
-    nsISelection *nsselection = NULL;
+    nsISelection *nsselection;
+    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->nscontainer) {
-        nsIDOMWindow *dom_window = NULL;
-
-        nsIWebBrowser_GetContentDOMWindow(This->nscontainer->webbrowser, &dom_window);
-        if(dom_window) {
-            nsIDOMWindow_GetSelection(dom_window, &nsselection);
-            nsIDOMWindow_Release(dom_window);
-        }
+    nsres = nsIDOMWindow_GetSelection(This->window->nswindow, &nsselection);
+    if(NS_FAILED(nsres)) {
+        ERR("GetSelection failed: %08x\n", nsres);
+        return E_FAIL;
     }
 
     *p = HTMLSelectionObject_Create(This, nsselection);
