@@ -856,16 +856,16 @@ static HRESULT set_event_handler_disp(event_target_t **event_target_ptr, HTMLDoc
         return S_OK;
     IDispatch_AddRef(disp);
 
-    if(doc->nscontainer && (event_info[eid].flags & EVENT_DEFAULTLISTENER)) {
-        if(!doc->nscontainer->event_vector) {
-            doc->nscontainer->event_vector = heap_alloc_zero(EVENTID_LAST*sizeof(BOOL));
-            if(!doc->nscontainer->event_vector)
+    if(doc->window->nswindow && (event_info[eid].flags & EVENT_DEFAULTLISTENER)) {
+        if(!doc->window->event_vector) {
+            doc->window->event_vector = heap_alloc_zero(EVENTID_LAST*sizeof(BOOL));
+            if(!doc->window->event_vector)
                 return E_OUTOFMEMORY;
         }
 
-        if(!doc->nscontainer->event_vector[eid]) {
-            doc->nscontainer->event_vector[eid] = TRUE;
-            add_nsevent_listener(doc->nscontainer, event_info[eid].name);
+        if(!doc->window->event_vector[eid]) {
+            doc->window->event_vector[eid] = TRUE;
+            add_nsevent_listener(doc->window, event_info[eid].name);
         }
     }
 

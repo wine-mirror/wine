@@ -235,26 +235,18 @@ static void init_listener(nsEventListener *This, NSContainer *container,
     This->This = container;
 }
 
-void add_nsevent_listener(NSContainer *container, LPCWSTR type)
+void add_nsevent_listener(HTMLWindow *window, LPCWSTR type)
 {
-    nsIDOMWindow *dom_window;
     nsIDOMEventTarget *target;
     nsresult nsres;
 
-    nsres = nsIWebBrowser_GetContentDOMWindow(container->webbrowser, &dom_window);
-    if(NS_FAILED(nsres)) {
-        ERR("GetContentDOMWindow failed: %08x\n", nsres);
-        return;
-    }
-
-    nsres = nsIDOMWindow_QueryInterface(dom_window, &IID_nsIDOMEventTarget, (void**)&target);
-    nsIDOMWindow_Release(dom_window);
+    nsres = nsIDOMWindow_QueryInterface(window->nswindow, &IID_nsIDOMEventTarget, (void**)&target);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIDOMEventTarget interface: %08x\n", nsres);
         return;
     }
 
-    init_event(target, type, NSEVENTLIST(&container->htmlevent_listener), TRUE);
+    init_event(target, type, NSEVENTLIST(&window->doc->nscontainer->htmlevent_listener), TRUE);
     nsIDOMEventTarget_Release(target);
 }
 

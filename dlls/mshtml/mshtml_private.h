@@ -198,6 +198,7 @@ struct HTMLWindow {
 
     event_target_t *event_target;
     IHTMLEventObj *event;
+    BOOL *event_vector;
 
     SCRIPTMODE scriptmode;
     struct list script_hosts;
@@ -401,8 +402,6 @@ struct NSContainer {
 
     nsChannelBSC *bscallback; /* hack */
     HWND reset_focus; /* hack */
-
-    BOOL *event_vector;
 };
 
 typedef struct {
@@ -613,7 +612,7 @@ nsICommandParams *create_nscommand_params(void);
 HRESULT nsnode_to_nsstring(nsIDOMNode*,nsAString*);
 void get_editor_controller(NSContainer*);
 void init_nsevents(NSContainer*);
-void add_nsevent_listener(NSContainer*,LPCWSTR);
+void add_nsevent_listener(HTMLWindow*,LPCWSTR);
 nsresult get_nsinterface(nsISupports*,REFIID,void**);
 void update_nsdocument(HTMLDocument*);
 
