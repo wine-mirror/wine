@@ -140,7 +140,9 @@ static HRESULT WINAPI HTMLSelectionObject_Invoke(IHTMLSelectionObject *iface, DI
 static HRESULT WINAPI HTMLSelectionObject_createRange(IHTMLSelectionObject *iface, IDispatch **range)
 {
     HTMLSelectionObject *This = HTMLSELOBJ_THIS(iface);
+    IHTMLTxtRange *range_obj = NULL;
     nsIDOMRange *nsrange = NULL;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, range);
 
@@ -178,8 +180,11 @@ static HRESULT WINAPI HTMLSelectionObject_createRange(IHTMLSelectionObject *ifac
             ERR("GetRangeAt failed: %08x\n", nsres);
     }
 
-    *range = (IDispatch*)HTMLTxtRange_Create(&This->doc->basedoc, nsrange);
-    return S_OK;
+    hres = HTMLTxtRange_Create(This->doc, nsrange, &range_obj);
+
+    nsIDOMRange_Release(nsrange);
+    *range = (IDispatch*)range_obj;
+    return hres;
 }
 
 static HRESULT WINAPI HTMLSelectionObject_empty(IHTMLSelectionObject *iface)

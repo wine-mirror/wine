@@ -602,6 +602,7 @@ static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, I
     nsIDOMDocumentRange *nsdocrange;
     nsIDOMRange *nsrange = NULL;
     nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, range);
 
@@ -628,8 +629,10 @@ static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, I
 
     nsIDOMDocumentRange_Release(nsdocrange);
 
-    *range = HTMLTxtRange_Create(This->textcont.element.node.doc, nsrange);
-    return S_OK;
+    hres = HTMLTxtRange_Create(This->textcont.element.node.doc->doc_node, nsrange, range);
+
+    nsIDOMRange_Release(nsrange);
+    return hres;
 }
 
 #undef HTMLBODY_THIS

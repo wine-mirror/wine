@@ -1740,7 +1740,6 @@ static void init_doc(HTMLDocument *doc, const htmldoc_vtbl_t *vtbl)
     doc->readystate = READYSTATE_UNINITIALIZED;
 
     list_init(&doc->bindings);
-    list_init(&doc->range_list);
 
     HTMLDocument_HTMLDocument3_Init(doc);
     HTMLDocument_HTMLDocument5_Init(doc);
@@ -1771,7 +1770,6 @@ static void destroy_htmldoc(HTMLDocument *This)
         release_event_target(This->event_target);
 
     heap_free(This->mime);
-    detach_ranges(This);
     release_nodes(This);
     release_dispex(&This->dispex);
 
@@ -1809,6 +1807,7 @@ static ULONG HTMLDocumentNode_Release(HTMLDocument *base)
 
     if(!ref) {
         detach_selection(This);
+        detach_ranges(This);
         destroy_htmldoc(&This->basedoc);
         heap_free(This);
     }
@@ -1844,6 +1843,7 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     doc->basedoc.window = window;
 
     list_init(&doc->selection_list);
+    list_init(&doc->range_list);
 
     *ret = doc;
     return S_OK;

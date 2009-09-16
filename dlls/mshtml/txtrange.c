@@ -43,7 +43,7 @@ typedef struct {
     LONG ref;
 
     nsIDOMRange *nsrange;
-    HTMLDocument *doc;
+    HTMLDocumentNode *doc;
 
     struct list entry;
 } HTMLTxtRange;
@@ -72,7 +72,7 @@ typedef enum {
     RU_TEXTEDIT
 } range_unit_t;
 
-static HTMLTxtRange *get_range_object(HTMLDocument *doc, IHTMLTxtRange *iface)
+static HTMLTxtRange *get_range_object(HTMLDocumentNode *doc, IHTMLTxtRange *iface)
 {
     HTMLTxtRange *iter;
 
@@ -342,7 +342,7 @@ static nsIDOMNode *prev_node(HTMLTxtRange *This, nsIDOMNode *iter)
     if(!iter) {
         nsIDOMHTMLElement *nselem;
 
-        nsIDOMHTMLDocument_GetBody(This->doc->nsdoc, &nselem);
+        nsIDOMHTMLDocument_GetBody(This->doc->basedoc.nsdoc, &nselem);
         nsIDOMElement_GetLastChild(nselem, &tmp);
         if(!tmp)
             return (nsIDOMNode*)nselem;
@@ -1139,7 +1139,7 @@ static HRESULT WINAPI HTMLTxtRange_put_text(IHTMLTxtRange *iface, BSTR v)
         return MSHTML_E_NODOC;
 
     nsAString_Init(&text_str, v);
-    nsres = nsIDOMHTMLDocument_CreateTextNode(This->doc->nsdoc, &text_str, &text_node);
+    nsres = nsIDOMHTMLDocument_CreateTextNode(This->doc->basedoc.nsdoc, &text_str, &text_node);
     nsAString_Finish(&text_str);
     if(NS_FAILED(nsres)) {
         ERR("CreateTextNode failed: %08x\n", nsres);
@@ -1201,7 +1201,7 @@ static HRESULT WINAPI HTMLTxtRange_parentElement(IHTMLTxtRange *iface, IHTMLElem
         return S_OK;
     }
 
-    node = get_node(This->doc, nsnode, TRUE);
+    node = get_node(&This->doc->basedoc, nsnode, TRUE);
     nsIDOMNode_Release(nsnode);
 
     return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)parent);
@@ -1211,14 +1211,15 @@ static HRESULT WINAPI HTMLTxtRange_duplicate(IHTMLTxtRange *iface, IHTMLTxtRange
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
     nsIDOMRange *nsrange = NULL;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, Duplicate);
 
     nsIDOMRange_CloneRange(This->nsrange, &nsrange);
-    *Duplicate = HTMLTxtRange_Create(This->doc, nsrange);
+    hres = HTMLTxtRange_Create(This->doc, nsrange, Duplicate);
     nsIDOMRange_Release(nsrange);
 
-    return S_OK;
+    return hres;
 }
 
 static HRESULT WINAPI HTMLTxtRange_inRange(IHTMLTxtRange *iface, IHTMLTxtRange *Range,
@@ -1347,7 +1348,7 @@ static HRESULT WINAPI HTMLTxtRange_expand(IHTMLTxtRange *iface, BSTR Unit, VARIA
         nsIDOMHTMLElement *nsbody = NULL;
         nsresult nsres;
 
-        nsres = nsIDOMHTMLDocument_GetBody(This->doc->nsdoc, &nsbody);
+        nsres = nsIDOMHTMLDocument_GetBody(This->doc->basedoc.nsdoc, &nsbody);
         if(NS_FAILED(nsres) || !nsbody) {
             ERR("Could not get body: %08x\n", nsres);
             break;
@@ -1550,7 +1551,7 @@ static HRESULT WINAPI HTMLTxtRange_select(IHTMLTxtRange *iface)
 
     TRACE("(%p)\n", This);
 
-    nsres = nsIDOMWindow_GetSelection(This->doc->window->nswindow, &nsselection);
+    nsres = nsIDOMWindow_GetSelection(This->doc->basedoc.window->nswindow, &nsselection);
     if(NS_FAILED(nsres)) {
         ERR("GetSelection failed: %08x\n", nsres);
         return E_FAIL;
@@ -1787,17 +1788,17 @@ static HRESULT exec_indent(HTMLTxtRange *This, VARIANT *in, VARIANT *out)
 
     TRACE("(%p)->(%p %p)\n", This, in, out);
 
-    if(!This->doc->nsdoc) {
+    if(!This->doc->basedoc.nsdoc) {
         WARN("NULL nsdoc\n");
         return E_NOTIMPL;
     }
 
     nsAString_Init(&tag_str, blockquoteW);
-    nsIDOMHTMLDocument_CreateElement(This->doc->nsdoc, &tag_str, &blockquote_elem);
+    nsIDOMHTMLDocument_CreateElement(This->doc->basedoc.nsdoc, &tag_str, &blockquote_elem);
     nsAString_Finish(&tag_str);
 
     nsAString_Init(&tag_str, pW);
-    nsIDOMDocument_CreateElement(This->doc->nsdoc, &tag_str, &p_elem);
+    nsIDOMDocument_CreateElement(This->doc->basedoc.nsdoc, &tag_str, &p_elem);
     nsAString_Finish(&tag_str);
 
     nsIDOMRange_ExtractContents(This->nsrange, &fragment);
@@ -1847,9 +1848,13 @@ static const IOleCommandTargetVtbl OleCommandTargetVtbl = {
     RangeCommandTarget_Exec
 };
 
-IHTMLTxtRange *HTMLTxtRange_Create(HTMLDocument *doc, nsIDOMRange *nsrange)
+HRESULT HTMLTxtRange_Create(HTMLDocumentNode *doc, nsIDOMRange *nsrange, IHTMLTxtRange **p)
 {
-    HTMLTxtRange *ret = heap_alloc(sizeof(HTMLTxtRange));
+    HTMLTxtRange *ret;
+
+    ret = heap_alloc(sizeof(HTMLTxtRange));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->lpHTMLTxtRangeVtbl = &HTMLTxtRangeVtbl;
     ret->lpOleCommandTargetVtbl = &OleCommandTargetVtbl;
@@ -1862,10 +1867,11 @@ IHTMLTxtRange *HTMLTxtRange_Create(HTMLDocument *doc, nsIDOMRange *nsrange)
     ret->doc = doc;
     list_add_head(&doc->range_list, &ret->entry);
 
-    return HTMLTXTRANGE(ret);
+    *p = HTMLTXTRANGE(ret);
+    return S_OK;
 }
 
-void detach_ranges(HTMLDocument *This)
+void detach_ranges(HTMLDocumentNode *This)
 {
     HTMLTxtRange *iter;
 

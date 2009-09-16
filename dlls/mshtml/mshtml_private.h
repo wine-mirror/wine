@@ -301,8 +301,6 @@ struct HTMLDocument {
     ConnectionPoint cp_htmldocevents2;
     ConnectionPoint cp_propnotif;
 
-    struct list range_list;
-
     HTMLDOMNode *nodes;
 };
 
@@ -327,6 +325,7 @@ struct HTMLDocumentNode {
     LONG ref;
 
     struct list selection_list;
+    struct list range_list;
 };
 
 struct HTMLDocumentObj {
@@ -638,13 +637,13 @@ void channelbsc_set_channel(nsChannelBSC*,nsChannel*,nsIStreamListener*,nsISuppo
 IMoniker *get_channelbsc_mon(nsChannelBSC*);
 
 HRESULT HTMLSelectionObject_Create(HTMLDocumentNode*,nsISelection*,IHTMLSelectionObject**);
-IHTMLTxtRange *HTMLTxtRange_Create(HTMLDocument*,nsIDOMRange*);
+HRESULT HTMLTxtRange_Create(HTMLDocumentNode*,nsIDOMRange*,IHTMLTxtRange**);
 IHTMLStyle *HTMLStyle_Create(nsIDOMCSSStyleDeclaration*);
 IHTMLStyleSheet *HTMLStyleSheet_Create(nsIDOMStyleSheet*);
 IHTMLStyleSheetsCollection *HTMLStyleSheetsCollection_Create(nsIDOMStyleSheetList*);
 
 void detach_selection(HTMLDocumentNode*);
-void detach_ranges(HTMLDocument*);
+void detach_ranges(HTMLDocumentNode*);
 HRESULT get_node_text(HTMLDOMNode*,BSTR*);
 
 HTMLDOMNode *HTMLDOMTextNode_Create(HTMLDocument*,nsIDOMNode*);
