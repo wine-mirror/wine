@@ -261,8 +261,8 @@ static HRESULT disp_cmp(IDispatch *disp1, IDispatch *disp2, BOOL *ret)
         return S_OK;
     }
 
-    if(!disp1) {
-        *ret = !disp2;
+    if(!disp1 || !disp2) {
+        *ret = FALSE;
         return S_OK;
     }
 

@@ -943,6 +943,8 @@ ok(getVT(true && nullDisp) === "VT_DISPATCH",
    "getVT(0 && nullDisp) = " + getVT(true && nullDisp));
 ok(!nullDisp === true, "!nullDisp = " + !nullDisp);
 ok(String(nullDisp) === "null", "String(nullDisp) = " + String(nullDisp));
+ok(nullDisp != new Object(), "nullDisp == new Object()");
+ok(new Object() != nullDisp, "new Object() == nullDisp");
 
 function do_test() {}
 function nosemicolon() {} nosemicolon();
