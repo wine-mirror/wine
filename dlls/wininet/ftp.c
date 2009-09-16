@@ -380,7 +380,10 @@ static BOOL FTP_FtpPutFileW(ftp_session_t *lpwfs, LPCWSTR lpszLocalFile,
     }
 
     if (lpwfs->lstnSocket != -1)
+    {
         closesocket(lpwfs->lstnSocket);
+        lpwfs->lstnSocket = -1;
+    }
 
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
@@ -850,7 +853,10 @@ static HINTERNET FTP_FtpFindFirstFileW(ftp_session_t *lpwfs,
 
 lend:
     if (lpwfs->lstnSocket != -1)
+    {
         closesocket(lpwfs->lstnSocket);
+        lpwfs->lstnSocket = -1;
+    }
 
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
@@ -1305,7 +1311,10 @@ HINTERNET FTP_FtpOpenFileW(ftp_session_t *lpwfs,
     }
 
     if (lpwfs->lstnSocket != -1)
+    {
         closesocket(lpwfs->lstnSocket);
+        lpwfs->lstnSocket = -1;
+    }
 
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
@@ -1629,7 +1638,10 @@ static BOOL FTP_FtpGetFileW(ftp_session_t *lpwfs, LPCWSTR lpszRemoteFile, LPCWST
     }
 
     if (lpwfs->lstnSocket != -1)
+    {
         closesocket(lpwfs->lstnSocket);
+        lpwfs->lstnSocket = -1;
+    }
 
     CloseHandle(hFile);
 
