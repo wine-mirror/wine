@@ -708,9 +708,9 @@ static nsresult async_open_doc_uri(nsChannel *This, NSContainer *container,
     if(container->bscallback) {
         channelbsc_set_channel(container->bscallback, This, listener, context);
 
-        if(container->doc && container->doc->basedoc.mime) {
+        if(container->doc && container->doc->mime) {
             heap_free(This->content_type);
-            This->content_type = heap_strdupWtoA(container->doc->basedoc.mime);
+            This->content_type = heap_strdupWtoA(container->doc->mime);
         }
 
         return NS_OK;

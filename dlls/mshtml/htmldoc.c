@@ -1763,7 +1763,6 @@ static void destroy_htmldoc(HTMLDocument *This)
     if(This->event_target)
         release_event_target(This->event_target);
 
-    heap_free(This->mime);
     release_nodes(This);
     release_dispex(&This->dispex);
 
@@ -1894,6 +1893,7 @@ static ULONG HTMLDocumentObj_Release(HTMLDocument *base)
 
         if(This->hwnd)
             DestroyWindow(This->hwnd);
+        heap_free(This->mime);
 
         destroy_htmldoc(&This->basedoc);
 

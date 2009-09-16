@@ -370,8 +370,8 @@ static HRESULT WINAPI MonikerProp_PutProperty(IMonikerProp *iface, MONIKERPROPER
 
     switch(mkp) {
     case MIMETYPEPROP:
-        heap_free(This->mime);
-        This->mime = heap_strdupW(val);
+        heap_free(This->doc_obj->mime);
+        This->doc_obj->mime = heap_strdupW(val);
         break;
 
     case CLASSIDPROP:
