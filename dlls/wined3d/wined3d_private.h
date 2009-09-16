@@ -1875,9 +1875,9 @@ typedef struct IWineD3DVolumeImpl
     BOOL                    dirty;
 } IWineD3DVolumeImpl;
 
-extern const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl DECLSPEC_HIDDEN;
-
 void volume_add_dirty_box(IWineD3DVolume *iface, const WINED3DBOX *dirty_box) DECLSPEC_HIDDEN;
+HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT width, UINT height,
+        UINT depth, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool, IUnknown *parent) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IWineD3DVolumeTexture implementation structure (extends IWineD3DBaseTextureImpl)

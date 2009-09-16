@@ -1040,15 +1040,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
         UINT Width, UINT Height, UINT Depth, DWORD Usage, WINED3DFORMAT Format,
         WINED3DPOOL Pool, IWineD3DVolume **ppVolume, IUnknown *parent)
 {
-    IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVolumeImpl        *object; /** NOTE: impl ref allowed since this is a create function **/
-    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(Format, &GLINFO_LOCATION);
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DVolumeImpl *object;
     HRESULT hr;
 
-    if(!GL_SUPPORT(EXT_TEXTURE3D)) {
-        WARN("(%p) : Volume cannot be created - no volume texture support\n", This);
-        return WINED3DERR_INVALIDCALL;
-    }
+    TRACE("(%p) : W(%d) H(%d) D(%d), Usage(%d), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
+          Depth, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -1058,35 +1055,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    object->lpVtbl = &IWineD3DVolume_Vtbl;
-    hr = resource_init((IWineD3DResource *)object, WINED3DRTYPE_VOLUME, This,
-            Width * Height * Depth * format_desc->byte_count, Usage, format_desc, Pool, parent);
+    hr = volume_init(object, This, Width, Height, Depth, Usage, Format, Pool, parent);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize resource, returning %#x\n", hr);
+        WARN("Failed to initialize volume, returning %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppVolume = NULL;
         return hr;
     }
 
-    TRACE("(%p) : Created resource %p\n", This, object);
-
+    TRACE("(%p) : Created volume %p.\n", This, object);
     *ppVolume = (IWineD3DVolume *)object;
-
-    TRACE("(%p) : W(%d) H(%d) D(%d), Usage(%d), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
-          Depth, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
-
-    object->currentDesc.Width   = Width;
-    object->currentDesc.Height  = Height;
-    object->currentDesc.Depth   = Depth;
-
-    /** Note: Volume textures cannot be dxtn, hence no need to check here **/
-    object->lockable            = TRUE;
-    object->locked              = FALSE;
-    memset(&object->lockedBox, 0, sizeof(WINED3DBOX));
-    object->dirty               = TRUE;
-
-    volume_add_dirty_box((IWineD3DVolume *)object, NULL);
 
     return WINED3D_OK;
 }
