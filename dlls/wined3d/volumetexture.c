@@ -76,7 +76,7 @@ static void volumetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINE
     This->baseTexture.dirty = FALSE;
 }
 
-static void volumetexture_cleanup(IWineD3DVolumeTextureImpl *This, D3DCB_DESTROYVOLUMEFN volume_destroy_cb)
+static void volumetexture_cleanup(IWineD3DVolumeTextureImpl *This)
 {
     unsigned int i;
 
@@ -90,7 +90,7 @@ static void volumetexture_cleanup(IWineD3DVolumeTextureImpl *This, D3DCB_DESTROY
         {
             /* Cleanup the container. */
             IWineD3DVolume_SetContainer(volume, NULL);
-            volume_destroy_cb(volume);
+            IWineD3DVolume_Release(volume);
         }
     }
     basetexture_cleanup((IWineD3DBaseTexture *)This);
@@ -170,7 +170,7 @@ HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT 
         {
             ERR("Creating a volume for the volume texture failed, hr %#x.\n", hr);
             texture->volumes[i] = NULL;
-            volumetexture_cleanup(texture, D3DCB_DefaultDestroyVolume);
+            volumetexture_cleanup(texture);
             return hr;
         }
 
@@ -224,7 +224,7 @@ static ULONG WINAPI IWineD3DVolumeTextureImpl_Release(IWineD3DVolumeTexture *ifa
     TRACE("(%p) : Releasing from %d\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
-        IWineD3DVolumeTexture_Destroy(iface, D3DCB_DefaultDestroyVolume);
+        IWineD3DVolumeTexture_Destroy(iface);
     }
     return ref;
 }
@@ -344,10 +344,11 @@ static BOOL WINAPI IWineD3DVolumeTextureImpl_IsCondNP2(IWineD3DVolumeTexture *if
 /* *******************************************
    IWineD3DVolumeTexture IWineD3DVolumeTexture parts follow
    ******************************************* */
-static void WINAPI IWineD3DVolumeTextureImpl_Destroy(IWineD3DVolumeTexture *iface, D3DCB_DESTROYVOLUMEFN D3DCB_DestroyVolume) {
+static void WINAPI IWineD3DVolumeTextureImpl_Destroy(IWineD3DVolumeTexture *iface)
+{
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
 
-    volumetexture_cleanup(This, D3DCB_DestroyVolume);
+    volumetexture_cleanup(This);
 
     HeapFree(GetProcessHeap(), 0, This);
 }

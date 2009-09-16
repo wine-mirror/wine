@@ -123,6 +123,7 @@ static ULONG WINAPI IWineD3DVolumeImpl_Release(IWineD3DVolume *iface) {
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
         resource_cleanup((IWineD3DResource *)iface);
+        This->parent_ops->wined3d_object_destroyed(This->resource.parent);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -374,8 +375,9 @@ static const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
     IWineD3DVolumeImpl_SetContainer
 };
 
-HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT width, UINT height,
-        UINT depth, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool, IUnknown *parent)
+HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT width,
+        UINT height, UINT depth, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool,
+        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(format, gl_info);
@@ -397,6 +399,7 @@ HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT
         return hr;
     }
 
+    volume->parent_ops = parent_ops;
     volume->currentDesc.Width = width;
     volume->currentDesc.Height = height;
     volume->currentDesc.Depth = depth;

@@ -2215,7 +2215,6 @@ interface IWineD3DDeviceParent : IUnknown
         [out] IWineD3DSwapChain **swapchain
     );
 }
-typedef ULONG (*D3DCB_DESTROYVOLUMEFN)(IWineD3DVolume *pVolume);
 typedef ULONG (*D3DCB_DESTROYSWAPCHAINFN)(IWineD3DSwapChain *pSwapChain);
 typedef HRESULT (*D3DCB_ENUMRESOURCES)(IWineD3DResource *resource, void *pData);
 
@@ -2689,7 +2688,6 @@ interface IWineD3DCubeTexture : IWineD3DBaseTexture
 interface IWineD3DVolumeTexture : IWineD3DBaseTexture
 {
     void Destroy(
-        [in] D3DCB_DESTROYVOLUMEFN destroy_volume_callback
     );
     HRESULT GetLevelDesc(
         [in] UINT level,
@@ -2968,7 +2966,8 @@ interface IWineD3DDevice : IWineD3DBase
         [in] WINED3DFORMAT format,
         [in] WINED3DPOOL pool,
         [out] IWineD3DVolume **volume,
-        [in] IUnknown *parent
+        [in] IUnknown *parent,
+        [in] const struct wined3d_parent_ops *parent_ops
     );
     HRESULT CreateCubeTexture(
         [in] UINT edge_length,

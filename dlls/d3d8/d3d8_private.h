@@ -649,6 +649,5 @@ size_t parse_token(const DWORD* pToken);
 
 /* Callbacks */
 extern ULONG WINAPI D3D8CB_DestroySwapChain (IWineD3DSwapChain *pSwapChain);
-extern ULONG WINAPI D3D8CB_DestroyVolume(IWineD3DVolume *pVolume);
 
 #endif /* __WINE_D3DX8_PRIVATE_H */

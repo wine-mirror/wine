@@ -1036,9 +1036,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
-        UINT Width, UINT Height, UINT Depth, DWORD Usage, WINED3DFORMAT Format,
-        WINED3DPOOL Pool, IWineD3DVolume **ppVolume, IUnknown *parent)
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface, UINT Width, UINT Height,
+        UINT Depth, DWORD Usage, WINED3DFORMAT Format, WINED3DPOOL Pool, IWineD3DVolume **ppVolume,
+        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVolumeImpl *object;
@@ -1055,7 +1055,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    hr = volume_init(object, This, Width, Height, Depth, Usage, Format, Pool, parent);
+    hr = volume_init(object, This, Width, Height, Depth, Usage, Format, Pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize volume, returning %#x.\n", hr);

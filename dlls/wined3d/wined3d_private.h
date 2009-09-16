@@ -1866,6 +1866,7 @@ typedef struct IWineD3DVolumeImpl
     IWineD3DResourceClass      resource;
 
     /* WineD3DVolume Information */
+    const struct wined3d_parent_ops *parent_ops;
     WINED3DVOLUMET_DESC      currentDesc;
     IWineD3DBase            *container;
     BOOL                    lockable;
@@ -1876,8 +1877,9 @@ typedef struct IWineD3DVolumeImpl
 } IWineD3DVolumeImpl;
 
 void volume_add_dirty_box(IWineD3DVolume *iface, const WINED3DBOX *dirty_box) DECLSPEC_HIDDEN;
-HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT width, UINT height,
-        UINT depth, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool, IUnknown *parent) DECLSPEC_HIDDEN;
+HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT width,
+        UINT height, UINT depth, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool,
+        IUnknown *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IWineD3DVolumeTexture implementation structure (extends IWineD3DBaseTextureImpl)

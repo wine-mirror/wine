@@ -538,6 +538,5 @@ typedef struct IDirect3DQuery9Impl {
 
 /* Callbacks */
 extern ULONG WINAPI D3D9CB_DestroySwapChain (IWineD3DSwapChain *pSwapChain);
-extern ULONG WINAPI D3D9CB_DestroyVolume(IWineD3DVolume *pVolume);
 
 #endif /* __WINE_D3D9_PRIVATE_H */

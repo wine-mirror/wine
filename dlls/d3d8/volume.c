@@ -52,6 +52,14 @@ static ULONG WINAPI IDirect3DVolume8Impl_AddRef(LPDIRECT3DVOLUME8 iface) {
         /* No container, handle our own refcounting */
         ULONG ref = InterlockedIncrement(&This->ref);
         TRACE("(%p) : AddRef from %d\n", This, ref - 1);
+
+        if (ref == 1)
+        {
+            wined3d_mutex_lock();
+            IWineD3DVolume_AddRef(This->wineD3DVolume);
+            wined3d_mutex_unlock();
+        }
+
         return ref;
     }
 }
@@ -75,8 +83,6 @@ static ULONG WINAPI IDirect3DVolume8Impl_Release(LPDIRECT3DVOLUME8 iface) {
             wined3d_mutex_lock();
             IWineD3DVolume_Release(This->wineD3DVolume);
             wined3d_mutex_unlock();
-
-            HeapFree(GetProcessHeap(), 0, This);
         }
 
         return ref;
@@ -219,15 +225,15 @@ static const IDirect3DVolume8Vtbl Direct3DVolume8_Vtbl =
     IDirect3DVolume8Impl_UnlockBox
 };
 
-ULONG WINAPI D3D8CB_DestroyVolume(IWineD3DVolume *pVolume) {
-    IDirect3DVolume8Impl* volumeParent;
-
-    IWineD3DVolume_GetParent(pVolume, (IUnknown **) &volumeParent);
-    /* GetParent's AddRef was forwarded to an object in destruction.
-     * Releasing it here again would cause an endless recursion. */
-    volumeParent->forwardReference = NULL;
-    return IDirect3DVolume8_Release((IDirect3DVolume8*) volumeParent);
+static void STDMETHODCALLTYPE volume_wined3d_object_destroyed(void *parent)
+{
+    HeapFree(GetProcessHeap(), 0, parent);
 }
+
+static const struct wined3d_parent_ops d3d8_volume_wined3d_parent_ops =
+{
+    volume_wined3d_object_destroyed,
+};
 
 HRESULT volume_init(IDirect3DVolume8Impl *volume, IDirect3DDevice8Impl *device, UINT width, UINT height,
         UINT depth, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool)
@@ -238,7 +244,7 @@ HRESULT volume_init(IDirect3DVolume8Impl *volume, IDirect3DDevice8Impl *device, 
     volume->ref = 1;
 
     hr = IWineD3DDevice_CreateVolume(device->WineD3DDevice, width, height, depth, usage,
-            format, pool, &volume->wineD3DVolume, (IUnknown *)volume);
+            format, pool, &volume->wineD3DVolume, (IUnknown *)volume, &d3d8_volume_wined3d_parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d volume, hr %#x.\n", hr);

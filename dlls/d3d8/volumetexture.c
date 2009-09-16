@@ -58,7 +58,7 @@ static ULONG WINAPI IDirect3DVolumeTexture8Impl_Release(LPDIRECT3DVOLUMETEXTURE8
 
     if (ref == 0) {
         wined3d_mutex_lock();
-        IWineD3DVolumeTexture_Destroy(This->wineD3DVolumeTexture, D3D8CB_DestroyVolume);
+        IWineD3DVolumeTexture_Destroy(This->wineD3DVolumeTexture);
         wined3d_mutex_unlock();
 
         IUnknown_Release(This->parentDevice);
