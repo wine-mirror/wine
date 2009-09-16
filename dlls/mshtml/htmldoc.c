@@ -1764,9 +1764,6 @@ static void destroy_htmldoc(HTMLDocument *This)
 {
     remove_doc_tasks(This);
 
-    if(This->undomgr)
-        IOleUndoManager_Release(This->undomgr);
-
     set_document_bscallback(This, NULL);
     set_current_mon(This, NULL);
 
@@ -1899,6 +1896,8 @@ static ULONG HTMLDocumentObj_Release(HTMLDocument *base)
             IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(&This->basedoc));
         if(This->ipsite)
             IOleDocumentView_SetInPlaceSite(DOCVIEW(&This->basedoc), NULL);
+        if(This->undomgr)
+            IOleUndoManager_Release(This->undomgr);
         destroy_htmldoc(&This->basedoc);
         if(This->basedoc.nsdoc)
             remove_mutation_observer(This->nscontainer, This->basedoc.nsdoc);

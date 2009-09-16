@@ -284,8 +284,6 @@ struct HTMLDocument {
     HTMLWindow *window;
     nsIDOMHTMLDocument *nsdoc;
 
-    IOleUndoManager *undomgr;
-
     nsChannelBSC *bscallback;
     IMoniker *mon;
     LPOLESTR url;
@@ -354,6 +352,8 @@ struct HTMLDocumentObj {
     IOleInPlaceSite *ipsite;
     IOleInPlaceFrame *frame;
     IOleInPlaceUIWindow *ip_window;
+
+    IOleUndoManager *undomgr;
 };
 
 typedef struct {
