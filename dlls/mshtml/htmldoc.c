@@ -1728,12 +1728,13 @@ static dispex_static_data_t HTMLDocument_dispex = {
     HTMLDocument_iface_tids
 };
 
-static void init_doc(HTMLDocument *doc, const htmldoc_vtbl_t *vtbl)
+static void init_doc(HTMLDocument *doc, IUnknown *unk_impl)
 {
-    doc->vtbl = vtbl;
     doc->lpHTMLDocument2Vtbl = &HTMLDocumentVtbl;
     doc->lpIDispatchExVtbl = &DocDispatchExVtbl;
     doc->lpSupportErrorInfoVtbl = &SupportErrorInfoVtbl;
+
+    doc->unk_impl = unk_impl;
 
     HTMLDocument_HTMLDocument3_Init(doc);
     HTMLDocument_HTMLDocument5_Init(doc);
@@ -1767,37 +1768,6 @@ static void destroy_htmldoc(HTMLDocument *This)
     if(This->nsdoc)
         nsIDOMHTMLDocument_Release(This->nsdoc);
 }
-
-#define HTMLDOCNODE_THIS(base) DEFINE_THIS2(HTMLDocumentNode, basedoc, base)
-
-static HRESULT HTMLDocumentNode_QueryInterface(HTMLDocument *base, REFIID riid, void **ppv)
-{
-    HTMLDocumentNode *This = HTMLDOCNODE_THIS(base);
-
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->node), riid, ppv);
-}
-
-static ULONG HTMLDocumentNode_AddRef(HTMLDocument *base)
-{
-    HTMLDocumentNode *This = HTMLDOCNODE_THIS(base);
-
-    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->node));
-}
-
-static ULONG HTMLDocumentNode_Release(HTMLDocument *base)
-{
-    HTMLDocumentNode *This = HTMLDOCNODE_THIS(base);
-
-    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->node));
-}
-
-#undef HTMLDOCNODE_THIS
-
-static const htmldoc_vtbl_t HTMLDocumentNodeVtbl = {
-    HTMLDocumentNode_QueryInterface,
-    HTMLDocumentNode_AddRef,
-    HTMLDocumentNode_Release
-};
 
 #define HTMLDOCNODE_NODE_THIS(iface) DEFINE_THIS2(HTMLDocumentNode, node, iface)
 
@@ -1839,7 +1809,7 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     doc->basedoc.doc_node = doc;
     doc->basedoc.doc_obj = doc_obj;
 
-    init_doc(&doc->basedoc, &HTMLDocumentNodeVtbl);
+    init_doc(&doc->basedoc, (IUnknown*)HTMLDOMNODE(&doc->node));
     doc->ref = 1;
 
     nsIDOMHTMLDocument_AddRef(nsdoc);
@@ -1866,42 +1836,6 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
 static HRESULT WINAPI CustomDoc_QueryInterface(ICustomDoc *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentObj *This = CUSTOMDOC_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(&This->basedoc), riid, ppv);
-}
-
-static ULONG WINAPI CustomDoc_AddRef(ICustomDoc *iface)
-{
-    HTMLDocumentObj *This = CUSTOMDOC_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(&This->basedoc));
-}
-
-static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
-{
-    HTMLDocumentObj *This = CUSTOMDOC_THIS(iface);
-    return IHTMLDocument_Release(HTMLDOC(&This->basedoc));
-}
-
-static HRESULT WINAPI CustomDoc_SetUIHandler(ICustomDoc *iface, IDocHostUIHandler *pUIHandler)
-{
-    HTMLDocumentObj *This = CUSTOMDOC_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pUIHandler);
-    return E_NOTIMPL;
-}
-
-#undef CUSTOMDOC_THIS
-
-static const ICustomDocVtbl CustomDocVtbl = {
-    CustomDoc_QueryInterface,
-    CustomDoc_AddRef,
-    CustomDoc_Release,
-    CustomDoc_SetUIHandler
-};
-
-#define HTMLDOCOBJ_THIS(base) DEFINE_THIS2(HTMLDocumentObj, basedoc, base)
-
-static HRESULT HTMLDocumentObj_QueryInterface(HTMLDocument *base, REFIID riid, void **ppv)
-{
-    HTMLDocumentObj *This = HTMLDOCOBJ_THIS(base);
 
     if(htmldoc_qi(&This->basedoc, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
@@ -1919,9 +1853,9 @@ static HRESULT HTMLDocumentObj_QueryInterface(HTMLDocument *base, REFIID riid, v
     return S_OK;
 }
 
-static ULONG HTMLDocumentObj_AddRef(HTMLDocument *base)
+static ULONG WINAPI CustomDoc_AddRef(ICustomDoc *iface)
 {
-    HTMLDocumentObj *This = HTMLDOCOBJ_THIS(base);
+    HTMLDocumentObj *This = CUSTOMDOC_THIS(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref = %u\n", This, ref);
@@ -1929,9 +1863,9 @@ static ULONG HTMLDocumentObj_AddRef(HTMLDocument *base)
     return ref;
 }
 
-static ULONG HTMLDocumentObj_Release(HTMLDocument *base)
+static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
 {
-    HTMLDocumentObj *This = HTMLDOCOBJ_THIS(base);
+    HTMLDocumentObj *This = CUSTOMDOC_THIS(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref = %u\n", This, ref);
@@ -1975,12 +1909,20 @@ static ULONG HTMLDocumentObj_Release(HTMLDocument *base)
     return ref;
 }
 
-#undef HTMLDOCOBJ_THIS
+static HRESULT WINAPI CustomDoc_SetUIHandler(ICustomDoc *iface, IDocHostUIHandler *pUIHandler)
+{
+    HTMLDocumentObj *This = CUSTOMDOC_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pUIHandler);
+    return E_NOTIMPL;
+}
 
-static const htmldoc_vtbl_t HTMLDocumentObjVtbl = {
-    HTMLDocumentObj_QueryInterface,
-    HTMLDocumentObj_AddRef,
-    HTMLDocumentObj_Release
+#undef CUSTOMDOC_THIS
+
+static const ICustomDocVtbl CustomDocVtbl = {
+    CustomDoc_QueryInterface,
+    CustomDoc_AddRef,
+    CustomDoc_Release,
+    CustomDoc_SetUIHandler
 };
 
 HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
@@ -1995,7 +1937,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     if(!doc)
         return E_OUTOFMEMORY;
 
-    init_doc(&doc->basedoc, &HTMLDocumentObjVtbl);
+    init_doc(&doc->basedoc, (IUnknown*)CUSTOMDOC(doc));
 
     doc->lpCustomDocVtbl = &CustomDocVtbl;
     doc->ref = 1;

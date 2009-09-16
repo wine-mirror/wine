@@ -246,15 +246,8 @@ struct ConnectionPoint {
     ConnectionPoint *next;
 };
 
-typedef struct {
-    HRESULT (*query_interface)(HTMLDocument*,REFIID,void**);
-    ULONG (*addref)(HTMLDocument*);
-    ULONG (*release)(HTMLDocument*);
-} htmldoc_vtbl_t;
-
 struct HTMLDocument {
     DispatchEx dispex;
-    const htmldoc_vtbl_t                  *vtbl;
     const IHTMLDocument2Vtbl              *lpHTMLDocument2Vtbl;
     const IHTMLDocument3Vtbl              *lpHTMLDocument3Vtbl;
     const IHTMLDocument4Vtbl              *lpHTMLDocument4Vtbl;
@@ -277,6 +270,8 @@ struct HTMLDocument {
     const IDispatchExVtbl                 *lpIDispatchExVtbl;
     const ISupportErrorInfoVtbl           *lpSupportErrorInfoVtbl;
 
+    IUnknown *unk_impl;
+
     HTMLDocumentObj *doc_obj;
     HTMLDocumentNode *doc_node;
 
@@ -292,17 +287,17 @@ struct HTMLDocument {
 
 static inline HRESULT htmldoc_query_interface(HTMLDocument *This, REFIID riid, void **ppv)
 {
-    return This->vtbl->query_interface(This, riid, ppv);
+    return IUnknown_QueryInterface(This->unk_impl, riid, ppv);
 }
 
 static inline ULONG htmldoc_addref(HTMLDocument *This)
 {
-    return This->vtbl->addref(This);
+    return IUnknown_AddRef(This->unk_impl);
 }
 
 static inline ULONG htmldoc_release(HTMLDocument *This)
 {
-    return This->vtbl->release(This);
+    return IUnknown_Release(This->unk_impl);
 }
 
 struct HTMLDocumentObj {
