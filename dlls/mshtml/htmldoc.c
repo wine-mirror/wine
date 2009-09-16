@@ -428,8 +428,7 @@ static HRESULT WINAPI HTMLDocument_get_selection(IHTMLDocument2 *iface, IHTMLSel
         return E_FAIL;
     }
 
-    *p = HTMLSelectionObject_Create(This, nsselection);
-    return S_OK;
+    return HTMLSelectionObject_Create(This->doc_node, nsselection, p);
 }
 
 static HRESULT WINAPI HTMLDocument_get_readyState(IHTMLDocument2 *iface, BSTR *p)
@@ -1741,7 +1740,6 @@ static void init_doc(HTMLDocument *doc, const htmldoc_vtbl_t *vtbl)
     doc->readystate = READYSTATE_UNINITIALIZED;
 
     list_init(&doc->bindings);
-    list_init(&doc->selection_list);
     list_init(&doc->range_list);
 
     HTMLDocument_HTMLDocument3_Init(doc);
@@ -1787,7 +1785,6 @@ static void destroy_htmldoc(HTMLDocument *This)
         release_event_target(This->event_target);
 
     heap_free(This->mime);
-    detach_selection(This);
     detach_ranges(This);
     release_nodes(This);
     release_dispex(&This->dispex);
@@ -1825,6 +1822,7 @@ static ULONG HTMLDocumentNode_Release(HTMLDocument *base)
     TRACE("(%p) ref = %u\n", This, ref);
 
     if(!ref) {
+        detach_selection(This);
         destroy_htmldoc(&This->basedoc);
         heap_free(This);
     }
@@ -1858,6 +1856,8 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     doc->basedoc.nsdoc = nsdoc;
 
     doc->basedoc.window = window;
+
+    list_init(&doc->selection_list);
 
     *ret = doc;
     return S_OK;
