@@ -21,10 +21,14 @@
 #ifndef __WINE_OLEDBERR_H
 #define __WINE_OLEDBERR_H
 
-#define DB_E_NOTFOUND             0x80040e19
+#define DB_E_NOTFOUND                       0x80040e19
 
-#define DB_E_ERRORSOCCURRED       0x80040e21
+#define DB_E_UNSUPPORTEDCONVERSION          0x80040e1d
 
-#define DB_S_ERRORSOCCURRED       0x00040eda
+#define DB_E_ERRORSOCCURRED                 0x80040e21
+
+#define DB_E_DATAOVERFLOW                   0x80040e57
+
+#define DB_S_ERRORSOCCURRED                 0x00040eda
 
 #endif /* __WINE_OLEDBERR_H */
