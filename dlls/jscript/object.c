@@ -163,13 +163,34 @@ static const builtin_info_t Object_info = {
 };
 
 static HRESULT ObjectConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     HRESULT hres;
 
     TRACE("\n");
 
     switch(flags) {
+    case DISPATCH_METHOD:
+        if(arg_cnt(dp)) {
+            VARIANT *arg = get_arg(dp,0);
+
+            if(V_VT(arg) != VT_EMPTY && V_VT(arg) != VT_NULL) {
+                IDispatch *disp;
+
+                hres = to_object(dispex->ctx, arg, &disp);
+                if(FAILED(hres))
+                    return hres;
+
+                if(retv) {
+                    V_VT(retv) = VT_DISPATCH;
+                    V_DISPATCH(retv) = disp;
+                }else {
+                    IDispatch_Release(disp);
+                }
+                return S_OK;
+            }
+        }
+        /* fall through */
     case DISPATCH_CONSTRUCT: {
         DispatchEx *obj;
 

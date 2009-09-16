@@ -88,6 +88,17 @@ ok(tmp.f() === "[object RegExp]", "tmp.f() = " + tmp.f());
 (tmp = new String).f = Object.prototype.toString;
 ok(tmp.f() === "[object String]", "tmp.f() = " + tmp.f());
 
+ok(Object(1) instanceof Number, "Object(1) is not instance of Number");
+ok(Object("") instanceof String, "Object('') is not instance of String");
+ok(Object(false) instanceof Boolean, "Object(false) is not instance of Boolean");
+
+obj = new Object();
+ok(Object(obj) === obj, "Object(obj) !== obj");
+
+ok(typeof(Object()) === "object", "typeof(Object()) !== 'object'");
+ok(typeof(Object(undefined)) === "object", "typeof(Object(undefined)) !== 'object'");
+ok(typeof(Object(null)) === "object", "typeof(Object(null)) !== 'object'");
+
 var obj = new Object();
 obj.toString = function (x) {
     ok(arguments.length === 0, "arguments.length = " + arguments.length);
@@ -95,6 +106,7 @@ obj.toString = function (x) {
 };
 ok((tmp = obj.toLocaleString()) === "test", "obj.toLocaleString() = " + tmp);
 ok((tmp = obj.toLocaleString(1)) === "test", "obj.toLocaleString(1) = " + tmp);
+ok(obj === obj.valueOf(), "obj !== obj.valueOf");
 
 ok("".length === 0, "\"\".length = " + "".length);
 ok(getVT("".length) == "VT_I4", "\"\".length = " + "".length);
