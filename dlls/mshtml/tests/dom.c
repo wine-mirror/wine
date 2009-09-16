@@ -94,6 +94,31 @@ static const IID * const none_iids[] = {
     NULL
 };
 
+static const IID * const doc_node_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
+    &IID_IHTMLDocument,
+    &IID_IHTMLDocument2,
+    &IID_IHTMLDocument3,
+    &IID_IHTMLDocument4,
+    &IID_IHTMLDocument5,
+    &IID_IDispatchEx,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
+static const IID * const doc_obj_iids[] = {
+    &IID_IHTMLDocument,
+    &IID_IHTMLDocument2,
+    &IID_IHTMLDocument3,
+    &IID_IHTMLDocument4,
+    &IID_IHTMLDocument5,
+    &IID_IDispatchEx,
+    &IID_IConnectionPointContainer,
+    &IID_ICustomDoc,
+    NULL
+};
+
 static const IID * const elem_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
@@ -4081,6 +4106,9 @@ static void test_window(IHTMLDocument2 *doc)
     hres = IHTMLWindow2_get_document(window, &doc2);
     ok(hres == S_OK, "get_document failed: %08x\n", hres);
     ok(doc2 != NULL, "doc2 == NULL\n");
+
+    test_ifaces((IUnknown*)doc2, doc_node_iids);
+    test_ifaces((IUnknown*)doc, doc_obj_iids);
 
     IHTMLDocument_Release(doc2);
 

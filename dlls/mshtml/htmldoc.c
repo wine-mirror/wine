@@ -1597,7 +1597,7 @@ static const IDispatchExVtbl DocDispatchExVtbl = {
     DocDispatchEx_GetNameSpaceParent
 };
 
-static HRESULT htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
+static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
 {
     *ppv = NULL;
 
@@ -1696,25 +1696,25 @@ static HRESULT htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = PERSISTHIST(This);
     }else if(IsEqualGUID(&CLSID_CMarkup, riid)) {
         FIXME("(%p)->(CLSID_CMarkup %p)\n", This, ppv);
-        return E_NOINTERFACE;
+        *ppv = NULL;
     }else if(IsEqualGUID(&IID_IRunnableObject, riid)) {
         TRACE("(%p)->(IID_IRunnableObject %p) returning NULL\n", This, ppv);
-        return E_NOINTERFACE;
+        *ppv = NULL;
     }else if(IsEqualGUID(&IID_IPersistPropertyBag, riid)) {
         TRACE("(%p)->(IID_IPersistPropertyBag %p) returning NULL\n", This, ppv);
-        return E_NOINTERFACE;
+        *ppv = NULL;
     }else if(IsEqualGUID(&IID_IMarshal, riid)) {
         TRACE("(%p)->(IID_IMarshal %p) returning NULL\n", This, ppv);
-        return E_NOINTERFACE;
+        *ppv = NULL;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
-        return *ppv ? S_OK : E_NOINTERFACE;
+        return TRUE;
     }else {
-        FIXME("(%p)->(%s %p) interface not supported\n", This, debugstr_guid(riid), ppv);
-        return E_NOINTERFACE;
+        return FALSE;
     }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    if(*ppv)
+        IUnknown_AddRef((IUnknown*)*ppv);
+    return TRUE;
 }
 
 static const tid_t HTMLDocument_iface_tids[] = {
@@ -1777,35 +1777,21 @@ static HRESULT HTMLDocumentNode_QueryInterface(HTMLDocument *base, REFIID riid, 
 {
     HTMLDocumentNode *This = HTMLDOCNODE_THIS(base);
 
-    return htmldoc_qi(&This->basedoc, riid, ppv);
+    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->node), riid, ppv);
 }
 
 static ULONG HTMLDocumentNode_AddRef(HTMLDocument *base)
 {
     HTMLDocumentNode *This = HTMLDOCNODE_THIS(base);
-    ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref = %u\n", This, ref);
-
-    return ref;
+    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->node));
 }
 
 static ULONG HTMLDocumentNode_Release(HTMLDocument *base)
 {
     HTMLDocumentNode *This = HTMLDOCNODE_THIS(base);
-    ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref = %u\n", This, ref);
-
-    if(!ref) {
-        detach_selection(This);
-        detach_ranges(This);
-        release_nodes(This);
-        destroy_htmldoc(&This->basedoc);
-        heap_free(This);
-    }
-
-    return ref;
+    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->node));
 }
 
 #undef HTMLDOCNODE_THIS
@@ -1814,6 +1800,35 @@ static const htmldoc_vtbl_t HTMLDocumentNodeVtbl = {
     HTMLDocumentNode_QueryInterface,
     HTMLDocumentNode_AddRef,
     HTMLDocumentNode_Release
+};
+
+#define HTMLDOCNODE_NODE_THIS(iface) DEFINE_THIS2(HTMLDocumentNode, node, iface)
+
+static HRESULT HTMLDocumentNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+{
+    HTMLDocumentNode *This = HTMLDOCNODE_NODE_THIS(iface);
+
+    if(htmldoc_qi(&This->basedoc, riid, ppv))
+        return *ppv ? S_OK : E_NOINTERFACE;
+
+    return HTMLDOMNode_QI(&This->node, riid, ppv);
+}
+
+void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
+{
+    HTMLDocumentNode *This = HTMLDOCNODE_NODE_THIS(iface);
+
+    detach_selection(This);
+    detach_ranges(This);
+    release_nodes(This);
+    destroy_htmldoc(&This->basedoc);
+}
+
+#undef HTMLDOCNODE_NODE_THIS
+
+static const NodeImplVtbl HTMLDocumentNodeImplVtbl = {
+    HTMLDocumentNode_QI,
+    HTMLDocumentNode_destructor
 };
 
 HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_obj, HTMLWindow *window, HTMLDocumentNode **ret)
@@ -1838,6 +1853,9 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     list_init(&doc->selection_list);
     list_init(&doc->range_list);
 
+    HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)nsdoc);
+    doc->node.vtbl = &HTMLDocumentNodeImplVtbl;
+
     *ret = doc;
     return S_OK;
 }
@@ -1848,7 +1866,12 @@ static HRESULT HTMLDocumentObj_QueryInterface(HTMLDocument *base, REFIID riid, v
 {
     HTMLDocumentObj *This = HTMLDOCOBJ_THIS(base);
 
-    return htmldoc_qi(&This->basedoc, riid, ppv);
+    if(htmldoc_qi(&This->basedoc, riid, ppv))
+        return *ppv ? S_OK : E_NOINTERFACE;
+
+    FIXME("Unimplemented interface %s\n", debugstr_guid(riid));
+    *ppv = NULL;
+    return E_NOINTERFACE;
 }
 
 static ULONG HTMLDocumentObj_AddRef(HTMLDocument *base)

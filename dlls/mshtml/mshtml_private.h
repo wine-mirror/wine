@@ -306,17 +306,6 @@ static inline ULONG htmldoc_release(HTMLDocument *This)
     return This->vtbl->release(This);
 }
 
-struct HTMLDocumentNode {
-    HTMLDocument basedoc;
-
-    LONG ref;
-
-    HTMLDOMNode *nodes;
-
-    struct list selection_list;
-    struct list range_list;
-};
-
 struct HTMLDocumentObj {
     HTMLDocument basedoc;
 
@@ -476,6 +465,18 @@ typedef struct {
 
     ConnectionPoint cp;
 } HTMLTextContainer;
+
+struct HTMLDocumentNode {
+    HTMLDOMNode node;
+    HTMLDocument basedoc;
+
+    LONG ref;
+
+    HTMLDOMNode *nodes;
+
+    struct list selection_list;
+    struct list range_list;
+};
 
 #define HTMLWINDOW2(x)   ((IHTMLWindow2*)                 &(x)->lpHTMLWindow2Vtbl)
 #define HTMLWINDOW3(x)   ((IHTMLWindow3*)                 &(x)->lpHTMLWindow3Vtbl)

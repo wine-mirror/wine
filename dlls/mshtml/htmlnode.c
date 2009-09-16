@@ -972,6 +972,7 @@ void release_nodes(HTMLDocumentNode *This)
     for(iter = This->nodes; iter; iter = next) {
         next = iter->next;
         iter->doc = NULL;
-        IHTMLDOMNode_Release(HTMLDOMNODE(iter));
+        if(&This->node != iter)
+            IHTMLDOMNode_Release(HTMLDOMNODE(iter));
     }
 }
