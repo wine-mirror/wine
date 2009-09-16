@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Jacek Caban for CodeWeavers
+ * Copyright 2005-2009 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -153,6 +153,8 @@ void release_dispex(DispatchEx*);
 BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**);
 
+typedef struct HTMLWindow HTMLWindow;
+
 typedef enum {
     SCRIPTMODE_GECKO,
     SCRIPTMODE_ACTIVESCRIPT
@@ -167,6 +169,14 @@ typedef struct {
 } global_prop_t;
 
 typedef struct {
+    const IHTMLOptionElementFactoryVtbl *lpHTMLOptionElementFactoryVtbl;
+
+    LONG ref;
+
+    HTMLWindow *window;
+} HTMLOptionElementFactory;
+
+struct HTMLWindow {
     DispatchEx dispex;
     const IHTMLWindow2Vtbl *lpHTMLWindow2Vtbl;
     const IHTMLWindow3Vtbl *lpHTMLWindow3Vtbl;
@@ -183,12 +193,14 @@ typedef struct {
     SCRIPTMODE scriptmode;
     struct list script_hosts;
 
+    HTMLOptionElementFactory *option_factory;
+
     global_prop_t *global_props;
     DWORD global_prop_cnt;
     DWORD global_prop_size;
 
     struct list entry;
-} HTMLWindow;
+};
 
 typedef enum {
     UNKNOWN_USERMODE,
@@ -228,14 +240,6 @@ struct HTMLLocation {
 
     HTMLDocument *doc;
 };
-
-typedef struct {
-    const IHTMLOptionElementFactoryVtbl *lpHTMLOptionElementFactoryVtbl;
-
-    LONG ref;
-
-    HTMLDocument *doc;
-} HTMLOptionElementFactory;
 
 struct HTMLDocument {
     DispatchEx dispex;
@@ -303,7 +307,6 @@ struct HTMLDocument {
     ConnectionPoint cp_htmldocevents2;
     ConnectionPoint cp_propnotif;
 
-    HTMLOptionElementFactory *option_factory;
     HTMLLocation *location;
 
     struct list selection_list;
@@ -510,7 +513,7 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument*,HTMLDocument**);
 
 HRESULT HTMLWindow_Create(HTMLDocument*,nsIDOMWindow*,HTMLWindow**);
 HTMLWindow *nswindow_to_window(const nsIDOMWindow*);
-HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLDocument*);
+HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLWindow*);
 HTMLLocation *HTMLLocation_Create(HTMLDocument*);
 IOmNavigator *OmNavigator_Create(void);
 

@@ -95,6 +95,11 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
     if(!ref) {
         DWORD i;
 
+        if(This->option_factory) {
+            This->option_factory->window = NULL;
+            IHTMLOptionElementFactory_Release(HTMLOPTFACTORY(This->option_factory));
+        }
+
         if(This->event_target)
             release_event_target(This->event_target);
         for(i=0; i < This->global_prop_cnt; i++)
@@ -672,10 +677,10 @@ static HRESULT WINAPI HTMLWindow2_get_Option(IHTMLWindow2 *iface, IHTMLOptionEle
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->doc->option_factory)
-        This->doc->option_factory = HTMLOptionElementFactory_Create(This->doc);
+    if(!This->option_factory)
+        This->option_factory = HTMLOptionElementFactory_Create(This);
 
-    *p = HTMLOPTFACTORY(This->doc->option_factory);
+    *p = HTMLOPTFACTORY(This->option_factory);
     IHTMLOptionElementFactory_AddRef(*p);
 
     return S_OK;

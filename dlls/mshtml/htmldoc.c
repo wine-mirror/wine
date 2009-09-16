@@ -196,11 +196,6 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
         if(This->hwnd)
             DestroyWindow(This->hwnd);
 
-        if(This->option_factory) {
-            This->option_factory->doc = NULL;
-            IHTMLOptionElementFactory_Release(HTMLOPTFACTORY(This->option_factory));
-        }
-
         if(This->location)
             This->location->doc = NULL;
 

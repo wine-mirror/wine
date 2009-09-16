@@ -459,7 +459,7 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
     TRACE("(%p)->(%s %s %s %s %p)\n", This, debugstr_variant(&text), debugstr_variant(&value),
           debugstr_variant(&defaultselected), debugstr_variant(&selected), optelem);
 
-    if(!This->doc->nsdoc) {
+    if(!This->window || !This->window->doc || !This->window->doc->nsdoc) {
         WARN("NULL nsdoc\n");
         return E_UNEXPECTED;
     }
@@ -467,14 +467,14 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
     *optelem = NULL;
 
     nsAString_Init(&option_str, optionW);
-    nsres = nsIDOMHTMLDocument_CreateElement(This->doc->nsdoc, &option_str, &nselem);
+    nsres = nsIDOMHTMLDocument_CreateElement(This->window->doc->nsdoc, &option_str, &nselem);
     nsAString_Finish(&option_str);
     if(NS_FAILED(nsres)) {
         ERR("CreateElement failed: %08x\n", nsres);
         return E_FAIL;
     }
 
-    hres = IHTMLDOMNode_QueryInterface(HTMLDOMNODE(get_node(This->doc, (nsIDOMNode*)nselem, TRUE)),
+    hres = IHTMLDOMNode_QueryInterface(HTMLDOMNODE(get_node(This->window->doc, (nsIDOMNode*)nselem, TRUE)),
             &IID_IHTMLOptionElement, (void**)optelem);
     nsIDOMElement_Release(nselem);
 
@@ -509,7 +509,7 @@ static const IHTMLOptionElementFactoryVtbl HTMLOptionElementFactoryVtbl = {
     HTMLOptionElementFactory_create
 };
 
-HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLDocument *doc)
+HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLWindow *window)
 {
     HTMLOptionElementFactory *ret;
 
@@ -517,7 +517,7 @@ HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLDocument *doc)
 
     ret->lpHTMLOptionElementFactoryVtbl = &HTMLOptionElementFactoryVtbl;
     ret->ref = 1;
-    ret->doc = doc;
+    ret->window = window;
 
     return ret;
 }
