@@ -263,7 +263,7 @@ static void set_parsecomplete(HTMLDocument *doc)
 
     /* FIXME: IE7 calls EnableModelless(TRUE), EnableModelless(FALSE) and sets interactive state here */
 
-    doc->readystate = READYSTATE_INTERACTIVE;
+    doc->doc_obj->readystate = READYSTATE_INTERACTIVE;
     call_property_onchanged(&doc->cp_propnotif, DISPID_READYSTATE);
 
     if(doc->doc_obj->client)
@@ -289,7 +289,7 @@ static void set_parsecomplete(HTMLDocument *doc)
         IOleCommandTarget_Release(olecmd);
     }
 
-    doc->readystate = READYSTATE_COMPLETE;
+    doc->doc_obj->readystate = READYSTATE_COMPLETE;
     call_property_onchanged(&doc->cp_propnotif, DISPID_READYSTATE);
 
     if(doc->doc_obj->frame) {

@@ -454,7 +454,7 @@ static HRESULT WINAPI HTMLDocument_get_readyState(IHTMLDocument2 *iface, BSTR *p
     if(!p)
         return E_POINTER;
 
-    *p = SysAllocString(readystate_str[This->readystate]);
+    *p = SysAllocString(readystate_str[This->doc_obj->readystate]);
     return S_OK;
 }
 
@@ -1512,7 +1512,7 @@ static HRESULT WINAPI DocDispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMemb
             return E_INVALIDARG;
 
         V_VT(pVarResult) = VT_I4;
-        V_I4(pVarResult) = This->readystate;
+        V_I4(pVarResult) = This->doc_obj->readystate;
         return S_OK;
     }
 
@@ -1737,7 +1737,6 @@ static void init_doc(HTMLDocument *doc, const htmldoc_vtbl_t *vtbl)
     doc->lpHTMLDocument2Vtbl = &HTMLDocumentVtbl;
     doc->lpIDispatchExVtbl = &DocDispatchExVtbl;
     doc->lpSupportErrorInfoVtbl = &SupportErrorInfoVtbl;
-    doc->readystate = READYSTATE_UNINITIALIZED;
 
     HTMLDocument_HTMLDocument3_Init(doc);
     HTMLDocument_HTMLDocument5_Init(doc);
@@ -1941,6 +1940,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     doc->nscontainer = NSContainer_Create(doc, NULL);
     list_init(&doc->bindings);
     doc->usermode = UNKNOWN_USERMODE;
+    doc->readystate = READYSTATE_UNINITIALIZED;
 
     if(doc->nscontainer) {
         nsresult nsres;

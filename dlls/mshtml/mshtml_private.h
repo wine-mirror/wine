@@ -284,7 +284,6 @@ struct HTMLDocument {
     HTMLWindow *window;
     nsIDOMHTMLDocument *nsdoc;
 
-    READYSTATE readystate;
     LPWSTR mime;
 
     DWORD update;
@@ -350,6 +349,7 @@ struct HTMLDocumentObj {
     BOOL focus;
 
     USERMODE usermode;
+    READYSTATE readystate;
 
     /* FIXME: probably should be in document node object */
     nsChannelBSC *bscallback;

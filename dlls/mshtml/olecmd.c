@@ -555,7 +555,7 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
     if(This->doc_obj->frame)
         IOleInPlaceFrame_SetStatusText(This->doc_obj->frame, NULL);
 
-    This->readystate = READYSTATE_UNINITIALIZED;
+    This->doc_obj->readystate = READYSTATE_UNINITIALIZED;
 
     if(This->doc_obj->client) {
         IOleCommandTarget *cmdtrg;
