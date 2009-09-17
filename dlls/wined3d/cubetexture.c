@@ -174,8 +174,11 @@ static ULONG WINAPI IWineD3DCubeTextureImpl_Release(IWineD3DCubeTexture *iface) 
     ULONG ref;
     TRACE("(%p) : Releasing from %d\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
-    if (ref == 0) {
-        IWineD3DCubeTexture_Destroy(iface);
+    if (!ref)
+    {
+        cubetexture_cleanup(This);
+        This->parent_ops->wined3d_object_destroyed(This->resource.parent);
+        HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
 }
@@ -318,15 +321,6 @@ static BOOL WINAPI IWineD3DCubeTextureImpl_IsCondNP2(IWineD3DCubeTexture *iface)
 /* *******************************************
    IWineD3DCubeTexture IWineD3DCubeTexture parts follow
    ******************************************* */
-static void WINAPI IWineD3DCubeTextureImpl_Destroy(IWineD3DCubeTexture *iface)
-{
-    IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
-
-    cubetexture_cleanup(This);
-    /* finally delete the object */
-    HeapFree(GetProcessHeap(), 0, This);
-}
-
 static HRESULT WINAPI IWineD3DCubeTextureImpl_GetLevelDesc(IWineD3DCubeTexture *iface, UINT Level, WINED3DSURFACE_DESC* pDesc) {
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
 
@@ -435,7 +429,6 @@ static const IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl =
     IWineD3DCubeTextureImpl_GetTextureDimensions,
     IWineD3DCubeTextureImpl_IsCondNP2,
     /* IWineD3DCubeTexture */
-    IWineD3DCubeTextureImpl_Destroy,
     IWineD3DCubeTextureImpl_GetLevelDesc,
     IWineD3DCubeTextureImpl_GetCubeMapSurface,
     IWineD3DCubeTextureImpl_LockRect,
@@ -444,7 +437,8 @@ static const IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl =
 };
 
 HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UINT levels,
-        IWineD3DDeviceImpl *device, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool, IUnknown *parent)
+        IWineD3DDeviceImpl *device, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool,
+        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(format, gl_info);
@@ -499,6 +493,8 @@ HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UIN
         WARN("Failed to initialize basetexture, returning %#x\n", hr);
         return hr;
     }
+
+    texture->parent_ops = parent_ops;
 
     /* Find the nearest pow2 match. */
     pow2_edge_length = 1;

@@ -46,6 +46,14 @@ static ULONG WINAPI IDirect3DCubeTexture8Impl_AddRef(LPDIRECT3DCUBETEXTURE8 ifac
 
     TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
+    if (ref == 1)
+    {
+        IUnknown_AddRef(This->parentDevice);
+        wined3d_mutex_lock();
+        IWineD3DCubeTexture_AddRef(This->wineD3DCubeTexture);
+        wined3d_mutex_unlock();
+    }
+
     return ref;
 }
 
@@ -58,12 +66,10 @@ static ULONG WINAPI IDirect3DCubeTexture8Impl_Release(LPDIRECT3DCUBETEXTURE8 ifa
     if (ref == 0) {
         TRACE("Releasing child %p\n", This->wineD3DCubeTexture);
 
-        wined3d_mutex_lock();
-        IWineD3DCubeTexture_Destroy(This->wineD3DCubeTexture);
-        wined3d_mutex_unlock();
-
         IUnknown_Release(This->parentDevice);
-        HeapFree(GetProcessHeap(), 0, This);
+        wined3d_mutex_lock();
+        IWineD3DCubeTexture_Release(This->wineD3DCubeTexture);
+        wined3d_mutex_unlock();
     }
     return ref;
 }
@@ -313,6 +319,16 @@ static const IDirect3DCubeTexture8Vtbl Direct3DCubeTexture8_Vtbl =
     IDirect3DCubeTexture8Impl_AddDirtyRect
 };
 
+static void STDMETHODCALLTYPE d3d8_cubetexture_wined3d_object_destroyed(void *parent)
+{
+    HeapFree(GetProcessHeap(), 0, parent);
+}
+
+static const struct wined3d_parent_ops d3d8_cubetexture_wined3d_parent_ops =
+{
+    d3d8_cubetexture_wined3d_object_destroyed,
+};
+
 HRESULT cubetexture_init(IDirect3DCubeTexture8Impl *texture, IDirect3DDevice8Impl *device,
         UINT edge_length, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
 {
@@ -323,7 +339,8 @@ HRESULT cubetexture_init(IDirect3DCubeTexture8Impl *texture, IDirect3DDevice8Imp
 
     wined3d_mutex_lock();
     hr = IWineD3DDevice_CreateCubeTexture(device->WineD3DDevice, edge_length, levels, usage & WINED3DUSAGE_MASK,
-            wined3dformat_from_d3dformat(format), pool, &texture->wineD3DCubeTexture, (IUnknown *)texture);
+            wined3dformat_from_d3dformat(format), pool, &texture->wineD3DCubeTexture,
+            (IUnknown *)texture, &d3d8_cubetexture_wined3d_parent_ops);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {

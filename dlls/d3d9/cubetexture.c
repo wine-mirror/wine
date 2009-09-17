@@ -49,6 +49,14 @@ static ULONG WINAPI IDirect3DCubeTexture9Impl_AddRef(LPDIRECT3DCUBETEXTURE9 ifac
 
     TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
+    if (ref == 1)
+    {
+        IDirect3DDevice9Ex_AddRef(This->parentDevice);
+        wined3d_mutex_lock();
+        IWineD3DCubeTexture_AddRef(This->wineD3DCubeTexture);
+        wined3d_mutex_unlock();
+    }
+
     return ref;
 }
 
@@ -61,12 +69,10 @@ static ULONG WINAPI IDirect3DCubeTexture9Impl_Release(LPDIRECT3DCUBETEXTURE9 ifa
     if (ref == 0) {
         TRACE("Releasing child %p\n", This->wineD3DCubeTexture);
 
-        wined3d_mutex_lock();
-        IWineD3DCubeTexture_Destroy(This->wineD3DCubeTexture);
         IDirect3DDevice9Ex_Release(This->parentDevice);
+        wined3d_mutex_lock();
+        IWineD3DCubeTexture_Release(This->wineD3DCubeTexture);
         wined3d_mutex_unlock();
-
-        HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
 }
@@ -352,6 +358,16 @@ static const IDirect3DCubeTexture9Vtbl Direct3DCubeTexture9_Vtbl =
     IDirect3DCubeTexture9Impl_AddDirtyRect
 };
 
+static void STDMETHODCALLTYPE cubetexture_wined3d_object_destroyed(void *parent)
+{
+    HeapFree(GetProcessHeap(), 0, parent);
+}
+
+static const struct wined3d_parent_ops d3d9_cubetexture_wined3d_parent_ops =
+{
+    cubetexture_wined3d_object_destroyed,
+};
+
 HRESULT cubetexture_init(IDirect3DCubeTexture9Impl *texture, IDirect3DDevice9Impl *device,
         UINT edge_length, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
 {
@@ -362,7 +378,8 @@ HRESULT cubetexture_init(IDirect3DCubeTexture9Impl *texture, IDirect3DDevice9Imp
 
     wined3d_mutex_lock();
     hr = IWineD3DDevice_CreateCubeTexture(device->WineD3DDevice, edge_length, levels, usage,
-            wined3dformat_from_d3dformat(format), pool, &texture->wineD3DCubeTexture, (IUnknown *)texture);
+            wined3dformat_from_d3dformat(format), pool, &texture->wineD3DCubeTexture,
+            (IUnknown *)texture, &d3d9_cubetexture_wined3d_parent_ops);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {

@@ -1839,11 +1839,13 @@ typedef struct IWineD3DCubeTextureImpl
     IWineD3DBaseTextureClass  baseTexture;
 
     /* IWineD3DCubeTexture */
+    const struct wined3d_parent_ops *parent_ops;
     IWineD3DSurface          *surfaces[6][MAX_MIP_LEVELS];
 } IWineD3DCubeTextureImpl;
 
-HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UINT levels, IWineD3DDeviceImpl *device,
-        DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool, IUnknown *parent) DECLSPEC_HIDDEN;
+HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UINT levels,
+        IWineD3DDeviceImpl *device, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool,
+        IUnknown *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 typedef struct _WINED3DVOLUMET_DESC
 {

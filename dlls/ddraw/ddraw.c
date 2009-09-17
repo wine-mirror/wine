@@ -2620,8 +2620,9 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
          */
         if(desc2.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
         {
-            hr = IWineD3DDevice_CreateCubeTexture(This->wineD3DDevice, DDSD->dwWidth /* Edgelength */, levels,
-                    0 /* usage */, Format, Pool, (IWineD3DCubeTexture **)&object->wineD3DTexture, (IUnknown *)object);
+            hr = IWineD3DDevice_CreateCubeTexture(This->wineD3DDevice, DDSD->dwWidth /* Edgelength */,
+                    levels, 0 /* usage */, Format, Pool, (IWineD3DCubeTexture **)&object->wineD3DTexture,
+                    (IUnknown *)object, &ddraw_null_wined3d_parent_ops);
         }
         else
         {

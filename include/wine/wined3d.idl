@@ -2652,8 +2652,6 @@ interface IWineD3DTexture : IWineD3DBaseTexture
 ]
 interface IWineD3DCubeTexture : IWineD3DBaseTexture
 {
-    void Destroy(
-    );
     HRESULT GetLevelDesc(
         [in] UINT level,
         [out] WINED3DSURFACE_DESC *desc
@@ -2975,7 +2973,8 @@ interface IWineD3DDevice : IWineD3DBase
         [in] WINED3DFORMAT format,
         [in] WINED3DPOOL pool,
         [out] IWineD3DCubeTexture **texture,
-        [in] IUnknown *parent
+        [in] IUnknown *parent,
+        [in] const struct wined3d_parent_ops *parent_ops
     );
     HRESULT CreateQuery(
         [in] WINED3DQUERYTYPE type,
