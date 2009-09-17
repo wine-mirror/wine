@@ -749,42 +749,35 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateCubeTexture(IDirect3DDevice8 *i
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 iface, UINT Size, DWORD Usage, DWORD FVF, D3DPOOL Pool, IDirect3DVertexBuffer8** ppVertexBuffer) {
-    IDirect3DVertexBuffer8Impl *object;
+static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexBuffer(IDirect3DDevice8 *iface, UINT size, DWORD usage,
+        DWORD fvf, D3DPOOL pool, IDirect3DVertexBuffer8 **buffer)
+{
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-    HRESULT hrc = D3D_OK;
+    IDirect3DVertexBuffer8Impl *object;
+    HRESULT hr;
 
-    TRACE("(%p) Relay\n", This);
-    /* Allocate the storage for the device */
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVertexBuffer8Impl));
-    if (NULL == object) {
-        FIXME("Allocation of memory failed\n");
-        *ppVertexBuffer = NULL;
+    TRACE("iface %p, size %u, usage %#x, fvf %#x, pool %#x, buffer %p.\n",
+            iface, size, usage, fvf, pool, buffer);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate buffer memory.\n");
         return D3DERR_OUTOFVIDEOMEMORY;
     }
 
-    object->lpVtbl = &Direct3DVertexBuffer8_Vtbl;
-    object->ref = 1;
-
-    wined3d_mutex_lock();
-    hrc = IWineD3DDevice_CreateVertexBuffer(This->WineD3DDevice, Size, Usage & WINED3DUSAGE_MASK,
-            0 /* fvf for ddraw only */, (WINED3DPOOL)Pool, &object->wineD3DVertexBuffer, (IUnknown *)object);
-    wined3d_mutex_unlock();
-
-    object->fvf = FVF;
-
-    if (D3D_OK != hrc) {
-
-        /* free up object */
-        FIXME("(%p) call to IWineD3DDevice_CreateVertexBuffer failed\n", This);
+    hr = vertexbuffer_init(object, This, size, usage, fvf, pool);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize vertex buffer, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppVertexBuffer = NULL;
-    } else {
-        IUnknown_AddRef(iface);
-        object->parentDevice = iface;
-        *ppVertexBuffer = (LPDIRECT3DVERTEXBUFFER8) object;
+        return hr;
     }
-    return hrc;
+
+    TRACE("Created vertex buffer %p.\n", object);
+    *buffer = (IDirect3DVertexBuffer8 *)object;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_CreateIndexBuffer(IDirect3DDevice8 *iface, UINT size, DWORD usage,

@@ -210,7 +210,7 @@ static HRESULT WINAPI IDirect3DVertexBuffer8Impl_GetDesc(LPDIRECT3DVERTEXBUFFER8
     return hr;
 }
 
-const IDirect3DVertexBuffer8Vtbl Direct3DVertexBuffer8_Vtbl =
+static const IDirect3DVertexBuffer8Vtbl Direct3DVertexBuffer8_Vtbl =
 {
     /* IUnknown */
     IDirect3DVertexBuffer8Impl_QueryInterface,
@@ -230,3 +230,28 @@ const IDirect3DVertexBuffer8Vtbl Direct3DVertexBuffer8_Vtbl =
     IDirect3DVertexBuffer8Impl_Unlock,
     IDirect3DVertexBuffer8Impl_GetDesc
 };
+
+HRESULT vertexbuffer_init(IDirect3DVertexBuffer8Impl *buffer, IDirect3DDevice8Impl *device,
+        UINT size, DWORD usage, DWORD fvf, D3DPOOL pool)
+{
+    HRESULT hr;
+
+    buffer->lpVtbl = &Direct3DVertexBuffer8_Vtbl;
+    buffer->ref = 1;
+    buffer->fvf = fvf;
+
+    wined3d_mutex_lock();
+    hr = IWineD3DDevice_CreateVertexBuffer(device->WineD3DDevice, size, usage & WINED3DUSAGE_MASK,
+            0, (WINED3DPOOL)pool, &buffer->wineD3DVertexBuffer, (IUnknown *)buffer);
+    wined3d_mutex_unlock();
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d buffer, hr %#x.\n", hr);
+        return hr;
+    }
+
+    buffer->parentDevice = (IDirect3DDevice8 *)device;
+    IUnknown_AddRef(buffer->parentDevice);
+
+    return D3D_OK;
+}

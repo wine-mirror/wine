@@ -319,11 +319,6 @@ struct IDirect3DResource8Impl
 /* ---------------------- */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DVertexBuffer8Vtbl Direct3DVertexBuffer8_Vtbl DECLSPEC_HIDDEN;
-
-/*****************************************************************************
  * IDirect3DVertexBuffer8 implementation structure
  */
 struct IDirect3DVertexBuffer8Impl
@@ -340,6 +335,9 @@ struct IDirect3DVertexBuffer8Impl
 
     DWORD                             fvf;
 };
+
+HRESULT vertexbuffer_init(IDirect3DVertexBuffer8Impl *buffer, IDirect3DDevice8Impl *device,
+        UINT size, DWORD usage, DWORD fvf, D3DPOOL pool) DECLSPEC_HIDDEN;
 
 /* --------------------- */
 /* IDirect3DIndexBuffer8 */
