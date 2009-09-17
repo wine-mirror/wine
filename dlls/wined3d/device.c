@@ -446,7 +446,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface,
         struct wined3d_buffer_desc *desc, const void *data, IUnknown *parent, IWineD3DBuffer **buffer)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(WINED3DFMT_UNKNOWN, &This->adapter->gl_info);
     struct wined3d_buffer *object;
     HRESULT hr;
 
@@ -459,48 +458,20 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface,
         return E_OUTOFMEMORY;
     }
 
-    object->vtbl = &wined3d_buffer_vtbl;
-    object->desc = *desc;
-
     FIXME("Ignoring access flags (pool)\n");
 
-    hr = resource_init((IWineD3DResource *)object, WINED3DRTYPE_BUFFER, This, desc->byte_width,
-            desc->usage, format_desc, WINED3DPOOL_MANAGED, parent);
+    hr = buffer_init(object, This, desc->byte_width, desc->usage,
+            WINED3DFMT_UNKNOWN, WINED3DPOOL_MANAGED, GL_ARRAY_BUFFER_ARB,
+            data, parent);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize resource, returning %#x\n", hr);
+        WARN("Failed to initialize buffer, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
         return hr;
     }
-    object->buffer_type_hint = GL_ARRAY_BUFFER_ARB;
+    object->desc = *desc;
 
-    TRACE("Created resource %p\n", object);
-
-    TRACE("size %#x, usage=%#x, format %s, memory @ %p, iface @ %p\n", object->resource.size, object->resource.usage,
-            debug_d3dformat(object->resource.format_desc->format), object->resource.allocatedMemory, object);
-
-    if (data)
-    {
-        BYTE *ptr;
-
-        hr = IWineD3DBuffer_Map((IWineD3DBuffer *)object, 0, desc->byte_width, &ptr, 0);
-        if (FAILED(hr))
-        {
-            ERR("Failed to map buffer, hr %#x\n", hr);
-            IWineD3DBuffer_Release((IWineD3DBuffer *)object);
-            return hr;
-        }
-
-        memcpy(ptr, data, desc->byte_width);
-
-        hr = IWineD3DBuffer_Unmap((IWineD3DBuffer *)object);
-        if (FAILED(hr))
-        {
-            ERR("Failed to unmap buffer, hr %#x\n", hr);
-            IWineD3DBuffer_Release((IWineD3DBuffer *)object);
-            return hr;
-        }
-    }
+    TRACE("Created buffer %p.\n", object);
 
     *buffer = (IWineD3DBuffer *)object;
 
@@ -511,18 +482,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
         DWORD FVF, WINED3DPOOL Pool, IWineD3DBuffer **ppVertexBuffer, IUnknown *parent)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    /* Dummy format for now */
-    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(WINED3DFMT_VERTEXDATA, &This->adapter->gl_info);
     struct wined3d_buffer *object;
     int dxVersion = ( (IWineD3DImpl *) This->wineD3D)->dxVersion;
     HRESULT hr;
     BOOL conv;
 
-    if(Size == 0) {
-        WARN("Size 0 requested, returning WINED3DERR_INVALIDCALL\n");
-        *ppVertexBuffer = NULL;
-        return WINED3DERR_INVALIDCALL;
-    } else if(Pool == WINED3DPOOL_SCRATCH) {
+    if (Pool == WINED3DPOOL_SCRATCH)
+    {
         /* The d3d9 testsuit shows that this is not allowed. It doesn't make much sense
          * anyway, SCRATCH vertex buffers aren't usable anywhere
          */
@@ -539,20 +505,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    object->vtbl = &wined3d_buffer_vtbl;
-    hr = resource_init((IWineD3DResource *)object, WINED3DRTYPE_BUFFER, This, Size, Usage, format_desc, Pool, parent);
+    hr = buffer_init(object, This, Size, Usage, WINED3DFMT_VERTEXDATA, Pool, GL_ARRAY_BUFFER_ARB, NULL, parent);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize resource, returning %#x\n", hr);
+        WARN("Failed to initialize buffer, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppVertexBuffer = NULL;
         return hr;
     }
-    object->buffer_type_hint = GL_ARRAY_BUFFER_ARB;
 
-    TRACE("(%p) : Created resource %p\n", This, object);
-
-    TRACE("(%p) : Size=%d, Usage=0x%08x, FVF=%x, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->resource.allocatedMemory, object);
+    TRACE("Created buffer %p.\n", object);
+    TRACE("FVF %#x, Pool %#x.\n", FVF, Pool);
     *ppVertexBuffer = (IWineD3DBuffer *)object;
 
     /* Observations show that drawStridedSlow is faster on dynamic VBs than converting +
@@ -589,7 +551,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
         UINT Length, DWORD Usage, WINED3DPOOL Pool, IWineD3DBuffer **ppIndexBuffer, IUnknown *parent)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(WINED3DFMT_UNKNOWN, &This->adapter->gl_info);
     struct wined3d_buffer *object;
     HRESULT hr;
 
@@ -604,25 +565,20 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    object->vtbl = &wined3d_buffer_vtbl;
-    hr = resource_init((IWineD3DResource *)object, WINED3DRTYPE_BUFFER, This, Length, Usage, format_desc, Pool, parent);
+    hr = buffer_init(object, This, Length, Usage, WINED3DFMT_UNKNOWN, Pool, GL_ELEMENT_ARRAY_BUFFER_ARB, NULL, parent);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize resource, returning %#x\n", hr);
+        WARN("Failed to initialize buffer, hr %#x\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppIndexBuffer = NULL;
         return hr;
     }
-    object->buffer_type_hint = GL_ELEMENT_ARRAY_BUFFER_ARB;
 
-    TRACE("(%p) : Created resource %p\n", This, object);
+    TRACE("Created buffer %p.\n", object);
 
     if(Pool != WINED3DPOOL_SYSTEMMEM && !(Usage & WINED3DUSAGE_DYNAMIC) && GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT)) {
         object->flags |= WINED3D_BUFFER_CREATEBO;
     }
 
-    TRACE("(%p) : Len=%d, Use=%x, Pool=%d - Memory@%p, Iface@%p\n", This, Length, Usage,
-            Pool, object, object->resource.allocatedMemory);
     *ppIndexBuffer = (IWineD3DBuffer *) object;
 
     return WINED3D_OK;
