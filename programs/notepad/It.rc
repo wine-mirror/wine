@@ -45,7 +45,7 @@ MAIN_MENU MENU
   MENUITEM "E&sci",             CMD_EXIT
  }
 POPUP "&Modifica" {
-  MENUITEM "&Anulla\tCtrl+Z",     CMD_UNDO
+  MENUITEM "&Annulla\tCtrl+Z",     CMD_UNDO
   MENUITEM SEPARATOR
   MENUITEM "&Taglia\tCtrl+X",      CMD_CUT
   MENUITEM "&Copia\tCtrl+C",     CMD_COPY
