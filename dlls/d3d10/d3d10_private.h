@@ -30,13 +30,13 @@
 #include "d3d10.h"
 
 /* TRACE helper functions */
-const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type);
-const char *debug_d3d10_shader_variable_class(D3D10_SHADER_VARIABLE_CLASS c);
-const char *debug_d3d10_shader_variable_type(D3D10_SHADER_VARIABLE_TYPE t);
+const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type) DECLSPEC_HIDDEN;
+const char *debug_d3d10_shader_variable_class(D3D10_SHADER_VARIABLE_CLASS c) DECLSPEC_HIDDEN;
+const char *debug_d3d10_shader_variable_type(D3D10_SHADER_VARIABLE_TYPE t) DECLSPEC_HIDDEN;
 
-void *d3d10_rb_alloc(size_t size);
-void *d3d10_rb_realloc(void *ptr, size_t size);
-void d3d10_rb_free(void *ptr);
+void *d3d10_rb_alloc(size_t size) DECLSPEC_HIDDEN;
+void *d3d10_rb_realloc(void *ptr, size_t size) DECLSPEC_HIDDEN;
+void d3d10_rb_free(void *ptr) DECLSPEC_HIDDEN;
 
 enum d3d10_effect_object_type
 {
@@ -143,7 +143,7 @@ struct d3d10_effect_technique
 };
 
 /* ID3D10Effect */
-extern const struct ID3D10EffectVtbl d3d10_effect_vtbl;
+extern const struct ID3D10EffectVtbl d3d10_effect_vtbl DECLSPEC_HIDDEN;
 struct d3d10_effect
 {
     const struct ID3D10EffectVtbl *vtbl;
@@ -173,7 +173,7 @@ struct d3d10_effect
     struct d3d10_effect_technique *techniques;
 };
 
-HRESULT d3d10_effect_parse(struct d3d10_effect *This, const void *data, SIZE_T data_size);
+HRESULT d3d10_effect_parse(struct d3d10_effect *This, const void *data, SIZE_T data_size) DECLSPEC_HIDDEN;
 
 /* D3D10Core */
 HRESULT WINAPI D3D10CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter,
