@@ -3112,6 +3112,7 @@ static BOOL FTP_GetDataSocket(ftp_session_t *lpwfs, LPINT nDataSocket)
     if (lpwfs->hdr.dwFlags & INTERNET_FLAG_PASSIVE)
     {
 	*nDataSocket = lpwfs->pasvSocket;
+	lpwfs->pasvSocket = -1;
     }
     else
     {
