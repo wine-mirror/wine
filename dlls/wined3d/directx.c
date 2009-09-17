@@ -377,11 +377,9 @@ static ULONG WINAPI IWineD3DImpl_Release(IWineD3D *iface) {
     return ref;
 }
 
-/* Set the shader type for this device, depending on the given capabilities,
- * the device type, and the user preferences in wined3d_settings */
-
-static void select_shader_mode(const struct wined3d_gl_info *gl_info,
-        WINED3DDEVTYPE DeviceType, int *ps_selected, int *vs_selected)
+/* Set the shader type for this device, depending on the given capabilities
+ * and the user preferences in wined3d_settings. */
+static void select_shader_mode(const struct wined3d_gl_info *gl_info, int *ps_selected, int *vs_selected)
 {
     if (wined3d_settings.vs_mode == VS_NONE) {
         *vs_selected = SHADER_NONE;
@@ -2716,7 +2714,7 @@ static BOOL CheckSrgbWriteCapability(struct WineD3DAdapter *adapter,
     {
         int vs_selected_mode;
         int ps_selected_mode;
-        select_shader_mode(&adapter->gl_info, DeviceType, &ps_selected_mode, &vs_selected_mode);
+        select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
 
         if((ps_selected_mode == SHADER_ARB) || (ps_selected_mode == SHADER_GLSL)) {
             TRACE_(d3d_caps)("[OK]\n");
@@ -3577,7 +3575,7 @@ static const shader_backend_t *select_shader_backend(struct WineD3DAdapter *adap
     int vs_selected_mode;
     int ps_selected_mode;
 
-    select_shader_mode(&adapter->gl_info, DeviceType, &ps_selected_mode, &vs_selected_mode);
+    select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
     if (vs_selected_mode == SHADER_GLSL || ps_selected_mode == SHADER_GLSL) {
         ret = &glsl_shader_backend;
     } else if (vs_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_ARB) {
@@ -3595,7 +3593,7 @@ static const struct fragment_pipeline *select_fragment_implementation(struct Win
     int vs_selected_mode;
     int ps_selected_mode;
 
-    select_shader_mode(&adapter->gl_info, DeviceType, &ps_selected_mode, &vs_selected_mode);
+    select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
     if((ps_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_GLSL) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
         return &arbfp_fragment_pipeline;
     } else if(ps_selected_mode == SHADER_ATI) {
@@ -3615,7 +3613,7 @@ static const struct blit_shader *select_blit_implementation(struct WineD3DAdapte
     int vs_selected_mode;
     int ps_selected_mode;
 
-    select_shader_mode(&adapter->gl_info, DeviceType, &ps_selected_mode, &vs_selected_mode);
+    select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
     if((ps_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_GLSL) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
         return &arbfp_blit;
     } else {
@@ -3645,7 +3643,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         return WINED3DERR_INVALIDCALL;
     }
 
-    select_shader_mode(&adapter->gl_info, DeviceType, &ps_selected_mode, &vs_selected_mode);
+    select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
 
     /* This function should *not* be modifying GL caps
      * TODO: move the functionality where it belongs */
@@ -4263,8 +4261,7 @@ static HRESULT WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter,
     object->adapterNo                    = Adapter;
     object->devType                      = DeviceType;
 
-    select_shader_mode(&adapter->gl_info, DeviceType,
-            &object->ps_selected_mode, &object->vs_selected_mode);
+    select_shader_mode(&adapter->gl_info, &object->ps_selected_mode, &object->vs_selected_mode);
     object->shader_backend = select_shader_backend(adapter, DeviceType);
 
     memset(&shader_caps, 0, sizeof(shader_caps));
@@ -4762,7 +4759,7 @@ BOOL InitAdapters(IWineD3DImpl *This)
 
         WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
 
-        select_shader_mode(&adapter->gl_info, WINED3DDEVTYPE_HAL, &ps_selected_mode, &vs_selected_mode);
+        select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
         select_shader_max_constants(ps_selected_mode, vs_selected_mode, &adapter->gl_info);
         fillGLAttribFuncs(&adapter->gl_info);
         adapter->opengl = TRUE;
