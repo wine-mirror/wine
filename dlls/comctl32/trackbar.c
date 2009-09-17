@@ -155,7 +155,7 @@ static void TRACKBAR_RecalculateTics (TRACKBAR_INFO *infoPtr)
     if (infoPtr->uTicFreq && infoPtr->lRangeMax >= infoPtr->lRangeMin) {
         nrTics=(infoPtr->lRangeMax - infoPtr->lRangeMin)/infoPtr->uTicFreq;
         /* don't add extra tic if there's no remainder */
-        if ((infoPtr->lRangeMax - infoPtr->lRangeMin) % infoPtr->uTicFreq == 0)
+        if (nrTics && ((infoPtr->lRangeMax - infoPtr->lRangeMin) % infoPtr->uTicFreq == 0))
           nrTics--;
     }
     else {

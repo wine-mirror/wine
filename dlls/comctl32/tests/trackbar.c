@@ -785,22 +785,41 @@ static void test_tic_settings(HWND hWndTrackbar){
     /* test TBM_SETTICFREQ */
     SendMessage(hWndTrackbar, TBM_SETRANGE, TRUE, MAKELONG(0, 10));
     SendMessage(hWndTrackbar, TBM_SETTICFREQ, 2, 0);
-    r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0,0);
+    r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0, 0);
     expect(6, r);
     SendMessage(hWndTrackbar, TBM_SETTICFREQ, 5, 0);
-    r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0,0);
+    r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0, 0);
     expect(3, r);
     SendMessage(hWndTrackbar, TBM_SETTICFREQ, 15, 0);
-    r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0,0);
+    r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0, 0);
     expect(2, r);
 
     /* test TBM_GETNUMTICS */
     /* since TIC FREQ is 15, there should be only 2 tics now */
-    r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0,0);
+    r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0, 0);
     expect(2, r);
 
     ok_sequence(sequences, TRACKBAR_SEQ_INDEX, tic_settings_test_seq, "tic settings test sequence", TRUE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_tic_settings_test_seq, "parent tic settings test sequence", TRUE);
+
+    /* range [0,0], freq = 1 */
+    SendMessage(hWndTrackbar, TBM_SETRANGEMAX, TRUE, 0);
+    SendMessage(hWndTrackbar, TBM_SETRANGEMIN, TRUE, 0);
+    SendMessage(hWndTrackbar, TBM_SETTICFREQ, 1, 0);
+    r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0, 0);
+    expect(2, r);
+    /* range [0,1], freq = 1 */
+    SendMessage(hWndTrackbar, TBM_SETRANGEMAX, TRUE, 1);
+    SendMessage(hWndTrackbar, TBM_SETRANGEMIN, TRUE, 0);
+    SendMessage(hWndTrackbar, TBM_SETTICFREQ, 1, 0);
+    r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0, 0);
+    expect(2, r);
+    /* range [0,2], freq = 1 */
+    SendMessage(hWndTrackbar, TBM_SETRANGEMAX, TRUE, 2);
+    SendMessage(hWndTrackbar, TBM_SETRANGEMIN, TRUE, 0);
+    SendMessage(hWndTrackbar, TBM_SETTICFREQ, 1, 0);
+    r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0, 0);
+    expect(3, r);
 }
 
 static void test_tic_placement(HWND hWndTrackbar){
