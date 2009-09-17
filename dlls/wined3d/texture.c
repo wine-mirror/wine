@@ -161,8 +161,11 @@ static ULONG WINAPI IWineD3DTextureImpl_Release(IWineD3DTexture *iface) {
     ULONG ref;
     TRACE("(%p) : Releasing from %d\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
-    if (ref == 0) {
-        IWineD3DTexture_Destroy(iface);
+    if (!ref)
+    {
+        texture_cleanup(This);
+        This->parent_ops->wined3d_object_destroyed(This->resource.parent);
+        HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
 }
@@ -323,15 +326,6 @@ static BOOL WINAPI IWineD3DTextureImpl_IsCondNP2(IWineD3DTexture *iface) {
 /* *******************************************
    IWineD3DTexture IWineD3DTexture parts follow
    ******************************************* */
-static void WINAPI IWineD3DTextureImpl_Destroy(IWineD3DTexture *iface)
-{
-    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-
-    texture_cleanup(This);
-    /* free the object */
-    HeapFree(GetProcessHeap(), 0, This);
-}
-
 static HRESULT WINAPI IWineD3DTextureImpl_GetLevelDesc(IWineD3DTexture *iface, UINT Level, WINED3DSURFACE_DESC* pDesc) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
 
@@ -432,7 +426,6 @@ static const IWineD3DTextureVtbl IWineD3DTexture_Vtbl =
     IWineD3DTextureImpl_GetTextureDimensions,
     IWineD3DTextureImpl_IsCondNP2,
     /* IWineD3DTexture */
-    IWineD3DTextureImpl_Destroy,
     IWineD3DTextureImpl_GetLevelDesc,
     IWineD3DTextureImpl_GetSurfaceLevel,
     IWineD3DTextureImpl_LockRect,
@@ -441,7 +434,8 @@ static const IWineD3DTextureVtbl IWineD3DTexture_Vtbl =
 };
 
 HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT levels,
-        IWineD3DDeviceImpl *device, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool, IUnknown *parent)
+        IWineD3DDeviceImpl *device, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool,
+        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(format, gl_info);
@@ -514,6 +508,8 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         WARN("Failed to initialize basetexture, returning %#x.\n", hr);
         return hr;
     }
+
+    texture->parent_ops = parent_ops;
 
     /* Precalculated scaling for 'faked' non power of two texture coords.
      * Second also don't use ARB_TEXTURE_RECTANGLE in case the surface format is P8 and EXT_PALETTED_TEXTURE

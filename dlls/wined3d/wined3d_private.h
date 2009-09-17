@@ -1819,14 +1819,16 @@ typedef struct IWineD3DTextureImpl
     IWineD3DBaseTextureClass  baseTexture;
 
     /* IWineD3DTexture */
+    const struct wined3d_parent_ops *parent_ops;
     IWineD3DSurface          *surfaces[MAX_MIP_LEVELS];
     UINT                      target;
     BOOL                      cond_np2;
 
 } IWineD3DTextureImpl;
 
-HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT levels, IWineD3DDeviceImpl *device,
-        DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool, IUnknown *parent) DECLSPEC_HIDDEN;
+HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT levels,
+        IWineD3DDeviceImpl *device, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool,
+        IUnknown *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IWineD3DCubeTexture implementation structure (extends IWineD3DBaseTextureImpl)

@@ -2627,7 +2627,8 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         else
         {
             hr = IWineD3DDevice_CreateTexture(This->wineD3DDevice, DDSD->dwWidth, DDSD->dwHeight, levels,
-                    0 /* usage */, Format, Pool, (IWineD3DTexture **)&object->wineD3DTexture, (IUnknown *)object);
+                    0 /* usage */, Format, Pool, (IWineD3DTexture **)&object->wineD3DTexture,
+                    (IUnknown *)object, &ddraw_null_wined3d_parent_ops);
         }
         This->tex_root = NULL;
     }

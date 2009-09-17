@@ -49,6 +49,14 @@ static ULONG WINAPI IDirect3DTexture9Impl_AddRef(LPDIRECT3DTEXTURE9 iface) {
 
     TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
+    if (ref == 1)
+    {
+        IDirect3DDevice9Ex_AddRef(This->parentDevice);
+        wined3d_mutex_lock();
+        IWineD3DTexture_AddRef(This->wineD3DTexture);
+        wined3d_mutex_unlock();
+    }
+
     return ref;
 }
 
@@ -59,12 +67,10 @@ static ULONG WINAPI IDirect3DTexture9Impl_Release(LPDIRECT3DTEXTURE9 iface) {
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
-        wined3d_mutex_lock();
-        IWineD3DTexture_Destroy(This->wineD3DTexture);
-        wined3d_mutex_unlock();
-
         IDirect3DDevice9Ex_Release(This->parentDevice);
-        HeapFree(GetProcessHeap(), 0, This);
+        wined3d_mutex_lock();
+        IWineD3DTexture_Release(This->wineD3DTexture);
+        wined3d_mutex_unlock();
     }
     return ref;
 }
@@ -350,6 +356,16 @@ static const IDirect3DTexture9Vtbl Direct3DTexture9_Vtbl =
     IDirect3DTexture9Impl_AddDirtyRect
 };
 
+static void STDMETHODCALLTYPE d3d9_texture_wined3d_object_destroyed(void *parent)
+{
+    HeapFree(GetProcessHeap(), 0, parent);
+}
+
+static const struct wined3d_parent_ops d3d9_texture_wined3d_parent_ops =
+{
+    d3d9_texture_wined3d_object_destroyed,
+};
+
 HRESULT texture_init(IDirect3DTexture9Impl *texture, IDirect3DDevice9Impl *device,
         UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
 {
@@ -359,8 +375,9 @@ HRESULT texture_init(IDirect3DTexture9Impl *texture, IDirect3DDevice9Impl *devic
     texture->ref = 1;
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_CreateTexture(device->WineD3DDevice, width, height, levels, usage & WINED3DUSAGE_MASK,
-            wined3dformat_from_d3dformat(format), pool, &texture->wineD3DTexture, (IUnknown *)texture);
+    hr = IWineD3DDevice_CreateTexture(device->WineD3DDevice, width, height, levels,
+            usage & WINED3DUSAGE_MASK, wined3dformat_from_d3dformat(format), pool,
+            &texture->wineD3DTexture, (IUnknown *)texture, &d3d9_texture_wined3d_parent_ops);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
