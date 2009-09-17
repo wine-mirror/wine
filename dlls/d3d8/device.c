@@ -787,42 +787,35 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 
     return hrc;
 }
 
-static HRESULT WINAPI IDirect3DDevice8Impl_CreateIndexBuffer(LPDIRECT3DDEVICE8 iface, UINT Length, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IDirect3DIndexBuffer8** ppIndexBuffer) {
-    IDirect3DIndexBuffer8Impl *object;
+static HRESULT WINAPI IDirect3DDevice8Impl_CreateIndexBuffer(IDirect3DDevice8 *iface, UINT size, DWORD usage,
+        D3DFORMAT format, D3DPOOL pool, IDirect3DIndexBuffer8 **buffer)
+{
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-    HRESULT hrc = D3D_OK;
+    IDirect3DIndexBuffer8Impl *object;
+    HRESULT hr;
 
-    TRACE("(%p) Relay\n", This);
-    /* Allocate the storage for the device */
+    TRACE("iface %p, size %u, usage %#x, format %#x, pool %#x, buffer %p.\n",
+            iface, size, usage, format, pool, buffer);
+
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (NULL == object) {
-        FIXME("Allocation of memory failed\n");
-        *ppIndexBuffer = NULL;
+    if (!object)
+    {
+        ERR("Failed to allocate buffer memory.\n");
         return D3DERR_OUTOFVIDEOMEMORY;
     }
 
-    object->lpVtbl = &Direct3DIndexBuffer8_Vtbl;
-    object->ref = 1;
-    object->format = wined3dformat_from_d3dformat(Format);
-    TRACE("Calling wined3d create index buffer\n");
-
-    wined3d_mutex_lock();
-    hrc = IWineD3DDevice_CreateIndexBuffer(This->WineD3DDevice, Length, Usage & WINED3DUSAGE_MASK,
-            (WINED3DPOOL)Pool, &object->wineD3DIndexBuffer, (IUnknown *)object);
-    wined3d_mutex_unlock();
-
-    if (D3D_OK != hrc) {
-
-        /* free up object */
-        FIXME("(%p) call to IWineD3DDevice_CreateIndexBuffer failed\n", This);
+    hr = indexbuffer_init(object, This, size, usage, format, pool);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize index buffer, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppIndexBuffer = NULL;
-    } else {
-        IUnknown_AddRef(iface);
-        object->parentDevice = iface;
-        *ppIndexBuffer = (LPDIRECT3DINDEXBUFFER8)object;
+        return hr;
     }
-    return hrc;
+
+    TRACE("Created index buffer %p.\n", object);
+    *buffer = (IDirect3DIndexBuffer8 *)object;
+
+    return D3D_OK;
 }
 
 static HRESULT IDirect3DDevice8Impl_CreateSurface(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height,
