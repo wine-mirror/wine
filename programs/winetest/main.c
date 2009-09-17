@@ -589,7 +589,7 @@ static HMODULE load_com_dll(const char *name)
     {
         LONG size = sizeof(dllname);
         if(RegQueryValueA(hkey, NULL, dllname, &size) == ERROR_SUCCESS)
-            dll = LoadLibraryExA(dllname, NULL, LOAD_LIBRARY_AS_DATAFILE);
+            dll = LoadLibraryA(dllname);
         RegCloseKey(hkey);
     }
 
