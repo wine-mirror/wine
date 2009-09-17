@@ -233,41 +233,27 @@ static const IDirect3DVertexBuffer9Vtbl Direct3DVertexBuffer9_Vtbl =
     IDirect3DVertexBuffer9Impl_GetDesc
 };
 
-
-/* IDirect3DDevice9 IDirect3DVertexBuffer9 Methods follow: */
-HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexBuffer(IDirect3DDevice9Ex *iface, UINT Size, DWORD Usage,
-        DWORD FVF, D3DPOOL Pool, IDirect3DVertexBuffer9** ppVertexBuffer, HANDLE* pSharedHandle)
+HRESULT vertexbuffer_init(IDirect3DVertexBuffer9Impl *buffer, IDirect3DDevice9Impl *device,
+        UINT size, UINT usage, DWORD fvf, D3DPOOL pool)
 {
-    IDirect3DVertexBuffer9Impl *object;
-    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    HRESULT hrc = D3D_OK;
+    HRESULT hr;
 
-    /* Allocate the storage for the device */
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVertexBuffer9Impl));
-    if (NULL == object) {
-        FIXME("Allocation of memory failed, returning D3DERR_OUTOFVIDEOMEMORY\n");
-        return D3DERR_OUTOFVIDEOMEMORY;
-    }
-
-    object->lpVtbl = &Direct3DVertexBuffer9_Vtbl;
-    object->ref = 1;
-    object->fvf = FVF;
+    buffer->lpVtbl = &Direct3DVertexBuffer9_Vtbl;
+    buffer->ref = 1;
+    buffer->fvf = fvf;
 
     wined3d_mutex_lock();
-    hrc = IWineD3DDevice_CreateVertexBuffer(This->WineD3DDevice, Size, Usage & WINED3DUSAGE_MASK,
-            0 /* fvf for ddraw only */, (WINED3DPOOL) Pool, &(object->wineD3DVertexBuffer), (IUnknown *)object);
+    hr = IWineD3DDevice_CreateVertexBuffer(device->WineD3DDevice, size, usage & WINED3DUSAGE_MASK,
+            0 /* fvf for ddraw only */, (WINED3DPOOL)pool, &buffer->wineD3DVertexBuffer, (IUnknown *)buffer);
     wined3d_mutex_unlock();
-
-    if (hrc != D3D_OK) {
-
-        /* free up object */
-        WARN("(%p) call to IWineD3DDevice_CreateVertexBuffer failed\n", This);
-        HeapFree(GetProcessHeap(), 0, object);
-    } else {
-        IDirect3DDevice9Ex_AddRef(iface);
-        object->parentDevice = iface;
-        TRACE("(%p) : Created vertex buffer %p\n", This, object);
-        *ppVertexBuffer = (LPDIRECT3DVERTEXBUFFER9) object;
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d buffer, hr %#x.\n", hr);
+        return hr;
     }
-    return hrc;
+
+    buffer->parentDevice = (IDirect3DDevice9Ex *)device;
+    IDirect3DDevice9Ex_AddRef(buffer->parentDevice);
+
+    return D3D_OK;
 }

@@ -197,9 +197,6 @@ extern HRESULT WINAPI IDirect3DDevice9Impl_CreateAdditionalSwapChain(IDirect3DDe
 extern HRESULT WINAPI IDirect3DDevice9Impl_GetSwapChain(IDirect3DDevice9Ex *iface,
         UINT iSwapChain, IDirect3DSwapChain9 **pSwapChain) DECLSPEC_HIDDEN;
 extern UINT WINAPI IDirect3DDevice9Impl_GetNumberOfSwapChains(IDirect3DDevice9Ex *iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexBuffer(IDirect3DDevice9Ex *iface,
-        UINT Length, DWORD Usage, DWORD FVF, D3DPOOL Pool,
-        IDirect3DVertexBuffer9 **ppVertexBuffer, HANDLE *pSharedHandle) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirect3DDevice9Impl_CreateStateBlock(IDirect3DDevice9Ex *iface,
         D3DSTATEBLOCKTYPE Type, IDirect3DStateBlock9 **ppSB) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirect3DDevice9Impl_BeginStateBlock(IDirect3DDevice9Ex *iface) DECLSPEC_HIDDEN;
@@ -353,6 +350,9 @@ typedef struct IDirect3DVertexBuffer9Impl
 
     DWORD fvf;
 } IDirect3DVertexBuffer9Impl;
+
+HRESULT vertexbuffer_init(IDirect3DVertexBuffer9Impl *buffer, IDirect3DDevice9Impl *device,
+        UINT size, UINT usage, DWORD fvf, D3DPOOL pool) DECLSPEC_HIDDEN;
 
 /* --------------------- */
 /* IDirect3DIndexBuffer9 */

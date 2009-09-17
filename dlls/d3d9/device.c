@@ -742,6 +742,37 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateCubeTexture(IDirect3DDevice9Ex 
     return D3D_OK;
 }
 
+static HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexBuffer(IDirect3DDevice9Ex *iface, UINT size, DWORD usage,
+        DWORD fvf, D3DPOOL pool, IDirect3DVertexBuffer9 **buffer, HANDLE *shared_handle)
+{
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    IDirect3DVertexBuffer9Impl *object;
+    HRESULT hr;
+
+    TRACE("iface %p, size %u, usage %#x, fvf %#x, pool %#x, buffer %p, shared_handle %p.\n",
+            iface, size, usage, fvf, pool, buffer, shared_handle);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate buffer memory.\n");
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    hr = vertexbuffer_init(object, This, size, usage, fvf, pool);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize vertex buffer, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created vertex buffer %p.\n", object);
+    *buffer = (IDirect3DVertexBuffer9 *)object;
+
+    return D3D_OK;
+}
+
 static HRESULT WINAPI IDirect3DDevice9Impl_CreateIndexBuffer(IDirect3DDevice9Ex *iface, UINT size, DWORD usage,
         D3DFORMAT format, D3DPOOL pool, IDirect3DIndexBuffer9 **buffer, HANDLE *shared_handle)
 {
