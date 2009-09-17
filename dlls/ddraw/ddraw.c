@@ -64,7 +64,7 @@ static const DDDEVICEIDENTIFIER2 deviceidentifier =
 
 static void STDMETHODCALLTYPE ddraw_null_wined3d_object_destroyed(void *parent) {}
 
-static const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops =
+const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops =
 {
     ddraw_null_wined3d_object_destroyed,
 };

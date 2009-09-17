@@ -635,6 +635,7 @@ static ULONG STDMETHODCALLTYPE buffer_Release(IWineD3DBuffer *iface)
     {
         buffer_UnLoad(iface);
         resource_cleanup((IWineD3DResource *)iface);
+        This->parent_ops->wined3d_object_destroyed(This->resource.parent);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -1059,8 +1060,9 @@ static const struct IWineD3DBufferVtbl wined3d_buffer_vtbl =
     buffer_GetDesc,
 };
 
-HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device, UINT size, DWORD usage,
-        WINED3DFORMAT format, WINED3DPOOL pool, GLenum bind_hint, const char *data, IUnknown *parent)
+HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
+        UINT size, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool, GLenum bind_hint,
+        const char *data, IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(format, &device->adapter->gl_info);
     HRESULT hr;
@@ -1080,6 +1082,7 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device, U
         WARN("Failed to initialize resource, hr %#x\n", hr);
         return hr;
     }
+    buffer->parent_ops = parent_ops;
     buffer->buffer_type_hint = bind_hint;
 
     TRACE("size %#x, usage %#x, format %s, memory @ %p, iface @ %p.\n", buffer->resource.size, buffer->resource.usage,

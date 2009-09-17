@@ -2416,6 +2416,7 @@ struct wined3d_buffer
     const struct IWineD3DBufferVtbl *vtbl;
     IWineD3DResourceClass resource;
 
+    const struct wined3d_parent_ops *parent_ops;
     struct wined3d_buffer_desc desc;
 
     GLuint buffer_object;
@@ -2441,8 +2442,9 @@ struct wined3d_buffer
 
 const BYTE *buffer_get_memory(IWineD3DBuffer *iface, UINT offset, GLuint *buffer_object) DECLSPEC_HIDDEN;
 BYTE *buffer_get_sysmem(struct wined3d_buffer *This) DECLSPEC_HIDDEN;
-HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device, UINT size, DWORD usage,
-        WINED3DFORMAT format, WINED3DPOOL pool, GLenum bind_hint, const char *data, IUnknown *parent) DECLSPEC_HIDDEN;
+HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
+        UINT size, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool, GLenum bind_hint,
+        const char *data, IUnknown *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 /* IWineD3DRendertargetView */
 struct wined3d_rendertarget_view

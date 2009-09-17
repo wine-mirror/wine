@@ -39,6 +39,8 @@
 #endif
 #include "wine/wined3d.h"
 
+extern const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops DECLSPEC_HIDDEN;
+
 /*****************************************************************************
  * IParent - a helper interface
  *****************************************************************************/

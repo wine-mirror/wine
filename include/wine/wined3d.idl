@@ -2888,6 +2888,7 @@ interface IWineD3DDevice : IWineD3DBase
         [in] struct wined3d_buffer_desc *desc,
         [in] const void *data,
         [in] IUnknown *parent,
+        [in] const struct wined3d_parent_ops *parent_ops,
         [out] IWineD3DBuffer **buffer
     );
     HRESULT CreateVertexBuffer(
@@ -2896,14 +2897,16 @@ interface IWineD3DDevice : IWineD3DBase
         [in] DWORD fvf,
         [in] WINED3DPOOL pool,
         [out] IWineD3DBuffer **vertex_buffer,
-        [in] IUnknown *parent
+        [in] IUnknown *parent,
+        [in] const struct wined3d_parent_ops *parent_ops
     );
     HRESULT CreateIndexBuffer(
         [in] UINT length,
         [in] DWORD usage,
         [in] WINED3DPOOL pool,
         [out] IWineD3DBuffer **index_buffer,
-        [in] IUnknown *parent
+        [in] IUnknown *parent,
+        [in] const struct wined3d_parent_ops *parent_ops
     );
     HRESULT CreateStateBlock(
         [in] WINED3DSTATEBLOCKTYPE type,

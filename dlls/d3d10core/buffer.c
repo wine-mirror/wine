@@ -53,6 +53,8 @@ static ULONG STDMETHODCALLTYPE d3d10_buffer_AddRef(ID3D10Buffer *iface)
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
 
+    if (refcount == 1) IWineD3DBuffer_AddRef(This->wined3d_buffer);
+
     return refcount;
 }
 
@@ -66,7 +68,6 @@ static ULONG STDMETHODCALLTYPE d3d10_buffer_Release(ID3D10Buffer *iface)
     if (!refcount)
     {
         IWineD3DBuffer_Release(This->wined3d_buffer);
-        HeapFree(GetProcessHeap(), 0, This);
     }
 
     return refcount;
@@ -166,6 +167,16 @@ static const struct ID3D10BufferVtbl d3d10_buffer_vtbl =
     d3d10_buffer_GetDesc,
 };
 
+static void STDMETHODCALLTYPE d3d10_buffer_wined3d_object_released(void *parent)
+{
+    HeapFree(GetProcessHeap(), 0, parent);
+}
+
+static const struct wined3d_parent_ops d3d10_buffer_wined3d_parent_ops =
+{
+    d3d10_buffer_wined3d_object_released,
+};
+
 HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d10_device *device,
         const D3D10_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data)
 {
@@ -184,7 +195,8 @@ HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d10_device *devi
     wined3d_desc.misc_flags = desc->MiscFlags;
 
     hr = IWineD3DDevice_CreateBuffer(device->wined3d_device, &wined3d_desc,
-            data ? data->pSysMem : NULL, (IUnknown *)buffer, &buffer->wined3d_buffer);
+            data ? data->pSysMem : NULL, (IUnknown *)buffer, &d3d10_buffer_wined3d_parent_ops,
+            &buffer->wined3d_buffer);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d buffer, hr %#x.\n", hr);
