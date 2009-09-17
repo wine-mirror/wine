@@ -635,7 +635,7 @@ static ULONG STDMETHODCALLTYPE buffer_Release(IWineD3DBuffer *iface)
     {
         buffer_UnLoad(iface);
         resource_cleanup((IWineD3DResource *)iface);
-        This->parent_ops->wined3d_object_destroyed(This->resource.parent);
+        This->resource.parent_ops->wined3d_object_destroyed(This->resource.parent);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -1076,13 +1076,12 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
     buffer->vtbl = &wined3d_buffer_vtbl;
 
     hr = resource_init((IWineD3DResource *)buffer, WINED3DRTYPE_BUFFER,
-            device, size, usage, format_desc, pool, parent);
+            device, size, usage, format_desc, pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, hr %#x\n", hr);
         return hr;
     }
-    buffer->parent_ops = parent_ops;
     buffer->buffer_type_hint = bind_hint;
 
     TRACE("size %#x, usage %#x, format %s, memory @ %p, iface @ %p.\n", buffer->resource.size, buffer->resource.usage,

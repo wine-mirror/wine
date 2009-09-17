@@ -123,7 +123,7 @@ static ULONG WINAPI IWineD3DVolumeImpl_Release(IWineD3DVolume *iface) {
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
         resource_cleanup((IWineD3DResource *)iface);
-        This->parent_ops->wined3d_object_destroyed(This->resource.parent);
+        This->resource.parent_ops->wined3d_object_destroyed(This->resource.parent);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -392,14 +392,13 @@ HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT
     volume->lpVtbl = &IWineD3DVolume_Vtbl;
 
     hr = resource_init((IWineD3DResource *)volume, WINED3DRTYPE_VOLUME, device,
-            width * height * depth * format_desc->byte_count, usage, format_desc, pool, parent);
+            width * height * depth * format_desc->byte_count, usage, format_desc, pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x.\n", hr);
         return hr;
     }
 
-    volume->parent_ops = parent_ops;
     volume->currentDesc.Width = width;
     volume->currentDesc.Height = height;
     volume->currentDesc.Depth = depth;

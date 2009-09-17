@@ -1699,7 +1699,7 @@ typedef struct IWineD3DResourceClass
     BYTE                   *heapMemory; /* Pointer to the HeapAlloced block of memory */
     struct list             privateData;
     struct list             resource_list_entry;
-
+    const struct wined3d_parent_ops *parent_ops;
 } IWineD3DResourceClass;
 
 typedef struct IWineD3DResourceImpl
@@ -1718,7 +1718,7 @@ HRESULT resource_get_private_data(IWineD3DResource *iface, REFGUID guid,
         void *data, DWORD *data_size) DECLSPEC_HIDDEN;
 HRESULT resource_init(IWineD3DResource *iface, WINED3DRESOURCETYPE resource_type,
         IWineD3DDeviceImpl *device, UINT size, DWORD usage, const struct GlPixelFormatDesc *format_desc,
-        WINED3DPOOL pool, IUnknown *parent) DECLSPEC_HIDDEN;
+        WINED3DPOOL pool, IUnknown *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 WINED3DRESOURCETYPE resource_get_type(IWineD3DResource *iface) DECLSPEC_HIDDEN;
 DWORD resource_set_priority(IWineD3DResource *iface, DWORD new_priority) DECLSPEC_HIDDEN;
 HRESULT resource_set_private_data(IWineD3DResource *iface, REFGUID guid,
@@ -1801,7 +1801,7 @@ DWORD basetexture_get_level_count(IWineD3DBaseTexture *iface) DECLSPEC_HIDDEN;
 DWORD basetexture_get_lod(IWineD3DBaseTexture *iface) DECLSPEC_HIDDEN;
 HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, UINT levels, WINED3DRESOURCETYPE resource_type,
         IWineD3DDeviceImpl *device, UINT size, DWORD usage, const struct GlPixelFormatDesc *format_desc,
-        WINED3DPOOL pool, IUnknown *parent) DECLSPEC_HIDDEN;
+        WINED3DPOOL pool, IUnknown *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTexture *iface,
         WINED3DTEXTUREFILTERTYPE filter_type) DECLSPEC_HIDDEN;
 BOOL basetexture_set_dirty(IWineD3DBaseTexture *iface, BOOL dirty) DECLSPEC_HIDDEN;
@@ -1819,7 +1819,6 @@ typedef struct IWineD3DTextureImpl
     IWineD3DBaseTextureClass  baseTexture;
 
     /* IWineD3DTexture */
-    const struct wined3d_parent_ops *parent_ops;
     IWineD3DSurface          *surfaces[MAX_MIP_LEVELS];
     UINT                      target;
     BOOL                      cond_np2;
@@ -1841,7 +1840,6 @@ typedef struct IWineD3DCubeTextureImpl
     IWineD3DBaseTextureClass  baseTexture;
 
     /* IWineD3DCubeTexture */
-    const struct wined3d_parent_ops *parent_ops;
     IWineD3DSurface          *surfaces[6][MAX_MIP_LEVELS];
 } IWineD3DCubeTextureImpl;
 
@@ -1866,7 +1864,6 @@ typedef struct IWineD3DVolumeImpl
     IWineD3DResourceClass      resource;
 
     /* WineD3DVolume Information */
-    const struct wined3d_parent_ops *parent_ops;
     WINED3DVOLUMET_DESC      currentDesc;
     IWineD3DBase            *container;
     BOOL                    lockable;
@@ -1892,7 +1889,6 @@ typedef struct IWineD3DVolumeTextureImpl
     IWineD3DBaseTextureClass  baseTexture;
 
     /* IWineD3DVolumeTexture */
-    const struct wined3d_parent_ops *parent_ops;
     IWineD3DVolume           *volumes[MAX_MIP_LEVELS];
 } IWineD3DVolumeTextureImpl;
 
@@ -1958,7 +1954,6 @@ struct IWineD3DSurfaceImpl
     IWineD3DResourceClass     resource;
 
     /* IWineD3DSurface fields */
-    const struct wined3d_parent_ops *parent_ops;
     IWineD3DBase              *container;
     WINED3DSURFACET_DESC      currentDesc;
     IWineD3DPaletteImpl       *palette; /* D3D7 style palette handling */
@@ -2416,7 +2411,6 @@ struct wined3d_buffer
     const struct IWineD3DBufferVtbl *vtbl;
     IWineD3DResourceClass resource;
 
-    const struct wined3d_parent_ops *parent_ops;
     struct wined3d_buffer_desc desc;
 
     GLuint buffer_object;

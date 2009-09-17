@@ -136,7 +136,7 @@ static ULONG WINAPI IWineD3DVolumeTextureImpl_Release(IWineD3DVolumeTexture *ifa
     if (!ref)
     {
         volumetexture_cleanup(This);
-        This->parent_ops->wined3d_object_destroyed(This->resource.parent);
+        This->resource.parent_ops->wined3d_object_destroyed(This->resource.parent);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -406,15 +406,13 @@ HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT 
 
     texture->lpVtbl = &IWineD3DVolumeTexture_Vtbl;
 
-    hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, levels,
-            WINED3DRTYPE_VOLUMETEXTURE, device, 0, usage, format_desc, pool, parent);
+    hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, levels, WINED3DRTYPE_VOLUMETEXTURE,
+            device, 0, usage, format_desc, pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize basetexture, returning %#x.\n", hr);
         return hr;
     }
-
-    texture->parent_ops = parent_ops;
 
     /* Is NP2 support for volumes needed? */
     texture->baseTexture.pow2Matrix[0] = 1.0f;

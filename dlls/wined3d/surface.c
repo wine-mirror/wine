@@ -160,14 +160,12 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
     }
 
     hr = resource_init((IWineD3DResource *)surface, WINED3DRTYPE_SURFACE,
-            device, resource_size, usage, format_desc, pool, parent);
+            device, resource_size, usage, format_desc, pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x.\n", hr);
         return hr;
     }
-
-    surface->parent_ops = parent_ops;
 
     /* "Standalone" surface. */
     IWineD3DSurface_SetContainer((IWineD3DSurface *)surface, NULL);
@@ -730,7 +728,7 @@ static ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface)
     if (!ref)
     {
         surface_cleanup(This);
-        This->parent_ops->wined3d_object_destroyed(This->resource.parent);
+        This->resource.parent_ops->wined3d_object_destroyed(This->resource.parent);
 
         TRACE("(%p) Released.\n", This);
         HeapFree(GetProcessHeap(), 0, This);

@@ -164,7 +164,7 @@ static ULONG WINAPI IWineD3DTextureImpl_Release(IWineD3DTexture *iface) {
     if (!ref)
     {
         texture_cleanup(This);
-        This->parent_ops->wined3d_object_destroyed(This->resource.parent);
+        This->resource.parent_ops->wined3d_object_destroyed(This->resource.parent);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -501,15 +501,13 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
 
     texture->lpVtbl = &IWineD3DTexture_Vtbl;
 
-    hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, levels,
-            WINED3DRTYPE_TEXTURE, device, 0, usage, format_desc, pool, parent);
+    hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, levels, WINED3DRTYPE_TEXTURE,
+            device, 0, usage, format_desc, pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize basetexture, returning %#x.\n", hr);
         return hr;
     }
-
-    texture->parent_ops = parent_ops;
 
     /* Precalculated scaling for 'faked' non power of two texture coords.
      * Second also don't use ARB_TEXTURE_RECTANGLE in case the surface format is P8 and EXT_PALETTED_TEXTURE

@@ -177,7 +177,7 @@ static ULONG WINAPI IWineD3DCubeTextureImpl_Release(IWineD3DCubeTexture *iface) 
     if (!ref)
     {
         cubetexture_cleanup(This);
-        This->parent_ops->wined3d_object_destroyed(This->resource.parent);
+        This->resource.parent_ops->wined3d_object_destroyed(This->resource.parent);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -486,15 +486,13 @@ HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UIN
 
     texture->lpVtbl = &IWineD3DCubeTexture_Vtbl;
 
-    hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, levels,
-            WINED3DRTYPE_CUBETEXTURE, device, 0, usage, format_desc, pool, parent);
+    hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, levels, WINED3DRTYPE_CUBETEXTURE,
+            device, 0, usage, format_desc, pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize basetexture, returning %#x\n", hr);
         return hr;
     }
-
-    texture->parent_ops = parent_ops;
 
     /* Find the nearest pow2 match. */
     pow2_edge_length = 1;
