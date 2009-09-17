@@ -413,11 +413,6 @@ HRESULT cubetexture_init(IDirect3DCubeTexture8Impl *texture, IDirect3DDevice8Imp
 /* ----------------- */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DTexture8Vtbl Direct3DTexture8_Vtbl DECLSPEC_HIDDEN;
-
-/*****************************************************************************
  * IDirect3DTexture8 implementation structure
  */
 struct IDirect3DTexture8Impl
@@ -432,6 +427,9 @@ struct IDirect3DTexture8Impl
     /* Parent reference */
     LPDIRECT3DDEVICE8            parentDevice;
 };
+
+HRESULT texture_init(IDirect3DTexture8Impl *texture, IDirect3DDevice8Impl *device,
+        UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
 
 /* ----------------------- */
 /* IDirect3DVolumeTexture8 */

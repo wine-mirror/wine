@@ -285,7 +285,7 @@ static HRESULT WINAPI IDirect3DTexture8Impl_AddDirtyRect(LPDIRECT3DTEXTURE8 ifac
     return hr;
 }
 
-const IDirect3DTexture8Vtbl Direct3DTexture8_Vtbl =
+static const IDirect3DTexture8Vtbl Direct3DTexture8_Vtbl =
 {
     /* IUnknown */
     IDirect3DTexture8Impl_QueryInterface,
@@ -311,3 +311,27 @@ const IDirect3DTexture8Vtbl Direct3DTexture8_Vtbl =
     IDirect3DTexture8Impl_UnlockRect,
     IDirect3DTexture8Impl_AddDirtyRect
 };
+
+HRESULT texture_init(IDirect3DTexture8Impl *texture, IDirect3DDevice8Impl *device,
+        UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
+{
+    HRESULT hr;
+
+    texture->lpVtbl = &Direct3DTexture8_Vtbl;
+    texture->ref = 1;
+
+    wined3d_mutex_lock();
+    hr = IWineD3DDevice_CreateTexture(device->WineD3DDevice, width, height, levels, usage & WINED3DUSAGE_MASK,
+            wined3dformat_from_d3dformat(format), pool, &texture->wineD3DTexture, (IUnknown *)texture);
+    wined3d_mutex_unlock();
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d texture, hr %#x.\n", hr);
+        return hr;
+    }
+
+    texture->parentDevice = (IDirect3DDevice8 *)device;
+    IDirect3DDevice8_AddRef(texture->parentDevice);
+
+    return D3D_OK;
+}
