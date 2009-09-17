@@ -726,45 +726,34 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVolumeTexture(IDirect3DDevice8 
     return D3D_OK;
 }
 
-static HRESULT WINAPI IDirect3DDevice8Impl_CreateCubeTexture(IDirect3DDevice8 *iface, UINT EdgeLength,
-        UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IDirect3DCubeTexture8 **ppCubeTexture)
+static HRESULT WINAPI IDirect3DDevice8Impl_CreateCubeTexture(IDirect3DDevice8 *iface, UINT edge_length,
+        UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DCubeTexture8 **texture)
 {
-    IDirect3DCubeTexture8Impl *object;
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-    HRESULT hr = D3D_OK;
+    IDirect3DCubeTexture8Impl *object;
+    HRESULT hr;
 
-    TRACE("(%p) : ELen(%d) Lvl(%d) Usage(%d) fmt(%u), Pool(%d)\n" , This, EdgeLength, Levels, Usage, Format, Pool);
+    TRACE("iface %p, edge_length %u, levels %u, usage %#x, format %#x, pool %#x, texture %p.\n",
+            iface, edge_length, levels, usage, format, pool, texture);
 
-    /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-
-    if (NULL == object) {
-        FIXME("(%p) allocation of CubeTexture failed\n", This);
-        *ppCubeTexture = NULL;
+    if (!object)
+    {
+        ERR("Failed to allocate cube texture memory.\n");
         return D3DERR_OUTOFVIDEOMEMORY;
     }
 
-    object->lpVtbl = &Direct3DCubeTexture8_Vtbl;
-    object->ref = 1;
-
-    wined3d_mutex_lock();
-    hr = IWineD3DDevice_CreateCubeTexture(This->WineD3DDevice, EdgeLength, Levels, Usage & WINED3DUSAGE_MASK,
-            wined3dformat_from_d3dformat(Format), Pool, &object->wineD3DCubeTexture, (IUnknown *)object);
-    wined3d_mutex_unlock();
-
-    if (hr != D3D_OK){
-
-        /* free up object */
-        FIXME("(%p) call to IWineD3DDevice_CreateCubeTexture failed\n", This);
+    hr = cubetexture_init(object, This, edge_length, levels, usage, format, pool);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize cube texture, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppCubeTexture = NULL;
-    } else {
-        IUnknown_AddRef(iface);
-        object->parentDevice = iface;
-        *ppCubeTexture = (LPDIRECT3DCUBETEXTURE8) object;
+        return hr;
     }
 
-    TRACE("(%p) returning %p\n",This, *ppCubeTexture);
+    TRACE("Created cube texture %p.\n", object);
+    *texture = (IDirect3DCubeTexture8 *)object;
+
     return hr;
 }
 

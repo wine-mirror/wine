@@ -390,11 +390,6 @@ struct IDirect3DBaseTexture8Impl
 /* --------------------- */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DCubeTexture8Vtbl Direct3DCubeTexture8_Vtbl DECLSPEC_HIDDEN;
-
-/*****************************************************************************
  * IDirect3DCubeTexture8 implementation structure
  */
 struct IDirect3DCubeTexture8Impl
@@ -409,6 +404,9 @@ struct IDirect3DCubeTexture8Impl
     /* Parent reference */
     LPDIRECT3DDEVICE8                parentDevice;
 };
+
+HRESULT cubetexture_init(IDirect3DCubeTexture8Impl *texture, IDirect3DDevice8Impl *device,
+        UINT edge_length, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
 
 /* ----------------- */
 /* IDirect3DTexture8 */
