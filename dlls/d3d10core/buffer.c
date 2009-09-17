@@ -145,7 +145,7 @@ static void STDMETHODCALLTYPE d3d10_buffer_GetDesc(ID3D10Buffer *iface, D3D10_BU
     FIXME("iface %p, desc %p stub!\n", iface, desc);
 }
 
-const struct ID3D10BufferVtbl d3d10_buffer_vtbl =
+static const struct ID3D10BufferVtbl d3d10_buffer_vtbl =
 {
     /* IUnknown methods */
     d3d10_buffer_QueryInterface,
@@ -165,3 +165,31 @@ const struct ID3D10BufferVtbl d3d10_buffer_vtbl =
     d3d10_buffer_Unmap,
     d3d10_buffer_GetDesc,
 };
+
+HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d10_device *device,
+        const D3D10_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data)
+{
+    struct wined3d_buffer_desc wined3d_desc;
+    HRESULT hr;
+
+    buffer->vtbl = &d3d10_buffer_vtbl;
+    buffer->refcount = 1;
+
+    FIXME("Implement DXGI<->wined3d usage conversion\n");
+
+    wined3d_desc.byte_width = desc->ByteWidth;
+    wined3d_desc.usage = desc->Usage;
+    wined3d_desc.bind_flags = desc->BindFlags;
+    wined3d_desc.cpu_access_flags = desc->CPUAccessFlags;
+    wined3d_desc.misc_flags = desc->MiscFlags;
+
+    hr = IWineD3DDevice_CreateBuffer(device->wined3d_device, &wined3d_desc,
+            data ? data->pSysMem : NULL, (IUnknown *)buffer, &buffer->wined3d_buffer);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d buffer, hr %#x.\n", hr);
+        return hr;
+    }
+
+    return S_OK;
+}

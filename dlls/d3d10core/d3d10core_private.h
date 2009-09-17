@@ -96,7 +96,6 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
         const D3D10_TEXTURE2D_DESC *desc);
 
 /* ID3D10Buffer */
-extern const struct ID3D10BufferVtbl d3d10_buffer_vtbl;
 struct d3d10_buffer
 {
     const struct ID3D10BufferVtbl *vtbl;
@@ -104,6 +103,9 @@ struct d3d10_buffer
 
     IWineD3DBuffer *wined3d_buffer;
 };
+
+HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d10_device *device,
+        const D3D10_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data);
 
 /* ID3D10RenderTargetView */
 extern const struct ID3D10RenderTargetViewVtbl d3d10_rendertarget_view_vtbl;
