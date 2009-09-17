@@ -31,7 +31,7 @@ STRINGTABLE DISCARDABLE
     IDS_CERT_INFO_UNTRUSTED_ROOT "This certificate could not be validated to a trusted root certificate."
     IDS_CERT_INFO_PARTIAL_CHAIN "This certificate's issuer could not be found."
     IDS_CERT_INFO_BAD_PURPOSES "All the intended purposes of this certificate could not be verified."
-    IDS_CERT_INFO_PURPOSES "This cerificate is intended for the following purposes:"
+    IDS_CERT_INFO_PURPOSES "This certificate is intended for the following purposes:"
     IDS_SUBJECT_HEADING "Issued to: "
     IDS_ISSUER_HEADING "Issued by: "
     IDS_VALID_FROM "Valid from "
