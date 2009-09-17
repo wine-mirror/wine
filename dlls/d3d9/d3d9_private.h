@@ -200,9 +200,6 @@ extern UINT WINAPI IDirect3DDevice9Impl_GetNumberOfSwapChains(IDirect3DDevice9Ex
 extern HRESULT WINAPI IDirect3DDevice9Impl_CreateTexture(IDirect3DDevice9Ex *iface,
         UINT Width, UINT Height, UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool,
         IDirect3DTexture9 **ppTexture, HANDLE *pSharedHandle) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI IDirect3DDevice9Impl_CreateCubeTexture(IDirect3DDevice9Ex *iface,
-        UINT EdgeLength, UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool,
-        IDirect3DCubeTexture9 **ppCubeTexture, HANDLE *pSharedHandle) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexBuffer(IDirect3DDevice9Ex *iface,
         UINT Length, DWORD Usage, DWORD FVF, D3DPOOL Pool,
         IDirect3DVertexBuffer9 **ppVertexBuffer, HANDLE *pSharedHandle) DECLSPEC_HIDDEN;
@@ -421,6 +418,8 @@ typedef struct IDirect3DCubeTexture9Impl
     LPDIRECT3DDEVICE9EX       parentDevice;
 }  IDirect3DCubeTexture9Impl;
 
+HRESULT cubetexture_init(IDirect3DCubeTexture9Impl *texture, IDirect3DDevice9Impl *device,
+        UINT edge_length, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
 
 /* ----------------- */
 /* IDirect3DTexture9 */
