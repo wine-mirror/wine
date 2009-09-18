@@ -187,14 +187,14 @@ static void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLhandleA
     static const char * const spam[] =
     {
         "Vertex shader was successfully compiled to run on hardware.\n",    /* fglrx          */
-        "Fragment shader was successfully compiled to run on hardware.\n",  /* fglrx          */
+        "Fragment shader was successfully compiled to run on hardware.\n",  /* fglrx, with \n */
+        "Fragment shader was successfully compiled to run on hardware.",    /* fglrx, no \n   */
         "Fragment shader(s) linked, vertex shader(s) linked. \n ",          /* fglrx, with \n */
         "Fragment shader(s) linked, vertex shader(s) linked.",              /* fglrx, no \n   */
         "Vertex shader(s) linked, no fragment shader(s) defined. \n ",      /* fglrx, with \n */
         "Vertex shader(s) linked, no fragment shader(s) defined.",          /* fglrx, no \n   */
-        "Fragment shader was successfully compiled to run on hardware.\n"
-        "Fragment shader(s) linked, no vertex shader(s) defined.",          /* fglrx, no \n   */
         "Fragment shader(s) linked, no vertex shader(s) defined. \n ",      /* fglrx, with \n */
+        "Fragment shader(s) linked, no vertex shader(s) defined.",          /* fglrx, no \n   */
     };
 
     if (!TRACE_ON(d3d_shader) && !FIXME_ON(d3d_shader)) return;
