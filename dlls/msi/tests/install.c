@@ -6271,6 +6271,12 @@ static void test_envvar(void)
     DWORD type, size;
     char buffer[16];
 
+    if (on_win9x)
+    {
+        win_skip("Environment variables are handled differently on Win9x and WinMe\n");
+        return;
+    }
+
     create_test_files();
     create_database(msifile, env_tables, sizeof(env_tables) / sizeof(msi_table));
 
