@@ -53,7 +53,7 @@ static void test_startup(void)
         }
     }
 
-    ok(gpversion > 0 && gpversion < 42, "unexpected gdiplus version %i\n", gpversion);
+    ok(gpversion > 0 && gpversion <= 2, "unexpected gdiplus version %i\n", gpversion);
     trace("gdiplus version is %i\n", gpversion);
 
     status = GdipCreatePen1((ARGB)0xffff00ff, 10.0f, UnitPixel, &pen);
