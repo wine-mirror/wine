@@ -1025,7 +1025,7 @@ void load_mapi_providers(void)
 
     /* Open the app's key */
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, appKey, 0, KEY_READ, &hkeyMail) != ERROR_SUCCESS)
-        return;
+        goto cleanUp;
 
     /* Try to load the providers */
     load_mapi_provider(hkeyMail, regkey_dllpath, &mapi_provider);
