@@ -48,6 +48,8 @@ static const BYTE digitsToHex[] = {
   0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,10,11,12,13,
   14,15 };
 
+MAPI_FUNCTIONS mapiFunctions;
+
 /**************************************************************************
  *  ScInitMapiUtil (MAPI32.33)
  *
@@ -1028,6 +1030,33 @@ void load_mapi_providers(void)
     /* Try to load the providers */
     load_mapi_provider(hkeyMail, regkey_dllpath, &mapi_provider);
     load_mapi_provider(hkeyMail, regkey_dllpath_ex, &mapi_ex_provider);
+
+    /* Now try to load our function pointers */
+    ZeroMemory(&mapiFunctions, sizeof(mapiFunctions));
+
+    /* Simple MAPI functions */
+    if (mapi_provider)
+    {
+        mapiFunctions.MAPIAddress = (void*) GetProcAddress(mapi_provider, "MAPIAddress");
+        mapiFunctions.MAPIDeleteMail = (void*) GetProcAddress(mapi_provider, "MAPIDeleteMail");
+        mapiFunctions.MAPIDetails = (void*) GetProcAddress(mapi_provider, "MAPIDetails");
+        mapiFunctions.MAPIFindNext = (void*) GetProcAddress(mapi_provider, "MAPIFindNext");
+        mapiFunctions.MAPILogoff = (void*) GetProcAddress(mapi_provider, "MAPILogoff");
+        mapiFunctions.MAPILogon = (void*) GetProcAddress(mapi_provider, "MAPILogon");
+        mapiFunctions.MAPIReadMail = (void*) GetProcAddress(mapi_provider, "MAPIReadMail");
+        mapiFunctions.MAPIResolveName = (void*) GetProcAddress(mapi_provider, "MAPIResolveName");
+        mapiFunctions.MAPISaveMail = (void*) GetProcAddress(mapi_provider, "MAPISaveMail");
+        mapiFunctions.MAPISendDocuments = (void*) GetProcAddress(mapi_provider, "MAPISendDocuments");
+        mapiFunctions.MAPISendMail = (void*) GetProcAddress(mapi_provider, "MAPISendMail");
+    }
+
+    /* Extended MAPI functions */
+    if (mapi_ex_provider)
+    {
+        mapiFunctions.MAPIInitialize = (void*) GetProcAddress(mapi_ex_provider, "MAPIInitialize");
+        mapiFunctions.MAPILogonEx = (void*) GetProcAddress(mapi_ex_provider, "MAPILogonEx");
+        mapiFunctions.MAPIUninitialize = (void*) GetProcAddress(mapi_ex_provider, "MAPIUninitialize");
+    }
 
 cleanUp:
     RegCloseKey(hkeyMail);

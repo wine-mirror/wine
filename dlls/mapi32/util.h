@@ -22,7 +22,29 @@
 
 #define _MAPI_UTIL_H
 
+#include <mapi.h>
+#include <mapix.h>
+
 extern void load_mapi_providers(void);
 extern void unload_mapi_providers(void);
+
+typedef struct MAPI_FUNCTIONS {
+    LPMAPIADDRESS        MAPIAddress;
+    LPMAPIDELETEMAIL     MAPIDeleteMail;
+    LPMAPIDETAILS        MAPIDetails;
+    LPMAPIFINDNEXT       MAPIFindNext;
+    LPMAPIINITIALIZE     MAPIInitialize;
+    LPMAPILOGOFF         MAPILogoff;
+    LPMAPILOGON          MAPILogon;
+    LPMAPILOGONEX        MAPILogonEx;
+    LPMAPIREADMAIL       MAPIReadMail;
+    LPMAPIRESOLVENAME    MAPIResolveName;
+    LPMAPISAVEMAIL       MAPISaveMail;
+    LPMAPISENDMAIL       MAPISendMail;
+    LPMAPISENDDOCUMENTS  MAPISendDocuments;
+    LPMAPIUNINITIALIZE   MAPIUninitialize;
+} MAPI_FUNCTIONS;
+
+extern MAPI_FUNCTIONS mapiFunctions;
 
 #endif
