@@ -2,6 +2,7 @@
  * MAPISendMail implementation
  *
  * Copyright 2005 Hans Leidekker
+ * Copyright 2009 Owen Rudge for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,6 +34,7 @@
 #include "shellapi.h"
 #include "shlwapi.h"
 #include "wine/debug.h"
+#include "util.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mapi);
 
@@ -53,7 +55,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mapi);
  *  Failure: MAPI_E_FAILURE
  *
  * NOTES
- *  This is a temporary hack. 
+ *  The fallback procedure is a temporary hack.
  */
 ULONG WINAPI MAPISendMail( LHANDLE session, ULONG_PTR uiparam,
     lpMapiMessage message, FLAGS flags, ULONG reserved )
@@ -74,6 +76,14 @@ ULONG WINAPI MAPISendMail( LHANDLE session, ULONG_PTR uiparam,
     TRACE( "(0x%08x 0x%08lx %p 0x%08x 0x%08x)\n", session, uiparam,
            message, flags, reserved );
 
+    /* Check to see if we have a Simple MAPI provider loaded */
+    if (mapiFunctions.MAPISendMail)
+        return mapiFunctions.MAPISendMail(session, uiparam, message, flags, reserved);
+
+    /* TODO: Check if we have an Extended MAPI provider, if so, implement
+             wrapper around that. */
+
+    /* Fall back on our own implementation */
     if (!message) return MAPI_E_FAILURE;
 
     for (i = 0; i < message->nRecipCount; i++)
