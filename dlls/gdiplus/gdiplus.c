@@ -86,7 +86,7 @@ Status WINAPI GdiplusStartup(ULONG_PTR *token, const struct GdiplusStartupInput 
           input->DebugEventCallback, input->SuppressBackgroundThread,
           input->SuppressExternalCodecs);
 
-    if(input->GdiplusVersion != 1)
+    if(input->GdiplusVersion < 1 || input->GdiplusVersion > 2)
         return UnsupportedGdiplusVersion;
 
     if(input->SuppressBackgroundThread){
