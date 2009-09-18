@@ -184,3 +184,68 @@ HRESULT WINAPI MAPIAdminProfiles(ULONG ulFlags,  LPPROFADMIN *lppProfAdmin)
     *lppProfAdmin = NULL;
     return E_FAIL;
 }
+
+ULONG WINAPI MAPIAddress(LHANDLE session, ULONG_PTR uiparam, LPSTR caption,
+    ULONG editfields, LPSTR labels, ULONG nRecips, lpMapiRecipDesc lpRecips,
+    FLAGS flags, ULONG reserved, LPULONG newRecips, lpMapiRecipDesc * lppNewRecips)
+{
+    if (mapiFunctions.MAPIAddress)
+        return mapiFunctions.MAPIAddress(session, uiparam, caption, editfields, labels,
+            nRecips, lpRecips, flags, reserved, newRecips, lppNewRecips);
+
+    return MAPI_E_NOT_SUPPORTED;
+}
+
+ULONG WINAPI MAPIDeleteMail(LHANDLE session, ULONG_PTR uiparam, LPSTR msg_id,
+    FLAGS flags, ULONG reserved)
+{
+    if (mapiFunctions.MAPIDeleteMail)
+        return mapiFunctions.MAPIDeleteMail(session, uiparam, msg_id, flags, reserved);
+
+    return MAPI_E_NOT_SUPPORTED;
+}
+
+ULONG WINAPI MAPIDetails(LHANDLE session, ULONG_PTR uiparam, lpMapiRecipDesc recip,
+    FLAGS flags, ULONG reserved)
+{
+    if (mapiFunctions.MAPIDetails)
+        return mapiFunctions.MAPIDetails(session, uiparam, recip, flags, reserved);
+
+    return MAPI_E_NOT_SUPPORTED;
+}
+
+ULONG WINAPI MAPIFindNext(LHANDLE session, ULONG_PTR uiparam, LPSTR msg_type,
+    LPSTR seed_msg_id, FLAGS flags, ULONG reserved, LPSTR msg_id)
+{
+    if (mapiFunctions.MAPIFindNext)
+        return mapiFunctions.MAPIFindNext(session, uiparam, msg_type, seed_msg_id, flags, reserved, msg_id);
+
+    return MAPI_E_NOT_SUPPORTED;
+}
+
+ULONG WINAPI MAPIReadMail(LHANDLE session, ULONG_PTR uiparam, LPSTR msg_id,
+    FLAGS flags, ULONG reserved, lpMapiMessage msg)
+{
+    if (mapiFunctions.MAPIReadMail)
+        return mapiFunctions.MAPIReadMail(session, uiparam, msg_id, flags, reserved, msg);
+
+    return MAPI_E_NOT_SUPPORTED;
+}
+
+ULONG WINAPI MAPIResolveName(LHANDLE session, ULONG_PTR uiparam, LPSTR name,
+    FLAGS flags, ULONG reserved, lpMapiRecipDesc *recip)
+{
+    if (mapiFunctions.MAPIResolveName)
+        return mapiFunctions.MAPIResolveName(session, uiparam, name, flags, reserved, recip);
+
+    return MAPI_E_NOT_SUPPORTED;
+}
+
+ULONG WINAPI MAPISaveMail(LHANDLE session, ULONG_PTR uiparam, lpMapiMessage msg,
+    FLAGS flags, ULONG reserved, LPSTR msg_id)
+{
+    if (mapiFunctions.MAPISaveMail)
+        return mapiFunctions.MAPISaveMail(session, uiparam, msg, flags, reserved, msg_id);
+
+    return MAPI_E_NOT_SUPPORTED;
+}

@@ -211,3 +211,12 @@ exit:
 
     return ret;
 }
+
+ULONG WINAPI MAPISendDocuments(ULONG_PTR uiparam, LPSTR delim, LPSTR paths,
+    LPSTR filenames, ULONG reserved)
+{
+    if (mapiFunctions.MAPISendDocuments)
+        return mapiFunctions.MAPISendDocuments(uiparam, delim, paths, filenames, reserved);
+
+    return MAPI_E_NOT_SUPPORTED;
+}
