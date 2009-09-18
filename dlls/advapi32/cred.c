@@ -1010,40 +1010,54 @@ static INT convert_PCREDENTIALW_to_PCREDENTIALA(const CREDENTIALW *CredentialW, 
     return needed;
 }
 
-static void convert_PCREDENTIALA_to_PCREDENTIALW(const CREDENTIALA *CredentialA, PCREDENTIALW CredentialW, DWORD *len)
+/******************************************************************************
+ * convert_PCREDENTIALA_to_PCREDENTIALW [internal]
+ *
+ * convert a Credential struct from ANSI to UNICODE and return the needed size in Bytes
+ *
+ */
+static INT convert_PCREDENTIALA_to_PCREDENTIALW(const CREDENTIALA *CredentialA, PCREDENTIALW CredentialW, INT len)
 {
-    char *buffer = (char *)CredentialW + sizeof(CREDENTIALW);
+    char *buffer;
     INT string_len;
+    INT needed = sizeof(CREDENTIALW);
 
-    *len += sizeof(CREDENTIALW);
     if (!CredentialW)
     {
-        if (CredentialA->TargetName) *len += sizeof(WCHAR) * MultiByteToWideChar(CP_ACP, 0, CredentialA->TargetName, -1, NULL, 0);
-        if (CredentialA->Comment) *len += sizeof(WCHAR) * MultiByteToWideChar(CP_ACP, 0, CredentialA->Comment, -1, NULL, 0);
-        *len += CredentialA->CredentialBlobSize;
-        if (CredentialA->TargetAlias) *len += sizeof(WCHAR) * MultiByteToWideChar(CP_ACP, 0, CredentialA->TargetAlias, -1, NULL, 0);
-        if (CredentialA->UserName) *len += sizeof(WCHAR) * MultiByteToWideChar(CP_ACP, 0, CredentialA->UserName, -1, NULL, 0);
+        if (CredentialA->TargetName)
+            needed += sizeof(WCHAR) * MultiByteToWideChar(CP_ACP, 0, CredentialA->TargetName, -1, NULL, 0);
+        if (CredentialA->Comment)
+            needed += sizeof(WCHAR) * MultiByteToWideChar(CP_ACP, 0, CredentialA->Comment, -1, NULL, 0);
+        needed += CredentialA->CredentialBlobSize;
+        if (CredentialA->TargetAlias)
+            needed += sizeof(WCHAR) * MultiByteToWideChar(CP_ACP, 0, CredentialA->TargetAlias, -1, NULL, 0);
+        if (CredentialA->UserName)
+            needed += sizeof(WCHAR) * MultiByteToWideChar(CP_ACP, 0, CredentialA->UserName, -1, NULL, 0);
 
-        return;
+        return needed;
     }
 
+    buffer = (char *)CredentialW + sizeof(CREDENTIALW);
+    len -= sizeof(CREDENTIALW);
     CredentialW->Flags = CredentialA->Flags;
     CredentialW->Type = CredentialA->Type;
     if (CredentialA->TargetName)
     {
         CredentialW->TargetName = (LPWSTR)buffer;
-        string_len = MultiByteToWideChar(CP_ACP, 0, CredentialA->TargetName, -1, CredentialW->TargetName, -1);
+        string_len = MultiByteToWideChar(CP_ACP, 0, CredentialA->TargetName, -1, CredentialW->TargetName, len / sizeof(WCHAR));
         buffer += sizeof(WCHAR) * string_len;
-        *len += sizeof(WCHAR) * string_len;
+        needed += sizeof(WCHAR) * string_len;
+        len -= sizeof(WCHAR) * string_len;
     }
     else
         CredentialW->TargetName = NULL;
     if (CredentialA->Comment)
     {
         CredentialW->Comment = (LPWSTR)buffer;
-        string_len = MultiByteToWideChar(CP_ACP, 0, CredentialA->Comment, -1, CredentialW->Comment, -1);
+        string_len = MultiByteToWideChar(CP_ACP, 0, CredentialA->Comment, -1, CredentialW->Comment, len / sizeof(WCHAR));
         buffer += sizeof(WCHAR) * string_len;
-        *len += sizeof(WCHAR) * string_len;
+        needed += sizeof(WCHAR) * string_len;
+        len -= sizeof(WCHAR) * string_len;
     }
     else
         CredentialW->Comment = NULL;
@@ -1055,7 +1069,8 @@ static void convert_PCREDENTIALA_to_PCREDENTIALW(const CREDENTIALA *CredentialA,
         memcpy(CredentialW->CredentialBlob, CredentialA->CredentialBlob,
                CredentialA->CredentialBlobSize);
         buffer += CredentialA->CredentialBlobSize;
-        *len += CredentialA->CredentialBlobSize;
+        needed += CredentialA->CredentialBlobSize;
+        len -= CredentialA->CredentialBlobSize;
     }
     else
         CredentialW->CredentialBlob = NULL;
@@ -1065,21 +1080,23 @@ static void convert_PCREDENTIALA_to_PCREDENTIALW(const CREDENTIALA *CredentialA,
     if (CredentialA->TargetAlias)
     {
         CredentialW->TargetAlias = (LPWSTR)buffer;
-        string_len = MultiByteToWideChar(CP_ACP, 0, CredentialA->TargetAlias, -1, CredentialW->TargetAlias, -1);
+        string_len = MultiByteToWideChar(CP_ACP, 0, CredentialA->TargetAlias, -1, CredentialW->TargetAlias, len / sizeof(WCHAR));
         buffer += sizeof(WCHAR) * string_len;
-        *len += sizeof(WCHAR) * string_len;
+        needed += sizeof(WCHAR) * string_len;
+        len -= sizeof(WCHAR) * string_len;
     }
     else
         CredentialW->TargetAlias = NULL;
     if (CredentialA->UserName)
     {
         CredentialW->UserName = (LPWSTR)buffer;
-        string_len = MultiByteToWideChar(CP_ACP, 0, CredentialA->UserName, -1, CredentialW->UserName, -1);
-        buffer += sizeof(WCHAR) * string_len;
-        *len += sizeof(WCHAR) * string_len;
+        string_len = MultiByteToWideChar(CP_ACP, 0, CredentialA->UserName, -1, CredentialW->UserName, len / sizeof(WCHAR));
+        needed += sizeof(WCHAR) * string_len;
     }
     else
         CredentialW->UserName = NULL;
+
+    return needed;
 }
 
 /******************************************************************************
@@ -1730,7 +1747,7 @@ BOOL WINAPI CredReadDomainCredentialsW(PCREDENTIAL_TARGET_INFORMATIONW TargetInf
 BOOL WINAPI CredWriteA(PCREDENTIALA Credential, DWORD Flags)
 {
     BOOL ret;
-    DWORD len;
+    INT len;
     PCREDENTIALW CredentialW;
 
     TRACE("(%p, 0x%x)\n", Credential, Flags);
@@ -1741,16 +1758,15 @@ BOOL WINAPI CredWriteA(PCREDENTIALA Credential, DWORD Flags)
         return FALSE;
     }
 
-    len = 0;
-    convert_PCREDENTIALA_to_PCREDENTIALW(Credential, NULL, &len);
+    len = convert_PCREDENTIALA_to_PCREDENTIALW(Credential, NULL, 0);
     CredentialW = HeapAlloc(GetProcessHeap(), 0, len);
     if (!CredentialW)
     {
         SetLastError(ERROR_OUTOFMEMORY);
         return FALSE;
     }
-    len = 0;
-    convert_PCREDENTIALA_to_PCREDENTIALW(Credential, CredentialW, &len);
+
+    convert_PCREDENTIALA_to_PCREDENTIALW(Credential, CredentialW, len);
 
     ret = CredWriteW(CredentialW, Flags);
 
