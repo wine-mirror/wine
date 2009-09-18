@@ -107,6 +107,8 @@ static const WCHAR attrLeft[] =
     {'l','e','f','t',0};
 static const WCHAR attrLetterSpacing[] =
     {'l','e','t','t','e','r','-','s','p','a','c','i','n','g',0};
+static const WCHAR attrLineHeight[] =
+    {'l','i','n','e','-','h','e','i','g','h','t',0};
 static const WCHAR attrMargin[] =
     {'m','a','r','g','i','n',0};
 static const WCHAR attrMarginBottom[] =
@@ -192,6 +194,7 @@ static const struct{
     {attrHeight,               DISPID_IHTMLSTYLE_HEIGHT},
     {attrLeft,                 DISPID_IHTMLSTYLE_LEFT},
     {attrLetterSpacing,        DISPID_IHTMLSTYLE_LETTERSPACING},
+    {attrLineHeight,           DISPID_IHTMLSTYLE_LINEHEIGHT},
     {attrMargin,               DISPID_IHTMLSTYLE_MARGIN},
     {attrMarginBottom,         DISPID_IHTMLSTYLE_MARGINBOTTOM},
     {attrMarginLeft,           DISPID_IHTMLSTYLE_MARGINLEFT},
