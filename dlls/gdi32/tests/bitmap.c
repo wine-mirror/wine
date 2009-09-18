@@ -2393,6 +2393,10 @@ static void test_GdiAlphaBlend(void)
     expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -1, 0, 30, 30, blend), TRUE, BOOL, "%d");
     expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 30, 30, blend), TRUE, BOOL, "%d");
 
+    SetLastError(0xdeadbeef);
+    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, NULL, 0, 0, 20, 20, blend), FALSE, BOOL, "%d");
+    expect_eq(GetLastError(), 0xdeadbeef, int, "%d");
+
     SelectObject(hdcDst, oldDst);
     SelectObject(hdcSrc, oldSrc);
     DeleteObject(bmpSrc);
