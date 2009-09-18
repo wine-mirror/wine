@@ -203,6 +203,16 @@ static void test_canconvert(void)
         return;
     }
 
+    /* Some older versions of the library don't support several conversions, we'll skip
+       if we have such a library */
+    hr = IDataConvert_CanConvert(convert, DBTYPE_EMPTY, DBTYPE_DBTIMESTAMP);
+    if(hr == S_FALSE)
+    {
+        win_skip("Doesn't handle DBTYPE_EMPTY -> DBTYPE_DBTIMESTAMP conversion so skipping\n");
+        IDataConvert_Release(convert);
+        return;
+    }
+
     for(src_idx = 0; src_idx < sizeof(simple_convert) / sizeof(simple_convert[0]); src_idx++)
         for(dst_idx = 0; dst_idx < sizeof(simple_convert) / sizeof(simple_convert[0]); dst_idx++)
         {
