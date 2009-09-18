@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mapi32.dll
 IMPORTLIB = mapi32
-IMPORTS   = uuid shlwapi shell32 kernel32
+IMPORTS   = uuid shlwapi shell32 advapi32 kernel32
 
 C_SRCS = \
 	imalloc.c \

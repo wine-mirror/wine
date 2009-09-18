@@ -1,7 +1,7 @@
 /*
  *             MAPI basics
  *
- * Copyright 2001 CodeWeavers Inc.
+ * Copyright 2001, 2009 CodeWeavers Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,6 +29,7 @@
 #include "mapiform.h"
 #include "mapi.h"
 #include "wine/debug.h"
+#include "util.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mapi);
 
@@ -45,9 +46,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hinstDLL);
+        load_mapi_providers();
         break;
     case DLL_PROCESS_DETACH:
 	TRACE("DLL_PROCESS_DETACH: %d objects remaining\n", MAPI_ObjectCount);
+        unload_mapi_providers();
 	break;
     }
     return TRUE;
