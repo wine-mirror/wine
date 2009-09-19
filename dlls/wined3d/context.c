@@ -762,7 +762,7 @@ BOOL context_set_current(struct wined3d_context *ctx)
         }
         ctx->current = 1;
     }
-    else
+    else if(pwglGetCurrentContext())
     {
         TRACE("Clearing current D3D context.\n");
         if (!pwglMakeCurrent(NULL, NULL))
