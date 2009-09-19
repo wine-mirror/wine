@@ -746,7 +746,8 @@ static BOOL create_file_with_version(const CHAR *name, LONG ms, LONG ls)
     BOOL ret = FALSE;
 
     GetSystemDirectory(path, MAX_PATH);
-    lstrcatA(path, "\\kernel32.dll");
+    /* Some dlls can't be updated on Vista/W2K8 */
+    lstrcatA(path, "\\version.dll");
 
     CopyFileA(path, name, FALSE);
 
