@@ -59,37 +59,9 @@
 #define EDIT_SEQ_INDEX      1
 #define UPDOWN_SEQ_INDEX    2
 
-static HWND parent_wnd, edit, updown;
+static HWND parent_wnd, edit;
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
-
-static const struct message create_parent_wnd_seq[] = {
-    { WM_GETMINMAXINFO, sent },
-    { WM_NCCREATE, sent },
-    { WM_NCCALCSIZE, sent|wparam, 0 },
-    { WM_CREATE, sent },
-    { WM_SHOWWINDOW, sent|wparam, 1 },
-    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
-    { WM_QUERYNEWPALETTE,   sent|optional },
-    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
-    { WM_ACTIVATEAPP, sent|wparam, 1 },
-    { WM_NCACTIVATE, sent },
-    { WM_ACTIVATE, sent|wparam, 1 },
-    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
-    { WM_IME_NOTIFY, sent|defwinproc|optional },
-    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
-    /* Win9x adds SWP_NOZORDER below */
-    { WM_WINDOWPOSCHANGED, sent, /*|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE*/ },
-    { WM_NCCALCSIZE, sent|wparam|optional, 1 },
-    { WM_SIZE, sent },
-    { WM_MOVE, sent },
-    { 0 }
-};
-
-static const struct message add_edit_to_parent_seq[] = {
-    { WM_PARENTNOTIFY, sent|wparam, WM_CREATE },
-    { 0 }
-};
 
 static const struct message add_updown_with_edit_seq[] = {
     { WM_WINDOWPOSCHANGING, sent },
@@ -179,15 +151,6 @@ static const struct message test_updown_unicode_seq[] = {
     { UDM_GETUNICODEFORMAT, sent },
     { UDM_SETUNICODEFORMAT, sent|wparam, 0 },
     { UDM_GETUNICODEFORMAT, sent },
-    { 0 }
-};
-
-static const struct message test_updown_destroy_seq[] = {
-    { WM_SHOWWINDOW, sent|wparam|lparam, 0, 0 },
-    { WM_WINDOWPOSCHANGING, sent},
-    { WM_WINDOWPOSCHANGED, sent},
-    { WM_DESTROY, sent},
-    { WM_NCDESTROY, sent},
     { 0 }
 };
 
@@ -359,7 +322,10 @@ static HWND create_updown_control(void)
 
 static void test_updown_pos(void)
 {
+    HWND updown;
     int r;
+
+    updown = create_updown_control();
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -410,12 +376,17 @@ static void test_updown_pos(void)
     expect(1,HIWORD(r));
 
     ok_sequence(sequences, UPDOWN_SEQ_INDEX, test_updown_pos_seq , "test updown pos", FALSE);
+
+    DestroyWindow(updown);
 }
 
 static void test_updown_pos32(void)
 {
+    HWND updown;
     int r;
     int low, high;
+
+    updown = create_updown_control();
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -433,7 +404,7 @@ static void test_updown_pos32(void)
         win_skip("UDM_SETPOS32 and UDM_GETPOS32 need 5.80\n");
         return;
     }
-    expect(100,r); /* As set by test_updown_pos() */
+    expect(50,r);
 
     /* Since UDM_SETBUDDYINT was not set at creation bRet will always be true as a return from UDM_GETPOS32 */
 
@@ -470,11 +441,15 @@ static void test_updown_pos32(void)
     expect(1,high);
 
     ok_sequence(sequences, UPDOWN_SEQ_INDEX, test_updown_pos32_seq, "test updown pos32", FALSE);
+
+    DestroyWindow(updown);
 }
 
 static void test_updown_buddy(void)
 {
-    HWND buddyReturn;
+    HWND updown, buddyReturn;
+
+    updown = create_updown_control();
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -489,11 +464,16 @@ static void test_updown_buddy(void)
 
     ok_sequence(sequences, UPDOWN_SEQ_INDEX, test_updown_buddy_seq, "test updown buddy", TRUE);
     ok_sequence(sequences, EDIT_SEQ_INDEX, add_updown_with_edit_seq, "test updown buddy_edit", FALSE);
+
+    DestroyWindow(updown);
 }
 
 static void test_updown_base(void)
 {
+    HWND updown;
     int r;
+
+    updown = create_updown_control();
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -526,11 +506,16 @@ static void test_updown_base(void)
     expect(10,r);
 
     ok_sequence(sequences, UPDOWN_SEQ_INDEX, test_updown_base_seq, "test updown base", FALSE);
+
+    DestroyWindow(updown);
 }
 
 static void test_updown_unicode(void)
 {
+    HWND updown;
     int r;
+
+    updown = create_updown_control();
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -552,22 +537,14 @@ static void test_updown_unicode(void)
     expect(0,r);
 
     ok_sequence(sequences, UPDOWN_SEQ_INDEX, test_updown_unicode_seq, "test updown unicode", FALSE);
+
+    DestroyWindow(updown);
 }
 
-
-static void test_create_updown_control(void)
+static void test_updown_create(void)
 {
     CHAR text[MAX_PATH];
-
-    parent_wnd = create_parent_window();
-    ok(parent_wnd != NULL, "Failed to create parent window!\n");
-    ok_sequence(sequences, PARENT_SEQ_INDEX, create_parent_wnd_seq, "create parent window", TRUE);
-
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
-
-    edit = create_edit_control();
-    ok(edit != NULL, "Failed to create edit control\n");
-    ok_sequence(sequences, PARENT_SEQ_INDEX, add_edit_to_parent_seq, "add edit control to parent", FALSE);
+    HWND updown;
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -582,13 +559,7 @@ static void test_create_updown_control(void)
     ok(lstrlenA(text) == 0, "Expected empty string\n");
     ok_sequence(sequences, EDIT_SEQ_INDEX, get_edit_text_seq, "get edit text", FALSE);
 
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
-
-    test_updown_pos();
-    test_updown_pos32();
-    test_updown_buddy();
-    test_updown_base();
-    test_updown_unicode();
+    DestroyWindow(updown);
 }
 
 START_TEST(updown)
@@ -596,5 +567,18 @@ START_TEST(updown)
     InitCommonControls();
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
-    test_create_updown_control();
+    parent_wnd = create_parent_window();
+    ok(parent_wnd != NULL, "Failed to create parent window!\n");
+    edit = create_edit_control();
+    ok(edit != NULL, "Failed to create edit control\n");
+
+    test_updown_create();
+    test_updown_pos();
+    test_updown_pos32();
+    test_updown_buddy();
+    test_updown_base();
+    test_updown_unicode();
+
+    DestroyWindow(edit);
+    DestroyWindow(parent_wnd);
 }
