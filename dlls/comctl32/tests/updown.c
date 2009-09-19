@@ -567,6 +567,7 @@ static void test_UDS_SETBUDDYINT(void)
     HWND updown;
     DWORD style, ret;
     CHAR text[10];
+    BOOL b;
 
     /* creating without UDS_SETBUDDYINT */
     updown = create_updown_control(0);
@@ -577,24 +578,37 @@ static void test_UDS_SETBUDDYINT(void)
     ok(style & UDS_SETBUDDYINT, "Expected UDS_SETBUDDY to be set\n");
     SendMessage(updown, UDM_SETPOS, 0, 20);
     GetWindowTextA(edit, text, sizeof(text)/sizeof(CHAR));
-    todo_wine ok(lstrlenA(text) == 0, "Expected empty string\n");
+    ok(lstrlenA(text) == 0, "Expected empty string\n");
     DestroyWindow(updown);
 
     /* creating with UDS_SETBUDDYINT */
     updown = create_updown_control(UDS_SETBUDDYINT);
     GetWindowTextA(edit, text, sizeof(text)/sizeof(CHAR));
+    /* 50 is initial value here */
     ok(lstrcmpA(text, "50") == 0, "Expected '50', got '%s'\n", text);
     /* now remove style flag */
     style = GetWindowLongA(updown, GWL_STYLE);
     SetWindowLongA(updown, GWL_STYLE, style & ~UDS_SETBUDDYINT);
     SendMessage(updown, UDM_SETPOS, 0, 20);
     GetWindowTextA(edit, text, sizeof(text)/sizeof(CHAR));
-    todo_wine ok(lstrcmpA(text, "20") == 0, "Expected '20', got '%s'\n", text);
+    ok(lstrcmpA(text, "20") == 0, "Expected '20', got '%s'\n", text);
     /* set edit text directly, check position */
     strcpy(text, "10");
     SetWindowTextA(edit, text);
     ret = SendMessageA(updown, UDM_GETPOS32, 0, 0);
-    todo_wine expect(10, ret);
+    expect(10, ret);
+    strcpy(text, "11");
+    SetWindowTextA(edit, text);
+    ret = SendMessageA(updown, UDM_GETPOS, 0, 0);
+    expect(11, LOWORD(ret));
+    expect(0,  HIWORD(ret));
+    /* set to invalid value */
+    strcpy(text, "21st");
+    SetWindowTextA(edit, text);
+    b = FALSE;
+    ret = SendMessageA(updown, UDM_GETPOS32, 0, (LPARAM)&b);
+    expect(11, ret);
+    expect(TRUE, b);
     /* set style back */
     style = GetWindowLongA(updown, GWL_STYLE);
     SetWindowLongA(updown, GWL_STYLE, style | UDS_SETBUDDYINT);
