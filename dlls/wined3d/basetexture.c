@@ -70,25 +70,30 @@ void basetexture_cleanup(IWineD3DBaseTexture *iface)
     resource_cleanup((IWineD3DResource *)iface);
 }
 
+/* A GL context is provided by the caller */
+static void gltexture_delete(struct gl_texture *tex)
+{
+    ENTER_GL();
+    glDeleteTextures(1, &tex->name);
+    LEAVE_GL();
+    tex->name = 0;
+}
+
 void basetexture_unload(IWineD3DBaseTexture *iface)
 {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
-    if(This->baseTexture.texture_rgb.name) {
+    if(This->baseTexture.texture_rgb.name ||
+       This->baseTexture.texture_srgb.name) {
         ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
-        ENTER_GL();
-        glDeleteTextures(1, &This->baseTexture.texture_rgb.name);
-        This->baseTexture.texture_rgb.name = 0;
-        LEAVE_GL();
     }
 
+    if(This->baseTexture.texture_rgb.name) {
+        gltexture_delete(&This->baseTexture.texture_rgb);
+    }
     if(This->baseTexture.texture_srgb.name) {
-        ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
-        ENTER_GL();
-        glDeleteTextures(1, &This->baseTexture.texture_srgb.name);
-        This->baseTexture.texture_srgb.name = 0;
-        LEAVE_GL();
+        gltexture_delete(&This->baseTexture.texture_srgb);
     }
     This->baseTexture.texture_rgb.dirty = TRUE;
     This->baseTexture.texture_srgb.dirty = TRUE;
