@@ -293,7 +293,7 @@ static LRESULT WINAPI updown_subclass_proc(HWND hwnd, UINT message, WPARAM wPara
     return ret;
 }
 
-static HWND create_updown_control(void)
+static HWND create_updown_control(DWORD style)
 {
     struct subclass_info *info;
     HWND updown;
@@ -304,7 +304,7 @@ static HWND create_updown_control(void)
         return NULL;
 
     GetClientRect(parent_wnd, &rect);
-    updown = CreateUpDownControl(WS_CHILD | WS_BORDER | WS_VISIBLE | UDS_ALIGNRIGHT,
+    updown = CreateUpDownControl(WS_CHILD | WS_BORDER | WS_VISIBLE | UDS_ALIGNRIGHT | style,
                                  0, 0, rect.right, rect.bottom, parent_wnd, 1, GetModuleHandleA(NULL), edit,
                                  100, 0, 50);
     if (!updown)
@@ -325,7 +325,7 @@ static void test_updown_pos(void)
     HWND updown;
     int r;
 
-    updown = create_updown_control();
+    updown = create_updown_control(0);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -386,7 +386,7 @@ static void test_updown_pos32(void)
     int r;
     int low, high;
 
-    updown = create_updown_control();
+    updown = create_updown_control(0);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -449,7 +449,7 @@ static void test_updown_buddy(void)
 {
     HWND updown, buddyReturn;
 
-    updown = create_updown_control();
+    updown = create_updown_control(0);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -473,7 +473,7 @@ static void test_updown_base(void)
     HWND updown;
     int r;
 
-    updown = create_updown_control();
+    updown = create_updown_control(0);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -515,7 +515,7 @@ static void test_updown_unicode(void)
     HWND updown;
     int r;
 
-    updown = create_updown_control();
+    updown = create_updown_control(0);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -548,7 +548,7 @@ static void test_updown_create(void)
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
-    updown = create_updown_control();
+    updown = create_updown_control(0);
     ok(updown != NULL, "Failed to create updown control\n");
     ok_sequence(sequences, PARENT_SEQ_INDEX, add_updown_to_parent_seq, "add updown control to parent", TRUE);
     ok_sequence(sequences, EDIT_SEQ_INDEX, add_updown_with_edit_seq, "add updown control with edit", FALSE);
@@ -559,6 +559,48 @@ static void test_updown_create(void)
     ok(lstrlenA(text) == 0, "Expected empty string\n");
     ok_sequence(sequences, EDIT_SEQ_INDEX, get_edit_text_seq, "get edit text", FALSE);
 
+    DestroyWindow(updown);
+}
+
+static void test_UDS_SETBUDDYINT(void)
+{
+    HWND updown;
+    DWORD style, ret;
+    CHAR text[10];
+
+    /* creating without UDS_SETBUDDYINT */
+    updown = create_updown_control(0);
+    /* try to set UDS_SETBUDDYINT after creation */
+    style = GetWindowLongA(updown, GWL_STYLE);
+    SetWindowLongA(updown, GWL_STYLE, style | UDS_SETBUDDYINT);
+    style = GetWindowLongA(updown, GWL_STYLE);
+    ok(style & UDS_SETBUDDYINT, "Expected UDS_SETBUDDY to be set\n");
+    SendMessage(updown, UDM_SETPOS, 0, 20);
+    GetWindowTextA(edit, text, sizeof(text)/sizeof(CHAR));
+    todo_wine ok(lstrlenA(text) == 0, "Expected empty string\n");
+    DestroyWindow(updown);
+
+    /* creating with UDS_SETBUDDYINT */
+    updown = create_updown_control(UDS_SETBUDDYINT);
+    GetWindowTextA(edit, text, sizeof(text)/sizeof(CHAR));
+    ok(lstrcmpA(text, "50") == 0, "Expected '50', got '%s'\n", text);
+    /* now remove style flag */
+    style = GetWindowLongA(updown, GWL_STYLE);
+    SetWindowLongA(updown, GWL_STYLE, style & ~UDS_SETBUDDYINT);
+    SendMessage(updown, UDM_SETPOS, 0, 20);
+    GetWindowTextA(edit, text, sizeof(text)/sizeof(CHAR));
+    todo_wine ok(lstrcmpA(text, "20") == 0, "Expected '20', got '%s'\n", text);
+    /* set edit text directly, check position */
+    strcpy(text, "10");
+    SetWindowTextA(edit, text);
+    ret = SendMessageA(updown, UDM_GETPOS32, 0, 0);
+    todo_wine expect(10, ret);
+    /* set style back */
+    style = GetWindowLongA(updown, GWL_STYLE);
+    SetWindowLongA(updown, GWL_STYLE, style | UDS_SETBUDDYINT);
+    SendMessage(updown, UDM_SETPOS, 0, 30);
+    GetWindowTextA(edit, text, sizeof(text)/sizeof(CHAR));
+    ok(lstrcmpA(text, "30") == 0, "Expected '30', got '%s'\n", text);
     DestroyWindow(updown);
 }
 
@@ -578,6 +620,7 @@ START_TEST(updown)
     test_updown_buddy();
     test_updown_base();
     test_updown_unicode();
+    test_UDS_SETBUDDYINT();
 
     DestroyWindow(edit);
     DestroyWindow(parent_wnd);
