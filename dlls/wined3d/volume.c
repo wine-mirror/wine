@@ -266,7 +266,8 @@ static HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, WINED3DL
 
         if (containerType == WINED3DRTYPE_VOLUMETEXTURE) {
           IWineD3DBaseTextureImpl* pTexture = (IWineD3DBaseTextureImpl*) cont;
-          pTexture->baseTexture.dirty = TRUE;
+          pTexture->baseTexture.texture_rgb.dirty = TRUE;
+          pTexture->baseTexture.texture_srgb.dirty = TRUE;
         } else {
           FIXME("Set dirty on container type %d\n", containerType);
         }

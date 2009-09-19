@@ -4696,9 +4696,9 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
          */
         if(SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface*)This, &IID_IWineD3DBaseTexture, (void **) &texture)))
         {
-            ((IWineD3DBaseTextureImpl *) texture)->baseTexture.states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
-            ((IWineD3DBaseTextureImpl *) texture)->baseTexture.states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
-            ((IWineD3DBaseTextureImpl *) texture)->baseTexture.states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_NONE;
+            ((IWineD3DBaseTextureImpl *) texture)->baseTexture.texture_rgb.states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
+            ((IWineD3DBaseTextureImpl *) texture)->baseTexture.texture_rgb.states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
+            ((IWineD3DBaseTextureImpl *) texture)->baseTexture.texture_rgb.states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_NONE;
             IWineD3DBaseTexture_Release(texture);
         }
     }

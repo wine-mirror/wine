@@ -125,17 +125,17 @@ static void context_apply_attachment_filter_states(IWineD3DSurface *surface, BOO
     /* Update base texture states array */
     if (SUCCEEDED(IWineD3DSurface_GetContainer(surface, &IID_IWineD3DBaseTexture, (void **)&texture_impl)))
     {
-        if (texture_impl->baseTexture.states[WINED3DTEXSTA_MINFILTER] != WINED3DTEXF_POINT
-            || texture_impl->baseTexture.states[WINED3DTEXSTA_MIPFILTER] != WINED3DTEXF_NONE)
+        if (texture_impl->baseTexture.texture_rgb.states[WINED3DTEXSTA_MINFILTER] != WINED3DTEXF_POINT
+            || texture_impl->baseTexture.texture_rgb.states[WINED3DTEXSTA_MIPFILTER] != WINED3DTEXF_NONE)
         {
-            texture_impl->baseTexture.states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
-            texture_impl->baseTexture.states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_NONE;
+            texture_impl->baseTexture.texture_rgb.states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
+            texture_impl->baseTexture.texture_rgb.states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_NONE;
             update_minfilter = TRUE;
         }
 
-        if (texture_impl->baseTexture.states[WINED3DTEXSTA_MAGFILTER] != WINED3DTEXF_POINT)
+        if (texture_impl->baseTexture.texture_rgb.states[WINED3DTEXSTA_MAGFILTER] != WINED3DTEXF_POINT)
         {
-            texture_impl->baseTexture.states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
+            texture_impl->baseTexture.texture_rgb.states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
             update_magfilter = TRUE;
         }
 

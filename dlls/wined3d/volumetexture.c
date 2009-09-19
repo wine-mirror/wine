@@ -53,7 +53,7 @@ static void volumetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINE
 
     /* If the texture is marked dirty or the srgb sampler setting has changed
      * since the last load then reload the volumes. */
-    if (This->baseTexture.dirty)
+    if (This->baseTexture.texture_rgb.dirty)
     {
         for (i = 0; i < This->baseTexture.levels; ++i)
         {
@@ -74,7 +74,7 @@ static void volumetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINE
     }
 
     /* No longer dirty */
-    This->baseTexture.dirty = FALSE;
+    This->baseTexture.texture_rgb.dirty = FALSE;
 }
 
 static void volumetexture_cleanup(IWineD3DVolumeTextureImpl *This)
@@ -312,7 +312,8 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_UnlockBox(IWineD3DVolumeTexture 
 
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_AddDirtyBox(IWineD3DVolumeTexture *iface, CONST WINED3DBOX* pDirtyBox) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-    This->baseTexture.dirty = TRUE;
+    This->baseTexture.texture_rgb.dirty = TRUE;
+    This->baseTexture.texture_srgb.dirty = TRUE;
     TRACE("(%p) : dirtyfication of volume Level (0)\n", This);
     volume_add_dirty_box(This->volumes[0], pDirtyBox);
 

@@ -58,7 +58,7 @@ static void texture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRG
             srgb_mode = This->baseTexture.is_srgb;
             break;
     }
-    dirty = srgb_mode ? &This->baseTexture.srgbDirty : &This->baseTexture.dirty;
+    dirty = srgb_mode ? &This->baseTexture.texture_srgb.dirty : &This->baseTexture.texture_rgb.dirty;
 
     if (!device->isInDraw)
     {
@@ -275,12 +275,16 @@ static HRESULT WINAPI IWineD3DTextureImpl_BindTexture(IWineD3DTexture *iface, BO
     hr = basetexture_bind((IWineD3DBaseTexture *)iface, srgb, &set_gl_texture_desc);
     if (set_gl_texture_desc && SUCCEEDED(hr)) {
         UINT i;
+        struct gl_texture *gl_tex;
+
+        if(This->baseTexture.is_srgb) {
+            gl_tex = &This->baseTexture.texture_srgb;
+        } else {
+            gl_tex = &This->baseTexture.texture_rgb;
+        }
+
         for (i = 0; i < This->baseTexture.levels; ++i) {
-            if(This->baseTexture.is_srgb) {
-                surface_set_texture_name(This->surfaces[i], This->baseTexture.srgbTextureName, TRUE);
-            } else {
-                surface_set_texture_name(This->surfaces[i], This->baseTexture.textureName, FALSE);
-            }
+            surface_set_texture_name(This->surfaces[i], gl_tex->name, This->baseTexture.is_srgb);
         }
         /* Conditinal non power of two textures use a different clamping default. If we're using the GL_WINE_normalized_texrect
          * partial driver emulation, we're dealing with a GL_TEXTURE_2D texture which has the address mode set to repeat - something
@@ -298,11 +302,11 @@ static HRESULT WINAPI IWineD3DTextureImpl_BindTexture(IWineD3DTexture *iface, BO
             glTexParameteri(IWineD3DTexture_GetTextureDimensions(iface), GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             checkGLcall("glTexParameteri(dimension, GL_TEXTURE_MAG_FILTER, GL_NEAREST)");
             LEAVE_GL();
-            This->baseTexture.states[WINED3DTEXSTA_ADDRESSU]      = WINED3DTADDRESS_CLAMP;
-            This->baseTexture.states[WINED3DTEXSTA_ADDRESSV]      = WINED3DTADDRESS_CLAMP;
-            This->baseTexture.states[WINED3DTEXSTA_MAGFILTER]     = WINED3DTEXF_POINT;
-            This->baseTexture.states[WINED3DTEXSTA_MINFILTER]     = WINED3DTEXF_POINT;
-            This->baseTexture.states[WINED3DTEXSTA_MIPFILTER]     = WINED3DTEXF_NONE;
+            gl_tex->states[WINED3DTEXSTA_ADDRESSU]      = WINED3DTADDRESS_CLAMP;
+            gl_tex->states[WINED3DTEXSTA_ADDRESSV]      = WINED3DTADDRESS_CLAMP;
+            gl_tex->states[WINED3DTEXSTA_MAGFILTER]     = WINED3DTEXF_POINT;
+            gl_tex->states[WINED3DTEXSTA_MINFILTER]     = WINED3DTEXF_POINT;
+            gl_tex->states[WINED3DTEXSTA_MIPFILTER]     = WINED3DTEXF_NONE;
         }
     }
 
@@ -388,8 +392,8 @@ static HRESULT WINAPI IWineD3DTextureImpl_UnlockRect(IWineD3DTexture *iface, UIN
 
 static HRESULT WINAPI IWineD3DTextureImpl_AddDirtyRect(IWineD3DTexture *iface, CONST RECT* pDirtyRect) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    This->baseTexture.dirty = TRUE;
-    This->baseTexture.srgbDirty = TRUE;
+    This->baseTexture.texture_rgb.dirty = TRUE;
+    This->baseTexture.texture_srgb.dirty = TRUE;
     TRACE("(%p) : dirtyfication of surface Level (0)\n", This);
     surface_add_dirty_rect(This->surfaces[0], pDirtyRect);
 

@@ -56,7 +56,7 @@ static void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3
             srgb_mode = This->baseTexture.is_srgb;
             break;
     }
-    dirty = srgb_mode ? &This->baseTexture.srgbDirty : &This->baseTexture.dirty;
+    dirty = srgb_mode ? &This->baseTexture.texture_srgb.dirty : &This->baseTexture.texture_rgb.dirty;
 
     TRACE("(%p) : About to load texture: dirtified(%u).\n", This, *dirty);
 
@@ -293,9 +293,9 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_BindTexture(IWineD3DCubeTexture *i
         for (i = 0; i < This->baseTexture.levels; ++i) {
             for (j = WINED3DCUBEMAP_FACE_POSITIVE_X; j <= WINED3DCUBEMAP_FACE_NEGATIVE_Z; ++j) {
                 if(This->baseTexture.is_srgb) {
-                    surface_set_texture_name(This->surfaces[j][i], This->baseTexture.srgbTextureName, TRUE);
+                    surface_set_texture_name(This->surfaces[j][i], This->baseTexture.texture_srgb.name, TRUE);
                 } else {
-                    surface_set_texture_name(This->surfaces[j][i], This->baseTexture.textureName, FALSE);
+                    surface_set_texture_name(This->surfaces[j][i], This->baseTexture.texture_rgb.name, FALSE);
                 }
             }
         }
@@ -387,8 +387,8 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_UnlockRect(IWineD3DCubeTexture *if
 static HRESULT  WINAPI IWineD3DCubeTextureImpl_AddDirtyRect(IWineD3DCubeTexture *iface, WINED3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect) {
     HRESULT hr = WINED3DERR_INVALIDCALL;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
-    This->baseTexture.dirty = TRUE;
-    This->baseTexture.srgbDirty = TRUE;
+    This->baseTexture.texture_rgb.dirty = TRUE;
+    This->baseTexture.texture_srgb.dirty = TRUE;
     TRACE("(%p) : dirtyfication of faceType(%d) Level (0)\n", This, FaceType);
     if (FaceType <= WINED3DCUBEMAP_FACE_NEGATIVE_Z) {
         surface_add_dirty_rect(This->surfaces[FaceType][0], pDirtyRect);

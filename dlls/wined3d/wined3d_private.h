@@ -1756,16 +1756,20 @@ enum WINED3DSRGB
     SRGB_BOTH                               = 3,    /* Loads both textures */
 };
 
+struct gl_texture
+{
+    DWORD                   states[MAX_WINETEXTURESTATES];
+    BOOL                    dirty;
+    GLuint                  name;
+};
+
 /*****************************************************************************
  * IWineD3DBaseTexture implementation structure (extends IWineD3DResourceImpl)
  */
 typedef struct IWineD3DBaseTextureClass
 {
-    DWORD                   states[MAX_WINETEXTURESTATES];
-    DWORD                   srgbstates[MAX_WINETEXTURESTATES];
+    struct gl_texture       texture_rgb, texture_srgb;
     UINT                    levels;
-    BOOL                    dirty, srgbDirty;
-    UINT                    textureName, srgbTextureName;
     float                   pow2Matrix[16];
     UINT                    LOD;
     WINED3DTEXTUREFILTERTYPE filterType;
