@@ -617,7 +617,7 @@ static ULONG WINAPI Source_Release(ITfSource *iface)
 /*****************************************************
  * ITfSource functions
  *****************************************************/
-static WINAPI HRESULT ThreadMgrSource_AdviseSink(ITfSource *iface,
+static HRESULT WINAPI ThreadMgrSource_AdviseSink(ITfSource *iface,
         REFIID riid, IUnknown *punk, DWORD *pdwCookie)
 {
     ThreadMgrSink *tms;
@@ -652,7 +652,7 @@ static WINAPI HRESULT ThreadMgrSource_AdviseSink(ITfSource *iface,
     return S_OK;
 }
 
-static WINAPI HRESULT ThreadMgrSource_UnadviseSink(ITfSource *iface, DWORD pdwCookie)
+static HRESULT WINAPI ThreadMgrSource_UnadviseSink(ITfSource *iface, DWORD pdwCookie)
 {
     ThreadMgrSink *sink;
     ThreadMgr *This = impl_from_ITfSourceVtbl(iface);
@@ -1118,7 +1118,7 @@ static ULONG WINAPI ThreadMgrEventSink_Release(ITfThreadMgrEventSink *iface)
 }
 
 
-static WINAPI HRESULT ThreadMgrEventSink_OnInitDocumentMgr(
+static HRESULT WINAPI ThreadMgrEventSink_OnInitDocumentMgr(
         ITfThreadMgrEventSink *iface,ITfDocumentMgr *pdim)
 {
     struct list *cursor;
@@ -1135,7 +1135,7 @@ static WINAPI HRESULT ThreadMgrEventSink_OnInitDocumentMgr(
     return S_OK;
 }
 
-static WINAPI HRESULT ThreadMgrEventSink_OnUninitDocumentMgr(
+static HRESULT WINAPI ThreadMgrEventSink_OnUninitDocumentMgr(
         ITfThreadMgrEventSink *iface, ITfDocumentMgr *pdim)
 {
     struct list *cursor;
@@ -1152,7 +1152,7 @@ static WINAPI HRESULT ThreadMgrEventSink_OnUninitDocumentMgr(
     return S_OK;
 }
 
-static WINAPI HRESULT ThreadMgrEventSink_OnSetFocus(
+static HRESULT WINAPI ThreadMgrEventSink_OnSetFocus(
         ITfThreadMgrEventSink *iface, ITfDocumentMgr *pdimFocus,
         ITfDocumentMgr *pdimPrevFocus)
 {
@@ -1170,7 +1170,7 @@ static WINAPI HRESULT ThreadMgrEventSink_OnSetFocus(
     return S_OK;
 }
 
-static WINAPI HRESULT ThreadMgrEventSink_OnPushContext(
+static HRESULT WINAPI ThreadMgrEventSink_OnPushContext(
         ITfThreadMgrEventSink *iface, ITfContext *pic)
 {
     struct list *cursor;
@@ -1187,7 +1187,7 @@ static WINAPI HRESULT ThreadMgrEventSink_OnPushContext(
     return S_OK;
 }
 
-static WINAPI HRESULT ThreadMgrEventSink_OnPopContext(
+static HRESULT WINAPI ThreadMgrEventSink_OnPopContext(
         ITfThreadMgrEventSink *iface, ITfContext *pic)
 {
     struct list *cursor;
@@ -1238,7 +1238,7 @@ static ULONG WINAPI ThreadMgrSourceSingle_Release(ITfSourceSingle *iface)
     return ThreadMgr_Release((ITfThreadMgr *)This);
 }
 
-static WINAPI HRESULT ThreadMgrSourceSingle_AdviseSingleSink( ITfSourceSingle *iface,
+static HRESULT WINAPI ThreadMgrSourceSingle_AdviseSingleSink( ITfSourceSingle *iface,
     TfClientId tid, REFIID riid, IUnknown *punk)
 {
     ThreadMgr *This = impl_from_ITfSourceSingleVtbl(iface);
@@ -1246,7 +1246,7 @@ static WINAPI HRESULT ThreadMgrSourceSingle_AdviseSingleSink( ITfSourceSingle *i
     return E_NOTIMPL;
 }
 
-static WINAPI HRESULT ThreadMgrSourceSingle_UnadviseSingleSink( ITfSourceSingle *iface,
+static HRESULT WINAPI ThreadMgrSourceSingle_UnadviseSingleSink( ITfSourceSingle *iface,
     TfClientId tid, REFIID riid)
 {
     ThreadMgr *This = impl_from_ITfSourceSingleVtbl(iface);
