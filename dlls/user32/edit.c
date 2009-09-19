@@ -5011,6 +5011,9 @@ static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
 
 	case EM_SETREADONLY16:
 	case EM_SETREADONLY:
+	{
+		DWORD old_style = es->style;
+
 		if (wParam) {
                     SetWindowLongW( hwnd, GWL_STYLE,
                                     GetWindowLongW( hwnd, GWL_STYLE ) | ES_READONLY );
@@ -5020,8 +5023,13 @@ static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
                                     GetWindowLongW( hwnd, GWL_STYLE ) & ~ES_READONLY );
                     es->style &= ~ES_READONLY;
 		}
-                result = 1;
+
+		if (old_style ^ es->style)
+		    InvalidateRect(es->hwndSelf, NULL, TRUE);
+
+		result = 1;
 		break;
+	}
 
 	case EM_SETWORDBREAKPROC16:
 		EDIT_EM_SetWordBreakProc16(es, (EDITWORDBREAKPROC16)lParam);
