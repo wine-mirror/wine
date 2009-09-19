@@ -346,6 +346,7 @@ static void test_makecurrent(HDC winhdc)
 {
     BOOL ret;
     HGLRC hglrc;
+    DWORD error;
 
     hglrc = wglCreateContext(winhdc);
     ok( hglrc != 0, "wglCreateContext failed\n" );
@@ -354,6 +355,41 @@ static void test_makecurrent(HDC winhdc)
     ok( ret, "wglMakeCurrent failed\n" );
 
     ok( wglGetCurrentContext() == hglrc, "wrong context\n" );
+
+    /* set the same context again */
+    ret = wglMakeCurrent( winhdc, hglrc );
+    ok( ret, "wglMakeCurrent failed\n" );
+
+    /* check wglMakeCurrent(x, y) after another call to wglMakeCurrent(x, y) */
+    ret = wglMakeCurrent( winhdc, NULL );
+    ok( ret, "wglMakeCurrent failed\n" );
+
+    ret = wglMakeCurrent( winhdc, NULL );
+    ok( ret, "wglMakeCurrent failed\n" );
+
+    SetLastError( 0xdeadbeef );
+    ret = wglMakeCurrent( NULL, NULL );
+    ok( !ret, "wglMakeCurrent succeeded\n" );
+    error = GetLastError();
+    ok( error == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got error=%x\n", error);
+
+    ret = wglMakeCurrent( winhdc, NULL );
+    ok( ret, "wglMakeCurrent failed\n" );
+
+    ret = wglMakeCurrent( winhdc, hglrc );
+    ok( ret, "wglMakeCurrent failed\n" );
+
+    ret = wglMakeCurrent( NULL, NULL );
+    ok( ret, "wglMakeCurrent failed\n" );
+
+    SetLastError( 0xdeadbeef );
+    ret = wglMakeCurrent( NULL, NULL );
+    ok( !ret, "wglMakeCurrent succeeded\n" );
+    error = GetLastError();
+    ok( error == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got error=%x\n", error);
+
+    ret = wglMakeCurrent( winhdc, hglrc );
+    ok( ret, "wglMakeCurrent failed\n" );
 }
 
 static void test_colorbits(HDC hdc)
