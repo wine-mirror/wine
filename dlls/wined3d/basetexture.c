@@ -451,9 +451,9 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
         }
     }
 
-    if ((gl_tex->states[WINED3DSAMP_MAGFILTER] != WINED3DTEXF_ANISOTROPIC
-         && gl_tex->states[WINED3DSAMP_MINFILTER] != WINED3DTEXF_ANISOTROPIC
-         && gl_tex->states[WINED3DSAMP_MIPFILTER] != WINED3DTEXF_ANISOTROPIC)
+    if ((gl_tex->states[WINED3DTEXSTA_MAGFILTER] != WINED3DTEXF_ANISOTROPIC
+         && gl_tex->states[WINED3DTEXSTA_MINFILTER] != WINED3DTEXF_ANISOTROPIC
+         && gl_tex->states[WINED3DTEXSTA_MIPFILTER] != WINED3DTEXF_ANISOTROPIC)
             || cond_np2)
     {
         aniso = 1;
