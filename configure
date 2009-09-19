@@ -2724,7 +2724,7 @@ fi
 
 # Check whether --with-xxf86vm was given.
 if test "${with_xxf86vm+set}" = set; then :
-  withval=$with_xxf86vm; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_xf86vmode_h=no; fi
+  withval=$with_xxf86vm; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_xf86vmode_h=no; ac_cv_header_X11_extensions_xf86vmproto_h=no; fi
 fi
 
 
@@ -8024,7 +8024,8 @@ fi
                       X11/extensions/Xinerama.h \
                       X11/extensions/Xrandr.h \
                       X11/extensions/Xrender.h \
-                      X11/extensions/xf86vmode.h
+                      X11/extensions/xf86vmode.h \
+                      X11/extensions/xf86vmproto.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#ifdef HAVE_X11_XLIB_H
@@ -8323,7 +8324,7 @@ This is an error since --with-xshape was requested." "$LINENO" 5 ;;
 esac
 fi
 
-                if test "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes"
+                if test "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes" -o "$ac_cv_header_X11_extensions_xf86vmproto_h" = "yes"
         then
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lXxf86vm" >&5
 $as_echo_n "checking for -lXxf86vm... " >&6; }

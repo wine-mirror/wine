@@ -1029,6 +1029,9 @@
 /* Define to 1 if you have the <X11/extensions/xf86vmode.h> header file. */
 #undef HAVE_X11_EXTENSIONS_XF86VMODE_H
 
+/* Define to 1 if you have the <X11/extensions/xf86vmproto.h> header file. */
+#undef HAVE_X11_EXTENSIONS_XF86VMPROTO_H
+
 /* Define to 1 if you have the <X11/extensions/Xinerama.h> header file. */
 #undef HAVE_X11_EXTENSIONS_XINERAMA_H
 

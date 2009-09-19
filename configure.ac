@@ -84,7 +84,7 @@ AC_ARG_WITH(xshm,      AS_HELP_STRING([--without-xshm],[do not use XShm (shared 
             [if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_XShm_h=no; fi])
 AC_ARG_WITH(xslt,      AS_HELP_STRING([--without-xslt],[do not use XSLT]))
 AC_ARG_WITH(xxf86vm,   AS_HELP_STRING([--without-xxf86vm],[do not use XFree video mode extension]),
-            [if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_xf86vmode_h=no; fi])
+            [if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_xf86vmode_h=no; ac_cv_header_X11_extensions_xf86vmproto_h=no; fi])
 
 AC_ARG_WITH(wine-tools,AS_HELP_STRING([--with-wine-tools=DIR],[use Wine tools from directory DIR]))
 AC_ARG_WITH(wine64,    AS_HELP_STRING([--with-wine64=DIR],[use the 64-bit Wine in DIR for a Wow64 build]))
@@ -810,7 +810,8 @@ then
                       X11/extensions/Xinerama.h \
                       X11/extensions/Xrandr.h \
                       X11/extensions/Xrender.h \
-                      X11/extensions/xf86vmode.h],,,
+                      X11/extensions/xf86vmode.h \
+                      X11/extensions/xf86vmproto.h],,,
 [#ifdef HAVE_X11_XLIB_H
 # include <X11/Xlib.h>
 #endif
@@ -863,7 +864,7 @@ then
                          [XShape ${notice_platform}development files not found, XShape won't be supported.])
 
         dnl *** Check for XFree86 VMODE extension
-        if test "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes"
+        if test "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes" -o "$ac_cv_header_X11_extensions_xf86vmproto_h" = "yes"
         then
             WINE_CHECK_SONAME(Xxf86vm,XF86VidModeQueryExtension,,,[$X_LIBS $XLIB $X_EXTRA_LIBS])
         fi
