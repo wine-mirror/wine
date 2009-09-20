@@ -413,8 +413,7 @@ GpStatus WINGDIPAPI GdipCloneImage(GpImage *image, GpImage **cloneImage)
             GdipDisposeImage(*cloneImage);
             *cloneImage = NULL;
         }
-
-        memcpy(&(*cloneImage)->format, &image->format, sizeof(GUID));
+        else memcpy(&(*cloneImage)->format, &image->format, sizeof(GUID));
 
         return stat;
     }
