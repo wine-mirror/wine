@@ -432,7 +432,8 @@ static HRESULT Function_apply(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
 
         if(V_VT(get_arg(dp,1)) == VT_DISPATCH) {
             arg_array = iface_to_jsdisp((IUnknown*)V_DISPATCH(get_arg(dp,1)));
-            if(!is_class(arg_array, JSCLASS_ARRAY) && !is_class(arg_array, JSCLASS_ARGUMENTS)) {
+            if(arg_array && (
+                !is_class(arg_array, JSCLASS_ARRAY) && !is_class(arg_array, JSCLASS_ARGUMENTS) )) {
                 jsdisp_release(arg_array);
                 arg_array = NULL;
             }
