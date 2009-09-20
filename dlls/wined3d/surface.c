@@ -3581,7 +3581,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
          * FBO support, so it doesn't really make sense to try and make it work with different offscreen rendering
          * backends.
          */
-        if (GL_SUPPORT(EXT_FRAMEBUFFER_BLIT) && surface_can_stretch_rect(Src, This))
+        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && GL_SUPPORT(EXT_FRAMEBUFFER_BLIT)
+                && surface_can_stretch_rect(Src, This))
         {
             stretch_rect_fbo((IWineD3DDevice *)myDevice, SrcSurface, &srect,
                     (IWineD3DSurface *)This, &rect, Filter, upsideDown);
@@ -3644,8 +3645,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             Src->palette = This->palette;
         }
 
-        if (GL_SUPPORT(EXT_FRAMEBUFFER_BLIT) && surface_can_stretch_rect(Src, This)
-                && !(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE)))
+        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && GL_SUPPORT(EXT_FRAMEBUFFER_BLIT)
+                && !(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE))
+                && surface_can_stretch_rect(Src, This))
         {
             TRACE("Using stretch_rect_fbo\n");
             /* The source is always a texture, but never the currently active render target, and the texture
