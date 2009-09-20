@@ -248,7 +248,7 @@ static ULONG WINAPI IDirect3DVertexDeclaration9Impl_Release(LPDIRECT3DVERTEXDECL
         IDirect3DDevice9Ex *parentDevice = This->parentDevice;
 
         if(!This->convFVF) {
-            IDirect3DVertexDeclaration9Impl_Release(iface);
+            IDirect3DVertexDeclaration9Impl_Destroy(iface);
         }
         IDirect3DDevice9Ex_Release(parentDevice);
     }
