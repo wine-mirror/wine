@@ -100,13 +100,15 @@ static const builtin_info_t Arguments_info = {
     NULL
 };
 
-static HRESULT create_arguments(script_ctx_t *ctx, LCID lcid, DISPPARAMS *dp,
+static HRESULT create_arguments(script_ctx_t *ctx, IDispatch *calee, LCID lcid, DISPPARAMS *dp,
         jsexcept_t *ei, IServiceProvider *caller, DispatchEx **ret)
 {
     DispatchEx *args;
     VARIANT var;
     DWORD i;
     HRESULT hres;
+
+    static const WCHAR caleeW[] = {'c','a','l','l','e','e',0};
 
     args = heap_alloc_zero(sizeof(DispatchEx));
     if(!args)
@@ -128,6 +130,12 @@ static HRESULT create_arguments(script_ctx_t *ctx, LCID lcid, DISPPARAMS *dp,
         V_VT(&var) = VT_I4;
         V_I4(&var) = arg_cnt(dp);
         hres = jsdisp_propput_name(args, lengthW, lcid, &var, ei, caller);
+
+        if(SUCCEEDED(hres)) {
+            V_VT(&var) = VT_DISPATCH;
+            V_DISPATCH(&var) = calee;
+            hres = jsdisp_propput_name(args, caleeW, lcid, &var, ei, caller);
+        }
     }
 
     if(FAILED(hres)) {
@@ -151,7 +159,8 @@ static HRESULT create_var_disp(FunctionInstance *function, LCID lcid, DISPPARAMS
     if(FAILED(hres))
         return hres;
 
-    hres = create_arguments(function->dispex.ctx, lcid, dp, ei, caller, &arg_disp);
+    hres = create_arguments(function->dispex.ctx, (IDispatch*)_IDispatchEx_(&function->dispex),
+            lcid, dp, ei, caller, &arg_disp);
     if(SUCCEEDED(hres)) {
         VARIANT var;
 

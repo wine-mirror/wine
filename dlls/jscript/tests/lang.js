@@ -68,6 +68,7 @@ function testFunc1(x, y) {
     ok(arguments.length === 2, "arguments.length is not 2");
     ok(arguments["0"] === true, "arguments[0] is not true");
     ok(arguments["1"] === "test", "arguments[1] is not \"test\"");
+    ok(arguments.callee === testFunc1, "arguments.calee !== testFunc1");
 
     return true;
 }
@@ -116,6 +117,7 @@ obj1.func = function () {
     ok(this.test === true, "this.test is not true");
     ok(arguments.length === 1, "arguments.length is not 1");
     ok(arguments["0"] === true, "arguments[0] is not true");
+    ok(typeof(arguments.callee) === "function", "typeof(arguments.calee) = " + typeof(arguments.calee));
 
     return "test";
 };
@@ -128,6 +130,7 @@ function testConstr1() {
     ok(this !== undefined, "this is undefined");
     ok(arguments.length === 1, "arguments.length is not 1");
     ok(arguments["0"] === true, "arguments[0] is not 1");
+    ok(arguments.callee === testConstr1, "arguments.calee !== testConstr1");
 
     return false;
 }
