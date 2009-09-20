@@ -450,13 +450,60 @@ static HRESULT Array_reverse(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.4.4.9 */
 static HRESULT Array_shift(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    DWORD length = 0, i;
+    VARIANT v, ret;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(is_class(dispex, JSCLASS_ARRAY)) {
+        length = ((ArrayInstance*)dispex)->length;
+    }else {
+        hres = get_jsdisp_length(dispex, lcid, ei, &length);
+        if(SUCCEEDED(hres) && !length)
+            hres = set_jsdisp_length(dispex, lcid, ei, 0);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(!length) {
+        if(retv)
+            V_VT(retv) = VT_EMPTY;
+        return S_OK;
+    }
+
+    hres = jsdisp_propget_idx(dispex, 0, lcid, &ret, ei, caller);
+    if(hres == DISP_E_UNKNOWNNAME) {
+        V_VT(&ret) = VT_EMPTY;
+        hres = S_OK;
+    }
+
+    for(i=1; SUCCEEDED(hres) && i<length; i++) {
+        hres = jsdisp_propget_idx(dispex, i, lcid, &v, ei, caller);
+        if(hres == DISP_E_UNKNOWNNAME)
+            hres = jsdisp_delete_idx(dispex, i-1);
+        else if(SUCCEEDED(hres))
+            hres = jsdisp_propput_idx(dispex, i-1, lcid, &v, ei, caller);
+    }
+
+    if(SUCCEEDED(hres)) {
+        hres = jsdisp_delete_idx(dispex, length-1);
+        if(SUCCEEDED(hres))
+            hres = set_jsdisp_length(dispex, lcid, ei, length-1);
+    }
+
+    if(SUCCEEDED(hres) && retv)
+        *retv = ret;
+    else
+        VariantClear(&ret);
+    return hres;
 }
 
+/* ECMA-262 3rd Edition    15.4.4.10 */
 static HRESULT Array_slice(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {

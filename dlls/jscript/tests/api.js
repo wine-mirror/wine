@@ -646,6 +646,35 @@ ok(tmp === undefined, "unshift returned " +tmp);
 ok(arr.length === 3, "arr.length = " + arr.length);
 ok(arr[0] === 0 && arr[1] === 1 && arr[2] === 2, "unexpected array");
 
+arr = [1,2,,4];
+tmp = arr.shift();
+ok(tmp === 1, "[1,2,,4].shift() = " + tmp);
+ok(arr.toString() === "2,,4", "arr = " + arr.toString());
+
+arr = [];
+tmp = arr.shift();
+ok(tmp === undefined, "[].shift() = " + tmp);
+ok(arr.toString() === "", "arr = " + arr.toString());
+
+arr = [1,2,,4];
+tmp = arr.shift(2);
+ok(tmp === 1, "[1,2,,4].shift(2) = " + tmp);
+ok(arr.toString() === "2,,4", "arr = " + arr.toString());
+
+arr = [1,];
+tmp = arr.shift();
+ok(tmp === 1, "[1,].shift() = " + tmp);
+ok(arr.toString() === "", "arr = " + arr.toString());
+
+obj = new Object();
+obj[0] = "test";
+obj[2] = 3;
+obj.length = 3;
+tmp = Array.prototype.shift.call(obj);
+ok(tmp === "test", "obj.shift() = " + tmp);
+ok(obj.length == 2, "obj.length = " + obj.length);
+ok(obj[1] === 3, "obj[1] = " + obj[1]);
+
 var num = new Number(6);
 arr = [0,1,2];
 tmp = arr.concat(3, [4,5], num);
