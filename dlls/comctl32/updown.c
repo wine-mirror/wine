@@ -1037,9 +1037,13 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	case UDM_SETBASE:
 	    TRACE("UpDown Ctrl new base(%ld), hwnd=%p\n", wParam, hwnd);
 	    if (wParam==10 || wParam==16) {
-		WPARAM temp = infoPtr->Base;
+		WPARAM old_base = infoPtr->Base;
 		infoPtr->Base = wParam;
-		return temp;
+
+		if (old_base != infoPtr->Base)
+		    UPDOWN_SetBuddyInt(infoPtr);
+
+		return old_base;
 	    }
 	    break;
 

@@ -525,7 +525,7 @@ static void test_updown_base(void)
     GetWindowTextA(edit, text, sizeof(text)/sizeof(CHAR));
     /* FIXME: currently hex output isn't properly formatted, but for this
        test only change from initial text matters */
-    todo_wine ok(lstrcmpA(text, "10") != 0, "Expected '0x000A', got '%s'\n", text);
+    ok(lstrcmpA(text, "10") != 0, "Expected '0x000A', got '%s'\n", text);
 
     DestroyWindow(updown);
 }
