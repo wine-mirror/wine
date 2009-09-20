@@ -408,7 +408,7 @@ static HRESULT Function_apply(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
     FunctionInstance *function;
     DISPPARAMS args = {NULL,NULL,0,0};
     DWORD argc, i;
-    IDispatch *this_obj;
+    IDispatch *this_obj = NULL;
     HRESULT hres = S_OK;
 
     TRACE("\n");
