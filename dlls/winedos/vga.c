@@ -1158,7 +1158,7 @@ void VGA_ShowMouse( BOOL show )
 void VGA_UpdatePalette(void)
 {
   /* Figure out which palette is used now */
-  if(vga_fb_bright == TRUE)
+  if(vga_fb_bright)
   {
     if(vga_fb_palette_index == 0)
     {
@@ -1210,7 +1210,7 @@ static void VGA_SetEnabled(BOOL enabled)
   TRACE("%i\n", enabled);
 
   /* Check if going from enabled to disabled */
-  if(vga_fb_enabled == TRUE && enabled == FALSE)
+  if(vga_fb_enabled && !enabled)
   {
     /* Clear frame buffer */
     memset(vga_fb_window_data, 0x00, vga_fb_window_size);
