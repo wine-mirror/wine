@@ -472,6 +472,7 @@ static void test_updown_base(void)
 {
     HWND updown;
     int r;
+    CHAR text[10];
 
     updown = create_updown_control(0);
 
@@ -506,6 +507,25 @@ static void test_updown_base(void)
     expect(10,r);
 
     ok_sequence(sequences, UPDOWN_SEQ_INDEX, test_updown_base_seq, "test updown base", FALSE);
+
+    DestroyWindow(updown);
+
+    /* switch base with buddy attached */
+    updown = create_updown_control(UDS_SETBUDDYINT);
+
+    r = SendMessage(updown, UDM_SETPOS32, 0, 10);
+    expect(50, r);
+
+    GetWindowTextA(edit, text, sizeof(text)/sizeof(CHAR));
+    ok(lstrcmpA(text, "10") == 0, "Expected '10', got '%s'\n", text);
+
+    r = SendMessage(updown, UDM_SETBASE, 16, 0);
+    expect(10, r);
+
+    GetWindowTextA(edit, text, sizeof(text)/sizeof(CHAR));
+    /* FIXME: currently hex output isn't properly formatted, but for this
+       test only change from initial text matters */
+    todo_wine ok(lstrcmpA(text, "10") != 0, "Expected '0x000A', got '%s'\n", text);
 
     DestroyWindow(updown);
 }
@@ -568,6 +588,10 @@ static void test_UDS_SETBUDDYINT(void)
     DWORD style, ret;
     CHAR text[10];
     BOOL b;
+
+    /* cleanup buddy */
+    text[0] = '\0';
+    SetWindowTextA(edit, text);
 
     /* creating without UDS_SETBUDDYINT */
     updown = create_updown_control(0);
