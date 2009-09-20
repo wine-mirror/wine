@@ -412,7 +412,7 @@ static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
 
     IUnknown_QueryInterface(iface1, &IID_IUnknown, (void**)&unk1);
     IUnknown_Release(unk1);
-    IUnknown_QueryInterface(iface1, &IID_IUnknown, (void**)&unk2);
+    IUnknown_QueryInterface(iface2, &IID_IUnknown, (void**)&unk2);
     IUnknown_Release(unk2);
 
     return unk1 == unk2;
@@ -584,6 +584,17 @@ static IHTMLDOMNode *_get_node_iface(unsigned line, IUnknown *unk)
     return node;
 }
 
+#define get_node2_iface(u) _get_node2_iface(__LINE__,u)
+static IHTMLDOMNode2 *_get_node2_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLDOMNode2 *node;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDOMNode2, (void**)&node);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLDOMNode2: %08x\n", hres);
+    return node;
+}
+
 #define get_img_iface(u) _get_img_iface(__LINE__,u)
 static IHTMLImgElement *_get_img_iface(unsigned line, IUnknown *unk)
 {
@@ -608,6 +619,26 @@ static void _test_node_name(unsigned line, IUnknown *unk, const char *exname)
     ok_(__FILE__, line) (!strcmp_wa(name, exname), "got name: %s, expected %s\n", wine_dbgstr_w(name), exname);
 
     SysFreeString(name);
+}
+
+#define get_owner_doc(u) _get_owner_doc(__LINE__,u)
+static IHTMLDocument2 *_get_owner_doc(unsigned line, IUnknown *unk)
+{
+    IHTMLDOMNode2 *node = _get_node2_iface(line, unk);
+    IDispatch *disp = (void*)0xdeadbeef;
+    IHTMLDocument2 *doc;
+    HRESULT hres;
+
+    hres = IHTMLDOMNode2_get_ownerDocument(node, &disp);
+    IHTMLDOMNode2_Release(node);
+    ok_(__FILE__,line)(hres == S_OK, "get_ownerDocument failed: %08x\n", hres);
+    ok_(__FILE__,line)(disp != NULL, "disp = NULL\n");
+
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLDocument2, (void**)&doc);
+    IDispatch_Release(disp);
+    ok_(__FILE__,line)(hres == S_OK, "Could not get IHTMLDocument2 iface: %08x\n", hres);
+
+    return doc;
 }
 
 #define test_elem_tag(u,n) _test_elem_tag(__LINE__,u,n)
@@ -730,8 +761,26 @@ static void _test_elem_offset(unsigned line, IUnknown *unk)
     IHTMLElement_Release(elem);
 }
 
+#define get_doc_node(d) _get_doc_node(__LINE__,d)
+static IHTMLDocument2 *_get_doc_node(unsigned line, IHTMLDocument2 *doc)
+{
+    IHTMLWindow2 *window;
+    IHTMLDocument2 *ret;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok_(__FILE__,line)(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
+
+    hres = IHTMLWindow2_get_document(window, &ret);
+    ok_(__FILE__,line)(hres == S_OK, "get_document failed: %08x\n", hres);
+    ok_(__FILE__,line)(ret != NULL, "document = NULL\n");
+
+    return ret;
+}
+
 static void test_doc_elem(IHTMLDocument2 *doc)
 {
+    IHTMLDocument2 *doc_node, *owner_doc;
     IHTMLElement *elem;
     IHTMLDocument3 *doc3;
     HRESULT hres;
@@ -745,6 +794,12 @@ static void test_doc_elem(IHTMLDocument2 *doc)
 
     test_node_name((IUnknown*)elem, "HTML");
     test_elem_tag((IUnknown*)elem, "HTML");
+
+    doc_node = get_doc_node(doc);
+    owner_doc = get_owner_doc((IUnknown*)elem);
+    ok(iface_cmp((IUnknown *)doc_node, (IUnknown *)owner_doc), "doc_node != owner_doc\n");
+    IHTMLDocument2_Release(doc_node);
+    IHTMLDocument2_Release(owner_doc);
 
     IHTMLElement_Release(elem);
 }
@@ -4659,6 +4714,7 @@ static void test_elems(IHTMLDocument2 *doc)
     elem = get_elem_by_id(doc, "s", TRUE);
     if(elem) {
         IHTMLSelectElement *select;
+        IHTMLDocument2 *doc_node;
 
         hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLSelectElement, (void**)&select);
         ok(hres == S_OK, "Could not get IHTMLSelectElement interface: %08x\n", hres);
@@ -4684,7 +4740,10 @@ static void test_elems(IHTMLDocument2 *doc)
 
         hres = IHTMLElement_get_document(elem, &disp);
         ok(hres == S_OK, "get_document failed: %08x\n", hres);
-        ok(iface_cmp((IUnknown*)disp, (IUnknown*)doc), "disp != doc\n");
+
+        doc_node = get_doc_node(doc);
+        ok(iface_cmp((IUnknown*)disp, (IUnknown*)doc_node), "disp != doc\n");
+        IHTMLDocument2_Release(doc_node);
 
         IHTMLElement_Release(elem);
     }
