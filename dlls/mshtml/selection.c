@@ -182,7 +182,7 @@ static HRESULT WINAPI HTMLSelectionObject_createRange(IHTMLSelectionObject *ifac
 
     hres = HTMLTxtRange_Create(This->doc, nsrange, &range_obj);
 
-    nsIDOMRange_Release(nsrange);
+    if (nsrange) nsIDOMRange_Release(nsrange);
     *range = (IDispatch*)range_obj;
     return hres;
 }
