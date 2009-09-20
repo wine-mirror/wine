@@ -808,8 +808,12 @@ static HRESULT WINAPI HTMLDOMNode2_Invoke(IHTMLDOMNode2 *iface, DISPID dispIdMem
 static HRESULT WINAPI HTMLDOMNode2_get_ownerDocument(IHTMLDOMNode2 *iface, IDispatch **p)
 {
     HTMLDOMNode *This = HTMLDOMNODE2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = (IDispatch*)HTMLDOC(&This->doc->basedoc);
+    IDispatch_AddRef(*p);
+    return S_OK;
 }
 
 #undef HTMLDOMNODE2_THIS
