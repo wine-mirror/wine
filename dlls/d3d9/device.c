@@ -992,6 +992,12 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetRenderTarget(LPDIRECT3DDEVICE9EX
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
+    if (RenderTargetIndex >= D3D9_MAX_SIMULTANEOUS_RENDERTARGETS)
+    {
+        WARN("Invalid index %u specified.\n", RenderTargetIndex);
+        return D3DERR_INVALIDCALL;
+    }
+
     wined3d_mutex_lock();
     hr = IWineD3DDevice_SetRenderTarget(This->WineD3DDevice, RenderTargetIndex, pSurface ? pSurface->wineD3DSurface : NULL);
     wined3d_mutex_unlock();
@@ -1007,6 +1013,12 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetRenderTarget(LPDIRECT3DDEVICE9EX
     TRACE("(%p) Relay\n" , This);
 
     if (ppRenderTarget == NULL) {
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (RenderTargetIndex >= D3D9_MAX_SIMULTANEOUS_RENDERTARGETS)
+    {
+        WARN("Invalid index %u specified.\n", RenderTargetIndex);
         return D3DERR_INVALIDCALL;
     }
 

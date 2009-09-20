@@ -529,6 +529,7 @@ typedef struct IDirect3DVertexShader9Impl {
 } IDirect3DVertexShader9Impl;
 
 #define D3D9_MAX_VERTEX_SHADER_CONSTANTF 256
+#define D3D9_MAX_SIMULTANEOUS_RENDERTARGETS 4
 
 /* --------------------- */
 /* IDirect3DPixelShader9 */
