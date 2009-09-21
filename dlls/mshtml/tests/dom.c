@@ -804,6 +804,80 @@ static void test_doc_elem(IHTMLDocument2 *doc)
     IHTMLElement_Release(elem);
 }
 
+static void test_get_set_attr(IHTMLDocument2 *doc)
+{
+    IHTMLElement *elem;
+    IHTMLDocument3 *doc3;
+    HRESULT hres;
+    BSTR bstr;
+    VARIANT val;
+
+    /* grab an element to test with */
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
+    ok(hres == S_OK, "QueryInterface(IID_IHTMLDocument3) failed: %08x\n", hres);
+
+    hres = IHTMLDocument3_get_documentElement(doc3, &elem);
+    IHTMLDocument3_Release(doc3);
+    ok(hres == S_OK, "get_documentElement failed: %08x\n", hres);
+
+    /* get a non-present attribute */
+    bstr = a2bstr("notAnAttribute");
+    hres = IHTMLElement_getAttribute(elem, bstr, 0, &val);
+    ok(hres == S_OK, "getAttribute failed: %08x\n", hres);
+    ok(V_VT(&val) == VT_NULL, "variant type should have been VT_NULL (0x%x), was: 0x%x\n", VT_NULL, V_VT(&val));
+    VariantClear(&val);
+    SysFreeString(bstr);
+
+    /* get a present attribute */
+    bstr = a2bstr("scrollHeight");
+    hres = IHTMLElement_getAttribute(elem, bstr, 0, &val);
+    ok(hres == S_OK, "getAttribute failed: %08x\n", hres);
+    ok(V_VT(&val) == VT_I4, "variant type should have been VT_I4 (0x%x), was: 0x%x\n", VT_I4, V_VT(&val));
+    VariantClear(&val);
+    SysFreeString(bstr);
+
+    /* create a new BSTR attribute */
+    bstr = a2bstr("newAttribute");
+
+    V_VT(&val) = VT_BSTR;
+    V_BSTR(&val) = a2bstr("the value");
+    hres = IHTMLElement_setAttribute(elem, bstr, val, 0);
+    ok(hres == S_OK, "setAttribute failed: %08x\n", hres);
+    VariantClear(&val);
+
+    hres = IHTMLElement_getAttribute(elem, bstr, 0, &val);
+    ok(hres == S_OK, "getAttribute failed: %08x\n", hres);
+    ok(V_VT(&val) == VT_BSTR, "variant type should have been VT_BSTR (0x%x), was: 0x%x\n", VT_BSTR, V_VT(&val));
+    ok(strcmp_wa(V_BSTR(&val), "the value") == 0, "variant value should have been L\"the value\", was %s\n", wine_dbgstr_w(V_BSTR(&val)));
+    VariantClear(&val);
+
+    /* overwrite the attribute with a BOOL */
+    V_VT(&val) = VT_BOOL;
+    V_BOOL(&val) = VARIANT_TRUE;
+    hres = IHTMLElement_setAttribute(elem, bstr, val, 0);
+    ok(hres == S_OK, "setAttribute failed: %08x\n", hres);
+    VariantClear(&val);
+
+    hres = IHTMLElement_getAttribute(elem, bstr, 0, &val);
+    ok(hres == S_OK, "getAttribute failed: %08x\n", hres);
+    ok(V_VT(&val) == VT_BOOL, "variant type should have been VT_BOOL (0x%x), was: 0x%x\n", VT_BOOL, V_VT(&val));
+    ok(V_BOOL(&val) == VARIANT_TRUE, "variant value should have been VARIANT_TRUE (0x%x), was %d\n", VARIANT_TRUE, V_BOOL(&val));
+    VariantClear(&val);
+
+    SysFreeString(bstr);
+
+    /* case-insensitive */
+    bstr = a2bstr("newattribute");
+    hres = IHTMLElement_getAttribute(elem, bstr, 0, &val);
+    ok(hres == S_OK, "getAttribute failed: %08x\n", hres);
+    todo_wine ok(V_VT(&val) == VT_BOOL, "variant type should have been VT_BOOL (0x%x), was: 0x%x\n", VT_BOOL, V_VT(&val));
+    todo_wine ok(V_BOOL(&val) == VARIANT_TRUE, "variant value should have been VARIANT_TRUE (0x%x), was %d\n", VARIANT_TRUE, V_BOOL(&val));
+    VariantClear(&val);
+    SysFreeString(bstr);
+
+    IHTMLElement_Release(elem);
+}
+
 #define get_doc_elem(d) _get_doc_elem(__LINE__,d)
 static IHTMLElement *_get_doc_elem(unsigned line, IHTMLDocument2 *doc)
 {
@@ -5347,6 +5421,7 @@ START_TEST(dom)
     CoInitialize(NULL);
 
     run_domtest(doc_str1, test_doc_elem);
+    run_domtest(doc_str1, test_get_set_attr);
     run_domtest(range_test_str, test_txtrange);
     run_domtest(range_test2_str, test_txtrange2);
     if (winetest_interactive || ! is_ie_hardened()) {

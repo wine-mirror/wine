@@ -96,44 +96,26 @@ static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttr
                                                VARIANT AttributeValue, LONG lFlags)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    nsAString attr_str;
-    nsAString value_str;
-    nsresult nsres;
     HRESULT hres;
-    VARIANT AttributeValueChanged;
+    DISPID dispid, dispidNamed = DISPID_PROPERTYPUT;
+    DISPPARAMS dispParams;
+    EXCEPINFO excep;
 
-    WARN("(%p)->(%s . %08x)\n", This, debugstr_w(strAttributeName), lFlags);
+    TRACE("(%p)->(%s . %08x)\n", This, debugstr_w(strAttributeName), lFlags);
 
-    if(!This->nselem) {
-        FIXME("NULL nselem\n");
-        return E_NOTIMPL;
-    }
-
-    VariantInit(&AttributeValueChanged);
-
-    hres = VariantChangeType(&AttributeValueChanged, &AttributeValue, 0, VT_BSTR);
-    if (FAILED(hres)) {
-        WARN("couldn't convert input attribute value %d to VT_BSTR\n", V_VT(&AttributeValue));
+    hres = IDispatchEx_GetDispID(DISPATCHEX(&This->node.dispex), strAttributeName,
+            fdexNameCaseInsensitive | fdexNameEnsure, &dispid);
+    if(FAILED(hres))
         return hres;
-    }
 
-    nsAString_Init(&attr_str, strAttributeName);
-    nsAString_Init(&value_str, V_BSTR(&AttributeValueChanged));
+    dispParams.cArgs = 1;
+    dispParams.cNamedArgs = 1;
+    dispParams.rgdispidNamedArgs = &dispidNamed;
+    dispParams.rgvarg = &AttributeValue;
 
-    TRACE("setting %s to %s\n", debugstr_w(strAttributeName),
-        debugstr_w(V_BSTR(&AttributeValueChanged)));
-
-    nsres = nsIDOMHTMLElement_SetAttribute(This->nselem, &attr_str, &value_str);
-    nsAString_Finish(&attr_str);
-    nsAString_Finish(&value_str);
-
-    if(NS_SUCCEEDED(nsres)) {
-        hres = S_OK;
-    }else {
-        ERR("SetAttribute failed: %08x\n", nsres);
-        hres = E_FAIL;
-    }
-
+    hres = IDispatchEx_InvokeEx(DISPATCHEX(&This->node.dispex), dispid,
+            LOCALE_SYSTEM_DEFAULT, DISPATCH_PROPERTYPUT, &dispParams,
+            NULL, &excep, NULL);
     return hres;
 }
 
@@ -141,59 +123,28 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
                                                LONG lFlags, VARIANT *AttributeValue)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    nsAString attr_str;
-    nsAString value_str;
-    const PRUnichar *value;
-    nsresult nsres;
-    HRESULT hres = S_OK;
+    DISPID dispid;
+    HRESULT hres;
+    DISPPARAMS dispParams = {NULL, NULL, 0, 0};
+    EXCEPINFO excep;
 
-    WARN("(%p)->(%s %08x %p)\n", This, debugstr_w(strAttributeName), lFlags, AttributeValue);
+    TRACE("(%p)->(%s %08x %p)\n", This, debugstr_w(strAttributeName), lFlags, AttributeValue);
 
-    if(!This->nselem) {
-        FIXME("NULL nselem\n");
+    hres = IDispatchEx_GetDispID(DISPATCHEX(&This->node.dispex), strAttributeName,
+            fdexNameCaseInsensitive, &dispid);
+    if(hres == DISP_E_UNKNOWNNAME) {
         V_VT(AttributeValue) = VT_NULL;
         return S_OK;
     }
 
-    V_VT(AttributeValue) = VT_NULL;
-
-    nsAString_Init(&attr_str, strAttributeName);
-    nsAString_Init(&value_str, NULL);
-
-    nsres = nsIDOMHTMLElement_GetAttribute(This->nselem, &attr_str, &value_str);
-    nsAString_Finish(&attr_str);
-
-    if(NS_SUCCEEDED(nsres)) {
-        static const WCHAR wszSRC[] = {'s','r','c',0};
-        nsAString_GetData(&value_str, &value);
-        if(!strcmpiW(strAttributeName, wszSRC))
-        {
-            WCHAR buffer[256];
-            DWORD len;
-            BSTR bstrBaseUrl;
-            hres = IHTMLDocument2_get_URL(HTMLDOC(&This->node.doc->basedoc), &bstrBaseUrl);
-            if(SUCCEEDED(hres)) {
-                hres = CoInternetCombineUrl(bstrBaseUrl, value,
-                                            URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,
-                                            buffer, sizeof(buffer)/sizeof(WCHAR), &len, 0);
-                SysFreeString(bstrBaseUrl);
-                if(SUCCEEDED(hres)) {
-                    V_VT(AttributeValue) = VT_BSTR;
-                    V_BSTR(AttributeValue) = SysAllocString(buffer);
-                    TRACE("attr_value=%s\n", debugstr_w(V_BSTR(AttributeValue)));
-                }
-            }
-        }else if(*value) {
-            V_VT(AttributeValue) = VT_BSTR;
-            V_BSTR(AttributeValue) = SysAllocString(value);
-            TRACE("attr_value=%s\n", debugstr_w(V_BSTR(AttributeValue)));
-        }
-    }else {
-        ERR("GetAttribute failed: %08x\n", nsres);
-        hres = E_FAIL;
+    if(FAILED(hres)) {
+        V_VT(AttributeValue) = VT_NULL;
+        return hres;
     }
 
-    nsAString_Finish(&value_str);
+    hres = IDispatchEx_InvokeEx(DISPATCHEX(&This->node.dispex), dispid,
+            LOCALE_SYSTEM_DEFAULT, DISPATCH_PROPERTYGET, &dispParams,
+            AttributeValue, &excep, NULL);
 
     return hres;
 }
