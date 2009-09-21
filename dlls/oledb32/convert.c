@@ -126,13 +126,238 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
     return E_NOTIMPL;
 }
 
+static inline WORD get_dbtype_class(DBTYPE type)
+{
+    switch(type)
+    {
+    case DBTYPE_I2:
+    case DBTYPE_R4:
+    case DBTYPE_R8:
+    case DBTYPE_I1:
+    case DBTYPE_UI1:
+    case DBTYPE_UI2:
+        return DBTYPE_I2;
+
+    case DBTYPE_I4:
+    case DBTYPE_UI4:
+        return DBTYPE_I4;
+
+    case DBTYPE_I8:
+    case DBTYPE_UI8:
+        return DBTYPE_I8;
+
+    case DBTYPE_BSTR:
+    case DBTYPE_STR:
+    case DBTYPE_WSTR:
+        return DBTYPE_BSTR;
+
+    case DBTYPE_DBDATE:
+    case DBTYPE_DBTIME:
+    case DBTYPE_DBTIMESTAMP:
+        return DBTYPE_DBDATE;
+    }
+    return type;
+}
+
+/* Many src types will convert to this group of dst types */
+static inline BOOL common_class(WORD dst_class)
+{
+    switch(dst_class)
+    {
+    case DBTYPE_EMPTY:
+    case DBTYPE_NULL:
+    case DBTYPE_I2:
+    case DBTYPE_I4:
+    case DBTYPE_BSTR:
+    case DBTYPE_BOOL:
+    case DBTYPE_VARIANT:
+    case DBTYPE_I8:
+    case DBTYPE_CY:
+    case DBTYPE_DECIMAL:
+    case DBTYPE_NUMERIC:
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static inline BOOL array_type(DBTYPE type)
+{
+    return (type >= DBTYPE_I2 && type <= DBTYPE_UI4);
+}
+
 static HRESULT WINAPI convert_CanConvert(IDataConvert* iface,
-                                         DBTYPE wSrcType, DBTYPE wDstType)
+                                         DBTYPE src_type, DBTYPE dst_type)
 {
     convert *This = impl_from_IDataConvert(iface);
-    FIXME("(%p)->(%d, %d): stub\n", This, wSrcType, wDstType);
+    DBTYPE src_base_type = src_type & 0x1ff;
+    DBTYPE dst_base_type = dst_type & 0x1ff;
+    WORD dst_class = get_dbtype_class(dst_base_type);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d, %d)\n", This, src_type, dst_type);
+
+    if(src_type & DBTYPE_VECTOR || dst_type & DBTYPE_VECTOR) return S_FALSE;
+
+    if(src_type & DBTYPE_ARRAY)
+    {
+        if(!array_type(src_base_type)) return S_FALSE;
+        if(dst_type & DBTYPE_ARRAY)
+        {
+            if(src_type == dst_type) return S_OK;
+            return S_FALSE;
+        }
+        if(dst_type == DBTYPE_VARIANT) return S_OK;
+        return S_FALSE;
+    }
+
+    if(dst_type & DBTYPE_ARRAY)
+    {
+        if(!array_type(dst_base_type)) return S_FALSE;
+        if(src_type == DBTYPE_IDISPATCH || src_type == DBTYPE_VARIANT) return S_OK;
+        return S_FALSE;
+    }
+
+    if(dst_type & DBTYPE_BYREF)
+        if(dst_base_type != DBTYPE_BYTES && dst_base_type != DBTYPE_STR && dst_base_type != DBTYPE_WSTR)
+            return S_FALSE;
+
+    switch(get_dbtype_class(src_base_type))
+    {
+    case DBTYPE_EMPTY:
+        if(common_class(dst_class)) return S_OK;
+        switch(dst_class)
+        {
+        case DBTYPE_DATE:
+        case DBTYPE_GUID:
+            return S_OK;
+        default:
+            if(dst_base_type == DBTYPE_DBTIMESTAMP) return S_OK;
+            return S_FALSE;
+        }
+
+    case DBTYPE_NULL:
+        switch(dst_base_type)
+        {
+        case DBTYPE_NULL:
+        case DBTYPE_VARIANT: return S_OK;
+        default: return S_FALSE;
+        }
+
+    case DBTYPE_I4:
+        if(dst_base_type == DBTYPE_BYTES) return S_OK;
+        /* fall through */
+    case DBTYPE_I2:
+        if(dst_base_type == DBTYPE_DATE) return S_OK;
+        /* fall through */
+    case DBTYPE_DECIMAL:
+        if(common_class(dst_class)) return S_OK;
+        if(dst_class == DBTYPE_DBDATE) return S_OK;
+        return S_FALSE;
+
+    case DBTYPE_BOOL:
+        if(dst_base_type == DBTYPE_DATE) return S_OK;
+    case DBTYPE_NUMERIC:
+    case DBTYPE_CY:
+        if(common_class(dst_class)) return S_OK;
+        return S_FALSE;
+
+    case DBTYPE_I8:
+        if(common_class(dst_class)) return S_OK;
+        if(dst_base_type == DBTYPE_BYTES) return S_OK;
+        return S_FALSE;
+
+    case DBTYPE_DATE:
+        switch(dst_class)
+        {
+        case DBTYPE_EMPTY:
+        case DBTYPE_NULL:
+        case DBTYPE_I2:
+        case DBTYPE_I4:
+        case DBTYPE_BSTR:
+        case DBTYPE_BOOL:
+        case DBTYPE_VARIANT:
+        case DBTYPE_I8:
+        case DBTYPE_DATE:
+        case DBTYPE_DBDATE:
+            return S_OK;
+        default: return S_FALSE;
+        }
+
+    case DBTYPE_IDISPATCH:
+    case DBTYPE_VARIANT:
+        switch(dst_base_type)
+        {
+        case DBTYPE_IDISPATCH:
+        case DBTYPE_ERROR:
+        case DBTYPE_IUNKNOWN:
+            return S_OK;
+        }
+        /* fall through */
+    case DBTYPE_BSTR:
+        if(common_class(dst_class)) return S_OK;
+        switch(dst_class)
+        {
+        case DBTYPE_DATE:
+        case DBTYPE_GUID:
+        case DBTYPE_BYTES:
+        case DBTYPE_DBDATE:
+            return S_OK;
+        default: return S_FALSE;
+        }
+
+    case DBTYPE_ERROR:
+        switch(dst_base_type)
+        {
+        case DBTYPE_BSTR:
+        case DBTYPE_ERROR:
+        case DBTYPE_VARIANT:
+        case DBTYPE_WSTR:
+            return S_OK;
+        default: return S_FALSE;
+        }
+
+    case DBTYPE_IUNKNOWN:
+        switch(dst_base_type)
+        {
+        case DBTYPE_EMPTY:
+        case DBTYPE_NULL:
+        case DBTYPE_IDISPATCH:
+        case DBTYPE_VARIANT:
+        case DBTYPE_IUNKNOWN:
+            return S_OK;
+        default: return S_FALSE;
+        }
+
+    case DBTYPE_BYTES:
+        if(dst_class == DBTYPE_I4 || dst_class == DBTYPE_I8) return S_OK;
+        /* fall through */
+    case DBTYPE_GUID:
+        switch(dst_class)
+        {
+        case DBTYPE_EMPTY:
+        case DBTYPE_NULL:
+        case DBTYPE_BSTR:
+        case DBTYPE_VARIANT:
+        case DBTYPE_GUID:
+        case DBTYPE_BYTES:
+            return S_OK;
+        default: return S_FALSE;
+        }
+
+    case DBTYPE_DBDATE:
+        switch(dst_class)
+        {
+        case DBTYPE_EMPTY:
+        case DBTYPE_NULL:
+        case DBTYPE_DATE:
+        case DBTYPE_BSTR:
+        case DBTYPE_VARIANT:
+        case DBTYPE_DBDATE:
+            return S_OK;
+        default: return S_FALSE;
+        }
+
+    }
+    return S_FALSE;
 }
 
 static HRESULT WINAPI convert_GetConversionSize(IDataConvert* iface,

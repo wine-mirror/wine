@@ -236,7 +236,6 @@ static void test_canconvert(void)
 
             hr = IDataConvert_CanConvert(convert, simple_convert[src_idx].type, simple_convert[dst_idx].type);
             expect = simple_expect;
-todo_wine
             ok((hr == S_OK && expect == TRUE) ||
                (hr == S_FALSE && expect == FALSE),
                "%04x -> %04x: got %08x expect conversion to be %spossible\n", simple_convert[src_idx].type,
@@ -245,7 +244,6 @@ todo_wine
             /* src DBTYPE_BYREF */
             hr = IDataConvert_CanConvert(convert, simple_convert[src_idx].type | DBTYPE_BYREF, simple_convert[dst_idx].type);
             expect = simple_expect;
-todo_wine
             ok((hr == S_OK && expect == TRUE) ||
                (hr == S_FALSE && expect == FALSE),
                "%04x -> %04x: got %08x expect conversion to be %spossible\n", simple_convert[src_idx].type | DBTYPE_BYREF,
@@ -259,7 +257,6 @@ todo_wine
                 simple_convert[dst_idx].type == DBTYPE_STR ||
                 simple_convert[dst_idx].type == DBTYPE_WSTR))
                 expect = TRUE;
-todo_wine
             ok((hr == S_OK && expect == TRUE) ||
                (hr == S_FALSE && expect == FALSE),
                "%04x -> %04x: got %08x expect conversion to be %spossible\n", simple_convert[src_idx].type,
@@ -273,7 +270,6 @@ todo_wine
                 simple_convert[dst_idx].type == DBTYPE_STR ||
                 simple_convert[dst_idx].type == DBTYPE_WSTR))
                 expect = TRUE;
-todo_wine
             ok((hr == S_OK && expect == TRUE) ||
                (hr == S_FALSE && expect == FALSE),
                "%04x -> %04x: got %08x expect conversion to be %spossible\n", simple_convert[src_idx].type | DBTYPE_BYREF,
@@ -284,7 +280,6 @@ todo_wine
             expect = FALSE;
             if(array_type(simple_convert[src_idx].type) && simple_convert[dst_idx].type == DBTYPE_VARIANT)
                 expect = TRUE;
-todo_wine
             ok((hr == S_OK && expect == TRUE) ||
                (hr == S_FALSE && expect == FALSE),
                "%04x -> %04x: got %08x expect conversion to be %spossible\n", simple_convert[src_idx].type | DBTYPE_ARRAY,
@@ -297,7 +292,6 @@ todo_wine
                (simple_convert[src_idx].type == DBTYPE_IDISPATCH ||
                 simple_convert[src_idx].type == DBTYPE_VARIANT))
                 expect = TRUE;
-todo_wine
             ok((hr == S_OK && expect == TRUE) ||
                (hr == S_FALSE && expect == FALSE),
                "%04x -> %04x: got %08x expect conversion to be %spossible\n", simple_convert[src_idx].type,
@@ -309,7 +303,6 @@ todo_wine
             if(array_type(simple_convert[src_idx].type) &&
                simple_convert[src_idx].type == simple_convert[dst_idx].type)
                 expect = TRUE;
-todo_wine
             ok((hr == S_OK && expect == TRUE) ||
                (hr == S_FALSE && expect == FALSE),
                "%04x -> %04x: got %08x expect conversion to be %spossible\n", simple_convert[src_idx].type | DBTYPE_ARRAY,
@@ -318,7 +311,6 @@ todo_wine
             /* src DBTYPE_VECTOR */
             hr = IDataConvert_CanConvert(convert, simple_convert[src_idx].type | DBTYPE_VECTOR, simple_convert[dst_idx].type);
             expect = FALSE;
-todo_wine
             ok((hr == S_OK && expect == TRUE) ||
                (hr == S_FALSE && expect == FALSE),
                "%04x -> %04x: got %08x expect conversion to be %spossible\n", simple_convert[src_idx].type | DBTYPE_VECTOR,
@@ -327,7 +319,6 @@ todo_wine
             /* dst DBTYPE_VECTOR */
             hr = IDataConvert_CanConvert(convert, simple_convert[src_idx].type, simple_convert[dst_idx].type | DBTYPE_VECTOR);
             expect = FALSE;
-todo_wine
             ok((hr == S_OK && expect == TRUE) ||
                (hr == S_FALSE && expect == FALSE),
                "%04x -> %04x: got %08x expect conversion to be %spossible\n", simple_convert[src_idx].type,
@@ -336,7 +327,6 @@ todo_wine
             /* src & dst DBTYPE_VECTOR */
             hr = IDataConvert_CanConvert(convert, simple_convert[src_idx].type | DBTYPE_VECTOR, simple_convert[dst_idx].type | DBTYPE_VECTOR);
             expect = FALSE;
-todo_wine
             ok((hr == S_OK && expect == TRUE) ||
                (hr == S_FALSE && expect == FALSE),
                "%04x -> %04x: got %08x expect conversion to be %spossible\n", simple_convert[src_idx].type | DBTYPE_VECTOR,
