@@ -111,7 +111,8 @@ static snd_pcm_uframes_t CommitAll(IDsDriverBufferImpl *This)
     TRACE("%p needs to commit to %lu, used: %ld\n", This, commitahead, used);
     if (used < commitahead)
     {
-        snd_pcm_uframes_t done, putin = commitahead - used;
+        snd_pcm_sframes_t done;
+        snd_pcm_uframes_t putin = commitahead - used;
         if (This->mmap)
         {
             snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &putin);
@@ -121,9 +122,10 @@ static snd_pcm_uframes_t CommitAll(IDsDriverBufferImpl *This)
         {
             if (putin + This->mmap_pos > This->mmap_buflen_frames)
                 putin = This->mmap_buflen_frames - This->mmap_pos;
-            done = putin;
-            snd_pcm_writei(This->pcm, This->mmap_buffer + snd_pcm_frames_to_bytes(This->pcm, This->mmap_pos), putin);
+            done = snd_pcm_writei(This->pcm, This->mmap_buffer + snd_pcm_frames_to_bytes(This->pcm, This->mmap_pos), putin);
+            if (done < putin) WARN("Short write %ld/%ld\n", putin, done);
         }
+        if (done < 0) done = 0;
         This->mmap_pos += done;
         used += done;
         putin = commitahead - used;
@@ -138,8 +140,10 @@ static snd_pcm_uframes_t CommitAll(IDsDriverBufferImpl *This)
             }
             else
             {
-                snd_pcm_writei(This->pcm, This->mmap_buffer, putin);
-                This->mmap_pos = done = putin;
+                done = snd_pcm_writei(This->pcm, This->mmap_buffer, putin);
+                if (done < putin) WARN("Short write %ld/%ld\n", putin, done);
+                if (done < 0) done = 0;
+                This->mmap_pos = done;
             }
             used += done;
         }
@@ -402,18 +406,23 @@ static HRESULT WINAPI IDsDriverBufferImpl_Unlock(PIDSDRIVERBUFFER iface,
             if (ret == -EPIPE)
             {
                 WARN("Underrun occurred\n");
-                snd_pcm_prepare(This->pcm);
+                snd_pcm_recover(This->pcm, -EPIPE, 1);
                 ret = snd_pcm_writei(This->pcm, pvAudio1, writelen);
-                snd_pcm_start(This->pcm);
+
+                /* Advance mmap pointer a little to make dsound notice the underrun and respond to it */
+                if (ret < writelen) WARN("Short write %ld/%d\n", writelen, ret);
+                This->mmap_pos += This->mmap_commitahead + ret;
+                This->mmap_pos %= This->mmap_buflen_frames;
             }
+            else if (ret > 0)
+                This->mmap_pos += ret;
             if (ret < 0)
                 WARN("Committing data: %d / %s (%p %ld)\n", ret, snd_strerror(ret), pvAudio1, writelen);
-            This->mmap_pos += writelen;
         }
 
         if (This->mmap_pos == This->mmap_buflen_frames)
             This->mmap_pos = 0;
-        if (!This->mmap_pos && dwLen2)
+        if (dwLen2)
         {
             writelen = snd_pcm_bytes_to_frames(This->pcm, dwLen2);
             if (This->mmap)
@@ -425,7 +434,8 @@ static HRESULT WINAPI IDsDriverBufferImpl_Unlock(PIDSDRIVERBUFFER iface,
             {
                 int ret;
                 ret = snd_pcm_writei(This->pcm, pvAudio2, writelen);
-                This->mmap_pos = writelen;
+                if (ret < writelen) WARN("Short write %ld/%d\n", writelen, ret);
+                This->mmap_pos = ret > 0 ? ret : 0;
             }
             assert(This->mmap_pos < This->mmap_buflen_frames);
         }
