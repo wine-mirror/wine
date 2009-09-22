@@ -109,21 +109,95 @@ static ULONG WINAPI convert_Release(IDataConvert* iface)
     return ref;
 }
 
+static int get_length(DBTYPE type)
+{
+    switch(type)
+    {
+    case DBTYPE_I1:
+    case DBTYPE_UI1:
+        return 1;
+    case DBTYPE_I2:
+    case DBTYPE_UI2:
+        return 2;
+    case DBTYPE_I4:
+    case DBTYPE_UI4:
+        return 4;
+    case DBTYPE_I8:
+    case DBTYPE_UI8:
+        return 8;
+    default:
+        FIXME("Unhandled type %04x\n", type);
+        return 0;
+    }
+}
+
 static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
-                                          DBTYPE wSrcType, DBTYPE wDstType,
-                                          DBLENGTH cbSrcLength, DBLENGTH *pcbDstLength,
-                                          void *pSrc, void *pDst,
-                                          DBLENGTH cbDstMaxLength,
-                                          DBSTATUS dbsSrcStatus, DBSTATUS *pdbsDstStatus,
-                                          BYTE bPrecision, BYTE bScale,
-                                          DBDATACONVERT dwFlags)
+                                          DBTYPE src_type, DBTYPE dst_type,
+                                          DBLENGTH src_len, DBLENGTH *dst_len,
+                                          void *src, void *dst,
+                                          DBLENGTH dst_max_len,
+                                          DBSTATUS src_status, DBSTATUS *dst_status,
+                                          BYTE precision, BYTE scale,
+                                          DBDATACONVERT flags)
 {
     convert *This = impl_from_IDataConvert(iface);
-    FIXME("(%p)->(%d, %d, %d, %p, %p, %p, %d, %d, %p, %d, %d, %x): stub\n", This,
-          wSrcType, wDstType, cbSrcLength, pcbDstLength, pSrc, pDst, cbDstMaxLength,
-          dbsSrcStatus, pdbsDstStatus, bPrecision, bScale, dwFlags);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d, %d, %d, %p, %p, %p, %d, %d, %p, %d, %d, %x): stub\n", This,
+          src_type, dst_type, src_len, dst_len, src, dst, dst_max_len,
+          src_status, dst_status, precision, scale, flags);
+
+    *dst_len = get_length(dst_type);
+    *dst_status = DBSTATUS_E_BADACCESSOR;
+
+    if(IDataConvert_CanConvert(iface, src_type, dst_type) != S_OK)
+    {
+        return DB_E_UNSUPPORTEDCONVERSION;
+    }
+
+    switch(dst_type)
+    {
+    case DBTYPE_I4:
+    {
+        signed int *d = dst;
+        switch(src_type)
+        {
+        case DBTYPE_EMPTY:       *d = 0; hr = S_OK;                              break;
+        case DBTYPE_I2:          hr = VarI4FromI2(*(signed short*)src, d);       break;
+        case DBTYPE_I4:          *d = *(signed int*)src; hr = S_OK;              break;
+        case DBTYPE_R4:          hr = VarI4FromR4(*(FLOAT*)src, d);              break;
+        case DBTYPE_R8:          hr = VarI4FromR8(*(double*)src, d);             break;
+        case DBTYPE_CY:          hr = VarI4FromCy(*(CY*)src, d);                 break;
+        case DBTYPE_DATE:        hr = VarI4FromDate(*(DATE*)src, d);             break;
+        case DBTYPE_BSTR:        hr = VarI4FromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
+        case DBTYPE_BOOL:        hr = VarI4FromBool(*(VARIANT_BOOL*)src, d);     break;
+        case DBTYPE_DECIMAL:     hr = VarI4FromDec((DECIMAL*)src, d);            break;
+        case DBTYPE_I1:          hr = VarI4FromI1(*(signed char*)src, d);        break;
+        case DBTYPE_UI1:         hr = VarI4FromUI1(*(BYTE*)src, d);              break;
+        case DBTYPE_UI2:         hr = VarI4FromUI2(*(WORD*)src, d);              break;
+        case DBTYPE_UI4:         hr = VarI4FromUI4(*(DWORD*)src, d);             break;
+        case DBTYPE_I8:          hr = VarI4FromI8(*(LONGLONG*)src, d);           break;
+        case DBTYPE_UI8:         hr = VarI4FromUI8(*(ULONGLONG*)src, d);         break;
+        default: FIXME("Unimplemented conversion %04x -> I4\n", src_type); return E_NOTIMPL;
+        }
+        break;
+    }
+
+    default:
+        FIXME("Unimplemented conversion %04x -> %04x\n", src_type, dst_type);
+        return E_NOTIMPL;
+
+    }
+
+    if(hr == DISP_E_OVERFLOW)
+    {
+        *dst_status = DBSTATUS_E_DATAOVERFLOW;
+        hr = DB_E_ERRORSOCCURRED;
+    }
+    else if(hr == S_OK)
+        *dst_status = DBSTATUS_S_OK;
+
+    return hr;
 }
 
 static inline WORD get_dbtype_class(DBTYPE type)
