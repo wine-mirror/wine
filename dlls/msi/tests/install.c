@@ -407,6 +407,11 @@ static const CHAR rofc_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\
                                      "Media\tDiskId\n"
                                      "1\t1\t\ttest1.cab\tDISK1\t\n";
 
+static const CHAR lus2_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
+                                     "i2\ti4\tL64\tS255\tS32\tS72\n"
+                                     "Media\tDiskId\n"
+                                     "1\t1\t\t#test1.cab\tDISK1\t\n";
+
 static const CHAR sdp_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                                "s72\tS255\tI2\n"
                                                "InstallExecuteSequence\tAction\n"
@@ -1227,6 +1232,42 @@ static const msi_table ppc_tables[] =
     ADD_TABLE(ppc_file),
     ADD_TABLE(pp_install_exec_seq),
     ADD_TABLE(ppc_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table lus0_tables[] =
+{
+    ADD_TABLE(ci_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(rof_feature_comp),
+    ADD_TABLE(rof_file),
+    ADD_TABLE(pp_install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table lus1_tables[] =
+{
+    ADD_TABLE(ci_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(rof_feature_comp),
+    ADD_TABLE(rof_file),
+    ADD_TABLE(pp_install_exec_seq),
+    ADD_TABLE(rofc_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table lus2_tables[] =
+{
+    ADD_TABLE(ci_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(rof_feature_comp),
+    ADD_TABLE(rof_file),
+    ADD_TABLE(pp_install_exec_seq),
+    ADD_TABLE(lus2_media),
     ADD_TABLE(property),
 };
 
@@ -2689,6 +2730,170 @@ static void test_readonlyfile_cab(void)
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest");
     DeleteFile(msifile);
+}
+
+static BOOL add_cabinet_storage(LPCSTR db, LPCSTR cabinet)
+{
+    WCHAR dbW[MAX_PATH], cabinetW[MAX_PATH];
+    IStorage *stg;
+    IStream *stm;
+    HRESULT hr;
+    HANDLE handle;
+
+    MultiByteToWideChar(CP_ACP, 0, db, -1, dbW, MAX_PATH);
+    hr = StgOpenStorage(dbW, NULL, STGM_DIRECT|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, NULL, 0, &stg);
+    if (FAILED(hr))
+        return FALSE;
+
+    MultiByteToWideChar(CP_ACP, 0, cabinet, -1, cabinetW, MAX_PATH);
+    hr = IStorage_CreateStream(stg, cabinetW, STGM_WRITE|STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
+    if (FAILED(hr))
+    {
+        IStorage_Release(stg);
+        return FALSE;
+    }
+
+    handle = CreateFileW(cabinetW, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        DWORD count;
+        char buffer[1024];
+        if (ReadFile(handle, buffer, sizeof(buffer), &count, NULL))
+            IStream_Write(stm, buffer, count, &count);
+        CloseHandle(handle);
+    }
+
+    IStream_Release(stm);
+    IStorage_Release(stg);
+
+    return TRUE;
+}
+
+static void test_lastusedsource(void)
+{
+    static char prodcode[] = "{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}";
+
+    UINT r;
+    char value[MAX_PATH], path[MAX_PATH];
+    DWORD size;
+
+    if (!pMsiSourceListGetInfoA)
+    {
+        win_skip("MsiSourceListGetInfoA is not available\n");
+        return;
+    }
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("maximus", 500);
+    create_cab_file("test1.cab", MEDIA_SIZE, "maximus\0");
+    DeleteFile("maximus");
+
+    create_database("msifile0.msi", lus0_tables, sizeof(lus0_tables) / sizeof(msi_table));
+    create_database("msifile1.msi", lus1_tables, sizeof(lus1_tables) / sizeof(msi_table));
+    create_database("msifile2.msi", lus2_tables, sizeof(lus2_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    /* no cabinet file */
+
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE, value, &size);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %u\n", r);
+    ok(!lstrcmpA(value, "aaa"), "Expected \"aaa\", got \"%s\"\n", value);
+
+    r = MsiInstallProductA("msifile0.msi", "PUBLISH_PRODUCT=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    lstrcpyA(path, CURR_DIR);
+    lstrcatA(path, "\\");
+
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE, value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    todo_wine
+    {
+    ok(!lstrcmpA(value, path), "Expected \"%s\", got \"%s\"\n", path, value);
+    ok(size == lstrlenA(path), "Expected %d, got %d\n", lstrlenA(path), size);
+    }
+
+    r = MsiInstallProductA("msifile0.msi", "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    /* seperate cabinet file */
+
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE, value, &size);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %u\n", r);
+    ok(!lstrcmpA(value, "aaa"), "Expected \"aaa\", got \"%s\"\n", value);
+
+    r = MsiInstallProductA("msifile1.msi", "PUBLISH_PRODUCT=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    lstrcpyA(path, CURR_DIR);
+    lstrcatA(path, "\\");
+
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE, value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    todo_wine
+    {
+    ok(!lstrcmpA(value, path), "Expected \"%s\", got \"%s\"\n", path, value);
+    ok(size == lstrlenA(path), "Expected %d, got %d\n", lstrlenA(path), size);
+    }
+
+    r = MsiInstallProductA("msifile1.msi", "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE, value, &size);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %u\n", r);
+    ok(!lstrcmpA(value, "aaa"), "Expected \"aaa\", got \"%s\"\n", value);
+
+    /* embedded cabinet stream */
+
+    add_cabinet_storage("msifile2.msi", "test1.cab");
+
+    r = MsiInstallProductA("msifile2.msi", "PUBLISH_PRODUCT=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE, value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    todo_wine
+    {
+    ok(!lstrcmpA(value, path), "Expected \"%s\", got \"%s\"\n", path, value);
+    ok(size == lstrlenA(path), "Expected %d, got %d\n", lstrlenA(path), size);
+    }
+
+    r = MsiInstallProductA("msifile2.msi", "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE, value, &size);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %u\n", r);
+    ok(!lstrcmpA(value, "aaa"), "Expected \"aaa\", got \"%s\"\n", value);
+
+    /* Delete the files in the temp (current) folder */
+    delete_cab_files();
+    DeleteFile("msitest\\maximus");
+    RemoveDirectory("msitest");
+    DeleteFile("msifile0.msi");
+    DeleteFile("msifile1.msi");
+    DeleteFile("msifile2.msi");
 }
 
 static void test_setdirproperty(void)
@@ -6420,6 +6625,7 @@ START_TEST(install)
     test_int_widths();
     test_shortcut();
     test_envvar();
+    test_lastusedsource();
 
     DeleteFileA(log_file);
 
