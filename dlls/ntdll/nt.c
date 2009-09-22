@@ -1322,7 +1322,7 @@ void fill_cpu_info(void)
             switch (cputype)
             {
             case CPU_TYPE_POWERPC:
-                cached_sci.ProcessorArchitecture = PROCESSOR_ARCHITECTURE_PPC;
+                cached_sci.Architecture = PROCESSOR_ARCHITECTURE_PPC;
                 valSize = sizeof(int);
                 if (sysctlbyname ("hw.cpusubtype", &value, &valSize, NULL, 0) == 0)
                 {
