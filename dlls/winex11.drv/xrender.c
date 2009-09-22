@@ -1834,14 +1834,10 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     heightSrc = pts[1].y - pts[0].y;
     if (!widthDst || !heightDst || !widthSrc || !heightSrc) return TRUE;
 
-    /* If the source is a 1x1 bitmap, tiling is equivalent to stretching, but
-        tiling is much faster. Therefore, we do no stretching in this case. */
-    repeat_src = widthSrc == 1 && heightSrc == 1;
-
 #ifndef HAVE_XRENDERSETPICTURETRANSFORM
-    if((widthDst != widthSrc || heightDst != heightSrc) && !repeat_src)
+    if(widthDst != widthSrc || heightDst != heightSrc)
 #else
-    if(!pXRenderSetPictureTransform && !repeat_src)
+    if(!pXRenderSetPictureTransform)
 #endif
     {
         FIXME("Unable to Stretch, XRenderSetPictureTransform is currently required\n");
@@ -1858,6 +1854,10 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
         }
         return FALSE;
     }
+
+    /* If the source is a 1x1 bitmap, tiling is equivalent to stretching, but
+        tiling is much faster. Therefore, we do no stretching in this case. */
+    repeat_src = dib.dsBmih.biWidth == 1 && abs(dib.dsBmih.biHeight) == 1;
 
     if (xSrc < 0 || ySrc < 0 || widthSrc < 0 || heightSrc < 0 || xSrc + widthSrc > dib.dsBmih.biWidth
         || ySrc + heightSrc > abs(dib.dsBmih.biHeight))
@@ -1966,7 +1966,10 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     /* Make sure we ALWAYS set the transformation matrix even if we don't need to scale. The reason is
      * that later on we want to reuse pictures (it can bring a lot of extra performance) and each time
      * a different transformation matrix might have been used. */
-    set_xrender_transformation(src_pict, widthSrc/(double)widthDst, heightSrc/(double)heightDst, 0, 0);
+    if (repeat_src)
+        set_xrender_transformation(src_pict, 1.0, 1.0, 0, 0);
+    else
+        set_xrender_transformation(src_pict, widthSrc/(double)widthDst, heightSrc/(double)heightDst, 0, 0);
     pXRenderComposite(gdi_display, PictOpOver, src_pict, 0, dst_pict,
                       0, 0, 0, 0,
                       xDst + devDst->dc_rect.left, yDst + devDst->dc_rect.top, widthDst, heightDst);
