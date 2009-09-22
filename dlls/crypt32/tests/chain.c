@@ -1680,6 +1680,15 @@ static void testGetCertChain(void)
     ok(GetLastError() == ERROR_INVALID_DATA ||
      GetLastError() == CRYPT_E_ASN1_BADTAG /* Vista */,
      "Expected ERROR_INVALID_DATA or CRYPT_E_ASN1_BADTAG, got %d\n", GetLastError());
+
+    para.cbSize = 0;
+    SetLastError(0xdeadbeef);
+    ret = pCertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL,
+     &chain);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_DATA,
+     "Expected ERROR_INVALID_DATA, got %u\n", GetLastError());
+
     CertFreeCertificateContext(cert);
 
     for (i = 0; i < sizeof(chainCheck) / sizeof(chainCheck[0]); i++)
@@ -1705,6 +1714,41 @@ static void testGetCertChain(void)
             pCertFreeCertificateChain(chain);
         }
     }
+}
+
+static void test_CERT_CHAIN_PARA_cbSize(void)
+{
+    BOOL ret;
+    PCCERT_CONTEXT cert;
+    CERT_CHAIN_PARA para = { 0 };
+    PCCERT_CHAIN_CONTEXT chain;
+    HCERTSTORE store;
+    DWORD i;
+
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+
+    ret = CertAddEncodedCertificateToStore(store,
+     X509_ASN_ENCODING, chain0_0, sizeof(chain0_0),
+     CERT_STORE_ADD_ALWAYS, NULL);
+    ret = CertAddEncodedCertificateToStore(store,
+     X509_ASN_ENCODING, chain0_1, sizeof(chain0_1),
+     CERT_STORE_ADD_ALWAYS, &cert);
+
+    for (i = 0; i < sizeof(CERT_CHAIN_PARA) + 2; i++)
+    {
+        FILETIME fileTime;
+
+        SystemTimeToFileTime(&oct2007, &fileTime);
+
+        para.cbSize = i;
+        ret = pCertGetCertificateChain(NULL, cert, &fileTime,
+         NULL, &para, 0, NULL, &chain);
+        ok(ret, "CertGetCertificateChain failed %u\n", GetLastError());
+        pCertFreeCertificateChain(chain);
+    }
+
+    CertCloseStore(store, 0);
 }
 
 typedef struct _ChainPolicyCheck
@@ -2016,5 +2060,6 @@ START_TEST(chain)
     {
         testVerifyCertChainPolicy();
         testGetCertChain();
+        test_CERT_CHAIN_PARA_cbSize();
     }
 }
