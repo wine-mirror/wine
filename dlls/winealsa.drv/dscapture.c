@@ -134,7 +134,8 @@ static void CALLBACK Capture_Notify(UINT timerID, UINT msg, DWORD_PTR dwUser, DW
     PIDSCDRIVERBUFFER iface = (PIDSCDRIVERBUFFER)This;
 
     /* **** */
-    EnterCriticalSection(&This->pcm_crst);
+    /* Don't deadlock since there is a critical section can be held by the timer api itself while running this code */
+    if (!TryEnterCriticalSection(&This->pcm_crst)) return;
 
     IDsDriverBuffer_GetPosition(iface, &playpos, NULL);
     last_playpos = This->notify->playpos;
@@ -555,7 +556,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Lock(PIDSCDRIVERBUFFER iface, L
     if (ppvAudio1)
         *ppvAudio1 = (LPBYTE)This->presented_buffer + dwWritePosition;
 
-    if (dwWritePosition + dwWriteLen < This->mmap_buflen_bytes) {
+    if (dwWritePosition + dwWriteLen <= This->mmap_buflen_bytes) {
         if (pdwLen1)
             *pdwLen1 = dwWriteLen;
         if (ppvAudio2)
@@ -631,6 +632,9 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_SetFormat(PIDSCDRIVERBUFFER ifa
 
     /* Set some defaults */
     snd_pcm_hw_params_any(pcm, hw_params);
+    err = snd_pcm_hw_params_set_access (pcm, hw_params, SND_PCM_ACCESS_MMAP_INTERLEAVED);
+    if (err < 0) goto err;
+
     err = snd_pcm_hw_params_set_channels(pcm, hw_params, pwfx->nChannels);
     if (err < 0) { WARN("Could not set channels to %d\n", pwfx->nChannels); goto err; }
 
