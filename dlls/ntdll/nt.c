@@ -857,7 +857,7 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
     }
 }
 
-static void create_system_registry_keys( void )
+static BOOL create_system_registry_keys( void )
 {
     static const WCHAR SystemW[] = {'M','a','c','h','i','n','e','\\',
                                     'H','a','r','d','w','a','r','e','\\',
@@ -878,6 +878,7 @@ static void create_system_registry_keys( void )
     HANDLE hkey, system_key, cpu_key;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW, valueW;
+    ULONG dispos;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -887,17 +888,23 @@ static void create_system_registry_keys( void )
     attr.SecurityQualityOfService = NULL;
 
     RtlInitUnicodeString( &nameW, SystemW );
-    if (NtCreateKey( &system_key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) return;
+    if (NtCreateKey( &system_key, KEY_ALL_ACCESS, &attr, 0, NULL, REG_OPTION_VOLATILE, &dispos ))
+        return FALSE;
+    if (dispos == REG_OPENED_EXISTING_KEY)
+    {
+        NtClose( system_key );
+        return FALSE;
+    }
 
     RtlInitUnicodeString( &valueW, IdentifierW );
     NtSetValueKey( system_key, &valueW, 0, REG_SZ, SysidW, sizeof(SysidW) );
 
     attr.RootDirectory = system_key;
     RtlInitUnicodeString( &nameW, fpuW );
-    if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) NtClose( hkey );
+    if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, REG_OPTION_VOLATILE, NULL )) NtClose( hkey );
 
     RtlInitUnicodeString( &nameW, cpuW );
-    if (!NtCreateKey( &cpu_key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
+    if (!NtCreateKey( &cpu_key, KEY_ALL_ACCESS, &attr, 0, NULL, REG_OPTION_VOLATILE, NULL ))
     {
         for (i = 0; i < NtCurrentTeb()->Peb->NumberOfProcessors; i++)
         {
@@ -906,7 +913,7 @@ static void create_system_registry_keys( void )
             attr.RootDirectory = cpu_key;
             sprintfW( numW, PercentDW, i );
             RtlInitUnicodeString( &nameW, numW );
-            if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
+            if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, REG_OPTION_VOLATILE, NULL ))
             {
                 PROCESSOR_POWER_INFORMATION power_info;
                 DWORD cpuMHz;
@@ -935,6 +942,7 @@ static void create_system_registry_keys( void )
         NtClose( cpu_key );
     }
     NtClose( system_key );
+    return TRUE;
 }
 
 static void create_env_registry_keys( void )
@@ -1377,8 +1385,7 @@ void fill_cpu_info(void)
     TRACE("<- CPU arch %d, level %d, rev %d, features 0x%x\n",
           cached_sci.Architecture, cached_sci.Level, cached_sci.Revision, cached_sci.FeatureSet);
 
-    create_env_registry_keys();
-    create_system_registry_keys();
+    if (create_system_registry_keys()) create_env_registry_keys();
 }
 
 /******************************************************************************
