@@ -1039,6 +1039,8 @@ static void check_DrawIcon(HDC hdc, BOOL maskvalue, UINT32 color, int bpp, COLOR
     HICON hicon = create_test_icon(hdc, 1, 1, bpp, maskvalue, &color, sizeof(color));
     if (!hicon) return;
     SetPixelV(hdc, 0, 0, background);
+    SetPixelV(hdc, GetSystemMetrics(SM_CXICON)-1, GetSystemMetrics(SM_CYICON)-1, background);
+    SetPixelV(hdc, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), background);
     DrawIcon(hdc, 0, 0, hicon);
     result = GetPixel(hdc, 0, 0);
 
@@ -1047,6 +1049,21 @@ static void check_DrawIcon(HDC hdc, BOOL maskvalue, UINT32 color, int bpp, COLOR
         "Overlaying Mask %d on Color %06X with DrawIcon. "
         "Expected a close match to %06X (modern), or %06X (legacy). Got %06X from line %d\n",
         maskvalue, color, modern_expected, legacy_expected, result, line);
+
+    result = GetPixel(hdc, GetSystemMetrics(SM_CXICON)-1, GetSystemMetrics(SM_CYICON)-1);
+
+    ok (color_match(result, modern_expected) ||         /* Windows 2000 and up */
+        broken(color_match(result, legacy_expected)),   /* Windows NT 4.0, 9X and below */
+        "Overlaying Mask %d on Color %06X with DrawIcon. "
+        "Expected a close match to %06X (modern), or %06X (legacy). Got %06X from line %d\n",
+        maskvalue, color, modern_expected, legacy_expected, result, line);
+
+    result = GetPixel(hdc, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON));
+
+    ok (color_match(result, background),
+        "Overlaying Mask %d on Color %06X with DrawIcon. "
+        "Expected unchanged background color %06X. Got %06X from line %d\n",
+        maskvalue, color, background, result, line);
 }
 
 static void test_DrawIcon(void)
@@ -1070,8 +1087,8 @@ static void test_DrawIcon(void)
 
     memset(&bitmapInfo, 0, sizeof(bitmapInfo));
     bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bitmapInfo.bmiHeader.biWidth = 1;
-    bitmapInfo.bmiHeader.biHeight = 1;
+    bitmapInfo.bmiHeader.biWidth = GetSystemMetrics(SM_CXICON)+1;
+    bitmapInfo.bmiHeader.biHeight = GetSystemMetrics(SM_CYICON)+1;
     bitmapInfo.bmiHeader.biBitCount = 32;
     bitmapInfo.bmiHeader.biPlanes = 1;
     bitmapInfo.bmiHeader.biCompression = BI_RGB;
