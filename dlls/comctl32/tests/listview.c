@@ -837,7 +837,12 @@ static void test_checkboxes(void)
     item.mask = LVIF_STATE;
     item.stateMask = 0xffff;
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
-    ok(item.state == 0x1ccc, "state %x\n", item.state);
+    if (item.state != 0x1ccc)
+    {
+        win_skip("LVS_EX_CHECKBOXES style is unavailable. Skipping.\n");
+        DestroyWindow(hwnd);
+        return;
+    }
 
     /* Now add an item without specifying a state and check that its state goes to 0x1000 */
     item.iItem = 2;
