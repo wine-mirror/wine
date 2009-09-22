@@ -25,6 +25,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "ole2.h"
 #include "msdadc.h"
 #include "oledberr.h"
@@ -143,7 +144,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
     convert *This = impl_from_IDataConvert(iface);
     HRESULT hr;
 
-    TRACE("(%p)->(%d, %d, %d, %p, %p, %p, %d, %d, %p, %d, %d, %x): stub\n", This,
+    TRACE("(%p)->(%d, %d, %d, %p, %p, %p, %d, %d, %p, %d, %d, %x)\n", This,
           src_type, dst_type, src_len, dst_len, src, dst, dst_max_len,
           src_status, dst_status, precision, scale, flags);
 
@@ -153,6 +154,46 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
     if(IDataConvert_CanConvert(iface, src_type, dst_type) != S_OK)
     {
         return DB_E_UNSUPPORTEDCONVERSION;
+    }
+
+    if(src_type == DBTYPE_STR)
+    {
+        BSTR b;
+        DWORD len;
+
+        if(flags & DBDATACONVERT_LENGTHFROMNTS)
+            len = MultiByteToWideChar(CP_ACP, 0, src, -1, NULL, 0) - 1;
+        else
+            len = MultiByteToWideChar(CP_ACP, 0, src, src_len, NULL, 0);
+        b = SysAllocStringLen(NULL, len);
+        if(!b) return E_OUTOFMEMORY;
+        if(flags & DBDATACONVERT_LENGTHFROMNTS)
+            MultiByteToWideChar(CP_ACP, 0, src, -1, b, len + 1);
+        else
+            MultiByteToWideChar(CP_ACP, 0, src, src_len, b, len);
+
+        hr = IDataConvert_DataConvert(iface, DBTYPE_BSTR, dst_type, 0, dst_len,
+                                      &b, dst, dst_max_len, src_status, dst_status,
+                                      precision, scale, flags);
+
+        SysFreeString(b);
+        return hr;
+    }
+
+    if(src_type == DBTYPE_WSTR)
+    {
+        BSTR b;
+
+        if(flags & DBDATACONVERT_LENGTHFROMNTS)
+            b = SysAllocString(src);
+        else
+            b = SysAllocStringLen(src, src_len / 2);
+        if(!b) return E_OUTOFMEMORY;
+        hr = IDataConvert_DataConvert(iface, DBTYPE_BSTR, dst_type, 0, dst_len,
+                                      &b, dst, dst_max_len, src_status, dst_status,
+                                      precision, scale, flags);
+        SysFreeString(b);
+        return hr;
     }
 
     switch(dst_type)
