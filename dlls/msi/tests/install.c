@@ -174,6 +174,10 @@ static const CHAR environment_dat[] = "Environment\tName\tValue\tComponent_\n"
                                       "Var3\t=-MSITESTVAR3\t1\tOne\n"
                                       "Var4\tMSITESTVAR4\t1\tOne\n";
 
+static const CHAR condition_dat[] = "Feature_\tLevel\tCondition\n"
+                                    "s38\ti2\tS255\n"
+                                    "Condition\tFeature_\tLevel\n"
+                                    "One\t4\t1\n";
 
 static const CHAR up_property_dat[] = "Property\tValue\n"
                                       "s72\tl0\n"
@@ -917,6 +921,19 @@ static const msi_table sc_tables[] =
     ADD_TABLE(media),
     ADD_TABLE(property),
     ADD_TABLE(shortcut)
+};
+
+static const msi_table ps_tables[] =
+{
+    ADD_TABLE(component),
+    ADD_TABLE(directory),
+    ADD_TABLE(feature),
+    ADD_TABLE(feature_comp),
+    ADD_TABLE(file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(media),
+    ADD_TABLE(property),
+    ADD_TABLE(condition)
 };
 
 static const msi_table env_tables[] =
@@ -6542,6 +6559,47 @@ static void test_envvar(void)
     delete_test_files();
 }
 
+static void test_preselected(void)
+{
+    UINT r;
+
+    create_test_files();
+    create_database(msifile, ps_tables, sizeof(ps_tables) / sizeof(msi_table));
+
+    r = MsiInstallProductA(msifile, "ADDLOCAL=One");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(!delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\cabout\\new", FALSE), "File installed\n");
+    ok(!delete_pf("msitest\\cabout\\four.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\cabout", FALSE), "File installed\n");
+    ok(!delete_pf("msitest\\changed\\three.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\changed", FALSE), "File installed\n");
+    ok(!delete_pf("msitest\\first\\two.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\first", FALSE), "File installed\n");
+    ok(!delete_pf("msitest\\filename", TRUE), "File installed\n");
+    todo_wine ok(delete_pf("msitest\\one.txt", TRUE), "File not installed\n");
+    ok(!delete_pf("msitest\\service.exe", TRUE), "File installed\n");
+    todo_wine ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout\\new", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout\\four.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\changed\\three.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\changed", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\first\\two.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\first", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\filename", TRUE), "File not installed\n");
+    ok(!delete_pf("msitest\\one.txt", TRUE), "File installed\n");
+    ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -6626,6 +6684,7 @@ START_TEST(install)
     test_shortcut();
     test_envvar();
     test_lastusedsource();
+    test_preselected();
 
     DeleteFileA(log_file);
 
