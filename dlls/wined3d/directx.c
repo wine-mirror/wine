@@ -1872,10 +1872,63 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
      * shaders), but 8 texture stages (register combiners). */
     gl_info->max_sampler_stages = max(gl_info->max_fragment_samplers, gl_info->max_texture_stages);
 
-    /* We can only use ORM_FBO when the hardware supports it. */
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && !gl_info->supported[EXT_FRAMEBUFFER_OBJECT]) {
-        WARN_(d3d_caps)("GL_EXT_framebuffer_object not supported, falling back to backbuffer offscreen rendering mode.\n");
-        wined3d_settings.offscreen_rendering_mode = ORM_BACKBUFFER;
+    if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT])
+    {
+        gl_info->fbo_ops.glIsRenderbuffer = gl_info->glIsRenderbuffer;
+        gl_info->fbo_ops.glBindRenderbuffer = gl_info->glBindRenderbuffer;
+        gl_info->fbo_ops.glDeleteRenderbuffers = gl_info->glDeleteRenderbuffers;
+        gl_info->fbo_ops.glGenRenderbuffers = gl_info->glGenRenderbuffers;
+        gl_info->fbo_ops.glRenderbufferStorage = gl_info->glRenderbufferStorage;
+        gl_info->fbo_ops.glRenderbufferStorageMultisample = gl_info->glRenderbufferStorageMultisample;
+        gl_info->fbo_ops.glGetRenderbufferParameteriv = gl_info->glGetRenderbufferParameteriv;
+        gl_info->fbo_ops.glIsFramebuffer = gl_info->glIsFramebuffer;
+        gl_info->fbo_ops.glBindFramebuffer = gl_info->glBindFramebuffer;
+        gl_info->fbo_ops.glDeleteFramebuffers = gl_info->glDeleteFramebuffers;
+        gl_info->fbo_ops.glGenFramebuffers = gl_info->glGenFramebuffers;
+        gl_info->fbo_ops.glCheckFramebufferStatus = gl_info->glCheckFramebufferStatus;
+        gl_info->fbo_ops.glFramebufferTexture1D = gl_info->glFramebufferTexture1D;
+        gl_info->fbo_ops.glFramebufferTexture2D = gl_info->glFramebufferTexture2D;
+        gl_info->fbo_ops.glFramebufferTexture3D = gl_info->glFramebufferTexture3D;
+        gl_info->fbo_ops.glFramebufferRenderbuffer = gl_info->glFramebufferRenderbuffer;
+        gl_info->fbo_ops.glGetFramebufferAttachmentParameteriv = gl_info->glGetFramebufferAttachmentParameteriv;
+        gl_info->fbo_ops.glBlitFramebuffer = gl_info->glBlitFramebuffer;
+        gl_info->fbo_ops.glGenerateMipmap = gl_info->glGenerateMipmap;
+    }
+    else
+    {
+        if (gl_info->supported[EXT_FRAMEBUFFER_OBJECT])
+        {
+            gl_info->fbo_ops.glIsRenderbuffer = gl_info->glIsRenderbufferEXT;
+            gl_info->fbo_ops.glBindRenderbuffer = gl_info->glBindRenderbufferEXT;
+            gl_info->fbo_ops.glDeleteRenderbuffers = gl_info->glDeleteRenderbuffersEXT;
+            gl_info->fbo_ops.glGenRenderbuffers = gl_info->glGenRenderbuffersEXT;
+            gl_info->fbo_ops.glRenderbufferStorage = gl_info->glRenderbufferStorageEXT;
+            gl_info->fbo_ops.glGetRenderbufferParameteriv = gl_info->glGetRenderbufferParameterivEXT;
+            gl_info->fbo_ops.glIsFramebuffer = gl_info->glIsFramebufferEXT;
+            gl_info->fbo_ops.glBindFramebuffer = gl_info->glBindFramebufferEXT;
+            gl_info->fbo_ops.glDeleteFramebuffers = gl_info->glDeleteFramebuffersEXT;
+            gl_info->fbo_ops.glGenFramebuffers = gl_info->glGenFramebuffersEXT;
+            gl_info->fbo_ops.glCheckFramebufferStatus = gl_info->glCheckFramebufferStatusEXT;
+            gl_info->fbo_ops.glFramebufferTexture1D = gl_info->glFramebufferTexture1DEXT;
+            gl_info->fbo_ops.glFramebufferTexture2D = gl_info->glFramebufferTexture2DEXT;
+            gl_info->fbo_ops.glFramebufferTexture3D = gl_info->glFramebufferTexture3DEXT;
+            gl_info->fbo_ops.glFramebufferRenderbuffer = gl_info->glFramebufferRenderbufferEXT;
+            gl_info->fbo_ops.glGetFramebufferAttachmentParameteriv = gl_info->glGetFramebufferAttachmentParameterivEXT;
+            gl_info->fbo_ops.glGenerateMipmap = gl_info->glGenerateMipmapEXT;
+        }
+        else if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+        {
+            WARN_(d3d_caps)("Framebuffer objects not supported, falling back to backbuffer offscreen rendering mode.\n");
+            wined3d_settings.offscreen_rendering_mode = ORM_BACKBUFFER;
+        }
+        if (gl_info->supported[EXT_FRAMEBUFFER_BLIT])
+        {
+            gl_info->fbo_ops.glBlitFramebuffer = gl_info->glBlitFramebufferEXT;
+        }
+        if (gl_info->supported[EXT_FRAMEBUFFER_MULTISAMPLE])
+        {
+            gl_info->fbo_ops.glRenderbufferStorageMultisample = gl_info->glRenderbufferStorageMultisampleEXT;
+        }
     }
 
     /* MRTs are currently only supported when FBOs are used. */

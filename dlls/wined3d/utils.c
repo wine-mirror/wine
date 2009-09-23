@@ -443,6 +443,10 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
             GL_DEPTH_STENCIL_EXT,   GL_UNSIGNED_INT_24_8_EXT,
             WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL,
             EXT_PACKED_DEPTH_STENCIL},
+    {WINED3DFMT_D15S1,              GL_DEPTH24_STENCIL8,              GL_DEPTH24_STENCIL8,                    0,
+            GL_DEPTH_STENCIL,       GL_UNSIGNED_INT_24_8,
+            WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL,
+            ARB_FRAMEBUFFER_OBJECT},
     {WINED3DFMT_D24S8,              GL_DEPTH_COMPONENT24_ARB,         GL_DEPTH_COMPONENT24_ARB,               0,
             GL_DEPTH_COMPONENT,     GL_UNSIGNED_INT,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_DEPTH,
@@ -451,6 +455,10 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
             GL_DEPTH_STENCIL_EXT,   GL_UNSIGNED_INT_24_8_EXT,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL,
             EXT_PACKED_DEPTH_STENCIL},
+    {WINED3DFMT_D24S8,              GL_DEPTH24_STENCIL8,              GL_DEPTH24_STENCIL8,                    0,
+            GL_DEPTH_STENCIL,       GL_UNSIGNED_INT_24_8,
+            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL,
+            ARB_FRAMEBUFFER_OBJECT},
     {WINED3DFMT_D24X8,              GL_DEPTH_COMPONENT24_ARB,         GL_DEPTH_COMPONENT24_ARB,               0,
             GL_DEPTH_COMPONENT,     GL_UNSIGNED_INT,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_DEPTH,
@@ -463,6 +471,10 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
             GL_DEPTH_STENCIL_EXT,   GL_UNSIGNED_INT_24_8_EXT,
             WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL,
             EXT_PACKED_DEPTH_STENCIL},
+    {WINED3DFMT_D24X4S4,            GL_DEPTH24_STENCIL8,              GL_DEPTH24_STENCIL8,                    0,
+            GL_DEPTH_STENCIL,       GL_UNSIGNED_INT_24_8,
+            WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL,
+            ARB_FRAMEBUFFER_OBJECT},
     {WINED3DFMT_D16_UNORM,          GL_DEPTH_COMPONENT24_ARB,         GL_DEPTH_COMPONENT24_ARB,               0,
             GL_DEPTH_COMPONENT,     GL_UNSIGNED_SHORT,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_DEPTH,
@@ -476,7 +488,7 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
             WINED3DFMT_FLAG_DEPTH,
             ARB_DEPTH_BUFFER_FLOAT},
     {WINED3DFMT_D24FS8,             GL_DEPTH32F_STENCIL8,             GL_DEPTH32F_STENCIL8,                   0,
-            GL_DEPTH_STENCIL_EXT,   GL_FLOAT_32_UNSIGNED_INT_24_8_REV,
+            GL_DEPTH_STENCIL,       GL_FLOAT_32_UNSIGNED_INT_24_8_REV,
             WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL,
             ARB_DEPTH_BUFFER_FLOAT},
     /* Vendor-specific formats */
@@ -587,12 +599,12 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct GlPix
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, tex, 0));
+    gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
 
-    status = GL_EXTCALL(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT));
+    status = gl_info->fbo_ops.glCheckFramebufferStatus(GL_FRAMEBUFFER);
     checkGLcall("Framebuffer format check");
 
-    if (status == GL_FRAMEBUFFER_COMPLETE_EXT)
+    if (status == GL_FRAMEBUFFER_COMPLETE)
     {
         TRACE("Format %s is supported as FBO color attachment\n", debug_d3dformat(format_desc->format));
         format_desc->Flags |= WINED3DFMT_FLAG_FBO_ATTACHABLE;
@@ -621,19 +633,19 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct GlPix
 
             while(glGetError());
 
-            GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, 0, 0));
+            gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
 
             glTexImage2D(GL_TEXTURE_2D, 0, format_desc->rtInternal, 16, 16, 0,
                     format_desc->glFormat, format_desc->glType, NULL);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-            GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, tex, 0));
+            gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
 
-            status = GL_EXTCALL(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT));
+            status = gl_info->fbo_ops.glCheckFramebufferStatus(GL_FRAMEBUFFER);
             checkGLcall("Framebuffer format check");
 
-            if (status == GL_FRAMEBUFFER_COMPLETE_EXT)
+            if (status == GL_FRAMEBUFFER_COMPLETE)
             {
                 TRACE("Format %s rtInternal format is supported as FBO color attachment\n",
                         debug_d3dformat(format_desc->format));
@@ -647,38 +659,36 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct GlPix
         }
     }
 
-    if (status == GL_FRAMEBUFFER_COMPLETE_EXT && format_desc->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING)
+    if (status == GL_FRAMEBUFFER_COMPLETE && format_desc->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING)
     {
         GLuint rb;
 
-        if (GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
+        if (GL_SUPPORT(ARB_FRAMEBUFFER_OBJECT)
+                || GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
         {
-            GL_EXTCALL(glGenRenderbuffersEXT(1, &rb));
-            GL_EXTCALL(glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rb));
-            GL_EXTCALL(glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH24_STENCIL8_EXT, 16, 16));
-            GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
-                    GL_RENDERBUFFER_EXT, rb));
-            GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT,
-                    GL_RENDERBUFFER_EXT, rb));
+            gl_info->fbo_ops.glGenRenderbuffers(1, &rb);
+            gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, rb);
+            gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 16, 16);
+            gl_info->fbo_ops.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rb);
+            gl_info->fbo_ops.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rb);
             checkGLcall("RB attachment");
         }
 
         glEnable(GL_BLEND);
         glClear(GL_COLOR_BUFFER_BIT);
-        if (glGetError() == GL_INVALID_FRAMEBUFFER_OPERATION_EXT)
+        if (glGetError() == GL_INVALID_FRAMEBUFFER_OPERATION)
         {
             while(glGetError());
             TRACE("Format doesn't support post-pixelshader blending.\n");
             format_desc->Flags &= ~WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING;
         }
 
-        if (GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
+        if (GL_SUPPORT(ARB_FRAMEBUFFER_OBJECT)
+                || GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
         {
-            GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
-                    GL_RENDERBUFFER_EXT, 0));
-            GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT,
-                    GL_RENDERBUFFER_EXT, 0));
-            GL_EXTCALL(glDeleteRenderbuffersEXT(1, &rb));
+            gl_info->fbo_ops.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
+            gl_info->fbo_ops.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
+            gl_info->fbo_ops.glDeleteRenderbuffers(1, &rb);
             checkGLcall("RB cleanup");
         }
     }
@@ -698,8 +708,8 @@ static void init_format_fbo_compat_info(struct wined3d_gl_info *gl_info)
     {
         ENTER_GL();
 
-        GL_EXTCALL(glGenFramebuffersEXT(1, &fbo));
-        GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo));
+        gl_info->fbo_ops.glGenFramebuffers(1, &fbo);
+        gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
         LEAVE_GL();
     }
@@ -739,7 +749,7 @@ static void init_format_fbo_compat_info(struct wined3d_gl_info *gl_info)
     {
         ENTER_GL();
 
-        GL_EXTCALL(glDeleteFramebuffersEXT(1, &fbo));
+        gl_info->fbo_ops.glDeleteFramebuffers(1, &fbo);
 
         LEAVE_GL();
     }
@@ -830,10 +840,10 @@ static BOOL check_filter(const struct wined3d_gl_info *gl_info, GLenum internal)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     glEnable(GL_TEXTURE_2D);
 
-    GL_EXTCALL(glGenFramebuffersEXT(1, &fbo));
-    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo));
-    GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, buffer, 0));
-    glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+    gl_info->fbo_ops.glGenFramebuffers(1, &fbo);
+    gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, buffer, 0);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
     glViewport(0, 0, 16, 1);
     glDisable(GL_LIGHTING);
@@ -873,8 +883,8 @@ static BOOL check_filter(const struct wined3d_gl_info *gl_info, GLenum internal)
         ret = TRUE;
     }
 
-    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
-    GL_EXTCALL(glDeleteFramebuffersEXT(1, &fbo));
+    gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    gl_info->fbo_ops.glDeleteFramebuffers(1, &fbo);
     glDeleteTextures(1, &tex);
     glDeleteTextures(1, &buffer);
 
@@ -1762,15 +1772,16 @@ const char* debug_d3dpool(WINED3DPOOL Pool) {
 const char *debug_fbostatus(GLenum status) {
     switch(status) {
 #define FBOSTATUS_TO_STR(u) case u: return #u
-        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_COMPLETE_EXT);
-        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT);
-        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT);
+        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_COMPLETE);
+        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT);
+        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT);
         FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT);
         FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT);
-        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT);
-        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT);
-        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE_EXT);
-        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_UNSUPPORTED_EXT);
+        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER);
+        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER);
+        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE);
+        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_UNSUPPORTED);
+        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_UNDEFINED);
 #undef FBOSTATUS_TO_STR
         default:
             FIXME("Unrecognied FBO status 0x%08x\n", status);
@@ -1788,7 +1799,7 @@ const char *debug_glerror(GLenum error) {
         GLERROR_TO_STR(GL_STACK_OVERFLOW);
         GLERROR_TO_STR(GL_STACK_UNDERFLOW);
         GLERROR_TO_STR(GL_OUT_OF_MEMORY);
-        GLERROR_TO_STR(GL_INVALID_FRAMEBUFFER_OPERATION_EXT);
+        GLERROR_TO_STR(GL_INVALID_FRAMEBUFFER_OPERATION);
 #undef GLERROR_TO_STR
         default:
             FIXME("Unrecognied GL error 0x%08x\n", error);

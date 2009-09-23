@@ -2210,6 +2210,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
         D3DCB_DESTROYSWAPCHAINFN D3DCB_DestroySwapChain)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    const struct wined3d_context *context;
+    const struct wined3d_gl_info *gl_info;
     int sampler;
     UINT i;
     TRACE("(%p)\n", This);
@@ -2219,7 +2221,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     /* I don't think that the interface guarantees that the device is destroyed from the same thread
      * it was created. Thus make sure a context is active for the glDelete* calls
      */
-    ActivateContext(This, NULL, CTXUSAGE_RESOURCELOAD);
+    context = ActivateContext(This, NULL, CTXUSAGE_RESOURCELOAD);
+    gl_info = context->gl_info;
 
     if(This->logo_surface) IWineD3DSurface_Release(This->logo_surface);
 
@@ -2273,7 +2276,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     }
     if (This->depth_blt_rb) {
         ENTER_GL();
-        GL_EXTCALL(glDeleteRenderbuffersEXT(1, &This->depth_blt_rb));
+        gl_info->fbo_ops.glDeleteRenderbuffers(1, &This->depth_blt_rb);
         LEAVE_GL();
         This->depth_blt_rb = 0;
         This->depth_blt_rb_w = 0;
@@ -5952,7 +5955,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
 
         context = ActivateContext(This, surface, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
-        context_bind_fbo(context, GL_FRAMEBUFFER_EXT, NULL);
+        context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
         buffer = surface_get_gl_buffer(surface, swapchain);
         glDrawBuffer(buffer);
         checkGLcall("glDrawBuffer()");
@@ -5961,9 +5964,9 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
 
         context = ActivateContext(This, NULL, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
-        context_bind_fbo(context, GL_FRAMEBUFFER_EXT, &context->dst_fbo);
-        context_attach_surface_fbo(context, GL_FRAMEBUFFER_EXT, 0, surface);
-        context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER_EXT, NULL, FALSE);
+        context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
+        context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, surface);
+        context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, NULL, FALSE);
     }
 
     if (rect) {
@@ -6320,6 +6323,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     GLbitfield mask = GL_COLOR_BUFFER_BIT; /* TODO: Support blitting depth/stencil surfaces */
     IWineD3DSwapChain *src_swapchain, *dst_swapchain;
+    const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     GLenum gl_filter;
     POINT offset = {0, 0};
@@ -6350,6 +6354,8 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     else if (dst_swapchain) context = ActivateContext(This, dst_surface, CTXUSAGE_RESOURCELOAD);
     else context = ActivateContext(This, NULL, CTXUSAGE_RESOURCELOAD);
 
+    gl_info = context->gl_info;
+
     if (src_swapchain) {
         GLenum buffer = surface_get_gl_buffer(src_surface, src_swapchain);
 
@@ -6373,17 +6379,17 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         }
 
         ENTER_GL();
-        context_bind_fbo(context, GL_READ_FRAMEBUFFER_EXT, NULL);
+        context_bind_fbo(context, GL_READ_FRAMEBUFFER, NULL);
         glReadBuffer(buffer);
         checkGLcall("glReadBuffer()");
     } else {
         TRACE("Source surface %p is offscreen\n", src_surface);
         ENTER_GL();
-        context_bind_fbo(context, GL_READ_FRAMEBUFFER_EXT, &context->src_fbo);
-        context_attach_surface_fbo(context, GL_READ_FRAMEBUFFER_EXT, 0, src_surface);
-        glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+        context_bind_fbo(context, GL_READ_FRAMEBUFFER, &context->src_fbo);
+        context_attach_surface_fbo(context, GL_READ_FRAMEBUFFER, 0, src_surface);
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
         checkGLcall("glReadBuffer()");
-        context_attach_depth_stencil_fbo(context, GL_READ_FRAMEBUFFER_EXT, NULL, FALSE);
+        context_attach_depth_stencil_fbo(context, GL_READ_FRAMEBUFFER, NULL, FALSE);
     }
     LEAVE_GL();
 
@@ -6412,29 +6418,29 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         }
 
         ENTER_GL();
-        context_bind_fbo(context, GL_DRAW_FRAMEBUFFER_EXT, NULL);
+        context_bind_fbo(context, GL_DRAW_FRAMEBUFFER, NULL);
         glDrawBuffer(buffer);
         checkGLcall("glDrawBuffer()");
     } else {
         TRACE("Destination surface %p is offscreen\n", dst_surface);
 
         ENTER_GL();
-        context_bind_fbo(context, GL_DRAW_FRAMEBUFFER_EXT, &context->dst_fbo);
-        context_attach_surface_fbo(context, GL_DRAW_FRAMEBUFFER_EXT, 0, dst_surface);
-        glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+        context_bind_fbo(context, GL_DRAW_FRAMEBUFFER, &context->dst_fbo);
+        context_attach_surface_fbo(context, GL_DRAW_FRAMEBUFFER, 0, dst_surface);
+        glDrawBuffer(GL_COLOR_ATTACHMENT0);
         checkGLcall("glDrawBuffer()");
-        context_attach_depth_stencil_fbo(context, GL_DRAW_FRAMEBUFFER_EXT, NULL, FALSE);
+        context_attach_depth_stencil_fbo(context, GL_DRAW_FRAMEBUFFER, NULL, FALSE);
     }
     glDisable(GL_SCISSOR_TEST);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
 
     if (flip) {
-        GL_EXTCALL(glBlitFramebufferEXT(src_rect->x1, src_rect->y1, src_rect->x2, src_rect->y2,
-                dst_rect->x1, dst_rect->y2, dst_rect->x2, dst_rect->y1, mask, gl_filter));
+        gl_info->fbo_ops.glBlitFramebuffer(src_rect->x1, src_rect->y1, src_rect->x2, src_rect->y2,
+                dst_rect->x1, dst_rect->y2, dst_rect->x2, dst_rect->y1, mask, gl_filter);
         checkGLcall("glBlitFramebuffer()");
     } else {
-        GL_EXTCALL(glBlitFramebufferEXT(src_rect->x1, src_rect->y1, src_rect->x2, src_rect->y2,
-                dst_rect->x1, dst_rect->y1, dst_rect->x2, dst_rect->y2, mask, gl_filter));
+        gl_info->fbo_ops.glBlitFramebuffer(src_rect->x1, src_rect->y1, src_rect->x2, src_rect->y2,
+                dst_rect->x1, dst_rect->y1, dst_rect->x2, dst_rect->y2, mask, gl_filter);
         checkGLcall("glBlitFramebuffer()");
     }
 
@@ -6878,10 +6884,13 @@ static BOOL is_display_mode_supported(IWineD3DDeviceImpl *This, const WINED3DPRE
 void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain_iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *) swapchain_iface;
+    const struct wined3d_context *context;
+    const struct wined3d_gl_info *gl_info;
     UINT i;
     IWineD3DBaseShaderImpl *shader;
 
-    ActivateContext(This, NULL, CTXUSAGE_RESOURCELOAD);
+    context = ActivateContext(This, NULL, CTXUSAGE_RESOURCELOAD);
+    gl_info = context->gl_info;
 
     IWineD3DDevice_EnumResources(iface, reset_unload_resources, NULL);
     LIST_FOR_EACH_ENTRY(shader, &This->shaders, IWineD3DBaseShaderImpl, baseShader.shader_list_entry) {
@@ -6894,7 +6903,7 @@ void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain_
         This->depth_blt_texture = 0;
     }
     if (This->depth_blt_rb) {
-        GL_EXTCALL(glDeleteRenderbuffersEXT(1, &This->depth_blt_rb));
+        gl_info->fbo_ops.glDeleteRenderbuffers(1, &This->depth_blt_rb);
         This->depth_blt_rb = 0;
         This->depth_blt_rb_w = 0;
         This->depth_blt_rb_h = 0;

@@ -4097,6 +4097,29 @@ typedef BOOL (WINAPI * WINED3D_PFNWGLSETPIXELFORMATWINE) (HDC hdc, int iPixelFor
  * Structures
  ****************************************************/
 
+struct wined3d_fbo_ops
+{
+    PGLFNGLISRENDERBUFFERPROC                       glIsRenderbuffer;
+    PGLFNGLBINDRENDERBUFFERPROC                     glBindRenderbuffer;
+    PGLFNGLDELETERENDERBUFFERSPROC                  glDeleteRenderbuffers;
+    PGLFNGLGENRENDERBUFFERSPROC                     glGenRenderbuffers;
+    PGLFNGLRENDERBUFFERSTORAGEPROC                  glRenderbufferStorage;
+    PGLFNRENDERBUFFERSTORAGEMULTISAMPLEPROC         glRenderbufferStorageMultisample;
+    PGLFNGLGETRENDERBUFFERPARAMETERIVPROC           glGetRenderbufferParameteriv;
+    PGLFNGLISFRAMEBUFFERPROC                        glIsFramebuffer;
+    PGLFNGLBINDFRAMEBUFFERPROC                      glBindFramebuffer;
+    PGLFNGLDELETEFRAMEBUFFERSPROC                   glDeleteFramebuffers;
+    PGLFNGLGENFRAMEBUFFERSPROC                      glGenFramebuffers;
+    PGLFNGLCHECKFRAMEBUFFERSTATUSPROC               glCheckFramebufferStatus;
+    PGLFNGLFRAMEBUFFERTEXTURE1DPROC                 glFramebufferTexture1D;
+    PGLFNGLFRAMEBUFFERTEXTURE2DPROC                 glFramebufferTexture2D;
+    PGLFNGLFRAMEBUFFERTEXTURE3DPROC                 glFramebufferTexture3D;
+    PGLFNGLFRAMEBUFFERRENDERBUFFERPROC              glFramebufferRenderbuffer;
+    PGLFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC  glGetFramebufferAttachmentParameteriv;
+    PGLFNGLBLITFRAMEBUFFERPROC                      glBlitFramebuffer;
+    PGLFNGLGENERATEMIPMAPPROC                       glGenerateMipmap;
+};
+
 #define USE_GL_FUNC(type, pfn, ext, replace) type pfn;
 
 struct wined3d_gl_info
@@ -4145,6 +4168,7 @@ struct wined3d_gl_info
 
     BOOL supported[WINED3D_GL_EXT_COUNT];
 
+    struct wined3d_fbo_ops fbo_ops;
     /* GL function pointers */
     GL_EXT_FUNCS_GEN
     /* WGL function pointers */

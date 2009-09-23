@@ -70,7 +70,7 @@ static void surface_cleanup(IWineD3DSurfaceImpl *This)
 
     LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->renderbuffers, renderbuffer_entry_t, entry)
     {
-        GL_EXTCALL(glDeleteRenderbuffersEXT(1, &entry->id));
+        gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
         HeapFree(GetProcessHeap(), 0, entry);
     }
 
@@ -610,6 +610,7 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
 /* GL locking is done by the caller */
 void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int width, unsigned int height) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    const struct wined3d_gl_info *gl_info = &This->resource.wineD3DDevice->adapter->gl_info;
     renderbuffer_entry_t *entry;
     GLuint renderbuffer = 0;
     unsigned int src_width, src_height;
@@ -636,10 +637,10 @@ void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int wi
     }
 
     if (!renderbuffer) {
-        GL_EXTCALL(glGenRenderbuffersEXT(1, &renderbuffer));
-        GL_EXTCALL(glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, renderbuffer));
-        GL_EXTCALL(glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT,
-                This->resource.format_desc->glInternal, width, height));
+        gl_info->fbo_ops.glGenRenderbuffers(1, &renderbuffer);
+        gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+        gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER,
+                This->resource.format_desc->glInternal, width, height);
 
         entry = HeapAlloc(GetProcessHeap(), 0, sizeof(renderbuffer_entry_t));
         entry->width = width;
@@ -814,6 +815,8 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
     IWineD3DBaseTexture *texture = NULL;
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    const struct wined3d_context *context;
+    const struct wined3d_gl_info *gl_info;
     renderbuffer_entry_t *entry, *entry2;
     TRACE("(%p)\n", iface);
 
@@ -844,7 +847,8 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
     IWineD3DSurface_ModifyLocation(iface, SFLAG_INSRGBTEX, FALSE);
     This->Flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
 
-    ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
+    context = ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
+    gl_info = context->gl_info;
 
     /* Destroy PBOs, but load them into real sysmem before */
     if(This->Flags & SFLAG_PBO) {
@@ -857,7 +861,7 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
      */
     LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->renderbuffers, renderbuffer_entry_t, entry) {
         ENTER_GL();
-        GL_EXTCALL(glDeleteRenderbuffersEXT(1, &entry->id));
+        gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
         LEAVE_GL();
         list_remove(&entry->entry);
         HeapFree(GetProcessHeap(), 0, entry);
@@ -1885,7 +1889,8 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             break;
 
         case WINED3DFMT_D15S1:
-            if (GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
+            if (GL_SUPPORT(ARB_FRAMEBUFFER_OBJECT)
+                    || GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
             {
                 *convert = CONVERT_D15S1;
                 *target_bpp = 4;
@@ -1893,7 +1898,8 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             break;
 
         case WINED3DFMT_D24X4S4:
-            if (GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
+            if (GL_SUPPORT(ARB_FRAMEBUFFER_OBJECT)
+                    || GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
             {
                 *convert = CONVERT_D24X4S4;
             }
@@ -3581,7 +3587,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
          * FBO support, so it doesn't really make sense to try and make it work with different offscreen rendering
          * backends.
          */
-        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && GL_SUPPORT(EXT_FRAMEBUFFER_BLIT)
+        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
+                && myDevice->adapter->gl_info.fbo_ops.glBlitFramebuffer
                 && surface_can_stretch_rect(Src, This))
         {
             stretch_rect_fbo((IWineD3DDevice *)myDevice, SrcSurface, &srect,
@@ -3645,7 +3652,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             Src->palette = This->palette;
         }
 
-        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && GL_SUPPORT(EXT_FRAMEBUFFER_BLIT)
+        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
+                && myDevice->adapter->gl_info.fbo_ops.glBlitFramebuffer
                 && !(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE))
                 && surface_can_stretch_rect(Src, This))
         {
@@ -4342,6 +4350,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, struct wined3d_context *co
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
 
     TRACE("(%p) New location %#x\n", This, location);
 
@@ -4373,7 +4382,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, struct wined3d_context *co
 
             /* Note that we use depth_blt here as well, rather than glCopyTexImage2D
              * directly on the FBO texture. That's because we need to flip. */
-            context_bind_fbo(context, GL_FRAMEBUFFER_EXT, NULL);
+            context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
             if (This->texture_target == GL_TEXTURE_RECTANGLE_ARB)
             {
                 glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_binding);
@@ -4395,30 +4404,32 @@ void surface_load_ds_location(IWineD3DSurface *iface, struct wined3d_context *co
 
             /* Setup the destination */
             if (!device->depth_blt_rb) {
-                GL_EXTCALL(glGenRenderbuffersEXT(1, &device->depth_blt_rb));
+                gl_info->fbo_ops.glGenRenderbuffers(1, &device->depth_blt_rb);
                 checkGLcall("glGenRenderbuffersEXT");
             }
             if (device->depth_blt_rb_w != This->currentDesc.Width
                     || device->depth_blt_rb_h != This->currentDesc.Height) {
-                GL_EXTCALL(glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, device->depth_blt_rb));
+                gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, device->depth_blt_rb);
                 checkGLcall("glBindRenderbufferEXT");
-                GL_EXTCALL(glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGBA8, This->currentDesc.Width, This->currentDesc.Height));
+                gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8,
+                        This->currentDesc.Width, This->currentDesc.Height);
                 checkGLcall("glRenderbufferStorageEXT");
                 device->depth_blt_rb_w = This->currentDesc.Width;
                 device->depth_blt_rb_h = This->currentDesc.Height;
             }
 
-            context_bind_fbo(context, GL_FRAMEBUFFER_EXT, &context->dst_fbo);
-            GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, device->depth_blt_rb));
+            context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
+            gl_info->fbo_ops.glFramebufferRenderbuffer(GL_FRAMEBUFFER,
+                    GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, device->depth_blt_rb);
             checkGLcall("glFramebufferRenderbufferEXT");
-            context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER_EXT, iface, FALSE);
+            context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, iface, FALSE);
 
             /* Do the actual blit */
             surface_depth_blt(This, device->depth_blt_texture, This->currentDesc.Width, This->currentDesc.Height, bind_target);
             checkGLcall("depth_blt");
 
-            if (context->current_fbo) context_bind_fbo(context, GL_FRAMEBUFFER_EXT, &context->current_fbo->id);
-            else context_bind_fbo(context, GL_FRAMEBUFFER_EXT, NULL);
+            if (context->current_fbo) context_bind_fbo(context, GL_FRAMEBUFFER, &context->current_fbo->id);
+            else context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
 
             LEAVE_GL();
         } else {
@@ -4430,12 +4441,12 @@ void surface_load_ds_location(IWineD3DSurface *iface, struct wined3d_context *co
 
             ENTER_GL();
 
-            context_bind_fbo(context, GL_FRAMEBUFFER_EXT, NULL);
+            context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
             surface_depth_blt(This, This->texture_name, This->currentDesc.Width,
                     This->currentDesc.Height, This->texture_target);
             checkGLcall("depth_blt");
 
-            if (context->current_fbo) context_bind_fbo(context, GL_FRAMEBUFFER_EXT, &context->current_fbo->id);
+            if (context->current_fbo) context_bind_fbo(context, GL_FRAMEBUFFER, &context->current_fbo->id);
 
             LEAVE_GL();
         } else {
