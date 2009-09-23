@@ -72,6 +72,7 @@ static const struct {
     {"GL_ARB_pixel_buffer_object",          ARB_PIXEL_BUFFER_OBJECT,        0                           },
     {"GL_ARB_point_parameters",             ARB_POINT_PARAMETERS,           0                           },
     {"GL_ARB_point_sprite",                 ARB_POINT_SPRITE,               0                           },
+    {"GL_ARB_provoking_vertex",             ARB_PROVOKING_VERTEX,           0                           },
     {"GL_ARB_texture_border_clamp",         ARB_TEXTURE_BORDER_CLAMP,       0                           },
     {"GL_ARB_texture_compression",          ARB_TEXTURE_COMPRESSION,        0                           },
     {"GL_ARB_texture_cube_map",             ARB_TEXTURE_CUBE_MAP,           0                           },

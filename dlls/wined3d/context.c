@@ -1362,7 +1362,11 @@ struct wined3d_context *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceI
         checkGLcall("glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)");
     }
 
-    if (GL_SUPPORT(EXT_PROVOKING_VERTEX))
+    if (GL_SUPPORT(ARB_PROVOKING_VERTEX))
+    {
+        GL_EXTCALL(glProvokingVertex(GL_FIRST_VERTEX_CONVENTION));
+    }
+    else if (GL_SUPPORT(EXT_PROVOKING_VERTEX))
     {
         GL_EXTCALL(glProvokingVertexEXT(GL_FIRST_VERTEX_CONVENTION_EXT));
     }

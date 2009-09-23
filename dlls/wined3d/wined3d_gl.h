@@ -1884,6 +1884,17 @@ typedef void (WINE_GLAPI *WINED3D_PFNGLMULTITEXCOORD4SVARBPROC) (GLenum target, 
 #endif
 typedef void (WINE_GLAPI * PGLFNGLPOINTPARAMETERFARBPROC) (GLenum pname, GLfloat param);
 typedef void (WINE_GLAPI * PGLFNGLPOINTPARAMETERFVARBPROC) (GLenum pname, const GLfloat *params);
+
+/* GL_ARB_provoking_vertex */
+#ifndef GL_ARB_provoking_vertex
+#define GL_ARB_provoking_vertex 1
+#define GL_FIRST_VERTEX_CONVENTION                      0x8e4d
+#define GL_LAST_VERTEX_CONVENTION                       0x8e4e
+#define GL_PROVOKING_VERTEX                             0x8e4f
+#define GL_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION     0x8e4c
+#endif
+typedef void (WINE_GLAPI * PGLFNGLPROVOKINGVERTEXPROC)(GLenum mode);
+
 /* GL_ARB_vertex_blend */
 #ifndef GL_ARB_vertex_blend
 #define GL_ARB_vertex_blend 1
@@ -3549,6 +3560,7 @@ typedef enum _GL_SupportedExt {
   ARB_MULTITEXTURE,
   ARB_OCCLUSION_QUERY,
   ARB_POINT_PARAMETERS,
+  ARB_PROVOKING_VERTEX,
   ARB_PIXEL_BUFFER_OBJECT,
   ARB_POINT_SPRITE,
   ARB_TEXTURE_COMPRESSION,
@@ -3714,6 +3726,8 @@ typedef enum _GL_SupportedExt {
     /* GL_ARB_point_parameters */ \
     USE_GL_FUNC(PGLFNGLPOINTPARAMETERFARBPROC,                      glPointParameterfARB,                       ARB_POINT_PARAMETERS,   NULL )\
     USE_GL_FUNC(PGLFNGLPOINTPARAMETERFVARBPROC,                     glPointParameterfvARB,                      ARB_POINT_PARAMETERS,   NULL )\
+    /* GL_ARB_provoking_vertex */ \
+    USE_GL_FUNC(PGLFNGLPROVOKINGVERTEXPROC,                         glProvokingVertex,                          ARB_PROVOKING_VERTEX,   NULL)\
     /* GL_ARB_texture_compression */ \
     USE_GL_FUNC(PGLFNCOMPRESSEDTEXIMAGE2DPROC,                      glCompressedTexImage2DARB,                  ARB_TEXTURE_COMPRESSION,NULL )\
     USE_GL_FUNC(PGLFNCOMPRESSEDTEXIMAGE3DPROC,                      glCompressedTexImage3DARB,                  ARB_TEXTURE_COMPRESSION,NULL )\
