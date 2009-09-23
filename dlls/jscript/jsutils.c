@@ -603,8 +603,18 @@ HRESULT to_object(script_ctx_t *ctx, VARIANT *v, IDispatch **disp)
         *disp = (IDispatch*)_IDispatchEx_(dispex);
         break;
     case VT_DISPATCH:
-        IDispatch_AddRef(V_DISPATCH(v));
-        *disp = V_DISPATCH(v);
+        if(V_DISPATCH(v)) {
+            IDispatch_AddRef(V_DISPATCH(v));
+            *disp = V_DISPATCH(v);
+        }else {
+            DispatchEx *obj;
+
+            hres = create_object(ctx, NULL, &obj);
+            if(FAILED(hres))
+                return hres;
+
+            *disp = (IDispatch*)_IDispatchEx_(obj);
+        }
         break;
     case VT_BOOL:
         hres = create_bool(ctx, V_BOOL(v), &dispex);

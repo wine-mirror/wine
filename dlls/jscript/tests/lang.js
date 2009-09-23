@@ -948,6 +948,11 @@ ok(!nullDisp === true, "!nullDisp = " + !nullDisp);
 ok(String(nullDisp) === "null", "String(nullDisp) = " + String(nullDisp));
 ok(nullDisp != new Object(), "nullDisp == new Object()");
 ok(new Object() != nullDisp, "new Object() == nullDisp");
+ok((typeof Object(nullDisp)) === "object", "typeof Object(nullDisp) !== 'object'");
+tmp = getVT(Object(nullDisp));
+ok(tmp === "VT_DISPATCH", "getVT(Object(nullDisp) = " + tmp);
+tmp = Object(nullDisp).toString();
+ok(tmp === "[object Object]", "Object(nullDisp).toString() = " + tmp);
 
 function do_test() {}
 function nosemicolon() {} nosemicolon();
