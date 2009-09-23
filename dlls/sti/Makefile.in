@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = sti.dll
 IMPORTLIB = sti
-IMPORTS   = ole32 advapi32 kernel32
+IMPORTS   = uuid ole32 advapi32 kernel32
 
 C_SRCS = \
 	regsvr.c \
