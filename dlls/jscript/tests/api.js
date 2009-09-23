@@ -1621,6 +1621,69 @@ exception_test(function() {eval("'unterminated")}, "SyntaxError", -2146827273);
 exception_test(function() {eval("nonexistingfunc()")}, "TypeError", -2146823281);
 exception_test(function() {RegExp(/a/, "g");}, "RegExpError", -2146823271);
 
+function testThisExcept(func, number) {
+    exception_test(function() {func.call(new Object())}, "TypeError", number);
+}
+
+function testBoolThis(func) {
+    testThisExcept(Boolean.prototype[func], -2146823278);
+}
+
+testBoolThis("toString");
+testBoolThis("valueOf");
+
+function testDateThis(func) {
+    testThisExcept(Date.prototype[func], -2146823282);
+}
+
+testDateThis("getDate");
+testDateThis("getDay");
+testDateThis("getFullYear");
+testDateThis("getHours");
+testDateThis("getMilliseconds");
+testDateThis("getMinutes");
+testDateThis("getMonth");
+testDateThis("getSeconds");
+testDateThis("getTime");
+testDateThis("getTimezoneOffset");
+testDateThis("getUTCDate");
+testDateThis("getUTCDay");
+testDateThis("getUTCFullYear");
+testDateThis("getUTCHours");
+testDateThis("getUTCMilliseconds");
+testDateThis("getUTCMinutes");
+testDateThis("getUTCMonth");
+testDateThis("getUTCSeconds");
+testDateThis("setDate");
+testDateThis("setFullYear");
+testDateThis("setHours");
+testDateThis("setMilliseconds");
+testDateThis("setMinutes");
+testDateThis("setMonth");
+testDateThis("setSeconds");
+testDateThis("setTime");
+testDateThis("setUTCDate");
+testDateThis("setUTCFullYear");
+testDateThis("setUTCHours");
+testDateThis("setUTCMilliseconds");
+testDateThis("setUTCMinutes");
+testDateThis("setUTCMonth");
+testDateThis("setUTCSeconds");
+testDateThis("toDateString");
+testDateThis("toLocaleDateString");
+testDateThis("toLocaleString");
+testDateThis("toLocaleTimeString");
+testDateThis("toString");
+testDateThis("toTimeString");
+testDateThis("toUTCString");
+testDateThis("valueOf");
+
+function testArrayThis(func) {
+    testThisExcept(Array.prototype[func], -2146823257);
+}
+
+testArrayThis("toString");
+
 function testArrayHostThis(func) {
     exception_test(function() { Array.prototype[func].call(testObj); }, "TypeError", -2146823274);
 }

@@ -936,10 +936,8 @@ static HRESULT Array_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
     TRACE("\n");
 
     array = array_this(jsthis);
-    if(!array) {
-        FIXME("not Array object\n");
-        return E_FAIL;
-    }
+    if(!array)
+        return throw_type_error(ctx, ei, IDS_ARRAY_EXPECTED, NULL);
 
     return array_join(ctx, &array->dispex, array->length, default_separatorW, retv, ei, sp);
 }

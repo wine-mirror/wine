@@ -41,4 +41,5 @@ STRINGTABLE DISCARDABLE
     IDS_JSCRIPT_EXPECTED    "JScript object expected"
     IDS_REGEXP_SYNTAX_ERROR "Syntax error in regular expression"
     IDS_INVALID_LENGTH      "Array length must be a finite positive integer"
+    IDS_ARRAY_EXPECTED      "Array object expected"
 }
