@@ -2775,10 +2775,12 @@ typedef struct IWineD3DVertexShaderImpl {
     UINT                       min_rel_offset, max_rel_offset;
     UINT                       rel_offset;
 } IWineD3DVertexShaderImpl;
-extern const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl DECLSPEC_HIDDEN;
 
 void find_vs_compile_args(IWineD3DVertexShaderImpl *shader, IWineD3DStateBlockImpl *stateblock,
         struct vs_compile_args *args) DECLSPEC_HIDDEN;
+HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *device,
+        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
+        IUnknown *parent) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure

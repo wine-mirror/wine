@@ -332,7 +332,7 @@ static HRESULT WINAPI IWIneD3DVertexShaderImpl_SetLocalConstantsF(IWineD3DVertex
     return WINED3D_OK;
 }
 
-const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
+static const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
 {
     /*** IUnknown methods ***/
     IWineD3DVertexShaderImpl_QueryInterface,
@@ -351,4 +351,28 @@ const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
 void find_vs_compile_args(IWineD3DVertexShaderImpl *shader, IWineD3DStateBlockImpl *stateblock, struct vs_compile_args *args) {
     args->fog_src = stateblock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
     args->swizzle_map = ((IWineD3DDeviceImpl *)shader->baseShader.device)->strided_streams.swizzle_map;
+}
+
+HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *device,
+        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
+        IUnknown *parent)
+{
+    HRESULT hr;
+
+    if (!byte_code) return WINED3DERR_INVALIDCALL;
+
+    shader->lpVtbl = &IWineD3DVertexShader_Vtbl;
+    shader->parent = parent;
+    shader_init(&shader->baseShader, (IWineD3DDevice *)device);
+    list_add_head(&device->shaders, &shader->baseShader.shader_list_entry);
+
+    hr = IWineD3DVertexShader_SetFunction((IWineD3DVertexShader *)shader, byte_code, output_signature);
+    if (FAILED(hr))
+    {
+        WARN("Failed to set function, hr %#x.\n", hr);
+        shader_cleanup((IWineD3DBaseShader *)shader);
+        return hr;
+    }
+
+    return WINED3D_OK;
 }

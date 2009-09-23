@@ -1764,38 +1764,29 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
         const DWORD *pFunction, const struct wined3d_shader_signature *output_signature,
         IWineD3DVertexShader **ppVertexShader, IUnknown *parent)
 {
-    IWineD3DDeviceImpl       *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVertexShaderImpl *object;  /* NOTE: impl usage is ok, this is a create */
-    HRESULT hr = WINED3D_OK;
-
-    if (!pFunction) return WINED3DERR_INVALIDCALL;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DVertexShaderImpl *object;
+    HRESULT hr;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
-        ERR("Out of memory\n");
-        *ppVertexShader = NULL;
-        return WINED3DERR_OUTOFVIDEOMEMORY;
+        ERR("Failed to allocate shader memory.\n");
+        return E_OUTOFMEMORY;
     }
 
-    object->lpVtbl = &IWineD3DVertexShader_Vtbl;
-    object->parent = parent;
-    shader_init(&object->baseShader, iface);
-    list_add_head(&This->shaders, &object->baseShader.shader_list_entry);
-    *ppVertexShader = (IWineD3DVertexShader *)object;
-
-    TRACE("(%p) : Created vertex shader %p\n", This, *ppVertexShader);
-
-    hr = IWineD3DVertexShader_SetFunction(*ppVertexShader, pFunction, output_signature);
+    hr = vertexshader_init(object, This, pFunction, output_signature, parent);
     if (FAILED(hr))
     {
-        WARN("(%p) : Failed to set function, returning %#x\n", iface, hr);
-        IWineD3DVertexShader_Release(*ppVertexShader);
-        *ppVertexShader = NULL;
+        WARN("Failed to initialize vertex shader, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
         return hr;
     }
 
-    return hr;
+    TRACE("Created vertex shader %p.\n", object);
+    *ppVertexShader = (IWineD3DVertexShader *)object;
+
+    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface,
