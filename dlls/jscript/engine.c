@@ -1550,7 +1550,7 @@ HRESULT new_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, j
         return E_FAIL;
     }
 
-    hres = disp_call(V_DISPATCH(&constr), DISPID_VALUE, ctx->parser->script->lcid,
+    hres = disp_call(ctx->parser->script, V_DISPATCH(&constr), DISPID_VALUE,
                      DISPATCH_CONSTRUCT, &dp, &var, ei, NULL/*FIXME*/);
     IDispatch_Release(V_DISPATCH(&constr));
     if(FAILED(hres))
@@ -1581,13 +1581,13 @@ HRESULT call_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, 
         switch(exprval.type) {
         case EXPRVAL_VARIANT:
             if(V_VT(&exprval.u.var) == VT_DISPATCH)
-                hres = disp_call(V_DISPATCH(&exprval.u.var), DISPID_VALUE, ctx->parser->script->lcid,
+                hres = disp_call(ctx->parser->script, V_DISPATCH(&exprval.u.var), DISPID_VALUE,
                         DISPATCH_METHOD, &dp, flags & EXPR_NOVAL ? NULL : &var, ei, NULL/*FIXME*/);
             else
                 hres = throw_type_error(ctx->var_disp->ctx, ei, IDS_NO_PROPERTY, NULL);
             break;
         case EXPRVAL_IDREF:
-            hres = disp_call(exprval.u.idref.disp, exprval.u.idref.id, ctx->parser->script->lcid,
+            hres = disp_call(ctx->parser->script, exprval.u.idref.disp, exprval.u.idref.id,
                     DISPATCH_METHOD, &dp, flags & EXPR_NOVAL ? NULL : &var, ei, NULL/*FIXME*/);
             break;
         case EXPRVAL_INVALID:

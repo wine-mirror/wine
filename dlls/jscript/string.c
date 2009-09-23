@@ -854,7 +854,7 @@ static HRESULT rep_call(DispatchEx *func, const WCHAR *str, match_result_t *matc
     }
 
     if(SUCCEEDED(hres))
-        hres = jsdisp_call_value(func, lcid, DISPATCH_METHOD, &dp, &var, ei, caller);
+        hres = jsdisp_call_value(func, DISPATCH_METHOD, &dp, &var, ei, caller);
 
     for(i=0; i < parens_cnt+1; i++) {
         if(i != parens_cnt+1)

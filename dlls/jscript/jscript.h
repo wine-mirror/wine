@@ -130,10 +130,10 @@ HRESULT init_dispex(DispatchEx*,script_ctx_t*,const builtin_info_t*,DispatchEx*)
 HRESULT init_dispex_from_constr(DispatchEx*,script_ctx_t*,const builtin_info_t*,DispatchEx*);
 DispatchEx *iface_to_jsdisp(IUnknown*);
 
-HRESULT disp_call(IDispatch*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
-HRESULT jsdisp_call_value(DispatchEx*,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
-HRESULT jsdisp_call(DispatchEx*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
-HRESULT jsdisp_call_name(DispatchEx*,const WCHAR*,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
+HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
+HRESULT jsdisp_call_value(DispatchEx*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
+HRESULT jsdisp_call(DispatchEx*,DISPID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
+HRESULT jsdisp_call_name(DispatchEx*,const WCHAR*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT disp_propget(IDispatch*,DISPID,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT disp_propput(IDispatch*,DISPID,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_propget(DispatchEx*,DISPID,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);

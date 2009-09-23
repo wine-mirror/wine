@@ -107,7 +107,7 @@ static HRESULT constructor_call(DispatchEx *constr, LCID lcid, WORD flags, DISPP
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     if(flags != DISPATCH_PROPERTYGET)
-        return jsdisp_call_value(constr, lcid, flags, dp, retv, ei, sp);
+        return jsdisp_call_value(constr, flags, dp, retv, ei, sp);
 
     V_VT(retv) = VT_DISPATCH;
     V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(constr);

@@ -78,7 +78,7 @@ static HRESULT Object_toLocaleString(DispatchEx *dispex, LCID lcid, WORD flags, 
 
     TRACE("\n");
 
-    return jsdisp_call_name(dispex, toStringW, lcid, DISPATCH_METHOD, &params, retv, ei, sp);
+    return jsdisp_call_name(dispex, toStringW, DISPATCH_METHOD, &params, retv, ei, sp);
 }
 
 static HRESULT Object_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
