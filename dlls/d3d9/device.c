@@ -1967,6 +1967,36 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetIndices(LPDIRECT3DDEVICE9EX ifac
     return rc;
 }
 
+static HRESULT WINAPI IDirect3DDevice9Impl_CreatePixelShader(IDirect3DDevice9Ex *iface,
+        const DWORD *byte_code, IDirect3DPixelShader9 **shader)
+{
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    IDirect3DPixelShader9Impl *object;
+    HRESULT hr;
+
+    TRACE("iface %p, byte_code %p, shader %p.\n", iface, byte_code, shader);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        FIXME("Failed to allocate pixel shader memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = pixelshader_init(object, This, byte_code);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize pixel shader, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created pixel shader %p.\n", object);
+    *shader = (IDirect3DPixelShader9 *)object;
+
+    return D3D_OK;
+}
+
 static HRESULT  WINAPI  IDirect3DDevice9Impl_DrawRectPatch(LPDIRECT3DDEVICE9EX iface, UINT Handle, CONST float* pNumSegs, CONST D3DRECTPATCH_INFO* pRectPatchInfo) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hr;

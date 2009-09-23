@@ -222,8 +222,6 @@ extern HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShaderConstantB(IDirect3DDev
         UINT StartRegister, const BOOL *pConstantData, UINT BoolCount) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShaderConstantB(IDirect3DDevice9Ex *iface,
         UINT StartRegister, BOOL *pConstantData, UINT BoolCount) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI IDirect3DDevice9Impl_CreatePixelShader(IDirect3DDevice9Ex *iface,
-        const DWORD *pFunction, IDirect3DPixelShader9 **ppShader) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShader(IDirect3DDevice9Ex *iface,
         IDirect3DPixelShader9 *pShader) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShader(IDirect3DDevice9Ex *iface,
@@ -550,6 +548,9 @@ typedef struct IDirect3DPixelShader9Impl {
     /* Parent reference */
     LPDIRECT3DDEVICE9EX       parentDevice;
 } IDirect3DPixelShader9Impl;
+
+HRESULT pixelshader_init(IDirect3DPixelShader9Impl *shader,
+        IDirect3DDevice9Impl *device, const DWORD *byte_code) DECLSPEC_HIDDEN;
 
 /* --------------- */
 /* IDirect3DQuery9 */
