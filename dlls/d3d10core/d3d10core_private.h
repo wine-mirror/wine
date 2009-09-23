@@ -132,7 +132,6 @@ HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d10_
         const void *shader_byte_code, SIZE_T shader_byte_code_length) DECLSPEC_HIDDEN;
 
 /* ID3D10VertexShader */
-extern const struct ID3D10VertexShaderVtbl d3d10_vertex_shader_vtbl DECLSPEC_HIDDEN;
 struct d3d10_vertex_shader
 {
     const struct ID3D10VertexShaderVtbl *vtbl;
@@ -141,6 +140,9 @@ struct d3d10_vertex_shader
     IWineD3DVertexShader *wined3d_shader;
     struct wined3d_shader_signature output_signature;
 };
+
+HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d10_device *device,
+        const void *byte_code, SIZE_T byte_code_length) DECLSPEC_HIDDEN;
 
 /* ID3D10GeometryShader */
 extern const struct ID3D10GeometryShaderVtbl d3d10_geometry_shader_vtbl DECLSPEC_HIDDEN;
