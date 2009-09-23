@@ -1795,37 +1795,28 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface
         IWineD3DPixelShader **ppPixelShader, IUnknown *parent)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DPixelShaderImpl *object; /* NOTE: impl allowed, this is a create */
-    HRESULT hr = WINED3D_OK;
-
-    if (!pFunction) return WINED3DERR_INVALIDCALL;
+    IWineD3DPixelShaderImpl *object;
+    HRESULT hr;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
-        ERR("Out of memory\n");
-        *ppPixelShader = NULL;
-        return WINED3DERR_OUTOFVIDEOMEMORY;
+        ERR("Failed to allocate shader memory.\n");
+        return E_OUTOFMEMORY;
     }
 
-    object->lpVtbl = &IWineD3DPixelShader_Vtbl;
-    object->parent = parent;
-    shader_init(&object->baseShader, iface);
-    list_add_head(&This->shaders, &object->baseShader.shader_list_entry);
-    *ppPixelShader = (IWineD3DPixelShader *)object;
-
-    TRACE("(%p) : Created pixel shader %p\n", This, *ppPixelShader);
-
-    hr = IWineD3DPixelShader_SetFunction(*ppPixelShader, pFunction, output_signature);
+    hr = pixelshader_init(object, This, pFunction, output_signature, parent);
     if (FAILED(hr))
     {
-        WARN("(%p) : Failed to set function, returning %#x\n", iface, hr);
-        IWineD3DPixelShader_Release(*ppPixelShader);
-        *ppPixelShader = NULL;
+        WARN("Failed to initialize pixel shader, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
         return hr;
     }
 
-    return hr;
+    TRACE("Created pixel shader %p.\n", object);
+    *ppPixelShader = (IWineD3DPixelShader *)object;
+
+    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DWORD Flags,

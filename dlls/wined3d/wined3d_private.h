@@ -2831,7 +2831,9 @@ typedef struct IWineD3DPixelShaderImpl {
 
 } IWineD3DPixelShaderImpl;
 
-extern const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl DECLSPEC_HIDDEN;
+HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *device,
+        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
+        IUnknown *parent) DECLSPEC_HIDDEN;
 void pixelshader_update_samplers(struct shader_reg_maps *reg_maps,
         IWineD3DBaseTexture * const *textures) DECLSPEC_HIDDEN;
 void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImpl *stateblock,

@@ -343,7 +343,7 @@ void pixelshader_update_samplers(struct shader_reg_maps *reg_maps, IWineD3DBaseT
     }
 }
 
-const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =
+static const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =
 {
     /*** IUnknown methods ***/
     IWineD3DPixelShaderImpl_QueryInterface,
@@ -420,4 +420,28 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImp
             args->fog = FOG_OFF;
         }
     }
+}
+
+HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *device,
+        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
+        IUnknown *parent)
+{
+    HRESULT hr;
+
+    if (!byte_code) return WINED3DERR_INVALIDCALL;
+
+    shader->lpVtbl = &IWineD3DPixelShader_Vtbl;
+    shader->parent = parent;
+    shader_init(&shader->baseShader, (IWineD3DDevice *)device);
+    list_add_head(&device->shaders, &shader->baseShader.shader_list_entry);
+
+    hr = IWineD3DPixelShader_SetFunction((IWineD3DPixelShader *)shader, byte_code, output_signature);
+    if (FAILED(hr))
+    {
+        WARN("Failed to set function, hr %#x.\n", hr);
+        shader_cleanup((IWineD3DBaseShader *)shader);
+        return hr;
+    }
+
+    return WINED3D_OK;
 }
