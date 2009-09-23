@@ -2765,8 +2765,6 @@ typedef struct IWineD3DVertexShaderImpl {
     /* IWineD3DVertexShaderImpl */
     IUnknown                    *parent;
 
-    DWORD                       usage;
-
     /* The GL shader */
     void                        *backend_priv;
 
@@ -2776,8 +2774,6 @@ typedef struct IWineD3DVertexShaderImpl {
 
     UINT                       min_rel_offset, max_rel_offset;
     UINT                       rel_offset;
-
-    UINT                       recompile_count;
 } IWineD3DVertexShaderImpl;
 extern const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl DECLSPEC_HIDDEN;
 
