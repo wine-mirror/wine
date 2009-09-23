@@ -153,7 +153,6 @@ struct d3d10_geometry_shader
 };
 
 /* ID3D10PixelShader */
-extern const struct ID3D10PixelShaderVtbl d3d10_pixel_shader_vtbl DECLSPEC_HIDDEN;
 struct d3d10_pixel_shader
 {
     const struct ID3D10PixelShaderVtbl *vtbl;
@@ -163,8 +162,9 @@ struct d3d10_pixel_shader
     struct wined3d_shader_signature output_signature;
 };
 
-HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length,
-        struct d3d10_shader_info *shader_info) DECLSPEC_HIDDEN;
+HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d10_device *device,
+        const void *byte_code, SIZE_T byte_code_length) DECLSPEC_HIDDEN;
+
 HRESULT shader_parse_signature(const char *data, DWORD data_size, struct wined3d_shader_signature *s) DECLSPEC_HIDDEN;
 void shader_free_signature(struct wined3d_shader_signature *s) DECLSPEC_HIDDEN;
 
