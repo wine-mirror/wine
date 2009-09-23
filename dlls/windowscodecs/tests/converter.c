@@ -236,6 +236,12 @@ static void compare_bitmap_data(const struct bitmap_data *expect, IWICBitmapSour
     HeapFree(GetProcessHeap(), 0, converted_bits);
 }
 
+static const BYTE bits_24bppBGR[] = {
+    255,0,0, 0,255,0, 0,0,255, 0,0,0,
+    0,255,255, 255,0,255, 255,255,0, 255,255,255};
+static const struct bitmap_data testdata_24bppBGR = {
+    &GUID_WICPixelFormat24bppBGR, 24, bits_24bppBGR, 4, 2, 96.0, 96.0};
+
 static const BYTE bits_32bppBGR[] = {
     255,0,0,80, 0,255,0,80, 0,0,255,80, 0,0,0,80,
     0,255,255,80, 255,0,255,80, 255,255,0,80, 255,255,255,80};
@@ -424,6 +430,9 @@ START_TEST(converter)
 
     test_encoder(&testdata_32bppBGR, &CLSID_WICBmpEncoder,
                  &testdata_32bppBGR, &CLSID_WICBmpDecoder, "BMP encoder 32bppBGR");
+
+    test_encoder(&testdata_24bppBGR, &CLSID_WICPngEncoder,
+                 &testdata_24bppBGR, &CLSID_WICPngDecoder, "PNG encoder 24bppBGR");
 
     CoUninitialize();
 }
