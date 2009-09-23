@@ -31,6 +31,28 @@ extern "C" {
 
 DEFINE_GUID(CLSID_Sti, 0xB323F8E0L, 0x2E68, 0x11D0, 0x90, 0xEA, 0x00, 0xAA, 0x00, 0x60, 0xF8, 0x6C);
 
+DEFINE_GUID(IID_IStillImageW, 0x641BD880, 0x2DC8, 0x11D0, 0x90, 0xEA, 0x00, 0xAA, 0x00, 0x60, 0xF8, 0x6C);
+
+DEFINE_GUID(IID_IStillImageA, 0xA7B1F740, 0x1D7F, 0x11D1, 0xAC, 0xA9, 0x00, 0xA0, 0x24, 0x38, 0xAD, 0x48);
+
+#define STI_VERSION_REAL         0x00000002
+#define STI_VERSION_FLAG_UNICODE 0x01000000
+
+#ifndef WINE_NO_UNICODE_MACROS
+# ifdef UNICODE
+#  define STI_VERSION (STI_VERSION_REAL | STI_VERSION_FLAG_UNICODE)
+# else
+#  define STI_VERSION (STI_VERSION_REAL)
+# endif
+#endif
+
+typedef struct IStillImageA *PSTIA;
+typedef struct IStillImageW *PSTIW;
+DECL_WINELIB_TYPE_AW(PSTI)
+
+HRESULT WINAPI StiCreateInstanceA(HINSTANCE hinst, DWORD dwVer, PSTIA *ppSti, LPUNKNOWN pUnkOuter);
+HRESULT WINAPI StiCreateInstanceW(HINSTANCE hinst, DWORD dwVer, PSTIW *ppSti, LPUNKNOWN pUnkOuter);
+
 #ifdef __cplusplus
 };
 #endif
