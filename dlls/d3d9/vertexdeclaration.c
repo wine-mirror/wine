@@ -349,72 +349,50 @@ static HRESULT convert_to_wined3d_declaration(const D3DVERTEXELEMENT9* d3d9_elem
     return D3D_OK;
 }
 
-/* IDirect3DDevice9 IDirect3DVertexDeclaration9 Methods follow: */
-HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexDeclaration(IDirect3DDevice9Ex *iface,
-        const D3DVERTEXELEMENT9 *pVertexElements, IDirect3DVertexDeclaration9 **ppDecl)
+HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration9Impl *declaration,
+        IDirect3DDevice9Impl *device, const D3DVERTEXELEMENT9 *elements)
 {
-    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    IDirect3DVertexDeclaration9Impl *object = NULL;
-    WINED3DVERTEXELEMENT* wined3d_elements;
+    WINED3DVERTEXELEMENT *wined3d_elements;
     UINT wined3d_element_count;
     UINT element_count;
     HRESULT hr;
 
-    TRACE("(%p) : Relay\n", iface);
-    if (NULL == ppDecl) {
-        WARN("(%p) : Caller passed NULL As ppDecl, returning D3DERR_INVALIDCALL\n",This);
-        return D3DERR_INVALIDCALL;
-    }
-
-    hr = convert_to_wined3d_declaration(pVertexElements, &wined3d_elements, &wined3d_element_count);
+    hr = convert_to_wined3d_declaration(elements, &wined3d_elements, &wined3d_element_count);
     if (FAILED(hr))
     {
-        WARN("(%p) : Error parsing vertex declaration\n", This);
+        WARN("Failed to create wined3d vertex declaration elements, hr %#x.\n", hr);
         return hr;
     }
 
-    /* Allocate the storage for the device */
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVertexDeclaration9Impl));
-    if (NULL == object) {
-        HeapFree(GetProcessHeap(), 0, wined3d_elements);
-        FIXME("Allocation of memory failed, returning D3DERR_OUTOFVIDEOMEMORY\n");
-        return D3DERR_OUTOFVIDEOMEMORY;
-    }
-
-    object->lpVtbl = &Direct3DVertexDeclaration9_Vtbl;
-    object->ref = 0;
+    declaration->lpVtbl = &Direct3DVertexDeclaration9_Vtbl;
+    declaration->ref = 1;
 
     element_count = wined3d_element_count + 1;
-    object->elements = HeapAlloc(GetProcessHeap(), 0, element_count * sizeof(D3DVERTEXELEMENT9));
-    if (!object->elements) {
+    declaration->elements = HeapAlloc(GetProcessHeap(), 0, element_count * sizeof(*declaration->elements));
+    if (!declaration->elements)
+    {
         HeapFree(GetProcessHeap(), 0, wined3d_elements);
-        HeapFree(GetProcessHeap(), 0, object);
-        ERR("Memory allocation failed\n");
+        ERR("Failed to allocate vertex declaration elements memory.\n");
         return D3DERR_OUTOFVIDEOMEMORY;
     }
-    CopyMemory(object->elements, pVertexElements, element_count * sizeof(D3DVERTEXELEMENT9));
-    object->element_count = element_count;
+    memcpy(declaration->elements, elements, element_count * sizeof(*elements));
+    declaration->element_count = element_count;
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_CreateVertexDeclaration(This->WineD3DDevice, &object->wineD3DVertexDeclaration,
-            (IUnknown *)object, wined3d_elements, wined3d_element_count);
+    hr = IWineD3DDevice_CreateVertexDeclaration(device->WineD3DDevice, &declaration->wineD3DVertexDeclaration,
+            (IUnknown *)declaration, wined3d_elements, wined3d_element_count);
     wined3d_mutex_unlock();
-
     HeapFree(GetProcessHeap(), 0, wined3d_elements);
-
-    if (FAILED(hr)) {
-
-        /* free up object */
-        WARN("(%p) call to IWineD3DDevice_CreateVertexDeclaration failed\n", This);
-        HeapFree(GetProcessHeap(), 0, object->elements);
-        HeapFree(GetProcessHeap(), 0, object);
-    } else {
-        object->parentDevice = iface;
-        *ppDecl = (LPDIRECT3DVERTEXDECLARATION9) object;
-        IDirect3DVertexDeclaration9_AddRef(*ppDecl);
-         TRACE("(%p) : Created vertex declaration %p\n", This, object);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d vertex declaration, hr %#x.\n", hr);
+        return hr;
     }
-    return hr;
+
+    declaration->parentDevice = (IDirect3DDevice9Ex *)device;
+    IDirect3DDevice9Ex_AddRef(declaration->parentDevice);
+
+    return D3D_OK;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetVertexDeclaration(LPDIRECT3DDEVICE9EX iface, IDirect3DVertexDeclaration9* pDecl) {

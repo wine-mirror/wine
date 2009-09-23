@@ -1678,6 +1678,42 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_ProcessVertices(LPDIRECT3DDEVICE9EX
     return hr;
 }
 
+static HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexDeclaration(IDirect3DDevice9Ex *iface,
+        const D3DVERTEXELEMENT9 *elements, IDirect3DVertexDeclaration9 **declaration)
+{
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    IDirect3DVertexDeclaration9Impl *object;
+    HRESULT hr;
+
+    TRACE("iface %p, elements %p, declaration %p.\n", iface, elements, declaration);
+
+    if (!declaration)
+    {
+        WARN("Caller passed a NULL declaration, returning D3DERR_INVALIDCALL.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate vertex declaration memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = vertexdeclaration_init(object, This, elements);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize vertex declaration, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created vertex declaration %p.\n", object);
+    *declaration = (IDirect3DVertexDeclaration9 *)object;
+
+    return D3D_OK;
+}
+
 static IDirect3DVertexDeclaration9 *getConvertedDecl(IDirect3DDevice9Impl *This, DWORD fvf) {
     HRESULT hr;
     D3DVERTEXELEMENT9* elements = NULL;
