@@ -11820,12 +11820,12 @@ static void test_clipboard_viewers(void)
     /* Test that changing the clipboard actually refreshes the registered viewer. */
     clear_clipboard(hWnd1);
     wm_clipboard_changed[0].wParam = (WPARAM) GetClipboardOwner();
-    ok_sequence(wm_clipboard_changed, "clear clipbd (viewer=owner=1)", TRUE);
+    ok_sequence(wm_clipboard_changed, "clear clipbd (viewer=owner=1)", FALSE);
 
     /* Again, but with different owner. */
     clear_clipboard(hWnd2);
     wm_clipboard_changed_and_owned[1].wParam = (WPARAM) GetClipboardOwner();
-    ok_sequence(wm_clipboard_changed_and_owned, "clear clipbd (viewer=1, owner=2)", TRUE);
+    ok_sequence(wm_clipboard_changed_and_owned, "clear clipbd (viewer=1, owner=2)", FALSE);
 
     /* Test re-registering same window. */
     hRet = SetClipboardViewer(hWnd1);

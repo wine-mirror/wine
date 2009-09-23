@@ -285,7 +285,7 @@ BOOL WINAPI CloseClipboard(void)
             USER_Driver->pEndClipboardUpdate();
 
             if (hWndViewer)
-                SendMessageW(hWndViewer, WM_DRAWCLIPBOARD, 0, 0);
+                SendMessageW(hWndViewer, WM_DRAWCLIPBOARD, (WPARAM) GetClipboardOwner(), 0);
 
             bCBHasChanged = FALSE;
         }
