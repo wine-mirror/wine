@@ -94,21 +94,175 @@ GpStatus WINGDIPAPI GdipBitmapCreateApplyEffect(GpBitmap** inputBitmaps,
     return NotImplemented;
 }
 
+static inline void getpixel_16bppGrayScale(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
+    const BYTE *row, UINT x)
+{
+    *r = *g = *b = row[x*2+1];
+    *a = 255;
+}
+
+static inline void getpixel_16bppRGB555(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
+    const BYTE *row, UINT x)
+{
+    WORD pixel = *((WORD*)(row)+x);
+    *r = (pixel>>7&0xf8)|(pixel>>12&0x7);
+    *g = (pixel>>2&0xf8)|(pixel>>6&0x7);
+    *b = (pixel<<3&0xf8)|(pixel>>2&0x7);
+    *a = 255;
+}
+
+static inline void getpixel_16bppRGB565(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
+    const BYTE *row, UINT x)
+{
+    WORD pixel = *((WORD*)(row)+x);
+    *r = (pixel>>8&0xf8)|(pixel>>13&0x7);
+    *g = (pixel>>3&0xfc)|(pixel>>9&0x3);
+    *b = (pixel<<3&0xf8)|(pixel>>2&0x7);
+    *a = 255;
+}
+
+static inline void getpixel_16bppARGB1555(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
+    const BYTE *row, UINT x)
+{
+    WORD pixel = *((WORD*)(row)+x);
+    *r = (pixel>>7&0xf8)|(pixel>>12&0x7);
+    *g = (pixel>>2&0xf8)|(pixel>>6&0x7);
+    *b = (pixel<<3&0xf8)|(pixel>>2&0x7);
+    if ((pixel&0x8000) == 0x8000)
+        *a = 255;
+    else
+        *a = 0;
+}
+
+static inline void getpixel_24bppRGB(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
+    const BYTE *row, UINT x)
+{
+    *r = row[x*3+2];
+    *g = row[x*3+1];
+    *b = row[x*3];
+    *a = 255;
+}
+
+static inline void getpixel_32bppRGB(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
+    const BYTE *row, UINT x)
+{
+    *r = row[x*4+2];
+    *g = row[x*4+1];
+    *b = row[x*4];
+    *a = 255;
+}
+
+static inline void getpixel_32bppARGB(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
+    const BYTE *row, UINT x)
+{
+    *r = row[x*4+2];
+    *g = row[x*4+1];
+    *b = row[x*4];
+    *a = row[x*4+3];
+}
+
+static inline void getpixel_32bppPARGB(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
+    const BYTE *row, UINT x)
+{
+    *a = row[x*4+3];
+    if (*a == 0)
+        *r = *g = *b = 0;
+    else
+    {
+        *r = row[x*4+2] * 255 / *a;
+        *g = row[x*4+1] * 255 / *a;
+        *b = row[x*4] * 255 / *a;
+    }
+}
+
+static inline void getpixel_48bppRGB(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
+    const BYTE *row, UINT x)
+{
+    *r = row[x*6+5];
+    *g = row[x*6+3];
+    *b = row[x*6+1];
+    *a = 255;
+}
+
+static inline void getpixel_64bppARGB(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
+    const BYTE *row, UINT x)
+{
+    *r = row[x*8+5];
+    *g = row[x*8+3];
+    *b = row[x*8+1];
+    *a = row[x*8+7];
+}
+
+static inline void getpixel_64bppPARGB(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
+    const BYTE *row, UINT x)
+{
+    *a = row[x*8+7];
+    if (*a == 0)
+        *r = *g = *b = 0;
+    else
+    {
+        *r = row[x*8+5] * 255 / *a;
+        *g = row[x*8+3] * 255 / *a;
+        *b = row[x*8+1] * 255 / *a;
+    }
+}
+
 GpStatus WINGDIPAPI GdipBitmapGetPixel(GpBitmap* bitmap, INT x, INT y,
     ARGB *color)
 {
-    static int calls;
+    BYTE r, g, b, a;
+    BYTE *row;
     TRACE("%p %d %d %p\n", bitmap, x, y, color);
 
-    if(!bitmap || !color)
+    if(!bitmap || !color ||
+       x < 0 || y < 0 || x >= bitmap->width || y >= bitmap->height)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    row = bitmap->bits+bitmap->stride*y;
 
-    *color = 0xdeadbeef;
+    switch (bitmap->format)
+    {
+        case PixelFormat16bppGrayScale:
+            getpixel_16bppGrayScale(&r,&g,&b,&a,row,x);
+            break;
+        case PixelFormat16bppRGB555:
+            getpixel_16bppRGB555(&r,&g,&b,&a,row,x);
+            break;
+        case PixelFormat16bppRGB565:
+            getpixel_16bppRGB565(&r,&g,&b,&a,row,x);
+            break;
+        case PixelFormat16bppARGB1555:
+            getpixel_16bppARGB1555(&r,&g,&b,&a,row,x);
+            break;
+        case PixelFormat24bppRGB:
+            getpixel_24bppRGB(&r,&g,&b,&a,row,x);
+            break;
+        case PixelFormat32bppRGB:
+            getpixel_32bppRGB(&r,&g,&b,&a,row,x);
+            break;
+        case PixelFormat32bppARGB:
+            getpixel_32bppARGB(&r,&g,&b,&a,row,x);
+            break;
+        case PixelFormat32bppPARGB:
+            getpixel_32bppPARGB(&r,&g,&b,&a,row,x);
+            break;
+        case PixelFormat48bppRGB:
+            getpixel_48bppRGB(&r,&g,&b,&a,row,x);
+            break;
+        case PixelFormat64bppARGB:
+            getpixel_64bppARGB(&r,&g,&b,&a,row,x);
+            break;
+        case PixelFormat64bppPARGB:
+            getpixel_64bppPARGB(&r,&g,&b,&a,row,x);
+            break;
+        default:
+            FIXME("not implemented for format 0x%x\n", bitmap->format);
+            return NotImplemented;
+    }
 
-    return NotImplemented;
+    *color = a<<24|r<<16|g<<8|b;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipBitmapSetPixel(GpBitmap* bitmap, INT x, INT y,
