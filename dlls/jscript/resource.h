@@ -34,4 +34,5 @@
 #define IDS_ILLEGAL_ASSIGN                  0x1390
 #define IDS_UNDEFINED                       0x1391
 #define IDS_NOT_BOOL                        0x1392
+#define IDS_REGEXP_SYNTAX_ERROR             0x1399
 #define IDS_INVALID_LENGTH                  0x13A5

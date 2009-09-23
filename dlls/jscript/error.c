@@ -310,6 +310,14 @@ static HRESULT ReferenceErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD fl
             dispex->ctx->reference_error_constr);
 }
 
+static HRESULT RegExpErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD flags,
+        DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    TRACE("\n");
+    return error_constr(dispex, flags, dp, retv, ei,
+            dispex->ctx->regexp_error_constr);
+}
+
 static HRESULT SyntaxErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
@@ -341,25 +349,26 @@ HRESULT init_error_constr(script_ctx_t *ctx, DispatchEx *object_prototype)
     static const WCHAR EvalErrorW[] = {'E','v','a','l','E','r','r','o','r',0};
     static const WCHAR RangeErrorW[] = {'R','a','n','g','e','E','r','r','o','r',0};
     static const WCHAR ReferenceErrorW[] = {'R','e','f','e','r','e','n','c','e','E','r','r','o','r',0};
+    static const WCHAR RegExpErrorW[] = {'R','e','g','E','x','p','E','r','r','o','r',0};
     static const WCHAR SyntaxErrorW[] = {'S','y','n','t','a','x','E','r','r','o','r',0};
     static const WCHAR TypeErrorW[] = {'T','y','p','e','E','r','r','o','r',0};
     static const WCHAR URIErrorW[] = {'U','R','I','E','r','r','o','r',0};
     static const WCHAR *names[] = {ErrorW, EvalErrorW, RangeErrorW,
-        ReferenceErrorW, SyntaxErrorW, TypeErrorW, URIErrorW};
+        ReferenceErrorW, RegExpErrorW, SyntaxErrorW, TypeErrorW, URIErrorW};
     DispatchEx **constr_addr[] = {&ctx->error_constr, &ctx->eval_error_constr,
-        &ctx->range_error_constr, &ctx->reference_error_constr,
+        &ctx->range_error_constr, &ctx->reference_error_constr, &ctx->regexp_error_constr,
         &ctx->syntax_error_constr, &ctx->type_error_constr,
         &ctx->uri_error_constr};
     static builtin_invoke_t constr_val[] = {ErrorConstr_value, EvalErrorConstr_value,
-        RangeErrorConstr_value, ReferenceErrorConstr_value, SyntaxErrorConstr_value,
-        TypeErrorConstr_value, URIErrorConstr_value};
+        RangeErrorConstr_value, ReferenceErrorConstr_value, RegExpErrorConstr_value,
+        SyntaxErrorConstr_value, TypeErrorConstr_value, URIErrorConstr_value};
 
     ErrorInstance *err;
     INT i;
     VARIANT v;
     HRESULT hres;
 
-    for(i=0; i<7; i++) {
+    for(i=0; i < sizeof(names)/sizeof(names[0]); i++) {
         hres = alloc_error(ctx, i==0 ? object_prototype : NULL, NULL, &err);
         if(FAILED(hres))
             return hres;
@@ -431,6 +440,11 @@ HRESULT throw_range_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHA
 HRESULT throw_reference_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)
 {
     return throw_error(ctx, ei, id, str, ctx->reference_error_constr);
+}
+
+HRESULT throw_regexp_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)
+{
+    return throw_error(ctx, ei, id, str, ctx->regexp_error_constr);
 }
 
 HRESULT throw_syntax_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)

@@ -151,6 +151,7 @@ HRESULT Function_value(DispatchEx*,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IS
 HRESULT throw_eval_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
 HRESULT throw_range_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
 HRESULT throw_reference_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
+HRESULT throw_regexp_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
 HRESULT throw_syntax_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
 HRESULT throw_type_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
 HRESULT throw_uri_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
@@ -208,6 +209,7 @@ struct _script_ctx_t {
     DispatchEx *eval_error_constr;
     DispatchEx *range_error_constr;
     DispatchEx *reference_error_constr;
+    DispatchEx *regexp_error_constr;
     DispatchEx *syntax_error_constr;
     DispatchEx *type_error_constr;
     DispatchEx *uri_error_constr;

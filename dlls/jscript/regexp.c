@@ -3819,8 +3819,12 @@ static HRESULT regexp_constructor(script_ctx_t *ctx, DISPPARAMS *dp, VARIANT *re
     if(FAILED(hres))
         return hres;
 
-    V_VT(retv) = VT_DISPATCH;
-    V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(ret);
+    if(retv) {
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(ret);
+    }else {
+        jsdisp_release(ret);
+    }
     return S_OK;
 }
 
@@ -3830,6 +3834,31 @@ static HRESULT RegExpConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DIS
     TRACE("\n");
 
     switch(flags) {
+    case DISPATCH_METHOD:
+        if(arg_cnt(dp)) {
+            VARIANT *arg = get_arg(dp,0);
+            if(V_VT(arg) == VT_DISPATCH) {
+                DispatchEx *jsdisp = iface_to_jsdisp((IUnknown*)V_DISPATCH(arg));
+                if(jsdisp) {
+                    if(is_class(jsdisp, JSCLASS_REGEXP)) {
+                        if(arg_cnt(dp) > 1 && V_VT(get_arg(dp,1)) != VT_EMPTY) {
+                            jsdisp_release(jsdisp);
+                            return throw_regexp_error(dispex->ctx, ei, IDS_REGEXP_SYNTAX_ERROR, NULL);
+                        }
+
+                        if(retv) {
+                            V_VT(retv) = VT_DISPATCH;
+                            V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(jsdisp);
+                        }else {
+                            jsdisp_release(jsdisp);
+                        }
+                        return S_OK;
+                    }
+                    jsdisp_release(jsdisp);
+                }
+            }
+        }
+        /* fall through */
     case DISPATCH_CONSTRUCT:
         return regexp_constructor(dispex->ctx, dp, retv);
     default:

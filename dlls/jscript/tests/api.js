@@ -1617,6 +1617,7 @@ exception_test(function() {eval("while(")}, "SyntaxError", -2146827286);
 exception_test(function() {eval("if(")}, "SyntaxError", -2146827286);
 exception_test(function() {eval("'unterminated")}, "SyntaxError", -2146827273);
 exception_test(function() {eval("nonexistingfunc()")}, "TypeError", -2146823281);
+exception_test(function() {RegExp(/a/, "g");}, "RegExpError", -2146823271);
 
 function testObjectInherit(obj, constr, ts, tls, vo) {
     ok(obj instanceof Object, "obj is not instance of Object");

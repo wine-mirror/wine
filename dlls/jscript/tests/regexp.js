@@ -286,4 +286,16 @@ ok(re.source === "abc[^d]", "re.source = '" + re.source + "', expected 'abc[^d]'
 re = /a\bc[^d]/g;
 ok(re.source === "a\\bc[^d]", "re.source = '" + re.source + "', expected 'a\\bc[^d]'");
 
+re = /abc/;
+ok(re === RegExp(re), "re !== RegExp(re)");
+
+re = RegExp("abc[^d]", "g");
+ok(re.source === "abc[^d]", "re.source = '" + re.source + "', expected 'abc[^d]'");
+
+re = /abc/;
+ok(re === RegExp(re, undefined), "re !== RegExp(re, undefined)");
+
+re = /abc/;
+ok(re === RegExp(re, undefined, 1), "re !== RegExp(re, undefined, 1)");
+
 reportSuccess();
