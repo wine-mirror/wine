@@ -50,6 +50,13 @@ static ULONG WINAPI IDirect3DVertexDeclaration8Impl_AddRef(IDirect3DVertexDeclar
     ULONG ref_count = InterlockedIncrement(&This->ref_count);
     TRACE("(%p) : AddRef increasing to %d\n", This, ref_count);
 
+    if (ref_count == 1)
+    {
+        wined3d_mutex_lock();
+        IWineD3DVertexDeclaration_AddRef(This->wined3d_vertex_declaration);
+        wined3d_mutex_unlock();
+    }
+
     return ref_count;
 }
 
@@ -64,9 +71,6 @@ static ULONG WINAPI IDirect3DVertexDeclaration8Impl_Release(IDirect3DVertexDecla
         wined3d_mutex_lock();
         IWineD3DVertexDeclaration_Release(This->wined3d_vertex_declaration);
         wined3d_mutex_unlock();
-
-        HeapFree(GetProcessHeap(), 0, This->elements);
-        HeapFree(GetProcessHeap(), 0, This);
     }
 
     return ref_count;
@@ -359,6 +363,18 @@ static const IDirect3DVertexDeclaration8Vtbl Direct3DVertexDeclaration8_Vtbl =
     IDirect3DVertexDeclaration8Impl_Release
 };
 
+static void STDMETHODCALLTYPE d3d8_vertexdeclaration_wined3d_object_destroyed(void *parent)
+{
+    IDirect3DVertexDeclaration8Impl *declaration = parent;
+    HeapFree(GetProcessHeap(), 0, declaration->elements);
+    HeapFree(GetProcessHeap(), 0, declaration);
+}
+
+static const struct wined3d_parent_ops d3d8_vertexdeclaration_wined3d_parent_ops =
+{
+    d3d8_vertexdeclaration_wined3d_object_destroyed,
+};
+
 HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration8Impl *declaration,
         IDirect3DDevice8Impl *device, const DWORD *elements)
 {
@@ -382,7 +398,8 @@ HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration8Impl *declaration,
 
     wined3d_mutex_lock();
     hr = IWineD3DDevice_CreateVertexDeclaration(device->WineD3DDevice, &declaration->wined3d_vertex_declaration,
-            (IUnknown *)declaration, wined3d_elements, wined3d_element_count);
+            (IUnknown *)declaration, &d3d8_vertexdeclaration_wined3d_parent_ops,
+            wined3d_elements, wined3d_element_count);
     wined3d_mutex_unlock();
     HeapFree(GetProcessHeap(), 0, wined3d_elements);
     if (FAILED(hr))
@@ -407,7 +424,8 @@ HRESULT vertexdeclaration_init_fvf(IDirect3DVertexDeclaration8Impl *declaration,
     declaration->shader_handle = fvf;
 
     hr = IWineD3DDevice_CreateVertexDeclarationFromFVF(device->WineD3DDevice,
-            &declaration->wined3d_vertex_declaration, (IUnknown *)declaration, fvf);
+            &declaration->wined3d_vertex_declaration, (IUnknown *)declaration,
+            &d3d8_vertexdeclaration_wined3d_parent_ops, fvf);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d vertex declaration, hr %#x.\n", hr);

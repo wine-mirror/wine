@@ -3250,7 +3250,8 @@ IDirectDrawImpl_FindDecl(IDirectDrawImpl *This,
     }
     TRACE("not found. Creating and inserting at position %d.\n", low);
 
-    hr = IWineD3DDevice_CreateVertexDeclarationFromFVF(This->wineD3DDevice, &pDecl, (IUnknown *)This, fvf);
+    hr = IWineD3DDevice_CreateVertexDeclarationFromFVF(This->wineD3DDevice, &pDecl,
+            (IUnknown *)This, &ddraw_null_wined3d_parent_ops, fvf);
     if (hr != S_OK) return NULL;
 
     if(This->declArraySize == This->numConvertedDecls) {

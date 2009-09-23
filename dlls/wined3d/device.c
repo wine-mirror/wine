@@ -1573,7 +1573,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetSwapChain(IWineD3DDevice *iface, U
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice *iface,
-        IWineD3DVertexDeclaration **declaration, IUnknown *parent,
+        IWineD3DVertexDeclaration **declaration, IUnknown *parent, const struct wined3d_parent_ops *parent_ops,
         const WINED3DVERTEXELEMENT *elements, UINT element_count)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -1590,7 +1590,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice 
         return E_OUTOFMEMORY;
     }
 
-    hr = vertexdeclaration_init(object, This, elements, element_count, parent);
+    hr = vertexdeclaration_init(object, This, elements, element_count, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize vertex declaration, hr %#x.\n", hr);
@@ -1742,7 +1742,8 @@ static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclarationFromFVF(IWineD3DDevice *iface,
-        IWineD3DVertexDeclaration **declaration, IUnknown *parent, DWORD fvf)
+        IWineD3DVertexDeclaration **declaration, IUnknown *parent,
+        const struct wined3d_parent_ops *parent_ops, DWORD fvf)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     WINED3DVERTEXELEMENT *elements;
@@ -1754,7 +1755,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclarationFromFVF(IWineD3D
     size = ConvertFvfToDeclaration(This, fvf, &elements);
     if (size == ~0U) return E_OUTOFMEMORY;
 
-    hr = IWineD3DDevice_CreateVertexDeclaration(iface, declaration, parent, elements, size);
+    hr = IWineD3DDevice_CreateVertexDeclaration(iface, declaration, parent, parent_ops, elements, size);
     HeapFree(GetProcessHeap(), 0, elements);
     return hr;
 }

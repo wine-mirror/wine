@@ -74,6 +74,7 @@ static ULONG WINAPI IWineD3DVertexDeclarationImpl_Release(IWineD3DVertexDeclarat
         }
 
         HeapFree(GetProcessHeap(), 0, This->elements);
+        This->parent_ops->wined3d_object_destroyed(This->parent);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -202,7 +203,8 @@ static const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl =
 };
 
 HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *declaration, IWineD3DDeviceImpl *device,
-        const WINED3DVERTEXELEMENT *elements, UINT element_count, IUnknown *parent)
+        const WINED3DVERTEXELEMENT *elements, UINT element_count,
+        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     WORD preloaded = 0; /* MAX_STREAMS, 16 */
@@ -219,6 +221,7 @@ HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *declaration, IWine
     declaration->lpVtbl = &IWineD3DVertexDeclaration_Vtbl;
     declaration->ref = 1;
     declaration->parent = parent;
+    declaration->parent_ops = parent_ops;
     declaration->wineD3DDevice = device;
     declaration->elements = HeapAlloc(GetProcessHeap(), 0, sizeof(*declaration->elements) * element_count);
     if (!declaration->elements)

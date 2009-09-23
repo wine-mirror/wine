@@ -129,6 +129,11 @@ static ULONG STDMETHODCALLTYPE d3d10_input_layout_AddRef(ID3D10InputLayout *ifac
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
 
+    if (refcount == 1)
+    {
+        IWineD3DVertexDeclaration_AddRef(This->wined3d_decl);
+    }
+
     return refcount;
 }
 
@@ -142,7 +147,6 @@ static ULONG STDMETHODCALLTYPE d3d10_input_layout_Release(ID3D10InputLayout *ifa
     if (!refcount)
     {
         IWineD3DVertexDeclaration_Release(This->wined3d_decl);
-        HeapFree(GetProcessHeap(), 0, This);
     }
 
     return refcount;
@@ -194,6 +198,16 @@ static const struct ID3D10InputLayoutVtbl d3d10_input_layout_vtbl =
     d3d10_input_layout_SetPrivateDataInterface,
 };
 
+static void STDMETHODCALLTYPE d3d10_input_layout_wined3d_object_destroyed(void *parent)
+{
+    HeapFree(GetProcessHeap(), 0, parent);
+}
+
+static const struct wined3d_parent_ops d3d10_input_layout_wined3d_parent_ops =
+{
+    d3d10_input_layout_wined3d_object_destroyed,
+};
+
 HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d10_device *device,
         const D3D10_INPUT_ELEMENT_DESC *element_descs, UINT element_count,
         const void *shader_byte_code, SIZE_T shader_byte_code_length)
@@ -214,7 +228,7 @@ HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d10_
     }
 
     hr = IWineD3DDevice_CreateVertexDeclaration(device->wined3d_device, &layout->wined3d_decl,
-            (IUnknown *)layout, wined3d_elements, wined3d_element_count);
+            (IUnknown *)layout, &d3d10_input_layout_wined3d_parent_ops, wined3d_elements, wined3d_element_count);
     HeapFree(GetProcessHeap(), 0, wined3d_elements);
     if (FAILED(hr))
     {

@@ -2187,6 +2187,7 @@ typedef struct IWineD3DVertexDeclarationImpl {
     LONG                    ref;
 
     IUnknown                *parent;
+    const struct wined3d_parent_ops *parent_ops;
     IWineD3DDeviceImpl      *wineD3DDevice;
 
     struct wined3d_vertex_declaration_element *elements;
@@ -2198,8 +2199,9 @@ typedef struct IWineD3DVertexDeclarationImpl {
     BOOL                    half_float_conv_needed;
 } IWineD3DVertexDeclarationImpl;
 
-HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *This, IWineD3DDeviceImpl *device,
-        const WINED3DVERTEXELEMENT *elements, UINT element_count, IUnknown *parent) DECLSPEC_HIDDEN;
+HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *declaration, IWineD3DDeviceImpl *device,
+        const WINED3DVERTEXELEMENT *elements, UINT element_count,
+        IUnknown *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IWineD3DStateBlock implementation structure
