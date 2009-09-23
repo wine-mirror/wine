@@ -41,5 +41,7 @@ STRINGTABLE DISCARDABLE
     IDS_ILLEGAL_ASSIGN      "Neleistinas priskyrimas"
     IDS_UNDEFINED           "„|“ yra neapibrėžtas"
     IDS_NOT_BOOL            "Tikėtasi loginio objekto"
+    IDS_JSCRIPT_EXPECTED    "Tikėtasi JScript objekto"
+    IDS_REGEXP_SYNTAX_ERROR "Sintaksės klaida reguliariajame reiškinyje"
     IDS_INVALID_LENGTH      "Masyvo dydis turi būti teigiamas sveikasis skaičius"
 }
