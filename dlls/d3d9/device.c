@@ -1830,6 +1830,36 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetFVF(LPDIRECT3DDEVICE9EX iface, DWO
     return hr;
 }
 
+static HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexShader(IDirect3DDevice9Ex *iface,
+        const DWORD *byte_code, IDirect3DVertexShader9 **shader)
+{
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    IDirect3DVertexShader9Impl *object;
+    HRESULT hr;
+
+    TRACE("iface %p, byte_code %p, shader %p.\n", iface, byte_code, shader);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate vertex shader memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = vertexshader_init(object, This, byte_code);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize vertex shader, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created vertex shader %p.\n", object);
+    *shader = (IDirect3DVertexShader9 *)object;
+
+    return D3D_OK;
+}
+
 static HRESULT WINAPI IDirect3DDevice9Impl_SetStreamSource(LPDIRECT3DDEVICE9EX iface, UINT StreamNumber, IDirect3DVertexBuffer9* pStreamData, UINT OffsetInBytes, UINT Stride) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hr;

@@ -206,8 +206,6 @@ extern HRESULT WINAPI IDirect3DDevice9Impl_SetVertexDeclaration(IDirect3DDevice9
         IDirect3DVertexDeclaration9 *pDecl) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirect3DDevice9Impl_GetVertexDeclaration(IDirect3DDevice9Ex *iface,
         IDirect3DVertexDeclaration9 **ppDecl) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexShader(IDirect3DDevice9Ex *iface,
-        const DWORD *pFunction, IDirect3DVertexShader9 **ppShader) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShader(IDirect3DDevice9Ex *iface,
         IDirect3DVertexShader9 *pShader) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShader(IDirect3DDevice9Ex *iface,
@@ -527,6 +525,9 @@ typedef struct IDirect3DVertexShader9Impl {
   /* Parent reference */
   LPDIRECT3DDEVICE9EX parentDevice;
 } IDirect3DVertexShader9Impl;
+
+HRESULT vertexshader_init(IDirect3DVertexShader9Impl *shader,
+        IDirect3DDevice9Impl *device, const DWORD *byte_code) DECLSPEC_HIDDEN;
 
 #define D3D9_MAX_VERTEX_SHADER_CONSTANTF 256
 #define D3D9_MAX_SIMULTANEOUS_RENDERTARGETS 4
