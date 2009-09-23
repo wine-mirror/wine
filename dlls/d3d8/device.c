@@ -1716,119 +1716,55 @@ static HRESULT WINAPI IDirect3DDevice8Impl_ProcessVertices(LPDIRECT3DDEVICE8 ifa
     return hr;
 }
 
-static HRESULT IDirect3DDevice8Impl_CreateVertexDeclaration(IDirect3DDevice8 *iface, CONST DWORD *declaration, IDirect3DVertexDeclaration8 **decl_ptr) {
+static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(IDirect3DDevice8 *iface,
+        const DWORD *declaration, const DWORD *byte_code, DWORD *shader, DWORD usage)
+{
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-    IDirect3DVertexDeclaration8Impl *object;
+    IDirect3DVertexShader8Impl *object;
+    DWORD shader_handle;
+    DWORD handle;
     HRESULT hr;
 
-    TRACE("(%p) : declaration %p\n", This, declaration);
+    TRACE("iface %p, declaration %p, byte_code %p, shader %p, usage %#x.\n",
+            iface, declaration, byte_code, shader, usage);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object) {
-        ERR("Memory allocation failed\n");
-        *decl_ptr = NULL;
-        return D3DERR_OUTOFVIDEOMEMORY;
-    }
-
-    hr = vertexdeclaration_init(object, This, declaration);
-    if (FAILED(hr))
+    if (!object)
     {
-        WARN("Failed to initialize vertex declaration, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
-    }
-
-    TRACE("Created vertex declaration %p.\n", object);
-    *decl_ptr = (IDirect3DVertexDeclaration8 *)object;
-
-    return D3D_OK;
-}
-
-static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 iface, CONST DWORD* pDeclaration, CONST DWORD* pFunction, DWORD* ppShader, DWORD Usage) {
-    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-    HRESULT hrc = D3D_OK;
-    IDirect3DVertexShader8Impl *object;
-    const DWORD *token = pDeclaration;
-    DWORD handle;
-
-    /* Test if the vertex declaration is valid */
-    while (D3DVSD_END() != *token) {
-        D3DVSD_TOKENTYPE token_type = ((*token & D3DVSD_TOKENTYPEMASK) >> D3DVSD_TOKENTYPESHIFT);
-
-        if (token_type == D3DVSD_TOKEN_STREAMDATA && !(token_type & 0x10000000)) {
-            DWORD type = ((*token & D3DVSD_DATATYPEMASK) >> D3DVSD_DATATYPESHIFT);
-            DWORD reg  = ((*token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
-
-            if(reg == D3DVSDE_NORMAL && type != D3DVSDT_FLOAT3 && !pFunction) {
-                WARN("Attempt to use a non-FLOAT3 normal with the fixed function function\n");
-                return D3DERR_INVALIDCALL;
-            }
-        }
-        token += parse_token(token);
-    }
-
-    /* Setup a stub object for now */
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    TRACE("(%p) : pFunction(%p), ppShader(%p)\n", This, pFunction, ppShader);
-    if (NULL == object) {
-        FIXME("Allocation of memory failed\n");
-        *ppShader = 0;
-        return D3DERR_OUTOFVIDEOMEMORY;
-    }
-
-    object->ref = 1;
-    object->lpVtbl = &Direct3DVertexShader8_Vtbl;
-
-    hrc = IDirect3DDevice8Impl_CreateVertexDeclaration(iface, pDeclaration, &object->vertex_declaration);
-    if (FAILED(hrc)) {
-        ERR("(%p) : IDirect3DDeviceImpl_CreateVertexDeclaration call failed\n", This);
-        HeapFree(GetProcessHeap(), 0, object);
-        *ppShader = 0;
-        return D3DERR_INVALIDCALL;
+        ERR("Failed to allocate vertex shader memory.\n");
+        *shader = 0;
+        return E_OUTOFMEMORY;
     }
 
     wined3d_mutex_lock();
     handle = d3d8_allocate_handle(&This->handle_table, object, D3D8_HANDLE_VS);
+    wined3d_mutex_unlock();
     if (handle == D3D8_INVALID_HANDLE)
     {
-        ERR("Failed to allocate shader handle\n");
-        wined3d_mutex_unlock();
-        IDirect3DVertexDeclaration8_Release(object->vertex_declaration);
+        ERR("Failed to allocate vertex shader handle.\n");
         HeapFree(GetProcessHeap(), 0, object);
-        *ppShader = 0;
+        *shader = 0;
         return E_OUTOFMEMORY;
     }
-    else
+
+    shader_handle = handle + VS_HIGHESTFIXEDFXF + 1;
+
+    hr = vertexshader_init(object, This, declaration, byte_code, shader_handle, usage);
+    if (FAILED(hr))
     {
-        DWORD shader_handle = handle + VS_HIGHESTFIXEDFXF + 1;
-        *ppShader = ((IDirect3DVertexDeclaration8Impl *)object->vertex_declaration)->shader_handle = shader_handle;
+        WARN("Failed to initialize vertex shader, hr %#x.\n", hr);
+        wined3d_mutex_lock();
+        d3d8_free_handle(&This->handle_table, handle, D3D8_HANDLE_VS);
+        wined3d_mutex_unlock();
+        HeapFree(GetProcessHeap(), 0, object);
+        *shader = 0;
+        return hr;
     }
 
-    if (pFunction)
-    {
-        /* Usage is missing ... Use SetRenderState to set the sw vp render state in SetVertexShader */
-        hrc = IWineD3DDevice_CreateVertexShader(This->WineD3DDevice, pFunction,
-                NULL /* output signature */, &object->wineD3DVertexShader, (IUnknown *)object);
+    TRACE("Created vertex shader %p (handle %#x).\n", object, shader_handle);
+    *shader = shader_handle;
 
-        if (FAILED(hrc))
-        {
-            /* free up object */
-            FIXME("Call to IWineD3DDevice_CreateVertexShader failed\n");
-            d3d8_free_handle(&This->handle_table, handle, D3D8_HANDLE_VS);
-            IDirect3DVertexDeclaration8_Release(object->vertex_declaration);
-            HeapFree(GetProcessHeap(), 0, object);
-            *ppShader = 0;
-        }
-        else
-        {
-            load_local_constants(pDeclaration, object->wineD3DVertexShader);
-            TRACE("(%p) : returning %p (handle %#x)\n", This, object, *ppShader);
-        }
-    }
-
-    wined3d_mutex_unlock();
-
-    return hrc;
+    return D3D_OK;
 }
 
 static IDirect3DVertexDeclaration8Impl *IDirect3DDevice8Impl_FindDecl(IDirect3DDevice8Impl *This, DWORD fvf)

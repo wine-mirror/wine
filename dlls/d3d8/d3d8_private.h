@@ -587,11 +587,6 @@ DECLARE_INTERFACE_(IDirect3DPixelShader8,IUnknown)
 #define IDirect3DPixelShader8_Release(p)             (p)->lpVtbl->Release(p)
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DVertexShader8Vtbl Direct3DVertexShader8_Vtbl DECLSPEC_HIDDEN;
-
-/*****************************************************************************
  * IDirect3DVertexShader implementation structure
  */
 
@@ -602,6 +597,9 @@ struct IDirect3DVertexShader8Impl {
   IDirect3DVertexDeclaration8      *vertex_declaration;
   IWineD3DVertexShader             *wineD3DVertexShader;
 };
+
+HRESULT vertexshader_init(IDirect3DVertexShader8Impl *shader, IDirect3DDevice8Impl *device,
+        const DWORD *declaration, const DWORD *byte_code, DWORD shader_handle, DWORD usage) DECLSPEC_HIDDEN;
 
 #define D3D8_MAX_VERTEX_SHADER_CONSTANTF 256
 
