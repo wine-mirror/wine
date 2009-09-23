@@ -2131,6 +2131,12 @@ static GpStatus encode_image_BMP(GpImage *image, IStream* stream,
     return encode_image_WIC(image, stream, &CLSID_WICBmpEncoder, params);
 }
 
+static GpStatus encode_image_png(GpImage *image, IStream* stream,
+    GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params)
+{
+    return encode_image_WIC(image, stream, &CLSID_WICPngEncoder, params);
+}
+
 /*****************************************************************************
  * GdipSaveImageToStream [GDIPLUS.@]
  */
@@ -2354,14 +2360,14 @@ static const struct image_codec codecs[NUM_CODECS] = {
             /* FormatDescription */  png_format,
             /* FilenameExtension */  png_extension,
             /* MimeType */           png_mimetype,
-            /* Flags */              ImageCodecFlagsDecoder | ImageCodecFlagsSupportBitmap | ImageCodecFlagsBuiltin,
+            /* Flags */              ImageCodecFlagsEncoder | ImageCodecFlagsDecoder | ImageCodecFlagsSupportBitmap | ImageCodecFlagsBuiltin,
             /* Version */            1,
             /* SigCount */           1,
             /* SigSize */            8,
             /* SigPattern */         png_sig_pattern,
             /* SigMask */            png_sig_mask,
         },
-        NULL,
+        encode_image_png,
         decode_image_png
     },
     {
