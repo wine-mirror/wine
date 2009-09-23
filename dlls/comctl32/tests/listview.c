@@ -3,6 +3,7 @@
  *
  * Copyright 2006 Mike McCormack for CodeWeavers
  * Copyright 2007 George Gov
+ * Copyright 2009 Nikolay Sivov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1606,6 +1607,13 @@ static void test_icon_spacing(void)
        "Expected %d, got %d\n", MAKELONG(w, h), r);
 
     r = SendMessage(hwnd, LVM_SETICONSPACING, 0, MAKELPARAM(25, 35));
+    if (r == 0)
+    {
+        /* version 4.0 */
+        win_skip("LVM_SETICONSPACING unimplemented. Skipping.\n");
+        DestroyWindow(hwnd);
+        return;
+    }
     expect(MAKELONG(20,30), r);
 
     r = SendMessage(hwnd, LVM_SETICONSPACING, 0, MAKELPARAM(-1,-1));
