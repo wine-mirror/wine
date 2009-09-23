@@ -667,11 +667,146 @@ HRESULT PngDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 
 typedef struct PngEncoder {
     const IWICBitmapEncoderVtbl *lpVtbl;
+    const IWICBitmapFrameEncodeVtbl *lpFrameVtbl;
     LONG ref;
     IStream *stream;
     png_structp png_ptr;
     png_infop info_ptr;
+    UINT frame_count;
 } PngEncoder;
+
+static inline PngEncoder *encoder_from_frame(IWICBitmapFrameEncode *iface)
+{
+    return CONTAINING_RECORD(iface, PngEncoder, lpFrameVtbl);
+}
+
+static HRESULT WINAPI PngFrameEncode_QueryInterface(IWICBitmapFrameEncode *iface, REFIID iid,
+    void **ppv)
+{
+    PngEncoder *This = encoder_from_frame(iface);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IWICBitmapFrameEncode, iid))
+    {
+        *ppv = &This->lpFrameVtbl;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI PngFrameEncode_AddRef(IWICBitmapFrameEncode *iface)
+{
+    PngEncoder *This = encoder_from_frame(iface);
+    return IUnknown_AddRef((IUnknown*)This);
+}
+
+static ULONG WINAPI PngFrameEncode_Release(IWICBitmapFrameEncode *iface)
+{
+    PngEncoder *This = encoder_from_frame(iface);
+    return IUnknown_Release((IUnknown*)This);
+}
+
+static HRESULT WINAPI PngFrameEncode_Initialize(IWICBitmapFrameEncode *iface,
+    IPropertyBag2 *pIEncoderOptions)
+{
+    FIXME("(%p,%p): stub\n", iface, pIEncoderOptions);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PngFrameEncode_SetSize(IWICBitmapFrameEncode *iface,
+    UINT uiWidth, UINT uiHeight)
+{
+    FIXME("(%p,%u,%u): stub\n", iface, uiWidth, uiHeight);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PngFrameEncode_SetResolution(IWICBitmapFrameEncode *iface,
+    double dpiX, double dpiY)
+{
+    FIXME("(%p,%0.2f,%0.2f): stub\n", iface, dpiX, dpiY);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PngFrameEncode_SetPixelFormat(IWICBitmapFrameEncode *iface,
+    WICPixelFormatGUID *pPixelFormat)
+{
+    TRACE("(%p,%s): stub\n", iface, debugstr_guid(pPixelFormat));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PngFrameEncode_SetColorContexts(IWICBitmapFrameEncode *iface,
+    UINT cCount, IWICColorContext **ppIColorContext)
+{
+    FIXME("(%p,%u,%p): stub\n", iface, cCount, ppIColorContext);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PngFrameEncode_SetPalette(IWICBitmapFrameEncode *iface,
+    IWICPalette *pIPalette)
+{
+    FIXME("(%p,%p): stub\n", iface, pIPalette);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+}
+
+static HRESULT WINAPI PngFrameEncode_SetThumbnail(IWICBitmapFrameEncode *iface,
+    IWICBitmapSource *pIThumbnail)
+{
+    FIXME("(%p,%p): stub\n", iface, pIThumbnail);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+}
+
+static HRESULT WINAPI PngFrameEncode_WritePixels(IWICBitmapFrameEncode *iface,
+    UINT lineCount, UINT cbStride, UINT cbBufferSize, BYTE *pbPixels)
+{
+    FIXME("(%p,%u,%u,%u,%p): stub\n", iface, lineCount, cbStride, cbBufferSize, pbPixels);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PngFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
+    IWICBitmapSource *pIBitmapSource, WICRect *prc)
+{
+    FIXME("(%p,%p,%p): stub\n", iface, pIBitmapSource, prc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PngFrameEncode_Commit(IWICBitmapFrameEncode *iface)
+{
+    FIXME("(%p): stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PngFrameEncode_GetMetadataQueryWriter(IWICBitmapFrameEncode *iface,
+    IWICMetadataQueryWriter **ppIMetadataQueryWriter)
+{
+    FIXME("(%p, %p): stub\n", iface, ppIMetadataQueryWriter);
+    return E_NOTIMPL;
+}
+
+static const IWICBitmapFrameEncodeVtbl PngEncoder_FrameVtbl = {
+    PngFrameEncode_QueryInterface,
+    PngFrameEncode_AddRef,
+    PngFrameEncode_Release,
+    PngFrameEncode_Initialize,
+    PngFrameEncode_SetSize,
+    PngFrameEncode_SetResolution,
+    PngFrameEncode_SetPixelFormat,
+    PngFrameEncode_SetColorContexts,
+    PngFrameEncode_SetPalette,
+    PngFrameEncode_SetThumbnail,
+    PngFrameEncode_WritePixels,
+    PngFrameEncode_WriteSource,
+    PngFrameEncode_Commit,
+    PngFrameEncode_GetMetadataQueryWriter
+};
 
 static HRESULT WINAPI PngEncoder_QueryInterface(IWICBitmapEncoder *iface, REFIID iid,
     void **ppv)
@@ -826,8 +961,25 @@ static HRESULT WINAPI PngEncoder_SetPreview(IWICBitmapEncoder *iface, IWICBitmap
 static HRESULT WINAPI PngEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
     IWICBitmapFrameEncode **ppIFrameEncode, IPropertyBag2 **ppIEncoderOptions)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, ppIFrameEncode, ppIEncoderOptions);
-    return E_NOTIMPL;
+    PngEncoder *This = (PngEncoder*)iface;
+    HRESULT hr;
+    TRACE("(%p,%p,%p)\n", iface, ppIFrameEncode, ppIEncoderOptions);
+
+    if (This->frame_count != 0)
+        return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+
+    if (!This->stream)
+        return WINCODEC_ERR_NOTINITIALIZED;
+
+    hr = CreatePropertyBag2(ppIEncoderOptions);
+    if (FAILED(hr)) return hr;
+
+    This->frame_count = 1;
+
+    IWICBitmapEncoder_AddRef(iface);
+    *ppIFrameEncode = (IWICBitmapFrameEncode*)&This->lpFrameVtbl;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PngEncoder_Commit(IWICBitmapEncoder *iface)
@@ -880,10 +1032,12 @@ HRESULT PngEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     if (!This) return E_OUTOFMEMORY;
 
     This->lpVtbl = &PngEncoder_Vtbl;
+    This->lpFrameVtbl = &PngEncoder_FrameVtbl;
     This->ref = 1;
     This->png_ptr = NULL;
     This->info_ptr = NULL;
     This->stream = NULL;
+    This->frame_count = 0;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
