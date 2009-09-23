@@ -257,21 +257,19 @@ static HRESULT invoke_constructor(script_ctx_t *ctx, FunctionInstance *function,
 static HRESULT invoke_value_proc(script_ctx_t *ctx, FunctionInstance *function, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    DispatchEx *this_obj = NULL;
     IDispatch *this_disp;
     vdisp_t vthis;
     HRESULT hres;
 
     this_disp = get_this(dp);
     if(this_disp)
-        this_obj = iface_to_jsdisp((IUnknown*)this_disp);
+        set_disp(&vthis, this_disp);
+    else
+        set_jsdisp(&vthis, ctx->script_disp);
 
-    set_jsdisp(&vthis, this_obj ? this_obj : ctx->script_disp);
     hres = function->value_proc(ctx, &vthis, flags, dp, retv, ei, caller);
-    vdisp_release(&vthis);
 
-    if(this_obj)
-        jsdisp_release(this_obj);
+    vdisp_release(&vthis);
     return hres;
 }
 
