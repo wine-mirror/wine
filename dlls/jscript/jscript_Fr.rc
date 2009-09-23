@@ -42,6 +42,8 @@ STRINGTABLE DISCARDABLE
     IDS_OBJECT_EXPECTED     "Objet attendu"
     IDS_ILLEGAL_ASSIGN      "Affectation illégale"
     IDS_UNDEFINED           "« | » n'est pas défini"
-    IDS_NOT_BOOL            "Booléen attendu"
+    IDS_NOT_BOOL            "Objet booléen attendu"
+    IDS_JSCRIPT_EXPECTED    "Objet JScript attendu"
+    IDS_REGEXP_SYNTAX_ERROR "Erreur de syntaxe dans l'expression rationnelle"
     IDS_INVALID_LENGTH      "La longueur d'un tableau doit être un entier positif"
 }
