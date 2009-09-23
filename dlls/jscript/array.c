@@ -46,7 +46,7 @@ static const WCHAR unshiftW[] = {'u','n','s','h','i','f','t',0};
 
 static const WCHAR default_separatorW[] = {',',0};
 
-static HRESULT get_jsdisp_length(DispatchEx *obj, jsexcept_t *ei, DWORD *ret)
+static HRESULT get_jsdisp_length(script_ctx_t *ctx, DispatchEx *obj, jsexcept_t *ei, DWORD *ret)
 {
     VARIANT var;
     HRESULT hres;
@@ -55,7 +55,7 @@ static HRESULT get_jsdisp_length(DispatchEx *obj, jsexcept_t *ei, DWORD *ret)
     if(FAILED(hres))
         return hres;
 
-    hres = to_uint32(obj->ctx, &var, ei, ret);
+    hres = to_uint32(ctx, &var, ei, ret);
     VariantClear(&var);
     return hres;
 }
@@ -102,14 +102,14 @@ static HRESULT Array_length(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
         DWORD i;
         HRESULT hres;
 
-        hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &num);
+        hres = to_number(ctx, get_arg(dp, 0), ei, &num);
         if(V_VT(&num) == VT_I4)
             len = V_I4(&num);
         else
             len = floor(V_R8(&num));
 
         if(len!=(DWORD)len)
-            return throw_range_error(dispex->ctx, ei, IDS_INVALID_LENGTH, NULL);
+            return throw_range_error(ctx, ei, IDS_INVALID_LENGTH, NULL);
 
         for(i=len; i<This->length; i++) {
             hres = jsdisp_delete_idx(dispex, i);
@@ -182,7 +182,7 @@ static HRESULT Array_concat(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
 
     TRACE("\n");
 
-    hres = create_array(dispex->ctx, 0, &ret);
+    hres = create_array(ctx, 0, &ret);
     if(FAILED(hres))
         return hres;
 
@@ -214,7 +214,7 @@ static HRESULT Array_concat(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     return S_OK;
 }
 
-static HRESULT array_join(DispatchEx *array, DWORD length, const WCHAR *sep, VARIANT *retv,
+static HRESULT array_join(script_ctx_t *ctx, DispatchEx *array, DWORD length, const WCHAR *sep, VARIANT *retv,
         jsexcept_t *ei, IServiceProvider *caller)
 {
     BSTR *str_tab, ret = NULL;
@@ -242,7 +242,7 @@ static HRESULT array_join(DispatchEx *array, DWORD length, const WCHAR *sep, VAR
             break;
 
         if(V_VT(&var) != VT_EMPTY && V_VT(&var) != VT_NULL)
-            hres = to_string(array->ctx, &var, ei, str_tab+i);
+            hres = to_string(ctx, &var, ei, str_tab+i);
         VariantClear(&var);
         if(FAILED(hres))
             break;
@@ -330,15 +330,15 @@ static HRESULT Array_join(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DIS
     if(arg_cnt(dp)) {
         BSTR sep;
 
-        hres = to_string(dispex->ctx, get_arg(dp,0), ei, &sep);
+        hres = to_string(ctx, get_arg(dp,0), ei, &sep);
         if(FAILED(hres))
             return hres;
 
-        hres = array_join(dispex, length, sep, retv, ei, caller);
+        hres = array_join(ctx, dispex, length, sep, retv, ei, caller);
 
         SysFreeString(sep);
     }else {
-        hres = array_join(dispex, length, default_separatorW, retv, ei, caller);
+        hres = array_join(ctx, dispex, length, default_separatorW, retv, ei, caller);
     }
 
     return hres;
@@ -418,7 +418,7 @@ static HRESULT Array_push(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DIS
     if(dispex->builtin_info->class == JSCLASS_ARRAY) {
         length = ((ArrayInstance*)dispex)->length;
     }else {
-        hres = get_jsdisp_length(dispex, ei, &length);
+        hres = get_jsdisp_length(ctx, dispex, ei, &length);
         if(FAILED(hres))
             return hres;
     }
@@ -463,7 +463,7 @@ static HRESULT Array_shift(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DI
     if(is_class(dispex, JSCLASS_ARRAY)) {
         length = ((ArrayInstance*)dispex)->length;
     }else {
-        hres = get_jsdisp_length(dispex, ei, &length);
+        hres = get_jsdisp_length(ctx, dispex, ei, &length);
         if(SUCCEEDED(hres) && !length)
             hres = set_jsdisp_length(dispex, ei, 0);
         if(FAILED(hres))
@@ -518,13 +518,13 @@ static HRESULT Array_slice(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DI
     if(is_class(dispex, JSCLASS_ARRAY)) {
         length = ((ArrayInstance*)dispex)->length;
     }else {
-        hres = get_jsdisp_length(dispex, ei, &length);
+        hres = get_jsdisp_length(ctx, dispex, ei, &length);
         if(FAILED(hres))
             return hres;
     }
 
     if(arg_cnt(dp)) {
-        hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 0), ei, &v);
         if(FAILED(hres))
             return hres;
 
@@ -541,7 +541,7 @@ static HRESULT Array_slice(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DI
     else start = 0;
 
     if(arg_cnt(dp)>1) {
-        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
         if(FAILED(hres))
             return hres;
 
@@ -557,7 +557,7 @@ static HRESULT Array_slice(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DI
     }
     else end = length;
 
-    hres = create_array(dispex->ctx, (end>start)?end-start:0, &arr);
+    hres = create_array(ctx, (end>start)?end-start:0, &arr);
     if(FAILED(hres))
         return hres;
 
@@ -722,7 +722,7 @@ static HRESULT Array_sort(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DIS
             sorttab[i] = vtab+i;
 
         for(i=0; i < length/2; i++) {
-            hres = sort_cmp(dispex->ctx, cmp_func, sorttab[2*i+1], sorttab[2*i], ei, caller, &cmp);
+            hres = sort_cmp(ctx, cmp_func, sorttab[2*i+1], sorttab[2*i], ei, caller, &cmp);
             if(FAILED(hres))
                 break;
 
@@ -747,7 +747,7 @@ static HRESULT Array_sort(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DIS
                     memcpy(tmpbuf, sorttab+i, k*sizeof(VARIANT*));
 
                     while(a < k && b < bend) {
-                        hres = sort_cmp(dispex->ctx, cmp_func, tmpbuf[a], sorttab[i+k+b], ei, caller, &cmp);
+                        hres = sort_cmp(ctx, cmp_func, tmpbuf[a], sorttab[i+k+b], ei, caller, &cmp);
                         if(FAILED(hres))
                             break;
 
@@ -811,14 +811,14 @@ static HRESULT Array_splice(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     if(is_class(dispex, JSCLASS_ARRAY)) {
         length = ((ArrayInstance*)dispex)->length;
     }else {
-        hres = get_jsdisp_length(dispex, ei, &length);
+        hres = get_jsdisp_length(ctx, dispex, ei, &length);
         if(FAILED(hres))
             return hres;
     }
 
     argc = arg_cnt(dp);
     if(argc >= 1) {
-        hres = to_integer(dispex->ctx, get_arg(dp,0), ei, &v);
+        hres = to_integer(ctx, get_arg(dp,0), ei, &v);
         if(FAILED(hres))
             return hres;
 
@@ -833,7 +833,7 @@ static HRESULT Array_splice(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     }
 
     if(argc >= 2) {
-        hres = to_integer(dispex->ctx, get_arg(dp,1), ei, &v);
+        hres = to_integer(ctx, get_arg(dp,1), ei, &v);
         if(FAILED(hres))
             return hres;
 
@@ -848,7 +848,7 @@ static HRESULT Array_splice(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     }
 
     if(retv) {
-        hres = create_array(dispex->ctx, 0, &ret_array);
+        hres = create_array(ctx, 0, &ret_array);
         if(FAILED(hres))
             return hres;
 
@@ -922,7 +922,7 @@ static HRESULT Array_toString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
         return E_FAIL;
     }
 
-    return array_join(dispex, ((ArrayInstance*)dispex)->length, default_separatorW, retv, ei, sp);
+    return array_join(ctx, dispex, ((ArrayInstance*)dispex)->length, default_separatorW, retv, ei, sp);
 }
 
 static HRESULT Array_toLocaleString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -947,7 +947,7 @@ static HRESULT Array_unshift(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
     if(is_class(dispex, JSCLASS_ARRAY)) {
         length = ((ArrayInstance*)dispex)->length;
     }else {
-        hres = get_jsdisp_length(dispex, ei, &length);
+        hres = get_jsdisp_length(ctx, dispex, ei, &length);
         if(FAILED(hres))
             return hres;
     }
@@ -1006,9 +1006,9 @@ static HRESULT Array_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DI
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_FUNC, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_FUNC, NULL);
     case INVOKE_PROPERTYGET:
-        return array_join(dispex, ((ArrayInstance*)dispex)->length, default_separatorW, retv, ei, sp);
+        return array_join(ctx, dispex, ((ArrayInstance*)dispex)->length, default_separatorW, retv, ei, sp);
     default:
         FIXME("unimplemented flags %x\n", flags);
         return E_NOTIMPL;
@@ -1083,9 +1083,9 @@ static HRESULT ArrayConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD fla
     case DISPATCH_CONSTRUCT: {
         if(arg_cnt(dp) == 1 && V_VT((arg_var = get_arg(dp, 0))) == VT_I4) {
             if(V_I4(arg_var) < 0)
-                return throw_range_error(dispex->ctx, ei, IDS_INVALID_LENGTH, NULL);
+                return throw_range_error(ctx, ei, IDS_INVALID_LENGTH, NULL);
 
-            hres = create_array(dispex->ctx, V_I4(arg_var), &obj);
+            hres = create_array(ctx, V_I4(arg_var), &obj);
             if(FAILED(hres))
                 return hres;
 
@@ -1094,7 +1094,7 @@ static HRESULT ArrayConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD fla
             return S_OK;
         }
 
-        hres = create_array(dispex->ctx, arg_cnt(dp), &obj);
+        hres = create_array(ctx, arg_cnt(dp), &obj);
         if(FAILED(hres))
             return hres;
 
