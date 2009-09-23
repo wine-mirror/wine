@@ -380,7 +380,7 @@ HRESULT init_error_constr(script_ctx_t *ctx, DispatchEx *object_prototype)
             return E_OUTOFMEMORY;
         }
 
-        hres = jsdisp_propput_name(&err->dispex, nameW, ctx->lcid, &v, NULL/*FIXME*/, NULL/*FIXME*/);
+        hres = jsdisp_propput_name(&err->dispex, nameW, &v, NULL/*FIXME*/, NULL/*FIXME*/);
 
         if(SUCCEEDED(hres))
             hres = create_builtin_function(ctx, constr_val[i], names[i], NULL,

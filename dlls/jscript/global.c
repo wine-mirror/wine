@@ -887,7 +887,7 @@ HRESULT init_global(script_ctx_t *ctx)
 
     V_VT(&var) = VT_DISPATCH;
     V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(math);
-    hres = jsdisp_propput_name(ctx->global, MathW, ctx->lcid, &var, NULL/*FIXME*/, NULL/*FIXME*/);
+    hres = jsdisp_propput_name(ctx->global, MathW, &var, NULL/*FIXME*/, NULL/*FIXME*/);
     jsdisp_release(math);
 
     return hres;

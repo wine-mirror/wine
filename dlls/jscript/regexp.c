@@ -3520,7 +3520,7 @@ static HRESULT create_match_array(script_ctx_t *ctx, BSTR input, const match_res
             break;
         }
 
-        hres = jsdisp_propput_idx(array, i+1, lcid, &var, ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_idx(array, i+1, &var, ei, NULL/*FIXME*/);
         SysFreeString(V_BSTR(&var));
         if(FAILED(hres))
             break;
@@ -3529,13 +3529,13 @@ static HRESULT create_match_array(script_ctx_t *ctx, BSTR input, const match_res
     while(SUCCEEDED(hres)) {
         V_VT(&var) = VT_I4;
         V_I4(&var) = result->str-input;
-        hres = jsdisp_propput_name(array, indexW, lcid, &var, ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_name(array, indexW, &var, ei, NULL/*FIXME*/);
         if(FAILED(hres))
             break;
 
         V_VT(&var) = VT_BSTR;
         V_BSTR(&var) = input;
-        hres = jsdisp_propput_name(array, inputW, lcid, &var, ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_name(array, inputW, &var, ei, NULL/*FIXME*/);
         if(FAILED(hres))
             break;
 
@@ -3544,7 +3544,7 @@ static HRESULT create_match_array(script_ctx_t *ctx, BSTR input, const match_res
             hres = E_OUTOFMEMORY;
             break;
         }
-        hres = jsdisp_propput_name(array, zeroW, lcid, &var, ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_name(array, zeroW, &var, ei, NULL/*FIXME*/);
         SysFreeString(V_BSTR(&var));
         break;
     }

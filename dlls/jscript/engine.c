@@ -242,7 +242,7 @@ static HRESULT put_value(script_ctx_t *ctx, exprval_t *ref, VARIANT *v, jsexcept
     if(ref->type != EXPRVAL_IDREF)
         return throw_reference_error(ctx, ei, IDS_ILLEGAL_ASSIGN, NULL);
 
-    return disp_propput(ref->u.idref.disp, ref->u.idref.id, ctx->lcid, v, ei, NULL/*FIXME*/);
+    return disp_propput(ctx, ref->u.idref.disp, ref->u.idref.id, v, ei, NULL/*FIXME*/);
 }
 
 static inline BOOL is_null(const VARIANT *v)
@@ -416,7 +416,7 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
 
         V_VT(&var) = VT_DISPATCH;
         V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(func_obj);
-        hres = jsdisp_propput_name(ctx->var_disp, func->expr->identifier, script->lcid, &var, ei, NULL);
+        hres = jsdisp_propput_name(ctx->var_disp, func->expr->identifier, &var, ei, NULL);
         jsdisp_release(func_obj);
         if(FAILED(hres))
             return hres;
@@ -616,7 +616,7 @@ static HRESULT variable_list_eval(exec_ctx_t *ctx, variable_declaration_t *var_l
         if(FAILED(hres))
             break;
 
-        hres = jsdisp_propput_name(ctx->var_disp, iter->identifier, ctx->parser->script->lcid, &val, ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_name(ctx->var_disp, iter->identifier, &val, ei, NULL/*FIXME*/);
         VariantClear(&val);
         if(FAILED(hres))
             break;
@@ -1163,8 +1163,7 @@ static HRESULT catch_eval(exec_ctx_t *ctx, catch_block_t *block, return_type_t *
 
     hres = create_dispex(ctx->parser->script, NULL, NULL, &var_disp);
     if(SUCCEEDED(hres)) {
-        hres = jsdisp_propput_name(var_disp, block->identifier, ctx->parser->script->lcid,
-                &ex, &rt->ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_name(var_disp, block->identifier, &ex, &rt->ei, NULL/*FIXME*/);
         if(SUCCEEDED(hres)) {
             hres = scope_push(ctx->scope_chain, var_disp, &ctx->scope_chain);
             if(SUCCEEDED(hres)) {
@@ -1697,7 +1696,7 @@ HRESULT array_literal_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWOR
         if(FAILED(hres))
             break;
 
-        hres = jsdisp_propput_idx(array, i, ctx->parser->script->lcid, &val, ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_idx(array, i, &val, ei, NULL/*FIXME*/);
         VariantClear(&val);
         if(FAILED(hres))
             break;
@@ -1748,7 +1747,7 @@ HRESULT property_value_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWO
             hres = exprval_to_value(ctx->parser->script, &exprval, ei, &val);
             exprval_release(&exprval);
             if(SUCCEEDED(hres)) {
-                hres = jsdisp_propput_name(obj, name, ctx->parser->script->lcid, &val, ei, NULL/*FIXME*/);
+                hres = jsdisp_propput_name(obj, name, &val, ei, NULL/*FIXME*/);
                 VariantClear(&val);
             }
         }

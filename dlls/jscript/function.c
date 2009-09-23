@@ -74,7 +74,7 @@ static HRESULT init_parameters(DispatchEx *var_disp, FunctionInstance *function,
     cargs = arg_cnt(dp);
 
     for(param = function->parameters; param; param = param->next) {
-        hres = jsdisp_propput_name(var_disp, param->identifier, lcid,
+        hres = jsdisp_propput_name(var_disp, param->identifier,
                 i < cargs ? get_arg(dp,i) : &var_empty, ei, caller);
         if(FAILED(hres))
             return hres;
@@ -121,7 +121,7 @@ static HRESULT create_arguments(script_ctx_t *ctx, IDispatch *calee, LCID lcid, 
     }
 
     for(i=0; i < arg_cnt(dp); i++) {
-        hres = jsdisp_propput_idx(args, i, lcid, get_arg(dp,i), ei, caller);
+        hres = jsdisp_propput_idx(args, i, get_arg(dp,i), ei, caller);
         if(FAILED(hres))
             break;
     }
@@ -129,12 +129,12 @@ static HRESULT create_arguments(script_ctx_t *ctx, IDispatch *calee, LCID lcid, 
     if(SUCCEEDED(hres)) {
         V_VT(&var) = VT_I4;
         V_I4(&var) = arg_cnt(dp);
-        hres = jsdisp_propput_name(args, lengthW, lcid, &var, ei, caller);
+        hres = jsdisp_propput_name(args, lengthW, &var, ei, caller);
 
         if(SUCCEEDED(hres)) {
             V_VT(&var) = VT_DISPATCH;
             V_DISPATCH(&var) = calee;
-            hres = jsdisp_propput_name(args, caleeW, lcid, &var, ei, caller);
+            hres = jsdisp_propput_name(args, caleeW, &var, ei, caller);
         }
     }
 
@@ -166,7 +166,7 @@ static HRESULT create_var_disp(FunctionInstance *function, LCID lcid, DISPPARAMS
 
         V_VT(&var) = VT_DISPATCH;
         V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(arg_disp);
-        hres = jsdisp_propput_name(var_disp, argumentsW, lcid, &var, ei, caller);
+        hres = jsdisp_propput_name(var_disp, argumentsW, &var, ei, caller);
         jsdisp_release(arg_disp);
     }
 
@@ -618,7 +618,7 @@ static HRESULT set_prototype(script_ctx_t *ctx, DispatchEx *dispex, DispatchEx *
     V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(prototype);
     memset(&jsexcept, 0, sizeof(jsexcept));
 
-    return jsdisp_propput_name(dispex, prototypeW, ctx->lcid, &var, &jsexcept, NULL/*FIXME*/);
+    return jsdisp_propput_name(dispex, prototypeW, &var, &jsexcept, NULL/*FIXME*/);
 }
 
 HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, const WCHAR *name,

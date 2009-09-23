@@ -758,7 +758,7 @@ static HRESULT String_match(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
             break;
         }
 
-        hres = jsdisp_propput_idx(array, i, lcid, &var, ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_idx(array, i, &var, ei, NULL/*FIXME*/);
         SysFreeString(V_BSTR(&var));
         if(FAILED(hres))
             break;
@@ -1313,7 +1313,7 @@ static HRESULT String_split(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
                 break;
             }
 
-            hres = jsdisp_propput_idx(array, i, lcid, &var, ei, sp);
+            hres = jsdisp_propput_idx(array, i, &var, ei, sp);
             SysFreeString(V_BSTR(&var));
             if(FAILED(hres))
                 break;
@@ -1335,7 +1335,7 @@ static HRESULT String_split(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
             V_BSTR(&var) = SysAllocStringLen(ptr, len);
 
             if(V_BSTR(&var)) {
-                hres = jsdisp_propput_idx(array, i, lcid, &var, ei, sp);
+                hres = jsdisp_propput_idx(array, i, &var, ei, sp);
                 SysFreeString(V_BSTR(&var));
             }else {
                 hres = E_OUTOFMEMORY;

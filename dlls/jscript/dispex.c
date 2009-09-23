@@ -327,7 +327,7 @@ static HRESULT prop_get(DispatchEx *This, dispex_prop_t *prop, DISPPARAMS *dp,
     return hres;
 }
 
-static HRESULT prop_put(DispatchEx *This, dispex_prop_t *prop, LCID lcid, DISPPARAMS *dp,
+static HRESULT prop_put(DispatchEx *This, dispex_prop_t *prop, DISPPARAMS *dp,
         jsexcept_t *ei, IServiceProvider *caller)
 {
     DWORD i;
@@ -336,7 +336,7 @@ static HRESULT prop_put(DispatchEx *This, dispex_prop_t *prop, LCID lcid, DISPPA
     switch(prop->type) {
     case PROP_BUILTIN:
         if(!(prop->flags & PROPF_METHOD))
-            return prop->u.p->invoke(This, lcid, DISPATCH_PROPERTYPUT, dp, NULL, ei, caller);
+            return prop->u.p->invoke(This, This->ctx->lcid, DISPATCH_PROPERTYPUT, dp, NULL, ei, caller);
     case PROP_PROTREF:
         prop->type = PROP_VARIANT;
         prop->flags = PROPF_ENUM;
@@ -559,7 +559,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         hres = prop_get(This, prop, pdp, pvarRes, &jsexcept, pspCaller);
         break;
     case DISPATCH_PROPERTYPUT:
-        hres = prop_put(This, prop, lcid, pdp, &jsexcept, pspCaller);
+        hres = prop_put(This, prop, pdp, &jsexcept, pspCaller);
         break;
     default:
         FIXME("Unimplemented flags %x\n", wFlags);
@@ -899,7 +899,7 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, DIS
     return hres;
 }
 
-HRESULT jsdisp_propput_name(DispatchEx *obj, const WCHAR *name, LCID lcid, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
+HRESULT jsdisp_propput_name(DispatchEx *obj, const WCHAR *name, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
 {
     DISPID named_arg = DISPID_PROPERTYPUT;
     DISPPARAMS dp = {val, &named_arg, 1, 1};
@@ -910,20 +910,20 @@ HRESULT jsdisp_propput_name(DispatchEx *obj, const WCHAR *name, LCID lcid, VARIA
     if(FAILED(hres))
         return hres;
 
-    return prop_put(obj, prop, lcid, &dp, ei, caller);
+    return prop_put(obj, prop, &dp, ei, caller);
 }
 
-HRESULT jsdisp_propput_idx(DispatchEx *obj, DWORD idx, LCID lcid, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
+HRESULT jsdisp_propput_idx(DispatchEx *obj, DWORD idx, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
 {
     WCHAR buf[12];
 
     static const WCHAR formatW[] = {'%','d',0};
 
     sprintfW(buf, formatW, idx);
-    return jsdisp_propput_name(obj, buf, lcid, val, ei, caller);
+    return jsdisp_propput_name(obj, buf, val, ei, caller);
 }
 
-HRESULT disp_propput(IDispatch *disp, DISPID id, LCID lcid, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
+HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
 {
     DISPID dispid = DISPID_PROPERTYPUT;
     DISPPARAMS dp  = {val, &dispid, 1, 1};
@@ -937,7 +937,7 @@ HRESULT disp_propput(IDispatch *disp, DISPID id, LCID lcid, VARIANT *val, jsexce
 
         prop = get_prop(jsdisp, id);
         if(prop)
-            hres = prop_put(jsdisp, prop, lcid, &dp, ei, caller);
+            hres = prop_put(jsdisp, prop, &dp, ei, caller);
         else
             hres = DISP_E_MEMBERNOTFOUND;
 
@@ -950,10 +950,10 @@ HRESULT disp_propput(IDispatch *disp, DISPID id, LCID lcid, VARIANT *val, jsexce
         ULONG err = 0;
 
         TRACE("using IDispatch\n");
-        return IDispatch_Invoke(disp, id, &IID_NULL, DISPATCH_PROPERTYPUT, lcid, &dp, NULL, &ei->ei, &err);
+        return IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, DISPATCH_PROPERTYPUT, &dp, NULL, &ei->ei, &err);
     }
 
-    hres = IDispatchEx_InvokeEx(dispex, id, lcid, DISPATCH_PROPERTYPUT, &dp, NULL, &ei->ei, caller);
+    hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, DISPATCH_PROPERTYPUT, &dp, NULL, &ei->ei, caller);
 
     IDispatchEx_Release(dispex);
     return hres;
