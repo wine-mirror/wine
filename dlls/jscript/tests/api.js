@@ -1621,6 +1621,16 @@ exception_test(function() {eval("'unterminated")}, "SyntaxError", -2146827273);
 exception_test(function() {eval("nonexistingfunc()")}, "TypeError", -2146823281);
 exception_test(function() {RegExp(/a/, "g");}, "RegExpError", -2146823271);
 
+function testArrayHostThis(func) {
+    exception_test(function() { Array.prototype[func].call(testObj); }, "TypeError", -2146823274);
+}
+
+testArrayHostThis("push");
+testArrayHostThis("shift");
+testArrayHostThis("slice");
+testArrayHostThis("splice");
+testArrayHostThis("unshift");
+
 function testObjectInherit(obj, constr, ts, tls, vo) {
     ok(obj instanceof Object, "obj is not instance of Object");
     ok(obj instanceof constr, "obj is not instance of its constructor");

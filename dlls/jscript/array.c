@@ -69,10 +69,8 @@ static HRESULT get_length(script_ctx_t *ctx, vdisp_t *vdisp, jsexcept_t *ei, Dis
         return S_OK;
     }
 
-    if(!is_jsdisp(vdisp)) {
-        FIXME("Not JScript object\n");
-        return E_FAIL;
-    }
+    if(!is_jsdisp(vdisp))
+        return throw_type_error(ctx, ei, IDS_JSCRIPT_EXPECTED, NULL);
 
     hres = jsdisp_propget_name(vdisp->u.jsdisp, lengthW, &var, ei, NULL/*FIXME*/);
     if(FAILED(hres))

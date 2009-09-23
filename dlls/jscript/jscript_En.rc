@@ -38,6 +38,7 @@ STRINGTABLE DISCARDABLE
     IDS_ILLEGAL_ASSIGN      "Illegal assignment"
     IDS_UNDEFINED           "'|' is undefined"
     IDS_NOT_BOOL            "Boolean object expected"
+    IDS_JSCRIPT_EXPECTED    "JScript object expected"
     IDS_REGEXP_SYNTAX_ERROR "Syntax error in regular expression"
     IDS_INVALID_LENGTH      "Array length must be a finite positive integer"
 }
