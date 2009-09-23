@@ -32,7 +32,7 @@ static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','
 
 static const WCHAR default_valueW[] = {'[','o','b','j','e','c','t',' ','O','b','j','e','c','t',']',0};
 
-static HRESULT Object_toString(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Object_toString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR formatW[] = {'[','o','b','j','e','c','t',' ','%','s',']',0};
@@ -71,7 +71,7 @@ static HRESULT Object_toString(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT Object_toLocaleString(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Object_toLocaleString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     DISPPARAMS params = {NULL, NULL, 0, 0};
@@ -81,7 +81,7 @@ static HRESULT Object_toLocaleString(DispatchEx *dispex, WORD flags, DISPPARAMS 
     return jsdisp_call_name(dispex, toStringW, DISPATCH_METHOD, &params, retv, ei, sp);
 }
 
-static HRESULT Object_valueOf(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Object_valueOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -96,28 +96,28 @@ static HRESULT Object_valueOf(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT Object_hasOwnProperty(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Object_propertyIsEnumerable(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Object_propertyIsEnumerable(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Object_isPrototypeOf(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Object_isPrototypeOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Object_value(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Object_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -162,7 +162,7 @@ static const builtin_info_t Object_info = {
     NULL
 };
 
-static HRESULT ObjectConstr_value(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT ObjectConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     HRESULT hres;

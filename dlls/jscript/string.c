@@ -64,7 +64,7 @@ static const WCHAR toLocaleUpperCaseW[] = {'t','o','L','o','c','a','l','e','U','
 static const WCHAR localeCompareW[] = {'l','o','c','a','l','e','C','o','m','p','a','r','e',0};
 static const WCHAR fromCharCodeW[] = {'f','r','o','m','C','h','a','r','C','o','d','e',0};
 
-static HRESULT String_length(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_length(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("%p\n", dispex);
@@ -86,7 +86,7 @@ static HRESULT String_length(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.5.4.2 */
-static HRESULT String_toString(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_toString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     StringInstance *string;
@@ -112,12 +112,12 @@ static HRESULT String_toString(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.5.4.2 */
-static HRESULT String_valueOf(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_valueOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
 
-    return String_toString(dispex, flags, dp, retv, ei, sp);
+    return String_toString(ctx, dispex, flags, dp, retv, ei, sp);
 }
 
 static HRESULT do_attributeless_tag_format(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -234,7 +234,7 @@ static HRESULT do_attribute_tag_format(DispatchEx *dispex, WORD flags,
     return S_OK;
 }
 
-static HRESULT String_anchor(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_anchor(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR fontW[] = {'A',0};
@@ -243,21 +243,21 @@ static HRESULT String_anchor(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return do_attribute_tag_format(dispex, flags, dp, retv, ei, sp, fontW, colorW);
 }
 
-static HRESULT String_big(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_big(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR bigtagW[] = {'B','I','G',0};
     return do_attributeless_tag_format(dispex, flags, dp, retv, ei, sp, bigtagW);
 }
 
-static HRESULT String_blink(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_blink(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR blinktagW[] = {'B','L','I','N','K',0};
     return do_attributeless_tag_format(dispex, flags, dp, retv, ei, sp, blinktagW);
 }
 
-static HRESULT String_bold(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_bold(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR boldtagW[] = {'B',0};
@@ -265,7 +265,7 @@ static HRESULT String_bold(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.5.4.5 */
-static HRESULT String_charAt(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_charAt(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     const WCHAR *str;
@@ -333,7 +333,7 @@ static HRESULT String_charAt(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.5.4.5 */
-static HRESULT String_charCodeAt(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_charCodeAt(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     const WCHAR *str;
@@ -391,7 +391,7 @@ static HRESULT String_charCodeAt(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.5.4.6 */
-static HRESULT String_concat(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_concat(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     BSTR *strs = NULL, ret = NULL;
@@ -448,14 +448,14 @@ static HRESULT String_concat(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT String_fixed(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_fixed(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR fixedtagW[] = {'T','T',0};
     return do_attributeless_tag_format(dispex, flags, dp, retv, ei, sp, fixedtagW);
 }
 
-static HRESULT String_fontcolor(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_fontcolor(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR fontW[] = {'F','O','N','T',0};
@@ -464,7 +464,7 @@ static HRESULT String_fontcolor(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return do_attribute_tag_format(dispex, flags, dp, retv, ei, sp, fontW, colorW);
 }
 
-static HRESULT String_fontsize(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_fontsize(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR fontW[] = {'F','O','N','T',0};
@@ -473,7 +473,7 @@ static HRESULT String_fontsize(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return do_attribute_tag_format(dispex, flags, dp, retv, ei, sp, fontW, colorW);
 }
 
-static HRESULT String_indexOf(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_indexOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     DWORD length, pos = 0;
@@ -555,7 +555,7 @@ static HRESULT String_indexOf(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT String_italics(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_italics(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR italicstagW[] = {'I',0};
@@ -563,7 +563,7 @@ static HRESULT String_italics(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.5.4.8 */
-static HRESULT String_lastIndexOf(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_lastIndexOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     BSTR search_str, val_str = NULL;
@@ -649,7 +649,7 @@ static HRESULT String_lastIndexOf(DispatchEx *dispex, WORD flags, DISPPARAMS *dp
     return S_OK;
 }
 
-static HRESULT String_link(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_link(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR fontW[] = {'A',0};
@@ -659,7 +659,7 @@ static HRESULT String_link(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.5.4.10 */
-static HRESULT String_match(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_match(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     const WCHAR *str;
@@ -871,7 +871,7 @@ static HRESULT rep_call(DispatchEx *func, const WCHAR *str, match_result_t *matc
 }
 
 /* ECMA-262 3rd Edition    15.5.4.11 */
-static HRESULT String_replace(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_replace(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     const WCHAR *str;
@@ -1105,7 +1105,7 @@ static HRESULT String_replace(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return hres;
 }
 
-static HRESULT String_search(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_search(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
@@ -1113,7 +1113,7 @@ static HRESULT String_search(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.5.4.13 */
-static HRESULT String_slice(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_slice(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     const WCHAR *str;
@@ -1209,14 +1209,14 @@ static HRESULT String_slice(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT String_small(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_small(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR smalltagW[] = {'S','M','A','L','L',0};
     return do_attributeless_tag_format(dispex, flags, dp, retv, ei, sp, smalltagW);
 }
 
-static HRESULT String_split(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_split(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     match_result_t *match_result = NULL;
@@ -1357,14 +1357,14 @@ static HRESULT String_split(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return hres;
 }
 
-static HRESULT String_strike(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_strike(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR striketagW[] = {'S','T','R','I','K','E',0};
     return do_attributeless_tag_format(dispex, flags, dp, retv, ei, sp, striketagW);
 }
 
-static HRESULT String_sub(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_sub(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR subtagW[] = {'S','U','B',0};
@@ -1372,7 +1372,7 @@ static HRESULT String_sub(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.5.4.15 */
-static HRESULT String_substring(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_substring(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     const WCHAR *str;
@@ -1461,7 +1461,7 @@ static HRESULT String_substring(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    B.2.3 */
-static HRESULT String_substr(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_substr(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     BSTR val_str = NULL;
@@ -1541,14 +1541,14 @@ static HRESULT String_substr(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return hres;
 }
 
-static HRESULT String_sup(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_sup(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR suptagW[] = {'S','U','P',0};
     return do_attributeless_tag_format(dispex, flags, dp, retv, ei, sp, suptagW);
 }
 
-static HRESULT String_toLowerCase(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_toLowerCase(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     const WCHAR* str;
@@ -1594,7 +1594,7 @@ static HRESULT String_toLowerCase(DispatchEx *dispex, WORD flags, DISPPARAMS *dp
     return S_OK;
 }
 
-static HRESULT String_toUpperCase(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_toUpperCase(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     const WCHAR* str;
@@ -1640,28 +1640,28 @@ static HRESULT String_toUpperCase(DispatchEx *dispex, WORD flags, DISPPARAMS *dp
     return S_OK;
 }
 
-static HRESULT String_toLocaleLowerCase(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_toLocaleLowerCase(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT String_toLocaleUpperCase(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_toLocaleUpperCase(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT String_localeCompare(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_localeCompare(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT String_value(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT String_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     StringInstance *This = (StringInstance*)dispex;
@@ -1742,7 +1742,7 @@ static const builtin_info_t String_info = {
 };
 
 /* ECMA-262 3rd Edition    15.5.3.2 */
-static HRESULT StringConstr_fromCharCode(DispatchEx *dispex, WORD flags,
+static HRESULT StringConstr_fromCharCode(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     DWORD i, code;
@@ -1772,7 +1772,7 @@ static HRESULT StringConstr_fromCharCode(DispatchEx *dispex, WORD flags,
     return S_OK;
 }
 
-static HRESULT StringConstr_value(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT StringConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     HRESULT hres;

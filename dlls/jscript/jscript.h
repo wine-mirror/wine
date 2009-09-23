@@ -86,7 +86,7 @@ typedef enum {
     JSCLASS_ARGUMENTS
 } jsclass_t;
 
-typedef HRESULT (*builtin_invoke_t)(DispatchEx*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
+typedef HRESULT (*builtin_invoke_t)(script_ctx_t*,DispatchEx*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
 
 typedef struct {
     const WCHAR *name;
@@ -146,7 +146,7 @@ HRESULT jsdisp_delete_idx(DispatchEx*,DWORD);
 
 HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,const WCHAR*,const builtin_info_t*,DWORD,
         DispatchEx*,DispatchEx**);
-HRESULT Function_value(DispatchEx*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
+HRESULT Function_value(script_ctx_t*,DispatchEx*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
 
 HRESULT throw_eval_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
 HRESULT throw_range_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);

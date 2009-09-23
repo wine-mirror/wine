@@ -73,7 +73,7 @@ static HRESULT math_constant(DOUBLE val, WORD flags, VARIANT *retv)
 }
 
 /* ECMA-262 3rd Edition    15.8.1.1 */
-static HRESULT Math_E(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_E(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -81,7 +81,7 @@ static HRESULT Math_E(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.8.1.4 */
-static HRESULT Math_LOG2E(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_LOG2E(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -89,21 +89,21 @@ static HRESULT Math_LOG2E(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.8.1.4 */
-static HRESULT Math_LOG10E(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_LOG10E(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
     return math_constant(M_LOG10E, flags, retv);
 }
 
-static HRESULT Math_LN2(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_LN2(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
     return math_constant(M_LN2, flags, retv);
 }
 
-static HRESULT Math_LN10(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_LN10(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -111,21 +111,21 @@ static HRESULT Math_LN10(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.8.1.6 */
-static HRESULT Math_PI(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_PI(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
     return math_constant(M_PI, flags, retv);
 }
 
-static HRESULT Math_SQRT2(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_SQRT2(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
     return math_constant(M_SQRT2, flags, retv);
 }
 
-static HRESULT Math_SQRT1_2(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_SQRT1_2(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -133,7 +133,7 @@ static HRESULT Math_SQRT1_2(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.8.2.12 */
-static HRESULT Math_abs(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_abs(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT v;
@@ -158,7 +158,7 @@ static HRESULT Math_abs(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT Math_acos(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_acos(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT v;
@@ -179,7 +179,7 @@ static HRESULT Math_acos(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT Math_asin(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_asin(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT v;
@@ -200,7 +200,7 @@ static HRESULT Math_asin(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT Math_atan(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_atan(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT v;
@@ -221,7 +221,7 @@ static HRESULT Math_atan(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT Math_atan2(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_atan2(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT v1, v2;
@@ -247,7 +247,7 @@ static HRESULT Math_atan2(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.8.2.6 */
-static HRESULT Math_ceil(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_ceil(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT v;
@@ -270,7 +270,7 @@ static HRESULT Math_ceil(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT Math_cos(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_cos(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT v;
@@ -291,7 +291,7 @@ static HRESULT Math_cos(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT Math_exp(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_exp(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT v;
@@ -312,7 +312,7 @@ static HRESULT Math_exp(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT Math_floor(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_floor(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT v;
@@ -335,7 +335,7 @@ static HRESULT Math_floor(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT Math_log(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_log(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT v;
@@ -359,7 +359,7 @@ static HRESULT Math_log(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.8.2.11 */
-static HRESULT Math_max(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_max(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     DOUBLE max, d;
@@ -396,7 +396,7 @@ static HRESULT Math_max(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.8.2.12 */
-static HRESULT Math_min(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_min(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     DOUBLE min, d;
@@ -433,7 +433,7 @@ static HRESULT Math_min(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.8.2.13 */
-static HRESULT Math_pow(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_pow(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT x, y;
@@ -460,7 +460,7 @@ static HRESULT Math_pow(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.8.2.14 */
-static HRESULT Math_random(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_random(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     UINT r;
@@ -477,7 +477,7 @@ static HRESULT Math_random(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
 }
 
 /* ECMA-262 3rd Edition    15.8.2.15 */
-static HRESULT Math_round(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_round(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT v;
@@ -499,7 +499,7 @@ static HRESULT Math_round(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT Math_sin(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_sin(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT v;
@@ -520,7 +520,7 @@ static HRESULT Math_sin(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT Math_sqrt(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_sqrt(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT v;
@@ -541,7 +541,7 @@ static HRESULT Math_sqrt(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT Math_tan(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Math_tan(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT v;

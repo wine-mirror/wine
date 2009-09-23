@@ -250,7 +250,7 @@ static HRESULT invoke_prop_func(DispatchEx *This, DispatchEx *jsthis, dispex_pro
             WARN("%s is not a constructor\n", debugstr_w(prop->name));
             return E_INVALIDARG;
         }
-        return prop->u.p->invoke(jsthis, flags, dp, retv, ei, caller);
+        return prop->u.p->invoke(This->ctx, jsthis, flags, dp, retv, ei, caller);
     case PROP_PROTREF:
         return invoke_prop_func(This->prototype, jsthis, This->prototype->props+prop->u.ref, flags, dp, retv, ei, caller);
     case PROP_VARIANT: {
@@ -304,7 +304,7 @@ static HRESULT prop_get(DispatchEx *This, dispex_prop_t *prop, DISPPARAMS *dp,
 
             hres = VariantCopy(retv, &prop->u.var);
         }else {
-            hres = prop->u.p->invoke(This, DISPATCH_PROPERTYGET, dp, retv, ei, caller);
+            hres = prop->u.p->invoke(This->ctx, This, DISPATCH_PROPERTYGET, dp, retv, ei, caller);
         }
         break;
     case PROP_PROTREF:
@@ -336,7 +336,7 @@ static HRESULT prop_put(DispatchEx *This, dispex_prop_t *prop, DISPPARAMS *dp,
     switch(prop->type) {
     case PROP_BUILTIN:
         if(!(prop->flags & PROPF_METHOD))
-            return prop->u.p->invoke(This, DISPATCH_PROPERTYPUT, dp, NULL, ei, caller);
+            return prop->u.p->invoke(This->ctx, This, DISPATCH_PROPERTYPUT, dp, NULL, ei, caller);
     case PROP_PROTREF:
         prop->type = PROP_VARIANT;
         prop->flags = PROPF_ENUM;
@@ -826,7 +826,7 @@ HRESULT jsdisp_get_id(DispatchEx *jsdisp, const WCHAR *name, DWORD flags, DISPID
 HRESULT jsdisp_call_value(DispatchEx *disp, WORD flags, DISPPARAMS *dp, VARIANT *retv,
         jsexcept_t *ei, IServiceProvider *caller)
 {
-    return disp->builtin_info->value_prop.invoke(disp, flags, dp, retv, ei, caller);
+    return disp->builtin_info->value_prop.invoke(disp->ctx, disp, flags, dp, retv, ei, caller);
 }
 
 HRESULT jsdisp_call(DispatchEx *disp, DISPID id, WORD flags, DISPPARAMS *dp, VARIANT *retv,

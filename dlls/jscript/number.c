@@ -42,7 +42,7 @@ static const WCHAR valueOfW[] = {'v','a','l','u','e','O','f',0};
 
 #define NUMBER_TOSTRING_BUF_SIZE 64
 /* ECMA-262 3rd Edition    15.7.4.2 */
-static HRESULT Number_toString(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Number_toString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     NumberInstance *number;
@@ -170,35 +170,35 @@ static HRESULT Number_toString(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT Number_toLocaleString(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Number_toLocaleString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Number_toFixed(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Number_toFixed(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Number_toExponential(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Number_toExponential(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Number_toPrecision(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Number_toPrecision(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Number_valueOf(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Number_valueOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -213,7 +213,7 @@ static HRESULT Number_valueOf(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     return S_OK;
 }
 
-static HRESULT Number_value(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Number_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     NumberInstance *number = (NumberInstance*)dispex;
@@ -251,7 +251,7 @@ static const builtin_info_t Number_info = {
     NULL
 };
 
-static HRESULT NumberConstr_value(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT NumberConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT num;
