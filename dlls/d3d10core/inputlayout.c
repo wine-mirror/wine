@@ -39,7 +39,7 @@ static HRESULT isgn_handler(const char *data, DWORD data_size, DWORD tag, void *
     }
 }
 
-HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEMENT_DESC *element_descs,
+static HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEMENT_DESC *element_descs,
         UINT element_count, const void *shader_byte_code, SIZE_T shader_byte_code_length,
         WINED3DVERTEXELEMENT **wined3d_elements, UINT *wined3d_element_count)
 {
@@ -181,7 +181,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_input_layout_SetPrivateDataInterface(ID3D
     return E_NOTIMPL;
 }
 
-const struct ID3D10InputLayoutVtbl d3d10_input_layout_vtbl =
+static const struct ID3D10InputLayoutVtbl d3d10_input_layout_vtbl =
 {
     /* IUnknown methods */
     d3d10_input_layout_QueryInterface,
@@ -193,3 +193,34 @@ const struct ID3D10InputLayoutVtbl d3d10_input_layout_vtbl =
     d3d10_input_layout_SetPrivateData,
     d3d10_input_layout_SetPrivateDataInterface,
 };
+
+HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d10_device *device,
+        const D3D10_INPUT_ELEMENT_DESC *element_descs, UINT element_count,
+        const void *shader_byte_code, SIZE_T shader_byte_code_length)
+{
+    WINED3DVERTEXELEMENT *wined3d_elements;
+    UINT wined3d_element_count;
+    HRESULT hr;
+
+    layout->vtbl = &d3d10_input_layout_vtbl;
+    layout->refcount = 1;
+
+    hr = d3d10_input_layout_to_wined3d_declaration(element_descs, element_count,
+            shader_byte_code, shader_byte_code_length, &wined3d_elements, &wined3d_element_count);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d vertex declaration elements, hr %#x.\n", hr);
+        return hr;
+    }
+
+    hr = IWineD3DDevice_CreateVertexDeclaration(device->wined3d_device, &layout->wined3d_decl,
+            (IUnknown *)layout, wined3d_elements, wined3d_element_count);
+    HeapFree(GetProcessHeap(), 0, wined3d_elements);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d vertex declaration, hr %#x.\n", hr);
+        return hr;
+    }
+
+    return S_OK;
+}

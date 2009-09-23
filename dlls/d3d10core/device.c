@@ -901,8 +901,6 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateInputLayout(ID3D10Device *if
 {
     struct d3d10_device *This = (struct d3d10_device *)iface;
     struct d3d10_input_layout *object;
-    WINED3DVERTEXELEMENT *wined3d_elements;
-    UINT wined3d_element_count;
     HRESULT hr;
 
     TRACE("iface %p, element_descs %p, element_count %u, shader_byte_code %p,"
@@ -917,22 +915,16 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateInputLayout(ID3D10Device *if
         return E_OUTOFMEMORY;
     }
 
-    object->vtbl = &d3d10_input_layout_vtbl;
-    object->refcount = 1;
-
-    hr = d3d10_input_layout_to_wined3d_declaration(element_descs, element_count,
-            shader_byte_code, shader_byte_code_length, &wined3d_elements, &wined3d_element_count);
+    hr = d3d10_input_layout_init(object, This, element_descs, element_count,
+            shader_byte_code, shader_byte_code_length);
     if (FAILED(hr))
     {
+        WARN("Failed to initialize input layout, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
         return hr;
     }
 
-    IWineD3DDevice_CreateVertexDeclaration(This->wined3d_device, &object->wined3d_decl,
-            (IUnknown *)object, wined3d_elements, wined3d_element_count);
-
-    HeapFree(GetProcessHeap(), 0, wined3d_elements);
-
+    TRACE("Created input layout %p.\n", object);
     *input_layout = (ID3D10InputLayout *)object;
 
     return S_OK;

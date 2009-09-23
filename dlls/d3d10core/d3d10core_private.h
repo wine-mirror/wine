@@ -119,7 +119,6 @@ struct d3d10_rendertarget_view
 };
 
 /* ID3D10InputLayout */
-extern const struct ID3D10InputLayoutVtbl d3d10_input_layout_vtbl DECLSPEC_HIDDEN;
 struct d3d10_input_layout
 {
     const struct ID3D10InputLayoutVtbl *vtbl;
@@ -128,9 +127,9 @@ struct d3d10_input_layout
     IWineD3DVertexDeclaration *wined3d_decl;
 };
 
-HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEMENT_DESC *element_descs,
-        UINT element_count, const void *shader_byte_code, SIZE_T shader_byte_code_length,
-        WINED3DVERTEXELEMENT **wined3d_elements, UINT *wined3d_element_count) DECLSPEC_HIDDEN;
+HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d10_device *device,
+        const D3D10_INPUT_ELEMENT_DESC *element_descs, UINT element_count,
+        const void *shader_byte_code, SIZE_T shader_byte_code_length) DECLSPEC_HIDDEN;
 
 /* ID3D10VertexShader */
 extern const struct ID3D10VertexShaderVtbl d3d10_vertex_shader_vtbl DECLSPEC_HIDDEN;
