@@ -715,6 +715,7 @@ typedef struct PngEncoder {
     double xres, yres;
     UINT lines_written;
     BOOL frame_committed;
+    BOOL committed;
 } PngEncoder;
 
 static inline PngEncoder *encoder_from_frame(IWICBitmapFrameEncode *iface)
@@ -1195,8 +1196,15 @@ static HRESULT WINAPI PngEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 
 static HRESULT WINAPI PngEncoder_Commit(IWICBitmapEncoder *iface)
 {
-    TRACE("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    PngEncoder *This = (PngEncoder*)iface;
+    TRACE("(%p)\n", iface);
+
+    if (!This->frame_committed || This->committed)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    This->committed = TRUE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PngEncoder_GetMetadataQueryWriter(IWICBitmapEncoder *iface,
@@ -1258,6 +1266,7 @@ HRESULT PngEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->yres = 0.0;
     This->lines_written = 0;
     This->frame_committed = FALSE;
+    This->committed = FALSE;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
