@@ -759,7 +759,10 @@ BOOL context_set_current(struct wined3d_context *ctx)
         TRACE("Switching to D3D context %p, GL context %p, device context %p.\n", ctx, ctx->glCtx, ctx->hdc);
         if (!pwglMakeCurrent(ctx->hdc, ctx->glCtx))
         {
-            ERR("Failed to make GL context %p current on device context %p.\n", ctx->glCtx, ctx->hdc);
+            DWORD err = GetLastError();
+            ERR("Failed to make GL context %p current on device context %p, last error %#x.\n",
+                    ctx->glCtx, ctx->hdc, err);
+            TlsSetValue(wined3d_context_tls_idx, NULL);
             return FALSE;
         }
         ctx->current = 1;
@@ -769,7 +772,9 @@ BOOL context_set_current(struct wined3d_context *ctx)
         TRACE("Clearing current D3D context.\n");
         if (!pwglMakeCurrent(NULL, NULL))
         {
-            ERR("Failed to clear current GL context.\n");
+            DWORD err = GetLastError();
+            ERR("Failed to clear current GL context, last error %#x.\n", err);
+            TlsSetValue(wined3d_context_tls_idx, NULL);
             return FALSE;
         }
     }
