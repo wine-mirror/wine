@@ -530,9 +530,6 @@ DECLARE_INTERFACE_(IDirect3DVertexDeclaration8, IUnknown)
 #define IDirect3DVertexDeclaration8_AddRef(p)              (p)->lpVtbl->AddRef(p)
 #define IDirect3DVertexDeclaration8_Release(p)             (p)->lpVtbl->Release(p)
 
-/*** Implementation ***/
-extern const IDirect3DVertexDeclaration8Vtbl Direct3DVertexDeclaration8_Vtbl DECLSPEC_HIDDEN;
-
 typedef struct {
     const IDirect3DVertexDeclaration8Vtbl *lpVtbl;
     LONG ref_count;
@@ -546,6 +543,8 @@ typedef struct {
 
 HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration8Impl *declaration,
         IDirect3DDevice8Impl *device, const DWORD *elements) DECLSPEC_HIDDEN;
+HRESULT vertexdeclaration_init_fvf(IDirect3DVertexDeclaration8Impl *declaration,
+        IDirect3DDevice8Impl *device, DWORD fvf) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirect3DVertexShader8 interface

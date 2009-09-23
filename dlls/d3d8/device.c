@@ -1863,17 +1863,10 @@ static IDirect3DVertexDeclaration8Impl *IDirect3DDevice8Impl_FindDecl(IDirect3DD
         return NULL;
     }
 
-    d3d8_declaration->ref_count = 1;
-    d3d8_declaration->lpVtbl = &Direct3DVertexDeclaration8_Vtbl;
-    d3d8_declaration->elements = NULL;
-    d3d8_declaration->elements_size = 0;
-    d3d8_declaration->shader_handle = fvf;
-
-    hr = IWineD3DDevice_CreateVertexDeclarationFromFVF(This->WineD3DDevice,
-            &d3d8_declaration->wined3d_vertex_declaration, (IUnknown *)d3d8_declaration, fvf);
+    hr = vertexdeclaration_init_fvf(d3d8_declaration, This, fvf);
     if (FAILED(hr))
     {
-        ERR("Failed to create wined3d vertex declaration.\n");
+        WARN("Failed to initialize vertex declaration, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, d3d8_declaration);
         return NULL;
     }

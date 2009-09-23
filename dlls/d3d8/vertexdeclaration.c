@@ -352,7 +352,7 @@ UINT convert_to_wined3d_declaration(const DWORD *d3d8_elements, DWORD *d3d8_elem
     return element_count;
 }
 
-const IDirect3DVertexDeclaration8Vtbl Direct3DVertexDeclaration8_Vtbl =
+static const IDirect3DVertexDeclaration8Vtbl Direct3DVertexDeclaration8_Vtbl =
 {
     IDirect3DVertexDeclaration8Impl_QueryInterface,
     IDirect3DVertexDeclaration8Impl_AddRef,
@@ -389,6 +389,28 @@ HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration8Impl *declaration,
     {
         WARN("Failed to create wined3d vertex declaration, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, declaration->elements);
+        return hr;
+    }
+
+    return D3D_OK;
+}
+
+HRESULT vertexdeclaration_init_fvf(IDirect3DVertexDeclaration8Impl *declaration,
+        IDirect3DDevice8Impl *device, DWORD fvf)
+{
+    HRESULT hr;
+
+    declaration->ref_count = 1;
+    declaration->lpVtbl = &Direct3DVertexDeclaration8_Vtbl;
+    declaration->elements = NULL;
+    declaration->elements_size = 0;
+    declaration->shader_handle = fvf;
+
+    hr = IWineD3DDevice_CreateVertexDeclarationFromFVF(device->WineD3DDevice,
+            &declaration->wined3d_vertex_declaration, (IUnknown *)declaration, fvf);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d vertex declaration, hr %#x.\n", hr);
         return hr;
     }
 
