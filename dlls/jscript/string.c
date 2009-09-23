@@ -85,13 +85,9 @@ static HRESULT String_length(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
     return S_OK;
 }
 
-/* ECMA-262 3rd Edition    15.5.4.2 */
-static HRESULT String_toString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+static HRESULT stringobj_to_string(DispatchEx *dispex, VARIANT *retv)
 {
     StringInstance *string;
-
-    TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_STRING)) {
         WARN("this is not a string object\n");
@@ -112,12 +108,21 @@ static HRESULT String_toString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
 }
 
 /* ECMA-262 3rd Edition    15.5.4.2 */
+static HRESULT String_toString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    TRACE("\n");
+
+    return stringobj_to_string(dispex, retv);
+}
+
+/* ECMA-262 3rd Edition    15.5.4.2 */
 static HRESULT String_valueOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
 
-    return String_toString(ctx, dispex, flags, dp, retv, ei, sp);
+    return stringobj_to_string(dispex, retv);
 }
 
 static HRESULT do_attributeless_tag_format(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
