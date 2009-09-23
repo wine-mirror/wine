@@ -281,21 +281,15 @@ static HRESULT call_function(script_ctx_t *ctx, FunctionInstance *function, IDis
     HRESULT hres;
 
     if(function->value_proc) {
-        DispatchEx *jsthis = NULL;
         vdisp_t vthis;
 
-        if(this_obj) {
-            jsthis = iface_to_jsdisp((IUnknown*)this_obj);
-            if(!jsthis)
-                FIXME("this_obj is not DispatchEx\n");
-        }
+        if(this_obj)
+            set_disp(&vthis, this_obj);
+        else
+            set_jsdisp(&vthis, ctx->script_disp);
 
-        set_jsdisp(&vthis, jsthis ? jsthis : ctx->script_disp);
         hres = function->value_proc(ctx, &vthis, DISPATCH_METHOD, args, retv, ei, caller);
         vdisp_release(&vthis);
-
-        if(jsthis)
-            jsdisp_release(jsthis);
     }else {
         hres = invoke_source(ctx, function, this_obj ? this_obj : (IDispatch*)_IDispatchEx_(ctx->script_disp),
                 args, retv, ei, caller);

@@ -912,6 +912,10 @@ static void run_tests(void)
     parse_script_a("ok(String(testObj) === '1', 'wrong testObj value');");
     CHECK_CALLED(testobj_value);
 
+    SET_EXPECT(testobj_value);
+    parse_script_a("ok(String.prototype.concat.call(testObj, ' OK') === '1 OK', 'wrong concat result');");
+    CHECK_CALLED(testobj_value);
+
     run_from_res("lang.js");
     run_from_res("api.js");
     run_from_res("regexp.js");
