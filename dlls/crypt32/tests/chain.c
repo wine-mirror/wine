@@ -1686,8 +1686,9 @@ static void testGetCertChain(void)
     ret = pCertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL,
      &chain);
     ok(!ret, "Expected failure\n");
-    ok(GetLastError() == ERROR_INVALID_DATA,
-     "Expected ERROR_INVALID_DATA, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DATA ||
+     GetLastError() == CRYPT_E_ASN1_BADTAG, /* Vista and higher */
+     "Expected ERROR_INVALID_DATA or CRYPT_E_ASN1_BADTAG, got %d\n", GetLastError());
 
     CertFreeCertificateContext(cert);
 
