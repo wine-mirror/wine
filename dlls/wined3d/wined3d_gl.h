@@ -1585,6 +1585,114 @@ typedef void (WINE_GLAPI *PGLFNCLAMPCOLORARBPROC) (GLenum target, GLenum clamp);
 #endif
 typedef void (WINE_GLAPI *PGLFNDRAWBUFFERSARBPROC) (GLsizei n, const GLenum *bufs);
 
+/* GL_ARB_framebuffer_object */
+#ifndef GL_ARB_framebuffer_object
+#define GL_ARB_framebuffer_object 1
+#define GL_FRAMEBUFFER                                      0x8d40
+#define GL_READ_FRAMEBUFFER                                 0x8ca8
+#define GL_DRAW_FRAMEBUFFER                                 0x8ca9
+#define GL_RENDERBUFFER                                     0x8d41
+#define GL_STENCIL_INDEX1                                   0x8d46
+#define GL_STENCIL_INDEX4                                   0x8d47
+#define GL_STENCIL_INDEX8                                   0x8d48
+#define GL_STENCIL_INDEX16                                  0x8d49
+#define GL_RENDERBUFFER_WIDTH                               0x8d42
+#define GL_RENDERBUFFER_HEIGHT                              0x8d43
+#define GL_RENDERBUFFER_INTERNAL_FORMAT                     0x8d44
+#define GL_RENDERBUFFER_RED_SIZE                            0x8d50
+#define GL_RENDERBUFFER_GREEN_SIZE                          0x8d51
+#define GL_RENDERBUFFER_BLUE_SIZE                           0x8d52
+#define GL_RENDERBUFFER_ALPHA_SIZE                          0x8d53
+#define GL_RENDERBUFFER_DEPTH_SIZE                          0x8d54
+#define GL_RENDERBUFFER_STENCIL_SIZE                        0x8d55
+#define GL_RENDERBUFFER_SAMPLES                             0x8cab
+#define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE               0x8cd0
+#define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME               0x8cd1
+#define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL             0x8cd2
+#define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE     0x8cd3
+#define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LAYER             0x8cd4
+#define GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING            0x8210
+#define GL_FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE            0x8211
+#define GL_FRAMEBUFFER_ATTACHMENT_RED_SIZE                  0x8212
+#define GL_FRAMEBUFFER_ATTACHMENT_GREEN_SIZE                0x8213
+#define GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE                 0x8214
+#define GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE                0x8215
+#define GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE                0x8216
+#define GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE              0x8217
+#define GL_SRGB                                             0x8c40
+#define GL_UNSIGNED_NORMALIZED                              0x8c17
+#define GL_FRAMEBUFFER_DEFAULT                              0x8218
+#define GL_INDEX                                            0x8222
+#define GL_COLOR_ATTACHMENT0                                0x8ce0
+#define GL_COLOR_ATTACHMENT1                                0x8ce1
+#define GL_COLOR_ATTACHMENT2                                0x8ce2
+#define GL_COLOR_ATTACHMENT3                                0x8ce3
+#define GL_COLOR_ATTACHMENT4                                0x8ce4
+#define GL_COLOR_ATTACHMENT5                                0x8ce5
+#define GL_COLOR_ATTACHMENT6                                0x8ce6
+#define GL_COLOR_ATTACHMENT7                                0x8ce7
+#define GL_COLOR_ATTACHMENT8                                0x8ce8
+#define GL_COLOR_ATTACHMENT9                                0x8ce9
+#define GL_COLOR_ATTACHMENT10                               0x8cea
+#define GL_COLOR_ATTACHMENT11                               0x8ceb
+#define GL_COLOR_ATTACHMENT12                               0x8cec
+#define GL_COLOR_ATTACHMENT13                               0x8ced
+#define GL_COLOR_ATTACHMENT14                               0x8cee
+#define GL_COLOR_ATTACHMENT15                               0x8cef
+#define GL_DEPTH_ATTACHMENT                                 0x8d00
+#define GL_STENCIL_ATTACHMENT                               0x8d20
+#define GL_DEPTH_STENCIL_ATTACHMENT                         0x821a
+#define GL_MAX_SAMPLES                                      0x8d57
+#define GL_FRAMEBUFFER_COMPLETE                             0x8cd5
+#define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT                0x8cd6
+#define GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT        0x8cd7
+#define GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER               0x8cdb
+#define GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER               0x8cdc
+#define GL_FRAMEBUFFER_UNSUPPORTED                          0x8cdd
+#define GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE               0x8d56
+#define GL_FRAMEBUFFER_UNDEFINED                            0x8219
+#define GL_FRAMEBUFFER_BINDING                              0x8ca6
+#define GL_DRAW_FRAMEBUFFER_BINDING                         0x8ca6
+#define GL_READ_FRAMEBUFFER_BINDING                         0x8caa
+#define GL_RENDERBUFFER_BINDING                             0x8ca7
+#define GL_MAX_COLOR_ATTACHMENTS                            0x8cdf
+#define GL_MAX_RENDERBUFFER_SIZE                            0x84e8
+#define GL_INVALID_FRAMEBUFFER_OPERATION                    0x0506
+#define GL_DEPTH_STENCIL                                    0x84f9
+#define GL_UNSIGNED_INT_24_8                                0x84fa
+#define GL_DEPTH24_STENCIL8                                 0x88f0
+#define GL_TEXTURE_STENCIL_SIZE                             0x88f1
+#endif
+typedef GLboolean (WINE_GLAPI * PGLFNGLISRENDERBUFFERPROC)(GLuint renderbuffer);
+typedef void (WINE_GLAPI * PGLFNGLBINDRENDERBUFFERPROC)(GLenum target, GLuint renderbuffer);
+typedef void (WINE_GLAPI * PGLFNGLDELETERENDERBUFFERSPROC)(GLsizei n, const GLuint *renderbuffers);
+typedef void (WINE_GLAPI * PGLFNGLGENRENDERBUFFERSPROC)(GLsizei n, GLuint *renderbuffers);
+typedef void (WINE_GLAPI * PGLFNGLRENDERBUFFERSTORAGEPROC)(GLenum target, GLenum internalformat,
+        GLsizei width, GLsizei height);
+typedef void (WINE_GLAPI * PGLFNRENDERBUFFERSTORAGEMULTISAMPLEPROC)(GLenum target, GLsizei samples,
+        GLenum internalformat, GLsizei width, GLsizei height);
+typedef void (WINE_GLAPI * PGLFNGLGETRENDERBUFFERPARAMETERIVPROC)(GLenum target, GLenum pname, GLint *params);
+typedef GLboolean (WINE_GLAPI * PGLFNGLISFRAMEBUFFERPROC)(GLuint framebuffer);
+typedef void (WINE_GLAPI * PGLFNGLBINDFRAMEBUFFERPROC)(GLenum target, GLuint framebuffer);
+typedef void (WINE_GLAPI * PGLFNGLDELETEFRAMEBUFFERSPROC)(GLsizei n, const GLuint *framebuffers);
+typedef void (WINE_GLAPI * PGLFNGLGENFRAMEBUFFERSPROC)(GLsizei n, GLuint *framebuffers);
+typedef GLenum (WINE_GLAPI * PGLFNGLCHECKFRAMEBUFFERSTATUSPROC)(GLenum target);
+typedef void (WINE_GLAPI * PGLFNGLFRAMEBUFFERTEXTURE1DPROC)(GLenum target, GLenum attachment,
+        GLenum textarget, GLuint texture, GLint level);
+typedef void (WINE_GLAPI * PGLFNGLFRAMEBUFFERTEXTURE2DPROC)(GLenum target, GLenum attachment,
+        GLenum textarget, GLuint texture, GLint level);
+typedef void (WINE_GLAPI * PGLFNGLFRAMEBUFFERTEXTURE3DPROC)(GLenum target, GLenum attachment,
+        GLenum textarget, GLuint texture, GLint level, GLint layer);
+typedef void (WINE_GLAPI * PGLFNGLFRAMEBUFFERTEXTURELAYERPROC)(GLenum target, GLenum attachment,
+        GLuint texture, GLint level, GLint layer);
+typedef void (WINE_GLAPI * PGLFNGLFRAMEBUFFERRENDERBUFFERPROC)(GLenum target, GLenum attachment,
+        GLenum renderbuffertarget, GLuint renderbuffer);
+typedef void (WINE_GLAPI * PGLFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC)(GLenum target, GLenum attachment,
+        GLenum pname, GLint *params);
+typedef void (WINE_GLAPI * PGLFNGLBLITFRAMEBUFFERPROC)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
+        GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+typedef void (WINE_GLAPI * PGLFNGLGENERATEMIPMAPPROC)(GLenum target);
+
 /* GL_ARB_geometry_shader4 */
 #ifndef GL_ARB_geometry_shader4
 #define GL_GEOMETRY_SHADER_ARB                      0x8dd9
@@ -3434,6 +3542,7 @@ typedef enum _GL_SupportedExt {
   ARB_DRAW_BUFFERS,
   ARB_FRAGMENT_PROGRAM,
   ARB_FRAGMENT_SHADER,
+  ARB_FRAMEBUFFER_OBJECT,
   ARB_GEOMETRY_SHADER4,
   ARB_IMAGING,
   ARB_MULTISAMPLE,
@@ -3551,6 +3660,27 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNCLAMPCOLORARBPROC,                             glClampColorARB,                            ARB_COLOR_BUFFER_FLOAT, NULL )\
     /* GL_ARB_draw_buffers */ \
     USE_GL_FUNC(PGLFNDRAWBUFFERSARBPROC,                            glDrawBuffersARB,                           ARB_DRAW_BUFFERS,       NULL )\
+    /* GL_ARB_framebuffer_object */ \
+    USE_GL_FUNC(PGLFNGLISRENDERBUFFERPROC,                          glIsRenderbuffer,                           ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLBINDRENDERBUFFERPROC,                        glBindRenderbuffer,                         ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLDELETERENDERBUFFERSPROC,                     glDeleteRenderbuffers,                      ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLGENRENDERBUFFERSPROC,                        glGenRenderbuffers,                         ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLRENDERBUFFERSTORAGEPROC,                     glRenderbufferStorage,                      ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNRENDERBUFFERSTORAGEMULTISAMPLEPROC,            glRenderbufferStorageMultisample,           ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLGETRENDERBUFFERPARAMETERIVPROC,              glGetRenderbufferParameteriv,               ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLISFRAMEBUFFERPROC,                           glIsFramebuffer,                            ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLBINDFRAMEBUFFERPROC,                         glBindFramebuffer,                          ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLDELETEFRAMEBUFFERSPROC,                      glDeleteFramebuffers,                       ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLGENFRAMEBUFFERSPROC,                         glGenFramebuffers,                          ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLCHECKFRAMEBUFFERSTATUSPROC,                  glCheckFramebufferStatus,                   ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLFRAMEBUFFERTEXTURE1DPROC,                    glFramebufferTexture1D,                     ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLFRAMEBUFFERTEXTURE2DPROC,                    glFramebufferTexture2D,                     ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLFRAMEBUFFERTEXTURE3DPROC,                    glFramebufferTexture3D,                     ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLFRAMEBUFFERTEXTURELAYERPROC,                 glFramebufferTextureLayer,                  ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLFRAMEBUFFERRENDERBUFFERPROC,                 glFramebufferRenderbuffer,                  ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC,     glGetFramebufferAttachmentParameteriv,      ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLBLITFRAMEBUFFERPROC,                         glBlitFramebuffer,                          ARB_FRAMEBUFFER_OBJECT, NULL )\
+    USE_GL_FUNC(PGLFNGLGENERATEMIPMAPPROC,                          glGenerateMipmap,                           ARB_FRAMEBUFFER_OBJECT, NULL )\
     /* GL_ARB_geometry_shader4 */ \
     USE_GL_FUNC(PGLFNPROGRAMPARAMETERIARBPROC,                      glProgramParameteriARB,                     ARB_GEOMETRY_SHADER4,   NULL ) \
     USE_GL_FUNC(PGLFNFRAMEBUFFERTEXTUREARBPROC,                     glFramebufferTextureARB,                    ARB_GEOMETRY_SHADER4,   NULL ) \
