@@ -843,6 +843,63 @@ todo_wine
     IDataConvert_Release(convert);
 }
 
+static void test_converttobstr(void)
+{
+    IDataConvert *convert;
+    HRESULT hr;
+    BSTR dst;
+    BYTE src[20];
+    DBSTATUS dst_status;
+    DBLENGTH dst_len;
+    static const WCHAR ten[] = {'1','0',0};
+    BSTR b;
+
+    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
+    if(FAILED(hr))
+    {
+        win_skip("Unable to load oledb conversion library\n");
+        return;
+    }
+
+    hr = IDataConvert_DataConvert(convert, DBTYPE_EMPTY, DBTYPE_BSTR, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %d\n", dst_len);
+    ok(dst != NULL, "got %p\n", dst);
+    ok(SysStringLen(dst) == 0, "got %d\n", SysStringLen(dst));
+    SysFreeString(dst);
+
+    dst = (void*)0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_NULL, DBTYPE_BSTR, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_E_BADACCESSOR, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %d\n", dst_len);
+    ok(dst == (void*)0x1234, "got %p\n", dst);
+
+    *(short *)src = 4321;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_I2, DBTYPE_BSTR, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %d\n", dst_len);
+    ok(dst != NULL, "got %p\n", dst);
+    ok(SysStringLen(dst) == 4, "got %d\n", SysStringLen(dst));
+    SysFreeString(dst);
+
+    b = SysAllocString(ten);
+    *(BSTR *)src = b;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_BSTR, DBTYPE_BSTR, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %d\n", dst_len);
+    ok(dst != NULL, "got %p\n", dst);
+    ok(dst != b, "got %p src %p\n", dst, b);
+    ok(!lstrcmpW(b, dst), "got %s\n", wine_dbgstr_w(dst));
+    SysFreeString(dst);
+    SysFreeString(b);
+
+    IDataConvert_Release(convert);
+}
+
 
 START_TEST(convert)
 {
@@ -851,5 +908,6 @@ START_TEST(convert)
     test_canconvert();
     test_converttoi2();
     test_converttoi4();
+    test_converttobstr();
     OleUninitialize();
 }

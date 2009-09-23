@@ -126,6 +126,8 @@ static int get_length(DBTYPE type)
     case DBTYPE_I8:
     case DBTYPE_UI8:
         return 8;
+    case DBTYPE_BSTR:
+        return sizeof(BSTR);
     default:
         FIXME("Unhandled type %04x\n", type);
         return 0;
@@ -250,6 +252,31 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         break;
     }
 
+    case DBTYPE_BSTR:
+    {
+        BSTR *d = dst;
+        switch(src_type)
+        {
+        case DBTYPE_EMPTY:       *d = SysAllocStringLen(NULL, 0); hr = *d ? S_OK : E_OUTOFMEMORY;      break;
+        case DBTYPE_I2:          hr = VarBstrFromI2(*(signed short*)src, LOCALE_USER_DEFAULT, 0, d);   break;
+        case DBTYPE_I4:          hr = VarBstrFromI4(*(signed int*)src, LOCALE_USER_DEFAULT, 0, d);     break;
+        case DBTYPE_R4:          hr = VarBstrFromR4(*(FLOAT*)src, LOCALE_USER_DEFAULT, 0, d);          break;
+        case DBTYPE_R8:          hr = VarBstrFromR8(*(double*)src, LOCALE_USER_DEFAULT, 0, d);         break;
+        case DBTYPE_CY:          hr = VarBstrFromCy(*(CY*)src, LOCALE_USER_DEFAULT, 0, d);             break;
+        case DBTYPE_DATE:        hr = VarBstrFromDate(*(DATE*)src, LOCALE_USER_DEFAULT, 0, d);         break;
+        case DBTYPE_BSTR:        *d = SysAllocStringLen(*(BSTR*)src, SysStringLen(*(BSTR*)src)); hr = *d ? S_OK : E_OUTOFMEMORY;     break;
+        case DBTYPE_BOOL:        hr = VarBstrFromBool(*(VARIANT_BOOL*)src, LOCALE_USER_DEFAULT, 0, d); break;
+        case DBTYPE_DECIMAL:     hr = VarBstrFromDec((DECIMAL*)src, LOCALE_USER_DEFAULT, 0, d);        break;
+        case DBTYPE_I1:          hr = VarBstrFromI1(*(signed char*)src, LOCALE_USER_DEFAULT, 0, d);    break;
+        case DBTYPE_UI1:         hr = VarBstrFromUI1(*(BYTE*)src, LOCALE_USER_DEFAULT, 0, d);          break;
+        case DBTYPE_UI2:         hr = VarBstrFromUI2(*(WORD*)src, LOCALE_USER_DEFAULT, 0, d);          break;
+        case DBTYPE_UI4:         hr = VarBstrFromUI4(*(DWORD*)src, LOCALE_USER_DEFAULT, 0, d);         break;
+        case DBTYPE_I8:          hr = VarBstrFromI8(*(LONGLONG*)src, LOCALE_USER_DEFAULT, 0, d);       break;
+        case DBTYPE_UI8:         hr = VarBstrFromUI8(*(ULONGLONG*)src, LOCALE_USER_DEFAULT, 0, d);     break;
+        default: FIXME("Unimplemented conversion %04x -> BSTR\n", src_type); return E_NOTIMPL;
+        }
+        break;
+    }
     default:
         FIXME("Unimplemented conversion %04x -> %04x\n", src_type, dst_type);
         return E_NOTIMPL;
