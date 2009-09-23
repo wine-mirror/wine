@@ -70,6 +70,7 @@ MAKE_FUNCPTR(png_set_write_fn);
 MAKE_FUNCPTR(png_read_end);
 MAKE_FUNCPTR(png_read_image);
 MAKE_FUNCPTR(png_read_info);
+MAKE_FUNCPTR(png_write_end);
 MAKE_FUNCPTR(png_write_info);
 MAKE_FUNCPTR(png_write_rows);
 #undef MAKE_FUNCPTR
@@ -110,6 +111,7 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_read_end);
         LOAD_FUNCPTR(png_read_image);
         LOAD_FUNCPTR(png_read_info);
+        LOAD_FUNCPTR(png_write_end);
         LOAD_FUNCPTR(png_write_info);
         LOAD_FUNCPTR(png_write_rows);
 
@@ -712,6 +714,7 @@ typedef struct PngEncoder {
     UINT width, height;
     double xres, yres;
     UINT lines_written;
+    BOOL frame_committed;
 } PngEncoder;
 
 static inline PngEncoder *encoder_from_frame(IWICBitmapFrameEncode *iface)
@@ -973,8 +976,23 @@ static HRESULT WINAPI PngFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
 
 static HRESULT WINAPI PngFrameEncode_Commit(IWICBitmapFrameEncode *iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    PngEncoder *This = encoder_from_frame(iface);
+    TRACE("(%p)\n", iface);
+
+    if (!This->info_written || This->lines_written != This->height || This->frame_committed)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    /* set up setjmp/longjmp error handling */
+    if (setjmp(png_jmpbuf(This->png_ptr)))
+    {
+        return E_FAIL;
+    }
+
+    ppng_write_end(This->png_ptr, This->info_ptr);
+
+    This->frame_committed = TRUE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PngFrameEncode_GetMetadataQueryWriter(IWICBitmapFrameEncode *iface,
@@ -1239,6 +1257,7 @@ HRESULT PngEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->xres = 0.0;
     This->yres = 0.0;
     This->lines_written = 0;
+    This->frame_committed = FALSE;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
