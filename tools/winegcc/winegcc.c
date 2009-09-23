@@ -159,7 +159,8 @@ static const struct
     { "x86_64",  CPU_x86_64 },
     { "sparc",   CPU_SPARC },
     { "alpha",   CPU_ALPHA },
-    { "powerpc", CPU_POWERPC }
+    { "powerpc", CPU_POWERPC },
+    { "arm",     CPU_ARM }
 };
 
 static const struct
@@ -216,6 +217,8 @@ static const enum target_cpu build_cpu = CPU_SPARC;
 static const enum target_cpu build_cpu = CPU_ALPHA;
 #elif defined(__powerpc__)
 static const enum target_cpu build_cpu = CPU_POWERPC;
+#elif defined(__arm__)
+static const enum target_cpu build_cpu = CPU_ARM;
 #else
 #error Unsupported CPU
 #endif
