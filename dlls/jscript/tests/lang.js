@@ -953,6 +953,12 @@ function do_test() {}
 function nosemicolon() {} nosemicolon();
 function () {} nosemicolon();
 
+if(false) {
+    function in_if_false() { return true; } ok(false, "!?");
+}
+
+ok(in_if_false(), "in_if_false failed");
+
 ok(typeof(doesnotexist) === "undefined", "typeof(doesnotexist) = " + typeof(doesnotexist));
 
 (function() { newValue = 1; })();

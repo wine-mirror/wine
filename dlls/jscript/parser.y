@@ -264,8 +264,6 @@ HtmlComment
 /* ECMA-262 3rd Edition    14 */
 SourceElements
         : /* empty */           { $$ = new_source_elements(ctx); }
-        | SourceElements FunctionExpression
-                                { $$ = $1; }
         | SourceElements Statement
                                 { $$ = source_elements_add_statement($1, $2); }
 
@@ -297,6 +295,7 @@ Statement
         : Block                 { $$ = $1; }
         | VariableStatement     { $$ = $1; }
         | EmptyStatement        { $$ = $1; }
+        | FunctionExpression    { $$ = new_empty_statement(ctx); } /* FIXME: return NULL */
         | ExpressionStatement   { $$ = $1; }
         | IfStatement           { $$ = $1; }
         | IterationStatement    { $$ = $1; }
