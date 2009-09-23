@@ -799,6 +799,79 @@ static void test_createhbitmap(void)
     expect(Ok, stat);
 }
 
+static void test_getsetpixel(void)
+{
+    GpStatus stat;
+    GpBitmap *bitmap;
+    ARGB color;
+    BYTE bits[16] = {0x00,0x00,0x00,0x00, 0x00,0xff,0xff,0x00,
+                     0xff,0x00,0x00,0x00, 0xff,0xff,0xff,0x00};
+
+    stat = GdipCreateBitmapFromScan0(2, 2, 8, PixelFormat32bppRGB, bits, &bitmap);
+    expect(Ok, stat);
+
+    /* null parameters */
+    stat = GdipBitmapGetPixel(NULL, 1, 1, &color);
+    expect(InvalidParameter, stat);
+
+    stat = GdipBitmapGetPixel(bitmap, 1, 1, NULL);
+    expect(InvalidParameter, stat);
+
+    stat = GdipBitmapSetPixel(NULL, 1, 1, 0);
+    expect(InvalidParameter, stat);
+
+    /* out of bounds */
+    stat = GdipBitmapGetPixel(bitmap, -1, 1, &color);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipBitmapSetPixel(bitmap, -1, 1, 0);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipBitmapGetPixel(bitmap, 1, -1, &color);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipBitmapSetPixel(bitmap, 1, -1, 0);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipBitmapGetPixel(bitmap, 2, 1, &color);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipBitmapSetPixel(bitmap, 2, 1, 0);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipBitmapGetPixel(bitmap, 1, 2, &color);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipBitmapSetPixel(bitmap, 1, 2, 0);
+    todo_wine expect(InvalidParameter, stat);
+
+    /* valid use */
+    stat = GdipBitmapGetPixel(bitmap, 1, 1, &color);
+    todo_wine expect(Ok, stat);
+    todo_wine expect(0xffffffff, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 0, 1, &color);
+    todo_wine expect(Ok, stat);
+    todo_wine expect(0xff0000ff, color);
+
+    stat = GdipBitmapSetPixel(bitmap, 1, 1, 0xff676869);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipBitmapSetPixel(bitmap, 0, 0, 0xff474849);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipBitmapGetPixel(bitmap, 1, 1, &color);
+    todo_wine expect(Ok, stat);
+    todo_wine expect(0xff676869, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 0, 0, &color);
+    todo_wine expect(Ok, stat);
+    todo_wine expect(0xff474849, color);
+
+    stat = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, stat);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -825,6 +898,7 @@ START_TEST(image)
     test_fromhicon();
     test_getrawformat();
     test_createhbitmap();
+    test_getsetpixel();
 
     GdiplusShutdown(gdiplusToken);
 }
