@@ -699,6 +699,7 @@ typedef struct PngEncoder {
     BOOL frame_initialized;
     const struct png_pixelformat *format;
     BOOL info_written;
+    UINT width, height;
 } PngEncoder;
 
 static inline PngEncoder *encoder_from_frame(IWICBitmapFrameEncode *iface)
@@ -757,8 +758,15 @@ static HRESULT WINAPI PngFrameEncode_Initialize(IWICBitmapFrameEncode *iface,
 static HRESULT WINAPI PngFrameEncode_SetSize(IWICBitmapFrameEncode *iface,
     UINT uiWidth, UINT uiHeight)
 {
-    FIXME("(%p,%u,%u): stub\n", iface, uiWidth, uiHeight);
-    return E_NOTIMPL;
+    PngEncoder *This = encoder_from_frame(iface);
+    TRACE("(%p,%u,%u)\n", iface, uiWidth, uiHeight);
+
+    if (!This->frame_initialized || This->info_written) return WINCODEC_ERR_WRONGSTATE;
+
+    This->width = uiWidth;
+    This->height = uiHeight;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PngFrameEncode_SetResolution(IWICBitmapFrameEncode *iface,
@@ -1089,6 +1097,8 @@ HRESULT PngEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->frame_initialized = FALSE;
     This->format = NULL;
     This->info_written = FALSE;
+    This->width = 0;
+    This->height = 0;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
