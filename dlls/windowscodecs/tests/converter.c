@@ -199,8 +199,8 @@ static void compare_bitmap_data(const struct bitmap_data *expect, IWICBitmapSour
 
     hr = IWICBitmapSource_GetResolution(source, &xres, &yres);
     ok(SUCCEEDED(hr), "GetResolution(%s) failed, hr=%x\n", name, hr);
-    ok(fabs(xres - expect->xres) < 0.01, "expecting %0.2f, got %0.2f (%s)\n", expect->xres, xres, name);
-    ok(fabs(yres - expect->yres) < 0.01, "expecting %0.2f, got %0.2f (%s)\n", expect->yres, yres, name);
+    ok(fabs(xres - expect->xres) < 0.02, "expecting %0.2f, got %0.2f (%s)\n", expect->xres, xres, name);
+    ok(fabs(yres - expect->yres) < 0.02, "expecting %0.2f, got %0.2f (%s)\n", expect->yres, yres, name);
 
     hr = IWICBitmapSource_GetPixelFormat(source, &dst_pixelformat);
     ok(SUCCEEDED(hr), "GetPixelFormat(%s) failed, hr=%x\n", name, hr);
@@ -318,6 +318,100 @@ static void test_default_converter(void)
     DeleteTestBitmap(src_bitmap);
 }
 
+static void test_encoder(const struct bitmap_data *src, const CLSID* clsid_encoder,
+    const struct bitmap_data *dst, const CLSID *clsid_decoder, const char *name)
+{
+    HRESULT hr;
+    IWICBitmapEncoder *encoder;
+    IWICBitmapSource *src_bitmap;
+    HGLOBAL hglobal;
+    IStream *stream;
+    IWICBitmapFrameEncode *frameencode;
+    IPropertyBag2 *options=NULL;
+    IWICBitmapDecoder *decoder;
+    IWICBitmapFrameDecode *framedecode;
+    WICPixelFormatGUID pixelformat;
+
+    CreateTestBitmap(src, &src_bitmap);
+
+    hr = CoCreateInstance(clsid_encoder, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICBitmapEncoder, (void**)&encoder);
+    ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hglobal = GlobalAlloc(GMEM_MOVEABLE, 0);
+        ok(hglobal != NULL, "GlobalAlloc failed\n");
+        if (hglobal)
+        {
+            hr = CreateStreamOnHGlobal(hglobal, TRUE, &stream);
+            ok(SUCCEEDED(hr), "CreateStreamOnHGlobal failed, hr=%x\n", hr);
+        }
+
+        if (hglobal && SUCCEEDED(hr))
+        {
+            hr = IWICBitmapEncoder_Initialize(encoder, stream, WICBitmapEncoderNoCache);
+            ok(SUCCEEDED(hr), "Initialize failed, hr=%x\n", hr);
+
+            hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frameencode, &options);
+            ok(SUCCEEDED(hr), "CreateFrame failed, hr=%x\n", hr);
+            if (SUCCEEDED(hr))
+            {
+                hr = IWICBitmapFrameEncode_Initialize(frameencode, options);
+                ok(SUCCEEDED(hr), "Initialize failed, hr=%x\n", hr);
+
+                memcpy(&pixelformat, src->format, sizeof(GUID));
+                hr = IWICBitmapFrameEncode_SetPixelFormat(frameencode, &pixelformat);
+                ok(SUCCEEDED(hr), "SetPixelFormat failed, hr=%x\n", hr);
+                ok(IsEqualGUID(&pixelformat, src->format), "SetPixelFormat changed the format\n");
+
+                hr = IWICBitmapFrameEncode_SetSize(frameencode, src->width, src->height);
+                ok(SUCCEEDED(hr), "SetSize failed, hr=%x\n", hr);
+
+                hr = IWICBitmapFrameEncode_WriteSource(frameencode, src_bitmap, NULL);
+                ok(SUCCEEDED(hr), "WriteSource failed, hr=%x\n", hr);
+
+                hr = IWICBitmapFrameEncode_Commit(frameencode);
+                ok(SUCCEEDED(hr), "Commit failed, hr=%x\n", hr);
+
+                hr = IWICBitmapEncoder_Commit(encoder);
+                ok(SUCCEEDED(hr), "Commit failed, hr=%x\n", hr);
+
+                IWICBitmapFrameEncode_Release(frameencode);
+                IPropertyBag2_Release(options);
+            }
+
+            if (SUCCEEDED(hr))
+            {
+                hr = CoCreateInstance(clsid_decoder, NULL, CLSCTX_INPROC_SERVER,
+                    &IID_IWICBitmapDecoder, (void**)&decoder);
+                ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
+            }
+
+            if (SUCCEEDED(hr))
+            {
+                hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnDemand);
+                ok(SUCCEEDED(hr), "Initialize failed, hr=%x\n", hr);
+
+                hr = IWICBitmapDecoder_GetFrame(decoder, 0, &framedecode);
+                ok(SUCCEEDED(hr), "GetFrame failed, hr=%x\n", hr);
+
+                if (SUCCEEDED(hr))
+                {
+                    compare_bitmap_data(dst, (IWICBitmapSource*)framedecode, name);
+
+                    IWICBitmapFrameDecode_Release(framedecode);
+                }
+
+                IWICBitmapDecoder_Release(decoder);
+            }
+
+            IStream_Release(stream);
+        }
+    }
+
+    DeleteTestBitmap(src_bitmap);
+}
+
 START_TEST(converter)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -327,6 +421,9 @@ START_TEST(converter)
     test_conversion(&testdata_32bppBGRA, &testdata_32bppBGRA, "BGRA -> BGRA", 0);
     test_invalid_conversion();
     test_default_converter();
+
+    test_encoder(&testdata_32bppBGR, &CLSID_WICBmpEncoder,
+                 &testdata_32bppBGR, &CLSID_WICBmpDecoder, "BMP encoder 32bppBGR");
 
     CoUninitialize();
 }
