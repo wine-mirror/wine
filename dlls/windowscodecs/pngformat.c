@@ -659,11 +659,181 @@ HRESULT PngDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     return ret;
 }
 
+typedef struct PngEncoder {
+    const IWICBitmapEncoderVtbl *lpVtbl;
+    LONG ref;
+} PngEncoder;
+
+static HRESULT WINAPI PngEncoder_QueryInterface(IWICBitmapEncoder *iface, REFIID iid,
+    void **ppv)
+{
+    PngEncoder *This = (PngEncoder*)iface;
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IWICBitmapEncoder, iid))
+    {
+        *ppv = This;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI PngEncoder_AddRef(IWICBitmapEncoder *iface)
+{
+    PngEncoder *This = (PngEncoder*)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI PngEncoder_Release(IWICBitmapEncoder *iface)
+{
+    PngEncoder *This = (PngEncoder*)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (ref == 0)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI PngEncoder_Initialize(IWICBitmapEncoder *iface,
+    IStream *pIStream, WICBitmapEncoderCacheOption cacheOption)
+{
+    FIXME("(%p,%p,%u): stub\n", iface, pIStream, cacheOption);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PngEncoder_GetContainerFormat(IWICBitmapEncoder *iface,
+    GUID *pguidContainerFormat)
+{
+    FIXME("(%p,%s): stub\n", iface, debugstr_guid(pguidContainerFormat));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PngEncoder_GetEncoderInfo(IWICBitmapEncoder *iface,
+    IWICBitmapEncoderInfo **ppIEncoderInfo)
+{
+    FIXME("(%p,%p): stub\n", iface, ppIEncoderInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PngEncoder_SetColorContexts(IWICBitmapEncoder *iface,
+    UINT cCount, IWICColorContext **ppIColorContext)
+{
+    FIXME("(%p,%u,%p): stub\n", iface, cCount, ppIColorContext);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PngEncoder_SetPalette(IWICBitmapEncoder *iface, IWICPalette *pIPalette)
+{
+    TRACE("(%p,%p)\n", iface, pIPalette);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+}
+
+static HRESULT WINAPI PngEncoder_SetThumbnail(IWICBitmapEncoder *iface, IWICBitmapSource *pIThumbnail)
+{
+    TRACE("(%p,%p)\n", iface, pIThumbnail);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+}
+
+static HRESULT WINAPI PngEncoder_SetPreview(IWICBitmapEncoder *iface, IWICBitmapSource *pIPreview)
+{
+    TRACE("(%p,%p)\n", iface, pIPreview);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+}
+
+static HRESULT WINAPI PngEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
+    IWICBitmapFrameEncode **ppIFrameEncode, IPropertyBag2 **ppIEncoderOptions)
+{
+    FIXME("(%p,%p,%p): stub\n", iface, ppIFrameEncode, ppIEncoderOptions);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PngEncoder_Commit(IWICBitmapEncoder *iface)
+{
+    TRACE("(%p): stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PngEncoder_GetMetadataQueryWriter(IWICBitmapEncoder *iface,
+    IWICMetadataQueryWriter **ppIMetadataQueryWriter)
+{
+    FIXME("(%p,%p): stub\n", iface, ppIMetadataQueryWriter);
+    return E_NOTIMPL;
+}
+
+static const IWICBitmapEncoderVtbl PngEncoder_Vtbl = {
+    PngEncoder_QueryInterface,
+    PngEncoder_AddRef,
+    PngEncoder_Release,
+    PngEncoder_Initialize,
+    PngEncoder_GetContainerFormat,
+    PngEncoder_GetEncoderInfo,
+    PngEncoder_SetColorContexts,
+    PngEncoder_SetPalette,
+    PngEncoder_SetThumbnail,
+    PngEncoder_SetPreview,
+    PngEncoder_CreateNewFrame,
+    PngEncoder_Commit,
+    PngEncoder_GetMetadataQueryWriter
+};
+
+HRESULT PngEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
+{
+    PngEncoder *This;
+    HRESULT ret;
+
+    TRACE("(%p,%s,%p)\n", pUnkOuter, debugstr_guid(iid), ppv);
+
+    *ppv = NULL;
+
+    if (pUnkOuter) return CLASS_E_NOAGGREGATION;
+
+    if (!libpng_handle && !load_libpng())
+    {
+        ERR("Failed writing PNG because unable to find %s\n",SONAME_LIBPNG);
+        return E_FAIL;
+    }
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(PngEncoder));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->lpVtbl = &PngEncoder_Vtbl;
+    This->ref = 1;
+
+    ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
+    IUnknown_Release((IUnknown*)This);
+
+    return ret;
+}
+
 #else /* !HAVE_PNG_H */
 
 HRESULT PngDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 {
     ERR("Trying to load PNG picture, but PNG supported not compiled in.\n");
+    return E_FAIL;
+}
+
+HRESULT PngEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
+{
+    ERR("Trying to save PNG picture, but PNG supported not compiled in.\n");
     return E_FAIL;
 }
 
