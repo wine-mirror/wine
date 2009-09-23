@@ -265,19 +265,150 @@ GpStatus WINGDIPAPI GdipBitmapGetPixel(GpBitmap* bitmap, INT x, INT y,
     return Ok;
 }
 
+static inline void setpixel_16bppGrayScale(BYTE r, BYTE g, BYTE b, BYTE a,
+    BYTE *row, UINT x)
+{
+    *((WORD*)(row)+x) = (r+g+b)*85;
+}
+
+static inline void setpixel_16bppRGB555(BYTE r, BYTE g, BYTE b, BYTE a,
+    BYTE *row, UINT x)
+{
+    *((WORD*)(row)+x) = (r<<7&0x7c00)|
+                        (g<<2&0x03e0)|
+                        (b>>3&0x001f);
+}
+
+static inline void setpixel_16bppRGB565(BYTE r, BYTE g, BYTE b, BYTE a,
+    BYTE *row, UINT x)
+{
+    *((WORD*)(row)+x) = (r<<8&0xf800)|
+                         (g<<3&0x07e0)|
+                         (b>>3&0x001f);
+}
+
+static inline void setpixel_16bppARGB1555(BYTE r, BYTE g, BYTE b, BYTE a,
+    BYTE *row, UINT x)
+{
+    *((WORD*)(row)+x) = (a<<8&0x8000)|
+                        (r<<7&0x7c00)|
+                        (g<<2&0x03e0)|
+                        (b>>3&0x001f);
+}
+
+static inline void setpixel_24bppRGB(BYTE r, BYTE g, BYTE b, BYTE a,
+    BYTE *row, UINT x)
+{
+    row[x*3+2] = r;
+    row[x*3+1] = g;
+    row[x*3] = b;
+}
+
+static inline void setpixel_32bppRGB(BYTE r, BYTE g, BYTE b, BYTE a,
+    BYTE *row, UINT x)
+{
+    *((DWORD*)(row)+x) = (r<<16)|(g<<8)|b;
+}
+
+static inline void setpixel_32bppARGB(BYTE r, BYTE g, BYTE b, BYTE a,
+    BYTE *row, UINT x)
+{
+    *((DWORD*)(row)+x) = (a<<24)|(r<<16)|(g<<8)|b;
+}
+
+static inline void setpixel_32bppPARGB(BYTE r, BYTE g, BYTE b, BYTE a,
+    BYTE *row, UINT x)
+{
+    r = r * a / 255;
+    g = g * a / 255;
+    b = b * a / 255;
+    *((DWORD*)(row)+x) = (a<<24)|(r<<16)|(g<<8)|b;
+}
+
+static inline void setpixel_48bppRGB(BYTE r, BYTE g, BYTE b, BYTE a,
+    BYTE *row, UINT x)
+{
+    row[x*6+5] = row[x*6+4] = r;
+    row[x*6+3] = row[x*6+2] = g;
+    row[x*6+1] = row[x*6] = b;
+}
+
+static inline void setpixel_64bppARGB(BYTE r, BYTE g, BYTE b, BYTE a,
+    BYTE *row, UINT x)
+{
+    UINT64 a64=a, r64=r, g64=g, b64=b;
+    *((UINT64*)(row)+x) = (a64<<56)|(a64<<48)|(r64<<40)|(r64<<32)|(g64<<24)|(g64<<16)|(b64<<8)|b64;
+}
+
+static inline void setpixel_64bppPARGB(BYTE r, BYTE g, BYTE b, BYTE a,
+    BYTE *row, UINT x)
+{
+    UINT64 a64, r64, g64, b64;
+    a64 = a * 257;
+    r64 = r * a / 255;
+    g64 = g * a / 255;
+    b64 = b * a / 255;
+    *((UINT64*)(row)+x) = (a64<<48)|(r64<<32)|(g64<<16)|b64;
+}
+
 GpStatus WINGDIPAPI GdipBitmapSetPixel(GpBitmap* bitmap, INT x, INT y,
     ARGB color)
 {
-    static int calls;
+    BYTE a, r, g, b;
+    BYTE *row;
     TRACE("bitmap:%p, x:%d, y:%d, color:%08x\n", bitmap, x, y, color);
 
-    if(!bitmap)
+    if(!bitmap || x < 0 || y < 0 || x >= bitmap->width || y >= bitmap->height)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    a = color>>24;
+    r = color>>16;
+    g = color>>8;
+    b = color;
 
-    return NotImplemented;
+    row = bitmap->bits + bitmap->stride * y;
+
+    switch (bitmap->format)
+    {
+        case PixelFormat16bppGrayScale:
+            setpixel_16bppGrayScale(r,g,b,a,row,x);
+            break;
+        case PixelFormat16bppRGB555:
+            setpixel_16bppRGB555(r,g,b,a,row,x);
+            break;
+        case PixelFormat16bppRGB565:
+            setpixel_16bppRGB565(r,g,b,a,row,x);
+            break;
+        case PixelFormat16bppARGB1555:
+            setpixel_16bppARGB1555(r,g,b,a,row,x);
+            break;
+        case PixelFormat24bppRGB:
+            setpixel_24bppRGB(r,g,b,a,row,x);
+            break;
+        case PixelFormat32bppRGB:
+            setpixel_32bppRGB(r,g,b,a,row,x);
+            break;
+        case PixelFormat32bppARGB:
+            setpixel_32bppARGB(r,g,b,a,row,x);
+            break;
+        case PixelFormat32bppPARGB:
+            setpixel_32bppPARGB(r,g,b,a,row,x);
+            break;
+        case PixelFormat48bppRGB:
+            setpixel_48bppRGB(r,g,b,a,row,x);
+            break;
+        case PixelFormat64bppARGB:
+            setpixel_64bppARGB(r,g,b,a,row,x);
+            break;
+        case PixelFormat64bppPARGB:
+            setpixel_64bppPARGB(r,g,b,a,row,x);
+            break;
+        default:
+            FIXME("not implemented for format 0x%x\n", bitmap->format);
+            return NotImplemented;
+    }
+
+    return Ok;
 }
 
 /* This function returns a pointer to an array of pixels that represents the

@@ -825,25 +825,25 @@ static void test_getsetpixel(void)
     expect(InvalidParameter, stat);
 
     stat = GdipBitmapSetPixel(bitmap, -1, 1, 0);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     stat = GdipBitmapGetPixel(bitmap, 1, -1, &color);
     expect(InvalidParameter, stat);
 
     stat = GdipBitmapSetPixel(bitmap, 1, -1, 0);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     stat = GdipBitmapGetPixel(bitmap, 2, 1, &color);
     expect(InvalidParameter, stat);
 
     stat = GdipBitmapSetPixel(bitmap, 2, 1, 0);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     stat = GdipBitmapGetPixel(bitmap, 1, 2, &color);
     expect(InvalidParameter, stat);
 
     stat = GdipBitmapSetPixel(bitmap, 1, 2, 0);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     /* valid use */
     stat = GdipBitmapGetPixel(bitmap, 1, 1, &color);
@@ -855,18 +855,18 @@ static void test_getsetpixel(void)
     expect(0xff0000ff, color);
 
     stat = GdipBitmapSetPixel(bitmap, 1, 1, 0xff676869);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipBitmapSetPixel(bitmap, 0, 0, 0xff474849);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipBitmapGetPixel(bitmap, 1, 1, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff676869, color);
+    expect(0xff676869, color);
 
     stat = GdipBitmapGetPixel(bitmap, 0, 0, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff474849, color);
+    expect(0xff474849, color);
 
     stat = GdipDisposeImage((GpImage*)bitmap);
     expect(Ok, stat);
