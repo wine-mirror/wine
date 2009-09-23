@@ -416,13 +416,10 @@ static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
 
     TRACE("\n");
 
-    if(!(function = function_from_vdisp(jsthis))) {
-        FIXME("dispex is not a function\n");
-        return E_FAIL;
-    }
+    if(!(function = function_this(jsthis)))
+        return throw_type_error(ctx, ei, IDS_NOT_FUNC, NULL);
 
     argc = arg_cnt(dp);
-
     if(argc) {
         hres = to_object(ctx, get_arg(dp,0), &this_obj);
         if(FAILED(hres))
@@ -471,10 +468,8 @@ static HRESULT Function_call(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
 
     TRACE("\n");
 
-    if(!(function = function_from_vdisp(jsthis))) {
-        FIXME("dispex is not a function\n");
-        return E_FAIL;
-    }
+    if(!(function = function_this(jsthis)))
+        return throw_type_error(ctx, ei, IDS_NOT_FUNC, NULL);
 
     argc = arg_cnt(dp);
     if(argc) {

@@ -1688,6 +1688,14 @@ function testArrayThis(func) {
 
 testArrayThis("toString");
 
+function testFunctionThis(func) {
+    testThisExcept(Function.prototype[func], -2146823286);
+}
+
+testFunctionThis("toString");
+testFunctionThis("call");
+testFunctionThis("apply");
+
 function testArrayHostThis(func) {
     exception_test(function() { Array.prototype[func].call(testObj); }, "TypeError", -2146823274);
 }
