@@ -601,7 +601,7 @@ static HRESULT Date_toString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     return dateobj_to_string((DateInstance*)dispex, retv);
 }
@@ -619,7 +619,7 @@ static HRESULT Date_toLocaleString(script_ctx_t *ctx, DispatchEx *dispex, WORD f
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     date = (DateInstance*)dispex;
 
@@ -639,13 +639,13 @@ static HRESULT Date_toLocaleString(script_ctx_t *ctx, DispatchEx *dispex, WORD f
         return dateobj_to_string(date, retv);
 
     if(retv) {
-        date_len = GetDateFormatW(dispex->ctx->lcid, DATE_LONGDATE, &st, NULL, NULL, 0);
-        time_len = GetTimeFormatW(dispex->ctx->lcid, 0, &st, NULL, NULL, 0);
+        date_len = GetDateFormatW(ctx->lcid, DATE_LONGDATE, &st, NULL, NULL, 0);
+        time_len = GetTimeFormatW(ctx->lcid, 0, &st, NULL, NULL, 0);
         date_str = SysAllocStringLen(NULL, date_len+time_len-1);
         if(!date_str)
             return E_OUTOFMEMORY;
-        GetDateFormatW(dispex->ctx->lcid, DATE_LONGDATE, &st, NULL, date_str, date_len);
-        GetTimeFormatW(dispex->ctx->lcid, 0, &st, NULL, &date_str[date_len], time_len);
+        GetDateFormatW(ctx->lcid, DATE_LONGDATE, &st, NULL, date_str, date_len);
+        GetTimeFormatW(ctx->lcid, 0, &st, NULL, &date_str[date_len], time_len);
         date_str[date_len-1] = ' ';
 
         V_VT(retv) = VT_BSTR;
@@ -660,7 +660,7 @@ static HRESULT Date_valueOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -699,7 +699,7 @@ static HRESULT Date_toUTCString(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     date = (DateInstance*)dispex;
 
@@ -879,7 +879,7 @@ static HRESULT Date_toDateString(script_ctx_t *ctx, DispatchEx *dispex, WORD fla
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     return dateobj_to_date_string((DateInstance*)dispex, retv);
 }
@@ -902,7 +902,7 @@ static HRESULT Date_toTimeString(script_ctx_t *ctx, DispatchEx *dispex, WORD fla
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     date = (DateInstance*)dispex;
 
@@ -959,7 +959,7 @@ static HRESULT Date_toLocaleDateString(script_ctx_t *ctx, DispatchEx *dispex, WO
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     date = (DateInstance*)dispex;
 
@@ -979,11 +979,11 @@ static HRESULT Date_toLocaleDateString(script_ctx_t *ctx, DispatchEx *dispex, WO
         return dateobj_to_date_string(date, retv);
 
     if(retv) {
-        len = GetDateFormatW(dispex->ctx->lcid, DATE_LONGDATE, &st, NULL, NULL, 0);
+        len = GetDateFormatW(ctx->lcid, DATE_LONGDATE, &st, NULL, NULL, 0);
         date_str = SysAllocStringLen(NULL, len);
         if(!date_str)
             return E_OUTOFMEMORY;
-        GetDateFormatW(dispex->ctx->lcid, DATE_LONGDATE, &st, NULL, date_str, len);
+        GetDateFormatW(ctx->lcid, DATE_LONGDATE, &st, NULL, date_str, len);
 
         V_VT(retv) = VT_BSTR;
         V_BSTR(retv) = date_str;
@@ -1004,7 +1004,7 @@ static HRESULT Date_toLocaleTimeString(script_ctx_t *ctx, DispatchEx *dispex, WO
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     date = (DateInstance*)dispex;
 
@@ -1024,11 +1024,11 @@ static HRESULT Date_toLocaleTimeString(script_ctx_t *ctx, DispatchEx *dispex, WO
         return Date_toTimeString(ctx, dispex, flags, dp, retv, ei, caller);
 
     if(retv) {
-        len = GetTimeFormatW(dispex->ctx->lcid, 0, &st, NULL, NULL, 0);
+        len = GetTimeFormatW(ctx->lcid, 0, &st, NULL, NULL, 0);
         date_str = SysAllocStringLen(NULL, len);
         if(!date_str)
             return E_OUTOFMEMORY;
-        GetTimeFormatW(dispex->ctx->lcid, 0, &st, NULL, date_str, len);
+        GetTimeFormatW(ctx->lcid, 0, &st, NULL, date_str, len);
 
         V_VT(retv) = VT_BSTR;
         V_BSTR(retv) = date_str;
@@ -1043,7 +1043,7 @@ static HRESULT Date_getTime(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1059,7 +1059,7 @@ static HRESULT Date_getFullYear(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1077,7 +1077,7 @@ static HRESULT Date_getUTCFullYear(script_ctx_t *ctx, DispatchEx *dispex, WORD f
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1093,7 +1093,7 @@ static HRESULT Date_getMonth(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1111,7 +1111,7 @@ static HRESULT Date_getUTCMonth(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1127,7 +1127,7 @@ static HRESULT Date_getDate(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1145,7 +1145,7 @@ static HRESULT Date_getUTCDate(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1161,7 +1161,7 @@ static HRESULT Date_getDay(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DI
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1179,7 +1179,7 @@ static HRESULT Date_getUTCDay(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1195,7 +1195,7 @@ static HRESULT Date_getHours(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1213,7 +1213,7 @@ static HRESULT Date_getUTCHours(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1229,7 +1229,7 @@ static HRESULT Date_getMinutes(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1247,7 +1247,7 @@ static HRESULT Date_getUTCMinutes(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1263,7 +1263,7 @@ static HRESULT Date_getSeconds(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1281,7 +1281,7 @@ static HRESULT Date_getUTCSeconds(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1297,7 +1297,7 @@ static HRESULT Date_getMilliseconds(script_ctx_t *ctx, DispatchEx *dispex, WORD 
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1315,7 +1315,7 @@ static HRESULT Date_getUTCMilliseconds(script_ctx_t *ctx, DispatchEx *dispex, WO
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1331,7 +1331,7 @@ static HRESULT Date_getTimezoneOffset(script_ctx_t *ctx, DispatchEx *dispex, WOR
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
@@ -1352,12 +1352,12 @@ static HRESULT Date_setTime(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
-        return throw_type_error(dispex->ctx, ei, IDS_ARG_NOT_OPT, NULL);
+        return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
@@ -1382,12 +1382,12 @@ static HRESULT Date_setMilliseconds(script_ctx_t *ctx, DispatchEx *dispex, WORD 
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
-        return throw_type_error(dispex->ctx, ei, IDS_ARG_NOT_OPT, NULL);
+        return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
@@ -1415,12 +1415,12 @@ static HRESULT Date_setUTCMilliseconds(script_ctx_t *ctx, DispatchEx *dispex, WO
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
-        return throw_type_error(dispex->ctx, ei, IDS_ARG_NOT_OPT, NULL);
+        return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
@@ -1448,21 +1448,21 @@ static HRESULT Date_setSeconds(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
-        return throw_type_error(dispex->ctx, ei, IDS_ARG_NOT_OPT, NULL);
+        return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
     date = (DateInstance*)dispex;
     t = local_time(date->time, date);
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
     sec = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
         if(FAILED(hres))
             return hres;
         ms = num_val(&v);
@@ -1491,21 +1491,21 @@ static HRESULT Date_setUTCSeconds(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
-        return throw_type_error(dispex->ctx, ei, IDS_ARG_NOT_OPT, NULL);
+        return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
     date = (DateInstance*)dispex;
     t = date->time;
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
     sec = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
         if(FAILED(hres))
             return hres;
         ms = num_val(&v);
@@ -1534,21 +1534,21 @@ static HRESULT Date_setMinutes(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
-        return throw_type_error(dispex->ctx, ei, IDS_ARG_NOT_OPT, NULL);
+        return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
     date = (DateInstance*)dispex;
     t = local_time(date->time, date);
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
     min = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
         if(FAILED(hres))
             return hres;
         sec = num_val(&v);
@@ -1556,7 +1556,7 @@ static HRESULT Date_setMinutes(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
     else sec = sec_from_time(t);
 
     if(arg_cnt(dp) > 2) {
-        hres = to_number(dispex->ctx, get_arg(dp, 2), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 2), ei, &v);
         if(FAILED(hres))
             return hres;
         ms = num_val(&v);
@@ -1585,21 +1585,21 @@ static HRESULT Date_setUTCMinutes(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
-        return throw_type_error(dispex->ctx, ei, IDS_ARG_NOT_OPT, NULL);
+        return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
     date = (DateInstance*)dispex;
     t = date->time;
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
     min = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
         if(FAILED(hres))
             return hres;
         sec = num_val(&v);
@@ -1607,7 +1607,7 @@ static HRESULT Date_setUTCMinutes(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
     else sec = sec_from_time(t);
 
     if(arg_cnt(dp) > 2) {
-        hres = to_number(dispex->ctx, get_arg(dp, 2), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 2), ei, &v);
         if(FAILED(hres))
             return hres;
         ms = num_val(&v);
@@ -1636,21 +1636,21 @@ static HRESULT Date_setHours(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
-        return throw_type_error(dispex->ctx, ei, IDS_ARG_NOT_OPT, NULL);
+        return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
     date = (DateInstance*)dispex;
     t = local_time(date->time, date);
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
     hour = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
         if(FAILED(hres))
             return hres;
         min = num_val(&v);
@@ -1658,7 +1658,7 @@ static HRESULT Date_setHours(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
     else min = min_from_time(t);
 
     if(arg_cnt(dp) > 2) {
-        hres = to_number(dispex->ctx, get_arg(dp, 2), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 2), ei, &v);
         if(FAILED(hres))
             return hres;
         sec = num_val(&v);
@@ -1666,7 +1666,7 @@ static HRESULT Date_setHours(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
     else sec = sec_from_time(t);
 
     if(arg_cnt(dp) > 3) {
-        hres = to_number(dispex->ctx, get_arg(dp, 3), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 3), ei, &v);
         if(FAILED(hres))
             return hres;
         ms = num_val(&v);
@@ -1694,21 +1694,21 @@ static HRESULT Date_setUTCHours(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
-        return throw_type_error(dispex->ctx, ei, IDS_ARG_NOT_OPT, NULL);
+        return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
     date = (DateInstance*)dispex;
     t = date->time;
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
     hour = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
         if(FAILED(hres))
             return hres;
         min = num_val(&v);
@@ -1716,7 +1716,7 @@ static HRESULT Date_setUTCHours(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
     else min = min_from_time(t);
 
     if(arg_cnt(dp) > 2) {
-        hres = to_number(dispex->ctx, get_arg(dp, 2), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 2), ei, &v);
         if(FAILED(hres))
             return hres;
         sec = num_val(&v);
@@ -1724,7 +1724,7 @@ static HRESULT Date_setUTCHours(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
     else sec = sec_from_time(t);
 
     if(arg_cnt(dp) > 3) {
-        hres = to_number(dispex->ctx, get_arg(dp, 3), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 3), ei, &v);
         if(FAILED(hres))
             return hres;
         ms = num_val(&v);
@@ -1752,12 +1752,12 @@ static HRESULT Date_setDate(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
-        return throw_type_error(dispex->ctx, ei, IDS_ARG_NOT_OPT, NULL);
+        return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
@@ -1785,12 +1785,12 @@ static HRESULT Date_setUTCDate(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
-        return throw_type_error(dispex->ctx, ei, IDS_ARG_NOT_OPT, NULL);
+        return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
@@ -1818,21 +1818,21 @@ static HRESULT Date_setMonth(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
-        return throw_type_error(dispex->ctx, ei, IDS_ARG_NOT_OPT, NULL);
+        return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
     date = (DateInstance*)dispex;
     t = local_time(date->time, date);
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
     month = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
         if(FAILED(hres))
             return hres;
         ddate = num_val(&v);
@@ -1861,21 +1861,21 @@ static HRESULT Date_setUTCMonth(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
-        return throw_type_error(dispex->ctx, ei, IDS_ARG_NOT_OPT, NULL);
+        return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
     date = (DateInstance*)dispex;
     t = date->time;
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
     month = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
         if(FAILED(hres))
             return hres;
         ddate = num_val(&v);
@@ -1904,21 +1904,21 @@ static HRESULT Date_setFullYear(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
-        return throw_type_error(dispex->ctx, ei, IDS_ARG_NOT_OPT, NULL);
+        return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
     date = (DateInstance*)dispex;
     t = local_time(date->time, date);
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
     year = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
         if(FAILED(hres))
             return hres;
         month = num_val(&v);
@@ -1926,7 +1926,7 @@ static HRESULT Date_setFullYear(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
     else month = month_from_time(t);
 
     if(arg_cnt(dp) > 2) {
-        hres = to_number(dispex->ctx, get_arg(dp, 2), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 2), ei, &v);
         if(FAILED(hres))
             return hres;
         ddate = num_val(&v);
@@ -1954,21 +1954,21 @@ static HRESULT Date_setUTCFullYear(script_ctx_t *ctx, DispatchEx *dispex, WORD f
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
-        return throw_type_error(dispex->ctx, ei, IDS_ARG_NOT_OPT, NULL);
+        return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
     date = (DateInstance*)dispex;
     t = date->time;
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
     year = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
         if(FAILED(hres))
             return hres;
         month = num_val(&v);
@@ -1976,7 +1976,7 @@ static HRESULT Date_setUTCFullYear(script_ctx_t *ctx, DispatchEx *dispex, WORD f
     else month = month_from_time(t);
 
     if(arg_cnt(dp) > 2) {
-        hres = to_number(dispex->ctx, get_arg(dp, 2), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 2), ei, &v);
         if(FAILED(hres))
             return hres;
         ddate = num_val(&v);
@@ -2002,7 +2002,7 @@ static HRESULT Date_getYear(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_DATE))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     date = (DateInstance*)dispex;
     t = local_time(date->time, date);
@@ -2028,7 +2028,7 @@ static HRESULT Date_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DIS
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_FUNC, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_FUNC, NULL);
     default:
         FIXME("unimplemented flags %x\n", flags);
         return E_NOTIMPL;
@@ -2397,7 +2397,7 @@ static HRESULT DateConstr_parse(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
         return S_OK;
     }
 
-    hres = to_string(dispex->ctx, get_arg(dp,0), ei, &parse_str);
+    hres = to_string(ctx, get_arg(dp,0), ei, &parse_str);
     if(FAILED(hres))
         return hres;
 
@@ -2525,7 +2525,7 @@ static HRESULT DateConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
             lltime = ((LONGLONG)time.dwHighDateTime<<32)
                 + time.dwLowDateTime;
 
-            hres = create_date(dispex->ctx, NULL, lltime/10000-TIME_EPOCH, &date);
+            hres = create_date(ctx, NULL, lltime/10000-TIME_EPOCH, &date);
             if(FAILED(hres))
                 return hres;
             break;
@@ -2535,20 +2535,20 @@ static HRESULT DateConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
         case 1: {
             VARIANT prim, num;
 
-            hres = to_primitive(dispex->ctx, get_arg(dp,0), ei, &prim, NO_HINT);
+            hres = to_primitive(ctx, get_arg(dp,0), ei, &prim, NO_HINT);
             if(FAILED(hres))
                 return hres;
 
             if(V_VT(&prim) == VT_BSTR)
                 hres = date_parse(V_BSTR(&prim), &num);
             else
-                hres = to_number(dispex->ctx, &prim, ei, &num);
+                hres = to_number(ctx, &prim, ei, &num);
 
             VariantClear(&prim);
             if(FAILED(hres))
                 return hres;
 
-            hres = create_date(dispex->ctx, NULL, time_clip(num_val(&num)), &date);
+            hres = create_date(ctx, NULL, time_clip(num_val(&num)), &date);
             if(FAILED(hres))
                 return hres;
             break;
@@ -2563,7 +2563,7 @@ static HRESULT DateConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
             if(FAILED(hres))
                 return hres;
 
-            hres = create_date(dispex->ctx, NULL, num_val(&ret_date), &date);
+            hres = create_date(ctx, NULL, num_val(&ret_date), &date);
             if(FAILED(hres))
                 return hres;
 
