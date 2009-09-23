@@ -36,6 +36,7 @@ static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     DispatchEx *jsdisp;
+    const WCHAR *str;
 
     static const WCHAR formatW[] = {'[','o','b','j','e','c','t',' ','%','s',']',0};
 
@@ -56,18 +57,22 @@ static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
     TRACE("\n");
 
     jsdisp = get_jsdisp(jsthis);
-    if(!jsdisp || names[jsdisp->builtin_info->class] == NULL) {
+    if(!jsdisp) {
+        str = objectW;
+    }else if(names[jsdisp->builtin_info->class]) {
+        str = names[jsdisp->builtin_info->class];
+    }else {
         FIXME("jdisp->builtin_info->class = %d\n", jsdisp->builtin_info->class);
         return E_FAIL;
     }
 
     if(retv) {
         V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = SysAllocStringLen(NULL, 9+strlenW(names[jsdisp->builtin_info->class]));
+        V_BSTR(retv) = SysAllocStringLen(NULL, 9+strlenW(str));
         if(!V_BSTR(retv))
             return E_OUTOFMEMORY;
 
-        sprintfW(V_BSTR(retv), formatW, names[jsdisp->builtin_info->class]);
+        sprintfW(V_BSTR(retv), formatW, str);
     }
 
     return S_OK;

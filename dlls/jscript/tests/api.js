@@ -87,6 +87,8 @@ ok(tmp.f() === "[object Number]", "tmp.f() = " + tmp.f());
 ok(tmp.f() === "[object RegExp]", "tmp.f() = " + tmp.f());
 (tmp = new String).f = Object.prototype.toString;
 ok(tmp.f() === "[object String]", "tmp.f() = " + tmp.f());
+tmp = Object.prototype.toString.call(testObj);
+ok(tmp === "[object Object]", "'' + new Object() = " + tmp);
 
 ok(Object(1) instanceof Number, "Object(1) is not instance of Number");
 ok(Object("") instanceof String, "Object('') is not instance of String");
