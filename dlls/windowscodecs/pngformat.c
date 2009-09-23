@@ -665,6 +665,29 @@ HRESULT PngDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     return ret;
 }
 
+struct png_pixelformat {
+    const WICPixelFormatGUID *guid;
+    UINT bpp;
+    int bit_depth;
+    int color_type;
+    BOOL remove_filler;
+    BOOL swap_rgb;
+};
+
+static const struct png_pixelformat formats[] = {
+    {&GUID_WICPixelFormat24bppBGR, 24, 8, PNG_COLOR_TYPE_RGB, 0, 1},
+    {&GUID_WICPixelFormatBlackWhite, 1, 1, PNG_COLOR_TYPE_GRAY, 0, 0},
+    {&GUID_WICPixelFormat2bppGray, 2, 2, PNG_COLOR_TYPE_GRAY, 0, 0},
+    {&GUID_WICPixelFormat4bppGray, 4, 4, PNG_COLOR_TYPE_GRAY, 0, 0},
+    {&GUID_WICPixelFormat8bppGray, 8, 8, PNG_COLOR_TYPE_GRAY, 0, 0},
+    {&GUID_WICPixelFormat16bppGray, 16, 16, PNG_COLOR_TYPE_GRAY, 0, 0},
+    {&GUID_WICPixelFormat32bppBGR, 32, 8, PNG_COLOR_TYPE_RGB, 1, 1},
+    {&GUID_WICPixelFormat32bppBGRA, 32, 8, PNG_COLOR_TYPE_RGB_ALPHA, 0, 1},
+    {&GUID_WICPixelFormat48bppRGB, 48, 16, PNG_COLOR_TYPE_RGB, 0, 0},
+    {&GUID_WICPixelFormat64bppRGBA, 64, 16, PNG_COLOR_TYPE_RGB_ALPHA, 0, 0},
+    {NULL},
+};
+
 typedef struct PngEncoder {
     const IWICBitmapEncoderVtbl *lpVtbl;
     const IWICBitmapFrameEncodeVtbl *lpFrameVtbl;
@@ -674,6 +697,8 @@ typedef struct PngEncoder {
     png_infop info_ptr;
     UINT frame_count;
     BOOL frame_initialized;
+    const struct png_pixelformat *format;
+    BOOL info_written;
 } PngEncoder;
 
 static inline PngEncoder *encoder_from_frame(IWICBitmapFrameEncode *iface)
@@ -746,8 +771,24 @@ static HRESULT WINAPI PngFrameEncode_SetResolution(IWICBitmapFrameEncode *iface,
 static HRESULT WINAPI PngFrameEncode_SetPixelFormat(IWICBitmapFrameEncode *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    TRACE("(%p,%s): stub\n", iface, debugstr_guid(pPixelFormat));
-    return E_NOTIMPL;
+    PngEncoder *This = encoder_from_frame(iface);
+    int i;
+    TRACE("(%p,%s)\n", iface, debugstr_guid(pPixelFormat));
+
+    if (!This->frame_initialized || This->info_written) return WINCODEC_ERR_WRONGSTATE;
+
+    for (i=0; formats[i].guid; i++)
+    {
+        if (memcmp(formats[i].guid, pPixelFormat, sizeof(GUID)) == 0)
+            break;
+    }
+
+    if (!formats[i].guid) i = 0;
+
+    This->format = &formats[i];
+    memcpy(pPixelFormat, This->format->guid, sizeof(GUID));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PngFrameEncode_SetColorContexts(IWICBitmapFrameEncode *iface,
@@ -1046,6 +1087,8 @@ HRESULT PngEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->stream = NULL;
     This->frame_count = 0;
     This->frame_initialized = FALSE;
+    This->format = NULL;
+    This->info_written = FALSE;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
