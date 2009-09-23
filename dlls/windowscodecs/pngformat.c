@@ -58,8 +58,11 @@ MAKE_FUNCPTR(png_get_pHYs);
 MAKE_FUNCPTR(png_get_PLTE);
 MAKE_FUNCPTR(png_get_tRNS);
 MAKE_FUNCPTR(png_set_bgr);
+MAKE_FUNCPTR(png_set_filler);
 MAKE_FUNCPTR(png_set_gray_1_2_4_to_8);
 MAKE_FUNCPTR(png_set_gray_to_rgb);
+MAKE_FUNCPTR(png_set_IHDR);
+MAKE_FUNCPTR(png_set_pHYs);
 MAKE_FUNCPTR(png_set_read_fn);
 MAKE_FUNCPTR(png_set_strip_16);
 MAKE_FUNCPTR(png_set_tRNS_to_alpha);
@@ -67,6 +70,8 @@ MAKE_FUNCPTR(png_set_write_fn);
 MAKE_FUNCPTR(png_read_end);
 MAKE_FUNCPTR(png_read_image);
 MAKE_FUNCPTR(png_read_info);
+MAKE_FUNCPTR(png_write_info);
+MAKE_FUNCPTR(png_write_rows);
 #undef MAKE_FUNCPTR
 
 static void *load_libpng(void)
@@ -93,8 +98,11 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_get_PLTE);
         LOAD_FUNCPTR(png_get_tRNS);
         LOAD_FUNCPTR(png_set_bgr);
+        LOAD_FUNCPTR(png_set_filler);
         LOAD_FUNCPTR(png_set_gray_1_2_4_to_8);
         LOAD_FUNCPTR(png_set_gray_to_rgb);
+        LOAD_FUNCPTR(png_set_IHDR);
+        LOAD_FUNCPTR(png_set_pHYs);
         LOAD_FUNCPTR(png_set_read_fn);
         LOAD_FUNCPTR(png_set_strip_16);
         LOAD_FUNCPTR(png_set_tRNS_to_alpha);
@@ -102,6 +110,8 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_read_end);
         LOAD_FUNCPTR(png_read_image);
         LOAD_FUNCPTR(png_read_info);
+        LOAD_FUNCPTR(png_write_info);
+        LOAD_FUNCPTR(png_write_rows);
 
 #undef LOAD_FUNCPTR
     }
@@ -701,6 +711,7 @@ typedef struct PngEncoder {
     BOOL info_written;
     UINT width, height;
     double xres, yres;
+    UINT lines_written;
 } PngEncoder;
 
 static inline PngEncoder *encoder_from_frame(IWICBitmapFrameEncode *iface)
@@ -831,8 +842,60 @@ static HRESULT WINAPI PngFrameEncode_SetThumbnail(IWICBitmapFrameEncode *iface,
 static HRESULT WINAPI PngFrameEncode_WritePixels(IWICBitmapFrameEncode *iface,
     UINT lineCount, UINT cbStride, UINT cbBufferSize, BYTE *pbPixels)
 {
-    FIXME("(%p,%u,%u,%u,%p): stub\n", iface, lineCount, cbStride, cbBufferSize, pbPixels);
-    return E_NOTIMPL;
+    PngEncoder *This = encoder_from_frame(iface);
+    png_byte **row_pointers=NULL;
+    UINT i;
+    TRACE("(%p,%u,%u,%u,%p)\n", iface, lineCount, cbStride, cbBufferSize, pbPixels);
+
+    if (!This->frame_initialized || !This->width || !This->height || !This->format)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    if (lineCount == 0 || lineCount + This->lines_written > This->height)
+        return E_INVALIDARG;
+
+    /* set up setjmp/longjmp error handling */
+    if (setjmp(png_jmpbuf(This->png_ptr)))
+    {
+        if (row_pointers) HeapFree(GetProcessHeap(), 0, row_pointers);
+        return E_FAIL;
+    }
+
+    if (!This->info_written)
+    {
+        ppng_set_IHDR(This->png_ptr, This->info_ptr, This->width, This->height,
+            This->format->bit_depth, This->format->color_type, PNG_INTERLACE_NONE,
+            PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+
+        if (This->xres != 0.0 && This->yres != 0.0)
+        {
+            ppng_set_pHYs(This->png_ptr, This->info_ptr, (This->xres+0.0127) / 0.0254,
+                (This->yres+0.0127) / 0.0254, PNG_RESOLUTION_METER);
+        }
+
+        ppng_write_info(This->png_ptr, This->info_ptr);
+
+        if (This->format->remove_filler)
+            ppng_set_filler(This->png_ptr, 0, PNG_FILLER_AFTER);
+
+        if (This->format->swap_rgb)
+            ppng_set_bgr(This->png_ptr);
+
+        This->info_written = TRUE;
+    }
+
+    row_pointers = HeapAlloc(GetProcessHeap(), 0, lineCount * sizeof(png_byte*));
+    if (!row_pointers)
+        return E_OUTOFMEMORY;
+
+    for (i=0; i<lineCount; i++)
+        row_pointers[i] = pbPixels + cbStride * i;
+
+    ppng_write_rows(This->png_ptr, row_pointers, lineCount);
+    This->lines_written += lineCount;
+
+    HeapFree(GetProcessHeap(), 0, row_pointers);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PngFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
@@ -1109,6 +1172,7 @@ HRESULT PngEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->height = 0;
     This->xres = 0.0;
     This->yres = 0.0;
+    This->lines_written = 0;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
