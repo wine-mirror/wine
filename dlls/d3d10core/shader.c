@@ -394,6 +394,11 @@ static ULONG STDMETHODCALLTYPE d3d10_pixel_shader_AddRef(ID3D10PixelShader *ifac
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
 
+    if (refcount == 1)
+    {
+        IWineD3DPixelShader_AddRef(This->wined3d_shader);
+    }
+
     return refcount;
 }
 
@@ -407,8 +412,6 @@ static ULONG STDMETHODCALLTYPE d3d10_pixel_shader_Release(ID3D10PixelShader *ifa
     if (!refcount)
     {
         IWineD3DPixelShader_Release(This->wined3d_shader);
-        shader_free_signature(&This->output_signature);
-        HeapFree(GetProcessHeap(), 0, This);
     }
 
     return refcount;
@@ -460,6 +463,18 @@ static const struct ID3D10PixelShaderVtbl d3d10_pixel_shader_vtbl =
     d3d10_pixel_shader_SetPrivateDataInterface,
 };
 
+static void STDMETHODCALLTYPE d3d10_pixel_shader_wined3d_object_destroyed(void *parent)
+{
+    struct d3d10_pixel_shader *shader = parent;
+    shader_free_signature(&shader->output_signature);
+    HeapFree(GetProcessHeap(), 0, shader);
+}
+
+static const struct wined3d_parent_ops d3d10_pixel_shader_wined3d_parent_ops =
+{
+    d3d10_pixel_shader_wined3d_object_destroyed,
+};
+
 HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d10_device *device,
         const void *byte_code, SIZE_T byte_code_length)
 {
@@ -478,8 +493,8 @@ HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d10_
     }
 
     hr = IWineD3DDevice_CreatePixelShader(device->wined3d_device,
-            shader_info.shader_code, &shader->output_signature,
-            &shader->wined3d_shader, (IUnknown *)shader);
+            shader_info.shader_code, &shader->output_signature, &shader->wined3d_shader,
+            (IUnknown *)shader, &d3d10_pixel_shader_wined3d_parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d pixel shader, hr %#x.\n", hr);

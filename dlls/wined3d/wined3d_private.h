@@ -2813,6 +2813,7 @@ typedef struct IWineD3DPixelShaderImpl {
 
     /* IWineD3DPixelShaderImpl */
     IUnknown                   *parent;
+    const struct wined3d_parent_ops *parent_ops;
 
     /* Pixel shader input semantics */
     struct wined3d_shader_signature_element input_signature[MAX_REG_INPUT];
@@ -2833,7 +2834,7 @@ typedef struct IWineD3DPixelShaderImpl {
 
 HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
-        IUnknown *parent) DECLSPEC_HIDDEN;
+        IUnknown *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 void pixelshader_update_samplers(struct shader_reg_maps *reg_maps,
         IWineD3DBaseTexture * const *textures) DECLSPEC_HIDDEN;
 void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImpl *stateblock,

@@ -3013,7 +3013,8 @@ interface IWineD3DDevice : IWineD3DBase
         [in] const DWORD *function,
         [in] const struct wined3d_shader_signature *output_signature,
         [out] IWineD3DPixelShader **shader,
-        [in] IUnknown *parent
+        [in] IUnknown *parent,
+        [in] const struct wined3d_parent_ops *parent_ops
     );
     HRESULT CreatePalette(
         [in] DWORD flags,
