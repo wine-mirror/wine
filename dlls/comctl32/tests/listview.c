@@ -1289,6 +1289,15 @@ static void test_create(void)
     hList = CreateWindow("MyListView32", "Test", WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, GetModuleHandle(NULL), 0);
     ok((HIMAGELIST)SendMessage(hList, LVM_GETIMAGELIST, 0, 0) == test_create_imagelist, "Image list not obtained\n");
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+
+    if (!IsWindow(hHeader))
+    {
+        /* version 4.0 */
+        win_skip("LVM_GETHEADER not implemented. Skipping.\n");
+        DestroyWindow(hList);
+        return;
+    }
+
     ok(IsWindow(hHeader) && IsWindowVisible(hHeader), "Listview not in report mode\n");
     ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
     DestroyWindow(hList);
