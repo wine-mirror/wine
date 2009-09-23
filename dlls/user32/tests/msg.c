@@ -11813,7 +11813,7 @@ static void test_clipboard_viewers(void)
     /* Test registering hWnd1 as a viewer. */
     hRet = SetClipboardViewer(hWnd1);
     wm_clipboard_changed[0].wParam = (WPARAM) GetClipboardOwner();
-    ok_sequence(wm_clipboard_changed, "set viewer NULL->1", TRUE);
+    ok_sequence(wm_clipboard_changed, "set viewer NULL->1", FALSE);
     expect_HWND(NULL, hRet);
     expect_HWND(hWnd1, GetClipboardViewer());
 
@@ -11830,7 +11830,7 @@ static void test_clipboard_viewers(void)
     /* Test re-registering same window. */
     hRet = SetClipboardViewer(hWnd1);
     wm_clipboard_changed[0].wParam = (WPARAM) GetClipboardOwner();
-    ok_sequence(wm_clipboard_changed, "set viewer 1->1", TRUE);
+    ok_sequence(wm_clipboard_changed, "set viewer 1->1", FALSE);
     expect_HWND(hWnd1, hRet);
     expect_HWND(hWnd1, GetClipboardViewer());
 
