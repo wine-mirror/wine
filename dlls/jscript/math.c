@@ -148,7 +148,7 @@ static HRESULT Math_abs(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPP
         return S_OK;
     }
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
@@ -171,7 +171,7 @@ static HRESULT Math_acos(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISP
         return S_OK;
     }
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
@@ -192,7 +192,7 @@ static HRESULT Math_asin(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISP
         return S_OK;
     }
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
@@ -213,7 +213,7 @@ static HRESULT Math_atan(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISP
         return S_OK;
     }
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
@@ -234,11 +234,11 @@ static HRESULT Math_atan2(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DIS
         return S_OK;
     }
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v1);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v1);
     if(FAILED(hres))
         return hres;
 
-    hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v2);
+    hres = to_number(ctx, get_arg(dp, 1), ei, &v2);
     if(FAILED(hres))
         return hres;
 
@@ -261,7 +261,7 @@ static HRESULT Math_ceil(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISP
         return S_OK;
     }
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
@@ -283,7 +283,7 @@ static HRESULT Math_cos(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPP
         return S_OK;
     }
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
@@ -304,7 +304,7 @@ static HRESULT Math_exp(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPP
         return S_OK;
     }
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
@@ -326,7 +326,7 @@ static HRESULT Math_floor(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DIS
         return S_OK;
     }
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
@@ -349,7 +349,7 @@ static HRESULT Math_log(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPP
         return S_OK;
     }
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
@@ -375,13 +375,13 @@ static HRESULT Math_max(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPP
         return S_OK;
     }
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
     max = num_val(&v);
     for(i=1; i < arg_cnt(dp); i++) {
-        hres = to_number(dispex->ctx, get_arg(dp, i), ei, &v);
+        hres = to_number(ctx, get_arg(dp, i), ei, &v);
         if(FAILED(hres))
             return hres;
 
@@ -412,13 +412,13 @@ static HRESULT Math_min(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPP
         return S_OK;
     }
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
     min = num_val(&v);
     for(i=1; i < arg_cnt(dp); i++) {
-        hres = to_number(dispex->ctx, get_arg(dp, i), ei, &v);
+        hres = to_number(ctx, get_arg(dp, i), ei, &v);
         if(FAILED(hres))
             return hres;
 
@@ -446,11 +446,11 @@ static HRESULT Math_pow(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPP
         return S_OK;
     }
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &x);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &x);
     if(FAILED(hres))
         return hres;
 
-    hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &y);
+    hres = to_number(ctx, get_arg(dp, 1), ei, &y);
     if(FAILED(hres))
         return hres;
 
@@ -490,7 +490,7 @@ static HRESULT Math_round(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DIS
         return S_OK;
     }
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
@@ -512,7 +512,7 @@ static HRESULT Math_sin(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPP
         return S_OK;
     }
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
@@ -533,7 +533,7 @@ static HRESULT Math_sqrt(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISP
         return S_OK;
     }
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 
@@ -554,7 +554,7 @@ static HRESULT Math_tan(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPP
         return S_OK;
     }
 
-    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
 

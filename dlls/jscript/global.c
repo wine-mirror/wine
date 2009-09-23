@@ -156,7 +156,7 @@ static HRESULT JSGlobal_Array(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
 {
     TRACE("\n");
 
-    return constructor_call(dispex->ctx->array_constr, flags, dp, retv, ei, sp);
+    return constructor_call(ctx->array_constr, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_Boolean(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -164,7 +164,7 @@ static HRESULT JSGlobal_Boolean(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
 {
     TRACE("\n");
 
-    return constructor_call(dispex->ctx->bool_constr, flags, dp, retv, ei, sp);
+    return constructor_call(ctx->bool_constr, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_Date(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -172,7 +172,7 @@ static HRESULT JSGlobal_Date(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
 {
     TRACE("\n");
 
-    return constructor_call(dispex->ctx->date_constr, flags, dp, retv, ei, sp);
+    return constructor_call(ctx->date_constr, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_Error(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -180,7 +180,7 @@ static HRESULT JSGlobal_Error(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
 {
     TRACE("\n");
 
-    return constructor_call(dispex->ctx->error_constr, flags, dp, retv, ei, sp);
+    return constructor_call(ctx->error_constr, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_EvalError(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -188,7 +188,7 @@ static HRESULT JSGlobal_EvalError(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
 {
     TRACE("\n");
 
-    return constructor_call(dispex->ctx->eval_error_constr, flags, dp, retv, ei, sp);
+    return constructor_call(ctx->eval_error_constr, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_RangeError(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -196,7 +196,7 @@ static HRESULT JSGlobal_RangeError(script_ctx_t *ctx, DispatchEx *dispex, WORD f
 {
     TRACE("\n");
 
-    return constructor_call(dispex->ctx->range_error_constr, flags, dp, retv, ei, sp);
+    return constructor_call(ctx->range_error_constr, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_ReferenceError(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -204,7 +204,7 @@ static HRESULT JSGlobal_ReferenceError(script_ctx_t *ctx, DispatchEx *dispex, WO
 {
     TRACE("\n");
 
-    return constructor_call(dispex->ctx->reference_error_constr, flags, dp, retv, ei, sp);
+    return constructor_call(ctx->reference_error_constr, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_SyntaxError(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -212,7 +212,7 @@ static HRESULT JSGlobal_SyntaxError(script_ctx_t *ctx, DispatchEx *dispex, WORD 
 {
     TRACE("\n");
 
-    return constructor_call(dispex->ctx->syntax_error_constr, flags, dp, retv, ei, sp);
+    return constructor_call(ctx->syntax_error_constr, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_TypeError(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -220,7 +220,7 @@ static HRESULT JSGlobal_TypeError(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
 {
     TRACE("\n");
 
-    return constructor_call(dispex->ctx->type_error_constr, flags, dp, retv, ei, sp);
+    return constructor_call(ctx->type_error_constr, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_URIError(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -228,7 +228,7 @@ static HRESULT JSGlobal_URIError(script_ctx_t *ctx, DispatchEx *dispex, WORD fla
 {
     TRACE("\n");
 
-    return constructor_call(dispex->ctx->uri_error_constr, flags, dp, retv, ei, sp);
+    return constructor_call(ctx->uri_error_constr, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_Function(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -236,7 +236,7 @@ static HRESULT JSGlobal_Function(script_ctx_t *ctx, DispatchEx *dispex, WORD fla
 {
     TRACE("\n");
 
-    return constructor_call(dispex->ctx->function_constr, flags, dp, retv, ei, sp);
+    return constructor_call(ctx->function_constr, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_Number(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -244,7 +244,7 @@ static HRESULT JSGlobal_Number(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
 {
     TRACE("\n");
 
-    return constructor_call(dispex->ctx->number_constr, flags, dp, retv, ei, sp);
+    return constructor_call(ctx->number_constr, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_Object(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -252,7 +252,7 @@ static HRESULT JSGlobal_Object(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
 {
     TRACE("\n");
 
-    return constructor_call(dispex->ctx->object_constr, flags, dp, retv, ei, sp);
+    return constructor_call(ctx->object_constr, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_String(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -260,7 +260,7 @@ static HRESULT JSGlobal_String(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
 {
     TRACE("\n");
 
-    return constructor_call(dispex->ctx->string_constr, flags, dp, retv, ei, sp);
+    return constructor_call(ctx->string_constr, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_RegExp(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -268,7 +268,7 @@ static HRESULT JSGlobal_RegExp(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
 {
     TRACE("\n");
 
-    return constructor_call(dispex->ctx->regexp_constr, flags, dp, retv, ei, sp);
+    return constructor_call(ctx->regexp_constr, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_ActiveXObject(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -324,19 +324,19 @@ static HRESULT JSGlobal_eval(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
         return S_OK;
     }
 
-    if(!dispex->ctx->exec_ctx) {
+    if(!ctx->exec_ctx) {
         FIXME("No active exec_ctx\n");
         return E_UNEXPECTED;
     }
 
     TRACE("parsing %s\n", debugstr_w(V_BSTR(arg)));
-    hres = script_parse(dispex->ctx, V_BSTR(arg), NULL, &parser_ctx);
+    hres = script_parse(ctx, V_BSTR(arg), NULL, &parser_ctx);
     if(FAILED(hres)) {
         WARN("parse (%s) failed: %08x\n", debugstr_w(V_BSTR(arg)), hres);
-        return throw_syntax_error(dispex->ctx, ei, hres, NULL);
+        return throw_syntax_error(ctx, ei, hres, NULL);
     }
 
-    hres = exec_source(dispex->ctx->exec_ctx, parser_ctx, parser_ctx->source, ei, retv);
+    hres = exec_source(ctx->exec_ctx, parser_ctx, parser_ctx->source, ei, retv);
     parser_release(parser_ctx);
 
     return hres;
@@ -352,7 +352,7 @@ static HRESULT JSGlobal_isNaN(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
     TRACE("\n");
 
     if(arg_cnt(dp)) {
-        hres = to_number(dispex->ctx, get_arg(dp,0), ei, &num);
+        hres = to_number(ctx, get_arg(dp,0), ei, &num);
         if(FAILED(hres))
             return hres;
 
@@ -380,7 +380,7 @@ static HRESULT JSGlobal_isFinite(script_ctx_t *ctx, DispatchEx *dispex, WORD fla
     if(arg_cnt(dp)) {
         VARIANT num;
 
-        hres = to_number(dispex->ctx, get_arg(dp,0), ei, &num);
+        hres = to_number(ctx, get_arg(dp,0), ei, &num);
         if(FAILED(hres))
             return hres;
 
@@ -422,7 +422,7 @@ static HRESULT JSGlobal_parseInt(script_ctx_t *ctx, DispatchEx *dispex, WORD fla
     }
 
     if(arg_cnt(dp) >= 2) {
-        hres = to_int32(dispex->ctx, get_arg(dp, 1), ei, &radix);
+        hres = to_int32(ctx, get_arg(dp, 1), ei, &radix);
         if(FAILED(hres))
             return hres;
 
@@ -434,7 +434,7 @@ static HRESULT JSGlobal_parseInt(script_ctx_t *ctx, DispatchEx *dispex, WORD fla
         }
     }
 
-    hres = to_string(dispex->ctx, get_arg(dp, 0), ei, &str);
+    hres = to_string(ctx, get_arg(dp, 0), ei, &str);
     if(FAILED(hres))
         return hres;
 
@@ -492,7 +492,7 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, DispatchEx *dispex, WORD f
     }
 
     arg = get_arg(dp, 0);
-    hres = to_string(dispex->ctx, arg, ei, &val_str);
+    hres = to_string(ctx, arg, ei, &val_str);
     if(FAILED(hres))
         return hres;
 
@@ -605,7 +605,7 @@ static HRESULT JSGlobal_unescape(script_ctx_t *ctx, DispatchEx *dispex, WORD fla
         return S_OK;
     }
 
-    hres = to_string(dispex->ctx, get_arg(dp, 0), ei, &str);
+    hres = to_string(ctx, get_arg(dp, 0), ei, &str);
     if(FAILED(hres))
         return hres;
 
@@ -724,7 +724,7 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
         return S_OK;
     }
 
-    hres = to_string(dispex->ctx, get_arg(dp,0), ei, &str);
+    hres = to_string(ctx, get_arg(dp,0), ei, &str);
     if(FAILED(hres))
         return hres;
 

@@ -125,7 +125,7 @@ static HRESULT String_valueOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
     return stringobj_to_string(dispex, retv);
 }
 
-static HRESULT do_attributeless_tag_format(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT do_attributeless_tag_format(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp, const WCHAR *tagname)
 {
     static const WCHAR tagfmt[] = {'<','%','s','>','%','s','<','/','%','s','>',0};
@@ -140,7 +140,7 @@ static HRESULT do_attributeless_tag_format(DispatchEx *dispex, WORD flags, DISPP
         V_VT(&this) = VT_DISPATCH;
         V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
 
-        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        hres = to_string(ctx, &this, ei, &val_str);
         if(FAILED(hres))
             return hres;
 
@@ -171,7 +171,7 @@ static HRESULT do_attributeless_tag_format(DispatchEx *dispex, WORD flags, DISPP
     return S_OK;
 }
 
-static HRESULT do_attribute_tag_format(DispatchEx *dispex, WORD flags,
+static HRESULT do_attribute_tag_format(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp,
         const WCHAR *tagname, const WCHAR *attr)
 {
@@ -190,7 +190,7 @@ static HRESULT do_attribute_tag_format(DispatchEx *dispex, WORD flags,
         V_VT(&this) = VT_DISPATCH;
         V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
 
-        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        hres = to_string(ctx, &this, ei, &val_str);
         if(FAILED(hres))
             return hres;
 
@@ -205,7 +205,7 @@ static HRESULT do_attribute_tag_format(DispatchEx *dispex, WORD flags,
     }
 
     if(arg_cnt(dp)) {
-        hres = to_string(dispex->ctx, get_arg(dp, 0), ei, &attr_value);
+        hres = to_string(ctx, get_arg(dp, 0), ei, &attr_value);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -245,28 +245,28 @@ static HRESULT String_anchor(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
     static const WCHAR fontW[] = {'A',0};
     static const WCHAR colorW[] = {'N','A','M','E',0};
 
-    return do_attribute_tag_format(dispex, flags, dp, retv, ei, sp, fontW, colorW);
+    return do_attribute_tag_format(ctx, dispex, flags, dp, retv, ei, sp, fontW, colorW);
 }
 
 static HRESULT String_big(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR bigtagW[] = {'B','I','G',0};
-    return do_attributeless_tag_format(dispex, flags, dp, retv, ei, sp, bigtagW);
+    return do_attributeless_tag_format(ctx, dispex, flags, dp, retv, ei, sp, bigtagW);
 }
 
 static HRESULT String_blink(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR blinktagW[] = {'B','L','I','N','K',0};
-    return do_attributeless_tag_format(dispex, flags, dp, retv, ei, sp, blinktagW);
+    return do_attributeless_tag_format(ctx, dispex, flags, dp, retv, ei, sp, blinktagW);
 }
 
 static HRESULT String_bold(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR boldtagW[] = {'B',0};
-    return do_attributeless_tag_format(dispex, flags, dp, retv, ei, sp, boldtagW);
+    return do_attributeless_tag_format(ctx, dispex, flags, dp, retv, ei, sp, boldtagW);
 }
 
 /* ECMA-262 3rd Edition    15.5.4.5 */
@@ -287,7 +287,7 @@ static HRESULT String_charAt(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
         V_VT(&this) = VT_DISPATCH;
         V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
 
-        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        hres = to_string(ctx, &this, ei, &val_str);
         if(FAILED(hres))
             return hres;
 
@@ -304,7 +304,7 @@ static HRESULT String_charAt(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
     if(arg_cnt(dp)) {
         VARIANT num;
 
-        hres = to_integer(dispex->ctx, get_arg(dp, 0), ei, &num);
+        hres = to_integer(ctx, get_arg(dp, 0), ei, &num);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -354,7 +354,7 @@ static HRESULT String_charCodeAt(script_ctx_t *ctx, DispatchEx *dispex, WORD fla
         V_VT(&this) = VT_DISPATCH;
         V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
 
-        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        hres = to_string(ctx, &this, ei, &val_str);
         if(FAILED(hres))
             return hres;
 
@@ -371,7 +371,7 @@ static HRESULT String_charCodeAt(script_ctx_t *ctx, DispatchEx *dispex, WORD fla
     if(arg_cnt(dp) > 0) {
         VARIANT v;
 
-        hres = to_integer(dispex->ctx, get_arg(dp, 0), ei, &v);
+        hres = to_integer(ctx, get_arg(dp, 0), ei, &v);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -415,10 +415,10 @@ static HRESULT String_concat(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
     V_VT(&var) = VT_DISPATCH;
     V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(dispex);
 
-    hres = to_string(dispex->ctx, &var, ei, strs);
+    hres = to_string(ctx, &var, ei, strs);
     if(SUCCEEDED(hres)) {
         for(i=0; i < arg_cnt(dp); i++) {
-            hres = to_string(dispex->ctx, get_arg(dp, i), ei, strs+i+1);
+            hres = to_string(ctx, get_arg(dp, i), ei, strs+i+1);
             if(FAILED(hres))
                 break;
         }
@@ -457,7 +457,7 @@ static HRESULT String_fixed(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR fixedtagW[] = {'T','T',0};
-    return do_attributeless_tag_format(dispex, flags, dp, retv, ei, sp, fixedtagW);
+    return do_attributeless_tag_format(ctx, dispex, flags, dp, retv, ei, sp, fixedtagW);
 }
 
 static HRESULT String_fontcolor(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -466,7 +466,7 @@ static HRESULT String_fontcolor(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
     static const WCHAR fontW[] = {'F','O','N','T',0};
     static const WCHAR colorW[] = {'C','O','L','O','R',0};
 
-    return do_attribute_tag_format(dispex, flags, dp, retv, ei, sp, fontW, colorW);
+    return do_attribute_tag_format(ctx, dispex, flags, dp, retv, ei, sp, fontW, colorW);
 }
 
 static HRESULT String_fontsize(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -475,7 +475,7 @@ static HRESULT String_fontsize(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
     static const WCHAR fontW[] = {'F','O','N','T',0};
     static const WCHAR colorW[] = {'S','I','Z','E',0};
 
-    return do_attribute_tag_format(dispex, flags, dp, retv, ei, sp, fontW, colorW);
+    return do_attribute_tag_format(ctx, dispex, flags, dp, retv, ei, sp, fontW, colorW);
 }
 
 static HRESULT String_indexOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -495,7 +495,7 @@ static HRESULT String_indexOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
         V_VT(&this) = VT_DISPATCH;
         V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
 
-        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        hres = to_string(ctx, &this, ei, &val_str);
         if(FAILED(hres))
             return hres;
 
@@ -518,7 +518,7 @@ static HRESULT String_indexOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
         return S_OK;
     }
 
-    hres = to_string(dispex->ctx, get_arg(dp,0), ei, &search_str);
+    hres = to_string(ctx, get_arg(dp,0), ei, &search_str);
     if(FAILED(hres)) {
         SysFreeString(val_str);
         return hres;
@@ -527,7 +527,7 @@ static HRESULT String_indexOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
     if(arg_cnt(dp) >= 2) {
         VARIANT ival;
 
-        hres = to_integer(dispex->ctx, get_arg(dp,1), ei, &ival);
+        hres = to_integer(ctx, get_arg(dp,1), ei, &ival);
         if(SUCCEEDED(hres)) {
             if(V_VT(&ival) == VT_I4)
                 pos = V_VT(&ival) > 0 ? V_I4(&ival) : 0;
@@ -564,7 +564,7 @@ static HRESULT String_italics(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR italicstagW[] = {'I',0};
-    return do_attributeless_tag_format(dispex, flags, dp, retv, ei, sp, italicstagW);
+    return do_attributeless_tag_format(ctx, dispex, flags, dp, retv, ei, sp, italicstagW);
 }
 
 /* ECMA-262 3rd Edition    15.5.4.8 */
@@ -590,7 +590,7 @@ static HRESULT String_lastIndexOf(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
         V_VT(&this) = VT_DISPATCH;
         V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
 
-        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        hres = to_string(ctx, &this, ei, &val_str);
         if(FAILED(hres))
             return hres;
 
@@ -607,7 +607,7 @@ static HRESULT String_lastIndexOf(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
         return S_OK;
     }
 
-    hres = to_string(dispex->ctx, get_arg(dp,0), ei, &search_str);
+    hres = to_string(ctx, get_arg(dp,0), ei, &search_str);
     if(FAILED(hres)) {
         SysFreeString(val_str);
         return hres;
@@ -618,7 +618,7 @@ static HRESULT String_lastIndexOf(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
     if(arg_cnt(dp) >= 2) {
         VARIANT ival;
 
-        hres = to_integer(dispex->ctx, get_arg(dp,1), ei, &ival);
+        hres = to_integer(ctx, get_arg(dp,1), ei, &ival);
         if(SUCCEEDED(hres)) {
             if(V_VT(&ival) == VT_I4)
                 pos = V_VT(&ival) > 0 ? V_I4(&ival) : 0;
@@ -660,7 +660,7 @@ static HRESULT String_link(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DI
     static const WCHAR fontW[] = {'A',0};
     static const WCHAR colorW[] = {'H','R','E','F',0};
 
-    return do_attribute_tag_format(dispex, flags, dp, retv, ei, sp, fontW, colorW);
+    return do_attribute_tag_format(ctx, dispex, flags, dp, retv, ei, sp, fontW, colorW);
 }
 
 /* ECMA-262 3rd Edition    15.5.4.10 */
@@ -698,11 +698,11 @@ static HRESULT String_match(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     default: {
         BSTR match_str;
 
-        hres = to_string(dispex->ctx, arg_var, ei, &match_str);
+        hres = to_string(ctx, arg_var, ei, &match_str);
         if(FAILED(hres))
             return hres;
 
-        hres = create_regexp_str(dispex->ctx, match_str, SysStringLen(match_str), NULL, 0, &regexp);
+        hres = create_regexp_str(ctx, match_str, SysStringLen(match_str), NULL, 0, &regexp);
         SysFreeString(match_str);
         if(FAILED(hres))
             return hres;
@@ -715,7 +715,7 @@ static HRESULT String_match(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
         V_VT(&this) = VT_DISPATCH;
         V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
 
-        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        hres = to_string(ctx, &this, ei, &val_str);
         if(FAILED(hres)) {
             jsdisp_release(regexp);
             return hres;
@@ -731,7 +731,7 @@ static HRESULT String_match(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
         length = this->length;
     }
 
-    hres = regexp_match(regexp, str, length, FALSE, &match_result, &match_cnt);
+    hres = regexp_match(ctx, regexp, str, length, FALSE, &match_result, &match_cnt);
     jsdisp_release(regexp);
     if(FAILED(hres)) {
         SysFreeString(val_str);
@@ -748,7 +748,7 @@ static HRESULT String_match(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
         return S_OK;
     }
 
-    hres = create_array(dispex->ctx, match_cnt, &array);
+    hres = create_array(ctx, match_cnt, &array);
     if(FAILED(hres)) {
         SysFreeString(val_str);
         return hres;
@@ -814,8 +814,8 @@ static HRESULT strbuf_append(strbuf_t *buf, const WCHAR *str, DWORD len)
     return S_OK;
 }
 
-static HRESULT rep_call(DispatchEx *func, const WCHAR *str, match_result_t *match, match_result_t *parens,
-        DWORD parens_cnt, BSTR *ret, jsexcept_t *ei, IServiceProvider *caller)
+static HRESULT rep_call(script_ctx_t *ctx, DispatchEx *func, const WCHAR *str, match_result_t *match,
+        match_result_t *parens, DWORD parens_cnt, BSTR *ret, jsexcept_t *ei, IServiceProvider *caller)
 {
     DISPPARAMS dp = {NULL, NULL, 0, 0};
     VARIANTARG *args, *arg;
@@ -870,7 +870,7 @@ static HRESULT rep_call(DispatchEx *func, const WCHAR *str, match_result_t *matc
     if(FAILED(hres))
         return hres;
 
-    hres = to_string(func->ctx, &var, ei, ret);
+    hres = to_string(ctx, &var, ei, ret);
     VariantClear(&var);
     return hres;
 }
@@ -897,7 +897,7 @@ static HRESULT String_replace(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
         V_VT(&this) = VT_DISPATCH;
         V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
 
-        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        hres = to_string(ctx, &this, ei, &val_str);
         if(FAILED(hres))
             return hres;
 
@@ -939,7 +939,7 @@ static HRESULT String_replace(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
         }
 
     default:
-        hres = to_string(dispex->ctx, arg_var, ei, &match_str);
+        hres = to_string(ctx, arg_var, ei, &match_str);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -961,7 +961,7 @@ static HRESULT String_replace(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
             }
 
         default:
-            hres = to_string(dispex->ctx, arg_var, ei, &rep_str);
+            hres = to_string(ctx, arg_var, ei, &rep_str);
             if(FAILED(hres))
                 break;
 
@@ -978,8 +978,8 @@ static HRESULT String_replace(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
 
         while(1) {
             if(regexp) {
-                hres = regexp_match_next(regexp, gcheck, str, length, &cp, parens_ptr,
-                                         &parens_size, &parens_cnt, &match);
+                hres = regexp_match_next(ctx, regexp, gcheck, str, length, &cp, parens_ptr,
+                        &parens_size, &parens_cnt, &match);
                 gcheck = TRUE;
 
                 if(hres == S_FALSE) {
@@ -1004,7 +1004,7 @@ static HRESULT String_replace(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
             if(rep_func) {
                 BSTR cstr;
 
-                hres = rep_call(rep_func, str, &match, parens, parens_cnt, &cstr, ei, caller);
+                hres = rep_call(ctx, rep_func, str, &match, parens, parens_cnt, &cstr, ei, caller);
                 if(FAILED(hres))
                     break;
 
@@ -1136,7 +1136,7 @@ static HRESULT String_slice(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
         V_VT(&this) = VT_DISPATCH;
         V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
 
-        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        hres = to_string(ctx, &this, ei, &val_str);
         if(FAILED(hres))
             return hres;
 
@@ -1151,7 +1151,7 @@ static HRESULT String_slice(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     }
 
     if(arg_cnt(dp)) {
-        hres = to_integer(dispex->ctx, get_arg(dp,0), ei, &v);
+        hres = to_integer(ctx, get_arg(dp,0), ei, &v);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -1174,7 +1174,7 @@ static HRESULT String_slice(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     }
 
     if(arg_cnt(dp) >= 2) {
-        hres = to_integer(dispex->ctx, get_arg(dp,1), ei, &v);
+        hres = to_integer(ctx, get_arg(dp,1), ei, &v);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -1218,7 +1218,7 @@ static HRESULT String_small(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR smalltagW[] = {'S','M','A','L','L',0};
-    return do_attributeless_tag_format(dispex, flags, dp, retv, ei, sp, smalltagW);
+    return do_attributeless_tag_format(ctx, dispex, flags, dp, retv, ei, sp, smalltagW);
 }
 
 static HRESULT String_split(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -1245,7 +1245,7 @@ static HRESULT String_split(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
         V_VT(&this) = VT_DISPATCH;
         V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
 
-        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        hres = to_string(ctx, &this, ei, &val_str);
         if(FAILED(hres))
             return hres;
 
@@ -1267,7 +1267,7 @@ static HRESULT String_split(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
         regexp = iface_to_jsdisp((IUnknown*)V_DISPATCH(arg));
         if(regexp) {
             if(is_class(regexp, JSCLASS_REGEXP)) {
-                hres = regexp_match(regexp, str, length, TRUE, &match_result, &match_cnt);
+                hres = regexp_match(ctx, regexp, str, length, TRUE, &match_result, &match_cnt);
                 jsdisp_release(regexp);
                 if(FAILED(hres)) {
                     SysFreeString(val_str);
@@ -1279,7 +1279,7 @@ static HRESULT String_split(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
         }
     }
     default:
-        hres = to_string(dispex->ctx, arg, ei, &match_str);
+        hres = to_string(ctx, arg, ei, &match_str);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -1292,7 +1292,7 @@ static HRESULT String_split(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
         }
     }
 
-    hres = create_array(dispex->ctx, 0, &array);
+    hres = create_array(ctx, 0, &array);
 
     if(SUCCEEDED(hres)) {
         ptr = str;
@@ -1366,14 +1366,14 @@ static HRESULT String_strike(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR striketagW[] = {'S','T','R','I','K','E',0};
-    return do_attributeless_tag_format(dispex, flags, dp, retv, ei, sp, striketagW);
+    return do_attributeless_tag_format(ctx, dispex, flags, dp, retv, ei, sp, striketagW);
 }
 
 static HRESULT String_sub(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR subtagW[] = {'S','U','B',0};
-    return do_attributeless_tag_format(dispex, flags, dp, retv, ei, sp, subtagW);
+    return do_attributeless_tag_format(ctx, dispex, flags, dp, retv, ei, sp, subtagW);
 }
 
 /* ECMA-262 3rd Edition    15.5.4.15 */
@@ -1395,7 +1395,7 @@ static HRESULT String_substring(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
         V_VT(&this) = VT_DISPATCH;
         V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
 
-        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        hres = to_string(ctx, &this, ei, &val_str);
         if(FAILED(hres))
             return hres;
 
@@ -1410,7 +1410,7 @@ static HRESULT String_substring(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
     }
 
     if(arg_cnt(dp) >= 1) {
-        hres = to_integer(dispex->ctx, get_arg(dp,0), ei, &v);
+        hres = to_integer(ctx, get_arg(dp,0), ei, &v);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -1428,7 +1428,7 @@ static HRESULT String_substring(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
     }
 
     if(arg_cnt(dp) >= 2) {
-        hres = to_integer(dispex->ctx, get_arg(dp,1), ei, &v);
+        hres = to_integer(ctx, get_arg(dp,1), ei, &v);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -1488,7 +1488,7 @@ static HRESULT String_substr(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
 
         V_VT(&this) = VT_DISPATCH;
         V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
-        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        hres = to_string(ctx, &this, ei, &val_str);
         if(FAILED(hres))
             return hres;
 
@@ -1497,7 +1497,7 @@ static HRESULT String_substr(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
     }
 
     if(arg_cnt(dp) >= 1) {
-        hres = to_integer(dispex->ctx, get_arg(dp,0), ei, &v);
+        hres = to_integer(ctx, get_arg(dp,0), ei, &v);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -1515,7 +1515,7 @@ static HRESULT String_substr(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
     }
 
     if(arg_cnt(dp) >= 2) {
-        hres = to_integer(dispex->ctx, get_arg(dp,1), ei, &v);
+        hres = to_integer(ctx, get_arg(dp,1), ei, &v);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -1550,7 +1550,7 @@ static HRESULT String_sup(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DIS
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR suptagW[] = {'S','U','P',0};
-    return do_attributeless_tag_format(dispex, flags, dp, retv, ei, sp, suptagW);
+    return do_attributeless_tag_format(ctx, dispex, flags, dp, retv, ei, sp, suptagW);
 }
 
 static HRESULT String_toLowerCase(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
@@ -1569,7 +1569,7 @@ static HRESULT String_toLowerCase(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
         V_VT(&this) = VT_DISPATCH;
         V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
 
-        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        hres = to_string(ctx, &this, ei, &val_str);
         if(FAILED(hres))
             return hres;
 
@@ -1615,7 +1615,7 @@ static HRESULT String_toUpperCase(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
         V_VT(&this) = VT_DISPATCH;
         V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
 
-        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        hres = to_string(ctx, &this, ei, &val_str);
         if(FAILED(hres))
             return hres;
 
@@ -1675,7 +1675,7 @@ static HRESULT String_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_FUNC, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_FUNC, NULL);
     case DISPATCH_PROPERTYGET: {
         BSTR str = SysAllocString(This->str);
         if(!str)
@@ -1759,7 +1759,7 @@ static HRESULT StringConstr_fromCharCode(script_ctx_t *ctx, DispatchEx *dispex, 
         return E_OUTOFMEMORY;
 
     for(i=0; i<arg_cnt(dp); i++) {
-        hres = to_uint32(dispex->ctx, get_arg(dp, i), ei, &code);
+        hres = to_uint32(ctx, get_arg(dp, i), ei, &code);
         if(FAILED(hres)) {
             SysFreeString(ret);
             return hres;
@@ -1789,7 +1789,7 @@ static HRESULT StringConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
         BSTR str;
 
         if(arg_cnt(dp)) {
-            hres = to_string(dispex->ctx, get_arg(dp, 0), ei, &str);
+            hres = to_string(ctx, get_arg(dp, 0), ei, &str);
             if(FAILED(hres))
                 return hres;
         }else {
@@ -1808,14 +1808,14 @@ static HRESULT StringConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
         if(arg_cnt(dp)) {
             BSTR str;
 
-            hres = to_string(dispex->ctx, get_arg(dp, 0), ei, &str);
+            hres = to_string(ctx, get_arg(dp, 0), ei, &str);
             if(FAILED(hres))
                 return hres;
 
-            hres = create_string(dispex->ctx, str, SysStringLen(str), &ret);
+            hres = create_string(ctx, str, SysStringLen(str), &ret);
             SysFreeString(str);
         }else {
-            hres = create_string(dispex->ctx, NULL, 0, &ret);
+            hres = create_string(ctx, NULL, 0, &ret);
         }
 
         if(FAILED(hres))

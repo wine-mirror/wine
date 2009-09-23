@@ -124,7 +124,7 @@ static HRESULT Object_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_FUNC, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_FUNC, NULL);
     case DISPATCH_PROPERTYGET:
         V_VT(retv) = VT_BSTR;
         V_BSTR(retv) = SysAllocString(default_valueW);
@@ -177,7 +177,7 @@ static HRESULT ObjectConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
             if(V_VT(arg) != VT_EMPTY && V_VT(arg) != VT_NULL) {
                 IDispatch *disp;
 
-                hres = to_object(dispex->ctx, arg, &disp);
+                hres = to_object(ctx, arg, &disp);
                 if(FAILED(hres))
                     return hres;
 
@@ -194,7 +194,7 @@ static HRESULT ObjectConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
     case DISPATCH_CONSTRUCT: {
         DispatchEx *obj;
 
-        hres = create_object(dispex->ctx, NULL, &obj);
+        hres = create_object(ctx, NULL, &obj);
         if(FAILED(hres))
             return hres;
 

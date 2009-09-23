@@ -42,7 +42,7 @@ static HRESULT Bool_toString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_BOOLEAN))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_BOOL, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_BOOL, NULL);
 
     if(retv) {
         BoolInstance *bool = (BoolInstance*)dispex;
@@ -68,7 +68,7 @@ static HRESULT Bool_valueOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_BOOLEAN))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_BOOL, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_BOOL, NULL);
 
     if(retv) {
         BoolInstance *bool = (BoolInstance*)dispex;
@@ -87,7 +87,7 @@ static HRESULT Bool_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DIS
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_FUNC, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_FUNC, NULL);
     default:
         FIXME("unimplemented flags %x\n", flags);
         return E_NOTIMPL;
@@ -127,7 +127,7 @@ static HRESULT BoolConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
     case DISPATCH_CONSTRUCT: {
         DispatchEx *bool;
 
-        hres = create_bool(dispex->ctx, value, &bool);
+        hres = create_bool(ctx, value, &bool);
         if(FAILED(hres))
             return hres;
 

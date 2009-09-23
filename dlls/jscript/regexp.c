@@ -3294,7 +3294,7 @@ out:
     return re;
 }
 
-static HRESULT do_regexp_match_next(RegExpInstance *regexp, const WCHAR *str, DWORD len,
+static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, const WCHAR *str, DWORD len,
         const WCHAR **cp, match_result_t **parens, DWORD *parens_size, DWORD *parens_cnt, match_result_t *ret)
 {
     REMatchState *x, *result;
@@ -3305,7 +3305,7 @@ static HRESULT do_regexp_match_next(RegExpInstance *regexp, const WCHAR *str, DW
     gData.cpend = str + len;
     gData.start = *cp-str;
     gData.skipped = 0;
-    gData.pool = &regexp->dispex.ctx->tmp_heap;
+    gData.pool = &ctx->tmp_heap;
 
     x = InitMatch(NULL, &gData, regexp->jsregexp, gData.cpend - gData.cpbegin);
     if(!x) {
@@ -3355,7 +3355,7 @@ static HRESULT do_regexp_match_next(RegExpInstance *regexp, const WCHAR *str, DW
     return S_OK;
 }
 
-HRESULT regexp_match_next(DispatchEx *dispex, BOOL gcheck, const WCHAR *str, DWORD len,
+HRESULT regexp_match_next(script_ctx_t *ctx, DispatchEx *dispex, BOOL gcheck, const WCHAR *str, DWORD len,
         const WCHAR **cp, match_result_t **parens, DWORD *parens_size, DWORD *parens_cnt, match_result_t *ret)
 {
     RegExpInstance *regexp = (RegExpInstance*)dispex;
@@ -3365,16 +3365,16 @@ HRESULT regexp_match_next(DispatchEx *dispex, BOOL gcheck, const WCHAR *str, DWO
     if(gcheck && !(regexp->jsregexp->flags & JSREG_GLOB))
         return S_FALSE;
 
-    mark = jsheap_mark(&regexp->dispex.ctx->tmp_heap);
+    mark = jsheap_mark(&ctx->tmp_heap);
 
-    hres = do_regexp_match_next(regexp, str, len, cp, parens, parens_size, parens_cnt, ret);
+    hres = do_regexp_match_next(ctx, regexp, str, len, cp, parens, parens_size, parens_cnt, ret);
 
     jsheap_clear(mark);
     return hres;
 }
 
-HRESULT regexp_match(DispatchEx *dispex, const WCHAR *str, DWORD len, BOOL gflag, match_result_t **match_result,
-        DWORD *result_cnt)
+HRESULT regexp_match(script_ctx_t *ctx, DispatchEx *dispex, const WCHAR *str, DWORD len, BOOL gflag,
+        match_result_t **match_result, DWORD *result_cnt)
 {
     RegExpInstance *This = (RegExpInstance*)dispex;
     match_result_t *ret = NULL, cres;
@@ -3383,10 +3383,10 @@ HRESULT regexp_match(DispatchEx *dispex, const WCHAR *str, DWORD len, BOOL gflag
     jsheap_t *mark;
     HRESULT hres;
 
-    mark = jsheap_mark(&This->dispex.ctx->tmp_heap);
+    mark = jsheap_mark(&ctx->tmp_heap);
 
     while(1) {
-        hres = do_regexp_match_next(This, str, len, &cp, NULL, NULL, NULL, &cres);
+        hres = do_regexp_match_next(ctx, This, str, len, &cp, NULL, NULL, NULL, &cres);
         if(hres == S_FALSE) {
             hres = S_OK;
             break;
@@ -3558,7 +3558,7 @@ static HRESULT create_match_array(script_ctx_t *ctx, BSTR input, const match_res
     return S_OK;
 }
 
-static HRESULT run_exec(DispatchEx *dispex, VARIANT *arg, jsexcept_t *ei, BSTR *input,
+static HRESULT run_exec(script_ctx_t *ctx, DispatchEx *dispex, VARIANT *arg, jsexcept_t *ei, BSTR *input,
         match_result_t *match, match_result_t **parens, DWORD *parens_cnt, VARIANT_BOOL *ret)
 {
     RegExpInstance *regexp;
@@ -3575,7 +3575,7 @@ static HRESULT run_exec(DispatchEx *dispex, VARIANT *arg, jsexcept_t *ei, BSTR *
     regexp = (RegExpInstance*)dispex;
 
     if(arg) {
-        hres = to_string(regexp->dispex.ctx, arg, ei, &string);
+        hres = to_string(ctx, arg, ei, &string);
         if(FAILED(hres))
             return hres;
     }else {
@@ -3589,7 +3589,7 @@ static HRESULT run_exec(DispatchEx *dispex, VARIANT *arg, jsexcept_t *ei, BSTR *
         last_index = regexp->last_index;
 
     cp = string + last_index;
-    hres = regexp_match_next(&regexp->dispex, FALSE, string, length, &cp, parens, parens ? &parens_size : NULL,
+    hres = regexp_match_next(ctx, &regexp->dispex, FALSE, string, length, &cp, parens, parens ? &parens_size : NULL,
             parens_cnt, match);
     if(FAILED(hres)) {
         SysFreeString(string);
@@ -3620,7 +3620,7 @@ static HRESULT RegExp_exec(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DI
 
     TRACE("\n");
 
-    hres = run_exec(dispex, arg_cnt(dp) ? get_arg(dp,0) : NULL, ei, &string, &match, &parens, &parens_cnt, &b);
+    hres = run_exec(ctx, dispex, arg_cnt(dp) ? get_arg(dp,0) : NULL, ei, &string, &match, &parens, &parens_cnt, &b);
     if(FAILED(hres))
         return hres;
 
@@ -3628,7 +3628,7 @@ static HRESULT RegExp_exec(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DI
         if(b) {
             IDispatch *ret;
 
-            hres = create_match_array(dispex->ctx, string, &match, parens, parens_cnt, ei, &ret);
+            hres = create_match_array(ctx, string, &match, parens, parens_cnt, ei, &ret);
             if(SUCCEEDED(hres)) {
                 V_VT(retv) = VT_DISPATCH;
                 V_DISPATCH(retv) = ret;
@@ -3652,7 +3652,7 @@ static HRESULT RegExp_test(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DI
 
     TRACE("\n");
 
-    hres = run_exec(dispex, arg_cnt(dp) ? get_arg(dp,0) : NULL, ei, NULL, &match, NULL, NULL, &b);
+    hres = run_exec(ctx, dispex, arg_cnt(dp) ? get_arg(dp,0) : NULL, ei, NULL, &match, NULL, NULL, &b);
     if(FAILED(hres))
         return hres;
 
@@ -3670,7 +3670,7 @@ static HRESULT RegExp_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_FUNC, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_FUNC, NULL);
     default:
         FIXME("unimplemented flags %x\n", flags);
         return E_NOTIMPL;
@@ -3843,7 +3843,7 @@ static HRESULT RegExpConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
                     if(is_class(jsdisp, JSCLASS_REGEXP)) {
                         if(arg_cnt(dp) > 1 && V_VT(get_arg(dp,1)) != VT_EMPTY) {
                             jsdisp_release(jsdisp);
-                            return throw_regexp_error(dispex->ctx, ei, IDS_REGEXP_SYNTAX_ERROR, NULL);
+                            return throw_regexp_error(ctx, ei, IDS_REGEXP_SYNTAX_ERROR, NULL);
                         }
 
                         if(retv) {
@@ -3860,7 +3860,7 @@ static HRESULT RegExpConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
         }
         /* fall through */
     case DISPATCH_CONSTRUCT:
-        return regexp_constructor(dispex->ctx, dp, retv);
+        return regexp_constructor(ctx, dp, retv);
     default:
         FIXME("unimplemented flags: %x\n", flags);
         return E_NOTIMPL;

@@ -244,9 +244,9 @@ typedef struct {
     DWORD len;
 } match_result_t;
 
-HRESULT regexp_match_next(DispatchEx*,BOOL,const WCHAR*,DWORD,const WCHAR**,match_result_t**,
+HRESULT regexp_match_next(script_ctx_t*,DispatchEx*,BOOL,const WCHAR*,DWORD,const WCHAR**,match_result_t**,
         DWORD*,DWORD*,match_result_t*);
-HRESULT regexp_match(DispatchEx*,const WCHAR*,DWORD,BOOL,match_result_t**,DWORD*);
+HRESULT regexp_match(script_ctx_t*,DispatchEx*,const WCHAR*,DWORD,BOOL,match_result_t**,DWORD*);
 
 static inline VARIANT *get_arg(DISPPARAMS *dp, DWORD i)
 {

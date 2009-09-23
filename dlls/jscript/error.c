@@ -119,7 +119,7 @@ static HRESULT Error_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_FUNC, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_FUNC, NULL);
     default:
         FIXME("unimplemented flags %x\n", flags);
         return E_NOTIMPL;
@@ -223,7 +223,7 @@ static HRESULT create_error(script_ctx_t *ctx, DispatchEx *constr,
     return S_OK;
 }
 
-static HRESULT error_constr(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT error_constr(script_ctx_t *ctx, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, DispatchEx *constr) {
     DispatchEx *err;
     VARIANT numv;
@@ -234,9 +234,9 @@ static HRESULT error_constr(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     V_VT(&numv) = VT_NULL;
 
     if(arg_cnt(dp)) {
-        hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &numv);
+        hres = to_number(ctx, get_arg(dp, 0), ei, &numv);
         if(FAILED(hres) || (V_VT(&numv)==VT_R8 && isnan(V_R8(&numv))))
-            hres = to_string(dispex->ctx, get_arg(dp, 0), ei, &msg);
+            hres = to_string(ctx, get_arg(dp, 0), ei, &msg);
         else if(V_VT(&numv) == VT_I4)
             num = V_I4(&numv);
         else
@@ -247,7 +247,7 @@ static HRESULT error_constr(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     }
 
     if(arg_cnt(dp)>1 && !msg) {
-        hres = to_string(dispex->ctx, get_arg(dp, 1), ei, &msg);
+        hres = to_string(ctx, get_arg(dp, 1), ei, &msg);
         if(FAILED(hres))
             return hres;
     }
@@ -256,9 +256,9 @@ static HRESULT error_constr(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     case INVOKE_FUNC:
     case DISPATCH_CONSTRUCT:
         if(V_VT(&numv) == VT_NULL)
-            hres = create_error(dispex->ctx, constr, NULL, msg, &err);
+            hres = create_error(ctx, constr, NULL, msg, &err);
         else
-            hres = create_error(dispex->ctx, constr, &num, msg, &err);
+            hres = create_error(ctx, constr, &num, msg, &err);
 
         if(FAILED(hres))
             return hres;
@@ -282,64 +282,56 @@ static HRESULT ErrorConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD fla
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
-    return error_constr(dispex, flags, dp, retv, ei,
-            dispex->ctx->error_constr);
+    return error_constr(ctx, flags, dp, retv, ei, ctx->error_constr);
 }
 
 static HRESULT EvalErrorConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
-    return error_constr(dispex, flags, dp, retv, ei,
-            dispex->ctx->eval_error_constr);
+    return error_constr(ctx, flags, dp, retv, ei, ctx->eval_error_constr);
 }
 
 static HRESULT RangeErrorConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
-    return error_constr(dispex, flags, dp, retv, ei,
-            dispex->ctx->range_error_constr);
+    return error_constr(ctx, flags, dp, retv, ei, ctx->range_error_constr);
 }
 
 static HRESULT ReferenceErrorConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
-    return error_constr(dispex, flags, dp, retv, ei,
-            dispex->ctx->reference_error_constr);
+    return error_constr(ctx, flags, dp, retv, ei, ctx->reference_error_constr);
 }
 
 static HRESULT RegExpErrorConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
-    return error_constr(dispex, flags, dp, retv, ei,
-            dispex->ctx->regexp_error_constr);
+    return error_constr(ctx, flags, dp, retv, ei, ctx->regexp_error_constr);
 }
 
 static HRESULT SyntaxErrorConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
-    return error_constr(dispex, flags, dp, retv, ei,
-            dispex->ctx->syntax_error_constr);
+    return error_constr(ctx, flags, dp, retv, ei, ctx->syntax_error_constr);
 }
 
 static HRESULT TypeErrorConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
-    return error_constr(dispex, flags, dp, retv, ei,
-            dispex->ctx->type_error_constr);
+    return error_constr(ctx, flags, dp, retv, ei, ctx->type_error_constr);
 }
 
 static HRESULT URIErrorConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
-    return error_constr(dispex, flags, dp, retv, ei,
-            dispex->ctx->uri_error_constr);
+    return error_constr(ctx, flags, dp, retv, ei, ctx->uri_error_constr);
 }
 
 HRESULT init_error_constr(script_ctx_t *ctx, DispatchEx *object_prototype)

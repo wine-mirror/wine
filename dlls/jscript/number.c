@@ -54,17 +54,17 @@ static HRESULT Number_toString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_NUMBER))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_NUM, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_NUM, NULL);
 
     number = (NumberInstance*)dispex;
 
     if(arg_cnt(dp)) {
-        hres = to_int32(dispex->ctx, get_arg(dp, 0), ei, &radix);
+        hres = to_int32(ctx, get_arg(dp, 0), ei, &radix);
         if(FAILED(hres))
             return hres;
 
         if(radix<2 || radix>36)
-            return throw_type_error(dispex->ctx, ei, IDS_INVALID_CALL_ARG, NULL);
+            return throw_type_error(ctx, ei, IDS_INVALID_CALL_ARG, NULL);
     }
 
     if(V_VT(&number->num) == VT_I4)
@@ -73,7 +73,7 @@ static HRESULT Number_toString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
         val = V_R8(&number->num);
 
     if(radix==10 || isnan(val) || isinf(val)) {
-        hres = to_string(dispex->ctx, &number->num, ei, &str);
+        hres = to_string(ctx, &number->num, ei, &str);
         if(FAILED(hres))
             return hres;
     }
@@ -204,7 +204,7 @@ static HRESULT Number_valueOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
     TRACE("\n");
 
     if(!is_class(dispex, JSCLASS_NUMBER))
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_NUM, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_NUM, NULL);
 
     if(retv) {
         NumberInstance *number = (NumberInstance*)dispex;
@@ -220,7 +220,7 @@ static HRESULT Number_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(dispex->ctx, ei, IDS_NOT_FUNC, NULL);
+        return throw_type_error(ctx, ei, IDS_NOT_FUNC, NULL);
     case DISPATCH_PROPERTYGET:
         *retv = number->num;
         break;
@@ -269,7 +269,7 @@ static HRESULT NumberConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
             return S_OK;
         }
 
-        hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &num);
+        hres = to_number(ctx, get_arg(dp, 0), ei, &num);
         if(FAILED(hres))
             return hres;
 
@@ -281,7 +281,7 @@ static HRESULT NumberConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
         DispatchEx *obj;
 
         if(arg_cnt(dp)) {
-            hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &num);
+            hres = to_number(ctx, get_arg(dp, 0), ei, &num);
             if(FAILED(hres))
                 return hres;
         }else {
@@ -289,7 +289,7 @@ static HRESULT NumberConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
             V_I4(&num) = 0;
         }
 
-        hres = create_number(dispex->ctx, &num, &obj);
+        hres = create_number(ctx, &num, &obj);
         if(FAILED(hres))
             return hres;
 
