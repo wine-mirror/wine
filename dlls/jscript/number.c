@@ -41,8 +41,19 @@ static const WCHAR toPrecisionW[] = {'t','o','P','r','e','c','i','s','i','o','n'
 static const WCHAR valueOfW[] = {'v','a','l','u','e','O','f',0};
 
 #define NUMBER_TOSTRING_BUF_SIZE 64
+
+static inline NumberInstance *number_from_vdisp(vdisp_t *vdisp)
+{
+    return (NumberInstance*)vdisp->u.jsdisp;
+}
+
+static inline NumberInstance *number_this(vdisp_t *jsthis)
+{
+    return is_vclass(jsthis, JSCLASS_NUMBER) ? number_from_vdisp(jsthis) : NULL;
+}
+
 /* ECMA-262 3rd Edition    15.7.4.2 */
-static HRESULT Number_toString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Number_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     NumberInstance *number;
@@ -53,10 +64,8 @@ static HRESULT Number_toString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_NUMBER))
+    if(!(number = number_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_NUM, NULL);
-
-    number = (NumberInstance*)dispex;
 
     if(arg_cnt(dp)) {
         hres = to_int32(ctx, get_arg(dp, 0), ei, &radix);
@@ -170,53 +179,53 @@ static HRESULT Number_toString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
     return S_OK;
 }
 
-static HRESULT Number_toLocaleString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Number_toLocaleString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Number_toFixed(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Number_toFixed(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Number_toExponential(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Number_toExponential(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Number_toPrecision(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Number_toPrecision(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Number_valueOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Number_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
+    NumberInstance *number;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_NUMBER))
+    if(!(number = number_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_NUM, NULL);
 
-    if(retv) {
-        NumberInstance *number = (NumberInstance*)dispex;
+    if(retv)
         *retv = number->num;
-    }
     return S_OK;
 }
 
-static HRESULT Number_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Number_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    NumberInstance *number = (NumberInstance*)dispex;
+    NumberInstance *number = number_from_vdisp(jsthis);
 
     switch(flags) {
     case INVOKE_FUNC:
@@ -251,7 +260,7 @@ static const builtin_info_t Number_info = {
     NULL
 };
 
-static HRESULT NumberConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT NumberConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT num;

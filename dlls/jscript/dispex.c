@@ -245,12 +245,19 @@ static HRESULT invoke_prop_func(DispatchEx *This, DispatchEx *jsthis, dispex_pro
     HRESULT hres;
 
     switch(prop->type) {
-    case PROP_BUILTIN:
+    case PROP_BUILTIN: {
+        vdisp_t vthis;
+
         if(flags == DISPATCH_CONSTRUCT && (prop->flags & DISPATCH_METHOD)) {
             WARN("%s is not a constructor\n", debugstr_w(prop->name));
             return E_INVALIDARG;
         }
-        return prop->u.p->invoke(This->ctx, jsthis, flags, dp, retv, ei, caller);
+
+        set_jsdisp(&vthis, jsthis);
+        hres = prop->u.p->invoke(This->ctx, &vthis, flags, dp, retv, ei, caller);
+        vdisp_release(&vthis);
+        return hres;
+    }
     case PROP_PROTREF:
         return invoke_prop_func(This->prototype, jsthis, This->prototype->props+prop->u.ref, flags, dp, retv, ei, caller);
     case PROP_VARIANT: {
@@ -304,7 +311,11 @@ static HRESULT prop_get(DispatchEx *This, dispex_prop_t *prop, DISPPARAMS *dp,
 
             hres = VariantCopy(retv, &prop->u.var);
         }else {
-            hres = prop->u.p->invoke(This->ctx, This, DISPATCH_PROPERTYGET, dp, retv, ei, caller);
+            vdisp_t vthis;
+
+            set_jsdisp(&vthis, This);
+            hres = prop->u.p->invoke(This->ctx, &vthis, DISPATCH_PROPERTYGET, dp, retv, ei, caller);
+            vdisp_release(&vthis);
         }
         break;
     case PROP_PROTREF:
@@ -335,8 +346,14 @@ static HRESULT prop_put(DispatchEx *This, dispex_prop_t *prop, DISPPARAMS *dp,
 
     switch(prop->type) {
     case PROP_BUILTIN:
-        if(!(prop->flags & PROPF_METHOD))
-            return prop->u.p->invoke(This->ctx, This, DISPATCH_PROPERTYPUT, dp, NULL, ei, caller);
+        if(!(prop->flags & PROPF_METHOD)) {
+            vdisp_t vthis;
+
+            set_jsdisp(&vthis, This);
+            hres = prop->u.p->invoke(This->ctx, &vthis, DISPATCH_PROPERTYPUT, dp, NULL, ei, caller);
+            vdisp_release(&vthis);
+            return hres;
+        }
     case PROP_PROTREF:
         prop->type = PROP_VARIANT;
         prop->flags = PROPF_ENUM;
@@ -823,10 +840,16 @@ HRESULT jsdisp_get_id(DispatchEx *jsdisp, const WCHAR *name, DWORD flags, DISPID
     return DISP_E_UNKNOWNNAME;
 }
 
-HRESULT jsdisp_call_value(DispatchEx *disp, WORD flags, DISPPARAMS *dp, VARIANT *retv,
+HRESULT jsdisp_call_value(DispatchEx *jsthis, WORD flags, DISPPARAMS *dp, VARIANT *retv,
         jsexcept_t *ei, IServiceProvider *caller)
 {
-    return disp->builtin_info->value_prop.invoke(disp->ctx, disp, flags, dp, retv, ei, caller);
+    vdisp_t vdisp;
+    HRESULT hres;
+
+    set_jsdisp(&vdisp, jsthis);
+    hres = jsthis->builtin_info->value_prop.invoke(jsthis->ctx, &vdisp, flags, dp, retv, ei, caller);
+    vdisp_release(&vdisp);
+    return hres;
 }
 
 HRESULT jsdisp_call(DispatchEx *disp, DISPID id, WORD flags, DISPPARAMS *dp, VARIANT *retv,

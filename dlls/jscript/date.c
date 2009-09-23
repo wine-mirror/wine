@@ -94,6 +94,11 @@ static const WCHAR getYearW[] = {'g','e','t','Y','e','a','r',0};
 static const WCHAR UTCW[] = {'U','T','C',0};
 static const WCHAR parseW[] = {'p','a','r','s','e',0};
 
+static inline DateInstance *date_this(vdisp_t *jsthis)
+{
+    return is_vclass(jsthis, JSCLASS_DATE) ? (DateInstance*)jsthis->u.jsdisp : NULL;
+}
+
 /*ECMA-262 3rd Edition    15.9.1.2 */
 #define MS_PER_DAY 86400000
 #define MS_PER_HOUR 3600000
@@ -595,19 +600,21 @@ static HRESULT dateobj_to_string(DateInstance *date, VARIANT *retv)
     return date_to_string(time, TRUE, offset, retv);
 }
 
-static HRESULT Date_toString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
-    return dateobj_to_string((DateInstance*)dispex, retv);
+    return dateobj_to_string(date, retv);
 }
 
 /* ECMA-262 3rd Edition    15.9.1.5 */
-static HRESULT Date_toLocaleString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_toLocaleString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
@@ -618,10 +625,8 @@ static HRESULT Date_toLocaleString(script_ctx_t *ctx, DispatchEx *dispex, WORD f
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
-
-    date = (DateInstance*)dispex;
 
     if(isnan(date->time)) {
         if(retv) {
@@ -654,23 +659,23 @@ static HRESULT Date_toLocaleString(script_ctx_t *ctx, DispatchEx *dispex, WORD f
     return S_OK;
 }
 
-static HRESULT Date_valueOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
-    if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
+    if(retv)
         num_set_val(retv, date->time);
-    }
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.9.5.42 */
-static HRESULT Date_toUTCString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_toUTCString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
@@ -698,10 +703,8 @@ static HRESULT Date_toUTCString(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
-
-    date = (DateInstance*)dispex;
 
     if(isnan(date->time)) {
         if(retv) {
@@ -875,17 +878,19 @@ static HRESULT dateobj_to_date_string(DateInstance *date, VARIANT *retv)
     return S_OK;
 }
 
-static HRESULT Date_toDateString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_toDateString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    if(!is_class(dispex, JSCLASS_DATE))
+    DateInstance *date;
+
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
-    return dateobj_to_date_string((DateInstance*)dispex, retv);
+    return dateobj_to_date_string(date, retv);
 }
 
 /* ECMA-262 3rd Edition    15.9.5.4 */
-static HRESULT Date_toTimeString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_toTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
@@ -901,10 +906,8 @@ static HRESULT Date_toTimeString(script_ctx_t *ctx, DispatchEx *dispex, WORD fla
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
-
-    date = (DateInstance*)dispex;
 
     if(isnan(date->time)) {
         if(retv) {
@@ -947,7 +950,7 @@ static HRESULT Date_toTimeString(script_ctx_t *ctx, DispatchEx *dispex, WORD fla
 }
 
 /* ECMA-262 3rd Edition    15.9.5.6 */
-static HRESULT Date_toLocaleDateString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_toLocaleDateString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
@@ -958,10 +961,8 @@ static HRESULT Date_toLocaleDateString(script_ctx_t *ctx, DispatchEx *dispex, WO
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
-
-    date = (DateInstance*)dispex;
 
     if(isnan(date->time)) {
         if(retv) {
@@ -992,7 +993,7 @@ static HRESULT Date_toLocaleDateString(script_ctx_t *ctx, DispatchEx *dispex, WO
 }
 
 /* ECMA-262 3rd Edition    15.9.5.7 */
-static HRESULT Date_toLocaleTimeString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_toLocaleTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
@@ -1003,10 +1004,8 @@ static HRESULT Date_toLocaleTimeString(script_ctx_t *ctx, DispatchEx *dispex, WO
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
-
-    date = (DateInstance*)dispex;
 
     if(isnan(date->time)) {
         if(retv) {
@@ -1021,7 +1020,7 @@ static HRESULT Date_toLocaleTimeString(script_ctx_t *ctx, DispatchEx *dispex, WO
     st = create_systemtime(local_time(date->time, date));
 
     if(st.wYear<1601 || st.wYear>9999)
-        return Date_toTimeString(ctx, dispex, flags, dp, retv, ei, caller);
+        return Date_toTimeString(ctx, jsthis, flags, dp, retv, ei, caller);
 
     if(retv) {
         len = GetTimeFormatW(ctx->lcid, 0, &st, NULL, NULL, 0);
@@ -1037,32 +1036,33 @@ static HRESULT Date_toLocaleTimeString(script_ctx_t *ctx, DispatchEx *dispex, WO
 }
 
 /* ECMA-262 3rd Edition    15.9.5.9 */
-static HRESULT Date_getTime(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getTime(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
-    if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
+    if(retv)
         num_set_val(retv, date->time);
-    }
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.9.5.10 */
-static HRESULT Date_getFullYear(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
         DOUBLE time = local_time(date->time, date);
 
         num_set_val(retv, year_from_time(time));
@@ -1071,32 +1071,33 @@ static HRESULT Date_getFullYear(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
 }
 
 /* ECMA-262 3rd Edition    15.9.5.11 */
-static HRESULT Date_getUTCFullYear(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getUTCFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
-    if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
+    if(retv)
         num_set_val(retv, year_from_time(date->time));
-    }
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.9.5.12 */
-static HRESULT Date_getMonth(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
         DOUBLE time = local_time(date->time, date);
 
         num_set_val(retv, month_from_time(time));
@@ -1105,32 +1106,33 @@ static HRESULT Date_getMonth(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
 }
 
 /* ECMA-262 3rd Edition    15.9.5.13 */
-static HRESULT Date_getUTCMonth(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getUTCMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
-    if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
+    if(retv)
         num_set_val(retv, month_from_time(date->time));
-    }
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.9.5.14 */
-static HRESULT Date_getDate(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
         DOUBLE time = local_time(date->time, date);
 
         num_set_val(retv, date_from_time(time));
@@ -1139,32 +1141,33 @@ static HRESULT Date_getDate(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
 }
 
 /* ECMA-262 3rd Edition    15.9.5.15 */
-static HRESULT Date_getUTCDate(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getUTCDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
-    if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
+    if(retv)
         num_set_val(retv, date_from_time(date->time));
-    }
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.9.5.16 */
-static HRESULT Date_getDay(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getDay(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
         DOUBLE time = local_time(date->time, date);
 
         num_set_val(retv, week_day(time));
@@ -1173,32 +1176,33 @@ static HRESULT Date_getDay(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DI
 }
 
 /* ECMA-262 3rd Edition    15.9.5.17 */
-static HRESULT Date_getUTCDay(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getUTCDay(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
-    if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
+    if(retv)
         num_set_val(retv, week_day(date->time));
-    }
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.9.5.18 */
-static HRESULT Date_getHours(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
         DOUBLE time = local_time(date->time, date);
 
         num_set_val(retv, hour_from_time(time));
@@ -1207,32 +1211,33 @@ static HRESULT Date_getHours(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
 }
 
 /* ECMA-262 3rd Edition    15.9.5.19 */
-static HRESULT Date_getUTCHours(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getUTCHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
-    if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
+    if(retv)
         num_set_val(retv, hour_from_time(date->time));
-    }
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.9.5.20 */
-static HRESULT Date_getMinutes(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
         DOUBLE time = local_time(date->time, date);
 
         num_set_val(retv, min_from_time(time));
@@ -1241,32 +1246,33 @@ static HRESULT Date_getMinutes(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
 }
 
 /* ECMA-262 3rd Edition    15.9.5.21 */
-static HRESULT Date_getUTCMinutes(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getUTCMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
-    if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
+    if(retv)
         num_set_val(retv, min_from_time(date->time));
-    }
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.9.5.22 */
-static HRESULT Date_getSeconds(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
         DOUBLE time = local_time(date->time, date);
 
         num_set_val(retv, sec_from_time(time));
@@ -1275,32 +1281,33 @@ static HRESULT Date_getSeconds(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
 }
 
 /* ECMA-262 3rd Edition    15.9.5.23 */
-static HRESULT Date_getUTCSeconds(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getUTCSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
-    if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
+    if(retv)
         num_set_val(retv, sec_from_time(date->time));
-    }
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.9.5.24 */
-static HRESULT Date_getMilliseconds(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
         DOUBLE time = local_time(date->time, date);
 
         num_set_val(retv, ms_from_time(time));
@@ -1309,40 +1316,40 @@ static HRESULT Date_getMilliseconds(script_ctx_t *ctx, DispatchEx *dispex, WORD 
 }
 
 /* ECMA-262 3rd Edition    15.9.5.25 */
-static HRESULT Date_getUTCMilliseconds(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getUTCMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
-    if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
+    if(retv)
         num_set_val(retv, ms_from_time(date->time));
-    }
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.9.5.26 */
-static HRESULT Date_getTimezoneOffset(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getTimezoneOffset(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
-    if(retv) {
-        DateInstance *date = (DateInstance*)dispex;
+    if(retv)
         num_set_val(retv, floor(
                     (date->time-local_time(date->time, date))/MS_PER_MINUTE));
-    }
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.9.5.27 */
-static HRESULT Date_setTime(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setTime(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1351,7 +1358,7 @@ static HRESULT Date_setTime(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
@@ -1361,7 +1368,6 @@ static HRESULT Date_setTime(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     if(FAILED(hres))
         return hres;
 
-    date = (DateInstance*)dispex;
     date->time = time_clip(num_val(&v));
 
     if(retv)
@@ -1371,7 +1377,7 @@ static HRESULT Date_setTime(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
 }
 
 /* ECMA-262 3rd Edition    15.9.5.28 */
-static HRESULT Date_setMilliseconds(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1381,7 +1387,7 @@ static HRESULT Date_setMilliseconds(script_ctx_t *ctx, DispatchEx *dispex, WORD 
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
@@ -1391,7 +1397,6 @@ static HRESULT Date_setMilliseconds(script_ctx_t *ctx, DispatchEx *dispex, WORD 
     if(FAILED(hres))
         return hres;
 
-    date = (DateInstance*)dispex;
     t = local_time(date->time, date);
     t = make_date(day(t), make_time(hour_from_time(t), min_from_time(t),
                 sec_from_time(t), num_val(&v)));
@@ -1404,7 +1409,7 @@ static HRESULT Date_setMilliseconds(script_ctx_t *ctx, DispatchEx *dispex, WORD 
 }
 
 /* ECMA-262 3rd Edition    15.9.5.29 */
-static HRESULT Date_setUTCMilliseconds(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setUTCMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1414,7 +1419,7 @@ static HRESULT Date_setUTCMilliseconds(script_ctx_t *ctx, DispatchEx *dispex, WO
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
@@ -1424,7 +1429,6 @@ static HRESULT Date_setUTCMilliseconds(script_ctx_t *ctx, DispatchEx *dispex, WO
     if(FAILED(hres))
         return hres;
 
-    date = (DateInstance*)dispex;
     t = date->time;
     t = make_date(day(t), make_time(hour_from_time(t), min_from_time(t),
                 sec_from_time(t), num_val(&v)));
@@ -1437,7 +1441,7 @@ static HRESULT Date_setUTCMilliseconds(script_ctx_t *ctx, DispatchEx *dispex, WO
 }
 
 /* ECMA-262 3rd Edition    15.9.5.30 */
-static HRESULT Date_setSeconds(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1447,13 +1451,12 @@ static HRESULT Date_setSeconds(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
         return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
-    date = (DateInstance*)dispex;
     t = local_time(date->time, date);
 
     hres = to_number(ctx, get_arg(dp, 0), ei, &v);
@@ -1480,7 +1483,7 @@ static HRESULT Date_setSeconds(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
 }
 
 /* ECMA-262 3rd Edition    15.9.5.31 */
-static HRESULT Date_setUTCSeconds(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setUTCSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1490,13 +1493,12 @@ static HRESULT Date_setUTCSeconds(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
         return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
-    date = (DateInstance*)dispex;
     t = date->time;
 
     hres = to_number(ctx, get_arg(dp, 0), ei, &v);
@@ -1523,7 +1525,7 @@ static HRESULT Date_setUTCSeconds(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
 }
 
 /* ECMA-262 3rd Edition    15.9.5.33 */
-static HRESULT Date_setMinutes(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1533,13 +1535,12 @@ static HRESULT Date_setMinutes(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
         return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
-    date = (DateInstance*)dispex;
     t = local_time(date->time, date);
 
     hres = to_number(ctx, get_arg(dp, 0), ei, &v);
@@ -1574,7 +1575,7 @@ static HRESULT Date_setMinutes(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
 }
 
 /* ECMA-262 3rd Edition    15.9.5.34 */
-static HRESULT Date_setUTCMinutes(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setUTCMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1584,13 +1585,12 @@ static HRESULT Date_setUTCMinutes(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
         return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
-    date = (DateInstance*)dispex;
     t = date->time;
 
     hres = to_number(ctx, get_arg(dp, 0), ei, &v);
@@ -1625,7 +1625,7 @@ static HRESULT Date_setUTCMinutes(script_ctx_t *ctx, DispatchEx *dispex, WORD fl
 }
 
 /* ECMA-262 3rd Edition    15.9.5.35 */
-static HRESULT Date_setHours(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1635,13 +1635,12 @@ static HRESULT Date_setHours(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
         return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
-    date = (DateInstance*)dispex;
     t = local_time(date->time, date);
 
     hres = to_number(ctx, get_arg(dp, 0), ei, &v);
@@ -1683,23 +1682,22 @@ static HRESULT Date_setHours(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
 }
 
 /* ECMA-262 3rd Edition    15.9.5.36 */
-static HRESULT Date_setUTCHours(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setUTCHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DateInstance *date;
     VARIANT v;
     HRESULT hres;
-    DateInstance *date;
     DOUBLE t, hour, min, sec, ms;
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
         return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
-    date = (DateInstance*)dispex;
     t = date->time;
 
     hres = to_number(ctx, get_arg(dp, 0), ei, &v);
@@ -1741,7 +1739,7 @@ static HRESULT Date_setUTCHours(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
 }
 
 /* ECMA-262 3rd Edition    15.9.5.36 */
-static HRESULT Date_setDate(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1751,7 +1749,7 @@ static HRESULT Date_setDate(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
@@ -1761,7 +1759,6 @@ static HRESULT Date_setDate(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     if(FAILED(hres))
         return hres;
 
-    date = (DateInstance*)dispex;
     t = local_time(date->time, date);
     t = make_date(make_day(year_from_time(t), month_from_time(t),
                 num_val(&v)), time_within_day(t));
@@ -1774,7 +1771,7 @@ static HRESULT Date_setDate(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
 }
 
 /* ECMA-262 3rd Edition    15.9.5.37 */
-static HRESULT Date_setUTCDate(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setUTCDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1784,7 +1781,7 @@ static HRESULT Date_setUTCDate(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
@@ -1794,7 +1791,6 @@ static HRESULT Date_setUTCDate(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
     if(FAILED(hres))
         return hres;
 
-    date = (DateInstance*)dispex;
     t = date->time;
     t = make_date(make_day(year_from_time(t), month_from_time(t),
                 num_val(&v)), time_within_day(t));
@@ -1807,7 +1803,7 @@ static HRESULT Date_setUTCDate(script_ctx_t *ctx, DispatchEx *dispex, WORD flags
 }
 
 /* ECMA-262 3rd Edition    15.9.5.38 */
-static HRESULT Date_setMonth(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1817,13 +1813,12 @@ static HRESULT Date_setMonth(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
         return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
-    date = (DateInstance*)dispex;
     t = local_time(date->time, date);
 
     hres = to_number(ctx, get_arg(dp, 0), ei, &v);
@@ -1850,7 +1845,7 @@ static HRESULT Date_setMonth(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
 }
 
 /* ECMA-262 3rd Edition    15.9.5.39 */
-static HRESULT Date_setUTCMonth(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setUTCMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1860,13 +1855,12 @@ static HRESULT Date_setUTCMonth(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
         return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
-    date = (DateInstance*)dispex;
     t = date->time;
 
     hres = to_number(ctx, get_arg(dp, 0), ei, &v);
@@ -1893,7 +1887,7 @@ static HRESULT Date_setUTCMonth(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
 }
 
 /* ECMA-262 3rd Edition    15.9.5.40 */
-static HRESULT Date_setFullYear(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1903,13 +1897,12 @@ static HRESULT Date_setFullYear(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
         return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
-    date = (DateInstance*)dispex;
     t = local_time(date->time, date);
 
     hres = to_number(ctx, get_arg(dp, 0), ei, &v);
@@ -1943,7 +1936,7 @@ static HRESULT Date_setFullYear(script_ctx_t *ctx, DispatchEx *dispex, WORD flag
 }
 
 /* ECMA-262 3rd Edition    15.9.5.41 */
-static HRESULT Date_setUTCFullYear(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setUTCFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1953,13 +1946,12 @@ static HRESULT Date_setUTCFullYear(script_ctx_t *ctx, DispatchEx *dispex, WORD f
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
     if(!arg_cnt(dp))
         return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
 
-    date = (DateInstance*)dispex;
     t = date->time;
 
     hres = to_number(ctx, get_arg(dp, 0), ei, &v);
@@ -1993,7 +1985,7 @@ static HRESULT Date_setUTCFullYear(script_ctx_t *ctx, DispatchEx *dispex, WORD f
 }
 
 /* ECMA-262 3rd Edition    B2.4 */
-static HRESULT Date_getYear(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     DateInstance *date;
@@ -2001,13 +1993,10 @@ static HRESULT Date_getYear(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE))
+    if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
 
-    date = (DateInstance*)dispex;
     t = local_time(date->time, date);
-
-
     if(isnan(t)) {
         if(retv)
             num_set_nan(retv);
@@ -2021,7 +2010,7 @@ static HRESULT Date_getYear(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     return S_OK;
 }
 
-static HRESULT Date_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -2383,7 +2372,7 @@ static inline HRESULT date_parse(BSTR input, VARIANT *retv) {
     return S_OK;
 }
 
-static HRESULT DateConstr_parse(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT DateConstr_parse(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     BSTR parse_str;
@@ -2497,7 +2486,7 @@ static HRESULT date_utc(script_ctx_t *ctx, DISPPARAMS *dp, VARIANT *retv, jsexce
     return S_OK;
 }
 
-static HRESULT DateConstr_UTC(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT DateConstr_UTC(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -2505,7 +2494,7 @@ static HRESULT DateConstr_UTC(script_ctx_t *ctx, DispatchEx *dispex, WORD flags,
     return date_utc(ctx, dp, retv, ei);
 }
 
-static HRESULT DateConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT DateConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     DispatchEx *date;

@@ -32,20 +32,26 @@ typedef struct {
 static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
 static const WCHAR valueOfW[] = {'v','a','l','u','e','O','f',0};
 
+static inline BoolInstance *bool_this(vdisp_t *jsthis)
+{
+    return is_vclass(jsthis, JSCLASS_BOOLEAN) ? (BoolInstance*)jsthis->u.jsdisp : NULL;
+}
+
 /* ECMA-262 3rd Edition    15.6.4.2 */
-static HRESULT Bool_toString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Bool_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
+    BoolInstance *bool;
+
     static const WCHAR trueW[] = {'t','r','u','e',0};
     static const WCHAR falseW[] = {'f','a','l','s','e',0};
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_BOOLEAN))
+    if(!(bool = bool_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_BOOL, NULL);
 
     if(retv) {
-        BoolInstance *bool = (BoolInstance*)dispex;
         BSTR val;
 
         if(bool->val) val = SysAllocString(trueW);
@@ -62,17 +68,17 @@ static HRESULT Bool_toString(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, 
 }
 
 /* ECMA-262 3rd Edition    15.6.4.3 */
-static HRESULT Bool_valueOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Bool_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
+    BoolInstance *bool;
+
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_BOOLEAN))
+    if(!(bool = bool_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_BOOL, NULL);
 
     if(retv) {
-        BoolInstance *bool = (BoolInstance*)dispex;
-
         V_VT(retv) = VT_BOOL;
         V_BOOL(retv) = bool->val;
     }
@@ -80,7 +86,7 @@ static HRESULT Bool_valueOf(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, D
     return S_OK;
 }
 
-static HRESULT Bool_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT Bool_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -111,7 +117,7 @@ static const builtin_info_t Bool_info = {
     NULL
 };
 
-static HRESULT BoolConstr_value(script_ctx_t *ctx, DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+static HRESULT BoolConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     HRESULT hres;
