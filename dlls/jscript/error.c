@@ -39,7 +39,7 @@ static const WCHAR messageW[] = {'m','e','s','s','a','g','e',0};
 static const WCHAR numberW[] = {'n','u','m','b','e','r',0};
 static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
 
-static HRESULT Error_number(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT Error_number(DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     ErrorInstance *This = (ErrorInstance*)dispex;
@@ -57,7 +57,7 @@ static HRESULT Error_number(DispatchEx *dispex, LCID lcid, WORD flags,
     }
 }
 
-static HRESULT Error_description(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT Error_description(DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     ErrorInstance *This = (ErrorInstance*)dispex;
@@ -76,7 +76,7 @@ static HRESULT Error_description(DispatchEx *dispex, LCID lcid, WORD flags,
 }
 
 /* ECMA-262 3rd Edition    15.11.4.3 */
-static HRESULT Error_message(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT Error_message(DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     ErrorInstance *This = (ErrorInstance*)dispex;
@@ -95,7 +95,7 @@ static HRESULT Error_message(DispatchEx *dispex, LCID lcid, WORD flags,
 }
 
 /* ECMA-262 3rd Edition    15.11.4.4 */
-static HRESULT Error_toString(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT Error_toString(DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR str[] = {'[','o','b','j','e','c','t',' ','E','r','r','o','r',']',0};
@@ -112,7 +112,7 @@ static HRESULT Error_toString(DispatchEx *dispex, LCID lcid, WORD flags,
     return S_OK;
 }
 
-static HRESULT Error_value(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT Error_value(DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -278,7 +278,7 @@ static HRESULT error_constr(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     }
 }
 
-static HRESULT ErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT ErrorConstr_value(DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -286,7 +286,7 @@ static HRESULT ErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD flags,
             dispex->ctx->error_constr);
 }
 
-static HRESULT EvalErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT EvalErrorConstr_value(DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -294,7 +294,7 @@ static HRESULT EvalErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD flags,
             dispex->ctx->eval_error_constr);
 }
 
-static HRESULT RangeErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT RangeErrorConstr_value(DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -302,7 +302,7 @@ static HRESULT RangeErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD flags,
             dispex->ctx->range_error_constr);
 }
 
-static HRESULT ReferenceErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT ReferenceErrorConstr_value(DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -310,7 +310,7 @@ static HRESULT ReferenceErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD fl
             dispex->ctx->reference_error_constr);
 }
 
-static HRESULT RegExpErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT RegExpErrorConstr_value(DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -318,7 +318,7 @@ static HRESULT RegExpErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD flags
             dispex->ctx->regexp_error_constr);
 }
 
-static HRESULT SyntaxErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT SyntaxErrorConstr_value(DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -326,7 +326,7 @@ static HRESULT SyntaxErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD flags
             dispex->ctx->syntax_error_constr);
 }
 
-static HRESULT TypeErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT TypeErrorConstr_value(DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -334,7 +334,7 @@ static HRESULT TypeErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD flags,
             dispex->ctx->type_error_constr);
 }
 
-static HRESULT URIErrorConstr_value(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT URIErrorConstr_value(DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");

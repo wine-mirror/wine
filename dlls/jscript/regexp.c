@@ -3425,7 +3425,7 @@ HRESULT regexp_match(DispatchEx *dispex, const WCHAR *str, DWORD len, BOOL gflag
     return S_OK;
 }
 
-static HRESULT RegExp_source(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT RegExp_source(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -3448,28 +3448,28 @@ static HRESULT RegExp_source(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
     return S_OK;
 }
 
-static HRESULT RegExp_global(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT RegExp_global(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT RegExp_ignoreCase(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT RegExp_ignoreCase(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT RegExp_multiline(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT RegExp_multiline(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT RegExp_lastIndex(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT RegExp_lastIndex(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -3489,7 +3489,7 @@ static HRESULT RegExp_lastIndex(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
     return S_OK;
 }
 
-static HRESULT RegExp_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT RegExp_toString(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     FIXME("\n");
@@ -3497,7 +3497,7 @@ static HRESULT RegExp_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
 }
 
 static HRESULT create_match_array(script_ctx_t *ctx, BSTR input, const match_result_t *result,
-        const match_result_t *parens, DWORD parens_cnt, LCID lcid, jsexcept_t *ei, IDispatch **ret)
+        const match_result_t *parens, DWORD parens_cnt, jsexcept_t *ei, IDispatch **ret)
 {
     DispatchEx *array;
     VARIANT var;
@@ -3558,7 +3558,7 @@ static HRESULT create_match_array(script_ctx_t *ctx, BSTR input, const match_res
     return S_OK;
 }
 
-static HRESULT run_exec(DispatchEx *dispex, VARIANT *arg, LCID lcid, jsexcept_t *ei, BSTR *input,
+static HRESULT run_exec(DispatchEx *dispex, VARIANT *arg, jsexcept_t *ei, BSTR *input,
         match_result_t *match, match_result_t **parens, DWORD *parens_cnt, VARIANT_BOOL *ret)
 {
     RegExpInstance *regexp;
@@ -3609,7 +3609,7 @@ static HRESULT run_exec(DispatchEx *dispex, VARIANT *arg, LCID lcid, jsexcept_t 
     return S_OK;
 }
 
-static HRESULT RegExp_exec(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT RegExp_exec(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     match_result_t *parens = NULL, match;
@@ -3620,7 +3620,7 @@ static HRESULT RegExp_exec(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
 
     TRACE("\n");
 
-    hres = run_exec(dispex, arg_cnt(dp) ? get_arg(dp,0) : NULL, lcid, ei, &string, &match, &parens, &parens_cnt, &b);
+    hres = run_exec(dispex, arg_cnt(dp) ? get_arg(dp,0) : NULL, ei, &string, &match, &parens, &parens_cnt, &b);
     if(FAILED(hres))
         return hres;
 
@@ -3628,7 +3628,7 @@ static HRESULT RegExp_exec(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
         if(b) {
             IDispatch *ret;
 
-            hres = create_match_array(dispex->ctx, string, &match, parens, parens_cnt, lcid, ei, &ret);
+            hres = create_match_array(dispex->ctx, string, &match, parens, parens_cnt, ei, &ret);
             if(SUCCEEDED(hres)) {
                 V_VT(retv) = VT_DISPATCH;
                 V_DISPATCH(retv) = ret;
@@ -3643,7 +3643,7 @@ static HRESULT RegExp_exec(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
     return hres;
 }
 
-static HRESULT RegExp_test(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT RegExp_test(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     match_result_t match;
@@ -3652,7 +3652,7 @@ static HRESULT RegExp_test(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
 
     TRACE("\n");
 
-    hres = run_exec(dispex, arg_cnt(dp) ? get_arg(dp,0) : NULL, lcid, ei, NULL, &match, NULL, NULL, &b);
+    hres = run_exec(dispex, arg_cnt(dp) ? get_arg(dp,0) : NULL, ei, NULL, &match, NULL, NULL, &b);
     if(FAILED(hres))
         return hres;
 
@@ -3663,7 +3663,7 @@ static HRESULT RegExp_test(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
     return S_OK;
 }
 
-static HRESULT RegExp_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT RegExp_value(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -3828,7 +3828,7 @@ static HRESULT regexp_constructor(script_ctx_t *ctx, DISPPARAMS *dp, VARIANT *re
     return S_OK;
 }
 
-static HRESULT RegExpConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT RegExpConstr_value(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");

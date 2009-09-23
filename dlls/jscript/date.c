@@ -583,7 +583,7 @@ static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, 
 }
 
 /* ECMA-262 3rd Edition    15.9.1.2 */
-static HRESULT Date_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_toString(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     DateInstance *date;
@@ -604,7 +604,7 @@ static HRESULT Date_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
 }
 
 /* ECMA-262 3rd Edition    15.9.1.5 */
-static HRESULT Date_toLocaleString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_toLocaleString(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
@@ -633,16 +633,16 @@ static HRESULT Date_toLocaleString(DispatchEx *dispex, LCID lcid, WORD flags, DI
     st = create_systemtime(local_time(date->time, date));
 
     if(st.wYear<1601 || st.wYear>9999)
-        return Date_toString(dispex, lcid, flags, dp, retv, ei, caller);
+        return Date_toString(dispex, flags, dp, retv, ei, caller);
 
     if(retv) {
-        date_len = GetDateFormatW(lcid, DATE_LONGDATE, &st, NULL, NULL, 0);
-        time_len = GetTimeFormatW(lcid, 0, &st, NULL, NULL, 0);
+        date_len = GetDateFormatW(dispex->ctx->lcid, DATE_LONGDATE, &st, NULL, NULL, 0);
+        time_len = GetTimeFormatW(dispex->ctx->lcid, 0, &st, NULL, NULL, 0);
         date_str = SysAllocStringLen(NULL, date_len+time_len-1);
         if(!date_str)
             return E_OUTOFMEMORY;
-        GetDateFormatW(lcid, DATE_LONGDATE, &st, NULL, date_str, date_len);
-        GetTimeFormatW(lcid, 0, &st, NULL, &date_str[date_len], time_len);
+        GetDateFormatW(dispex->ctx->lcid, DATE_LONGDATE, &st, NULL, date_str, date_len);
+        GetTimeFormatW(dispex->ctx->lcid, 0, &st, NULL, &date_str[date_len], time_len);
         date_str[date_len-1] = ' ';
 
         V_VT(retv) = VT_BSTR;
@@ -651,7 +651,7 @@ static HRESULT Date_toLocaleString(DispatchEx *dispex, LCID lcid, WORD flags, DI
     return S_OK;
 }
 
-static HRESULT Date_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_valueOf(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -667,7 +667,7 @@ static HRESULT Date_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
 }
 
 /* ECMA-262 3rd Edition    15.9.5.42 */
-static HRESULT Date_toUTCString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_toUTCString(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
@@ -775,7 +775,7 @@ static HRESULT Date_toUTCString(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
 }
 
 /* ECMA-262 3rd Edition    15.9.5.3 */
-static HRESULT Date_toDateString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_toDateString(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
@@ -882,7 +882,7 @@ static HRESULT Date_toDateString(DispatchEx *dispex, LCID lcid, WORD flags, DISP
 }
 
 /* ECMA-262 3rd Edition    15.9.5.4 */
-static HRESULT Date_toTimeString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_toTimeString(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
@@ -944,7 +944,7 @@ static HRESULT Date_toTimeString(DispatchEx *dispex, LCID lcid, WORD flags, DISP
 }
 
 /* ECMA-262 3rd Edition    15.9.5.6 */
-static HRESULT Date_toLocaleDateString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_toLocaleDateString(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
@@ -973,14 +973,14 @@ static HRESULT Date_toLocaleDateString(DispatchEx *dispex, LCID lcid, WORD flags
     st = create_systemtime(local_time(date->time, date));
 
     if(st.wYear<1601 || st.wYear>9999)
-        return Date_toDateString(dispex, lcid, flags, dp, retv, ei, caller);
+        return Date_toDateString(dispex, flags, dp, retv, ei, caller);
 
     if(retv) {
-        len = GetDateFormatW(lcid, DATE_LONGDATE, &st, NULL, NULL, 0);
+        len = GetDateFormatW(dispex->ctx->lcid, DATE_LONGDATE, &st, NULL, NULL, 0);
         date_str = SysAllocStringLen(NULL, len);
         if(!date_str)
             return E_OUTOFMEMORY;
-        GetDateFormatW(lcid, DATE_LONGDATE, &st, NULL, date_str, len);
+        GetDateFormatW(dispex->ctx->lcid, DATE_LONGDATE, &st, NULL, date_str, len);
 
         V_VT(retv) = VT_BSTR;
         V_BSTR(retv) = date_str;
@@ -989,7 +989,7 @@ static HRESULT Date_toLocaleDateString(DispatchEx *dispex, LCID lcid, WORD flags
 }
 
 /* ECMA-262 3rd Edition    15.9.5.7 */
-static HRESULT Date_toLocaleTimeString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_toLocaleTimeString(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
@@ -1018,14 +1018,14 @@ static HRESULT Date_toLocaleTimeString(DispatchEx *dispex, LCID lcid, WORD flags
     st = create_systemtime(local_time(date->time, date));
 
     if(st.wYear<1601 || st.wYear>9999)
-        return Date_toTimeString(dispex, lcid, flags, dp, retv, ei, caller);
+        return Date_toTimeString(dispex, flags, dp, retv, ei, caller);
 
     if(retv) {
-        len = GetTimeFormatW(lcid, 0, &st, NULL, NULL, 0);
+        len = GetTimeFormatW(dispex->ctx->lcid, 0, &st, NULL, NULL, 0);
         date_str = SysAllocStringLen(NULL, len);
         if(!date_str)
             return E_OUTOFMEMORY;
-        GetTimeFormatW(lcid, 0, &st, NULL, date_str, len);
+        GetTimeFormatW(dispex->ctx->lcid, 0, &st, NULL, date_str, len);
 
         V_VT(retv) = VT_BSTR;
         V_BSTR(retv) = date_str;
@@ -1034,7 +1034,7 @@ static HRESULT Date_toLocaleTimeString(DispatchEx *dispex, LCID lcid, WORD flags
 }
 
 /* ECMA-262 3rd Edition    15.9.5.9 */
-static HRESULT Date_getTime(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getTime(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1050,7 +1050,7 @@ static HRESULT Date_getTime(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
 }
 
 /* ECMA-262 3rd Edition    15.9.5.10 */
-static HRESULT Date_getFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getFullYear(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1068,7 +1068,7 @@ static HRESULT Date_getFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
 }
 
 /* ECMA-262 3rd Edition    15.9.5.11 */
-static HRESULT Date_getUTCFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getUTCFullYear(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1084,7 +1084,7 @@ static HRESULT Date_getUTCFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DI
 }
 
 /* ECMA-262 3rd Edition    15.9.5.12 */
-static HRESULT Date_getMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getMonth(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1102,7 +1102,7 @@ static HRESULT Date_getMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
 }
 
 /* ECMA-262 3rd Edition    15.9.5.13 */
-static HRESULT Date_getUTCMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getUTCMonth(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1118,7 +1118,7 @@ static HRESULT Date_getUTCMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
 }
 
 /* ECMA-262 3rd Edition    15.9.5.14 */
-static HRESULT Date_getDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getDate(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1136,7 +1136,7 @@ static HRESULT Date_getDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
 }
 
 /* ECMA-262 3rd Edition    15.9.5.15 */
-static HRESULT Date_getUTCDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getUTCDate(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1152,7 +1152,7 @@ static HRESULT Date_getUTCDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
 }
 
 /* ECMA-262 3rd Edition    15.9.5.16 */
-static HRESULT Date_getDay(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getDay(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1170,7 +1170,7 @@ static HRESULT Date_getDay(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
 }
 
 /* ECMA-262 3rd Edition    15.9.5.17 */
-static HRESULT Date_getUTCDay(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getUTCDay(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1186,7 +1186,7 @@ static HRESULT Date_getUTCDay(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
 }
 
 /* ECMA-262 3rd Edition    15.9.5.18 */
-static HRESULT Date_getHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getHours(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1204,7 +1204,7 @@ static HRESULT Date_getHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
 }
 
 /* ECMA-262 3rd Edition    15.9.5.19 */
-static HRESULT Date_getUTCHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getUTCHours(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1220,7 +1220,7 @@ static HRESULT Date_getUTCHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
 }
 
 /* ECMA-262 3rd Edition    15.9.5.20 */
-static HRESULT Date_getMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getMinutes(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1238,7 +1238,7 @@ static HRESULT Date_getMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
 }
 
 /* ECMA-262 3rd Edition    15.9.5.21 */
-static HRESULT Date_getUTCMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getUTCMinutes(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1254,7 +1254,7 @@ static HRESULT Date_getUTCMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DIS
 }
 
 /* ECMA-262 3rd Edition    15.9.5.22 */
-static HRESULT Date_getSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getSeconds(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1272,7 +1272,7 @@ static HRESULT Date_getSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
 }
 
 /* ECMA-262 3rd Edition    15.9.5.23 */
-static HRESULT Date_getUTCSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getUTCSeconds(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1288,7 +1288,7 @@ static HRESULT Date_getUTCSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DIS
 }
 
 /* ECMA-262 3rd Edition    15.9.5.24 */
-static HRESULT Date_getMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getMilliseconds(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1306,7 +1306,7 @@ static HRESULT Date_getMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, D
 }
 
 /* ECMA-262 3rd Edition    15.9.5.25 */
-static HRESULT Date_getUTCMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getUTCMilliseconds(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1322,7 +1322,7 @@ static HRESULT Date_getUTCMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags
 }
 
 /* ECMA-262 3rd Edition    15.9.5.26 */
-static HRESULT Date_getTimezoneOffset(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getTimezoneOffset(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -1339,7 +1339,7 @@ static HRESULT Date_getTimezoneOffset(DispatchEx *dispex, LCID lcid, WORD flags,
 }
 
 /* ECMA-262 3rd Edition    15.9.5.27 */
-static HRESULT Date_setTime(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setTime(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1368,7 +1368,7 @@ static HRESULT Date_setTime(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
 }
 
 /* ECMA-262 3rd Edition    15.9.5.28 */
-static HRESULT Date_setMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setMilliseconds(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1401,7 +1401,7 @@ static HRESULT Date_setMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, D
 }
 
 /* ECMA-262 3rd Edition    15.9.5.29 */
-static HRESULT Date_setUTCMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setUTCMilliseconds(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1434,7 +1434,7 @@ static HRESULT Date_setUTCMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags
 }
 
 /* ECMA-262 3rd Edition    15.9.5.30 */
-static HRESULT Date_setSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setSeconds(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1477,7 +1477,7 @@ static HRESULT Date_setSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
 }
 
 /* ECMA-262 3rd Edition    15.9.5.31 */
-static HRESULT Date_setUTCSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setUTCSeconds(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1520,7 +1520,7 @@ static HRESULT Date_setUTCSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DIS
 }
 
 /* ECMA-262 3rd Edition    15.9.5.33 */
-static HRESULT Date_setMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setMinutes(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1571,7 +1571,7 @@ static HRESULT Date_setMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
 }
 
 /* ECMA-262 3rd Edition    15.9.5.34 */
-static HRESULT Date_setUTCMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setUTCMinutes(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1622,7 +1622,7 @@ static HRESULT Date_setUTCMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DIS
 }
 
 /* ECMA-262 3rd Edition    15.9.5.35 */
-static HRESULT Date_setHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setHours(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1680,7 +1680,7 @@ static HRESULT Date_setHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
 }
 
 /* ECMA-262 3rd Edition    15.9.5.36 */
-static HRESULT Date_setUTCHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setUTCHours(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1738,7 +1738,7 @@ static HRESULT Date_setUTCHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
 }
 
 /* ECMA-262 3rd Edition    15.9.5.36 */
-static HRESULT Date_setDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setDate(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1771,7 +1771,7 @@ static HRESULT Date_setDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
 }
 
 /* ECMA-262 3rd Edition    15.9.5.37 */
-static HRESULT Date_setUTCDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setUTCDate(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1804,7 +1804,7 @@ static HRESULT Date_setUTCDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
 }
 
 /* ECMA-262 3rd Edition    15.9.5.38 */
-static HRESULT Date_setMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setMonth(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1847,7 +1847,7 @@ static HRESULT Date_setMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
 }
 
 /* ECMA-262 3rd Edition    15.9.5.39 */
-static HRESULT Date_setUTCMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setUTCMonth(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1890,7 +1890,7 @@ static HRESULT Date_setUTCMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
 }
 
 /* ECMA-262 3rd Edition    15.9.5.40 */
-static HRESULT Date_setFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setFullYear(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1940,7 +1940,7 @@ static HRESULT Date_setFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
 }
 
 /* ECMA-262 3rd Edition    15.9.5.41 */
-static HRESULT Date_setUTCFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setUTCFullYear(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     VARIANT v;
@@ -1990,7 +1990,7 @@ static HRESULT Date_setUTCFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DI
 }
 
 /* ECMA-262 3rd Edition    B2.4 */
-static HRESULT Date_getYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_getYear(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     DateInstance *date;
@@ -2018,7 +2018,7 @@ static HRESULT Date_getYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     return S_OK;
 }
 
-static HRESULT Date_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_value(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     TRACE("\n");
@@ -2380,7 +2380,7 @@ static inline HRESULT date_parse(BSTR input, VARIANT *retv) {
     return S_OK;
 }
 
-static HRESULT DateConstr_parse(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT DateConstr_parse(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     BSTR parse_str;
@@ -2404,7 +2404,7 @@ static HRESULT DateConstr_parse(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
     return hres;
 }
 
-static HRESULT DateConstr_UTC(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT DateConstr_UTC(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     VARIANT year, month, vdate, hours, minutes, seconds, ms;
@@ -2495,7 +2495,7 @@ static HRESULT DateConstr_UTC(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
     return S_OK;
 }
 
-static HRESULT DateConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT DateConstr_value(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     DispatchEx *date;
@@ -2549,7 +2549,7 @@ static HRESULT DateConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
             VARIANT ret_date;
             DateInstance *di;
 
-            DateConstr_UTC(dispex, lcid, flags, dp, &ret_date, ei, sp);
+            DateConstr_UTC(dispex, flags, dp, &ret_date, ei, sp);
 
             hres = create_date(dispex->ctx, NULL, num_val(&ret_date), &date);
             if(FAILED(hres))

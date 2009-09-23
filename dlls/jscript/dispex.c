@@ -250,7 +250,7 @@ static HRESULT invoke_prop_func(DispatchEx *This, DispatchEx *jsthis, dispex_pro
             WARN("%s is not a constructor\n", debugstr_w(prop->name));
             return E_INVALIDARG;
         }
-        return prop->u.p->invoke(jsthis, This->ctx->lcid, flags, dp, retv, ei, caller);
+        return prop->u.p->invoke(jsthis, flags, dp, retv, ei, caller);
     case PROP_PROTREF:
         return invoke_prop_func(This->prototype, jsthis, This->prototype->props+prop->u.ref, flags, dp, retv, ei, caller);
     case PROP_VARIANT: {
@@ -304,7 +304,7 @@ static HRESULT prop_get(DispatchEx *This, dispex_prop_t *prop, DISPPARAMS *dp,
 
             hres = VariantCopy(retv, &prop->u.var);
         }else {
-            hres = prop->u.p->invoke(This, This->ctx->lcid, DISPATCH_PROPERTYGET, dp, retv, ei, caller);
+            hres = prop->u.p->invoke(This, DISPATCH_PROPERTYGET, dp, retv, ei, caller);
         }
         break;
     case PROP_PROTREF:
@@ -336,7 +336,7 @@ static HRESULT prop_put(DispatchEx *This, dispex_prop_t *prop, DISPPARAMS *dp,
     switch(prop->type) {
     case PROP_BUILTIN:
         if(!(prop->flags & PROPF_METHOD))
-            return prop->u.p->invoke(This, This->ctx->lcid, DISPATCH_PROPERTYPUT, dp, NULL, ei, caller);
+            return prop->u.p->invoke(This, DISPATCH_PROPERTYPUT, dp, NULL, ei, caller);
     case PROP_PROTREF:
         prop->type = PROP_VARIANT;
         prop->flags = PROPF_ENUM;
@@ -474,8 +474,8 @@ static HRESULT WINAPI DispatchEx_GetTypeInfoCount(IDispatchEx *iface, UINT *pcti
     return S_OK;
 }
 
-static HRESULT WINAPI DispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo,
-                                              LCID lcid, ITypeInfo **ppTInfo)
+static HRESULT WINAPI DispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LCID lcid,
+                                              ITypeInfo **ppTInfo)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
     FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
@@ -483,8 +483,8 @@ static HRESULT WINAPI DispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo,
 }
 
 static HRESULT WINAPI DispatchEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
-                                                LPOLESTR *rgszNames, UINT cNames,
-                                                LCID lcid, DISPID *rgDispId)
+                                                LPOLESTR *rgszNames, UINT cNames, LCID lcid,
+                                                DISPID *rgDispId)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
     UINT i;
@@ -503,7 +503,7 @@ static HRESULT WINAPI DispatchEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
 }
 
 static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
-                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                                        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
@@ -826,7 +826,7 @@ HRESULT jsdisp_get_id(DispatchEx *jsdisp, const WCHAR *name, DWORD flags, DISPID
 HRESULT jsdisp_call_value(DispatchEx *disp, WORD flags, DISPPARAMS *dp, VARIANT *retv,
         jsexcept_t *ei, IServiceProvider *caller)
 {
-    return disp->builtin_info->value_prop.invoke(disp, disp->ctx->lcid, flags, dp, retv, ei, caller);
+    return disp->builtin_info->value_prop.invoke(disp, flags, dp, retv, ei, caller);
 }
 
 HRESULT jsdisp_call(DispatchEx *disp, DISPID id, WORD flags, DISPPARAMS *dp, VARIANT *retv,

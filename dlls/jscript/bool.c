@@ -33,7 +33,7 @@ static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
 static const WCHAR valueOfW[] = {'v','a','l','u','e','O','f',0};
 
 /* ECMA-262 3rd Edition    15.6.4.2 */
-static HRESULT Bool_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Bool_toString(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     static const WCHAR trueW[] = {'t','r','u','e',0};
@@ -62,7 +62,7 @@ static HRESULT Bool_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
 }
 
 /* ECMA-262 3rd Edition    15.6.4.3 */
-static HRESULT Bool_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Bool_valueOf(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -80,7 +80,7 @@ static HRESULT Bool_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     return S_OK;
 }
 
-static HRESULT Bool_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Bool_value(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     TRACE("\n");
@@ -111,7 +111,7 @@ static const builtin_info_t Bool_info = {
     NULL
 };
 
-static HRESULT BoolConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT BoolConstr_value(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     HRESULT hres;
