@@ -2094,15 +2094,20 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetIndices(LPDIRECT3DDEVICE8 iface, I
 
     return rc;
 }
-static HRESULT WINAPI IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 iface, CONST DWORD* pFunction, DWORD* ppShader) {
+
+static HRESULT WINAPI IDirect3DDevice8Impl_CreatePixelShader(IDirect3DDevice8 *iface,
+        const DWORD *byte_code, DWORD *shader)
+{
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IDirect3DPixelShader8Impl *object;
+    DWORD shader_handle;
     DWORD handle;
     HRESULT hr;
 
-    TRACE("(%p) : pFunction(%p), ppShader(%p)\n", This, pFunction, ppShader);
+    TRACE("iface %p, byte_code %p, shader %p.\n", iface, byte_code, shader);
 
-    if (NULL == ppShader) {
+    if (!shader)
+    {
         TRACE("(%p) Invalid call\n", This);
         return D3DERR_INVALIDCALL;
     }
@@ -2110,39 +2115,38 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 i
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
-        ERR("Failed to allocate memmory.\n");
+        ERR("Failed to allocate pixel shader memmory.\n");
         return E_OUTOFMEMORY;
     }
 
-    object->ref    = 1;
-    object->lpVtbl = &Direct3DPixelShader8_Vtbl;
-
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_CreatePixelShader(This->WineD3DDevice, pFunction,
-            NULL, &object->wineD3DPixelShader, (IUnknown *)object);
+    handle = d3d8_allocate_handle(&This->handle_table, object, D3D8_HANDLE_PS);
+    wined3d_mutex_unlock();
+    if (handle == D3D8_INVALID_HANDLE)
+    {
+        ERR("Failed to allocate pixel shader handle.\n");
+        HeapFree(GetProcessHeap(), 0, object);
+        return E_OUTOFMEMORY;
+    }
+
+    shader_handle = handle + VS_HIGHESTFIXEDFXF + 1;
+
+    hr = pixelshader_init(object, This, byte_code, shader_handle);
     if (FAILED(hr))
     {
+        WARN("Failed to initialize pixel shader, hr %#x.\n", hr);
+        wined3d_mutex_lock();
+        d3d8_free_handle(&This->handle_table, handle, D3D8_HANDLE_PS);
         wined3d_mutex_unlock();
-        FIXME("(%p) call to IWineD3DDevice_CreatePixelShader failed\n", This);
-        HeapFree(GetProcessHeap(), 0 , object);
-        *ppShader = 0;
+        HeapFree(GetProcessHeap(), 0, object);
+        *shader = 0;
         return hr;
     }
 
-    handle = d3d8_allocate_handle(&This->handle_table, object, D3D8_HANDLE_PS);
-    wined3d_mutex_unlock();
+    TRACE("Created pixel shader %p (handle %#x).\n", object, shader_handle);
+    *shader = shader_handle;
 
-    if (handle == D3D8_INVALID_HANDLE)
-    {
-        ERR("Failed to allocate shader handle\n");
-        IDirect3DVertexShader8_Release((IUnknown *)object);
-        return E_OUTOFMEMORY;
-    }
-
-    *ppShader = object->handle = handle + VS_HIGHESTFIXEDFXF + 1;
-    TRACE("(%p) : returning %p (handle %#x)\n", This, object, *ppShader);
-
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_SetPixelShader(LPDIRECT3DDEVICE8 iface, DWORD pShader) {

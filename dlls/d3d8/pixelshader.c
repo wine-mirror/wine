@@ -65,10 +65,32 @@ static ULONG WINAPI IDirect3DPixelShader8Impl_Release(IDirect3DPixelShader8 * if
     return ref;
 }
 
-const IDirect3DPixelShader8Vtbl Direct3DPixelShader8_Vtbl =
+static const IDirect3DPixelShader8Vtbl Direct3DPixelShader8_Vtbl =
 {
     /* IUnknown */
     IDirect3DPixelShader8Impl_QueryInterface,
     IDirect3DPixelShader8Impl_AddRef,
     IDirect3DPixelShader8Impl_Release,
 };
+
+HRESULT pixelshader_init(IDirect3DPixelShader8Impl *shader, IDirect3DDevice8Impl *device,
+        const DWORD *byte_code, DWORD shader_handle)
+{
+    HRESULT hr;
+
+    shader->ref = 1;
+    shader->lpVtbl = &Direct3DPixelShader8_Vtbl;
+    shader->handle = shader_handle;
+
+    wined3d_mutex_lock();
+    hr = IWineD3DDevice_CreatePixelShader(device->WineD3DDevice, byte_code,
+            NULL, &shader->wineD3DPixelShader, (IUnknown *)shader);
+    wined3d_mutex_unlock();
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d pixel shader, hr %#x.\n", hr);
+        return hr;
+    }
+
+    return D3D_OK;
+}

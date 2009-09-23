@@ -603,17 +603,6 @@ HRESULT vertexshader_init(IDirect3DVertexShader8Impl *shader, IDirect3DDevice8Im
 
 #define D3D8_MAX_VERTEX_SHADER_CONSTANTF 256
 
-
-/* ------------------------ */
-/* IDirect3DPixelShaderImpl */
-/* ------------------------ */
-
-
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DPixelShader8Vtbl Direct3DPixelShader8_Vtbl DECLSPEC_HIDDEN;
-
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure
  */
@@ -624,6 +613,9 @@ typedef struct IDirect3DPixelShader8Impl {
     DWORD                            handle;
     IWineD3DPixelShader             *wineD3DPixelShader;
 } IDirect3DPixelShader8Impl;
+
+HRESULT pixelshader_init(IDirect3DPixelShader8Impl *shader, IDirect3DDevice8Impl *device,
+        const DWORD *byte_code, DWORD shader_handle) DECLSPEC_HIDDEN;
 
 /**
  * Internals functions
