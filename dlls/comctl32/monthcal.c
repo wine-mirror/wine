@@ -371,8 +371,7 @@ static void paint_button (const MONTHCAL_INFO *infoPtr, HDC hdc, BOOL btnNext,
             stateNum += 1;
         else
         {
-            DWORD dwStyle = GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE);
-            if (dwStyle & WS_DISABLED) stateNum += 2;
+            if (infoPtr->dwStyle & WS_DISABLED) stateNum += 2;
         }
         DrawThemeBackground (theme, hdc, SBP_ARROWBTN, states[stateNum], r, NULL);
     }
@@ -383,8 +382,7 @@ static void paint_button (const MONTHCAL_INFO *infoPtr, HDC hdc, BOOL btnNext,
             style |= DFCS_PUSHED;
         else
         {
-            DWORD dwStyle = GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE);
-            if (dwStyle & WS_DISABLED) style |= DFCS_INACTIVE;
+            if (infoPtr->dwStyle & WS_DISABLED) style |= DFCS_INACTIVE;
         }
         
         DrawFrameControl(hdc, r, DFC_SCROLL, style);
@@ -415,7 +413,6 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
   WCHAR buf1[20];
   WCHAR buf2[32];
   COLORREF oldTextColor, oldBkColor;
-  DWORD dwStyle = GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE);
   RECT rcTemp;
   RECT rcDay; /* used in MONTHCAL_CalcDayRect() */
   SYSTEMTIME localtime;
@@ -560,7 +557,7 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
       if((infoPtr->currentMonth==infoPtr->todaysDate.wMonth) &&
           (day==infoPtr->todaysDate.wDay) &&
 	  (infoPtr->currentYear == infoPtr->todaysDate.wYear)) {
-        if(!(dwStyle & MCS_NOTODAYCIRCLE))
+        if(!(infoPtr->dwStyle & MCS_NOTODAYCIRCLE))
 	  MONTHCAL_CircleDay(infoPtr, hdc, day, infoPtr->currentMonth);
       }
     }
@@ -582,7 +579,7 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
       if((infoPtr->currentMonth==infoPtr->todaysDate.wMonth) &&
           (day==infoPtr->todaysDate.wDay) &&
           (infoPtr->currentYear == infoPtr->todaysDate.wYear))
-        if(!(dwStyle & MCS_NOTODAYCIRCLE))
+        if(!(infoPtr->dwStyle & MCS_NOTODAYCIRCLE))
 	  MONTHCAL_CircleDay(infoPtr, hdc, day, infoPtr->currentMonth);
     }
     mask<<=1;
@@ -623,8 +620,8 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
 /* draw `today' date if style allows it, and draw a circle before today's
  * date if necessary */
 
-  if(!(dwStyle & MCS_NOTODAY))  {
-    if(!(dwStyle & MCS_NOTODAYCIRCLE))  {
+  if(!(infoPtr->dwStyle & MCS_NOTODAY))  {
+    if(!(infoPtr->dwStyle & MCS_NOTODAYCIRCLE))  {
       /*day is the number of days from nextmonth we put on the calendar */
       MONTHCAL_CircleDay(infoPtr, hdc,
 			 day+MONTHCAL_MonthLength(infoPtr->currentMonth,infoPtr->currentYear),
@@ -650,7 +647,7 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
   }
 
 /*eventually draw week numbers*/
-  if(dwStyle & MCS_WEEKNUMBERS)  {
+  if(infoPtr->dwStyle & MCS_WEEKNUMBERS)  {
     /* display weeknumbers*/
     int mindays;
 
@@ -747,7 +744,7 @@ MONTHCAL_GetMinReqRect(const MONTHCAL_INFO *infoPtr, LPRECT lpRect)
   lpRect->top = infoPtr->title.top;
   lpRect->right = infoPtr->title.right;
   lpRect->bottom = infoPtr->todayrect.bottom;
-  AdjustWindowRect(lpRect, GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE), FALSE);
+  AdjustWindowRect(lpRect, infoPtr->dwStyle, FALSE);
 
   TRACE("%s\n", wine_dbgstr_rect(lpRect));
 
