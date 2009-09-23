@@ -1719,9 +1719,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_ProcessVertices(LPDIRECT3DDEVICE8 ifa
 static HRESULT IDirect3DDevice8Impl_CreateVertexDeclaration(IDirect3DDevice8 *iface, CONST DWORD *declaration, IDirect3DVertexDeclaration8 **decl_ptr) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IDirect3DVertexDeclaration8Impl *object;
-    WINED3DVERTEXELEMENT *wined3d_elements;
-    UINT wined3d_element_count;
-    HRESULT hr = D3D_OK;
+    HRESULT hr;
 
     TRACE("(%p) : declaration %p\n", This, declaration);
 
@@ -1732,38 +1730,18 @@ static HRESULT IDirect3DDevice8Impl_CreateVertexDeclaration(IDirect3DDevice8 *if
         return D3DERR_OUTOFVIDEOMEMORY;
     }
 
-    object->ref_count = 1;
-    object->lpVtbl = &Direct3DVertexDeclaration8_Vtbl;
-
-    wined3d_element_count = convert_to_wined3d_declaration(declaration, &object->elements_size, &wined3d_elements);
-    object->elements = HeapAlloc(GetProcessHeap(), 0, object->elements_size);
-    if (!object->elements) {
-        ERR("Memory allocation failed\n");
-        HeapFree(GetProcessHeap(), 0, wined3d_elements);
+    hr = vertexdeclaration_init(object, This, declaration);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize vertex declaration, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        *decl_ptr = NULL;
-        return D3DERR_OUTOFVIDEOMEMORY;
+        return hr;
     }
 
-    CopyMemory(object->elements, declaration, object->elements_size);
+    TRACE("Created vertex declaration %p.\n", object);
+    *decl_ptr = (IDirect3DVertexDeclaration8 *)object;
 
-    wined3d_mutex_lock();
-    hr = IWineD3DDevice_CreateVertexDeclaration(This->WineD3DDevice, &object->wined3d_vertex_declaration,
-            (IUnknown *)object, wined3d_elements, wined3d_element_count);
-    wined3d_mutex_unlock();
-
-    HeapFree(GetProcessHeap(), 0, wined3d_elements);
-
-    if (FAILED(hr)) {
-        ERR("(%p) : IWineD3DDevice_CreateVertexDeclaration call failed\n", This);
-        HeapFree(GetProcessHeap(), 0, object->elements);
-        HeapFree(GetProcessHeap(), 0, object);
-    } else {
-        *decl_ptr = (IDirect3DVertexDeclaration8 *)object;
-        TRACE("(%p) : Created vertex declaration %p\n", This, object);
-    }
-
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 iface, CONST DWORD* pDeclaration, CONST DWORD* pFunction, DWORD* ppShader, DWORD Usage) {

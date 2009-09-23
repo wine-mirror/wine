@@ -358,3 +358,39 @@ const IDirect3DVertexDeclaration8Vtbl Direct3DVertexDeclaration8_Vtbl =
     IDirect3DVertexDeclaration8Impl_AddRef,
     IDirect3DVertexDeclaration8Impl_Release
 };
+
+HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration8Impl *declaration,
+        IDirect3DDevice8Impl *device, const DWORD *elements)
+{
+    WINED3DVERTEXELEMENT *wined3d_elements;
+    UINT wined3d_element_count;
+    HRESULT hr;
+
+    declaration->lpVtbl = &Direct3DVertexDeclaration8_Vtbl;
+    declaration->ref_count = 1;
+
+    wined3d_element_count = convert_to_wined3d_declaration(elements, &declaration->elements_size, &wined3d_elements);
+    declaration->elements = HeapAlloc(GetProcessHeap(), 0, declaration->elements_size);
+    if (!declaration->elements)
+    {
+        ERR("Failed to allocate vertex declaration elements memory.\n");
+        HeapFree(GetProcessHeap(), 0, wined3d_elements);
+        return E_OUTOFMEMORY;
+    }
+
+    memcpy(declaration->elements, elements, declaration->elements_size);
+
+    wined3d_mutex_lock();
+    hr = IWineD3DDevice_CreateVertexDeclaration(device->WineD3DDevice, &declaration->wined3d_vertex_declaration,
+            (IUnknown *)declaration, wined3d_elements, wined3d_element_count);
+    wined3d_mutex_unlock();
+    HeapFree(GetProcessHeap(), 0, wined3d_elements);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d vertex declaration, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, declaration->elements);
+        return hr;
+    }
+
+    return D3D_OK;
+}
