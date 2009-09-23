@@ -45,7 +45,9 @@ static void *libpng_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(png_create_read_struct);
 MAKE_FUNCPTR(png_create_info_struct);
+MAKE_FUNCPTR(png_create_write_struct);
 MAKE_FUNCPTR(png_destroy_read_struct);
+MAKE_FUNCPTR(png_destroy_write_struct);
 MAKE_FUNCPTR(png_error);
 MAKE_FUNCPTR(png_get_bit_depth);
 MAKE_FUNCPTR(png_get_color_type);
@@ -61,6 +63,7 @@ MAKE_FUNCPTR(png_set_gray_to_rgb);
 MAKE_FUNCPTR(png_set_read_fn);
 MAKE_FUNCPTR(png_set_strip_16);
 MAKE_FUNCPTR(png_set_tRNS_to_alpha);
+MAKE_FUNCPTR(png_set_write_fn);
 MAKE_FUNCPTR(png_read_end);
 MAKE_FUNCPTR(png_read_image);
 MAKE_FUNCPTR(png_read_info);
@@ -77,7 +80,9 @@ static void *load_libpng(void)
     }
         LOAD_FUNCPTR(png_create_read_struct);
         LOAD_FUNCPTR(png_create_info_struct);
+        LOAD_FUNCPTR(png_create_write_struct);
         LOAD_FUNCPTR(png_destroy_read_struct);
+        LOAD_FUNCPTR(png_destroy_write_struct);
         LOAD_FUNCPTR(png_error);
         LOAD_FUNCPTR(png_get_bit_depth);
         LOAD_FUNCPTR(png_get_color_type);
@@ -93,6 +98,7 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_set_read_fn);
         LOAD_FUNCPTR(png_set_strip_16);
         LOAD_FUNCPTR(png_set_tRNS_to_alpha);
+        LOAD_FUNCPTR(png_set_write_fn);
         LOAD_FUNCPTR(png_read_end);
         LOAD_FUNCPTR(png_read_image);
         LOAD_FUNCPTR(png_read_info);
@@ -662,6 +668,9 @@ HRESULT PngDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 typedef struct PngEncoder {
     const IWICBitmapEncoderVtbl *lpVtbl;
     LONG ref;
+    IStream *stream;
+    png_structp png_ptr;
+    png_infop info_ptr;
 } PngEncoder;
 
 static HRESULT WINAPI PngEncoder_QueryInterface(IWICBitmapEncoder *iface, REFIID iid,
@@ -706,17 +715,73 @@ static ULONG WINAPI PngEncoder_Release(IWICBitmapEncoder *iface)
 
     if (ref == 0)
     {
+        if (This->png_ptr)
+            ppng_destroy_write_struct(&This->png_ptr, &This->info_ptr);
+        if (This->stream)
+            IStream_Release(This->stream);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
     return ref;
 }
 
+static void user_write_data(png_structp png_ptr, png_bytep data, png_size_t length)
+{
+    PngEncoder *This = ppng_get_io_ptr(png_ptr);
+    HRESULT hr;
+    ULONG byteswritten;
+
+    hr = IStream_Write(This->stream, data, length, &byteswritten);
+    if (FAILED(hr) || byteswritten != length)
+    {
+        ppng_error(png_ptr, "failed writing data");
+    }
+}
+
+static void user_flush(png_structp png_ptr)
+{
+}
+
 static HRESULT WINAPI PngEncoder_Initialize(IWICBitmapEncoder *iface,
     IStream *pIStream, WICBitmapEncoderCacheOption cacheOption)
 {
-    FIXME("(%p,%p,%u): stub\n", iface, pIStream, cacheOption);
-    return E_NOTIMPL;
+    PngEncoder *This = (PngEncoder*)iface;
+
+    TRACE("(%p,%p,%u)\n", iface, pIStream, cacheOption);
+
+    if (This->png_ptr)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    /* initialize libpng */
+    This->png_ptr = ppng_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!This->png_ptr)
+        return E_FAIL;
+
+    This->info_ptr = ppng_create_info_struct(This->png_ptr);
+    if (!This->info_ptr)
+    {
+        ppng_destroy_write_struct(&This->png_ptr, (png_infopp)NULL);
+        This->png_ptr = NULL;
+        return E_FAIL;
+    }
+
+    IStream_AddRef(pIStream);
+    This->stream = pIStream;
+
+    /* set up setjmp/longjmp error handling */
+    if (setjmp(png_jmpbuf(This->png_ptr)))
+    {
+        ppng_destroy_write_struct(&This->png_ptr, &This->info_ptr);
+        This->png_ptr = NULL;
+        IStream_Release(This->stream);
+        This->stream = NULL;
+        return E_FAIL;
+    }
+
+    /* set up custom i/o handling */
+    ppng_set_write_fn(This->png_ptr, This, user_write_data, user_flush);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PngEncoder_GetContainerFormat(IWICBitmapEncoder *iface,
@@ -816,6 +881,9 @@ HRESULT PngEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 
     This->lpVtbl = &PngEncoder_Vtbl;
     This->ref = 1;
+    This->png_ptr = NULL;
+    This->info_ptr = NULL;
+    This->stream = NULL;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
