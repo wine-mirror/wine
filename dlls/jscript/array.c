@@ -51,7 +51,7 @@ static HRESULT get_jsdisp_length(DispatchEx *obj, LCID lcid, jsexcept_t *ei, DWO
     VARIANT var;
     HRESULT hres;
 
-    hres = jsdisp_propget_name(obj, lengthW, lcid, &var, ei, NULL/*FIXME*/);
+    hres = jsdisp_propget_name(obj, lengthW, &var, ei, NULL/*FIXME*/);
     if(FAILED(hres))
         return hres;
 
@@ -136,7 +136,7 @@ static HRESULT concat_array(DispatchEx *array, ArrayInstance *obj, DWORD *len, L
     HRESULT hres;
 
     for(i=0; i < obj->length; i++) {
-        hres = jsdisp_propget_idx(&obj->dispex, i, lcid, &var, ei, caller);
+        hres = jsdisp_propget_idx(&obj->dispex, i, &var, ei, caller);
         if(hres == DISP_E_UNKNOWNNAME)
             continue;
         if(FAILED(hres))
@@ -237,7 +237,7 @@ static HRESULT array_join(DispatchEx *array, LCID lcid, DWORD length, const WCHA
         return E_OUTOFMEMORY;
 
     for(i=0; i < length; i++) {
-        hres = jsdisp_propget_idx(array, i, lcid, &var, ei, caller);
+        hres = jsdisp_propget_idx(array, i, &var, ei, caller);
         if(FAILED(hres))
             break;
 
@@ -374,7 +374,7 @@ static HRESULT Array_pop(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *
     sprintfW(buf, formatW, --length);
     hres = jsdisp_get_id(dispex, buf, 0, &id);
     if(SUCCEEDED(hres)) {
-        hres = jsdisp_propget(dispex, id, lcid, &val, ei, caller);
+        hres = jsdisp_propget(dispex, id, &val, ei, caller);
         if(FAILED(hres))
             return hres;
 
@@ -476,14 +476,14 @@ static HRESULT Array_shift(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
         return S_OK;
     }
 
-    hres = jsdisp_propget_idx(dispex, 0, lcid, &ret, ei, caller);
+    hres = jsdisp_propget_idx(dispex, 0, &ret, ei, caller);
     if(hres == DISP_E_UNKNOWNNAME) {
         V_VT(&ret) = VT_EMPTY;
         hres = S_OK;
     }
 
     for(i=1; SUCCEEDED(hres) && i<length; i++) {
-        hres = jsdisp_propget_idx(dispex, i, lcid, &v, ei, caller);
+        hres = jsdisp_propget_idx(dispex, i, &v, ei, caller);
         if(hres == DISP_E_UNKNOWNNAME)
             hres = jsdisp_delete_idx(dispex, i-1);
         else if(SUCCEEDED(hres))
@@ -562,7 +562,7 @@ static HRESULT Array_slice(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
         return hres;
 
     for(idx=start; idx<end; idx++) {
-        hres = jsdisp_propget_idx(dispex, idx, lcid, &v, ei, sp);
+        hres = jsdisp_propget_idx(dispex, idx, &v, ei, sp);
         if(hres == DISP_E_UNKNOWNNAME)
             continue;
 
@@ -696,7 +696,7 @@ static HRESULT Array_sort(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS 
     vtab = heap_alloc_zero(length * sizeof(VARIANT));
     if(vtab) {
         for(i=0; i<length; i++) {
-            hres = jsdisp_propget_idx(dispex, i, lcid, vtab+i, ei, caller);
+            hres = jsdisp_propget_idx(dispex, i, vtab+i, ei, caller);
             if(FAILED(hres) && hres != DISP_E_UNKNOWNNAME) {
                 WARN("Could not get elem %d: %08x\n", i, hres);
                 break;
@@ -853,7 +853,7 @@ static HRESULT Array_splice(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
             return hres;
 
         for(i=0; SUCCEEDED(hres) && i < delete_cnt; i++) {
-            hres = jsdisp_propget_idx(dispex, start+i, lcid, &v, ei, caller);
+            hres = jsdisp_propget_idx(dispex, start+i, &v, ei, caller);
             if(hres == DISP_E_UNKNOWNNAME)
                 hres = S_OK;
             else if(SUCCEEDED(hres))
@@ -870,7 +870,7 @@ static HRESULT Array_splice(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
 
     if(add_args < delete_cnt) {
         for(i = start; SUCCEEDED(hres) && i < length-delete_cnt; i++) {
-            hres = jsdisp_propget_idx(dispex, i+delete_cnt, lcid, &v, ei, caller);
+            hres = jsdisp_propget_idx(dispex, i+delete_cnt, &v, ei, caller);
             if(hres == DISP_E_UNKNOWNNAME)
                 hres = jsdisp_delete_idx(dispex, i+add_args);
             else if(SUCCEEDED(hres))
@@ -881,7 +881,7 @@ static HRESULT Array_splice(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
             hres = jsdisp_delete_idx(dispex, i-1);
     }else if(add_args > delete_cnt) {
         for(i=length-delete_cnt; SUCCEEDED(hres) && i != start; i--) {
-            hres = jsdisp_propget_idx(dispex, i+delete_cnt-1, lcid, &v, ei, caller);
+            hres = jsdisp_propget_idx(dispex, i+delete_cnt-1, &v, ei, caller);
             if(hres == DISP_E_UNKNOWNNAME)
                 hres = jsdisp_delete_idx(dispex, i+add_args-1);
             else if(SUCCEEDED(hres))
@@ -968,7 +968,7 @@ static HRESULT Array_unshift(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
 
         hres = jsdisp_get_id(dispex, str, 0, &id);
         if(SUCCEEDED(hres)) {
-            hres = jsdisp_propget(dispex, id, lcid, &var, ei, caller);
+            hres = jsdisp_propget(dispex, id, &var, ei, caller);
             if(FAILED(hres))
                 return hres;
 

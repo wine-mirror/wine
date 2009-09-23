@@ -374,7 +374,7 @@ static HRESULT array_to_args(DispatchEx *arg_array, LCID lcid, jsexcept_t *ei, I
     DWORD length, i;
     HRESULT hres;
 
-    hres = jsdisp_propget_name(arg_array, lengthW, lcid, &var, ei, NULL/*FIXME*/);
+    hres = jsdisp_propget_name(arg_array, lengthW, &var, ei, NULL/*FIXME*/);
     if(FAILED(hres))
         return hres;
 
@@ -388,7 +388,7 @@ static HRESULT array_to_args(DispatchEx *arg_array, LCID lcid, jsexcept_t *ei, I
         return E_OUTOFMEMORY;
 
     for(i=0; i<length; i++) {
-        hres = jsdisp_propget_idx(arg_array, i, lcid, argv+i, ei, caller);
+        hres = jsdisp_propget_idx(arg_array, i, argv+i, ei, caller);
         if(FAILED(hres)) {
             while(i--)
                 VariantClear(argv+i);

@@ -209,7 +209,7 @@ HRESULT to_primitive(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret
         jsdisp = iface_to_jsdisp((IUnknown*)V_DISPATCH(v));
         if(!jsdisp) {
             V_VT(ret) = VT_EMPTY;
-            return disp_propget(V_DISPATCH(v), DISPID_VALUE, ctx->lcid, ret, ei, NULL /*FIXME*/);
+            return disp_propget(ctx, V_DISPATCH(v), DISPID_VALUE, ret, ei, NULL /*FIXME*/);
         }
 
         if(hint == NO_HINT)

@@ -284,7 +284,7 @@ static HRESULT invoke_prop_func(DispatchEx *This, DispatchEx *jsthis, dispex_pro
     return E_FAIL;
 }
 
-static HRESULT prop_get(DispatchEx *This, dispex_prop_t *prop, LCID lcid, DISPPARAMS *dp,
+static HRESULT prop_get(DispatchEx *This, dispex_prop_t *prop, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     HRESULT hres;
@@ -304,11 +304,11 @@ static HRESULT prop_get(DispatchEx *This, dispex_prop_t *prop, LCID lcid, DISPPA
 
             hres = VariantCopy(retv, &prop->u.var);
         }else {
-            hres = prop->u.p->invoke(This, lcid, DISPATCH_PROPERTYGET, dp, retv, ei, caller);
+            hres = prop->u.p->invoke(This, This->ctx->lcid, DISPATCH_PROPERTYGET, dp, retv, ei, caller);
         }
         break;
     case PROP_PROTREF:
-        hres = prop_get(This->prototype, This->prototype->props+prop->u.ref, lcid, dp, retv, ei, caller);
+        hres = prop_get(This->prototype, This->prototype->props+prop->u.ref, dp, retv, ei, caller);
         break;
     case PROP_VARIANT:
         hres = VariantCopy(retv, &prop->u.var);
@@ -556,7 +556,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         hres = invoke_prop_func(This, This, prop, wFlags, pdp, pvarRes, &jsexcept, pspCaller);
         break;
     case DISPATCH_PROPERTYGET:
-        hres = prop_get(This, prop, lcid, pdp, pvarRes, &jsexcept, pspCaller);
+        hres = prop_get(This, prop, pdp, pvarRes, &jsexcept, pspCaller);
         break;
     case DISPATCH_PROPERTYPUT:
         hres = prop_put(This, prop, lcid, pdp, &jsexcept, pspCaller);
@@ -775,7 +775,7 @@ HRESULT init_dispex_from_constr(DispatchEx *dispex, script_ctx_t *ctx, const bui
 
         V_VT(&var) = VT_EMPTY;
         memset(&jsexcept, 0, sizeof(jsexcept));
-        hres = prop_get(constr, prop, ctx->lcid, NULL, &var, &jsexcept, NULL/*FIXME*/);
+        hres = prop_get(constr, prop, NULL, &var, &jsexcept, NULL/*FIXME*/);
         if(FAILED(hres)) {
             ERR("Could not get prototype\n");
             return hres;
@@ -959,8 +959,7 @@ HRESULT disp_propput(IDispatch *disp, DISPID id, LCID lcid, VARIANT *val, jsexce
     return hres;
 }
 
-HRESULT jsdisp_propget_name(DispatchEx *obj, const WCHAR *name, LCID lcid, VARIANT *var,
-        jsexcept_t *ei, IServiceProvider *caller)
+HRESULT jsdisp_propget_name(DispatchEx *obj, const WCHAR *name, VARIANT *var, jsexcept_t *ei, IServiceProvider *caller)
 {
     DISPPARAMS dp = {NULL, NULL, 0, 0};
     dispex_prop_t *prop;
@@ -974,21 +973,20 @@ HRESULT jsdisp_propget_name(DispatchEx *obj, const WCHAR *name, LCID lcid, VARIA
     if(!prop)
         return S_OK;
 
-    return prop_get(obj, prop, lcid, &dp, var, ei, caller);
+    return prop_get(obj, prop, &dp, var, ei, caller);
 }
 
-HRESULT jsdisp_propget_idx(DispatchEx *obj, DWORD idx, LCID lcid, VARIANT *var, jsexcept_t *ei, IServiceProvider *caller)
+HRESULT jsdisp_propget_idx(DispatchEx *obj, DWORD idx, VARIANT *var, jsexcept_t *ei, IServiceProvider *caller)
 {
     WCHAR buf[12];
 
     static const WCHAR formatW[] = {'%','d',0};
 
     sprintfW(buf, formatW, idx);
-    return jsdisp_propget_name(obj, buf, lcid, var, ei, caller);
+    return jsdisp_propget_name(obj, buf, var, ei, caller);
 }
 
-HRESULT jsdisp_propget(DispatchEx *jsdisp, DISPID id, LCID lcid, VARIANT *val, jsexcept_t *ei,
-        IServiceProvider *caller)
+HRESULT jsdisp_propget(DispatchEx *jsdisp, DISPID id, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
 {
     DISPPARAMS dp  = {NULL,NULL,0,0};
     dispex_prop_t *prop;
@@ -998,10 +996,10 @@ HRESULT jsdisp_propget(DispatchEx *jsdisp, DISPID id, LCID lcid, VARIANT *val, j
         return DISP_E_MEMBERNOTFOUND;
 
     V_VT(val) = VT_EMPTY;
-    return prop_get(jsdisp, prop, lcid, &dp, val, ei, caller);
+    return prop_get(jsdisp, prop, &dp, val, ei, caller);
 }
 
-HRESULT disp_propget(IDispatch *disp, DISPID id, LCID lcid, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
+HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
 {
     DISPPARAMS dp  = {NULL,NULL,0,0};
     IDispatchEx *dispex;
@@ -1010,7 +1008,7 @@ HRESULT disp_propget(IDispatch *disp, DISPID id, LCID lcid, VARIANT *val, jsexce
 
     jsdisp = iface_to_jsdisp((IUnknown*)disp);
     if(jsdisp) {
-        hres = jsdisp_propget(jsdisp, id, lcid, val, ei, caller);
+        hres = jsdisp_propget(jsdisp, id, val, ei, caller);
         jsdisp_release(jsdisp);
         return hres;
     }
@@ -1020,10 +1018,10 @@ HRESULT disp_propget(IDispatch *disp, DISPID id, LCID lcid, VARIANT *val, jsexce
         ULONG err = 0;
 
         TRACE("using IDispatch\n");
-        return IDispatch_Invoke(disp, id, &IID_NULL, lcid, INVOKE_PROPERTYGET, &dp, val, &ei->ei, &err);
+        return IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, INVOKE_PROPERTYGET, &dp, val, &ei->ei, &err);
     }
 
-    hres = IDispatchEx_InvokeEx(dispex, id, lcid, INVOKE_PROPERTYGET, &dp, val, &ei->ei, caller);
+    hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, INVOKE_PROPERTYGET, &dp, val, &ei->ei, caller);
     IDispatchEx_Release(dispex);
 
     return hres;

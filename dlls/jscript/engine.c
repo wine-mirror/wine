@@ -77,7 +77,7 @@ static HRESULT exprval_value(script_ctx_t *ctx, exprval_t *val, jsexcept_t *ei, 
             return E_FAIL;
         }
 
-        return disp_propget(val->u.idref.disp, val->u.idref.id, ctx->lcid, ret, ei, NULL/*FIXME*/);
+        return disp_propget(ctx, val->u.idref.disp, val->u.idref.id, ret, ei, NULL/*FIXME*/);
     case EXPRVAL_NAMEREF:
         break;
     case EXPRVAL_INVALID:
@@ -1326,7 +1326,7 @@ HRESULT function_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD fla
     TRACE("\n");
 
     if(expr->identifier) {
-        hres = jsdisp_propget_name(ctx->var_disp, expr->identifier, ctx->parser->script->lcid, &var, ei, NULL/*FIXME*/);
+        hres = jsdisp_propget_name(ctx->var_disp, expr->identifier, &var, ei, NULL/*FIXME*/);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1989,7 +1989,7 @@ static HRESULT instanceof_eval(exec_ctx_t *ctx, VARIANT *inst, VARIANT *objv, js
     }
 
     if(is_class(obj, JSCLASS_FUNCTION)) {
-        hres = jsdisp_propget_name(obj, prototypeW, ctx->parser->script->lcid, &var, ei, NULL/*FIXME*/);
+        hres = jsdisp_propget_name(obj, prototypeW, &var, ei, NULL/*FIXME*/);
     }else {
         FIXME("throw TypeError\n");
         hres = E_FAIL;
