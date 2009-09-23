@@ -52,6 +52,7 @@ MAKE_FUNCPTR(png_get_color_type);
 MAKE_FUNCPTR(png_get_image_height);
 MAKE_FUNCPTR(png_get_image_width);
 MAKE_FUNCPTR(png_get_io_ptr);
+MAKE_FUNCPTR(png_get_pHYs);
 MAKE_FUNCPTR(png_get_PLTE);
 MAKE_FUNCPTR(png_get_tRNS);
 MAKE_FUNCPTR(png_set_bgr);
@@ -83,6 +84,7 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_get_image_height);
         LOAD_FUNCPTR(png_get_image_width);
         LOAD_FUNCPTR(png_get_io_ptr);
+        LOAD_FUNCPTR(png_get_pHYs);
         LOAD_FUNCPTR(png_get_PLTE);
         LOAD_FUNCPTR(png_get_tRNS);
         LOAD_FUNCPTR(png_set_bgr);
@@ -510,8 +512,26 @@ static HRESULT WINAPI PngDecoder_Frame_GetPixelFormat(IWICBitmapFrameDecode *ifa
 static HRESULT WINAPI PngDecoder_Frame_GetResolution(IWICBitmapFrameDecode *iface,
     double *pDpiX, double *pDpiY)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, pDpiX, pDpiY);
-    return E_NOTIMPL;
+    PngDecoder *This = impl_from_frame(iface);
+    png_uint_32 ret, xres, yres;
+    int unit_type;
+
+    ret = ppng_get_pHYs(This->png_ptr, This->info_ptr, &xres, &yres, &unit_type);
+
+    if (ret && unit_type == PNG_RESOLUTION_METER)
+    {
+        *pDpiX = xres * 0.0254;
+        *pDpiY = yres * 0.0254;
+    }
+    else
+    {
+        WARN("no pHYs block present\n");
+        *pDpiX = *pDpiY = 96.0;
+    }
+
+    TRACE("(%p)->(%0.2f,%0.2f)\n", iface, *pDpiX, *pDpiY);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PngDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
