@@ -31,6 +31,7 @@
 #include "mshtmhst.h"
 #include "docobj.h"
 #include "dispex.h"
+#include "mshtml_test.h"
 
 static const char doc_blank[] = "<html></html>";
 static const char doc_str1[] = "<html><body>test</body></html>";
@@ -5392,27 +5393,6 @@ static void gecko_installer_workaround(BOOL disable)
     }
 
     RegCloseKey(hkey);
-}
-
-/* Check if Internet Explorer is configured to run in "Enhanced Security Configuration" (aka hardened mode) */
-/* Note: this code is duplicated in dlls/mshtml/tests/dom.c, dlls/mshtml/tests/script.c and dlls/urlmon/tests/sec_mgr.c */
-static BOOL is_ie_hardened(void)
-{
-    HKEY zone_map;
-    DWORD ie_harden, type, size;
-
-    ie_harden = 0;
-    if(RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap",
-                    0, KEY_QUERY_VALUE, &zone_map) == ERROR_SUCCESS) {
-        size = sizeof(DWORD);
-        if (RegQueryValueEx(zone_map, "IEHarden", NULL, &type, (LPBYTE) &ie_harden, &size) != ERROR_SUCCESS ||
-            type != REG_DWORD) {
-            ie_harden = 0;
-        }
-    RegCloseKey(zone_map);
-    }
-
-    return ie_harden != 0;
 }
 
 START_TEST(dom)

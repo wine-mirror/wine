@@ -168,7 +168,7 @@ static void test_SecurityManager(void)
 }
 
 /* Check if Internet Explorer is configured to run in "Enhanced Security Configuration" (aka hardened mode) */
-/* Note: this code is duplicated in dlls/mshtml/tests/dom.c, dlls/mshtml/tests/script.c and dlls/urlmon/tests/sec_mgr.c */
+/* Note: this code is duplicated in dlls/mshtml/tests/mshtml_test.h and dlls/urlmon/tests/sec_mgr.c */
 static BOOL is_ie_hardened(void)
 {
     HKEY zone_map;

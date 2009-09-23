@@ -37,6 +37,7 @@
 #include "idispids.h"
 #include "shlguid.h"
 #include "perhist.h"
+#include "mshtml_test.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(IID_IProxyManager,0x00000008,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
@@ -104,6 +105,7 @@ DEFINE_EXPECT(Exec_ShellDocView_37);
 DEFINE_EXPECT(Exec_ShellDocView_84);
 DEFINE_EXPECT(Exec_ShellDocView_103);
 DEFINE_EXPECT(Exec_ShellDocView_105);
+DEFINE_EXPECT(Exec_ShellDocView_140);
 DEFINE_EXPECT(Exec_UPDATECOMMANDS);
 DEFINE_EXPECT(Exec_SETTITLE);
 DEFINE_EXPECT(Exec_HTTPEQUIV);
@@ -2310,6 +2312,14 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
 
             return E_NOTIMPL;
 
+        case 140:
+            CHECK_EXPECT2(Exec_ShellDocView_140);
+
+            ok(pvaIn == NULL, "pvaIn != NULL\n");
+            ok(pvaOut == NULL, "pvaOut != NULL\n");
+
+            return E_NOTIMPL;
+
         default:
             ok(0, "unexpected command %d\n", nCmdID);
             return E_FAIL;
@@ -2499,9 +2509,10 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
 static IServiceProvider ServiceProvider = { &ServiceProviderVtbl };
 
 DEFINE_GUID(IID_unk1, 0xD48A6EC6,0x6A4A,0x11CF,0x94,0xA7,0x44,0x45,0x53,0x54,0x00,0x00); /* HTMLWindow2 ? */
-DEFINE_GUID(IID_unk2, 0x7BB0B520,0xB1A7,0x11D2,0xBB,0x23,0x00,0xC0,0x4F,0x79,0xAB,0xCD);
-DEFINE_GUID(IID_unk3, 0x000670BA,0x0000,0x0000,0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
+DEFINE_GUID(IID_IThumbnailView, 0x7BB0B520,0xB1A7,0x11D2,0xBB,0x23,0x00,0xC0,0x4F,0x79,0xAB,0xCD);
+DEFINE_GUID(IID_IRenMailEditor, 0x000670BA,0x0000,0x0000,0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 DEFINE_GUID(IID_unk4, 0x305104a6,0x98b5,0x11cf,0xbb,0x82,0x00,0xaa,0x00,0xbd,0xce,0x0b);
+DEFINE_GUID(IID_IDocHostUIHandlerPriv, 0xf0d241d1,0x5d0e,0x4e85,0xbc,0xb4,0xfa,0xd7,0xf7,0xc5,0x52,0x8c);
 
 static HRESULT QueryInterface(REFIID riid, void **ppv)
 {
@@ -2533,11 +2544,13 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         return E_NOINTERFACE; /* ? */
     else if(IsEqualGUID(&IID_unk1, riid))
         return E_NOINTERFACE; /* HTMLWindow2 ? */
-    else if(IsEqualGUID(&IID_unk2, riid))
+    else if(IsEqualGUID(&IID_IThumbnailView, riid))
         return E_NOINTERFACE; /* ? */
-    else if(IsEqualGUID(&IID_unk3, riid))
+    else if(IsEqualGUID(&IID_IRenMailEditor, riid))
         return E_NOINTERFACE; /* ? */
     else if(IsEqualGUID(&IID_unk4, riid))
+        return E_NOINTERFACE; /* ? */
+    else if(IsEqualGUID(&IID_IDocHostUIHandlerPriv, riid))
         return E_NOINTERFACE; /* ? */
     else
         ok(0, "unexpected riid %s\n", debugstr_guid(riid));
@@ -2811,6 +2824,7 @@ static void test_download(DWORD flags)
     SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
     SET_EXPECT(Exec_ShellDocView_103);
     SET_EXPECT(Exec_ShellDocView_105);
+    SET_EXPECT(Exec_ShellDocView_140);
     SET_EXPECT(Exec_MSHTML_PARSECOMPLETE);
     SET_EXPECT(Exec_HTTPEQUIV_DONE);
     SET_EXPECT(SetStatusText);
@@ -2870,6 +2884,7 @@ static void test_download(DWORD flags)
     CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
     SET_CALLED(Exec_ShellDocView_103);
     SET_CALLED(Exec_ShellDocView_105);
+    SET_CALLED(Exec_ShellDocView_140);
     CHECK_CALLED(Exec_MSHTML_PARSECOMPLETE);
     CHECK_CALLED(Exec_HTTPEQUIV_DONE);
     SET_CALLED(SetStatusText);
@@ -4030,7 +4045,10 @@ static void test_HTMLDocument_http(void)
         return;
     }
 
-    test_download(DWL_HTTP);
+    if (winetest_interactive || ! is_ie_hardened())
+        test_download(DWL_HTTP);
+    else
+        win_skip("IE running in Enhanced Security Configuration\n");
 
     test_IsDirty(unk, S_FALSE);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
