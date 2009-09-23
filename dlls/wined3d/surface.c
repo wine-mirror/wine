@@ -622,7 +622,9 @@ void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int wi
     if (width > src_width || height > src_height) return;
 
     /* Remove any renderbuffer set if the sizes match */
-    if (width == src_width && height == src_height) {
+    if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT]
+            || (width == src_width && height == src_height))
+    {
         This->current_renderbuffer = NULL;
         return;
     }
