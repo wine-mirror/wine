@@ -2094,7 +2094,7 @@ typedef void (WINE_GLAPI * PGLFNGLPOINTPARAMETERFVEXTPROC) (GLenum pname, const 
 #define GL_FIRST_VERTEX_CONVENTION_EXT                      0x8e4d
 #define GL_LAST_VERTEX_CONVENTION_EXT                       0x8e4e
 #define GL_PROVOKING_VERTEX_EXT                             0x8e4f
-#define GL_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTIONS_EXT    0x8e4c
+#define GL_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION_EXT     0x8e4c
 #endif
 typedef void (WINE_GLAPI * PGLFNGLPROVOKINGVERTEXEXTPROC)(GLenum mode);
 
