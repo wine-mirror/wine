@@ -1762,7 +1762,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclarationFromFVF(IWineD3D
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface,
         const DWORD *pFunction, const struct wined3d_shader_signature *output_signature,
-        IWineD3DVertexShader **ppVertexShader, IUnknown *parent)
+        IWineD3DVertexShader **ppVertexShader, IUnknown *parent,
+        const struct wined3d_parent_ops *parent_ops)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexShaderImpl *object;
@@ -1775,7 +1776,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
         return E_OUTOFMEMORY;
     }
 
-    hr = vertexshader_init(object, This, pFunction, output_signature, parent);
+    hr = vertexshader_init(object, This, pFunction, output_signature, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize vertex shader, hr %#x.\n", hr);

@@ -174,6 +174,7 @@ static ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface
     if (!refcount)
     {
         shader_cleanup((IWineD3DBaseShader *)iface);
+        This->parent_ops->wined3d_object_destroyed(This->parent);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -355,7 +356,7 @@ void find_vs_compile_args(IWineD3DVertexShaderImpl *shader, IWineD3DStateBlockIm
 
 HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
-        IUnknown *parent)
+        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     HRESULT hr;
 
@@ -363,6 +364,7 @@ HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *
 
     shader->lpVtbl = &IWineD3DVertexShader_Vtbl;
     shader->parent = parent;
+    shader->parent_ops = parent_ops;
     shader_init(&shader->baseShader, (IWineD3DDevice *)device);
     list_add_head(&device->shaders, &shader->baseShader.shader_list_entry);
 

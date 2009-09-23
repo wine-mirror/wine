@@ -161,6 +161,11 @@ static ULONG STDMETHODCALLTYPE d3d10_vertex_shader_AddRef(ID3D10VertexShader *if
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
 
+    if (refcount == 1)
+    {
+        IWineD3DVertexShader_AddRef(This->wined3d_shader);
+    }
+
     return refcount;
 }
 
@@ -174,8 +179,6 @@ static ULONG STDMETHODCALLTYPE d3d10_vertex_shader_Release(ID3D10VertexShader *i
     if (!refcount)
     {
         IWineD3DVertexShader_Release(This->wined3d_shader);
-        shader_free_signature(&This->output_signature);
-        HeapFree(GetProcessHeap(), 0, This);
     }
 
     return refcount;
@@ -227,6 +230,18 @@ static const struct ID3D10VertexShaderVtbl d3d10_vertex_shader_vtbl =
     d3d10_vertex_shader_SetPrivateDataInterface,
 };
 
+static void STDMETHODCALLTYPE d3d10_vertex_shader_wined3d_object_destroyed(void *parent)
+{
+    struct d3d10_vertex_shader *shader = parent;
+    shader_free_signature(&shader->output_signature);
+    HeapFree(GetProcessHeap(), 0, shader);
+}
+
+static const struct wined3d_parent_ops d3d10_vertex_shader_wined3d_parent_ops =
+{
+    d3d10_vertex_shader_wined3d_object_destroyed,
+};
+
 HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d10_device *device,
         const void *byte_code, SIZE_T byte_code_length)
 {
@@ -245,8 +260,8 @@ HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d1
     }
 
     hr = IWineD3DDevice_CreateVertexShader(device->wined3d_device,
-            shader_info.shader_code, &shader->output_signature,
-            &shader->wined3d_shader, (IUnknown *)shader);
+            shader_info.shader_code, &shader->output_signature, &shader->wined3d_shader,
+            (IUnknown *)shader, &d3d10_vertex_shader_wined3d_parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d vertex shader, hr %#x.\n", hr);

@@ -46,7 +46,21 @@ static ULONG WINAPI IDirect3DVertexShader8Impl_AddRef(IDirect3DVertexShader8 *if
 
     TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
+    if (ref == 1 && This->wineD3DVertexShader)
+    {
+        wined3d_mutex_lock();
+        IWineD3DVertexShader_AddRef(This->wineD3DVertexShader);
+        wined3d_mutex_unlock();
+    }
+
     return ref;
+}
+
+static void STDMETHODCALLTYPE d3d8_vertexshader_wined3d_object_destroyed(void *parent)
+{
+    IDirect3DVertexShader8Impl *shader = parent;
+    IDirect3DVertexDeclaration8_Release(shader->vertex_declaration);
+    HeapFree(GetProcessHeap(), 0, shader);
 }
 
 static ULONG WINAPI IDirect3DVertexShader8Impl_Release(IDirect3DVertexShader8 *iface) {
@@ -56,14 +70,16 @@ static ULONG WINAPI IDirect3DVertexShader8Impl_Release(IDirect3DVertexShader8 *i
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
-        IDirect3DVertexDeclaration8_Release(This->vertex_declaration);
         if (This->wineD3DVertexShader)
         {
             wined3d_mutex_lock();
             IWineD3DVertexShader_Release(This->wineD3DVertexShader);
             wined3d_mutex_unlock();
         }
-        HeapFree(GetProcessHeap(), 0, This);
+        else
+        {
+            d3d8_vertexshader_wined3d_object_destroyed(This);
+        }
     }
     return ref;
 }
@@ -74,6 +90,11 @@ static const IDirect3DVertexShader8Vtbl Direct3DVertexShader8_Vtbl =
     IDirect3DVertexShader8Impl_QueryInterface,
     IDirect3DVertexShader8Impl_AddRef,
     IDirect3DVertexShader8Impl_Release,
+};
+
+static const struct wined3d_parent_ops d3d8_vertexshader_wined3d_parent_ops =
+{
+    d3d8_vertexshader_wined3d_object_destroyed,
 };
 
 static HRESULT vertexshader_create_vertexdeclaration(IDirect3DDevice8Impl *device,
@@ -149,7 +170,8 @@ HRESULT vertexshader_init(IDirect3DVertexShader8Impl *shader, IDirect3DDevice8Im
 
         wined3d_mutex_lock();
         hr = IWineD3DDevice_CreateVertexShader(device->WineD3DDevice, byte_code,
-                NULL /* output signature */, &shader->wineD3DVertexShader, (IUnknown *)shader);
+                NULL /* output signature */, &shader->wineD3DVertexShader,
+                (IUnknown *)shader, &d3d8_vertexshader_wined3d_parent_ops);
         wined3d_mutex_unlock();
         if (FAILED(hr))
         {

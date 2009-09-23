@@ -2764,6 +2764,7 @@ typedef struct IWineD3DVertexShaderImpl {
 
     /* IWineD3DVertexShaderImpl */
     IUnknown                    *parent;
+    const struct wined3d_parent_ops *parent_ops;
 
     /* The GL shader */
     void                        *backend_priv;
@@ -2780,7 +2781,7 @@ void find_vs_compile_args(IWineD3DVertexShaderImpl *shader, IWineD3DStateBlockIm
         struct vs_compile_args *args) DECLSPEC_HIDDEN;
 HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
-        IUnknown *parent) DECLSPEC_HIDDEN;
+        IUnknown *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure
