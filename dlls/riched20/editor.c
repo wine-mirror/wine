@@ -141,8 +141,8 @@
   + WM_PASTE
   + WM_SETFONT
   + WM_SETTEXT (resets undo stack !) (proper style?) ANSI&Unicode
-  - WM_STYLECHANGING
-  - WM_STYLECHANGED (things like read-only flag)
+  + WM_STYLECHANGING (seems to do nothing)
+  + WM_STYLECHANGED (seems to do nothing)
   + WM_UNICHAR
   + WM_VSCROLL
 
@@ -2997,8 +2997,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   UNSUPPORTED_MSG(EM_SETTABSTOPS)
   UNSUPPORTED_MSG(EM_SETTYPOGRAPHYOPTIONS)
   UNSUPPORTED_MSG(EM_SETWORDBREAKPROCEX)
-  UNSUPPORTED_MSG(WM_STYLECHANGING)
-  UNSUPPORTED_MSG(WM_STYLECHANGED)
 
 /* Messages specific to Richedit controls */
 
