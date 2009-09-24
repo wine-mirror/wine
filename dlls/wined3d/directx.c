@@ -988,6 +988,7 @@ static GL_Vendors wined3d_guess_vendor(const char *gl_vendor, const char *gl_ren
         return VENDOR_INTEL;
 
     if (strstr(gl_vendor, "Mesa")
+            || strstr(gl_vendor, "DRI R300 Project")
             || strstr(gl_vendor, "Tungsten Graphics, Inc"))
         return VENDOR_MESA;
 
