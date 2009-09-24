@@ -1220,3 +1220,12 @@ BOOL WINAPI InitNetworkAddressControl(void)
     FIXME("stub\n");
     return FALSE;
 }
+
+/***********************************************************************
+ *              ShellHookProc (SHELL32.@)
+ */
+LRESULT CALLBACK ShellHookProc(DWORD a, DWORD b, DWORD c)
+{
+    FIXME("Stub\n");
+    return 0;
+}

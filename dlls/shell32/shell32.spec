@@ -408,7 +408,7 @@
 @ stdcall ShellExecuteExA (long)
 @ stdcall ShellExecuteExW (long)
 @ stdcall ShellExecuteW (long wstr wstr wstr wstr long)
-@ stub ShellHookProc
+@ stdcall ShellHookProc(long long long)
 @ stdcall Shell_NotifyIcon(long ptr) Shell_NotifyIconA
 @ stdcall Shell_NotifyIconA(long ptr)
 @ stdcall Shell_NotifyIconW(long ptr)
