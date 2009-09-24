@@ -408,6 +408,28 @@ static int __stdcall iid_lookup( const IID * pIID, int * pIndex )
 }
 
 
+static BOOL check_address(void *actual, void *expected)
+{
+    static void *ole32_start = NULL;
+    static void *ole32_end = NULL;
+
+    if (actual == expected)
+        return TRUE;
+
+    /* On Win7, actual can be located inside ole32.dll */
+    if (ole32_start == NULL || ole32_end == NULL)
+    {
+        PIMAGE_NT_HEADERS nt_headers;
+        ole32_start = (void *) GetModuleHandleA("ole32.dll");
+        if (ole32_start == NULL)
+            return FALSE;
+        nt_headers = (PIMAGE_NT_HEADERS)((char *) ole32_start + ((PIMAGE_DOS_HEADER) ole32_start)->e_lfanew);
+        ole32_end = (void *)((char *) ole32_start + nt_headers->OptionalHeader.SizeOfImage);
+    }
+
+    return ole32_start <= actual && actual < ole32_end;
+}
+
 static const ExtendedProxyFileInfo my_proxy_file_info =
 {
     (const PCInterfaceProxyVtblList *) &cstub_ProxyVtblList,
@@ -477,7 +499,7 @@ static IPSFactoryBuffer *test_NdrDllGetClassObject(void)
     ok(stub_vtbl[i]->Vtbl.name != CStd_##name, #name "vtbl %d updated %p %p\n", \
        i, stub_vtbl[i]->Vtbl.name, CStd_##name )
 #define VTBL_TEST_CHANGE_TO(name, i)                                  \
-    ok(stub_vtbl[i]->Vtbl.name == CStd_##name, #name "vtbl %d not updated %p %p\n", \
+    ok(check_address(stub_vtbl[i]->Vtbl.name, CStd_##name), #name "vtbl %d not updated %p %p\n", \
        i, stub_vtbl[i]->Vtbl.name, CStd_##name )
 #define VTBL_TEST_ZERO(name, i)                                  \
     ok(stub_vtbl[i]->Vtbl.name == NULL, #name "vtbl %d not null %p\n", \
@@ -528,7 +550,7 @@ static IPSFactoryBuffer *test_NdrDllGetClassObject(void)
     VTBL_TEST_CHANGE_TO(DebugServerRelease, 3);
 
 #define VTBL_PROXY_TEST(i,num,ptr) \
-    ok( proxy_vtbl[i]->Vtbl[num] == (ptr), "wrong proxy %u func %u %p/%p\n", \
+    ok( check_address(proxy_vtbl[i]->Vtbl[num], (ptr)), "wrong proxy %u func %u %p/%p\n", \
         (i), (num), proxy_vtbl[i]->Vtbl[num], (ptr) )
 #define VTBL_PROXY_TEST_NOT_ZERO(i,num) \
     ok( proxy_vtbl[i]->Vtbl[num] != NULL, "wrong proxy %u func %u is NULL\n", (i), (num))
