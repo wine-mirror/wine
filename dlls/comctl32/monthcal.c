@@ -158,6 +158,12 @@ int MONTHCAL_MonthLength(int month, int year)
   }
 }
 
+/* compares timestamps using date part only */
+static inline BOOL MONTHCAL_IsDateEqual(const SYSTEMTIME *first, const SYSTEMTIME *second)
+{
+  return (first->wYear == second->wYear) && (first->wMonth == second->wMonth) &&
+         (first->wDay  == second->wDay);
+}
 
 /* make sure that time is valid */
 static int MONTHCAL_ValidateTime(SYSTEMTIME time)
@@ -1093,6 +1099,9 @@ MONTHCAL_SetToday(MONTHCAL_INFO *infoPtr, SYSTEMTIME *today)
   TRACE("%p\n", today);
 
   if(!today) return FALSE;
+
+  if(MONTHCAL_IsDateEqual(today, &infoPtr->todaysDate)) return TRUE;
+
   MONTHCAL_CopyTime(today, &infoPtr->todaysDate);
   InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
   return TRUE;
