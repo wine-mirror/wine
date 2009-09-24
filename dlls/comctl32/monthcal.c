@@ -1001,11 +1001,16 @@ MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
 
   if(!MONTHCAL_ValidateTime(*curSel)) return FALSE;
 
-  infoPtr->currentMonth=curSel->wMonth;
-  infoPtr->currentYear=curSel->wYear;
-
   MONTHCAL_CopyTime(curSel, &infoPtr->minSel);
   MONTHCAL_CopyTime(curSel, &infoPtr->maxSel);
+
+  /* exit earlier if selection equals current */
+  if (infoPtr->currentMonth == curSel->wMonth &&
+      infoPtr->currentYear  == curSel->wYear  &&
+      infoPtr->curSelDay    == curSel->wDay) return TRUE;
+
+  infoPtr->currentMonth = curSel->wMonth;
+  infoPtr->currentYear  = curSel->wYear;
 
   InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
 
