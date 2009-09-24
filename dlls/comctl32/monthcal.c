@@ -777,13 +777,13 @@ MONTHCAL_GetColor(const MONTHCAL_INFO *infoPtr, WPARAM wParam)
 
 
 static LRESULT
-MONTHCAL_SetColor(MONTHCAL_INFO *infoPtr, WPARAM wParam, COLORREF color)
+MONTHCAL_SetColor(MONTHCAL_INFO *infoPtr, INT index, COLORREF color)
 {
-  int prev = -1;
+  COLORREF prev = -1;
 
-  TRACE("%ld: color %08x\n", wParam, color);
+  TRACE("%d: color %08x\n", index, color);
 
-  switch((int)wParam) {
+  switch(index) {
     case MCSC_BACKGROUND:
       prev = infoPtr->bk;
       infoPtr->bk = color;
@@ -810,7 +810,7 @@ MONTHCAL_SetColor(MONTHCAL_INFO *infoPtr, WPARAM wParam, COLORREF color)
       break;
   }
 
-  InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+  InvalidateRect(infoPtr->hwndSelf, NULL, index == MCSC_BACKGROUND ? TRUE : FALSE);
   return prev;
 }
 
