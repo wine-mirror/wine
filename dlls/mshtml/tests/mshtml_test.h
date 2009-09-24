@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Ge van Geldorp
+ * Copyright 2009 Ge van Geldorp for VMware, Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
