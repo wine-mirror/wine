@@ -2243,6 +2243,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
 {
     int fd, needs_close;
     struct stat st;
+    static int once;
 
     if ((io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )) != STATUS_SUCCESS)
         return io->u.Status;
@@ -2253,7 +2254,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
     switch( info_class )
     {
     case FileFsVolumeInformation:
-        FIXME( "%p: volume info not supported\n", handle );
+        if (!once++) FIXME( "%p: volume info not supported\n", handle );
         break;
     case FileFsLabelInformation:
         FIXME( "%p: label info not supported\n", handle );
