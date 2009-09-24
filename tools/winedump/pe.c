@@ -492,9 +492,7 @@ static	void	dump_dir_exported_functions(void)
     pFunc = RVA(exportDir->AddressOfFunctions, exportDir->NumberOfFunctions * sizeof(DWORD));
     if (!pFunc) {printf("Can't grab functions' address table\n"); return;}
     pName = RVA(exportDir->AddressOfNames, exportDir->NumberOfNames * sizeof(DWORD));
-    if (!pName) {printf("Can't grab functions' name table\n"); return;}
     pOrdl = RVA(exportDir->AddressOfNameOrdinals, exportDir->NumberOfNames * sizeof(WORD));
-    if (!pOrdl) {printf("Can't grab functions' ordinal table\n"); return;}
 
     funcs = calloc( exportDir->NumberOfFunctions, sizeof(*funcs) );
     if (!funcs) fatal("no memory");
@@ -506,15 +504,15 @@ static	void	dump_dir_exported_functions(void)
         if (!pFunc[i]) continue;
         printf("  %08X %5u ", pFunc[i], exportDir->Base + i);
         if (funcs[i])
-        {
             printf("%s", get_symbol_str((const char*)RVA(funcs[i], sizeof(DWORD))));
-            /* check for forwarded function */
-            if ((const char *)RVA(pFunc[i],1) >= (const char *)exportDir &&
-                (const char *)RVA(pFunc[i],1) < (const char *)exportDir + size)
-                printf(" (-> %s)", (const char *)RVA(pFunc[i],1));
-            printf("\n");
-        }
-        else printf("<by ordinal>\n");
+        else
+            printf("<by ordinal>");
+
+        /* check for forwarded function */
+        if ((const char *)RVA(pFunc[i],1) >= (const char *)exportDir &&
+            (const char *)RVA(pFunc[i],1) < (const char *)exportDir + size)
+            printf(" (-> %s)", (const char *)RVA(pFunc[i],1));
+        printf("\n");
     }
     free(funcs);
     printf("\n");
