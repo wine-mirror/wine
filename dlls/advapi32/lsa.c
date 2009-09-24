@@ -408,9 +408,50 @@ NTSTATUS WINAPI LsaLookupSids(
     OUT PLSA_REFERENCED_DOMAIN_LIST *ReferencedDomains,
     OUT PLSA_TRANSLATED_NAME *Names )
 {
-    FIXME("(%p,%u,%p,%p,%p) stub\n", PolicyHandle, Count, Sids,
+    ULONG i, mapped, size;
+    ULONG name_size, domain_size;
+    SID_NAME_USE use;
+
+    TRACE("(%p,%u,%p,%p,%p) stub\n", PolicyHandle, Count, Sids,
           ReferencedDomains, Names);
 
+    size = sizeof(LSA_TRANSLATED_NAME) * Count;
+    if (!(*Names = HeapAlloc( GetProcessHeap(), 0, size) )) return STATUS_NO_MEMORY;
+    if (!(*ReferencedDomains = HeapAlloc( GetProcessHeap(), 0, sizeof(LSA_REFERENCED_DOMAIN_LIST)) ))
+    {
+        HeapFree( GetProcessHeap(), 0, *Names);
+        return STATUS_NO_MEMORY;
+    }
+    (*ReferencedDomains)->Entries = 0;
+    (*ReferencedDomains)->Domains = NULL;
+
+    mapped = 0;
+    for (i = 0; i < Count; i++)
+    {
+        name_size = domain_size = 0;
+        (*Names)[i].Use = SidTypeUnknown;
+        (*Names)[i].DomainIndex = -1;
+        (*Names)[i].Name.Length = 0;
+        (*Names)[i].Name.MaximumLength = 0;
+        (*Names)[i].Name.Buffer = NULL;
+        if (LookupAccountSidW(NULL, Sids[i], NULL, &name_size, NULL, &domain_size, &use))
+        {
+            if (domain_size)
+                FIXME("domains not handled\n");
+            mapped++;
+
+            domain_size = 0;
+            (*Names)[i].Use = use;
+            (*Names)[i].Name.Length = name_size * sizeof(WCHAR);
+            (*Names)[i].Name.MaximumLength = name_size * sizeof(WCHAR);
+            (*Names)[i].Name.Buffer = HeapAlloc(GetProcessHeap(),0,name_size * sizeof(WCHAR));
+            LookupAccountSidW(NULL, Sids[i], (*Names)[i].Name.Buffer, &name_size, NULL, &domain_size, &use);
+        }
+    }
+    TRACE("mapped %u out of %u\n",mapped,Count);
+
+    if (mapped == Count) return STATUS_SUCCESS;
+    if (mapped) return STATUS_SOME_NOT_MAPPED;
     return STATUS_NONE_MAPPED;
 }
 
