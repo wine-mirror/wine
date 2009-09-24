@@ -44,4 +44,5 @@ STRINGTABLE DISCARDABLE
     IDS_JSCRIPT_EXPECTED    "Tikėtasi JScript objekto"
     IDS_REGEXP_SYNTAX_ERROR "Sintaksės klaida reguliariajame reiškinyje"
     IDS_INVALID_LENGTH      "Masyvo dydis turi būti teigiamas sveikasis skaičius"
+    IDS_ARRAY_EXPECTED      "Tikėtasi masyvo objekto"
 }
