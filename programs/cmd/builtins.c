@@ -1775,12 +1775,6 @@ void WCMD_endlocal (void) {
  *
  * Display and optionally sets DOS attributes on a file or directory
  *
- * FIXME: Wine currently uses the Unix stat() function to get file attributes.
- * As a result only the Readonly flag is correctly reported, the Archive bit
- * is always set and the rest are not implemented. We do the Right Thing anyway.
- *
- * FIXME: No SET functionality.
- *
  */
 
 void WCMD_setshow_attrib (void) {
@@ -1789,26 +1783,49 @@ void WCMD_setshow_attrib (void) {
   HANDLE hff;
   WIN32_FIND_DATA fd;
   WCHAR flags[9] = {' ',' ',' ',' ',' ',' ',' ',' ','\0'};
+  WCHAR *name = param1;
+  DWORD attrib_set=0;
+  DWORD attrib_clear=0;
 
-  if (param1[0] == '-') {
-    WCMD_output (WCMD_LoadMessage(WCMD_NYI));
-    return;
+  if (param1[0] == '+' || param1[0] == '-') {
+    DWORD attrib = 0;
+    /* FIXME: the real cmd can handle many more than two args; this should be in a loop */
+    switch (param1[1]) {
+    case 'H': case 'h': attrib |= FILE_ATTRIBUTE_HIDDEN; break;
+    case 'S': case 's': attrib |= FILE_ATTRIBUTE_SYSTEM; break;
+    case 'R': case 'r': attrib |= FILE_ATTRIBUTE_READONLY; break;
+    case 'A': case 'a': attrib |= FILE_ATTRIBUTE_ARCHIVE; break;
+    default:
+      WCMD_output (WCMD_LoadMessage(WCMD_NYI));
+      return;
+    }
+    switch (param1[0]) {
+    case '+': attrib_set = attrib; break;
+    case '-': attrib_clear = attrib; break;
+    }
+    name = param2;
   }
 
-  if (strlenW(param1) == 0) {
+  if (strlenW(name) == 0) {
     static const WCHAR slashStarW[]  = {'\\','*','\0'};
 
-    GetCurrentDirectory (sizeof(param1)/sizeof(WCHAR), param1);
-    strcatW (param1, slashStarW);
+    GetCurrentDirectory (sizeof(param2)/sizeof(WCHAR), name);
+    strcatW (name, slashStarW);
   }
 
-  hff = FindFirstFile (param1, &fd);
+  hff = FindFirstFile (name, &fd);
   if (hff == INVALID_HANDLE_VALUE) {
-    WCMD_output (WCMD_LoadMessage(WCMD_FILENOTFOUND), param1);
+    WCMD_output (WCMD_LoadMessage(WCMD_FILENOTFOUND), name);
   }
   else {
     do {
-      if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+      if (attrib_set || attrib_clear) {
+        fd.dwFileAttributes &= ~attrib_clear;
+        fd.dwFileAttributes |= attrib_set;
+        if (!fd.dwFileAttributes)
+           fd.dwFileAttributes |= FILE_ATTRIBUTE_NORMAL;
+        SetFileAttributesW(name, fd.dwFileAttributes);
+      } else {
         static const WCHAR fmt[] = {'%','s',' ',' ',' ','%','s','\n','\0'};
         if (fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) {
 	  flags[0] = 'H';
