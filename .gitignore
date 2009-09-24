@@ -102,6 +102,7 @@ dlls/oledb32/convert.h
 dlls/oledb32/convert_i.c
 dlls/oledb32/tests/convert.h
 dlls/oledb32/tests/convert_i.c
+dlls/pstorec/pstorec_tlb.tlb
 dlls/qmgr/qmgr_local.h
 dlls/qmgr/qmgr_local_i.c
 dlls/qmgrprxy/qmgrprxy.h
