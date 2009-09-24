@@ -186,6 +186,7 @@ static NTSTATUS find_entry( HMODULE hmod, const LDR_RESOURCE_INFO *info,
 
     root = RtlImageDirectoryEntryToData( hmod, TRUE, IMAGE_DIRECTORY_ENTRY_RESOURCE, &size );
     if (!root) return STATUS_RESOURCE_DATA_NOT_FOUND;
+    if (size < sizeof(*resdirptr)) return STATUS_RESOURCE_DATA_NOT_FOUND;
     resdirptr = root;
 
     if (!level--) goto done;
