@@ -173,14 +173,6 @@ HRESULT WINAPI DllCanUnloadNow( void )
 }
 
 /******************************************************************************
- *           StiCreateInstance   (STI.@)
- */
-HRESULT WINAPI StiCreateInstance( HINSTANCE hinst, DWORD dwVer, PSTIW *ppSti, LPUNKNOWN pUnkOuter )
-{
-    return STG_E_UNIMPLEMENTEDFUNCTION;
-}
-
-/******************************************************************************
  *           StiCreateInstanceA   (STI.@)
  */
 HRESULT WINAPI StiCreateInstanceA( HINSTANCE hinst, DWORD dwVer, PSTIA *ppSti, LPUNKNOWN pUnkOuter )
