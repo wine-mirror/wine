@@ -91,7 +91,7 @@ typedef struct
     int		height_increment;
     int		width_increment;
     int		firstDayplace; /* place of the first day of the current month */
-    int		delta;	/* scroll rate; # of months that the */
+    INT		delta;	/* scroll rate; # of months that the */
                         /* control moves when user clicks a scroll button */
     int		visible;	/* # of months visible */
     int		firstDay;	/* Start month calendar with firstDay's day */
@@ -166,7 +166,7 @@ static inline BOOL MONTHCAL_IsDateEqual(const SYSTEMTIME *first, const SYSTEMTIM
 }
 
 /* make sure that time is valid */
-static int MONTHCAL_ValidateTime(SYSTEMTIME time)
+static BOOL MONTHCAL_ValidateTime(SYSTEMTIME time)
 {
   if(time.wMonth < 1 || time.wMonth > 12 ) return FALSE;
   if(time.wDayOfWeek > 6) return FALSE;
@@ -759,11 +759,11 @@ MONTHCAL_GetMinReqRect(const MONTHCAL_INFO *infoPtr, LPRECT lpRect)
 
 
 static LRESULT
-MONTHCAL_GetColor(const MONTHCAL_INFO *infoPtr, WPARAM wParam)
+MONTHCAL_GetColor(const MONTHCAL_INFO *infoPtr, INT index)
 {
   TRACE("\n");
 
-  switch((int)wParam) {
+  switch(index) {
     case MCSC_BACKGROUND:
       return infoPtr->bk;
     case MCSC_TEXT:
@@ -834,13 +834,13 @@ MONTHCAL_GetMonthDelta(const MONTHCAL_INFO *infoPtr)
 
 
 static LRESULT
-MONTHCAL_SetMonthDelta(MONTHCAL_INFO *infoPtr, WPARAM wParam)
+MONTHCAL_SetMonthDelta(MONTHCAL_INFO *infoPtr, INT delta)
 {
-  int prev = infoPtr->delta;
+  INT prev = infoPtr->delta;
 
-  TRACE("delta %ld\n", wParam);
+  TRACE("delta %d\n", delta);
 
-  infoPtr->delta = (int)wParam;
+  infoPtr->delta = delta;
   return prev;
 }
 
@@ -1645,21 +1645,21 @@ done:
 
 
 static LRESULT
-MONTHCAL_Paint(MONTHCAL_INFO *infoPtr, WPARAM wParam)
+MONTHCAL_Paint(MONTHCAL_INFO *infoPtr, HDC hdc_paint)
 {
   HDC hdc;
   PAINTSTRUCT ps;
 
-  if (wParam)
+  if (hdc_paint)
   {
     GetClientRect(infoPtr->hwndSelf, &ps.rcPaint);
-    hdc = (HDC)wParam;
+    hdc = hdc_paint;
   }
   else
     hdc = BeginPaint(infoPtr->hwndSelf, &ps);
 
   MONTHCAL_Refresh(infoPtr, hdc, &ps);
-  if (!wParam) EndPaint(infoPtr->hwndSelf, &ps);
+  if (!hdc_paint) EndPaint(infoPtr->hwndSelf, &ps);
   return 0;
 }
 
@@ -2011,7 +2011,7 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   case WM_PRINTCLIENT:
   case WM_PAINT:
-    return MONTHCAL_Paint(infoPtr, wParam);
+    return MONTHCAL_Paint(infoPtr, (HDC)wParam);
 
   case WM_SETFOCUS:
     return MONTHCAL_SetFocus(infoPtr);
