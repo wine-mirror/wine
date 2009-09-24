@@ -71,6 +71,7 @@
 # include <unistd.h>
 #endif
 #include <windows.h>
+#include <winternl.h>
 #include <wine/svcctl.h>
 #include <wine/unicode.h>
 #include <wine/library.h>
@@ -155,6 +156,125 @@ done:
     if (fd != -1) close( fd );
     HeapFree( GetProcessHeap(), 0, file );
     return ret;
+}
+
+/* create the volatile hardware registry keys */
+static void create_hardware_registry_keys(void)
+{
+    static const WCHAR SystemW[] = {'H','a','r','d','w','a','r','e','\\',
+                                    'D','e','s','c','r','i','p','t','i','o','n','\\',
+                                    'S','y','s','t','e','m',0};
+    static const WCHAR fpuW[] = {'F','l','o','a','t','i','n','g','P','o','i','n','t','P','r','o','c','e','s','s','o','r',0};
+    static const WCHAR cpuW[] = {'C','e','n','t','r','a','l','P','r','o','c','e','s','s','o','r',0};
+    static const WCHAR IdentifierW[] = {'I','d','e','n','t','i','f','i','e','r',0};
+    static const WCHAR SysidW[] = {'A','T',' ','c','o','m','p','a','t','i','b','l','e',0};
+    static const WCHAR mhzKeyW[] = {'~','M','H','z',0};
+    static const WCHAR VendorIdentifierW[] = {'V','e','n','d','o','r','I','d','e','n','t','i','f','i','e','r',0};
+    static const WCHAR VenidIntelW[] = {'G','e','n','u','i','n','e','I','n','t','e','l',0};
+    /* static const WCHAR VenidAMDW[] = {'A','u','t','h','e','n','t','i','c','A','M','D',0}; */
+    static const WCHAR PercentDW[] = {'%','d',0};
+    static const WCHAR IntelCpuDescrW[] = {'x','8','6',' ','F','a','m','i','l','y',' ','%','d',' ','M','o','d','e','l',' ','%','d',
+                                           ' ','S','t','e','p','p','i','n','g',' ','%','d',0};
+    unsigned int i;
+    HKEY hkey, system_key, cpu_key, fpu_key;
+    SYSTEM_CPU_INFORMATION sci;
+    PROCESSOR_POWER_INFORMATION power_info;
+    WCHAR idW[60];
+
+    NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
+    if (NtPowerInformation(ProcessorInformation, NULL, 0, &power_info, sizeof(power_info)))
+        power_info.MaxMhz = 0;
+
+    /*TODO: report 64bit processors properly*/
+    sprintfW( idW, IntelCpuDescrW, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
+
+    if (RegCreateKeyExW( HKEY_LOCAL_MACHINE, SystemW, 0, NULL, REG_OPTION_VOLATILE,
+                         KEY_ALL_ACCESS, NULL, &system_key, NULL ))
+        return;
+
+    RegSetValueExW( system_key, IdentifierW, 0, REG_SZ, (const BYTE *)SysidW, sizeof(SysidW) );
+
+    if (RegCreateKeyExW( system_key, fpuW, 0, NULL, REG_OPTION_VOLATILE,
+                         KEY_ALL_ACCESS, NULL, &fpu_key, NULL ))
+        fpu_key = 0;
+    if (RegCreateKeyExW( system_key, cpuW, 0, NULL, REG_OPTION_VOLATILE,
+                         KEY_ALL_ACCESS, NULL, &cpu_key, NULL ))
+        cpu_key = 0;
+
+    for (i = 0; i < NtCurrentTeb()->Peb->NumberOfProcessors; i++)
+    {
+        WCHAR numW[10];
+
+        sprintfW( numW, PercentDW, i );
+        if (!RegCreateKeyExW( cpu_key, numW, 0, NULL, REG_OPTION_VOLATILE,
+                              KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+        {
+            RegSetValueExW( hkey, IdentifierW, 0, REG_SZ,
+                            (const BYTE *)idW, (strlenW(idW) + 1) * sizeof(WCHAR) );
+            /*TODO; report amd's properly*/
+            RegSetValueExW( hkey, VendorIdentifierW, 0, REG_SZ,
+                            (const BYTE *)VenidIntelW, sizeof(VenidIntelW) );
+            RegSetValueExW( hkey, mhzKeyW, 0, REG_DWORD, (BYTE *)&power_info.MaxMhz, sizeof(DWORD) );
+            RegCloseKey( hkey );
+        }
+        if (!RegCreateKeyExW( fpu_key, numW, 0, NULL, REG_OPTION_VOLATILE,
+                              KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+        {
+            RegSetValueExW( hkey, IdentifierW, 0, REG_SZ,
+                            (const BYTE *)idW, (strlenW(idW) + 1) * sizeof(WCHAR) );
+            RegCloseKey( hkey );
+        }
+    }
+    RegCloseKey( fpu_key );
+    RegCloseKey( cpu_key );
+    RegCloseKey( system_key );
+}
+
+/* create the platform-specific environment registry keys */
+static void create_environment_registry_keys( void )
+{
+    static const WCHAR EnvironW[]  = {'S','y','s','t','e','m','\\',
+                                      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                      'C','o','n','t','r','o','l','\\',
+                                      'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
+                                      'E','n','v','i','r','o','n','m','e','n','t',0};
+    static const WCHAR NumProcW[]  = {'N','U','M','B','E','R','_','O','F','_','P','R','O','C','E','S','S','O','R','S',0};
+    static const WCHAR ProcArchW[] = {'P','R','O','C','E','S','S','O','R','_','A','R','C','H','I','T','E','C','T','U','R','E',0};
+    static const WCHAR x86W[]      = {'x','8','6',0};
+    static const WCHAR ProcIdW[]   = {'P','R','O','C','E','S','S','O','R','_','I','D','E','N','T','I','F','I','E','R',0};
+    static const WCHAR ProcLvlW[]  = {'P','R','O','C','E','S','S','O','R','_','L','E','V','E','L',0};
+    static const WCHAR ProcRevW[]  = {'P','R','O','C','E','S','S','O','R','_','R','E','V','I','S','I','O','N',0};
+    static const WCHAR PercentDW[] = {'%','d',0};
+    static const WCHAR Percent04XW[] = {'%','0','4','x',0};
+    static const WCHAR IntelCpuDescrW[]  = {'x','8','6',' ','F','a','m','i','l','y',' ','%','d',' ','M','o','d','e','l',' ','%','d',
+                                            ' ','S','t','e','p','p','i','n','g',' ','%','d',',',' ','G','e','n','u','i','n','e','I','n','t','e','l',0};
+
+    HKEY env_key;
+    SYSTEM_CPU_INFORMATION sci;
+    WCHAR buffer[60];
+
+    NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
+
+    if (RegCreateKeyW( HKEY_LOCAL_MACHINE, EnvironW, &env_key )) return;
+
+    sprintfW( buffer, PercentDW, NtCurrentTeb()->Peb->NumberOfProcessors );
+    RegSetValueExW( env_key, NumProcW, 0, REG_SZ, (BYTE *)buffer, (strlenW(buffer) + 1) * sizeof(WCHAR) );
+
+    /* TODO: currently hardcoded x86, add different processors */
+    RegSetValueExW( env_key, ProcArchW, 0, REG_SZ, (const BYTE *)x86W, sizeof(x86W) );
+
+    /* TODO: currently hardcoded Intel, add different processors */
+    sprintfW( buffer, IntelCpuDescrW, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
+    RegSetValueExW( env_key, ProcIdW, 0, REG_SZ, (BYTE *)buffer, (strlenW(buffer) + 1) * sizeof(WCHAR) );
+
+    sprintfW( buffer, PercentDW, sci.Level );
+    RegSetValueExW( env_key, ProcLvlW, 0, REG_SZ, (BYTE *)buffer, (strlenW(buffer) + 1) * sizeof(WCHAR) );
+
+    /* Properly report model/stepping */
+    sprintfW( buffer, Percent04XW, sci.Revision );
+    RegSetValueExW( env_key, ProcRevW, 0, REG_SZ, (BYTE *)buffer, (strlenW(buffer) + 1) * sizeof(WCHAR) );
+
+    RegCloseKey( env_key );
 }
 
 /* Performs the rename operations dictated in %SystemRoot%\Wininit.ini.
@@ -864,6 +984,8 @@ int main( int argc, char *argv[] )
 
     ResetEvent( event );  /* in case this is a restart */
 
+    create_hardware_registry_keys();
+    create_environment_registry_keys();
     wininit();
     pendingRename();
 
