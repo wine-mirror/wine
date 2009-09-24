@@ -58,6 +58,7 @@ static HRESULT (WINAPI *pStrRetToBufA)(STRRET*,LPCITEMIDLIST,LPSTR,UINT);
 static HRESULT (WINAPI *pStrRetToBufW)(STRRET*,LPCITEMIDLIST,LPWSTR,UINT);
 static INT     (WINAPIV *pwnsprintfA)(LPSTR,INT,LPCSTR, ...);
 static INT     (WINAPIV *pwnsprintfW)(LPWSTR,INT,LPCWSTR, ...);
+static LPWSTR  (WINAPI *pStrChrNW)(LPWSTR,WCHAR,UINT);
 
 static int strcmpW(const WCHAR *str1, const WCHAR *str2)
 {
@@ -373,6 +374,27 @@ static void test_StrCpyW(void)
   }
 }
 
+static void test_StrChrNW(void)
+{
+    static WCHAR string[] = {'T','e','s','t','i','n','g',' ','S','t','r','i','n','g',0};
+    LPWSTR p;
+
+    if (!pStrChrNW)
+    {
+        win_skip("StrChrNW not available\n");
+        return;
+    }
+
+    p = pStrChrNW(string,'t',10);
+    ok(*p=='t',"Found wrong 't'\n");
+    ok(*(p+1)=='i',"next should be 'i'\n");
+
+    p = pStrChrNW(string,'S',10);
+    ok(*p=='S',"Found wrong 'S'\n");
+
+    p = pStrChrNW(string,'r',10);
+    ok(p==NULL,"Should not have found 'r'\n");
+}
 
 static void test_StrToIntA(void)
 {
@@ -911,6 +933,7 @@ START_TEST(string)
   pStrCatBuffW = (void *)GetProcAddress(hShlwapi, "StrCatBuffW");
   pStrCpyNXA = (void *)GetProcAddress(hShlwapi, (LPSTR)399);
   pStrCpyNXW = (void *)GetProcAddress(hShlwapi, (LPSTR)400);
+  pStrChrNW = (void *)GetProcAddress(hShlwapi, "StrChrNW");
   pStrFormatByteSize64A = (void *)GetProcAddress(hShlwapi, "StrFormatByteSize64A");
   pStrFormatKBSizeA = (void *)GetProcAddress(hShlwapi, "StrFormatKBSizeA");
   pStrFormatKBSizeW = (void *)GetProcAddress(hShlwapi, "StrFormatKBSizeW");
@@ -929,6 +952,7 @@ START_TEST(string)
   test_StrRChrA();
   test_StrRChrW();
   test_StrCpyW();
+  test_StrChrNW();
   test_StrToIntA();
   test_StrToIntW();
   test_StrToIntExA();

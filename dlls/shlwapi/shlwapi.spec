@@ -757,6 +757,7 @@
 @ stdcall StrChrA (str long)
 @ stdcall StrChrIA (str long)
 @ stdcall StrChrIW (wstr long)
+@ stdcall StrChrNW(wstr long long)
 @ stdcall StrChrW (wstr long)
 @ stdcall StrCmpIW (wstr wstr)
 @ stdcall StrCmpLogicalW(wstr wstr)
