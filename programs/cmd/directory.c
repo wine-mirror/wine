@@ -680,7 +680,7 @@ void WCMD_directory (WCHAR *cmd) {
   orderGroupDirs = FALSE;
   orderGroupDirsReverse = FALSE;
   showattrs  = 0;
-  attrsbits  = 0;
+  attrsbits  = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
 
   /* Handle args - Loop through so right most is the effective one */
   /* Note: /- appears to be a negate rather than an off, eg. dir
