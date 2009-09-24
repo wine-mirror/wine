@@ -104,7 +104,7 @@ typedef struct
     int		status;		/* See MC_SEL flags */
     int		curSelDay;	/* current selected day */
     int		firstSelDay;	/* first selected day */
-    int		maxSelCount;
+    INT		maxSelCount;
     SYSTEMTIME	minSel;
     SYSTEMTIME	maxSel;
     DWORD	rangeValid;
@@ -1026,12 +1026,12 @@ MONTHCAL_GetMaxSelCount(const MONTHCAL_INFO *infoPtr)
 
 
 static LRESULT
-MONTHCAL_SetMaxSelCount(MONTHCAL_INFO *infoPtr, WPARAM wParam)
+MONTHCAL_SetMaxSelCount(MONTHCAL_INFO *infoPtr, INT max)
 {
-  TRACE("%lx\n", wParam);
+  TRACE("%d\n", max);
 
   if(infoPtr->dwStyle & MCS_MULTISELECT)  {
-    infoPtr->maxSelCount = wParam;
+    infoPtr->maxSelCount = max;
   }
 
   return TRUE;
