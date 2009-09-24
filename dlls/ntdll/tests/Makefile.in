@@ -8,6 +8,7 @@ IMPORTS   = kernel32
 CTESTS = \
 	atom.c \
 	change.c \
+	directory.c \
 	env.c \
 	error.c \
 	exception.c \
