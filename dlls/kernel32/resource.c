@@ -1078,6 +1078,9 @@ static BOOL read_mapped_resources( QUEUEDUPDATES *updates, void *base, DWORD map
 
     TRACE("found .rsrc at %08x, size %08x\n", sec[i].PointerToRawData, sec[i].SizeOfRawData);
 
+    if (!sec[i].PointerToRawData || sec[i].SizeOfRawData < sizeof(IMAGE_RESOURCE_DIRECTORY))
+        return TRUE;
+
     root = (void*) ((BYTE*)base + sec[i].PointerToRawData);
     enumerate_mapped_resources( updates, base, mapping_size, root );
 
@@ -1404,13 +1407,6 @@ static IMAGE_SECTION_HEADER *get_resource_section( void *base, DWORD mapping_siz
         return NULL;
     }
 
-    /* check that the resources section is last */
-    if (i != num_sections - 1)
-    {
-        FIXME(".rsrc isn't the last section\n");
-        return NULL;
-    }
-
     return &sec[i];
 }
 
@@ -1487,10 +1483,15 @@ static BOOL write_raw_resources( QUEUEDUPDATES *updates )
     if (!sec)
         goto done;
 
-    if ((sec->SizeOfRawData + sec->PointerToRawData) != write_map->size)
+    if (!sec->PointerToRawData)  /* empty section */
     {
-        FIXME(".rsrc isn't at the end of the image %08x + %08x != %08x\n",
-            sec->SizeOfRawData, sec->PointerToRawData, write_map->size);
+        sec->PointerToRawData = write_map->size;
+        sec->SizeOfRawData = 0;
+    }
+    else if ((sec->SizeOfRawData + sec->PointerToRawData) != write_map->size)
+    {
+        FIXME(".rsrc isn't at the end of the image %08x + %08x != %08x for %s\n",
+              sec->SizeOfRawData, sec->PointerToRawData, write_map->size, debugstr_w(updates->pFileName));
         goto done;
     }
 
