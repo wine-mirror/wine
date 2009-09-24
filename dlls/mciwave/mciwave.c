@@ -255,7 +255,7 @@ static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, const MMCKINFO* pckMainRIFF)
     wmw->lpWaveFormat = HeapAlloc(GetProcessHeap(), 0, mmckInfo.cksize);
     if (!wmw->lpWaveFormat) return MMSYSERR_NOMEM;
     r = mmioRead(wmw->hFile, (HPSTR)wmw->lpWaveFormat, mmckInfo.cksize);
-    if (r < sizeof(WAVEFORMAT))
+    if (r < sizeof(PCMWAVEFORMAT))
 	return MCIERR_INVALID_FILE;
 
     TRACE("wFormatTag=%04X !\n",   wmw->lpWaveFormat->wFormatTag);
