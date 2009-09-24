@@ -128,6 +128,8 @@ static int get_length(DBTYPE type)
         return 8;
     case DBTYPE_BSTR:
         return sizeof(BSTR);
+    case DBTYPE_WSTR:
+        return 0;
     default:
         FIXME("Unhandled type %04x\n", type);
         return 0;
@@ -277,6 +279,39 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         }
         break;
     }
+
+    case DBTYPE_WSTR:
+    {
+        BSTR b;
+        DBLENGTH bstr_len;
+        INT bytes_to_copy;
+        hr = IDataConvert_DataConvert(iface, src_type, DBTYPE_BSTR, src_len, &bstr_len,
+                                      src, &b, sizeof(BSTR), src_status, dst_status,
+                                      precision, scale, flags);
+        if(hr != S_OK) return hr;
+        bstr_len = SysStringLen(b);
+        *dst_len = bstr_len * sizeof(WCHAR); /* Doesn't include size for '\0' */
+        *dst_status = DBSTATUS_S_OK;
+        bytes_to_copy = min(*dst_len + sizeof(WCHAR), dst_max_len);
+        if(dst)
+        {
+            if(bytes_to_copy >= sizeof(WCHAR))
+            {
+                memcpy(dst, b, bytes_to_copy - sizeof(WCHAR));
+                *((WCHAR*)dst + bytes_to_copy / sizeof(WCHAR) - 1) = 0;
+                if(bytes_to_copy < *dst_len + sizeof(WCHAR))
+                    *dst_status = DBSTATUS_S_TRUNCATED;
+            }
+            else
+            {
+                *dst_status = DBSTATUS_E_DATAOVERFLOW;
+                hr = DB_E_ERRORSOCCURRED;
+            }
+        }
+        SysFreeString(b);
+        return hr;
+    }
+
     default:
         FIXME("Unimplemented conversion %04x -> %04x\n", src_type, dst_type);
         return E_NOTIMPL;
