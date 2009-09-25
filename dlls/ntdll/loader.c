@@ -116,6 +116,8 @@ static WINE_MODREF *last_failed_modref;
 
 static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_MODREF** pwm );
 static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved );
+static FARPROC find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
+                                    DWORD exp_size, DWORD ordinal, LPCWSTR load_path );
 static FARPROC find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
                                   DWORD exp_size, const char *name, int hint, LPCWSTR load_path );
 
@@ -403,7 +405,13 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
     }
     if ((exports = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE,
                                                  IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
-        proc = find_named_export( wm->ldr.BaseAddress, exports, exp_size, end + 1, -1, load_path );
+    {
+        const char *name = end + 1;
+        if (*name == '#')  /* ordinal */
+            proc = find_ordinal_export( wm->ldr.BaseAddress, exports, exp_size, atoi(name+1), load_path );
+        else
+            proc = find_named_export( wm->ldr.BaseAddress, exports, exp_size, name, -1, load_path );
+    }
 
     if (!proc)
     {
