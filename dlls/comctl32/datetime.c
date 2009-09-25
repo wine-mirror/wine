@@ -138,43 +138,43 @@ static const int maxrepetition [] = {4,2,2,2,4,2,2,4,-1};
 
 
 static DWORD
-DATETIME_GetSystemTime (const DATETIME_INFO *infoPtr, SYSTEMTIME *lprgSysTimeArray)
+DATETIME_GetSystemTime (const DATETIME_INFO *infoPtr, SYSTEMTIME *systime)
 {
-    if (!lprgSysTimeArray) return GDT_NONE;
+    if (!systime) return GDT_NONE;
 
     if ((infoPtr->dwStyle & DTS_SHOWNONE) &&
         (SendMessageW (infoPtr->hwndCheckbut, BM_GETCHECK, 0, 0) == BST_UNCHECKED))
         return GDT_NONE;
 
-    MONTHCAL_CopyTime (&infoPtr->date, lprgSysTimeArray);
+    *systime = infoPtr->date;
 
     return GDT_VALID;
 }
 
 
 static BOOL
-DATETIME_SetSystemTime (DATETIME_INFO *infoPtr, DWORD flag, const SYSTEMTIME *lprgSysTimeArray)
+DATETIME_SetSystemTime (DATETIME_INFO *infoPtr, DWORD flag, const SYSTEMTIME *systime)
 {
-    if (!lprgSysTimeArray) return 0;
+    if (!systime) return 0;
 
     TRACE("%04d/%02d/%02d %02d:%02d:%02d\n",
-          lprgSysTimeArray->wYear, lprgSysTimeArray->wMonth, lprgSysTimeArray->wDay,
-          lprgSysTimeArray->wHour, lprgSysTimeArray->wMinute, lprgSysTimeArray->wSecond);
+          systime->wYear, systime->wMonth, systime->wDay,
+          systime->wHour, systime->wMinute, systime->wSecond);
 
     if (flag == GDT_VALID) {
-      if (lprgSysTimeArray->wYear < 1601 || lprgSysTimeArray->wYear > 30827 ||
-          lprgSysTimeArray->wMonth < 1 || lprgSysTimeArray->wMonth > 12 ||
-          lprgSysTimeArray->wDayOfWeek > 6 ||
-          lprgSysTimeArray->wDay < 1 || lprgSysTimeArray->wDay > 31 ||
-          lprgSysTimeArray->wHour > 23 ||
-          lprgSysTimeArray->wMinute > 59 ||
-          lprgSysTimeArray->wSecond > 59 ||
-          lprgSysTimeArray->wMilliseconds > 999
+      if (systime->wYear < 1601 || systime->wYear > 30827 ||
+          systime->wMonth < 1 || systime->wMonth > 12 ||
+          systime->wDayOfWeek > 6 ||
+          systime->wDay < 1 || systime->wDay > 31 ||
+          systime->wHour > 23 ||
+          systime->wMinute > 59 ||
+          systime->wSecond > 59 ||
+          systime->wMilliseconds > 999
           )
         return 0;
 
         infoPtr->dateValid = TRUE;
-        MONTHCAL_CopyTime (lprgSysTimeArray, &infoPtr->date);
+        infoPtr->date = *systime;
         SendMessageW (infoPtr->hMonthCal, MCM_SETCURSEL, 0, (LPARAM)(&infoPtr->date));
         SendMessageW (infoPtr->hwndCheckbut, BM_SETCHECK, BST_CHECKED, 0);
     } else if ((infoPtr->dwStyle & DTS_SHOWNONE) && (flag == GDT_NONE)) {
@@ -1128,7 +1128,7 @@ DATETIME_SendDateTimeChangeNotify (const DATETIME_INFO *infoPtr)
 
     dtdtc.dwFlags = (infoPtr->dwStyle & DTS_SHOWNONE) ? GDT_NONE : GDT_VALID;
 
-    MONTHCAL_CopyTime (&infoPtr->date, &dtdtc.st);
+    dtdtc.st = infoPtr->date;
     return (BOOL) SendMessageW (infoPtr->hwndNotify, WM_NOTIFY,
                                 dtdtc.nmhdr.idFrom, (LPARAM)&dtdtc);
 }

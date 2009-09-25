@@ -232,18 +232,6 @@ extern void UPDOWN_Unregister(void);
 
 int MONTHCAL_MonthLength(int month, int year);
 
-static inline void MONTHCAL_CopyTime(const SYSTEMTIME *from, SYSTEMTIME *to)
-{
-  to->wYear = from->wYear;
-  to->wMonth = from->wMonth;
-  to->wDayOfWeek = from->wDayOfWeek;
-  to->wDay = from->wDay;
-  to->wHour = from->wHour;
-  to->wMinute = from->wMinute;
-  to->wSecond = from->wSecond;
-  to->wMilliseconds = from->wMilliseconds;
-}
-
 extern void THEMING_Initialize(void);
 extern void THEMING_Uninitialize(void);
 extern LRESULT THEMING_CallOriginalClass(HWND, UINT, WPARAM, LPARAM);

@@ -639,7 +639,7 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
 	strcpyW(buf1, todayW);
       }
     MONTHCAL_CalcDayRect(infoPtr, &rtoday, 1, 6);
-    MONTHCAL_CopyTime(&infoPtr->todaysDate,&localtime);
+    localtime = infoPtr->todaysDate;
     GetDateFormatW(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&localtime,NULL,buf2,countof(buf2));
     wsprintfW(buf, fmt2W, buf1, buf2);
     SelectObject(hdc, infoPtr->hBoldFont);
@@ -919,12 +919,12 @@ MONTHCAL_SetRange(MONTHCAL_INFO *infoPtr, SHORT limits, SYSTEMTIME *range)
 
     if (limits & GDTR_MIN)
     {
-        MONTHCAL_CopyTime(&range[0], &infoPtr->minDate);
+        infoPtr->minDate = range[0];
         infoPtr->rangeValid |= GDTR_MIN;
     }
     if (limits & GDTR_MAX)
     {
-        MONTHCAL_CopyTime(&range[1], &infoPtr->maxDate);
+        infoPtr->maxDate = range[1];
         infoPtr->rangeValid |= GDTR_MAX;
     }
 
@@ -963,8 +963,8 @@ MONTHCAL_GetRange(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *range)
 
   if(!range) return FALSE;
 
-  MONTHCAL_CopyTime(&infoPtr->maxDate, &range[1]);
-  MONTHCAL_CopyTime(&infoPtr->minDate, &range[0]);
+  range[1] = infoPtr->maxDate;
+  range[0] = infoPtr->minDate;
 
   return infoPtr->rangeValid;
 }
@@ -991,7 +991,7 @@ MONTHCAL_GetCurSel(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
   if(!curSel) return FALSE;
   if(infoPtr->dwStyle & MCS_MULTISELECT) return FALSE;
 
-  MONTHCAL_CopyTime(&infoPtr->minSel, curSel);
+  *curSel = infoPtr->minSel;
   TRACE("%d/%d/%d\n", curSel->wYear, curSel->wMonth, curSel->wDay);
   return TRUE;
 }
@@ -1007,8 +1007,8 @@ MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
 
   if(!MONTHCAL_ValidateTime(*curSel)) return FALSE;
 
-  MONTHCAL_CopyTime(curSel, &infoPtr->minSel);
-  MONTHCAL_CopyTime(curSel, &infoPtr->maxSel);
+  infoPtr->minSel = *curSel;
+  infoPtr->maxSel = *curSel;
 
   /* exit earlier if selection equals current */
   if (infoPtr->currentMonth == curSel->wMonth &&
@@ -1053,8 +1053,8 @@ MONTHCAL_GetSelRange(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *range)
 
   if(infoPtr->dwStyle & MCS_MULTISELECT)
   {
-    MONTHCAL_CopyTime(&infoPtr->maxSel, &range[1]);
-    MONTHCAL_CopyTime(&infoPtr->minSel, &range[0]);
+    range[1] = infoPtr->maxSel;
+    range[0] = infoPtr->minSel;
     TRACE("[min,max]=[%d %d]\n", infoPtr->minSel.wDay, infoPtr->maxSel.wDay);
     return TRUE;
   }
@@ -1072,8 +1072,8 @@ MONTHCAL_SetSelRange(MONTHCAL_INFO *infoPtr, SYSTEMTIME *range)
 
   if(infoPtr->dwStyle & MCS_MULTISELECT)
   {
-    MONTHCAL_CopyTime(&range[1], &infoPtr->maxSel);
-    MONTHCAL_CopyTime(&range[0], &infoPtr->minSel);
+    infoPtr->maxSel = range[1];
+    infoPtr->minSel = range[0];
     TRACE("[min,max]=[%d %d]\n", infoPtr->minSel.wDay, infoPtr->maxSel.wDay);
     return TRUE;
   }
@@ -1088,7 +1088,7 @@ MONTHCAL_GetToday(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *today)
   TRACE("%p\n", today);
 
   if(!today) return FALSE;
-  MONTHCAL_CopyTime(&infoPtr->todaysDate, today);
+  *today = infoPtr->todaysDate;
   return TRUE;
 }
 
@@ -1102,7 +1102,7 @@ MONTHCAL_SetToday(MONTHCAL_INFO *infoPtr, SYSTEMTIME *today)
 
   if(MONTHCAL_IsDateEqual(today, &infoPtr->todaysDate)) return TRUE;
 
-  MONTHCAL_CopyTime(today, &infoPtr->todaysDate);
+  infoPtr->todaysDate = *today;
   InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
   return TRUE;
 }
@@ -1424,19 +1424,19 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   if(hit == MCHT_TODAYLINK) {
     NMSELCHANGE nmsc;
 
-    infoPtr->curSelDay = infoPtr->todaysDate.wDay;
-    infoPtr->firstSelDay = infoPtr->todaysDate.wDay;
-    infoPtr->currentMonth=infoPtr->todaysDate.wMonth;
-    infoPtr->currentYear=infoPtr->todaysDate.wYear;
-    MONTHCAL_CopyTime(&infoPtr->todaysDate, &infoPtr->minSel);
-    MONTHCAL_CopyTime(&infoPtr->todaysDate, &infoPtr->maxSel);
+    infoPtr->curSelDay    = infoPtr->todaysDate.wDay;
+    infoPtr->firstSelDay  = infoPtr->todaysDate.wDay;
+    infoPtr->currentMonth = infoPtr->todaysDate.wMonth;
+    infoPtr->currentYear  = infoPtr->todaysDate.wYear;
+    infoPtr->minSel = infoPtr->todaysDate;
+    infoPtr->maxSel = infoPtr->todaysDate;
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
 
     nmsc.nmhdr.hwndFrom = infoPtr->hwndSelf;
     nmsc.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
     nmsc.nmhdr.code     = MCN_SELCHANGE;
-    MONTHCAL_CopyTime(&infoPtr->minSel, &nmsc.stSelStart);
-    MONTHCAL_CopyTime(&infoPtr->maxSel, &nmsc.stSelEnd);
+    nmsc.stSelStart     = infoPtr->minSel;
+    nmsc.stSelEnd       = infoPtr->maxSel;
     SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmsc.nmhdr.idFrom, (LPARAM)&nmsc);
 
     nmsc.nmhdr.code     = MCN_SELECT;
@@ -1447,16 +1447,16 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
     SYSTEMTIME selArray[2];
     NMSELCHANGE nmsc;
 
-    MONTHCAL_CopyTime(&ht.st, &selArray[0]);
-    MONTHCAL_CopyTime(&ht.st, &selArray[1]);
+    selArray[0] = ht.st;
+    selArray[1] = ht.st;
     MONTHCAL_SetSelRange(infoPtr, selArray);
     MONTHCAL_SetCurSel(infoPtr, &selArray[0]);
     TRACE("MCHT_CALENDARDATE\n");
     nmsc.nmhdr.hwndFrom = infoPtr->hwndSelf;
     nmsc.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
     nmsc.nmhdr.code     = MCN_SELCHANGE;
-    MONTHCAL_CopyTime(&infoPtr->minSel,&nmsc.stSelStart);
-    MONTHCAL_CopyTime(&infoPtr->maxSel,&nmsc.stSelEnd);
+    nmsc.stSelStart     = infoPtr->minSel;
+    nmsc.stSelEnd       = infoPtr->maxSel;
 
     SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmsc.nmhdr.idFrom, (LPARAM)&nmsc);
 
@@ -1532,8 +1532,8 @@ MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
     nmsc.nmhdr.hwndFrom = infoPtr->hwndSelf;
     nmsc.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
     nmsc.nmhdr.code     = MCN_SELECT;
-    MONTHCAL_CopyTime(&infoPtr->minSel, &nmsc.stSelStart);
-    MONTHCAL_CopyTime(&infoPtr->maxSel, &nmsc.stSelEnd);
+    nmsc.stSelStart     = infoPtr->minSel;
+    nmsc.stSelEnd       = infoPtr->maxSel;
 
     SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmsc.nmhdr.idFrom, (LPARAM)&nmsc);
 
@@ -1873,8 +1873,8 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   MONTHCAL_SetFirstDayOfWeek(infoPtr, -1);
   infoPtr->currentMonth = infoPtr->todaysDate.wMonth;
   infoPtr->currentYear = infoPtr->todaysDate.wYear;
-  MONTHCAL_CopyTime(&infoPtr->todaysDate, &infoPtr->minDate);
-  MONTHCAL_CopyTime(&infoPtr->todaysDate, &infoPtr->maxDate);
+  infoPtr->minDate = infoPtr->todaysDate;
+  infoPtr->maxDate = infoPtr->todaysDate;
   infoPtr->maxDate.wYear=2050;
   infoPtr->minDate.wYear=1950;
   infoPtr->maxSelCount  = 7;
