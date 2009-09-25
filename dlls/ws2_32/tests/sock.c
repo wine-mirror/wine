@@ -1949,11 +1949,20 @@ static DWORD WINAPI AcceptKillThread(select_thread_params *par)
     return 0;
 }
 
+
+static int CALLBACK AlwaysDeferConditionFunc(LPWSABUF lpCallerId, LPWSABUF lpCallerData, LPQOS pQos,
+                                             LPQOS lpGQOS, LPWSABUF lpCalleeId, LPWSABUF lpCalleeData,
+                                             GROUP FAR * g, DWORD_PTR dwCallbackData)
+{
+    return CF_DEFER;
+}
+
 static void test_accept(void)
 {
     int ret;
-    SOCKET server_socket = INVALID_SOCKET;
+    SOCKET server_socket = INVALID_SOCKET, accepted = INVALID_SOCKET, connector = INVALID_SOCKET;
     struct sockaddr_in address;
+    int socklen;
     select_thread_params thread_params;
     HANDLE thread_handle = NULL;
     DWORD id;
@@ -1966,6 +1975,7 @@ static void test_accept(void)
     }
 
     memset(&address, 0, sizeof(address));
+    address.sin_addr.s_addr = inet_addr("127.0.0.1");
     address.sin_family = AF_INET;
     ret = bind(server_socket, (struct sockaddr*) &address, sizeof(address));
     if (ret != 0)
@@ -1974,12 +1984,33 @@ static void test_accept(void)
         goto done;
     }
 
-    ret = listen(server_socket, 1);
+    socklen = sizeof(address);
+    ret = getsockname(server_socket, (struct sockaddr*)&address, &socklen);
+    if (ret != 0) {
+        skip("failed to lookup bind address, error %d\n", WSAGetLastError());
+        goto done;
+    }
+
+    ret = listen(server_socket, 5);
     if (ret != 0)
     {
         trace("error making server socket listen: %d\n", WSAGetLastError());
         goto done;
     }
+
+    trace("Blocking accept next\n");
+
+    connector = socket(AF_INET, SOCK_STREAM, 0);
+    ok(connector != INVALID_SOCKET, "Failed to create connector socket, error %d\n", WSAGetLastError());
+
+    ret = connect(connector, (struct sockaddr*)&address, sizeof(address));
+    ok(ret == 0, "connecting to accepting socket failed, error %d\n", WSAGetLastError());
+
+    accepted = WSAAccept(server_socket, NULL, NULL, (LPCONDITIONPROC) AlwaysDeferConditionFunc, 0);
+    ok(accepted == INVALID_SOCKET && WSAGetLastError() == WSATRY_AGAIN, "Failed to defer connection, %d\n", WSAGetLastError());
+
+    accepted = accept(server_socket, NULL, 0);
+    ok(accepted != INVALID_SOCKET, "Failed to accept deferred connection, error %d\n", WSAGetLastError());
 
     server_ready = CreateEventA(NULL, TRUE, FALSE, NULL);
     if (server_ready == INVALID_HANDLE_VALUE)
@@ -2011,6 +2042,10 @@ static void test_accept(void)
     ok(thread_params.ReadKilled, "closesocket did not wakeup accept\n");
 
 done:
+    if (accepted != INVALID_SOCKET)
+        closesocket(accepted);
+    if (connector != INVALID_SOCKET)
+        closesocket(connector);
     if (thread_handle != NULL)
         CloseHandle(thread_handle);
     if (server_ready != INVALID_HANDLE_VALUE)
@@ -2755,13 +2790,6 @@ static void test_GetAddrInfoW(void)
     ret = pGetAddrInfoW(localhost, port, &hint, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
     pFreeAddrInfoW(result);
-}
-
-static int CALLBACK AlwaysDeferConditionFunc(LPWSABUF lpCallerId, LPWSABUF lpCallerData, LPQOS pQos,
-                                             LPQOS lpGQOS, LPWSABUF lpCalleeId, LPWSABUF lpCalleeData,
-                                             GROUP FAR * g, DWORD_PTR dwCallbackData)
-{
-    return CF_DEFER;
 }
 
 static void test_AcceptEx(void)
