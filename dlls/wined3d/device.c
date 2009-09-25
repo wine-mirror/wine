@@ -7057,6 +7057,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     else
         IWineD3DDevice_SetDepthStencilSurface(iface, NULL);
 
+    TRACE("Resetting stateblock\n");
+    IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock);
+    IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->stateBlock);
+
     delete_opengl_contexts(iface, (IWineD3DSwapChain *) swapchain);
 
     if(pPresentationParameters->Windowed) {
@@ -7130,10 +7134,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         This->style = style;
         This->exStyle = exStyle;
     }
-
-    TRACE("Resetting stateblock\n");
-    IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock);
-    IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->stateBlock);
 
     /* Note: No parent needed for initial internal stateblock */
     hr = IWineD3DDevice_CreateStateBlock(iface, WINED3DSBT_INIT, (IWineD3DStateBlock **)&This->stateBlock, NULL);
