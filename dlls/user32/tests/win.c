@@ -3226,6 +3226,7 @@ static void test_scrollwindow( HWND hwnd)
 
     ShowWindow( hwnd, SW_SHOW);
     UpdateWindow( hwnd);
+    flush_events( TRUE );
     GetClientRect( hwnd, &rc);
     hdc = GetDC( hwnd);
     /* test ScrollWindow(Ex) with no clip rectangle */
