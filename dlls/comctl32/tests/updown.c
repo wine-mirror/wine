@@ -513,7 +513,7 @@ static void test_updown_base(void)
     /* switch base with buddy attached */
     updown = create_updown_control(UDS_SETBUDDYINT);
 
-    r = SendMessage(updown, UDM_SETPOS32, 0, 10);
+    r = SendMessage(updown, UDM_SETPOS, 0, 10);
     expect(50, r);
 
     GetWindowTextA(edit, text, sizeof(text)/sizeof(CHAR));
@@ -587,7 +587,6 @@ static void test_UDS_SETBUDDYINT(void)
     HWND updown;
     DWORD style, ret;
     CHAR text[10];
-    BOOL b;
 
     /* cleanup buddy */
     text[0] = '\0';
@@ -619,7 +618,7 @@ static void test_UDS_SETBUDDYINT(void)
     /* set edit text directly, check position */
     strcpy(text, "10");
     SetWindowTextA(edit, text);
-    ret = SendMessageA(updown, UDM_GETPOS32, 0, 0);
+    ret = SendMessageA(updown, UDM_GETPOS, 0, 0);
     expect(10, ret);
     strcpy(text, "11");
     SetWindowTextA(edit, text);
@@ -629,10 +628,9 @@ static void test_UDS_SETBUDDYINT(void)
     /* set to invalid value */
     strcpy(text, "21st");
     SetWindowTextA(edit, text);
-    b = FALSE;
-    ret = SendMessageA(updown, UDM_GETPOS32, 0, (LPARAM)&b);
-    expect(11, ret);
-    expect(TRUE, b);
+    ret = SendMessageA(updown, UDM_GETPOS, 0, 0);
+    expect(11, LOWORD(ret));
+    expect(TRUE, HIWORD(ret));
     /* set style back */
     style = GetWindowLongA(updown, GWL_STYLE);
     SetWindowLongA(updown, GWL_STYLE, style | UDS_SETBUDDYINT);
