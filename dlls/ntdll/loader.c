@@ -2522,10 +2522,25 @@ PVOID WINAPI RtlImageDirectoryEntryToData( HMODULE module, BOOL image, WORD dir,
         image = FALSE;
     }
     if (!(nt = RtlImageNtHeader( module ))) return NULL;
-    if (dir >= nt->OptionalHeader.NumberOfRvaAndSizes) return NULL;
-    if (!(addr = nt->OptionalHeader.DataDirectory[dir].VirtualAddress)) return NULL;
-    *size = nt->OptionalHeader.DataDirectory[dir].Size;
-    if (image || addr < nt->OptionalHeader.SizeOfHeaders) return (char *)module + addr;
+    if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+    {
+        const IMAGE_NT_HEADERS64 *nt64 = (IMAGE_NT_HEADERS64 *)nt;
+
+        if (dir >= nt64->OptionalHeader.NumberOfRvaAndSizes) return NULL;
+        if (!(addr = nt64->OptionalHeader.DataDirectory[dir].VirtualAddress)) return NULL;
+        *size = nt64->OptionalHeader.DataDirectory[dir].Size;
+        if (image || addr < nt64->OptionalHeader.SizeOfHeaders) return (char *)module + addr;
+    }
+    else if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+    {
+        const IMAGE_NT_HEADERS32 *nt32 = (IMAGE_NT_HEADERS32 *)nt;
+
+        if (dir >= nt32->OptionalHeader.NumberOfRvaAndSizes) return NULL;
+        if (!(addr = nt32->OptionalHeader.DataDirectory[dir].VirtualAddress)) return NULL;
+        *size = nt32->OptionalHeader.DataDirectory[dir].Size;
+        if (image || addr < nt32->OptionalHeader.SizeOfHeaders) return (char *)module + addr;
+    }
+    else return NULL;
 
     /* not mapped as image, need to find the section containing the virtual address */
     return RtlImageRvaToVa( nt, module, addr, NULL );
