@@ -2838,6 +2838,13 @@ interface IWineD3DBaseShader : IWineD3DBase
         [in] const DWORD *function,
         [in] const struct wined3d_shader_signature *output_signature
     );
+    HRESULT GetDevice(
+        [out] IWineD3DDevice **device
+    );
+    HRESULT GetFunction(
+        [out] void *data,
+        [in, out] UINT *data_size
+    );
 }
 
 [
@@ -2847,13 +2854,6 @@ interface IWineD3DBaseShader : IWineD3DBase
 ]
 interface IWineD3DVertexShader : IWineD3DBaseShader
 {
-    HRESULT GetDevice(
-        [out] IWineD3DDevice **device
-    );
-    HRESULT GetFunction(
-        [out] void *data,
-        [in, out] UINT *data_size
-    );
     HRESULT SetLocalConstantsF(
         [in] UINT start_idx,
         [in] const float *src_data,
@@ -2868,13 +2868,6 @@ interface IWineD3DVertexShader : IWineD3DBaseShader
 ]
 interface IWineD3DPixelShader : IWineD3DBaseShader
 {
-    HRESULT GetDevice(
-        [out] IWineD3DDevice **device
-    );
-    HRESULT GetFunction(
-        [out] void *data,
-        [in, out] UINT *data_size
-    );
 }
 
 [

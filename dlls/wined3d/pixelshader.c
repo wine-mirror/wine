@@ -354,9 +354,9 @@ static const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =
     IWineD3DPixelShaderImpl_GetParent,
     /*** IWineD3DBaseShader methods ***/
     IWineD3DPixelShaderImpl_SetFunction,
-    /*** IWineD3DPixelShader methods ***/
     IWineD3DPixelShaderImpl_GetDevice,
     IWineD3DPixelShaderImpl_GetFunction
+    /*** IWineD3DPixelShader methods ***/
 };
 
 void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImpl *stateblock, struct ps_compile_args *args) {

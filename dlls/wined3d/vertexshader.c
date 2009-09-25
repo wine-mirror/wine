@@ -343,9 +343,9 @@ static const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
     IWineD3DVertexShaderImpl_GetParent,
     /*** IWineD3DBaseShader methods ***/
     IWineD3DVertexShaderImpl_SetFunction,
-    /*** IWineD3DVertexShader methods ***/
     IWineD3DVertexShaderImpl_GetDevice,
     IWineD3DVertexShaderImpl_GetFunction,
+    /*** IWineD3DVertexShader methods ***/
     IWIneD3DVertexShaderImpl_SetLocalConstantsF
 };
 
