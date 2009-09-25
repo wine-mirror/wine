@@ -3064,8 +3064,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetMaterial(IWineD3DDevice *iface, WINE
 /*****
  * Get / Set Indices
  *****/
-static HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWineD3DBuffer* pIndexData, WINED3DFORMAT fmt) {
-    IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;
+static HRESULT WINAPI IWineD3DDeviceImpl_SetIndexBuffer(IWineD3DDevice *iface,
+        IWineD3DBuffer *pIndexData, WINED3DFORMAT fmt)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DBuffer *oldIdxs;
 
     TRACE("(%p) : Setting to %p\n", This, pIndexData);
@@ -7393,7 +7395,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetDepthStencilSurface,
     IWineD3DDeviceImpl_SetGammaRamp,
     IWineD3DDeviceImpl_GetGammaRamp,
-    IWineD3DDeviceImpl_SetIndices,
+    IWineD3DDeviceImpl_SetIndexBuffer,
     IWineD3DDeviceImpl_GetIndices,
     IWineD3DDeviceImpl_SetBaseVertexIndex,
     IWineD3DDeviceImpl_GetBaseVertexIndex,

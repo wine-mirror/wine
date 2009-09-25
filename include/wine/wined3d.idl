@@ -3118,7 +3118,7 @@ interface IWineD3DDevice : IWineD3DBase
         [in] UINT swapchain_idx,
         [out] WINED3DGAMMARAMP *ramp
     );
-    HRESULT SetIndices(
+    HRESULT SetIndexBuffer(
         [in] IWineD3DBuffer *index_buffer,
         [in] WINED3DFORMAT format
     );

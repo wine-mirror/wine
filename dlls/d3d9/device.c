@@ -508,7 +508,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9EX iface, D3
      * below fails, the device is considered "lost", and _Reset and _Release are the only allowed calls
      */
     wined3d_mutex_lock();
-    IWineD3DDevice_SetIndices(This->WineD3DDevice, NULL, WINED3DFMT_UNKNOWN);
+    IWineD3DDevice_SetIndexBuffer(This->WineD3DDevice, NULL, WINED3DFMT_UNKNOWN);
     for(i = 0; i < 16; i++) {
         IWineD3DDevice_SetStreamSource(This->WineD3DDevice, i, NULL, 0, 0);
     }
@@ -1934,7 +1934,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetIndices(LPDIRECT3DDEVICE9EX ifac
     TRACE("(%p) Relay\n", This);
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_SetIndices(This->WineD3DDevice,
+    hr = IWineD3DDevice_SetIndexBuffer(This->WineD3DDevice,
             ib ? ib->wineD3DIndexBuffer : NULL,
             ib ? ib->format : WINED3DFMT_UNKNOWN);
     wined3d_mutex_unlock();

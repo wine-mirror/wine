@@ -2060,7 +2060,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetIndices(LPDIRECT3DDEVICE8 iface, I
      */
     wined3d_mutex_lock();
     IWineD3DDevice_SetBaseVertexIndex(This->WineD3DDevice, baseVertexIndex);
-    hr = IWineD3DDevice_SetIndices(This->WineD3DDevice,
+    hr = IWineD3DDevice_SetIndexBuffer(This->WineD3DDevice,
             ib ? ib->wineD3DIndexBuffer : NULL,
             ib ? ib->format : WINED3DFMT_UNKNOWN);
     wined3d_mutex_unlock();
