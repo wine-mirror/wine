@@ -2203,7 +2203,11 @@ BOOL WINAPI CreateUrlCacheEntryW(
     BOOL bFound = FALSE;
     int count;
     DWORD error;
+    HANDLE hFile;
+    FILETIME ft;
+
     static const WCHAR szWWW[] = {'w','w','w',0};
+    static const WCHAR fmt[] = {'%','0','8','X','%','s',0};
 
     TRACE("(%s, 0x%08x, %s, %p, 0x%08x)\n",
         debugstr_w(lpszUrlName),
@@ -2306,7 +2310,6 @@ BOOL WINAPI CreateUrlCacheEntryW(
     for (i = 0; i < 255; i++)
     {
         static const WCHAR szFormat[] = {'[','%','u',']','%','s',0};
-        HANDLE hFile;
         WCHAR *p;
 
         wsprintfW(lpszFileNameNoPath + countnoextension, szFormat, i, szExtension);
@@ -2334,6 +2337,18 @@ BOOL WINAPI CreateUrlCacheEntryW(
         }
     }
 
+    GetSystemTimeAsFileTime(&ft);
+    wsprintfW(lpszFileNameNoPath + countnoextension, fmt, ft.dwLowDateTime, szExtension);
+
+    TRACE("Trying: %s\n", debugstr_w(lpszFileName));
+    hFile = CreateFileW(lpszFileName, GENERIC_READ, 0, NULL, CREATE_NEW, 0, NULL);
+    if (hFile != INVALID_HANDLE_VALUE)
+    {
+        CloseHandle(hFile);
+        return TRUE;
+    }
+
+    WARN("Could not find a unique filename\n");
     return FALSE;
 }
 
