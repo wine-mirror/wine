@@ -1872,25 +1872,23 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->firstDayHighWord = FALSE;
   MONTHCAL_SetFirstDayOfWeek(infoPtr, -1);
   infoPtr->currentMonth = infoPtr->todaysDate.wMonth;
-  infoPtr->currentYear = infoPtr->todaysDate.wYear;
+  infoPtr->currentYear  = infoPtr->todaysDate.wYear;
   infoPtr->minDate = infoPtr->todaysDate;
   infoPtr->maxDate = infoPtr->todaysDate;
-  infoPtr->maxDate.wYear=2050;
-  infoPtr->minDate.wYear=1950;
-  infoPtr->maxSelCount  = 7;
-  infoPtr->monthRange = 3;
-  infoPtr->monthdayState = Alloc
-                         (infoPtr->monthRange * sizeof(MONTHDAYSTATE));
-  infoPtr->titlebk     = comctl32_color.clrActiveCaption;
-  infoPtr->titletxt    = comctl32_color.clrWindow;
-  infoPtr->monthbk     = comctl32_color.clrWindow;
-  infoPtr->trailingtxt = comctl32_color.clrGrayText;
-  infoPtr->bk          = comctl32_color.clrWindow;
-  infoPtr->txt	       = comctl32_color.clrWindowText;
+  infoPtr->maxDate.wYear = 2050;
+  infoPtr->minDate.wYear = 1950;
+  infoPtr->maxSelCount   = 7;
+  infoPtr->monthRange    = 3;
+  infoPtr->monthdayState = Alloc(infoPtr->monthRange * sizeof(MONTHDAYSTATE));
+  infoPtr->titlebk       = comctl32_color.clrActiveCaption;
+  infoPtr->titletxt      = comctl32_color.clrWindow;
+  infoPtr->monthbk       = comctl32_color.clrWindow;
+  infoPtr->trailingtxt   = comctl32_color.clrGrayText;
+  infoPtr->bk            = comctl32_color.clrWindow;
+  infoPtr->txt	         = comctl32_color.clrWindowText;
 
-  /* set the current day for highlighing */
-  infoPtr->minSel.wDay = infoPtr->todaysDate.wDay;
-  infoPtr->maxSel.wDay = infoPtr->todaysDate.wDay;
+  infoPtr->minSel = infoPtr->todaysDate;
+  infoPtr->maxSel = infoPtr->todaysDate;
 
   /* call MONTHCAL_UpdateSize to set all of the dimensions */
   /* of the control */
