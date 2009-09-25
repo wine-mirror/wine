@@ -376,7 +376,7 @@ static const struct wined3d_parent_ops d3d8_vertexdeclaration_wined3d_parent_ops
 };
 
 HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration8Impl *declaration,
-        IDirect3DDevice8Impl *device, const DWORD *elements)
+        IDirect3DDevice8Impl *device, const DWORD *elements, DWORD shader_handle)
 {
     WINED3DVERTEXELEMENT *wined3d_elements;
     UINT wined3d_element_count;
@@ -384,6 +384,7 @@ HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration8Impl *declaration,
 
     declaration->lpVtbl = &Direct3DVertexDeclaration8_Vtbl;
     declaration->ref_count = 1;
+    declaration->shader_handle = shader_handle;
 
     wined3d_element_count = convert_to_wined3d_declaration(elements, &declaration->elements_size, &wined3d_elements);
     declaration->elements = HeapAlloc(GetProcessHeap(), 0, declaration->elements_size);

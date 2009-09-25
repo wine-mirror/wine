@@ -113,15 +113,13 @@ static HRESULT vertexshader_create_vertexdeclaration(IDirect3DDevice8Impl *devic
         return D3DERR_OUTOFVIDEOMEMORY;
     }
 
-    hr = vertexdeclaration_init(object, device, declaration);
+    hr = vertexdeclaration_init(object, device, declaration, shader_handle);
     if (FAILED(hr))
     {
         WARN("Failed to initialize vertex declaration, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
         return hr;
     }
-
-    object->shader_handle = shader_handle;
 
     TRACE("Created vertex declaration %p.\n", object);
     *decl_ptr = (IDirect3DVertexDeclaration8 *)object;

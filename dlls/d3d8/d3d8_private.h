@@ -542,7 +542,7 @@ typedef struct {
 } IDirect3DVertexDeclaration8Impl;
 
 HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration8Impl *declaration,
-        IDirect3DDevice8Impl *device, const DWORD *elements) DECLSPEC_HIDDEN;
+        IDirect3DDevice8Impl *device, const DWORD *elements, DWORD shader_handle) DECLSPEC_HIDDEN;
 HRESULT vertexdeclaration_init_fvf(IDirect3DVertexDeclaration8Impl *declaration,
         IDirect3DDevice8Impl *device, DWORD fvf) DECLSPEC_HIDDEN;
 
