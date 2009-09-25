@@ -334,7 +334,7 @@ static BOOL primary_render_target_is_p8(IWineD3DDeviceImpl *device)
     if (device->render_targets && device->render_targets[0]) {
         IWineD3DSurfaceImpl* render_target = (IWineD3DSurfaceImpl*)device->render_targets[0];
         if ((render_target->resource.usage & WINED3DUSAGE_RENDERTARGET)
-                && (render_target->resource.format_desc->format == WINED3DFMT_P8))
+                && (render_target->resource.format_desc->format == WINED3DFMT_P8_UINT))
             return TRUE;
     }
     return FALSE;
@@ -351,7 +351,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
     const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
 
     /* Only support read back of converted P8 surfaces */
-    if (This->Flags & SFLAG_CONVERTED && format_desc->format != WINED3DFMT_P8)
+    if (This->Flags & SFLAG_CONVERTED && format_desc->format != WINED3DFMT_P8_UINT)
     {
         FIXME("Read back converted textures unsupported, format=%s\n", debug_d3dformat(format_desc->format));
         return;
@@ -390,7 +390,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
         int dst_pitch = 0;
 
         /* In case of P8 the index is stored in the alpha component if the primary render target uses P8 */
-        if (format_desc->format == WINED3DFMT_P8 && primary_render_target_is_p8(This->resource.wineD3DDevice))
+        if (format_desc->format == WINED3DFMT_P8_UINT && primary_render_target_is_p8(This->resource.wineD3DDevice))
         {
             format = GL_ALPHA;
             type = GL_UNSIGNED_BYTE;
@@ -764,8 +764,8 @@ void surface_internal_preload(IWineD3DSurface *iface, enum WINED3DSRGB srgb)
             ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
         }
 
-        if (This->resource.format_desc->format == WINED3DFMT_P8
-                || This->resource.format_desc->format == WINED3DFMT_A8P8)
+        if (This->resource.format_desc->format == WINED3DFMT_P8_UINT
+                || This->resource.format_desc->format == WINED3DFMT_P8_UINT_A8_UNORM)
         {
             if(palette9_changed(This)) {
                 TRACE("Reloading surface because the d3d8/9 palette was changed\n");
@@ -960,7 +960,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
 
     switch(This->resource.format_desc->format)
     {
-        case WINED3DFMT_P8:
+        case WINED3DFMT_P8_UINT:
         {
             if(primary_render_target_is_p8(myDevice)) {
                 /* In case of P8 render targets the index is stored in the alpha component */
@@ -1066,7 +1066,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
         row = HeapAlloc(GetProcessHeap(), 0, len);
         if(!row) {
             ERR("Out of memory\n");
-            if (This->resource.format_desc->format == WINED3DFMT_P8) HeapFree(GetProcessHeap(), 0, mem);
+            if (This->resource.format_desc->format == WINED3DFMT_P8_UINT) HeapFree(GetProcessHeap(), 0, mem);
             LEAVE_GL();
             return;
         }
@@ -1096,7 +1096,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
      * the same color but we have no choice.
      * In case of P8 render targets, the index is stored in the alpha component so no conversion is needed.
      */
-    if ((This->resource.format_desc->format == WINED3DFMT_P8) && !primary_render_target_is_p8(myDevice))
+    if (This->resource.format_desc->format == WINED3DFMT_P8_UINT && !primary_render_target_is_p8(myDevice))
     {
         const PALETTEENTRY *pal = NULL;
         DWORD width = pitch / 3;
@@ -1629,8 +1629,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
         return hr;
     }
 
-    if (This->resource.format_desc->format == WINED3DFMT_P8
-            || This->resource.format_desc->format == WINED3DFMT_A8P8)
+    if (This->resource.format_desc->format == WINED3DFMT_P8_UINT
+            || This->resource.format_desc->format == WINED3DFMT_P8_UINT_A8_UNORM)
     {
         /* GetDC on palettized formats is unsupported in D3D9, and the method is missing in
             D3D8, so this should only be used for DX <=7 surfaces (with non-device palettes) */
@@ -1722,7 +1722,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
     /* Ok, now look if we have to do any conversion */
     switch(This->resource.format_desc->format)
     {
-        case WINED3DFMT_P8:
+        case WINED3DFMT_P8_UINT:
             /* ****************
                 Paletted Texture
                 **************** */
@@ -1757,7 +1757,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
 
             break;
 
-        case WINED3DFMT_R3G3B2:
+        case WINED3DFMT_B2G3R3_UNORM:
             /* **********************
                 GL_UNSIGNED_BYTE_3_3_2
                 ********************** */
@@ -1768,7 +1768,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             }
             break;
 
-        case WINED3DFMT_R5G6B5:
+        case WINED3DFMT_B5G6R5_UNORM:
             if (colorkey_active) {
                 *convert = CONVERT_CK_565;
                 *format = GL_RGBA;
@@ -1777,7 +1777,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             }
             break;
 
-        case WINED3DFMT_X1R5G5B5:
+        case WINED3DFMT_B5G5R5X1_UNORM:
             if (colorkey_active) {
                 *convert = CONVERT_CK_5551;
                 *format = GL_BGRA;
@@ -1786,7 +1786,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             }
             break;
 
-        case WINED3DFMT_R8G8B8:
+        case WINED3DFMT_B8G8R8_UNORM:
             if (colorkey_active) {
                 *convert = CONVERT_CK_RGB24;
                 *format = GL_RGBA;
@@ -1796,7 +1796,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             }
             break;
 
-        case WINED3DFMT_X8R8G8B8:
+        case WINED3DFMT_B8G8R8X8_UNORM:
             if (colorkey_active) {
                 *convert = CONVERT_RGB32_888;
                 *format = GL_RGBA;
@@ -1813,7 +1813,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             *target_bpp = 3;
             break;
 
-        case WINED3DFMT_L6V5U5:
+        case WINED3DFMT_R5G5_SNORM_L6_UNORM:
             *convert = CONVERT_L6V5U5;
             if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
                 *target_bpp = 3;
@@ -1826,7 +1826,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             }
             break;
 
-        case WINED3DFMT_X8L8V8U8:
+        case WINED3DFMT_R8G8_SNORM_L8X8_UNORM:
             *convert = CONVERT_X8L8V8U8;
             *target_bpp = 4;
             if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
@@ -1858,8 +1858,8 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             *target_bpp = 6;
             break;
 
-        case WINED3DFMT_A4L4:
-            /* A4L4 exists as an internal gl format, but for some reason there is not
+        case WINED3DFMT_L4A4_UNORM:
+            /* WINED3DFMT_L4A4_UNORM exists as an internal gl format, but for some reason there is not
              * format+type combination to load it. Thus convert it to A8L8, then load it
              * with A4L4 internal, but A8L8 format+type
              */
@@ -1890,7 +1890,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             *target_bpp = 12;
             break;
 
-        case WINED3DFMT_D15S1:
+        case WINED3DFMT_S1_UINT_D15_UNORM:
             if (GL_SUPPORT(ARB_FRAMEBUFFER_OBJECT)
                     || GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
             {
@@ -1899,7 +1899,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             }
             break;
 
-        case WINED3DFMT_D24X4S4:
+        case WINED3DFMT_S4X4_UINT_D24_UNORM:
             if (GL_SUPPORT(ARB_FRAMEBUFFER_OBJECT)
                     || GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
             {
@@ -1907,7 +1907,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             }
             break;
 
-        case WINED3DFMT_D24FS8:
+        case WINED3DFMT_S8_UINT_D24_FLOAT:
             if (GL_SUPPORT(ARB_DEPTH_BUFFER_FLOAT))
             {
                 *convert = CONVERT_D24FS8;
@@ -2507,8 +2507,8 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
 BOOL palette9_changed(IWineD3DSurfaceImpl *This) {
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
-    if (This->palette || (This->resource.format_desc->format != WINED3DFMT_P8
-            && This->resource.format_desc->format != WINED3DFMT_A8P8))
+    if (This->palette || (This->resource.format_desc->format != WINED3DFMT_P8_UINT
+            && This->resource.format_desc->format != WINED3DFMT_P8_UINT_A8_UNORM))
     {
         /* If a ddraw-style palette is attached assume no d3d9 palette change.
          * Also the palette isn't interesting if the surface format isn't P8 or A8P8
@@ -3577,7 +3577,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
 
         /* When blitting from a render target a texture, the texture isn't required to have a palette.
          * In this case grab the palette from the render target. */
-        if ((This->resource.format_desc->format == WINED3DFMT_P8) && (This->palette == NULL))
+        if (This->resource.format_desc->format == WINED3DFMT_P8_UINT && !This->palette)
         {
             paletteOverride = TRUE;
             TRACE("Source surface (%p) lacks palette, overriding palette with palette %p of destination surface (%p)\n", Src, This->palette, This);
@@ -3653,7 +3653,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
          * surface is not required to have a palette. Our rendering / conversion
          * code further down the road retrieves the palette from the surface, so
          * it must have a palette set. */
-        if ((Src->resource.format_desc->format == WINED3DFMT_P8) && (Src->palette == NULL))
+        if (Src->resource.format_desc->format == WINED3DFMT_P8_UINT && !Src->palette)
         {
             paletteOverride = TRUE;
             TRACE("Source surface (%p) lacks palette, overriding palette with palette %p of destination surface (%p)\n", Src, This->palette, This);
@@ -3853,7 +3853,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             /* The color as given in the Blt function is in the format of the frame-buffer...
              * 'clear' expect it in ARGB format => we need to do some conversion :-)
              */
-            if (This->resource.format_desc->format == WINED3DFMT_P8)
+            if (This->resource.format_desc->format == WINED3DFMT_P8_UINT)
             {
                 DWORD alpha;
 
@@ -3869,7 +3869,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                     color = alpha;
                 }
             }
-            else if (This->resource.format_desc->format == WINED3DFMT_R5G6B5)
+            else if (This->resource.format_desc->format == WINED3DFMT_B5G6R5_UNORM)
             {
                 if (DDBltFx->u5.dwFillColor == 0xFFFF) {
                     color = 0xFFFFFFFF;
@@ -3880,12 +3880,12 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                             ((DDBltFx->u5.dwFillColor & 0x001F) << 3));
                 }
             }
-            else if ((This->resource.format_desc->format == WINED3DFMT_R8G8B8)
-                    || (This->resource.format_desc->format == WINED3DFMT_X8R8G8B8))
+            else if (This->resource.format_desc->format == WINED3DFMT_B8G8R8_UNORM
+                    || This->resource.format_desc->format == WINED3DFMT_B8G8R8X8_UNORM)
             {
                 color = 0xFF000000 | DDBltFx->u5.dwFillColor;
             }
-            else if (This->resource.format_desc->format == WINED3DFMT_A8R8G8B8)
+            else if (This->resource.format_desc->format == WINED3DFMT_B8G8R8A8_UNORM)
             {
                 color = DDBltFx->u5.dwFillColor;
             }
@@ -3918,14 +3918,14 @@ static HRESULT IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, const RECT *D
             case WINED3DFMT_D16_UNORM:
                 depth = (float) DDBltFx->u5.dwFillDepth / (float) 0x0000ffff;
                 break;
-            case WINED3DFMT_D15S1:
+            case WINED3DFMT_S1_UINT_D15_UNORM:
                 depth = (float) DDBltFx->u5.dwFillDepth / (float) 0x0000fffe;
                 break;
-            case WINED3DFMT_D24S8:
-            case WINED3DFMT_D24X8:
+            case WINED3DFMT_S8_UINT_D24_UNORM:
+            case WINED3DFMT_X8D24_UNORM:
                 depth = (float) DDBltFx->u5.dwFillDepth / (float) 0x00ffffff;
                 break;
-            case WINED3DFMT_D32:
+            case WINED3DFMT_D32_UNORM:
                 depth = (float) DDBltFx->u5.dwFillDepth / (float) 0xffffffff;
                 break;
             default:
@@ -4058,8 +4058,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface)
 
     if (!pal) return WINED3D_OK;
 
-    if (This->resource.format_desc->format == WINED3DFMT_P8
-            || This->resource.format_desc->format == WINED3DFMT_A8P8)
+    if (This->resource.format_desc->format == WINED3DFMT_P8_UINT
+            || This->resource.format_desc->format == WINED3DFMT_P8_UINT_A8_UNORM)
     {
         int bpp;
         GLenum format, internal, type;
@@ -4171,9 +4171,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
            is used in combination with texture uploads (RTL_READTEX/RTL_TEXTEX). The reason is that EXT_PALETTED_TEXTURE
            doesn't work in combination with ARB_TEXTURE_RECTANGLE.
         */
-        if(This->Flags & SFLAG_NONPOW2 && GL_SUPPORT(ARB_TEXTURE_RECTANGLE)
-                && !((This->resource.format_desc->format == WINED3DFMT_P8) && GL_SUPPORT(EXT_PALETTED_TEXTURE)
-                && (wined3d_settings.rendertargetlock_mode == RTL_READTEX)))
+        if (This->Flags & SFLAG_NONPOW2 && GL_SUPPORT(ARB_TEXTURE_RECTANGLE)
+                && !(This->resource.format_desc->format == WINED3DFMT_P8_UINT && GL_SUPPORT(EXT_PALETTED_TEXTURE)
+                && wined3d_settings.rendertargetlock_mode == RTL_READTEX))
         {
             This->texture_target = GL_TEXTURE_RECTANGLE_ARB;
             This->pow2Width  = This->currentDesc.Width;
@@ -4900,7 +4900,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
 
                 This->Flags |= SFLAG_CONVERTED;
             }
-            else if ((This->resource.format_desc->format == WINED3DFMT_P8)
+            else if (This->resource.format_desc->format == WINED3DFMT_P8_UINT
                     && (GL_SUPPORT(EXT_PALETTED_TEXTURE) || GL_SUPPORT(ARB_FRAGMENT_PROGRAM)))
             {
                 d3dfmt_p8_upload_palette(iface, convert);

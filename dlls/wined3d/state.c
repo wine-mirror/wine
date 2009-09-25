@@ -4068,7 +4068,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
                 case WINED3DFMT_R8G8B8A8_UINT:
                     GL_EXTCALL(glVertexAttrib4NubvARB(i, ptr));
                     break;
-                case WINED3DFMT_A8R8G8B8:
+                case WINED3DFMT_B8G8R8A8_UNORM:
                     if (GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA))
                     {
                         const DWORD *src = (const DWORD *)ptr;

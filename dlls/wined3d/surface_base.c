@@ -599,22 +599,22 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
     masks = (DWORD *)b_info->bmiColors;
     switch (This->resource.format_desc->format)
     {
-        case WINED3DFMT_R8G8B8:
+        case WINED3DFMT_B8G8R8_UNORM:
             usage = DIB_RGB_COLORS;
             b_info->bmiHeader.biCompression = BI_RGB;
             break;
 
-        case WINED3DFMT_X1R5G5B5:
-        case WINED3DFMT_A1R5G5B5:
-        case WINED3DFMT_A4R4G4B4:
-        case WINED3DFMT_X4R4G4B4:
-        case WINED3DFMT_R3G3B2:
-        case WINED3DFMT_A8R3G3B2:
+        case WINED3DFMT_B5G5R5X1_UNORM:
+        case WINED3DFMT_B5G5R5A1_UNORM:
+        case WINED3DFMT_B4G4R4A4_UNORM:
+        case WINED3DFMT_B4G4R4X4_UNORM:
+        case WINED3DFMT_B2G3R3_UNORM:
+        case WINED3DFMT_B2G3R3A8_UNORM:
         case WINED3DFMT_R10G10B10A2_UNORM:
         case WINED3DFMT_R8G8B8A8_UNORM:
-        case WINED3DFMT_X8B8G8R8:
-        case WINED3DFMT_A2R10G10B10:
-        case WINED3DFMT_R5G6B5:
+        case WINED3DFMT_R8G8B8X8_UNORM:
+        case WINED3DFMT_B10G10R10A2_UNORM:
+        case WINED3DFMT_B5G6R5_UNORM:
         case WINED3DFMT_R16G16B16A16_UNORM:
             usage = 0;
             b_info->bmiHeader.biCompression = BI_BITFIELDS;
@@ -757,9 +757,9 @@ struct d3dfmt_convertor_desc {
 
 static const struct d3dfmt_convertor_desc convertors[] =
 {
-    {WINED3DFMT_R32_FLOAT,  WINED3DFMT_R16_FLOAT,   convert_r32_float_r16_float},
-    {WINED3DFMT_R5G6B5,     WINED3DFMT_X8R8G8B8,    convert_r5g6b5_x8r8g8b8},
-    {WINED3DFMT_A8R8G8B8,   WINED3DFMT_X8R8G8B8,    convert_a8r8g8b8_x8r8g8b8},
+    {WINED3DFMT_R32_FLOAT,      WINED3DFMT_R16_FLOAT,       convert_r32_float_r16_float},
+    {WINED3DFMT_B5G6R5_UNORM,   WINED3DFMT_B8G8R8X8_UNORM,  convert_r5g6b5_x8r8g8b8},
+    {WINED3DFMT_B8G8R8A8_UNORM, WINED3DFMT_B8G8R8X8_UNORM,  convert_a8r8g8b8_x8r8g8b8},
 };
 
 static inline const struct d3dfmt_convertor_desc *find_convertor(WINED3DFORMAT from, WINED3DFORMAT to)

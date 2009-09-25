@@ -70,8 +70,8 @@ static void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3
         ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
     }
 
-    if (This->resource.format_desc->format == WINED3DFMT_P8
-            || This->resource.format_desc->format == WINED3DFMT_A8P8)
+    if (This->resource.format_desc->format == WINED3DFMT_P8_UINT
+            || This->resource.format_desc->format == WINED3DFMT_P8_UINT_A8_UNORM)
     {
         for (i = 0; i < This->baseTexture.levels; ++i)
         {

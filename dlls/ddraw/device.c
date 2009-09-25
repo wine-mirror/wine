@@ -1147,18 +1147,18 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
 
     WINED3DFORMAT FormatList[] = {
         /* 32 bit */
-        WINED3DFMT_A8R8G8B8,
-        WINED3DFMT_X8R8G8B8,
+        WINED3DFMT_B8G8R8A8_UNORM,
+        WINED3DFMT_B8G8R8X8_UNORM,
         /* 24 bit */
-        WINED3DFMT_R8G8B8,
+        WINED3DFMT_B8G8R8_UNORM,
         /* 16 Bit */
-        WINED3DFMT_A1R5G5B5,
-        WINED3DFMT_A4R4G4B4,
-        WINED3DFMT_R5G6B5,
-        WINED3DFMT_X1R5G5B5,
+        WINED3DFMT_B5G5R5A1_UNORM,
+        WINED3DFMT_B4G4R4A4_UNORM,
+        WINED3DFMT_B5G6R5_UNORM,
+        WINED3DFMT_B5G5R5X1_UNORM,
         /* 8 Bit */
-        WINED3DFMT_R3G3B2,
-        WINED3DFMT_P8,
+        WINED3DFMT_B2G3R3_UNORM,
+        WINED3DFMT_P8_UINT,
         /* FOURCC codes */
         WINED3DFMT_DXT1,
         WINED3DFMT_DXT3,
@@ -1167,12 +1167,12 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
 
     WINED3DFORMAT BumpFormatList[] = {
         WINED3DFMT_R8G8_SNORM,
-        WINED3DFMT_L6V5U5,
-        WINED3DFMT_X8L8V8U8,
+        WINED3DFMT_R5G5_SNORM_L6_UNORM,
+        WINED3DFMT_R8G8_SNORM_L8X8_UNORM,
         WINED3DFMT_R8G8B8A8_SNORM,
         WINED3DFMT_R16G16_SNORM,
-        WINED3DFMT_W11V11U10,
-        WINED3DFMT_A2W10V10U10
+        WINED3DFMT_R10G11B11_SNORM,
+        WINED3DFMT_R10G10B10_SNORM_A2_UNORM
     };
 
     TRACE("(%p)->(%p,%p): Relay\n", This, Callback, Arg);
@@ -1309,18 +1309,18 @@ IDirect3DDeviceImpl_2_EnumTextureFormats(IDirect3DDevice2 *iface,
 
     WINED3DFORMAT FormatList[] = {
         /* 32 bit */
-        WINED3DFMT_A8R8G8B8,
-        WINED3DFMT_X8R8G8B8,
+        WINED3DFMT_B8G8R8A8_UNORM,
+        WINED3DFMT_B8G8R8X8_UNORM,
         /* 24 bit */
-        WINED3DFMT_R8G8B8,
+        WINED3DFMT_B8G8R8_UNORM,
         /* 16 Bit */
-        WINED3DFMT_A1R5G5B5,
-        WINED3DFMT_A4R4G4B4,
-        WINED3DFMT_R5G6B5,
-        WINED3DFMT_X1R5G5B5,
+        WINED3DFMT_B5G5R5A1_UNORM,
+        WINED3DFMT_B4G4R4A4_UNORM,
+        WINED3DFMT_B5G6R5_UNORM,
+        WINED3DFMT_B5G5R5X1_UNORM,
         /* 8 Bit */
-        WINED3DFMT_R3G3B2,
-        WINED3DFMT_P8,
+        WINED3DFMT_B2G3R3_UNORM,
+        WINED3DFMT_P8_UINT,
         /* FOURCC codes - Not in this version*/
     };
 
@@ -3841,14 +3841,14 @@ IDirect3DDeviceImpl_7_DrawPrimitiveStrided(IDirect3DDevice7 *iface,
 
     if(VertexType & D3DFVF_DIFFUSE)
     {
-        WineD3DStrided.diffuse.format = WINED3DFMT_A8R8G8B8;
+        WineD3DStrided.diffuse.format = WINED3DFMT_B8G8R8A8_UNORM;
         WineD3DStrided.diffuse.lpData = D3DDrawPrimStrideData->diffuse.lpvData;
         WineD3DStrided.diffuse.dwStride = D3DDrawPrimStrideData->diffuse.dwStride;
     }
 
     if(VertexType & D3DFVF_SPECULAR)
     {
-        WineD3DStrided.specular.format = WINED3DFMT_A8R8G8B8;
+        WineD3DStrided.specular.format = WINED3DFMT_B8G8R8A8_UNORM;
         WineD3DStrided.specular.lpData = D3DDrawPrimStrideData->specular.lpvData;
         WineD3DStrided.specular.dwStride = D3DDrawPrimStrideData->specular.dwStride;
     }
@@ -3982,14 +3982,14 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
 
     if(VertexType & D3DFVF_DIFFUSE)
     {
-        WineD3DStrided.diffuse.format = WINED3DFMT_A8R8G8B8;
+        WineD3DStrided.diffuse.format = WINED3DFMT_B8G8R8A8_UNORM;
         WineD3DStrided.diffuse.lpData = D3DDrawPrimStrideData->diffuse.lpvData;
         WineD3DStrided.diffuse.dwStride = D3DDrawPrimStrideData->diffuse.dwStride;
     }
 
     if(VertexType & D3DFVF_SPECULAR)
     {
-        WineD3DStrided.specular.format = WINED3DFMT_A8R8G8B8;
+        WineD3DStrided.specular.format = WINED3DFMT_B8G8R8A8_UNORM;
         WineD3DStrided.specular.lpData = D3DDrawPrimStrideData->specular.lpvData;
         WineD3DStrided.specular.dwStride = D3DDrawPrimStrideData->specular.dwStride;
     }

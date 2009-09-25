@@ -313,7 +313,7 @@ const char* filename)
     }
     fprintf(f, "P6\n%d %d\n255\n", This->pow2Width, This->pow2Height);
 
-    if (This->resource.format_desc->format == WINED3DFMT_P8)
+    if (This->resource.format_desc->format == WINED3DFMT_P8_UINT)
     {
         unsigned char table[256][3];
         int i;
@@ -418,8 +418,8 @@ static HRESULT WINAPI IWineGDISurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
         return hr;
     }
 
-    if (This->resource.format_desc->format == WINED3DFMT_P8
-            || This->resource.format_desc->format == WINED3DFMT_A8P8)
+    if (This->resource.format_desc->format == WINED3DFMT_P8_UINT
+            || This->resource.format_desc->format == WINED3DFMT_P8_UINT_A8_UNORM)
     {
         unsigned int n;
         const PALETTEENTRY *pal = NULL;

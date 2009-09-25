@@ -581,11 +581,11 @@ IDirectDrawImpl_SetDisplayModeNoOverride(IDirectDraw7 *iface,
     Mode.RefreshRate = RefreshRate;
     switch(BPP)
     {
-        case 8:  Mode.Format = WINED3DFMT_P8;       break;
-        case 15: Mode.Format = WINED3DFMT_X1R5G5B5; break;
-        case 16: Mode.Format = WINED3DFMT_R5G6B5;   break;
-        case 24: Mode.Format = WINED3DFMT_R8G8B8;   break;
-        case 32: Mode.Format = WINED3DFMT_X8R8G8B8; break;
+        case 8:  Mode.Format = WINED3DFMT_P8_UINT;          break;
+        case 15: Mode.Format = WINED3DFMT_B5G5R5X1_UNORM;   break;
+        case 16: Mode.Format = WINED3DFMT_B5G6R5_UNORM;     break;
+        case 24: Mode.Format = WINED3DFMT_B8G8R8_UNORM;     break;
+        case 32: Mode.Format = WINED3DFMT_B8G8R8X8_UNORM;   break;
     }
 
     /* TODO: The possible return values from msdn suggest that
@@ -1336,22 +1336,22 @@ IDirectDrawImpl_EnumDisplayModes(IDirectDraw7 *iface,
 
     WINED3DFORMAT checkFormatList[] =
     {
-        WINED3DFMT_R8G8B8,
-        WINED3DFMT_A8R8G8B8,
-        WINED3DFMT_X8R8G8B8,
-        WINED3DFMT_R5G6B5,
-        WINED3DFMT_X1R5G5B5,
-        WINED3DFMT_A1R5G5B5,
-        WINED3DFMT_A4R4G4B4,
-        WINED3DFMT_R3G3B2,
-        WINED3DFMT_A8R3G3B2,
-        WINED3DFMT_X4R4G4B4,
+        WINED3DFMT_B8G8R8_UNORM,
+        WINED3DFMT_B8G8R8A8_UNORM,
+        WINED3DFMT_B8G8R8X8_UNORM,
+        WINED3DFMT_B5G6R5_UNORM,
+        WINED3DFMT_B5G5R5X1_UNORM,
+        WINED3DFMT_B5G5R5A1_UNORM,
+        WINED3DFMT_B4G4R4A4_UNORM,
+        WINED3DFMT_B2G3R3_UNORM,
+        WINED3DFMT_B2G3R3A8_UNORM,
+        WINED3DFMT_B4G4R4X4_UNORM,
         WINED3DFMT_R10G10B10A2_UNORM,
         WINED3DFMT_R8G8B8A8_UNORM,
-        WINED3DFMT_X8B8G8R8,
-        WINED3DFMT_A2R10G10B10,
-        WINED3DFMT_A8P8,
-        WINED3DFMT_P8
+        WINED3DFMT_R8G8B8X8_UNORM,
+        WINED3DFMT_B10G10R10A2_UNORM,
+        WINED3DFMT_P8_UINT_A8_UNORM,
+        WINED3DFMT_P8_UINT,
     };
 
     TRACE("(%p)->(%p,%p,%p): Relay\n", This, DDSD, Context, cb);
@@ -2341,23 +2341,23 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         switch(This->orig_bpp)
         {
             case 8:
-                Mode.Format = WINED3DFMT_P8;
+                Mode.Format = WINED3DFMT_P8_UINT;
                 break;
 
             case 15:
-                Mode.Format = WINED3DFMT_X1R5G5B5;
+                Mode.Format = WINED3DFMT_B5G5R5X1_UNORM;
                 break;
 
             case 16:
-                Mode.Format = WINED3DFMT_R5G6B5;
+                Mode.Format = WINED3DFMT_B5G6R5_UNORM;
                 break;
 
             case 24:
-                Mode.Format = WINED3DFMT_R8G8B8;
+                Mode.Format = WINED3DFMT_B8G8R8_UNORM;
                 break;
 
             case 32:
-                Mode.Format = WINED3DFMT_X8R8G8B8;
+                Mode.Format = WINED3DFMT_B8G8R8X8_UNORM;
                 break;
         }
         Mode.Width = This->orig_width;
@@ -2376,16 +2376,16 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
             switch(desc2.u2.dwMipMapCount) /* Who had this glorious idea? */
             {
                 case 15:
-                    PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, WINED3DFMT_D15S1);
+                    PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, WINED3DFMT_S1_UINT_D15_UNORM);
                     break;
                 case 16:
                     PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, WINED3DFMT_D16_UNORM);
                     break;
                 case 24:
-                    PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, WINED3DFMT_D24X8);
+                    PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, WINED3DFMT_X8D24_UNORM);
                     break;
                 case 32:
-                    PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, WINED3DFMT_D32);
+                    PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, WINED3DFMT_D32_UNORM);
                     break;
                 default:
                     ERR("Unknown Z buffer bit depth\n");

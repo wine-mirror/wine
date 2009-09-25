@@ -128,7 +128,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
         element = &si->elements[WINED3D_FFP_DIFFUSE];
         diffuse = element->data + streamOffset[element->stream_idx];
 
-        if (num_untracked_materials && element->format_desc->format != WINED3DFMT_A8R8G8B8)
+        if (num_untracked_materials && element->format_desc->format != WINED3DFMT_B8G8R8A8_UNORM)
             FIXME("Implement diffuse color tracking from %s\n", debug_d3dformat(element->format_desc->format));
     }
     else
@@ -149,7 +149,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
         {
             if (GL_SUPPORT(EXT_FOG_COORD))
             {
-                if (element->format_desc->format == WINED3DFMT_A8R8G8B8) specular_fog = TRUE;
+                if (element->format_desc->format == WINED3DFMT_B8G8R8A8_UNORM) specular_fog = TRUE;
                 else FIXME("Implement fog coordinates from %s\n", debug_d3dformat(element->format_desc->format));
             }
             else
@@ -332,7 +332,7 @@ static inline void send_attribute(IWineD3DDeviceImpl *This, WINED3DFORMAT format
         case WINED3DFMT_R8G8B8A8_UINT:
             GL_EXTCALL(glVertexAttrib4ubvARB(index, ptr));
             break;
-        case WINED3DFMT_A8R8G8B8:
+        case WINED3DFMT_B8G8R8A8_UNORM:
             if (GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA))
             {
                 const DWORD *src = ptr;

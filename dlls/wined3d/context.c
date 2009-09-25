@@ -922,10 +922,10 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
      * Likely a lot of other new bugs will be exposed. For that reason request a depth stencil surface all the
      * time. It can cause a slight performance hit but fixes a lot of regressions. A fixme reminds of that this
      * issue needs to be fixed. */
-    if (ds_format_desc->format != WINED3DFMT_D24S8)
+    if (ds_format_desc->format != WINED3DFMT_S8_UINT_D24_UNORM)
     {
         FIXME("Add OpenGL context recreation support to SetDepthStencilSurface\n");
-        ds_format_desc = getFormatDescEntry(WINED3DFMT_D24S8, &This->adapter->gl_info);
+        ds_format_desc = getFormatDescEntry(WINED3DFMT_S8_UINT_D24_UNORM, &This->adapter->gl_info);
     }
 
     getDepthStencilBits(ds_format_desc, &depthBits, &stencilBits);
@@ -1137,18 +1137,18 @@ struct wined3d_context *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceI
         if(wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER) {
             auxBuffers = TRUE;
 
-            if (color_format_desc->format == WINED3DFMT_X4R4G4B4)
-                color_format_desc = getFormatDescEntry(WINED3DFMT_A4R4G4B4, &This->adapter->gl_info);
-            else if (color_format_desc->format == WINED3DFMT_X8R8G8B8)
-                color_format_desc = getFormatDescEntry(WINED3DFMT_A8R8G8B8, &This->adapter->gl_info);
+            if (color_format_desc->format == WINED3DFMT_B4G4R4X4_UNORM)
+                color_format_desc = getFormatDescEntry(WINED3DFMT_B4G4R4A4_UNORM, &This->adapter->gl_info);
+            else if (color_format_desc->format == WINED3DFMT_B8G8R8X8_UNORM)
+                color_format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, &This->adapter->gl_info);
         }
 
         /* DirectDraw supports 8bit paletted render targets and these are used by old games like Starcraft and C&C.
          * Most modern hardware doesn't support 8bit natively so we perform some form of 8bit -> 32bit conversion.
          * The conversion (ab)uses the alpha component for storing the palette index. For this reason we require
          * a format with 8bit alpha, so request A8R8G8B8. */
-        if (color_format_desc->format == WINED3DFMT_P8)
-            color_format_desc = getFormatDescEntry(WINED3DFMT_A8R8G8B8, &This->adapter->gl_info);
+        if (color_format_desc->format == WINED3DFMT_P8_UINT)
+            color_format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, &This->adapter->gl_info);
 
         /* Retrieve the depth stencil format from the present parameters.
          * The choice of the proper format can give a nice performance boost

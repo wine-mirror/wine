@@ -5,6 +5,7 @@
  * Copyright 2004 Jason Edmeades
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
+ * Copyright 2009 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -130,7 +131,7 @@ static BOOL declaration_element_valid_ffp(const WINED3DVERTEXELEMENT *element)
                 case WINED3DFMT_R32G32_FLOAT:
                 case WINED3DFMT_R32G32B32_FLOAT:
                 case WINED3DFMT_R32G32B32A32_FLOAT:
-                case WINED3DFMT_A8R8G8B8:
+                case WINED3DFMT_B8G8R8A8_UNORM:
                 case WINED3DFMT_R8G8B8A8_UINT:
                 case WINED3DFMT_R16G16_SINT:
                 case WINED3DFMT_R16G16B16A16_SINT:
@@ -174,7 +175,7 @@ static BOOL declaration_element_valid_ffp(const WINED3DVERTEXELEMENT *element)
             {
                 case WINED3DFMT_R32G32B32_FLOAT:
                 case WINED3DFMT_R32G32B32A32_FLOAT:
-                case WINED3DFMT_A8R8G8B8:
+                case WINED3DFMT_B8G8R8A8_UNORM:
                 case WINED3DFMT_R8G8B8A8_UINT:
                 case WINED3DFMT_R16G16B16A16_SINT:
                 case WINED3DFMT_R8G8B8A8_UNORM:

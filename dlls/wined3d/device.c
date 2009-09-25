@@ -298,7 +298,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
             stream_info->elements[idx].stream_idx = element->input_slot;
             stream_info->elements[idx].buffer_object = buffer_object;
 
-            if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) && element->format_desc->format == WINED3DFMT_A8R8G8B8)
+            if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) && element->format_desc->format == WINED3DFMT_B8G8R8A8_UNORM)
             {
                 stream_info->swizzle_map |= 1 << idx;
             }
@@ -360,7 +360,8 @@ void device_stream_info_from_strided(IWineD3DDeviceImpl *This,
     {
         if (!stream_info->elements[i].format_desc) continue;
 
-        if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) && stream_info->elements[i].format_desc->format == WINED3DFMT_A8R8G8B8)
+        if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA)
+                && stream_info->elements[i].format_desc->format == WINED3DFMT_B8G8R8A8_UNORM)
         {
             stream_info->swizzle_map |= 1 << i;
         }
@@ -1655,7 +1656,7 @@ static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the
     }
     if (has_blend && (num_blends > 0)) {
         if (((fvf & WINED3DFVF_XYZB5) == WINED3DFVF_XYZB2) && (fvf & WINED3DFVF_LASTBETA_D3DCOLOR))
-            elements[idx].format = WINED3DFMT_A8R8G8B8;
+            elements[idx].format = WINED3DFMT_B8G8R8A8_UNORM;
         else {
             switch(num_blends) {
                 case 1: elements[idx].format = WINED3DFMT_R32_FLOAT; break;
@@ -1675,7 +1676,7 @@ static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the
             (((fvf & WINED3DFVF_XYZB5) == WINED3DFVF_XYZB2) && (fvf & WINED3DFVF_LASTBETA_D3DCOLOR)))
             elements[idx].format = WINED3DFMT_R8G8B8A8_UINT;
         else if (fvf & WINED3DFVF_LASTBETA_D3DCOLOR)
-            elements[idx].format = WINED3DFMT_A8R8G8B8;
+            elements[idx].format = WINED3DFMT_B8G8R8A8_UNORM;
         else
             elements[idx].format = WINED3DFMT_R32_FLOAT;
         elements[idx].usage = WINED3DDECLUSAGE_BLENDINDICES;
@@ -1695,13 +1696,13 @@ static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the
         idx++;
     }
     if (has_diffuse) {
-        elements[idx].format = WINED3DFMT_A8R8G8B8;
+        elements[idx].format = WINED3DFMT_B8G8R8A8_UNORM;
         elements[idx].usage = WINED3DDECLUSAGE_COLOR;
         elements[idx].usage_idx = 0;
         idx++;
     }
     if (has_specular) {
-        elements[idx].format = WINED3DFMT_A8R8G8B8;
+        elements[idx].format = WINED3DFMT_B8G8R8A8_UNORM;
         elements[idx].usage = WINED3DDECLUSAGE_COLOR;
         elements[idx].usage_idx = 1;
         idx++;
@@ -1884,7 +1885,7 @@ static void IWineD3DDeviceImpl_LoadLogo(IWineD3DDeviceImpl *This, const char *fi
         bm.bmHeight = 32;
     }
 
-    hr = IWineD3DDevice_CreateSurface((IWineD3DDevice *) This, bm.bmWidth, bm.bmHeight, WINED3DFMT_R5G6B5, TRUE,
+    hr = IWineD3DDevice_CreateSurface((IWineD3DDevice *)This, bm.bmWidth, bm.bmHeight, WINED3DFMT_B5G6R5_UNORM, TRUE,
             FALSE, 0, &This->logo_surface, 0, WINED3DPOOL_DEFAULT, WINED3DMULTISAMPLE_NONE, 0, SURFACE_OPENGL,
             NULL, &wined3d_null_parent_ops);
     if(FAILED(hr)) {
@@ -5457,14 +5458,15 @@ static void dirtify_p8_texture_samplers(IWineD3DDeviceImpl *device)
 {
     int i;
 
-    for (i = 0; i < MAX_COMBINED_SAMPLERS; i++) {
-            IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl*)device->stateBlock->textures[i];
-            if (texture && (texture->resource.format_desc->format == WINED3DFMT_P8
-                    || texture->resource.format_desc->format == WINED3DFMT_A8P8))
-            {
-                IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(i));
-            }
+    for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
+    {
+        IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl*)device->stateBlock->textures[i];
+        if (texture && (texture->resource.format_desc->format == WINED3DFMT_P8_UINT
+                || texture->resource.format_desc->format == WINED3DFMT_P8_UINT_A8_UNORM))
+        {
+            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(i));
         }
+    }
 }
 
 static HRESULT  WINAPI  IWineD3DDeviceImpl_SetPaletteEntries(IWineD3DDevice *iface, UINT PaletteNumber, CONST PALETTEENTRY* pEntries) {
@@ -5994,8 +5996,9 @@ static inline DWORD argb_to_fmt(DWORD color, WINED3DFORMAT destfmt) {
     unsigned int r, g, b, a;
     DWORD ret;
 
-    if(destfmt == WINED3DFMT_A8R8G8B8 || destfmt == WINED3DFMT_X8R8G8B8 ||
-       destfmt == WINED3DFMT_R8G8B8)
+    if (destfmt == WINED3DFMT_B8G8R8A8_UNORM
+            || destfmt == WINED3DFMT_B8G8R8X8_UNORM
+            || destfmt == WINED3DFMT_B8G8R8_UNORM)
         return color;
 
     TRACE("Converting color %08x to format %s\n", color, debug_d3dformat(destfmt));
@@ -6007,7 +6010,7 @@ static inline DWORD argb_to_fmt(DWORD color, WINED3DFORMAT destfmt) {
 
     switch(destfmt)
     {
-        case WINED3DFMT_R5G6B5:
+        case WINED3DFMT_B5G6R5_UNORM:
             if(r == 0xff && g == 0xff && b == 0xff) return 0xffff;
             r = (r * 32) / 256;
             g = (g * 64) / 256;
@@ -6018,8 +6021,8 @@ static inline DWORD argb_to_fmt(DWORD color, WINED3DFORMAT destfmt) {
             TRACE("Returning %08x\n", ret);
             return ret;
 
-        case WINED3DFMT_X1R5G5B5:
-        case WINED3DFMT_A1R5G5B5:
+        case WINED3DFMT_B5G5R5X1_UNORM:
+        case WINED3DFMT_B5G5R5A1_UNORM:
             a = (a *  2) / 256;
             r = (r * 32) / 256;
             g = (g * 32) / 256;
@@ -6035,8 +6038,8 @@ static inline DWORD argb_to_fmt(DWORD color, WINED3DFORMAT destfmt) {
             TRACE("Returning %08x\n", a);
             return a;
 
-        case WINED3DFMT_X4R4G4B4:
-        case WINED3DFMT_A4R4G4B4:
+        case WINED3DFMT_B4G4R4X4_UNORM:
+        case WINED3DFMT_B4G4R4A4_UNORM:
             a = (a * 16) / 256;
             r = (r * 16) / 256;
             g = (g * 16) / 256;
@@ -6048,7 +6051,7 @@ static inline DWORD argb_to_fmt(DWORD color, WINED3DFORMAT destfmt) {
             TRACE("Returning %08x\n", ret);
             return ret;
 
-        case WINED3DFMT_R3G3B2:
+        case WINED3DFMT_B2G3R3_UNORM:
             r = (r * 8) / 256;
             g = (g * 8) / 256;
             b = (b * 4) / 256;
@@ -6058,7 +6061,7 @@ static inline DWORD argb_to_fmt(DWORD color, WINED3DFORMAT destfmt) {
             TRACE("Returning %08x\n", ret);
             return ret;
 
-        case WINED3DFMT_X8B8G8R8:
+        case WINED3DFMT_R8G8B8X8_UNORM:
         case WINED3DFMT_R8G8B8A8_UNORM:
             ret  = a << 24;
             ret |= b << 16;
@@ -6067,7 +6070,7 @@ static inline DWORD argb_to_fmt(DWORD color, WINED3DFORMAT destfmt) {
             TRACE("Returning %08x\n", ret);
             return ret;
 
-        case WINED3DFMT_A2R10G10B10:
+        case WINED3DFMT_B10G10R10A2_UNORM:
             a = (a *    4) / 256;
             r = (r * 1024) / 256;
             g = (g * 1024) / 256;
@@ -6563,7 +6566,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
         WINED3DLOCKED_RECT rect;
 
         /* MSDN: Cursor must be A8R8G8B8 */
-        if (WINED3DFMT_A8R8G8B8 != pSur->resource.format_desc->format)
+        if (pSur->resource.format_desc->format != WINED3DFMT_B8G8R8A8_UNORM)
         {
             ERR("(%p) : surface(%p) has an invalid format\n", This, pCursorBitmap);
             return WINED3DERR_INVALIDCALL;
@@ -6589,7 +6592,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
             This->cursorHeight = pSur->currentDesc.Height;
             if (SUCCEEDED(IWineD3DSurface_LockRect(pCursorBitmap, &rect, NULL, WINED3DLOCK_READONLY)))
             {
-                const struct GlPixelFormatDesc *glDesc = getFormatDescEntry(WINED3DFMT_A8R8G8B8, &GLINFO_LOCATION);
+                const struct GlPixelFormatDesc *glDesc =
+                        getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, &GLINFO_LOCATION);
                 char *mem, *bits = rect.pBits;
                 GLint intfmt = glDesc->glInternal;
                 GLint format = glDesc->glFormat;

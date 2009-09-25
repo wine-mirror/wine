@@ -223,11 +223,11 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct win
         else if (is_ffp_color) FIXME("test FLOAT16 fixed function processing colors\n");
         *float16_used = TRUE;
     }
-    else if (check_d3dcolor && format == WINED3DFMT_A8R8G8B8)
+    else if (check_d3dcolor && format == WINED3DFMT_B8G8R8A8_UNORM)
     {
         ret = buffer_process_converted_attribute(This, CONV_D3DCOLOR, attrib, stride_this_run);
 
-        if (!is_ffp_color) FIXME("Test for non-color fixed function WINED3DFMT_A8R8G8B8 format\n");
+        if (!is_ffp_color) FIXME("Test for non-color fixed function WINED3DFMT_B8G8R8A8_UNORM format\n");
     }
     else if (is_ffp_position && format == WINED3DFMT_R32G32B32A32_FLOAT)
     {

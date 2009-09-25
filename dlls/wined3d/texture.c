@@ -67,8 +67,8 @@ static void texture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRG
         ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
     }
 
-    if (This->resource.format_desc->format == WINED3DFMT_P8
-            || This->resource.format_desc->format == WINED3DFMT_A8P8)
+    if (This->resource.format_desc->format == WINED3DFMT_P8_UINT
+            || This->resource.format_desc->format == WINED3DFMT_P8_UINT_A8_UNORM)
     {
         for (i = 0; i < This->baseTexture.levels; ++i)
         {
@@ -528,8 +528,8 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         texture->baseTexture.minMipLookup = minMipLookup_noFilter;
     }
     else if (gl_info->supported[ARB_TEXTURE_RECTANGLE] && (width != pow2_width || height != pow2_height)
-            && !((format_desc->format == WINED3DFMT_P8) && gl_info->supported[EXT_PALETTED_TEXTURE]
-            && (wined3d_settings.rendertargetlock_mode == RTL_READTEX)))
+            && !(format_desc->format == WINED3DFMT_P8_UINT && gl_info->supported[EXT_PALETTED_TEXTURE]
+            && wined3d_settings.rendertargetlock_mode == RTL_READTEX))
     {
         if ((width != 1) || (height != 1)) texture->baseTexture.pow2Matrix_identity = FALSE;
 
