@@ -886,6 +886,7 @@ HRESULT WINAPI Control_FillCache_RunDLLA(HWND hWnd, HANDLE hModule, DWORD w, DWO
 void WINAPI RunDLL_CallEntry16( DWORD proc, HWND hwnd, HINSTANCE inst,
                                 LPCSTR cmdline, INT cmdshow )
 {
+#ifdef __i386__
     WORD args[5];
     SEGPTR cmdline_seg;
 
@@ -900,6 +901,7 @@ void WINAPI RunDLL_CallEntry16( DWORD proc, HWND hwnd, HINSTANCE inst,
     args[0] = cmdshow;
     WOWCallback16Ex( proc, WCB16_PASCAL, sizeof(args), args, NULL );
     UnMapLS( cmdline_seg );
+#endif
 }
 
 /*************************************************************************
