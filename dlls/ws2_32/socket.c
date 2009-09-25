@@ -1457,6 +1457,7 @@ static int WS2_register_async_shutdown( SOCKET s, int type )
 SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
                                  int *addrlen32)
 {
+    NTSTATUS status;
     SOCKET as;
     BOOL is_blocking;
 
@@ -1464,33 +1465,32 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
     is_blocking = _is_blocking(s);
 
     do {
-        if (is_blocking)
-        {
-            int fd = get_sock_fd( s, FILE_READ_DATA, NULL );
-            if (fd == -1) return INVALID_SOCKET;
-            /* block here */
-            do_block(fd, POLLIN, -1);
-            _sync_sock_state(s); /* let wineserver notice connection */
-            release_sock_fd( s, fd );
-            /* retrieve any error codes from it */
-            SetLastError(_get_sock_error(s, FD_ACCEPT_BIT));
-            /* FIXME: care about the error? */
-        }
+        /* try accepting first (if there is a deferred connection) */
         SERVER_START_REQ( accept_socket )
         {
             req->lhandle    = wine_server_obj_handle( SOCKET2HANDLE(s) );
             req->access     = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
             req->attributes = OBJ_INHERIT;
-            set_error( wine_server_call( req ) );
+            status = wine_server_call( req );
             as = HANDLE2SOCKET( wine_server_ptr_handle( reply->handle ));
         }
         SERVER_END_REQ;
-        if (as)
+        if (!status)
         {
             if (addr) WS_getpeername(as, addr, addrlen32);
             return as;
         }
-    } while (is_blocking);
+        if (is_blocking && status == WSAEWOULDBLOCK)
+        {
+            int fd = get_sock_fd( s, FILE_READ_DATA, NULL );
+            /* block here */
+            do_block(fd, POLLIN, -1);
+            _sync_sock_state(s); /* let wineserver notice connection */
+            release_sock_fd( s, fd );
+        }
+    } while (is_blocking && status == WSAEWOULDBLOCK);
+
+    set_error(status);
     return INVALID_SOCKET;
 }
 
