@@ -107,9 +107,10 @@ static void test_StreamOnMemory(void)
     ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == sizeof(Memory) - 1, "bSeek cursor moved to position (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart);
 
     IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_SET, &uNewPos); /* reset seek pointer */
-    LargeInt.QuadPart = -sizeof(Memory) - 5;
+    LargeInt.QuadPart = -(LONGLONG)sizeof(Memory) - 5;
     hr = IWICStream_Seek(pStream, LargeInt, STREAM_SEEK_END, &uNewPos);
-    ok(hr == E_INVALIDARG, "Seek returned with %#x, expected %#x\n", hr, E_INVALIDARG);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW),
+       "Seek returned with %#x, expected %#x\n", hr, HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW));
     ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 0, "bSeek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 0); /* remains unchanged */
     IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_SET, NULL);
 
