@@ -1470,6 +1470,45 @@ static void test_fmtusertypestg(void)
     }
 }
 
+static void test_references(void)
+{
+    IStorage *stg,*stg2;
+    HRESULT hr;
+    unsigned c1,c2;
+    static const WCHAR StorName[] = { 'D','a','t','a','S','p','a','c','e','I','n','f','o',0 };
+
+    DeleteFileA(filenameA);
+
+    hr = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
+    ok(hr==S_OK, "StgCreateDocfile failed\n");
+
+    if (SUCCEEDED(hr))
+    {
+        IStorage_Release(stg);
+
+        hr = StgOpenStorage( filename, NULL, STGM_TRANSACTED | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, NULL, 0, &stg);
+        ok(hr==S_OK, "StgOpenStorage failed (result=%x)\n",hr);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IStorage_CreateStorage(stg,StorName,STGM_READWRITE | STGM_SHARE_EXCLUSIVE,0,0,&stg2);
+            ok(hr == S_OK, "IStorage_CreateStorage failed (result=%x)\n",hr);
+
+            if (SUCCEEDED(hr))
+            {
+                c1 = IStorage_AddRef(stg);
+                ok(c1 == 2, "creating internal storage added references to ancestor\n");
+                c1 = IStorage_AddRef(stg);
+                IStorage_Release(stg2);
+                c2 = IStorage_AddRef(stg) - 1;
+                ok(c1 == c2, "releasing internal storage removed references to ancestor\n");
+            }
+            c1 = IStorage_Release(stg);
+            while ( c1 ) c1 = IStorage_Release(stg);
+        }
+    }
+}
+
 START_TEST(storage32)
 {
     CHAR temp[MAX_PATH];
@@ -1497,4 +1536,5 @@ START_TEST(storage32)
     test_readonly();
     test_simple();
     test_fmtusertypestg();
+    test_references();
 }

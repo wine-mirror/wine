@@ -3713,7 +3713,6 @@ static void StorageInternalImpl_Destroy( StorageBaseImpl *iface)
 {
   StorageInternalImpl* This = (StorageInternalImpl*) iface;
 
-  StorageBaseImpl_Release((IStorage*)This->base.ancestorStorage);
   HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -4312,10 +4311,9 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
     newStorage->base.openFlags = (openFlags & ~STGM_CREATE);
 
     /*
-     * Keep the ancestor storage pointer and nail a reference to it.
+     * Keep the ancestor storage pointer but do not nail a reference to it.
      */
     newStorage->base.ancestorStorage = ancestorStorage;
-    StorageBaseImpl_AddRef((IStorage*)(newStorage->base.ancestorStorage));
 
     /*
      * Keep the index of the root property set for this storage,
