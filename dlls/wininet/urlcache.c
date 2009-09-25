@@ -1479,7 +1479,11 @@ BOOL WINAPI GetUrlCacheEntryInfoExA(
         return FALSE;
     }
     if (dwFlags != 0)
+    {
         FIXME("Undocumented flag(s): %x\n", dwFlags);
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
     return GetUrlCacheEntryInfoA(lpszUrl, lpCacheEntryInfo, lpdwCacheEntryInfoBufSize);
 }
 
@@ -1679,7 +1683,11 @@ BOOL WINAPI GetUrlCacheEntryInfoExW(
         return FALSE;
     }
     if (dwFlags != 0)
+    {
         FIXME("Undocumented flag(s): %x\n", dwFlags);
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
     return GetUrlCacheEntryInfoW(lpszUrl, lpCacheEntryInfo, lpdwCacheEntryInfoBufSize);
 }
 
@@ -1866,6 +1874,13 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
     }
 
     pUrlEntry = (URL_CACHEFILE_ENTRY *)pEntry;
+    if (!pUrlEntry->dwOffsetLocalName)
+    {
+        URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
+
     TRACE("Found URL: %s\n", (LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl);
     TRACE("Header info: %s\n", (LPBYTE)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo);
 
@@ -1955,6 +1970,13 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
     }
 
     pUrlEntry = (URL_CACHEFILE_ENTRY *)pEntry;
+    if (!pUrlEntry->dwOffsetLocalName)
+    {
+        URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
+
     TRACE("Found URL: %s\n", (LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl);
     TRACE("Header info: %s\n", (LPBYTE)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo);
 
