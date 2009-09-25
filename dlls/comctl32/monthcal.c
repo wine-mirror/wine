@@ -1318,110 +1318,112 @@ MONTHCAL_RButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   return 0;
 }
 
+/* creates updown control and edit box */
+static void MONTHCAL_EditYear(MONTHCAL_INFO *infoPtr)
+{
+    static const WCHAR EditW[] = { 'E','D','I','T',0 };
+
+    infoPtr->hWndYearEdit =
+	CreateWindowExW(0, EditW, 0, WS_VISIBLE | WS_CHILD | ES_READONLY,
+			infoPtr->titleyear.left + 3, infoPtr->titlebtnnext.top,
+			infoPtr->titleyear.right - infoPtr->titleyear.left + 4,
+			infoPtr->textHeight, infoPtr->hwndSelf,
+			NULL, NULL, NULL);
+
+    SendMessageW(infoPtr->hWndYearEdit, WM_SETFONT, (WPARAM)infoPtr->hBoldFont, TRUE);
+
+    infoPtr->hWndYearUpDown =
+	CreateWindowExW(0, UPDOWN_CLASSW, 0,
+			WS_VISIBLE | WS_CHILD | UDS_SETBUDDYINT | UDS_NOTHOUSANDS | UDS_ARROWKEYS,
+			infoPtr->titleyear.right + 7, infoPtr->titlebtnnext.top,
+			18, infoPtr->textHeight, infoPtr->hwndSelf,
+			NULL, NULL, NULL);
+
+    /* attach edit box */
+    SendMessageW(infoPtr->hWndYearUpDown, UDM_SETRANGE, 0, MAKELONG(9999, 1753));
+    SendMessageW(infoPtr->hWndYearUpDown, UDM_SETBUDDY, (WPARAM)infoPtr->hWndYearEdit, 0);
+    SendMessageW(infoPtr->hWndYearUpDown, UDM_SETPOS, 0, infoPtr->currentYear);
+}
+
 static LRESULT
 MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 {
-  static const WCHAR EditW[] = { 'E','D','I','T',0 };
   MCHITTESTINFO ht;
   DWORD hit;
-  HMENU hMenu;
-  RECT rcDay; /* used in determining area to invalidate */
-  WCHAR buf[32];
-  int i;
-  POINT menupoint;
-
-  TRACE("%lx\n", lParam);
 
   if (infoPtr->hWndYearUpDown)
-    {
-      infoPtr->currentYear=SendMessageW(infoPtr->hWndYearUpDown, UDM_SETPOS, 0, 0);
+  {
+      infoPtr->currentYear = SendMessageW(infoPtr->hWndYearUpDown, UDM_SETPOS, 0, 0);
       if(!DestroyWindow(infoPtr->hWndYearUpDown))
-	{
-	  FIXME("Can't destroy Updown Control\n");
-	}
+      {
+          FIXME("Can't destroy Updown Control\n");
+      }
       else
-	infoPtr->hWndYearUpDown=0;
+	  infoPtr->hWndYearUpDown = 0;
+
       if(!DestroyWindow(infoPtr->hWndYearEdit))
-	{
-	  FIXME("Can't destroy Updown Control\n");
-	}
+      {
+          FIXME("Can't destroy Updown Control\n");
+      }
       else
-	infoPtr->hWndYearEdit=0;
+          infoPtr->hWndYearEdit = 0;
+
       InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
-    }
+  }
 
   ht.pt.x = (short)LOWORD(lParam);
   ht.pt.y = (short)HIWORD(lParam);
+  TRACE("(%d, %d)\n", ht.pt.x, ht.pt.y);
+
   hit = MONTHCAL_HitTest(infoPtr, &ht);
 
-  /* FIXME: these flags should be checked by */
-  /*((hit & MCHT_XXX) == MCHT_XXX) b/c some of the flags are */
-  /* multi-bit */
-  if(hit ==MCHT_TITLEBTNNEXT) {
+  switch(hit)
+  {
+  case MCHT_TITLEBTNNEXT:
     MONTHCAL_GoToNextMonth(infoPtr);
     infoPtr->status = MC_NEXTPRESSED;
     SetTimer(infoPtr->hwndSelf, MC_NEXTMONTHTIMER, MC_NEXTMONTHDELAY, 0);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     return 0;
-  }
-  if(hit == MCHT_TITLEBTNPREV){
+
+  case MCHT_TITLEBTNPREV:
     MONTHCAL_GoToPrevMonth(infoPtr);
     infoPtr->status = MC_PREVPRESSED;
     SetTimer(infoPtr->hwndSelf, MC_PREVMONTHTIMER, MC_NEXTMONTHDELAY, 0);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     return 0;
-  }
 
-  if(hit == MCHT_TITLEMONTH) {
-    hMenu = CreatePopupMenu();
+  case MCHT_TITLEMONTH:
+  {
+    HMENU hMenu = CreatePopupMenu();
+    WCHAR buf[32];
+    POINT menupoint;
+    INT i;
 
-    for (i=0; i<12;i++)
-      {
-	GetLocaleInfoW(LOCALE_USER_DEFAULT,LOCALE_SMONTHNAME1+i, buf,countof(buf));
-	AppendMenuW(hMenu, MF_STRING|MF_ENABLED,i+1, buf);
-      }
-    menupoint.x=infoPtr->titlemonth.right;
-    menupoint.y=infoPtr->titlemonth.bottom;
+    for (i = 0; i < 12; i++)
+    {
+	GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHNAME1+i, buf, countof(buf));
+	AppendMenuW(hMenu, MF_STRING|MF_ENABLED, i + 1, buf);
+    }
+    menupoint.x = infoPtr->titlemonth.right;
+    menupoint.y = infoPtr->titlemonth.bottom;
     ClientToScreen(infoPtr->hwndSelf, &menupoint);
-    i= TrackPopupMenu(hMenu,TPM_LEFTALIGN | TPM_NONOTIFY | TPM_RIGHTBUTTON | TPM_RETURNCMD,
-		      menupoint.x, menupoint.y, 0, infoPtr->hwndSelf, NULL);
-    if ((i>0) && (i<13))
-      {
-	infoPtr->currentMonth=i;
-	InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
-      }
-  }
-  if(hit == MCHT_TITLEYEAR) {
-    infoPtr->hWndYearEdit=CreateWindowExW(0,
-			 EditW,
-			   0,
-			 WS_VISIBLE | WS_CHILD |UDS_SETBUDDYINT,
-			 infoPtr->titleyear.left+3,infoPtr->titlebtnnext.top,
-			 infoPtr->titleyear.right-infoPtr->titleyear.left+4,
-			 infoPtr->textHeight,
-			 infoPtr->hwndSelf,
-			 NULL,
-			 NULL,
-			 NULL);
-    SendMessageW( infoPtr->hWndYearEdit, WM_SETFONT, (WPARAM) infoPtr->hBoldFont, (LPARAM)TRUE);
-    infoPtr->hWndYearUpDown=CreateWindowExW(0,
-			 UPDOWN_CLASSW,
-			   0,
-			 WS_VISIBLE | WS_CHILD |UDS_SETBUDDYINT|UDS_NOTHOUSANDS|UDS_ARROWKEYS,
-			 infoPtr->titleyear.right+7,infoPtr->titlebtnnext.top,
-			 18,
-			 infoPtr->textHeight,
-			 infoPtr->hwndSelf,
-			 NULL,
-			 NULL,
-			 NULL);
-    SendMessageW(infoPtr->hWndYearUpDown, UDM_SETRANGE, 0, MAKELONG (9999, 1753));
-    SendMessageW(infoPtr->hWndYearUpDown, UDM_SETBUDDY, (WPARAM) infoPtr->hWndYearEdit, 0);
-    SendMessageW(infoPtr->hWndYearUpDown, UDM_SETPOS, 0, infoPtr->currentYear);
-    return 0;
+    i = TrackPopupMenu(hMenu,TPM_LEFTALIGN | TPM_NONOTIFY | TPM_RIGHTBUTTON | TPM_RETURNCMD,
+		       menupoint.x, menupoint.y, 0, infoPtr->hwndSelf, NULL);
 
+    if ((i > 0) && (i < 13))
+    {
+	infoPtr->currentMonth = i;
+	InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+    }
   }
-  if(hit == MCHT_TODAYLINK) {
+  case MCHT_TITLEYEAR:
+  {
+    MONTHCAL_EditYear(infoPtr);
+    return 0;
+  }
+  case MCHT_TODAYLINK:
+  {
     NMSELCHANGE nmsc;
 
     infoPtr->curSelDay    = infoPtr->todaysDate.wDay;
@@ -1443,7 +1445,9 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
     SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmsc.nmhdr.idFrom, (LPARAM)&nmsc);
     return 0;
   }
-  if(hit == MCHT_CALENDARDATE) {
+  case MCHT_CALENDARDATE:
+  {
+    RECT rcDay; /* used in determining area to invalidate */
     SYSTEMTIME selArray[2];
     NMSELCHANGE nmsc;
 
@@ -1460,7 +1464,6 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
     SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmsc.nmhdr.idFrom, (LPARAM)&nmsc);
 
-
     /* redraw both old and new days if the selected day changed */
     if(infoPtr->curSelDay != ht.st.wDay) {
       MONTHCAL_CalcPosFromDay(infoPtr, ht.st.wDay, ht.st.wMonth, &rcDay);
@@ -1474,6 +1477,7 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
     infoPtr->curSelDay = ht.st.wDay;
     infoPtr->status = MC_SEL_LBUTDOWN;
     return 0;
+  }
   }
 
   return 1;
