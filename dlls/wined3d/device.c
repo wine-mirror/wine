@@ -3100,7 +3100,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetIndexBuffer(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetIndices(IWineD3DDevice *iface, IWineD3DBuffer** ppIndexData) {
+static HRESULT WINAPI IWineD3DDeviceImpl_GetIndexBuffer(IWineD3DDevice *iface, IWineD3DBuffer **ppIndexData)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     *ppIndexData = This->stateBlock->pIndexData;
@@ -7396,7 +7397,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_SetGammaRamp,
     IWineD3DDeviceImpl_GetGammaRamp,
     IWineD3DDeviceImpl_SetIndexBuffer,
-    IWineD3DDeviceImpl_GetIndices,
+    IWineD3DDeviceImpl_GetIndexBuffer,
     IWineD3DDeviceImpl_SetBaseVertexIndex,
     IWineD3DDeviceImpl_GetBaseVertexIndex,
     IWineD3DDeviceImpl_SetLight,

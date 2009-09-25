@@ -3122,7 +3122,7 @@ interface IWineD3DDevice : IWineD3DBase
         [in] IWineD3DBuffer *index_buffer,
         [in] WINED3DFORMAT format
     );
-    HRESULT GetIndices(
+    HRESULT GetIndexBuffer(
         [out] IWineD3DBuffer **index_buffer
     );
     HRESULT SetBaseVertexIndex(

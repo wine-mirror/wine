@@ -1954,7 +1954,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetIndices(LPDIRECT3DDEVICE9EX ifac
     }
 
     wined3d_mutex_lock();
-    rc = IWineD3DDevice_GetIndices(This->WineD3DDevice, &retIndexData);
+    rc = IWineD3DDevice_GetIndexBuffer(This->WineD3DDevice, &retIndexData);
     if (SUCCEEDED(rc) && retIndexData) {
         IWineD3DBuffer_GetParent(retIndexData, (IUnknown **)ppIndexData);
         IWineD3DBuffer_Release(retIndexData);

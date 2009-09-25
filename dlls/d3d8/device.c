@@ -2082,7 +2082,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetIndices(LPDIRECT3DDEVICE8 iface, I
     /* The case from UINT to INT is safe because d3d8 will never set negative values */
     wined3d_mutex_lock();
     IWineD3DDevice_GetBaseVertexIndex(This->WineD3DDevice, (INT *) pBaseVertexIndex);
-    rc = IWineD3DDevice_GetIndices(This->WineD3DDevice, &retIndexData);
+    rc = IWineD3DDevice_GetIndexBuffer(This->WineD3DDevice, &retIndexData);
     if (SUCCEEDED(rc) && retIndexData) {
         IWineD3DBuffer_GetParent(retIndexData, (IUnknown **)ppIndexData);
         IWineD3DBuffer_Release(retIndexData);
