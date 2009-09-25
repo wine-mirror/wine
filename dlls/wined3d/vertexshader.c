@@ -175,7 +175,7 @@ static ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface
     if (!refcount)
     {
         shader_cleanup((IWineD3DBaseShader *)iface);
-        This->parent_ops->wined3d_object_destroyed(This->parent);
+        This->baseShader.parent_ops->wined3d_object_destroyed(This->baseShader.parent);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -189,7 +189,7 @@ static ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface
 static HRESULT WINAPI IWineD3DVertexShaderImpl_GetParent(IWineD3DVertexShader *iface, IUnknown** parent){
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
 
-    *parent = This->parent;
+    *parent = This->baseShader.parent;
     IUnknown_AddRef(*parent);
     TRACE("(%p) : returning %p\n", This, *parent);
     return WINED3D_OK;
@@ -367,10 +367,7 @@ HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *
     if (!byte_code) return WINED3DERR_INVALIDCALL;
 
     shader->lpVtbl = &IWineD3DVertexShader_Vtbl;
-    shader->parent = parent;
-    shader->parent_ops = parent_ops;
-    shader_init(&shader->baseShader, (IWineD3DDevice *)device);
-    list_add_head(&device->shaders, &shader->baseShader.shader_list_entry);
+    shader_init(&shader->baseShader, device, parent, parent_ops);
 
     hr = vertexshader_set_function(shader, byte_code, output_signature);
     if (FAILED(hr))

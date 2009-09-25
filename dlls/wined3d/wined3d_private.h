@@ -2645,6 +2645,10 @@ typedef struct IWineD3DBaseShaderClass
     BOOL                            load_local_constsF;
     const struct wined3d_shader_frontend *frontend;
     void *frontend_data;
+    void *backend_data;
+
+    IUnknown *parent;
+    const struct wined3d_parent_ops *parent_ops;
 
     /* Programs this shader is linked with */
     struct list linked_programs;
@@ -2685,7 +2689,8 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
         struct wined3d_shader_signature_element *input_signature,
         struct wined3d_shader_signature_element *output_signature,
         const DWORD *byte_code, DWORD constf_size) DECLSPEC_HIDDEN;
-void shader_init(struct IWineD3DBaseShaderClass *shader, IWineD3DDevice *device) DECLSPEC_HIDDEN;
+void shader_init(struct IWineD3DBaseShaderClass *shader, IWineD3DDeviceImpl *device,
+        IUnknown *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 BOOL shader_match_semantic(const char *semantic_name, WINED3DDECLUSAGE usage) DECLSPEC_HIDDEN;
 const struct wined3d_shader_frontend *shader_select_frontend(DWORD version_token) DECLSPEC_HIDDEN;
 void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, const DWORD *pFunction) DECLSPEC_HIDDEN;
@@ -2762,13 +2767,6 @@ typedef struct IWineD3DVertexShaderImpl {
     /* IWineD3DBaseShader */
     IWineD3DBaseShaderClass     baseShader;
 
-    /* IWineD3DVertexShaderImpl */
-    IUnknown                    *parent;
-    const struct wined3d_parent_ops *parent_ops;
-
-    /* The GL shader */
-    void                        *backend_priv;
-
     /* Vertex shader input and output semantics */
     struct wined3d_shader_attribute attributes[MAX_ATTRIBS];
     struct wined3d_shader_signature_element output_signature[MAX_REG_OUTPUT];
@@ -2811,18 +2809,11 @@ typedef struct IWineD3DPixelShaderImpl {
     /* IWineD3DBaseShader */
     IWineD3DBaseShaderClass     baseShader;
 
-    /* IWineD3DPixelShaderImpl */
-    IUnknown                   *parent;
-    const struct wined3d_parent_ops *parent_ops;
-
     /* Pixel shader input semantics */
     struct wined3d_shader_signature_element input_signature[MAX_REG_INPUT];
     DWORD                 input_reg_map[MAX_REG_INPUT];
     BOOL                  input_reg_used[MAX_REG_INPUT];
     unsigned int declared_in_count;
-
-    /* The GL shader */
-    void                        *backend_priv;
 
     /* Some information about the shader behavior */
     char                        vpos_uniform;
