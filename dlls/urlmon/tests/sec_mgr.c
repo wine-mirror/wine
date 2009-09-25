@@ -213,13 +213,15 @@ static void test_url_action(IInternetSecurityManager *secmgr, IInternetZoneManag
         policy = 0xdeadbeef;
         hres = IInternetSecurityManager_ProcessUrlAction(secmgr, url9, action, (BYTE*)&policy,
                 sizeof(WCHAR), NULL, 0, 0, 0);
-        ok(hres == E_FAIL, "ProcessUrlAction(%x) failed: %08x, expected E_FAIL\n", action, hres);
+        ok(hres == E_FAIL || broken(hres == HRESULT_FROM_WIN32(ERROR_NOT_FOUND)),
+            "(0x%x) got 0x%x (expected E_FAIL)\n", action, hres);
         ok(policy == 0xdeadbeef, "(%x) policy=%x\n", action, policy);
 
         policy = 0xdeadbeef;
         hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 3, action, (BYTE*)&policy,
                 sizeof(DWORD), URLZONEREG_DEFAULT);
-        ok(hres == E_FAIL, "GetZoneActionPolicy failed: %08x, expected E_FAIL\n", hres);
+        ok(hres == E_FAIL || broken(hres == HRESULT_FROM_WIN32(ERROR_NOT_FOUND)),
+            "(0x%x) got 0x%x (expected E_FAIL)\n", action, hres);
         ok(policy == 0xdeadbeef, "(%x) policy=%x\n", action, policy);
         return;
     }
@@ -425,7 +427,8 @@ static void test_GetZoneActionPolicy(void)
 
     hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 3, 0x1fff, buf,
             sizeof(DWORD), URLZONEREG_DEFAULT);
-    ok(hres == E_FAIL, "GetZoneActionPolicy failed: %08x, expected E_FAIL\n", hres);
+    ok(hres == E_FAIL || broken(hres == HRESULT_FROM_WIN32(ERROR_NOT_FOUND)),
+            "(0x%x) got 0x%x (expected E_FAIL)\n", action, hres);
 
     hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 13, action, buf,
             sizeof(DWORD), URLZONEREG_DEFAULT);
