@@ -268,77 +268,6 @@ void* interlocked_xchg_ptr( void** dest, void* val )
     return ret;
 }
 
-#elif defined(__sparc__) && defined(__sun__)
-
-/*
- * As the earlier Sparc processors lack necessary atomic instructions,
- * I'm simply falling back to the library-provided _lwp_mutex routines
- * to ensure mutual exclusion in a way appropriate for the current
- * architecture.
- *
- * FIXME:  If we have the compare-and-swap instruction (Sparc v9 and above)
- *         we could use this to speed up the Interlocked operations ...
- */
-#include <synch.h>
-static lwp_mutex_t interlocked_mutex = DEFAULTMUTEX;
-
-int interlocked_cmpxchg( int *dest, int xchg, int compare )
-{
-    _lwp_mutex_lock( &interlocked_mutex );
-    if (*dest == compare) *dest = xchg;
-    else compare = *dest;
-    _lwp_mutex_unlock( &interlocked_mutex );
-    return compare;
-}
-
-void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare )
-{
-    _lwp_mutex_lock( &interlocked_mutex );
-    if (*dest == compare) *dest = xchg;
-    else compare = *dest;
-    _lwp_mutex_unlock( &interlocked_mutex );
-    return compare;
-}
-
-__int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare )
-{
-    _lwp_mutex_lock( &interlocked_mutex );
-    if (*dest == compare) *dest = xchg;
-    else compare = *dest;
-    _lwp_mutex_unlock( &interlocked_mutex );
-    return compare;
-}
-
-int interlocked_xchg( int *dest, int val )
-{
-    int retv;
-    _lwp_mutex_lock( &interlocked_mutex );
-    retv = *dest;
-    *dest = val;
-    _lwp_mutex_unlock( &interlocked_mutex );
-    return retv;
-}
-
-void *interlocked_xchg_ptr( void **dest, void *val )
-{
-    void *retv;
-    _lwp_mutex_lock( &interlocked_mutex );
-    retv = *dest;
-    *dest = val;
-    _lwp_mutex_unlock( &interlocked_mutex );
-    return retv;
-}
-
-int interlocked_xchg_add( int *dest, int incr )
-{
-    int retv;
-    _lwp_mutex_lock( &interlocked_mutex );
-    retv = *dest;
-    *dest += incr;
-    _lwp_mutex_unlock( &interlocked_mutex );
-    return retv;
-}
-
 #elif defined(__ALPHA__) && defined(__GNUC__)
 
 __ASM_GLOBAL_FUNC(interlocked_cmpxchg,
@@ -395,6 +324,80 @@ __ASM_GLOBAL_FUNC(interlocked_xchg_add,
                   "beq   $1,L0xchg_add\n\t"
                   "mb")
 
+
 #else
-# error You must implement the interlocked* functions for your CPU
+
+#include <pthread.h>
+
+static pthread_mutex_t interlocked_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+int interlocked_cmpxchg( int *dest, int xchg, int compare )
+{
+    pthread_mutex_lock( &interlocked_mutex );
+
+    if (*dest == compare)
+        *dest = xchg;
+    else
+        compare = *dest;
+
+    pthread_mutex_unlock( &interlocked_mutex );
+    return compare;
+}
+
+void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare )
+{
+    pthread_mutex_lock( &interlocked_mutex );
+
+    if (*dest == compare)
+        *dest = xchg;
+    else
+        compare = *dest;
+
+    pthread_mutex_unlock( &interlocked_mutex );
+    return compare;
+}
+
+__int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare )
+{
+    pthread_mutex_lock( &interlocked_mutex );
+
+    if (*dest == compare)
+        *dest = xchg;
+    else
+        compare = *dest;
+
+    pthread_mutex_unlock( &interlocked_mutex );
+    return compare;
+}
+
+int interlocked_xchg( int *dest, int val )
+{
+    int retv;
+    pthread_mutex_lock( &interlocked_mutex );
+    retv = *dest;
+    *dest = val;
+    pthread_mutex_unlock( &interlocked_mutex );
+    return retv;
+}
+
+void *interlocked_xchg_ptr( void **dest, void *val )
+{
+    void *retv;
+    pthread_mutex_lock( &interlocked_mutex );
+    retv = *dest;
+    *dest = val;
+    pthread_mutex_unlock( &interlocked_mutex );
+    return retv;
+}
+
+int interlocked_xchg_add( int *dest, int incr )
+{
+    int retv;
+    pthread_mutex_lock( &interlocked_mutex );
+    retv = *dest;
+    *dest += incr;
+    pthread_mutex_unlock( &interlocked_mutex );
+    return retv;
+}
+
 #endif
