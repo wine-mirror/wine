@@ -46,4 +46,5 @@ STRINGTABLE DISCARDABLE
     IDS_JSCRIPT_EXPECTED    "Objet JScript attendu"
     IDS_REGEXP_SYNTAX_ERROR "Erreur de syntaxe dans l'expression rationnelle"
     IDS_INVALID_LENGTH      "La longueur d'un tableau doit être un entier positif"
+    IDS_ARRAY_EXPECTED      "Objet tableau attendu"
 }
