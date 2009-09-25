@@ -328,6 +328,29 @@ static void test_monthcal(void)
     hwnd = CreateWindowA(MONTHCAL_CLASSA, "MonthCal", WS_POPUP | WS_VISIBLE, CW_USEDEFAULT,
                          0, 300, 300, 0, 0, NULL, NULL);
     ok(hwnd != NULL, "Failed to create MonthCal\n");
+
+    /* test range just after creation */
+    memset(&st, 0xcc, sizeof(st));
+    ok(SendMessage(hwnd, MCM_GETRANGE, 0, (LPARAM)st) == 0, "No limits should be set\n");
+
+    expect(0, st[0].wYear);
+    expect(0, st[0].wMonth);
+    expect(0, st[0].wDay);
+    expect(0, st[0].wDayOfWeek);
+    expect(0, st[0].wHour);
+    expect(0, st[0].wMinute);
+    expect(0, st[0].wSecond);
+    expect(0, st[0].wMilliseconds);
+
+    expect(0, st[1].wYear);
+    expect(0, st[1].wMonth);
+    expect(0, st[1].wDay);
+    expect(0, st[1].wDayOfWeek);
+    expect(0, st[1].wHour);
+    expect(0, st[1].wMinute);
+    expect(0, st[1].wSecond);
+    expect(0, st[1].wMilliseconds);
+
     GetSystemTime(&st[0]);
     st[1] = st[0];
 
@@ -379,6 +402,60 @@ static void test_monthcal(void)
     st[1].wYear += 4;
     ok(SendMessage(hwnd, MCM_SETRANGE, GDTR_MAX, (LPARAM)st), "Failed to set max limit\n");
     ok(SendMessage(hwnd, MCM_GETRANGE, 0, (LPARAM)st1) == GDTR_MAX, "Only MAX limit should be set\n");
+
+    /* set both limits, then set max < min */
+    GetSystemTime(&st[0]);
+    st[1] = st[0];
+    st[1].wYear++;
+    ok(SendMessage(hwnd, MCM_SETRANGE, GDTR_MIN|GDTR_MAX, (LPARAM)st), "Failed to set limits\n");
+    ok(SendMessage(hwnd, MCM_GETRANGE, 0, (LPARAM)st1) == (GDTR_MIN|GDTR_MAX), "Min limit expected\n");
+    st[1].wYear -= 2;
+    ok(SendMessage(hwnd, MCM_SETRANGE, GDTR_MAX, (LPARAM)st), "Failed to set limits\n");
+    ok(SendMessage(hwnd, MCM_GETRANGE, 0, (LPARAM)st1) == GDTR_MAX, "Max limit expected\n");
+
+    expect(0, st1[0].wYear);
+    expect(0, st1[0].wMonth);
+    expect(0, st1[0].wDay);
+    expect(0, st1[0].wDayOfWeek);
+    expect(0, st1[0].wHour);
+    expect(0, st1[0].wMinute);
+    expect(0, st1[0].wSecond);
+    expect(0, st1[0].wMilliseconds);
+
+    expect(st[1].wYear,      st1[1].wYear);
+    expect(st[1].wMonth,     st1[1].wMonth);
+    expect(st[1].wDay,       st1[1].wDay);
+    expect(st[1].wDayOfWeek, st1[1].wDayOfWeek);
+    expect(st[1].wHour,      st1[1].wHour);
+    expect(st[1].wMinute,    st1[1].wMinute);
+    expect(st[1].wSecond,    st1[1].wSecond);
+    expect(st[1].wMilliseconds, st1[1].wMilliseconds);
+
+    st[1] = st[0];
+    st[1].wYear++;
+    ok(SendMessage(hwnd, MCM_SETRANGE, GDTR_MIN|GDTR_MAX, (LPARAM)st), "Failed to set limits\n");
+    ok(SendMessage(hwnd, MCM_GETRANGE, 0, (LPARAM)st1) == (GDTR_MIN|GDTR_MAX), "Min limit expected\n");
+    st[0].wYear++; /* start == end now */
+    ok(SendMessage(hwnd, MCM_SETRANGE, GDTR_MIN, (LPARAM)st), "Failed to set limits\n");
+    ok(SendMessage(hwnd, MCM_GETRANGE, 0, (LPARAM)st1) == GDTR_MIN, "Min limit expected\n");
+
+    expect(st[0].wYear,      st1[0].wYear);
+    expect(st[0].wMonth,     st1[0].wMonth);
+    expect(st[0].wDay,       st1[0].wDay);
+    expect(st[0].wDayOfWeek, st1[0].wDayOfWeek);
+    expect(st[0].wHour,      st1[0].wHour);
+    expect(st[0].wMinute,    st1[0].wMinute);
+    expect(st[0].wSecond,    st1[0].wSecond);
+    expect(st[0].wMilliseconds, st1[0].wMilliseconds);
+
+    expect(0, st1[1].wYear);
+    expect(0, st1[1].wMonth);
+    expect(0, st1[1].wDay);
+    expect(0, st1[1].wDayOfWeek);
+    expect(0, st1[1].wHour);
+    expect(0, st1[1].wMinute);
+    expect(0, st1[1].wSecond);
+    expect(0, st1[1].wMilliseconds);
 
     DestroyWindow(hwnd);
 }

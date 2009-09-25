@@ -36,9 +36,6 @@
  *    -- handle resources better (doesn't work now); 
  *    -- take care of internationalization.
  *    -- keyboard handling.
- *    -- GetRange: At the moment, we copy ranges anyway, regardless of
- *                 infoPtr->rangeValid; an invalid range is simply filled 
- *                 with zeros in SetRange.  Is this the right behavior?
  *    -- search for FIXME
  */
 
@@ -931,11 +928,11 @@ MONTHCAL_SetRange(MONTHCAL_INFO *infoPtr, SHORT limits, SYSTEMTIME *range)
     /* Only one limit set - we are done */
     if ((infoPtr->rangeValid & (GDTR_MIN | GDTR_MAX)) != (GDTR_MIN | GDTR_MAX))
         return TRUE;
-    
+
     SystemTimeToFileTime(&infoPtr->maxDate, &ft_max);
     SystemTimeToFileTime(&infoPtr->minDate, &ft_min);
 
-    if (CompareFileTime(&ft_min, &ft_max) > 0)
+    if (CompareFileTime(&ft_min, &ft_max) >= 0)
     {
         if ((limits & (GDTR_MIN | GDTR_MAX)) == (GDTR_MIN | GDTR_MAX))
         {
@@ -946,8 +943,11 @@ MONTHCAL_SetRange(MONTHCAL_INFO *infoPtr, SHORT limits, SYSTEMTIME *range)
         }
         else
         {
-            /* Reset the other limit. */
-            /* FIXME: native sets date&time to 0. Should we do this too? */
+            static const SYSTEMTIME zero;
+
+            /* reset the other limit */
+            if (limits & GDTR_MIN) infoPtr->maxDate = zero;
+            if (limits & GDTR_MAX) infoPtr->minDate = zero;
             infoPtr->rangeValid &= limits & GDTR_MIN ? ~GDTR_MAX : ~GDTR_MIN ;
         }
     }
@@ -1873,10 +1873,6 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   MONTHCAL_SetFirstDayOfWeek(infoPtr, -1);
   infoPtr->currentMonth = infoPtr->todaysDate.wMonth;
   infoPtr->currentYear  = infoPtr->todaysDate.wYear;
-  infoPtr->minDate = infoPtr->todaysDate;
-  infoPtr->maxDate = infoPtr->todaysDate;
-  infoPtr->maxDate.wYear = 2050;
-  infoPtr->minDate.wYear = 1950;
   infoPtr->maxSelCount   = 7;
   infoPtr->monthRange    = 3;
   infoPtr->monthdayState = Alloc(infoPtr->monthRange * sizeof(MONTHDAYSTATE));
