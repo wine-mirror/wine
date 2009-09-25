@@ -7,6 +7,7 @@
  * Copyright 2005 Oliver Stieber
  * Copyright 2006 Ivan Gyurdiev
  * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
+ * Copyright 2009 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -209,50 +210,51 @@ static void pshader_set_limits(IWineD3DPixelShaderImpl *This)
     }
 }
 
-static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface,
-        const DWORD *pFunction, const struct wined3d_shader_signature *output_signature)
+static HRESULT pixelshader_set_function(IWineD3DPixelShaderImpl *shader,
+        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature)
 {
-    IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)shader->baseShader.device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     unsigned int i, highest_reg_used = 0, num_regs_used = 0;
-    shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
+    shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
     const struct wined3d_shader_frontend *fe;
     HRESULT hr;
 
-    TRACE("(%p) : pFunction %p\n", iface, pFunction);
+    TRACE("shader %p, byte_code %p, output_signature %p.\n", shader, byte_code, output_signature);
 
-    fe = shader_select_frontend(*pFunction);
+    fe = shader_select_frontend(*byte_code);
     if (!fe)
     {
         FIXME("Unable to find frontend for shader.\n");
         return WINED3DERR_INVALIDCALL;
     }
-    This->baseShader.frontend = fe;
-    This->baseShader.frontend_data = fe->shader_init(pFunction, output_signature);
-    if (!This->baseShader.frontend_data)
+    shader->baseShader.frontend = fe;
+    shader->baseShader.frontend_data = fe->shader_init(byte_code, output_signature);
+    if (!shader->baseShader.frontend_data)
     {
         FIXME("Failed to initialize frontend.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
     /* First pass: trace shader */
-    if (TRACE_ON(d3d_shader)) shader_trace_init(fe, This->baseShader.frontend_data, pFunction);
+    if (TRACE_ON(d3d_shader)) shader_trace_init(fe, shader->baseShader.frontend_data, byte_code);
 
     /* Initialize immediate constant lists */
-    list_init(&This->baseShader.constantsF);
-    list_init(&This->baseShader.constantsB);
-    list_init(&This->baseShader.constantsI);
+    list_init(&shader->baseShader.constantsF);
+    list_init(&shader->baseShader.constantsB);
+    list_init(&shader->baseShader.constantsI);
 
     /* Second pass: figure out which registers are used, what the semantics are, etc.. */
-    hr = shader_get_registers_used((IWineD3DBaseShader *)This, fe,
-            reg_maps, NULL, This->input_signature, NULL,
-            pFunction, GL_LIMITS(pshader_constantsF));
+    hr = shader_get_registers_used((IWineD3DBaseShader *)shader, fe,
+            reg_maps, NULL, shader->input_signature, NULL,
+            byte_code, gl_info->max_pshader_constantsF);
     if (FAILED(hr)) return hr;
 
-    pshader_set_limits(This);
+    pshader_set_limits(shader);
 
     for (i = 0; i < MAX_REG_INPUT; ++i)
     {
-        if (This->input_reg_used[i])
+        if (shader->input_reg_used[i])
         {
             ++num_regs_used;
             highest_reg_used = i;
@@ -261,10 +263,10 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
 
     /* Don't do any register mapping magic if it is not needed, or if we can't
      * achieve anything anyway */
-    if (highest_reg_used < (GL_LIMITS(glsl_varyings) / 4)
-            || num_regs_used > (GL_LIMITS(glsl_varyings) / 4))
+    if (highest_reg_used < (gl_info->max_glsl_varyings / 4)
+            || num_regs_used > (gl_info->max_glsl_varyings / 4))
     {
-        if (num_regs_used > (GL_LIMITS(glsl_varyings) / 4))
+        if (num_regs_used > (gl_info->max_glsl_varyings / 4))
         {
             /* This happens with relative addressing. The input mapper function
              * warns about this if the higher registers are declared too, so
@@ -274,28 +276,28 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
 
         for (i = 0; i < MAX_REG_INPUT; ++i)
         {
-            This->input_reg_map[i] = i;
+            shader->input_reg_map[i] = i;
         }
 
-        This->declared_in_count = highest_reg_used + 1;
+        shader->declared_in_count = highest_reg_used + 1;
     }
     else
     {
-        This->declared_in_count = 0;
+        shader->declared_in_count = 0;
         for (i = 0; i < MAX_REG_INPUT; ++i)
         {
-            if (This->input_reg_used[i]) This->input_reg_map[i] = This->declared_in_count++;
-            else This->input_reg_map[i] = ~0U;
+            if (shader->input_reg_used[i]) shader->input_reg_map[i] = shader->declared_in_count++;
+            else shader->input_reg_map[i] = ~0U;
         }
     }
 
-    This->baseShader.load_local_constsF = FALSE;
+    shader->baseShader.load_local_constsF = FALSE;
 
-    TRACE("(%p) : Copying the function\n", This);
+    TRACE("(%p) : Copying byte code.\n", shader);
 
-    This->baseShader.function = HeapAlloc(GetProcessHeap(), 0, This->baseShader.functionLength);
-    if (!This->baseShader.function) return E_OUTOFMEMORY;
-    memcpy(This->baseShader.function, pFunction, This->baseShader.functionLength);
+    shader->baseShader.function = HeapAlloc(GetProcessHeap(), 0, shader->baseShader.functionLength);
+    if (!shader->baseShader.function) return E_OUTOFMEMORY;
+    memcpy(shader->baseShader.function, byte_code, shader->baseShader.functionLength);
 
     return WINED3D_OK;
 }
@@ -353,7 +355,6 @@ static const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =
     /*** IWineD3DBase methods ***/
     IWineD3DPixelShaderImpl_GetParent,
     /*** IWineD3DBaseShader methods ***/
-    IWineD3DPixelShaderImpl_SetFunction,
     IWineD3DPixelShaderImpl_GetDevice,
     IWineD3DPixelShaderImpl_GetFunction
     /*** IWineD3DPixelShader methods ***/
@@ -437,7 +438,7 @@ HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *de
     shader_init(&shader->baseShader, (IWineD3DDevice *)device);
     list_add_head(&device->shaders, &shader->baseShader.shader_list_entry);
 
-    hr = IWineD3DPixelShader_SetFunction((IWineD3DPixelShader *)shader, byte_code, output_signature);
+    hr = pixelshader_set_function(shader, byte_code, output_signature);
     if (FAILED(hr))
     {
         WARN("Failed to set function, hr %#x.\n", hr);

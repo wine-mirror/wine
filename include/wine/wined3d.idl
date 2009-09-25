@@ -2834,10 +2834,6 @@ interface IWineD3DBuffer : IWineD3DResource
 ]
 interface IWineD3DBaseShader : IWineD3DBase
 {
-    HRESULT SetFunction(
-        [in] const DWORD *function,
-        [in] const struct wined3d_shader_signature *output_signature
-    );
     HRESULT GetDevice(
         [out] IWineD3DDevice **device
     );
