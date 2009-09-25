@@ -365,43 +365,6 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
              */
             TRACE("(%p) D3D unloaded\n", This);
         }
-        else if(This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE |
-                                                     DDSCAPS_3DDEVICE       |
-                                                     DDSCAPS_TEXTURE        ) )
-        {
-            /* It's a render target, but no swapchain was created.
-             * The IParent interfaces have to be released manually.
-             * The same applies for textures without an
-             * IWineD3DTexture object attached
-             */
-            IParent *Parent;
-
-            for(i = 0; i < MAX_COMPLEX_ATTACHED; i++)
-            {
-                if(This->complex_array[i])
-                {
-                    /* Only the topmost level can have more than 1 surfaces in the complex
-                     * attachment array(Cube texture roots), for all others there is only
-                     * one
-                     */
-                    surf = This->complex_array[i];
-                    while(surf)
-                    {
-                        IWineD3DSurface_GetParent(surf->WineD3DSurface,
-                                                  (IUnknown **) &Parent);
-                        IParent_Release(Parent);  /* For the getParent */
-                        IParent_Release(Parent);  /* To release it */
-                        surf = surf->complex_array[0];
-                    }
-                }
-            }
-
-            /* Now the top-level surface */
-            IWineD3DSurface_GetParent(This->WineD3DSurface,
-                                      (IUnknown **) &Parent);
-            IParent_Release(Parent);  /* For the getParent */
-            IParent_Release(Parent);  /* To release it */
-        }
 
         /* The refcount test shows that the palette is detached when the surface is destroyed */
         IDirectDrawSurface7_SetPalette((IDirectDrawSurface7 *)This, NULL);
