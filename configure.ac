@@ -2437,6 +2437,7 @@ WINE_CONFIG_MAKEFILE([dlls/spoolss/tests/Makefile],[dlls/Maketest.rules],[dlls],
 WINE_CONFIG_MAKEFILE([dlls/stdole2.tlb/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/stdole32.tlb/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/sti/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
+WINE_CONFIG_MAKEFILE([dlls/sti/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
 WINE_CONFIG_MAKEFILE([dlls/storage.dll16/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[enable_win16])
 WINE_CONFIG_MAKEFILE([dlls/stress.dll16/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[enable_win16])
 WINE_CONFIG_MAKEFILE([dlls/strmiids/Makefile],[dlls/Makeimplib.rules],[dlls],[ALL_IMPLIB_DIRS])

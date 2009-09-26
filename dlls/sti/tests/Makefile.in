@@ -1,0 +1,15 @@
+EXTRADEFS = -DCOM_NO_WINDOWS_H
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = sti.dll
+IMPORTS   = ole32 kernel32
+EXTRALIBS = -luuid
+
+CTESTS = \
+	sti.c
+
+@MAKE_TEST_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
