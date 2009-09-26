@@ -1233,7 +1233,7 @@ static void MONTHCAL_GoToNextMonth(MONTHCAL_INFO *infoPtr)
 
   if(infoPtr->dwStyle & MCS_DAYSTATE) {
     NMDAYSTATE nmds;
-    int i;
+    INT i;
 
     nmds.nmhdr.hwndFrom = infoPtr->hwndSelf;
     nmds.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
@@ -1242,13 +1242,15 @@ static void MONTHCAL_GoToNextMonth(MONTHCAL_INFO *infoPtr)
     nmds.prgDayState	= Alloc(infoPtr->monthRange * sizeof(MONTHDAYSTATE));
 
     nmds.stStart = infoPtr->todaysDate;
-    nmds.stStart.wYear = infoPtr->curSel.wYear;
+    nmds.stStart.wYear  = infoPtr->curSel.wYear;
     nmds.stStart.wMonth = infoPtr->curSel.wMonth;
     nmds.stStart.wDay = 1;
 
     SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmds.nmhdr.idFrom, (LPARAM)&nmds);
-    for(i=0; i<infoPtr->monthRange; i++)
+    for(i = 0; i < infoPtr->monthRange; i++)
       infoPtr->monthdayState[i] = nmds.prgDayState[i];
+
+    Free(nmds.prgDayState);
   }
 }
 
@@ -1265,23 +1267,24 @@ static void MONTHCAL_GoToPrevMonth(MONTHCAL_INFO *infoPtr)
 
   if(infoPtr->dwStyle & MCS_DAYSTATE) {
     NMDAYSTATE nmds;
-    int i;
+    INT i;
 
     nmds.nmhdr.hwndFrom = infoPtr->hwndSelf;
     nmds.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
     nmds.nmhdr.code     = MCN_GETDAYSTATE;
     nmds.cDayState	= infoPtr->monthRange;
-    nmds.prgDayState	= Alloc
-                        (infoPtr->monthRange * sizeof(MONTHDAYSTATE));
+    nmds.prgDayState	= Alloc(infoPtr->monthRange * sizeof(MONTHDAYSTATE));
 
     nmds.stStart = infoPtr->todaysDate;
-    nmds.stStart.wYear = infoPtr->curSel.wYear;
+    nmds.stStart.wYear  = infoPtr->curSel.wYear;
     nmds.stStart.wMonth = infoPtr->curSel.wMonth;
     nmds.stStart.wDay = 1;
 
     SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmds.nmhdr.idFrom, (LPARAM)&nmds);
-    for(i=0; i<infoPtr->monthRange; i++)
+    for(i = 0; i < infoPtr->monthRange; i++)
        infoPtr->monthdayState[i] = nmds.prgDayState[i];
+
+    Free(nmds.prgDayState);
   }
 }
 
