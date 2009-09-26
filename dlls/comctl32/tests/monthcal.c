@@ -322,7 +322,7 @@ static const struct message destroy_parent_seq[] = {
 static void test_monthcal(void)
 {
     HWND hwnd;
-    SYSTEMTIME st[2], st1[2];
+    SYSTEMTIME st[2], st1[2], today;
     int res, month_range;
 
     hwnd = CreateWindowA(MONTHCAL_CLASSA, "MonthCal", WS_POPUP | WS_VISIBLE, CW_USEDEFAULT,
@@ -354,13 +354,41 @@ static void test_monthcal(void)
     GetSystemTime(&st[0]);
     st[1] = st[0];
 
+    SendMessage(hwnd, MCM_GETTODAY, 0, (LPARAM)&today);
+
     /* Invalid date/time */
     st[0].wYear  = 2000;
     /* Time should not matter */
     st[1].wHour = st[1].wMinute = st[1].wSecond = 70;
+    st[1].wMilliseconds = 1200;
     ok(SendMessage(hwnd, MCM_SETRANGE, GDTR_MAX, (LPARAM)st), "Failed to set MAX limit\n");
+    /* invalid timestamp is written back with today data and msecs untouched */
+    expect(today.wHour, st[1].wHour);
+    expect(today.wMinute, st[1].wMinute);
+    expect(today.wSecond, st[1].wSecond);
+    expect(1200, st[1].wMilliseconds);
+
     ok(SendMessage(hwnd, MCM_GETRANGE, 0, (LPARAM)st1) == GDTR_MAX, "No limits should be set\n");
     ok(st1[0].wYear != 2000, "Lover limit changed\n");
+    /* invalid timestamp should be replaced with today data, except msecs */
+    expect(today.wHour, st1[1].wHour);
+    expect(today.wMinute, st1[1].wMinute);
+    expect(today.wSecond, st1[1].wSecond);
+    expect(1200, st1[1].wMilliseconds);
+
+    /* Invalid date/time with invalid milliseconds only */
+    GetSystemTime(&st[0]);
+    st[1] = st[0];
+    /* Time should not matter */
+    st[1].wMilliseconds = 1200;
+    ok(SendMessage(hwnd, MCM_SETRANGE, GDTR_MAX, (LPARAM)st), "Failed to set MAX limit\n");
+    /* invalid milliseconds field doesn't lead to invalid timestamp */
+    expect(st[0].wHour,   st[1].wHour);
+    expect(st[0].wMinute, st[1].wMinute);
+    expect(st[0].wSecond, st[1].wSecond);
+    expect(1200, st[1].wMilliseconds);
+
+    GetSystemTime(&st[0]);
 
     st[1].wMonth = 0;
     ok(!SendMessage(hwnd, MCM_SETRANGE, GDTR_MIN | GDTR_MAX, (LPARAM)st), "Should have failed to set limits\n");

@@ -160,17 +160,35 @@ static inline BOOL MONTHCAL_IsDateEqual(const SYSTEMTIME *first, const SYSTEMTIM
          (first->wDay  == second->wDay);
 }
 
-/* make sure that time is valid */
-static BOOL MONTHCAL_ValidateTime(SYSTEMTIME time)
+/* make sure that date fields are valid */
+static BOOL MONTHCAL_ValidateDate(const SYSTEMTIME *time)
 {
-  if(time.wMonth < 1 || time.wMonth > 12 ) return FALSE;
-  if(time.wDayOfWeek > 6) return FALSE;
-  if(time.wDay > MONTHCAL_MonthLength(time.wMonth, time.wYear))
+  if(time->wMonth < 1 || time->wMonth > 12 ) return FALSE;
+  if(time->wDayOfWeek > 6) return FALSE;
+  if(time->wDay > MONTHCAL_MonthLength(time->wMonth, time->wYear))
 	  return FALSE;
 
   return TRUE;
 }
 
+/* Used in MCM_SETRANGE/MCM_SETSELRANGE to determine resulting time part.
+   Milliseconds are intentionaly not validated. */
+static BOOL MONTHCAL_ValidateTime(const SYSTEMTIME *time)
+{
+  if((time->wHour > 24) || (time->wMinute > 59) || (time->wSecond > 59))
+    return FALSE;
+  else
+    return TRUE;
+}
+
+/* Copies timestamp part only. Milliseconds are intentionaly not copied
+   cause it matches required behaviour for current use of this helper */
+static void MONTHCAL_CopyTime(const SYSTEMTIME *from, SYSTEMTIME *to)
+{
+  to->wHour   = from->wHour;
+  to->wMinute = from->wMinute;
+  to->wSecond = from->wSecond;
+}
 
 /* Note:Depending on DST, this may be offset by a day.
    Need to find out if we're on a DST place & adjust the clock accordingly.
@@ -908,17 +926,23 @@ MONTHCAL_SetRange(MONTHCAL_INFO *infoPtr, SHORT limits, SYSTEMTIME *range)
 
     TRACE("%x %p\n", limits, range);
 
-    if ((limits & GDTR_MIN && !MONTHCAL_ValidateTime(range[0])) ||
-        (limits & GDTR_MAX && !MONTHCAL_ValidateTime(range[1])))
+    if ((limits & GDTR_MIN && !MONTHCAL_ValidateDate(&range[0])) ||
+        (limits & GDTR_MAX && !MONTHCAL_ValidateDate(&range[1])))
         return FALSE;
 
     if (limits & GDTR_MIN)
     {
+        if (!MONTHCAL_ValidateTime(&range[0]))
+            MONTHCAL_CopyTime(&infoPtr->todaysDate, &range[0]);
+
         infoPtr->minDate = range[0];
         infoPtr->rangeValid |= GDTR_MIN;
     }
     if (limits & GDTR_MAX)
     {
+        if (!MONTHCAL_ValidateTime(&range[1]))
+            MONTHCAL_CopyTime(&infoPtr->todaysDate, &range[1]);
+
         infoPtr->maxDate = range[1];
         infoPtr->rangeValid |= GDTR_MAX;
     }
@@ -1003,7 +1027,7 @@ MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
   if(!curSel) return FALSE;
   if(infoPtr->dwStyle & MCS_MULTISELECT) return FALSE;
 
-  if(!MONTHCAL_ValidateTime(*curSel)) return FALSE;
+  if(!MONTHCAL_ValidateDate(curSel)) return FALSE;
 
   infoPtr->minSel = *curSel;
   infoPtr->maxSel = *curSel;
@@ -1067,8 +1091,15 @@ MONTHCAL_SetSelRange(MONTHCAL_INFO *infoPtr, SYSTEMTIME *range)
 
   if(infoPtr->dwStyle & MCS_MULTISELECT)
   {
-    infoPtr->maxSel = range[1];
+    /* adjust timestamps */
+    if(!MONTHCAL_ValidateTime(&range[0]))
+      MONTHCAL_CopyTime(&infoPtr->todaysDate, &range[0]);
+    if(!MONTHCAL_ValidateTime(&range[1]))
+      MONTHCAL_CopyTime(&infoPtr->todaysDate, &range[1]);
+
     infoPtr->minSel = range[0];
+    infoPtr->maxSel = range[1];
+
     TRACE("[min,max]=[%d %d]\n", infoPtr->minSel.wDay, infoPtr->maxSel.wDay);
     return TRUE;
   }
