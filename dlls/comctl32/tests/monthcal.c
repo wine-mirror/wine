@@ -867,6 +867,19 @@ static void test_monthcal_hittest(void)
 
     hwnd = create_monthcal_control(0);
 
+    /* test with invalid structure size */
+    mchit.cbSize = MCHITTESTINFO_V1_SIZE - 1;
+    mchit.pt.x = 0;
+    mchit.pt.y = 0;
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
+    expect(0, mchit.pt.x);
+    expect(0, mchit.pt.y);
+    expect(-1, res);
+    expect(0, mchit.uHit);
+    /* test with invalid pointer */
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM)NULL);
+    expect(-1, res);
+
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     st.wYear = 2007;
@@ -882,7 +895,7 @@ static void test_monthcal_hittest(void)
     expect(1,res);
 
     /* (0, 0) is the top left of the control and should not be active */
-    mchit.cbSize = sizeof(MCHITTESTINFO);
+    mchit.cbSize = MCHITTESTINFO_V1_SIZE;
     mchit.pt.x = 0;
     mchit.pt.y = 0;
     res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
@@ -1051,7 +1064,7 @@ static void test_monthcal_todaylink(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     /* (70, 370) is in active area - today link */
-    mchit.cbSize = sizeof(MCHITTESTINFO);
+    mchit.cbSize = MCHITTESTINFO_V1_SIZE;
     mchit.pt.x = 70;
     mchit.pt.y = 370;
     res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);

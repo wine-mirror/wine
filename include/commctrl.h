@@ -4702,7 +4702,14 @@ typedef struct {
         POINT pt;
         UINT uHit;
         SYSTEMTIME st;
+        /* Vista */
+        RECT rc;
+        INT iOffset;
+        INT iRow;
+        INT iCol;
 } MCHITTESTINFO, *PMCHITTESTINFO;
+
+#define MCHITTESTINFO_V1_SIZE CCSIZEOF_STRUCT(MCHITTESTINFO, st)
 
 typedef struct tagNMSELCHANGE
 {

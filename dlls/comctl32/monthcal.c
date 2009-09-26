@@ -1141,6 +1141,7 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
   DWORD retval;
   int day,wday,wnum;
 
+  if(!lpht || lpht->cbSize < MCHITTESTINFO_V1_SIZE) return -1;
 
   x = lpht->pt.x;
   y = lpht->pt.y;
@@ -1417,6 +1418,7 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
       InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
   }
 
+  ht.cbSize = sizeof(MCHITTESTINFO);
   ht.pt.x = (short)LOWORD(lParam);
   ht.pt.y = (short)HIWORD(lParam);
   TRACE("(%d, %d)\n", ht.pt.x, ht.pt.y);
@@ -1550,6 +1552,7 @@ MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
     redraw = TRUE;
   }
 
+  ht.cbSize = sizeof(MCHITTESTINFO);
   ht.pt.x = (short)LOWORD(lParam);
   ht.pt.y = (short)HIWORD(lParam);
   hit = MONTHCAL_HitTest(infoPtr, &ht);
@@ -1628,6 +1631,7 @@ MONTHCAL_MouseMove(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
   if(!(infoPtr->status & MC_SEL_LBUTDOWN)) return 0;
 
+  ht.cbSize = sizeof(MCHITTESTINFO);
   ht.pt.x = (short)LOWORD(lParam);
   ht.pt.y = (short)HIWORD(lParam);
 
