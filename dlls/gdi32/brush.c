@@ -53,10 +53,10 @@ static const struct gdi_obj_funcs brush_funcs =
     BRUSH_DeleteObject   /* pDeleteObject */
 };
 
-static HGLOBAL16 dib_copy(const BITMAPINFO *info, UINT coloruse)
+static HGLOBAL dib_copy(const BITMAPINFO *info, UINT coloruse)
 {
     BITMAPINFO  *newInfo;
-    HGLOBAL16   hmem;
+    HGLOBAL     hmem;
     INT         size;
 
     if (info->bmiHeader.biCompression != BI_RGB && info->bmiHeader.biCompression != BI_BITFIELDS)
@@ -67,13 +67,13 @@ static HGLOBAL16 dib_copy(const BITMAPINFO *info, UINT coloruse)
                                     info->bmiHeader.biBitCount);
     size += bitmap_info_size( info, coloruse );
 
-    if (!(hmem = GlobalAlloc16( GMEM_MOVEABLE, size )))
+    if (!(hmem = GlobalAlloc( GMEM_MOVEABLE, size )))
     {
         return 0;
     }
-    newInfo = GlobalLock16( hmem );
+    newInfo = GlobalLock( hmem );
     memcpy( newInfo, info, size );
-    GlobalUnlock16( hmem );
+    GlobalUnlock( hmem );
     return hmem;
 }
 
@@ -133,7 +133,7 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
 
             ptr->logbrush.lbStyle = BS_DIBPATTERN;
             if (!(bmi = GlobalLock( h ))) goto error;
-            ptr->logbrush.lbHatch = dib_copy( bmi, ptr->logbrush.lbColor);
+            ptr->logbrush.lbHatch = (ULONG_PTR)dib_copy( bmi, ptr->logbrush.lbColor);
             GlobalUnlock( h );
             if (!ptr->logbrush.lbHatch) goto error;
             break;
@@ -156,7 +156,7 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
         if (ptr->logbrush.lbStyle == BS_PATTERN)
             DeleteObject( (HGDIOBJ)ptr->logbrush.lbHatch );
         else if (ptr->logbrush.lbStyle == BS_DIBPATTERN)
-            GlobalFree16( (HGLOBAL16)ptr->logbrush.lbHatch );
+            GlobalFree( (HGLOBAL)ptr->logbrush.lbHatch );
     }
     HeapFree( GetProcessHeap(), 0, ptr );
     return 0;
@@ -423,7 +423,7 @@ static BOOL BRUSH_DeleteObject( HGDIOBJ handle )
 	  DeleteObject( (HGDIOBJ)brush->logbrush.lbHatch );
 	  break;
       case BS_DIBPATTERN:
-	  GlobalFree16( (HGLOBAL16)brush->logbrush.lbHatch );
+	  GlobalFree( (HGLOBAL)brush->logbrush.lbHatch );
 	  break;
     }
     return HeapFree( GetProcessHeap(), 0, brush );
