@@ -2,6 +2,7 @@
  * Functions to use the XRender extension
  *
  * Copyright 2001, 2002 Huw D M Davies for CodeWeavers
+ * Copyright 2009 Roderick Colenbrander
  *
  * Some parts also:
  * Copyright 2000 Keith Packard, member of The XFree86 Project, Inc.
@@ -833,6 +834,33 @@ void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE *physDev)
     HeapFree(GetProcessHeap(), 0, physDev->xrender);
     physDev->xrender = NULL;
     return;
+}
+
+BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, const DIBSECTION *dib)
+{
+    WineXRenderFormat *fmt;
+    ColorShifts shifts;
+
+    /* When XRender is not around we can only use the screen_depth and when needed we perform depth conversion
+     * in software. Further we also return the screen depth for paletted formats or TrueColor formats with a low
+     * number of bits because XRender can't handle paletted formats and 8-bit TrueColor does not exist for XRender. */
+    if(!X11DRV_XRender_Installed || dib->dsBm.bmBitsPixel <= 8)
+        return FALSE;
+
+    X11DRV_PALETTE_ComputeColorShifts(&shifts, dib->dsBitfields[0], dib->dsBitfields[1], dib->dsBitfields[2]);
+
+    /* Common formats should be in our picture format table. */
+    fmt = get_xrender_format_from_color_shifts(dib->dsBm.bmBitsPixel, &shifts);
+    if(fmt)
+    {
+        physBitmap->pixmap_depth = fmt->pict_format->depth;
+        physBitmap->trueColor = TRUE;
+        physBitmap->pixmap_color_shifts = shifts;
+        return TRUE;
+    }
+    TRACE("Unhandled dibsection format bpp=%d, redMask=%x, greenMask=%x, blueMask=%x\n",
+          dib->dsBm.bmBitsPixel, dib->dsBitfields[0], dib->dsBitfields[1], dib->dsBitfields[2]);
+    return FALSE;
 }
 
 /***********************************************************************
@@ -2170,6 +2198,11 @@ void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap,
     XCopyArea( gdi_display, physBitmap->pixmap, physDev->brush.pixmap,
                get_bitmap_gc(physBitmap->pixmap_depth), 0, 0, width, height, 0, 0 );
     wine_tsx11_unlock();
+}
+
+BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, const DIBSECTION *dib)
+{
+    return FALSE;
 }
 
 BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
