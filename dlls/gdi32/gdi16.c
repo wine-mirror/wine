@@ -1601,15 +1601,6 @@ void WINAPI Resurrection16(HDC16 hdc,
 }
 
 
-/**********************************************************************
- *	     CreateMetaFile     (GDI.125)
- */
-HDC16 WINAPI CreateMetaFile16( LPCSTR filename )
-{
-    return HDC_16( CreateMetaFileA( filename ) );
-}
-
-
 /***********************************************************************
  *           MulDiv   (GDI.128)
  */
