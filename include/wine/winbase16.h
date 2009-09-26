@@ -522,10 +522,4 @@ BOOL16      WINAPI WritePrivateProfileSection16(LPCSTR,LPCSTR,LPCSTR);
 BOOL16      WINAPI WritePrivateProfileStruct16(LPCSTR,LPCSTR,LPVOID,UINT16,LPCSTR);
 BOOL16      WINAPI WriteProfileSection16(LPCSTR,LPCSTR);
 
-/* Some optimizations */
-extern inline LPVOID WINAPI MapSL( SEGPTR segptr )
-{
-    return (char *)wine_ldt_copy.base[SELECTOROF(segptr) >> __AHSHIFT] + OFFSETOF(segptr);
-}
-
 #endif /* __WINE_WINE_WINBASE16_H */
