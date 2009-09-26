@@ -1294,22 +1294,24 @@ MONTHCAL_RButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   WCHAR buf[32];
 
   hMenu = CreatePopupMenu();
-  if (!LoadStringW(COMCTL32_hModule,IDM_GOTODAY,buf,countof(buf)))
-    {
+  if (!LoadStringW(COMCTL32_hModule, IDM_GOTODAY, buf, countof(buf)))
+  {
       WARN("Can't load resource\n");
       strcpyW(buf, todayW);
-    }
-  AppendMenuW(hMenu, MF_STRING|MF_ENABLED,1, buf);
-  menupoint.x=(short)LOWORD(lParam);
-  menupoint.y=(short)HIWORD(lParam);
+  }
+  AppendMenuW(hMenu, MF_STRING|MF_ENABLED, 1, buf);
+  menupoint.x = (short)LOWORD(lParam);
+  menupoint.y = (short)HIWORD(lParam);
   ClientToScreen(infoPtr->hwndSelf, &menupoint);
-  if( TrackPopupMenu(hMenu,TPM_RIGHTBUTTON| TPM_NONOTIFY|TPM_RETURNCMD,
+  if( TrackPopupMenu(hMenu, TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD,
 		     menupoint.x, menupoint.y, 0, infoPtr->hwndSelf, NULL))
-    {
-      infoPtr->curSel.wMonth = infoPtr->todaysDate.wMonth;
-      infoPtr->curSel.wYear  = infoPtr->todaysDate.wYear;
+  {
+      infoPtr->curSel = infoPtr->todaysDate;
+      infoPtr->minSel = infoPtr->todaysDate;
+      infoPtr->maxSel = infoPtr->todaysDate;
       InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
-    }
+  }
+
   return 0;
 }
 
