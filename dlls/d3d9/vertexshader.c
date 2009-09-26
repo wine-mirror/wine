@@ -64,10 +64,14 @@ static ULONG WINAPI IDirect3DVertexShader9Impl_Release(LPDIRECT3DVERTEXSHADER9 i
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
-        IDirect3DDevice9Ex_Release(This->parentDevice);
+        IDirect3DDevice9Ex *parentDevice = This->parentDevice;
+
         wined3d_mutex_lock();
         IWineD3DVertexShader_Release(This->wineD3DVertexShader);
         wined3d_mutex_unlock();
+
+        /* Release the device last, as it may cause the device to be destroyed. */
+        IDirect3DDevice9Ex_Release(parentDevice);
     }
     return ref;
 }

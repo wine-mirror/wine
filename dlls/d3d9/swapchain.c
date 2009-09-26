@@ -60,7 +60,8 @@ static ULONG WINAPI IDirect3DSwapChain9Impl_Release(LPDIRECT3DSWAPCHAIN9 iface) 
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
-        if (This->parentDevice) IDirect3DDevice9Ex_Release(This->parentDevice);
+        IDirect3DDevice9Ex *parentDevice = This->parentDevice;
+
         if (!This->isImplicit) {
             wined3d_mutex_lock();
             IWineD3DSwapChain_Destroy(This->wineD3DSwapChain);
@@ -68,6 +69,9 @@ static ULONG WINAPI IDirect3DSwapChain9Impl_Release(LPDIRECT3DSWAPCHAIN9 iface) 
 
             HeapFree(GetProcessHeap(), 0, This);
         }
+
+        /* Release the device last, as it may cause the device to be destroyed. */
+        if (parentDevice) IDirect3DDevice9Ex_Release(parentDevice);
     }
     return ref;
 }
