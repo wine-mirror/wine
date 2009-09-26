@@ -26,7 +26,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "wownt32.h"
-#include "gdi_private.h"
 #include "wine/wingdi16.h"
 #include "wine/debug.h"
 
@@ -51,19 +50,6 @@ typedef enum WING_DITHER_TYPE
   WING_DISPERSED_4x4, WING_DISPERSED_8x8, WING_CLUSTERED_4x4
 } WING_DITHER_TYPE;
 
-/*
- * WinG DIB bitmaps can be selected into DC and then scribbled upon
- * by GDI functions. They can also be changed directly. This gives us
- * three choices
- *	- use original WinG 16-bit DLL
- *		requires working 16-bit driver interface
- * 	- implement DIB graphics driver from scratch
- *		see wing.zip size
- *	- use shared pixmaps
- *		won't work with some videocards and/or videomodes
- * 961208 - AK
- */
-
 /***********************************************************************
  *          WinGCreateDC	(WING.1001)
  *
@@ -79,7 +65,7 @@ typedef enum WING_DITHER_TYPE
 HDC16 WINAPI WinGCreateDC16(void)
 {
     TRACE("(void)\n");
-	return CreateCompatibleDC16(0);
+    return HDC_16( CreateCompatibleDC( 0 ));
 }
 
 /***********************************************************************
@@ -130,13 +116,38 @@ BOOL16 WINAPI WinGRecommendDIBFormat16(BITMAPINFO *bmpi)
  *  Success: A handle to the created bitmap.
  *  Failure: A NULL handle.
  */
-HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 hdc, BITMAPINFO *bmpi,
-                                    SEGPTR *bits)
+HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 hdc, BITMAPINFO *bmpi, SEGPTR *bits)
 {
-    TRACE("(%d,%p,%p)\n", hdc, bmpi, bits);
-    TRACE(": create %dx%dx%d bitmap\n", bmpi->bmiHeader.biWidth,
-	  bmpi->bmiHeader.biHeight, bmpi->bmiHeader.biPlanes);
-    return CreateDIBSection16(hdc, bmpi, 0, bits, 0, 0);
+    LPVOID bits32;
+    HBITMAP hbitmap;
+
+    TRACE("(%d,%p,%p): create %dx%dx%d bitmap\n", hdc, bmpi, bits,
+          bmpi->bmiHeader.biWidth, bmpi->bmiHeader.biHeight, bmpi->bmiHeader.biPlanes);
+
+    hbitmap = CreateDIBSection( HDC_32(hdc), bmpi, BI_RGB, &bits32, 0, 0 );
+    if (hbitmap)
+    {
+        DIBSECTION dib;
+        DWORD size;
+        WORD count, sel;
+        int i;
+
+        GetObjectW( hbitmap, sizeof(dib), &dib );
+        size = dib.dsBm.bmHeight * dib.dsBm.bmWidthBytes;
+
+        /* calculate number of sel's needed for size with 64K steps */
+        count = (size + 0xffff) / 0x10000;
+        sel = AllocSelectorArray16(count);
+
+        for (i = 0; i < count; i++)
+        {
+            SetSelectorBase(sel + (i << __AHSHIFT), (DWORD)bits32 + i * 0x10000);
+            SetSelectorLimit16(sel + (i << __AHSHIFT), size - 1); /* yep, limit is correct */
+            size -= 0x10000;
+        }
+        if (bits) *bits = MAKESEGPTR( sel, 0 );
+    }
+    return HBITMAP_16(hbitmap);
 }
 
 /***********************************************************************
@@ -144,17 +155,8 @@ HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 hdc, BITMAPINFO *bmpi,
  */
 SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
 {
-    BITMAPOBJ* bmp = GDI_GetObjPtr( HBITMAP_32(hWinGBitmap), OBJ_BITMAP );
-    SEGPTR res = 0;
-
-    TRACE("(%d,%p)\n", hWinGBitmap, bmpi);
-    if (!bmp) return 0;
-
-    if (bmpi) FIXME(": Todo - implement setting BITMAPINFO\n");
-
-    res = bmp->segptr_bits;
-    GDI_ReleaseObj( HBITMAP_32(hWinGBitmap) );
-    return res;
+    FIXME("%x, %p: not supported\n", hWinGBitmap, bmpi );
+    return 0;
 }
 
 /***********************************************************************
@@ -171,11 +173,10 @@ SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
  * RETURNS
  *  The number of entries set.
  */
-UINT16 WINAPI WinGSetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
-                                     RGBQUAD *colors)
+UINT16 WINAPI WinGSetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num, RGBQUAD *colors)
 {
     TRACE("(%d,%d,%d,%p)\n", hdc, start, num, colors);
-    return SetDIBColorTable16(hdc, start, num, colors);
+    return SetDIBColorTable( HDC_32(hdc), start, num, colors );
 }
 
 /***********************************************************************
@@ -192,11 +193,10 @@ UINT16 WINAPI WinGSetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
  * RETURNS
  *  The number of entries retrieved.
  */
-UINT16 WINAPI WinGGetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
-				     RGBQUAD *colors)
+UINT16 WINAPI WinGGetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num, RGBQUAD *colors)
 {
     TRACE("(%d,%d,%d,%p)\n", hdc, start, num, colors);
-    return GetDIBColorTable16(hdc, start, num, colors);
+    return GetDIBColorTable( HDC_32(hdc), start, num, colors );
 }
 
 /***********************************************************************
@@ -213,10 +213,10 @@ UINT16 WINAPI WinGGetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
  */
 HPALETTE16 WINAPI WinGCreateHalfTonePalette16(void)
 {
-    HDC16 hdc = CreateCompatibleDC16(0);
-    HPALETTE16 ret = CreateHalftonePalette16(hdc);
+    HDC hdc = CreateCompatibleDC(0);
+    HPALETTE16 ret = HPALETTE_16( CreateHalftonePalette( hdc ));
     TRACE("(void)\n");
-    DeleteDC16(hdc);
+    DeleteDC( hdc );
     return ret;
 }
 
@@ -238,7 +238,7 @@ HBRUSH16 WINAPI WinGCreateHalfToneBrush16(HDC16 winDC, COLORREF col,
                                             WING_DITHER_TYPE type)
 {
     TRACE("(%d,%d,%d)\n", winDC, col, type);
-    return CreateSolidBrush16(col);
+    return HBRUSH_16( CreateSolidBrush( col ));
 }
 
 /***********************************************************************
@@ -251,12 +251,12 @@ BOOL16 WINAPI WinGStretchBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
                                HDC16 srcDC, INT16 xSrc, INT16 ySrc,
                                INT16 widSrc, INT16 heiSrc)
 {
-    BOOL16 retval;
+    BOOL retval;
     TRACE("(%d,%d,...)\n", destDC, srcDC);
-    SetStretchBltMode16 ( destDC, COLORONCOLOR );
-    retval=StretchBlt16(destDC, xDest, yDest, widDest, heiDest, srcDC,
-			xSrc, ySrc, widSrc, heiSrc, SRCCOPY);
-    SetStretchBltMode16 ( destDC, BLACKONWHITE );
+    SetStretchBltMode( HDC_32(destDC), COLORONCOLOR );
+    retval = StretchBlt( HDC_32(destDC), xDest, yDest, widDest, heiDest,
+                         HDC_32(srcDC), xSrc, ySrc, widSrc, heiSrc, SRCCOPY );
+    SetStretchBltMode( HDC_32(destDC), BLACKONWHITE );
     return retval;
 }
 
@@ -270,6 +270,5 @@ BOOL16 WINAPI WinGBitBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
                            INT16 xSrc, INT16 ySrc)
 {
     TRACE("(%d,%d,...)\n", destDC, srcDC);
-    return BitBlt16(destDC, xDest, yDest, widDest, heiDest, srcDC,
-		    xSrc, ySrc, SRCCOPY);
+    return BitBlt( HDC_32(destDC), xDest, yDest, widDest, heiDest, HDC_32(srcDC), xSrc, ySrc, SRCCOPY );
 }

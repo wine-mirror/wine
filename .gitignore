@@ -124,7 +124,6 @@ dlls/toolhelp.dll16
 dlls/user.exe16
 dlls/ver.dll16
 dlls/wineps16.drv16
-dlls/wing.dll16
 dlls/winsock.dll16
 dlls/wprocs.dll16
 include/activaut.h

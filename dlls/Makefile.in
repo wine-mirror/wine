@@ -28,7 +28,6 @@ WIN16_FILES = \
 	user.exe16 \
 	ver.dll16 \
 	wineps16.drv16 \
-	wing.dll16 \
 	winsock.dll16 \
 	wprocs.dll16
 
@@ -43,7 +42,7 @@ all: $(BUILDSUBDIRS) @WIN16_FILES@
 commdlg.dll16:
 	echo "comdlg32.dll" >$@
 
-gdi.exe16 wing.dll16:
+gdi.exe16:
 	echo "gdi32.dll" >$@
 
 krnl386.exe16 system.drv16 toolhelp.dll16:

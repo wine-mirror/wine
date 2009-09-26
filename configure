@@ -17082,6 +17082,14 @@ dlls/winex11.drv/Makefile: dlls/winex11.drv/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/winex11.drv/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/wing.dll16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	wing.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/wing.dll16/Makefile: dlls/wing.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/wing.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wing32/Makefile"
 test "x$enable_wing32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	wing32"
@@ -19082,6 +19090,7 @@ do
     "dlls/wineps.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wineps.drv/Makefile" ;;
     "dlls/winequartz.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winequartz.drv/Makefile" ;;
     "dlls/winex11.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winex11.drv/Makefile" ;;
+    "dlls/wing.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wing.dll16/Makefile" ;;
     "dlls/wing32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wing32/Makefile" ;;
     "dlls/winhttp/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winhttp/Makefile" ;;
     "dlls/winhttp/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winhttp/tests/Makefile" ;;

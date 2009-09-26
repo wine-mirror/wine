@@ -9,9 +9,7 @@ IMPORTS   = advapi32 kernel32 ntdll
 EXTRAINCL = @FREETYPEINCL@ @FONTCONFIGINCL@
 EXTRALIBS = @CARBONLIB@
 
-SPEC_SRCS16 = \
-	gdi.exe.spec \
-	wing.spec
+SPEC_SRCS16 = gdi.exe.spec
 
 C_SRCS = \
 	bidi.c \
@@ -56,8 +54,7 @@ C_SRCS16 = \
 	bidi16.c \
 	env.c \
 	gdi16.c \
-	metafile16.c \
-	wing.c
+	metafile16.c
 
 RC_SRCS = version.rc
 RC_SRCS16 = version16.rc
