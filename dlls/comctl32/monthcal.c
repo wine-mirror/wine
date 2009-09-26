@@ -1421,10 +1421,8 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   {
     NMSELCHANGE nmsc;
 
-    infoPtr->curSel.wDay  = infoPtr->todaysDate.wDay;
     infoPtr->firstSelDay  = infoPtr->todaysDate.wDay;
-    infoPtr->curSel.wMonth = infoPtr->todaysDate.wMonth;
-    infoPtr->curSel.wYear  = infoPtr->todaysDate.wYear;
+    infoPtr->curSel = infoPtr->todaysDate;
     infoPtr->minSel = infoPtr->todaysDate;
     infoPtr->maxSel = infoPtr->todaysDate;
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
