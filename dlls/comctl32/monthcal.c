@@ -1248,13 +1248,28 @@ static void MONTHCAL_NotifyDayState(MONTHCAL_INFO *infoPtr)
 
 static void MONTHCAL_GoToNextMonth(MONTHCAL_INFO *infoPtr)
 {
+  SYSTEMTIME next = infoPtr->curSel;
+
   TRACE("\n");
 
-  infoPtr->curSel.wMonth++;
-  if(infoPtr->curSel.wMonth > 12) {
-    infoPtr->curSel.wYear++;
-    infoPtr->curSel.wMonth = 1;
+  next.wMonth++;
+  if(next.wMonth > 12) {
+    next.wYear++;
+    next.wMonth = 1;
   }
+
+  /* prevent max range exceeding */
+  if(infoPtr->rangeValid & GDTR_MAX)
+  {
+     FILETIME ft_next, ft_max;
+
+     SystemTimeToFileTime(&infoPtr->maxDate, &ft_max);
+     SystemTimeToFileTime(&next, &ft_next);
+
+     if (CompareFileTime(&ft_next, &ft_max) > 0) return;
+  }
+
+  infoPtr->curSel = next;
 
   MONTHCAL_NotifyDayState(infoPtr);
 }
@@ -1262,13 +1277,28 @@ static void MONTHCAL_GoToNextMonth(MONTHCAL_INFO *infoPtr)
 
 static void MONTHCAL_GoToPrevMonth(MONTHCAL_INFO *infoPtr)
 {
+  SYSTEMTIME prev = infoPtr->curSel;
+
   TRACE("\n");
 
-  infoPtr->curSel.wMonth--;
-  if(infoPtr->curSel.wMonth < 1) {
-    infoPtr->curSel.wYear--;
-    infoPtr->curSel.wMonth = 12;
+  prev.wMonth--;
+  if(prev.wMonth < 1) {
+    prev.wYear--;
+    prev.wMonth = 12;
   }
+
+  /* prevent min range exceeding */
+  if(infoPtr->rangeValid & GDTR_MIN)
+  {
+     FILETIME ft_prev, ft_min;
+
+     SystemTimeToFileTime(&infoPtr->minDate, &ft_min);
+     SystemTimeToFileTime(&prev, &ft_prev);
+
+     if (CompareFileTime(&ft_prev, &ft_min) < 0) return;
+  }
+
+  infoPtr->curSel = prev;
 
   MONTHCAL_NotifyDayState(infoPtr);
 }
@@ -1495,7 +1525,7 @@ MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
   infoPtr->status = MC_SEL_LBUTUP;
 
-  if(hit ==MCHT_CALENDARDATENEXT) {
+  if(hit == MCHT_CALENDARDATENEXT) {
     MONTHCAL_GoToNextMonth(infoPtr);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     return TRUE;
@@ -1858,8 +1888,7 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   GetLocalTime(&infoPtr->todaysDate);
   infoPtr->firstDayHighWord = FALSE;
   MONTHCAL_SetFirstDayOfWeek(infoPtr, -1);
-  infoPtr->curSel.wMonth = infoPtr->todaysDate.wMonth;
-  infoPtr->curSel.wYear  = infoPtr->todaysDate.wYear;
+
   infoPtr->maxSelCount   = 7;
   infoPtr->monthRange    = 3;
   infoPtr->monthdayState = Alloc(infoPtr->monthRange * sizeof(MONTHDAYSTATE));
@@ -1872,6 +1901,7 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
 
   infoPtr->minSel = infoPtr->todaysDate;
   infoPtr->maxSel = infoPtr->todaysDate;
+  infoPtr->curSel = infoPtr->todaysDate;
 
   /* call MONTHCAL_UpdateSize to set all of the dimensions */
   /* of the control */
