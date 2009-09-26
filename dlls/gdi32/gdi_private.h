@@ -252,8 +252,7 @@ typedef struct tagDC
     INT          saveLevel;
     HDC          saved_dc;
     DWORD_PTR    dwHookData;
-    FARPROC16    hookProc;         /* the original SEGPTR ... */
-    DCHOOKPROC   hookThunk;        /* ... and the thunk to call it */
+    DCHOOKPROC   hookProc;         /* DC hook */
 
     INT          wndOrgX;          /* Window origin */
     INT          wndOrgY;

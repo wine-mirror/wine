@@ -1769,6 +1769,26 @@ void WINAPI PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr, 
 
 
 /***********************************************************************
+ *           SetDCHook   (GDI.190)
+ */
+BOOL16 WINAPI SetDCHook16( HDC16 hdc16, FARPROC16 hookProc, DWORD dwHookData )
+{
+    FIXME( "%04x %p %x: not supported\n", hdc16, hookProc, dwHookData );
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *           GetDCHook   (GDI.191)
+ */
+DWORD WINAPI GetDCHook16( HDC16 hdc16, FARPROC16 *phookProc )
+{
+    FIXME( "%04x: not supported\n", hdc16 );
+    return 0;
+}
+
+
+/***********************************************************************
  *           SetHookFlags   (GDI.192)
  */
 WORD WINAPI SetHookFlags16( HDC16 hdc, WORD flags )
