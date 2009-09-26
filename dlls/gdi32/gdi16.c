@@ -26,6 +26,7 @@
 #include "wownt32.h"
 #include "wine/wingdi16.h"
 #include "gdi_private.h"
+#include "wine/list.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
@@ -222,6 +223,57 @@ static INT CALLBACK enum_font_callback( const LOGFONTW *plf,
     return LOWORD(ret);
 }
 
+struct dib_segptr_bits
+{
+    struct list entry;
+    HBITMAP16 bmp;
+    WORD      sel;
+    WORD      count;
+};
+
+static struct list dib_segptr_list = LIST_INIT( dib_segptr_list );
+
+static SEGPTR alloc_segptr_bits( HBITMAP bmp, void *bits32 )
+{
+    DIBSECTION dib;
+    unsigned int i, size;
+    struct dib_segptr_bits *bits;
+
+    if (!(bits = HeapAlloc( GetProcessHeap(), 0, sizeof(*bits) ))) return 0;
+
+    GetObjectW( bmp, sizeof(dib), &dib );
+    size = dib.dsBm.bmHeight * dib.dsBm.bmWidthBytes;
+
+    /* calculate number of sel's needed for size with 64K steps */
+    bits->bmp   = HBITMAP_16( bmp );
+    bits->count = (size + 0xffff) / 0x10000;
+    bits->sel   = AllocSelectorArray16( bits->count );
+
+    for (i = 0; i < bits->count; i++)
+    {
+        SetSelectorBase(bits->sel + (i << __AHSHIFT), (DWORD)bits32 + i * 0x10000);
+        SetSelectorLimit16(bits->sel + (i << __AHSHIFT), size - 1); /* yep, limit is correct */
+        size -= 0x10000;
+    }
+    list_add_head( &dib_segptr_list, &bits->entry );
+    return MAKESEGPTR( bits->sel, 0 );
+}
+
+static void free_segptr_bits( HBITMAP16 bmp )
+{
+    unsigned int i;
+    struct dib_segptr_bits *bits;
+
+    LIST_FOR_EACH_ENTRY( bits, &dib_segptr_list, struct dib_segptr_bits, entry )
+    {
+        if (bits->bmp != bmp) continue;
+        for (i = 0; i < bits->count; i++) FreeSelector16( bits->sel + (i << __AHSHIFT) );
+
+        list_remove( &bits->entry );
+        HeapFree( GetProcessHeap(), 0, bits );
+        return;
+    }
+}
 
 /***********************************************************************
  *           SetBkColor    (GDI.1)
@@ -1125,6 +1177,7 @@ BOOL16 WINAPI DeleteDC16( HDC16 hdc )
  */
 BOOL16 WINAPI DeleteObject16( HGDIOBJ16 obj )
 {
+    if (GetObjectType( HGDIOBJ_32(obj) ) == OBJ_BITMAP) free_segptr_bits( obj );
     return DeleteObject( HGDIOBJ_32(obj) );
 }
 
@@ -3623,40 +3676,6 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, const BITMAPINFO *bmi, UINT16 us
     HBITMAP hbitmap;
 
     hbitmap = CreateDIBSection( HDC_32(hdc), bmi, usage, &bits32, section, offset );
-    if (hbitmap)
-    {
-        BITMAPOBJ *bmp = GDI_GetObjPtr(hbitmap, OBJ_BITMAP);
-        if (bmp && bmp->dib && bits32)
-        {
-            const BITMAPINFOHEADER *bi = &bmi->bmiHeader;
-            LONG width, height;
-            WORD planes, bpp;
-            DWORD compr, size;
-            INT width_bytes;
-            WORD count, sel;
-            int i;
-
-            DIB_GetBitmapInfo(bi, &width, &height, &planes, &bpp, &compr, &size);
-
-            height = height >= 0 ? height : -height;
-            width_bytes = DIB_GetDIBWidthBytes(width, bpp);
-
-            if (!size || (compr != BI_RLE4 && compr != BI_RLE8)) size = width_bytes * height;
-
-            /* calculate number of sel's needed for size with 64K steps */
-            count = (size + 0xffff) / 0x10000;
-            sel = AllocSelectorArray16(count);
-
-            for (i = 0; i < count; i++)
-            {
-                SetSelectorBase(sel + (i << __AHSHIFT), (DWORD)bits32 + i * 0x10000);
-                SetSelectorLimit16(sel + (i << __AHSHIFT), size - 1); /* yep, limit is correct */
-                size -= 0x10000;
-            }
-            bmp->segptr_bits = MAKESEGPTR( sel, 0 );
-            if (bits16) *bits16 = bmp->segptr_bits;
-        }
-        if (bmp) GDI_ReleaseObj( hbitmap );
-    }
+    if (hbitmap && bits32 && bits16) *bits16 = alloc_segptr_bits( hbitmap, bits32 );
     return HBITMAP_16(hbitmap);
 }
