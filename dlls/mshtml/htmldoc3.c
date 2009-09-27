@@ -31,6 +31,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "htmlevent.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -173,8 +174,10 @@ static HRESULT WINAPI HTMLDocument3_attachEvent(IHTMLDocument3 *iface, BSTR even
                                                 IDispatch* pDisp, VARIANT_BOOL *pfResult)
 {
     HTMLDocument *This = HTMLDOC3_THIS(iface);
-    FIXME("(%p)->(%s %p %p)\n", This, debugstr_w(event), pDisp, pfResult);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(event), pDisp, pfResult);
+
+    return attach_event(&This->doc_node->node.event_target, This, event, pDisp, pfResult);
 }
 
 static HRESULT WINAPI HTMLDocument3_detachEvent(IHTMLDocument3 *iface, BSTR event,
