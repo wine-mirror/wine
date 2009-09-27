@@ -402,6 +402,11 @@ BOOL WINAPI IsDebuggerPresent(void)
  */
 BOOL WINAPI CheckRemoteDebuggerPresent(HANDLE process, PBOOL DebuggerPresent)
 {
+    if(!process || !DebuggerPresent)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
     FIXME("(%p)->(%p): Stub!\n", process, DebuggerPresent);
     *DebuggerPresent = FALSE;
     return TRUE;

@@ -32,6 +32,7 @@
 static int    myARGC;
 static char** myARGV;
 
+static BOOL (WINAPI *pCheckRemoteDebuggerPresent)(HANDLE,PBOOL);
 static BOOL (WINAPI *pDebugActiveProcessStop)(DWORD);
 static BOOL (WINAPI *pDebugSetProcessKillOnExit)(BOOL);
 
@@ -431,11 +432,42 @@ static void test_ExitCode(void)
     }
 }
 
+static void test_RemoteDebugger(void)
+{
+    BOOL bret, present;
+    if(!pCheckRemoteDebuggerPresent)
+    {
+        win_skip("CheckRemoteDebuggerPresent is not available\n");
+        return;
+    }
+    present = TRUE;
+    SetLastError(0xdeadbeef);
+    bret = pCheckRemoteDebuggerPresent(GetCurrentProcess(),&present);
+    ok(bret , "expected CheckRemoteDebuggerPresent to succeed\n");
+    ok(0xdeadbeef == GetLastError(),
+       "expected error to be unchanged, got %d/%x\n",GetLastError(), GetLastError());
+
+    present = TRUE;
+    SetLastError(0xdeadbeef);
+    bret = pCheckRemoteDebuggerPresent(NULL,&present);
+    ok(!bret , "expected CheckRemoteDebuggerPresent to fail\n");
+    ok(present, "expected parameter to be unchanged\n");
+    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+       "expected error ERROR_INVALID_PARAMETER, got %d/%x\n",GetLastError(), GetLastError());
+
+    SetLastError(0xdeadbeef);
+    bret = pCheckRemoteDebuggerPresent(GetCurrentProcess(),NULL);
+    ok(!bret , "expected CheckRemoteDebuggerPresent to fail\n");
+    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+       "expected error ERROR_INVALID_PARAMETER, got %d/%x\n",GetLastError(), GetLastError());
+}
+
 START_TEST(debugger)
 {
     HMODULE hdll;
 
     hdll=GetModuleHandle("kernel32.dll");
+    pCheckRemoteDebuggerPresent=(void*)GetProcAddress(hdll, "CheckRemoteDebuggerPresent");
     pDebugActiveProcessStop=(void*)GetProcAddress(hdll, "DebugActiveProcessStop");
     pDebugSetProcessKillOnExit=(void*)GetProcAddress(hdll, "DebugSetProcessKillOnExit");
 
@@ -451,5 +483,6 @@ START_TEST(debugger)
     else
     {
         test_ExitCode();
+        test_RemoteDebugger();
     }
 }
