@@ -96,7 +96,7 @@ static HRESULT exec_global_code(JScript *This, parser_ctx_t *parser_ctx)
     VARIANT var;
     HRESULT hres;
 
-    hres = create_exec_ctx((IDispatch*)_IDispatchEx_(This->ctx->script_disp), This->ctx->script_disp, NULL, &exec_ctx);
+    hres = create_exec_ctx(This->ctx, NULL, This->ctx->global, NULL, &exec_ctx);
     if(FAILED(hres))
         return hres;
 
@@ -147,12 +147,6 @@ static HRESULT set_ctx_site(JScript *This)
     HRESULT hres;
 
     This->ctx->lcid = This->lcid;
-
-    if(!This->ctx->script_disp) {
-        hres = create_dispex(This->ctx, NULL, NULL, &This->ctx->script_disp);
-        if(FAILED(hres))
-            return hres;
-    }
 
     hres = init_global(This->ctx);
     if(FAILED(hres))
@@ -335,6 +329,11 @@ static HRESULT WINAPI JScript_Close(IActiveScript *iface)
         if(This->ctx->state == SCRIPTSTATE_DISCONNECTED)
             change_state(This, SCRIPTSTATE_INITIALIZED);
 
+        if(This->ctx->host_global) {
+            IDispatch_Release(This->ctx->host_global);
+            This->ctx->host_global = NULL;
+        }
+
         if(This->ctx->named_items) {
             named_item_t *iter, *iter2;
 
@@ -359,11 +358,6 @@ static HRESULT WINAPI JScript_Close(IActiveScript *iface)
 
         if (This->site)
             change_state(This, SCRIPTSTATE_CLOSED);
-
-        if(This->ctx->script_disp) {
-            jsdisp_release(This->ctx->script_disp);
-            This->ctx->script_disp = NULL;
-        }
 
         if(This->ctx->global) {
             jsdisp_release(This->ctx->global);
@@ -407,6 +401,11 @@ static HRESULT WINAPI JScript_AddNamedItem(IActiveScript *iface,
             WARN("object does not implement IDispatch\n");
             return hres;
         }
+
+        if(This->ctx->host_global)
+            IDispatch_Release(This->ctx->host_global);
+        IDispatch_AddRef(disp);
+        This->ctx->host_global = disp;
     }
 
     item = heap_alloc(sizeof(*item));
@@ -449,12 +448,12 @@ static HRESULT WINAPI JScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR 
     if(!ppdisp)
         return E_POINTER;
 
-    if(This->thread_id != GetCurrentThreadId() || !This->ctx->script_disp) {
+    if(This->thread_id != GetCurrentThreadId() || !This->ctx->global) {
         *ppdisp = NULL;
         return E_UNEXPECTED;
     }
 
-    *ppdisp = (IDispatch*)_IDispatchEx_(This->ctx->script_disp);
+    *ppdisp = (IDispatch*)_IDispatchEx_(This->ctx->global);
     IDispatch_AddRef(*ppdisp);
     return S_OK;
 }

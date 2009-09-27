@@ -79,6 +79,8 @@ DEFINE_EXPECT(GetItemInfo_testVal);
 #define DISPID_GLOBAL_TESTOBJ       0x1006
 #define DISPID_GLOBAL_NULL_BSTR     0x1007
 #define DISPID_GLOBAL_NULL_DISP     0x1008
+#define DISPID_GLOBAL_TESTTHIS      0x1009
+#define DISPID_GLOBAL_TESTTHIS2     0x100a
 
 #define DISPID_TESTOBJ_PROP         0x2000
 
@@ -89,6 +91,7 @@ static const CHAR test_valA[] = "testVal";
 
 static BOOL strict_dispid_check;
 static const char *test_name = "(null)";
+static IDispatch *script_disp;
 
 static BSTR a2bstr(const char *str)
 {
@@ -325,6 +328,18 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         return DISP_E_UNKNOWNNAME;
     }
 
+    if(!strcmp_wa(bstrName, "testThis")) {
+        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        *pid = DISPID_GLOBAL_TESTTHIS;
+        return S_OK;
+    }
+
+    if(!strcmp_wa(bstrName, "testThis2")) {
+        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        *pid = DISPID_GLOBAL_TESTTHIS2;
+        return S_OK;
+    }
+
     if(strict_dispid_check)
         ok(0, "unexpected call %s\n", wine_dbgstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
@@ -492,6 +507,35 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         V_VT(pvarRes) = VT_DISPATCH;
         V_DISPATCH(pvarRes) = NULL;
         return S_OK;
+
+    case DISPID_GLOBAL_TESTTHIS:
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes == NULL, "pvarRes != NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        ok(V_VT(pdp->rgvarg) == VT_DISPATCH, "V_VT(arg) = %d\n", V_VT(pdp->rgvarg));
+        ok(V_DISPATCH(pdp->rgvarg) == (IDispatch*)iface, "disp != iface\n");
+
+        return S_OK;
+
+    case DISPID_GLOBAL_TESTTHIS2:
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes == NULL, "pvarRes != NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        ok(V_VT(pdp->rgvarg) == VT_DISPATCH, "V_VT(arg) = %d\n", V_VT(pdp->rgvarg));
+        ok(V_DISPATCH(pdp->rgvarg) != (IDispatch*)iface, "disp == iface\n");
+        ok(V_DISPATCH(pdp->rgvarg) == script_disp, "disp != script_disp\n");
+
+        return S_OK;
     }
 
     ok(0, "unexpected call %x\n", id);
@@ -625,7 +669,7 @@ static IActiveScript *create_script(void)
     return script;
 }
 
-static void parse_script(BSTR script_str)
+static void parse_script(DWORD flags, BSTR script_str)
 {
     IActiveScriptParse *parser;
     IActiveScript *engine;
@@ -650,15 +694,21 @@ static void parse_script(BSTR script_str)
     ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
 
     hres = IActiveScript_AddNamedItem(engine, testW,
-            SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
+            SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|flags);
     ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
     ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
 
+    hres = IActiveScript_GetScriptDispatch(engine, NULL, &script_disp);
+    ok(hres == S_OK, "GetScriptDispatch failed: %08x\n", hres);
+    ok(script_disp != NULL, "script_disp == NULL\n");
+    ok(script_disp != (IDispatch*)&Global, "script_disp == Global\n");
+
     hres = IActiveScriptParse64_ParseScriptText(parser, script_str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
 
+    IDispatch_Release(script_disp);
     IActiveScript_Release(engine);
     IUnknown_Release(parser);
 }
@@ -704,11 +754,16 @@ static HRESULT parse_htmlscript(BSTR script_str)
     return hres;
 }
 
-static void parse_script_a(const char *src)
+static void parse_script_af(DWORD flags, const char *src)
 {
     BSTR tmp = a2bstr(src);
-    parse_script(tmp);
+    parse_script(flags, tmp);
     SysFreeString(tmp);
+}
+
+static void parse_script_a(const char *src)
+{
+    parse_script_af(SCRIPTITEM_GLOBALMEMBERS, src);
 }
 
 static HRESULT parse_htmlscript_a(const char *src)
@@ -766,7 +821,7 @@ static void run_from_file(const char *filename)
     strict_dispid_check = FALSE;
 
     if(script_str)
-        parse_script(script_str);
+        parse_script(SCRIPTITEM_GLOBALMEMBERS, script_str);
 
     SysFreeString(script_str);
 }
@@ -793,7 +848,7 @@ static void run_from_res(const char *name)
 
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
-    parse_script(str);
+    parse_script(SCRIPTITEM_GLOBALMEMBERS, str);
     CHECK_CALLED(global_success_d);
     CHECK_CALLED(global_success_i);
 
@@ -916,12 +971,30 @@ static void run_tests(void)
     parse_script_a("ok(String.prototype.concat.call(testObj, ' OK') === '1 OK', 'wrong concat result');");
     CHECK_CALLED(testobj_value);
 
+    SET_EXPECT(global_propget_d);
+    SET_EXPECT(global_propget_i);
+    parse_script_a("this.testPropGet;");
+    CHECK_CALLED(global_propget_d);
+    CHECK_CALLED(global_propget_i);
+
+    SET_EXPECT(global_propget_d);
+    SET_EXPECT(global_propget_i);
+    parse_script_a("(function () { this.testPropGet; })();");
+    CHECK_CALLED(global_propget_d);
+    CHECK_CALLED(global_propget_i);
+
+    parse_script_a("testThis(this);");
+    parse_script_a("(function () { testThis(this); })();");
+
     run_from_res("lang.js");
     run_from_res("api.js");
     run_from_res("regexp.js");
 
     test_isvisible(FALSE);
     test_isvisible(TRUE);
+
+    parse_script_af(0, "test.testThis2(this);");
+    parse_script_af(0, "(function () { test.testThis2(this); })();");
 
     hres = parse_htmlscript_a("<!--");
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);

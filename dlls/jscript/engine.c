@@ -178,7 +178,8 @@ void scope_release(scope_chain_t *scope)
     heap_free(scope);
 }
 
-HRESULT create_exec_ctx(IDispatch *this_obj, DispatchEx *var_disp, scope_chain_t *scope, exec_ctx_t **ret)
+HRESULT create_exec_ctx(script_ctx_t *script_ctx, IDispatch *this_obj, DispatchEx *var_disp,
+        scope_chain_t *scope, exec_ctx_t **ret)
 {
     exec_ctx_t *ctx;
 
@@ -188,8 +189,13 @@ HRESULT create_exec_ctx(IDispatch *this_obj, DispatchEx *var_disp, scope_chain_t
 
     ctx->ref = 1;
 
-    IDispatch_AddRef(this_obj);
-    ctx->this_obj = this_obj;
+    if(this_obj)
+        ctx->this_obj = this_obj;
+    else if(script_ctx->host_global)
+        ctx->this_obj = script_ctx->host_global;
+    else
+        ctx->this_obj = (IDispatch*)_IDispatchEx_(script_ctx->global);
+    IDispatch_AddRef(ctx->this_obj);
 
     IDispatchEx_AddRef(_IDispatchEx_(var_disp));
     ctx->var_disp = var_disp;
@@ -537,21 +543,15 @@ static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, js
         }
     }
 
-    hres = jsdisp_get_id(ctx->parser->script->script_disp, identifier, 0, &id);
-    if(SUCCEEDED(hres)) {
-        exprval_set_idref(ret, (IDispatch*)_IDispatchEx_(ctx->parser->script->script_disp), id);
-        return S_OK;
-    }
-
     if(lookup_global_members(ctx->parser->script, identifier, ret))
         return S_OK;
 
     if(flags & EXPR_NEWREF) {
-        hres = jsdisp_get_id(ctx->parser->script->script_disp, identifier, fdexNameEnsure, &id);
+        hres = jsdisp_get_id(ctx->parser->script->global, identifier, fdexNameEnsure, &id);
         if(FAILED(hres))
             return hres;
 
-        exprval_set_idref(ret, (IDispatch*)_IDispatchEx_(ctx->parser->script->script_disp), id);
+        exprval_set_idref(ret, (IDispatch*)_IDispatchEx_(ctx->parser->script->global), id);
         return S_OK;
     }
 

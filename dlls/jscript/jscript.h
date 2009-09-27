@@ -264,7 +264,8 @@ struct _script_ctx_t {
 
     jsheap_t tmp_heap;
 
-    DispatchEx *script_disp;
+    IDispatch *host_global;
+
     DispatchEx *global;
     DispatchEx *function_constr;
     DispatchEx *array_constr;
