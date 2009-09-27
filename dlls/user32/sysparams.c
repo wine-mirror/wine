@@ -2327,8 +2327,14 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         ret = set_user_pref_param( 2, 0x02, PtrToUlong(pvParam), fWinIni );
         break;
 
-    WINE_SPI_FIXME(SPI_GETDROPSHADOW);          /* 0x1024  _WIN32_WINNT >= 0x510 */
-    WINE_SPI_FIXME(SPI_SETDROPSHADOW);          /* 0x1025  _WIN32_WINNT >= 0x510 */
+    case SPI_GETDROPSHADOW:
+        ret = get_user_pref_param( 2, 0x04, pvParam );
+        break;
+
+    case SPI_SETDROPSHADOW:
+        ret = set_user_pref_param( 2, 0x04, PtrToUlong(pvParam), fWinIni );
+        break;
+
     WINE_SPI_FIXME(SPI_GETBLOCKSENDINPUTRESETS);
     WINE_SPI_FIXME(SPI_SETBLOCKSENDINPUTRESETS);
     case SPI_GETUIEFFECTS:
