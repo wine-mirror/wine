@@ -2443,6 +2443,7 @@ WINE_CONFIG_MAKEFILE([dlls/stress.dll16/Makefile],[dlls/Makedll.rules],[dlls],[A
 WINE_CONFIG_MAKEFILE([dlls/strmiids/Makefile],[dlls/Makeimplib.rules],[dlls],[ALL_IMPLIB_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/svrapi/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/sxs/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
+WINE_CONFIG_MAKEFILE([dlls/system.drv16/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[enable_win16])
 WINE_CONFIG_MAKEFILE([dlls/t2embed/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/tapi32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/traffic/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])

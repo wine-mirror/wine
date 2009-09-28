@@ -122,6 +122,7 @@ static void SYSTEM_StopTicks(void)
 DWORD WINAPI InquireSystem16( WORD code, WORD arg )
 {
     WORD drivetype;
+    WCHAR root[3];
 
     switch(code)
     {
@@ -129,7 +130,12 @@ DWORD WINAPI InquireSystem16( WORD code, WORD arg )
         return SYS_TIMER_RATE;
 
     case 1:  /* Get drive type */
-        drivetype = GetDriveType16( arg );
+        root[0] = 'A' + arg;
+        root[1] = ':';
+        root[2] = 0;
+        drivetype = GetDriveTypeW( root );
+        if (drivetype == DRIVE_CDROM) drivetype = DRIVE_REMOTE;
+        else if (drivetype == DRIVE_NO_ROOT_DIR) drivetype = DRIVE_UNKNOWN;
         return MAKELONG( drivetype, drivetype );
 
     case 2:  /* Enable one-drive logic */
