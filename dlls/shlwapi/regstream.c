@@ -144,13 +144,29 @@ static HRESULT WINAPI IStream_fnRead (IStream * iface, void* pv, ULONG cb, ULONG
 static HRESULT WINAPI IStream_fnWrite (IStream * iface, const void* pv, ULONG cb, ULONG* pcbWritten)
 {
 	ISHRegStream *This = (ISHRegStream *)iface;
+	DWORD newLen = This->dwPos + cb;
 
-	TRACE("(%p)\n",This);
+	TRACE("(%p, %p, %d, %p)\n",This, pv, cb, pcbWritten);
+
+	if (newLen < This->dwPos) /* overflow */
+	  return STG_E_INSUFFICIENTMEMORY;
+
+	if (newLen > This->dwLength)
+	{
+	  LPBYTE newBuf = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->pbBuffer, newLen);
+	  if (!newBuf)
+	    return STG_E_INSUFFICIENTMEMORY;
+
+	  This->dwLength = newLen;
+	  This->pbBuffer = newBuf;
+	}
+	memmove(This->pbBuffer + This->dwPos, pv, cb);
+	This->dwPos += cb; /* adjust pointer */
 
 	if (pcbWritten)
-	  *pcbWritten = 0;
+	  *pcbWritten = cb;
 
-	return E_NOTIMPL;
+	return S_OK;
 }
 
 /**************************************************************************
@@ -159,12 +175,28 @@ static HRESULT WINAPI IStream_fnWrite (IStream * iface, const void* pv, ULONG cb
 static HRESULT WINAPI IStream_fnSeek (IStream * iface, LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER* plibNewPosition)
 {
 	ISHRegStream *This = (ISHRegStream *)iface;
+	LARGE_INTEGER tmp;
+	TRACE("(%p, %s, %d %p)\n", This,
+              wine_dbgstr_longlong(dlibMove.QuadPart), dwOrigin, plibNewPosition);
 
-	TRACE("(%p)\n",This);
+	if (dwOrigin == STREAM_SEEK_SET)
+	  tmp = dlibMove;
+        else if (dwOrigin == STREAM_SEEK_CUR)
+	  tmp.QuadPart = This->dwPos + dlibMove.QuadPart;
+	else if (dwOrigin == STREAM_SEEK_END)
+	  tmp.QuadPart = This->dwLength + dlibMove.QuadPart;
+        else
+	  return STG_E_INVALIDPARAMETER;
+
+	if (tmp.QuadPart < 0)
+	  return STG_E_INVALIDFUNCTION;
+
+	/* we cut off the high part here */
+	This->dwPos = tmp.LowPart;
 
 	if (plibNewPosition)
-	  plibNewPosition->QuadPart = 0;
-	return E_NOTIMPL;
+	  plibNewPosition->QuadPart = This->dwPos;
+	return S_OK;
 }
 
 /**************************************************************************
@@ -173,9 +205,21 @@ static HRESULT WINAPI IStream_fnSeek (IStream * iface, LARGE_INTEGER dlibMove, D
 static HRESULT WINAPI IStream_fnSetSize (IStream * iface, ULARGE_INTEGER libNewSize)
 {
 	ISHRegStream *This = (ISHRegStream *)iface;
+	DWORD newLen;
+	LPBYTE newBuf;
 
-	TRACE("(%p)\n",This);
-	return E_NOTIMPL;
+	TRACE("(%p, %s)\n", This, wine_dbgstr_longlong(libNewSize.QuadPart));
+
+	/* we cut off the high part here */
+	newLen = libNewSize.LowPart;
+	newBuf = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->pbBuffer, newLen);
+	if (!newBuf)
+	  return STG_E_INSUFFICIENTMEMORY;
+
+	This->pbBuffer = newBuf;
+	This->dwLength = newLen;
+
+	return S_OK;
 }
 
 /**************************************************************************
