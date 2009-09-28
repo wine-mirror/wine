@@ -198,13 +198,13 @@ static void test_SetupCopyOEMInf(void)
     SetLastError(0xdeadbeef);
     res = pSetupCopyOEMInfA(tmpfile, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
-    if (GetLastError() == ERROR_WRONG_INF_TYPE)
+    if (GetLastError() == ERROR_WRONG_INF_TYPE || GetLastError() == ERROR_UNSUPPORTED_TYPE /* Win7 */)
     {
        /* FIXME:
         * Vista needs a [Manufacturer] entry in the inf file. Doing this will give some
         * popups during the installation though as it also needs a catalog file (signed?).
         */
-       win_skip("Needs a different inf file on Vista/W2K8\n");
+       win_skip("Needs a different inf file on Vista+\n");
        DeleteFile(tmpfile);
        return;
     }
