@@ -295,11 +295,17 @@ preprocessor
 	| tPRAGMA opt_text tNL	{ fprintf(ppy_out, "#pragma %s\n", $2 ? $2 : ""); free($2); }
 	| tPPIDENT opt_text tNL	{ if(pp_status.pedantic) ppy_warning("#ident ignored (arg: '%s')", $2); free($2); }
         | tRCINCLUDE tRCINCLUDEPATH {
-                int nl=strlen($2) +3;
-                char *fn=pp_xmalloc(nl);
-                sprintf(fn,"\"%s\"",$2);
-		free($2);
-		pp_do_include(fn,1);
+                if($2)
+                {
+                        int nl=strlen($2) +3;
+                        char *fn=pp_xmalloc(nl);
+                        if(fn)
+                        {
+                                sprintf(fn,"\"%s\"",$2);
+                                pp_do_include(fn,1);
+                        }
+                        free($2);
+                }
 	}
 	| tRCINCLUDE tDQSTRING {
 		pp_do_include($2,1);
@@ -361,7 +367,7 @@ mtext	: tLITERAL	{ $$ = new_mtext($1, 0, exp_text); }
 		int mat = marg_index($1);
 		if(mat >= 0)
 			$$ = new_mtext(NULL, mat, exp_subst);
-		else
+		else if($1)
 			$$ = new_mtext($1, 0, exp_text);
 		}
 	;
@@ -546,6 +552,8 @@ static int boolean(cval_t *v)
 static marg_t *new_marg(char *str, def_arg_t type)
 {
 	marg_t *ma = pp_xmalloc(sizeof(marg_t));
+	if(!ma)
+		return NULL;
 	ma->arg = str;
 	ma->type = type;
 	ma->nnl = 0;
@@ -554,16 +562,27 @@ static marg_t *new_marg(char *str, def_arg_t type)
 
 static marg_t *add_new_marg(char *str, def_arg_t type)
 {
-	marg_t *ma = new_marg(str, type);
+	marg_t **new_macro_args;
+	marg_t *ma;
+	if(!str)
+		return NULL;
+	new_macro_args = pp_xrealloc(macro_args, (nmacro_args+1) * sizeof(macro_args[0]));
+	if(!new_macro_args)
+		return NULL;
+	macro_args = new_macro_args;
+	ma = new_marg(str, type);
+	if(!ma)
+		return NULL;
+	macro_args[nmacro_args] = ma;
 	nmacro_args++;
-	macro_args = pp_xrealloc(macro_args, nmacro_args * sizeof(macro_args[0]));
-	macro_args[nmacro_args-1] = ma;
 	return ma;
 }
 
 static int marg_index(char *id)
 {
 	int t;
+	if(!id)
+		return -1;
 	for(t = 0; t < nmacro_args; t++)
 	{
 		if(!strcmp(id, macro_args[t]->arg))
@@ -658,9 +677,22 @@ static mtext_t *combine_mtext(mtext_t *tail, mtext_t *mtp)
 
 static char *merge_text(char *s1, char *s2)
 {
-	int l1 = strlen(s1);
-	int l2 = strlen(s2);
-	s1 = pp_xrealloc(s1, l1+l2+1);
+	int l1;
+	int l2;
+	char *snew;
+	if(!s1)
+		return s2;
+	if(!s2)
+		return s1;
+	l1 = strlen(s1);
+	l2 = strlen(s2);
+	snew = pp_xrealloc(s1, l1+l2+1);
+	if(!snew)
+	{
+		free(s2);
+		return s1;
+	}
+	s1 = snew;
 	memcpy(s1+l1, s2, l2+1);
 	free(s2);
 	return s1;

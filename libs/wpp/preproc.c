@@ -126,9 +126,12 @@ static int pphash(const char *str)
 
 pp_entry_t *pplookup(const char *ident)
 {
-	int idx = pphash(ident);
+	int idx;
 	pp_entry_t *ppp;
 
+	if(!ident)
+		return NULL;
+	idx = pphash(ident);
 	for(ppp = pp_def_state->defines[idx]; ppp; ppp = ppp->next)
 	{
 		if(!strcmp(ident, ppp->ident))
@@ -220,9 +223,12 @@ pp_entry_t *pp_add_define(char *def, char *text)
 {
 	int len;
 	char *cptr;
-	int idx = pphash(def);
+	int idx;
 	pp_entry_t *ppp;
 
+	if(!def)
+		return NULL;
+	idx = pphash(def);
 	if((ppp = pplookup(def)) != NULL)
 	{
 		if(pp_status.pedantic)
@@ -230,11 +236,18 @@ pp_entry_t *pp_add_define(char *def, char *text)
 		pp_del_define(def);
 	}
 	ppp = pp_xmalloc(sizeof(pp_entry_t));
+	if(!ppp)
+		return NULL;
 	memset( ppp, 0, sizeof(*ppp) );
 	ppp->ident = def;
 	ppp->type = def_define;
 	ppp->subst.text = text;
 	ppp->filename = pp_xstrdup(pp_status.input ? pp_status.input : "<internal or cmdline>");
+	if(!ppp->filename)
+	{
+		free(ppp);
+		return NULL;
+	}
 	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
 	ppp->next = pp_def_state->defines[idx];
 	pp_def_state->defines[idx] = ppp;
@@ -262,9 +275,12 @@ pp_entry_t *pp_add_define(char *def, char *text)
 
 pp_entry_t *pp_add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
 {
-	int idx = pphash(id);
+	int idx;
 	pp_entry_t *ppp;
 
+	if(!id)
+		return NULL;
+	idx = pphash(id);
 	if((ppp = pplookup(id)) != NULL)
 	{
 		if(pp_status.pedantic)
@@ -272,6 +288,8 @@ pp_entry_t *pp_add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
 		pp_del_define(id);
 	}
 	ppp = pp_xmalloc(sizeof(pp_entry_t));
+	if(!ppp)
+		return NULL;
 	memset( ppp, 0, sizeof(*ppp) );
 	ppp->ident	= id;
 	ppp->type	= def_macro;
@@ -279,6 +297,11 @@ pp_entry_t *pp_add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
 	ppp->nargs	= nargs;
 	ppp->subst.mtext= exp;
 	ppp->filename = pp_xstrdup(pp_status.input ? pp_status.input : "<internal or cmdline>");
+	if(!ppp->filename)
+	{
+		free(ppp);
+		return NULL;
+	}
 	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
 	ppp->next	= pp_def_state->defines[idx];
 	pp_def_state->defines[idx] = ppp;

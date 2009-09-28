@@ -437,7 +437,7 @@ includelogicentry_t *pp_includelogiclist = NULL;
 	/*
 	 * Handle left side of #define
 	 */
-<pp_def>{cident}\(		ppy_lval.cptr = pp_xstrdup(ppy_text); ppy_lval.cptr[ppy_leng-1] = '\0'; yy_pp_state(pp_macro);  return tMACRO;
+<pp_def>{cident}\(		ppy_lval.cptr = pp_xstrdup(ppy_text); if(ppy_lval.cptr) ppy_lval.cptr[ppy_leng-1] = '\0'; yy_pp_state(pp_macro);  return tMACRO;
 <pp_def>{cident}		ppy_lval.cptr = pp_xstrdup(ppy_text); yy_pp_state(pp_define); return tDEFINE;
 <pp_def>{ws}+			;
 <pp_def>\\\r?\n			newline(0);
