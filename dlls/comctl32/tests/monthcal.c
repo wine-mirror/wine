@@ -33,6 +33,7 @@
 #include "msg.h"
 
 #define expect(expected, got) ok(expected == got, "Expected %d, got %d\n", expected, got);
+#define expect_hex(expected, got) ok(expected == got, "Expected %x, got %x\n", expected, got);
 
 #define NUM_MSG_SEQUENCES   2
 #define PARENT_SEQ_INDEX    0
@@ -858,6 +859,7 @@ static void test_monthcal_hittest(void)
     LONG x;
     UINT title_index;
     HWND hwnd;
+    RECT r;
     static const UINT title_hits[] =
         { MCHT_NOWHERE, MCHT_TITLEBK, MCHT_TITLEBTNPREV, MCHT_TITLEBK,
           MCHT_TITLEMONTH, MCHT_TITLEBK, MCHT_TITLEYEAR, MCHT_TITLEBK,
@@ -880,6 +882,16 @@ static void test_monthcal_hittest(void)
     res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM)NULL);
     expect(-1, res);
 
+    /* resize control to display single Calendar */
+    res = SendMessage(hwnd, MCM_GETMINREQRECT, 0, (LPARAM)&r);
+    if (res == 0)
+    {
+        win_skip("Message MCM_GETMINREQRECT unsupported. Skipping.\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+    MoveWindow(hwnd, 0, 0, r.right, r.bottom, FALSE);
+
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     st.wYear = 2007;
@@ -894,60 +906,60 @@ static void test_monthcal_hittest(void)
     res = SendMessage(hwnd, MCM_SETCURSEL, 0, (LPARAM)&st);
     expect(1,res);
 
-    /* (0, 0) is the top left of the control and should not be active */
+    /* (0, 0) is the top left of the control - title */
     mchit.cbSize = MCHITTESTINFO_V1_SIZE;
     mchit.pt.x = 0;
     mchit.pt.y = 0;
-    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
     expect(0, mchit.pt.x);
     expect(0, mchit.pt.y);
     expect(mchit.uHit, res);
-    todo_wine {expect(MCHT_NOWHERE, res);}
+    todo_wine expect_hex(MCHT_TITLE, res);
 
-    /* (300, 400) is the bottom right of the control and should not be active */
-    mchit.pt.x = 300;
-    mchit.pt.y = 400;
-    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(300, mchit.pt.x);
-    expect(400, mchit.pt.y);
+    /* bottom right of the control and should not be active */
+    mchit.pt.x = r.right;
+    mchit.pt.y = r.bottom;
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
+    expect(r.right,  mchit.pt.x);
+    expect(r.bottom, mchit.pt.y);
     expect(mchit.uHit, res);
-    todo_wine {expect(MCHT_NOWHERE, res);}
+    todo_wine expect_hex(MCHT_NOWHERE, res);
 
-    /* (500, 500) is completely out of the control and should not be active */
-    mchit.pt.x = 500;
-    mchit.pt.y = 500;
+    /* completely out of the control, should not be active */
+    mchit.pt.x = 2 * r.right;
+    mchit.pt.y = 2 * r.bottom;
     res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(500, mchit.pt.x);
-    expect(500, mchit.pt.y);
+    expect(2 * r.right, mchit.pt.x);
+    expect(2 * r.bottom, mchit.pt.y);
     expect(mchit.uHit, res);
-    todo_wine {expect(MCHT_NOWHERE, res);}
+    todo_wine expect_hex(MCHT_NOWHERE, res);
 
-    /* (120, 180) is in active area - calendar background */
-    mchit.pt.x = 120;
-    mchit.pt.y = 180;
+    /* in active area - day of the week */
+    mchit.pt.x = r.right / 2;
+    mchit.pt.y = r.bottom / 2;
     res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(120, mchit.pt.x);
-    expect(180, mchit.pt.y);
+    expect(r.right / 2, mchit.pt.x);
+    expect(r.bottom / 2, mchit.pt.y);
     expect(mchit.uHit, res);
-    expect(MCHT_CALENDARBK, res);
+    expect_hex(MCHT_CALENDARDATE, res);
 
-    /* (70, 70) is in active area - day of the week */
-    mchit.pt.x = 70;
-    mchit.pt.y = 70;
+    /* in active area - day of the week #2 */
+    mchit.pt.x = r.right / 14; /* half of first day rect */
+    mchit.pt.y = r.bottom / 2;
     res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(70, mchit.pt.x);
-    expect(70, mchit.pt.y);
+    expect(r.right / 14, mchit.pt.x);
+    expect(r.bottom / 2, mchit.pt.y);
     expect(mchit.uHit, res);
-    todo_wine {expect(MCHT_CALENDARDAY, res);}
+    todo_wine expect_hex(MCHT_CALENDARDATE, res);
 
-    /* (70, 90) is in active area - date from prev month */
-    mchit.pt.x = 70;
-    mchit.pt.y = 90;
+    /* in active area - date from prev month */
+    mchit.pt.x = r.right / 14; /* half of first day rect */
+    mchit.pt.y = 6 * r.bottom / 19;
     res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(70, mchit.pt.x);
-    expect(90, mchit.pt.y);
+    expect(r.right / 14, mchit.pt.x);
+    expect(6 * r.bottom / 19, mchit.pt.y);
     expect(mchit.uHit, res);
-    todo_wine {expect(MCHT_CALENDARDATEPREV, res);}
+    todo_wine expect_hex(MCHT_CALENDARDATEPREV, res);
 
 #if 0
     /* (125, 115) is in active area - date from this month */
@@ -960,91 +972,96 @@ static void test_monthcal_hittest(void)
     expect(MCHT_CALENDARDATE, res);
 #endif
 
-    /* (80, 220) is in active area - background section of the title */
-    mchit.pt.x = 80;
-    mchit.pt.y = 220;
+    /* in active area - background section of the title */
+    mchit.pt.x = 2 * r.right / 7;
+    mchit.pt.y = 2 * r.bottom / 19;
     res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(80, mchit.pt.x);
-    expect(220, mchit.pt.y);
+    expect(2 * r.right / 7, mchit.pt.x);
+    expect(2 * r.bottom / 19, mchit.pt.y);
     expect(mchit.uHit, res);
-    todo_wine {expect(MCHT_TITLEBK, res);}
+    expect_hex(MCHT_TITLEBK, res);
 
-    /* (140, 215) is in active area - month section of the title */
-    mchit.pt.x = 140;
-    mchit.pt.y = 215;
+    /* in active area - month section of the title */
+    mchit.pt.x = r.right / 2;
+    mchit.pt.y = 2 * r.bottom / 19;
     res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(140, mchit.pt.x);
-    expect(215, mchit.pt.y);
+    expect(r.right / 2, mchit.pt.x);
+    expect(2 * r.bottom / 19, mchit.pt.y);
     expect(mchit.uHit, res);
-    todo_wine {expect(MCHT_TITLEMONTH, res);}
+    expect_hex(MCHT_TITLE, res);
 
-    /* (170, 215) is in active area - year section of the title */
-    mchit.pt.x = 170;
-    mchit.pt.y = 215;
+    /* in active area - year section of the title */
+    mchit.pt.x = 3 * r.right / 4;
+    mchit.pt.y = 2 * r.bottom / 19;
     res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(170, mchit.pt.x);
-    expect(215, mchit.pt.y);
+    expect(3 * r.right / 4, mchit.pt.x);
+    expect(2 * r.bottom / 19, mchit.pt.y);
     expect(mchit.uHit, res);
-    todo_wine {expect(MCHT_TITLEYEAR, res);}
+    expect_hex(MCHT_TITLE, res);
 
-    /* (150, 260) is in active area - date from this month */
-    mchit.pt.x = 150;
-    mchit.pt.y = 260;
+    /* in active area - date from next month */
+    mchit.pt.x = 11 * r.right / 14;
+    mchit.pt.y = 16 * r.bottom / 19;
     res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(150, mchit.pt.x);
-    expect(260, mchit.pt.y);
+    expect(11 * r.right / 14, mchit.pt.x);
+    expect(16 * r.bottom / 19, mchit.pt.y);
     expect(mchit.uHit, res);
-    todo_wine {expect(MCHT_CALENDARDATE, res);}
+    expect_hex(MCHT_CALENDARDATENEXT, res);
 
-    /* (150, 350) is in active area - date from next month */
-    mchit.pt.x = 150;
-    mchit.pt.y = 350;
+    /* in active area - today link */
+    mchit.pt.x = r.right / 14;
+    mchit.pt.y = 18 * r.bottom / 19;
     res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(150, mchit.pt.x);
-    expect(350, mchit.pt.y);
+    expect(r.right / 14, mchit.pt.x);
+    expect(18 * r.bottom / 19, mchit.pt.y);
     expect(mchit.uHit, res);
-    todo_wine {expect(MCHT_CALENDARDATENEXT, res);}
+    expect_hex(MCHT_TODAYLINK, res);
 
-    /* (150, 370) is in active area - today link */
-    mchit.pt.x = 150;
-    mchit.pt.y = 370;
+    /* in active area - today link */
+    mchit.pt.x = r.right / 2;
+    mchit.pt.y = 18 * r.bottom / 19;
     res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(150, mchit.pt.x);
-    expect(370, mchit.pt.y);
+    expect(r.right / 2, mchit.pt.x);
+    expect(18 * r.bottom / 19, mchit.pt.y);
     expect(mchit.uHit, res);
-    todo_wine {expect(MCHT_TODAYLINK, res);}
+    expect_hex(MCHT_TODAYLINK, res);
 
-    /* (70, 370) is in active area - today link */
-    mchit.pt.x = 70;
-    mchit.pt.y = 370;
+    /* in active area - today link */
+    mchit.pt.x = r.right / 10;
+    mchit.pt.y = 18 * r.bottom / 19;
     res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(70, mchit.pt.x);
-    expect(370, mchit.pt.y);
+    expect(r.right / 10, mchit.pt.x);
+    expect(18 * r.bottom / 19, mchit.pt.y);
     expect(mchit.uHit, res);
-    todo_wine {expect(MCHT_TODAYLINK, res);}
+    expect_hex(MCHT_TODAYLINK, res);
 
     ok_sequence(sequences, MONTHCAL_SEQ_INDEX, monthcal_hit_test_seq, "monthcal hit test", TRUE);
 
     /* The horizontal position of title bar elements depends on locale (y pos
        is constant), so we sample across a horizontal line and make sure we
        find all elements. */
-    mchit.pt.y = 40;
+    mchit.pt.y = (5/2) * r.bottom / 19;
     title_index = 0;
-    for (x = 0; x < 300; x++){
+
+    for (x = 0; x < r.right; x++){
         mchit.pt.x = x;
         res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
         expect(x, mchit.pt.x);
-        expect(40, mchit.pt.y);
+        expect((5/2) * r.bottom / 19, mchit.pt.y);
         expect(mchit.uHit, res);
         if (res != title_hits[title_index]){
             title_index++;
             if (sizeof(title_hits) / sizeof(title_hits[0]) <= title_index)
                 break;
-            todo_wine {expect(title_hits[title_index], res);}
+
+            todo_wine
+                 expect_hex(title_hits[title_index], res);
         }
     }
-    todo_wine {ok(300 <= x && title_index + 1 == sizeof(title_hits) / sizeof(title_hits[0]),
-        "Wrong title layout\n");}
+
+    todo_wine
+        ok(r.right <= x && title_index + 1 == sizeof(title_hits) / sizeof(title_hits[0]),
+           "Wrong title layout\n");
 
     DestroyWindow(hwnd);
 }
