@@ -639,7 +639,7 @@ includelogicentry_t *pp_includelogiclist = NULL;
 			if(yy_current_state() == pp_inc)
 				ppy_error("Expected include filename");
 
-			if(yy_current_state() == pp_if)
+			else if(yy_current_state() == pp_if)
 			{
 				ppy_lval.cptr = pp_xstrdup(ppy_text);
 				return tIDENT;
@@ -808,7 +808,10 @@ static int make_number(int radix, YYSTYPE *val, const char *str, int len)
 	ext[0] = len > 2 ? toupper(str[len-3]) : ' ';
 
 	if(!strcmp(ext, "LUL"))
+	{
 		ppy_error("Invalid constant suffix");
+		return 0;
+	}
 	else if(!strcmp(ext, "LLU") || !strcmp(ext, "ULL"))
 	{
 		is_ll++;
@@ -1085,7 +1088,10 @@ static void expand_macro(macexpstackentry_t *mep)
 	assert(ppp->expanding == 0);
 
 	if((ppp->nargs >= 0 && nargs != ppp->nargs) || (ppp->nargs < 0 && nargs < -ppp->nargs))
+	{
 		ppy_error("Too %s macro arguments (%d)", nargs < abs(ppp->nargs) ? "few" : "many", nargs);
+		return;
+	}
 
 	for(n = 0; n < nargs; n++)
 		nnl += mep->nnls[n];
@@ -1323,7 +1329,10 @@ static bufferstackentry_t *pop_buffer(void)
 static void push_macro(pp_entry_t *ppp)
 {
 	if(macexpstackidx >= MAXMACEXPSTACK)
+	{
 		ppy_error("Too many nested macros");
+		return;
+	}
 
 	macexpstack[macexpstackidx] = pp_xmalloc(sizeof(macexpstack[0][0]));
         memset( macexpstack[macexpstackidx], 0, sizeof(macexpstack[0][0]));
@@ -1472,13 +1481,19 @@ void pp_do_include(char *fname, int type)
 	n = strlen(fname);
 
 	if(n <= 2)
+	{
 		ppy_error("Empty include filename");
+		return;
+	}
 
 	/* Undo the effect of the quotation */
 	fname[n-1] = '\0';
 
 	if((ppy_in = pp_open_include(fname+1, type ? pp_status.input : NULL, &newpath)) == NULL)
+	{
 		ppy_error("Unable to open include file %s", fname+1);
+		return;
+	}
 
 	fname[n-1] = *fname;	/* Redo the quotes */
 	push_buffer(NULL, newpath, fname, 0);

@@ -519,13 +519,18 @@ void pp_push_if(pp_if_state_t s)
 	case if_ignore:
 		pp_push_ignore_state();
 		break;
+	default:
+		pp_internal_error(__FILE__, __LINE__, "Invalid pp_if_state (%d)", (int)pp_if_state());
 	}
 }
 
 pp_if_state_t pp_pop_if(void)
 {
 	if(if_stack_idx <= 0)
+	{
 		ppy_error("#{endif,else,elif} without #{if,ifdef,ifndef} (#if-stack underflow)");
+		return if_error;
+	}
 
 	switch(pp_if_state())
 	{
@@ -538,6 +543,8 @@ pp_if_state_t pp_pop_if(void)
 	case if_ignore:
 		pp_pop_ignore_state();
 		break;
+	default:
+		pp_internal_error(__FILE__, __LINE__, "Invalid pp_if_state (%d)", (int)pp_if_state());
 	}
 
 	if(pp_flex_debug)

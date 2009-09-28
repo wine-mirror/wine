@@ -224,6 +224,9 @@ preprocessor
 		case if_elsetrue:
 		case if_elsefalse:
 			ppy_error("#elif cannot follow #else");
+			break;
+		case if_error:
+			break;
 		default:
 			pp_internal_error(__FILE__, __LINE__, "Invalid pp_if_state (%d) in #elif directive", s);
 		}
@@ -247,24 +250,29 @@ preprocessor
 		case if_elsetrue:
 		case if_elsefalse:
 			ppy_error("#else clause already defined");
+			break;
+		case if_error:
+			break;
 		default:
 			pp_internal_error(__FILE__, __LINE__, "Invalid pp_if_state (%d) in #else directive", s);
 		}
 		}
 	| tENDIF tNL		{
-		pp_pop_if();
-		if(pp_incl_state.ifdepth == pp_get_if_depth() && pp_incl_state.state == 1)
+		if(pp_pop_if() != if_error)
 		{
-			pp_incl_state.state = 2;
-			pp_incl_state.seen_junk = 0;
+			if(pp_incl_state.ifdepth == pp_get_if_depth() && pp_incl_state.state == 1)
+			{
+				pp_incl_state.state = 2;
+				pp_incl_state.seen_junk = 0;
+			}
+			else if(pp_incl_state.state != 1)
+			{
+				pp_incl_state.state = -1;
+			}
+			if(pp_status.debug)
+				fprintf(stderr, "tENDIF: %s:%d: include_state=%d, include_ppp='%s', include_ifdepth=%d\n",
+					pp_status.input, pp_status.line_number, pp_incl_state.state, pp_incl_state.ppp, pp_incl_state.ifdepth);
 		}
-		else if(pp_incl_state.state != 1)
-		{
-			pp_incl_state.state = -1;
-		}
-		if(pp_status.debug)
-			fprintf(stderr, "tENDIF: %s:%d: include_state=%d, include_ppp='%s', include_ifdepth=%d\n",
-                                pp_status.input, pp_status.line_number, pp_incl_state.state, pp_incl_state.ppp, pp_incl_state.ifdepth);
 		}
 	| tUNDEF tIDENT tNL	{ pp_del_define($2); free($2); }
 	| tDEFINE opt_text tNL	{ pp_add_define($1, $2); }
@@ -346,7 +354,8 @@ mtext	: tLITERAL	{ $$ = new_mtext($1, 0, exp_text); }
 		int mat = marg_index($2);
 		if(mat < 0)
 			ppy_error("Stringification identifier must be an argument parameter");
-		$$ = new_mtext(NULL, mat, exp_stringize);
+		else
+			$$ = new_mtext(NULL, mat, exp_stringize);
 		}
 	| tIDENT	{
 		int mat = marg_index($1);

@@ -144,6 +144,7 @@ int wpp_parse( const char *input, FILE *output )
     int ret;
 
     pp_status.input = NULL;
+    pp_status.state = 0;
 
     pp_push_define_state();
     add_cmdline_defines();
@@ -152,8 +153,8 @@ int wpp_parse( const char *input, FILE *output )
     if (!input) ppy_in = stdin;
     else if (!(ppy_in = fopen(input, "rt")))
     {
-        fprintf(stderr,"Could not open %s\n", input);
-        exit(2);
+        ppy_error("Could not open %s\n", input);
+        return 2;
     }
 
     pp_status.input = input;
@@ -162,6 +163,8 @@ int wpp_parse( const char *input, FILE *output )
     fprintf(ppy_out, "# 1 \"%s\" 1\n", input ? input : "");
 
     ret = ppy_parse();
+    /* If there were errors during processing, return an error code */
+    if(!ret && pp_status.state) ret = pp_status.state;
 
     if (input) fclose(ppy_in);
     pp_pop_define_state();
@@ -184,14 +187,14 @@ int wpp_parse_temp( const char *input, const char *output_base, char **output_na
 
     if((fd = mkstemps( temp_name, 0 )) == -1)
     {
-        fprintf(stderr, "Could not generate a temp name from %s\n", temp_name);
-        exit(2);
+        ppy_error("Could not generate a temp name from %s\n", temp_name);
+        return 2;
     }
 
     if (!(output = fdopen(fd, "wt")))
     {
-        fprintf(stderr,"Could not open fd %s for writing\n", temp_name);
-        exit(2);
+        ppy_error("Could not open fd %s for writing\n", temp_name);
+        return 2;
     }
 
     *output_name = temp_name;

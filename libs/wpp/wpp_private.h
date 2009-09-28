@@ -113,7 +113,8 @@ typedef enum {
 	if_elif,
 	if_elsefalse,
 	if_elsetrue,
-	if_ignore
+	if_ignore,
+	if_error
 } pp_if_state_t;
 
 
@@ -228,6 +229,7 @@ struct pp_status
     const char *input;  /* current input file name */
     int line_number;    /* current line number */
     int char_number;    /* current char number in line */
+    int state;          /* current error state */
     int pedantic;       /* pedantic option */
     int debug;          /* debug messages flag */
 };
