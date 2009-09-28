@@ -188,6 +188,13 @@ static inline void stack16_pop( int size )
     NtCurrentTeb()->WOW32Reserved = (char *)NtCurrentTeb()->WOW32Reserved + size;
 }
 
+/* global16.c */
+extern HGLOBAL16 GLOBAL_CreateBlock( UINT16 flags, void *ptr, DWORD size,
+                                     HGLOBAL16 hOwner, unsigned char selflags );
+extern BOOL16 GLOBAL_FreeBlock( HGLOBAL16 handle );
+extern BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, void *ptr, DWORD size );
+extern HGLOBAL16 GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL16 hOwner, unsigned char selflags );
+
 /* ne_module.c */
 extern NE_MODULE *NE_GetPtr( HMODULE16 hModule );
 extern WORD NE_GetOrdinal( HMODULE16 hModule, const char *name );

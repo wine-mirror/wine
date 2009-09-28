@@ -102,13 +102,6 @@ BOOL16 WINAPI GlobalEntryHandle16( GLOBALENTRY *pGlobal, HGLOBAL16 hItem );
 BOOL16 WINAPI GlobalEntryModule16( GLOBALENTRY *pGlobal, HMODULE16 hModule,
                                  WORD wSeg );
 
-/* FIXME: Wine internal functions */
-extern HGLOBAL16 GLOBAL_CreateBlock( UINT16 flags, void *ptr, DWORD size,
-                                     HGLOBAL16 hOwner, unsigned char selflags );
-extern BOOL16 GLOBAL_FreeBlock( HGLOBAL16 handle );
-extern BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, void *ptr, DWORD size );
-extern HGLOBAL16 GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL16 hOwner, unsigned char selflags );
-
 /* Local heap */
 
 typedef struct
