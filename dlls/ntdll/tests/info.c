@@ -23,6 +23,9 @@
 
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI * pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
+static NTSTATUS (WINAPI * pNtQueryInformationThread)(HANDLE, THREADINFOCLASS, PVOID, ULONG, PULONG);
+static NTSTATUS (WINAPI * pNtSetInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG);
+static NTSTATUS (WINAPI * pNtSetInformationThread)(HANDLE, THREADINFOCLASS, PVOID, ULONG);
 static NTSTATUS (WINAPI * pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 
 /* one_before_last_pid is used to be able to compare values of a still running process
@@ -50,6 +53,9 @@ static BOOL InitFunctionPtrs(void)
 
     NTDLL_GET_PROC(NtQuerySystemInformation);
     NTDLL_GET_PROC(NtQueryInformationProcess);
+    NTDLL_GET_PROC(NtQueryInformationThread);
+    NTDLL_GET_PROC(NtSetInformationProcess);
+    NTDLL_GET_PROC(NtSetInformationThread);
     NTDLL_GET_PROC(NtReadVirtualMemory);
 
     return TRUE;
@@ -884,6 +890,76 @@ static void test_readvirtualmemory(void)
     CloseHandle(process);
 }
 
+static void test_affinity(void)
+{
+    NTSTATUS status;
+    PROCESS_BASIC_INFORMATION pbi;
+    DWORD_PTR proc_affinity, thread_affinity;
+    THREAD_BASIC_INFORMATION tbi;
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), NULL );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    proc_affinity = (DWORD_PTR)pbi.Reserved2[0];
+    ok( proc_affinity == (1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1, "Unexpected process affinity\n" );
+    proc_affinity = 1 << NtCurrentTeb()->Peb->NumberOfProcessors;
+    status = pNtSetInformationProcess( GetCurrentProcess(), ProcessAffinityMask, &proc_affinity, sizeof(proc_affinity) );
+    ok( status == STATUS_INVALID_PARAMETER,
+        "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
+
+    proc_affinity = 0;
+    status = pNtSetInformationProcess( GetCurrentProcess(), ProcessAffinityMask, &proc_affinity, sizeof(proc_affinity) );
+    todo_wine
+    ok( status == STATUS_INVALID_PARAMETER,
+        "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
+
+    status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( tbi.AffinityMask == (1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1, "Unexpected thread affinity\n" );
+    thread_affinity = 1 << NtCurrentTeb()->Peb->NumberOfProcessors;
+    status = pNtSetInformationThread( GetCurrentThread(), ThreadAffinityMask, &thread_affinity, sizeof(thread_affinity) );
+    ok( status == STATUS_INVALID_PARAMETER,
+        "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
+    thread_affinity = 0;
+    status = pNtSetInformationThread( GetCurrentThread(), ThreadAffinityMask, &thread_affinity, sizeof(thread_affinity) );
+    todo_wine
+    ok( status == STATUS_INVALID_PARAMETER,
+        "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
+
+    thread_affinity = 1;
+    status = pNtSetInformationThread( GetCurrentThread(), ThreadAffinityMask, &thread_affinity, sizeof(thread_affinity) );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
+    ok( tbi.AffinityMask == 1, "Unexpected thread affinity\n" );
+
+    if (NtCurrentTeb()->Peb->NumberOfProcessors <= 1)
+    {
+        skip("only one processor, skipping affinity testing\n");
+        return;
+    }
+    proc_affinity = 2;
+    status = pNtSetInformationProcess( GetCurrentProcess(), ProcessAffinityMask, &proc_affinity, sizeof(proc_affinity) );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), NULL );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    proc_affinity = (DWORD_PTR)pbi.Reserved2[0];
+    ok( proc_affinity == 2, "Unexpected process affinity\n" );
+    /* Setting the process affinity changes the thread affinity to match */
+    status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    todo_wine
+    ok( tbi.AffinityMask == 2, "Unexpected thread affinity\n" );
+
+    proc_affinity = (1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
+    status = pNtSetInformationProcess( GetCurrentProcess(), ProcessAffinityMask, &proc_affinity, sizeof(proc_affinity) );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    /* Resetting the process affinity also resets the thread affinity */
+    status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    todo_wine
+    ok( tbi.AffinityMask == (1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1,
+        "Unexpected thread affinity" );
+}
+
 START_TEST(info)
 {
     if(!InitFunctionPtrs())
@@ -968,4 +1044,7 @@ START_TEST(info)
     /* belongs into it's own file */
     trace("Starting test_readvirtualmemory()\n");
     test_readvirtualmemory();
+
+    trace("Starting test_affinity()\n");
+    test_affinity();
 }
