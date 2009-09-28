@@ -853,17 +853,28 @@ static void test_monthcal_unicode(void)
 
 static void test_monthcal_hittest(void)
 {
+    typedef struct hittest_test
+    {
+	UINT ht;
+        int  todo;
+    } hittest_test_t;
+
+    static const hittest_test_t title_hits[] = {
+        { MCHT_NOWHERE,      0 },
+        { MCHT_TITLEBTNPREV, 0 },
+        { MCHT_TITLEMONTH,   1 },
+        { MCHT_TITLEYEAR,    1 },
+        { MCHT_TITLEBTNNEXT, 0 },
+        { MCHT_NOWHERE,      0 }
+    };
+
     MCHITTESTINFO mchit;
-    UINT res;
+    UINT res, old_res;
     SYSTEMTIME st;
     LONG x;
     UINT title_index;
     HWND hwnd;
     RECT r;
-    static const UINT title_hits[] =
-        { MCHT_NOWHERE, MCHT_TITLEBK, MCHT_TITLEBTNPREV, MCHT_TITLEBK,
-          MCHT_TITLEMONTH, MCHT_TITLEBK, MCHT_TITLEYEAR, MCHT_TITLEBK,
-          MCHT_TITLEBTNNEXT, MCHT_TITLEBK, MCHT_NOWHERE };
 
     memset(&mchit, 0, sizeof(MCHITTESTINFO));
 
@@ -914,7 +925,7 @@ static void test_monthcal_hittest(void)
     expect(0, mchit.pt.x);
     expect(0, mchit.pt.y);
     expect(mchit.uHit, res);
-    todo_wine expect_hex(MCHT_TITLE, res);
+    expect_hex(MCHT_TITLE, res);
 
     /* bottom right of the control and should not be active */
     mchit.pt.x = r.right;
@@ -950,7 +961,7 @@ static void test_monthcal_hittest(void)
     expect(r.right / 14, mchit.pt.x);
     expect(r.bottom / 2, mchit.pt.y);
     expect(mchit.uHit, res);
-    todo_wine expect_hex(MCHT_CALENDARDATE, res);
+    expect_hex(MCHT_CALENDARDATE, res);
 
     /* in active area - date from prev month */
     mchit.pt.x = r.right / 14; /* half of first day rect */
@@ -959,7 +970,7 @@ static void test_monthcal_hittest(void)
     expect(r.right / 14, mchit.pt.x);
     expect(6 * r.bottom / 19, mchit.pt.y);
     expect(mchit.uHit, res);
-    todo_wine expect_hex(MCHT_CALENDARDATEPREV, res);
+    expect_hex(MCHT_CALENDARDATEPREV, res);
 
 #if 0
     /* (125, 115) is in active area - date from this month */
@@ -1040,8 +1051,10 @@ static void test_monthcal_hittest(void)
     /* The horizontal position of title bar elements depends on locale (y pos
        is constant), so we sample across a horizontal line and make sure we
        find all elements. */
+    mchit.pt.x = 0;
     mchit.pt.y = (5/2) * r.bottom / 19;
     title_index = 0;
+    old_res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
 
     for (x = 0; x < r.right; x++){
         mchit.pt.x = x;
@@ -1049,13 +1062,21 @@ static void test_monthcal_hittest(void)
         expect(x, mchit.pt.x);
         expect((5/2) * r.bottom / 19, mchit.pt.y);
         expect(mchit.uHit, res);
-        if (res != title_hits[title_index]){
+
+        if (res != MCHT_TITLEBK && res != old_res) {
             title_index++;
+            old_res = res;
+
             if (sizeof(title_hits) / sizeof(title_hits[0]) <= title_index)
                 break;
 
-            todo_wine
-                 expect_hex(title_hits[title_index], res);
+            if (title_hits[title_index].todo) {
+                todo_wine
+                  ok(title_hits[title_index].ht == res, "Expected %x, got %x, pos %d\n",
+                                                         title_hits[title_index].ht, res, x);
+            }
+            else ok(title_hits[title_index].ht == res, "Expected %x, got %x, pos %d\n",
+                                                        title_hits[title_index].ht, res, x);
         }
     }
 

@@ -759,11 +759,15 @@ MONTHCAL_GetMinReqRect(const MONTHCAL_INFO *infoPtr, LPRECT lpRect)
 
   if(!lpRect) return FALSE;
 
-  lpRect->left = infoPtr->title.left;
-  lpRect->top = infoPtr->title.top;
-  lpRect->right = infoPtr->title.right;
+  lpRect->left   = infoPtr->title.left;
+  lpRect->top    = infoPtr->title.top;
+  lpRect->right  = infoPtr->title.right;
   lpRect->bottom = infoPtr->todayrect.bottom;
+
   AdjustWindowRect(lpRect, infoPtr->dwStyle, FALSE);
+
+  /* minimal rectangle is zero based */
+  OffsetRect(lpRect, -lpRect->left, -lpRect->top);
 
   TRACE("%s\n", wine_dbgstr_rect(lpRect));
 
