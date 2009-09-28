@@ -23,7 +23,6 @@ WIN16_FILES = \
 	krnl386.exe16 \
 	mmsystem.dll16 \
 	setupx.dll16 \
-	toolhelp.dll16 \
 	user.exe16 \
 	ver.dll16 \
 	wineps16.drv16 \
@@ -44,7 +43,7 @@ commdlg.dll16:
 gdi.exe16:
 	echo "gdi32.dll" >$@
 
-krnl386.exe16 toolhelp.dll16:
+krnl386.exe16:
 	echo "kernel32.dll" >$@
 
 setupx.dll16:

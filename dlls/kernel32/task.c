@@ -38,14 +38,12 @@
 
 #include "wine/winbase16.h"
 #include "winternl.h"
-#include "toolhelp.h"
 #include "kernel_private.h"
 #include "kernel16_private.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(task);
-WINE_DECLARE_DEBUG_CHANNEL(toolhelp);
 
 #include "pshpack1.h"
 
@@ -1462,54 +1460,6 @@ HMODULE16 WINAPI GetExePtr( HANDLE16 handle )
 }
 
 
-/***********************************************************************
- *           TaskFirst   (TOOLHELP.63)
- */
-BOOL16 WINAPI TaskFirst16( TASKENTRY *lpte )
-{
-    lpte->hNext = hFirstTask;
-    return TaskNext16( lpte );
-}
-
-
-/***********************************************************************
- *           TaskNext   (TOOLHELP.64)
- */
-BOOL16 WINAPI TaskNext16( TASKENTRY *lpte )
-{
-    TDB *pTask;
-    INSTANCEDATA *pInstData;
-
-    TRACE_(toolhelp)("(%p): task=%04x\n", lpte, lpte->hNext );
-    if (!lpte->hNext) return FALSE;
-
-    /* make sure that task and hInstance are valid (skip initial Wine task !) */
-    while (1) {
-        pTask = TASK_GetPtr( lpte->hNext );
-        if (!pTask || pTask->magic != TDB_MAGIC) return FALSE;
-        if (pTask->hInstance)
-            break;
-        lpte->hNext = pTask->hNext;
-    }
-    pInstData = MapSL( MAKESEGPTR( GlobalHandleToSel16(pTask->hInstance), 0 ) );
-    lpte->hTask         = lpte->hNext;
-    lpte->hTaskParent   = pTask->hParent;
-    lpte->hInst         = pTask->hInstance;
-    lpte->hModule       = pTask->hModule;
-    lpte->wSS           = SELECTOROF( pTask->teb->WOW32Reserved );
-    lpte->wSP           = OFFSETOF( pTask->teb->WOW32Reserved );
-    lpte->wStackTop     = pInstData->stacktop;
-    lpte->wStackMinimum = pInstData->stackmin;
-    lpte->wStackBottom  = pInstData->stackbottom;
-    lpte->wcEvents      = pTask->nEvents;
-    lpte->hQueue        = pTask->hQueue;
-    lstrcpynA( lpte->szModule, pTask->module_name, sizeof(lpte->szModule) );
-    lpte->wPSPOffset    = 0x100;  /*??*/
-    lpte->hNext         = pTask->hNext;
-    return TRUE;
-}
-
-
 typedef INT (WINAPI *MessageBoxA_funcptr)(HWND hWnd, LPCSTR text, LPCSTR title, UINT type);
 
 /**************************************************************************
@@ -1534,39 +1484,6 @@ void WINAPI FatalAppExit16( UINT16 action, LPCSTR str )
         ERR( "%s\n", debugstr_a(str) );
     }
  done:
-    ExitThread(0xff);
-}
-
-
-/***********************************************************************
- *           TerminateApp   (TOOLHELP.77)
- *
- * See "Undocumented Windows".
- */
-void WINAPI TerminateApp16(HTASK16 hTask, WORD wFlags)
-{
-    if (hTask && hTask != GetCurrentTask())
-    {
-        FIXME("cannot terminate task %x\n", hTask);
-        return;
-    }
-
-    if (wFlags & NO_UAE_BOX)
-    {
-        UINT16 old_mode;
-        old_mode = SetErrorMode16(0);
-        SetErrorMode16(old_mode|SEM_NOGPFAULTERRORBOX);
-    }
-    FatalAppExit16( 0, NULL );
-
-    /* hmm, we're still alive ?? */
-
-    /* check undocumented flag */
-    if (!(wFlags & 0x8000))
-        TASK_CallTaskSignalProc( USIG16_TERMINATION, hTask );
-
-    /* UndocWin says to call int 0x21/0x4c exit=0xff here,
-       but let's just call ExitThread */
     ExitThread(0xff);
 }
 

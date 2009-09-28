@@ -38,7 +38,6 @@
 #endif
 
 #include "wine/winbase16.h"
-#include "toolhelp.h"
 #include "winternl.h"
 #include "kernel_private.h"
 #include "kernel16_private.h"
@@ -951,6 +950,8 @@ DWORD WINAPI GlobalMasterHandle16(void)
 
 /***********************************************************************
  *           GlobalHandleToSel   (TOOLHELP.50)
+ *
+ * FIXME: This is in TOOLHELP but we keep a copy here for now.
  */
 WORD WINAPI GlobalHandleToSel16( HGLOBAL16 handle )
 {
@@ -965,100 +966,6 @@ WORD WINAPI GlobalHandleToSel16( HGLOBAL16 handle )
         return handle - 1;
     }
     return handle | 7;
-}
-
-
-/***********************************************************************
- *           GlobalFirst   (TOOLHELP.51)
- */
-BOOL16 WINAPI GlobalFirst16( GLOBALENTRY *pGlobal, WORD wFlags )
-{
-    if (wFlags == GLOBAL_LRU) return FALSE;
-    pGlobal->dwNext = 0;
-    return GlobalNext16( pGlobal, wFlags );
-}
-
-
-/***********************************************************************
- *           GlobalNext   (TOOLHELP.52)
- */
-BOOL16 WINAPI GlobalNext16( GLOBALENTRY *pGlobal, WORD wFlags)
-{
-    GLOBALARENA *pArena;
-
-    if (pGlobal->dwNext >= globalArenaSize) return FALSE;
-    pArena = pGlobalArena + pGlobal->dwNext;
-    if (wFlags == GLOBAL_FREE)  /* only free blocks */
-    {
-        int i;
-        for (i = pGlobal->dwNext; i < globalArenaSize; i++, pArena++)
-            if (pArena->size == 0) break;  /* block is free */
-        if (i >= globalArenaSize) return FALSE;
-        pGlobal->dwNext = i;
-    }
-
-    pGlobal->dwAddress    = (DWORD_PTR)pArena->base;
-    pGlobal->dwBlockSize  = pArena->size;
-    pGlobal->hBlock       = pArena->handle;
-    pGlobal->wcLock       = pArena->lockCount;
-    pGlobal->wcPageLock   = pArena->pageLockCount;
-    pGlobal->wFlags       = (GetCurrentPDB16() == pArena->hOwner);
-    pGlobal->wHeapPresent = FALSE;
-    pGlobal->hOwner       = pArena->hOwner;
-    pGlobal->wType        = GT_UNKNOWN;
-    pGlobal->wData        = 0;
-    pGlobal->dwNext++;
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           GlobalInfo   (TOOLHELP.53)
- */
-BOOL16 WINAPI GlobalInfo16( GLOBALINFO *pInfo )
-{
-    int i;
-    GLOBALARENA *pArena;
-
-    pInfo->wcItems = globalArenaSize;
-    pInfo->wcItemsFree = 0;
-    pInfo->wcItemsLRU = 0;
-    for (i = 0, pArena = pGlobalArena; i < globalArenaSize; i++, pArena++)
-        if (pArena->size == 0) pInfo->wcItemsFree++;
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           GlobalEntryHandle   (TOOLHELP.54)
- */
-BOOL16 WINAPI GlobalEntryHandle16( GLOBALENTRY *pGlobal, HGLOBAL16 hItem )
-{
-    GLOBALARENA *pArena = GET_ARENA_PTR(hItem);
-
-    pGlobal->dwAddress    = (DWORD_PTR)pArena->base;
-    pGlobal->dwBlockSize  = pArena->size;
-    pGlobal->hBlock       = pArena->handle;
-    pGlobal->wcLock       = pArena->lockCount;
-    pGlobal->wcPageLock   = pArena->pageLockCount;
-    pGlobal->wFlags       = (GetCurrentPDB16() == pArena->hOwner);
-    pGlobal->wHeapPresent = FALSE;
-    pGlobal->hOwner       = pArena->hOwner;
-    pGlobal->wType        = GT_UNKNOWN;
-    pGlobal->wData        = 0;
-    pGlobal->dwNext++;
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           GlobalEntryModule   (TOOLHELP.55)
- */
-BOOL16 WINAPI GlobalEntryModule16( GLOBALENTRY *pGlobal, HMODULE16 hModule,
-                                 WORD wSeg )
-{
-    FIXME("(%p, 0x%04x, 0x%04x), stub.\n", pGlobal, hModule, wSeg);
-    return FALSE;
 }
 
 

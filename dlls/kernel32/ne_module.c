@@ -36,7 +36,6 @@
 #include "wine/winbase16.h"
 #include "wownt32.h"
 #include "winternl.h"
-#include "toolhelp.h"
 #include "kernel_private.h"
 #include "kernel16_private.h"
 #include "wine/exception.h"
@@ -1954,58 +1953,6 @@ FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hModule, LPCSTR name )
     }
     return GetProcAddress16( LOWORD(hModule), name );
 }
-
-/**********************************************************************
- *	    ModuleFirst    (TOOLHELP.59)
- */
-BOOL16 WINAPI ModuleFirst16( MODULEENTRY *lpme )
-{
-    lpme->wNext = hFirstModule;
-    return ModuleNext16( lpme );
-}
-
-
-/**********************************************************************
- *	    ModuleNext    (TOOLHELP.60)
- */
-BOOL16 WINAPI ModuleNext16( MODULEENTRY *lpme )
-{
-    NE_MODULE *pModule;
-    char *name;
-
-    if (!lpme->wNext) return FALSE;
-    if (!(pModule = NE_GetPtr( lpme->wNext ))) return FALSE;
-    name = (char *)pModule + pModule->ne_restab;
-    memcpy( lpme->szModule, name + 1, min(*name, MAX_MODULE_NAME) );
-    lpme->szModule[min(*name, MAX_MODULE_NAME)] = '\0';
-    lpme->hModule = lpme->wNext;
-    lpme->wcUsage = pModule->count;
-    lstrcpynA( lpme->szExePath, NE_MODULE_NAME(pModule), sizeof(lpme->szExePath) );
-    lpme->wNext = pModule->next;
-    return TRUE;
-}
-
-
-/**********************************************************************
- *	    ModuleFindName    (TOOLHELP.61)
- */
-BOOL16 WINAPI ModuleFindName16( MODULEENTRY *lpme, LPCSTR name )
-{
-    lpme->wNext = GetModuleHandle16( name );
-    return ModuleNext16( lpme );
-}
-
-
-/**********************************************************************
- *	    ModuleFindHandle    (TOOLHELP.62)
- */
-BOOL16 WINAPI ModuleFindHandle16( MODULEENTRY *lpme, HMODULE16 hModule )
-{
-    hModule = GetExePtr( hModule );
-    lpme->wNext = hModule;
-    return ModuleNext16( lpme );
-}
-
 
 /***************************************************************************
  *          IsRomModule    (KERNEL.323)

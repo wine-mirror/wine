@@ -16682,6 +16682,14 @@ dlls/tapi32/Makefile: dlls/tapi32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/tapi32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/toolhelp.dll16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	toolhelp.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/toolhelp.dll16/Makefile: dlls/toolhelp.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/toolhelp.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/traffic/Makefile"
 test "x$enable_traffic" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	traffic"
@@ -19056,6 +19064,7 @@ do
     "dlls/system.drv16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/system.drv16/Makefile" ;;
     "dlls/t2embed/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/t2embed/Makefile" ;;
     "dlls/tapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/tapi32/Makefile" ;;
+    "dlls/toolhelp.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/toolhelp.dll16/Makefile" ;;
     "dlls/traffic/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/traffic/Makefile" ;;
     "dlls/twain.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/twain.dll16/Makefile" ;;
     "dlls/twain_32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/twain_32/Makefile" ;;

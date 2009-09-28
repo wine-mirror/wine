@@ -35,7 +35,6 @@
 #include <string.h>
 #include "wine/winbase16.h"
 #include "wownt32.h"
-#include "toolhelp.h"
 #include "winternl.h"
 #include "kernel_private.h"
 #include "kernel16_private.h"
@@ -125,6 +124,30 @@ typedef struct
     WORD minsize;               /* 26 Minimum size of the heap */
     WORD magic;                 /* 28 Magic number */
 } LOCALHEAPINFO;
+
+typedef struct
+{
+    DWORD dwSize;                /* 00 */
+    DWORD dwMemReserved;         /* 04 */
+    DWORD dwMemCommitted;        /* 08 */
+    DWORD dwTotalFree;           /* 0C */
+    DWORD dwLargestFreeBlock;    /* 10 */
+    DWORD dwcFreeHandles;        /* 14 */
+} LOCAL32INFO;
+
+typedef struct
+{
+    DWORD dwSize;                /* 00 */
+    WORD hHandle;                /* 04 */
+    DWORD dwAddress;             /* 06 */
+    DWORD dwSizeBlock;           /* 0A */
+    WORD wFlags;                 /* 0E */
+    WORD wType;                  /* 10 */
+    WORD hHeap;                  /* 12 */
+    WORD wHeapType;              /* 14 */
+    DWORD dwNext;                /* 16 */
+    DWORD dwNextAlt;             /* 1A */
+} LOCAL32ENTRY;
 
 #include "poppack.h"
 
@@ -1686,68 +1709,6 @@ WORD WINAPI LocalHandleDelta16( WORD delta )
 
 
 /***********************************************************************
- *           LocalInfo   (TOOLHELP.56)
- */
-BOOL16 WINAPI LocalInfo16( LOCALINFO *pLocalInfo, HGLOBAL16 handle )
-{
-    LOCALHEAPINFO *pInfo = LOCAL_GetHeap(SELECTOROF(WOWGlobalLock16(handle)));
-    if (!pInfo) return FALSE;
-    pLocalInfo->wcItems = pInfo->items;
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           LocalFirst   (TOOLHELP.57)
- */
-BOOL16 WINAPI LocalFirst16( LOCALENTRY *pLocalEntry, HGLOBAL16 handle )
-{
-    WORD ds = GlobalHandleToSel16( handle );
-    char *ptr = MapSL( MAKESEGPTR( ds, 0 ) );
-    LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
-    if (!pInfo) return FALSE;
-
-    pLocalEntry->hHandle   = pInfo->first + ARENA_HEADER_SIZE;
-    pLocalEntry->wAddress  = pLocalEntry->hHandle;
-    pLocalEntry->wFlags    = LF_FIXED;
-    pLocalEntry->wcLock    = 0;
-    pLocalEntry->wType     = LT_NORMAL;
-    pLocalEntry->hHeap     = handle;
-    pLocalEntry->wHeapType = NORMAL_HEAP;
-    pLocalEntry->wNext     = ARENA_PTR(ptr,pInfo->first)->next;
-    pLocalEntry->wSize     = pLocalEntry->wNext - pLocalEntry->hHandle;
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           LocalNext   (TOOLHELP.58)
- */
-BOOL16 WINAPI LocalNext16( LOCALENTRY *pLocalEntry )
-{
-    WORD ds = GlobalHandleToSel16( pLocalEntry->hHeap );
-    char *ptr = MapSL( MAKESEGPTR( ds, 0 ) );
-    LOCALARENA *pArena;
-
-    if (!LOCAL_GetHeap( ds )) return FALSE;
-    if (!pLocalEntry->wNext) return FALSE;
-    pArena = ARENA_PTR( ptr, pLocalEntry->wNext );
-
-    pLocalEntry->hHandle   = pLocalEntry->wNext + ARENA_HEADER_SIZE;
-    pLocalEntry->wAddress  = pLocalEntry->hHandle;
-    pLocalEntry->wFlags    = (pArena->prev & 3) + 1;
-    pLocalEntry->wcLock    = 0;
-    pLocalEntry->wType     = LT_NORMAL;
-    if (pArena->next != pLocalEntry->wNext)  /* last one? */
-        pLocalEntry->wNext = pArena->next;
-    else
-        pLocalEntry->wNext = 0;
-    pLocalEntry->wSize     = pLocalEntry->wNext - pLocalEntry->hHandle;
-    return TRUE;
-}
-
-
-/***********************************************************************
  * 32-bit local heap functions (Win95; undocumented)
  */
 
@@ -2189,7 +2150,6 @@ static LOCAL32HEADER *Local32_GetHeap( HGLOBAL16 handle )
 
 /***********************************************************************
  *           Local32Info   (KERNEL.444)
- *           Local32Info   (TOOLHELP.84)
  */
 BOOL16 WINAPI Local32Info16( LOCAL32INFO *pLocal32Info, HGLOBAL16 handle )
 {
@@ -2236,7 +2196,6 @@ BOOL16 WINAPI Local32Info16( LOCAL32INFO *pLocal32Info, HGLOBAL16 handle )
 
 /***********************************************************************
  *           Local32First   (KERNEL.445)
- *           Local32First   (TOOLHELP.85)
  */
 BOOL16 WINAPI Local32First16( LOCAL32ENTRY *pLocal32Entry, HGLOBAL16 handle )
 {
@@ -2246,7 +2205,6 @@ BOOL16 WINAPI Local32First16( LOCAL32ENTRY *pLocal32Entry, HGLOBAL16 handle )
 
 /***********************************************************************
  *           Local32Next   (KERNEL.446)
- *           Local32Next   (TOOLHELP.86)
  */
 BOOL16 WINAPI Local32Next16( LOCAL32ENTRY *pLocal32Entry )
 {
