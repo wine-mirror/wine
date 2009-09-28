@@ -235,13 +235,28 @@ static HRESULT WINAPI IStream_fnLockUnlockRegion (IStream * iface, ULARGE_INTEGE
 /*************************************************************************
  * IStream_fnStat
  */
-static HRESULT WINAPI IStream_fnStat (IStream * iface, STATSTG*   pstatstg, DWORD grfStatFlag)
+static HRESULT WINAPI IStream_fnStat (IStream * iface, STATSTG* pstatstg, DWORD grfStatFlag)
 {
 	ISHRegStream *This = (ISHRegStream *)iface;
 
-	TRACE("(%p)\n",This);
+	TRACE("(%p, %p, %d)\n",This,pstatstg,grfStatFlag);
 
-	return E_NOTIMPL;
+	pstatstg->pwcsName = NULL;
+	pstatstg->type = STGTY_STREAM;
+	pstatstg->cbSize.QuadPart = This->dwLength;
+	pstatstg->mtime.dwHighDateTime = 0;
+	pstatstg->mtime.dwLowDateTime = 0;
+	pstatstg->ctime.dwHighDateTime = 0;
+	pstatstg->ctime.dwLowDateTime = 0;
+	pstatstg->atime.dwHighDateTime = 0;
+	pstatstg->atime.dwLowDateTime = 0;
+	pstatstg->grfMode = STGM_READWRITE;
+	pstatstg->grfLocksSupported = 0;
+	pstatstg->clsid = CLSID_NULL;
+	pstatstg->grfStateBits = 0;
+	pstatstg->reserved = 0;
+
+	return S_OK;
 }
 
 /*************************************************************************
