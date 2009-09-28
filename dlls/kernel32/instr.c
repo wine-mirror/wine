@@ -106,13 +106,6 @@ static BOOL INSTR_ReplaceSelector( CONTEXT86 *context, WORD *sel )
 {
     if (*sel == 0x40)
     {
-        static WORD sys_timer = 0;
-        if (!sys_timer)
-        {
-            if (!winedos.BiosTick) load_winedos();
-            if (winedos.BiosTick)
-                sys_timer = CreateSystemTimer( 55, winedos.BiosTick );
-        }
         *sel = DOSMEM_BiosDataSeg;
         return TRUE;
     }

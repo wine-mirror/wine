@@ -137,7 +137,6 @@ extern struct winedos_exports
     void (WINAPI *CallBuiltinHandler)( CONTEXT86 *context, BYTE intnum );
     DWORD (WINAPI *inport)( int port, int size );
     void (WINAPI *outport)( int port, int size, DWORD val );
-    void (* BiosTick)(WORD timer);
 } winedos;
 
 /* returns directory handle for named objects */

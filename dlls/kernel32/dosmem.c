@@ -115,7 +115,6 @@ BOOL load_winedos(void)
                 GET_ADDR(outport);
                 GET_ADDR(EmulateInterruptPM);
                 GET_ADDR(CallBuiltinHandler);
-                GET_ADDR(BiosTick);
 #undef GET_ADDR
             }
             RtlRemoveVectoredExceptionHandler( dosmem_handler );

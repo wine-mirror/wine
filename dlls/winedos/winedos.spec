@@ -11,6 +11,3 @@
 @ cdecl FreeDosBlock(ptr) DOSMEM_FreeBlock
 @ cdecl AllocDosBlock(long ptr) DOSMEM_AllocBlock
 @ cdecl ResizeDosBlock(ptr long long) DOSMEM_ResizeBlock
-
-# BIOS functions
-@ cdecl BiosTick(long)

@@ -224,10 +224,25 @@ static void DOSMEM_FillBiosSegments(void)
  *
  * Increment the BIOS tick counter. Called by timer signal handler.
  */
-void BiosTick( WORD timer )
+static void CALLBACK BiosTick( LPVOID arg, DWORD low, DWORD high )
 {
-    BIOSDATA *pBiosData = DOSVM_BiosData();
-    if (pBiosData) pBiosData->Ticks++;
+    BIOSDATA *pBiosData = arg;
+    pBiosData->Ticks++;
+}
+
+/***********************************************************************
+ *           timer_thread
+ */
+static DWORD CALLBACK timer_thread( void *arg )
+{
+    LARGE_INTEGER when;
+    HANDLE timer;
+
+    if (!(timer = CreateWaitableTimerA( NULL, FALSE, NULL ))) return 0;
+
+    when.u.LowPart = when.u.HighPart = 0;
+    SetWaitableTimer( timer, &when, 55 /* actually 54.925 */, BiosTick, arg, FALSE );
+    for (;;) SleepEx( INFINITE, TRUE );
 }
 
 /***********************************************************************
@@ -488,6 +503,8 @@ BOOL DOSMEM_InitDosMemory(void)
      * Set DOS memory base and initialize conventional memory.
      */
     DOSMEM_InitMemory(DOSMEM_dosmem + reserve);
+
+    CloseHandle( CreateThread( NULL, 0, timer_thread, DOSVM_BiosData(), 0, NULL ));
     return TRUE;
 }
 
