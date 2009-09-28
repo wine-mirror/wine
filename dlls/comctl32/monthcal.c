@@ -1763,7 +1763,7 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
   SIZE size;
   TEXTMETRICW tm;
   HFONT currentFont;
-  int xdiv, left_offset;
+  INT xdiv, dx, dy;
   RECT rcClient;
 
   GetClientRect(infoPtr->hwndSelf, &rcClient);
@@ -1781,22 +1781,21 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
 
   xdiv = (infoPtr->dwStyle & MCS_WEEKNUMBERS) ? 8 : 7;
 
-  infoPtr->width_increment = size.cx * 2 + 4;
+  infoPtr->width_increment  = size.cx * 2 + 4;
   infoPtr->height_increment = infoPtr->textHeight;
-  left_offset = (rcClient.right - rcClient.left) - (infoPtr->width_increment * xdiv);
 
   /* calculate title area */
-  title->top    = rcClient.top;
-  title->bottom = title->top + 3 * infoPtr->height_increment / 2;
-  title->left   = left_offset;
-  title->right  = rcClient.right;
+  title->top    = 0;
+  title->bottom = 3 * infoPtr->height_increment / 2;
+  title->left   = 0;
+  title->right  = infoPtr->width_increment * xdiv;
 
   /* set the dimensions of the next and previous buttons and center */
   /* the month text vertically */
   prev->top    = next->top    = title->top + 4;
   prev->bottom = next->bottom = title->bottom - 4;
   prev->left   = title->left + 4;
-  prev->right  = prev->left + (title->bottom - title->top) ;
+  prev->right  = prev->left + (title->bottom - title->top);
   next->right  = title->right - 4;
   next->left   = next->right - (title->bottom - title->top);
 
@@ -1808,23 +1807,46 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
 
   /* setup the dimensions of the rectangle we draw the names of the */
   /* days of the week in */
-  weeknumrect->left = left_offset;
+  weeknumrect->left = 0;
+
   if(infoPtr->dwStyle & MCS_WEEKNUMBERS)
-    weeknumrect->right=prev->right;
+    weeknumrect->right = prev->right;
   else
-    weeknumrect->right=weeknumrect->left;
+    weeknumrect->right = weeknumrect->left;
+
   wdays->left   = days->left   = weeknumrect->right;
   wdays->right  = days->right  = wdays->left + 7 * infoPtr->width_increment;
-  wdays->top    = title->bottom ;
+  wdays->top    = title->bottom;
   wdays->bottom = wdays->top + infoPtr->height_increment;
 
-  days->top    = weeknumrect->top = wdays->bottom ;
+  days->top    = weeknumrect->top = wdays->bottom;
   days->bottom = weeknumrect->bottom = days->top + 6 * infoPtr->height_increment;
 
-  todayrect->left   = rcClient.left;
-  todayrect->right  = rcClient.right;
+  todayrect->left   = 0;
+  todayrect->right  = title->right;
   todayrect->top    = days->bottom;
   todayrect->bottom = days->bottom + infoPtr->height_increment;
+
+  /* offset all rectangles to center in client area */
+  dx = (rcClient.right  - title->right) / 2;
+  dy = (rcClient.bottom - todayrect->bottom) / 2;
+
+  /* if calendar doesn't fit client area show it at left/top bounds */
+  if (title->left + dx < 0) dx = 0;
+  if (title->top  + dy < 0) dy = 0;
+
+  if (dx != 0 || dy != 0)
+  {
+    OffsetRect(title, dx, dy);
+    OffsetRect(prev,  dx, dy);
+    OffsetRect(next,  dx, dy);
+    OffsetRect(titlemonth, dx, dy);
+    OffsetRect(titleyear, dx, dy);
+    OffsetRect(wdays, dx, dy);
+    OffsetRect(weeknumrect, dx, dy);
+    OffsetRect(days, dx, dy);
+    OffsetRect(todayrect, dx, dy);
+  }
 
   TRACE("dx=%d dy=%d client[%s] title[%s] wdays[%s] days[%s] today[%s]\n",
 	infoPtr->width_increment,infoPtr->height_increment,
