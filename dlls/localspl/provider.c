@@ -103,6 +103,7 @@ static const WCHAR default_devmodeW[] = {'D','e','f','a','u','l','t',' ','D','e'
 static const WCHAR dependent_filesW[] = {'D','e','p','e','n','d','e','n','t',' ','F','i','l','e','s',0};
 static const WCHAR descriptionW[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR driverW[] = {'D','r','i','v','e','r',0};
+static const WCHAR emptyW[] = {0};
 static const WCHAR fmt_driversW[] = { 'S','y','s','t','e','m','\\',
                                   'C','u', 'r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
                                   'c','o','n','t','r','o','l','\\',
@@ -554,6 +555,47 @@ static DWORD monitor_loadall(void)
     }
     TRACE("%d monitors loaded\n", loaded);
     return loaded;
+}
+
+/******************************************************************
+ * monitor_loadui [internal]
+ *
+ * load the userinterface-dll for a given portmonitor
+ *
+ * On failure, NULL is returned
+ */
+static monitor_t * monitor_loadui(monitor_t * pm)
+{
+    monitor_t * pui = NULL;
+    LPWSTR  buffer[MAX_PATH];
+    HANDLE  hXcv;
+    DWORD   len;
+    DWORD   res;
+
+    if (pm == NULL) return NULL;
+    TRACE("(%p) => dllname: %s\n", pm, debugstr_w(pm->dllname));
+
+    /* Try the Portmonitor first; works for many monitors */
+    if (pm->monitorUI) {
+        EnterCriticalSection(&monitor_handles_cs);
+        pm->refcount++;
+        LeaveCriticalSection(&monitor_handles_cs);
+        return pm;
+    }
+
+    /* query the userinterface-dllname from the Portmonitor */
+    if ((pm->monitor) && (pm->monitor->pfnXcvDataPort)) {
+        /* building (",XcvMonitor %s",pm->name) not needed yet */
+        res = pm->monitor->pfnXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv);
+        TRACE("got %u with %p\n", res, hXcv);
+        if (res) {
+            res = pm->monitor->pfnXcvDataPort(hXcv, monitorUIW, NULL, 0, (BYTE *) buffer, sizeof(buffer), &len);
+            TRACE("got %u with %s\n", res, debugstr_w((LPWSTR) buffer));
+            if (res == ERROR_SUCCESS) pui = monitor_load(NULL, (LPWSTR) buffer);
+            pm->monitor->pfnXcvClosePort(hXcv);
+        }
+    }
+    return pui;
 }
 
 /******************************************************************
@@ -1152,7 +1194,6 @@ end:
  */
 static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCopyFlags, BOOL lazy)
 {
-    static const WCHAR emptyW[1];
     const printenv_t *env;
     apd_data_t apd;
     DRIVER_INFO_8W di;
@@ -1476,6 +1517,75 @@ static BOOL WINAPI fpClosePrinter(HANDLE hPrinter)
     return FALSE;
 }
 
+/******************************************************************************
+ * fpConfigurePort [exported through PRINTPROVIDOR]
+ *
+ * Display the Configuration-Dialog for a specific Port
+ *
+ * PARAMS
+ *  pName     [I] Servername or NULL (local Computer)
+ *  hWnd      [I] Handle to parent Window for the Dialog-Box
+ *  pPortName [I] Name of the Port, that should be configured
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ */
+static BOOL WINAPI fpConfigurePort(LPWSTR pName, HWND hWnd, LPWSTR pPortName)
+{
+    monitor_t * pm;
+    monitor_t * pui;
+    LONG        lres;
+    DWORD       res;
+
+    TRACE("(%s, %p, %s)\n", debugstr_w(pName), hWnd, debugstr_w(pPortName));
+
+    lres = copy_servername_from_name(pName, NULL);
+    if (lres) {
+        FIXME("server %s not supported\n", debugstr_w(pName));
+        SetLastError(ERROR_INVALID_NAME);
+        return FALSE;
+    }
+
+    /* an empty Portname is Invalid, but can popup a Dialog */
+    if (!pPortName[0]) {
+        SetLastError(ERROR_NOT_SUPPORTED);
+        return FALSE;
+    }
+
+    pm = monitor_load_by_port(pPortName);
+    if (pm && pm->monitor && pm->monitor->pfnConfigurePort) {
+        TRACE("use %s for %s (monitor %p: %s)\n", debugstr_w(pm->name),
+                debugstr_w(pPortName), pm, debugstr_w(pm->dllname));
+        res = pm->monitor->pfnConfigurePort(pName, hWnd, pPortName);
+        TRACE("got %d with %u\n", res, GetLastError());
+    }
+    else
+    {
+        pui = monitor_loadui(pm);
+        if (pui && pui->monitorUI && pui->monitorUI->pfnConfigurePortUI) {
+            TRACE("use %s for %s (monitorui %p: %s)\n", debugstr_w(pui->name),
+                        debugstr_w(pPortName), pui, debugstr_w(pui->dllname));
+            res = pui->monitorUI->pfnConfigurePortUI(pName, hWnd, pPortName);
+            TRACE("got %d with %u\n", res, GetLastError());
+        }
+        else
+        {
+            FIXME("not implemented for %s (monitor %p: %s / monitorui %p: %s)\n",
+                    debugstr_w(pPortName), pm, debugstr_w(pm ? pm->dllname : NULL),
+                    pui, debugstr_w(pui ? pui->dllname : NULL));
+
+            SetLastError(ERROR_NOT_SUPPORTED);
+            res = FALSE;
+        }
+        monitor_unload(pui);
+    }
+    monitor_unload(pm);
+
+    TRACE("returning %d with %u\n", res, GetLastError());
+    return res;
+}
 
 /******************************************************************
  * fpDeleteMonitor [exported through PRINTPROVIDOR]
@@ -1837,7 +1947,7 @@ void setup_provider(void)
         fpEnumMonitors,
         fpEnumPorts,
         NULL,   /* fpAddPort */
-        NULL,   /* fpConfigurePort */
+        fpConfigurePort,
         NULL,   /* fpDeletePort */
         NULL,   /* fpCreatePrinterIC */
         NULL,   /* fpPlayGdiScriptOnPrinterIC */
