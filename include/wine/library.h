@@ -102,19 +102,8 @@ static inline void wine_ldt_init_fs( unsigned short sel, const LDT_ENTRY *entry 
 static inline void wine_ldt_free_fs( unsigned short sel ) { }
 #endif  /* __i386__ */
 
-
 /* the local copy of the LDT */
-#ifdef __CYGWIN__
-# ifdef WINE_EXPORT_LDT_COPY
-#  define WINE_LDT_EXTERN __declspec(dllexport)
-# else
-#  define WINE_LDT_EXTERN __declspec(dllimport)
-# endif
-#else
-# define WINE_LDT_EXTERN extern
-#endif
-
-WINE_LDT_EXTERN struct __wine_ldt_copy
+extern struct __wine_ldt_copy
 {
     void         *base[8192];  /* base address or 0 if entry is free   */
     unsigned long limit[8192]; /* limit in bytes or 0 if entry is free */

@@ -87,7 +87,6 @@ EXPORTS
     wine_init_argv0_path
     wine_is_dbcs_leadbyte
     wine_ldt_alloc_entries
-    wine_ldt_copy
     wine_ldt_free_entries
     wine_ldt_get_entry
     wine_ldt_get_ptr
