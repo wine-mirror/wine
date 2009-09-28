@@ -776,6 +776,8 @@ ME_SendRequestResize(ME_TextEditor *editor, BOOL force)
     {
       REQRESIZE info;
 
+      info.nmhdr.hwndFrom = NULL;
+      info.nmhdr.idFrom = 0;
       info.nmhdr.code = EN_REQUESTRESIZE;
       info.rc = rc;
       info.rc.right = editor->nTotalWidth;

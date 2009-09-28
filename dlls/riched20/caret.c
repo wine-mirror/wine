@@ -1537,6 +1537,8 @@ void ME_SendSelChange(ME_TextEditor *editor)
   if (!(editor->nEventMask & ENM_SELCHANGE))
     return;
 
+  sc.nmhdr.hwndFrom = NULL;
+  sc.nmhdr.idFrom = 0;
   sc.nmhdr.code = EN_SELCHANGE;
   ME_GetSelectionOfs(editor, &sc.chrg.cpMin, &sc.chrg.cpMax);
   sc.seltyp = SEL_EMPTY;

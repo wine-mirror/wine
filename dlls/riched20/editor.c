@@ -2941,8 +2941,8 @@ static void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM
   if (cursor.pRun->member.run.style->fmt.dwMask & CFM_LINK &&
       cursor.pRun->member.run.style->fmt.dwEffects & CFE_LINK)
   { /* The clicked run has CFE_LINK set */
-    info.nmhdr.hwndFrom = editor->hWnd;
-    info.nmhdr.idFrom = GetWindowLongW(editor->hWnd, GWLP_ID);
+    info.nmhdr.hwndFrom = NULL;
+    info.nmhdr.idFrom = 0;
     info.nmhdr.code = EN_LINK;
     info.msg = msg;
     info.wParam = wParam;
@@ -2950,7 +2950,7 @@ static void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM
     cursor.nOffset = 0;
     info.chrg.cpMin = ME_GetCursorOfs(&cursor);
     info.chrg.cpMax = info.chrg.cpMin + cursor.pRun->member.run.strText->nLen;
-    SendMessageW(GetParent(editor->hWnd), WM_NOTIFY,info.nmhdr.idFrom, (LPARAM)&info);
+    ITextHost_TxNotify(editor->texthost, info.nmhdr.code, &info);
   }
 }
 
