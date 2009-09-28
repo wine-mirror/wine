@@ -234,6 +234,8 @@ static HRESULT WINAPI IStream_fnCopyTo (IStream * iface, IStream* pstm, ULARGE_I
 	  pcbRead->QuadPart = 0;
 	if (pcbWritten)
 	  pcbWritten->QuadPart = 0;
+
+	/* TODO implement */
 	return E_NOTIMPL;
 }
 
@@ -246,6 +248,7 @@ static HRESULT WINAPI IStream_fnCommit (IStream * iface, DWORD grfCommitFlags)
 
 	TRACE("(%p)\n",This);
 
+	/* commit not supported by this stream */
 	return E_NOTIMPL;
 }
 
@@ -258,6 +261,7 @@ static HRESULT WINAPI IStream_fnRevert (IStream * iface)
 
 	TRACE("(%p)\n",This);
 
+	/* revert not supported by this stream */
 	return E_NOTIMPL;
 }
 
@@ -270,6 +274,7 @@ static HRESULT WINAPI IStream_fnLockUnlockRegion (IStream * iface, ULARGE_INTEGE
 
 	TRACE("(%p)\n",This);
 
+	/* lock/unlock not supported by this stream */
 	return E_NOTIMPL;
 }
 
@@ -308,8 +313,9 @@ static HRESULT WINAPI IStream_fnClone (IStream * iface, IStream** ppstm)
 	ISHRegStream *This = (ISHRegStream *)iface;
 
 	TRACE("(%p)\n",This);
-	if (ppstm)
-	  *ppstm = NULL;
+	*ppstm = NULL;
+
+	/* clone not supported by this stream */
 	return E_NOTIMPL;
 }
 
