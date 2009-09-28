@@ -82,8 +82,8 @@ void *pp_xmalloc(size_t size)
     res = malloc(size);
     if(res == NULL)
     {
-        fprintf(stderr, "Virtual memory exhausted.\n");
-        exit(2);
+        /* Set the error flag */
+        pp_status.state = 1;
     }
     return res;
 }
@@ -96,8 +96,8 @@ void *pp_xrealloc(void *p, size_t size)
     res = realloc(p, size);
     if(res == NULL)
     {
-        fprintf(stderr, "Virtual memory exhausted.\n");
-        exit(2);
+        /* Set the error flag */
+        pp_status.state = 1;
     }
     return res;
 }
@@ -177,13 +177,16 @@ static void free_pp_entry( pp_entry_t *ppp, int idx )
 }
 
 /* push a new (empty) define state */
-void pp_push_define_state(void)
+int pp_push_define_state(void)
 {
     pp_def_state_t *state = pp_xmalloc( sizeof(*state) );
+    if(!state)
+        return 1;
 
     memset( state->defines, 0, sizeof(state->defines) );
     state->next = pp_def_state;
     pp_def_state = state;
+    return 0;
 }
 
 /* pop the current define state */
@@ -349,10 +352,12 @@ pp_entry_t *pp_add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
 static char **includepath;
 static int nincludepath = 0;
 
-void wpp_add_include_path(const char *path)
+int wpp_add_include_path(const char *path)
 {
 	char *tok;
 	char *cpy = pp_xstrdup(path);
+	if(!cpy)
+		return 1;
 
 	tok = strtok(cpy, INCLUDESEPARATOR);
 	while(tok)
@@ -360,7 +365,14 @@ void wpp_add_include_path(const char *path)
 		if(*tok) {
 			char *dir;
 			char *cptr;
+			char **new_path;
+
 			dir = pp_xstrdup(tok);
+			if(!dir)
+			{
+				free(cpy);
+				return 1;
+			}
 			for(cptr = dir; *cptr; cptr++)
 			{
 				/* Convert to forward slash */
@@ -372,13 +384,21 @@ void wpp_add_include_path(const char *path)
 				*cptr = '\0';
 
 			/* Add to list */
+			new_path = pp_xrealloc(includepath, (nincludepath+1) * sizeof(*includepath));
+			if(!new_path)
+			{
+				free(dir);
+				free(cpy);
+				return 1;
+			}
+			includepath = new_path;
+			includepath[nincludepath] = dir;
 			nincludepath++;
-			includepath = pp_xrealloc(includepath, nincludepath * sizeof(*includepath));
-			includepath[nincludepath-1] = dir;
 		}
 		tok = strtok(NULL, INCLUDESEPARATOR);
 	}
 	free(cpy);
+	return 0;
 }
 
 char *wpp_find_include(const char *name, const char *parent_name)
@@ -390,6 +410,8 @@ char *wpp_find_include(const char *name, const char *parent_name)
     int i, fd;
 
     cpy = pp_xmalloc(strlen(name)+1);
+    if(!cpy)
+        return NULL;
     cptr = cpy;
 
     for(ccptr = name; *ccptr; ccptr++)
@@ -415,6 +437,11 @@ char *wpp_find_include(const char *name, const char *parent_name)
         if ((p = strrchr( parent_name, '/' ))) p++;
         else p = parent_name;
         path = pp_xmalloc( (p - parent_name) + strlen(cpy) + 1 );
+        if(!path)
+        {
+            free(cpy);
+            return NULL;
+        }
         memcpy( path, parent_name, p - parent_name );
         strcpy( path + (p - parent_name), cpy );
         fd = open( path, O_RDONLY );
@@ -430,6 +457,11 @@ char *wpp_find_include(const char *name, const char *parent_name)
     for(i = 0; i < nincludepath; i++)
     {
         path = pp_xmalloc(strlen(includepath[i]) + strlen(cpy) + 2);
+        if(!path)
+        {
+            free(cpy);
+            return NULL;
+        }
         strcpy(path, includepath[i]);
         strcat(path, "/");
         strcat(path, cpy);
@@ -630,11 +662,14 @@ static void generic_msg(const char *s, const char *t, const char *n, va_list ap)
 		if(n)
 		{
 			cpy = pp_xstrdup(n);
+			if(!cpy)
+				goto end;
 			for (p = cpy; *p; p++) if(!isprint(*p)) *p = ' ';
 			fprintf(stderr, " near '%s'", cpy);
 			free(cpy);
 		}
 	}
+end:
 #endif
 	fprintf(stderr, "\n");
 }
