@@ -52,7 +52,8 @@ static BOOL need_mova_const(IWineD3DBaseShader *shader, const struct wined3d_gl_
 /* Returns TRUE if result.clip from GL_NV_vertex_program2 should be used and FALSE otherwise */
 static inline BOOL use_nv_clip(const struct wined3d_gl_info *gl_info)
 {
-    return GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION);
+    return GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION) &&
+           !(GLINFO_LOCATION.quirks & WINED3D_QUIRK_NV_CLIP_BROKEN);
 }
 
 static BOOL need_helper_const(const struct wined3d_gl_info *gl_info)

@@ -672,6 +672,52 @@ static BOOL match_apple_nvts(const struct wined3d_gl_info *gl_info, const char *
     return GL_SUPPORT(NV_TEXTURE_SHADER);
 }
 
+/* A GL context is provided by the caller */
+static BOOL match_broken_nv_clip(const struct wined3d_gl_info *gl_info, const char *gl_renderer)
+{
+    GLuint prog;
+    BOOL ret = FALSE;
+    GLint pos;
+    const char *testcode =
+        "!!ARBvp1.0\n"
+        "OPTION NV_vertex_program2;\n"
+        "MOV result.clip[0], 0.0;\n"
+        "MOV result.position, 0.0;\n"
+        "END\n";
+
+    if(!GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION)) return FALSE;
+
+    ENTER_GL();
+    while(glGetError());
+
+    GL_EXTCALL(glGenProgramsARB(1, &prog));
+    if(!prog)
+    {
+        ERR("Failed to create an ARB offset limit test program\n");
+        LEAVE_GL();
+        return FALSE;
+    }
+    GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, prog));
+    GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+                                  strlen(testcode), testcode));
+    glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
+    if(pos != -1)
+    {
+        WARN("GL_NV_vertex_program2_option result.clip[] test failed\n");
+        TRACE("error: %s\n", debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+        ret = TRUE;
+        while(glGetError());
+    }
+    else TRACE("GL_NV_vertex_program2_option result.clip[] test passed\n");
+
+    GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, 0));
+    GL_EXTCALL(glDeleteProgramsARB(1, &prog));
+    checkGLcall("GL_NV_vertex_program2_option result.clip[] test cleanup");
+
+    LEAVE_GL();
+    return ret;
+}
+
 static void quirk_arb_constants(struct wined3d_gl_info *gl_info)
 {
     TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL.\n", gl_info->vs_arb_constantsF);
@@ -796,6 +842,11 @@ static void quirk_apple_nvts(struct wined3d_gl_info *gl_info)
     gl_info->supported[NV_TEXTURE_SHADER3] = FALSE;
 }
 
+static void quirk_disable_nvvp_clip(struct wined3d_gl_info *gl_info)
+{
+    gl_info->quirks |= WINED3D_QUIRK_NV_CLIP_BROKEN;
+}
+
 struct driver_quirk
 {
     BOOL (*match)(const struct wined3d_gl_info *gl_info, const char *gl_renderer);
@@ -868,6 +919,11 @@ static const struct driver_quirk quirk_table[] =
         match_apple_nvts,
         quirk_apple_nvts,
         "Apple NV_texture_shader disable"
+    },
+    {
+        match_broken_nv_clip,
+        quirk_disable_nvvp_clip,
+        "Apple NV_vertex_program clip bug quirk"
     },
 };
 
