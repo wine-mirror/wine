@@ -958,8 +958,7 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         case SECPKG_ATTR_REMOTE_CERT_CONTEXT:
         {
             unsigned int list_size;
-            const gnutls_datum_t *datum = pgnutls_certificate_get_peers(
-                    ctx->session, &list_size);
+            const gnutls_datum_t *datum;
 
             datum = pgnutls_certificate_get_peers(ctx->session, &list_size);
             if (datum)
