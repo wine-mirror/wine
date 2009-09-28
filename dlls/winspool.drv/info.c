@@ -6555,57 +6555,17 @@ BOOL WINAPI ConfigurePortA(LPSTR pName, HWND hWnd, LPSTR pPortName)
  */
 BOOL WINAPI ConfigurePortW(LPWSTR pName, HWND hWnd, LPWSTR pPortName)
 {
-    monitor_t * pm;
-    monitor_t * pui;
-    DWORD       res;
 
     TRACE("(%s, %p, %s)\n", debugstr_w(pName), hWnd, debugstr_w(pPortName));
 
-    if (pName && pName[0]) {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+    if ((backend == NULL)  && !load_backend()) return FALSE;
 
     if (!pPortName) {
         SetLastError(RPC_X_NULL_REF_POINTER);
         return FALSE;
     }
 
-    /* an empty Portname is Invalid, but can popup a Dialog */
-    if (!pPortName[0]) {
-        SetLastError(ERROR_NOT_SUPPORTED);
-        return FALSE;
-    }
-
-    pm = monitor_load_by_port(pPortName);
-    if (pm && pm->monitor && pm->monitor->pfnConfigurePort) {
-        TRACE("Using %s for %s (%p: %s)\n", debugstr_w(pm->name), debugstr_w(pPortName), pm, debugstr_w(pm->dllname));
-        res = pm->monitor->pfnConfigurePort(pName, hWnd, pPortName);
-        TRACE("got %d with %u\n", res, GetLastError());
-    }
-    else
-    {
-        pui = monitor_loadui(pm);
-        if (pui && pui->monitorUI && pui->monitorUI->pfnConfigurePortUI) {
-            TRACE("Use %s for %s (%p: %s)\n", debugstr_w(pui->name), debugstr_w(pPortName), pui, debugstr_w(pui->dllname));
-            res = pui->monitorUI->pfnConfigurePortUI(pName, hWnd, pPortName);
-            TRACE("got %d with %u\n", res, GetLastError());
-        }
-        else
-        {
-            FIXME("not implemented for %s (%p: %s => %p: %s)\n", debugstr_w(pPortName),
-                  pm, debugstr_w(pm ? pm->dllname : NULL), pui, debugstr_w(pui ? pui->dllname : NULL));
-
-            /* XP: ERROR_NOT_SUPPORTED, NT351,9x: ERROR_INVALID_PARAMETER */
-            SetLastError(ERROR_NOT_SUPPORTED);
-            res = FALSE;
-        }
-        monitor_unload(pui);
-    }
-    monitor_unload(pm);
-
-    TRACE("returning %d with %u\n", res, GetLastError());
-    return res;
+    return backend->fpConfigurePort(pName, hWnd, pPortName);
 }
 
 /******************************************************************************
