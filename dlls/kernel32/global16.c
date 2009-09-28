@@ -71,6 +71,7 @@ static GLOBALARENA *pGlobalArena;
 static int globalArenaSize;
 
 #define GLOBAL_MAX_ALLOC_SIZE 0x00ff0000  /* Largest allocation is 16M - 64K */
+#define GLOBAL_MAX_COUNT      8192        /* Max number of allocated blocks */
 
 #define VALID_HANDLE(handle) (((handle)>>__AHSHIFT)<globalArenaSize)
 #define GET_ARENA_PTR(handle)  (pGlobalArena + ((handle) >> __AHSHIFT))
@@ -113,15 +114,16 @@ static GLOBALARENA *GLOBAL_GetArena( WORD sel, WORD selcount )
     if (((sel >> __AHSHIFT) + selcount) > globalArenaSize)
     {
         int newsize = ((sel >> __AHSHIFT) + selcount + 0xff) & ~0xff;
-        GLOBALARENA *pNewArena;
 
-        if (pGlobalArena)
-            pNewArena = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                     pGlobalArena, newsize * sizeof(GLOBALARENA) );
-        else
-            pNewArena = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, newsize * sizeof(GLOBALARENA) );
-        if (!pNewArena) return 0;
-        pGlobalArena = pNewArena;
+        if (!pGlobalArena)
+        {
+            pGlobalArena = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                      GLOBAL_MAX_COUNT * sizeof(GLOBALARENA) );
+            if (!pGlobalArena) return 0;
+            /* Hack: store a pointer to it in THHOOK instead of a handle */
+            *(GLOBALARENA **)&pThhook->hGlobalHeap = pGlobalArena;
+        }
+        if (newsize > GLOBAL_MAX_COUNT) return 0;
         globalArenaSize = newsize;
     }
     return pGlobalArena + (sel >> __AHSHIFT);
