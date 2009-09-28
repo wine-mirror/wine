@@ -987,66 +987,6 @@ static monitor_t * monitor_loadui(monitor_t * pm)
     return pui;
 }
 
-
-/******************************************************************
- * monitor_load_by_port [internal]
- *
- * load a printmonitor for a given port
- *
- * On failure, NULL is returned
- */
-
-static monitor_t * monitor_load_by_port(LPCWSTR portname)
-{
-    HKEY    hroot;
-    HKEY    hport;
-    LPWSTR  buffer;
-    monitor_t * pm = NULL;
-    DWORD   registered = 0;
-    DWORD   id = 0;
-    DWORD   len;
-
-    TRACE("(%s)\n", debugstr_w(portname));
-
-    /* Try the Local Monitor first */
-    if (RegOpenKeyW(HKEY_LOCAL_MACHINE, WinNT_CV_PortsW, &hroot) == ERROR_SUCCESS) {
-        if (RegQueryValueExW(hroot, portname, NULL, NULL, NULL, &len) == ERROR_SUCCESS) {
-            /* found the portname */
-            RegCloseKey(hroot);
-            return monitor_load(LocalPortW, NULL);
-        }
-        RegCloseKey(hroot);
-    }
-
-    len = MAX_PATH + lstrlenW(bs_Ports_bsW) + lstrlenW(portname) + 1;
-    buffer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    if (buffer == NULL) return NULL;
-
-    if (RegOpenKeyW(HKEY_LOCAL_MACHINE, MonitorsW, &hroot) == ERROR_SUCCESS) {
-        EnterCriticalSection(&monitor_handles_cs);
-        RegQueryInfoKeyW(hroot, NULL, NULL, NULL, &registered, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-
-        while ((pm == NULL) && (id < registered)) {
-            buffer[0] = '\0';
-            RegEnumKeyW(hroot, id, buffer, MAX_PATH);
-            TRACE("testing %s\n", debugstr_w(buffer));
-            len = lstrlenW(buffer);
-            lstrcatW(buffer, bs_Ports_bsW);
-            lstrcatW(buffer, portname);
-            if (RegOpenKeyW(hroot, buffer, &hport) == ERROR_SUCCESS) {
-                RegCloseKey(hport);
-                buffer[len] = '\0';             /* use only the Monitor-Name */
-                pm = monitor_load(buffer, NULL);
-            }
-            id++;
-        }
-        LeaveCriticalSection(&monitor_handles_cs);
-        RegCloseKey(hroot);
-    }
-    HeapFree(GetProcessHeap(), 0, buffer);
-    return pm;
-}
-
 /******************************************************************
  * get_servername_from_name  (internal)
  *
@@ -2229,57 +2169,16 @@ BOOL WINAPI DeletePortA (LPSTR pName, HWND hWnd, LPSTR pPortName)
  */
 BOOL WINAPI DeletePortW (LPWSTR pName, HWND hWnd, LPWSTR pPortName)
 {
-    monitor_t * pm;
-    monitor_t * pui;
-    DWORD       res;
-
     TRACE("(%s, %p, %s)\n", debugstr_w(pName), hWnd, debugstr_w(pPortName));
 
-    if (pName && pName[0]) {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+    if ((backend == NULL)  && !load_backend()) return FALSE;
 
     if (!pPortName) {
         SetLastError(RPC_X_NULL_REF_POINTER);
         return FALSE;
     }
 
-    /* an empty Portname is Invalid */
-    if (!pPortName[0]) {
-        SetLastError(ERROR_NOT_SUPPORTED);
-        return FALSE;
-    }
-
-    pm = monitor_load_by_port(pPortName);
-    if (pm && pm->monitor && pm->monitor->pfnDeletePort) {
-        TRACE("Using %s for %s (%p: %s)\n", debugstr_w(pm->name), debugstr_w(pPortName), pm, debugstr_w(pm->dllname));
-        res = pm->monitor->pfnDeletePort(pName, hWnd, pPortName);
-        TRACE("got %d with %u\n", res, GetLastError());
-    }
-    else
-    {
-        pui = monitor_loadui(pm);
-        if (pui && pui->monitorUI && pui->monitorUI->pfnDeletePortUI) {
-            TRACE("use %s for %s (%p: %s)\n", debugstr_w(pui->name), debugstr_w(pPortName), pui, debugstr_w(pui->dllname));
-            res = pui->monitorUI->pfnDeletePortUI(pName, hWnd, pPortName);
-            TRACE("got %d with %u\n", res, GetLastError());
-        }
-        else
-        {
-            FIXME("not implemented for %s (%p: %s => %p: %s)\n", debugstr_w(pPortName),
-                  pm, debugstr_w(pm ? pm->dllname : NULL), pui, debugstr_w(pui ? pui->dllname : NULL));
-
-            /* XP: ERROR_NOT_SUPPORTED, NT351,9x: ERROR_INVALID_PARAMETER */
-            SetLastError(ERROR_NOT_SUPPORTED);
-            res = FALSE;
-        }
-        monitor_unload(pui);
-    }
-    monitor_unload(pm);
-
-    TRACE("returning %d with %u\n", res, GetLastError());
-    return res;
+    return backend->fpDeletePort(pName, hWnd, pPortName);
 }
 
 /******************************************************************************
