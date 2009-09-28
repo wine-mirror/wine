@@ -1413,8 +1413,33 @@ fail:
 
 void SECUR32_deinitSchannelSP(void)
 {
+    int i = schan_handle_table_size;
+
     if (!libgnutls_handle) return;
 
+    /* deinitialized sessions first because a pointer to the credentials
+     * are stored for the session by calling gnutls_credentials_set. */
+    while (--i)
+    {
+        if (schan_handle_table[i].type == SCHAN_HANDLE_CTX)
+        {
+            struct schan_context *ctx = schan_free_handle(i, SCHAN_HANDLE_CTX);
+            pgnutls_deinit(ctx->session);
+            HeapFree(GetProcessHeap(), 0, ctx);
+        }
+    }
+    i = schan_handle_table_size;
+    while (--i)
+    {
+        if (schan_handle_table[i].type != SCHAN_HANDLE_FREE)
+        {
+            struct schan_credentials *cred;
+            cred = schan_free_handle(i, SCHAN_HANDLE_CRED);
+            pgnutls_certificate_free_credentials(cred->credentials);
+            HeapFree(GetProcessHeap(), 0, cred);
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, schan_handle_table);
     pgnutls_global_deinit();
     wine_dlclose(libgnutls_handle, NULL, 0);
 }
