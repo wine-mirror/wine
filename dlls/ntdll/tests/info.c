@@ -908,7 +908,6 @@ static void test_affinity(void)
 
     proc_affinity = 0;
     status = pNtSetInformationProcess( GetCurrentProcess(), ProcessAffinityMask, &proc_affinity, sizeof(proc_affinity) );
-    todo_wine
     ok( status == STATUS_INVALID_PARAMETER,
         "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
 

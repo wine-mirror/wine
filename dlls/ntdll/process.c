@@ -404,6 +404,8 @@ NTSTATUS WINAPI NtSetInformationProcess(
         if (ProcessInformationLength != sizeof(DWORD_PTR)) return STATUS_INVALID_PARAMETER;
         if (*(PDWORD_PTR)ProcessInformation & ~(((DWORD_PTR)1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1))
             return STATUS_INVALID_PARAMETER;
+        if (!*(PDWORD_PTR)ProcessInformation)
+            return STATUS_INVALID_PARAMETER;
         SERVER_START_REQ( set_process_info )
         {
             req->handle   = wine_server_obj_handle( ProcessHandle );
