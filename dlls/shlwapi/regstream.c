@@ -440,21 +440,41 @@ static IStream *IStream_Create(HKEY hKey, LPBYTE pbBuffer, DWORD dwLength)
 IStream * WINAPI SHOpenRegStream2A(HKEY hKey, LPCSTR pszSubkey,
                                    LPCSTR pszValue,DWORD dwMode)
 {
+  IStream *tmp;
   HKEY hStrKey = NULL;
   LPBYTE lpBuff = NULL;
-  DWORD dwLength, dwType;
+  DWORD dwLength = 0;
+  LONG ret;
 
   TRACE("(%p,%s,%s,0x%08x)\n", hKey, pszSubkey, pszValue, dwMode);
 
-  /* Open the key, read in binary data and create stream */
-  if (!RegOpenKeyExA (hKey, pszSubkey, 0, KEY_READ, &hStrKey) &&
-      !RegQueryValueExA (hStrKey, pszValue, 0, 0, 0, &dwLength) &&
-      (lpBuff = HeapAlloc (GetProcessHeap(), 0, dwLength)) &&
-      !RegQueryValueExA (hStrKey, pszValue, 0, &dwType, lpBuff, &dwLength) &&
-      dwType == REG_BINARY)
-    return IStream_Create(hStrKey, lpBuff, dwLength);
+  if (dwMode == STGM_READ)
+    ret = RegOpenKeyExA(hKey, pszSubkey, 0, KEY_READ, &hStrKey);
+  else /* in write mode we make sure the subkey exits */
+    ret = RegCreateKeyExA(hKey, pszSubkey, 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &hStrKey, NULL);
 
-  HeapFree (GetProcessHeap(), 0, lpBuff);
+  if (ret == ERROR_SUCCESS)
+  {
+    if (dwMode == STGM_READ || dwMode == STGM_READWRITE)
+    {
+      /* read initial data */
+      ret = RegQueryValueExA(hStrKey, pszValue, 0, 0, 0, &dwLength);
+      if (ret == ERROR_SUCCESS && dwLength)
+      {
+        lpBuff = HeapAlloc(GetProcessHeap(), 0, dwLength);
+        RegQueryValueExA(hStrKey, pszValue, 0, 0, lpBuff, &dwLength);
+      }
+    }
+
+    if (!dwLength)
+      lpBuff = HeapAlloc(GetProcessHeap(), 0, dwLength);
+
+    tmp = IStream_Create(hStrKey, lpBuff, dwLength);
+
+    return tmp;
+  }
+
+  HeapFree(GetProcessHeap(), 0, lpBuff);
   if (hStrKey)
     RegCloseKey(hStrKey);
   return NULL;
@@ -468,22 +488,42 @@ IStream * WINAPI SHOpenRegStream2A(HKEY hKey, LPCSTR pszSubkey,
 IStream * WINAPI SHOpenRegStream2W(HKEY hKey, LPCWSTR pszSubkey,
                                    LPCWSTR pszValue, DWORD dwMode)
 {
+  IStream *tmp;
   HKEY hStrKey = NULL;
   LPBYTE lpBuff = NULL;
-  DWORD dwLength, dwType;
+  DWORD dwLength = 0;
+  LONG ret;
 
   TRACE("(%p,%s,%s,0x%08x)\n", hKey, debugstr_w(pszSubkey),
         debugstr_w(pszValue), dwMode);
 
-  /* Open the key, read in binary data and create stream */
-  if (!RegOpenKeyExW (hKey, pszSubkey, 0, KEY_READ, &hStrKey) &&
-      !RegQueryValueExW (hStrKey, pszValue, 0, 0, 0, &dwLength) &&
-      (lpBuff = HeapAlloc (GetProcessHeap(), 0, dwLength)) &&
-      !RegQueryValueExW (hStrKey, pszValue, 0, &dwType, lpBuff, &dwLength) &&
-      dwType == REG_BINARY)
-    return IStream_Create(hStrKey, lpBuff, dwLength);
+  if (dwMode == STGM_READ)
+    ret = RegOpenKeyExW(hKey, pszSubkey, 0, KEY_READ, &hStrKey);
+  else /* in write mode we make sure the subkey exits */
+    ret = RegCreateKeyExW(hKey, pszSubkey, 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &hStrKey, NULL);
 
-  HeapFree (GetProcessHeap(), 0, lpBuff);
+  if (ret == ERROR_SUCCESS)
+  {
+    if (dwMode == STGM_READ || dwMode == STGM_READWRITE)
+    {
+      /* read initial data */
+      ret = RegQueryValueExW(hStrKey, pszValue, 0, 0, 0, &dwLength);
+      if (ret == ERROR_SUCCESS && dwLength)
+      {
+        lpBuff = HeapAlloc(GetProcessHeap(), 0, dwLength);
+        RegQueryValueExW(hStrKey, pszValue, 0, 0, lpBuff, &dwLength);
+      }
+    }
+
+    if (!dwLength)
+      lpBuff = HeapAlloc(GetProcessHeap(), 0, dwLength);
+
+    tmp = IStream_Create(hStrKey, lpBuff, dwLength);
+
+    return tmp;
+  }
+
+  HeapFree(GetProcessHeap(), 0, lpBuff);
   if (hStrKey)
     RegCloseKey(hStrKey);
   return NULL;
