@@ -1453,8 +1453,8 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 	GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHNAME1+i, buf, countof(buf));
 	AppendMenuW(hMenu, MF_STRING|MF_ENABLED, i + 1, buf);
     }
-    menupoint.x = infoPtr->titlemonth.right;
-    menupoint.y = infoPtr->titlemonth.bottom;
+    menupoint.x = ht.pt.x;
+    menupoint.y = ht.pt.y;
     ClientToScreen(infoPtr->hwndSelf, &menupoint);
     i = TrackPopupMenu(hMenu,TPM_LEFTALIGN | TPM_NONOTIFY | TPM_RIGHTBUTTON | TPM_RETURNCMD,
 		       menupoint.x, menupoint.y, 0, infoPtr->hwndSelf, NULL);
@@ -1464,6 +1464,7 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 	infoPtr->curSel.wMonth = i;
 	InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     }
+    return 0;
   }
   case MCHT_TITLEYEAR:
   {
