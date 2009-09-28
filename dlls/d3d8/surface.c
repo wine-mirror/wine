@@ -79,11 +79,14 @@ static ULONG WINAPI IDirect3DSurface8Impl_Release(LPDIRECT3DSURFACE8 iface) {
         TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
         if (ref == 0) {
-            if (This->parentDevice) IUnknown_Release(This->parentDevice);
+            IDirect3DDevice8 *parentDevice = This->parentDevice;
+
             /* Implicit surfaces are destroyed with the device, not if refcount reaches 0. */
             wined3d_mutex_lock();
             IWineD3DSurface_Release(This->wineD3DSurface);
             wined3d_mutex_unlock();
+
+            if (parentDevice) IDirect3DDevice8_Release(parentDevice);
         }
 
         return ref;

@@ -65,10 +65,14 @@ static ULONG WINAPI IDirect3DTexture8Impl_Release(LPDIRECT3DTEXTURE8 iface) {
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
-        IDirect3DDevice8_Release(This->parentDevice);
+        IDirect3DDevice8 *parentDevice = This->parentDevice;
+
         wined3d_mutex_lock();
         IWineD3DTexture_Release(This->wineD3DTexture);
         wined3d_mutex_unlock();
+
+        /* Release the device last, as it may cause the device to be destroyed. */
+        IDirect3DDevice8_Release(parentDevice);
     }
     return ref;
 }

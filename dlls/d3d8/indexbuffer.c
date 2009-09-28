@@ -64,10 +64,14 @@ static ULONG WINAPI IDirect3DIndexBuffer8Impl_Release(LPDIRECT3DINDEXBUFFER8 ifa
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
-        IDirect3DDevice8_Release(This->parentDevice);
+        IDirect3DDevice8 *parentDevice = This->parentDevice;
+
         wined3d_mutex_lock();
         IWineD3DBuffer_Release(This->wineD3DIndexBuffer);
         wined3d_mutex_unlock();
+
+        /* Release the device last, as it may cause the device to be destroyed. */
+        IDirect3DDevice8_Release(parentDevice);
     }
     return ref;
 }
