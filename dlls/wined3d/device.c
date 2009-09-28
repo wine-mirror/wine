@@ -4429,108 +4429,113 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetTextureStageState(IWineD3DDevice *if
 /*****
  * Get / Set Texture
  *****/
-static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage, IWineD3DBaseTexture* pTexture) {
+static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
+        DWORD stage, IWineD3DBaseTexture *texture)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DBaseTexture *oldTexture;
+    IWineD3DBaseTexture *prev;
 
-    TRACE("(%p) : Stage %#x, Texture %p\n", This, Stage, pTexture);
+    TRACE("iface %p, stage %u, texture %p.\n", iface, stage, texture);
 
-    if (Stage >= WINED3DVERTEXTEXTURESAMPLER0 && Stage <= WINED3DVERTEXTEXTURESAMPLER3) {
-        Stage -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
+    if (stage >= WINED3DVERTEXTEXTURESAMPLER0 && stage <= WINED3DVERTEXTEXTURESAMPLER3)
+        stage -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
+
+    /* Windows accepts overflowing this array... we do not. */
+    if (stage >= sizeof(This->stateBlock->textures) / sizeof(*This->stateBlock->textures))
+    {
+        WARN("Ignoring invalid stage %u.\n", stage);
+        return WINED3D_OK;
     }
-
-    if (Stage >= sizeof(This->stateBlock->textures)/sizeof(This->stateBlock->textures[0])) {
-        ERR("Current stage overflows textures array (stage %d)\n", Stage);
-        return WINED3D_OK; /* Windows accepts overflowing this array ... we do not. */
-    }
-
-    oldTexture = This->updateStateBlock->textures[Stage];
 
     /* SetTexture isn't allowed on textures in WINED3DPOOL_SCRATCH */
-    if (pTexture && ((IWineD3DTextureImpl*)pTexture)->resource.pool == WINED3DPOOL_SCRATCH)
+    if (texture && ((IWineD3DTextureImpl *)texture)->resource.pool == WINED3DPOOL_SCRATCH)
     {
-        WARN("(%p) Attempt to set scratch texture rejected\n", pTexture);
+        WARN("Rejecting attempt to set scratch texture.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    TRACE("GL_LIMITS %d\n",GL_LIMITS(sampler_stages));
-    TRACE("(%p) : oldtexture(%p)\n", This,oldTexture);
+    This->updateStateBlock->changed.textures |= 1 << stage;
 
-    This->updateStateBlock->changed.textures |= 1 << Stage;
-    TRACE("(%p) : setting new texture to %p\n", This, pTexture);
-    This->updateStateBlock->textures[Stage]         = pTexture;
+    prev = This->updateStateBlock->textures[stage];
+    TRACE("Previous texture %p.\n", prev);
 
-    /* Handle recording of state blocks */
-    if (This->isRecordingState) {
+    if (texture == prev)
+    {
+        TRACE("App is setting the same texture again, nothing to do.\n");
+        return WINED3D_OK;
+    }
+
+    TRACE("Setting new texture to %p.\n", texture);
+    This->updateStateBlock->textures[stage] = texture;
+
+    if (This->isRecordingState)
+    {
         TRACE("Recording... not performing anything\n");
 
-        if (pTexture) IWineD3DBaseTexture_AddRef(pTexture);
-        if (oldTexture) IWineD3DBaseTexture_Release(oldTexture);
+        if (texture) IWineD3DBaseTexture_AddRef(texture);
+        if (prev) IWineD3DBaseTexture_Release(prev);
 
         return WINED3D_OK;
     }
 
-    if(oldTexture == pTexture) {
-        TRACE("App is setting the same texture again, nothing to do\n");
-        return WINED3D_OK;
-    }
+    if (texture)
+    {
+        IWineD3DBaseTextureImpl *t = (IWineD3DBaseTextureImpl *)texture;
+        LONG bind_count = InterlockedIncrement(&t->baseTexture.bindCount);
+        UINT dimensions = IWineD3DBaseTexture_GetTextureDimensions(texture);
 
-    /** NOTE: MSDN says that setTexture increases the reference count,
-    * and that the application must set the texture back to null (or have a leaky application),
-    * This means we should pass the refcount up to the parent
-     *******************************/
-    if (NULL != This->updateStateBlock->textures[Stage]) {
-        IWineD3DBaseTextureImpl *new = (IWineD3DBaseTextureImpl *) This->updateStateBlock->textures[Stage];
-        ULONG bindCount = InterlockedIncrement(&new->baseTexture.bindCount);
-        UINT dimensions = IWineD3DBaseTexture_GetTextureDimensions(pTexture);
+        IWineD3DBaseTexture_AddRef(texture);
 
-        IWineD3DBaseTexture_AddRef(This->updateStateBlock->textures[Stage]);
-
-        if (!oldTexture || dimensions != IWineD3DBaseTexture_GetTextureDimensions(oldTexture))
+        if (!prev || dimensions != IWineD3DBaseTexture_GetTextureDimensions(prev))
         {
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADER);
         }
 
-        if(oldTexture == NULL && Stage < MAX_TEXTURES) {
-            /* The source arguments for color and alpha ops have different meanings when a NULL texture is bound,
-             * so the COLOROP and ALPHAOP have to be dirtified.
-             */
-            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(Stage, WINED3DTSS_COLOROP));
-            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(Stage, WINED3DTSS_ALPHAOP));
+        if (!prev && stage < MAX_TEXTURES)
+        {
+            /* The source arguments for color and alpha ops have different
+             * meanings when a NULL texture is bound, so the COLOROP and
+             * ALPHAOP have to be dirtified. */
+            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(stage, WINED3DTSS_COLOROP));
+            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(stage, WINED3DTSS_ALPHAOP));
         }
-        if(bindCount == 1) {
-            new->baseTexture.sampler = Stage;
-        }
-        /* More than one assignment? Doesn't matter, we only need one gl texture unit to use for uploading */
 
+        if (bind_count == 1) t->baseTexture.sampler = stage;
     }
 
-    if (NULL != oldTexture) {
-        IWineD3DBaseTextureImpl *old = (IWineD3DBaseTextureImpl *) oldTexture;
-        LONG bindCount = InterlockedDecrement(&old->baseTexture.bindCount);
+    if (prev)
+    {
+        IWineD3DBaseTextureImpl *t = (IWineD3DBaseTextureImpl *)prev;
+        LONG bind_count = InterlockedDecrement(&t->baseTexture.bindCount);
 
-        IWineD3DBaseTexture_Release(oldTexture);
-        if(pTexture == NULL && Stage < MAX_TEXTURES) {
-            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(Stage, WINED3DTSS_COLOROP));
-            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(Stage, WINED3DTSS_ALPHAOP));
+        IWineD3DBaseTexture_Release(prev);
+
+        if (!texture && stage < MAX_TEXTURES)
+        {
+            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(stage, WINED3DTSS_COLOROP));
+            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(stage, WINED3DTSS_ALPHAOP));
         }
 
-        if(bindCount && old->baseTexture.sampler == Stage) {
-            int i;
-            /* Have to do a search for the other sampler(s) where the texture is bound to
-             * Shouldn't happen as long as apps bind a texture only to one stage
-             */
-            TRACE("Searcing for other sampler / stage id where the texture is bound to\n");
-            for(i = 0; i < MAX_COMBINED_SAMPLERS; i++) {
-                if(This->updateStateBlock->textures[i] == oldTexture) {
-                    old->baseTexture.sampler = i;
+        if (bind_count && t->baseTexture.sampler == stage)
+        {
+            unsigned int i;
+
+            /* Search for other stages the texture is bound to. Shouldn't
+             * happen if applications bind textures to a single stage only. */
+            TRACE("Searching for other stages the texture is bound to.\n");
+            for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
+            {
+                if (This->updateStateBlock->textures[i] == prev)
+                {
+                    TRACE("Texture is also bound to stage %u.\n", i);
+                    t->baseTexture.sampler = i;
                     break;
                 }
             }
         }
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(Stage));
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(stage));
 
     return WINED3D_OK;
 }
