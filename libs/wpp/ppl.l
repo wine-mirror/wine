@@ -908,19 +908,26 @@ static void expand_special(pp_entry_t *ppp)
 {
 	const char *dbgtext = "?";
 	static char *buf = NULL;
+	char *new_buf;
 
 	assert(ppp->type == def_special);
 
 	if(!strcmp(ppp->ident, "__LINE__"))
 	{
 		dbgtext = "def_special(__LINE__)";
-		buf = pp_xrealloc(buf, 32);
+		new_buf = pp_xrealloc(buf, 32);
+		if(!new_buf)
+			return;
+		buf = new_buf;
 		sprintf(buf, "%d", pp_status.line_number);
 	}
 	else if(!strcmp(ppp->ident, "__FILE__"))
 	{
 		dbgtext = "def_special(__FILE__)";
-		buf = pp_xrealloc(buf, strlen(pp_status.input) + 3);
+		new_buf = pp_xrealloc(buf, strlen(pp_status.input) + 3);
+		if(!new_buf)
+			return;
+		buf = new_buf;
 		sprintf(buf, "\"%s\"", pp_status.input);
 	}
 	else
@@ -965,12 +972,19 @@ static char *curdef_text = NULL;
 
 static void add_text(const char *str, int len)
 {
+	int new_alloc;
+	char *new_text;
+
 	if(len == 0)
 		return;
 	if(curdef_idx >= curdef_alloc || curdef_alloc - curdef_idx < len)
 	{
-		curdef_alloc += (len + ALLOCBLOCKSIZE-1) & ~(ALLOCBLOCKSIZE-1);
-		curdef_text = pp_xrealloc(curdef_text, curdef_alloc * sizeof(curdef_text[0]));
+		new_alloc = curdef_alloc + ((len + ALLOCBLOCKSIZE-1) & ~(ALLOCBLOCKSIZE-1));
+		new_text = pp_xrealloc(curdef_text, new_alloc * sizeof(curdef_text[0]));
+		if(!new_text)
+			return;
+		curdef_text = new_text;
+		curdef_alloc = new_alloc;
 		if(curdef_alloc > 65536)
 			ppy_warning("Reallocating macro-expansion buffer larger than 64kB");
 	}
@@ -1168,12 +1182,19 @@ static void new_string(void)
 
 static void add_string(const char *str, int len)
 {
+	int new_alloc;
+	char *new_buffer;
+
 	if(len == 0)
 		return;
 	if(strbuf_idx >= strbuf_alloc || strbuf_alloc - strbuf_idx < len)
 	{
-		strbuf_alloc += (len + ALLOCBLOCKSIZE-1) & ~(ALLOCBLOCKSIZE-1);
-		strbuffer = pp_xrealloc(strbuffer, strbuf_alloc * sizeof(strbuffer[0]));
+		new_alloc = strbuf_alloc + ((len + ALLOCBLOCKSIZE-1) & ~(ALLOCBLOCKSIZE-1));
+		new_buffer = pp_xrealloc(strbuffer, new_alloc * sizeof(strbuffer[0]));
+		if(!new_buffer)
+			return;
+		strbuffer = new_buffer;
+		strbuf_alloc = new_alloc;
 		if(strbuf_alloc > 65536)
 			ppy_warning("Reallocating string buffer larger than 64kB");
 	}
@@ -1184,6 +1205,8 @@ static void add_string(const char *str, int len)
 static char *get_string(void)
 {
 	char *str = pp_xmalloc(strbuf_idx + 1);
+	if(!str)
+		return NULL;
 	memcpy(str, strbuffer, strbuf_idx);
 	str[strbuf_idx] = '\0';
 #ifdef DEBUG
@@ -1259,14 +1282,10 @@ static bufferstackentry_t *pop_buffer(void)
 		bufferstack[bufferstackidx].define->expanding = 0;
 	else
 	{
-		pp_status.line_number = bufferstack[bufferstackidx].line_number;
-		pp_status.char_number = bufferstack[bufferstackidx].char_number;
-		pp_status.input  = bufferstack[bufferstackidx].filename;
-		ncontinuations = bufferstack[bufferstackidx].ncontinuations;
 		if(!bufferstack[bufferstackidx].should_pop)
 		{
 			fclose(ppy_in);
-			fprintf(ppy_out, "# %d \"%s\" 2\n", pp_status.line_number, pp_status.input);
+			fprintf(ppy_out, "# %d \"%s\" 2\n", bufferstack[bufferstackidx].line_number, bufferstack[bufferstackidx].filename);
 
 			/* We have EOF, check the include logic */
 			if(pp_incl_state.state == 2 && !pp_incl_state.seen_junk && pp_incl_state.ppp)
@@ -1275,6 +1294,9 @@ static bufferstackentry_t *pop_buffer(void)
 				if(ppp)
 				{
 					includelogicentry_t *iep = pp_xmalloc(sizeof(includelogicentry_t));
+					if(!iep)
+						return NULL;
+
 					iep->ppp = ppp;
 					ppp->iep = iep;
 					iep->filename = bufferstack[bufferstackidx].include_filename;
@@ -1284,7 +1306,7 @@ static bufferstackentry_t *pop_buffer(void)
 						iep->next->prev = iep;
 					pp_includelogiclist = iep;
 					if(pp_status.debug)
-						fprintf(stderr, "pop_buffer: %s:%d: includelogic added, include_ppp='%s', file='%s'\n", pp_status.input, pp_status.line_number, pp_incl_state.ppp, iep->filename);
+						fprintf(stderr, "pop_buffer: %s:%d: includelogic added, include_ppp='%s', file='%s'\n", bufferstack[bufferstackidx].filename, bufferstack[bufferstackidx].line_number, pp_incl_state.ppp, iep->filename);
 				}
 				else
 					free(bufferstack[bufferstackidx].include_filename);
@@ -1293,6 +1315,10 @@ static bufferstackentry_t *pop_buffer(void)
 			pp_incl_state	= bufferstack[bufferstackidx].incl;
 
 		}
+		pp_status.line_number = bufferstack[bufferstackidx].line_number;
+		pp_status.char_number = bufferstack[bufferstackidx].char_number;
+		pp_status.input  = bufferstack[bufferstackidx].filename;
+		ncontinuations = bufferstack[bufferstackidx].ncontinuations;
 	}
 
 	if(ppy_debug)
@@ -1335,6 +1361,8 @@ static void push_macro(pp_entry_t *ppp)
 	}
 
 	macexpstack[macexpstackidx] = pp_xmalloc(sizeof(macexpstack[0][0]));
+	if(!macexpstack[macexpstackidx])
+		return;
         memset( macexpstack[macexpstackidx], 0, sizeof(macexpstack[0][0]));
 	macexpstack[macexpstackidx]->ppp = ppp;
 	macexpstackidx++;
@@ -1372,8 +1400,13 @@ static void add_text_to_macro(const char *text, int len)
 
 	if(mep->curargalloc - mep->curargsize <= len+1)	/* +1 for '\0' */
 	{
-		mep->curargalloc += (ALLOCBLOCKSIZE > len+1) ? ALLOCBLOCKSIZE : len+1;
-		mep->curarg = pp_xrealloc(mep->curarg, mep->curargalloc * sizeof(mep->curarg[0]));
+		char *new_curarg;
+		int new_alloc =	mep->curargalloc + (ALLOCBLOCKSIZE > len+1) ? ALLOCBLOCKSIZE : len+1;
+		new_curarg = pp_xrealloc(mep->curarg, new_alloc * sizeof(mep->curarg[0]));
+		if(!new_curarg)
+			return;
+		mep->curarg = new_curarg;
+		mep->curargalloc = new_alloc;
 	}
 	memcpy(mep->curarg + mep->curargsize, text, len);
 	mep->curargsize += len;
@@ -1384,14 +1417,30 @@ static void macro_add_arg(int last)
 {
 	int nnl = 0;
 	char *cptr;
+	char **new_args, **new_ppargs;
+	int *new_nnls;
 	macexpstackentry_t *mep = top_macro();
 
 	assert(mep->ppp->expanding == 0);
 
-	mep->args = pp_xrealloc(mep->args, (mep->nargs+1) * sizeof(mep->args[0]));
-	mep->ppargs = pp_xrealloc(mep->ppargs, (mep->nargs+1) * sizeof(mep->ppargs[0]));
-	mep->nnls = pp_xrealloc(mep->nnls, (mep->nargs+1) * sizeof(mep->nnls[0]));
+	new_args = pp_xrealloc(mep->args, (mep->nargs+1) * sizeof(mep->args[0]));
+	if(!new_args)
+		return;
+	mep->args = new_args;
+
+	new_ppargs = pp_xrealloc(mep->ppargs, (mep->nargs+1) * sizeof(mep->ppargs[0]));
+	if(!new_ppargs)
+		return;
+	mep->ppargs = new_ppargs;
+
+	new_nnls = pp_xrealloc(mep->nnls, (mep->nargs+1) * sizeof(mep->nnls[0]));
+	if(!new_nnls)
+		return;
+	mep->nnls = new_nnls;
+
 	mep->args[mep->nargs] = pp_xstrdup(mep->curarg ? mep->curarg : "");
+	if(!mep->args[mep->nargs])
+		return;
 	cptr = mep->args[mep->nargs]-1;
 	while((cptr = strchr(cptr+1, '\n')))
 	{
@@ -1436,7 +1485,7 @@ static void macro_add_expansion(void)
 			pp_status.input,
 			pp_status.line_number,
 			mep->nargs-1,
-			mep->ppargs[mep->nargs-1]);
+			mep->ppargs[mep->nargs-1] ? mep->ppargs[mep->nargs-1] : "");
 }
 
 

@@ -594,6 +594,8 @@ static int marg_index(char *id)
 static mtext_t *new_mtext(char *str, int idx, def_exp_t type)
 {
 	mtext_t *mt = pp_xmalloc(sizeof(mtext_t));
+	if(!mt)
+		return NULL;
 	if(str == NULL)
 		mt->subst.argidx = idx;
 	else
@@ -613,7 +615,11 @@ static mtext_t *combine_mtext(mtext_t *tail, mtext_t *mtp)
 
 	if(tail->type == exp_text && mtp->type == exp_text)
 	{
-		tail->subst.text = pp_xrealloc(tail->subst.text, strlen(tail->subst.text)+strlen(mtp->subst.text)+1);
+		char *new_text;
+		new_text = pp_xrealloc(tail->subst.text, strlen(tail->subst.text)+strlen(mtp->subst.text)+1);
+		if(!new_text)
+			return mtp;
+		tail->subst.text = new_text;
 		strcat(tail->subst.text, mtp->subst.text);
 		free(mtp->subst.text);
 		free(mtp);
