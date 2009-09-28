@@ -740,6 +740,22 @@ static tbsize_result_t tbsize_results[] =
 
 static int tbsize_numtests = 0;
 
+typedef struct
+{
+    int test_num;
+    int rect_index;
+    RECT rcButton;
+} tbsize_alt_result_t;
+
+static tbsize_alt_result_t tbsize_alt_results[] =
+{
+  { 5, 2, { 0, 24, 8, 29 } },
+  { 20, 1, { 100, 2, 107, 102 } },
+  { 20, 2, { 107, 2, 207, 102 } }
+};
+
+static int tbsize_alt_numtests = 0;
+
 #define check_sizes_todo(todomask) { \
         RECT rc; \
         int buttonCount, i, mask=(todomask); \
@@ -751,7 +767,11 @@ static int tbsize_numtests = 0;
         compare(buttonCount, res->nButtons, "%d"); \
         for (i=0; i<min(buttonCount, res->nButtons); i++) { \
             ok(SendMessageA(hToolbar, TB_GETITEMRECT, i, (LPARAM)&rc) == 1, "TB_GETITEMRECT\n"); \
-            if (!(mask&1)) { \
+            if (broken(tbsize_alt_numtests < sizeof(tbsize_alt_results)/sizeof(tbsize_alt_results[0]) && \
+                       memcmp(&rc, &tbsize_alt_results[tbsize_alt_numtests].rcButton, sizeof(RECT)) == 0)) { \
+                win_skip("Alternate rect found\n"); \
+                tbsize_alt_numtests++; \
+            } else if (!(mask&1)) { \
                 check_rect("button", rc, res->rcButtons[i]); \
             } else {\
                 todo_wine { check_rect("button", rc, res->rcButtons[i]); } \
