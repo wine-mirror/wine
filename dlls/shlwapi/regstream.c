@@ -116,24 +116,21 @@ static ULONG WINAPI IStream_fnRelease(IStream *iface)
 static HRESULT WINAPI IStream_fnRead (IStream * iface, void* pv, ULONG cb, ULONG* pcbRead)
 {
 	ISHRegStream *This = (ISHRegStream *)iface;
-
-	DWORD dwBytesToRead, dwBytesLeft;
+	DWORD dwBytesToRead;
 
 	TRACE("(%p)->(%p,0x%08x,%p)\n",This, pv, cb, pcbRead);
 
-	if (!pv)
-	  return STG_E_INVALIDPOINTER;
+	if (This->dwPos >= This->dwLength)
+	  dwBytesToRead = 0;
+        else
+	  dwBytesToRead = This->dwLength - This->dwPos;
 
-	dwBytesLeft = This->dwLength - This->dwPos;
-
-	if ( 0 >= dwBytesLeft ) /* end of buffer */
-	  return S_FALSE;
-
-	dwBytesToRead = ( cb > dwBytesLeft) ? dwBytesLeft : cb;
-
-	memmove ( pv, (This->pbBuffer) + (This->dwPos), dwBytesToRead);
-
-	This->dwPos += dwBytesToRead; /* adjust pointer */
+	dwBytesToRead = (cb > dwBytesToRead) ? dwBytesToRead : cb;
+	if (dwBytesToRead != 0) /* not at end of buffer and we want to read something */
+	{
+	  memmove(pv, This->pbBuffer + This->dwPos, dwBytesToRead);
+	  This->dwPos += dwBytesToRead; /* adjust pointer */
+	}
 
 	if (pcbRead)
 	  *pcbRead = dwBytesToRead;
