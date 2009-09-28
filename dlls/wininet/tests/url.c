@@ -30,9 +30,10 @@
 
 #include "wine/test.h"
 
-#define TEST_URL "http://www.winehq.org/site/about"
+#define TEST_URL "http://www.winehq.org/site/about#hi"
 #define TEST_URL_HOST "www.winehq.org"
 #define TEST_URL_PATH "/site/about"
+#define TEST_URL_HASH "#hi"
 #define TEST_URL2 "http://www.myserver.com/myscript.php?arg=1"
 #define TEST_URL2_SERVER "www.myserver.com"
 #define TEST_URL2_PATH "/myscript.php"
@@ -147,10 +148,10 @@ static void InternetCrackUrl_test(void)
   ok(urlComponents.nScheme == INTERNET_SCHEME_HTTP,"urlComponents->nScheme should have been INTERNET_SCHEME_HTTP instead of %d\n", urlComponents.nScheme);
   ok(!urlComponents.lpszUserName, ".lpszUserName should have been set to NULL\n");
   ok(!urlComponents.lpszPassword, ".lpszPassword should have been set to NULL\n");
-  ok(!urlComponents.lpszExtraInfo, ".lpszExtraInfo should have been set to NULL\n");
+  ok(urlComponents.dwExtraInfoLength == strlen(TEST_URL_HASH),".dwExtraInfoLength should be %d, but is %d\n", lstrlenA(TEST_URL_HASH), urlComponents.dwExtraInfoLength);
+  ok(!strncmp(urlComponents.lpszExtraInfo,TEST_URL_HASH,strlen(TEST_URL_HASH)), ".lpszExtraInfo should be %s but is %s\n", TEST_URL_HASH, urlComponents.lpszExtraInfo);
   ok(!urlComponents.dwUserNameLength,".dwUserNameLength should be 0, but is %d\n", urlComponents.dwUserNameLength);
   ok(!urlComponents.dwPasswordLength,".dwPasswordLength should be 0, but is %d\n", urlComponents.dwPasswordLength);
-  ok(!urlComponents.dwExtraInfoLength,".dwExtraInfoLength should be 0, but is %d\n", urlComponents.dwExtraInfoLength);
 
   /*3. Check for %20 */
   copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 2048, 1024);

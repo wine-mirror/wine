@@ -1424,8 +1424,11 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
     lpUC->nPort = INTERNET_INVALID_PORT_NUMBER;
 
     /* Parse <params> */
-    if (!(lpszParam = memchrW(lpszap, ';', dwUrlLength - (lpszap - lpszUrl))))
+    lpszParam = memchrW(lpszap, ';', dwUrlLength - (lpszap - lpszUrl));
+    if(!lpszParam)
         lpszParam = memchrW(lpszap, '?', dwUrlLength - (lpszap - lpszUrl));
+    if(!lpszParam)
+        lpszParam = memchrW(lpszap, '#', dwUrlLength - (lpszap - lpszUrl));
 
     SetUrlComponentValueW(&lpUC->lpszExtraInfo, &lpUC->dwExtraInfoLength,
                           lpszParam, lpszParam ? dwUrlLength-(lpszParam-lpszUrl) : 0);
