@@ -559,38 +559,14 @@ LPVOID WINAPI MapSLFix( SEGPTR sptr )
     return MapSL(sptr);
 }
 
+#ifdef __i386__
+
 /***********************************************************************
  *           UnMapSLFixArray   (KERNEL32.@)
  *
  * Must not change EAX, hence defined as asm function.
  */
-#ifdef __i386__
 __ASM_STDCALL_FUNC( UnMapSLFixArray, 8, "ret $8" )
-#endif
-
-
-/***********************************************************************
- *           GetThreadSelectorEntry   (KERNEL32.@)
- */
-BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldtent )
-{
-    THREAD_DESCRIPTOR_INFORMATION       tdi;
-    NTSTATUS                            status;
-
-    tdi.Selector = sel;
-    status = NtQueryInformationThread( hthread, ThreadDescriptorTableEntry,
-                                       &tdi, sizeof(tdi), NULL);
-    if (status)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-    *ldtent = tdi.Entry;
-    return TRUE;
-}
-
-
-#ifdef __i386__
 
 /***********************************************************************
  *		SMapLS (KERNEL32.@)

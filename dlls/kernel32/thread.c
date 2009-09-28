@@ -422,6 +422,26 @@ DWORD WINAPI SetThreadIdealProcessor(
 }
 
 
+/***********************************************************************
+ *           GetThreadSelectorEntry   (KERNEL32.@)
+ */
+BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldtent )
+{
+    THREAD_DESCRIPTOR_INFORMATION tdi;
+    NTSTATUS status;
+
+    tdi.Selector = sel;
+    status = NtQueryInformationThread( hthread, ThreadDescriptorTableEntry, &tdi, sizeof(tdi), NULL);
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+    *ldtent = tdi.Entry;
+    return TRUE;
+}
+
+
 /* callback for QueueUserAPC */
 static void CALLBACK call_user_apc( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
 {
