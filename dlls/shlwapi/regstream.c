@@ -505,21 +505,22 @@ IStream * WINAPI SHOpenRegStreamW(HKEY hkey, LPCWSTR pszSubkey,
 IStream * WINAPI SHCreateMemStream(const BYTE *lpbData, UINT dwDataLen)
 {
   IStream *iStrmRet = NULL;
+  LPBYTE lpbDup;
 
   TRACE("(%p,%d)\n", lpbData, dwDataLen);
 
-  if (lpbData)
+  if (!lpbData)
+    dwDataLen = 0;
+
+  lpbDup = HeapAlloc(GetProcessHeap(), 0, dwDataLen);
+
+  if (lpbDup)
   {
-    LPBYTE lpbDup = HeapAlloc(GetProcessHeap(), 0, dwDataLen);
+    memcpy(lpbDup, lpbData, dwDataLen);
+    iStrmRet = IStream_Create(NULL, lpbDup, dwDataLen);
 
-    if (lpbDup)
-    {
-      memcpy(lpbDup, lpbData, dwDataLen);
-      iStrmRet = IStream_Create(NULL, lpbDup, dwDataLen);
-
-      if (!iStrmRet)
-        HeapFree(GetProcessHeap(), 0, lpbDup);
-    }
+    if (!iStrmRet)
+      HeapFree(GetProcessHeap(), 0, lpbDup);
   }
   return iStrmRet;
 }
