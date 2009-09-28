@@ -1065,6 +1065,42 @@ cpp_quote("#define MAX_SIZE_SECURITY_ID 512")
         [in] DWORD dwFlags);
 }
 
+/*****************************************************************************
+ * IInternetHostSecurityManager interface
+ */
+cpp_quote("#define SID_SInternetHostSecurityManager IID_IInternetHostSecurityManager")
+
+[
+    local,
+    object,
+    uuid(3af280b6-cb3f-11d0-891e-00c04fb6bfc4),
+    pointer_default(unique)
+]
+interface IInternetHostSecurityManager : IUnknown
+{
+    HRESULT GetSecurityId(
+            [out, size_is(*pcbSecurityId)] BYTE *pbSecurityId,
+            [in, out] DWORD *pcbSecurityId,
+            [in] DWORD_PTR dwReserved);
+
+    HRESULT ProcessUrlAction(
+            [in] DWORD dwAction,
+            [out, size_is(cbPolicy)] BYTE *pPolicy,
+            [in] DWORD cbPolicy,
+            [in] BYTE *pContext,
+            [in] DWORD cbContext,
+            [in] DWORD dwFlags,
+            [in] DWORD dwReserved);
+
+    HRESULT QueryCustomPolicy(
+            [in] REFGUID guidKey,
+            [out, size_is(,*pcbPolicy)] BYTE **ppPolicy,
+            [out] DWORD *pcbPolicy,
+            [in] BYTE *pContext,
+            [in] DWORD cbContext,
+            [in] DWORD dwReserved);
+}
+
 cpp_quote("#define URLACTION_MIN                        0x00001000")
 cpp_quote("#define URLACTION_DOWNLOAD_MIN               0x00001000")
 cpp_quote("#define URLACTION_DOWNLOAD_SIGNED_ACTIVEX    0x00001001")
@@ -1642,6 +1678,17 @@ interface IInternetProtocolEx : IInternetProtocol
         [in] DWORD grfPI,
         [in] HANDLE *dwReserved);
 }
+
+cpp_quote("#define CONFIRMSAFETYACTION_LOADOBJECT  0x00000001")
+
+struct CONFIRMSAFETY
+{
+    CLSID clsid;
+    IUnknown *pUnk;
+    DWORD dwFlags;
+};
+
+cpp_quote("EXTERN_C const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY;")
 
 cpp_quote("DEFINE_GUID(CLSID_InternetSecurityManager, 0x7b8a2d94, 0x0ac9, 0x11d1, 0x89, 0x6c, 0x00, 0xc0, 0x4f, 0xB6, 0xbf, 0xc4);")
 cpp_quote("DEFINE_GUID(CLSID_InternetZoneManager, 0x7B8A2D95, 0x0AC9, 0x11D1, 0x89, 0x6C, 0x00, 0xC0, 0x4F, 0xB6, 0xBF, 0xC4);")
