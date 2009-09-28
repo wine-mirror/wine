@@ -52,8 +52,6 @@ static struct notify
 
 static int nrofnotifys = 0;
 
-static FARPROC16 HookNotify = NULL;
-
 
 /***********************************************************************
  *           TaskFindHandle   (TOOLHELP.65)
@@ -225,20 +223,4 @@ BOOL16 WINAPI SystemHeapInfo16( SYSHEAPINFO *pHeapInfo )
     FreeLibrary16( user );
     FreeLibrary16( gdi );
     return TRUE;
-}
-
-
-/***********************************************************************
- *           ToolHelpHook                             (KERNEL.341)
- *	see "Undocumented Windows"
- */
-FARPROC16 WINAPI ToolHelpHook16(FARPROC16 lpfnNotifyHandler)
-{
-	FARPROC16 tmp;
-
-	FIXME("(%p), stub.\n", lpfnNotifyHandler);
-	tmp = HookNotify;
-	HookNotify = lpfnNotifyHandler;
-	/* just return previously installed notification function */
-	return tmp;
 }

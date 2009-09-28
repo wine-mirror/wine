@@ -106,6 +106,17 @@ LONG WINAPI KERNEL_nop(void)
     return 0;
 }
 
+/***********************************************************************
+ *           ToolHelpHook                             (KERNEL.341)
+ *	see "Undocumented Windows"
+ */
+FARPROC16 WINAPI ToolHelpHook16(FARPROC16 func)
+{
+    static FARPROC16 hook;
+
+    FIXME("(%p), stub.\n", func);
+    return InterlockedExchangePointer( (void **)&hook, func );
+}
 
 /* thunk for 16-bit CreateThread */
 struct thread_args
