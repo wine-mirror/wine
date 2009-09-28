@@ -60,6 +60,7 @@ C_SRCS = \
 	persist.c \
 	protocol.c \
 	script.c \
+	secmgr.c \
 	selection.c \
 	service.c \
 	task.c \

@@ -105,6 +105,7 @@ static const IID * const doc_node_iids[] = {
     &IID_IHTMLDocument5,
     &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
+    &IID_IInternetHostSecurityManager,
     NULL
 };
 

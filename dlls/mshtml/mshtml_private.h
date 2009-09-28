@@ -465,6 +465,8 @@ struct HTMLDocumentNode {
     HTMLDOMNode node;
     HTMLDocument basedoc;
 
+    const IInternetHostSecurityManagerVtbl *lpIInternetHostSecurityManagerVtbl;
+
     LONG ref;
 
     HTMLDOMNode *nodes;
@@ -540,6 +542,8 @@ struct HTMLDocumentNode {
 
 #define SUPPERRINFO(x)   ((ISupportErrorInfo*) &(x)->lpSupportErrorInfoVtbl)
 
+#define HOSTSECMGR(x)    ((IInternetHostSecurityManager*)  &(x)->lpIInternetHostSecurityManagerVtbl)
+
 #define DEFINE_THIS2(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,ifc)))
 #define DEFINE_THIS(cls,ifc,iface) DEFINE_THIS2(cls,lp ## ifc ## Vtbl,iface)
 
@@ -563,6 +567,8 @@ void HTMLDocument_View_Init(HTMLDocument*);
 void HTMLDocument_Window_Init(HTMLDocument*);
 void HTMLDocument_Service_Init(HTMLDocument*);
 void HTMLDocument_Hlink_Init(HTMLDocument*);
+
+void HTMLDocumentNode_SecMgr_Init(HTMLDocumentNode*);
 
 HRESULT HTMLCurrentStyle_Create(HTMLElement*,IHTMLCurrentStyle**);
 
