@@ -43,6 +43,12 @@ typedef struct
 	LPBYTE pbBuffer;
 	DWORD  dwLength;
 	DWORD  dwPos;
+	DWORD  dwMode;
+	union {
+	    LPSTR keyNameA;
+	    LPWSTR keyNameW;
+	}u;
+	BOOL   bUnicode;
 } ISHRegStream;
 
 /**************************************************************************
@@ -98,11 +104,34 @@ static ULONG WINAPI IStream_fnRelease(IStream *iface)
 	{
 	  TRACE(" destroying SHReg IStream (%p)\n",This);
 
-          HeapFree(GetProcessHeap(),0,This->pbBuffer);
-
 	  if (This->hKey)
-	    RegCloseKey(This->hKey);
+	  {
+	    /* write back data in REG_BINARY */
+	    if (This->dwMode == STGM_READWRITE || This->dwMode == STGM_WRITE)
+	    {
+	      if (This->dwLength)
+	      {
+	        if (This->bUnicode)
+	          RegSetValueExW(This->hKey, This->u.keyNameW, 0, REG_BINARY,
+	                         (const BYTE *) This->pbBuffer, This->dwLength);
+	        else
+	          RegSetValueExA(This->hKey, This->u.keyNameA, 0, REG_BINARY,
+	                        (const BYTE *) This->pbBuffer, This->dwLength);
+	      }
+	      else
+	      {
+	        if (This->bUnicode)
+	          RegDeleteValueW(This->hKey, This->u.keyNameW);
+	        else
+	          RegDeleteValueA(This->hKey, This->u.keyNameA);
+	      }
+	    }
 
+	    RegCloseKey(This->hKey);
+	  }
+
+	  HeapFree(GetProcessHeap(),0,This->u.keyNameA);
+	  HeapFree(GetProcessHeap(),0,This->pbBuffer);
 	  HeapFree(GetProcessHeap(),0,This);
 	  return 0;
 	}
@@ -296,7 +325,7 @@ static HRESULT WINAPI IStream_fnStat (IStream * iface, STATSTG* pstatstg, DWORD 
 	pstatstg->ctime.dwLowDateTime = 0;
 	pstatstg->atime.dwHighDateTime = 0;
 	pstatstg->atime.dwLowDateTime = 0;
-	pstatstg->grfMode = STGM_READWRITE;
+	pstatstg->grfMode = This->dwMode;
 	pstatstg->grfLocksSupported = 0;
 	pstatstg->clsid = CLSID_NULL;
 	pstatstg->grfStateBits = 0;
@@ -395,7 +424,10 @@ static ISHRegStream rsDummyRegStream =
  NULL,
  NULL,
  0,
- 0
+ 0,
+ STGM_READWRITE,
+ {NULL},
+ FALSE
 };
 
 /**************************************************************************
@@ -403,7 +435,7 @@ static ISHRegStream rsDummyRegStream =
  *
  * Internal helper: Create and initialise a new registry stream object.
  */
-static IStream *IStream_Create(HKEY hKey, LPBYTE pbBuffer, DWORD dwLength)
+static ISHRegStream *IStream_Create(HKEY hKey, LPBYTE pbBuffer, DWORD dwLength)
 {
  ISHRegStream* regStream;
 
@@ -417,9 +449,12 @@ static IStream *IStream_Create(HKEY hKey, LPBYTE pbBuffer, DWORD dwLength)
    regStream->pbBuffer = pbBuffer;
    regStream->dwLength = dwLength;
    regStream->dwPos = 0;
+   regStream->dwMode = STGM_READWRITE;
+   regStream->u.keyNameA = NULL;
+   regStream->bUnicode = FALSE;
  }
  TRACE ("Returning %p\n", regStream);
- return (IStream *)regStream;
+ return regStream;
 }
 
 /*************************************************************************
@@ -440,7 +475,7 @@ static IStream *IStream_Create(HKEY hKey, LPBYTE pbBuffer, DWORD dwLength)
 IStream * WINAPI SHOpenRegStream2A(HKEY hKey, LPCSTR pszSubkey,
                                    LPCSTR pszValue,DWORD dwMode)
 {
-  IStream *tmp;
+  ISHRegStream *tmp;
   HKEY hStrKey = NULL;
   LPBYTE lpBuff = NULL;
   DWORD dwLength = 0;
@@ -470,8 +505,19 @@ IStream * WINAPI SHOpenRegStream2A(HKEY hKey, LPCSTR pszSubkey,
       lpBuff = HeapAlloc(GetProcessHeap(), 0, dwLength);
 
     tmp = IStream_Create(hStrKey, lpBuff, dwLength);
+    if(tmp)
+    {
+      if(pszValue)
+      {
+        int len = lstrlenA(pszValue) + 1;
+        tmp->u.keyNameA = HeapAlloc(GetProcessHeap(), 0, len);
+        memcpy(tmp->u.keyNameA, pszValue, len);
+      }
 
-    return tmp;
+      tmp->dwMode = dwMode;
+      tmp->bUnicode = FALSE;
+      return (IStream *)tmp;
+    }
   }
 
   HeapFree(GetProcessHeap(), 0, lpBuff);
@@ -488,7 +534,7 @@ IStream * WINAPI SHOpenRegStream2A(HKEY hKey, LPCSTR pszSubkey,
 IStream * WINAPI SHOpenRegStream2W(HKEY hKey, LPCWSTR pszSubkey,
                                    LPCWSTR pszValue, DWORD dwMode)
 {
-  IStream *tmp;
+  ISHRegStream *tmp;
   HKEY hStrKey = NULL;
   LPBYTE lpBuff = NULL;
   DWORD dwLength = 0;
@@ -519,8 +565,19 @@ IStream * WINAPI SHOpenRegStream2W(HKEY hKey, LPCWSTR pszSubkey,
       lpBuff = HeapAlloc(GetProcessHeap(), 0, dwLength);
 
     tmp = IStream_Create(hStrKey, lpBuff, dwLength);
+    if(tmp)
+    {
+      if(pszValue)
+      {
+        int len = lstrlenW(pszValue) + 1;
+        tmp->u.keyNameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        memcpy(tmp->u.keyNameW, pszValue, len * sizeof(WCHAR));
+      }
 
-    return tmp;
+      tmp->dwMode = dwMode;
+      tmp->bUnicode = TRUE;
+      return (IStream *)tmp;
+    }
   }
 
   HeapFree(GetProcessHeap(), 0, lpBuff);
@@ -604,7 +661,7 @@ IStream * WINAPI SHCreateMemStream(const BYTE *lpbData, UINT dwDataLen)
   if (lpbDup)
   {
     memcpy(lpbDup, lpbData, dwDataLen);
-    iStrmRet = IStream_Create(NULL, lpbDup, dwDataLen);
+    iStrmRet = (IStream *)IStream_Create(NULL, lpbDup, dwDataLen);
 
     if (!iStrmRet)
       HeapFree(GetProcessHeap(), 0, lpbDup);
@@ -642,7 +699,7 @@ HRESULT WINAPI SHCreateStreamWrapper(LPBYTE lpbData, DWORD dwDataLen,
   if(dwReserved || !lppStream)
     return E_INVALIDARG;
 
-  lpStream = IStream_Create(NULL, lpbData, dwDataLen);
+  lpStream = (IStream *)IStream_Create(NULL, lpbData, dwDataLen);
 
   if(!lpStream)
     return E_OUTOFMEMORY;
