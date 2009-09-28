@@ -47,6 +47,7 @@ struct ScriptHost {
     const IActiveScriptSiteInterruptPollVtbl  *lpIActiveScriptSiteInterruptPollVtbl;
     const IActiveScriptSiteWindowVtbl         *lpIActiveScriptSiteWindowVtbl;
     const IActiveScriptSiteDebug32Vtbl        *lpIActiveScriptSiteDebug32Vtbl;
+    const IServiceProviderVtbl                *lpServiceProviderVtbl;
 
     LONG ref;
 
@@ -239,6 +240,9 @@ static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, 
     }else if(IsEqualGUID(&IID_IActiveScriptSiteDebug32, riid)) {
         TRACE("(%p)->(IID_IActiveScriptSiteDebug32 %p)\n", This, ppv);
         *ppv = ACTSCPDBG32(This);
+    }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
+        TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
+        *ppv = SERVPROV(This);
     }else if(IsEqualGUID(&IID_ICanHandleException, riid)) {
         TRACE("(%p)->(IID_ICanHandleException not supported %p)\n", This, ppv);
         return E_NOINTERFACE;
@@ -529,6 +533,43 @@ static const IActiveScriptSiteDebug32Vtbl ActiveScriptSiteDebug32Vtbl = {
     ActiveScriptSiteDebug32_OnScriptErrorDebug
 };
 
+#define SERVPROV_THIS(iface) DEFINE_THIS(ScriptHost, ServiceProvider, iface)
+
+static HRESULT WINAPI ASServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
+{
+    ScriptHost *This = SERVPROV_THIS(iface);
+    return IActiveScriptSite_QueryInterface(ACTSCPSITE(This), riid, ppv);
+}
+
+static ULONG WINAPI ASServiceProvider_AddRef(IServiceProvider *iface)
+{
+    ScriptHost *This = SERVPROV_THIS(iface);
+    return IActiveScriptSite_AddRef(ACTSCPSITE(This));
+}
+
+static ULONG WINAPI ASServiceProvider_Release(IServiceProvider *iface)
+{
+    ScriptHost *This = SERVPROV_THIS(iface);
+    return IActiveScriptSite_Release(ACTSCPSITE(This));
+}
+
+static HRESULT WINAPI ASServiceProvider_QueryService(IServiceProvider *iface, REFGUID guidService,
+        REFIID riid, void **ppv)
+{
+    ScriptHost *This = SERVPROV_THIS(iface);
+    FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+#undef SERVPROV_THIS
+
+static const IServiceProviderVtbl ASServiceProviderVtbl = {
+    ASServiceProvider_QueryInterface,
+    ASServiceProvider_AddRef,
+    ASServiceProvider_Release,
+    ASServiceProvider_QueryService
+};
+
 static ScriptHost *create_script_host(HTMLWindow *window, const GUID *guid)
 {
     ScriptHost *ret;
@@ -539,6 +580,7 @@ static ScriptHost *create_script_host(HTMLWindow *window, const GUID *guid)
     ret->lpIActiveScriptSiteInterruptPollVtbl  = &ActiveScriptSiteInterruptPollVtbl;
     ret->lpIActiveScriptSiteWindowVtbl         = &ActiveScriptSiteWindowVtbl;
     ret->lpIActiveScriptSiteDebug32Vtbl        = &ActiveScriptSiteDebug32Vtbl;
+    ret->lpServiceProviderVtbl                 = &ASServiceProviderVtbl;
     ret->ref = 1;
     ret->window = window;
     ret->script_state = SCRIPTSTATE_UNINITIALIZED;

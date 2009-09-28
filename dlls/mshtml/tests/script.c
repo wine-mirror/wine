@@ -1053,7 +1053,7 @@ static HRESULT WINAPI ActiveScript_SetScriptSite(IActiveScript *iface, IActiveSc
     ok(hres == E_NOINTERFACE, "Could not get IID_ICanHandleException interface: %08x\n", hres);
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_IServiceProvider, (void**)&service);
-    todo_wine ok(hres == S_OK, "Could not get IServiceProvider interface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IServiceProvider interface: %08x\n", hres);
     if(SUCCEEDED(hres))
         IServiceProvider_Release(service);
 
