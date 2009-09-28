@@ -64,6 +64,31 @@ BOOL16 WINAPI TaskFindHandle16( TASKENTRY *lpte, HTASK16 hTask )
     return TaskNext16( lpte );
 }
 
+/***********************************************************************
+ *           MemManInfo   (TOOLHELP.72)
+ */
+BOOL16 WINAPI MemManInfo16( MEMMANINFO *info )
+{
+    MEMORYSTATUS status;
+
+    /*
+     * Not unsurprisingly although the documentation says you
+     * _must_ provide the size in the dwSize field, this function
+     * (under Windows) always fills the structure and returns true.
+     */
+    GlobalMemoryStatus( &status );
+    info->wPageSize            = getpagesize();
+    info->dwLargestFreeBlock   = status.dwAvailVirtual;
+    info->dwMaxPagesAvailable  = info->dwLargestFreeBlock / info->wPageSize;
+    info->dwMaxPagesLockable   = info->dwMaxPagesAvailable;
+    info->dwTotalLinearSpace   = status.dwTotalVirtual / info->wPageSize;
+    info->dwTotalUnlockedPages = info->dwTotalLinearSpace;
+    info->dwFreePages          = info->dwMaxPagesAvailable;
+    info->dwTotalPages         = info->dwTotalLinearSpace;
+    info->dwFreeLinearSpace    = info->dwMaxPagesAvailable;
+    info->dwSwapFilePages      = status.dwTotalPageFile / info->wPageSize;
+    return TRUE;
+}
 
 /***********************************************************************
  *		NotifyRegister (TOOLHELP.73)
