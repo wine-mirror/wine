@@ -666,6 +666,12 @@ static BOOL match_allows_spec_alpha(const struct wined3d_gl_info *gl_info, const
     }
 }
 
+static BOOL match_apple_nvts(const struct wined3d_gl_info *gl_info, const char *gl_renderer)
+{
+    if(!match_apple(gl_info, gl_renderer)) return FALSE;
+    return GL_SUPPORT(NV_TEXTURE_SHADER);
+}
+
 static void quirk_arb_constants(struct wined3d_gl_info *gl_info)
 {
     TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL.\n", gl_info->vs_arb_constantsF);
@@ -783,6 +789,13 @@ static void quirk_allows_specular_alpha(struct wined3d_gl_info *gl_info)
     gl_info->quirks |= WINED3D_QUIRK_ALLOWS_SPECULAR_ALPHA;
 }
 
+static void quirk_apple_nvts(struct wined3d_gl_info *gl_info)
+{
+    gl_info->supported[NV_TEXTURE_SHADER] = FALSE;
+    gl_info->supported[NV_TEXTURE_SHADER2] = FALSE;
+    gl_info->supported[NV_TEXTURE_SHADER3] = FALSE;
+}
+
 struct driver_quirk
 {
     BOOL (*match)(const struct wined3d_gl_info *gl_info, const char *gl_renderer);
@@ -847,7 +860,15 @@ static const struct driver_quirk quirk_table[] =
         match_allows_spec_alpha,
         quirk_allows_specular_alpha,
         "Allow specular alpha quirk"
-    }
+    },
+    {
+        /* The pixel formats provided by GL_NV_texture_shader are broken on OSX
+         * (rdar://5682521).
+         */
+        match_apple_nvts,
+        quirk_apple_nvts,
+        "Apple NV_texture_shader disable"
+    },
 };
 
 /* Certain applications (Steam) complain if we report an outdated driver version. In general,
