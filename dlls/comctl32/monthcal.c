@@ -1336,7 +1336,7 @@ static void MONTHCAL_GoToPrevMonth(MONTHCAL_INFO *infoPtr)
 }
 
 static LRESULT
-MONTHCAL_RButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
+MONTHCAL_RButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 {
   static const WCHAR todayW[] = { 'G','o',' ','t','o',' ','T','o','d','a','y',':',0 };
   HMENU hMenu;
@@ -2043,8 +2043,8 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case WM_KILLFOCUS:
     return MONTHCAL_KillFocus(infoPtr, (HWND)wParam);
 
-  case WM_RBUTTONDOWN:
-    return MONTHCAL_RButtonDown(infoPtr, lParam);
+  case WM_RBUTTONUP:
+    return MONTHCAL_RButtonUp(infoPtr, lParam);
 
   case WM_LBUTTONDOWN:
     return MONTHCAL_LButtonDown(infoPtr, lParam);
