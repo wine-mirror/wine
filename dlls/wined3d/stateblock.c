@@ -222,22 +222,22 @@ void stateblock_copy(
     }
 
     /* Fixed size arrays */
-    memcpy(Dest->vertexShaderConstantB, This->vertexShaderConstantB, sizeof(BOOL) * MAX_CONST_B);
-    memcpy(Dest->vertexShaderConstantI, This->vertexShaderConstantI, sizeof(INT) * MAX_CONST_I * 4);
-    memcpy(Dest->pixelShaderConstantB, This->pixelShaderConstantB, sizeof(BOOL) * MAX_CONST_B);
-    memcpy(Dest->pixelShaderConstantI, This->pixelShaderConstantI, sizeof(INT) * MAX_CONST_I * 4);
+    memcpy(Dest->vertexShaderConstantB, This->vertexShaderConstantB, sizeof(Dest->vertexShaderConstantB));
+    memcpy(Dest->vertexShaderConstantI, This->vertexShaderConstantI, sizeof(Dest->vertexShaderConstantI));
+    memcpy(Dest->pixelShaderConstantB, This->pixelShaderConstantB, sizeof(Dest->pixelShaderConstantB));
+    memcpy(Dest->pixelShaderConstantI, This->pixelShaderConstantI, sizeof(Dest->pixelShaderConstantI));
 
-    memcpy(Dest->streamStride, This->streamStride, sizeof(UINT) * MAX_STREAMS);
-    memcpy(Dest->streamOffset, This->streamOffset, sizeof(UINT) * MAX_STREAMS);
-    memcpy(Dest->streamSource, This->streamSource, sizeof(IWineD3DBuffer *) * MAX_STREAMS);
-    memcpy(Dest->streamFreq,   This->streamFreq,   sizeof(UINT) * MAX_STREAMS);
-    memcpy(Dest->streamFlags,  This->streamFlags,  sizeof(UINT) * MAX_STREAMS);
-    memcpy(Dest->transforms,   This->transforms,   sizeof(WINED3DMATRIX) * (HIGHEST_TRANSFORMSTATE + 1));
-    memcpy(Dest->clipplane,    This->clipplane,    sizeof(double) * MAX_CLIPPLANES * 4);
-    memcpy(Dest->renderState,  This->renderState,  sizeof(DWORD) * (WINEHIGHEST_RENDER_STATE + 1));
-    memcpy(Dest->textures,     This->textures,     sizeof(IWineD3DBaseTexture*) * MAX_COMBINED_SAMPLERS);
-    memcpy(Dest->textureState, This->textureState, sizeof(DWORD) * MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE + 1));
-    memcpy(Dest->samplerState, This->samplerState, sizeof(DWORD) * MAX_COMBINED_SAMPLERS * (WINED3D_HIGHEST_SAMPLER_STATE + 1));
+    memcpy(Dest->streamStride, This->streamStride, sizeof(Dest->streamStride));
+    memcpy(Dest->streamOffset, This->streamOffset, sizeof(Dest->streamOffset));
+    memcpy(Dest->streamSource, This->streamSource, sizeof(Dest->streamSource));
+    memcpy(Dest->streamFreq, This->streamFreq, sizeof(Dest->streamFreq));
+    memcpy(Dest->streamFlags, This->streamFlags, sizeof(Dest->streamFlags));
+    memcpy(Dest->transforms, This->transforms, sizeof(Dest->transforms));
+    memcpy(Dest->clipplane, This->clipplane, sizeof(Dest->clipplane));
+    memcpy(Dest->renderState, This->renderState, sizeof(Dest->renderState));
+    memcpy(Dest->textures, This->textures, sizeof(Dest->textures));
+    memcpy(Dest->textureState, This->textureState, sizeof(Dest->textureState));
+    memcpy(Dest->samplerState, This->samplerState, sizeof(Dest->samplerState));
 
     /* Dynamically sized arrays */
     memcpy(Dest->vertexShaderConstantF, This->vertexShaderConstantF, sizeof(float) * GL_LIMITS(vshader_constantsF) * 4);
