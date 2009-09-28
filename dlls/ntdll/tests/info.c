@@ -920,7 +920,6 @@ static void test_affinity(void)
         "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
     thread_affinity = 0;
     status = pNtSetInformationThread( GetCurrentThread(), ThreadAffinityMask, &thread_affinity, sizeof(thread_affinity) );
-    todo_wine
     ok( status == STATUS_INVALID_PARAMETER,
         "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
 

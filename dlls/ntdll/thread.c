@@ -1216,6 +1216,7 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
             const ULONG_PTR *paff = data;
             if (length != sizeof(ULONG_PTR)) return STATUS_INVALID_PARAMETER;
             if (*paff & ~affinity_mask) return STATUS_INVALID_PARAMETER;
+            if (!*paff) return STATUS_INVALID_PARAMETER;
             SERVER_START_REQ( set_thread_info )
             {
                 req->handle   = wine_server_obj_handle( handle );
