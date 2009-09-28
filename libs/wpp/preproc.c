@@ -110,6 +110,8 @@ char *pp_xstrdup(const char *str)
 	assert(str != NULL);
 	len = strlen(str)+1;
 	s = pp_xmalloc(len);
+	if(!s)
+		return NULL;
 	return memcpy(s, str, len);
 }
 
