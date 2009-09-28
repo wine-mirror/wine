@@ -5,6 +5,7 @@
  * Copyright 2004 Jason Edmeades
  * Copyright 2005 Oliver Stieber
  * Copyright 2007 Stefan Dösinger for CodeWeavers
+ * Copyright 2009 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -278,17 +279,9 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
     if (!refCount) {
         int counter;
 
-        /* type 0 represents the primary stateblock, so free all the resources */
-        if (This->blockType == WINED3DSBT_INIT) {
-            /* NOTE: according to MSDN: The application is responsible for making sure the texture references are cleared down */
-            for (counter = 0; counter < MAX_COMBINED_SAMPLERS; counter++) {
-                if (This->textures[counter]) {
-                    /* release our 'internal' hold on the texture */
-                    if(0 != IWineD3DBaseTexture_Release(This->textures[counter])) {
-                        TRACE("Texture still referenced by stateblock, applications has leaked Stage = %u Texture = %p\n", counter, This->textures[counter]);
-                    }
-                }
-            }
+        for (counter = 0; counter < MAX_COMBINED_SAMPLERS; counter++)
+        {
+            if (This->textures[counter]) IWineD3DBaseTexture_Release(This->textures[counter]);
         }
 
         for (counter = 0; counter < MAX_STREAMS; counter++) {
@@ -605,13 +598,14 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         }
 
         /* Samplers */
-        /* TODO: move over to using memcpy */
         map = This->changed.textures;
         for (i = 0; map; map >>= 1, ++i)
         {
             if (!(map & 1)) continue;
 
             TRACE("Updating texture %u to %p (was %p)\n", i, targetStateBlock->textures[i], This->textures[i]);
+            if (targetStateBlock->textures[i]) IWineD3DBaseTexture_AddRef(targetStateBlock->textures[i]);
+            if (This->textures[i]) IWineD3DBaseTexture_Release(This->textures[i]);
             This->textures[i] = targetStateBlock->textures[i];
         }
 
@@ -650,10 +644,19 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         memcpy(This->pixelShaderConstantI, targetStateBlock->pixelShaderConstantI, sizeof(This->pixelShaderConstantF));
         memcpy(This->pixelShaderConstantF, targetStateBlock->pixelShaderConstantF, sizeof(float) * GL_LIMITS(pshader_constantsF) * 4);
         memcpy(This->renderState, targetStateBlock->renderState, sizeof(This->renderState));
-        memcpy(This->textures, targetStateBlock->textures, sizeof(This->textures));
         memcpy(This->textureState, targetStateBlock->textureState, sizeof(This->textureState));
         memcpy(This->samplerState, targetStateBlock->samplerState, sizeof(This->samplerState));
         This->scissorRect = targetStateBlock->scissorRect;
+
+        for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
+        {
+            if (targetStateBlock->textures[i] != This->textures[i])
+            {
+                if (targetStateBlock->textures[i]) IWineD3DBaseTexture_AddRef(targetStateBlock->textures[i]);
+                if (This->textures[i]) IWineD3DBaseTexture_Release(This->textures[i]);
+                This->textures[i] = targetStateBlock->textures[i];
+            }
+        }
 
         if(targetStateBlock->pIndexData != This->pIndexData ||
            targetStateBlock->IndexFmt != This->IndexFmt) {

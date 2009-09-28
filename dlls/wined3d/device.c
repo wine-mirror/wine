@@ -4460,6 +4460,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
+
+        if (pTexture) IWineD3DBaseTexture_AddRef(pTexture);
+        if (oldTexture) IWineD3DBaseTexture_Release(oldTexture);
+
         return WINED3D_OK;
     }
 
