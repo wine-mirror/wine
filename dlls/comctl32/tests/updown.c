@@ -393,7 +393,15 @@ static void test_updown_pos32(void)
     /* Set the position to 0 to 1000 */
     SendMessage(updown, UDM_SETRANGE32, 0 , 1000 );
 
+    low = high = -1;
     r = SendMessage(updown, UDM_GETRANGE32, (WPARAM) &low , (LPARAM) &high );
+    if (low == -1)
+    {
+        win_skip("UDM_SETRANGE32/UDM_GETRANGE32 not available\n");
+        DestroyWindow(updown);
+        return;
+    }
+
     expect(0,low);
     expect(1000,high);
 
@@ -402,6 +410,7 @@ static void test_updown_pos32(void)
     if (!r)
     {
         win_skip("UDM_SETPOS32 and UDM_GETPOS32 need 5.80\n");
+        DestroyWindow(updown);
         return;
     }
     expect(50,r);
@@ -548,6 +557,12 @@ static void test_updown_unicode(void)
     r = SendMessage(updown, UDM_SETUNICODEFORMAT, 1 , 0);
     expect(0,r);
     r = SendMessage(updown, UDM_GETUNICODEFORMAT, 0 , 0);
+    if (!r)
+    {
+        win_skip("UDM_SETUNICODEFORMAT not available\n");
+        DestroyWindow(updown);
+        return;
+    }
     expect(1,r);
 
     /* And now set it back to ANSI */
