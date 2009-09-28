@@ -274,8 +274,9 @@ static HRESULT JSGlobal_RegExp(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
 static HRESULT JSGlobal_ActiveXObject(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    return constructor_call(ctx->activex_constr, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_VBArray(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
@@ -770,7 +771,7 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 }
 
 static const builtin_prop_t JSGlobal_props[] = {
-    {ActiveXObjectW,             JSGlobal_ActiveXObject,             PROPF_METHOD},
+    {ActiveXObjectW,             JSGlobal_ActiveXObject,             PROPF_CONSTR},
     {ArrayW,                     JSGlobal_Array,                     PROPF_CONSTR},
     {BooleanW,                   JSGlobal_Boolean,                   PROPF_CONSTR},
     {CollectGarbageW,            JSGlobal_CollectGarbage,            PROPF_METHOD},
@@ -825,6 +826,10 @@ static HRESULT init_constructors(script_ctx_t *ctx, DispatchEx *object_prototype
         return hres;
 
     hres = create_object_constr(ctx, object_prototype, &ctx->object_constr);
+    if(FAILED(hres))
+        return hres;
+
+    hres = create_activex_constr(ctx, &ctx->activex_constr);
     if(FAILED(hres))
         return hres;
 

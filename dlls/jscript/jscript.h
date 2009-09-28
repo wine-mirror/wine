@@ -268,6 +268,7 @@ struct _script_ctx_t {
 
     DispatchEx *global;
     DispatchEx *function_constr;
+    DispatchEx *activex_constr;
     DispatchEx *array_constr;
     DispatchEx *bool_constr;
     DispatchEx *date_constr;
@@ -296,6 +297,7 @@ HRESULT init_global(script_ctx_t*);
 HRESULT init_function_constr(script_ctx_t*,DispatchEx*);
 HRESULT create_object_prototype(script_ctx_t*,DispatchEx**);
 
+HRESULT create_activex_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_array_constr(script_ctx_t*,DispatchEx*,DispatchEx**);
 HRESULT create_bool_constr(script_ctx_t*,DispatchEx*,DispatchEx**);
 HRESULT create_date_constr(script_ctx_t*,DispatchEx*,DispatchEx**);

@@ -1532,6 +1532,9 @@ ok(bool.toString() === "true", "bool.toString() = " + bool.toString());
 ok(bool.valueOf() === Boolean(1), "bool.valueOf() = " + bool.valueOf());
 ok(bool.toLocaleString() === bool.toString(), "bool.toLocaleString() = " + bool.toLocaleString());
 
+ok(ActiveXObject instanceof Function, "ActiveXObject is not instance of Function");
+ok(ActiveXObject.prototype instanceof Object, "ActiveXObject.prototype is not instance of Object");
+
 ok(Error.prototype !== TypeError.prototype, "Error.prototype === TypeError.prototype");
 ok(RangeError.prototype !== TypeError.prototype, "RangeError.prototype === TypeError.prototype");
 ok(Error.prototype.toLocaleString === Object.prototype.toLocaleString,
