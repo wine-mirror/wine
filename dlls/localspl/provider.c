@@ -1648,6 +1648,76 @@ static BOOL WINAPI fpDeleteMonitor(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMo
 }
 
 /*****************************************************************************
+ * fpDeletePort [exported through PRINTPROVIDOR]
+ *
+ * Delete a specific Port
+ *
+ * PARAMS
+ *  pName     [I] Servername or NULL (local Computer)
+ *  hWnd      [I] Handle to parent Window for the Dialog-Box
+ *  pPortName [I] Name of the Port, that should be deleted
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ */
+static BOOL WINAPI fpDeletePort(LPWSTR pName, HWND hWnd, LPWSTR pPortName)
+{
+    monitor_t * pm;
+    monitor_t * pui;
+    LONG        lres;
+    DWORD       res;
+
+    TRACE("(%s, %p, %s)\n", debugstr_w(pName), hWnd, debugstr_w(pPortName));
+
+    lres = copy_servername_from_name(pName, NULL);
+    if (lres) {
+        FIXME("server %s not supported\n", debugstr_w(pName));
+        SetLastError(ERROR_INVALID_NAME);
+        return FALSE;
+    }
+
+    /* an empty Portname is Invalid */
+    if (!pPortName[0]) {
+        SetLastError(ERROR_NOT_SUPPORTED);
+        return FALSE;
+    }
+
+    pm = monitor_load_by_port(pPortName);
+    if (pm && pm->monitor && pm->monitor->pfnDeletePort) {
+        TRACE("use %s for %s (monitor %p: %s)\n", debugstr_w(pm->name),
+                debugstr_w(pPortName), pm, debugstr_w(pm->dllname));
+        res = pm->monitor->pfnDeletePort(pName, hWnd, pPortName);
+        TRACE("got %d with %u\n", res, GetLastError());
+    }
+    else
+    {
+        pui = monitor_loadui(pm);
+        if (pui && pui->monitorUI && pui->monitorUI->pfnDeletePortUI) {
+            TRACE("use %s for %s (monitorui %p: %s)\n", debugstr_w(pui->name),
+                        debugstr_w(pPortName), pui, debugstr_w(pui->dllname));
+            res = pui->monitorUI->pfnDeletePortUI(pName, hWnd, pPortName);
+            TRACE("got %d with %u\n", res, GetLastError());
+        }
+        else
+        {
+            FIXME("not implemented for %s (monitor %p: %s / monitorui %p: %s)\n",
+                    debugstr_w(pPortName), pm, debugstr_w(pm ? pm->dllname : NULL),
+                    pui, debugstr_w(pui ? pui->dllname : NULL));
+
+            SetLastError(ERROR_NOT_SUPPORTED);
+            res = FALSE;
+        }
+        monitor_unload(pui);
+    }
+    monitor_unload(pm);
+
+    TRACE("returning %d with %u\n", res, GetLastError());
+    return res;
+}
+
+/*****************************************************************************
  * fpEnumMonitors [exported through PRINTPROVIDOR]
  *
  * Enumerate available Port-Monitors
@@ -1948,7 +2018,7 @@ void setup_provider(void)
         fpEnumPorts,
         NULL,   /* fpAddPort */
         fpConfigurePort,
-        NULL,   /* fpDeletePort */
+        fpDeletePort,
         NULL,   /* fpCreatePrinterIC */
         NULL,   /* fpPlayGdiScriptOnPrinterIC */
         NULL,   /* fpDeletePrinterIC */
