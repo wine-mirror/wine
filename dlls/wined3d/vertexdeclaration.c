@@ -69,7 +69,8 @@ static ULONG WINAPI IWineD3DVertexDeclarationImpl_Release(IWineD3DVertexDeclarat
     TRACE("(%p) : Releasing from %d\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
-        if(iface == This->wineD3DDevice->stateBlock->vertexDecl) {
+        if (This->wineD3DDevice->stateBlock && iface == This->wineD3DDevice->stateBlock->vertexDecl)
+        {
             /* See comment in PixelShader::Release */
             IWineD3DDeviceImpl_MarkStateDirty(This->wineD3DDevice, STATE_VDECL);
         }

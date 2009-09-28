@@ -279,6 +279,8 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
     if (!refCount) {
         int counter;
 
+        if (This->vertexDecl) IWineD3DVertexDeclaration_Release(This->vertexDecl);
+
         for (counter = 0; counter < MAX_COMBINED_SAMPLERS; counter++)
         {
             if (This->textures[counter]) IWineD3DBaseTexture_Release(This->textures[counter]);
@@ -511,6 +513,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         if(This->changed.vertexDecl && This->vertexDecl != targetStateBlock->vertexDecl){
             TRACE("Updating vertex declaration from %p to %p\n", This->vertexDecl, targetStateBlock->vertexDecl);
 
+            if (targetStateBlock->vertexDecl) IWineD3DVertexDeclaration_AddRef(targetStateBlock->vertexDecl);
+            if (This->vertexDecl) IWineD3DVertexDeclaration_Release(This->vertexDecl);
             This->vertexDecl = targetStateBlock->vertexDecl;
         }
 
@@ -624,7 +628,6 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
 
         record_lights(This, targetStateBlock);
     } else if(This->blockType == WINED3DSBT_ALL) {
-        This->vertexDecl = targetStateBlock->vertexDecl;
         memcpy(This->vertexShaderConstantB, targetStateBlock->vertexShaderConstantB, sizeof(This->vertexShaderConstantI));
         memcpy(This->vertexShaderConstantI, targetStateBlock->vertexShaderConstantI, sizeof(This->vertexShaderConstantF));
         memcpy(This->vertexShaderConstantF, targetStateBlock->vertexShaderConstantF, sizeof(float) * GL_LIMITS(vshader_constantsF) * 4);
@@ -647,6 +650,13 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         memcpy(This->textureState, targetStateBlock->textureState, sizeof(This->textureState));
         memcpy(This->samplerState, targetStateBlock->samplerState, sizeof(This->samplerState));
         This->scissorRect = targetStateBlock->scissorRect;
+
+        if (This->vertexDecl != targetStateBlock->vertexDecl)
+        {
+            if (targetStateBlock->vertexDecl) IWineD3DVertexDeclaration_AddRef(targetStateBlock->vertexDecl);
+            if (This->vertexDecl) IWineD3DVertexDeclaration_Release(This->vertexDecl);
+            This->vertexDecl = targetStateBlock->vertexDecl;
+        }
 
         for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
         {

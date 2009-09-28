@@ -3328,6 +3328,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* if
 
     TRACE("(%p) : pDecl=%p\n", This, pDecl);
 
+    if (pDecl) IWineD3DVertexDeclaration_AddRef(pDecl);
+    if (oldDecl) IWineD3DVertexDeclaration_Release(oldDecl);
+
     This->updateStateBlock->vertexDecl = pDecl;
     This->updateStateBlock->changed.vertexDecl = TRUE;
 
