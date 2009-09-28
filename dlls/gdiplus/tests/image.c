@@ -828,10 +828,14 @@ static void test_getsetpixel(void)
     expect(InvalidParameter, stat);
 
     stat = GdipBitmapGetPixel(bitmap, 1, -1, &color);
-    expect(InvalidParameter, stat);
+    ok(stat == InvalidParameter ||
+       broken(stat == Ok), /* Older gdiplus */
+       "Expected InvalidParameter, got %.8x\n", stat);
 
     stat = GdipBitmapSetPixel(bitmap, 1, -1, 0);
-    expect(InvalidParameter, stat);
+    ok(stat == InvalidParameter ||
+       broken(stat == Ok), /* Older gdiplus */
+       "Expected InvalidParameter, got %.8x\n", stat);
 
     stat = GdipBitmapGetPixel(bitmap, 2, 1, &color);
     expect(InvalidParameter, stat);
