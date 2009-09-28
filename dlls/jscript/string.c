@@ -200,7 +200,7 @@ static HRESULT do_attribute_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
     StringInstance *string;
     const WCHAR *str;
     DWORD length;
-    BSTR attr_value, val_str;
+    BSTR attr_value, val_str = NULL;
     HRESULT hres;
 
     if(!(string = string_this(jsthis))) {
