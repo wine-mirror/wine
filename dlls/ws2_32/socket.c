@@ -822,7 +822,6 @@ INT WINAPI WSACleanup(void)
 
 
 /***********************************************************************
- *      WSAGetLastError		(WINSOCK.111)
  *      WSAGetLastError		(WS2_32.111)
  */
 INT WINAPI WSAGetLastError(void)
@@ -2144,7 +2143,6 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 }
 
 /***********************************************************************
- *		htonl			(WINSOCK.8)
  *		htonl			(WS2_32.8)
  */
 WS_u_long WINAPI WS_htonl(WS_u_long hostlong)
@@ -2154,7 +2152,6 @@ WS_u_long WINAPI WS_htonl(WS_u_long hostlong)
 
 
 /***********************************************************************
- *		htons			(WINSOCK.9)
  *		htons			(WS2_32.9)
  */
 WS_u_short WINAPI WS_htons(WS_u_short hostshort)
@@ -2201,7 +2198,6 @@ int WINAPI WSAHtons(SOCKET s, WS_u_short hostshort, WS_u_short *lpnetshort)
 
 
 /***********************************************************************
- *		inet_addr		(WINSOCK.10)
  *		inet_addr		(WS2_32.11)
  */
 WS_u_long WINAPI WS_inet_addr(const char *cp)
@@ -2212,7 +2208,6 @@ WS_u_long WINAPI WS_inet_addr(const char *cp)
 
 
 /***********************************************************************
- *		ntohl			(WINSOCK.14)
  *		ntohl			(WS2_32.14)
  */
 WS_u_long WINAPI WS_ntohl(WS_u_long netlong)
@@ -2222,7 +2217,6 @@ WS_u_long WINAPI WS_ntohl(WS_u_long netlong)
 
 
 /***********************************************************************
- *		ntohs			(WINSOCK.15)
  *		ntohs			(WS2_32.15)
  */
 WS_u_short WINAPI WS_ntohs(WS_u_short netshort)
@@ -4252,7 +4246,6 @@ int WINAPI __WSAFDIsSet(SOCKET s, WS_fd_set *set)
 }
 
 /***********************************************************************
- *      WSAIsBlocking			(WINSOCK.114)
  *      WSAIsBlocking			(WS2_32.114)
  */
 BOOL WINAPI WSAIsBlocking(void)
@@ -4270,7 +4263,6 @@ BOOL WINAPI WSAIsBlocking(void)
 }
 
 /***********************************************************************
- *      WSACancelBlockingCall		(WINSOCK.113)
  *      WSACancelBlockingCall		(WS2_32.113)
  */
 INT WINAPI WSACancelBlockingCall(void)

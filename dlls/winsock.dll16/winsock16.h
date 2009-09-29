@@ -19,9 +19,6 @@
 #ifndef __WINE_WINE_WINSOCK16_H
 #define __WINE_WINE_WINSOCK16_H
 
-#include <stdarg.h>
-#include <windef.h>
-#include <winbase.h>
 #include <pshpack1.h>
 
 typedef UINT16 SOCKET16;
@@ -29,7 +26,7 @@ typedef UINT16 SOCKET16;
 typedef struct
 {
         UINT16    fd_count;               /* how many are SET? */
-        SOCKET16  fd_array[WS_FD_SETSIZE];   /* an array of SOCKETs */
+        SOCKET16  fd_array[FD_SETSIZE];   /* an array of SOCKETs */
 } ws_fd_set16;
 
 /* ws_hostent16, ws_protoent16, ws_servent16, ws_netent16

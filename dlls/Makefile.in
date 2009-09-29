@@ -26,7 +26,6 @@ WIN16_FILES = \
 	user.exe16 \
 	ver.dll16 \
 	wineps16.drv16 \
-	winsock.dll16 \
 	wprocs.dll16
 
 @MAKE_RULES@
@@ -63,9 +62,6 @@ wineps16.drv16:
 
 mmsystem.dll16:
 	echo "winmm.dll" >$@
-
-winsock.dll16:
-	echo "ws2_32.dll" >$@
 
 # Import libraries
 

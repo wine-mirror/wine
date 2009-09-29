@@ -5,14 +5,14 @@
 5   pascal -ret16 getpeername(word ptr ptr) getpeername16
 6   pascal -ret16 getsockname(word ptr ptr) getsockname16
 7   pascal -ret16 getsockopt(word word word ptr ptr) getsockopt16
-8   pascal htonl(long) WS_htonl
-9   pascal -ret16 htons(word) WS_htons
-10  pascal inet_addr(ptr) WS_inet_addr
+8   pascal htonl(long) htonl16
+9   pascal -ret16 htons(word) htons16
+10  pascal inet_addr(ptr) inet_addr16
 11  pascal inet_ntoa(long) inet_ntoa16
 12  pascal -ret16 ioctlsocket(word long ptr) ioctlsocket16
 13  pascal -ret16 listen(word word) listen16
-14  pascal ntohl(long) WS_ntohl
-15  pascal -ret16 ntohs(word) WS_ntohs
+14  pascal ntohl(long) ntohl16
+15  pascal -ret16 ntohs(word) ntohs16
 16  pascal -ret16 recv(word ptr word word) recv16
 17  pascal -ret16 recvfrom(word ptr word word ptr ptr) recvfrom16
 18  pascal -ret16 select(word ptr ptr ptr ptr) select16
@@ -38,10 +38,10 @@
 108 pascal -ret16 WSACancelAsyncRequest(word) WSACancelAsyncRequest16
 109 pascal -ret16 WSASetBlockingHook(segptr) WSASetBlockingHook16
 110 pascal -ret16 WSAUnhookBlockingHook() WSAUnhookBlockingHook16
-111 pascal -ret16 WSAGetLastError() WSAGetLastError
+111 pascal -ret16 WSAGetLastError() WSAGetLastError16
 112 pascal   WSASetLastError(word) WSASetLastError16
-113 pascal -ret16 WSACancelBlockingCall() WSACancelBlockingCall
-114 pascal -ret16 WSAIsBlocking() WSAIsBlocking
+113 pascal -ret16 WSACancelBlockingCall() WSACancelBlockingCall16
+114 pascal -ret16 WSAIsBlocking() WSAIsBlocking16
 115 pascal   WSAStartup(word ptr) WSAStartup16
 116 pascal   WSACleanup() WSACleanup16
 151 pascal -ret16 __WSAFDIsSet(word ptr) __WSAFDIsSet16

@@ -20,11 +20,10 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include "winsock2.h"
 #include "wine/winbase16.h"
-#include "wine/winsock16.h"
+#include "winsock16.h"
 #include "wownt32.h"
 #include "winuser.h"
 #include "wine/debug.h"
@@ -91,7 +90,7 @@ static SEGPTR dbuffer_seg;
 
 extern int WINAPI WS_gethostname(char *name, int namelen);
 
-static WS_fd_set *ws_fdset_16_to_32( const ws_fd_set16 *set16, WS_fd_set *set32 )
+static fd_set *ws_fdset_16_to_32( const ws_fd_set16 *set16, fd_set *set32 )
 {
     UINT i;
     set32->fd_count = set16->fd_count;
@@ -99,7 +98,7 @@ static WS_fd_set *ws_fdset_16_to_32( const ws_fd_set16 *set16, WS_fd_set *set32 
     return set32;
 }
 
-static ws_fd_set16 *ws_fdset_32_to_16( const WS_fd_set *set32, ws_fd_set16 *set16 )
+static ws_fd_set16 *ws_fdset_32_to_16( const fd_set *set32, ws_fd_set16 *set16 )
 {
     UINT i;
     set16->fd_count = set32->fd_count;
@@ -191,7 +190,7 @@ static SEGPTR get_buffer_pe(int size)
  * and handle all Win16/Win32 dependent things (struct size, ...) *correctly*.
  * Ditto for protoent and servent.
  */
-static SEGPTR ws_hostent_32_to_16( const struct WS_hostent* he, SEGPTR base, int *buff_size )
+static SEGPTR ws_hostent_32_to_16( const struct hostent* he, SEGPTR base, int *buff_size )
 {
     char *p;
     struct ws_hostent16 *p_to;
@@ -230,7 +229,7 @@ static SEGPTR ws_hostent_32_to_16( const struct WS_hostent* he, SEGPTR base, int
     return base;
 }
 
-static SEGPTR ws_protoent_32_to_16( const struct WS_protoent *pe, SEGPTR base, int *buff_size )
+static SEGPTR ws_protoent_32_to_16( const struct protoent *pe, SEGPTR base, int *buff_size )
 {
     char *p;
     struct ws_protoent16 *p_to;
@@ -264,7 +263,7 @@ static SEGPTR ws_protoent_32_to_16( const struct WS_protoent *pe, SEGPTR base, i
     return base;
 }
 
-static SEGPTR ws_servent_32_to_16( const struct WS_servent *se, SEGPTR base, int *buff_size )
+static SEGPTR ws_servent_32_to_16( const struct servent *se, SEGPTR base, int *buff_size )
 {
     char *p;
     struct ws_servent16 *p_to;
@@ -308,9 +307,9 @@ static DWORD WINAPI async_gethostbyname(LPVOID arg)
     struct async_query_gethostbyname *aq = arg;
     int size = 0;
     WORD fail = 0;
-    struct WS_hostent *he;
+    struct hostent *he;
 
-    if ((he = WS_gethostbyname( aq->host_name )))
+    if ((he = gethostbyname( aq->host_name )))
     {
         size = aq->query.sbuflen;
         if (!ws_hostent_32_to_16( he, aq->query.sbuf, &size )) fail = WSAENOBUFS;
@@ -325,9 +324,9 @@ static DWORD WINAPI async_gethostbyaddr(LPVOID arg)
     struct async_query_gethostbyaddr *aq = arg;
     int size = 0;
     WORD fail = 0;
-    struct WS_hostent *he;
+    struct hostent *he;
 
-    if ((he = WS_gethostbyaddr(aq->host_addr,aq->host_len,aq->host_type)))
+    if ((he = gethostbyaddr(aq->host_addr,aq->host_len,aq->host_type)))
     {
         size = aq->query.sbuflen;
         if (!ws_hostent_32_to_16( he, aq->query.sbuf, &size )) fail = WSAENOBUFS;
@@ -342,9 +341,9 @@ static DWORD WINAPI async_getprotobyname(LPVOID arg)
     struct async_query_getprotobyname *aq = arg;
     int size = 0;
     WORD fail = 0;
-    struct WS_protoent *pe;
+    struct protoent *pe;
 
-    if ((pe = WS_getprotobyname(aq->proto_name)))
+    if ((pe = getprotobyname(aq->proto_name)))
     {
         size = aq->query.sbuflen;
         if (!ws_protoent_32_to_16( pe, aq->query.sbuf, &size )) fail = WSAENOBUFS;
@@ -359,9 +358,9 @@ static DWORD WINAPI async_getprotobynumber(LPVOID arg)
     struct async_query_getprotobynumber *aq = arg;
     int size = 0;
     WORD fail = 0;
-    struct WS_protoent *pe;
+    struct protoent *pe;
 
-    if ((pe = WS_getprotobynumber(aq->proto_number)))
+    if ((pe = getprotobynumber(aq->proto_number)))
     {
         size = aq->query.sbuflen;
         if (!ws_protoent_32_to_16( pe, aq->query.sbuf, &size )) fail = WSAENOBUFS;
@@ -376,9 +375,9 @@ static DWORD WINAPI async_getservbyname(LPVOID arg)
     struct async_query_getservbyname *aq = arg;
     int size = 0;
     WORD fail = 0;
-    struct WS_servent *se;
+    struct servent *se;
 
-    if ((se = WS_getservbyname(aq->serv_name,aq->serv_proto)))
+    if ((se = getservbyname(aq->serv_name,aq->serv_proto)))
     {
         size = aq->query.sbuflen;
         if (!ws_servent_32_to_16( se, aq->query.sbuf, &size )) fail = WSAENOBUFS;
@@ -393,9 +392,9 @@ static DWORD WINAPI async_getservbyport(LPVOID arg)
     struct async_query_getservbyport *aq = arg;
     int size = 0;
     WORD fail = 0;
-    struct WS_servent *se;
+    struct servent *se;
 
-    if ((se = WS_getservbyport(aq->serv_port,aq->serv_proto)))
+    if ((se = getservbyport(aq->serv_port,aq->serv_proto)))
     {
         size = aq->query.sbuflen;
         if (!ws_servent_32_to_16( se, aq->query.sbuf, &size )) fail = WSAENOBUFS;
@@ -441,10 +440,10 @@ static HANDLE16 run_query( HWND16 hWnd, UINT uMsg, LPTHREAD_START_ROUTINE func,
 /***********************************************************************
  *              accept		(WINSOCK.1)
  */
-SOCKET16 WINAPI accept16(SOCKET16 s, struct WS_sockaddr* addr, INT16* addrlen16 )
+SOCKET16 WINAPI accept16(SOCKET16 s, struct sockaddr* addr, INT16* addrlen16 )
 {
     INT addrlen32 = addrlen16 ? *addrlen16 : 0;
-    SOCKET retSocket = WS_accept( s, addr, &addrlen32 );
+    SOCKET retSocket = accept( s, addr, &addrlen32 );
     if( addrlen16 ) *addrlen16 = addrlen32;
     return retSocket;
 }
@@ -452,9 +451,9 @@ SOCKET16 WINAPI accept16(SOCKET16 s, struct WS_sockaddr* addr, INT16* addrlen16 
 /***********************************************************************
  *              bind			(WINSOCK.2)
  */
-INT16 WINAPI bind16(SOCKET16 s, struct WS_sockaddr *name, INT16 namelen)
+INT16 WINAPI bind16(SOCKET16 s, struct sockaddr *name, INT16 namelen)
 {
-    return WS_bind( s, name, namelen );
+    return bind( s, name, namelen );
 }
 
 /***********************************************************************
@@ -462,24 +461,24 @@ INT16 WINAPI bind16(SOCKET16 s, struct WS_sockaddr *name, INT16 namelen)
  */
 INT16 WINAPI closesocket16(SOCKET16 s)
 {
-    return WS_closesocket(s);
+    return closesocket(s);
 }
 
 /***********************************************************************
  *              connect               (WINSOCK.4)
  */
-INT16 WINAPI connect16(SOCKET16 s, struct WS_sockaddr *name, INT16 namelen)
+INT16 WINAPI connect16(SOCKET16 s, struct sockaddr *name, INT16 namelen)
 {
-    return WS_connect( s, name, namelen );
+    return connect( s, name, namelen );
 }
 
 /***********************************************************************
  *              getpeername		(WINSOCK.5)
  */
-INT16 WINAPI getpeername16(SOCKET16 s, struct WS_sockaddr *name, INT16 *namelen16)
+INT16 WINAPI getpeername16(SOCKET16 s, struct sockaddr *name, INT16 *namelen16)
 {
     INT namelen32 = *namelen16;
-    INT retVal = WS_getpeername( s, name, &namelen32 );
+    INT retVal = getpeername( s, name, &namelen32 );
    *namelen16 = namelen32;
     return retVal;
 }
@@ -487,14 +486,14 @@ INT16 WINAPI getpeername16(SOCKET16 s, struct WS_sockaddr *name, INT16 *namelen1
 /***********************************************************************
  *              getsockname		(WINSOCK.6)
  */
-INT16 WINAPI getsockname16(SOCKET16 s, struct WS_sockaddr *name, INT16 *namelen16)
+INT16 WINAPI getsockname16(SOCKET16 s, struct sockaddr *name, INT16 *namelen16)
 {
     INT retVal;
 
     if( namelen16 )
     {
         INT namelen32 = *namelen16;
-        retVal = WS_getsockname( s, name, &namelen32 );
+        retVal = getsockname( s, name, &namelen32 );
        *namelen16 = namelen32;
     }
     else retVal = SOCKET_ERROR;
@@ -511,18 +510,45 @@ INT16 WINAPI getsockopt16(SOCKET16 s, INT16 level, INT16 optname, char *optval, 
     INT retVal;
 
     if( optlen ) optlen32 = *optlen; else p = NULL;
-    retVal = WS_getsockopt( s, (WORD)level, optname, optval, p );
+    retVal = getsockopt( s, (WORD)level, optname, optval, p );
     if( optlen ) *optlen = optlen32;
     return retVal;
 }
 
 /***********************************************************************
+ *		htonl			(WINSOCK.8)
+ */
+u_long WINAPI htonl16(u_long hostlong)
+{
+    return htonl(hostlong);
+}
+
+
+/***********************************************************************
+ *		htons			(WINSOCK.9)
+ */
+u_short WINAPI htons16(u_short hostshort)
+{
+    return htons(hostshort);
+}
+
+/***********************************************************************
+ *		inet_addr		(WINSOCK.10)
+ */
+u_long WINAPI inet_addr16(const char *cp)
+{
+    if (!cp) return INADDR_NONE;
+    return inet_addr(cp);
+}
+
+
+/***********************************************************************
  *		inet_ntoa		(WINSOCK.11)
  */
-SEGPTR WINAPI inet_ntoa16(struct WS_in_addr in)
+SEGPTR WINAPI inet_ntoa16(struct in_addr in)
 {
     char* retVal;
-    if (!(retVal = WS_inet_ntoa( in ))) return 0;
+    if (!(retVal = inet_ntoa( in ))) return 0;
     if (!dbuffer_seg) dbuffer_seg = MapLS( retVal );
     return dbuffer_seg;
 }
@@ -530,9 +556,9 @@ SEGPTR WINAPI inet_ntoa16(struct WS_in_addr in)
 /***********************************************************************
  *              ioctlsocket           (WINSOCK.12)
  */
-INT16 WINAPI ioctlsocket16(SOCKET16 s, LONG cmd, ULONG *argp)
+INT16 WINAPI ioctlsocket16(SOCKET16 s, LONG cmd, u_long *argp)
 {
-    return WS_ioctlsocket( s, cmd, argp );
+    return ioctlsocket( s, cmd, argp );
 }
 
 /***********************************************************************
@@ -540,7 +566,24 @@ INT16 WINAPI ioctlsocket16(SOCKET16 s, LONG cmd, ULONG *argp)
  */
 INT16 WINAPI listen16(SOCKET16 s, INT16 backlog)
 {
-    return WS_listen( s, backlog );
+    return listen( s, backlog );
+}
+
+/***********************************************************************
+ *		ntohl			(WINSOCK.14)
+ */
+u_long WINAPI ntohl16(u_long netlong)
+{
+    return ntohl(netlong);
+}
+
+
+/***********************************************************************
+ *		ntohs			(WINSOCK.15)
+ */
+u_short WINAPI ntohs16(u_short netshort)
+{
+    return ntohs(netshort);
 }
 
 /***********************************************************************
@@ -548,23 +591,23 @@ INT16 WINAPI listen16(SOCKET16 s, INT16 backlog)
  */
 INT16 WINAPI recv16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
 {
-    return WS_recv( s, buf, len, flags );
+    return recv( s, buf, len, flags );
 }
 
 /***********************************************************************
  *              recvfrom		(WINSOCK.17)
  */
 INT16 WINAPI recvfrom16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
-                        struct WS_sockaddr *from, INT16 *fromlen16)
+                        struct sockaddr *from, INT16 *fromlen16)
 {
     if (fromlen16)
     {
         INT fromlen32 = *fromlen16;
-        INT retVal = WS_recvfrom( s, buf, len, flags, from, &fromlen32 );
+        INT retVal = recvfrom( s, buf, len, flags, from, &fromlen32 );
         *fromlen16 = fromlen32;
         return retVal;
     }
-    else return WS_recvfrom( s, buf, len, flags, from, NULL );
+    else return recvfrom( s, buf, len, flags, from, NULL );
 }
 
 /***********************************************************************
@@ -572,17 +615,17 @@ INT16 WINAPI recvfrom16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
  */
 INT16 WINAPI select16(INT16 nfds, ws_fd_set16 *ws_readfds,
                       ws_fd_set16 *ws_writefds, ws_fd_set16 *ws_exceptfds,
-                      struct WS_timeval* timeout)
+                      struct timeval* timeout)
 {
-    WS_fd_set read_set, write_set, except_set;
-    WS_fd_set *pread_set = NULL, *pwrite_set = NULL, *pexcept_set = NULL;
+    fd_set read_set, write_set, except_set;
+    fd_set *pread_set = NULL, *pwrite_set = NULL, *pexcept_set = NULL;
     int ret;
 
     if (ws_readfds) pread_set = ws_fdset_16_to_32( ws_readfds, &read_set );
     if (ws_writefds) pwrite_set = ws_fdset_16_to_32( ws_writefds, &write_set );
     if (ws_exceptfds) pexcept_set = ws_fdset_16_to_32( ws_exceptfds, &except_set );
     /* struct timeval is the same for both 32- and 16-bit code */
-    ret = WS_select( nfds, pread_set, pwrite_set, pexcept_set, timeout );
+    ret = select( nfds, pread_set, pwrite_set, pexcept_set, timeout );
     if (ws_readfds) ws_fdset_32_to_16( &read_set, ws_readfds );
     if (ws_writefds) ws_fdset_32_to_16( &write_set, ws_writefds );
     if (ws_exceptfds) ws_fdset_32_to_16( &except_set, ws_exceptfds );
@@ -594,16 +637,16 @@ INT16 WINAPI select16(INT16 nfds, ws_fd_set16 *ws_readfds,
  */
 INT16 WINAPI send16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
 {
-    return WS_send( s, buf, len, flags );
+    return send( s, buf, len, flags );
 }
 
 /***********************************************************************
  *              sendto		(WINSOCK.20)
  */
 INT16 WINAPI sendto16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
-                      struct WS_sockaddr *to, INT16 tolen)
+                      struct sockaddr *to, INT16 tolen)
 {
-    return WS_sendto( s, buf, len, flags, to, tolen );
+    return sendto( s, buf, len, flags, to, tolen );
 }
 
 /***********************************************************************
@@ -613,7 +656,7 @@ INT16 WINAPI setsockopt16(SOCKET16 s, INT16 level, INT16 optname,
                           char *optval, INT16 optlen)
 {
     if( !optval ) return SOCKET_ERROR;
-    return WS_setsockopt( s, (WORD)level, optname, optval, optlen );
+    return setsockopt( s, (WORD)level, optname, optval, optlen );
 }
 
 /***********************************************************************
@@ -621,7 +664,7 @@ INT16 WINAPI setsockopt16(SOCKET16 s, INT16 level, INT16 optname,
  */
 INT16 WINAPI shutdown16(SOCKET16 s, INT16 how)
 {
-    return WS_shutdown( s, how );
+    return shutdown( s, how );
 }
 
 /***********************************************************************
@@ -629,7 +672,7 @@ INT16 WINAPI shutdown16(SOCKET16 s, INT16 how)
  */
 SOCKET16 WINAPI socket16(INT16 af, INT16 type, INT16 protocol)
 {
-    return WS_socket( af, type, protocol );
+    return socket( af, type, protocol );
 }
 
 /***********************************************************************
@@ -637,9 +680,9 @@ SOCKET16 WINAPI socket16(INT16 af, INT16 type, INT16 protocol)
  */
 SEGPTR WINAPI gethostbyaddr16(const char *addr, INT16 len, INT16 type)
 {
-    struct WS_hostent *he;
+    struct hostent *he;
 
-    if (!(he = WS_gethostbyaddr( addr, len, type ))) return 0;
+    if (!(he = gethostbyaddr( addr, len, type ))) return 0;
     return ws_hostent_32_to_16( he, 0, NULL );
 }
 
@@ -648,9 +691,9 @@ SEGPTR WINAPI gethostbyaddr16(const char *addr, INT16 len, INT16 type)
  */
 SEGPTR WINAPI gethostbyname16(const char *name)
 {
-    struct WS_hostent *he;
+    struct hostent *he;
 
-    if (!(he = WS_gethostbyname( name ))) return 0;
+    if (!(he = gethostbyname( name ))) return 0;
     return ws_hostent_32_to_16( he, 0, NULL );
 }
 
@@ -659,9 +702,9 @@ SEGPTR WINAPI gethostbyname16(const char *name)
  */
 SEGPTR WINAPI getprotobyname16(const char *name)
 {
-    struct WS_protoent *pe;
+    struct protoent *pe;
 
-    if (!(pe = WS_getprotobyname( name ))) return 0;
+    if (!(pe = getprotobyname( name ))) return 0;
     return ws_protoent_32_to_16( pe, 0, NULL );
 }
 
@@ -670,9 +713,9 @@ SEGPTR WINAPI getprotobyname16(const char *name)
  */
 SEGPTR WINAPI getprotobynumber16(INT16 number)
 {
-    struct WS_protoent *pe;
+    struct protoent *pe;
 
-    if (!(pe = WS_getprotobynumber( number ))) return 0;
+    if (!(pe = getprotobynumber( number ))) return 0;
     return ws_protoent_32_to_16( pe, 0, NULL );
 }
 
@@ -681,9 +724,9 @@ SEGPTR WINAPI getprotobynumber16(INT16 number)
  */
 SEGPTR WINAPI getservbyname16(const char *name, const char *proto)
 {
-    struct WS_servent *se;
+    struct servent *se;
 
-    if (!(se = WS_getservbyname( name, proto ))) return 0;
+    if (!(se = getservbyname( name, proto ))) return 0;
     return ws_servent_32_to_16( se, 0, NULL );
 }
 
@@ -692,9 +735,9 @@ SEGPTR WINAPI getservbyname16(const char *name, const char *proto)
  */
 SEGPTR WINAPI getservbyport16(INT16 port, const char *proto)
 {
-    struct WS_servent *se;
+    struct servent *se;
 
-    if (!(se = WS_getservbyport( port, proto ))) return 0;
+    if (!(se = getservbyport( port, proto ))) return 0;
     return ws_servent_32_to_16( se, 0, NULL );
 }
 
@@ -703,7 +746,8 @@ SEGPTR WINAPI getservbyport16(INT16 port, const char *proto)
  */
 INT16 WINAPI gethostname16(char *name, INT16 namelen)
 {
-    return WS_gethostname(name, namelen);
+    extern int WINAPI gethostname(char *name, INT namelen);
+    return gethostname(name, namelen);
 }
 
 /***********************************************************************
@@ -870,11 +914,35 @@ INT16 WINAPI WSAUnhookBlockingHook16(void)
 }
 
 /***********************************************************************
+ *      WSAGetLastError		(WINSOCK.111)
+ */
+INT WINAPI WSAGetLastError16(void)
+{
+    return WSAGetLastError();
+}
+
+/***********************************************************************
  *      WSASetLastError		(WINSOCK.112)
  */
 void WINAPI WSASetLastError16(INT16 iError)
 {
     WSASetLastError(iError);
+}
+
+/***********************************************************************
+ *      WSACancelBlockingCall		(WINSOCK.113)
+ */
+INT WINAPI WSACancelBlockingCall16(void)
+{
+    return WSACancelBlockingCall();
+}
+
+/***********************************************************************
+ *      WSAIsBlocking			(WINSOCK.114)
+ */
+BOOL WINAPI WSAIsBlocking16(void)
+{
+    return WSAIsBlocking();
 }
 
 /***********************************************************************

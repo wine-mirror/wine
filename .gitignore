@@ -122,7 +122,6 @@ dlls/stdole32.tlb/std_ole_v1.tlb
 dlls/user.exe16
 dlls/ver.dll16
 dlls/wineps16.drv16
-dlls/winsock.dll16
 dlls/wprocs.dll16
 include/activaut.h
 include/activdbg.h

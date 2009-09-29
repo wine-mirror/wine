@@ -14,10 +14,6 @@ C_SRCS = \
 	protocol.c \
 	socket.c
 
-C_SRCS16 = socket16.c
-
-SPEC_SRCS16 = winsock.spec
-
 RC_SRCS = version.rc
 
 @MAKE_DLL_RULES@
