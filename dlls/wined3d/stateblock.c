@@ -167,80 +167,77 @@ static void stateblock_savedstates_set(IWineD3DStateBlock *iface, SAVEDSTATES *s
     memset(states->vertexShaderConstantsF, value, bsize * GL_LIMITS(vshader_constantsF));
 }
 
-static void stateblock_copy(IWineD3DStateBlock *destination, IWineD3DStateBlock *source)
+static void stateblock_copy(IWineD3DStateBlockImpl *dst, IWineD3DStateBlockImpl *src)
 {
-    int l;
+    const struct wined3d_gl_info *gl_info = &src->wineD3DDevice->adapter->gl_info;
+    unsigned int l;
 
-    IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)source;
-    IWineD3DStateBlockImpl *Dest = (IWineD3DStateBlockImpl *)destination;
-
-    /* IUnknown fields */
-    Dest->lpVtbl                = This->lpVtbl;
-    Dest->ref                   = This->ref;
-
-    /* IWineD3DStateBlock information */
-    Dest->parent                = This->parent;
-    Dest->wineD3DDevice         = This->wineD3DDevice;
-    Dest->blockType             = This->blockType;
+    dst->lpVtbl = src->lpVtbl;
+    dst->ref = src->ref;
+    dst->parent = src->parent;
+    dst->wineD3DDevice = src->wineD3DDevice;
+    dst->blockType = src->blockType;
 
     /* Saved states */
-    stateblock_savedstates_copy(source, &Dest->changed, &This->changed);
+    stateblock_savedstates_copy((IWineD3DStateBlock *)src, &dst->changed, &src->changed);
 
     /* Single items */
-    Dest->gl_primitive_type = This->gl_primitive_type;
-    Dest->vertexDecl = This->vertexDecl;
-    Dest->vertexShader = This->vertexShader;
-    Dest->streamIsUP = This->streamIsUP;
-    Dest->pIndexData = This->pIndexData;
-    Dest->IndexFmt = This->IndexFmt;
-    Dest->baseVertexIndex = This->baseVertexIndex;
-    /* Dest->lights = This->lights; */
-    Dest->clip_status = This->clip_status;
-    Dest->viewport = This->viewport;
-    Dest->material = This->material;
-    Dest->pixelShader = This->pixelShader;
-    Dest->scissorRect = This->scissorRect;
+    dst->gl_primitive_type = src->gl_primitive_type;
+    dst->vertexDecl = src->vertexDecl;
+    dst->vertexShader = src->vertexShader;
+    dst->streamIsUP = src->streamIsUP;
+    dst->pIndexData = src->pIndexData;
+    dst->IndexFmt = src->IndexFmt;
+    dst->baseVertexIndex = src->baseVertexIndex;
+    dst->clip_status = src->clip_status;
+    dst->viewport = src->viewport;
+    dst->material = src->material;
+    dst->pixelShader = src->pixelShader;
+    dst->scissorRect = src->scissorRect;
 
     /* Lights */
-    memset(Dest->activeLights, 0, sizeof(Dest->activeLights));
-    for(l = 0; l < LIGHTMAP_SIZE; l++) {
+    memset(dst->activeLights, 0, sizeof(dst->activeLights));
+    for (l = 0; l < LIGHTMAP_SIZE; ++l)
+    {
         struct list *e1, *e2;
-        LIST_FOR_EACH_SAFE(e1, e2, &Dest->lightMap[l]) {
+        LIST_FOR_EACH_SAFE(e1, e2, &dst->lightMap[l])
+        {
             PLIGHTINFOEL *light = LIST_ENTRY(e1, PLIGHTINFOEL, entry);
             list_remove(&light->entry);
             HeapFree(GetProcessHeap(), 0, light);
         }
 
-        LIST_FOR_EACH(e1, &This->lightMap[l]) {
+        LIST_FOR_EACH(e1, &src->lightMap[l])
+        {
             PLIGHTINFOEL *light = LIST_ENTRY(e1, PLIGHTINFOEL, entry), *light2;
             light2 = HeapAlloc(GetProcessHeap(), 0, sizeof(*light));
             *light2 = *light;
-            list_add_tail(&Dest->lightMap[l], &light2->entry);
-            if(light2->glIndex != -1) Dest->activeLights[light2->glIndex] = light2;
+            list_add_tail(&dst->lightMap[l], &light2->entry);
+            if (light2->glIndex != -1) dst->activeLights[light2->glIndex] = light2;
         }
     }
 
     /* Fixed size arrays */
-    memcpy(Dest->vertexShaderConstantB, This->vertexShaderConstantB, sizeof(Dest->vertexShaderConstantB));
-    memcpy(Dest->vertexShaderConstantI, This->vertexShaderConstantI, sizeof(Dest->vertexShaderConstantI));
-    memcpy(Dest->pixelShaderConstantB, This->pixelShaderConstantB, sizeof(Dest->pixelShaderConstantB));
-    memcpy(Dest->pixelShaderConstantI, This->pixelShaderConstantI, sizeof(Dest->pixelShaderConstantI));
+    memcpy(dst->vertexShaderConstantB, src->vertexShaderConstantB, sizeof(dst->vertexShaderConstantB));
+    memcpy(dst->vertexShaderConstantI, src->vertexShaderConstantI, sizeof(dst->vertexShaderConstantI));
+    memcpy(dst->pixelShaderConstantB, src->pixelShaderConstantB, sizeof(dst->pixelShaderConstantB));
+    memcpy(dst->pixelShaderConstantI, src->pixelShaderConstantI, sizeof(dst->pixelShaderConstantI));
 
-    memcpy(Dest->streamStride, This->streamStride, sizeof(Dest->streamStride));
-    memcpy(Dest->streamOffset, This->streamOffset, sizeof(Dest->streamOffset));
-    memcpy(Dest->streamSource, This->streamSource, sizeof(Dest->streamSource));
-    memcpy(Dest->streamFreq, This->streamFreq, sizeof(Dest->streamFreq));
-    memcpy(Dest->streamFlags, This->streamFlags, sizeof(Dest->streamFlags));
-    memcpy(Dest->transforms, This->transforms, sizeof(Dest->transforms));
-    memcpy(Dest->clipplane, This->clipplane, sizeof(Dest->clipplane));
-    memcpy(Dest->renderState, This->renderState, sizeof(Dest->renderState));
-    memcpy(Dest->textures, This->textures, sizeof(Dest->textures));
-    memcpy(Dest->textureState, This->textureState, sizeof(Dest->textureState));
-    memcpy(Dest->samplerState, This->samplerState, sizeof(Dest->samplerState));
+    memcpy(dst->streamStride, src->streamStride, sizeof(dst->streamStride));
+    memcpy(dst->streamOffset, src->streamOffset, sizeof(dst->streamOffset));
+    memcpy(dst->streamSource, src->streamSource, sizeof(dst->streamSource));
+    memcpy(dst->streamFreq, src->streamFreq, sizeof(dst->streamFreq));
+    memcpy(dst->streamFlags, src->streamFlags, sizeof(dst->streamFlags));
+    memcpy(dst->transforms, src->transforms, sizeof(dst->transforms));
+    memcpy(dst->clipplane, src->clipplane, sizeof(dst->clipplane));
+    memcpy(dst->renderState, src->renderState, sizeof(dst->renderState));
+    memcpy(dst->textures, src->textures, sizeof(dst->textures));
+    memcpy(dst->textureState, src->textureState, sizeof(dst->textureState));
+    memcpy(dst->samplerState, src->samplerState, sizeof(dst->samplerState));
 
     /* Dynamically sized arrays */
-    memcpy(Dest->vertexShaderConstantF, This->vertexShaderConstantF, sizeof(float) * GL_LIMITS(vshader_constantsF) * 4);
-    memcpy(Dest->pixelShaderConstantF,  This->pixelShaderConstantF,  sizeof(float) * GL_LIMITS(pshader_constantsF) * 4);
+    memcpy(dst->vertexShaderConstantF, src->vertexShaderConstantF, sizeof(float) * gl_info->max_vshader_constantsF * 4);
+    memcpy(dst->pixelShaderConstantF,  src->pixelShaderConstantF,  sizeof(float) * gl_info->max_pshader_constantsF * 4);
 }
 
 /**********************************************************
@@ -1383,7 +1380,7 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
     if (type == WINED3DSBT_INIT || type == WINED3DSBT_RECORDED) return WINED3D_OK;
 
     /* Otherwise, might as well set the whole state block to the appropriate values  */
-    if (device->stateBlock) stateblock_copy((IWineD3DStateBlock *)stateblock, (IWineD3DStateBlock *)device->stateBlock);
+    if (device->stateBlock) stateblock_copy(stateblock, device->stateBlock);
     else memset(stateblock->streamFreq, 1, sizeof(stateblock->streamFreq));
 
     /* Reset the ref and type after kludging it. */
