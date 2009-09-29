@@ -2492,6 +2492,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         extra_surfaces = DDSD->dwBackBufferCount;
         desc2.ddsCaps.dwCaps &= ~DDSCAPS_FRONTBUFFER; /* It's not a front buffer */
         desc2.ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
+        desc2.dwBackBufferCount = 0;
     }
 
     hr = DD_OK;

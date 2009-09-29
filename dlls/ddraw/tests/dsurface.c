@@ -1154,9 +1154,9 @@ static void AttachmentTest7(void)
     HRESULT hr;
     IDirectDraw7 *dd7;
     IDirectDrawSurface7 *surface1, *surface2, *surface3, *surface4;
-    DDSURFACEDESC2 ddsd;
+    DDSURFACEDESC2 ddsd, ddsd2;
     UINT num;
-    DDSCAPS2 caps = {DDSCAPS_TEXTURE, 0, 0, 0};
+    DDSCAPS2 caps = {DDSCAPS_TEXTURE, 0, 0, 0}, caps2 = {DDSCAPS_BACKBUFFER,0,0,0};
     HWND window = CreateWindow( "static", "ddraw_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
 
     hr = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw7, (void **) &dd7);
@@ -1252,6 +1252,14 @@ static void AttachmentTest7(void)
     ddsd.dwBackBufferCount = 2;
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface1, NULL);
     ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
+
+    /* backbuffer surfaces must not have dwBackBufferCount set */
+    ddsd2.dwSize = sizeof(ddsd2);
+    hr = IDirectDrawSurface7_GetAttachedSurface(surface1, &caps2, &surface2);
+    ok(hr==DD_OK,"GetAttachedSurface returned: %x\n", hr);
+    hr = IDirectDrawSurface7_GetSurfaceDesc(surface2, &ddsd2);
+    ok(hr==DD_OK,"GetSurfaceDesc returned: %x\n", hr);
+    ok(ddsd2.dwBackBufferCount==0,"backbuffer surface has dwBackBufferCount==%u\n", ddsd2.dwBackBufferCount);
 
     num = 0;
     IDirectDrawSurface7_EnumAttachedSurfaces(surface1, &num, SurfaceCounter);
