@@ -1055,7 +1055,7 @@ static UINT HANDLE_CustomType19(MSIPACKAGE *package, LPCWSTR source,
 
     msi_free( deformated );
 
-    return ERROR_FUNCTION_FAILED;
+    return ERROR_INSTALL_FAILURE;
 }
 
 static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
