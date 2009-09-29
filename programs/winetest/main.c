@@ -570,12 +570,13 @@ static BOOL get_main_clsid(const char *name, CLSID *clsid)
     return FALSE;
 }
 
-static HMODULE load_com_dll(const char *name)
+static HMODULE load_com_dll(const char *name, char **path, char *filename)
 {
     HMODULE dll = NULL;
     HKEY hkey;
     char keyname[100];
     char dllname[MAX_PATH];
+    char *p;
     CLSID clsid;
 
     if(!get_main_clsid(name, &clsid)) return NULL;
@@ -589,7 +590,15 @@ static HMODULE load_com_dll(const char *name)
     {
         LONG size = sizeof(dllname);
         if(RegQueryValueA(hkey, NULL, dllname, &size) == ERROR_SUCCESS)
-            dll = LoadLibraryA(dllname);
+        {
+            if ((dll = LoadLibraryExA(dllname, NULL, LOAD_LIBRARY_AS_DATAFILE)))
+            {
+                strcpy( filename, dllname );
+                p = strrchr(dllname, '\\');
+                if (p) *p = 0;
+                *path = heap_strdup( dllname );
+            }
+        }
         RegCloseKey(hkey);
     }
 
@@ -628,11 +637,7 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
     strcpy(filename, dllname);
     dll = LoadLibraryExA(dllname, NULL, LOAD_LIBRARY_AS_DATAFILE);
 
-    if(!dll)
-    {
-        dll = load_com_dll(dllname);
-        if(dll) get_dll_path(dll, &wine_tests[nr_of_files].maindllpath, filename);
-    }
+    if (!dll) dll = load_com_dll(dllname, &wine_tests[nr_of_files].maindllpath, filename);
 
     if (!dll && pLoadLibraryShim)
     {
