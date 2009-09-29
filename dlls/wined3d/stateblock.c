@@ -202,7 +202,7 @@ static void stateblock_copy(IWineD3DStateBlock *destination, IWineD3DStateBlock 
     Dest->scissorRect = This->scissorRect;
 
     /* Lights */
-    memset(This->activeLights, 0, sizeof(This->activeLights));
+    memset(Dest->activeLights, 0, sizeof(Dest->activeLights));
     for(l = 0; l < LIGHTMAP_SIZE; l++) {
         struct list *e1, *e2;
         LIST_FOR_EACH_SAFE(e1, e2, &Dest->lightMap[l]) {
