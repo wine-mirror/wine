@@ -346,7 +346,7 @@ static void monitor_unload(monitor_t * pm)
 /******************************************************************
  * monitor_unloadall [internal]
  *
- * release all printmonitors and unload them from memory, when needed
+ * release all registered printmonitors and unload them from memory, when needed
  *
  */
 
@@ -359,7 +359,8 @@ static void monitor_unloadall(void)
     /* iterate through the list, with safety against removal */
     LIST_FOR_EACH_ENTRY_SAFE(pm, next, &monitor_handles, monitor_t, entry)
     {
-        monitor_unload(pm);
+        /* skip monitorui dlls */
+        if (pm->monitor) monitor_unload(pm);
     }
     LeaveCriticalSection(&monitor_handles_cs);
 }
