@@ -342,7 +342,7 @@ static HRESULT WINAPI BmpFrameEncode_Commit(IWICBitmapFrameEncode *iface)
     bfh.bfOffBits = sizeof(BITMAPFILEHEADER) + info_size;
 
     pos.QuadPart = 0;
-    hr = IStream_Seek(This->stream, pos, STREAM_SEEK_SET, NULL);\
+    hr = IStream_Seek(This->stream, pos, STREAM_SEEK_SET, NULL);
     if (FAILED(hr)) return hr;
 
     hr = IStream_Write(This->stream, &bfh, sizeof(BITMAPFILEHEADER), &byteswritten);
