@@ -1564,16 +1564,17 @@ MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
   infoPtr->status = MC_SEL_LBUTUP;
 
-  if(hit == MCHT_CALENDARDATENEXT) {
-    MONTHCAL_GoToNextMonth(infoPtr);
+  if((hit == MCHT_CALENDARDATENEXT) || (hit == MCHT_CALENDARDATEPREV)) {
+    SYSTEMTIME st[2];
+
+    st[0] = st[1] = ht.st;
+    MONTHCAL_SetSelRange(infoPtr, st);
+    MONTHCAL_SetCurSel(infoPtr, &st[0]);
+
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     return TRUE;
   }
-  if(hit == MCHT_CALENDARDATEPREV){
-    MONTHCAL_GoToPrevMonth(infoPtr);
-    InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
-    return TRUE;
-  }
+
   nmhdr.hwndFrom = infoPtr->hwndSelf;
   nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
   nmhdr.code     = NM_RELEASEDCAPTURE;
