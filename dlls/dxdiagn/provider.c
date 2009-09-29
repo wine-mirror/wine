@@ -29,7 +29,6 @@
 #include "winver.h"
 #include "objidl.h"
 #include "dshow.h"
-#include "strmif.h"
 #include "vfw.h"
 #include "mmddk.h"
 #include "ddraw.h"
