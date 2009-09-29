@@ -1539,6 +1539,18 @@ static const msi_table ip_tables[] =
     ADD_TABLE(property)
 };
 
+static const msi_table fiu_tables[] =
+{
+    ADD_TABLE(rof_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(rof_feature_comp),
+    ADD_TABLE(rof_file),
+    ADD_TABLE(pp_install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+};
+
 /* cabinet definitions */
 
 /* make the max size large so there is only one cab file */
@@ -6677,6 +6689,84 @@ static void test_installed_prop(void)
     delete_test_files();
 }
 
+static void test_file_in_use(void)
+{
+    UINT r;
+    DWORD size;
+    HANDLE file;
+    HKEY hkey;
+    LONG ret;
+    char path[MAX_PATH], *buf, *src, *dst;
+
+    static char key[]   = "System\\CurrentControlSet\\Control\\Session Manager";
+    static char value[] = "PendingFileRenameOperations";
+
+    RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_ALL_ACCESS, &hkey);
+    if (!RegQueryValueExA(hkey, value, NULL, NULL, NULL, &size))
+    {
+        skip("Pending file rename operations, skipping test\n");
+        return;
+    }
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\maximus", 500);
+    create_database(msifile, fiu_tables, sizeof(fiu_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    lstrcpy(path, PROG_FILES_DIR);
+    lstrcat(path, "\\msitest");
+    CreateDirectoryA(path, NULL);
+
+    lstrcat(path, "\\maximus");
+    file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+
+    r = MsiInstallProductA(msifile, "REBOOT=ReallySuppress FULL=1");
+    todo_wine ok(r == ERROR_SUCCESS_REBOOT_REQUIRED, "Expected ERROR_SUCCESS_REBOOT_REQUIRED got %u\n", r);
+    ok(!file_matches(path), "Expected file not to match\n");
+    CloseHandle(file);
+
+    ret = RegQueryValueExA(hkey, value, NULL, NULL, NULL, &size);
+    buf = HeapAlloc(GetProcessHeap(), 0, size);
+
+    buf[0] = 0;
+    ret = RegQueryValueExA(hkey, value, NULL, NULL, (LPBYTE)buf, &size);
+    todo_wine ok(!ret, "RegQueryValueExA failed %d (%u)\n", ret, GetLastError());
+    todo_wine ok(strstr(buf, "msitest\\maximus") != NULL, "Unexpected value \"%s\"\n", buf);
+
+    for (src = buf; *src; src = dst + strlen(dst) + 1)
+    {
+        DWORD flags = MOVEFILE_COPY_ALLOWED;
+
+        dst = src + strlen(src) + 1;
+        if (*dst == '!')
+        {
+            flags |= MOVEFILE_REPLACE_EXISTING;
+            dst++;
+        }
+        src += strlen("\\??\\");
+        if (*dst)
+        {
+            dst += strlen("\\??\\");
+            ok(MoveFileExA(src, dst, flags), "Failed to move file %s -> %s (%u)\n", src, dst, GetLastError());
+        }
+        else
+            ok(DeleteFileA(src), "Failed to delete file %s (%u)\n", src, GetLastError());
+    }
+    HeapFree(GetProcessHeap(), 0, buf);
+    RegDeleteValueA(hkey, value);
+    RegCloseKey(hkey);
+
+    todo_wine ok(file_matches(path), "Expected file to match\n");
+    ok(delete_pf("msitest\\maximus", TRUE), "File not present\n");
+    ok(delete_pf("msitest", FALSE), "Directory not present\n");
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -6763,6 +6853,7 @@ START_TEST(install)
     test_lastusedsource();
     test_preselected();
     test_installed_prop();
+    test_file_in_use();
 
     DeleteFileA(log_file);
 
