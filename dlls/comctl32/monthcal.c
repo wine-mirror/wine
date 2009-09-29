@@ -1739,7 +1739,6 @@ MONTHCAL_SetFocus(const MONTHCAL_INFO *infoPtr)
 /* sets the size information */
 static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
 {
-  static const WCHAR SunW[] = { 'S','u','n',0 };
   static const WCHAR O0W[] = { '0','0',0 };
   HDC hdc = GetDC(infoPtr->hwndSelf);
   RECT *title=&infoPtr->title;
@@ -1751,11 +1750,12 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
   RECT *weeknumrect=&infoPtr->weeknums;
   RECT *days=&infoPtr->days;
   RECT *todayrect=&infoPtr->todayrect;
-  SIZE size;
+  SIZE size, sz;
   TEXTMETRICW tm;
   HFONT currentFont;
-  INT xdiv, dx, dy;
+  INT xdiv, dx, dy, i;
   RECT rcClient;
+  WCHAR buff[80];
 
   GetClientRect(infoPtr->hwndSelf, &rcClient);
 
@@ -1764,7 +1764,26 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
   /* get the height and width of each day's text */
   GetTextMetricsW(hdc, &tm);
   infoPtr->textHeight = tm.tmHeight + tm.tmExternalLeading + tm.tmInternalLeading;
-  GetTextExtentPoint32W(hdc, SunW, 3, &size);
+
+  /* find largest abbreviated day name for current locale */
+  size.cx = sz.cx = 0;
+  for (i = 0; i < 7; i++)
+  {
+      if(GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SABBREVDAYNAME1,
+                        buff, countof(buff)))
+      {
+          GetTextExtentPoint32W(hdc, buff, lstrlenW(buff), &sz);
+          if (sz.cx > size.cx) size.cx = sz.cx;
+      }
+      else /* locale independent fallback on failure */
+      {
+          static const WCHAR SunW[] = { 'S','u','n',0 };
+
+          GetTextExtentPoint32W(hdc, SunW, lstrlenW(SunW), &size);
+          break;
+      }
+  }
+
   infoPtr->textWidth = size.cx + 2;
 
   /* recalculate the height and width increments and offsets */
