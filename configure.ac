@@ -178,6 +178,7 @@ then
     enable_w32skrnl=${enable_w32skrnl:-no}
     enable_winedos=${enable_winedos:-no}
     enable_winevdm=${enable_winevdm:-no}
+    enable_wow32=${enable_wow32:-no}
 fi
 
 dnl Some special cases for the wow64 build
