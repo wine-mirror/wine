@@ -22,6 +22,14 @@
 #define __WINE_WPP_H
 
 #include <stdio.h>
+#include <stdarg.h>
+
+struct wpp_callbacks
+{
+    /* Error callbacks */
+    void (*error)( const char *file, int line, int col, const char *near, const char *msg, va_list ap );
+    void (*warning)( const char *file, int line, int col, const char *near, const char *msg, va_list ap );
+};
 
 /* Return value == 0 means successful execution */
 extern int wpp_add_define( const char *name, const char *value );
@@ -33,5 +41,6 @@ extern int wpp_add_include_path( const char *path );
 extern char *wpp_find_include( const char *name, const char *parent_name );
 extern int wpp_parse( const char *input, FILE *output );
 extern int wpp_parse_temp( const char *input, const char *output_base, char **output_name );
+extern void wpp_set_callbacks( const struct wpp_callbacks *callbacks );
 
 #endif  /* __WINE_WPP_H */

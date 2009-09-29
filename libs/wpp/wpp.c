@@ -230,3 +230,8 @@ int wpp_parse_temp( const char *input, const char *output_base, char **output_na
     fclose( output );
     return ret;
 }
+
+void wpp_set_callbacks( const struct wpp_callbacks *callbacks )
+{
+    wpp_callbacks = callbacks;
+}

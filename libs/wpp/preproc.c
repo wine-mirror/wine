@@ -674,13 +674,32 @@ end:
 	fprintf(stderr, "\n");
 }
 
+static void wpp_default_error(const char *file, int line, int col, const char *near, const char *msg, va_list ap)
+{
+	generic_msg(msg, "Error", near, ap);
+	exit(1);
+}
+
+static void wpp_default_warning(const char *file, int line, int col, const char *near, const char *msg, va_list ap)
+{
+	generic_msg(msg, "Warning", near, ap);
+}
+
+static const struct wpp_callbacks default_callbacks =
+{
+	wpp_default_error,
+	wpp_default_warning,
+};
+
+const struct wpp_callbacks *wpp_callbacks = &default_callbacks;
+
 int ppy_error(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
-	generic_msg(s, "Error", ppy_text, ap);
+	wpp_callbacks->error(pp_status.input, pp_status.line_number, pp_status.char_number, ppy_text, s, ap);
 	va_end(ap);
-	exit(1);
+	pp_status.state = 1;
 	return 1;
 }
 
@@ -688,7 +707,7 @@ int ppy_warning(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
-	generic_msg(s, "Warning", ppy_text, ap);
+	wpp_callbacks->warning(pp_status.input, pp_status.line_number, pp_status.char_number, ppy_text, s, ap);
 	va_end(ap);
 	return 0;
 }
