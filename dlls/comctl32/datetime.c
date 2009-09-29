@@ -970,7 +970,8 @@ DATETIME_Char (DATETIME_INFO *infoPtr, WPARAM vkCode)
                 break;
             case INVALIDFULLYEAR:
             case FULLYEAR:
-                date->wYear = (date->wYear%1000)*10 + num;
+                /* reset current year initialy */
+                date->wYear = ((date->wYear/1000) ? 0 : 1)*(date->wYear%1000)*10 + num;
                 date->wDayOfWeek = DATETIME_CalculateDayOfWeek(
                         date->wDay,date->wMonth,date->wYear);
                 DATETIME_SendDateTimeChangeNotify (infoPtr);
