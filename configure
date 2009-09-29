@@ -12127,6 +12127,7 @@ for ac_func in \
 	pwrite \
 	readdir \
 	readlink \
+	sched_setaffinity \
 	sched_yield \
 	select \
 	setproctitle \

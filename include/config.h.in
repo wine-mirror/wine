@@ -645,6 +645,9 @@
 /* Define to 1 if you have the <sched.h> header file. */
 #undef HAVE_SCHED_H
 
+/* Define to 1 if you have the `sched_setaffinity' function. */
+#undef HAVE_SCHED_SETAFFINITY
+
 /* Define to 1 if you have the `sched_yield' function. */
 #undef HAVE_SCHED_YIELD
 

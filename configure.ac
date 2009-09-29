@@ -1692,6 +1692,7 @@ AC_CHECK_FUNCS(\
 	pwrite \
 	readdir \
 	readlink \
+	sched_setaffinity \
 	sched_yield \
 	select \
 	setproctitle \
