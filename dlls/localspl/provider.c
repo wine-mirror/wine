@@ -1458,6 +1458,72 @@ static BOOL WINAPI fpAddMonitor(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
 }
 
 /******************************************************************************
+ * fpAddPort [exported through PRINTPROVIDOR]
+ *
+ * Add a Port for a specific Monitor
+ *
+ * PARAMS
+ *  pName        [I] Servername or NULL (local Computer)
+ *  hWnd         [I] Handle to parent Window for the Dialog-Box
+ *  pMonitorName [I] Name of the Monitor that manage the Port
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ */
+static BOOL WINAPI fpAddPort(LPWSTR pName, HWND hWnd, LPWSTR pMonitorName)
+{
+    monitor_t * pm;
+    monitor_t * pui;
+    LONG        lres;
+    DWORD       res;
+
+    TRACE("(%s, %p, %s)\n", debugstr_w(pName), hWnd, debugstr_w(pMonitorName));
+
+    lres = copy_servername_from_name(pName, NULL);
+    if (lres) {
+        FIXME("server %s not supported\n", debugstr_w(pName));
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    /* an empty Monitorname is Invalid */
+    if (!pMonitorName[0]) {
+        SetLastError(ERROR_NOT_SUPPORTED);
+        return FALSE;
+    }
+
+    pm = monitor_load(pMonitorName, NULL);
+    if (pm && pm->monitor && pm->monitor->pfnAddPort) {
+        res = pm->monitor->pfnAddPort(pName, hWnd, pMonitorName);
+        TRACE("got %d with %u (%s)\n", res, GetLastError(), debugstr_w(pm->dllname));
+    }
+    else
+    {
+        pui = monitor_loadui(pm);
+        if (pui && pui->monitorUI && pui->monitorUI->pfnAddPortUI) {
+            res = pui->monitorUI->pfnAddPortUI(pName, hWnd, pMonitorName, NULL);
+            TRACE("got %d with %u (%s)\n", res, GetLastError(), debugstr_w(pui->dllname));
+        }
+        else
+        {
+            FIXME("not implemented for %s (monitor %p: %s / monitorui %p: %s)\n",
+                    debugstr_w(pMonitorName), pm, debugstr_w(pm ? pm->dllname : NULL),
+                    pui, debugstr_w(pui ? pui->dllname : NULL));
+
+            SetLastError(ERROR_NOT_SUPPORTED);
+            res = FALSE;
+        }
+        monitor_unload(pui);
+    }
+    monitor_unload(pm);
+
+    TRACE("returning %d with %u\n", res, GetLastError());
+    return res;
+}
+
+/******************************************************************************
  * fpAddPrinterDriverEx [exported through PRINTPROVIDOR]
  *
  * Install a Printer Driver with the Option to upgrade / downgrade the Files
@@ -2017,7 +2083,7 @@ void setup_provider(void)
         NULL,   /* fpEnumForms */
         fpEnumMonitors,
         fpEnumPorts,
-        NULL,   /* fpAddPort */
+        fpAddPort,
         fpConfigurePort,
         fpDeletePort,
         NULL,   /* fpCreatePrinterIC */
