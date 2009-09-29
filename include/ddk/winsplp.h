@@ -280,8 +280,7 @@ typedef struct _PRINTPROVIDOR {
  HANDLE (WINAPI *fpFindFirstPrinterChangeNotification)(HANDLE hPrinter,
                  DWORD fdwFlags, DWORD fdwOptions, LPVOID pPrinterNotifyOptions);
  BOOL   (WINAPI *fpFindClosePrinterChangeNotification)(HANDLE hChange);
- BOOL   (WINAPI *fpAddPortEx)(HANDLE hMonitor, LPWSTR pName, DWORD Level,
-                 LPBYTE lpBuffer, LPWSTR lpMonitorName);
+ BOOL   (WINAPI *fpAddPortEx)(LPWSTR, DWORD, LPBYTE, LPWSTR);
  BOOL   (WINAPI *fpShutDown)(LPVOID pvReserved);
  BOOL   (WINAPI *fpRefreshPrinterChangeNotification)(HANDLE hPrinter,
                  DWORD Reserved, PVOID pvReserved, PVOID pPrinterNotifyInfo);
