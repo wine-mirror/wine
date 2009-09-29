@@ -1095,6 +1095,18 @@ DECL_HANDLER(get_process_info)
     }
 }
 
+static void set_process_affinity( struct process *process, affinity_t affinity )
+{
+    struct thread *thread;
+
+    process->affinity = affinity;
+
+    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
+    {
+        set_thread_affinity( thread, affinity );
+    }
+}
+
 /* set information about a process */
 DECL_HANDLER(set_process_info)
 {
@@ -1103,7 +1115,7 @@ DECL_HANDLER(set_process_info)
     if ((process = get_process_from_handle( req->handle, PROCESS_SET_INFORMATION )))
     {
         if (req->mask & SET_PROCESS_INFO_PRIORITY) process->priority = req->priority;
-        if (req->mask & SET_PROCESS_INFO_AFFINITY) process->affinity = req->affinity;
+        if (req->mask & SET_PROCESS_INFO_AFFINITY) set_process_affinity( process, req->affinity );
         release_object( process );
     }
 }

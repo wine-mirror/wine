@@ -946,7 +946,6 @@ static void test_affinity(void)
     /* Setting the process affinity changes the thread affinity to match */
     status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-    todo_wine
     ok( tbi.AffinityMask == 2, "Unexpected thread affinity\n" );
 
     proc_affinity = (1 << si.dwNumberOfProcessors) - 1;
@@ -955,7 +954,6 @@ static void test_affinity(void)
     /* Resetting the process affinity also resets the thread affinity */
     status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-    todo_wine
     ok( tbi.AffinityMask == (1 << si.dwNumberOfProcessors) - 1,
         "Unexpected thread affinity" );
 }

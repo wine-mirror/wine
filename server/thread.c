@@ -404,6 +404,11 @@ struct thread *get_thread_from_pid( int pid )
     return NULL;
 }
 
+void set_thread_affinity( struct thread *thread, affinity_t affinity )
+{
+    thread->affinity = affinity;
+}
+
 #define THREAD_PRIORITY_REALTIME_HIGHEST 6
 #define THREAD_PRIORITY_REALTIME_LOWEST -7
 
@@ -428,7 +433,7 @@ static void set_thread_info( struct thread *thread,
             set_error( STATUS_INVALID_PARAMETER );
     }
     if (req->mask & SET_THREAD_INFO_AFFINITY)
-        thread->affinity = req->affinity;
+        set_thread_affinity( thread, req->affinity );
     if (req->mask & SET_THREAD_INFO_TOKEN)
         security_set_thread_token( thread, req->token );
 }
