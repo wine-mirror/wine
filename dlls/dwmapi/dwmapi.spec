@@ -31,7 +31,7 @@
 @ stub DwmGetCompositionTimingInfo
 @ stub DwmGetGraphicsStreamClient
 @ stub DwmGetGraphicsStreamTransformHint
-@ stub DwmGetTransportAttributes
+@ stdcall DwmGetTransportAttributes(ptr ptr ptr)
 @ stub DwmGetWindowAttribute
 @ stdcall DwmIsCompositionEnabled(ptr)
 @ stub DwmModifyPreviousDxFrameDuration

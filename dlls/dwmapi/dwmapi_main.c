@@ -110,6 +110,17 @@ HRESULT WINAPI DwmSetWindowAttribute(HWND hwnd, DWORD attributenum, LPCVOID attr
     return E_NOTIMPL;
 }
 
+
+/**********************************************************************
+ *  *           DwmGetTransportAttributes         (DWMAPI.@)
+ *   */
+HRESULT WINAPI DwmGetTransportAttributes(BOOL *pfIsRemoting, BOOL *pfIsConnected, DWORD *pDwGeneration)
+{
+    FIXME("(%p, %p, %p) stub\n", pfIsRemoting, pfIsConnected, pDwGeneration);
+
+    return E_NOTIMPL;
+}
+
 /**********************************************************************
  *           DwmUnregisterThumbnail         (DWMAPI.@)
  */
