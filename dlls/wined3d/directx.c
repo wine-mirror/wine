@@ -693,7 +693,7 @@ static BOOL match_broken_nv_clip(const struct wined3d_gl_info *gl_info, const ch
     GL_EXTCALL(glGenProgramsARB(1, &prog));
     if(!prog)
     {
-        ERR("Failed to create an ARB offset limit test program\n");
+        ERR("Failed to create the NVvp clip test program\n");
         LEAVE_GL();
         return FALSE;
     }
