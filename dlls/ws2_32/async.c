@@ -478,29 +478,6 @@ static HANDLE run_query( HWND hWnd, UINT uMsg, LPTHREAD_START_ROUTINE func,
 
 
 /***********************************************************************
- *       WSAAsyncGetHostByAddr	(WINSOCK.102)
- */
-HANDLE16 WINAPI WSAAsyncGetHostByAddr16(HWND16 hWnd, UINT16 uMsg, LPCSTR addr,
-                               INT16 len, INT16 type, SEGPTR sbuf, INT16 buflen)
-{
-    struct async_query_gethostbyaddr *aq;
-
-    TRACE("hwnd %04x, msg %04x, addr %p[%i]\n", hWnd, uMsg, addr, len );
-
-    if (!(aq = HeapAlloc( GetProcessHeap(), 0, sizeof(*aq) + len )))
-    {
-        SetLastError( WSAEWOULDBLOCK );
-        return 0;
-    }
-    aq->host_addr = (char *)(aq + 1);
-    aq->host_len  = len;
-    aq->host_type = type;
-    memcpy( aq->host_addr, addr, len );
-    return WSA_H16( run_query( HWND_32(hWnd), uMsg, async_gethostbyaddr, &aq->query,
-                               (void*)sbuf, buflen, AQ_WIN16 ));
-}
-
-/***********************************************************************
  *       WSAAsyncGetHostByAddr        (WS2_32.102)
  */
 HANDLE WINAPI WSAAsyncGetHostByAddr(HWND hWnd, UINT uMsg, LPCSTR addr,
@@ -523,28 +500,6 @@ HANDLE WINAPI WSAAsyncGetHostByAddr(HWND hWnd, UINT uMsg, LPCSTR addr,
 }
 
 /***********************************************************************
- *       WSAAsyncGetHostByName	(WINSOCK.103)
- */
-HANDLE16 WINAPI WSAAsyncGetHostByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
-                                      SEGPTR sbuf, INT16 buflen)
-{
-    struct async_query_gethostbyname *aq;
-    unsigned int len = strlen(name) + 1;
-
-    TRACE("hwnd %04x, msg %04x, host %s, buffer %i\n", hWnd, uMsg, debugstr_a(name), buflen );
-
-    if (!(aq = HeapAlloc( GetProcessHeap(), 0, sizeof(*aq) + len )))
-    {
-        SetLastError( WSAEWOULDBLOCK );
-        return 0;
-    }
-    aq->host_name = (char *)(aq + 1);
-    strcpy( aq->host_name, name );
-    return WSA_H16( run_query( HWND_32(hWnd), uMsg, async_gethostbyname, &aq->query,
-                               (void*)sbuf, buflen, AQ_WIN16 ));
-}
-
-/***********************************************************************
  *       WSAAsyncGetHostByName	(WS2_32.103)
  */
 HANDLE WINAPI WSAAsyncGetHostByName(HWND hWnd, UINT uMsg, LPCSTR name,
@@ -563,28 +518,6 @@ HANDLE WINAPI WSAAsyncGetHostByName(HWND hWnd, UINT uMsg, LPCSTR name,
     aq->host_name = (char *)(aq + 1);
     strcpy( aq->host_name, name );
     return run_query( hWnd, uMsg, async_gethostbyname, &aq->query, sbuf, buflen, AQ_WIN32 );
-}
-
-/***********************************************************************
- *       WSAAsyncGetProtoByName	(WINSOCK.105)
- */
-HANDLE16 WINAPI WSAAsyncGetProtoByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
-                                         SEGPTR sbuf, INT16 buflen)
-{
-    struct async_query_getprotobyname *aq;
-    unsigned int len = strlen(name) + 1;
-
-    TRACE("hwnd %04x, msg %04x, proto %s, buffer %i\n", hWnd, uMsg, debugstr_a(name), buflen );
-
-    if (!(aq = HeapAlloc( GetProcessHeap(), 0, sizeof(*aq) + len )))
-    {
-        SetLastError( WSAEWOULDBLOCK );
-        return 0;
-    }
-    aq->proto_name = (char *)(aq + 1);
-    strcpy( aq->proto_name, name );
-    return WSA_H16( run_query( HWND_32(hWnd), uMsg, async_getprotobyname, &aq->query,
-                               (void*)sbuf, buflen, AQ_WIN16 ));
 }
 
 /***********************************************************************
@@ -610,26 +543,6 @@ HANDLE WINAPI WSAAsyncGetProtoByName(HWND hWnd, UINT uMsg, LPCSTR name,
 
 
 /***********************************************************************
- *       WSAAsyncGetProtoByNumber	(WINSOCK.104)
- */
-HANDLE16 WINAPI WSAAsyncGetProtoByNumber16(HWND16 hWnd,UINT16 uMsg,INT16 number,
-                                           SEGPTR sbuf, INT16 buflen)
-{
-    struct async_query_getprotobynumber *aq;
-
-    TRACE("hwnd %04x, msg %04x, num %i\n", hWnd, uMsg, number );
-
-    if (!(aq = HeapAlloc( GetProcessHeap(), 0, sizeof(*aq) )))
-    {
-        SetLastError( WSAEWOULDBLOCK );
-        return 0;
-    }
-    aq->proto_number = number;
-    return WSA_H16( run_query( HWND_32(hWnd), uMsg, async_getprotobynumber, &aq->query,
-                               (void *)sbuf, buflen, AQ_WIN16 ));
-}
-
-/***********************************************************************
  *       WSAAsyncGetProtoByNumber     (WS2_32.104)
  */
 HANDLE WINAPI WSAAsyncGetProtoByNumber(HWND hWnd, UINT uMsg, INT number,
@@ -646,31 +559,6 @@ HANDLE WINAPI WSAAsyncGetProtoByNumber(HWND hWnd, UINT uMsg, INT number,
     }
     aq->proto_number = number;
     return run_query( hWnd, uMsg, async_getprotobynumber, &aq->query, sbuf, buflen, AQ_WIN32 );
-}
-
-/***********************************************************************
- *       WSAAsyncGetServByName	(WINSOCK.107)
- */
-HANDLE16 WINAPI WSAAsyncGetServByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
-                                        LPCSTR proto, SEGPTR sbuf, INT16 buflen)
-{
-    struct async_query_getservbyname *aq;
-    unsigned int len1 = strlen(name) + 1;
-    unsigned int len2 = strlen(proto) + 1;
-
-    TRACE("hwnd %04x, msg %04x, name %s, proto %s\n", hWnd, uMsg, debugstr_a(name), debugstr_a(proto));
-
-    if (!(aq = HeapAlloc( GetProcessHeap(), 0, sizeof(*aq) + len1 + len2 )))
-    {
-        SetLastError( WSAEWOULDBLOCK );
-        return 0;
-    }
-    aq->serv_name  = (char *)(aq + 1);
-    aq->serv_proto = aq->serv_name + len1;
-    strcpy( aq->serv_name, name );
-    strcpy( aq->serv_proto, proto );
-    return WSA_H16( run_query( HWND_32(hWnd), uMsg,async_getservbyname, &aq->query,
-                               (void *)sbuf, buflen, AQ_WIN16 ));
 }
 
 /***********************************************************************
@@ -695,29 +583,6 @@ HANDLE WINAPI WSAAsyncGetServByName(HWND hWnd, UINT uMsg, LPCSTR name,
     strcpy( aq->serv_name, name );
     strcpy( aq->serv_proto, proto );
     return run_query( hWnd, uMsg, async_getservbyname, &aq->query, sbuf, buflen, AQ_WIN32 );
-}
-
-/***********************************************************************
- *       WSAAsyncGetServByPort	(WINSOCK.106)
- */
-HANDLE16 WINAPI WSAAsyncGetServByPort16(HWND16 hWnd, UINT16 uMsg, INT16 port,
-                                        LPCSTR proto, SEGPTR sbuf, INT16 buflen)
-{
-    struct async_query_getservbyport *aq;
-    unsigned int len = strlen(proto) + 1;
-
-    TRACE("hwnd %04x, msg %04x, port %i, proto %s\n", hWnd, uMsg, port, debugstr_a(proto));
-
-    if (!(aq = HeapAlloc( GetProcessHeap(), 0, sizeof(*aq) + len )))
-    {
-        SetLastError( WSAEWOULDBLOCK );
-        return 0;
-    }
-    aq->serv_proto = (char *)(aq + 1);
-    aq->serv_port  = port;
-    strcpy( aq->serv_proto, proto );
-    return WSA_H16( run_query( HWND_32(hWnd), uMsg, async_getservbyport, &aq->query,
-                               (void *)sbuf, buflen, AQ_WIN16 ));
 }
 
 /***********************************************************************
@@ -752,14 +617,6 @@ INT WINAPI WSACancelAsyncRequest(HANDLE hAsyncTaskHandle)
 }
 
 /***********************************************************************
- *       WSACancelAsyncRequest	(WINSOCK.108)
- */
-INT16 WINAPI WSACancelAsyncRequest16(HANDLE16 hAsyncTaskHandle)
-{
-    return (INT16)WSACancelAsyncRequest(WSA_H32 (hAsyncTaskHandle));
-}
-
-/***********************************************************************
  *       WSApSetPostRoutine	(WS2_32.24)
  */
 INT WINAPI WSApSetPostRoutine(LPWPUPOSTMESSAGE lpPostRoutine)
@@ -769,7 +626,7 @@ INT WINAPI WSApSetPostRoutine(LPWPUPOSTMESSAGE lpPostRoutine)
 }
 
 /***********************************************************************
- *        (WS2_32.25)
+ *        WPUCompleteOverlappedRequest   (WS2_32.25)
  */
 WSAEVENT WINAPI WPUCompleteOverlappedRequest(SOCKET s, LPWSAOVERLAPPED overlapped,
                                              DWORD error, DWORD transferred, LPINT errcode)

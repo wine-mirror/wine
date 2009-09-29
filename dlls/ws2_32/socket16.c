@@ -26,9 +26,59 @@
 #include "wine/winbase16.h"
 #include "wine/winsock16.h"
 #include "wownt32.h"
+#include "winuser.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
+
+struct async_query_header
+{
+    HWND     hWnd;
+    UINT     uMsg;
+    SEGPTR   sbuf;
+    INT      sbuflen;
+    HANDLE16 handle;
+};
+
+struct async_query_gethostbyname
+{
+    struct async_query_header query;
+    char *host_name;
+};
+
+struct async_query_gethostbyaddr
+{
+    struct async_query_header query;
+    char *host_addr;
+    int   host_len;
+    int   host_type;
+};
+
+struct async_query_getprotobyname
+{
+    struct async_query_header query;
+    char *proto_name;
+};
+
+struct async_query_getprotobynumber
+{
+    struct async_query_header query;
+    int   proto_number;
+};
+
+struct async_query_getservbyname
+{
+    struct async_query_header query;
+    char *serv_name;
+    char *serv_proto;
+};
+
+struct async_query_getservbyport
+{
+    struct async_query_header query;
+    char *serv_proto;
+    int   serv_port;
+};
 
 static INT num_startup;  /* reference counter */
 static void *he_buffer;
@@ -55,6 +105,13 @@ static ws_fd_set16 *ws_fdset_32_to_16( const WS_fd_set *set32, ws_fd_set16 *set1
     set16->fd_count = set32->fd_count;
     for (i = 0; i < set16->fd_count; i++) set16->fd_array[i] = set32->fd_array[i];
     return set16;
+}
+
+static DWORD finish_query( struct async_query_header *query, LPARAM lparam )
+{
+    PostMessageW( query->hWnd, query->uMsg, (WPARAM)query->handle, lparam );
+    HeapFree( GetProcessHeap(), 0, query );
+    return 0;
 }
 
 static int list_size(char** l, int item_size)
@@ -134,18 +191,26 @@ static SEGPTR get_buffer_pe(int size)
  * and handle all Win16/Win32 dependent things (struct size, ...) *correctly*.
  * Ditto for protoent and servent.
  */
-static SEGPTR ws_hostent_32_to_16( const struct WS_hostent* he )
+static SEGPTR ws_hostent_32_to_16( const struct WS_hostent* he, SEGPTR base, int *buff_size )
 {
     char *p;
-    SEGPTR base;
     struct ws_hostent16 *p_to;
 
-    int size = (sizeof(*he) +
+    int size = (sizeof(*p_to) +
                 strlen(he->h_name) + 1 +
                 list_size(he->h_aliases, 0) +
                 list_size(he->h_addr_list, he->h_length));
 
-    base = get_buffer_he(size);
+    if (buff_size)
+    {
+        if (*buff_size < size)
+        {
+            *buff_size = size;
+            return 0;
+        }
+        *buff_size = size;
+    }
+    else base = get_buffer_he(size);
     p_to = MapSL(base);
 
     p_to->h_addrtype = he->h_addrtype;
@@ -165,17 +230,25 @@ static SEGPTR ws_hostent_32_to_16( const struct WS_hostent* he )
     return base;
 }
 
-static SEGPTR ws_protoent_32_to_16( const struct WS_protoent *pe )
+static SEGPTR ws_protoent_32_to_16( const struct WS_protoent *pe, SEGPTR base, int *buff_size )
 {
     char *p;
-    SEGPTR base;
     struct ws_protoent16 *p_to;
 
-    int size = (sizeof(*pe) +
+    int size = (sizeof(*p_to) +
                 strlen(pe->p_name) + 1 +
                 list_size(pe->p_aliases, 0));
 
-    base = get_buffer_pe(size);
+    if (buff_size)
+    {
+        if (*buff_size < size)
+        {
+            *buff_size = size;
+            return 0;
+        }
+        *buff_size = size;
+    }
+    else base = get_buffer_pe(size);
     p_to = MapSL(base);
 
     p_to->p_proto = pe->p_proto;
@@ -191,18 +264,26 @@ static SEGPTR ws_protoent_32_to_16( const struct WS_protoent *pe )
     return base;
 }
 
-static SEGPTR ws_servent_32_to_16( const struct WS_servent *se )
+static SEGPTR ws_servent_32_to_16( const struct WS_servent *se, SEGPTR base, int *buff_size )
 {
     char *p;
-    SEGPTR base;
     struct ws_servent16 *p_to;
 
-    int size = (sizeof(*se) +
+    int size = (sizeof(*p_to) +
                 strlen(se->s_proto) + 1 +
                 strlen(se->s_name) + 1 +
                 list_size(se->s_aliases, 0));
 
-    base = get_buffer_se(size);
+    if (buff_size)
+    {
+        if (*buff_size < size)
+        {
+            *buff_size = size;
+            return 0;
+        }
+        *buff_size = size;
+    }
+    else base = get_buffer_se(size);
     p_to = MapSL(base);
 
     p_to->s_port = se->s_port;
@@ -222,6 +303,140 @@ static SEGPTR ws_servent_32_to_16( const struct WS_servent *se )
     return base;
 }
 
+static DWORD WINAPI async_gethostbyname(LPVOID arg)
+{
+    struct async_query_gethostbyname *aq = arg;
+    int size = 0;
+    WORD fail = 0;
+    struct WS_hostent *he;
+
+    if ((he = WS_gethostbyname( aq->host_name )))
+    {
+        size = aq->query.sbuflen;
+        if (!ws_hostent_32_to_16( he, aq->query.sbuf, &size )) fail = WSAENOBUFS;
+    }
+    else fail = GetLastError();
+
+    return finish_query( &aq->query, MAKELPARAM( size, fail ));
+}
+
+static DWORD WINAPI async_gethostbyaddr(LPVOID arg)
+{
+    struct async_query_gethostbyaddr *aq = arg;
+    int size = 0;
+    WORD fail = 0;
+    struct WS_hostent *he;
+
+    if ((he = WS_gethostbyaddr(aq->host_addr,aq->host_len,aq->host_type)))
+    {
+        size = aq->query.sbuflen;
+        if (!ws_hostent_32_to_16( he, aq->query.sbuf, &size )) fail = WSAENOBUFS;
+    }
+    else fail = GetLastError();
+
+    return finish_query( &aq->query, MAKELPARAM( size, fail ));
+}
+
+static DWORD WINAPI async_getprotobyname(LPVOID arg)
+{
+    struct async_query_getprotobyname *aq = arg;
+    int size = 0;
+    WORD fail = 0;
+    struct WS_protoent *pe;
+
+    if ((pe = WS_getprotobyname(aq->proto_name)))
+    {
+        size = aq->query.sbuflen;
+        if (!ws_protoent_32_to_16( pe, aq->query.sbuf, &size )) fail = WSAENOBUFS;
+    }
+    else fail = GetLastError();
+
+    return finish_query( &aq->query, MAKELPARAM( size, fail ));
+}
+
+static DWORD WINAPI async_getprotobynumber(LPVOID arg)
+{
+    struct async_query_getprotobynumber *aq = arg;
+    int size = 0;
+    WORD fail = 0;
+    struct WS_protoent *pe;
+
+    if ((pe = WS_getprotobynumber(aq->proto_number)))
+    {
+        size = aq->query.sbuflen;
+        if (!ws_protoent_32_to_16( pe, aq->query.sbuf, &size )) fail = WSAENOBUFS;
+    }
+    else fail = GetLastError();
+
+    return finish_query( &aq->query, MAKELPARAM( size, fail ));
+}
+
+static DWORD WINAPI async_getservbyname(LPVOID arg)
+{
+    struct async_query_getservbyname *aq = arg;
+    int size = 0;
+    WORD fail = 0;
+    struct WS_servent *se;
+
+    if ((se = WS_getservbyname(aq->serv_name,aq->serv_proto)))
+    {
+        size = aq->query.sbuflen;
+        if (!ws_servent_32_to_16( se, aq->query.sbuf, &size )) fail = WSAENOBUFS;
+    }
+    else fail = GetLastError();
+
+    return finish_query( &aq->query, MAKELPARAM( size, fail ));
+}
+
+static DWORD WINAPI async_getservbyport(LPVOID arg)
+{
+    struct async_query_getservbyport *aq = arg;
+    int size = 0;
+    WORD fail = 0;
+    struct WS_servent *se;
+
+    if ((se = WS_getservbyport(aq->serv_port,aq->serv_proto)))
+    {
+        size = aq->query.sbuflen;
+        if (!ws_servent_32_to_16( se, aq->query.sbuf, &size )) fail = WSAENOBUFS;
+    }
+    else fail = GetLastError();
+
+    return finish_query( &aq->query, MAKELPARAM( size, fail ));
+}
+
+/****************************************************************************
+ * The main async help function.
+ *
+ * It either starts a thread or just calls the function directly for platforms
+ * with no thread support. This relies on the fact that PostMessage() does
+ * not actually call the windowproc before the function returns.
+ */
+static HANDLE16 run_query( HWND16 hWnd, UINT uMsg, LPTHREAD_START_ROUTINE func,
+                           struct async_query_header *query, SEGPTR sbuf, INT sbuflen )
+{
+    static LONG next_handle = 0xdead;
+    HANDLE thread;
+    ULONG handle = LOWORD( InterlockedIncrement( &next_handle ));
+
+    /* avoid handle 0 */
+    while (!handle) handle = LOWORD( InterlockedIncrement( &next_handle ));
+
+    query->hWnd    = HWND_32(hWnd);
+    query->uMsg    = uMsg;
+    query->handle  = handle;
+    query->sbuf    = sbuf;
+    query->sbuflen = sbuflen;
+
+    thread = CreateThread( NULL, 0, func, query, 0, NULL );
+    if (!thread)
+    {
+        SetLastError( WSAEWOULDBLOCK );
+        return 0;
+    }
+    CloseHandle( thread );
+    return handle;
+}
 
 /***********************************************************************
  *              accept		(WINSOCK.1)
@@ -425,7 +640,7 @@ SEGPTR WINAPI gethostbyaddr16(const char *addr, INT16 len, INT16 type)
     struct WS_hostent *he;
 
     if (!(he = WS_gethostbyaddr( addr, len, type ))) return 0;
-    return ws_hostent_32_to_16( he );
+    return ws_hostent_32_to_16( he, 0, NULL );
 }
 
 /***********************************************************************
@@ -436,7 +651,7 @@ SEGPTR WINAPI gethostbyname16(const char *name)
     struct WS_hostent *he;
 
     if (!(he = WS_gethostbyname( name ))) return 0;
-    return ws_hostent_32_to_16( he );
+    return ws_hostent_32_to_16( he, 0, NULL );
 }
 
 /***********************************************************************
@@ -447,7 +662,7 @@ SEGPTR WINAPI getprotobyname16(const char *name)
     struct WS_protoent *pe;
 
     if (!(pe = WS_getprotobyname( name ))) return 0;
-    return ws_protoent_32_to_16( pe );
+    return ws_protoent_32_to_16( pe, 0, NULL );
 }
 
 /***********************************************************************
@@ -458,7 +673,7 @@ SEGPTR WINAPI getprotobynumber16(INT16 number)
     struct WS_protoent *pe;
 
     if (!(pe = WS_getprotobynumber( number ))) return 0;
-    return ws_protoent_32_to_16( pe );
+    return ws_protoent_32_to_16( pe, 0, NULL );
 }
 
 /***********************************************************************
@@ -469,7 +684,7 @@ SEGPTR WINAPI getservbyname16(const char *name, const char *proto)
     struct WS_servent *se;
 
     if (!(se = WS_getservbyname( name, proto ))) return 0;
-    return ws_servent_32_to_16( se );
+    return ws_servent_32_to_16( se, 0, NULL );
 }
 
 /***********************************************************************
@@ -480,7 +695,7 @@ SEGPTR WINAPI getservbyport16(INT16 port, const char *proto)
     struct WS_servent *se;
 
     if (!(se = WS_getservbyport( port, proto ))) return 0;
-    return ws_servent_32_to_16( se );
+    return ws_servent_32_to_16( se, 0, NULL );
 }
 
 /***********************************************************************
@@ -497,6 +712,144 @@ INT16 WINAPI gethostname16(char *name, INT16 namelen)
 INT16 WINAPI WSAAsyncSelect16(SOCKET16 s, HWND16 hWnd, UINT16 wMsg, LONG lEvent)
 {
     return WSAAsyncSelect( s, HWND_32(hWnd), wMsg, lEvent );
+}
+
+/***********************************************************************
+ *       WSAAsyncGetHostByAddr	(WINSOCK.102)
+ */
+HANDLE16 WINAPI WSAAsyncGetHostByAddr16(HWND16 hWnd, UINT16 uMsg, LPCSTR addr,
+                               INT16 len, INT16 type, SEGPTR sbuf, INT16 buflen)
+{
+    struct async_query_gethostbyaddr *aq;
+
+    TRACE("hwnd %04x, msg %04x, addr %p[%i]\n", hWnd, uMsg, addr, len );
+
+    if (!(aq = HeapAlloc( GetProcessHeap(), 0, sizeof(*aq) + len )))
+    {
+        SetLastError( WSAEWOULDBLOCK );
+        return 0;
+    }
+    aq->host_addr = (char *)(aq + 1);
+    aq->host_len  = len;
+    aq->host_type = type;
+    memcpy( aq->host_addr, addr, len );
+    return run_query( hWnd, uMsg, async_gethostbyaddr, &aq->query, sbuf, buflen );
+}
+
+/***********************************************************************
+ *       WSAAsyncGetHostByName	(WINSOCK.103)
+ */
+HANDLE16 WINAPI WSAAsyncGetHostByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
+                                      SEGPTR sbuf, INT16 buflen)
+{
+    struct async_query_gethostbyname *aq;
+    unsigned int len = strlen(name) + 1;
+
+    TRACE("hwnd %04x, msg %04x, host %s, buffer %i\n", hWnd, uMsg, debugstr_a(name), buflen );
+
+    if (!(aq = HeapAlloc( GetProcessHeap(), 0, sizeof(*aq) + len )))
+    {
+        SetLastError( WSAEWOULDBLOCK );
+        return 0;
+    }
+    aq->host_name = (char *)(aq + 1);
+    strcpy( aq->host_name, name );
+    return run_query( hWnd, uMsg, async_gethostbyname, &aq->query, sbuf, buflen );
+}
+
+/***********************************************************************
+ *       WSAAsyncGetProtoByNumber	(WINSOCK.104)
+ */
+HANDLE16 WINAPI WSAAsyncGetProtoByNumber16(HWND16 hWnd,UINT16 uMsg,INT16 number,
+                                           SEGPTR sbuf, INT16 buflen)
+{
+    struct async_query_getprotobynumber *aq;
+
+    TRACE("hwnd %04x, msg %04x, num %i\n", hWnd, uMsg, number );
+
+    if (!(aq = HeapAlloc( GetProcessHeap(), 0, sizeof(*aq) )))
+    {
+        SetLastError( WSAEWOULDBLOCK );
+        return 0;
+    }
+    aq->proto_number = number;
+    return run_query( hWnd, uMsg, async_getprotobynumber, &aq->query, sbuf, buflen );
+}
+
+/***********************************************************************
+ *       WSAAsyncGetProtoByName	(WINSOCK.105)
+ */
+HANDLE16 WINAPI WSAAsyncGetProtoByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
+                                         SEGPTR sbuf, INT16 buflen)
+{
+    struct async_query_getprotobyname *aq;
+    unsigned int len = strlen(name) + 1;
+
+    TRACE("hwnd %04x, msg %04x, proto %s, buffer %i\n", hWnd, uMsg, debugstr_a(name), buflen );
+
+    if (!(aq = HeapAlloc( GetProcessHeap(), 0, sizeof(*aq) + len )))
+    {
+        SetLastError( WSAEWOULDBLOCK );
+        return 0;
+    }
+    aq->proto_name = (char *)(aq + 1);
+    strcpy( aq->proto_name, name );
+    return run_query( hWnd, uMsg, async_getprotobyname, &aq->query, sbuf, buflen );
+}
+
+/***********************************************************************
+ *       WSAAsyncGetServByPort	(WINSOCK.106)
+ */
+HANDLE16 WINAPI WSAAsyncGetServByPort16(HWND16 hWnd, UINT16 uMsg, INT16 port,
+                                        LPCSTR proto, SEGPTR sbuf, INT16 buflen)
+{
+    struct async_query_getservbyport *aq;
+    unsigned int len = strlen(proto) + 1;
+
+    TRACE("hwnd %04x, msg %04x, port %i, proto %s\n", hWnd, uMsg, port, debugstr_a(proto));
+
+    if (!(aq = HeapAlloc( GetProcessHeap(), 0, sizeof(*aq) + len )))
+    {
+        SetLastError( WSAEWOULDBLOCK );
+        return 0;
+    }
+    aq->serv_proto = (char *)(aq + 1);
+    aq->serv_port  = port;
+    strcpy( aq->serv_proto, proto );
+    return run_query( hWnd, uMsg, async_getservbyport, &aq->query, sbuf, buflen );
+}
+
+/***********************************************************************
+ *       WSAAsyncGetServByName	(WINSOCK.107)
+ */
+HANDLE16 WINAPI WSAAsyncGetServByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
+                                        LPCSTR proto, SEGPTR sbuf, INT16 buflen)
+{
+    struct async_query_getservbyname *aq;
+    unsigned int len1 = strlen(name) + 1;
+    unsigned int len2 = strlen(proto) + 1;
+
+    TRACE("hwnd %04x, msg %04x, name %s, proto %s\n", hWnd, uMsg, debugstr_a(name), debugstr_a(proto));
+
+    if (!(aq = HeapAlloc( GetProcessHeap(), 0, sizeof(*aq) + len1 + len2 )))
+    {
+        SetLastError( WSAEWOULDBLOCK );
+        return 0;
+    }
+    aq->serv_name  = (char *)(aq + 1);
+    aq->serv_proto = aq->serv_name + len1;
+    strcpy( aq->serv_name, name );
+    strcpy( aq->serv_proto, proto );
+    return run_query( hWnd, uMsg, async_getservbyname, &aq->query, sbuf, buflen );
+}
+
+/***********************************************************************
+ *       WSACancelAsyncRequest	(WINSOCK.108)
+ */
+INT16 WINAPI WSACancelAsyncRequest16(HANDLE16 hAsyncTaskHandle)
+{
+    FIXME("(%04x),stub\n", hAsyncTaskHandle);
+    return 0;
 }
 
 /***********************************************************************
