@@ -1558,6 +1558,7 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 #define ERROR_SXS_WRONG_SECTION_TYPE                       14009
 #define ERROR_SXS_THREAD_QUERIES_DISABLED                  14010
 #define ERROR_SXS_PROCESS_DEFAULT_ALREADY_SET              14011
+#define ERROR_SXS_CORRUPTION                               14083
 
 /* HRESULT values for OLE, SHELL and other Interface stuff */
 /* the codes 4000-40ff are reserved for OLE */
