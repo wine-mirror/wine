@@ -768,7 +768,7 @@ static void test_monthcal_currdate(void)
 static void test_monthcal_firstDay(void)
 {
     int res, fday, i, prev;
-    TCHAR b[128];
+    CHAR b[128];
     LCID lcid = LOCALE_USER_DEFAULT;
     HWND hwnd;
 
@@ -778,7 +778,7 @@ static void test_monthcal_firstDay(void)
 
     /* Setter and Getters for first day of week */
     /* check for locale first day */
-    if(GetLocaleInfo(lcid, LOCALE_IFIRSTDAYOFWEEK, b, 128)){
+    if(GetLocaleInfoA(lcid, LOCALE_IFIRSTDAYOFWEEK, b, 128)){
         fday = atoi(b);
         trace("fday: %d\n", fday);
         res = SendMessage(hwnd, MCM_GETFIRSTDAYOFWEEK, 0, 0);
@@ -1266,6 +1266,9 @@ static void test_monthcal_monthrange(void)
 
     res = SendMessage(hwnd, MCM_SETCURSEL, 0, (LPARAM)&st);
     expect(1,res);
+
+    /* to be locale independent */
+    SendMessage(hwnd, MCM_SETFIRSTDAYOFWEEK, 0, (LPARAM)6);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
