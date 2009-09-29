@@ -1210,30 +1210,30 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
     goto done;
   }
   if(PtInRect(&infoPtr->days, lpht->pt))
-    {
+  {
       lpht->st.wYear  = infoPtr->curSel.wYear;
       if ( day < 1)
-	{
+      {
 	  retval = MCHT_CALENDARDATEPREV;
 	  lpht->st.wMonth = infoPtr->curSel.wMonth - 1;
-	  if (lpht->st.wMonth <1)
-	    {
+	  if (lpht->st.wMonth < 1)
+	  {
 	      lpht->st.wMonth = 12;
 	      lpht->st.wYear--;
-	    }
-	  lpht->st.wDay   = MONTHCAL_MonthLength(lpht->st.wMonth,lpht->st.wYear) -day;
-	}
+	  }
+	  lpht->st.wDay = MONTHCAL_MonthLength(lpht->st.wMonth,lpht->st.wYear) + day;
+      }
       else if (day > MONTHCAL_MonthLength(infoPtr->curSel.wMonth,infoPtr->curSel.wYear))
-	{
+      {
 	  retval = MCHT_CALENDARDATENEXT;
 	  lpht->st.wMonth = infoPtr->curSel.wMonth + 1;
-	  if (lpht->st.wMonth <12)
-	    {
+	  if (lpht->st.wMonth > 12)
+	  {
 	      lpht->st.wMonth = 1;
 	      lpht->st.wYear++;
-	    }
-	  lpht->st.wDay   = day - MONTHCAL_MonthLength(infoPtr->curSel.wMonth,infoPtr->curSel.wYear) ;
-	}
+	  }
+	  lpht->st.wDay = day - MONTHCAL_MonthLength(infoPtr->curSel.wMonth,infoPtr->curSel.wYear);
+      }
       else {
 	retval = MCHT_CALENDARDATE;
 	lpht->st.wMonth = infoPtr->curSel.wMonth;
