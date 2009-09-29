@@ -71,12 +71,10 @@ fail:
     return E_OUTOFMEMORY;
 }
 
-/** Copy all members of one stateblock to another */
-static void stateblock_savedstates_copy(IWineD3DStateBlock* iface, SAVEDSTATES *dest, const SAVEDSTATES *source)
+/* Copy all members of one stateblock to another */
+static void stateblock_savedstates_copy(SAVEDSTATES *dest, const SAVEDSTATES *source,
+        const struct wined3d_gl_info *gl_info)
 {
-    IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
-    unsigned bsize = sizeof(BOOL);
-
     /* Single values */
     dest->primitive_type = source->primitive_type;
     dest->indices = source->indices;
@@ -102,8 +100,10 @@ static void stateblock_savedstates_copy(IWineD3DStateBlock* iface, SAVEDSTATES *
     dest->vertexShaderConstantsI = source->vertexShaderConstantsI;
 
     /* Dynamically sized arrays */
-    memcpy(dest->pixelShaderConstantsF, source->pixelShaderConstantsF, bsize * GL_LIMITS(pshader_constantsF));
-    memcpy(dest->vertexShaderConstantsF, source->vertexShaderConstantsF, bsize * GL_LIMITS(vshader_constantsF));
+    memcpy(dest->pixelShaderConstantsF, source->pixelShaderConstantsF,
+            sizeof(BOOL) * gl_info->max_pshader_constantsF);
+    memcpy(dest->vertexShaderConstantsF, source->vertexShaderConstantsF,
+            sizeof(BOOL) * gl_info->max_vshader_constantsF);
 }
 
 static inline void stateblock_set_bits(DWORD *map, UINT map_size)
@@ -179,7 +179,7 @@ static void stateblock_copy(IWineD3DStateBlockImpl *dst, IWineD3DStateBlockImpl 
     dst->blockType = src->blockType;
 
     /* Saved states */
-    stateblock_savedstates_copy((IWineD3DStateBlock *)src, &dst->changed, &src->changed);
+    stateblock_savedstates_copy(&dst->changed, &src->changed, gl_info);
 
     /* Single items */
     dst->gl_primitive_type = src->gl_primitive_type;
