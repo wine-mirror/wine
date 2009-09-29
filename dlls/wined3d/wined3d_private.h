@@ -2293,7 +2293,7 @@ struct IWineD3DStateBlockImpl
     /* Light hashmap . Collisions are handled using standard wine double linked lists */
 #define LIGHTMAP_SIZE 43 /* Use of a prime number recommended. Set to 1 for a linked list! */
 #define LIGHTMAP_HASHFUNC(x) ((x) % LIGHTMAP_SIZE) /* Primitive and simple function */
-    struct list               lightMap[LIGHTMAP_SIZE]; /* Mashmap containing the lights */
+    struct list               lightMap[LIGHTMAP_SIZE]; /* Hash map containing the lights */
     PLIGHTINFOEL             *activeLights[MAX_ACTIVE_LIGHTS]; /* Map of opengl lights to d3d lights */
 
     /* Clipping */
