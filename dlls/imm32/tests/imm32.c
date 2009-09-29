@@ -287,6 +287,11 @@ static void test_ImmSetCompositionString(void)
     todo_wine
     ok(!ret, "ImmSetCompositionStringW() succeeded.\n");
 
+    ret = ImmSetCompositionStringW(imc, SCS_SETSTR | SCS_CHANGEATTR | SCS_CHANGECLAUSE,
+        NULL, 0, NULL, 0);
+    todo_wine
+    ok(!ret, "ImmSetCompositionStringW() succeeded.\n");
+
     ImmReleaseContext(hwnd, imc);
 }
 
