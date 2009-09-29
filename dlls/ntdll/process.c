@@ -141,7 +141,6 @@ NTSTATUS WINAPI NtQueryInformationProcess(
     UNIMPLEMENTED_INFO_CLASS(ProcessForegroundInformation);
     UNIMPLEMENTED_INFO_CLASS(ProcessLUIDDeviceMapsEnabled);
     UNIMPLEMENTED_INFO_CLASS(ProcessBreakOnTermination);
-    UNIMPLEMENTED_INFO_CLASS(ProcessDebugObjectHandle);
     UNIMPLEMENTED_INFO_CLASS(ProcessDebugFlags);
     UNIMPLEMENTED_INFO_CLASS(ProcessHandleTracing);
 
@@ -295,6 +294,15 @@ NTSTATUS WINAPI NtQueryInformationProcess(
         /* "These are not the debuggers you are looking for." *
          * set it to 0 aka "no debugger" to satisfy copy protections */
         len = 4;
+        if (ProcessInformationLength == len)
+            memset(ProcessInformation, 0, ProcessInformationLength);
+        else
+            ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    case ProcessDebugObjectHandle:
+        /* "These are not the debuggers you are looking for." *
+         * set it to 0 aka "no debugger" to satisfy copy protections */
+        len = sizeof(HANDLE);
         if (ProcessInformationLength == len)
             memset(ProcessInformation, 0, ProcessInformationLength);
         else
