@@ -37,68 +37,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <stdarg.h>
-#include <string.h>
-#include <sys/types.h>
-#ifdef HAVE_SYS_IPC_H
-# include <sys/ipc.h>
-#endif
-#ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
-#endif
-#ifdef HAVE_SYS_FILIO_H
-# include <sys/filio.h>
-#endif
-#if defined(__svr4__)
-#include <sys/ioccom.h>
-#ifdef HAVE_SYS_SOCKIO_H
-# include <sys/sockio.h>
-#endif
-#endif
-
-#if defined(__EMX__)
-# include <sys/so_ioctl.h>
-#endif
-
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>
-#endif
-
-#ifdef HAVE_SYS_MSG_H
-# include <sys/msg.h>
-#endif
-#ifdef HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-# include <arpa/inet.h>
-#endif
-#include <ctype.h>
-#include <fcntl.h>
-#include <errno.h>
-#ifdef HAVE_SYS_ERRNO_H
-#include <sys/errno.h>
-#endif
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#include <stdlib.h>
-#ifdef HAVE_ARPA_NAMESER_H
-# include <arpa/nameser.h>
-#endif
-#ifdef HAVE_RESOLV_H
-# include <resolv.h>
-#endif
-
 #include "wine/winbase16.h"
 #include "windef.h"
 #include "winbase.h"
@@ -124,11 +62,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": csWSgetXXXbyYYY") }
 };
 CRITICAL_SECTION csWSgetXXXbyYYY = { &critsect_debug, -1, 0, 0, 0, 0 };
-
-/* prototypes of some functions in socket.c
- */
-UINT wsaErrno(void);
-UINT wsaHerrno(int errnr);
 
 #define AQ_WIN16	0x00
 #define AQ_WIN32	0x04
@@ -229,11 +162,11 @@ static DWORD finish_query( struct async_query_header *query, LPARAM lparam )
 
 /* ----- hostent */
 
-static int hostent_size(struct hostent* p_he)
+static int hostent_size(const struct WS_hostent* p_he)
 {
   int size = 0;
   if( p_he )
-  { size  = sizeof(struct hostent);
+  { size  = sizeof(struct WS_hostent);
     size += strlen(p_he->h_name) + 1;
     size += list_size(p_he->h_aliases, 0);
     size += list_size(p_he->h_addr_list, p_he->h_length ); }
@@ -243,7 +176,7 @@ static int hostent_size(struct hostent* p_he)
 /* Copy hostent to p_to, fix up inside pointers using p_base (different for
  * Win16 (linear vs. segmented). Return -neededsize on overrun.
  */
-static int WS_copy_he(char *p_to,char *p_base,int t_size,struct hostent* p_he, int flag)
+static int WS_copy_he(char *p_to,char *p_base,int t_size,const struct WS_hostent* p_he, int flag)
 {
 	char* p_name,*p_aliases,*p_addr,*p;
 	struct ws_hostent16 *p_to16 = (struct ws_hostent16*)p_to;
@@ -251,7 +184,7 @@ static int WS_copy_he(char *p_to,char *p_base,int t_size,struct hostent* p_he, i
 	int	size = hostent_size(p_he) +
 		(
 		 (flag & AQ_WIN32) ? sizeof(struct WS_hostent) : sizeof(struct ws_hostent16)
-		- sizeof(struct hostent)
+		- sizeof(struct WS_hostent)
 		);
 
 	if (t_size < size)
@@ -291,47 +224,19 @@ static DWORD WINAPI async_gethostbyname(LPVOID arg)
     struct async_query_gethostbyname *aq = arg;
     int size = 0;
     WORD fail = 0;
-    struct hostent *he;
+    struct WS_hostent *he;
     char *copy_hostent = HB_WIN32(aq) ? aq->query.sbuf : MapSL((SEGPTR)aq->query.sbuf);
-#ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
-    char *extrabuf;
-    int ebufsize=1024;
-    struct hostent hostentry;
-    int locerr = ENOBUFS;
-#endif
-    char buf[100];
-    if( !(aq->host_name)) {
-        aq->host_name = buf;
-        if( gethostname( buf, 100) == -1) {
-            fail = WSAENOBUFS; /* appropriate ? */
-            goto done;
+
+    he = WS_gethostbyname(aq->host_name);
+    if (he) {
+        size = WS_copy_he(copy_hostent, aq->query.sbuf, aq->query.sbuflen, he, aq->query.flags);
+        if (size < 0) {
+            fail = WSAENOBUFS;
+            size = -size;
         }
     }
+    else fail = GetLastError();
 
-#ifdef  HAVE_LINUX_GETHOSTBYNAME_R_6
-    he = NULL;
-    extrabuf=HeapAlloc(GetProcessHeap(),0,ebufsize) ;
-    while(extrabuf) {
-        if (gethostbyname_r(aq->host_name, &hostentry, extrabuf, ebufsize, &he, &locerr) != ERANGE) break;
-        ebufsize *=2;
-        extrabuf=HeapReAlloc(GetProcessHeap(),0,extrabuf,ebufsize) ;
-    }
-    if (he) size = WS_copy_he(copy_hostent, aq->query.sbuf, aq->query.sbuflen, he, aq->query.flags);
-    else fail = ((locerr < 0) ? wsaErrno() : wsaHerrno(locerr));
-    HeapFree(GetProcessHeap(),0,extrabuf);
-#else
-    EnterCriticalSection( &csWSgetXXXbyYYY );
-    he = gethostbyname(aq->host_name);
-    if (he) size = WS_copy_he(copy_hostent, aq->query.sbuf, aq->query.sbuflen, he, aq->query.flags);
-    else fail = ((h_errno < 0) ? wsaErrno() : wsaHerrno(h_errno));
-    LeaveCriticalSection( &csWSgetXXXbyYYY );
-#endif
-    if (size < 0) {
-        fail = WSAENOBUFS;
-        size = -size;
-    }
-
-done:
     return finish_query( &aq->query, MAKELPARAM( size, fail ));
 }
 
@@ -340,46 +245,27 @@ static DWORD WINAPI async_gethostbyaddr(LPVOID arg)
     struct async_query_gethostbyaddr *aq = arg;
     int size = 0;
     WORD fail = 0;
-    struct hostent *he;
+    struct WS_hostent *he;
     char *copy_hostent = HB_WIN32(aq) ? aq->query.sbuf : MapSL((SEGPTR)aq->query.sbuf);
-#ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
-    char *extrabuf;
-    int ebufsize=1024;
-    struct hostent hostentry;
-    int locerr = ENOBUFS;
 
-    he = NULL;
-    extrabuf=HeapAlloc(GetProcessHeap(),0,ebufsize) ;
-    while(extrabuf) {
-        if (gethostbyaddr_r(aq->host_addr,aq->host_len,aq->host_type,
-                            &hostentry, extrabuf, ebufsize, &he, &locerr) != ERANGE) break;
-        ebufsize *=2;
-        extrabuf=HeapReAlloc(GetProcessHeap(),0,extrabuf,ebufsize) ;
-    }
-    if (he) size = WS_copy_he(copy_hostent, aq->query.sbuf, aq->query.sbuflen, he, aq->query.flags);
-    else fail = ((locerr < 0) ? wsaErrno() : wsaHerrno(locerr));
-    HeapFree(GetProcessHeap(),0,extrabuf);
-#else
-    EnterCriticalSection( &csWSgetXXXbyYYY );
-    he = gethostbyaddr(aq->host_addr,aq->host_len,aq->host_type);
-    if (he) size = WS_copy_he(copy_hostent, aq->query.sbuf, aq->query.sbuflen, he, aq->query.flags);
-    else fail = ((h_errno < 0) ? wsaErrno() : wsaHerrno(h_errno));
-    LeaveCriticalSection( &csWSgetXXXbyYYY );
-#endif
-    if (size < 0) {
-        fail = WSAENOBUFS;
-        size = -size;
+    he = WS_gethostbyaddr(aq->host_addr,aq->host_len,aq->host_type);
+    if (he) {
+        size = WS_copy_he(copy_hostent, aq->query.sbuf, aq->query.sbuflen, he, aq->query.flags);
+        if (size < 0) {
+            fail = WSAENOBUFS;
+            size = -size;
+        }
     }
     return finish_query( &aq->query, MAKELPARAM( size, fail ));
 }
 
 /* ----- protoent */
 
-static int protoent_size(struct protoent* p_pe)
+static int protoent_size(const struct WS_protoent* p_pe)
 {
   int size = 0;
   if( p_pe )
-  { size  = sizeof(struct protoent);
+  { size  = sizeof(struct WS_protoent);
     size += strlen(p_pe->p_name) + 1;
     size += list_size(p_pe->p_aliases, 0); }
   return size;
@@ -388,7 +274,7 @@ static int protoent_size(struct protoent* p_pe)
 /* Copy protoent to p_to, fix up inside pointers using p_base (different for
  * Win16 (linear vs. segmented). Return -neededsize on overrun.
  */
-static int WS_copy_pe(char *p_to,char *p_base,int t_size,struct protoent* p_pe, int flag)
+static int WS_copy_pe(char *p_to,char *p_base,int t_size,const struct WS_protoent* p_pe, int flag)
 {
 	char* p_name,*p_aliases,*p;
 	struct ws_protoent16 *p_to16 = (struct ws_protoent16*)p_to;
@@ -396,7 +282,7 @@ static int WS_copy_pe(char *p_to,char *p_base,int t_size,struct protoent* p_pe, 
 	int	size = protoent_size(p_pe) +
 		(
 		 (flag & AQ_WIN32) ? sizeof(struct WS_protoent) : sizeof(struct ws_protoent16)
-		- sizeof(struct protoent)
+		- sizeof(struct WS_protoent)
 		);
 
 	if (t_size < size)
@@ -429,27 +315,19 @@ static DWORD WINAPI async_getprotobyname(LPVOID arg)
     struct async_query_getprotobyname *aq = arg;
     int size = 0;
     WORD fail = 0;
-
-#ifdef HAVE_GETPROTOBYNAME
-    struct protoent *pe;
+    struct WS_protoent *pe;
     char *copy_protoent = HB_WIN32(aq) ? aq->query.sbuf : MapSL((SEGPTR)aq->query.sbuf);
-    EnterCriticalSection( &csWSgetXXXbyYYY );
-    pe = getprotobyname(aq->proto_name);
+
+    pe = WS_getprotobyname(aq->proto_name);
     if (pe) {
         size = WS_copy_pe(copy_protoent, aq->query.sbuf, aq->query.sbuflen, pe, aq->query.flags);
         if (size < 0) {
             fail = WSAENOBUFS;
             size = -size;
         }
-    } else {
-        MESSAGE("protocol %s not found; You might want to add "
-                "this to /etc/protocols\n", debugstr_a(aq->proto_name) );
-        fail = WSANO_DATA;
     }
-    LeaveCriticalSection( &csWSgetXXXbyYYY );
-#else
-    fail = WSANO_DATA;
-#endif
+    else fail = GetLastError();
+
     return finish_query( &aq->query, MAKELPARAM( size, fail ));
 }
 
@@ -458,37 +336,29 @@ static DWORD WINAPI async_getprotobynumber(LPVOID arg)
     struct async_query_getprotobynumber *aq = arg;
     int size = 0;
     WORD fail = 0;
-
-#ifdef HAVE_GETPROTOBYNUMBER
-    struct protoent *pe;
+    struct WS_protoent *pe;
     char *copy_protoent = HB_WIN32(aq) ? aq->query.sbuf : MapSL((SEGPTR)aq->query.sbuf);
-    EnterCriticalSection( &csWSgetXXXbyYYY );
-    pe = getprotobynumber(aq->proto_number);
+
+    pe = WS_getprotobynumber(aq->proto_number);
     if (pe) {
         size = WS_copy_pe(copy_protoent, aq->query.sbuf, aq->query.sbuflen, pe, aq->query.flags);
         if (size < 0) {
             fail = WSAENOBUFS;
             size = -size;
         }
-    } else {
-        MESSAGE("protocol number %d not found; You might want to add "
-                "this to /etc/protocols\n", aq->proto_number );
-        fail = WSANO_DATA;
     }
-    LeaveCriticalSection( &csWSgetXXXbyYYY );
-#else
-    fail = WSANO_DATA;
-#endif
+    else fail = GetLastError();
+
     return finish_query( &aq->query, MAKELPARAM( size, fail ));
 }
 
 /* ----- servent */
 
-static int servent_size(struct servent* p_se)
+static int servent_size(const struct WS_servent* p_se)
 {
 	int size = 0;
 	if( p_se ) {
-		size += sizeof(struct servent);
+		size += sizeof(struct WS_servent);
 		size += strlen(p_se->s_proto) + strlen(p_se->s_name) + 2;
 		size += list_size(p_se->s_aliases, 0);
 	}
@@ -499,7 +369,7 @@ static int servent_size(struct servent* p_se)
  * Win16 (linear vs. segmented). Return -neededsize on overrun.
  * Take care of different Win16/Win32 servent structs (packing !)
  */
-static int WS_copy_se(char *p_to,char *p_base,int t_size,struct servent* p_se, int flag)
+static int WS_copy_se(char *p_to,char *p_base,int t_size,const struct WS_servent* p_se, int flag)
 {
 	char* p_name,*p_aliases,*p_proto,*p;
 	struct ws_servent16 *p_to16 = (struct ws_servent16*)p_to;
@@ -507,7 +377,7 @@ static int WS_copy_se(char *p_to,char *p_base,int t_size,struct servent* p_se, i
 	int	size = servent_size(p_se) +
 		(
 		 (flag & AQ_WIN32) ? sizeof(struct WS_servent) : sizeof(struct ws_servent16)
-		- sizeof(struct servent)
+		- sizeof(struct WS_servent)
 		);
 
 	if (t_size < size)
@@ -544,24 +414,19 @@ static DWORD WINAPI async_getservbyname(LPVOID arg)
     struct async_query_getservbyname *aq = arg;
     int size = 0;
     WORD fail = 0;
-    struct servent *se;
+    struct WS_servent *se;
     char *copy_servent = HB_WIN32(aq) ? aq->query.sbuf : MapSL((SEGPTR)aq->query.sbuf);
 
-    EnterCriticalSection( &csWSgetXXXbyYYY );
-    se = getservbyname(aq->serv_name,aq->serv_proto);
+    se = WS_getservbyname(aq->serv_name,aq->serv_proto);
     if (se) {
         size = WS_copy_se(copy_servent, aq->query.sbuf, aq->query.sbuflen, se, aq->query.flags);
         if (size < 0) {
             fail = WSAENOBUFS;
             size = -size;
         }
-    } else {
-        MESSAGE("service %s protocol %s not found; You might want to add "
-                "this to /etc/services\n", debugstr_a(aq->serv_name) ,
-                aq->serv_proto ? debugstr_a(aq->serv_proto ):"*");
-        fail = WSANO_DATA;
     }
-    LeaveCriticalSection( &csWSgetXXXbyYYY );
+    else fail = GetLastError();
+
     return finish_query( &aq->query, MAKELPARAM( size, fail ));
 }
 
@@ -570,28 +435,19 @@ static DWORD WINAPI async_getservbyport(LPVOID arg)
     struct async_query_getservbyport *aq = arg;
     int size = 0;
     WORD fail = 0;
-    struct servent *se;
+    struct WS_servent *se;
     char *copy_servent = HB_WIN32(aq) ? aq->query.sbuf : MapSL((SEGPTR)aq->query.sbuf);
 
-    EnterCriticalSection( &csWSgetXXXbyYYY );
-#ifdef HAVE_GETSERVBYPORT
-    se = getservbyport(aq->serv_port,aq->serv_proto);
+    se = WS_getservbyport(aq->serv_port,aq->serv_proto);
     if (se) {
         size = WS_copy_se(copy_servent, aq->query.sbuf, aq->query.sbuflen, se, aq->query.flags);
         if (size < 0) {
             fail = WSAENOBUFS;
             size = -size;
         }
-    } else {
-        MESSAGE("service on port %d protocol %s not found; You might want to add "
-                "this to /etc/services\n", aq->serv_port,
-                aq->serv_proto ? debugstr_a(aq->serv_proto ):"*");
-        fail = WSANO_DATA;
     }
-#else
-    fail = WSANO_DATA;
-#endif
-    LeaveCriticalSection( &csWSgetXXXbyYYY );
+    else fail = GetLastError();
+
     return finish_query( &aq->query, MAKELPARAM( size, fail ));
 }
 
