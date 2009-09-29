@@ -221,7 +221,6 @@ static const WCHAR Help_FileW[] = {'H','e','l','p',' ','F','i','l','e',0};
 static const WCHAR LocationW[] = {'L','o','c','a','t','i','o','n',0};
 static const WCHAR ManufacturerW[] = {'M','a','n','u','f','a','c','t','u','r','e','r',0};
 static const WCHAR MonitorW[] = {'M','o','n','i','t','o','r',0};
-static const WCHAR MonitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
 static const WCHAR NameW[] = {'N','a','m','e',0};
 static const WCHAR ObjectGUIDW[] = {'O','b','j','e','c','t','G','U','I','D',0};
 static const WCHAR OEM_UrlW[] = {'O','E','M',' ','U','r','l',0};
@@ -943,48 +942,6 @@ cleanup:
     HeapFree(GetProcessHeap(), 0, regroot);
     TRACE("=> %p\n", pm);
     return pm;
-}
-
-/******************************************************************
- * monitor_loadui [internal]
- *
- * load the userinterface-dll for a given portmonitor
- *
- * On failure, NULL is returned
- */
-
-static monitor_t * monitor_loadui(monitor_t * pm)
-{
-    monitor_t * pui = NULL;
-    LPWSTR  buffer[MAX_PATH];
-    HANDLE  hXcv;
-    DWORD   len;
-    DWORD   res;
-
-    if (pm == NULL) return NULL;
-    TRACE("(%p) => dllname: %s\n", pm, debugstr_w(pm->dllname));
-
-    /* Try the Portmonitor first; works for many monitors */
-    if (pm->monitorUI) {
-        EnterCriticalSection(&monitor_handles_cs);
-        pm->refcount++;
-        LeaveCriticalSection(&monitor_handles_cs);
-        return pm;
-    }
-
-    /* query the userinterface-dllname from the Portmonitor */
-    if ((pm->monitor) && (pm->monitor->pfnXcvDataPort)) {
-        /* building (",XcvMonitor %s",pm->name) not needed yet */
-        res = pm->monitor->pfnXcvOpenPort(emptyStringW, SERVER_ACCESS_ADMINISTER, &hXcv);
-        TRACE("got %u with %p\n", res, hXcv);
-        if (res) {
-            res = pm->monitor->pfnXcvDataPort(hXcv, MonitorUIW, NULL, 0, (BYTE *) buffer, sizeof(buffer), &len);
-            TRACE("got %u with %s\n", res, debugstr_w((LPWSTR) buffer));
-            if (res == ERROR_SUCCESS) pui = monitor_load(NULL, (LPWSTR) buffer);
-            pm->monitor->pfnXcvClosePort(hXcv);
-        }
-    }
-    return pui;
 }
 
 /******************************************************************
@@ -6015,57 +5972,16 @@ BOOL WINAPI AddPortA(LPSTR pName, HWND hWnd, LPSTR pMonitorName)
  */
 BOOL WINAPI AddPortW(LPWSTR pName, HWND hWnd, LPWSTR pMonitorName)
 {
-    monitor_t * pm;
-    monitor_t * pui;
-    DWORD       res;
-
     TRACE("(%s, %p, %s)\n", debugstr_w(pName), hWnd, debugstr_w(pMonitorName));
 
-    if (pName && pName[0]) {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+    if ((backend == NULL)  && !load_backend()) return FALSE;
 
     if (!pMonitorName) {
         SetLastError(RPC_X_NULL_REF_POINTER);
         return FALSE;
     }
 
-    /* an empty Monitorname is Invalid */
-    if (!pMonitorName[0]) {
-        SetLastError(ERROR_NOT_SUPPORTED);
-        return FALSE;
-    }
-
-    pm = monitor_load(pMonitorName, NULL);
-    if (pm && pm->monitor && pm->monitor->pfnAddPort) {
-        res = pm->monitor->pfnAddPort(pName, hWnd, pMonitorName);
-        TRACE("got %d with %u\n", res, GetLastError());
-        res = TRUE;
-    }
-    else
-    {
-        pui = monitor_loadui(pm);
-        if (pui && pui->monitorUI && pui->monitorUI->pfnAddPortUI) {
-            TRACE("use %p: %s\n", pui, debugstr_w(pui->dllname));
-            res = pui->monitorUI->pfnAddPortUI(pName, hWnd, pMonitorName, NULL);
-            TRACE("got %d with %u\n", res, GetLastError());
-            res = TRUE;
-        }
-        else
-        {
-            FIXME("not implemented for %s (%p: %s => %p: %s)\n", debugstr_w(pMonitorName),
-                  pm, debugstr_w(pm ? pm->dllname : NULL), pui, debugstr_w(pui ? pui->dllname : NULL));
-
-            /* XP: ERROR_NOT_SUPPORTED, NT351,9x: ERROR_INVALID_PARAMETER */
-            SetLastError(ERROR_NOT_SUPPORTED);
-            res = FALSE;
-        }
-        monitor_unload(pui);
-    }
-    monitor_unload(pm);
-    TRACE("returning %d with %u\n", res, GetLastError());
-    return res;
+    return backend->fpAddPort(pName, hWnd, pMonitorName);
 }
 
 /******************************************************************************
