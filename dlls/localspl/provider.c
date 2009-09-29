@@ -568,7 +568,7 @@ static DWORD monitor_loadall(void)
 static monitor_t * monitor_loadui(monitor_t * pm)
 {
     monitor_t * pui = NULL;
-    LPWSTR  buffer[MAX_PATH];
+    WCHAR   buffer[MAX_PATH];
     HANDLE  hXcv;
     DWORD   len;
     DWORD   res;
@@ -591,8 +591,8 @@ static monitor_t * monitor_loadui(monitor_t * pm)
         TRACE("got %u with %p\n", res, hXcv);
         if (res) {
             res = pm->monitor->pfnXcvDataPort(hXcv, monitorUIW, NULL, 0, (BYTE *) buffer, sizeof(buffer), &len);
-            TRACE("got %u with %s\n", res, debugstr_w((LPWSTR) buffer));
-            if (res == ERROR_SUCCESS) pui = monitor_load(NULL, (LPWSTR) buffer);
+            TRACE("got %u with %s\n", res, debugstr_w(buffer));
+            if (res == ERROR_SUCCESS) pui = monitor_load(NULL, buffer);
             pm->monitor->pfnXcvClosePort(hXcv);
         }
     }
