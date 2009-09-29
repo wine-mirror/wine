@@ -155,6 +155,20 @@ static int running_on_visible_desktop (void)
     return IsWindowVisible(desktop);
 }
 
+/* check for wine fake dll module */
+static BOOL is_fake_dll( HMODULE module )
+{
+    static const char fakedll_signature[] = "Wine placeholder DLL";
+    const IMAGE_DOS_HEADER *dos;
+
+    if (!((ULONG_PTR)module & 1)) return FALSE;  /* not loaded as datafile */
+    dos = (const IMAGE_DOS_HEADER *)((const char *)module - 1);
+    if (dos->e_magic != IMAGE_DOS_SIGNATURE) return FALSE;
+    if (dos->e_lfanew >= sizeof(*dos) + sizeof(fakedll_signature) &&
+        !memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) )) return TRUE;
+    return FALSE;
+}
+
 /* check if Gecko is present, trying to trigger the install if not */
 static BOOL gecko_check(void)
 {
@@ -638,6 +652,17 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
     dll = LoadLibraryExA(dllname, NULL, LOAD_LIBRARY_AS_DATAFILE);
 
     if (!dll) dll = load_com_dll(dllname, &wine_tests[nr_of_files].maindllpath, filename);
+
+    if (dll && running_under_wine() && ((ULONG_PTR)dll & 1))
+    {
+        /* builtin dlls can't be loaded as datafile, so we must have native or fake dll */
+        if (!is_fake_dll(dll))
+        {
+            FreeLibrary(dll);
+            xprintf ("    %s=load error Configured as native\n", dllname);
+            return TRUE;
+        }
+    }
 
     if (!dll && pLoadLibraryShim)
     {
