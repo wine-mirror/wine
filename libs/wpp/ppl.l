@@ -1514,6 +1514,9 @@ void pp_do_include(char *fname, int type)
 	int n;
 	includelogicentry_t *iep;
 
+	if(!fname)
+		return;
+
 	for(iep = pp_includelogiclist; iep; iep = iep->next)
 	{
 		if(!strcmp(iep->filename, fname))

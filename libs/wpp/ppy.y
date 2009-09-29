@@ -279,16 +279,16 @@ preprocessor
 	| tMACRO res_arg allmargs tMACROEND opt_mtexts tNL	{
 		pp_add_macro($1, macro_args, nmacro_args, $5);
 		}
-	| tLINE tSINT tDQSTRING	tNL	{ fprintf(ppy_out, "# %d %s\n", $2 , $3); free($3); }
-	| tGCCLINE tSINT tDQSTRING tNL	{ fprintf(ppy_out, "# %d %s\n", $2 , $3); free($3); }
+	| tLINE tSINT tDQSTRING	tNL	{ if($3) fprintf(ppy_out, "# %d %s\n", $2 , $3); free($3); }
+	| tGCCLINE tSINT tDQSTRING tNL	{ if($3) fprintf(ppy_out, "# %d %s\n", $2 , $3); free($3); }
 	| tGCCLINE tSINT tDQSTRING tSINT tNL
-		{ fprintf(ppy_out, "# %d %s %d\n", $2, $3, $4); free($3); }
+		{ if($3) fprintf(ppy_out, "# %d %s %d\n", $2, $3, $4); free($3); }
 	| tGCCLINE tSINT tDQSTRING tSINT tSINT tNL
-		{ fprintf(ppy_out, "# %d %s %d %d\n", $2 ,$3, $4, $5); free($3); }
+		{ if($3) fprintf(ppy_out, "# %d %s %d %d\n", $2 ,$3, $4, $5); free($3); }
 	| tGCCLINE tSINT tDQSTRING tSINT tSINT tSINT  tNL
-		{ fprintf(ppy_out, "# %d %s %d %d %d\n", $2 ,$3 ,$4 ,$5, $6); free($3); }
+		{ if($3) fprintf(ppy_out, "# %d %s %d %d %d\n", $2 ,$3 ,$4 ,$5, $6); free($3); }
 	| tGCCLINE tSINT tDQSTRING tSINT tSINT tSINT tSINT tNL
-		{ fprintf(ppy_out, "# %d %s %d %d %d %d\n", $2 ,$3 ,$4 ,$5, $6, $7); free($3); }
+		{ if($3) fprintf(ppy_out, "# %d %s %d %d %d %d\n", $2 ,$3 ,$4 ,$5, $6, $7); free($3); }
 	| tGCCLINE tNL		/* The null-token */
 	| tERROR opt_text tNL	{ ppy_error("#error directive: '%s'", $2); free($2); }
 	| tWARNING opt_text tNL	{ ppy_warning("#warning directive: '%s'", $2); free($2); }
