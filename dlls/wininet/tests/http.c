@@ -1735,6 +1735,10 @@ static DWORD CALLBACK server_thread(LPVOID param)
             send(c, okmsg, sizeof okmsg-1, 0);
             send(c, page1, sizeof page1-1, 0);
         }
+        if (strstr(buffer, "GET /testG"))
+        {
+            send(c, page1, sizeof page1-1, 0);
+        }
 
         shutdown(c, 2);
         closesocket(c);
@@ -2218,6 +2222,69 @@ static void test_invalid_response_headers(int port)
     InternetCloseHandle(session);
 }
 
+static void test_response_without_headers(int port)
+{
+    HINTERNET hi, hc, hr;
+    DWORD r, count, size, status;
+    char buffer[1024];
+
+    SetLastError(0xdeadbeef);
+    hi = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(hi != NULL, "open failed %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hc = InternetConnect(hi, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(hc != NULL, "connect failed %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hr = HttpOpenRequest(hc, NULL, "/testG", NULL, NULL, NULL, 0, 0);
+    ok(hr != NULL, "HttpOpenRequest failed %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    r = HttpSendRequest(hr, NULL, 0, NULL, 0);
+    todo_wine ok(r, "HttpSendRequest failed %u\n", GetLastError());
+
+    count = 0;
+    memset(buffer, 0, sizeof buffer);
+    SetLastError(0xdeadbeef);
+    r = InternetReadFile(hr, buffer, sizeof buffer, &count);
+    ok(r, "InternetReadFile failed %u\n", GetLastError());
+    todo_wine ok(count == sizeof page1 - 1, "count was wrong\n");
+    todo_wine ok(!memcmp(buffer, page1, sizeof page1), "http data wrong\n");
+
+    status = 0;
+    size = sizeof(status);
+    SetLastError(0xdeadbeef);
+    r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
+    todo_wine ok(r, "HttpQueryInfo failed %u\n", GetLastError());
+    todo_wine ok(status == 200, "expected status 200 got %u\n", status);
+
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_TEXT, buffer, &size, NULL );
+    todo_wine ok(r, "HttpQueryInfo failed %u\n", GetLastError());
+    todo_wine ok(!strcmp(buffer, "OK"), "expected OK got: \"%s\"\n", buffer);
+
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    r = HttpQueryInfo(hr, HTTP_QUERY_VERSION, buffer, &size, NULL);
+    ok(r, "HttpQueryInfo failed %u\n", GetLastError());
+    todo_wine ok(!strcmp(buffer, "HTTP/1.0"), "expected HTTP/1.0 got: \"%s\"\n", buffer);
+
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    r = HttpQueryInfo(hr, HTTP_QUERY_RAW_HEADERS, buffer, &size, NULL);
+    ok(r, "HttpQueryInfo failed %u\n", GetLastError());
+    todo_wine ok(!strcmp(buffer, "HTTP/1.0 200 OK"), "raw headers wrong: \"%s\"\n", buffer);
+
+    InternetCloseHandle(hr);
+    InternetCloseHandle(hc);
+    InternetCloseHandle(hi);
+}
+
 static void test_HttpQueryInfo(int port)
 {
     HINTERNET hi, hc, hr;
@@ -2353,6 +2420,7 @@ static void test_http_connection(void)
     test_cookie_header(si.port);
     test_basic_authentication(si.port);
     test_invalid_response_headers(si.port);
+    test_response_without_headers(si.port);
     test_HttpQueryInfo(si.port);
     test_HttpSendRequestW(si.port);
 

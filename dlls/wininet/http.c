@@ -4319,7 +4319,7 @@ static INT HTTP_GetResponseHeaders(http_request_t *lpwhr, BOOL clear)
         else if (!codeHundred)
         {
             FIXME("Non status line at head of response (%s)\n",debugstr_w(buffer));
-            continue;
+            goto lend;
         }
     } while (codeHundred);
 
