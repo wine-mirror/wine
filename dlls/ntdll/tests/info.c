@@ -896,12 +896,14 @@ static void test_affinity(void)
     PROCESS_BASIC_INFORMATION pbi;
     DWORD_PTR proc_affinity, thread_affinity;
     THREAD_BASIC_INFORMATION tbi;
+    SYSTEM_INFO si;
 
+    GetSystemInfo(&si);
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), NULL );
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     proc_affinity = (DWORD_PTR)pbi.Reserved2[0];
-    ok( proc_affinity == (1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1, "Unexpected process affinity\n" );
-    proc_affinity = 1 << NtCurrentTeb()->Peb->NumberOfProcessors;
+    ok( proc_affinity == (1 << si.dwNumberOfProcessors) - 1, "Unexpected process affinity\n" );
+    proc_affinity = 1 << si.dwNumberOfProcessors;
     status = pNtSetInformationProcess( GetCurrentProcess(), ProcessAffinityMask, &proc_affinity, sizeof(proc_affinity) );
     ok( status == STATUS_INVALID_PARAMETER,
         "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
@@ -913,8 +915,8 @@ static void test_affinity(void)
 
     status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-    ok( tbi.AffinityMask == (1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1, "Unexpected thread affinity\n" );
-    thread_affinity = 1 << NtCurrentTeb()->Peb->NumberOfProcessors;
+    ok( tbi.AffinityMask == (1 << si.dwNumberOfProcessors) - 1, "Unexpected thread affinity\n" );
+    thread_affinity = 1 << si.dwNumberOfProcessors;
     status = pNtSetInformationThread( GetCurrentThread(), ThreadAffinityMask, &thread_affinity, sizeof(thread_affinity) );
     ok( status == STATUS_INVALID_PARAMETER,
         "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
@@ -929,7 +931,7 @@ static void test_affinity(void)
     status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
     ok( tbi.AffinityMask == 1, "Unexpected thread affinity\n" );
 
-    if (NtCurrentTeb()->Peb->NumberOfProcessors <= 1)
+    if (si.dwNumberOfProcessors <= 1)
     {
         skip("only one processor, skipping affinity testing\n");
         return;
@@ -947,14 +949,14 @@ static void test_affinity(void)
     todo_wine
     ok( tbi.AffinityMask == 2, "Unexpected thread affinity\n" );
 
-    proc_affinity = (1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
+    proc_affinity = (1 << si.dwNumberOfProcessors) - 1;
     status = pNtSetInformationProcess( GetCurrentProcess(), ProcessAffinityMask, &proc_affinity, sizeof(proc_affinity) );
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     /* Resetting the process affinity also resets the thread affinity */
     status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     todo_wine
-    ok( tbi.AffinityMask == (1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1,
+    ok( tbi.AffinityMask == (1 << si.dwNumberOfProcessors) - 1,
         "Unexpected thread affinity" );
 }
 
