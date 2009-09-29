@@ -251,7 +251,7 @@ LONG FD31_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,
 	    SetBkColor( lpdis->hDC, oldBk );
 	    SetTextColor( lpdis->hDC, oldText );
 	}
-	DrawIcon(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top, hFolder);
+	DrawIconEx( lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top, hFolder, 16, 16, 0, 0, DI_NORMAL );
         HeapFree(GetProcessHeap(), 0, str);
 	return TRUE;
     }
@@ -285,7 +285,7 @@ LONG FD31_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,
 	    SetBkColor( lpdis->hDC, oldBk );
 	    SetTextColor( lpdis->hDC, oldText );
 	}
-	DrawIcon(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top, hIcon);
+	DrawIconEx( lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top, hIcon, 16, 16, 0, 0, DI_NORMAL );
         HeapFree(GetProcessHeap(), 0, str);
 	return TRUE;
     }
