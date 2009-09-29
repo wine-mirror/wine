@@ -588,273 +588,31 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, WINED3DSTATEBLOCKTYPE Type, IWineD3DStateBlock** ppStateBlock, IUnknown *parent) {
-
-    IWineD3DDeviceImpl     *This = (IWineD3DDeviceImpl *)iface;
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice *iface,
+        WINED3DSTATEBLOCKTYPE type, IWineD3DStateBlock **stateblock, IUnknown *parent)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DStateBlockImpl *object;
-    unsigned int i, j;
-    HRESULT temp_result;
+    HRESULT hr;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if(!object)
     {
-        ERR("Out of memory\n");
-        *ppStateBlock = NULL;
-        return WINED3DERR_OUTOFVIDEOMEMORY;
+        ERR("Failed to allocate stateblock memory.\n");
+        return E_OUTOFMEMORY;
     }
 
-    object->lpVtbl = &IWineD3DStateBlock_Vtbl;
-    object->wineD3DDevice = This;
-    object->parent = parent;
-    object->ref = 1;
-    object->blockType = Type;
-
-    *ppStateBlock = (IWineD3DStateBlock *)object;
-
-    for(i = 0; i < LIGHTMAP_SIZE; i++) {
-        list_init(&object->lightMap[i]);
-    }
-
-    temp_result = allocate_shader_constants(object);
-    if (FAILED(temp_result))
+    hr = stateblock_init(object, This, type, parent);
+    if (FAILED(hr))
     {
+        WARN("Failed to initialize stateblock, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        return temp_result;
+        return hr;
     }
 
-    /* Special case - Used during initialization to produce a placeholder stateblock
-          so other functions called can update a state block                         */
-    if (Type == WINED3DSBT_INIT || Type == WINED3DSBT_RECORDED)
-    {
-        /* Don't bother increasing the reference count otherwise a device will never
-           be freed due to circular dependencies                                   */
-        return WINED3D_OK;
-    }
+    TRACE("Created stateblock %p.\n", object);
+    *stateblock = (IWineD3DStateBlock *)object;
 
-    /* Otherwise, might as well set the whole state block to the appropriate values  */
-    if (This->stateBlock != NULL)
-        stateblock_copy((IWineD3DStateBlock*) object, (IWineD3DStateBlock*) This->stateBlock);
-    else
-        memset(object->streamFreq, 1, sizeof(object->streamFreq));
-
-    /* Reset the ref and type after kludging it */
-    object->wineD3DDevice = This;
-    object->ref           = 1;
-    object->blockType     = Type;
-
-    TRACE("Updating changed flags appropriate for type %d\n", Type);
-
-    if (Type == WINED3DSBT_ALL) {
-
-        TRACE("ALL => Pretend everything has changed\n");
-        stateblock_savedstates_set((IWineD3DStateBlock*) object, &object->changed, TRUE);
-
-        /* Lights are not part of the changed / set structure */
-        for(j = 0; j < LIGHTMAP_SIZE; j++) {
-            struct list *e;
-            LIST_FOR_EACH(e, &object->lightMap[j]) {
-                PLIGHTINFOEL *light = LIST_ENTRY(e, PLIGHTINFOEL, entry);
-                light->changed = TRUE;
-                light->enabledChanged = TRUE;
-            }
-        }
-        for(j = 1; j <= WINEHIGHEST_RENDER_STATE; j++) {
-            object->contained_render_states[j - 1] = j;
-        }
-        object->num_contained_render_states = WINEHIGHEST_RENDER_STATE;
-        /* TODO: Filter unused transforms between TEXTURE8 and WORLD0? */
-        for(j = 1; j <= HIGHEST_TRANSFORMSTATE; j++) {
-            object->contained_transform_states[j - 1] = j;
-        }
-        object->num_contained_transform_states = HIGHEST_TRANSFORMSTATE;
-        for(j = 0; j < GL_LIMITS(vshader_constantsF); j++) {
-            object->contained_vs_consts_f[j] = j;
-        }
-        object->num_contained_vs_consts_f = GL_LIMITS(vshader_constantsF);
-        for(j = 0; j < MAX_CONST_I; j++) {
-            object->contained_vs_consts_i[j] = j;
-        }
-        object->num_contained_vs_consts_i = MAX_CONST_I;
-        for(j = 0; j < MAX_CONST_B; j++) {
-            object->contained_vs_consts_b[j] = j;
-        }
-        object->num_contained_vs_consts_b = MAX_CONST_B;
-        for(j = 0; j < GL_LIMITS(pshader_constantsF); j++) {
-            object->contained_ps_consts_f[j] = j;
-        }
-        object->num_contained_ps_consts_f = GL_LIMITS(pshader_constantsF);
-        for(j = 0; j < MAX_CONST_I; j++) {
-            object->contained_ps_consts_i[j] = j;
-        }
-        object->num_contained_ps_consts_i = MAX_CONST_I;
-        for(j = 0; j < MAX_CONST_B; j++) {
-            object->contained_ps_consts_b[j] = j;
-        }
-        object->num_contained_ps_consts_b = MAX_CONST_B;
-        for(i = 0; i < MAX_TEXTURES; i++) {
-            for (j = 0; j <= WINED3D_HIGHEST_TEXTURE_STATE; ++j)
-            {
-                object->contained_tss_states[object->num_contained_tss_states].stage = i;
-                object->contained_tss_states[object->num_contained_tss_states].state = j;
-                object->num_contained_tss_states++;
-            }
-        }
-        for(i = 0; i < MAX_COMBINED_SAMPLERS; i++) {
-            for(j = 1; j <= WINED3D_HIGHEST_SAMPLER_STATE; j++) {
-                object->contained_sampler_states[object->num_contained_sampler_states].stage = i;
-                object->contained_sampler_states[object->num_contained_sampler_states].state = j;
-                object->num_contained_sampler_states++;
-            }
-        }
-
-        for(i = 0; i < MAX_STREAMS; i++) {
-            if(object->streamSource[i]) {
-                IWineD3DBuffer_AddRef(object->streamSource[i]);
-            }
-        }
-        if(object->pIndexData) {
-            IWineD3DBuffer_AddRef(object->pIndexData);
-        }
-        if(object->vertexShader) {
-            IWineD3DVertexShader_AddRef(object->vertexShader);
-        }
-        if(object->pixelShader) {
-            IWineD3DPixelShader_AddRef(object->pixelShader);
-        }
-
-    } else if (Type == WINED3DSBT_PIXELSTATE) {
-
-        TRACE("PIXELSTATE => Pretend all pixel shates have changed\n");
-        stateblock_savedstates_set((IWineD3DStateBlock*) object, &object->changed, FALSE);
-
-        object->changed.pixelShader = TRUE;
-
-        /* Pixel Shader Constants */
-        for (i = 0; i < GL_LIMITS(pshader_constantsF); ++i) {
-            object->contained_ps_consts_f[i] = i;
-            object->changed.pixelShaderConstantsF[i] = TRUE;
-        }
-        object->num_contained_ps_consts_f = GL_LIMITS(pshader_constantsF);
-        for (i = 0; i < MAX_CONST_B; ++i) {
-            object->contained_ps_consts_b[i] = i;
-            object->changed.pixelShaderConstantsB |= (1 << i);
-        }
-        object->num_contained_ps_consts_b = MAX_CONST_B;
-        for (i = 0; i < MAX_CONST_I; ++i) {
-            object->contained_ps_consts_i[i] = i;
-            object->changed.pixelShaderConstantsI |= (1 << i);
-        }
-        object->num_contained_ps_consts_i = MAX_CONST_I;
-
-        for (i = 0; i < NUM_SAVEDPIXELSTATES_R; i++) {
-            DWORD rs = SavedPixelStates_R[i];
-            object->changed.renderState[rs >> 5] |= 1 << (rs & 0x1f);
-            object->contained_render_states[i] = rs;
-        }
-        object->num_contained_render_states = NUM_SAVEDPIXELSTATES_R;
-        for (j = 0; j < MAX_TEXTURES; j++) {
-            for (i = 0; i < NUM_SAVEDPIXELSTATES_T; i++) {
-                DWORD state = SavedPixelStates_T[i];
-                object->changed.textureState[j] |= 1 << state;
-                object->contained_tss_states[object->num_contained_tss_states].stage = j;
-                object->contained_tss_states[object->num_contained_tss_states].state = state;
-                object->num_contained_tss_states++;
-            }
-        }
-        for (j = 0 ; j < MAX_COMBINED_SAMPLERS; j++) {
-            for (i =0; i < NUM_SAVEDPIXELSTATES_S;i++) {
-                DWORD state = SavedPixelStates_S[i];
-                object->changed.samplerState[j] |= 1 << state;
-                object->contained_sampler_states[object->num_contained_sampler_states].stage = j;
-                object->contained_sampler_states[object->num_contained_sampler_states].state = state;
-                object->num_contained_sampler_states++;
-            }
-        }
-        if(object->pixelShader) {
-            IWineD3DPixelShader_AddRef(object->pixelShader);
-        }
-
-        /* Pixel state blocks do not contain vertex buffers. Set them to NULL to avoid wrong refcounting
-         * on them. This makes releasing the buffer easier
-         */
-        for(i = 0; i < MAX_STREAMS; i++) {
-            object->streamSource[i] = NULL;
-        }
-        object->pIndexData = NULL;
-        object->vertexShader = NULL;
-
-    } else if (Type == WINED3DSBT_VERTEXSTATE) {
-
-        TRACE("VERTEXSTATE => Pretend all vertex shates have changed\n");
-        stateblock_savedstates_set((IWineD3DStateBlock*) object, &object->changed, FALSE);
-
-        object->changed.vertexShader = TRUE;
-
-        /* Vertex Shader Constants */
-        for (i = 0; i < GL_LIMITS(vshader_constantsF); ++i) {
-            object->changed.vertexShaderConstantsF[i] = TRUE;
-            object->contained_vs_consts_f[i] = i;
-        }
-        object->num_contained_vs_consts_f = GL_LIMITS(vshader_constantsF);
-        for (i = 0; i < MAX_CONST_B; ++i) {
-            object->contained_vs_consts_b[i] = i;
-            object->changed.vertexShaderConstantsB |= (1 << i);
-        }
-        object->num_contained_vs_consts_b = MAX_CONST_B;
-        for (i = 0; i < MAX_CONST_I; ++i) {
-            object->contained_vs_consts_i[i] = i;
-            object->changed.vertexShaderConstantsI |= (1 << i);
-        }
-        object->num_contained_vs_consts_i = MAX_CONST_I;
-        for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
-            DWORD rs = SavedVertexStates_R[i];
-            object->changed.renderState[rs >> 5] |= 1 << (rs & 0x1f);
-            object->contained_render_states[i] = rs;
-        }
-        object->num_contained_render_states = NUM_SAVEDVERTEXSTATES_R;
-        for (j = 0; j < MAX_TEXTURES; j++) {
-            for (i = 0; i < NUM_SAVEDVERTEXSTATES_T; i++) {
-                DWORD state = SavedVertexStates_T[i];
-                object->changed.textureState[j] |= 1 << state;
-                object->contained_tss_states[object->num_contained_tss_states].stage = j;
-                object->contained_tss_states[object->num_contained_tss_states].state = state;
-                object->num_contained_tss_states++;
-            }
-        }
-        for (j = 0 ; j < MAX_COMBINED_SAMPLERS; j++){
-            for (i =0; i < NUM_SAVEDVERTEXSTATES_S;i++) {
-                DWORD state = SavedVertexStates_S[i];
-                object->changed.samplerState[j] |= 1 << state;
-                object->contained_sampler_states[object->num_contained_sampler_states].stage = j;
-                object->contained_sampler_states[object->num_contained_sampler_states].state = state;
-                object->num_contained_sampler_states++;
-            }
-        }
-
-        for(j = 0; j < LIGHTMAP_SIZE; j++) {
-            struct list *e;
-            LIST_FOR_EACH(e, &object->lightMap[j]) {
-                PLIGHTINFOEL *light = LIST_ENTRY(e, PLIGHTINFOEL, entry);
-                light->changed = TRUE;
-                light->enabledChanged = TRUE;
-            }
-        }
-
-        for(i = 0; i < MAX_STREAMS; i++) {
-            if(object->streamSource[i]) {
-                IWineD3DBuffer_AddRef(object->streamSource[i]);
-            }
-        }
-        if(object->vertexShader) {
-            IWineD3DVertexShader_AddRef(object->vertexShader);
-        }
-        object->pIndexData = NULL;
-        object->pixelShader = NULL;
-    } else {
-        FIXME("Unrecognized state block type %d\n", Type);
-    }
-
-    TRACE("(%p) returning token (ptr to stateblock) of %p\n", This, object);
     return WINED3D_OK;
 }
 
