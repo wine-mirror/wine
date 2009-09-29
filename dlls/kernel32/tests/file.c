@@ -1860,10 +1860,11 @@ static void test_FindNextFileA(void)
     ok ( err == ERROR_NO_MORE_FILES, "GetLastError should return ERROR_NO_MORE_FILES\n");
 }
 
-static void test_FindFirstFileExA(void)
+static void test_FindFirstFileExA(FINDEX_SEARCH_OPS search_ops)
 {
     WIN32_FIND_DATAA search_results;
     HANDLE handle;
+    BOOL ret;
 
     if (!pFindFirstFileExA)
     {
@@ -1875,9 +1876,8 @@ static void test_FindFirstFileExA(void)
     _lclose(_lcreat("test-dir\\file1", 0));
     _lclose(_lcreat("test-dir\\file2", 0));
     CreateDirectoryA("test-dir\\dir1", NULL);
-    /* FindExLimitToDirectories is ignored */
     SetLastError(0xdeadbeef);
-    handle = pFindFirstFileExA("test-dir\\*", FindExInfoStandard, &search_results, FindExSearchLimitToDirectories, NULL, 0);
+    handle = pFindFirstFileExA("test-dir\\*", FindExInfoStandard, &search_results, search_ops, NULL, 0);
     if (handle == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
         win_skip("FindFirstFileExA is not implemented\n");
@@ -1894,7 +1894,18 @@ static void test_FindFirstFileExA(void)
     ok(FindNextFile(handle, &search_results), "Fetching third file failed\n");
     ok(CHECK_NAME(search_results.cFileName), "Invalid third entry - %s\n", search_results.cFileName);
 
-    ok(FindNextFile(handle, &search_results), "Fetching fourth file failed\n");
+    SetLastError(0xdeadbeef);
+    ret = FindNextFile(handle, &search_results);
+    if (!ret && (GetLastError() == ERROR_NO_MORE_FILES) && (search_ops == FindExSearchLimitToDirectories))
+    {
+        skip("File system supports directory filtering\n");
+        /* Results from the previous call are not cleared */
+        ok(strcmp(search_results.cFileName, "dir1") == 0, "Third entry should be 'dir1' is %s\n", search_results.cFileName);
+        FindClose( handle );
+        goto cleanup;
+    }
+
+    ok(ret, "Fetching fourth file failed\n");
     ok(CHECK_NAME(search_results.cFileName), "Invalid fourth entry - %s\n", search_results.cFileName);
 
     ok(FindNextFile(handle, &search_results), "Fetching fifth file failed\n");
@@ -1902,7 +1913,7 @@ static void test_FindFirstFileExA(void)
 
 #undef CHECK_NAME
 
-    ok(FindNextFile(handle, &search_results) == FALSE, "Fetching sixth file should failed\n");
+    ok(FindNextFile(handle, &search_results) == FALSE, "Fetching sixth file should fail\n");
 
     FindClose( handle );
 
@@ -2804,7 +2815,9 @@ START_TEST(file)
     test_MoveFileW();
     test_FindFirstFileA();
     test_FindNextFileA();
-    test_FindFirstFileExA();
+    test_FindFirstFileExA(0);
+    /* FindExLimitToDirectories is ignored if the file system doesn't support directory filtering */
+    test_FindFirstFileExA(FindExSearchLimitToDirectories);
     test_LockFile();
     test_file_sharing();
     test_offset_in_overlapped_structure();
