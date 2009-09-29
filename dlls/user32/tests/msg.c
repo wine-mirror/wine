@@ -7813,6 +7813,12 @@ static VOID CALLBACK tfunc(HWND hwnd, UINT uMsg, UINT_PTR id, DWORD dwTime)
 {
 }
 
+static VOID CALLBACK tfunc_crash(HWND hwnd, UINT uMsg, UINT_PTR id, DWORD dwTime)
+{
+    /* Crash on purpose */
+    *(volatile int *)0 = 2;
+}
+
 #define TIMER_ID  0x19
 
 static DWORD WINAPI timer_thread_proc(LPVOID x)
@@ -7834,6 +7840,7 @@ static void test_timers(void)
 {
     struct timer_info info;
     DWORD id;
+    MSG msg;
 
     info.hWnd = CreateWindow ("TestWindowClass", NULL,
        WS_OVERLAPPEDWINDOW ,
@@ -7854,6 +7861,12 @@ static void test_timers(void)
     CloseHandle(info.handles[1]);
 
     ok( KillTimer(info.hWnd, TIMER_ID), "KillTimer failed\n");
+
+    /* Test timer callback with crash */
+    info.id = SetTimer(info.hWnd, TIMER_ID, 0, tfunc_crash);
+    ok(info.id, "SetTimer failed\n");
+    Sleep(150);
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
 
     ok(DestroyWindow(info.hWnd), "failed to destroy window\n");
 }
