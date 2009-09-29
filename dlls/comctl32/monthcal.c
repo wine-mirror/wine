@@ -1498,34 +1498,9 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   }
   case MCHT_CALENDARDATE:
   {
-    RECT rcDay; /* used in determining area to invalidate */
-    SYSTEMTIME selArray[2];
-    NMSELCHANGE nmsc;
-
-    selArray[0] = ht.st;
-    selArray[1] = ht.st;
-    MONTHCAL_SetSelRange(infoPtr, selArray);
-    MONTHCAL_SetCurSel(infoPtr, &selArray[0]);
     TRACE("MCHT_CALENDARDATE\n");
-    nmsc.nmhdr.hwndFrom = infoPtr->hwndSelf;
-    nmsc.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
-    nmsc.nmhdr.code     = MCN_SELCHANGE;
-    nmsc.stSelStart     = infoPtr->minSel;
-    nmsc.stSelEnd       = infoPtr->maxSel;
-
-    SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmsc.nmhdr.idFrom, (LPARAM)&nmsc);
-
-    /* redraw both old and new days if the selected day changed */
-    if(infoPtr->curSel.wDay != ht.st.wDay) {
-      MONTHCAL_CalcPosFromDay(infoPtr, ht.st.wDay, ht.st.wMonth, &rcDay);
-      InvalidateRect(infoPtr->hwndSelf, &rcDay, TRUE);
-
-      MONTHCAL_CalcPosFromDay(infoPtr, infoPtr->curSel.wDay, infoPtr->curSel.wMonth, &rcDay);
-      InvalidateRect(infoPtr->hwndSelf, &rcDay, TRUE);
-    }
 
     infoPtr->firstSelDay = ht.st.wDay;
-    infoPtr->curSel.wDay = ht.st.wDay;
     infoPtr->status = MC_SEL_LBUTDOWN;
     return 0;
   }
@@ -1557,6 +1532,14 @@ MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
     redraw = TRUE;
   }
 
+  /* always send NM_RELEASEDCAPTURE notification */
+  nmhdr.hwndFrom = infoPtr->hwndSelf;
+  nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
+  nmhdr.code     = NM_RELEASEDCAPTURE;
+  TRACE("Sent notification from %p to %p\n", infoPtr->hwndSelf, infoPtr->hwndNotify);
+
+  SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmhdr.idFrom, (LPARAM)&nmhdr);
+
   ht.cbSize = sizeof(MCHITTESTINFO);
   ht.pt.x = (short)LOWORD(lParam);
   ht.pt.y = (short)HIWORD(lParam);
@@ -1564,28 +1547,29 @@ MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
   infoPtr->status = MC_SEL_LBUTUP;
 
-  if((hit == MCHT_CALENDARDATENEXT) || (hit == MCHT_CALENDARDATEPREV)) {
-    SYSTEMTIME st[2];
+  if((hit == MCHT_CALENDARDATENEXT) ||
+     (hit == MCHT_CALENDARDATEPREV) ||
+     (hit == MCHT_CALENDARDATE))
+  {
+    SYSTEMTIME st[2], sel = infoPtr->curSel;
 
     st[0] = st[1] = ht.st;
     MONTHCAL_SetSelRange(infoPtr, st);
+    /* will be invalidated here */
     MONTHCAL_SetCurSel(infoPtr, &st[0]);
 
-    InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
-    return TRUE;
-  }
+    /* send MCN_SELCHANGE only if new date selected */
+    if (!MONTHCAL_IsDateEqual(&sel, &ht.st))
+    {
+        nmsc.nmhdr.hwndFrom = infoPtr->hwndSelf;
+        nmsc.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
+        nmsc.nmhdr.code     = MCN_SELCHANGE;
+        nmsc.stSelStart     = infoPtr->minSel;
+        nmsc.stSelEnd       = infoPtr->maxSel;
 
-  nmhdr.hwndFrom = infoPtr->hwndSelf;
-  nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
-  nmhdr.code     = NM_RELEASEDCAPTURE;
-  TRACE("Sent notification from %p to %p\n", infoPtr->hwndSelf, infoPtr->hwndNotify);
+        SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmsc.nmhdr.idFrom, (LPARAM)&nmsc);
+    }
 
-  SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmhdr.idFrom, (LPARAM)&nmhdr);
-  /* redraw if necessary */
-  if(redraw)
-    InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
-  /* only send MCN_SELECT if currently displayed month's day was selected */
-  if(hit == MCHT_CALENDARDATE) {
     nmsc.nmhdr.hwndFrom = infoPtr->hwndSelf;
     nmsc.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
     nmsc.nmhdr.code     = MCN_SELECT;
@@ -1594,7 +1578,13 @@ MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
     SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmsc.nmhdr.idFrom, (LPARAM)&nmsc);
 
+    return 0;
   }
+
+  /* redraw if necessary */
+  if(redraw)
+    InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+
   return 0;
 }
 
