@@ -209,6 +209,14 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	pBIO_new_fp(stderr, BIO_NOCLOSE); /* FIXME: should use winedebug stuff */
 
 	meth = pSSLv23_method();
+        ctx = pSSL_CTX_new(meth);
+        if (!pSSL_CTX_set_default_verify_paths(ctx))
+        {
+            ERR("SSL_CTX_set_default_verify_paths failed: %s\n",
+                pERR_error_string(pERR_get_error(), 0));
+            INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+            return FALSE;
+        }
 #else
 	FIXME("can't use SSL, not compiled in.\n");
         INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR);
@@ -371,14 +379,6 @@ BOOL NETCON_secure_connect(WININET_NETCONNECTION *connection, LPCWSTR hostname)
         return FALSE;
     }
 
-    ctx = pSSL_CTX_new(meth);
-    if (!pSSL_CTX_set_default_verify_paths(ctx))
-    {
-        ERR("SSL_CTX_set_default_verify_paths failed: %s\n",
-            pERR_error_string(pERR_get_error(), 0));
-        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
-        return FALSE;
-    }
     connection->ssl_s = pSSL_new(ctx);
     if (!connection->ssl_s)
     {
