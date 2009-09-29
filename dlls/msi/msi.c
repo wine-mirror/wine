@@ -693,9 +693,6 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
     if (szCommandLine)
         lstrcpyW(commandline,szCommandLine);
 
-    if (MsiQueryProductStateW(szProduct) != INSTALLSTATE_UNKNOWN)
-        lstrcatW(commandline,szInstalled);
-
     if (eInstallState == INSTALLSTATE_ABSENT)
         lstrcatW(commandline, szRemoveAll);
 
