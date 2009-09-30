@@ -29,6 +29,7 @@ STRINGTABLE DISCARDABLE
 {
     IDS_TO_PRIMITIVE        "Erreur lors de la conversion de l'objet vers un type primitif"
     IDS_INVALID_CALL_ARG    "Appel de procédure ou argument invalide"
+    IDS_CREATE_OBJ_ERROR    "Le serveur d'automatisation ne peut créer l'objet"
     IDS_NO_PROPERTY         "Cet objet ne supporte pas cette propriété ou méthode"
     IDS_ARG_NOT_OPT         "Argument non optionnel"
     IDS_SYNTAX_ERROR        "Erreur de syntaxe"
