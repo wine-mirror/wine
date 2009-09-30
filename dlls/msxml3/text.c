@@ -102,7 +102,7 @@ static ULONG WINAPI domtext_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
-        IXMLDOMNode_Release(IXMLDOMNode_from_impl(This->node));
+        destroy_xmlnode(This->node);
         HeapFree( GetProcessHeap(), 0, This );
     }
 
