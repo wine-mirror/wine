@@ -178,9 +178,6 @@ extern BOOL CDECL X11DRV_AlphaBlend( X11DRV_PDEVICE *physDevDst, INT xDst, INT y
                                      INT widthDst, INT heightDst,
                                      X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
                                      INT widthSrc, INT heightSrc, BLENDFUNCTION blendfn );
-extern BOOL CDECL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
-                                 INT width, INT height, X11DRV_PDEVICE *physDevSrc,
-                                 INT xSrc, INT ySrc, DWORD rop );
 extern BOOL CDECL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
                                           FONTENUMPROCW dfeproc, LPARAM lp );
 extern LONG CDECL X11DRV_GetBitmapBits( HBITMAP hbitmap, void *bits, LONG count );
@@ -190,8 +187,6 @@ extern BOOL CDECL X11DRV_GetDCOrgEx( X11DRV_PDEVICE *physDev, LPPOINT lpp );
 extern BOOL CDECL X11DRV_GetTextExtentExPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
                                                INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size );
 extern BOOL CDECL X11DRV_GetTextMetrics(X11DRV_PDEVICE *physDev, TEXTMETRICW *metrics);
-extern BOOL CDECL X11DRV_PatBlt( X11DRV_PDEVICE *physDev, INT left, INT top,
-                                 INT width, INT height, DWORD rop );
 extern BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
                                      INT widthDst, INT heightDst,
                                      X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,

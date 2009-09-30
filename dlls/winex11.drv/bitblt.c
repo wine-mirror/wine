@@ -1352,15 +1352,11 @@ static BOOL client_side_dib_copy( X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc
 
 
 /***********************************************************************
- *           BITBLT_InternalStretchBlt
- *
- * Implementation of PatBlt(), BitBlt() and StretchBlt().
+ *           X11DRV_StretchBlt
  */
-static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
-                                       INT widthDst, INT heightDst,
-                                       X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
-                                       INT widthSrc, INT heightSrc,
-                                       DWORD rop )
+BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                              X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
+                              DWORD rop )
 {
     BOOL usePat, useSrc, useDst, destUsed, fStretch, fNullBrush;
     RECT visRectDst, visRectSrc;
@@ -1661,38 +1657,4 @@ done:
     if (useSrc && physDevDst != physDevSrc) X11DRV_UnlockDIBSection( physDevSrc, FALSE );
     X11DRV_UnlockDIBSection( physDevDst, TRUE );
     return TRUE;
-}
-
-
-/***********************************************************************
- *           X11DRV_PatBlt
- */
-BOOL CDECL X11DRV_PatBlt( X11DRV_PDEVICE *physDev, INT left, INT top, INT width, INT height, DWORD rop )
-{
-    return BITBLT_InternalStretchBlt( physDev, left, top, width, height, NULL, 0, 0, 0, 0, rop );
-}
-
-
-/***********************************************************************
- *           X11DRV_BitBlt
- */
-BOOL CDECL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
-                    INT width, INT height, X11DRV_PDEVICE *physDevSrc,
-                    INT xSrc, INT ySrc, DWORD rop )
-{
-    return BITBLT_InternalStretchBlt( physDevDst, xDst, yDst, width, height,
-                                      physDevSrc, xSrc, ySrc, width, height, rop );
-}
-
-
-/***********************************************************************
- *           X11DRV_StretchBlt
- */
-BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
-                              INT widthDst, INT heightDst,
-                              X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
-                              INT widthSrc, INT heightSrc, DWORD rop )
-{
-    return BITBLT_InternalStretchBlt( physDevDst, xDst, yDst, widthDst, heightDst,
-                                      physDevSrc, xSrc, ySrc, widthSrc, heightSrc, rop );
 }
