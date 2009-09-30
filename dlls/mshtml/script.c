@@ -557,6 +557,16 @@ static HRESULT WINAPI ASServiceProvider_QueryService(IServiceProvider *iface, RE
         REFIID riid, void **ppv)
 {
     ScriptHost *This = SERVPROV_THIS(iface);
+
+    if(IsEqualGUID(&SID_SInternetHostSecurityManager, guidService)) {
+        TRACE("(%p)->(SID_SInternetHostSecurityManager)\n", This);
+
+        if(!This->window || !This->window->doc)
+            return E_NOINTERFACE;
+
+        return IInternetHostSecurityManager_QueryInterface(HOSTSECMGR(This->window->doc), riid, ppv);
+    }
+
     FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
     return E_NOINTERFACE;
 }

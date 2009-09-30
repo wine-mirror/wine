@@ -571,6 +571,23 @@ static const IObjectSafetyVtbl ObjectSafetyVtbl = {
 
 static IObjectSafety ObjectSafety = { &ObjectSafetyVtbl };
 
+static void test_security(void)
+{
+    IInternetHostSecurityManager *sec_mgr;
+    IServiceProvider *sp;
+    HRESULT hres;
+
+    hres = IActiveScriptSite_QueryInterface(site, &IID_IServiceProvider, (void**)&sp);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08x\n", hres);
+
+    hres = IServiceProvider_QueryService(sp, &SID_SInternetHostSecurityManager,
+            &IID_IInternetHostSecurityManager, (void**)&sec_mgr);
+    IServiceProvider_Release(sp);
+    ok(hres == S_OK, "QueryService failed: %08x\n", hres);
+
+    IInternetHostSecurityManager_Release(sec_mgr);
+}
+
 static HRESULT WINAPI ActiveScriptProperty_QueryInterface(IActiveScriptProperty *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -959,6 +976,8 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
     ok(V_VT(&var) == VT_NULL, "V_VT(var) = %d\n", V_VT(&var));
     CHECK_CALLED(GetScriptDispatch);
     CHECK_CALLED(script_testprop_i);
+
+    test_security();
 
     return S_OK;
 }
