@@ -524,7 +524,7 @@ static void test_dtm_set_range_swap_min_max(void)
 static void test_dtm_set_and_get_system_time(void)
 {
     LRESULT r;
-    SYSTEMTIME st, getSt;
+    SYSTEMTIME st, getSt, ref;
     HWND hWnd, hWndDateTime_test_gdt_none;
 
     hWndDateTime_test_gdt_none = create_datetime_control(0, 0);
@@ -579,6 +579,92 @@ static void test_dtm_set_and_get_system_time(void)
     expect_unsuccess(0, r);
 
     ok_sequence(sequences, DATETIME_SEQ_INDEX, test_dtm_set_and_get_system_time_seq, "test_dtm_set_and_get_system_time", FALSE);
+
+    /* set to some valid value */
+    GetSystemTime(&ref);
+    r = SendMessage(hWnd, DTM_SETSYSTEMTIME, GDT_VALID, (LPARAM)&ref);
+    expect(1, r);
+    r = SendMessage(hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM)&getSt);
+    expect(GDT_VALID, r);
+    expect_systime(&ref, &getSt);
+
+    /* year invalid */
+    st = ref;
+    st.wYear = 0;
+    r = SendMessage(hWnd, DTM_SETSYSTEMTIME, GDT_VALID, (LPARAM)&st);
+    todo_wine expect(1, r);
+    r = SendMessage(hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM)&getSt);
+    expect(GDT_VALID, r);
+    expect_systime(&ref, &getSt);
+    /* month invalid */
+    st = ref;
+    st.wMonth = 13;
+    r = SendMessage(hWnd, DTM_SETSYSTEMTIME, GDT_VALID, (LPARAM)&st);
+    expect(0, r);
+    r = SendMessage(hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM)&getSt);
+    expect(GDT_VALID, r);
+    expect_systime(&ref, &getSt);
+    /* day invalid */
+    st = ref;
+    st.wDay = 32;
+    r = SendMessage(hWnd, DTM_SETSYSTEMTIME, GDT_VALID, (LPARAM)&st);
+    expect(0, r);
+    r = SendMessage(hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM)&getSt);
+    expect(GDT_VALID, r);
+    expect_systime(&ref, &getSt);
+    /* day of week isn't validated */
+    st = ref;
+    st.wDayOfWeek = 10;
+    r = SendMessage(hWnd, DTM_SETSYSTEMTIME, GDT_VALID, (LPARAM)&st);
+    todo_wine expect(1, r);
+    r = SendMessage(hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM)&getSt);
+    expect(GDT_VALID, r);
+    expect_systime(&ref, &getSt);
+    /* hour invalid */
+    st = ref;
+    st.wHour = 25;
+    r = SendMessage(hWnd, DTM_SETSYSTEMTIME, GDT_VALID, (LPARAM)&st);
+    expect(0, r);
+    r = SendMessage(hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM)&getSt);
+    expect(GDT_VALID, r);
+    expect_systime(&ref, &getSt);
+    /* minute invalid */
+    st = ref;
+    st.wMinute = 60;
+    r = SendMessage(hWnd, DTM_SETSYSTEMTIME, GDT_VALID, (LPARAM)&st);
+    expect(0, r);
+    r = SendMessage(hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM)&getSt);
+    expect(GDT_VALID, r);
+    expect_systime(&ref, &getSt);
+    /* sec invalid */
+    st = ref;
+    st.wSecond = 60;
+    r = SendMessage(hWnd, DTM_SETSYSTEMTIME, GDT_VALID, (LPARAM)&st);
+    expect(0, r);
+    r = SendMessage(hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM)&getSt);
+    expect(GDT_VALID, r);
+    expect_systime(&ref, &getSt);
+    /* msec invalid */
+    st = ref;
+    st.wMilliseconds = 1000;
+    r = SendMessage(hWnd, DTM_SETSYSTEMTIME, GDT_VALID, (LPARAM)&st);
+    expect(0, r);
+    r = SendMessage(hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM)&getSt);
+    expect(GDT_VALID, r);
+    expect_systime(&ref, &getSt);
+
+    /* day of week should be calculated automatically,
+       actual day of week for this date is 4 */
+    fill_systime_struct(&st, 2009, 10, 1, 1, 0, 0, 10, 200);
+    r = SendMessage(hWnd, DTM_SETSYSTEMTIME, GDT_VALID, (LPARAM)&st);
+    expect(1, r);
+    r = SendMessage(hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM)&getSt);
+    expect(GDT_VALID, r);
+    /* 01.10.2009 is Thursday */
+    todo_wine expect(4, (LRESULT)getSt.wDayOfWeek);
+    st.wDayOfWeek = 4;
+    todo_wine expect_systime(&st, &getSt);
+
     DestroyWindow(hWnd);
 }
 
