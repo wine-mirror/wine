@@ -68,6 +68,9 @@ static const BYTE secid10[] =
 static const BYTE secid10_2[] =
     {'f','i','l','e',':','s','o','m','e',' ','f','i','l','e','.','j','p','g',3,0,0,0};
 
+static const GUID CLSID_TestActiveX =
+    {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x06,0x46}};
+
 static struct secmgr_test {
     LPCWSTR url;
     DWORD zone;
@@ -242,6 +245,33 @@ static void test_url_action(IInternetSecurityManager *secmgr, IInternetZoneManag
             else
                 ok(hres == S_OK, "ProcessUrlAction(%x) failed: %08x\n", action, hres);
             ok(policy == 0xdeadbeef, "(%x) policy=%x\n", action, policy);
+
+            policy = 0xdeadbeef;
+            hres = IInternetSecurityManager_ProcessUrlAction(secmgr, url9, action, (BYTE*)&policy,
+                    2, NULL, 0, 0, 0);
+            if(reg_policy == URLPOLICY_DISALLOW)
+                ok(hres == S_FALSE, "ProcessUrlAction(%x) failed: %08x, expected S_FALSE\n", action, hres);
+            else
+                ok(hres == S_OK, "ProcessUrlAction(%x) failed: %08x\n", action, hres);
+            ok(policy == 0xdeadbeef, "(%x) policy=%x\n", action, policy);
+
+            policy = 0xdeadbeef;
+            hres = IInternetSecurityManager_ProcessUrlAction(secmgr, url9, action, (BYTE*)&policy,
+                    sizeof(DWORD), NULL, 0, 0, 0);
+            if(reg_policy == URLPOLICY_DISALLOW)
+                ok(hres == S_FALSE, "ProcessUrlAction(%x) failed: %08x, expected S_FALSE\n", action, hres);
+            else
+                ok(hres == S_OK, "ProcessUrlAction(%x) failed: %08x\n", action, hres);
+            ok(policy == reg_policy, "(%x) policy=%x\n", action, policy);
+
+            policy = 0xdeadbeef;
+            hres = IInternetSecurityManager_ProcessUrlAction(secmgr, url9, action, (BYTE*)&policy,
+                    sizeof(WCHAR), (BYTE*)0xdeadbeef, 16, 0, 0);
+            if(reg_policy == URLPOLICY_DISALLOW)
+                ok(hres == S_FALSE, "ProcessUrlAction(%x) failed: %08x, expected S_FALSE\n", action, hres);
+            else
+                ok(hres == S_OK, "ProcessUrlAction(%x) failed: %08x\n", action, hres);
+            ok(policy == 0xdeadbeef, "(%x) policy=%x\n", action, policy);
         }else {
             skip("IE running in Enhanced Security Configuration\n");
         }
@@ -265,6 +295,18 @@ static void test_special_url_action(IInternetSecurityManager *secmgr, IInternetZ
     ok(hres == S_FALSE, "ProcessUrlAction(%x) failed: %08x, expected S_FALSE\n", action, hres);
 }
 
+static void test_activex(IInternetSecurityManager *secmgr)
+{
+    DWORD policy;
+    HRESULT hres;
+
+    policy = 0xdeadbeef;
+    hres = IInternetSecurityManager_ProcessUrlAction(secmgr, url1, URLACTION_ACTIVEX_RUN, (BYTE*)&policy,
+            sizeof(DWORD), (BYTE*)&CLSID_TestActiveX, sizeof(CLSID), 0, 0);
+    ok(hres == S_OK, "ProcessUrlAction(URLACTION_ACTIVEX_RUN) failed: %08x\n", hres);
+    ok(policy == URLPOLICY_ALLOW || policy == URLPOLICY_DISALLOW, "policy = %x\n", policy);
+}
+
 static void test_polices(void)
 {
     IInternetZoneManager *zonemgr = NULL;
@@ -277,11 +319,14 @@ static void test_polices(void)
     ok(hres == S_OK, "CoInternetCreateZoneManager failed: %08x\n", hres);
 
     test_url_action(secmgr, zonemgr, URLACTION_SCRIPT_RUN);
+    test_url_action(secmgr, zonemgr, URLACTION_ACTIVEX_RUN);
     test_url_action(secmgr, zonemgr, URLACTION_ACTIVEX_OVERRIDE_OBJECT_SAFETY);
     test_url_action(secmgr, zonemgr, URLACTION_CHANNEL_SOFTDIST_PERMISSIONS);
     test_url_action(secmgr, zonemgr, 0xdeadbeef);
 
     test_special_url_action(secmgr, zonemgr, URLACTION_SCRIPT_OVERRIDE_SAFETY);
+
+    test_activex(secmgr);
 
     IInternetSecurityManager_Release(secmgr);
     IInternetZoneManager_Release(zonemgr);

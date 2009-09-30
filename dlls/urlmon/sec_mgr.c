@@ -536,7 +536,7 @@ static HRESULT WINAPI SecManagerImpl_ProcessUrlAction(IInternetSecurityManager *
             return hres;
     }
 
-    if(pContext || cbContext || dwFlags || dwReserved)
+    if(dwFlags || dwReserved)
         FIXME("Unsupported arguments\n");
 
     if(!pwszUrl)
@@ -551,6 +551,8 @@ static HRESULT WINAPI SecManagerImpl_ProcessUrlAction(IInternetSecurityManager *
         return hres;
 
     TRACE("policy %x\n", policy);
+    if(cbPolicy >= sizeof(DWORD))
+        *(DWORD*)pPolicy = policy;
 
     switch(GetUrlPolicyPermissions(policy)) {
     case URLPOLICY_ALLOW:
