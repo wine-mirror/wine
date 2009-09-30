@@ -61,8 +61,17 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
-    *ppv = NULL;
+    if (mapiFunctions.DllGetClassObject)
+    {
+        HRESULT ret = mapiFunctions.DllGetClassObject(rclsid, iid, ppv);
+
+        TRACE("ret: %x\n", ret);
+        return ret;
+    }
+
     FIXME("\n\tCLSID:\t%s,\n\tIID:\t%s\n", debugstr_guid(rclsid), debugstr_guid(iid));
+
+    *ppv = NULL;
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 

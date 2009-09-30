@@ -1056,6 +1056,8 @@ void load_mapi_providers(void)
         mapiFunctions.MAPIInitialize = (void*) GetProcAddress(mapi_ex_provider, "MAPIInitialize");
         mapiFunctions.MAPILogonEx = (void*) GetProcAddress(mapi_ex_provider, "MAPILogonEx");
         mapiFunctions.MAPIUninitialize = (void*) GetProcAddress(mapi_ex_provider, "MAPIUninitialize");
+
+        mapiFunctions.DllGetClassObject = (void*) GetProcAddress(mapi_ex_provider, "DllGetClassObject");
     }
 
 cleanUp:

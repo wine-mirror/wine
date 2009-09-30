@@ -43,6 +43,8 @@ typedef struct MAPI_FUNCTIONS {
     LPMAPISENDMAIL       MAPISendMail;
     LPMAPISENDDOCUMENTS  MAPISendDocuments;
     LPMAPIUNINITIALIZE   MAPIUninitialize;
+
+    HRESULT (WINAPI *DllGetClassObject)(REFCLSID, REFIID, LPVOID *);
 } MAPI_FUNCTIONS;
 
 extern MAPI_FUNCTIONS mapiFunctions;
