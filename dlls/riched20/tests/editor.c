@@ -5639,6 +5639,7 @@ static void test_eventMask(void)
 
 static int received_WM_NOTIFY = 0;
 static int modify_at_WM_NOTIFY = 0;
+static BOOL filter_on_WM_NOTIFY = FALSE;
 static HWND hwndRichedit_WM_NOTIFY;
 
 static LRESULT WINAPI WM_NOTIFY_ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -5647,6 +5648,7 @@ static LRESULT WINAPI WM_NOTIFY_ParentMsgCheckProcA(HWND hwnd, UINT message, WPA
     {
       received_WM_NOTIFY = 1;
       modify_at_WM_NOTIFY = SendMessage(hwndRichedit_WM_NOTIFY, EM_GETMODIFY, 0, 0);
+      if (filter_on_WM_NOTIFY) return TRUE;
     }
     return DefWindowProcA(hwnd, message, wParam, lParam);
 }
@@ -5656,6 +5658,7 @@ static void test_WM_NOTIFY(void)
     HWND parent;
     WNDCLASSA cls;
     CHARFORMAT2 cf2;
+    int sel_start, sel_end;
 
     /* register class to capture WM_NOTIFY */
     cls.style = 0;
@@ -5717,6 +5720,29 @@ static void test_WM_NOTIFY(void)
     SendMessage(hwndRichedit_WM_NOTIFY, EM_REPLACESEL, FALSE, (LPARAM)"inserted");
     ok(received_WM_NOTIFY == 1, "Expected WM_NOTIFY was NOT sent!\n");
     SendMessage(hwndRichedit_WM_NOTIFY, WM_SETREDRAW, TRUE, 0);
+
+    /* Test filtering key events. */
+    SendMessage(hwndRichedit_WM_NOTIFY, EM_SETSEL, 0, 0);
+    SendMessage(hwndRichedit_WM_NOTIFY, EM_SETEVENTMASK, 0, ENM_KEYEVENTS);
+    SendMessage(hwndRichedit_WM_NOTIFY, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+    received_WM_NOTIFY = 0;
+    SendMessage(hwndRichedit_WM_NOTIFY, WM_KEYDOWN, VK_RIGHT, 0);
+    SendMessage(hwndRichedit_WM_NOTIFY, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+    ok(sel_start == 1 && sel_end == 1,
+       "selections is incorrectly at (%d,%d)\n", sel_start, sel_end);
+    filter_on_WM_NOTIFY = TRUE;
+    received_WM_NOTIFY = 0;
+    SendMessage(hwndRichedit_WM_NOTIFY, WM_KEYDOWN, VK_RIGHT, 0);
+    SendMessage(hwndRichedit_WM_NOTIFY, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+    ok(sel_start == 1 && sel_end == 1,
+       "selections is incorrectly at (%d,%d)\n", sel_start, sel_end);
+
+    /* test with owner set to NULL */
+    SetWindowLongPtr(hwndRichedit_WM_NOTIFY, GWLP_HWNDPARENT, 0);
+    SendMessage(hwndRichedit_WM_NOTIFY, WM_KEYDOWN, VK_RIGHT, 0);
+    SendMessage(hwndRichedit_WM_NOTIFY, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+    todo_wine ok(sel_start == 1 && sel_end == 1,
+       "selections is incorrectly at (%d,%d)\n", sel_start, sel_end);
 
     DestroyWindow(hwndRichedit_WM_NOTIFY);
     DestroyWindow(parent);
