@@ -297,6 +297,12 @@ static void test_special_url_action(IInternetSecurityManager *secmgr, IInternetZ
     hres = IInternetSecurityManager_ProcessUrlAction(secmgr, url1, action, (BYTE*)&policy,
             sizeof(WCHAR), NULL, 0, 0, 0);
     ok(hres == S_FALSE, "ProcessUrlAction(%x) failed: %08x, expected S_FALSE\n", action, hres);
+
+    policy = 0xdeadbeef;
+    hres = IInternetSecurityManager_ProcessUrlAction(secmgr, url1, action, (BYTE*)&policy,
+            sizeof(DWORD), NULL, 0, 0, 0);
+    ok(hres == S_FALSE, "ProcessUrlAction(%x) failed: %08x, expected S_FALSE\n", action, hres);
+    ok(policy == URLPOLICY_DISALLOW, "policy = %x\n", policy);
 }
 
 static void test_activex(IInternetSecurityManager *secmgr)
@@ -338,6 +344,7 @@ static void test_polices(void)
     test_url_action(secmgr, zonemgr, 0xdeadbeef);
 
     test_special_url_action(secmgr, zonemgr, URLACTION_SCRIPT_OVERRIDE_SAFETY);
+    test_special_url_action(secmgr, zonemgr, URLACTION_ACTIVEX_OVERRIDE_SCRIPT_SAFETY);
 
     test_activex(secmgr);
 

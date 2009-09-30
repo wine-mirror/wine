@@ -238,6 +238,7 @@ static HRESULT get_action_policy(DWORD zone, DWORD action, BYTE *policy, DWORD s
 
     switch(action) {
     case URLACTION_SCRIPT_OVERRIDE_SAFETY:
+    case URLACTION_ACTIVEX_OVERRIDE_SCRIPT_SAFETY:
         *(DWORD*)policy = URLPOLICY_DISALLOW;
         return S_OK;
     }
