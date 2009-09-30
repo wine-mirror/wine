@@ -6131,6 +6131,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
 static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, DWORD RenderTargetIndex, IWineD3DSurface *pRenderTarget) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     WINED3DVIEWPORT viewport;
+    int dxVersion = ( (IWineD3DImpl *) This->wineD3D)->dxVersion;
 
     TRACE("(%p) : Setting rendertarget %d to %p\n", This, RenderTargetIndex, pRenderTarget);
 
@@ -6163,7 +6164,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
     This->render_targets[RenderTargetIndex] = pRenderTarget;
 
     /* Render target 0 is special */
-    if(RenderTargetIndex == 0) {
+    if(RenderTargetIndex == 0 && dxVersion > 7) {
         /* Finally, reset the viewport as the MSDN states. */
         viewport.Height = ((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height;
         viewport.Width  = ((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Width;

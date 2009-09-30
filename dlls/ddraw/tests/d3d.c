@@ -2973,6 +2973,109 @@ static void ComputeSphereVisibility(void)
     ok(result[0] == 0x2002f, "Expected 0x2002f, got %x\n", result[0]);
 }
 
+static void SetRenderTargetTest(void)
+{
+    HRESULT hr;
+    IDirectDrawSurface7 *newrt, *oldrt;
+    D3DVIEWPORT7 vp;
+    DDSURFACEDESC2 ddsd;
+    DWORD stateblock;
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_3DDEVICE;
+    ddsd.dwWidth = 64;
+    ddsd.dwHeight = 64;
+    hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &newrt, NULL);
+    ok(hr == DD_OK, "IDirectDraw7_CreateSurface failed, hr=0x%08x\n", hr);
+    if(FAILED(hr))
+    {
+        skip("Skipping SetRenderTarget test\n");
+        return;
+    }
+
+    memset(&vp, 0, sizeof(vp));
+    vp.dwX = 10;
+    vp.dwY = 10;
+    vp.dwWidth = 246;
+    vp.dwHeight = 246;
+    vp.dvMinZ = 0.25;
+    vp.dvMaxZ = 0.75;
+    hr = IDirect3DDevice7_SetViewport(lpD3DDevice, &vp);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetViewport failed, hr=0x%08x\n", hr);
+
+    hr = IDirect3DDevice7_GetRenderTarget(lpD3DDevice, &oldrt);
+    ok(hr == DD_OK, "IDirect3DDevice7_GetRenderTarget failed, hr=0x%08x\n", hr);
+
+    hr = IDirect3DDevice7_SetRenderTarget(lpD3DDevice, newrt, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderTarget failed, hr=0x%08x\n", hr);
+    memset(&vp, 0xff, sizeof(vp));
+    hr = IDirect3DDevice7_GetViewport(lpD3DDevice, &vp);
+    ok(hr == D3D_OK, "IDirect3DDevice7_GetViewport failed, hr=0x%08x\n", hr);
+    ok(vp.dwX == 10, "vp.dwX is %u, expected 10\n", vp.dwX);
+    ok(vp.dwY == 10, "vp.dwY is %u, expected 10\n", vp.dwY);
+    ok(vp.dwWidth == 246, "vp.dwWidth is %u, expected 246\n", vp.dwWidth);
+    ok(vp.dwHeight == 246, "vp.dwHeight is %u, expected 246\n", vp.dwHeight);
+    ok(vp.dvMinZ == 0.25, "vp.dvMinZ is %f, expected 0.1\n", vp.dvMinZ);
+    ok(vp.dvMaxZ == 0.75, "vp.dvMaxZ is %f, expected 0.9\n", vp.dvMaxZ);
+
+    memset(&vp, 0, sizeof(vp));
+    vp.dwX = 0;
+    vp.dwY = 0;
+    vp.dwWidth = 64;
+    vp.dwHeight = 64;
+    vp.dvMinZ = 0.0;
+    vp.dvMaxZ = 1.0;
+    hr = IDirect3DDevice7_SetViewport(lpD3DDevice, &vp);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetViewport failed, hr=0x%08x\n", hr);
+
+    hr = IDirect3DDevice7_BeginStateBlock(lpD3DDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice7_BeginStateblock failed, hr=0x%08x\n", hr);
+    hr = IDirect3DDevice7_SetRenderTarget(lpD3DDevice, oldrt, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderTarget failed, hr=0x%08x\n", hr);
+
+    /* Check this twice, before and after ending the stateblock */
+    memset(&vp, 0xff, sizeof(vp));
+    hr = IDirect3DDevice7_GetViewport(lpD3DDevice, &vp);
+    ok(hr == D3D_OK, "IDirect3DDevice7_GetViewport failed, hr=0x%08x\n", hr);
+    ok(vp.dwX == 0, "vp.dwX is %u, expected 0\n", vp.dwX);
+    ok(vp.dwY == 0, "vp.dwY is %u, expected 0\n", vp.dwY);
+    ok(vp.dwWidth == 64, "vp.dwWidth is %u, expected 64\n", vp.dwWidth);
+    ok(vp.dwHeight == 64, "vp.dwHeight is %u, expected 64\n", vp.dwHeight);
+    ok(vp.dvMinZ == 0.0, "vp.dvMinZ is %f, expected 0.0\n", vp.dvMinZ);
+    ok(vp.dvMaxZ == 1.0, "vp.dvMaxZ is %f, expected 1.0\n", vp.dvMaxZ);
+
+    hr = IDirect3DDevice7_EndStateBlock(lpD3DDevice, &stateblock);
+    ok(hr == D3D_OK, "IDirect3DDevice7_EndStateblock failed, hr=0x%08x\n", hr);
+
+    memset(&vp, 0xff, sizeof(vp));
+    hr = IDirect3DDevice7_GetViewport(lpD3DDevice, &vp);
+    ok(hr == D3D_OK, "IDirect3DDevice7_GetViewport failed, hr=0x%08x\n", hr);
+    ok(vp.dwX == 0, "vp.dwX is %u, expected 0\n", vp.dwX);
+    ok(vp.dwY == 0, "vp.dwY is %u, expected 0\n", vp.dwY);
+    ok(vp.dwWidth == 64, "vp.dwWidth is %u, expected 64\n", vp.dwWidth);
+    ok(vp.dwHeight == 64, "vp.dwHeight is %u, expected 64\n", vp.dwHeight);
+    ok(vp.dvMinZ == 0.0, "vp.dvMinZ is %f, expected 0.0\n", vp.dvMinZ);
+    ok(vp.dvMaxZ == 1.0, "vp.dvMaxZ is %f, expected 1.0\n", vp.dvMaxZ);
+
+    hr = IDirect3DDevice7_DeleteStateBlock(lpD3DDevice, stateblock);
+    ok(hr == D3D_OK, "IDirect3DDevice7_DeleteStateblock failed, hr=0x%08x\n", hr);
+
+    memset(&vp, 0, sizeof(vp));
+    vp.dwX = 0;
+    vp.dwY = 0;
+    vp.dwWidth = 256;
+    vp.dwHeight = 256;
+    vp.dvMinZ = 0.0;
+    vp.dvMaxZ = 0.0;
+    hr = IDirect3DDevice7_SetViewport(lpD3DDevice, &vp);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetViewport failed, hr=0x%08x\n", hr);
+
+    IDirectDrawSurface7_Release(oldrt);
+    IDirectDrawSurface7_Release(newrt);
+}
+
 START_TEST(d3d)
 {
     init_function_pointers();
@@ -2996,6 +3099,7 @@ START_TEST(d3d)
         VertexBufferDescTest();
         D3D7_OldRenderStateTest();
         DeviceLoadTest();
+        SetRenderTargetTest();
         ReleaseDirect3D();
     }
 
