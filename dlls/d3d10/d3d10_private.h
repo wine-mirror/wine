@@ -72,6 +72,7 @@ struct d3d10_effect_type
 
     DWORD id;
     struct wine_rb_entry entry;
+    struct d3d10_effect *effect;
 
     char *name;
     DWORD element_count;
@@ -83,6 +84,15 @@ struct d3d10_effect_type
     DWORD row_count;
     D3D10_SHADER_VARIABLE_TYPE basetype;
     D3D10_SHADER_VARIABLE_CLASS type_class;
+    struct d3d10_effect_type_member *members;
+};
+
+struct d3d10_effect_type_member
+{
+    char *name;
+    char *semantic;
+    DWORD buffer_offset;
+    struct d3d10_effect_type *type;
 };
 
 /* ID3D10EffectVariable */

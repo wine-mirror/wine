@@ -68,6 +68,8 @@ static struct d3d10_effect_variable null_vector_variable =
 static struct d3d10_effect_variable null_matrix_variable =
         {(ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL};
 
+static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, const char *data, DWORD offset);
+
 static inline void read_dword(const char **ptr, DWORD *d)
 {
     memcpy(d, *ptr, sizeof(*d));
@@ -154,8 +156,10 @@ static BOOL copy_name(const char *ptr, char **name)
 {
     size_t name_len;
 
+    if (!ptr) return TRUE;
+
     name_len = strlen(ptr) + 1;
-    if( name_len == 1 )
+    if (name_len == 1)
     {
         return TRUE;
     }
@@ -355,7 +359,6 @@ static HRESULT parse_fx10_type(struct d3d10_effect_type *t, const char *ptr, con
     else if (unknown0 == 3)
     {
         unsigned int i;
-        DWORD tmp;
 
         TRACE("Type is a structure.\n");
 
@@ -367,20 +370,49 @@ static HRESULT parse_fx10_type(struct d3d10_effect_type *t, const char *ptr, con
         t->basetype = 0;
         t->type_class = D3D10_SVC_STRUCT;
 
+        t->members = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, t->member_count * sizeof(*t->members));
+        if (!t->members)
+        {
+            ERR("Failed to allocate members memory.\n");
+            return E_OUTOFMEMORY;
+        }
+
         for (i = 0; i < t->member_count; ++i)
         {
-            read_dword(&ptr, &tmp);
-            TRACE("Member %u name at offset %#x.\n", i, tmp);
-            TRACE("Member %u name: %s.\n", i, debugstr_a(data + tmp));
+            struct d3d10_effect_type_member *typem = &t->members[i];
 
-            /* Member semantic? */
-            skip_dword_unknown(&ptr, 1);
+            read_dword(&ptr, &offset);
+            TRACE("Member name at offset %#x.\n", offset);
 
-            read_dword(&ptr, &tmp);
-            TRACE("Member %u offset in struct: %#x.\n", i, tmp);
+            if (!copy_name(data + offset, &typem->name))
+            {
+                ERR("Failed to copy name.\n");
+                return E_OUTOFMEMORY;
+            }
+            TRACE("Member name: %s.\n", debugstr_a(typem->name));
 
-            read_dword(&ptr, &tmp);
-            TRACE("Member %u type info at offset %#x.\n", i, tmp);
+            read_dword(&ptr, &offset);
+            TRACE("Member semantic at offset %#x.\n", offset);
+
+            if (!copy_name(data + offset, &typem->semantic))
+            {
+                ERR("Failed to copy semantic.\n");
+                return E_OUTOFMEMORY;
+            }
+            TRACE("Member semantic: %s.\n", debugstr_a(typem->semantic));
+
+            read_dword(&ptr, &typem->buffer_offset);
+            TRACE("Member offset in struct: %#x.\n", typem->buffer_offset);
+
+            read_dword(&ptr, &offset);
+            TRACE("Member type info at offset %#x.\n", offset);
+
+            typem->type = get_fx10_type(t->effect, data, offset);
+            if (!typem->type)
+            {
+                ERR("Failed to get variable type.\n");
+                return E_FAIL;
+            }
         }
     }
 
@@ -409,6 +441,7 @@ static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, cons
 
     type->vtbl = &d3d10_effect_type_vtbl;
     type->id = offset;
+    type->effect = effect;
     hr = parse_fx10_type(type, data + offset, data);
     if (FAILED(hr))
     {
@@ -425,6 +458,78 @@ static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, cons
     }
 
     return type;
+}
+
+static void set_variable_vtbl(struct d3d10_effect_variable *v)
+{
+    switch (v->type->type_class)
+    {
+        case D3D10_SVC_SCALAR:
+            v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl;
+            break;
+
+        case D3D10_SVC_VECTOR:
+            v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl;
+            break;
+
+        case D3D10_SVC_MATRIX_ROWS:
+        case D3D10_SVC_MATRIX_COLUMNS:
+            v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl;
+            break;
+
+        default:
+            FIXME("Unhandled type class %s.\n", debug_d3d10_shader_variable_class(v->type->type_class));
+            v->vtbl = &d3d10_effect_variable_vtbl;
+            break;
+    }
+}
+
+static HRESULT copy_variableinfo_from_type(struct d3d10_effect_variable *v)
+{
+    unsigned int i;
+
+    if (v->type->member_count == 0) return S_OK;
+
+    v->members = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, v->type->member_count * sizeof(*v->members));
+    if (!v->members)
+    {
+        ERR("Failed to allocate members memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < v->type->member_count; ++i)
+    {
+        struct d3d10_effect_variable *var = &v->members[i];
+        struct d3d10_effect_type_member *typem = &v->type->members[i];
+        HRESULT hr;
+
+        var->buffer = v;
+        var->effect = v->effect;
+        var->type = typem->type;
+        set_variable_vtbl(var);
+
+        if (!copy_name(typem->name, &var->name))
+        {
+            ERR("Failed to copy name.\n");
+            return E_OUTOFMEMORY;
+        }
+        TRACE("Variable name: %s.\n", debugstr_a(var->name));
+
+        if (!copy_name(typem->semantic, &var->semantic))
+        {
+            ERR("Failed to copy name.\n");
+            return E_OUTOFMEMORY;
+        }
+        TRACE("Variable semantic: %s.\n", debugstr_a(var->semantic));
+
+        var->buffer_offset = typem->buffer_offset;
+        TRACE("Variable buffer offset: %u.\n", var->buffer_offset);
+
+        hr = copy_variableinfo_from_type(var);
+        if (FAILED(hr)) return hr;
+    }
+
+    return S_OK;
 }
 
 static HRESULT parse_fx10_variable_head(struct d3d10_effect_variable *v, const char **ptr, const char *data)
@@ -450,29 +555,9 @@ static HRESULT parse_fx10_variable_head(struct d3d10_effect_variable *v, const c
         ERR("Failed to get variable type.\n");
         return E_FAIL;
     }
+    set_variable_vtbl(v);
 
-    switch (v->type->type_class)
-    {
-        case D3D10_SVC_SCALAR:
-            v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl;
-            break;
-
-        case D3D10_SVC_VECTOR:
-            v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl;
-            break;
-
-        case D3D10_SVC_MATRIX_ROWS:
-        case D3D10_SVC_MATRIX_COLUMNS:
-            v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl;
-            break;
-
-        default:
-            FIXME("Unhandled type class %s.\n", debug_d3d10_shader_variable_class(v->type->type_class));
-            v->vtbl = &d3d10_effect_variable_vtbl;
-            break;
-    }
-
-    return S_OK;
+    return copy_variableinfo_from_type(v);
 }
 
 static HRESULT parse_fx10_annotation(struct d3d10_effect_variable *a, const char **ptr, const char *data)
@@ -720,6 +805,7 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_variable *l, const ch
     D3D10_CBUFFER_TYPE d3d10_cbuffer_type;
     HRESULT hr;
 
+    /* Generate our own type, it isn't in the fx blob. */
     l->type = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*l->type));
     if (!l->type)
     {
@@ -728,6 +814,7 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_variable *l, const ch
     }
     l->type->vtbl = &d3d10_effect_type_vtbl;
     l->type->type_class = D3D10_SVC_OBJECT;
+    l->type->effect = l->effect;
 
     read_dword(ptr, &offset);
     TRACE("Local buffer name at offset %#x.\n", offset);
@@ -802,15 +889,46 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_variable *l, const ch
         return E_OUTOFMEMORY;
     }
 
+    l->type->members = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, l->type->member_count * sizeof(*l->type->members));
+    if (!l->type->members)
+    {
+        ERR("Failed to allocate type members memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
     for (i = 0; i < l->type->member_count; ++i)
     {
         struct d3d10_effect_variable *v = &l->members[i];
+        struct d3d10_effect_type_member *typem = &l->type->members[i];
 
         v->buffer = l;
         v->effect = l->effect;
 
         hr = parse_fx10_variable(v, ptr, data);
         if (FAILED(hr)) return hr;
+
+        /*
+         * Copy the values from the variable type to the constant buffers type
+         * members structure, because it is our own generated type.
+         */
+        typem->type = v->type;
+
+        if (!copy_name(v->name, &typem->name))
+        {
+            ERR("Failed to copy name.\n");
+            return E_OUTOFMEMORY;
+        }
+        TRACE("Variable name: %s.\n", debugstr_a(typem->name));
+
+        if (!copy_name(v->semantic, &typem->semantic))
+        {
+            ERR("Failed to copy name.\n");
+            return E_OUTOFMEMORY;
+        }
+        TRACE("Variable semantic: %s.\n", debugstr_a(typem->semantic));
+
+        typem->buffer_offset = v->buffer_offset;
+        TRACE("Variable buffer offset: %u.\n", typem->buffer_offset);
 
         l->type->size_packed += v->type->size_packed;
         l->type->size_unpacked += v->type->size_unpacked;
@@ -838,11 +956,31 @@ static int d3d10_effect_type_compare(const void *key, const struct wine_rb_entry
     return *id - t->id;
 }
 
+static void d3d10_effect_type_member_destroy(struct d3d10_effect_type_member *typem)
+{
+    TRACE("effect type member %p.\n", typem);
+
+    /* Do not release typem->type, it will be covered by d3d10_effect_type_destroy(). */
+    HeapFree(GetProcessHeap(), 0, typem->semantic);
+    HeapFree(GetProcessHeap(), 0, typem->name);
+}
+
 static void d3d10_effect_type_destroy(struct wine_rb_entry *entry, void *context)
 {
     struct d3d10_effect_type *t = WINE_RB_ENTRY_VALUE(entry, struct d3d10_effect_type, entry);
 
     TRACE("effect type %p.\n", t);
+
+    if (t->members)
+    {
+        unsigned int i;
+
+        for (i = 0; i < t->member_count; ++i)
+        {
+            d3d10_effect_type_member_destroy(&t->members[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, t->members);
+    }
 
     HeapFree(GetProcessHeap(), 0, t->name);
     HeapFree(GetProcessHeap(), 0, t);
@@ -1043,18 +1181,28 @@ static HRESULT d3d10_effect_object_apply(struct d3d10_effect_object *o)
 
 static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
 {
+    unsigned int i;
+
     TRACE("variable %p.\n", v);
 
     HeapFree(GetProcessHeap(), 0, v->name);
     HeapFree(GetProcessHeap(), 0, v->semantic);
     if (v->annotations)
     {
-        unsigned int i;
         for (i = 0; i < v->annotation_count; ++i)
         {
             d3d10_effect_variable_destroy(&v->annotations[i]);
         }
         HeapFree(GetProcessHeap(), 0, v->annotations);
+    }
+
+    if (v->members)
+    {
+        for (i = 0; i < v->type->member_count; ++i)
+        {
+            d3d10_effect_variable_destroy(&v->members[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, v->members);
     }
 }
 
@@ -1125,6 +1273,17 @@ static void d3d10_effect_local_buffer_destroy(struct d3d10_effect_variable *l)
             d3d10_effect_variable_destroy(&l->members[i]);
         }
         HeapFree(GetProcessHeap(), 0, l->members);
+    }
+
+    if (l->type->members)
+    {
+        for (i = 0; i < l->type->member_count; ++i)
+        {
+            /* Do not release l->type->members[i].type, it will be covered by d3d10_effect_type_destroy(). */
+            HeapFree(GetProcessHeap(), 0, l->type->members[i].semantic);
+            HeapFree(GetProcessHeap(), 0, l->type->members[i].name);
+        }
+        HeapFree(GetProcessHeap(), 0, l->type->members);
     }
     HeapFree(GetProcessHeap(), 0, l->type->name);
     HeapFree(GetProcessHeap(), 0, l->type);
@@ -3132,9 +3291,13 @@ static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTy
 
 static LPCSTR STDMETHODCALLTYPE d3d10_effect_type_GetMemberName(ID3D10EffectType *iface, UINT index)
 {
-    FIXME("iface %p, index %u stub!\n", iface, index);
+    struct d3d10_effect_type *This = (struct d3d10_effect_type *)iface;
 
-    return NULL;
+    TRACE("iface %p, index %u\n", iface, index);
+
+    if(index >= This->member_count) return NULL;
+
+    return This->members[index].name;
 }
 
 static LPCSTR STDMETHODCALLTYPE d3d10_effect_type_GetMemberSemantic(ID3D10EffectType *iface, UINT index)
