@@ -109,8 +109,8 @@ struct d3d10_effect_local_buffer
     struct d3d10_effect *effect;
     char *name;
     DWORD data_size;
-    DWORD member_count;
     DWORD annotation_count;
+    struct d3d10_effect_type *type;
     struct d3d10_effect_variable *members;
     struct d3d10_effect_variable *annotations;
 };

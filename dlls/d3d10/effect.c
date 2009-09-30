@@ -717,7 +717,17 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, cons
 {
     unsigned int i;
     DWORD offset;
+    D3D10_CBUFFER_TYPE d3d10_cbuffer_type;
     HRESULT hr;
+
+    l->type = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*l->type));
+    if (!l->type)
+    {
+        ERR("Failed to allocate local buffer type memory.\n");
+        return E_OUTOFMEMORY;
+    }
+    l->type->vtbl = &d3d10_effect_type_vtbl;
+    l->type->type_class = D3D10_SVC_OBJECT;
 
     read_dword(ptr, &offset);
     TRACE("Local buffer name at offset %#x.\n", offset);
@@ -732,10 +742,36 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, cons
     read_dword(ptr, &l->data_size);
     TRACE("Local buffer data size: %#x.\n", l->data_size);
 
-    skip_dword_unknown(ptr, 1);
+    read_dword(ptr, &d3d10_cbuffer_type);
+    TRACE("Local buffer type: %#x.\n", d3d10_cbuffer_type);
 
-    read_dword(ptr, &l->member_count);
-    TRACE("Local buffer member count: %#x.\n", l->member_count);
+    switch(d3d10_cbuffer_type)
+    {
+        case D3D10_CT_CBUFFER:
+            l->type->basetype = D3D10_SVT_CBUFFER;
+            if (!copy_name("cbuffer", &l->type->name))
+            {
+                ERR("Failed to copy name.\n");
+                return E_OUTOFMEMORY;
+            }
+            break;
+
+        case D3D10_CT_TBUFFER:
+            l->type->basetype = D3D10_SVT_TBUFFER;
+            if (!copy_name("tbuffer", &l->type->name))
+            {
+                ERR("Failed to copy name.\n");
+                return E_OUTOFMEMORY;
+            }
+            break;
+
+        default:
+            ERR("Unexpected D3D10_CBUFFER_TYPE %#x!\n", d3d10_cbuffer_type);
+            return E_FAIL;
+    }
+
+    read_dword(ptr, &l->type->member_count);
+    TRACE("Local buffer member count: %#x.\n", l->type->member_count);
 
     skip_dword_unknown(ptr, 1);
 
@@ -759,14 +795,14 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, cons
         if (FAILED(hr)) return hr;
     }
 
-    l->members = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, l->member_count * sizeof(*l->members));
+    l->members = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, l->type->member_count * sizeof(*l->members));
     if (!l->members)
     {
         ERR("Failed to allocate members memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    for (i = 0; i < l->member_count; ++i)
+    for (i = 0; i < l->type->member_count; ++i)
     {
         struct d3d10_effect_variable *v = &l->members[i];
 
@@ -775,7 +811,21 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, cons
 
         hr = parse_fx10_variable(v, ptr, data);
         if (FAILED(hr)) return hr;
+
+        l->type->size_packed += v->type->size_packed;
+        l->type->size_unpacked += v->type->size_unpacked;
     }
+    l->type->stride = l->type->size_unpacked = (l->type->size_unpacked + 0xf) & ~0xf;
+
+    TRACE("Constant buffer:\n");
+    TRACE("\tType name: %s.\n", debugstr_a(l->type->name));
+    TRACE("\tElement count: %u.\n", l->type->element_count);
+    TRACE("\tMember count: %u.\n", l->type->member_count);
+    TRACE("\tUnpacked size: %#x.\n", l->type->size_unpacked);
+    TRACE("\tStride: %#x.\n", l->type->stride);
+    TRACE("\tPacked size %#x.\n", l->type->size_packed);
+    TRACE("\tBasetype: %s.\n", debug_d3d10_shader_variable_type(l->type->basetype));
+    TRACE("\tTypeclass: %s.\n", debug_d3d10_shader_variable_class(l->type->type_class));
 
     return S_OK;
 }
@@ -1070,12 +1120,14 @@ static void d3d10_effect_local_buffer_destroy(struct d3d10_effect_local_buffer *
     HeapFree(GetProcessHeap(), 0, l->name);
     if (l->members)
     {
-        for (i = 0; i < l->member_count; ++i)
+        for (i = 0; i < l->type->member_count; ++i)
         {
             d3d10_effect_variable_destroy(&l->members[i]);
         }
         HeapFree(GetProcessHeap(), 0, l->members);
     }
+    HeapFree(GetProcessHeap(), 0, l->type->name);
+    HeapFree(GetProcessHeap(), 0, l->type);
 
     if (l->annotations)
     {
@@ -1254,7 +1306,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
         struct d3d10_effect_local_buffer *l = &This->local_buffers[i];
         unsigned int j;
 
-        for (j = 0; j < l->member_count; ++j)
+        for (j = 0; j < l->type->member_count; ++j)
         {
             struct d3d10_effect_variable *v = &l->members[j];
 
