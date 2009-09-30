@@ -117,6 +117,8 @@ DEFINE_EXPECT(script_testprop_i);
 
 static const GUID CLSID_TestScript =
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x07,0x46}};
+static const GUID CLSID_TestActiveX =
+    {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x06,0x46}};
 
 static IHTMLDocument2 *notif_doc;
 static IDispatchEx *window_dispex;
@@ -575,6 +577,7 @@ static void test_security(void)
 {
     IInternetHostSecurityManager *sec_mgr;
     IServiceProvider *sp;
+    DWORD policy;
     HRESULT hres;
 
     hres = IActiveScriptSite_QueryInterface(site, &IID_IServiceProvider, (void**)&sp);
@@ -584,6 +587,11 @@ static void test_security(void)
             &IID_IInternetHostSecurityManager, (void**)&sec_mgr);
     IServiceProvider_Release(sp);
     ok(hres == S_OK, "QueryService failed: %08x\n", hres);
+
+    hres = IInternetHostSecurityManager_ProcessUrlAction(sec_mgr, URLACTION_ACTIVEX_RUN, (BYTE*)&policy, sizeof(policy),
+                                                         (BYTE*)&CLSID_TestActiveX, sizeof(CLSID), 0, 0);
+    ok(hres == S_OK, "ProcessUrlAction failed: %08x\n", hres);
+    ok(policy == URLPOLICY_ALLOW, "policy = %x\n", policy);
 
     IInternetHostSecurityManager_Release(sec_mgr);
 }

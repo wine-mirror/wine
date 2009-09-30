@@ -471,6 +471,8 @@ struct HTMLDocumentNode {
 
     HTMLDOMNode *nodes;
 
+    IInternetSecurityManager *secmgr;
+
     struct list selection_list;
     struct list range_list;
 };

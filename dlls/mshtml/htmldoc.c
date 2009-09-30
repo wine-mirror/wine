@@ -1772,6 +1772,9 @@ void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
 {
     HTMLDocumentNode *This = HTMLDOCNODE_NODE_THIS(iface);
 
+    if(This->secmgr)
+        IInternetSecurityManager_Release(This->secmgr);
+
     detach_selection(This);
     detach_ranges(This);
     release_nodes(This);
@@ -1805,6 +1808,7 @@ static dispex_static_data_t HTMLDocumentNode_dispex = {
 HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_obj, HTMLWindow *window, HTMLDocumentNode **ret)
 {
     HTMLDocumentNode *doc;
+    HRESULT hres;
 
     doc = heap_alloc_zero(sizeof(HTMLDocumentNode));
     if(!doc)
@@ -1828,6 +1832,12 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
 
     HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)nsdoc);
     doc->node.vtbl = &HTMLDocumentNodeImplVtbl;
+
+    hres = CoInternetCreateSecurityManager(NULL, &doc->secmgr, 0);
+    if(FAILED(hres)) {
+        htmldoc_release(&doc->basedoc);
+        return hres;
+    }
 
     *ret = doc;
     return S_OK;

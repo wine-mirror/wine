@@ -34,6 +34,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
+
 #define HOSTSECMGR_THIS(iface) DEFINE_THIS(HTMLDocumentNode, IInternetHostSecurityManager, iface)
 
 static HRESULT WINAPI InternetHostSecurityManager_QueryInterface(IInternetHostSecurityManager *iface, REFIID riid, void **ppv)
@@ -66,8 +68,14 @@ static HRESULT WINAPI InternetHostSecurityManager_ProcessUrlAction(IInternetHost
         BYTE *pPolicy, DWORD cbPolicy, BYTE *pContext, DWORD cbContext, DWORD dwFlags, DWORD dwReserved)
 {
     HTMLDocumentNode *This = HOSTSECMGR_THIS(iface);
-    FIXME("%p)->(%d %p %d %p %d %x %x)\n", This, dwAction, pPolicy, cbPolicy, pContext, cbContext, dwFlags, dwReserved);
-    return E_NOTIMPL;
+    const WCHAR *url;
+
+    TRACE("%p)->(%d %p %d %p %d %x %x)\n", This, dwAction, pPolicy, cbPolicy, pContext, cbContext, dwFlags, dwReserved);
+
+    url = This->basedoc.doc_obj->url ? This->basedoc.doc_obj->url : about_blankW;
+
+    return IInternetSecurityManager_ProcessUrlAction(This->secmgr, url, dwAction, pPolicy, cbPolicy,
+            pContext, cbContext, dwFlags, dwReserved);
 }
 
 static HRESULT WINAPI InternetHostSecurityManager_QueryCustomPolicy(IInternetHostSecurityManager *iface, REFGUID guidKey,
