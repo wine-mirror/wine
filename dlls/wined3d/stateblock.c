@@ -164,7 +164,7 @@ static void stateblock_savedstates_set(SAVEDSTATES *states, BOOL value, const st
     memset(states->vertexShaderConstantsF, value, sizeof(BOOL) * gl_info->max_vshader_constantsF);
 }
 
-static void stateblock_copy(IWineD3DStateBlockImpl *dst, IWineD3DStateBlockImpl *src)
+static void stateblock_copy(IWineD3DStateBlockImpl *dst, const IWineD3DStateBlockImpl *src)
 {
     const struct wined3d_gl_info *gl_info = &src->wineD3DDevice->adapter->gl_info;
     unsigned int l;
@@ -331,7 +331,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_GetDevice(IWineD3DStateBlock *ifac
 
 }
 
-static inline void record_lights(IWineD3DStateBlockImpl *This, IWineD3DStateBlockImpl *targetStateBlock) {
+static void record_lights(IWineD3DStateBlockImpl *This, const IWineD3DStateBlockImpl *targetStateBlock)
+{
     UINT i;
 
     /* Lights... For a recorded state block, we just had a chain of actions to perform,
@@ -744,7 +745,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     return WINED3D_OK;
 }
 
-static inline void apply_lights(IWineD3DDevice *pDevice, IWineD3DStateBlockImpl *This) {
+static void apply_lights(IWineD3DDevice *pDevice, const IWineD3DStateBlockImpl *This)
+{
     UINT i;
     for(i = 0; i < LIGHTMAP_SIZE; i++) {
         struct list *e;
