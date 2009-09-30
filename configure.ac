@@ -2220,6 +2220,7 @@ WINE_CONFIG_MAKEFILE([dlls/dxgi/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_D
 WINE_CONFIG_MAKEFILE([dlls/dxgi/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
 WINE_CONFIG_MAKEFILE([dlls/dxguid/Makefile],[dlls/Makeimplib.rules],[dlls],[ALL_IMPLIB_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/faultrep/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
+WINE_CONFIG_MAKEFILE([dlls/fltlib/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/fusion/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/fusion/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
 WINE_CONFIG_MAKEFILE([dlls/gdi32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])

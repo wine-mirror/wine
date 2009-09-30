@@ -14860,6 +14860,14 @@ dlls/faultrep/Makefile: dlls/faultrep/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/faultrep/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/fltlib/Makefile"
+test "x$enable_fltlib" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	fltlib"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/fltlib/Makefile: dlls/fltlib/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/fltlib/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/fusion/Makefile"
 test "x$enable_fusion" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	fusion"
@@ -18846,6 +18854,7 @@ do
     "dlls/dxgi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxgi/tests/Makefile" ;;
     "dlls/dxguid/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxguid/Makefile" ;;
     "dlls/faultrep/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/faultrep/Makefile" ;;
+    "dlls/fltlib/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/fltlib/Makefile" ;;
     "dlls/fusion/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/fusion/Makefile" ;;
     "dlls/fusion/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/fusion/tests/Makefile" ;;
     "dlls/gdi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdi32/Makefile" ;;
