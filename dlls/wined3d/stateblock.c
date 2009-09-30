@@ -113,12 +113,9 @@ static inline void stateblock_set_bits(DWORD *map, UINT map_size)
     if (mask) map[map_size >> 5] = mask;
 }
 
-/** Set all members of a stateblock savedstate to the given value */
-static void stateblock_savedstates_set(IWineD3DStateBlock *iface, SAVEDSTATES *states, BOOL value)
+/* Set all members of a stateblock savedstate to the given value */
+static void stateblock_savedstates_set(SAVEDSTATES *states, BOOL value, const struct wined3d_gl_info *gl_info)
 {
-    IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
-    unsigned bsize = sizeof(BOOL);
-
     /* Single values */
     states->primitive_type = value;
     states->indices = value;
@@ -163,8 +160,8 @@ static void stateblock_savedstates_set(IWineD3DStateBlock *iface, SAVEDSTATES *s
     }
 
     /* Dynamically sized arrays */
-    memset(states->pixelShaderConstantsF, value, bsize * GL_LIMITS(pshader_constantsF));
-    memset(states->vertexShaderConstantsF, value, bsize * GL_LIMITS(vshader_constantsF));
+    memset(states->pixelShaderConstantsF, value, sizeof(BOOL) * gl_info->max_pshader_constantsF);
+    memset(states->vertexShaderConstantsF, value, sizeof(BOOL) * gl_info->max_vshader_constantsF);
 }
 
 static void stateblock_copy(IWineD3DStateBlockImpl *dst, IWineD3DStateBlockImpl *src)
@@ -1393,7 +1390,7 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
     if (type == WINED3DSBT_ALL)
     {
         TRACE("ALL => Pretend everything has changed.\n");
-        stateblock_savedstates_set((IWineD3DStateBlock *)stateblock, &stateblock->changed, TRUE);
+        stateblock_savedstates_set(&stateblock->changed, TRUE, gl_info);
 
         /* Lights are not part of the changed / set structure. */
         for (i = 0; i < LIGHTMAP_SIZE; ++i)
@@ -1488,7 +1485,7 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
     else if (type == WINED3DSBT_PIXELSTATE)
     {
         TRACE("PIXELSTATE => Pretend all pixel states have changed.\n");
-        stateblock_savedstates_set((IWineD3DStateBlock *)stateblock, &stateblock->changed, FALSE);
+        stateblock_savedstates_set(&stateblock->changed, FALSE, gl_info);
 
         /* Pixel Shader Constants. */
         for (i = 0; i <  gl_info->max_pshader_constantsF; ++i)
@@ -1560,7 +1557,7 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
     else if (type == WINED3DSBT_VERTEXSTATE)
     {
         TRACE("VERTEXSTATE => Pretend all vertex shates have changed.\n");
-        stateblock_savedstates_set((IWineD3DStateBlock *)stateblock, &stateblock->changed, FALSE);
+        stateblock_savedstates_set(&stateblock->changed, FALSE, gl_info);
 
         /* Vertex Shader Constants. */
         for (i = 0; i <  gl_info->max_vshader_constantsF; ++i)
