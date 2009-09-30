@@ -115,6 +115,100 @@ char *pp_xstrdup(const char *str)
 	return memcpy(s, str, len);
 }
 
+static char *wpp_default_lookup(const char *name, const char *parent_name,
+                                char **include_path, int include_path_count)
+{
+    char *cpy;
+    char *cptr;
+    char *path;
+    const char *ccptr;
+    int i, fd;
+
+    cpy = pp_xmalloc(strlen(name)+1);
+    if(!cpy)
+        return NULL;
+    cptr = cpy;
+
+    for(ccptr = name; *ccptr; ccptr++)
+    {
+        /* Convert to forward slash */
+        if(*ccptr == '\\') {
+            /* kill double backslash */
+            if(ccptr[1] == '\\')
+                ccptr++;
+            *cptr = '/';
+        }else {
+            *cptr = *ccptr;
+        }
+        cptr++;
+    }
+    *cptr = '\0';
+
+    if(parent_name)
+    {
+        /* Search directory of parent include and then -I path */
+        const char *p;
+
+        if ((p = strrchr( parent_name, '/' ))) p++;
+        else p = parent_name;
+        path = pp_xmalloc( (p - parent_name) + strlen(cpy) + 1 );
+        if(!path)
+        {
+            free(cpy);
+            return NULL;
+        }
+        memcpy( path, parent_name, p - parent_name );
+        strcpy( path + (p - parent_name), cpy );
+        fd = open( path, O_RDONLY );
+        if (fd != -1)
+        {
+            close( fd );
+            free( cpy );
+            return path;
+        }
+        free( path );
+    }
+    /* Search -I path */
+    for(i = 0; i < include_path_count; i++)
+    {
+        path = pp_xmalloc(strlen(include_path[i]) + strlen(cpy) + 2);
+        if(!path)
+        {
+            free(cpy);
+            return NULL;
+        }
+        strcpy(path, include_path[i]);
+        strcat(path, "/");
+        strcat(path, cpy);
+        fd = open( path, O_RDONLY );
+        if (fd != -1)
+        {
+            close( fd );
+            free( cpy );
+            return path;
+        }
+        free( path );
+    }
+    free( cpy );
+    return NULL;
+}
+
+static void *wpp_default_open(const char *filename, int type) {
+    return fopen(filename,"rt");
+}
+
+static void wpp_default_close(void *file) {
+    fclose(file);
+}
+
+static int wpp_default_read(void *file, char *buffer, unsigned int len){
+    return fread(buffer, 1, len, file);
+}
+
+static void wpp_default_write( const char *buffer, unsigned int len ) {
+    fwrite(buffer, 1, len, ppy_out);
+}
+
 /* Don't comment on the hash, its primitive but functional... */
 static int pphash(const char *str)
 {
@@ -403,88 +497,17 @@ int wpp_add_include_path(const char *path)
 
 char *wpp_find_include(const char *name, const char *parent_name)
 {
-    char *cpy;
-    char *cptr;
-    char *path;
-    const char *ccptr;
-    int i, fd;
-
-    cpy = pp_xmalloc(strlen(name)+1);
-    if(!cpy)
-        return NULL;
-    cptr = cpy;
-
-    for(ccptr = name; *ccptr; ccptr++)
-    {
-        /* Convert to forward slash */
-        if(*ccptr == '\\') {
-            /* kill double backslash */
-            if(ccptr[1] == '\\')
-                ccptr++;
-            *cptr = '/';
-        }else {
-            *cptr = *ccptr;
-        }
-        cptr++;
-    }
-    *cptr = '\0';
-
-    if(parent_name)
-    {
-        /* Search directory of parent include and then -I path */
-        const char *p;
-
-        if ((p = strrchr( parent_name, '/' ))) p++;
-        else p = parent_name;
-        path = pp_xmalloc( (p - parent_name) + strlen(cpy) + 1 );
-        if(!path)
-        {
-            free(cpy);
-            return NULL;
-        }
-        memcpy( path, parent_name, p - parent_name );
-        strcpy( path + (p - parent_name), cpy );
-        fd = open( path, O_RDONLY );
-        if (fd != -1)
-        {
-            close( fd );
-            free( cpy );
-            return path;
-        }
-        free( path );
-    }
-    /* Search -I path */
-    for(i = 0; i < nincludepath; i++)
-    {
-        path = pp_xmalloc(strlen(includepath[i]) + strlen(cpy) + 2);
-        if(!path)
-        {
-            free(cpy);
-            return NULL;
-        }
-        strcpy(path, includepath[i]);
-        strcat(path, "/");
-        strcat(path, cpy);
-        fd = open( path, O_RDONLY );
-        if (fd != -1)
-        {
-            close( fd );
-            free( cpy );
-            return path;
-        }
-        free( path );
-    }
-    free( cpy );
-    return NULL;
+    return wpp_default_lookup(name, parent_name, includepath, nincludepath);
 }
 
-FILE *pp_open_include(const char *name, const char *parent_name, char **newpath)
+void *pp_open_include(const char *name, const char *parent_name, char **newpath)
 {
     char *path;
-    FILE *fp;
+    void *fp;
 
-    if (!(path = wpp_find_include( name, parent_name ))) return NULL;
-    fp = fopen(path, "rt");
+    if (!(path = wpp_callbacks->lookup(name, parent_name, includepath,
+                                       nincludepath))) return NULL;
+    fp = wpp_callbacks->open(path, parent_name == NULL ? 1 : 0);
 
     if (fp)
     {
@@ -687,6 +710,11 @@ static void wpp_default_warning(const char *file, int line, int col, const char 
 
 static const struct wpp_callbacks default_callbacks =
 {
+	wpp_default_lookup,
+	wpp_default_open,
+	wpp_default_close,
+	wpp_default_read,
+	wpp_default_write,
 	wpp_default_error,
 	wpp_default_warning,
 };

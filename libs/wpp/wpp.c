@@ -176,8 +176,8 @@ int wpp_parse( const char *input, FILE *output )
     add_cmdline_defines();
     add_special_defines();
 
-    if (!input) ppy_in = stdin;
-    else if (!(ppy_in = fopen(input, "rt")))
+    if (!input) pp_status.file = stdin;
+    else if (!(pp_status.file = wpp_callbacks->open(input, 1)))
     {
         ppy_error("Could not open %s\n", input);
         return 2;
@@ -186,13 +186,13 @@ int wpp_parse( const char *input, FILE *output )
     pp_status.input = input;
 
     ppy_out = output;
-    fprintf(ppy_out, "# 1 \"%s\" 1\n", input ? input : "");
+    pp_writestring("# 1 \"%s\" 1\n", input ? input : "");
 
     ret = ppy_parse();
     /* If there were errors during processing, return an error code */
     if(!ret && pp_status.state) ret = pp_status.state;
 
-    if (input) fclose(ppy_in);
+    if (input) wpp_callbacks->close(pp_status.file);
     pp_pop_define_state();
     return ret;
 }

@@ -26,6 +26,23 @@
 
 struct wpp_callbacks
 {
+    /* I/O callbacks */
+
+    /* Looks for a file to include, returning the path where it is found */
+    /* parent_name is the directory of the parent source file (for local
+     * includes), includepath is an array of additional include paths */
+    char *(*lookup)( const char *filename, const char *parent_name,
+                     char **include_path, int include_path_count );
+    /* Opens an include file */
+    /* The type param is true if it is a local ("...") include */
+    void *(*open)( const char *filename, int type );
+    /* Closes a previously opened file */
+    void (*close)( void *file );
+    /* Reads buffer from the input */
+    int (*read)( void *file, char *buffer, unsigned int len );
+    /* Writes buffer to the output */
+    void (*write)( const char *buffer, unsigned int len );
+
     /* Error callbacks */
     void (*error)( const char *file, int line, int col, const char *near, const char *msg, va_list ap );
     void (*warning)( const char *file, int line, int col, const char *near, const char *msg, va_list ap );

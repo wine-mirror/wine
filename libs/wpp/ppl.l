@@ -178,6 +178,7 @@ ul	[uUlL]|[uUlL][lL]|[lL][uU]|[lL][lL][uU]|[uU][lL][lL]|[lL][uU][lL]
 #define YY_NO_UNISTD_H
 #endif
 
+#include "wine/wpp.h"
 #include "wpp_private.h"
 #include "ppy.tab.h"
 
@@ -205,6 +206,7 @@ ul	[uUlL]|[uUlL][lL]|[lL][uU]|[lL][lL][uU]|[uU][lL][lL]|[lL][uU][lL]
 
 typedef struct bufferstackentry {
 	YY_BUFFER_STATE	bufferstate;	/* Buffer to switch back to */
+	void		*filehandle;    /* Handle to be used with wpp_callbacks->read */
 	pp_entry_t	*define;	/* Points to expanding define or NULL if handling includes */
 	int		line_number;	/* Line that we were handling */
 	int		char_number;	/* The current position on that line */
@@ -297,6 +299,56 @@ include_state_t pp_incl_state =
 };
 
 includelogicentry_t *pp_includelogiclist = NULL;
+
+#define YY_INPUT(buf,result,max_size)					     \
+	{								     \
+		result = wpp_callbacks->read(pp_status.file, buf, max_size); \
+	}
+
+#define BUFFERINITIALCAPACITY 256
+
+void pp_writestring(const char *format, ...)
+{
+	va_list valist;
+	int len;
+	static char *buffer;
+	static int buffercapacity;
+	char *new_buffer;
+
+	if(buffercapacity == 0)
+	{
+		buffer = pp_xmalloc(BUFFERINITIALCAPACITY);
+		if(buffer == NULL)
+			return;
+		buffercapacity = BUFFERINITIALCAPACITY;
+	}
+
+	va_start(valist, format);
+	len = vsnprintf(buffer, buffercapacity,
+			format, valist);
+        /* If the string is longer than buffersize, vsnprintf returns
+         * the string length with glibc >= 2.1, -1 with glibc < 2.1 */
+	while(len > buffercapacity || len < 0)
+	{
+		do
+		{
+			buffercapacity *= 2;
+		} while(len > buffercapacity);
+
+		new_buffer = pp_xrealloc(buffer, buffercapacity);
+		if(new_buffer == NULL)
+		{
+			va_end(valist);
+			return;
+		}
+		buffer = new_buffer;
+		len = vsnprintf(buffer, buffercapacity,
+				format, valist);
+	}
+	va_end(valist);
+
+	wpp_callbacks->write(buffer, len);
+}
 
 %}
 
@@ -1243,6 +1295,7 @@ static void push_buffer(pp_entry_t *ppp, char *filename, char *incname, int pop)
 
 	memset(&bufferstack[bufferstackidx], 0, sizeof(bufferstack[0]));
 	bufferstack[bufferstackidx].bufferstate	= YY_CURRENT_BUFFER;
+	bufferstack[bufferstackidx].filehandle  = pp_status.file;
 	bufferstack[bufferstackidx].define	= ppp;
 	bufferstack[bufferstackidx].line_number	= pp_status.line_number;
 	bufferstack[bufferstackidx].char_number	= pp_status.char_number;
@@ -1284,8 +1337,8 @@ static bufferstackentry_t *pop_buffer(void)
 	{
 		if(!bufferstack[bufferstackidx].should_pop)
 		{
-			fclose(ppy_in);
-			fprintf(ppy_out, "# %d \"%s\" 2\n", bufferstack[bufferstackidx].line_number, bufferstack[bufferstackidx].filename);
+			wpp_callbacks->close(pp_status.file);
+			pp_writestring("# %d \"%s\" 2\n", bufferstack[bufferstackidx].line_number, bufferstack[bufferstackidx].filename);
 
 			/* We have EOF, check the include logic */
 			if(pp_incl_state.state == 2 && !pp_incl_state.seen_junk && pp_incl_state.ppp)
@@ -1332,7 +1385,8 @@ static bufferstackentry_t *pop_buffer(void)
 			bufferstack[bufferstackidx].filename,
 			bufferstack[bufferstackidx].should_pop);
 
-        ppy__switch_to_buffer(bufferstack[bufferstackidx].bufferstate);
+	pp_status.file = bufferstack[bufferstackidx].filehandle;
+	ppy__switch_to_buffer(bufferstack[bufferstackidx].bufferstate);
 
 	if(bufferstack[bufferstackidx].should_pop)
 	{
@@ -1499,7 +1553,7 @@ static void put_buffer(const char *s, int len)
 	if(top_macro())
 		add_text_to_macro(s, len);
 	else
-           fwrite(s, 1, len, ppy_out);
+		wpp_callbacks->write(s, len);
 }
 
 
@@ -1513,6 +1567,7 @@ void pp_do_include(char *fname, int type)
 	char *newpath;
 	int n;
 	includelogicentry_t *iep;
+	void *fp;
 
 	if(!fname)
 		return;
@@ -1541,7 +1596,7 @@ void pp_do_include(char *fname, int type)
 	/* Undo the effect of the quotation */
 	fname[n-1] = '\0';
 
-	if((ppy_in = pp_open_include(fname+1, type ? pp_status.input : NULL, &newpath)) == NULL)
+	if((fp = pp_open_include(fname+1, type ? pp_status.input : NULL, &newpath)) == NULL)
 	{
 		ppy_error("Unable to open include file %s", fname+1);
 		return;
@@ -1556,9 +1611,10 @@ void pp_do_include(char *fname, int type)
 	if(pp_status.debug)
 		fprintf(stderr, "pp_do_include: %s:%d: include_state=%d, include_ppp='%s', include_ifdepth=%d\n",
                         pp_status.input, pp_status.line_number, pp_incl_state.state, pp_incl_state.ppp, pp_incl_state.ifdepth);
-        ppy__switch_to_buffer(ppy__create_buffer(ppy_in, YY_BUF_SIZE));
+	pp_status.file = fp;
+	ppy__switch_to_buffer(ppy__create_buffer(NULL, YY_BUF_SIZE));
 
-	fprintf(ppy_out, "# 1 \"%s\" 1%s\n", newpath, type ? "" : " 3");
+	pp_writestring("# 1 \"%s\" 1%s\n", newpath, type ? "" : " 3");
 }
 
 /*
