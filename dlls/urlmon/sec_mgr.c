@@ -590,8 +590,8 @@ static HRESULT WINAPI SecManagerImpl_QueryCustomPolicy(IInternetSecurityManager 
             return hres;
     }
 
-    FIXME("Default action is not implemented\n");
-    return E_NOTIMPL;
+    WARN("Unknown guidKey %s\n", debugstr_guid(guidKey));
+    return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
 }
 
 static HRESULT WINAPI SecManagerImpl_SetZoneMapping(IInternetSecurityManager *iface,

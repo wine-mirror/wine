@@ -71,6 +71,10 @@ static const BYTE secid10_2[] =
 static const GUID CLSID_TestActiveX =
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x06,0x46}};
 
+/* Defined as extern in urlmon.idl, but not exported by uuid.lib */
+const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
+    {0x10200490,0xfa38,0x11d0,{0xac,0x0e,0x00,0xa0,0xc9,0xf,0xff,0xc0}};
+
 static struct secmgr_test {
     LPCWSTR url;
     DWORD zone;
@@ -297,7 +301,9 @@ static void test_special_url_action(IInternetSecurityManager *secmgr, IInternetZ
 
 static void test_activex(IInternetSecurityManager *secmgr)
 {
-    DWORD policy;
+    DWORD policy, policy_size;
+    struct CONFIRMSAFETY cs;
+    BYTE *ppolicy;
     HRESULT hres;
 
     policy = 0xdeadbeef;
@@ -305,6 +311,13 @@ static void test_activex(IInternetSecurityManager *secmgr)
             sizeof(DWORD), (BYTE*)&CLSID_TestActiveX, sizeof(CLSID), 0, 0);
     ok(hres == S_OK, "ProcessUrlAction(URLACTION_ACTIVEX_RUN) failed: %08x\n", hres);
     ok(policy == URLPOLICY_ALLOW || policy == URLPOLICY_DISALLOW, "policy = %x\n", policy);
+
+    cs.clsid = CLSID_TestActiveX;
+    cs.pUnk = (IUnknown*)0xdeadbeef;
+    cs.dwFlags = 0;
+    hres = IInternetSecurityManager_QueryCustomPolicy(secmgr, url1, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
+            &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
+    ok(hres == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "QueryCusromPolicy failed: %08x\n", hres);
 }
 
 static void test_polices(void)
