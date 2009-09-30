@@ -6130,7 +6130,6 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, DWORD RenderTargetIndex, IWineD3DSurface *pRenderTarget) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    WINED3DVIEWPORT viewport;
     int dxVersion = ( (IWineD3DImpl *) This->wineD3D)->dxVersion;
 
     TRACE("(%p) : Setting rendertarget %d to %p\n", This, RenderTargetIndex, pRenderTarget);
@@ -6165,14 +6164,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
 
     /* Render target 0 is special */
     if(RenderTargetIndex == 0 && dxVersion > 7) {
-        /* Finally, reset the viewport as the MSDN states. */
-        viewport.Height = ((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height;
-        viewport.Width  = ((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Width;
-        viewport.X      = 0;
-        viewport.Y      = 0;
-        viewport.MaxZ   = 1.0f;
-        viewport.MinZ   = 0.0f;
-        IWineD3DDeviceImpl_SetViewport(iface, &viewport);
+        /* Finally, reset the viewport as the MSDN states. Tests show that stateblock recording is ignored.
+         * the change goes directly into the primary stateblock.
+         */
+        This->stateBlock->viewport.Height = ((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height;
+        This->stateBlock->viewport.Width  = ((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Width;
+        This->stateBlock->viewport.X      = 0;
+        This->stateBlock->viewport.Y      = 0;
+        This->stateBlock->viewport.MaxZ   = 1.0f;
+        This->stateBlock->viewport.MinZ   = 0.0f;
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VIEWPORT);
     }
     return WINED3D_OK;
 }
