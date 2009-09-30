@@ -57,16 +57,16 @@ static struct d3d10_effect_technique null_technique =
         {&d3d10_effect_technique_vtbl, NULL, NULL, 0, 0, NULL, NULL};
 static struct d3d10_effect_pass null_pass =
         {&d3d10_effect_pass_vtbl, NULL, NULL, 0, 0, 0, NULL, NULL};
-static struct d3d10_effect_local_buffer null_local_buffer =
-        {&d3d10_effect_constant_buffer_vtbl, NULL, NULL, 0, 0, 0, NULL, NULL};
+static struct d3d10_effect_variable null_local_buffer =
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_constant_buffer_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL};
 static struct d3d10_effect_variable null_variable =
-        {&d3d10_effect_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL};
+        {&d3d10_effect_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL};
 static struct d3d10_effect_variable null_scalar_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL};
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL};
 static struct d3d10_effect_variable null_vector_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL};
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL};
 static struct d3d10_effect_variable null_matrix_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL};
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL};
 
 static inline void read_dword(const char **ptr, DWORD *d)
 {
@@ -713,7 +713,7 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
     return S_OK;
 }
 
-static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, const char **ptr, const char *data)
+static HRESULT parse_fx10_local_buffer(struct d3d10_effect_variable *l, const char **ptr, const char *data)
 {
     unsigned int i;
     DWORD offset;
@@ -884,8 +884,8 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
 
     for (i = 0; i < e->local_buffer_count; ++i)
     {
-        struct d3d10_effect_local_buffer *l = &e->local_buffers[i];
-        l->vtbl = &d3d10_effect_constant_buffer_vtbl;
+        struct d3d10_effect_variable *l = &e->local_buffers[i];
+        l->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_constant_buffer_vtbl;
         l->effect = e;
 
         hr = parse_fx10_local_buffer(l, &ptr, data);
@@ -1111,7 +1111,7 @@ static void d3d10_effect_technique_destroy(struct d3d10_effect_technique *t)
     }
 }
 
-static void d3d10_effect_local_buffer_destroy(struct d3d10_effect_local_buffer *l)
+static void d3d10_effect_local_buffer_destroy(struct d3d10_effect_variable *l)
 {
     unsigned int i;
 
@@ -1246,7 +1246,7 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
         UINT index)
 {
     struct d3d10_effect *This = (struct d3d10_effect *)iface;
-    struct d3d10_effect_local_buffer *l;
+    struct d3d10_effect_variable *l;
 
     TRACE("iface %p, index %u\n", iface, index);
 
@@ -1273,7 +1273,7 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
 
     for (i = 0; i < This->local_buffer_count; ++i)
     {
-        struct d3d10_effect_local_buffer *l = &This->local_buffers[i];
+        struct d3d10_effect_variable *l = &This->local_buffers[i];
 
         if (!strcmp(l->name, name))
         {
@@ -1303,7 +1303,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
 
     for (i = 0; i < This->local_buffer_count; ++i)
     {
-        struct d3d10_effect_local_buffer *l = &This->local_buffers[i];
+        struct d3d10_effect_variable *l = &This->local_buffers[i];
         unsigned int j;
 
         for (j = 0; j < l->type->member_count; ++j)
@@ -2017,7 +2017,7 @@ static BOOL STDMETHODCALLTYPE d3d10_effect_constant_buffer_IsValid(ID3D10EffectC
 {
     TRACE("iface %p\n", iface);
 
-    return (struct d3d10_effect_local_buffer *)iface != &null_local_buffer;
+    return (struct d3d10_effect_variable *)iface != &null_local_buffer;
 }
 
 static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_constant_buffer_GetType(ID3D10EffectConstantBuffer *iface)
@@ -2038,7 +2038,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_constant_buffer_GetDesc(ID3D10Effe
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_constant_buffer_GetAnnotationByIndex(
         ID3D10EffectConstantBuffer *iface, UINT index)
 {
-    struct d3d10_effect_local_buffer *This = (struct d3d10_effect_local_buffer *)iface;
+    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
     struct d3d10_effect_variable *a;
 
     TRACE("iface %p, index %u\n", iface, index);
@@ -2059,7 +2059,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_constant_buf
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_constant_buffer_GetAnnotationByName(
         ID3D10EffectConstantBuffer *iface, LPCSTR name)
 {
-    struct d3d10_effect_local_buffer *This = (struct d3d10_effect_local_buffer *)iface;
+    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
     unsigned int i;
 
     TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
