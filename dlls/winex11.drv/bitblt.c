@@ -1231,6 +1231,127 @@ static BOOL BITBLT_GetVisRectangles( X11DRV_PDEVICE *physDevDst, INT xDst, INT y
 
 
 /***********************************************************************
+ *           client_side_dib_copy
+ */
+static BOOL client_side_dib_copy( X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
+                                  X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
+                                  INT width, INT height )
+{
+    DIBSECTION srcDib, dstDib;
+    BYTE *srcPtr, *dstPtr;
+    INT srcRowOffset, dstRowOffset;
+    INT bytesPerPixel;
+    INT bytesToCopy;
+    INT y;
+    static RECT unusedRect;
+
+    if (GetObjectW(physDevSrc->bitmap->hbitmap, sizeof(srcDib), &srcDib) != sizeof(srcDib))
+      return FALSE;
+    if (GetObjectW(physDevDst->bitmap->hbitmap, sizeof(dstDib), &dstDib) != sizeof(dstDib))
+      return FALSE;
+
+    /* check for oversized values, just like X11DRV_DIB_CopyDIBSection() */
+    if (xSrc > srcDib.dsBm.bmWidth || ySrc > srcDib.dsBm.bmHeight)
+      return FALSE;
+    if (xSrc + width > srcDib.dsBm.bmWidth)
+      width = srcDib.dsBm.bmWidth - xSrc;
+    if (ySrc + height > srcDib.dsBm.bmHeight)
+      height = srcDib.dsBm.bmHeight - ySrc;
+
+    if (GetRgnBox(physDevDst->region, &unusedRect) == COMPLEXREGION)
+    {
+      /* for simple regions, the clipping was already done by BITBLT_GetVisRectangles */
+      FIXME("potential optimization: client-side complex region clipping\n");
+      return FALSE;
+    }
+    if (dstDib.dsBm.bmBitsPixel <= 8)
+    {
+      FIXME("potential optimization: client-side color-index mode DIB copy\n");
+      return FALSE;
+    }
+    if (!(srcDib.dsBmih.biCompression == BI_BITFIELDS &&
+          dstDib.dsBmih.biCompression == BI_BITFIELDS &&
+          !memcmp(srcDib.dsBitfields, dstDib.dsBitfields, 3*sizeof(DWORD)))
+        && !(srcDib.dsBmih.biCompression == BI_RGB &&
+             dstDib.dsBmih.biCompression == BI_RGB))
+    {
+      FIXME("potential optimization: client-side compressed DIB copy\n");
+      return FALSE;
+    }
+    if (srcDib.dsBm.bmBitsPixel != dstDib.dsBm.bmBitsPixel)
+    {
+      FIXME("potential optimization: pixel format conversion\n");
+      return FALSE;
+    }
+    if (srcDib.dsBmih.biWidth < 0 || dstDib.dsBmih.biWidth < 0)
+    {
+      FIXME("negative widths not yet implemented\n");
+      return FALSE;
+    }
+
+    switch (dstDib.dsBm.bmBitsPixel)
+    {
+      case 15:
+      case 16:
+        bytesPerPixel = 2;
+        break;
+      case 24:
+        bytesPerPixel = 3;
+        break;
+      case 32:
+        bytesPerPixel = 4;
+        break;
+      default:
+        FIXME("don't know how to work with a depth of %d\n", physDevSrc->depth);
+        return FALSE;
+    }
+
+    bytesToCopy = width * bytesPerPixel;
+
+    if (srcDib.dsBmih.biHeight < 0)
+    {
+      srcPtr = &physDevSrc->bitmap->base[ySrc*srcDib.dsBm.bmWidthBytes + xSrc*bytesPerPixel];
+      srcRowOffset = srcDib.dsBm.bmWidthBytes;
+    }
+    else
+    {
+      srcPtr = &physDevSrc->bitmap->base[(srcDib.dsBm.bmHeight-ySrc-1)*srcDib.dsBm.bmWidthBytes
+        + xSrc*bytesPerPixel];
+      srcRowOffset = -srcDib.dsBm.bmWidthBytes;
+    }
+    if (dstDib.dsBmih.biHeight < 0)
+    {
+      dstPtr = &physDevDst->bitmap->base[yDst*dstDib.dsBm.bmWidthBytes + xDst*bytesPerPixel];
+      dstRowOffset = dstDib.dsBm.bmWidthBytes;
+    }
+    else
+    {
+      dstPtr = &physDevDst->bitmap->base[(dstDib.dsBm.bmHeight-yDst-1)*dstDib.dsBm.bmWidthBytes
+        + xDst*bytesPerPixel];
+      dstRowOffset = -dstDib.dsBm.bmWidthBytes;
+    }
+
+    /* Handle overlapping regions on the same DIB */
+    if (physDevSrc == physDevDst && ySrc < yDst)
+    {
+      srcPtr += srcRowOffset * (height - 1);
+      srcRowOffset = -srcRowOffset;
+      dstPtr += dstRowOffset * (height - 1);
+      dstRowOffset = -dstRowOffset;
+    }
+
+    for (y = yDst; y < yDst + height; ++y)
+    {
+      memmove(dstPtr, srcPtr, bytesToCopy);
+      srcPtr += srcRowOffset;
+      dstPtr += dstRowOffset;
+    }
+
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           BITBLT_InternalStretchBlt
  *
  * Implementation of PatBlt(), BitBlt() and StretchBlt().
@@ -1520,127 +1641,6 @@ BOOL CDECL X11DRV_PatBlt( X11DRV_PDEVICE *physDev, INT left, INT top, INT width,
 
 
 /***********************************************************************
- *           X11DRV_ClientSideDIBCopy
- */
-static BOOL X11DRV_ClientSideDIBCopy( X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
-                                      X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
-                                      INT width, INT height )
-{
-    DIBSECTION srcDib, dstDib;
-    BYTE *srcPtr, *dstPtr;
-    INT srcRowOffset, dstRowOffset;
-    INT bytesPerPixel;
-    INT bytesToCopy;
-    INT y;
-    static RECT unusedRect;
-
-    if (GetObjectW(physDevSrc->bitmap->hbitmap, sizeof(srcDib), &srcDib) != sizeof(srcDib))
-      return FALSE;
-    if (GetObjectW(physDevDst->bitmap->hbitmap, sizeof(dstDib), &dstDib) != sizeof(dstDib))
-      return FALSE;
-
-    /* check for oversized values, just like X11DRV_DIB_CopyDIBSection() */
-    if (xSrc > srcDib.dsBm.bmWidth || ySrc > srcDib.dsBm.bmHeight)
-      return FALSE;
-    if (xSrc + width > srcDib.dsBm.bmWidth)
-      width = srcDib.dsBm.bmWidth - xSrc;
-    if (ySrc + height > srcDib.dsBm.bmHeight)
-      height = srcDib.dsBm.bmHeight - ySrc;
-
-    if (GetRgnBox(physDevDst->region, &unusedRect) == COMPLEXREGION)
-    {
-      /* for simple regions, the clipping was already done by BITBLT_GetVisRectangles */
-      FIXME("potential optimization: client-side complex region clipping\n");
-      return FALSE;
-    }
-    if (dstDib.dsBm.bmBitsPixel <= 8)
-    {
-      FIXME("potential optimization: client-side color-index mode DIB copy\n");
-      return FALSE;
-    }
-    if (!(srcDib.dsBmih.biCompression == BI_BITFIELDS &&
-          dstDib.dsBmih.biCompression == BI_BITFIELDS &&
-          !memcmp(srcDib.dsBitfields, dstDib.dsBitfields, 3*sizeof(DWORD)))
-        && !(srcDib.dsBmih.biCompression == BI_RGB &&
-             dstDib.dsBmih.biCompression == BI_RGB))
-    {
-      FIXME("potential optimization: client-side compressed DIB copy\n");
-      return FALSE;
-    }
-    if (srcDib.dsBm.bmBitsPixel != dstDib.dsBm.bmBitsPixel)
-    {
-      FIXME("potential optimization: pixel format conversion\n");
-      return FALSE;
-    }
-    if (srcDib.dsBmih.biWidth < 0 || dstDib.dsBmih.biWidth < 0)
-    {
-      FIXME("negative widths not yet implemented\n");
-      return FALSE;
-    }
-
-    switch (dstDib.dsBm.bmBitsPixel)
-    {
-      case 15:
-      case 16:
-        bytesPerPixel = 2;
-        break;
-      case 24:
-        bytesPerPixel = 3;
-        break;
-      case 32:
-        bytesPerPixel = 4;
-        break;
-      default:
-        FIXME("don't know how to work with a depth of %d\n", physDevSrc->depth);
-        return FALSE;
-    }
-
-    bytesToCopy = width * bytesPerPixel;
-
-    if (srcDib.dsBmih.biHeight < 0)
-    {
-      srcPtr = &physDevSrc->bitmap->base[ySrc*srcDib.dsBm.bmWidthBytes + xSrc*bytesPerPixel];
-      srcRowOffset = srcDib.dsBm.bmWidthBytes;
-    }
-    else
-    {
-      srcPtr = &physDevSrc->bitmap->base[(srcDib.dsBm.bmHeight-ySrc-1)*srcDib.dsBm.bmWidthBytes
-        + xSrc*bytesPerPixel];
-      srcRowOffset = -srcDib.dsBm.bmWidthBytes;
-    }
-    if (dstDib.dsBmih.biHeight < 0)
-    {
-      dstPtr = &physDevDst->bitmap->base[yDst*dstDib.dsBm.bmWidthBytes + xDst*bytesPerPixel];
-      dstRowOffset = dstDib.dsBm.bmWidthBytes;
-    }
-    else
-    {
-      dstPtr = &physDevDst->bitmap->base[(dstDib.dsBm.bmHeight-yDst-1)*dstDib.dsBm.bmWidthBytes
-        + xDst*bytesPerPixel];
-      dstRowOffset = -dstDib.dsBm.bmWidthBytes;
-    }
-
-    /* Handle overlapping regions on the same DIB */
-    if (physDevSrc == physDevDst && ySrc < yDst)
-    {
-      srcPtr += srcRowOffset * (height - 1);
-      srcRowOffset = -srcRowOffset;
-      dstPtr += dstRowOffset * (height - 1);
-      dstRowOffset = -dstRowOffset;
-    }
-
-    for (y = yDst; y < yDst + height; ++y)
-    {
-      memmove(dstPtr, srcPtr, bytesToCopy);
-      srcPtr += srcRowOffset;
-      dstPtr += dstRowOffset;
-    }
-
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           X11DRV_BitBlt
  */
 BOOL CDECL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
@@ -1705,9 +1705,7 @@ BOOL CDECL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
       height = visRectDst.bottom - visRectDst.top;
 
       if (sDst == DIB_Status_AppMod) {
-        result = X11DRV_ClientSideDIBCopy( physDevSrc, xSrc, ySrc,
-                                           physDevDst, xDst, yDst,
-                                           width, height );
+        result = client_side_dib_copy( physDevSrc, xSrc, ySrc, physDevDst, xDst, yDst, width, height );
         if (result)
           goto END;
         /* fall back to X server copying */
