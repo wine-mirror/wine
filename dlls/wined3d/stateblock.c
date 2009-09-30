@@ -164,19 +164,10 @@ static void stateblock_savedstates_set(SAVEDSTATES *states, BOOL value, const st
     memset(states->vertexShaderConstantsF, value, sizeof(BOOL) * gl_info->max_vshader_constantsF);
 }
 
-static void stateblock_copy(IWineD3DStateBlockImpl *dst, const IWineD3DStateBlockImpl *src)
+static void stateblock_copy_values(IWineD3DStateBlockImpl *dst, const IWineD3DStateBlockImpl *src,
+        const struct wined3d_gl_info *gl_info)
 {
-    const struct wined3d_gl_info *gl_info = &src->wineD3DDevice->adapter->gl_info;
     unsigned int l;
-
-    dst->lpVtbl = src->lpVtbl;
-    dst->ref = src->ref;
-    dst->parent = src->parent;
-    dst->wineD3DDevice = src->wineD3DDevice;
-    dst->blockType = src->blockType;
-
-    /* Saved states */
-    stateblock_savedstates_copy(&dst->changed, &src->changed, gl_info);
 
     /* Single items */
     dst->gl_primitive_type = src->gl_primitive_type;
@@ -235,6 +226,23 @@ static void stateblock_copy(IWineD3DStateBlockImpl *dst, const IWineD3DStateBloc
     /* Dynamically sized arrays */
     memcpy(dst->vertexShaderConstantF, src->vertexShaderConstantF, sizeof(float) * gl_info->max_vshader_constantsF * 4);
     memcpy(dst->pixelShaderConstantF,  src->pixelShaderConstantF,  sizeof(float) * gl_info->max_pshader_constantsF * 4);
+}
+
+static void stateblock_copy(IWineD3DStateBlockImpl *dst, const IWineD3DStateBlockImpl *src)
+{
+    const struct wined3d_gl_info *gl_info = &src->wineD3DDevice->adapter->gl_info;
+
+    dst->lpVtbl = src->lpVtbl;
+    dst->ref = src->ref;
+    dst->parent = src->parent;
+    dst->wineD3DDevice = src->wineD3DDevice;
+    dst->blockType = src->blockType;
+
+    /* Saved states */
+    stateblock_savedstates_copy(&dst->changed, &src->changed, gl_info);
+
+    /* Saved values */
+    stateblock_copy_values(dst, src, gl_info);
 }
 
 /**********************************************************
