@@ -2354,6 +2354,7 @@ struct IWineD3DStateBlockImpl
 
 HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *device,
         WINED3DSTATEBLOCKTYPE type, IUnknown *parent) DECLSPEC_HIDDEN;
+void stateblock_init_contained_states(IWineD3DStateBlockImpl *object) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued state
  * because only the driver knows about it, but we have a created state because d3d

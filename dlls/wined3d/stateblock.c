@@ -228,6 +228,118 @@ static void stateblock_copy_values(IWineD3DStateBlockImpl *dst, const IWineD3DSt
     memcpy(dst->pixelShaderConstantF,  src->pixelShaderConstantF,  sizeof(float) * gl_info->max_pshader_constantsF * 4);
 }
 
+void stateblock_init_contained_states(IWineD3DStateBlockImpl *stateblock)
+{
+    const struct wined3d_gl_info *gl_info = &stateblock->wineD3DDevice->adapter->gl_info;
+    unsigned int i, j;
+
+    for (i = 0; i <= WINEHIGHEST_RENDER_STATE >> 5; ++i)
+    {
+        DWORD map = stateblock->changed.renderState[i];
+        for (j = 0; map; map >>= 1, ++j)
+        {
+            if (!(map & 1)) continue;
+
+            stateblock->contained_render_states[stateblock->num_contained_render_states] = (i << 5) | j;
+            ++stateblock->num_contained_render_states;
+        }
+    }
+
+    for (i = 0; i <= HIGHEST_TRANSFORMSTATE >> 5; ++i)
+    {
+        DWORD map = stateblock->changed.transform[i];
+        for (j = 0; map; map >>= 1, ++j)
+        {
+            if (!(map & 1)) continue;
+
+            stateblock->contained_transform_states[stateblock->num_contained_transform_states] = (i << 5) | j;
+            ++stateblock->num_contained_transform_states;
+        }
+    }
+
+    for (i = 0; i < gl_info->max_vshader_constantsF; ++i)
+    {
+        if (stateblock->changed.vertexShaderConstantsF[i])
+        {
+            stateblock->contained_vs_consts_f[stateblock->num_contained_vs_consts_f] = i;
+            ++stateblock->num_contained_vs_consts_f;
+        }
+    }
+
+    for (i = 0; i < MAX_CONST_I; ++i)
+    {
+        if (stateblock->changed.vertexShaderConstantsI & (1 << i))
+        {
+            stateblock->contained_vs_consts_i[stateblock->num_contained_vs_consts_i] = i;
+            ++stateblock->num_contained_vs_consts_i;
+        }
+    }
+
+    for (i = 0; i < MAX_CONST_B; ++i)
+    {
+        if (stateblock->changed.vertexShaderConstantsB & (1 << i))
+        {
+            stateblock->contained_vs_consts_b[stateblock->num_contained_vs_consts_b] = i;
+            ++stateblock->num_contained_vs_consts_b;
+        }
+    }
+
+    for (i = 0; i < gl_info->max_pshader_constantsF; ++i)
+    {
+        if (stateblock->changed.pixelShaderConstantsF[i])
+        {
+            stateblock->contained_ps_consts_f[stateblock->num_contained_ps_consts_f] = i;
+            ++stateblock->num_contained_ps_consts_f;
+        }
+    }
+
+    for (i = 0; i < MAX_CONST_I; ++i)
+    {
+        if (stateblock->changed.pixelShaderConstantsI & (1 << i))
+        {
+            stateblock->contained_ps_consts_i[stateblock->num_contained_ps_consts_i] = i;
+            ++stateblock->num_contained_ps_consts_i;
+        }
+    }
+
+    for (i = 0; i < MAX_CONST_B; ++i)
+    {
+        if (stateblock->changed.pixelShaderConstantsB & (1 << i))
+        {
+            stateblock->contained_ps_consts_b[stateblock->num_contained_ps_consts_b] = i;
+            ++stateblock->num_contained_ps_consts_b;
+        }
+    }
+
+    for (i = 0; i < MAX_TEXTURES; ++i)
+    {
+        DWORD map = stateblock->changed.textureState[i];
+
+        for(j = 0; map; map >>= 1, ++j)
+        {
+            if (!(map & 1)) continue;
+
+            stateblock->contained_tss_states[stateblock->num_contained_tss_states].stage = i;
+            stateblock->contained_tss_states[stateblock->num_contained_tss_states].state = j;
+            ++stateblock->num_contained_tss_states;
+        }
+    }
+
+    for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
+    {
+        DWORD map = stateblock->changed.samplerState[i];
+
+        for (j = 0; map; map >>= 1, ++j)
+        {
+            if (!(map & 1)) continue;
+
+            stateblock->contained_sampler_states[stateblock->num_contained_sampler_states].stage = i;
+            stateblock->contained_sampler_states[stateblock->num_contained_sampler_states].state = j;
+            ++stateblock->num_contained_sampler_states;
+        }
+    }
+}
+
 /**********************************************************
  * IWineD3DStateBlockImpl IUnknown parts follows
  **********************************************************/
