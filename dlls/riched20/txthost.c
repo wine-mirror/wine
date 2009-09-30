@@ -44,7 +44,7 @@ typedef struct ITextHostImpl {
 
 static const ITextHostVtbl textHostVtbl;
 
-ITextHost *ME_CreateTextHost(HWND hwnd, BOOL bEmulateVersion10)
+ITextHost *ME_CreateTextHost(HWND hwnd, CREATESTRUCTW *cs, BOOL bEmulateVersion10)
 {
     ITextHostImpl *texthost;
     texthost = CoTaskMemAlloc(sizeof(*texthost));
@@ -60,6 +60,7 @@ ITextHost *ME_CreateTextHost(HWND hwnd, BOOL bEmulateVersion10)
         editor = ME_MakeEditor((ITextHost*)texthost, bEmulateVersion10);
         editor->exStyleFlags = GetWindowLongW(hwnd, GWL_EXSTYLE);
         editor->hWnd = hwnd; /* FIXME: Remove editor's dependence on hWnd */
+        editor->hwndParent = cs->hwndParent;
         SetWindowLongPtrW(hwnd, 0, (LONG_PTR)editor);
     }
 
@@ -448,9 +449,13 @@ HRESULT WINAPI ITextHostImpl_TxNotify(ITextHost *iface,
                                       void *pv)
 {
     ITextHostImpl *This = (ITextHostImpl *)iface;
+    ME_TextEditor *editor = (ME_TextEditor*)GetWindowLongPtrW(This->hWnd, 0);
     HWND hwnd = This->hWnd;
-    HWND parent = GetParent(hwnd);
-    UINT id = GetWindowLongW(hwnd, GWLP_ID);
+    UINT id;
+
+    if (!editor || !editor->hwndParent) return S_OK;
+
+    id = GetWindowLongW(hwnd, GWLP_ID);
 
     switch (iNotify)
     {
@@ -471,13 +476,13 @@ HRESULT WINAPI ITextHostImpl_TxNotify(ITextHost *iface,
             info->hwndFrom = hwnd;
             info->idFrom = id;
             info->code = iNotify;
-            SendMessageW(parent, WM_NOTIFY, id, (LPARAM)info);
+            SendMessageW(editor->hwndParent, WM_NOTIFY, id, (LPARAM)info);
             break;
         }
 
         case EN_UPDATE:
             /* Only sent when the window is visible. */
-            if (!IsWindowVisible(This->hWnd))
+            if (!IsWindowVisible(hwnd))
                 break;
             /* Fall through */
         case EN_CHANGE:
@@ -487,7 +492,7 @@ HRESULT WINAPI ITextHostImpl_TxNotify(ITextHost *iface,
         case EN_MAXTEXT:
         case EN_SETFOCUS:
         case EN_VSCROLL:
-            SendMessageW(parent, WM_COMMAND, MAKEWPARAM(id, iNotify), (LPARAM)hwnd);
+            SendMessageW(editor->hwndParent, WM_COMMAND, MAKEWPARAM(id, iNotify), (LPARAM)hwnd);
             break;
 
         case EN_MSGFILTER:

@@ -271,7 +271,7 @@ struct RTFTable *ME_MakeTableDef(ME_TextEditor *editor);
 void ME_InitTableDef(ME_TextEditor *editor, struct RTFTable *tableDef);
 
 /* txthost.c */
-ITextHost *ME_CreateTextHost(HWND hwnd, BOOL bEmulateVersion10);
+ITextHost *ME_CreateTextHost(HWND hwnd, CREATESTRUCTW *cs, BOOL bEmulateVersion10);
 #ifdef __i386__ /* Use wrappers to perform thiscall on i386 */
 #define TXTHOST_VTABLE(This) (&itextHostStdcallVtbl)
 #else /* __i386__ */

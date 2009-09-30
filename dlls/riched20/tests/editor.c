@@ -5741,7 +5741,7 @@ static void test_WM_NOTIFY(void)
     SetWindowLongPtr(hwndRichedit_WM_NOTIFY, GWLP_HWNDPARENT, 0);
     SendMessage(hwndRichedit_WM_NOTIFY, WM_KEYDOWN, VK_RIGHT, 0);
     SendMessage(hwndRichedit_WM_NOTIFY, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
-    todo_wine ok(sel_start == 1 && sel_end == 1,
+    ok(sel_start == 1 && sel_end == 1,
        "selections is incorrectly at (%d,%d)\n", sel_start, sel_end);
 
     DestroyWindow(hwndRichedit_WM_NOTIFY);
