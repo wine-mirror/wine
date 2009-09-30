@@ -228,23 +228,6 @@ static void stateblock_copy_values(IWineD3DStateBlockImpl *dst, const IWineD3DSt
     memcpy(dst->pixelShaderConstantF,  src->pixelShaderConstantF,  sizeof(float) * gl_info->max_pshader_constantsF * 4);
 }
 
-static void stateblock_copy(IWineD3DStateBlockImpl *dst, const IWineD3DStateBlockImpl *src)
-{
-    const struct wined3d_gl_info *gl_info = &src->wineD3DDevice->adapter->gl_info;
-
-    dst->lpVtbl = src->lpVtbl;
-    dst->ref = src->ref;
-    dst->parent = src->parent;
-    dst->wineD3DDevice = src->wineD3DDevice;
-    dst->blockType = src->blockType;
-
-    /* Saved states */
-    stateblock_savedstates_copy(&dst->changed, &src->changed, gl_info);
-
-    /* Saved values */
-    stateblock_copy_values(dst, src, gl_info);
-}
-
 /**********************************************************
  * IWineD3DStateBlockImpl IUnknown parts follows
  **********************************************************/
@@ -1387,13 +1370,18 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
     if (type == WINED3DSBT_INIT || type == WINED3DSBT_RECORDED) return WINED3D_OK;
 
     /* Otherwise, might as well set the whole state block to the appropriate values  */
-    if (device->stateBlock) stateblock_copy(stateblock, device->stateBlock);
-    else memset(stateblock->streamFreq, 1, sizeof(stateblock->streamFreq));
+    if (device->stateBlock)
+    {
+        /* Saved states */
+        stateblock_savedstates_copy(&stateblock->changed, &device->stateBlock->changed, gl_info);
 
-    /* Reset the ref and type after kludging it. */
-    stateblock->wineD3DDevice = device;
-    stateblock->ref = 1;
-    stateblock->blockType = type;
+        /* Saved values */
+        stateblock_copy_values(stateblock, device->stateBlock, gl_info);
+    }
+    else
+    {
+        memset(stateblock->streamFreq, 1, sizeof(stateblock->streamFreq));
+    }
 
     TRACE("Updating changed flags appropriate for type %#x.\n", type);
 
