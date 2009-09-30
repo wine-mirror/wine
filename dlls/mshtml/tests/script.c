@@ -37,6 +37,10 @@
 
 DEFINE_GUID(CLSID_IdentityUnmarshal,0x0000001b,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 
+/* Defined as extern in urlmon.idl, but not exported by uuid.lib */
+const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
+    {0x10200490,0xfa38,0x11d0,{0xac,0x0e,0x00,0xa0,0xc9,0xf,0xff,0xc0}};
+
 #ifdef _WIN64
 
 #define CTXARG_T DWORDLONG
@@ -110,6 +114,10 @@ DEFINE_EXPECT(GetScriptDispatch);
 DEFINE_EXPECT(funcDisp);
 DEFINE_EXPECT(script_testprop_d);
 DEFINE_EXPECT(script_testprop_i);
+DEFINE_EXPECT(AXQueryInterface_IActiveScript);
+DEFINE_EXPECT(AXQueryInterface_IObjectSafety);
+DEFINE_EXPECT(AXGetInterfaceSafetyOptions);
+DEFINE_EXPECT(AXSetInterfaceSafetyOptions);
 
 #define TESTSCRIPT_CLSID "{178fc163-f585-4e24-9c13-4bb7faf80746}"
 
@@ -519,7 +527,7 @@ static SCRIPTSTATE state;
 static HRESULT WINAPI ObjectSafety_QueryInterface(IObjectSafety *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
-    ok(0, "unexpected call\n");
+    ok(0, "unexpected call %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -573,11 +581,72 @@ static const IObjectSafetyVtbl ObjectSafetyVtbl = {
 
 static IObjectSafety ObjectSafety = { &ObjectSafetyVtbl };
 
+static HRESULT WINAPI AXObjectSafety_QueryInterface(IObjectSafety *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IActiveScript, riid)) {
+        CHECK_EXPECT(AXQueryInterface_IActiveScript);
+        return E_NOINTERFACE;
+    }
+
+    if(IsEqualGUID(&IID_IObjectSafety, riid)) {
+        CHECK_EXPECT(AXQueryInterface_IObjectSafety);
+        *ppv = iface;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI AXObjectSafety_GetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
+        DWORD *pdwSupportedOptions, DWORD *pdwEnabledOptions)
+{
+    CHECK_EXPECT(AXGetInterfaceSafetyOptions);
+
+    ok(IsEqualGUID(&IID_IDispatchEx, riid), "unexpected riid %s\n", debugstr_guid(riid));
+    ok(pdwSupportedOptions != NULL, "pdwSupportedOptions == NULL\n");
+    ok(pdwEnabledOptions != NULL, "pdwEnabledOptions == NULL\n");
+
+    *pdwSupportedOptions = INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER;
+    *pdwEnabledOptions = INTERFACE_USES_DISPEX;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI AXObjectSafety_SetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
+        DWORD dwOptionSetMask, DWORD dwEnabledOptions)
+{
+    CHECK_EXPECT(AXSetInterfaceSafetyOptions);
+
+    ok(IsEqualGUID(&IID_IDispatchEx, riid), "unexpected riid %s\n", debugstr_guid(riid));
+
+    ok(dwOptionSetMask == (INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACE_USES_SECURITY_MANAGER),
+       "dwOptionSetMask=%x\n", dwOptionSetMask);
+    ok(dwEnabledOptions == (INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACE_USES_SECURITY_MANAGER),
+       "dwEnabledOptions=%x\n", dwOptionSetMask);
+
+    return S_OK;
+}
+
+static const IObjectSafetyVtbl AXObjectSafetyVtbl = {
+    AXObjectSafety_QueryInterface,
+    ObjectSafety_AddRef,
+    ObjectSafety_Release,
+    AXObjectSafety_GetInterfaceSafetyOptions,
+    AXObjectSafety_SetInterfaceSafetyOptions
+};
+
+static IObjectSafety AXObjectSafety = { &AXObjectSafetyVtbl };
+
 static void test_security(void)
 {
     IInternetHostSecurityManager *sec_mgr;
     IServiceProvider *sp;
-    DWORD policy;
+    DWORD policy, policy_size;
+    struct CONFIRMSAFETY cs;
+    BYTE *ppolicy;
     HRESULT hres;
 
     hres = IActiveScriptSite_QueryInterface(site, &IID_IServiceProvider, (void**)&sp);
@@ -592,6 +661,26 @@ static void test_security(void)
                                                          (BYTE*)&CLSID_TestActiveX, sizeof(CLSID), 0, 0);
     ok(hres == S_OK, "ProcessUrlAction failed: %08x\n", hres);
     ok(policy == URLPOLICY_ALLOW, "policy = %x\n", policy);
+
+    cs.clsid = CLSID_TestActiveX;
+    cs.pUnk = (IUnknown*)&AXObjectSafety;
+    cs.dwFlags = 0;
+
+    SET_EXPECT(AXQueryInterface_IActiveScript);
+    SET_EXPECT(AXQueryInterface_IObjectSafety);
+    SET_EXPECT(AXGetInterfaceSafetyOptions);
+    SET_EXPECT(AXSetInterfaceSafetyOptions);
+    hres = IInternetHostSecurityManager_QueryCustomPolicy(sec_mgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
+            &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
+    CHECK_CALLED(AXQueryInterface_IActiveScript);
+    CHECK_CALLED(AXQueryInterface_IObjectSafety);
+    CHECK_CALLED(AXGetInterfaceSafetyOptions);
+    CHECK_CALLED(AXSetInterfaceSafetyOptions);
+
+    ok(hres == S_OK, "QueryCusromPolicy failed: %08x\n", hres);
+    ok(policy_size == sizeof(DWORD), "policy_size = %d\n", policy_size);
+    ok(*(DWORD*)ppolicy == URLPOLICY_ALLOW, "policy = %x\n", *(DWORD*)ppolicy);
+    CoTaskMemFree(ppolicy);
 
     IInternetHostSecurityManager_Release(sec_mgr);
 }

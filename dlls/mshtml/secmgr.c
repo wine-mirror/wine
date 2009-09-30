@@ -27,6 +27,8 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "objsafe.h"
+#include "activscp.h"
 
 #include "wine/debug.h"
 
@@ -35,6 +37,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
+
+/* Defined as extern in urlmon.idl, but not exported by uuid.lib */
+const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
+    {0x10200490,0xfa38,0x11d0,{0xac,0x0e,0x00,0xa0,0xc9,0xf,0xff,0xc0}};
 
 #define HOSTSECMGR_THIS(iface) DEFINE_THIS(HTMLDocumentNode, IInternetHostSecurityManager, iface)
 
@@ -78,12 +84,84 @@ static HRESULT WINAPI InternetHostSecurityManager_ProcessUrlAction(IInternetHost
             pContext, cbContext, dwFlags, dwReserved);
 }
 
+static DWORD confirm_safety(HTMLDocumentNode *This, const WCHAR *url, IUnknown *obj)
+{
+    DWORD policy, enabled_opts, supported_opts;
+    IObjectSafety *obj_safety;
+    HRESULT hres;
+
+    /* FIXME: Check URLACTION_ACTIVEX_OVERRIDE_SCRIPT_SAFETY */
+
+    hres = IInternetSecurityManager_ProcessUrlAction(This->secmgr, url, URLACTION_SCRIPT_SAFE_ACTIVEX,
+            (BYTE*)&policy, sizeof(policy), NULL, 0, 0, 0);
+    if(FAILED(hres) || policy != URLPOLICY_ALLOW)
+        return URLPOLICY_DISALLOW;
+
+    hres = IUnknown_QueryInterface(obj, &IID_IObjectSafety, (void**)&obj_safety);
+    if(FAILED(hres))
+        return URLPOLICY_DISALLOW;
+
+    hres = IObjectSafety_GetInterfaceSafetyOptions(obj_safety, &IID_IDispatchEx, &supported_opts, &enabled_opts);
+    if(SUCCEEDED(hres)) {
+        enabled_opts = INTERFACESAFE_FOR_UNTRUSTED_CALLER;
+        if(supported_opts & INTERFACE_USES_SECURITY_MANAGER)
+            enabled_opts |= INTERFACE_USES_SECURITY_MANAGER;
+        hres = IObjectSafety_SetInterfaceSafetyOptions(obj_safety, &IID_IDispatchEx, enabled_opts, enabled_opts);
+    }
+    IObjectSafety_Release(obj_safety);
+    if(FAILED(hres))
+        return URLPOLICY_DISALLOW;
+
+    return URLPOLICY_ALLOW;
+}
+
 static HRESULT WINAPI InternetHostSecurityManager_QueryCustomPolicy(IInternetHostSecurityManager *iface, REFGUID guidKey,
         BYTE **ppPolicy, DWORD *pcbPolicy, BYTE *pContext, DWORD cbContext, DWORD dwReserved)
 {
     HTMLDocumentNode *This = HOSTSECMGR_THIS(iface);
-    FIXME("(%p)->(%s %p %p %p %d %x)\n", This, debugstr_guid(guidKey), ppPolicy, pcbPolicy, pContext, cbContext, dwReserved);
-    return E_NOTIMPL;
+    const WCHAR *url;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p %p %p %d %x)\n", This, debugstr_guid(guidKey), ppPolicy, pcbPolicy, pContext, cbContext, dwReserved);
+
+    url = This->basedoc.doc_obj->url ? This->basedoc.doc_obj->url : about_blankW;
+
+    hres = IInternetSecurityManager_QueryCustomPolicy(This->secmgr, url, guidKey, ppPolicy, pcbPolicy,
+            pContext, cbContext, dwReserved);
+    if(hres != HRESULT_FROM_WIN32(ERROR_NOT_FOUND))
+        return hres;
+
+    if(IsEqualGUID(&GUID_CUSTOM_CONFIRMOBJECTSAFETY, guidKey)) {
+        IActiveScript *active_script;
+        struct CONFIRMSAFETY *cs;
+        DWORD policy;
+
+        if(cbContext != sizeof(struct CONFIRMSAFETY)) {
+            FIXME("wrong context size\n");
+            return E_FAIL;
+        }
+
+        cs = (struct CONFIRMSAFETY*)pContext;
+        hres = IUnknown_QueryInterface(cs->pUnk, &IID_IActiveScript, (void**)&active_script);
+        if(SUCCEEDED(hres)) {
+            FIXME("Got IAciveScript iface\n");
+            IActiveScript_Release(active_script);
+            return E_FAIL;
+        }
+
+        policy = confirm_safety(This, url, cs->pUnk);
+
+        *ppPolicy = CoTaskMemAlloc(sizeof(policy));
+        if(!*ppPolicy)
+            return E_OUTOFMEMORY;
+
+        *(DWORD*)*ppPolicy = policy;
+        *pcbPolicy = sizeof(policy);
+        return S_OK;
+    }
+
+    FIXME("Unknown guidKey %s\n", debugstr_guid(guidKey));
+    return hres;
 }
 
 #undef HOSTSECMGR_THIS
