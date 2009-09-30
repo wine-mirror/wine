@@ -76,6 +76,16 @@ static CRITICAL_SECTION cs_gethostbyname = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 #include <openssl/err.h>
 
+static CRITICAL_SECTION init_ssl_cs;
+static CRITICAL_SECTION_DEBUG init_ssl_cs_debug =
+{
+    0, 0, &init_ssl_cs,
+    { &init_ssl_cs_debug.ProcessLocksList,
+      &init_ssl_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": init_ssl_cs") }
+};
+static CRITICAL_SECTION init_ssl_cs = { &init_ssl_cs_debug, -1, 0, 0, 0, 0 };
+
 static void *libssl_handle;
 static void *libcrypto_handle;
 
@@ -180,17 +190,24 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     if (!secure) return TRUE;
 
 #if defined(SONAME_LIBSSL) && defined(SONAME_LIBCRYPTO)
-    if (libssl_handle) return TRUE;
+    EnterCriticalSection( &init_ssl_cs );
+    if (libssl_handle)
+    {
+        LeaveCriticalSection( &init_ssl_cs );
+        return TRUE;
+    }
     if (!(libssl_handle = wine_dlopen( SONAME_LIBSSL, RTLD_NOW, NULL, 0 )))
     {
         ERR("Trying to use SSL but couldn't load %s. Expect trouble.\n", SONAME_LIBSSL);
         set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
+        LeaveCriticalSection( &init_ssl_cs );
         return FALSE;
     }
     if (!(libcrypto_handle = wine_dlopen( SONAME_LIBCRYPTO, RTLD_NOW, NULL, 0 )))
     {
         ERR("Trying to use SSL but couldn't load %s. Expect trouble.\n", SONAME_LIBCRYPTO);
         set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
+        LeaveCriticalSection( &init_ssl_cs );
         return FALSE;
     }
 #define LOAD_FUNCPTR(x) \
@@ -198,6 +215,7 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     { \
         ERR("Failed to load symbol %s\n", #x); \
         set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR ); \
+        LeaveCriticalSection( &init_ssl_cs ); \
         return FALSE; \
     }
     LOAD_FUNCPTR( SSL_library_init );
@@ -221,6 +239,7 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     { \
         ERR("Failed to load symbol %s\n", #x); \
         set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR ); \
+        LeaveCriticalSection( &init_ssl_cs ); \
         return FALSE; \
     }
     LOAD_FUNCPTR( BIO_new_fp );
@@ -239,8 +258,10 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     {
         ERR("SSL_CTX_set_default_verify_paths failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
         set_last_error( ERROR_OUTOFMEMORY );
+        LeaveCriticalSection( &init_ssl_cs );
         return FALSE;
     }
+    LeaveCriticalSection( &init_ssl_cs );
 #else
     WARN("SSL support not compiled in.\n");
     set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
