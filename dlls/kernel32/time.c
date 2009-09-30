@@ -325,7 +325,7 @@ BOOL WINAPI GetSystemTimeAdjustment( PDWORD lpTimeAdjustment, PDWORD lpTimeIncre
     PBOOL  lpTimeAdjustmentDisabled )
 {
     *lpTimeAdjustment = 0;
-    *lpTimeIncrement = 0;
+    *lpTimeIncrement = 10000000 / sysconf(_SC_CLK_TCK);
     *lpTimeAdjustmentDisabled = TRUE;
     return TRUE;
 }
