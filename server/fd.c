@@ -192,8 +192,8 @@ struct fd
     unsigned int         sharing;     /* file sharing mode */
     int                  unix_fd;     /* unix file descriptor */
     unsigned int         no_fd_status;/* status to return when unix_fd is -1 */
-    int                  signaled :1; /* is the fd signaled? */
-    int                  fs_locks :1; /* can we use filesystem locks for this fd? */
+    unsigned int         signaled :1; /* is the fd signaled? */
+    unsigned int         fs_locks :1; /* can we use filesystem locks for this fd? */
     int                  poll_index;  /* index of fd in poll array */
     struct async_queue  *read_q;      /* async readers of this fd */
     struct async_queue  *write_q;     /* async writers of this fd */
