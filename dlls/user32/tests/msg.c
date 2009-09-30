@@ -7862,7 +7862,21 @@ static void test_timers(void)
 
     ok( KillTimer(info.hWnd, TIMER_ID), "KillTimer failed\n");
 
+    ok(DestroyWindow(info.hWnd), "failed to destroy window\n");
+
     /* Test timer callback with crash */
+    SetLastError(0xdeadbeef);
+    info.hWnd = CreateWindowW(testWindowClassW, NULL,
+                              WS_OVERLAPPEDWINDOW ,
+                              CW_USEDEFAULT, CW_USEDEFAULT, 300, 300, 0,
+                              NULL, NULL, 0);
+    if ((!info.hWnd && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) || /* Win9x/Me */
+        (!pGetMenuInfo)) /* Win95/NT4 */
+    {
+        win_skip("Test would crash on Win9x/WinMe/NT4\n");
+        DestroyWindow(info.hWnd);
+        return;
+    }
     info.id = SetTimer(info.hWnd, TIMER_ID, 0, tfunc_crash);
     ok(info.id, "SetTimer failed\n");
     Sleep(150);
