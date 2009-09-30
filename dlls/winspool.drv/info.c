@@ -64,16 +64,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(winspool);
 
 /* ############################### */
 
-static CRITICAL_SECTION monitor_handles_cs;
-static CRITICAL_SECTION_DEBUG monitor_handles_cs_debug = 
-{
-    0, 0, &monitor_handles_cs,
-    { &monitor_handles_cs_debug.ProcessLocksList, &monitor_handles_cs_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": monitor_handles_cs") }
-};
-static CRITICAL_SECTION monitor_handles_cs = { &monitor_handles_cs_debug, -1, 0, 0, 0, 0 };
-
-
 static CRITICAL_SECTION printer_handles_cs;
 static CRITICAL_SECTION_DEBUG printer_handles_cs_debug = 
 {
@@ -84,17 +74,6 @@ static CRITICAL_SECTION_DEBUG printer_handles_cs_debug =
 static CRITICAL_SECTION printer_handles_cs = { &printer_handles_cs_debug, -1, 0, 0, 0, 0 };
 
 /* ############################### */
-
-typedef struct {
-    struct list     entry;
-    LPWSTR          name;
-    LPWSTR          dllname;
-    PMONITORUI      monitorUI;
-    LPMONITOR       monitor;
-    HMODULE         hdll;
-    DWORD           refcount;
-    DWORD           dwMonitorSize;
-} monitor_t;
 
 typedef struct {
     DWORD job_id;
@@ -132,9 +111,6 @@ typedef struct {
 
 /* ############################### */
 
-static struct list monitor_handles = LIST_INIT( monitor_handles );
-static monitor_t * pm_localport;
-
 static opened_printer_t **printer_handles;
 static UINT nb_printer_handles;
 static LONG next_job_id = 1;
@@ -153,12 +129,6 @@ static const WCHAR DriversW[] = { 'S','y','s','t','e','m','\\',
                                   'P','r','i','n','t','\\',
                                   'E','n','v','i','r','o','n','m','e','n','t','s','\\',
                                   '%','s','\\','D','r','i','v','e','r','s','%','s',0 };
-
-static const WCHAR MonitorsW[] =  { 'S','y','s','t','e','m','\\',
-                                  'C','u', 'r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-                                  'C','o','n','t','r','o','l','\\',
-                                  'P','r','i','n','t','\\',
-                                  'M','o','n','i','t','o','r','s','\\',0};
 
 static const WCHAR PrintersW[] = {'S','y','s','t','e','m','\\',
                                   'C','u', 'r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
@@ -758,190 +728,6 @@ static inline DWORD set_reg_szW(HKEY hkey, const WCHAR *keyname, const WCHAR *va
                               (lstrlenW(value) + 1) * sizeof(WCHAR));
     else
         return ERROR_FILE_NOT_FOUND;
-}
-
-/******************************************************************
- * monitor_unload [internal]
- *
- * release a printmonitor and unload it from memory, when needed
- *
- */
-static void monitor_unload(monitor_t * pm)
-{
-    if (pm == NULL) return;
-    TRACE("%p (refcount: %d) %s\n", pm, pm->refcount, debugstr_w(pm->name));
-
-    EnterCriticalSection(&monitor_handles_cs);
-
-    if (pm->refcount) pm->refcount--;
-
-    if (pm->refcount == 0) {
-        list_remove(&pm->entry);
-        FreeLibrary(pm->hdll);
-        HeapFree(GetProcessHeap(), 0, pm->name);
-        HeapFree(GetProcessHeap(), 0, pm->dllname);
-        HeapFree(GetProcessHeap(), 0, pm);
-    }
-    LeaveCriticalSection(&monitor_handles_cs);
-}
-
-/******************************************************************
- * monitor_load [internal]
- *
- * load a printmonitor, get the dllname from the registry, when needed 
- * initialize the monitor and dump found function-pointers
- *
- * On failure, SetLastError() is called and NULL is returned
- */
-
-static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
-{
-    LPMONITOR2  (WINAPI *pInitializePrintMonitor2) (PMONITORINIT, LPHANDLE);
-    PMONITORUI  (WINAPI *pInitializePrintMonitorUI)(VOID);
-    LPMONITOREX (WINAPI *pInitializePrintMonitor)  (LPWSTR);
-    DWORD (WINAPI *pInitializeMonitorEx)(LPWSTR, LPMONITOR);
-    DWORD (WINAPI *pInitializeMonitor)  (LPWSTR);
-
-    monitor_t * pm = NULL;
-    monitor_t * cursor;
-    LPWSTR  regroot = NULL;
-    LPWSTR  driver = dllname;
-
-    TRACE("(%s, %s)\n", debugstr_w(name), debugstr_w(dllname));
-    /* Is the Monitor already loaded? */
-    EnterCriticalSection(&monitor_handles_cs);
-
-    if (name) {
-        LIST_FOR_EACH_ENTRY(cursor, &monitor_handles, monitor_t, entry)
-        {
-            if (cursor->name && (lstrcmpW(name, cursor->name) == 0)) {
-                pm = cursor;
-                break;
-            }
-        }
-    }
-
-    if (pm == NULL) {
-        pm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(monitor_t));
-        if (pm == NULL) goto cleanup;
-        list_add_tail(&monitor_handles, &pm->entry);
-    }
-    pm->refcount++;
-
-    if (pm->name == NULL) {
-        /* Load the monitor */
-        LPMONITOREX pmonitorEx;
-        DWORD   len;
-
-        if (name) {
-            len = lstrlenW(MonitorsW) + lstrlenW(name) + 2;
-            regroot = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        }
-
-        if (regroot) {
-            lstrcpyW(regroot, MonitorsW);
-            lstrcatW(regroot, name);
-            /* Get the Driver from the Registry */
-            if (driver == NULL) {
-                HKEY    hroot;
-                DWORD   namesize;
-                if (RegOpenKeyW(HKEY_LOCAL_MACHINE, regroot, &hroot) == ERROR_SUCCESS) {
-                    if (RegQueryValueExW(hroot, DriverW, NULL, NULL, NULL,
-                                        &namesize) == ERROR_SUCCESS) {
-                        driver = HeapAlloc(GetProcessHeap(), 0, namesize);
-                        RegQueryValueExW(hroot, DriverW, NULL, NULL, (LPBYTE) driver, &namesize) ;
-                    }
-                    RegCloseKey(hroot);
-                }
-            }
-        }
-
-        pm->name = strdupW(name);
-        pm->dllname = strdupW(driver);
-
-        if ((name && (!regroot || !pm->name)) || !pm->dllname) {
-            monitor_unload(pm);
-            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-            pm = NULL;
-            goto cleanup;
-        }
-
-        pm->hdll = LoadLibraryW(driver);
-        TRACE("%p: LoadLibrary(%s) => %d\n", pm->hdll, debugstr_w(driver), GetLastError());
-
-        if (pm->hdll == NULL) {
-            monitor_unload(pm);
-            SetLastError(ERROR_MOD_NOT_FOUND);
-            pm = NULL;
-            goto cleanup;
-        }
-
-        pInitializePrintMonitor2  = (void *)GetProcAddress(pm->hdll, "InitializePrintMonitor2");
-        pInitializePrintMonitorUI = (void *)GetProcAddress(pm->hdll, "InitializePrintMonitorUI");
-        pInitializePrintMonitor   = (void *)GetProcAddress(pm->hdll, "InitializePrintMonitor");
-        pInitializeMonitorEx = (void *)GetProcAddress(pm->hdll, "InitializeMonitorEx");
-        pInitializeMonitor   = (void *)GetProcAddress(pm->hdll, "InitializeMonitor");
-
-
-        TRACE("%p: %s,pInitializePrintMonitor2\n", pInitializePrintMonitor2, debugstr_w(driver));
-        TRACE("%p: %s,pInitializePrintMonitorUI\n", pInitializePrintMonitorUI, debugstr_w(driver));
-        TRACE("%p: %s,pInitializePrintMonitor\n", pInitializePrintMonitor, debugstr_w(driver));
-        TRACE("%p: %s,pInitializeMonitorEx\n", pInitializeMonitorEx, debugstr_w(driver));
-        TRACE("%p: %s,pInitializeMonitor\n", pInitializeMonitor, debugstr_w(driver));
-
-        if (pInitializePrintMonitorUI  != NULL) {
-            pm->monitorUI = pInitializePrintMonitorUI();
-            TRACE("%p: MONITORUI from %s,InitializePrintMonitorUI()\n", pm->monitorUI, debugstr_w(driver)); 
-            if (pm->monitorUI) {
-                TRACE(  "0x%08x: dwMonitorSize (%d)\n",
-                        pm->monitorUI->dwMonitorUISize, pm->monitorUI->dwMonitorUISize );
-
-            }
-        }
-
-        if (pInitializePrintMonitor && regroot) {
-            pmonitorEx = pInitializePrintMonitor(regroot);
-            TRACE(  "%p: LPMONITOREX from %s,InitializePrintMonitor(%s)\n",
-                    pmonitorEx, debugstr_w(driver), debugstr_w(regroot));
-
-            if (pmonitorEx) {
-                pm->dwMonitorSize = pmonitorEx->dwMonitorSize;
-                pm->monitor = &(pmonitorEx->Monitor);
-            }
-        }
-
-        if (pm->monitor) {
-            TRACE(  "0x%08x: dwMonitorSize (%d)\n", pm->dwMonitorSize, pm->dwMonitorSize );
-
-        }
-
-        if (!pm->monitor && regroot) {
-            if (pInitializePrintMonitor2 != NULL) {
-                FIXME("%s,InitializePrintMonitor2 not implemented\n", debugstr_w(driver));
-            }
-            if (pInitializeMonitorEx != NULL) {
-                FIXME("%s,InitializeMonitorEx not implemented\n", debugstr_w(driver));
-            }
-            if (pInitializeMonitor != NULL) {
-                FIXME("%s,InitializeMonitor not implemented\n", debugstr_w(driver));
-            }
-        }
-        if (!pm->monitor && !pm->monitorUI) {
-            monitor_unload(pm);
-            SetLastError(ERROR_PROC_NOT_FOUND);
-            pm = NULL;
-        }
-    }
-cleanup:
-    if ((pm_localport ==  NULL) && (pm != NULL) && (lstrcmpW(pm->name, LocalPortW) == 0)) {
-        pm->refcount++;
-        pm_localport = pm;
-    }
-    LeaveCriticalSection(&monitor_handles_cs);
-    if (driver != dllname) HeapFree(GetProcessHeap(), 0, driver);
-    HeapFree(GetProcessHeap(), 0, regroot);
-    TRACE("=> %p\n", pm);
-    return pm;
 }
 
 /******************************************************************
@@ -6080,8 +5866,6 @@ BOOL WINAPI AddPortExA(LPSTR pName, DWORD level, LPBYTE pBuffer, LPSTR pMonitorN
 BOOL WINAPI AddPortExW(LPWSTR pName, DWORD level, LPBYTE pBuffer, LPWSTR pMonitorName)
 {
     PORT_INFO_2W * pi2;
-    monitor_t * pm;
-    DWORD       res = FALSE;
 
     pi2 = (PORT_INFO_2W *) pBuffer;
 
@@ -6090,34 +5874,14 @@ BOOL WINAPI AddPortExW(LPWSTR pName, DWORD level, LPBYTE pBuffer, LPWSTR pMonito
             debugstr_w(((level > 1) && pi2) ? pi2->pMonitorName : NULL),
             debugstr_w(((level > 1) && pi2) ? pi2->pDescription : NULL));
 
-
-    if ((level < 1) || (level > 2)) {
-        SetLastError(ERROR_INVALID_LEVEL);
-        return FALSE;
-    }
+    if ((backend == NULL)  && !load_backend()) return FALSE;
 
     if ((!pi2) || (!pMonitorName) || (!pMonitorName[0])) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    /* load the Monitor */
-    pm = monitor_load(pMonitorName, NULL);
-    if (!pm) {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    if (pm->monitor && pm->monitor->pfnAddPortEx) {
-        res = pm->monitor->pfnAddPortEx(pName, level, pBuffer, pMonitorName);
-        TRACE("got %u with %u\n", res, GetLastError());
-    }
-    else
-    {
-        FIXME("not implemented for %s (%p)\n", debugstr_w(pMonitorName), pm->monitor);
-    }
-    monitor_unload(pm);
-    return res;
+    return backend->fpAddPortEx(pName, level, pBuffer, pMonitorName);
 }
 
 /******************************************************************************
