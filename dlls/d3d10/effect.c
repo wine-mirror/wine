@@ -734,8 +734,8 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, cons
 
     skip_dword_unknown(ptr, 1);
 
-    read_dword(ptr, &l->variable_count);
-    TRACE("Local buffer variable count: %#x.\n", l->variable_count);
+    read_dword(ptr, &l->member_count);
+    TRACE("Local buffer member count: %#x.\n", l->member_count);
 
     skip_dword_unknown(ptr, 1);
 
@@ -759,16 +759,16 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, cons
         if (FAILED(hr)) return hr;
     }
 
-    l->variables = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, l->variable_count * sizeof(*l->variables));
-    if (!l->variables)
+    l->members = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, l->member_count * sizeof(*l->members));
+    if (!l->members)
     {
-        ERR("Failed to allocate variables memory.\n");
+        ERR("Failed to allocate members memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    for (i = 0; i < l->variable_count; ++i)
+    for (i = 0; i < l->member_count; ++i)
     {
-        struct d3d10_effect_variable *v = &l->variables[i];
+        struct d3d10_effect_variable *v = &l->members[i];
 
         v->buffer = l;
         v->effect = l->effect;
@@ -1068,13 +1068,13 @@ static void d3d10_effect_local_buffer_destroy(struct d3d10_effect_local_buffer *
     TRACE("local buffer %p.\n", l);
 
     HeapFree(GetProcessHeap(), 0, l->name);
-    if (l->variables)
+    if (l->members)
     {
-        for (i = 0; i < l->variable_count; ++i)
+        for (i = 0; i < l->member_count; ++i)
         {
-            d3d10_effect_variable_destroy(&l->variables[i]);
+            d3d10_effect_variable_destroy(&l->members[i]);
         }
-        HeapFree(GetProcessHeap(), 0, l->variables);
+        HeapFree(GetProcessHeap(), 0, l->members);
     }
 
     if (l->annotations)
@@ -1254,9 +1254,9 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
         struct d3d10_effect_local_buffer *l = &This->local_buffers[i];
         unsigned int j;
 
-        for (j = 0; j < l->variable_count; ++j)
+        for (j = 0; j < l->member_count; ++j)
         {
-            struct d3d10_effect_variable *v = &l->variables[j];
+            struct d3d10_effect_variable *v = &l->members[j];
 
             if (!strcmp(v->name, name))
             {
