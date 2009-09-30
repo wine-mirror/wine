@@ -429,6 +429,11 @@ HRESULT throw_eval_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR
     return throw_error(ctx, ei, id, str, ctx->eval_error_constr);
 }
 
+HRESULT throw_generic_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)
+{
+    return throw_error(ctx, ei, id, str, ctx->error_constr);
+}
+
 HRESULT throw_range_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)
 {
     return throw_error(ctx, ei, id, str, ctx->range_error_constr);

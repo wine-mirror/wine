@@ -351,6 +351,11 @@ static HRESULT WINAPI JScript_Close(IActiveScript *iface)
             This->ctx->named_items = NULL;
         }
 
+        if(This->ctx->secmgr) {
+            IInternetHostSecurityManager_Release(This->ctx->secmgr);
+            This->ctx->secmgr = NULL;
+        }
+
         if(This->ctx->site) {
             IActiveScriptSite_Release(This->ctx->site);
             This->ctx->site = NULL;
@@ -554,6 +559,7 @@ static HRESULT WINAPI JScriptParse_InitNew(IActiveScriptParse *iface)
 
     ctx->ref = 1;
     ctx->state = SCRIPTSTATE_UNINITIALIZED;
+    ctx->safeopt = This->safeopt;
     jsheap_init(&ctx->tmp_heap);
 
     ctx = InterlockedCompareExchangePointer((void**)&This->ctx, ctx, NULL);

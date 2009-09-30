@@ -214,13 +214,13 @@ HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,const WCHAR*,cons
 HRESULT Function_value(script_ctx_t*,vdisp_t*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
 
 HRESULT throw_eval_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
+HRESULT throw_generic_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
 HRESULT throw_range_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
 HRESULT throw_reference_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
 HRESULT throw_regexp_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
 HRESULT throw_syntax_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
 HRESULT throw_type_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
 HRESULT throw_uri_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
-
 
 HRESULT create_object(script_ctx_t*,DispatchEx*,DispatchEx**);
 HRESULT create_math(script_ctx_t*,DispatchEx**);
@@ -260,6 +260,8 @@ struct _script_ctx_t {
     exec_ctx_t *exec_ctx;
     named_item_t *named_items;
     IActiveScriptSite *site;
+    IInternetHostSecurityManager *secmgr;
+    DWORD safeopt;
     LCID lcid;
 
     jsheap_t tmp_heap;

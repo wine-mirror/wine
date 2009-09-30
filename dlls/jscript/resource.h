@@ -20,6 +20,7 @@
 
 #define IDS_TO_PRIMITIVE                    0x0001
 #define IDS_INVALID_CALL_ARG                0x0005
+#define IDS_CREATE_OBJ_ERROR                0x01AD
 #define IDS_NO_PROPERTY                     0x01B6
 #define IDS_ARG_NOT_OPT                     0x01c1
 #define IDS_SYNTAX_ERROR                    0x03EA
