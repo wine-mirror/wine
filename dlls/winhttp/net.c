@@ -234,6 +234,13 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     pBIO_new_fp( stderr, BIO_NOCLOSE );
 
     method = pSSLv23_method();
+    ctx = pSSL_CTX_new( method );
+    if (!pSSL_CTX_set_default_verify_paths( ctx ))
+    {
+        ERR("SSL_CTX_set_default_verify_paths failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
+        set_last_error( ERROR_OUTOFMEMORY );
+        return FALSE;
+    }
 #else
     WARN("SSL support not compiled in.\n");
     set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
@@ -333,13 +340,6 @@ BOOL netconn_secure_connect( netconn_t *conn )
     X509 *cert;
     long res;
 
-    ctx = pSSL_CTX_new( method );
-    if (!pSSL_CTX_set_default_verify_paths( ctx ))
-    {
-        ERR("SSL_CTX_set_default_verify_paths failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
-        set_last_error( ERROR_OUTOFMEMORY );
-        return FALSE;
-    }
     if (!(conn->ssl_conn = pSSL_new( ctx )))
     {
         ERR("SSL_new failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
