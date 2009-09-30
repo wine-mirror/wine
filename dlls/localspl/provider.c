@@ -1524,6 +1524,70 @@ static BOOL WINAPI fpAddPort(LPWSTR pName, HWND hWnd, LPWSTR pMonitorName)
 }
 
 /******************************************************************************
+ * fpAddPortEx [exported through PRINTPROVIDOR]
+ *
+ * Add a Port for a specific Monitor, without presenting a user interface
+ *
+ * PARAMS
+ *  pName         [I] Servername or NULL (local Computer)
+ *  level         [I] Structure-Level (1 or 2) for pBuffer
+ *  pBuffer       [I] PTR to: PORT_INFO_1 or PORT_INFO_2
+ *  pMonitorName  [I] Name of the Monitor that manage the Port
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ */
+static BOOL WINAPI fpAddPortEx(LPWSTR pName, DWORD level, LPBYTE pBuffer, LPWSTR pMonitorName)
+{
+    PORT_INFO_2W * pi2;
+    monitor_t * pm;
+    DWORD lres;
+    DWORD res;
+
+    pi2 = (PORT_INFO_2W *) pBuffer;
+
+    TRACE("(%s, %d, %p, %s): %s %s %s\n", debugstr_w(pName), level, pBuffer,
+            debugstr_w(pMonitorName), debugstr_w(pi2 ? pi2->pPortName : NULL),
+            debugstr_w(((level > 1) && pi2) ? pi2->pMonitorName : NULL),
+            debugstr_w(((level > 1) && pi2) ? pi2->pDescription : NULL));
+
+    lres = copy_servername_from_name(pName, NULL);
+    if (lres) {
+        FIXME("server %s not supported\n", debugstr_w(pName));
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if ((level < 1) || (level > 2)) {
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
+    if ((!pi2) || (!pMonitorName) || (!pMonitorName[0])) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    /* load the Monitor */
+    pm = monitor_load(pMonitorName, NULL);
+    if (pm && pm->monitor && pm->monitor->pfnAddPortEx) {
+        res = pm->monitor->pfnAddPortEx(pName, level, pBuffer, pMonitorName);
+        TRACE("got %d with %u (%s)\n", res, GetLastError(), debugstr_w(pm->dllname));
+    }
+    else
+    {
+        FIXME("not implemented for %s (monitor %p: %s)\n",
+            debugstr_w(pMonitorName), pm, pm ? debugstr_w(pm->dllname) : NULL);
+            SetLastError(ERROR_INVALID_PARAMETER);
+            res = FALSE;
+    }
+    monitor_unload(pm);
+    return res;
+}
+
+/******************************************************************************
  * fpAddPrinterDriverEx [exported through PRINTPROVIDOR]
  *
  * Install a Printer Driver with the Option to upgrade / downgrade the Files
@@ -2098,7 +2162,7 @@ void setup_provider(void)
         NULL,   /* fpGetPrinterDriverEx */
         NULL,   /* fpFindFirstPrinterChangeNotification */
         NULL,   /* fpFindClosePrinterChangeNotification */
-        NULL,   /* fpAddPortEx */
+        fpAddPortEx,
         NULL,   /* fpShutDown */
         NULL,   /* fpRefreshPrinterChangeNotification */
         NULL,   /* fpOpenPrinterEx */
