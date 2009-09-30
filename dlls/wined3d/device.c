@@ -6164,8 +6164,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
 
     /* Render target 0 is special */
     if(RenderTargetIndex == 0 && dxVersion > 7) {
-        /* Finally, reset the viewport as the MSDN states. Tests show that stateblock recording is ignored.
-         * the change goes directly into the primary stateblock.
+        /* Finally, reset the viewport and scissor rect as the MSDN states.
+         * Tests show that stateblock recording is ignored, the change goes
+         * directly into the primary stateblock.
          */
         This->stateBlock->viewport.Height = ((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height;
         This->stateBlock->viewport.Width  = ((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Width;
@@ -6174,6 +6175,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
         This->stateBlock->viewport.MaxZ   = 1.0f;
         This->stateBlock->viewport.MinZ   = 0.0f;
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VIEWPORT);
+
+        This->stateBlock->scissorRect.top = 0;
+        This->stateBlock->scissorRect.left = 0;
+        This->stateBlock->scissorRect.right = This->stateBlock->viewport.Width;
+        This->stateBlock->scissorRect.bottom = This->stateBlock->viewport.Height;
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SCISSORRECT);
     }
     return WINED3D_OK;
 }
