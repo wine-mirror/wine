@@ -289,6 +289,12 @@ ALCdevice* CDECL wine_alcGetContextsDevice(ALCcontext *context)
 
 ALCdevice* CDECL wine_alcOpenDevice(const ALCchar *devicename)
 {
+    if(devicename != NULL && (strcmp(devicename, "DirectSound3D") == 0 ||
+                              strcmp(devicename, "DirectSound") == 0 ||
+                              strcmp(devicename, "Generic Hardware") == 0 ||
+                              strcmp(devicename, "Generic Software") == 0)) {
+        devicename = NULL;
+    }
     return alcOpenDevice(devicename);
 }
 
