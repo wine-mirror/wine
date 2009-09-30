@@ -199,7 +199,7 @@ static void MONTHCAL_CopyTime(const SYSTEMTIME *from, SYSTEMTIME *to)
 
 /* returns the day in the week(0 == sunday, 6 == saturday) */
 /* day(1 == 1st, 2 == 2nd... etc), year is the  year value */
-static int MONTHCAL_CalculateDayOfWeek(DWORD day, DWORD month, DWORD year)
+int MONTHCAL_CalculateDayOfWeek(DWORD day, DWORD month, DWORD year)
 {
   year-=(month < 3);
 

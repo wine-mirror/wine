@@ -88,6 +88,7 @@ typedef struct
 
 /* in monthcal.c */
 extern int MONTHCAL_MonthLength(int month, int year);
+extern int MONTHCAL_CalculateDayOfWeek(DWORD day, DWORD month, DWORD year);
 
 /* this list of defines is closely related to `allowedformatchars' defined
  * in datetime.c; the high nibble indicates the `base type' of the format
@@ -164,17 +165,21 @@ DATETIME_SetSystemTime (DATETIME_INFO *infoPtr, DWORD flag, const SYSTEMTIME *sy
     if (flag == GDT_VALID) {
       if (systime->wYear < 1601 || systime->wYear > 30827 ||
           systime->wMonth < 1 || systime->wMonth > 12 ||
-          systime->wDayOfWeek > 6 ||
           systime->wDay < 1 || systime->wDay > 31 ||
           systime->wHour > 23 ||
           systime->wMinute > 59 ||
           systime->wSecond > 59 ||
           systime->wMilliseconds > 999
           )
-        return 0;
+        return FALSE;
 
         infoPtr->dateValid = TRUE;
         infoPtr->date = *systime;
+        /* always store a valid day of week */
+        infoPtr->date.wDayOfWeek =
+            MONTHCAL_CalculateDayOfWeek(infoPtr->date.wDay, infoPtr->date.wMonth,
+                                                            infoPtr->date.wYear);
+
         SendMessageW (infoPtr->hMonthCal, MCM_SETCURSEL, 0, (LPARAM)(&infoPtr->date));
         SendMessageW (infoPtr->hwndCheckbut, BM_SETCHECK, BST_CHECKED, 0);
     } else if ((infoPtr->dwStyle & DTS_SHOWNONE) && (flag == GDT_NONE)) {
@@ -182,7 +187,7 @@ DATETIME_SetSystemTime (DATETIME_INFO *infoPtr, DWORD flag, const SYSTEMTIME *sy
         SendMessageW (infoPtr->hwndCheckbut, BM_SETCHECK, BST_UNCHECKED, 0);
     }
     else
-        return 0;
+        return FALSE;
 
     InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
     return TRUE;

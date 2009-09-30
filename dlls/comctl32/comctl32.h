@@ -231,6 +231,7 @@ extern void UPDOWN_Unregister(void);
 
 
 int MONTHCAL_MonthLength(int month, int year);
+int MONTHCAL_CalculateDayOfWeek(DWORD day, DWORD month, DWORD year);
 
 extern void THEMING_Initialize(void);
 extern void THEMING_Uninitialize(void);

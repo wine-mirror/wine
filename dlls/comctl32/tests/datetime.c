@@ -616,7 +616,7 @@ static void test_dtm_set_and_get_system_time(void)
     st = ref;
     st.wDayOfWeek = 10;
     r = SendMessage(hWnd, DTM_SETSYSTEMTIME, GDT_VALID, (LPARAM)&st);
-    todo_wine expect(1, r);
+    expect(1, r);
     r = SendMessage(hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM)&getSt);
     expect(GDT_VALID, r);
     expect_systime(&ref, &getSt);
@@ -661,9 +661,9 @@ static void test_dtm_set_and_get_system_time(void)
     r = SendMessage(hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM)&getSt);
     expect(GDT_VALID, r);
     /* 01.10.2009 is Thursday */
-    todo_wine expect(4, (LRESULT)getSt.wDayOfWeek);
+    expect(4, (LRESULT)getSt.wDayOfWeek);
     st.wDayOfWeek = 4;
-    todo_wine expect_systime(&st, &getSt);
+    expect_systime(&st, &getSt);
 
     DestroyWindow(hWnd);
 }
