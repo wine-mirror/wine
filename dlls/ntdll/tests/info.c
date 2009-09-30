@@ -947,6 +947,11 @@ static void test_affinity(void)
     status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok( tbi.AffinityMask == 2, "Unexpected thread affinity\n" );
+    /* The thread affinity is restricted to the process affinity */
+    thread_affinity = 1;
+    status = pNtSetInformationThread( GetCurrentThread(), ThreadAffinityMask, &thread_affinity, sizeof(thread_affinity) );
+    ok( status == STATUS_INVALID_PARAMETER,
+        "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
 
     proc_affinity = (1 << si.dwNumberOfProcessors) - 1;
     status = pNtSetInformationProcess( GetCurrentProcess(), ProcessAffinityMask, &proc_affinity, sizeof(proc_affinity) );

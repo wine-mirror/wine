@@ -409,6 +409,11 @@ struct thread *get_thread_from_pid( int pid )
 
 void set_thread_affinity( struct thread *thread, affinity_t affinity )
 {
+    if ((affinity & thread->process->affinity) != affinity)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
 #ifdef HAVE_SCHED_SETAFFINITY
     if (thread->unix_pid != -1)
     {
