@@ -298,7 +298,7 @@ static void test_LsaLookupNames2(void)
     ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %x)\n", status);
     ok(sids[0].Use == SidTypeWellKnownGroup, "expected SidTypeWellKnownGroup, got %u\n", sids[0].Use);
     ok(sids[0].Flags == 0, "expected 0, got 0x%08x\n", sids[0].Flags);
-    todo_wine ok(domains->Entries == 1, "expected 1, got %u\n", domains->Entries);
+    ok(domains->Entries == 1, "expected 1, got %u\n", domains->Entries);
     get_sid_info(sids[0].Sid, &account, &sid_dom);
     ok(!strcmp(account, "LOCAL SERVICE"), "expected \"LOCAL SERVICE\", got \"%s\"\n", account);
     ok(!strcmp(sid_dom, "NT AUTHORITY"), "expected \"NT AUTHORITY\", got \"%s\"\n", sid_dom);
@@ -323,7 +323,7 @@ static void test_LsaLookupNames2(void)
     ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %x)\n", status);
     ok(sids[0].Use == SidTypeWellKnownGroup, "expected SidTypeWellKnownGroup, got %u\n", sids[0].Use);
     ok(sids[0].Flags == 0, "expected 0, got 0x%08x\n", sids[0].Flags);
-    todo_wine ok(domains->Entries == 1, "expected 1, got %u\n", domains->Entries);
+    ok(domains->Entries == 1, "expected 1, got %u\n", domains->Entries);
     get_sid_info(sids[0].Sid, &account, &sid_dom);
     ok(!strcmp(account, "LOCAL SERVICE"), "expected \"LOCAL SERVICE\", got \"%s\"\n", account);
     ok(!strcmp(sid_dom, "NT AUTHORITY"), "expected \"NT AUTHORITY\", got \"%s\"\n", sid_dom);
@@ -338,8 +338,8 @@ static void test_LsaLookupNames2(void)
     ok(sids[0].Use == SidTypeWellKnownGroup, "expected SidTypeWellKnownGroup, got %u\n", sids[0].Use);
     ok(sids[1].Use == SidTypeUnknown, "expected SidTypeUnknown, got %u\n", sids[0].Use);
     ok(sids[2].Use == SidTypeWellKnownGroup, "expected SidTypeWellKnownGroup, got %u\n", sids[0].Use);
-    todo_wine ok(sids[0].DomainIndex == 0, "expected 0, got %u\n", sids[0].DomainIndex);
-    todo_wine ok(domains->Entries == 1, "expected 1, got %u\n", domains->Entries);
+    ok(sids[0].DomainIndex == 0, "expected 0, got %u\n", sids[0].DomainIndex);
+    ok(domains->Entries == 1, "expected 1, got %u\n", domains->Entries);
     pLsaFreeMemory(sids);
     pLsaFreeMemory(domains);
 

@@ -33,6 +33,7 @@
 #include "advapi32_misc.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(advapi);
 
@@ -311,6 +312,39 @@ static BOOL lookup_name( LSA_UNICODE_STRING *name, SID *sid, DWORD *sid_size, WC
     return ret;
 }
 
+static INT build_domain(PLSA_REFERENCED_DOMAIN_LIST currentList, PLSA_UNICODE_STRING domain)
+{
+    ULONG count;
+    ULONG sid_size = 0,domain_size = 0;
+    BOOL handled = FALSE;
+    SID_NAME_USE use;
+
+    for (count = 0; count < currentList->Entries; count ++)
+    {
+        if ((currentList->Domains[count].Name.Length == domain->Length) &&
+            (strncmpiW(currentList->Domains[count].Name.Buffer,domain->Buffer,(domain->Length / sizeof(WCHAR))) == 0))
+        {
+            HeapFree(GetProcessHeap(),0,domain->Buffer);
+            return count;
+        }
+    }
+
+    if (currentList->Entries > 0)
+        currentList->Domains = HeapReAlloc(GetProcessHeap(),0,currentList->Domains, (currentList->Entries + 1) * sizeof(LSA_TRUST_INFORMATION));
+    else
+        currentList->Domains = HeapAlloc(GetProcessHeap(),0,sizeof(LSA_TRUST_INFORMATION));
+
+    currentList->Domains[currentList->Entries].Name = *domain;
+
+    lookup_name( domain, NULL, &sid_size, NULL, &domain_size, &use, &handled );
+    domain_size = 0;
+    currentList->Domains[currentList->Entries].Sid = HeapAlloc(GetProcessHeap(),0,sid_size);
+    lookup_name( domain, currentList->Domains[currentList->Entries].Sid, &sid_size, NULL, &domain_size, &use, &handled );
+
+    currentList->Entries++;
+    return currentList->Entries-1;
+}
+
 /******************************************************************************
  * LsaLookupNames2 [ADVAPI32.@]
  *
@@ -319,7 +353,7 @@ NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
                                  PLSA_UNICODE_STRING names, PLSA_REFERENCED_DOMAIN_LIST *domains,
                                  PLSA_TRANSLATED_SID2 *sids )
 {
-    ULONG i, sid_size_total = 0, domain_size_total = 0, size, num_domains;
+    ULONG i, sid_size_total = 0, domain_size_max = 0, size;
     ULONG sid_size, domain_size, mapped;
     BOOL ret, handled = FALSE;
     SID_NAME_USE use;
@@ -327,7 +361,7 @@ NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
 
     TRACE("(%p,0x%08x,0x%08x,%p,%p,%p)\n", policy, flags, count, names, domains, sids);
 
-    mapped = num_domains = 0;
+    mapped = 0;
     for (i = 0; i < count; i++)
     {
         handled = FALSE;
@@ -338,9 +372,8 @@ NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
             sid_size_total += sid_size;
             if (domain_size)
             {
-                FIXME("domain not handled\n");
-                domain_size_total += domain_size;
-                num_domains++;
+                if (domain_size > domain_size_max)
+                    domain_size_max = domain_size;
             }
             mapped++;
         }
@@ -362,13 +395,20 @@ NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
 
     for (i = 0; i < count; i++)
     {
+        LSA_UNICODE_STRING domain;
+
+        domain.Length = domain_size_max*sizeof(WCHAR);
+        domain.MaximumLength = domain_size_max*sizeof(WCHAR);
+        domain.Buffer = HeapAlloc(GetProcessHeap(),0,domain.Length);
+
         (*sids)[i].Use = SidTypeUnknown;
         (*sids)[i].DomainIndex = -1;
         (*sids)[i].Flags = 0;
 
         handled = FALSE;
         sid_size = sid_size_total;
-        ret = lookup_name( &names[i], sid, &sid_size, NULL, &domain_size, &use, &handled );
+        domain_size = domain_size_max;
+        ret = lookup_name( &names[i], sid, &sid_size, domain.Buffer, &domain_size, &use, &handled );
         if (handled)
         {
             (*sids)[i].Sid = sid;
@@ -376,7 +416,16 @@ NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
 
             sid += sid_size;
             sid_size_total -= sid_size;
+            if (domain_size)
+            {
+                domain.Length = domain_size * sizeof(WCHAR);
+                (*sids)[i].DomainIndex = build_domain(*domains, &domain);
+            }
+            else
+                HeapFree(GetProcessHeap(),0,domain.Buffer);
         }
+        else
+            HeapFree(GetProcessHeap(),0,domain.Buffer);
     }
 
     if (mapped == count) return STATUS_SUCCESS;
@@ -436,16 +485,31 @@ NTSTATUS WINAPI LsaLookupSids(
         (*Names)[i].Name.Buffer = NULL;
         if (LookupAccountSidW(NULL, Sids[i], NULL, &name_size, NULL, &domain_size, &use))
         {
-            if (domain_size)
-                FIXME("domains not handled\n");
+            LSA_UNICODE_STRING domain;
+
             mapped++;
 
-            domain_size = 0;
+            if (domain_size)
+            {
+                domain.Length = domain_size*sizeof(WCHAR);
+                domain.MaximumLength = domain_size*sizeof(WCHAR);
+                domain.Buffer = HeapAlloc(GetProcessHeap(),0,domain.Length);
+            }
+            else
+            {
+                domain.Length = 0;
+                domain.MaximumLength = 0;
+                domain.Buffer = NULL;
+            }
+
             (*Names)[i].Use = use;
             (*Names)[i].Name.Length = name_size * sizeof(WCHAR);
             (*Names)[i].Name.MaximumLength = name_size * sizeof(WCHAR);
             (*Names)[i].Name.Buffer = HeapAlloc(GetProcessHeap(),0,name_size * sizeof(WCHAR));
-            LookupAccountSidW(NULL, Sids[i], (*Names)[i].Name.Buffer, &name_size, NULL, &domain_size, &use);
+            LookupAccountSidW(NULL, Sids[i], (*Names)[i].Name.Buffer, &name_size, domain.Buffer, &domain_size, &use);
+
+            if (domain_size)
+                (*Names)[i].DomainIndex = build_domain(*ReferencedDomains, &domain);
         }
     }
     TRACE("mapped %u out of %u\n",mapped,Count);
