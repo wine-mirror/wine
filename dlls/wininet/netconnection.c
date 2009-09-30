@@ -98,6 +98,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
 #include <openssl/err.h>
 
+static CRITICAL_SECTION init_ssl_cs;
+static CRITICAL_SECTION_DEBUG init_ssl_cs_debug =
+{
+    0, 0, &init_ssl_cs,
+    { &init_ssl_cs_debug.ProcessLocksList,
+      &init_ssl_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": init_ssl_cs") }
+};
+static CRITICAL_SECTION init_ssl_cs = { &init_ssl_cs_debug, -1, 0, 0, 0, 0 };
+
 static void *OpenSSL_ssl_handle;
 static void *OpenSSL_crypto_handle;
 
@@ -142,14 +152,19 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
     {
 #if defined(SONAME_LIBSSL) && defined(SONAME_LIBCRYPTO)
         TRACE("using SSL connection\n");
+        EnterCriticalSection(&init_ssl_cs);
 	if (OpenSSL_ssl_handle) /* already initialized everything */
+        {
+            LeaveCriticalSection(&init_ssl_cs);
             return TRUE;
+        }
 	OpenSSL_ssl_handle = wine_dlopen(SONAME_LIBSSL, RTLD_NOW, NULL, 0);
 	if (!OpenSSL_ssl_handle)
 	{
 	    ERR("trying to use a SSL connection, but couldn't load %s. Expect trouble.\n",
 		SONAME_LIBSSL);
             INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR);
+            LeaveCriticalSection(&init_ssl_cs);
             return FALSE;
 	}
 	OpenSSL_crypto_handle = wine_dlopen(SONAME_LIBCRYPTO, RTLD_NOW, NULL, 0);
@@ -158,6 +173,7 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	    ERR("trying to use a SSL connection, but couldn't load %s. Expect trouble.\n",
 		SONAME_LIBCRYPTO);
             INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR);
+            LeaveCriticalSection(&init_ssl_cs);
             return FALSE;
 	}
 
@@ -168,6 +184,7 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
     { \
         ERR("failed to load symbol %s\n", #x); \
         INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR); \
+        LeaveCriticalSection(&init_ssl_cs); \
         return FALSE; \
     }
 
@@ -196,6 +213,7 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
     { \
         ERR("failed to load symbol %s\n", #x); \
         INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR); \
+        LeaveCriticalSection(&init_ssl_cs); \
         return FALSE; \
     }
 	DYNCRYPTO(BIO_new_fp);
@@ -215,8 +233,10 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
             ERR("SSL_CTX_set_default_verify_paths failed: %s\n",
                 pERR_error_string(pERR_get_error(), 0));
             INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+            LeaveCriticalSection(&init_ssl_cs);
             return FALSE;
         }
+        LeaveCriticalSection(&init_ssl_cs);
 #else
 	FIXME("can't use SSL, not compiled in.\n");
         INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR);
