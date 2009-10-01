@@ -17108,6 +17108,14 @@ dlls/wineps.drv/Makefile: dlls/wineps.drv/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/wineps.drv/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/wineps16.drv16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	wineps16.drv16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/wineps16.drv16/Makefile: dlls/wineps16.drv16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/wineps16.drv16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winequartz.drv/Makefile"
 test "x$enable_winequartz_drv" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	winequartz.drv"
@@ -19143,6 +19151,7 @@ do
     "dlls/winenas.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winenas.drv/Makefile" ;;
     "dlls/wineoss.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wineoss.drv/Makefile" ;;
     "dlls/wineps.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wineps.drv/Makefile" ;;
+    "dlls/wineps16.drv16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wineps16.drv16/Makefile" ;;
     "dlls/winequartz.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winequartz.drv/Makefile" ;;
     "dlls/winex11.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winex11.drv/Makefile" ;;
     "dlls/wing.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wing.dll16/Makefile" ;;

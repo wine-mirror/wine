@@ -176,19 +176,6 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 }
 
 
-/**************************************************************
- *	AdvancedSetupDialog	[WINEPS16.93]
- *
- */
-WORD WINAPI PSDRV_AdvancedSetupDialog16(HWND16 hwnd, HANDLE16 hDriver,
-					 LPDEVMODEA devin, LPDEVMODEA devout)
-{
-
-  TRACE("hwnd = %04x, hDriver = %04x devin=%p devout=%p\n", hwnd,
-	hDriver, devin, devout);
-  return IDCANCEL;
-}
-
 /****************************************************************
  *       PSDRV_PaperDlgProc
  *
@@ -406,21 +393,6 @@ INT CDECL PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput
   }
   return IDOK;
 }
-/***************************************************************
- *	ExtDeviceMode	[WINEPS16.90]
- *
- */
-
-INT16 WINAPI PSDRV_ExtDeviceMode16(HWND16 hwnd, HANDLE16 hDriver,
-				   LPDEVMODEA lpdmOutput, LPSTR lpszDevice,
-				   LPSTR lpszPort, LPDEVMODEA lpdmInput,
-				   LPSTR lpszProfile, WORD fwMode)
-
-{
-    return PSDRV_ExtDeviceMode(NULL, HWND_32(hwnd), lpdmOutput, lpszDevice,
-				 lpszPort, lpdmInput, lpszProfile, (DWORD) fwMode);
-}
-
 /***********************************************************************
  *	PSDRV_DeviceCapabilities	
  *
@@ -720,29 +692,6 @@ DWORD CDECL PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR
     FIXME("Unsupported capability %d\n", fwCapability);
   }
   return -1;
-}
-
-/**************************************************************
- *     DeviceCapabilities [WINEPS16.91]
- */
-DWORD WINAPI PSDRV_DeviceCapabilities16(LPCSTR lpszDevice,
-			       LPCSTR lpszPort, WORD fwCapability,
-			       LPSTR lpszOutput, LPDEVMODEA lpdm)
-{
-    return PSDRV_DeviceCapabilities(NULL, lpszDevice, lpszPort, fwCapability,
-				      lpszOutput, lpdm);
-}
-
-/***************************************************************
- *	DeviceMode	[WINEPS16.13]
- *
- */
-void WINAPI PSDRV_DeviceMode16(HWND16 hwnd, HANDLE16 hDriver,
-LPSTR lpszDevice, LPSTR lpszPort)
-{
-    PSDRV_ExtDeviceMode16( hwnd, hDriver, NULL, lpszDevice, lpszPort, NULL,
-			   NULL, DM_PROMPT );
-    return;
 }
 
 #if 0

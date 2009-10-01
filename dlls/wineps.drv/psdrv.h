@@ -397,11 +397,6 @@ extern const UNICODEGLYPH   PSDRV_AGLbyName[];	    /*  duplicates omitted  */
 extern const INT    	    PSDRV_AGLbyUVSize;	    /* sorted by UV -	    */
 extern const UNICODEGLYPH   PSDRV_AGLbyUV[];	    /*  duplicates included */
 
-
-extern INT16 WINAPI PSDRV_ExtDeviceMode16(HWND16 hwnd, HANDLE16 hDriver,
-		    LPDEVMODEA lpdmOutput, LPSTR lpszDevice, LPSTR lpszPort,
-		    LPDEVMODEA lpdmInput, LPSTR lpszProfile, WORD fwMode);
-
 extern HINSTANCE PSDRV_hInstance;
 extern HANDLE PSDRV_Heap;
 extern char *PSDRV_ANSIVector[256];

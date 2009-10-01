@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = wineps16.drv16
+IMPORTS   = kernel32
+
+EXTRADLLFLAGS = -Wb,--subsystem,win16
+
+C_SRCS = driver.c
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
