@@ -4642,24 +4642,25 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, s
 static void viewport_miscpart(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     UINT width, height;
-    IWineD3DSurfaceImpl *target;
+    IWineD3DSurfaceImpl *target = (IWineD3DSurfaceImpl *) stateblock->wineD3DDevice->render_targets[0];
+    WINED3DVIEWPORT vp = stateblock->viewport;
 
-    glDepthRange(stateblock->viewport.MinZ, stateblock->viewport.MaxZ);
+    if(vp.Width > target->currentDesc.Width) vp.Width = target->currentDesc.Width;
+    if(vp.Height > target->currentDesc.Height) vp.Height = target->currentDesc.Height;
+
+    glDepthRange(vp.MinZ, vp.MaxZ);
     checkGLcall("glDepthRange");
     /* Note: GL requires lower left, DirectX supplies upper left. This is reversed when using offscreen rendering
      */
     if (context->render_offscreen)
     {
-        glViewport(stateblock->viewport.X,
-                   stateblock->viewport.Y,
-                   stateblock->viewport.Width, stateblock->viewport.Height);
+        glViewport(vp.X, vp.Y, vp.Width, vp.Height);
     } else {
-        target = (IWineD3DSurfaceImpl *) stateblock->wineD3DDevice->render_targets[0];
         target->get_drawable_size(context, &width, &height);
 
-        glViewport(stateblock->viewport.X,
-                   (height - (stateblock->viewport.Y + stateblock->viewport.Height)),
-                   stateblock->viewport.Width, stateblock->viewport.Height);
+        glViewport(vp.X,
+                   (height - (vp.Y + vp.Height)),
+                   vp.Width, vp.Height);
     }
 
     checkGLcall("glViewport");

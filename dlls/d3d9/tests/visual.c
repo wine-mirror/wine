@@ -10395,6 +10395,76 @@ static void sgn_test(IDirect3DDevice9 *device) {
     IDirect3DVertexShader9_Release(shader);
 }
 
+static void viewport_test(IDirect3DDevice9 *device) {
+    HRESULT hr;
+    DWORD color;
+    D3DVIEWPORT9 vp, old_vp;
+    const float quad[] =
+    {
+        -0.5,   -0.5,   0.1,
+         0.5,   -0.5,   0.1,
+        -0.5,    0.5,   0.1,
+         0.5,    0.5,   0.1
+    };
+
+    memset(&old_vp, 0, sizeof(old_vp));
+    hr = IDirect3DDevice9_GetViewport(device, &old_vp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetViewport failed with %08x\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ff0000, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
+
+    /* Test a viewport with Width and Height bigger than the surface dimensions
+     *
+     * TODO: Test Width < surface.width, but X + Width > surface.width
+     * TODO: Test Width < surface.width, what happens with the height?
+     */
+    memset(&vp, 0, sizeof(vp));
+    vp.X = 0;
+    vp.Y = 0;
+    vp.Width = 10000;
+    vp.Height = 10000;
+    vp.MinZ = 0.0;
+    vp.MaxZ = 0.0;
+    hr = IDirect3DDevice9_SetViewport(device, &vp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetViewport failed with %08x\n", hr);
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %08x\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 3 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %08x\n", hr);
+    }
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+
+    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
+    color = getPixelColor(device, 158, 118);
+    ok(color == 0x00ff0000, "viewport test: (158,118) has color %08x\n", color);
+    color = getPixelColor(device, 162, 118);
+    ok(color == 0x00ff0000, "viewport test: (162,118) has color %08x\n", color);
+    color = getPixelColor(device, 158, 122);
+    ok(color == 0x00ff0000, "viewport test: (158,122) has color %08x\n", color);
+    color = getPixelColor(device, 162, 122);
+    ok(color == 0x00ffffff, "viewport test: (162,122) has color %08x\n", color);
+
+    color = getPixelColor(device, 478, 358);
+    ok(color == 0x00ffffff, "viewport test: (478,358 has color %08x\n", color);
+    color = getPixelColor(device, 482, 358);
+    ok(color == 0x00ff0000, "viewport test: (482,358) has color %08x\n", color);
+    color = getPixelColor(device, 478, 362);
+    ok(color == 0x00ff0000, "viewport test: (478,362) has color %08x\n", color);
+    color = getPixelColor(device, 482, 362);
+    ok(color == 0x00ff0000, "viewport test: (482,362) has color %08x\n", color);
+
+    hr = IDirect3DDevice9_SetViewport(device, &old_vp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetViewport failed with %08x\n", hr);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -10493,6 +10563,7 @@ START_TEST(visual)
     yuv_color_test(device_ptr);
     zwriteenable_test(device_ptr);
     alphatest_test(device_ptr);
+    viewport_test(device_ptr);
 
     if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
     {
