@@ -2030,9 +2030,34 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetMemberBySemantic(
         ID3D10EffectVariable *iface, LPCSTR semantic)
 {
-    FIXME("iface %p, semantic %s stub!\n", iface, debugstr_a(semantic));
+    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    unsigned int i;
 
-    return NULL;
+    TRACE("iface %p, semantic %s.\n", iface, debugstr_a(semantic));
+
+    if (!semantic)
+    {
+        WARN("Invalid semantic specified\n");
+        return (ID3D10EffectVariable *)&null_variable;
+    }
+
+    for (i = 0; i < This->type->member_count; ++i)
+    {
+        struct d3d10_effect_variable *m = &This->members[i];
+
+        if (m->semantic)
+        {
+            if (!strcmp(m->semantic, semantic))
+            {
+                TRACE("Returning member %p\n", m);
+                return (ID3D10EffectVariable *)m;
+            }
+        }
+    }
+
+    WARN("Invalid semantic specified\n");
+
+    return (ID3D10EffectVariable *)&null_variable;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetElement(
