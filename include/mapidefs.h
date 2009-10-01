@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 1998 Justin Bradford
+ * Copyright (c) 2009 Owen Rudge for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -100,8 +101,6 @@ typedef struct IMAPIStatus IMAPIStatus;
 typedef IMAPIStatus *LPMAPISTATUS;
 typedef struct IMessage IMessage;
 typedef IMessage *LPMESSAGE;
-typedef struct IMsgStore IMsgStore;
-typedef IMsgStore *LPMDB;
 typedef struct IProfSect IProfSect;
 typedef IProfSect *LPPROFSECT;
 typedef struct IProviderAdmin IProviderAdmin;
@@ -765,6 +764,9 @@ typedef struct _NOTIFICATION
 typedef LONG (WINAPI NOTIFCALLBACK)(LPVOID,ULONG,LPNOTIFICATION);
 typedef NOTIFCALLBACK *LPNOTIFCALLBACK;
 
+/* IMAPIContainer::OpenEntry flags */
+#define MAPI_BEST_ACCESS    0x00000010
+
 /*****************************************************************************
  * IMAPITable interface
  *
@@ -913,6 +915,89 @@ DECLARE_INTERFACE_(IMAPIProp,IUnknown)
 #endif
 
 typedef IMAPIProp *LPMAPIPROP;
+
+/*****************************************************************************
+ * IMsgStore interface
+ */
+#define INTERFACE IMsgStore
+DECLARE_INTERFACE_(IMsgStore,IMAPIProp)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IMAPIProp methods ***/
+    STDMETHOD(GetLastError)(THIS_ HRESULT hRes, ULONG ulFlags, LPMAPIERROR *lppErr) PURE;
+    STDMETHOD(SaveChanges)(THIS_ ULONG ulFlags) PURE;
+    STDMETHOD(GetProps)(THIS_ LPSPropTagArray lpPropTags, ULONG ulFlags, ULONG *lpValues, LPSPropValue *lppProps) PURE;
+    STDMETHOD(GetPropList)(THIS_ ULONG  ulFlags, LPSPropTagArray *lppPropTagArray) PURE;
+    STDMETHOD(OpenProperty)(THIS_ ULONG ulPropTag, LPCIID lpIid, ULONG ulOpts, ULONG ulFlags, LPUNKNOWN *lppUnk) PURE;
+    STDMETHOD(SetProps)(THIS_ ULONG cValues, LPSPropValue lpProps, LPSPropProblemArray *lppProbs) PURE;
+    STDMETHOD(DeleteProps)(THIS_ LPSPropTagArray lpPropTags, LPSPropProblemArray *lppProbs) PURE;
+    STDMETHOD(CopyTo)(THIS_ ULONG ciidExclude, LPCIID lpIid, LPSPropTagArray lpProps, ULONG ulParam,
+                      LPMAPIPROGRESS lpProgress, LPCIID lpIface,LPVOID lpDest, ULONG ulFlags,
+                      LPSPropProblemArray *lppProbs) PURE;
+    STDMETHOD(CopyProps)(THIS_ LPSPropTagArray lpIncludeProps, ULONG ulParam, LPMAPIPROGRESS lpProgress,
+                         LPCIID lpIid, LPVOID lpDestObj, ULONG ulFlags, LPSPropProblemArray *lppProblems) PURE;
+    STDMETHOD(GetNamesFromIDs)(THIS_ LPSPropTagArray *lppPropTags, LPGUID lpIid, ULONG ulFlags, ULONG *lpCount,
+                               LPMAPINAMEID **lpppNames) PURE;
+    STDMETHOD(GetIDsFromNames)(THIS_ ULONG cPropNames, LPMAPINAMEID *lppNames, ULONG ulFlags, LPSPropTagArray *lppPropTags) PURE;
+    /*** IMsgStore methods ***/
+    STDMETHOD(Advise)(THIS_ ULONG cbEntryID, LPENTRYID lpEntryID, ULONG ulEventMask, LPMAPIADVISESINK lpAdviseSink,
+                      ULONG * lpulConnection) PURE;
+    STDMETHOD(Unadvise)(THIS_ ULONG ulConnection) PURE;
+    STDMETHOD(CompareEntryIDs)(THIS_ ULONG cbEntryID1, LPENTRYID lpEntryID1, ULONG cbEntryID2, LPENTRYID lpEntryID2,
+                ULONG ulFlags, ULONG * lpulResult) PURE;
+    STDMETHOD(OpenEntry)(THIS_ ULONG cbEntryID, LPENTRYID lpEntryID, LPCIID lpInterface, ULONG ulFlags, ULONG *lpulObjType,
+                LPUNKNOWN *lppUnk) PURE;
+    STDMETHOD(SetReceiveFolder)(THIS_ LPSTR lpszMessageClass, ULONG ulFlags, ULONG cbEntryID, LPENTRYID lpEntryID) PURE;
+    STDMETHOD(GetReceiveFolder)(THIS_ LPSTR lpszMessageClass, ULONG ulFlags, ULONG * lpcbEntryID, LPENTRYID *lppEntryID,
+                LPSTR *lppszExplicitClass) PURE;
+    STDMETHOD(GetReceiveFolderTable)(THIS_ ULONG ulFlags, LPMAPITABLE * lppTable) PURE;
+    STDMETHOD(StoreLogoff)(THIS_ ULONG * lpulFlags) PURE;
+    STDMETHOD(AbortSubmit)(THIS_ ULONG cbEntryID, LPENTRYID lpEntryID, ULONG ulFlags) PURE;
+    STDMETHOD(GetOutgoingQueue)(THIS_ ULONG ulFlags, LPMAPITABLE * lppTable) PURE;
+    STDMETHOD(SetLockState)(THIS_ LPMESSAGE lpMessage, ULONG ulLockState) PURE;
+    STDMETHOD(FinishedMsg)(THIS_ ULONG ulFlags, ULONG cbEntryID, LPENTRYID lpEntryID) PURE;
+    STDMETHOD(NotifyNewMail)(THIS_ LPNOTIFICATION lpNotification) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+        /*** IUnknown methods ***/
+#define IMsgStore_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
+#define IMsgStore_AddRef(p)                    (p)->lpVtbl->AddRef(p)
+#define IMsgStore_Release(p)                   (p)->lpVtbl->Release(p)
+        /*** IMAPIProp methods ***/
+#define IMsgStore_GetLastError(p,a,b,c)        (p)->lpVtbl->GetLastError(p,a,b,c)
+#define IMsgStore_SaveChanges(p,a)             (p)->lpVtbl->SaveChanges(p,a)
+#define IMsgStore_GetProps(p,a,b,c,d)          (p)->lpVtbl->GetProps(p,a,b,c,d)
+#define IMsgStore_GetPropList(p,a,b)           (p)->lpVtbl->GetPropList(p,a,b)
+#define IMsgStore_OpenProperty(p,a,b,c,d,e)    (p)->lpVtbl->OpenProperty(p,a,b,c,d,e)
+#define IMsgStore_SetProps(p,a,b,c)            (p)->lpVtbl->SetProps(p,a,b,c)
+#define IMsgStore_DeleteProps(p,a,b)           (p)->lpVtbl->DeleteProps(p,a,b)
+#define IMsgStore_CopyTo(p,a,b,c,d,e,f,g,h,i)  (p)->lpVtbl->CopyTo(p,a,b,c,d,e,f,g,h,i)
+#define IMsgStore_CopyProps(p,a,b,c,d,e,f,g)   (p)->lpVtbl->CopyProps(p,a,b,c,d,e,f,g)
+#define IMsgStore_GetNamesFromIDs(p,a,b,c,d,e) (p)->lpVtbl->GetNamesFromIDs(p,a,b,c,d,e)
+#define IMsgStore_GetIDsFromNames(p,a,b,c,d)   (p)->lpVtbl->GetIDsFromNames(p,a,b,c,d)
+        /*** IMsgStore methods ***/
+#define IMsgStore_Advise(p,a,b,c,d,e)            (p)->lpVtbl->Advise(p,a,b,c,d,e)
+#define IMsgStore_Unadvise(p,a)                  (p)->lpVtbl->Unadvise(p,a)
+#define IMsgStore_CompareEntryIDs(p,a,b,c,d,e,f) (p)->lpVtbl->CompareEntryIDs(p,a,b,c,d,e,f)
+#define IMsgStore_OpenEntry(p,a,b,c,d,e,f)       (p)->lpVtbl->OpenEntry(p,a,b,c,d,e,f)
+#define IMsgStore_SetReceiveFolder(p,a,b,c,d)    (p)->lpVtbl->SetReceiveFolder(p,a,b,c,d)
+#define IMsgStore_GetReceiveFolder(p,a,b,c,d,e)  (p)->lpVtbl->GetReceiveFolder(p,a,b,c,d,e)
+#define IMsgStore_GetReceiveFolderTable(p,a,b)   (p)->lpVtbl->GetReceiveFolderTable(p,a,b)
+#define IMsgStore_StoreLogoff(p,a)               (p)->lpVtbl->StoreLogoff(p,a)
+#define IMsgStore_AbortSubmit(p,a,b,c)           (p)->lpVtbl->AbortSubmit(p,a,b,c)
+#define IMsgStore_GetOutgoingQueue(p,a,b)        (p)->lpVtbl->GetOutgoingQueue(p,a,b)
+#define IMsgStore_SetLockState(p,a,b)            (p)->lpVtbl->SetLockState(p,a,b)
+#define IMsgStore_FinishedMsg(p,a,b,c)           (p)->lpVtbl->FinishedMsg(p,a,b,c)
+#define IMsgStore_NotifyNewMail(p,a)             (p)->lpVtbl->NotifyNewMail(p,a)
+
+#endif
+
+typedef IMsgStore *LPMDB;
 
 typedef struct
 {
