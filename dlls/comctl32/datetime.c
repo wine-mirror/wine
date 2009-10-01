@@ -1241,7 +1241,6 @@ DATETIME_SetFont (DATETIME_INFO *infoPtr, HFONT font, BOOL repaint)
 static LRESULT
 DATETIME_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
 {
-    static const WCHAR SysMonthCal32W[] = { 'S', 'y', 's', 'M', 'o', 'n', 't', 'h', 'C', 'a', 'l', '3', '2', 0 };
     DATETIME_INFO *infoPtr = Alloc (sizeof(DATETIME_INFO));
     STYLESTRUCT ss = { 0, lpcs->style };
 
@@ -1262,7 +1261,7 @@ DATETIME_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
     DATETIME_SetFormatW (infoPtr, 0);
 
     /* create the monthcal control */
-    infoPtr->hMonthCal = CreateWindowExW (0, SysMonthCal32W, 0, WS_BORDER | WS_POPUP | WS_CLIPSIBLINGS, 
+    infoPtr->hMonthCal = CreateWindowExW (0, MONTHCAL_CLASSW, 0, WS_BORDER | WS_POPUP | WS_CLIPSIBLINGS,
 					  0, 0, 0, 0, infoPtr->hwndSelf, 0, 0, 0);
 
     /* initialize info structure */
