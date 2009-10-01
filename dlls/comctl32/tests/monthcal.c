@@ -1316,6 +1316,10 @@ static void test_monthcal_maxselday(void)
     /* if no style specified default to 1 */
     res = SendMessage(hwnd, MCM_GETMAXSELCOUNT, 0, 0);
     expect(1, res);
+    res = SendMessage(hwnd, MCM_SETMAXSELCOUNT, 5, 0);
+    expect(0, res);
+    res = SendMessage(hwnd, MCM_GETMAXSELCOUNT, 0, 0);
+    expect(1, res);
 
     /* try to set style */
     style = GetWindowLong(hwnd, GWL_STYLE);
@@ -1351,12 +1355,19 @@ static void test_monthcal_maxselday(void)
     res = SendMessage(hwnd, MCM_GETMAXSELCOUNT, 0, 0);
     expect(15, res);
 
+    /* test invalid value */
     res = SendMessage(hwnd, MCM_SETMAXSELCOUNT, -1, 0);
-    todo_wine {expect(0, res);}
+    expect(0, res);
     res = SendMessage(hwnd, MCM_GETMAXSELCOUNT, 0, 0);
-    todo_wine {expect(15, res);}
+    expect(15, res);
 
     ok_sequence(sequences, MONTHCAL_SEQ_INDEX, monthcal_max_sel_day_seq, "monthcal MaxSelDay", FALSE);
+
+    /* zero value is invalid too */
+    res = SendMessage(hwnd, MCM_SETMAXSELCOUNT, 0, 0);
+    expect(0, res);
+    res = SendMessage(hwnd, MCM_GETMAXSELCOUNT, 0, 0);
+    expect(15, res);
 
     DestroyWindow(hwnd);
 }

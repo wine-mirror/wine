@@ -1087,9 +1087,10 @@ MONTHCAL_SetMaxSelCount(MONTHCAL_INFO *infoPtr, INT max)
 {
   TRACE("%d\n", max);
 
-  if(infoPtr->dwStyle & MCS_MULTISELECT)  {
-    infoPtr->maxSelCount = max;
-  }
+  if(!(infoPtr->dwStyle & MCS_MULTISELECT)) return FALSE;
+  if(max <= 0) return FALSE;
+
+  infoPtr->maxSelCount = max;
 
   return TRUE;
 }
