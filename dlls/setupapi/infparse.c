@@ -27,6 +27,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -96,6 +97,91 @@ static RETERR16 get_last_error(void)
     }
 }
 
+/* string substitution support, duplicated from setupapi/parser.c */
+
+static const char *get_string_subst( HINF hinf, const char *str, unsigned int *len,
+                                     char subst[MAX_INF_STRING_LENGTH], BOOL no_trailing_slash )
+{
+    int dirid;
+    char *end;
+    INFCONTEXT context;
+    char buffer[MAX_INF_STRING_LENGTH];
+
+    if (!*len)  /* empty string (%%) is replaced by single percent */
+    {
+        *len = 1;
+        return "%";
+    }
+    memcpy( buffer, str, *len );
+    buffer[*len] = 0;
+
+    if (SetupFindFirstLineA( hinf, "Strings", buffer, &context ) &&
+        SetupGetStringFieldA( &context, 0, subst, MAX_INF_STRING_LENGTH, NULL ))
+    {
+        *len = strlen( subst );
+        return subst;
+    }
+
+    /* check for integer id */
+    dirid = strtoul( buffer, &end, 10 );
+    if (!*end && !CtlGetLddPath16( dirid, subst ))
+    {
+        *len = strlen( subst );
+        if (no_trailing_slash && *len && subst[*len - 1] == '\\') *len -= 1;
+        return subst;
+    }
+    return NULL;
+}
+
+static unsigned int string_subst( HINF hinf, const char *text, char *buffer )
+{
+    const char *start, *subst, *p;
+    unsigned int len, total = 0;
+    int inside = 0;
+    unsigned int size = MAX_INF_STRING_LENGTH;
+    char tmp[MAX_INF_STRING_LENGTH];
+
+    for (p = start = text; *p; p++)
+    {
+        if (*p != '%') continue;
+        inside = !inside;
+        if (inside)  /* start of a %xx% string */
+        {
+            len = p - start;
+            if (len > size - 1) len = size - 1;
+            if (buffer) memcpy( buffer + total, start, len );
+            total += len;
+            size -= len;
+            start = p;
+        }
+        else /* end of the %xx% string, find substitution */
+        {
+            len = p - start - 1;
+            subst = get_string_subst( hinf, start + 1, &len, tmp, p[1] == '\\' );
+            if (!subst)
+            {
+                subst = start;
+                len = p - start + 1;
+            }
+            if (len > size - 1) len = size - 1;
+            if (buffer) memcpy( buffer + total, subst, len );
+            total += len;
+            size -= len;
+            start = p + 1;
+        }
+    }
+
+    if (start != p) /* unfinished string, copy it */
+    {
+        len = p - start;
+        if (len > size - 1) len = size - 1;
+        if (buffer) memcpy( buffer + total, start, len );
+        total += len;
+    }
+    if (buffer && size) buffer[total] = 0;
+    return total;
+}
+
 
 /***********************************************************************
  *		IpOpen (SETUPX.2)
@@ -146,14 +232,11 @@ RETERR16 WINAPI IpGetProfileString16( HINF16 hinf16, LPCSTR section, LPCSTR entr
  */
 void WINAPI GenFormStrWithoutPlaceHolders16( LPSTR dst, LPCSTR src, HINF16 hinf16 )
 {
-    UNICODE_STRING srcW;
     HINF hinf = get_hinf( hinf16 );
 
     if (!hinf) return;
 
-    if (!RtlCreateUnicodeStringFromAsciiz( &srcW, src )) return;
-    PARSER_string_substA( hinf, srcW.Buffer, dst, MAX_INF_STRING_LENGTH );
-    RtlFreeUnicodeString( &srcW );
+    string_subst( hinf, src, dst );
     TRACE( "%s -> %s\n", debugstr_a(src), debugstr_a(dst) );
 }
 

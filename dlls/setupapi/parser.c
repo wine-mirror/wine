@@ -418,8 +418,8 @@ static unsigned int PARSER_string_substW( const struct inf_file *file, const WCH
 /* do string substitutions on the specified text */
 /* the buffer is assumed to be large enough */
 /* returns necessary length not including terminating null */
-unsigned int PARSER_string_substA( const struct inf_file *file, const WCHAR *text, char *buffer,
-                                   unsigned int size )
+static unsigned int PARSER_string_substA( const struct inf_file *file, const WCHAR *text,
+                                          char *buffer, unsigned int size )
 {
     WCHAR buffW[MAX_STRING_LEN+1];
     DWORD ret;
