@@ -3284,9 +3284,22 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_type_GetDesc(ID3D10EffectType *ifa
 static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTypeByIndex(ID3D10EffectType *iface,
         UINT index)
 {
-    FIXME("iface %p, index %u stub!\n", iface, index);
+    struct d3d10_effect_type *This = (struct d3d10_effect_type *)iface;
+    struct d3d10_effect_type *t;
 
-    return NULL;
+    TRACE("iface %p, index %u\n", iface, index);
+
+    if (index >= This->member_count)
+    {
+        WARN("Invalid index specified\n");
+        return (ID3D10EffectType *)&null_type;
+    }
+
+    t = (&This->members[index])->type;
+
+    TRACE("Returning member %p, %s\n", t, debugstr_a(t->name));
+
+    return (ID3D10EffectType *)t;
 }
 
 static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTypeByName(ID3D10EffectType *iface,
