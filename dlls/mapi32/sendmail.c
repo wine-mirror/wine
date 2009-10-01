@@ -25,10 +25,13 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#define COBJMACROS
+
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "objbase.h"
+#include "objidl.h"
 #include "mapi.h"
 #include "mapix.h"
 #include "mapiutil.h"
@@ -59,6 +62,7 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
     LPSPropValue props;
     ULONG entry_len;
     DWORD obj_type;
+    IMessage* msg;
     ULONG values;
     HRESULT ret;
 
@@ -146,6 +150,113 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
 
     IMsgStore_OpenEntry(msg_store, props[0].Value.bin.cb, (LPENTRYID) props[0].Value.bin.lpb,
         NULL, MAPI_MODIFY, &obj_type, (LPUNKNOWN *) &folder);
+
+    /* Create a new message */
+    if (IMAPIFolder_CreateMessage(folder, NULL, 0, &msg) == S_OK)
+    {
+        ULONG token;
+        SPropValue p;
+
+        /* Define message properties */
+        p.ulPropTag = PR_MESSAGE_FLAGS;
+        p.Value.l = MSGFLAG_FROMME | MSGFLAG_UNSENT;
+
+        IMessage_SetProps(msg, 1, &p, NULL);
+
+        p.ulPropTag = PR_SENTMAIL_ENTRYID;
+        p.Value.bin.cb = props[0].Value.bin.cb;
+        p.Value.bin.lpb = props[0].Value.bin.lpb;
+        IMessage_SetProps(msg, 1,&p, NULL);
+
+        /* Set message subject */
+        if (message->lpszSubject)
+        {
+            p.ulPropTag = PR_SUBJECT_A;
+            p.Value.lpszA = message->lpszSubject;
+            IMessage_SetProps(msg, 1, &p, NULL);
+        }
+
+        /* Set message body */
+        if (message->lpszNoteText)
+        {
+            LPSTREAM stream = NULL;
+
+            if (IMessage_OpenProperty(msg, PR_BODY_A, &IID_IStream, 0,
+                MAPI_MODIFY | MAPI_CREATE, (LPUNKNOWN*) &stream) == S_OK)
+            {
+                IStream_Write(stream, message->lpszNoteText, strlen(message->lpszNoteText)+1, NULL);
+                IStream_Release(stream);
+            }
+        }
+
+        /* Add message attachments */
+        if (message->nFileCount > 0)
+        {
+            FIXME("TODO: %d attachments\n", message->nFileCount);
+        }
+
+        IMessage_SaveChanges(msg, KEEP_OPEN_READWRITE);
+
+        /* Prepare the message form */
+
+        if (IMAPISession_PrepareForm(session, NULL, msg, &token) == S_OK)
+        {
+            ULONG access = 0, status = 0, flags = 0, pc = 0;
+            ULONG pT[2] = {1, PR_MSG_STATUS};
+
+            /* Retrieve message status, flags, access rights and class */
+
+            if (IMessage_GetProps(msg, (LPSPropTagArray) pT, 0, &pc, &props) == S_OK)
+            {
+                status = props->Value.ul;
+                MAPIFreeBuffer(props);
+            }
+
+            pT[1] = PR_MESSAGE_FLAGS;
+
+            if (IMessage_GetProps(msg, (LPSPropTagArray) pT, 0, &pc, &props) == S_OK)
+            {
+                flags = props->Value.ul;
+                MAPIFreeBuffer(props);
+            }
+
+            pT[1] = PR_ACCESS;
+
+            if (IMessage_GetProps(msg, (LPSPropTagArray) pT, 0, &pc, &props) == S_OK)
+            {
+                access = props->Value.ul;
+                MAPIFreeBuffer(props);
+            }
+
+            pT[1] = PR_MESSAGE_CLASS_A;
+
+            if (IMessage_GetProps(msg, (LPSPropTagArray) pT, 0, &pc, &props) == S_OK)
+            {
+                /* Show the message form (edit window) */
+
+                ret = IMAPISession_ShowForm(session, 0, msg_store, folder, NULL,
+                                            token, NULL, 0, status, flags, access,
+                                            props->Value.lpszA);
+
+                switch (ret)
+                {
+                    case S_OK:
+                        retval = SUCCESS_SUCCESS;
+                        break;
+
+                    case MAPI_E_USER_CANCEL:
+                        retval = MAPI_E_USER_ABORT;
+                        break;
+
+                    default:
+                        TRACE("ShowForm failure: %x\n", ret);
+                        break;
+                }
+            }
+        }
+
+        IMessage_Release(msg);
+    }
 
     /* Free up the resources we've used */
     IMAPIFolder_Release(folder);
