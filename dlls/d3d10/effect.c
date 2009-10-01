@@ -790,10 +790,9 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
         return E_OUTOFMEMORY;
     }
 
-    for(i = 0; i < v->annotation_count; ++i)
+    for (i = 0; i < v->annotation_count; ++i)
     {
         struct d3d10_effect_variable *a = &v->annotations[i];
-        HRESULT hr;
 
         a->effect = v->effect;
 
