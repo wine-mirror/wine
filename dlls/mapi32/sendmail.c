@@ -44,6 +44,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mapi);
 
+#define READ_BUF_SIZE    4096
+
 /*
    Internal function to send a message via Extended MAPI. Wrapper around the Simple
    MAPI function MAPISendMail.
@@ -192,7 +194,100 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
         /* Add message attachments */
         if (message->nFileCount > 0)
         {
-            FIXME("TODO: %d attachments\n", message->nFileCount);
+            ULONG num_attach = 0;
+            int i, j;
+
+            for (i = 0; i < message->nFileCount; i++)
+            {
+                IAttach* attachment = NULL;
+                SPropValue prop[4];
+                LPCSTR filename;
+                HANDLE file;
+
+                if (!message->lpFiles[i].lpszPathName)
+                    continue;
+
+                /* Open the attachment for reading */
+                file = CreateFileA(message->lpFiles[i].lpszPathName, GENERIC_READ, FILE_SHARE_READ,
+                    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+                if (file == INVALID_HANDLE_VALUE)
+                    continue;
+
+                /* Check if a display filename has been given; if not, get one ourselves from path name */
+                filename = message->lpFiles[i].lpszFileName;
+
+                if (!filename)
+                {
+                    filename = message->lpFiles[i].lpszPathName;
+
+                    for (j = strlen(message->lpFiles[i].lpszPathName)-1; j >= 0; j--)
+                    {
+                        if (message->lpFiles[i].lpszPathName[i] == '\\' ||
+                            message->lpFiles[i].lpszPathName[i] == '/')
+                        {
+                            filename = &message->lpFiles[i].lpszPathName[i+1];
+                            break;
+                        }
+                    }
+                }
+
+                TRACE("Attachment %d path: '%s'; filename: '%s'\n", i, debugstr_a(message->lpFiles[i].lpszPathName),
+                    debugstr_a(filename));
+
+                /* Create the attachment */
+                if (IMessage_CreateAttach(msg, NULL, 0, &num_attach, &attachment) != S_OK)
+                {
+                    TRACE("Unable to create attachment\n");
+                    CloseHandle(file);
+                    continue;
+                }
+
+                /* Set the attachment properties */
+                ZeroMemory(prop, sizeof(prop));
+
+                prop[0].ulPropTag = PR_ATTACH_METHOD;
+                prop[0].Value.ul = ATTACH_BY_VALUE;
+                prop[1].ulPropTag = PR_ATTACH_LONG_FILENAME_A;
+                prop[1].Value.lpszA = (LPSTR) filename;
+                prop[2].ulPropTag = PR_ATTACH_FILENAME_A;
+                prop[2].Value.lpszA = (LPSTR) filename;
+                prop[3].ulPropTag = PR_RENDERING_POSITION;
+                prop[3].Value.l = -1;
+
+                if (IAttach_SetProps(attachment, 4, prop, NULL) == S_OK)
+                {
+                    LPSTREAM stream = NULL;
+
+                    if (IAttach_OpenProperty(attachment, PR_ATTACH_DATA_BIN, &IID_IStream, 0,
+                        MAPI_MODIFY | MAPI_CREATE, (LPUNKNOWN*) &stream) == S_OK)
+                    {
+                        BYTE data[READ_BUF_SIZE];
+                        DWORD size = 0, read, written;
+
+                        while (ReadFile(file, data, READ_BUF_SIZE, &read, NULL) && (read != 0))
+                        {
+                            IStream_Write(stream, data, read, &written);
+                            size += read;
+                        }
+
+                        TRACE("%d bytes read, %d bytes written of attachment\n", read, written);
+
+                        IStream_Commit(stream, STGC_DEFAULT);
+                        IStream_Release(stream);
+
+                        prop[0].ulPropTag = PR_ATTACH_SIZE;
+                        prop[0].Value.ul = size;
+                        IAttach_SetProps(attachment, 1, prop, NULL);
+
+                        IAttach_SaveChanges(attachment, KEEP_OPEN_READONLY);
+                        num_attach++;
+                    }
+                }
+
+                CloseHandle(file);
+                IAttach_Release(attachment);
+            }
         }
 
         IMessage_SaveChanges(msg, KEEP_OPEN_READWRITE);
