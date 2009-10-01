@@ -1464,7 +1464,7 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
     i = TrackPopupMenu(hMenu,TPM_LEFTALIGN | TPM_NONOTIFY | TPM_RIGHTBUTTON | TPM_RETURNCMD,
 		       menupoint.x, menupoint.y, 0, infoPtr->hwndSelf, NULL);
 
-    if ((i > 0) && (i < 13))
+    if ((i > 0) && (i < 13) && infoPtr->curSel.wMonth != i)
     {
 	infoPtr->curSel.wMonth = i;
 	InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
