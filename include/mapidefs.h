@@ -84,8 +84,7 @@ typedef struct IAddrBook IAddrBook;
 typedef IAddrBook *LPADRBOOK;
 typedef struct IABContainer IABContainer;
 typedef IABContainer *LPABCONT;
-typedef struct IAttach IAttach;
-typedef IAttach *LPATTACH;
+typedef struct IAttach *LPATTACH;
 typedef struct IDistList IDistList;
 typedef IDistList *LPDISTLIST;
 typedef struct IMailUser IMailUser;
@@ -899,17 +898,17 @@ DECLARE_INTERFACE_(IMAPIProp,IUnknown)
 #define IMAPIProp_AddRef(p)                    (p)->lpVtbl->AddRef(p)
 #define IMAPIProp_Release(p)                   (p)->lpVtbl->Release(p)
         /*** IMAPIProp methods ***/
-#define IMAPIProp_GetLastError(p,a,b,c)        (p)->lpVtbl->GetLastError(p,a,b,c)        
-#define IMAPIProp_SaveChanges(p,a)             (p)->lpVtbl->SaveChanges(p,a)             
-#define IMAPIProp_GetProps(p,a,b,c,d)          (p)->lpVtbl->GetProps(p,a,b,c,d)          
-#define IMAPIProp_GetPropList(p,a,b)           (p)->lpVtbl->GetPropList(p,a,b)           
-#define IMAPIProp_OpenProperty(p,a,b,c,d,e)    (p)->lpVtbl->OpenProperty(p,a,b,c,d,e)    
-#define IMAPIProp_SetProps(p,a,b,c)            (p)->lpVtbl->SetProps(p,a,b,c)            
-#define IMAPIProp_DeleteProps(p,a,b)           (p)->lpVtbl->DeleteProps(p,a,b)           
-#define IMAPIProp_CopyTo(p,a,b,c,d,e,f,g,h,i)  (p)->lpVtbl->CopyTo(p,a,b,c,d,e,f,g,h,i)  
-#define IMAPIProp_CopyProps(p,a,b,c,d,e,f,g)   (p)->lpVtbl->CopyProps(p,a,b,c,d,e,f,g)   
-#define IMAPIProp_GetNamesFromIDs(p,a,b,c,d,e) (p)->lpVtbl->GetNamesFromIDs(p,a,b,c,d,e) 
-#define IMAPIProp_GetIDsFromNames(p,a,b,c,d)   (p)->lpVtbl->GetIDsFromNames(p,a,b,c,d)   
+#define IMAPIProp_GetLastError(p,a,b,c)        (p)->lpVtbl->GetLastError(p,a,b,c)
+#define IMAPIProp_SaveChanges(p,a)             (p)->lpVtbl->SaveChanges(p,a)
+#define IMAPIProp_GetProps(p,a,b,c,d)          (p)->lpVtbl->GetProps(p,a,b,c,d)
+#define IMAPIProp_GetPropList(p,a,b)           (p)->lpVtbl->GetPropList(p,a,b)
+#define IMAPIProp_OpenProperty(p,a,b,c,d,e)    (p)->lpVtbl->OpenProperty(p,a,b,c,d,e)
+#define IMAPIProp_SetProps(p,a,b,c)            (p)->lpVtbl->SetProps(p,a,b,c)
+#define IMAPIProp_DeleteProps(p,a,b)           (p)->lpVtbl->DeleteProps(p,a,b)
+#define IMAPIProp_CopyTo(p,a,b,c,d,e,f,g,h,i)  (p)->lpVtbl->CopyTo(p,a,b,c,d,e,f,g,h,i)
+#define IMAPIProp_CopyProps(p,a,b,c,d,e,f,g)   (p)->lpVtbl->CopyProps(p,a,b,c,d,e,f,g)
+#define IMAPIProp_GetNamesFromIDs(p,a,b,c,d,e) (p)->lpVtbl->GetNamesFromIDs(p,a,b,c,d,e)
+#define IMAPIProp_GetIDsFromNames(p,a,b,c,d)   (p)->lpVtbl->GetIDsFromNames(p,a,b,c,d)
 #endif
 
 typedef IMAPIProp *LPMAPIPROP;
@@ -1270,5 +1269,58 @@ DECLARE_INTERFACE_(IMessage,IMAPIProp)
 #define MSGFLAG_UNSENT       0x00000008U
 #define MSGFLAG_HASATTACH    0x00000010U
 #define MSGFLAG_FROMME       0x00000020U
+
+/*****************************************************************************
+ * IAttach interface
+ */
+#define INTERFACE IAttach
+DECLARE_INTERFACE_(IAttach,IMAPIProp)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IMAPIProp methods ***/
+    STDMETHOD(GetLastError)(THIS_ HRESULT hRes, ULONG ulFlags, LPMAPIERROR *lppErr) PURE;
+    STDMETHOD(SaveChanges)(THIS_ ULONG ulFlags) PURE;
+    STDMETHOD(GetProps)(THIS_ LPSPropTagArray lpPropTags, ULONG ulFlags, ULONG *lpValues, LPSPropValue *lppProps) PURE;
+    STDMETHOD(GetPropList)(THIS_ ULONG  ulFlags, LPSPropTagArray *lppPropTagArray) PURE;
+    STDMETHOD(OpenProperty)(THIS_ ULONG ulPropTag, LPCIID lpIid, ULONG ulOpts, ULONG ulFlags, LPUNKNOWN *lppUnk) PURE;
+    STDMETHOD(SetProps)(THIS_ ULONG cValues, LPSPropValue lpProps, LPSPropProblemArray *lppProbs) PURE;
+    STDMETHOD(DeleteProps)(THIS_ LPSPropTagArray lpPropTags, LPSPropProblemArray *lppProbs) PURE;
+    STDMETHOD(CopyTo)(THIS_ ULONG ciidExclude, LPCIID lpIid, LPSPropTagArray lpProps, ULONG ulParam,
+                      LPMAPIPROGRESS lpProgress, LPCIID lpIface,LPVOID lpDest, ULONG ulFlags,
+                      LPSPropProblemArray *lppProbs) PURE;
+    STDMETHOD(CopyProps)(THIS_ LPSPropTagArray lpIncludeProps, ULONG ulParam, LPMAPIPROGRESS lpProgress,
+                         LPCIID lpIid, LPVOID lpDestObj, ULONG ulFlags, LPSPropProblemArray *lppProblems) PURE;
+    STDMETHOD(GetNamesFromIDs)(THIS_ LPSPropTagArray *lppPropTags, LPGUID lpIid, ULONG ulFlags, ULONG *lpCount,
+                               LPMAPINAMEID **lpppNames) PURE;
+    STDMETHOD(GetIDsFromNames)(THIS_ ULONG cPropNames, LPMAPINAMEID *lppNames, ULONG ulFlags, LPSPropTagArray *lppPropTags) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+        /*** IUnknown methods ***/
+#define IAttach_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
+#define IAttach_AddRef(p)                    (p)->lpVtbl->AddRef(p)
+#define IAttach_Release(p)                   (p)->lpVtbl->Release(p)
+        /*** IMAPIProp methods ***/
+#define IAttach_GetLastError(p,a,b,c)        (p)->lpVtbl->GetLastError(p,a,b,c)
+#define IAttach_SaveChanges(p,a)             (p)->lpVtbl->SaveChanges(p,a)
+#define IAttach_GetProps(p,a,b,c,d)          (p)->lpVtbl->GetProps(p,a,b,c,d)
+#define IAttach_GetPropList(p,a,b)           (p)->lpVtbl->GetPropList(p,a,b)
+#define IAttach_OpenProperty(p,a,b,c,d,e)    (p)->lpVtbl->OpenProperty(p,a,b,c,d,e)
+#define IAttach_SetProps(p,a,b,c)            (p)->lpVtbl->SetProps(p,a,b,c)
+#define IAttach_DeleteProps(p,a,b)           (p)->lpVtbl->DeleteProps(p,a,b)
+#define IAttach_CopyTo(p,a,b,c,d,e,f,g,h,i)  (p)->lpVtbl->CopyTo(p,a,b,c,d,e,f,g,h,i)
+#define IAttach_CopyProps(p,a,b,c,d,e,f,g)   (p)->lpVtbl->CopyProps(p,a,b,c,d,e,f,g)
+#define IAttach_GetNamesFromIDs(p,a,b,c,d,e) (p)->lpVtbl->GetNamesFromIDs(p,a,b,c,d,e)
+#define IAttach_GetIDsFromNames(p,a,b,c,d)   (p)->lpVtbl->GetIDsFromNames(p,a,b,c,d)
+#endif
+
+/* Attachment flags */
+
+#define NO_ATTACHMENT        0x00000000U
+#define ATTACH_BY_VALUE      0x00000001U
 
 #endif /*MAPIDEFS_H*/
