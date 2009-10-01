@@ -38,6 +38,19 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mapi);
 
+/*
+   Internal function to send a message via Extended MAPI. Wrapper around the Simple
+   MAPI function MAPISendMail.
+*/
+static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpMapiMessage message,
+    FLAGS flags, ULONG reserved)
+{
+    TRACE("Using Extended MAPI wrapper for MAPISendMail\n");
+
+    MAPIUninitialize();
+    return MAPI_E_FAILURE;
+}
+
 /**************************************************************************
  *  MAPISendMail	(MAPI32.211)
  *
@@ -80,8 +93,9 @@ ULONG WINAPI MAPISendMail( LHANDLE session, ULONG_PTR uiparam,
     if (mapiFunctions.MAPISendMail)
         return mapiFunctions.MAPISendMail(session, uiparam, message, flags, reserved);
 
-    /* TODO: Check if we have an Extended MAPI provider, if so, implement
-             wrapper around that. */
+    /* Check if we have an Extended MAPI provider - if so, use our wrapper */
+    if (MAPIInitialize(NULL) == S_OK)
+        return sendmail_extended_mapi(session, uiparam, message, flags, reserved);
 
     /* Fall back on our own implementation */
     if (!message) return MAPI_E_FAILURE;
