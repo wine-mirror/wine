@@ -1997,9 +1997,34 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetMemberByName(
         ID3D10EffectVariable *iface, LPCSTR name)
 {
-    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
+    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    unsigned int i;
 
-    return NULL;
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    if (!name)
+    {
+        WARN("Invalid name specified\n");
+        return (ID3D10EffectVariable *)&null_variable;
+    }
+
+    for (i = 0; i < This->type->member_count; ++i)
+    {
+        struct d3d10_effect_variable *m = &This->members[i];
+
+        if (m->name)
+        {
+            if (!strcmp(m->name, name))
+            {
+                TRACE("Returning member %p\n", m);
+                return (ID3D10EffectVariable *)m;
+            }
+        }
+    }
+
+    WARN("Invalid name specified\n");
+
+    return (ID3D10EffectVariable *)&null_variable;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetMemberBySemantic(
