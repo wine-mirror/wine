@@ -1976,9 +1976,22 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetMemberByIndex(
         ID3D10EffectVariable *iface, UINT index)
 {
-    FIXME("iface %p, index %u stub!\n", iface, index);
+    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *m;
 
-    return NULL;
+    TRACE("iface %p, index %u\n", iface, index);
+
+    if (index >= This->type->member_count)
+    {
+        WARN("Invalid index specified\n");
+        return (ID3D10EffectVariable *)&null_variable;
+    }
+
+    m = &This->members[index];
+
+    TRACE("Returning member %p, %s\n", m, debugstr_a(m->name));
+
+    return (ID3D10EffectVariable *)m;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetMemberByName(
