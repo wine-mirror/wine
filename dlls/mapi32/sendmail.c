@@ -358,7 +358,7 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
     IMsgStore_Release(msg_store);
 
 logoff: ;
-    IMAPISession_Logoff(session, (ULONG) NULL, 0, 0);
+    IMAPISession_Logoff(session, 0, 0, 0);
     IMAPISession_Release(session);
 
 cleanup: ;
