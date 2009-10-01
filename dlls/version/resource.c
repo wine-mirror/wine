@@ -390,38 +390,46 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
 }
 
 
+/***********************************************************************
+ *           find_resource         [internal]
+ */
+DWORD find_resource( HFILE lzfd, LPCSTR type, LPCSTR id, DWORD *reslen, DWORD *offset )
+{
+    DWORD magic = read_xx_header( lzfd );
+
+    switch (magic)
+    {
+    case IMAGE_OS2_SIGNATURE:
+        if (!find_ne_resource( lzfd, type, id, reslen, offset )) magic = 0;
+        break;
+    case IMAGE_NT_SIGNATURE:
+        if (!find_pe_resource( lzfd, type, id, reslen, offset )) magic = 0;
+        break;
+    }
+    return magic;
+}
+
+
 /*************************************************************************
  * GetFileResourceSize                     [VER.2]
  */
 DWORD WINAPI GetFileResourceSize16( LPCSTR lpszFileName, LPCSTR lpszResType,
                                     LPCSTR lpszResId, LPDWORD lpdwFileOffset )
 {
-    BOOL retv = FALSE;
     HFILE lzfd;
     OFSTRUCT ofs;
-    DWORD reslen;
+    DWORD reslen = 0;
 
     TRACE("(%s,type=%p,id=%p,off=%p)\n",
           debugstr_a(lpszFileName), lpszResType, lpszResId, lpszResId );
 
     lzfd = LZOpenFileA( (LPSTR)lpszFileName, &ofs, OF_READ );
-    if ( lzfd < 0 ) return 0;
-
-    switch ( read_xx_header( lzfd ) )
+    if (lzfd >= 0)
     {
-    case IMAGE_OS2_SIGNATURE:
-        retv = find_ne_resource( lzfd, lpszResType, lpszResId,
-                                 &reslen, lpdwFileOffset );
-        break;
-
-    case IMAGE_NT_SIGNATURE:
-        retv = find_pe_resource( lzfd, lpszResType, lpszResId,
-                                 &reslen, lpdwFileOffset );
-        break;
+        if (!find_resource( lzfd, lpszResType, lpszResId, &reslen, lpdwFileOffset )) reslen = 0;
+        LZClose( lzfd );
     }
-
-    LZClose( lzfd );
-    return retv? reslen : 0;
+    return reslen;
 }
 
 
@@ -432,7 +440,6 @@ DWORD WINAPI GetFileResource16( LPCSTR lpszFileName, LPCSTR lpszResType,
                                 LPCSTR lpszResId, DWORD dwFileOffset,
                                 DWORD dwResLen, LPVOID lpvData )
 {
-    BOOL retv = FALSE;
     HFILE lzfd;
     OFSTRUCT ofs;
     DWORD reslen = dwResLen;
@@ -446,20 +453,7 @@ DWORD WINAPI GetFileResource16( LPCSTR lpszFileName, LPCSTR lpszResType,
 
     if ( !dwFileOffset )
     {
-        switch ( read_xx_header( lzfd ) )
-        {
-        case IMAGE_OS2_SIGNATURE:
-            retv = find_ne_resource( lzfd, lpszResType, lpszResId,
-                                     &reslen, &dwFileOffset );
-            break;
-
-        case IMAGE_NT_SIGNATURE:
-            retv = find_pe_resource( lzfd, lpszResType, lpszResId,
-                                     &reslen, &dwFileOffset );
-            break;
-        }
-
-        if ( !retv )
+        if (!find_resource( lzfd, lpszResType, lpszResId, &reslen, &dwFileOffset ))
         {
             LZClose( lzfd );
             return 0;
