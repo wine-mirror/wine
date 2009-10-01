@@ -130,6 +130,33 @@ static const WCHAR themeClass[] = { 'S','c','r','o','l','l','b','a','r',0 };
 
 /* helper functions  */
 
+/* send a single MCN_SELCHANGE notification */
+static inline void MONTHCAL_NotifySelectionChange(const MONTHCAL_INFO *infoPtr)
+{
+    NMSELCHANGE nmsc;
+
+    nmsc.nmhdr.hwndFrom = infoPtr->hwndSelf;
+    nmsc.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
+    nmsc.nmhdr.code     = MCN_SELCHANGE;
+    nmsc.stSelStart     = infoPtr->minSel;
+    nmsc.stSelEnd       = infoPtr->maxSel;
+    SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmsc.nmhdr.idFrom, (LPARAM)&nmsc);
+}
+
+/* send a single MCN_SELECT notification */
+static inline void MONTHCAL_NotifySelect(const MONTHCAL_INFO *infoPtr)
+{
+    NMSELCHANGE nmsc;
+
+    nmsc.nmhdr.hwndFrom = infoPtr->hwndSelf;
+    nmsc.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
+    nmsc.nmhdr.code     = MCN_SELECT;
+    nmsc.stSelStart     = infoPtr->minSel;
+    nmsc.stSelEnd       = infoPtr->maxSel;
+
+    SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmsc.nmhdr.idFrom, (LPARAM)&nmsc);
+}
+
 /* returns the number of days in any given month, checking for leap days */
 /* january is 1, december is 12 */
 int MONTHCAL_MonthLength(int month, int year)
@@ -1478,23 +1505,14 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   }
   case MCHT_TODAYLINK:
   {
-    NMSELCHANGE nmsc;
-
     infoPtr->firstSelDay  = infoPtr->todaysDate.wDay;
     infoPtr->curSel = infoPtr->todaysDate;
     infoPtr->minSel = infoPtr->todaysDate;
     infoPtr->maxSel = infoPtr->todaysDate;
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
 
-    nmsc.nmhdr.hwndFrom = infoPtr->hwndSelf;
-    nmsc.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
-    nmsc.nmhdr.code     = MCN_SELCHANGE;
-    nmsc.stSelStart     = infoPtr->minSel;
-    nmsc.stSelEnd       = infoPtr->maxSel;
-    SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmsc.nmhdr.idFrom, (LPARAM)&nmsc);
-
-    nmsc.nmhdr.code     = MCN_SELECT;
-    SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmsc.nmhdr.idFrom, (LPARAM)&nmsc);
+    MONTHCAL_NotifySelectionChange(infoPtr);
+    MONTHCAL_NotifySelect(infoPtr);
     return 0;
   }
   case MCHT_CALENDARDATE:
@@ -1514,7 +1532,6 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 static LRESULT
 MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 {
-  NMSELCHANGE nmsc;
   NMHDR nmhdr;
   BOOL redraw = FALSE;
   MCHITTESTINFO ht;
@@ -1561,23 +1578,9 @@ MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
     /* send MCN_SELCHANGE only if new date selected */
     if (!MONTHCAL_IsDateEqual(&sel, &ht.st))
-    {
-        nmsc.nmhdr.hwndFrom = infoPtr->hwndSelf;
-        nmsc.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
-        nmsc.nmhdr.code     = MCN_SELCHANGE;
-        nmsc.stSelStart     = infoPtr->minSel;
-        nmsc.stSelEnd       = infoPtr->maxSel;
+        MONTHCAL_NotifySelectionChange(infoPtr);
 
-        SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmsc.nmhdr.idFrom, (LPARAM)&nmsc);
-    }
-
-    nmsc.nmhdr.hwndFrom = infoPtr->hwndSelf;
-    nmsc.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
-    nmsc.nmhdr.code     = MCN_SELECT;
-    nmsc.stSelStart     = infoPtr->minSel;
-    nmsc.stSelEnd       = infoPtr->maxSel;
-
-    SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmsc.nmhdr.idFrom, (LPARAM)&nmsc);
+    MONTHCAL_NotifySelect(infoPtr);
 
     return 0;
   }
