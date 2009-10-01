@@ -48,10 +48,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(mapi);
 static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpMapiMessage message,
     FLAGS flags, ULONG reserved)
 {
+    ULONG tags[] = {1, PR_IPM_DRAFTS_ENTRYID};
     ULONG retval = MAPI_E_FAILURE;
     IMAPISession *session = NULL;
     IMAPITable* msg_table;
     LPSRowSet rows = NULL;
+    IMsgStore* msg_store;
+    IMAPIFolder* folder;
+    LPENTRYID entry_id;
+    LPSPropValue props;
+    ULONG entry_len;
+    DWORD obj_type;
+    ULONG values;
     HRESULT ret;
 
     TRACE("Using Extended MAPI wrapper for MAPISendMail\n");
@@ -110,8 +118,38 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
     if (!rows)
         goto logoff;
 
+    /* Open the message store */
+    IMAPISession_OpenMsgStore(session, 0, rows->aRow[0].lpProps[0].Value.bin.cb,
+                              (ENTRYID *) rows->aRow[0].lpProps[0].Value.bin.lpb, NULL,
+                              MDB_NO_DIALOG | MAPI_BEST_ACCESS, &msg_store);
+
     /* We don't need this any more */
     FreeProws(rows);
+
+    /* First open the inbox, from which the drafts folder can be opened */
+    if (IMsgStore_GetReceiveFolder(msg_store, NULL, 0, &entry_len, &entry_id, NULL) == S_OK)
+    {
+        IMsgStore_OpenEntry(msg_store, entry_len, entry_id, NULL, 0, &obj_type, (LPUNKNOWN*) &folder);
+        MAPIFreeBuffer(entry_id);
+    }
+
+    /* Open the drafts folder, or failing that, try asking the message store for the outbox */
+    if ((folder == NULL) || ((ret = IMAPIFolder_GetProps(folder, (LPSPropTagArray) tags, 0, &values, &props)) != S_OK))
+    {
+        TRACE("Unable to open Drafts folder; opening Outbox instead\n");
+        tags[1] = PR_IPM_OUTBOX_ENTRYID;
+        ret = IMsgStore_GetProps(msg_store, (LPSPropTagArray) tags, 0, &values, &props);
+    }
+
+    if (ret != S_OK)
+        goto logoff;
+
+    IMsgStore_OpenEntry(msg_store, props[0].Value.bin.cb, (LPENTRYID) props[0].Value.bin.lpb,
+        NULL, MAPI_MODIFY, &obj_type, (LPUNKNOWN *) &folder);
+
+    /* Free up the resources we've used */
+    IMAPIFolder_Release(folder);
+    IMsgStore_Release(msg_store);
 
 logoff: ;
     IMAPISession_Logoff(session, (ULONG) NULL, 0, 0);
