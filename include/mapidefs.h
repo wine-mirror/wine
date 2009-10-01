@@ -162,6 +162,7 @@ typedef struct _MAPIUID
 #define MAPI_ACCESS_CREATE_HIERARCHY  0x00000008U
 #define MAPI_ACCESS_CREATE_CONTENTS   0x00000010U
 #define MAPI_ACCESS_CREATE_ASSOCIATED 0x00000020U
+#define MAPI_USE_DEFAULT              0x00000040U
 #define MAPI_UNICODE                  0x80000000U /* Strings in this call are Unicode */
 
 #if defined (UNICODE) || defined (__WINESRC__)
@@ -169,6 +170,9 @@ typedef struct _MAPIUID
 #else
 #define fMapiUnicode 0U
 #endif
+
+/* IMAPISession::OpenMessageStore() flags */
+#define MDB_NO_DIALOG           0x00000001
 
 /* Types of message receivers */
 #ifndef MAPI_ORIG
