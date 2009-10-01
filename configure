@@ -16444,6 +16444,14 @@ dlls/setupapi/tests/Makefile: dlls/setupapi/tests/Makefile.in dlls/Maketest.rule
 ac_config_files="$ac_config_files dlls/setupapi/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/setupx.dll16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	setupx.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/setupx.dll16/Makefile: dlls/setupx.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/setupx.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/sfc/Makefile"
 test "x$enable_sfc" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	sfc"
@@ -19068,6 +19076,7 @@ do
     "dlls/serialui/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/serialui/tests/Makefile" ;;
     "dlls/setupapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/setupapi/Makefile" ;;
     "dlls/setupapi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/setupapi/tests/Makefile" ;;
+    "dlls/setupx.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/setupx.dll16/Makefile" ;;
     "dlls/sfc/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sfc/Makefile" ;;
     "dlls/sfc_os/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sfc_os/Makefile" ;;
     "dlls/shdoclc/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/shdoclc/Makefile" ;;

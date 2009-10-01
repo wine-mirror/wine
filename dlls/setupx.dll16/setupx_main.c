@@ -66,7 +66,6 @@
 #include "winnls.h"
 #include "setupapi.h"
 #include "setupx16.h"
-#include "setupapi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
@@ -95,6 +94,24 @@ DWORD WINAPI SURegQueryValueEx( HKEY hkey, LPSTR lpszValueName,
                                lpbData, lpcbData );
 }
 
+/***********************************************************************
+ *		TPWriteProfileString (SETUPX.62)
+ */
+BOOL WINAPI TPWriteProfileString16( LPCSTR section, LPCSTR entry, LPCSTR string )
+{
+    FIXME( "%s %s %s: stub\n", debugstr_a(section), debugstr_a(entry), debugstr_a(string) );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *		suErrorToIds  (SETUPX.61)
+ */
+DWORD WINAPI suErrorToIds16( WORD w1, WORD w2 )
+{
+    FIXME( "%x %x: stub\n", w1, w2 );
+    return 0;
+}
 
 /***********************************************************************
  *		InstallHinfSection (SETUPX.527)

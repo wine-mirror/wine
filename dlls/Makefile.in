@@ -22,7 +22,6 @@ WIN16_FILES = \
 	gdi.exe16 \
 	krnl386.exe16 \
 	mmsystem.dll16 \
-	setupx.dll16 \
 	user.exe16 \
 	wprocs.dll16
 
@@ -42,9 +41,6 @@ gdi.exe16:
 
 krnl386.exe16:
 	echo "kernel32.dll" >$@
-
-setupx.dll16:
-	echo "setupapi.dll" >$@
 
 user.exe16:
 	echo "user32.dll" >$@

@@ -33,25 +33,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
 /***********************************************************************
- *		TPWriteProfileString (SETUPX.62)
- */
-BOOL WINAPI TPWriteProfileString16( LPCSTR section, LPCSTR entry, LPCSTR string )
-{
-    FIXME( "%s %s %s: stub\n", debugstr_a(section), debugstr_a(entry), debugstr_a(string) );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *		suErrorToIds  (SETUPX.61)
- */
-DWORD WINAPI suErrorToIds16( WORD w1, WORD w2 )
-{
-    FIXME( "%x %x: stub\n", w1, w2 );
-    return 0;
-}
-
-/***********************************************************************
  *              CM_Connect_MachineA  (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Connect_MachineA(PCSTR name, PHMACHINE machine)

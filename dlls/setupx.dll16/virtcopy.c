@@ -31,10 +31,19 @@
 #include "winnls.h"
 #include "setupapi.h"
 #include "setupx16.h"
-#include "setupapi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
+
+/* copied from setupapi */
+#define COPYFILEDLGORD	1000
+#define SOURCESTRORD	500
+#define DESTSTRORD	501
+#define PROGRESSORD	502
+
+#define REG_INSTALLEDFILES "System\\CurrentControlSet\\Control\\InstalledFiles"
+#define REGPART_RENAME "\\Rename"
+#define REG_VERSIONCONFLICT "Software\\Microsoft\\VersionConflictManager"
 
 static FARPROC16 VCP_Proc = NULL;
 static LPARAM VCP_MsgRef = 0;
@@ -42,6 +51,8 @@ static LPARAM VCP_MsgRef = 0;
 static BOOL VCP_opened = FALSE;
 
 static VCPSTATUS vcp_status;
+
+static HMODULE SETUPAPI_hInstance;
 
 static WORD VCP_Callback( LPVOID obj, UINT16 msg, WPARAM16 wParam, LPARAM lParam, LPARAM lParamRef )
 {
@@ -214,10 +225,10 @@ static RETERR16 VCP_VirtnodeCreate(const VCPFILESPEC *vfsSrc, const VCPFILESPEC 
 	vn_num += 20;
 	if (pvnlist)
 	    pvnlist = HeapReAlloc(heap, HEAP_ZERO_MEMORY, pvnlist,
-		    		sizeof(LPVIRTNODE *) * vn_num);
+				sizeof(LPVIRTNODE *) * vn_num);
 	else
-	    pvnlist = HeapAlloc(heap, HEAP_ZERO_MEMORY, 
-		    		sizeof(LPVIRTNODE *) * vn_num);
+	    pvnlist = HeapAlloc(heap, HEAP_ZERO_MEMORY,
+				sizeof(LPVIRTNODE *) * vn_num);
     }
     pvnlist[vn_last] = HeapAlloc(heap, HEAP_ZERO_MEMORY, sizeof(VIRTNODE));
     lpvn = pvnlist[vn_last];
@@ -584,6 +595,8 @@ static void VCP_UI_RegisterProgressClass(void)
     wndClass.lpszClassName = "setupx_progress";
 
     RegisterClassA (&wndClass);
+
+    SETUPAPI_hInstance = LoadLibraryA( "setupapi.dll" );
 }
 
 static RETERR16 VCP_UI_NodeCompare(LPVIRTNODE vn1, LPVIRTNODE vn2)

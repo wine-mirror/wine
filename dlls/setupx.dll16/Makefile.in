@@ -1,0 +1,18 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = setupx.dll16
+IMPORTS   = setupapi user32 advapi32 kernel32
+
+EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,setupapi.dll
+
+C_SRCS = \
+	devinst16.c \
+	infparse.c \
+	setupx_main.c \
+	virtcopy.c
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

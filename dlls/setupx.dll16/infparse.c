@@ -38,7 +38,6 @@
 #include "winnls.h"
 #include "setupapi.h"
 #include "setupx16.h"
-#include "setupapi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
