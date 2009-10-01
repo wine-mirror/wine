@@ -38,7 +38,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ver);
 
-extern DWORD find_resource( HFILE lzfd, LPCSTR type, LPCSTR id, DWORD *reslen, DWORD *offset );
+extern DWORD find_version_resource( HFILE lzfd, DWORD *reslen, DWORD *offset );
 
 /******************************************************************************
  *
@@ -355,8 +355,7 @@ static DWORD VERSION_GetFileVersionInfo_16( LPCSTR filename, DWORD datasize, LPV
 
         if (lzfd >= 0)
         {
-            if (find_resource( lzfd, MAKEINTRESOURCEA(VS_FILE_INFO), MAKEINTRESOURCEA(VS_VERSION_INFO),
-                               &len, &offset ))
+            if (find_version_resource( lzfd, &len, &offset ))
             {
                 if (data)
                 {
