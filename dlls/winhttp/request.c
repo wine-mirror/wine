@@ -839,7 +839,6 @@ static BOOL secure_proxy_connect( request_t *request )
 {
     static const WCHAR verbConnect[] = {'C','O','N','N','E','C','T',0};
     static const WCHAR fmt[] = {'%','s',':','%','d',0};
-    static const WCHAR http1_1[] = {'H','T','T','P','/','1','.','1',0};
     BOOL ret = FALSE;
     LPWSTR path;
     connect_t *connect = request->connect;
