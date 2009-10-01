@@ -79,54 +79,37 @@ static inline void stateblock_set_bits(DWORD *map, UINT map_size)
 }
 
 /* Set all members of a stateblock savedstate to the given value */
-static void stateblock_savedstates_set(SAVEDSTATES *states, BOOL value, const struct wined3d_gl_info *gl_info)
+static void stateblock_savedstates_set(SAVEDSTATES *states, const struct wined3d_gl_info *gl_info)
 {
+    unsigned int i;
+
     /* Single values */
-    states->primitive_type = value;
-    states->indices = value;
-    states->material = value;
-    states->viewport = value;
-    states->vertexDecl = value;
-    states->pixelShader = value;
-    states->vertexShader = value;
-    states->scissorRect = value;
+    states->primitive_type = 1;
+    states->indices = 1;
+    states->material = 1;
+    states->viewport = 1;
+    states->vertexDecl = 1;
+    states->pixelShader = 1;
+    states->vertexShader = 1;
+    states->scissorRect = 1;
 
     /* Fixed size arrays */
-    if (value)
-    {
-        int i;
-        states->streamSource = 0xffff;
-        states->streamFreq = 0xffff;
-        states->textures = 0xfffff;
-        stateblock_set_bits(states->transform, HIGHEST_TRANSFORMSTATE + 1);
-        stateblock_set_bits(states->renderState, WINEHIGHEST_RENDER_STATE + 1);
-        for (i = 0; i < MAX_TEXTURES; ++i) states->textureState[i] = 0x3ffff;
-        for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i) states->samplerState[i] = 0x3fff;
-        states->clipplane = 0xffffffff;
-        states->pixelShaderConstantsB = 0xffff;
-        states->pixelShaderConstantsI = 0xffff;
-        states->vertexShaderConstantsB = 0xffff;
-        states->vertexShaderConstantsI = 0xffff;
-    }
-    else
-    {
-        states->streamSource = 0;
-        states->streamFreq = 0;
-        states->textures = 0;
-        memset(states->transform, 0, sizeof(states->transform));
-        memset(states->renderState, 0, sizeof(states->renderState));
-        memset(states->textureState, 0, sizeof(states->textureState));
-        memset(states->samplerState, 0, sizeof(states->samplerState));
-        states->clipplane = 0;
-        states->pixelShaderConstantsB = 0;
-        states->pixelShaderConstantsI = 0;
-        states->vertexShaderConstantsB = 0;
-        states->vertexShaderConstantsI = 0;
-    }
+    states->streamSource = 0xffff;
+    states->streamFreq = 0xffff;
+    states->textures = 0xfffff;
+    stateblock_set_bits(states->transform, HIGHEST_TRANSFORMSTATE + 1);
+    stateblock_set_bits(states->renderState, WINEHIGHEST_RENDER_STATE + 1);
+    for (i = 0; i < MAX_TEXTURES; ++i) states->textureState[i] = 0x3ffff;
+    for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i) states->samplerState[i] = 0x3fff;
+    states->clipplane = 0xffffffff;
+    states->pixelShaderConstantsB = 0xffff;
+    states->pixelShaderConstantsI = 0xffff;
+    states->vertexShaderConstantsB = 0xffff;
+    states->vertexShaderConstantsI = 0xffff;
 
     /* Dynamically sized arrays */
-    memset(states->pixelShaderConstantsF, value, sizeof(BOOL) * gl_info->max_pshader_constantsF);
-    memset(states->vertexShaderConstantsF, value, sizeof(BOOL) * gl_info->max_vshader_constantsF);
+    memset(states->pixelShaderConstantsF, TRUE, sizeof(BOOL) * gl_info->max_pshader_constantsF);
+    memset(states->vertexShaderConstantsF, TRUE, sizeof(BOOL) * gl_info->max_vshader_constantsF);
 }
 
 static void stateblock_copy_values(IWineD3DStateBlockImpl *dst, const IWineD3DStateBlockImpl *src,
@@ -1462,7 +1445,8 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
     if (type == WINED3DSBT_ALL)
     {
         TRACE("ALL => Pretend everything has changed.\n");
-        stateblock_savedstates_set(&stateblock->changed, TRUE, gl_info);
+
+        stateblock_savedstates_set(&stateblock->changed, gl_info);
 
         /* Lights are not part of the changed / set structure. */
         for (i = 0; i < LIGHTMAP_SIZE; ++i)
@@ -1557,7 +1541,6 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
     else if (type == WINED3DSBT_PIXELSTATE)
     {
         TRACE("PIXELSTATE => Pretend all pixel states have changed.\n");
-        stateblock_savedstates_set(&stateblock->changed, FALSE, gl_info);
 
         /* Pixel Shader Constants. */
         for (i = 0; i <  gl_info->max_pshader_constantsF; ++i)
@@ -1629,7 +1612,6 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
     else if (type == WINED3DSBT_VERTEXSTATE)
     {
         TRACE("VERTEXSTATE => Pretend all vertex shates have changed.\n");
-        stateblock_savedstates_set(&stateblock->changed, FALSE, gl_info);
 
         /* Vertex Shader Constants. */
         for (i = 0; i <  gl_info->max_vshader_constantsF; ++i)
