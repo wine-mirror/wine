@@ -380,9 +380,9 @@ static void test_DPA_Merge(void)
 
     for (i = 0; i < 6; i++)
     {
-        ret = pDPA_InsertPtr(dpa2, i, (PVOID)(6-i));
+        ret = pDPA_InsertPtr(dpa2, i, (PVOID)(INT_PTR)(6-i));
         ok(ret == i, "ret=%d\n", ret);
-        ret = pDPA_InsertPtr(dpa3, i, (PVOID)(i+1));
+        ret = pDPA_InsertPtr(dpa3, i, (PVOID)(INT_PTR)(i+1));
         ok(ret == i, "ret=%d\n", ret);
     }
 
@@ -404,7 +404,7 @@ static void test_DPA_Merge(void)
 
     for (i = 0; i < 6; i++)
     {
-        ret = pDPA_InsertPtr(dpa2, i, (PVOID)(6-i));
+        ret = pDPA_InsertPtr(dpa2, i, (PVOID)(INT_PTR)(6-i));
         ok(ret == i, "ret=%d\n", ret);
     }
 
@@ -497,7 +497,7 @@ static void test_DPA_EnumCallback(void)
 
     for (i = 0; i < 6; i++)
     {
-        ret = pDPA_InsertPtr(dpa, i, (PVOID)(i+1));
+        ret = pDPA_InsertPtr(dpa, i, (PVOID)(INT_PTR)(i+1));
         ok(ret == i, "ret=%d\n", ret);
     }
 
@@ -529,7 +529,7 @@ static void test_DPA_DestroyCallback(void)
 
     for (i = 0; i < 3; i++)
     {
-        ret = pDPA_InsertPtr(dpa, i, (PVOID)(i+1));
+        ret = pDPA_InsertPtr(dpa, i, (PVOID)(INT_PTR)(i+1));
         ok(ret == i, "ret=%d\n", ret);
     }
 
@@ -706,7 +706,7 @@ if (0) {
     /* saving/loading */
     for (i = 0; i < 6; i++)
     {
-        ret = pDPA_InsertPtr(dpa, i, (PVOID)(i+1));
+        ret = pDPA_InsertPtr(dpa, i, (PVOID)(INT_PTR)(i+1));
         ok(ret == i, "ret=%d\n", ret);
     }
 
