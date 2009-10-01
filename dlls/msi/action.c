@@ -880,6 +880,9 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     /* finish up running custom actions */
     ACTION_FinishCustomActions(package);
     
+    if (rc == ERROR_SUCCESS && package->need_reboot)
+        return ERROR_SUCCESS_REBOOT_REQUIRED;
+
     return rc;
 }
 

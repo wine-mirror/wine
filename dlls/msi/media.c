@@ -338,15 +338,52 @@ static INT_PTR cabinet_copy_file(FDINOTIFICATIONTYPE fdint,
     if (handle == INVALID_HANDLE_VALUE)
     {
         DWORD err = GetLastError();
-        DWORD attrs = GetFileAttributesW(path);
+        DWORD attrs2 = GetFileAttributesW(path);
 
-        if (attrs == INVALID_FILE_ATTRIBUTES)
+        if (attrs2 == INVALID_FILE_ATTRIBUTES)
+        {
             ERR("failed to create %s (error %d)\n", debugstr_w(path), err);
-        else if (err == ERROR_ACCESS_DENIED && (attrs & FILE_ATTRIBUTE_READONLY))
+            goto done;
+        }
+        else if (err == ERROR_ACCESS_DENIED && (attrs2 & FILE_ATTRIBUTE_READONLY))
         {
             TRACE("removing read-only attribute on %s\n", debugstr_w(path));
-            SetFileAttributesW( path, attrs & ~FILE_ATTRIBUTE_READONLY );
-            handle = CreateFileW(path, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, attrs, NULL);
+            SetFileAttributesW( path, attrs2 & ~FILE_ATTRIBUTE_READONLY );
+            handle = CreateFileW(path, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, attrs2, NULL);
+
+            if (handle != INVALID_HANDLE_VALUE) goto done;
+            err = GetLastError();
+        }
+        if (err == ERROR_SHARING_VIOLATION)
+        {
+            static const WCHAR msiW[] = {'m','s','i',0};
+            static const WCHAR slashW[] = {'\\',0};
+            WCHAR tmpfileW[MAX_PATH], *tmppathW, *p;
+            DWORD len;
+
+            TRACE("file in use, scheduling rename operation\n");
+
+            GetTempFileNameW(slashW, msiW, 0, tmpfileW);
+            len = strlenW(path) + strlenW(tmpfileW) + 1;
+            if (!(tmppathW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+                return ERROR_OUTOFMEMORY;
+
+            strcpyW(tmppathW, path);
+            if ((p = strrchrW(tmppathW, '\\'))) *p = 0;
+            strcatW(tmppathW, tmpfileW);
+
+            handle = CreateFileW(tmppathW, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, attrs, NULL);
+
+            if (handle != INVALID_HANDLE_VALUE &&
+                MoveFileExW(path, NULL, MOVEFILE_DELAY_UNTIL_REBOOT) &&
+                MoveFileExW(tmppathW, path, MOVEFILE_DELAY_UNTIL_REBOOT))
+            {
+                data->package->need_reboot = 1;
+            }
+            else
+                WARN("failed to schedule rename operation %s (error %d)\n", debugstr_w(path), GetLastError());
+
+            HeapFree(GetProcessHeap(), 0, tmppathW);
         }
         else
             WARN("failed to create %s (error %d)\n", debugstr_w(path), err);
