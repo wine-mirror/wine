@@ -1447,6 +1447,7 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
         TRACE("ALL => Pretend everything has changed.\n");
 
         stateblock_savedstates_set(&stateblock->changed, gl_info);
+        stateblock_init_contained_states(stateblock);
 
         /* Lights are not part of the changed / set structure. */
         for (i = 0; i < LIGHTMAP_SIZE; ++i)
@@ -1457,75 +1458,6 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
                 PLIGHTINFOEL *light = LIST_ENTRY(e, PLIGHTINFOEL, entry);
                 light->changed = TRUE;
                 light->enabledChanged = TRUE;
-            }
-        }
-
-        for (i = 1; i <= WINEHIGHEST_RENDER_STATE; ++i)
-        {
-            stateblock->contained_render_states[i - 1] = i;
-        }
-        stateblock->num_contained_render_states = WINEHIGHEST_RENDER_STATE;
-
-        /* TODO: Filter unused transforms between TEXTURE8 and WORLD0? */
-        for (i = 1; i <= HIGHEST_TRANSFORMSTATE; ++i)
-        {
-            stateblock->contained_transform_states[i - 1] = i;
-        }
-        stateblock->num_contained_transform_states = HIGHEST_TRANSFORMSTATE;
-
-        for (i = 0; i < gl_info->max_vshader_constantsF; ++i)
-        {
-            stateblock->contained_vs_consts_f[i] = i;
-        }
-        stateblock->num_contained_vs_consts_f = gl_info->max_vshader_constantsF;
-
-        for (i = 0; i < MAX_CONST_I; ++i)
-        {
-            stateblock->contained_vs_consts_i[i] = i;
-        }
-        stateblock->num_contained_vs_consts_i = MAX_CONST_I;
-
-        for (i = 0; i < MAX_CONST_B; ++i)
-        {
-            stateblock->contained_vs_consts_b[i] = i;
-        }
-        stateblock->num_contained_vs_consts_b = MAX_CONST_B;
-
-        for (i = 0; i <  gl_info->max_pshader_constantsF; ++i)
-        {
-            stateblock->contained_ps_consts_f[i] = i;
-        }
-        stateblock->num_contained_ps_consts_f = gl_info->max_pshader_constantsF;
-
-        for (i = 0; i < MAX_CONST_I; ++i)
-        {
-            stateblock->contained_ps_consts_i[i] = i;
-        }
-        stateblock->num_contained_ps_consts_i = MAX_CONST_I;
-
-        for (i = 0; i < MAX_CONST_B; ++i)
-        {
-            stateblock->contained_ps_consts_b[i] = i;
-        }
-        stateblock->num_contained_ps_consts_b = MAX_CONST_B;
-
-        for (i = 0; i < MAX_TEXTURES; ++i)
-        {
-            for (j = 0; j <= WINED3D_HIGHEST_TEXTURE_STATE; ++j)
-            {
-                stateblock->contained_tss_states[stateblock->num_contained_tss_states].stage = i;
-                stateblock->contained_tss_states[stateblock->num_contained_tss_states].state = j;
-                ++stateblock->num_contained_tss_states;
-            }
-        }
-
-        for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
-        {
-            for (j = 1; j <= WINED3D_HIGHEST_SAMPLER_STATE; ++j)
-            {
-                stateblock->contained_sampler_states[stateblock->num_contained_sampler_states].stage = i;
-                stateblock->contained_sampler_states[stateblock->num_contained_sampler_states].state = j;
-                ++stateblock->num_contained_sampler_states;
             }
         }
 
