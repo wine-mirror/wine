@@ -30,6 +30,9 @@
 #include "winerror.h"
 #include "objbase.h"
 #include "mapi.h"
+#include "mapix.h"
+#include "mapiutil.h"
+#include "mapidefs.h"
 #include "winreg.h"
 #include "shellapi.h"
 #include "shlwapi.h"
@@ -45,10 +48,78 @@ WINE_DEFAULT_DEBUG_CHANNEL(mapi);
 static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpMapiMessage message,
     FLAGS flags, ULONG reserved)
 {
+    ULONG retval = MAPI_E_FAILURE;
+    IMAPISession *session = NULL;
+    IMAPITable* msg_table;
+    LPSRowSet rows = NULL;
+    HRESULT ret;
+
     TRACE("Using Extended MAPI wrapper for MAPISendMail\n");
 
+    /* Attempt to log on via Extended MAPI */
+
+    ret = MAPILogonEx(0, NULL, NULL, MAPI_EXTENDED | MAPI_USE_DEFAULT | MAPI_NEW_SESSION, &session);
+    TRACE("MAPILogonEx: %x\n", ret);
+
+    if (ret != S_OK)
+    {
+        retval = MAPI_E_LOGIN_FAILURE;
+        goto cleanup;
+    }
+
+    /* Open the default message store */
+
+    if (IMAPISession_GetMsgStoresTable(session, 0, &msg_table) == S_OK)
+    {
+        /* We want the default store */
+        SizedSPropTagArray(2, columns) = {2, {PR_ENTRYID, PR_DEFAULT_STORE}};
+
+        /* Set the columns we want */
+        if (IMAPITable_SetColumns(msg_table, (LPSPropTagArray) &columns, 0) == S_OK)
+        {
+            while (1)
+            {
+                if (IMAPITable_QueryRows(msg_table, 1, 0, &rows) != S_OK)
+                {
+                    MAPIFreeBuffer(rows);
+                    rows = NULL;
+                }
+                else if (rows->cRows != 1)
+                {
+                    FreeProws(rows);
+                    rows = NULL;
+                }
+                else
+                {
+                    /* If it's not the default store, try the next row */
+                    if (!rows->aRow[0].lpProps[1].Value.b)
+                    {
+                        FreeProws(rows);
+                        continue;
+                    }
+                }
+
+                break;
+            }
+        }
+
+        IMAPITable_Release(msg_table);
+    }
+
+    /* Did we manage to get the right store? */
+    if (!rows)
+        goto logoff;
+
+    /* We don't need this any more */
+    FreeProws(rows);
+
+logoff: ;
+    IMAPISession_Logoff(session, (ULONG) NULL, 0, 0);
+    IMAPISession_Release(session);
+
+cleanup: ;
     MAPIUninitialize();
-    return MAPI_E_FAILURE;
+    return retval;
 }
 
 /**************************************************************************
