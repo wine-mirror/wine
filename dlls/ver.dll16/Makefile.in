@@ -2,16 +2,12 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = version.dll
-IMPORTLIB = version
-IMPORTS   = lz32 kernel32 ntdll
+MODULE    = ver.dll16
+IMPORTS   = version lz32 kernel32
 
-C_SRCS = \
-	info.c \
-	install.c \
-	resource.c
+EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,version.dll
 
-RC_SRCS = version.rc
+C_SRCS = version.c
 
 @MAKE_DLL_RULES@
 

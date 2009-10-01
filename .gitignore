@@ -120,7 +120,6 @@ dlls/shdocvw/shdocvw_v1.tlb
 dlls/stdole2.tlb/std_ole_v2.tlb
 dlls/stdole32.tlb/std_ole_v1.tlb
 dlls/user.exe16
-dlls/ver.dll16
 dlls/wineps16.drv16
 dlls/wprocs.dll16
 include/activaut.h

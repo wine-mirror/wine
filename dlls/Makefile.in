@@ -24,7 +24,6 @@ WIN16_FILES = \
 	mmsystem.dll16 \
 	setupx.dll16 \
 	user.exe16 \
-	ver.dll16 \
 	wineps16.drv16 \
 	wprocs.dll16
 
@@ -50,9 +49,6 @@ setupx.dll16:
 
 user.exe16:
 	echo "user32.dll" >$@
-
-ver.dll16:
-	echo "version.dll" >$@
 
 wprocs.dll16:
 	echo "winedos.dll" >$@

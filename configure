@@ -16868,6 +16868,14 @@ dlls/vdmdbg/Makefile: dlls/vdmdbg/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/vdmdbg/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/ver.dll16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	ver.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/ver.dll16/Makefile: dlls/ver.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/ver.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/version/Makefile"
 test "x$enable_version" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	version"
@@ -19105,6 +19113,7 @@ do
     "dlls/uxtheme/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/uxtheme/tests/Makefile" ;;
     "dlls/vdhcp.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/vdhcp.vxd/Makefile" ;;
     "dlls/vdmdbg/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/vdmdbg/Makefile" ;;
+    "dlls/ver.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ver.dll16/Makefile" ;;
     "dlls/version/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/version/Makefile" ;;
     "dlls/version/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/version/tests/Makefile" ;;
     "dlls/vmm.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/vmm.vxd/Makefile" ;;
