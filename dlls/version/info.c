@@ -30,12 +30,15 @@
 #include "winbase.h"
 #include "winver.h"
 #include "winternl.h"
+#include "lzexpand.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "winerror.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ver);
+
+extern DWORD find_resource( HFILE lzfd, LPCSTR type, LPCSTR id, DWORD *reslen, DWORD *offset );
 
 /******************************************************************************
  *
@@ -344,23 +347,30 @@ static DWORD VERSION_GetFileVersionInfo_16( LPCSTR filename, DWORD datasize, LPV
     }
 
     /* first try without loading a 16-bit module */
-    if (is_builtin)
-        len = 0;
-    else
-        len = GetFileResourceSize16( filename,
-                                     MAKEINTRESOURCEA(VS_FILE_INFO),
-                                     MAKEINTRESOURCEA(VS_VERSION_INFO),
-                                     &offset );
-    if (len)
+    len = 0;
+    if (!is_builtin)
     {
-        if (!data) return len;
+        OFSTRUCT ofs;
+        HFILE lzfd = LZOpenFileA( (LPSTR)filename, &ofs, OF_READ );
 
-        len = GetFileResource16( filename,
-                                 MAKEINTRESOURCEA(VS_FILE_INFO),
-                                 MAKEINTRESOURCEA(VS_VERSION_INFO),
-                                 offset, datasize, data );
+        if (lzfd >= 0)
+        {
+            if (find_resource( lzfd, MAKEINTRESOURCEA(VS_FILE_INFO), MAKEINTRESOURCEA(VS_VERSION_INFO),
+                               &len, &offset ))
+            {
+                if (data)
+                {
+                    LZSeek( lzfd, offset, 0 /* SEEK_SET */ );
+                    len = LZRead( lzfd, data, min( len, datasize ) );
+                }
+            }
+            LZClose( lzfd );
+        }
+
         if (len)
         {
+            if (!data) return len;
+
             vffi = (VS_FIXEDFILEINFO *)VersionInfo16_Value( (VS_VERSION_INFO_STRUCT16 *)data );
 
             if ( vffi->dwSignature == VS_FFI_SIGNATURE )
