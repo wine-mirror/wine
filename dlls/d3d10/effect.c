@@ -57,16 +57,22 @@ static struct d3d10_effect_technique null_technique =
         {&d3d10_effect_technique_vtbl, NULL, NULL, 0, 0, NULL, NULL};
 static struct d3d10_effect_pass null_pass =
         {&d3d10_effect_pass_vtbl, NULL, NULL, 0, 0, 0, NULL, NULL};
+static struct d3d10_effect_type null_type =
+        {&d3d10_effect_type_vtbl, 0, {NULL, NULL, 0}, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL};
 static struct d3d10_effect_variable null_local_buffer =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_constant_buffer_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL};
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_constant_buffer_vtbl,
+        NULL, NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL};
 static struct d3d10_effect_variable null_variable =
-        {&d3d10_effect_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL};
+        {&d3d10_effect_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL};
 static struct d3d10_effect_variable null_scalar_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL};
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl,
+        NULL, NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL};
 static struct d3d10_effect_variable null_vector_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL};
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl,
+        NULL, NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL};
 static struct d3d10_effect_variable null_matrix_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL};
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl,
+        NULL, NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL};
 
 static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, const char *data, DWORD offset);
 
@@ -3249,7 +3255,17 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_type_GetDesc(ID3D10EffectType *ifa
 
     TRACE("iface %p, desc %p\n", iface, desc);
 
-    if (!desc) return E_INVALIDARG;
+    if (This == &null_type)
+    {
+        WARN("Null type specified\n");
+        return E_FAIL;
+    }
+
+    if (!desc)
+    {
+        WARN("Invalid argument specified\n");
+        return E_INVALIDARG;
+    }
 
     desc->TypeName = This->name;
     desc->Class = This->type_class;
