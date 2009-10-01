@@ -1937,6 +1937,24 @@ static INT MONTHCAL_StyleChanged(MONTHCAL_INFO *infoPtr, WPARAM wStyleType,
     return 0;
 }
 
+static INT MONTHCAL_StyleChanging(MONTHCAL_INFO *infoPtr, WPARAM wStyleType,
+                                  STYLESTRUCT *lpss)
+{
+    TRACE("(styletype=%lx, styleOld=0x%08x, styleNew=0x%08x)\n",
+          wStyleType, lpss->styleOld, lpss->styleNew);
+
+    /* block MCS_MULTISELECT change */
+    if ((lpss->styleNew ^ lpss->styleOld) & MCS_MULTISELECT)
+    {
+        if (lpss->styleOld & MCS_MULTISELECT)
+            lpss->styleNew |= MCS_MULTISELECT;
+        else
+            lpss->styleNew &= ~MCS_MULTISELECT;
+    }
+
+    return 0;
+}
+
 /* FIXME: check whether dateMin/dateMax need to be adjusted. */
 static LRESULT
 MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
@@ -1965,7 +1983,7 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->firstDayHighWord = FALSE;
   MONTHCAL_SetFirstDayOfWeek(infoPtr, -1);
 
-  infoPtr->maxSelCount   = 7;
+  infoPtr->maxSelCount   = (infoPtr->dwStyle & MCS_MULTISELECT) ? 7 : 1;
   infoPtr->monthRange    = 3;
   infoPtr->monthdayState = Alloc(infoPtr->monthRange * sizeof(MONTHDAYSTATE));
   infoPtr->titlebk       = comctl32_color.clrActiveCaption;
@@ -2130,6 +2148,9 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   case WM_STYLECHANGED:
     return MONTHCAL_StyleChanged(infoPtr, wParam, (LPSTYLESTRUCT)lParam);
+
+  case WM_STYLECHANGING:
+    return MONTHCAL_StyleChanging(infoPtr, wParam, (LPSTYLESTRUCT)lParam);
 
   default:
     if ((uMsg >= WM_USER) && (uMsg < WM_APP) && !COMCTL32_IsReflectedMessage(uMsg))

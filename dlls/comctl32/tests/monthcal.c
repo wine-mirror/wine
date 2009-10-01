@@ -580,6 +580,14 @@ static LRESULT WINAPI monthcal_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
     msg.lParam = lParam;
     add_message(sequences, MONTHCAL_SEQ_INDEX, &msg);
 
+    /* some debug output for style changing */
+    if ((message == WM_STYLECHANGING ||
+         message == WM_STYLECHANGED) && lParam)
+    {
+        STYLESTRUCT *style = (STYLESTRUCT*)lParam;
+        trace("\told style: 0x%08x, new style: 0x%08x\n", style->styleOld, style->styleNew);
+    }
+
     defwndproc_counter++;
     ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
     defwndproc_counter--;
@@ -1302,8 +1310,33 @@ static void test_monthcal_maxselday(void)
 {
     int res;
     HWND hwnd;
+    DWORD style;
+
+    hwnd = create_monthcal_control(0);
+    /* if no style specified default to 1 */
+    res = SendMessage(hwnd, MCM_GETMAXSELCOUNT, 0, 0);
+    expect(1, res);
+
+    /* try to set style */
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    SetWindowLong(hwnd, GWL_STYLE, style | MCS_MULTISELECT);
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    ok(!(style & MCS_MULTISELECT), "Expected MCS_MULTISELECT not to be set\n");
+    DestroyWindow(hwnd);
 
     hwnd = create_monthcal_control(MCS_MULTISELECT);
+    /* try to remove style */
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    SetWindowLong(hwnd, GWL_STYLE, style & ~MCS_MULTISELECT);
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    ok(style & MCS_MULTISELECT, "Expected MCS_MULTISELECT to be set\n");
+    DestroyWindow(hwnd);
+
+    hwnd = create_monthcal_control(MCS_MULTISELECT);
+
+    /* default width is a week */
+    res = SendMessage(hwnd, MCM_GETMAXSELCOUNT, 0, 0);
+    expect(7, res);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
