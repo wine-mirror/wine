@@ -1578,7 +1578,6 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_SLT: instruction = "SLT"; break;
         case WINED3DSIH_SUB: instruction = "SUB"; break;
         case WINED3DSIH_MOVA:instruction = "ARR"; break;
-        case WINED3DSIH_SGN: instruction = "SSG"; break;
         case WINED3DSIH_DSX: instruction = "DDX"; break;
         default: instruction = "";
             FIXME("Unhandled opcode %#x\n", ins->handler_idx);
@@ -2455,13 +2454,14 @@ static void shader_hw_sgn(const struct wined3d_shader_instruction *ins)
     char src_name[50];
     struct shader_arb_ctx_priv *ctx = ins->ctx->backend_data;
 
-    /* SGN is only valid in vertex shaders */
-    if(ctx->target_version == NV2) {
-        shader_hw_map2gl(ins);
-        return;
-    }
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_name);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name);
+
+    /* SGN is only valid in vertex shaders */
+    if(ctx->target_version >= NV2) {
+        shader_addline(buffer, "SSG%s %s, %s;\n", shader_arb_get_modifier(ins), dst_name, src_name);
+        return;
+    }
 
     /* If SRC > 0.0, -SRC < SRC = TRUE, otherwise false.
      * if SRC < 0.0,  SRC < -SRC = TRUE. If neither is true, src = 0.0

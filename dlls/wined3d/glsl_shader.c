@@ -1956,7 +1956,6 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_FRC: instruction = "fract"; break;
         case WINED3DSIH_NRM: instruction = "normalize"; break;
         case WINED3DSIH_EXP: instruction = "exp2"; break;
-        case WINED3DSIH_SGN: instruction = "sign"; break;
         case WINED3DSIH_DSX: instruction = "dFdx"; break;
         case WINED3DSIH_DSY: instruction = "ycorrection.y * dFdy"; break;
         default: instruction = "";
@@ -2447,6 +2446,21 @@ static void shader_glsl_sincos(const struct wined3d_shader_instruction *ins)
             ERR("Write mask should be .x, .y or .xy\n");
             break;
     }
+}
+
+/* sgn in vs_2_0 has 2 extra parameters(registers for temporary storage) which we don't use
+ * here. But those extra parameters require a dedicated function for sgn, since map2gl would
+ * generate invalid code
+ */
+static void shader_glsl_sgn(const struct wined3d_shader_instruction *ins)
+{
+    glsl_src_param_t src0_param;
+    DWORD write_mask;
+
+    write_mask = shader_glsl_append_dst(ins->ctx->buffer, ins);
+    shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src0_param);
+
+    shader_addline(ins->ctx->buffer, "sign(%s));\n", src0_param.param_str);
 }
 
 /** Process the WINED3DSIO_LOOP instruction in GLSL:
@@ -4719,7 +4733,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_RSQ           */ shader_glsl_rsq,
     /* WINED3DSIH_SETP          */ NULL,
     /* WINED3DSIH_SGE           */ shader_glsl_compare,
-    /* WINED3DSIH_SGN           */ shader_glsl_map2gl,
+    /* WINED3DSIH_SGN           */ shader_glsl_sgn,
     /* WINED3DSIH_SINCOS        */ shader_glsl_sincos,
     /* WINED3DSIH_SLT           */ shader_glsl_compare,
     /* WINED3DSIH_SUB           */ shader_glsl_arith,
