@@ -3338,9 +3338,34 @@ static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTy
 static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTypeBySemantic(ID3D10EffectType *iface,
         LPCSTR semantic)
 {
-    FIXME("iface %p, semantic %s stub!\n", iface, debugstr_a(semantic));
+    struct d3d10_effect_type *This = (struct d3d10_effect_type *)iface;
+    unsigned int i;
 
-    return NULL;
+    TRACE("iface %p, semantic %s\n", iface, debugstr_a(semantic));
+
+    if (!semantic)
+    {
+        WARN("Invalid semantic specified\n");
+        return (ID3D10EffectType *)&null_type;
+    }
+
+    for (i = 0; i < This->member_count; ++i)
+    {
+        struct d3d10_effect_type_member *typem = &This->members[i];
+
+        if (typem->semantic)
+        {
+            if (!strcmp(typem->semantic, semantic))
+            {
+                TRACE("Returning type %p.\n", typem->type);
+                return (ID3D10EffectType *)typem->type;
+            }
+        }
+    }
+
+    WARN("Invalid semantic specified\n");
+
+    return (ID3D10EffectType *)&null_type;
 }
 
 static LPCSTR STDMETHODCALLTYPE d3d10_effect_type_GetMemberName(ID3D10EffectType *iface, UINT index)
