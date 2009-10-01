@@ -71,41 +71,6 @@ fail:
     return E_OUTOFMEMORY;
 }
 
-/* Copy all members of one stateblock to another */
-static void stateblock_savedstates_copy(SAVEDSTATES *dest, const SAVEDSTATES *source,
-        const struct wined3d_gl_info *gl_info)
-{
-    /* Single values */
-    dest->primitive_type = source->primitive_type;
-    dest->indices = source->indices;
-    dest->material = source->material;
-    dest->viewport = source->viewport;
-    dest->vertexDecl = source->vertexDecl;
-    dest->pixelShader = source->pixelShader;
-    dest->vertexShader = source->vertexShader;
-    dest->scissorRect = dest->scissorRect;
-
-    /* Fixed size arrays */
-    dest->streamSource = source->streamSource;
-    dest->streamFreq = source->streamFreq;
-    dest->textures = source->textures;
-    memcpy(dest->transform, source->transform, sizeof(source->transform));
-    memcpy(dest->renderState, source->renderState, sizeof(source->renderState));
-    memcpy(dest->textureState, source->textureState, sizeof(source->textureState));
-    memcpy(dest->samplerState, source->samplerState, sizeof(source->samplerState));
-    dest->clipplane = source->clipplane;
-    dest->pixelShaderConstantsB = source->pixelShaderConstantsB;
-    dest->pixelShaderConstantsI = source->pixelShaderConstantsI;
-    dest->vertexShaderConstantsB = source->vertexShaderConstantsB;
-    dest->vertexShaderConstantsI = source->vertexShaderConstantsI;
-
-    /* Dynamically sized arrays */
-    memcpy(dest->pixelShaderConstantsF, source->pixelShaderConstantsF,
-            sizeof(BOOL) * gl_info->max_pshader_constantsF);
-    memcpy(dest->vertexShaderConstantsF, source->vertexShaderConstantsF,
-            sizeof(BOOL) * gl_info->max_vshader_constantsF);
-}
-
 static inline void stateblock_set_bits(DWORD *map, UINT map_size)
 {
     DWORD mask = (1 << (map_size & 0x1f)) - 1;
@@ -1484,9 +1449,6 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
     /* Otherwise, might as well set the whole state block to the appropriate values  */
     if (device->stateBlock)
     {
-        /* Saved states */
-        stateblock_savedstates_copy(&stateblock->changed, &device->stateBlock->changed, gl_info);
-
         /* Saved values */
         stateblock_copy_values(stateblock, device->stateBlock, gl_info);
     }
