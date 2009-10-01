@@ -3292,12 +3292,21 @@ static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTy
 static LPCSTR STDMETHODCALLTYPE d3d10_effect_type_GetMemberName(ID3D10EffectType *iface, UINT index)
 {
     struct d3d10_effect_type *This = (struct d3d10_effect_type *)iface;
+    struct d3d10_effect_type_member *typem;
 
     TRACE("iface %p, index %u\n", iface, index);
 
-    if(index >= This->member_count) return NULL;
+    if (index >= This->member_count)
+    {
+        WARN("Invalid index specified\n");
+        return NULL;
+    }
 
-    return This->members[index].name;
+    typem = &This->members[index];
+
+    TRACE("Returning name %s\n", debugstr_a(typem->name));
+
+    return typem->name;
 }
 
 static LPCSTR STDMETHODCALLTYPE d3d10_effect_type_GetMemberSemantic(ID3D10EffectType *iface, UINT index)
