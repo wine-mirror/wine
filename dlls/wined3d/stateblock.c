@@ -1499,51 +1499,7 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
         TRACE("PIXELSTATE => Pretend all pixel states have changed.\n");
 
         stateblock_savedstates_set_pixel(&stateblock->changed, gl_info);
-
-        /* Pixel Shader Constants. */
-        for (i = 0; i <  gl_info->max_pshader_constantsF; ++i)
-        {
-            stateblock->contained_ps_consts_f[i] = i;
-        }
-        stateblock->num_contained_ps_consts_f =  gl_info->max_pshader_constantsF;
-
-        for (i = 0; i < MAX_CONST_B; ++i)
-        {
-            stateblock->contained_ps_consts_b[i] = i;
-        }
-        stateblock->num_contained_ps_consts_b = MAX_CONST_B;
-
-        for (i = 0; i < MAX_CONST_I; ++i)
-        {
-            stateblock->contained_ps_consts_i[i] = i;
-        }
-        stateblock->num_contained_ps_consts_i = MAX_CONST_I;
-
-        for (i = 0; i < NUM_SAVEDPIXELSTATES_R; i++)
-        {
-            stateblock->contained_render_states[i] = SavedPixelStates_R[i];
-        }
-        stateblock->num_contained_render_states = NUM_SAVEDPIXELSTATES_R;
-
-        for (i = 0; i < MAX_TEXTURES; ++i)
-        {
-            for (j = 0; j < NUM_SAVEDPIXELSTATES_T; ++j)
-            {
-                stateblock->contained_tss_states[stateblock->num_contained_tss_states].stage = i;
-                stateblock->contained_tss_states[stateblock->num_contained_tss_states].state = SavedPixelStates_T[j];
-                ++stateblock->num_contained_tss_states;
-            }
-        }
-
-        for (i = 0 ; i < MAX_COMBINED_SAMPLERS; ++i)
-        {
-            for (j = 0; j < NUM_SAVEDPIXELSTATES_S; ++j)
-            {
-                stateblock->contained_sampler_states[stateblock->num_contained_sampler_states].stage = i;
-                stateblock->contained_sampler_states[stateblock->num_contained_sampler_states].state = SavedPixelStates_S[j];
-                stateblock->num_contained_sampler_states++;
-            }
-        }
+        stateblock_init_contained_states(stateblock);
 
         if (stateblock->pixelShader) IWineD3DPixelShader_AddRef(stateblock->pixelShader);
 
