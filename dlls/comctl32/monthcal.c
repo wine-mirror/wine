@@ -877,18 +877,19 @@ static LRESULT
 MONTHCAL_SetFirstDayOfWeek(MONTHCAL_INFO *infoPtr, INT day)
 {
   int prev = MAKELONG(infoPtr->firstDay, infoPtr->firstDayHighWord);
-  int localFirstDay;
-  WCHAR buf[40];
 
   TRACE("day %d\n", day);
 
-  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, buf, countof(buf));
-  TRACE("%s %d\n", debugstr_w(buf), strlenW(buf));
-
-  localFirstDay = atoiW(buf);
-
   if(day == -1)
   {
+    int localFirstDay;
+    WCHAR buf[80];
+
+    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, buf, countof(buf));
+    TRACE("%s %d\n", debugstr_w(buf), strlenW(buf));
+
+    localFirstDay = atoiW(buf);
+
     infoPtr->firstDay = localFirstDay;
     infoPtr->firstDayHighWord = FALSE;
   }
