@@ -23,10 +23,70 @@
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "winver.h"
+#include "lzexpand.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ver);
 
+
+extern DWORD find_resource( HFILE lzfd, LPCSTR type, LPCSTR id, DWORD *reslen, DWORD *offset );
+
+/*************************************************************************
+ * GetFileResourceSize                     [VER.2]
+ */
+DWORD WINAPI GetFileResourceSize16( LPCSTR lpszFileName, LPCSTR lpszResType,
+                                    LPCSTR lpszResId, LPDWORD lpdwFileOffset )
+{
+    HFILE lzfd;
+    OFSTRUCT ofs;
+    DWORD reslen = 0;
+
+    TRACE("(%s,type=%p,id=%p,off=%p)\n",
+          debugstr_a(lpszFileName), lpszResType, lpszResId, lpszResId );
+
+    lzfd = LZOpenFileA( (LPSTR)lpszFileName, &ofs, OF_READ );
+    if (lzfd >= 0)
+    {
+        if (!find_resource( lzfd, lpszResType, lpszResId, &reslen, lpdwFileOffset )) reslen = 0;
+        LZClose( lzfd );
+    }
+    return reslen;
+}
+
+
+/*************************************************************************
+ * GetFileResource                         [VER.3]
+ */
+DWORD WINAPI GetFileResource16( LPCSTR lpszFileName, LPCSTR lpszResType,
+                                LPCSTR lpszResId, DWORD dwFileOffset,
+                                DWORD dwResLen, LPVOID lpvData )
+{
+    HFILE lzfd;
+    OFSTRUCT ofs;
+    DWORD reslen = dwResLen;
+
+    TRACE("(%s,type=%p,id=%p,off=%d,len=%d,data=%p)\n",
+		debugstr_a(lpszFileName), lpszResType, lpszResId,
+                dwFileOffset, dwResLen, lpvData );
+
+    lzfd = LZOpenFileA( (LPSTR)lpszFileName, &ofs, OF_READ );
+    if ( lzfd < 0 ) return 0;
+
+    if ( !dwFileOffset )
+    {
+        if (!find_resource( lzfd, lpszResType, lpszResId, &reslen, &dwFileOffset ))
+        {
+            LZClose( lzfd );
+            return 0;
+        }
+    }
+
+    LZSeek( lzfd, dwFileOffset, 0 /* SEEK_SET */ );
+    reslen = LZRead( lzfd, lpvData, min( reslen, dwResLen ) );
+    LZClose( lzfd );
+
+    return reslen;
+}
 
 /*************************************************************************
  * GetFileVersionInfoSize                  [VER.6]
