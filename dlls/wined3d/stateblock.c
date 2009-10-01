@@ -79,7 +79,7 @@ static inline void stateblock_set_bits(DWORD *map, UINT map_size)
 }
 
 /* Set all members of a stateblock savedstate to the given value */
-static void stateblock_savedstates_set(SAVEDSTATES *states, const struct wined3d_gl_info *gl_info)
+static void stateblock_savedstates_set_all(SAVEDSTATES *states, const struct wined3d_gl_info *gl_info)
 {
     unsigned int i;
 
@@ -110,6 +110,30 @@ static void stateblock_savedstates_set(SAVEDSTATES *states, const struct wined3d
     /* Dynamically sized arrays */
     memset(states->pixelShaderConstantsF, TRUE, sizeof(BOOL) * gl_info->max_pshader_constantsF);
     memset(states->vertexShaderConstantsF, TRUE, sizeof(BOOL) * gl_info->max_vshader_constantsF);
+}
+
+static void stateblock_savedstates_set_pixel(SAVEDSTATES *states, const struct wined3d_gl_info *gl_info)
+{
+    DWORD texture_mask = 0;
+    WORD sampler_mask = 0;
+    unsigned int i;
+
+    states->pixelShader = 1;
+
+    for (i = 0; i < NUM_SAVEDPIXELSTATES_R; ++i)
+    {
+        DWORD rs = SavedPixelStates_R[i];
+        states->renderState[rs >> 5] |= 1 << (rs & 0x1f);
+    }
+
+    for (i = 0; i < NUM_SAVEDPIXELSTATES_T; ++i) texture_mask |= 1 << SavedPixelStates_T[i];
+    for (i = 0; i < MAX_TEXTURES; ++i) states->textureState[i] = texture_mask;
+    for (i = 0; i < NUM_SAVEDPIXELSTATES_S; ++i) sampler_mask |= 1 << SavedPixelStates_S[i];
+    for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i) states->samplerState[i] = sampler_mask;
+    states->pixelShaderConstantsB = 0xffff;
+    states->pixelShaderConstantsI = 0xffff;
+
+    memset(states->pixelShaderConstantsF, TRUE, sizeof(BOOL) * gl_info->max_pshader_constantsF);
 }
 
 static void stateblock_copy_values(IWineD3DStateBlockImpl *dst, const IWineD3DStateBlockImpl *src,
@@ -1446,7 +1470,7 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
     {
         TRACE("ALL => Pretend everything has changed.\n");
 
-        stateblock_savedstates_set(&stateblock->changed, gl_info);
+        stateblock_savedstates_set_all(&stateblock->changed, gl_info);
         stateblock_init_contained_states(stateblock);
 
         /* Lights are not part of the changed / set structure. */
@@ -1474,33 +1498,30 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
     {
         TRACE("PIXELSTATE => Pretend all pixel states have changed.\n");
 
+        stateblock_savedstates_set_pixel(&stateblock->changed, gl_info);
+
         /* Pixel Shader Constants. */
         for (i = 0; i <  gl_info->max_pshader_constantsF; ++i)
         {
             stateblock->contained_ps_consts_f[i] = i;
-            stateblock->changed.pixelShaderConstantsF[i] = TRUE;
         }
         stateblock->num_contained_ps_consts_f =  gl_info->max_pshader_constantsF;
 
         for (i = 0; i < MAX_CONST_B; ++i)
         {
             stateblock->contained_ps_consts_b[i] = i;
-            stateblock->changed.pixelShaderConstantsB |= (1 << i);
         }
         stateblock->num_contained_ps_consts_b = MAX_CONST_B;
 
         for (i = 0; i < MAX_CONST_I; ++i)
         {
             stateblock->contained_ps_consts_i[i] = i;
-            stateblock->changed.pixelShaderConstantsI |= (1 << i);
         }
         stateblock->num_contained_ps_consts_i = MAX_CONST_I;
 
         for (i = 0; i < NUM_SAVEDPIXELSTATES_R; i++)
         {
-            DWORD rs = SavedPixelStates_R[i];
-            stateblock->changed.renderState[rs >> 5] |= 1 << (rs & 0x1f);
-            stateblock->contained_render_states[i] = rs;
+            stateblock->contained_render_states[i] = SavedPixelStates_R[i];
         }
         stateblock->num_contained_render_states = NUM_SAVEDPIXELSTATES_R;
 
@@ -1508,10 +1529,8 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
         {
             for (j = 0; j < NUM_SAVEDPIXELSTATES_T; ++j)
             {
-                DWORD state = SavedPixelStates_T[j];
-                stateblock->changed.textureState[i] |= 1 << state;
                 stateblock->contained_tss_states[stateblock->num_contained_tss_states].stage = i;
-                stateblock->contained_tss_states[stateblock->num_contained_tss_states].state = state;
+                stateblock->contained_tss_states[stateblock->num_contained_tss_states].state = SavedPixelStates_T[j];
                 ++stateblock->num_contained_tss_states;
             }
         }
@@ -1520,15 +1539,12 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
         {
             for (j = 0; j < NUM_SAVEDPIXELSTATES_S; ++j)
             {
-                DWORD state = SavedPixelStates_S[j];
-                stateblock->changed.samplerState[i] |= 1 << state;
                 stateblock->contained_sampler_states[stateblock->num_contained_sampler_states].stage = i;
-                stateblock->contained_sampler_states[stateblock->num_contained_sampler_states].state = state;
+                stateblock->contained_sampler_states[stateblock->num_contained_sampler_states].state = SavedPixelStates_S[j];
                 stateblock->num_contained_sampler_states++;
             }
         }
 
-        stateblock->changed.pixelShader = TRUE;
         if (stateblock->pixelShader) IWineD3DPixelShader_AddRef(stateblock->pixelShader);
 
         /* Pixel state blocks do not contain vertex buffers. Set them to NULL
