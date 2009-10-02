@@ -268,10 +268,10 @@ void		dump_frame_pointer_omission(unsigned long base, unsigned long len);
 FILE *open_file (const char *name, const char *ext, const char *mode);
 
 #ifdef __GNUC__
-void  do_usage (void) __attribute__ ((noreturn));
+void  do_usage (const char *arg) __attribute__ ((noreturn));
 void  fatal (const char *message)  __attribute__ ((noreturn));
 #else
-void  do_usage (void);
+void  do_usage (const char *arg);
 void  fatal (const char *message);
 #endif
 

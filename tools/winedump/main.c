@@ -80,13 +80,13 @@ static void do_dump (const char *arg)
 }
 
 
-static void do_code (void)
+static void do_code (const char *arg)
 {
   globals.do_code = 1;
 }
 
 
-static void do_trace (void)
+static void do_trace (const char *arg)
 {
   globals.do_trace = 1;
   globals.do_code = 1;
@@ -100,18 +100,18 @@ static void do_forward (const char *arg)
   globals.do_code = 1;
 }
 
-static void do_document (void)
+static void do_document (const char *arg)
 {
   globals.do_documentation = 1;
 }
 
-static void do_cdecl (void)
+static void do_cdecl (const char *arg)
 {
   globals.do_cdecl = 1;
 }
 
 
-static void do_quiet (void)
+static void do_quiet (const char *arg)
 {
   globals.do_quiet = 1;
 }
@@ -157,18 +157,18 @@ static void do_symfile (const char *arg)
 }
 
 
-static void do_verbose (void)
+static void do_verbose (const char *arg)
 {
   globals.do_verbose = 1;
 }
 
 
-static void do_symdmngl (void)
+static void do_symdmngl (const char *arg)
 {
     globals.do_demangle = 1;
 }
 
-static void do_dumphead (void)
+static void do_dumphead (const char *arg)
 {
     globals.do_dumpheader = 1;
 }
@@ -178,12 +178,12 @@ static void do_dumpsect (const char* arg)
     globals.dumpsect = arg;
 }
 
-static void do_rawdebug (void)
+static void do_rawdebug (const char *arg)
 {
     globals.do_debug = 1;
 }
 
-static void do_dumpall(void)
+static void do_dumpall(const char *arg)
 {
     globals.do_dumpheader = 1;
     globals.do_dump_rawdata = 1;
@@ -195,7 +195,7 @@ struct my_option
   const char *name;
   Mode mode;
   int   has_arg;
-  void  (*func) ();
+  void  (*func)(const char *arg);
   const char *usage;
 };
 
@@ -226,7 +226,7 @@ static const struct my_option option_table[] = {
   {NULL,    NONE, 0, NULL,        NULL}
 };
 
-void do_usage (void)
+void do_usage (const char *arg)
 {
     const struct my_option *opt;
     printf ("Usage: winedump [-h | sym <sym> | spec <dll> | dump <file>]\n");
@@ -466,7 +466,7 @@ int   main (int argc, char *argv[])
             return 1;
 	break;
     case NONE:
-	do_usage();
+	do_usage(0);
 	break;
     case DUMP:
         if (globals.input_name == NULL)
