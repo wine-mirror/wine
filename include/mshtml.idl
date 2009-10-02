@@ -4091,6 +4091,278 @@ interface IHTMLElement : IDispatch
     HRESULT all([retval, out] IDispatch **p);
 }
 
+#define WINE_IHTMLELEMENT_DISPINTERFACE_DECL                            \
+    [id(DISPID_IHTMLELEMENT_SETATTRIBUTE)]                              \
+    void setAttribute(                                                  \
+        [in] BSTR strAttributeName,                                     \
+        [in] VARIANT AttValue,                                          \
+        [defaultvalue(1), in] LONG lFlags);                             \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT_GETATTRIBUTE)]                              \
+    VARIANT getAttribute(                                               \
+        [in] BSTR strAttributeName,                                     \
+        [defaultvalue(0), in] LONG lFlags);                             \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT_REMOVEATTRIBUTE)]                           \
+    VARIANT_BOOL removeAttribute(                                       \
+        [in] BSTR strAttributeName,                                     \
+        [defaultvalue(1), in] LONG lFlags);                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]              \
+    void className(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]              \
+    BSTR className();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ID), bindable]                     \
+    void id(BSTR v);                                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ID), bindable]                     \
+    BSTR id();                                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_TAGNAME)]                          \
+    BSTR tagName();                                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_PARENTELEMENT)]                    \
+    IHTMLElement *parentElement();                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_STYLE), nonbrowsable]              \
+    IHTMLStyle *style();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]    \
+    void onhelp(VARIANT v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]    \
+    VARIANT onhelp();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]   \
+    void onclick(VARIANT v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]   \
+    VARIANT onclick();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]\
+    void ondblclick(VARIANT v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]\
+    VARIANT ondblclick();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable] \
+    void onkeydown(VARIANT v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable] \
+    VARIANT onkeydown();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]   \
+    void onkeyup(VARIANT v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]   \
+    VARIANT onkeyup();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]\
+    void onkeypress(VARIANT v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]\
+    VARIANT onkeypress();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]\
+    void onmouseout(VARIANT v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]\
+    VARIANT onmouseout();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable] \
+    void onmouseover(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable] \
+    VARIANT onmouseover();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable] \
+    void onmousemove(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable] \
+    VARIANT onmousemove();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable] \
+    void onmousedown(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable] \
+    VARIANT onmousedown();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable] \
+    void onmouseup(VARIANT v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable] \
+    VARIANT onmouseup();                                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_DOCUMENT)] IDispatch* document();  \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]     \
+    void title(BSTR v);                                                 \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]     \
+    BSTR title();                                                       \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]  \
+    void language(BSTR v);                                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]  \
+    BSTR language();                                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable] \
+    void onselectstart(VARIANT v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable] \
+    VARIANT onselectstart();                                            \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT_SCROLLINTOVIEW)]                            \
+    void scrollIntoView([optional, in] VARIANT varargStart);            \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT_CONTAINS)]                                  \
+    VARIANT_BOOL contains([in] IHTMLElement* pChild);                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]            \
+    LONG sourceIndex();                                                 \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]                     \
+    VARIANT recordNumber();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_LANG)]                             \
+    void lang(BSTR v);                                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_LANG)]                             \
+    BSTR lang();                                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]                       \
+    LONG offsetLeft();                                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]                        \
+    LONG offsetTop();                                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]                      \
+    LONG offsetWidth();                                                 \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]                     \
+    LONG offsetHeight();                                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]                     \
+    IHTMLElement* offsetParent();                                       \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_INNERHTML)]                        \
+    void innerHTML(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_INNERHTML)]                        \
+    BSTR innerHTML();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_INNERTEXT)]                        \
+    void innerText(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_INNERTEXT)]                        \
+    BSTR innerText();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_OUTERHTML)]                        \
+    void outerHTML(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_OUTERHTML)]                        \
+    BSTR outerHTML();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_OUTERTEXT)]                        \
+    void outerText(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_OUTERTEXT)]                        \
+    BSTR outerText();                                                   \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT_INSERTADJACENTHTML)]                        \
+    void insertAdjacentHTML(                                            \
+        [in] BSTR where,                                                \
+        [in] BSTR html);                                                \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT_INSERTADJACENTTEXT)]                        \
+    void insertAdjacentText(                                            \
+        [in] BSTR where,                                                \
+        [in] BSTR text);                                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_PARENTTEXTEDIT)]                   \
+    IHTMLElement* parentTextEdit();                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ISTEXTEDIT)]                       \
+    VARIANT_BOOL isTextEdit();                                          \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT_CLICK)]                                     \
+    void click();                                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_FILTERS)]                          \
+    IHTMLFiltersCollection* filters();                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable] \
+    void ondragstart(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable] \
+    VARIANT ondragstart();                                              \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT_TOSTRING)]                                  \
+    BSTR toString();                                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable] \
+    void onbeforeupdate(VARIANT v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable] \
+    VARIANT onbeforeupdate();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable] \
+    void onafterupdate(VARIANT v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable] \
+    VARIANT onafterupdate();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable] \
+    void onerrorupdate(VARIANT v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable] \
+    VARIANT onerrorupdate();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable] \
+    void onrowexit(VARIANT v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable] \
+    VARIANT onrowexit();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable] \
+    void onrowenter(VARIANT v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable] \
+    VARIANT onrowenter();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable] \
+    void ondatasetchanged(VARIANT v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable] \
+    VARIANT ondatasetchanged();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable] \
+    void ondataavailable(VARIANT v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable] \
+    VARIANT ondataavailable();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable] \
+    void ondatasetcomplete(VARIANT v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable] \
+    VARIANT ondatasetcomplete();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable] \
+    void onfilterchange(VARIANT v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable] \
+    VARIANT onfilterchange();                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_CHILDREN)]                         \
+    IDispatch* children();                                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT_ALL)]                              \
+    IDispatch* all()
+
 /*****************************************************************************
  *    IHTMLElement2 interface
  */
@@ -4658,277 +4930,7 @@ dispinterface DispHTMLGenericElement
 {
 properties:
 methods:
-    [id(DISPID_IHTMLELEMENT_SETATTRIBUTE)]
-    void setAttribute(
-            [in] BSTR strAttributeName,
-            [in] VARIANT AttributeValue,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_GETATTRIBUTE)]
-    VARIANT getAttribute(
-             [in] BSTR strAttributeName,
-             [in, defaultvalue(0)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_REMOVEATTRIBUTE)]
-    VARIANT_BOOL removeAttribute(
-            [in] BSTR strAttributeName,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [propput, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    void className(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    BSTR className();
-
-    [propput, id(DISPID_IHTMLELEMENT_ID), bindable]
-    void id(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ID), bindable]
-    BSTR id();
-
-    [propget, id(DISPID_IHTMLELEMENT_TAGNAME)]
-    BSTR tagName();
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTELEMENT)]
-    IHTMLElement *parentElement();
-
-    [propget, id(DISPID_IHTMLELEMENT_STYLE), nonbrowsable]
-    IHTMLStyle *style();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    void onhelp(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    VARIANT onhelp();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    void onclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    VARIANT onclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    void ondblclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    VARIANT ondblclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    void onkeydown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    VARIANT onkeydown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    void onkeyup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    VARIANT onkeyup();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    void onkeypress(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    VARIANT onkeypress();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    void onmouseout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    VARIANT onmouseout();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    void onmouseover(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    VARIANT onmouseover();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    void onmousemove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    VARIANT onmousemove();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    void onmousedown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    VARIANT onmousedown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    void onmouseup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    VARIANT onmouseup();
-
-    [propget, id(DISPID_IHTMLELEMENT_DOCUMENT)]
-    IDispatch *document();
-
-    [propput, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    void title(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    BSTR title();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    void language(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    BSTR language();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    void onselectstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    VARIANT onselectstart();
-
-    [id(DISPID_IHTMLELEMENT_SCROLLINTOVIEW)]
-    void scrollIntoView([in, optional] VARIANT varargStart);
-
-    [id(DISPID_IHTMLELEMENT_CONTAINS)]
-    VARIANT_BOOL contains([in] IHTMLElement *pChild);
-
-    [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]
-    LONG sourceIndex();
-
-    [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
-    VARIANT recordNumber();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANG)]
-    void lang(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANG)]
-    BSTR lang();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    LONG offsetLeft();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    LONG offsetTop();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    LONG offsetWidth();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    LONG offsetHeight();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
-    IHTMLElement *offsetParent();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    void innerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    BSTR innerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    void innerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    BSTR innerText();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    void outerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    BSTR outerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    void outerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    BSTR outerText();
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTHTML)]
-    void insertAdjacentHTML(
-            [in] BSTR where,
-            [in] BSTR html);
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTTEXT)]
-    void insertAdjacentText(
-            [in] BSTR where,
-            [in] BSTR text);
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTTEXTEDIT)]
-    IHTMLElement *parentTextEdit();
-
-    [propget, id(DISPID_IHTMLELEMENT_ISTEXTEDIT)]
-    VARIANT_BOOL isTextEdit();
-
-    [id(DISPID_IHTMLELEMENT_CLICK)]
-    void click();
-
-    [propget, id(DISPID_IHTMLELEMENT_FILTERS)]
-    IHTMLFiltersCollection *filters();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    void ondragstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    VARIANT ondragstart();
-
-    [id(DISPID_IHTMLELEMENT_TOSTRING)]
-    BSTR toString();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    void onbeforeupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    VARIANT onbeforeupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    void onafterupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    VARIANT onafterupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    void onerrorupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    VARIANT onerrorupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    void onrowexit(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    VARIANT onrowexit();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    void onrowenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    VARIANT onrowenter();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    void ondatasetchanged(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    VARIANT ondatasetchanged();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    void ondataavailable(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    VARIANT ondataavailable();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    void ondatasetcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    VARIANT ondatasetcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    void onfilterchange(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    VARIANT onfilterchange();
-
-    [propget, id(DISPID_IHTMLELEMENT_CHILDREN)]
-    IDispatch *children();
-
-    [propget, id(DISPID_IHTMLELEMENT_ALL)]
-    IDispatch *all();
+    WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLELEMENT2_SCOPENAME)]
     BSTR scopeName();
@@ -6380,277 +6382,7 @@ dispinterface DispHTMLImg
 {
 properties:
 methods:
-    [id(DISPID_IHTMLELEMENT_SETATTRIBUTE)]
-    void setAttribute(
-            [in] BSTR strAttributeName,
-            [in] VARIANT AttributeValue,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_GETATTRIBUTE)]
-    VARIANT getAttribute(
-             [in] BSTR strAttributeName,
-             [in, defaultvalue(0)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_REMOVEATTRIBUTE)]
-    VARIANT_BOOL removeAttribute(
-            [in] BSTR strAttributeName,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [propput, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    void className(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    BSTR className();
-
-    [propput, id(DISPID_IHTMLELEMENT_ID), bindable]
-    void id(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ID), bindable]
-    BSTR id();
-
-    [propget, id(DISPID_IHTMLELEMENT_TAGNAME)]
-    BSTR tagName();
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTELEMENT)]
-    IHTMLElement *parentElement();
-
-    [propget, id(DISPID_IHTMLELEMENT_STYLE), nonbrowsable]
-    IHTMLStyle *style();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    void onhelp(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    VARIANT onhelp();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    void onclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    VARIANT onclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    void ondblclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    VARIANT ondblclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    void onkeydown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    VARIANT onkeydown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    void onkeyup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    VARIANT onkeyup();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    void onkeypress(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    VARIANT onkeypress();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    void onmouseout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    VARIANT onmouseout();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    void onmouseover(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    VARIANT onmouseover();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    void onmousemove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    VARIANT onmousemove();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    void onmousedown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    VARIANT onmousedown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    void onmouseup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    VARIANT onmouseup();
-
-    [propget, id(DISPID_IHTMLELEMENT_DOCUMENT)]
-    IDispatch *document();
-
-    [propput, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    void title(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    BSTR title();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    void language(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    BSTR language();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    void onselectstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    VARIANT onselectstart();
-
-    [id(DISPID_IHTMLELEMENT_SCROLLINTOVIEW)]
-    void scrollIntoView([in, optional] VARIANT varargStart);
-
-    [id(DISPID_IHTMLELEMENT_CONTAINS)]
-    VARIANT_BOOL contains([in] IHTMLElement *pChild);
-
-    [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]
-    LONG sourceIndex();
-
-    [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
-    VARIANT recordNumber();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANG)]
-    void lang(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANG)]
-    BSTR lang();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    LONG offsetLeft();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    LONG offsetTop();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    LONG offsetWidth();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    LONG offsetHeight();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
-    IHTMLElement *offsetParent();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    void innerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    BSTR innerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    void innerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    BSTR innerText();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    void outerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    BSTR outerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    void outerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    BSTR outerText();
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTHTML)]
-    void insertAdjacentHTML(
-            [in] BSTR where,
-            [in] BSTR html);
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTTEXT)]
-    void insertAdjacentText(
-            [in] BSTR where,
-            [in] BSTR text);
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTTEXTEDIT)]
-    IHTMLElement *parentTextEdit();
-
-    [propget, id(DISPID_IHTMLELEMENT_ISTEXTEDIT)]
-    VARIANT_BOOL isTextEdit();
-
-    [id(DISPID_IHTMLELEMENT_CLICK)]
-    void click();
-
-    [propget, id(DISPID_IHTMLELEMENT_FILTERS)]
-    IHTMLFiltersCollection *filters();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    void ondragstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    VARIANT ondragstart();
-
-    [id(DISPID_IHTMLELEMENT_TOSTRING)]
-    BSTR toString();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    void onbeforeupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    VARIANT onbeforeupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    void onafterupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    VARIANT onafterupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    void onerrorupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    VARIANT onerrorupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    void onrowexit(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    VARIANT onrowexit();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    void onrowenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    VARIANT onrowenter();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    void ondatasetchanged(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    VARIANT ondatasetchanged();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    void ondataavailable(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    VARIANT ondataavailable();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    void ondatasetcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    VARIANT ondatasetcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    void onfilterchange(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    VARIANT onfilterchange();
-
-    [propget, id(DISPID_IHTMLELEMENT_CHILDREN)]
-    IDispatch *children();
-
-    [propget, id(DISPID_IHTMLELEMENT_ALL)]
-    IDispatch *all();
+    WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLELEMENT2_SCOPENAME)]
     BSTR scopeName();
@@ -7628,275 +7360,7 @@ dispinterface DispHTMLBody
 {
 properties:
 methods:
-    [id(DISPID_IHTMLELEMENT_SETATTRIBUTE)]
-    void setAttribute(
-        [in] BSTR strAttributeName,
-        [in] VARIANT AttValue,
-        [defaultvalue(1), in] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_GETATTRIBUTE)]
-    VARIANT getAttribute(
-        [in] BSTR strAttributeName,
-        [defaultvalue(0), in] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_REMOVEATTRIBUTE)]
-    VARIANT_BOOL removeAttribute(
-        [in] BSTR strAttributeName,
-        [defaultvalue(1), in] LONG lFlags);
-
-    [propput, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    void className(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    BSTR className();
-
-    [propput, id(DISPID_IHTMLELEMENT_ID), bindable]
-    void id(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ID), bindable]
-    BSTR id();
-
-    [propget, id(DISPID_IHTMLELEMENT_TAGNAME)]
-    BSTR tagName();
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTELEMENT)]
-    IHTMLElement* parentElement();
-
-    [propget, id(DISPID_IHTMLELEMENT_STYLE), nonbrowsable]
-    IHTMLStyle* style();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    void onhelp(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    VARIANT onhelp();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    void onclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    VARIANT onclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    void ondblclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    VARIANT ondblclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    void onkeydown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    VARIANT onkeydown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    void onkeyup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    VARIANT onkeyup();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    void onkeypress(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    VARIANT onkeypress();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    void onmouseout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    VARIANT onmouseout();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    void onmouseover(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    VARIANT onmouseover();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    void onmousemove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    VARIANT onmousemove();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    void onmousedown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    VARIANT onmousedown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    void onmouseup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    VARIANT onmouseup();
-
-    [propget, id(DISPID_IHTMLELEMENT_DOCUMENT)] IDispatch* document();
-
-    [propput, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    void title(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    BSTR title();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    void language(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    BSTR language();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    void onselectstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    VARIANT onselectstart();
-
-    [id(DISPID_IHTMLELEMENT_SCROLLINTOVIEW)]
-    void scrollIntoView([optional, in] VARIANT varargStart);
-
-    [id(DISPID_IHTMLELEMENT_CONTAINS)]
-    VARIANT_BOOL contains([in] IHTMLElement* pChild);
-
-    [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]
-    LONG sourceIndex();
-
-    [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
-    VARIANT recordNumber();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANG)]
-    void lang(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANG)]
-    BSTR lang();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    LONG offsetLeft();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    LONG offsetTop();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    LONG offsetWidth();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    LONG offsetHeight();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
-    IHTMLElement* offsetParent();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    void innerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    BSTR innerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    void innerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    BSTR innerText();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    void outerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    BSTR outerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    void outerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    BSTR outerText();
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTHTML)]
-    void insertAdjacentHTML(
-        [in] BSTR where,
-        [in] BSTR html);
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTTEXT)]
-    void insertAdjacentText(
-        [in] BSTR where,
-        [in] BSTR text);
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTTEXTEDIT)]
-    IHTMLElement* parentTextEdit();
-
-    [propget, id(DISPID_IHTMLELEMENT_ISTEXTEDIT)]
-    VARIANT_BOOL isTextEdit();
-
-    [id(DISPID_IHTMLELEMENT_CLICK)] void click();
-
-    [propget, id(DISPID_IHTMLELEMENT_FILTERS)]
-    IHTMLFiltersCollection* filters();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    void ondragstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    VARIANT ondragstart();
-
-    [id(DISPID_IHTMLELEMENT_TOSTRING)]
-    BSTR toString();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    void onbeforeupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    VARIANT onbeforeupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    void onafterupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    VARIANT onafterupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    void onerrorupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    VARIANT onerrorupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    void onrowexit(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    VARIANT onrowexit();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    void onrowenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    VARIANT onrowenter();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    void ondatasetchanged(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    VARIANT ondatasetchanged();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    void ondataavailable(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    VARIANT ondataavailable();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    void ondatasetcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    VARIANT ondatasetcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    void onfilterchange(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    VARIANT onfilterchange();
-
-    [propget, id(DISPID_IHTMLELEMENT_CHILDREN)]
-    IDispatch* children();
-
-    [propget, id(DISPID_IHTMLELEMENT_ALL)]
-    IDispatch* all();
+    WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLELEMENT2_SCOPENAME)]
     BSTR scopeName();
@@ -8722,275 +8186,7 @@ dispinterface DispHTMLAnchorElement
 {
 properties:
 methods:
-    [id(DISPID_IHTMLELEMENT_SETATTRIBUTE)]
-    void setAttribute(
-        [in] BSTR strAttributeName,
-        [in] VARIANT AttValue,
-        [defaultvalue(1), in] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_GETATTRIBUTE)]
-    VARIANT getAttribute(
-        [in] BSTR strAttributeName,
-        [defaultvalue(0), in] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_REMOVEATTRIBUTE)]
-    VARIANT_BOOL removeAttribute(
-        [in] BSTR strAttributeName,
-        [defaultvalue(1), in] LONG lFlags);
-
-    [propput, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    void className(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    BSTR className();
-
-    [propput, id(DISPID_IHTMLELEMENT_ID), bindable]
-    void id(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ID), bindable]
-    BSTR id();
-
-    [propget, id(DISPID_IHTMLELEMENT_TAGNAME)]
-    BSTR tagName();
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTELEMENT)]
-    IHTMLElement* parentElement();
-
-    [propget, id(DISPID_IHTMLELEMENT_STYLE), nonbrowsable]
-    IHTMLStyle* style();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    void onhelp(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    VARIANT onhelp();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    void onclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    VARIANT onclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    void ondblclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    VARIANT ondblclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    void onkeydown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    VARIANT onkeydown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    void onkeyup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    VARIANT onkeyup();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    void onkeypress(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    VARIANT onkeypress();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    void onmouseout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    VARIANT onmouseout();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    void onmouseover(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    VARIANT onmouseover();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    void onmousemove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    VARIANT onmousemove();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    void onmousedown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    VARIANT onmousedown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    void onmouseup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    VARIANT onmouseup();
-
-    [propget, id(DISPID_IHTMLELEMENT_DOCUMENT)] IDispatch* document();
-
-    [propput, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    void title(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    BSTR title();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    void language(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    BSTR language();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    void onselectstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    VARIANT onselectstart();
-
-    [id(DISPID_IHTMLELEMENT_SCROLLINTOVIEW)]
-    void scrollIntoView([optional, in] VARIANT varargStart);
-
-    [id(DISPID_IHTMLELEMENT_CONTAINS)]
-    VARIANT_BOOL contains([in] IHTMLElement* pChild);
-
-    [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]
-    LONG sourceIndex();
-
-    [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
-    VARIANT recordNumber();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANG)]
-    void lang(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANG)]
-    BSTR lang();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    LONG offsetLeft();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    LONG offsetTop();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    LONG offsetWidth();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    LONG offsetHeight();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
-    IHTMLElement* offsetParent();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    void innerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    BSTR innerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    void innerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    BSTR innerText();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    void outerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    BSTR outerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    void outerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    BSTR outerText();
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTHTML)]
-    void insertAdjacentHTML(
-        [in] BSTR where,
-        [in] BSTR html);
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTTEXT)]
-    void insertAdjacentText(
-        [in] BSTR where,
-        [in] BSTR text);
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTTEXTEDIT)]
-    IHTMLElement* parentTextEdit();
-
-    [propget, id(DISPID_IHTMLELEMENT_ISTEXTEDIT)]
-    VARIANT_BOOL isTextEdit();
-
-    [id(DISPID_IHTMLELEMENT_CLICK)] void click();
-
-    [propget, id(DISPID_IHTMLELEMENT_FILTERS)]
-    IHTMLFiltersCollection* filters();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    void ondragstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    VARIANT ondragstart();
-
-    [id(DISPID_IHTMLELEMENT_TOSTRING)]
-    BSTR toString();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    void onbeforeupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    VARIANT onbeforeupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    void onafterupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    VARIANT onafterupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    void onerrorupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    VARIANT onerrorupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    void onrowexit(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    VARIANT onrowexit();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    void onrowenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    VARIANT onrowenter();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    void ondatasetchanged(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    VARIANT ondatasetchanged();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    void ondataavailable(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    VARIANT ondataavailable();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    void ondatasetcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    VARIANT ondatasetcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    void onfilterchange(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    VARIANT onfilterchange();
-
-    [propget, id(DISPID_IHTMLELEMENT_CHILDREN)]
-    IDispatch* children();
-
-    [propget, id(DISPID_IHTMLELEMENT_ALL)]
-    IDispatch* all();
+    WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLELEMENT2_SCOPENAME)]
     BSTR scopeName();
@@ -10071,277 +9267,7 @@ dispinterface DispHTMLSelectElement
 {
 properties:
 methods:
-    [id(DISPID_IHTMLELEMENT_SETATTRIBUTE)]
-    void setAttribute(
-            [in] BSTR strAttributeName,
-            [in] VARIANT AttributeValue,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_GETATTRIBUTE)]
-    VARIANT getAttribute(
-             [in] BSTR strAttributeName,
-             [in, defaultvalue(0)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_REMOVEATTRIBUTE)]
-    VARIANT_BOOL removeAttribute(
-            [in] BSTR strAttributeName,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [propput, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    void className(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    BSTR className();
-
-    [propput, id(DISPID_IHTMLELEMENT_ID), bindable]
-    void id(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ID), bindable]
-    BSTR id();
-
-    [propget, id(DISPID_IHTMLELEMENT_TAGNAME)]
-    BSTR tagName();
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTELEMENT)]
-    IHTMLElement *parentElement();
-
-    [propget, id(DISPID_IHTMLELEMENT_STYLE), nonbrowsable]
-    IHTMLStyle *style();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    void onhelp(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    VARIANT onhelp();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    void onclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    VARIANT onclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    void ondblclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    VARIANT ondblclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    void onkeydown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    VARIANT onkeydown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    void onkeyup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    VARIANT onkeyup();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    void onkeypress(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    VARIANT onkeypress();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    void onmouseout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    VARIANT onmouseout();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    void onmouseover(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    VARIANT onmouseover();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    void onmousemove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    VARIANT onmousemove();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    void onmousedown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    VARIANT onmousedown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    void onmouseup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    VARIANT onmouseup();
-
-    [propget, id(DISPID_IHTMLELEMENT_DOCUMENT)]
-    IDispatch *document();
-
-    [propput, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    void title(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    BSTR title();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    void language(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    BSTR language();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    void onselectstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    VARIANT onselectstart();
-
-    [id(DISPID_IHTMLELEMENT_SCROLLINTOVIEW)]
-    void scrollIntoView([in, optional] VARIANT varargStart);
-
-    [id(DISPID_IHTMLELEMENT_CONTAINS)]
-    VARIANT_BOOL contains([in] IHTMLElement *pChild);
-
-    [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]
-    LONG sourceIndex();
-
-    [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
-    VARIANT recordNumber();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANG)]
-    void lang(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANG)]
-    BSTR lang();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    LONG offsetLeft();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    LONG offsetTop();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    LONG offsetWidth();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    LONG offsetHeight();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
-    IHTMLElement *offsetParent();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    void innerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    BSTR innerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    void innerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    BSTR innerText();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    void outerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    BSTR outerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    void outerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    BSTR outerText();
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTHTML)]
-    void insertAdjacentHTML(
-            [in] BSTR where,
-            [in] BSTR html);
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTTEXT)]
-    void insertAdjacentText(
-            [in] BSTR where,
-            [in] BSTR text);
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTTEXTEDIT)]
-    IHTMLElement *parentTextEdit();
-
-    [propget, id(DISPID_IHTMLELEMENT_ISTEXTEDIT)]
-    VARIANT_BOOL isTextEdit();
-
-    [id(DISPID_IHTMLELEMENT_CLICK)]
-    void click();
-
-    [propget, id(DISPID_IHTMLELEMENT_FILTERS)]
-    IHTMLFiltersCollection *filters();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    void ondragstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    VARIANT ondragstart();
-
-    [id(DISPID_IHTMLELEMENT_TOSTRING)]
-    BSTR toString();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    void onbeforeupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    VARIANT onbeforeupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    void onafterupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    VARIANT onafterupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    void onerrorupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    VARIANT onerrorupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    void onrowexit(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    VARIANT onrowexit();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    void onrowenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    VARIANT onrowenter();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    void ondatasetchanged(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    VARIANT ondatasetchanged();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    void ondataavailable(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    VARIANT ondataavailable();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    void ondatasetcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    VARIANT ondatasetcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    void onfilterchange(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    VARIANT onfilterchange();
-
-    [propget, id(DISPID_IHTMLELEMENT_CHILDREN)]
-    IDispatch *children();
-
-    [propget, id(DISPID_IHTMLELEMENT_ALL)]
-    IDispatch *all();
+    WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLELEMENT2_SCOPENAME)]
     BSTR scopeName();
@@ -11103,277 +10029,7 @@ dispinterface DispHTMLOptionElement
 {
 properties:
 methods:
-    [id(DISPID_IHTMLELEMENT_SETATTRIBUTE)]
-    void setAttribute(
-            [in] BSTR strAttributeName,
-            [in] VARIANT AttributeValue,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_GETATTRIBUTE)]
-    VARIANT getAttribute(
-             [in] BSTR strAttributeName,
-             [in, defaultvalue(0)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_REMOVEATTRIBUTE)]
-    VARIANT_BOOL removeAttribute(
-            [in] BSTR strAttributeName,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [propput, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    void className(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    BSTR className();
-
-    [propput, id(DISPID_IHTMLELEMENT_ID), bindable]
-    void id(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ID), bindable]
-    BSTR id();
-
-    [propget, id(DISPID_IHTMLELEMENT_TAGNAME)]
-    BSTR tagName();
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTELEMENT)]
-    IHTMLElement *parentElement();
-
-    [propget, id(DISPID_IHTMLELEMENT_STYLE), nonbrowsable]
-    IHTMLStyle *style();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    void onhelp(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    VARIANT onhelp();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    void onclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    VARIANT onclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    void ondblclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    VARIANT ondblclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    void onkeydown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    VARIANT onkeydown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    void onkeyup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    VARIANT onkeyup();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    void onkeypress(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    VARIANT onkeypress();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    void onmouseout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    VARIANT onmouseout();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    void onmouseover(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    VARIANT onmouseover();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    void onmousemove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    VARIANT onmousemove();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    void onmousedown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    VARIANT onmousedown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    void onmouseup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    VARIANT onmouseup();
-
-    [propget, id(DISPID_IHTMLELEMENT_DOCUMENT)]
-    IDispatch *document();
-
-    [propput, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    void title(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    BSTR title();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    void language(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    BSTR language();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    void onselectstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    VARIANT onselectstart();
-
-    [id(DISPID_IHTMLELEMENT_SCROLLINTOVIEW)]
-    void scrollIntoView([in, optional] VARIANT varargStart);
-
-    [id(DISPID_IHTMLELEMENT_CONTAINS)]
-    VARIANT_BOOL contains([in] IHTMLElement *pChild);
-
-    [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]
-    LONG sourceIndex();
-
-    [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
-    VARIANT recordNumber();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANG)]
-    void lang(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANG)]
-    BSTR lang();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    LONG offsetLeft();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    LONG offsetTop();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    LONG offsetWidth();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    LONG offsetHeight();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
-    IHTMLElement *offsetParent();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    void innerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    BSTR innerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    void innerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    BSTR innerText();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    void outerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    BSTR outerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    void outerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    BSTR outerText();
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTHTML)]
-    void insertAdjacentHTML(
-            [in] BSTR where,
-            [in] BSTR html);
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTTEXT)]
-    void insertAdjacentText(
-            [in] BSTR where,
-            [in] BSTR text);
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTTEXTEDIT)]
-    IHTMLElement *parentTextEdit();
-
-    [propget, id(DISPID_IHTMLELEMENT_ISTEXTEDIT)]
-    VARIANT_BOOL isTextEdit();
-
-    [id(DISPID_IHTMLELEMENT_CLICK)]
-    void click();
-
-    [propget, id(DISPID_IHTMLELEMENT_FILTERS)]
-    IHTMLFiltersCollection *filters();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    void ondragstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    VARIANT ondragstart();
-
-    [id(DISPID_IHTMLELEMENT_TOSTRING)]
-    BSTR toString();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    void onbeforeupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    VARIANT onbeforeupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    void onafterupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    VARIANT onafterupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    void onerrorupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    VARIANT onerrorupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    void onrowexit(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    VARIANT onrowexit();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    void onrowenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    VARIANT onrowenter();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    void ondatasetchanged(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    VARIANT ondatasetchanged();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    void ondataavailable(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    VARIANT ondataavailable();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    void ondatasetcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    VARIANT ondatasetcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    void onfilterchange(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    VARIANT onfilterchange();
-
-    [propget, id(DISPID_IHTMLELEMENT_CHILDREN)]
-    IDispatch *children();
-
-    [propget, id(DISPID_IHTMLELEMENT_ALL)]
-    IDispatch *all();
+    WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLELEMENT2_SCOPENAME)]
     BSTR scopeName();
@@ -12303,277 +10959,7 @@ dispinterface DispHTMLInputElement
 {
 properties:
 methods:
-    [id(DISPID_IHTMLELEMENT_SETATTRIBUTE)]
-    void setAttribute(
-            [in] BSTR strAttributeName,
-            [in] VARIANT AttributeValue,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_GETATTRIBUTE)]
-    VARIANT getAttribute(
-             [in] BSTR strAttributeName,
-             [in, defaultvalue(0)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_REMOVEATTRIBUTE)]
-    VARIANT_BOOL removeAttribute(
-            [in] BSTR strAttributeName,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [propput, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    void className(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    BSTR className();
-
-    [propput, id(DISPID_IHTMLELEMENT_ID), bindable]
-    void id(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ID), bindable]
-    BSTR id();
-
-    [propget, id(DISPID_IHTMLELEMENT_TAGNAME)]
-    BSTR tagName();
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTELEMENT)]
-    IHTMLElement *parentElement();
-
-    [propget, id(DISPID_IHTMLELEMENT_STYLE), nonbrowsable]
-    IHTMLStyle *style();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    void onhelp(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    VARIANT onhelp();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    void onclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    VARIANT onclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    void ondblclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    VARIANT ondblclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    void onkeydown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    VARIANT onkeydown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    void onkeyup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    VARIANT onkeyup();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    void onkeypress(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    VARIANT onkeypress();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    void onmouseout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    VARIANT onmouseout();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    void onmouseover(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    VARIANT onmouseover();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    void onmousemove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    VARIANT onmousemove();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    void onmousedown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    VARIANT onmousedown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    void onmouseup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    VARIANT onmouseup();
-
-    [propget, id(DISPID_IHTMLELEMENT_DOCUMENT)]
-    IDispatch *document();
-
-    [propput, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    void title(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    BSTR title();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    void language(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    BSTR language();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    void onselectstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    VARIANT onselectstart();
-
-    [id(DISPID_IHTMLELEMENT_SCROLLINTOVIEW)]
-    void scrollIntoView([in, optional] VARIANT varargStart);
-
-    [id(DISPID_IHTMLELEMENT_CONTAINS)]
-    VARIANT_BOOL contains([in] IHTMLElement *pChild);
-
-    [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]
-    LONG sourceIndex();
-
-    [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
-    VARIANT recordNumber();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANG)]
-    void lang(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANG)]
-    BSTR lang();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    LONG offsetLeft();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    LONG offsetTop();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    LONG offsetWidth();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    LONG offsetHeight();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
-    IHTMLElement *offsetParent();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    void innerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    BSTR innerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    void innerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    BSTR innerText();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    void outerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    BSTR outerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    void outerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    BSTR outerText();
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTHTML)]
-    void insertAdjacentHTML(
-            [in] BSTR where,
-            [in] BSTR html);
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTTEXT)]
-    void insertAdjacentText(
-            [in] BSTR where,
-            [in] BSTR text);
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTTEXTEDIT)]
-    IHTMLElement *parentTextEdit();
-
-    [propget, id(DISPID_IHTMLELEMENT_ISTEXTEDIT)]
-    VARIANT_BOOL isTextEdit();
-
-    [id(DISPID_IHTMLELEMENT_CLICK)]
-    void click();
-
-    [propget, id(DISPID_IHTMLELEMENT_FILTERS)]
-    IHTMLFiltersCollection *filters();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    void ondragstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    VARIANT ondragstart();
-
-    [id(DISPID_IHTMLELEMENT_TOSTRING)]
-    BSTR toString();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    void onbeforeupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    VARIANT onbeforeupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    void onafterupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    VARIANT onafterupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    void onerrorupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    VARIANT onerrorupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    void onrowexit(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    VARIANT onrowexit();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    void onrowenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    VARIANT onrowenter();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    void ondatasetchanged(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    VARIANT ondatasetchanged();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    void ondataavailable(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    VARIANT ondataavailable();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    void ondatasetcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    VARIANT ondatasetcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    void onfilterchange(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    VARIANT onfilterchange();
-
-    [propget, id(DISPID_IHTMLELEMENT_CHILDREN)]
-    IDispatch *children();
-
-    [propget, id(DISPID_IHTMLELEMENT_ALL)]
-    IDispatch *all();
+    WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLELEMENT2_SCOPENAME)]
     BSTR scopeName();
@@ -13443,277 +11829,7 @@ dispinterface DispHTMLUnknownElement
 {
 properties:
 methods:
-    [id(DISPID_IHTMLELEMENT_SETATTRIBUTE)]
-    void setAttribute(
-            [in] BSTR strAttributeName,
-            [in] VARIANT AttributeValue,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_GETATTRIBUTE)]
-    VARIANT getAttribute(
-             [in] BSTR strAttributeName,
-             [in, defaultvalue(0)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_REMOVEATTRIBUTE)]
-    VARIANT_BOOL removeAttribute(
-            [in] BSTR strAttributeName,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [propput, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    void className(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    BSTR className();
-
-    [propput, id(DISPID_IHTMLELEMENT_ID), bindable]
-    void id(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ID), bindable]
-    BSTR id();
-
-    [propget, id(DISPID_IHTMLELEMENT_TAGNAME)]
-    BSTR tagName();
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTELEMENT)]
-    IHTMLElement *parentElement();
-
-    [propget, id(DISPID_IHTMLELEMENT_STYLE), nonbrowsable]
-    IHTMLStyle *style();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    void onhelp(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    VARIANT onhelp();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    void onclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    VARIANT onclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    void ondblclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    VARIANT ondblclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    void onkeydown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    VARIANT onkeydown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    void onkeyup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    VARIANT onkeyup();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    void onkeypress(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    VARIANT onkeypress();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    void onmouseout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    VARIANT onmouseout();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    void onmouseover(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    VARIANT onmouseover();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    void onmousemove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    VARIANT onmousemove();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    void onmousedown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    VARIANT onmousedown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    void onmouseup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    VARIANT onmouseup();
-
-    [propget, id(DISPID_IHTMLELEMENT_DOCUMENT)]
-    IDispatch *document();
-
-    [propput, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    void title(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    BSTR title();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    void language(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    BSTR language();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    void onselectstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    VARIANT onselectstart();
-
-    [id(DISPID_IHTMLELEMENT_SCROLLINTOVIEW)]
-    void scrollIntoView([in, optional] VARIANT varargStart);
-
-    [id(DISPID_IHTMLELEMENT_CONTAINS)]
-    VARIANT_BOOL contains([in] IHTMLElement *pChild);
-
-    [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]
-    LONG sourceIndex();
-
-    [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
-    VARIANT recordNumber();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANG)]
-    void lang(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANG)]
-    BSTR lang();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    LONG offsetLeft();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    LONG offsetTop();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    LONG offsetWidth();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    LONG offsetHeight();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
-    IHTMLElement *offsetParent();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    void innerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    BSTR innerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    void innerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    BSTR innerText();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    void outerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    BSTR outerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    void outerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    BSTR outerText();
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTHTML)]
-    void insertAdjacentHTML(
-            [in] BSTR where,
-            [in] BSTR html);
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTTEXT)]
-    void insertAdjacentText(
-            [in] BSTR where,
-            [in] BSTR text);
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTTEXTEDIT)]
-    IHTMLElement *parentTextEdit();
-
-    [propget, id(DISPID_IHTMLELEMENT_ISTEXTEDIT)]
-    VARIANT_BOOL isTextEdit();
-
-    [id(DISPID_IHTMLELEMENT_CLICK)]
-    void click();
-
-    [propget, id(DISPID_IHTMLELEMENT_FILTERS)]
-    IHTMLFiltersCollection *filters();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    void ondragstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    VARIANT ondragstart();
-
-    [id(DISPID_IHTMLELEMENT_TOSTRING)]
-    BSTR toString();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    void onbeforeupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    VARIANT onbeforeupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    void onafterupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    VARIANT onafterupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    void onerrorupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    VARIANT onerrorupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    void onrowexit(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    VARIANT onrowexit();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    void onrowenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    VARIANT onrowenter();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    void ondatasetchanged(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    VARIANT ondatasetchanged();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    void ondataavailable(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    VARIANT ondataavailable();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    void ondatasetcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    VARIANT ondatasetcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    void onfilterchange(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    VARIANT onfilterchange();
-
-    [propget, id(DISPID_IHTMLELEMENT_CHILDREN)]
-    IDispatch *children();
-
-    [propget, id(DISPID_IHTMLELEMENT_ALL)]
-    IDispatch *all();
+    WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLELEMENT2_SCOPENAME)]
     BSTR scopeName();
@@ -18311,277 +16427,7 @@ dispinterface DispHTMLCommentElement
 {
 properties:
 methods:
-    [id(DISPID_IHTMLELEMENT_SETATTRIBUTE)]
-    void setAttribute(
-            [in] BSTR strAttributeName,
-            [in] VARIANT AttributeValue,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_GETATTRIBUTE)]
-    VARIANT getAttribute(
-             [in] BSTR strAttributeName,
-             [in, defaultvalue(0)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_REMOVEATTRIBUTE)]
-    VARIANT_BOOL removeAttribute(
-            [in] BSTR strAttributeName,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [propput, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    void className(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    BSTR className();
-
-    [propput, id(DISPID_IHTMLELEMENT_ID), bindable]
-    void id(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ID), bindable]
-    BSTR id();
-
-    [propget, id(DISPID_IHTMLELEMENT_TAGNAME)]
-    BSTR tagName();
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTELEMENT)]
-    IHTMLElement *parentElement();
-
-    [propget, id(DISPID_IHTMLELEMENT_STYLE), nonbrowsable]
-    IHTMLStyle *style();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    void onhelp(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    VARIANT onhelp();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    void onclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    VARIANT onclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    void ondblclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    VARIANT ondblclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    void onkeydown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    VARIANT onkeydown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    void onkeyup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    VARIANT onkeyup();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    void onkeypress(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    VARIANT onkeypress();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    void onmouseout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    VARIANT onmouseout();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    void onmouseover(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    VARIANT onmouseover();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    void onmousemove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    VARIANT onmousemove();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    void onmousedown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    VARIANT onmousedown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    void onmouseup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    VARIANT onmouseup();
-
-    [propget, id(DISPID_IHTMLELEMENT_DOCUMENT)]
-    IDispatch *document();
-
-    [propput, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    void title(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    BSTR title();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    void language(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    BSTR language();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    void onselectstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    VARIANT onselectstart();
-
-    [id(DISPID_IHTMLELEMENT_SCROLLINTOVIEW)]
-    void scrollIntoView([in, optional] VARIANT varargStart);
-
-    [id(DISPID_IHTMLELEMENT_CONTAINS)]
-    VARIANT_BOOL contains([in] IHTMLElement *pChild);
-
-    [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]
-    LONG sourceIndex();
-
-    [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
-    VARIANT recordNumber();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANG)]
-    void lang(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANG)]
-    BSTR lang();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    LONG offsetLeft();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    LONG offsetTop();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    LONG offsetWidth();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    LONG offsetHeight();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
-    IHTMLElement *offsetParent();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    void innerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    BSTR innerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    void innerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    BSTR innerText();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    void outerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    BSTR outerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    void outerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    BSTR outerText();
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTHTML)]
-    void insertAdjacentHTML(
-            [in] BSTR where,
-            [in] BSTR html);
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTTEXT)]
-    void insertAdjacentText(
-            [in] BSTR where,
-            [in] BSTR text);
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTTEXTEDIT)]
-    IHTMLElement *parentTextEdit();
-
-    [propget, id(DISPID_IHTMLELEMENT_ISTEXTEDIT)]
-    VARIANT_BOOL isTextEdit();
-
-    [id(DISPID_IHTMLELEMENT_CLICK)]
-    void click();
-
-    [propget, id(DISPID_IHTMLELEMENT_FILTERS)]
-    IHTMLFiltersCollection *filters();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    void ondragstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    VARIANT ondragstart();
-
-    [id(DISPID_IHTMLELEMENT_TOSTRING)]
-    BSTR toString();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    void onbeforeupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    VARIANT onbeforeupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    void onafterupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    VARIANT onafterupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    void onerrorupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    VARIANT onerrorupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    void onrowexit(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    VARIANT onrowexit();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    void onrowenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    VARIANT onrowenter();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    void ondatasetchanged(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    VARIANT ondatasetchanged();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    void ondataavailable(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    VARIANT ondataavailable();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    void ondatasetcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    VARIANT ondatasetcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    void onfilterchange(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    VARIANT onfilterchange();
-
-    [propget, id(DISPID_IHTMLELEMENT_CHILDREN)]
-    IDispatch *children();
-
-    [propget, id(DISPID_IHTMLELEMENT_ALL)]
-    IDispatch *all();
+    WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLELEMENT2_SCOPENAME)]
     BSTR scopeName();
@@ -20350,277 +18196,7 @@ dispinterface DispHTMLTable
 {
 properties:
 methods:
-    [id(DISPID_IHTMLELEMENT_SETATTRIBUTE)]
-    void setAttribute(
-            [in] BSTR strAttributeName,
-            [in] VARIANT AttributeValue,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_GETATTRIBUTE)]
-    VARIANT getAttribute(
-             [in] BSTR strAttributeName,
-             [in, defaultvalue(0)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_REMOVEATTRIBUTE)]
-    VARIANT_BOOL removeAttribute(
-            [in] BSTR strAttributeName,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [propput, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    void className(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    BSTR className();
-
-    [propput, id(DISPID_IHTMLELEMENT_ID), bindable]
-    void id(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ID), bindable]
-    BSTR id();
-
-    [propget, id(DISPID_IHTMLELEMENT_TAGNAME)]
-    BSTR tagName();
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTELEMENT)]
-    IHTMLElement *parentElement();
-
-    [propget, id(DISPID_IHTMLELEMENT_STYLE), nonbrowsable]
-    IHTMLStyle *style();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    void onhelp(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    VARIANT onhelp();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    void onclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    VARIANT onclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    void ondblclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    VARIANT ondblclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    void onkeydown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    VARIANT onkeydown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    void onkeyup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    VARIANT onkeyup();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    void onkeypress(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    VARIANT onkeypress();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    void onmouseout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    VARIANT onmouseout();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    void onmouseover(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    VARIANT onmouseover();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    void onmousemove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    VARIANT onmousemove();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    void onmousedown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    VARIANT onmousedown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    void onmouseup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    VARIANT onmouseup();
-
-    [propget, id(DISPID_IHTMLELEMENT_DOCUMENT)]
-    IDispatch *document();
-
-    [propput, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    void title(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    BSTR title();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    void language(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    BSTR language();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    void onselectstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    VARIANT onselectstart();
-
-    [id(DISPID_IHTMLELEMENT_SCROLLINTOVIEW)]
-    void scrollIntoView([in, optional] VARIANT varargStart);
-
-    [id(DISPID_IHTMLELEMENT_CONTAINS)]
-    VARIANT_BOOL contains([in] IHTMLElement *pChild);
-
-    [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]
-    LONG sourceIndex();
-
-    [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
-    VARIANT recordNumber();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANG)]
-    void lang(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANG)]
-    BSTR lang();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    LONG offsetLeft();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    LONG offsetTop();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    LONG offsetWidth();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    LONG offsetHeight();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
-    IHTMLElement *offsetParent();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    void innerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    BSTR innerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    void innerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    BSTR innerText();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    void outerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    BSTR outerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    void outerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    BSTR outerText();
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTHTML)]
-    void insertAdjacentHTML(
-            [in] BSTR where,
-            [in] BSTR html);
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTTEXT)]
-    void insertAdjacentText(
-            [in] BSTR where,
-            [in] BSTR text);
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTTEXTEDIT)]
-    IHTMLElement *parentTextEdit();
-
-    [propget, id(DISPID_IHTMLELEMENT_ISTEXTEDIT)]
-    VARIANT_BOOL isTextEdit();
-
-    [id(DISPID_IHTMLELEMENT_CLICK)]
-    void click();
-
-    [propget, id(DISPID_IHTMLELEMENT_FILTERS)]
-    IHTMLFiltersCollection *filters();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    void ondragstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    VARIANT ondragstart();
-
-    [id(DISPID_IHTMLELEMENT_TOSTRING)]
-    BSTR toString();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    void onbeforeupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    VARIANT onbeforeupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    void onafterupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    VARIANT onafterupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    void onerrorupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    VARIANT onerrorupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    void onrowexit(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    VARIANT onrowexit();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    void onrowenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    VARIANT onrowenter();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    void ondatasetchanged(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    VARIANT ondatasetchanged();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    void ondataavailable(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    VARIANT ondataavailable();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    void ondatasetcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    VARIANT ondatasetcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    void onfilterchange(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    VARIANT onfilterchange();
-
-    [propget, id(DISPID_IHTMLELEMENT_CHILDREN)]
-    IDispatch *children();
-
-    [propget, id(DISPID_IHTMLELEMENT_ALL)]
-    IDispatch *all();
+    WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLELEMENT2_SCOPENAME)]
     BSTR scopeName();
@@ -21360,277 +18936,7 @@ dispinterface DispHTMLTableRow
 {
 properties:
 methods:
-    [id(DISPID_IHTMLELEMENT_SETATTRIBUTE)]
-    void setAttribute(
-            [in] BSTR strAttributeName,
-            [in] VARIANT AttributeValue,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_GETATTRIBUTE)]
-    VARIANT getAttribute(
-             [in] BSTR strAttributeName,
-             [in, defaultvalue(0)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_REMOVEATTRIBUTE)]
-    VARIANT_BOOL removeAttribute(
-            [in] BSTR strAttributeName,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [propput, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    void className(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    BSTR className();
-
-    [propput, id(DISPID_IHTMLELEMENT_ID), bindable]
-    void id(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ID), bindable]
-    BSTR id();
-
-    [propget, id(DISPID_IHTMLELEMENT_TAGNAME)]
-    BSTR tagName();
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTELEMENT)]
-    IHTMLElement *parentElement();
-
-    [propget, id(DISPID_IHTMLELEMENT_STYLE), nonbrowsable]
-    IHTMLStyle *style();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    void onhelp(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    VARIANT onhelp();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    void onclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    VARIANT onclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    void ondblclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    VARIANT ondblclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    void onkeydown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    VARIANT onkeydown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    void onkeyup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    VARIANT onkeyup();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    void onkeypress(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    VARIANT onkeypress();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    void onmouseout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    VARIANT onmouseout();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    void onmouseover(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    VARIANT onmouseover();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    void onmousemove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    VARIANT onmousemove();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    void onmousedown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    VARIANT onmousedown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    void onmouseup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    VARIANT onmouseup();
-
-    [propget, id(DISPID_IHTMLELEMENT_DOCUMENT)]
-    IDispatch *document();
-
-    [propput, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    void title(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    BSTR title();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    void language(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    BSTR language();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    void onselectstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    VARIANT onselectstart();
-
-    [id(DISPID_IHTMLELEMENT_SCROLLINTOVIEW)]
-    void scrollIntoView([in, optional] VARIANT varargStart);
-
-    [id(DISPID_IHTMLELEMENT_CONTAINS)]
-    VARIANT_BOOL contains([in] IHTMLElement *pChild);
-
-    [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]
-    LONG sourceIndex();
-
-    [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
-    VARIANT recordNumber();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANG)]
-    void lang(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANG)]
-    BSTR lang();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    LONG offsetLeft();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    LONG offsetTop();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    LONG offsetWidth();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    LONG offsetHeight();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
-    IHTMLElement *offsetParent();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    void innerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    BSTR innerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    void innerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    BSTR innerText();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    void outerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    BSTR outerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    void outerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    BSTR outerText();
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTHTML)]
-    void insertAdjacentHTML(
-            [in] BSTR where,
-            [in] BSTR html);
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTTEXT)]
-    void insertAdjacentText(
-            [in] BSTR where,
-            [in] BSTR text);
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTTEXTEDIT)]
-    IHTMLElement *parentTextEdit();
-
-    [propget, id(DISPID_IHTMLELEMENT_ISTEXTEDIT)]
-    VARIANT_BOOL isTextEdit();
-
-    [id(DISPID_IHTMLELEMENT_CLICK)]
-    void click();
-
-    [propget, id(DISPID_IHTMLELEMENT_FILTERS)]
-    IHTMLFiltersCollection *filters();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    void ondragstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    VARIANT ondragstart();
-
-    [id(DISPID_IHTMLELEMENT_TOSTRING)]
-    BSTR toString();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    void onbeforeupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    VARIANT onbeforeupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    void onafterupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    VARIANT onafterupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    void onerrorupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    VARIANT onerrorupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    void onrowexit(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    VARIANT onrowexit();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    void onrowenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    VARIANT onrowenter();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    void ondatasetchanged(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    VARIANT ondatasetchanged();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    void ondataavailable(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    VARIANT ondataavailable();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    void ondatasetcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    VARIANT ondatasetcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    void onfilterchange(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    VARIANT onfilterchange();
-
-    [propget, id(DISPID_IHTMLELEMENT_CHILDREN)]
-    IDispatch *children();
-
-    [propget, id(DISPID_IHTMLELEMENT_ALL)]
-    IDispatch *all();
+    WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLELEMENT2_SCOPENAME)]
     BSTR scopeName();
@@ -22440,280 +19746,7 @@ dispinterface DispHTMLIFrame
 {
 properties:
 methods:
-    [id(DISPID_IHTMLELEMENT_SETATTRIBUTE)]
-    void setAttribute(
-            [in] BSTR strAttributeName,
-            [in] VARIANT AttributeValue,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_GETATTRIBUTE)]
-    VARIANT getAttribute(
-             [in] BSTR strAttributeName,
-             [in, defaultvalue(0)] LONG lFlags);
-
-    [id(DISPID_IHTMLELEMENT_REMOVEATTRIBUTE)]
-    VARIANT_BOOL removeAttribute(
-            [in] BSTR strAttributeName,
-            [in, defaultvalue(1)] LONG lFlags);
-
-    [propput, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    void className(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_CLASSNAME), bindable]
-    BSTR className();
-
-    [propput, id(DISPID_IHTMLELEMENT_ID), bindable]
-    void id(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ID), bindable]
-    BSTR id();
-
-    [propget, id(DISPID_IHTMLELEMENT_TAGNAME)]
-    BSTR tagName();
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTELEMENT)]
-    IHTMLElement *parentElement();
-
-    [propget, id(DISPID_IHTMLELEMENT_STYLE), nonbrowsable]
-    IHTMLStyle *style();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    void onhelp(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONHELP), displaybind, bindable]
-    VARIANT onhelp();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    void onclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONCLICK), displaybind, bindable]
-    VARIANT onclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    void ondblclick(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDBLCLICK), displaybind, bindable]
-    VARIANT ondblclick();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    void onkeydown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYDOWN), displaybind, bindable]
-    VARIANT onkeydown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    void onkeyup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYUP), displaybind, bindable]
-    VARIANT onkeyup();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    void onkeypress(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONKEYPRESS), displaybind, bindable]
-    VARIANT onkeypress();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    void onmouseout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOUT), displaybind, bindable]
-    VARIANT onmouseout();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    void onmouseover(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEOVER), displaybind, bindable]
-    VARIANT onmouseover();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    void onmousemove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEMOVE), displaybind, bindable]
-    VARIANT onmousemove();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    void onmousedown(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEDOWN), displaybind, bindable]
-    VARIANT onmousedown();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    void onmouseup(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONMOUSEUP), displaybind, bindable]
-    VARIANT onmouseup();
-
-    [propget, id(DISPID_IHTMLELEMENT_DOCUMENT)]
-    IDispatch *document();
-
-    [propput, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    void title(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_TITLE), displaybind, bindable]
-    BSTR title();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    void language(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANGUAGE), displaybind, bindable]
-    BSTR language();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    void onselectstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONSELECTSTART), displaybind, bindable]
-    VARIANT onselectstart();
-
-    [id(DISPID_IHTMLELEMENT_SCROLLINTOVIEW)]
-    void scrollIntoView([in, optional] VARIANT varargStart);
-
-    [id(DISPID_IHTMLELEMENT_CONTAINS)]
-    VARIANT_BOOL contains([in] IHTMLElement *pChild);
-
-    [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]
-    LONG sourceIndex();
-
-    [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
-    VARIANT recordNumber();
-
-    [propput, id(DISPID_IHTMLELEMENT_LANG)]
-    void lang(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_LANG)]
-    BSTR lang();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    LONG offsetLeft();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    LONG offsetTop();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    LONG offsetWidth();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    LONG offsetHeight();
-
-    [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
-    IHTMLElement *offsetParent();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    void innerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERHTML)]
-    BSTR innerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    void innerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_INNERTEXT)]
-    BSTR innerText();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    void outerHTML(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERHTML)]
-    BSTR outerHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    void outerText(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT_OUTERTEXT)]
-    BSTR outerText();
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTHTML)]
-    void insertAdjacentHTML(
-            [in] BSTR where,
-            [in] BSTR html);
-
-    [id(DISPID_IHTMLELEMENT_INSERTADJACENTTEXT)]
-    void insertAdjacentText(
-            [in] BSTR where,
-            [in] BSTR text);
-
-    [propget, id(DISPID_IHTMLELEMENT_PARENTTEXTEDIT)]
-    IHTMLElement *parentTextEdit();
-
-    [propget, id(DISPID_IHTMLELEMENT_ISTEXTEDIT)]
-    VARIANT_BOOL isTextEdit();
-
-    [id(DISPID_IHTMLELEMENT_CLICK)]
-    void click();
-
-    [propget, id(DISPID_IHTMLELEMENT_FILTERS)]
-    IHTMLFiltersCollection *filters();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    void ondragstart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDRAGSTART), displaybind, bindable]
-    VARIANT ondragstart();
-
-    [id(DISPID_IHTMLELEMENT_TOSTRING)]
-    BSTR toString();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    void onbeforeupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONBEFOREUPDATE), displaybind, bindable]
-    VARIANT onbeforeupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    void onafterupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONAFTERUPDATE), displaybind, bindable]
-    VARIANT onafterupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    void onerrorupdate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONERRORUPDATE), displaybind, bindable]
-    VARIANT onerrorupdate();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    void onrowexit(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWEXIT), displaybind, bindable]
-    VARIANT onrowexit();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    void onrowenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONROWENTER), displaybind, bindable]
-    VARIANT onrowenter();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    void ondatasetchanged(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCHANGED), displaybind, bindable]
-    VARIANT ondatasetchanged();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    void ondataavailable(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATAAVAILABLE), displaybind, bindable]
-    VARIANT ondataavailable();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    void ondatasetcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONDATASETCOMPLETE), displaybind, bindable]
-    VARIANT ondatasetcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    void onfilterchange(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT_ONFILTERCHANGE), displaybind, bindable]
-    VARIANT onfilterchange();
-
-    [propget, id(DISPID_IHTMLELEMENT_CHILDREN)]
-    IDispatch *children();
-
-    [propget, id(DISPID_IHTMLELEMENT_ALL)]
-    IDispatch *all();
-
-    [propget, id(DISPID_IHTMLELEMENT2_SCOPENAME)]
-    BSTR scopeName();
+    WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
 
     [id(DISPID_IHTMLELEMENT2_SETCAPTURE)]
     void setCapture([in, defaultvalue(-1)] VARIANT_BOOL containerCapture);
