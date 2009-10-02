@@ -215,6 +215,7 @@ BOOL netconn_connected( netconn_t * );
 BOOL netconn_create( netconn_t *, int, int, int );
 BOOL netconn_get_next_line( netconn_t *, char *, DWORD * );
 BOOL netconn_init( netconn_t *, BOOL );
+void netconn_unload( void );
 BOOL netconn_query_data_available( netconn_t *, DWORD * );
 BOOL netconn_recv( netconn_t *, void *, size_t, int, int * );
 BOOL netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr *, socklen_t * );

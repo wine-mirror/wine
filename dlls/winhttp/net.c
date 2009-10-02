@@ -97,6 +97,7 @@ static SSL_CTX *ctx;
 MAKE_FUNCPTR( SSL_library_init );
 MAKE_FUNCPTR( SSL_load_error_strings );
 MAKE_FUNCPTR( SSLv23_method );
+MAKE_FUNCPTR( SSL_CTX_free );
 MAKE_FUNCPTR( SSL_CTX_new );
 MAKE_FUNCPTR( SSL_new );
 MAKE_FUNCPTR( SSL_free );
@@ -221,6 +222,7 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     LOAD_FUNCPTR( SSL_library_init );
     LOAD_FUNCPTR( SSL_load_error_strings );
     LOAD_FUNCPTR( SSLv23_method );
+    LOAD_FUNCPTR( SSL_CTX_free );
     LOAD_FUNCPTR( SSL_CTX_new );
     LOAD_FUNCPTR( SSL_new );
     LOAD_FUNCPTR( SSL_free );
@@ -268,6 +270,20 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     return FALSE;
 #endif
     return TRUE;
+}
+
+void netconn_unload( void )
+{
+#if defined(SONAME_LIBSSL) && defined(SONAME_LIBCRYPTO)
+    if (libcrypto_handle)
+        wine_dlclose( libcrypto_handle, NULL, 0 );
+    if (libssl_handle)
+    {
+        if (ctx)
+            pSSL_CTX_free( ctx );
+        wine_dlclose( libssl_handle, NULL, 0 );
+    }
+#endif
 }
 
 BOOL netconn_connected( netconn_t *conn )
