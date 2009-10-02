@@ -1341,7 +1341,7 @@ static void test_DrawState(void)
     /* DSS_NORMAL draw Icon without any modifications */
     /* DSS_UNION draw the Icon dithered */
 
-    todo_wine check_DrawState_Size(hdcDst, FALSE, 0x00A0B0C0, 32, 0, DSS_NORMAL, __LINE__);
+    check_DrawState_Size(hdcDst, FALSE, 0x00A0B0C0, 32, 0, DSS_NORMAL, __LINE__);
     check_DrawState_Color(hdcDst, FALSE, 0x00A0B0C0, 32, 0, DSS_NORMAL, 0x00FFFFFF, 0x00C0B0A0, 0x00C0B0A0, __LINE__);
 
 cleanup:
