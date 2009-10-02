@@ -34,7 +34,9 @@
 #endif
 #include <sys/types.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <math.h>
+#include <limits.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -2156,8 +2158,10 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
  *
  * INIT ONLY
  */
-static BOOL XFONT_ReadCachedMetrics( int fd, int res, unsigned x_checksum, int x_count )
+static BOOL XFONT_ReadCachedMetrics( const char *path, int res, unsigned x_checksum, int x_count )
 {
+    int fd = open( path, O_RDONLY );
+
     if( fd >= 0 )
     {
 	unsigned u;
@@ -2270,6 +2274,8 @@ fail:
         HeapFree( GetProcessHeap(), 0, fontList );
 	fontList = NULL;
 	close( fd );
+    } else {
+        TRACE("fontcache '%s': %s\n", path, strerror(errno));
     }
     return FALSE;
 }
@@ -2855,7 +2861,7 @@ static void X11DRV_FONT_InitX11Metrics( void )
 {
   char**    x_pattern;
   unsigned  x_checksum;
-  int       i, x_count, fd, buf_size;
+  int       i, x_count, buf_size;
   char      *buffer;
   HKEY hkey;
 
@@ -2879,7 +2885,7 @@ static void X11DRV_FONT_InitX11Metrics( void )
      if( j ) x_checksum ^= __genericCheckSum( x_pattern[i], j );
   }
   x_checksum |= X_PFONT_MAGIC;
-  buf_size = 128;
+  buf_size = PATH_MAX;
   buffer = HeapAlloc( GetProcessHeap(), 0, buf_size );
 
   /* deal with systemwide font metrics cache */
@@ -2895,8 +2901,8 @@ static void X11DRV_FONT_InitX11Metrics( void )
 
   if( buffer[0] )
   {
-      fd = open( buffer, O_RDONLY );
-      XFONT_ReadCachedMetrics(fd, DefResolution, x_checksum, x_count);
+      TRACE("system fontcache is '%s'\n", buffer);
+      XFONT_ReadCachedMetrics(buffer, DefResolution, x_checksum, x_count);
   }
   if (fontList == NULL)
   {
@@ -2904,8 +2910,8 @@ static void X11DRV_FONT_InitX11Metrics( void )
       buffer = XFONT_UserMetricsCache( buffer, &buf_size );
       if( buffer[0] )
       {
-	  fd = open( buffer, O_RDONLY );
-	  XFONT_ReadCachedMetrics(fd, DefResolution, x_checksum, x_count);
+          TRACE("user fontcache is '%s'\n", buffer);
+	  XFONT_ReadCachedMetrics(buffer, DefResolution, x_checksum, x_count);
       }
   }
 
@@ -2914,11 +2920,15 @@ static void X11DRV_FONT_InitX11Metrics( void )
       int n_ff = XFONT_BuildMetrics(x_pattern, DefResolution, x_checksum, x_count);
       if( buffer[0] )	 /* update cached metrics */
       {
-	  fd = open( buffer, O_CREAT | O_TRUNC | O_RDWR, 0644 ); /* -rw-r--r-- */
-	  if( XFONT_WriteCachedMetrics( fd, x_checksum, x_count, n_ff ) == FALSE )
+	  int fd = open( buffer, O_CREAT | O_TRUNC | O_RDWR, 0666 );
+	  if ( fd < 0 )
+	  {
+	      WARN("Unable to create fontcache '%s': %s\n", buffer, strerror(errno));
+	  }
+	  else if( XFONT_WriteCachedMetrics( fd, x_checksum, x_count, n_ff ) == FALSE )
 	  {
 	      WARN("Unable to write to fontcache '%s'\n", buffer);
-	      if( fd >= 0) remove( buffer );	/* couldn't write entire file */
+	      remove( buffer );	/* couldn't write entire file */
 	  }
       }
   }
