@@ -1458,7 +1458,7 @@ static dispex_static_data_t HTMLElement_dispex = {
     HTMLElement_iface_tids
 };
 
-void HTMLElement_Init(HTMLElement *This)
+void HTMLElement_Init(HTMLElement *This, dispex_static_data_t *dispex_data)
 {
     This->lpHTMLElementVtbl = &HTMLElementVtbl;
 
@@ -1467,8 +1467,7 @@ void HTMLElement_Init(HTMLElement *This)
     HTMLElement2_Init(This);
     HTMLElement3_Init(This);
 
-    if(!This->node.dispex.data)
-        init_dispex(&This->node.dispex, (IUnknown*)HTMLELEM(This), &HTMLElement_dispex);
+    init_dispex(&This->node.dispex, (IUnknown*)HTMLELEM(This), dispex_data ? dispex_data : &HTMLElement_dispex);
 }
 
 HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_generic)
@@ -1527,7 +1526,7 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL 
 
     if(!ret) {
         ret = heap_alloc_zero(sizeof(HTMLElement));
-        HTMLElement_Init(ret);
+        HTMLElement_Init(ret, NULL);
         ret->node.vtbl = &HTMLElementImplVtbl;
     }
 

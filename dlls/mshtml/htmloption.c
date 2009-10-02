@@ -347,8 +347,7 @@ HTMLElement *HTMLOptionElement_Create(nsIDOMHTMLElement *nselem)
     ret->lpHTMLOptionElementVtbl = &HTMLOptionElementVtbl;
     ret->element.node.vtbl = &HTMLOptionElementImplVtbl;
 
-    HTMLElement_Init(&ret->element);
-    init_dispex(&ret->element.node.dispex, (IUnknown*)HTMLOPTION(ret), &HTMLOptionElement_dispex);
+    HTMLElement_Init(&ret->element, &HTMLOptionElement_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLOptionElement, (void**)&ret->nsoption);
     if(NS_FAILED(nsres))

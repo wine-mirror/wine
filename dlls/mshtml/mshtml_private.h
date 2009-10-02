@@ -669,10 +669,10 @@ HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLGenericElement_Create(nsIDOMHTMLElement*);
 
 void HTMLDOMNode_Init(HTMLDocumentNode*,HTMLDOMNode*,nsIDOMNode*);
-void HTMLElement_Init(HTMLElement*);
+void HTMLElement_Init(HTMLElement*,dispex_static_data_t*);
 void HTMLElement2_Init(HTMLElement*);
 void HTMLElement3_Init(HTMLElement*);
-void HTMLTextContainer_Init(HTMLTextContainer*);
+void HTMLTextContainer_Init(HTMLTextContainer*,dispex_static_data_t*);
 
 HRESULT HTMLDOMNode_QI(HTMLDOMNode*,REFIID,void**);
 void HTMLDOMNode_destructor(HTMLDOMNode*);

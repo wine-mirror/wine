@@ -193,8 +193,7 @@ HTMLElement *HTMLCommentElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode
     ret->element.node.vtbl = &HTMLCommentElementImplVtbl;
     ret->lpIHTMLCommentElementVtbl = &HTMLCommentElementVtbl;
 
-    init_dispex(&ret->element.node.dispex, (IUnknown*)HTMLCOMMENT(ret), &HTMLCommentElement_dispex);
-    HTMLElement_Init(&ret->element);
+    HTMLElement_Init(&ret->element, &HTMLCommentElement_dispex);
     HTMLDOMNode_Init(doc, &ret->element.node, nsnode);
 
     return &ret->element;

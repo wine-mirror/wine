@@ -607,8 +607,7 @@ HTMLElement *HTMLImgElement_Create(nsIDOMHTMLElement *nselem)
     if(NS_FAILED(nsres))
         ERR("Could not get nsIDOMHTMLImageElement: %08x\n", nsres);
 
-    init_dispex(&ret->element.node.dispex, (IUnknown*)HTMLIMG(ret), &HTMLImgElement_dispex);
-    HTMLElement_Init(&ret->element);
+    HTMLElement_Init(&ret->element, &HTMLImgElement_dispex);
 
     return &ret->element;
 }

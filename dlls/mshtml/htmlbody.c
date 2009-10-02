@@ -766,12 +766,10 @@ HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
 
     TRACE("(%p)->(%p)\n", ret, nselem);
 
-    HTMLTextContainer_Init(&ret->textcont);
-
     ret->lpHTMLBodyElementVtbl = &HTMLBodyElementVtbl;
-
-    init_dispex(&ret->textcont.element.node.dispex, (IUnknown*)HTMLBODY(ret), &HTMLBodyElement_dispex);
     ret->textcont.element.node.vtbl = &HTMLBodyElementImplVtbl;
+
+    HTMLTextContainer_Init(&ret->textcont, &HTMLBodyElement_dispex);
 
     ConnectionPoint_Init(&ret->cp_propnotif, &ret->textcont.element.cp_container, &IID_IPropertyNotifySink);
 

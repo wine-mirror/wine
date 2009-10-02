@@ -288,8 +288,7 @@ HTMLElement *HTMLIFrame_Create(nsIDOMHTMLElement *nselem)
     ret->lpIHTMLFrameBase2Vtbl = &HTMLIFrameBase2Vtbl;
     ret->element.node.vtbl = &HTMLIFrameImplVtbl;
 
-    init_dispex(&ret->element.node.dispex, (IUnknown*)HTMLFRAMEBASE2(ret), &HTMLIFrame_dispex);
-    HTMLElement_Init(&ret->element);
+    HTMLElement_Init(&ret->element, &HTMLIFrame_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLIFrameElement, (void**)&ret->nsiframe);
     if(NS_FAILED(nsres))

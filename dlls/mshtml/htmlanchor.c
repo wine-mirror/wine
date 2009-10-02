@@ -478,7 +478,7 @@ HTMLElement *HTMLAnchorElement_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLAnchorElement *ret = heap_alloc_zero(sizeof(HTMLAnchorElement));
 
-    HTMLElement_Init(&ret->element);
+    HTMLElement_Init(&ret->element, NULL);
 
     ret->lpHTMLAnchorElementVtbl = &HTMLAnchorElementVtbl;
     ret->element.node.vtbl = &HTMLAnchorElementImplVtbl;
