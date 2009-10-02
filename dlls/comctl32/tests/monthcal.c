@@ -216,9 +216,6 @@ static const struct message monthcal_hit_test_seq[] = {
     { MCM_HITTEST, sent|wparam, 0},
     { MCM_HITTEST, sent|wparam, 0},
     { MCM_HITTEST, sent|wparam, 0},
-    { MCM_HITTEST, sent|wparam, 0},
-    { MCM_HITTEST, sent|wparam, 0},
-    { MCM_HITTEST, sent|wparam, 0},
     { 0 }
 };
 
@@ -868,12 +865,14 @@ static void test_monthcal_hittest(void)
     } hittest_test_t;
 
     static const hittest_test_t title_hits[] = {
-        { MCHT_NOWHERE,      0 },
+        /* Start is the same everywhere */
+        { MCHT_TITLE,        0 },
         { MCHT_TITLEBTNPREV, 0 },
-        { MCHT_TITLEMONTH,   1 },
-        { MCHT_TITLEYEAR,    1 },
+        /* The middle piece is only tested for presence of items */
+        /* End is the same everywhere */
         { MCHT_TITLEBTNNEXT, 0 },
-        { MCHT_NOWHERE,      0 }
+        { MCHT_TITLE,        0 },
+        { MCHT_NOWHERE,      1 }
     };
 
     MCHITTESTINFO mchit;
@@ -883,6 +882,9 @@ static void test_monthcal_hittest(void)
     UINT title_index;
     HWND hwnd;
     RECT r;
+    char yearmonth[80], *locale_month, *locale_year;
+    int month_count, year_count;
+    BOOL in_the_middle;
 
     memset(&mchit, 0, sizeof(MCHITTESTINFO));
 
@@ -991,33 +993,6 @@ static void test_monthcal_hittest(void)
     expect(MCHT_CALENDARDATE, res);
 #endif
 
-    /* in active area - background section of the title */
-    mchit.pt.x = 2 * r.right / 7;
-    mchit.pt.y = 2 * r.bottom / 19;
-    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(2 * r.right / 7, mchit.pt.x);
-    expect(2 * r.bottom / 19, mchit.pt.y);
-    expect(mchit.uHit, res);
-    expect_hex(MCHT_TITLEBK, res);
-
-    /* in active area - month section of the title */
-    mchit.pt.x = r.right / 2;
-    mchit.pt.y = 2 * r.bottom / 19;
-    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(r.right / 2, mchit.pt.x);
-    expect(2 * r.bottom / 19, mchit.pt.y);
-    expect(mchit.uHit, res);
-    expect_hex(MCHT_TITLE, res);
-
-    /* in active area - year section of the title */
-    mchit.pt.x = 3 * r.right / 4;
-    mchit.pt.y = 2 * r.bottom / 19;
-    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(3 * r.right / 4, mchit.pt.x);
-    expect(2 * r.bottom / 19, mchit.pt.y);
-    expect(mchit.uHit, res);
-    expect_hex(MCHT_TITLE, res);
-
     /* in active area - date from next month */
     mchit.pt.x = 11 * r.right / 14;
     mchit.pt.y = 16 * r.bottom / 19;
@@ -1059,38 +1034,75 @@ static void test_monthcal_hittest(void)
     /* The horizontal position of title bar elements depends on locale (y pos
        is constant), so we sample across a horizontal line and make sure we
        find all elements. */
+
+    /* Get the format of the title */
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SYEARMONTH, yearmonth, 80);
+    /* Find out if we have a month and/or year */
+    locale_year = strstr(yearmonth, "y");
+    locale_month = strstr(yearmonth, "M");
+
     mchit.pt.x = 0;
     mchit.pt.y = (5/2) * r.bottom / 19;
     title_index = 0;
     old_res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
+    expect_hex(title_hits[title_index].ht, old_res);
 
+    in_the_middle = FALSE;
+    month_count = year_count = 0;
     for (x = 0; x < r.right; x++){
         mchit.pt.x = x;
         res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
         expect(x, mchit.pt.x);
         expect((5/2) * r.bottom / 19, mchit.pt.y);
         expect(mchit.uHit, res);
+        if (res != old_res) {
 
-        if (res != MCHT_TITLEBK && res != old_res) {
-            title_index++;
-            old_res = res;
+            if (old_res == MCHT_TITLEBTNPREV)
+                in_the_middle = TRUE;
 
-            if (sizeof(title_hits) / sizeof(title_hits[0]) <= title_index)
-                break;
+            if (res == MCHT_TITLEBTNNEXT)
+                in_the_middle = FALSE;
 
-            if (title_hits[title_index].todo) {
-                todo_wine
-                  ok(title_hits[title_index].ht == res, "Expected %x, got %x, pos %d\n",
-                                                         title_hits[title_index].ht, res, x);
+            if (in_the_middle) {
+                if (res == MCHT_TITLEMONTH)
+                    month_count++;
+                else if (res == MCHT_TITLEYEAR)
+                    year_count++;
+            } else {
+                title_index++;
+
+                if (sizeof(title_hits) / sizeof(title_hits[0]) <= title_index)
+                    break;
+
+                if (title_hits[title_index].todo) {
+                    todo_wine
+                    ok(title_hits[title_index].ht == res, "Expected %x, got %x, pos %d\n",
+                                                          title_hits[title_index].ht, res, x);
+                } else {
+                    ok(title_hits[title_index].ht == res, "Expected %x, got %x, pos %d\n",
+                                                          title_hits[title_index].ht, res, x);
+                }
             }
-            else ok(title_hits[title_index].ht == res, "Expected %x, got %x, pos %d\n",
-                                                        title_hits[title_index].ht, res, x);
+            old_res = res;
         }
     }
 
-    todo_wine
-        ok(r.right <= x && title_index + 1 == sizeof(title_hits) / sizeof(title_hits[0]),
-           "Wrong title layout\n");
+    /* There are some limits, even if LOCALE_SYEARMONTH contains rubbish
+     * or no month/year indicators at all */
+    if (locale_month)
+        todo_wine ok(month_count == 1, "Expected 1 month item, got %d\n", month_count);
+    else
+        ok(month_count <= 1, "Too many month items: %d\n", month_count);
+
+    if (locale_year)
+        todo_wine ok(year_count == 1, "Expected 1 year item, got %d\n", year_count);
+    else
+        ok(year_count <= 1, "Too many year items: %d\n", year_count);
+
+    todo_wine ok(month_count + year_count >= 1, "Not enough month and year items\n");
+
+    ok(r.right <= x && title_index + 1 == sizeof(title_hits) / sizeof(title_hits[0]),
+       "Wrong title layout\n");
 
     DestroyWindow(hwnd);
 }
