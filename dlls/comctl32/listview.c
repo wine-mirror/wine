@@ -3731,7 +3731,10 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
                     /* If we're allowing multiple selections, send notification.
                        If return value is non-zero, cancel. */
                     if (!(infoPtr->dwStyle & LVS_SINGLESEL) && (notify_hdr(infoPtr, LVN_MARQUEEBEGIN, &hdr) == 0))
+                    {
                         infoPtr->bMarqueeSelect = TRUE;
+                        SetCapture(infoPtr->hwndSelf);
+                    }
                 }
                 else
                 {
@@ -9533,9 +9536,12 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT 
 
     if (infoPtr->bDragging || infoPtr->bMarqueeSelect)
     {
-        /* Remove the marquee rectangle */
+        /* Remove the marquee rectangle and release our mouse capture */
         if (infoPtr->bMarqueeSelect)
+        {
             LISTVIEW_InvalidateRect(infoPtr, &infoPtr->marqueeRect);
+            ReleaseCapture();
+        }
 
         SetRect(&infoPtr->marqueeRect, 0, 0, 0, 0);
 
