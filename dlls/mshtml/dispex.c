@@ -31,6 +31,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+static const WCHAR objectW[] = {'[','o','b','j','e','c','t',']',0};
+
 typedef struct {
     DISPID id;
     BSTR name;
@@ -244,10 +246,12 @@ static dispex_data_t *preprocess_dispex_data(DispatchEx *This)
 
     TRACE("(%p)\n", This);
 
-    hres = get_typeinfo(This->data->disp_tid, &dti);
-    if(FAILED(hres)) {
-        ERR("Could not get disp type info: %08x\n", hres);
-        return NULL;
+    if(This->data->disp_tid) {
+        hres = get_typeinfo(This->data->disp_tid, &dti);
+        if(FAILED(hres)) {
+            ERR("Could not get disp type info: %08x\n", hres);
+            return NULL;
+        }
     }
 
     data = heap_alloc(sizeof(dispex_data_t));
@@ -421,8 +425,6 @@ HRESULT dispex_get_dprop_ref(DispatchEx *This, const WCHAR *name, BOOL alloc, VA
 static HRESULT dispex_value(DispatchEx *This, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
-    static const WCHAR objectW[] = {'[','o','b','j','e','c','t',']',0};
-
     if(This->data->vtbl && This->data->vtbl->value)
         return This->data->vtbl->value(This->outer, lcid, flags, params, res, ei, caller);
 
@@ -537,11 +539,13 @@ static const dispex_static_data_vtbl_t function_dispex_vtbl = {
     NULL
 };
 
+static const tid_t function_iface_tids[] = {0};
+
 static dispex_static_data_t function_dispex = {
     &function_dispex_vtbl,
-    LAST_tid,
+    NULL_tid,
     NULL,
-    NULL
+    function_iface_tids
 };
 
 static func_disp_t *create_func_disp(DispatchEx *obj, func_info_t *info)
@@ -571,6 +575,18 @@ static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
         break;
     case DISPATCH_PROPERTYGET: {
         dispex_dynamic_data_t *dynamic_data;
+
+        if(func->id == DISPID_VALUE) {
+            BSTR ret;
+
+            ret = SysAllocString(objectW);
+            if(!ret)
+                return E_OUTOFMEMORY;
+
+            V_VT(res) = VT_BSTR;
+            V_BSTR(res) = ret;
+            return S_OK;
+        }
 
         dynamic_data = get_dynamic_data(This, TRUE);
         if(!dynamic_data)
@@ -613,8 +629,10 @@ static HRESULT get_builtin_func(dispex_data_t *data, DISPID id, func_info_t **re
     while(min <= max) {
         n = (min+max)/2;
 
-        if(data->funcs[n].id == id)
-            break;
+        if(data->funcs[n].id == id) {
+            *ret = data->funcs+n;
+            return S_OK;
+        }
 
         if(data->funcs[n].id < id)
             min = n+1;
@@ -622,13 +640,8 @@ static HRESULT get_builtin_func(dispex_data_t *data, DISPID id, func_info_t **re
             max = n-1;
     }
 
-    if(min > max) {
-        WARN("invalid id %x\n", id);
-        return DISP_E_UNKNOWNNAME;
-    }
-
-    *ret = data->funcs+n;
-    return S_OK;
+    WARN("invalid id %x\n", id);
+    return DISP_E_UNKNOWNNAME;
 }
 
 #define DISPATCHEX_THIS(iface) DEFINE_THIS(DispatchEx, IDispatchEx, iface)
@@ -777,9 +790,6 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
-    if(id == DISPID_VALUE)
-        return dispex_value(This, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
-
     if(is_custom_dispid(id) && This->data->vtbl && This->data->vtbl->invoke)
         return This->data->vtbl->invoke(This->outer, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
@@ -853,6 +863,8 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         return E_FAIL;
 
     hres = get_builtin_func(data, id, &func);
+    if(id == DISPID_VALUE && hres == DISP_E_UNKNOWNNAME)
+        return dispex_value(This, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
     if(FAILED(hres))
         return hres;
 
