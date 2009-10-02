@@ -5371,6 +5371,31 @@ interface IHTMLElement4 : IDispatch
     VARIANT onfocusout()
 
 /*****************************************************************************
+ *    IHTMLUniqueName interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f4d0-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLUniqueName : IDispatch
+{
+    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
+    HRESULT uniqueNumber([retval, out] LONG * p);
+
+    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
+    HRESULT uniqueID([retval, out] BSTR * p);
+}
+
+#define WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL                 \
+    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]  \
+    LONG uniqueNumber();                                        \
+                                                                \
+    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]      \
+    BSTR uniqueID()
+
+/*****************************************************************************
  *    IHTMLGenericElement interface
  */
 [
@@ -5406,12 +5431,7 @@ methods:
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    LONG uniqueNumber();
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
-    BSTR uniqueID();
+    WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
     LONG nodeType();
@@ -6384,12 +6404,7 @@ methods:
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    LONG uniqueNumber();
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
-    BSTR uniqueID();
+    WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
     LONG nodeType();
@@ -6622,25 +6637,7 @@ methods:
 
     [propget, id(DISPID_IHTMLIMGELEMENT2_LONGDESC), displaybind, bindable]
     BSTR longDesc();
-};
-
-/*****************************************************************************
- *    IHTMLUniqueName interface
- */
-[
-    odl,
-    oleautomation,
-    dual,
-    uuid(3050f4d0-98b5-11cf-bb82-00aa00bdce0b)
-]
-interface IHTMLUniqueName : IDispatch
-{
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    HRESULT uniqueNumber([retval, out] LONG * p);
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
-    HRESULT uniqueID([retval, out] BSTR * p);
-};
+}
 
 [
     odl,
@@ -6888,12 +6885,7 @@ methods:
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    LONG uniqueNumber();
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
-    BSTR uniqueID();
+    WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
     LONG nodeType();
@@ -7251,12 +7243,7 @@ methods:
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    LONG uniqueNumber();
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
-    BSTR uniqueID();
+    WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
     LONG nodeType();
@@ -7869,12 +7856,7 @@ methods:
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    LONG uniqueNumber();
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
-    BSTR uniqueID();
+    WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
     LONG nodeType();
@@ -8157,12 +8139,7 @@ methods:
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    LONG uniqueNumber();
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
-    BSTR uniqueID();
+    WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
     LONG nodeType();
@@ -8613,12 +8590,7 @@ methods:
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    LONG uniqueNumber();
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
-    BSTR uniqueID();
+    WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
     LONG nodeType();
@@ -9009,12 +8981,7 @@ methods:
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    LONG uniqueNumber();
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
-    BSTR uniqueID();
+    WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
     LONG nodeType();
@@ -13133,12 +13100,7 @@ methods:
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    LONG uniqueNumber();
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
-    BSTR uniqueID();
+    WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
     LONG nodeType();
@@ -14428,12 +14390,7 @@ methods:
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    LONG uniqueNumber();
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
-    BSTR uniqueID();
+    WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
     LONG nodeType();
@@ -14694,12 +14651,7 @@ methods:
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    LONG uniqueNumber();
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
-    BSTR uniqueID();
+    WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
     LONG nodeType();
@@ -15030,12 +14982,7 @@ methods:
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    LONG uniqueNumber();
-
-    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
-    BSTR uniqueID();
+    WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
     LONG nodeType();
