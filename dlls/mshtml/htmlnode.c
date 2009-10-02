@@ -536,8 +536,22 @@ static HRESULT WINAPI HTMLDOMNode_cloneNode(IHTMLDOMNode *iface, VARIANT_BOOL fD
                                             IHTMLDOMNode **clonedNode)
 {
     HTMLDOMNode *This = HTMLDOMNODE_THIS(iface);
-    FIXME("(%p)->(%x %p)\n", This, fDeep, clonedNode);
-    return E_NOTIMPL;
+    nsIDOMNode *nsnode;
+    HTMLDOMNode *node;
+    nsresult nsres;
+
+    TRACE("(%p)->(%x %p)\n", This, fDeep, clonedNode);
+
+    nsres = nsIDOMNode_CloneNode(This->nsnode, fDeep != VARIANT_FALSE, &nsnode);
+    if(NS_FAILED(nsres) || !nsnode) {
+        ERR("CloneNode failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    node = get_node(This->doc, nsnode, TRUE);
+    IHTMLDOMNode_AddRef(HTMLDOMNODE(node));
+    *clonedNode = HTMLDOMNODE(node);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMNode_removeNode(IHTMLDOMNode *iface, VARIANT_BOOL fDeep,

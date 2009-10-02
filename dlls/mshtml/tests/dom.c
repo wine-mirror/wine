@@ -656,6 +656,22 @@ static IHTMLDocument2 *_get_owner_doc(unsigned line, IUnknown *unk)
     return doc;
 }
 
+#define clone_node(n,d) _clone_node(__LINE__,n,d)
+static IHTMLDOMNode *_clone_node(unsigned line, IUnknown *unk, VARIANT_BOOL deep)
+{
+    IHTMLDOMNode *node = _get_node_iface(line, unk);
+    IHTMLDOMNode *ret = NULL;
+    HRESULT hres;
+
+    hres = IHTMLDOMNode_cloneNode(node, deep, &ret);
+    IHTMLDOMNode_Release(node);
+    ok_(__FILE__,line)(hres == S_OK, "cloneNode failed: %08x\n", hres);
+    ok_(__FILE__,line)(ret != NULL, "ret == NULL\n");
+
+    return ret;
+
+}
+
 #define test_elem_tag(u,n) _test_elem_tag(__LINE__,u,n)
 static void _test_elem_tag(unsigned line, IUnknown *unk, const char *extag)
 {
@@ -1285,6 +1301,21 @@ static void _test_elem_collection(unsigned line, IUnknown *unk,
     ok_(__FILE__,line) (disp == NULL, "disp != NULL\n");
 
     IHTMLElementCollection_Release(col);
+}
+
+#define test_elem_all(c,t,l) _test_elem_all(__LINE__,c,t,l)
+static void _test_elem_all(unsigned line, IUnknown *unk, const elem_type_t *elem_types, LONG exlen)
+{
+    IHTMLElement *elem = _get_elem_iface(line, unk);
+    IDispatch *disp;
+    HRESULT hres;
+
+    hres = IHTMLElement_get_all(elem, &disp);
+    IHTMLElement_Release(elem);
+    ok_(__FILE__,line)(hres == S_OK, "get_all failed: %08x\n", hres);
+
+    _test_elem_collection(line, (IUnknown*)disp, elem_types, exlen);
+    IDispatch_Release(disp);
 }
 
 #define test_elem_getelembytag(u,t,l) _test_elem_getelembytag(__LINE__,u,t,l)
@@ -4462,9 +4493,11 @@ static void test_table_elem(IHTMLElement *elem)
 {
     IHTMLElementCollection *col;
     IHTMLTable *table;
+    IHTMLDOMNode *node;
     HRESULT hres;
 
     static const elem_type_t row_types[] = {ET_TR,ET_TR};
+    static const elem_type_t all_types[] = {ET_TBODY,ET_TR,ET_TR,ET_TD,ET_TD};
 
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLTable, (void**)&table);
     ok(hres == S_OK, "Could not get IHTMLTable iface: %08x\n", hres);
@@ -4478,6 +4511,18 @@ static void test_table_elem(IHTMLElement *elem)
 
     test_elem_collection((IUnknown*)col, row_types, sizeof(row_types)/sizeof(*row_types));
     IHTMLElementCollection_Release(col);
+
+    test_elem_all((IUnknown*)table, all_types, sizeof(all_types)/sizeof(*all_types));
+
+    node = clone_node((IUnknown*)table, VARIANT_TRUE);
+    test_elem_tag((IUnknown*)node, "TABLE");
+    test_elem_all((IUnknown*)node, all_types, sizeof(all_types)/sizeof(*all_types));
+    IHTMLDOMNode_Release(node);
+
+    node = clone_node((IUnknown*)table, VARIANT_FALSE);
+    test_elem_tag((IUnknown*)node, "TABLE");
+    test_elem_all((IUnknown*)node, NULL, 0);
+    IHTMLDOMNode_Release(node);
 
     IHTMLTable_Release(table);
 }
@@ -4748,16 +4793,8 @@ static void test_elems(IHTMLDocument2 *doc)
     }
 
     elem = get_doc_elem(doc);
-    ok(hres == S_OK, "get_documentElement failed: %08x\n", hres);
-    hres = IHTMLElement_get_all(elem, &disp);
+    test_elem_all((IUnknown*)elem, all_types+1, sizeof(all_types)/sizeof(all_types[0])-1);
     IHTMLElement_Release(elem);
-    ok(hres == S_OK, "get_all failed: %08x\n", hres);
-
-    hres = IDispatch_QueryInterface(disp, &IID_IHTMLElementCollection, (void**)&col);
-    IDispatch_Release(disp);
-    ok(hres == S_OK, "Could not get IHTMLElementCollection: %08x\n", hres);
-    test_elem_collection((IUnknown*)col, all_types+1, sizeof(all_types)/sizeof(all_types[0])-1);
-    IHTMLElementCollection_Release(col);
 
     get_elem_by_id(doc, "xxx", FALSE);
     elem = get_doc_elem_by_id(doc, "xxx");
