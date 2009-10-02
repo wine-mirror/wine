@@ -2130,6 +2130,13 @@ BOOL WINAPI ImmSetCompositionStringA(
     if (!data)
         return FALSE;
 
+    if (!(dwIndex == SCS_SETSTR ||
+          dwIndex == SCS_CHANGEATTR ||
+          dwIndex == SCS_CHANGECLAUSE ||
+          dwIndex == SCS_SETRECONVERTSTRING ||
+          dwIndex == SCS_QUERYRECONVERTSTRING))
+        return FALSE;
+
     if (!is_himc_ime_unicode(data))
         return data->immKbd->pImeSetCompositionString(hIMC, dwIndex, lpComp,
                         dwCompLen, lpRead, dwReadLen);
@@ -2176,6 +2183,13 @@ BOOL WINAPI ImmSetCompositionStringW(
             hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen);
 
     if (!data)
+        return FALSE;
+
+    if (!(dwIndex == SCS_SETSTR ||
+          dwIndex == SCS_CHANGEATTR ||
+          dwIndex == SCS_CHANGECLAUSE ||
+          dwIndex == SCS_SETRECONVERTSTRING ||
+          dwIndex == SCS_QUERYRECONVERTSTRING))
         return FALSE;
 
     if (is_himc_ime_unicode(data))
