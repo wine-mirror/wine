@@ -59,7 +59,7 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
     IMAPITable* msg_table;
     LPSRowSet rows = NULL;
     IMsgStore* msg_store;
-    IMAPIFolder* folder;
+    IMAPIFolder* folder = NULL;
     LPENTRYID entry_id;
     LPSPropValue props;
     ULONG entry_len;
