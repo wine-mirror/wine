@@ -171,6 +171,20 @@ __ASM_GLOBAL_FUNC( wine_call_on_stack,
                    "lwz 0, 4(1)\n\t"    /* fetch return address */
                    "mtlr 0\n\t"         /* return address -> lr */
                    "blr")               /* return */
+#elif defined(__arm__)
+__ASM_GLOBAL_FUNC( wine_call_on_stack,
+                   "str r14, [r13, #4]\n\t"     /* save return address on stack */
+                   "sub r2, r2, #16\n\t"        /* reserve space on new stack */
+                   "str r13, [r2, #12]\n\t"     /* store old sp */
+                   "mov r3, r0\n\t"             /* func */
+                   "mov r0, r1\n\t"             /* arg */
+                   "mov r13, r2\n\t"            /* stack */
+                   "mov r2, #0\n\t"             /* zero */
+                   "str r2, [r13]\n\t"          /* bottom of stack */
+                   "sub r13, r13, #16\n\t"      /* create a frame for this function */
+                   "blx r3\n\t"                 /* call func */
+                   "ldr r13, [r13, #28]\n\t"    /* fetch old sp */
+                   "ldr r15, [r13, #4]")        /* fetch return address and return */
 #else
 #error You must implement wine_switch_to_stack for your platform
 #endif
