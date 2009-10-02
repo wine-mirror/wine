@@ -1498,6 +1498,12 @@ then
   then
     EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
   fi
+
+  dnl Enable -Werror for maintainer mode
+  if test "${enable_maintainer_mode+set}" = set
+  then
+      WINE_TRY_CFLAGS([-Werror])
+  fi
 fi
 
 dnl **** Check for underscore on external symbols ****

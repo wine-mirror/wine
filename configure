@@ -11753,6 +11753,42 @@ $as_echo "$ac_cv_c_string_h_warnings" >&6; }
   then
     EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
   fi
+
+    if test "${enable_maintainer_mode+set}" = set
+  then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror" >&5
+$as_echo_n "checking whether the compiler supports -Werror... " >&6; }
+if test "${ac_cv_cflags__Werror+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Werror"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__Werror=yes
+else
+  ac_cv_cflags__Werror=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Werror" >&5
+$as_echo "$ac_cv_cflags__Werror" >&6; }
+if test $ac_cv_cflags__Werror = yes; then :
+  EXTRACFLAGS="$EXTRACFLAGS -Werror"
+fi
+  fi
 fi
 
 
