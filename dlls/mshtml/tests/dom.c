@@ -353,7 +353,7 @@ static const elem_type_info_t elem_type_infos[] = {
     {"HEAD",      elem_iids,        NULL},
     {"TITLE",     elem_iids,        NULL},
     {"BODY",      body_iids,        &DIID_DispHTMLBody},
-    {"A",         anchor_iids,      NULL},
+    {"A",         anchor_iids,      &DIID_DispHTMLAnchorElement},
     {"INPUT",     input_iids,       &DIID_DispHTMLInputElement},
     {"SELECT",    select_iids,      &DIID_DispHTMLSelectElement},
     {"TEXTAREA",  textarea_iids,    NULL},
@@ -527,7 +527,8 @@ static void _test_disp(unsigned line, IUnknown *unk, const IID *diid, const char
     if(_test_get_dispid(line, unk, &iid))
         ok_(__FILE__,line) (IsEqualGUID(&iid, diid), "unexpected guid %s\n", dbgstr_guid(&iid));
 
-    _test_disp_value(line, unk, val);
+    if(val)
+        _test_disp_value(line, unk, val);
 }
 
 #define test_disp2(u,id,id2,v) _test_disp2(__LINE__,u,id,id2,v)
@@ -539,7 +540,8 @@ static void _test_disp2(unsigned line, IUnknown *unk, const IID *diid, const IID
         ok_(__FILE__,line) (IsEqualGUID(&iid, diid) || broken(IsEqualGUID(&iid, diid2)),
                 "unexpected guid %s\n", dbgstr_guid(&iid));
 
-    _test_disp_value(line, unk, val);
+    if(val)
+        _test_disp_value(line, unk, val);
 }
 
 #define get_elem_iface(u) _get_elem_iface(__LINE__,u)
@@ -664,7 +666,7 @@ static void _test_elem_type(unsigned line, IUnknown *unk, elem_type_t type)
     _test_elem_tag(line, unk, elem_type_infos[type].tag);
     _test_ifaces(line, unk, elem_type_infos[type].iids);
 
-    if(elem_type_infos[type].dispiid)
+    if(elem_type_infos[type].dispiid && type != ET_A)
         _test_disp(line, unk, elem_type_infos[type].dispiid, "[object]");
 }
 
