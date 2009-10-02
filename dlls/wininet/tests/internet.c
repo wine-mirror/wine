@@ -184,7 +184,7 @@ static void test_InternetQueryOptionA(void)
   if (retval)
   {
       ok(!strcmp(useragent,buffer),"Got wrong user agent string %s instead of %s\n",buffer,useragent);
-      todo_wine ok(len == strlen(useragent),"Got wrong user agent length %d instead of %d\n",len,lstrlenA(useragent));
+      ok(len == strlen(useragent),"Got wrong user agent length %d instead of %d\n",len,lstrlenA(useragent));
   }
   ok(err == 0xdeadbeef, "Got wrong error code %d\n",err);
   HeapFree(GetProcessHeap(),0,buffer);
@@ -231,7 +231,7 @@ static void test_InternetQueryOptionA(void)
   len=0;
   retval=InternetQueryOptionA(hinet,INTERNET_OPTION_USER_AGENT,NULL,&len);
   err=GetLastError();
-  todo_wine ok(len == 1,"Got wrong user agent length %d instead of %d\n",len,1);
+  ok(len == 1,"Got wrong user agent length %d instead of %d\n",len,1);
   ok(retval == 0,"Got wrong return value %d\n",retval);
   ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code%d\n",err);
 

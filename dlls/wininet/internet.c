@@ -526,17 +526,36 @@ static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         bufsize = *size;
 
         if (unicode) {
-            *size = (strlenW(ai->lpszAgent) + 1) * sizeof(WCHAR);
+            DWORD len = ai->lpszAgent ? strlenW(ai->lpszAgent) : 0;
+
+            *size = (len + 1) * sizeof(WCHAR);
             if(!buffer || bufsize < *size)
                 return ERROR_INSUFFICIENT_BUFFER;
 
-            strcpyW(buffer, ai->lpszAgent);
+            if (ai->lpszAgent)
+                strcpyW(buffer, ai->lpszAgent);
+            else
+                *(WCHAR *)buffer = 0;
+            /* If the buffer is copied, the returned length doesn't include
+             * the NULL terminator.
+             */
+            *size = len * sizeof(WCHAR);
         }else {
-            *size = WideCharToMultiByte(CP_ACP, 0, ai->lpszAgent, -1, NULL, 0, NULL, NULL);
+            if (ai->lpszAgent)
+                *size = WideCharToMultiByte(CP_ACP, 0, ai->lpszAgent, -1, NULL, 0, NULL, NULL);
+            else
+                *size = 1;
             if(!buffer || bufsize < *size)
                 return ERROR_INSUFFICIENT_BUFFER;
 
-            WideCharToMultiByte(CP_ACP, 0, ai->lpszAgent, -1, buffer, *size, NULL, NULL);
+            if (ai->lpszAgent)
+                WideCharToMultiByte(CP_ACP, 0, ai->lpszAgent, -1, buffer, *size, NULL, NULL);
+            else
+                *(char *)buffer = 0;
+            /* If the buffer is copied, the returned length doesn't include
+             * the NULL terminator.
+             */
+            *size -= 1;
         }
 
         return ERROR_SUCCESS;
