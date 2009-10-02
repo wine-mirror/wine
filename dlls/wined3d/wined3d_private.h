@@ -150,9 +150,9 @@ void wined3d_rb_free(void *ptr) DECLSPEC_HIDDEN;
 
 /* Used for CreateStateBlock */
 #define NUM_SAVEDPIXELSTATES_R     35
-#define NUM_SAVEDPIXELSTATES_T     18
+#define NUM_SAVEDPIXELSTATES_T     17
 #define NUM_SAVEDPIXELSTATES_S     12
-#define NUM_SAVEDVERTEXSTATES_R    34
+#define NUM_SAVEDVERTEXSTATES_R    33
 #define NUM_SAVEDVERTEXSTATES_T    2
 #define NUM_SAVEDVERTEXSTATES_S    1
 
