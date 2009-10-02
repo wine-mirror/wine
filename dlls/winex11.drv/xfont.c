@@ -1830,18 +1830,10 @@ static char* XFONT_UserMetricsCache( char* buffer, int* buf_size )
     const char *confdir = wine_get_config_dir();
     const char *display_name = XDisplayName(NULL);
     int len = strlen(confdir) + strlen(INIFontMetrics) + strlen(display_name) + 8;
-    int display = 0;
-    int screen = 0;
+    unsigned int display = 0;
+    unsigned int screen = 0;
     char *p, *ext;
 
-    /*
-    **  Normalize the display name, since on Red Hat systems, DISPLAY
-    **      is commonly set to one of either 'unix:0.0' or ':0' or ':0.0'.
-    **      after this code, all of the above will resolve to ':0.0'.
-    */
-    if (!strncmp( display_name, "unix:", 5 )) display_name += 4;
-    p = strchr(display_name, ':');
-    if (p) sscanf(p + 1, "%d.%d", &display, &screen);
 
     if ((len > *buf_size) &&
         !(buffer = HeapReAlloc( GetProcessHeap(), 0, buffer, *buf_size = len )))
@@ -1854,8 +1846,46 @@ static char* XFONT_UserMetricsCache( char* buffer, int* buf_size )
     ext = buffer + strlen(buffer);
     strcpy( ext, display_name );
 
-    if (!(p = strchr( ext, ':' ))) p = ext + strlen(ext);
-    sprintf( p, ":%d.%d", display, screen );
+    /*
+    **  Normalize the display name. The format of DISPLAY is
+    **    [protocol/] [hostname] :[:] num [.num]
+    **
+    **  - on Red Hat systems, DISPLAY is commonly set to one of
+    **    either 'unix:0.0' or ':0' or ':0.0'.
+    **  - on MacOS X systems, DISPLAY is commonly set to
+    **    /tmp/foo/:0
+    **
+    **  after this code, all of the above will resolve to ':0.0'.
+    */
+    p = strrchr(ext, ':');
+    if (p)
+    {
+        sscanf(p + 1, "%u.%u", &display, &screen);
+        *p = 0;
+        if (display > 9999)
+        {
+            WARN("unlikely X11 display number\n");
+            *buffer = 0;
+            return buffer;
+        }
+    }
+    if (!strcmp( ext, "unix" ) ||
+        !strcmp( ext, "localhost" ))
+        *ext = 0;
+    if (!strncmp( ext, "/tmp/", 5 ))
+        *ext = 0; /* assume pathnames are local */
+
+    /* Deal with the possibility of slashes in the display name */
+    for( p = ext; *p; p++ )
+        if ( *p == '/' )
+            *p = '_';
+
+    /* X11 fonts are per-display, not per-screen, so don't
+    ** include the screen number in the font cache filename */
+    sprintf( ext + strlen(ext), ":%u", display );
+
+    TRACE("display '%s' -> cachefile '%s'\n", display_name, buffer);
+
     return buffer;
 }
 
