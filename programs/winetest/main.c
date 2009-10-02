@@ -135,8 +135,11 @@ static int running_on_visible_desktop (void)
 {
     HWND desktop;
     HMODULE huser32 = GetModuleHandle("user32.dll");
-    FARPROC pGetProcessWindowStation = GetProcAddress(huser32, "GetProcessWindowStation");
-    FARPROC pGetUserObjectInformationA = GetProcAddress(huser32, "GetUserObjectInformationA");
+    HWINSTA (WINAPI *pGetProcessWindowStation)(void);
+    BOOL (WINAPI *pGetUserObjectInformationA)(HANDLE,INT,LPVOID,DWORD,LPDWORD);
+
+    pGetProcessWindowStation = (void *)GetProcAddress(huser32, "GetProcessWindowStation");
+    pGetUserObjectInformationA = (void *)GetProcAddress(huser32, "GetUserObjectInformationA");
 
     desktop = GetDesktopWindow();
     if (!GetWindowLongPtrW(desktop, GWLP_WNDPROC)) /* Win9x */
