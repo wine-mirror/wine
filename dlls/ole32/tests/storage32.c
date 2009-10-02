@@ -1185,6 +1185,107 @@ static void test_revert(void)
     ok( r == TRUE, "deleted file\n");
 }
 
+static void test_nonroot_transacted(void)
+{
+    IStorage *stg = NULL, *stg2 = NULL;
+    HRESULT r;
+    IStream *stm = NULL;
+    static const WCHAR stgname[] = { 'P','E','R','M','S','T','G',0 };
+    static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
+    static const WCHAR stmname2[] = { 'F','O','O',0 };
+
+    DeleteFileA(filenameA);
+
+    /* create a transacted file */
+    r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE |
+                            STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
+    ok(r==S_OK, "StgCreateDocfile failed\n");
+
+    /* create a transacted substorage */
+    r = IStorage_CreateStorage(stg, stgname, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_TRANSACTED, 0, 0, &stg2);
+    ok(r==S_OK, "IStorage->CreateStorage failed, hr=%08x\n", r);
+
+    if (r == S_OK)
+    {
+        /* create and commit stmname */
+        r = IStorage_CreateStream(stg2, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
+        ok(r==S_OK, "IStorage->CreateStream failed\n");
+        if (r == S_OK)
+            IStream_Release(stm);
+
+        IStorage_Commit(stg2, 0);
+
+        /* create and revert stmname2 */
+        r = IStorage_CreateStream(stg2, stmname2, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
+        ok(r==S_OK, "IStorage->CreateStream failed\n");
+        if (r == S_OK)
+            IStream_Release(stm);
+
+        IStorage_Revert(stg2);
+
+        /* check that Commit and Revert really worked */
+        r = IStorage_OpenStream(stg2, stmname, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
+        ok(r==S_OK, "IStorage->OpenStream should succeed %08x\n", r);
+        if (r == S_OK)
+            IStream_Release(stm);
+
+        r = IStorage_OpenStream(stg2, stmname2, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
+        todo_wine ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStream should fail %08x\n", r);
+        if (r == S_OK)
+            IStream_Release(stm);
+
+        IStorage_Release(stg2);
+    }
+
+    IStream_Release(stg);
+
+    /* create a non-transacted file */
+    r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE |
+                            STGM_READWRITE, 0, &stg);
+    ok(r==S_OK, "StgCreateDocfile failed\n");
+
+    /* create a transacted substorage */
+    r = IStorage_CreateStorage(stg, stgname, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_TRANSACTED, 0, 0, &stg2);
+    ok(r==S_OK, "IStorage->CreateStorage failed, hr=%08x\n", r);
+
+    if (r == S_OK)
+    {
+        /* create and commit stmname */
+        r = IStorage_CreateStream(stg2, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
+        ok(r==S_OK, "IStorage->CreateStream failed\n");
+        if (r == S_OK)
+            IStream_Release(stm);
+
+        IStorage_Commit(stg2, 0);
+
+        /* create and revert stmname2 */
+        r = IStorage_CreateStream(stg2, stmname2, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
+        ok(r==S_OK, "IStorage->CreateStream failed\n");
+        if (r == S_OK)
+            IStream_Release(stm);
+
+        IStorage_Revert(stg2);
+
+        /* check that Commit and Revert really worked */
+        r = IStorage_OpenStream(stg2, stmname, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
+        ok(r==S_OK, "IStorage->OpenStream should succeed %08x\n", r);
+        if (r == S_OK)
+            IStream_Release(stm);
+
+        r = IStorage_OpenStream(stg2, stmname2, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
+        todo_wine ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStream should fail %08x\n", r);
+        if (r == S_OK)
+            IStream_Release(stm);
+
+        IStorage_Release(stg2);
+    }
+
+    IStream_Release(stg);
+
+    r = DeleteFileA(filenameA);
+    ok( r == TRUE, "deleted file\n");
+}
+
 static void test_ReadClassStm(void)
 {
     CLSID clsid;
@@ -1741,6 +1842,7 @@ START_TEST(storage32)
     test_streamenum();
     test_transact();
     test_revert();
+    test_nonroot_transacted();
     test_ReadClassStm();
     test_access();
     test_writeclassstg();
