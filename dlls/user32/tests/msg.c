@@ -5257,7 +5257,7 @@ static WNDPROC old_button_proc;
 
 static LRESULT CALLBACK button_hook_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static long defwndproc_counter = 0;
+    static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct recvd_message msg;
 
@@ -5458,7 +5458,7 @@ static WNDPROC old_static_proc;
 
 static LRESULT CALLBACK static_hook_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static long defwndproc_counter = 0;
+    static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct recvd_message msg;
 
@@ -5553,7 +5553,7 @@ static WNDPROC old_combobox_proc;
 
 static LRESULT CALLBACK combobox_hook_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static long defwndproc_counter = 0;
+    static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct recvd_message msg;
 
@@ -9011,7 +9011,7 @@ static WNDPROC old_edit_proc;
 
 static LRESULT CALLBACK edit_hook_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static long defwndproc_counter = 0;
+    static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct recvd_message msg;
 
