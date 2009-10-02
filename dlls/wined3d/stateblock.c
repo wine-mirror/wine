@@ -28,9 +28,136 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define GLINFO_LOCATION This->wineD3DDevice->adapter->gl_info
 
-/***************************************
- * Stateblock helper functions follow
- **************************************/
+#define NUM_SAVEDPIXELSTATES_R     35
+#define NUM_SAVEDPIXELSTATES_T     17
+#define NUM_SAVEDPIXELSTATES_S     12
+#define NUM_SAVEDVERTEXSTATES_R    33
+#define NUM_SAVEDVERTEXSTATES_T    2
+#define NUM_SAVEDVERTEXSTATES_S    1
+
+static const DWORD pixel_states_render[NUM_SAVEDPIXELSTATES_R] =
+{
+    WINED3DRS_ALPHABLENDENABLE,
+    WINED3DRS_ALPHAFUNC,
+    WINED3DRS_ALPHAREF,
+    WINED3DRS_ALPHATESTENABLE,
+    WINED3DRS_BLENDOP,
+    WINED3DRS_COLORWRITEENABLE,
+    WINED3DRS_DESTBLEND,
+    WINED3DRS_DITHERENABLE,
+    WINED3DRS_FILLMODE,
+    WINED3DRS_FOGDENSITY,
+    WINED3DRS_FOGEND,
+    WINED3DRS_FOGSTART,
+    WINED3DRS_LASTPIXEL,
+    WINED3DRS_SHADEMODE,
+    WINED3DRS_SRCBLEND,
+    WINED3DRS_STENCILENABLE,
+    WINED3DRS_STENCILFAIL,
+    WINED3DRS_STENCILFUNC,
+    WINED3DRS_STENCILMASK,
+    WINED3DRS_STENCILPASS,
+    WINED3DRS_STENCILREF,
+    WINED3DRS_STENCILWRITEMASK,
+    WINED3DRS_STENCILZFAIL,
+    WINED3DRS_TEXTUREFACTOR,
+    WINED3DRS_WRAP0,
+    WINED3DRS_WRAP1,
+    WINED3DRS_WRAP2,
+    WINED3DRS_WRAP3,
+    WINED3DRS_WRAP4,
+    WINED3DRS_WRAP5,
+    WINED3DRS_WRAP6,
+    WINED3DRS_WRAP7,
+    WINED3DRS_ZENABLE,
+    WINED3DRS_ZFUNC,
+    WINED3DRS_ZWRITEENABLE,
+};
+
+static const DWORD pixel_states_texture[NUM_SAVEDPIXELSTATES_T] =
+{
+    WINED3DTSS_ALPHAARG0,
+    WINED3DTSS_ALPHAARG1,
+    WINED3DTSS_ALPHAARG2,
+    WINED3DTSS_ALPHAOP,
+    WINED3DTSS_BUMPENVLOFFSET,
+    WINED3DTSS_BUMPENVLSCALE,
+    WINED3DTSS_BUMPENVMAT00,
+    WINED3DTSS_BUMPENVMAT01,
+    WINED3DTSS_BUMPENVMAT10,
+    WINED3DTSS_BUMPENVMAT11,
+    WINED3DTSS_COLORARG0,
+    WINED3DTSS_COLORARG1,
+    WINED3DTSS_COLORARG2,
+    WINED3DTSS_COLOROP,
+    WINED3DTSS_RESULTARG,
+    WINED3DTSS_TEXCOORDINDEX,
+    WINED3DTSS_TEXTURETRANSFORMFLAGS,
+};
+
+static const DWORD pixel_states_sampler[NUM_SAVEDPIXELSTATES_S] =
+{
+    WINED3DSAMP_ADDRESSU,
+    WINED3DSAMP_ADDRESSV,
+    WINED3DSAMP_ADDRESSW,
+    WINED3DSAMP_BORDERCOLOR,
+    WINED3DSAMP_MAGFILTER,
+    WINED3DSAMP_MINFILTER,
+    WINED3DSAMP_MIPFILTER,
+    WINED3DSAMP_MIPMAPLODBIAS,
+    WINED3DSAMP_MAXMIPLEVEL,
+    WINED3DSAMP_MAXANISOTROPY,
+    WINED3DSAMP_SRGBTEXTURE,
+    WINED3DSAMP_ELEMENTINDEX,
+};
+
+static const DWORD vertex_states_render[NUM_SAVEDVERTEXSTATES_R] =
+{
+    WINED3DRS_AMBIENT,
+    WINED3DRS_AMBIENTMATERIALSOURCE,
+    WINED3DRS_CLIPPING,
+    WINED3DRS_CLIPPLANEENABLE,
+    WINED3DRS_COLORVERTEX,
+    WINED3DRS_DIFFUSEMATERIALSOURCE,
+    WINED3DRS_EMISSIVEMATERIALSOURCE,
+    WINED3DRS_FOGDENSITY,
+    WINED3DRS_FOGEND,
+    WINED3DRS_FOGSTART,
+    WINED3DRS_FOGTABLEMODE,
+    WINED3DRS_FOGVERTEXMODE,
+    WINED3DRS_INDEXEDVERTEXBLENDENABLE,
+    WINED3DRS_LIGHTING,
+    WINED3DRS_LOCALVIEWER,
+    WINED3DRS_MULTISAMPLEANTIALIAS,
+    WINED3DRS_MULTISAMPLEMASK,
+    WINED3DRS_NORMALIZENORMALS,
+    WINED3DRS_PATCHEDGESTYLE,
+    WINED3DRS_POINTSCALE_A,
+    WINED3DRS_POINTSCALE_B,
+    WINED3DRS_POINTSCALE_C,
+    WINED3DRS_POINTSCALEENABLE,
+    WINED3DRS_POINTSIZE,
+    WINED3DRS_POINTSIZE_MAX,
+    WINED3DRS_POINTSIZE_MIN,
+    WINED3DRS_POINTSPRITEENABLE,
+    WINED3DRS_RANGEFOGENABLE,
+    WINED3DRS_SPECULARMATERIALSOURCE,
+    WINED3DRS_TWEENFACTOR,
+    WINED3DRS_VERTEXBLEND,
+    WINED3DRS_CULLMODE,
+    WINED3DRS_FOGCOLOR,
+};
+
+static const DWORD vertex_states_texture[NUM_SAVEDVERTEXSTATES_T] =
+{
+    WINED3DTSS_TEXCOORDINDEX,
+    WINED3DTSS_TEXTURETRANSFORMFLAGS,
+};
+
+static const DWORD vertex_states_sampler[NUM_SAVEDVERTEXSTATES_S] =
+{
+    WINED3DSAMP_DMAPOFFSET,
+};
 
 /* Allocates the correct amount of space for pixel and vertex shader constants,
  * along with their set/changed flags on the given stateblock object
@@ -122,13 +249,13 @@ static void stateblock_savedstates_set_pixel(SAVEDSTATES *states, const struct w
 
     for (i = 0; i < NUM_SAVEDPIXELSTATES_R; ++i)
     {
-        DWORD rs = SavedPixelStates_R[i];
+        DWORD rs = pixel_states_render[i];
         states->renderState[rs >> 5] |= 1 << (rs & 0x1f);
     }
 
-    for (i = 0; i < NUM_SAVEDPIXELSTATES_T; ++i) texture_mask |= 1 << SavedPixelStates_T[i];
+    for (i = 0; i < NUM_SAVEDPIXELSTATES_T; ++i) texture_mask |= 1 << pixel_states_texture[i];
     for (i = 0; i < MAX_TEXTURES; ++i) states->textureState[i] = texture_mask;
-    for (i = 0; i < NUM_SAVEDPIXELSTATES_S; ++i) sampler_mask |= 1 << SavedPixelStates_S[i];
+    for (i = 0; i < NUM_SAVEDPIXELSTATES_S; ++i) sampler_mask |= 1 << pixel_states_sampler[i];
     for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i) states->samplerState[i] = sampler_mask;
     states->pixelShaderConstantsB = 0xffff;
     states->pixelShaderConstantsI = 0xffff;
@@ -146,13 +273,13 @@ static void stateblock_savedstates_set_vertex(SAVEDSTATES *states, const struct 
 
     for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; ++i)
     {
-        DWORD rs = SavedVertexStates_R[i];
+        DWORD rs = vertex_states_render[i];
         states->renderState[rs >> 5] |= 1 << (rs & 0x1f);
     }
 
-    for (i = 0; i < NUM_SAVEDVERTEXSTATES_T; ++i) texture_mask |= 1 << SavedVertexStates_T[i];
+    for (i = 0; i < NUM_SAVEDVERTEXSTATES_T; ++i) texture_mask |= 1 << vertex_states_texture[i];
     for (i = 0; i < MAX_TEXTURES; ++i) states->textureState[i] = texture_mask;
-    for (i = 0; i < NUM_SAVEDVERTEXSTATES_S; ++i) sampler_mask |= 1 << SavedVertexStates_S[i];
+    for (i = 0; i < NUM_SAVEDVERTEXSTATES_S; ++i) sampler_mask |= 1 << vertex_states_sampler[i];
     for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i) states->samplerState[i] = sampler_mask;
     states->vertexShaderConstantsB = 0xffff;
     states->vertexShaderConstantsI = 0xffff;
@@ -791,16 +918,16 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         memcpy(This->vertexShaderConstantF, targetStateBlock->vertexShaderConstantF, sizeof(float) * GL_LIMITS(vshader_constantsF) * 4);
         record_lights(This, targetStateBlock);
         for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
-            This->renderState[SavedVertexStates_R[i]] = targetStateBlock->renderState[SavedVertexStates_R[i]];
+            This->renderState[vertex_states_render[i]] = targetStateBlock->renderState[vertex_states_render[i]];
         }
         for (j = 0; j < MAX_COMBINED_SAMPLERS; j++) {
             for (i = 0; i < NUM_SAVEDVERTEXSTATES_S; i++) {
-                This->samplerState[j][SavedVertexStates_S[i]] = targetStateBlock->samplerState[j][SavedVertexStates_S[i]];
+                This->samplerState[j][vertex_states_sampler[i]] = targetStateBlock->samplerState[j][vertex_states_sampler[i]];
             }
         }
         for (j = 0; j < MAX_TEXTURES; j++) {
             for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
-                This->textureState[j][SavedVertexStates_R[i]] = targetStateBlock->textureState[j][SavedVertexStates_R[i]];
+                This->textureState[j][vertex_states_render[i]] = targetStateBlock->textureState[j][vertex_states_render[i]];
             }
         }
         for(i = 0; i < MAX_STREAMS; i++) {
@@ -820,16 +947,16 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         memcpy(This->pixelShaderConstantI, targetStateBlock->pixelShaderConstantI, sizeof(This->pixelShaderConstantF));
         memcpy(This->pixelShaderConstantF, targetStateBlock->pixelShaderConstantF, sizeof(float) * GL_LIMITS(pshader_constantsF) * 4);
         for (i = 0; i < NUM_SAVEDPIXELSTATES_R; i++) {
-            This->renderState[SavedPixelStates_R[i]] = targetStateBlock->renderState[SavedPixelStates_R[i]];
+            This->renderState[pixel_states_render[i]] = targetStateBlock->renderState[pixel_states_render[i]];
         }
         for (j = 0; j < MAX_COMBINED_SAMPLERS; j++) {
             for (i = 0; i < NUM_SAVEDPIXELSTATES_S; i++) {
-                This->samplerState[j][SavedPixelStates_S[i]] = targetStateBlock->samplerState[j][SavedPixelStates_S[i]];
+                This->samplerState[j][pixel_states_sampler[i]] = targetStateBlock->samplerState[j][pixel_states_sampler[i]];
             }
         }
         for (j = 0; j < MAX_TEXTURES; j++) {
             for (i = 0; i < NUM_SAVEDPIXELSTATES_R; i++) {
-                This->textureState[j][SavedPixelStates_R[i]] = targetStateBlock->textureState[j][SavedPixelStates_R[i]];
+                This->textureState[j][pixel_states_render[i]] = targetStateBlock->textureState[j][pixel_states_render[i]];
             }
         }
         if(This->pixelShader != targetStateBlock->pixelShader) {
@@ -1025,27 +1152,25 @@ should really perform a delta so that only the changes get updated*/
         apply_lights(pDevice, This);
 
         for(i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
-            IWineD3DDevice_SetRenderState(pDevice, SavedVertexStates_R[i], This->renderState[SavedVertexStates_R[i]]);
+            IWineD3DDevice_SetRenderState(pDevice, vertex_states_render[i], This->renderState[vertex_states_render[i]]);
         }
         for(j = 0; j < MAX_TEXTURES; j++) {
             for(i = 0; i < NUM_SAVEDVERTEXSTATES_T; i++) {
-                IWineD3DDevice_SetTextureStageState(pDevice, j, SavedVertexStates_T[i],
-                        This->textureState[j][SavedVertexStates_T[i]]);
+                IWineD3DDevice_SetTextureStageState(pDevice, j, vertex_states_texture[i],
+                        This->textureState[j][vertex_states_texture[i]]);
             }
         }
 
         for(j = 0; j < MAX_FRAGMENT_SAMPLERS; j++) {
             for(i = 0; i < NUM_SAVEDVERTEXSTATES_S; i++) {
-                IWineD3DDevice_SetSamplerState(pDevice, j, SavedVertexStates_S[i],
-                                               This->samplerState[j][SavedVertexStates_S[i]]);
+                IWineD3DDevice_SetSamplerState(pDevice, j, vertex_states_sampler[i],
+                        This->samplerState[j][vertex_states_sampler[i]]);
             }
         }
         for(j = MAX_FRAGMENT_SAMPLERS; j < MAX_COMBINED_SAMPLERS; j++) {
             for(i = 0; i < NUM_SAVEDVERTEXSTATES_S; i++) {
-                IWineD3DDevice_SetSamplerState(pDevice,
-                                               WINED3DVERTEXTEXTURESAMPLER0 + j - MAX_FRAGMENT_SAMPLERS,
-                                               SavedVertexStates_S[i],
-                                               This->samplerState[j][SavedVertexStates_S[i]]);
+                IWineD3DDevice_SetSamplerState(pDevice, WINED3DVERTEXTEXTURESAMPLER0 + j - MAX_FRAGMENT_SAMPLERS,
+                        vertex_states_sampler[i], This->samplerState[j][vertex_states_sampler[i]]);
             }
         }
     } else if(This->blockType == WINED3DSBT_PIXELSTATE) {
@@ -1064,27 +1189,25 @@ should really perform a delta so that only the changes get updated*/
         }
 
         for(i = 0; i < NUM_SAVEDPIXELSTATES_R; i++) {
-            IWineD3DDevice_SetRenderState(pDevice, SavedPixelStates_R[i], This->renderState[SavedPixelStates_R[i]]);
+            IWineD3DDevice_SetRenderState(pDevice, pixel_states_render[i], This->renderState[pixel_states_render[i]]);
         }
         for(j = 0; j < MAX_TEXTURES; j++) {
             for(i = 0; i < NUM_SAVEDPIXELSTATES_T; i++) {
-                IWineD3DDevice_SetTextureStageState(pDevice, j, SavedPixelStates_T[i],
-                        This->textureState[j][SavedPixelStates_T[i]]);
+                IWineD3DDevice_SetTextureStageState(pDevice, j, pixel_states_texture[i],
+                        This->textureState[j][pixel_states_texture[i]]);
             }
         }
 
         for(j = 0; j < MAX_FRAGMENT_SAMPLERS; j++) {
             for(i = 0; i < NUM_SAVEDPIXELSTATES_S; i++) {
-                IWineD3DDevice_SetSamplerState(pDevice, j, SavedPixelStates_S[i],
-                                               This->samplerState[j][SavedPixelStates_S[i]]);
+                IWineD3DDevice_SetSamplerState(pDevice, j, pixel_states_sampler[i],
+                        This->samplerState[j][pixel_states_sampler[i]]);
             }
         }
         for(j = MAX_FRAGMENT_SAMPLERS; j < MAX_COMBINED_SAMPLERS; j++) {
             for(i = 0; i < NUM_SAVEDPIXELSTATES_S; i++) {
-                IWineD3DDevice_SetSamplerState(pDevice,
-                                               WINED3DVERTEXTEXTURESAMPLER0 + j - MAX_FRAGMENT_SAMPLERS,
-                                               SavedPixelStates_S[i],
-                                               This->samplerState[j][SavedPixelStates_S[i]]);
+                IWineD3DDevice_SetSamplerState(pDevice, WINED3DVERTEXTEXTURESAMPLER0 + j - MAX_FRAGMENT_SAMPLERS,
+                        pixel_states_sampler[i], This->samplerState[j][pixel_states_sampler[i]]);
             }
         }
     } else if(This->blockType == WINED3DSBT_ALL) {
