@@ -42,7 +42,7 @@ static const char range_test2_str[] =
 static const char elem_test_str[] =
     "<html><head><title>test</title><style>.body { margin-right: 0px; }</style>"
     "<body onload=\"Testing()\">text test<!-- a comment -->"
-    "<a href=\"http://test\" name=\"x\">link</a>"
+    "<a id=\"a\" href=\"http://test\" name=\"x\">link</a>"
     "<input id=\"in\" class=\"testclass\" tabIndex=\"2\" title=\"test title\" />"
     "<select id=\"s\"><option id=\"x\" value=\"val1\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
@@ -610,6 +610,17 @@ static IHTMLImgElement *_get_img_iface(unsigned line, IUnknown *unk)
     return img;
 }
 
+#define get_anchor_iface(u) _get_anchor_iface(__LINE__,u)
+static IHTMLAnchorElement *_get_anchor_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLAnchorElement *anchor;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLAnchorElement, (void**)&anchor);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLAnchorElement: %08x\n", hres);
+    return anchor;
+}
+
 #define test_node_name(u,n) _test_node_name(__LINE__,u,n)
 static void _test_node_name(unsigned line, IUnknown *unk, const char *exname)
 {
@@ -896,6 +907,21 @@ static IHTMLElement *_get_doc_elem(unsigned line, IHTMLDocument2 *doc)
     IHTMLDocument3_Release(doc3);
 
     return elem;
+}
+
+#define test_anchor_href(a,h) _test_anchor_href(__LINE__,a,h)
+static void _test_anchor_href(unsigned line, IUnknown *unk, const char *exhref)
+{
+    IHTMLAnchorElement *anchor = _get_anchor_iface(line, unk);
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLAnchorElement_get_href(anchor, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_href failed: %08x\n", hres);
+    ok_(__FILE__,line)(!strcmp_wa(str, exhref), "href = %s, expected %s\n", wine_dbgstr_w(str), exhref);
+    SysFreeString(str);
+
+    _test_disp_value(line, unk, exhref);
 }
 
 #define test_option_text(o,t) _test_option_text(__LINE__,o,t)
@@ -4929,6 +4955,12 @@ static void test_elems(IHTMLDocument2 *doc)
     ok(elem != NULL, "elem == NULL\n");
     if(elem) {
         test_iframe_elem(elem);
+        IHTMLElement_Release(elem);
+    }
+
+    elem = get_elem_by_id(doc, "a", TRUE);
+    if(elem) {
+        test_anchor_href((IUnknown*)elem, "http://test/");
         IHTMLElement_Release(elem);
     }
 
