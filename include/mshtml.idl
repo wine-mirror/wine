@@ -5378,6 +5378,13 @@ interface IHTMLElement4 : IDispatch
     [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable] \
     VARIANT onfocusout()
 
+#define WINE_IELEMENTSELECTOR_DISPINTERFACE_DECL                \
+    [id(DISPID_IELEMENTSELECTOR_QUERYSELECTOR)]                 \
+    IHTMLElement *querySelector([in] BSTR v);                   \
+                                                                \
+    [id(DISPID_IELEMENTSELECTOR_QUERYSELECTORALL)]              \
+    IHTMLDOMChildrenCollection *querySelectorAll([in] BSTR v)
+
 /*****************************************************************************
  *    IHTMLUniqueName interface
  */
@@ -5662,7 +5669,8 @@ interface IHTMLDatabinding : IDispatch
     WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;    \
     WINE_HTMLDOMNODE_DISPINTERFACE_DECL;        \
     WINE_IHTMLDATABINDING_DISPINTERFACE_DECL;   \
-    WINE_IHTMLELEMENT5_DISPINTERFACE_DECL
+    WINE_IHTMLELEMENT5_DISPINTERFACE_DECL;      \
+    WINE_IELEMENTSELECTOR_DISPINTERFACE_DECL
 
 /*****************************************************************************
  *    IHTMLGenericElement interface
@@ -7251,12 +7259,6 @@ dispinterface DispHTMLAnchorElement
 properties:
 methods:
     WINE_HTMLDATAELEMENT_DISPINTERFACE_DECL;
-
-    [id(DISPID_IELEMENTSELECTOR_QUERYSELECTOR)]
-    IHTMLElement *querySelector([in] BSTR v);
-
-    [id(DISPID_IELEMENTSELECTOR_QUERYSELECTORALL)]
-    IHTMLDOMChildrenCollection *querySelectorAll([in] BSTR v);
 
     [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
     IDispatch *constructor();
