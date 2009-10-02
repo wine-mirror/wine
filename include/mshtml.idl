@@ -5331,7 +5331,44 @@ interface IHTMLElement4 : IDispatch
 
     [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
     HRESULT onfocusout([retval, out] VARIANT * p);
-};
+}
+
+#define WINE_IHTMLELEMENT4_DISPINTERFACE_DECL                           \
+    [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable] \
+    void onmousewheel(VARIANT v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable] \
+    VARIANT onmousewheel();                                             \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT4_NORMALIZE)]                                \
+    void normalize();                                                   \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT4_GETATTRIBUTENODE)]                         \
+    IHTMLDOMAttribute* getAttributeNode([in] BSTR bstrname);            \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT4_SETATTRIBUTENODE)]                         \
+    IHTMLDOMAttribute* setAttributeNode([in] IHTMLDOMAttribute* pattr); \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT4_REMOVEATTRIBUTENODE)]                      \
+    IHTMLDOMAttribute* removeAttributeNode([in] IHTMLDOMAttribute* pattr); \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable] \
+    void onbeforeactivate(VARIANT v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable] \
+    VARIANT onbeforeactivate();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]\
+    void onfocusin(VARIANT v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]\
+    VARIANT onfocusin();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable] \
+    void onfocusout(VARIANT v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable] \
+    VARIANT onfocusout()
 
 /*****************************************************************************
  *    IHTMLGenericElement interface
@@ -5368,42 +5405,7 @@ methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    void onmousewheel(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    VARIANT onmousewheel();
-
-    [id(DISPID_IHTMLELEMENT4_NORMALIZE)]
-    void normalize();
-
-    [id(DISPID_IHTMLELEMENT4_GETATTRIBUTENODE)]
-    IHTMLDOMAttribute *getAttributeNode([in] BSTR bstrname);
-
-    [id(DISPID_IHTMLELEMENT4_SETATTRIBUTENODE)]
-    IHTMLDOMAttribute *setAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [id(DISPID_IHTMLELEMENT4_REMOVEATTRIBUTENODE)]
-    IHTMLDOMAttribute *removeAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    void onbeforeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    VARIANT onbeforeactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    void onfocusin(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    VARIANT onfocusin();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    void onfocusout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    VARIANT onfocusout();
+    WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
     LONG uniqueNumber();
@@ -6381,42 +6383,7 @@ methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    void onmousewheel(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    VARIANT onmousewheel();
-
-    [id(DISPID_IHTMLELEMENT4_NORMALIZE)]
-    void normalize();
-
-    [id(DISPID_IHTMLELEMENT4_GETATTRIBUTENODE)]
-    IHTMLDOMAttribute *getAttributeNode([in] BSTR bstrname);
-
-    [id(DISPID_IHTMLELEMENT4_SETATTRIBUTENODE)]
-    IHTMLDOMAttribute *setAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [id(DISPID_IHTMLELEMENT4_REMOVEATTRIBUTENODE)]
-    IHTMLDOMAttribute *removeAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    void onbeforeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    VARIANT onbeforeactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    void onfocusin(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    VARIANT onfocusin();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    void onfocusout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    VARIANT onfocusout();
+    WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
     LONG uniqueNumber();
@@ -6920,42 +6887,7 @@ methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    void onmousewheel(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    VARIANT onmousewheel();
-
-    [id(DISPID_IHTMLELEMENT4_NORMALIZE)]
-    void normalize();
-
-    [id(DISPID_IHTMLELEMENT4_GETATTRIBUTENODE)]
-     IHTMLDOMAttribute* getAttributeNode([in] BSTR bstrname);
-
-    [id(DISPID_IHTMLELEMENT4_SETATTRIBUTENODE)]
-    IHTMLDOMAttribute* setAttributeNode([in] IHTMLDOMAttribute* pattr);
-
-    [id(DISPID_IHTMLELEMENT4_REMOVEATTRIBUTENODE)]
-    IHTMLDOMAttribute* removeAttributeNode([in] IHTMLDOMAttribute* pattr);
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    void onbeforeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    VARIANT onbeforeactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    void onfocusin(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    VARIANT onfocusin();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    void onfocusout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    VARIANT onfocusout();
+    WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
     LONG uniqueNumber();
@@ -7318,42 +7250,7 @@ methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    void onmousewheel(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    VARIANT onmousewheel();
-
-    [id(DISPID_IHTMLELEMENT4_NORMALIZE)]
-    void normalize();
-
-    [id(DISPID_IHTMLELEMENT4_GETATTRIBUTENODE)]
-     IHTMLDOMAttribute* getAttributeNode([in] BSTR bstrname);
-
-    [id(DISPID_IHTMLELEMENT4_SETATTRIBUTENODE)]
-    IHTMLDOMAttribute* setAttributeNode([in] IHTMLDOMAttribute* pattr);
-
-    [id(DISPID_IHTMLELEMENT4_REMOVEATTRIBUTENODE)]
-    IHTMLDOMAttribute* removeAttributeNode([in] IHTMLDOMAttribute* pattr);
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    void onbeforeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    VARIANT onbeforeactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    void onfocusin(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    VARIANT onfocusin();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    void onfocusout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    VARIANT onfocusout();
+    WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
     LONG uniqueNumber();
@@ -7971,42 +7868,7 @@ methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    void onmousewheel(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    VARIANT onmousewheel();
-
-    [id(DISPID_IHTMLELEMENT4_NORMALIZE)]
-    void normalize();
-
-    [id(DISPID_IHTMLELEMENT4_GETATTRIBUTENODE)]
-    IHTMLDOMAttribute *getAttributeNode([in] BSTR bstrname);
-
-    [id(DISPID_IHTMLELEMENT4_SETATTRIBUTENODE)]
-    IHTMLDOMAttribute *setAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [id(DISPID_IHTMLELEMENT4_REMOVEATTRIBUTENODE)]
-    IHTMLDOMAttribute *removeAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    void onbeforeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    VARIANT onbeforeactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    void onfocusin(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    VARIANT onfocusin();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    void onfocusout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    VARIANT onfocusout();
+    WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
     LONG uniqueNumber();
@@ -8294,42 +8156,7 @@ methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    void onmousewheel(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    VARIANT onmousewheel();
-
-    [id(DISPID_IHTMLELEMENT4_NORMALIZE)]
-    void normalize();
-
-    [id(DISPID_IHTMLELEMENT4_GETATTRIBUTENODE)]
-    IHTMLDOMAttribute *getAttributeNode([in] BSTR bstrname);
-
-    [id(DISPID_IHTMLELEMENT4_SETATTRIBUTENODE)]
-    IHTMLDOMAttribute *setAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [id(DISPID_IHTMLELEMENT4_REMOVEATTRIBUTENODE)]
-    IHTMLDOMAttribute *removeAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    void onbeforeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    VARIANT onbeforeactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    void onfocusin(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    VARIANT onfocusin();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    void onfocusout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    VARIANT onfocusout();
+    WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
     LONG uniqueNumber();
@@ -8785,42 +8612,7 @@ methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    void onmousewheel(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    VARIANT onmousewheel();
-
-    [id(DISPID_IHTMLELEMENT4_NORMALIZE)]
-    void normalize();
-
-    [id(DISPID_IHTMLELEMENT4_GETATTRIBUTENODE)]
-    IHTMLDOMAttribute *getAttributeNode([in] BSTR bstrname);
-
-    [id(DISPID_IHTMLELEMENT4_SETATTRIBUTENODE)]
-    IHTMLDOMAttribute *setAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [id(DISPID_IHTMLELEMENT4_REMOVEATTRIBUTENODE)]
-    IHTMLDOMAttribute *removeAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    void onbeforeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    VARIANT onbeforeactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    void onfocusin(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    VARIANT onfocusin();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    void onfocusout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    VARIANT onfocusout();
+    WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
     LONG uniqueNumber();
@@ -9216,42 +9008,7 @@ methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    void onmousewheel(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    VARIANT onmousewheel();
-
-    [id(DISPID_IHTMLELEMENT4_NORMALIZE)]
-    void normalize();
-
-    [id(DISPID_IHTMLELEMENT4_GETATTRIBUTENODE)]
-    IHTMLDOMAttribute *getAttributeNode([in] BSTR bstrname);
-
-    [id(DISPID_IHTMLELEMENT4_SETATTRIBUTENODE)]
-    IHTMLDOMAttribute *setAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [id(DISPID_IHTMLELEMENT4_REMOVEATTRIBUTENODE)]
-    IHTMLDOMAttribute *removeAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    void onbeforeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    VARIANT onbeforeactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    void onfocusin(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    VARIANT onfocusin();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    void onfocusout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    VARIANT onfocusout();
+    WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
     LONG uniqueNumber();
@@ -13375,42 +13132,7 @@ methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    void onmousewheel(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    VARIANT onmousewheel();
-
-    [id(DISPID_IHTMLELEMENT4_NORMALIZE)]
-    void normalize();
-
-    [id(DISPID_IHTMLELEMENT4_GETATTRIBUTENODE)]
-    IHTMLDOMAttribute *getAttributeNode([in] BSTR bstrname);
-
-    [id(DISPID_IHTMLELEMENT4_SETATTRIBUTENODE)]
-    IHTMLDOMAttribute *setAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [id(DISPID_IHTMLELEMENT4_REMOVEATTRIBUTENODE)]
-    IHTMLDOMAttribute *removeAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    void onbeforeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    VARIANT onbeforeactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    void onfocusin(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    VARIANT onfocusin();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    void onfocusout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    VARIANT onfocusout();
+    WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
     LONG uniqueNumber();
@@ -14705,42 +14427,7 @@ methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    void onmousewheel(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    VARIANT onmousewheel();
-
-    [id(DISPID_IHTMLELEMENT4_NORMALIZE)]
-    void normalize();
-
-    [id(DISPID_IHTMLELEMENT4_GETATTRIBUTENODE)]
-    IHTMLDOMAttribute *getAttributeNode([in] BSTR bstrname);
-
-    [id(DISPID_IHTMLELEMENT4_SETATTRIBUTENODE)]
-    IHTMLDOMAttribute *setAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [id(DISPID_IHTMLELEMENT4_REMOVEATTRIBUTENODE)]
-    IHTMLDOMAttribute *removeAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    void onbeforeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    VARIANT onbeforeactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    void onfocusin(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    VARIANT onfocusin();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    void onfocusout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    VARIANT onfocusout();
+    WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
     LONG uniqueNumber();
@@ -15006,42 +14693,7 @@ methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    void onmousewheel(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    VARIANT onmousewheel();
-
-    [id(DISPID_IHTMLELEMENT4_NORMALIZE)]
-    void normalize();
-
-    [id(DISPID_IHTMLELEMENT4_GETATTRIBUTENODE)]
-    IHTMLDOMAttribute *getAttributeNode([in] BSTR bstrname);
-
-    [id(DISPID_IHTMLELEMENT4_SETATTRIBUTENODE)]
-    IHTMLDOMAttribute *setAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [id(DISPID_IHTMLELEMENT4_REMOVEATTRIBUTENODE)]
-    IHTMLDOMAttribute *removeAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    void onbeforeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    VARIANT onbeforeactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    void onfocusin(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    VARIANT onfocusin();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    void onfocusout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    VARIANT onfocusout();
+    WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
     LONG uniqueNumber();
@@ -15377,42 +15029,7 @@ methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    void onmousewheel(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
-    VARIANT onmousewheel();
-
-    [id(DISPID_IHTMLELEMENT4_NORMALIZE)]
-    void normalize();
-
-    [id(DISPID_IHTMLELEMENT4_GETATTRIBUTENODE)]
-    IHTMLDOMAttribute *getAttributeNode([in] BSTR bstrname);
-
-    [id(DISPID_IHTMLELEMENT4_SETATTRIBUTENODE)]
-    IHTMLDOMAttribute *setAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [id(DISPID_IHTMLELEMENT4_REMOVEATTRIBUTENODE)]
-    IHTMLDOMAttribute *removeAttributeNode([in] IHTMLDOMAttribute *pattr);
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    void onbeforeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
-    VARIANT onbeforeactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    void onfocusin(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
-    VARIANT onfocusin();
-
-    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    void onfocusout(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
-    VARIANT onfocusout();
+    WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
     LONG uniqueNumber();
