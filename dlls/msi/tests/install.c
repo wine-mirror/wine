@@ -6767,6 +6767,12 @@ static void test_file_in_use(void)
     HKEY hkey;
     char path[MAX_PATH];
 
+    if (on_win9x)
+    {
+        win_skip("Pending file renaming is implemented differently on Win9x and WinMe\n");
+        return;
+    }
+
     RegOpenKeyExA(HKEY_LOCAL_MACHINE, session_manager, 0, KEY_ALL_ACCESS, &hkey);
     if (!RegQueryValueExA(hkey, rename_ops, NULL, NULL, NULL, &size))
     {
@@ -6813,6 +6819,12 @@ static void test_file_in_use_cab(void)
     HANDLE file;
     HKEY hkey;
     char path[MAX_PATH];
+
+    if (on_win9x)
+    {
+        win_skip("Pending file renaming is implemented differently on Win9x and WinMe\n");
+        return;
+    }
 
     RegOpenKeyExA(HKEY_LOCAL_MACHINE, session_manager, 0, KEY_ALL_ACCESS, &hkey);
     if (!RegQueryValueExA(hkey, rename_ops, NULL, NULL, NULL, &size))
