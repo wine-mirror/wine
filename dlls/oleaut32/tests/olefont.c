@@ -57,9 +57,9 @@ static HRESULT (WINAPI *pOleCreateFontIndirect)(LPFONTDESC,REFIID,LPVOID*);
 /* check that resulting hfont has height hfont_height.   */
 /* Various checks along the way.                         */
 
-static void test_ifont_sizes(long lo_size, long hi_size, 
-	long ratio_logical, long ratio_himetric,
-	long hfont_height, const char * test_name)
+static void test_ifont_sizes(LONG lo_size, LONG hi_size,
+	LONG ratio_logical, LONG ratio_himetric,
+	LONG hfont_height, const char * test_name)
 {
 	FONTDESC fd;
 	LPVOID pvObj = NULL;
@@ -91,8 +91,8 @@ static void test_ifont_sizes(long lo_size, long hi_size,
 	ok(hres == S_OK,"%s: IFont_get_size returns 0x%08x instead of S_OK.\n",
 		test_name, hres);
 	ok(S(psize).Lo == lo_size && S(psize).Hi == 0,
-		"%s: get_Size: Lo=%d, Hi=%d; expected Lo=%ld, Hi=%ld.\n",
-		test_name, S(psize).Lo, S(psize).Hi, lo_size, 0L);
+		"%s: get_Size: Lo=%d, Hi=%d; expected Lo=%d, Hi=0.\n",
+		test_name, S(psize).Lo, S(psize).Hi, lo_size);
 
 	/* Change ratio, check size unchanged.  Standard is 72, 2540. */
 	hres = IFont_SetRatio(ifnt, ratio_logical, ratio_himetric);
@@ -102,8 +102,8 @@ static void test_ifont_sizes(long lo_size, long hi_size,
 	ok(hres == S_OK,"%s: IFont_get_size returns 0x%08x instead of S_OK.\n",
                 test_name, hres);
 	ok(S(psize).Lo == lo_size && S(psize).Hi == 0,
-		"%s: gS after SR: Lo=%d, Hi=%d; expected Lo=%ld, Hi=%ld.\n",
-		test_name, S(psize).Lo, S(psize).Hi, lo_size, 0L);
+		"%s: gS after SR: Lo=%d, Hi=%d; expected Lo=%d, Hi=0.\n",
+		test_name, S(psize).Lo, S(psize).Hi, lo_size);
 
 	/* Check hFont size with this ratio.  This tests an important 	*/
 	/* conversion for which MSDN is very wrong.			*/
@@ -112,7 +112,7 @@ static void test_ifont_sizes(long lo_size, long hi_size,
 		test_name, hres);
 	hres = GetObject (hfont, sizeof(LOGFONT), &lf);
 	ok(lf.lfHeight == hfont_height,
-		"%s: hFont has lf.lfHeight=%d, expected %ld.\n",
+		"%s: hFont has lf.lfHeight=%d, expected %d.\n",
 		test_name, lf.lfHeight, hfont_height);
 
 	/* Free IFont. */
