@@ -112,6 +112,10 @@ interface IHTMLDOMConstructor : IDispatch
     HRESULT DefineSetter([in] BSTR propname, [in] VARIANT* pdispHandler);
 }
 
+#define WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL                     \
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]       \
+    IDispatch *constructor()
+
 interface IHTMLDocument2;
 interface IHTMLStyleSheetsCollection;
 interface IHTMLFrameBase;
@@ -5659,7 +5663,8 @@ interface IHTMLDatabinding : IDispatch
     WINE_IHTMLELEMENT4_DISPINTERFACE_DECL;      \
     WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;    \
     WINE_HTMLDOMNODE_DISPINTERFACE_DECL;        \
-    WINE_IHTMLELEMENT5_DISPINTERFACE_DECL
+    WINE_IHTMLELEMENT5_DISPINTERFACE_DECL;      \
+    WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL
 
 #define WINE_HTMLDATAELEMENT_DISPINTERFACE_DECL \
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;       \
@@ -5670,7 +5675,8 @@ interface IHTMLDatabinding : IDispatch
     WINE_HTMLDOMNODE_DISPINTERFACE_DECL;        \
     WINE_IHTMLDATABINDING_DISPINTERFACE_DECL;   \
     WINE_IHTMLELEMENT5_DISPINTERFACE_DECL;      \
-    WINE_IELEMENTSELECTOR_DISPINTERFACE_DECL
+    WINE_IELEMENTSELECTOR_DISPINTERFACE_DECL;   \
+    WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL
 
 /*****************************************************************************
  *    IHTMLGenericElement interface
@@ -5759,8 +5765,7 @@ methods:
     [propget, id(DISPID_IHTMLSTYLESHEETRULE_READONLY)]
     VARIANT_BOOL readOnly();
 
-    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
-    IDispatch* constructor();
+    WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL;
 }
 
 [
@@ -5808,8 +5813,7 @@ methods:
     [id(DISPID_IHTMLSTYLESHEETRULESCOLLECTION_ITEM)]
     IHTMLStyleSheetRule* item([in] long index);
 
-    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
-    IDispatch* constructor();
+    WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL;
 }
 
 [
@@ -5852,8 +5856,7 @@ methods:
     [propget, id(DISPID_IHTMLSTYLESHEETPAGE_PSEUDOCLASS)]
     BSTR pseudoClass();
 
-    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
-    IDispatch* constructor();
+    WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL;
 }
 [
     noncreatable,
@@ -5897,8 +5900,7 @@ methods:
     [id(DISPID_IHTMLSTYLESHEETPAGESCOLLECTION_ITEM)]
     IHTMLStyleSheetPage* item([in] long index);
 
-    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
-    IDispatch* constructor();
+    WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL;
 }
 
 [
@@ -7259,9 +7261,6 @@ dispinterface DispHTMLAnchorElement
 properties:
 methods:
     WINE_HTMLDATAELEMENT_DISPINTERFACE_DECL;
-
-    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
-    IDispatch *constructor();
 
     [propput, id(DISPID_IHTMLANCHORELEMENT_HREF), displaybind, bindable]
     void href(BSTR v);
@@ -8741,8 +8740,7 @@ methods:
     [propget, id(DISPID_IOMNAVIGATOR_USERPROFILE)]
     IHTMLOpsProfile *userProfile();
 
-    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
-    IDispatch *constructor();
+    WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL;
 }
 
 [
@@ -8898,8 +8896,7 @@ methods:
     [id(DISPID_IHTMLLOCATION_TOSTRING)]
     BSTR toString();
 
-    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
-    IDispatch *constructor();
+    WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL;
 }
 
 [
