@@ -2162,6 +2162,8 @@ DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
 
         return res;
     }
+    case INTERNET_OPTION_USER_AGENT:
+        return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
     }
 
     FIXME("Stub for %d\n", option);
