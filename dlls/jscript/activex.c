@@ -21,6 +21,7 @@
 
 #include "jscript.h"
 #include "objsafe.h"
+#include "mshtmhst.h"
 
 #include "wine/debug.h"
 
@@ -59,6 +60,8 @@ static IUnknown *create_activex_object(script_ctx_t *ctx, const WCHAR *progid)
 {
     IInternetHostSecurityManager *secmgr;
     struct CONFIRMSAFETY cs;
+    IClassFactoryEx *cfex;
+    IClassFactory *cf;
     DWORD policy_size;
     BYTE *bpolicy;
     IUnknown *obj;
@@ -82,9 +85,17 @@ static IUnknown *create_activex_object(script_ctx_t *ctx, const WCHAR *progid)
     if(FAILED(hres) || policy != URLPOLICY_ALLOW)
         return NULL;
 
-    /* FIXME: Use IClassFactoryEx */
+    hres = CoGetClassObject(&guid, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER, NULL, &IID_IClassFactory, (void**)&cf);
+    if(FAILED(hres))
+        return NULL;
 
-    hres = CoCreateInstance(&guid, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER, &IID_IUnknown, (void**)&obj);
+    hres = IClassFactory_QueryInterface(cf, &IID_IClassFactoryEx, (void**)&cfex);
+    if(SUCCEEDED(hres)) {
+        FIXME("Use IClassFactoryEx\n");
+        IClassFactoryEx_Release(cfex);
+    }
+
+    hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&obj);
     if(FAILED(hres))
         return NULL;
 
