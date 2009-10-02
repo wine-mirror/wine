@@ -9754,11 +9754,11 @@ static void yuv_color_test(IDirect3DDevice9 *device) {
              * differently, so we need a max diff of 16
              */
             color = getPixelColor(device, 40, 240);
-            ok(color_match(color, ref_color_left, 16),
+            ok(color_match(color, ref_color_left, 18),
                "Input 0x%08x: Got color 0x%08x for pixel 1/1, expected 0x%08x, format %s\n",
                test_data[i].in, color, ref_color_left, fmt_string);
             color = getPixelColor(device, 600, 240);
-            ok(color_match(color, ref_color_right, 16),
+            ok(color_match(color, ref_color_right, 18),
                "Input 0x%08x: Got color 0x%08x for pixel 2/1, expected 0x%08x, format %s\n",
                test_data[i].in, color, ref_color_right, fmt_string);
         }
