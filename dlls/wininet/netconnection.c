@@ -120,6 +120,7 @@ static SSL_CTX *ctx;
 MAKE_FUNCPTR(SSL_library_init);
 MAKE_FUNCPTR(SSL_load_error_strings);
 MAKE_FUNCPTR(SSLv23_method);
+MAKE_FUNCPTR(SSL_CTX_free);
 MAKE_FUNCPTR(SSL_CTX_new);
 MAKE_FUNCPTR(SSL_new);
 MAKE_FUNCPTR(SSL_free);
@@ -191,6 +192,7 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	DYNSSL(SSL_library_init);
 	DYNSSL(SSL_load_error_strings);
 	DYNSSL(SSLv23_method);
+	DYNSSL(SSL_CTX_free);
 	DYNSSL(SSL_CTX_new);
 	DYNSSL(SSL_new);
 	DYNSSL(SSL_free);
@@ -244,6 +246,20 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 #endif
     }
     return TRUE;
+}
+
+void NETCON_unload(void)
+{
+#if defined(SONAME_LIBSSL) && defined(SONAME_LIBCRYPTO)
+    if (OpenSSL_crypto_handle)
+        wine_dlclose(OpenSSL_crypto_handle, NULL, 0);
+    if (OpenSSL_ssl_handle)
+    {
+        if (ctx)
+            pSSL_CTX_free(ctx);
+        wine_dlclose(OpenSSL_ssl_handle, NULL, 0);
+    }
+#endif
 }
 
 BOOL NETCON_connected(WININET_NETCONNECTION *connection)

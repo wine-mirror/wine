@@ -429,6 +429,7 @@ VOID INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR dwContext,
 
 BOOL NETCON_connected(WININET_NETCONNECTION *connection);
 BOOL NETCON_init(WININET_NETCONNECTION *connnection, BOOL useSSL);
+void NETCON_unload(void);
 BOOL NETCON_create(WININET_NETCONNECTION *connection, int domain,
 	      int type, int protocol);
 BOOL NETCON_close(WININET_NETCONNECTION *connection);

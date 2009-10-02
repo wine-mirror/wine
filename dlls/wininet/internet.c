@@ -290,6 +290,8 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
         case DLL_PROCESS_DETACH:
 
+            NETCON_unload();
+
 	    URLCacheContainers_DeleteAll();
 
 	    if (g_dwTlsErrIndex != TLS_OUT_OF_INDEXES)
