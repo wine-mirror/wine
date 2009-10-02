@@ -48,7 +48,7 @@ static int (WINAPI *pwglReleasePbufferDCARB)(HPBUFFERARB, HDC);
 
 /* WGL_ARB_make_current_read */
 static BOOL (WINAPI *pwglMakeContextCurrentARB)(HDC hdraw, HDC hread, HGLRC hglrc);
-static HDC (WINAPI *pwglGetCurrentReadDCARB)();
+static HDC (WINAPI *pwglGetCurrentReadDCARB)(void);
 
 /* WGL_ARB_pixel_format */
 #define WGL_ACCELERATION_ARB 0x2003
