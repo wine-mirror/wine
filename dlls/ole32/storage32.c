@@ -298,20 +298,12 @@ static HRESULT WINAPI StorageBaseImpl_QueryInterface(
   void**             ppvObject)
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
-  /*
-   * Perform a sanity check on the parameters.
-   */
+
   if ( (This==0) || (ppvObject==0) )
     return E_INVALIDARG;
 
-  /*
-   * Initialize the return parameter.
-   */
   *ppvObject = 0;
 
-  /*
-   * Compare the riid with the interface IDs implemented by this object.
-   */
   if (IsEqualGUID(&IID_IUnknown, riid) ||
       IsEqualGUID(&IID_IStorage, riid))
   {
@@ -322,16 +314,9 @@ static HRESULT WINAPI StorageBaseImpl_QueryInterface(
     *ppvObject = &This->pssVtbl;
   }
 
-  /*
-   * Check that we obtained an interface.
-   */
   if ((*ppvObject)==0)
     return E_NOINTERFACE;
 
-  /*
-   * Query Interface always increases the reference count by one when it is
-   * successful
-   */
   IStorage_AddRef(iface);
 
   return S_OK;
@@ -368,16 +353,11 @@ static ULONG WINAPI StorageBaseImpl_Release(
       IStorage* iface)
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
-  /*
-   * Decrease the reference count on this object.
-   */
+
   ULONG ref = InterlockedDecrement(&This->ref);
 
   TRACE("(%p) ReleaseRef to %d\n", This, ref);
 
-  /*
-   * If the reference count goes down to 0, perform suicide.
-   */
   if (ref == 0)
   {
     /*
@@ -416,23 +396,14 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
   TRACE("(%p, %s, %p, %x, %d, %p)\n",
 	iface, debugstr_w(pwcsName), reserved1, grfMode, reserved2, ppstm);
 
-  /*
-   * Perform a sanity check on the parameters.
-   */
   if ( (pwcsName==NULL) || (ppstm==0) )
   {
     res = E_INVALIDARG;
     goto end;
   }
 
-  /*
-   * Initialize the out parameter
-   */
   *ppstm = NULL;
 
-  /*
-   * Validate the STGM flags
-   */
   if ( FAILED( validateSTGM(grfMode) ) ||
        STGM_SHARE_MODE(grfMode) != STGM_SHARE_EXCLUSIVE)
   {
@@ -494,10 +465,6 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
       newStream->grfMode = grfMode;
       *ppstm = (IStream*)newStream;
 
-      /*
-       * Since we are returning a pointer to the interface, we have to
-       * nail down the reference.
-       */
       IStream_AddRef(*ppstm);
 
       res = S_OK;
@@ -544,9 +511,6 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
 	iface, debugstr_w(pwcsName), pstgPriority,
 	grfMode, snbExclude, reserved, ppstg);
 
-  /*
-   * Perform a sanity check on the parameters.
-   */
   if ( (This==0) || (pwcsName==NULL) || (ppstg==0) )
   {
     res = E_INVALIDARG;
@@ -560,9 +524,6 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
     goto end;
   }
 
-  /*
-   * Validate the STGM flags
-   */
   if ( FAILED( validateSTGM(grfMode) ))
   {
     res = STG_E_INVALIDFLAG;
@@ -592,40 +553,22 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
     }
   }
 
-  /*
-   * Initialize the out parameter
-   */
   *ppstg = NULL;
 
-  /*
-   * Create a property enumeration to search the properties
-   */
   propertyEnumeration = IEnumSTATSTGImpl_Construct(
                           This->ancestorStorage,
                           This->rootPropertySetIndex);
 
-  /*
-   * Search the enumeration for the property with the given name
-   */
   foundPropertyIndex = IEnumSTATSTGImpl_FindProperty(
                          propertyEnumeration,
                          pwcsName,
                          &currentProperty);
 
-  /*
-   * Delete the property enumeration since we don't need it anymore
-   */
   IEnumSTATSTGImpl_Destroy(propertyEnumeration);
 
-  /*
-   * If it was found, construct the stream object and return a pointer to it.
-   */
   if ( (foundPropertyIndex!=PROPERTY_NULL) &&
        (currentProperty.propertyType==PROPTYPE_STORAGE) )
   {
-    /*
-     * Construct a new Storage object
-     */
     newStorage = StorageInternalImpl_Construct(
                    This->ancestorStorage,
                    grfMode,
@@ -635,10 +578,6 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
     {
       *ppstg = (IStorage*)newStorage;
 
-      /*
-       * Since we are returning a pointer to the interface,
-       * we have to nail down the reference.
-       */
       StorageBaseImpl_AddRef(*ppstg);
 
       res = S_OK;
@@ -677,15 +616,9 @@ static HRESULT WINAPI StorageBaseImpl_EnumElements(
   TRACE("(%p, %d, %p, %d, %p)\n",
 	iface, reserved1, reserved2, reserved3, ppenum);
 
-  /*
-   * Perform a sanity check on the parameters.
-   */
   if ( (This==0) || (ppenum==0))
     return E_INVALIDARG;
 
-  /*
-   * Construct the enumerator.
-   */
   newEnum = IEnumSTATSTGImpl_Construct(
               This->ancestorStorage,
               This->rootPropertySetIndex);
@@ -694,10 +627,6 @@ static HRESULT WINAPI StorageBaseImpl_EnumElements(
   {
     *ppenum = (IEnumSTATSTG*)newEnum;
 
-    /*
-     * Don't forget to nail down a reference to the new object before
-     * returning it.
-     */
     IEnumSTATSTG_AddRef(*ppenum);
 
     return S_OK;
@@ -726,18 +655,12 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
   TRACE("(%p, %p, %x)\n",
 	iface, pstatstg, grfStatFlag);
 
-  /*
-   * Perform a sanity check on the parameters.
-   */
   if ( (This==0) || (pstatstg==0))
   {
     res = E_INVALIDARG;
     goto end;
   }
 
-  /*
-   * Read the information from the property.
-   */
   readSuccessful = StorageImpl_ReadProperty(
                     This->ancestorStorage,
                     This->rootPropertySetIndex,
@@ -792,15 +715,9 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
   TRACE("(%p, %s, %s)\n",
 	iface, debugstr_w(pwcsOldName), debugstr_w(pwcsNewName));
 
-  /*
-   * Create a property enumeration to search the properties
-   */
   propertyEnumeration = IEnumSTATSTGImpl_Construct(This->ancestorStorage,
                                                    This->rootPropertySetIndex);
 
-  /*
-   * Search the enumeration for the new property name
-   */
   foundPropertyIndex = IEnumSTATSTGImpl_FindProperty(propertyEnumeration,
                                                      pwcsNewName,
                                                      &currentProperty);
@@ -823,9 +740,6 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
                                                      pwcsOldName,
                                                      &currentProperty);
 
-  /*
-   * Delete the property enumeration since we don't need it anymore
-   */
   IEnumSTATSTGImpl_Destroy(propertyEnumeration);
 
   if (foundPropertyIndex != PROPERTY_NULL)
@@ -952,9 +866,6 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
 	iface, debugstr_w(pwcsName), grfMode,
 	reserved1, reserved2, ppstm);
 
-  /*
-   * Validate parameters
-   */
   if (ppstm == 0)
     return STG_E_INVALIDPOINTER;
 
@@ -964,9 +875,6 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
   if (reserved1 || reserved2)
     return STG_E_INVALIDPARAMETER;
 
-  /*
-   * Validate the STGM flags
-   */
   if ( FAILED( validateSTGM(grfMode) ))
     return STG_E_INVALIDFLAG;
 
@@ -996,14 +904,8 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
   if(This->ancestorStorage->base.openFlags & STGM_SIMPLE)
     if(grfMode & STGM_CREATE) return STG_E_INVALIDFLAG;
 
-  /*
-   * Initialize the out parameter
-   */
   *ppstm = 0;
 
-  /*
-   * Create a property enumeration to search the properties
-   */
   propertyEnumeration = IEnumSTATSTGImpl_Construct(This->ancestorStorage,
                                                    This->rootPropertySetIndex);
 
@@ -1103,10 +1005,6 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
   {
     *ppstm = (IStream*)newStream;
 
-    /*
-     * Since we are returning a pointer to the interface, we have to nail down
-     * the reference.
-     */
     IStream_AddRef(*ppstm);
   }
   else
@@ -1185,23 +1083,14 @@ static HRESULT WINAPI StorageImpl_CreateStorage(
 	iface, debugstr_w(pwcsName), grfMode,
 	reserved1, reserved2, ppstg);
 
-  /*
-   * Validate parameters
-   */
   if (ppstg == 0)
     return STG_E_INVALIDPOINTER;
 
   if (pwcsName == 0)
     return STG_E_INVALIDNAME;
 
-  /*
-   * Initialize the out parameter
-   */
   *ppstg = NULL;
 
-  /*
-   * Validate the STGM flags
-   */
   if ( FAILED( validateSTGM(grfMode) ) ||
        (grfMode & STGM_DELETEONRELEASE) )
   {
@@ -1581,9 +1470,6 @@ static HRESULT WINAPI StorageImpl_CopyTo(
 	iface, ciidExclude, rgiidExclude,
 	snbExclude, pstgDest);
 
-  /*
-   * Perform a sanity check
-   */
   if ( pstgDest == 0 )
     return STG_E_INVALIDPOINTER;
 
@@ -1799,18 +1685,12 @@ static HRESULT WINAPI StorageImpl_DestroyElement(
   TRACE("(%p, %s)\n",
 	iface, debugstr_w(pwcsName));
 
-  /*
-   * Perform a sanity check on the parameters.
-   */
   if (pwcsName==NULL)
     return STG_E_INVALIDPOINTER;
 
   if ( STGM_ACCESS_MODE( This->base.openFlags ) == STGM_READ )
     return STG_E_ACCESSDENIED;
 
-  /*
-   * Create a property enumeration to search the property with the given name
-   */
   propertyEnumeration = IEnumSTATSTGImpl_Construct(
     This->base.ancestorStorage,
     This->base.rootPropertySetIndex);
@@ -3755,20 +3635,11 @@ static HRESULT WINAPI IEnumSTATSTGImpl_QueryInterface(
 {
   IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
 
-  /*
-   * Perform a sanity check on the parameters.
-   */
   if (ppvObject==0)
     return E_INVALIDARG;
 
-  /*
-   * Initialize the return parameter.
-   */
   *ppvObject = 0;
 
-  /*
-   * Compare the riid with the interface IDs implemented by this object.
-   */
   if (IsEqualGUID(&IID_IUnknown, riid) ||
       IsEqualGUID(&IID_IEnumSTATSTG, riid))
   {
@@ -3796,9 +3667,6 @@ static ULONG   WINAPI IEnumSTATSTGImpl_Release(
 
   newRef = InterlockedDecrement(&This->ref);
 
-  /*
-   * If the reference count goes down to 0, perform suicide.
-   */
   if (newRef==0)
   {
     IEnumSTATSTGImpl_Destroy(This);
@@ -3820,9 +3688,6 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
   ULONG       objectFetched       = 0;
   ULONG      currentSearchNode;
 
-  /*
-   * Perform a sanity check on the parameters.
-   */
   if ( (rgelt==0) || ( (celt!=1) && (pceltFetched==0) ) )
     return E_INVALIDARG;
 
@@ -4289,9 +4154,6 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
 {
   StorageInternalImpl* newStorage;
 
-  /*
-   * Allocate space for the new storage object
-   */
   newStorage = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(StorageInternalImpl));
 
   if (newStorage!=0)
@@ -5781,9 +5643,6 @@ HRESULT WINAPI StgCreateDocfile(
 	debugstr_w(pwcsName), grfMode,
 	reserved, ppstgOpen);
 
-  /*
-   * Validate the parameters
-   */
   if (ppstgOpen == 0)
     return STG_E_INVALIDPOINTER;
   if (reserved != 0)
@@ -5793,9 +5652,6 @@ HRESULT WINAPI StgCreateDocfile(
   if (STGM_SHARE_MODE(grfMode) == 0)
       grfMode |= STGM_SHARE_DENY_NONE;
 
-  /*
-   * Validate the STGM flags
-   */
   if ( FAILED( validateSTGM(grfMode) ))
     goto end;
 
@@ -5861,9 +5717,6 @@ HRESULT WINAPI StgCreateDocfile(
   if (grfMode & STGM_TRANSACTED)
     FIXME("Transacted mode not implemented.\n");
 
-  /*
-   * Initialize the "out" parameter.
-   */
   *ppstgOpen = 0;
 
   hFile = CreateFileW(pwcsName,
@@ -6041,9 +5894,6 @@ HRESULT WINAPI StgOpenStorage(
 	debugstr_w(pwcsName), pstgPriority, grfMode,
 	snbExclude, reserved, ppstgOpen);
 
-  /*
-   * Perform sanity checks
-   */
   if (pwcsName == 0)
   {
     hr = STG_E_INVALIDNAME;
@@ -6095,9 +5945,6 @@ HRESULT WINAPI StgOpenStorage(
         goto end;
     }
 
-  /*
-   * Validate the STGM flags
-   */
   if ( FAILED( validateSTGM(grfMode) ) ||
        (grfMode&STGM_CREATE))
   {
@@ -6120,9 +5967,6 @@ HRESULT WINAPI StgOpenStorage(
   shareMode    = GetShareModeFromSTGM(grfMode);
   accessMode   = GetAccessModeFromSTGM(grfMode);
 
-  /*
-   * Initialize the "out" parameter.
-   */
   *ppstgOpen = 0;
 
   hFile = CreateFileW( pwcsName,
@@ -6238,9 +6082,6 @@ HRESULT WINAPI StgCreateDocfileOnILockBytes(
   StorageImpl*   newStorage = 0;
   HRESULT        hr         = S_OK;
 
-  /*
-   * Validate the parameters
-   */
   if ((ppstgOpen == 0) || (plkbyt == 0))
     return STG_E_INVALIDPOINTER;
 
@@ -6292,21 +6133,12 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(
   StorageImpl* newStorage = 0;
   HRESULT        hr = S_OK;
 
-  /*
-   * Perform a sanity check
-   */
   if ((plkbyt == 0) || (ppstgOpen == 0))
     return STG_E_INVALIDPOINTER;
 
-  /*
-   * Validate the STGM flags
-   */
   if ( FAILED( validateSTGM(grfMode) ))
     return STG_E_INVALIDFLAG;
 
-  /*
-   * Initialize the "out" parameter.
-   */
   *ppstgOpen = 0;
 
   /*
