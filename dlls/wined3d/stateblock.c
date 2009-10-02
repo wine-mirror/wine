@@ -136,6 +136,30 @@ static void stateblock_savedstates_set_pixel(SAVEDSTATES *states, const struct w
     memset(states->pixelShaderConstantsF, TRUE, sizeof(BOOL) * gl_info->max_pshader_constantsF);
 }
 
+static void stateblock_savedstates_set_vertex(SAVEDSTATES *states, const struct wined3d_gl_info *gl_info)
+{
+    DWORD texture_mask = 0;
+    WORD sampler_mask = 0;
+    unsigned int i;
+
+    states->vertexShader = 1;
+
+    for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; ++i)
+    {
+        DWORD rs = SavedVertexStates_R[i];
+        states->renderState[rs >> 5] |= 1 << (rs & 0x1f);
+    }
+
+    for (i = 0; i < NUM_SAVEDVERTEXSTATES_T; ++i) texture_mask |= 1 << SavedVertexStates_T[i];
+    for (i = 0; i < MAX_TEXTURES; ++i) states->textureState[i] = texture_mask;
+    for (i = 0; i < NUM_SAVEDVERTEXSTATES_S; ++i) sampler_mask |= 1 << SavedVertexStates_S[i];
+    for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i) states->samplerState[i] = sampler_mask;
+    states->vertexShaderConstantsB = 0xffff;
+    states->vertexShaderConstantsI = 0xffff;
+
+    memset(states->vertexShaderConstantsF, TRUE, sizeof(BOOL) * gl_info->max_vshader_constantsF);
+}
+
 static void stateblock_copy_values(IWineD3DStateBlockImpl *dst, const IWineD3DStateBlockImpl *src,
         const struct wined3d_gl_info *gl_info)
 {
@@ -1517,10 +1541,11 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
     {
         TRACE("VERTEXSTATE => Pretend all vertex shates have changed.\n");
 
+        stateblock_savedstates_set_vertex(&stateblock->changed, gl_info);
+
         /* Vertex Shader Constants. */
         for (i = 0; i <  gl_info->max_vshader_constantsF; ++i)
         {
-            stateblock->changed.vertexShaderConstantsF[i] = TRUE;
             stateblock->contained_vs_consts_f[i] = i;
         }
         stateblock->num_contained_vs_consts_f =  gl_info->max_vshader_constantsF;
@@ -1528,22 +1553,18 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
         for (i = 0; i < MAX_CONST_B; ++i)
         {
             stateblock->contained_vs_consts_b[i] = i;
-            stateblock->changed.vertexShaderConstantsB |= (1 << i);
         }
         stateblock->num_contained_vs_consts_b = MAX_CONST_B;
 
         for (i = 0; i < MAX_CONST_I; ++i)
         {
             stateblock->contained_vs_consts_i[i] = i;
-            stateblock->changed.vertexShaderConstantsI |= (1 << i);
         }
         stateblock->num_contained_vs_consts_i = MAX_CONST_I;
 
         for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++)
         {
-            DWORD rs = SavedVertexStates_R[i];
-            stateblock->changed.renderState[rs >> 5] |= 1 << (rs & 0x1f);
-            stateblock->contained_render_states[i] = rs;
+            stateblock->contained_render_states[i] = SavedVertexStates_R[i];
         }
         stateblock->num_contained_render_states = NUM_SAVEDVERTEXSTATES_R;
 
@@ -1551,10 +1572,8 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
         {
             for (j = 0; j < NUM_SAVEDVERTEXSTATES_T; ++j)
             {
-                DWORD state = SavedVertexStates_T[j];
-                stateblock->changed.textureState[i] |= 1 << state;
                 stateblock->contained_tss_states[stateblock->num_contained_tss_states].stage = i;
-                stateblock->contained_tss_states[stateblock->num_contained_tss_states].state = state;
+                stateblock->contained_tss_states[stateblock->num_contained_tss_states].state = SavedVertexStates_T[j];
                 ++stateblock->num_contained_tss_states;
             }
         }
@@ -1563,10 +1582,8 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
         {
             for (j = 0; j < NUM_SAVEDVERTEXSTATES_S; ++j)
             {
-                DWORD state = SavedVertexStates_S[j];
-                stateblock->changed.samplerState[i] |= 1 << state;
                 stateblock->contained_sampler_states[stateblock->num_contained_sampler_states].stage = i;
-                stateblock->contained_sampler_states[stateblock->num_contained_sampler_states].state = state;
+                stateblock->contained_sampler_states[stateblock->num_contained_sampler_states].state = SavedVertexStates_S[j];
                 ++stateblock->num_contained_sampler_states;
             }
         }
@@ -1587,7 +1604,6 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
             if (stateblock->streamSource[i]) IWineD3DBuffer_AddRef(stateblock->streamSource[i]);
         }
 
-        stateblock->changed.vertexShader = TRUE;
         if (stateblock->vertexShader) IWineD3DVertexShader_AddRef(stateblock->vertexShader);
 
         stateblock->pIndexData = NULL;
