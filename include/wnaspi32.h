@@ -150,7 +150,7 @@ typedef struct tagSRB32_ExecSCSICmd {
   BYTE        SRB_CDBLen;         /* 15 CDB Length */
   BYTE        SRB_HaStat;         /* 16 Host Adapter Status */
   BYTE        SRB_TargStat;       /* 17 Target Status */
-  void        (*SRB_PostProc)();  /* 18 Post routine */
+  void        (*SRB_PostProc)( struct tagSRB32_ExecSCSICmd * ); /* 18 Post routine */
   void        *SRB_Rsvd2;         /* 1C Reserved */
   BYTE        SRB_Rsvd3[16];      /* 20 Reserved for expansion */
   BYTE        CDBByte[16];        /* 30 SCSI CDB */
@@ -179,7 +179,7 @@ typedef struct tagSRB32_BusDeviceReset {
  BYTE         SRB_Rsvd1[12];            /* 0A Reserved for Alignment */
  BYTE         SRB_HaStat;               /* 16 Host Adapter Status */
  BYTE         SRB_TargStat;             /* 17 Target Status */
- void         (*SRB_PostProc)();        /* 18 Post routine */
+ void         (*SRB_PostProc)( struct tagSRB32_BusDeviceReset * ); /* 18 Post routine */
  void         *SRB_Rsvd2;               /* 1c Reserved */
  BYTE         SRB_Rsvd3[32];            /* 20 Reserved */
 } SRB_BusDeviceReset, *PSRB_BusDeviceReset;

@@ -270,7 +270,7 @@ ASPI_DebugPrintResult(SRB_ExecSCSICmd *prb)
 static DWORD
 WNASPI32_DoPosting( SRB_ExecSCSICmd *lpPRB, DWORD status )
 {
-	void (*SRB_PostProc)() = lpPRB->SRB_PostProc;
+	void (*SRB_PostProc)(SRB_ExecSCSICmd *) = lpPRB->SRB_PostProc;
 	BYTE SRB_Flags = lpPRB->SRB_Flags;
 	if( status == SS_PENDING )
 	{
