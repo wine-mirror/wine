@@ -5400,6 +5400,52 @@ interface IHTMLUniqueName : IDispatch
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]      \
     BSTR uniqueID()
 
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f3f2-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLDatabinding : IDispatch
+{
+    [propput, id(DISPID_IHTMLDATABINDING_DATAFLD)]
+    HRESULT dataFld([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLDATABINDING_DATAFLD)]
+    HRESULT dataFld([retval, out] BSTR * p);
+
+    [propput, id(DISPID_IHTMLDATABINDING_DATASRC)]
+    HRESULT dataSrc([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLDATABINDING_DATASRC)]
+    HRESULT dataSrc([retval, out] BSTR * p);
+
+    [propput, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
+    HRESULT dataFormatAs([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
+    HRESULT dataFormatAs([retval, out] BSTR * p);
+}
+
+#define WINE_IHTMLDATABINDING_DISPINTERFACE_DECL        \
+    [propput, id(DISPID_IHTMLDATABINDING_DATAFLD)]      \
+    void dataFld(BSTR v);                               \
+                                                        \
+    [propget, id(DISPID_IHTMLDATABINDING_DATAFLD)]      \
+    BSTR dataFld();                                     \
+                                                        \
+    [propput, id(DISPID_IHTMLDATABINDING_DATASRC)]      \
+    void dataSrc(BSTR v);                               \
+                                                        \
+    [propget, id(DISPID_IHTMLDATABINDING_DATASRC)]      \
+    BSTR dataSrc();                                     \
+                                                        \
+    [propput, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)] \
+    void dataFormatAs(BSTR v);                          \
+                                                        \
+    [propget, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)] \
+    BSTR dataFormatAs()
+
 /*****************************************************************************
  *    IHTMLGenericElement interface
  */
@@ -6347,24 +6393,7 @@ methods:
     WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
     WINE_IHTMLDOMNODE_DISPINTERFACE_DECL;
     WINE_IHTMLDOMNODE2_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATAFLD)]
-    void dataFld(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATAFLD)]
-    BSTR dataFld();
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATASRC)]
-    void dataSrc(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATASRC)]
-    BSTR dataSrc();
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
-    void dataFormatAs(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
-    BSTR dataFormatAs();
+    WINE_IHTMLDATABINDING_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLIMGELEMENT_ISMAP), displaybind, bindable]
     void isMap(VARIANT_BOOL v);
@@ -6513,33 +6542,6 @@ methods:
     [propget, id(DISPID_IHTMLIMGELEMENT2_LONGDESC), displaybind, bindable]
     BSTR longDesc();
 }
-
-[
-    odl,
-    oleautomation,
-    dual,
-    uuid(3050f3f2-98b5-11cf-bb82-00aa00bdce0b)
-]
-interface IHTMLDatabinding : IDispatch
-{
-    [propput, id(DISPID_IHTMLDATABINDING_DATAFLD)]
-    HRESULT dataFld([in] BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATAFLD)]
-    HRESULT dataFld([retval, out] BSTR * p);
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATASRC)]
-    HRESULT dataSrc([in] BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATASRC)]
-    HRESULT dataSrc([retval, out] BSTR * p);
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
-    HRESULT dataFormatAs([in] BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
-    HRESULT dataFormatAs([retval, out] BSTR * p);
-};
 
 /*****************************************************************************
  *    IHTMLControlElement interface
@@ -7056,24 +7058,7 @@ methods:
     WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
     WINE_IHTMLDOMNODE_DISPINTERFACE_DECL;
     WINE_IHTMLDOMNODE2_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATAFLD)]
-    void dataFld(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATAFLD)]
-    BSTR dataFld();
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATASRC)]
-    void dataSrc(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATASRC)]
-    BSTR dataSrc();
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
-    void dataFormatAs(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
-    BSTR dataFormatAs();
+    WINE_IHTMLDATABINDING_DISPINTERFACE_DECL;
 
     [id(DISPID_IHTMLELEMENT5_IE8_GETATTRIBUTENODE)]
     IHTMLDOMAttribute2 *ie8_getAttributeNode([in] BSTR bstrname);
@@ -7604,24 +7589,7 @@ methods:
     WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
     WINE_IHTMLDOMNODE_DISPINTERFACE_DECL;
     WINE_IHTMLDOMNODE2_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATAFLD)]
-    void dataFld(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATAFLD)]
-    BSTR dataFld();
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATASRC)]
-    void dataSrc(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATASRC)]
-    BSTR dataSrc();
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
-    void dataFormatAs(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
-    BSTR dataFormatAs();
+    WINE_IHTMLDATABINDING_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLSELECTELEMENT_SIZE), displaybind, bindable]
     void size(LONG v);
@@ -7822,24 +7790,7 @@ methods:
     WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
     WINE_IHTMLDOMNODE_DISPINTERFACE_DECL;
     WINE_IHTMLDOMNODE2_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATAFLD)]
-    void dataFld(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATAFLD)]
-    BSTR dataFld();
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATASRC)]
-    void dataSrc(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATASRC)]
-    BSTR dataSrc();
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
-    void dataFormatAs(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
-    BSTR dataFormatAs();
+    WINE_IHTMLDATABINDING_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLOPTIONELEMENT_SELECTED)]
     void selected(VARIANT_BOOL v);
@@ -8208,24 +8159,7 @@ methods:
     WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
     WINE_IHTMLDOMNODE_DISPINTERFACE_DECL;
     WINE_IHTMLDOMNODE2_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATAFLD)]
-    void dataFld(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATAFLD)]
-    BSTR dataFld();
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATASRC)]
-    void dataSrc(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATASRC)]
-    BSTR dataSrc();
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
-    void dataFormatAs(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
-    BSTR dataFormatAs();
+    WINE_IHTMLDATABINDING_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLINPUTELEMENT_TYPE)]
     void type(BSTR v);
@@ -13749,24 +13683,7 @@ methods:
     WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
     WINE_IHTMLDOMNODE_DISPINTERFACE_DECL;
     WINE_IHTMLDOMNODE2_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATAFLD)]
-    void dataFld(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATAFLD)]
-    BSTR dataFld();
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATASRC)]
-    void dataSrc(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATASRC)]
-    BSTR dataSrc();
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
-    void dataFormatAs(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
-    BSTR dataFormatAs();
+    WINE_IHTMLDATABINDING_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLTABLE_COLS)]
     void cols(LONG v);
@@ -14211,24 +14128,7 @@ methods:
     WINE_IHTMLUNIQUENAME_DISPINTERFACE_DECL;
     WINE_IHTMLDOMNODE_DISPINTERFACE_DECL;
     WINE_IHTMLDOMNODE2_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATAFLD)]
-    void dataFld(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATAFLD)]
-    BSTR dataFld();
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATASRC)]
-    void dataSrc(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATASRC)]
-    BSTR dataSrc();
-
-    [propput, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
-    void dataFormatAs(BSTR v);
-
-    [propget, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)]
-    BSTR dataFormatAs();
+    WINE_IHTMLDATABINDING_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLFRAMEBASE_SRC)]
     void src(BSTR v);
