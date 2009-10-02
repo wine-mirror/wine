@@ -43,3 +43,18 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
     return TRUE;
 }
+
+/**********************************************************************
+ *      FilterConnectCommunicationPort         (FLTLIB.@)
+ */
+HRESULT WINAPI FilterConnectCommunicationPort(LPCWSTR lpPortName, DWORD dwOptions,
+                                              LPVOID lpContext, DWORD dwSizeOfContext,
+                                              LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+                                              HANDLE *hPort)
+{
+    FIXME("(%s, %d, %p, %d, %p, %p) stub\n", debugstr_w(lpPortName), dwOptions,
+        lpContext, dwSizeOfContext, lpSecurityAttributes, hPort);
+
+    *hPort = INVALID_HANDLE_VALUE;
+    return E_NOTIMPL;
+}

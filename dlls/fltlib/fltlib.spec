@@ -1,7 +1,7 @@
 @ stub FilterAttach
 @ stub FilterAttachAtAltitude
 @ stub FilterClose
-@ stub FilterConnectCommunicationPort
+@ stdcall FilterConnectCommunicationPort(wstr long ptr long ptr ptr)
 @ stub FilterCreate
 @ stub FilterDetach
 @ stub FilterFindClose
