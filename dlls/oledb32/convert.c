@@ -129,6 +129,7 @@ static int get_length(DBTYPE type)
     case DBTYPE_BSTR:
         return sizeof(BSTR);
     case DBTYPE_WSTR:
+    case DBTYPE_BYREF | DBTYPE_WSTR:
         return 0;
     default:
         FIXME("Unhandled type %04x\n", type);
@@ -308,6 +309,26 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
                 hr = DB_E_ERRORSOCCURRED;
             }
         }
+        SysFreeString(b);
+        return hr;
+    }
+
+    case DBTYPE_BYREF | DBTYPE_WSTR:
+    {
+        BSTR b;
+        WCHAR **d = dst;
+        DBLENGTH bstr_len;
+        hr = IDataConvert_DataConvert(iface, src_type, DBTYPE_BSTR, src_len, &bstr_len,
+                                      src, &b, sizeof(BSTR), src_status, dst_status,
+                                      precision, scale, flags);
+        if(hr != S_OK) return hr;
+
+        bstr_len = SysStringLen(b) * sizeof(WCHAR);
+        *dst_len = bstr_len; /* Doesn't include size for '\0' */
+
+        *d = CoTaskMemAlloc(bstr_len + sizeof(WCHAR));
+        if(*d) memcpy(*d, b, bstr_len + sizeof(WCHAR));
+        else hr = E_OUTOFMEMORY;
         SysFreeString(b);
         return hr;
     }
