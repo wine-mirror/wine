@@ -138,10 +138,28 @@ MAKE_FUNCPTR(SSL_CTX_set_default_verify_paths);
 
 /* OpenSSL's libcrypto functions that we use */
 MAKE_FUNCPTR(BIO_new_fp);
+MAKE_FUNCPTR(CRYPTO_num_locks);
+MAKE_FUNCPTR(CRYPTO_set_id_callback);
+MAKE_FUNCPTR(CRYPTO_set_locking_callback);
 MAKE_FUNCPTR(ERR_get_error);
 MAKE_FUNCPTR(ERR_error_string);
 MAKE_FUNCPTR(i2d_X509);
 #undef MAKE_FUNCPTR
+
+static CRITICAL_SECTION *ssl_locks;
+
+static unsigned long ssl_thread_id(void)
+{
+    return GetCurrentThreadId();
+}
+
+static void ssl_lock_callback(int mode, int type, const char *file, int line)
+{
+    if (mode & CRYPTO_LOCK)
+        EnterCriticalSection(&ssl_locks[type]);
+    else
+        LeaveCriticalSection(&ssl_locks[type]);
+}
 
 #endif
 
@@ -152,6 +170,8 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
     if (useSSL)
     {
 #if defined(SONAME_LIBSSL) && defined(SONAME_LIBCRYPTO)
+        int i;
+
         TRACE("using SSL connection\n");
         EnterCriticalSection(&init_ssl_cs);
 	if (OpenSSL_ssl_handle) /* already initialized everything */
@@ -219,6 +239,9 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
         return FALSE; \
     }
 	DYNCRYPTO(BIO_new_fp);
+	DYNCRYPTO(CRYPTO_num_locks);
+	DYNCRYPTO(CRYPTO_set_id_callback);
+	DYNCRYPTO(CRYPTO_set_locking_callback);
 	DYNCRYPTO(ERR_get_error);
 	DYNCRYPTO(ERR_error_string);
 	DYNCRYPTO(i2d_X509);
@@ -238,6 +261,19 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
             LeaveCriticalSection(&init_ssl_cs);
             return FALSE;
         }
+
+        pCRYPTO_set_id_callback(ssl_thread_id);
+        ssl_locks = HeapAlloc(GetProcessHeap(), 0,
+                pCRYPTO_num_locks() * sizeof(CRITICAL_SECTION));
+        if (!ssl_locks)
+        {
+            INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+            LeaveCriticalSection(&init_ssl_cs);
+            return FALSE;
+        }
+        for (i = 0; i < pCRYPTO_num_locks(); i++)
+            InitializeCriticalSection(&ssl_locks[i]);
+        pCRYPTO_set_locking_callback(ssl_lock_callback);
         LeaveCriticalSection(&init_ssl_cs);
 #else
 	FIXME("can't use SSL, not compiled in.\n");
@@ -252,7 +288,17 @@ void NETCON_unload(void)
 {
 #if defined(SONAME_LIBSSL) && defined(SONAME_LIBCRYPTO)
     if (OpenSSL_crypto_handle)
+    {
+        if (ssl_locks)
+        {
+            int i;
+
+            for (i = 0; i < pCRYPTO_num_locks(); i++)
+                DeleteCriticalSection(&ssl_locks[i]);
+            HeapFree(GetProcessHeap(), 0, ssl_locks);
+        }
         wine_dlclose(OpenSSL_crypto_handle, NULL, 0);
+    }
     if (OpenSSL_ssl_handle)
     {
         if (ctx)
