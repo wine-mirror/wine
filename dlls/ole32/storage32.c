@@ -3720,13 +3720,12 @@ static void StorageInternalImpl_Destroy( StorageBaseImpl *iface)
 **
 ** Storage32InternalImpl_Commit
 **
-** The non-root storages cannot be opened in transacted mode thus this function
-** does nothing.
 */
 static HRESULT WINAPI StorageInternalImpl_Commit(
   IStorage*            iface,
   DWORD                  grfCommitFlags)  /* [in] */
 {
+  FIXME("(%p,%x): stub\n", iface, grfCommitFlags);
   return S_OK;
 }
 
@@ -3734,12 +3733,11 @@ static HRESULT WINAPI StorageInternalImpl_Commit(
 **
 ** Storage32InternalImpl_Revert
 **
-** The non-root storages cannot be opened in transacted mode thus this function
-** does nothing.
 */
 static HRESULT WINAPI StorageInternalImpl_Revert(
   IStorage*            iface)
 {
+  FIXME("(%p): stub\n", iface);
   return S_OK;
 }
 
