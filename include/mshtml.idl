@@ -5143,7 +5143,143 @@ interface IHTMLElement3 : IDispatch
 
     [propget, id(DISPID_IHTMLELEMENT3_GLYPHMODE), hidden, restricted, nonbrowsable]
     HRESULT glyphMode([retval, out] LONG * p);
-};
+}
+
+#define WINE_IHTMLELEMENT3_DISPINTERFACE_DECL                           \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT3_MERGEATTRIBUTES)]                          \
+    void mergeAttributes(                                               \
+            [in] IHTMLElement* mergeThis,                               \
+            [optional, in] VARIANT* pvarFlags);                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_ISMULTILINE)]                     \
+    VARIANT_BOOL isMultiLine();                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_CANHAVEHTML)]                     \
+    VARIANT_BOOL canHaveHTML();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable] \
+    void onlayoutcomplete(VARIANT v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable] \
+    VARIANT onlayoutcomplete();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]   \
+    void onpage(VARIANT v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]   \
+    VARIANT onpage();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable] \
+    void inflateBlock(VARIANT_BOOL v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable] \
+    VARIANT_BOOL inflateBlock();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable] \
+    void onbeforedeactivate(VARIANT v);                                 \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable] \
+    VARIANT onbeforedeactivate();                                       \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT3_SETACTIVE)]                                \
+    void setActive();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable] \
+    void contentEditable(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable] \
+    BSTR contentEditable();                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_ISCONTENTEDITABLE)]               \
+    VARIANT_BOOL isContentEditable();                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]\
+    void hideFocus(VARIANT_BOOL v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]\
+    VARIANT_BOOL hideFocus();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable] \
+    void disabled(VARIANT_BOOL v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable] \
+    VARIANT_BOOL disabled();                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_ISDISABLED)]                      \
+    VARIANT_BOOL isDisabled();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]   \
+    void onmove(VARIANT v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]   \
+    VARIANT onmove();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable] \
+    void oncontrolselect(VARIANT v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable] \
+    VARIANT oncontrolselect();                                          \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT3_FIREEVENT)]                                \
+    VARIANT_BOOL fireEvent(                                             \
+        [in] BSTR bstrEventName,                                        \
+        [optional, in] VARIANT* pvarEventObject);                       \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable] \
+    void onresizestart(VARIANT v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable] \
+    VARIANT onresizestart();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable] \
+    void onresizeend(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable] \
+    VARIANT onresizeend();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable] \
+    void onmovestart(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable] \
+    VARIANT onmovestart();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]\
+    void onmoveend(VARIANT v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]\
+    VARIANT onmoveend();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable] \
+    void onmouseenter(VARIANT v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable] \
+    VARIANT onmouseenter();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable] \
+    void onmouseleave(VARIANT v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable] \
+    VARIANT onmouseleave();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable] \
+    void onactivate(VARIANT v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable] \
+    VARIANT onactivate();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable] \
+    void ondeactivate(VARIANT v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable] \
+    VARIANT ondeactivate();                                             \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT3_DRAGDROP)]                                 \
+    VARIANT_BOOL dragDrop();                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT3_GLYPHMODE), hidden, restricted, nonbrowsable] \
+    LONG glyphMode()
+
 /*****************************************************************************
  *    IHTMLElement4 interface
  */
@@ -5231,139 +5367,7 @@ properties:
 methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
-
-    [id(DISPID_IHTMLELEMENT3_MERGEATTRIBUTES)]
-    void mergeAttributes(
-            [in] IHTMLElement *mergeThis,
-            [in, optional] VARIANT *pvarFlags);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISMULTILINE)]
-    VARIANT_BOOL isMultiLine();
-
-    [propget, id(DISPID_IHTMLELEMENT3_CANHAVEHTML)]
-    VARIANT_BOOL canHaveHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    void onlayoutcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    VARIANT onlayoutcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    void onpage(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    VARIANT onpage();
-
-    [propput, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    void inflateBlock(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    VARIANT_BOOL inflateBlock();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    void onbeforedeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    VARIANT onbeforedeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_SETACTIVE)]
-    void setActive();
-
-    [propput, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    void contentEditable(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    BSTR contentEditable();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISCONTENTEDITABLE)]
-    VARIANT_BOOL isContentEditable();
-
-    [propput, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    void hideFocus(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    VARIANT_BOOL hideFocus();
-
-    [propput, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    void disabled(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    VARIANT_BOOL disabled();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISDISABLED)]
-    VARIANT_BOOL isDisabled();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    void onmove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    VARIANT onmove();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    void oncontrolselect(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    VARIANT oncontrolselect();
-
-    [id(DISPID_IHTMLELEMENT3_FIREEVENT)]
-    VARIANT_BOOL fireEvent(
-            [in] BSTR bstrEventName,
-            [in, optional] VARIANT *pvarEventObject);
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    void onresizestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    VARIANT onresizestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    void onresizeend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    VARIANT onresizeend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    void onmovestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    VARIANT onmovestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    void onmoveend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    VARIANT onmoveend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    void onmouseenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    VARIANT onmouseenter();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    void onmouseleave(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    VARIANT onmouseleave();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    void onactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    VARIANT onactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    void ondeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    VARIANT ondeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_DRAGDROP)]
-    VARIANT_BOOL dragDrop();
-
-    [propget, id(DISPID_IHTMLELEMENT3_GLYPHMODE), hidden, restricted, nonbrowsable]
-    LONG glyphMode();
+    WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
     void onmousewheel(VARIANT v);
@@ -6376,139 +6380,7 @@ properties:
 methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
-
-    [id(DISPID_IHTMLELEMENT3_MERGEATTRIBUTES)]
-    void mergeAttributes(
-            [in] IHTMLElement *mergeThis,
-            [in, optional] VARIANT *pvarFlags);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISMULTILINE)]
-    VARIANT_BOOL isMultiLine();
-
-    [propget, id(DISPID_IHTMLELEMENT3_CANHAVEHTML)]
-    VARIANT_BOOL canHaveHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    void onlayoutcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    VARIANT onlayoutcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    void onpage(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    VARIANT onpage();
-
-    [propput, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    void inflateBlock(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    VARIANT_BOOL inflateBlock();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    void onbeforedeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    VARIANT onbeforedeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_SETACTIVE)]
-    void setActive();
-
-    [propput, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    void contentEditable(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    BSTR contentEditable();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISCONTENTEDITABLE)]
-    VARIANT_BOOL isContentEditable();
-
-    [propput, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    void hideFocus(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    VARIANT_BOOL hideFocus();
-
-    [propput, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    void disabled(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    VARIANT_BOOL disabled();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISDISABLED)]
-    VARIANT_BOOL isDisabled();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    void onmove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    VARIANT onmove();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    void oncontrolselect(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    VARIANT oncontrolselect();
-
-    [id(DISPID_IHTMLELEMENT3_FIREEVENT)]
-    VARIANT_BOOL fireEvent(
-            [in] BSTR bstrEventName,
-            [in, optional] VARIANT *pvarEventObject);
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    void onresizestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    VARIANT onresizestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    void onresizeend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    VARIANT onresizeend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    void onmovestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    VARIANT onmovestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    void onmoveend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    VARIANT onmoveend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    void onmouseenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    VARIANT onmouseenter();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    void onmouseleave(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    VARIANT onmouseleave();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    void onactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    VARIANT onactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    void ondeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    VARIANT ondeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_DRAGDROP)]
-    VARIANT_BOOL dragDrop();
-
-    [propget, id(DISPID_IHTMLELEMENT3_GLYPHMODE), hidden, restricted, nonbrowsable]
-    LONG glyphMode();
+    WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
     void onmousewheel(VARIANT v);
@@ -7047,137 +6919,7 @@ properties:
 methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
-
-    [id(DISPID_IHTMLELEMENT3_MERGEATTRIBUTES)]
-    void mergeAttributes(
-        [in] IHTMLElement* mergeThis,
-        [optional, in] VARIANT* pvarFlags);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISMULTILINE)]
-    VARIANT_BOOL isMultiLine();
-
-    [propget, id(DISPID_IHTMLELEMENT3_CANHAVEHTML)]
-    VARIANT_BOOL canHaveHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    void onlayoutcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    VARIANT onlayoutcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    void onpage(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    VARIANT onpage();
-
-    [propput, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    void inflateBlock(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    VARIANT_BOOL inflateBlock();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    void onbeforedeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    VARIANT onbeforedeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_SETACTIVE)]
-    void setActive();
-
-    [propput, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    void contentEditable(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    BSTR contentEditable();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISCONTENTEDITABLE)]
-    VARIANT_BOOL isContentEditable();
-
-    [propput, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    void hideFocus(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    VARIANT_BOOL hideFocus();
-
-    [propput, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    void disabled(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    VARIANT_BOOL disabled();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISDISABLED)]
-    VARIANT_BOOL isDisabled();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    void onmove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    VARIANT onmove();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    void oncontrolselect(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    VARIANT oncontrolselect();
-
-    [id(DISPID_IHTMLELEMENT3_FIREEVENT)]
-    VARIANT_BOOL fireEvent(
-        [in] BSTR bstrEventName,
-        [optional, in] VARIANT* pvarEventObject);
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-     void onresizestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    VARIANT onresizestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    void onresizeend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    VARIANT onresizeend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    void onmovestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    VARIANT onmovestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    void onmoveend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    VARIANT onmoveend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    void onmouseenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    VARIANT onmouseenter();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    void onmouseleave(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    VARIANT onmouseleave();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    void onactivate(VARIANT v);
-    [propget, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable] VARIANT onactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    void ondeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    VARIANT ondeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_DRAGDROP)]
-    VARIANT_BOOL dragDrop();
-
-    [propget, id(DISPID_IHTMLELEMENT3_GLYPHMODE), hidden, restricted, nonbrowsable]
-    LONG glyphMode();
+    WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
     void onmousewheel(VARIANT v);
@@ -7575,137 +7317,7 @@ properties:
 methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
-
-    [id(DISPID_IHTMLELEMENT3_MERGEATTRIBUTES)]
-    void mergeAttributes(
-        [in] IHTMLElement* mergeThis,
-        [optional, in] VARIANT* pvarFlags);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISMULTILINE)]
-    VARIANT_BOOL isMultiLine();
-
-    [propget, id(DISPID_IHTMLELEMENT3_CANHAVEHTML)]
-    VARIANT_BOOL canHaveHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    void onlayoutcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    VARIANT onlayoutcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    void onpage(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    VARIANT onpage();
-
-    [propput, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    void inflateBlock(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    VARIANT_BOOL inflateBlock();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    void onbeforedeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    VARIANT onbeforedeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_SETACTIVE)]
-    void setActive();
-
-    [propput, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    void contentEditable(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    BSTR contentEditable();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISCONTENTEDITABLE)]
-    VARIANT_BOOL isContentEditable();
-
-    [propput, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    void hideFocus(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    VARIANT_BOOL hideFocus();
-
-    [propput, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    void disabled(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    VARIANT_BOOL disabled();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISDISABLED)]
-    VARIANT_BOOL isDisabled();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    void onmove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    VARIANT onmove();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    void oncontrolselect(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    VARIANT oncontrolselect();
-
-    [id(DISPID_IHTMLELEMENT3_FIREEVENT)]
-    VARIANT_BOOL fireEvent(
-        [in] BSTR bstrEventName,
-        [optional, in] VARIANT* pvarEventObject);
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-     void onresizestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    VARIANT onresizestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    void onresizeend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    VARIANT onresizeend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    void onmovestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    VARIANT onmovestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    void onmoveend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    VARIANT onmoveend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    void onmouseenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    VARIANT onmouseenter();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    void onmouseleave(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    VARIANT onmouseleave();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    void onactivate(VARIANT v);
-    [propget, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable] VARIANT onactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    void ondeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    VARIANT ondeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_DRAGDROP)]
-    VARIANT_BOOL dragDrop();
-
-    [propget, id(DISPID_IHTMLELEMENT3_GLYPHMODE), hidden, restricted, nonbrowsable]
-    LONG glyphMode();
+    WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
     void onmousewheel(VARIANT v);
@@ -8358,139 +7970,7 @@ properties:
 methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
-
-    [id(DISPID_IHTMLELEMENT3_MERGEATTRIBUTES)]
-    void mergeAttributes(
-            [in] IHTMLElement *mergeThis,
-            [in, optional] VARIANT *pvarFlags);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISMULTILINE)]
-    VARIANT_BOOL isMultiLine();
-
-    [propget, id(DISPID_IHTMLELEMENT3_CANHAVEHTML)]
-    VARIANT_BOOL canHaveHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    void onlayoutcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    VARIANT onlayoutcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    void onpage(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    VARIANT onpage();
-
-    [propput, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    void inflateBlock(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    VARIANT_BOOL inflateBlock();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    void onbeforedeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    VARIANT onbeforedeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_SETACTIVE)]
-    void setActive();
-
-    [propput, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    void contentEditable(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    BSTR contentEditable();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISCONTENTEDITABLE)]
-    VARIANT_BOOL isContentEditable();
-
-    [propput, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    void hideFocus(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    VARIANT_BOOL hideFocus();
-
-    [propput, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    void disabled(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    VARIANT_BOOL disabled();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISDISABLED)]
-    VARIANT_BOOL isDisabled();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    void onmove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    VARIANT onmove();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    void oncontrolselect(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    VARIANT oncontrolselect();
-
-    [id(DISPID_IHTMLELEMENT3_FIREEVENT)]
-    VARIANT_BOOL fireEvent(
-            [in] BSTR bstrEventName,
-            [in, optional] VARIANT *pvarEventObject);
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    void onresizestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    VARIANT onresizestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    void onresizeend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    VARIANT onresizeend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    void onmovestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    VARIANT onmovestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    void onmoveend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    VARIANT onmoveend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    void onmouseenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    VARIANT onmouseenter();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    void onmouseleave(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    VARIANT onmouseleave();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    void onactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    VARIANT onactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    void ondeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    VARIANT ondeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_DRAGDROP)]
-    VARIANT_BOOL dragDrop();
-
-    [propget, id(DISPID_IHTMLELEMENT3_GLYPHMODE), hidden, restricted, nonbrowsable]
-    LONG glyphMode();
+    WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
     void onmousewheel(VARIANT v);
@@ -8813,139 +8293,7 @@ properties:
 methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
-
-    [id(DISPID_IHTMLELEMENT3_MERGEATTRIBUTES)]
-    void mergeAttributes(
-            [in] IHTMLElement *mergeThis,
-            [in, optional] VARIANT *pvarFlags);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISMULTILINE)]
-    VARIANT_BOOL isMultiLine();
-
-    [propget, id(DISPID_IHTMLELEMENT3_CANHAVEHTML)]
-    VARIANT_BOOL canHaveHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    void onlayoutcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    VARIANT onlayoutcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    void onpage(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    VARIANT onpage();
-
-    [propput, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    void inflateBlock(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    VARIANT_BOOL inflateBlock();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    void onbeforedeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    VARIANT onbeforedeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_SETACTIVE)]
-    void setActive();
-
-    [propput, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    void contentEditable(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    BSTR contentEditable();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISCONTENTEDITABLE)]
-    VARIANT_BOOL isContentEditable();
-
-    [propput, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    void hideFocus(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    VARIANT_BOOL hideFocus();
-
-    [propput, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    void disabled(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    VARIANT_BOOL disabled();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISDISABLED)]
-    VARIANT_BOOL isDisabled();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    void onmove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    VARIANT onmove();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    void oncontrolselect(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    VARIANT oncontrolselect();
-
-    [id(DISPID_IHTMLELEMENT3_FIREEVENT)]
-    VARIANT_BOOL fireEvent(
-            [in] BSTR bstrEventName,
-            [in, optional] VARIANT *pvarEventObject);
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    void onresizestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    VARIANT onresizestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    void onresizeend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    VARIANT onresizeend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    void onmovestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    VARIANT onmovestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    void onmoveend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    VARIANT onmoveend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    void onmouseenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    VARIANT onmouseenter();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    void onmouseleave(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    VARIANT onmouseleave();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    void onactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    VARIANT onactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    void ondeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    VARIANT ondeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_DRAGDROP)]
-    VARIANT_BOOL dragDrop();
-
-    [propget, id(DISPID_IHTMLELEMENT3_GLYPHMODE), hidden, restricted, nonbrowsable]
-    LONG glyphMode();
+    WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
     void onmousewheel(VARIANT v);
@@ -9436,139 +8784,7 @@ properties:
 methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
-
-    [id(DISPID_IHTMLELEMENT3_MERGEATTRIBUTES)]
-    void mergeAttributes(
-            [in] IHTMLElement *mergeThis,
-            [in, optional] VARIANT *pvarFlags);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISMULTILINE)]
-    VARIANT_BOOL isMultiLine();
-
-    [propget, id(DISPID_IHTMLELEMENT3_CANHAVEHTML)]
-    VARIANT_BOOL canHaveHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    void onlayoutcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    VARIANT onlayoutcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    void onpage(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    VARIANT onpage();
-
-    [propput, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    void inflateBlock(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    VARIANT_BOOL inflateBlock();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    void onbeforedeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    VARIANT onbeforedeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_SETACTIVE)]
-    void setActive();
-
-    [propput, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    void contentEditable(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    BSTR contentEditable();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISCONTENTEDITABLE)]
-    VARIANT_BOOL isContentEditable();
-
-    [propput, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    void hideFocus(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    VARIANT_BOOL hideFocus();
-
-    [propput, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    void disabled(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    VARIANT_BOOL disabled();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISDISABLED)]
-    VARIANT_BOOL isDisabled();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    void onmove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    VARIANT onmove();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    void oncontrolselect(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    VARIANT oncontrolselect();
-
-    [id(DISPID_IHTMLELEMENT3_FIREEVENT)]
-    VARIANT_BOOL fireEvent(
-            [in] BSTR bstrEventName,
-            [in, optional] VARIANT *pvarEventObject);
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    void onresizestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    VARIANT onresizestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    void onresizeend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    VARIANT onresizeend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    void onmovestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    VARIANT onmovestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    void onmoveend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    VARIANT onmoveend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    void onmouseenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    VARIANT onmouseenter();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    void onmouseleave(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    VARIANT onmouseleave();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    void onactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    VARIANT onactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    void ondeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    VARIANT ondeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_DRAGDROP)]
-    VARIANT_BOOL dragDrop();
-
-    [propget, id(DISPID_IHTMLELEMENT3_GLYPHMODE), hidden, restricted, nonbrowsable]
-    LONG glyphMode();
+    WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
     void onmousewheel(VARIANT v);
@@ -9999,139 +9215,7 @@ properties:
 methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
-
-    [id(DISPID_IHTMLELEMENT3_MERGEATTRIBUTES)]
-    void mergeAttributes(
-            [in] IHTMLElement *mergeThis,
-            [in, optional] VARIANT *pvarFlags);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISMULTILINE)]
-    VARIANT_BOOL isMultiLine();
-
-    [propget, id(DISPID_IHTMLELEMENT3_CANHAVEHTML)]
-    VARIANT_BOOL canHaveHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    void onlayoutcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    VARIANT onlayoutcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    void onpage(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    VARIANT onpage();
-
-    [propput, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    void inflateBlock(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    VARIANT_BOOL inflateBlock();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    void onbeforedeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    VARIANT onbeforedeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_SETACTIVE)]
-    void setActive();
-
-    [propput, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    void contentEditable(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    BSTR contentEditable();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISCONTENTEDITABLE)]
-    VARIANT_BOOL isContentEditable();
-
-    [propput, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    void hideFocus(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    VARIANT_BOOL hideFocus();
-
-    [propput, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    void disabled(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    VARIANT_BOOL disabled();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISDISABLED)]
-    VARIANT_BOOL isDisabled();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    void onmove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    VARIANT onmove();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    void oncontrolselect(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    VARIANT oncontrolselect();
-
-    [id(DISPID_IHTMLELEMENT3_FIREEVENT)]
-    VARIANT_BOOL fireEvent(
-            [in] BSTR bstrEventName,
-            [in, optional] VARIANT *pvarEventObject);
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    void onresizestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    VARIANT onresizestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    void onresizeend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    VARIANT onresizeend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    void onmovestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    VARIANT onmovestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    void onmoveend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    VARIANT onmoveend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    void onmouseenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    VARIANT onmouseenter();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    void onmouseleave(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    VARIANT onmouseleave();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    void onactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    VARIANT onactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    void ondeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    VARIANT ondeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_DRAGDROP)]
-    VARIANT_BOOL dragDrop();
-
-    [propget, id(DISPID_IHTMLELEMENT3_GLYPHMODE), hidden, restricted, nonbrowsable]
-    LONG glyphMode();
+    WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
     void onmousewheel(VARIANT v);
@@ -14290,139 +13374,7 @@ properties:
 methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
-
-    [id(DISPID_IHTMLELEMENT3_MERGEATTRIBUTES)]
-    void mergeAttributes(
-            [in] IHTMLElement *mergeThis,
-            [in, optional] VARIANT *pvarFlags);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISMULTILINE)]
-    VARIANT_BOOL isMultiLine();
-
-    [propget, id(DISPID_IHTMLELEMENT3_CANHAVEHTML)]
-    VARIANT_BOOL canHaveHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    void onlayoutcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    VARIANT onlayoutcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    void onpage(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    VARIANT onpage();
-
-    [propput, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    void inflateBlock(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    VARIANT_BOOL inflateBlock();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    void onbeforedeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    VARIANT onbeforedeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_SETACTIVE)]
-    void setActive();
-
-    [propput, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    void contentEditable(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    BSTR contentEditable();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISCONTENTEDITABLE)]
-    VARIANT_BOOL isContentEditable();
-
-    [propput, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    void hideFocus(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    VARIANT_BOOL hideFocus();
-
-    [propput, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    void disabled(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    VARIANT_BOOL disabled();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISDISABLED)]
-    VARIANT_BOOL isDisabled();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    void onmove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    VARIANT onmove();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    void oncontrolselect(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    VARIANT oncontrolselect();
-
-    [id(DISPID_IHTMLELEMENT3_FIREEVENT)]
-    VARIANT_BOOL fireEvent(
-            [in] BSTR bstrEventName,
-            [in, optional] VARIANT *pvarEventObject);
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    void onresizestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    VARIANT onresizestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    void onresizeend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    VARIANT onresizeend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    void onmovestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    VARIANT onmovestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    void onmoveend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    VARIANT onmoveend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    void onmouseenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    VARIANT onmouseenter();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    void onmouseleave(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    VARIANT onmouseleave();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    void onactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    VARIANT onactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    void ondeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    VARIANT ondeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_DRAGDROP)]
-    VARIANT_BOOL dragDrop();
-
-    [propget, id(DISPID_IHTMLELEMENT3_GLYPHMODE), hidden, restricted, nonbrowsable]
-    LONG glyphMode();
+    WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
     void onmousewheel(VARIANT v);
@@ -15752,139 +14704,7 @@ properties:
 methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
-
-    [id(DISPID_IHTMLELEMENT3_MERGEATTRIBUTES)]
-    void mergeAttributes(
-            [in] IHTMLElement *mergeThis,
-            [in, optional] VARIANT *pvarFlags);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISMULTILINE)]
-    VARIANT_BOOL isMultiLine();
-
-    [propget, id(DISPID_IHTMLELEMENT3_CANHAVEHTML)]
-    VARIANT_BOOL canHaveHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    void onlayoutcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    VARIANT onlayoutcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    void onpage(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    VARIANT onpage();
-
-    [propput, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    void inflateBlock(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    VARIANT_BOOL inflateBlock();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    void onbeforedeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    VARIANT onbeforedeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_SETACTIVE)]
-    void setActive();
-
-    [propput, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    void contentEditable(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    BSTR contentEditable();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISCONTENTEDITABLE)]
-    VARIANT_BOOL isContentEditable();
-
-    [propput, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    void hideFocus(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    VARIANT_BOOL hideFocus();
-
-    [propput, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    void disabled(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    VARIANT_BOOL disabled();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISDISABLED)]
-    VARIANT_BOOL isDisabled();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    void onmove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    VARIANT onmove();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    void oncontrolselect(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    VARIANT oncontrolselect();
-
-    [id(DISPID_IHTMLELEMENT3_FIREEVENT)]
-    VARIANT_BOOL fireEvent(
-            [in] BSTR bstrEventName,
-            [in, optional] VARIANT *pvarEventObject);
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    void onresizestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    VARIANT onresizestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    void onresizeend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    VARIANT onresizeend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    void onmovestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    VARIANT onmovestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    void onmoveend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    VARIANT onmoveend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    void onmouseenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    VARIANT onmouseenter();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    void onmouseleave(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    VARIANT onmouseleave();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    void onactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    VARIANT onactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    void ondeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    VARIANT ondeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_DRAGDROP)]
-    VARIANT_BOOL dragDrop();
-
-    [propget, id(DISPID_IHTMLELEMENT3_GLYPHMODE), hidden, restricted, nonbrowsable]
-    LONG glyphMode();
+    WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
     void onmousewheel(VARIANT v);
@@ -16185,139 +15005,7 @@ properties:
 methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
-
-    [id(DISPID_IHTMLELEMENT3_MERGEATTRIBUTES)]
-    void mergeAttributes(
-            [in] IHTMLElement *mergeThis,
-            [in, optional] VARIANT *pvarFlags);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISMULTILINE)]
-    VARIANT_BOOL isMultiLine();
-
-    [propget, id(DISPID_IHTMLELEMENT3_CANHAVEHTML)]
-    VARIANT_BOOL canHaveHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    void onlayoutcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    VARIANT onlayoutcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    void onpage(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    VARIANT onpage();
-
-    [propput, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    void inflateBlock(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    VARIANT_BOOL inflateBlock();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    void onbeforedeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    VARIANT onbeforedeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_SETACTIVE)]
-    void setActive();
-
-    [propput, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    void contentEditable(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    BSTR contentEditable();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISCONTENTEDITABLE)]
-    VARIANT_BOOL isContentEditable();
-
-    [propput, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    void hideFocus(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    VARIANT_BOOL hideFocus();
-
-    [propput, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    void disabled(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    VARIANT_BOOL disabled();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISDISABLED)]
-    VARIANT_BOOL isDisabled();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    void onmove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    VARIANT onmove();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    void oncontrolselect(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    VARIANT oncontrolselect();
-
-    [id(DISPID_IHTMLELEMENT3_FIREEVENT)]
-    VARIANT_BOOL fireEvent(
-            [in] BSTR bstrEventName,
-            [in, optional] VARIANT *pvarEventObject);
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    void onresizestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    VARIANT onresizestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    void onresizeend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    VARIANT onresizeend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    void onmovestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    VARIANT onmovestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    void onmoveend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    VARIANT onmoveend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    void onmouseenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    VARIANT onmouseenter();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    void onmouseleave(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    VARIANT onmouseleave();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    void onactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    VARIANT onactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    void ondeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    VARIANT ondeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_DRAGDROP)]
-    VARIANT_BOOL dragDrop();
-
-    [propget, id(DISPID_IHTMLELEMENT3_GLYPHMODE), hidden, restricted, nonbrowsable]
-    LONG glyphMode();
+    WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
     void onmousewheel(VARIANT v);
@@ -16687,444 +15375,8 @@ dispinterface DispHTMLIFrame
 properties:
 methods:
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
-
-    [id(DISPID_IHTMLELEMENT2_SETCAPTURE)]
-    void setCapture([in, defaultvalue(-1)] VARIANT_BOOL containerCapture);
-
-    [id(DISPID_IHTMLELEMENT2_RELEASECAPTURE)]
-    void releaseCapture();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONLOSECAPTURE), displaybind, bindable]
-    void onlosecapture(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONLOSECAPTURE), displaybind, bindable]
-    VARIANT onlosecapture();
-
-    [id(DISPID_IHTMLELEMENT2_COMPONENTFROMPOINT)]
-    BSTR componentFromPoint(
-            [in] LONG x,
-            [in] LONG y);
-
-    [id(DISPID_IHTMLELEMENT2_DOSCROLL)]
-    void doScroll([in, optional] VARIANT component);
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONSCROLL), displaybind, bindable]
-    void onscroll(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONSCROLL), displaybind, bindable]
-    VARIANT onscroll();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONDRAG), displaybind, bindable]
-    void ondrag(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONDRAG), displaybind, bindable]
-    VARIANT ondrag();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONDRAGEND), displaybind, bindable]
-    void ondragend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONDRAGEND), displaybind, bindable]
-    VARIANT ondragend();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONDRAGENTER), displaybind, bindable]
-    void ondragenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONDRAGENTER), displaybind, bindable]
-    VARIANT ondragenter();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONDRAGOVER), displaybind, bindable]
-    void ondragover(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONDRAGOVER), displaybind, bindable]
-    VARIANT ondragover();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONDRAGLEAVE), displaybind, bindable]
-    void ondragleave(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONDRAGLEAVE), displaybind, bindable]
-    VARIANT ondragleave();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONDROP), displaybind, bindable]
-    void ondrop(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONDROP), displaybind, bindable]
-    VARIANT ondrop();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONBEFORECUT), displaybind, bindable]
-    void onbeforecut(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONBEFORECUT), displaybind, bindable]
-    VARIANT onbeforecut();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONCUT), displaybind, bindable]
-    void oncut(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONCUT), displaybind, bindable]
-    VARIANT oncut();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONBEFORECOPY), displaybind, bindable]
-    void onbeforecopy(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONBEFORECOPY), displaybind, bindable]
-    VARIANT onbeforecopy();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONCOPY), displaybind, bindable]
-    void oncopy(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONCOPY), displaybind, bindable]
-    VARIANT oncopy();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONBEFOREPASTE), displaybind, bindable]
-    void onbeforepaste(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONBEFOREPASTE), displaybind, bindable]
-    VARIANT onbeforepaste();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONPASTE), displaybind, bindable]
-    void onpaste(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONPASTE), displaybind, bindable]
-    VARIANT onpaste();
-
-    [propget, id(DISPID_IHTMLELEMENT2_CURRENTSTYLE), nonbrowsable]
-    IHTMLCurrentStyle *currentStyle();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONPROPERTYCHANGE), displaybind, bindable]
-    void onpropertychange(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONPROPERTYCHANGE), displaybind, bindable]
-    VARIANT onpropertychange();
-
-    [id(DISPID_IHTMLELEMENT2_GETCLIENTRECTS)]
-    IHTMLRectCollection *getClientRects();
-
-    [id(DISPID_IHTMLELEMENT2_GETBOUNDINGCLIENTRECT)]
-    IHTMLRect *getBoundingClientRect();
-
-    [id(DISPID_IHTMLELEMENT2_SETEXPRESSION)]
-    void setExpression(
-            [in] BSTR propname,
-            [in] BSTR expression,
-            [in, defaultvalue("")] BSTR language);
-
-    [id(DISPID_IHTMLELEMENT2_GETEXPRESSION)]
-    VARIANT getExpression([in] BSTR propname);
-
-    [id(DISPID_IHTMLELEMENT2_REMOVEEXPRESSION)]
-    VARIANT_BOOL removeExpression([in] BSTR propname);
-
-    [propput, id(DISPID_IHTMLELEMENT2_TABINDEX), displaybind, bindable]
-    void tabIndex(short v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_TABINDEX), displaybind, bindable]
-    short tabIndex();
-
-    [id(DISPID_IHTMLELEMENT2_FOCUS)]
-    void focus();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ACCESSKEY), displaybind, bindable]
-    void accessKey(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ACCESSKEY), displaybind, bindable]
-    BSTR accessKey();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONBLUR), displaybind, bindable]
-    void onblur(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONBLUR), displaybind, bindable]
-    VARIANT onblur();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONFOCUS), displaybind, bindable]
-    void onfocus(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONFOCUS), displaybind, bindable]
-    VARIANT onfocus();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONRESIZE), displaybind, bindable]
-    void onresize(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONRESIZE), displaybind, bindable]
-    VARIANT onresize();
-
-    [id(DISPID_IHTMLELEMENT2_BLUR)]
-    void blur();
-
-    [id(DISPID_IHTMLELEMENT2_ADDFILTER)]
-    void addFilter([in] IUnknown *pUnk);
-
-    [id(DISPID_IHTMLELEMENT2_REMOVEFILTER)]
-    void removeFilter([in] IUnknown *pUnk);
-
-    [propget, id(DISPID_IHTMLELEMENT2_CLIENTHEIGHT), displaybind, bindable]
-    LONG clientHeight();
-
-    [propget, id(DISPID_IHTMLELEMENT2_CLIENTWIDTH), displaybind, bindable]
-    LONG clientWidth();
-
-    [propget, id(DISPID_IHTMLELEMENT2_CLIENTTOP), displaybind, bindable]
-    LONG clientTop();
-
-    [propget, id(DISPID_IHTMLELEMENT2_CLIENTLEFT), displaybind, bindable]
-    LONG clientLeft();
-
-    [id(DISPID_IHTMLELEMENT2_ATTACHEVENT)]
-    VARIANT_BOOL attachEvent(
-            [in] BSTR event,
-            [in] IDispatch *pDisp);
-
-    [id(DISPID_IHTMLELEMENT2_DETACHEVENT)]
-    void detachEvent(
-            [in] BSTR event,
-            [in] IDispatch *pDisp);
-
-    [propget, id(DISPID_IHTMLELEMENT2_READYSTATE)]
-    VARIANT readyState();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONREADYSTATECHANGE), displaybind, bindable]
-    void onreadystatechange(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONREADYSTATECHANGE), displaybind, bindable]
-    VARIANT onreadystatechange();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONROWSDELETE), displaybind, bindable]
-    void onrowsdelete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONROWSDELETE), displaybind, bindable]
-    VARIANT onrowsdelete();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONROWSINSERTED), displaybind, bindable]
-    void onrowsinserted(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONROWSINSERTED), displaybind, bindable]
-     VARIANT onrowsinserted();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONCELLCHANGE), displaybind, bindable]
-     void oncellchange(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONCELLCHANGE), displaybind, bindable]
-    VARIANT oncellchange();
-
-    [propput, id(DISPID_IHTMLELEMENT2_DIR), displaybind, bindable]
-    void dir(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_DIR), displaybind, bindable]
-    BSTR dir();
-
-    [id(DISPID_IHTMLELEMENT2_CREATECONTROLRANGE)]
-    IDispatch *createControlRange();
-
-    [propget, id(DISPID_IHTMLELEMENT2_SCROLLHEIGHT), displaybind, bindable]
-    LONG scrollHeight();
-
-    [propget, id(DISPID_IHTMLELEMENT2_SCROLLWIDTH), displaybind, bindable]
-    LONG scrollWidth();
-
-    [propput, id(DISPID_IHTMLELEMENT2_SCROLLTOP), displaybind, bindable]
-    void scrollTop(LONG v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_SCROLLTOP), displaybind, bindable]
-    LONG scrollTop();
-
-    [propput, id(DISPID_IHTMLELEMENT2_SCROLLLEFT), displaybind, bindable]
-    void scrollLeft(LONG v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_SCROLLLEFT), displaybind, bindable]
-    LONG scrollLeft();
-
-    [id(DISPID_IHTMLELEMENT2_CLEARATTRIBUTES)]
-    void clearAttributes();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONCONTEXTMENU), displaybind, bindable]
-    void oncontextmenu(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONCONTEXTMENU), displaybind, bindable]
-    VARIANT oncontextmenu();
-
-    [id(DISPID_IHTMLELEMENT2_INSERTADJACENTELEMENT)]
-    IHTMLElement *insertAdjacentElement(
-            [in] BSTR where,
-            [in] IHTMLElement *insertedElement);
-
-    [id(DISPID_IHTMLELEMENT2_APPLYELEMENT)]
-    IHTMLElement *applyElement(
-            [in] IHTMLElement *apply,
-            [in] BSTR where);
-
-    [id(DISPID_IHTMLELEMENT2_GETADJACENTTEXT)]
-    BSTR getAdjacentText([in] BSTR where);
-
-    [id(DISPID_IHTMLELEMENT2_REPLACEADJACENTTEXT)]
-    BSTR replaceAdjacentText(
-            [in] BSTR where,
-            [in] BSTR newText);
-
-    [propget, id(DISPID_IHTMLELEMENT2_CANHAVECHILDREN)]
-    VARIANT_BOOL canHaveChildren();
-
-    [id(DISPID_IHTMLELEMENT2_ADDBEHAVIOR)]
-    LONG addBehavior(
-            [in] BSTR bstrUrl,
-            [in, optional] VARIANT *pvarFactory);
-
-    [id(DISPID_IHTMLELEMENT2_REMOVEBEHAVIOR)]
-    VARIANT_BOOL removeBehavior([in] LONG cookie);
-
-    [propget, id(DISPID_IHTMLELEMENT2_RUNTIMESTYLE), nonbrowsable]
-    IHTMLStyle *runtimeStyle();
-
-    [propget, id(DISPID_IHTMLELEMENT2_BEHAVIORURNS)]
-    IDispatch *behaviorUrns();
-
-    [propput, id(DISPID_IHTMLELEMENT2_TAGURN)]
-    void tagUrn(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_TAGURN)]
-    BSTR tagUrn();
-
-    [propput, id(DISPID_IHTMLELEMENT2_ONBEFOREEDITFOCUS), displaybind, bindable]
-    void onbeforeeditfocus(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT2_ONBEFOREEDITFOCUS), displaybind, bindable]
-    VARIANT onbeforeeditfocus();
-
-    [propget, id(DISPID_IHTMLELEMENT2_READYSTATEVALUE), hidden, restricted]
-    LONG readyStateValue();
-
-    [id(DISPID_IHTMLELEMENT2_GETELEMENTSBYTAGNAME)]
-    IHTMLElementCollection *getElementsByTagName([in] BSTR v);
-
-    [id(DISPID_IHTMLELEMENT3_MERGEATTRIBUTES)]
-    void mergeAttributes(
-            [in] IHTMLElement *mergeThis,
-            [in, optional] VARIANT *pvarFlags);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISMULTILINE)]
-    VARIANT_BOOL isMultiLine();
-
-    [propget, id(DISPID_IHTMLELEMENT3_CANHAVEHTML)]
-    VARIANT_BOOL canHaveHTML();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    void onlayoutcomplete(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
-    VARIANT onlayoutcomplete();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    void onpage(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
-    VARIANT onpage();
-
-    [propput, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    void inflateBlock(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
-    VARIANT_BOOL inflateBlock();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    void onbeforedeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
-    VARIANT onbeforedeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_SETACTIVE)]
-    void setActive();
-
-    [propput, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    void contentEditable(BSTR v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
-    BSTR contentEditable();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISCONTENTEDITABLE)]
-    VARIANT_BOOL isContentEditable();
-
-    [propput, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    void hideFocus(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
-    VARIANT_BOOL hideFocus();
-
-    [propput, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    void disabled(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
-    VARIANT_BOOL disabled();
-
-    [propget, id(DISPID_IHTMLELEMENT3_ISDISABLED)]
-    VARIANT_BOOL isDisabled();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    void onmove(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
-    VARIANT onmove();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    void oncontrolselect(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
-    VARIANT oncontrolselect();
-
-    [id(DISPID_IHTMLELEMENT3_FIREEVENT)]
-    VARIANT_BOOL fireEvent(
-            [in] BSTR bstrEventName,
-            [in, optional] VARIANT *pvarEventObject);
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    void onresizestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
-    VARIANT onresizestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    void onresizeend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
-    VARIANT onresizeend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    void onmovestart(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
-    VARIANT onmovestart();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    void onmoveend(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
-    VARIANT onmoveend();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    void onmouseenter(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
-    VARIANT onmouseenter();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    void onmouseleave(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
-    VARIANT onmouseleave();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    void onactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
-    VARIANT onactivate();
-
-    [propput, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    void ondeactivate(VARIANT v);
-
-    [propget, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
-    VARIANT ondeactivate();
-
-    [id(DISPID_IHTMLELEMENT3_DRAGDROP)]
-    VARIANT_BOOL dragDrop();
-
-    [propget, id(DISPID_IHTMLELEMENT3_GLYPHMODE), hidden, restricted, nonbrowsable]
-    LONG glyphMode();
+    WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;
+    WINE_IHTMLELEMENT3_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
     void onmousewheel(VARIANT v);
