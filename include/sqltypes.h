@@ -101,6 +101,16 @@ typedef void*              		PTR;
 typedef signed short            RETCODE;
 typedef void*                   SQLHWND;
 
+#ifdef _WIN64
+typedef INT64           SQLLEN;
+typedef UINT64          SQLULEN;
+typedef UINT64          SQLSETPOSIROW;
+#else
+#define SQLLEN          SQLINTEGER
+#define SQLULEN         SQLUINTEGER
+#define SQLSETPOSIROW   SQLUSMALLINT
+#endif
+
 typedef SQLHANDLE          		HENV;
 typedef SQLHANDLE          		HDBC;
 typedef SQLHANDLE          		HSTMT;
