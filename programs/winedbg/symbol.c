@@ -91,24 +91,39 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG base,
     {
         struct dbg_type type;
         VARIANT         v;
-        DWORD*          pdw;
 
         type.module = sym->ModBase;
         type.id = sym->info;
 
-        /* FIXME: this won't work for pointers, as we always for the
-         * dereference to be in debuggee address space while here
-         * it's in debugger address space
-         */
-        if (!types_get_info(&type, TI_GET_VALUE, &v) || (v.n1.n2.vt & VT_BYREF))
+        if (!types_get_info(&type, TI_GET_VALUE, &v))
         {
-            if (buffer) snprintf(buffer, sz, "Couldn't dereference pointer for const value");
+            if (buffer) snprintf(buffer, sz, "Couldn't get full value information for %s", sym->Name);
             return FALSE;
         }
-        pdw = (DWORD*)lexeme_alloc_size(sizeof(*pdw));
-        lvalue->cookie = DLV_HOST;
-        lvalue->addr.Offset = (ULONG)(DWORD_PTR)pdw;
-        *pdw = sym->Value;
+        else if (v.n1.n2.vt & VT_BYREF)
+        {
+            /* FIXME: this won't work for pointers or arrays, as we don't always
+             * know, if the value to be dereferenced lies in debuggee or
+             * debugger address space.
+             */
+            if (sym->Tag == SymTagPointerType || sym->Tag == SymTagArrayType)
+            {
+                if (buffer) snprintf(buffer, sz, "Couldn't dereference pointer for const value for %s", sym->Name);
+                return FALSE;
+            }
+            /* this is likely Wine's dbghelp which passes const values by reference
+             * (object is managed by dbghelp, hence in debugger address space)
+             */
+            lvalue->cookie = DLV_HOST;
+            lvalue->addr.Offset = (DWORD_PTR)sym->Value;
+        }
+        else
+        {
+            DWORD* pdw = (DWORD*)lexeme_alloc_size(sizeof(*pdw));
+            lvalue->cookie = DLV_HOST;
+            lvalue->addr.Offset = (DWORD_PTR)pdw;
+            *pdw = sym->Value;
+        }
     }
     else if (sym->Flags & SYMFLAG_LOCAL)
     {
