@@ -773,9 +773,15 @@ static void test_monthcal_currdate(void)
     expect(st_original.wYear, st_new.wYear);
     expect(st_original.wMonth, st_new.wMonth);
     expect(st_original.wDay, st_new.wDay);
-    expect(st_original.wHour, st_new.wHour);
-    expect(st_original.wMinute, st_new.wMinute);
-    expect(st_original.wSecond, st_new.wSecond);
+    ok(st_original.wHour == st_new.wHour ||
+       broken(0 == st_new.wHour), /* comctl32 <= 4.70 */
+       "Expected %d, got %d\n", st_original.wHour, st_new.wHour);
+    ok(st_original.wMinute == st_new.wMinute ||
+       broken(0 == st_new.wMinute), /* comctl32 <= 4.70 */
+       "Expected %d, got %d\n", st_original.wMinute, st_new.wMinute);
+    ok(st_original.wSecond == st_new.wSecond ||
+       broken(0 == st_new.wSecond), /* comctl32 <= 4.70 */
+       "Expected %d, got %d\n", st_original.wSecond, st_new.wSecond);
 
     /* lparam cannot be NULL */
     res = SendMessage(hwnd, MCM_GETCURSEL, 0, 0);
