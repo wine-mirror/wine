@@ -859,11 +859,17 @@ static void test_monthcal_unicode(void)
 
     /* current setting is 1, so, should return 1 */
     res = SendMessage(hwnd, MCM_GETUNICODEFORMAT, 0, 0);
-    todo_wine {expect(1, res);}
+    todo_wine
+    ok(1 == res ||
+       broken(0 == res), /* comctl32 <= 4.70 */
+       "Expected 1, got %d\n", res);
 
     /* setting to 0, should return previous settings */
     res = SendMessage(hwnd, MCM_SETUNICODEFORMAT, 0, 0);
-    todo_wine {expect(1, res);}
+    todo_wine
+    ok(1 == res ||
+       broken(0 == res), /* comctl32 <= 4.70 */
+       "Expected 1, got %d\n", res);
 
     /* current setting is 0, so, it should return 0 */
     res = SendMessage(hwnd, MCM_GETUNICODEFORMAT, 0, 0);
