@@ -2169,6 +2169,7 @@ static DWORD wodClose(WORD wDevID)
  */
 static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
+    WORD delta;
     TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
 
     /* first, do the sanity checks... */
@@ -2187,10 +2188,11 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     lpWaveHdr->dwFlags |= WHDR_INQUEUE;
     lpWaveHdr->lpNext = 0;
 
-    if ((lpWaveHdr->dwBufferLength & (WOutDev[wDevID].waveFormat.Format.nBlockAlign - 1)) != 0)
+    delta = lpWaveHdr->dwBufferLength % WOutDev[wDevID].waveFormat.Format.nBlockAlign;
+    if (delta != 0)
     {
         WARN("WaveHdr length isn't a multiple of the PCM block size: %d %% %d\n",lpWaveHdr->dwBufferLength,WOutDev[wDevID].waveFormat.Format.nBlockAlign);
-        lpWaveHdr->dwBufferLength &= ~(WOutDev[wDevID].waveFormat.Format.nBlockAlign - 1);
+        lpWaveHdr->dwBufferLength -= delta;
     }
 
     OSS_AddRingMessage(&WOutDev[wDevID].msgRing, WINE_WM_HEADER, (DWORD_PTR)lpWaveHdr, FALSE);
