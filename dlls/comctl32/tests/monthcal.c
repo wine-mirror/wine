@@ -1484,7 +1484,7 @@ static void test_monthcal_getselrange(void)
 {
     HWND hwnd;
     SYSTEMTIME st, range[2];
-    BOOL ret;
+    BOOL ret, old_comctl32 = FALSE;
 
     hwnd = create_monthcal_control(MCS_MULTISELECT);
 
@@ -1492,25 +1492,37 @@ static void test_monthcal_getselrange(void)
     ret = SendMessage(hwnd, MCM_GETTODAY, 0, (LPARAM)&st);
     expect(TRUE, ret);
 
+    memset(range, 0xcc, sizeof(range));
     ret = SendMessage(hwnd, MCM_GETSELRANGE, 0, (LPARAM)range);
     expect(TRUE, ret);
     expect(st.wYear,      range[0].wYear);
     expect(st.wMonth,     range[0].wMonth);
     expect(st.wDay,       range[0].wDay);
-    expect(st.wDayOfWeek, range[0].wDayOfWeek);
-    expect(st.wHour,      range[0].wHour);
-    expect(st.wMinute,    range[0].wMinute);
-    expect(st.wSecond,    range[0].wSecond);
-    expect(st.wMilliseconds, range[0].wMilliseconds);
+    if (range[0].wDayOfWeek == 0)
+    {
+        win_skip("comctl32 <= 4.70 doesn't set some values\n");
+        old_comctl32 = TRUE;
+    }
+    else
+    {
+         expect(st.wDayOfWeek, range[0].wDayOfWeek);
+         expect(st.wHour,      range[0].wHour);
+         expect(st.wMinute,    range[0].wMinute);
+         expect(st.wSecond,    range[0].wSecond);
+         expect(st.wMilliseconds, range[0].wMilliseconds);
+    }
 
     expect(st.wYear,      range[1].wYear);
     expect(st.wMonth,     range[1].wMonth);
     expect(st.wDay,       range[1].wDay);
-    expect(st.wDayOfWeek, range[1].wDayOfWeek);
-    expect(st.wHour,      range[1].wHour);
-    expect(st.wMinute,    range[1].wMinute);
-    expect(st.wSecond,    range[1].wSecond);
-    expect(st.wMilliseconds, range[1].wMilliseconds);
+    if (!old_comctl32)
+    {
+        expect(st.wDayOfWeek, range[1].wDayOfWeek);
+        expect(st.wHour,      range[1].wHour);
+        expect(st.wMinute,    range[1].wMinute);
+        expect(st.wSecond,    range[1].wSecond);
+        expect(st.wMilliseconds, range[1].wMilliseconds);
+    }
 
     DestroyWindow(hwnd);
 }
