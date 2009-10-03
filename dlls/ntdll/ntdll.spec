@@ -264,7 +264,7 @@
 @ stdcall NtQuerySecurityObject (long long long long long)
 @ stdcall NtQuerySemaphore (long long ptr long ptr)
 @ stdcall NtQuerySymbolicLinkObject(long ptr ptr)
-@ stub NtQuerySystemEnvironmentValue
+@ stdcall NtQuerySystemEnvironmentValue(ptr ptr long ptr)
 # @ stub NtQuerySystemEnvironmentValueEx
 @ stdcall NtQuerySystemInformation(long long long long)
 @ stdcall NtQuerySystemTime(ptr)

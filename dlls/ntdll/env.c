@@ -30,8 +30,21 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
+#include "winnt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(environ);
+
+/******************************************************************************
+ *  NtQuerySystemEnvironmentValue		[NTDLL.@]
+ */
+NTSYSAPI NTSTATUS WINAPI NtQuerySystemEnvironmentValue(PUNICODE_STRING VariableName,
+                                                       PWCHAR Value,
+                                                       ULONG ValueBufferLength,
+                                                       PULONG RequiredLength)
+{
+    FIXME("stub!\n");
+    return STATUS_NOT_IMPLEMENTED;
+}
 
 /******************************************************************************
  *  RtlCreateEnvironment		[NTDLL.@]
