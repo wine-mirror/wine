@@ -322,6 +322,7 @@ static void test_monthcal(void)
     HWND hwnd;
     SYSTEMTIME st[2], st1[2], today;
     int res, month_range;
+    DWORD limits;
 
     hwnd = CreateWindowA(MONTHCAL_CLASSA, "MonthCal", WS_POPUP | WS_VISIBLE, CW_USEDEFAULT,
                          0, 300, 300, 0, 0, NULL, NULL);
@@ -329,7 +330,16 @@ static void test_monthcal(void)
 
     /* test range just after creation */
     memset(&st, 0xcc, sizeof(st));
-    ok(SendMessage(hwnd, MCM_GETRANGE, 0, (LPARAM)st) == 0, "No limits should be set\n");
+    limits = SendMessage(hwnd, MCM_GETRANGE, 0, (LPARAM)st);
+    ok(limits == 0 ||
+       broken(limits == GDTR_MIN), /* comctl32 <= 4.70 */
+       "No limits should be set (%d)\n", limits);
+    if (limits == GDTR_MIN)
+    {
+        win_skip("comctl32 <= 4.70 is broken\n");
+        DestroyWindow(hwnd);
+        return;
+    }
 
     ok(0 == st[0].wYear ||
        broken(1752 == st[0].wYear), /* comctl32 <= 4.72 */
