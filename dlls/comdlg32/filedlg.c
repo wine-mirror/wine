@@ -1320,15 +1320,16 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
    {VIEW_LIST,         FCIDM_TB_SMALLICON,  TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0 },
    {VIEW_DETAILS,      FCIDM_TB_REPORTVIEW, TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0 },
   };
-  TBADDBITMAP tba[2];
+  static const TBADDBITMAP tba = {HINST_COMMCTRL, IDB_VIEW_SMALL_COLOR};
+
   RECT rectTB;
   RECT rectlook;
-  FileOpenDlgInfos *fodInfos = GetPropA(hwnd,FileOpenDlgInfosStr);
 
-  tba[0].hInst = HINST_COMMCTRL;
-  tba[0].nID   = IDB_VIEW_SMALL_COLOR;
-  tba[1].hInst = COMDLG32_hInstance;
-  tba[1].nID   = 800;
+  HIMAGELIST toolbarImageList;
+  SHFILEINFOA shFileInfo;
+  ITEMIDLIST *desktopPidl;
+
+  FileOpenDlgInfos *fodInfos = GetPropA(hwnd,FileOpenDlgInfosStr);
 
   TRACE("%p\n", fodInfos);
 
@@ -1378,9 +1379,19 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
 /* FIXME: use TB_LOADIMAGES when implemented */
 /*  SendMessageW(fodInfos->DlgInfos.hwndTB, TB_LOADIMAGES, IDB_VIEW_SMALL_COLOR, HINST_COMMCTRL);*/
   SendMessageW(fodInfos->DlgInfos.hwndTB, TB_SETMAXTEXTROWS, 0, 0);
-  SendMessageW(fodInfos->DlgInfos.hwndTB, TB_ADDBITMAP, 12, (LPARAM) &tba[0]);
-  SendMessageW(fodInfos->DlgInfos.hwndTB, TB_ADDBITMAP, 1, (LPARAM) &tba[1]);
+  SendMessageW(fodInfos->DlgInfos.hwndTB, TB_ADDBITMAP, 12, (LPARAM) &tba);
 
+  /* Retrieve and add desktop icon to the toolbar */
+  toolbarImageList = (HIMAGELIST)SendMessageW(fodInfos->DlgInfos.hwndTB, TB_GETIMAGELIST, 0, 0L);
+  SHGetSpecialFolderLocation(hwnd, CSIDL_DESKTOP, &desktopPidl);
+  SHGetFileInfoA((LPCSTR)desktopPidl, 0, &shFileInfo, sizeof(shFileInfo),
+    SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON);
+  ImageList_AddIcon(toolbarImageList, shFileInfo.hIcon);
+
+  DestroyIcon(shFileInfo.hIcon);
+  CoTaskMemFree(desktopPidl);
+
+  /* Finish Toolbar Construction */
   SendMessageW(fodInfos->DlgInfos.hwndTB, TB_ADDBUTTONSW, 9, (LPARAM) tbb);
   SendMessageW(fodInfos->DlgInfos.hwndTB, TB_AUTOSIZE, 0, 0);
 

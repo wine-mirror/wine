@@ -71,9 +71,6 @@ PD32_PORTRAIT ICON pd32_portrait.ico
 /* @makedep: pd32_landscape.ico */
 PD32_LANDSCAPE ICON pd32_landscape.ico
 
-/* @makedep: 800.bmp */
-800 BITMAP DISCARDABLE LOADONCALL "800.bmp"
-
 /* @makedep: folder.ico */
 FOLDER ICON folder.ico
 
