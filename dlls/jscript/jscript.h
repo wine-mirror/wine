@@ -369,7 +369,7 @@ static inline void num_set_nan(VARIANT *v)
 #endif
 }
 
-static inline DOUBLE ret_nan()
+static inline DOUBLE ret_nan(void)
 {
     VARIANT v;
     num_set_nan(&v);
