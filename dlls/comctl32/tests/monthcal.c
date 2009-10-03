@@ -331,9 +331,15 @@ static void test_monthcal(void)
     memset(&st, 0xcc, sizeof(st));
     ok(SendMessage(hwnd, MCM_GETRANGE, 0, (LPARAM)st) == 0, "No limits should be set\n");
 
-    expect(0, st[0].wYear);
-    expect(0, st[0].wMonth);
-    expect(0, st[0].wDay);
+    ok(0 == st[0].wYear ||
+       broken(1752 == st[0].wYear), /* comctl32 <= 4.72 */
+       "Expected 0, got %d\n", st[0].wYear);
+    ok(0 == st[0].wMonth ||
+       broken(9 == st[0].wMonth), /* comctl32 <= 4.72 */
+       "Expected 0, got %d\n", st[0].wMonth);
+    ok(0 == st[0].wDay ||
+       broken(14 == st[0].wDay), /* comctl32 <= 4.72 */
+       "Expected 0, got %d\n", st[0].wDay);
     expect(0, st[0].wDayOfWeek);
     expect(0, st[0].wHour);
     expect(0, st[0].wMinute);
