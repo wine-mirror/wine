@@ -608,3 +608,11 @@ int CDECL _XcptFilter(NTSTATUS ex, PEXCEPTION_POINTERS ptr)
     /* I assume ptr->ExceptionRecord->ExceptionCode is the same as ex */
     return msvcrt_exception_filter(ptr);
 }
+
+/******************************************************************
+ *		MSVCRT___uncaught_exception
+ */
+BOOL CDECL MSVCRT___uncaught_exception(void)
+{
+    return FALSE;
+}

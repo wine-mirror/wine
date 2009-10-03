@@ -30,7 +30,7 @@
 @ stub ??_Fbad_typeid@@QAEXXZ
 @ cdecl ??_U@YAPAXI@Z(long) msvcrt.??_U@YAPAXI@Z
 @ cdecl ??_V@YAXPAX@Z(ptr) msvcrt.??_V@YAXPAX@Z
-@ stub __uncaught_exception
+@ cdecl __uncaught_exception() msvcrt.__uncaught_exception
 @ cdecl ?_query_new_handler@@YAP6AHI@ZXZ() msvcrt.?_query_new_handler@@YAP6AHI@ZXZ
 @ cdecl ?_query_new_mode@@YAHXZ() msvcrt.?_query_new_mode@@YAHXZ
 @ cdecl ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) msvcrt.?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z
