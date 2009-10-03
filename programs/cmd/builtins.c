@@ -171,7 +171,7 @@ void WCMD_copy (void) {
   WIN32_FIND_DATA fd;
   HANDLE hff;
   BOOL force, status;
-  WCHAR outpath[MAX_PATH], srcpath[MAX_PATH], copycmd[3];
+  WCHAR outpath[MAX_PATH], srcpath[MAX_PATH], copycmd[4];
   DWORD len;
   static const WCHAR copyCmdW[] = {'C','O','P','Y','C','M','D','\0'};
   BOOL copyToDir = FALSE;
@@ -238,8 +238,20 @@ void WCMD_copy (void) {
   else if (strstrW (quals, parmY))
     force = TRUE;
   else {
+    /* By default, we will force the overwrite in batch mode and ask for
+     * confirmation in interactive mode. */
+    force = !!context;
+
+    /* If COPYCMD is set, then we force the overwrite with /Y and ask for
+     * confirmation with /-Y. If COPYCMD is neither of those, then we use the
+     * default behavior. */
     len = GetEnvironmentVariable (copyCmdW, copycmd, sizeof(copycmd)/sizeof(WCHAR));
-    force = (len && len < (sizeof(copycmd)/sizeof(WCHAR)) && ! lstrcmpiW (copycmd, parmY));
+    if (len && len < (sizeof(copycmd)/sizeof(WCHAR))) {
+      if (!lstrcmpiW (copycmd, parmY))
+        force = TRUE;
+      else if (!lstrcmpiW (copycmd, parmNoY))
+        force = FALSE;
+    }
   }
 
   /* Loop through all source files */
