@@ -703,6 +703,7 @@ static void symt_fill_sym_info(const struct module_pair* pair,
                 case VT_UI2: sym_info->Value = (ULONG)data->u.value.n1.n2.n3.uiVal; break;
                 case VT_UI1: sym_info->Value = (ULONG)data->u.value.n1.n2.n3.bVal; break;
                 case VT_I1 | VT_BYREF: sym_info->Value = (ULONG)data->u.value.n1.n2.n3.byref; break;
+                case VT_EMPTY: sym_info->Value = 0; break;
                 default:
                     FIXME("Unsupported variant type (%u)\n", data->u.value.n1.n2.vt);
                     sym_info->Value = 0;

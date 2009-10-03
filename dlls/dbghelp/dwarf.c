@@ -1393,12 +1393,24 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
             v.n1.n2.n3.byref = pool_strdup(&subpgm->ctx->module->pool, value.u.string);
             break;
 
-        case DW_FORM_data8:
         case DW_FORM_block:
         case DW_FORM_block1:
         case DW_FORM_block2:
         case DW_FORM_block4:
+            v.n1.n2.vt = VT_I4;
+            switch (value.u.block.size)
+            {
+            case 1:     v.n1.n2.n3.lVal = *(BYTE*)value.u.block.ptr;    break;
+            case 2:     v.n1.n2.n3.lVal = *(USHORT*)value.u.block.ptr;  break;
+            case 4:     v.n1.n2.n3.lVal = *(DWORD*)value.u.block.ptr;   break;
+            default:
+                v.n1.n2.vt = VT_I1 | VT_BYREF;
+                v.n1.n2.n3.byref = pool_alloc(&subpgm->ctx->module->pool, value.u.block.size);
+                memcpy(v.n1.n2.n3.byref, value.u.block.ptr, value.u.block.size);
+            }
+            break;
 
+        case DW_FORM_data8:
         default:
             FIXME("Unsupported form for const value %s (%lx)\n",
                   name.u.string, value.form);
