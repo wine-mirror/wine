@@ -1649,6 +1649,60 @@ static void WCMD_addCommand(WCHAR *command, int *commandLen,
     *lastEntry = thisEntry;
 }
 
+
+/***************************************************************************
+ * WCMD_IsEndQuote
+ *
+ *   Checks if the quote pointet to is the end-quote.
+ *
+ *   Quotes end if:
+ *
+ *   1) The current parameter ends at EOL or at the beginning
+ *      of a redirection or pipe and not in a quote section.
+ *
+ *   2) If the next character is a space and not in a quote section.
+ *
+ *   Returns TRUE if this is an end quote, and FALSE if it is not.
+ *
+ */
+static BOOL WCMD_IsEndQuote(WCHAR *quote, int quoteIndex)
+{
+    int quoteCount = quoteIndex;
+    int i;
+
+    /* If we are not in a quoted section, then we are not an end-quote */
+    if(quoteIndex == 0)
+    {
+        return FALSE;
+    }
+
+    /* Check how many quotes are left for this parameter */
+    for(i=0;quote[i];i++)
+    {
+        if(quote[i] == '"')
+        {
+            quoteCount++;
+        }
+
+        /* Quote counting ends at EOL, redirection, space or pipe if current quote is complete */
+        else if(((quoteCount % 2) == 0)
+            && ((quote[i] == '<') || (quote[i] == '>') || (quote[i] == '|') || (quote[i] == ' ')))
+        {
+            break;
+        }
+    }
+
+    /* If the quote is part of the last part of a series of quotes-on-quotes, then it must
+       be an end-quote */
+    if(quoteIndex >= (quoteCount / 2))
+    {
+        return TRUE;
+    }
+
+    /* No cigar */
+    return FALSE;
+}
+
 /***************************************************************************
  * WCMD_ReadAndParseLine
  *
@@ -1897,8 +1951,8 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
                 }
                 break;
 
-      case '"': if (inQuotes && *(curPos+1) == ' ') {
-                    inQuotes--; /* An end quote must be proceeded by a space */
+      case '"': if (WCMD_IsEndQuote(curPos, inQuotes)) {
+                    inQuotes--;
                 } else {
                     inQuotes++; /* Quotes within quotes are fun! */
                 }
