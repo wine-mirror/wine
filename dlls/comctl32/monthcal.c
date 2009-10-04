@@ -71,6 +71,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(monthcal);
 
 #define countof(arr) (sizeof(arr)/sizeof(arr[0]))
 
+/* convert from days to 100 nanoseconds unit - used as FILETIME unit */
+#define DAYSTO100NSECS(days) (((ULONGLONG)(days))*24*60*60*10000000)
+
 typedef struct
 {
     HWND	hwndSelf;
@@ -97,7 +100,7 @@ typedef struct
     MONTHDAYSTATE *monthdayState;
     SYSTEMTIME	todaysDate;
     int		status;		/* See MC_SEL flags */
-    int		firstSelDay;	/* first selected day */
+    SYSTEMTIME	firstSel;	/* first selected day */
     INT		maxSelCount;
     SYSTEMTIME	minSel;
     SYSTEMTIME	maxSel;
@@ -1108,7 +1111,6 @@ MONTHCAL_GetCurSel(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
 }
 
 /* FIXME: if the specified date is not visible, make it visible */
-/* FIXME: redraw? */
 static LRESULT
 MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
 {
@@ -1126,6 +1128,7 @@ MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
 
   infoPtr->curSel = *curSel;
 
+  /* FIXME: it's possible to reduce rectangle here */
   InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
 
   return TRUE;
@@ -1181,14 +1184,27 @@ MONTHCAL_SetSelRange(MONTHCAL_INFO *infoPtr, SYSTEMTIME *range)
 
   if(infoPtr->dwStyle & MCS_MULTISELECT)
   {
+    SYSTEMTIME old_range[2];
+
     /* adjust timestamps */
     if(!MONTHCAL_ValidateTime(&range[0]))
       MONTHCAL_CopyTime(&infoPtr->todaysDate, &range[0]);
     if(!MONTHCAL_ValidateTime(&range[1]))
       MONTHCAL_CopyTime(&infoPtr->todaysDate, &range[1]);
 
+    old_range[0] = infoPtr->minSel;
+    old_range[1] = infoPtr->maxSel;
+
     infoPtr->minSel = range[0];
     infoPtr->maxSel = range[1];
+
+    /* redraw if bounds changed */
+    /* FIXME: no actual need to redraw everything */
+    if(!MONTHCAL_IsDateEqual(&old_range[0], &range[0]) ||
+       !MONTHCAL_IsDateEqual(&old_range[1], &range[1]))
+    {
+       InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+    }
 
     TRACE("[min,max]=[%d %d]\n", infoPtr->minSel.wDay, infoPtr->maxSel.wDay);
     return TRUE;
@@ -1566,7 +1582,7 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   }
   case MCHT_TODAYLINK:
   {
-    infoPtr->firstSelDay  = infoPtr->todaysDate.wDay;
+    infoPtr->firstSel = infoPtr->todaysDate;
     infoPtr->curSel = infoPtr->todaysDate;
     infoPtr->minSel = infoPtr->todaysDate;
     infoPtr->maxSel = infoPtr->todaysDate;
@@ -1580,7 +1596,18 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   case MCHT_CALENDARDATEPREV:
   case MCHT_CALENDARDATE:
   {
-    infoPtr->firstSelDay = ht.st.wDay;
+    infoPtr->firstSel = ht.st;
+
+    if(infoPtr->dwStyle & MCS_MULTISELECT)
+    {
+      SYSTEMTIME st[2];
+
+      st[0] = st[1] = ht.st;
+
+      /* clear selection range */
+      MONTHCAL_SetSelRange(infoPtr, st);
+    }
+
     infoPtr->status = MC_SEL_LBUTDOWN;
     MONTHCAL_SetDayFocus(infoPtr, &ht.st);
     return 0;
@@ -1634,12 +1661,17 @@ MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
      (hit == MCHT_CALENDARDATEPREV) ||
      (hit == MCHT_CALENDARDATE))
   {
-    SYSTEMTIME st[2], sel = infoPtr->curSel;
+    SYSTEMTIME sel = infoPtr->curSel;
 
-    st[0] = st[1] = ht.st;
-    MONTHCAL_SetSelRange(infoPtr, st);
-    /* will be invalidated here */
-    MONTHCAL_SetCurSel(infoPtr, &st[0]);
+    if(!(infoPtr->dwStyle & MCS_MULTISELECT))
+    {
+        SYSTEMTIME st[2];
+
+        st[0] = st[1] = ht.st;
+        MONTHCAL_SetSelRange(infoPtr, st);
+        /* will be invalidated here */
+        MONTHCAL_SetCurSel(infoPtr, &st[0]);
+    }
 
     /* send MCN_SELCHANGE only if new date selected */
     if (!MONTHCAL_IsDateEqual(&sel, &ht.st))
@@ -1691,8 +1723,8 @@ static LRESULT
 MONTHCAL_MouseMove(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 {
   MCHITTESTINFO ht;
-  SYSTEMTIME old_focused;
-  int selday, hit;
+  SYSTEMTIME old_focused, st_ht;
+  INT hit;
   RECT r;
 
   if(!(infoPtr->status & MC_SEL_LBUTDOWN)) return 0;
@@ -1711,47 +1743,78 @@ MONTHCAL_MouseMove(MONTHCAL_INFO *infoPtr, LPARAM lParam)
     return 0;
   }
 
-  selday = ht.st.wDay;
+  st_ht = ht.st;
   old_focused = infoPtr->focusedSel;
   MONTHCAL_SetDayFocus(infoPtr, &ht.st);
 
   MONTHCAL_CalcPosFromDay(infoPtr, ht.st.wDay, ht.st.wMonth, &r);
 
   if(infoPtr->dwStyle & MCS_MULTISELECT)  {
-    SYSTEMTIME selArray[2];
+    SYSTEMTIME st[2];
+    FILETIME ft_ht, ft_first;
+    ULARGE_INTEGER ul_ht, ul_first, ul_diff;
     int i;
+    LONG cmp;
 
-    MONTHCAL_GetSelRange(infoPtr, selArray);
-    i = 0;
-    if(infoPtr->firstSelDay==selArray[0].wDay) i=1;
-    TRACE("oldRange:%d %d %d %d\n", infoPtr->firstSelDay, selArray[0].wDay, selArray[1].wDay, i);
-    if(infoPtr->firstSelDay==selArray[1].wDay) {
-      /* 1st time we get here: selArray[0]=selArray[1])  */
-      /* if we're still at the first selected date, return */
-      if(infoPtr->firstSelDay==selday) goto done;
-      if(selday<infoPtr->firstSelDay) i = 0;
+    MONTHCAL_GetSelRange(infoPtr, st);
+    i = MONTHCAL_IsDateEqual(&infoPtr->firstSel, &st[0]) ? 1 : 0;
+
+    SystemTimeToFileTime(&st_ht, &ft_ht);
+    SystemTimeToFileTime(&infoPtr->firstSel, &ft_first);
+
+    cmp = CompareFileTime(&ft_ht, &ft_first);
+
+    if(MONTHCAL_IsDateEqual(&infoPtr->firstSel, &st[1])) {
+      /* If we're still at the first selected date and range is empty, return.
+         If range isn't empty we should change range to a singel firstSel */
+      if(MONTHCAL_IsDateEqual(&infoPtr->firstSel, &st_ht) &&
+         MONTHCAL_IsDateEqual(&st[0], &st[1])) goto done;
+
+      /* new selected date is earlier */
+      if(cmp == -1) i = 0;
     }
 
-    if(abs(infoPtr->firstSelDay - selday) >= infoPtr->maxSelCount) {
-      if(selday>infoPtr->firstSelDay)
-        selday = infoPtr->firstSelDay + infoPtr->maxSelCount;
+    ul_ht.LowPart  = ft_ht.dwLowDateTime;
+    ul_ht.HighPart = ft_ht.dwHighDateTime;
+    ul_first.LowPart  = ft_first.dwLowDateTime;
+    ul_first.HighPart = ft_first.dwHighDateTime;
+
+    /* new selected date is later */
+    if(cmp == 1)
+       ul_diff.QuadPart = ul_ht.QuadPart - ul_first.QuadPart;
+    else
+       ul_diff.QuadPart = -ul_ht.QuadPart + ul_first.QuadPart;
+
+    if(ul_diff.QuadPart >= DAYSTO100NSECS(infoPtr->maxSelCount)) {
+      if(cmp == 1)
+        ul_ht.QuadPart = ul_first.QuadPart + DAYSTO100NSECS(infoPtr->maxSelCount - 1);
       else
-        selday = infoPtr->firstSelDay - infoPtr->maxSelCount;
+        ul_ht.QuadPart = ul_first.QuadPart - DAYSTO100NSECS(infoPtr->maxSelCount - 1);
+
+      ft_ht.dwLowDateTime  = ul_ht.LowPart;
+      ft_ht.dwHighDateTime = ul_ht.HighPart;
+      FileTimeToSystemTime(&ft_ht, &st_ht);
     }
 
-    if(selArray[i].wDay!=selday) {
-      TRACE("newRange:%d %d %d %d\n", infoPtr->firstSelDay, selArray[0].wDay, selArray[1].wDay, i);
+    if(!MONTHCAL_IsDateEqual(&st[i], &st_ht)) {
+      FILETIME ft_range0, ft_range1;
 
-      selArray[i].wDay = selday;
+      st[i] = st_ht;
 
-      if(selArray[0].wDay>selArray[1].wDay) {
-        DWORD tempday;
-        tempday = selArray[1].wDay;
-        selArray[1].wDay = selArray[0].wDay;
-        selArray[0].wDay = tempday;
+      SystemTimeToFileTime(&st[0], &ft_range0);
+      SystemTimeToFileTime(&st[1], &ft_range1);
+
+      /* swap bounds if needed */
+      if(CompareFileTime(&ft_range0, &ft_range1) == 1) {
+        SYSTEMTIME swap = st[1];
+
+        st[1] = st[0];
+        st[0] = swap;
       }
 
-      MONTHCAL_SetSelRange(infoPtr, selArray);
+      MONTHCAL_CopyTime(&infoPtr->todaysDate, &st[0]);
+      MONTHCAL_CopyTime(&infoPtr->todaysDate, &st[1]);
+      MONTHCAL_SetSelRange(infoPtr, st);
     }
   }
 
