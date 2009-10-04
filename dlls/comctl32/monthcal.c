@@ -102,6 +102,7 @@ typedef struct
     SYSTEMTIME	minSel;
     SYSTEMTIME	maxSel;
     SYSTEMTIME  curSel;         /* contains currently selected year, month and day */
+    SYSTEMTIME  focusedSel;     /* date currently focused with mouse movement */
     DWORD	rangeValid;
     SYSTEMTIME	minDate;
     SYSTEMTIME	maxDate;
@@ -312,6 +313,43 @@ static inline void MONTHCAL_CalcPosFromDay(const MONTHCAL_INFO *infoPtr,
   MONTHCAL_CalcDayRect(infoPtr, r, x, y);
 }
 
+/* Focused day helper:
+
+   - set focused date to given value;
+   - reset to zero value if NULL passed;
+   - invalidate previous and new day rectangle only if needed.
+*/
+static void MONTHCAL_SetDayFocus(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *st)
+{
+  RECT r;
+
+  if(st)
+  {
+    /* there's nothing to do if it's the same date,
+       mouse move within same date rectangle case */
+    if(MONTHCAL_IsDateEqual(&infoPtr->focusedSel, st)) return;
+
+    /* invalidate old focused day */
+    MONTHCAL_CalcPosFromDay(infoPtr, infoPtr->focusedSel.wDay,
+                                     infoPtr->focusedSel.wMonth, &r);
+    InvalidateRect(infoPtr->hwndSelf, &r, FALSE);
+
+    infoPtr->focusedSel = *st;
+  }
+
+  MONTHCAL_CalcPosFromDay(infoPtr, infoPtr->focusedSel.wDay,
+                                   infoPtr->focusedSel.wMonth, &r);
+
+  if(!st & MONTHCAL_ValidateDate(&infoPtr->focusedSel))
+  {
+    static const SYSTEMTIME st_null;
+
+    infoPtr->focusedSel = st_null;
+  }
+
+  /* on set invalidates new day, on reset clears previous focused day */
+  InvalidateRect(infoPtr->hwndSelf, &r, FALSE);
+}
 
 /* day is the day in the month(1 == 1st of the month) */
 /* month is the month value(1 == january, 12 == december) */
@@ -393,8 +431,8 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, int day, int
     SetBkColor(hdc, oldBk);
   }
 
-  /* draw a rectangle around the currently selected days text */
-  if((day == infoPtr->curSel.wDay) && (month == infoPtr->curSel.wMonth))
+  /* draw focus rectangle */
+  if((day == infoPtr->focusedSel.wDay) && (month == infoPtr->focusedSel.wMonth))
     DrawFocusRect(hdc, &r);
 }
 
@@ -1470,12 +1508,15 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
       InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
   }
 
+  SetCapture(infoPtr->hwndSelf);
+
   ht.cbSize = sizeof(MCHITTESTINFO);
   ht.pt.x = (short)LOWORD(lParam);
   ht.pt.y = (short)HIWORD(lParam);
-  TRACE("(%d, %d)\n", ht.pt.x, ht.pt.y);
 
   hit = MONTHCAL_HitTest(infoPtr, &ht);
+
+  TRACE("%x at (%d, %d)\n", hit, ht.pt.x, ht.pt.y);
 
   switch(hit)
   {
@@ -1535,12 +1576,13 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
     MONTHCAL_NotifySelect(infoPtr);
     return 0;
   }
+  case MCHT_CALENDARDATENEXT:
+  case MCHT_CALENDARDATEPREV:
   case MCHT_CALENDARDATE:
   {
-    TRACE("MCHT_CALENDARDATE\n");
-
     infoPtr->firstSelDay = ht.st.wDay;
     infoPtr->status = MC_SEL_LBUTDOWN;
+    MONTHCAL_SetDayFocus(infoPtr, &ht.st);
     return 0;
   }
   }
@@ -1570,6 +1612,8 @@ MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
     redraw = TRUE;
   }
 
+  ReleaseCapture();
+
   /* always send NM_RELEASEDCAPTURE notification */
   nmhdr.hwndFrom = infoPtr->hwndSelf;
   nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
@@ -1584,6 +1628,7 @@ MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   hit = MONTHCAL_HitTest(infoPtr, &ht);
 
   infoPtr->status = MC_SEL_LBUTUP;
+  MONTHCAL_SetDayFocus(infoPtr, NULL);
 
   if((hit == MCHT_CALENDARDATENEXT) ||
      (hit == MCHT_CALENDARDATEPREV) ||
@@ -1646,7 +1691,8 @@ static LRESULT
 MONTHCAL_MouseMove(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 {
   MCHITTESTINFO ht;
-  int oldselday, selday, hit;
+  SYSTEMTIME old_focused;
+  int selday, hit;
   RECT r;
 
   if(!(infoPtr->status & MC_SEL_LBUTDOWN)) return 0;
@@ -1659,12 +1705,17 @@ MONTHCAL_MouseMove(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
   /* not on the calendar date numbers? bail out */
   TRACE("hit:%x\n",hit);
-  if((hit & MCHT_CALENDARDATE) != MCHT_CALENDARDATE) return 0;
+  if((hit & MCHT_CALENDARDATE) != MCHT_CALENDARDATE)
+  {
+    MONTHCAL_SetDayFocus(infoPtr, NULL);
+    return 0;
+  }
 
   selday = ht.st.wDay;
-  oldselday = infoPtr->curSel.wDay;
-  infoPtr->curSel.wDay = selday;
-  MONTHCAL_CalcPosFromDay(infoPtr, selday, ht.st. wMonth, &r);
+  old_focused = infoPtr->focusedSel;
+  MONTHCAL_SetDayFocus(infoPtr, &ht.st);
+
+  MONTHCAL_CalcPosFromDay(infoPtr, ht.st.wDay, ht.st.wMonth, &r);
 
   if(infoPtr->dwStyle & MCS_MULTISELECT)  {
     SYSTEMTIME selArray[2];
@@ -1709,7 +1760,7 @@ done:
   /* only redraw if the currently selected day changed */
   /* FIXME: this should specify a rectangle containing only the days that changed */
   /* using InvalidateRect */
-  if(oldselday != infoPtr->curSel.wDay)
+  if(!MONTHCAL_IsDateEqual(&old_focused, &infoPtr->focusedSel))
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
 
   return 0;
