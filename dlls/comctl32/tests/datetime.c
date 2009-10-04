@@ -149,7 +149,7 @@ static LRESULT WINAPI datetime_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
     return ret;
 }
 
-static HWND create_datetime_control(DWORD style, DWORD exstyle)
+static HWND create_datetime_control(DWORD style)
 {
     struct subclass_info *info;
     HWND hWndDateTime = NULL;
@@ -187,7 +187,7 @@ static void test_dtm_set_format(void)
     SYSTEMTIME systime;
     LRESULT r;
 
-    hWnd = create_datetime_control(DTS_SHOWNONE, 0);
+    hWnd = create_datetime_control(DTS_SHOWNONE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -238,7 +238,7 @@ static void test_dtm_set_and_get_mccolor(void)
 {
     HWND hWnd;
 
-    hWnd = create_datetime_control(DTS_SHOWNONE, 0);
+    hWnd = create_datetime_control(DTS_SHOWNONE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -259,7 +259,7 @@ static void test_dtm_set_and_get_mcfont(void)
     HFONT hFontOrig, hFontNew;
     HWND hWnd;
 
-    hWnd = create_datetime_control(DTS_SHOWNONE, 0);
+    hWnd = create_datetime_control(DTS_SHOWNONE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -277,7 +277,7 @@ static void test_dtm_get_monthcal(void)
     LRESULT r;
     HWND hWnd;
 
-    hWnd = create_datetime_control(DTS_SHOWNONE, 0);
+    hWnd = create_datetime_control(DTS_SHOWNONE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -337,7 +337,7 @@ static void test_dtm_set_and_get_range(void)
     SYSTEMTIME getSt[2];
     HWND hWnd;
 
-    hWnd = create_datetime_control(DTS_SHOWNONE, 0);
+    hWnd = create_datetime_control(DTS_SHOWNONE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -423,7 +423,7 @@ static void test_dtm_set_range_swap_min_max(void)
     SYSTEMTIME origSt;
     HWND hWnd;
 
-    hWnd = create_datetime_control(DTS_SHOWNONE, 0);
+    hWnd = create_datetime_control(DTS_SHOWNONE);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     fill_systime_struct(&st[0], 2007, 2, 4, 15, 2, 2, 2, 2);
@@ -527,7 +527,7 @@ static void test_dtm_set_and_get_system_time(void)
     SYSTEMTIME st, getSt, ref;
     HWND hWnd, hWndDateTime_test_gdt_none;
 
-    hWndDateTime_test_gdt_none = create_datetime_control(0, 0);
+    hWndDateTime_test_gdt_none = create_datetime_control(0);
 
     ok(hWndDateTime_test_gdt_none!=NULL, "Expected non NULL, got %p\n", hWndDateTime_test_gdt_none);
     if(hWndDateTime_test_gdt_none) {
@@ -543,7 +543,7 @@ static void test_dtm_set_and_get_system_time(void)
 
     DestroyWindow(hWndDateTime_test_gdt_none);
 
-    hWnd = create_datetime_control(DTS_SHOWNONE, 0);
+    hWnd = create_datetime_control(DTS_SHOWNONE);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     r = SendMessage(hWnd, DTM_SETSYSTEMTIME, GDT_NONE, (LPARAM)&st);
