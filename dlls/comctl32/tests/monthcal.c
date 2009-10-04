@@ -1323,10 +1323,13 @@ static void test_monthcal_monthrange(void)
     res = SendMessage(hwnd, MCM_GETMONTHRANGE, GMR_VISIBLE, (LPARAM)st_visible);
     todo_wine {
         expect(2, res);
+    }
         expect(2000, st_visible[0].wYear);
         expect(11, st_visible[0].wMonth);
         expect(1, st_visible[0].wDay);
         expect(2000, st_visible[1].wYear);
+
+    todo_wine {
         expect(12, st_visible[1].wMonth);
         expect(31, st_visible[1].wDay);
     }

@@ -936,9 +936,28 @@ MONTHCAL_SetFirstDayOfWeek(MONTHCAL_INFO *infoPtr, INT day)
 
 
 static LRESULT
-MONTHCAL_GetMonthRange(const MONTHCAL_INFO *infoPtr)
+MONTHCAL_GetMonthRange(const MONTHCAL_INFO *infoPtr, DWORD flag, SYSTEMTIME *st)
 {
   TRACE("\n");
+
+  if(st)
+  {
+    if(flag == GMR_VISIBLE)
+    {
+        /*FIXME: currently multicalendar feature isn't implelented, so entirely
+                 visible month is current */
+        st[0] = st[1] = infoPtr->curSel;
+
+        st[0].wDay = 1;
+        st[0].wDayOfWeek = MONTHCAL_CalculateDayOfWeek(1, st[0].wMonth, st[0].wYear);
+
+        st[1].wDay = MONTHCAL_MonthLength(st[1].wMonth, st[1].wYear);
+        st[1].wDayOfWeek = MONTHCAL_CalculateDayOfWeek(st[1].wDay, st[1].wMonth,
+                                                       st[1].wYear);
+    }
+    else
+        FIXME("only GMR_VISIBLE flag supported, got %d\n", flag);
+  }
 
   return infoPtr->monthRange;
 }
@@ -2053,7 +2072,7 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return MONTHCAL_SetSelRange(infoPtr, (LPSYSTEMTIME)lParam);
 
   case MCM_GETMONTHRANGE:
-    return MONTHCAL_GetMonthRange(infoPtr);
+    return MONTHCAL_GetMonthRange(infoPtr, wParam, (SYSTEMTIME*)lParam);
 
   case MCM_SETDAYSTATE:
     return MONTHCAL_SetDayState(infoPtr, (INT)wParam, (LPMONTHDAYSTATE)lParam);
