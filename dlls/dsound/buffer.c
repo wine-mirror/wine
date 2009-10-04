@@ -1177,15 +1177,20 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     HRESULT hres = DS_OK;
     TRACE("(%p,%p,%p)\n", device, pdsb, pdsb);
 
-    dsb = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*dsb));
-
+    dsb = HeapAlloc(GetProcessHeap(),0,sizeof(*dsb));
     if (dsb == NULL) {
         WARN("out of memory\n");
         *ppdsb = NULL;
         return DSERR_OUTOFMEMORY;
     }
+    CopyMemory(dsb, pdsb, sizeof(*dsb));
 
-    CopyMemory(dsb, pdsb, sizeof(IDirectSoundBufferImpl));
+    dsb->pwfx = DSOUND_CopyFormat(pdsb->pwfx);
+    if (dsb->pwfx == NULL) {
+        HeapFree(GetProcessHeap(),0,dsb);
+        *ppdsb = NULL;
+        return DSERR_OUTOFMEMORY;
+    }
 
     if (pdsb->hwbuf) {
         TRACE("duplicating hardware buffer\n");
@@ -1194,6 +1199,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
                                               (LPVOID *)&dsb->hwbuf);
         if (FAILED(hres)) {
             WARN("IDsDriver_DuplicateSoundBuffer failed (%08x)\n", hres);
+            HeapFree(GetProcessHeap(),0,dsb->pwfx);
             HeapFree(GetProcessHeap(),0,dsb);
             *ppdsb = NULL;
             return hres;
@@ -1213,15 +1219,6 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     DSOUND_RecalcFormat(dsb);
     DSOUND_MixToTemporary(dsb, 0, dsb->buflen, FALSE);
 
-    dsb->pwfx = DSOUND_CopyFormat(pdsb->pwfx);
-    if (dsb->pwfx == NULL) {
-        HeapFree(GetProcessHeap(),0,dsb->tmp_buffer);
-        HeapFree(GetProcessHeap(),0,dsb->buffer);
-        HeapFree(GetProcessHeap(),0,dsb);
-        *ppdsb = NULL;
-        return DSERR_OUTOFMEMORY;
-    }
-
     RtlInitializeResource(&dsb->lock);
 
     /* register buffer */
@@ -1229,10 +1226,11 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     if (hres != DS_OK) {
         RtlDeleteResource(&dsb->lock);
         HeapFree(GetProcessHeap(),0,dsb->tmp_buffer);
-        HeapFree(GetProcessHeap(),0,dsb->buffer);
+        list_remove(&dsb->entry);
+        dsb->buffer->ref--;
         HeapFree(GetProcessHeap(),0,dsb->pwfx);
         HeapFree(GetProcessHeap(),0,dsb);
-        *ppdsb = 0;
+        dsb = NULL;
     }
 
     *ppdsb = dsb;
