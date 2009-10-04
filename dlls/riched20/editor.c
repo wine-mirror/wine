@@ -2293,6 +2293,10 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
       if (editor->bDialogMode && editor->hwndParent)
         PostMessageW(editor->hwndParent, WM_CLOSE, 0, 0);
       return TRUE;
+    case VK_TAB:
+      if (editor->bDialogMode && editor->hwndParent)
+        SendMessageW(editor->hwndParent, WM_NEXTDLGCTL, shift_is_down, 0);
+      return TRUE;
     case 'A':
       if (ctrl_is_down)
       {
