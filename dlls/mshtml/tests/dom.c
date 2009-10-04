@@ -809,32 +809,6 @@ static IHTMLDocument2 *_get_doc_node(unsigned line, IHTMLDocument2 *doc)
     return ret;
 }
 
-static void test_doc_elem(IHTMLDocument2 *doc)
-{
-    IHTMLDocument2 *doc_node, *owner_doc;
-    IHTMLElement *elem;
-    IHTMLDocument3 *doc3;
-    HRESULT hres;
-
-    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
-    ok(hres == S_OK, "QueryInterface(IID_IHTMLDocument3) failed: %08x\n", hres);
-
-    hres = IHTMLDocument3_get_documentElement(doc3, &elem);
-    IHTMLDocument3_Release(doc3);
-    ok(hres == S_OK, "get_documentElement failed: %08x\n", hres);
-
-    test_node_name((IUnknown*)elem, "HTML");
-    test_elem_tag((IUnknown*)elem, "HTML");
-
-    doc_node = get_doc_node(doc);
-    owner_doc = get_owner_doc((IUnknown*)elem);
-    ok(iface_cmp((IUnknown *)doc_node, (IUnknown *)owner_doc), "doc_node != owner_doc\n");
-    IHTMLDocument2_Release(doc_node);
-    IHTMLDocument2_Release(owner_doc);
-
-    IHTMLElement_Release(elem);
-}
-
 static void test_get_set_attr(IHTMLDocument2 *doc)
 {
     IHTMLElement *elem;
@@ -2004,6 +1978,24 @@ static void _test_elem_client_size(unsigned line, IUnknown *unk)
     ok_(__FILE__,line) (hres == S_OK, "get_clientWidth failed: %08x\n", hres);
     hres = IHTMLElement2_get_clientHeight(elem, &l);
     ok_(__FILE__,line) (hres == S_OK, "get_clientHeight failed: %08x\n", hres);
+
+    IHTMLElement2_Release(elem);
+}
+
+#define test_elem_client_rect(u) _test_elem_client_rect(__LINE__,u)
+static void _test_elem_client_rect(unsigned line, IUnknown *unk)
+{
+    IHTMLElement2 *elem = _get_elem2_iface(line, unk);
+    LONG l;
+    HRESULT hres;
+
+    hres = IHTMLElement2_get_clientLeft(elem, &l);
+    ok_(__FILE__,line) (hres == S_OK, "get_clientLeft failed: %08x\n", hres);
+    ok_(__FILE__,line) (!l, "clientLeft = %d\n", l);
+
+    hres = IHTMLElement2_get_clientTop(elem, &l);
+    ok_(__FILE__,line) (hres == S_OK, "get_clientTop failed: %08x\n", hres);
+    ok_(__FILE__,line) (!l, "clientTop = %d\n", l);
 
     IHTMLElement2_Release(elem);
 }
@@ -4201,6 +4193,34 @@ static void test_default_selection(IHTMLDocument2 *doc)
 
     test_range_text(range, NULL);
     IHTMLTxtRange_Release(range);
+}
+
+static void test_doc_elem(IHTMLDocument2 *doc)
+{
+    IHTMLDocument2 *doc_node, *owner_doc;
+    IHTMLElement *elem;
+    IHTMLDocument3 *doc3;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
+    ok(hres == S_OK, "QueryInterface(IID_IHTMLDocument3) failed: %08x\n", hres);
+
+    hres = IHTMLDocument3_get_documentElement(doc3, &elem);
+    IHTMLDocument3_Release(doc3);
+    ok(hres == S_OK, "get_documentElement failed: %08x\n", hres);
+
+    test_node_name((IUnknown*)elem, "HTML");
+    test_elem_tag((IUnknown*)elem, "HTML");
+
+    doc_node = get_doc_node(doc);
+    owner_doc = get_owner_doc((IUnknown*)elem);
+    ok(iface_cmp((IUnknown *)doc_node, (IUnknown *)owner_doc), "doc_node != owner_doc\n");
+    IHTMLDocument2_Release(doc_node);
+    IHTMLDocument2_Release(owner_doc);
+
+    test_elem_client_rect((IUnknown*)elem);
+
+    IHTMLElement_Release(elem);
 }
 
 static void test_default_body(IHTMLBodyElement *body)
