@@ -66,6 +66,7 @@ DEFINE_EXPECT(QueryCustomPolicy);
 DEFINE_EXPECT(reportSuccess);
 DEFINE_EXPECT(Host_QS_SecMgr);
 DEFINE_EXPECT(Caller_QS_SecMgr);
+DEFINE_EXPECT(QI_IObjectWithSite);
 
 static const WCHAR testW[] = {'t','e','s','t',0};
 
@@ -132,6 +133,9 @@ static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid,
         if(FAILED(QI_IDispatch_hres))
             return QI_IDispatch_hres;
         *ppv = iface;
+    }else if(IsEqualGUID(&IID_IObjectWithSite, riid)) {
+        CHECK_EXPECT(QI_IObjectWithSite);
+        return E_NOINTERFACE;
     }else {
         return E_NOINTERFACE;
     }
@@ -747,12 +751,14 @@ static void test_ActiveXObject(void)
     SET_EXPECT(ProcessUrlAction);
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QueryCustomPolicy);
+    SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(reportSuccess);
     parse_script_a(parser, "(new ActiveXObject('Wine.Test')).reportSuccess();");
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QueryCustomPolicy);
+    CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(reportSuccess);
 
     proc = parse_procedure_a(parser, "(new ActiveXObject('Wine.Test')).reportSuccess();");
@@ -760,21 +766,25 @@ static void test_ActiveXObject(void)
     SET_EXPECT(ProcessUrlAction);
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QueryCustomPolicy);
+    SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(reportSuccess);
     call_procedure(proc, NULL);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QueryCustomPolicy);
+    CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(reportSuccess);
 
     SET_EXPECT(ProcessUrlAction);
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QueryCustomPolicy);
+    SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(reportSuccess);
     call_procedure(proc, &caller_sp);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QueryCustomPolicy);
+    CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(reportSuccess);
 
     IDispatchEx_Release(proc);
@@ -787,12 +797,14 @@ static void test_ActiveXObject(void)
     SET_EXPECT(ProcessUrlAction);
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QueryCustomPolicy);
+    SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(reportSuccess);
     call_procedure(proc, &caller_sp);
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QueryCustomPolicy);
+    CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(reportSuccess);
 
     parse_script_a(parser, "testException(function() { new ActiveXObject('Wine.TestABC'); }, 'Error', -2146827859);");
@@ -866,12 +878,14 @@ static void test_ActiveXObject(void)
     SET_EXPECT(ProcessUrlAction);
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QueryCustomPolicy);
+    SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(reportSuccess);
     parse_script_a(parser, "(new ActiveXObject('Wine.Test')).reportSuccess();");
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QueryCustomPolicy);
+    CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(reportSuccess);
 
     IUnknown_Release(parser);

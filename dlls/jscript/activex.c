@@ -59,6 +59,7 @@ static IInternetHostSecurityManager *get_sec_mgr(script_ctx_t *ctx)
 static IUnknown *create_activex_object(script_ctx_t *ctx, const WCHAR *progid)
 {
     IInternetHostSecurityManager *secmgr;
+    IObjectWithSite *obj_site;
     struct CONFIRMSAFETY cs;
     IClassFactoryEx *cfex;
     IClassFactory *cf;
@@ -112,6 +113,12 @@ static IUnknown *create_activex_object(script_ctx_t *ctx, const WCHAR *progid)
     if(FAILED(hres) || policy != URLPOLICY_ALLOW) {
         IUnknown_Release(obj);
         return NULL;
+    }
+
+    hres = IUnknown_QueryInterface(obj, &IID_IObjectWithSite, (void**)&obj_site);
+    if(SUCCEEDED(hres)) {
+        FIXME("Set object site\n");
+        IObjectWithSite_Release(obj_site);
     }
 
     return obj;
