@@ -33,6 +33,8 @@
 #include <time.h>
 #include <wine/test.h>
 
+#define ID_RICHEDITTESTDBUTTON 0x123
+
 static CHAR string1[MAX_PATH], string2[MAX_PATH], string3[MAX_PATH];
 
 #define ok_w3(format, szString1, szString2, szString3) \
@@ -6699,6 +6701,265 @@ static void test_zoom(void)
     DestroyWindow(hwnd);
 }
 
+struct dialog_mode_messages
+{
+    int wm_getdefid, wm_close, wm_nextdlgctl;
+};
+
+static struct dialog_mode_messages dm_messages;
+
+#define test_dm_messages(wmclose, wmgetdefid, wmnextdlgctl) \
+    ok(dm_messages.wm_close == wmclose, "expected %d WM_CLOSE message, " \
+    "got %d\n", wmclose, dm_messages.wm_close); \
+    ok(dm_messages.wm_getdefid == wmgetdefid, "expected %d WM_GETDIFID message, " \
+    "got %d\n", wmgetdefid, dm_messages.wm_getdefid);\
+    ok(dm_messages.wm_nextdlgctl == wmnextdlgctl, "expected %d WM_NEXTDLGCTL message, " \
+    "got %d\n", wmnextdlgctl, dm_messages.wm_nextdlgctl)
+
+static LRESULT CALLBACK dialog_mode_wnd_proc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (iMsg)
+    {
+        case DM_GETDEFID:
+            dm_messages.wm_getdefid++;
+            return MAKELONG(ID_RICHEDITTESTDBUTTON, DC_HASDEFID);
+        case WM_NEXTDLGCTL:
+            dm_messages.wm_nextdlgctl++;
+            break;
+        case WM_CLOSE:
+            dm_messages.wm_close++;
+            break;
+    }
+
+    return DefWindowProc(hwnd, iMsg, wParam, lParam);
+}
+
+static void test_dialogmode(void)
+{
+    HWND hwRichEdit, hwParent, hwButton;
+    MSG msg= {0};
+    int lcount, r;
+    WNDCLASSA cls;
+
+    cls.style = 0;
+    cls.lpfnWndProc = dialog_mode_wnd_proc;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "DialogModeParentClass";
+    if(!RegisterClassA(&cls)) assert(0);
+
+    hwParent = CreateWindow("DialogModeParentClass", NULL, WS_OVERLAPPEDWINDOW,
+      CW_USEDEFAULT, 0, 200, 120, NULL, NULL, GetModuleHandleA(0), NULL);
+
+    /* Test richedit(ES_MULTILINE) */
+
+    hwRichEdit = new_window(RICHEDIT_CLASS, ES_MULTILINE, hwParent);
+
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    lcount = SendMessage(hwRichEdit,  EM_GETLINECOUNT, 0, 0);
+    ok(2 == lcount, "expected 2, got %d\n", lcount);
+
+    r = SendMessage(hwRichEdit, WM_GETDLGCODE, 0, 0);
+    ok(0x8f == r, "expected 0x8f, got 0x%x\n", r);
+
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    lcount = SendMessage(hwRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(3 == lcount, "expected 3, got %d\n", lcount);
+
+    r = SendMessage(hwRichEdit, WM_GETDLGCODE, 0, (LPARAM)&msg);
+    ok(0x8f == r, "expected 0x8f, got 0x%x\n", r);
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    lcount = SendMessage(hwRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(3 == lcount, "expected 3, got %d\n", lcount);
+
+    DestroyWindow(hwRichEdit);
+
+    /* Test standalone richedit(ES_MULTILINE) */
+
+    hwRichEdit = new_window(RICHEDIT_CLASS, ES_MULTILINE, NULL);
+
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    lcount = SendMessage(hwRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(2 == lcount, "expected 2, got %d\n", lcount);
+
+    r = SendMessage(hwRichEdit, WM_GETDLGCODE, 0, (LPARAM)&msg);
+    ok(0x8f == r, "expected 0x8f, got 0x%x\n", r);
+
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    lcount = SendMessage(hwRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(2 == lcount, "expected 2, got %d\n", lcount);
+
+    DestroyWindow(hwRichEdit);
+
+    /* Check  a destination for messages */
+
+    hwRichEdit = new_window(RICHEDIT_CLASS, ES_MULTILINE, hwParent);
+
+    SetWindowLong(hwRichEdit, GWL_STYLE, GetWindowLong(hwRichEdit, GWL_STYLE)& ~WS_POPUP);
+    SetParent( hwRichEdit, NULL);
+
+    r = SendMessage(hwRichEdit, WM_GETDLGCODE, 0, (LPARAM)&msg);
+    ok(0x8f == r, "expected 0x8f, got 0x%x\n", r);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 1, 0);
+
+    DestroyWindow(hwRichEdit);
+
+    /* Check messages from richedit(ES_MULTILINE) */
+
+    hwRichEdit = new_window(RICHEDIT_CLASS, ES_MULTILINE, hwParent);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 0, 0);
+
+    lcount = SendMessage(hwRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(2 == lcount, "expected 2, got %d\n", lcount);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_GETDLGCODE, 0, (LPARAM)&msg);
+    ok(0x8f == r, "expected 0x8f, got 0x%x\n", r);
+    test_dm_messages(0, 0, 0);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 1, 0);
+
+    lcount = SendMessage(hwRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(2 == lcount, "expected 2, got %d\n", lcount);
+
+    hwButton = CreateWindow("BUTTON", "OK", WS_VISIBLE|WS_CHILD|BS_PUSHBUTTON,
+        100, 100, 50, 20, hwParent, (HMENU)ID_RICHEDITTESTDBUTTON, GetModuleHandleA(0), NULL);
+    ok(hwButton!=NULL, "CreateWindow failed with error code %d\n", GetLastError());
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 1, 1);
+
+    lcount = SendMessage(hwRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(2 == lcount, "expected 2, got %d\n", lcount);
+
+    DestroyWindow(hwButton);
+    DestroyWindow(hwRichEdit);
+
+    /* Check messages from richedit(ES_MULTILINE|ES_WANTRETURN) */
+
+    hwRichEdit = new_window(RICHEDIT_CLASS, ES_MULTILINE|ES_WANTRETURN, hwParent);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 0, 0);
+
+    lcount = SendMessage(hwRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(2 == lcount, "expected 2, got %d\n", lcount);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_GETDLGCODE, 0, (LPARAM)&msg);
+    ok(0x8f == r, "expected 0x8f, got 0x%x\n", r);
+    test_dm_messages(0, 0, 0);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 0, 0);
+
+    lcount = SendMessage(hwRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(3 == lcount, "expected 3, got %d\n", lcount);
+
+    hwButton = CreateWindow("BUTTON", "OK", WS_VISIBLE|WS_CHILD|BS_PUSHBUTTON,
+        100, 100, 50, 20, hwParent, (HMENU)ID_RICHEDITTESTDBUTTON, GetModuleHandleA(0), NULL);
+    ok(hwButton!=NULL, "CreateWindow failed with error code %d\n", GetLastError());
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 0, 0);
+
+    lcount = SendMessage(hwRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(4 == lcount, "expected 4, got %d\n", lcount);
+
+    DestroyWindow(hwButton);
+    DestroyWindow(hwRichEdit);
+
+    /* Check messages from richedit(0) */
+
+    hwRichEdit = new_window(RICHEDIT_CLASS, 0, hwParent);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 0, 0);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_GETDLGCODE, 0, (LPARAM)&msg);
+    ok(0x8b == r, "expected 0x8b, got 0x%x\n", r);
+    test_dm_messages(0, 0, 0);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 1, 0);
+
+    hwButton = CreateWindow("BUTTON", "OK", WS_VISIBLE|WS_CHILD|BS_PUSHBUTTON,
+        100, 100, 50, 20, hwParent, (HMENU)ID_RICHEDITTESTDBUTTON, GetModuleHandleA(0), NULL);
+    ok(hwButton!=NULL, "CreateWindow failed with error code %d\n", GetLastError());
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 1, 1);
+
+    DestroyWindow(hwRichEdit);
+
+    /* Check messages from richedit(ES_WANTRETURN) */
+
+    hwRichEdit = new_window(RICHEDIT_CLASS, ES_WANTRETURN, hwParent);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 0, 0);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_GETDLGCODE, 0, (LPARAM)&msg);
+    ok(0x8b == r, "expected 0x8b, got 0x%x\n", r);
+    test_dm_messages(0, 0, 0);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 0, 0);
+
+    hwButton = CreateWindow("BUTTON", "OK", WS_VISIBLE|WS_CHILD|BS_PUSHBUTTON,
+        100, 100, 50, 20, hwParent, (HMENU)ID_RICHEDITTESTDBUTTON, GetModuleHandleA(0), NULL);
+    ok(hwButton!=NULL, "CreateWindow failed with error code %d\n", GetLastError());
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 0, 0);
+
+    DestroyWindow(hwRichEdit);
+    DestroyWindow(hwParent);
+}
+
 START_TEST( editor )
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -6755,6 +7016,7 @@ START_TEST( editor )
   test_format_rect();
   test_WM_GETDLGCODE();
   test_zoom();
+  test_dialogmode();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.

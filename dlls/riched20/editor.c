@@ -2145,6 +2145,31 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
       ME_SendRequestResize(editor, FALSE);
       return TRUE;
     case VK_RETURN:
+      if (editor->bDialogMode)
+      {
+        if (ctrl_is_down)
+          return TRUE;
+
+        if (!(editor->styleFlags & ES_WANTRETURN))
+        {
+          if (editor->hwndParent)
+          {
+            DWORD dw;
+            dw = SendMessageW(editor->hwndParent, DM_GETDEFID, 0, 0);
+            if (HIWORD(dw) == DC_HASDEFID)
+            {
+                HWND hwDefCtrl = GetDlgItem(editor->hwndParent, LOWORD(dw));
+                if (hwDefCtrl)
+                {
+                    SendMessageW(editor->hwndParent, WM_NEXTDLGCTL, (WPARAM)hwDefCtrl, (LPARAM)TRUE);
+                    PostMessageW(hwDefCtrl, WM_KEYDOWN, VK_RETURN, 0);
+                }
+            }
+          }
+          return TRUE;
+        }
+      }
+
       if (editor->styleFlags & ES_MULTILINE)
       {
         ME_Cursor cursor = editor->pCursors[0];
