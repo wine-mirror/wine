@@ -2393,6 +2393,7 @@ YIELDPROC WINAPI mciGetYieldProc(MCIDEVICEID uDeviceID, DWORD* lpdwYieldData)
 	WARN("Proc is 32 bit\n");
 	return NULL;
     }
+    if (lpdwYieldData) *lpdwYieldData = wmd->dwYieldData;
     return wmd->lpfnYieldProc;
 }
 
