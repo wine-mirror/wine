@@ -590,8 +590,25 @@ static HRESULT WINAPI HTMLElement2_get_clientWidth(IHTMLElement2 *iface, LONG *p
 static HRESULT WINAPI HTMLElement2_get_clientTop(IHTMLElement2 *iface, LONG *p)
 {
     HTMLElement *This = HTMLELEM2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMNSElement *nselem;
+    PRInt32 client_top = 0;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMElement_QueryInterface(This->nselem, &IID_nsIDOMNSElement, (void**)&nselem);
+    if(NS_SUCCEEDED(nsres)) {
+        nsres = nsIDOMNSElement_GetClientTop(nselem, &client_top);
+        nsIDOMNSElement_Release(nselem);
+        if(NS_FAILED(nsres))
+            ERR("GetScrollHeight failed: %08x\n", nsres);
+    }else {
+        ERR("Could not get nsIDOMNSElement interface: %08x\n", nsres);
+    }
+
+    *p = client_top;
+    TRACE("*p = %d\n", *p);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement2_get_clientLeft(IHTMLElement2 *iface, LONG *p)
