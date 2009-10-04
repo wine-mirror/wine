@@ -370,6 +370,7 @@ typedef struct tagME_TextEditor
   BOOL AutoURLDetect_bEnable;
   WCHAR cPasswordMask;
   BOOL bHaveFocus;
+  BOOL bDialogMode; /* Indicates that we are inside a dialog window */
   /*for IME */
   int imeStartIndex;
   DWORD selofs; /* The size of the selection bar on the left side of control */
