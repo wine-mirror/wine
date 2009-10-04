@@ -773,7 +773,7 @@ static HRESULT WINAPI HTMLElement2_get_scrollHeight(IHTMLElement2 *iface, LONG *
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMElement_QueryInterface(This->nselem, &IID_nsIDOMNSHTMLElement, (void**)&nselem);
+    nsres = nsIDOMElement_QueryInterface(This->nselem, &IID_nsIDOMNSElement, (void**)&nselem);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIDOMNSElement_GetScrollHeight(nselem, &height);
         nsIDOMNSElement_Release(nselem);
@@ -783,7 +783,7 @@ static HRESULT WINAPI HTMLElement2_get_scrollHeight(IHTMLElement2 *iface, LONG *
         ERR("Could not get nsIDOMNSElement interface: %08x\n", nsres);
     }
 
-    *p = height == -1 ? 0 : height;
+    *p = height;
     TRACE("*p = %d\n", *p);
 
     return S_OK;
