@@ -386,6 +386,8 @@ HKLM,System\CurrentControlSet\Control\ContentIndex\Language\Neutral,"Locale",0x1
 [ControlClass]
 HKLM,System\CurrentControlSet\Control\Class\{4d36e978-e325-11ce-bfc1-08002be10318},,,"Ports (COM & LPT)"
 HKLM,System\CurrentControlSet\Control\Class\{4d36e978-e325-11ce-bfc1-08002be10318},"Class",,"Ports"
+HKLM,System\CurrentControlSet\Control\Class\{6bdd1fc6-810f-11d0-bec7-08002be2092f},,,"Imaging devices"
+HKLM,System\CurrentControlSet\Control\Class\{6bdd1fc6-810f-11d0-bec7-08002be2092f},"Class",,"Image"
 
 [CurrentVersion]
 HKLM,%CurrentVersion%,"CommonFilesDir",,"%16427%"
