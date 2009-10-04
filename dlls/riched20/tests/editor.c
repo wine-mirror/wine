@@ -6831,6 +6831,11 @@ static void test_dialogmode(void)
     ok(2 == lcount, "expected 2, got %d\n", lcount);
 
     memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_ESCAPE, 0x10001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 0, 0);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
     r = SendMessage(hwRichEdit, WM_GETDLGCODE, 0, (LPARAM)&msg);
     ok(0x8f == r, "expected 0x8f, got 0x%x\n", r);
     test_dm_messages(0, 0, 0);
@@ -6842,6 +6847,11 @@ static void test_dialogmode(void)
 
     lcount = SendMessage(hwRichEdit, EM_GETLINECOUNT, 0, 0);
     ok(2 == lcount, "expected 2, got %d\n", lcount);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_ESCAPE, 0x10001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 0, 0);
 
     hwButton = CreateWindow("BUTTON", "OK", WS_VISIBLE|WS_CHILD|BS_PUSHBUTTON,
         100, 100, 50, 20, hwParent, (HMENU)ID_RICHEDITTESTDBUTTON, GetModuleHandleA(0), NULL);
@@ -6871,6 +6881,11 @@ static void test_dialogmode(void)
     ok(2 == lcount, "expected 2, got %d\n", lcount);
 
     memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_ESCAPE, 0x10001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 0, 0);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
     r = SendMessage(hwRichEdit, WM_GETDLGCODE, 0, (LPARAM)&msg);
     ok(0x8f == r, "expected 0x8f, got 0x%x\n", r);
     test_dm_messages(0, 0, 0);
@@ -6882,6 +6897,11 @@ static void test_dialogmode(void)
 
     lcount = SendMessage(hwRichEdit, EM_GETLINECOUNT, 0, 0);
     ok(3 == lcount, "expected 3, got %d\n", lcount);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_ESCAPE, 0x10001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 0, 0);
 
     hwButton = CreateWindow("BUTTON", "OK", WS_VISIBLE|WS_CHILD|BS_PUSHBUTTON,
         100, 100, 50, 20, hwParent, (HMENU)ID_RICHEDITTESTDBUTTON, GetModuleHandleA(0), NULL);
@@ -6908,6 +6928,11 @@ static void test_dialogmode(void)
     test_dm_messages(0, 0, 0);
 
     memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_ESCAPE, 0x10001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 0, 0);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
     r = SendMessage(hwRichEdit, WM_GETDLGCODE, 0, (LPARAM)&msg);
     ok(0x8b == r, "expected 0x8b, got 0x%x\n", r);
     test_dm_messages(0, 0, 0);
@@ -6916,6 +6941,11 @@ static void test_dialogmode(void)
     r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
     ok(0 == r, "expected 0, got %d\n", r);
     test_dm_messages(0, 1, 0);
+
+    memset(&dm_messages, 0, sizeof(dm_messages));
+    r = SendMessage(hwRichEdit, WM_KEYDOWN, VK_ESCAPE, 0x10001);
+    ok(0 == r, "expected 0, got %d\n", r);
+    test_dm_messages(0, 0, 0);
 
     hwButton = CreateWindow("BUTTON", "OK", WS_VISIBLE|WS_CHILD|BS_PUSHBUTTON,
         100, 100, 50, 20, hwParent, (HMENU)ID_RICHEDITTESTDBUTTON, GetModuleHandleA(0), NULL);

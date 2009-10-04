@@ -2289,6 +2289,10 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
         return TRUE;
       }
       break;
+    case VK_ESCAPE:
+      if (editor->bDialogMode && editor->hwndParent)
+        PostMessageW(editor->hwndParent, WM_CLOSE, 0, 0);
+      return TRUE;
     case 'A':
       if (ctrl_is_down)
       {
