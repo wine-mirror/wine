@@ -202,6 +202,62 @@ static BOOL MONTHCAL_ValidateDate(const SYSTEMTIME *time)
   return TRUE;
 }
 
+/* Compares two dates in SYSTEMTIME format
+ *
+ * PARAMETERS
+ *
+ *  [I] first  : pointer to valid first date data to compare
+ *  [I] second : pointer to valid second date data to compare
+ *
+ * RETURN VALUE
+ *
+ *  -1 : first <  second
+ *   0 : first == second
+ *   1 : first >  second
+ *
+ *  Note that no date validation performed, alreadt validated values expected.
+ */
+static LONG MONTHCAL_CompareSystemTime(const SYSTEMTIME *first, const SYSTEMTIME *second)
+{
+  FILETIME ft_first, ft_second;
+
+  SystemTimeToFileTime(first, &ft_first);
+  SystemTimeToFileTime(second, &ft_second);
+
+  return CompareFileTime(&ft_first, &ft_second);
+}
+
+/* Checks largest possible date range and configured one
+ *
+ * PARAMETERS
+ *
+ *  [I] infoPtr : valid pointer to control data
+ *  [I] date    : pointer to valid date data to check
+ *
+ * RETURN VALUE
+ *
+ *  TRUE  - date whithin largest and configured range
+ *  FALSE - date is outside largest or configured range
+ */
+static BOOL MONTHCAL_IsDateInValidRange(const MONTHCAL_INFO *infoPtr, const SYSTEMTIME *date)
+{
+  static const SYSTEMTIME max_date = { .wYear = 9999, .wMonth = 12, .wDay = 31 };
+  static const SYSTEMTIME min_date = { .wYear = 1752, .wMonth = 9,  .wDay = 14 };
+
+  if((MONTHCAL_CompareSystemTime(date, &max_date) == 1) ||
+     (MONTHCAL_CompareSystemTime(date, &min_date) == -1)) return FALSE;
+
+  if(infoPtr->rangeValid & GDTR_MAX) {
+     if((MONTHCAL_CompareSystemTime(date, &infoPtr->maxSel) == 1)) return FALSE;
+  }
+
+  if(infoPtr->rangeValid & GDTR_MIN) {
+     if((MONTHCAL_CompareSystemTime(date, &infoPtr->minSel) == -1)) return FALSE;
+  }
+
+  return TRUE;
+}
+
 /* Used in MCM_SETRANGE/MCM_SETSELRANGE to determine resulting time part.
    Milliseconds are intentionaly not validated. */
 static BOOL MONTHCAL_ValidateTime(const SYSTEMTIME *time)
@@ -1119,6 +1175,7 @@ MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
   if(infoPtr->dwStyle & MCS_MULTISELECT) return FALSE;
 
   if(!MONTHCAL_ValidateDate(curSel)) return FALSE;
+  if(!MONTHCAL_IsDateInValidRange(infoPtr, curSel)) return FALSE;
 
   infoPtr->minSel = *curSel;
   infoPtr->maxSel = *curSel;

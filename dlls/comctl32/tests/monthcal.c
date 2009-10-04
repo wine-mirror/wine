@@ -789,6 +789,39 @@ static void test_monthcal_currdate(void)
 
     ok_sequence(sequences, MONTHCAL_SEQ_INDEX, monthcal_curr_date_seq, "monthcal currDate", TRUE);
 
+    /* December, 31, 9999 is the maximum allowed date */
+    memset(&st_new, 0, sizeof(st_new));
+    st_new.wYear = 9999;
+    st_new.wMonth = 12;
+    st_new.wDay = 31;
+    res = SendMessage(hwnd, MCM_SETCURSEL, 0, (LPARAM)&st_new);
+    expect(1, res);
+    memset(&st_test, 0, sizeof(st_test));
+    res = SendMessage(hwnd, MCM_GETCURSEL, 0, (LPARAM)&st_test);
+    expect(1, res);
+    expect(st_new.wYear, st_test.wYear);
+    expect(st_new.wMonth, st_test.wMonth);
+    expect(st_new.wDay, st_test.wDay);
+    expect(st_new.wHour, st_test.wHour);
+    expect(st_new.wMinute, st_test.wMinute);
+    expect(st_new.wSecond, st_test.wSecond);
+    /* try one day later */
+    st_original = st_new;
+    st_new.wYear = 10000;
+    st_new.wMonth = 1;
+    st_new.wDay = 1;
+    res = SendMessage(hwnd, MCM_SETCURSEL, 0, (LPARAM)&st_new);
+    expect(0, res);
+    memset(&st_test, 0, sizeof(st_test));
+    res = SendMessage(hwnd, MCM_GETCURSEL, 0, (LPARAM)&st_test);
+    expect(1, res);
+    expect(st_original.wYear, st_test.wYear);
+    expect(st_original.wMonth, st_test.wMonth);
+    expect(st_original.wDay, st_test.wDay);
+    expect(st_original.wHour, st_test.wHour);
+    expect(st_original.wMinute, st_test.wMinute);
+    expect(st_original.wSecond, st_test.wSecond);
+
     DestroyWindow(hwnd);
 }
 
