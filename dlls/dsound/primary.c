@@ -17,6 +17,10 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ *
+ * TODO:
+ *      When PrimarySetFormat (via ReopenDevice or PrimaryOpen) fails,
+ *       it leaves dsound in unusable (not really open) state.
  */
 
 #include <stdarg.h>
@@ -437,11 +441,36 @@ HRESULT DSOUND_PrimaryGetPosition(DirectSoundDevice *device, LPDWORD playpos, LP
 	return DS_OK;
 }
 
+LPWAVEFORMATEX DSOUND_CopyFormat(LPCWAVEFORMATEX wfex)
+{
+	DWORD size = wfex->wFormatTag == WAVE_FORMAT_PCM ?
+		sizeof(WAVEFORMATEX) : sizeof(WAVEFORMATEX) + wfex->cbSize;
+	LPWAVEFORMATEX pwfx = HeapAlloc(GetProcessHeap(),0,size);
+	if (pwfx == NULL) {
+		WARN("out of memory\n");
+	} else if (wfex->wFormatTag != WAVE_FORMAT_PCM) {
+		CopyMemory(pwfx, wfex, size);
+	} else {
+		CopyMemory(pwfx, wfex, sizeof(PCMWAVEFORMAT));
+		pwfx->cbSize=0;
+		if (pwfx->nBlockAlign != pwfx->nChannels * pwfx->wBitsPerSample/8) {
+			WARN("Fixing bad nBlockAlign (%u)\n", pwfx->nBlockAlign);
+			pwfx->nBlockAlign  = pwfx->nChannels * pwfx->wBitsPerSample/8;
+		}
+		if (pwfx->nAvgBytesPerSec != pwfx->nSamplesPerSec * pwfx->nBlockAlign) {
+			WARN("Fixing bad nAvgBytesPerSec (%u)\n", pwfx->nAvgBytesPerSec);
+			pwfx->nAvgBytesPerSec  = pwfx->nSamplesPerSec * pwfx->nBlockAlign;
+		}
+	}
+	return pwfx;
+}
+
 HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex, BOOL forced)
 {
 	HRESULT err = DSERR_BUFFERLOST;
-	int i, alloc_size, cp_size;
+	int i;
 	DWORD nSamplesPerSec, bpp, chans;
+	LPWAVEFORMATEX oldpwfx;
 	TRACE("(%p,%p)\n", device, wfex);
 
 	if (device->priolevel == DSSCL_NORMAL) {
@@ -464,19 +493,19 @@ HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex,
 	RtlAcquireResourceExclusive(&(device->buffer_list_lock), TRUE);
 	EnterCriticalSection(&(device->mixlock));
 
-        if (wfex->wFormatTag == WAVE_FORMAT_PCM) {
-            alloc_size = sizeof(WAVEFORMATEX);
-            cp_size = sizeof(PCMWAVEFORMAT);
-        } else
-            alloc_size = cp_size = sizeof(WAVEFORMATEX) + wfex->cbSize;
-
-        device->pwfx = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,device->pwfx,alloc_size);
-
 	nSamplesPerSec = device->pwfx->nSamplesPerSec;
 	bpp = device->pwfx->wBitsPerSample;
 	chans = device->pwfx->nChannels;
 
-        CopyMemory(device->pwfx, wfex, cp_size);
+	oldpwfx = device->pwfx;
+	device->pwfx = DSOUND_CopyFormat(wfex);
+	if (device->pwfx == NULL) {
+		device->pwfx = oldpwfx;
+		err = DSERR_OUTOFMEMORY;
+		goto done;
+	}
+	/* TODO: on failure below (bad format?), reinstall oldpwfx */
+	HeapFree(GetProcessHeap(), 0, oldpwfx);
 
 	if (!(device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMSETFORMAT) && device->hwbuf) {
 		err = IDsDriverBuffer_SetFormat(device->hwbuf, device->pwfx);
@@ -484,8 +513,10 @@ HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex,
 		/* On bad format, try to re-create, big chance it will work then, only do this if we <HAVE> to */
 		if (forced && (device->pwfx->nSamplesPerSec/100 != wfex->nSamplesPerSec/100 || err == DSERR_BADFORMAT))
 		{
+			DWORD cp_size = wfex->wFormatTag == WAVE_FORMAT_PCM ?
+				sizeof(PCMWAVEFORMAT) : sizeof(WAVEFORMATEX) + wfex->cbSize;
 			err = DSERR_BUFFERLOST;
-		        CopyMemory(device->pwfx, wfex, cp_size);
+			CopyMemory(device->pwfx, wfex, cp_size);
 		}
 
 		if (err != DSERR_BUFFERLOST && FAILED(err)) {

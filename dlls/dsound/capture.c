@@ -1365,13 +1365,10 @@ HRESULT IDirectSoundCaptureBufferImpl_Create(
         wfex->nAvgBytesPerSec, wfex->nBlockAlign,
         wfex->wBitsPerSample, wfex->cbSize);
 
-    if (wfex->wFormatTag == WAVE_FORMAT_PCM) {
-        device->pwfx = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEFORMATEX));
-        CopyMemory(device->pwfx, wfex, sizeof(PCMWAVEFORMAT));
-        device->pwfx->cbSize = 0;
-    } else {
-        device->pwfx = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEFORMATEX)+wfex->cbSize);
-        CopyMemory(device->pwfx, wfex, sizeof(WAVEFORMATEX)+wfex->cbSize);
+    device->pwfx = DSOUND_CopyFormat(wfex);
+    if ( device->pwfx == NULL ) {
+	*ppobj = NULL;
+	return DSERR_OUTOFMEMORY;
     }
 
     *ppobj = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,

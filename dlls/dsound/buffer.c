@@ -957,7 +957,7 @@ HRESULT IDirectSoundBufferImpl_Create(
 	LPWAVEFORMATEX wfex = dsbd->lpwfxFormat;
 	HRESULT err = DS_OK;
 	DWORD capf = 0;
-	int use_hw, alloc_size, cp_size;
+	int use_hw;
 	TRACE("(%p,%p,%p)\n",device,pdsb,dsbd);
 
 	if (dsbd->dwBufferBytes < DSBSIZE_MIN || dsbd->dwBufferBytes > DSBSIZE_MAX) {
@@ -985,22 +985,12 @@ HRESULT IDirectSoundBufferImpl_Create(
 	/* size depends on version */
 	CopyMemory(&dsb->dsbd, dsbd, dsbd->dwSize);
 
-	/* variable sized struct so calculate size based on format */
-	if (wfex->wFormatTag == WAVE_FORMAT_PCM) {
-		alloc_size = sizeof(WAVEFORMATEX);
-		cp_size = sizeof(PCMWAVEFORMAT);
-	} else 
-		alloc_size = cp_size = sizeof(WAVEFORMATEX) + wfex->cbSize;
-
-	dsb->pwfx = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,alloc_size);
+	dsb->pwfx = DSOUND_CopyFormat(wfex);
 	if (dsb->pwfx == NULL) {
-		WARN("out of memory\n");
 		HeapFree(GetProcessHeap(),0,dsb);
 		*pdsb = NULL;
 		return DSERR_OUTOFMEMORY;
 	}
-
-	CopyMemory(dsb->pwfx, wfex, cp_size);
 
 	if (dsbd->dwBufferBytes % dsbd->lpwfxFormat->nBlockAlign)
 		dsb->buflen = dsbd->dwBufferBytes + 
@@ -1185,7 +1175,6 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
 {
     IDirectSoundBufferImpl *dsb;
     HRESULT hres = DS_OK;
-    int size;
     TRACE("(%p,%p,%p)\n", device, pdsb, pdsb);
 
     dsb = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*dsb));
@@ -1224,19 +1213,14 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     DSOUND_RecalcFormat(dsb);
     DSOUND_MixToTemporary(dsb, 0, dsb->buflen, FALSE);
 
-    /* variable sized struct so calculate size based on format */
-    size = sizeof(WAVEFORMATEX) + pdsb->pwfx->cbSize;
-
-    dsb->pwfx = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,size);
+    dsb->pwfx = DSOUND_CopyFormat(pdsb->pwfx);
     if (dsb->pwfx == NULL) {
-            WARN("out of memory\n");
-            HeapFree(GetProcessHeap(),0,dsb->buffer);
-            HeapFree(GetProcessHeap(),0,dsb);
-            *ppdsb = NULL;
-            return DSERR_OUTOFMEMORY;
+        HeapFree(GetProcessHeap(),0,dsb->tmp_buffer);
+        HeapFree(GetProcessHeap(),0,dsb->buffer);
+        HeapFree(GetProcessHeap(),0,dsb);
+        *ppdsb = NULL;
+        return DSERR_OUTOFMEMORY;
     }
-
-    CopyMemory(dsb->pwfx, pdsb->pwfx, size);
 
     RtlInitializeResource(&dsb->lock);
 
