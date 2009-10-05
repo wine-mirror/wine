@@ -36,6 +36,31 @@ static HRESULT (WINAPI *pStiCreateInstance)(HINSTANCE,DWORD,PSTIW*,LPUNKNOWN);
 static HRESULT (WINAPI *pStiCreateInstanceA)(HINSTANCE,DWORD,PSTIA*,LPUNKNOWN);
 static HRESULT (WINAPI *pStiCreateInstanceW)(HINSTANCE,DWORD,PSTIW*,LPUNKNOWN);
 
+static BOOL aggregator_addref_called;
+
+static HRESULT WINAPI aggregator_QueryInterface(IUnknown *iface, REFIID riid, void **ppvObject)
+{
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI aggregator_AddRef(IUnknown *iface)
+{
+    aggregator_addref_called = TRUE;
+    return 2;
+}
+
+static ULONG WINAPI aggregator_Release(IUnknown *iface)
+{
+    return 1;
+}
+
+static struct IUnknownVtbl aggregator_vtbl =
+{
+    aggregator_QueryInterface,
+    aggregator_AddRef,
+    aggregator_Release
+};
+
 static BOOL init_function_pointers(void)
 {
     sti_dll = LoadLibrary("sti.dll");
@@ -52,7 +77,7 @@ static BOOL init_function_pointers(void)
     return FALSE;
 }
 
-void test_version_flag_versus_aw(void)
+static void test_version_flag_versus_aw(void)
 {
     HRESULT hr;
 
@@ -74,7 +99,7 @@ void test_version_flag_versus_aw(void)
             IUnknown_Release((IUnknown*)pStiW);
         }
         else
-            todo_wine ok(0, "could not create StillImageA, hr = 0x%X\n", hr);
+            ok(0, "could not create StillImageA, hr = 0x%X\n", hr);
         hr = pStiCreateInstance(GetModuleHandle(NULL), STI_VERSION_REAL | STI_VERSION_FLAG_UNICODE, &pStiW, NULL);
         if (SUCCEEDED(hr))
         {
@@ -88,7 +113,7 @@ void test_version_flag_versus_aw(void)
             IUnknown_Release((IUnknown*)pStiW);
         }
         else
-            todo_wine ok(0, "could not create StillImageW, hr = 0x%X\n", hr);
+            ok(0, "could not create StillImageW, hr = 0x%X\n", hr);
     }
     else
         skip("No StiCreateInstance function\n");
@@ -130,7 +155,72 @@ void test_version_flag_versus_aw(void)
             IUnknown_Release((IUnknown*)pStiW);
         }
         else
-            todo_wine ok(0, "could not create StillImageW, hr = 0x%X\n", hr);
+            ok(0, "could not create StillImageW, hr = 0x%X\n", hr);
+    }
+    else
+        skip("No StiCreateInstanceW function\n");
+}
+
+static void test_stillimage_aggregation(void)
+{
+    if (pStiCreateInstanceW)
+    {
+        IUnknown aggregator = { &aggregator_vtbl };
+        IStillImageW *pStiW;
+        IUnknown *pUnknown;
+        HRESULT hr;
+
+        /* When aggregating, the outer object must get the non-delegating IUnknown to be
+           able to control the inner object's reference count and query its interfaces.
+           But StiCreateInstance* only take PSTI. So how does the non-delegating IUnknown
+           come back to the outer object calling this function? */
+
+        hr = pStiCreateInstanceW(GetModuleHandle(NULL), STI_VERSION_REAL, &pStiW, &aggregator);
+        if (SUCCEEDED(hr))
+        {
+            IStillImageW *pStiW2 = NULL;
+
+            /* Does this interface delegate? */
+            aggregator_addref_called = FALSE;
+            IStillImage_AddRef(pStiW);
+            ok(!aggregator_addref_called, "the aggregated IStillImageW shouldn't delegate\n");
+            IStillImage_Release(pStiW);
+
+            /* Tests show calling IStillImageW_WriteToErrorLog on the interface segfaults on Windows, so I guess it's an IUnknown.
+               But querying for an IUnknown returns a different interface, which also delegates.
+               So much for COM being reflexive...
+               Anyway I doubt apps depend on any of this. */
+
+            /* And what about the IStillImageW interface? */
+            hr = IStillImage_QueryInterface(pStiW, &IID_IStillImageW, (void**)&pStiW2);
+            if (SUCCEEDED(hr))
+            {
+                ok(pStiW != pStiW2, "the aggregated IStillImageW and its queried IStillImageW unexpectedly match\n");
+                /* Does it delegate? */
+                aggregator_addref_called = FALSE;
+                IStillImage_AddRef(pStiW2);
+                ok(aggregator_addref_called, "the created IStillImageW's IStillImageW should delegate\n");
+                IStillImage_Release(pStiW2);
+                IStillImage_Release(pStiW2);
+            }
+            else
+                ok(0, "could not query for IID_IStillImageW, hr = 0x%x\n", hr);
+
+            IStillImage_Release(pStiW);
+        }
+        else
+            ok(0, "could not create StillImageW, hr = 0x%X\n", hr);
+
+        /* Now do the above tests prove that STI.DLL isn't picky about querying for IUnknown
+           in CoCreateInterface when aggregating? */
+        hr = CoCreateInstance(&CLSID_Sti, &aggregator, CLSCTX_ALL, &IID_IStillImageW, (void**)&pStiW);
+        ok(FAILED(hr), "CoCreateInstance unexpectedly succeeded when querying for IStillImageW during aggregation\n");
+        if (SUCCEEDED(hr))
+            IStillImage_Release(pStiW);
+        hr = CoCreateInstance(&CLSID_Sti, &aggregator, CLSCTX_ALL, &IID_IUnknown, (void**)&pUnknown);
+        ok(FAILED(hr), "CoCreateInstance unexpectedly succeeded when querying for IUnknown during aggregation\n");
+        if (SUCCEEDED(hr))
+            IUnknown_Release(pUnknown);
     }
     else
         skip("No StiCreateInstanceW function\n");
@@ -143,6 +233,7 @@ START_TEST(sti)
         if (init_function_pointers())
         {
             test_version_flag_versus_aw();
+            test_stillimage_aggregation();
             FreeLibrary(sti_dll);
         }
         else
