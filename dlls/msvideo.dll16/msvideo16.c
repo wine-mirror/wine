@@ -670,7 +670,7 @@ BOOL16 VFWAPI ICInfo16(DWORD fccType, DWORD fccHandler, ICINFO16 *lpicinfo)
  *
  *
  */
-static  LRESULT CALLBACK  IC_Callback3216(DWORD pfn16, HIC hic, HDRVR hdrv, UINT msg, DWORD lp1, DWORD lp2)
+static  LRESULT CALLBACK  IC_Callback3216(DWORD pfn16, HIC hic, HDRVR hdrv, UINT msg, LPARAM lp1, LPARAM lp2)
 {
     WORD args[8];
     DWORD ret = 0;
@@ -781,7 +781,7 @@ HIC16 VFWAPI ICOpenFunction16(DWORD fccType, DWORD fccHandler, UINT16 wMode, FAR
         LeaveCriticalSection(&msvideo_cs);
         return 0;
     }
-    if ((hic32 = ICOpenFunction(fccType, fccHandler, wMode, IC_Callback3216)))
+    if ((hic32 = ICOpenFunction(fccType, fccHandler, wMode, (DRIVERPROC)thunk)))
         thunk->hIC16 = HIC_16(hic32);
     else
         thunk->pfn16 = 0;
