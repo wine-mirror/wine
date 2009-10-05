@@ -132,6 +132,10 @@ static const WCHAR themeClass[] = { 'S','c','r','o','l','l','b','a','r',0 };
 
 /* empty SYSTEMTIME const */
 static const SYSTEMTIME st_null;
+/* valid date limits */
+static const SYSTEMTIME max_allowed_date = { .wYear = 9999, .wMonth = 12, .wDay = 31 };
+static const SYSTEMTIME min_allowed_date = { .wYear = 1752, .wMonth = 9,  .wDay = 14 };
+
 
 #define MONTHCAL_GetInfoPtr(hwnd) ((MONTHCAL_INFO *)GetWindowLongPtrW(hwnd, 0))
 
@@ -244,11 +248,8 @@ static LONG MONTHCAL_CompareSystemTime(const SYSTEMTIME *first, const SYSTEMTIME
  */
 static BOOL MONTHCAL_IsDateInValidRange(const MONTHCAL_INFO *infoPtr, const SYSTEMTIME *date)
 {
-  static const SYSTEMTIME max_date = { .wYear = 9999, .wMonth = 12, .wDay = 31 };
-  static const SYSTEMTIME min_date = { .wYear = 1752, .wMonth = 9,  .wDay = 14 };
-
-  if((MONTHCAL_CompareSystemTime(date, &max_date) == 1) ||
-     (MONTHCAL_CompareSystemTime(date, &min_date) == -1)) return FALSE;
+  if((MONTHCAL_CompareSystemTime(date, &max_allowed_date) == 1) ||
+     (MONTHCAL_CompareSystemTime(date, &min_allowed_date) == -1)) return FALSE;
 
   if(infoPtr->rangeValid & GDTR_MAX) {
      if((MONTHCAL_CompareSystemTime(date, &infoPtr->maxSel) == 1)) return FALSE;
@@ -1194,12 +1195,10 @@ MONTHCAL_SetRange(MONTHCAL_INFO *infoPtr, SHORT limits, SYSTEMTIME *range)
         }
         else
         {
-            static const SYSTEMTIME zero;
-
             /* reset the other limit */
-            if (limits & GDTR_MIN) infoPtr->maxDate = zero;
-            if (limits & GDTR_MAX) infoPtr->minDate = zero;
-            infoPtr->rangeValid &= limits & GDTR_MIN ? ~GDTR_MAX : ~GDTR_MIN ;
+            if (limits & GDTR_MIN) infoPtr->maxDate = st_null;
+            if (limits & GDTR_MAX) infoPtr->minDate = st_null;
+            infoPtr->rangeValid &= limits & GDTR_MIN ? ~GDTR_MAX : ~GDTR_MIN;
         }
     }
 
@@ -1554,16 +1553,7 @@ static void MONTHCAL_GoToNextMonth(MONTHCAL_INFO *infoPtr)
     next.wMonth = 1;
   }
 
-  /* prevent max range exceeding */
-  if(infoPtr->rangeValid & GDTR_MAX)
-  {
-     FILETIME ft_next, ft_max;
-
-     SystemTimeToFileTime(&infoPtr->maxDate, &ft_max);
-     SystemTimeToFileTime(&next, &ft_next);
-
-     if (CompareFileTime(&ft_next, &ft_max) > 0) return;
-  }
+  if(!MONTHCAL_IsDateInValidRange(infoPtr, &next)) return;
 
   infoPtr->curSel = next;
 
@@ -1583,16 +1573,7 @@ static void MONTHCAL_GoToPrevMonth(MONTHCAL_INFO *infoPtr)
     prev.wMonth = 12;
   }
 
-  /* prevent min range exceeding */
-  if(infoPtr->rangeValid & GDTR_MIN)
-  {
-     FILETIME ft_prev, ft_min;
-
-     SystemTimeToFileTime(&infoPtr->minDate, &ft_min);
-     SystemTimeToFileTime(&prev, &ft_prev);
-
-     if (CompareFileTime(&ft_prev, &ft_min) < 0) return;
-  }
+  if(!MONTHCAL_IsDateInValidRange(infoPtr, &prev)) return;
 
   infoPtr->curSel = prev;
 
@@ -1651,7 +1632,8 @@ static void MONTHCAL_EditYear(MONTHCAL_INFO *infoPtr)
 			NULL, NULL, NULL);
 
     /* attach edit box */
-    SendMessageW(infoPtr->hWndYearUpDown, UDM_SETRANGE, 0, MAKELONG(9999, 1753));
+    SendMessageW(infoPtr->hWndYearUpDown, UDM_SETRANGE, 0,
+                 MAKELONG(max_allowed_date.wYear, min_allowed_date.wYear));
     SendMessageW(infoPtr->hWndYearUpDown, UDM_SETBUDDY, (WPARAM)infoPtr->hWndYearEdit, 0);
     SendMessageW(infoPtr->hWndYearUpDown, UDM_SETPOS, 0, infoPtr->curSel.wYear);
 }
