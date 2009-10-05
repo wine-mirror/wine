@@ -154,17 +154,24 @@ struct state_test
 #define EVENT_ERROR          0x08
 #define EVENT_APPLY_DATA     0x10
 
+struct event_data
+{
+    DWORD stateblock;
+    IDirect3DSurface8 *original_render_target;
+    IDirect3DSwapChain8 *new_swap_chain;
+};
+
 struct event
 {
-   int (*event_fn)(IDirect3DDevice8 *device, void *arg);
-   int status;
+    int (*event_fn)(IDirect3DDevice8 *device, struct event_data *event_data);
+    int status;
 };
 
 /* This is an event-machine, which tests things.
  * It tests get and set operations for a batch of states, based on
  * results from the event function, which directs what's to be done */
 static void execute_test_chain(IDirect3DDevice8 *device, struct state_test *test,
-        unsigned int ntests, struct event *event, unsigned int nevents, void *event_arg)
+        unsigned int ntests, struct event *event, unsigned int nevents, struct event_data *event_data)
 {
     unsigned int i = 0, j;
     int outcome;
@@ -174,7 +181,7 @@ static void execute_test_chain(IDirect3DDevice8 *device, struct state_test *test
     {
         /* Execute the next event handler (if available) or just set the supplied status */
         outcome = event[j].status;
-        if (event[j].event_fn) outcome |= event[j].event_fn(device, event_arg);
+        if (event[j].event_fn) outcome |= event[j].event_fn(device, event_data);
 
         /* Now verify correct outcome depending on what was signaled by the handler.
          * An EVENT_CHECK_TEST signal means check the returned data against the test_data (out).
@@ -256,19 +263,11 @@ static void execute_test_chain(IDirect3DDevice8 *device, struct state_test *test
     }
 }
 
-struct event_data
-{
-    DWORD stateblock;
-    IDirect3DSurface8 *original_render_target;
-    IDirect3DSwapChain8 *new_swap_chain;
-};
-
-static int switch_render_target(IDirect3DDevice8* device, void *data)
+static int switch_render_target(IDirect3DDevice8* device, struct event_data *event_data)
 {
     D3DPRESENT_PARAMETERS present_parameters;
     IDirect3DSwapChain8 *swapchain = NULL;
     IDirect3DSurface8 *backbuffer = NULL;
-    struct event_data *edata = data;
     D3DDISPLAYMODE d3ddm;
     HRESULT hr;
 
@@ -290,7 +289,7 @@ static int switch_render_target(IDirect3DDevice8* device, void *data)
     if (FAILED(hr)) goto error;
 
     /* Save the current render target */
-    hr = IDirect3DDevice8_GetRenderTarget(device, &edata->original_render_target);
+    hr = IDirect3DDevice8_GetRenderTarget(device, &event_data->original_render_target);
     ok(SUCCEEDED(hr), "GetRenderTarget returned %#x.\n", hr);
     if (FAILED(hr)) goto error;
 
@@ -300,7 +299,7 @@ static int switch_render_target(IDirect3DDevice8* device, void *data)
     if (FAILED(hr)) goto error;
 
     IDirect3DSurface8_Release(backbuffer);
-    edata->new_swap_chain = swapchain;
+    event_data->new_swap_chain = swapchain;
     return EVENT_OK;
 
 error:
@@ -309,26 +308,25 @@ error:
     return EVENT_ERROR;
 }
 
-static int revert_render_target(IDirect3DDevice8 *device, void *data)
+static int revert_render_target(IDirect3DDevice8 *device, struct event_data *event_data)
 {
-    struct event_data *edata = data;
     HRESULT hr;
 
     /* Reset the old render target */
-    hr = IDirect3DDevice8_SetRenderTarget(device, edata->original_render_target, NULL);
+    hr = IDirect3DDevice8_SetRenderTarget(device, event_data->original_render_target, NULL);
     ok(SUCCEEDED(hr), "SetRenderTarget returned %#x.\n", hr);
     if (FAILED(hr))
     {
-        IDirect3DSurface8_Release(edata->original_render_target);
+        IDirect3DSurface8_Release(event_data->original_render_target);
         return EVENT_ERROR;
     }
 
-    IDirect3DSurface8_Release(edata->original_render_target);
-    IDirect3DSwapChain8_Release(edata->new_swap_chain);
+    IDirect3DSurface8_Release(event_data->original_render_target);
+    IDirect3DSwapChain8_Release(event_data->new_swap_chain);
     return EVENT_OK;
 }
 
-static int begin_stateblock(IDirect3DDevice8 *device, void *data)
+static int begin_stateblock(IDirect3DDevice8 *device, struct event_data *event_data)
 {
     HRESULT hr;
 
@@ -338,44 +336,39 @@ static int begin_stateblock(IDirect3DDevice8 *device, void *data)
     return EVENT_OK;
 }
 
-static int end_stateblock(IDirect3DDevice8 *device, void *data)
+static int end_stateblock(IDirect3DDevice8 *device, struct event_data *event_data)
 {
-    struct event_data *edata = data;
     HRESULT hr;
 
-    hr = IDirect3DDevice8_EndStateBlock(device, &edata->stateblock);
+    hr = IDirect3DDevice8_EndStateBlock(device, &event_data->stateblock);
     ok(SUCCEEDED(hr), "EndStateBlock returned %#x.\n", hr);
     if (FAILED(hr)) return EVENT_ERROR;
     return EVENT_OK;
 }
 
-static int abort_stateblock(IDirect3DDevice8 *device, void *data)
+static int abort_stateblock(IDirect3DDevice8 *device, struct event_data *event_data)
 {
-    struct event_data *edata = data;
-
-    IDirect3DDevice8_DeleteStateBlock(device, edata->stateblock);
+    IDirect3DDevice8_DeleteStateBlock(device, event_data->stateblock);
     return EVENT_OK;
 }
 
-static int apply_stateblock(IDirect3DDevice8 *device, void *data)
+static int apply_stateblock(IDirect3DDevice8 *device, struct event_data *event_data)
 {
-    struct event_data *edata = data;
     HRESULT hr;
 
-    hr = IDirect3DDevice8_ApplyStateBlock(device, edata->stateblock);
+    hr = IDirect3DDevice8_ApplyStateBlock(device, event_data->stateblock);
     ok(SUCCEEDED(hr), "Apply returned %#x.\n", hr);
 
-    IDirect3DDevice8_DeleteStateBlock(device, edata->stateblock);
+    IDirect3DDevice8_DeleteStateBlock(device, event_data->stateblock);
     if (FAILED(hr)) return EVENT_ERROR;
     return EVENT_OK;
 }
 
-static int capture_stateblock(IDirect3DDevice8 *device, void *data)
+static int capture_stateblock(IDirect3DDevice8 *device, struct event_data *event_data)
 {
-    struct event_data *edata = data;
     HRESULT hr;
 
-    hr = IDirect3DDevice8_CaptureStateBlock(device, edata->stateblock);
+    hr = IDirect3DDevice8_CaptureStateBlock(device, event_data->stateblock);
     ok(SUCCEEDED(hr), "Capture returned %#x.\n", hr);
     if (FAILED(hr)) return EVENT_ERROR;
 
