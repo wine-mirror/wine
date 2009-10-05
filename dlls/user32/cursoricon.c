@@ -674,10 +674,7 @@ static BOOL stretch_blt_icon(HBITMAP hDest, BITMAPINFO *pDestInfo, BITMAPINFO *p
 {
     HBITMAP hOld;
     BOOL res = FALSE;
-    static HDC hdcMem = NULL;
-
-    if (!hdcMem)
-        hdcMem = CreateCompatibleDC(screen_dc);
+    HDC hdcMem = CreateCompatibleDC(screen_dc);
 
     if (hdcMem)
     {
@@ -687,6 +684,7 @@ static BOOL stretch_blt_icon(HBITMAP hDest, BITMAPINFO *pDestInfo, BITMAPINFO *p
                             0, 0, pSrcInfo->bmiHeader.biWidth, pSrcInfo->bmiHeader.biHeight,
                             pSrcBits, pSrcInfo, DIB_RGB_COLORS, SRCCOPY);
         SelectObject(hdcMem, hOld);
+        DeleteDC( hdcMem );
     }
 
     return res;
