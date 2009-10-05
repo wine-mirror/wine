@@ -699,7 +699,6 @@ DECL_HANDLER(output_debug_string)
     debug_event_t data;
 
     data.output_string.string  = req->string;
-    data.output_string.unicode = req->unicode;
     data.output_string.length  = req->length;
     generate_debug_event( current, OUTPUT_DEBUG_STRING_EVENT, &data );
 }

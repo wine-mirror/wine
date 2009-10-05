@@ -131,9 +131,8 @@ typedef union
     struct
     {
         int          code;       /* OUTPUT_DEBUG_STRING_EVENT */
-        int          unicode;    /* is it Unicode? */
-        client_ptr_t string;     /* string to display (in debugged process address space) */
         data_size_t  length;     /* string length */
+        client_ptr_t string;     /* string to display (in debugged process address space) */
     } output_string;
     struct
     {
@@ -1580,7 +1579,6 @@ enum char_info_mode
 @REQ(output_debug_string)
     data_size_t   length;      /* string length */
     client_ptr_t  string;      /* string to display (in debugged process address space) */
-    int           unicode;     /* is it Unicode? */
 @END
 
 

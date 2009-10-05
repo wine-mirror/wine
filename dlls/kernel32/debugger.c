@@ -118,7 +118,7 @@ BOOL WINAPI WaitForDebugEvent(
                 break;
             case OUTPUT_DEBUG_STRING_EVENT:
                 event->u.DebugString.lpDebugStringData  = wine_server_get_ptr( data.output_string.string );
-                event->u.DebugString.fUnicode           = data.output_string.unicode;
+                event->u.DebugString.fUnicode           = FALSE;
                 event->u.DebugString.nDebugStringLength = data.output_string.length;
                 break;
             case RIP_EVENT:
@@ -243,7 +243,6 @@ void WINAPI OutputDebugStringA( LPCSTR str )
     SERVER_START_REQ( output_debug_string )
     {
         req->string  = wine_server_client_ptr( str );
-        req->unicode = 0;
         req->length  = strlen(str) + 1;
         wine_server_call( req );
     }
@@ -267,15 +266,15 @@ void WINAPI OutputDebugStringA( LPCSTR str )
  */
 void WINAPI OutputDebugStringW( LPCWSTR str )
 {
-    SERVER_START_REQ( output_debug_string )
+    UNICODE_STRING strW;
+    STRING strA;
+
+    RtlInitUnicodeString( &strW, str );
+    if (!RtlUnicodeStringToAnsiString( &strA, &strW, TRUE ))
     {
-        req->string  = wine_server_client_ptr( str );
-        req->unicode = 1;
-        req->length  = (lstrlenW(str) + 1) * sizeof(WCHAR);
-        wine_server_call( req );
+        OutputDebugStringA( strA.Buffer );
+        RtlFreeAnsiString( &strA );
     }
-    SERVER_END_REQ;
-    WARN("%s\n", debugstr_w(str));
 }
 
 

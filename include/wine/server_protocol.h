@@ -115,7 +115,6 @@ typedef union
     struct
     {
         int          code;
-        int          unicode;
         client_ptr_t string;
         data_size_t  length;
     } output_string;
@@ -2048,8 +2047,6 @@ struct output_debug_string_request
     struct request_header __header;
     data_size_t   length;
     client_ptr_t  string;
-    int           unicode;
-    char __pad_28[4];
 };
 struct output_debug_string_reply
 {
@@ -5347,6 +5344,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 390
+#define SERVER_PROTOCOL_VERSION 391
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

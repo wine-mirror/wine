@@ -656,8 +656,7 @@ static void dump_varargs_debug_event( const char *prefix, data_size_t size )
     case OUTPUT_DEBUG_STRING_EVENT:
         fprintf( stderr, "%s{output_string", prefix );
         dump_uint64( ",string=", &event.output_string.string );
-        fprintf( stderr, ",unicode=%d,len=%u}",
-                 event.output_string.unicode, event.output_string.length );
+        fprintf( stderr, ",len=%u}", event.output_string.length );
         break;
     case RIP_EVENT:
         fprintf( stderr, "%s{rip,err=%d,type=%d}", prefix,
@@ -1994,7 +1993,6 @@ static void dump_output_debug_string_request( const struct output_debug_string_r
 {
     fprintf( stderr, " length=%u", req->length );
     dump_uint64( ", string=", &req->string );
-    fprintf( stderr, ", unicode=%d", req->unicode );
 }
 
 static void dump_continue_debug_event_request( const struct continue_debug_event_request *req )
