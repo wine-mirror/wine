@@ -949,9 +949,8 @@ static void transform_queue_test(
 
 /* =================== State test: Render States ===================================== */
 
-#define D3D9_RENDER_STATES 102
-const D3DRENDERSTATETYPE render_state_indices[] = {
-
+const D3DRENDERSTATETYPE render_state_indices[] =
+{
     D3DRS_ZENABLE,
     D3DRS_FILLMODE,
     D3DRS_SHADEMODE,
@@ -1060,7 +1059,7 @@ const D3DRENDERSTATETYPE render_state_indices[] = {
 };
 
 typedef struct render_state_data {
-    DWORD states[D3D9_RENDER_STATES];
+    DWORD states[sizeof(render_state_indices) / sizeof(*render_state_indices)];
 } render_state_data;
 
 typedef struct render_state_arg {
@@ -1082,7 +1081,8 @@ static void render_state_set_handler(
     const render_state_data* rsdata = data;
     unsigned int i;
 
-    for (i = 0; i < D3D9_RENDER_STATES; i++) {
+    for (i = 0; i < sizeof(render_state_indices) / sizeof(*render_state_indices); ++i)
+    {
         hret = IDirect3DDevice9_SetRenderState(device, render_state_indices[i], rsdata->states[i]);
         ok(hret == D3D_OK, "SetRenderState returned %#x.\n", hret);
     }
@@ -1095,7 +1095,8 @@ static void render_state_get_handler(
     render_state_data* rsdata = data;
     unsigned int i = 0;
 
-    for (i = 0; i < D3D9_RENDER_STATES; i++) {
+    for (i = 0; i < sizeof(render_state_indices) / sizeof(*render_state_indices); ++i)
+    {
         hret = IDirect3DDevice9_GetRenderState(device, render_state_indices[i], &rsdata->states[i]);
         ok(hret == D3D_OK, "GetRenderState returned %#x.\n", hret);
     }
@@ -1108,8 +1109,10 @@ static void render_state_print_handler(
     const render_state_data* rsdata = data;
 
     unsigned int i;
-    for (i = 0; i < D3D9_RENDER_STATES; i++)
+    for (i = 0; i < sizeof(render_state_indices) / sizeof(*render_state_indices); ++i)
+    {
         trace("Index = %u, Value = %#x\n", i, rsdata->states[i]);
+    }
 }
 
 static inline DWORD to_dword(float fl) {
@@ -1228,12 +1231,14 @@ static void render_state_default_data_init(const struct render_state_arg *rsarg,
    data->states[idx++] = TRUE;                  /* BLENDOPALPHA */
 }
 
-static void render_state_poison_data_init(
-    render_state_data* data) {
+static void render_state_poison_data_init(struct render_state_data *data)
+{
+    unsigned int i;
 
-   unsigned int i;
-   for (i = 0; i < D3D9_RENDER_STATES; i++)
+    for (i = 0; i < sizeof(render_state_indices) / sizeof(*render_state_indices); ++i)
+    {
        data->states[i] = 0x1337c0de;
+    }
 }
 
 static void render_state_test_data_init(
