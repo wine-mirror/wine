@@ -378,32 +378,42 @@ BOOL WINAPI EnumResourceNamesA( HMODULE hmod, LPCSTR type, ENUMRESNAMEPROCA lpfu
         goto done;
 
     et = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
-    for (i = 0; i < resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries; i++)
+    __TRY
     {
-        if (et[i].u1.s1.NameIsString)
+        for (i = 0; i < resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries; i++)
         {
-            str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const BYTE *)basedir + et[i].u1.s1.NameOffset);
-            newlen = WideCharToMultiByte(CP_ACP, 0, str->NameString, str->Length, NULL, 0, NULL, NULL);
-            if (newlen + 1 > len)
+            if (et[i].u1.s1.NameIsString)
             {
-                len = newlen + 1;
-                HeapFree( GetProcessHeap(), 0, name );
-                if (!(name = HeapAlloc(GetProcessHeap(), 0, len + 1 )))
+                str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const BYTE *)basedir + et[i].u1.s1.NameOffset);
+                newlen = WideCharToMultiByte(CP_ACP, 0, str->NameString, str->Length, NULL, 0, NULL, NULL);
+                if (newlen + 1 > len)
                 {
-                    ret = FALSE;
-                    break;
+                    len = newlen + 1;
+                    HeapFree( GetProcessHeap(), 0, name );
+                    if (!(name = HeapAlloc(GetProcessHeap(), 0, len + 1 )))
+                    {
+                        ret = FALSE;
+                        break;
+                    }
                 }
+                WideCharToMultiByte( CP_ACP, 0, str->NameString, str->Length, name, len, NULL, NULL );
+                name[newlen] = 0;
+                ret = lpfun(hmod,type,name,lparam);
             }
-            WideCharToMultiByte( CP_ACP, 0, str->NameString, str->Length, name, len, NULL, NULL );
-            name[newlen] = 0;
-            ret = lpfun(hmod,type,name,lparam);
+            else
+            {
+                ret = lpfun( hmod, type, UIntToPtr(et[i].u1.s2.Id), lparam );
+            }
+            if (!ret) break;
         }
-        else
-        {
-            ret = lpfun( hmod, type, UIntToPtr(et[i].u1.s2.Id), lparam );
-        }
-        if (!ret) break;
     }
+    __EXCEPT_PAGE_FAULT
+    {
+        ret = FALSE;
+        status = STATUS_ACCESS_VIOLATION;
+    }
+    __ENDTRY
+
 done:
     HeapFree( GetProcessHeap(), 0, name );
     if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
@@ -440,31 +450,40 @@ BOOL WINAPI EnumResourceNamesW( HMODULE hmod, LPCWSTR type, ENUMRESNAMEPROCW lpf
         goto done;
 
     et = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
-    for (i = 0; i < resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries; i++)
+    __TRY
     {
-        if (et[i].u1.s1.NameIsString)
+        for (i = 0; i < resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries; i++)
         {
-            str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const BYTE *)basedir + et[i].u1.s1.NameOffset);
-            if (str->Length + 1 > len)
+            if (et[i].u1.s1.NameIsString)
             {
-                len = str->Length + 1;
-                HeapFree( GetProcessHeap(), 0, name );
-                if (!(name = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+                str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const BYTE *)basedir + et[i].u1.s1.NameOffset);
+                if (str->Length + 1 > len)
                 {
-                    ret = FALSE;
-                    break;
+                    len = str->Length + 1;
+                    HeapFree( GetProcessHeap(), 0, name );
+                    if (!(name = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+                    {
+                        ret = FALSE;
+                        break;
+                    }
                 }
+                memcpy(name, str->NameString, str->Length * sizeof (WCHAR));
+                name[str->Length] = 0;
+                ret = lpfun(hmod,type,name,lparam);
             }
-            memcpy(name, str->NameString, str->Length * sizeof (WCHAR));
-            name[str->Length] = 0;
-            ret = lpfun(hmod,type,name,lparam);
+            else
+            {
+                ret = lpfun( hmod, type, UIntToPtr(et[i].u1.s2.Id), lparam );
+            }
+            if (!ret) break;
         }
-        else
-        {
-            ret = lpfun( hmod, type, UIntToPtr(et[i].u1.s2.Id), lparam );
-        }
-        if (!ret) break;
     }
+    __EXCEPT_PAGE_FAULT
+    {
+        ret = FALSE;
+        status = STATUS_ACCESS_VIOLATION;
+    }
+    __ENDTRY
 done:
     HeapFree( GetProcessHeap(), 0, name );
     if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
@@ -503,11 +522,20 @@ BOOL WINAPI EnumResourceLanguagesA( HMODULE hmod, LPCSTR type, LPCSTR name,
         goto done;
 
     et = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
-    for (i = 0; i < resdir->NumberOfNamedEntries + resdir->NumberOfIdEntries; i++)
+    __TRY
     {
-        ret = lpfun( hmod, type, name, et[i].u1.s2.Id, lparam );
-        if (!ret) break;
+        for (i = 0; i < resdir->NumberOfNamedEntries + resdir->NumberOfIdEntries; i++)
+        {
+            ret = lpfun( hmod, type, name, et[i].u1.s2.Id, lparam );
+            if (!ret) break;
+        }
     }
+    __EXCEPT_PAGE_FAULT
+    {
+        ret = FALSE;
+        status = STATUS_ACCESS_VIOLATION;
+    }
+    __ENDTRY
 done:
     if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
     if (HIWORD(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
@@ -546,11 +574,20 @@ BOOL WINAPI EnumResourceLanguagesW( HMODULE hmod, LPCWSTR type, LPCWSTR name,
         goto done;
 
     et = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
-    for (i = 0; i < resdir->NumberOfNamedEntries + resdir->NumberOfIdEntries; i++)
+    __TRY
     {
-        ret = lpfun( hmod, type, name, et[i].u1.s2.Id, lparam );
-        if (!ret) break;
+        for (i = 0; i < resdir->NumberOfNamedEntries + resdir->NumberOfIdEntries; i++)
+        {
+            ret = lpfun( hmod, type, name, et[i].u1.s2.Id, lparam );
+            if (!ret) break;
+        }
     }
+    __EXCEPT_PAGE_FAULT
+    {
+        ret = FALSE;
+        status = STATUS_ACCESS_VIOLATION;
+    }
+    __ENDTRY
 done:
     if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
     if (HIWORD(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
