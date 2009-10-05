@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 EXEEXT    = @EXEEXT@
+DEFS      = -D__WINESRC__ $(EXTRADEFS)
 
 PROGRAMS = wmc$(EXEEXT) wmc-installed
 MANPAGES = wmc.man

@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 EXEEXT    = @EXEEXT@
 MODULE    = none
+DEFS      = -D__WINESRC__ $(EXTRADEFS)
 EXTRAINCL = @FREETYPEINCL@
 FREETYPELIBS = @FREETYPELIBS@
 
