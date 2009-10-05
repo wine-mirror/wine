@@ -1462,8 +1462,9 @@ static HRESULT WINAPI StorageImpl_CopyTo(
   HRESULT      hr;
   IStorage     *pstgTmp, *pstgChild;
   IStream      *pstrTmp, *pstrChild;
+  BOOL         skip = FALSE;
 
-  if ((ciidExclude != 0) || (rgiidExclude != NULL) || (snbExclude != NULL))
+  if ((ciidExclude != 0) || (rgiidExclude != NULL))
     FIXME("Exclude option not implemented\n");
 
   TRACE("(%p, %d, %p, %p, %p)\n",
@@ -1499,6 +1500,21 @@ static HRESULT WINAPI StorageImpl_CopyTo(
       hr = S_OK;   /* done, every element has been copied */
       break;
     }
+
+    if ( snbExclude )
+    {
+      WCHAR **snb = snbExclude;
+      skip = FALSE;
+      while ( *snb != NULL && !skip )
+      {
+        if ( lstrcmpW(curElement.pwcsName, *snb) == 0 )
+          skip = TRUE;
+        ++snb;
+      }
+    }
+
+    if ( skip )
+      continue;
 
     if (curElement.type == STGTY_STORAGE)
     {
@@ -1548,7 +1564,7 @@ static HRESULT WINAPI StorageImpl_CopyTo(
        * do the copy recursively
        */
       hr = IStorage_CopyTo( pstgChild, ciidExclude, rgiidExclude,
-                               snbExclude, pstgTmp );
+                               NULL, pstgTmp );
 
       IStorage_Release( pstgTmp );
       IStorage_Release( pstgChild );
