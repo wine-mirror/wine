@@ -3607,6 +3607,19 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
         WORD wDragWidth = GetSystemMetrics(SM_CXDRAG);
         WORD wDragHeight= GetSystemMetrics(SM_CYDRAG);
 
+        /* Ensure coordinates are within client bounds */
+        if (x < 0)
+            x = 0;
+
+        if (y < 0)
+            y = 0;
+
+        if (x > infoPtr->rcList.right)
+            x = infoPtr->rcList.right;
+
+        if (y > infoPtr->rcList.bottom)
+            y = infoPtr->rcList.bottom;
+
         tmp.x = x;
         tmp.y = y;
 
