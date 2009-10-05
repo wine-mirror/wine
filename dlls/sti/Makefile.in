@@ -8,6 +8,7 @@ IMPORTS   = uuid ole32 advapi32 kernel32
 
 C_SRCS = \
 	regsvr.c \
+	sti.c \
 	sti_main.c
 
 @MAKE_DLL_RULES@
