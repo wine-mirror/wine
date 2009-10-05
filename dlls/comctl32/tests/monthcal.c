@@ -1592,6 +1592,33 @@ static void test_monthcal_selrange(void)
     expect(range[0].wSecond,    range2[1].wSecond);
     expect(range[0].wMilliseconds, range2[1].wMilliseconds);
 
+    /* try with range larger than maximum configured */
+    memset(&range[0], 0, sizeof(range[0]));
+    range[0].wYear  = 2009;
+    range[0].wMonth = 10;
+    range[0].wDay   = 1;
+    range[1] = range[0];
+
+    ret = SendMessage(hwnd, MCM_SETSELRANGE, 0, (LPARAM)range);
+    expect(TRUE, ret);
+
+    range[1] = range[0];
+    /* default max. range is 7 days */
+    range[1].wDay = 8;
+
+    ret = SendMessage(hwnd, MCM_SETSELRANGE, 0, (LPARAM)range);
+    expect(FALSE, ret);
+
+    ret = SendMessage(hwnd, MCM_GETSELRANGE, 0, (LPARAM)range2);
+    expect(TRUE, ret);
+
+    expect(range[0].wYear,  range2[0].wYear);
+    expect(range[0].wMonth, range2[0].wMonth);
+    expect(range[0].wDay,   range2[0].wDay);
+    expect(range[0].wYear,  range2[1].wYear);
+    expect(range[0].wMonth, range2[1].wMonth);
+    expect(range[0].wDay,   range2[1].wDay);
+
     DestroyWindow(hwnd);
 }
 

@@ -258,6 +258,66 @@ static BOOL MONTHCAL_IsDateInValidRange(const MONTHCAL_INFO *infoPtr, const SYST
   return TRUE;
 }
 
+/* Checks passed range width with configured maximum selection count
+ *
+ * PARAMETERS
+ *
+ *  [I] infoPtr : valid pointer to control data
+ *  [I] range0  : pointer to valid date data (requested bound)
+ *  [I] range1  : pointer to valid date data (primary bound)
+ *  [O] adjust  : returns adjusted range bound to fit maximum range (optional)
+ *
+ *  Adjust value computed basing on primary bound and current maximum selection
+ *  count. For simple range check (without adjusted value required) (range0, range1)
+ *  relation means nothing.
+ *
+ * RETURN VALUE
+ *
+ *  TRUE  - range is shorter or equal to maximum
+ *  FALSE - range is larger than maximum
+ */
+static BOOL MONTHCAL_IsSelRangeValid(const MONTHCAL_INFO *infoPtr,
+                                     const SYSTEMTIME *range0,
+                                     const SYSTEMTIME *range1,
+                                     SYSTEMTIME *adjust)
+{
+  ULARGE_INTEGER ul_range0, ul_range1, ul_diff;
+  FILETIME ft_range0, ft_range1;
+  LONG cmp;
+
+  SystemTimeToFileTime(range0, &ft_range0);
+  SystemTimeToFileTime(range1, &ft_range1);
+
+  ul_range0.LowPart  = ft_range0.dwLowDateTime;
+  ul_range0.HighPart = ft_range0.dwHighDateTime;
+  ul_range1.LowPart  = ft_range1.dwLowDateTime;
+  ul_range1.HighPart = ft_range1.dwHighDateTime;
+
+  cmp = CompareFileTime(&ft_range0, &ft_range1);
+
+  if(cmp == 1)
+     ul_diff.QuadPart = ul_range0.QuadPart - ul_range1.QuadPart;
+  else
+     ul_diff.QuadPart = -ul_range0.QuadPart + ul_range1.QuadPart;
+
+  if(ul_diff.QuadPart >= DAYSTO100NSECS(infoPtr->maxSelCount)) {
+
+     if(adjust) {
+       if(cmp == 1)
+          ul_range0.QuadPart = ul_range1.QuadPart + DAYSTO100NSECS(infoPtr->maxSelCount - 1);
+       else
+          ul_range0.QuadPart = ul_range1.QuadPart - DAYSTO100NSECS(infoPtr->maxSelCount - 1);
+
+       ft_range0.dwLowDateTime  = ul_range0.LowPart;
+       ft_range0.dwHighDateTime = ul_range0.HighPart;
+       FileTimeToSystemTime(&ft_range0, adjust);
+     }
+
+     return FALSE;
+  }
+  else return TRUE;
+}
+
 /* Used in MCM_SETRANGE/MCM_SETSELRANGE to determine resulting time part.
    Milliseconds are intentionaly not validated. */
 static BOOL MONTHCAL_ValidateTime(const SYSTEMTIME *time)
@@ -1249,6 +1309,9 @@ MONTHCAL_SetSelRange(MONTHCAL_INFO *infoPtr, SYSTEMTIME *range)
     if(!MONTHCAL_ValidateTime(&range[1]))
       MONTHCAL_CopyTime(&infoPtr->todaysDate, &range[1]);
 
+    /* maximum range exceeded */
+    if(!MONTHCAL_IsSelRangeValid(infoPtr, &range[0], &range[1], NULL)) return FALSE;
+
     old_range[0] = infoPtr->minSel;
     old_range[1] = infoPtr->maxSel;
 
@@ -1825,22 +1888,17 @@ MONTHCAL_MouseMove(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
   if(infoPtr->dwStyle & MCS_MULTISELECT)  {
     SYSTEMTIME st[2];
-    FILETIME ft_ht, ft_first;
-    ULARGE_INTEGER ul_ht, ul_first, ul_diff;
     int i;
     LONG cmp;
 
     MONTHCAL_GetSelRange(infoPtr, st);
     i = MONTHCAL_IsDateEqual(&infoPtr->firstSel, &st[0]) ? 1 : 0;
 
-    SystemTimeToFileTime(&st_ht, &ft_ht);
-    SystemTimeToFileTime(&infoPtr->firstSel, &ft_first);
-
-    cmp = CompareFileTime(&ft_ht, &ft_first);
+    cmp = MONTHCAL_CompareSystemTime(&st_ht, &infoPtr->firstSel);
 
     if(MONTHCAL_IsDateEqual(&infoPtr->firstSel, &st[1])) {
       /* If we're still at the first selected date and range is empty, return.
-         If range isn't empty we should change range to a singel firstSel */
+         If range isn't empty we should change range to a single firstSel */
       if(MONTHCAL_IsDateEqual(&infoPtr->firstSel, &st_ht) &&
          MONTHCAL_IsDateEqual(&st[0], &st[1])) goto done;
 
@@ -1848,46 +1906,14 @@ MONTHCAL_MouseMove(MONTHCAL_INFO *infoPtr, LPARAM lParam)
       if(cmp == -1) i = 0;
     }
 
-    ul_ht.LowPart  = ft_ht.dwLowDateTime;
-    ul_ht.HighPart = ft_ht.dwHighDateTime;
-    ul_first.LowPart  = ft_first.dwLowDateTime;
-    ul_first.HighPart = ft_first.dwHighDateTime;
-
-    /* new selected date is later */
-    if(cmp == 1)
-       ul_diff.QuadPart = ul_ht.QuadPart - ul_first.QuadPart;
-    else
-       ul_diff.QuadPart = -ul_ht.QuadPart + ul_first.QuadPart;
-
-    if(ul_diff.QuadPart >= DAYSTO100NSECS(infoPtr->maxSelCount)) {
-      if(cmp == 1)
-        ul_ht.QuadPart = ul_first.QuadPart + DAYSTO100NSECS(infoPtr->maxSelCount - 1);
-      else
-        ul_ht.QuadPart = ul_first.QuadPart - DAYSTO100NSECS(infoPtr->maxSelCount - 1);
-
-      ft_ht.dwLowDateTime  = ul_ht.LowPart;
-      ft_ht.dwHighDateTime = ul_ht.HighPart;
-      FileTimeToSystemTime(&ft_ht, &st_ht);
-    }
+    MONTHCAL_IsSelRangeValid(infoPtr, &st_ht, &infoPtr->firstSel, &st_ht);
 
     if(!MONTHCAL_IsDateEqual(&st[i], &st_ht)) {
-      FILETIME ft_range0, ft_range1;
-
       st[i] = st_ht;
-
-      SystemTimeToFileTime(&st[0], &ft_range0);
-      SystemTimeToFileTime(&st[1], &ft_range1);
-
-      /* swap bounds if needed */
-      if(CompareFileTime(&ft_range0, &ft_range1) == 1) {
-        SYSTEMTIME swap = st[1];
-
-        st[1] = st[0];
-        st[0] = swap;
-      }
 
       MONTHCAL_CopyTime(&infoPtr->todaysDate, &st[0]);
       MONTHCAL_CopyTime(&infoPtr->todaysDate, &st[1]);
+      /* bounds will be swapped here if needed */
       MONTHCAL_SetSelRange(infoPtr, st);
     }
   }
