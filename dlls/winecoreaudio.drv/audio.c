@@ -449,7 +449,7 @@ static BOOL supportedFormat(LPWAVEFORMATEX wf)
         WAVEFORMATEXTENSIBLE * wfex = (WAVEFORMATEXTENSIBLE *)wf;
 
         if (wf->cbSize == 22 && IsEqualGUID(&wfex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)) {
-            if (wf->nChannels >=1 && wf->nChannels <= 2) {
+            if (wf->nChannels >=1 && wf->nChannels <= 8) {
                 if (wf->wBitsPerSample==wfex->Samples.wValidBitsPerSample) {
                     if (wf->wBitsPerSample==8||wf->wBitsPerSample==16)
                         return TRUE;
