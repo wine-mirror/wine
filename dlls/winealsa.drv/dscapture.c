@@ -92,6 +92,7 @@ struct IDsCaptureDriverBufferImpl
     CRITICAL_SECTION pcm_crst;
     LPBYTE mmap_buffer, presented_buffer;
     DWORD mmap_buflen_bytes, play_looping, mmap_ofs_bytes;
+    BOOL mmap;
 
     /* Note: snd_pcm_frames_to_bytes(This->pcm, mmap_buflen_frames) != mmap_buflen_bytes */
     /* The actual buffer may differ in size from the wanted buffer size */
@@ -342,30 +343,77 @@ static snd_pcm_uframes_t CommitAll(IDsCaptureDriverBufferImpl *This, DWORD force
     if (used < commitahead && (forced || This->play_looping))
     {
         snd_pcm_uframes_t done, putin = commitahead - used;
-        snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &putin);
-        CopyData(This, This->mmap_pos, putin);
-        done = snd_pcm_mmap_commit(This->pcm, This->mmap_pos, putin);
-        This->mmap_pos += done;
-        used += done;
-        putin = commitahead - used;
-
-        if (This->mmap_pos == This->mmap_buflen_frames && (snd_pcm_sframes_t)putin > 0 && This->play_looping)
+        if (This->mmap)
         {
             snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &putin);
-            This->mmap_ofs_bytes += snd_pcm_frames_to_bytes(This->pcm, This->mmap_buflen_frames);
-            This->mmap_ofs_bytes %= This->mmap_buflen_bytes;
             CopyData(This, This->mmap_pos, putin);
             done = snd_pcm_mmap_commit(This->pcm, This->mmap_pos, putin);
+
             This->mmap_pos += done;
             used += done;
+            putin = commitahead - used;
+
+            if (This->mmap_pos == This->mmap_buflen_frames && (snd_pcm_sframes_t)putin > 0 && This->play_looping)
+            {
+                This->mmap_ofs_bytes += snd_pcm_frames_to_bytes(This->pcm, This->mmap_buflen_frames);
+                This->mmap_ofs_bytes %= This->mmap_buflen_bytes;
+
+                snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &putin);
+                CopyData(This, This->mmap_pos, putin);
+                done = snd_pcm_mmap_commit(This->pcm, This->mmap_pos, putin);
+
+                This->mmap_pos += done;
+                used += done;
+            }
         }
+        else
+        {
+            DWORD pos;
+            snd_pcm_sframes_t ret;
+
+            snd_pcm_uframes_t cap = snd_pcm_bytes_to_frames(This->pcm, This->mmap_buflen_bytes);
+            pos = realpos_to_fakepos(This, This->mmap_pos);
+            if (This->mmap_pos + putin > cap)
+                putin = cap - This->mmap_pos;
+            ret = snd_pcm_readi(This->pcm, This->presented_buffer + pos, putin);
+            if (ret == -EPIPE)
+            {
+                WARN("Underrun occurred\n");
+                snd_pcm_prepare(This->pcm);
+                ret = snd_pcm_readi(This->pcm, This->presented_buffer + pos, putin);
+                snd_pcm_start(This->pcm);
+            }
+            if (ret < 0)
+            {
+                WARN("Committing data: %ld / %s (%ld)\n", ret, snd_strerror(ret), putin);
+                ret = 0;
+            }
+            This->mmap_pos += ret;
+            used += ret;
+            /* At this point mmap_pos may be >= This->mmap_pos this is harmless
+             * realpos_to_fakepos handles it well, and below it is truncated
+             */
+
+            putin = commitahead - used;
+            if (putin > 0)
+            {
+                pos = realpos_to_fakepos(This, This->mmap_pos);
+                ret = snd_pcm_readi(This->pcm, This->presented_buffer + pos, putin);
+                if (ret > 0)
+                {
+                    This->mmap_pos += ret;
+                    used += ret;
+                }
+            }
+        }
+
     }
 
-    if (This->mmap_pos == This->mmap_buflen_frames)
+    if (This->mmap_pos >= This->mmap_buflen_frames)
     {
         This->mmap_ofs_bytes += snd_pcm_frames_to_bytes(This->pcm, This->mmap_buflen_frames);
         This->mmap_ofs_bytes %= This->mmap_buflen_bytes;
-        This->mmap_pos = 0;
+        This->mmap_pos -= This->mmap_buflen_frames;
     }
 
     return used;
@@ -451,23 +499,30 @@ static int CreateMMAP(IDsCaptureDriverBufferImpl* pdbi)
     snd_pcm_sw_params_set_avail_min(pcm, sw_params, 0);
     err = snd_pcm_sw_params(pcm, sw_params);
 
-    avail = snd_pcm_avail_update(pcm);
-    if ((snd_pcm_sframes_t)avail < 0)
+    pdbi->mmap_ofs_bytes = 0;
+    if (!pdbi->mmap)
     {
-        ERR("No buffer is available: %s.\n", snd_strerror(avail));
-        return DSERR_GENERIC;
+        pdbi->mmap_buffer = NULL;
+
+        frames = snd_pcm_bytes_to_frames(pdbi->pcm, pdbi->mmap_buflen_bytes);
+        snd_pcm_format_set_silence(format, pdbi->presented_buffer, frames);
+        pdbi->mmap_pos = 0;
     }
-    err = snd_pcm_mmap_begin(pcm, &areas, &ofs, &avail);
-    if ( err < 0 )
+    else
     {
-        ERR("Can't map sound device for direct access: %s\n", snd_strerror(err));
-        return DSERR_GENERIC;
+        err = snd_pcm_mmap_begin(pcm, &areas, &ofs, &avail);
+        if ( err < 0 )
+        {
+            ERR("Can't map sound device for direct access: %s/%d\n", snd_strerror(err), err);
+            return DSERR_GENERIC;
+        }
+        snd_pcm_format_set_silence(format, areas->addr, pdbi->mmap_buflen_frames);
+        pdbi->mmap_pos = ofs + snd_pcm_mmap_commit(pcm, ofs, 0);
+        pdbi->mmap_buffer = areas->addr;
     }
-    err = snd_pcm_mmap_commit(pcm, ofs, 0);
-    pdbi->mmap_buffer = areas->addr;
 
     TRACE("created mmap buffer of %ld frames (%d bytes) at %p\n",
-        frames, pdbi->mmap_buflen_bytes, pdbi->mmap_buffer);
+        pdbi->mmap_buflen_frames, pdbi->mmap_buflen_bytes, pdbi->mmap_buffer);
 
     return DS_OK;
 }
@@ -591,6 +646,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_SetFormat(PIDSCDRIVERBUFFER ifa
     snd_pcm_uframes_t buffer_size;
     DWORD rate = pwfx->nSamplesPerSec;
     int err=0;
+    BOOL mmap;
 
     TRACE("(%p, %p)\n", iface, pwfx);
 
@@ -632,8 +688,6 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_SetFormat(PIDSCDRIVERBUFFER ifa
 
     /* Set some defaults */
     snd_pcm_hw_params_any(pcm, hw_params);
-    err = snd_pcm_hw_params_set_access (pcm, hw_params, SND_PCM_ACCESS_MMAP_INTERLEAVED);
-    if (err < 0) goto err;
 
     err = snd_pcm_hw_params_set_channels(pcm, hw_params, pwfx->nChannels);
     if (err < 0) { WARN("Could not set channels to %d\n", pwfx->nChannels); goto err; }
@@ -657,9 +711,19 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_SetFormat(PIDSCDRIVERBUFFER ifa
     snd_pcm_hw_params_set_buffer_size_near(pcm, hw_params, &buffer_size);
     buffer_size = 5000;
     snd_pcm_hw_params_set_period_time_near(pcm, hw_params, (unsigned int*)&buffer_size, NULL);
+
+    err = snd_pcm_hw_params_set_access (pcm, hw_params, SND_PCM_ACCESS_MMAP_INTERLEAVED);
+    if (err < 0)
+    {
+        err = snd_pcm_hw_params_set_access (pcm, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
+        if (err < 0) { WARN("Could not set access\n"); goto err; }
+        mmap = 0;
+    }
+    else
+        mmap = 1;
+
     err = snd_pcm_hw_params(pcm, hw_params);
-    err = snd_pcm_sw_params(pcm, This->sw_params);
-    snd_pcm_prepare(pcm);
+    if (err < 0) { WARN("Could not set hw parameters\n"); goto err; }
 
     if (This->pcm)
     {
@@ -667,6 +731,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_SetFormat(PIDSCDRIVERBUFFER ifa
         snd_pcm_close(This->pcm);
     }
     This->pcm = pcm;
+    This->mmap = mmap;
 
     snd_pcm_prepare(This->pcm);
     CreateMMAP(This);
@@ -708,8 +773,8 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetPosition(PIDSCDRIVERBUFFER i
 
     if (snd_pcm_state(This->pcm) != SND_PCM_STATE_RUNNING)
     {
-        hw_pptr = This->mmap_pos;
         CheckXRUN(This);
+        hw_pptr = This->mmap_pos;
     }
     else
     {
@@ -730,7 +795,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetPosition(PIDSCDRIVERBUFFER i
 
     LeaveCriticalSection(&This->pcm_crst);
 
-    TRACE("hw_pptr=0x%08x, hw_wptr=0x%08x playpos=%d, writepos=%d\n", (unsigned int)hw_pptr, (unsigned int)hw_wptr, lpdwCappos?*lpdwCappos:-1, lpdwReadpos?*lpdwReadpos:-1);
+    TRACE("hw_pptr=%u, hw_wptr=%u playpos=%u(%p), writepos=%u(%p)\n", (unsigned int)hw_pptr, (unsigned int)hw_wptr, realpos_to_fakepos(This, hw_pptr), lpdwCappos, realpos_to_fakepos(This, hw_wptr), lpdwReadpos);
     return DS_OK;
 }
 
@@ -893,7 +958,11 @@ static HRESULT WINAPI IDsCaptureDriverImpl_Open(PIDSCDRIVER iface)
     err = snd_pcm_hw_params_any(pcm, hw_params);
     if (err < 0) goto err;
     err = snd_pcm_hw_params_set_access (pcm, hw_params, SND_PCM_ACCESS_MMAP_INTERLEAVED);
-    if (err < 0) goto err;
+    if (err < 0)
+    {
+        err = snd_pcm_hw_params_set_access (pcm, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
+        if (err < 0) goto err;
+    }
 
     TRACE("Success\n");
     snd_pcm_close(pcm);
@@ -1007,12 +1076,6 @@ DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv)
 {
     IDsCaptureDriverImpl** idrv = (IDsCaptureDriverImpl**)drv;
     TRACE("(%d,%p)\n",wDevID,drv);
-
-    if (!(WInDev[wDevID].dwSupport & WAVECAPS_DIRECTSOUND))
-    {
-        WARN("Hardware accelerated capture not supported, falling back to wavein\n");
-        return MMSYSERR_NOTSUPPORTED;
-    }
 
     *idrv = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDsCaptureDriverImpl));
     if (!*idrv)
