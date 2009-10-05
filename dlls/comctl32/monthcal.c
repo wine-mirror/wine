@@ -130,6 +130,9 @@ static const int DayOfWeekTable[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
 
 static const WCHAR themeClass[] = { 'S','c','r','o','l','l','b','a','r',0 };
 
+/* empty SYSTEMTIME const */
+static const SYSTEMTIME st_null;
+
 #define MONTHCAL_GetInfoPtr(hwnd) ((MONTHCAL_INFO *)GetWindowLongPtrW(hwnd, 0))
 
 /* helper functions  */
@@ -482,11 +485,7 @@ static BOOL MONTHCAL_SetDayFocus(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *st)
                                    infoPtr->focusedSel.wMonth, &r);
 
   if(!st & MONTHCAL_ValidateDate(&infoPtr->focusedSel))
-  {
-    static const SYSTEMTIME st_null;
-
     infoPtr->focusedSel = st_null;
-  }
 
   /* on set invalidates new day, on reset clears previous focused day */
   InvalidateRect(infoPtr->hwndSelf, &r, FALSE);
@@ -573,10 +572,6 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, int day, int
     SetTextColor(hdc, oldCol);
     SetBkColor(hdc, oldBk);
   }
-
-  /* draw focus rectangle */
-  if((day == infoPtr->focusedSel.wDay) && (month == infoPtr->focusedSel.wMonth))
-    DrawFocusRect(hdc, &r);
 }
 
 
@@ -777,16 +772,8 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
     MONTHCAL_CalcDayRect(infoPtr, &rcDay, i, 0);
     if(IntersectRect(&rcTemp, &(ps->rcPaint), &rcDay))
     {
-
       MONTHCAL_DrawDay(infoPtr, hdc, day, infoPtr->curSel.wMonth, i, 0,
 	infoPtr->monthdayState[m] & mask);
-
-      if((infoPtr->curSel.wMonth == infoPtr->todaysDate.wMonth) &&
-          (day==infoPtr->todaysDate.wDay) &&
-	  (infoPtr->curSel.wYear == infoPtr->todaysDate.wYear)) {
-        if(!(infoPtr->dwStyle & MCS_NOTODAYCIRCLE))
-	  MONTHCAL_CircleDay(infoPtr, hdc, day, infoPtr->curSel.wMonth);
-      }
     }
 
     mask<<=1;
@@ -802,12 +789,6 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
     {
       MONTHCAL_DrawDay(infoPtr, hdc, day, infoPtr->curSel.wMonth, i, j,
           infoPtr->monthdayState[m] & mask);
-
-      if((infoPtr->curSel.wMonth == infoPtr->todaysDate.wMonth) &&
-          (day==infoPtr->todaysDate.wDay) &&
-          (infoPtr->curSel.wYear == infoPtr->todaysDate.wYear))
-        if(!(infoPtr->dwStyle & MCS_NOTODAYCIRCLE))
-	  MONTHCAL_CircleDay(infoPtr, hdc, day, infoPtr->curSel.wMonth);
     }
     mask<<=1;
     day++;
@@ -843,6 +824,22 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
   }
   SetTextColor(hdc, infoPtr->txt);
 
+  /* draw today mark rectangle */
+  if((infoPtr->curSel.wMonth == infoPtr->todaysDate.wMonth) &&
+     (infoPtr->curSel.wYear == infoPtr->todaysDate.wYear) &&
+    !(infoPtr->dwStyle & MCS_NOTODAYCIRCLE))
+  {
+    MONTHCAL_CircleDay(infoPtr, hdc, infoPtr->todaysDate.wDay, infoPtr->todaysDate.wMonth);
+  }
+
+  /* draw focused day */
+  if(!MONTHCAL_IsDateEqual(&infoPtr->focusedSel, &st_null))
+  {
+    MONTHCAL_CalcPosFromDay(infoPtr, infoPtr->focusedSel.wDay,
+                                     infoPtr->focusedSel.wMonth, &rcDay);
+
+    DrawFocusRect(hdc, &rcDay);
+  }
 
 /* draw `today' date if style allows it, and draw a circle before today's
  * date if necessary */
