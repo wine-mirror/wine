@@ -822,6 +822,23 @@ static void test_monthcal_currdate(void)
     expect(st_original.wMinute, st_test.wMinute);
     expect(st_original.wSecond, st_test.wSecond);
 
+    /* setting selection equal to current reports success even if out range */
+    memset(&st_new, 0, sizeof(st_new));
+    st_new.wYear = 2009;
+    st_new.wDay  = 5;
+    st_new.wMonth = 10;
+    res = SendMessage(hwnd, MCM_SETCURSEL, 0, (LPARAM)&st_new);
+    expect(1, res);
+    memset(&st_test, 0, sizeof(st_test));
+    st_test.wYear = 2009;
+    st_test.wDay  = 6;
+    st_test.wMonth = 10;
+    res = SendMessage(hwnd, MCM_SETRANGE, GDTR_MIN, (LPARAM)&st_test);
+    expect(1, res);
+    /* set to current again */
+    res = SendMessage(hwnd, MCM_SETCURSEL, 0, (LPARAM)&st_new);
+    expect(1, res);
+
     DestroyWindow(hwnd);
 }
 

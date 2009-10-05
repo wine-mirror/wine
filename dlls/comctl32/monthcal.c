@@ -252,11 +252,11 @@ static BOOL MONTHCAL_IsDateInValidRange(const MONTHCAL_INFO *infoPtr, const SYST
      (MONTHCAL_CompareSystemTime(date, &min_allowed_date) == -1)) return FALSE;
 
   if(infoPtr->rangeValid & GDTR_MAX) {
-     if((MONTHCAL_CompareSystemTime(date, &infoPtr->maxSel) == 1)) return FALSE;
+     if((MONTHCAL_CompareSystemTime(date, &infoPtr->maxDate) == 1)) return FALSE;
   }
 
   if(infoPtr->rangeValid & GDTR_MIN) {
-     if((MONTHCAL_CompareSystemTime(date, &infoPtr->minSel) == -1)) return FALSE;
+     if((MONTHCAL_CompareSystemTime(date, &infoPtr->minDate) == -1)) return FALSE;
   }
 
   return TRUE;
@@ -1255,13 +1255,13 @@ MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
   if(infoPtr->dwStyle & MCS_MULTISELECT) return FALSE;
 
   if(!MONTHCAL_ValidateDate(curSel)) return FALSE;
+  /* exit earlier if selection equals current */
+  if (MONTHCAL_IsDateEqual(&infoPtr->curSel, curSel)) return TRUE;
+
   if(!MONTHCAL_IsDateInValidRange(infoPtr, curSel)) return FALSE;
 
   infoPtr->minSel = *curSel;
   infoPtr->maxSel = *curSel;
-
-  /* exit earlier if selection equals current */
-  if (MONTHCAL_IsDateEqual(&infoPtr->curSel, curSel)) return TRUE;
 
   infoPtr->curSel = *curSel;
 
