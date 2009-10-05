@@ -1252,8 +1252,25 @@ MONTHCAL_SetSelRange(MONTHCAL_INFO *infoPtr, SYSTEMTIME *range)
     old_range[0] = infoPtr->minSel;
     old_range[1] = infoPtr->maxSel;
 
-    infoPtr->minSel = range[0];
-    infoPtr->maxSel = range[1];
+    /* swap if min > max */
+    if(MONTHCAL_CompareSystemTime(&range[0], &range[1]) <= 0)
+    {
+      infoPtr->minSel = range[0];
+      infoPtr->maxSel = range[1];
+    }
+    else
+    {
+      infoPtr->minSel = range[1];
+      infoPtr->maxSel = range[0];
+    }
+
+    /* update day of week */
+    infoPtr->minSel.wDayOfWeek =
+            MONTHCAL_CalculateDayOfWeek(infoPtr->minSel.wDay, infoPtr->minSel.wMonth,
+                                                              infoPtr->minSel.wYear);
+    infoPtr->maxSel.wDayOfWeek =
+            MONTHCAL_CalculateDayOfWeek(infoPtr->maxSel.wDay, infoPtr->maxSel.wMonth,
+                                                              infoPtr->maxSel.wYear);
 
     /* redraw if bounds changed */
     /* FIXME: no actual need to redraw everything */

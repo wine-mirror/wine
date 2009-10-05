@@ -1516,10 +1516,10 @@ static void test_monthcal_destroy(void)
     ok_sequence(sequences, MONTHCAL_SEQ_INDEX, destroy_monthcal_multi_sel_style_seq, "Destroy monthcal (multi sel style)", FALSE);
 }
 
-static void test_monthcal_getselrange(void)
+static void test_monthcal_selrange(void)
 {
     HWND hwnd;
-    SYSTEMTIME st, range[2];
+    SYSTEMTIME st, range[2], range2[2];
     BOOL ret, old_comctl32 = FALSE;
 
     hwnd = create_monthcal_control(MCS_MULTISELECT);
@@ -1560,6 +1560,38 @@ static void test_monthcal_getselrange(void)
         expect(st.wMilliseconds, range[1].wMilliseconds);
     }
 
+    /* bounds are swapped if min > max */
+    memset(&range[0], 0, sizeof(range[0]));
+    range[0].wYear  = 2009;
+    range[0].wMonth = 10;
+    range[0].wDay   = 5;
+    range[1] = range[0];
+    range[1].wDay   = 3;
+
+    ret = SendMessage(hwnd, MCM_SETSELRANGE, 0, (LPARAM)range);
+    expect(TRUE, ret);
+
+    ret = SendMessage(hwnd, MCM_GETSELRANGE, 0, (LPARAM)range2);
+    expect(TRUE, ret);
+
+    expect(range[1].wYear,      range2[0].wYear);
+    expect(range[1].wMonth,     range2[0].wMonth);
+    expect(range[1].wDay,       range2[0].wDay);
+    expect(6, range2[0].wDayOfWeek);
+    expect(range[1].wHour,      range2[0].wHour);
+    expect(range[1].wMinute,    range2[0].wMinute);
+    expect(range[1].wSecond,    range2[0].wSecond);
+    expect(range[1].wMilliseconds, range2[0].wMilliseconds);
+
+    expect(range[0].wYear,      range2[1].wYear);
+    expect(range[0].wMonth,     range2[1].wMonth);
+    expect(range[0].wDay,       range2[1].wDay);
+    expect(1, range2[1].wDayOfWeek);
+    expect(range[0].wHour,      range2[1].wHour);
+    expect(range[0].wMinute,    range2[1].wMinute);
+    expect(range[0].wSecond,    range2[1].wSecond);
+    expect(range[0].wMilliseconds, range2[1].wMilliseconds);
+
     DestroyWindow(hwnd);
 }
 
@@ -1599,7 +1631,7 @@ START_TEST(monthcal)
     test_monthcal_todaylink();
     test_monthcal_size();
     test_monthcal_maxselday();
-    test_monthcal_getselrange();
+    test_monthcal_selrange();
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     DestroyWindow(parent_wnd);
