@@ -156,10 +156,17 @@ struct state_test
 #define EVENT_ERROR          0x08
 #define EVENT_APPLY_DATA     0x10
 
+struct event_data
+{
+    IDirect3DStateBlock9 *stateblock;
+    IDirect3DSurface9 *original_render_target;
+    IDirect3DSwapChain9 *new_swap_chain;
+};
+
 struct event
 {
-   int (*event_fn) (IDirect3DDevice9* device, void* arg);
-   int status;
+    int (*event_fn)(IDirect3DDevice9 *device, struct event_data *event_data);
+    int status;
 };
 
 /* This is an event-machine, which tests things.
@@ -167,7 +174,7 @@ struct event
  * results from the event function, which directs what's to be done */
 
 static void execute_test_chain(IDirect3DDevice9 *device, struct state_test *test,
-        unsigned int ntests, struct event *event, unsigned int nevents, void *event_arg)
+        unsigned int ntests, struct event *event, unsigned int nevents, struct event_data *event_data)
 {
     int outcome;
     unsigned int i = 0, j;
@@ -178,7 +185,7 @@ static void execute_test_chain(IDirect3DDevice9 *device, struct state_test *test
         /* Execute the next event handler (if available) or just set the supplied status */
         outcome = event[j].status;
         if (event[j].event_fn)
-            outcome |= event[j].event_fn(device, event_arg);
+            outcome |= event[j].event_fn(device, event_data);
 
         /* Now verify correct outcome depending on what was signaled by the handler.
          * An EVENT_CHECK_TEST signal means check the returned data against the test_data (out).
@@ -253,20 +260,12 @@ static void execute_test_chain(IDirect3DDevice9 *device, struct state_test *test
          test[i].set_handler(device, &test[i], test[i].default_data);
 }
 
-struct event_data
-{
-    IDirect3DStateBlock9* stateblock;
-    IDirect3DSurface9* original_render_target;
-    IDirect3DSwapChain9* new_swap_chain;
-};
-
-static int switch_render_target(IDirect3DDevice9 *device, void *data)
+static int switch_render_target(IDirect3DDevice9 *device, struct event_data *event_data)
 {
     HRESULT hret;
     D3DPRESENT_PARAMETERS present_parameters;
     IDirect3DSwapChain9* swapchain = NULL;
     IDirect3DSurface9* backbuffer = NULL;
-    struct event_data* edata = data;
 
     /* Parameters for new swapchain */
     ZeroMemory(&present_parameters, sizeof(present_parameters));
@@ -284,7 +283,7 @@ static int switch_render_target(IDirect3DDevice9 *device, void *data)
     if (hret != D3D_OK) goto error;
 
     /* Save the current render target */
-    hret = IDirect3DDevice9_GetRenderTarget(device, 0, &edata->original_render_target);
+    hret = IDirect3DDevice9_GetRenderTarget(device, 0, &event_data->original_render_target);
     ok (hret == D3D_OK, "GetRenderTarget returned %#x.\n", hret);
     if (hret != D3D_OK) goto error;
 
@@ -294,7 +293,7 @@ static int switch_render_target(IDirect3DDevice9 *device, void *data)
     if (hret != D3D_OK) goto error;
 
     IUnknown_Release(backbuffer);
-    edata->new_swap_chain = swapchain;
+    event_data->new_swap_chain = swapchain;
     return EVENT_OK;
 
     error:
@@ -303,79 +302,71 @@ static int switch_render_target(IDirect3DDevice9 *device, void *data)
     return EVENT_ERROR;
 }
 
-static int revert_render_target(IDirect3DDevice9 *device, void *data)
+static int revert_render_target(IDirect3DDevice9 *device, struct event_data *event_data)
 {
-    struct event_data *edata = data;
     HRESULT hret;
 
     /* Reset the old render target */
-    hret = IDirect3DDevice9_SetRenderTarget(device, 0, edata->original_render_target);
+    hret = IDirect3DDevice9_SetRenderTarget(device, 0, event_data->original_render_target);
     ok (hret == D3D_OK, "SetRenderTarget returned %#x.\n", hret);
     if (hret != D3D_OK) {
-        IUnknown_Release(edata->original_render_target);
+        IUnknown_Release(event_data->original_render_target);
         return EVENT_ERROR;
     }
 
-    IUnknown_Release(edata->original_render_target);
+    IUnknown_Release(event_data->original_render_target);
+    IUnknown_Release(event_data->new_swap_chain);
 
-    IUnknown_Release(edata->new_swap_chain);
     return EVENT_OK;
 }
 
-static int begin_stateblock(
-    IDirect3DDevice9* device,
-    void* data) {
-
+static int begin_stateblock(IDirect3DDevice9 *device, struct event_data *event_data)
+{
     HRESULT hret;
 
-    data = NULL;
     hret = IDirect3DDevice9_BeginStateBlock(device);
     ok(hret == D3D_OK, "BeginStateBlock returned %#x.\n", hret);
     if (hret != D3D_OK) return EVENT_ERROR;
     return EVENT_OK;
 }
 
-static int end_stateblock(IDirect3DDevice9 *device, void *data)
+static int end_stateblock(IDirect3DDevice9 *device, struct event_data *event_data)
 {
-    struct event_data *edata = data;
     HRESULT hret;
 
-    hret = IDirect3DDevice9_EndStateBlock(device, &edata->stateblock);
+    hret = IDirect3DDevice9_EndStateBlock(device, &event_data->stateblock);
     ok(hret == D3D_OK, "EndStateBlock returned %#x.\n", hret);
     if (hret != D3D_OK) return EVENT_ERROR;
     return EVENT_OK;
 }
 
-static int abort_stateblock(IDirect3DDevice9 *device, void *data)
+static int abort_stateblock(IDirect3DDevice9 *device, struct event_data *event_data)
 {
-    struct event_data *edata = data;
-
-    IUnknown_Release(edata->stateblock);
+    IUnknown_Release(event_data->stateblock);
     return EVENT_OK;
 }
 
-static int apply_stateblock(IDirect3DDevice9 *device, void *data)
+static int apply_stateblock(IDirect3DDevice9 *device, struct event_data *event_data)
 {
-    struct event_data *edata = data;
     HRESULT hret;
 
-    hret = IDirect3DStateBlock9_Apply(edata->stateblock);
+    hret = IDirect3DStateBlock9_Apply(event_data->stateblock);
     ok(hret == D3D_OK, "Apply returned %#x.\n", hret);
     if (hret != D3D_OK) {
-        IUnknown_Release(edata->stateblock);
+        IUnknown_Release(event_data->stateblock);
         return EVENT_ERROR;
     }
 
-    IUnknown_Release(edata->stateblock);
+    IUnknown_Release(event_data->stateblock);
+
     return EVENT_OK;
 }
 
-static int capture_stateblock(IDirect3DDevice9 *device, void *data)
+static int capture_stateblock(IDirect3DDevice9 *device, struct event_data *event_data)
 {
-    struct event_data *edata = data;
     HRESULT hret;
 
-    hret = IDirect3DStateBlock9_Capture(edata->stateblock);
+    hret = IDirect3DStateBlock9_Capture(event_data->stateblock);
     ok(hret == D3D_OK, "Capture returned %#x.\n", hret);
     if (hret != D3D_OK)
         return EVENT_ERROR;
