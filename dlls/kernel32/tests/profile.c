@@ -844,8 +844,9 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok( ret == 0, "expected return size 0, got %d\n", ret );
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     todo_wine
-    ok( GetLastError() == 0xdeadbeef , "expected 0xdeadbeef, got %d\n",
-        GetLastError());
+   ok( GetLastError() == 0xdeadbeef ||
+       GetLastError() == ERROR_FILE_NOT_FOUND /* Win 7 */,
+       "expected 0xdeadbeef or ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
 
 
     DeleteFileA(path);
