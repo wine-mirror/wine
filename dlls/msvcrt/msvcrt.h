@@ -131,7 +131,7 @@ void __cdecl _purecall(void);
 void __cdecl _amsg_exit(int errnum);
 
 extern char **MSVCRT__environ;
-extern MSVCRT_wchar_t **_wenviron;
+extern MSVCRT_wchar_t **MSVCRT__wenviron;
 
 extern char ** msvcrt_SnapshotOfEnvironmentA(char **);
 extern MSVCRT_wchar_t ** msvcrt_SnapshotOfEnvironmentW(MSVCRT_wchar_t **);

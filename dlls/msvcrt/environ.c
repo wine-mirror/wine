@@ -107,8 +107,8 @@ int CDECL _putenv(const char *str)
  /* Update the __p__environ array only when already initialized */
  if (MSVCRT__environ)
    MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(MSVCRT__environ);
- if (_wenviron)
-   _wenviron = msvcrt_SnapshotOfEnvironmentW(_wenviron);
+ if (MSVCRT__wenviron)
+   MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(MSVCRT__wenviron);
    
 finish:
  HeapFree(GetProcessHeap(), 0, name);
@@ -153,8 +153,8 @@ int CDECL _wputenv(const MSVCRT_wchar_t *str)
  /* Update the __p__environ array only when already initialized */
  if (MSVCRT__environ)
    MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(MSVCRT__environ);
- if (_wenviron)
-   _wenviron = msvcrt_SnapshotOfEnvironmentW(_wenviron);
+ if (MSVCRT__wenviron)
+   MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(MSVCRT__wenviron);
 
 finish:
  HeapFree(GetProcessHeap(), 0, name);

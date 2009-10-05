@@ -550,7 +550,7 @@
 @ cdecl _wctime(ptr) MSVCRT__wctime
 @ cdecl _wctime32(ptr) MSVCRT__wctime32
 @ cdecl _wctime64(ptr) MSVCRT__wctime64
-@ extern _wenviron
+@ extern _wenviron MSVCRT__wenviron
 @ varargs _wexecl(wstr wstr)
 @ varargs _wexecle(wstr wstr)
 @ varargs _wexeclp(wstr wstr)

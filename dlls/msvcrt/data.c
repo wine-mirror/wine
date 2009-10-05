@@ -51,7 +51,7 @@ MSVCRT_wchar_t **MSVCRT___wargv = NULL;
 char *MSVCRT__acmdln = NULL;
 MSVCRT_wchar_t *MSVCRT__wcmdln = NULL;
 char **MSVCRT__environ = NULL;
-MSVCRT_wchar_t **_wenviron = NULL;
+MSVCRT_wchar_t **MSVCRT__wenviron = NULL;
 char **MSVCRT___initenv = NULL;
 MSVCRT_wchar_t **MSVCRT___winitenv = NULL;
 int MSVCRT_app_type = 0;
@@ -213,9 +213,9 @@ char*** CDECL __p__environ(void)
  */
 MSVCRT_wchar_t*** CDECL __p__wenviron(void)
 {
-  if (!_wenviron)
-    _wenviron = msvcrt_SnapshotOfEnvironmentW(NULL);
-  return &_wenviron;
+  if (!MSVCRT__wenviron)
+    MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(NULL);
+  return &MSVCRT__wenviron;
 }
 
 /*********************************************************************
@@ -325,7 +325,7 @@ void msvcrt_free_args(void)
   HeapFree(GetProcessHeap(), 0, MSVCRT___initenv);
   HeapFree(GetProcessHeap(), 0, MSVCRT___winitenv);
   HeapFree(GetProcessHeap(), 0, MSVCRT__environ);
-  HeapFree(GetProcessHeap(), 0, _wenviron);
+  HeapFree(GetProcessHeap(), 0, MSVCRT__wenviron);
   HeapFree(GetProcessHeap(), 0, MSVCRT__pgmptr);
   HeapFree(GetProcessHeap(), 0, MSVCRT__wpgmptr);
 }
