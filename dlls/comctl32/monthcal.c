@@ -328,13 +328,33 @@ static BOOL MONTHCAL_ValidateTime(const SYSTEMTIME *time)
     return TRUE;
 }
 
-/* Copies timestamp part only. Milliseconds are intentionaly not copied
-   cause it matches required behaviour for current use of this helper */
+/* Copies timestamp part only.
+ *
+ * PARAMETERS
+ *
+ *  [I] from : source date
+ *  [O] to   : dest date
+ */
 static void MONTHCAL_CopyTime(const SYSTEMTIME *from, SYSTEMTIME *to)
 {
   to->wHour   = from->wHour;
   to->wMinute = from->wMinute;
   to->wSecond = from->wSecond;
+}
+
+/* Copies date part only.
+ *
+ * PARAMETERS
+ *
+ *  [I] from : source date
+ *  [O] to   : dest date
+ */
+static void MONTHCAL_CopyDate(const SYSTEMTIME *from, SYSTEMTIME *to)
+{
+  to->wYear  = from->wYear;
+  to->wMonth = from->wMonth;
+  to->wDay   = from->wDay;
+  to->wDayOfWeek = from->wDayOfWeek;
 }
 
 /* Note:Depending on DST, this may be offset by a day.
@@ -437,8 +457,10 @@ static inline void MONTHCAL_CalcPosFromDay(const MONTHCAL_INFO *infoPtr,
    - set focused date to given value;
    - reset to zero value if NULL passed;
    - invalidate previous and new day rectangle only if needed.
+
+   Returns TRUE if focused day changed, FALSE otherwise.
 */
-static void MONTHCAL_SetDayFocus(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *st)
+static BOOL MONTHCAL_SetDayFocus(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *st)
 {
   RECT r;
 
@@ -446,7 +468,7 @@ static void MONTHCAL_SetDayFocus(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *st)
   {
     /* there's nothing to do if it's the same date,
        mouse move within same date rectangle case */
-    if(MONTHCAL_IsDateEqual(&infoPtr->focusedSel, st)) return;
+    if(MONTHCAL_IsDateEqual(&infoPtr->focusedSel, st)) return FALSE;
 
     /* invalidate old focused day */
     MONTHCAL_CalcPosFromDay(infoPtr, infoPtr->focusedSel.wDay,
@@ -468,6 +490,8 @@ static void MONTHCAL_SetDayFocus(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *st)
 
   /* on set invalidates new day, on reset clears previous focused day */
   InvalidateRect(infoPtr->hwndSelf, &r, FALSE);
+
+  return TRUE;
 }
 
 /* day is the day in the month(1 == 1st of the month) */
@@ -1719,7 +1743,6 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   }
   case MCHT_TODAYLINK:
   {
-    infoPtr->firstSel = infoPtr->todaysDate;
     infoPtr->curSel = infoPtr->todaysDate;
     infoPtr->minSel = infoPtr->todaysDate;
     infoPtr->maxSel = infoPtr->todaysDate;
@@ -1733,7 +1756,7 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   case MCHT_CALENDARDATEPREV:
   case MCHT_CALENDARDATE:
   {
-    infoPtr->firstSel = ht.st;
+    MONTHCAL_CopyDate(&ht.st, &infoPtr->firstSel);
 
     if(infoPtr->dwStyle & MCS_MULTISELECT)
     {
@@ -1882,49 +1905,39 @@ MONTHCAL_MouseMove(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
   st_ht = ht.st;
   old_focused = infoPtr->focusedSel;
-  MONTHCAL_SetDayFocus(infoPtr, &ht.st);
+
+  /* if pointer is over focused day still there's nothing to do */
+  if(!MONTHCAL_SetDayFocus(infoPtr, &ht.st)) return 0;
 
   MONTHCAL_CalcPosFromDay(infoPtr, ht.st.wDay, ht.st.wMonth, &r);
 
-  if(infoPtr->dwStyle & MCS_MULTISELECT)  {
+  if(infoPtr->dwStyle & MCS_MULTISELECT) {
     SYSTEMTIME st[2];
-    int i;
-    LONG cmp;
 
     MONTHCAL_GetSelRange(infoPtr, st);
-    i = MONTHCAL_IsDateEqual(&infoPtr->firstSel, &st[0]) ? 1 : 0;
 
-    cmp = MONTHCAL_CompareSystemTime(&st_ht, &infoPtr->firstSel);
-
-    if(MONTHCAL_IsDateEqual(&infoPtr->firstSel, &st[1])) {
-      /* If we're still at the first selected date and range is empty, return.
-         If range isn't empty we should change range to a single firstSel */
-      if(MONTHCAL_IsDateEqual(&infoPtr->firstSel, &st_ht) &&
-         MONTHCAL_IsDateEqual(&st[0], &st[1])) goto done;
-
-      /* new selected date is earlier */
-      if(cmp == -1) i = 0;
-    }
+    /* If we're still at the first selected date and range is empty, return.
+       If range isn't empty we should change range to a single firstSel */
+    if(MONTHCAL_IsDateEqual(&infoPtr->firstSel, &st_ht) &&
+       MONTHCAL_IsDateEqual(&st[0], &st[1])) goto done;
 
     MONTHCAL_IsSelRangeValid(infoPtr, &st_ht, &infoPtr->firstSel, &st_ht);
 
-    if(!MONTHCAL_IsDateEqual(&st[i], &st_ht)) {
-      st[i] = st_ht;
+    st[0] = infoPtr->firstSel;
+    /* we should overwrite timestamp here */
+    MONTHCAL_CopyDate(&st_ht, &st[1]);
 
-      MONTHCAL_CopyTime(&infoPtr->todaysDate, &st[0]);
-      MONTHCAL_CopyTime(&infoPtr->todaysDate, &st[1]);
-      /* bounds will be swapped here if needed */
-      MONTHCAL_SetSelRange(infoPtr, st);
-    }
+    /* bounds will be swapped here if needed */
+    MONTHCAL_SetSelRange(infoPtr, st);
+
+    return 0;
   }
 
 done:
 
-  /* only redraw if the currently selected day changed */
-  /* FIXME: this should specify a rectangle containing only the days that changed */
-  /* using InvalidateRect */
-  if(!MONTHCAL_IsDateEqual(&old_focused, &infoPtr->focusedSel))
-    InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+  /* FIXME: this should specify a rectangle containing only the days that changed
+     using InvalidateRect */
+  InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
 
   return 0;
 }
