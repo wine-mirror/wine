@@ -304,9 +304,7 @@ static int ALSA_ComputeCaps(snd_ctl_t *ctl, snd_pcm_t *pcm,
     ** Can we do WAVECAPS_PITCH, WAVECAPS_SYNC, or WAVECAPS_PLAYBACKRATE? */
     *supports |= WAVECAPS_SAMPLEACCURATE;
 
-    /* FIXME: NONITERLEAVED and COMPLEX are not supported right now */
-    if ( snd_pcm_access_mask_test( acmask, SND_PCM_ACCESS_MMAP_INTERLEAVED ) )
-        *supports |= WAVECAPS_DIRECTSOUND;
+    *supports |= WAVECAPS_DIRECTSOUND;
 
     /* check for volume control support */
     if (ctl) {
