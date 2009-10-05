@@ -203,6 +203,13 @@ static void test_StringFromGUID2(void)
 {
   WCHAR str[50];
   int len;
+
+  /* invalid pointer */
+  SetLastError(0xdeadbeef);
+  len = StringFromGUID2(NULL,str,50);
+  ok(len == 0, "len: %d (expected 0)\n", len);
+  ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %x\n", GetLastError());
+
   /* Test corner cases for buffer size */
   len = StringFromGUID2(&CLSID_StdFont,str,50);
   ok(len == 39, "len: %d (expected 39)\n", len);

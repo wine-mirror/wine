@@ -1621,7 +1621,7 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax)
                                      '%','0','4','X','-','%','0','2','X','%','0','2','X','-',
                                      '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X',
                                      '%','0','2','X','%','0','2','X','}',0 };
-    if (cmax < CHARS_IN_GUID) return 0;
+    if (!id || cmax < CHARS_IN_GUID) return 0;
     sprintfW( str, formatW, id->Data1, id->Data2, id->Data3,
               id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
               id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
