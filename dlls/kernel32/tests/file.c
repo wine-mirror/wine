@@ -77,9 +77,9 @@ static void test__hread( void )
 {
     HFILE filehandle;
     char buffer[10000];
-    long bytes_read;
-    long bytes_wanted;
-    long i;
+    LONG bytes_read;
+    LONG bytes_wanted;
+    LONG i;
     BOOL ret;
 
     SetFileAttributesA(filename,FILE_ATTRIBUTE_NORMAL); /* be sure to remove stale files */
@@ -124,10 +124,10 @@ static void test__hwrite( void )
 {
     HFILE filehandle;
     char buffer[10000];
-    long bytes_read;
-    long bytes_written;
-    long blocks;
-    long i;
+    LONG bytes_read;
+    LONG bytes_written;
+    ULONG blocks;
+    LONG i;
     char *contents;
     HLOCAL memory_object;
     char checksum[1];
@@ -159,7 +159,7 @@ static void test__hwrite( void )
     srand( (unsigned)time( NULL ) );
     for (blocks = 0; blocks < 100; blocks++)
     {
-        for (i = 0; i < (long)sizeof( buffer ); i++)
+        for (i = 0; i < (LONG)sizeof( buffer ); i++)
         {
             buffer[i] = rand(  );
             checksum[0] = checksum[0] + buffer[i];
@@ -355,7 +355,7 @@ static void test__llseek( void )
     INT i;
     HFILE filehandle;
     char buffer[1];
-    long bytes_read;
+    LONG bytes_read;
     BOOL ret;
 
     filehandle = _lcreat( filename, 0 );
@@ -432,7 +432,7 @@ static void test__lread( void )
 {
     HFILE filehandle;
     char buffer[10000];
-    long bytes_read;
+    UINT bytes_read;
     UINT bytes_wanted;
     UINT i;
     BOOL ret;
@@ -477,10 +477,10 @@ static void test__lwrite( void )
 {
     HFILE filehandle;
     char buffer[10000];
-    long bytes_read;
-    long bytes_written;
-    long blocks;
-    long i;
+    UINT bytes_read;
+    UINT bytes_written;
+    UINT blocks;
+    INT i;
     char *contents;
     HLOCAL memory_object;
     char checksum[1];
@@ -512,7 +512,7 @@ static void test__lwrite( void )
     srand( (unsigned)time( NULL ) );
     for (blocks = 0; blocks < 100; blocks++)
     {
-        for (i = 0; i < (long)sizeof( buffer ); i++)
+        for (i = 0; i < (INT)sizeof( buffer ); i++)
         {
             buffer[i] = rand(  );
             checksum[0] = checksum[0] + buffer[i];
