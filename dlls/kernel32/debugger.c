@@ -240,6 +240,10 @@ BOOL WINAPI DebugActiveProcessStop( DWORD pid )
  */
 void WINAPI OutputDebugStringA( LPCSTR str )
 {
+    static HANDLE DBWinMutex = NULL;
+    static BOOL mutex_inited = FALSE;
+
+    /* send string to attached debugger */
     SERVER_START_REQ( output_debug_string )
     {
         req->string  = wine_server_client_ptr( str );
@@ -247,7 +251,82 @@ void WINAPI OutputDebugStringA( LPCSTR str )
         wine_server_call( req );
     }
     SERVER_END_REQ;
+
     WARN("%s\n", str);
+
+    /* send string to a system-wide monitor */
+    /* FIXME should only send to monitor if no debuggers are attached */
+
+    if (!mutex_inited)
+    {
+        /* first call to OutputDebugString, initialize mutex handle */
+        static const WCHAR mutexname[] = {'D','B','W','i','n','M','u','t','e','x',0};
+        HANDLE mutex = CreateMutexExW( NULL, mutexname, 0, SYNCHRONIZE );
+        if (mutex)
+        {
+            if (InterlockedCompareExchangePointer( &DBWinMutex, mutex, 0 ) != 0)
+            {
+                /* someone beat us here... */
+                CloseHandle( mutex );
+            }
+        }
+        mutex_inited = TRUE;
+    }
+
+    if (DBWinMutex)
+    {
+        static const WCHAR shmname[] = {'D','B','W','I','N','_','B','U','F','F','E','R',0};
+        static const WCHAR eventbuffername[] = {'D','B','W','I','N','_','B','U','F','F','E','R','_','R','E','A','D','Y',0};
+        static const WCHAR eventdataname[] = {'D','B','W','I','N','_','D','A','T','A','_','R','E','A','D','Y',0};
+        HANDLE mapping;
+
+        mapping = OpenFileMappingW( FILE_MAP_WRITE, FALSE, shmname );
+        if (mapping)
+        {
+            LPVOID buffer;
+            HANDLE eventbuffer, eventdata;
+
+            buffer = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 0 );
+            eventbuffer = OpenEventW( SYNCHRONIZE, FALSE, eventbuffername );
+            eventdata = OpenEventW( EVENT_MODIFY_STATE, FALSE, eventdataname );
+
+            if (buffer && eventbuffer && eventdata)
+            {
+                /* monitor is present, synchronize with other OutputDebugString invokations */
+                WaitForSingleObject( DBWinMutex, INFINITE );
+
+                /* acquire control over the buffer */
+                if (WaitForSingleObject( eventbuffer, 10000 ) == WAIT_OBJECT_0)
+                {
+                    int str_len;
+                    struct _mon_buffer_t {
+                        DWORD pid;
+                        char buffer[1];
+                    } *mon_buffer = (struct _mon_buffer_t*) buffer;
+
+                    str_len = strlen( str );
+                    if (str_len > (4096 - sizeof(DWORD) - 1))
+                        str_len = 4096 - sizeof(DWORD) - 1;
+
+                    mon_buffer->pid = GetCurrentProcessId();
+                    memcpy( mon_buffer->buffer, str, str_len );
+                    mon_buffer->buffer[str_len] = 0;
+
+                    /* signal data ready */
+                    SetEvent( eventdata );
+                }
+                ReleaseMutex( DBWinMutex );
+            }
+
+            if (buffer)
+                UnmapViewOfFile( buffer );
+            if (eventbuffer)
+                CloseHandle( eventbuffer );
+            if (eventdata)
+                CloseHandle( eventdata );
+            CloseHandle( mapping );
+        }
+    }
 }
 
 
