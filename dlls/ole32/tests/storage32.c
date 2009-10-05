@@ -36,6 +36,14 @@ DEFINE_GUID( test_stg_cls, 0x88888888, 0x0425, 0x0000, 0,0,0,0,0,0,0,0);
 static CHAR filenameA[MAX_PATH];
 static WCHAR filename[MAX_PATH];
 
+static const WCHAR file1_name[] = {'c','o','p','y','t','e','s','t','A',0};
+static const WCHAR file2_name[] = {'c','o','p','y','t','e','s','t','B',0};
+static const WCHAR stgA_name[] = {'S','t','o','r','a','g','e','A',0};
+static const WCHAR stgB_name[] = {'S','t','o','r','a','g','e','B',0};
+static const WCHAR strmA_name[] = {'S','t','r','e','a','m','A',0};
+static const WCHAR strmB_name[] = {'S','t','r','e','a','m','B',0};
+static const WCHAR strmC_name[] = {'S','t','r','e','a','m','C',0};
+
 static void test_hglobal_storage_stat(void)
 {
     ILockBytes *ilb = NULL;
@@ -1820,6 +1828,176 @@ static void test_references(void)
     }
 }
 
+/* dest
+ *  |-StorageA
+ *  |  `StreamA: "StreamA"
+ *  |-StorageB
+ *  |  `StreamB: "StreamB"
+ *  `StreamC: "StreamC"
+ */
+static HRESULT create_test_file(IStorage *dest)
+{
+    IStorage *stgA = NULL, *stgB = NULL;
+    IStream *strmA = NULL, *strmB = NULL, *strmC = NULL;
+    const ULONG strmA_name_size = lstrlenW(strmA_name) * sizeof(WCHAR);
+    const ULONG strmB_name_size = lstrlenW(strmB_name) * sizeof(WCHAR);
+    const ULONG strmC_name_size = lstrlenW(strmC_name) * sizeof(WCHAR);
+    ULONG bytes;
+    HRESULT hr;
+
+    hr = IStorage_CreateStorage(dest, stgA_name, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stgA);
+    ok(hr == S_OK, "IStorage_CreateStorage failed: 0x%08x\n", hr);
+    if(FAILED(hr))
+        goto cleanup;
+
+    hr = IStorage_CreateStream(stgA, strmA_name, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &strmA);
+    ok(hr == S_OK, "IStorage_CreateStream failed: 0x%08x\n", hr);
+    if(FAILED(hr))
+        goto cleanup;
+
+    hr = IStream_Write(strmA, strmA_name, strmA_name_size, &bytes);
+    ok(hr == S_OK && bytes == strmA_name_size, "IStream_Write failed: 0x%08x, %d of %d bytes written\n", hr, bytes, strmA_name_size);
+
+    hr = IStorage_CreateStorage(dest, stgB_name, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stgB);
+    ok(hr == S_OK, "IStorage_CreateStorage failed: 0x%08x\n", hr);
+    if(FAILED(hr))
+        goto cleanup;
+
+    hr = IStorage_CreateStream(stgB, strmB_name, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &strmB);
+    ok(hr == S_OK, "IStorage_CreateStream failed: 0x%08x\n", hr);
+    if(FAILED(hr))
+        goto cleanup;
+
+    hr = IStream_Write(strmB, strmB_name, strmB_name_size, &bytes);
+    ok(hr == S_OK && bytes == strmB_name_size, "IStream_Write failed: 0x%08x, %d of %d bytes written\n", hr, bytes, strmB_name_size);
+
+    hr = IStorage_CreateStream(dest, strmC_name, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &strmC);
+    ok(hr == S_OK, "IStorage_CreateStream failed: 0x%08x\n", hr);
+    if(FAILED(hr))
+        goto cleanup;
+
+    hr = IStream_Write(strmC, strmC_name, strmC_name_size, &bytes);
+    ok(hr == S_OK && bytes == strmC_name_size, "IStream_Write failed: 0x%08x, %d of %d bytes written\n", hr, bytes, strmC_name_size);
+
+cleanup:
+    if(strmC)
+        IStream_Release(strmC);
+    if(strmB)
+        IStream_Release(strmB);
+    if(stgB)
+        IStorage_Release(stgB);
+    if(strmA)
+        IStream_Release(strmA);
+    if(stgA)
+        IStorage_Release(stgA);
+
+    return hr;
+}
+
+static void test_copyto(void)
+{
+    IStorage *file1 = NULL, *file2 = NULL, *stg_tmp;
+    IStream *strm_tmp;
+    WCHAR buf[64];
+    HRESULT hr;
+
+    /* create & populate file1 */
+    hr = StgCreateDocfile(file1_name, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &file1);
+    ok(hr == S_OK, "StgCreateDocfile failed: 0x%08x\n", hr);
+    if(FAILED(hr))
+        goto cleanup;
+
+    hr = create_test_file(file1);
+    if(FAILED(hr))
+        goto cleanup;
+
+    /* create file2 */
+    hr = StgCreateDocfile(file2_name, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &file2);
+    ok(hr == S_OK, "StgCreateDocfile failed: 0x%08x\n", hr);
+    if(FAILED(hr))
+        goto cleanup;
+
+    /* copy file1 into file2 */
+    hr = IStorage_CopyTo(file1, 0, NULL, NULL, NULL);
+    ok(hr == STG_E_INVALIDPOINTER, "CopyTo should give STG_E_INVALIDPONITER, gave: 0x%08x\n", hr);
+
+    hr = IStorage_CopyTo(file1, 0, NULL, NULL, file2);
+    ok(hr == S_OK, "CopyTo failed: 0x%08x\n", hr);
+    if(FAILED(hr))
+        goto cleanup;
+
+    /* verify that all of file1 was copied */
+    hr = IStorage_OpenStorage(file2, stgA_name, NULL,
+            STGM_READWRITE | STGM_SHARE_EXCLUSIVE, NULL, 0, &stg_tmp);
+    ok(hr == S_OK, "OpenStorage failed: 0x%08x\n", hr);
+
+    if(SUCCEEDED(hr)){
+        hr = IStorage_OpenStream(stg_tmp, strmA_name, NULL,
+                STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &strm_tmp);
+        ok(hr == S_OK, "OpenStream failed: 0x%08x\n", hr);
+
+        if(SUCCEEDED(hr)){
+            memset(buf, 0, sizeof(buf));
+            hr = IStream_Read(strm_tmp, buf, sizeof(buf), NULL);
+            ok(hr == S_OK, "Read failed: 0x%08x\n", hr);
+            if(SUCCEEDED(hr))
+                ok(lstrcmpW(buf, strmA_name) == 0,
+                        "Expected %s to be read, got %s\n", wine_dbgstr_w(strmA_name), wine_dbgstr_w(buf));
+
+            IStream_Release(strm_tmp);
+        }
+
+        IStorage_Release(stg_tmp);
+    }
+
+    hr = IStorage_OpenStorage(file2, stgB_name, NULL,
+            STGM_READWRITE | STGM_SHARE_EXCLUSIVE, NULL, 0, &stg_tmp);
+    ok(hr == S_OK, "OpenStorage failed: 0x%08x\n", hr);
+
+    if(SUCCEEDED(hr)){
+        hr = IStorage_OpenStream(stg_tmp, strmB_name, NULL,
+                STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &strm_tmp);
+        ok(hr == S_OK, "OpenStream failed: 0x%08x\n", hr);
+
+        if(SUCCEEDED(hr)){
+            memset(buf, 0, sizeof(buf));
+            hr = IStream_Read(strm_tmp, buf, sizeof(buf), NULL);
+            ok(hr == S_OK, "Read failed: 0x%08x\n", hr);
+            if(SUCCEEDED(hr))
+                ok(lstrcmpW(buf, strmB_name) == 0,
+                        "Expected %s to be read, got %s\n", wine_dbgstr_w(strmB_name), wine_dbgstr_w(buf));
+
+            IStream_Release(strm_tmp);
+        }
+
+        IStorage_Release(stg_tmp);
+    }
+
+    hr = IStorage_OpenStream(file2, strmC_name, NULL,
+            STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &strm_tmp);
+    ok(hr == S_OK, "OpenStream failed: 0x%08x\n", hr);
+
+    if(SUCCEEDED(hr)){
+        memset(buf, 0, sizeof(buf));
+        hr = IStream_Read(strm_tmp, buf, sizeof(buf), NULL);
+        ok(hr == S_OK, "Read failed: 0x%08x\n", hr);
+        if(SUCCEEDED(hr))
+            ok(lstrcmpW(buf, strmC_name) == 0,
+                    "Expected %s to be read, got %s\n", wine_dbgstr_w(strmC_name), wine_dbgstr_w(buf));
+
+        IStream_Release(strm_tmp);
+    }
+
+cleanup:
+    if(file1)
+        IStorage_Release(file1);
+    if(file2)
+        IStorage_Release(file2);
+
+    DeleteFileW(file1_name);
+    DeleteFileW(file2_name);
+}
+
 START_TEST(storage32)
 {
     CHAR temp[MAX_PATH];
@@ -1850,4 +2028,5 @@ START_TEST(storage32)
     test_simple();
     test_fmtusertypestg();
     test_references();
+    test_copyto();
 }
