@@ -485,7 +485,7 @@ static BOOL MONTHCAL_SetDayFocus(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *st)
   MONTHCAL_CalcPosFromDay(infoPtr, infoPtr->focusedSel.wDay,
                                    infoPtr->focusedSel.wMonth, &r);
 
-  if(!st & MONTHCAL_ValidateDate(&infoPtr->focusedSel))
+  if(!st && MONTHCAL_ValidateDate(&infoPtr->focusedSel))
     infoPtr->focusedSel = st_null;
 
   /* on set invalidates new day, on reset clears previous focused day */
