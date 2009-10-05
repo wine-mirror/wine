@@ -828,10 +828,10 @@ static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi,
                     hXorBits = 0;
                 }
             }
-
-            HeapFree( GetProcessHeap(), 0, pSrcInfo );
-            HeapFree( GetProcessHeap(), 0, pDestInfo );
         }
+
+        HeapFree( GetProcessHeap(), 0, pSrcInfo );
+        HeapFree( GetProcessHeap(), 0, pDestInfo );
     }
 
     if( !hXorBits || !hAndBits )
