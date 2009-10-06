@@ -1,11 +1,12 @@
-/* Month calendar control
-
+/*
+ * Month calendar control
  *
  * Copyright 1998, 1999 Eric Kohl (ekohl@abo.rhein-zeitung.de)
  * Copyright 1999 Alex Priem (alexp@sci.kun.nl)
  * Copyright 1999 Chris Morgan <cmorgan@wpi.edu> and
  *		  James Abbatiello <abbeyj@wpi.edu>
  * Copyright 2000 Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+ * Copyright 2009 Nikolay Sivov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1788,16 +1789,19 @@ static LRESULT
 MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 {
   NMHDR nmhdr;
-  BOOL redraw = FALSE;
   MCHITTESTINFO ht;
   DWORD hit;
 
   TRACE("\n");
 
   if(infoPtr->status & (MC_PREVPRESSED | MC_NEXTPRESSED)) {
+    RECT *r;
+
     KillTimer(infoPtr->hwndSelf, MC_PREVNEXTMONTHTIMER);
+    r = infoPtr->status & MC_PREVPRESSED ? &infoPtr->titlebtnprev : &infoPtr->titlebtnnext;
     infoPtr->status &= ~(MC_PREVPRESSED | MC_NEXTPRESSED);
-    redraw = TRUE;
+
+    InvalidateRect(infoPtr->hwndSelf, r, FALSE);
   }
 
   ReleaseCapture();
@@ -1818,9 +1822,7 @@ MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   infoPtr->status = MC_SEL_LBUTUP;
   MONTHCAL_SetDayFocus(infoPtr, NULL);
 
-  if((hit == MCHT_CALENDARDATENEXT) ||
-     (hit == MCHT_CALENDARDATEPREV) ||
-     (hit == MCHT_CALENDARDATE))
+  if((hit & MCHT_CALENDARDATE) == MCHT_CALENDARDATE)
   {
     SYSTEMTIME sel = infoPtr->curSel;
 
@@ -1839,13 +1841,7 @@ MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
         MONTHCAL_NotifySelectionChange(infoPtr);
 
     MONTHCAL_NotifySelect(infoPtr);
-
-    return 0;
   }
-
-  /* redraw if necessary */
-  if(redraw)
-    InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
 
   return 0;
 }
