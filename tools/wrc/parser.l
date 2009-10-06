@@ -106,7 +106,9 @@ cident	[a-zA-Z_][0-9a-zA-Z_]*
 #include <errno.h>
 #include <limits.h>
 
-#ifndef HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#else
 #define YY_NO_UNISTD_H
 #endif
 
