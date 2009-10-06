@@ -218,7 +218,9 @@ static void test_stillimage_aggregation(void)
         if (SUCCEEDED(hr))
             IStillImage_Release(pStiW);
         hr = CoCreateInstance(&CLSID_Sti, &aggregator, CLSCTX_ALL, &IID_IUnknown, (void**)&pUnknown);
-        ok(FAILED(hr), "CoCreateInstance unexpectedly succeeded when querying for IUnknown during aggregation\n");
+        ok(SUCCEEDED(hr) ||
+            broken(hr == CLASS_E_NOAGGREGATION), /* Win 2000 */
+                "CoCreateInstance unexpectedly failed when querying for IUnknown during aggregation, hr = 0x%x\n", hr);
         if (SUCCEEDED(hr))
             IUnknown_Release(pUnknown);
     }

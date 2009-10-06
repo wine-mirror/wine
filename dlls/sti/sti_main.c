@@ -97,9 +97,6 @@ static HRESULT WINAPI sti_cf_CreateInstance( IClassFactory *iface, LPUNKNOWN pOu
 
     *ppobj = NULL;
 
-    if (pOuter)
-        return CLASS_E_NOAGGREGATION;
-
     r = This->pfnCreateInstance( riid, pOuter, (LPVOID *)&punk );
     if (FAILED(r))
         return r;
