@@ -158,7 +158,8 @@ struct arb_vs_compile_args
         struct
         {
             WORD                    bools;
-            char                    clip_control[2];
+            char                    clip_texcoord;
+            char                    clipplane_mask;
         }                           boolclip;
         DWORD                       boolclip_compare;
     };
@@ -2926,14 +2927,14 @@ static void vshader_add_footer(IWineD3DVertexShaderImpl *This, struct wined3d_sh
             shader_addline(buffer, "DP4 result.clip[%u].x, TMP_OUT, state.clip[%u].plane;\n", i, i);
         }
     }
-    else if(args->boolclip.clip_control[0])
+    else if(args->boolclip.clip_texcoord)
     {
         unsigned int cur_clip = 0;
         char component[4] = {'x', 'y', 'z', 'w'};
 
         for(i = 0; i < GL_LIMITS(clipplanes); i++)
         {
-            if(args->boolclip.clip_control[1] & (1 << i))
+            if(args->boolclip.clipplane_mask & (1 << i))
             {
                 shader_addline(buffer, "DP4 TA.%c, TMP_OUT, state.clip[%u].plane;\n",
                                component[cur_clip++], i);
@@ -2955,7 +2956,7 @@ static void vshader_add_footer(IWineD3DVertexShaderImpl *This, struct wined3d_sh
                 break;
         }
         shader_addline(buffer, "MOV result.texcoord[%u], TA;\n",
-                       args->boolclip.clip_control[0] - 1);
+                       args->boolclip.clip_texcoord - 1);
     }
 
     /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
@@ -4192,25 +4193,25 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
         struct arb_pshader_private *shader_priv = ps->baseShader.backend_data;
         args->ps_signature = shader_priv->input_signature_idx;
 
-        args->boolclip.clip_control[0] = shader_priv->clipplane_emulation + 1;
+        args->boolclip.clip_texcoord = shader_priv->clipplane_emulation + 1;
     }
     else
     {
         args->ps_signature = ~0;
         if(!dev->vs_clipping)
         {
-            args->boolclip.clip_control[0] = ffp_clip_emul(stateblock) ? GL_LIMITS(texture_stages) : 0;
+            args->boolclip.clip_texcoord = ffp_clip_emul(stateblock) ? GL_LIMITS(texture_stages) : 0;
         }
-        /* Otherwise: Setting boolclip_compare set clip_control[0] to 0 */
+        /* Otherwise: Setting boolclip_compare set clip_texcoord to 0 */
     }
 
-    if(args->boolclip.clip_control[0])
+    if(args->boolclip.clip_texcoord)
     {
         if(stateblock->renderState[WINED3DRS_CLIPPING])
         {
-            args->boolclip.clip_control[1] = stateblock->renderState[WINED3DRS_CLIPPLANEENABLE];
+            args->boolclip.clipplane_mask = stateblock->renderState[WINED3DRS_CLIPPLANEENABLE];
         }
-        /* clip_control[1] was set to 0 by setting boolclip_compare to 0 */
+        /* clipplane_mask was set to 0 by setting boolclip_compare to 0 */
     }
 
     /* This forces all local boolean constants to 1 to make them stateblock independent */
