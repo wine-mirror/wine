@@ -149,7 +149,8 @@ struct SLApiDB
 SEGPTR CALL32_CBClient_RetAddr = 0;
 SEGPTR CALL32_CBClientEx_RetAddr = 0;
 
-extern void __wine_call_from_16_thunk();
+extern int call_entry_point( void *func, int nb_args, const DWORD *args );
+extern void __wine_call_from_16_thunk(void);
 
 /* Push a DWORD on the 32-bit stack */
 static inline void stack32_push( CONTEXT86 *context, DWORD val )
@@ -1036,39 +1037,7 @@ DWORD WINAPIV SSCall(
           DPRINTF("0x%08x,",args[i]);
       DPRINTF("])\n");
     }
-    switch (nr) {
-    case 0:	ret = fun();
-		break;
-    case 4:	ret = fun(args[0]);
-		break;
-    case 8:	ret = fun(args[0],args[1]);
-		break;
-    case 12:	ret = fun(args[0],args[1],args[2]);
-		break;
-    case 16:	ret = fun(args[0],args[1],args[2],args[3]);
-		break;
-    case 20:	ret = fun(args[0],args[1],args[2],args[3],args[4]);
-		break;
-    case 24:	ret = fun(args[0],args[1],args[2],args[3],args[4],args[5]);
-		break;
-    case 28:	ret = fun(args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
-		break;
-    case 32:	ret = fun(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7]);
-		break;
-    case 36:	ret = fun(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8]);
-		break;
-    case 40:	ret = fun(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9]);
-		break;
-    case 44:	ret = fun(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10]);
-		break;
-    case 48:	ret = fun(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11]);
-		break;
-    default:
-	WARN("Unsupported nr of arguments, %d\n",nr);
-	ret = 0;
-	break;
-
-    }
+    ret = call_entry_point( fun, nr / sizeof(DWORD), args );
     TRACE(" returning %d ...\n",ret);
     return ret;
 }
@@ -1081,9 +1050,7 @@ void WINAPI __regs_W32S_BackTo32( CONTEXT86 *context )
     LPDWORD stack = (LPDWORD)context->Esp;
     FARPROC proc = (FARPROC)context->Eip;
 
-    context->Eax = proc( stack[1], stack[2], stack[3], stack[4], stack[5],
-                               stack[6], stack[7], stack[8], stack[9], stack[10] );
-
+    context->Eax = call_entry_point( proc, 10, stack + 1 );
     context->Eip = stack32_pop(context);
 }
 DEFINE_REGS_ENTRYPOINT( W32S_BackTo32, 0 )
@@ -2378,54 +2345,8 @@ static DWORD WOW_CallProc32W16( FARPROC proc32, DWORD nrofargs, DWORD *args )
     DWORD mutex_count;
 
     ReleaseThunkLock( &mutex_count );
-
-    /*
-     * FIXME:  If ( nrofargs & CPEX_DEST_CDECL ) != 0, we should call a
-     *         32-bit CDECL routine ...
-     */
-
     if (!proc32) ret = 0;
-    else switch (nrofargs)
-    {
-    case 0: ret = proc32();
-            break;
-    case 1: ret = proc32(args[0]);
-            break;
-    case 2: ret = proc32(args[0],args[1]);
-            break;
-    case 3: ret = proc32(args[0],args[1],args[2]);
-            break;
-    case 4: ret = proc32(args[0],args[1],args[2],args[3]);
-            break;
-    case 5: ret = proc32(args[0],args[1],args[2],args[3],args[4]);
-            break;
-    case 6: ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5]);
-            break;
-    case 7: ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
-            break;
-    case 8: ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7]);
-            break;
-    case 9: ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8]);
-            break;
-    case 10:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9]);
-            break;
-    case 11:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10]);
-            break;
-    case 12:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11]);
-            break;
-    case 13:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12]);
-            break;
-    case 14:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13]);
-            break;
-    case 15:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14]);
-            break;
-    default:
-            /* FIXME: should go up to 32  arguments */
-            ERR("Unsupported number of arguments %d, please report.\n",nrofargs);
-            ret = 0;
-            break;
-    }
-
+    else ret = call_entry_point( proc32, nrofargs & ~CPEX_DEST_CDECL, args );
     RestoreThunkLock( mutex_count );
 
     TRACE("returns %08x\n",ret);
