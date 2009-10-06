@@ -52,6 +52,7 @@ static const WCHAR propertyIsEnumerableW[] =
 static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','e','O','f',0};
 static const WCHAR valueOfW[] = {'v','a','l','u','e','O','f',0};
 static const WCHAR toUTCStringW[] = {'t','o','U','T','C','S','t','r','i','n','g',0};
+static const WCHAR toGMTStringW[] = {'t','o','G','M','T','S','t','r','i','n','g',0};
 static const WCHAR toDateStringW[] = {'t','o','D','a','t','e','S','t','r','i','n','g',0};
 static const WCHAR toTimeStringW[] = {'t','o','T','i','m','e','S','t','r','i','n','g',0};
 static const WCHAR toLocaleDateStringW[] = {'t','o','L','o','c','a','l','e','D','a','t','e','S','t','r','i','n','g',0};
@@ -778,6 +779,13 @@ static HRESULT Date_toUTCString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
         V_BSTR(retv) = date_str;
     }
     return S_OK;
+}
+
+static HRESULT Date_toGMTString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 /* ECMA-262 3rd Edition    15.9.5.3 */
@@ -2062,6 +2070,7 @@ static const builtin_prop_t Date_props[] = {
     {setUTCMonthW,           Date_setUTCMonth,           PROPF_METHOD|2},
     {setUTCSecondsW,         Date_setUTCSeconds,         PROPF_METHOD|2},
     {toDateStringW,          Date_toDateString,          PROPF_METHOD},
+    {toGMTStringW,           Date_toGMTString,           PROPF_METHOD},
     {toLocaleDateStringW,    Date_toLocaleDateString,    PROPF_METHOD},
     {toLocaleStringW,        Date_toLocaleString,        PROPF_METHOD},
     {toLocaleTimeStringW,    Date_toLocaleTimeString,    PROPF_METHOD},

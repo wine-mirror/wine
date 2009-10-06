@@ -69,6 +69,9 @@ static const WCHAR ScriptEngineBuildVersionW[] =
 static const WCHAR CollectGarbageW[] = {'C','o','l','l','e','c','t','G','a','r','b','a','g','e',0};
 static const WCHAR MathW[] = {'M','a','t','h',0};
 static const WCHAR encodeURIW[] = {'e','n','c','o','d','e','U','R','I',0};
+static const WCHAR decodeURIW[] = {'d','e','c','o','d','e','U','R','I',0};
+static const WCHAR encodeURIComponentW[] = {'e','n','c','o','d','e','U','R','I','C','o','m','p','o','n','e','n','t',0};
+static const WCHAR decodeURIComponentW[] = {'d','e','c','o','d','e','U','R','I','C','o','m','p','o','n','e','n','t',0};
 
 static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
 
@@ -834,6 +837,27 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     return S_OK;
 }
 
+static HRESULT JSGlobal_decodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT JSGlobal_decodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static const builtin_prop_t JSGlobal_props[] = {
     {ActiveXObjectW,             JSGlobal_ActiveXObject,             PROPF_CONSTR},
     {ArrayW,                     JSGlobal_Array,                     PROPF_CONSTR},
@@ -862,7 +886,10 @@ static const builtin_prop_t JSGlobal_props[] = {
     {TypeErrorW,                 JSGlobal_TypeError,                 PROPF_CONSTR},
     {URIErrorW,                  JSGlobal_URIError,                  PROPF_CONSTR},
     {VBArrayW,                   JSGlobal_VBArray,                   PROPF_METHOD},
+    {decodeURIW,                 JSGlobal_decodeURI,                 PROPF_METHOD},
+    {decodeURIComponentW,        JSGlobal_decodeURIComponent,        PROPF_METHOD},
     {encodeURIW,                 JSGlobal_encodeURI,                 PROPF_METHOD},
+    {encodeURIComponentW,        JSGlobal_encodeURIComponent,        PROPF_METHOD},
     {escapeW,                    JSGlobal_escape,                    PROPF_METHOD},
     {evalW,                      JSGlobal_eval,                      PROPF_METHOD|1},
     {isFiniteW,                  JSGlobal_isFinite,                  PROPF_METHOD},
