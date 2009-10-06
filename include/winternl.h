@@ -760,6 +760,7 @@ typedef enum _THREADINFOCLASS {
     ThreadPriorityBoost,
     ThreadSetTlsArrayAddress,
     ThreadIsIoPending,
+    ThreadHideFromDebugger,
     MaxThreadInfoClass
 } THREADINFOCLASS;
 

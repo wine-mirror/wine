@@ -1227,6 +1227,10 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
             SERVER_END_REQ;
         }
         return status;
+    case ThreadHideFromDebugger:
+        /* pretend the call succeeded to satisfy some code protectors */
+        return STATUS_SUCCESS;
+
     case ThreadBasicInformation:
     case ThreadTimes:
     case ThreadPriority:
