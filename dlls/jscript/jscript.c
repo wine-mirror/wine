@@ -159,6 +159,105 @@ static HRESULT set_ctx_site(JScript *This)
     return S_OK;
 }
 
+typedef struct {
+    const IServiceProviderVtbl *lpIServiceProviderVtbl;
+
+    LONG ref;
+
+    IServiceProvider *sp;
+} AXSite;
+
+#define SERVPROV(x)  ((IServiceProvider*) &(x)->lpIServiceProviderVtbl)
+
+#define SERVPROV_THIS(iface) DEFINE_THIS(AXSite, IServiceProvider, iface)
+
+static HRESULT WINAPI AXSite_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
+{
+    AXSite *This = SERVPROV_THIS(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = SERVPROV(This);
+    }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
+        TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
+        *ppv = SERVPROV(This);
+    }else {
+        TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI AXSite_AddRef(IServiceProvider *iface)
+{
+    AXSite *This = SERVPROV_THIS(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI AXSite_Release(IServiceProvider *iface)
+{
+    AXSite *This = SERVPROV_THIS(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI AXSite_QueryService(IServiceProvider *iface,
+        REFGUID guidService, REFIID riid, void **ppv)
+{
+    AXSite *This = SERVPROV_THIS(iface);
+
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
+
+    return IServiceProvider_QueryService(This->sp, guidService, riid, ppv);
+}
+
+#undef SERVPROV_THIS
+
+static IServiceProviderVtbl AXSiteVtbl = {
+    AXSite_QueryInterface,
+    AXSite_AddRef,
+    AXSite_Release,
+    AXSite_QueryService
+};
+
+IUnknown *create_ax_site(script_ctx_t *ctx)
+{
+    IServiceProvider *sp;
+    AXSite *ret;
+    HRESULT hres;
+
+    hres = IActiveScriptSite_QueryInterface(ctx->site, &IID_IServiceProvider, (void**)&sp);
+    if(FAILED(hres)) {
+        ERR("Could not get IServiceProvider iface: %08x\n", hres);
+        return NULL;
+    }
+
+    ret = heap_alloc(sizeof(AXSite));
+    if(!ret) {
+        IServiceProvider_Release(sp);
+        return NULL;
+    }
+
+    ret->lpIServiceProviderVtbl = &AXSiteVtbl;
+    ret->ref = 1;
+    ret->sp = sp;
+
+    return (IUnknown*)SERVPROV(ret);
+}
+
 #define ACTSCRIPT_THIS(iface) DEFINE_THIS(JScript, IActiveScript, iface)
 
 static HRESULT WINAPI JScript_QueryInterface(IActiveScript *iface, REFIID riid, void **ppv)

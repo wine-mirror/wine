@@ -309,6 +309,8 @@ HRESULT create_object_constr(script_ctx_t*,DispatchEx*,DispatchEx**);
 HRESULT create_regexp_constr(script_ctx_t*,DispatchEx*,DispatchEx**);
 HRESULT create_string_constr(script_ctx_t*,DispatchEx*,DispatchEx**);
 
+IUnknown *create_ax_site(script_ctx_t*);
+
 typedef struct {
     const WCHAR *str;
     DWORD len;

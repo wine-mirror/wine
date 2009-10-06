@@ -117,8 +117,19 @@ static IUnknown *create_activex_object(script_ctx_t *ctx, const WCHAR *progid)
 
     hres = IUnknown_QueryInterface(obj, &IID_IObjectWithSite, (void**)&obj_site);
     if(SUCCEEDED(hres)) {
-        FIXME("Set object site\n");
+        IUnknown *ax_site;
+
+        ax_site = create_ax_site(ctx);
+        if(ax_site) {
+            hres = IObjectWithSite_SetSite(obj_site, ax_site);
+            IUnknown_Release(ax_site);
+        }
         IObjectWithSite_Release(obj_site);
+        if(!ax_site || FAILED(hres)) {
+            IObjectWithSite_Release(obj_site);
+            IUnknown_Release(obj);
+            return NULL;
+        }
     }
 
     return obj;

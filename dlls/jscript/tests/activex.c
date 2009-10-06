@@ -67,6 +67,7 @@ DEFINE_EXPECT(reportSuccess);
 DEFINE_EXPECT(Host_QS_SecMgr);
 DEFINE_EXPECT(Caller_QS_SecMgr);
 DEFINE_EXPECT(QI_IObjectWithSite);
+DEFINE_EXPECT(SetSite);
 
 static const WCHAR testW[] = {'t','e','s','t',0};
 
@@ -78,6 +79,7 @@ static HRESULT QueryCustomPolicy_hres;
 static DWORD QueryCustomPolicy_psize;
 static DWORD QueryCustomPolicy_policy;
 static HRESULT QI_IDispatch_hres;
+static HRESULT SetSite_hres;
 
 #define TESTOBJ_CLSID "{178fc163-f585-4e24-9c13-4bb7faf80646}"
 
@@ -123,6 +125,56 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     return lstrcmpA(buf, stra);
 }
 
+static HRESULT WINAPI ObjectWithSite_QueryInterface(IObjectWithSite *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI ObjectWithSite_AddRef(IObjectWithSite *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ObjectWithSite_Release(IObjectWithSite *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ObjectWithSite_SetSite(IObjectWithSite *iface, IUnknown *pUnkSite)
+{
+    IServiceProvider *sp;
+    HRESULT hres;
+
+
+    CHECK_EXPECT(SetSite);
+    ok(pUnkSite != NULL, "pUnkSite == NULL\n");
+
+    hres = IUnknown_QueryInterface(pUnkSite, &IID_IServiceProvider, (void**)&sp);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08x\n", hres);
+    IServiceProvider_Release(sp);
+
+    return SetSite_hres;
+}
+
+static HRESULT WINAPI ObjectWithSite_GetSite(IObjectWithSite *iface, REFIID riid, void **ppvSite)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IObjectWithSiteVtbl ObjectWithSiteVtbl = {
+    ObjectWithSite_QueryInterface,
+    ObjectWithSite_AddRef,
+    ObjectWithSite_Release,
+    ObjectWithSite_SetSite,
+    ObjectWithSite_GetSite
+};
+
+static IObjectWithSite ObjectWithSite = { &ObjectWithSiteVtbl };
+
+static IObjectWithSite *object_with_site;
+
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -135,12 +187,12 @@ static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid,
         *ppv = iface;
     }else if(IsEqualGUID(&IID_IObjectWithSite, riid)) {
         CHECK_EXPECT(QI_IObjectWithSite);
-        return E_NOINTERFACE;
+        *ppv = object_with_site;
     }else {
         return E_NOINTERFACE;
     }
 
-    return S_OK;
+    return *ppv ? S_OK : E_NOINTERFACE;
 }
 
 static ULONG WINAPI DispatchEx_AddRef(IDispatchEx *iface)
@@ -663,6 +715,7 @@ static IActiveScriptParse *create_script(void)
     QueryCustomPolicy_psize = sizeof(DWORD);
     QueryCustomPolicy_policy = URLPOLICY_ALLOW;
     QI_IDispatch_hres = S_OK;
+    SetSite_hres = S_OK;
 
     hres = CoCreateInstance(&CLSID_JScript, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IActiveScript, (void**)&script);
@@ -923,6 +976,40 @@ static void test_ActiveXObject(void)
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QueryCustomPolicy);
+
+    IUnknown_Release(parser);
+
+    parser = create_script();
+    object_with_site = &ObjectWithSite;
+
+    SET_EXPECT(Host_QS_SecMgr);
+    SET_EXPECT(ProcessUrlAction);
+    SET_EXPECT(CreateInstance);
+    SET_EXPECT(QueryCustomPolicy);
+    SET_EXPECT(QI_IObjectWithSite);
+    SET_EXPECT(SetSite);
+    SET_EXPECT(reportSuccess);
+    parse_script_a(parser, "(new ActiveXObject('Wine.Test')).reportSuccess();");
+    CHECK_CALLED(Host_QS_SecMgr);
+    CHECK_CALLED(ProcessUrlAction);
+    CHECK_CALLED(CreateInstance);
+    CHECK_CALLED(QueryCustomPolicy);
+    CHECK_CALLED(QI_IObjectWithSite);
+    CHECK_CALLED(SetSite);
+    CHECK_CALLED(reportSuccess);
+
+    SetSite_hres = E_FAIL;
+    SET_EXPECT(ProcessUrlAction);
+    SET_EXPECT(CreateInstance);
+    SET_EXPECT(QueryCustomPolicy);
+    SET_EXPECT(QI_IObjectWithSite);
+    SET_EXPECT(SetSite);
+    parse_script_a(parser, "testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
+    CHECK_CALLED(ProcessUrlAction);
+    CHECK_CALLED(CreateInstance);
+    CHECK_CALLED(QueryCustomPolicy);
+    CHECK_CALLED(QI_IObjectWithSite);
+    CHECK_CALLED(SetSite);
 
     IUnknown_Release(parser);
 }
