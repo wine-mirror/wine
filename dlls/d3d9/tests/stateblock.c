@@ -123,23 +123,14 @@ struct state_test
     const void* test_data_in;
     const void* test_data_out;
 
-    /* The poison data is the data to preinitialize the return buffer to */
-    const void* poison_data;
-
-    /* Return buffer */
-    void* return_data;
-
-    /* Size of the data samples above */
-    unsigned int data_size;
-
     /* Test resource management handlers */
     HRESULT (*setup_handler) (struct state_test* test);
     void (*teardown_handler) (struct state_test* test);
 
     /* Test data handlers */
     void (*set_handler) (IDirect3DDevice9* device, const struct state_test* test, const void* data_in);
-    void (*get_handler) (IDirect3DDevice9* device, const struct state_test* test, void* data_out);
-    void (*print_handler) (const struct state_test* test, const void* data);
+    void (*check_data)(IDirect3DDevice9 *device, unsigned int chain_stage,
+            const struct state_test *test, const void *expected_data);
 
     /* Test arguments */
     const void* test_arg;
@@ -198,53 +189,22 @@ static void execute_test_chain(IDirect3DDevice9 *device, struct state_test *test
             trace("Test %s, Stage %u in error state, aborting\n", test[i].test_name, j);
             break;
 
-        } else if (outcome & EVENT_CHECK_TEST || outcome & EVENT_CHECK_DEFAULT || outcome & EVENT_CHECK_INITIAL) {
-
-            for (i=0; i < ntests; i++) {
-
-                memcpy(test[i].return_data, test[i].poison_data, test[i].data_size);
-                test[i].get_handler(device, &test[i], test[i].return_data);
-
-                if (outcome & EVENT_CHECK_TEST) {
-
-                    BOOL test_failed = memcmp(test[i].test_data_out, test[i].return_data, test[i].data_size);
-                    ok(!test_failed, "Test %s, Stage %u: returned data does not match test data [csize=%u]\n",
-                        test[i].test_name, j, test[i].data_size);
-
-                    if (test_failed && test[i].print_handler) {
-                        trace("Returned data was:\n");
-                        test[i].print_handler(&test[i], test[i].return_data);
-                        trace("Test data was:\n");
-                        test[i].print_handler(&test[i], test[i].test_data_out);
-                    }
+        }
+        else if (outcome & (EVENT_CHECK_TEST | EVENT_CHECK_DEFAULT | EVENT_CHECK_INITIAL))
+        {
+            for (i = 0; i < ntests; ++i)
+            {
+                if (outcome & EVENT_CHECK_TEST)
+                {
+                    test[i].check_data(device, j, &test[i], test[i].test_data_out);
                 }
-
                 else if (outcome & EVENT_CHECK_DEFAULT)
                 {
-                    BOOL test_failed = memcmp(test[i].default_data, test[i].return_data, test[i].data_size);
-                    ok (!test_failed, "Test %s, Stage %u: returned data does not match default data [csize=%u]\n",
-                        test[i].test_name, j, test[i].data_size);
-
-                    if (test_failed && test[i].print_handler) {
-                        trace("Returned data was:\n");
-                        test[i].print_handler(&test[i], test[i].return_data);
-                        trace("Default data was:\n");
-                        test[i].print_handler(&test[i], test[i].default_data);
-                    }
+                    test[i].check_data(device, j, &test[i], test[i].default_data);
                 }
-
                 else if (outcome & EVENT_CHECK_INITIAL)
                 {
-                    BOOL test_failed = memcmp(test[i].initial_data, test[i].return_data, test[i].data_size);
-                    ok (!test_failed, "Test %s, Stage %u: returned data does not match initial data [csize=%u]\n",
-                        test[i].test_name, j, test[i].data_size);
-
-                    if (test_failed && test[i].print_handler) {
-                        trace("Returned data was:\n");
-                        test[i].print_handler(&test[i], test[i].return_data);
-                        trace("Initial data was:\n");
-                        test[i].print_handler(&test[i], test[i].initial_data);
-                    }
+                    test[i].check_data(device, j, &test[i], test[i].initial_data);
                 }
             }
         }
@@ -482,22 +442,26 @@ struct shader_constant_context
     struct shader_constant_data return_data_buffer;
 };
 
-static void shader_constant_print_handler(const struct state_test *test, const void *data)
+static const struct shader_constant_data shader_constant_poison_data =
 {
-    const struct shader_constant_data *scdata = data;
+    {0x1337c0de, 0x1337c0de, 0x1337c0de, 0x1337c0de},
+    {1.0f, 2.0f, 3.0f, 4.0f},
+    {FALSE, TRUE, FALSE, TRUE},
+};
 
-    trace("Integer constant = { %#x, %#x, %#x, %#x }\n",
-        scdata->int_constant[0], scdata->int_constant[1],
-        scdata->int_constant[2], scdata->int_constant[3]);
+static const struct shader_constant_data shader_constant_default_data =
+{
+    {0, 0, 0, 0},
+    {0.0f, 0.0f, 0.0f, 0.0f},
+    {0, 0, 0, 0},
+};
 
-    trace("Float constant = { %f, %f, %f, %f }\n",
-        scdata->float_constant[0], scdata->float_constant[1],
-        scdata->float_constant[2], scdata->float_constant[3]);
-
-    trace("Boolean constants = [ %#x, %#x, %#x, %#x ]\n",
-        scdata->bool_constant[0], scdata->bool_constant[1],
-        scdata->bool_constant[2], scdata->bool_constant[3]);
-}
+static const struct shader_constant_data shader_constant_test_data =
+{
+    {0xdead0000, 0xdead0001, 0xdead0002, 0xdead0003},
+    {5.0f, 6.0f, 7.0f, 8.0f},
+    {TRUE, FALSE, FALSE, TRUE},
+};
 
 static void shader_constant_set_handler(IDirect3DDevice9 *device, const struct state_test *test, const void *data)
 {
@@ -524,49 +488,63 @@ static void shader_constant_set_handler(IDirect3DDevice9 *device, const struct s
     }
 }
 
-static void shader_constant_get_handler(IDirect3DDevice9 *device, const struct state_test *test, void *data)
+static void shader_constant_check_data(IDirect3DDevice9 *device, unsigned int chain_stage,
+        const struct state_test *test, const void *expected_data)
 {
+    struct shader_constant_data value = shader_constant_poison_data;
+    const struct shader_constant_data *scdata = expected_data;
     const struct shader_constant_arg *scarg = test->test_arg;
-    struct shader_constant_data *scdata = data;
-    HRESULT hret;
-    unsigned int index = scarg->idx;
+    HRESULT hr;
 
-    if (!scarg->pshader) {
-        hret = IDirect3DDevice9_GetVertexShaderConstantI(device, index, scdata->int_constant, 1);
-        ok(hret == D3D_OK, "GetVertexShaderConstantI returned %#x.\n", hret);
-        hret = IDirect3DDevice9_GetVertexShaderConstantF(device, index, scdata->float_constant, 1);
-        ok(hret == D3D_OK, "GetVertexShaderConstantF returned %#x.\n", hret);
-        hret = IDirect3DDevice9_GetVertexShaderConstantB(device, index, scdata->bool_constant, 4);
-        ok(hret == D3D_OK, "GetVertexShaderConstantB returned %#x.\n", hret);
-
-    } else {
-        hret = IDirect3DDevice9_GetPixelShaderConstantI(device, index, scdata->int_constant, 1);
-        ok(hret == D3D_OK, "GetPixelShaderConstantI returned %#x.\n", hret);
-        hret = IDirect3DDevice9_GetPixelShaderConstantF(device, index, scdata->float_constant, 1);
-        ok(hret == D3D_OK, "GetPixelShaderConstantF returned %#x.\n", hret);
-        hret = IDirect3DDevice9_GetPixelShaderConstantB(device, index, scdata->bool_constant, 4);
-        ok(hret == D3D_OK, "GetPixelShaderConstantB returned %#x.\n", hret);
+    if (!scarg->pshader)
+    {
+        hr = IDirect3DDevice9_GetVertexShaderConstantI(device, scarg->idx, value.int_constant, 1);
+        ok(SUCCEEDED(hr), "GetVertexShaderConstantI returned %#x.\n", hr);
+        hr = IDirect3DDevice9_GetVertexShaderConstantF(device, scarg->idx, value.float_constant, 1);
+        ok(SUCCEEDED(hr), "GetVertexShaderConstantF returned %#x.\n", hr);
+        hr = IDirect3DDevice9_GetVertexShaderConstantB(device, scarg->idx, value.bool_constant, 4);
+        ok(SUCCEEDED(hr), "GetVertexShaderConstantB returned %#x.\n", hr);
     }
+    else
+    {
+        hr = IDirect3DDevice9_GetPixelShaderConstantI(device, scarg->idx, value.int_constant, 1);
+        ok(SUCCEEDED(hr), "GetPixelShaderConstantI returned %#x.\n", hr);
+        hr = IDirect3DDevice9_GetPixelShaderConstantF(device, scarg->idx, value.float_constant, 1);
+        ok(SUCCEEDED(hr), "GetPixelShaderConstantF returned %#x.\n", hr);
+        hr = IDirect3DDevice9_GetPixelShaderConstantB(device, scarg->idx, value.bool_constant, 4);
+        ok(SUCCEEDED(hr), "GetPixelShaderConstantB returned %#x.\n", hr);
+    }
+
+    ok(!memcmp(scdata->int_constant, value.int_constant, sizeof(scdata->int_constant)),
+            "Chain stage %u, %s integer constant:\n"
+            "\t{%#x, %#x, %#x, %#x} expected\n"
+            "\t{%#x, %#x, %#x, %#x} received\n",
+            chain_stage, scarg->pshader ? "pixel shader" : "vertex_shader",
+            scdata->int_constant[0], scdata->int_constant[1],
+            scdata->int_constant[2], scdata->int_constant[3],
+            value.int_constant[0], value.int_constant[1],
+            value.int_constant[2], value.int_constant[3]);
+
+    ok(!memcmp(scdata->float_constant, value.float_constant, sizeof(scdata->float_constant)),
+            "Chain stage %u, %s float constant:\n"
+            "\t{%.8e, %.8e, %.8e, %.8e} expected\n"
+            "\t{%.8e, %.8e, %.8e, %.8e} received\n",
+            chain_stage, scarg->pshader ? "pixel shader" : "vertex_shader",
+            scdata->float_constant[0], scdata->float_constant[1],
+            scdata->float_constant[2], scdata->float_constant[3],
+            value.float_constant[0], value.float_constant[1],
+            value.float_constant[2], value.float_constant[3]);
+
+    ok(!memcmp(scdata->bool_constant, value.bool_constant, sizeof(scdata->bool_constant)),
+            "Chain stage %u, %s boolean constant:\n"
+            "\t{%#x, %#x, %#x, %#x} expected\n"
+            "\t{%#x, %#x, %#x, %#x} received\n",
+            chain_stage, scarg->pshader ? "pixel shader" : "vertex_shader",
+            scdata->bool_constant[0], scdata->bool_constant[1],
+            scdata->bool_constant[2], scdata->bool_constant[3],
+            value.bool_constant[0], value.bool_constant[1],
+            value.bool_constant[2], value.bool_constant[3]);
 }
-
-static const struct shader_constant_data shader_constant_poison_data =
-{
-    { 0x1337c0de, 0x1337c0de, 0x1337c0de, 0x1337c0de },
-    { 1.0f, 2.0f, 3.0f, 4.0f },
-    { FALSE, TRUE, FALSE, TRUE }
-};
-
-static const struct shader_constant_data shader_constant_default_data =
-{
-        { 0, 0, 0, 0 }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0, 0, 0, 0 }
-};
-
-static const struct shader_constant_data shader_constant_test_data =
-{
-    { 0xdead0000, 0xdead0001, 0xdead0002, 0xdead0003 },
-    { 5.0f, 6.0f, 7.0f, 8.0f },
-    { TRUE, FALSE, FALSE, TRUE }
-};
 
 static HRESULT shader_constant_setup_handler(struct state_test *test)
 {
@@ -574,14 +552,10 @@ static HRESULT shader_constant_setup_handler(struct state_test *test)
     if (ctx == NULL) return E_FAIL;
     test->test_context = ctx;
 
-    test->return_data = &ctx->return_data_buffer;
     test->test_data_in = &shader_constant_test_data;
     test->test_data_out = &shader_constant_test_data;
     test->default_data = &shader_constant_default_data;
     test->initial_data = &shader_constant_default_data;
-    test->poison_data = &shader_constant_poison_data;
-
-    test->data_size = sizeof(struct shader_constant_data);
 
     return D3D_OK;
 }
@@ -596,9 +570,8 @@ static void shader_constants_queue_test(struct state_test *test, const struct sh
     test->setup_handler = shader_constant_setup_handler;
     test->teardown_handler = shader_constant_teardown_handler;
     test->set_handler = shader_constant_set_handler;
-    test->get_handler = shader_constant_get_handler;
-    test->print_handler = shader_constant_print_handler;
-    test->test_name = test_arg->pshader? "set_get_pshader_constants": "set_get_vshader_constants";
+    test->check_data = shader_constant_check_data;
+    test->test_name = test_arg->pshader ? "set_get_pshader_constants" : "set_get_vshader_constants";
     test->test_arg = test_arg;
 }
 
@@ -622,36 +595,88 @@ struct light_context
     struct light_data return_data_buffer;
 };
 
-static void light_print_handler(const struct state_test* test, const void *data)
+static const struct light_data light_poison_data =
 {
-    const struct light_data *ldata = data;
+    {
+        0x1337c0de,
+        {7.0f, 4.0f, 2.0f, 1.0f},
+        {7.0f, 4.0f, 2.0f, 1.0f},
+        {7.0f, 4.0f, 2.0f, 1.0f},
+        {3.3f, 4.4f, 5.5f},
+        {6.6f, 7.7f, 8.8f},
+        12.12f, 13.13f, 14.14f, 15.15f, 16.16f, 17.17f, 18.18f,
+    },
+    TRUE,
+    0x1337c0de,
+    0x1337c0de,
+};
 
-    trace("Get Light return value: %#x\n", ldata->get_light_result);
-    trace("Get Light enable return value: %#x\n", ldata->get_enabled_result);
+static const struct light_data light_default_data =
+{
+    {
+        D3DLIGHT_DIRECTIONAL,
+        {1.0f, 1.0f, 1.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 1.0f},
+        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+    },
+    FALSE,
+    D3D_OK,
+    D3D_OK,
+};
 
-    trace("Light Enabled = %u\n", ldata->enabled);
-    trace("Light Type = %u\n", ldata->light.Type);
-    trace("Light Diffuse = { %f, %f, %f, %f }\n",
-        ldata->light.Diffuse.r, ldata->light.Diffuse.g,
-        ldata->light.Diffuse.b, ldata->light.Diffuse.a);
-    trace("Light Specular = { %f, %f, %f, %f}\n",
-        ldata->light.Specular.r, ldata->light.Specular.g,
-        ldata->light.Specular.b, ldata->light.Specular.a);
-    trace("Light Ambient = { %f, %f, %f, %f }\n",
-        ldata->light.Ambient.r, ldata->light.Ambient.g,
-        ldata->light.Ambient.b, ldata->light.Ambient.a);
-    trace("Light Position = { %f, %f, %f }\n",
-        ldata->light.Position.x, ldata->light.Position.y, ldata->light.Position.z);
-    trace("Light Direction = { %f, %f, %f }\n",
-        ldata->light.Direction.x, ldata->light.Direction.y, ldata->light.Direction.z);
-    trace("Light Range = %f\n", ldata->light.Range);
-    trace("Light Fallof = %f\n", ldata->light.Falloff);
-    trace("Light Attenuation0 = %f\n", ldata->light.Attenuation0);
-    trace("Light Attenuation1 = %f\n", ldata->light.Attenuation1);
-    trace("Light Attenuation2 = %f\n", ldata->light.Attenuation2);
-    trace("Light Theta = %f\n", ldata->light.Theta);
-    trace("Light Phi = %f\n", ldata->light.Phi);
-}
+/* This is used for the initial read state (before a write causes side effects).
+ * The proper return status is D3DERR_INVALIDCALL. */
+static const struct light_data light_initial_data =
+{
+    {
+        0x1337c0de,
+        {7.0f, 4.0f, 2.0f, 1.0f},
+        {7.0f, 4.0f, 2.0f, 1.0f},
+        {7.0f, 4.0f, 2.0f, 1.0f},
+        {3.3f, 4.4f, 5.5f},
+        {6.6f, 7.7f, 8.8f},
+        12.12f, 13.13f, 14.14f, 15.15f, 16.16f, 17.17f, 18.18f,
+    },
+    TRUE,
+    D3DERR_INVALIDCALL,
+    D3DERR_INVALIDCALL,
+};
+
+static const struct light_data light_test_data_in =
+{
+    {
+        1,
+        {2.0f, 2.0f, 2.0f, 2.0f},
+        {3.0f, 3.0f, 3.0f, 3.0f},
+        {4.0f, 4.0f, 4.0f, 4.0f},
+        {5.0f, 5.0f, 5.0f},
+        {6.0f, 6.0f, 6.0f},
+        7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f,
+    },
+    TRUE,
+    D3D_OK,
+    D3D_OK
+};
+
+/* SetLight will use 128 as the "enabled" value */
+static const struct light_data light_test_data_out =
+{
+    {
+        1,
+        {2.0f, 2.0f, 2.0f, 2.0f},
+        {3.0f, 3.0f, 3.0f, 3.0f},
+        {4.0f, 4.0f, 4.0f, 4.0f},
+        {5.0f, 5.0f, 5.0f},
+        {6.0f, 6.0f, 6.0f},
+        7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f,
+    },
+    128,
+    D3D_OK,
+    D3D_OK,
+};
 
 static void light_set_handler(IDirect3DDevice9 *device, const struct state_test *test, const void *data)
 {
@@ -667,54 +692,82 @@ static void light_set_handler(IDirect3DDevice9 *device, const struct state_test 
     ok(hret == D3D_OK, "SetLightEnable returned %#x.\n", hret);
 }
 
-static void light_get_handler(IDirect3DDevice9 *device, const struct state_test *test, void *data)
+static void light_check_data(IDirect3DDevice9 *device, unsigned int chain_stage,
+        const struct state_test *test, const void *expected_data)
 {
     const struct light_arg *larg = test->test_arg;
-    struct light_data *ldata = data;
-    HRESULT hret;
-    unsigned int index = larg->idx;
+    const struct light_data *ldata = expected_data;
+    struct light_data value;
 
-    hret = IDirect3DDevice9_GetLightEnable(device, index, &ldata->enabled);
-    ldata->get_enabled_result = hret;
+    value = light_poison_data;
 
-    hret = IDirect3DDevice9_GetLight(device, index, &ldata->light);
-    ldata->get_light_result = hret;
+    value.get_enabled_result = IDirect3DDevice9_GetLightEnable(device, larg->idx, &value.enabled);
+    value.get_light_result = IDirect3DDevice9_GetLight(device, larg->idx, &value.light);
+
+    ok(value.get_enabled_result == ldata->get_enabled_result,
+            "Chain stage %u: expected get_enabled_result %#x, got %#x.\n",
+            chain_stage, ldata->get_enabled_result, value.get_enabled_result);
+    ok(value.get_light_result == ldata->get_light_result,
+            "Chain stage %u: expected get_light_result %#x, got %#x.\n",
+            chain_stage, ldata->get_light_result, value.get_light_result);
+
+    ok(value.enabled == ldata->enabled,
+            "Chain stage %u: expected enabled %#x, got %#x.\n",
+            chain_stage, ldata->enabled, value.enabled);
+    ok(value.light.Type == ldata->light.Type,
+            "Chain stage %u: expected light.Type %#x, got %#x.\n",
+            chain_stage, ldata->light.Type, value.light.Type);
+    ok(!memcmp(&value.light.Diffuse, &ldata->light.Diffuse, sizeof(value.light.Diffuse)),
+            "Chain stage %u, light.Diffuse:\n\t{%.8e, %.8e, %.8e, %.8e} expected\n"
+            "\t{%.8e, %.8e, %.8e, %.8e} received.\n", chain_stage,
+            ldata->light.Diffuse.r, ldata->light.Diffuse.g,
+            ldata->light.Diffuse.b, ldata->light.Diffuse.a,
+            value.light.Diffuse.r, value.light.Diffuse.g,
+            value.light.Diffuse.b, value.light.Diffuse.a);
+    ok(!memcmp(&value.light.Specular, &ldata->light.Specular, sizeof(value.light.Specular)),
+            "Chain stage %u, light.Specular:\n\t{%.8e, %.8e, %.8e, %.8e} expected\n"
+            "\t{%.8e, %.8e, %.8e, %.8e} received.\n", chain_stage,
+            ldata->light.Specular.r, ldata->light.Specular.g,
+            ldata->light.Specular.b, ldata->light.Specular.a,
+            value.light.Specular.r, value.light.Specular.g,
+            value.light.Specular.b, value.light.Specular.a);
+    ok(!memcmp(&value.light.Ambient, &ldata->light.Ambient, sizeof(value.light.Ambient)),
+            "Chain stage %u, light.Ambient:\n\t{%.8e, %.8e, %.8e, %.8e} expected\n"
+            "\t{%.8e, %.8e, %.8e, %.8e} received.\n", chain_stage,
+            ldata->light.Ambient.r, ldata->light.Ambient.g,
+            ldata->light.Ambient.b, ldata->light.Ambient.a,
+            value.light.Ambient.r, value.light.Ambient.g,
+            value.light.Ambient.b, value.light.Ambient.a);
+    ok(!memcmp(&value.light.Position, &ldata->light.Position, sizeof(value.light.Position)),
+            "Chain stage %u, light.Position:\n\t{%.8e, %.8e, %.8e} expected\n\t{%.8e, %.8e, %.8e} received.\n",
+            chain_stage, ldata->light.Position.x, ldata->light.Position.y, ldata->light.Position.z,
+            value.light.Position.x, value.light.Position.y, value.light.Position.z);
+    ok(!memcmp(&value.light.Direction, &ldata->light.Direction, sizeof(value.light.Direction)),
+            "Chain stage %u, light.Direction:\n\t{%.8e, %.8e, %.8e} expected\n\t{%.8e, %.8e, %.8e} received.\n",
+            chain_stage, ldata->light.Direction.x, ldata->light.Direction.y, ldata->light.Direction.z,
+            value.light.Direction.x, value.light.Direction.y, value.light.Direction.z);
+    ok(value.light.Range == ldata->light.Range,
+            "Chain stage %u: expected light.Range %.8e, got %.8e.\n",
+            chain_stage, ldata->light.Range, value.light.Range);
+    ok(value.light.Falloff == ldata->light.Falloff,
+            "Chain stage %u: expected light.Falloff %.8e, got %.8e.\n",
+            chain_stage, ldata->light.Falloff, value.light.Falloff);
+    ok(value.light.Attenuation0 == ldata->light.Attenuation0,
+            "Chain stage %u: expected light.Attenuation0 %.8e, got %.8e.\n",
+            chain_stage, ldata->light.Attenuation0, value.light.Attenuation0);
+    ok(value.light.Attenuation1 == ldata->light.Attenuation1,
+            "Chain stage %u: expected light.Attenuation1 %.8e, got %.8e.\n",
+            chain_stage, ldata->light.Attenuation1, value.light.Attenuation1);
+    ok(value.light.Attenuation2 == ldata->light.Attenuation2,
+            "Chain stage %u: expected light.Attenuation2 %.8e, got %.8e.\n",
+            chain_stage, ldata->light.Attenuation2, value.light.Attenuation2);
+    ok(value.light.Theta == ldata->light.Theta,
+            "Chain stage %u: expected light.Theta %.8e, got %.8e.\n",
+            chain_stage, ldata->light.Theta, value.light.Theta);
+    ok(value.light.Phi == ldata->light.Phi,
+            "Chain stage %u: expected light.Phi %.8e, got %.8e.\n",
+            chain_stage, ldata->light.Phi, value.light.Phi);
 }
-
-static const struct light_data light_poison_data =
-    { { 0x1337c0de,
-        { 7.0, 4.0, 2.0, 1.0 }, { 7.0, 4.0, 2.0, 1.0 }, { 7.0, 4.0, 2.0, 1.0 },
-        { 3.3f, 4.4f, 5.5f },{ 6.6f, 7.7f, 8.8f },
-        12.12f, 13.13f, 14.14f, 15.15f, 16.16f, 17.17f, 18.18f },
-        1, 0x1337c0de, 0x1337c0de };
-
-static const struct light_data light_default_data =
-    { { D3DLIGHT_DIRECTIONAL,
-        { 1.0, 1.0, 1.0, 0.0 }, { 0.0, 0.0, 0.0, 0.0 }, { 0.0, 0.0, 0.0, 0.0 },
-        { 0.0, 0.0, 0.0 }, { 0.0, 0.0, 1.0 },
-        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 }, 0, D3D_OK, D3D_OK };
-
-/* This is used for the initial read state (before a write causes side effects)
- * The proper return status is D3DERR_INVALIDCALL */
-static const struct light_data light_initial_data =
-    { { 0x1337c0de,
-        { 7.0, 4.0, 2.0, 1.0 }, { 7.0, 4.0, 2.0, 1.0 }, { 7.0, 4.0, 2.0, 1.0 },
-        { 3.3f, 4.4f, 5.5f }, { 6.6f, 7.7f, 8.8f },
-        12.12f, 13.13f, 14.14f, 15.15f, 16.16f, 17.17f, 18.18f },
-        1, D3DERR_INVALIDCALL, D3DERR_INVALIDCALL };
-
-static const struct light_data light_test_data_in =
-    { { 1,
-        { 2.0, 2.0, 2.0, 2.0 }, { 3.0, 3.0, 3.0, 3.0 }, { 4.0, 4.0, 4.0, 4.0 },
-        { 5.0, 5.0, 5.0 }, { 6.0, 6.0, 6.0 },
-        7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0 }, 1, D3D_OK, D3D_OK};
-
-/* SetLight will use 128 as the "enabled" value */
-static const struct light_data light_test_data_out =
-    { { 1,
-        { 2.0, 2.0, 2.0, 2.0 }, { 3.0, 3.0, 3.0, 3.0 }, { 4.0, 4.0, 4.0, 4.0 },
-        { 5.0, 5.0, 5.0 }, { 6.0, 6.0, 6.0 },
-        7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0 }, 128, D3D_OK, D3D_OK};
 
 static HRESULT light_setup_handler(struct state_test *test)
 {
@@ -722,14 +775,10 @@ static HRESULT light_setup_handler(struct state_test *test)
     if (ctx == NULL) return E_FAIL;
     test->test_context = ctx;
 
-    test->return_data = &ctx->return_data_buffer;
     test->test_data_in = &light_test_data_in;
     test->test_data_out = &light_test_data_out;
     test->default_data = &light_default_data;
     test->initial_data = &light_initial_data;
-    test->poison_data = &light_poison_data;
-
-    test->data_size = sizeof(struct light_data);
 
     return D3D_OK;
 }
@@ -744,8 +793,7 @@ static void lights_queue_test(struct state_test *test, const struct light_arg *t
     test->setup_handler = light_setup_handler;
     test->teardown_handler = light_teardown_handler;
     test->set_handler = light_set_handler;
-    test->get_handler = light_get_handler;
-    test->print_handler = light_print_handler;
+    test->check_data = light_check_data;
     test->test_name = "set_get_light";
     test->test_arg = test_arg;
 }
@@ -767,28 +815,125 @@ struct transform_context
     struct transform_data return_data_buffer;
 };
 
-static inline void print_matrix(
-    const char* name, const D3DMATRIX* matrix) {
-
-    trace("%s Matrix = {\n", name);
-    trace("    %f %f %f %f\n", U(*matrix).m[0][0], U(*matrix).m[1][0], U(*matrix).m[2][0], U(*matrix).m[3][0]);
-    trace("    %f %f %f %f\n", U(*matrix).m[0][1], U(*matrix).m[1][1], U(*matrix).m[2][1], U(*matrix).m[3][1]);
-    trace("    %f %f %f %f\n", U(*matrix).m[0][2], U(*matrix).m[1][2], U(*matrix).m[2][2], U(*matrix).m[3][2]);
-    trace("    %f %f %f %f\n", U(*matrix).m[0][3], U(*matrix).m[1][3], U(*matrix).m[2][3], U(*matrix).m[3][3]);
-    trace("}\n");
-}
-
-static void transform_print_handler(const struct state_test *test, const void *data)
+static const struct transform_data transform_default_data =
 {
-    const struct transform_data *tdata = data;
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}},
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}},
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}},
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}},
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}},
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}},
+};
 
-    print_matrix("View", &tdata->view);
-    print_matrix("Projection", &tdata->projection);
-    print_matrix("Texture0", &tdata->texture0);
-    print_matrix("Texture7", &tdata->texture7);
-    print_matrix("World0", &tdata->world0);
-    print_matrix("World255", &tdata->world255);
-}
+static const struct transform_data transform_poison_data =
+{
+    {{{
+         1.0f,  2.0f,  3.0f,  4.0f,
+         5.0f,  6.0f,  7.0f,  8.0f,
+         9.0f, 10.0f, 11.0f, 12.0f,
+        13.0f, 14.0f, 15.0f, 16.0f,
+    }}},
+    {{{
+        17.0f, 18.0f, 19.0f, 20.0f,
+        21.0f, 22.0f, 23.0f, 24.0f,
+        25.0f, 26.0f, 27.0f, 28.0f,
+        29.0f, 30.0f, 31.0f, 32.0f,
+    }}},
+    {{{
+        33.0f, 34.0f, 35.0f, 36.0f,
+        37.0f, 38.0f, 39.0f, 40.0f,
+        41.0f, 42.0f, 43.0f, 44.0f,
+        45.0f, 46.0f, 47.0f, 48.0f
+    }}},
+    {{{
+        49.0f, 50.0f, 51.0f, 52.0f,
+        53.0f, 54.0f, 55.0f, 56.0f,
+        57.0f, 58.0f, 59.0f, 60.0f,
+        61.0f, 62.0f, 63.0f, 64.0f,
+    }}},
+    {{{
+        64.0f, 66.0f, 67.0f, 68.0f,
+        69.0f, 70.0f, 71.0f, 72.0f,
+        73.0f, 74.0f, 75.0f, 76.0f,
+        77.0f, 78.0f, 79.0f, 80.0f,
+    }}},
+    {{{
+        81.0f, 82.0f, 83.0f, 84.0f,
+        85.0f, 86.0f, 87.0f, 88.0f,
+        89.0f, 90.0f, 91.0f, 92.0f,
+        93.0f, 94.0f, 95.0f, 96.0f,
+    }}},
+};
+
+static const struct transform_data transform_test_data =
+{
+    {{{
+          1.2f,     3.4f,  -5.6f,  7.2f,
+        10.11f,  -12.13f, 14.15f, -1.5f,
+        23.56f,   12.89f, 44.56f, -1.0f,
+          2.3f,     0.0f,   4.4f,  5.5f,
+    }}},
+    {{{
+          9.2f,    38.7f,  -6.6f,  7.2f,
+        10.11f,  -12.13f, 77.15f, -1.5f,
+        23.56f,   12.89f, 14.56f, -1.0f,
+         12.3f,     0.0f,   4.4f,  5.5f,
+    }}},
+    {{{
+         10.2f,     3.4f,   0.6f,  7.2f,
+        10.11f,  -12.13f, 14.15f, -1.5f,
+        23.54f,    12.9f, 44.56f, -1.0f,
+          2.3f,     0.0f,   4.4f,  5.5f,
+    }}},
+    {{{
+          1.2f,     3.4f,  -5.6f,  7.2f,
+        10.11f,  -12.13f, -14.5f, -1.5f,
+         2.56f,   12.89f, 23.56f, -1.0f,
+        112.3f,     0.0f,   4.4f,  2.5f,
+    }}},
+    {{{
+          1.2f,   31.41f,  58.6f,  7.2f,
+        10.11f,  -12.13f, -14.5f, -1.5f,
+         2.56f,   12.89f, 11.56f, -1.0f,
+        112.3f,     0.0f,  44.4f,  2.5f,
+    }}},
+    {{{
+         1.20f,     3.4f,  -5.6f,  7.0f,
+        10.11f, -12.156f, -14.5f, -1.5f,
+         2.56f,   1.829f,  23.6f, -1.0f,
+        112.3f,     0.0f,  41.4f,  2.5f,
+    }}},
+};
 
 static void transform_set_handler(IDirect3DDevice9 *device, const struct state_test *test, const void *data)
 {
@@ -814,81 +959,71 @@ static void transform_set_handler(IDirect3DDevice9 *device, const struct state_t
     ok(hret == D3D_OK, "SetTransform returned %#x.\n", hret);
 }
 
-static void transform_get_handler(IDirect3DDevice9 *device, const struct state_test *test, void *data)
+static void compare_matrix(const char *name, unsigned int chain_stage,
+        const D3DMATRIX *received, const D3DMATRIX *expected)
 {
-    struct transform_data *tdata = data;
-    HRESULT hret;
-
-    hret = IDirect3DDevice9_GetTransform(device, D3DTS_VIEW, &tdata->view);
-    ok(hret == D3D_OK, "GetTransform returned %#x.\n", hret);
-
-    hret = IDirect3DDevice9_GetTransform(device, D3DTS_PROJECTION, &tdata->projection);
-    ok(hret == D3D_OK, "GetTransform returned %#x.\n", hret);
-
-    hret = IDirect3DDevice9_GetTransform(device, D3DTS_TEXTURE0, &tdata->texture0);
-    ok(hret == D3D_OK, "GetTransform returned %#x.\n", hret);
-
-    hret = IDirect3DDevice9_GetTransform(device, D3DTS_TEXTURE0 + texture_stages - 1, &tdata->texture7);
-    ok(hret == D3D_OK, "GetTransform returned %#x.\n", hret);
-
-    hret = IDirect3DDevice9_GetTransform(device, D3DTS_WORLD, &tdata->world0);
-    ok(hret == D3D_OK, "GetTransform returned %#x.\n", hret);
-
-    hret = IDirect3DDevice9_GetTransform(device, D3DTS_WORLDMATRIX(255), &tdata->world255);
-    ok(hret == D3D_OK, "GetTransform returned %#x.\n", hret);
+    ok(!memcmp(expected, received, sizeof(*expected)),
+            "Chain stage %u, matrix %s:\n"
+            "\t{\n"
+            "\t\t%.8e, %.8e, %.8e, %.8e,\n"
+            "\t\t%.8e, %.8e, %.8e, %.8e,\n"
+            "\t\t%.8e, %.8e, %.8e, %.8e,\n"
+            "\t\t%.8e, %.8e, %.8e, %.8e,\n"
+            "\t} expected\n"
+            "\t{\n"
+            "\t\t%.8e, %.8e, %.8e, %.8e,\n"
+            "\t\t%.8e, %.8e, %.8e, %.8e,\n"
+            "\t\t%.8e, %.8e, %.8e, %.8e,\n"
+            "\t\t%.8e, %.8e, %.8e, %.8e,\n"
+            "\t} received\n",
+            chain_stage, name,
+            U(*expected).m[0][0], U(*expected).m[1][0], U(*expected).m[2][0], U(*expected).m[3][0],
+            U(*expected).m[0][1], U(*expected).m[1][1], U(*expected).m[2][1], U(*expected).m[3][1],
+            U(*expected).m[0][2], U(*expected).m[1][2], U(*expected).m[2][2], U(*expected).m[3][2],
+            U(*expected).m[0][3], U(*expected).m[1][3], U(*expected).m[2][3], U(*expected).m[3][3],
+            U(*received).m[0][0], U(*received).m[1][0], U(*received).m[2][0], U(*received).m[3][0],
+            U(*received).m[0][1], U(*received).m[1][1], U(*received).m[2][1], U(*received).m[3][1],
+            U(*received).m[0][2], U(*received).m[1][2], U(*received).m[2][2], U(*received).m[3][2],
+            U(*received).m[0][3], U(*received).m[1][3], U(*received).m[2][3], U(*received).m[3][3]);
 }
 
-static const struct transform_data transform_default_data =
+static void transform_check_data(IDirect3DDevice9 *device, unsigned int chain_stage,
+        const struct state_test *test, const void *expected_data)
 {
-      { { { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 } } },
-      { { { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 } } },
-      { { { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 } } },
-      { { { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 } } },
-      { { { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 } } },
-      { { { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 } } }
-};
+    const struct transform_data *tdata = expected_data;
+    D3DMATRIX value;
+    HRESULT hr;
 
-static const struct transform_data transform_poison_data =
-{
-      { { { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f,
-        9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f } } },
+    value = transform_poison_data.view;
+    hr = IDirect3DDevice9_GetTransform(device, D3DTS_VIEW, &value);
+    ok(SUCCEEDED(hr), "GetTransform returned %#x.\n", hr);
+    compare_matrix("View", chain_stage, &value, &tdata->view);
 
-      { { { 17.0f, 18.0f, 19.0f, 20.0f, 21.0f, 22.0f, 23.0f, 24.0f,
-        25.0f, 26.0f, 27.0f, 28.0f, 29.0f, 30.0f, 31.0f, 32.0f } } },
+    value = transform_poison_data.projection;
+    hr = IDirect3DDevice9_GetTransform(device, D3DTS_PROJECTION, &value);
+    ok(SUCCEEDED(hr), "GetTransform returned %#x.\n", hr);
+    compare_matrix("Projection", chain_stage, &value, &tdata->projection);
 
-      { { { 33.0f, 34.0f, 35.0f, 36.0f, 37.0f, 38.0f, 39.0f, 40.0f,
-        41.0f, 42.0f, 43.0f, 44.0f, 45.0f, 46.0f, 47.0f, 48.0f } } },
+    value = transform_poison_data.texture0;
+    hr = IDirect3DDevice9_GetTransform(device, D3DTS_TEXTURE0, &value);
+    ok(SUCCEEDED(hr), "GetTransform returned %#x.\n", hr);
+    compare_matrix("Texture0", chain_stage, &value, &tdata->texture0);
 
-      { { { 49.0f, 50.0f, 51.0f, 52.0f, 53.0f, 54.0f, 55.0f, 56.0f,
-        57.0f, 58.0f, 59.0f, 60.0f, 61.0f, 62.0f, 63.0f, 64.0f } } },
+    value = transform_poison_data.texture7;
+    hr = IDirect3DDevice9_GetTransform(device, D3DTS_TEXTURE0 + texture_stages - 1, &value);
+    ok(SUCCEEDED(hr), "GetTransform returned %#x.\n", hr);
+    compare_matrix("Texture7", chain_stage, &value, &tdata->texture7);
 
-      { { { 64.0f, 66.0f, 67.0f, 68.0f, 69.0f, 70.0f, 71.0f, 72.0f,
-        73.0f, 74.0f, 75.0f, 76.0f, 77.0f, 78.0f, 79.0f, 80.0f } } },
+    value = transform_poison_data.world0;
+    hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLD, &value);
+    ok(SUCCEEDED(hr), "GetTransform returned %#x.\n", hr);
+    compare_matrix("World0", chain_stage, &value, &tdata->world0);
 
-      { { { 81.0f, 82.0f, 83.0f, 84.0f, 85.0f, 86.0f, 87.0f, 88.0f,
-        89.0f, 90.0f, 91.0f, 92.0f, 93.0f, 94.0f, 95.0f, 96.0f} } },
-};
-
-static const struct transform_data transform_test_data =
-{
-      { { { 1.2f, 3.4f, -5.6f, 7.2f, 10.11f, -12.13f, 14.15f, -1.5f,
-        23.56f, 12.89f, 44.56f, -1.0f, 2.3f, 0.0f, 4.4f, 5.5f } } },
-
-      { { { 9.2f, 38.7f, -6.6f, 7.2f, 10.11f, -12.13f, 77.15f, -1.5f,
-        23.56f, 12.89f, 14.56f, -1.0f, 12.3f, 0.0f, 4.4f, 5.5f } } },
-
-      { { { 10.2f, 3.4f, 0.6f, 7.2f, 10.11f, -12.13f, 14.15f, -1.5f,
-        23.54f, 12.9f, 44.56f, -1.0f, 2.3f, 0.0f, 4.4f, 5.5f } } },
-
-      { { { 1.2f, 3.4f, -5.6f, 7.2f, 10.11f, -12.13f, -14.5f, -1.5f,
-        2.56f, 12.89f, 23.56f, -1.0f, 112.3f, 0.0f, 4.4f, 2.5f } } },
-
-      { { { 1.2f, 31.41f, 58.6f, 7.2f, 10.11f, -12.13f, -14.5f, -1.5f,
-        2.56f, 12.89f, 11.56f, -1.0f, 112.3f, 0.0f, 44.4f, 2.5f } } },
-
-      { { { 1.20f, 3.4f, -5.6f, 7.0f, 10.11f, -12.156f, -14.5f, -1.5f,
-        2.56f, 1.829f, 23.6f, -1.0f, 112.3f, 0.0f, 41.4f, 2.5f } } },
-};
+    value = transform_poison_data.world255;
+    hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLDMATRIX(255), &value);
+    ok(SUCCEEDED(hr), "GetTransform returned %#x.\n", hr);
+    compare_matrix("World255", chain_stage, &value, &tdata->world255);
+}
 
 static HRESULT transform_setup_handler(struct state_test *test)
 {
@@ -896,14 +1031,10 @@ static HRESULT transform_setup_handler(struct state_test *test)
     if (ctx == NULL) return E_FAIL;
     test->test_context = ctx;
 
-    test->return_data = &ctx->return_data_buffer;
     test->test_data_in = &transform_test_data;
     test->test_data_out = &transform_test_data;
     test->default_data = &transform_default_data;
     test->initial_data = &transform_default_data;
-    test->poison_data = &transform_poison_data;
-
-    test->data_size = sizeof(struct transform_data);
 
     return D3D_OK;
 }
@@ -918,8 +1049,7 @@ static void transform_queue_test(struct state_test *test)
     test->setup_handler = transform_setup_handler;
     test->teardown_handler = transform_teardown_handler;
     test->set_handler = transform_set_handler;
-    test->get_handler = transform_get_handler;
-    test->print_handler = transform_print_handler;
+    test->check_data = transform_check_data;
     test->test_name = "set_get_transforms";
     test->test_arg = NULL;
 }
@@ -1067,27 +1197,21 @@ static void render_state_set_handler(IDirect3DDevice9 *device, const struct stat
     }
 }
 
-static void render_state_get_handler(IDirect3DDevice9 *device, const struct state_test *test, void *data)
+static void render_state_check_data(IDirect3DDevice9 *device, unsigned int chain_stage,
+        const struct state_test *test, const void *expected_data)
 {
-    struct render_state_data *rsdata = data;
-    HRESULT hret;
-    unsigned int i = 0;
-
-    for (i = 0; i < sizeof(render_state_indices) / sizeof(*render_state_indices); ++i)
-    {
-        hret = IDirect3DDevice9_GetRenderState(device, render_state_indices[i], &rsdata->states[i]);
-        ok(hret == D3D_OK, "GetRenderState returned %#x.\n", hret);
-    }
-}
-
-static void render_state_print_handler(const struct state_test *test, const void *data)
-{
-    const struct render_state_data *rsdata = data;
-
+    const struct render_state_context *ctx = test->test_context;
+    const struct render_state_data *rsdata = expected_data;
     unsigned int i;
+    HRESULT hr;
+
     for (i = 0; i < sizeof(render_state_indices) / sizeof(*render_state_indices); ++i)
     {
-        trace("Index = %u, Value = %#x\n", i, rsdata->states[i]);
+        DWORD value = ctx->poison_data_buffer.states[i];
+        hr = IDirect3DDevice9_GetRenderState(device, render_state_indices[i], &value);
+        ok(SUCCEEDED(hr), "GetRenderState returned %#x.\n", hr);
+        ok(value == rsdata->states[i], "Chain stage %u, render state %#x: expected %#x, got %#x.\n",
+                chain_stage, render_state_indices[i], rsdata->states[i], value);
     }
 }
 
@@ -1335,18 +1459,14 @@ static HRESULT render_state_setup_handler(struct state_test *test)
     if (ctx == NULL) return E_FAIL;
     test->test_context = ctx;
 
-    test->return_data = &ctx->return_data_buffer;
     test->default_data = &ctx->default_data_buffer;
     test->initial_data = &ctx->default_data_buffer;
     test->test_data_in = &ctx->test_data_buffer;
     test->test_data_out = &ctx->test_data_buffer;
-    test->poison_data = &ctx->poison_data_buffer;
 
     render_state_default_data_init(rsarg, &ctx->default_data_buffer);
     render_state_test_data_init(&ctx->test_data_buffer);
     render_state_poison_data_init(&ctx->poison_data_buffer);
-
-    test->data_size = sizeof(struct render_state_data);
 
     return D3D_OK;
 }
@@ -1361,8 +1481,7 @@ static void render_states_queue_test(struct state_test *test, const struct rende
     test->setup_handler = render_state_setup_handler;
     test->teardown_handler = render_state_teardown_handler;
     test->set_handler = render_state_set_handler;
-    test->get_handler = render_state_get_handler;
-    test->print_handler = render_state_print_handler;
+    test->check_data = render_state_check_data;
     test->test_name = "set_get_render_states";
     test->test_arg = test_arg;
 }
