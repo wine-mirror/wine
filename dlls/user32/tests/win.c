@@ -3242,6 +3242,7 @@ static void test_scrollwindow( HWND hwnd)
     rc2 = rc;
     rc2.top = ( rc2.top + rc2.bottom) / 2;
     ScrollWindowEx( hwnd, 0, - rc2.top, &rc2, NULL, NULL, NULL, SW_ERASE);
+    flush_events(FALSE);
     /* expected: black should have scrolled to the upper half */
     colr = GetPixel( hdc, (rc2.left+rc2.right)/ 2,  rc2.bottom / 4 );
     ok ( colr == 0, "pixel should be black, color is %08x\n", colr);
@@ -3261,6 +3262,7 @@ static void test_scrollwindow( HWND hwnd)
     rc3.left = rc3.right / 4;
     rc3.right -= rc3.right / 4;
     ScrollWindowEx( hwnd, 0, - rc2.top, &rc2, &rc3, NULL, NULL, SW_ERASE);
+    flush_events(FALSE);
     /* expected: black should have scrolled to the upper half */
     colr = GetPixel( hdc, (rc2.left+rc2.right)/ 2,  rc2.bottom / 4 );
     ok ( colr == 0, "pixel should be black, color is %08x\n", colr);
