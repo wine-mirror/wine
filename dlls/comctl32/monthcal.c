@@ -382,6 +382,30 @@ int MONTHCAL_CalculateDayOfWeek(DWORD day, DWORD month, DWORD year)
          DayOfWeekTable[month-1] + day ) % 7);
 }
 
+/* properly updates date to point on next month */
+void inline MONTHCAL_GetNextMonth(SYSTEMTIME *date)
+{
+  if(++date->wMonth > 12)
+  {
+    date->wMonth = 1;
+    date->wYear++;
+  }
+  date->wDayOfWeek = MONTHCAL_CalculateDayOfWeek(date->wDay, date->wMonth,
+                                                 date->wYear);
+}
+
+/* properly updates date to point on prev month */
+void inline MONTHCAL_GetPrevMonth(SYSTEMTIME *date)
+{
+  if(--date->wMonth < 1)
+  {
+    date->wMonth = 12;
+    date->wYear--;
+  }
+  date->wDayOfWeek = MONTHCAL_CalculateDayOfWeek(date->wDay, date->wMonth,
+                                                 date->wYear);
+}
+
 /* From a given point, calculate the row (weekpos), column(daypos)
    and day in the calendar. day== 0 mean the last day of tha last month
 */
@@ -1245,7 +1269,7 @@ MONTHCAL_GetCurSel(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
   if(!curSel) return FALSE;
   if(infoPtr->dwStyle & MCS_MULTISELECT) return FALSE;
 
-  *curSel = infoPtr->minSel;
+  *curSel = infoPtr->curSel;
   TRACE("%d/%d/%d\n", curSel->wYear, curSel->wMonth, curSel->wDay);
   return TRUE;
 }
@@ -1499,36 +1523,28 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
   if(PtInRect(&infoPtr->days, lpht->pt))
   {
       lpht->st.wYear  = infoPtr->curSel.wYear;
-      if ( day < 1)
+      lpht->st.wMonth = infoPtr->curSel.wMonth;
+      if (day < 1)
       {
 	  retval = MCHT_CALENDARDATEPREV;
-	  lpht->st.wMonth = infoPtr->curSel.wMonth - 1;
-	  if (lpht->st.wMonth < 1)
-	  {
-	      lpht->st.wMonth = 12;
-	      lpht->st.wYear--;
-	  }
-	  lpht->st.wDay = MONTHCAL_MonthLength(lpht->st.wMonth,lpht->st.wYear) + day;
+	  MONTHCAL_GetPrevMonth(&lpht->st);
+	  lpht->st.wDay = MONTHCAL_MonthLength(lpht->st.wMonth, lpht->st.wYear) + day;
       }
-      else if (day > MONTHCAL_MonthLength(infoPtr->curSel.wMonth,infoPtr->curSel.wYear))
+      else if (day > MONTHCAL_MonthLength(infoPtr->curSel.wMonth, infoPtr->curSel.wYear))
       {
 	  retval = MCHT_CALENDARDATENEXT;
-	  lpht->st.wMonth = infoPtr->curSel.wMonth + 1;
-	  if (lpht->st.wMonth > 12)
-	  {
-	      lpht->st.wMonth = 1;
-	      lpht->st.wYear++;
-	  }
-	  lpht->st.wDay = day - MONTHCAL_MonthLength(infoPtr->curSel.wMonth,infoPtr->curSel.wYear);
+	  MONTHCAL_GetNextMonth(&lpht->st);
+	  lpht->st.wDay = day - MONTHCAL_MonthLength(infoPtr->curSel.wMonth, infoPtr->curSel.wYear);
       }
       else {
 	retval = MCHT_CALENDARDATE;
-	lpht->st.wMonth = infoPtr->curSel.wMonth;
-	lpht->st.wDay   = day;
-	lpht->st.wDayOfWeek   = MONTHCAL_CalculateDayOfWeek(day,lpht->st.wMonth,lpht->st.wYear);
+	lpht->st.wDay = day;
       }
+      /* always update day of week */
+      lpht->st.wDayOfWeek = MONTHCAL_CalculateDayOfWeek(day, lpht->st.wMonth,
+                                                             lpht->st.wYear);
       goto done;
-    }
+  }
   if(PtInRect(&infoPtr->todayrect, lpht->pt)) {
     retval = MCHT_TODAYLINK;
     goto done;
@@ -1575,11 +1591,7 @@ static void MONTHCAL_GoToNextMonth(MONTHCAL_INFO *infoPtr)
 
   TRACE("\n");
 
-  next.wMonth++;
-  if(next.wMonth > 12) {
-    next.wYear++;
-    next.wMonth = 1;
-  }
+  MONTHCAL_GetNextMonth(&next);
 
   if(!MONTHCAL_IsDateInValidRange(infoPtr, &next)) return;
 
@@ -1595,11 +1607,7 @@ static void MONTHCAL_GoToPrevMonth(MONTHCAL_INFO *infoPtr)
 
   TRACE("\n");
 
-  prev.wMonth--;
-  if(prev.wMonth < 1) {
-    prev.wYear--;
-    prev.wMonth = 12;
-  }
+  MONTHCAL_GetPrevMonth(&prev);
 
   if(!MONTHCAL_IsDateInValidRange(infoPtr, &prev)) return;
 
