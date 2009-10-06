@@ -207,6 +207,23 @@ static CRITICAL_SECTION xrender_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 #define NATIVE_BYTE_ORDER LSBFirst
 #endif
 
+static XRENDERINFO get_xrender_info(X11DRV_PDEVICE *physDev)
+{
+    if(!physDev->xrender)
+    {
+        physDev->xrender = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct tagXRENDERINFO));
+
+        if(!physDev->xrender)
+        {
+            ERR("Unable to allocate XRENDERINFO!\n");
+            return NULL;
+        }
+        physDev->xrender->cache_index = -1;
+    }
+
+    return physDev->xrender;
+}
+
 static BOOL get_xrender_template(const WineXRenderFormatTemplate *fmt, XRenderPictFormat *templ, unsigned long *mask)
 {
     templ->id = 0;
@@ -795,6 +812,7 @@ void X11DRV_XRender_Finalize(void)
 BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
 {
     LFANDSIZE lfsz;
+    XRENDERINFO info;
 
     GetObjectW(hfont, sizeof(lfsz.lf), &lfsz.lf);
     TRACE("h=%d w=%d weight=%d it=%d charset=%d name=%s\n",
@@ -806,15 +824,13 @@ BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
     GetWorldTransform( physDev->hdc, &lfsz.xform );
     lfsz_calc_hash(&lfsz);
 
+    info = get_xrender_info(physDev);
+    if (!info) return 0;
+
     EnterCriticalSection(&xrender_cs);
-    if(!physDev->xrender) {
-        physDev->xrender = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-				     sizeof(*physDev->xrender));
-	physDev->xrender->cache_index = -1;
-    }
-    else if(physDev->xrender->cache_index != -1)
-        dec_ref_cache(physDev->xrender->cache_index);
-    physDev->xrender->cache_index = GetCacheEntry(physDev, &lfsz);
+    if(info->cache_index != -1)
+        dec_ref_cache(info->cache_index);
+    info->cache_index = GetCacheEntry(physDev, &lfsz);
     LeaveCriticalSection(&xrender_cs);
     return 0;
 }
