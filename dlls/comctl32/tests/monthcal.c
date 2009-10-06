@@ -383,7 +383,7 @@ static void test_monthcal(void)
     expect(1200, st[1].wMilliseconds);
 
     ok(SendMessage(hwnd, MCM_GETRANGE, 0, (LPARAM)st1) == GDTR_MAX, "No limits should be set\n");
-    ok(st1[0].wYear != 2000, "Lover limit changed\n");
+    ok(st1[0].wYear != 2000, "Lower limit changed\n");
     /* invalid timestamp should be replaced with today data, except msecs */
     expect(today.wHour, st1[1].wHour);
     expect(today.wMinute, st1[1].wMinute);
@@ -407,10 +407,10 @@ static void test_monthcal(void)
     st[1].wMonth = 0;
     ok(!SendMessage(hwnd, MCM_SETRANGE, GDTR_MIN | GDTR_MAX, (LPARAM)st), "Should have failed to set limits\n");
     ok(SendMessage(hwnd, MCM_GETRANGE, 0, (LPARAM)st1) == GDTR_MAX, "No limits should be set\n");
-    ok(st1[0].wYear != 2000, "Lover limit changed\n");
+    ok(st1[0].wYear != 2000, "Lower limit changed\n");
     ok(!SendMessage(hwnd, MCM_SETRANGE, GDTR_MAX, (LPARAM)st), "Should have failed to set MAX limit\n");
     ok(SendMessage(hwnd, MCM_GETRANGE, 0, (LPARAM)st1) == GDTR_MAX, "No limits should be set\n");
-    ok(st1[0].wYear != 2000, "Lover limit changed\n");
+    ok(st1[0].wYear != 2000, "Lower limit changed\n");
 
     GetSystemTime(&st[0]);
     st[0].wDay = 20;
