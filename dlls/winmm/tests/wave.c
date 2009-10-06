@@ -825,6 +825,7 @@ static void wave_out_test_device(UINT_PTR device)
     WAVEOUTCAPSW capsW;
     WAVEFORMATEX format, oformat;
     WAVEFORMATEXTENSIBLE wfex;
+    IMAADPCMWAVEFORMAT wfa;
     HWAVEOUT wout;
     MMRESULT rc;
     UINT f;
@@ -1159,7 +1160,6 @@ static void wave_out_test_device(UINT_PTR device)
     format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
     format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
     format.cbSize=0;
-    oformat=format;
     rc=waveOutOpen(&wout,device,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
     ok(rc==MMSYSERR_NOERROR ||rc==WAVERR_BADFORMAT ||
        rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
@@ -1176,28 +1176,30 @@ static void wave_out_test_device(UINT_PTR device)
         trace("waveOutOpen(%s): WAVE_FORMAT_MULAW not supported\n",
               dev_name(device));
 
-    format.wFormatTag=WAVE_FORMAT_ADPCM;
-    format.nChannels=2;
-    format.wBitsPerSample=4;
-    format.nSamplesPerSec=22050;
-    format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
-    format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
-    format.cbSize=0;
-    oformat=format;
-    rc=waveOutOpen(&wout,device,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
+    wfa.wfx.wFormatTag=WAVE_FORMAT_IMA_ADPCM;
+    wfa.wfx.nChannels=1;
+    wfa.wfx.nSamplesPerSec=11025;
+    wfa.wfx.nAvgBytesPerSec=5588;
+    wfa.wfx.nBlockAlign=256;
+    wfa.wfx.wBitsPerSample=4; /* see imaadp32.c */
+    wfa.wfx.cbSize=2;
+    wfa.wSamplesPerBlock=505;
+    rc=waveOutOpen(&wout,device,&wfa.wfx,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
     ok(rc==MMSYSERR_NOERROR ||rc==WAVERR_BADFORMAT ||
        rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
        "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         waveOutClose(wout);
-        wave_out_test_deviceOut(device,1.0,1,0,&format,0,CALLBACK_EVENT,
+        /* TODO: teach wave_generate_* ADPCM
+        wave_out_test_deviceOut(device,1.0,1,0,&wfa.wfx,0,CALLBACK_EVENT,
                                 &capsA,winetest_interactive,TRUE,FALSE);
-        wave_out_test_deviceOut(device,1.0,10,0,&format,0,CALLBACK_EVENT,
+        wave_out_test_deviceOut(device,1.0,10,0,&wfa.wfx,0,CALLBACK_EVENT,
                                 &capsA,winetest_interactive,TRUE,FALSE);
-        wave_out_test_deviceOut(device,1.0,5,1,&format,0,CALLBACK_EVENT,
+        wave_out_test_deviceOut(device,1.0,5,1,&wfa.wfx,0,CALLBACK_EVENT,
                                 &capsA,winetest_interactive,TRUE,FALSE);
+	*/
     } else
-        trace("waveOutOpen(%s): WAVE_FORMAT_ADPCM not supported\n",
+        trace("waveOutOpen(%s): WAVE_FORMAT_IMA_ADPCM not supported\n",
               dev_name(device));
 
     /* test if WAVEFORMATEXTENSIBLE supported */
