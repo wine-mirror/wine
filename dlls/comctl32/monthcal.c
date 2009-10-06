@@ -63,10 +63,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(monthcal);
 #define MC_SEL_LBUTDOWN	    2	/* Left button pressed in calendar */
 #define MC_PREVPRESSED      4   /* Prev month button pressed */
 #define MC_NEXTPRESSED      8   /* Next month button pressed */
-#define MC_NEXTMONTHDELAY   350	/* when continuously pressing `next */
-										/* month', wait 500 ms before going */
-										/* to the next month */
+#define MC_PREVNEXTMONTHDELAY   350	/* when continuously pressing `next/prev
+					   month', wait 500 ms before going
+					   to the next/prev month */
+#define MC_TODAYUPDATEDELAY 120000 /* time between today check for update (2 min) */
+
 #define MC_PREVNEXTMONTHTIMER   1	/* Timer ID's */
+#define MC_TODAYUPDATETIMER     2
 
 #define countof(arr) (sizeof(arr)/sizeof(arr[0]))
 
@@ -98,6 +101,7 @@ typedef struct
     int		monthRange;
     MONTHDAYSTATE *monthdayState;
     SYSTEMTIME	todaysDate;
+    BOOL	todaySet;       /* Today was forced with MCM_SETTODAY */
     int		status;		/* See MC_SEL flags */
     SYSTEMTIME	firstSel;	/* first selected day */
     INT		maxSelCount;
@@ -1380,21 +1384,45 @@ MONTHCAL_GetToday(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *today)
   return TRUE;
 }
 
+/* Internal helper for MCM_SETTODAY handler and auto update timer handler
+ *
+ * RETURN VALUE
+ *
+ *  TRUE  - today date changed
+ *  FALSE - today date isn't changed
+ */
+static BOOL
+MONTHCAL_UpdateToday(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *today)
+{
+  RECT new_r, old_r;
 
+  if(MONTHCAL_IsDateEqual(today, &infoPtr->todaysDate)) return FALSE;
+
+  MONTHCAL_CalcPosFromDay(infoPtr, infoPtr->todaysDate.wDay,
+                                   infoPtr->todaysDate.wMonth, &old_r);
+  MONTHCAL_CalcPosFromDay(infoPtr, today->wDay, today->wMonth, &new_r);
+
+  infoPtr->todaysDate = *today;
+
+  /* only two days need redrawing */
+  InvalidateRect(infoPtr->hwndSelf, &old_r, FALSE);
+  InvalidateRect(infoPtr->hwndSelf, &new_r, FALSE);
+  return TRUE;
+}
+
+/* MCM_SETTODAT handler */
 static LRESULT
-MONTHCAL_SetToday(MONTHCAL_INFO *infoPtr, SYSTEMTIME *today)
+MONTHCAL_SetToday(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *today)
 {
   TRACE("%p\n", today);
 
   if(!today) return FALSE;
 
-  if(MONTHCAL_IsDateEqual(today, &infoPtr->todaysDate)) return TRUE;
+  /* remember if date was set successfully */
+  if(MONTHCAL_UpdateToday(infoPtr, today)) infoPtr->todaySet = TRUE;
 
-  infoPtr->todaysDate = *today;
-  InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
   return TRUE;
 }
-
 
 static LRESULT
 MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
@@ -1678,14 +1706,14 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   case MCHT_TITLEBTNNEXT:
     MONTHCAL_GoToNextMonth(infoPtr);
     infoPtr->status = MC_NEXTPRESSED;
-    SetTimer(infoPtr->hwndSelf, MC_PREVNEXTMONTHTIMER, MC_NEXTMONTHDELAY, 0);
+    SetTimer(infoPtr->hwndSelf, MC_PREVNEXTMONTHTIMER, MC_PREVNEXTMONTHDELAY, 0);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     return 0;
 
   case MCHT_TITLEBTNPREV:
     MONTHCAL_GoToPrevMonth(infoPtr);
     infoPtr->status = MC_PREVPRESSED;
-    SetTimer(infoPtr->hwndSelf, MC_PREVNEXTMONTHTIMER, MC_NEXTMONTHDELAY, 0);
+    SetTimer(infoPtr->hwndSelf, MC_PREVNEXTMONTHTIMER, MC_PREVNEXTMONTHDELAY, 0);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     return 0;
 
@@ -1834,6 +1862,20 @@ MONTHCAL_Timer(MONTHCAL_INFO *infoPtr, WPARAM id)
     if(infoPtr->status & MC_PREVPRESSED) MONTHCAL_GoToPrevMonth(infoPtr);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     break;
+  case MC_TODAYUPDATETIMER:
+  {
+    SYSTEMTIME st;
+
+    if(infoPtr->todaySet) return 0;
+
+    GetLocalTime(&st);
+    MONTHCAL_UpdateToday(infoPtr, &st);
+
+    /* notification sent anyway */
+    MONTHCAL_NotifySelectionChange(infoPtr);
+
+    return 0;
+  }
   default:
     ERR("got unknown timer %ld\n", id);
     break;
@@ -2211,7 +2253,10 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   /* call MONTHCAL_UpdateSize to set all of the dimensions */
   /* of the control */
   MONTHCAL_UpdateSize(infoPtr);
-  
+
+  /* today auto update timer, to be freed only on control destruction */
+  SetTimer(infoPtr->hwndSelf, MC_TODAYUPDATETIMER, MC_TODAYUPDATEDELAY, 0);
+
   OpenThemeData (infoPtr->hwndSelf, themeClass);
 
   return 0;
