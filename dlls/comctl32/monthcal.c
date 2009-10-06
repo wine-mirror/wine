@@ -66,8 +66,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(monthcal);
 #define MC_NEXTMONTHDELAY   350	/* when continuously pressing `next */
 										/* month', wait 500 ms before going */
 										/* to the next month */
-#define MC_NEXTMONTHTIMER   1			/* Timer ID's */
-#define MC_PREVMONTHTIMER   2
+#define MC_PREVNEXTMONTHTIMER   1	/* Timer ID's */
 
 #define countof(arr) (sizeof(arr)/sizeof(arr[0]))
 
@@ -1679,14 +1678,14 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   case MCHT_TITLEBTNNEXT:
     MONTHCAL_GoToNextMonth(infoPtr);
     infoPtr->status = MC_NEXTPRESSED;
-    SetTimer(infoPtr->hwndSelf, MC_NEXTMONTHTIMER, MC_NEXTMONTHDELAY, 0);
+    SetTimer(infoPtr->hwndSelf, MC_PREVNEXTMONTHTIMER, MC_NEXTMONTHDELAY, 0);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     return 0;
 
   case MCHT_TITLEBTNPREV:
     MONTHCAL_GoToPrevMonth(infoPtr);
     infoPtr->status = MC_PREVPRESSED;
-    SetTimer(infoPtr->hwndSelf, MC_PREVMONTHTIMER, MC_NEXTMONTHDELAY, 0);
+    SetTimer(infoPtr->hwndSelf, MC_PREVNEXTMONTHTIMER, MC_NEXTMONTHDELAY, 0);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     return 0;
 
@@ -1767,14 +1766,9 @@ MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
   TRACE("\n");
 
-  if(infoPtr->status & MC_NEXTPRESSED) {
-    KillTimer(infoPtr->hwndSelf, MC_NEXTMONTHTIMER);
-    infoPtr->status &= ~MC_NEXTPRESSED;
-    redraw = TRUE;
-  }
-  if(infoPtr->status & MC_PREVPRESSED) {
-    KillTimer(infoPtr->hwndSelf, MC_PREVMONTHTIMER);
-    infoPtr->status &= ~MC_PREVPRESSED;
+  if(infoPtr->status & (MC_PREVPRESSED | MC_NEXTPRESSED)) {
+    KillTimer(infoPtr->hwndSelf, MC_PREVNEXTMONTHTIMER);
+    infoPtr->status &= ~(MC_PREVPRESSED | MC_NEXTPRESSED);
     redraw = TRUE;
   }
 
@@ -1830,29 +1824,20 @@ MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
 
 static LRESULT
-MONTHCAL_Timer(MONTHCAL_INFO *infoPtr, WPARAM wParam)
+MONTHCAL_Timer(MONTHCAL_INFO *infoPtr, WPARAM id)
 {
-  BOOL redraw = FALSE;
+  TRACE("%ld\n", id);
 
-  TRACE("%ld\n", wParam);
-
-  switch(wParam) {
-  case MC_NEXTMONTHTIMER:
-    redraw = TRUE;
-    MONTHCAL_GoToNextMonth(infoPtr);
-    break;
-  case MC_PREVMONTHTIMER:
-    redraw = TRUE;
-    MONTHCAL_GoToPrevMonth(infoPtr);
+  switch(id) {
+  case MC_PREVNEXTMONTHTIMER:
+    if(infoPtr->status & MC_NEXTPRESSED) MONTHCAL_GoToNextMonth(infoPtr);
+    if(infoPtr->status & MC_PREVPRESSED) MONTHCAL_GoToPrevMonth(infoPtr);
+    InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     break;
   default:
-    ERR("got unknown timer\n");
+    ERR("got unknown timer %ld\n", id);
     break;
   }
-
-  /* redraw only if necessary */
-  if(redraw)
-    InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
 
   return 0;
 }
