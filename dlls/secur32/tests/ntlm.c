@@ -32,6 +32,7 @@
 #include <sspi.h>
 #include <rpc.h>
 #include <rpcdce.h>
+#include <secext.h>
 
 #include "wine/test.h"
 
@@ -59,6 +60,7 @@ static SECURITY_STATUS (SEC_ENTRY * pEncryptMessage)(PCtxtHandle, ULONG,
                             PSecBufferDesc, ULONG);
 static SECURITY_STATUS (SEC_ENTRY * pDecryptMessage)(PCtxtHandle, PSecBufferDesc,
                             ULONG, PULONG);
+static BOOLEAN (WINAPI * pGetUserNameExA)(EXTENDED_NAME_FORMAT, LPSTR, PULONG);
 
 typedef struct _SspiData {
     PCredHandle cred;
@@ -168,6 +170,7 @@ static void InitFunctionPtrs(void)
         pVerifySignature = (PVOID)GetProcAddress(secdll, "VerifySignature");
         pEncryptMessage = (PVOID)GetProcAddress(secdll, "EncryptMessage");
         pDecryptMessage = (PVOID)GetProcAddress(secdll, "DecryptMessage");
+        pGetUserNameExA = (PVOID)GetProcAddress(secdll, "GetUserNameExA");
     }
 }
 
@@ -1267,6 +1270,48 @@ static void test_cred_multiple_use(void)
     ok(ret == SEC_E_OK, "FreeCredentialsHandle failed with error 0x%x\n", ret);
 }
 
+static void test_null_auth_data(void)
+{
+    SECURITY_STATUS status;
+    PSecPkgInfo info;
+    CredHandle cred;
+    CtxtHandle ctx;
+    SecBufferDesc buffer_desc;
+    SecBuffer buffers[1];
+    char user[256];
+    TimeStamp ttl;
+    ULONG attr, size;
+    BOOLEAN ret;
+
+    if(pQuerySecurityPackageInfoA((SEC_CHAR *)"NTLM", &info) != SEC_E_OK)
+    {
+        skip("NTLM package not installed, skipping test\n");
+        return;
+    }
+
+    status = pAcquireCredentialsHandleA(NULL, (SEC_CHAR *)"NTLM", SECPKG_CRED_OUTBOUND,
+                                        NULL, NULL, NULL, NULL, &cred, &ttl);
+    ok(status == SEC_E_OK, "AcquireCredentialsHande() failed %s\n", getSecError(status));
+
+    buffers[0].cbBuffer = info->cbMaxToken;
+    buffers[0].BufferType = SECBUFFER_TOKEN;
+    buffers[0].pvBuffer = HeapAlloc(GetProcessHeap(), 0, buffers[0].cbBuffer);
+
+    buffer_desc.ulVersion = SECBUFFER_VERSION;
+    buffer_desc.cBuffers = sizeof(buffers)/sizeof(buffers[0]);
+    buffer_desc.pBuffers = buffers;
+
+    size = sizeof(user);
+    ret = pGetUserNameExA(NameSamCompatible, user, &size);
+    ok(ret, "GetUserNameExA failed %u\n", GetLastError());
+
+    status = pInitializeSecurityContextA(&cred, NULL, (SEC_CHAR *)user,
+                                         ISC_REQ_CONNECTION, 0, SECURITY_NETWORK_DREP,
+                                         NULL, 0, &ctx, &buffer_desc, &attr, &ttl);
+    todo_wine
+    ok(status == SEC_I_CONTINUE_NEEDED, "InitializeSecurityContextA failed %s\n", getSecError(status));
+}
+
 START_TEST(ntlm)
 {
     InitFunctionPtrs();
@@ -1290,6 +1335,7 @@ START_TEST(ntlm)
             testSignSeal();
 
         test_cred_multiple_use();
+        if (pGetUserNameExA) test_null_auth_data();
     }
     else
         win_skip("Needed functions are not available\n");
