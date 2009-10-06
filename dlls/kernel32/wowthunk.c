@@ -48,11 +48,11 @@ WINE_DECLARE_DEBUG_CHANNEL(snoop);
 extern DWORD WINAPI wine_call_to_16( FARPROC16 target, DWORD cbArgs, PEXCEPTION_HANDLER handler );
 extern void WINAPI wine_call_to_16_regs( CONTEXT86 *context, DWORD cbArgs, PEXCEPTION_HANDLER handler );
 extern void __wine_call_to_16_ret(void);
-extern void CALL32_CBClient_Ret();
-extern void CALL32_CBClientEx_Ret();
-extern void DPMI_PendingEventCheck();
-extern void DPMI_PendingEventCheck_Cleanup();
-extern void DPMI_PendingEventCheck_Return();
+extern void CALL32_CBClient_Ret(void);
+extern void CALL32_CBClientEx_Ret(void);
+extern void DPMI_PendingEventCheck(void);
+extern void DPMI_PendingEventCheck_Cleanup(void);
+extern void DPMI_PendingEventCheck_Return(void);
 extern BYTE __wine_call16_start[];
 extern BYTE __wine_call16_end[];
 

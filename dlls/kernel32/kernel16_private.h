@@ -114,7 +114,7 @@ typedef struct
 {
     WORD   pushw_bp;               /* pushw %bp */
     BYTE   pushl;                  /* pushl $target */
-    void (*target)();
+    void  *target;
     WORD   call;                   /* call CALLFROM16 */
     short  callfrom16;
 } ENTRYPOINT16;
@@ -147,8 +147,8 @@ typedef struct _THHOOK
     HTASK16    LockTDB;             /* 14 hLockedTask */
 } THHOOK;
 
-extern LONG __wine_call_from_16();
-extern void __wine_call_from_16_regs();
+extern LONG __wine_call_from_16(void);
+extern void __wine_call_from_16_regs(void);
 
 extern THHOOK *pThhook;
 
