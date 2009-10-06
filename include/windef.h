@@ -227,7 +227,8 @@ typedef unsigned int    ULONG,      *PULONG;
 /* Note that Winelib is purely Win32.                             */
 
 #ifdef __WINESRC__
-#define WINE_NO_UNICODE_MACROS
+#define WINE_NO_UNICODE_MACROS 1
+#define WINE_STRICT_PROTOTYPES 1
 #endif
 
 #ifdef WINE_NO_UNICODE_MACROS
@@ -304,10 +305,15 @@ typedef HICON HCURSOR;
 
 /* Callback function pointers types */
 
+#ifdef WINE_STRICT_PROTOTYPES
+typedef INT_PTR (CALLBACK *FARPROC)(void);
+typedef INT_PTR (CALLBACK *NEARPROC)(void);
+typedef INT_PTR (CALLBACK *PROC)(void);
+#else
 typedef INT_PTR (CALLBACK *FARPROC)();
 typedef INT_PTR (CALLBACK *NEARPROC)();
 typedef INT_PTR (CALLBACK *PROC)();
-
+#endif
 
 /* Macros to split words and longs. */
 

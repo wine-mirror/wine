@@ -472,7 +472,7 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
 /***********************************************************************
  *		ICOpenFunction			[MSVFW32.@]
  */
-HIC VFWAPI ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC lpfnHandler)
+HIC VFWAPI ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, DRIVERPROC lpfnHandler)
 {
     ICOPEN      icopen;
     WINE_HIC*   whic;

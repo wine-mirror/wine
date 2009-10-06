@@ -499,7 +499,11 @@ BOOL    VFWAPI  ICInstall(DWORD fccType, DWORD fccHandler, LPARAM lParam, LPSTR 
 BOOL    VFWAPI  ICRemove(DWORD fccType, DWORD fccHandler, UINT wFlags);
 LRESULT	VFWAPI	ICGetInfo(HIC hic,ICINFO *picinfo, DWORD cb);
 HIC	VFWAPI	ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode);
+#ifdef WINE_STRICT_PROTOTYPES
+HIC	VFWAPI	ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, DRIVERPROC lpfnHandler);
+#else
 HIC	VFWAPI	ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC lpfnHandler);
+#endif
 
 LRESULT VFWAPI	ICClose(HIC hic);
 HIC	VFWAPI	ICLocate(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn, LPBITMAPINFOHEADER lpbiOut, WORD wFlags);
