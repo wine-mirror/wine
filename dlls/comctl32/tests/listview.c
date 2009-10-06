@@ -4021,6 +4021,80 @@ static void test_LVS_EX_TRANSPARENTBKGND(void)
     DestroyWindow(hwnd);
 }
 
+void test_ApproximateViewRect(void)
+{
+    HWND hwnd;
+    DWORD ret;
+    INT cx, cy;
+    HIMAGELIST himl;
+    HBITMAP hbmp;
+    LVITEMA itema;
+    static CHAR test[] = "abracadabra, a very long item label";
+
+    cx = GetSystemMetrics(SM_CXICONSPACING) - GetSystemMetrics(SM_CXICON);
+    cy = GetSystemMetrics(SM_CYICONSPACING) - GetSystemMetrics(SM_CYICON);
+
+    hwnd = create_custom_listview_control(LVS_ICON);
+    himl = ImageList_Create(40, 40, 0, 4, 4);
+    ok(himl != NULL, "failed to create imagelist\n");
+    hbmp = CreateBitmap(40, 40, 1, 1, NULL);
+    ok(hbmp != NULL, "failed to create bitmap\n");
+    ret = ImageList_Add(himl, hbmp, 0);
+    expect(0, ret);
+    ret = SendMessage(hwnd, LVM_SETIMAGELIST, 0, (LPARAM)himl);
+    expect(0, ret);
+
+    itema.mask = LVIF_IMAGE;
+    itema.iImage = 0;
+    itema.iItem = 0;
+    itema.iSubItem = 0;
+    ret = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM)&itema);
+    expect(0, ret);
+
+    ret = SendMessage(hwnd, LVM_SETICONSPACING, 0, MAKELPARAM(75, 75));
+    if (ret == 0)
+    {
+        /* version 4.0 */
+        win_skip("LVM_SETICONSPACING unimplemented. Skipping.\n");
+        return;
+    }
+
+    ret = SendMessage(hwnd, LVM_APPROXIMATEVIEWRECT, 11, MAKELPARAM(100,100));
+    ok(MAKELONG(77,827)==ret,"Incorrect Approximate rect\n");
+
+    ret = SendMessage(hwnd, LVM_SETICONSPACING, 0, MAKELPARAM(50, 50));
+    ret = SendMessage(hwnd, LVM_APPROXIMATEVIEWRECT, 11, MAKELPARAM(100,100));
+    ok(MAKELONG(102,302)==ret,"Incorrect Approximate rect\n");
+
+    ret = SendMessage(hwnd, LVM_APPROXIMATEVIEWRECT, -1, MAKELPARAM(100,100));
+    ok(MAKELONG(52,52)==ret,"Incorrect Approximate rect\n");
+
+    itema.pszText = test;
+    ret = SendMessage(hwnd, LVM_SETITEMTEXT, 0, (LPARAM)&itema);
+    expect(TRUE, ret);
+    ret = SendMessage(hwnd, LVM_APPROXIMATEVIEWRECT, -1, MAKELPARAM(100,100));
+    ok(MAKELONG(52,52)==ret,"Incorrect Approximate rect\n");
+
+    ret = SendMessage(hwnd, LVM_APPROXIMATEVIEWRECT, 0, MAKELPARAM(100,100));
+    ok(MAKELONG(52,2)==ret,"Incorrect Approximate rect\n");
+    ret = SendMessage(hwnd, LVM_APPROXIMATEVIEWRECT, 1, MAKELPARAM(100,100));
+    ok(MAKELONG(52,52)==ret,"Incorrect Approximate rect\n");
+    ret = SendMessage(hwnd, LVM_APPROXIMATEVIEWRECT, 2, MAKELPARAM(100,100));
+    ok(MAKELONG(102,52)==ret,"Incorrect Approximate rect\n");
+    ret = SendMessage(hwnd, LVM_APPROXIMATEVIEWRECT, 3, MAKELPARAM(100,100));
+    ok(MAKELONG(102,102)==ret,"Incorrect Approximate rect\n");
+    ret = SendMessage(hwnd, LVM_APPROXIMATEVIEWRECT, 4, MAKELPARAM(100,100));
+    ok(MAKELONG(102,102)==ret,"Incorrect Approximate rect\n");
+    ret = SendMessage(hwnd, LVM_APPROXIMATEVIEWRECT, 5, MAKELPARAM(100,100));
+    ok(MAKELONG(102,152)==ret,"Incorrect Approximate rect\n");
+    ret = SendMessage(hwnd, LVM_APPROXIMATEVIEWRECT, 6, MAKELPARAM(100,100));
+    ok(MAKELONG(102,152)==ret,"Incorrect Approximate rect\n");
+    ret = SendMessage(hwnd, LVM_APPROXIMATEVIEWRECT, 7, MAKELPARAM(160,100));
+    ok(MAKELONG(152,152)==ret,"Incorrect Approximate rect\n");
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -4077,6 +4151,7 @@ START_TEST(listview)
     test_indentation();
     test_getitemspacing();
     test_getcolumnwidth();
+    test_ApproximateViewRect();
 
     if (!load_v6_module(&ctx_cookie))
     {
