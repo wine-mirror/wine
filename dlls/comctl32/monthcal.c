@@ -2191,6 +2191,10 @@ static INT MONTHCAL_StyleChanged(MONTHCAL_INFO *infoPtr, WPARAM wStyleType,
 
     infoPtr->dwStyle = lpss->styleNew;
 
+    /* make room for week numbers */
+    if ((lpss->styleNew ^ lpss->styleOld) & MCS_WEEKNUMBERS)
+        MONTHCAL_UpdateSize(infoPtr);
+
     return 0;
 }
 
