@@ -1648,6 +1648,11 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
             if (stateblock->streamSource[i]) IWineD3DBuffer_AddRef(stateblock->streamSource[i]);
         }
 
+        for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
+        {
+            if (stateblock->textures[i]) IWineD3DBaseTexture_AddRef(stateblock->textures[i]);
+        }
+
         if (stateblock->pIndexData) IWineD3DBuffer_AddRef(stateblock->pIndexData);
         if (stateblock->vertexShader) IWineD3DVertexShader_AddRef(stateblock->vertexShader);
         if (stateblock->pixelShader) IWineD3DPixelShader_AddRef(stateblock->pixelShader);
