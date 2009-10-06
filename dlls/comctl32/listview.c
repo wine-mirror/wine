@@ -4857,10 +4857,46 @@ static DWORD LISTVIEW_ApproximateViewRect(const LISTVIEW_INFO *infoPtr, INT nIte
 
     dwViewRect = MAKELONG(wWidth, wHeight);
   }
+  else if (infoPtr->uView == LV_VIEW_ICON)
+  {
+    UINT rows,cols;
+    UINT nItemWidth;
+    UINT nItemHeight;
+
+    nItemWidth = infoPtr->iconSpacing.cx;
+    nItemHeight = infoPtr->iconSpacing.cy;
+
+    if (nItemCount == -1)
+      nItemCount = infoPtr->nItemCount;
+
+    if (wWidth == 0xffff)
+      wWidth = infoPtr->rcList.right - infoPtr->rcList.left;
+
+    if (wWidth < nItemWidth)
+      wWidth = nItemWidth;
+
+    cols = wWidth / nItemWidth;
+    if (cols > nItemCount)
+      cols = nItemCount;
+    if (cols < 1)
+        cols = 1;
+
+    if (nItemCount)
+    {
+      rows = nItemCount / cols;
+      if (nItemCount % cols)
+        rows++;
+    }
+    else
+      rows = 0;
+
+    wHeight = (nItemHeight * rows)+2;
+    wWidth = (nItemWidth * cols)+2;
+
+    dwViewRect = MAKELONG(wWidth, wHeight);
+  }
   else if (infoPtr->uView == LV_VIEW_SMALLICON)
     FIXME("uView == LV_VIEW_SMALLICON: not implemented\n");
-  else if (infoPtr->uView == LV_VIEW_ICON)
-    FIXME("uView == LV_VIEW_ICON: not implemented\n");
 
   return dwViewRect;
 }
