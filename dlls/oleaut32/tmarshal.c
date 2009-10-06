@@ -2037,6 +2037,7 @@ static HRESULT WINAPI
 TMStubImpl_Invoke(
     LPRPCSTUBBUFFER iface, RPCOLEMESSAGE* xmsg,IRpcChannelBuffer*rpcchanbuf)
 {
+#ifdef __i386__
     int		i;
     const FUNCDESC *fdesc;
     TMStubImpl *This = (TMStubImpl *)iface;
@@ -2201,6 +2202,10 @@ exit:
 
     TRACE("returning\n");
     return hres;
+#else
+    FIXME( "not implemented on non-i386\n" );
+    return E_FAIL;
+#endif
 }
 
 static LPRPCSTUBBUFFER WINAPI

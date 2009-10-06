@@ -5621,6 +5621,41 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
     return DISP_E_UNKNOWNNAME;
 }
 
+
+#ifdef __i386__
+
+extern DWORD CDECL call_method( void *func, int nb_args, const DWORD *args );
+__ASM_GLOBAL_FUNC( call_method,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl %esi\n\t"
+                  __ASM_CFI(".cfi_rel_offset %esi,-4\n\t")
+                   "pushl %edi\n\t"
+                  __ASM_CFI(".cfi_rel_offset %edi,-8\n\t")
+                   "movl 12(%ebp),%edx\n\t"
+                   "shll $2,%edx\n\t"
+                   "jz 1f\n\t"
+                   "subl %edx,%esp\n\t"
+                   "andl $~15,%esp\n\t"
+                   "movl 12(%ebp),%ecx\n\t"
+                   "movl 16(%ebp),%esi\n\t"
+                   "movl %esp,%edi\n\t"
+                   "cld\n\t"
+                   "rep; movsl\n"
+                   "1:\tcall *8(%ebp)\n\t"
+                   "leal -8(%ebp),%esp\n\t"
+                   "popl %edi\n\t"
+                   __ASM_CFI(".cfi_same_value %edi\n\t")
+                   "popl %esi\n\t"
+                   __ASM_CFI(".cfi_same_value %esi\n\t")
+                   "popl %ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                   "ret" )
+
 /* ITypeInfo::Invoke
  *
  * Invokes a method, or accesses a property of an object, that implements the
@@ -5639,106 +5674,8 @@ _invoke(FARPROC func,CALLCONV callconv, int nrargs, DWORD *args) {
 
     switch (callconv) {
     case CC_STDCALL:
-
-	switch (nrargs) {
-	case 0:
-		res = func();
-		break;
-	case 1:
-		res = func(args[0]);
-		break;
-	case 2:
-		res = func(args[0],args[1]);
-		break;
-	case 3:
-		res = func(args[0],args[1],args[2]);
-		break;
-	case 4:
-		res = func(args[0],args[1],args[2],args[3]);
-		break;
-	case 5:
-		res = func(args[0],args[1],args[2],args[3],args[4]);
-		break;
-	case 6:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5]);
-		break;
-	case 7:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
-		break;
-	case 8:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7]);
-		break;
-	case 9:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8]);
-		break;
-	case 10:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9]);
-		break;
-	case 11:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10]);
-		break;
-	case 12:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11]);
-		break;
-	case 13:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12]);
-		break;
-	case 14:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13]);
-		break;
-	case 15:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14]);
-		break;
-	case 16:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14],args[15]);
-		break;
-	case 17:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14],args[15],args[16]);
-		break;
-	case 18:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14],args[15],args[16],args[17]);
-		break;
-	case 19:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14],args[15],args[16],args[17],args[18]);
-		break;
-	case 20:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14],args[15],args[16],args[17],args[18],args[19]);
-		break;
-	case 21:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14],args[15],args[16],args[17],args[18],args[19],args[20]);
-		break;
-	case 22:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14],args[15],args[16],args[17],args[18],args[19],args[20],args[21]);
-		break;
-	case 23:
-		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14],args[15],args[16],args[17],args[18],args[19],args[20],args[21],args[22]);
-		break;
-	case 24:
-                res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14],args[15],args[16],args[17],args[18],args[19],args[20],args[21],args[22],args[23]);
-                break;
-	case 25:
-                res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14],args[15],args[16],args[17],args[18],args[19],args[20],args[21],args[22],args[23],args[24]);
-                break;
-	case 26:
-                res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14],args[15],args[16],args[17],args[18],args[19],args[20],args[21],args[22],args[23],args[24],args[25]);
-                break;
-	case 27:
-                res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14],args[15],args[16],args[17],args[18],args[19],args[20],args[21],args[22],args[23],args[24],args[25],args[26]);
-                break;
-	case 28:
-                res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14],args[15],args[16],args[17],args[18],args[19],args[20],args[21],args[22],args[23],args[24],args[25],args[26],args[27]);
-                break;
-	case 29:
-                res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14],args[15],args[16],args[17],args[18],args[19],args[20],args[21],args[22],args[23],args[24],args[25],args[26],args[27],args[28]);
-                break;
-	case 30:
-                res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14],args[15],args[16],args[17],args[18],args[19],args[20],args[21],args[22],args[23],args[24],args[25],args[26],args[27],args[28],args[29]);
-                break;
-	default:
-		FIXME("unsupported number of arguments %d in stdcall\n",nrargs);
-		res = -1;
-		break;
-	}
+    case CC_CDECL:
+        res = call_method( func, nrargs, args );
 	break;
     default:
 	FIXME("unsupported calling convention %d\n",callconv);
@@ -5775,6 +5712,7 @@ static int _dispargsize(VARTYPE vt)
 	return 1;
     }
 }
+#endif /* __i386__ */
 
 static HRESULT userdefined_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc, VARTYPE *vt)
 {
@@ -5954,6 +5892,7 @@ DispCallFunc(
     void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VARTYPE vtReturn, UINT cActuals,
     VARTYPE* prgvt, VARIANTARG** prgpvarg, VARIANT* pvargResult)
 {
+#ifdef __i386__
     int argsize, argspos;
     UINT i;
     DWORD *args;
@@ -6009,9 +5948,13 @@ DispCallFunc(
         V_VT(pvargResult) = vtReturn;
         V_UI4(pvargResult) = hres;
     }
-
     HeapFree(GetProcessHeap(),0,args);
     return S_OK;
+#else
+    FIXME( "(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d)): not implemented for this CPU\n",
+           pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg, pvargResult, V_VT(pvargResult));
+    return E_NOTIMPL;
+#endif
 }
 
 #define INVBUF_ELEMENT_SIZE \
