@@ -2555,29 +2555,27 @@ LookupAccountNameA(
 static BOOL lookup_user_account_name(PSID Sid, PDWORD cbSid, LPWSTR ReferencedDomainName,
                                      LPDWORD cchReferencedDomainName, PSID_NAME_USE peUse )
 {
-    /* Default implementation: Always return a default SID */
-    SID_IDENTIFIER_AUTHORITY identifierAuthority = {SECURITY_NT_AUTHORITY};
+    char buffer[sizeof(TOKEN_USER) + sizeof(SID) + sizeof(DWORD)*SID_MAX_SUB_AUTHORITIES];
+    DWORD len = sizeof(buffer);
+    HANDLE token;
     BOOL ret;
     PSID pSid;
     static const WCHAR dm[] = {'D','O','M','A','I','N',0};
     DWORD nameLen;
     LPCWSTR domainName;
 
-    ret = AllocateAndInitializeSid(&identifierAuthority,
-        2,
-        SECURITY_BUILTIN_DOMAIN_RID,
-        DOMAIN_ALIAS_RID_ADMINS,
-        0, 0, 0, 0, 0, 0,
-        &pSid);
-
-    if (!ret)
-       return FALSE;
-
-    if (!RtlValidSid(pSid))
+    if (!OpenThreadToken(GetCurrentThread(), TOKEN_READ, TRUE, &token))
     {
-       FreeSid(pSid);
-       return FALSE;
+        if (GetLastError() != ERROR_NO_TOKEN) return FALSE;
+        if (!OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &token)) return FALSE;
     }
+
+    ret = GetTokenInformation(token, TokenUser, buffer, len, &len);
+    CloseHandle( token );
+
+    if (!ret) return FALSE;
+
+    pSid = ((TOKEN_USER *)buffer)->User.Sid;
 
     if (Sid != NULL && (*cbSid >= GetLengthSid(pSid)))
        CopySid(*cbSid, Sid, pSid);
@@ -2604,8 +2602,6 @@ static BOOL lookup_user_account_name(PSID Sid, PDWORD cbSid, LPWSTR ReferencedDo
 
     if (ret)
         *peUse = SidTypeUser;
-
-    FreeSid(pSid);
 
     return ret;
 }
