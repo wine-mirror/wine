@@ -721,7 +721,7 @@ static void WINAPI event_client ( client_params *par )
     HANDLE event;
     WSANETWORKEVENTS wsa_events;
     char *send_last, *recv_last, *send_p, *recv_p;
-    long mask = FD_READ | FD_WRITE | FD_CLOSE;
+    LONG mask = FD_READ | FD_WRITE | FD_CLOSE;
 
     trace ( "event_client (%x): starting\n", id );
     client_start ( par );
