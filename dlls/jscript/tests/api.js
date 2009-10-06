@@ -58,6 +58,15 @@ ok(tmp === "undefined", "encodeURI() = " + tmp);
 tmp = encodeURI("abc", "test");
 ok(tmp === "abc", "encodeURI('abc') = " + tmp);
 
+tmp = escape("abc");
+ok(tmp === "abc", "escape('abc') = " + tmp);
+tmp = escape("");
+ok(tmp === "", "escape('') = " + tmp);
+tmp = escape("a1b c!d+e@*-_+./,");
+ok(tmp === "a1b%20c%21d+e@*-_+./%2C", "escape('a1b c!d+e@*-_+./,') = " + tmp);
+tmp = escape();
+ok(tmp === "undefined", "escape() = " + tmp);
+
 tmp = unescape("abc");
 ok(tmp === "abc", "unescape('abc') = " + tmp);
 tmp = unescape("");
@@ -68,6 +77,10 @@ tmp = unescape();
 ok(tmp === "undefined", "unescape() = " + tmp);
 tmp = unescape("%54%65s%u0074");
 ok(tmp === "Test", "unescape('%54%65s%u0074') = " + tmp);
+
+tmp = "aA1~`!@#$%^&*()_+=-][{}';:/.,<>?\|";
+ok(escape(tmp) === "aA1%7E%60%21@%23%24%25%5E%26*%28%29_+%3D-%5D%5B%7B%7D%27%3B%3A/.%2C%3C%3E%3F%7C", "escape('" + tmp + "') = " + escape(tmp));
+ok(unescape(escape(tmp)) === tmp, "unescape(escape('" + tmp + "')) = " + unescape(escape(tmp)));
 
 tmp = "" + new Object();
 ok(tmp === "[object Object]", "'' + new Object() = " + tmp);

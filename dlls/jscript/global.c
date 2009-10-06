@@ -296,8 +296,72 @@ static HRESULT JSGlobal_Enumerator(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
 static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR ret, str;
+    const WCHAR *ptr;
+    DWORD len = 0, i, size;
+    char buf[4];
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(!arg_cnt(dp)) {
+        if(retv) {
+            ret = SysAllocString(undefinedW);
+            if(!ret)
+                return E_OUTOFMEMORY;
+
+            V_VT(retv) = VT_BSTR;
+            V_BSTR(retv) = ret;
+        }
+
+        return S_OK;
+    }
+
+    hres = to_string(ctx, get_arg(dp, 0), ei, &str);
+    if(FAILED(hres))
+        return hres;
+
+    for(ptr=str; *ptr; ptr++) {
+        if(isalnumW(*ptr) || *ptr=='*' || *ptr=='@' || *ptr=='-' || *ptr=='_'
+                || *ptr=='+' || *ptr=='.' || *ptr=='/')
+            len++;
+        else {
+            size = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, NULL, 0, NULL, NULL)*3;
+            if(!size) {
+                FIXME("throw Error\n");
+                return E_FAIL;
+            }
+            len += size;
+        }
+    }
+
+    ret = SysAllocStringLen(NULL, len);
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    len = 0;
+    for(ptr=str; *ptr; ptr++) {
+        if(isalnumW(*ptr) || *ptr=='*' || *ptr=='@' || *ptr=='-' || *ptr=='_'
+                || *ptr=='+' || *ptr=='.' || *ptr=='/')
+            ret[len++] = *ptr;
+        else {
+            size = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, buf, sizeof(buf), NULL, NULL);
+            for(i=0; i<size; i++) {
+                ret[len++] = '%';
+                ret[len++] = int_to_char(buf[i] >> 4);
+                ret[len++] = int_to_char(buf[i] & 0xf);
+            }
+        }
+    }
+
+    if(retv) {
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = ret;
+    }
+    else
+        SysFreeString(ret);
+
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.1.2.1 */
