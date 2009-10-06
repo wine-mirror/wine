@@ -648,8 +648,15 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
                 if(reg_maps->constf[idx] & (1 << shift)) highest_constf = i;
             }
 
-            clip_limit = GL_LIMITS(clipplanes);
-            if(ctx->target_version == ARB) clip_limit = min(clip_limit, 4);
+            if(use_nv_clip(gl_info) && ctx->target_version >= NV2)
+            {
+                clip_limit = GL_LIMITS(clipplanes);
+            }
+            else
+            {
+                unsigned int mask = ctx->cur_vs_args->boolclip.clipplane_mask;
+                clip_limit = min(count_bits(mask), 4);
+            }
             *num_clipplanes = min(clip_limit, max_constantsF - highest_constf - 1);
             max_constantsF -= *num_clipplanes;
             if(*num_clipplanes < clip_limit)
