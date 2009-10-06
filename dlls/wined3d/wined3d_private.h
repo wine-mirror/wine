@@ -240,10 +240,6 @@ static inline float float_24_to_32(DWORD in)
 #define VBO_NONE   0
 #define VBO_HW     1
 
-#define NP2_NONE   0
-#define NP2_REPACK 1
-#define NP2_NATIVE 2
-
 #define ORM_BACKBUFFER  0
 #define ORM_PBUFFER     1
 #define ORM_FBO         2
@@ -324,13 +320,6 @@ enum wined3d_immconst_type
     WINED3D_IMMCONST_FLOAT,
     WINED3D_IMMCONST_FLOAT4,
 };
-
-typedef enum _WINED3DVS_RASTOUT_OFFSETS
-{
-    WINED3DSRO_POSITION = 0,
-    WINED3DSRO_FOG = 1,
-    WINED3DSRO_POINT_SIZE = 2,
-} WINED3DVS_RASTOUT_OFFSETS;
 
 #define WINED3DSP_NOSWIZZLE (0 | (1 << 2) | (2 << 4) | (3 << 6))
 
@@ -766,7 +755,6 @@ extern int num_lock DECLSPEC_HIDDEN;
 #define GL_SUPPORT(ExtName)           (GLINFO_LOCATION.supported[ExtName] != 0)
 #define GL_LIMITS(ExtName)            (GLINFO_LOCATION.max_##ExtName)
 #define GL_EXTCALL(FuncName)          (GLINFO_LOCATION.FuncName)
-#define GL_VEND(_VendName)            (GLINFO_LOCATION.gl_vendor == VENDOR_##_VendName ? TRUE : FALSE)
 
 #define D3DCOLOR_B_R(dw) (((dw) >> 16) & 0xFF)
 #define D3DCOLOR_B_G(dw) (((dw) >>  8) & 0xFF)
@@ -788,8 +776,6 @@ extern int num_lock DECLSPEC_HIDDEN;
 /* DirectX Device Limits */
 /* --------------------- */
 #define MAX_MIP_LEVELS 32  /* Maximum number of mipmap levels. */
-#define MAX_STREAMS  16  /* Maximum possible streams - used for fixed size arrays
-                            See MaxStreams in MSDN under GetDeviceCaps */
 #define HIGHEST_TRANSFORMSTATE WINED3DTS_WORLDMATRIX(255) /* Highest value in WINED3DTRANSFORMSTATETYPE */
 
 /* Checking of API calls */
@@ -826,28 +812,11 @@ do {                                                                            
     memcpy(gl_mat, (mat), 16 * sizeof(float));                                              \
 } while (0)
 
-/* Macro to dump out the current state of the light chain */
-#define DUMP_LIGHT_CHAIN()                    \
-do {                                          \
-  PLIGHTINFOEL *el = This->stateBlock->lights;\
-  while (el) {                                \
-    TRACE("Light %p (glIndex %ld, d3dIndex %ld, enabled %d)\n", el, el->glIndex, el->OriginalIndex, el->lightEnabled);\
-    el = el->next;                            \
-  }                                           \
-} while(0)
-
 /* Trace vector and strided data information */
-#define TRACE_VECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w)
 #define TRACE_STRIDED(si, name) do { if (si->use_map & (1 << name)) \
         TRACE( #name "=(data:%p, stride:%d, format:%#x, vbo %d, stream %u)\n", \
         si->elements[name].data, si->elements[name].stride, si->elements[name].format_desc->format, \
         si->elements[name].buffer_object, si->elements[name].stream_idx); } while(0)
-
-/* Defines used for optimizations */
-
-/*    Only reapply what is necessary */
-#define REAPPLY_ALPHAOP  0x0001
-#define REAPPLY_ALL      0xFFFF
 
 /* Advance declaration of structures to satisfy compiler */
 typedef struct IWineD3DStateBlockImpl IWineD3DStateBlockImpl;
@@ -1230,9 +1199,6 @@ HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwapChain *
 #define WINE_D3D7_CAPABLE(gl_info) (gl_info->supported[ARB_TEXTURE_COMPRESSION] && gl_info->supported[ARB_TEXTURE_CUBE_MAP] && gl_info->supported[ARB_TEXTURE_ENV_DOT3])
 #define WINE_D3D8_CAPABLE(gl_info) WINE_D3D7_CAPABLE(gl_info) && (gl_info->supported[ARB_MULTISAMPLE] && gl_info->supported[ARB_TEXTURE_BORDER_CLAMP])
 #define WINE_D3D9_CAPABLE(gl_info) WINE_D3D8_CAPABLE(gl_info) && (gl_info->supported[ARB_FRAGMENT_PROGRAM] && gl_info->supported[ARB_VERTEX_SHADER])
-
-/* Default callbacks for implicit object destruction */
-extern ULONG WINAPI D3DCB_DefaultDestroyVolume(IWineD3DVolume *pSurface) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * Internal representation of a light
@@ -2066,7 +2032,6 @@ BOOL palette9_changed(IWineD3DSurfaceImpl *This) DECLSPEC_HIDDEN;
 /*****************************************************************************
  * IWineD3DVertexDeclaration implementation structure
  */
-#define MAX_ATTRIBS 16
 
 struct wined3d_vertex_declaration_element
 {
@@ -2268,12 +2233,7 @@ typedef struct IWineD3DQueryImpl
     LONG                      ref;     /* Note: Ref counting not required */
 
     IUnknown                 *parent;
-    /*TODO: replace with iface usage */
-#if 0
-    IWineD3DDevice         *wineD3DDevice;
-#else
     IWineD3DDeviceImpl       *wineD3DDevice;
-#endif
 
     /* IWineD3DQuery fields */
     enum query_state         state;

@@ -4454,16 +4454,6 @@ static HRESULT WINAPI IWineD3DImpl_GetParent(IWineD3D *iface, IUnknown **pParent
     return WINED3D_OK;
 }
 
-ULONG WINAPI D3DCB_DefaultDestroyVolume(IWineD3DVolume *pVolume) {
-    IUnknown* volumeParent;
-    TRACE("(%p) call back\n", pVolume);
-
-    /* Now, release the parent, which will take care of cleaning up the volume for us */
-    IWineD3DVolume_GetParent(pVolume, &volumeParent);
-    IUnknown_Release(volumeParent);
-    return IUnknown_Release(volumeParent);
-}
-
 static void WINE_GLAPI invalid_func(const void *data)
 {
     ERR("Invalid vertex attribute function called\n");
