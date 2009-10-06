@@ -304,7 +304,14 @@ NTSTATUS WINAPI NtQueryInformationProcess(
          * set it to 0 aka "no debugger" to satisfy copy protections */
         len = sizeof(HANDLE);
         if (ProcessInformationLength == len)
-            memset(ProcessInformation, 0, ProcessInformationLength);
+        {
+            if (!ProcessInformation)
+                ret = STATUS_ACCESS_VIOLATION;
+            else if (!ProcessHandle)
+                ret = STATUS_INVALID_HANDLE;
+            else
+                memset(ProcessInformation, 0, ProcessInformationLength);
+        }
         else
             ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
