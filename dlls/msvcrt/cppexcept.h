@@ -24,7 +24,7 @@
 #define CXX_FRAME_MAGIC    0x19930520
 #define CXX_EXCEPTION      0xe06d7363
 
-typedef void (*vtable_ptr)();
+typedef void (*vtable_ptr)(void);
 
 /* type_info object, see cpp.c for implementation */
 typedef struct __type_info
@@ -56,7 +56,7 @@ typedef struct __catchblock_info
     UINT             flags;         /* flags (see below) */
     const type_info *type_info;     /* C++ type caught by this block */
     int              offset;        /* stack offset to copy exception object to */
-    void           (*handler)();    /* catch block handler code */
+    void           (*handler)(void);/* catch block handler code */
 } catchblock_info;
 #define TYPE_FLAG_CONST      1
 #define TYPE_FLAG_VOLATILE   2
@@ -76,7 +76,7 @@ typedef struct __tryblock_info
 typedef struct __unwind_info
 {
     int    prev;          /* prev trylevel unwind handler, to run after this one */
-    void (*handler)();    /* unwind handler */
+    void (*handler)(void);/* unwind handler */
 } unwind_info;
 
 /* descriptor of all try blocks of a given function */
@@ -128,7 +128,7 @@ typedef DWORD (*cxx_exc_custom_handler)( PEXCEPTION_RECORD, cxx_exception_frame*
 typedef struct __cxx_exception_type
 {
     UINT                       flags;            /* TYPE_FLAG flags */
-    void                     (*destructor)();    /* exception object destructor */
+    void                     (*destructor)(void);/* exception object destructor */
     cxx_exc_custom_handler     custom_handler;   /* custom handler for this exception */
     const cxx_type_info_table *type_info_table;  /* list of types for this exception object */
 } cxx_exception_type;

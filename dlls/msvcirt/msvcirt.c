@@ -36,7 +36,7 @@ typedef struct {
 #define THISCALL(func) __thiscall_ ## func
 #define THISCALL_NAME(func) __ASM_NAME("__thiscall_" #func)
 #define DEFINE_THISCALL_WRAPPER(func,args) \
-    extern void THISCALL(func)(); \
+    extern void THISCALL(func)(void); \
     __ASM_GLOBAL_FUNC(__thiscall_ ## func, \
                       "popl %eax\n\t" \
                       "pushl %ecx\n\t" \

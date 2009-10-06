@@ -199,7 +199,7 @@ static void copy_exception( void *object, cxx_exception_frame *frame,
 /* unwind the local function up to a given trylevel */
 static void cxx_local_unwind( cxx_exception_frame* frame, const cxx_function_descr *descr, int last_level)
 {
-    void (*handler)();
+    void (*handler)(void);
     int trylevel = frame->trylevel;
 
     while (trylevel != last_level)
