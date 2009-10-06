@@ -126,10 +126,9 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
     /* cbStruct should contain size of returned data (at most sizeof(dd)) 
        TODO: should it be *exactly* sizeof(dd), as tested here?
      */
-    if (rc == MMSYSERR_NOERROR) {    
+    if (rc == MMSYSERR_NOERROR) {
         ok(dd.cbStruct == sizeof(dd),
-            "acmDriverDetails(): cbStruct = %08x, should be %08lx\n",
-            dd.cbStruct, (unsigned long)sizeof(dd));
+            "acmDriverDetails(): cbStruct = %08x\n", dd.cbStruct);
     }
 
     if (rc == MMSYSERR_NOERROR && winetest_interactive) {
