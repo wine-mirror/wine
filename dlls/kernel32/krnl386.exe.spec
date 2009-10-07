@@ -388,9 +388,9 @@
 483 pascal MapProcessHandle(long) MapProcessHandle
 484 pascal SetProcessDword(long s_word long) SetProcessDword
 485 pascal GetProcessDword(long s_word) GetProcessDword
-486 pascal FreeLibrary32(long) FreeLibrary
-487 pascal GetModuleFileName32(long str word) GetModuleFileNameA
-488 pascal GetModuleHandle32(str) GetModuleHandleA
+486 pascal FreeLibrary32(long) FreeLibrary32_16
+487 pascal GetModuleFileName32(long str word) GetModuleFileName32_16
+488 pascal GetModuleHandle32(str) GetModuleHandle32_16
 489 stub KERNEL_489  # VWin32_BoostWithDecay
 490 pascal -ret16 KERNEL_490(word) KERNEL_490
 491 pascal RegisterServiceProcess(long long) RegisterServiceProcess16

@@ -276,6 +276,15 @@ VOID WINAPI VWin32_EventSet(HANDLE event)
 }
 
 /***********************************************************************
+ *           GetProcAddress32   		(KERNEL.453)
+ */
+FARPROC WINAPI GetProcAddress32_16( HMODULE hModule, LPCSTR function )
+{
+    /* FIXME: we used to disable snoop when returning proc for Win16 subsystem */
+    return GetProcAddress( hModule, function );
+}
+
+/***********************************************************************
  *           CreateW32Event    (KERNEL.457)
  */
 HANDLE WINAPI CreateW32Event( BOOL manual_reset, BOOL initial_state )
@@ -374,6 +383,30 @@ HANDLE WINAPI ConvertToGlobalHandle16( HANDLE handle )
 DWORD WINAPI MapProcessHandle( HANDLE hProcess )
 {
     return GetProcessId( hProcess );
+}
+
+/***********************************************************************
+ *           FreeLibrary32 (KERNEL.486)
+ */
+BOOL WINAPI FreeLibrary32_16( HINSTANCE module )
+{
+    return FreeLibrary( module );
+}
+
+/***********************************************************************
+ *              GetModuleFileName32     (KERNEL.487)
+ */
+DWORD WINAPI GetModuleFileName32_16( HMODULE module, LPSTR buffer, DWORD size )
+{
+    return GetModuleFileNameA( module, buffer, size );
+}
+
+/***********************************************************************
+ *              GetModuleHandle32        (KERNEL.488)
+ */
+HMODULE WINAPI GetModuleHandle32_16(LPCSTR module)
+{
+    return GetModuleHandleA( module );
 }
 
 /***********************************************************************

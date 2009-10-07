@@ -562,7 +562,6 @@ BOOL WINAPI GetModuleHandleExW( DWORD flags, LPCWSTR name, HMODULE *module )
 
 /***********************************************************************
  *              GetModuleHandleA         (KERNEL32.@)
- *              GetModuleHandle32        (KERNEL.488)
  *
  * Get the handle of a dll loaded into the process address space.
  *
@@ -597,7 +596,6 @@ HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
 
 /***********************************************************************
  *              GetModuleFileNameA      (KERNEL32.@)
- *              GetModuleFileName32     (KERNEL.487)
  *
  * Get the file name of a loaded module from its handle.
  *
@@ -996,7 +994,6 @@ HMODULE WINAPI LoadLibraryW(LPCWSTR libnameW)
 
 /***********************************************************************
  *           FreeLibrary   (KERNEL32.@)
- *           FreeLibrary32 (KERNEL.486)
  *
  * Free a dll loaded into the process address space.
  *
@@ -1068,26 +1065,6 @@ FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )
     }
     return fp;
 }
-
-/***********************************************************************
- *           GetProcAddress32   		(KERNEL.453)
- *
- * Find the address of an exported symbol in a loaded dll.
- *
- * PARAMS
- *  hModule  [I] Handle to the dll returned by LoadLibraryA().
- *  function [I] Name of the symbol, or an integer ordinal number < 16384
- *
- * RETURNS
- *  Success: A pointer to the symbol in the process address space.
- *  Failure: NULL. Use GetLastError() to determine the cause.
- */
-FARPROC WINAPI GetProcAddress32_16( HMODULE hModule, LPCSTR function )
-{
-    /* FIXME: we used to disable snoop when returning proc for Win16 subsystem */
-    return GetProcAddress( hModule, function );
-}
-
 
 /***********************************************************************
  *           DelayLoadFailureHook  (KERNEL32.@)
