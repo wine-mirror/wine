@@ -588,7 +588,6 @@ HANDLE WINAPI GetCurrentThread(void)
 #ifdef __i386__
 
 /***********************************************************************
- *		SetLastError (KERNEL.147)
  *		SetLastError (KERNEL32.@)
  */
 /* void WINAPI SetLastError( DWORD error ); */
@@ -599,7 +598,6 @@ __ASM_STDCALL_FUNC( SetLastError, 4,
                    "ret $4" )
 
 /***********************************************************************
- *		GetLastError (KERNEL.148)
  *		GetLastError (KERNEL32.@)
  */
 /* DWORD WINAPI GetLastError(void); */
@@ -622,7 +620,6 @@ __ASM_STDCALL_FUNC( GetCurrentThreadId, 0, ".byte 0x64\n\tmovl 0x24,%eax\n\tret"
 #else  /* __i386__ */
 
 /**********************************************************************
- *		SetLastError (KERNEL.147)
  *		SetLastError (KERNEL32.@)
  *
  * Sets the last-error code.
@@ -636,7 +633,6 @@ void WINAPI SetLastError( DWORD error ) /* [in] Per-thread error code */
 }
 
 /**********************************************************************
- *		GetLastError (KERNEL.148)
  *              GetLastError (KERNEL32.@)
  *
  * Get the last-error code.

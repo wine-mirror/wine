@@ -243,6 +243,24 @@ static const char *GetParamErrorString(UINT16 uErr) {
 
 
 /***********************************************************************
+ *		SetLastError (KERNEL.147)
+ */
+void WINAPI SetLastError16( DWORD error )
+{
+    SetLastError( error );
+}
+
+
+/***********************************************************************
+ *		GetLastError (KERNEL.148)
+ */
+DWORD WINAPI GetLastError16(void)
+{
+    return GetLastError();
+}
+
+
+/***********************************************************************
 *	LogError (KERNEL.324)
 */
 VOID WINAPI LogError16(UINT16 uErr, LPVOID lpvInfo)

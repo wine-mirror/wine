@@ -148,8 +148,8 @@
 144 pascal -ret16 CreateDirectory(ptr ptr) CreateDirectory16
 145 pascal -ret16 RemoveDirectory(ptr) RemoveDirectory16
 146 pascal -ret16 DeleteFile(ptr) DeleteFile16
-147 pascal -ret16 SetLastError(long) SetLastError
-148 pascal   GetLastError() GetLastError
+147 pascal -ret16 SetLastError(long) SetLastError16
+148 pascal GetLastError() GetLastError16
 149 pascal -ret16 GetVersionEx(ptr) GetVersionEx16
 150 pascal -ret16 DirectedYield(word) DirectedYield16
 151 stub WinOldApCall
