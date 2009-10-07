@@ -1681,10 +1681,8 @@ MONTHCAL_RButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 /* creates updown control and edit box */
 static void MONTHCAL_EditYear(MONTHCAL_INFO *infoPtr)
 {
-    static const WCHAR EditW[] = { 'E','D','I','T',0 };
-
     infoPtr->hWndYearEdit =
-	CreateWindowExW(0, EditW, 0, WS_VISIBLE | WS_CHILD | ES_READONLY,
+	CreateWindowExW(0, WC_EDITW, 0, WS_VISIBLE | WS_CHILD | ES_READONLY,
 			infoPtr->titleyear.left + 3, infoPtr->titlebtnnext.top,
 			infoPtr->titleyear.right - infoPtr->titleyear.left + 4,
 			infoPtr->textHeight, infoPtr->hwndSelf,
