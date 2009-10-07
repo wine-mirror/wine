@@ -209,9 +209,8 @@ static void test_SetupCopyOEMInf(void)
        return;
     }
 
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
-       GetLastError() == ERROR_FILE_EXISTS, /* Win98 */
-       "Expected ERROR_FILE_NOT_FOUND or ERROR_FILE_EXISTS, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+       "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
     ok(file_exists(tmpfile), "Expected tmpfile to exist\n");
 
     /* try SP_COPY_REPLACEONLY, dest does not exist */
@@ -307,6 +306,24 @@ static void test_SetupCopyOEMInf(void)
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     ok(!file_exists(path), "Expected source inf to not exist\n");
+
+    if (pSetupUninstallOEMInfA)
+    {
+        char *destfile = strrchr(dest, '\\') + 1;
+
+        SetLastError(0xdeadbeef);
+        ok(pSetupUninstallOEMInfA(destfile, 0, NULL), "Failed to uninstall '%s' : %d\n", destfile, GetLastError());
+    }
+    else
+    {
+        /* Win9x/WinMe */
+        SetLastError(0xdeadbeef);
+        ok(DeleteFileA(dest), "Failed to delete file '%s' : %d\n", dest, GetLastError());
+
+        /* On WinMe we also need to remove the .pnf file */
+        *(strrchr(dest, '.') + 1) = 'p';
+        DeleteFileA(dest);
+    }
 }
 
 static void create_source_file(LPSTR filename, const BYTE *data, DWORD size)
