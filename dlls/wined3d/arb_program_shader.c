@@ -84,12 +84,6 @@ static inline BOOL ffp_clip_emul(IWineD3DStateBlockImpl *stateblock)
     return stateblock->lowest_disabled_stage < 7;
 }
 
-/* Internally used shader constants. Applications can use constants 0 to GL_LIMITS(vs_arb_constantsF) - 1,
- * so upload them above that
- */
-#define ARB_SHADER_PRIVCONST_BASE (GL_LIMITS(vs_arb_constantsF) - 1)
-#define ARB_SHADER_PRIVCONST_POS ARB_SHADER_PRIVCONST_BASE + 0
-
 /* ARB_program_shader private data */
 
 struct control_frame
