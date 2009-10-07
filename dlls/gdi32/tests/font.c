@@ -2920,14 +2920,13 @@ static void test_GetGlyphOutline(void)
 }
 
 /* bug #9995: there is a limit to the character width that can be specified */
-static void test_GetTextMetrics2(  const char *fontname)
+static void test_GetTextMetrics2(const char *fontname, int font_height)
 {
     HFONT of, hf;
     HDC hdc;
     TEXTMETRICA tm;
-    LOGFONTA lf;
     BOOL ret;
-    int avecharw[3], maxcharw[3];
+    int ave_width, height, width, ratio, scale;
 
     if (!is_truetype_font_installed( fontname)) {
         skip("%s is not installed\n", fontname);
@@ -2936,60 +2935,46 @@ static void test_GetTextMetrics2(  const char *fontname)
     hdc = CreateCompatibleDC(0);
     ok( hdc != NULL, "CreateCompatibleDC failed\n");
     /* select width = 0 */
-    hf = CreateFontA( -11, 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE,
+    hf = CreateFontA(font_height, 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE,
             DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_LH_ANGLES,
             DEFAULT_QUALITY, VARIABLE_PITCH,
             fontname);
     ok( hf != NULL, "CreateFontA failed\n");
     of = SelectObject( hdc, hf);
-    ret = GetObjectA( hf, sizeof( lf), &lf);
     ret = GetTextMetricsA( hdc, &tm);
     ok(ret, "GetTextMetricsA error %u\n", GetLastError());
-    avecharw[0] =tm.tmAveCharWidth;
-    maxcharw[0] =tm.tmMaxCharWidth;
+    height = tm.tmHeight;
+    ave_width = tm.tmAveCharWidth;
     SelectObject( hdc, of);
     DeleteObject( hf);
-    /* select LARGE width = 1023 */
-    hf = CreateFontA( -11, 1023, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE,
-            DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_LH_ANGLES,
-            DEFAULT_QUALITY, VARIABLE_PITCH,
-            fontname);
-    ok( hf != NULL, "CreateFontA failed\n");
-    of = SelectObject( hdc, hf);
-    ret = GetObjectA( hf, sizeof( lf), &lf);
-    ret = GetTextMetricsA( hdc, &tm);
-    ok(ret, "GetTextMetricsA error %u\n", GetLastError());
-    avecharw[1] =tm.tmAveCharWidth;
-    maxcharw[1] =tm.tmMaxCharWidth;
-    SelectObject( hdc, of);
-    DeleteObject( hf);
-    /* select TOOLARGE width = 1536 */
-    hf = CreateFontA( -11, 1536, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE,
-            DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_LH_ANGLES,
-            DEFAULT_QUALITY, VARIABLE_PITCH,
-            fontname);
-    ok( hf != NULL, "CreateFontA failed\n");
-    of = SelectObject( hdc, hf);
-    ret = GetObjectA( hf, sizeof( lf), &lf);
-    ret = GetTextMetricsA( hdc, &tm);
-    ok(ret, "GetTextMetricsA error %u\n", GetLastError());
-    avecharw[2] =tm.tmAveCharWidth;
-    maxcharw[2] =tm.tmMaxCharWidth;
-    SelectObject( hdc, of);
-    DeleteObject( hf);
-    /* tests */
-    ok( avecharw[1] > 10 * avecharw[0], "Av. charwidth not large ( %d cmp.to %d)\n",
-            avecharw[1], avecharw[0]);
-    ok( maxcharw[1] > 10 * maxcharw[0], "Max charwidth not large ( %d cmp.to %d)\n",
-            maxcharw[1], maxcharw[0]);
-todo_wine {
-    ok( avecharw[2] ==  avecharw[0], "Unexpected Av. charwidth ( %d cmp.to %d)\n",
-            avecharw[2], avecharw[0]);
-    ok( maxcharw[2] ==  maxcharw[0], "Unexpected Max charwidth ( %d cmp.to %d)\n",
-            maxcharw[2], maxcharw[0]);
-}
-    /* clean up */
+
+    trace("height %d, ave width %d\n", height, ave_width);
+
+    for (width = ave_width * 2; /* nothing*/; width += ave_width)
+    {
+        hf = CreateFont(height, width, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE,
+                        DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_LH_ANGLES,
+                        DEFAULT_QUALITY, VARIABLE_PITCH, fontname);
+        ok(hf != 0, "CreateFont failed\n");
+        of = SelectObject(hdc, hf);
+        ret = GetTextMetrics(hdc, &tm);
+        ok(ret, "GetTextMetrics error %u\n", GetLastError());
+        SelectObject(hdc, of);
+        DeleteObject(hf);
+
+        if (tm.tmAveCharWidth == ave_width || width / height > 200)
+            break;
+    }
+
     DeleteDC(hdc);
+
+    ratio = width / height;
+    scale = width / ave_width;
+
+    trace("max width/height ratio (%d / %d) %d, max width scale (%d / %d) %d\n",
+          width, height, ratio, width, ave_width, scale);
+
+    ok(ratio >= 90 && ratio <= 110, "expected width/height ratio 90-110, got %d\n", ratio);
 }
 
 START_TEST(font)
@@ -3029,6 +3014,10 @@ START_TEST(font)
     test_GdiRealizationInfo();
     test_GetTextFace();
     test_GetGlyphOutline();
-    test_GetTextMetrics2( "Tahoma");
-    test_GetTextMetrics2( "Arial");
+    test_GetTextMetrics2("Tahoma", -11);
+    test_GetTextMetrics2("Tahoma", -55);
+    test_GetTextMetrics2("Tahoma", -110);
+    test_GetTextMetrics2("Arial", -11);
+    test_GetTextMetrics2("Arial", -55);
+    test_GetTextMetrics2("Arial", -110);
 }
