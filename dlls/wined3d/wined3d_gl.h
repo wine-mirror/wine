@@ -4166,15 +4166,15 @@ struct wined3d_gl_info
     unsigned int max_vshader_constantsF;
     unsigned int max_pshader_constantsF;
 
-    unsigned int vs_arb_constantsF;
-    unsigned int vs_arb_max_instructions;
-    unsigned int vs_arb_max_temps;
-    unsigned int ps_arb_constantsF;
-    unsigned int ps_arb_max_local_constants;
-    unsigned int ps_arb_max_instructions;
-    unsigned int ps_arb_max_temps;
-    unsigned int vs_glsl_constantsF;
-    unsigned int ps_glsl_constantsF;
+    unsigned int max_vs_arb_constantsF;
+    unsigned int max_vs_arb_instructions;
+    unsigned int max_vs_arb_temps;
+    unsigned int max_ps_arb_constantsF;
+    unsigned int max_ps_arb_local_constants;
+    unsigned int max_ps_arb_instructions;
+    unsigned int max_ps_arb_temps;
+    unsigned int max_vs_glsl_constantsF;
+    unsigned int max_ps_glsl_constantsF;
 
     DWORD reserved_glsl_constants;
 

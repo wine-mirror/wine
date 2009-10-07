@@ -4611,7 +4611,7 @@ static void shader_glsl_get_caps(WINED3DDEVTYPE devtype,
      * of native instructions, so use that here. For more info see the pixel shader versioning code below.
      */
     if ((gl_info->supported[NV_VERTEX_PROGRAM2] && !gl_info->supported[NV_VERTEX_PROGRAM3])
-            || gl_info->ps_arb_max_instructions <= 512)
+            || gl_info->max_ps_arb_instructions <= 512)
         pCaps->VertexShaderVersion = WINED3DVS_VERSION(2,0);
     else
         pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
@@ -4630,7 +4630,7 @@ static void shader_glsl_get_caps(WINED3DDEVTYPE devtype,
      * NOTE: ps3.0 hardware requires 512 or more instructions but ati and nvidia offer 'enough' (1024 vs 4096) on their most basic ps3.0 hardware.
      */
     if ((gl_info->supported[NV_FRAGMENT_PROGRAM] && !gl_info->supported[NV_FRAGMENT_PROGRAM2])
-            || (gl_info->ps_arb_max_instructions <= 512))
+            || (gl_info->max_ps_arb_instructions <= 512))
         pCaps->PixelShaderVersion = WINED3DPS_VERSION(2,0);
     else
         pCaps->PixelShaderVersion = WINED3DPS_VERSION(3,0);

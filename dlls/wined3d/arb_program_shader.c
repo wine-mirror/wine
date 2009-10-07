@@ -3481,7 +3481,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
 
         struct arb_ps_np2fixup_info* const fixup = priv_ctx.cur_np2fixup_info;
         const WORD map = priv_ctx.cur_ps_args->super.np2_fixup;
-        const UINT max_lconsts = gl_info->ps_arb_max_local_constants;
+        const UINT max_lconsts = GL_LIMITS(ps_arb_local_constants);
 
         fixup->offset = next_local;
         fixup->super.active = 0;
