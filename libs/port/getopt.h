@@ -113,63 +113,11 @@ struct option
 #endif	/* need getopt */
 
 
-/* Get definitions and prototypes for functions to process the
-   arguments in ARGV (ARGC of them, minus the program name) for
-   options given in OPTS.
-
-   Return the option character from OPTS just read.  Return -1 when
-   there are no more options.  For unrecognized options, or options
-   missing arguments, `optopt' is set to the option letter, and '?' is
-   returned.
-
-   The OPTS string is a list of characters which are recognized option
-   letters, optionally followed by colons, specifying that that letter
-   takes an argument, to be placed in `optarg'.
-
-   If a letter in OPTS is followed by two colons, its argument is
-   optional.  This behavior is specific to the GNU `getopt'.
-
-   The argument `--' causes premature termination of argument
-   scanning, explicitly telling `getopt' that there are no more
-   options.
-
-   If OPTS begins with `--', then non-option arguments are treated as
-   arguments to the option '\0'.  This behavior is specific to the GNU
-   `getopt'.  */
-
-#if (defined __STDC__ && __STDC__) || defined __cplusplus
-# ifdef __GNU_LIBRARY__
-/* Many other libraries have conflicting prototypes for getopt, with
-   differences in the consts, in stdlib.h.  To avoid compilation
-   errors, only prototype getopt for the GNU C library.  */
-extern int getopt (int ___argc, char *const *___argv, const char *__shortopts);
-# else /* not __GNU_LIBRARY__ */
-extern int getopt ();
-# endif /* __GNU_LIBRARY__ */
-
-# ifndef __need_getopt
-extern int getopt_long (int ___argc, char *const *___argv,
-			const char *__shortopts,
-		        const struct option *__longopts, int *__longind);
-extern int getopt_long_only (int ___argc, char *const *___argv,
-			     const char *__shortopts,
-		             const struct option *__longopts, int *__longind);
-
 /* Internal only.  Users should not call this directly.  */
 extern int _getopt_internal (int ___argc, char *const *___argv,
 			     const char *__shortopts,
 		             const struct option *__longopts, int *__longind,
 			     int __long_only);
-# endif
-#else /* not __STDC__ */
-extern int getopt ();
-# ifndef __need_getopt
-extern int getopt_long ();
-extern int getopt_long_only ();
-
-extern int _getopt_internal ();
-# endif
-#endif /* __STDC__ */
 
 #ifdef	__cplusplus
 }
