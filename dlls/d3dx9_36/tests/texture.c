@@ -78,7 +78,7 @@ static HRESULT create_file(const char *filename, const unsigned char *data, cons
     return D3DERR_INVALIDCALL;
 }
 
-static void test_D3DXGetImageInfo()
+static void test_D3DXGetImageInfo(void)
 {
     HRESULT hr;
     D3DXIMAGE_INFO info;

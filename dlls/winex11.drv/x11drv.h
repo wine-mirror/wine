@@ -300,7 +300,7 @@ extern BOOL destroy_glxpixmap(Display *display, XID glxpixmap);
 /* IME support */
 extern void IME_UnregisterClasses(void);
 extern void IME_SetOpenStatus(BOOL fOpen);
-extern INT IME_GetCursorPos();
+extern INT IME_GetCursorPos(void);
 extern void IME_SetCursorPos(DWORD pos);
 extern void IME_UpdateAssociation(HWND focus);
 extern BOOL IME_SetCompositionString(DWORD dwIndex, LPCVOID lpComp,

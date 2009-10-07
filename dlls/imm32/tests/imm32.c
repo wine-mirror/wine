@@ -118,7 +118,7 @@ static void msg_spy_init(HWND hwnd) {
     msg_spy_flush_msgs();
 }
 
-static void msg_spy_cleanup() {
+static void msg_spy_cleanup(void) {
     if (msg_spy.get_msg_hook)
         UnhookWindowsHookEx(msg_spy.get_msg_hook);
     if (msg_spy.call_wnd_proc_hook)

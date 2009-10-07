@@ -453,7 +453,7 @@ static void test_GetCountColorProfileElements(void)
     }
 }
 
-static void test_GetStandardColorSpaceProfileA()
+static void test_GetStandardColorSpaceProfileA(void)
 {
     BOOL ret;
     DWORD size;
@@ -533,7 +533,7 @@ static void test_GetStandardColorSpaceProfileA()
     ok( ret, "SetStandardColorSpaceProfileA() failed (%d)\n", GetLastError() );
 }
 
-static void test_GetStandardColorSpaceProfileW()
+static void test_GetStandardColorSpaceProfileW(void)
 {
     BOOL ret;
     DWORD size;

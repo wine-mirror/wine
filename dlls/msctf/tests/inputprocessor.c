@@ -770,7 +770,7 @@ static HRESULT RegisterTextService(REFCLSID rclsid)
     return CoRegisterClassObject(rclsid, (IUnknown*) cf, CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &regid);
 }
 
-static HRESULT UnregisterTextService()
+static HRESULT UnregisterTextService(void)
 {
     return CoRevokeClassObject(regid);
 }

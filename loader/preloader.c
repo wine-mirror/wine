@@ -192,7 +192,7 @@ struct
  *  It calls wld_start, passing a pointer to the args it receives
  *  then jumps to the address wld_start returns.
  */
-void _start();
+void _start(void);
 extern char _end[];
 __ASM_GLOBAL_FUNC(_start,
                   "\tmovl $243,%eax\n"        /* SYS_set_thread_area */

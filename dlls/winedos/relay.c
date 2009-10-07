@@ -167,7 +167,7 @@ void DOSVM_RelayHandler( CONTEXT86 *context )
  */
 void DOSVM_BuildCallFrame( CONTEXT86 *context, DOSRELAY relay, LPVOID data )
 {
-    static void (*__wine_call_from_16_regs_ptr)();
+    static void (*__wine_call_from_16_regs_ptr)(void);
     WORD  code_sel = DOSVM_dpmi_segments->relay_code_sel;
 
     /*
