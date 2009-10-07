@@ -79,20 +79,20 @@
  69 stdcall -noname K32WOWGetVDMPointerUnfix(long)
  70 stdcall -noname K32WOWGetDescriptor(long long)
  71 stub -noname IsThreadId
- 72 stdcall -noname -ret64 K32RtlLargeIntegerAdd(long long long long) ntdll.RtlLargeIntegerAdd
- 73 stdcall -noname -ret64 K32RtlEnlargedIntegerMultiply(long long) ntdll.RtlEnlargedIntegerMultiply
- 74 stdcall -noname -ret64 K32RtlEnlargedUnsignedMultiply(long long) ntdll.RtlEnlargedUnsignedMultiply
- 75 stdcall -noname K32RtlEnlargedUnsignedDivide(long long long ptr) ntdll.RtlEnlargedUnsignedDivide
- 76 stdcall -noname -ret64 K32RtlExtendedLargeIntegerDivide(long long long ptr) ntdll.RtlExtendedLargeIntegerDivide
- 77 stdcall -noname -ret64 K32RtlExtendedMagicDivide(long long long long long) ntdll.RtlExtendedMagicDivide
- 78 stdcall -noname -ret64 K32RtlExtendedIntegerMultiply(long long long) ntdll.RtlExtendedIntegerMultiply
- 79 stdcall -noname -ret64 K32RtlLargeIntegerShiftLeft(long long long) ntdll.RtlLargeIntegerShiftLeft
- 80 stdcall -noname -ret64 K32RtlLargeIntegerShiftRight(long long long) ntdll.RtlLargeIntegerShiftRight
- 81 stdcall -noname -ret64 K32RtlLargeIntegerArithmeticShift(long long long) ntdll.RtlLargeIntegerArithmeticShift
- 82 stdcall -noname -ret64 K32RtlLargeIntegerNegate(long long) ntdll.RtlLargeIntegerNegate
- 83 stdcall -noname -ret64 K32RtlLargeIntegerSubtract(long long long long) ntdll.RtlLargeIntegerSubtract
- 84 stdcall -noname -ret64 K32RtlConvertLongToLargeInteger(long) ntdll.RtlConvertLongToLargeInteger
- 85 stdcall -noname -ret64 K32RtlConvertUlongToLargeInteger(long) ntdll.RtlConvertUlongToLargeInteger
+ 72 stdcall -noname -arch=win32 -ret64 K32RtlLargeIntegerAdd(long long long long) ntdll.RtlLargeIntegerAdd
+ 73 stdcall -noname -arch=win32 -ret64 K32RtlEnlargedIntegerMultiply(long long) ntdll.RtlEnlargedIntegerMultiply
+ 74 stdcall -noname -arch=win32 -ret64 K32RtlEnlargedUnsignedMultiply(long long) ntdll.RtlEnlargedUnsignedMultiply
+ 75 stdcall -noname -arch=win32 K32RtlEnlargedUnsignedDivide(long long long ptr) ntdll.RtlEnlargedUnsignedDivide
+ 76 stdcall -noname -arch=win32 -ret64 K32RtlExtendedLargeIntegerDivide(long long long ptr) ntdll.RtlExtendedLargeIntegerDivide
+ 77 stdcall -noname -arch=win32 -ret64 K32RtlExtendedMagicDivide(long long long long long) ntdll.RtlExtendedMagicDivide
+ 78 stdcall -noname -arch=win32 -ret64 K32RtlExtendedIntegerMultiply(long long long) ntdll.RtlExtendedIntegerMultiply
+ 79 stdcall -noname -arch=win32 -ret64 K32RtlLargeIntegerShiftLeft(long long long) ntdll.RtlLargeIntegerShiftLeft
+ 80 stdcall -noname -arch=win32 -ret64 K32RtlLargeIntegerShiftRight(long long long) ntdll.RtlLargeIntegerShiftRight
+ 81 stdcall -noname -arch=win32 -ret64 K32RtlLargeIntegerArithmeticShift(long long long) ntdll.RtlLargeIntegerArithmeticShift
+ 82 stdcall -noname -arch=win32 -ret64 K32RtlLargeIntegerNegate(long long) ntdll.RtlLargeIntegerNegate
+ 83 stdcall -noname -arch=win32 -ret64 K32RtlLargeIntegerSubtract(long long long long) ntdll.RtlLargeIntegerSubtract
+ 84 stdcall -noname -arch=win32 -ret64 K32RtlConvertLongToLargeInteger(long) ntdll.RtlConvertLongToLargeInteger
+ 85 stdcall -noname -arch=win32 -ret64 K32RtlConvertUlongToLargeInteger(long) ntdll.RtlConvertUlongToLargeInteger
  86 stdcall @(ptr) _KERNEL32_86
  87 stdcall -noname -i386 SSOnBigStack()
  88 varargs -noname -i386 SSCall(long long ptr)
