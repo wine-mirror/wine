@@ -960,7 +960,7 @@ static void test_affinity(void)
     status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok( tbi.AffinityMask == (1 << si.dwNumberOfProcessors) - 1,
-        "Unexpected thread affinity" );
+        "Unexpected thread affinity\n" );
 }
 
 START_TEST(info)
