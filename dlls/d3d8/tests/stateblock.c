@@ -138,12 +138,8 @@ struct state_test
 };
 
 /* See below for explanation of the flags */
-#define EVENT_OK             0x00
-#define EVENT_CHECK_DEFAULT  0x01
-#define EVENT_CHECK_INITIAL  0x02
-#define EVENT_CHECK_TEST     0x04
-#define EVENT_ERROR          0x08
-#define EVENT_APPLY_DATA     0x10
+#define EVENT_OK    0
+#define EVENT_ERROR -1
 
 struct event_data
 {
@@ -152,11 +148,42 @@ struct event_data
     IDirect3DSwapChain8 *new_swap_chain;
 };
 
+enum stateblock_data
+{
+    SB_DATA_NONE = 0,
+    SB_DATA_DEFAULT,
+    SB_DATA_INITIAL,
+    SB_DATA_TEST_IN,
+    SB_DATA_TEST,
+};
+
 struct event
 {
     int (*event_fn)(IDirect3DDevice8 *device, struct event_data *event_data);
-    int status;
+    enum stateblock_data check;
+    enum stateblock_data apply;
 };
+
+static const void *get_event_data(const struct state_test *test, enum stateblock_data data)
+{
+    switch (data)
+    {
+        case SB_DATA_DEFAULT:
+            return test->default_data;
+
+        case SB_DATA_INITIAL:
+            return test->initial_data;
+
+        case SB_DATA_TEST_IN:
+            return test->test_data_in;
+
+        case SB_DATA_TEST:
+            return test->test_data_out;
+
+        default:
+            return NULL;
+    }
+}
 
 /* This is an event-machine, which tests things.
  * It tests get and set operations for a batch of states, based on
@@ -164,52 +191,38 @@ struct event
 static void execute_test_chain(IDirect3DDevice8 *device, struct state_test *test,
         unsigned int ntests, struct event *event, unsigned int nevents, struct event_data *event_data)
 {
-    unsigned int i = 0, j;
-    int outcome;
+    unsigned int i, j;
 
     /* For each queued event */
     for (j = 0; j < nevents; ++j)
     {
-        /* Execute the next event handler (if available) or just set the supplied status */
-        outcome = event[j].status;
-        if (event[j].event_fn) outcome |= event[j].event_fn(device, event_data);
+        const void *data;
 
-        /* Now verify correct outcome depending on what was signaled by the handler.
-         * An EVENT_CHECK_TEST signal means check the returned data against the test_data (out).
-         * An EVENT_CHECK_DEFAULT signal means check the returned data against the default_data.
-         * An EVENT_CHECK_INITIAL signal means check the returned data against the initial_data.
-         * An EVENT_ERROR signal means the test isn't going to work, exit the event loop.
-         * An EVENT_APPLY_DATA signal means load the test data (after checks) */
-
-        if (outcome & EVENT_ERROR)
+        /* Execute the next event handler (if available). */
+        if (event[j].event_fn)
         {
-            trace("Test %s, Stage %u in error state, aborting\n", test[i].test_name, j);
-            break;
-        }
-        else if (outcome & EVENT_CHECK_TEST || outcome & EVENT_CHECK_DEFAULT || outcome & EVENT_CHECK_INITIAL)
-        {
-            for (i = 0; i < ntests; ++i)
+            if (event[j].event_fn(device, event_data) == EVENT_ERROR)
             {
-                if (outcome & EVENT_CHECK_TEST)
-                {
-                    test[i].check_data(device, j, &test[i], test[i].test_data_out);
-                }
-                else if (outcome & EVENT_CHECK_DEFAULT)
-                {
-                    test[i].check_data(device, j, &test[i], test[i].default_data);
-                }
-                else if (outcome & EVENT_CHECK_INITIAL)
-                {
-                    test[i].check_data(device, j, &test[i], test[i].initial_data);
-                }
+                trace("Stage %u in error state, aborting.\n", j);
+                break;
             }
         }
 
-        if (outcome & EVENT_APPLY_DATA)
+        if (event[j].check != SB_DATA_NONE)
         {
             for (i = 0; i < ntests; ++i)
             {
-                test[i].set_handler(device, &test[i], test[i].test_data_in);
+                data = get_event_data(&test[i], event[j].check);
+                test[i].check_data(device, j, &test[i], data);
+            }
+        }
+
+        if (event[j].apply != SB_DATA_NONE)
+        {
+            for (i = 0; i < ntests; ++i)
+            {
+                data = get_event_data(&test[i], event[j].apply);
+                test[i].set_handler(device, &test[i], data);
             }
         }
     }
@@ -341,51 +354,51 @@ static void execute_test_chain_all(IDirect3DDevice8 *device, struct state_test *
 
     struct event read_events[] =
     {
-        {NULL, EVENT_CHECK_INITIAL},
+        {NULL,                      SB_DATA_INITIAL,        SB_DATA_NONE},
     };
 
     struct event write_read_events[] =
     {
-        {NULL, EVENT_APPLY_DATA},
-        {NULL, EVENT_CHECK_TEST},
+        {NULL,                      SB_DATA_NONE,           SB_DATA_TEST_IN},
+        {NULL,                      SB_DATA_TEST,           SB_DATA_NONE},
     };
 
     struct event abort_stateblock_events[] =
     {
-        {begin_stateblock, EVENT_APPLY_DATA},
-        {end_stateblock, EVENT_OK},
-        {abort_stateblock, EVENT_CHECK_DEFAULT},
+        {begin_stateblock,          SB_DATA_NONE,           SB_DATA_TEST_IN},
+        {end_stateblock,            SB_DATA_NONE,           SB_DATA_NONE},
+        {abort_stateblock,          SB_DATA_DEFAULT,        SB_DATA_NONE},
     };
 
     struct event apply_stateblock_events[] =
     {
-        {begin_stateblock, EVENT_APPLY_DATA},
-        {end_stateblock, EVENT_OK},
-        {apply_stateblock, EVENT_CHECK_TEST},
+        {begin_stateblock,          SB_DATA_NONE,           SB_DATA_TEST_IN},
+        {end_stateblock,            SB_DATA_NONE,           SB_DATA_NONE},
+        {apply_stateblock,          SB_DATA_TEST,           SB_DATA_NONE},
     };
 
     struct event capture_reapply_stateblock_events[] =
     {
-        {begin_stateblock, EVENT_APPLY_DATA},
-        {end_stateblock, EVENT_OK},
-        {capture_stateblock, EVENT_CHECK_DEFAULT | EVENT_APPLY_DATA},
-        {apply_stateblock, EVENT_CHECK_DEFAULT},
+        {begin_stateblock,          SB_DATA_NONE,           SB_DATA_TEST_IN},
+        {end_stateblock,            SB_DATA_NONE,           SB_DATA_NONE},
+        {capture_stateblock,        SB_DATA_DEFAULT,        SB_DATA_TEST_IN},
+        {apply_stateblock,          SB_DATA_DEFAULT,        SB_DATA_NONE},
     };
 
     struct event rendertarget_switch_events[] =
     {
-        {NULL, EVENT_APPLY_DATA},
-        {switch_render_target, EVENT_CHECK_TEST},
-        {revert_render_target, EVENT_OK},
+        {NULL,                      SB_DATA_NONE,           SB_DATA_TEST_IN},
+        {switch_render_target,      SB_DATA_TEST,           SB_DATA_NONE},
+        {revert_render_target,      SB_DATA_NONE,           SB_DATA_NONE},
     };
 
     struct event rendertarget_stateblock_events[] =
     {
-        {begin_stateblock, EVENT_APPLY_DATA},
-        {switch_render_target, EVENT_CHECK_DEFAULT},
-        {end_stateblock, EVENT_OK},
-        {revert_render_target, EVENT_OK},
-        {apply_stateblock, EVENT_CHECK_TEST},
+        {begin_stateblock,          SB_DATA_NONE,           SB_DATA_TEST_IN},
+        {switch_render_target,      SB_DATA_DEFAULT,        SB_DATA_NONE},
+        {end_stateblock,            SB_DATA_NONE,           SB_DATA_NONE},
+        {revert_render_target,      SB_DATA_NONE,           SB_DATA_NONE},
+        {apply_stateblock,          SB_DATA_TEST,           SB_DATA_NONE},
     };
 
     /* Setup each test for execution */
