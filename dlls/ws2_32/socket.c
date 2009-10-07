@@ -288,9 +288,6 @@ static struct WS_servent *WS_dup_se(const struct servent* p_se);
 int WSAIOCTL_GetInterfaceCount(void);
 int WSAIOCTL_GetInterfaceName(int intNumber, char *intName);
 
-UINT wsaErrno(void);
-UINT wsaHerrno(int errnr);
-
 #define MAP_OPTION(opt) { WS_##opt, opt }
 
 static const int ws_sock_map[][2] =
@@ -414,6 +411,99 @@ static const int ws_eai_map[][2] =
 };
 
 static const char magic_loopback_addr[] = {127, 12, 34, 56};
+
+/* ----------------------------------- error handling */
+
+static UINT wsaErrno(void)
+{
+    int	loc_errno = errno;
+    WARN("errno %d, (%s).\n", loc_errno, strerror(loc_errno));
+
+    switch(loc_errno)
+    {
+	case EINTR:		return WSAEINTR;
+	case EBADF:		return WSAEBADF;
+	case EPERM:
+	case EACCES:		return WSAEACCES;
+	case EFAULT:		return WSAEFAULT;
+	case EINVAL:		return WSAEINVAL;
+	case EMFILE:		return WSAEMFILE;
+	case EWOULDBLOCK:	return WSAEWOULDBLOCK;
+	case EINPROGRESS:	return WSAEINPROGRESS;
+	case EALREADY:		return WSAEALREADY;
+	case ENOTSOCK:		return WSAENOTSOCK;
+	case EDESTADDRREQ:	return WSAEDESTADDRREQ;
+	case EMSGSIZE:		return WSAEMSGSIZE;
+	case EPROTOTYPE:	return WSAEPROTOTYPE;
+	case ENOPROTOOPT:	return WSAENOPROTOOPT;
+	case EPROTONOSUPPORT:	return WSAEPROTONOSUPPORT;
+	case ESOCKTNOSUPPORT:	return WSAESOCKTNOSUPPORT;
+	case EOPNOTSUPP:	return WSAEOPNOTSUPP;
+	case EPFNOSUPPORT:	return WSAEPFNOSUPPORT;
+	case EAFNOSUPPORT:	return WSAEAFNOSUPPORT;
+	case EADDRINUSE:	return WSAEADDRINUSE;
+	case EADDRNOTAVAIL:	return WSAEADDRNOTAVAIL;
+	case ENETDOWN:		return WSAENETDOWN;
+	case ENETUNREACH:	return WSAENETUNREACH;
+	case ENETRESET:		return WSAENETRESET;
+	case ECONNABORTED:	return WSAECONNABORTED;
+	case EPIPE:
+	case ECONNRESET:	return WSAECONNRESET;
+	case ENOBUFS:		return WSAENOBUFS;
+	case EISCONN:		return WSAEISCONN;
+	case ENOTCONN:		return WSAENOTCONN;
+	case ESHUTDOWN:		return WSAESHUTDOWN;
+	case ETOOMANYREFS:	return WSAETOOMANYREFS;
+	case ETIMEDOUT:		return WSAETIMEDOUT;
+	case ECONNREFUSED:	return WSAECONNREFUSED;
+	case ELOOP:		return WSAELOOP;
+	case ENAMETOOLONG:	return WSAENAMETOOLONG;
+	case EHOSTDOWN:		return WSAEHOSTDOWN;
+	case EHOSTUNREACH:	return WSAEHOSTUNREACH;
+	case ENOTEMPTY:		return WSAENOTEMPTY;
+#ifdef EPROCLIM
+	case EPROCLIM:		return WSAEPROCLIM;
+#endif
+#ifdef EUSERS
+	case EUSERS:		return WSAEUSERS;
+#endif
+#ifdef EDQUOT
+	case EDQUOT:		return WSAEDQUOT;
+#endif
+#ifdef ESTALE
+	case ESTALE:		return WSAESTALE;
+#endif
+#ifdef EREMOTE
+	case EREMOTE:		return WSAEREMOTE;
+#endif
+
+       /* just in case we ever get here and there are no problems */
+	case 0:			return 0;
+        default:
+		WARN("Unknown errno %d!\n", loc_errno);
+		return WSAEOPNOTSUPP;
+    }
+}
+
+static UINT wsaHerrno(int loc_errno)
+{
+
+    WARN("h_errno %d.\n", loc_errno);
+
+    switch(loc_errno)
+    {
+	case HOST_NOT_FOUND:	return WSAHOST_NOT_FOUND;
+	case TRY_AGAIN:		return WSATRY_AGAIN;
+	case NO_RECOVERY:	return WSANO_RECOVERY;
+	case NO_DATA:		return WSANO_DATA;
+	case ENOBUFS:		return WSAENOBUFS;
+
+	case 0:			return 0;
+        default:
+		WARN("Unknown h_errno %d!\n", loc_errno);
+		return WSAEOPNOTSUPP;
+    }
+}
 
 static inline DWORD NtStatusToWSAError( const DWORD status )
 {
@@ -4421,99 +4511,6 @@ static struct WS_servent *WS_dup_se(const struct servent* p_se)
     p_to->s_aliases = (char **)p;
     list_dup(p_se->s_aliases, p_to->s_aliases, 0);
     return p_to;
-}
-
-/* ----------------------------------- error handling */
-
-UINT wsaErrno(void)
-{
-    int	loc_errno = errno;
-    WARN("errno %d, (%s).\n", loc_errno, strerror(loc_errno));
-
-    switch(loc_errno)
-    {
-	case EINTR:		return WSAEINTR;
-	case EBADF:		return WSAEBADF;
-	case EPERM:
-	case EACCES:		return WSAEACCES;
-	case EFAULT:		return WSAEFAULT;
-	case EINVAL:		return WSAEINVAL;
-	case EMFILE:		return WSAEMFILE;
-	case EWOULDBLOCK:	return WSAEWOULDBLOCK;
-	case EINPROGRESS:	return WSAEINPROGRESS;
-	case EALREADY:		return WSAEALREADY;
-	case ENOTSOCK:		return WSAENOTSOCK;
-	case EDESTADDRREQ:	return WSAEDESTADDRREQ;
-	case EMSGSIZE:		return WSAEMSGSIZE;
-	case EPROTOTYPE:	return WSAEPROTOTYPE;
-	case ENOPROTOOPT:	return WSAENOPROTOOPT;
-	case EPROTONOSUPPORT:	return WSAEPROTONOSUPPORT;
-	case ESOCKTNOSUPPORT:	return WSAESOCKTNOSUPPORT;
-	case EOPNOTSUPP:	return WSAEOPNOTSUPP;
-	case EPFNOSUPPORT:	return WSAEPFNOSUPPORT;
-	case EAFNOSUPPORT:	return WSAEAFNOSUPPORT;
-	case EADDRINUSE:	return WSAEADDRINUSE;
-	case EADDRNOTAVAIL:	return WSAEADDRNOTAVAIL;
-	case ENETDOWN:		return WSAENETDOWN;
-	case ENETUNREACH:	return WSAENETUNREACH;
-	case ENETRESET:		return WSAENETRESET;
-	case ECONNABORTED:	return WSAECONNABORTED;
-	case EPIPE:
-	case ECONNRESET:	return WSAECONNRESET;
-	case ENOBUFS:		return WSAENOBUFS;
-	case EISCONN:		return WSAEISCONN;
-	case ENOTCONN:		return WSAENOTCONN;
-	case ESHUTDOWN:		return WSAESHUTDOWN;
-	case ETOOMANYREFS:	return WSAETOOMANYREFS;
-	case ETIMEDOUT:		return WSAETIMEDOUT;
-	case ECONNREFUSED:	return WSAECONNREFUSED;
-	case ELOOP:		return WSAELOOP;
-	case ENAMETOOLONG:	return WSAENAMETOOLONG;
-	case EHOSTDOWN:		return WSAEHOSTDOWN;
-	case EHOSTUNREACH:	return WSAEHOSTUNREACH;
-	case ENOTEMPTY:		return WSAENOTEMPTY;
-#ifdef EPROCLIM
-	case EPROCLIM:		return WSAEPROCLIM;
-#endif
-#ifdef EUSERS
-	case EUSERS:		return WSAEUSERS;
-#endif
-#ifdef EDQUOT
-	case EDQUOT:		return WSAEDQUOT;
-#endif
-#ifdef ESTALE
-	case ESTALE:		return WSAESTALE;
-#endif
-#ifdef EREMOTE
-	case EREMOTE:		return WSAEREMOTE;
-#endif
-
-       /* just in case we ever get here and there are no problems */
-	case 0:			return 0;
-        default:
-		WARN("Unknown errno %d!\n", loc_errno);
-		return WSAEOPNOTSUPP;
-    }
-}
-
-UINT wsaHerrno(int loc_errno)
-{
-
-    WARN("h_errno %d.\n", loc_errno);
-
-    switch(loc_errno)
-    {
-	case HOST_NOT_FOUND:	return WSAHOST_NOT_FOUND;
-	case TRY_AGAIN:		return WSATRY_AGAIN;
-	case NO_RECOVERY:	return WSANO_RECOVERY;
-	case NO_DATA:		return WSANO_DATA;
-	case ENOBUFS:		return WSAENOBUFS;
-
-	case 0:			return 0;
-        default:
-		WARN("Unknown h_errno %d!\n", loc_errno);
-		return WSAEOPNOTSUPP;
-    }
 }
 
 
