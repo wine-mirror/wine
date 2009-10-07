@@ -3137,7 +3137,6 @@ static void arbfp_add_sRGB_correction(struct wined3d_shader_buffer *buffer, cons
         * not allocated from one of our registers that were used earlier.
         */
     }
-    shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
     /* [0.0;1.0] clamping. Not needed, this is done implicitly */
 }
 
@@ -3513,7 +3512,9 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
     if(args->super.srgb_correction) {
         arbfp_add_sRGB_correction(buffer, fragcolor, srgbtmp[0], srgbtmp[1], srgbtmp[2], srgbtmp[3],
                                   priv_ctx.target_version >= NV2);
-    } else if(reg_maps->shader_version.major < 2) {
+    }
+
+    if(strcmp(fragcolor, "result.color")) {
         shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
     }
     shader_addline(buffer, "END\n");
@@ -5776,6 +5777,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
     if(settings->sRGB_write) {
         shader_addline(&buffer, "MAD ret, fragment.color.secondary, specular_enable, %s;\n", final_combiner_src);
         arbfp_add_sRGB_correction(&buffer, "ret", "arg0", "arg1", "arg2", "tempreg", FALSE);
+        shader_addline(&buffer, "MOV result.color, ret;\n");
     } else {
         shader_addline(&buffer, "MAD result.color, fragment.color.secondary, specular_enable, %s;\n", final_combiner_src);
     }
