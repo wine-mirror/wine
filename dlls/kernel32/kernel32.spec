@@ -17,13 +17,13 @@
   7 stdcall -noname -i386 -register VxDCall6(long) VxDCall
   8 stdcall -noname -i386 -register VxDCall7(long) VxDCall
   9 stdcall -noname -i386 -register VxDCall8(long) VxDCall
- 10 stdcall -noname k32CharToOemA(str ptr)
- 11 stdcall -noname k32CharToOemBuffA(str ptr long)
- 12 stdcall -noname k32OemToCharA(ptr ptr)
- 13 stdcall -noname k32OemToCharBuffA(ptr ptr long)
- 14 stdcall -noname k32LoadStringA(long long ptr long)
- 15 varargs -noname k32wsprintfA(str str)
- 16 stdcall -noname k32wvsprintfA(ptr str ptr)
+ 10 stdcall -noname -i386 k32CharToOemA(str ptr)
+ 11 stdcall -noname -i386 k32CharToOemBuffA(str ptr long)
+ 12 stdcall -noname -i386 k32OemToCharA(ptr ptr)
+ 13 stdcall -noname -i386 k32OemToCharBuffA(ptr ptr long)
+ 14 stdcall -noname -i386 k32LoadStringA(long long ptr long)
+ 15 varargs -noname -i386 k32wsprintfA(str str)
+ 16 stdcall -noname -i386 k32wvsprintfA(ptr str ptr)
  17 stdcall -noname -i386 -register CommonUnimpStub()
  18 stdcall -noname GetProcessDword(long long)
  19 stub -noname ThunkTheTemplateHandle
