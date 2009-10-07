@@ -1138,6 +1138,8 @@ MONTHCAL_SetFirstDayOfWeek(MONTHCAL_INFO *infoPtr, INT day)
     infoPtr->firstDayHighWord = TRUE;
   }
 
+  InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+
   return prev;
 }
 
