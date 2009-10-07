@@ -315,14 +315,11 @@ DWORD MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end )
                 if (ext_header.nt.FileHeader.Characteristics & IMAGE_FILE_DLL) ret |= BINARY_FLAG_DLL;
                 if (len < sizeof(ext_header.nt))  /* clear remaining part of header if missing */
                     memset( (char *)&ext_header.nt + len, 0, sizeof(ext_header.nt) - len );
-                if (res_start) *res_start = (void *)ext_header.nt.OptionalHeader.ImageBase;
-                if (res_end) *res_end = (void *)(ext_header.nt.OptionalHeader.ImageBase +
-                                                 ext_header.nt.OptionalHeader.SizeOfImage);
                 switch (ext_header.nt.OptionalHeader.Magic)
                 {
                 case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-                    if (res_start) *res_start = (void *)ext_header.nt.OptionalHeader.ImageBase;
-                    if (res_end) *res_end = (void *)(ext_header.nt.OptionalHeader.ImageBase +
+                    if (res_start) *res_start = (void *)(ULONG_PTR)ext_header.nt.OptionalHeader.ImageBase;
+                    if (res_end) *res_end = (void *)((ULONG_PTR)ext_header.nt.OptionalHeader.ImageBase +
                                                      ext_header.nt.OptionalHeader.SizeOfImage);
                     return ret;
                 case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
