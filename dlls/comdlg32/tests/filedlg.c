@@ -29,6 +29,8 @@
 
 /* ##### */
 
+static int resizesupported = TRUE;
+
 static void toolbarcheck( HWND hDlg)
 {
     /* test toolbar properties */
@@ -349,6 +351,7 @@ static LONG_PTR WINAPI resize_template_hook(HWND dlg, UINT msg, WPARAM wParam, L
             if( resize_testcases[index].flags & OFN_ENABLESIZING)
                 if( !(style & WS_SIZEBOX)) {
                     win_skip( "OFN_ENABLESIZING flag not supported.\n");
+                    resizesupported = FALSE;
                     PostMessage( parent, WM_COMMAND, IDCANCEL, 0);
                 } else
                     ok( style & WS_SIZEBOX,
@@ -934,6 +937,49 @@ static void test_getfolderpath(void)
        CommDlgExtendedError());
 }
 
+static void test_resizable2(void)
+{
+    OPENFILENAMEA ofn = {0};
+    char filename[1024] = "pls press Enter if sizable, Esc otherwise";
+    DWORD ret;
+
+    /* interactive because there is no hook function */
+    if( !winetest_interactive) {
+        skip( "some interactive resizable dialog tests (set WINETEST_INTERACTIVE=1)\n");
+        return;
+    }
+    ofn.lStructSize = sizeof(ofn);
+    ofn.lpstrFile = filename;
+    ofn.nMaxFile = 1024;
+    ofn.lpfnHook = NULL;
+    ofn.hInstance = GetModuleHandleA(NULL);
+    ofn.lpTemplateName = "template1";
+    ofn.Flags = OFN_EXPLORER;
+#define ISSIZABLE 1
+    ret = GetOpenFileNameA(&ofn);
+    ok( ret == ISSIZABLE, "File Dialog should have been sizable\n");
+    ret = CommDlgExtendedError();
+    ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
+    ofn.Flags = OFN_EXPLORER | OFN_ENABLETEMPLATE;
+    ret = GetOpenFileNameA(&ofn);
+    ok( ret != ISSIZABLE, "File Dialog should NOT have been sizable\n");
+    ret = CommDlgExtendedError();
+    ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
+    ofn.Flags = OFN_EXPLORER | OFN_ENABLETEMPLATEHANDLE;
+    ofn.hInstance = LoadResource( GetModuleHandle(NULL), FindResource( GetModuleHandle(NULL), "template1", (LPSTR)RT_DIALOG));
+    ofn.lpTemplateName = NULL;
+    ret = GetOpenFileNameA(&ofn);
+    ok( ret != ISSIZABLE, "File Dialog should NOT have been sizable\n");
+    ret = CommDlgExtendedError();
+    ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
+    ofn.Flags = OFN_EXPLORER | OFN_ENABLEHOOK;
+    ret = GetOpenFileNameA(&ofn);
+    ok( ret != ISSIZABLE, "File Dialog should NOT have been sizable\n");
+    ret = CommDlgExtendedError();
+    ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
+#undef ISSIZABLE
+}
+
 START_TEST(filedlg)
 {
     test_DialogCancel();
@@ -943,4 +989,5 @@ START_TEST(filedlg)
     test_resize();
     test_ok();
     test_getfolderpath();
+    if( resizesupported) test_resizable2();
 }

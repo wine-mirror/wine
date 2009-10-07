@@ -271,6 +271,13 @@ static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
         return FALSE;
     }
 
+    /* msdn: explorer style dialogs permit sizing by default.
+     * The OFN_ENABLESIZING flag is only needed when a hook or
+     * custom tmeplate is provided */
+    if( (fodInfos->ofnInfos->Flags & OFN_EXPLORER) &&
+            !(fodInfos->ofnInfos->Flags & ( OFN_ENABLEHOOK | OFN_ENABLETEMPLATE | OFN_ENABLETEMPLATEHANDLE)))
+        fodInfos->ofnInfos->Flags |= OFN_ENABLESIZING;
+
     if (fodInfos->ofnInfos->Flags & OFN_ENABLESIZING)
     {
         ((LPDLGTEMPLATEW)template)->style |= WS_SIZEBOX;
