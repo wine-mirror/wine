@@ -680,8 +680,13 @@ typedef struct _CRYPT_SMIME_CAPABILITIES {
 
 typedef struct _VTableProvStruc {
     DWORD    Version;
-    FARPROC  pFuncVerifyImage;
-    FARPROC  pFuncReturnhWnd;
+#ifdef WINE_STRICT_PROTOTYPES
+    BOOL     (WINAPI *FuncVerifyImage)(LPCSTR,BYTE*);
+    void     (WINAPI *FuncReturnhWnd)(HWND*);
+#else
+    FARPROC  FuncVerifyImage;
+    FARPROC  FuncReturnhWnd;
+#endif
     DWORD    dwProvType;
     BYTE    *pbContextInfo;
     DWORD    cbContextInfo;

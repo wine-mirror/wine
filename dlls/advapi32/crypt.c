@@ -182,12 +182,9 @@ static BOOL CALLBACK CRYPT_VerifyImage(LPCSTR lpszImage, BYTE* pData)
 	return TRUE;
 }
 
-static BOOL CALLBACK CRYPT_ReturnhWnd(HWND *phWnd)
+static void CALLBACK CRYPT_ReturnhWnd(HWND *phWnd)
 {
-	if (!phWnd)
-		return FALSE;
-	*phWnd = crypt_hWindow;
-	return TRUE;
+	if (phWnd) *phWnd = crypt_hWindow;
 }
 
 #define CRYPT_GetProvFunc(name) \
@@ -242,8 +239,8 @@ static PCRYPTPROV CRYPT_LoadProvider(PCWSTR pImage)
 	 *        Does it need memory allocation?
          */
 	provider->pVTable->Version = 3;
-	provider->pVTable->pFuncVerifyImage = (FARPROC)CRYPT_VerifyImage;
-	provider->pVTable->pFuncReturnhWnd = (FARPROC)CRYPT_ReturnhWnd;
+	provider->pVTable->FuncVerifyImage = CRYPT_VerifyImage;
+	provider->pVTable->FuncReturnhWnd = CRYPT_ReturnhWnd;
 	provider->pVTable->dwProvType = 0;
 	provider->pVTable->pbContextInfo = NULL;
 	provider->pVTable->cbContextInfo = 0;
