@@ -97,8 +97,10 @@ typedef struct
     INT		delta;	/* scroll rate; # of months that the */
                         /* control moves when user clicks a scroll button */
     int		visible;	/* # of months visible */
-    int		firstDay;	/* Start month calendar with firstDay's day */
-    int		firstDayHighWord;    /* High word only used externally */
+    int		firstDay;	/* Start month calendar with firstDay's day,
+				   stored in SYSTEMTIME format */
+    BOOL	firstDaySet;    /* first week day differs from locale defined */
+
     int		monthRange;
     MONTHDAYSTATE *monthdayState;
     SYSTEMTIME	todaysDate;
@@ -177,10 +179,12 @@ static inline void MONTHCAL_NotifySelect(const MONTHCAL_INFO *infoPtr)
 int MONTHCAL_MonthLength(int month, int year)
 {
   const int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
-  /*Wrap around, this eases handling*/
+  /* Wrap around, this eases handling. Getting length only we shouldn't care
+     about year change here cause January and December have
+     the same day quantity */
   if(month == 0)
     month = 12;
-  if(month == 13)
+  else if(month == 13)
     month = 1;
 
   /* if we have a leap year add 1 day to February */
@@ -372,9 +376,17 @@ static void MONTHCAL_CopyDate(const SYSTEMTIME *from, SYSTEMTIME *to)
    0 = Sunday.
 */
 
-/* returns the day in the week(0 == sunday, 6 == saturday) */
-/* day(1 == 1st, 2 == 2nd... etc), year is the  year value */
-int MONTHCAL_CalculateDayOfWeek(DWORD day, DWORD month, DWORD year)
+/* Returns the day in the week
+ *
+ * PARAMETERS
+ *  [i] day : day of month [1, 31]
+ *  [I] month : month number [1, 12]
+ *  [I] year : year value
+ *
+ * RETURN VALUE
+ *   day of week in SYSTEMTIME format: (0 == sunday,..., 6 == saturday)
+ */
+int MONTHCAL_CalculateDayOfWeek(WORD day, WORD month, WORD year)
 {
   year-=(month < 3);
 
@@ -751,14 +763,14 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
     dayrect.right += infoPtr->width_increment;
   }
 
-/* draw day numbers; first, the previous month */
-
+  /* draw day numbers; first, the previous month */
   firstDay = MONTHCAL_CalculateDayOfWeek(1, infoPtr->curSel.wMonth, infoPtr->curSel.wYear);
 
-  day = MONTHCAL_MonthLength(prevMonth, infoPtr->curSel.wYear)  +
-    (infoPtr->firstDay + 7  - firstDay)%7 + 1;
+  day = MONTHCAL_MonthLength(prevMonth, infoPtr->curSel.wYear) +
+    (infoPtr->firstDay - firstDay)%7 + 1;
+
   if (day > MONTHCAL_MonthLength(prevMonth, infoPtr->curSel.wYear))
-    day -=7;
+    day -= 7;
   startofprescal = day;
   mask = 1<<(day-1);
 
@@ -921,7 +933,7 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
     {
 	/* calculate all those exceptions for january */
 	weeknum1 = MONTHCAL_CalculateDayOfWeek(1, 1, infoPtr->curSel.wYear);
-	if ((infoPtr->firstDay + 7 - weeknum1) % 7 > mindays)
+	if ((infoPtr->firstDay - weeknum1) % 7 > mindays)
 	    weeknum = 1;
 	else
 	{
@@ -932,7 +944,7 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
 	    weeknum += startofprescal + 7;
 	    weeknum /= 7;
 	    weeknum1 = MONTHCAL_CalculateDayOfWeek(1, 1, infoPtr->curSel.wYear - 1);
-	    if ((infoPtr->firstDay + 7 - weeknum1) % 7 > mindays) weeknum++;
+	    if ((infoPtr->firstDay - weeknum1) % 7 > mindays) weeknum++;
 	}
     }
     else
@@ -944,7 +956,7 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
 	weeknum += startofprescal + 7;
 	weeknum /= 7;
 	weeknum1 = MONTHCAL_CalculateDayOfWeek(1, 1, infoPtr->curSel.wYear);
-	if ((infoPtr->firstDay + 7 - weeknum1) % 7 > mindays) weeknum++;
+	if ((infoPtr->firstDay - weeknum1) % 7 > mindays) weeknum++;
     }
 
     dayrect = infoPtr->weeknums;
@@ -1089,10 +1101,15 @@ MONTHCAL_SetMonthDelta(MONTHCAL_INFO *infoPtr, INT delta)
 }
 
 
-static LRESULT
+static inline LRESULT
 MONTHCAL_GetFirstDayOfWeek(const MONTHCAL_INFO *infoPtr)
 {
-  return MAKELONG(infoPtr->firstDay, infoPtr->firstDayHighWord);
+  int day;
+
+  /* convert from SYSTEMTIME to locale format */
+  day = (infoPtr->firstDay >= 0) ? (infoPtr->firstDay+6)%7 : infoPtr->firstDay;
+
+  return MAKELONG(day, infoPtr->firstDaySet);
 }
 
 
@@ -1115,33 +1132,41 @@ MONTHCAL_GetFirstDayOfWeek(const MONTHCAL_INFO *infoPtr)
 static LRESULT
 MONTHCAL_SetFirstDayOfWeek(MONTHCAL_INFO *infoPtr, INT day)
 {
-  int prev = MAKELONG(infoPtr->firstDay, infoPtr->firstDayHighWord);
+  LRESULT prev = MONTHCAL_GetFirstDayOfWeek(infoPtr);
+  int new_day;
 
-  TRACE("day %d\n", day);
+  TRACE("%d\n", day);
 
   if(day == -1)
   {
-    int localFirstDay;
     WCHAR buf[80];
 
     GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, buf, countof(buf));
     TRACE("%s %d\n", debugstr_w(buf), strlenW(buf));
 
-    localFirstDay = atoiW(buf);
+    new_day = atoiW(buf);
 
-    infoPtr->firstDay = localFirstDay;
-    infoPtr->firstDayHighWord = FALSE;
+    infoPtr->firstDaySet = FALSE;
   }
   else if(day >= 7)
   {
-    infoPtr->firstDay = 6; /* max first day allowed */
-    infoPtr->firstDayHighWord = TRUE;
+    new_day = 6; /* max first day allowed */
+    infoPtr->firstDaySet = TRUE;
   }
   else
   {
-    infoPtr->firstDay = day;
-    infoPtr->firstDayHighWord = TRUE;
+    /* Native behaviour for that case is broken: invalid date number >31
+       got displayed at (0,0) position, current month starts always from
+       (1,0) position. Should be implemnted here as well. */
+    if (day < -1)
+      FIXME("No bug compatibility for day=%d\n", day);
+
+    new_day = day;
+    infoPtr->firstDaySet = TRUE;
   }
+
+  /* convert from locale to SYSTEMTIME format */
+  infoPtr->firstDay = (new_day >= 0) ? (++new_day) % 7 : new_day;
 
   InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
 
@@ -2248,7 +2273,6 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   /* FIXME: calculate systemtime ->> localtime(substract timezoneinfo) */
 
   GetLocalTime(&infoPtr->todaysDate);
-  infoPtr->firstDayHighWord = FALSE;
   MONTHCAL_SetFirstDayOfWeek(infoPtr, -1);
 
   infoPtr->maxSelCount   = (infoPtr->dwStyle & MCS_MULTISELECT) ? 7 : 1;

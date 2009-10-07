@@ -88,7 +88,7 @@ typedef struct
 
 /* in monthcal.c */
 extern int MONTHCAL_MonthLength(int month, int year);
-extern int MONTHCAL_CalculateDayOfWeek(DWORD day, DWORD month, DWORD year);
+extern int MONTHCAL_CalculateDayOfWeek(WORD day, WORD month, WORD year);
 
 /* this list of defines is closely related to `allowedformatchars' defined
  * in datetime.c; the high nibble indicates the `base type' of the format
