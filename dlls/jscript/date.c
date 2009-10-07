@@ -675,9 +675,8 @@ static HRESULT Date_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     return S_OK;
 }
 
-/* ECMA-262 3rd Edition    15.9.5.42 */
-static HRESULT Date_toUTCString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+static inline HRESULT create_utc_string(script_ctx_t *ctx, vdisp_t *jsthis,
+        VARIANT *retv, jsexcept_t *ei)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
     static const WCHAR formatADW[] = { '%','s',',',' ','%','d',' ','%','s',' ','%','d',' ',
@@ -701,8 +700,6 @@ static HRESULT Date_toUTCString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
     BSTR date_str;
     int len, size, year, day;
     DWORD lcid_en, week_id, month_id;
-
-    TRACE("\n");
 
     if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
@@ -781,11 +778,19 @@ static HRESULT Date_toUTCString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    15.9.5.42 */
+static HRESULT Date_toUTCString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+{
+    TRACE("\n");
+    return create_utc_string(ctx, jsthis, retv, ei);
+}
+
 static HRESULT Date_toGMTString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return create_utc_string(ctx, jsthis, retv, ei);
 }
 
 /* ECMA-262 3rd Edition    15.9.5.3 */

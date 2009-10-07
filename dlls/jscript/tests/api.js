@@ -1874,6 +1874,7 @@ testFunctions(Date.prototype, [
         ["toString", 0],
         ["toTimeString", 0],
         ["toUTCString", 0],
+        ["toGMTString", 0],
         ["valueOf", 0]
     ]);
 
