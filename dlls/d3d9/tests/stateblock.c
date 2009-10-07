@@ -437,11 +437,6 @@ struct shader_constant_arg
     BOOL pshader;
 };
 
-struct shader_constant_context
-{
-    struct shader_constant_data return_data_buffer;
-};
-
 static const struct shader_constant_data shader_constant_poison_data =
 {
     {0x1337c0de, 0x1337c0de, 0x1337c0de, 0x1337c0de},
@@ -548,10 +543,7 @@ static void shader_constant_check_data(IDirect3DDevice9 *device, unsigned int ch
 
 static HRESULT shader_constant_setup_handler(struct state_test *test)
 {
-    struct shader_constant_context *ctx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ctx));
-    if (ctx == NULL) return E_FAIL;
-    test->test_context = ctx;
-
+    test->test_context = NULL;
     test->test_data_in = &shader_constant_test_data;
     test->test_data_out = &shader_constant_test_data;
     test->default_data = &shader_constant_default_data;
@@ -588,11 +580,6 @@ struct light_data
 struct light_arg
 {
     unsigned int idx;
-};
-
-struct light_context
-{
-    struct light_data return_data_buffer;
 };
 
 static const struct light_data light_poison_data =
@@ -771,10 +758,7 @@ static void light_check_data(IDirect3DDevice9 *device, unsigned int chain_stage,
 
 static HRESULT light_setup_handler(struct state_test *test)
 {
-    struct light_context *ctx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ctx));
-    if (ctx == NULL) return E_FAIL;
-    test->test_context = ctx;
-
+    test->test_context = NULL;
     test->test_data_in = &light_test_data_in;
     test->test_data_out = &light_test_data_out;
     test->default_data = &light_default_data;
@@ -808,11 +792,6 @@ struct transform_data
     D3DMATRIX texture7;
     D3DMATRIX world0;
     D3DMATRIX world255;
-};
-
-struct transform_context
-{
-    struct transform_data return_data_buffer;
 };
 
 static const struct transform_data transform_default_data =
@@ -1027,10 +1006,7 @@ static void transform_check_data(IDirect3DDevice9 *device, unsigned int chain_st
 
 static HRESULT transform_setup_handler(struct state_test *test)
 {
-    struct transform_context *ctx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ctx));
-    if (ctx == NULL) return E_FAIL;
-    test->test_context = ctx;
-
+    test->test_context = NULL;
     test->test_data_in = &transform_test_data;
     test->test_data_out = &transform_test_data;
     test->default_data = &transform_default_data;
@@ -1178,7 +1154,6 @@ struct render_state_arg
 
 struct render_state_context
 {
-    struct render_state_data return_data_buffer;
     struct render_state_data default_data_buffer;
     struct render_state_data test_data_buffer;
     struct render_state_data poison_data_buffer;
