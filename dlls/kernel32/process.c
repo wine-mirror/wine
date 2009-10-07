@@ -2722,7 +2722,6 @@ DWORD WINAPI GetProcessId( HANDLE hProcess )
 
 
 /*********************************************************************
- *           CloseW32Handle (KERNEL.474)
  *           CloseHandle    (KERNEL32.@)
  *
  * Closes a handle.
@@ -2830,7 +2829,6 @@ BOOL WINAPI DuplicateHandle( HANDLE source_process, HANDLE source,
 
 
 /***********************************************************************
- *           ConvertToGlobalHandle   (KERNEL.476)
  *           ConvertToGlobalHandle  (KERNEL32.@)
  */
 HANDLE WINAPI ConvertToGlobalHandle(HANDLE hSrc)

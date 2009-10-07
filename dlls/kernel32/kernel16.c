@@ -353,6 +353,22 @@ DWORD WINAPI GetCurrentProcessId16(void)
 }
 
 /*********************************************************************
+ *           CloseW32Handle (KERNEL.474)
+ */
+BOOL WINAPI CloseW32Handle( HANDLE handle )
+{
+    return CloseHandle( handle );
+}
+
+/***********************************************************************
+ *           ConvertToGlobalHandle   (KERNEL.476)
+ */
+HANDLE WINAPI ConvertToGlobalHandle16( HANDLE handle )
+{
+    return ConvertToGlobalHandle( handle );
+}
+
+/*********************************************************************
  *           MapProcessHandle   (KERNEL.483)
  */
 DWORD WINAPI MapProcessHandle( HANDLE hProcess )

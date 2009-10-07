@@ -376,9 +376,9 @@
 471 pascal GetCurrentProcessId() GetCurrentProcessId16
 472 pascal -register MapHInstLS() MapHInstLS16
 473 pascal -register MapHInstSL() MapHInstSL16
-474 pascal CloseW32Handle(long) CloseHandle
+474 pascal CloseW32Handle(long) CloseW32Handle
 475 pascal -ret16 GetTEBSelectorFS() GetTEBSelectorFS16
-476 pascal ConvertToGlobalHandle(long) ConvertToGlobalHandle
+476 pascal ConvertToGlobalHandle(long) ConvertToGlobalHandle16
 477 stub WOAFullScreen
 478 stub WOATerminateProcess
 479 pascal KERNEL_479(long) VWin32_EventSet  # ???
