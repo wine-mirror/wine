@@ -844,7 +844,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
          */
         if(pshader) {
             /* No indirect addressing here */
-            max_constantsF = GL_LIMITS(pshader_constantsF);
+            max_constantsF = GL_LIMITS(ps_glsl_constantsF);
         } else {
             if(This->baseShader.reg_maps.usesrelconstF) {
                 /* Subtract the other potential uniforms from the max available (bools, ints, and 1 row of projection matrix).
@@ -854,7 +854,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                  *
                  * Writing gl_ClipPos requires one uniform for each clipplane as well.
                  */
-                max_constantsF = GL_LIMITS(vshader_constantsF) - 3 - GL_LIMITS(clipplanes);
+                max_constantsF = GL_LIMITS(vs_glsl_constantsF) - 3 - GL_LIMITS(clipplanes);
                 max_constantsF -= count_bits(This->baseShader.reg_maps.integer_constants);
                 /* Strictly speaking a bool only uses one scalar, but the nvidia(Linux) compiler doesn't pack them properly,
                  * so each scalar requires a full vec4. We could work around this by packing the booleans ourselves, but
@@ -864,7 +864,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                 /* Set by driver quirks in directx.c */
                 max_constantsF -= GLINFO_LOCATION.reserved_glsl_constants;
             } else {
-                max_constantsF = GL_LIMITS(vshader_constantsF);
+                max_constantsF = GL_LIMITS(vs_glsl_constantsF);
             }
         }
         max_constantsF = min(This->baseShader.limits.constant_float, max_constantsF);
@@ -923,7 +923,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                     srgb_cmp);
         }
         if(reg_maps->vpos || reg_maps->usesdsy) {
-            if(This->baseShader.limits.constant_float + extra_constants_needed + 1 < GL_LIMITS(pshader_constantsF)) {
+            if(This->baseShader.limits.constant_float + extra_constants_needed + 1 < GL_LIMITS(ps_glsl_constantsF)) {
                 shader_addline(buffer, "uniform vec4 ycorrection;\n");
                 ((IWineD3DPixelShaderImpl *) This)->vpos_uniform = 1;
                 extra_constants_needed++;
@@ -4132,8 +4132,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     GL_EXTCALL(glLinkProgramARB(programId));
     print_glsl_info_log(&GLINFO_LOCATION, programId);
 
-    entry->vuniformF_locations = HeapAlloc(GetProcessHeap(), 0, sizeof(GLhandleARB) * GL_LIMITS(vshader_constantsF));
-    for (i = 0; i < GL_LIMITS(vshader_constantsF); ++i) {
+    entry->vuniformF_locations = HeapAlloc(GetProcessHeap(), 0, sizeof(GLhandleARB) * GL_LIMITS(vs_glsl_constantsF));
+    for (i = 0; i < GL_LIMITS(vs_glsl_constantsF); ++i) {
         snprintf(glsl_name, sizeof(glsl_name), "VC[%i]", i);
         entry->vuniformF_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
     }
@@ -4141,8 +4141,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
         snprintf(glsl_name, sizeof(glsl_name), "VI[%i]", i);
         entry->vuniformI_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
     }
-    entry->puniformF_locations = HeapAlloc(GetProcessHeap(), 0, sizeof(GLhandleARB) * GL_LIMITS(pshader_constantsF));
-    for (i = 0; i < GL_LIMITS(pshader_constantsF); ++i) {
+    entry->puniformF_locations = HeapAlloc(GetProcessHeap(), 0, sizeof(GLhandleARB) * GL_LIMITS(ps_glsl_constantsF));
+    for (i = 0; i < GL_LIMITS(ps_glsl_constantsF); ++i) {
         snprintf(glsl_name, sizeof(glsl_name), "PC[%i]", i);
         entry->puniformF_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
     }
@@ -4521,7 +4521,7 @@ static HRESULT shader_glsl_alloc(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
     struct shader_glsl_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_glsl_priv));
-    SIZE_T stack_size = wined3d_log2i(max(GL_LIMITS(vshader_constantsF), GL_LIMITS(pshader_constantsF))) + 1;
+    SIZE_T stack_size = wined3d_log2i(max(GL_LIMITS(vs_glsl_constantsF), GL_LIMITS(ps_glsl_constantsF))) + 1;
 
     if (!shader_buffer_init(&priv->shader_buffer))
     {
@@ -4536,13 +4536,13 @@ static HRESULT shader_glsl_alloc(IWineD3DDevice *iface) {
         goto fail;
     }
 
-    if (!constant_heap_init(&priv->vconst_heap, GL_LIMITS(vshader_constantsF)))
+    if (!constant_heap_init(&priv->vconst_heap, GL_LIMITS(vs_glsl_constantsF)))
     {
         ERR("Failed to initialize vertex shader constant heap\n");
         goto fail;
     }
 
-    if (!constant_heap_init(&priv->pconst_heap, GL_LIMITS(pshader_constantsF)))
+    if (!constant_heap_init(&priv->pconst_heap, GL_LIMITS(ps_glsl_constantsF)))
     {
         ERR("Failed to initialize pixel shader constant heap\n");
         goto fail;
@@ -4616,7 +4616,7 @@ static void shader_glsl_get_caps(WINED3DDEVTYPE devtype,
     else
         pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
     TRACE_(d3d_caps)("Hardware vertex shader version %d.%d enabled (GLSL)\n", (pCaps->VertexShaderVersion >> 8) & 0xff, pCaps->VertexShaderVersion & 0xff);
-    pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF);
+    pCaps->MaxVertexShaderConst = GL_LIMITS(vs_glsl_constantsF);
 
     /* Older DX9-class videocards (GeforceFX / Radeon >9500/X*00) only support pixel shader 2.0/2.0a/2.0b.
      * In OpenGL the extensions related to GLSL abstract lowlevel GL info away which is needed
@@ -4635,7 +4635,7 @@ static void shader_glsl_get_caps(WINED3DDEVTYPE devtype,
     else
         pCaps->PixelShaderVersion = WINED3DPS_VERSION(3,0);
 
-    pCaps->MaxPixelShaderConst = GL_LIMITS(pshader_constantsF);
+    pCaps->MaxPixelShaderConst = GL_LIMITS(ps_glsl_constantsF);
 
     /* FIXME: The following line is card dependent. -8.0 to 8.0 is the
      * Direct3D minimum requirement.
