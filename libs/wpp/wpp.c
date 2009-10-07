@@ -216,12 +216,16 @@ int wpp_parse_temp( const char *input, const char *output_base, char **output_na
     if((fd = mkstemps( temp_name, 0 )) == -1)
     {
         ppy_error("Could not generate a temp name from %s\n", temp_name);
+        free( temp_name );
         return 2;
     }
 
     if (!(output = fdopen(fd, "wt")))
     {
         ppy_error("Could not open fd %s for writing\n", temp_name);
+        close( fd );
+        unlink( temp_name );
+        free( temp_name );
         return 2;
     }
 
