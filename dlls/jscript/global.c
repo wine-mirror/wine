@@ -301,8 +301,7 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
 {
     BSTR ret, str;
     const WCHAR *ptr;
-    DWORD len = 0, i, size;
-    char buf[4];
+    DWORD len = 0;
     HRESULT hres;
 
     TRACE("\n");
@@ -325,17 +324,13 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
         return hres;
 
     for(ptr=str; *ptr; ptr++) {
-        if(isalnumW(*ptr) || *ptr=='*' || *ptr=='@' || *ptr=='-' || *ptr=='_'
-                || *ptr=='+' || *ptr=='.' || *ptr=='/')
+        if(*ptr > 0xff)
+            len += 6;
+        else if(isalnum((char)*ptr) || *ptr=='*' || *ptr=='@' || *ptr=='-'
+                || *ptr=='_' || *ptr=='+' || *ptr=='.' || *ptr=='/')
             len++;
-        else {
-            size = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, NULL, 0, NULL, NULL)*3;
-            if(!size) {
-                FIXME("throw Error\n");
-                return E_FAIL;
-            }
-            len += size;
-        }
+        else
+            len += 3;
     }
 
     ret = SysAllocStringLen(NULL, len);
@@ -344,16 +339,21 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
 
     len = 0;
     for(ptr=str; *ptr; ptr++) {
-        if(isalnumW(*ptr) || *ptr=='*' || *ptr=='@' || *ptr=='-' || *ptr=='_'
-                || *ptr=='+' || *ptr=='.' || *ptr=='/')
+        if(*ptr > 0xff) {
+            ret[len++] = '%';
+            ret[len++] = 'u';
+            ret[len++] = int_to_char(*ptr >> 12);
+            ret[len++] = int_to_char((*ptr >> 8) & 0xf);
+            ret[len++] = int_to_char((*ptr >> 4) & 0xf);
+            ret[len++] = int_to_char(*ptr & 0xf);
+        }
+        else if(isalnum((char)*ptr) || *ptr=='*' || *ptr=='@' || *ptr=='-'
+                || *ptr=='_' || *ptr=='+' || *ptr=='.' || *ptr=='/')
             ret[len++] = *ptr;
         else {
-            size = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, buf, sizeof(buf), NULL, NULL);
-            for(i=0; i<size; i++) {
-                ret[len++] = '%';
-                ret[len++] = int_to_char(buf[i] >> 4);
-                ret[len++] = int_to_char(buf[i] & 0xf);
-            }
+            ret[len++] = '%';
+            ret[len++] = int_to_char(*ptr >> 4);
+            ret[len++] = int_to_char(*ptr & 0xf);
         }
     }
 
