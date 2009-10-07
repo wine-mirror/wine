@@ -4160,14 +4160,13 @@ struct wined3d_gl_info
     UINT max_glsl_varyings;
     float max_shininess;
 
-    unsigned int max_vshader_constantsF;
-    unsigned int max_pshader_constantsF;
-
     unsigned int max_vs_arb_constantsF;
+    unsigned int max_vs_arb_native_constants;
     unsigned int max_vs_arb_instructions;
     unsigned int max_vs_arb_temps;
     unsigned int max_ps_arb_constantsF;
     unsigned int max_ps_arb_local_constants;
+    unsigned int max_ps_arb_native_constants;
     unsigned int max_ps_arb_instructions;
     unsigned int max_ps_arb_temps;
     unsigned int max_vs_glsl_constantsF;

@@ -688,10 +688,10 @@ static BOOL match_broken_nv_clip(const struct wined3d_gl_info *gl_info, const ch
 
 static void quirk_arb_constants(struct wined3d_gl_info *gl_info)
 {
-    TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL.\n", gl_info->max_vs_arb_constantsF);
-    gl_info->max_vs_glsl_constantsF = gl_info->max_vs_arb_constantsF;
-    TRACE_(d3d_caps)("Using ARB ps constant limit(=%u) for GLSL.\n", gl_info->max_ps_arb_constantsF);
-    gl_info->max_ps_glsl_constantsF = gl_info->max_ps_arb_constantsF;
+    TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL.\n", gl_info->max_vs_arb_native_constants);
+    gl_info->max_vs_glsl_constantsF = gl_info->max_vs_arb_native_constants;
+    TRACE_(d3d_caps)("Using ARB ps constant limit(=%u) for GLSL.\n", gl_info->max_ps_arb_native_constants);
+    gl_info->max_ps_glsl_constantsF = gl_info->max_ps_arb_native_constants;
 }
 
 static void quirk_apple_glsl_constants(struct wined3d_gl_info *gl_info)
@@ -1593,6 +1593,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_driver_info *driver_info, str
     gl_info->max_ps_glsl_constantsF = 0;
     gl_info->max_vs_arb_constantsF = 0;
     gl_info->max_ps_arb_constantsF = 0;
+    gl_info->max_vs_arb_native_constants = 0;
     gl_info->max_ps_arb_local_constants = 0;
 
     /* Retrieve opengl defaults */
@@ -1836,6 +1837,9 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_driver_info *driver_info, str
         GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
         gl_info->max_ps_arb_constantsF = gl_max;
         TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM float constants: %d.\n", gl_info->max_ps_arb_constantsF);
+        GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_PARAMETERS_ARB, &gl_max));
+        gl_info->max_ps_arb_native_constants = gl_max;
+        TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM native float constants: %d.\n", gl_info->max_ps_arb_native_constants);
         GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_TEMPORARIES_ARB, &gl_max));
         gl_info->max_ps_arb_temps = gl_max;
         TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM native temporaries: %d.\n", gl_info->max_ps_arb_temps);
@@ -1851,6 +1855,9 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_driver_info *driver_info, str
         GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
         gl_info->max_vs_arb_constantsF = gl_max;
         TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM float constants: %d.\n", gl_info->max_vs_arb_constantsF);
+        GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_PARAMETERS_ARB, &gl_max));
+        gl_info->max_vs_arb_native_constants = gl_max;
+        TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM native float constants: %d.\n", gl_info->max_vs_arb_native_constants);
         GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_TEMPORARIES_ARB, &gl_max));
         gl_info->max_vs_arb_temps = gl_max;
         TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM native temporaries: %d.\n", gl_info->max_vs_arb_temps);
