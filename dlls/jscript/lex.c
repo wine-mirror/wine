@@ -287,7 +287,7 @@ static BOOL unescape(WCHAR *str)
             i = hex_to_int(*++p);
             if(i == -1)
                 return FALSE;
-            c += 1 << 4;
+            c += i << 4;
 
             i = hex_to_int(*++p);
             if(i == -1)
@@ -297,13 +297,15 @@ static BOOL unescape(WCHAR *str)
         default:
             if(isdigitW(*p)) {
                 c = *p++ - '0';
-                while(isdigitW(*p))
-                    c = c*10 + (*p++ - '0');
-                *pd++ = c;
-                continue;
+                if(isdigitW(*p)) {
+                    c = c*8 + (*p++ - '0');
+                    if(isdigitW(*p))
+                        c = c*8 + (*p++ - '0');
+                }
+                p--;
             }
-
-            c = *p;
+            else
+                c = *p;
         }
 
         *pd++ = c;

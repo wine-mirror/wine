@@ -66,6 +66,8 @@ tmp = escape("a1b c!d+e@*-_+./,");
 ok(tmp === "a1b%20c%21d+e@*-_+./%2C", "escape('a1b c!d+e@*-_+./,') = " + tmp);
 tmp = escape();
 ok(tmp === "undefined", "escape() = " + tmp);
+tmp = escape('\u1234\123\xf3');
+ok(tmp == "%u1234S%F3", "escape('\u1234\123\xf3') = " + tmp);
 
 tmp = unescape("abc");
 ok(tmp === "abc", "unescape('abc') = " + tmp);
@@ -201,6 +203,12 @@ tmp = "abc".charCodeAt(true);
 ok(tmp === 0x62, "'abc'.charCodeAt(true) = " + tmp);
 tmp = "abc".charCodeAt(0,2);
 ok(tmp === 0x61, "'abc'.charCodeAt(0,2) = " + tmp);
+tmp = "\u49F4".charCodeAt(0);
+ok(tmp === 0x49F4, "'\u49F4'.charCodeAt(0) = " + tmp);
+tmp = "\052".charCodeAt(0);
+ok(tmp === 0x2A, "'\052'.charCodeAt(0) = " + tmp);
+tmp = "\xa2".charCodeAt(0);
+ok(tmp === 0xA2, "'\xa2'.charCodeAt(0) = " + tmp);
 
 tmp = "abcd".substring(1,3);
 ok(tmp === "bc", "'abcd'.substring(1,3) = " + tmp);
