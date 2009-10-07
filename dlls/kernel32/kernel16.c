@@ -175,6 +175,29 @@ INT16 WINAPI lstrlen16( LPCSTR str )
 }
 
 /***********************************************************************
+ *           OutputDebugString   (KERNEL.115)
+ */
+void WINAPI OutputDebugString16( LPCSTR str )
+{
+    OutputDebugStringA( str );
+}
+
+/***********************************************************************
+ *           DebugBreak   (KERNEL.203)
+ */
+void WINAPI DebugBreak16( CONTEXT *context )
+{
+    EXCEPTION_RECORD rec;
+
+    rec.ExceptionCode    = EXCEPTION_BREAKPOINT;
+    rec.ExceptionFlags   = 0;
+    rec.ExceptionRecord  = NULL;
+    rec.ExceptionAddress = (LPVOID)context->Eip;
+    rec.NumberParameters = 0;
+    NtRaiseException( &rec, context, TRUE );
+}
+
+/***********************************************************************
  *           hmemcpy   (KERNEL.348)
  */
 void WINAPI hmemcpy16( LPVOID dst, LPCVOID src, LONG count )

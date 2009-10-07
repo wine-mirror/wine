@@ -22,7 +22,6 @@
 #include <string.h>
 
 #include "winerror.h"
-#include "wine/winbase16.h"
 #include "wine/server.h"
 #include "kernel_private.h"
 #include "wine/debug.h"
@@ -358,23 +357,6 @@ void WINAPI OutputDebugStringW( LPCWSTR str )
 
 
 /***********************************************************************
- *           OutputDebugString   (KERNEL.115)
- *
- *  Output by a 16 bit application of an ascii string to a debugger (if attached)
- *  and program log.
- *
- * PARAMS
- *  str [I] The message to be logged and given to the debugger.
- *
- * RETURNS
- */
-void WINAPI OutputDebugString16( LPCSTR str )
-{
-    OutputDebugStringA( str );
-}
-
-
-/***********************************************************************
  *           DebugBreak   (KERNEL32.@)
  *
  *  Raises an exception so that a debugger (if attached)
@@ -417,36 +399,6 @@ BOOL WINAPI DebugBreakProcess(HANDLE hProc)
     SERVER_END_REQ;
     if (self) DbgBreakPoint();
     return ret;
-}
-
-
-/***********************************************************************
- *           DebugBreak   (KERNEL.203)
- *
- *  Raises an exception in a 16 bit application so that a debugger (if attached)
- *  can take some action.
- *
- * PARAMS
- *
- * RETURNS
- *
- * BUGS
- *
- *  Only 386 compatible processors implemented.
- */
-void WINAPI DebugBreak16(
-    CONTEXT86 *context) /* [in/out] A pointer to the 386 compatible processor state. */
-{
-#ifdef __i386__
-    EXCEPTION_RECORD rec;
-
-    rec.ExceptionCode    = EXCEPTION_BREAKPOINT;
-    rec.ExceptionFlags   = 0;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context->Eip;
-    rec.NumberParameters = 0;
-    NtRaiseException( &rec, context, TRUE );
-#endif  /* defined(__i386__) */
 }
 
 
