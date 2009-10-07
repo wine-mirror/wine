@@ -435,6 +435,8 @@ static void call_continue(PROTOCOLDATA *protocol_data)
     HRESULT hres;
 
     if(!state) {
+        if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST)
+            CLEAR_CALLED(ReportProgress_COOKIE_SENT);
         if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST || tested_protocol == FTP_TEST) {
             if (http_is_first) {
                 CLEAR_CALLED(ReportProgress_FINDINGRESOURCE);
@@ -2423,6 +2425,7 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags)
         test_priority(async_protocol);
         test_http_info(async_protocol);
 
+        SET_EXPECT(ReportProgress_COOKIE_SENT);
         SET_EXPECT(ReportProgress_FINDINGRESOURCE);
         SET_EXPECT(ReportProgress_CONNECTING);
         SET_EXPECT(ReportProgress_SENDINGREQUEST);
