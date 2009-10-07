@@ -141,26 +141,6 @@ INT WINAPIV k32wsprintfA(LPSTR buffer, LPCSTR spec, ...)
 
 
 /***********************************************************************
- *           hmemcpy   (KERNEL.348)
- */
-void WINAPI hmemcpy16( LPVOID dst, LPCVOID src, LONG count )
-{
-    memcpy( dst, src, count );
-}
-
-
-/***********************************************************************
- *           lstrcat   (KERNEL.89)
- */
-SEGPTR WINAPI lstrcat16( SEGPTR dst, LPCSTR src )
-{
-    /* Windows does not check for NULL pointers here, so we don't either */
-    strcat( MapSL(dst), src );
-    return dst;
-}
-
-
-/***********************************************************************
  *           lstrcatA   (KERNEL32.@)
  *           lstrcat    (KERNEL32.@)
  */
@@ -195,31 +175,6 @@ LPWSTR WINAPI lstrcatW( LPWSTR dst, LPCWSTR src )
         return NULL;
     }
     __ENDTRY
-    return dst;
-}
-
-
-/***********************************************************************
- *           lstrcatn   (KERNEL.352)
- */
-SEGPTR WINAPI lstrcatn16( SEGPTR dst, LPCSTR src, INT16 n )
-{
-    LPSTR p = MapSL(dst);
-    LPSTR start = p;
-
-    while (*p) p++;
-    if ((n -= (p - start)) <= 0) return dst;
-    lstrcpynA( p, src, n );
-    return dst;
-}
-
-
-/***********************************************************************
- *           lstrcpy   (KERNEL.88)
- */
-SEGPTR WINAPI lstrcpy16( SEGPTR dst, LPCSTR src )
-{
-    if (!lstrcpyA( MapSL(dst), src )) dst = 0;
     return dst;
 }
 
@@ -260,16 +215,6 @@ LPWSTR WINAPI lstrcpyW( LPWSTR dst, LPCWSTR src )
         return NULL;
     }
     __ENDTRY
-    return dst;
-}
-
-
-/***********************************************************************
- *           lstrcpyn   (KERNEL.353)
- */
-SEGPTR WINAPI lstrcpyn16( SEGPTR dst, LPCSTR src, INT16 n )
-{
-    lstrcpynA( MapSL(dst), src, n );
     return dst;
 }
 
@@ -344,15 +289,6 @@ LPWSTR WINAPI lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
 
 
 /***********************************************************************
- *           lstrlen   (KERNEL.90)
- */
-INT16 WINAPI lstrlen16( LPCSTR str )
-{
-    return (INT16)lstrlenA( str );
-}
-
-
-/***********************************************************************
  *           lstrlenA   (KERNEL32.@)
  *           lstrlen    (KERNEL32.@)
  */
@@ -390,85 +326,4 @@ INT WINAPI lstrlenW( LPCWSTR str )
     }
     __ENDTRY
     return ret;
-}
-
-
-/***********************************************************************
- *           UnicodeToAnsi   (KERNEL.434)
- */
-INT16 WINAPI UnicodeToAnsi16( LPCWSTR src, LPSTR dst, INT16 codepage )
-{
-    if ( codepage == -1 ) codepage = CP_ACP;
-    return WideCharToMultiByte( codepage, 0, src, -1, dst, 0x7fffffff, NULL, NULL );
-}
-
-
-/***************************************************************************
- *
- * Win 2.x string functions now moved to USER
- *
- * We rather want to implement them here instead of doing Callouts
- */
-
-/***********************************************************************
- *		Reserved1 (KERNEL.77)
- */
-SEGPTR WINAPI KERNEL_AnsiNext16(SEGPTR current)
-{
-    return (*(char *)MapSL(current)) ? current + 1 : current;
-}
-
-/***********************************************************************
- *		Reserved2(KERNEL.78)
- */
-SEGPTR WINAPI KERNEL_AnsiPrev16( SEGPTR start, SEGPTR current )
-{
-    return (current==start)?start:current-1;
-}
-
-/***********************************************************************
- *		Reserved3 (KERNEL.79)
- */
-SEGPTR WINAPI KERNEL_AnsiUpper16( SEGPTR strOrChar )
-{
-    /* uppercase only one char if strOrChar < 0x10000 */
-    if (HIWORD(strOrChar))
-    {
-        char *s = MapSL(strOrChar);
-        while (*s)
-        {
-            *s = toupper(*s);
-            s++;
-        }
-        return strOrChar;
-    }
-    else return toupper((char)strOrChar);
-}
-
-/***********************************************************************
- *		Reserved4 (KERNEL.80)
- */
-SEGPTR WINAPI KERNEL_AnsiLower16( SEGPTR strOrChar )
-{
-    /* lowercase only one char if strOrChar < 0x10000 */
-    if (HIWORD(strOrChar))
-    {
-        char *s = MapSL(strOrChar);
-        while (*s)
-        {
-            *s = tolower(*s);
-            s++;
-        }
-        return strOrChar;
-    }
-    else return tolower((char)strOrChar);
-}
-
-
-/***********************************************************************
- *		Reserved5 (KERNEL.87)
- */
-INT16 WINAPI KERNEL_lstrcmp16( LPCSTR str1, LPCSTR str2 )
-{
-    return (INT16)strcmp( str1, str2 );
 }
