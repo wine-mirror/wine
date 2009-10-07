@@ -43,7 +43,6 @@
 #include "ddk/wdm.h"
 
 #include "wine/unicode.h"
-#include "wine/winbase16.h"
 #include "kernel_private.h"
 
 #include "wine/debug.h"
@@ -200,47 +199,6 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
     return status;
 }
 
-
-/***********************************************************************
- *           WaitForSingleObject   (KERNEL.460)
- */
-DWORD WINAPI WaitForSingleObject16( HANDLE handle, DWORD timeout )
-{
-    DWORD retval, mutex_count;
-
-    ReleaseThunkLock( &mutex_count );
-    retval = WaitForSingleObject( handle, timeout );
-    RestoreThunkLock( mutex_count );
-    return retval;
-}
-
-/***********************************************************************
- *           WaitForMultipleObjects   (KERNEL.461)
- */
-DWORD WINAPI WaitForMultipleObjects16( DWORD count, const HANDLE *handles,
-                                       BOOL wait_all, DWORD timeout )
-{
-    DWORD retval, mutex_count;
-
-    ReleaseThunkLock( &mutex_count );
-    retval = WaitForMultipleObjectsEx( count, handles, wait_all, timeout, FALSE );
-    RestoreThunkLock( mutex_count );
-    return retval;
-}
-
-/***********************************************************************
- *           WaitForMultipleObjectsEx   (KERNEL.495)
- */
-DWORD WINAPI WaitForMultipleObjectsEx16( DWORD count, const HANDLE *handles,
-                                         BOOL wait_all, DWORD timeout, BOOL alertable )
-{
-    DWORD retval, mutex_count;
-
-    ReleaseThunkLock( &mutex_count );
-    retval = WaitForMultipleObjectsEx( count, handles, wait_all, timeout, alertable );
-    RestoreThunkLock( mutex_count );
-    return retval;
-}
 
 /***********************************************************************
  *           RegisterWaitForSingleObject   (KERNEL32.@)
@@ -542,15 +500,6 @@ HANDLE WINAPI CreateEventExW( SECURITY_ATTRIBUTES *sa, LPCWSTR name, DWORD flags
 
 
 /***********************************************************************
- *           CreateW32Event    (KERNEL.457)
- */
-HANDLE WINAPI WIN16_CreateEvent( BOOL manual_reset, BOOL initial_state )
-{
-    return CreateEventW( NULL, manual_reset, initial_state, NULL );
-}
-
-
-/***********************************************************************
  *           OpenEventA    (KERNEL32.@)
  */
 HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
@@ -616,7 +565,6 @@ BOOL WINAPI PulseEvent( HANDLE handle )
 
 
 /***********************************************************************
- *           SetW32Event (KERNEL.458)
  *           SetEvent    (KERNEL32.@)
  */
 BOOL WINAPI SetEvent( HANDLE handle )
@@ -630,7 +578,6 @@ BOOL WINAPI SetEvent( HANDLE handle )
 
 
 /***********************************************************************
- *           ResetW32Event (KERNEL.459)
  *           ResetEvent    (KERNEL32.@)
  */
 BOOL WINAPI ResetEvent( HANDLE handle )
@@ -641,53 +588,6 @@ BOOL WINAPI ResetEvent( HANDLE handle )
         SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }
-
-
-/***********************************************************************
- * NOTE: The Win95 VWin32_Event routines given below are really low-level
- *       routines implemented directly by VWin32. The user-mode libraries
- *       implement Win32 synchronisation routines on top of these low-level
- *       primitives. We do it the other way around here :-)
- */
-
-/***********************************************************************
- *       VWin32_EventCreate	(KERNEL.442)
- */
-HANDLE WINAPI VWin32_EventCreate(VOID)
-{
-    HANDLE hEvent = CreateEventW( NULL, FALSE, 0, NULL );
-    return ConvertToGlobalHandle( hEvent );
-}
-
-/***********************************************************************
- *       VWin32_EventDestroy	(KERNEL.443)
- */
-VOID WINAPI VWin32_EventDestroy(HANDLE event)
-{
-    CloseHandle( event );
-}
-
-/***********************************************************************
- *       VWin32_EventWait	(KERNEL.450)
- */
-VOID WINAPI VWin32_EventWait(HANDLE event)
-{
-    DWORD mutex_count;
-
-    ReleaseThunkLock( &mutex_count );
-    WaitForSingleObject( event, INFINITE );
-    RestoreThunkLock( mutex_count );
-}
-
-/***********************************************************************
- *       VWin32_EventSet	(KERNEL.451)
- *       KERNEL_479             (KERNEL.479)
- */
-VOID WINAPI VWin32_EventSet(HANDLE event)
-{
-    SetEvent( event );
-}
-
 
 
 /***********************************************************************

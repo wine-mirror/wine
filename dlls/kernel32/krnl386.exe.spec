@@ -359,9 +359,9 @@
 454 equate __FLATCS 0   # initialized by BUILTIN_Init()
 455 equate __FLATDS 0   # initialized by BUILTIN_Init()
 456 pascal DefResourceHandler(word word word) NE_DefResourceHandler
-457 pascal CreateW32Event(long long) WIN16_CreateEvent
-458 pascal SetW32Event(long) SetEvent
-459 pascal ResetW32Event(long) ResetEvent
+457 pascal CreateW32Event(long long) CreateW32Event
+458 pascal SetW32Event(long) SetW32Event
+459 pascal ResetW32Event(long) ResetW32Event
 460 pascal WaitForSingleObject(long long) WaitForSingleObject16
 461 pascal WaitForMultipleObjects(long ptr long long) WaitForMultipleObjects16
 462 pascal GetCurrentThreadId() GetCurrentThreadId

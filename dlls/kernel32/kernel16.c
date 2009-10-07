@@ -215,6 +215,109 @@ INT16 WINAPI UnicodeToAnsi16( LPCWSTR src, LPSTR dst, INT16 codepage )
 }
 
 /***********************************************************************
+ *       VWin32_EventCreate	(KERNEL.442)
+ */
+HANDLE WINAPI VWin32_EventCreate(VOID)
+{
+    HANDLE hEvent = CreateEventW( NULL, FALSE, 0, NULL );
+    return ConvertToGlobalHandle( hEvent );
+}
+
+/***********************************************************************
+ *       VWin32_EventDestroy	(KERNEL.443)
+ */
+VOID WINAPI VWin32_EventDestroy(HANDLE event)
+{
+    CloseHandle( event );
+}
+
+/***********************************************************************
+ *       VWin32_EventWait	(KERNEL.450)
+ */
+VOID WINAPI VWin32_EventWait(HANDLE event)
+{
+    DWORD mutex_count;
+
+    ReleaseThunkLock( &mutex_count );
+    WaitForSingleObject( event, INFINITE );
+    RestoreThunkLock( mutex_count );
+}
+
+/***********************************************************************
+ *       VWin32_EventSet	(KERNEL.451)
+ *       KERNEL_479             (KERNEL.479)
+ */
+VOID WINAPI VWin32_EventSet(HANDLE event)
+{
+    SetEvent( event );
+}
+
+/***********************************************************************
+ *           CreateW32Event    (KERNEL.457)
+ */
+HANDLE WINAPI CreateW32Event( BOOL manual_reset, BOOL initial_state )
+{
+    return CreateEventW( NULL, manual_reset, initial_state, NULL );
+}
+
+/***********************************************************************
+ *           SetW32Event (KERNEL.458)
+ */
+BOOL WINAPI SetW32Event( HANDLE handle )
+{
+    return SetEvent( handle );
+}
+
+/***********************************************************************
+ *           ResetW32Event (KERNEL.459)
+ */
+BOOL WINAPI ResetW32Event( HANDLE handle )
+{
+    return ResetEvent( handle );
+}
+
+/***********************************************************************
+ *           WaitForSingleObject   (KERNEL.460)
+ */
+DWORD WINAPI WaitForSingleObject16( HANDLE handle, DWORD timeout )
+{
+    DWORD retval, mutex_count;
+
+    ReleaseThunkLock( &mutex_count );
+    retval = WaitForSingleObject( handle, timeout );
+    RestoreThunkLock( mutex_count );
+    return retval;
+}
+
+/***********************************************************************
+ *           WaitForMultipleObjects   (KERNEL.461)
+ */
+DWORD WINAPI WaitForMultipleObjects16( DWORD count, const HANDLE *handles,
+                                       BOOL wait_all, DWORD timeout )
+{
+    DWORD retval, mutex_count;
+
+    ReleaseThunkLock( &mutex_count );
+    retval = WaitForMultipleObjectsEx( count, handles, wait_all, timeout, FALSE );
+    RestoreThunkLock( mutex_count );
+    return retval;
+}
+
+/***********************************************************************
+ *           WaitForMultipleObjectsEx   (KERNEL.495)
+ */
+DWORD WINAPI WaitForMultipleObjectsEx16( DWORD count, const HANDLE *handles,
+                                         BOOL wait_all, DWORD timeout, BOOL alertable )
+{
+    DWORD retval, mutex_count;
+
+    ReleaseThunkLock( &mutex_count );
+    retval = WaitForMultipleObjectsEx( count, handles, wait_all, timeout, alertable );
+    RestoreThunkLock( mutex_count );
+    return retval;
+}
+
+/***********************************************************************
  *		EnableDos (KERNEL.41)
  *		DisableDos (KERNEL.42)
  *		GetLastDiskChange (KERNEL.98)
