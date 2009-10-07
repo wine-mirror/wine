@@ -74,7 +74,6 @@ static UINT process_error_mode;
 
 static DWORD shutdown_flags = 0;
 static DWORD shutdown_priority = 0x280;
-static DWORD process_dword;
 static BOOL is_wow64;
 
 HMODULE kernel32_handle = 0;
@@ -2537,114 +2536,12 @@ DWORD WINAPI GetProcessFlags( DWORD processid )
 
 
 /***********************************************************************
- *           GetProcessDword    (KERNEL.485)
  *           GetProcessDword    (KERNEL32.18)
- * 'Of course you cannot directly access Windows internal structures'
  */
 DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
 {
-    DWORD               x, y;
-    STARTUPINFOW        siw;
-
-    TRACE("(%d, %d)\n", dwProcessID, offset );
-
-    if (dwProcessID && dwProcessID != GetCurrentProcessId())
-    {
-        ERR("%d: process %x not accessible\n", offset, dwProcessID);
-        return 0;
-    }
-
-    switch ( offset )
-    {
-    case GPD_APP_COMPAT_FLAGS:
-        return GetAppCompatFlags16(0);
-    case GPD_LOAD_DONE_EVENT:
-        return 0;
-    case GPD_HINSTANCE16:
-        return GetTaskDS16();
-    case GPD_WINDOWS_VERSION:
-        return GetExeVersion16();
-    case GPD_THDB:
-        return (DWORD_PTR)NtCurrentTeb() - 0x10 /* FIXME */;
-    case GPD_PDB:
-        return (DWORD_PTR)NtCurrentTeb()->Peb; /* FIXME: truncating a pointer */
-    case GPD_STARTF_SHELLDATA: /* return stdoutput handle from startupinfo ??? */
-        GetStartupInfoW(&siw);
-        return HandleToULong(siw.hStdOutput);
-    case GPD_STARTF_HOTKEY: /* return stdinput handle from startupinfo ??? */
-        GetStartupInfoW(&siw);
-        return HandleToULong(siw.hStdInput);
-    case GPD_STARTF_SHOWWINDOW:
-        GetStartupInfoW(&siw);
-        return siw.wShowWindow;
-    case GPD_STARTF_SIZE:
-        GetStartupInfoW(&siw);
-        x = siw.dwXSize;
-        if ( (INT)x == CW_USEDEFAULT ) x = CW_USEDEFAULT16;
-        y = siw.dwYSize;
-        if ( (INT)y == CW_USEDEFAULT ) y = CW_USEDEFAULT16;
-        return MAKELONG( x, y );
-    case GPD_STARTF_POSITION:
-        GetStartupInfoW(&siw);
-        x = siw.dwX;
-        if ( (INT)x == CW_USEDEFAULT ) x = CW_USEDEFAULT16;
-        y = siw.dwY;
-        if ( (INT)y == CW_USEDEFAULT ) y = CW_USEDEFAULT16;
-        return MAKELONG( x, y );
-    case GPD_STARTF_FLAGS:
-        GetStartupInfoW(&siw);
-        return siw.dwFlags;
-    case GPD_PARENT:
-        return 0;
-    case GPD_FLAGS:
-        return GetProcessFlags(0);
-    case GPD_USERDATA:
-        return process_dword;
-    default:
-        ERR("Unknown offset %d\n", offset );
-        return 0;
-    }
-}
-
-/***********************************************************************
- *           SetProcessDword    (KERNEL.484)
- * 'Of course you cannot directly access Windows internal structures'
- */
-void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value )
-{
-    TRACE("(%d, %d)\n", dwProcessID, offset );
-
-    if (dwProcessID && dwProcessID != GetCurrentProcessId())
-    {
-        ERR("%d: process %x not accessible\n", offset, dwProcessID);
-        return;
-    }
-
-    switch ( offset )
-    {
-    case GPD_APP_COMPAT_FLAGS:
-    case GPD_LOAD_DONE_EVENT:
-    case GPD_HINSTANCE16:
-    case GPD_WINDOWS_VERSION:
-    case GPD_THDB:
-    case GPD_PDB:
-    case GPD_STARTF_SHELLDATA:
-    case GPD_STARTF_HOTKEY:
-    case GPD_STARTF_SHOWWINDOW:
-    case GPD_STARTF_SIZE:
-    case GPD_STARTF_POSITION:
-    case GPD_STARTF_FLAGS:
-    case GPD_PARENT:
-    case GPD_FLAGS:
-        ERR("Not allowed to modify offset %d\n", offset );
-        break;
-    case GPD_USERDATA:
-        process_dword = value;
-        break;
-    default:
-        ERR("Unknown offset %d\n", offset );
-        break;
-    }
+    FIXME( "(%d, %d): not supported\n", dwProcessID, offset );
+    return 0;
 }
 
 
