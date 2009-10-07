@@ -1224,8 +1224,6 @@
 @ stdcall GetExpWinVer16(long)
 @ stdcall GetModuleHandle16(str)
 @ stdcall GetSelectorLimit16(long)
-@ stdcall GetVersion16()
-@ stdcall GetWinFlags16()
 @ stdcall GlobalDOSAlloc16(long)
 @ stdcall GlobalDOSFree16(long)
 @ stdcall GlobalFlags16(long)
