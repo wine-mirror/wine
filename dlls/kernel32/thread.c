@@ -554,24 +554,6 @@ DWORD WINAPI GetThreadId(HANDLE Thread)
 }
 
 
-/**********************************************************************
- * VWin32_BoostThreadGroup [KERNEL.535]
- */
-VOID WINAPI VWin32_BoostThreadGroup( DWORD threadId, INT boost )
-{
-    FIXME("(0x%08x,%d): stub\n", threadId, boost);
-}
-
-
-/**********************************************************************
- * VWin32_BoostThreadStatic [KERNEL.536]
- */
-VOID WINAPI VWin32_BoostThreadStatic( DWORD threadId, INT boost )
-{
-    FIXME("(0x%08x,%d): stub\n", threadId, boost);
-}
-
-
 /***********************************************************************
  * GetCurrentThread [KERNEL32.@]  Gets pseudohandle for current thread
  *
@@ -604,14 +586,12 @@ __ASM_STDCALL_FUNC( SetLastError, 4,
 __ASM_STDCALL_FUNC( GetLastError, 0, ".byte 0x64\n\tmovl 0x34,%eax\n\tret" )
 
 /***********************************************************************
- *		GetCurrentProcessId (KERNEL.471)
  *		GetCurrentProcessId (KERNEL32.@)
  */
 /* DWORD WINAPI GetCurrentProcessId(void) */
 __ASM_STDCALL_FUNC( GetCurrentProcessId, 0, ".byte 0x64\n\tmovl 0x20,%eax\n\tret" )
 
 /***********************************************************************
- *		GetCurrentThreadId (KERNEL.462)
  *		GetCurrentThreadId (KERNEL32.@)
  */
 /* DWORD WINAPI GetCurrentThreadId(void) */
@@ -646,7 +626,6 @@ DWORD WINAPI GetLastError(void)
 }
 
 /***********************************************************************
- *		GetCurrentProcessId (KERNEL.471)
  *		GetCurrentProcessId (KERNEL32.@)
  *
  * Get the current process identifier.
@@ -660,7 +639,6 @@ DWORD WINAPI GetCurrentProcessId(void)
 }
 
 /***********************************************************************
- *		GetCurrentThreadId (KERNEL.462)
  *		GetCurrentThreadId (KERNEL32.@)
  *
  * Get the current thread identifier.

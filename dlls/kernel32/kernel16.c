@@ -327,6 +327,48 @@ DWORD WINAPI WaitForMultipleObjects16( DWORD count, const HANDLE *handles,
 }
 
 /***********************************************************************
+ *		GetCurrentThreadId (KERNEL.462)
+ */
+DWORD WINAPI GetCurrentThreadId16(void)
+{
+    return GetCurrentThreadId();
+}
+
+/***********************************************************************
+ *           ExitProcess   (KERNEL.466)
+ */
+void WINAPI ExitProcess16( WORD status )
+{
+    DWORD count;
+    ReleaseThunkLock( &count );
+    ExitProcess( status );
+}
+
+/***********************************************************************
+ *		GetCurrentProcessId (KERNEL.471)
+ */
+DWORD WINAPI GetCurrentProcessId16(void)
+{
+    return GetCurrentProcessId();
+}
+
+/*********************************************************************
+ *           MapProcessHandle   (KERNEL.483)
+ */
+DWORD WINAPI MapProcessHandle( HANDLE hProcess )
+{
+    return GetProcessId( hProcess );
+}
+
+/***********************************************************************
+ *		RegisterServiceProcess (KERNEL.491)
+ */
+DWORD WINAPI RegisterServiceProcess16( DWORD dwProcessId, DWORD dwType )
+{
+    return 1; /* success */
+}
+
+/***********************************************************************
  *           WaitForMultipleObjectsEx   (KERNEL.495)
  */
 DWORD WINAPI WaitForMultipleObjectsEx16( DWORD count, const HANDLE *handles,
@@ -338,6 +380,23 @@ DWORD WINAPI WaitForMultipleObjectsEx16( DWORD count, const HANDLE *handles,
     retval = WaitForMultipleObjectsEx( count, handles, wait_all, timeout, alertable );
     RestoreThunkLock( mutex_count );
     return retval;
+}
+
+/**********************************************************************
+ * VWin32_BoostThreadGroup   (KERNEL.535)
+ */
+VOID WINAPI VWin32_BoostThreadGroup( DWORD threadId, INT boost )
+{
+    FIXME("(0x%08x,%d): stub\n", threadId, boost);
+}
+
+
+/**********************************************************************
+ * VWin32_BoostThreadStatic   (KERNEL.536)
+ */
+VOID WINAPI VWin32_BoostThreadStatic( DWORD threadId, INT boost )
+{
+    FIXME("(0x%08x,%d): stub\n", threadId, boost);
 }
 
 /***********************************************************************

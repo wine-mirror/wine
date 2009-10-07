@@ -364,7 +364,7 @@
 459 pascal ResetW32Event(long) ResetW32Event
 460 pascal WaitForSingleObject(long long) WaitForSingleObject16
 461 pascal WaitForMultipleObjects(long ptr long long) WaitForMultipleObjects16
-462 pascal GetCurrentThreadId() GetCurrentThreadId
+462 pascal GetCurrentThreadId() GetCurrentThreadId16
 463 pascal SetThreadQueue(long word) SetThreadQueue16
 464 pascal GetThreadQueue(long) GetThreadQueue16
 465 stub NukeProcess
@@ -373,7 +373,7 @@
 468 stub WOASpawnConApp
 469 stub WOAGimmeTitle
 470 stub WOADestroyConsole
-471 pascal GetCurrentProcessId() GetCurrentProcessId
+471 pascal GetCurrentProcessId() GetCurrentProcessId16
 472 pascal -register MapHInstLS() MapHInstLS16
 473 pascal -register MapHInstSL() MapHInstSL16
 474 pascal CloseW32Handle(long) CloseHandle
@@ -385,7 +385,7 @@
 480 pascal -ret16 _EnterWin16Lock() _EnterWin16Lock
 481 pascal -ret16 _LeaveWin16Lock() _LeaveWin16Lock
 482 pascal LoadSystemLibrary32(str) LoadLibrary32_16   # FIXME!
-483 pascal MapProcessHandle(long) GetProcessId
+483 pascal MapProcessHandle(long) MapProcessHandle
 484 pascal SetProcessDword(long s_word long) SetProcessDword
 485 pascal GetProcessDword(long s_word) GetProcessDword
 486 pascal FreeLibrary32(long) FreeLibrary
@@ -393,7 +393,7 @@
 488 pascal GetModuleHandle32(str) GetModuleHandleA
 489 stub KERNEL_489  # VWin32_BoostWithDecay
 490 pascal -ret16 KERNEL_490(word) KERNEL_490
-491 pascal RegisterServiceProcess(long long) RegisterServiceProcess
+491 pascal RegisterServiceProcess(long long) RegisterServiceProcess16
 492 stub WOAAbort
 493 pascal -ret16 UTInit(long long long long) UTInit16
 494 stub KERNEL_494

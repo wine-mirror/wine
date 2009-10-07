@@ -2648,17 +2648,6 @@ void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value )
 }
 
 
-/***********************************************************************
- *           ExitProcess   (KERNEL.466)
- */
-void WINAPI ExitProcess16( WORD status )
-{
-    DWORD count;
-    ReleaseThunkLock( &count );
-    ExitProcess( status );
-}
-
-
 /*********************************************************************
  *           OpenProcess   (KERNEL32.@)
  *
@@ -2703,7 +2692,6 @@ HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
 
 
 /*********************************************************************
- *           MapProcessHandle   (KERNEL.483)
  *           GetProcessId       (KERNEL32.@)
  *
  * Gets the a unique identifier of a process.
@@ -3296,7 +3284,6 @@ BOOL WINAPI ProcessIdToSessionId( DWORD procid, DWORD *sessionid_ptr )
 
 
 /***********************************************************************
- *		RegisterServiceProcess (KERNEL.491)
  *		RegisterServiceProcess (KERNEL32.@)
  *
  * A service process calls this function to ensure that it continues to run
