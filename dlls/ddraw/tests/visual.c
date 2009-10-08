@@ -2294,7 +2294,8 @@ static void p8_primary_test(void)
     U1(ddsd.ddpfPixelFormat).dwRGBBitCount      = 8;
     hr = IDirectDraw_CreateSurface(DirectDraw1, &ddsd, &offscreen, NULL);
     ok(hr == DD_OK ||
-       broken(hr == DDERR_INVALIDPIXELFORMAT), /* VMware */
+       broken(hr == DDERR_INVALIDPIXELFORMAT) || /* VMware */
+       broken(hr == DDERR_NODIRECTDRAWHW), /* VMware */
        "IDirectDraw_CreateSurface returned %08x\n", hr);
     if (FAILED(hr)) goto out;
 
@@ -2614,7 +2615,7 @@ static void cubemap_test(IDirect3DDevice7 *device)
     if(SUCCEEDED(hr))
     {
         hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_TEXCOORDSIZE3(0) | D3DFVF_TEX1, quad + 0 * 6, 4, 0);
-        if (hr == E_NOTIMPL)
+        if (hr == DDERR_UNSUPPORTED || hr == DDERR_NODIRECTDRAWHW)
         {
             /* VMware */
             win_skip("IDirect3DDevice7_DrawPrimitive is not completely implemented, colors won't be tested\n");
