@@ -1058,7 +1058,7 @@ const D3DRENDERSTATETYPE render_state_indices[] =
     D3DRS_EMISSIVEMATERIALSOURCE,
     D3DRS_VERTEXBLEND,
     D3DRS_CLIPPLANEENABLE,
-#if 0 /* Driver dependent, increase array size to enable */
+#if 0 /* Driver dependent */
     D3DRS_POINTSIZE,
 #endif
     D3DRS_POINTSIZE_MIN,
@@ -1070,7 +1070,9 @@ const D3DRENDERSTATETYPE render_state_indices[] =
     D3DRS_MULTISAMPLEANTIALIAS,
     D3DRS_MULTISAMPLEMASK,
     D3DRS_PATCHEDGESTYLE,
+#if 0 /* Apparently not recorded in the stateblock */
     D3DRS_DEBUGMONITORTOKEN,
+#endif
     D3DRS_POINTSIZE_MAX,
     D3DRS_INDEXEDVERTEXBLENDENABLE,
     D3DRS_COLORWRITEENABLE,
@@ -1202,7 +1204,7 @@ static void render_state_default_data_init(const struct render_state_arg *rsarg,
     data->states[idx++] = TRUE;                  /* MULTISAMPLEANTIALIAS */
     data->states[idx++] = 0xFFFFFFFF;            /* MULTISAMPLEMASK */
     data->states[idx++] = D3DPATCHEDGE_DISCRETE; /* PATCHEDGESTYLE */
-    data->states[idx++] = 0xbaadcafe;            /* DEBUGMONITORTOKEN */
+    if (0) data->states[idx++] = 0xbaadcafe;     /* DEBUGMONITORTOKEN, not recorded in the stateblock */
     data->states[idx++] = to_dword(rsarg->pointsize_max); /* POINTSIZE_MAX */
     data->states[idx++] = FALSE;                 /* INDEXEDVERTEXBLENDENABLE */
     data->states[idx++] = 0x0000000F;            /* COLORWRITEENABLE */
@@ -1286,7 +1288,7 @@ static void render_state_test_data_init(struct render_state_data *data)
     data->states[idx++] = FALSE;                 /* MULTISAMPLEANTIALIAS */
     data->states[idx++] = 0xABCDDBCA;            /* MULTISAMPLEMASK */
     data->states[idx++] = D3DPATCHEDGE_CONTINUOUS; /* PATCHEDGESTYLE */
-    data->states[idx++] = D3DDMT_DISABLE;        /* DEBUGMONITORTOKEN */
+    if (0) data->states[idx++] = D3DDMT_DISABLE; /* DEBUGMONITORTOKEN, not recorded in the stateblock */
     data->states[idx++] = to_dword(77.0f);       /* POINTSIZE_MAX */
     data->states[idx++] = TRUE;                  /* INDEXEDVERTEXBLENDENABLE */
     data->states[idx++] = 0x00000009;            /* COLORWRITEENABLE */
