@@ -39,6 +39,7 @@
 #include "winerror.h"
 #include "winternl.h"
 #include "winioctl.h"
+#include "kernel_private.h"
 #include "kernel16_private.h"
 #include "wine/library.h"
 #include "wine/unicode.h"
@@ -47,7 +48,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vxd);
 
-typedef BOOL (WINAPI *DeviceIoProc)(DWORD, LPVOID, DWORD, LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
 typedef DWORD (WINAPI *VxDCallProc)(DWORD, CONTEXT86 *);
 
 struct vxd_module
@@ -134,7 +134,7 @@ static HANDLE open_vxd_handle( LPCWSTR name )
 }
 
 /* retrieve the DeviceIoControl function for a Vxd given a file handle */
-static DeviceIoProc get_vxd_proc( HANDLE handle )
+DeviceIoProc VXD_get_proc( HANDLE handle )
 {
     DeviceIoProc ret = NULL;
     int status, i;
@@ -299,86 +299,3 @@ void WINAPI __regs_VxDCall( DWORD service, CONTEXT86 *context )
 #ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( VxDCall, 1 )
 #endif
-
-
-/***********************************************************************
- *		OpenVxDHandle (KERNEL32.@)
- *
- *	This function is supposed to return the corresponding Ring 0
- *	("kernel") handle for a Ring 3 handle in Win9x.
- *	Evidently, Wine will have problems with this. But we try anyway,
- *	maybe it helps...
- */
-HANDLE WINAPI OpenVxDHandle(HANDLE hHandleRing3)
-{
-    FIXME( "(%p), stub! (returning Ring 3 handle instead of Ring 0)\n", hHandleRing3);
-    return hHandleRing3;
-}
-
-
-/****************************************************************************
- *		DeviceIoControl (KERNEL32.@)
- * This is one of those big ugly nasty procedure which can do
- * a million and one things when it comes to devices. It can also be
- * used for VxD communication.
- *
- * A return value of FALSE indicates that something has gone wrong which
- * GetLastError can decipher.
- */
-BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
-                            LPVOID lpvInBuffer, DWORD cbInBuffer,
-                            LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-                            LPDWORD lpcbBytesReturned,
-                            LPOVERLAPPED lpOverlapped)
-{
-    NTSTATUS status;
-
-    TRACE( "(%p,%x,%p,%d,%p,%d,%p,%p)\n",
-           hDevice,dwIoControlCode,lpvInBuffer,cbInBuffer,
-           lpvOutBuffer,cbOutBuffer,lpcbBytesReturned,lpOverlapped );
-
-    /* Check if this is a user defined control code for a VxD */
-
-    if (HIWORD( dwIoControlCode ) == 0 && (GetVersion() & 0x80000000))
-    {
-        DeviceIoProc proc = get_vxd_proc( hDevice );
-        if (proc) return proc( dwIoControlCode, lpvInBuffer, cbInBuffer,
-                               lpvOutBuffer, cbOutBuffer, lpcbBytesReturned, lpOverlapped );
-    }
-
-    /* Not a VxD, let ntdll handle it */
-
-    if (lpOverlapped)
-    {
-        LPVOID cvalue = ((ULONG_PTR)lpOverlapped->hEvent & 1) ? NULL : lpOverlapped;
-        lpOverlapped->Internal = STATUS_PENDING;
-        lpOverlapped->InternalHigh = 0;
-        if (HIWORD(dwIoControlCode) == FILE_DEVICE_FILE_SYSTEM)
-            status = NtFsControlFile(hDevice, lpOverlapped->hEvent,
-                                     NULL, cvalue, (PIO_STATUS_BLOCK)lpOverlapped,
-                                     dwIoControlCode, lpvInBuffer, cbInBuffer,
-                                     lpvOutBuffer, cbOutBuffer);
-        else
-            status = NtDeviceIoControlFile(hDevice, lpOverlapped->hEvent,
-                                           NULL, cvalue, (PIO_STATUS_BLOCK)lpOverlapped,
-                                           dwIoControlCode, lpvInBuffer, cbInBuffer,
-                                           lpvOutBuffer, cbOutBuffer);
-        if (lpcbBytesReturned) *lpcbBytesReturned = lpOverlapped->InternalHigh;
-    }
-    else
-    {
-        IO_STATUS_BLOCK iosb;
-
-        if (HIWORD(dwIoControlCode) == FILE_DEVICE_FILE_SYSTEM)
-            status = NtFsControlFile(hDevice, NULL, NULL, NULL, &iosb,
-                                     dwIoControlCode, lpvInBuffer, cbInBuffer,
-                                     lpvOutBuffer, cbOutBuffer);
-        else
-            status = NtDeviceIoControlFile(hDevice, NULL, NULL, NULL, &iosb,
-                                           dwIoControlCode, lpvInBuffer, cbInBuffer,
-                                           lpvOutBuffer, cbOutBuffer);
-        if (lpcbBytesReturned) *lpcbBytesReturned = iosb.Information;
-    }
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
-}

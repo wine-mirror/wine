@@ -93,6 +93,9 @@ extern DWORD MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_en
 
 extern BOOL NLS_IsUnicodeOnlyLcid(LCID);
 
+/* vxd.c */
+typedef BOOL (WINAPI *DeviceIoProc)(DWORD, LPVOID, DWORD, LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
+extern DeviceIoProc VXD_get_proc( HANDLE handle );
 extern HANDLE VXD_Open( LPCWSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );
 
 /* environ.c */
