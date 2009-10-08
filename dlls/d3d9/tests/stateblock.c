@@ -314,7 +314,7 @@ static int end_stateblock(IDirect3DDevice9 *device, struct event_data *event_dat
     return EVENT_OK;
 }
 
-static int abort_stateblock(IDirect3DDevice9 *device, struct event_data *event_data)
+static int release_stateblock(IDirect3DDevice9 *device, struct event_data *event_data)
 {
     IUnknown_Release(event_data->stateblock);
     return EVENT_OK;
@@ -368,7 +368,7 @@ static void execute_test_chain_all(IDirect3DDevice9 *device, struct state_test *
     {
         {begin_stateblock,          SB_DATA_NONE,           SB_DATA_TEST_IN},
         {end_stateblock,            SB_DATA_NONE,           SB_DATA_NONE},
-        {abort_stateblock,          SB_DATA_DEFAULT,        SB_DATA_NONE},
+        {release_stateblock,        SB_DATA_DEFAULT,        SB_DATA_NONE},
     };
 
     struct event apply_stateblock_events[] =
