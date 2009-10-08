@@ -2107,7 +2107,7 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
   size.cx = sz.cx = 0;
   for (i = 0; i < 7; i++)
   {
-      if(GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SABBREVDAYNAME1,
+      if(GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SABBREVDAYNAME1 + i,
                         buff, countof(buff)))
       {
           GetTextExtentPoint32W(hdc, buff, lstrlenW(buff), &sz);
