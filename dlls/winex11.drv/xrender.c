@@ -146,7 +146,6 @@ struct xrender_info
     Picture            pict;
 };
 
-
 static gsCacheEntry *glyphsetCache = NULL;
 static DWORD glyphsetCacheSize = 0;
 static INT lastfree = -1;
@@ -480,6 +479,49 @@ static WineXRenderFormat *get_xrender_format_from_color_shifts(int depth, ColorS
     /* This should not happen because when we reach 'shifts' must have been set and we only allows shifts which are backed by X */
     ERR("No XRender format found!\n");
     return NULL;
+}
+
+/* Set the x/y scaling and x/y offsets in the transformation matrix of the source picture */
+static void set_xrender_transformation(Picture src_pict, float xscale, float yscale, int xoffset, int yoffset)
+{
+#ifdef HAVE_XRENDERSETPICTURETRANSFORM
+    XTransform xform = {{
+        { XDoubleToFixed(xscale), XDoubleToFixed(0), XDoubleToFixed(xoffset) },
+        { XDoubleToFixed(0), XDoubleToFixed(yscale), XDoubleToFixed(yoffset) },
+        { XDoubleToFixed(0), XDoubleToFixed(0), XDoubleToFixed(1) }
+    }};
+
+    pXRenderSetPictureTransform(gdi_display, src_pict, &xform);
+#endif
+}
+
+static Picture create_xrender_picture(Drawable drawable, int depth, ColorShifts *shifts)
+{
+    Picture pict;
+    XRenderPictureAttributes pa;
+    WineXRenderFormat *fmt = get_xrender_format_from_color_shifts(depth, shifts);
+    if (!fmt) return 0;
+
+    wine_tsx11_lock();
+    pa.subwindow_mode = IncludeInferiors;
+    pict = pXRenderCreatePicture(gdi_display, drawable, fmt->pict_format, CPSubwindowMode, &pa);
+    wine_tsx11_unlock();
+
+    return pict;
+}
+
+static Picture get_xrender_picture(X11DRV_PDEVICE *physDev)
+{
+    struct xrender_info *info = get_xrender_info(physDev);
+    if (!info) return 0;
+
+    if(!info->pict)
+    {
+        info->pict = create_xrender_picture(physDev->drawable, physDev->depth, physDev->color_shifts);
+        TRACE("Allocing pict=%lx dc=%p drawable=%08lx\n", info->pict, physDev->hdc, physDev->drawable);
+    }
+
+    return info->pict;
 }
 
 static BOOL fontcmp(LFANDSIZE *p1, LFANDSIZE *p2)
@@ -1434,7 +1476,6 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     gsCacheEntry *entry;
     gsCacheEntryFormat *formatEntry;
     BOOL retv = FALSE;
-    HDC hdc = physDev->hdc;
     int textPixel, backgroundPixel;
     HRGN saved_region = 0;
     BOOL disable_antialias = FALSE;
@@ -1515,35 +1556,6 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         DeleteObject( clip_region );
     }
 
-    if(X11DRV_XRender_Installed) {
-        if(!physDev->xrender->pict) {
-	    XRenderPictureAttributes pa;
-	    pa.subwindow_mode = IncludeInferiors;
-
-	    wine_tsx11_lock();
-	    physDev->xrender->pict = pXRenderCreatePicture(gdi_display,
-							   physDev->drawable, dst_format->pict_format,
-							   CPSubwindowMode, &pa);
-	    wine_tsx11_unlock();
-
-	    TRACE("allocing pict = %lx dc = %p drawable = %08lx\n",
-                  physDev->xrender->pict, hdc, physDev->drawable);
-	} else {
-	    TRACE("using existing pict = %lx dc = %p drawable = %08lx\n",
-                  physDev->xrender->pict, hdc, physDev->drawable);
-	}
-
-	if ((data = X11DRV_GetRegionData( physDev->region, 0 )))
-	{
-	    wine_tsx11_lock();
-	    pXRenderSetPictureClipRectangles( gdi_display, physDev->xrender->pict,
-					      physDev->dc_rect.left, physDev->dc_rect.top,
-					      (XRectangle *)data->Buffer, data->rdh.nCount );
-	    wine_tsx11_unlock();
-	    HeapFree( GetProcessHeap(), 0, data );
-	}
-    }
-
     EnterCriticalSection(&xrender_cs);
 
     entry = glyphsetCache + physDev->xrender->cache_index;
@@ -1578,6 +1590,17 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         INT offset = 0;
         POINT desired, current;
         int render_op = PictOpOver;
+        Picture pict = get_xrender_picture(physDev);
+
+        if ((data = X11DRV_GetRegionData( physDev->region, 0 )))
+        {
+            wine_tsx11_lock();
+            pXRenderSetPictureClipRectangles( gdi_display, pict,
+                            physDev->dc_rect.left, physDev->dc_rect.top,
+                            (XRectangle *)data->Buffer, data->rdh.nCount );
+            wine_tsx11_unlock();
+            HeapFree( GetProcessHeap(), 0, data );
+        }
 
         /* There's a bug in XRenderCompositeText that ignores the xDst and yDst parameters.
            So we pass zeros to the function and move to our starting position using the first
@@ -1618,9 +1641,11 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
             }
         }
         wine_tsx11_lock();
+        /* Make sure we don't have any transforms set from a previous call */
+        set_xrender_transformation(pict, 1, 1, 0, 0);
         pXRenderCompositeText16(gdi_display, render_op,
                                 tile_pict,
-                                physDev->xrender->pict,
+                                pict,
                                 formatEntry->font_format->pict_format,
                                 0, 0, 0, 0, elts, count);
         wine_tsx11_unlock();
@@ -1779,20 +1804,6 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 done_unlock:
     X11DRV_UnlockDIBSection( physDev, TRUE );
     return retv;
-}
-
-/* Set the x/y scaling and x/y offsets in the transformation matrix of the source picture */
-static void set_xrender_transformation(Picture src_pict, float xscale, float yscale, int xoffset, int yoffset)
-{
-#ifdef HAVE_XRENDERSETPICTURETRANSFORM
-    XTransform xform = {{
-        { XDoubleToFixed(xscale), XDoubleToFixed(0), XDoubleToFixed(xoffset) },
-        { XDoubleToFixed(0), XDoubleToFixed(yscale), XDoubleToFixed(yoffset) },
-        { XDoubleToFixed(0), XDoubleToFixed(0), XDoubleToFixed(1) }
-    }};
-
-    pXRenderSetPictureTransform(gdi_display, src_pict, &xform);
-#endif
 }
 
 /* Helper function for (stretched) blitting using xrender */
