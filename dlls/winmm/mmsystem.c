@@ -39,6 +39,7 @@
 #include "winnls.h"
 
 #include "wine/winuser16.h"
+#include "winemm.h"
 #include "winemm16.h"
 
 #include "wine/debug.h"

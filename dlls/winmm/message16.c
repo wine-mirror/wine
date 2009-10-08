@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wownt32.h"
+#include "winemm.h"
 #include "winemm16.h"
 #include "digitalv.h"
 #include "wine/debug.h"
