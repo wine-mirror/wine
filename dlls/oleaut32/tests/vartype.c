@@ -5249,8 +5249,11 @@ static void test_SysAllocStringByteLen(void)
   const CHAR szTestA[6] = { 'T','e','s','t','\0','?' };
   BSTR str;
 
-  str = SysAllocStringByteLen(szTestA, 0x80000000);
-  ok (str == NULL, "Expected NULL, got %p\n", str);
+  if (sizeof(void *) == 4)  /* not limited to 0x80000000 on Win64 */
+  {
+      str = SysAllocStringByteLen(szTestA, 0x80000000);
+      ok (str == NULL, "Expected NULL, got %p\n", str);
+  }
 
   str = SysAllocStringByteLen(szTestA, 0xffffffff);
   ok (str == NULL, "Expected NULL, got %p\n", str);
