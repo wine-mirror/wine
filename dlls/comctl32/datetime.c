@@ -543,7 +543,7 @@ DATETIME_IncreaseField (DATETIME_INFO *infoPtr, int number, int delta)
 
 
 static void
-DATETIME_ReturnFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int count, SHORT *fieldWidthPtr)
+DATETIME_ReturnFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int count, SHORT *width)
 {
     /* fields are a fixed width, determined by the largest possible string */
     /* presumably, these widths should be language dependent */
@@ -552,10 +552,6 @@ DATETIME_ReturnFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int count, SHO
     static const WCHAR fld_d4W[] = { '2', '2', '2', '2', 0 };
     static const WCHAR fld_am1[] = { 'A', 0 };
     static const WCHAR fld_am2[] = { 'A', 'M', 0 };
-    static const WCHAR fld_day[] = { 'W', 'e', 'd', 'n', 'e', 's', 'd', 'a', 'y', 0 };
-    static const WCHAR fld_day3[] = { 'W', 'e', 'd', 0 };
-    static const WCHAR fld_mon[] = { 'S', 'e', 'p', 't', 'e', 'm', 'b', 'e', 'r', 0 };
-    static const WCHAR fld_mon3[] = { 'D', 'e', 'c', 0 };
     int spec;
     WCHAR buffer[80];
     LPCWSTR bufptr;
@@ -602,18 +598,64 @@ DATETIME_ReturnFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int count, SHO
 	    case FULLYEAR:
 	        bufptr = fld_d4W;
 	        break;
-	    case THREECHARDAY:
-	        bufptr = fld_day3;
-	        break;
-	    case FULLDAY:
-	        bufptr = fld_day;
-	        break;
 	    case THREECHARMONTH:
-	        bufptr = fld_mon3;
-	        break;
 	    case FULLMONTH:
-	        bufptr = fld_mon;
-	        break;
+	    case THREECHARDAY:
+	    case FULLDAY:
+	    {
+		static const WCHAR fld_day[] = {'W','e','d','n','e','s','d','a','y',0};
+		static const WCHAR fld_abbrday[] = {'W','e','d',0};
+		static const WCHAR fld_mon[] = {'S','e','p','t','e','m','b','e','r',0};
+		static const WCHAR fld_abbrmon[] = {'D','e','c',0};
+
+		const WCHAR *fall;
+		LCTYPE lctype;
+		INT i, max_count;
+		LONG cx;
+
+		/* choose locale data type and fallback string */
+		switch (spec) {
+		case THREECHARDAY:
+		    fall   = fld_abbrday;
+		    lctype = LOCALE_SABBREVDAYNAME1;
+		    max_count = 7;
+		    break;
+		case FULLDAY:
+		    fall   = fld_day;
+		    lctype = LOCALE_SDAYNAME1;
+		    max_count = 7;
+		    break;
+		case THREECHARMONTH:
+		    fall   = fld_abbrmon;
+		    lctype = LOCALE_SABBREVMONTHNAME1;
+		    max_count = 12;
+		    break;
+		case FULLMONTH:
+		    fall   = fld_mon;
+		    lctype = LOCALE_SMONTHNAME1;
+		    max_count = 12;
+		    break;
+		}
+
+		cx = 0;
+		for (i = 0; i < max_count; i++)
+		{
+		    if(GetLocaleInfoW(LOCALE_USER_DEFAULT, lctype + i,
+			buffer, lstrlenW(buffer)))
+		    {
+			GetTextExtentPoint32W(hdc, buffer, lstrlenW(buffer), &size);
+			if (size.cx > cx) cx = size.cx;
+		    }
+		    else /* locale independent fallback on failure */
+		    {
+		        GetTextExtentPoint32W(hdc, fall, lstrlenW(fall), &size);
+			cx = size.cx;
+		        break;
+		    }
+		}
+		*width = cx;
+		return;
+	    }
 	    case ONELETTERAMPM:
 	        bufptr = fld_am1;
 	        break;
@@ -626,7 +668,7 @@ DATETIME_ReturnFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int count, SHO
         }
     }
     GetTextExtentPoint32W (hdc, bufptr, strlenW(bufptr), &size);
-    *fieldWidthPtr = size.cx;
+    *width = size.cx;
 }
 
 static void 
