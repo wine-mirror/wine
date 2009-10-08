@@ -668,6 +668,25 @@ static void test_dtm_set_and_get_system_time(void)
     DestroyWindow(hWnd);
 }
 
+static void test_wm_set_get_text(void)
+{
+    static const CHAR a_str[] = "a";
+    char buff[10];
+    HWND hWnd;
+    LRESULT ret;
+
+    hWnd = create_datetime_control(0);
+
+    ret = SendMessage(hWnd, WM_SETTEXT, 0, (LPARAM)a_str);
+    expect(CB_ERR, ret);
+
+    buff[0] = 0;
+    ret = SendMessage(hWnd, WM_GETTEXT, sizeof(buff), (LPARAM)buff);
+    ok(strcmp(buff, a_str) != 0, "Expected text not to change, got %s\n", buff);
+
+    DestroyWindow(hWnd);
+}
+
 START_TEST(datetime)
 {
     HMODULE hComctl32;
@@ -694,4 +713,5 @@ START_TEST(datetime)
     test_dtm_set_and_get_range();
     test_dtm_set_range_swap_min_max();
     test_dtm_set_and_get_system_time();
+    test_wm_set_get_text();
 }
