@@ -177,19 +177,14 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
     return Ok;
 }
 
-static LONG HatchStyleToHatch(HatchStyle hatchstyle)
-{
-    switch (hatchstyle)
-    {
-        case HatchStyleHorizontal:        return HS_HORIZONTAL;
-        case HatchStyleVertical:          return HS_VERTICAL;
-        case HatchStyleForwardDiagonal:   return HS_FDIAGONAL;
-        case HatchStyleBackwardDiagonal:  return HS_BDIAGONAL;
-        case HatchStyleCross:             return HS_CROSS;
-        case HatchStyleDiagonalCross:     return HS_DIAGCROSS;
-        default:                          return 0;
-    }
-}
+static const char HatchBrushes[][8] = {
+    { 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00 }, /* HatchStyleHorizontal */
+    { 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08 }, /* HatchStyleVertical */
+    { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 }, /* HatchStyleForwardDiagonal */
+    { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 }, /* HatchStyleBackwardDiagonal */
+    { 0x08, 0x08, 0x08, 0xff, 0x08, 0x08, 0x08, 0x08 }, /* HatchStyleCross */
+    { 0x81, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x81 }, /* HatchStyleDiagonalCross */
+};
 
 /******************************************************************************
  * GdipCreateHatchBrush [GDIPLUS.@]
@@ -197,6 +192,7 @@ static LONG HatchStyleToHatch(HatchStyle hatchstyle)
 GpStatus WINGDIPAPI GdipCreateHatchBrush(HatchStyle hatchstyle, ARGB forecol, ARGB backcol, GpHatch **brush)
 {
     COLORREF fgcol = ARGB2COLORREF(forecol);
+    GpStatus stat = Ok;
 
     TRACE("(%d, %d, %d, %p)\n", hatchstyle, forecol, backcol, brush);
 
@@ -205,37 +201,79 @@ GpStatus WINGDIPAPI GdipCreateHatchBrush(HatchStyle hatchstyle, ARGB forecol, AR
     *brush = GdipAlloc(sizeof(GpHatch));
     if (!*brush) return OutOfMemory;
 
-    switch (hatchstyle)
+    if (hatchstyle < sizeof(HatchBrushes) / sizeof(HatchBrushes[0]))
     {
-        case HatchStyleHorizontal:
-        case HatchStyleVertical:
-        case HatchStyleForwardDiagonal:
-        case HatchStyleBackwardDiagonal:
-        case HatchStyleCross:
-        case HatchStyleDiagonalCross:
-            /* Brushes that map to BS_HATCHED */
-            (*brush)->brush.lb.lbStyle = BS_HATCHED;
-            (*brush)->brush.lb.lbColor = fgcol;
-            (*brush)->brush.lb.lbHatch = HatchStyleToHatch(hatchstyle);
-            break;
+        HBITMAP hbmp;
+        HDC hdc;
+        BITMAPINFOHEADER bmih;
+        DWORD* bits;
+        int x, y;
 
-        default:
-            FIXME("Unimplemented hatch style %d\n", hatchstyle);
+        hdc = CreateCompatibleDC(0);
 
-            (*brush)->brush.lb.lbStyle = BS_SOLID;
-            (*brush)->brush.lb.lbColor = fgcol;
-            (*brush)->brush.lb.lbHatch = 0;
-            break;
+        if (hdc)
+        {
+            bmih.biSize = sizeof(bmih);
+            bmih.biWidth = 8;
+            bmih.biHeight = 8;
+            bmih.biPlanes = 1;
+            bmih.biBitCount = 32;
+            bmih.biCompression = BI_RGB;
+            bmih.biSizeImage = 0;
+
+            hbmp = CreateDIBSection(hdc, (BITMAPINFO*)&bmih, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+
+            if (hbmp)
+            {
+                for (y=0; y<8; y++)
+                    for (x=0; x<8; x++)
+                        if ((HatchBrushes[hatchstyle][y] & (0x80 >> x)) != 0)
+                            bits[y*8+x] = forecol;
+                        else
+                            bits[y*8+x] = backcol;
+            }
+            else
+                stat = GenericError;
+
+            DeleteDC(hdc);
+        }
+        else
+            stat = GenericError;
+
+        if (stat == Ok)
+        {
+            (*brush)->brush.lb.lbStyle = BS_PATTERN;
+            (*brush)->brush.lb.lbColor = 0;
+            (*brush)->brush.lb.lbHatch = (ULONG_PTR)hbmp;
+            (*brush)->brush.gdibrush = CreateBrushIndirect(&(*brush)->brush.lb);
+
+            DeleteObject(hbmp);
+        }
+    }
+    else
+    {
+        FIXME("Unimplemented hatch style %d\n", hatchstyle);
+
+        (*brush)->brush.lb.lbStyle = BS_SOLID;
+        (*brush)->brush.lb.lbColor = fgcol;
+        (*brush)->brush.lb.lbHatch = 0;
+        (*brush)->brush.gdibrush = CreateBrushIndirect(&(*brush)->brush.lb);
     }
 
+    if (stat == Ok)
+    {
+        (*brush)->brush.bt = BrushTypeHatchFill;
+        (*brush)->forecol = forecol;
+        (*brush)->backcol = backcol;
+        (*brush)->hatchstyle = hatchstyle;
+    }
+    else
+    {
+        GdipFree(*brush);
+        *brush = NULL;
+    }
 
-    (*brush)->brush.gdibrush = CreateBrushIndirect(&(*brush)->brush.lb);
-    (*brush)->brush.bt = BrushTypeHatchFill;
-    (*brush)->forecol = forecol;
-    (*brush)->backcol = backcol;
-    (*brush)->hatchstyle = hatchstyle;
-
-    return Ok;
+    return stat;
 }
 
 /******************************************************************************
