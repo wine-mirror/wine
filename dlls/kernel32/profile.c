@@ -1386,23 +1386,23 @@ INT WINAPI GetPrivateProfileSectionA( LPCSTR section, LPSTR buffer,
         return 0;
     }
 
-    bufferW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    bufferW = HeapAlloc(GetProcessHeap(), 0, len * 2 * sizeof(WCHAR));
     RtlCreateUnicodeStringFromAsciiz(&sectionW, section);
     if (filename) RtlCreateUnicodeStringFromAsciiz(&filenameW, filename);
     else filenameW.Buffer = NULL;
 
-    retW = GetPrivateProfileSectionW(sectionW.Buffer, bufferW, len, filenameW.Buffer);
-    if (len > 2)
+    retW = GetPrivateProfileSectionW(sectionW.Buffer, bufferW, len * 2, filenameW.Buffer);
+    if (retW)
     {
+        if (retW == len * 2 - 2) retW++;  /* overflow */
         ret = WideCharToMultiByte(CP_ACP, 0, bufferW, retW + 1, buffer, len, NULL, NULL);
-        if (ret > 2)
-            ret -= 1;
-        else
+        if (!ret || ret == len)  /* overflow */
         {
-            ret = 0;
+            ret = len - 2;
             buffer[len-2] = 0;
             buffer[len-1] = 0;
         }
+        else ret--;
     }
     else
     {
