@@ -884,7 +884,6 @@ static void D3D7EnumTest(void)
     memset(&d3d7et, 0, sizeof(d3d7et));
     IDirect3D7_EnumDevices(lpD3D, enumDevicesCallbackTest7, &d3d7et);
 
-
     /* A couple of games (Delta Force LW and TFD) rely on this behaviour */
     ok(d3d7et.tnlhal < d3d7et.total, "TnLHal device enumerated as only device.\n");
 
@@ -893,8 +892,6 @@ static void D3D7EnumTest(void)
 
     if(d3d7et.tnlhal)
         ok(d3d7et.hal, "TnLHal device enumerated, but no Hal device found.\n");
-
-    return;
 }
 
 static void CapsTest(void)
