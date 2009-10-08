@@ -39,11 +39,13 @@ static int modes_size;
 static LPDDSURFACEDESC modes;
 
 static HRESULT (WINAPI *pDirectDrawEnumerateA)(LPDDENUMCALLBACKA,LPVOID);
+static HRESULT (WINAPI *pDirectDrawEnumerateW)(LPDDENUMCALLBACKW,LPVOID);
 
 static void init_function_pointers(void)
 {
     HMODULE hmod = GetModuleHandleA("ddraw.dll");
     pDirectDrawEnumerateA = (void*)GetProcAddress(hmod, "DirectDrawEnumerateA");
+    pDirectDrawEnumerateW = (void*)GetProcAddress(hmod, "DirectDrawEnumerateW");
 }
 
 static void createwindow(void)
@@ -156,6 +158,40 @@ static void test_DirectDrawEnumerateA(void)
     trace("Calling DirectDrawEnumerateA with test_context_callbackA callback and non-NULL context.\n");
     ret = pDirectDrawEnumerateA(test_context_callbackA, (LPVOID)0xdeadbeef);
     ok(ret == DD_OK, "Expected DD_OK, got %d\n", ret);
+}
+
+static BOOL WINAPI test_callbackW(GUID *lpGUID, LPWSTR lpDriverDescription,
+                                  LPWSTR lpDriverName, LPVOID lpContext)
+{
+    ok(0, "The callback should not be invoked by DirectDrawEnumerateW\n");
+    return TRUE;
+}
+
+static void test_DirectDrawEnumerateW(void)
+{
+    HRESULT ret;
+
+    if (!pDirectDrawEnumerateW)
+    {
+        win_skip("DirectDrawEnumerateW is not available\n");
+        return;
+    }
+
+    /* DirectDrawEnumerateW is not implemented on Windows. */
+
+    /* Test with NULL callback parameter. */
+    ret = pDirectDrawEnumerateW(NULL, NULL);
+    ok(ret == DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, got %d\n", ret);
+
+    /* Test with invalid callback parameter. */
+    ret = pDirectDrawEnumerateW((LPDDENUMCALLBACKW)0xdeadbeef, NULL);
+    ok(ret == DDERR_INVALIDPARAMS /* XP */ ||
+       ret == DDERR_UNSUPPORTED /* Win7 */,
+       "Expected DDERR_INVALIDPARAMS or DDERR_UNSUPPORTED, got %d\n", ret);
+
+    /* Test with valid callback parameter and NULL context parameter. */
+    ret = pDirectDrawEnumerateW(test_callbackW, NULL);
+    ok(ret == DDERR_UNSUPPORTED, "Expected DDERR_UNSUPPORTED, got %d\n", ret);
 }
 
 static void adddisplaymode(LPDDSURFACEDESC lpddsd)
@@ -486,6 +522,7 @@ START_TEST(ddrawmodes)
         return;
 
     test_DirectDrawEnumerateA();
+    test_DirectDrawEnumerateW();
 
     enumdisplaymodes();
     if (winetest_interactive)

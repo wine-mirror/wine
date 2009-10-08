@@ -428,12 +428,21 @@ DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA Callback,
 /***********************************************************************
  * DirectDrawEnumerateW (DDRAW.@)
  *
- * Enumerates legacy drivers, unicode version. See
- * the comments above DirectDrawEnumerateA for more details.
- *
- * The Flag member is not supported right now.
+ * Enumerates legacy drivers, unicode version.
+ * This function is not implemented on Windows.
  *
  ***********************************************************************/
+HRESULT WINAPI
+DirectDrawEnumerateW(LPDDENUMCALLBACKW Callback,
+                     LPVOID Context)
+{
+    TRACE("(%p, %p)\n", Callback, Context);
+
+    if (!Callback)
+        return DDERR_INVALIDPARAMS;
+    else
+        return DDERR_UNSUPPORTED;
+}
 
 /***********************************************************************
  * DirectDrawEnumerateExW (DDRAW.@)
