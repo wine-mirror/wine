@@ -294,6 +294,16 @@ static int revert_render_target(IDirect3DDevice9 *device, struct event_data *eve
     return EVENT_OK;
 }
 
+static int create_stateblock(IDirect3DDevice9 *device, struct event_data *event_data)
+{
+    HRESULT hr;
+
+    hr = IDirect3DDevice9_CreateStateBlock(device, D3DSBT_ALL, &event_data->stateblock);
+    ok(SUCCEEDED(hr), "CreateStateBlock returned %#x.\n", hr);
+    if (FAILED(hr)) return EVENT_ERROR;
+    return EVENT_OK;
+}
+
 static int begin_stateblock(IDirect3DDevice9 *device, struct event_data *event_data)
 {
     HRESULT hret;
@@ -386,6 +396,20 @@ static void execute_test_chain_all(IDirect3DDevice9 *device, struct state_test *
         {apply_stateblock,          SB_DATA_DEFAULT,        SB_DATA_NONE},
     };
 
+    struct event create_stateblock_capture_apply_events[] =
+    {
+        {create_stateblock,         SB_DATA_DEFAULT,        SB_DATA_TEST_IN},
+        {capture_stateblock,        SB_DATA_TEST,           SB_DATA_DEFAULT},
+        {apply_stateblock,          SB_DATA_TEST,           SB_DATA_NONE},
+    };
+
+    struct event create_stateblock_apply_events[] =
+    {
+        {NULL,                      SB_DATA_DEFAULT,        SB_DATA_TEST_IN},
+        {create_stateblock,         SB_DATA_TEST,           SB_DATA_DEFAULT},
+        {apply_stateblock,          SB_DATA_TEST,           SB_DATA_NONE},
+    };
+
     struct event rendertarget_switch_events[] =
     {
         {NULL,                      SB_DATA_NONE,           SB_DATA_TEST_IN},
@@ -424,6 +448,12 @@ static void execute_test_chain_all(IDirect3DDevice9 *device, struct state_test *
 
     trace("Running stateblock capture/reapply state tests\n");
     execute_test_chain(device, test, ntests, capture_reapply_stateblock_events, 4, &arg);
+
+    trace("Running create stateblock capture/apply state tests\n");
+    execute_test_chain(device, test, ntests, create_stateblock_capture_apply_events, 3, &arg);
+
+    trace("Running create stateblock apply state tests\n");
+    execute_test_chain(device, test, ntests, create_stateblock_apply_events, 3, &arg);
 
     trace("Running rendertarget switch state tests\n");
     execute_test_chain(device, test, ntests, rendertarget_switch_events, 3, &arg);
