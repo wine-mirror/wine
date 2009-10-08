@@ -49,8 +49,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
-HANDLE dos_handles[DOS_TABLE_SIZE];
-
 /* info structure for FindFirstFile handle */
 typedef struct
 {
@@ -315,32 +313,6 @@ BOOL WINAPI AreFileApisANSI(void)
 /**************************************************************************
  *                      Operations on file handles                        *
  **************************************************************************/
-
-/***********************************************************************
- *           FILE_InitProcessDosHandles
- *
- * Allocates the default DOS handles for a process. Called either by
- * Win32HandleToDosFileHandle below or by the DOSVM stuff.
- */
-static void FILE_InitProcessDosHandles( void )
-{
-    static BOOL init_done /* = FALSE */;
-    HANDLE cp = GetCurrentProcess();
-
-    if (init_done) return;
-    init_done = TRUE;
-    DuplicateHandle(cp, GetStdHandle(STD_INPUT_HANDLE), cp, &dos_handles[0],
-                    0, TRUE, DUPLICATE_SAME_ACCESS);
-    DuplicateHandle(cp, GetStdHandle(STD_OUTPUT_HANDLE), cp, &dos_handles[1],
-                    0, TRUE, DUPLICATE_SAME_ACCESS);
-    DuplicateHandle(cp, GetStdHandle(STD_ERROR_HANDLE), cp, &dos_handles[2],
-                    0, TRUE, DUPLICATE_SAME_ACCESS);
-    DuplicateHandle(cp, GetStdHandle(STD_ERROR_HANDLE), cp, &dos_handles[3],
-                    0, TRUE, DUPLICATE_SAME_ACCESS);
-    DuplicateHandle(cp, GetStdHandle(STD_ERROR_HANDLE), cp, &dos_handles[4],
-                    0, TRUE, DUPLICATE_SAME_ACCESS);
-}
-
 
 /******************************************************************
  *		FILE_ReadWriteApc (internal)
@@ -1205,59 +1177,6 @@ BOOL WINAPI UnlockFileEx( HANDLE hFile, DWORD reserved, DWORD count_low, DWORD c
 }
 
 
-/***********************************************************************
- *           Win32HandleToDosFileHandle   (KERNEL32.21)
- *
- * Allocate a DOS handle for a Win32 handle. The Win32 handle is no
- * longer valid after this function (even on failure).
- *
- * Note: this is not exactly right, since on Win95 the Win32 handles
- *       are on top of DOS handles and we do it the other way
- *       around. Should be good enough though.
- */
-HFILE WINAPI Win32HandleToDosFileHandle( HANDLE handle )
-{
-    int i;
-
-    if (!handle || (handle == INVALID_HANDLE_VALUE))
-        return HFILE_ERROR;
-
-    FILE_InitProcessDosHandles();
-    for (i = 0; i < DOS_TABLE_SIZE; i++)
-        if (!dos_handles[i])
-        {
-            dos_handles[i] = handle;
-            TRACE("Got %d for h32 %p\n", i, handle );
-            return (HFILE)i;
-        }
-    CloseHandle( handle );
-    SetLastError( ERROR_TOO_MANY_OPEN_FILES );
-    return HFILE_ERROR;
-}
-
-
-/***********************************************************************
- *           DosFileHandleToWin32Handle   (KERNEL32.20)
- *
- * Return the Win32 handle for a DOS handle.
- *
- * Note: this is not exactly right, since on Win95 the Win32 handles
- *       are on top of DOS handles and we do it the other way
- *       around. Should be good enough though.
- */
-HANDLE WINAPI DosFileHandleToWin32Handle( HFILE handle )
-{
-    HFILE16 hfile = (HFILE16)handle;
-    if (hfile < 5) FILE_InitProcessDosHandles();
-    if ((hfile >= DOS_TABLE_SIZE) || !dos_handles[hfile])
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return INVALID_HANDLE_VALUE;
-    }
-    return dos_handles[hfile];
-}
-
-
 /*************************************************************************
  *           SetHandleCount   (KERNEL32.@)
  */
@@ -1266,29 +1185,6 @@ UINT WINAPI SetHandleCount( UINT count )
     return min( 256, count );
 }
 
-
-/***********************************************************************
- *           DisposeLZ32Handle   (KERNEL32.22)
- *
- * Note: this is not entirely correct, we should only close the
- *       32-bit handle and not the 16-bit one, but we cannot do
- *       this because of the way our DOS handles are implemented.
- *       It shouldn't break anything though.
- */
-void WINAPI DisposeLZ32Handle( HANDLE handle )
-{
-    int i;
-
-    if (!handle || (handle == INVALID_HANDLE_VALUE)) return;
-
-    for (i = 5; i < DOS_TABLE_SIZE; i++)
-        if (dos_handles[i] == handle)
-        {
-            dos_handles[i] = 0;
-            CloseHandle( handle );
-            break;
-        }
-}
 
 /**************************************************************************
  *                      Operations on file names                          *

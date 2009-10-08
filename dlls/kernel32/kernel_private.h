@@ -65,10 +65,6 @@ static inline obj_handle_t console_handle_unmap(HANDLE h)
 
 extern HMODULE kernel32_handle;
 
-/* Size of per-process table of DOS handles */
-#define DOS_TABLE_SIZE 256
-extern HANDLE dos_handles[DOS_TABLE_SIZE];
-
 extern const WCHAR *DIR_Windows;
 extern const WCHAR *DIR_System;
 extern const WCHAR *DIR_SysWow64;
