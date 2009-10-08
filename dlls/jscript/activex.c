@@ -156,7 +156,7 @@ static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
     }
 
     if(arg_cnt(dp) != 1) {
-        FIXME("unsuported arg_cnt %d\n", arg_cnt(dp));
+        FIXME("unsupported arg_cnt %d\n", arg_cnt(dp));
         return E_NOTIMPL;
     }
 

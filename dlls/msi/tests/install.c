@@ -2903,7 +2903,7 @@ static void test_lastusedsource(void)
     r = MsiInstallProductA("msifile0.msi", "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    /* seperate cabinet file */
+    /* separate cabinet file */
 
     size = MAX_PATH;
     lstrcpyA(value, "aaa");

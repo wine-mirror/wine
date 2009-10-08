@@ -1391,8 +1391,8 @@ static DWORD WINAPI hooked_WaitForInputIdle(HANDLE process, DWORD timeout)
  * a problem for us because ShellExecute will assume that an app is ready to
  * receive DDE messages after it has called WaitForInputIdle() on that app.
  * To work around that we install our own version of WaitForInputIdle() that
- * will wait for the child to explicitly tell it it's ready. We do that by
- * changing the entry for WaitForInputIdle() in the shell32 import address
+ * will wait for the child to explicitly tell us that it is ready. We do that
+ * by changing the entry for WaitForInputIdle() in the shell32 import address
  * table.
  */
 static void hook_WaitForInputIdle(void *new_func)

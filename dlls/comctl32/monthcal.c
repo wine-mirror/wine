@@ -331,7 +331,7 @@ static BOOL MONTHCAL_IsSelRangeValid(const MONTHCAL_INFO *infoPtr,
 }
 
 /* Used in MCM_SETRANGE/MCM_SETSELRANGE to determine resulting time part.
-   Milliseconds are intentionaly not validated. */
+   Milliseconds are intentionally not validated. */
 static BOOL MONTHCAL_ValidateTime(const SYSTEMTIME *time)
 {
   if((time->wHour > 24) || (time->wMinute > 59) || (time->wSecond > 59))
