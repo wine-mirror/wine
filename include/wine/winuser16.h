@@ -961,12 +961,7 @@ INT16       WINAPI lstrcmpi16(LPCSTR,LPCSTR);
 
 /* undocumented functions */
 
-typedef VOID (*SYSTEMTIMERPROC)(WORD);
-
 void        WINAPI ConvertDialog32To16(LPCVOID,DWORD,LPVOID);
-WORD        WINAPI CreateSystemTimer(WORD,SYSTEMTIMERPROC);
-VOID        WINAPI DisableSystemTimers16(void);
-VOID        WINAPI EnableSystemTimers16(void);
 BOOL16      WINAPI EnumTaskWindows16(HTASK16,WNDENUMPROC16,LPARAM);
 BOOL16      WINAPI GrayString16(HDC16,HBRUSH16,GRAYSTRINGPROC16,LPARAM,
                                 INT16,INT16,INT16,INT16,INT16);

@@ -1,5 +1,5 @@
 1 pascal InquireSystem(word word) InquireSystem16
-2 pascal -ret16 CreateSystemTimer(word segptr) WIN16_CreateSystemTimer
+2 pascal -ret16 CreateSystemTimer(word segptr) CreateSystemTimer16
 3 pascal -ret16 KillSystemTimer(word) SYSTEM_KillSystemTimer
 4 pascal -ret16 EnableSystemTimers() EnableSystemTimers16
 5 pascal -ret16 DisableSystemTimers() DisableSystemTimers16

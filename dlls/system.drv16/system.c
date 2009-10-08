@@ -34,7 +34,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(system);
 
 typedef struct
 {
-    SYSTEMTIMERPROC callback;  /* NULL if not in use */
     FARPROC16       callback16;
     INT             rate;
     INT             ticks;
@@ -49,6 +48,7 @@ static HANDLE SYS_timer;
 static HANDLE SYS_thread;
 static int SYS_timers_disabled;
 
+
 /***********************************************************************
  *           SYSTEM_TimerTick
  */
@@ -59,11 +59,23 @@ static void CALLBACK SYSTEM_TimerTick( LPVOID arg, DWORD low, DWORD high )
     if (SYS_timers_disabled) return;
     for (i = 0; i < NB_SYS_TIMERS; i++)
     {
-        if (!SYS_Timers[i].callback) continue;
+        if (!SYS_Timers[i].callback16) continue;
         if ((SYS_Timers[i].ticks -= SYS_TIMER_RATE) <= 0)
         {
+            FARPROC16 proc = SYS_Timers[i].callback16;
+            CONTEXT86 context;
+
             SYS_Timers[i].ticks += SYS_Timers[i].rate;
-            SYS_Timers[i].callback( i+1 );
+
+            memset( &context, 0, sizeof(context) );
+            context.SegFs = wine_get_fs();
+            context.SegGs = wine_get_gs();
+            context.SegCs = SELECTOROF( proc );
+            context.Eip   = OFFSETOF( proc );
+            context.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME, bp);
+            context.Eax   = i + 1;
+
+            WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)&context );
         }
     }
 }
@@ -150,49 +162,21 @@ DWORD WINAPI InquireSystem16( WORD code, WORD arg )
 /***********************************************************************
  *           CreateSystemTimer   (SYSTEM.2)
  */
-WORD WINAPI CreateSystemTimer( WORD rate, SYSTEMTIMERPROC callback )
+WORD WINAPI CreateSystemTimer16( WORD rate, FARPROC16 proc )
 {
     int i;
     for (i = 0; i < NB_SYS_TIMERS; i++)
-        if (!SYS_Timers[i].callback)  /* Found one */
+        if (!SYS_Timers[i].callback16)  /* Found one */
         {
             SYS_Timers[i].rate = (UINT)rate * 1000;
             if (SYS_Timers[i].rate < SYS_TIMER_RATE)
                 SYS_Timers[i].rate = SYS_TIMER_RATE;
             SYS_Timers[i].ticks = SYS_Timers[i].rate;
-            SYS_Timers[i].callback = callback;
+            SYS_Timers[i].callback16 = proc;
             if (++SYS_NbTimers == 1) SYSTEM_StartTicks();
             return i + 1;  /* 0 means error */
         }
     return 0;
-}
-
-/**********************************************************************/
-
-static void call_timer_proc16( WORD timer )
-{
-    CONTEXT86 context;
-    FARPROC16 proc = SYS_Timers[timer-1].callback16;
-
-    memset( &context, 0, sizeof(context) );
-
-    context.SegFs = wine_get_fs();
-    context.SegGs = wine_get_gs();
-    context.SegCs = SELECTOROF( proc );
-    context.Eip   = OFFSETOF( proc );
-    context.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME,bp);
-    context.Eax   = timer;
-
-    WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)&context );
-}
-
-/**********************************************************************/
-
-WORD WINAPI WIN16_CreateSystemTimer( WORD rate, FARPROC16 proc )
-{
-    WORD ret = CreateSystemTimer( rate, call_timer_proc16 );
-    if (ret) SYS_Timers[ret - 1].callback16 = proc;
-    return ret;
 }
 
 
@@ -203,9 +187,9 @@ WORD WINAPI WIN16_CreateSystemTimer( WORD rate, FARPROC16 proc )
  */
 WORD WINAPI SYSTEM_KillSystemTimer( WORD timer )
 {
-    if ( !timer || timer > NB_SYS_TIMERS || !SYS_Timers[timer-1].callback )
+    if ( !timer || timer > NB_SYS_TIMERS || !SYS_Timers[timer-1].callback16 )
         return timer;  /* Error */
-    SYS_Timers[timer-1].callback = NULL;
+    SYS_Timers[timer-1].callback16 = 0;
     if (!--SYS_NbTimers) SYSTEM_StopTicks();
     return 0;
 }
