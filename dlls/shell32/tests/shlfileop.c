@@ -1978,6 +1978,7 @@ static void test_sh_path_prepare(void)
 {
     HRESULT res;
     CHAR path[MAX_PATH];
+    CHAR UNICODE_PATH_A[MAX_PATH];
 
     if(!pSHPathPrepareForWriteA)
     {
@@ -2010,12 +2011,14 @@ static void test_sh_path_prepare(void)
     set_curr_dir_path(path, "test1.txt\0");
     res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_NONE);
     ok(res == HRESULT_FROM_WIN32(ERROR_DIRECTORY) ||
+       res == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || /* WinMe */
        res == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), /* Vista */
        "Unexpected result : 0x%08x\n", res);
 
     /* file exists, SHPPFW_DIRCREATE */
     res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_DIRCREATE);
     ok(res == HRESULT_FROM_WIN32(ERROR_DIRECTORY) ||
+       res == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || /* WinMe */
        res == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), /* Vista */
        "Unexpected result : 0x%08x\n", res);
 
@@ -2023,6 +2026,7 @@ static void test_sh_path_prepare(void)
     set_curr_dir_path(path, "test1.txt\\\0");
     res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_NONE);
     ok(res == HRESULT_FROM_WIN32(ERROR_DIRECTORY) ||
+       res == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || /* WinMe */
        res == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), /* Vista */
        "Unexpected result : 0x%08x\n", res);
 
@@ -2063,19 +2067,21 @@ static void test_sh_path_prepare(void)
 
     if(!pSHPathPrepareForWriteW)
     {
-        skip("Skipping SHPathPrepareForWriteW tests\n");
+        win_skip("Skipping SHPathPrepareForWriteW tests\n");
         return;
     }
+    WideCharToMultiByte(CP_ACP, 0, UNICODE_PATH, -1, UNICODE_PATH_A, sizeof(UNICODE_PATH_A), NULL, NULL);
+
     /* unicode directory doesn't exist, SHPPFW_NONE */
     res = pSHPathPrepareForWriteW(0, 0, UNICODE_PATH, SHPPFW_NONE);
     ok(res == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "res == %08x, expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)\n", res);
     ok(!file_existsW(UNICODE_PATH), "unicode path was created but shouldn't be\n");
-    RemoveDirectoryW(UNICODE_PATH);
+    RemoveDirectoryA(UNICODE_PATH_A);
 
     /* unicode directory doesn't exist, SHPPFW_DIRCREATE */
     res = pSHPathPrepareForWriteW(0, 0, UNICODE_PATH, SHPPFW_DIRCREATE);
     ok(res == S_OK, "res == %08x, expected S_OK\n", res);
-    ok(file_existsW(UNICODE_PATH), "unicode path should've been created\n");
+    ok(file_exists(UNICODE_PATH_A), "unicode path should've been created\n");
 
     /* unicode directory exists, SHPPFW_NONE */
     res = pSHPathPrepareForWriteW(0, 0, UNICODE_PATH, SHPPFW_NONE);
@@ -2084,7 +2090,7 @@ static void test_sh_path_prepare(void)
     /* unicode directory exists, SHPPFW_DIRCREATE */
     res = pSHPathPrepareForWriteW(0, 0, UNICODE_PATH, SHPPFW_DIRCREATE);
     ok(res == S_OK, "ret == %08x, expected S_OK\n", res);
-    RemoveDirectoryW(UNICODE_PATH);
+    RemoveDirectoryA(UNICODE_PATH_A);
 }
 
 static void test_sh_new_link_info(void)
