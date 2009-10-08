@@ -26,7 +26,7 @@
 #include "wine/winbase16.h"
 #include "wine/server.h"
 #include "wine/debug.h"
-#include "kernel_private.h"
+#include "kernel16_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(selector);
 

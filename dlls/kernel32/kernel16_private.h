@@ -188,12 +188,23 @@ static inline void stack16_pop( int size )
     NtCurrentTeb()->WOW32Reserved = (char *)NtCurrentTeb()->WOW32Reserved + size;
 }
 
+/* dosmem.c */
+extern BOOL   DOSMEM_Init(void);
+extern LPVOID DOSMEM_MapRealToLinear(DWORD); /* real-mode to linear */
+extern LPVOID DOSMEM_MapDosToLinear(UINT);   /* linear DOS to Wine */
+extern UINT   DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
+extern BOOL   load_winedos(void);
+
 /* global16.c */
 extern HGLOBAL16 GLOBAL_CreateBlock( UINT16 flags, void *ptr, DWORD size,
                                      HGLOBAL16 hOwner, unsigned char selflags );
 extern BOOL16 GLOBAL_FreeBlock( HGLOBAL16 handle );
 extern BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, void *ptr, DWORD size );
 extern HGLOBAL16 GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL16 hOwner, unsigned char selflags );
+
+/* instr.c */
+extern DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *context );
+extern LONG CALLBACK INSTR_vectored_handler( EXCEPTION_POINTERS *ptrs );
 
 /* ne_module.c */
 extern NE_MODULE *NE_GetPtr( HMODULE16 hModule );
@@ -239,9 +250,35 @@ extern void TASK_InstallTHHook( THHOOK *pNewThook );
 
 extern BOOL WOWTHUNK_Init(void);
 
+extern struct winedos_exports
+{
+    /* for global16.c */
+    void*    (*AllocDosBlock)(UINT size, UINT16* pseg);
+    BOOL     (*FreeDosBlock)(void* ptr);
+    UINT     (*ResizeDosBlock)(void *ptr, UINT size, BOOL exact);
+    /* for instr.c */
+    BOOL (WINAPI *EmulateInterruptPM)( CONTEXT86 *context, BYTE intnum );
+    void (WINAPI *CallBuiltinHandler)( CONTEXT86 *context, BYTE intnum );
+    DWORD (WINAPI *inport)( int port, int size );
+    void (WINAPI *outport)( int port, int size, DWORD val );
+} winedos;
+
+extern WORD DOSMEM_0000H;
+extern WORD DOSMEM_BiosDataSeg;
+extern WORD DOSMEM_BiosSysSeg;
 extern DWORD CallTo16_DataSelector;
 extern DWORD CallTo16_TebSelector;
 extern SEGPTR CALL32_CBClient_RetAddr;
 extern SEGPTR CALL32_CBClientEx_RetAddr;
+
+#ifdef __i386__
+#define DEFINE_REGS_ENTRYPOINT( name, args ) \
+    __ASM_GLOBAL_FUNC( name, \
+                       ".byte 0x68\n\t"  /* pushl $__regs_func */       \
+                       ".long " __ASM_NAME("__regs_") #name "-.-11\n\t" \
+                       ".byte 0x6a," #args "\n\t" /* pushl $args */     \
+                       "call " __ASM_NAME("__wine_call_from_32_regs") "\n\t" \
+                       "ret $(4*" #args ")" ) /* fake ret to make copy protections happy */
+#endif
 
 #endif  /* __WINE_KERNEL16_PRIVATE_H */

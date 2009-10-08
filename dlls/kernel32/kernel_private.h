@@ -75,9 +75,6 @@ extern void FILE_SetDosError(void);
 extern WCHAR *FILE_name_AtoW( LPCSTR name, BOOL alloc );
 extern DWORD FILE_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen );
 
-extern DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *context );
-extern LONG CALLBACK INSTR_vectored_handler( EXCEPTION_POINTERS *ptrs );
-
 /* return values for MODULE_GetBinaryType */
 #define BINARY_UNKNOWN    0x00
 #define BINARY_PE         0x01
@@ -98,17 +95,6 @@ extern BOOL NLS_IsUnicodeOnlyLcid(LCID);
 
 extern HANDLE VXD_Open( LPCWSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );
 
-extern WORD DOSMEM_0000H;
-extern WORD DOSMEM_BiosDataSeg;
-extern WORD DOSMEM_BiosSysSeg;
-
-/* dosmem.c */
-extern BOOL   DOSMEM_Init(void);
-extern LPVOID DOSMEM_MapRealToLinear(DWORD); /* real-mode to linear */
-extern LPVOID DOSMEM_MapDosToLinear(UINT);   /* linear DOS to Wine */
-extern UINT   DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
-extern BOOL   load_winedos(void);
-
 /* environ.c */
 extern void ENV_CopyStartupInformation(void);
 
@@ -122,32 +108,7 @@ extern void LOCALE_InitRegistry(void);
 /* oldconfig.c */
 extern void convert_old_config(void);
 
-extern struct winedos_exports
-{
-    /* for global16.c */
-    void*    (*AllocDosBlock)(UINT size, UINT16* pseg);
-    BOOL     (*FreeDosBlock)(void* ptr);
-    UINT     (*ResizeDosBlock)(void *ptr, UINT size, BOOL exact);
-    /* for instr.c */
-    BOOL (WINAPI *EmulateInterruptPM)( CONTEXT86 *context, BYTE intnum );
-    void (WINAPI *CallBuiltinHandler)( CONTEXT86 *context, BYTE intnum );
-    DWORD (WINAPI *inport)( int port, int size );
-    void (WINAPI *outport)( int port, int size, DWORD val );
-} winedos;
-
 /* returns directory handle for named objects */
 extern HANDLE get_BaseNamedObjects_handle(void);
-
-/* Register functions */
-
-#ifdef __i386__
-#define DEFINE_REGS_ENTRYPOINT( name, args ) \
-    __ASM_GLOBAL_FUNC( name, \
-                       ".byte 0x68\n\t"  /* pushl $__regs_func */       \
-                       ".long " __ASM_NAME("__regs_") #name "-.-11\n\t" \
-                       ".byte 0x6a," #args "\n\t" /* pushl $args */     \
-                       "call " __ASM_NAME("__wine_call_from_32_regs") "\n\t" \
-                       "ret $(4*" #args ")" ) /* fake ret to make copy protections happy */
-#endif
 
 #endif
