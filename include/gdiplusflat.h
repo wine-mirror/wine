@@ -337,6 +337,11 @@ GpStatus WINGDIPAPI GdipSetPathMarker(GpPath*);
 GpStatus WINGDIPAPI GdipStartPathFigure(GpPath*);
 GpStatus WINGDIPAPI GdipTransformPath(GpPath*,GpMatrix*);
 
+/* HatchBrush */
+GpStatus WINGDIPAPI GdipCreateHatchBrush(HatchStyle,ARGB,ARGB,GpHatch**);
+GpStatus WINGDIPAPI GdipGetHatchBackgroundColor(GpHatch*,ARGB*);
+GpStatus WINGDIPAPI GdipGetHatchForegroundColor(GpHatch*,ARGB*);
+
 /* Image */
 GpStatus WINGDIPAPI GdipCloneImage(GpImage*, GpImage**);
 GpStatus WINGDIPAPI GdipCloneImageAttributes(GDIPCONST GpImageAttributes*,GpImageAttributes**);
