@@ -712,12 +712,13 @@ DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
                 /* fill if focused */
                 HBRUSH hbr = CreateSolidBrush (comctl32_color.clrActiveCaption);
 
-                selection.right  = field->right;
-                selection.left   = selection.right - size.cx;
+                selection.left   = 0;
                 selection.top    = 0;
+                selection.right  = size.cx;
                 selection.bottom = size.cy;
                 /* center rectangle */
-                OffsetRect(&selection, 0, (field->bottom - size.cy)/2);
+                OffsetRect(&selection, (field->right  + field->left - size.cx)/2,
+                                       (field->bottom - size.cy)/2);
 
                 FillRect(hdc, &selection, hbr);
                 DeleteObject (hbr);
@@ -727,7 +728,7 @@ DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
                 oldTextColor = SetTextColor (hdc, comctl32_color.clrWindowText);
 
             /* draw the date text using the colour set above */
-            DrawTextW (hdc, txt, strlenW(txt), field, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
+            DrawTextW (hdc, txt, strlenW(txt), field, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
             SetTextColor (hdc, oldTextColor);
         }
         SetBkMode (hdc, oldBkMode);
