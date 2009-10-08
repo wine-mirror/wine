@@ -140,7 +140,7 @@ typedef struct
     INT next;
 } gsCacheEntry;
 
-struct tagXRENDERINFO
+struct xrender_info
 {
     int                cache_index;
     Picture            pict;
@@ -207,11 +207,11 @@ static CRITICAL_SECTION xrender_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 #define NATIVE_BYTE_ORDER LSBFirst
 #endif
 
-static XRENDERINFO get_xrender_info(X11DRV_PDEVICE *physDev)
+static struct xrender_info *get_xrender_info(X11DRV_PDEVICE *physDev)
 {
     if(!physDev->xrender)
     {
-        physDev->xrender = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct tagXRENDERINFO));
+        physDev->xrender = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev->xrender));
 
         if(!physDev->xrender)
         {
@@ -812,7 +812,7 @@ void X11DRV_XRender_Finalize(void)
 BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
 {
     LFANDSIZE lfsz;
-    XRENDERINFO info;
+    struct xrender_info *info;
 
     GetObjectW(hfont, sizeof(lfsz.lf), &lfsz.lf);
     TRACE("h=%d w=%d weight=%d it=%d charset=%d name=%s\n",
