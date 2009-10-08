@@ -632,19 +632,15 @@ DATETIME_ReturnFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int count, SHO
 static void 
 DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
 {
-    int i,prevright;
-    RECT *field;
-    RECT *rcDraw = &infoPtr->rcDraw;
-    RECT *calbutton = &infoPtr->calbutton;
-    RECT *checkbox = &infoPtr->checkbox;
-    SIZE size;
-    COLORREF oldTextColor;
-    SHORT fieldWidth = 0;
-
-    /* draw control edge */
     TRACE("\n");
 
     if (infoPtr->dateValid) {
+        int i, prevright;
+        RECT *field;
+        RECT *rcDraw = &infoPtr->rcDraw;
+        SIZE size;
+        COLORREF oldTextColor;
+        SHORT fieldWidth = 0;
         HFONT oldFont = SelectObject (hdc, infoPtr->hFont);
         INT oldBkMode = SetBkMode (hdc, TRANSPARENT);
         WCHAR txt[80];
@@ -653,25 +649,35 @@ DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
         GetTextExtentPoint32W (hdc, txt, strlenW(txt), &size);
         rcDraw->bottom = size.cy + 2;
 
-        prevright = checkbox->right = ((infoPtr->dwStyle & DTS_SHOWNONE) ? 18 : 2);
+        prevright = infoPtr->checkbox.right = ((infoPtr->dwStyle & DTS_SHOWNONE) ? 18 : 2);
 
         for (i = 0; i < infoPtr->nrFields; i++) {
             DATETIME_ReturnTxt (infoPtr, i, txt, sizeof(txt)/sizeof(txt[0]));
             GetTextExtentPoint32W (hdc, txt, strlenW(txt), &size);
             DATETIME_ReturnFieldWidth (infoPtr, hdc, i, &fieldWidth);
             field = &infoPtr->fieldRect[i];
-            field->left  = prevright;
-            field->right = prevright + fieldWidth;
-            field->top   = rcDraw->top;
+            field->left   = prevright;
+            field->right  = prevright + fieldWidth;
+            field->top    = rcDraw->top;
             field->bottom = rcDraw->bottom;
             prevright = field->right;
 
             if (infoPtr->dwStyle & WS_DISABLED)
                 oldTextColor = SetTextColor (hdc, comctl32_color.clrGrayText);
             else if ((infoPtr->haveFocus) && (i == infoPtr->select)) {
+                RECT selection;
+
                 /* fill if focused */
                 HBRUSH hbr = CreateSolidBrush (comctl32_color.clrActiveCaption);
-                FillRect(hdc, field, hbr);
+
+                selection.right  = field->right;
+                selection.left   = selection.right - size.cx;
+                selection.top    = 0;
+                selection.bottom = size.cy;
+                /* center rectangle */
+                OffsetRect(&selection, 0, (field->bottom - size.cy)/2);
+
+                FillRect(hdc, &selection, hbr);
                 DeleteObject (hbr);
                 oldTextColor = SetTextColor (hdc, comctl32_color.clrWindow);
             }
@@ -687,7 +693,7 @@ DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
     }
 
     if (!(infoPtr->dwStyle & DTS_UPDOWN)) {
-        DrawFrameControl(hdc, calbutton, DFC_SCROLL,
+        DrawFrameControl(hdc, &infoPtr->calbutton, DFC_SCROLL,
                          DFCS_SCROLLDOWN | (infoPtr->bCalDepressed ? DFCS_PUSHED : 0) |
                          (infoPtr->dwStyle & WS_DISABLED ? DFCS_INACTIVE : 0) );
     }
