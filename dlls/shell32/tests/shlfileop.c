@@ -1042,10 +1042,13 @@ static void test_copy(void)
     shfo.pTo = "testdir2\\a.txt\0testdir2\\b.txt\0testdir2\\c.txt\0";
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperation(&shfo);
-    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
+    ok(retval == ERROR_SUCCESS ||
+       broken(retval == 0x100a1), /* WinMe */
+       "Expected ERROR_SUCCESS, got %d\n", retval);
     ok(DeleteFile("testdir2\\a.txt"), "Expected testdir2\\a.txt to exist\n");
     ok(DeleteFile("testdir2\\b.txt"), "Expected testdir2\\b.txt to exist\n");
-    ok(RemoveDirectory("testdir2\\c.txt"), "Expected testdir2\\c.txt to exist\n");
+    if (retval == ERROR_SUCCESS)
+        ok(RemoveDirectory("testdir2\\c.txt"), "Expected testdir2\\c.txt to exist\n");
 
     /* try many dest files without FOF_MULTIDESTFILES flag */
     shfo.pFrom = "test1.txt\0test2.txt\0test3.txt\0";
@@ -1073,7 +1076,9 @@ static void test_copy(void)
     shfo.pTo = "testdir2\0";
     shfo.fFlags &= ~FOF_MULTIDESTFILES;
     retval = SHFileOperation(&shfo);
-    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
+    ok(retval == ERROR_SUCCESS ||
+       broken(retval == 0x100a1), /* WinMe */
+       "Expected ERROR_SUCCESS, got %d\n", retval);
     ok(file_exists("testdir2\\test1.txt"), "Expected testdir2\\test1.txt to exist\n");
 
     /* try a glob with FOF_FILESONLY */
@@ -1190,18 +1195,28 @@ static void test_copy(void)
     shfo.fFlags &= ~FOF_MULTIDESTFILES;
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperation(&shfo);
-    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
-    ok(DeleteFile("testdir2\\test1.txt"), "Expected testdir2\\test1.txt to exist\n");
-    ok(DeleteFile("testdir2\\test4.txt\\a.txt"), "Expected a.txt to exist\n");
-    ok(RemoveDirectory("testdir2\\test4.txt"), "Expected testdir2\\test4.txt to exist\n");
+    ok(retval == ERROR_SUCCESS ||
+       broken(retval == 0x100a1), /* WinMe */
+       "Expected ERROR_SUCCESS, got %d\n", retval);
+    if (retval == ERROR_SUCCESS)
+    {
+        ok(DeleteFile("testdir2\\test1.txt"), "Expected testdir2\\test1.txt to exist\n");
+        ok(DeleteFile("testdir2\\test4.txt\\a.txt"), "Expected a.txt to exist\n");
+        ok(RemoveDirectory("testdir2\\test4.txt"), "Expected testdir2\\test4.txt to exist\n");
+    }
 
     /* copy one directory and a file in that dir to another dir */
     shfo.pFrom = "test4.txt\0test4.txt\\a.txt\0";
     shfo.pTo = "testdir2\0";
     retval = SHFileOperation(&shfo);
-    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
-    ok(DeleteFile("testdir2\\test4.txt\\a.txt"), "Expected a.txt to exist\n");
-    ok(DeleteFile("testdir2\\a.txt"), "Expected testdir2\\a.txt to exist\n");
+    ok(retval == ERROR_SUCCESS ||
+       broken(retval == 0x100a1), /* WinMe */
+       "Expected ERROR_SUCCESS, got %d\n", retval);
+    if (retval == ERROR_SUCCESS)
+    {
+        ok(DeleteFile("testdir2\\test4.txt\\a.txt"), "Expected a.txt to exist\n");
+        ok(DeleteFile("testdir2\\a.txt"), "Expected testdir2\\a.txt to exist\n");
+    }
 
     /* copy a file in a directory first, and then the directory to a nonexistent dir */
     shfo.pFrom = "test4.txt\\a.txt\0test4.txt\0";
@@ -1362,13 +1377,21 @@ static void test_copy(void)
     createTestFile("test4.txt\\test1.txt");
     shfo.pFrom = "test4.txt\0";
     shfo.pTo = "testdir2\0";
-    shfo.fFlags = FOF_NOCONFIRMATION;
-    ok(!SHFileOperation(&shfo), "First SHFileOperation failed\n");
-    createTestFile("test4.txt\\.\\test1.txt"); /* modify the content of the file */
-    /* without FOF_NOCONFIRMATION the confirmation is "This folder already contains a folder named ..." */
+    /* WinMe needs FOF_NOERRORUI */
+    shfo.fFlags = FOF_NOCONFIRMATION | FOF_NOERRORUI;
     retval = SHFileOperation(&shfo);
-    ok(retval == 0, "Expected 0, got %d\n", retval);
-    ok(file_has_content("testdir2\\test4.txt\\test1.txt", "test4.txt\\.\\test1.txt\n"), "The file was not copied\n");
+    ok(retval == ERROR_SUCCESS ||
+       broken(retval == 0x100a1), /* WinMe */
+       "Expected ERROR_SUCCESS, got %d\n", retval);
+    shfo.fFlags = FOF_NOCONFIRMATION;
+    if (ERROR_SUCCESS)
+    {
+        createTestFile("test4.txt\\.\\test1.txt"); /* modify the content of the file */
+        /* without FOF_NOCONFIRMATION the confirmation is "This folder already contains a folder named ..." */
+        retval = SHFileOperation(&shfo);
+        ok(retval == 0, "Expected 0, got %d\n", retval);
+        ok(file_has_content("testdir2\\test4.txt\\test1.txt", "test4.txt\\.\\test1.txt\n"), "The file was not copied\n");
+    }
 
     createTestFile("one.txt");
 
