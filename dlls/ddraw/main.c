@@ -403,7 +403,16 @@ DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA Callback,
                        LPVOID Context,
                        DWORD Flags)
 {
-    BOOL stop = FALSE;
+    TRACE("(%p, %p, 0x%08x)\n", Callback, Context, Flags);
+
+    if (Flags & ~(DDENUM_ATTACHEDSECONDARYDEVICES |
+                  DDENUM_DETACHEDSECONDARYDEVICES |
+                  DDENUM_NONDISPLAYDEVICES))
+        return DDERR_INVALIDPARAMS;
+
+    if (Flags)
+        FIXME("flags 0x%08x not handled\n", Flags);
+
     TRACE("Enumerating default DirectDraw HAL interface\n");
 
     /* We only have one driver by now */
@@ -413,11 +422,11 @@ DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA Callback,
         driver_name[] = "display";
 
         /* QuickTime expects the description "DirectDraw HAL" */
-        stop = !Callback(NULL, driver_desc, driver_name, Context, 0);
+        Callback(NULL, driver_desc, driver_name, Context, 0);
     }
     __EXCEPT_PAGE_FAULT
     {
-        return E_INVALIDARG;
+        return DDERR_INVALIDPARAMS;
     }
     __ENDTRY;
 
