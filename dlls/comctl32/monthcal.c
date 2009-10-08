@@ -395,7 +395,7 @@ int MONTHCAL_CalculateDayOfWeek(WORD day, WORD month, WORD year)
 }
 
 /* properly updates date to point on next month */
-void inline MONTHCAL_GetNextMonth(SYSTEMTIME *date)
+static inline void MONTHCAL_GetNextMonth(SYSTEMTIME *date)
 {
   if(++date->wMonth > 12)
   {
@@ -407,13 +407,52 @@ void inline MONTHCAL_GetNextMonth(SYSTEMTIME *date)
 }
 
 /* properly updates date to point on prev month */
-void inline MONTHCAL_GetPrevMonth(SYSTEMTIME *date)
+static inline void MONTHCAL_GetPrevMonth(SYSTEMTIME *date)
 {
   if(--date->wMonth < 1)
   {
     date->wMonth = 12;
     date->wYear--;
   }
+  date->wDayOfWeek = MONTHCAL_CalculateDayOfWeek(date->wDay, date->wMonth,
+                                                 date->wYear);
+}
+
+/* Returns full date for a first currently visible day */
+static void MONTHCAL_GetMinDate(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *date)
+{
+  int firstDay;
+
+  firstDay = MONTHCAL_CalculateDayOfWeek(1, infoPtr->curSel.wMonth, infoPtr->curSel.wYear);
+
+  *date = infoPtr->curSel;
+  MONTHCAL_GetPrevMonth(date);
+
+  date->wDay = MONTHCAL_MonthLength(date->wMonth, date->wYear) +
+               (infoPtr->firstDay - firstDay) % 7 + 1;
+
+  if(date->wDay > MONTHCAL_MonthLength(date->wMonth, date->wYear))
+    date->wDay -= 7;
+
+  /* fix day of week */
+  date->wDayOfWeek = MONTHCAL_CalculateDayOfWeek(date->wDay, date->wMonth,
+                                                 date->wYear);
+}
+
+/* Returns full date for a last currently visible day */
+static void MONTHCAL_GetMaxDate(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *date)
+{
+  SYSTEMTIME st;
+
+  *date = infoPtr->curSel;
+  MONTHCAL_GetNextMonth(date);
+
+  MONTHCAL_GetMinDate(infoPtr, &st);
+  /* Use month length to get max day. 42 means max day count in calendar area */
+  date->wDay = 42 - (MONTHCAL_MonthLength(st.wMonth, st.wYear) - st.wDay + 1) -
+                     MONTHCAL_MonthLength(infoPtr->curSel.wMonth, infoPtr->curSel.wYear);
+
+  /* fix day of week */
   date->wDayOfWeek = MONTHCAL_CalculateDayOfWeek(date->wDay, date->wMonth,
                                                  date->wYear);
 }
@@ -661,7 +700,7 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
   RECT *titlemonth=&infoPtr->titlemonth;
   RECT *titleyear=&infoPtr->titleyear;
   RECT dayrect;
-  int i, j, m, mask, day, firstDay, prevMonth;
+  int i, j, m, mask, day, prevMonth;
   int textHeight = infoPtr->textHeight;
   SIZE size;
   HBRUSH hbr;
@@ -673,6 +712,7 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
   RECT rcTemp;
   RECT rcDay; /* used in MONTHCAL_CalcDayRect() */
   int startofprescal;
+  SYSTEMTIME st;
 
   oldTextColor = SetTextColor(hdc, comctl32_color.clrWindowText);
 
@@ -764,13 +804,8 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
   }
 
   /* draw day numbers; first, the previous month */
-  firstDay = MONTHCAL_CalculateDayOfWeek(1, infoPtr->curSel.wMonth, infoPtr->curSel.wYear);
-
-  day = MONTHCAL_MonthLength(prevMonth, infoPtr->curSel.wYear) +
-    (infoPtr->firstDay - firstDay)%7 + 1;
-
-  if (day > MONTHCAL_MonthLength(prevMonth, infoPtr->curSel.wYear))
-    day -= 7;
+  MONTHCAL_GetMinDate(infoPtr, &st);
+  day = st.wDay;
   startofprescal = day;
   mask = 1<<(day-1);
 
@@ -1181,7 +1216,8 @@ MONTHCAL_GetMonthRange(const MONTHCAL_INFO *infoPtr, DWORD flag, SYSTEMTIME *st)
 
   if(st)
   {
-    if(flag == GMR_VISIBLE)
+    switch (flag) {
+    case GMR_VISIBLE:
     {
         /*FIXME: currently multicalendar feature isn't implelented, so entirely
                  visible month is current */
@@ -1193,9 +1229,20 @@ MONTHCAL_GetMonthRange(const MONTHCAL_INFO *infoPtr, DWORD flag, SYSTEMTIME *st)
         st[1].wDay = MONTHCAL_MonthLength(st[1].wMonth, st[1].wYear);
         st[1].wDayOfWeek = MONTHCAL_CalculateDayOfWeek(st[1].wDay, st[1].wMonth,
                                                        st[1].wYear);
+        /* a single current month used */
+        return 1;
     }
-    else
-        FIXME("only GMR_VISIBLE flag supported, got %d\n", flag);
+    case GMR_DAYSTATE:
+    {
+        /*FIXME: currently multicalendar feature isn't implelented,
+                 min date from previous month and max date from next one returned */
+        MONTHCAL_GetMinDate(infoPtr, &st[0]);
+        MONTHCAL_GetMaxDate(infoPtr, &st[1]);
+        break;
+    }
+    default:
+        WARN("Unknown flag value, got %d\n", flag);
+    }
   }
 
   return infoPtr->monthRange;
