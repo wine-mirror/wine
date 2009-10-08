@@ -368,7 +368,7 @@ HRESULT WINAPI
 DirectDrawEnumerateA(LPDDENUMCALLBACKA Callback,
                      LPVOID Context)
 {
-    BOOL stop = FALSE;
+    TRACE("(%p, %p)\n", Callback, Context);
 
     TRACE(" Enumerating default DirectDraw HAL interface\n");
     /* We only have one driver */
@@ -377,11 +377,11 @@ DirectDrawEnumerateA(LPDDENUMCALLBACKA Callback,
         static CHAR driver_desc[] = "DirectDraw HAL",
         driver_name[] = "display";
 
-        stop = !Callback(NULL, driver_desc, driver_name, Context);
+        Callback(NULL, driver_desc, driver_name, Context);
     }
     __EXCEPT_PAGE_FAULT
     {
-        return E_INVALIDARG;
+        return DDERR_INVALIDPARAMS;
     }
     __ENDTRY
 
