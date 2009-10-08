@@ -199,7 +199,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         thread_detach();
         break;
     case DLL_PROCESS_DETACH:
-        WriteOutProfiles16();
+        WritePrivateProfileSectionW( NULL, NULL, NULL );
         break;
     }
     return TRUE;

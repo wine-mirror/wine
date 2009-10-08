@@ -428,6 +428,81 @@ UINT16 WINAPI GetPrivateProfileInt16( LPCSTR section, LPCSTR entry,
 
 
 /***********************************************************************
+ *           GetPrivateProfileString   (KERNEL.128)
+ */
+INT16 WINAPI GetPrivateProfileString16( LPCSTR section, LPCSTR entry,
+                                        LPCSTR def_val, LPSTR buffer,
+                                        UINT16 len, LPCSTR filename )
+{
+    if (!section)
+    {
+        if (buffer && len) buffer[0] = 0;
+        return 0;
+    }
+    if (!entry)
+    {
+        /* We have to return the list of keys in the section but without the values
+         * so we need to massage the results of GetPrivateProfileSectionA.
+         */
+        UINT ret, oldlen = len, size = min( len, 1024 );
+        LPSTR data, src;
+
+        for (;;)
+        {
+            if (!(data = HeapAlloc(GetProcessHeap(), 0, size ))) return 0;
+            ret = GetPrivateProfileSectionA( section, data, size, filename );
+            if (!ret)
+            {
+                HeapFree( GetProcessHeap(), 0, data );
+                return 0;
+            }
+            if (ret != size - 2) break;
+            /* overflow, try again */
+            size *= 2;
+            HeapFree( GetProcessHeap(), 0, data );
+        }
+
+        src = data;
+        while (len && *src)
+        {
+            char *p = strchr( src, '=' );
+
+            if (!p) p = src + strlen(src);
+            if (p - src < len)
+            {
+                memcpy( buffer, src, p - src );
+                buffer += p - src;
+                *buffer++ = 0;
+                len -= (p - src) + 1;
+                src += strlen(src) + 1;
+            }
+            else  /* overflow */
+            {
+                memcpy( buffer, src, len );
+                buffer += len;
+                len = 0;
+            }
+        }
+        HeapFree( GetProcessHeap(), 0, data );
+
+        if (len)
+        {
+            *buffer = 0;
+            return oldlen - len;
+        }
+        if (oldlen > 2)
+        {
+            buffer[-2] = 0;
+            buffer[-1] = 0;
+            return oldlen - 2;
+        }
+        return 0;
+    }
+    return GetPrivateProfileStringA( section, entry, def_val, buffer, len, filename );
+}
+
+
+/***********************************************************************
  *           WritePrivateProfileString   (KERNEL.129)
  */
 BOOL16 WINAPI WritePrivateProfileString16( LPCSTR section, LPCSTR entry,
@@ -545,6 +620,15 @@ UINT16 WINAPI SetHandleCount16( UINT16 count )
 WORD WINAPI GetShortPathName16( LPCSTR longpath, LPSTR shortpath, WORD len )
 {
     return GetShortPathNameA( longpath, shortpath, len );
+}
+
+
+/***********************************************************************
+ *           WriteOutProfiles   (KERNEL.315)
+ */
+void WINAPI WriteOutProfiles16(void)
+{
+    WritePrivateProfileSectionW( NULL, NULL, NULL );
 }
 
 
