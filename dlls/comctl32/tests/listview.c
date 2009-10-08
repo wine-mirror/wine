@@ -4021,7 +4021,7 @@ static void test_LVS_EX_TRANSPARENTBKGND(void)
     DestroyWindow(hwnd);
 }
 
-void test_ApproximateViewRect(void)
+static void test_ApproximateViewRect(void)
 {
     HWND hwnd;
     DWORD ret;
