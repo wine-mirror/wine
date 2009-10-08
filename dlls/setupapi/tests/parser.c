@@ -602,14 +602,14 @@ static void test_SetupGetIntField(void)
     } keys[] =
     {
     /* key     fields            index   expected int  errorcode */
-    {  "Key=", "48",             1,      48,           ERROR_SUCCESS },
-    {  "Key=", "48",             0,      -1,           ERROR_INVALID_DATA },
-    {  "123=", "48",             0,      123,          ERROR_SUCCESS },
-    {  "Key=", "0x4",            1,      4,            ERROR_SUCCESS },
-    {  "Key=", "Field1",         1,      -1,           ERROR_INVALID_DATA },
-    {  "Key=", "Field1,34",      2,      34,           ERROR_SUCCESS },
-    {  "Key=", "Field1,,Field3", 2,      0,            ERROR_SUCCESS },
-    {  "Key=", "Field1,",        2,      0,            ERROR_SUCCESS }
+    {  "Key", "48",             1,      48,           ERROR_SUCCESS },
+    {  "Key", "48",             0,      -1,           ERROR_INVALID_DATA },
+    {  "123", "48",             0,      123,          ERROR_SUCCESS },
+    {  "Key", "0x4",            1,      4,            ERROR_SUCCESS },
+    {  "Key", "Field1",         1,      -1,           ERROR_INVALID_DATA },
+    {  "Key", "Field1,34",      2,      34,           ERROR_SUCCESS },
+    {  "Key", "Field1,,Field3", 2,      0,            ERROR_SUCCESS },
+    {  "Key", "Field1,",        2,      0,            ERROR_SUCCESS }
     };
     unsigned int i;
 
@@ -624,22 +624,17 @@ static void test_SetupGetIntField(void)
 
         strcpy( buffer, STD_HEADER "[TestSection]\n" );
         strcat( buffer, keys[i].key );
+        strcat( buffer, "=" );
         strcat( buffer, keys[i].fields );
         hinf = test_file_contents( buffer, &err);
         ok( hinf != NULL, "Expected valid INF file\n" );
 
-        SetupFindFirstLineA( hinf, "TestSection", "Key", &context );
+        SetupFindFirstLineA( hinf, "TestSection", keys[i].key, &context );
         SetLastError( 0xdeadbeef );
         intfield = -1;
         retb = SetupGetIntField( &context, keys[i].index, &intfield );
         if ( keys[i].err == ERROR_SUCCESS )
         {
-            if ( !retb && !lstrcmpA( keys[i].key, "123=" ) )
-            {
-                win_skip( "results differ on Win9x\n" );
-                SetupCloseInfFile( hinf );
-                continue;
-            }
             ok( retb, "%u: Expected success\n", i );
             ok( GetLastError() == ERROR_SUCCESS ||
                 GetLastError() == 0xdeadbeef /* win9x, NT4 */,
