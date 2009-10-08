@@ -811,16 +811,21 @@ static void test_monthcal_currdate(void)
     st_new.wMonth = 1;
     st_new.wDay = 1;
     res = SendMessage(hwnd, MCM_SETCURSEL, 0, (LPARAM)&st_new);
-    expect(0, res);
-    memset(&st_test, 0, sizeof(st_test));
-    res = SendMessage(hwnd, MCM_GETCURSEL, 0, (LPARAM)&st_test);
-    expect(1, res);
-    expect(st_original.wYear, st_test.wYear);
-    expect(st_original.wMonth, st_test.wMonth);
-    expect(st_original.wDay, st_test.wDay);
-    expect(st_original.wHour, st_test.wHour);
-    expect(st_original.wMinute, st_test.wMinute);
-    expect(st_original.wSecond, st_test.wSecond);
+    ok(0 == res ||
+       broken(1 == res), /* comctl32 <= 4.72 */
+       "Expected 0, got %d\n", res);
+    if (0 == res)
+    {
+        memset(&st_test, 0, sizeof(st_test));
+        res = SendMessage(hwnd, MCM_GETCURSEL, 0, (LPARAM)&st_test);
+        expect(1, res);
+        expect(st_original.wYear, st_test.wYear);
+        expect(st_original.wMonth, st_test.wMonth);
+        expect(st_original.wDay, st_test.wDay);
+        expect(st_original.wHour, st_test.wHour);
+        expect(st_original.wMinute, st_test.wMinute);
+        expect(st_original.wSecond, st_test.wSecond);
+    }
 
     /* setting selection equal to current reports success even if out range */
     memset(&st_new, 0, sizeof(st_new));
