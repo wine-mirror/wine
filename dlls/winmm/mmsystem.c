@@ -209,7 +209,7 @@ void WINAPI OutputDebugStr16(LPCSTR str)
  */
 UINT16 WINAPI mixerGetNumDevs16(void)
 {
-    return MMDRV_GetNum(MMDRV_MIXER);
+    return mixerGetNumDevs();
 }
 
 /**************************************************************************
@@ -443,7 +443,7 @@ DWORD WINAPI mixerMessage16(HMIXER16 hmix, UINT16 uMsg, DWORD dwParam1,
  */
 UINT16 WINAPI auxGetNumDevs16(void)
 {
-    return MMDRV_GetNum(MMDRV_AUX);
+    return auxGetNumDevs();
 }
 
 /* ###################################################
@@ -480,13 +480,7 @@ UINT16 WINAPI auxGetDevCaps16(UINT16 uDeviceID, LPAUXCAPS16 lpCaps, UINT16 uSize
  */
 UINT16 WINAPI auxGetVolume16(UINT16 uDeviceID, LPDWORD lpdwVolume)
 {
-    LPWINE_MLD		wmld;
-
-    TRACE("(%04X, %p) !\n", uDeviceID, lpdwVolume);
-
-    if ((wmld = MMDRV_Get((HANDLE)(ULONG_PTR)uDeviceID, MMDRV_AUX, TRUE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-    return MMDRV_Message(wmld, AUXDM_GETVOLUME, (DWORD_PTR)lpdwVolume, 0L, TRUE);
+    return auxGetVolume(uDeviceID, lpdwVolume);
 }
 
 /**************************************************************************
@@ -494,13 +488,7 @@ UINT16 WINAPI auxGetVolume16(UINT16 uDeviceID, LPDWORD lpdwVolume)
  */
 UINT16 WINAPI auxSetVolume16(UINT16 uDeviceID, DWORD dwVolume)
 {
-    LPWINE_MLD		wmld;
-
-    TRACE("(%04X, %u) !\n", uDeviceID, dwVolume);
-
-    if ((wmld = MMDRV_Get((HANDLE)(ULONG_PTR)uDeviceID, MMDRV_AUX, TRUE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-    return MMDRV_Message(wmld, AUXDM_SETVOLUME, dwVolume, 0L, TRUE);
+    return auxSetVolume(uDeviceID, dwVolume);
 }
 
 /**************************************************************************
@@ -508,8 +496,6 @@ UINT16 WINAPI auxSetVolume16(UINT16 uDeviceID, DWORD dwVolume)
  */
 DWORD WINAPI auxOutMessage16(UINT16 uDeviceID, UINT16 uMessage, DWORD dw1, DWORD dw2)
 {
-    LPWINE_MLD		wmld;
-
     TRACE("(%04X, %04X, %08X, %08X)\n", uDeviceID, uMessage, dw1, dw2);
 
     switch (uMessage) {
@@ -526,10 +512,7 @@ DWORD WINAPI auxOutMessage16(UINT16 uDeviceID, UINT16 uMessage, DWORD dw1, DWORD
 	      uDeviceID, uMessage, dw1, dw2);
 	break;
     }
-    if ((wmld = MMDRV_Get((HANDLE)(ULONG_PTR)uDeviceID, MMDRV_AUX, TRUE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    return MMDRV_Message(wmld, uMessage, dw1, dw2, TRUE);
+    return auxOutMessage(uDeviceID, uMessage, dw1, dw2);
 }
 
 /* ###################################################
@@ -657,14 +640,7 @@ YIELDPROC16 WINAPI mciGetYieldProc16(UINT16 uDeviceID, DWORD* lpdwYieldData)
  */
 HTASK16 WINAPI mciGetCreatorTask16(UINT16 uDeviceID)
 {
-    LPWINE_MCIDRIVER wmd;
-    HTASK16 ret = 0;
-
-    if ((wmd = MCI_GetDriver(uDeviceID))) 
-        ret = HTASK_16(wmd->CreatorThread);
-
-    TRACE("(%u) => %04x\n", uDeviceID, ret);
-    return ret;
+    return HTASK_16(mciGetCreatorTask(uDeviceID));
 }
 
 /**************************************************************************
@@ -696,7 +672,7 @@ UINT16 WINAPI mciDriverYield16(UINT16 uDeviceID)
  */
 UINT16 WINAPI midiOutGetNumDevs16(void)
 {
-    return MMDRV_GetNum(MMDRV_MIDIOUT);
+    return midiOutGetNumDevs();
 }
 
 /**************************************************************************
@@ -871,16 +847,13 @@ UINT16 WINAPI midiOutCacheDrumPatches16(HMIDIOUT16 hMidiOut, UINT16 uPatch,
  */
 UINT16 WINAPI midiOutGetID16(HMIDIOUT16 hMidiOut, UINT16* lpuDeviceID)
 {
-    LPWINE_MLD		wmld;
+    UINT        devid;
+    UINT16      ret;
 
-    TRACE("(%04X, %p)\n", hMidiOut, lpuDeviceID);
-
-    if (lpuDeviceID == NULL) return MMSYSERR_INVALPARAM;
-    if ((wmld = MMDRV_Get(HMIDIOUT_32(hMidiOut), MMDRV_MIDIOUT, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    *lpuDeviceID = wmld->uDeviceID;
-    return MMSYSERR_NOERROR;
+    ret = midiOutGetID(HMIDIOUT_32(hMidiOut), &devid);
+    if (ret != MMSYSERR_NOERROR) return ret;
+    *lpuDeviceID = devid;
+    return ret;
 }
 
 /**************************************************************************
@@ -920,7 +893,7 @@ DWORD WINAPI midiOutMessage16(HMIDIOUT16 hMidiOut, UINT16 uMessage,
  */
 UINT16 WINAPI midiInGetNumDevs16(void)
 {
-    return MMDRV_GetNum(MMDRV_MIDIIN);
+    return midiInGetNumDevs();
 }
 
 /**************************************************************************
@@ -1055,18 +1028,13 @@ UINT16 WINAPI midiInReset16(HMIDIIN16 hMidiIn)
  */
 UINT16 WINAPI midiInGetID16(HMIDIIN16 hMidiIn, UINT16* lpuDeviceID)
 {
-    LPWINE_MLD		wmld;
+    UINT        devid;
+    UINT16      ret;
 
-    TRACE("(%04X, %p)\n", hMidiIn, lpuDeviceID);
-
-    if (lpuDeviceID == NULL) return MMSYSERR_INVALPARAM;
-
-    if ((wmld = MMDRV_Get(HMIDIIN_32(hMidiIn), MMDRV_MIDIIN, TRUE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    *lpuDeviceID = wmld->uDeviceID;
-
-    return MMSYSERR_NOERROR;
+    ret = midiInGetID(HMIDIIN_32(hMidiIn), &devid);
+    if (ret != MMSYSERR_NOERROR) return ret;
+    *lpuDeviceID = devid;
+    return ret;
 }
 
 /**************************************************************************
@@ -1197,7 +1165,7 @@ MMRESULT16 WINAPI midiStreamStop16(HMIDISTRM16 hMidiStrm)
  */
 UINT16 WINAPI waveOutGetNumDevs16(void)
 {
-    return MMDRV_GetNum(MMDRV_WAVEOUT);
+    return waveOutGetNumDevs();
 }
 
 /**************************************************************************
@@ -1466,17 +1434,13 @@ UINT16 WINAPI waveOutSetVolume16(UINT16 devid, DWORD dw)
  */
 UINT16 WINAPI waveOutGetID16(HWAVEOUT16 hWaveOut, UINT16* lpuDeviceID)
 {
-    LPWINE_MLD		wmld;
+    UINT        devid;
+    UINT16      ret;
 
-    TRACE("(%04X, %p);\n", hWaveOut, lpuDeviceID);
-
-    if (lpuDeviceID == NULL) return MMSYSERR_INVALHANDLE;
-
-    if ((wmld = MMDRV_Get(HWAVEOUT_32(hWaveOut), MMDRV_WAVEOUT, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    *lpuDeviceID = wmld->uDeviceID;
-    return 0;
+    ret = waveOutGetID(HWAVEOUT_32(hWaveOut), &devid);
+    if (ret != MMSYSERR_NOERROR) return ret;
+    *lpuDeviceID = devid;
+    return ret;
 }
 
 /**************************************************************************
@@ -1510,7 +1474,7 @@ DWORD WINAPI waveOutMessage16(HWAVEOUT16 hWaveOut, UINT16 uMessage,
  */
 UINT16 WINAPI waveInGetNumDevs16(void)
 {
-    return MMDRV_GetNum(MMDRV_WAVEIN);
+    return waveInGetNumDevs();
 }
 
 /**************************************************************************
@@ -1701,17 +1665,13 @@ UINT16 WINAPI waveInGetPosition16(HWAVEIN16 hWaveIn, LPMMTIME16 lpTime,
  */
 UINT16 WINAPI waveInGetID16(HWAVEIN16 hWaveIn, UINT16* lpuDeviceID)
 {
-    LPWINE_MLD		wmld;
+    UINT        devid;
+    UINT16      ret;
 
-    TRACE("(%04X, %p);\n", hWaveIn, lpuDeviceID);
-
-    if (lpuDeviceID == NULL) return MMSYSERR_INVALHANDLE;
-
-    if ((wmld = MMDRV_Get(HWAVEIN_32(hWaveIn), MMDRV_WAVEIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    *lpuDeviceID = wmld->uDeviceID;
-    return MMSYSERR_NOERROR;
+    ret = waveInGetID(HWAVEIN_32(hWaveIn), &devid);
+    if (ret != MMSYSERR_NOERROR) return ret;
+    *lpuDeviceID = devid;
+    return ret;
 }
 
 /**************************************************************************
