@@ -70,6 +70,8 @@ typedef struct _ILHEAD
 } ILHEAD;
 #include "poppack.h"
 
+static HIMAGELIST (WINAPI *pImageList_Create)(int, int, UINT, int, int);
+static int (WINAPI *pImageList_Add)(HIMAGELIST, HBITMAP, HBITMAP);
 static BOOL (WINAPI *pImageList_DrawIndirect)(IMAGELISTDRAWPARAMS*);
 static BOOL (WINAPI *pImageList_SetImageCount)(HIMAGELIST,UINT);
 
@@ -1028,11 +1030,227 @@ static void test_shell_imagelist(void)
     FreeLibrary(hShell32);
 }
 
+static HBITMAP create_test_bitmap(HDC hdc, int bpp, UINT32 pixel1, UINT32 pixel2)
+{
+    HBITMAP hBitmap;
+    UINT32 *buffer = NULL;
+    BITMAPINFO bitmapInfo = {{sizeof(BITMAPINFOHEADER), 2, 1, 1, bpp, BI_RGB,
+                                0, 0, 0, 0, 0}};
+
+    hBitmap = CreateDIBSection(hdc, &bitmapInfo, DIB_RGB_COLORS, (void**)&buffer, NULL, 0);
+    ok(hBitmap != NULL && buffer != NULL, "CreateDIBSection failed.\n");
+
+    if(!hBitmap || !buffer)
+    {
+        DeleteObject(hBitmap);
+        return NULL;
+    }
+
+    buffer[0] = pixel1;
+    buffer[1] = pixel2;
+
+    return hBitmap;
+}
+
+static BOOL colour_match(UINT32 x, UINT32 y)
+{
+    const INT32 tolerance = 8;
+
+    const INT32 dr = abs((INT32)(x & 0x000000FF) - (INT32)(y & 0x000000FF));
+    const INT32 dg = abs((INT32)((x & 0x0000FF00) >> 8) - (INT32)((y & 0x0000FF00) >> 8));
+    const INT32 db = abs((INT32)((x & 0x00FF0000) >> 16) - (INT32)((y & 0x00FF0000) >> 16));
+
+    return (dr <= tolerance && dg <= tolerance && db <= tolerance);
+}
+
+static void check_ImageList_DrawIndirect(IMAGELISTDRAWPARAMS *ildp, UINT32 *bits,
+                                         UINT32 expected, int line)
+{
+    bits[0] = 0x00FFFFFF;
+    pImageList_DrawIndirect(ildp);
+    ok(colour_match(bits[0], expected),
+       "ImageList_DrawIndirect: Pixel %08X, Expected a close match to %08X from line %d\n",
+       bits[0] & 0x00FFFFFF, expected, line);
+}
+
+
+static void check_ImageList_DrawIndirect_fStyle(HDC hdc, HIMAGELIST himl, UINT32 *bits, int i,
+                                                UINT fStyle, UINT32 expected, int line)
+{
+    IMAGELISTDRAWPARAMS ildp = {sizeof(IMAGELISTDRAWPARAMS), himl, i, hdc,
+        0, 0, 0, 0, 0, 0, CLR_NONE, CLR_NONE, fStyle, 0, ILS_NORMAL, 0, 0x00000000};
+    check_ImageList_DrawIndirect(&ildp, bits, expected, line);
+}
+
+static void check_ImageList_DrawIndirect_ILD_ROP(HDC hdc, HIMAGELIST himl, UINT32 *bits, int i,
+                                                DWORD dwRop, UINT32 expected, int line)
+{
+    IMAGELISTDRAWPARAMS ildp = {sizeof(IMAGELISTDRAWPARAMS), himl, i, hdc,
+        0, 0, 0, 0, 0, 0, CLR_NONE, CLR_NONE, ILD_IMAGE | ILD_ROP, dwRop, ILS_NORMAL, 0, 0x00000000};
+    check_ImageList_DrawIndirect(&ildp, bits, expected, line);
+}
+
+static void check_ImageList_DrawIndirect_fState(HDC hdc, HIMAGELIST himl, UINT32 *bits, int i, UINT fStyle,
+                                                UINT fState, DWORD Frame, UINT32 expected, int line)
+{
+    IMAGELISTDRAWPARAMS ildp = {sizeof(IMAGELISTDRAWPARAMS), himl, i, hdc,
+        0, 0, 0, 0, 0, 0, CLR_NONE, CLR_NONE, fStyle, 0, fState, Frame, 0x00000000};
+    check_ImageList_DrawIndirect(&ildp, bits, expected, line);
+}
+
+static void check_ImageList_DrawIndirect_broken(HDC hdc, HIMAGELIST himl, UINT32 *bits, int i,
+                                                UINT fStyle, UINT fState, DWORD Frame, UINT32 expected,
+                                                UINT32 broken_expected, int line)
+{
+    IMAGELISTDRAWPARAMS ildp = {sizeof(IMAGELISTDRAWPARAMS), himl, i, hdc,
+        0, 0, 0, 0, 0, 0, CLR_NONE, CLR_NONE, fStyle, 0, fState, Frame, 0x00000000};
+    bits[0] = 0x00FFFFFF;
+    pImageList_DrawIndirect(&ildp);
+    ok(colour_match(bits[0], expected) ||
+       broken(colour_match(bits[0], broken_expected)),
+       "ImageList_DrawIndirect: Pixel %08X, Expected a close match to %08X from line %d\n",
+       bits[0] & 0x00FFFFFF, expected, line);
+}
+
+static void test_ImageList_DrawIndirect(void)
+{
+    HIMAGELIST himl = NULL;
+    int ret;
+    HDC hdcDst = NULL;
+    HBITMAP hbmOld = NULL, hbmDst = NULL;
+    HBITMAP hbmMask = NULL, hbmInverseMask = NULL;
+    HBITMAP hbmImage = NULL, hbmAlphaImage = NULL, hbmTransparentImage = NULL;
+    int iImage = -1, iAlphaImage = -1, iTransparentImage = -1;
+    UINT32 *bits = 0;
+    UINT32 maskBits = 0x00000000, inverseMaskBits = 0xFFFFFFFF;
+
+    BITMAPINFO bitmapInfo = {{sizeof(BITMAPINFOHEADER), 2, 1, 1, 32, BI_RGB,
+                                0, 0, 0, 0, 0}};
+
+    hdcDst = CreateCompatibleDC(0);
+    ok(hdcDst != 0, "CreateCompatibleDC(0) failed to return a valid DC\n");
+    if (!hdcDst)
+        return;
+
+    hbmMask = CreateBitmap(2, 1, 1, 1, &maskBits);
+    ok(hbmMask != 0, "CreateBitmap failed\n");
+    if(!hbmMask) goto cleanup;
+
+    hbmInverseMask = CreateBitmap(2, 1, 1, 1, &inverseMaskBits);
+    ok(hbmInverseMask != 0, "CreateBitmap failed\n");
+    if(!hbmInverseMask) goto cleanup;
+
+    himl = pImageList_Create(2, 1, ILC_COLOR32, 0, 1);
+    ok(himl != 0, "ImageList_Create failed\n");
+    if(!himl) goto cleanup;
+
+    /* Add a no-alpha image */
+    hbmImage = create_test_bitmap(hdcDst, 32, 0x00ABCDEF, 0x00ABCDEF);
+    if(!hbmImage) goto cleanup;
+
+    iImage = pImageList_Add(himl, hbmImage, hbmMask);
+    ok(iImage != -1, "ImageList_Add failed\n");
+    if(iImage == -1) goto cleanup;
+
+    /* Add an alpha image */
+    hbmAlphaImage = create_test_bitmap(hdcDst, 32, 0x89ABCDEF, 0x89ABCDEF);
+    if(!hbmAlphaImage) goto cleanup;
+
+    iAlphaImage = pImageList_Add(himl, hbmAlphaImage, hbmMask);
+    ok(iAlphaImage != -1, "ImageList_Add failed\n");
+    if(iAlphaImage == -1) goto cleanup;
+
+    /* Add a transparent alpha image */
+    hbmTransparentImage = create_test_bitmap(hdcDst, 32, 0x00ABCDEF, 0x89ABCDEF);
+    if(!hbmTransparentImage) goto cleanup;
+
+    iTransparentImage = pImageList_Add(himl, hbmTransparentImage, hbmMask);
+    ok(iTransparentImage != -1, "ImageList_Add failed\n");
+    if(iTransparentImage == -1) goto cleanup;
+
+    /* 32-bit Tests */
+    bitmapInfo.bmiHeader.biBitCount = 32;
+    hbmDst = CreateDIBSection(hdcDst, &bitmapInfo, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok (hbmDst && bits, "CreateDIBSection failed to return a valid bitmap and buffer\n");
+    if (!hbmDst || !bits)
+        goto cleanup;
+    hbmOld = SelectObject(hdcDst, hbmDst);
+
+    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iImage, ILD_NORMAL, 0x00ABCDEF, __LINE__);
+    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iImage, ILD_TRANSPARENT, 0x00ABCDEF, __LINE__);
+    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND25, ILS_NORMAL, 0, 0x00E8F1FA, 0x00D4D9DD, __LINE__);
+    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND50, ILS_NORMAL, 0, 0x00E8F1FA, 0x00B4BDC4, __LINE__);
+    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iImage, ILD_MASK, 0x00ABCDEF, __LINE__);
+    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iImage, ILD_IMAGE, 0x00ABCDEF, __LINE__);
+    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iImage, ILD_PRESERVEALPHA, 0x00ABCDEF, __LINE__);
+
+    todo_wine
+    {
+        check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, 0x00D3E5F7, __LINE__);
+        check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_TRANSPARENT, 0x00D3E5F7, __LINE__);
+        check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND25, ILS_NORMAL, 0, 0x00E8F1FA, 0x009DA8B1, __LINE__);
+        check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND50, ILS_NORMAL, 0, 0x00E8F1FA, 0x008C99A3, __LINE__);
+
+        check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_MASK, 0x00D3E5F7, __LINE__);
+        check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_IMAGE, 0x00D3E5F7, __LINE__);
+        check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_PRESERVEALPHA, 0x005D6F81, __LINE__);
+    }
+
+    todo_wine check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iTransparentImage, ILD_NORMAL, 0x00FFFFFF, __LINE__);
+
+    check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iImage, SRCCOPY, 0x00ABCDEF, __LINE__);
+    check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iImage, SRCINVERT, 0x00543210, __LINE__);
+
+    /* ILD_ROP is ignored when the image has an alpha channel */
+    todo_wine check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iAlphaImage, SRCCOPY, 0x00D3E5F7, __LINE__);
+    todo_wine check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iAlphaImage, SRCINVERT, 0x00D3E5F7, __LINE__);
+
+    todo_wine check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_SATURATE, 0, 0x00CCCCCC, __LINE__);
+    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, ILS_SATURATE, 0, 0x00AFAFAF, 0x00F0F0F0, __LINE__);
+
+    check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_GLOW, 0, 0x00ABCDEF, __LINE__);
+    check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_SHADOW, 0, 0x00ABCDEF, __LINE__);
+
+    todo_wine check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_ALPHA, 127, 0x00D5E6F7, __LINE__);
+    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, ILS_ALPHA, 127, 0x00E9F2FB, 0x00AEB7C0, __LINE__);
+    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, ILS_NORMAL, 127, 0x00E9F2FB, 0x00D3E5F7, __LINE__);
+
+cleanup:
+
+    if(hbmOld)
+        SelectObject(hdcDst, hbmOld);
+    if(hbmDst)
+        DeleteObject(hbmDst);
+
+    if(hdcDst)
+        DeleteDC(hdcDst);
+
+    if(hbmMask)
+        DeleteObject(hbmMask);
+    if(hbmInverseMask)
+        DeleteObject(hbmInverseMask);
+
+    if(hbmImage)
+        DeleteObject(hbmImage);
+    if(hbmAlphaImage)
+        DeleteObject(hbmAlphaImage);
+    if(hbmTransparentImage)
+        DeleteObject(hbmTransparentImage);
+
+    if(himl)
+    {
+        ret = ImageList_Destroy(himl);
+        ok(ret, "ImageList_Destroy failed\n");
+    }
+}
+
 START_TEST(imagelist)
 {
     ULONG_PTR ctx_cookie;
 
     HMODULE hComCtl32 = GetModuleHandle("comctl32.dll");
+    pImageList_Create = NULL;   /* These are not needed for non-v6.0 tests*/
+    pImageList_Add = NULL;
     pImageList_DrawIndirect = (void*)GetProcAddress(hComCtl32, "ImageList_DrawIndirect");
     pImageList_SetImageCount = (void*)GetProcAddress(hComCtl32, "ImageList_SetImageCount");
 
@@ -1048,11 +1266,22 @@ START_TEST(imagelist)
     testMerge();
     test_imagelist_storage();
 
+    FreeLibrary(hComCtl32);
+
     /* Now perform v6 tests */
 
     if (!load_v6_module(&ctx_cookie))
         return;
 
+    /* Reload comctl32 */
+    hComCtl32 = LoadLibraryA("comctl32.dll");
+    pImageList_Create = (void*)GetProcAddress(hComCtl32, "ImageList_Create");
+    pImageList_Add = (void*)GetProcAddress(hComCtl32, "ImageList_Add");
+    pImageList_DrawIndirect = (void*)GetProcAddress(hComCtl32, "ImageList_DrawIndirect");
+    pImageList_SetImageCount = (void*)GetProcAddress(hComCtl32, "ImageList_SetImageCount");
+
+    /* Do v6.0 tests */
+    test_ImageList_DrawIndirect();
     test_shell_imagelist();
 
     unload_v6_module(ctx_cookie);
