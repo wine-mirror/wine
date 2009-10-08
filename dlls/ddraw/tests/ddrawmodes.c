@@ -41,6 +41,7 @@ static LPDDSURFACEDESC modes;
 static HRESULT (WINAPI *pDirectDrawEnumerateA)(LPDDENUMCALLBACKA,LPVOID);
 static HRESULT (WINAPI *pDirectDrawEnumerateW)(LPDDENUMCALLBACKW,LPVOID);
 static HRESULT (WINAPI *pDirectDrawEnumerateExA)(LPDDENUMCALLBACKEXA,LPVOID,DWORD);
+static HRESULT (WINAPI *pDirectDrawEnumerateExW)(LPDDENUMCALLBACKEXW,LPVOID,DWORD);
 
 static void init_function_pointers(void)
 {
@@ -48,6 +49,7 @@ static void init_function_pointers(void)
     pDirectDrawEnumerateA = (void*)GetProcAddress(hmod, "DirectDrawEnumerateA");
     pDirectDrawEnumerateW = (void*)GetProcAddress(hmod, "DirectDrawEnumerateW");
     pDirectDrawEnumerateExA = (void*)GetProcAddress(hmod, "DirectDrawEnumerateExA");
+    pDirectDrawEnumerateExW = (void*)GetProcAddress(hmod, "DirectDrawEnumerateExW");
 }
 
 static void createwindow(void)
@@ -271,6 +273,50 @@ static void test_DirectDrawEnumerateExA(void)
                                   DDENUM_DETACHEDSECONDARYDEVICES |
                                   DDENUM_NONDISPLAYDEVICES);
     ok(ret == DD_OK, "Expected DD_OK, got %d\n", ret);
+}
+
+static BOOL WINAPI test_callbackExW(GUID *lpGUID, LPWSTR lpDriverDescription,
+                                    LPWSTR lpDriverName, LPVOID lpContext,
+                                    HMONITOR hm)
+{
+    ok(0, "The callback should not be invoked by DirectDrawEnumerateExW.\n");
+    return TRUE;
+}
+
+static void test_DirectDrawEnumerateExW(void)
+{
+    HRESULT ret;
+
+    if (!pDirectDrawEnumerateExW)
+    {
+        win_skip("DirectDrawEnumerateExW is not available\n");
+        return;
+    }
+
+    /* DirectDrawEnumerateExW is not implemented on Windows. */
+
+    /* Test with NULL callback parameter. */
+    ret = pDirectDrawEnumerateExW(NULL, NULL, 0);
+    ok(ret == DDERR_UNSUPPORTED, "Expected DDERR_UNSUPPORTED, got %d\n", ret);
+
+    /* Test with invalid callback parameter. */
+    ret = pDirectDrawEnumerateExW((LPDDENUMCALLBACKEXW)0xdeadbeef, NULL, 0);
+    ok(ret == DDERR_UNSUPPORTED, "Expected DDERR_UNSUPPORTED, got %d\n", ret);
+
+    /* Test with valid callback parameter and invalid flags */
+    ret = pDirectDrawEnumerateExW(test_callbackExW, NULL, ~0);
+    ok(ret == DDERR_UNSUPPORTED, "Expected DDERR_UNSUPPORTED, got %d\n", ret);
+
+    /* Test with valid callback parameter and NULL context parameter. */
+    ret = pDirectDrawEnumerateExW(test_callbackExW, NULL, 0);
+    ok(ret == DDERR_UNSUPPORTED, "Expected DDERR_UNSUPPORTED, got %d\n", ret);
+
+    /* Test with valid callback parameter, NULL context parameter, and all flags set. */
+    ret = pDirectDrawEnumerateExW(test_callbackExW, NULL,
+                                  DDENUM_ATTACHEDSECONDARYDEVICES |
+                                  DDENUM_DETACHEDSECONDARYDEVICES |
+                                  DDENUM_NONDISPLAYDEVICES);
+    ok(ret == DDERR_UNSUPPORTED, "Expected DDERR_UNSUPPORTED, got %d\n", ret);
 }
 
 static void adddisplaymode(LPDDSURFACEDESC lpddsd)
@@ -603,6 +649,7 @@ START_TEST(ddrawmodes)
     test_DirectDrawEnumerateA();
     test_DirectDrawEnumerateW();
     test_DirectDrawEnumerateExA();
+    test_DirectDrawEnumerateExW();
 
     enumdisplaymodes();
     if (winetest_interactive)

@@ -8,7 +8,7 @@
 @ stdcall DirectDrawCreateEx(ptr ptr ptr ptr)
 @ stdcall DirectDrawEnumerateA(ptr ptr)
 @ stdcall DirectDrawEnumerateExA(ptr ptr long)
-@ stub DirectDrawEnumerateExW
+@ stdcall DirectDrawEnumerateExW(ptr ptr long)
 @ stdcall DirectDrawEnumerateW(ptr ptr)
 @ stdcall -private DllCanUnloadNow()
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
