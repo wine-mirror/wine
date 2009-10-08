@@ -126,10 +126,11 @@ extern int MONTHCAL_CalculateDayOfWeek(WORD day, WORD month, WORD year);
 
 #define DTHT_DATEFIELD  0xff      /* for hit-testing */
 
-#define DTHT_NONE     0
-#define DTHT_CHECKBOX 0x200	/* these should end at '00' , to make */
-#define DTHT_MCPOPUP  0x300     /* & DTHT_DATEFIELD 0 when DATETIME_KeyDown */
-#define DTHT_GOTFOCUS 0x400     /* tests for date-fields */
+#define DTHT_NONE       0x1000
+#define DTHT_CHECKBOX   0x2000  /* these should end at '00' , to make */
+#define DTHT_MCPOPUP    0x3000  /* & DTHT_DATEFIELD 0 when DATETIME_KeyDown */
+#define DTHT_GOTFOCUS   0x4000  /* tests for date-fields */
+#define DTHT_NODATEMASK 0xf000  /* to mask check and drop down from others */
 
 static BOOL DATETIME_SendSimpleNotify (const DATETIME_INFO *infoPtr, UINT code);
 static BOOL DATETIME_SendDateTimeChangeNotify (const DATETIME_INFO *infoPtr);
@@ -668,7 +669,7 @@ DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
             if (infoPtr->dwStyle & WS_DISABLED)
                 oldTextColor = SetTextColor (hdc, comctl32_color.clrGrayText);
             else if ((infoPtr->haveFocus) && (i == infoPtr->select)) {
-                /* fill if focussed */
+                /* fill if focused */
                 HBRUSH hbr = CreateSolidBrush (comctl32_color.clrActiveCaption);
                 FillRect(hdc, field, hbr);
                 DeleteObject (hbr);
@@ -703,13 +704,23 @@ DATETIME_HitTest (const DATETIME_INFO *infoPtr, POINT pt)
     if (PtInRect (&infoPtr->calbutton, pt)) return DTHT_MCPOPUP;
     if (PtInRect (&infoPtr->checkbox, pt)) return DTHT_CHECKBOX;
 
-    for (i=0; i < infoPtr->nrFields; i++) {
+    for (i = 0; i < infoPtr->nrFields; i++) {
         if (PtInRect (&infoPtr->fieldRect[i], pt)) return i;
     }
 
     return DTHT_NONE;
 }
 
+/* Returns index of a closest date field from given counting to left
+   or -1 if there's no such fields at left */
+static int DATETIME_GetPrevDateField(const DATETIME_INFO *infoPtr, int i)
+{
+    for(--i; i >= 0; i--)
+    {
+        if (infoPtr->fieldspec[i] & DTHT_DATEFIELD) return i;
+    }
+    return -1;
+}
 
 static LRESULT
 DATETIME_LButtonDown (DATETIME_INFO *infoPtr, INT x, INT y)
@@ -722,10 +733,25 @@ DATETIME_LButtonDown (DATETIME_INFO *infoPtr, INT x, INT y)
     old = infoPtr->select;
     new = DATETIME_HitTest (infoPtr, pt);
 
-    /* FIXME: might be conditions where we don't want to update infoPtr->select */
-    infoPtr->select = new;
-
     SetFocus(infoPtr->hwndSelf);
+
+    if (!(new & DTHT_NODATEMASK) || (new == DTHT_NONE))
+    {
+        if (new == DTHT_NONE)
+            new = infoPtr->nrFields - 1;
+        else
+        {
+            /* hitting string part moves selection to next date field to left */
+            if (infoPtr->fieldspec[new] & DT_STRING)
+            {
+                new = DATETIME_GetPrevDateField(infoPtr, new);
+                if (new == -1) return 0;
+            }
+            /* never select full day of week */
+            if (infoPtr->fieldspec[new] == FULLDAY) return 0;
+        }
+    }
+    infoPtr->select = new;
 
     if (infoPtr->select == DTHT_MCPOPUP) {
         RECT rcMonthCal;
