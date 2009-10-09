@@ -647,7 +647,7 @@ static HRESULT create_mon_for_nschannel(nsChannel *channel, IMoniker **mon)
 
     hres = CreateURLMoniker(NULL, wine_url, mon);
     if(FAILED(hres))
-        WARN("CreateURLMonikrer failed: %08x\n", hres);
+        WARN("CreateURLMoniker failed: %08x\n", hres);
 
     return hres;
 }
