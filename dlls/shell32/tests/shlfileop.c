@@ -2073,9 +2073,10 @@ static void test_sh_path_prepare(void)
     WideCharToMultiByte(CP_ACP, 0, UNICODE_PATH, -1, UNICODE_PATH_A, sizeof(UNICODE_PATH_A), NULL, NULL);
 
     /* unicode directory doesn't exist, SHPPFW_NONE */
+    RemoveDirectoryA(UNICODE_PATH_A);
     res = pSHPathPrepareForWriteW(0, 0, UNICODE_PATH, SHPPFW_NONE);
     ok(res == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "res == %08x, expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)\n", res);
-    ok(!file_existsW(UNICODE_PATH), "unicode path was created but shouldn't be\n");
+    ok(!file_exists(UNICODE_PATH_A), "unicode path was created but shouldn't be\n");
     RemoveDirectoryA(UNICODE_PATH_A);
 
     /* unicode directory doesn't exist, SHPPFW_DIRCREATE */
