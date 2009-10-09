@@ -860,7 +860,7 @@ static HRESULT WINAPI PngFrameEncode_WritePixels(IWICBitmapFrameEncode *iface,
     /* set up setjmp/longjmp error handling */
     if (setjmp(png_jmpbuf(This->png_ptr)))
     {
-        if (row_pointers) HeapFree(GetProcessHeap(), 0, row_pointers);
+        HeapFree(GetProcessHeap(), 0, row_pointers);
         return E_FAIL;
     }
 
