@@ -46,7 +46,6 @@
  *   NM_RELEASEDCAPTURE
  *   TCN_FOCUSCHANGE
  *   TCN_GETOBJECT
- *   TCN_KEYDOWN
  *
  *  Macros:
  *   TabCtrl_AdjustRect
@@ -488,9 +487,18 @@ TAB_GetItemRect(const TAB_INFO *infoPtr, INT item, RECT *rect)
  *
  * This method is called to handle keyboard input
  */
-static LRESULT TAB_KeyDown(TAB_INFO* infoPtr, WPARAM keyCode)
+static LRESULT TAB_KeyDown(TAB_INFO* infoPtr, WPARAM keyCode, LPARAM lParam)
 {
   INT newItem = -1;
+  NMTCKEYDOWN nm;
+
+  /* TCN_KEYDOWN notification sent always */
+  nm.hdr.hwndFrom = infoPtr->hwnd;
+  nm.hdr.idFrom = GetWindowLongPtrW(infoPtr->hwnd, GWLP_ID);
+  nm.hdr.code = TCN_KEYDOWN;
+  nm.wVKey = keyCode;
+  nm.flags = lParam;
+  SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nm.hdr.idFrom, (LPARAM)&nm);
 
   switch (keyCode)
   {
@@ -3473,7 +3481,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;   /* Don't disturb normal focus behavior */
 
     case WM_KEYDOWN:
-      return TAB_KeyDown(infoPtr, wParam);
+      return TAB_KeyDown(infoPtr, wParam, lParam);
 
     case WM_NCHITTEST:
       return TAB_NCHitTest(infoPtr, lParam);
