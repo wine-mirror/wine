@@ -123,6 +123,7 @@ struct state_test
     const void *test_data_in;
     const void *test_data_out_all;
     const void *test_data_out_vertex;
+    const void *test_data_out_pixel;
 
     /* Test resource management handlers */
     HRESULT (*setup_handler) (struct state_test* test);
@@ -158,6 +159,7 @@ enum stateblock_data
     SB_DATA_TEST_IN,
     SB_DATA_TEST_ALL,
     SB_DATA_TEST_VERTEX,
+    SB_DATA_TEST_PIXEL,
 };
 
 struct event
@@ -185,6 +187,9 @@ static const void *get_event_data(const struct state_test *test, enum stateblock
 
         case SB_DATA_TEST_VERTEX:
             return test->test_data_out_vertex;
+
+        case SB_DATA_TEST_PIXEL:
+            return test->test_data_out_pixel;
 
         default:
             return NULL;
@@ -319,6 +324,16 @@ static int create_stateblock_vertex(IDirect3DDevice9 *device, struct event_data 
     return EVENT_OK;
 }
 
+static int create_stateblock_pixel(IDirect3DDevice9 *device, struct event_data *event_data)
+{
+    HRESULT hr;
+
+    hr = IDirect3DDevice9_CreateStateBlock(device, D3DSBT_PIXELSTATE, &event_data->stateblock);
+    ok(SUCCEEDED(hr), "CreateStateBlock returned %#x.\n", hr);
+    if (FAILED(hr)) return EVENT_ERROR;
+    return EVENT_OK;
+}
+
 static int begin_stateblock(IDirect3DDevice9 *device, struct event_data *event_data)
 {
     HRESULT hret;
@@ -439,6 +454,20 @@ static void execute_test_chain_all(IDirect3DDevice9 *device, struct state_test *
         {apply_stateblock,          SB_DATA_TEST_VERTEX,    SB_DATA_NONE},
     };
 
+    struct event create_stateblock_capture_apply_pixel_events[] =
+    {
+        {create_stateblock_pixel,   SB_DATA_DEFAULT,        SB_DATA_TEST_IN},
+        {capture_stateblock,        SB_DATA_TEST_ALL,       SB_DATA_DEFAULT},
+        {apply_stateblock,          SB_DATA_TEST_PIXEL,     SB_DATA_NONE},
+    };
+
+    struct event create_stateblock_apply_pixel_events[] =
+    {
+        {NULL,                      SB_DATA_DEFAULT,        SB_DATA_TEST_IN},
+        {create_stateblock_pixel,   SB_DATA_TEST_ALL,       SB_DATA_DEFAULT},
+        {apply_stateblock,          SB_DATA_TEST_PIXEL,     SB_DATA_NONE},
+    };
+
     struct event rendertarget_switch_events[] =
     {
         {NULL,                      SB_DATA_NONE,           SB_DATA_TEST_IN},
@@ -489,6 +518,12 @@ static void execute_test_chain_all(IDirect3DDevice9 *device, struct state_test *
 
     trace("Running create stateblock apply vertex state tests\n");
     execute_test_chain(device, test, ntests, create_stateblock_apply_vertex_events, 3, &arg);
+
+    trace("Running create stateblock capture/apply pixel state tests\n");
+    execute_test_chain(device, test, ntests, create_stateblock_capture_apply_pixel_events, 3, &arg);
+
+    trace("Running create stateblock apply pixel state tests\n");
+    execute_test_chain(device, test, ntests, create_stateblock_apply_pixel_events, 3, &arg);
 
     trace("Running rendertarget switch state tests\n");
     execute_test_chain(device, test, ntests, rendertarget_switch_events, 3, &arg);
@@ -630,10 +665,12 @@ static HRESULT shader_constant_setup_handler(struct state_test *test)
     if (test_arg->pshader)
     {
         test->test_data_out_vertex = &shader_constant_default_data;
+        test->test_data_out_pixel = &shader_constant_test_data;
     }
     else
     {
         test->test_data_out_vertex = &shader_constant_test_data;
+        test->test_data_out_pixel = &shader_constant_default_data;
     }
     test->default_data = &shader_constant_default_data;
     test->initial_data = &shader_constant_default_data;
@@ -851,6 +888,7 @@ static HRESULT light_setup_handler(struct state_test *test)
     test->test_data_in = &light_test_data_in;
     test->test_data_out_all = &light_test_data_out;
     test->test_data_out_vertex = &light_test_data_out;
+    test->test_data_out_pixel = &light_default_data;
     test->default_data = &light_default_data;
     test->initial_data = &light_initial_data;
 
@@ -1100,6 +1138,7 @@ static HRESULT transform_setup_handler(struct state_test *test)
     test->test_data_in = &transform_test_data;
     test->test_data_out_all = &transform_test_data;
     test->test_data_out_vertex = &transform_default_data;
+    test->test_data_out_pixel = &transform_default_data;
     test->default_data = &transform_default_data;
     test->initial_data = &transform_default_data;
 
@@ -1250,6 +1289,7 @@ struct render_state_context
     struct render_state_data default_data_buffer;
     struct render_state_data test_data_all_buffer;
     struct render_state_data test_data_vertex_buffer;
+    struct render_state_data test_data_pixel_buffer;
     struct render_state_data poison_data_buffer;
 };
 
@@ -1571,6 +1611,70 @@ static HRESULT render_state_setup_handler(struct state_test *test)
         D3DRS_VERTEXBLEND,
     };
 
+    static const DWORD states_pixel[] =
+    {
+        D3DRS_ALPHABLENDENABLE,
+        D3DRS_ALPHAFUNC,
+        D3DRS_ALPHAREF,
+        D3DRS_ALPHATESTENABLE,
+        D3DRS_ANTIALIASEDLINEENABLE,
+        D3DRS_BLENDFACTOR,
+        D3DRS_BLENDOP,
+        D3DRS_BLENDOPALPHA,
+        D3DRS_CCW_STENCILFAIL,
+        D3DRS_CCW_STENCILPASS,
+        D3DRS_CCW_STENCILZFAIL,
+        D3DRS_COLORWRITEENABLE,
+        D3DRS_COLORWRITEENABLE1,
+        D3DRS_COLORWRITEENABLE2,
+        D3DRS_COLORWRITEENABLE3,
+        D3DRS_DEPTHBIAS,
+        D3DRS_DESTBLEND,
+        D3DRS_DESTBLENDALPHA,
+        D3DRS_DITHERENABLE,
+        D3DRS_FILLMODE,
+        D3DRS_FOGDENSITY,
+        D3DRS_FOGEND,
+        D3DRS_FOGSTART,
+        D3DRS_LASTPIXEL,
+        D3DRS_SCISSORTESTENABLE,
+        D3DRS_SEPARATEALPHABLENDENABLE,
+        D3DRS_SHADEMODE,
+        D3DRS_SLOPESCALEDEPTHBIAS,
+        D3DRS_SRCBLEND,
+        D3DRS_SRCBLENDALPHA,
+        D3DRS_SRGBWRITEENABLE,
+        D3DRS_STENCILENABLE,
+        D3DRS_STENCILFAIL,
+        D3DRS_STENCILFUNC,
+        D3DRS_STENCILMASK,
+        D3DRS_STENCILPASS,
+        D3DRS_STENCILREF,
+        D3DRS_STENCILWRITEMASK,
+        D3DRS_STENCILZFAIL,
+        D3DRS_TEXTUREFACTOR,
+        D3DRS_TWOSIDEDSTENCILMODE,
+        D3DRS_WRAP0,
+        D3DRS_WRAP1,
+        D3DRS_WRAP10,
+        D3DRS_WRAP11,
+        D3DRS_WRAP12,
+        D3DRS_WRAP13,
+        D3DRS_WRAP14,
+        D3DRS_WRAP15,
+        D3DRS_WRAP2,
+        D3DRS_WRAP3,
+        D3DRS_WRAP4,
+        D3DRS_WRAP5,
+        D3DRS_WRAP6,
+        D3DRS_WRAP7,
+        D3DRS_WRAP8,
+        D3DRS_WRAP9,
+        D3DRS_ZENABLE,
+        D3DRS_ZFUNC,
+        D3DRS_ZWRITEENABLE,
+    };
+
     const struct render_state_arg *rsarg = test->test_arg;
     unsigned int i, j;
 
@@ -1583,6 +1687,7 @@ static HRESULT render_state_setup_handler(struct state_test *test)
     test->test_data_in = &ctx->test_data_all_buffer;
     test->test_data_out_all = &ctx->test_data_all_buffer;
     test->test_data_out_vertex = &ctx->test_data_vertex_buffer;
+    test->test_data_out_pixel = &ctx->test_data_pixel_buffer;
 
     render_state_default_data_init(rsarg, &ctx->default_data_buffer);
     render_state_test_data_init(&ctx->test_data_all_buffer);
@@ -1596,6 +1701,16 @@ static HRESULT render_state_setup_handler(struct state_test *test)
             if (render_state_indices[i] == states_vertex[j])
             {
                 ctx->test_data_vertex_buffer.states[i] = ctx->test_data_all_buffer.states[i];
+                break;
+            }
+        }
+
+        ctx->test_data_pixel_buffer.states[i] = ctx->default_data_buffer.states[i];
+        for (j = 0; j < sizeof(states_pixel) / sizeof(*states_pixel); ++j)
+        {
+            if (render_state_indices[i] == states_pixel[j])
+            {
+                ctx->test_data_pixel_buffer.states[i] = ctx->test_data_all_buffer.states[i];
                 break;
             }
         }
