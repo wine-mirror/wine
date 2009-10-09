@@ -197,7 +197,9 @@ static void test_SetupCopyOEMInf(void)
     /* try a relative SourceInfFileName */
     SetLastError(0xdeadbeef);
     res = pSetupCopyOEMInfA(tmpfile, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
-    ok(res == FALSE, "Expected FALSE, got %d\n", res);
+    ok(res == FALSE ||
+       broken(res == TRUE), /* Win98 */
+       "Expected FALSE, got %d\n", res);
     if (GetLastError() == ERROR_WRONG_INF_TYPE || GetLastError() == ERROR_UNSUPPORTED_TYPE /* Win7 */)
     {
        /* FIXME:
@@ -209,7 +211,8 @@ static void test_SetupCopyOEMInf(void)
        return;
     }
 
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
+       broken(GetLastError() == ERROR_SUCCESS), /* Win98 */
        "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
     ok(file_exists(tmpfile), "Expected tmpfile to exist\n");
 
