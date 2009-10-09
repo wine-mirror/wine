@@ -957,14 +957,11 @@ static LRESULT TAB_OnHScroll(TAB_INFO *infoPtr, int nScrollCode, int nPos)
  * scrolling control is displayed (or not).
  */
 static void TAB_SetupScrolling(
-  HWND        hwnd,
   TAB_INFO*   infoPtr,
   const RECT* clientRect)
 {
-  static const WCHAR msctls_updown32W[] = { 'm','s','c','t','l','s','_','u','p','d','o','w','n','3','2',0 };
   static const WCHAR emptyW[] = { 0 };
   INT maxRange = 0;
-  DWORD lStyle = GetWindowLongW(hwnd, GWL_STYLE);
 
   if (infoPtr->needsScrolling)
   {
@@ -974,12 +971,12 @@ static void TAB_SetupScrolling(
     /*
      * Calculate the position of the scroll control.
      */
-    if(lStyle & TCS_VERTICAL)
+    if(infoPtr->dwStyle & TCS_VERTICAL)
     {
       controlPos.right = clientRect->right;
       controlPos.left  = controlPos.right - 2 * GetSystemMetrics(SM_CXHSCROLL);
 
-      if (lStyle & TCS_BOTTOM)
+      if (infoPtr->dwStyle & TCS_BOTTOM)
       {
         controlPos.top    = clientRect->bottom - infoPtr->tabHeight;
         controlPos.bottom = controlPos.top + GetSystemMetrics(SM_CYHSCROLL);
@@ -995,7 +992,7 @@ static void TAB_SetupScrolling(
       controlPos.right = clientRect->right;
       controlPos.left  = controlPos.right - 2 * GetSystemMetrics(SM_CXHSCROLL);
 
-      if (lStyle & TCS_BOTTOM)
+      if (infoPtr->dwStyle & TCS_BOTTOM)
       {
         controlPos.top    = clientRect->bottom - infoPtr->tabHeight;
         controlPos.bottom = controlPos.top + GetSystemMetrics(SM_CYHSCROLL);
@@ -1013,12 +1010,12 @@ static void TAB_SetupScrolling(
      */
     if (infoPtr->hwndUpDown==0)
     {
-      infoPtr->hwndUpDown = CreateWindowW(msctls_updown32W, emptyW,
+      infoPtr->hwndUpDown = CreateWindowW(UPDOWN_CLASSW, emptyW,
 					  WS_VISIBLE | WS_CHILD | UDS_HORZ,
 					  controlPos.left, controlPos.top,
 					  controlPos.right - controlPos.left,
 					  controlPos.bottom - controlPos.top,
-					  hwnd, NULL, NULL, NULL);
+					  infoPtr->hwnd, NULL, NULL, NULL);
     }
     else
     {
@@ -1053,7 +1050,7 @@ static void TAB_SetupScrolling(
   else
   {
     /* If we once had a scroll control... hide it */
-    if (infoPtr->hwndUpDown!=0)
+    if (infoPtr->hwndUpDown)
       ShowWindow(infoPtr->hwndUpDown, SW_HIDE);
   }
   if (infoPtr->hwndUpDown)
@@ -1267,7 +1264,7 @@ static void TAB_SetItemBounds (TAB_INFO *infoPtr)
     infoPtr->needsScrolling = FALSE;
     infoPtr->leftmostVisible = 0;
   }
-  TAB_SetupScrolling(infoPtr->hwnd, infoPtr, &clientRect);
+  TAB_SetupScrolling(infoPtr, &clientRect);
 
   /* Set the number of rows */
   infoPtr->uNumRows = curItemRowCount;
