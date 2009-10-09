@@ -1184,30 +1184,15 @@ static void test_common_stub_data( const char *prefix, const MIDL_STUB_MESSAGE *
         "%s: pAsyncMsg should have been set to zero instead of %d\n", prefix, stubMsg->PointerLength );
     TEST_ZERO(fInDontFree, "%d");
     TEST_ZERO(fDontCallFreeInst, "%d");
-    ok(stubMsg->fInOnlyParam == 0 ||
-       stubMsg->fInOnlyParam == -1, /* Vista */
-       "%s: fInOnlyParam should have been set to 0 or -1 instead of %d\n", prefix, stubMsg->fInOnlyParam);
-    ok( stubMsg->fHasReturn == 0 ||
-        broken(stubMsg->fHasReturn == -1), /* win9x, nt4 */
+    ok( stubMsg->fHasReturn == 0 || broken(stubMsg->fHasReturn), /* win9x, nt4 */
         "%s: fHasReturn should have been set to zero instead of %d\n", prefix, stubMsg->fHasReturn );
     TEST_ZERO(fHasExtensions, "%d");
     TEST_ZERO(fHasNewCorrDesc, "%d");
-    ok(stubMsg->fIsIn == 0 ||
-       broken(stubMsg->fIsIn == -1), /* win9x, nt4 */
+    ok(stubMsg->fIsIn == 0 || broken(stubMsg->fIsIn), /* win9x, nt4 */
        "%s: fIsIn should have been set to 0 instead of %d\n", prefix, stubMsg->fIsIn);
-    ok(stubMsg->fIsOut == 0 ||
-       stubMsg->fIsOut == -1, /* XP-SP3 */
-       "%s: fIsOut should have been set to 0 or -1 instead of %d\n", prefix, stubMsg->fIsOut);
     TEST_ZERO(fIsOicf, "%d");
     ok(stubMsg->fBufferValid == 0,
        "%s: fBufferValid should have been set to 0 instead of %d\n", prefix, stubMsg->fBufferValid);
-    ok(stubMsg->fHasMemoryValidateCallback == 0 ||
-       stubMsg->fHasMemoryValidateCallback == -1, /* XP-SP3 */
-       "%s: fHasMemoryValidateCallback should have been set to 0 or -1 instead of %d\n",
-       prefix, stubMsg->fHasMemoryValidateCallback);
-    ok(stubMsg->fInFree == 0 ||
-       stubMsg->fInFree == -1, /* XP-SP3 */
-       "%s: fInFree should have been set to 0 or -1 instead of %d\n", prefix, stubMsg->fInFree);
     TEST_ZERO(fNeedMCCP, "%d");
     ok(stubMsg->fUnused == 0 ||
        stubMsg->fUnused == -2, /* Vista */
