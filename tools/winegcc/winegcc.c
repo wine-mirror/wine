@@ -320,7 +320,12 @@ static void compile(struct options* opts, const char* lang)
 	/* mixing different C and C++ compilers isn't supported in configure anyway */
 	case proc_cc:
 	case proc_cxx:
-            gcc_defs = strendswith(comp_args->base[0], "gcc") || strendswith(comp_args->base[0], "g++");
+            for ( j = 0; !gcc_defs && j < comp_args->size; j++ )
+            {
+                const char *cc = comp_args->base[j];
+
+                gcc_defs = strendswith(cc, "gcc") || strendswith(cc, "g++");
+            }
             break;
     }
 
