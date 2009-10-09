@@ -678,7 +678,9 @@ static void test_wm_set_get_text(void)
     hWnd = create_datetime_control(0);
 
     ret = SendMessage(hWnd, WM_SETTEXT, 0, (LPARAM)a_str);
-    expect(CB_ERR, ret);
+    ok(CB_ERR == ret ||
+       broken(1 == ret), /* comctl32 <= 4.72 */
+       "Expected CB_ERR, got %ld\n", ret);
 
     buff[0] = 0;
     ret = SendMessage(hWnd, WM_GETTEXT, sizeof(buff), (LPARAM)buff);
