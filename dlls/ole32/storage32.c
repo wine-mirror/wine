@@ -1462,10 +1462,8 @@ static HRESULT WINAPI StorageImpl_CopyTo(
   HRESULT      hr;
   IStorage     *pstgTmp, *pstgChild;
   IStream      *pstrTmp, *pstrChild;
-  BOOL         skip = FALSE;
-
-  if ((ciidExclude != 0) || (rgiidExclude != NULL))
-    FIXME("Exclude option not implemented\n");
+  BOOL         skip = FALSE, skip_storage = FALSE, skip_stream = FALSE;
+  int          i;
 
   TRACE("(%p, %d, %p, %p, %p)\n",
 	iface, ciidExclude, rgiidExclude,
@@ -1487,6 +1485,16 @@ static HRESULT WINAPI StorageImpl_CopyTo(
    */
   IStorage_Stat( iface, &curElement, STATFLAG_NONAME);
   IStorage_SetClass( pstgDest, &curElement.clsid );
+
+  for(i = 0; i < ciidExclude; ++i)
+  {
+    if(IsEqualGUID(&IID_IStorage, &rgiidExclude[i]))
+        skip_storage = TRUE;
+    else if(IsEqualGUID(&IID_IStream, &rgiidExclude[i]))
+        skip_stream = TRUE;
+    else
+        WARN("Unknown excluded GUID: %s\n", debugstr_guid(&rgiidExclude[i]));
+  }
 
   do
   {
@@ -1518,6 +1526,9 @@ static HRESULT WINAPI StorageImpl_CopyTo(
 
     if (curElement.type == STGTY_STORAGE)
     {
+      if(skip_storage)
+        continue;
+
       /*
        * open child source storage
        */
@@ -1571,6 +1582,9 @@ static HRESULT WINAPI StorageImpl_CopyTo(
     }
     else if (curElement.type == STGTY_STREAM)
     {
+      if(skip_stream)
+        continue;
+
       /*
        * create a new stream in destination storage. If the stream already
        * exist, it will be deleted and a new one will be created.
