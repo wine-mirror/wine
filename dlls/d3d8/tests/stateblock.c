@@ -119,7 +119,8 @@ struct state_test
      * in - what we want to write
      * out - what windows will actually write (not necessarily the same)  */
     const void *test_data_in;
-    const void *test_data_out;
+    const void *test_data_out_all;
+    const void *test_data_out_vertex;
 
     /* Test resource management handlers */
     HRESULT (*setup_handler)(struct state_test *test);
@@ -154,7 +155,8 @@ enum stateblock_data
     SB_DATA_DEFAULT,
     SB_DATA_INITIAL,
     SB_DATA_TEST_IN,
-    SB_DATA_TEST,
+    SB_DATA_TEST_ALL,
+    SB_DATA_TEST_VERTEX,
 };
 
 struct event
@@ -177,8 +179,11 @@ static const void *get_event_data(const struct state_test *test, enum stateblock
         case SB_DATA_TEST_IN:
             return test->test_data_in;
 
-        case SB_DATA_TEST:
-            return test->test_data_out;
+        case SB_DATA_TEST_ALL:
+            return test->test_data_out_all;
+
+        case SB_DATA_TEST_VERTEX:
+            return test->test_data_out_vertex;
 
         default:
             return NULL;
@@ -297,11 +302,21 @@ static int revert_render_target(IDirect3DDevice8 *device, struct event_data *eve
     return EVENT_OK;
 }
 
-static int create_stateblock(IDirect3DDevice8 *device, struct event_data *event_data)
+static int create_stateblock_all(IDirect3DDevice8 *device, struct event_data *event_data)
 {
     HRESULT hr;
 
     hr = IDirect3DDevice8_CreateStateBlock(device, D3DSBT_ALL, &event_data->stateblock);
+    ok(SUCCEEDED(hr), "CreateStateBlock returned %#x.\n", hr);
+    if (FAILED(hr)) return EVENT_ERROR;
+    return EVENT_OK;
+}
+
+static int create_stateblock_vertex(IDirect3DDevice8 *device, struct event_data *event_data)
+{
+    HRESULT hr;
+
+    hr = IDirect3DDevice8_CreateStateBlock(device, D3DSBT_VERTEXSTATE, &event_data->stateblock);
     ok(SUCCEEDED(hr), "CreateStateBlock returned %#x.\n", hr);
     if (FAILED(hr)) return EVENT_ERROR;
     return EVENT_OK;
@@ -370,7 +385,7 @@ static void execute_test_chain_all(IDirect3DDevice8 *device, struct state_test *
     struct event write_read_events[] =
     {
         {NULL,                      SB_DATA_NONE,           SB_DATA_TEST_IN},
-        {NULL,                      SB_DATA_TEST,           SB_DATA_NONE},
+        {NULL,                      SB_DATA_TEST_ALL,       SB_DATA_NONE},
     };
 
     struct event abort_stateblock_events[] =
@@ -384,7 +399,7 @@ static void execute_test_chain_all(IDirect3DDevice8 *device, struct state_test *
     {
         {begin_stateblock,          SB_DATA_NONE,           SB_DATA_TEST_IN},
         {end_stateblock,            SB_DATA_NONE,           SB_DATA_NONE},
-        {apply_stateblock,          SB_DATA_TEST,           SB_DATA_NONE},
+        {apply_stateblock,          SB_DATA_TEST_ALL,       SB_DATA_NONE},
     };
 
     struct event capture_reapply_stateblock_events[] =
@@ -395,24 +410,38 @@ static void execute_test_chain_all(IDirect3DDevice8 *device, struct state_test *
         {apply_stateblock,          SB_DATA_DEFAULT,        SB_DATA_NONE},
     };
 
-    struct event create_stateblock_capture_apply_events[] =
+    struct event create_stateblock_capture_apply_all_events[] =
     {
-        {create_stateblock,         SB_DATA_DEFAULT,        SB_DATA_TEST_IN},
-        {capture_stateblock,        SB_DATA_TEST,           SB_DATA_DEFAULT},
-        {apply_stateblock,          SB_DATA_TEST,           SB_DATA_NONE},
+        {create_stateblock_all,     SB_DATA_DEFAULT,        SB_DATA_TEST_IN},
+        {capture_stateblock,        SB_DATA_TEST_ALL,       SB_DATA_DEFAULT},
+        {apply_stateblock,          SB_DATA_TEST_ALL,       SB_DATA_NONE},
     };
 
-    struct event create_stateblock_apply_events[] =
+    struct event create_stateblock_apply_all_events[] =
     {
         {NULL,                      SB_DATA_DEFAULT,        SB_DATA_TEST_IN},
-        {create_stateblock,         SB_DATA_TEST,           SB_DATA_DEFAULT},
-        {apply_stateblock,          SB_DATA_TEST,           SB_DATA_NONE},
+        {create_stateblock_all,     SB_DATA_TEST_ALL,       SB_DATA_DEFAULT},
+        {apply_stateblock,          SB_DATA_TEST_ALL,       SB_DATA_NONE},
+    };
+
+    struct event create_stateblock_capture_apply_vertex_events[] =
+    {
+        {create_stateblock_vertex,  SB_DATA_DEFAULT,        SB_DATA_TEST_IN},
+        {capture_stateblock,        SB_DATA_TEST_ALL,       SB_DATA_DEFAULT},
+        {apply_stateblock,          SB_DATA_TEST_VERTEX,    SB_DATA_NONE},
+    };
+
+    struct event create_stateblock_apply_vertex_events[] =
+    {
+        {NULL,                      SB_DATA_DEFAULT,        SB_DATA_TEST_IN},
+        {create_stateblock_vertex,  SB_DATA_TEST_ALL,       SB_DATA_DEFAULT},
+        {apply_stateblock,          SB_DATA_TEST_VERTEX,    SB_DATA_NONE},
     };
 
     struct event rendertarget_switch_events[] =
     {
         {NULL,                      SB_DATA_NONE,           SB_DATA_TEST_IN},
-        {switch_render_target,      SB_DATA_TEST,           SB_DATA_NONE},
+        {switch_render_target,      SB_DATA_TEST_ALL,       SB_DATA_NONE},
         {revert_render_target,      SB_DATA_NONE,           SB_DATA_NONE},
     };
 
@@ -422,7 +451,7 @@ static void execute_test_chain_all(IDirect3DDevice8 *device, struct state_test *
         {switch_render_target,      SB_DATA_DEFAULT,        SB_DATA_NONE},
         {end_stateblock,            SB_DATA_NONE,           SB_DATA_NONE},
         {revert_render_target,      SB_DATA_NONE,           SB_DATA_NONE},
-        {apply_stateblock,          SB_DATA_TEST,           SB_DATA_NONE},
+        {apply_stateblock,          SB_DATA_TEST_ALL,       SB_DATA_NONE},
     };
 
     /* Setup each test for execution */
@@ -448,11 +477,17 @@ static void execute_test_chain_all(IDirect3DDevice8 *device, struct state_test *
     trace("Running stateblock capture/reapply state tests\n");
     execute_test_chain(device, test, ntests, capture_reapply_stateblock_events, 4, &arg);
 
-    trace("Running create stateblock capture/apply state tests\n");
-    execute_test_chain(device, test, ntests, create_stateblock_capture_apply_events, 3, &arg);
+    trace("Running create stateblock capture/apply all state tests\n");
+    execute_test_chain(device, test, ntests, create_stateblock_capture_apply_all_events, 3, &arg);
 
-    trace("Running create stateblock apply state tests\n");
-    execute_test_chain(device, test, ntests, create_stateblock_apply_events, 3, &arg);
+    trace("Running create stateblock apply all state tests\n");
+    execute_test_chain(device, test, ntests, create_stateblock_apply_all_events, 3, &arg);
+
+    trace("Running create stateblock capture/apply vertex state tests\n");
+    execute_test_chain(device, test, ntests, create_stateblock_capture_apply_vertex_events, 3, &arg);
+
+    trace("Running create stateblock apply vertex state tests\n");
+    execute_test_chain(device, test, ntests, create_stateblock_apply_vertex_events, 3, &arg);
 
     trace("Running rendertarget switch state tests\n");
     execute_test_chain(device, test, ntests, rendertarget_switch_events, 3, &arg);
@@ -546,9 +581,19 @@ static void shader_constant_check_data(IDirect3DDevice8 *device, unsigned int ch
 
 static HRESULT shader_constant_setup_handler(struct state_test *test)
 {
+    const struct shader_constant_arg *test_arg = test->test_arg;
+
     test->test_context = NULL;
     test->test_data_in = &shader_constant_test_data;
-    test->test_data_out = &shader_constant_test_data;
+    test->test_data_out_all = &shader_constant_test_data;
+    if (test_arg->pshader)
+    {
+        test->test_data_out_vertex = &shader_constant_default_data;
+    }
+    else
+    {
+        test->test_data_out_vertex = &shader_constant_test_data;
+    }
     test->default_data = &shader_constant_default_data;
     test->initial_data = &shader_constant_default_data;
 
@@ -762,7 +807,8 @@ static HRESULT light_setup_handler(struct state_test *test)
 {
     test->test_context = NULL;
     test->test_data_in = &light_test_data_in;
-    test->test_data_out = &light_test_data_out;
+    test->test_data_out_all = &light_test_data_out;
+    test->test_data_out_vertex = &light_test_data_out;
     test->default_data = &light_default_data;
     test->initial_data = &light_initial_data;
 
@@ -1011,7 +1057,8 @@ static HRESULT transform_setup_handler(struct state_test *test)
 {
     test->test_context = NULL;
     test->test_data_in = &transform_test_data;
-    test->test_data_out = &transform_test_data;
+    test->test_data_out_all = &transform_test_data;
+    test->test_data_out_vertex = &transform_default_data;
     test->default_data = &transform_default_data;
     test->initial_data = &transform_default_data;
 
@@ -1124,7 +1171,8 @@ struct render_state_arg
 struct render_state_context
 {
     struct render_state_data default_data_buffer;
-    struct render_state_data test_data_buffer;
+    struct render_state_data test_data_all_buffer;
+    struct render_state_data test_data_vertex_buffer;
     struct render_state_data poison_data_buffer;
 };
 
@@ -1328,7 +1376,48 @@ static void render_state_test_data_init(struct render_state_data *data)
 
 static HRESULT render_state_setup_handler(struct state_test *test)
 {
+    static const DWORD states_vertex[] =
+    {
+        D3DRS_AMBIENT,
+        D3DRS_AMBIENTMATERIALSOURCE,
+        D3DRS_CLIPPING,
+        D3DRS_CLIPPLANEENABLE,
+        D3DRS_COLORVERTEX,
+        D3DRS_CULLMODE,
+        D3DRS_DIFFUSEMATERIALSOURCE,
+        D3DRS_EMISSIVEMATERIALSOURCE,
+        D3DRS_FOGCOLOR,
+        D3DRS_FOGDENSITY,
+        D3DRS_FOGENABLE,
+        D3DRS_FOGEND,
+        D3DRS_FOGSTART,
+        D3DRS_FOGTABLEMODE,
+        D3DRS_FOGVERTEXMODE,
+        D3DRS_INDEXEDVERTEXBLENDENABLE,
+        D3DRS_LIGHTING,
+        D3DRS_LOCALVIEWER,
+        D3DRS_MULTISAMPLEANTIALIAS,
+        D3DRS_MULTISAMPLEMASK,
+        D3DRS_NORMALIZENORMALS,
+        D3DRS_PATCHEDGESTYLE,
+        D3DRS_POINTSCALE_A,
+        D3DRS_POINTSCALE_B,
+        D3DRS_POINTSCALE_C,
+        D3DRS_POINTSCALEENABLE,
+        D3DRS_POINTSIZE,
+        D3DRS_POINTSIZE_MAX,
+        D3DRS_POINTSIZE_MIN,
+        D3DRS_POINTSPRITEENABLE,
+        D3DRS_RANGEFOGENABLE,
+        D3DRS_SHADEMODE,
+        D3DRS_SPECULARENABLE,
+        D3DRS_SPECULARMATERIALSOURCE,
+        D3DRS_TWEENFACTOR,
+        D3DRS_VERTEXBLEND,
+    };
+
     const struct render_state_arg *rsarg = test->test_arg;
+    unsigned int i, j;
 
     struct render_state_context *ctx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ctx));
     if (!ctx) return E_FAIL;
@@ -1336,12 +1425,26 @@ static HRESULT render_state_setup_handler(struct state_test *test)
 
     test->default_data = &ctx->default_data_buffer;
     test->initial_data = &ctx->default_data_buffer;
-    test->test_data_in = &ctx->test_data_buffer;
-    test->test_data_out = &ctx->test_data_buffer;
+    test->test_data_in = &ctx->test_data_all_buffer;
+    test->test_data_out_all = &ctx->test_data_all_buffer;
+    test->test_data_out_vertex = &ctx->test_data_vertex_buffer;
 
     render_state_default_data_init(rsarg, &ctx->default_data_buffer);
-    render_state_test_data_init(&ctx->test_data_buffer);
+    render_state_test_data_init(&ctx->test_data_all_buffer);
     render_state_poison_data_init(&ctx->poison_data_buffer);
+
+    for (i = 0; i < sizeof(render_state_indices) / sizeof(*render_state_indices); ++i)
+    {
+        ctx->test_data_vertex_buffer.states[i] = ctx->default_data_buffer.states[i];
+        for (j = 0; j < sizeof(states_vertex) / sizeof(*states_vertex); ++j)
+        {
+            if (render_state_indices[i] == states_vertex[j])
+            {
+                ctx->test_data_vertex_buffer.states[i] = ctx->test_data_all_buffer.states[i];
+                break;
+            }
+        }
+    }
 
     return D3D_OK;
 }
