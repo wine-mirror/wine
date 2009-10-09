@@ -76,7 +76,7 @@ static HRESULT WINAPI InternetHostSecurityManager_ProcessUrlAction(IInternetHost
     HTMLDocumentNode *This = HOSTSECMGR_THIS(iface);
     const WCHAR *url;
 
-    TRACE("%p)->(%d %p %d %p %d %x %x)\n", This, dwAction, pPolicy, cbPolicy, pContext, cbContext, dwFlags, dwReserved);
+    TRACE("(%p)->(%d %p %d %p %d %x %x)\n", This, dwAction, pPolicy, cbPolicy, pContext, cbContext, dwFlags, dwReserved);
 
     url = This->basedoc.doc_obj->url ? This->basedoc.doc_obj->url : about_blankW;
 
