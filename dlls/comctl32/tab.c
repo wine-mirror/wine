@@ -2722,9 +2722,9 @@ TAB_HighlightItem (TAB_INFO *infoPtr, INT iItem, BOOL fHighlight)
 
   TRACE("(%p,%d,%s)\n", infoPtr, iItem, fHighlight ? "true" : "false");
 
-  if (!infoPtr || iItem < 0 || iItem >= infoPtr->uNumItem)
+  if (iItem < 0 || iItem >= infoPtr->uNumItem)
     return FALSE;
-  
+
   lpState = &TAB_GetItem(infoPtr, iItem)->dwState;
   oldState = *lpState;
 
@@ -3100,9 +3100,6 @@ TAB_Destroy (TAB_INFO *infoPtr)
 {
   UINT iItem;
 
-  if (!infoPtr)
-      return 0;
-
   SetWindowLongPtrW(infoPtr->hwnd, 0, 0);
 
   if (infoPtr->items) {
@@ -3122,7 +3119,7 @@ TAB_Destroy (TAB_INFO *infoPtr)
     KillTimer(infoPtr->hwnd, TAB_HOTTRACK_TIMER);
 
   CloseThemeData (GetWindowTheme (infoPtr->hwnd));
-  
+
   Free (infoPtr);
   return 0;
 }
@@ -3146,7 +3143,7 @@ static LRESULT TAB_NCCalcSize(WPARAM wParam)
 static inline LRESULT
 TAB_SetItemExtra (TAB_INFO *infoPtr, INT cbInfo)
 {
-  if (!infoPtr || cbInfo <= 0)
+  if (cbInfo <= 0)
     return FALSE;
 
   if (infoPtr->uNumItem)
@@ -3161,9 +3158,6 @@ TAB_SetItemExtra (TAB_INFO *infoPtr, INT cbInfo)
 
 static LRESULT TAB_RemoveImage (TAB_INFO *infoPtr, INT image)
 {
-  if (!infoPtr)
-    return 0;
-
   if (ImageList_Remove (infoPtr->himl, image))
   {
     INT i, *idx;
@@ -3334,7 +3328,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_InsertItemT (infoPtr, wParam, lParam, uMsg == TCM_INSERTITEMW);
 
     case TCM_SETITEMEXTRA:
-      return TAB_SetItemExtra (infoPtr, (int)wParam);
+      return TAB_SetItemExtra (infoPtr, (INT)wParam);
 
     case TCM_ADJUSTRECT:
       return TAB_AdjustRect (infoPtr, (BOOL)wParam, (LPRECT)lParam);
