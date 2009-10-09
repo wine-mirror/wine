@@ -221,6 +221,7 @@ TAB_DumpItemInternal(const TAB_INFO *infoPtr, UINT iItem)
  *   the index of the selected tab, or -1 if no tab is selected. */
 static inline LRESULT TAB_GetCurSel (const TAB_INFO *infoPtr)
 {
+    TRACE("(%p)\n", infoPtr);
     return infoPtr->iSelected;
 }
 
@@ -229,18 +230,21 @@ static inline LRESULT TAB_GetCurSel (const TAB_INFO *infoPtr)
 static inline LRESULT
 TAB_GetCurFocus (const TAB_INFO *infoPtr)
 {
+    TRACE("(%p)\n", infoPtr);
     return infoPtr->uFocus;
 }
 
 static inline LRESULT TAB_GetToolTips (const TAB_INFO *infoPtr)
 {
-    if (infoPtr == NULL) return 0;
+    TRACE("(%p)\n", infoPtr);
     return (LRESULT)infoPtr->hwndToolTip;
 }
 
 static inline LRESULT TAB_SetCurSel (TAB_INFO *infoPtr, INT iItem)
 {
   INT prevItem = infoPtr->iSelected;
+
+  TRACE("(%p %d)\n", infoPtr, iItem);
 
   if (iItem < 0)
       infoPtr->iSelected=-1;
@@ -262,6 +266,8 @@ static inline LRESULT TAB_SetCurSel (TAB_INFO *infoPtr, INT iItem)
 
 static LRESULT TAB_SetCurFocus (TAB_INFO *infoPtr, INT iItem)
 {
+  TRACE("(%p %d)\n", infoPtr, iItem);
+
   if (iItem < 0)
       infoPtr->uFocus = -1;
   else if (iItem < infoPtr->uNumItem) {
@@ -290,19 +296,18 @@ static LRESULT TAB_SetCurFocus (TAB_INFO *infoPtr, INT iItem)
 static inline LRESULT
 TAB_SetToolTips (TAB_INFO *infoPtr, HWND hwndToolTip)
 {
-    if (infoPtr)
-        infoPtr->hwndToolTip = hwndToolTip;
+    TRACE("%p %p", infoPtr, hwndToolTip);
+    infoPtr->hwndToolTip = hwndToolTip;
     return 0;
 }
 
 static inline LRESULT
 TAB_SetPadding (TAB_INFO *infoPtr, LPARAM lParam)
 {
-    if (infoPtr)
-    {
-        infoPtr->uHItemPadding_s=LOWORD(lParam);
-        infoPtr->uVItemPadding_s=HIWORD(lParam);
-    }
+    TRACE("(%p %d %d)\n", infoPtr, LOWORD(lParam), HIWORD(lParam));
+    infoPtr->uHItemPadding_s = LOWORD(lParam);
+    infoPtr->uVItemPadding_s = HIWORD(lParam);
+
     return 0;
 }
 
@@ -455,9 +460,10 @@ static BOOL TAB_InternalGetItemRect(
 }
 
 static inline BOOL
-TAB_GetItemRect(const TAB_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+TAB_GetItemRect(const TAB_INFO *infoPtr, INT item, RECT *rect)
 {
-  return TAB_InternalGetItemRect(infoPtr, wParam, (LPRECT)lParam, NULL);
+  TRACE("(%p, %d, %p)\n", infoPtr, item, rect);
+  return TAB_InternalGetItemRect(infoPtr, item, rect, NULL);
 }
 
 /******************************************************************************
@@ -549,6 +555,7 @@ static INT TAB_InternalHitTest (const TAB_INFO *infoPtr, POINT pt, UINT *flags)
 static inline LRESULT
 TAB_HitTest (const TAB_INFO *infoPtr, LPTCHITTESTINFO lptest)
 {
+  TRACE("(%p, %p)\n", infoPtr, lptest);
   return TAB_InternalHitTest (infoPtr, lptest->pt, &lptest->flags);
 }
 
@@ -2363,6 +2370,7 @@ static void TAB_Refresh (const TAB_INFO *infoPtr, HDC hdc)
 
 static inline DWORD TAB_GetRowCount (const TAB_INFO *infoPtr)
 {
+  TRACE("(%p)\n", infoPtr);
   return infoPtr->uNumRows;
 }
 
@@ -2574,18 +2582,13 @@ static inline LRESULT TAB_Paint (TAB_INFO *infoPtr, HDC hdcPaint)
 }
 
 static LRESULT
-TAB_InsertItemT (TAB_INFO *infoPtr, WPARAM wParam, LPARAM lParam, BOOL bUnicode)
+TAB_InsertItemT (TAB_INFO *infoPtr, INT iItem, TCITEMW *pti, BOOL bUnicode)
 {
   TAB_ITEM *item;
-  TCITEMW *pti;
-  INT iItem;
   RECT rect;
 
   GetClientRect (infoPtr->hwnd, &rect);
   TRACE("Rect: %p %s\n", infoPtr->hwnd, wine_dbgstr_rect(&rect));
-
-  pti = (TCITEMW *)lParam;
-  iItem = (INT)wParam;
 
   if (iItem < 0) return -1;
   if (iItem > infoPtr->uNumItem)
@@ -2664,7 +2667,7 @@ TAB_InsertItemT (TAB_INFO *infoPtr, WPARAM wParam, LPARAM lParam, BOOL bUnicode)
 }
 
 static LRESULT
-TAB_SetItemSize (TAB_INFO *infoPtr, LPARAM lParam)
+TAB_SetItemSize (TAB_INFO *infoPtr, INT cx, INT cy)
 {
   LONG lResult = 0;
   BOOL bNeedPaint = FALSE;
@@ -2672,16 +2675,16 @@ TAB_SetItemSize (TAB_INFO *infoPtr, LPARAM lParam)
   lResult = MAKELONG(infoPtr->tabWidth, infoPtr->tabHeight);
 
   /* UNDOCUMENTED: If requested Width or Height is 0 this means that program wants to use auto size. */
-  if (infoPtr->dwStyle & TCS_FIXEDWIDTH && (infoPtr->tabWidth != (INT)LOWORD(lParam)))
+  if (infoPtr->dwStyle & TCS_FIXEDWIDTH && (infoPtr->tabWidth != cx))
   {
-    infoPtr->tabWidth = (INT)LOWORD(lParam);
+    infoPtr->tabWidth = cx;
     bNeedPaint = TRUE;
   }
 
-  if (infoPtr->tabHeight != (INT)HIWORD(lParam))
+  if (infoPtr->tabHeight != cy)
   {
-    if ((infoPtr->fHeightSet = ((INT)HIWORD(lParam) != 0)))
-      infoPtr->tabHeight = (INT)HIWORD(lParam);
+    if ((infoPtr->fHeightSet = (cy != 0)))
+      infoPtr->tabHeight = cy;
 
     bNeedPaint = TRUE;
   }
@@ -2785,7 +2788,8 @@ TAB_SetItemT (TAB_INFO *infoPtr, INT iItem, LPTCITEMW tabItem, BOOL bUnicode)
 
 static inline LRESULT TAB_GetItemCount (const TAB_INFO *infoPtr)
 {
-   return infoPtr->uNumItem;
+  TRACE("\n");
+  return infoPtr->uNumItem;
 }
 
 
@@ -2936,7 +2940,7 @@ static inline LRESULT TAB_GetImageList (const TAB_INFO *infoPtr)
 static inline LRESULT TAB_SetImageList (TAB_INFO *infoPtr, HIMAGELIST himlNew)
 {
     HIMAGELIST himlPrev = infoPtr->himl;
-    TRACE("\n");
+    TRACE("himl=%p\n", himlNew);
     infoPtr->himl = himlNew;
     TAB_SetItemBounds(infoPtr);
     InvalidateRect(infoPtr->hwnd, NULL, TRUE);
@@ -2945,6 +2949,7 @@ static inline LRESULT TAB_SetImageList (TAB_INFO *infoPtr, HIMAGELIST himlNew)
 
 static inline LRESULT TAB_GetUnicodeFormat (const TAB_INFO *infoPtr)
 {
+    TRACE("(%p)\n", infoPtr);
     return infoPtr->bUnicode;
 }
 
@@ -2952,6 +2957,7 @@ static inline LRESULT TAB_SetUnicodeFormat (TAB_INFO *infoPtr, BOOL bUnicode)
 {
     BOOL bTemp = infoPtr->bUnicode;
 
+    TRACE("(%p %d)\n", infoPtr, bUnicode);
     infoPtr->bUnicode = bUnicode;
 
     return bTemp;
@@ -3143,6 +3149,8 @@ static LRESULT TAB_NCCalcSize(WPARAM wParam)
 static inline LRESULT
 TAB_SetItemExtra (TAB_INFO *infoPtr, INT cbInfo)
 {
+  TRACE("(%p %d)\n", infoPtr, cbInfo);
+
   if (cbInfo <= 0)
     return FALSE;
 
@@ -3158,6 +3166,8 @@ TAB_SetItemExtra (TAB_INFO *infoPtr, INT cbInfo)
 
 static LRESULT TAB_RemoveImage (TAB_INFO *infoPtr, INT image)
 {
+  TRACE("%p %d\n", infoPtr, image);
+
   if (ImageList_Remove (infoPtr->himl, image))
   {
     INT i, *idx;
@@ -3222,6 +3232,8 @@ TAB_DeselectAll (TAB_INFO *infoPtr, BOOL excludesel)
 {
   BOOL paint = FALSE;
   INT i, selected = infoPtr->iSelected;
+
+  TRACE("(%p, %d)\n", infoPtr, excludesel);
 
   if (!(infoPtr->dwStyle & TCS_BUTTONS))
     return 0;
@@ -3312,7 +3324,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
      return TAB_DeleteAllItems (infoPtr);
 
     case TCM_GETITEMRECT:
-     return TAB_GetItemRect (infoPtr, wParam, lParam);
+     return TAB_GetItemRect (infoPtr, (INT)wParam, (LPRECT)lParam);
 
     case TCM_GETCURSEL:
       return TAB_GetCurSel (infoPtr);
@@ -3325,7 +3337,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case TCM_INSERTITEMA:
     case TCM_INSERTITEMW:
-      return TAB_InsertItemT (infoPtr, wParam, lParam, uMsg == TCM_INSERTITEMW);
+      return TAB_InsertItemT (infoPtr, (INT)wParam, (TCITEMW*)lParam, uMsg == TCM_INSERTITEMW);
 
     case TCM_SETITEMEXTRA:
       return TAB_SetItemExtra (infoPtr, (INT)wParam);
@@ -3334,10 +3346,10 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_AdjustRect (infoPtr, (BOOL)wParam, (LPRECT)lParam);
 
     case TCM_SETITEMSIZE:
-      return TAB_SetItemSize (infoPtr, lParam);
+      return TAB_SetItemSize (infoPtr, (INT)LOWORD(lParam), (INT)HIWORD(lParam));
 
     case TCM_REMOVEIMAGE:
-      return TAB_RemoveImage (infoPtr, wParam);
+      return TAB_RemoveImage (infoPtr, (INT)wParam);
 
     case TCM_SETPADDING:
       return TAB_SetPadding (infoPtr, lParam);
