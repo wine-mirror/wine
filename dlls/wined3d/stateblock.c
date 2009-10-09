@@ -1674,6 +1674,13 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
         {
             stateblock->streamSource[i] = NULL;
         }
+
+        for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
+        {
+            stateblock->textures[i] = NULL;
+        }
+
+        stateblock->vertexDecl = NULL;
         stateblock->pIndexData = NULL;
         stateblock->vertexShader = NULL;
     }
@@ -1700,8 +1707,14 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
             if (stateblock->streamSource[i]) IWineD3DBuffer_AddRef(stateblock->streamSource[i]);
         }
 
+        for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
+        {
+            stateblock->textures[i] = NULL;
+        }
+
         if (stateblock->vertexShader) IWineD3DVertexShader_AddRef(stateblock->vertexShader);
 
+        stateblock->vertexDecl = NULL;
         stateblock->pIndexData = NULL;
         stateblock->pixelShader = NULL;
     }
