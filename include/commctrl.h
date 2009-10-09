@@ -4262,9 +4262,10 @@ typedef struct tagTCITEMW
 #define TCN_FIRST               (0U-550U)
 #define TCN_LAST                (0U-580U)
 #define TCN_KEYDOWN             (TCN_FIRST - 0)
-#define TCN_SELCHANGE		(TCN_FIRST - 1)
+#define TCN_SELCHANGE           (TCN_FIRST - 1)
 #define TCN_SELCHANGING         (TCN_FIRST - 2)
 #define TCN_GETOBJECT           (TCN_FIRST - 3)
+#define TCN_FOCUSCHANGE         (TCN_FIRST - 4)
 
 #include <pshpack1.h>
 typedef struct tagTCKEYDOWN

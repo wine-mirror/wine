@@ -161,6 +161,7 @@ static void TAB_InvalidateTabArea(const TAB_INFO *);
 static void TAB_EnsureSelectionVisible(TAB_INFO *);
 static void TAB_DrawItemInterior(const TAB_INFO *, HDC, INT, RECT*);
 static LRESULT TAB_DeselectAll(TAB_INFO *, BOOL);
+static BOOL TAB_InternalGetItemRect(const TAB_INFO *, INT, RECT*, RECT*);
 
 static BOOL
 TAB_SendSimpleNotify (const TAB_INFO *infoPtr, UINT code)
@@ -272,9 +273,25 @@ static LRESULT TAB_SetCurFocus (TAB_INFO *infoPtr, INT iItem)
       infoPtr->uFocus = -1;
   else if (iItem < infoPtr->uNumItem) {
     if (infoPtr->dwStyle & TCS_BUTTONS) {
-      FIXME("Should set input focus\n");
+      /* set focus to new item, leave selection as is */
+      if (infoPtr->uFocus != iItem) {
+        INT prev_focus = infoPtr->uFocus;
+        RECT r;
+
+        infoPtr->uFocus = iItem;
+
+        if (prev_focus != infoPtr->iSelected) {
+          if (TAB_InternalGetItemRect(infoPtr, prev_focus, &r, NULL))
+            InvalidateRect(infoPtr->hwnd, &r, FALSE);
+        }
+
+        if (TAB_InternalGetItemRect(infoPtr, iItem, &r, NULL))
+            InvalidateRect(infoPtr->hwnd, &r, FALSE);
+
+        TAB_SendSimpleNotify(infoPtr, TCN_FOCUSCHANGE);
+      }
     } else {
-      int oldFocus = infoPtr->uFocus;
+      INT oldFocus = infoPtr->uFocus;
       if (infoPtr->iSelected != iItem || oldFocus == -1 ) {
         infoPtr->uFocus = iItem;
         if (oldFocus != -1) {
@@ -467,13 +484,13 @@ TAB_GetItemRect(const TAB_INFO *infoPtr, INT item, RECT *rect)
 }
 
 /******************************************************************************
- * TAB_KeyUp
+ * TAB_KeyDown
  *
  * This method is called to handle keyboard input
  */
-static LRESULT TAB_KeyUp(TAB_INFO* infoPtr, WPARAM keyCode)
+static LRESULT TAB_KeyDown(TAB_INFO* infoPtr, WPARAM keyCode)
 {
-  int       newItem = -1;
+  INT newItem = -1;
 
   switch (keyCode)
   {
@@ -485,21 +502,28 @@ static LRESULT TAB_KeyUp(TAB_INFO* infoPtr, WPARAM keyCode)
       break;
   }
 
-  /*
-   * If we changed to a valid item, change the selection
-   */
-  if (newItem >= 0 &&
-      newItem < infoPtr->uNumItem &&
-      infoPtr->uFocus != newItem)
-  {
-    if (!TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGING))
-    {
-      TAB_SetCurSel(infoPtr, newItem);
-      TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGE);
-    }
-  }
+  /* If we changed to a valid item, change focused item */
+  if (newItem >= 0 && newItem < infoPtr->uNumItem && infoPtr->uFocus != newItem)
+      TAB_SetCurFocus(infoPtr, newItem);
 
   return 0;
+}
+
+/*
+ * WM_KILLFOCUS handler
+ */
+static void TAB_KillFocus(TAB_INFO *infoPtr)
+{
+  /* clear current focused item back to selected for TCS_BUTTONS */
+  if ((infoPtr->dwStyle & TCS_BUTTONS) && (infoPtr->uFocus != infoPtr->iSelected))
+  {
+    RECT r;
+
+    if (TAB_InternalGetItemRect(infoPtr, infoPtr->uFocus, &r, NULL))
+      InvalidateRect(infoPtr->hwnd, &r, FALSE);
+
+    infoPtr->uFocus = infoPtr->iSelected;
+  }
 }
 
 /******************************************************************************
@@ -598,7 +622,7 @@ TAB_LButtonDown (TAB_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     TAB_RelayEvent (infoPtr->hwndToolTip, infoPtr->hwnd,
 		    WM_LBUTTONDOWN, wParam, lParam);
 
-  if (infoPtr->dwStyle & TCS_FOCUSONBUTTONDOWN) {
+  if (!(infoPtr->dwStyle & TCS_FOCUSNEVER)) {
     SetFocus (infoPtr->hwnd);
   }
 
@@ -1482,7 +1506,8 @@ TAB_EraseTabInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, const RECT *dr
 	    {
 		InflateRect(&rTemp, 2, 2);
 		FillRect(hdc, &rTemp, hbr);
-		if (iItem == infoPtr->iHotTracked)
+		if (iItem == infoPtr->iHotTracked ||
+                   (iItem != infoPtr->iSelected && iItem == infoPtr->uFocus))
 		    DrawEdge(hdc, &rTemp, BDR_RAISEDINNER, BF_RECT);
 	    }
 	    else
@@ -1651,16 +1676,14 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
       (iItem == infoPtr->uFocus) )
   {
     RECT rFocus = *drawRect;
-    InflateRect(&rFocus, -3, -3);
+
+    if (!(infoPtr->dwStyle & TCS_BUTTONS)) InflateRect(&rFocus, -3, -3);
     if (infoPtr->dwStyle & TCS_BOTTOM && !(infoPtr->dwStyle & TCS_VERTICAL))
       rFocus.top -= 3;
-    if (infoPtr->dwStyle & TCS_BUTTONS)
-    {
-      rFocus.left -= 3;
-      rFocus.top -= 3;
-    }
 
-    DrawFocusRect(hdc, &rFocus);
+    /* focus should stay on selected item for TCS_BUTTONS style */
+    if (!((infoPtr->dwStyle & TCS_BUTTONS) && (infoPtr->iSelected != iItem)))
+      DrawFocusRect(hdc, &rFocus);
   }
 
   /*
@@ -2013,7 +2036,7 @@ static void TAB_DrawItem(const TAB_INFO *infoPtr, HDC  hdc, INT  iItem)
       {
         DWORD state = TAB_GetItem(infoPtr, iItem)->dwState;
 
-        if (state & TCIS_BUTTONPRESSED)
+        if ((state & TCIS_BUTTONPRESSED) || (iItem == infoPtr->uFocus))
           DrawEdge(hdc, &r, EDGE_SUNKEN, BF_SOFT|BF_RECT);
         else
           if (!(infoPtr->dwStyle & TCS_FLATBUTTONS))
@@ -3444,12 +3467,14 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return theme_changed (infoPtr);
 
     case WM_KILLFOCUS:
+      TAB_KillFocus(infoPtr);
     case WM_SETFOCUS:
       TAB_FocusChanging(infoPtr);
       break;   /* Don't disturb normal focus behavior */
 
-    case WM_KEYUP:
-      return TAB_KeyUp(infoPtr, wParam);
+    case WM_KEYDOWN:
+      return TAB_KeyDown(infoPtr, wParam);
+
     case WM_NCHITTEST:
       return TAB_NCHitTest(infoPtr, lParam);
 
