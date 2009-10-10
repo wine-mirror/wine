@@ -2528,11 +2528,19 @@ static void test_SetEntriesInAcl(void)
     ExplicitAccess.grfAccessPermissions = KEY_WRITE;
     ExplicitAccess.grfAccessMode = GRANT_ACCESS;
     ExplicitAccess.grfInheritance = NO_INHERITANCE;
+    ExplicitAccess.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+    ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
+    ExplicitAccess.Trustee.ptstrName = EveryoneSid;
+    ExplicitAccess.Trustee.MultipleTrusteeOperation = 0xDEADBEEF;
+    ExplicitAccess.Trustee.pMultipleTrustee = (PVOID)0xDEADBEEF;
+    res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
+    ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
+    ok(NewAcl != NULL, "returned acl was NULL\n");
+    LocalFree(NewAcl);
+
+    ExplicitAccess.Trustee.TrusteeType = TRUSTEE_IS_UNKNOWN;
     ExplicitAccess.Trustee.pMultipleTrustee = NULL;
     ExplicitAccess.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
-    ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
-    ExplicitAccess.Trustee.TrusteeType = TRUSTEE_IS_UNKNOWN;
-    ExplicitAccess.Trustee.ptstrName = EveryoneSid;
     res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
     ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
     ok(NewAcl != NULL, "returned acl was NULL\n");

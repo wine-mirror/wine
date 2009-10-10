@@ -3484,7 +3484,7 @@ DWORD WINAPI SetEntriesInAclW( ULONG count, PEXPLICIT_ACCESSW pEntries,
               pEntries[i].Trustee.TrusteeForm, pEntries[i].Trustee.TrusteeType,
               pEntries[i].Trustee.ptstrName);
 
-        if (pEntries[i].Trustee.MultipleTrusteeOperation != NO_MULTIPLE_TRUSTEE)
+        if (pEntries[i].Trustee.MultipleTrusteeOperation == TRUSTEE_IS_IMPERSONATE)
         {
             WARN("bad multiple trustee operation %d for trustee %d\n", pEntries[i].Trustee.MultipleTrusteeOperation, i);
             ret = ERROR_INVALID_PARAMETER;
