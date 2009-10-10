@@ -1584,18 +1584,18 @@ static void test_monthcal_selrange(void)
     expect(st.wYear,      range[0].wYear);
     expect(st.wMonth,     range[0].wMonth);
     expect(st.wDay,       range[0].wDay);
-    if (range[0].wDayOfWeek == 0)
+    if (range[0].wDayOfWeek != st.wDayOfWeek)
     {
         win_skip("comctl32 <= 4.70 doesn't set some values\n");
         old_comctl32 = TRUE;
     }
     else
     {
-         expect(st.wDayOfWeek, range[0].wDayOfWeek);
-         expect(st.wHour,      range[0].wHour);
-         expect(st.wMinute,    range[0].wMinute);
-         expect(st.wSecond,    range[0].wSecond);
-         expect(st.wMilliseconds, range[0].wMilliseconds);
+        expect(st.wDayOfWeek, range[0].wDayOfWeek);
+        expect(st.wHour,      range[0].wHour);
+        expect(st.wMinute,    range[0].wMinute);
+        expect(st.wSecond,    range[0].wSecond);
+        expect(st.wMilliseconds, range[0].wMilliseconds);
     }
 
     expect(st.wYear,      range[1].wYear);
