@@ -33,6 +33,7 @@ input_file:  the source code for the test program
 Options:
     -q       quiet mode
     -v       verbose mode (can be specified multiple times)
+    -i       interactive mode (runs even more tests)
     -s       announce successful tests
     -p prog  name of the program to run for C tests
     -P name  set the current platform name
@@ -61,6 +62,10 @@ while [ "$#" -gt 0 ]; do
     ;;
     -v)
 	WINETEST_DEBUG=`expr $WINETEST_DEBUG + 1`
+    ;;
+    -i)
+	WINETEST_INTERACTIVE=1
+	export WINETEST_INTERACTIVE
     ;;
     -s)
 	WINETEST_REPORT_SUCCESS=1
