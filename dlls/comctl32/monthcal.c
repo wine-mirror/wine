@@ -131,10 +131,6 @@ typedef struct
     WNDPROC EditWndProc;  /* original Edit window procedure */
 } MONTHCAL_INFO, *LPMONTHCAL_INFO;
 
-
-/* Offsets of days in the week to the weekday of january 1 in a leap year */
-static const int DayOfWeekTable[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
-
 static const WCHAR themeClass[] = { 'S','c','r','o','l','l','b','a','r',0 };
 
 /* empty SYSTEMTIME const */
@@ -389,10 +385,18 @@ static void MONTHCAL_CopyDate(const SYSTEMTIME *from, SYSTEMTIME *to)
  */
 int MONTHCAL_CalculateDayOfWeek(WORD day, WORD month, WORD year)
 {
-  year-=(month < 3);
+  FILETIME ft;
+  SYSTEMTIME st;
 
-  return((year + year/4 - year/100 + year/400 +
-         DayOfWeekTable[month-1] + day ) % 7);
+  st.wYear  = year;
+  st.wMonth = month;
+  st.wDay   = day;
+  st.wHour  = st.wMinute = st.wSecond = st.wMilliseconds = 0;
+
+  SystemTimeToFileTime(&st, &ft);
+  FileTimeToSystemTime(&ft, &st);
+
+  return st.wDayOfWeek;
 }
 
 /* properly updates date to point on next month */
