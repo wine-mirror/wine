@@ -149,9 +149,14 @@ static void test_DirectDrawEnumerateA(void)
     ret = pDirectDrawEnumerateA((LPDDENUMCALLBACKA)0xdeadbeef, NULL);
     ok(ret == DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, got %d\n", ret);
 
-    /* Test with callback that crashes. */
-    ret = pDirectDrawEnumerateA(crash_callbackA, NULL);
-    ok(ret == DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, got %d\n", ret);
+    if (pDirectDrawEnumerateExA)
+    {
+        /* Test with callback that crashes. */
+        ret = pDirectDrawEnumerateA(crash_callbackA, NULL);
+        ok(ret == DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, got %d\n", ret);
+    }
+    else
+        win_skip("Test would crash on older ddraw\n");
 
     /* Test with valid callback parameter and NULL context parameter. */
     trace("Calling DirectDrawEnumerateA with test_nullcontext_callbackA callback and NULL context.\n");
@@ -185,7 +190,9 @@ static void test_DirectDrawEnumerateW(void)
 
     /* Test with NULL callback parameter. */
     ret = pDirectDrawEnumerateW(NULL, NULL);
-    ok(ret == DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, got %d\n", ret);
+    ok(ret == DDERR_INVALIDPARAMS ||
+       ret == DDERR_UNSUPPORTED, /* Older ddraw */
+       "Expected DDERR_INVALIDPARAMS or DDERR_UNSUPPORTED, got %d\n", ret);
 
     /* Test with invalid callback parameter. */
     ret = pDirectDrawEnumerateW((LPDDENUMCALLBACKW)0xdeadbeef, NULL);
