@@ -248,26 +248,41 @@ static LONG MONTHCAL_CompareSystemTime(const SYSTEMTIME *first, const SYSTEMTIME
  *
  *  [I] infoPtr : valid pointer to control data
  *  [I] date    : pointer to valid date data to check
+ *  [I] fix     : make date fit valid range
  *
  * RETURN VALUE
  *
  *  TRUE  - date whithin largest and configured range
  *  FALSE - date is outside largest or configured range
  */
-static BOOL MONTHCAL_IsDateInValidRange(const MONTHCAL_INFO *infoPtr, const SYSTEMTIME *date)
+static BOOL MONTHCAL_IsDateInValidRange(const MONTHCAL_INFO *infoPtr,
+                                        SYSTEMTIME *date, BOOL fix)
 {
-  if((MONTHCAL_CompareSystemTime(date, &max_allowed_date) == 1) ||
-     (MONTHCAL_CompareSystemTime(date, &min_allowed_date) == -1)) return FALSE;
+  const SYSTEMTIME *fix_st = NULL;
 
-  if(infoPtr->rangeValid & GDTR_MAX) {
-     if((MONTHCAL_CompareSystemTime(date, &infoPtr->maxDate) == 1)) return FALSE;
+  if(MONTHCAL_CompareSystemTime(date, &max_allowed_date) == 1) {
+     fix_st = &max_allowed_date;
+  }
+  else if(MONTHCAL_CompareSystemTime(date, &min_allowed_date) == -1) {
+     fix_st = &min_allowed_date;
+  }
+  else if(infoPtr->rangeValid & GDTR_MAX) {
+     if((MONTHCAL_CompareSystemTime(date, &infoPtr->maxDate) == 1)) {
+       fix_st = &infoPtr->maxDate;
+     }
+  }
+  else if(infoPtr->rangeValid & GDTR_MIN) {
+     if((MONTHCAL_CompareSystemTime(date, &infoPtr->minDate) == -1)) {
+       fix_st = &infoPtr->minDate;
+     }
   }
 
-  if(infoPtr->rangeValid & GDTR_MIN) {
-     if((MONTHCAL_CompareSystemTime(date, &infoPtr->minDate) == -1)) return FALSE;
+  if (fix && fix_st) {
+    date->wYear  = fix_st->wYear;
+    date->wMonth = fix_st->wMonth;
   }
 
-  return TRUE;
+  return fix_st ? FALSE : TRUE;
 }
 
 /* Checks passed range width with configured maximum selection count
@@ -1369,7 +1384,7 @@ MONTHCAL_GetCurSel(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
 
 /* FIXME: if the specified date is not visible, make it visible */
 static LRESULT
-MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *curSel)
+MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
 {
   TRACE("%p\n", curSel);
   if(!curSel) return FALSE;
@@ -1379,7 +1394,7 @@ MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *curSel)
   /* exit earlier if selection equals current */
   if (MONTHCAL_IsDateEqual(&infoPtr->curSel, curSel)) return TRUE;
 
-  if(!MONTHCAL_IsDateInValidRange(infoPtr, curSel)) return FALSE;
+  if(!MONTHCAL_IsDateInValidRange(infoPtr, curSel, FALSE)) return FALSE;
 
   infoPtr->minSel = *curSel;
   infoPtr->maxSel = *curSel;
@@ -1686,7 +1701,7 @@ static void MONTHCAL_GoToNextMonth(MONTHCAL_INFO *infoPtr)
 
   MONTHCAL_GetNextMonth(&next);
 
-  if(!MONTHCAL_IsDateInValidRange(infoPtr, &next)) return;
+  if(!MONTHCAL_IsDateInValidRange(infoPtr, &next, FALSE)) return;
 
   infoPtr->curSel = next;
 
@@ -1702,7 +1717,7 @@ static void MONTHCAL_GoToPrevMonth(MONTHCAL_INFO *infoPtr)
 
   MONTHCAL_GetPrevMonth(&prev);
 
-  if(!MONTHCAL_IsDateInValidRange(infoPtr, &prev)) return;
+  if(!MONTHCAL_IsDateInValidRange(infoPtr, &prev, FALSE)) return;
 
   infoPtr->curSel = prev;
 
@@ -1879,6 +1894,7 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
     if ((i > 0) && (i < 13) && infoPtr->curSel.wMonth != i)
     {
 	infoPtr->curSel.wMonth = i;
+	MONTHCAL_IsDateInValidRange(infoPtr, &infoPtr->curSel, TRUE);
 	InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     }
     return 0;
