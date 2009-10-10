@@ -845,7 +845,7 @@ static NTSTATUS alloc_process_tls(void)
                                                   IMAGE_DIRECTORY_ENTRY_TLS, &size )))
             continue;
         size = (dir->EndAddressOfRawData - dir->StartAddressOfRawData) + dir->SizeOfZeroFill;
-        if (!size) continue;
+        if (!size && !dir->AddressOfCallBacks) continue;
         tls_total_size += size;
         tls_module_count++;
     }
