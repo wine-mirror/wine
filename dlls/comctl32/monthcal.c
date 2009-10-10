@@ -128,6 +128,7 @@ typedef struct
     HWND hwndNotify;    /* Window to receive the notifications */
     HWND hWndYearEdit;  /* Window Handle of edit box to handle years */
     HWND hWndYearUpDown;/* Window Handle of updown box to handle years */
+    WNDPROC EditWndProc;  /* original Edit window procedure */
 } MONTHCAL_INFO, *LPMONTHCAL_INFO;
 
 
@@ -1355,7 +1356,7 @@ MONTHCAL_GetCurSel(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
 
 /* FIXME: if the specified date is not visible, make it visible */
 static LRESULT
-MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
+MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *curSel)
 {
   TRACE("%p\n", curSel);
   if(!curSel) return FALSE;
@@ -1725,6 +1726,53 @@ MONTHCAL_RButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   return 0;
 }
 
+/***
+ * DESCRIPTION:
+ * Subclassed edit control windproc function
+ *
+ * PARAMETER(S):
+ * [I] hwnd : the edit window handle
+ * [I] uMsg : the message that is to be processed
+ * [I] wParam : first message parameter
+ * [I] lParam : second message parameter
+ *
+ */
+static LRESULT CALLBACK EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    MONTHCAL_INFO *infoPtr = (MONTHCAL_INFO *)GetWindowLongPtrW(GetParent(hwnd), 0);
+
+    TRACE("(hwnd=%p, uMsg=%x, wParam=%lx, lParam=%lx)\n",
+	  hwnd, uMsg, wParam, lParam);
+
+    switch (uMsg)
+    {
+	case WM_GETDLGCODE:
+	  return DLGC_WANTARROWS | DLGC_WANTALLKEYS;
+
+	case WM_DESTROY:
+	{
+	    WNDPROC editProc = infoPtr->EditWndProc;
+	    infoPtr->EditWndProc = NULL;
+	    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (DWORD_PTR)editProc);
+	    return CallWindowProcW(editProc, hwnd, uMsg, wParam, lParam);
+	}
+
+	case WM_KILLFOCUS:
+	    break;
+
+	case WM_KEYDOWN:
+	    if ((VK_ESCAPE == (INT)wParam) || (VK_RETURN == (INT)wParam))
+		break;
+
+	default:
+	    return CallWindowProcW(infoPtr->EditWndProc, hwnd, uMsg, wParam, lParam);
+    }
+
+    SendMessageW(infoPtr->hWndYearUpDown, WM_CLOSE, 0, 0);
+    SendMessageW(hwnd, WM_CLOSE, 0, 0);
+    return 0;
+}
+
 /* creates updown control and edit box */
 static void MONTHCAL_EditYear(MONTHCAL_INFO *infoPtr)
 {
@@ -1749,6 +1797,12 @@ static void MONTHCAL_EditYear(MONTHCAL_INFO *infoPtr)
                  MAKELONG(max_allowed_date.wYear, min_allowed_date.wYear));
     SendMessageW(infoPtr->hWndYearUpDown, UDM_SETBUDDY, (WPARAM)infoPtr->hWndYearEdit, 0);
     SendMessageW(infoPtr->hWndYearUpDown, UDM_SETPOS, 0, infoPtr->curSel.wYear);
+
+    /* subclass edit box */
+    infoPtr->EditWndProc = (WNDPROC)SetWindowLongPtrW(infoPtr->hWndYearEdit,
+                                  GWLP_WNDPROC, (DWORD_PTR)EditWndProc);
+
+    SetFocus(infoPtr->hWndYearEdit);
 }
 
 static LRESULT
@@ -1757,24 +1811,12 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   MCHITTESTINFO ht;
   DWORD hit;
 
-  if (infoPtr->hWndYearUpDown)
+  /* Actually we don't need input focus for calendar, this is used to kill
+     year updown and its buddy edit box */
+  if (IsWindow(infoPtr->hWndYearUpDown))
   {
-      infoPtr->curSel.wYear = SendMessageW(infoPtr->hWndYearUpDown, UDM_SETPOS, 0, 0);
-      if(!DestroyWindow(infoPtr->hWndYearUpDown))
-      {
-          FIXME("Can't destroy Updown Control\n");
-      }
-      else
-	  infoPtr->hWndYearUpDown = 0;
-
-      if(!DestroyWindow(infoPtr->hWndYearEdit))
-      {
-          FIXME("Can't destroy Updown Control\n");
-      }
-      else
-          infoPtr->hWndYearEdit = 0;
-
-      InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+      SetFocus(infoPtr->hwndSelf);
+      return 0;
   }
 
   SetCapture(infoPtr->hwndSelf);
@@ -1898,6 +1940,8 @@ MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   TRACE("Sent notification from %p to %p\n", infoPtr->hwndSelf, infoPtr->hwndNotify);
 
   SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmhdr.idFrom, (LPARAM)&nmhdr);
+
+  if(!(infoPtr->status & MC_SEL_LBUTDOWN)) return 0;
 
   ht.cbSize = sizeof(MCHITTESTINFO);
   ht.pt.x = (short)LOWORD(lParam);
@@ -2048,21 +2092,6 @@ MONTHCAL_Paint(MONTHCAL_INFO *infoPtr, HDC hdc_paint)
   if (!hdc_paint) EndPaint(infoPtr->hwndSelf, &ps);
   return 0;
 }
-
-
-static LRESULT
-MONTHCAL_KillFocus(const MONTHCAL_INFO *infoPtr, HWND hFocusWnd)
-{
-  TRACE("\n");
-
-  if (infoPtr->hwndNotify != hFocusWnd)
-    ShowWindow(infoPtr->hwndSelf, SW_HIDE);
-  else
-    InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
-
-  return 0;
-}
-
 
 static LRESULT
 MONTHCAL_SetFocus(const MONTHCAL_INFO *infoPtr)
@@ -2360,6 +2389,31 @@ MONTHCAL_Destroy(MONTHCAL_INFO *infoPtr)
   return 0;
 }
 
+/*
+ * Handler for WM_NOTIFY messages
+ */
+static LRESULT
+MONTHCAL_Notify(MONTHCAL_INFO *infoPtr, NMHDR *hdr)
+{
+  /* notification from year edit updown */
+  if (hdr->code == UDN_DELTAPOS)
+  {
+    NMUPDOWN *nmud = (NMUPDOWN*)hdr;
+
+    if (hdr->hwndFrom == infoPtr->hWndYearUpDown)
+    {
+      /* year value limits are set up explicitly after updown creation */
+      if ((nmud->iDelta + nmud->iPos) != infoPtr->curSel.wYear)
+      {
+        SYSTEMTIME new_date = infoPtr->curSel;
+
+        new_date.wYear = nmud->iDelta + nmud->iPos;
+        MONTHCAL_SetCurSel(infoPtr, &new_date);
+      }
+    }
+  }
+  return 0;
+}
 
 static LRESULT WINAPI
 MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -2439,9 +2493,6 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case WM_GETDLGCODE:
     return DLGC_WANTARROWS | DLGC_WANTCHARS;
 
-  case WM_KILLFOCUS:
-    return MONTHCAL_KillFocus(infoPtr, (HWND)wParam);
-
   case WM_RBUTTONUP:
     return MONTHCAL_RButtonUp(infoPtr, lParam);
 
@@ -2463,6 +2514,9 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   case WM_SIZE:
     return MONTHCAL_Size(infoPtr, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
+
+  case WM_NOTIFY:
+    return MONTHCAL_Notify(infoPtr, (NMHDR*)lParam);
 
   case WM_CREATE:
     return MONTHCAL_Create(hwnd, (LPCREATESTRUCTW)lParam);

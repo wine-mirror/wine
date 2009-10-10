@@ -1647,6 +1647,28 @@ static void test_monthcal_selrange(void)
     DestroyWindow(hwnd);
 }
 
+static void test_killfocus(void)
+{
+    HWND hwnd;
+    DWORD style;
+
+    hwnd = create_monthcal_control(0);
+
+    /* make parent invisible */
+    style = GetWindowLong(parent_wnd, GWL_STYLE);
+    SetWindowLong(parent_wnd, GWL_STYLE, style &~ WS_VISIBLE);
+
+    SendMessage(hwnd, WM_KILLFOCUS, (WPARAM)GetDesktopWindow(), 0);
+
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    ok(style & WS_VISIBLE, "Expected WS_VISIBLE to be set\n");
+
+    style = GetWindowLong(parent_wnd, GWL_STYLE);
+    SetWindowLong(parent_wnd, GWL_STYLE, style | WS_VISIBLE);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(monthcal)
 {
     HMODULE hComctl32;
@@ -1684,6 +1706,7 @@ START_TEST(monthcal)
     test_monthcal_size();
     test_monthcal_maxselday();
     test_monthcal_selrange();
+    test_killfocus();
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     DestroyWindow(parent_wnd);
