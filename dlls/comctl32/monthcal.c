@@ -184,6 +184,9 @@ int MONTHCAL_MonthLength(int month, int year)
   else if(month == 13)
     month = 1;
 
+  /* special case for calendar transition year */
+  if(month == min_allowed_date.wMonth && year == min_allowed_date.wYear) return 19;
+
   /* if we have a leap year add 1 day to February */
   /* a leap year is a year either divisible by 400 */
   /* or divisible by 4 and not by 100 */
@@ -1224,11 +1227,17 @@ MONTHCAL_GetMonthRange(const MONTHCAL_INFO *infoPtr, DWORD flag, SYSTEMTIME *st)
     switch (flag) {
     case GMR_VISIBLE:
     {
-        /*FIXME: currently multicalendar feature isn't implelented, so entirely
+        /*FIXME: currently multicalendar feature isn't implemented, so entirely
                  visible month is current */
         st[0] = st[1] = infoPtr->curSel;
 
-        st[0].wDay = 1;
+        if (infoPtr->curSel.wMonth == min_allowed_date.wMonth &&
+            infoPtr->curSel.wYear  == min_allowed_date.wYear)
+        {
+            st[0].wDay = min_allowed_date.wDay;
+        }
+        else
+            st[0].wDay = 1;
         st[0].wDayOfWeek = MONTHCAL_CalculateDayOfWeek(1, st[0].wMonth, st[0].wYear);
 
         st[1].wDay = MONTHCAL_MonthLength(st[1].wMonth, st[1].wYear);
@@ -1239,7 +1248,7 @@ MONTHCAL_GetMonthRange(const MONTHCAL_INFO *infoPtr, DWORD flag, SYSTEMTIME *st)
     }
     case GMR_DAYSTATE:
     {
-        /*FIXME: currently multicalendar feature isn't implelented,
+        /*FIXME: currently multicalendar feature isn't implemented,
                  min date from previous month and max date from next one returned */
         MONTHCAL_GetMinDate(infoPtr, &st[0]);
         MONTHCAL_GetMaxDate(infoPtr, &st[1]);
@@ -1625,7 +1634,7 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
 	lpht->st.wDay = day;
       }
       /* always update day of week */
-      lpht->st.wDayOfWeek = MONTHCAL_CalculateDayOfWeek(day, lpht->st.wMonth,
+      lpht->st.wDayOfWeek = MONTHCAL_CalculateDayOfWeek(lpht->st.wDay, lpht->st.wMonth,
                                                              lpht->st.wYear);
       goto done;
   }

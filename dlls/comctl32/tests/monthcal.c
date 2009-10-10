@@ -1350,6 +1350,7 @@ static void test_monthcal_monthrange(void)
     int res;
     SYSTEMTIME st_visible[2], st_daystate[2], st;
     HWND hwnd;
+    RECT r;
 
     hwnd = create_monthcal_control(0);
 
@@ -1403,6 +1404,30 @@ static void test_monthcal_monthrange(void)
     }
 
     ok_sequence(sequences, MONTHCAL_SEQ_INDEX, monthcal_monthrange_seq, "monthcal monthrange", FALSE);
+
+    /* resize control to display single Calendar */
+    res = SendMessage(hwnd, MCM_GETMINREQRECT, 0, (LPARAM)&r);
+    MoveWindow(hwnd, 0, 0, r.right, r.bottom, FALSE);
+
+    memset(&st, 0, sizeof(st));
+    st.wMonth = 9;
+    st.wYear  = 1752;
+    st.wDay   = 14;
+
+    res = SendMessage(hwnd, MCM_SETCURSEL, 0, (LPARAM)&st);
+    expect(1, res);
+
+    /* September 1752 has 19 days */
+    res = SendMessage(hwnd, MCM_GETMONTHRANGE, GMR_VISIBLE, (LPARAM)st_visible);
+    expect(1, res);
+
+    expect(1752, st_visible[0].wYear);
+    expect(9, st_visible[0].wMonth);
+    expect(14, st_visible[0].wDay);
+
+    expect(1752, st_visible[1].wYear);
+    expect(9, st_visible[1].wMonth);
+    expect(19, st_visible[1].wDay);
 
     DestroyWindow(hwnd);
 }
