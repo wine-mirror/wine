@@ -677,6 +677,27 @@ static void test_wm_set_get_text(void)
     DestroyWindow(hWnd);
 }
 
+static void test_dts_shownone(void)
+{
+    HWND hwnd;
+    DWORD style;
+
+    /* it isn't allowed to change DTS_SHOWNONE after creation */
+    hwnd = create_datetime_control(0);
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    SetWindowLong(hwnd, GWL_STYLE, style | DTS_SHOWNONE);
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    ok(!(style & DTS_SHOWNONE), "Expected DTS_SHOWNONE not to be set\n");
+    DestroyWindow(hwnd);
+
+    hwnd = create_datetime_control(DTS_SHOWNONE);
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    SetWindowLong(hwnd, GWL_STYLE, style & ~DTS_SHOWNONE);
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    ok(style & DTS_SHOWNONE, "Expected DTS_SHOWNONE to be set\n");
+    DestroyWindow(hwnd);
+}
+
 START_TEST(datetime)
 {
     HMODULE hComctl32;
@@ -704,4 +725,5 @@ START_TEST(datetime)
     test_dtm_set_range_swap_min_max();
     test_dtm_set_and_get_system_time();
     test_wm_set_get_text();
+    test_dts_shownone();
 }

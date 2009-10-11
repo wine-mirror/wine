@@ -1251,6 +1251,23 @@ DATETIME_Size (DATETIME_INFO *infoPtr, INT width, INT height)
     return 0;
 }
 
+static LRESULT
+DATETIME_StyleChanging(DATETIME_INFO *infoPtr, WPARAM wStyleType, STYLESTRUCT *lpss)
+{
+    TRACE("(styletype=%lx, styleOld=0x%08x, styleNew=0x%08x)\n",
+          wStyleType, lpss->styleOld, lpss->styleNew);
+
+    /* block DTS_SHOWNONE change */
+    if ((lpss->styleNew ^ lpss->styleOld) & DTS_SHOWNONE)
+    {
+        if (lpss->styleOld & DTS_SHOWNONE)
+            lpss->styleNew |= DTS_SHOWNONE;
+        else
+            lpss->styleNew &= ~DTS_SHOWNONE;
+    }
+
+    return 0;
+}
 
 static LRESULT 
 DATETIME_StyleChanged(DATETIME_INFO *infoPtr, WPARAM wStyleType, const STYLESTRUCT *lpss)
@@ -1448,6 +1465,9 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_COMMAND:
         return DATETIME_Command (infoPtr, wParam, lParam);
+
+    case WM_STYLECHANGING:
+        return DATETIME_StyleChanging(infoPtr, wParam, (LPSTYLESTRUCT)lParam);
 
     case WM_STYLECHANGED:
         return DATETIME_StyleChanged(infoPtr, wParam, (LPSTYLESTRUCT)lParam);
