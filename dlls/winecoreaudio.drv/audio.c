@@ -162,9 +162,6 @@ typedef struct {
     DWORD			dwLoops;		/* private copy of loop counter */
     
     DWORD			dwPlayedTotal;		/* number of bytes actually played since opening */
-    DWORD                       dwWrittenTotal;         /* number of bytes written to OSS buffer since opening */
-        
-    DWORD                       tickCountMS; /* time in MS of last AudioUnit callback */
 
     OSSpinLock                  lock;         /* synchronization stuff */
 
@@ -940,7 +937,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     copyFormat(lpDesc->lpFormat, &wwo->format);
     
     wwo->dwPlayedTotal = 0;
-    wwo->dwWrittenTotal = 0;
 
     wwo->trace_on = TRACE_ON(wave);
     wwo->warn_on  = WARN_ON(wave);
@@ -1372,7 +1368,7 @@ static DWORD wodReset(WORD wDevID)
     lpSavedQueuePtr = wwo->lpQueuePtr;
     wwo->lpPlayPtr = wwo->lpQueuePtr = wwo->lpLoopPtr = NULL;
     wwo->state = WINE_WS_PLAYING;
-    wwo->dwPlayedTotal = wwo->dwWrittenTotal = 0;
+    wwo->dwPlayedTotal = 0;
 
     wwo->dwPartialOffset = 0;        /* Clear partial wavehdr */
 
