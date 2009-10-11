@@ -406,25 +406,23 @@ static BOOL MONTHCAL_ValidateTime(const SYSTEMTIME *time)
 /* Returns the day in the week
  *
  * PARAMETERS
- *  [i] day : day of month [1, 31]
- *  [I] month : month number [1, 12]
- *  [I] year : year value
+ *  [i] date    : input date
+ *  [I] inplace : set calculated value back to date structure
  *
  * RETURN VALUE
  *   day of week in SYSTEMTIME format: (0 == sunday,..., 6 == saturday)
  */
-int MONTHCAL_CalculateDayOfWeek(WORD day, WORD month, WORD year)
+int MONTHCAL_CalculateDayOfWeek(SYSTEMTIME *date, BOOL inplace)
 {
+  SYSTEMTIME st = st_null;
   FILETIME ft;
-  SYSTEMTIME st;
 
-  st.wYear  = year;
-  st.wMonth = month;
-  st.wDay   = day;
-  st.wHour  = st.wMinute = st.wSecond = st.wMilliseconds = 0;
+  MONTHCAL_CopyDate(date, &st);
 
   SystemTimeToFileTime(&st, &ft);
   FileTimeToSystemTime(&ft, &st);
+
+  if (inplace) date->wDayOfWeek = st.wDayOfWeek;
 
   return st.wDayOfWeek;
 }
@@ -437,8 +435,7 @@ static inline void MONTHCAL_GetNextMonth(SYSTEMTIME *date)
     date->wMonth = 1;
     date->wYear++;
   }
-  date->wDayOfWeek = MONTHCAL_CalculateDayOfWeek(date->wDay, date->wMonth,
-                                                 date->wYear);
+  MONTHCAL_CalculateDayOfWeek(date, TRUE);
 }
 
 /* properly updates date to point on prev month */
@@ -449,16 +446,17 @@ static inline void MONTHCAL_GetPrevMonth(SYSTEMTIME *date)
     date->wMonth = 12;
     date->wYear--;
   }
-  date->wDayOfWeek = MONTHCAL_CalculateDayOfWeek(date->wDay, date->wMonth,
-                                                 date->wYear);
+  MONTHCAL_CalculateDayOfWeek(date, TRUE);
 }
 
 /* Returns full date for a first currently visible day */
 static void MONTHCAL_GetMinDate(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *date)
 {
+  SYSTEMTIME st_first = infoPtr->curSel;
   int firstDay;
 
-  firstDay = MONTHCAL_CalculateDayOfWeek(1, infoPtr->curSel.wMonth, infoPtr->curSel.wYear);
+  st_first.wDay = 1;
+  firstDay = MONTHCAL_CalculateDayOfWeek(&st_first, FALSE);
 
   *date = infoPtr->curSel;
   MONTHCAL_GetPrevMonth(date);
@@ -470,8 +468,7 @@ static void MONTHCAL_GetMinDate(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *date)
     date->wDay -= 7;
 
   /* fix day of week */
-  date->wDayOfWeek = MONTHCAL_CalculateDayOfWeek(date->wDay, date->wMonth,
-                                                 date->wYear);
+  MONTHCAL_CalculateDayOfWeek(date, TRUE);
 }
 
 /* Returns full date for a last currently visible day */
@@ -488,8 +485,7 @@ static void MONTHCAL_GetMaxDate(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *date)
                      MONTHCAL_MonthLength(infoPtr->curSel.wMonth, infoPtr->curSel.wYear);
 
   /* fix day of week */
-  date->wDayOfWeek = MONTHCAL_CalculateDayOfWeek(date->wDay, date->wMonth,
-                                                 date->wYear);
+  MONTHCAL_CalculateDayOfWeek(date, TRUE);
 }
 
 /* From a given point, calculate the row (weekpos), column(daypos)
@@ -500,6 +496,7 @@ static int MONTHCAL_CalcDayFromPos(const MONTHCAL_INFO *infoPtr, int x, int y,
 {
   int retval, firstDay;
   RECT rcClient;
+  SYSTEMTIME st = infoPtr->curSel;
 
   GetClientRect(infoPtr->hwndSelf, &rcClient);
 
@@ -512,7 +509,8 @@ static int MONTHCAL_CalcDayFromPos(const MONTHCAL_INFO *infoPtr, int x, int y,
   *daypos = (x - infoPtr->days.left ) / infoPtr->width_increment;
   *weekpos = (y - infoPtr->days.top ) / infoPtr->height_increment;
 
-  firstDay = (MONTHCAL_CalculateDayOfWeek(1, infoPtr->curSel.wMonth, infoPtr->curSel.wYear)+6 - infoPtr->firstDay)%7;
+  st.wDay = 1;
+  firstDay = (MONTHCAL_CalculateDayOfWeek(&st, FALSE) + 6 - infoPtr->firstDay) % 7;
   retval = *daypos + (7 * *weekpos) - firstDay;
   return retval;
 }
@@ -529,10 +527,12 @@ static int MONTHCAL_CalcDayFromPos(const MONTHCAL_INFO *infoPtr, int x, int y,
 static void MONTHCAL_CalcDayXY(const MONTHCAL_INFO *infoPtr,
                                const SYSTEMTIME *date, int *x, int *y)
 {
+  SYSTEMTIME st = infoPtr->curSel;
   LONG cmp;
   int first;
 
-  first = (MONTHCAL_CalculateDayOfWeek(1, infoPtr->curSel.wMonth, infoPtr->curSel.wYear) +6 - infoPtr->firstDay)%7;
+  st.wDay = 1;
+  first = (MONTHCAL_CalculateDayOfWeek(&st, FALSE) + 6 - infoPtr->firstDay) % 7;
 
   cmp = MONTHCAL_CompareMonths(date, &infoPtr->curSel);
 
@@ -985,6 +985,7 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
   if(infoPtr->dwStyle & MCS_WEEKNUMBERS) {
     static const WCHAR fmt_weekW[] = { '%','d',0 }; /* week numbers format */
     int mindays, weeknum, weeknum1;
+    SYSTEMTIME st = infoPtr->curSel;
 
     /* Rules what week to call the first week of a new year:
        LOCALE_IFIRSTWEEKOFYEAR == 0 (e.g US?):
@@ -1009,7 +1010,8 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
     if (infoPtr->curSel.wMonth < 2)
     {
 	/* calculate all those exceptions for january */
-	weeknum1 = MONTHCAL_CalculateDayOfWeek(1, 1, infoPtr->curSel.wYear);
+	st.wDay = st.wMonth = 1;
+	weeknum1 = MONTHCAL_CalculateDayOfWeek(&st, FALSE);
 	if ((infoPtr->firstDay - weeknum1) % 7 > mindays)
 	    weeknum = 1;
 	else
@@ -1018,9 +1020,10 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
 	    for(i = 0; i < 11; i++)
 	      weeknum += MONTHCAL_MonthLength(i+1, infoPtr->curSel.wYear - 1);
 
-	    weeknum += startofprescal + 7;
-	    weeknum /= 7;
-	    weeknum1 = MONTHCAL_CalculateDayOfWeek(1, 1, infoPtr->curSel.wYear - 1);
+	    weeknum  += startofprescal + 7;
+	    weeknum  /= 7;
+	    st.wYear -= 1;
+	    weeknum1  = MONTHCAL_CalculateDayOfWeek(&st, FALSE);
 	    if ((infoPtr->firstDay - weeknum1) % 7 > mindays) weeknum++;
 	}
     }
@@ -1032,7 +1035,8 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
 
 	weeknum += startofprescal + 7;
 	weeknum /= 7;
-	weeknum1 = MONTHCAL_CalculateDayOfWeek(1, 1, infoPtr->curSel.wYear);
+	st.wDay = st.wMonth = 1;
+	weeknum1 = MONTHCAL_CalculateDayOfWeek(&st, FALSE);
 	if ((infoPtr->firstDay - weeknum1) % 7 > mindays) weeknum++;
     }
 
@@ -1272,11 +1276,10 @@ MONTHCAL_GetMonthRange(const MONTHCAL_INFO *infoPtr, DWORD flag, SYSTEMTIME *st)
         }
         else
             st[0].wDay = 1;
-        st[0].wDayOfWeek = MONTHCAL_CalculateDayOfWeek(1, st[0].wMonth, st[0].wYear);
+        MONTHCAL_CalculateDayOfWeek(&st[0], TRUE);
 
         st[1].wDay = MONTHCAL_MonthLength(st[1].wMonth, st[1].wYear);
-        st[1].wDayOfWeek = MONTHCAL_CalculateDayOfWeek(st[1].wDay, st[1].wMonth,
-                                                       st[1].wYear);
+        MONTHCAL_CalculateDayOfWeek(&st[1], TRUE);
         /* a single current month used */
         return 1;
     }
@@ -1503,12 +1506,8 @@ MONTHCAL_SetSelRange(MONTHCAL_INFO *infoPtr, SYSTEMTIME *range)
     }
 
     /* update day of week */
-    infoPtr->minSel.wDayOfWeek =
-            MONTHCAL_CalculateDayOfWeek(infoPtr->minSel.wDay, infoPtr->minSel.wMonth,
-                                                              infoPtr->minSel.wYear);
-    infoPtr->maxSel.wDayOfWeek =
-            MONTHCAL_CalculateDayOfWeek(infoPtr->maxSel.wDay, infoPtr->maxSel.wMonth,
-                                                              infoPtr->maxSel.wYear);
+    MONTHCAL_CalculateDayOfWeek(&infoPtr->minSel, TRUE);
+    MONTHCAL_CalculateDayOfWeek(&infoPtr->maxSel, TRUE);
 
     /* redraw if bounds changed */
     /* FIXME: no actual need to redraw everything */
@@ -1667,8 +1666,7 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
 	lpht->st.wDay = day;
       }
       /* always update day of week */
-      lpht->st.wDayOfWeek = MONTHCAL_CalculateDayOfWeek(lpht->st.wDay, lpht->st.wMonth,
-                                                             lpht->st.wYear);
+      MONTHCAL_CalculateDayOfWeek(&lpht->st, TRUE);
       goto done;
   }
   if(PtInRect(&infoPtr->todayrect, lpht->pt)) {
