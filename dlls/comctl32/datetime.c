@@ -448,19 +448,6 @@ DATETIME_ReturnTxt (const DATETIME_INFO *infoPtr, int count, LPWSTR result, int 
     TRACE ("arg%d=%x->[%s]\n", count, infoPtr->fieldspec[count], debugstr_w(result));
 }
 
-/* Offsets of days in the week to the weekday of january 1 in a leap year. */
-static const int DayOfWeekTable[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
-
-/* returns the day in the week(0 == sunday, 6 == saturday) */
-/* day(1 == 1st, 2 == 2nd... etc), year is the  year value */
-static int DATETIME_CalculateDayOfWeek(DWORD day, DWORD month, DWORD year)
-{
-    year-=(month < 3);
-    
-    return((year + year/4 - year/100 + year/400 +
-         DayOfWeekTable[month-1] + day ) % 7);
-}
-
 static int wrap(int val, int delta, int minVal, int maxVal)
 {
     val += delta;
@@ -484,14 +471,14 @@ DATETIME_IncreaseField (DATETIME_INFO *infoPtr, int number, int delta)
 	case TWODIGITYEAR:
 	case FULLYEAR:
 	    date->wYear = wrap(date->wYear, delta, 1752, 9999);
-	    date->wDayOfWeek = DATETIME_CalculateDayOfWeek(date->wDay,date->wMonth,date->wYear);
+	    MONTHCAL_CalculateDayOfWeek(date, TRUE);
 	    break;
 	case ONEDIGITMONTH:
 	case TWODIGITMONTH:
 	case THREECHARMONTH:
 	case FULLMONTH:
 	    date->wMonth = wrap(date->wMonth, delta, 1, 12);
-	    date->wDayOfWeek = DATETIME_CalculateDayOfWeek(date->wDay,date->wMonth,date->wYear);
+	    MONTHCAL_CalculateDayOfWeek(date, TRUE);
 	    delta = 0;
 	    /* fall through */
 	case ONEDIGITDAY:
@@ -499,7 +486,7 @@ DATETIME_IncreaseField (DATETIME_INFO *infoPtr, int number, int delta)
 	case THREECHARDAY:
 	case FULLDAY:
 	    date->wDay = wrap(date->wDay, delta, 1, MONTHCAL_MonthLength(date->wMonth, date->wYear));
-	    date->wDayOfWeek = DATETIME_CalculateDayOfWeek(date->wDay,date->wMonth,date->wYear);
+	    MONTHCAL_CalculateDayOfWeek(date, TRUE);
 	    break;
 	case ONELETTERAMPM:
 	case TWOLETTERAMPM:
@@ -1042,16 +1029,14 @@ DATETIME_Char (DATETIME_INFO *infoPtr, WPARAM vkCode)
             case TWODIGITYEAR:
                 date->wYear = date->wYear - (date->wYear%100) +
                         (date->wYear%10)*10 + num;
-                date->wDayOfWeek = DATETIME_CalculateDayOfWeek(
-                        date->wDay,date->wMonth,date->wYear);
+                MONTHCAL_CalculateDayOfWeek(date, TRUE);
                 DATETIME_SendDateTimeChangeNotify (infoPtr);
                 break;
             case INVALIDFULLYEAR:
             case FULLYEAR:
                 /* reset current year initialy */
                 date->wYear = ((date->wYear/1000) ? 0 : 1)*(date->wYear%1000)*10 + num;
-                date->wDayOfWeek = DATETIME_CalculateDayOfWeek(
-                        date->wDay,date->wMonth,date->wYear);
+                MONTHCAL_CalculateDayOfWeek(date, TRUE);
                 DATETIME_SendDateTimeChangeNotify (infoPtr);
                 break;
             case ONEDIGITMONTH:
@@ -1060,8 +1045,7 @@ DATETIME_Char (DATETIME_INFO *infoPtr, WPARAM vkCode)
                     date->wMonth = num;
                 else
                     date->wMonth = (date->wMonth%10)*10+num;
-                date->wDayOfWeek = DATETIME_CalculateDayOfWeek(
-                        date->wDay,date->wMonth,date->wYear);
+                MONTHCAL_CalculateDayOfWeek(date, TRUE);
                 DATETIME_SendDateTimeChangeNotify (infoPtr);
                 break;
             case ONEDIGITDAY:
@@ -1071,8 +1055,7 @@ DATETIME_Char (DATETIME_INFO *infoPtr, WPARAM vkCode)
                     date->wDay = num;
                 else
                     date->wDay = newDays;
-                date->wDayOfWeek = DATETIME_CalculateDayOfWeek(
-                        date->wDay,date->wMonth,date->wYear);
+                MONTHCAL_CalculateDayOfWeek(date, TRUE);
                 DATETIME_SendDateTimeChangeNotify (infoPtr);
                 break;
             case ONEDIGIT12HOUR:
