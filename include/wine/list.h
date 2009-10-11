@@ -221,9 +221,11 @@ static inline void list_move_head( struct list *dst, struct list *src )
          (cursor2) = LIST_ENTRY((cursor)->field.prev, type, field))
 
 /* macros for statically initialized lists */
+#undef LIST_INIT
 #define LIST_INIT(list)  { &(list), &(list) }
 
 /* get pointer to object containing list element */
+#undef LIST_ENTRY
 #define LIST_ENTRY(elem, type, field) \
     ((type *)((char *)(elem) - (unsigned long)(&((type *)0)->field)))
 
