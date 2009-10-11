@@ -466,6 +466,8 @@ static void NSAPI nsDocumentObserver_EndLoad(nsIDocumentObserver *iface, nsIDocu
 
     TRACE("\n");
 
+    This->doc->basedoc.doc_node->content_ready = TRUE;
+
     task = heap_alloc(sizeof(task_t));
 
     task->doc = &This->doc->basedoc;

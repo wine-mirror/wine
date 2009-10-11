@@ -472,6 +472,7 @@ struct HTMLDocumentNode {
     LONG ref;
 
     HTMLDOMNode *nodes;
+    BOOL content_ready;
 
     IInternetSecurityManager *secmgr;
 
