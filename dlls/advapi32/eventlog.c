@@ -116,6 +116,30 @@ BOOL WINAPI CloseEventLog( HANDLE hEventLog )
 }
 
 /******************************************************************************
+ * ControlTraceW [ADVAPI32.@]
+ *
+ * Control a givel event trace session
+ *
+ */
+ULONG WINAPI ControlTraceW( TRACEHANDLE hSession, LPCWSTR SessionName, PEVENT_TRACE_PROPERTIES Properties, ULONG control )
+{
+    FIXME("(%s, %s, %p, %d) stub\n", wine_dbgstr_longlong(hSession), debugstr_w(SessionName), Properties, control);
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ * ControlTraceA [ADVAPI32.@]
+ *
+ * See ControlTraceW.
+ *
+ */
+ULONG WINAPI ControlTraceA( TRACEHANDLE hSession, LPCSTR SessionName, PEVENT_TRACE_PROPERTIES Properties, ULONG control )
+{
+    FIXME("(%s, %s, %p, %d) stub\n", wine_dbgstr_longlong(hSession), debugstr_a(SessionName), Properties, control);
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
  * DeregisterEventSource [ADVAPI32.@]
  * 
  * Closes a write handle to an event log

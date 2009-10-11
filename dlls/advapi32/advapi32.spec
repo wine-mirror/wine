@@ -65,8 +65,8 @@
 @ stdcall CommandLineFromMsiDescriptor(wstr ptr ptr)
 # @ stub ComputeAccessTokenFromCodeAuthzLevel
 @ stdcall ControlService(long long ptr)
-# @ stub ControlTraceA
-# @ stub ControlTraceW
+@ stdcall ControlTraceA(double str ptr long)
+@ stdcall ControlTraceW(double wstr ptr long)
 # @ stub ConvertAccessToSecurityDescriptorA
 # @ stub ConvertAccessToSecurityDescriptorW
 # @ stub ConvertSDToStringSDRootDomainA
