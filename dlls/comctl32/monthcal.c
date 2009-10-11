@@ -1520,10 +1520,12 @@ MONTHCAL_SetSelRange(MONTHCAL_INFO *infoPtr, SYSTEMTIME *range)
       infoPtr->minSel = range[1];
       infoPtr->maxSel = range[0];
     }
+    infoPtr->curSel = infoPtr->minSel;
 
     /* update day of week */
     MONTHCAL_CalculateDayOfWeek(&infoPtr->minSel, TRUE);
     MONTHCAL_CalculateDayOfWeek(&infoPtr->maxSel, TRUE);
+    MONTHCAL_CalculateDayOfWeek(&infoPtr->curSel, TRUE);
 
     /* redraw if bounds changed */
     /* FIXME: no actual need to redraw everything */
@@ -1725,35 +1727,42 @@ static void MONTHCAL_NotifyDayState(MONTHCAL_INFO *infoPtr)
   }
 }
 
-static void MONTHCAL_GoToNextMonth(MONTHCAL_INFO *infoPtr)
+static void MONTHCAL_GoToPrevNextMonth(MONTHCAL_INFO *infoPtr, BOOL prev)
 {
-  SYSTEMTIME next = infoPtr->curSel;
+  SYSTEMTIME st = infoPtr->curSel;
 
-  TRACE("\n");
+  TRACE("%s\n", prev ? "prev" : "next");
 
-  MONTHCAL_GetNextMonth(&next);
+  if(prev) MONTHCAL_GetPrevMonth(&st); else MONTHCAL_GetNextMonth(&st);
 
-  if(!MONTHCAL_IsDateInValidRange(infoPtr, &next, FALSE)) return;
+  if(!MONTHCAL_IsDateInValidRange(infoPtr, &st, FALSE)) return;
 
-  infoPtr->curSel = next;
+  if(infoPtr->dwStyle & MCS_MULTISELECT)
+  {
+    SYSTEMTIME range[2];
+
+    range[0] = infoPtr->minSel;
+    range[1] = infoPtr->maxSel;
+
+    if(prev)
+    {
+      MONTHCAL_GetPrevMonth(&range[0]);
+      MONTHCAL_GetPrevMonth(&range[1]);
+    }
+    else
+    {
+      MONTHCAL_GetNextMonth(&range[0]);
+      MONTHCAL_GetNextMonth(&range[1]);
+    }
+
+    MONTHCAL_SetSelRange(infoPtr, range);
+  }
+  else
+    MONTHCAL_SetCurSel(infoPtr, &st);
 
   MONTHCAL_NotifyDayState(infoPtr);
-}
 
-
-static void MONTHCAL_GoToPrevMonth(MONTHCAL_INFO *infoPtr)
-{
-  SYSTEMTIME prev = infoPtr->curSel;
-
-  TRACE("\n");
-
-  MONTHCAL_GetPrevMonth(&prev);
-
-  if(!MONTHCAL_IsDateInValidRange(infoPtr, &prev, FALSE)) return;
-
-  infoPtr->curSel = prev;
-
-  MONTHCAL_NotifyDayState(infoPtr);
+  MONTHCAL_NotifySelectionChange(infoPtr);
 }
 
 static LRESULT
@@ -1892,14 +1901,14 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   switch(hit)
   {
   case MCHT_TITLEBTNNEXT:
-    MONTHCAL_GoToNextMonth(infoPtr);
+    MONTHCAL_GoToPrevNextMonth(infoPtr, FALSE);
     infoPtr->status = MC_NEXTPRESSED;
     SetTimer(infoPtr->hwndSelf, MC_PREVNEXTMONTHTIMER, MC_PREVNEXTMONTHDELAY, 0);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     return 0;
 
   case MCHT_TITLEBTNPREV:
-    MONTHCAL_GoToPrevMonth(infoPtr);
+    MONTHCAL_GoToPrevNextMonth(infoPtr, TRUE);
     infoPtr->status = MC_PREVPRESSED;
     SetTimer(infoPtr->hwndSelf, MC_PREVNEXTMONTHTIMER, MC_PREVNEXTMONTHDELAY, 0);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
@@ -1951,17 +1960,13 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   case MCHT_CALENDARDATEPREV:
   case MCHT_CALENDARDATE:
   {
+    SYSTEMTIME st[2];
+
     MONTHCAL_CopyDate(&ht.st, &infoPtr->firstSel);
 
-    if(infoPtr->dwStyle & MCS_MULTISELECT)
-    {
-      SYSTEMTIME st[2];
-
-      st[0] = st[1] = ht.st;
-
-      /* clear selection range */
-      MONTHCAL_SetSelRange(infoPtr, st);
-    }
+    st[0] = st[1] = ht.st;
+    /* clear selection range */
+    MONTHCAL_SetSelRange(infoPtr, st);
 
     infoPtr->status = MC_SEL_LBUTDOWN;
     MONTHCAL_SetDayFocus(infoPtr, &ht.st);
@@ -2016,15 +2021,8 @@ MONTHCAL_LButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   {
     SYSTEMTIME sel = infoPtr->curSel;
 
-    if(!(infoPtr->dwStyle & MCS_MULTISELECT))
-    {
-        SYSTEMTIME st[2];
-
-        st[0] = st[1] = ht.st;
-        MONTHCAL_SetSelRange(infoPtr, st);
-        /* will be invalidated here */
-        MONTHCAL_SetCurSel(infoPtr, &st[0]);
-    }
+    /* will be invalidated here */
+    MONTHCAL_SetCurSel(infoPtr, &ht.st);
 
     /* send MCN_SELCHANGE only if new date selected */
     if (!MONTHCAL_IsDateEqual(&sel, &ht.st))
@@ -2044,8 +2042,8 @@ MONTHCAL_Timer(MONTHCAL_INFO *infoPtr, WPARAM id)
 
   switch(id) {
   case MC_PREVNEXTMONTHTIMER:
-    if(infoPtr->status & MC_NEXTPRESSED) MONTHCAL_GoToNextMonth(infoPtr);
-    if(infoPtr->status & MC_PREVPRESSED) MONTHCAL_GoToPrevMonth(infoPtr);
+    if(infoPtr->status & MC_NEXTPRESSED) MONTHCAL_GoToPrevNextMonth(infoPtr, FALSE);
+    if(infoPtr->status & MC_PREVPRESSED) MONTHCAL_GoToPrevNextMonth(infoPtr, TRUE);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     break;
   case MC_TODAYUPDATETIMER:
