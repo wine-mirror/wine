@@ -53,11 +53,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
 
-
 #if defined(HAVE_COREAUDIO_COREAUDIO_H) && defined(HAVE_AUDIOUNIT_AUDIOUNIT_H)
 #include <CoreAudio/CoreAudio.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <libkern/OSAtomic.h>
+
+WINE_DECLARE_DEBUG_CHANNEL(coreaudio);
 
 /*
     Due to AudioUnit headers conflict define some needed types.
@@ -528,6 +529,9 @@ BOOL CoreAudio_GetDevCaps (void)
     
     CoreAudio_DefaultDevice.out_caps.wChannels = 2;
     CoreAudio_DefaultDevice.out_caps.dwFormats|= WAVE_FORMAT_4S16;
+
+    TRACE_(coreaudio)("out dwFormats = %08x, dwSupport = %08x\n",
+           CoreAudio_DefaultDevice.out_caps.dwFormats, CoreAudio_DefaultDevice.out_caps.dwSupport);
     
     return TRUE;
 }
@@ -758,6 +762,8 @@ void CoreAudio_WaveRelease(void)
 */
 static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
+    TRACE_(coreaudio)("wMsg = 0x%04x dwParm1 = %04x dwParam2 = %04x\n", wMsg, dwParam1, dwParam2);
+
     switch (wMsg) {
         case WOM_OPEN:
         case WOM_CLOSE:
@@ -767,10 +773,12 @@ static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD
                                 (HDRVR)wwo->waveDesc.hWave, wMsg, wwo->waveDesc.dwInstance,
                                 dwParam1, dwParam2))
             {
+                ERR("can't notify client !\n");
                 return MMSYSERR_ERROR;
             }
             break;
         default:
+            ERR("Unknown callback message %u\n", wMsg);
             return MMSYSERR_INVALPARAM;
     }
     return MMSYSERR_NOERROR;
@@ -1214,7 +1222,7 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     LPWAVEHDR*wh;
     WINE_WAVEOUT *wwo;
     
-    TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %lu, %08X);\n", wDevID, lpWaveHdr, (unsigned long)lpWaveHdr->dwBufferLength, dwSize);
     
     /* first, do the sanity checks... */
     if (wDevID >= MAX_WAVEOUTDRV)

@@ -38,6 +38,19 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
 WINE_DECLARE_DEBUG_CHANNEL(midi);
 
+static const char *streamDescription(const AudioStreamBasicDescription* stream)
+{
+    return wine_dbg_sprintf("\n mSampleRate : %f\n mFormatID : %s\n mFormatFlags : %lX\n mBytesPerPacket : %lu\n mFramesPerPacket : %lu\n mBytesPerFrame : %lu\n mChannelsPerFrame : %lu\n mBitsPerChannel : %lu\n",
+        stream->mSampleRate,
+        wine_dbgstr_fourcc(stream->mFormatID),
+        stream->mFormatFlags,
+        stream->mBytesPerPacket,
+        stream->mFramesPerPacket,
+        stream->mBytesPerFrame,
+        stream->mChannelsPerFrame,
+        stream->mBitsPerChannel);
+}
+
 extern OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon, 
 				AudioUnitRenderActionFlags *ioActionFlags, 
 				const AudioTimeStamp *inTimeStamp, 
@@ -58,6 +71,8 @@ int AudioUnit_CreateDefaultAudioUnit(void *wwo, AudioUnit *au)
     Component comp;
     ComponentDescription desc;
     AURenderCallbackStruct callbackStruct;
+
+    TRACE("\n");
     
     desc.componentType = kAudioUnitType_Output;
     desc.componentSubType = kAudioUnitSubType_DefaultOutput;
@@ -95,6 +110,8 @@ int AudioUnit_InitializeWithStreamDescription(AudioUnit au, AudioStreamBasicDesc
 {
     OSStatus err = noErr;
         
+    TRACE("input format: %s\n", streamDescription(stream));
+
     err = AudioUnitSetProperty(au, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input,
                                 0, stream, sizeof(*stream));
 
@@ -116,6 +133,7 @@ int AudioUnit_InitializeWithStreamDescription(AudioUnit au, AudioStreamBasicDesc
 int AudioUnit_SetVolume(AudioUnit au, float left, float right)
 {
     OSStatus err = noErr;
+    FIXME("independent left/right volume not implemented (%f, %f)\n", left, right);
    
     err = AudioUnitSetParameter(au, kHALOutputParam_Volume, kAudioUnitParameterFlag_Output, 0, left, 0);
                                 
@@ -130,6 +148,7 @@ int AudioUnit_SetVolume(AudioUnit au, float left, float right)
 int AudioUnit_GetVolume(AudioUnit au, float *left, float *right)
 {
     OSStatus err = noErr;
+    FIXME("independent left/right volume not implemented\n");
     
     err = AudioUnitGetParameter(au, kHALOutputParam_Volume, kAudioUnitParameterFlag_Output, 0, left);
     if (err != noErr)
