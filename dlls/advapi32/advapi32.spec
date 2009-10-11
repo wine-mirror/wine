@@ -200,7 +200,7 @@
 @ stub ElfRegisterEventSourceW
 # @ stub ElfReportEventA
 @ stub ElfReportEventW
-# @ stub EnableTrace
+@ stdcall EnableTrace(long long long ptr double)
 @ stdcall EncryptFileA(str)
 @ stdcall EncryptFileW(wstr)
 # @ stub EncryptedFileKeyInfo

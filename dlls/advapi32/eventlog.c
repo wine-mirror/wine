@@ -134,6 +134,17 @@ BOOL WINAPI DeregisterEventSource( HANDLE hEventLog )
 }
 
 /******************************************************************************
+ * EnableTrace [ADVAPI32.@]
+ */
+ULONG WINAPI EnableTrace( ULONG enable, ULONG flag, ULONG level, LPCGUID guid, TRACEHANDLE hSession )
+{
+    FIXME("(%d, 0x%x, %d, %s, %s): stub\n", enable, flag, level,
+            debugstr_guid(guid), wine_dbgstr_longlong(hSession));
+
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
  * GetNumberOfEventLogRecords [ADVAPI32.@]
  *
  * Retrieves the number of records in an event log.
