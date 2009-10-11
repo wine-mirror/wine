@@ -608,6 +608,7 @@ BOOL install_wine_gecko(BOOL);
 HRESULT nsuri_to_url(LPCWSTR,BOOL,BSTR*);
 
 HRESULT hlink_frame_navigate(HTMLDocument*,LPCWSTR,nsIInputStream*,DWORD);
+HRESULT navigate_url(HTMLDocumentNode*,OLECHAR*);
 
 void call_property_onchanged(ConnectionPoint*,DISPID);
 HRESULT call_set_active_object(IOleInPlaceUIWindow*,IOleInPlaceActiveObject*);

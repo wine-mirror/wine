@@ -148,6 +148,7 @@ DEFINE_EXPECT(EnableModeless_FALSE);
 DEFINE_EXPECT(Frame_EnableModeless_TRUE);
 DEFINE_EXPECT(Frame_EnableModeless_FALSE);
 DEFINE_EXPECT(Frame_GetWindow);
+DEFINE_EXPECT(TranslateUrl);
 
 static IUnknown *doc_unk;
 static IMoniker *doc_mon;
@@ -665,6 +666,7 @@ static HRESULT WINAPI HlinkFrame_Navigate(IHlinkFrame *iface, DWORD grfHLNF, LPB
         DWORD site_data = 0xdeadbeef;
 
         hres = IHlink_GetTargetFrameName(pihlNavigate, &frame_name);
+        todo_wine
         ok(hres == S_FALSE, "GetTargetFrameName failed: %08x\n", hres);
         ok(frame_name == NULL, "frame_name = %p\n", frame_name);
 
@@ -676,6 +678,7 @@ static HRESULT WINAPI HlinkFrame_Navigate(IHlinkFrame *iface, DWORD grfHLNF, LPB
         hres = IHlink_GetHlinkSite(pihlNavigate, &site, &site_data);
         ok(hres == S_OK, "GetHlinkSite failed: %08x\n", hres);
         ok(site == NULL, "site = %p\n, expected NULL\n", site);
+        todo_wine
         ok(site_data == 0xdeadbeef, "site_data = %x\n", site_data);
     }
 
@@ -2107,8 +2110,13 @@ static HRESULT WINAPI DocHostUIHandler_GetExternal(IDocHostUIHandler2 *iface, ID
 static HRESULT WINAPI DocHostUIHandler_TranslateUrl(IDocHostUIHandler2 *iface, DWORD dwTranslate,
         OLECHAR *pchURLIn, OLECHAR **ppchURLOut)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(TranslateUrl);
+    ok(!dwTranslate, "dwTranslate = %x\n", dwTranslate);
+    ok(!strcmp_wa(pchURLIn, "about:blank"), "pchURLIn = %s\n", wine_dbgstr_w(pchURLIn));
+    ok(ppchURLOut != NULL, "ppchURLOut == NULL\n");
+    ok(!*ppchURLOut, "*ppchURLOut = %p\n", *ppchURLOut);
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI DocHostUIHandler_FilterDataObject(IDocHostUIHandler2 *iface, IDataObject *pDO,
@@ -2995,6 +3003,34 @@ static void test_Persist(IUnknown *unk, IMoniker *mon)
 
         IPersistMoniker_Release(persist_mon);
     }
+}
+
+static void test_put_href(IUnknown *unk)
+{
+    IHTMLLocation *location;
+    IHTMLDocument2 *doc;
+    BSTR str;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDocument2, (void**)&doc);
+    ok(hres == S_OK, "Could not get IHTMLDocument2 iface: %08x\n", hres);
+
+    location = NULL;
+    hres = IHTMLDocument2_get_location(doc, &location);
+    IHTMLDocument2_Release(doc);
+    ok(hres == S_OK, "get_location failed: %08x\n", hres);
+    ok(location != NULL, "location == NULL\n");
+
+    SET_EXPECT(TranslateUrl);
+    SET_EXPECT(Navigate);
+    str = a2bstr("about:blank");
+    hres = IHTMLLocation_put_href(location, str);
+    SysFreeString(str);
+    ok(hres == S_OK, "put_href failed: %08x\n", hres);
+    CHECK_CALLED(TranslateUrl);
+    CHECK_CALLED(Navigate);
+
+    IHTMLLocation_Release(location);
 }
 
 static const OLECMDF expect_cmds[OLECMDID_GETPRINTTEMPLATE+1] = {
@@ -4117,6 +4153,8 @@ static void test_HTMLDocument_http(void)
 
     test_IsDirty(unk, S_FALSE);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
+
+    test_put_href(unk);
 
     test_InPlaceDeactivate(unk, TRUE);
     test_Close(unk, FALSE);

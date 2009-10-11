@@ -41,6 +41,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define CONTENT_LENGTH "Content-Length"
 #define UTF16_STR "utf-16"
 
+static WCHAR emptyW[] = {0};
+
 typedef struct {
     const nsIInputStreamVtbl *lpInputStreamVtbl;
 
@@ -1215,5 +1217,28 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url,
     IHlinkFrame_Release(hlink_frame);
     IBindCtx_Release(bindctx);
     IBindStatusCallback_Release(STATUSCLB(callback));
+    return hres;
+}
+
+HRESULT navigate_url(HTMLDocumentNode *doc, OLECHAR *url)
+{
+    OLECHAR *translated_url = NULL;
+    HRESULT hres;
+
+    if(!url)
+        url = emptyW;
+
+    if(doc->basedoc.doc_obj->hostui) {
+        hres = IDocHostUIHandler_TranslateUrl(doc->basedoc.doc_obj->hostui, 0, url,
+                &translated_url);
+        if(hres == S_OK)
+            url = translated_url;
+    }
+
+    hres = hlink_frame_navigate(&doc->basedoc, url, NULL, 0);
+    if(FAILED(hres))
+        FIXME("hlink_frame_navigate failed: %08x\n", hres);
+
+    CoTaskMemFree(translated_url);
     return hres;
 }

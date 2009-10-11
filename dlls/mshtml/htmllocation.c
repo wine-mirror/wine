@@ -134,8 +134,15 @@ static HRESULT WINAPI HTMLLocation_Invoke(IHTMLLocation *iface, DISPID dispIdMem
 static HRESULT WINAPI HTMLLocation_put_href(IHTMLLocation *iface, BSTR v)
 {
     HTMLLocation *This = HTMLLOCATION_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    if(!This->window || !This->window->doc) {
+        FIXME("No document available\n");
+        return E_FAIL;
+    }
+
+    return navigate_url(This->window->doc, v);
 }
 
 static HRESULT WINAPI HTMLLocation_get_href(IHTMLLocation *iface, BSTR *p)
