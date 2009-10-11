@@ -31,7 +31,6 @@
  * TODO:
  *    -- DTS_APPCANPARSE
  *    -- DTS_SHORTDATECENTURYFORMAT
- *    -- DTN_CLOSEUP
  *    -- DTN_FORMAT
  *    -- DTN_FORMATQUERY
  *    -- DTN_USERSTRING
@@ -811,20 +810,23 @@ DATETIME_LButtonDown (DATETIME_INFO *infoPtr, INT x, INT y)
 
         if(IsWindowVisible(infoPtr->hMonthCal)) {
             ShowWindow(infoPtr->hMonthCal, SW_HIDE);
+            infoPtr->bDropdownEnabled = FALSE;
+            DATETIME_SendSimpleNotify (infoPtr, DTN_CLOSEUP);
         } else {
             const SYSTEMTIME *lprgSysTimeArray = &infoPtr->date;
             TRACE("update calendar %04d/%02d/%02d\n", 
             lprgSysTimeArray->wYear, lprgSysTimeArray->wMonth, lprgSysTimeArray->wDay);
             SendMessageW(infoPtr->hMonthCal, MCM_SETCURSEL, 0, (LPARAM)(&infoPtr->date));
 
-            if (infoPtr->bDropdownEnabled)
+            if (infoPtr->bDropdownEnabled) {
                 ShowWindow(infoPtr->hMonthCal, SW_SHOW);
+                DATETIME_SendSimpleNotify (infoPtr, DTN_DROPDOWN);
+            }
             infoPtr->bDropdownEnabled = TRUE;
         }
 
         TRACE ("dt:%p mc:%p mc parent:%p, desktop:%p\n",
                infoPtr->hwndSelf, infoPtr->hMonthCal, infoPtr->hwndNotify, GetDesktopWindow ());
-        DATETIME_SendSimpleNotify (infoPtr, DTN_DROPDOWN);
     }
 
     InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
@@ -944,6 +946,7 @@ DATETIME_Notify (DATETIME_INFO *infoPtr, LPNMHDR lpnmh)
         SendMessageW (infoPtr->hwndCheckbut, BM_SETCHECK, BST_CHECKED, 0);
         InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
         DATETIME_SendDateTimeChangeNotify (infoPtr);
+        DATETIME_SendSimpleNotify(infoPtr, DTN_CLOSEUP);
     }
     if ((lpnmh->hwndFrom == infoPtr->hUpdown) && (lpnmh->code == UDN_DELTAPOS)) {
         LPNMUPDOWN lpnmud = (LPNMUPDOWN)lpnmh;
@@ -1188,7 +1191,7 @@ DATETIME_SendDateTimeChangeNotify (const DATETIME_INFO *infoPtr)
     dtdtc.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
     dtdtc.nmhdr.code     = DTN_DATETIMECHANGE;
 
-    dtdtc.dwFlags = (infoPtr->dwStyle & DTS_SHOWNONE) ? GDT_NONE : GDT_VALID;
+    dtdtc.dwFlags = infoPtr->dateValid ? GDT_VALID : GDT_NONE;
 
     dtdtc.st = infoPtr->date;
     return (BOOL) SendMessageW (infoPtr->hwndNotify, WM_NOTIFY,
