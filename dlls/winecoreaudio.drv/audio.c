@@ -1565,11 +1565,11 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 /**************************************************************************
 * 				wodMessage (WINECOREAUDIO.7)
 */
-DWORD WINAPI CoreAudio_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser, 
-                                  DWORD dwParam1, DWORD dwParam2)
+DWORD WINAPI CoreAudio_wodMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
+                                  DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    TRACE("(%u, %s, %08x, %08x, %08x);\n",
-          wDevID, getMessage(wMsg), dwUser, dwParam1, dwParam2);
+    TRACE("(%u, %s, %p, %p, %p);\n",
+          wDevID, getMessage(wMsg), (void*)dwUser, (void*)dwParam1, (void*)dwParam2);
     
     switch (wMsg) {
         case DRVM_INIT:
