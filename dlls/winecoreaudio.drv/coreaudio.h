@@ -20,6 +20,8 @@
 #ifndef __WINE_COREAUDIO_H
 #define __WINE_COREAUDIO_H
 
+#include "wine/debug.h"
+
 extern LONG CoreAudio_WaveInit(void);
 extern void CoreAudio_WaveRelease(void);
 
@@ -28,5 +30,13 @@ extern void CoreAudio_MIDIRelease(void);
 
 extern LONG CoreAudio_MixerInit(void);
 extern void CoreAudio_MixerRelease(void);
+
+/* fourcc is in native order, where MSB is the first character. */
+static inline const char* wine_dbgstr_fourcc(unsigned long fourcc)
+{
+    char buf[4] = { (char) (fourcc >> 24), (char) (fourcc >> 16),
+                    (char) (fourcc >> 8),  (char) fourcc };
+    return wine_dbgstr_an(buf, sizeof(buf));
+}
 
 #endif /* __WINE_COREAUDIO_H */

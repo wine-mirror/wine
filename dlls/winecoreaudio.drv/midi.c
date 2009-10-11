@@ -40,6 +40,7 @@
 #include "mmddk.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "coreaudio.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
@@ -356,7 +357,7 @@ static DWORD MIDIOut_Data(WORD wDevID, DWORD dwParam)
         err = MusicDeviceMIDIEvent(destinations[wDevID].synth, (evt & 0xF0) | chn, d1, d2, 0);
         if (err != noErr)
         {
-            ERR("MusicDeviceMIDIEvent(%p, %04x, %04x, %04x, %d) return %c%c%c%c\n", destinations[wDevID].synth, (evt & 0xF0) | chn, d1, d2, 0, (char) (err >> 24), (char) (err >> 16), (char) (err >> 8), (char) err);
+            ERR("MusicDeviceMIDIEvent(%p, %04x, %04x, %04x, %d) return %s\n", destinations[wDevID].synth, (evt & 0xF0) | chn, d1, d2, 0, wine_dbgstr_fourcc(err));
             return MMSYSERR_ERROR;
         }
     }
@@ -434,7 +435,7 @@ static DWORD MIDIOut_LongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
         err = MusicDeviceSysEx(destinations[wDevID].synth, (const UInt8 *) lpData, lpMidiHdr->dwBufferLength);
         if (err != noErr)
         {
-            ERR("MusicDeviceSysEx(%p, %p, %d) return %c%c%c%c\n", destinations[wDevID].synth, lpData, lpMidiHdr->dwBufferLength, (char) (err >> 24), (char) (err >> 16), (char) (err >> 8), (char) err);
+            ERR("MusicDeviceSysEx(%p, %p, %d) return %s\n", destinations[wDevID].synth, lpData, lpMidiHdr->dwBufferLength, wine_dbgstr_fourcc(err));
             return MMSYSERR_ERROR;
         }
     }

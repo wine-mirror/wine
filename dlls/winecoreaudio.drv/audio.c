@@ -487,10 +487,7 @@ BOOL CoreAudio_GetDevCaps (void)
     propertySize = MAXPNAMELEN;
     status = AudioDeviceGetProperty(devId, 0 , FALSE, kAudioDevicePropertyDeviceName, &propertySize, name);
     if (status) {
-        ERR("AudioHardwareGetProperty for kAudioDevicePropertyDeviceName return %c%c%c%c\n", (char) (status >> 24),
-                                                                                             (char) (status >> 16),
-                                                                                             (char) (status >> 8),
-                                                                                             (char) status);
+        ERR("AudioHardwareGetProperty for kAudioDevicePropertyDeviceName return %s\n", wine_dbgstr_fourcc(status));
         return FALSE;
     }
     
@@ -504,21 +501,15 @@ BOOL CoreAudio_GetDevCaps (void)
     propertySize = sizeof(CoreAudio_DefaultDevice.streamDescription);
     status = AudioDeviceGetProperty(devId, 0, FALSE , kAudioDevicePropertyStreamFormat, &propertySize, &CoreAudio_DefaultDevice.streamDescription);
     if (status != noErr) {
-        ERR("AudioHardwareGetProperty for kAudioDevicePropertyStreamFormat return %c%c%c%c\n", (char) (status >> 24),
-                                                                                                (char) (status >> 16),
-                                                                                                (char) (status >> 8),
-                                                                                                (char) status);
+        ERR("AudioHardwareGetProperty for kAudioDevicePropertyStreamFormat return %s\n", wine_dbgstr_fourcc(status));
         return FALSE;
     }
     
-    TRACE("Device Stream Description mSampleRate : %f\n mFormatID : %c%c%c%c\n"
+    TRACE("Device Stream Description mSampleRate : %f\n mFormatID : %s\n"
             "mFormatFlags : %lX\n mBytesPerPacket : %lu\n mFramesPerPacket : %lu\n"
             "mBytesPerFrame : %lu\n mChannelsPerFrame : %lu\n mBitsPerChannel : %lu\n",
                                CoreAudio_DefaultDevice.streamDescription.mSampleRate,
-                               (char) (CoreAudio_DefaultDevice.streamDescription.mFormatID >> 24),
-                               (char) (CoreAudio_DefaultDevice.streamDescription.mFormatID >> 16),
-                               (char) (CoreAudio_DefaultDevice.streamDescription.mFormatID >> 8),
-                               (char) CoreAudio_DefaultDevice.streamDescription.mFormatID,
+                               wine_dbgstr_fourcc(CoreAudio_DefaultDevice.streamDescription.mFormatID),
                                CoreAudio_DefaultDevice.streamDescription.mFormatFlags,
                                CoreAudio_DefaultDevice.streamDescription.mBytesPerPacket,
                                CoreAudio_DefaultDevice.streamDescription.mFramesPerPacket,
@@ -566,10 +557,7 @@ LONG CoreAudio_WaveInit(void)
     propertySize = sizeof(CoreAudio_DefaultDevice.outputDeviceID);
     status = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &propertySize, &CoreAudio_DefaultDevice.outputDeviceID);
     if (status) {
-        ERR("AudioHardwareGetProperty return %c%c%c%c for kAudioHardwarePropertyDefaultOutputDevice\n", (char) (status >> 24),
-                                                                                                (char) (status >> 16),
-                                                                                                (char) (status >> 8),
-                                                                                                (char) status);
+        ERR("AudioHardwareGetProperty return %s for kAudioHardwarePropertyDefaultOutputDevice\n", wine_dbgstr_fourcc(status));
         return DRV_FAILURE;
     }
     if (CoreAudio_DefaultDevice.outputDeviceID == kAudioDeviceUnknown) {
@@ -1010,10 +998,7 @@ static DWORD wodClose(WORD wDevID)
 
         err = AudioUnitUninitialize(audioUnit);
         if (err) {
-            ERR("AudioUnitUninitialize return %c%c%c%c\n", (char) (err >> 24),
-                                                            (char) (err >> 16),
-                                                            (char) (err >> 8),
-                                                            (char) err);
+            ERR("AudioUnitUninitialize return %s\n", wine_dbgstr_fourcc(err));
             return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
         }
         
@@ -1299,10 +1284,8 @@ static DWORD wodPause(WORD wDevID)
      * render callback will just produce silence.
      */
     status = AudioOutputUnitStop(WOutDev[wDevID].audioUnit);
-    if (status) {
-        WARN("AudioOutputUnitStop return %c%c%c%c\n",
-             (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
-    }
+    if (status)
+        WARN("AudioOutputUnitStop return %s\n", wine_dbgstr_fourcc(status));
 
     OSSpinLockLock(&WOutDev[wDevID].lock);
     if (WOutDev[wDevID].state == WINE_WS_PLAYING)
@@ -1342,8 +1325,7 @@ static DWORD wodRestart(WORD wDevID)
 
     status = AudioOutputUnitStart(WOutDev[wDevID].audioUnit);
     if (status) {
-        ERR("AudioOutputUnitStart return %c%c%c%c\n",
-            (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
+        ERR("AudioOutputUnitStart return %s\n", wine_dbgstr_fourcc(status));
         return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
     }
 
@@ -1391,8 +1373,7 @@ static DWORD wodReset(WORD wDevID)
     status = AudioOutputUnitStart(wwo->audioUnit);
 
     if (status) {
-        ERR( "AudioOutputUnitStart return %c%c%c%c\n",
-             (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
+        ERR( "AudioOutputUnitStart return %s\n", wine_dbgstr_fourcc(status));
         return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
     }
 
@@ -2063,17 +2044,10 @@ static DWORD widClose(WORD wDevID)
      * that lock and trying to grab the wwi->lock in the callback. */
     err = AudioUnitUninitialize(wwi->audioUnit);
     if (err)
-    {
-        ERR("AudioUnitUninitialize return %c%c%c%c\n", (char) (err >> 24),
-                                                       (char) (err >> 16),
-                                                       (char) (err >> 8),
-                                                       (char) err);
-    }
+        ERR("AudioUnitUninitialize return %s\n", wine_dbgstr_fourcc(err));
 
     if (!AudioUnit_CloseAudioUnit(wwi->audioUnit))
-    {
         ERR("Can't close AudioUnit\n");
-    }
 
 
     OSSpinLockLock(&wwi->lock);

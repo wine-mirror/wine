@@ -364,10 +364,7 @@ LONG CoreAudio_MixerInit(void)
     status = AudioHardwareGetPropertyInfo(kAudioHardwarePropertyDevices, &propertySize, NULL);
     if (status)
     {
-        ERR("AudioHardwareGetPropertyInfo for kAudioHardwarePropertyDevices return %c%c%c%c\n", (char) (status >> 24),
-            (char) (status >> 16),
-            (char) (status >> 8),
-            (char) status);
+        ERR("AudioHardwareGetPropertyInfo for kAudioHardwarePropertyDevices return %s\n", wine_dbgstr_fourcc(status));
         return DRV_FAILURE;
     }
 
@@ -396,10 +393,7 @@ LONG CoreAudio_MixerInit(void)
     status = AudioHardwareGetProperty(kAudioHardwarePropertyDevices, &propertySize, deviceArray);
     if (status)
     {
-        ERR("AudioHardwareGetProperty for kAudioHardwarePropertyDevices return %c%c%c%c\n", (char) (status >> 24),
-            (char) (status >> 16),
-            (char) (status >> 8),
-            (char) status);
+        ERR("AudioHardwareGetProperty for kAudioHardwarePropertyDevices return %s\n", wine_dbgstr_fourcc(status));
         goto error;
     }
 
@@ -413,10 +407,7 @@ LONG CoreAudio_MixerInit(void)
         propertySize = MAXPNAMELEN;
         status = AudioDeviceGetProperty(line->deviceID, 0 , FALSE, kAudioDevicePropertyDeviceName, &propertySize, name);
         if (status) {
-            ERR("AudioHardwareGetProperty for kAudioDevicePropertyDeviceName return %c%c%c%c\n", (char) (status >> 24),
-                (char) (status >> 16),
-                (char) (status >> 8),
-                (char) status);
+            ERR("AudioHardwareGetProperty for kAudioDevicePropertyDeviceName return %s\n", wine_dbgstr_fourcc(status));
             goto error;
         }
 
@@ -433,10 +424,7 @@ LONG CoreAudio_MixerInit(void)
         propertySize = sizeof(UInt32);
 	status = AudioDeviceGetPropertyInfo(line->deviceID, 0, FALSE, kAudioDevicePropertyStreams, &propertySize, &write );
         if (status) {
-            ERR("AudioDeviceGetPropertyInfo for kAudioDevicePropertyDataSource return %c%c%c%c\n", (char) (status >> 24),
-                (char) (status >> 16),
-                (char) (status >> 8),
-                (char) status);
+            ERR("AudioDeviceGetPropertyInfo for kAudioDevicePropertyDataSource return %s\n", wine_dbgstr_fourcc(status));
             goto error;
         }
 
@@ -448,10 +436,7 @@ LONG CoreAudio_MixerInit(void)
             propertySize = sizeof(streamDescription);
             status = AudioDeviceGetProperty(line->deviceID, 0, FALSE , kAudioDevicePropertyStreamFormat, &propertySize, &streamDescription);
             if (status != noErr) {
-                ERR("AudioHardwareGetProperty for kAudioDevicePropertyStreamFormat return %c%c%c%c\n", (char) (status >> 24),
-                    (char) (status >> 16),
-                    (char) (status >> 8),
-                    (char) status);
+                ERR("AudioHardwareGetProperty for kAudioDevicePropertyStreamFormat return %s\n", wine_dbgstr_fourcc(status));
                 goto error;
             }
             line->numChannels = streamDescription.mChannelsPerFrame;
@@ -462,10 +447,7 @@ LONG CoreAudio_MixerInit(void)
             propertySize = sizeof(UInt32);
             status = AudioDeviceGetPropertyInfo(line->deviceID, 0, TRUE, kAudioDevicePropertyStreams, &propertySize, &write );
             if (status) {
-                ERR("AudioDeviceGetPropertyInfo for kAudioDevicePropertyStreams return %c%c%c%c\n", (char) (status >> 24),
-                    (char) (status >> 16),
-                    (char) (status >> 8),
-                    (char) status);
+                ERR("AudioDeviceGetPropertyInfo for kAudioDevicePropertyStreams return %s\n", wine_dbgstr_fourcc(status));
                 goto error;
             }
             if ( (propertySize / sizeof(AudioStreamID)) != 0)
@@ -476,10 +458,7 @@ LONG CoreAudio_MixerInit(void)
                 propertySize = sizeof(streamDescription);
                 status = AudioDeviceGetProperty(line->deviceID, 0, TRUE, kAudioDevicePropertyStreamFormat, &propertySize, &streamDescription);
                 if (status != noErr) {
-                    ERR("AudioHardwareGetProperty for kAudioDevicePropertyStreamFormat return %c%c%c%c\n", (char) (status >> 24),
-                        (char) (status >> 16),
-                        (char) (status >> 8),
-                        (char) status);
+                    ERR("AudioHardwareGetProperty for kAudioDevicePropertyStreamFormat return %s\n", wine_dbgstr_fourcc(status));
                     goto error;
                 }
                 line->numChannels = streamDescription.mChannelsPerFrame;
