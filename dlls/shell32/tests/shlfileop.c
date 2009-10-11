@@ -48,8 +48,8 @@
        "Expected %d, got %d\n", ret, retval)
 
 static CHAR CURR_DIR[MAX_PATH];
-static const WCHAR UNICODE_PATH[] = {'c',':','\\',0x00c4,'\0','\0'};
-    /* "c:\Ä", or "c:\A" with diaeresis */
+static const WCHAR UNICODE_PATH[] = {'c',':','\\',0x00ae,'\0','\0'};
+    /* "c:\®" can be used in all codepages */
     /* Double-null termination needed for pFrom field of SHFILEOPSTRUCT */
 
 static HMODULE hshell32;
