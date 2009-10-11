@@ -519,6 +519,32 @@ ULONG WINAPI RegisterTraceGuidsA( WMIDPREQUEST RequestAddress,
 }
 
 /******************************************************************************
+ * StartTraceW [ADVAPI32.@]
+ *
+ * Register and start an event trace session
+ *
+ */
+ULONG WINAPI StartTraceW( PTRACEHANDLE pSessionHandle, LPCWSTR SessionName, PEVENT_TRACE_PROPERTIES Properties )
+{
+    FIXME("(%p, %s, %p) stub\n", pSessionHandle, debugstr_w(SessionName), Properties);
+    if (pSessionHandle) *pSessionHandle = 0xcafe4242;
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ * StartTraceA [ADVAPI32.@]
+ *
+ * See StartTraceW.
+ *
+ */
+ULONG WINAPI StartTraceA( PTRACEHANDLE pSessionHandle, LPCSTR SessionName, PEVENT_TRACE_PROPERTIES Properties )
+{
+    FIXME("(%p, %s, %p) stub\n", pSessionHandle, debugstr_a(SessionName), Properties);
+    if (pSessionHandle) *pSessionHandle = 0xcafe4242;
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
  * TraceEvent [ADVAPI32.@]
  */
 ULONG WINAPI TraceEvent( TRACEHANDLE SessionHandle, PEVENT_TRACE_HEADER EventTrace )

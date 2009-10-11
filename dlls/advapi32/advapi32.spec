@@ -592,8 +592,8 @@
 @ stdcall StartServiceCtrlDispatcherA(ptr)
 @ stdcall StartServiceCtrlDispatcherW(ptr)
 @ stdcall StartServiceW(long long ptr)
-# @ stub StartTraceA
-# @ stub StartTraceW
+@ stdcall StartTraceA(ptr str ptr)
+@ stdcall StartTraceW(ptr wstr ptr)
 # @ stub StopTraceA
 # @ stub StopTraceW
 @ stdcall SynchronizeWindows31FilesAndWindowsNTRegistry(long long long long)
