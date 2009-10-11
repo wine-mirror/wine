@@ -283,6 +283,17 @@ static LONG MONTHCAL_CompareMonths(const SYSTEMTIME *first, const SYSTEMTIME *se
   return MONTHCAL_CompareSystemTime(&st_first, &st_second);
 }
 
+static LONG MONTHCAL_CompareDate(const SYSTEMTIME *first, const SYSTEMTIME *second)
+{
+  SYSTEMTIME st_first, st_second;
+
+  st_first = st_second = st_null;
+  MONTHCAL_CopyDate(first, &st_first);
+  MONTHCAL_CopyDate(second, &st_second);
+
+  return MONTHCAL_CompareSystemTime(&st_first, &st_second);
+}
+
 /* Checks largest possible date range and configured one
  *
  * PARAMETERS
@@ -634,7 +645,7 @@ static void MONTHCAL_CircleDay(const MONTHCAL_INFO *infoPtr, HDC hdc,
   SelectObject(hdc, hOldPen2);
 }
 
-static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, int day, int month,
+static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEMTIME *st,
                              int x, int y, int bold)
 {
   static const WCHAR fmtW[] = { '%','d',0 };
@@ -645,7 +656,7 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, int day, int
   COLORREF oldCol = 0;
   COLORREF oldBk = 0;
 
-  wsprintfW(buf, fmtW, day);
+  wsprintfW(buf, fmtW, st->wDay);
 
 /* No need to check styles: when selection is not valid, it is set to zero.
  * 1<day<31, so everything is OK.
@@ -653,11 +664,11 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, int day, int
 
   MONTHCAL_CalcDayRect(infoPtr, &r, x, y);
 
-  if((day>=infoPtr->minSel.wDay) && (day<=infoPtr->maxSel.wDay)
-       && (month == infoPtr->curSel.wMonth)) {
+  if ((MONTHCAL_CompareDate(st, &infoPtr->minSel) >= 0) &&
+      (MONTHCAL_CompareDate(st, &infoPtr->maxSel) <= 0)) {
     RECT r2;
 
-    TRACE("%d %d %d\n",day, infoPtr->minSel.wDay, infoPtr->maxSel.wDay);
+    TRACE("%d %d %d\n", st->wDay, infoPtr->minSel.wDay, infoPtr->maxSel.wDay);
     TRACE("%s\n", wine_dbgstr_rect(&r));
     oldCol = SetTextColor(hdc, infoPtr->monthbk);
     oldBk = SetBkColor(hdc, infoPtr->trailingtxt);
@@ -853,53 +864,54 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
 
   i = 0;
   m = 0;
-  while(day <= MONTHCAL_MonthLength(prevMonth, infoPtr->curSel.wYear)) {
+  while(st.wDay <= MONTHCAL_MonthLength(prevMonth, infoPtr->curSel.wYear)) {
     MONTHCAL_CalcDayRect(infoPtr, &rcDay, i, 0);
     if(IntersectRect(&rcTemp, &(ps->rcPaint), &rcDay))
     {
-      MONTHCAL_DrawDay(infoPtr, hdc, day, prevMonth, i, 0,
+      MONTHCAL_DrawDay(infoPtr, hdc, &st, i, 0,
           infoPtr->monthdayState[m] & mask);
     }
 
-    mask<<=1;
-    day++;
+    mask <<= 1;
+    st.wDay++;
     i++;
   }
 
 /* draw `current' month  */
 
   day = 1; /* start at the beginning of the current month */
-
+  st = infoPtr->curSel;
+  st.wDay = 1;
   infoPtr->firstDayplace = i;
   SetTextColor(hdc, infoPtr->txt);
   m++;
   mask = 1;
 
   /* draw the first week of the current month */
-  while(i<7) {
+  while(i < 7) {
     MONTHCAL_CalcDayRect(infoPtr, &rcDay, i, 0);
     if(IntersectRect(&rcTemp, &(ps->rcPaint), &rcDay))
     {
-      MONTHCAL_DrawDay(infoPtr, hdc, day, infoPtr->curSel.wMonth, i, 0,
+      MONTHCAL_DrawDay(infoPtr, hdc, &st, i, 0,
 	infoPtr->monthdayState[m] & mask);
     }
 
     mask<<=1;
-    day++;
+    st.wDay++;
     i++;
   }
 
   j = 1; /* move to the 2nd week of the current month */
   i = 0; /* move back to sunday */
-  while(day <= MONTHCAL_MonthLength(infoPtr->curSel.wMonth, infoPtr->curSel.wYear)) {
+  while(st.wDay <= MONTHCAL_MonthLength(infoPtr->curSel.wMonth, infoPtr->curSel.wYear)) {
     MONTHCAL_CalcDayRect(infoPtr, &rcDay, i, j);
     if(IntersectRect(&rcTemp, &(ps->rcPaint), &rcDay))
     {
-      MONTHCAL_DrawDay(infoPtr, hdc, day, infoPtr->curSel.wMonth, i, j,
+      MONTHCAL_DrawDay(infoPtr, hdc, &st, i, j,
           infoPtr->monthdayState[m] & mask);
     }
     mask<<=1;
-    day++;
+    st.wDay++;
     i++;
     if(i>6) { /* past saturday, goto the next weeks sunday */
       i = 0;
@@ -910,6 +922,9 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
 /*  draw `next' month */
 
   day = 1; /* start at the first day of the next month */
+  st = infoPtr->curSel;
+  st.wDay = 1;
+  MONTHCAL_GetNextMonth(&st);
   m++;
   mask = 1;
 
@@ -918,11 +933,12 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
     MONTHCAL_CalcDayRect(infoPtr, &rcDay, i, j);
     if(IntersectRect(&rcTemp, &(ps->rcPaint), &rcDay))
     {
-      MONTHCAL_DrawDay(infoPtr, hdc, day, infoPtr->curSel.wMonth + 1, i, j,
+      MONTHCAL_DrawDay(infoPtr, hdc, &st, i, j,
 		infoPtr->monthdayState[m] & mask);
     }
 
     mask<<=1;
+    st.wDay++;
     day++;
     i++;
     if(i==7) { /* past saturday, go to next week's sunday */
