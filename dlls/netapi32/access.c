@@ -112,7 +112,7 @@ static BOOL NETAPI_IsCurrentUser(LPCWSTR username)
     BOOL ret = FALSE;
 
     dwSize = LM20_UNLEN+1;
-    curr_user = HeapAlloc(GetProcessHeap(), 0, dwSize);
+    curr_user = HeapAlloc(GetProcessHeap(), 0, dwSize * sizeof(WCHAR));
     if(!curr_user)
     {
         ERR("Failed to allocate memory for user name.\n");
@@ -431,7 +431,7 @@ NetUserGetLocalGroups(LPCWSTR servername, LPCWSTR username, DWORD level,
         return status;
 
     size = UNLEN + 1;
-    NetApiBufferAllocate(size, (LPVOID*)&currentuser);
+    NetApiBufferAllocate(size * sizeof(WCHAR), (LPVOID*)&currentuser);
     GetUserNameW(currentuser, &size);
 
     if (lstrcmpiW(username, currentuser) && NETAPI_FindUser(username))
@@ -640,7 +640,7 @@ NetQueryDisplayInformation(
 
         /* get data */
         dwSize = UNLEN + 1;
-        NetApiBufferAllocate(dwSize, (LPVOID *) &name);
+        NetApiBufferAllocate(dwSize * sizeof(WCHAR), (LPVOID *) &name);
         if (!GetUserNameW(name, &dwSize))
         {
             NetApiBufferFree(name);
