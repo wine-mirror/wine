@@ -317,8 +317,7 @@ static CFDataRef wodMessageHandler(CFMessagePortRef port_ReceiveInMessageThread,
     switch (msgid)
     {
         case kWaveOutNotifyCompletionsMessage:
-            buffer = (UInt32 *) CFDataGetBytePtr(data);
-            wodHelper_NotifyCompletions(&WOutDev[buffer[0]].instance, FALSE);
+            wodHelper_NotifyCompletions(*(WINE_WAVEOUT_INSTANCE**)CFDataGetBytePtr(data), FALSE);
             break;
         case kWaveInNotifyCompletionsMessage:
             buffer = (UInt32 *) CFDataGetBytePtr(data);
@@ -356,14 +355,11 @@ static DWORD WINAPI messageThread(LPVOID p)
 static void wodSendNotifyCompletionsMessage(WINE_WAVEOUT_INSTANCE* wwo)
 {
     CFDataRef data;
-    UInt32 buffer;
 
     if (!Port_SendToMessageThread)
         return;
 
-    buffer = (UInt32) wwo->woID;
-
-    data = CFDataCreate(kCFAllocatorDefault, (UInt8 *)&buffer, sizeof(buffer));
+    data = CFDataCreate(kCFAllocatorDefault, (UInt8 *)&wwo, sizeof(wwo));
     if (!data)
         return;
 
@@ -810,7 +806,7 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 /**************************************************************************
 * 				wodOpen				[internal]
 */
-static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
+static DWORD wodOpen(WORD wDevID, WINE_WAVEOUT_INSTANCE** pInstance, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
     WINE_WAVEOUT_INSTANCE*      wwo;
     DWORD               ret;
@@ -818,7 +814,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     AudioUnit           audioUnit = NULL;
     BOOL                auInited  = FALSE;
 
-    TRACE("(%u, %p, %08x);\n", wDevID, lpDesc, dwFlags);
+    TRACE("(%u, %p, %p, %08x);\n", wDevID, pInstance, lpDesc, dwFlags);
     if (lpDesc == NULL)
     {
         WARN("Invalid Parameter !\n");
@@ -948,7 +944,10 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     WOutDev[wDevID].err_on   = ERR_ON(wave);
 
     OSSpinLockUnlock(&wwo->lock);
-    
+
+    *pInstance = wwo;
+    TRACE("opened instance %p\n", wwo);
+
     ret = wodNotifyClient(wwo, WOM_OPEN, 0L, 0L);
     
     return ret;
@@ -972,12 +971,11 @@ error:
 /**************************************************************************
 * 				wodClose			[internal]
 */
-static DWORD wodClose(WORD wDevID)
+static DWORD wodClose(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo)
 {
     DWORD		ret = MMSYSERR_NOERROR;
-    WINE_WAVEOUT_INSTANCE* wwo;
     
-    TRACE("(%u);\n", wDevID);
+    TRACE("(%u, %p);\n", wDevID, wwo);
     
     if (wDevID >= MAX_WAVEOUTDRV)
     {
@@ -985,7 +983,6 @@ static DWORD wodClose(WORD wDevID)
         return MMSYSERR_BADDEVICEID;
     }
     
-    wwo = &WOutDev[wDevID].instance;
     OSSpinLockLock(&wwo->lock);
     if (wwo->lpQueuePtr)
     {
@@ -1031,9 +1028,9 @@ static DWORD wodClose(WORD wDevID)
 /**************************************************************************
 * 				wodPrepare			[internal]
 */
-static DWORD wodPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
+static DWORD wodPrepare(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE("(%u, %p, %08x);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %p, %08x);\n", wDevID, wwo, lpWaveHdr, dwSize);
     
     if (wDevID >= MAX_WAVEOUTDRV) {
 	WARN("bad device ID !\n");
@@ -1052,9 +1049,9 @@ static DWORD wodPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 /**************************************************************************
 * 				wodUnprepare			[internal]
 */
-static DWORD wodUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
+static DWORD wodUnprepare(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE("(%u, %p, %08x);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %p, %08x);\n", wDevID, wwo, lpWaveHdr, dwSize);
     
     if (wDevID >= MAX_WAVEOUTDRV) {
 	WARN("bad device ID !\n");
@@ -1218,12 +1215,11 @@ static void wodHelper_NotifyCompletions(WINE_WAVEOUT_INSTANCE* wwo, BOOL force)
 * 				wodWrite			[internal]
 * 
 */
-static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
+static DWORD wodWrite(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
     LPWAVEHDR*wh;
-    WINE_WAVEOUT_INSTANCE *wwo;
     
-    TRACE("(%u, %p, %lu, %08X);\n", wDevID, lpWaveHdr, (unsigned long)lpWaveHdr->dwBufferLength, dwSize);
+    TRACE("(%u, %p, %p, %lu, %08X);\n", wDevID, wwo, lpWaveHdr, (unsigned long)lpWaveHdr->dwBufferLength, dwSize);
     
     /* first, do the sanity checks... */
     if (wDevID >= MAX_WAVEOUTDRV)
@@ -1231,8 +1227,6 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
         WARN("bad dev ID !\n");
         return MMSYSERR_BADDEVICEID;
     }
-    
-    wwo = &WOutDev[wDevID].instance;
     
     if (lpWaveHdr->lpData == NULL || !(lpWaveHdr->dwFlags & WHDR_PREPARED))
     {
@@ -1272,11 +1266,11 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 /**************************************************************************
 * 			wodPause				[internal]
 */
-static DWORD wodPause(WORD wDevID)
+static DWORD wodPause(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo)
 {
     OSStatus status;
 
-    TRACE("(%u);!\n", wDevID);
+    TRACE("(%u, %p);!\n", wDevID, wwo);
     
     if (wDevID >= MAX_WAVEOUTDRV)
     {
@@ -1292,14 +1286,14 @@ static DWORD wodPause(WORD wDevID)
      * state with the Audio Unit still running, that's harmless because the
      * render callback will just produce silence.
      */
-    status = AudioOutputUnitStop(WOutDev[wDevID].instance.audioUnit);
+    status = AudioOutputUnitStop(wwo->audioUnit);
     if (status)
         WARN("AudioOutputUnitStop return %s\n", wine_dbgstr_fourcc(status));
 
-    OSSpinLockLock(&WOutDev[wDevID].instance.lock);
-    if (WOutDev[wDevID].instance.state == WINE_WS_PLAYING)
-        WOutDev[wDevID].instance.state = WINE_WS_PAUSED;
-    OSSpinLockUnlock(&WOutDev[wDevID].instance.lock);
+    OSSpinLockLock(&wwo->lock);
+    if (wwo->state == WINE_WS_PLAYING)
+        wwo->state = WINE_WS_PAUSED;
+    OSSpinLockUnlock(&wwo->lock);
 
     return MMSYSERR_NOERROR;
 }
@@ -1307,11 +1301,11 @@ static DWORD wodPause(WORD wDevID)
 /**************************************************************************
 * 			wodRestart				[internal]
 */
-static DWORD wodRestart(WORD wDevID)
+static DWORD wodRestart(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo)
 {
     OSStatus status;
 
-    TRACE("(%u);\n", wDevID);
+    TRACE("(%u, %p);\n", wDevID, wwo);
     
     if (wDevID >= MAX_WAVEOUTDRV )
     {
@@ -1327,12 +1321,12 @@ static DWORD wodRestart(WORD wDevID)
      * Although we can be in PAUSED state with the Audio Unit still running,
      * that's harmless because the render callback will just produce silence.
      */
-    OSSpinLockLock(&WOutDev[wDevID].instance.lock);
-    if (WOutDev[wDevID].instance.state == WINE_WS_PAUSED)
-        WOutDev[wDevID].instance.state = WINE_WS_PLAYING;
-    OSSpinLockUnlock(&WOutDev[wDevID].instance.lock);
+    OSSpinLockLock(&wwo->lock);
+    if (wwo->state == WINE_WS_PAUSED)
+        wwo->state = WINE_WS_PLAYING;
+    OSSpinLockUnlock(&wwo->lock);
 
-    status = AudioOutputUnitStart(WOutDev[wDevID].instance.audioUnit);
+    status = AudioOutputUnitStart(wwo->audioUnit);
     if (status) {
         ERR("AudioOutputUnitStart return %s\n", wine_dbgstr_fourcc(status));
         return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
@@ -1344,21 +1338,18 @@ static DWORD wodRestart(WORD wDevID)
 /**************************************************************************
 * 			wodReset				[internal]
 */
-static DWORD wodReset(WORD wDevID)
+static DWORD wodReset(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo)
 {
-    WINE_WAVEOUT_INSTANCE* wwo;
     OSStatus status;
     LPWAVEHDR lpSavedQueuePtr;
 
-    TRACE("(%u);\n", wDevID);
+    TRACE("(%u, %p);\n", wDevID, wwo);
 
     if (wDevID >= MAX_WAVEOUTDRV)
     {
         WARN("bad device ID !\n");
         return MMSYSERR_BADDEVICEID;
     }
-
-    wwo = &WOutDev[wDevID].instance;
 
     OSSpinLockLock(&wwo->lock);
 
@@ -1397,19 +1388,15 @@ static DWORD wodReset(WORD wDevID)
 /**************************************************************************
 *           wodBreakLoop                [internal]
 */
-static DWORD wodBreakLoop(WORD wDevID)
+static DWORD wodBreakLoop(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo)
 {
-    WINE_WAVEOUT_INSTANCE* wwo;
-
-    TRACE("(%u);\n", wDevID);
+    TRACE("(%u, %p);\n", wDevID, wwo);
 
     if (wDevID >= MAX_WAVEOUTDRV)
     {
         WARN("bad device ID !\n");
         return MMSYSERR_BADDEVICEID;
     }
-
-    wwo = &WOutDev[wDevID].instance;
 
     OSSpinLockLock(&wwo->lock);
 
@@ -1427,12 +1414,11 @@ static DWORD wodBreakLoop(WORD wDevID)
 /**************************************************************************
 * 				wodGetPosition			[internal]
 */
-static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
+static DWORD wodGetPosition(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo, LPMMTIME lpTime, DWORD uSize)
 {
     DWORD		val;
-    WINE_WAVEOUT_INSTANCE* wwo;
 
-    TRACE("(%u, %p, %u);\n", wDevID, lpTime, uSize);
+    TRACE("(%u, %p, %p, %u);\n", wDevID, wwo, lpTime, uSize);
     
     if (wDevID >= MAX_WAVEOUTDRV)
     {
@@ -1442,8 +1428,6 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
     
     /* if null pointer to time structure return error */
     if (lpTime == NULL)	return MMSYSERR_INVALPARAM;
-    
-    wwo = &WOutDev[wDevID].instance;
     
     OSSpinLockLock(&wwo->lock);
     val = wwo->dwPlayedTotal;
@@ -1455,7 +1439,7 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 /**************************************************************************
 * 				wodGetVolume			[internal]
 */
-static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
+static DWORD wodGetVolume(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo, LPDWORD lpdwVol)
 {
     float left;
     float right;
@@ -1466,9 +1450,9 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
         return MMSYSERR_BADDEVICEID;
     }    
     
-    TRACE("(%u, %p);\n", wDevID, lpdwVol);
+    TRACE("(%u, %p, %p);\n", wDevID, wwo, lpdwVol);
 
-    AudioUnit_GetVolume(WOutDev[wDevID].instance.audioUnit, &left, &right);
+    AudioUnit_GetVolume(wwo->audioUnit, &left, &right);
 
     *lpdwVol = ((WORD) left * 0xFFFFl) + (((WORD) right * 0xFFFFl) << 16);
     
@@ -1478,7 +1462,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 /**************************************************************************
 * 				wodSetVolume			[internal]
 */
-static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
+static DWORD wodSetVolume(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo, DWORD dwParam)
 {
     float left;
     float right;
@@ -1492,9 +1476,9 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
     left  = LOWORD(dwParam) / 65535.0f;
     right = HIWORD(dwParam) / 65535.0f;
     
-    TRACE("(%u, %08x);\n", wDevID, dwParam);
+    TRACE("(%u, %p, %08x);\n", wDevID, wwo, dwParam);
 
-    AudioUnit_SetVolume(WOutDev[wDevID].instance.audioUnit, left, right);
+    AudioUnit_SetVolume(wwo->audioUnit, left, right);
 
     return MMSYSERR_NOERROR;
 }
@@ -1568,6 +1552,8 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 DWORD WINAPI CoreAudio_wodMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
                                   DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
+    WINE_WAVEOUT_INSTANCE* wwo = (WINE_WAVEOUT_INSTANCE*)dwUser;
+
     TRACE("(%u, %s, %p, %p, %p);\n",
           wDevID, getMessage(wMsg), (void*)dwUser, (void*)dwParam1, (void*)dwParam2);
     
@@ -1579,14 +1565,14 @@ DWORD WINAPI CoreAudio_wodMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
             
             /* FIXME: Pretend this is supported */
             return 0;
-        case WODM_OPEN:         return wodOpen(wDevID, (LPWAVEOPENDESC) dwParam1, dwParam2);          
-        case WODM_CLOSE:        return wodClose(wDevID);
-        case WODM_WRITE:        return wodWrite(wDevID, (LPWAVEHDR) dwParam1, dwParam2);
-        case WODM_PAUSE:        return wodPause(wDevID);  
-        case WODM_GETPOS:       return wodGetPosition(wDevID, (LPMMTIME) dwParam1, dwParam2);
-        case WODM_BREAKLOOP:    return wodBreakLoop(wDevID);
-        case WODM_PREPARE:      return wodPrepare(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
-        case WODM_UNPREPARE:    return wodUnprepare(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
+        case WODM_OPEN:         return wodOpen(wDevID, (WINE_WAVEOUT_INSTANCE**)dwUser, (LPWAVEOPENDESC) dwParam1, dwParam2);
+        case WODM_CLOSE:        return wodClose(wDevID, wwo);
+        case WODM_WRITE:        return wodWrite(wDevID, wwo, (LPWAVEHDR) dwParam1, dwParam2);
+        case WODM_PAUSE:        return wodPause(wDevID, wwo);
+        case WODM_GETPOS:       return wodGetPosition(wDevID, wwo, (LPMMTIME) dwParam1, dwParam2);
+        case WODM_BREAKLOOP:    return wodBreakLoop(wDevID, wwo);
+        case WODM_PREPARE:      return wodPrepare(wDevID, wwo, (LPWAVEHDR)dwParam1, dwParam2);
+        case WODM_UNPREPARE:    return wodUnprepare(wDevID, wwo, (LPWAVEHDR)dwParam1, dwParam2);
             
         case WODM_GETDEVCAPS:   return wodGetDevCaps(wDevID, (LPWAVEOUTCAPSW) dwParam1, dwParam2);
         case WODM_GETNUMDEVS:   return wodGetNumDevs();  
@@ -1595,10 +1581,10 @@ DWORD WINAPI CoreAudio_wodMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
         case WODM_SETPITCH:        
         case WODM_GETPLAYBACKRATE:	
         case WODM_SETPLAYBACKRATE:	return MMSYSERR_NOTSUPPORTED;
-        case WODM_GETVOLUME:    return wodGetVolume(wDevID, (LPDWORD)dwParam1);
-        case WODM_SETVOLUME:    return wodSetVolume(wDevID, dwParam1);
-        case WODM_RESTART:      return wodRestart(wDevID);
-        case WODM_RESET:    	return wodReset(wDevID);
+        case WODM_GETVOLUME:    return wodGetVolume(wDevID, wwo, (LPDWORD)dwParam1);
+        case WODM_SETVOLUME:    return wodSetVolume(wDevID, wwo, dwParam1);
+        case WODM_RESTART:      return wodRestart(wDevID, wwo);
+        case WODM_RESET:    	return wodReset(wDevID, wwo);
             
         case DRV_QUERYDEVICEINTERFACESIZE:  return wodDevInterfaceSize (wDevID, (LPDWORD)dwParam1);
         case DRV_QUERYDEVICEINTERFACE:      return wodDevInterface (wDevID, (PWCHAR)dwParam1, dwParam2);
