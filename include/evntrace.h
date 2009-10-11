@@ -176,6 +176,27 @@ struct _EVENT_TRACE_LOGFILEA
     PVOID Context;
 };
 
+typedef struct _EVENT_TRACE_PROPERTIES
+{
+    WNODE_HEADER Wnode;
+    ULONG BufferSize;
+    ULONG MinimumBuffers;
+    ULONG MaximumBuffers;
+    ULONG MaximumFileSize;
+    ULONG LogFileMode;
+    ULONG FlushTimer;
+    LONG AgeLimit;
+    ULONG NumberOfBuffers;
+    ULONG FreeBuffers;
+    ULONG EventsLost;
+    ULONG BuffersWritten;
+    ULONG LogBuffersLost;
+    ULONG RealTimeBuffersLost;
+    HANDLE LoggerThreadId;
+    ULONG LoggerFileNameOffset;
+    ULONG LoggerNameOffset;
+} EVENT_TRACE_PROPERTIES, *PEVENT_TRACE_PROPERTIES;
+
 ULONG WINAPI CloseTrace(TRACEHANDLE);
 ULONG WINAPI EnableTrace(ULONG,ULONG,ULONG,LPCGUID,TRACEHANDLE);
 ULONG WINAPI RegisterTraceGuidsA(WMIDPREQUEST,PVOID,LPCGUID,ULONG,PTRACE_GUID_REGISTRATION,LPCSTR,LPCSTR,PTRACEHANDLE);
