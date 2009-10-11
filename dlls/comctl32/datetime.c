@@ -932,7 +932,7 @@ DATETIME_EraseBackground (const DATETIME_INFO *infoPtr, HDC hdc)
 
 
 static LRESULT
-DATETIME_Notify (DATETIME_INFO *infoPtr, LPNMHDR lpnmh)
+DATETIME_Notify (DATETIME_INFO *infoPtr, const NMHDR *lpnmh)
 {
     TRACE ("Got notification %x from %p\n", lpnmh->code, lpnmh->hwndFrom);
     TRACE ("info: %p %p %p\n", infoPtr->hwndSelf, infoPtr->hMonthCal, infoPtr->hUpdown);
@@ -1272,8 +1272,6 @@ DATETIME_StyleChanging(DATETIME_INFO *infoPtr, WPARAM wStyleType, STYLESTRUCT *l
 static LRESULT 
 DATETIME_StyleChanged(DATETIME_INFO *infoPtr, WPARAM wStyleType, const STYLESTRUCT *lpss)
 {
-    static const WCHAR buttonW[] = { 'b', 'u', 't', 't', 'o', 'n', 0 };
-
     TRACE("(styletype=%lx, styleOld=0x%08x, styleNew=0x%08x)\n",
           wStyleType, lpss->styleOld, lpss->styleNew);
 
@@ -1282,7 +1280,7 @@ DATETIME_StyleChanged(DATETIME_INFO *infoPtr, WPARAM wStyleType, const STYLESTRU
     infoPtr->dwStyle = lpss->styleNew;
 
     if ( !(lpss->styleOld & DTS_SHOWNONE) && (lpss->styleNew & DTS_SHOWNONE) ) {
-        infoPtr->hwndCheckbut = CreateWindowExW (0, buttonW, 0, WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+        infoPtr->hwndCheckbut = CreateWindowExW (0, WC_BUTTONW, 0, WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
          					 2, 2, 13, 13, infoPtr->hwndSelf, 0, 
 						(HINSTANCE)GetWindowLongPtrW (infoPtr->hwndSelf, GWLP_HINSTANCE), 0);
         SendMessageW (infoPtr->hwndCheckbut, BM_SETCHECK, 1, 0);
