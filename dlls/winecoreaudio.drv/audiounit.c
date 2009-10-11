@@ -85,7 +85,7 @@ int AudioUnit_CreateDefaultAudioUnit(void *wwo, AudioUnit *au)
         return 0;
     
     err = OpenAComponent(comp, au);
-    if (comp == NULL)
+    if (err != noErr || *au == NULL)
         return 0;
         
     callbackStruct.inputProc = CoreAudio_woAudioUnitIOProc;
