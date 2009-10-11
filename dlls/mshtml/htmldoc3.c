@@ -141,6 +141,11 @@ static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, I
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(This->doc_obj->readystate == READYSTATE_UNINITIALIZED) {
+        *p = NULL;
+        return S_OK;
+    }
+
     if(!This->nsdoc) {
         WARN("NULL nsdoc\n");
         return E_UNEXPECTED;
