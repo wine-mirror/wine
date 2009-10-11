@@ -264,6 +264,33 @@ HANDLE WINAPI OpenEventLogW( LPCWSTR uncname, LPCWSTR source )
 }
 
 /******************************************************************************
+ * QueryAllTracesW [ADVAPI32.@]
+ *
+ * Query informations for started event trace sessions
+ *
+ */
+ULONG WINAPI QueryAllTracesW( PEVENT_TRACE_PROPERTIES * parray, ULONG arraycount, PULONG psessioncount )
+{
+    FIXME("(%p, %d, %p) stub\n", parray, arraycount, psessioncount);
+
+    if (psessioncount) *psessioncount = 0;
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ * QueryAllTracesA [ADVAPI32.@]
+ *
+ * See QueryAllTracesW.
+ */
+ULONG WINAPI QueryAllTracesA( PEVENT_TRACE_PROPERTIES * parray, ULONG arraycount, PULONG psessioncount )
+{
+    FIXME("(%p, %d, %p) stub\n", parray, arraycount, psessioncount);
+
+    if (psessioncount) *psessioncount = 0;
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
  * ReadEventLogA [ADVAPI32.@]
  *
  * Reads a whole number of entries from an event log.

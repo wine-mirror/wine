@@ -445,8 +445,8 @@
 @ stdcall PrivilegedServiceAuditAlarmW(wstr wstr long ptr long)
 # @ stub ProcessIdleTasks
 # @ stub ProcessTrace
-# @ stub QueryAllTracesA
-# @ stub QueryAllTracesW
+@ stdcall QueryAllTracesA(ptr long ptr)
+@ stdcall QueryAllTracesW(ptr long ptr)
 # @ stub QueryRecoveryAgentsOnEncryptedFile
 @ stdcall QueryServiceConfig2A(long long ptr long ptr)
 @ stdcall QueryServiceConfig2W(long long ptr long ptr)
