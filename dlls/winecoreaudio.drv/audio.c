@@ -144,30 +144,35 @@ static CoreAudio_Device CoreAudio_DefaultDevice;
 
 typedef struct {
     volatile int                state;      /* one of the WINE_WS_ manifest constants */
-    CoreAudio_Device            *cadev;
     WAVEOPENDESC                waveDesc;
     WORD                        wFlags;
     PCMWAVEFORMAT               format;
     DWORD                       woID;
     AudioUnit                   audioUnit;
     AudioStreamBasicDescription streamDescription;
-    
-    WAVEOUTCAPSW                caps;
-    char                        interface_name[32];
-    LPWAVEHDR			lpQueuePtr;		/* start of queued WAVEHDRs (waiting to be notified) */
-    LPWAVEHDR			lpPlayPtr;		/* start of not yet fully played buffers */
-    DWORD			dwPartialOffset;	/* Offset of not yet written bytes in lpPlayPtr */
-    
-    LPWAVEHDR			lpLoopPtr;              /* pointer of first buffer in loop, if any */
-    DWORD			dwLoops;		/* private copy of loop counter */
-    
-    DWORD			dwPlayedTotal;		/* number of bytes actually played since opening */
+
+    LPWAVEHDR                   lpQueuePtr;             /* start of queued WAVEHDRs (waiting to be notified) */
+    LPWAVEHDR                   lpPlayPtr;              /* start of not yet fully played buffers */
+    DWORD                       dwPartialOffset;        /* Offset of not yet written bytes in lpPlayPtr */
+
+    LPWAVEHDR                   lpLoopPtr;              /* pointer of first buffer in loop, if any */
+    DWORD                       dwLoops;                /* private copy of loop counter */
+
+    DWORD                       dwPlayedTotal;          /* number of bytes actually played since opening */
 
     OSSpinLock                  lock;         /* synchronization stuff */
+} WINE_WAVEOUT_INSTANCE;
+
+typedef struct {
+    CoreAudio_Device            *cadev;
+    WAVEOUTCAPSW                caps;
+    char                        interface_name[32];
 
     BOOL trace_on;
     BOOL warn_on;
     BOOL err_on;
+
+    WINE_WAVEOUT_INSTANCE       instance;
 } WINE_WAVEOUT;
 
 typedef struct {
@@ -215,9 +220,9 @@ static WINE_WAVEIN  WInDev    [MAX_WAVEINDRV];
 static HANDLE hThread = NULL; /* Track the thread we create so we can clean it up later */
 static CFMessagePortRef Port_SendToMessageThread;
 
-static void wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo);
-static void wodHelper_NotifyDoneForList(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr);
-static void wodHelper_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force);
+static void wodHelper_PlayPtrNext(WINE_WAVEOUT_INSTANCE* wwo);
+static void wodHelper_NotifyDoneForList(WINE_WAVEOUT_INSTANCE* wwo, LPWAVEHDR lpWaveHdr);
+static void wodHelper_NotifyCompletions(WINE_WAVEOUT_INSTANCE* wwo, BOOL force);
 static void widHelper_NotifyCompletions(WINE_WAVEIN* wwi);
 
 extern int AudioUnit_CreateDefaultAudioUnit(void *wwo, AudioUnit *au);
@@ -313,7 +318,7 @@ static CFDataRef wodMessageHandler(CFMessagePortRef port_ReceiveInMessageThread,
     {
         case kWaveOutNotifyCompletionsMessage:
             buffer = (UInt32 *) CFDataGetBytePtr(data);
-            wodHelper_NotifyCompletions(&WOutDev[buffer[0]], FALSE);
+            wodHelper_NotifyCompletions(&WOutDev[buffer[0]].instance, FALSE);
             break;
         case kWaveInNotifyCompletionsMessage:
             buffer = (UInt32 *) CFDataGetBytePtr(data);
@@ -348,7 +353,7 @@ static DWORD WINAPI messageThread(LPVOID p)
 * 			wodSendNotifyCompletionsMessage			[internal]
 *   Call from AudioUnit IO thread can't use Wine debug channels.
 */
-static void wodSendNotifyCompletionsMessage(WINE_WAVEOUT* wwo)
+static void wodSendNotifyCompletionsMessage(WINE_WAVEOUT_INSTANCE* wwo)
 {
     CFDataRef data;
     UInt32 buffer;
@@ -577,9 +582,9 @@ LONG CoreAudio_WaveInit(void)
         static const WCHAR wszWaveOutFormat[] =
             {'C','o','r','e','A','u','d','i','o',' ','W','a','v','e','O','u','t',' ','%','d',0};
 
-        WOutDev[i].state = WINE_WS_CLOSED;
+        WOutDev[i].instance.state = WINE_WS_CLOSED;
         WOutDev[i].cadev = &CoreAudio_DefaultDevice; 
-        WOutDev[i].woID = i;
+        WOutDev[i].instance.woID = i;
         
         memset(&WOutDev[i].caps, 0, sizeof(WOutDev[i].caps));
         
@@ -616,7 +621,7 @@ LONG CoreAudio_WaveInit(void)
         WOutDev[i].caps.dwFormats |= WAVE_FORMAT_1M16;
         WOutDev[i].caps.dwFormats |= WAVE_FORMAT_1S16;
 
-        WOutDev[i].lock = 0; /* initialize the mutex */
+        WOutDev[i].instance.lock = 0; /* initialize the mutex */
     }
 
     /* FIXME: implement sample rate conversion on input */
@@ -757,7 +762,7 @@ void CoreAudio_WaveRelease(void)
 /**************************************************************************
 * 			wodNotifyClient			[internal]
 */
-static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
+static DWORD wodNotifyClient(WINE_WAVEOUT_INSTANCE* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
     TRACE_(coreaudio)("wMsg = 0x%04x dwParm1 = %04x dwParam2 = %04x\n", wMsg, dwParam1, dwParam2);
 
@@ -807,7 +812,7 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 */
 static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
-    WINE_WAVEOUT*	wwo;
+    WINE_WAVEOUT_INSTANCE*      wwo;
     DWORD               ret;
     AudioStreamBasicDescription streamFormat;
     AudioUnit           audioUnit = NULL;
@@ -862,7 +867,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
      *   mark the device as ready.
      *   Otherwise, clean up and mark the device as available.
      */
-    wwo = &WOutDev[wDevID];
+    wwo = &WOutDev[wDevID].instance;
     if (!OSSpinLockTry(&wwo->lock))
         return MMSYSERR_ALLOCATED;
 
@@ -938,9 +943,9 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     
     wwo->dwPlayedTotal = 0;
 
-    wwo->trace_on = TRACE_ON(wave);
-    wwo->warn_on  = WARN_ON(wave);
-    wwo->err_on   = ERR_ON(wave);
+    WOutDev[wDevID].trace_on = TRACE_ON(wave);
+    WOutDev[wDevID].warn_on  = WARN_ON(wave);
+    WOutDev[wDevID].err_on   = ERR_ON(wave);
 
     OSSpinLockUnlock(&wwo->lock);
     
@@ -970,7 +975,7 @@ error:
 static DWORD wodClose(WORD wDevID)
 {
     DWORD		ret = MMSYSERR_NOERROR;
-    WINE_WAVEOUT*	wwo;
+    WINE_WAVEOUT_INSTANCE* wwo;
     
     TRACE("(%u);\n", wDevID);
     
@@ -980,7 +985,7 @@ static DWORD wodClose(WORD wDevID)
         return MMSYSERR_BADDEVICEID;
     }
     
-    wwo = &WOutDev[wDevID];
+    wwo = &WOutDev[wDevID].instance;
     OSSpinLockLock(&wwo->lock);
     if (wwo->lpQueuePtr)
     {
@@ -1071,10 +1076,10 @@ static DWORD wodUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 *
 * Check if the new waveheader is the beginning of a loop, and set up
 * state if so.
-* This is called with the WAVEOUT lock held.
+* This is called with the WAVEOUT_INSTANCE lock held.
 * Call from AudioUnit IO thread can't use Wine debug channels.
 */
-static void wodHelper_CheckForLoopBegin(WINE_WAVEOUT* wwo)
+static void wodHelper_CheckForLoopBegin(WINE_WAVEOUT_INSTANCE* wwo)
 {
     LPWAVEHDR lpWaveHdr = wwo->lpPlayPtr;
 
@@ -1082,12 +1087,12 @@ static void wodHelper_CheckForLoopBegin(WINE_WAVEOUT* wwo)
     {
         if (wwo->lpLoopPtr)
         {
-            if (wwo->warn_on)
+            if (WOutDev[wwo->woID].warn_on)
                 fprintf(stderr, "warn:winecoreaudio:wodHelper_CheckForLoopBegin Already in a loop. Discarding loop on this header (%p)\n", lpWaveHdr);
         }
         else
         {
-            if (wwo->trace_on)
+            if (WOutDev[wwo->woID].trace_on)
                 fprintf(stderr, "trace:winecoreaudio:wodHelper_CheckForLoopBegin Starting loop (%dx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
 
             wwo->lpLoopPtr = lpWaveHdr;
@@ -1103,10 +1108,10 @@ static void wodHelper_CheckForLoopBegin(WINE_WAVEOUT* wwo)
 * 				wodHelper_PlayPtrNext	        [internal]
 *
 * Advance the play pointer to the next waveheader, looping if required.
-* This is called with the WAVEOUT lock held.
+* This is called with the WAVEOUT_INSTANCE lock held.
 * Call from AudioUnit IO thread can't use Wine debug channels.
 */
-static void wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo)
+static void wodHelper_PlayPtrNext(WINE_WAVEOUT_INSTANCE* wwo)
 {
     BOOL didLoopBack = FALSE;
 
@@ -1136,13 +1141,13 @@ static void wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo)
 }
 
 /* Send the "done" notification for each WAVEHDR in a list.  The list must be
- * free-standing.  It should not be part of a device's queue.
- * This function must be called with the WAVEOUT lock *not* held.  Furthermore,
- * it does not lock it, itself.  That's because the callback to the application
- * may prompt the application to operate on the device, and we don't want to
- * deadlock.
+ * free-standing.  It should not be part of a device instance's queue.
+ * This function must be called with the WAVEOUT_INSTANCE lock *not* held.
+ * Furthermore, it does not lock it, itself.  That's because the callback to the
+ * application may prompt the application to operate on the device, and we don't
+ * want to deadlock.
  */
-static void wodHelper_NotifyDoneForList(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
+static void wodHelper_NotifyDoneForList(WINE_WAVEOUT_INSTANCE* wwo, LPWAVEHDR lpWaveHdr)
 {
     while (lpWaveHdr)
     {
@@ -1159,7 +1164,7 @@ static void wodHelper_NotifyDoneForList(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
 
 /* if force is TRUE then notify the client that all the headers were completed
  */
-static void wodHelper_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
+static void wodHelper_NotifyCompletions(WINE_WAVEOUT_INSTANCE* wwo, BOOL force)
 {
     LPWAVEHDR lpFirstDoneWaveHdr = NULL;
 
@@ -1216,7 +1221,7 @@ static void wodHelper_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
 static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
     LPWAVEHDR*wh;
-    WINE_WAVEOUT *wwo;
+    WINE_WAVEOUT_INSTANCE *wwo;
     
     TRACE("(%u, %p, %lu, %08X);\n", wDevID, lpWaveHdr, (unsigned long)lpWaveHdr->dwBufferLength, dwSize);
     
@@ -1227,7 +1232,7 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
         return MMSYSERR_BADDEVICEID;
     }
     
-    wwo = &WOutDev[wDevID];
+    wwo = &WOutDev[wDevID].instance;
     
     if (lpWaveHdr->lpData == NULL || !(lpWaveHdr->dwFlags & WHDR_PREPARED))
     {
@@ -1287,14 +1292,14 @@ static DWORD wodPause(WORD wDevID)
      * state with the Audio Unit still running, that's harmless because the
      * render callback will just produce silence.
      */
-    status = AudioOutputUnitStop(WOutDev[wDevID].audioUnit);
+    status = AudioOutputUnitStop(WOutDev[wDevID].instance.audioUnit);
     if (status)
         WARN("AudioOutputUnitStop return %s\n", wine_dbgstr_fourcc(status));
 
-    OSSpinLockLock(&WOutDev[wDevID].lock);
-    if (WOutDev[wDevID].state == WINE_WS_PLAYING)
-        WOutDev[wDevID].state = WINE_WS_PAUSED;
-    OSSpinLockUnlock(&WOutDev[wDevID].lock);
+    OSSpinLockLock(&WOutDev[wDevID].instance.lock);
+    if (WOutDev[wDevID].instance.state == WINE_WS_PLAYING)
+        WOutDev[wDevID].instance.state = WINE_WS_PAUSED;
+    OSSpinLockUnlock(&WOutDev[wDevID].instance.lock);
 
     return MMSYSERR_NOERROR;
 }
@@ -1322,12 +1327,12 @@ static DWORD wodRestart(WORD wDevID)
      * Although we can be in PAUSED state with the Audio Unit still running,
      * that's harmless because the render callback will just produce silence.
      */
-    OSSpinLockLock(&WOutDev[wDevID].lock);
-    if (WOutDev[wDevID].state == WINE_WS_PAUSED)
-        WOutDev[wDevID].state = WINE_WS_PLAYING;
-    OSSpinLockUnlock(&WOutDev[wDevID].lock);
+    OSSpinLockLock(&WOutDev[wDevID].instance.lock);
+    if (WOutDev[wDevID].instance.state == WINE_WS_PAUSED)
+        WOutDev[wDevID].instance.state = WINE_WS_PLAYING;
+    OSSpinLockUnlock(&WOutDev[wDevID].instance.lock);
 
-    status = AudioOutputUnitStart(WOutDev[wDevID].audioUnit);
+    status = AudioOutputUnitStart(WOutDev[wDevID].instance.audioUnit);
     if (status) {
         ERR("AudioOutputUnitStart return %s\n", wine_dbgstr_fourcc(status));
         return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
@@ -1341,7 +1346,7 @@ static DWORD wodRestart(WORD wDevID)
 */
 static DWORD wodReset(WORD wDevID)
 {
-    WINE_WAVEOUT* wwo;
+    WINE_WAVEOUT_INSTANCE* wwo;
     OSStatus status;
     LPWAVEHDR lpSavedQueuePtr;
 
@@ -1353,7 +1358,7 @@ static DWORD wodReset(WORD wDevID)
         return MMSYSERR_BADDEVICEID;
     }
 
-    wwo = &WOutDev[wDevID];
+    wwo = &WOutDev[wDevID].instance;
 
     OSSpinLockLock(&wwo->lock);
 
@@ -1394,7 +1399,7 @@ static DWORD wodReset(WORD wDevID)
 */
 static DWORD wodBreakLoop(WORD wDevID)
 {
-    WINE_WAVEOUT* wwo;
+    WINE_WAVEOUT_INSTANCE* wwo;
 
     TRACE("(%u);\n", wDevID);
 
@@ -1404,7 +1409,7 @@ static DWORD wodBreakLoop(WORD wDevID)
         return MMSYSERR_BADDEVICEID;
     }
 
-    wwo = &WOutDev[wDevID];
+    wwo = &WOutDev[wDevID].instance;
 
     OSSpinLockLock(&wwo->lock);
 
@@ -1425,7 +1430,7 @@ static DWORD wodBreakLoop(WORD wDevID)
 static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
     DWORD		val;
-    WINE_WAVEOUT*	wwo;
+    WINE_WAVEOUT_INSTANCE* wwo;
 
     TRACE("(%u, %p, %u);\n", wDevID, lpTime, uSize);
     
@@ -1438,11 +1443,11 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
     /* if null pointer to time structure return error */
     if (lpTime == NULL)	return MMSYSERR_INVALPARAM;
     
-    wwo = &WOutDev[wDevID];
+    wwo = &WOutDev[wDevID].instance;
     
-    OSSpinLockLock(&WOutDev[wDevID].lock);
+    OSSpinLockLock(&wwo->lock);
     val = wwo->dwPlayedTotal;
-    OSSpinLockUnlock(&WOutDev[wDevID].lock);
+    OSSpinLockUnlock(&wwo->lock);
     
     return bytes_to_mmtime(lpTime, val, &wwo->format);
 }
@@ -1463,7 +1468,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
     
     TRACE("(%u, %p);\n", wDevID, lpdwVol);
 
-    AudioUnit_GetVolume(WOutDev[wDevID].audioUnit, &left, &right); 
+    AudioUnit_GetVolume(WOutDev[wDevID].instance.audioUnit, &left, &right);
 
     *lpdwVol = ((WORD) left * 0xFFFFl) + (((WORD) right * 0xFFFFl) << 16);
     
@@ -1489,7 +1494,7 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
     
     TRACE("(%u, %08x);\n", wDevID, dwParam);
 
-    AudioUnit_SetVolume(WOutDev[wDevID].audioUnit, left, right); 
+    AudioUnit_SetVolume(WOutDev[wDevID].instance.audioUnit, left, right);
 
     return MMSYSERR_NOERROR;
 }
@@ -1647,7 +1652,7 @@ OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon,
                                      AudioBufferList *ioData)
 {
     UInt32 buffer;
-    WINE_WAVEOUT *wwo = (WINE_WAVEOUT *) inRefCon;
+    WINE_WAVEOUT_INSTANCE* wwo = (WINE_WAVEOUT_INSTANCE*)inRefCon;
     int needNotify = 0;
 
     unsigned int dataNeeded = ioData->mBuffers[0].mDataByteSize;
