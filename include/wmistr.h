@@ -33,4 +33,28 @@ typedef enum
     WMI_EXECUTE_METHOD = 9,
 } WMIDPREQUESTCODE;
 
+typedef struct _WNODE_HEADER
+{
+    ULONG BufferSize;
+    ULONG ProvicerId;
+    union
+    {
+        ULONG64 HistoricalContext;
+        struct
+        {
+            ULONG Version;
+            ULONG Linkage;
+        } DUMMYSTRUCTNAME;
+
+    } DUMMYUNIONNAME;
+    union
+    {
+        HANDLE KernelHandle;
+        LARGE_INTEGER TimeStamp;
+    } DUMMYUNIONNAME2;
+    GUID Guid;
+    ULONG ClientContext;
+    ULONG Flags;
+} WNODE_HEADER, *PWNODE_HEADER;
+
 #endif /* _WMISTR_ */
