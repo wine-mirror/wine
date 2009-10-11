@@ -50,6 +50,7 @@
 #include "wine/unicode.h"
 #include "wine/library.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
 
@@ -99,7 +100,7 @@ AudioUnitRender(                    AudioUnit                       ci,
 * | (any)   | pause()	   | PAUSING	   | PAUSED		       	     |
 * | PAUSED  | restart()    | RESTARTING    | PLAYING                         |
 * | (any)   | reset()	   | RESETTING     | PLAYING		      	     |
-* | (any)   | close()	   | CLOSING	   | CLOSED		      	     |
+* | (any)   | close()	   | CLOSING	   | <deallocated>	      	     |
 * +---------+-------------+---------------+---------------------------------+
 */
 
@@ -107,7 +108,7 @@ AudioUnitRender(                    AudioUnit                       ci,
 #define	WINE_WS_PLAYING   0 /* for waveOut: lpPlayPtr == NULL -> stopped */
 #define	WINE_WS_PAUSED    1
 #define	WINE_WS_STOPPED   2 /* Not used for waveOut */
-#define WINE_WS_CLOSED    3
+#define WINE_WS_CLOSED    3 /* Not used for waveOut */
 #define WINE_WS_OPENING   4
 #define WINE_WS_CLOSING   5
 
@@ -143,6 +144,8 @@ typedef struct tagCoreAudio_Device {
 static CoreAudio_Device CoreAudio_DefaultDevice;
 
 typedef struct {
+    struct list                 entry;
+
     volatile int                state;      /* one of the WINE_WS_ manifest constants */
     WAVEOPENDESC                waveDesc;
     WORD                        wFlags;
@@ -172,7 +175,8 @@ typedef struct {
     BOOL warn_on;
     BOOL err_on;
 
-    WINE_WAVEOUT_INSTANCE       instance;
+    struct list                 instances;
+    OSSpinLock                  lock;         /* guards the instances list */
 } WINE_WAVEOUT;
 
 typedef struct {
@@ -578,9 +582,8 @@ LONG CoreAudio_WaveInit(void)
         static const WCHAR wszWaveOutFormat[] =
             {'C','o','r','e','A','u','d','i','o',' ','W','a','v','e','O','u','t',' ','%','d',0};
 
-        WOutDev[i].instance.state = WINE_WS_CLOSED;
+        list_init(&WOutDev[i].instances);
         WOutDev[i].cadev = &CoreAudio_DefaultDevice; 
-        WOutDev[i].instance.woID = i;
         
         memset(&WOutDev[i].caps, 0, sizeof(WOutDev[i].caps));
         
@@ -617,7 +620,7 @@ LONG CoreAudio_WaveInit(void)
         WOutDev[i].caps.dwFormats |= WAVE_FORMAT_1M16;
         WOutDev[i].caps.dwFormats |= WAVE_FORMAT_1S16;
 
-        WOutDev[i].instance.lock = 0; /* initialize the mutex */
+        WOutDev[i].lock = 0; /* initialize the mutex */
     }
 
     /* FIXME: implement sample rate conversion on input */
@@ -856,31 +859,23 @@ static DWORD wodOpen(WORD wDevID, WINE_WAVEOUT_INSTANCE** pInstance, LPWAVEOPEND
     }
 
     /* We proceed in three phases:
-     * o Reserve the device for us, marking it as unavailable (not closed)
+     * o Allocate the device instance, marking it as opening
      * o Create, configure, and start the Audio Unit.  To avoid deadlock,
      *   this has to be done without holding wwo->lock.
-     * o If that was successful, finish setting up our device info and
-     *   mark the device as ready.
-     *   Otherwise, clean up and mark the device as available.
+     * o If that was successful, finish setting up our instance and add it
+     *   to the device's list.
+     *   Otherwise, clean up and deallocate the instance.
      */
-    wwo = &WOutDev[wDevID].instance;
-    if (!OSSpinLockTry(&wwo->lock))
-        return MMSYSERR_ALLOCATED;
+    wwo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wwo));
+    if (!wwo)
+        return MMSYSERR_NOMEM;
 
-    if (wwo->state != WINE_WS_CLOSED)
-    {
-        OSSpinLockUnlock(&wwo->lock);
-        return MMSYSERR_ALLOCATED;
-    }
-
+    wwo->woID = wDevID;
     wwo->state = WINE_WS_OPENING;
-    wwo->audioUnit = NULL;
-    OSSpinLockUnlock(&wwo->lock);
-
 
     if (!AudioUnit_CreateDefaultAudioUnit((void *) wwo, &audioUnit))
     {
-        ERR("CoreAudio_CreateDefaultAudioUnit(%p) failed\n", wwo);
+        ERR("CoreAudio_CreateDefaultAudioUnit(0x%04x) failed\n", wDevID);
         ret = MMSYSERR_ERROR;
         goto error;
     }
@@ -914,7 +909,8 @@ static DWORD wodOpen(WORD wDevID, WINE_WAVEOUT_INSTANCE** pInstance, LPWAVEOPEND
      * lock before calling it and the callback grabs wwo->lock.  This would
      * deadlock if we were holding wwo->lock.
      * Also, the callback has to safely do nothing in that case, because
-     * wwo hasn't been completely filled out, yet. */
+     * wwo hasn't been completely filled out, yet. This is assured by state
+     * being WINE_WS_OPENING. */
     ret = AudioOutputUnitStart(audioUnit);
     if (ret)
     {
@@ -936,14 +932,16 @@ static DWORD wodOpen(WORD wDevID, WINE_WAVEOUT_INSTANCE** pInstance, LPWAVEOPEND
 
     wwo->waveDesc = *lpDesc;
     copyFormat(lpDesc->lpFormat, &wwo->format);
-    
-    wwo->dwPlayedTotal = 0;
 
     WOutDev[wDevID].trace_on = TRACE_ON(wave);
     WOutDev[wDevID].warn_on  = WARN_ON(wave);
     WOutDev[wDevID].err_on   = ERR_ON(wave);
 
     OSSpinLockUnlock(&wwo->lock);
+
+    OSSpinLockLock(&WOutDev[wDevID].lock);
+    list_add_head(&WOutDev[wDevID].instances, &wwo->entry);
+    OSSpinLockUnlock(&WOutDev[wDevID].lock);
 
     *pInstance = wwo;
     TRACE("opened instance %p\n", wwo);
@@ -962,8 +960,8 @@ error:
 
     OSSpinLockLock(&wwo->lock);
     assert(wwo->state == WINE_WS_OPENING);
-    wwo->state = WINE_WS_CLOSED;
-    OSSpinLockUnlock(&wwo->lock);
+    /* OSSpinLockUnlock(&wwo->lock); *//* No need, about to free */
+    HeapFree(GetProcessHeap(), 0, wwo);
 
     return ret;
 }
@@ -1014,12 +1012,13 @@ static DWORD wodClose(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo)
             return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
         }  
         
-        OSSpinLockLock(&wwo->lock);
-        assert(wwo->state == WINE_WS_CLOSING);
-        wwo->state = WINE_WS_CLOSED; /* mark the device as closed */
-        OSSpinLockUnlock(&wwo->lock);
+        OSSpinLockLock(&WOutDev[wDevID].lock);
+        list_remove(&wwo->entry);
+        OSSpinLockUnlock(&WOutDev[wDevID].lock);
 
         ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
+
+        HeapFree(GetProcessHeap(), 0, wwo);
     }
     
     return ret;
@@ -1353,8 +1352,7 @@ static DWORD wodReset(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo)
 
     OSSpinLockLock(&wwo->lock);
 
-    if (wwo->state == WINE_WS_CLOSED || wwo->state == WINE_WS_CLOSING ||
-        wwo->state == WINE_WS_OPENING)
+    if (wwo->state == WINE_WS_CLOSING || wwo->state == WINE_WS_OPENING)
     {
         OSSpinLockUnlock(&wwo->lock);
         WARN("resetting a closed device\n");
