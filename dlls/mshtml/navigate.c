@@ -1160,14 +1160,27 @@ void channelbsc_set_channel(nsChannelBSC *This, nsChannel *channel, nsIStreamLis
     }
 }
 
-void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
-                          LPCWSTR uri, nsIInputStream *post_data_stream, DWORD hlnf)
+HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url,
+        nsIInputStream *post_data_stream, DWORD hlnf)
 {
+    IHlinkFrame *hlink_frame;
+    IServiceProvider *sp;
     BSCallback *callback;
     IBindCtx *bindctx;
     IMoniker *mon;
     IHlink *hlink;
-    HRESULT hr;
+    HRESULT hres;
+
+    hres = IOleClientSite_QueryInterface(doc->doc_obj->client, &IID_IServiceProvider,
+            (void**)&sp);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IServiceProvider_QueryService(sp, &IID_IHlinkFrame, &IID_IHlinkFrame,
+            (void**)&hlink_frame);
+    IServiceProvider_Release(sp);
+    if(FAILED(hres))
+        return hres;
 
     callback = &create_channelbsc(NULL)->bsc;
 
@@ -1178,21 +1191,15 @@ void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
               debugstr_an(callback->post_data, callback->post_data_len));
     }
 
-    hr = CreateAsyncBindCtx(0, STATUSCLB(callback), NULL, &bindctx);
-    if (FAILED(hr)) {
-        IBindStatusCallback_Release(STATUSCLB(callback));
-        return;
-    }
+    hres = CreateAsyncBindCtx(0, STATUSCLB(callback), NULL, &bindctx);
+    if(SUCCEEDED(hres))
+        hres = CoCreateInstance(&CLSID_StdHlink, NULL, CLSCTX_INPROC_SERVER,
+                &IID_IHlink, (LPVOID*)&hlink);
 
-    hr = CoCreateInstance(&CLSID_StdHlink, NULL, CLSCTX_INPROC_SERVER, &IID_IHlink, (LPVOID*)&hlink);
-    if (FAILED(hr)) {
-        IBindCtx_Release(bindctx);
-        IBindStatusCallback_Release(STATUSCLB(callback));
-        return;
-    }
+    if(SUCCEEDED(hres))
+        hres = CreateURLMoniker(NULL, url, &mon);
 
-    hr = CreateURLMoniker(NULL, uri, &mon);
-    if (SUCCEEDED(hr)) {
+    if(SUCCEEDED(hres)) {
         IHlink_SetMonikerReference(hlink, 0, mon, NULL);
 
         if(hlnf & HLNF_OPENINNEWWINDOW) {
@@ -1200,11 +1207,13 @@ void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
             IHlink_SetTargetFrameName(hlink, wszBlank); /* FIXME */
         }
 
-        IHlinkFrame_Navigate(hlink_frame, hlnf, bindctx, STATUSCLB(callback), hlink);
+        hres = IHlinkFrame_Navigate(hlink_frame, hlnf, bindctx, STATUSCLB(callback), hlink);
 
         IMoniker_Release(mon);
     }
 
+    IHlinkFrame_Release(hlink_frame);
     IBindCtx_Release(bindctx);
     IBindStatusCallback_Release(STATUSCLB(callback));
+    return hres;
 }

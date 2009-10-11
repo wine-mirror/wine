@@ -128,7 +128,6 @@ static BOOL exec_shldocvw_67(HTMLDocumentObj *doc, LPCWSTR url)
 static BOOL before_async_open(nsChannel *channel, NSContainer *container)
 {
     HTMLDocumentObj *doc = container->doc;
-    IServiceProvider *service_provider;
     DWORD hlnf = 0;
     LPCWSTR uri;
     HRESULT hres;
@@ -154,23 +153,8 @@ static BOOL before_async_open(nsChannel *channel, NSContainer *container)
     if(!hlnf && !exec_shldocvw_67(doc, uri))
         return FALSE;
 
-    hres = IOleClientSite_QueryInterface(doc->client, &IID_IServiceProvider,
-                                         (void**)&service_provider);
-    if(SUCCEEDED(hres)) {
-        IHlinkFrame *hlink_frame;
-
-        hres = IServiceProvider_QueryService(service_provider, &IID_IHlinkFrame,
-                                             &IID_IHlinkFrame, (void**)&hlink_frame);
-        IServiceProvider_Release(service_provider);
-        if(SUCCEEDED(hres)) {
-            hlink_frame_navigate(&doc->basedoc, hlink_frame, uri, channel->post_data_stream, hlnf);
-            IHlinkFrame_Release(hlink_frame);
-
-            return FALSE;
-        }
-    }
-
-    return TRUE;
+    hres = hlink_frame_navigate(&doc->basedoc, uri, channel->post_data_stream, hlnf);
+    return hres != S_OK;
 }
 
 #define NSCHANNEL_THIS(iface) DEFINE_THIS(nsChannel, HttpChannel, iface)
