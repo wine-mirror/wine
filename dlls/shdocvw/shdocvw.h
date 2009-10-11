@@ -252,6 +252,8 @@ HRESULT register_class_object(BOOL);
 HRESULT get_typeinfo(ITypeInfo**);
 DWORD register_iexplore(BOOL);
 
+const char *debugstr_variant(const VARIANT*);
+
 /* memory allocation functions */
 
 static inline void *heap_alloc(size_t len)
