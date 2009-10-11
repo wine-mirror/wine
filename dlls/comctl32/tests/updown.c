@@ -217,14 +217,9 @@ static HWND create_parent_window(void)
                           GetDesktopWindow(), NULL, GetModuleHandleA(NULL), NULL);
 }
 
-struct subclass_info
-{
-    WNDPROC oldproc;
-};
-
 static LRESULT WINAPI edit_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -239,40 +234,32 @@ static LRESULT WINAPI edit_subclass_proc(HWND hwnd, UINT message, WPARAM wParam,
     add_message(sequences, EDIT_SEQ_INDEX, &msg);
 
     defwndproc_counter++;
-    ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
+    ret = CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
     defwndproc_counter--;
     return ret;
 }
 
 static HWND create_edit_control(void)
 {
-    struct subclass_info *info;
+    WNDPROC oldproc;
     RECT rect;
-
-    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
-    if (!info)
-        return NULL;
 
     GetClientRect(parent_wnd, &rect);
     edit = CreateWindowExA(0, "EDIT", NULL, WS_CHILD | WS_BORDER | WS_VISIBLE,
                            0, 0, rect.right, rect.bottom,
                            parent_wnd, NULL, GetModuleHandleA(NULL), NULL);
-    if (!edit)
-    {
-        HeapFree(GetProcessHeap(), 0, info);
-        return NULL;
-    }
+    if (!edit) return NULL;
 
-    info->oldproc = (WNDPROC)SetWindowLongPtrA(edit, GWLP_WNDPROC,
-                                            (LONG_PTR)edit_subclass_proc);
-    SetWindowLongPtrA(edit, GWLP_USERDATA, (LONG_PTR)info);
+    oldproc = (WNDPROC)SetWindowLongPtrA(edit, GWLP_WNDPROC,
+                                         (LONG_PTR)edit_subclass_proc);
+    SetWindowLongPtrA(edit, GWLP_USERDATA, (LONG_PTR)oldproc);
 
     return edit;
 }
 
 static LRESULT WINAPI updown_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -287,7 +274,7 @@ static LRESULT WINAPI updown_subclass_proc(HWND hwnd, UINT message, WPARAM wPara
     add_message(sequences, UPDOWN_SEQ_INDEX, &msg);
 
     defwndproc_counter++;
-    ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
+    ret = CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
     defwndproc_counter--;
 
     return ret;
@@ -295,27 +282,19 @@ static LRESULT WINAPI updown_subclass_proc(HWND hwnd, UINT message, WPARAM wPara
 
 static HWND create_updown_control(DWORD style)
 {
-    struct subclass_info *info;
+    WNDPROC oldproc;
     HWND updown;
     RECT rect;
-
-    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
-    if (!info)
-        return NULL;
 
     GetClientRect(parent_wnd, &rect);
     updown = CreateUpDownControl(WS_CHILD | WS_BORDER | WS_VISIBLE | UDS_ALIGNRIGHT | style,
                                  0, 0, rect.right, rect.bottom, parent_wnd, 1, GetModuleHandleA(NULL), edit,
                                  100, 0, 50);
-    if (!updown)
-    {
-        HeapFree(GetProcessHeap(), 0, info);
-        return NULL;
-    }
+    if (!updown) return NULL;
 
-    info->oldproc = (WNDPROC)SetWindowLongPtrA(updown, GWLP_WNDPROC,
-                                            (LONG_PTR)updown_subclass_proc);
-    SetWindowLongPtrA(updown, GWLP_USERDATA, (LONG_PTR)info);
+    oldproc = (WNDPROC)SetWindowLongPtrA(updown, GWLP_WNDPROC,
+                                         (LONG_PTR)updown_subclass_proc);
+    SetWindowLongPtrA(updown, GWLP_USERDATA, (LONG_PTR)oldproc);
 
     return updown;
 }

@@ -396,14 +396,9 @@ static WCHAR pszUniTestW[] = {'T','S','T',0};
     ok(res == i, "Got Item Count as %d\n", res);\
 }
 
-struct subclass_info
-{
-    WNDPROC oldproc;
-};
-
 static LRESULT WINAPI header_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -417,7 +412,7 @@ static LRESULT WINAPI header_subclass_proc(HWND hwnd, UINT message, WPARAM wPara
     add_message(sequences, HEADER_SEQ_INDEX, &msg);
 
     defwndproc_counter++;
-    ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
+    ret = CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
     defwndproc_counter--;
 
     return ret;
@@ -487,7 +482,7 @@ static HWND create_custom_parent_window(void)
 
 static HWND create_custom_header_control(HWND hParent, BOOL preloadHeaderItems)
 {
-    struct subclass_info *info;
+    WNDPROC oldproc;
     HWND childHandle;
     HDLAYOUT hlayout;
     RECT rectwin;
@@ -505,9 +500,6 @@ static HWND create_custom_header_control(HWND hParent, BOOL preloadHeaderItems)
 
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
-    if (!info)
-         return NULL;
 
     childHandle = CreateWindowEx(0, WC_HEADER, NULL,
                            WS_CHILD|WS_BORDER|WS_VISIBLE|HDS_BUTTONS|HDS_HORZ,
@@ -534,9 +526,9 @@ static HWND create_custom_header_control(HWND hParent, BOOL preloadHeaderItems)
     SetWindowPos(childHandle, winpos.hwndInsertAfter, winpos.x, winpos.y,
                  winpos.cx, winpos.cy, 0);
 
-    info->oldproc = (WNDPROC)SetWindowLongPtrA(childHandle, GWLP_WNDPROC,
-                                               (LONG_PTR)header_subclass_proc);
-    SetWindowLongPtrA(childHandle, GWLP_USERDATA, (LONG_PTR)info);
+    oldproc = (WNDPROC)SetWindowLongPtrA(childHandle, GWLP_WNDPROC,
+                                         (LONG_PTR)header_subclass_proc);
+    SetWindowLongPtrA(childHandle, GWLP_USERDATA, (LONG_PTR)oldproc);
     return childHandle;
 }
 

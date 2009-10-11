@@ -121,14 +121,9 @@ static const struct message test_dtm_set_and_get_system_time_seq[] = {
     { 0 }
 };
 
-struct subclass_info
-{
-    WNDPROC oldproc;
-};
-
 static LRESULT WINAPI datetime_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -143,7 +138,7 @@ static LRESULT WINAPI datetime_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
     add_message(sequences, DATETIME_SEQ_INDEX, &msg);
 
     defwndproc_counter++;
-    ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
+    ret = CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
     defwndproc_counter--;
 
     return ret;
@@ -151,12 +146,8 @@ static LRESULT WINAPI datetime_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
 
 static HWND create_datetime_control(DWORD style)
 {
-    struct subclass_info *info;
+    WNDPROC oldproc;
     HWND hWndDateTime = NULL;
-
-    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
-    if (!info)
-        return NULL;
 
     hWndDateTime = CreateWindowEx(0,
         DATETIMEPICK_CLASS,
@@ -168,14 +159,11 @@ static HWND create_datetime_control(DWORD style)
         NULL,
         NULL);
 
-    if (!hWndDateTime) {
-        HeapFree(GetProcessHeap(), 0, info);
-        return NULL;
-    }
+    if (!hWndDateTime) return NULL;
 
-    info->oldproc = (WNDPROC)SetWindowLongPtrA(hWndDateTime, GWLP_WNDPROC,
-                                            (LONG_PTR)datetime_subclass_proc);
-    SetWindowLongPtrA(hWndDateTime, GWLP_USERDATA, (LONG_PTR)info);
+    oldproc = (WNDPROC)SetWindowLongPtrA(hWndDateTime, GWLP_WNDPROC,
+                                         (LONG_PTR)datetime_subclass_proc);
+    SetWindowLongPtrA(hWndDateTime, GWLP_USERDATA, (LONG_PTR)oldproc);
 
     return hWndDateTime;
 }

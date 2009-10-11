@@ -39,11 +39,6 @@
 #define PARENT_SEQ_INDEX    0
 #define MONTHCAL_SEQ_INDEX  1
 
-struct subclass_info
-{
-    WNDPROC oldproc;
-};
-
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
 static HWND parent_wnd;
@@ -581,7 +576,7 @@ static HWND create_parent_window(void)
 
 static LRESULT WINAPI monthcal_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -602,7 +597,7 @@ static LRESULT WINAPI monthcal_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
     }
 
     defwndproc_counter++;
-    ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
+    ret = CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
     defwndproc_counter--;
 
     return ret;
@@ -610,12 +605,8 @@ static LRESULT WINAPI monthcal_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
 
 static HWND create_monthcal_control(DWORD style)
 {
-    struct subclass_info *info;
+    WNDPROC oldproc;
     HWND hwnd;
-
-    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
-    if (!info)
-        return NULL;
 
     hwnd = CreateWindowEx(0,
                     MONTHCAL_CLASS,
@@ -624,15 +615,11 @@ static HWND create_monthcal_control(DWORD style)
                     0, 0, 300, 400,
                     parent_wnd, NULL, GetModuleHandleA(NULL), NULL);
 
-    if (!hwnd)
-    {
-        HeapFree(GetProcessHeap(), 0, info);
-        return NULL;
-    }
+    if (!hwnd) return NULL;
 
-    info->oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
-                                            (LONG_PTR)monthcal_subclass_proc);
-    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)info);
+    oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
+                                        (LONG_PTR)monthcal_subclass_proc);
+    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)oldproc);
 
     SendMessage(hwnd, WM_SETFONT, (WPARAM)GetStockObject(SYSTEM_FONT), 0);
 

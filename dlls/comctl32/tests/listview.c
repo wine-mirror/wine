@@ -271,11 +271,6 @@ static const struct message lvs_ex_transparentbkgnd_seq[] = {
     { 0 }
 };
 
-struct subclass_info
-{
-    WNDPROC oldproc;
-};
-
 static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
@@ -421,7 +416,7 @@ static HWND create_parent_window(BOOL Unicode)
 
 static LRESULT WINAPI listview_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -445,20 +440,16 @@ static LRESULT WINAPI listview_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
     add_message(sequences, LISTVIEW_SEQ_INDEX, &msg);
 
     defwndproc_counter++;
-    ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
+    ret = CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
     defwndproc_counter--;
     return ret;
 }
 
 static HWND create_listview_control(DWORD style)
 {
-    struct subclass_info *info;
+    WNDPROC oldproc;
     HWND hwnd;
     RECT rect;
-
-    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
-    if (!info)
-        return NULL;
 
     GetClientRect(hwndparent, &rect);
     hwnd = CreateWindowExA(0, WC_LISTVIEW, "foo",
@@ -467,15 +458,11 @@ static HWND create_listview_control(DWORD style)
                            hwndparent, NULL, GetModuleHandleA(NULL), NULL);
     ok(hwnd != NULL, "gle=%d\n", GetLastError());
 
-    if (!hwnd)
-    {
-        HeapFree(GetProcessHeap(), 0, info);
-        return NULL;
-    }
+    if (!hwnd) return NULL;
 
-    info->oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
-                                            (LONG_PTR)listview_subclass_proc);
-    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)info);
+    oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
+                                        (LONG_PTR)listview_subclass_proc);
+    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)oldproc);
 
     return hwnd;
 }
@@ -483,14 +470,10 @@ static HWND create_listview_control(DWORD style)
 /* unicode listview window with specified parent */
 static HWND create_listview_controlW(DWORD style, HWND parent)
 {
-    struct subclass_info *info;
+    WNDPROC oldproc;
     HWND hwnd;
     RECT rect;
     static const WCHAR nameW[] = {'f','o','o',0};
-
-    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
-    if (!info)
-        return NULL;
 
     GetClientRect(parent, &rect);
     hwnd = CreateWindowExW(0, WC_LISTVIEWW, nameW,
@@ -499,28 +482,20 @@ static HWND create_listview_controlW(DWORD style, HWND parent)
                            parent, NULL, GetModuleHandleW(NULL), NULL);
     ok(hwnd != NULL, "gle=%d\n", GetLastError());
 
-    if (!hwnd)
-    {
-        HeapFree(GetProcessHeap(), 0, info);
-        return NULL;
-    }
+    if (!hwnd) return NULL;
 
-    info->oldproc = (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC,
-                                            (LONG_PTR)listview_subclass_proc);
-    SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LONG_PTR)info);
+    oldproc = (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC,
+                                        (LONG_PTR)listview_subclass_proc);
+    SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LONG_PTR)oldproc);
 
     return hwnd;
 }
 
 static HWND create_custom_listview_control(DWORD style)
 {
-    struct subclass_info *info;
+    WNDPROC oldproc;
     HWND hwnd;
     RECT rect;
-
-    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
-    if (!info)
-        return NULL;
 
     GetClientRect(hwndparent, &rect);
     hwnd = CreateWindowExA(0, WC_LISTVIEW, "foo",
@@ -529,22 +504,18 @@ static HWND create_custom_listview_control(DWORD style)
                            hwndparent, NULL, GetModuleHandleA(NULL), NULL);
     ok(hwnd != NULL, "gle=%d\n", GetLastError());
 
-    if (!hwnd)
-    {
-        HeapFree(GetProcessHeap(), 0, info);
-        return NULL;
-    }
+    if (!hwnd) return NULL;
 
-    info->oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
-                                            (LONG_PTR)listview_subclass_proc);
-    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)info);
+    oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
+                                         (LONG_PTR)listview_subclass_proc);
+    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)oldproc);
 
     return hwnd;
 }
 
 static LRESULT WINAPI header_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -560,31 +531,27 @@ static LRESULT WINAPI header_subclass_proc(HWND hwnd, UINT message, WPARAM wPara
     add_message(sequences, LISTVIEW_SEQ_INDEX, &msg);
 
     defwndproc_counter++;
-    ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
+    ret = CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
     defwndproc_counter--;
     return ret;
 }
 
 static HWND subclass_header(HWND hwndListview)
 {
-    struct subclass_info *info;
+    WNDPROC oldproc;
     HWND hwnd;
 
-    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
-    if (!info)
-        return NULL;
-
     hwnd = ListView_GetHeader(hwndListview);
-    info->oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
-                                            (LONG_PTR)header_subclass_proc);
-    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)info);
+    oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
+                                         (LONG_PTR)header_subclass_proc);
+    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)oldproc);
 
     return hwnd;
 }
 
 static LRESULT WINAPI editbox_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -606,24 +573,20 @@ static LRESULT WINAPI editbox_subclass_proc(HWND hwnd, UINT message, WPARAM wPar
     }
 
     defwndproc_counter++;
-    ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
+    ret = CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
     defwndproc_counter--;
     return ret;
 }
 
 static HWND subclass_editbox(HWND hwndListview)
 {
-    struct subclass_info *info;
+    WNDPROC oldproc;
     HWND hwnd;
 
-    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
-    if (!info)
-        return NULL;
-
     hwnd = (HWND)SendMessage(hwndListview, LVM_GETEDITCONTROL, 0, 0);
-    info->oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
-                                            (LONG_PTR)editbox_subclass_proc);
-    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)info);
+    oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
+                                         (LONG_PTR)editbox_subclass_proc);
+    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)oldproc);
 
     return hwnd;
 }

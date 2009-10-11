@@ -364,11 +364,6 @@ static const struct message ignore_selection_test_seq[] = {
     {0}
 };
 
-struct subclass_info
-{
-    WNDPROC oldproc;
-};
-
 static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
     static LONG defwndproc_counter = 0;
     LRESULT ret;
@@ -430,7 +425,7 @@ static HWND create_parent_window(void){
 }
 
 static LRESULT WINAPI trackbar_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
-    struct subclass_info *info = (struct subclass_info *) GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -445,20 +440,16 @@ static LRESULT WINAPI trackbar_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
     add_message(sequences, TRACKBAR_SEQ_INDEX, &msg);
 
     defwndproc_counter++;
-    ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
+    ret = CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
     defwndproc_counter--;
 
     return ret;
 }
 
 static HWND create_trackbar(DWORD style, HWND parent){
-    struct subclass_info *info;
     HWND hWndTrack;
+    WNDPROC oldproc;
     RECT rect;
-
-    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
-    if (!info)
-        return NULL;
 
     GetClientRect(parent, &rect);
     hWndTrack = CreateWindowEx(
@@ -466,15 +457,10 @@ static HWND create_trackbar(DWORD style, HWND parent){
       rect.right,rect.bottom, 100, 50,
       parent, NULL,GetModuleHandleA(NULL) ,NULL);
 
-    if (!hWndTrack)
-    {
-        HeapFree(GetProcessHeap(), 0, info);
-        return NULL;
-    }
+    if (!hWndTrack) return NULL;
 
-    info->oldproc = (WNDPROC)SetWindowLongPtrA(hWndTrack, GWLP_WNDPROC, (LONG_PTR)trackbar_subclass_proc);
-
-    SetWindowLongPtrA(hWndTrack, GWLP_USERDATA, (LONG_PTR)info);
+    oldproc = (WNDPROC)SetWindowLongPtrA(hWndTrack, GWLP_WNDPROC, (LONG_PTR)trackbar_subclass_proc);
+    SetWindowLongPtrA(hWndTrack, GWLP_USERDATA, (LONG_PTR)oldproc);
 
     return hWndTrack;
 }

@@ -374,14 +374,9 @@ static HWND createParentWindow(void)
                           GetDesktopWindow(), NULL, GetModuleHandleA(NULL), NULL);
 }
 
-struct subclass_info
-{
-    WNDPROC oldproc;
-};
-
 static LRESULT WINAPI tabSubclassProcess(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -406,7 +401,7 @@ static LRESULT WINAPI tabSubclassProcess(HWND hwnd, UINT message, WPARAM wParam,
     }
 
     defwndproc_counter++;
-    ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
+    ret = CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
     defwndproc_counter--;
 
     return ret;
@@ -416,13 +411,9 @@ static HWND createFilledTabControl(HWND parent_wnd, DWORD style, DWORD mask, INT
 {
     HWND tabHandle;
     TCITEM tcNewTab;
-    struct subclass_info *info;
+    WNDPROC oldproc;
     RECT rect;
     INT i;
-
-    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
-    if (!info)
-        return NULL;
 
     GetClientRect(parent_wnd, &rect);
 
@@ -435,8 +426,8 @@ static HWND createFilledTabControl(HWND parent_wnd, DWORD style, DWORD mask, INT
 
     assert(tabHandle);
 
-    info->oldproc = (WNDPROC)SetWindowLongPtrA(tabHandle, GWLP_WNDPROC, (LONG_PTR)tabSubclassProcess);
-    SetWindowLongPtrA(tabHandle, GWLP_USERDATA, (LONG_PTR)info);
+    oldproc = (WNDPROC)SetWindowLongPtrA(tabHandle, GWLP_WNDPROC, (LONG_PTR)tabSubclassProcess);
+    SetWindowLongPtrA(tabHandle, GWLP_USERDATA, (LONG_PTR)oldproc);
 
     tcNewTab.mask = mask;
 
