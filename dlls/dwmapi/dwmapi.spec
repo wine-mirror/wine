@@ -30,7 +30,7 @@
 @ stdcall DwmGetColorizationColor(ptr long)
 @ stub DwmGetCompositionTimingInfo
 @ stdcall DwmGetGraphicsStreamClient(long ptr)
-@ stub DwmGetGraphicsStreamTransformHint
+@ stdcall DwmGetGraphicsStreamTransformHint(long ptr)
 @ stdcall DwmGetTransportAttributes(ptr ptr ptr)
 @ stub DwmGetWindowAttribute
 @ stdcall DwmIsCompositionEnabled(ptr)

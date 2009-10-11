@@ -149,3 +149,13 @@ HRESULT WINAPI DwmEnableMMCSS(BOOL enableMMCSS)
 
     return S_OK;
 }
+
+/**********************************************************************
+ *           DwmGetGraphicsStreamTransformHint         (DWMAPI.@)
+ */
+HRESULT WINAPI DwmGetGraphicsStreamTransformHint(UINT uIndex, MilMatrix3x2D *pTransform)
+{
+    FIXME("(%d, %p) stub\n", uIndex, pTransform);
+
+    return E_NOTIMPL;
+}
