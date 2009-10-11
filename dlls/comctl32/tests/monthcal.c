@@ -219,7 +219,7 @@ static const struct message monthcal_todaylink_seq[] = {
     { MCM_SETTODAY, sent|wparam, 0},
     { WM_PAINT, sent|wparam|lparam|defwinproc, 0, 0},
     { MCM_GETTODAY, sent|wparam, 0},
-    { WM_LBUTTONDOWN, sent|wparam|lparam, MK_LBUTTON, MAKELONG(70, 370)},
+    { WM_LBUTTONDOWN, sent|wparam, MK_LBUTTON},
     { WM_CAPTURECHANGED, sent|wparam|lparam|defwinproc, 0, 0},
     { WM_PAINT, sent|wparam|lparam|defwinproc, 0, 0},
     { MCM_GETCURSEL, sent|wparam, 0},
@@ -1181,54 +1181,46 @@ static void test_monthcal_todaylink(void)
 {
     MCHITTESTINFO mchit;
     SYSTEMTIME st_test, st_new;
-    BOOL error = FALSE;
     UINT res;
     HWND hwnd;
+    RECT r;
 
     memset(&mchit, 0, sizeof(MCHITTESTINFO));
 
     hwnd = create_monthcal_control(0);
 
+    res = SendMessage(hwnd, MCM_GETMINREQRECT, 0, (LPARAM)&r);
+    MoveWindow(hwnd, 0, 0, r.right, r.bottom, FALSE);
+
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
-    /* (70, 370) is in active area - today link */
+    /* hit active area - today link */
     mchit.cbSize = MCHITTESTINFO_V1_SIZE;
-    mchit.pt.x = 70;
-    mchit.pt.y = 370;
+    mchit.pt.x = r.right / 14;
+    mchit.pt.y = 18 * r.bottom / 19;
     res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(70, mchit.pt.x);
-    expect(370, mchit.pt.y);
+    expect(r.right / 14, mchit.pt.x);
+    expect(18 * r.bottom / 19, mchit.pt.y);
     expect(mchit.uHit, res);
-    todo_wine {expect(MCHT_TODAYLINK, res);}
-    if (70 != mchit.pt.x || 370 != mchit.pt.y || mchit.uHit != res
-        || MCHT_TODAYLINK != res)
-        error = TRUE;
+    expect(MCHT_TODAYLINK, res);
 
     st_test.wDay = 1;
     st_test.wMonth = 1;
     st_test.wYear = 2005;
-    memset(&st_new, 0, sizeof(SYSTEMTIME));
 
     SendMessage(hwnd, MCM_SETTODAY, 0, (LPARAM)&st_test);
 
+    memset(&st_new, 0, sizeof(st_new));
     res = SendMessage(hwnd, MCM_GETTODAY, 0, (LPARAM)&st_new);
     expect(1, res);
     expect(1, st_new.wDay);
     expect(1, st_new.wMonth);
     expect(2005, st_new.wYear);
-    if (1 != res || 1 != st_new.wDay || 1 != st_new.wMonth
-        || 2005 != st_new.wYear)
-        error = TRUE;
 
-    if (error) {
-        skip("cannot perform today link test\n");
-        return;
-    }
-
-    res = SendMessage(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELONG(70, 370));
+    res = SendMessage(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELONG(mchit.pt.x, mchit.pt.y));
     expect(0, res);
 
-    memset(&st_new, 0, sizeof(SYSTEMTIME));
+    memset(&st_new, 0, sizeof(st_new));
     res = SendMessage(hwnd, MCM_GETCURSEL, 0, (LPARAM)&st_new);
     expect(1, res);
     expect(1, st_new.wDay);
