@@ -11777,6 +11777,44 @@ interface IHTMLDocument5 : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLDocument6 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510417-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLDocument6 : IDispatch
+{
+    [propget, id(DISPID_IHTMLDOCUMENT6_COMPATIBLE)]
+    HRESULT compatible([retval, out] IHTMLDocumentCompatibleInfoCollection **p);
+
+    [propget, id(DISPID_IHTMLDOCUMENT6_DOCUMENTMODE)]
+    HRESULT documentMode([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT6_ONSTORAGE), displaybind, bindable]
+    HRESULT onstorage([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT6_ONSTORAGE), displaybind, bindable]
+    HRESULT onstorage([out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT6_ONSTORAGECOMMIT), displaybind, bindable]
+    HRESULT onstoragecommit([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT6_ONSTORAGECOMMIT), displaybind, bindable]
+    HRESULT onstoragecommit([out] VARIANT *p);
+
+    [id(DISPID_IHTMLDOCUMENT6_IE8_GETELEMENTBYID)]
+    HRESULT getElementById(
+        [in] BSTR bstrId,
+        [retval, out] IHTMLElement2 **p);
+
+    [id(DISPID_IHTMLDOCUMENT6_UPDATESETTINGS)]
+    HRESULT updateSettings();
+}
+
+/*****************************************************************************
  *    DispHTMLDocument dispinterface
  */
 [
@@ -12352,6 +12390,30 @@ methods:
     [propget, id(DISPID_IHTMLDOCUMENT5_COMPATMODE)]
     BSTR compatMode();
 
+    [propget, id(DISPID_IHTMLDOCUMENT6_COMPATIBLE)]
+    IHTMLDocumentCompatibleInfoCollection *compatible();
+
+    [propget, id(DISPID_IHTMLDOCUMENT6_DOCUMENTMODE)]
+    VARIANT documentMode();
+
+    [propput, id(DISPID_IHTMLDOCUMENT6_ONSTORAGE), displaybind, bindable]
+    void onstorage(VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT6_ONSTORAGE), displaybind, bindable]
+    VARIANT onstorage();
+
+    [propput, id(DISPID_IHTMLDOCUMENT6_ONSTORAGECOMMIT), displaybind, bindable]
+    void onstoragecommit(VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT6_ONSTORAGECOMMIT), displaybind, bindable]
+    VARIANT onstoragecommit();
+
+    [id(DISPID_IHTMLDOCUMENT6_IE8_GETELEMENTBYID)]
+    IHTMLElement2 *ie8_getElementById([in] BSTR bstrId);
+
+    [id(DISPID_IHTMLDOCUMENT6_UPDATESETTINGS)]
+    void updateSettings();
+
     WINE_HTMLDOMNODE_DISPINTERFACE_DECL;
 }
 
@@ -12370,6 +12432,7 @@ coclass HTMLDocument
                       interface IHTMLDocument3;
                       interface IHTMLDocument4;
                       interface IHTMLDocument5;
+                      interface IHTMLDocument6;
                       interface IHTMLDOMNode;
                       interface IHTMLDOMNode2;
 }
