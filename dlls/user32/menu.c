@@ -92,8 +92,8 @@ typedef struct {
 
 /* Popup menu structure */
 typedef struct {
+    struct user_object obj;
     WORD        wFlags;       /* Menu flags (MF_POPUP, MF_SYSMENU) */
-    WORD        wMagic;       /* Magic number */
     WORD	Width;        /* Width of the whole menu */
     WORD	Height;       /* Height of the whole menu */
     UINT        nItems;       /* Number of items in the menu */
@@ -299,12 +299,15 @@ static void do_debug_print_menuitem(const char *prefix, const MENUITEM *mp,
  */
 static POPUPMENU *MENU_GetMenu(HMENU hMenu)
 {
-    POPUPMENU *menu = USER_HEAP_LIN_ADDR(hMenu);
-    if (!menu || menu->wMagic != MENU_MAGIC)
+    POPUPMENU *menu = get_user_handle_ptr( hMenu, USER_MENU );
+
+    if (menu == OBJ_OTHER_PROCESS)
     {
-        WARN("invalid menu handle=%p, ptr=%p, magic=%x\n", hMenu, menu, menu? menu->wMagic:0);
-        menu = NULL;
+        WARN( "other process menu %p?\n", hMenu);
+        return NULL;
     }
+    if (menu) release_user_handle_ptr( menu );  /* FIXME! */
+    else WARN("invalid menu handle=%p\n", hMenu);
     return menu;
 }
 
@@ -4028,13 +4031,12 @@ HMENU WINAPI CreateMenu(void)
 {
     HMENU hMenu;
     LPPOPUPMENU menu;
-    if (!(hMenu = USER_HEAP_ALLOC( sizeof(POPUPMENU) ))) return 0;
-    menu = USER_HEAP_LIN_ADDR(hMenu);
 
-    ZeroMemory(menu, sizeof(POPUPMENU));
-    menu->wMagic = MENU_MAGIC;
+    if (!(menu = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*menu) ))) return 0;
     menu->FocusedItem = NO_SELECTED_ITEM;
     menu->bTimeToHide = FALSE;
+
+    if (!(hMenu = alloc_user_handle( &menu->obj, USER_MENU ))) HeapFree( GetProcessHeap(), 0, menu );
 
     TRACE("return %p\n", hMenu );
 
@@ -4047,14 +4049,12 @@ HMENU WINAPI CreateMenu(void)
  */
 BOOL WINAPI DestroyMenu( HMENU hMenu )
 {
-    LPPOPUPMENU lppop = MENU_GetMenu(hMenu);
+    LPPOPUPMENU lppop;
 
     TRACE("(%p)\n", hMenu);
 
-
-    if (!lppop) return FALSE;
-
-    lppop->wMagic = 0;  /* Mark it as destroyed */
+    if (!(lppop = free_user_handle( hMenu, USER_MENU ))) return FALSE;
+    if (lppop == OBJ_OTHER_PROCESS) return FALSE;
 
     /* DestroyMenu should not destroy system menu popup owner */
     if ((lppop->wFlags & (MF_POPUP | MF_SYSMENU)) == MF_POPUP && lppop->hWnd)
@@ -4074,7 +4074,7 @@ BOOL WINAPI DestroyMenu( HMENU hMenu )
         }
         HeapFree( GetProcessHeap(), 0, lppop->items );
     }
-    USER_HEAP_FREE( hMenu );
+    HeapFree( GetProcessHeap(), 0, lppop );
     return TRUE;
 }
 

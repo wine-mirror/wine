@@ -173,6 +173,7 @@ struct hook16_queue_info;
 enum user_obj_type
 {
     USER_WINDOW = 1,  /* window */
+    USER_MENU,        /* menu */
     USER_DWP          /* DeferWindowPos structure */
 };
 
