@@ -438,15 +438,49 @@ static HRESULT WINAPI HTMLWindow2_get_navigator(IHTMLWindow2 *iface, IOmNavigato
 static HRESULT WINAPI HTMLWindow2_put_name(IHTMLWindow2 *iface, BSTR v)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString name_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_Init(&name_str, v);
+    nsres = nsIDOMWindow_SetName(This->nswindow, &name_str);
+    nsAString_Finish(&name_str);
+    if(NS_FAILED(nsres))
+        ERR("SetName failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_get_name(IHTMLWindow2 *iface, BSTR *p)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString name_str;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&name_str, NULL);
+    nsres = nsIDOMWindow_GetName(This->nswindow, &name_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *name;
+
+        nsAString_GetData(&name_str, &name);
+        if(*name) {
+            *p = SysAllocString(name);
+            hres = *p ? S_OK : E_OUTOFMEMORY;
+        }else {
+            *p = NULL;
+            hres = S_OK;
+        }
+    }else {
+        ERR("GetName failed: %08x\n", nsres);
+        hres = E_FAIL;
+    }
+    nsAString_Finish(&name_str);
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLWindow2_get_parent(IHTMLWindow2 *iface, IHTMLWindow2 **p)

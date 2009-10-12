@@ -656,6 +656,20 @@ static IHTMLDocument2 *_get_owner_doc(unsigned line, IUnknown *unk)
     return doc;
 }
 
+#define get_doc_window(d) _get_doc_window(__LINE__,d)
+static IHTMLWindow2 *_get_doc_window(unsigned line, IHTMLDocument2 *doc)
+{
+    IHTMLWindow2 *window;
+    HRESULT hres;
+
+    window = NULL;
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok_(__FILE__,line)(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
+    ok_(__FILE__,line)(window != NULL, "window == NULL\n");
+
+    return window;
+}
+
 #define clone_node(n,d) _clone_node(__LINE__,n,d)
 static IHTMLDOMNode *_clone_node(unsigned line, IUnknown *unk, VARIANT_BOOL deep)
 {
@@ -808,6 +822,35 @@ static IHTMLDocument2 *_get_doc_node(unsigned line, IHTMLDocument2 *doc)
 
     return ret;
 }
+
+#define test_window_name(d,e) _test_window_name(__LINE__,d,e)
+static void _test_window_name(unsigned line, IHTMLWindow2 *window, const char *exname)
+{
+    BSTR name;
+    HRESULT hres;
+
+    hres = IHTMLWindow2_get_name(window, &name);
+    ok_(__FILE__,line)(hres == S_OK, "get_name failed: %08x\n", hres);
+    if(exname)
+        ok_(__FILE__,line)(!strcmp_wa(name, exname), "name = %s\n", wine_dbgstr_w(name));
+    else
+        ok_(__FILE__,line)(!name, "name = %s\n", wine_dbgstr_w(name));
+}
+
+#define set_window_name(w,n) _set_window_name(__LINE__,w,n)
+static void _set_window_name(unsigned line, IHTMLWindow2 *window, const char *name)
+{
+    BSTR str;
+    HRESULT hres;
+
+    str = a2bstr(name);
+    hres = IHTMLWindow2_put_name(window, str);
+    SysFreeString(str);
+    ok_(__FILE__,line)(hres == S_OK, "put_name failed: %08x\n", hres);
+
+    _test_window_name(line, window, name);
+}
+
 
 static void test_get_set_attr(IHTMLDocument2 *doc)
 {
@@ -4369,6 +4412,9 @@ static void test_window(IHTMLDocument2 *doc)
     ok(!strcmp_wa(str, "[object]"), "toString returned %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
+    test_window_name(window, NULL);
+    set_window_name(window, "test");
+
     IHTMLWindow2_Release(window);
 }
 
@@ -4738,6 +4784,7 @@ static void test_elems(IHTMLDocument2 *doc)
     IHTMLDOMChildrenCollection *child_col;
     IHTMLElement *elem, *elem2, *elem3;
     IHTMLDOMNode *node, *node2;
+    IHTMLWindow2 *window;
     IDispatch *disp;
     LONG type;
     HRESULT hres;
@@ -5151,6 +5198,11 @@ static void test_elems(IHTMLDocument2 *doc)
     IHTMLElement_Release(elem);
 
     IHTMLDocument3_Release(doc3);
+
+    window = get_doc_window(doc);
+    test_window_name(window, NULL);
+    set_window_name(window, "test name");
+    IHTMLWindow2_Release(window);
 }
 
 static void test_create_elems(IHTMLDocument2 *doc)
