@@ -128,7 +128,7 @@ static HRESULT WINAPI stillimagew_UnregisterLaunchApplication(IStillImageW *ifac
 {
     stillimage *This = impl_from_StillImageW(iface);
     FIXME("(%p, %s): stub\n", This, debugstr_w(pwszAppName));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI stillimagew_EnableHwNotifications(IStillImageW *iface, LPCWSTR pwszDeviceName,
