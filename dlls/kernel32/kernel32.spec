@@ -707,7 +707,7 @@
 @ stub HeapExtend
 @ stdcall HeapFree(long long long) ntdll.RtlFreeHeap
 @ stdcall HeapLock(long)
-# @ stub HeapQueryInformation
+@ stdcall HeapQueryInformation(long long ptr long ptr)
 @ stub HeapQueryTagW
 @ stdcall HeapReAlloc(long long ptr long) ntdll.RtlReAllocateHeap
 @ stub HeapSetFlags

@@ -1961,3 +1961,26 @@ ULONG WINAPI RtlGetProcessHeaps( ULONG count, HANDLE *heaps )
     RtlLeaveCriticalSection( &processHeap->critSection );
     return total;
 }
+
+/***********************************************************************
+ *           RtlQueryHeapInformation    (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlQueryHeapInformation( HANDLE heap, HEAP_INFORMATION_CLASS info_class,
+                                         PVOID info, SIZE_T size_in, PSIZE_T size_out)
+{
+    switch (info_class)
+    {
+    case HeapCompatibilityInformation:
+        if (size_out) *size_out = sizeof(ULONG);
+
+        if (size_in < sizeof(ULONG))
+            return STATUS_BUFFER_TOO_SMALL;
+
+        *(ULONG *)info = 0; /* standard heap */
+        return STATUS_SUCCESS;
+
+    default:
+        FIXME("Unknown heap information class %u\n", info_class);
+        return STATUS_INVALID_INFO_CLASS;
+    }
+}

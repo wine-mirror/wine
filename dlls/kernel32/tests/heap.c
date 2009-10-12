@@ -28,6 +28,8 @@
 
 #define MAGIC_DEAD 0xdeadbeef
 
+static BOOL (WINAPI *pHeapQueryInformation)(HANDLE, HEAP_INFORMATION_CLASS, PVOID, SIZE_T, PSIZE_T);
+
 static SIZE_T resize_9x(SIZE_T size)
 {
     DWORD dwSizeAligned = (size + 3) & ~3;
@@ -410,6 +412,58 @@ static void test_obsolete_flags(void)
     }
 }
 
+static void test_HeapQueryInformation(void)
+{
+    ULONG info;
+    SIZE_T size;
+    BOOL ret;
+
+    pHeapQueryInformation = (void *)GetProcAddress(GetModuleHandle("kernel32.dll"), "HeapQueryInformation");
+    if (!pHeapQueryInformation)
+    {
+        win_skip("HeapQueryInformation is not available\n");
+        return;
+    }
+
+    if (0) /* crashes under XP */
+    {
+        size = 0;
+        ret = pHeapQueryInformation(0,
+                                HeapCompatibilityInformation,
+                                &info, sizeof(info), &size);
+        size = 0;
+        ret = pHeapQueryInformation(GetProcessHeap(),
+                                HeapCompatibilityInformation,
+                                NULL, sizeof(info), &size);
+    }
+
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = pHeapQueryInformation(GetProcessHeap(),
+                                HeapCompatibilityInformation,
+                                NULL, 0, &size);
+    ok(!ret, "HeapQueryInformation should fail\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "expected ERROR_INSUFFICIENT_BUFFER got %u\n", GetLastError());
+    ok(size == sizeof(ULONG), "expected 4, got %lu\n", size);
+
+    SetLastError(0xdeadbeef);
+    ret = pHeapQueryInformation(GetProcessHeap(),
+                                HeapCompatibilityInformation,
+                                NULL, 0, NULL);
+    ok(!ret, "HeapQueryInformation should fail\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "expected ERROR_INSUFFICIENT_BUFFER got %u\n", GetLastError());
+
+    info = 0xdeadbeaf;
+    SetLastError(0xdeadbeef);
+    ret = pHeapQueryInformation(GetProcessHeap(),
+                                HeapCompatibilityInformation,
+                                &info, sizeof(info) + 1, NULL);
+    ok(ret, "HeapQueryInformation error %u\n", GetLastError());
+    ok(info == 0 || info == 1 || info == 2, "expected 0, 1 or 2, got %u\n", info);
+}
+
 START_TEST(heap)
 {
     test_heap();
@@ -422,4 +476,5 @@ START_TEST(heap)
     test_sized_HeapReAlloc(1, (1 << 20));
     test_sized_HeapReAlloc((1 << 20), (2 << 20));
     test_sized_HeapReAlloc((1 << 20), 1);
+    test_HeapQueryInformation();
 }

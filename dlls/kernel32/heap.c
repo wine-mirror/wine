@@ -291,6 +291,14 @@ SIZE_T WINAPI HeapSize( HANDLE heap, DWORD flags, LPCVOID ptr )
     return RtlSizeHeap( heap, flags, ptr );
 }
 
+BOOL WINAPI HeapQueryInformation( HANDLE heap, HEAP_INFORMATION_CLASS info_class,
+                                  PVOID info, SIZE_T size_in, PSIZE_T size_out)
+{
+    NTSTATUS ret = RtlQueryHeapInformation( heap, info_class, info, size_in, size_out );
+    if (ret) SetLastError( RtlNtStatusToDosError(ret) );
+    return !ret;
+}
+
 BOOL WINAPI HeapSetInformation( HANDLE heap, HEAP_INFORMATION_CLASS infoclass, PVOID info, SIZE_T size)
 {
     FIXME("%p %d %p %ld\n", heap, infoclass, info, size );

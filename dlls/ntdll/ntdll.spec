@@ -768,7 +768,7 @@
 @ stdcall RtlQueryAtomInAtomTable(ptr long ptr ptr ptr ptr)
 @ stdcall RtlQueryDepthSList(ptr)
 @ stdcall RtlQueryEnvironmentVariable_U(ptr ptr ptr)
-@ stub RtlQueryHeapInformation
+@ stdcall RtlQueryHeapInformation(long long ptr long ptr)
 @ stdcall RtlQueryInformationAcl(ptr ptr long long)
 @ stdcall RtlQueryInformationActivationContext(long long ptr long ptr long ptr)
 @ stub RtlQueryInformationActiveActivationContext
