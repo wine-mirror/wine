@@ -261,8 +261,8 @@ static HRESULT WINAPI fw_profile_get_GloballyOpenPorts(
 {
     fw_profile *This = impl_from_INetFwProfile( iface );
 
-    FIXME("%p, %p\n", This, openPorts);
-    return E_NOTIMPL;
+    TRACE("%p, %p\n", This, openPorts);
+    return NetFwOpenPorts_create( NULL, (void **)openPorts );
 }
 
 static HRESULT WINAPI fw_profile_get_Services(

@@ -21,3 +21,4 @@ HRESULT NetFwPolicy_create(IUnknown *, LPVOID *);
 HRESULT NetFwProfile_create(IUnknown *, LPVOID *);
 HRESULT NetFwAuthorizedApplication_create(IUnknown *, LPVOID *);
 HRESULT NetFwAuthorizedApplications_create(IUnknown *, LPVOID *);
+HRESULT NetFwOpenPorts_create(IUnknown *, LPVOID *);

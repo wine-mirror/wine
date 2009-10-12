@@ -10,6 +10,7 @@ C_SRCS = \
 	hnetcfg.c \
 	manager.c \
 	policy.c \
+	port.c \
 	profile.c \
 	regsvr.c
 
