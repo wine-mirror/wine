@@ -96,9 +96,28 @@ static const WCHAR onreadystatechangeW[] = {'o','n','r','e','a','d','y','s','t',
 static const WCHAR selectstartW[] = {'s','e','l','e','c','t','s','t','a','r','t',0};
 static const WCHAR onselectstartW[] = {'o','n','s','e','l','e','c','t','s','t','a','r','t',0};
 
+static const WCHAR HTMLEventsW[] = {'H','T','M','L','E','v','e','n','t','s',0};
+static const WCHAR KeyboardEventW[] = {'K','e','y','b','o','a','r','d','E','v','e','n','t',0};
+static const WCHAR MouseEventW[] = {'M','o','u','s','e','E','v','e','n','t',0};
+
+enum {
+    EVENTT_NONE,
+    EVENTT_HTML,
+    EVENTT_KEY,
+    EVENTT_MOUSE
+};
+
+static const WCHAR *event_types[] = {
+    NULL,
+    HTMLEventsW,
+    KeyboardEventW,
+    MouseEventW
+};
+
 typedef struct {
     LPCWSTR name;
     LPCWSTR attr_name;
+    DWORD type;
     DWORD flags;
 } event_info_t;
 
@@ -107,24 +126,24 @@ typedef struct {
 #define EVENT_FORWARDBODY        0x0004
 
 static const event_info_t event_info[] = {
-    {beforeunloadW,      onbeforeunloadW,      EVENT_DEFAULTLISTENER|EVENT_FORWARDBODY},
-    {blurW,              onblurW,              EVENT_DEFAULTLISTENER},
-    {changeW,            onchangeW,            EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {clickW,             onclickW,             EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {dblclickW,          ondblclickW,          EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {dragW,              ondragW,              0},
-    {dragstartW,         ondragstartW,         0},
-    {focusW,             onfocusW,             EVENT_DEFAULTLISTENER},
-    {keydownW,           onkeydownW,           EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {keyupW,             onkeyupW,             EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {loadW,              onloadW,              0},
-    {mousedownW,         onmousedownW,         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {mouseoutW,          onmouseoutW,          EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {mouseoverW,         onmouseoverW,         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {mouseupW,           onmouseupW,           EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {pasteW,             onpasteW,             0},
-    {readystatechangeW,  onreadystatechangeW,  0},
-    {selectstartW,       onselectstartW,       0}
+    {beforeunloadW,      onbeforeunloadW,      EVENTT_NONE,  EVENT_DEFAULTLISTENER|EVENT_FORWARDBODY},
+    {blurW,              onblurW,              EVENTT_HTML,  EVENT_DEFAULTLISTENER},
+    {changeW,            onchangeW,            EVENTT_HTML,  EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {clickW,             onclickW,             EVENTT_MOUSE, EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {dblclickW,          ondblclickW,          EVENTT_MOUSE, EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {dragW,              ondragW,              EVENTT_MOUSE, 0},
+    {dragstartW,         ondragstartW,         EVENTT_MOUSE, 0},
+    {focusW,             onfocusW,             EVENTT_HTML,  EVENT_DEFAULTLISTENER},
+    {keydownW,           onkeydownW,           EVENTT_KEY,   EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {keyupW,             onkeyupW,             EVENTT_KEY,   EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {loadW,              onloadW,              EVENTT_HTML,  0},
+    {mousedownW,         onmousedownW,         EVENTT_MOUSE, EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {mouseoutW,          onmouseoutW,          EVENTT_MOUSE, EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {mouseoverW,         onmouseoverW,         EVENTT_MOUSE, EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {mouseupW,           onmouseupW,           EVENTT_MOUSE, EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {pasteW,             onpasteW,             EVENTT_NONE,  0},
+    {readystatechangeW,  onreadystatechangeW,  EVENTT_NONE,  0},
+    {selectstartW,       onselectstartW,       EVENTT_MOUSE, 0}
 };
 
 eventid_t str_to_eid(LPCWSTR str)
@@ -680,15 +699,39 @@ static IHTMLEventObj *create_event(HTMLDOMNode *target, eventid_t eid, nsIDOMEve
     HTMLEventObj *ret;
 
     ret = heap_alloc(sizeof(*ret));
+    if(!ret)
+        return NULL;
+
     ret->lpIHTMLEventObjVtbl = &HTMLEventObjVtbl;
     ret->ref = 1;
     ret->type = event_info+eid;
-    ret->target = target;
-    IHTMLDOMNode_AddRef(HTMLDOMNODE(target));
 
     ret->nsevent = nsevent;
-    if(nsevent)
+    if(nsevent) {
         nsIDOMEvent_AddRef(nsevent);
+    }else if(event_types[event_info[eid].type]) {
+        nsIDOMDocumentEvent *doc_event;
+        nsresult nsres;
+
+        nsres = nsIDOMHTMLDocument_QueryInterface(target->doc->basedoc.nsdoc, &IID_nsIDOMDocumentEvent,
+                 (void**)&doc_event);
+        if(NS_SUCCEEDED(nsres)) {
+            nsAString type_str;
+
+            nsAString_Init(&type_str, event_types[event_info[eid].type]);
+            nsres = nsIDOMDocumentEvent_CreateEvent(doc_event, &type_str, &ret->nsevent);
+            nsAString_Finish(&type_str);
+            nsIDOMDocumentEvent_Release(doc_event);
+        }
+        if(NS_FAILED(nsres)) {
+            ERR("Could not create event: %08x\n", nsres);
+            IHTMLEventObj_Release(HTMLEVENTOBJ(ret));
+            return NULL;
+        }
+    }
+
+    ret->target = target;
+    IHTMLDOMNode_AddRef(HTMLDOMNODE(target));
 
     init_dispex(&ret->dispex, (IUnknown*)HTMLEVENTOBJ(ret), &HTMLEventObj_dispex);
 

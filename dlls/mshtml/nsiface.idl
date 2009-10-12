@@ -1013,6 +1013,18 @@ interface nsIDOMDocumentView : nsISupports
 
 [
     object,
+    uuid(46b91d66-28e2-11d4-ab1e-0010830123b4),
+    local
+    /* FROZEN */
+]
+interface nsIDOMDocumentEvent : nsISupports
+{
+cpp_quote("#undef CreateEvent")
+    nsresult CreateEvent(const nsAString *eventType, nsIDOMEvent **_retval);
+}
+
+[
+    object,
     uuid(a6cf90ce-15b3-11d2-932e-00805f8add32),
     local
     /* FROZEN */
