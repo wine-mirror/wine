@@ -869,9 +869,7 @@ DWORD WINAPI GetBestRoute(DWORD dwDestAddr, DWORD dwSourceAddr, PMIB_IPFORWARDRO
           matchedBits = numShifts;
           matchedNdx = ndx;
         }
-        else if (!matchedBits && table->table[ndx].dwForwardType ==
-         MIB_IPROUTE_TYPE_INDIRECT) {
-          /* default to a default gateway */
+        else if (!matchedBits) {
           matchedNdx = ndx;
         }
       }
