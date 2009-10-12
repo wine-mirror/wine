@@ -3780,6 +3780,20 @@ static void dump_set_window_layered_info_request( const struct set_window_layere
     fprintf( stderr, ", flags=%08x", req->flags );
 }
 
+static void dump_alloc_user_handle_request( const struct alloc_user_handle_request *req )
+{
+}
+
+static void dump_alloc_user_handle_reply( const struct alloc_user_handle_reply *req )
+{
+    fprintf( stderr, " handle=%08x", req->handle );
+}
+
+static void dump_free_user_handle_request( const struct free_user_handle_request *req )
+{
+    fprintf( stderr, " handle=%08x", req->handle );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -4019,6 +4033,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_add_fd_completion_request,
     (dump_func)dump_get_window_layered_info_request,
     (dump_func)dump_set_window_layered_info_request,
+    (dump_func)dump_alloc_user_handle_request,
+    (dump_func)dump_free_user_handle_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -4259,6 +4275,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     NULL,
     (dump_func)dump_get_window_layered_info_reply,
+    NULL,
+    (dump_func)dump_alloc_user_handle_reply,
     NULL,
 };
 
@@ -4501,6 +4519,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "add_fd_completion",
     "get_window_layered_info",
     "set_window_layered_info",
+    "alloc_user_handle",
+    "free_user_handle",
 };
 
 static const struct

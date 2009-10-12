@@ -20,6 +20,7 @@
 
 #include "thread.h"
 #include "user.h"
+#include "request.h"
 
 struct user_handle
 {
@@ -163,4 +164,22 @@ void *next_user_handle( user_handle_t *handle, enum user_object type )
         entry++;
     }
     return NULL;
+}
+
+/* allocate an arbitrary user handle */
+DECL_HANDLER(alloc_user_handle)
+{
+    reply->handle = alloc_user_handle( NULL, USER_CLIENT );
+}
+
+
+/* free an arbitrary user handle */
+DECL_HANDLER(free_user_handle)
+{
+    struct user_handle *entry;
+
+    if ((entry = handle_to_entry( req->handle )) && entry->type == USER_CLIENT)
+        free_user_entry( entry );
+    else
+        set_error( STATUS_INVALID_HANDLE );
 }

@@ -3224,3 +3224,16 @@ enum message_type
     unsigned int   alpha;         /* alpha (0..255) */
     unsigned int   flags;         /* LWA_* flags */
 @END
+
+
+/* Allocate an arbitrary user handle */
+@REQ(alloc_user_handle)
+@REPLY
+    user_handle_t  handle;        /* allocated handle */
+@END
+
+
+/* Free an arbitrary user handle */
+@REQ(free_user_handle)
+    user_handle_t  handle;        /* handle to free*/
+@END
