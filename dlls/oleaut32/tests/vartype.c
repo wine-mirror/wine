@@ -4020,6 +4020,12 @@ static void test_VarCyInt(void)
   scl, sgn, hi, (LONG)(mid), (LONG)(lo), S(U(out)).scale, \
   S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres)
 
+/* expect either a positive or negative zero */
+#define EXPECTDECZERO() ok(hres == S_OK && S(U(out)).scale == 0 && \
+  (S(U(out)).sign == 0 || S(U(out)).sign == 0x80) && out.Hi32 == 0 && U1(out).Lo64 == 0, \
+  "expected zero, got (%d,%d,%d,(%x %x)) hres 0x%08x\n", \
+  S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres)
+
 #define EXPECTDECI if (i < 0) EXPECTDEC(0, 0x80, 0, -i); else EXPECTDEC(0, 0, 0, i)
 
 static void test_VarDecFromI1(void)
@@ -4263,11 +4269,11 @@ static void test_VarDecAdd(void)
 
   SETDEC(l,0,0,0,1);    SETDEC(r,0,0,0,0);    MATH2(VarDecAdd); EXPECTDEC(0,0,0,1);
   SETDEC(l,0,0,0,1);    SETDEC(r,0,0,0,1);    MATH2(VarDecAdd); EXPECTDEC(0,0,0,2);
-  SETDEC(l,0,0,0,1);    SETDEC(r,0,0x80,0,1); MATH2(VarDecAdd); EXPECTDEC(0,0x80,0,0); /* '-0'! */
+  SETDEC(l,0,0,0,1);    SETDEC(r,0,0x80,0,1); MATH2(VarDecAdd); EXPECTDECZERO();
   SETDEC(l,0,0,0,1);    SETDEC(r,0,0x80,0,2); MATH2(VarDecAdd); EXPECTDEC(0,0x80,0,1);
 
   SETDEC(l,0,0x80,0,0); SETDEC(r,0,0,0,1);    MATH2(VarDecAdd); EXPECTDEC(0,0,0,1);
-  SETDEC(l,0,0x80,0,1); SETDEC(r,0,0,0,1);    MATH2(VarDecAdd); EXPECTDEC(0,0,0,0);
+  SETDEC(l,0,0x80,0,1); SETDEC(r,0,0,0,1);    MATH2(VarDecAdd); EXPECTDECZERO();
   SETDEC(l,0,0x80,0,1); SETDEC(r,0,0,0,2);    MATH2(VarDecAdd); EXPECTDEC(0,0,0,1);
   SETDEC(l,0,0x80,0,1); SETDEC(r,0,0x80,0,1); MATH2(VarDecAdd); EXPECTDEC(0,0x80,0,2);
   SETDEC(l,0,0x80,0,2); SETDEC(r,0,0,0,1);    MATH2(VarDecAdd); EXPECTDEC(0,0x80,0,1);
@@ -4304,9 +4310,9 @@ static void test_VarDecSub(void)
   MATHVARS2;
 
   CHECKPTR(VarDecSub);
-  SETDEC(l,0,0,0,0);    SETDEC(r,0,0,0,0);    MATH2(VarDecSub); EXPECTDEC(0,0x80,0,0);
+  SETDEC(l,0,0,0,0);    SETDEC(r,0,0,0,0);    MATH2(VarDecSub); EXPECTDECZERO();
   SETDEC(l,0,0,0,0);    SETDEC(r,0,0,0,1);    MATH2(VarDecSub); EXPECTDEC(0,0x80,0,1);
-  SETDEC(l,0,0,0,1);    SETDEC(r,0,0,0,1);    MATH2(VarDecSub); EXPECTDEC(0,0x80,0,0);
+  SETDEC(l,0,0,0,1);    SETDEC(r,0,0,0,1);    MATH2(VarDecSub); EXPECTDECZERO();
   SETDEC(l,0,0,0,1);    SETDEC(r,0,0x80,0,1); MATH2(VarDecSub); EXPECTDEC(0,0,0,2);
 }
 
@@ -4377,12 +4383,14 @@ static void test_VarDecDiv(void)
   SETDEC(l,0,0,0,45);    SETDEC(r,1,0,0,9);  MATH2(VarDecDiv);   EXPECTDEC(0,0,0,50);
   SETDEC(l,1,0,0,45);    SETDEC(r,2,0,0,9);  MATH2(VarDecDiv);   EXPECTDEC(0,0,0,50);
   /* these last three results suggest that native oleaut32 scales both operands down to zero
-     before the division, but does *not* try to scale the result, even if it is possible - 
-     analogous to multiplication behavior
+     before the division, but does not always try to scale the result, even if it is possible -
+     analogous to multiplication behavior.
    */
   SETDEC(l,1,0,0,45);    SETDEC(r,1,0,0,9);  MATH2(VarDecDiv);   EXPECTDEC(0,0,0,5);
-  SETDEC(l,2,0,0,450);    SETDEC(r,1,0,0,9);  MATH2(VarDecDiv);   EXPECTDEC(1,0,0,50);
-  
+  SETDEC(l,2,0,0,450);    SETDEC(r,1,0,0,9);  MATH2(VarDecDiv);
+  if (S(U(out)).scale == 1) EXPECTDEC(1,0,0,50);
+  else EXPECTDEC(0,0,0,5);
+
   /* inexact divisions */
   SETDEC(l,0,0,0,1);    SETDEC(r,0,0,0,3);  MATH2(VarDecDiv);   EXPECTDEC64(28,0,180700362,0x14b700cb,0x05555555);
   SETDEC(l,1,0,0,1);    SETDEC(r,0,0,0,3);  MATH2(VarDecDiv);   EXPECTDEC64(28,0,18070036,0x35458014,0x4d555555);
@@ -4854,7 +4862,10 @@ static void test_VarBstrFromR4(void)
   ok(hres == S_OK, "got hres 0x%08x\n", hres);
   if (bstr)
   {
-    ok(memcmp(bstr, szZero, sizeof(szZero)) == 0, "negative zero (got %s)\n", wtoascii(bstr));
+      if (bstr[0] == '-')
+          ok(memcmp(bstr + 1, szZero, sizeof(szZero)) == 0, "negative zero (got %s)\n", wtoascii(bstr));
+      else
+          ok(memcmp(bstr, szZero, sizeof(szZero)) == 0, "negative zero (got %s)\n", wtoascii(bstr));
   }
   
   /* The following tests that lcid is used for decimal separator even without LOCALE_USE_NLS */
