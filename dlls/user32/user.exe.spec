@@ -351,7 +351,7 @@
 371 pascal -ret16 SetWindowPlacement(word ptr) SetWindowPlacement16
 372 stub GetInternalIconHeader
 373 pascal -ret16 SubtractRect(ptr ptr ptr) SubtractRect16
-#374 DllEntryPoint
+374 pascal -ret16 DllEntryPoint(long word word word long word)
 375 stub DrawTextEx
 376 stub SetMessageExtraInfo
 378 stub SetPropEx

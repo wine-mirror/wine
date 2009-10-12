@@ -56,6 +56,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(user);
 
 WORD WINAPI DestroyIcon32(HGLOBAL16, UINT16);
 
+WORD USER_HeapSel = 0;  /* USER heap selector */
 
 struct gray_string_info
 {
@@ -1201,6 +1202,20 @@ BOOL16 WINAPI SubtractRect16( LPRECT16 dest, const RECT16 *src1,
             else if (tmp.bottom == dest->bottom) dest->bottom = tmp.top;
         }
     }
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *		DllEntryPoint (USER.374)
+ */
+BOOL WINAPI DllEntryPoint( DWORD reason, HINSTANCE16 inst, WORD ds,
+                           WORD heap, DWORD reserved1, WORD reserved2 )
+{
+    if (reason != DLL_PROCESS_ATTACH) return TRUE;
+    if (USER_HeapSel) return TRUE;  /* already called */
+
+    USER_HeapSel = ds;
     return TRUE;
 }
 

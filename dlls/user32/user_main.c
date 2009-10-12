@@ -36,7 +36,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(graphics);
 
 #define DESKTOP_ALL_ACCESS 0x01ff
 
-WORD USER_HeapSel = 0;  /* USER heap selector */
 HMODULE user32_module = 0;
 
 static SYSLEVEL USER_SysLevel;
@@ -267,15 +266,7 @@ static void winstation_init(void)
  */
 static BOOL process_attach(void)
 {
-    HINSTANCE16 instance;
-
-    /* Create USER heap */
-    if ((instance = LoadLibrary16( "USER.EXE" )) >= 32) USER_HeapSel = instance | 7;
-    else
-    {
-        USER_HeapSel = GlobalAlloc16( GMEM_FIXED, 65536 );
-        LocalInit16( USER_HeapSel, 32, 65534 );
-    }
+    LoadLibrary16( "user.exe" );
 
     /* some Win9x dlls expect keyboard to be loaded */
     if (GetVersion() & 0x80000000) LoadLibrary16( "keyboard.drv" );
