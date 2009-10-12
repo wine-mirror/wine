@@ -483,6 +483,10 @@ static void set_variable_vtbl(struct d3d10_effect_variable *v)
             v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl;
             break;
 
+        case D3D10_SVC_STRUCT:
+            v->vtbl = &d3d10_effect_variable_vtbl;
+            break;
+
         default:
             FIXME("Unhandled type class %s.\n", debug_d3d10_shader_variable_class(v->type->type_class));
             v->vtbl = &d3d10_effect_variable_vtbl;
