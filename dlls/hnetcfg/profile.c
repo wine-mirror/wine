@@ -271,8 +271,8 @@ static HRESULT WINAPI fw_profile_get_Services(
 {
     fw_profile *This = impl_from_INetFwProfile( iface );
 
-    FIXME("%p, %p\n", This, Services);
-    return E_NOTIMPL;
+    TRACE("%p, %p\n", This, Services);
+    return NetFwServices_create( NULL, (void **)Services );
 }
 
 static HRESULT WINAPI fw_profile_get_AuthorizedApplications(

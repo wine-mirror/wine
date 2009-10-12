@@ -12,7 +12,8 @@ C_SRCS = \
 	policy.c \
 	port.c \
 	profile.c \
-	regsvr.c
+	regsvr.c \
+	service.c
 
 @MAKE_DLL_RULES@
 
