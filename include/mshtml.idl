@@ -3686,6 +3686,42 @@ interface IHTMLDOMImplementation : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLDocumentCompatibleInfo interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3051041a-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLDocumentCompatibleInfo : IDispatch
+{
+    [propget, id(DISPID_IHTMLDOCUMENTCOMPATIBLEINFO_USERAGENT)]
+    HRESULT userAgent([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLDOCUMENTCOMPATIBLEINFO_VERSION)]
+    HRESULT version([retval, out] BSTR *p);
+}
+
+/*****************************************************************************
+ *    IHTMLDocumentCompatibleInfoCollection interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510418-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLDocumentCompatibleInfoCollection : IDispatch
+{
+    [propget, id(DISPID_IHTMLDOCUMENTCOMPATIBLEINFOCOLLECTION_LENGTH)]
+    HRESULT length([retval, out] long *p);
+
+    [id(DISPID_IHTMLDOCUMENTCOMPATIBLEINFOCOLLECTION_ITEM)]
+    HRESULT item([in] long i, [retval, out]IHTMLDocumentCompatibleInfo **p);
+}
+
+/*****************************************************************************
  *    DispHTMLDOMTextNode dispinterface
  */
 [
