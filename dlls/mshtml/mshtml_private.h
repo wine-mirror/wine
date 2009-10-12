@@ -253,6 +253,7 @@ struct HTMLDocument {
     const IHTMLDocument3Vtbl              *lpHTMLDocument3Vtbl;
     const IHTMLDocument4Vtbl              *lpHTMLDocument4Vtbl;
     const IHTMLDocument5Vtbl              *lpHTMLDocument5Vtbl;
+    const IHTMLDocument6Vtbl              *lpHTMLDocument6Vtbl;
     const IPersistMonikerVtbl             *lpPersistMonikerVtbl;
     const IPersistFileVtbl                *lpPersistFileVtbl;
     const IPersistHistoryVtbl             *lpPersistHistoryVtbl;
@@ -488,6 +489,7 @@ struct HTMLDocumentNode {
 #define HTMLDOC3(x)      ((IHTMLDocument3*)               &(x)->lpHTMLDocument3Vtbl)
 #define HTMLDOC4(x)      ((IHTMLDocument4*)               &(x)->lpHTMLDocument4Vtbl)
 #define HTMLDOC5(x)      ((IHTMLDocument5*)               &(x)->lpHTMLDocument5Vtbl)
+#define HTMLDOC6(x)      ((IHTMLDocument6*)               &(x)->lpHTMLDocument6Vtbl)
 #define PERSIST(x)       ((IPersist*)                     &(x)->lpPersistFileVtbl)
 #define PERSISTMON(x)    ((IPersistMoniker*)              &(x)->lpPersistMonikerVtbl)
 #define PERSISTFILE(x)   ((IPersistFile*)                 &(x)->lpPersistFileVtbl)

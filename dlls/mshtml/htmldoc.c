@@ -1626,6 +1626,9 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IHTMLDocument5, riid)) {
         TRACE("(%p)->(IID_IHTMLDocument5, %p)\n", This, ppv);
         *ppv = HTMLDOC5(This);
+    }else if(IsEqualGUID(&IID_IHTMLDocument6, riid)) {
+        TRACE("(%p)->(IID_IHTMLDocument6, %p)\n", This, ppv);
+        *ppv = HTMLDOC6(This);
     }else if(IsEqualGUID(&IID_IPersist, riid)) {
         TRACE("(%p)->(IID_IPersist, %p)\n", This, ppv);
         *ppv = PERSIST(This);
