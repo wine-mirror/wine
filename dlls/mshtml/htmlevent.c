@@ -877,6 +877,22 @@ HRESULT dispatch_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *even
     return S_OK;
 }
 
+HRESULT call_event(HTMLDOMNode *node, eventid_t eid)
+{
+    HRESULT hres;
+
+    if(node->vtbl->call_event) {
+        BOOL handled = FALSE;
+
+        hres = node->vtbl->call_event(node, eid, &handled);
+        if(handled)
+            return hres;
+    }
+
+    fire_event(node->doc, eid, node->nsnode, NULL);
+    return S_OK;
+}
+
 static inline event_target_t *get_event_target(event_target_t **event_target_ptr)
 {
     if(!*event_target_ptr)

@@ -28,6 +28,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "htmlevent.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -1129,6 +1130,25 @@ static void HTMLInputElement_destructor(HTMLDOMNode *iface)
     HTMLElement_destructor(&This->element.node);
 }
 
+static HRESULT HTMLInputElementImpl_call_event(HTMLDOMNode *iface, eventid_t eid, BOOL *handled)
+{
+    HTMLInputElement *This = HTMLINPUT_NODE_THIS(iface);
+
+    if(eid == EVENTID_CLICK) {
+        nsresult nsres;
+
+        *handled = TRUE;
+
+        nsres = nsIDOMHTMLInputElement_Click(This->nsinput);
+        if(NS_FAILED(nsres)) {
+            ERR("Click failed: %08x\n", nsres);
+            return E_FAIL;
+        }
+    }
+
+    return S_OK;
+}
+
 static HRESULT HTMLInputElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
 {
     HTMLInputElement *This = HTMLINPUT_NODE_THIS(iface);
@@ -1147,6 +1167,7 @@ static const NodeImplVtbl HTMLInputElementImplVtbl = {
     HTMLInputElement_QI,
     HTMLInputElement_destructor,
     NULL,
+    HTMLInputElementImpl_call_event,
     HTMLInputElementImpl_put_disabled,
     HTMLInputElementImpl_get_disabled,
 };

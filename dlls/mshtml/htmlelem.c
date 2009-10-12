@@ -1103,8 +1103,10 @@ static HRESULT WINAPI HTMLElement_get_isTextEdit(IHTMLElement *iface, VARIANT_BO
 static HRESULT WINAPI HTMLElement_click(IHTMLElement *iface)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    return call_event(&This->node, EVENTID_CLICK);
 }
 
 static HRESULT WINAPI HTMLElement_get_filters(IHTMLElement *iface,
