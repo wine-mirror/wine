@@ -853,6 +853,30 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, nsIDOMNode *target, nsIDOM
     doc->basedoc.window->event = prev_event;
 }
 
+HRESULT dispatch_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *event_obj, VARIANT_BOOL *cancelled)
+{
+    eventid_t eid;
+
+    eid = attr_to_eid(event_name);
+    if(eid == EVENTID_LAST) {
+        WARN("unknown event %s\n", debugstr_w(event_name));
+        return E_INVALIDARG;
+    }
+
+    if(event_obj && V_VT(event_obj) != VT_EMPTY && V_VT(event_obj) != VT_ERROR)
+        FIXME("event_obj not implemented\n");
+
+    if(!(event_info[eid].flags & EVENT_DEFAULTLISTENER)) {
+        FIXME("not EVENT_DEFAULTEVENTHANDLER\n");
+        return E_NOTIMPL;
+    }
+
+    fire_event(node->doc, eid, node->nsnode, NULL);
+
+    *cancelled = VARIANT_TRUE; /* FIXME */
+    return S_OK;
+}
+
 static inline event_target_t *get_event_target(event_target_t **event_target_ptr)
 {
     if(!*event_target_ptr)
