@@ -661,7 +661,11 @@ BOOL WIN_GetRectangles( HWND hwnd, RECT *rectWindow, RECT *rectClient )
     WND *win = WIN_GetPtr( hwnd );
     BOOL ret = TRUE;
 
-    if (!win) return FALSE;
+    if (!win)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
     if (win == WND_DESKTOP)
     {
         RECT rect;
@@ -684,7 +688,7 @@ BOOL WIN_GetRectangles( HWND hwnd, RECT *rectWindow, RECT *rectClient )
         SERVER_START_REQ( get_window_rectangles )
         {
             req->handle = wine_server_user_handle( hwnd );
-            if ((ret = !wine_server_call( req )))
+            if ((ret = !wine_server_call_err( req )))
             {
                 if (rectWindow)
                 {
