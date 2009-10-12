@@ -1007,6 +1007,37 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
 
  end:
     ret = CDROM_GetStatusCode(io);
+#elif defined(__APPLE__)
+    SUB_Q_HEADER* hdr = (SUB_Q_HEADER*)data;
+    int io = 0;
+    union
+    {
+        dk_cd_read_mcn_t mcn;
+        dk_cd_read_isrc_t isrc;
+    } ioc;
+    /* We need IOCDAudioControl for IOCTL_CDROM_CURRENT_POSITION */
+    if (fmt->Format == IOCTL_CDROM_CURRENT_POSITION)
+    {
+        ERR("This version of Mac OS X does not support IOCDAudioControl\n");
+        return STATUS_NOT_SUPPORTED;
+    }
+    /* No IOCDAudioControl support; just set the audio status to none */
+    hdr->AudioStatus = AUDIO_STATUS_NO_STATUS;
+    switch(fmt->Format)
+    {
+    case IOCTL_CDROM_MEDIA_CATALOG:
+        if ((io = ioctl(fd, DKIOCCDREADMCN, &ioc.mcn)) == -1) break;
+        memcpy(data->MediaCatalog.MediaCatalog, ioc.mcn.mcn, kCDMCNMaxLength);
+        data->MediaCatalog.Mcval = 1;
+        break;
+    case IOCTL_CDROM_TRACK_ISRC:
+        ioc.isrc.track = fmt->Track;
+        if ((io = ioctl(fd, DKIOCCDREADISRC, &ioc.isrc)) == -1) break;
+        memcpy(data->TrackIsrc.TrackIsrc, ioc.isrc.isrc, kCDISRCMaxLength);
+        data->TrackIsrc.Tcval = 1;
+        data->TrackIsrc.Track = ioc.isrc.track;
+    }
+    ret = CDROM_GetStatusCode(io);
 #endif
     return ret;
 }
