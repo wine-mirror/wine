@@ -177,8 +177,27 @@ static HRESULT WINAPI HTMLWindow2_item(IHTMLWindow2 *iface, VARIANT *pvarIndex, 
 static HRESULT WINAPI HTMLWindow2_get_length(IHTMLWindow2 *iface, LONG *p)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMWindowCollection *nscollection;
+    PRUint32 length;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMWindow_GetFrames(This->nswindow, &nscollection);
+    if(NS_FAILED(nsres)) {
+        ERR("GetFrames failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMWindowCollection_GetLength(nscollection, &length);
+    nsIDOMWindowCollection_Release(nscollection);
+    if(NS_FAILED(nsres)) {
+        ERR("GetLength failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = length;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_get_frames(IHTMLWindow2 *iface, IHTMLFramesCollection2 **p)

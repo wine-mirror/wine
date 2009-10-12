@@ -89,6 +89,7 @@ interface nsIDocumentStateListener;
 interface nsIDOMCSSStyleSheet;
 interface nsIDOMDocumentView;
 interface nsIDocumentObserver;
+interface nsIDOMWindow;
 
 interface IMoniker;
 
@@ -109,7 +110,6 @@ typedef nsISupports nsISHistory;
 typedef nsISupports nsIWidget;
 typedef nsISupports nsIHttpHeaderVisitor;
 typedef nsISupports nsIDOMBarProp;
-typedef nsISupports nsIDOMWindowCollection;
 typedef nsISupports nsIPrompt;
 typedef nsISupports nsIAuthPrompt;
 typedef nsISupports nsIDOMNamedNodeMap;
@@ -1104,6 +1104,19 @@ interface nsISelection : nsISupports
     nsresult DeleteFromDocument();
     nsresult SelectionLanguageChange(PRBool langRTL);
     nsresult ToString(PRUnichar **_retval);
+}
+
+[
+    object,
+    uuid(a6cf906f-15b3-11d2-932e-00805f8add32),
+    local
+    /* FROZEN */
+]
+interface nsIDOMWindowCollection : nsISupports
+{
+    nsresult GetLength(PRUint32 *aLength);
+    nsresult Item(PRUint32 index, nsIDOMWindow **_retval);
+    nsresult NamedItem(const nsAString *name, nsIDOMWindow **_retval);
 }
 
 [

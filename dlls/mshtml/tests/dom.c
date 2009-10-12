@@ -851,6 +851,16 @@ static void _set_window_name(unsigned line, IHTMLWindow2 *window, const char *na
     _test_window_name(line, window, name);
 }
 
+#define test_window_length(w,l) _test_window_length(__LINE__,w,l)
+static void _test_window_length(unsigned line, IHTMLWindow2 *window, LONG exlen)
+{
+    LONG length = -1;
+    HRESULT hres;
+
+    hres = IHTMLWindow2_get_length(window, &length);
+    ok_(__FILE__,line)(hres == S_OK, "get_length failed: %08x\n", hres);
+    ok_(__FILE__,line)(length == exlen, "length = %d, expected %d\n", length, exlen);
+}
 
 static void test_get_set_attr(IHTMLDocument2 *doc)
 {
@@ -4414,6 +4424,7 @@ static void test_window(IHTMLDocument2 *doc)
 
     test_window_name(window, NULL);
     set_window_name(window, "test");
+    test_window_length(window, 0);
 
     IHTMLWindow2_Release(window);
 }
@@ -4647,6 +4658,8 @@ static void test_iframe_elem(IHTMLElement *elem)
     IHTMLFrameBase2_Release(base2);
     ok(hres == S_OK, "get_contentWindow failed: %08x\n", hres);
     ok(content_window != NULL, "contentWindow = NULL\n");
+
+    test_window_length(content_window, 0);
 
     content_doc = NULL;
     hres = IHTMLWindow2_get_document(content_window, &content_doc);
@@ -5202,6 +5215,7 @@ static void test_elems(IHTMLDocument2 *doc)
     window = get_doc_window(doc);
     test_window_name(window, NULL);
     set_window_name(window, "test name");
+    test_window_length(window, 1);
     IHTMLWindow2_Release(window);
 }
 
