@@ -125,14 +125,12 @@ struct state_test
     const void *test_data_out_vertex;
     const void *test_data_out_pixel;
 
-    /* Test resource management handlers */
-    HRESULT (*setup_handler) (struct state_test* test);
-    void (*teardown_handler) (struct state_test* test);
-
-    /* Test data handlers */
-    void (*set_handler) (IDirect3DDevice9* device, const struct state_test* test, const void* data_in);
-    void (*check_data)(IDirect3DDevice9 *device, unsigned int chain_stage,
-            const struct state_test *test, const void *expected_data);
+    HRESULT (*init)(IDirect3DDevice9 *device, struct state_test *test);
+    void (*cleanup)(IDirect3DDevice9 *device, struct state_test *test);
+    void (*apply_data)(IDirect3DDevice9 *device, const struct state_test *test,
+            const void *data);
+    void (*check_data)(IDirect3DDevice9 *device, const struct state_test *test,
+            const void *expected_data, unsigned int chain_stage);
 
     /* Test arguments */
     const void* test_arg;
@@ -225,7 +223,7 @@ static void execute_test_chain(IDirect3DDevice9 *device, struct state_test *test
             for (i = 0; i < ntests; ++i)
             {
                 data = get_event_data(&test[i], event[j].check);
-                test[i].check_data(device, j, &test[i], data);
+                test[i].check_data(device, &test[i], data, j);
             }
         }
 
@@ -234,14 +232,16 @@ static void execute_test_chain(IDirect3DDevice9 *device, struct state_test *test
             for (i = 0; i < ntests; ++i)
             {
                 data = get_event_data(&test[i], event[j].apply);
-                test[i].set_handler(device, &test[i], data);
+                test[i].apply_data(device, &test[i], data);
             }
         }
-     }
+    }
 
-     /* Attempt to reset any changes made */
-     for (i=0; i < ntests; i++)
-         test[i].set_handler(device, &test[i], test[i].default_data);
+    /* Attempt to reset any changes made. */
+    for (i = 0; i < ntests; ++i)
+    {
+        test[i].apply_data(device, &test[i], test[i].default_data);
+    }
 }
 
 static int switch_render_target(IDirect3DDevice9 *device, struct event_data *event_data)
@@ -392,6 +392,7 @@ static void execute_test_chain_all(IDirect3DDevice9 *device, struct state_test *
 {
     struct event_data arg;
     unsigned int i;
+    HRESULT hr;
 
     struct event read_events[] =
     {
@@ -485,11 +486,11 @@ static void execute_test_chain_all(IDirect3DDevice9 *device, struct state_test *
     };
 
     /* Setup each test for execution */
-    for (i=0; i < ntests; i++) {
-        if (test[i].setup_handler(&test[i]) != D3D_OK) {
-            ok(FALSE, "Test \"%s\" failed setup, aborting\n", test[i].test_name);
-            return;
-        }
+    for (i = 0; i < ntests; ++i)
+    {
+        hr = test[i].init(device, &test[i]);
+        ok(SUCCEEDED(hr), "Test \"%s\" failed setup, aborting\n", test[i].test_name);
+        if (FAILED(hr)) return;
     }
 
     trace("Running initial read state tests\n");
@@ -532,8 +533,10 @@ static void execute_test_chain_all(IDirect3DDevice9 *device, struct state_test *
     execute_test_chain(device, test, ntests, rendertarget_stateblock_events, 5, &arg);
 
     /* Cleanup resources */
-    for (i=0; i < ntests; i++)
-        test[i].teardown_handler(&test[i]);
+    for (i = 0; i < ntests; ++i)
+    {
+        if (test[i].cleanup) test[i].cleanup(device, &test[i]);
+    }
 }
 
 /* =================== State test: Pixel and Vertex Shader constants ============ */
@@ -572,7 +575,7 @@ static const struct shader_constant_data shader_constant_test_data =
     {TRUE, FALSE, FALSE, TRUE},
 };
 
-static void shader_constant_set_handler(IDirect3DDevice9 *device, const struct state_test *test, const void *data)
+static void shader_constant_apply_data(IDirect3DDevice9 *device, const struct state_test *test, const void *data)
 {
     const struct shader_constant_arg *scarg = test->test_arg;
     const struct shader_constant_data *scdata = data;
@@ -597,8 +600,8 @@ static void shader_constant_set_handler(IDirect3DDevice9 *device, const struct s
     }
 }
 
-static void shader_constant_check_data(IDirect3DDevice9 *device, unsigned int chain_stage,
-        const struct state_test *test, const void *expected_data)
+static void shader_constant_check_data(IDirect3DDevice9 *device, const struct state_test *test,
+        const void *expected_data, unsigned int chain_stage)
 {
     struct shader_constant_data value = shader_constant_poison_data;
     const struct shader_constant_data *scdata = expected_data;
@@ -655,7 +658,7 @@ static void shader_constant_check_data(IDirect3DDevice9 *device, unsigned int ch
             value.bool_constant[2], value.bool_constant[3]);
 }
 
-static HRESULT shader_constant_setup_handler(struct state_test *test)
+static HRESULT shader_constant_test_init(IDirect3DDevice9 *device, struct state_test *test)
 {
     const struct shader_constant_arg *test_arg = test->test_arg;
 
@@ -678,16 +681,11 @@ static HRESULT shader_constant_setup_handler(struct state_test *test)
     return D3D_OK;
 }
 
-static void shader_constant_teardown_handler(struct state_test *test)
-{
-    HeapFree(GetProcessHeap(), 0, test->test_context);
-}
-
 static void shader_constants_queue_test(struct state_test *test, const struct shader_constant_arg *test_arg)
 {
-    test->setup_handler = shader_constant_setup_handler;
-    test->teardown_handler = shader_constant_teardown_handler;
-    test->set_handler = shader_constant_set_handler;
+    test->init = shader_constant_test_init;
+    test->cleanup = NULL;
+    test->apply_data = shader_constant_apply_data;
     test->check_data = shader_constant_check_data;
     test->test_name = test_arg->pshader ? "set_get_pshader_constants" : "set_get_vshader_constants";
     test->test_arg = test_arg;
@@ -791,7 +789,7 @@ static const struct light_data light_test_data_out =
     D3D_OK,
 };
 
-static void light_set_handler(IDirect3DDevice9 *device, const struct state_test *test, const void *data)
+static void light_apply_data(IDirect3DDevice9 *device, const struct state_test *test, const void *data)
 {
     const struct light_arg *larg = test->test_arg;
     const struct light_data *ldata = data;
@@ -805,8 +803,8 @@ static void light_set_handler(IDirect3DDevice9 *device, const struct state_test 
     ok(hret == D3D_OK, "SetLightEnable returned %#x.\n", hret);
 }
 
-static void light_check_data(IDirect3DDevice9 *device, unsigned int chain_stage,
-        const struct state_test *test, const void *expected_data)
+static void light_check_data(IDirect3DDevice9 *device, const struct state_test *test,
+        const void *expected_data, unsigned int chain_stage)
 {
     const struct light_arg *larg = test->test_arg;
     const struct light_data *ldata = expected_data;
@@ -882,7 +880,7 @@ static void light_check_data(IDirect3DDevice9 *device, unsigned int chain_stage,
             chain_stage, ldata->light.Phi, value.light.Phi);
 }
 
-static HRESULT light_setup_handler(struct state_test *test)
+static HRESULT light_test_init(IDirect3DDevice9 *device, struct state_test *test)
 {
     test->test_context = NULL;
     test->test_data_in = &light_test_data_in;
@@ -895,16 +893,11 @@ static HRESULT light_setup_handler(struct state_test *test)
     return D3D_OK;
 }
 
-static void light_teardown_handler(struct state_test *test)
-{
-    HeapFree(GetProcessHeap(), 0, test->test_context);
-}
-
 static void lights_queue_test(struct state_test *test, const struct light_arg *test_arg)
 {
-    test->setup_handler = light_setup_handler;
-    test->teardown_handler = light_teardown_handler;
-    test->set_handler = light_set_handler;
+    test->init = light_test_init;
+    test->cleanup = NULL;
+    test->apply_data = light_apply_data;
     test->check_data = light_check_data;
     test->test_name = "set_get_light";
     test->test_arg = test_arg;
@@ -1042,7 +1035,7 @@ static const struct transform_data transform_test_data =
     }}},
 };
 
-static void transform_set_handler(IDirect3DDevice9 *device, const struct state_test *test, const void *data)
+static void transform_apply_data(IDirect3DDevice9 *device, const struct state_test *test, const void *data)
 {
     const struct transform_data *tdata = data;
     HRESULT hret;
@@ -1094,8 +1087,8 @@ static void compare_matrix(const char *name, unsigned int chain_stage,
             U(*received).m[0][3], U(*received).m[1][3], U(*received).m[2][3], U(*received).m[3][3]);
 }
 
-static void transform_check_data(IDirect3DDevice9 *device, unsigned int chain_stage,
-        const struct state_test *test, const void *expected_data)
+static void transform_check_data(IDirect3DDevice9 *device, const struct state_test *test,
+        const void *expected_data, unsigned int chain_stage)
 {
     const struct transform_data *tdata = expected_data;
     D3DMATRIX value;
@@ -1132,7 +1125,7 @@ static void transform_check_data(IDirect3DDevice9 *device, unsigned int chain_st
     compare_matrix("World255", chain_stage, &value, &tdata->world255);
 }
 
-static HRESULT transform_setup_handler(struct state_test *test)
+static HRESULT transform_test_init(IDirect3DDevice9 *device, struct state_test *test)
 {
     test->test_context = NULL;
     test->test_data_in = &transform_test_data;
@@ -1145,16 +1138,11 @@ static HRESULT transform_setup_handler(struct state_test *test)
     return D3D_OK;
 }
 
-static void transform_teardown_handler(struct state_test *test)
-{
-    HeapFree(GetProcessHeap(), 0, test->test_context);
-}
-
 static void transform_queue_test(struct state_test *test)
 {
-    test->setup_handler = transform_setup_handler;
-    test->teardown_handler = transform_teardown_handler;
-    test->set_handler = transform_set_handler;
+    test->init = transform_test_init;
+    test->cleanup = NULL;
+    test->apply_data = transform_apply_data;
     test->check_data = transform_check_data;
     test->test_name = "set_get_transforms";
     test->test_arg = NULL;
@@ -1293,7 +1281,7 @@ struct render_state_context
     struct render_state_data poison_data_buffer;
 };
 
-static void render_state_set_handler(IDirect3DDevice9 *device, const struct state_test *test, const void *data)
+static void render_state_apply_data(IDirect3DDevice9 *device, const struct state_test *test, const void *data)
 {
     const struct render_state_data *rsdata = data;
     HRESULT hret;
@@ -1306,8 +1294,8 @@ static void render_state_set_handler(IDirect3DDevice9 *device, const struct stat
     }
 }
 
-static void render_state_check_data(IDirect3DDevice9 *device, unsigned int chain_stage,
-        const struct state_test *test, const void *expected_data)
+static void render_state_check_data(IDirect3DDevice9 *device, const struct state_test *test,
+        const void *expected_data, unsigned int chain_stage)
 {
     const struct render_state_context *ctx = test->test_context;
     const struct render_state_data *rsdata = expected_data;
@@ -1560,7 +1548,7 @@ static void render_state_test_data_init(struct render_state_data *data)
    data->states[idx++] = FALSE;                 /* BLENDOPALPHA */
 }
 
-static HRESULT render_state_setup_handler(struct state_test *test)
+static HRESULT render_state_test_init(IDirect3DDevice9 *device, struct state_test *test)
 {
     static const DWORD states_vertex[] =
     {
@@ -1719,16 +1707,16 @@ static HRESULT render_state_setup_handler(struct state_test *test)
     return D3D_OK;
 }
 
-static void render_state_teardown_handler(struct state_test *test)
+static void render_state_test_cleanup(IDirect3DDevice9 *device, struct state_test *test)
 {
     HeapFree(GetProcessHeap(), 0, test->test_context);
 }
 
 static void render_states_queue_test(struct state_test *test, const struct render_state_arg *test_arg)
 {
-    test->setup_handler = render_state_setup_handler;
-    test->teardown_handler = render_state_teardown_handler;
-    test->set_handler = render_state_set_handler;
+    test->init = render_state_test_init;
+    test->cleanup = render_state_test_cleanup;
+    test->apply_data = render_state_apply_data;
     test->check_data = render_state_check_data;
     test->test_name = "set_get_render_states";
     test->test_arg = test_arg;
