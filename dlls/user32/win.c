@@ -91,6 +91,89 @@ static inline void set_win_data( void *ptr, LONG_PTR val, UINT size )
 static void *user_handles[NB_USER_HANDLES];
 
 /***********************************************************************
+ *           alloc_user_handle
+ */
+HANDLE alloc_user_handle( struct user_object *ptr, enum user_obj_type type )
+{
+    HANDLE handle = 0;
+
+    SERVER_START_REQ( alloc_user_handle )
+    {
+        if (!wine_server_call_err( req )) handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    if (handle)
+    {
+        UINT index = USER_HANDLE_TO_INDEX( handle );
+
+        assert( index < NB_USER_HANDLES );
+        ptr->handle = handle;
+        ptr->type = type;
+        user_handles[index] = ptr;
+    }
+    return handle;
+}
+
+
+/***********************************************************************
+ *           get_user_handle_ptr
+ */
+void *get_user_handle_ptr( HANDLE handle, enum user_obj_type type )
+{
+    struct user_object *ptr;
+    WORD index = USER_HANDLE_TO_INDEX( handle );
+
+    if (index >= NB_USER_HANDLES) return NULL;
+
+    USER_Lock();
+    if ((ptr = user_handles[index]))
+    {
+        if (ptr->type == type &&
+            ((UINT)(UINT_PTR)ptr->handle == (UINT)(UINT_PTR)handle ||
+             !HIWORD(handle) || HIWORD(handle) == 0xffff))
+            return ptr;
+        ptr = NULL;
+    }
+    else ptr = OBJ_OTHER_PROCESS;
+    USER_Unlock();
+    return ptr;
+}
+
+
+/***********************************************************************
+ *           release_user_handle_ptr
+ */
+void release_user_handle_ptr( void *ptr )
+{
+    USER_Unlock();
+}
+
+
+/***********************************************************************
+ *           free_user_handle
+ */
+void *free_user_handle( HANDLE handle, enum user_obj_type type )
+{
+    struct user_object *ptr;
+    WORD index = USER_HANDLE_TO_INDEX( handle );
+
+    if ((ptr = get_user_handle_ptr( handle, type )) && ptr != OBJ_OTHER_PROCESS)
+    {
+        SERVER_START_REQ( free_user_handle )
+        {
+            req->handle = wine_server_user_handle( handle );
+            if (!wine_server_call( req )) user_handles[index] = NULL;
+            else ptr = NULL;
+        }
+        SERVER_END_REQ;
+        release_user_handle_ptr( ptr );
+    }
+    return ptr;
+}
+
+
+/***********************************************************************
  *           create_window_handle
  *
  * Create a window handle with the server.
