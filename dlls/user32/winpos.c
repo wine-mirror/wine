@@ -1790,7 +1790,7 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return FALSE;
     }
-    winpos->hwnd = wndPtr->hwndSelf;  /* make it a full handle */
+    winpos->hwnd = wndPtr->obj.handle;  /* make it a full handle */
 
     /* Finally make sure that all coordinates are valid */
     if (winpos->x < -32768) winpos->x = -32768;
