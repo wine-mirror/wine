@@ -288,6 +288,41 @@ static void test_WM_LBUTTONDOWN(void)
     DestroyWindow(hComboEx);
 }
 
+static void test_CB_GETLBTEXT(void)
+{
+    HWND hCombo;
+    CHAR buff[1];
+    COMBOBOXEXITEMA item;
+    LRESULT ret;
+
+    hCombo = createComboEx(WS_BORDER | WS_VISIBLE | WS_CHILD | CBS_DROPDOWN);
+
+    /* set text to null */
+    addItem(hCombo, 0, NULL);
+
+    buff[0] = 'a';
+    item.mask = CBEIF_TEXT;
+    item.iItem = 0;
+    item.pszText = buff;
+    item.cchTextMax = 1;
+    ret = SendMessage(hCombo, CBEM_GETITEMA, 0, (LPARAM)&item);
+    ok(ret != 0, "CBEM_GETITEM failed\n");
+    ok(buff[0] == 0, "\n");
+
+    ret = SendMessage(hCombo, CB_GETLBTEXTLEN, 0, 0);
+    ok(ret == 0, "Expected zero length\n");
+
+    ret = SendMessage(hCombo, CB_GETLBTEXTLEN, 0, 0);
+    ok(ret == 0, "Expected zero length\n");
+
+    buff[0] = 'a';
+    ret = SendMessage(hCombo, CB_GETLBTEXT, 0, (LPARAM)buff);
+    ok(ret == 0, "Expected zero length\n");
+    ok(buff[0] == 0, "Expected null terminator as a string, got %s\n", buff);
+
+    DestroyWindow(hCombo);
+}
+
 static LRESULT CALLBACK ComboExTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg) {
@@ -362,6 +397,7 @@ START_TEST(comboex)
 
     test_comboboxex();
     test_WM_LBUTTONDOWN();
+    test_CB_GETLBTEXT();
 
     cleanup();
 }

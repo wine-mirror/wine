@@ -510,6 +510,17 @@ static UINT COMBOEX_GetListboxText(const COMBOEX_INFO *infoPtr, INT_PTR n, LPWST
         return 0;
 
     str = COMBOEX_GetText(infoPtr, item);
+    if (!str)
+    {
+        if (buf)
+        {
+            if (infoPtr->unicode)
+                buf[0] = 0;
+            else
+                *((LPSTR)buf) = 0;
+        }
+        return 0;
+    }
 
     if (infoPtr->unicode)
     {
