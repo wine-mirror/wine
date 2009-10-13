@@ -968,7 +968,10 @@ static void hashtest(void)
     ret = pCryptImportKey(provider, (BYTE*)&key_blob,
                       sizeof(BLOBHEADER)+sizeof(DWORD)+key_length,
                       0, CRYPT_IPSEC_HMAC_KEY, &hkey);
-    ok(ret, "CryptImportKey error %u\n", GetLastError());
+    /* CRYPT_IPSEC_HMAC_KEY is not supported on W2K and lower */
+    ok(ret ||
+       broken(!ret && GetLastError() == NTE_BAD_FLAGS),
+       "CryptImportKey error %u\n", GetLastError());
 
     pCryptDestroyKey(hkey);
     pCryptReleaseContext(provider, 0);
