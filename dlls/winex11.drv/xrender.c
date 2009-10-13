@@ -124,7 +124,7 @@ typedef enum { AA_None = 0, AA_Grey, AA_RGB, AA_BGR, AA_VRGB, AA_VBGR, AA_MAXVAL
 typedef struct
 {
     GlyphSet glyphset;
-    WineXRenderFormat *font_format;
+    const WineXRenderFormat *font_format;
     int nrealized;
     BOOL *realized;
     void **bitmaps;
@@ -408,7 +408,7 @@ sym_not_found:
 }
 
 /* Helper function to convert from a color packed in a 32-bit integer to a XRenderColor */
-static void get_xrender_color(WineXRenderFormat *wxr_format, int src_color, XRenderColor *dst_color)
+static void get_xrender_color(const WineXRenderFormat *wxr_format, int src_color, XRenderColor *dst_color)
 {
     XRenderPictFormat *pf = wxr_format->pict_format;
 
@@ -430,7 +430,7 @@ static void get_xrender_color(WineXRenderFormat *wxr_format, int src_color, XRen
     dst_color->alpha = 0xffff;
 }
 
-static WineXRenderFormat *get_xrender_format(WXRFormat format)
+static const WineXRenderFormat *get_xrender_format(WXRFormat format)
 {
     int i;
     for(i=0; i<WineXRenderFormatsListSize; i++)
@@ -444,7 +444,7 @@ static WineXRenderFormat *get_xrender_format(WXRFormat format)
     return NULL;
 }
 
-static WineXRenderFormat *get_xrender_format_from_color_shifts(int depth, ColorShifts *shifts)
+static const WineXRenderFormat *get_xrender_format_from_color_shifts(int depth, ColorShifts *shifts)
 {
     int redMask, greenMask, blueMask;
     unsigned int i;
@@ -499,7 +499,7 @@ static Picture create_xrender_picture(Drawable drawable, int depth, ColorShifts 
 {
     Picture pict;
     XRenderPictureAttributes pa;
-    WineXRenderFormat *fmt = get_xrender_format_from_color_shifts(depth, shifts);
+    const WineXRenderFormat *fmt = get_xrender_format_from_color_shifts(depth, shifts);
     if (!fmt) return 0;
 
     wine_tsx11_lock();
@@ -896,7 +896,7 @@ void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE *physDev)
 
 BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, const DIBSECTION *dib)
 {
-    WineXRenderFormat *fmt;
+    const WineXRenderFormat *fmt;
     ColorShifts shifts;
 
     /* When XRender is not around we can only use the screen_depth and when needed we perform depth conversion
@@ -1411,7 +1411,7 @@ static void SmoothGlyphGray(XImage *image, int x, int y, void *bitmap, XGlyphInf
  * Returns an appropriate Picture for tiling the text colour.
  * Call and use result within the xrender_cs
  */
-static Picture get_tile_pict(WineXRenderFormat *wxr_format, int text_pixel)
+static Picture get_tile_pict(const WineXRenderFormat *wxr_format, int text_pixel)
 {
     static struct
     {
@@ -1484,7 +1484,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     unsigned int idx;
     double cosEsc, sinEsc;
     LOGFONTW lf;
-    WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDev->depth, physDev->color_shifts);
+    const WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDev->depth, physDev->color_shifts);
     Picture tile_pict = 0;
 
     /* Do we need to disable antialiasing because of palette mode? */
@@ -1860,8 +1860,8 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     POINT pts[2];
     BOOL top_down = FALSE;
     RGNDATA *rgndata;
-    WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(devDst->depth, devDst->color_shifts);
-    WineXRenderFormat *src_format;
+    const WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(devDst->depth, devDst->color_shifts);
+    const WineXRenderFormat *src_format;
     int repeat_src;
 
     if(!X11DRV_XRender_Installed) {
@@ -2058,8 +2058,8 @@ void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap,
     }
     else /* We meed depth conversion */
     {
-        WineXRenderFormat *src_format = get_xrender_format_from_color_shifts(physBitmap->pixmap_depth, &physBitmap->pixmap_color_shifts);
-        WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDev->depth, physDev->color_shifts);
+        const WineXRenderFormat *src_format = get_xrender_format_from_color_shifts(physBitmap->pixmap_depth, &physBitmap->pixmap_color_shifts);
+        const WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDev->depth, physDev->color_shifts);
 
         Picture src_pict, dst_pict;
         XRenderPictureAttributes pa;
@@ -2087,8 +2087,8 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
     int height = visRectDst->bottom - visRectDst->top;
     int x_src = physDevSrc->dc_rect.left + visRectSrc->left;
     int y_src = physDevSrc->dc_rect.top + visRectSrc->top;
-    WineXRenderFormat *src_format = get_xrender_format_from_color_shifts(physDevSrc->depth, physDevSrc->color_shifts);
-    WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDevDst->depth, physDevDst->color_shifts);
+    const WineXRenderFormat *src_format = get_xrender_format_from_color_shifts(physDevSrc->depth, physDevSrc->color_shifts);
+    const WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDevDst->depth, physDevDst->color_shifts);
     Picture src_pict=0, dst_pict=0, mask_pict=0;
 
     double xscale = widthSrc/(double)widthDst;
