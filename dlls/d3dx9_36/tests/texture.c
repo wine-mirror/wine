@@ -210,12 +210,27 @@ static void test_D3DXGetImageInfo(void)
     if(testbitmap_ok) DeleteFileA("testbitmap.bmp");
 }
 
+#define check_pixel_1bpp(lockrect, x, y, color) \
+ok(((BYTE*)(lockrect).pBits)[(x) + (y) * (lockrect).Pitch] == color, "Got color %#x, expected %#x\n", ((BYTE*)(lockrect).pBits)[(x) + (y) * (lockrect).Pitch], color)
+
+#define check_pixel_2bpp(lockrect, x, y, color) \
+ok(((WORD*)(lockrect).pBits)[(x) + (y) * (lockrect).Pitch / 2] == color, "Got color %#x, expected %#x\n", ((WORD*)(lockrect).pBits)[(x) + (y) * (lockrect).Pitch / 2], color)
+
+#define check_pixel_4bpp(lockrect, x, y, color) \
+ok(((DWORD*)(lockrect).pBits)[(x) + (y) * (lockrect).Pitch / 4] == color, "Got color %#x, expected %#x\n", ((DWORD*)(lockrect).pBits)[(x) + (y) * (lockrect).Pitch / 4], color)
 static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 {
     HRESULT hr;
     BOOL testdummy_ok, testbitmap_ok;
     IDirect3DSurface9 *surf, *newsurf;
     RECT rect;
+    D3DLOCKED_RECT lockrect;
+    const WORD pixdata_a8r3g3b2[] = { 0x57df, 0x98fc, 0xacdd, 0xc891 };
+    const WORD pixdata_a1r5g5b5[] = { 0x46b5, 0x99c8, 0x06a2, 0x9431 };
+    const WORD pixdata_r5g6b5[] = { 0x9ef6, 0x658d, 0x0aee, 0x42ee };
+    const DWORD pixdata_g16r16[] = { 0x07d23fbe, 0xdc7f44a4, 0xe4d8976b, 0x9a84fe89 };
+    const DWORD pixdata_a8b8g8r8[] = { 0xc3394cf0, 0x235ae892, 0x09b197fd, 0x8dc32bf6 };
+    const DWORD pixdata_a2r10g10b10[] = { 0x57395aff, 0x5b7668fd, 0xb0d856b5, 0xff2c61d6 };
 
     hr = create_file("testdummy.bmp", noimage, sizeof(noimage));  /* invalid image */
     testdummy_ok = SUCCEEDED(hr);
@@ -303,13 +318,11 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     /* D3DXLoadSurfaceFromMemory */
     SetRect(&rect, 0, 0, 2, 2);
 
-    todo_wine {
-        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_DEFAULT, 0);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_FILTER_NONE, 0);
+    ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
 
-        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, 0, NULL, &rect, D3DX_DEFAULT, 0);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
-    }
+    hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, 0, NULL, &rect, D3DX_FILTER_NONE, 0);
+    ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
 
     hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, NULL, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_DEFAULT, 0);
     ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
@@ -337,13 +350,147 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, NULL, NULL, NULL, D3DX_DEFAULT, 0);
         ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        check_release((IUnknown*)newsurf, 0);
     } else skip("Failed to create a second surface\n");
-    check_release((IUnknown*)newsurf, 0);
 
-
-    /* cleanup */
     check_release((IUnknown*)surf, 0);
 
+
+    /* test color conversion */
+    /* A8R8G8B8 */
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surf, NULL);
+    if(FAILED(hr)) skip("Failed to create a surface (%#x)\n", hr);
+    else {
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a8r3g3b2, D3DFMT_A8R3G3B2, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+        check_pixel_4bpp(lockrect, 0, 0, 0x57dbffff);
+        check_pixel_4bpp(lockrect, 1, 0, 0x98ffff00);
+        check_pixel_4bpp(lockrect, 0, 1, 0xacdbff55);
+        check_pixel_4bpp(lockrect, 1, 1, 0xc8929255);
+        IDirect3DSurface9_UnlockRect(surf);
+
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a1r5g5b5, D3DFMT_A1R5G5B5, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+        check_pixel_4bpp(lockrect, 0, 0, 0x008cadad);
+        check_pixel_4bpp(lockrect, 1, 0, 0xff317342);
+        check_pixel_4bpp(lockrect, 0, 1, 0x0008ad10);
+        check_pixel_4bpp(lockrect, 1, 1, 0xff29088c);
+        IDirect3DSurface9_UnlockRect(surf);
+
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_r5g6b5, D3DFMT_R5G6B5, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+        check_pixel_4bpp(lockrect, 0, 0, 0xff9cdfb5);
+        check_pixel_4bpp(lockrect, 1, 0, 0xff63b26b);
+        check_pixel_4bpp(lockrect, 0, 1, 0xff085d73);
+        check_pixel_4bpp(lockrect, 1, 1, 0xff425d73);
+        IDirect3DSurface9_UnlockRect(surf);
+
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_g16r16, D3DFMT_G16R16, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+        todo_wine {
+            check_pixel_4bpp(lockrect, 0, 0, 0xff3f08ff);
+        }
+        check_pixel_4bpp(lockrect, 1, 0, 0xff44dcff);
+        check_pixel_4bpp(lockrect, 0, 1, 0xff97e4ff);
+        check_pixel_4bpp(lockrect, 1, 1, 0xfffe9aff);
+        IDirect3DSurface9_UnlockRect(surf);
+
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a8b8g8r8, D3DFMT_A8B8G8R8, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+        check_pixel_4bpp(lockrect, 0, 0, 0xc3f04c39);
+        check_pixel_4bpp(lockrect, 1, 0, 0x2392e85a);
+        check_pixel_4bpp(lockrect, 0, 1, 0x09fd97b1);
+        check_pixel_4bpp(lockrect, 1, 1, 0x8df62bc3);
+        IDirect3DSurface9_UnlockRect(surf);
+
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a2r10g10b10, D3DFMT_A2R10G10B10, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+        check_pixel_4bpp(lockrect, 0, 0, 0x555c95bf);
+        check_pixel_4bpp(lockrect, 1, 0, 0x556d663f);
+        check_pixel_4bpp(lockrect, 0, 1, 0xaac385ad);
+        todo_wine {
+            check_pixel_4bpp(lockrect, 1, 1, 0xfffcc575);
+        }
+        IDirect3DSurface9_UnlockRect(surf);
+
+        check_release((IUnknown*)surf, 0);
+    }
+
+    /* A1R5G5B5 */
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_A1R5G5B5, D3DPOOL_DEFAULT, &surf, NULL);
+    if(FAILED(hr)) skip("Failed to create a surface (%#x)\n", hr);
+    else {
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a8r3g3b2, D3DFMT_A8R3G3B2, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+        check_pixel_2bpp(lockrect, 0, 0, 0x6fff);
+        check_pixel_2bpp(lockrect, 1, 0, 0xffe0);
+        check_pixel_2bpp(lockrect, 0, 1, 0xefea);
+        check_pixel_2bpp(lockrect, 1, 1, 0xca4a);
+        IDirect3DSurface9_UnlockRect(surf);
+
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a1r5g5b5, D3DFMT_A1R5G5B5, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+        check_pixel_2bpp(lockrect, 0, 0, 0x46b5);
+        check_pixel_2bpp(lockrect, 1, 0, 0x99c8);
+        check_pixel_2bpp(lockrect, 0, 1, 0x06a2);
+        check_pixel_2bpp(lockrect, 1, 1, 0x9431);
+        IDirect3DSurface9_UnlockRect(surf);
+
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_r5g6b5, D3DFMT_R5G6B5, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+        check_pixel_2bpp(lockrect, 0, 0, 0xcf76);
+        check_pixel_2bpp(lockrect, 1, 0, 0xb2cd);
+        check_pixel_2bpp(lockrect, 0, 1, 0x856e);
+        check_pixel_2bpp(lockrect, 1, 1, 0xa16e);
+        IDirect3DSurface9_UnlockRect(surf);
+
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_g16r16, D3DFMT_G16R16, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+        todo_wine {
+            check_pixel_2bpp(lockrect, 0, 0, 0xa03f);
+        }
+        check_pixel_2bpp(lockrect, 1, 0, 0xa37f);
+        check_pixel_2bpp(lockrect, 0, 1, 0xcb9f);
+        check_pixel_2bpp(lockrect, 1, 1, 0xfe7f);
+        IDirect3DSurface9_UnlockRect(surf);
+
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a8b8g8r8, D3DFMT_A8B8G8R8, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+        todo_wine {
+            check_pixel_2bpp(lockrect, 0, 0, 0xf527);
+            check_pixel_2bpp(lockrect, 1, 0, 0x4b8b);
+        }
+        check_pixel_2bpp(lockrect, 0, 1, 0x7e56);
+        check_pixel_2bpp(lockrect, 1, 1, 0xf8b8);
+        IDirect3DSurface9_UnlockRect(surf);
+
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a2r10g10b10, D3DFMT_A2R10G10B10, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+        check_pixel_2bpp(lockrect, 0, 0, 0x2e57);
+        todo_wine {
+            check_pixel_2bpp(lockrect, 1, 0, 0x3588);
+        }
+        check_pixel_2bpp(lockrect, 0, 1, 0xe215);
+        check_pixel_2bpp(lockrect, 1, 1, 0xff0e);
+        IDirect3DSurface9_UnlockRect(surf);
+
+        check_release((IUnknown*)surf, 0);
+    }
+
+    /* cleanup */
     if(testdummy_ok) DeleteFileA("testdummy.bmp");
     if(testbitmap_ok) DeleteFileA("testbitmap.bmp");
 }
