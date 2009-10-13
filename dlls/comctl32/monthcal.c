@@ -1015,8 +1015,7 @@ static void MONTHCAL_PaintCalendar(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTS
 
 static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps)
 {
-  RECT *title=&infoPtr->title;
-  HBRUSH hbr;
+  RECT *title = &infoPtr->title;
   COLORREF old_text_clr, old_bk_clr;
   HFONT old_font;
   RECT r_temp;
@@ -1024,11 +1023,6 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
   old_text_clr = SetTextColor(hdc, comctl32_color.clrWindowText);
   old_bk_clr   = GetBkColor(hdc);
   old_font     = GetCurrentObject(hdc, OBJ_FONT);
-
-  /* fill background */
-  hbr = CreateSolidBrush (infoPtr->bk);
-  FillRect(hdc, &ps->rcPaint, hbr);
-  DeleteObject(hbr);
 
   /* draw title, redraw all its elements */
   if(IntersectRect(&r_temp, &(ps->rcPaint), title))
@@ -1047,7 +1041,6 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
   SelectObject(hdc, old_font);
   SetTextColor(hdc, old_text_clr);
 }
-
 
 static LRESULT
 MONTHCAL_GetMinReqRect(const MONTHCAL_INFO *infoPtr, LPRECT lpRect)
@@ -2114,6 +2107,22 @@ MONTHCAL_Paint(MONTHCAL_INFO *infoPtr, HDC hdc_paint)
 }
 
 static LRESULT
+MONTHCAL_EraseBkgnd(const MONTHCAL_INFO *infoPtr, HDC hdc)
+{
+  HBRUSH hbr;
+  RECT rc;
+
+  if (!GetClipBox(hdc, &rc)) return FALSE;
+
+  /* fill background */
+  hbr = CreateSolidBrush (infoPtr->bk);
+  FillRect(hdc, &rc, hbr);
+  DeleteObject(hbr);
+
+  return TRUE;
+}
+
+static LRESULT
 MONTHCAL_SetFocus(const MONTHCAL_INFO *infoPtr)
 {
   TRACE("\n");
@@ -2528,6 +2537,9 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case WM_PRINTCLIENT:
   case WM_PAINT:
     return MONTHCAL_Paint(infoPtr, (HDC)wParam);
+
+  case WM_ERASEBKGND:
+    return MONTHCAL_EraseBkgnd(infoPtr, (HDC)wParam);
 
   case WM_SETFOCUS:
     return MONTHCAL_SetFocus(infoPtr);
