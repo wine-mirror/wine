@@ -192,7 +192,8 @@ HRESULT create_activex_constr(script_ctx_t *ctx, DispatchEx **ret)
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_function(ctx, ActiveXObject_value, ActiveXObjectW, NULL, PROPF_CONSTR, prototype, ret);
+    hres = create_builtin_function(ctx, ActiveXObject_value, ActiveXObjectW, NULL,
+            PROPF_CONSTR|1, prototype, ret);
 
     jsdisp_release(prototype);
     return hres;

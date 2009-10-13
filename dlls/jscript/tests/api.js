@@ -1941,4 +1941,43 @@ testFunctions(Function.prototype, [
         ["toString", 0]
     ]);
 
+ok(ActiveXObject.length == 1, "ActiveXObject.length = " + ActiveXObject.length);
+ok(Array.length == 1, "Array.length = " + Array.length);
+ok(Boolean.length == 1, "Boolean.length = " + Boolean.length);
+ok(CollectGarbage.length == 0, "CollectGarbage.length = " + CollectGarbage.length);
+//ok(Date.length == 7, "Date.length = " + Date.length);
+ok(Enumerator.length == 7, "Enumerator.length = " + Enumerator.length);
+ok(Error.length == 1, "Error.length = " + Error.length);
+ok(EvalError.length == 1, "EvalError.length = " + EvalError.length);
+ok(Function.length == 1, "Function.length = " + Function.length);
+ok(GetObject.length == 2, "GetObject.length = " + GetObject.length);
+ok(Number.length == 1, "Number.length = " + Number.length);
+ok(Object.length == 0, "Object.length = " + Object.length);
+ok(RangeError.length == 1, "RangeError.length = " + RangeError.length);
+ok(ReferenceError.length == 1, "ReferenceError.length = " + ReferenceError.length);
+ok(RegExp.length == 2, "RegExp.length = " + RegExp.length);
+ok(ScriptEngine.length == 0, "ScriptEngine.length = " + ScriptEngine.length);
+ok(ScriptEngineBuildVersion.length == 0,
+    "ScriptEngineBuildVersion.length = " + ScriptEngineBuildVersion.length);
+ok(ScriptEngineMajorVersion.length == 0,
+    "ScriptEngineMajorVersion.length = " + ScriptEngineMajorVersion.length);
+ok(ScriptEngineMinorVersion.length == 0,
+    "ScriptEngineMinorVersion.length = " + ScriptEngineMinorVersion.length);
+//ok(String.length == 1, "String.length = " + String.length);
+ok(SyntaxError.length == 1, "SyntaxError.length = " + SyntaxError.length);
+ok(TypeError.length == 1, "TypeError.length = " + TypeError.length);
+ok(URIError.length == 1, "URIError.length = " + URIError.length);
+ok(VBArray.length == 1, "VBArray.length = " + VBArray.length);
+ok(decodeURI.length == 1, "decodeURI.length = " + decodeURI.length);
+ok(decodeURIComponent.length == 1, "decodeURIComponent.length = " + decodeURIComponent.length);
+ok(encodeURI.length == 1, "encodeURI.length = " + encodeURI.length);
+ok(encodeURIComponent.length == 1, "encodeURIComponent.length = " + encodeURIComponent.length);
+ok(escape.length == 1, "escape.length = " + escape.length);
+ok(eval.length == 1, "eval.length = " + eval.length);
+ok(isFinite.length == 1, "isFinite.length = " + isFinite.length);
+ok(isNaN.length == 1, "isNaN.length = " + isNaN.length);
+ok(parseFloat.length == 1, "parseFloat.length = " + parseFloat.length);
+ok(parseInt.length == 2, "parseInt.length = " + parseInt.length);
+ok(unescape.length == 1, "unescape.length = " + unescape.length);
+
 reportSuccess();

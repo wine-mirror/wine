@@ -1705,7 +1705,7 @@ HRESULT create_string_constr(script_ctx_t *ctx, DispatchEx *object_prototype, Di
         return hres;
 
     hres = create_builtin_function(ctx, StringConstr_value, StringW, &StringConstr_info,
-            PROPF_CONSTR, &string->dispex, ret);
+            PROPF_CONSTR|1, &string->dispex, ret);
 
     jsdisp_release(&string->dispex);
     return hres;

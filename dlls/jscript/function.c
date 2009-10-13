@@ -673,7 +673,7 @@ HRESULT init_function_constr(script_ctx_t *ctx, DispatchEx *object_prototype)
     prot->value_proc = FunctionProt_value;
     prot->name = prototypeW;
 
-    hres = create_function(ctx, NULL, PROPF_CONSTR, TRUE, &prot->dispex, &constr);
+    hres = create_function(ctx, NULL, PROPF_CONSTR|1, TRUE, &prot->dispex, &constr);
     if(SUCCEEDED(hres)) {
         constr->value_proc = FunctionConstr_value;
         constr->name = FunctionW;
