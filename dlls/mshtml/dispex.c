@@ -221,7 +221,7 @@ static void add_func_info(dispex_data_t *data, DWORD *size, tid_t tid, const FUN
 
     data->funcs[data->func_cnt].id = desc->memid;
     data->funcs[data->func_cnt].tid = tid;
-    data->funcs[data->func_cnt].func_disp_idx = desc->invkind == DISPATCH_METHOD ? data->func_disp_cnt++ : -1;
+    data->funcs[data->func_cnt].func_disp_idx = (desc->invkind & DISPATCH_METHOD) ? data->func_disp_cnt++ : -1;
 
     data->func_cnt++;
 }
@@ -515,6 +515,9 @@ static HRESULT function_value(IUnknown *iface, LCID lcid, WORD flags, DISPPARAMS
     HRESULT hres;
 
     switch(flags) {
+    case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
+        if(!res)
+            return E_INVALIDARG;
     case DISPATCH_METHOD:
         hres = typeinfo_invoke(This->obj, This->info, flags, params, res, ei);
         break;
@@ -571,8 +574,10 @@ static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
     HRESULT hres;
 
     switch(flags) {
-    case DISPATCH_METHOD:
     case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
+        if(!res)
+            return E_INVALIDARG;
+    case DISPATCH_METHOD:
         hres = typeinfo_invoke(This, func, flags, dp, res, ei);
         break;
     case DISPATCH_PROPERTYGET: {
@@ -810,6 +815,9 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         var = &This->dynamic_data->props[idx].var;
 
         switch(wFlags) {
+        case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
+            if(!pvarRes)
+                return E_INVALIDARG;
         case DISPATCH_METHOD: {
             DISPID named_arg = DISPID_THIS;
             DISPPARAMS dp = {NULL, &named_arg, 0, 1};
