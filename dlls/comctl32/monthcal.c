@@ -2123,6 +2123,23 @@ MONTHCAL_EraseBkgnd(const MONTHCAL_INFO *infoPtr, HDC hdc)
 }
 
 static LRESULT
+MONTHCAL_PrintClient(MONTHCAL_INFO *infoPtr, HDC hdc, DWORD options)
+{
+  FIXME("Partial Stub: (hdc=%p options=0x%08x)\n", hdc, options);
+
+  if ((options & PRF_CHECKVISIBLE) && !IsWindowVisible(infoPtr->hwndSelf))
+      return 0;
+
+  if (options & PRF_ERASEBKGND)
+      MONTHCAL_EraseBkgnd(infoPtr, hdc);
+
+  if (options & PRF_CLIENT)
+      MONTHCAL_Paint(infoPtr, hdc);
+
+  return 0;
+}
+
+static LRESULT
 MONTHCAL_SetFocus(const MONTHCAL_INFO *infoPtr)
 {
   TRACE("\n");
@@ -2534,9 +2551,11 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case WM_LBUTTONUP:
     return MONTHCAL_LButtonUp(infoPtr, lParam);
 
-  case WM_PRINTCLIENT:
   case WM_PAINT:
     return MONTHCAL_Paint(infoPtr, (HDC)wParam);
+
+  case WM_PRINTCLIENT:
+    return MONTHCAL_PrintClient(infoPtr, (HDC)wParam, (DWORD)lParam);
 
   case WM_ERASEBKGND:
     return MONTHCAL_EraseBkgnd(infoPtr, (HDC)wParam);
