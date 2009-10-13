@@ -2666,6 +2666,7 @@ static void test_ConvertStringSecurityDescriptor(void)
         DWORD      revision;
         BOOL       ret;
         DWORD      GLE;
+        DWORD      altGLE;
     } cssd[] =
     {
         { "D:(A;;GA;;;WD)",                  0xdeadbeef,      FALSE, ERROR_UNKNOWN_REVISION },
@@ -2673,11 +2674,11 @@ static void test_ConvertStringSecurityDescriptor(void)
         { "D:(A;;GA;;;WD)",                  SDDL_REVISION_1, TRUE },
         { "D:(D;;GA;;;WD)",                  SDDL_REVISION_1, TRUE },
         { "ERROR:(D;;GA;;;WD)",              SDDL_REVISION_1, FALSE, ERROR_INVALID_PARAMETER },
-        /* test ACE string type with spaces */
+        /* test ACE string with spaces */
         { " D:(D;;GA;;;WD)",                SDDL_REVISION_1, TRUE },
         { "D: (D;;GA;;;WD)",                SDDL_REVISION_1, TRUE },
         { "D:( D;;GA;;;WD)",                SDDL_REVISION_1, TRUE },
-        { "D:(D ;;GA;;;WD)",                SDDL_REVISION_1, FALSE, RPC_S_INVALID_STRING_UUID },
+        { "D:(D ;;GA;;;WD)",                SDDL_REVISION_1, FALSE, RPC_S_INVALID_STRING_UUID, ERROR_INVALID_ACL }, /* Vista+ */
         { "D:(D; ;GA;;;WD)",                SDDL_REVISION_1, TRUE },
         { "D:(D;; GA;;;WD)",                SDDL_REVISION_1, TRUE },
         { "D:(D;;GA ;;;WD)",                SDDL_REVISION_1, FALSE, ERROR_INVALID_ACL },
@@ -2699,7 +2700,8 @@ static void test_ConvertStringSecurityDescriptor(void)
         /* test behaviour with empty strings */
         { "",                                SDDL_REVISION_1, TRUE },
         /* test ACE string SID */
-        { "D:(D;;GA;;;S-1-0-0)",             SDDL_REVISION_1, TRUE }
+        { "D:(D;;GA;;;S-1-0-0)",             SDDL_REVISION_1, TRUE },
+        { "D:(D;;GA;;;Nonexistent account)", SDDL_REVISION_1, FALSE, ERROR_INVALID_ACL, ERROR_INVALID_SID } /* W2K */
     };
 
     if (!pConvertStringSecurityDescriptorToSecurityDescriptorA)
@@ -2718,7 +2720,9 @@ static void test_ConvertStringSecurityDescriptor(void)
         GLE = GetLastError();
         ok(ret == cssd[i].ret, "(%02d) Expected %s (%d)\n", i, cssd[i].ret ? "success" : "failure", GLE);
         if (!cssd[i].ret)
-            ok(GLE == cssd[i].GLE, "(%02d) Expected %d, got %d\n", i, cssd[i].GLE, GLE);
+            ok(GLE == cssd[i].GLE ||
+               (cssd[i].altGLE && GLE == cssd[i].altGLE),
+               "(%02d) Unexpected last error %d\n", i, GLE);
         if (ret)
             LocalFree(pSD);
     }
@@ -2759,13 +2763,6 @@ static void test_ConvertStringSecurityDescriptor(void)
         Blank, SDDL_REVISION_1, &pSD, NULL);
     ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
 
-    /* test ACE string SID */
-    SetLastError(0xdeadbeef);
-    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
-        "D:(D;;GA;;;Nonexistent account)", SDDL_REVISION_1, &pSD, NULL);
-    ok(!ret, "Expected failure, got %d\n", ret);
-    ok(GetLastError() == ERROR_INVALID_ACL || GetLastError() == ERROR_INVALID_SID,
-       "Expected ERROR_INVALID_ACL or ERROR_INVALID_SID, got %d\n", GetLastError());
 }
 
 static void test_ConvertSecurityDescriptorToString(void)
