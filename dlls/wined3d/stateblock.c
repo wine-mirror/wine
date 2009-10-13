@@ -301,6 +301,7 @@ static void stateblock_savedstates_set_vertex(SAVEDSTATES *states, const struct 
     WORD sampler_mask = 0;
     unsigned int i;
 
+    states->vertexDecl = 1;
     states->vertexShader = 1;
 
     for (i = 0; i < sizeof(vertex_states_render) / sizeof(*vertex_states_render); ++i)
@@ -974,6 +975,12 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
                 This->streamSource[i] = targetStateBlock->streamSource[i];
             }
         }
+        if (This->vertexDecl != targetStateBlock->vertexDecl)
+        {
+            if (targetStateBlock->vertexDecl) IWineD3DVertexDeclaration_AddRef(targetStateBlock->vertexDecl);
+            if (This->vertexDecl) IWineD3DVertexDeclaration_Release(This->vertexDecl);
+            This->vertexDecl = targetStateBlock->vertexDecl;
+        }
         if(This->vertexShader != targetStateBlock->vertexShader) {
             if(targetStateBlock->vertexShader) IWineD3DVertexShader_AddRef(targetStateBlock->vertexShader);
             if(This->vertexShader) IWineD3DVertexShader_Release(This->vertexShader);
@@ -1176,6 +1183,7 @@ should really perform a delta so that only the changes get updated*/
         }
     } else if(This->blockType == WINED3DSBT_VERTEXSTATE) {
         IWineD3DDevice_SetVertexShader(pDevice, This->vertexShader);
+        IWineD3DDevice_SetVertexDeclaration(pDevice, This->vertexDecl);
         for (i = 0; i < GL_LIMITS(vshader_constantsF); i++) {
             IWineD3DDevice_SetVertexShaderConstantF(pDevice, i,
                     This->vertexShaderConstantF + i * 4, 1);
@@ -1751,7 +1759,7 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
 
         if (stateblock->vertexShader) IWineD3DVertexShader_AddRef(stateblock->vertexShader);
 
-        stateblock->vertexDecl = NULL;
+        if (stateblock->vertexDecl) IWineD3DVertexDeclaration_AddRef(stateblock->vertexDecl);
         stateblock->pIndexData = NULL;
         stateblock->pixelShader = NULL;
     }
