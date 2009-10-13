@@ -4668,6 +4668,7 @@ static const WCHAR MONTHCAL_CLASSW[] = { 'S','y','s',
 #define MCS_WEEKNUMBERS        0x0004
 #define MCS_NOTODAY            0x0010
 #define MCS_NOTODAYCIRCLE      0x0008
+#define MCS_NOTRAILINGDATES    0x0040
 
 #define MCHT_TITLE             0x00010000
 #define MCHT_CALENDAR          0x00020000

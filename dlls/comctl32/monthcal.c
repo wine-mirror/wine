@@ -93,7 +93,6 @@ typedef struct
     int		textWidth;
     int		height_increment;
     int		width_increment;
-    int		firstDayplace; /* place of the first day of the current month */
     INT		delta;	/* scroll rate; # of months that the */
                         /* control moves when user clicks a scroll button */
     int		visible;	/* # of months visible */
@@ -646,23 +645,22 @@ static void MONTHCAL_CircleDay(const MONTHCAL_INFO *infoPtr, HDC hdc,
 }
 
 static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEMTIME *st,
-                             int x, int y, int bold)
+                             int bold, const PAINTSTRUCT *ps)
 {
   static const WCHAR fmtW[] = { '%','d',0 };
   WCHAR buf[10];
-  RECT r;
+  RECT r, r_temp;
   static BOOL haveBoldFont, haveSelectedDay = FALSE;
   HBRUSH hbr;
   COLORREF oldCol = 0;
   COLORREF oldBk = 0;
 
-  wsprintfW(buf, fmtW, st->wDay);
-
 /* No need to check styles: when selection is not valid, it is set to zero.
  * 1<day<31, so everything is OK.
  */
 
-  MONTHCAL_CalcDayRect(infoPtr, &r, x, y);
+  MONTHCAL_CalcPosFromDay(infoPtr, st, &r);
+  if(!IntersectRect(&r_temp, &(ps->rcPaint), &r)) return;
 
   if ((MONTHCAL_CompareDate(st, &infoPtr->minSel) >= 0) &&
       (MONTHCAL_CompareDate(st, &infoPtr->maxSel) <= 0)) {
@@ -699,6 +697,7 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEM
   }
 
   SetBkMode(hdc,TRANSPARENT);
+  wsprintfW(buf, fmtW, st->wDay);
   DrawTextW(hdc, buf, -1, &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE );
 
   if(haveSelectedDay) {
@@ -708,7 +707,7 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEM
 }
 
 
-static void paint_button (MONTHCAL_INFO *infoPtr, HDC hdc, BOOL btnNext)
+static void MONTHCAL_PaintButton(MONTHCAL_INFO *infoPtr, HDC hdc, BOOL btnNext)
 {
     HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
     RECT *r = btnNext ? &infoPtr->titlebtnnext : &infoPtr->titlebtnprev;
@@ -744,347 +743,309 @@ static void paint_button (MONTHCAL_INFO *infoPtr, HDC hdc, BOOL btnNext)
         DrawFrameControl(hdc, r, DFC_SCROLL, style);
     }
 }
+/* paint a title with buttons and month/year string */
+static void MONTHCAL_PaintTitle(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps)
+{
+  static const WCHAR fmt_monthW[] = { '%','s',' ','%','l','d',0 };
+  WCHAR buf_month[80], buf_fmt[80];
+  HBRUSH hbr;
+  RECT *title = &infoPtr->title;
+  SIZE sz;
 
+  /* fill header box */
+  hbr =  CreateSolidBrush(infoPtr->titlebk);
+  FillRect(hdc, title, hbr);
+  DeleteObject(hbr);
+
+  /* navigation buttons */
+  MONTHCAL_PaintButton(infoPtr, hdc, FALSE);
+  MONTHCAL_PaintButton(infoPtr, hdc, TRUE);
+
+  /* month/year string */
+  SetBkColor(hdc, infoPtr->titlebk);
+  SetTextColor(hdc, infoPtr->titletxt);
+  SelectObject(hdc, infoPtr->hBoldFont);
+
+  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHNAME1+infoPtr->curSel.wMonth-1,
+                 buf_month, countof(buf_month));
+
+  wsprintfW(buf_fmt, fmt_monthW, buf_month, infoPtr->curSel.wYear);
+  DrawTextW(hdc, buf_fmt, strlenW(buf_fmt), title,
+                      DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+
+  /* update title rectangles with current month - used while testing hits */
+  GetTextExtentPoint32W(hdc, buf_fmt, strlenW(buf_fmt), &sz);
+  infoPtr->titlemonth.left = title->right / 2 + title->left / 2 - sz.cx / 2;
+  infoPtr->titleyear.right = title->right / 2 + title->left / 2 + sz.cx / 2;
+
+  GetTextExtentPoint32W(hdc, buf_month, strlenW(buf_month), &sz);
+  infoPtr->titlemonth.right = infoPtr->titlemonth.left + sz.cx;
+  infoPtr->titleyear.left   = infoPtr->titlemonth.right;
+}
+
+static void MONTHCAL_PaintWeeknumbers(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps)
+{
+  static const WCHAR fmt_weekW[] = { '%','d',0 };
+  INT mindays, weeknum, weeknum1, startofprescal;
+  SYSTEMTIME st = infoPtr->curSel;
+  RECT r;
+  WCHAR buf[80];
+  INT i, prev_month;
+
+  if (!(infoPtr->dwStyle & MCS_WEEKNUMBERS)) return;
+
+  MONTHCAL_GetMinDate(infoPtr, &st);
+  startofprescal = st.wDay;
+  st = infoPtr->curSel;
+
+  prev_month = infoPtr->curSel.wMonth - 1;
+  if(prev_month == 0) prev_month = 12;
+
+  /*
+     Rules what week to call the first week of a new year:
+     LOCALE_IFIRSTWEEKOFYEAR == 0 (e.g US?):
+     The week containing Jan 1 is the first week of year
+     LOCALE_IFIRSTWEEKOFYEAR == 2 (e.g. Germany):
+     First week of year must contain 4 days of the new year
+     LOCALE_IFIRSTWEEKOFYEAR == 1  (what contries?)
+     The first week of the year must contain only days of the new year
+  */
+  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IFIRSTWEEKOFYEAR, buf, countof(buf));
+  weeknum = atoiW(buf);
+  switch (weeknum)
+  {
+    case 1: mindays = 6;
+	break;
+    case 2: mindays = 3;
+	break;
+    case 0: mindays = 0;
+        break;
+    default:
+        WARN("Unknown LOCALE_IFIRSTWEEKOFYEAR value %d, defaulting to 0\n", weeknum);
+	mindays = 0;
+  }
+  if (infoPtr->curSel.wMonth < 2)
+  {
+    /* calculate all those exceptions for january */
+    st.wDay = st.wMonth = 1;
+    weeknum1 = MONTHCAL_CalculateDayOfWeek(&st, FALSE);
+    if ((infoPtr->firstDay - weeknum1) % 7 > mindays)
+	weeknum = 1;
+    else
+    {
+	weeknum = 0;
+	for(i = 0; i < 11; i++)
+	   weeknum += MONTHCAL_MonthLength(i+1, infoPtr->curSel.wYear - 1);
+
+	weeknum  += startofprescal + 7;
+	weeknum  /= 7;
+	st.wYear -= 1;
+	weeknum1  = MONTHCAL_CalculateDayOfWeek(&st, FALSE);
+	if ((infoPtr->firstDay - weeknum1) % 7 > mindays) weeknum++;
+    }
+  }
+  else
+  {
+    weeknum = 0;
+    for(i = 0; i < prev_month - 1; i++)
+	weeknum += MONTHCAL_MonthLength(i+1, infoPtr->curSel.wYear);
+
+    weeknum += startofprescal + 7;
+    weeknum /= 7;
+    st.wDay = st.wMonth = 1;
+    weeknum1 = MONTHCAL_CalculateDayOfWeek(&st, FALSE);
+    if ((infoPtr->firstDay - weeknum1) % 7 > mindays) weeknum++;
+  }
+
+  r = infoPtr->weeknums;
+  r.bottom = r.top + infoPtr->height_increment;
+
+  for(i = 0; i < 6; i++) {
+    if((i == 0) && (weeknum > 50))
+    {
+        wsprintfW(buf, fmt_weekW, weeknum);
+        weeknum = 0;
+    }
+    else if((i == 5) && (weeknum > 47))
+    {
+	wsprintfW(buf, fmt_weekW, 1);
+    }
+    else
+	wsprintfW(buf, fmt_weekW, weeknum + i);
+
+    DrawTextW(hdc, buf, -1, &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    OffsetRect(&r, 0, infoPtr->height_increment);
+  }
+
+  /* line separator for week numbers column */
+  MoveToEx(hdc, infoPtr->weeknums.right, infoPtr->weeknums.top + 3 , NULL);
+  LineTo(hdc,   infoPtr->weeknums.right, infoPtr->weeknums.bottom);
+}
+
+/* paint a calendar area */
+static void MONTHCAL_PaintCalendar(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps)
+{
+  INT prev_month, i, j;
+  WCHAR buf[80];
+  HBRUSH hbr;
+  RECT r;
+  int mask;
+  SYSTEMTIME st;
+
+  UnionRect(&r, &infoPtr->wdays, &infoPtr->todayrect);
+
+  hbr =  CreateSolidBrush(infoPtr->monthbk);
+  FillRect(hdc, &r, hbr);
+  DeleteObject(hbr);
+
+  /* draw line under day abbreviations */
+  MoveToEx(hdc, infoPtr->days.left + 3,
+                infoPtr->title.bottom + infoPtr->textHeight + 1, NULL);
+  LineTo(hdc, infoPtr->days.right - 3,
+              infoPtr->title.bottom + infoPtr->textHeight + 1);
+
+  prev_month = infoPtr->curSel.wMonth - 1;
+  if(prev_month == 0) prev_month = 12;
+
+  infoPtr->wdays.left = infoPtr->days.left = infoPtr->weeknums.right;
+
+  /* 1. draw day abbreviations */
+  SelectObject(hdc, infoPtr->hFont);
+  SetBkColor(hdc, infoPtr->monthbk);
+  SetTextColor(hdc, infoPtr->trailingtxt);
+  /* rectangle to draw a single day abbreviation within */
+  r = infoPtr->wdays;
+  r.right = r.left + infoPtr->width_increment;
+
+  i = infoPtr->firstDay;
+  for(j = 0; j < 7; j++) {
+    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SABBREVDAYNAME1 + (i+j+6)%7, buf, countof(buf));
+    DrawTextW(hdc, buf, strlenW(buf), &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    OffsetRect(&r, infoPtr->width_increment, 0);
+  }
+
+  /* 2. previous and next months */
+  if (!(infoPtr->dwStyle & MCS_NOTRAILINGDATES))
+  {
+    SYSTEMTIME st_max;
+
+    SetTextColor(hdc, infoPtr->trailingtxt);
+
+    MONTHCAL_GetMinDate(infoPtr, &st);
+
+    /* draw prev month */
+    mask = 1 << (st.wDay-1);
+    while(st.wDay <= MONTHCAL_MonthLength(prev_month, infoPtr->curSel.wYear)) {
+      MONTHCAL_DrawDay(infoPtr, hdc, &st, infoPtr->monthdayState[0] & mask, ps);
+      mask <<= 1;
+      st.wDay++;
+    }
+
+    /* draw next month */
+    st = infoPtr->curSel;
+    st.wDay = 1;
+    MONTHCAL_GetNextMonth(&st);
+    MONTHCAL_GetMaxDate(infoPtr, &st_max);
+    mask = 1;
+    while(st.wDay <= st_max.wDay) {
+      MONTHCAL_DrawDay(infoPtr, hdc, &st, infoPtr->monthdayState[2] & mask, ps);
+      mask <<= 1;
+      st.wDay++;
+    }
+  }
+
+  /* 3. current month */
+  SetTextColor(hdc, infoPtr->txt);
+  st = infoPtr->curSel;
+  st.wDay = 1;
+  mask = 1;
+  while(st.wDay <= MONTHCAL_MonthLength(infoPtr->curSel.wMonth, infoPtr->curSel.wYear)) {
+    MONTHCAL_DrawDay(infoPtr, hdc, &st, infoPtr->monthdayState[1] & mask,
+                     ps);
+    mask <<= 1;
+    st.wDay++;
+  }
+
+  /* 4. bottom today date */
+  if(!(infoPtr->dwStyle & MCS_NOTODAY))  {
+    static const WCHAR todayW[] = { 'T','o','d','a','y',':',0 };
+    static const WCHAR fmt_todayW[] = { '%','s',' ','%','s',0 };
+    WCHAR buf_todayW[30], buf_dateW[20];
+    RECT rtoday;
+
+    if(!(infoPtr->dwStyle & MCS_NOTODAYCIRCLE)) {
+      SYSTEMTIME fake_st;
+
+      MONTHCAL_GetMaxDate(infoPtr, &fake_st);
+      /* this is always safe cause next month will never fully fit calendar */
+      fake_st.wDay += 1;
+      MONTHCAL_CircleDay(infoPtr, hdc, &fake_st);
+    }
+    if (!LoadStringW(COMCTL32_hModule, IDM_TODAY, buf_todayW, countof(buf_todayW)))
+    {
+	WARN("Can't load resource\n");
+	strcpyW(buf_todayW, todayW);
+    }
+    MONTHCAL_CalcDayRect(infoPtr, &rtoday, 1, 6);
+    GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &infoPtr->todaysDate, NULL,
+                                                        buf_dateW, countof(buf_dateW));
+    SelectObject(hdc, infoPtr->hBoldFont);
+
+    wsprintfW(buf, fmt_todayW, buf_todayW, buf_dateW);
+    DrawTextW(hdc, buf, -1, &rtoday, DT_CALCRECT | DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+    DrawTextW(hdc, buf, -1, &rtoday, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+
+    SelectObject(hdc, infoPtr->hFont);
+  }
+
+  /* 5. today mark + focus */
+  if((infoPtr->curSel.wMonth == infoPtr->todaysDate.wMonth) &&
+     (infoPtr->curSel.wYear  == infoPtr->todaysDate.wYear) &&
+    !(infoPtr->dwStyle & MCS_NOTODAYCIRCLE))
+  {
+    MONTHCAL_CircleDay(infoPtr, hdc, &infoPtr->todaysDate);
+  }
+
+  if(!MONTHCAL_IsDateEqual(&infoPtr->focusedSel, &st_null))
+  {
+    MONTHCAL_CalcPosFromDay(infoPtr, &infoPtr->focusedSel, &r);
+    DrawFocusRect(hdc, &r);
+  }
+}
 
 static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps)
 {
-  static const WCHAR fmt_monthW[] = { '%','s',' ','%','l','d',0 };
   RECT *title=&infoPtr->title;
-  RECT *titlemonth=&infoPtr->titlemonth;
-  RECT *titleyear=&infoPtr->titleyear;
-  RECT dayrect;
-  int i, j, m, mask, day, prevMonth;
-  int textHeight = infoPtr->textHeight;
-  SIZE size;
   HBRUSH hbr;
-  HFONT currentFont;
-  WCHAR buf[20];
-  WCHAR buf1[20];
-  WCHAR buf2[32];
-  COLORREF oldTextColor, oldBkColor;
-  RECT rcTemp;
-  RECT rcDay; /* used in MONTHCAL_CalcDayRect() */
-  int startofprescal;
-  SYSTEMTIME st;
+  COLORREF old_text_clr, old_bk_clr;
+  HFONT old_font;
+  RECT r_temp;
 
-  oldTextColor = SetTextColor(hdc, comctl32_color.clrWindowText);
+  old_text_clr = SetTextColor(hdc, comctl32_color.clrWindowText);
+  old_bk_clr   = GetBkColor(hdc);
+  old_font     = GetCurrentObject(hdc, OBJ_FONT);
 
   /* fill background */
   hbr = CreateSolidBrush (infoPtr->bk);
   FillRect(hdc, &ps->rcPaint, hbr);
   DeleteObject(hbr);
 
-  /* draw header */
-  if(IntersectRect(&rcTemp, &(ps->rcPaint), title))
-  {
-    hbr =  CreateSolidBrush(infoPtr->titlebk);
-    FillRect(hdc, title, hbr);
-    DeleteObject(hbr);
-  }
+  /* draw title, redraw all its elements */
+  if(IntersectRect(&r_temp, &(ps->rcPaint), title))
+    MONTHCAL_PaintTitle(infoPtr, hdc, ps);
 
-  /* if the previous button is pressed draw it depressed */
-  if(IntersectRect(&rcTemp, &(ps->rcPaint), &infoPtr->titlebtnprev))
-    paint_button(infoPtr, hdc, FALSE);
+  /* draw calendar area */
+  UnionRect(&r_temp, &infoPtr->wdays, &infoPtr->todayrect);
+  if(IntersectRect(&r_temp, &(ps->rcPaint), &r_temp))
+    MONTHCAL_PaintCalendar(infoPtr, hdc, ps);
 
-  /* if next button is depressed draw it depressed */
-  if(IntersectRect(&rcTemp, &(ps->rcPaint), &infoPtr->titlebtnnext))
-    paint_button(infoPtr, hdc, TRUE);
+  /* week numbers */
+  MONTHCAL_PaintWeeknumbers(infoPtr, hdc, ps);
 
-  oldBkColor = SetBkColor(hdc, infoPtr->titlebk);
-  SetTextColor(hdc, infoPtr->titletxt);
-  currentFont = SelectObject(hdc, infoPtr->hBoldFont);
-
-  GetLocaleInfoW( LOCALE_USER_DEFAULT,LOCALE_SMONTHNAME1+infoPtr->curSel.wMonth -1,
-		  buf1,countof(buf1));
-  wsprintfW(buf, fmt_monthW, buf1, infoPtr->curSel.wYear);
-
-  if(IntersectRect(&rcTemp, &(ps->rcPaint), title))
-  {
-    DrawTextW(hdc, buf, strlenW(buf), title,
-                        DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-  }
-
-/* titlemonth left/right contained rect for whole titletxt('June  1999')
-  * MCM_HitTestInfo wants month & year rects, so prepare these now.
-  *(no, we can't draw them separately; the whole text is centered)
-  */
-  GetTextExtentPoint32W(hdc, buf, strlenW(buf), &size);
-  titlemonth->left = title->right / 2 + title->left / 2 - size.cx / 2;
-  titleyear->right = title->right / 2 + title->left / 2 + size.cx / 2;
-  GetTextExtentPoint32W(hdc, buf1, strlenW(buf1), &size);
-  titlemonth->right = titlemonth->left + size.cx;
-  titleyear->left = titlemonth->right;
-
-  /* draw month area */
-  rcTemp.top=infoPtr->wdays.top;
-  rcTemp.left=infoPtr->wdays.left;
-  rcTemp.bottom=infoPtr->todayrect.bottom;
-  rcTemp.right =infoPtr->todayrect.right;
-  if(IntersectRect(&rcTemp, &(ps->rcPaint), &rcTemp))
-  {
-    hbr =  CreateSolidBrush(infoPtr->monthbk);
-    FillRect(hdc, &rcTemp, hbr);
-    DeleteObject(hbr);
-  }
-
-/* draw line under day abbreviations */
-
-  MoveToEx(hdc, infoPtr->days.left + 3, title->bottom + textHeight + 1, NULL);
-  LineTo(hdc, infoPtr->days.right - 3, title->bottom + textHeight + 1);
-
-  prevMonth = infoPtr->curSel.wMonth - 1;
-  if(prevMonth == 0) /* if curSel.wMonth is january(1) prevMonth is */
-    prevMonth = 12;    /* december(12) of the previous year */
-
-  infoPtr->wdays.left   = infoPtr->days.left   = infoPtr->weeknums.right;
-
-  /* draw day abbreviations */
-  SelectObject(hdc, infoPtr->hFont);
-  SetBkColor(hdc, infoPtr->monthbk);
-  SetTextColor(hdc, infoPtr->trailingtxt);
-
-  /* rectangle to draw a single day abbreviation within */
-  dayrect = infoPtr->wdays;
-  dayrect.right = dayrect.left + infoPtr->width_increment;
-
-  i = infoPtr->firstDay;
-
-  for(j = 0; j < 7; j++) {
-    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SABBREVDAYNAME1 + (i+j+6)%7, buf, countof(buf));
-    DrawTextW(hdc, buf, strlenW(buf), &dayrect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-    dayrect.left  += infoPtr->width_increment;
-    dayrect.right += infoPtr->width_increment;
-  }
-
-  /* draw day numbers; first, the previous month */
-  MONTHCAL_GetMinDate(infoPtr, &st);
-  day = st.wDay;
-  startofprescal = day;
-  mask = 1<<(day-1);
-
-  i = 0;
-  m = 0;
-  while(st.wDay <= MONTHCAL_MonthLength(prevMonth, infoPtr->curSel.wYear)) {
-    MONTHCAL_CalcDayRect(infoPtr, &rcDay, i, 0);
-    if(IntersectRect(&rcTemp, &(ps->rcPaint), &rcDay))
-    {
-      MONTHCAL_DrawDay(infoPtr, hdc, &st, i, 0,
-          infoPtr->monthdayState[m] & mask);
-    }
-
-    mask <<= 1;
-    st.wDay++;
-    i++;
-  }
-
-/* draw `current' month  */
-
-  day = 1; /* start at the beginning of the current month */
-  st = infoPtr->curSel;
-  st.wDay = 1;
-  infoPtr->firstDayplace = i;
-  SetTextColor(hdc, infoPtr->txt);
-  m++;
-  mask = 1;
-
-  /* draw the first week of the current month */
-  while(i < 7) {
-    MONTHCAL_CalcDayRect(infoPtr, &rcDay, i, 0);
-    if(IntersectRect(&rcTemp, &(ps->rcPaint), &rcDay))
-    {
-      MONTHCAL_DrawDay(infoPtr, hdc, &st, i, 0,
-	infoPtr->monthdayState[m] & mask);
-    }
-
-    mask<<=1;
-    st.wDay++;
-    i++;
-  }
-
-  j = 1; /* move to the 2nd week of the current month */
-  i = 0; /* move back to sunday */
-  while(st.wDay <= MONTHCAL_MonthLength(infoPtr->curSel.wMonth, infoPtr->curSel.wYear)) {
-    MONTHCAL_CalcDayRect(infoPtr, &rcDay, i, j);
-    if(IntersectRect(&rcTemp, &(ps->rcPaint), &rcDay))
-    {
-      MONTHCAL_DrawDay(infoPtr, hdc, &st, i, j,
-          infoPtr->monthdayState[m] & mask);
-    }
-    mask<<=1;
-    st.wDay++;
-    i++;
-    if(i>6) { /* past saturday, goto the next weeks sunday */
-      i = 0;
-      j++;
-    }
-  }
-
-/*  draw `next' month */
-
-  day = 1; /* start at the first day of the next month */
-  st = infoPtr->curSel;
-  st.wDay = 1;
-  MONTHCAL_GetNextMonth(&st);
-  m++;
-  mask = 1;
-
-  SetTextColor(hdc, infoPtr->trailingtxt);
-  while((i<7) &&(j<6)) {
-    MONTHCAL_CalcDayRect(infoPtr, &rcDay, i, j);
-    if(IntersectRect(&rcTemp, &(ps->rcPaint), &rcDay))
-    {
-      MONTHCAL_DrawDay(infoPtr, hdc, &st, i, j,
-		infoPtr->monthdayState[m] & mask);
-    }
-
-    mask<<=1;
-    st.wDay++;
-    day++;
-    i++;
-    if(i==7) { /* past saturday, go to next week's sunday */
-      i = 0;
-      j++;
-    }
-  }
-  SetTextColor(hdc, infoPtr->txt);
-
-  /* draw today mark rectangle */
-  if((infoPtr->curSel.wMonth == infoPtr->todaysDate.wMonth) &&
-     (infoPtr->curSel.wYear == infoPtr->todaysDate.wYear) &&
-    !(infoPtr->dwStyle & MCS_NOTODAYCIRCLE))
-  {
-    MONTHCAL_CircleDay(infoPtr, hdc, &infoPtr->todaysDate);
-  }
-
-  /* draw focused day */
-  if(!MONTHCAL_IsDateEqual(&infoPtr->focusedSel, &st_null))
-  {
-    MONTHCAL_CalcPosFromDay(infoPtr, &infoPtr->focusedSel, &rcDay);
-
-    DrawFocusRect(hdc, &rcDay);
-  }
-
-  /* draw `today' date if style allows it, and draw a circle before today's
-   * date if necessary */
-  if(!(infoPtr->dwStyle & MCS_NOTODAY))  {
-    static const WCHAR todayW[] = { 'T','o','d','a','y',':',0 };
-    static const WCHAR fmt_todayW[] = { '%','s',' ','%','s',0 };
-    RECT rtoday;
-
-    if(!(infoPtr->dwStyle & MCS_NOTODAYCIRCLE)) {
-      SYSTEMTIME fake_st = infoPtr->curSel;
-
-      /*day is the number of days from nextmonth we put on the calendar */
-      fake_st.wDay = day + MONTHCAL_MonthLength(infoPtr->curSel.wMonth, infoPtr->curSel.wYear);
-      MONTHCAL_CircleDay(infoPtr, hdc, &fake_st);
-    }
-    if (!LoadStringW(COMCTL32_hModule, IDM_TODAY, buf1, countof(buf1)))
-    {
-	WARN("Can't load resource\n");
-	strcpyW(buf1, todayW);
-    }
-    MONTHCAL_CalcDayRect(infoPtr, &rtoday, 1, 6);
-    GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &infoPtr->todaysDate, NULL,
-                                                        buf2, countof(buf2));
-    wsprintfW(buf, fmt_todayW, buf1, buf2);
-    SelectObject(hdc, infoPtr->hBoldFont);
-
-    DrawTextW(hdc, buf, -1, &rtoday, DT_CALCRECT | DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-    if(IntersectRect(&rcTemp, &(ps->rcPaint), &rtoday))
-    {
-      DrawTextW(hdc, buf, -1, &rtoday, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-    }
-    SelectObject(hdc, infoPtr->hFont);
-  }
-
-  /* eventually draw week numbers */
-  if(infoPtr->dwStyle & MCS_WEEKNUMBERS) {
-    static const WCHAR fmt_weekW[] = { '%','d',0 }; /* week numbers format */
-    int mindays, weeknum, weeknum1;
-    SYSTEMTIME st = infoPtr->curSel;
-
-    /* Rules what week to call the first week of a new year:
-       LOCALE_IFIRSTWEEKOFYEAR == 0 (e.g US?):
-       The week containing Jan 1 is the first week of year
-       LOCALE_IFIRSTWEEKOFYEAR == 2 (e.g. Germany):
-       First week of year must contain 4 days of the new year
-       LOCALE_IFIRSTWEEKOFYEAR == 1  (what contries?)
-       The first week of the year must contain only days of the new year
-    */
-    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IFIRSTWEEKOFYEAR, buf, countof(buf));
-    weeknum = atoiW(buf);
-    switch (weeknum)
-    {
-      case 1: mindays = 6;
-	break;
-      case 2: mindays = 3;
-	break;
-      case 0:
-      default:
-	mindays = 0;
-    }
-    if (infoPtr->curSel.wMonth < 2)
-    {
-	/* calculate all those exceptions for january */
-	st.wDay = st.wMonth = 1;
-	weeknum1 = MONTHCAL_CalculateDayOfWeek(&st, FALSE);
-	if ((infoPtr->firstDay - weeknum1) % 7 > mindays)
-	    weeknum = 1;
-	else
-	{
-	    weeknum = 0;
-	    for(i = 0; i < 11; i++)
-	      weeknum += MONTHCAL_MonthLength(i+1, infoPtr->curSel.wYear - 1);
-
-	    weeknum  += startofprescal + 7;
-	    weeknum  /= 7;
-	    st.wYear -= 1;
-	    weeknum1  = MONTHCAL_CalculateDayOfWeek(&st, FALSE);
-	    if ((infoPtr->firstDay - weeknum1) % 7 > mindays) weeknum++;
-	}
-    }
-    else
-    {
-	weeknum = 0;
-	for(i = 0; i < prevMonth - 1; i++)
-	  weeknum += MONTHCAL_MonthLength(i+1, infoPtr->curSel.wYear);
-
-	weeknum += startofprescal + 7;
-	weeknum /= 7;
-	st.wDay = st.wMonth = 1;
-	weeknum1 = MONTHCAL_CalculateDayOfWeek(&st, FALSE);
-	if ((infoPtr->firstDay - weeknum1) % 7 > mindays) weeknum++;
-    }
-
-    dayrect = infoPtr->weeknums;
-    dayrect.bottom = dayrect.top + infoPtr->height_increment;
-
-    for(i = 0; i < 6; i++) {
-      if((i == 0) && (weeknum > 50))
-      {
-	  wsprintfW(buf, fmt_weekW, weeknum);
-	  weeknum = 0;
-      }
-      else if((i == 5) && (weeknum > 47))
-      {
-	  wsprintfW(buf, fmt_weekW, 1);
-      }
-      else
-	  wsprintfW(buf, fmt_weekW, weeknum + i);
-
-      DrawTextW(hdc, buf, -1, &dayrect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-      dayrect.top    += infoPtr->height_increment;
-      dayrect.bottom += infoPtr->height_increment;
-    }
-
-    MoveToEx(hdc, infoPtr->weeknums.right, infoPtr->weeknums.top + 3 , NULL);
-    LineTo(hdc,   infoPtr->weeknums.right, infoPtr->weeknums.bottom);
-  }
-
-  /* currentFont was font at entering Refresh */
-  SetBkColor(hdc, oldBkColor);
-  SelectObject(hdc, currentFont);
-  SetTextColor(hdc, oldTextColor);
+  /* restore context */
+  SetBkColor(hdc, old_bk_clr);
+  SelectObject(hdc, old_font);
+  SetTextColor(hdc, old_text_clr);
 }
 
 
