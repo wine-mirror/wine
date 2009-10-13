@@ -334,8 +334,10 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
     }
 
     ret = SysAllocStringLen(NULL, len);
-    if(!ret)
+    if(!ret) {
+        SysFreeString(str);
         return E_OUTOFMEMORY;
+    }
 
     len = 0;
     for(ptr=str; *ptr; ptr++) {
@@ -356,6 +358,8 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
             ret[len++] = int_to_char(*ptr & 0xf);
         }
     }
+
+    SysFreeString(str);
 
     if(retv) {
         V_VT(retv) = VT_BSTR;
@@ -690,8 +694,10 @@ static HRESULT JSGlobal_unescape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     }
 
     ret = SysAllocStringLen(NULL, len);
-    if(!ret)
+    if(!ret) {
+        SysFreeString(str);
         return E_OUTOFMEMORY;
+    }
 
     len = 0;
     for(ptr=str; *ptr; ptr++) {
@@ -714,6 +720,8 @@ static HRESULT JSGlobal_unescape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 
         len++;
     }
+
+    SysFreeString(str);
 
     if(retv) {
         V_VT(retv) = VT_BSTR;
@@ -802,6 +810,7 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         }else {
             i = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, NULL, 0, NULL, NULL)*3;
             if(!i) {
+                SysFreeString(str);
                 FIXME("throw URIError\n");
                 return E_FAIL;
             }
@@ -811,8 +820,10 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     }
 
     rptr = ret = SysAllocStringLen(NULL, len);
-    if(!ret)
+    if(!ret) {
+        SysFreeString(str);
         return E_OUTOFMEMORY;
+    }
 
     for(ptr = str; *ptr; ptr++) {
         if(is_uri_unescaped(*ptr) || is_uri_reserved(*ptr) || *ptr == '#') {
@@ -826,6 +837,8 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
             }
         }
     }
+
+    SysFreeString(str);
 
     TRACE("%s -> %s\n", debugstr_w(str), debugstr_w(ret));
     if(retv) {
@@ -847,8 +860,75 @@ static HRESULT JSGlobal_decodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR str, ret;
+    char buf[4];
+    const WCHAR *ptr;
+    DWORD len = 0, size, i;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(!arg_cnt(dp)) {
+        if(retv) {
+            ret = SysAllocString(undefinedW);
+            if(!ret)
+                return E_OUTOFMEMORY;
+
+            V_VT(retv) = VT_BSTR;
+            V_BSTR(retv) = ret;
+        }
+
+        return S_OK;
+    }
+
+    hres = to_string(ctx, get_arg(dp, 0), ei, &str);
+    if(FAILED(hres))
+        return hres;
+
+    for(ptr=str; *ptr; ptr++) {
+        if(is_uri_unescaped(*ptr))
+            len++;
+        else {
+            size = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, NULL, 0, NULL, NULL);
+            if(!size) {
+                SysFreeString(str);
+                FIXME("throw Error\n");
+                return E_FAIL;
+            }
+            len += size*3;
+        }
+    }
+
+    ret = SysAllocStringLen(NULL, len);
+    if(!ret) {
+        SysFreeString(str);
+        return E_OUTOFMEMORY;
+    }
+
+    len = 0;
+    for(ptr=str; *ptr; ptr++) {
+        if(is_uri_unescaped(*ptr))
+            ret[len++] = *ptr;
+        else {
+            size = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, buf, sizeof(buf), NULL, NULL);
+            for(i=0; i<size; i++) {
+                ret[len++] = '%';
+                ret[len++] = int_to_char((BYTE)buf[i] >> 4);
+                ret[len++] = int_to_char(buf[i] & 0x0f);
+            }
+        }
+    }
+
+    SysFreeString(str);
+
+    if(retv) {
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = ret;
+    } else {
+        SysFreeString(ret);
+    }
+
+    return S_OK;
 }
 
 static HRESULT JSGlobal_decodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
