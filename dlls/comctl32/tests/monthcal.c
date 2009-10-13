@@ -1402,7 +1402,9 @@ static void test_monthcal_monthrange(void)
 
     expect(1752, st_visible[0].wYear);
     expect(9, st_visible[0].wMonth);
-    expect(14, st_visible[0].wDay);
+    ok(14 == st_visible[0].wDay ||
+       broken(1 == st_visible[0].wDay), /* comctl32 <= 4.72 */
+       "Expected 14, got %d\n", st_visible[0].wDay);
 
     expect(1752, st_visible[1].wYear);
     expect(9, st_visible[1].wMonth);
