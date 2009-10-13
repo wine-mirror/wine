@@ -2673,6 +2673,18 @@ static void test_ConvertStringSecurityDescriptor(void)
         { "D:(A;;GA;;;WD)",                  SDDL_REVISION_1, TRUE },
         { "D:(D;;GA;;;WD)",                  SDDL_REVISION_1, TRUE },
         { "ERROR:(D;;GA;;;WD)",              SDDL_REVISION_1, FALSE, ERROR_INVALID_PARAMETER },
+        /* test ACE string type with spaces */
+        { " D:(D;;GA;;;WD)",                SDDL_REVISION_1, TRUE },
+        { "D: (D;;GA;;;WD)",                SDDL_REVISION_1, TRUE },
+        { "D:( D;;GA;;;WD)",                SDDL_REVISION_1, TRUE },
+        { "D:(D ;;GA;;;WD)",                SDDL_REVISION_1, FALSE, RPC_S_INVALID_STRING_UUID },
+        { "D:(D; ;GA;;;WD)",                SDDL_REVISION_1, TRUE },
+        { "D:(D;; GA;;;WD)",                SDDL_REVISION_1, TRUE },
+        { "D:(D;;GA ;;;WD)",                SDDL_REVISION_1, FALSE, ERROR_INVALID_ACL },
+        { "D:(D;;GA; ;;WD)",                SDDL_REVISION_1, TRUE },
+        { "D:(D;;GA;; ;WD)",                SDDL_REVISION_1, TRUE },
+        { "D:(D;;GA;;; WD)",                SDDL_REVISION_1, TRUE },
+        { "D:(D;;GA;;;WD )",                SDDL_REVISION_1, TRUE },
         /* test ACE string access rights */
         { "D:(A;;GA;;;WD)",                  SDDL_REVISION_1, TRUE },
         { "D:(A;;GRGWGX;;;WD)",              SDDL_REVISION_1, TRUE },
