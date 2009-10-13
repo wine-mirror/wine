@@ -208,7 +208,7 @@ static HRESULT HTMLDOMChildrenCollection_invoke(IUnknown *iface, DISPID id, LCID
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, flags, params, res, ei, caller);
 
     switch(flags) {
-    case INVOKE_PROPERTYGET: {
+    case DISPATCH_PROPERTYGET: {
         IDispatch *disp = NULL;
         HRESULT hres;
 

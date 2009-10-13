@@ -221,7 +221,7 @@ static void add_func_info(dispex_data_t *data, DWORD *size, tid_t tid, const FUN
 
     data->funcs[data->func_cnt].id = desc->memid;
     data->funcs[data->func_cnt].tid = tid;
-    data->funcs[data->func_cnt].func_disp_idx = desc->invkind == INVOKE_FUNC ? data->func_disp_cnt++ : -1;
+    data->funcs[data->func_cnt].func_disp_idx = desc->invkind == DISPATCH_METHOD ? data->func_disp_cnt++ : -1;
 
     data->func_cnt++;
 }
@@ -572,6 +572,7 @@ static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
 
     switch(flags) {
     case DISPATCH_METHOD:
+    case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
         hres = typeinfo_invoke(This, func, flags, dp, res, ei);
         break;
     case DISPATCH_PROPERTYGET: {
@@ -809,7 +810,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         var = &This->dynamic_data->props[idx].var;
 
         switch(wFlags) {
-        case INVOKE_FUNC: {
+        case DISPATCH_METHOD: {
             DISPID named_arg = DISPID_THIS;
             DISPPARAMS dp = {NULL, &named_arg, 0, 1};
             IDispatchEx *dispex;
@@ -848,9 +849,9 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
             heap_free(dp.rgvarg);
             return hres;
         }
-        case INVOKE_PROPERTYGET:
+        case DISPATCH_PROPERTYGET:
             return VariantCopy(pvarRes, var);
-        case INVOKE_PROPERTYPUT:
+        case DISPATCH_PROPERTYPUT:
             VariantClear(var);
             return VariantCopy(var, pdp->rgvarg);
         default:
