@@ -174,7 +174,7 @@ static inline void MONTHCAL_NotifySelect(const MONTHCAL_INFO *infoPtr)
 /* january is 1, december is 12 */
 int MONTHCAL_MonthLength(int month, int year)
 {
-  const int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
+  const int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
   /* Wrap around, this eases handling. Getting length only we shouldn't care
      about year change here cause January and December have
      the same day quantity */
@@ -813,7 +813,8 @@ static void MONTHCAL_PaintWeeknumbers(MONTHCAL_INFO *infoPtr, HDC hdc, const PAI
         WARN("Unknown LOCALE_IFIRSTWEEKOFYEAR value %d, defaulting to 0\n", weeknum);
 	mindays = 0;
   }
-  if (infoPtr->curSel.wMonth < 2)
+
+  if (infoPtr->curSel.wMonth == 1)
   {
     /* calculate all those exceptions for january */
     st.wDay = st.wMonth = 1;
@@ -1366,6 +1367,8 @@ MONTHCAL_GetCurSel(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
 static LRESULT
 MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
 {
+  SYSTEMTIME prev = infoPtr->curSel;
+
   TRACE("%p\n", curSel);
   if(!curSel) return FALSE;
   if(infoPtr->dwStyle & MCS_MULTISELECT) return FALSE;
@@ -1379,10 +1382,23 @@ MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
   infoPtr->minSel = *curSel;
   infoPtr->maxSel = *curSel;
 
-  infoPtr->curSel = *curSel;
+  /* if selection is still in current month, reduce rectangle */
+  prev.wDay = curSel->wDay;
+  if (MONTHCAL_IsDateEqual(&prev, curSel))
+  {
+    RECT r_prev, r_new;
 
-  /* FIXME: it's possible to reduce rectangle here */
-  InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+    /* note that infoPtr->curSel isn't updated yet */
+    MONTHCAL_CalcPosFromDay(infoPtr, &infoPtr->curSel, &r_prev);
+    MONTHCAL_CalcPosFromDay(infoPtr, curSel, &r_new);
+
+    InvalidateRect(infoPtr->hwndSelf, &r_prev, FALSE);
+    InvalidateRect(infoPtr->hwndSelf, &r_new,  FALSE);
+  }
+  else
+    InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+
+  infoPtr->curSel = *curSel;
 
   return TRUE;
 }
