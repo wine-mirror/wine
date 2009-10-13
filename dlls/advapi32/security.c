@@ -3876,6 +3876,9 @@ static BYTE ParseAceStringType(LPCWSTR* StringAcl)
     LPCWSTR szAcl = *StringAcl;
     const ACEFLAG *lpaf = AceType;
 
+    while (*szAcl == ' ')
+        szAcl++;
+
     while (lpaf->wstr &&
         (len = strlenW(lpaf->wstr)) &&
         strncmpW(lpaf->wstr, szAcl, len))
@@ -3884,7 +3887,7 @@ static BYTE ParseAceStringType(LPCWSTR* StringAcl)
     if (!lpaf->wstr)
         return 0;
 
-    *StringAcl += len;
+    *StringAcl = szAcl + len;
     return lpaf->value;
 }
 
@@ -3909,6 +3912,9 @@ static BYTE ParseAceStringFlags(LPCWSTR* StringAcl)
     UINT len = 0;
     BYTE flags = 0;
     LPCWSTR szAcl = *StringAcl;
+
+    while (*szAcl == ' ')
+        szAcl++;
 
     while (*szAcl != ';')
     {
@@ -3974,6 +3980,9 @@ static DWORD ParseAceStringRights(LPCWSTR* StringAcl)
     DWORD rights = 0;
     LPCWSTR szAcl = *StringAcl;
 
+    while (*szAcl == ' ')
+        szAcl++;
+
     if ((*szAcl == '0') && (*(szAcl + 1) == 'x'))
     {
         LPCWSTR p = szAcl;
@@ -4029,6 +4038,7 @@ static BOOL ParseStringAclToAcl(LPCWSTR StringAcl, LPDWORD lpdwFlags,
     DWORD acesize = 0;
     DWORD acecount = 0;
     PACCESS_ALLOWED_ACE pAce = NULL; /* pointer to current ACE */
+    DWORD error = ERROR_INVALID_ACL;
 
     TRACE("%s\n", debugstr_w(StringAcl));
 
@@ -4051,7 +4061,10 @@ static BOOL ParseStringAclToAcl(LPCWSTR StringAcl, LPDWORD lpdwFlags,
 	if (pAce)
             pAce->Header.AceType = (BYTE) val;
         if (*StringAcl != ';')
+        {
+            error = RPC_S_INVALID_STRING_UUID;
             goto lerr;
+        }
         StringAcl++;
 
         /* Parse ACE flags */
@@ -4071,6 +4084,8 @@ static BOOL ParseStringAclToAcl(LPCWSTR StringAcl, LPDWORD lpdwFlags,
         StringAcl++;
 
         /* Parse ACE object guid */
+        while (*StringAcl == ' ')
+            StringAcl++;
         if (*StringAcl != ';')
         {
             FIXME("Support for *_OBJECT_ACE_TYPE not implemented\n");
@@ -4079,6 +4094,8 @@ static BOOL ParseStringAclToAcl(LPCWSTR StringAcl, LPDWORD lpdwFlags,
         StringAcl++;
 
         /* Parse ACE inherit object guid */
+        while (*StringAcl == ' ')
+            StringAcl++;
         if (*StringAcl != ';')
         {
             FIXME("Support for *_OBJECT_ACE_TYPE not implemented\n");
@@ -4126,7 +4143,7 @@ static BOOL ParseStringAclToAcl(LPCWSTR StringAcl, LPDWORD lpdwFlags,
     return TRUE;
 
 lerr:
-    SetLastError(ERROR_INVALID_ACL);
+    SetLastError(error);
     WARN("Invalid ACE string format\n");
     return FALSE;
 }
@@ -4151,6 +4168,9 @@ static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
 
     if (SecurityDescriptor)
         lpNext = (LPBYTE)(SecurityDescriptor + 1);
+
+    while (*StringSecurityDescriptor == ' ')
+        StringSecurityDescriptor++;
 
     while (*StringSecurityDescriptor)
     {
@@ -5044,6 +5064,9 @@ static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
         TRACE("StringSid is NULL, returning FALSE\n");
         return FALSE;
     }
+
+    while (*StringSid == ' ')
+        StringSid++;
 
     *cBytes = ComputeStringSidSize(StringSid);
     if (!pisid) /* Simply compute the size */
