@@ -1658,16 +1658,7 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
      * state block. */
     if (type == WINED3DSBT_INIT || type == WINED3DSBT_RECORDED) return WINED3D_OK;
 
-    /* Otherwise, might as well set the whole state block to the appropriate values  */
-    if (device->stateBlock)
-    {
-        /* Saved values */
-        stateblock_copy_values(stateblock, device->stateBlock, gl_info);
-    }
-    else
-    {
-        memset(stateblock->streamFreq, 1, sizeof(stateblock->streamFreq));
-    }
+    stateblock_copy_values(stateblock, device->stateBlock, gl_info);
 
     TRACE("Updating changed flags appropriate for type %#x.\n", type);
 
