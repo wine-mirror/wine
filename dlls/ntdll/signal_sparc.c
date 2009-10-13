@@ -225,7 +225,7 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
         else
             ERR("Unhandled exception code %x flags %x addr %p\n",
                 rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
-        NtTerminateProcess( NtCurrentProcess(), 1 );
+        NtTerminateProcess( NtCurrentProcess(), rec->ExceptionCode );
     }
     return STATUS_SUCCESS;
 }
