@@ -130,7 +130,7 @@ struct state_test
     void (*apply_data)(IDirect3DDevice9 *device, const struct state_test *test,
             const void *data);
     void (*check_data)(IDirect3DDevice9 *device, const struct state_test *test,
-            const void *expected_data, unsigned int chain_stage);
+            const void *expected_data, unsigned int chain_stage, DWORD quirk);
 
     /* Test arguments */
     const void* test_arg;
@@ -141,6 +141,10 @@ struct state_test
 
 #define EVENT_OK    0
 #define EVENT_ERROR -1
+
+/* Apparently recorded stateblocks record and apply vertex declarations,
+ * but don't capture them */
+#define SB_QUIRK_RECORDED_VDECL_CAPTURE  0x00000001
 
 struct event_data
 {
@@ -165,6 +169,7 @@ struct event
     int (*event_fn)(IDirect3DDevice9 *device, struct event_data *event_data);
     enum stateblock_data check;
     enum stateblock_data apply;
+    DWORD quirk;
 };
 
 static const void *get_event_data(const struct state_test *test, enum stateblock_data data)
@@ -223,7 +228,7 @@ static void execute_test_chain(IDirect3DDevice9 *device, struct state_test *test
             for (i = 0; i < ntests; ++i)
             {
                 data = get_event_data(&test[i], event[j].check);
-                test[i].check_data(device, &test[i], data, j);
+                test[i].check_data(device, &test[i], data, j, event[j].quirk);
             }
         }
 
@@ -424,7 +429,7 @@ static void execute_test_chain_all(IDirect3DDevice9 *device, struct state_test *
         {begin_stateblock,          SB_DATA_NONE,           SB_DATA_TEST_IN},
         {end_stateblock,            SB_DATA_NONE,           SB_DATA_NONE},
         {capture_stateblock,        SB_DATA_DEFAULT,        SB_DATA_TEST_IN},
-        {apply_stateblock,          SB_DATA_DEFAULT,        SB_DATA_NONE},
+        {apply_stateblock,          SB_DATA_DEFAULT,        SB_DATA_NONE,       SB_QUIRK_RECORDED_VDECL_CAPTURE},
     };
 
     struct event create_stateblock_capture_apply_all_events[] =
@@ -601,7 +606,7 @@ static void shader_constant_apply_data(IDirect3DDevice9 *device, const struct st
 }
 
 static void shader_constant_check_data(IDirect3DDevice9 *device, const struct state_test *test,
-        const void *expected_data, unsigned int chain_stage)
+        const void *expected_data, unsigned int chain_stage, DWORD quirk)
 {
     struct shader_constant_data value = shader_constant_poison_data;
     const struct shader_constant_data *scdata = expected_data;
@@ -804,7 +809,7 @@ static void light_apply_data(IDirect3DDevice9 *device, const struct state_test *
 }
 
 static void light_check_data(IDirect3DDevice9 *device, const struct state_test *test,
-        const void *expected_data, unsigned int chain_stage)
+        const void *expected_data, unsigned int chain_stage, DWORD quirk)
 {
     const struct light_arg *larg = test->test_arg;
     const struct light_data *ldata = expected_data;
@@ -1088,7 +1093,7 @@ static void compare_matrix(const char *name, unsigned int chain_stage,
 }
 
 static void transform_check_data(IDirect3DDevice9 *device, const struct state_test *test,
-        const void *expected_data, unsigned int chain_stage)
+        const void *expected_data, unsigned int chain_stage, DWORD quirk)
 {
     const struct transform_data *tdata = expected_data;
     D3DMATRIX value;
@@ -1295,7 +1300,7 @@ static void render_state_apply_data(IDirect3DDevice9 *device, const struct state
 }
 
 static void render_state_check_data(IDirect3DDevice9 *device, const struct state_test *test,
-        const void *expected_data, unsigned int chain_stage)
+        const void *expected_data, unsigned int chain_stage, DWORD quirk)
 {
     const struct render_state_context *ctx = test->test_context;
     const struct render_state_data *rsdata = expected_data;
@@ -1722,12 +1727,354 @@ static void render_states_queue_test(struct state_test *test, const struct rende
     test->test_arg = test_arg;
 }
 
+/* resource tests */
+
+struct resource_test_arg
+{
+    DWORD vs_version;
+    DWORD ps_version;
+    UINT stream_count;
+    UINT tex_count;
+};
+
+struct resource_test_data
+{
+    IDirect3DVertexDeclaration9 *decl;
+    IDirect3DVertexShader9 *vs;
+    IDirect3DPixelShader9 *ps;
+    IDirect3DIndexBuffer9 *ib;
+    IDirect3DVertexBuffer9 **vb;
+    IDirect3DTexture9 **tex;
+};
+
+struct resource_test_context
+{
+    struct resource_test_data default_data;
+    struct resource_test_data test_data_all;
+    struct resource_test_data test_data_vertex;
+    struct resource_test_data test_data_pixel;
+    struct resource_test_data poison_data;
+};
+
+static void resource_apply_data(IDirect3DDevice9 *device, const struct state_test *test, const void *data)
+{
+    const struct resource_test_arg *arg = test->test_arg;
+    const struct resource_test_data *d = data;
+    unsigned int i;
+    HRESULT hr;
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, d->decl);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration (%p) returned %#x.\n", d->decl, hr);
+
+    hr = IDirect3DDevice9_SetVertexShader(device, d->vs);
+    ok(SUCCEEDED(hr), "SetVertexShader (%p) returned %#x.\n", d->vs, hr);
+
+    hr = IDirect3DDevice9_SetPixelShader(device, d->ps);
+    ok(SUCCEEDED(hr), "SetPixelShader (%p) returned %#x.\n", d->ps, hr);
+
+    hr = IDirect3DDevice9_SetIndices(device, d->ib);
+    ok(SUCCEEDED(hr), "SetIndices (%p) returned %#x.\n", d->ib, hr);
+
+    for (i = 0; i < arg->stream_count; ++i)
+    {
+        hr = IDirect3DDevice9_SetStreamSource(device, i, d->vb[i], 0, 64);
+        ok(SUCCEEDED(hr), "SetStreamSource (%u, %p, 0, 64) returned %#x.\n",
+                i, d->vb[i], hr);
+    }
+
+    for (i = 0; i < arg->tex_count; ++i)
+    {
+        hr = IDirect3DDevice9_SetTexture(device, i, (IDirect3DBaseTexture9 *)d->tex[i]);
+        ok(SUCCEEDED(hr), "SetTexture (%u, %p) returned %#x.\n", i, d->tex[i], hr);
+    }
+}
+
+static void resource_check_data(IDirect3DDevice9 *device, const struct state_test *test,
+        const void *expected_data, unsigned int chain_stage, DWORD quirk)
+{
+    const struct resource_test_context *ctx = test->test_context;
+    const struct resource_test_data *poison = &ctx->poison_data;
+    const struct resource_test_arg *arg = test->test_arg;
+    const struct resource_test_data *d = expected_data;
+    unsigned int i;
+    HRESULT hr;
+    void *ptr;
+    DWORD v, w;
+
+    ptr = poison->decl;
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, (IDirect3DVertexDeclaration9 **)&ptr);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration returned %#x.\n", hr);
+    if (quirk & SB_QUIRK_RECORDED_VDECL_CAPTURE)
+    {
+        ok(ptr == ctx->test_data_all.decl, "Chain stage %u, expected vertex declaration %p, received %p.\n",
+                chain_stage, ctx->test_data_all.decl, ptr);
+    }
+    else
+    {
+        ok(ptr == d->decl, "Chain stage %u, expected vertex declaration %p, received %p.\n",
+                chain_stage, d->decl, ptr);
+    }
+    if (SUCCEEDED(hr) && ptr)
+    {
+        IDirect3DVertexDeclaration9_Release((IDirect3DVertexDeclaration9 *)ptr);
+    }
+
+    ptr = poison->vs;
+    hr = IDirect3DDevice9_GetVertexShader(device, (IDirect3DVertexShader9 **)&ptr);
+    ok(SUCCEEDED(hr), "GetVertexShader returned %#x.\n", hr);
+    ok(ptr == d->vs, "Chain stage %u, expected vertex shader %p, received %p.\n",
+            chain_stage, d->vs, ptr);
+    if (SUCCEEDED(hr) && ptr)
+    {
+        IDirect3DVertexShader9_Release((IDirect3DVertexShader9 *)ptr);
+    }
+
+    ptr = poison->ps;
+    hr = IDirect3DDevice9_GetPixelShader(device, (IDirect3DPixelShader9 **)&ptr);
+    ok(SUCCEEDED(hr), "GetPixelShader returned %#x.\n", hr);
+    ok(ptr == d->ps, "Chain stage %u, expected pixel shader %p, received %p.\n",
+            chain_stage, d->ps, ptr);
+    if (SUCCEEDED(hr) && ptr)
+    {
+        IDirect3DPixelShader9_Release((IDirect3DPixelShader9 *)ptr);
+    }
+
+    ptr = poison->ib;
+    hr = IDirect3DDevice9_GetIndices(device, (IDirect3DIndexBuffer9 **)&ptr);
+    ok(SUCCEEDED(hr), "GetIndices returned %#x.\n", hr);
+    ok(ptr == d->ib, "Chain stage %u, expected index buffer %p, received %p.\n",
+            chain_stage, d->ib, ptr);
+    if (SUCCEEDED(hr) && ptr)
+    {
+        IDirect3DIndexBuffer9_Release((IDirect3DIndexBuffer9 *)ptr);
+    }
+
+    for (i = 0; i < arg->stream_count; ++i)
+    {
+        ptr = poison->vb[i];
+        hr = IDirect3DDevice9_GetStreamSource(device, i, (IDirect3DVertexBuffer9 **)&ptr, &v, &w);
+        ok(SUCCEEDED(hr), "GetStreamSource (%u) returned %#x.\n", i, hr);
+        ok(ptr == d->vb[i], "Chain stage %u, stream %u, expected vertex buffer %p, received %p.\n",
+                chain_stage, i, d->vb[i], ptr);
+        if (SUCCEEDED(hr) && ptr)
+        {
+            IDirect3DIndexBuffer9_Release((IDirect3DVertexBuffer9 *)ptr);
+        }
+    }
+
+    for (i = 0; i < arg->tex_count; ++i)
+    {
+        ptr = poison->tex[i];
+        hr = IDirect3DDevice9_GetTexture(device, i, (IDirect3DBaseTexture9 **)&ptr);
+        ok(SUCCEEDED(hr), "SetTexture (%u) returned %#x.\n", i, hr);
+        ok(ptr == d->tex[i], "Chain stage %u, texture stage %u, expected texture %p, received %p.\n",
+                chain_stage, i, d->tex[i], ptr);
+        if (SUCCEEDED(hr) && ptr)
+        {
+            IDirect3DBaseTexture9_Release((IDirect3DBaseTexture9 *)ptr);
+        }
+    }
+}
+
+static void resource_default_data_init(struct resource_test_data *data, const struct resource_test_arg *arg)
+{
+    unsigned int i;
+
+    data->decl = NULL;
+    data->vs = NULL;
+    data->ps = NULL;
+    data->ib = NULL;
+    data->vb = HeapAlloc(GetProcessHeap(), 0, arg->stream_count * sizeof(*data->vb));
+    for (i = 0; i < arg->stream_count; ++i)
+    {
+        data->vb[i] = NULL;
+    }
+    data->tex = HeapAlloc(GetProcessHeap(), 0, arg->tex_count * sizeof(*data->tex));
+    for (i = 0; i < arg->tex_count; ++i)
+    {
+        data->tex[i] = NULL;
+    }
+}
+
+static void resource_test_data_init(IDirect3DDevice9 *device,
+        struct resource_test_data *data, const struct resource_test_arg *arg)
+{
+    static const DWORD vs_code[] =
+    {
+        0xfffe0101,                                                             /* vs_1_1                       */
+        0x0000001f, 0x80000000, 0x900f0000,                                     /* dcl_position0 v0             */
+        0x00000009, 0xc0010000, 0x90e40000, 0xa0e40000,                         /* dp4 oPos.x, v0, c0           */
+        0x00000009, 0xc0020000, 0x90e40000, 0xa0e40001,                         /* dp4 oPos.y, v0, c1           */
+        0x00000009, 0xc0040000, 0x90e40000, 0xa0e40002,                         /* dp4 oPos.z, v0, c2           */
+        0x00000009, 0xc0080000, 0x90e40000, 0xa0e40003,                         /* dp4 oPos.w, v0, c3           */
+        0x0000ffff,                                                             /* END                          */
+    };
+    static const DWORD ps_code[] =
+    {
+        0xffff0101,                                                             /* ps_1_1                       */
+        0x00000051, 0xa00f0001, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, /* def c1 = 1.0, 0.0, 0.0, 0.0  */
+        0x00000042, 0xb00f0000,                                                 /* tex t0                       */
+        0x00000008, 0x800f0000, 0xa0e40001, 0xa0e40000,                         /* dp3 r0, c1, c0               */
+        0x00000005, 0x800f0000, 0x90e40000, 0x80e40000,                         /* mul r0, v0, r0               */
+        0x00000005, 0x800f0000, 0xb0e40000, 0x80e40000,                         /* mul r0, t0, r0               */
+        0x0000ffff,                                                             /* END                          */
+    };
+    static const D3DVERTEXELEMENT9 decl[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+        D3DDECL_END(),
+    };
+
+    unsigned int i;
+    HRESULT hr;
+
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl, &data->decl);
+    ok(SUCCEEDED(hr), "CreateVertexDeclaration returned %#x.\n", hr);
+
+    if (arg->vs_version)
+    {
+        hr = IDirect3DDevice9_CreateVertexShader(device, vs_code, &data->vs);
+        ok(SUCCEEDED(hr), "CreateVertexShader returned %#x.\n", hr);
+    }
+    else
+    {
+        data->vs = NULL;
+    }
+
+    if (arg->ps_version)
+    {
+        hr = IDirect3DDevice9_CreatePixelShader(device, ps_code, &data->ps);
+        ok(SUCCEEDED(hr), "CreatePixelShader returned %#x.\n", hr);
+    }
+    else
+    {
+        data->ps = NULL;
+    }
+
+    hr = IDirect3DDevice9_CreateIndexBuffer(device, 64, D3DUSAGE_DYNAMIC,
+            D3DFMT_INDEX32, D3DPOOL_DEFAULT, &data->ib, NULL);
+    ok(SUCCEEDED(hr), "CreateIndexBuffer returned %#x.\n", hr);
+
+    data->vb = HeapAlloc(GetProcessHeap(), 0, arg->stream_count * sizeof(*data->vb));
+    for (i = 0; i < arg->stream_count; ++i)
+    {
+        hr = IDirect3DDevice9_CreateVertexBuffer(device, 64, D3DUSAGE_DYNAMIC,
+                0, D3DPOOL_DEFAULT, &data->vb[i], NULL);
+        ok(SUCCEEDED(hr), "CreateVertexBuffer (%u) returned %#x.\n", i, hr);
+    }
+    data->tex = HeapAlloc(GetProcessHeap(), 0, arg->tex_count * sizeof(*data->tex));
+    for (i = 0; i < arg->tex_count; ++i)
+    {
+        hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, D3DUSAGE_DYNAMIC,
+                D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &data->tex[i], NULL);
+        ok(SUCCEEDED(hr), "CreateTexture (%u) returned %#x.\n", i, hr);
+    }
+}
+
+static void resource_poison_data_init(struct resource_test_data *data, const struct resource_test_arg *arg)
+{
+    DWORD poison = 0xdeadbeef;
+    unsigned int i;
+
+    data->decl = (IDirect3DVertexDeclaration9 *)poison++;
+    data->vs = (IDirect3DVertexShader9 *)poison++;
+    data->ps = (IDirect3DPixelShader9 *)poison++;
+    data->ib = (IDirect3DIndexBuffer9 *)poison++;
+    data->vb = HeapAlloc(GetProcessHeap(), 0, arg->stream_count * sizeof(*data->vb));
+    for (i = 0; i < arg->stream_count; ++i)
+    {
+        data->vb[i] = (IDirect3DVertexBuffer9 *)poison++;
+    }
+    data->tex = HeapAlloc(GetProcessHeap(), 0, arg->tex_count * sizeof(*data->tex));
+    for (i = 0; i < arg->tex_count; ++i)
+    {
+        data->tex[i] = (IDirect3DTexture9 *)poison++;
+    }
+}
+
+static HRESULT resource_test_init(IDirect3DDevice9 *device, struct state_test *test)
+{
+    const struct resource_test_arg *arg = test->test_arg;
+    struct resource_test_context *ctx;
+
+    ctx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ctx));
+    if (!ctx) return E_OUTOFMEMORY;
+
+    test->test_context = ctx;
+    test->test_data_in = &ctx->test_data_all;
+    test->test_data_out_all = &ctx->test_data_all;
+    test->test_data_out_vertex = &ctx->test_data_vertex;
+    test->test_data_out_pixel = &ctx->test_data_pixel;
+    test->default_data = &ctx->default_data;
+    test->initial_data = &ctx->default_data;
+
+    resource_default_data_init(&ctx->default_data, arg);
+    resource_test_data_init(device, &ctx->test_data_all, arg);
+    resource_default_data_init(&ctx->test_data_vertex, arg);
+    resource_default_data_init(&ctx->test_data_pixel, arg);
+    resource_poison_data_init(&ctx->poison_data, arg);
+
+    ctx->test_data_vertex.decl = ctx->test_data_all.decl;
+    ctx->test_data_vertex.vs = ctx->test_data_all.vs;
+    ctx->test_data_pixel.ps = ctx->test_data_all.ps;
+
+    return D3D_OK;
+}
+
+static void resource_test_cleanup(IDirect3DDevice9 *device, struct state_test *test)
+{
+    struct resource_test_context *ctx = test->test_context;
+    const struct resource_test_arg *arg = test->test_arg;
+    unsigned int i;
+    HRESULT hr;
+
+    resource_apply_data(device, test, &ctx->default_data);
+
+    IDirect3DVertexDeclaration9_Release(ctx->test_data_all.decl);
+    if (ctx->test_data_all.vs) IDirect3DVertexShader9_Release(ctx->test_data_all.vs);
+    if (ctx->test_data_all.ps) IDirect3DPixelShader9_Release(ctx->test_data_all.ps);
+    IDirect3DIndexBuffer9_Release(ctx->test_data_all.ib);
+    for (i = 0; i < arg->stream_count; ++i)
+    {
+        IDirect3DVertexBuffer9_Release(ctx->test_data_all.vb[i]);
+    }
+
+    for (i = 0; i < arg->tex_count; ++i)
+    {
+        hr = IDirect3DBaseTexture9_Release(ctx->test_data_all.tex[i]);
+    }
+
+    HeapFree(GetProcessHeap(), 0, ctx->default_data.vb);
+    HeapFree(GetProcessHeap(), 0, ctx->default_data.tex);
+    HeapFree(GetProcessHeap(), 0, ctx->test_data_all.vb);
+    HeapFree(GetProcessHeap(), 0, ctx->test_data_all.tex);
+    HeapFree(GetProcessHeap(), 0, ctx->test_data_vertex.vb);
+    HeapFree(GetProcessHeap(), 0, ctx->test_data_vertex.tex);
+    HeapFree(GetProcessHeap(), 0, ctx->test_data_pixel.vb);
+    HeapFree(GetProcessHeap(), 0, ctx->test_data_pixel.tex);
+    HeapFree(GetProcessHeap(), 0, ctx->poison_data.vb);
+    HeapFree(GetProcessHeap(), 0, ctx->poison_data.tex);
+    HeapFree(GetProcessHeap(), 0, ctx);
+}
+
+static void resource_test_queue(struct state_test *test, const struct resource_test_arg *test_arg)
+{
+    test->init = resource_test_init;
+    test->cleanup = resource_test_cleanup;
+    test->apply_data = resource_apply_data;
+    test->check_data = resource_check_data;
+    test->test_name = "set_get_resources";
+    test->test_arg = test_arg;
+}
+
 /* =================== Main state tests function =============================== */
 
 static void test_state_management(IDirect3DDevice9 *device, D3DPRESENT_PARAMETERS *device_pparams)
 {
     struct shader_constant_arg pshader_constant_arg;
     struct shader_constant_arg vshader_constant_arg;
+    struct resource_test_arg resource_test_arg;
     struct render_state_arg render_state_arg;
     struct light_arg light_arg;
     HRESULT hret;
@@ -1737,8 +2084,9 @@ static void test_state_management(IDirect3DDevice9 *device, D3DPRESENT_PARAMETER
                    1 for lights
                    1 for transforms
                    1 for render states
+                   1 for resources
      */
-    struct state_test tests[5];
+    struct state_test tests[6];
     unsigned int tcount = 0;
 
     hret = IDirect3DDevice9_GetDeviceCaps(device, &caps);
@@ -1774,6 +2122,13 @@ static void test_state_management(IDirect3DDevice9 *device, D3DPRESENT_PARAMETER
     render_state_arg.device_pparams = device_pparams;
     render_state_arg.pointsize_max = caps.MaxPointSize;
     render_states_queue_test(&tests[tcount], &render_state_arg);
+    tcount++;
+
+    resource_test_arg.vs_version = caps.VertexShaderVersion & 0xffff;
+    resource_test_arg.ps_version = caps.PixelShaderVersion & 0xffff;
+    resource_test_arg.stream_count = caps.MaxStreams;
+    resource_test_arg.tex_count = caps.MaxTextureBlendStages;
+    resource_test_queue(&tests[tcount], &resource_test_arg);
     tcount++;
 
     execute_test_chain_all(device, tests, tcount);
