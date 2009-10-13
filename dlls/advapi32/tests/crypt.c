@@ -933,17 +933,60 @@ static void test_machine_guid(void)
    RegCloseKey(key);
 }
 
+#define key_length 16
+
+static const unsigned char key[key_length] =
+    { 0xbf, 0xf6, 0x83, 0x4b, 0x3e, 0xa3, 0x23, 0xdd,
+      0x96, 0x78, 0x70, 0x8e, 0xa1, 0x9d, 0x3b, 0x40 };
+
+static void hashtest(void)
+{
+    struct KeyBlob
+    {
+        BLOBHEADER header;
+        DWORD key_size;
+        BYTE key_data[key_length];
+    } key_blob;
+
+    HCRYPTPROV provider;
+    HCRYPTKEY hkey;
+    BOOL ret;
+
+    SetLastError(0xdeadbeef);
+    ret = pCryptAcquireContextA(&provider, NULL, NULL,
+                                PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+    ok(ret, "CryptAcquireContext error %u\n", GetLastError());
+
+    key_blob.header.bType = PLAINTEXTKEYBLOB;
+    key_blob.header.bVersion = CUR_BLOB_VERSION;
+    key_blob.header.reserved = 0;
+    key_blob.header.aiKeyAlg = CALG_RC2;
+    key_blob.key_size = key_length;
+    memcpy(key_blob.key_data, key, key_length);
+
+    SetLastError(0xdeadbeef);
+    ret = pCryptImportKey(provider, (BYTE*)&key_blob,
+                      sizeof(BLOBHEADER)+sizeof(DWORD)+key_length,
+                      0, CRYPT_IPSEC_HMAC_KEY, &hkey);
+    ok(ret, "CryptImportKey error %u\n", GetLastError());
+
+    pCryptDestroyKey(hkey);
+    pCryptReleaseContext(provider, 0);
+}
+
 START_TEST(crypt)
 {
-	init_function_pointers();
-	if(pCryptAcquireContextA && pCryptReleaseContext) {
+    init_function_pointers();
+    if (pCryptAcquireContextA && pCryptReleaseContext)
+    {
+	hashtest();
 	init_environment();
 	test_acquire_context();
 	test_incorrect_api_usage();
 	test_verify_sig();
 	test_machine_guid();
 	clean_up_environment();
-	}
+    }
 	
 	test_enum_providers();
 	test_enum_provider_types();
