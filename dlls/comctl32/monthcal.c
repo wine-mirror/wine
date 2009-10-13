@@ -650,10 +650,11 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEM
   static const WCHAR fmtW[] = { '%','d',0 };
   WCHAR buf[10];
   RECT r, r_temp;
-  static BOOL haveBoldFont, haveSelectedDay = FALSE;
+  static BOOL bold_selected;
+  BOOL selected_day = FALSE;
   HBRUSH hbr;
   COLORREF oldCol = 0;
-  COLORREF oldBk = 0;
+  COLORREF oldBk  = 0;
 
 /* No need to check styles: when selection is not valid, it is set to zero.
  * 1<day<31, so everything is OK.
@@ -664,7 +665,6 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEM
 
   if ((MONTHCAL_CompareDate(st, &infoPtr->minSel) >= 0) &&
       (MONTHCAL_CompareDate(st, &infoPtr->maxSel) <= 0)) {
-    RECT r2;
 
     TRACE("%d %d %d\n", st->wDay, infoPtr->minSel.wDay, infoPtr->maxSel.wDay);
     TRACE("%s\n", wine_dbgstr_rect(&r));
@@ -673,34 +673,23 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEM
     hbr = GetSysColorBrush(COLOR_HIGHLIGHT);
     FillRect(hdc, &r, hbr);
 
-    /* FIXME: this may need to be changed now b/c of the other
-	drawing changes 11/3/99 CMM */
-    r2.left   = r.left - 0.25 * infoPtr->textWidth;
-    r2.top    = r.top;
-    r2.right  = r.left + 0.5 * infoPtr->textWidth;
-    r2.bottom = r.bottom;
-    if(haveSelectedDay) FillRect(hdc, &r2, hbr);
-      haveSelectedDay = TRUE;
-  } else {
-    haveSelectedDay = FALSE;
+    selected_day = TRUE;
   }
 
-  /* need to add some code for multiple selections */
-
-  if((bold) &&(!haveBoldFont)) {
+  if(bold && !bold_selected) {
     SelectObject(hdc, infoPtr->hBoldFont);
-    haveBoldFont = TRUE;
+    bold_selected = TRUE;
   }
-  if((!bold) &&(haveBoldFont)) {
+  if(!bold && bold_selected) {
     SelectObject(hdc, infoPtr->hFont);
-    haveBoldFont = FALSE;
+    bold_selected = FALSE;
   }
 
   SetBkMode(hdc,TRANSPARENT);
   wsprintfW(buf, fmtW, st->wDay);
   DrawTextW(hdc, buf, -1, &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE );
 
-  if(haveSelectedDay) {
+  if(selected_day) {
     SetTextColor(hdc, oldCol);
     SetBkColor(hdc, oldBk);
   }
@@ -1374,7 +1363,6 @@ MONTHCAL_GetCurSel(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
   return TRUE;
 }
 
-/* FIXME: if the specified date is not visible, make it visible */
 static LRESULT
 MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
 {
