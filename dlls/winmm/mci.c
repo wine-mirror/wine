@@ -1433,12 +1433,6 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	goto errCleanUp;
     }
 
-    /* set up call back */
-    if (hwndCallback != 0) {
-	dwFlags |= MCI_NOTIFY;
-	data[0] = (DWORD)hwndCallback;
-    }
-
     /* set return information */
     switch (retType = MCI_GetReturnType(lpCmd)) {
     case 0:		offset = 1;	break;
@@ -1453,6 +1447,11 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 
     if ((dwRet = MCI_ParseOptArgs(data, offset, lpCmd, args, &dwFlags)))
 	goto errCleanUp;
+
+    /* set up call back */
+    if (dwFlags & MCI_NOTIFY) {
+	data[0] = (DWORD)hwndCallback;
+    }
 
     /* FIXME: the command should get it's own notification window set up and
      * ask for device closing while processing the notification mechanism
