@@ -158,18 +158,20 @@ static int running_on_visible_desktop (void)
     return IsWindowVisible(desktop);
 }
 
-/* check for wine fake dll module */
-static BOOL is_fake_dll( HMODULE module )
+/* check for native dll when running under wine */
+static BOOL is_native_dll( HMODULE module )
 {
     static const char fakedll_signature[] = "Wine placeholder DLL";
     const IMAGE_DOS_HEADER *dos;
 
+    if (!running_under_wine()) return FALSE;
     if (!((ULONG_PTR)module & 1)) return FALSE;  /* not loaded as datafile */
+    /* builtin dlls can't be loaded as datafile, so we must have native or fake dll */
     dos = (const IMAGE_DOS_HEADER *)((const char *)module - 1);
     if (dos->e_magic != IMAGE_DOS_SIGNATURE) return FALSE;
     if (dos->e_lfanew >= sizeof(*dos) + sizeof(fakedll_signature) &&
-        !memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) )) return TRUE;
-    return FALSE;
+        !memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) )) return FALSE;
+    return TRUE;
 }
 
 /* check if Gecko is present, trying to trigger the install if not */
@@ -656,29 +658,27 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
 
     if (!dll) dll = load_com_dll(dllname, &wine_tests[nr_of_files].maindllpath, filename);
 
-    if (dll && running_under_wine() && ((ULONG_PTR)dll & 1))
-    {
-        /* builtin dlls can't be loaded as datafile, so we must have native or fake dll */
-        if (!is_fake_dll(dll))
-        {
-            FreeLibrary(dll);
-            xprintf ("    %s=load error Configured as native\n", dllname);
-            return TRUE;
-        }
-    }
-
     if (!dll && pLoadLibraryShim)
     {
         MultiByteToWideChar(CP_ACP, 0, dllname, -1, dllnameW, MAX_PATH);
-        if (FAILED( pLoadLibraryShim(dllnameW, NULL, NULL, &dll) ))
-            dll = 0;
-        else
+        if (SUCCEEDED( pLoadLibraryShim(dllnameW, NULL, NULL, &dll) ) && dll)
+        {
             get_dll_path(dll, &wine_tests[nr_of_files].maindllpath, filename);
+            FreeLibrary(dll);
+            dll = LoadLibraryExA(filename, NULL, LOAD_LIBRARY_AS_DATAFILE);
+        }
+        else dll = 0;
     }
 
     if (!dll)
     {
         xprintf ("    %s=dll is missing\n", dllname);
+        return TRUE;
+    }
+    if (is_native_dll(dll))
+    {
+        FreeLibrary(dll);
+        xprintf ("    %s=load error Configured as native\n", dllname);
         return TRUE;
     }
     if (!strcmp( dllname, "mshtml" ) && running_under_wine() && !gecko_check())
