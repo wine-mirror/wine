@@ -304,6 +304,7 @@ static const IID * const iframe_iids[] = {
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLElement3,
+    &IID_IHTMLFrameBase,
     &IID_IHTMLFrameBase2,
     &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
