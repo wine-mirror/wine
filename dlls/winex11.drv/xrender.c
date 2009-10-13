@@ -144,6 +144,7 @@ struct xrender_info
 {
     int                cache_index;
     Picture            pict;
+    const WineXRenderFormat *format;
 };
 
 static gsCacheEntry *glyphsetCache = NULL;
@@ -205,23 +206,6 @@ static CRITICAL_SECTION xrender_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 #define get_be_word(x) RtlUshortByteSwap(x)
 #define NATIVE_BYTE_ORDER LSBFirst
 #endif
-
-static struct xrender_info *get_xrender_info(X11DRV_PDEVICE *physDev)
-{
-    if(!physDev->xrender)
-    {
-        physDev->xrender = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev->xrender));
-
-        if(!physDev->xrender)
-        {
-            ERR("Unable to allocate XRENDERINFO!\n");
-            return NULL;
-        }
-        physDev->xrender->cache_index = -1;
-    }
-
-    return physDev->xrender;
-}
 
 static BOOL get_xrender_template(const WineXRenderFormatTemplate *fmt, XRenderPictFormat *templ, unsigned long *mask)
 {
@@ -495,19 +479,23 @@ static void set_xrender_transformation(Picture src_pict, float xscale, float ysc
 #endif
 }
 
-static Picture create_xrender_picture(Drawable drawable, int depth, ColorShifts *shifts)
+static struct xrender_info *get_xrender_info(X11DRV_PDEVICE *physDev)
 {
-    Picture pict;
-    XRenderPictureAttributes pa;
-    const WineXRenderFormat *fmt = get_xrender_format_from_color_shifts(depth, shifts);
-    if (!fmt) return 0;
+    if(!physDev->xrender)
+    {
+        physDev->xrender = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev->xrender));
 
-    wine_tsx11_lock();
-    pa.subwindow_mode = IncludeInferiors;
-    pict = pXRenderCreatePicture(gdi_display, drawable, fmt->pict_format, CPSubwindowMode, &pa);
-    wine_tsx11_unlock();
+        if(!physDev->xrender)
+        {
+            ERR("Unable to allocate XRENDERINFO!\n");
+            return NULL;
+        }
+        physDev->xrender->cache_index = -1;
+    }
+    if (!physDev->xrender->format)
+        physDev->xrender->format = get_xrender_format_from_color_shifts(physDev->depth, physDev->color_shifts);
 
-    return pict;
+    return physDev->xrender;
 }
 
 static Picture get_xrender_picture(X11DRV_PDEVICE *physDev)
@@ -515,9 +503,15 @@ static Picture get_xrender_picture(X11DRV_PDEVICE *physDev)
     struct xrender_info *info = get_xrender_info(physDev);
     if (!info) return 0;
 
-    if(!info->pict)
+    if (!info->pict && info->format)
     {
-        info->pict = create_xrender_picture(physDev->drawable, physDev->depth, physDev->color_shifts);
+        XRenderPictureAttributes pa;
+
+        wine_tsx11_lock();
+        pa.subwindow_mode = IncludeInferiors;
+        info->pict = pXRenderCreatePicture(gdi_display, physDev->drawable, info->format->pict_format,
+                                           CPSubwindowMode, &pa);
+        wine_tsx11_unlock();
         TRACE("Allocing pict=%lx dc=%p drawable=%08lx\n", info->pict, physDev->hdc, physDev->drawable);
     }
 
@@ -939,7 +933,7 @@ void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
     }
     wine_tsx11_unlock();
 
-    return;
+    physDev->xrender->format = NULL;
 }
 
 /************************************************************************
