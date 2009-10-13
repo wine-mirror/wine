@@ -322,9 +322,6 @@ static	void	wodPlayer_Reset(WINE_WAVEDEV* wwo, BOOL reset)
     int                         err;
     TRACE("(%p)\n", wwo);
 
-    /* flush all possible output */
-    snd_pcm_drain(wwo->pcm);
-
     wodUpdatePlayedTotal(wwo, NULL);
     /* updates current notify list */
     wodPlayer_NotifyCompletions(wwo, FALSE);
