@@ -9112,11 +9112,10 @@ static void tssargtemp_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_BeginScene(device);
     ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed, hr = %08x\n", hr);
     if(SUCCEEDED(hr)) {
-
-        hr = IDirect3DDevice9_EndScene(device);
-        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed, hr = %08x\n", hr);
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
         ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed with %08x\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed, hr = %08x\n", hr);
     }
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     color = getPixelColor(device, 320, 240);
