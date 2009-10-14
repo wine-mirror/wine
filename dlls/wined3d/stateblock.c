@@ -322,70 +322,6 @@ static void stateblock_savedstates_set_vertex(SAVEDSTATES *states, const struct 
     memset(states->vertexShaderConstantsF, TRUE, sizeof(BOOL) * gl_info->max_vshader_constantsF);
 }
 
-static void stateblock_copy_values(IWineD3DStateBlockImpl *dst, const IWineD3DStateBlockImpl *src,
-        const struct wined3d_gl_info *gl_info)
-{
-    unsigned int l;
-
-    /* Single items */
-    dst->gl_primitive_type = src->gl_primitive_type;
-    dst->vertexDecl = src->vertexDecl;
-    dst->vertexShader = src->vertexShader;
-    dst->streamIsUP = src->streamIsUP;
-    dst->pIndexData = src->pIndexData;
-    dst->IndexFmt = src->IndexFmt;
-    dst->baseVertexIndex = src->baseVertexIndex;
-    dst->clip_status = src->clip_status;
-    dst->viewport = src->viewport;
-    dst->material = src->material;
-    dst->pixelShader = src->pixelShader;
-    dst->scissorRect = src->scissorRect;
-
-    /* Lights */
-    memset(dst->activeLights, 0, sizeof(dst->activeLights));
-    for (l = 0; l < LIGHTMAP_SIZE; ++l)
-    {
-        struct list *e1, *e2;
-        LIST_FOR_EACH_SAFE(e1, e2, &dst->lightMap[l])
-        {
-            PLIGHTINFOEL *light = LIST_ENTRY(e1, PLIGHTINFOEL, entry);
-            list_remove(&light->entry);
-            HeapFree(GetProcessHeap(), 0, light);
-        }
-
-        LIST_FOR_EACH(e1, &src->lightMap[l])
-        {
-            PLIGHTINFOEL *light = LIST_ENTRY(e1, PLIGHTINFOEL, entry), *light2;
-            light2 = HeapAlloc(GetProcessHeap(), 0, sizeof(*light));
-            *light2 = *light;
-            list_add_tail(&dst->lightMap[l], &light2->entry);
-            if (light2->glIndex != -1) dst->activeLights[light2->glIndex] = light2;
-        }
-    }
-
-    /* Fixed size arrays */
-    memcpy(dst->vertexShaderConstantB, src->vertexShaderConstantB, sizeof(dst->vertexShaderConstantB));
-    memcpy(dst->vertexShaderConstantI, src->vertexShaderConstantI, sizeof(dst->vertexShaderConstantI));
-    memcpy(dst->pixelShaderConstantB, src->pixelShaderConstantB, sizeof(dst->pixelShaderConstantB));
-    memcpy(dst->pixelShaderConstantI, src->pixelShaderConstantI, sizeof(dst->pixelShaderConstantI));
-
-    memcpy(dst->streamStride, src->streamStride, sizeof(dst->streamStride));
-    memcpy(dst->streamOffset, src->streamOffset, sizeof(dst->streamOffset));
-    memcpy(dst->streamSource, src->streamSource, sizeof(dst->streamSource));
-    memcpy(dst->streamFreq, src->streamFreq, sizeof(dst->streamFreq));
-    memcpy(dst->streamFlags, src->streamFlags, sizeof(dst->streamFlags));
-    memcpy(dst->transforms, src->transforms, sizeof(dst->transforms));
-    memcpy(dst->clipplane, src->clipplane, sizeof(dst->clipplane));
-    memcpy(dst->renderState, src->renderState, sizeof(dst->renderState));
-    memcpy(dst->textures, src->textures, sizeof(dst->textures));
-    memcpy(dst->textureState, src->textureState, sizeof(dst->textureState));
-    memcpy(dst->samplerState, src->samplerState, sizeof(dst->samplerState));
-
-    /* Dynamically sized arrays */
-    memcpy(dst->vertexShaderConstantF, src->vertexShaderConstantF, sizeof(float) * gl_info->max_vshader_constantsF * 4);
-    memcpy(dst->pixelShaderConstantF,  src->pixelShaderConstantF,  sizeof(float) * gl_info->max_pshader_constantsF * 4);
-}
-
 void stateblock_init_contained_states(IWineD3DStateBlockImpl *stateblock)
 {
     const struct wined3d_gl_info *gl_info = &stateblock->wineD3DDevice->adapter->gl_info;
@@ -494,6 +430,26 @@ void stateblock_init_contained_states(IWineD3DStateBlockImpl *stateblock)
             stateblock->contained_sampler_states[stateblock->num_contained_sampler_states].stage = i;
             stateblock->contained_sampler_states[stateblock->num_contained_sampler_states].state = j;
             ++stateblock->num_contained_sampler_states;
+        }
+    }
+}
+
+static void stateblock_init_lights(IWineD3DStateBlockImpl *stateblock, struct list *light_map)
+{
+    unsigned int i;
+
+    for (i = 0; i < LIGHTMAP_SIZE; ++i)
+    {
+        const PLIGHTINFOEL *src_light;
+
+        LIST_FOR_EACH_ENTRY(src_light, &light_map[i], PLIGHTINFOEL, entry)
+        {
+            PLIGHTINFOEL *dst_light = HeapAlloc(GetProcessHeap(), 0, sizeof(*dst_light));
+
+            *dst_light = *src_light;
+            dst_light->changed = TRUE;
+            dst_light->enabledChanged = TRUE;
+            list_add_tail(&stateblock->lightMap[i], &dst_light->entry);
         }
     }
 }
@@ -1658,108 +1614,31 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
      * state block. */
     if (type == WINED3DSBT_INIT || type == WINED3DSBT_RECORDED) return WINED3D_OK;
 
-    stateblock_copy_values(stateblock, device->stateBlock, gl_info);
-
     TRACE("Updating changed flags appropriate for type %#x.\n", type);
 
-    if (type == WINED3DSBT_ALL)
+    switch (type)
     {
-        TRACE("ALL => Pretend everything has changed.\n");
+        case WINED3DSBT_ALL:
+            stateblock_init_lights(stateblock, device->stateBlock->lightMap);
+            stateblock_savedstates_set_all(&stateblock->changed, gl_info);
+            break;
 
-        stateblock_savedstates_set_all(&stateblock->changed, gl_info);
-        stateblock_init_contained_states(stateblock);
+        case WINED3DSBT_PIXELSTATE:
+            stateblock_savedstates_set_pixel(&stateblock->changed, gl_info);
+            break;
 
-        /* Lights are not part of the changed / set structure. */
-        for (i = 0; i < LIGHTMAP_SIZE; ++i)
-        {
-            struct list *e;
-            LIST_FOR_EACH(e, &stateblock->lightMap[i])
-            {
-                PLIGHTINFOEL *light = LIST_ENTRY(e, PLIGHTINFOEL, entry);
-                light->changed = TRUE;
-                light->enabledChanged = TRUE;
-            }
-        }
+        case WINED3DSBT_VERTEXSTATE:
+            stateblock_init_lights(stateblock, device->stateBlock->lightMap);
+            stateblock_savedstates_set_vertex(&stateblock->changed, gl_info);
+            break;
 
-        for (i = 0; i < MAX_STREAMS; ++i)
-        {
-            if (stateblock->streamSource[i]) IWineD3DBuffer_AddRef(stateblock->streamSource[i]);
-        }
-
-        for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
-        {
-            if (stateblock->textures[i]) IWineD3DBaseTexture_AddRef(stateblock->textures[i]);
-        }
-
-        if (stateblock->vertexDecl) IWineD3DVertexDeclaration_AddRef(stateblock->vertexDecl);
-        if (stateblock->pIndexData) IWineD3DBuffer_AddRef(stateblock->pIndexData);
-        if (stateblock->vertexShader) IWineD3DVertexShader_AddRef(stateblock->vertexShader);
-        if (stateblock->pixelShader) IWineD3DPixelShader_AddRef(stateblock->pixelShader);
+        default:
+            FIXME("Unrecognized state block type %#x.\n", type);
+            break;
     }
-    else if (type == WINED3DSBT_PIXELSTATE)
-    {
-        TRACE("PIXELSTATE => Pretend all pixel states have changed.\n");
 
-        stateblock_savedstates_set_pixel(&stateblock->changed, gl_info);
-        stateblock_init_contained_states(stateblock);
-
-        if (stateblock->pixelShader) IWineD3DPixelShader_AddRef(stateblock->pixelShader);
-
-        /* Pixel state blocks do not contain vertex buffers. Set them to NULL
-         * to avoid wrong refcounting on them. This makes releasing the buffer
-         * easier. */
-        for (i = 0; i < MAX_STREAMS; ++i)
-        {
-            stateblock->streamSource[i] = NULL;
-        }
-
-        for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
-        {
-            stateblock->textures[i] = NULL;
-        }
-
-        stateblock->vertexDecl = NULL;
-        stateblock->pIndexData = NULL;
-        stateblock->vertexShader = NULL;
-    }
-    else if (type == WINED3DSBT_VERTEXSTATE)
-    {
-        TRACE("VERTEXSTATE => Pretend all vertex shates have changed.\n");
-
-        stateblock_savedstates_set_vertex(&stateblock->changed, gl_info);
-        stateblock_init_contained_states(stateblock);
-
-        for (i = 0; i < LIGHTMAP_SIZE; ++i)
-        {
-            struct list *e;
-            LIST_FOR_EACH(e, &stateblock->lightMap[i])
-            {
-                PLIGHTINFOEL *light = LIST_ENTRY(e, PLIGHTINFOEL, entry);
-                light->changed = TRUE;
-                light->enabledChanged = TRUE;
-            }
-        }
-
-        for (i = 0; i < MAX_STREAMS; ++i)
-        {
-            if (stateblock->streamSource[i]) IWineD3DBuffer_AddRef(stateblock->streamSource[i]);
-        }
-
-        for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
-        {
-            stateblock->textures[i] = NULL;
-        }
-
-        if (stateblock->vertexShader) IWineD3DVertexShader_AddRef(stateblock->vertexShader);
-
-        if (stateblock->vertexDecl) IWineD3DVertexDeclaration_AddRef(stateblock->vertexDecl);
-        stateblock->pIndexData = NULL;
-        stateblock->pixelShader = NULL;
-    }
-    else
-    {
-        FIXME("Unrecognized state block type %#x.\n", type);
-    }
+    stateblock_init_contained_states(stateblock);
+    IWineD3DStateBlockImpl_Capture((IWineD3DStateBlock *)stateblock);
 
     return WINED3D_OK;
 }
