@@ -3938,14 +3938,36 @@ static BOOL CRYPT_AsnDecodePolicyQualifiers(const BYTE *pbEncoded,
     struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
      CRYPT_AsnDecodePolicyQualifier, sizeof(CERT_POLICY_QUALIFIER_INFO), TRUE,
      offsetof(CERT_POLICY_QUALIFIER_INFO, pszPolicyQualifierId) };
-    struct GenericArray *entries = pvStructInfo;
+    DWORD bytesNeeded;
 
     TRACE("%p, %d, %08x, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
      pvStructInfo, pvStructInfo ? *pcbStructInfo : 0);
 
-    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
-     entries ? entries->rgItems : NULL);
+    ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+     NULL, NULL, &bytesNeeded, pcbDecoded);
+    if (ret)
+    {
+        /* The size expected by the caller includes the combination of
+         * CERT_POLICY_INFO's cPolicyQualifier and rgPolicyQualifier,
+         * in addition to the size of all the decoded items.
+         * CRYPT_AsnDecodeArrayNoAlloc only returns the size of the decoded
+         * items, so add the size of cPolicyQualifier and rgPolicyQualifier.
+         */
+        bytesNeeded += FINALMEMBERSIZE(CERT_POLICY_INFO, cPolicyQualifier);
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, NULL, pvStructInfo,
+         pcbStructInfo, bytesNeeded)))
+        {
+            CERT_POLICY_INFO *info;
+
+            info = (CERT_POLICY_INFO *)((BYTE *)pvStructInfo -
+             offsetof(CERT_POLICY_INFO, cPolicyQualifier));
+            ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+             &info->cPolicyQualifier, info->rgPolicyQualifier, &bytesNeeded,
+             pcbDecoded);
+        }
+    }
     TRACE("Returning %d (%08x)\n", ret, GetLastError());
     return ret;
 }
