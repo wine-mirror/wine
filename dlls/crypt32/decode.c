@@ -3458,9 +3458,29 @@ static BOOL WINAPI CRYPT_AsnDecodeAuthorityInfoAccess(DWORD dwCertEncodingType,
          sizeof(CERT_AUTHORITY_INFO_ACCESS),
          CRYPT_AsnDecodeAccessDescription, sizeof(CERT_ACCESS_DESCRIPTION),
          TRUE, offsetof(CERT_ACCESS_DESCRIPTION, pszAccessMethod) };
+        DWORD bytesNeeded;
 
-        ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
+        ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &bytesNeeded, NULL);
+        if (ret)
+        {
+            if (!pvStructInfo)
+                *pcbStructInfo = bytesNeeded;
+            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
+             pvStructInfo, pcbStructInfo, bytesNeeded)))
+            {
+                CERT_AUTHORITY_INFO_ACCESS *access;
+
+                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+                    pvStructInfo = *(BYTE **)pvStructInfo;
+                access = pvStructInfo;
+                access->rgAccDescr = (PCERT_ACCESS_DESCRIPTION)
+                 ((BYTE *)pvStructInfo + sizeof(CERT_AUTHORITY_INFO_ACCESS));
+                ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc,
+                 pbEncoded, cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
+                 &access->cAccDescr, pcbStructInfo, NULL);
+            }
+        }
     }
     __EXCEPT_PAGE_FAULT
     {
