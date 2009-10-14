@@ -667,7 +667,7 @@ static void test_Render(void)
     ok(result != 0x00F0F0F0,
        "Color at 5,5 should have changed, but still was 0x%06X\n", result);
     result = GetPixel(hdc, 10, 10);
-    todo_wine ok(result == 0x00F0F0F0,
+    ok(result == 0x00F0F0F0,
        "Color at 10,10 should be unchanged 0xF0F0F0, but was 0x%06X\n", result);
 
     IPicture_Release(pic);
