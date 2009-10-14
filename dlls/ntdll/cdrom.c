@@ -2334,6 +2334,31 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         goto error;
     }
 
+#ifdef __APPLE__
+    {
+        char name[100];
+
+        /* This is ugly as hell, but Mac OS is unable to do anything from the
+         * partition fd, it wants an fd for the whole device, and it sometimes
+         * also requires the device fd to be closed first, so we have to close
+         * the handle that the caller gave us.
+         * Also for some reason it wants the fd to be closed before we even
+         * open the parent if we're trying to eject the disk.
+         */
+        if ((status = get_parent_device( fd, name, sizeof(name) ))) goto error;
+        if (dwIoControlCode == IOCTL_STORAGE_EJECT_MEDIA)
+            NtClose( hDevice );
+        if (needs_close) close( fd );
+        TRACE("opening parent %s\n", name );
+        if ((fd = open( name, O_RDONLY )) == -1)
+        {
+            status = FILE_GetNtStatus();
+            goto error;
+        }
+        needs_close = 1;
+    }
+#endif
+
     switch (dwIoControlCode)
     {
     case IOCTL_STORAGE_CHECK_VERIFY:
@@ -2365,28 +2390,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         if (lpInBuffer != NULL || nInBufferSize != 0 || lpOutBuffer != NULL || nOutBufferSize != 0)
             status = STATUS_INVALID_PARAMETER;
         else
-        {
-#ifdef __APPLE__
-            char name[100];
-
-            /* This is ugly as hell, but Mac OS is unable to eject from the device fd,
-             * it wants an fd for the whole device, and it also requires the device fd
-             * to be closed first, so we have to close the handle that the caller gave us.
-             * Also for some reason it wants the fd to be closed before we even open the parent.
-             */
-            if ((status = get_parent_device( fd, name, sizeof(name) ))) break;
-            NtClose( hDevice );
-            if (needs_close) close( fd );
-            TRACE("opening parent %s\n", name );
-            if ((fd = open( name, O_RDONLY )) == -1)
-            {
-                status = FILE_GetNtStatus();
-                break;
-            }
-            needs_close = 1;
-#endif
             status = CDROM_SetTray(fd, TRUE);
-        }
         break;
 
     case IOCTL_CDROM_MEDIA_REMOVAL:
