@@ -447,8 +447,6 @@ static void stateblock_init_lights(IWineD3DStateBlockImpl *stateblock, struct li
             struct wined3d_light_info *dst_light = HeapAlloc(GetProcessHeap(), 0, sizeof(*dst_light));
 
             *dst_light = *src_light;
-            dst_light->changed = TRUE;
-            dst_light->enabledChanged = TRUE;
             list_add_tail(&stateblock->lightMap[i], &dst_light->entry);
         }
     }
@@ -561,42 +559,34 @@ static void record_lights(IWineD3DStateBlockImpl *This, const IWineD3DStateBlock
         LIST_FOR_EACH(e, &This->lightMap[i]) {
             BOOL updated = FALSE;
             struct wined3d_light_info *src = LIST_ENTRY(e, struct wined3d_light_info, entry), *realLight;
-            if (!src->changed && !src->enabledChanged) continue;
 
             /* Look up the light in the destination */
             LIST_FOR_EACH(f, &targetStateBlock->lightMap[i]) {
                 realLight = LIST_ENTRY(f, struct wined3d_light_info, entry);
-                if(realLight->OriginalIndex == src->OriginalIndex) {
-                    if(src->changed) {
-                        src->OriginalParms = realLight->OriginalParms;
+                if (realLight->OriginalIndex == src->OriginalIndex)
+                {
+                    src->OriginalParms = realLight->OriginalParms;
+
+                    if (realLight->glIndex == -1 && src->glIndex != -1)
+                    {
+                        /* Light disabled */
+                        This->activeLights[src->glIndex] = NULL;
                     }
-                    if(src->enabledChanged) {
-                            /* Need to double check because enabledChanged does not catch enabled -> disabled -> enabled
-                        * or disabled -> enabled -> disabled changes
-                            */
-                        if(realLight->glIndex == -1 && src->glIndex != -1) {
-                            /* Light disabled */
-                            This->activeLights[src->glIndex] = NULL;
-                        } else if(realLight->glIndex != -1 && src->glIndex == -1){
-                            /* Light enabled */
-                            This->activeLights[realLight->glIndex] = src;
-                        }
-                        src->glIndex = realLight->glIndex;
+                    else if (realLight->glIndex != -1 && src->glIndex == -1)
+                    {
+                        /* Light enabled */
+                        This->activeLights[realLight->glIndex] = src;
                     }
+                    src->glIndex = realLight->glIndex;
                     updated = TRUE;
                     break;
                 }
             }
 
-            if(updated) {
-                /* Found a light, all done, proceed with next hash entry */
-                continue;
-            } else if(src->changed) {
-                /* Otherwise assign defaul params */
-                src->OriginalParms = WINED3D_default_light;
-            } else {
-                /* Not enabled by default */
-                src->glIndex = -1;
+            if (!updated)
+            {
+                ERR("Light %u in stateblock %p does not exist in device stateblock %p.\n",
+                        src->OriginalIndex, This, targetStateBlock);
             }
         }
     }
@@ -987,12 +977,8 @@ static void apply_lights(IWineD3DDevice *pDevice, const IWineD3DStateBlockImpl *
         {
             const struct wined3d_light_info *light = LIST_ENTRY(e, struct wined3d_light_info, entry);
 
-            if(light->changed) {
-                IWineD3DDevice_SetLight(pDevice, light->OriginalIndex, &light->OriginalParms);
-            }
-            if(light->enabledChanged) {
-                IWineD3DDevice_SetLightEnable(pDevice, light->OriginalIndex, light->glIndex != -1);
-            }
+            IWineD3DDevice_SetLight(pDevice, light->OriginalIndex, &light->OriginalParms);
+            IWineD3DDevice_SetLightEnable(pDevice, light->OriginalIndex, light->glIndex != -1);
         }
     }
 }

@@ -2485,7 +2485,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
         list_add_head(&This->updateStateBlock->lightMap[Hi], &object->entry);
         object->glIndex = -1;
         object->OriginalIndex = Index;
-        object->changed = TRUE;
     }
 
     /* Initialize the object */
@@ -2636,7 +2635,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
         }
     }
 
-    lightInfo->enabledChanged = TRUE;
     if(!Enable) {
         if(lightInfo->glIndex != -1) {
             if(!This->isRecordingState) {

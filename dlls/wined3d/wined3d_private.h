@@ -1208,8 +1208,6 @@ struct wined3d_light_info
     WINED3DLIGHT OriginalParms; /* Note D3D8LIGHT == D3D9LIGHT */
     DWORD        OriginalIndex;
     LONG         glIndex;
-    BOOL         changed;
-    BOOL         enabledChanged;
     BOOL         enabled;
 
     /* Converted parms to speed up swapping lights */
