@@ -604,7 +604,12 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
      cbEncoded, dwFlags, pDecodePara, pvStructInfo, *pcbStructInfo,
      startingPointer);
 
-    if (!arrayDesc->tag || pbEncoded[0] == arrayDesc->tag)
+    if (!cbEncoded)
+    {
+        SetLastError(CRYPT_E_ASN1_EOD);
+        ret = FALSE;
+    }
+    else if (!arrayDesc->tag || pbEncoded[0] == arrayDesc->tag)
     {
         DWORD dataLen;
 
@@ -765,7 +770,12 @@ static BOOL CRYPT_AsnDecodeArrayNoAlloc(const struct AsnArrayDescriptor *arrayDe
     TRACE("%p, %p, %d, %p, %p, %d\n", arrayDesc, pbEncoded,
      cbEncoded, pcItems, rgItems, pcItems ? *pcbItems : 0);
 
-    if (!arrayDesc->tag || pbEncoded[0] == arrayDesc->tag)
+    if (!cbEncoded)
+    {
+        SetLastError(CRYPT_E_ASN1_EOD);
+        ret = FALSE;
+    }
+    else if (!arrayDesc->tag || pbEncoded[0] == arrayDesc->tag)
     {
         DWORD dataLen;
 
@@ -2494,7 +2504,7 @@ static BOOL CRYPT_AsnDecodeSMIMECapabilitiesInternal(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded)
 {
-    struct AsnArrayDescriptor arrayDesc = { 0,
+    struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
      CRYPT_AsnDecodeSMIMECapability, sizeof(CRYPT_SMIME_CAPABILITY), TRUE,
      offsetof(CRYPT_SMIME_CAPABILITY, pszObjId) };
     PCRYPT_SMIME_CAPABILITIES capabilities = pvStructInfo;
@@ -2519,11 +2529,7 @@ static BOOL WINAPI CRYPT_AsnDecodeSMIMECapabilities(DWORD dwCertEncodingType,
     {
         DWORD bytesNeeded;
 
-        if (!cbEncoded)
-            SetLastError(CRYPT_E_ASN1_EOD);
-        else if (pbEncoded[0] != ASN_SEQUENCEOF)
-            SetLastError(CRYPT_E_ASN1_CORRUPT);
-        else if ((ret = CRYPT_AsnDecodeSMIMECapabilitiesInternal(pbEncoded,
+        if ((ret = CRYPT_AsnDecodeSMIMECapabilitiesInternal(pbEncoded,
          cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &bytesNeeded,
          NULL)))
         {
@@ -2989,9 +2995,7 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSAttributes(DWORD dwCertEncodingType,
     {
         DWORD bytesNeeded;
 
-        if (!cbEncoded)
-            SetLastError(CRYPT_E_ASN1_EOD);
-        else if (pbEncoded[0] != (ASN_CONSTRUCTOR | ASN_SETOF))
+        if (pbEncoded[0] != (ASN_CONSTRUCTOR | ASN_SETOF))
             SetLastError(CRYPT_E_ASN1_CORRUPT);
         else if ((ret = CRYPT_AsnDecodePKCSAttributesInternal(pbEncoded,
          cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &bytesNeeded,
