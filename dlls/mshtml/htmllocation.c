@@ -46,6 +46,23 @@ static HRESULT get_url(HTMLLocation *This, const WCHAR **ret)
     return S_OK;
 }
 
+static HRESULT get_url_components(HTMLLocation *This, URL_COMPONENTSW *url)
+{
+    const WCHAR *doc_url;
+    HRESULT hres;
+
+    hres = get_url(This, &doc_url);
+    if(FAILED(hres))
+        return hres;
+
+    if(!InternetCrackUrlW(doc_url, 0, 0, url)) {
+        FIXME("InternetCrackUrlW failed: 0x%08x\n", GetLastError());
+        SetLastError(0);
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
 
 #define HTMLLOCATION_THIS(iface) DEFINE_THIS(HTMLLocation, HTMLLocation, iface)
 
@@ -270,10 +287,9 @@ static HRESULT WINAPI HTMLLocation_get_pathname(IHTMLLocation *iface, BSTR *p)
     }
 
     url.dwUrlPathLength = 1;
-    if(!InternetCrackUrlW(doc_url, 0, 0, &url)) {
-        FIXME("InternetCrackUrl failed\n");
-        return E_FAIL;
-    }
+    hres = get_url_components(This, &url);
+    if(FAILED(hres))
+        return hres;
 
     if(!url.dwUrlPathLength) {
         *p = NULL;
