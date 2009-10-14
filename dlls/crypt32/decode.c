@@ -3135,14 +3135,15 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSAttributes(DWORD dwCertEncodingType,
 
     __TRY
     {
+        struct AsnArrayDescriptor arrayDesc = { ASN_CONSTRUCTOR | ASN_SETOF,
+         CRYPT_AsnDecodePKCSAttributeInternal, sizeof(CRYPT_ATTRIBUTE), TRUE,
+         offsetof(CRYPT_ATTRIBUTE, pszObjId) };
         DWORD bytesNeeded;
 
-        if (pbEncoded[0] != (ASN_CONSTRUCTOR | ASN_SETOF))
-            SetLastError(CRYPT_E_ASN1_CORRUPT);
-        else if ((ret = CRYPT_AsnDecodePKCSAttributesInternal(pbEncoded,
-         cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &bytesNeeded,
-         NULL)))
+        if ((ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded,
+         cbEncoded, NULL, NULL, &bytesNeeded, NULL)))
         {
+            bytesNeeded += sizeof(CRYPT_ATTRIBUTES);
             if (!pvStructInfo)
                 *pcbStructInfo = bytesNeeded;
             else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
@@ -3155,9 +3156,8 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSAttributes(DWORD dwCertEncodingType,
                 attrs = pvStructInfo;
                 attrs->rgAttr = (PCRYPT_ATTRIBUTE)((BYTE *)pvStructInfo +
                  sizeof(CRYPT_ATTRIBUTES));
-                ret = CRYPT_AsnDecodePKCSAttributesInternal(pbEncoded,
-                 cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo,
-                 &bytesNeeded, NULL);
+                ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded,
+                 cbEncoded, &attrs->cAttr, attrs->rgAttr, &bytesNeeded, NULL);
             }
         }
     }
