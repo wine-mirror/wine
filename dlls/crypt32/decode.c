@@ -5346,6 +5346,38 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSSignerInfo(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL CRYPT_AsnDecodeCMSCertEncoded(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    BOOL ret;
+    struct AsnArrayDescriptor arrayDesc = { 0, CRYPT_AsnDecodeCopyBytes,
+     sizeof(CRYPT_DER_BLOB), TRUE, offsetof(CRYPT_DER_BLOB, pbData) };
+    DWORD bytesNeeded;
+
+    TRACE("%p, %d, %08x, %p, %d, %p\n", pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, pvStructInfo ? *pcbStructInfo : 0, pcbDecoded);
+
+    if ((ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+     NULL, NULL, &bytesNeeded, pcbDecoded)))
+    {
+        bytesNeeded += MEMBERSIZE(CRYPT_SIGNED_INFO, cCertEncoded, cCrlEncoded);
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if ((ret = CRYPT_DecodeEnsureSpace(0, NULL, pvStructInfo,
+         pcbStructInfo, bytesNeeded)))
+        {
+            CRYPT_SIGNED_INFO *info = (CRYPT_SIGNED_INFO *)
+             ((BYTE *)pvStructInfo - offsetof(CRYPT_SIGNED_INFO, cCertEncoded));
+
+            ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+             &info->cCertEncoded, info->rgCertEncoded, &bytesNeeded,
+             pcbDecoded);
+        }
+    }
+    return ret;
+}
+
 static BOOL CRYPT_AsnDecodeCMSSignerId(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded)
@@ -5504,8 +5536,8 @@ BOOL CRYPT_AsnDecodeCMSSignedInfo(const BYTE *pbEncoded, DWORD cbEncoded,
        CRYPT_AsnDecodePKCSContentInfoInternal, sizeof(CRYPT_CONTENT_INFO),
        FALSE, TRUE, offsetof(CRYPT_SIGNED_INFO, content.pszObjId), 0 },
      { ASN_CONSTRUCTOR | ASN_CONTEXT | 0,
-       offsetof(CRYPT_SIGNED_INFO, cCertEncoded),
-       CRYPT_DecodeDERArray, sizeof(struct GenericArray), TRUE, TRUE,
+       offsetof(CRYPT_SIGNED_INFO, cCertEncoded), CRYPT_AsnDecodeCMSCertEncoded,
+       MEMBERSIZE(CRYPT_SIGNED_INFO, cCertEncoded, cCrlEncoded), TRUE, TRUE,
        offsetof(CRYPT_SIGNED_INFO, rgCertEncoded), 0 },
      { ASN_CONSTRUCTOR | ASN_CONTEXT | 1,
        offsetof(CRYPT_SIGNED_INFO, cCrlEncoded), CRYPT_DecodeDERArray,
