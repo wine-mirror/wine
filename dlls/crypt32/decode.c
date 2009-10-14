@@ -2528,9 +2528,6 @@ static BOOL WINAPI CRYPT_AsnDecodeCTL(DWORD dwCertEncodingType,
            TRUE, TRUE, offsetof(CTL_INFO, rgExtension), 0 },
         };
 
-        TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, *pcbStructInfo);
-
         ret = CRYPT_AsnDecodeSequence(items, sizeof(items) / sizeof(items[0]),
          pbEncoded, cbEncoded, dwFlags, pDecodePara, pvStructInfo,
          pcbStructInfo, NULL, NULL);
