@@ -347,7 +347,7 @@ static HRESULT equal2_values(VARIANT *lval, VARIANT *rval, BOOL *ret)
     return S_OK;
 }
 
-static HRESULT literal_to_var(literal_t *literal, VARIANT *v)
+static HRESULT literal_to_var(script_ctx_t *ctx, literal_t *literal, VARIANT *v)
 {
     switch(literal->type) {
     case LT_UNDEFINED:
@@ -364,18 +364,31 @@ static HRESULT literal_to_var(literal_t *literal, VARIANT *v)
         V_VT(v) = VT_R8;
         V_R8(v) = literal->u.dval;
         break;
-    case LT_STRING:
+    case LT_STRING: {
+        BSTR str = SysAllocString(literal->u.wstr);
+        if(!str)
+            return E_OUTOFMEMORY;
+
         V_VT(v) = VT_BSTR;
-        V_BSTR(v) = SysAllocString(literal->u.wstr);
+        V_BSTR(v) = str;
         break;
+    }
     case LT_BOOL:
         V_VT(v) = VT_BOOL;
         V_BOOL(v) = literal->u.bval;
         break;
-    case LT_DISPATCH:
+    case LT_REGEXP: {
+        DispatchEx *regexp;
+        HRESULT hres;
+
+        hres = create_regexp(ctx, literal->u.regexp.str, literal->u.regexp.str_len,
+                             literal->u.regexp.flags, &regexp);
+        if(FAILED(hres))
+            return hres;
+
         V_VT(v) = VT_DISPATCH;
-        IDispatch_AddRef(literal->u.disp);
-        V_DISPATCH(v) = literal->u.disp;
+        V_DISPATCH(v) = (IDispatch*)_IDispatchEx_(regexp);
+    }
     }
 
     return S_OK;
@@ -1656,7 +1669,7 @@ HRESULT literal_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flag
 
     TRACE("\n");
 
-    hres = literal_to_var(expr->literal, &var);
+    hres = literal_to_var(ctx->parser->script, expr->literal, &var);
     if(FAILED(hres))
         return hres;
 
@@ -1735,7 +1748,7 @@ HRESULT property_value_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWO
         return hres;
 
     for(iter = expr->property_list; iter; iter = iter->next) {
-        hres = literal_to_var(iter->name, &tmp);
+        hres = literal_to_var(ctx->parser->script, iter->name, &tmp);
         if(FAILED(hres))
             break;
 

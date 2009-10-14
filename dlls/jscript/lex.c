@@ -755,20 +755,10 @@ int parser_lex(void *lval, parser_ctx_t *ctx)
     return 0;
 }
 
-static void add_object_literal(parser_ctx_t *ctx, DispatchEx *obj)
-{
-    obj_literal_t *literal = parser_alloc(ctx, sizeof(obj_literal_t));
-
-    literal->obj = obj;
-    literal->next = ctx->obj_literals;
-    ctx->obj_literals = literal;
-}
-
 literal_t *parse_regexp(parser_ctx_t *ctx)
 {
     const WCHAR *re, *flags_ptr;
     DWORD re_len, flags;
-    DispatchEx *regexp;
     literal_t *ret;
     HRESULT hres;
 
@@ -798,14 +788,10 @@ literal_t *parse_regexp(parser_ctx_t *ctx)
     if(FAILED(hres))
         return NULL;
 
-    hres = create_regexp(ctx->script, re, re_len, flags, &regexp);
-    if(FAILED(hres))
-        return NULL;
-
-    add_object_literal(ctx, regexp);
-
     ret = parser_alloc(ctx, sizeof(literal_t));
-    ret->type = LT_DISPATCH;
-    ret->u.disp = (IDispatch*)_IDispatchEx_(regexp);
+    ret->type = LT_REGEXP;
+    ret->u.regexp.str = re;
+    ret->u.regexp.str_len = re_len;
+    ret->u.regexp.flags = flags;
     return ret;
 }

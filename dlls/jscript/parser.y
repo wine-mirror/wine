@@ -1591,13 +1591,8 @@ static void program_parsed(parser_ctx_t *ctx, source_elements_t *source)
 
 void parser_release(parser_ctx_t *ctx)
 {
-    obj_literal_t *iter;
-
     if(--ctx->ref)
         return;
-
-    for(iter = ctx->obj_literals; iter; iter = iter->next)
-        jsdisp_release(iter->obj);
 
     jsheap_free(&ctx->heap);
     heap_free(ctx);

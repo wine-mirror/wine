@@ -19,11 +19,6 @@
 typedef struct _source_elements_t source_elements_t;
 typedef struct _function_expression_t function_expression_t;
 
-typedef struct _obj_literal_t {
-    DispatchEx *obj;
-    struct _obj_literal_t *next;
-} obj_literal_t;
-
 typedef struct _function_declaration_t {
     function_expression_t *expr;
 
@@ -61,7 +56,6 @@ typedef struct _parser_ctx_t {
 
     jsheap_t heap;
 
-    obj_literal_t *obj_literals;
     func_stack_t *func_stack;
 
     struct _parser_ctx_t *next;
@@ -131,9 +125,9 @@ typedef enum {
     LT_DOUBLE,
     LT_STRING,
     LT_BOOL,
-    LT_DISPATCH,
     LT_UNDEFINED,
-    LT_NULL
+    LT_NULL,
+    LT_REGEXP
 }literal_type_t;
 
 typedef struct {
@@ -144,6 +138,11 @@ typedef struct {
         const WCHAR *wstr;
         VARIANT_BOOL bval;
         IDispatch *disp;
+        struct {
+            const WCHAR *str;
+            DWORD str_len;
+            DWORD flags;
+        } regexp;
     } u;
 } literal_t;
 

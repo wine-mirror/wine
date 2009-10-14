@@ -934,6 +934,11 @@ ok((function (){return 1;})() === 1, "(function (){return 1;})() = " + (function
 var re = /=(\?|%3F)/g;
 ok(re.source === "=(\\?|%3F)", "re.source = " + re.source);
 
+tmp = new Array();
+for(var i=0; i<2; i++)
+    tmp[i] = /b/;
+ok(tmp[0] != tmp[1], "tmp[0] == tmp [1]");
+
 ok(createNullBSTR() === '', "createNullBSTR() !== ''");
 
 ok(getVT(nullDisp) === "VT_DISPATCH", "getVT(nullDisp) = " + getVT(nullDisp));
