@@ -1018,7 +1018,7 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
     /* We need IOCDAudioControl for IOCTL_CDROM_CURRENT_POSITION */
     if (fmt->Format == IOCTL_CDROM_CURRENT_POSITION)
     {
-        ERR("This version of Mac OS X does not support IOCDAudioControl\n");
+        FIXME("NIY\n");
         return STATUS_NOT_SUPPORTED;
     }
     /* No IOCDAudioControl support; just set the audio status to none */
