@@ -2062,11 +2062,9 @@ static BOOL CRYPT_AsnDecodeRdn(const BYTE *pbEncoded, DWORD cbEncoded,
      sizeof(CERT_RDN),
      CRYPT_AsnDecodeRdnAttr, sizeof(CERT_RDN_ATTR), TRUE,
      offsetof(CERT_RDN_ATTR, pszObjId) };
-    PCERT_RDN rdn = pvStructInfo;
 
-    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
-     rdn ? rdn->rgRDNAttr : NULL);
+    ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, pcbStructInfo, pcbDecoded);
     return ret;
 }
 
@@ -2138,11 +2136,9 @@ static BOOL CRYPT_AsnDecodeUnicodeRdn(const BYTE *pbEncoded, DWORD cbEncoded,
      sizeof(CERT_RDN),
      CRYPT_AsnDecodeUnicodeRdnAttr, sizeof(CERT_RDN_ATTR), TRUE,
      offsetof(CERT_RDN_ATTR, pszObjId) };
-    PCERT_RDN rdn = pvStructInfo;
 
-    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
-     rdn ? rdn->rgRDNAttr : NULL);
+    ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, pcbStructInfo, pcbDecoded);
     return ret;
 }
 
@@ -2284,11 +2280,9 @@ static BOOL CRYPT_AsnDecodeCTLUsage(const BYTE *pbEncoded, DWORD cbEncoded,
      offsetof(CTL_USAGE, rgpszUsageIdentifier),
      sizeof(CTL_USAGE),
      CRYPT_AsnDecodeOidInternal, sizeof(LPSTR), TRUE, 0 };
-    CTL_USAGE *usage = pvStructInfo;
 
-    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
-     usage ? usage->rgpszUsageIdentifier : NULL);
+    ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, pcbStructInfo, pcbDecoded);
     return ret;
 }
 
@@ -2952,12 +2946,10 @@ static BOOL CRYPT_AsnDecodePKCSAttributesInternal(const BYTE *pbEncoded,
      sizeof(CRYPT_ATTRIBUTES),
      CRYPT_AsnDecodePKCSAttributeInternal, sizeof(CRYPT_ATTRIBUTE), TRUE,
      offsetof(CRYPT_ATTRIBUTE, pszObjId) };
-    PCRYPT_ATTRIBUTES attrs = pvStructInfo;
     BOOL ret;
 
-    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     NULL, pvStructInfo, pcbStructInfo, pcbDecoded, attrs ? attrs->rgAttr :
-     NULL);
+    ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, pcbStructInfo, pcbDecoded);
     return ret;
 }
 
@@ -3265,23 +3257,19 @@ static BOOL CRYPT_AsnDecodeAltNameInternal(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded)
 {
-    BOOL ret = TRUE;
+    BOOL ret;
     struct AsnArrayDescriptor arrayDesc = { 0,
      offsetof(CERT_ALT_NAME_INFO, cAltEntry),
      offsetof(CERT_ALT_NAME_INFO, rgAltEntry),
      sizeof(CERT_ALT_NAME_INFO),
      CRYPT_AsnDecodeAltNameEntry, sizeof(CERT_ALT_NAME_ENTRY), TRUE,
      offsetof(CERT_ALT_NAME_ENTRY, u.pwszURL) };
-    PCERT_ALT_NAME_INFO info = pvStructInfo;
 
     TRACE("%p, %d, %08x, %p, %d, %p\n", pbEncoded, cbEncoded, dwFlags,
      pvStructInfo, *pcbStructInfo, pcbDecoded);
 
-    if (info)
-        TRACE("info->rgAltEntry is %p\n", info->rgAltEntry);
-    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
-     info ? info->rgAltEntry : NULL);
+    ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, pcbStructInfo, pcbDecoded);
     return ret;
 }
 
