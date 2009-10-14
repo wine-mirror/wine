@@ -3737,7 +3737,7 @@ static HRESULT alloc_regexp(script_ctx_t *ctx, DispatchEx *object_prototype, Reg
     return S_OK;
 }
 
-static HRESULT create_regexp(script_ctx_t *ctx, const WCHAR *exp, int len, DWORD flags, DispatchEx **ret)
+HRESULT create_regexp(script_ctx_t *ctx, const WCHAR *exp, int len, DWORD flags, DispatchEx **ret)
 {
     RegExpInstance *regexp;
     HRESULT hres;
@@ -3773,6 +3773,7 @@ static HRESULT regexp_constructor(script_ctx_t *ctx, DISPPARAMS *dp, VARIANT *re
     const WCHAR *opt = emptyW, *src;
     DispatchEx *ret;
     VARIANT *arg;
+    DWORD flags;
     HRESULT hres;
 
     if(!arg_cnt(dp)) {
@@ -3820,7 +3821,11 @@ static HRESULT regexp_constructor(script_ctx_t *ctx, DISPPARAMS *dp, VARIANT *re
         opt = V_BSTR(arg);
     }
 
-    hres = create_regexp_str(ctx, src, -1, opt, strlenW(opt), &ret);
+    hres = parse_regexp_flags(opt, strlenW(opt), &flags);
+    if(FAILED(hres))
+        return hres;
+
+    hres = create_regexp(ctx, src, -1, flags, &ret);
     if(FAILED(hres))
         return hres;
 
@@ -3892,33 +3897,31 @@ HRESULT create_regexp_constr(script_ctx_t *ctx, DispatchEx *object_prototype, Di
     return hres;
 }
 
-HRESULT create_regexp_str(script_ctx_t *ctx, const WCHAR *exp, DWORD exp_len, const WCHAR *opt,
-        DWORD opt_len, DispatchEx **ret)
+HRESULT parse_regexp_flags(const WCHAR *str, DWORD str_len, DWORD *ret)
 {
     const WCHAR *p;
     DWORD flags = 0;
 
-    if(opt) {
-        for (p = opt; p < opt+opt_len; p++) {
-            switch (*p) {
-            case 'g':
-                flags |= JSREG_GLOB;
-                break;
-            case 'i':
-                flags |= JSREG_FOLD;
-                break;
-            case 'm':
-                flags |= JSREG_MULTILINE;
-                break;
-            case 'y':
-                flags |= JSREG_STICKY;
-                break;
-            default:
-                WARN("wrong flag %c\n", *p);
-                return E_FAIL;
-            }
+    for (p = str; p < str+str_len; p++) {
+        switch (*p) {
+        case 'g':
+            flags |= JSREG_GLOB;
+            break;
+        case 'i':
+            flags |= JSREG_FOLD;
+            break;
+        case 'm':
+            flags |= JSREG_MULTILINE;
+            break;
+        case 'y':
+            flags |= JSREG_STICKY;
+            break;
+        default:
+            WARN("wrong flag %c\n", *p);
+            return E_FAIL;
         }
     }
 
-    return create_regexp(ctx, exp, exp_len, flags, ret);
+    *ret = flags;
+    return S_OK;
 }

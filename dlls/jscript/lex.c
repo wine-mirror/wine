@@ -766,10 +766,10 @@ static void add_object_literal(parser_ctx_t *ctx, DispatchEx *obj)
 
 literal_t *parse_regexp(parser_ctx_t *ctx)
 {
-    const WCHAR *re, *flags;
+    const WCHAR *re, *flags_ptr;
+    DWORD re_len, flags;
     DispatchEx *regexp;
     literal_t *ret;
-    DWORD re_len;
     HRESULT hres;
 
     TRACE("\n");
@@ -790,11 +790,15 @@ literal_t *parse_regexp(parser_ctx_t *ctx)
 
     re_len = ctx->ptr-re;
 
-    flags = ++ctx->ptr;
+    flags_ptr = ++ctx->ptr;
     while(ctx->ptr < ctx->end && isalnumW(*ctx->ptr))
         ctx->ptr++;
 
-    hres = create_regexp_str(ctx->script, re, re_len, flags, ctx->ptr-flags, &regexp);
+    hres = parse_regexp_flags(flags_ptr, ctx->ptr-flags_ptr, &flags);
+    if(FAILED(hres))
+        return NULL;
+
+    hres = create_regexp(ctx->script, re, re_len, flags, &regexp);
     if(FAILED(hres))
         return NULL;
 

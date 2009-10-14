@@ -656,7 +656,7 @@ static HRESULT String_match(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
         if(FAILED(hres))
             return hres;
 
-        hres = create_regexp_str(ctx, match_str, SysStringLen(match_str), NULL, 0, &regexp);
+        hres = create_regexp(ctx, match_str, SysStringLen(match_str), 0, &regexp);
         SysFreeString(match_str);
         if(FAILED(hres))
             return hres;

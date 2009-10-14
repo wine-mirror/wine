@@ -225,7 +225,7 @@ HRESULT throw_uri_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
 HRESULT create_object(script_ctx_t*,DispatchEx*,DispatchEx**);
 HRESULT create_math(script_ctx_t*,DispatchEx**);
 HRESULT create_array(script_ctx_t*,DWORD,DispatchEx**);
-HRESULT create_regexp_str(script_ctx_t*,const WCHAR*,DWORD,const WCHAR*,DWORD,DispatchEx**);
+HRESULT create_regexp(script_ctx_t*,const WCHAR *,int,DWORD,DispatchEx**);
 HRESULT create_string(script_ctx_t*,const WCHAR*,DWORD,DispatchEx**);
 HRESULT create_bool(script_ctx_t*,VARIANT_BOOL,DispatchEx**);
 HRESULT create_number(script_ctx_t*,VARIANT*,DispatchEx**);
@@ -319,6 +319,7 @@ typedef struct {
 HRESULT regexp_match_next(script_ctx_t*,DispatchEx*,BOOL,const WCHAR*,DWORD,const WCHAR**,match_result_t**,
         DWORD*,DWORD*,match_result_t*);
 HRESULT regexp_match(script_ctx_t*,DispatchEx*,const WCHAR*,DWORD,BOOL,match_result_t**,DWORD*);
+HRESULT parse_regexp_flags(const WCHAR*,DWORD,DWORD*);
 
 static inline VARIANT *get_arg(DISPPARAMS *dp, DWORD i)
 {
