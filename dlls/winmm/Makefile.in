@@ -19,6 +19,7 @@ C_SRCS = \
 
 C_SRCS16 = \
 	message16.c \
+	mmio16.c \
 	mmsystem.c
 
 SPEC_SRCS16 = \
