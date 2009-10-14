@@ -2348,23 +2348,6 @@ static BOOL CRYPT_AsnDecodeCopyBytes(const BYTE *pbEncoded,
     return ret;
 }
 
-static BOOL CRYPT_DecodeDERArray(const BYTE *pbEncoded, DWORD cbEncoded,
- DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo, DWORD *pcbDecoded)
-{
-    BOOL ret;
-    struct AsnArrayDescriptor arrayDesc = { 0, CRYPT_AsnDecodeCopyBytes,
-     sizeof(CRYPT_DER_BLOB), TRUE, offsetof(CRYPT_DER_BLOB, pbData) };
-    struct GenericArray *array = pvStructInfo;
-
-    TRACE("%p, %d, %08x, %p, %d, %p\n", pbEncoded, cbEncoded, dwFlags,
-     pvStructInfo, *pcbStructInfo, pcbDecoded);
-
-    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
-     array ? array->rgItems : NULL);
-    return ret;
-}
-
 static BOOL CRYPT_AsnDecodeCTLUsage(const BYTE *pbEncoded, DWORD cbEncoded,
  DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo, DWORD *pcbDecoded)
 {
@@ -5378,6 +5361,38 @@ static BOOL CRYPT_AsnDecodeCMSCertEncoded(const BYTE *pbEncoded,
     return ret;
 }
 
+static BOOL CRYPT_AsnDecodeCMSCrlEncoded(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    BOOL ret;
+    struct AsnArrayDescriptor arrayDesc = { 0, CRYPT_AsnDecodeCopyBytes,
+     sizeof(CRYPT_DER_BLOB), TRUE, offsetof(CRYPT_DER_BLOB, pbData) };
+    DWORD bytesNeeded;
+
+    TRACE("%p, %d, %08x, %p, %d, %p\n", pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, pvStructInfo ? *pcbStructInfo : 0, pcbDecoded);
+
+    if ((ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+     NULL, NULL, &bytesNeeded, pcbDecoded)))
+    {
+        bytesNeeded += MEMBERSIZE(CRYPT_SIGNED_INFO, cCrlEncoded, content);
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if ((ret = CRYPT_DecodeEnsureSpace(0, NULL, pvStructInfo,
+         pcbStructInfo, bytesNeeded)))
+        {
+            CRYPT_SIGNED_INFO *info = (CRYPT_SIGNED_INFO *)
+             ((BYTE *)pvStructInfo - offsetof(CRYPT_SIGNED_INFO, cCrlEncoded));
+
+            ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+             &info->cCrlEncoded, info->rgCrlEncoded, &bytesNeeded,
+             pcbDecoded);
+        }
+    }
+    return ret;
+}
+
 static BOOL CRYPT_AsnDecodeCMSSignerId(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded)
@@ -5540,8 +5555,8 @@ BOOL CRYPT_AsnDecodeCMSSignedInfo(const BYTE *pbEncoded, DWORD cbEncoded,
        MEMBERSIZE(CRYPT_SIGNED_INFO, cCertEncoded, cCrlEncoded), TRUE, TRUE,
        offsetof(CRYPT_SIGNED_INFO, rgCertEncoded), 0 },
      { ASN_CONSTRUCTOR | ASN_CONTEXT | 1,
-       offsetof(CRYPT_SIGNED_INFO, cCrlEncoded), CRYPT_DecodeDERArray,
-       sizeof(struct GenericArray), TRUE, TRUE,
+       offsetof(CRYPT_SIGNED_INFO, cCrlEncoded), CRYPT_AsnDecodeCMSCrlEncoded,
+       MEMBERSIZE(CRYPT_SIGNED_INFO, cCrlEncoded, content), TRUE, TRUE,
        offsetof(CRYPT_SIGNED_INFO, rgCrlEncoded), 0 },
      { ASN_CONSTRUCTOR | ASN_SETOF, offsetof(CRYPT_SIGNED_INFO, cSignerInfo),
        CRYPT_DecodeSignerArray, sizeof(struct GenericArray), TRUE, TRUE,
