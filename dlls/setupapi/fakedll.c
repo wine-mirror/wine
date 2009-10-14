@@ -105,82 +105,11 @@ static inline void add_directory( struct dll_info *info, unsigned int idx, DWORD
     info->nt->OptionalHeader.DataDirectory[idx].Size = size;
 }
 
-/* find the limits of the resource data */
-static void get_resource_data( const IMAGE_RESOURCE_DIRECTORY *dir, const BYTE *root,
-                               DWORD *rva_start, DWORD *rva_end )
-{
-    const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
-    int i;
-
-    entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
-    for (i = 0; i < dir->NumberOfNamedEntries + dir->NumberOfIdEntries; i++, entry++)
-    {
-        const void *ptr = root + entry->u2.s3.OffsetToDirectory;
-        if (entry->u2.s3.DataIsDirectory) get_resource_data( ptr, root, rva_start, rva_end );
-        else
-        {
-            const IMAGE_RESOURCE_DATA_ENTRY *data = ptr;
-            *rva_start = min( *rva_start, data->OffsetToData );
-            *rva_end = max( *rva_end, data->OffsetToData + data->Size );
-        }
-    }
-}
-
-/* fixup RVAs of resource data */
-static void fixup_resources( IMAGE_RESOURCE_DIRECTORY *dir, BYTE *root, int delta )
-{
-    IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
-    int i;
-
-    entry = (IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
-    for (i = 0; i < dir->NumberOfNamedEntries + dir->NumberOfIdEntries; i++, entry++)
-    {
-        void *ptr = root + entry->u2.s3.OffsetToDirectory;
-        if (entry->u2.s3.DataIsDirectory) fixup_resources( ptr, root, delta );
-        else
-        {
-            IMAGE_RESOURCE_DATA_ENTRY *data = ptr;
-            if (data->OffsetToData) data->OffsetToData += delta;
-        }
-    }
-}
-
-/* add version resources to the dll by copying them from the source module */
-static BOOL add_version_resource( HMODULE module, struct dll_info *dll_info )
-{
-    BOOL ret = FALSE;
-    DWORD rva_start = ~0U, rva_end = 0, dir_size, total_size;
-    const IMAGE_RESOURCE_DIRECTORY *basedir;
-    const BYTE *data_start, *root;
-    BYTE *buffer;
-
-    if (!module) return TRUE;
-    if (LdrFindResourceDirectory_U( module, NULL, 0, &basedir ) != STATUS_SUCCESS) return TRUE;
-    root = (const BYTE *)basedir;
-    get_resource_data( basedir, root, &rva_start, &rva_end );
-    data_start = (const BYTE *)module + rva_start;
-    if (data_start <= root) return FALSE;
-    dir_size = data_start - root;
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, dir_size ))) return FALSE;
-    memcpy( buffer, root, dir_size );
-    fixup_resources( (IMAGE_RESOURCE_DIRECTORY *)buffer, buffer, dll_info->mem_pos + dir_size - rva_start );
-    if (!xwrite( dll_info, buffer, dir_size, dll_info->file_pos )) goto done;
-    if (!xwrite( dll_info, data_start, rva_end - rva_start, dll_info->file_pos + dir_size )) goto done;
-    total_size = dir_size + rva_end - rva_start;
-    add_directory( dll_info, IMAGE_DIRECTORY_ENTRY_RESOURCE, dll_info->mem_pos, total_size );
-    add_section( dll_info, ".rsrc", total_size, IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ );
-    ret = TRUE;
-done:
-    HeapFree( GetProcessHeap(), 0, buffer );
-    return ret;
-}
-
-/* build a complete fake dll, optionally using module as a source */
-static BOOL build_fake_dll( HANDLE file, HMODULE module )
+/* build a complete fake dll from scratch */
+static BOOL build_fake_dll( HANDLE file )
 {
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
-    const IMAGE_NT_HEADERS *src_nt = NULL;
     struct dll_info info;
     BYTE *buffer;
     BOOL ret = FALSE;
@@ -204,28 +133,25 @@ static BOOL build_fake_dll( HANDLE file, HMODULE module )
     memcpy( dos + 1, fakedll_signature, sizeof(fakedll_signature) );
 
     nt = info.nt = (IMAGE_NT_HEADERS *)(buffer + lfanew);
-    if (module) src_nt = RtlImageNtHeader( module );
     /* some fields are copied from the source dll */
-#define SET(field,def) nt->field = src_nt ? src_nt->field : def
-    SET( FileHeader.Machine, IMAGE_FILE_MACHINE_I386 );
-    SET( FileHeader.TimeDateStamp, 0 );
-    SET( FileHeader.Characteristics, IMAGE_FILE_DLL );
-    SET( OptionalHeader.MajorLinkerVersion, 1 );
-    SET( OptionalHeader.MinorLinkerVersion, 0 );
-    SET( OptionalHeader.MajorOperatingSystemVersion, 1 );
-    SET( OptionalHeader.MinorOperatingSystemVersion, 0 );
-    SET( OptionalHeader.MajorImageVersion, 1 );
-    SET( OptionalHeader.MinorImageVersion, 0 );
-    SET( OptionalHeader.MajorSubsystemVersion, 4 );
-    SET( OptionalHeader.MinorSubsystemVersion, 0 );
-    SET( OptionalHeader.Win32VersionValue, 0 );
-    SET( OptionalHeader.Subsystem, IMAGE_SUBSYSTEM_WINDOWS_GUI );
-    SET( OptionalHeader.DllCharacteristics, 0 );
-    SET( OptionalHeader.SizeOfStackReserve, 0 );
-    SET( OptionalHeader.SizeOfStackCommit, 0 );
-    SET( OptionalHeader.SizeOfHeapReserve, 0 );
-    SET( OptionalHeader.SizeOfHeapCommit, 0 );
-#undef SET
+    nt->FileHeader.Machine = IMAGE_FILE_MACHINE_I386;
+    nt->FileHeader.TimeDateStamp = 0;
+    nt->FileHeader.Characteristics = IMAGE_FILE_DLL;
+    nt->OptionalHeader.MajorLinkerVersion = 1;
+    nt->OptionalHeader.MinorLinkerVersion = 0;
+    nt->OptionalHeader.MajorOperatingSystemVersion = 1;
+    nt->OptionalHeader.MinorOperatingSystemVersion = 0;
+    nt->OptionalHeader.MajorImageVersion = 1;
+    nt->OptionalHeader.MinorImageVersion = 0;
+    nt->OptionalHeader.MajorSubsystemVersion = 4;
+    nt->OptionalHeader.MinorSubsystemVersion = 0;
+    nt->OptionalHeader.Win32VersionValue = 0;
+    nt->OptionalHeader.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
+    nt->OptionalHeader.DllCharacteristics = 0;
+    nt->OptionalHeader.SizeOfStackReserve = 0;
+    nt->OptionalHeader.SizeOfStackCommit = 0;
+    nt->OptionalHeader.SizeOfHeapReserve = 0;
+    nt->OptionalHeader.SizeOfHeapCommit = 0;
     /* other fields have fixed values */
     nt->Signature                              = IMAGE_NT_SIGNATURE;
     nt->FileHeader.NumberOfSections            = 0;
@@ -260,8 +186,6 @@ static BOOL build_fake_dll( HANDLE file, HMODULE module )
     add_directory( &info, IMAGE_DIRECTORY_ENTRY_BASERELOC, info.mem_pos, sizeof(reloc_section) );
     add_section( &info, ".reloc", sizeof(reloc_section),
                  IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_DISCARDABLE | IMAGE_SCN_MEM_READ );
-
-    if (!add_version_resource( module, &info )) goto done;
 
     header_size += nt->FileHeader.NumberOfSections * sizeof(IMAGE_SECTION_HEADER);
     nt->OptionalHeader.SizeOfHeaders = ALIGN( header_size, file_alignment );
@@ -454,10 +378,8 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
     }
     else
     {
-        HMODULE module = LoadLibraryW( source );
         WARN( "fake dll %s not found for %s\n", debugstr_w(source), debugstr_w(name) );
-        ret = build_fake_dll( h, module );
-        if (module) FreeLibrary( module );
+        ret = build_fake_dll( h );
     }
 
     CloseHandle( h );
