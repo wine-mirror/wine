@@ -777,7 +777,7 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
  * leaves that up to the caller.
  */
 static BOOL CRYPT_AsnDecodeArrayNoAlloc(const struct AsnArrayDescriptor *arrayDesc,
- const BYTE *pbEncoded, DWORD cbEncoded, void *pvStructInfo,
+ const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo,
  DWORD *pcbStructInfo, DWORD *pcbDecoded)
 {
     BOOL ret = TRUE;
@@ -844,7 +844,7 @@ static BOOL CRYPT_AsnDecodeArrayNoAlloc(const struct AsnArrayDescriptor *arrayDe
                         }
                         if (ret)
                             ret = arrayDesc->decodeFunc(ptr, itemEncoded,
-                             0, NULL, &size, &itemDecoded);
+                             dwFlags, NULL, &size, &itemDecoded);
                         if (ret)
                         {
                             cItems++;
@@ -1107,7 +1107,7 @@ static BOOL CRYPT_AsnDecodeCertExtensionsInternal(const BYTE *pbEncoded,
      pvStructInfo, *pcbStructInfo, pcbDecoded);
 
     ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-     pvStructInfo, pcbStructInfo, pcbDecoded);
+     dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
     return ret;
 }
 
@@ -1262,7 +1262,7 @@ static BOOL CRYPT_AsnDecodeCRLEntryExtensions(const BYTE *pbEncoded,
      pvStructInfo, *pcbStructInfo, pcbDecoded);
 
     ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-     pvStructInfo, pcbStructInfo, pcbDecoded);
+     dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
     return ret;
 }
 
@@ -1315,7 +1315,7 @@ static BOOL CRYPT_AsnDecodeCRLEntries(const BYTE *pbEncoded, DWORD cbEncoded,
      pvStructInfo, *pcbStructInfo, pcbDecoded);
 
     ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-     pvStructInfo, pcbStructInfo, pcbDecoded);
+     dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
     TRACE("Returning %d (%08x)\n", ret, GetLastError());
     return ret;
 }
@@ -1335,7 +1335,7 @@ static BOOL CRYPT_AsnDecodeCRLExtensionsInternal(const BYTE *pbEncoded,
      pvStructInfo, *pcbStructInfo, pcbDecoded);
 
     ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-     pvStructInfo, pcbStructInfo, pcbDecoded);
+     dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
     return ret;
 }
 
@@ -1619,7 +1619,7 @@ static BOOL WINAPI CRYPT_AsnDecodeExtensions(DWORD dwCertEncodingType,
         DWORD bytesNeeded;
 
         ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-         NULL, &bytesNeeded, NULL);
+         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &bytesNeeded, NULL);
         if (ret)
         {
             if (!pvStructInfo)
@@ -1635,7 +1635,8 @@ static BOOL WINAPI CRYPT_AsnDecodeExtensions(DWORD dwCertEncodingType,
                 exts->rgExtension = (CERT_EXTENSION *)((BYTE *)exts +
                  sizeof(CERT_EXTENSIONS));
                 ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded,
-                 cbEncoded, &exts->cExtension, &bytesNeeded, NULL);
+                 cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
+                 &exts->cExtension, &bytesNeeded, NULL);
             }
         }
     }
@@ -2303,7 +2304,7 @@ static BOOL CRYPT_AsnDecodeCTLEntryAttributes(const BYTE *pbEncoded,
     BOOL ret;
 
     ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-     pvStructInfo, pcbStructInfo, pcbDecoded);
+     dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
     return ret;
 }
 
@@ -2345,7 +2346,7 @@ static BOOL CRYPT_AsnDecodeCTLEntries(const BYTE *pbEncoded, DWORD cbEncoded,
      pvStructInfo, *pcbStructInfo, pcbDecoded);
 
     ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-     pvStructInfo, pcbStructInfo, pcbDecoded);
+     dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
     return ret;
 }
 
@@ -2364,7 +2365,7 @@ static BOOL CRYPT_AsnDecodeCTLExtensionsInternal(const BYTE *pbEncoded,
      pvStructInfo, *pcbStructInfo, pcbDecoded);
 
     ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-     pvStructInfo, pcbStructInfo, pcbDecoded);
+     dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
     return ret;
 }
 
@@ -2485,7 +2486,7 @@ static BOOL WINAPI CRYPT_AsnDecodeSMIMECapabilities(DWORD dwCertEncodingType,
          offsetof(CRYPT_SMIME_CAPABILITY, pszObjId) };
 
         if ((ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-         NULL, &bytesNeeded, NULL)))
+         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &bytesNeeded, NULL)))
         {
             if (!pvStructInfo)
                 *pcbStructInfo = bytesNeeded;
@@ -2501,8 +2502,8 @@ static BOOL WINAPI CRYPT_AsnDecodeSMIMECapabilities(DWORD dwCertEncodingType,
                  (PCRYPT_SMIME_CAPABILITY)((BYTE *)pvStructInfo +
                  sizeof(CRYPT_SMIME_CAPABILITIES));
                 ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc,
-                 pbEncoded, cbEncoded, &capabilities->cCapability,
-                 pcbStructInfo, NULL);
+                 pbEncoded, cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
+                 &capabilities->cCapability, pcbStructInfo, NULL);
             }
         }
     }
@@ -2580,7 +2581,7 @@ static BOOL CRYPT_AsnDecodeNoticeNumbers(const BYTE *pbEncoded,
      pvStructInfo, pvStructInfo ? *pcbDecoded : 0);
 
     ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-     pvStructInfo, pcbStructInfo, pcbDecoded);
+     dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
     TRACE("returning %d\n", ret);
     return ret;
 }
@@ -2868,7 +2869,7 @@ static BOOL CRYPT_AsnDecodePKCSAttributeValue(const BYTE *pbEncoded,
      pvStructInfo, pvStructInfo ? *pcbStructInfo : 0, pcbDecoded);
 
     ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-     pvStructInfo, pcbStructInfo, pcbDecoded);
+     dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
     return ret;
 }
 
@@ -2979,7 +2980,8 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSAttributes(DWORD dwCertEncodingType,
         DWORD bytesNeeded;
 
         if ((ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded,
-         cbEncoded, NULL, &bytesNeeded, NULL)))
+         cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &bytesNeeded,
+         NULL)))
         {
             if (!pvStructInfo)
                 *pcbStructInfo = bytesNeeded;
@@ -2994,7 +2996,8 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSAttributes(DWORD dwCertEncodingType,
                 attrs->rgAttr = (PCRYPT_ATTRIBUTE)((BYTE *)pvStructInfo +
                  sizeof(CRYPT_ATTRIBUTES));
                 ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded,
-                 cbEncoded, &attrs->cAttr, &bytesNeeded, NULL);
+                 cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
+                 &attrs->cAttr, &bytesNeeded, NULL);
             }
         }
     }
@@ -3688,7 +3691,7 @@ static BOOL CRYPT_AsnDecodeSubtreeConstraints(const BYTE *pbEncoded,
      pvStructInfo, *pcbStructInfo, pcbDecoded);
 
     ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-     pvStructInfo, pcbStructInfo, pcbDecoded);
+     dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
     TRACE("Returning %d (%08x)\n", ret, GetLastError());
     return ret;
 }
@@ -3798,7 +3801,7 @@ static BOOL CRYPT_AsnDecodePolicyQualifiers(const BYTE *pbEncoded,
      pvStructInfo, pvStructInfo ? *pcbStructInfo : 0);
 
     ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-     pvStructInfo, pcbStructInfo, pcbDecoded);
+     dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
     TRACE("Returning %d (%08x)\n", ret, GetLastError());
     return ret;
 }
@@ -4925,7 +4928,7 @@ static BOOL CRYPT_AsnDecodeDistPointName(const BYTE *pbEncoded,
             {
                 ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc,
                  pbEncoded + 1 + lenBytes, cbEncoded - 1 - lenBytes,
-                 NULL, &nameLen, NULL);
+                 dwFlags, NULL, &nameLen, NULL);
                 bytesNeeded = sizeof(CRL_DIST_POINT_NAME) + nameLen -
                  FINALMEMBERSIZE(CRL_DIST_POINT_NAME, u);
             }
@@ -4951,7 +4954,7 @@ static BOOL CRYPT_AsnDecodeDistPointName(const BYTE *pbEncoded,
                     name->dwDistPointNameChoice = CRL_DIST_POINT_FULL_NAME;
                     ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc,
                      pbEncoded + 1 + lenBytes, cbEncoded - 1 - lenBytes,
-                     &name->u.FullName.cAltEntry, &nameLen, NULL);
+                     dwFlags, &name->u.FullName.cAltEntry, &nameLen, NULL);
                 }
                 else
                     name->dwDistPointNameChoice = CRL_DIST_POINT_NO_NAME;
@@ -5173,7 +5176,7 @@ static BOOL CRYPT_AsnDecodePermittedSubtree(const BYTE *pbEncoded,
      pvStructInfo, *pcbStructInfo, pcbDecoded);
 
     ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-     pvStructInfo, pcbStructInfo, pcbDecoded);
+     dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
     return ret;
 }
 
@@ -5193,7 +5196,7 @@ static BOOL CRYPT_AsnDecodeExcludedSubtree(const BYTE *pbEncoded,
      pvStructInfo, *pcbStructInfo, pcbDecoded);
 
     ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-     pvStructInfo, pcbStructInfo, pcbDecoded);
+     dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
     return ret;
 }
 
@@ -5363,7 +5366,7 @@ static BOOL CRYPT_AsnDecodeCMSCertEncoded(const BYTE *pbEncoded,
      pvStructInfo, pvStructInfo ? *pcbStructInfo : 0, pcbDecoded);
 
     ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-     pvStructInfo, pcbStructInfo, pcbDecoded);
+     dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
     return ret;
 }
 
@@ -5383,7 +5386,7 @@ static BOOL CRYPT_AsnDecodeCMSCrlEncoded(const BYTE *pbEncoded,
      pvStructInfo, pvStructInfo ? *pcbStructInfo : 0, pcbDecoded);
 
     ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-     pvStructInfo, pcbStructInfo, pcbDecoded);
+     dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
     return ret;
 }
 
@@ -5526,7 +5529,7 @@ static BOOL CRYPT_DecodeSignerArray(const BYTE *pbEncoded, DWORD cbEncoded,
      pvStructInfo, *pcbStructInfo, pcbDecoded);
 
     ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
-     pvStructInfo, pcbStructInfo, pcbDecoded);
+     dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
     return ret;
 }
 
