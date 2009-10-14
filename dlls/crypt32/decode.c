@@ -2884,6 +2884,37 @@ static BOOL WINAPI CRYPT_AsnDecodePolicyQualifierUserNotice(
     return ret;
 }
 
+static BOOL CRYPT_AsnDecodePKCSAttributeValue(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    BOOL ret;
+    struct AsnArrayDescriptor arrayDesc = { 0, CRYPT_AsnDecodeCopyBytes,
+     sizeof(CRYPT_DER_BLOB), TRUE, offsetof(CRYPT_DER_BLOB, pbData) };
+    DWORD bytesNeeded;
+
+    TRACE("%p, %d, %08x, %p, %d, %p\n", pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, pvStructInfo ? *pcbStructInfo : 0, pcbDecoded);
+
+    if ((ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+     NULL, NULL, &bytesNeeded, pcbDecoded)))
+    {
+        bytesNeeded += FINALMEMBERSIZE(CRYPT_ATTRIBUTE, cValue);
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if ((ret = CRYPT_DecodeEnsureSpace(0, NULL, pvStructInfo,
+         pcbStructInfo, bytesNeeded)))
+        {
+            CRYPT_ATTRIBUTE *attr = (CRYPT_ATTRIBUTE *)((BYTE *)pvStructInfo -
+             offsetof(CRYPT_ATTRIBUTE, cValue));
+
+            ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+             &attr->cValue, attr->rgValue, pcbStructInfo, pcbDecoded);
+        }
+    }
+    return ret;
+}
+
 static BOOL CRYPT_AsnDecodePKCSAttributeInternal(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded)
@@ -2894,8 +2925,9 @@ static BOOL CRYPT_AsnDecodePKCSAttributeInternal(const BYTE *pbEncoded,
        CRYPT_AsnDecodeOidIgnoreTag, sizeof(LPSTR), FALSE, TRUE,
        offsetof(CRYPT_ATTRIBUTE, pszObjId), 0 },
      { ASN_CONSTRUCTOR | ASN_SETOF, offsetof(CRYPT_ATTRIBUTE, cValue),
-       CRYPT_DecodeDERArray, sizeof(struct GenericArray), FALSE, TRUE,
-       offsetof(CRYPT_ATTRIBUTE, rgValue), 0 },
+       CRYPT_AsnDecodePKCSAttributeValue,
+       FINALMEMBERSIZE(CRYPT_ATTRIBUTE, cValue), FALSE,
+       TRUE, offsetof(CRYPT_ATTRIBUTE, rgValue), 0 },
     };
     PCRYPT_ATTRIBUTE attr = pvStructInfo;
 
