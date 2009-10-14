@@ -81,6 +81,10 @@ static BOOL CRYPT_AsnDecodeChoiceOfTimeInternal(const BYTE *pbEncoded,
 static BOOL CRYPT_AsnDecodePubKeyInfoInternal(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded);
+/* Assumes pvStructInfo is a CERT_EXTENSION whose pszObjId is set ahead of time.
+ */
+static BOOL CRYPT_AsnDecodeExtension(const BYTE *pbEncoded, DWORD cbEncoded,
+ DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo, DWORD *pcbDecoded);
 /* Like CRYPT_AsnDecodeExtensions, except assumes rgExtension is set ahead of
  * time, doesn't do memory allocation, and doesn't do exception handling.
  */
@@ -303,6 +307,7 @@ struct AsnDecodeSequenceItem
     DWORD              size;
 };
 
+#define FINALMEMBERSIZE(s, member) (sizeof(s) - offsetof(s, member))
 #define MEMBERSIZE(s, member, nextmember) \
     (offsetof(s, nextmember) - offsetof(s, member))
 
@@ -1064,6 +1069,49 @@ static BOOL CRYPT_AsnDecodeValidity(const BYTE *pbEncoded, DWORD cbEncoded,
     return ret;
 }
 
+static BOOL CRYPT_AsnDecodeCertExtensionsInternal(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    BOOL ret = TRUE;
+    struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
+     CRYPT_AsnDecodeExtension, sizeof(CERT_EXTENSION), TRUE,
+     offsetof(CERT_EXTENSION, pszObjId) };
+    DWORD itemSize;
+
+    TRACE("%p, %d, %08x, %p, %d, %p\n", pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, *pcbStructInfo, pcbDecoded);
+
+    ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+     NULL, NULL, &itemSize, pcbDecoded);
+    if (ret)
+    {
+        DWORD bytesNeeded;
+
+        /* The size expected by the caller includes the combination of
+         * CERT_INFO's cExtension and rgExtension, in addition to the size of
+         * all the decoded items.  CRYPT_AsnDecodeArrayNoAlloc only returns
+         * the size of the decoded items, so add the size of cExtension and
+         * rgExtension.
+         */
+        bytesNeeded = FINALMEMBERSIZE(CERT_INFO, cExtension) + itemSize;
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, NULL, pvStructInfo,
+         pcbStructInfo, bytesNeeded)))
+        {
+            CERT_INFO *info;
+
+            info = (CERT_INFO *)((BYTE *)pvStructInfo -
+             offsetof(CERT_INFO, cExtension));
+            ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded,
+             cbEncoded, &info->cExtension, info->rgExtension, &itemSize,
+             pcbDecoded);
+        }
+    }
+    return ret;
+}
+
 static BOOL CRYPT_AsnDecodeCertExtensions(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded)
@@ -1075,7 +1123,7 @@ static BOOL CRYPT_AsnDecodeCertExtensions(const BYTE *pbEncoded,
     {
         BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
 
-        ret = CRYPT_AsnDecodeExtensionsInternal(pbEncoded + 1 + lenBytes,
+        ret = CRYPT_AsnDecodeCertExtensionsInternal(pbEncoded + 1 + lenBytes,
          dataLen, dwFlags, pvStructInfo, pcbStructInfo, NULL);
         if (ret && pcbDecoded)
             *pcbDecoded = 1 + lenBytes + dataLen;
@@ -1117,8 +1165,8 @@ static BOOL CRYPT_AsnDecodeCertInfo(DWORD dwCertEncodingType,
        CRYPT_AsnDecodeBitsInternal, sizeof(CRYPT_BIT_BLOB), TRUE, TRUE,
        offsetof(CERT_INFO, SubjectUniqueId.pbData), 0 },
      { ASN_CONTEXT | ASN_CONSTRUCTOR | 3, offsetof(CERT_INFO, cExtension),
-       CRYPT_AsnDecodeCertExtensions, sizeof(CERT_EXTENSIONS), TRUE, TRUE,
-       offsetof(CERT_INFO, rgExtension), 0 },
+       CRYPT_AsnDecodeCertExtensions, FINALMEMBERSIZE(CERT_INFO, cExtension),
+       TRUE, TRUE, offsetof(CERT_INFO, rgExtension), 0 },
     };
 
     TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
@@ -1488,9 +1536,6 @@ static BOOL CRYPT_AsnDecodeOidInternal(const BYTE *pbEncoded, DWORD cbEncoded,
     return ret;
 }
 
-/* Warning:  assumes pvStructInfo is a CERT_EXTENSION whose pszObjId is set
- * ahead of time!
- */
 static BOOL CRYPT_AsnDecodeExtension(const BYTE *pbEncoded, DWORD cbEncoded,
  DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo, DWORD *pcbDecoded)
 {
