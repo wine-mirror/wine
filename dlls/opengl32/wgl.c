@@ -690,6 +690,13 @@ void WINAPI wine_glGetIntegerv( GLenum pname, GLint* params )
     wine_wgl.p_wglGetIntegerv(pname, params);
 }
 
+/***********************************************************************
+ *              wglSwapBuffers (OPENGL32.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH wglSwapBuffers( HDC hdc )
+{
+    return SwapBuffers(hdc);
+}
 
 /* This is for brain-dead applications that use OpenGL functions before even
    creating a rendering context.... */
