@@ -153,7 +153,7 @@ typedef struct tagWINE_MCIDRIVER {
 
 #define WINE_TIMER_IS32	0x80
 
-enum mmioProcType {MMIO_PROC_16,MMIO_PROC_32A,MMIO_PROC_32W};
+enum mmioProcType {MMIO_PROC_32A,MMIO_PROC_32W};
 
 struct IOProcList
 {
@@ -170,7 +170,6 @@ typedef struct tagWINE_MMIO {
     struct IOProcList*		ioProc;
     unsigned			bTmpIOProc : 1,
                                 bBufferLoaded : 1;
-    DWORD                       segBuffer16;
     DWORD                       dwFileSize;
 } WINE_MMIO, *LPWINE_MMIO;
 
@@ -225,14 +224,6 @@ UINT            WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
                           LPCWAVEFORMATEX lpFormat, DWORD_PTR dwCallback, 
                           DWORD_PTR dwInstance, DWORD dwFlags, BOOL bFrom32);
 
-HMMIO           MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo,
-                          DWORD dwOpenFlags, enum mmioProcType type);
-LPMMIOPROC      MMIO_InstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
-                                   DWORD dwFlags, enum mmioProcType type);
-LRESULT         MMIO_SendMessage(HMMIO hmmio, UINT uMessage, LPARAM lParam1, 
-                                 LPARAM lParam2, enum mmioProcType type);
-LPWINE_MMIO     MMIO_Get(HMMIO h);
-
 WORD            TIME_SetEventInternal(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
                                       DWORD_PTR dwUser, UINT wFlags);
 void		TIME_MMTimeStop(void);
@@ -256,7 +247,6 @@ extern  WINMM_MapType   (*pFnMciMapMsg32WTo16)(WORD,WORD,DWORD,DWORD_PTR*);
 extern  WINMM_MapType   (*pFnMciUnMapMsg32WTo16)(WORD,WORD,DWORD,DWORD_PTR);
 extern  LRESULT         (*pFnCallMMDrvFunc16)(DWORD /* in fact FARPROC16 */,WORD,WORD,LONG,LONG,LONG);
 extern  unsigned        (*pFnLoadMMDrvFunc16)(LPCSTR,LPWINE_DRIVER, LPWINE_MM_DRIVER);
-extern  LRESULT         (*pFnMmioCallback16)(DWORD,LPMMIOINFO,UINT,LPARAM,LPARAM);
 extern  void            (WINAPI *pFnReleaseThunkLock)(DWORD*);
 extern  void            (WINAPI *pFnRestoreThunkLock)(DWORD);
 

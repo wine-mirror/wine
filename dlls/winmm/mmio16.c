@@ -1,8 +1,8 @@
 /*
  * MMSYSTEM mmio* functions
  *
- * Copyright 1993      Martin Ayotte
- *           1998-2003 Eric Pouech
+ * Copyright 1993               Martin Ayotte
+ *           1998-2003,2009     Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,7 +32,6 @@
 #include "winnls.h"
 
 #include "wine/winuser16.h"
-#include "winemm.h"
 #include "winemm16.h"
 
 #include "wine/debug.h"
@@ -43,6 +42,31 @@ WINE_DEFAULT_DEBUG_CHANNEL(mmsys);
  * #                     MMIO                        #
  * ###################################################
  */
+#include <pshpack1.h>
+#define MMIO_MAX_THUNKS      32
+
+static struct mmio_thunk
+{
+    BYTE        popl_eax;       /* popl  %eax (return address) */
+    BYTE        pushl_func;     /* pushl $pfn16 (16bit callback function) */
+    LPMMIOPROC16 pfn16;
+    BYTE        pushl_eax;      /* pushl %eax */
+    BYTE        jmp;            /* ljmp MMIO_Callback1632 */
+    DWORD       callback;
+    HMMIO       hMmio;          /* Handle to 32bit mmio object */
+    SEGPTR      segbuffer;      /* actual segmented ptr to buffer */
+} *MMIO_Thunks;
+
+#include <poppack.h>
+
+static CRITICAL_SECTION mmio_cs;
+static CRITICAL_SECTION_DEBUG mmio_critsect_debug =
+{
+    0, 0, &mmio_cs,
+    { &mmio_critsect_debug.ProcessLocksList, &mmio_critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": mmsystem_mmio_cs") }
+};
+static CRITICAL_SECTION mmio_cs = { &mmio_critsect_debug, -1, 0, 0, 0, 0 };
 
 /****************************************************************
  *       		MMIO_Map32To16			[INTERNAL]
@@ -100,18 +124,20 @@ static LRESULT	MMIO_UnMap32To16(DWORD wMsg, LPARAM lParam1, LPARAM lParam2,
 }
 
 /******************************************************************
- *		MMIO_Callback16
+ *		MMIO_Callback3216
  *
  *
  */
-LRESULT MMIO_Callback16(SEGPTR cb16, LPMMIOINFO lpmmioinfo, UINT uMessage,
-                        LPARAM lParam1, LPARAM lParam2)
+static LRESULT MMIO_Callback3216(SEGPTR cb16, LPMMIOINFO lpmmioinfo, UINT uMessage,
+                                 LPARAM lParam1, LPARAM lParam2)
 {
     DWORD 		result;
     MMIOINFO16          mmioInfo16;
     SEGPTR		segmmioInfo16;
     LPARAM		lp1 = lParam1, lp2 = lParam2;
-    WORD args[7];
+    WORD                args[7];
+
+    if (!cb16) return MMSYSERR_INVALPARAM;
 
     memset(&mmioInfo16, 0, sizeof(MMIOINFO16));
     mmioInfo16.lDiskOffset = lpmmioinfo->lDiskOffset;
@@ -143,18 +169,68 @@ LRESULT MMIO_Callback16(SEGPTR cb16, LPMMIOINFO lpmmioinfo, UINT uMessage,
 }
 
 /******************************************************************
- *             MMIO_ResetSegmentedData
+ *		MMIO_AddThunk
  *
  */
-static LRESULT     MMIO_SetSegmentedBuffer(HMMIO hmmio, SEGPTR ptr, BOOL release)
+static struct mmio_thunk*       MMIO_AddThunk(LPMMIOPROC16 pfn16, HPSTR segbuf)
 {
-    LPWINE_MMIO		wm;
+    struct mmio_thunk* thunk;
 
-    if ((wm = MMIO_Get(hmmio)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-    if (release) UnMapLS(wm->segBuffer16);
-    wm->segBuffer16 = ptr;
-    return MMSYSERR_NOERROR;
+    if (!MMIO_Thunks)
+    {
+        MMIO_Thunks = VirtualAlloc(NULL, MMIO_MAX_THUNKS * sizeof(*MMIO_Thunks), MEM_COMMIT,
+                                   PAGE_EXECUTE_READWRITE);
+        if (!MMIO_Thunks) return NULL;
+        for (thunk = MMIO_Thunks; thunk < &MMIO_Thunks[MMIO_MAX_THUNKS]; thunk++)
+        {
+            thunk->popl_eax     = 0x58;   /* popl  %eax */
+            thunk->pushl_func   = 0x68;   /* pushl $pfn16 */
+            thunk->pfn16        = 0;
+            thunk->pushl_eax    = 0x50;   /* pushl %eax */
+            thunk->jmp          = 0xe9;   /* jmp MMIO_Callback3216 */
+            thunk->callback     = (char *)MMIO_Callback3216 - (char *)(&thunk->callback + 1);
+            thunk->hMmio        = NULL;
+            thunk->segbuffer    = 0;
+        }
+    }
+    for (thunk = MMIO_Thunks; thunk < &MMIO_Thunks[MMIO_MAX_THUNKS]; thunk++)
+    {
+        if (thunk->pfn16 == 0 && thunk->hMmio == NULL)
+        {
+            thunk->pfn16 = pfn16;
+            thunk->hMmio = NULL;
+            thunk->segbuffer = (SEGPTR)segbuf;
+            return thunk;
+        }
+    }
+    FIXME("Out of mmio-thunks. Bump MMIO_MAX_THUNKS\n");
+    return NULL;
+}
+
+/******************************************************************
+ *		MMIO_HasThunk
+ *
+ */
+static struct mmio_thunk*    MMIO_HasThunk(HMMIO hmmio)
+{
+    struct mmio_thunk* thunk;
+
+    if (!MMIO_Thunks) return NULL;
+    for (thunk = MMIO_Thunks; thunk < &MMIO_Thunks[MMIO_MAX_THUNKS]; thunk++)
+    {
+        if (thunk->hMmio == hmmio) return thunk;
+    }
+    return NULL;
+}
+
+/******************************************************************
+ *             MMIO_SetSegmentedBuffer
+ *
+ */
+static void     MMIO_SetSegmentedBuffer(struct mmio_thunk* thunk, SEGPTR ptr, BOOL release)
+{
+    if (release) UnMapLS(thunk->segbuffer);
+    thunk->segbuffer = ptr;
 }
 
 /**************************************************************************
@@ -166,13 +242,21 @@ HMMIO16 WINAPI mmioOpen16(LPSTR szFileName, MMIOINFO16* lpmmioinfo16,
     HMMIO 	ret;
 
     if (lpmmioinfo16) {
-	MMIOINFO	mmioinfo;
+	MMIOINFO	        mmioinfo;
+        struct mmio_thunk*      thunk = NULL;
 
 	memset(&mmioinfo, 0, sizeof(mmioinfo));
 
+        EnterCriticalSection(&mmio_cs);
+        if (lpmmioinfo16->pIOProc && !(thunk = MMIO_AddThunk(lpmmioinfo16->pIOProc, lpmmioinfo16->pchBuffer)))
+        {
+            LeaveCriticalSection(&mmio_cs);
+            return 0;
+        }
+
 	mmioinfo.dwFlags     = lpmmioinfo16->dwFlags;
 	mmioinfo.fccIOProc   = lpmmioinfo16->fccIOProc;
-	mmioinfo.pIOProc     = (LPMMIOPROC)lpmmioinfo16->pIOProc;
+	mmioinfo.pIOProc     = (LPMMIOPROC)thunk;
 	mmioinfo.cchBuffer   = lpmmioinfo16->cchBuffer;
 	mmioinfo.pchBuffer   = MapSL((DWORD)lpmmioinfo16->pchBuffer);
         mmioinfo.adwInfo[0]  = lpmmioinfo16->adwInfo[0];
@@ -182,13 +266,22 @@ HMMIO16 WINAPI mmioOpen16(LPSTR szFileName, MMIOINFO16* lpmmioinfo16,
 	mmioinfo.adwInfo[1]  = lpmmioinfo16->adwInfo[1];
 	mmioinfo.adwInfo[2]  = lpmmioinfo16->adwInfo[2];
 
-	ret = MMIO_Open(szFileName, &mmioinfo, dwOpenFlags, MMIO_PROC_16);
-        MMIO_SetSegmentedBuffer(mmioinfo.hmmio, (SEGPTR)lpmmioinfo16->pchBuffer, FALSE);
+	ret = mmioOpenA(szFileName, &mmioinfo, dwOpenFlags);
+        if (thunk)
+        {
+            if (!ret || (dwOpenFlags & (MMIO_PARSE|MMIO_EXIST)))
+            {
+                thunk->pfn16 = NULL;
+                thunk->hMmio = NULL;
+            }
+            else thunk->hMmio = ret;
+        }
+        LeaveCriticalSection(&mmio_cs);
 
 	lpmmioinfo16->wErrorRet = mmioinfo.wErrorRet;
         lpmmioinfo16->hmmio     = HMMIO_16(mmioinfo.hmmio);
     } else {
-	ret = MMIO_Open(szFileName, NULL, dwOpenFlags, MMIO_PROC_32A);
+	ret = mmioOpenA(szFileName, NULL, dwOpenFlags);
     }
     return HMMIO_16(ret);
 }
@@ -198,8 +291,23 @@ HMMIO16 WINAPI mmioOpen16(LPSTR szFileName, MMIOINFO16* lpmmioinfo16,
  */
 MMRESULT16 WINAPI mmioClose16(HMMIO16 hmmio, UINT16 uFlags)
 {
-    MMIO_SetSegmentedBuffer(HMMIO_32(hmmio), 0, TRUE);
-    return mmioClose(HMMIO_32(hmmio), uFlags);
+    MMRESULT ret;
+
+    EnterCriticalSection(&mmio_cs);
+    ret = mmioClose(HMMIO_32(hmmio), uFlags);
+    if (ret == MMSYSERR_NOERROR)
+    {
+        struct mmio_thunk* thunk;
+
+        if ((thunk = MMIO_HasThunk(HMMIO_32(hmmio))))
+        {
+            MMIO_SetSegmentedBuffer(thunk, 0, TRUE);
+            thunk->pfn16 = NULL;
+            thunk->hMmio = NULL;
+        }
+    }
+    LeaveCriticalSection(&mmio_cs);
+    return ret;
 }
 
 /**************************************************************************
@@ -233,27 +341,34 @@ MMRESULT16 WINAPI mmioGetInfo16(HMMIO16 hmmio, MMIOINFO16* lpmmioinfo, UINT16 uF
 {
     MMIOINFO            mmioinfo;
     MMRESULT            ret;
-    LPWINE_MMIO		wm;
+    struct mmio_thunk*  thunk;
 
     TRACE("(0x%04x,%p,0x%08x)\n", hmmio, lpmmioinfo, uFlags);
 
-    if ((wm = MMIO_Get(HMMIO_32(hmmio))) == NULL)
+    EnterCriticalSection(&mmio_cs);
+    if ((thunk = MMIO_HasThunk(HMMIO_32(hmmio))) == NULL)
+    {
+        LeaveCriticalSection(&mmio_cs);
 	return MMSYSERR_INVALHANDLE;
+    }
 
     ret = mmioGetInfo(HMMIO_32(hmmio), &mmioinfo, uFlags);
-    if (ret != MMSYSERR_NOERROR) return ret;
+    if (ret != MMSYSERR_NOERROR)
+    {
+        LeaveCriticalSection(&mmio_cs);
+        return ret;
+    }
 
     lpmmioinfo->dwFlags     = mmioinfo.dwFlags;
     lpmmioinfo->fccIOProc   = mmioinfo.fccIOProc;
-    lpmmioinfo->pIOProc     = (wm->ioProc->type == MMIO_PROC_16) ?
-        (LPMMIOPROC16)wm->ioProc->pIOProc : NULL;
+    lpmmioinfo->pIOProc     = thunk->pfn16;
     lpmmioinfo->wErrorRet   = mmioinfo.wErrorRet;
     lpmmioinfo->hTask       = HTASK_16(mmioinfo.hTask);
     lpmmioinfo->cchBuffer   = mmioinfo.cchBuffer;
-    lpmmioinfo->pchBuffer   = (void*)wm->segBuffer16;
-    lpmmioinfo->pchNext     = (void*)(wm->segBuffer16 + (mmioinfo.pchNext - mmioinfo.pchBuffer));
-    lpmmioinfo->pchEndRead  = (void*)(wm->segBuffer16 + (mmioinfo.pchEndRead - mmioinfo.pchBuffer));
-    lpmmioinfo->pchEndWrite = (void*)(wm->segBuffer16 + (mmioinfo.pchEndWrite - mmioinfo.pchBuffer));
+    lpmmioinfo->pchBuffer   = (void*)thunk->segbuffer;
+    lpmmioinfo->pchNext     = (void*)(thunk->segbuffer + (mmioinfo.pchNext - mmioinfo.pchBuffer));
+    lpmmioinfo->pchEndRead  = (void*)(thunk->segbuffer + (mmioinfo.pchEndRead - mmioinfo.pchBuffer));
+    lpmmioinfo->pchEndWrite = (void*)(thunk->segbuffer + (mmioinfo.pchEndWrite - mmioinfo.pchBuffer));
     lpmmioinfo->lBufOffset  = mmioinfo.lBufOffset;
     lpmmioinfo->lDiskOffset = mmioinfo.lDiskOffset;
     lpmmioinfo->adwInfo[0]  = mmioinfo.adwInfo[0];
@@ -262,6 +377,7 @@ MMRESULT16 WINAPI mmioGetInfo16(HMMIO16 hmmio, MMIOINFO16* lpmmioinfo, UINT16 uF
     lpmmioinfo->dwReserved1 = 0;
     lpmmioinfo->dwReserved2 = 0;
     lpmmioinfo->hmmio = HMMIO_16(mmioinfo.hmmio);
+    LeaveCriticalSection(&mmio_cs);
 
     return MMSYSERR_NOERROR;
 }
@@ -310,7 +426,16 @@ MMRESULT16 WINAPI mmioSetBuffer16(HMMIO16 hmmio, LPSTR pchBuffer,
                                     cchBuffer, uFlags);
 
     if (ret == MMSYSERR_NOERROR)
-        MMIO_SetSegmentedBuffer(HMMIO_32(hmmio), (DWORD)pchBuffer, TRUE);
+    {
+        struct mmio_thunk* thunk;
+
+        if ((thunk = MMIO_HasThunk(HMMIO_32(hmmio))) == NULL)
+        {
+            FIXME("really ?\n");
+            return MMSYSERR_INVALHANDLE;
+        }
+        MMIO_SetSegmentedBuffer(thunk, (DWORD)pchBuffer, TRUE);
+    }
     else
         UnMapLS((DWORD)pchBuffer);
     return ret;
@@ -375,8 +500,61 @@ FOURCC WINAPI mmioStringToFOURCC16(LPCSTR sz, UINT16 uFlags)
 LPMMIOPROC16 WINAPI mmioInstallIOProc16(FOURCC fccIOProc, LPMMIOPROC16 pIOProc,
                                         DWORD dwFlags)
 {
-    return (LPMMIOPROC16)MMIO_InstallIOProc(fccIOProc, (LPMMIOPROC)pIOProc,
-                                            dwFlags, MMIO_PROC_16);
+    struct mmio_thunk*  thunk = NULL;
+    LPMMIOPROC pIOProc32;
+
+    EnterCriticalSection(&mmio_cs);
+
+    switch (dwFlags & (MMIO_INSTALLPROC|MMIO_REMOVEPROC|MMIO_FINDPROC)) {
+    case MMIO_INSTALLPROC:
+        if (!(thunk = MMIO_AddThunk(pIOProc, NULL)))
+        {
+            LeaveCriticalSection(&mmio_cs);
+            return NULL;
+        }
+        if (!mmioInstallIOProcA(fccIOProc, (LPMMIOPROC)thunk, dwFlags))
+        {
+            thunk->pfn16 = NULL;
+            pIOProc = NULL;
+        }
+        break;
+    case MMIO_REMOVEPROC:
+        if (MMIO_Thunks)
+        {
+            for (thunk = MMIO_Thunks; thunk < &MMIO_Thunks[MMIO_MAX_THUNKS]; thunk++)
+            {
+                if (thunk->pfn16 == pIOProc && thunk->segbuffer == 0)
+                {
+                    if (mmioInstallIOProcA(fccIOProc, (LPMMIOPROC)thunk, dwFlags))
+                        thunk->pfn16 = NULL;
+                    else
+                        pIOProc = NULL;
+                    break;
+                }
+            }
+        }
+        if (!thunk) pIOProc = NULL;
+        break;
+    case MMIO_FINDPROC:
+        if ((pIOProc32 = mmioInstallIOProcA(fccIOProc, NULL, dwFlags)) && MMIO_Thunks)
+        {
+            for (thunk = MMIO_Thunks; thunk < &MMIO_Thunks[MMIO_MAX_THUNKS]; thunk++)
+            {
+                if ((LPMMIOPROC)thunk == pIOProc32)
+                {
+                    pIOProc = thunk->pfn16;
+                    break;
+                }
+            }
+        }
+        break;
+    default:
+        WINE_FIXME("Unsupported flags %08x\n", dwFlags);
+        pIOProc = NULL;
+    }
+    LeaveCriticalSection(&mmio_cs);
+
+    return pIOProc;
 }
 
 /**************************************************************************
@@ -385,8 +563,22 @@ LPMMIOPROC16 WINAPI mmioInstallIOProc16(FOURCC fccIOProc, LPMMIOPROC16 pIOProc,
 LRESULT WINAPI mmioSendMessage16(HMMIO16 hmmio, UINT16 uMessage,
 				 LPARAM lParam1, LPARAM lParam2)
 {
-    return MMIO_SendMessage(HMMIO_32(hmmio), uMessage,
-                            lParam1, lParam2, MMIO_PROC_16);
+    struct mmio_thunk*  thunk;
+
+    if ((thunk = MMIO_HasThunk(HMMIO_32(hmmio))))
+    {
+        MMIOINFO        mmioinfo;
+        if (mmioGetInfo(HMMIO_32(hmmio), &mmioinfo, 0) == MMSYSERR_NOERROR)
+        {
+            return MMIO_Callback3216((SEGPTR)thunk->pfn16, &mmioinfo, uMessage, lParam1, lParam2);
+        }
+        return MMSYSERR_INVALHANDLE;
+    }
+    else
+    {
+        /* FIXME: we need to map lParam1 and lParam2 to 32bit entities */
+        return mmioSendMessage(HMMIO_32(hmmio), uMessage, lParam1, lParam2);
+    }
 }
 
 /**************************************************************************
@@ -434,16 +626,15 @@ MMRESULT16 WINAPI mmioRename16(LPCSTR szFileName, LPCSTR szNewFileName,
      * but a non installed ioproc without a fourcc won't do
      */
     if (lpmmioinfo && lpmmioinfo->fccIOProc && lpmmioinfo->pIOProc) {
-        MMIO_InstallIOProc(lpmmioinfo->fccIOProc, (LPMMIOPROC)lpmmioinfo->pIOProc,
-                           MMIO_INSTALLPROC, MMIO_PROC_16);
+        mmioInstallIOProc16(lpmmioinfo->fccIOProc, lpmmioinfo->pIOProc,
+                           MMIO_INSTALLPROC);
         inst = TRUE;
     }
     memset(&mmioinfo, 0, sizeof(mmioinfo));
     mmioinfo.fccIOProc = lpmmioinfo->fccIOProc;
     ret = mmioRenameA(szFileName, szNewFileName, &mmioinfo, dwRenameFlags);
     if (inst) {
-        MMIO_InstallIOProc(lpmmioinfo->fccIOProc, NULL,
-                           MMIO_REMOVEPROC, MMIO_PROC_16);
+        mmioInstallIOProc16(lpmmioinfo->fccIOProc, NULL, MMIO_REMOVEPROC);
     }
     return ret;
 }

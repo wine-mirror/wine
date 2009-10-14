@@ -45,8 +45,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmio);
 
-LRESULT         (*pFnMmioCallback16)(DWORD,LPMMIOINFO,UINT,LPARAM,LPARAM) /* = NULL */;
-
 static WINE_MMIO *MMIOList;
 
 /**************************************************************************
@@ -255,8 +253,8 @@ static struct IOProcList*	MMIO_FindProcNode(FOURCC fccIOProc)
 /****************************************************************
  *       	MMIO_InstallIOProc 			[INTERNAL]
  */
-LPMMIOPROC MMIO_InstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
-                              DWORD dwFlags, enum mmioProcType type)
+static LPMMIOPROC MMIO_InstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
+                                     DWORD dwFlags, enum mmioProcType type)
 {
     LPMMIOPROC	        lpProc = NULL;
     struct IOProcList*  pListNode;
@@ -352,11 +350,6 @@ static LRESULT	send_message(struct IOProcList* ioProc, LPMMIOINFO mmioinfo,
     }
 
     switch (ioProc->type) {
-    case MMIO_PROC_16:
-        if (pFnMmioCallback16)
-            result = pFnMmioCallback16((DWORD)ioProc->pIOProc,
-                                       mmioinfo, wMsg, lp1, lp2);
-        break;
     case MMIO_PROC_32A:
     case MMIO_PROC_32W:
 	if (ioProc->type != type) {
@@ -438,7 +431,7 @@ static FOURCC MMIO_ParseExtA(LPCSTR szFileName)
  *
  * Retrieves the mmio object from current process
  */
-LPWINE_MMIO	MMIO_Get(HMMIO h)
+static LPWINE_MMIO      MMIO_Get(HMMIO h)
 {
     LPWINE_MMIO		wm = NULL;
 
@@ -593,8 +586,8 @@ static MMRESULT MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
 /**************************************************************************
  * 			MMIO_Open       			[internal]
  */
-HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags, 
-                enum mmioProcType type)
+static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
+                       enum mmioProcType type)
 {
     LPWINE_MMIO		wm;
     MMIOINFO    	mmioinfo;
@@ -939,9 +932,6 @@ MMRESULT WINAPI mmioGetInfo(HMMIO hmmio, MMIOINFO* lpmmioinfo, UINT uFlags)
 	return MMSYSERR_INVALHANDLE;
 
     *lpmmioinfo = wm->info;
-    /* don't expose 16 bit ioproc:s */
-    if (wm->ioProc->type != MMIO_PROC_16)
-        lpmmioinfo->pIOProc = wm->ioProc->pIOProc;
 
     return MMSYSERR_NOERROR;
 }
@@ -1112,7 +1102,7 @@ LPMMIOPROC WINAPI mmioInstallIOProcW(FOURCC fccIOProc,
  *
  *
  */
-LRESULT         MMIO_SendMessage(HMMIO hmmio, UINT uMessage, LPARAM lParam1, 
+static LRESULT  MMIO_SendMessage(HMMIO hmmio, UINT uMessage, LPARAM lParam1,
                                  LPARAM lParam2, enum mmioProcType type)
 {
     LPWINE_MMIO		wm;

@@ -50,7 +50,6 @@ static WINE_MMTHREAD*   WINMM_GetmmThread(HANDLE16);
 static LPWINE_DRIVER    DRIVER_OpenDriver16(LPCWSTR, LPCWSTR, LPARAM);
 static LRESULT          DRIVER_CloseDriver16(HDRVR16, LPARAM, LPARAM);
 static LRESULT          DRIVER_SendMessage16(HDRVR16, UINT, LPARAM, LPARAM);
-extern LRESULT          MMIO_Callback16(SEGPTR, LPMMIOINFO, UINT, LPARAM, LPARAM);
 
 /* ###################################################
  * #                  LIBRARY                        #
@@ -83,7 +82,6 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
         pFnOpenDriver16     = DRIVER_OpenDriver16;
         pFnCloseDriver16    = DRIVER_CloseDriver16;
         pFnSendMessage16    = DRIVER_SendMessage16;
-        pFnMmioCallback16   = MMIO_Callback16;
         pFnReleaseThunkLock = ReleaseThunkLock;
         pFnRestoreThunkLock = RestoreThunkLock;
         MMDRV_Init16();
@@ -93,7 +91,6 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
         pFnOpenDriver16     = NULL;
         pFnCloseDriver16    = NULL;
         pFnSendMessage16    = NULL;
-        pFnMmioCallback16   = NULL;
         pFnReleaseThunkLock = NULL;
         pFnRestoreThunkLock = NULL;
         /* FIXME: add equivalent for MMDRV_Init16() */
