@@ -9,6 +9,7 @@ CTESTS = \
 	dom.c \
 	events.c \
 	htmldoc.c \
+	htmllocation.c \
 	misc.c \
 	protocol.c \
 	script.c
