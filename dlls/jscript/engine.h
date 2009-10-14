@@ -126,8 +126,18 @@ typedef struct _parameter_t parameter_t;
 HRESULT create_source_function(parser_ctx_t*,parameter_t*,source_elements_t*,scope_chain_t*,
         const WCHAR*,DWORD,DispatchEx**);
 
+typedef enum {
+    LT_INT,
+    LT_DOUBLE,
+    LT_STRING,
+    LT_BOOL,
+    LT_DISPATCH,
+    LT_UNDEFINED,
+    LT_NULL
+}literal_type_t;
+
 typedef struct {
-    VARTYPE vt;
+    literal_type_t type;
     union {
         LONG lval;
         double dval;

@@ -349,31 +349,33 @@ static HRESULT equal2_values(VARIANT *lval, VARIANT *rval, BOOL *ret)
 
 static HRESULT literal_to_var(literal_t *literal, VARIANT *v)
 {
-    V_VT(v) = literal->vt;
-
-    switch(V_VT(v)) {
-    case VT_EMPTY:
-    case VT_NULL:
+    switch(literal->type) {
+    case LT_UNDEFINED:
+        V_VT(v) = VT_EMPTY;
         break;
-    case VT_I4:
+    case LT_NULL:
+        V_VT(v) = VT_NULL;
+        break;
+    case LT_INT:
+        V_VT(v) = VT_I4;
         V_I4(v) = literal->u.lval;
         break;
-    case VT_R8:
+    case LT_DOUBLE:
+        V_VT(v) = VT_R8;
         V_R8(v) = literal->u.dval;
         break;
-    case VT_BSTR:
+    case LT_STRING:
+        V_VT(v) = VT_BSTR;
         V_BSTR(v) = SysAllocString(literal->u.wstr);
         break;
-    case VT_BOOL:
+    case LT_BOOL:
+        V_VT(v) = VT_BOOL;
         V_BOOL(v) = literal->u.bval;
         break;
-    case VT_DISPATCH:
+    case LT_DISPATCH:
+        V_VT(v) = VT_DISPATCH;
         IDispatch_AddRef(literal->u.disp);
         V_DISPATCH(v) = literal->u.disp;
-        break;
-    default:
-        ERR("wrong type %d\n", V_VT(v));
-        return E_NOTIMPL;
     }
 
     return S_OK;

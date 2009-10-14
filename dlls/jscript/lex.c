@@ -369,7 +369,7 @@ static literal_t *alloc_int_literal(parser_ctx_t *ctx, LONG l)
 {
     literal_t *ret = parser_alloc(ctx, sizeof(literal_t));
 
-    ret->vt = VT_I4;
+    ret->type = LT_INT;
     ret->u.lval = l;
 
     return ret;
@@ -447,7 +447,7 @@ static int parse_double_literal(parser_ctx_t *ctx, LONG int_part, literal_t **li
     }
 
     *literal = parser_alloc(ctx, sizeof(literal_t));
-    (*literal)->vt = VT_R8;
+    (*literal)->type = LT_DOUBLE;
     (*literal)->u.dval = (double)d*pow(10, exp);
 
     return tNumericLiteral;
@@ -801,7 +801,7 @@ literal_t *parse_regexp(parser_ctx_t *ctx)
     add_object_literal(ctx, regexp);
 
     ret = parser_alloc(ctx, sizeof(literal_t));
-    ret->vt = VT_DISPATCH;
+    ret->type = LT_DISPATCH;
     ret->u.disp = (IDispatch*)_IDispatchEx_(regexp);
     return ret;
 }
