@@ -153,14 +153,12 @@ typedef struct tagWINE_MCIDRIVER {
 
 #define WINE_TIMER_IS32	0x80
 
-enum mmioProcType {MMIO_PROC_32A,MMIO_PROC_32W};
-
 struct IOProcList
 {
     struct IOProcList*pNext;       /* Next item in linked list */
     FOURCC            fourCC;      /* four-character code identifying IOProc */
     LPMMIOPROC	      pIOProc;     /* pointer to IProc */
-    enum mmioProcType type;        /* 16, 32A or 32W */
+    BOOL              is_unicode;  /* 32A or 32W */
     int		      count;	   /* number of objects linked to it */
 };
 
