@@ -1274,7 +1274,7 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
 
     /* FIXME: should do something for other systems */
     GetSystemInfo(&si);
-    lpmemex->ullTotalVirtual  = (char*)si.lpMaximumApplicationAddress-(char*)si.lpMinimumApplicationAddress;
+    lpmemex->ullTotalVirtual  = (ULONG_PTR)si.lpMaximumApplicationAddress-(ULONG_PTR)si.lpMinimumApplicationAddress;
     /* FIXME: we should track down all the already allocated VM pages and substract them, for now arbitrarily remove 64KB so that it matches NT */
     lpmemex->ullAvailVirtual  = lpmemex->ullTotalVirtual-64*1024;
 
