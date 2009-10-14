@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Juan Lang
+ * Copyright 2005-2009 Juan Lang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1454,29 +1454,9 @@ static BOOL WINAPI CRYPT_AsnDecodeExtensions(DWORD dwCertEncodingType,
          sizeof(CERT_EXTENSIONS),
          CRYPT_AsnDecodeExtension, sizeof(CERT_EXTENSION), TRUE,
          offsetof(CERT_EXTENSION, pszObjId) };
-        DWORD bytesNeeded;
 
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded,
-         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, NULL, &bytesNeeded, NULL);
-        if (ret)
-        {
-            if (!pvStructInfo)
-                *pcbStructInfo = bytesNeeded;
-            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
-             pvStructInfo, pcbStructInfo, bytesNeeded)))
-            {
-                CERT_EXTENSIONS *exts;
-
-                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
-                    pvStructInfo = *(BYTE **)pvStructInfo;
-                exts = (CERT_EXTENSIONS *)pvStructInfo;
-                exts->rgExtension = (CERT_EXTENSION *)((BYTE *)exts +
-                 sizeof(CERT_EXTENSIONS));
-                ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded,
-                 cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
-                 NULL, &exts->cExtension, &bytesNeeded, NULL);
-            }
-        }
+         dwFlags, pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -1919,29 +1899,9 @@ static BOOL WINAPI CRYPT_AsnDecodeName(DWORD dwCertEncodingType,
          sizeof(CERT_NAME_INFO),
          CRYPT_AsnDecodeRdn, sizeof(CERT_RDN), TRUE,
          offsetof(CERT_RDN, rgRDNAttr) };
-        DWORD bytesNeeded;
 
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded,
-         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, NULL, &bytesNeeded, NULL);
-        if (ret)
-        {
-            if (!pvStructInfo)
-                *pcbStructInfo = bytesNeeded;
-            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
-             pvStructInfo, pcbStructInfo, bytesNeeded)))
-            {
-                CERT_NAME_INFO *info;
-
-                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
-                    pvStructInfo = *(BYTE **)pvStructInfo;
-                info = pvStructInfo;
-                info->rgRDN =
-                 (PCERT_RDN)((BYTE *)pvStructInfo + sizeof(CERT_NAME_INFO));
-                ret = CRYPT_AsnDecodeArray(&arrayDesc,
-                 pbEncoded, cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
-                 NULL, &info->cRDN, pcbStructInfo, NULL);
-            }
-        }
+         dwFlags, pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -2013,29 +1973,9 @@ static BOOL WINAPI CRYPT_AsnDecodeUnicodeName(DWORD dwCertEncodingType,
          sizeof(CERT_NAME_INFO),
          CRYPT_AsnDecodeUnicodeRdn, sizeof(CERT_RDN), TRUE,
          offsetof(CERT_RDN, rgRDNAttr) };
-        DWORD bytesNeeded;
 
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded,
-         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, NULL, &bytesNeeded, NULL);
-        if (ret)
-        {
-            if (!pvStructInfo)
-                *pcbStructInfo = bytesNeeded;
-            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
-             pvStructInfo, pcbStructInfo, bytesNeeded)))
-            {
-                CERT_NAME_INFO *info;
-
-                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
-                    pvStructInfo = *(BYTE **)pvStructInfo;
-                info = pvStructInfo;
-                info->rgRDN =
-                 (PCERT_RDN)((BYTE *)pvStructInfo + sizeof(CERT_NAME_INFO));
-                ret = CRYPT_AsnDecodeArray(&arrayDesc,
-                 pbEncoded, cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
-                 NULL, &info->cRDN, pcbStructInfo, NULL);
-            }
-        }
+         dwFlags, pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -2349,7 +2289,6 @@ static BOOL WINAPI CRYPT_AsnDecodeSMIMECapabilities(DWORD dwCertEncodingType,
 
     __TRY
     {
-        DWORD bytesNeeded;
         struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
          offsetof(CRYPT_SMIME_CAPABILITIES, cCapability),
          offsetof(CRYPT_SMIME_CAPABILITIES, rgCapability),
@@ -2357,27 +2296,8 @@ static BOOL WINAPI CRYPT_AsnDecodeSMIMECapabilities(DWORD dwCertEncodingType,
          CRYPT_AsnDecodeSMIMECapability, sizeof(CRYPT_SMIME_CAPABILITY), TRUE,
          offsetof(CRYPT_SMIME_CAPABILITY, pszObjId) };
 
-        if ((ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded,
-         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, NULL, &bytesNeeded, NULL)))
-        {
-            if (!pvStructInfo)
-                *pcbStructInfo = bytesNeeded;
-            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
-             pvStructInfo, pcbStructInfo, bytesNeeded)))
-            {
-                PCRYPT_SMIME_CAPABILITIES capabilities;
-
-                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
-                    pvStructInfo = *(BYTE **)pvStructInfo;
-                capabilities = pvStructInfo;
-                capabilities->rgCapability =
-                 (PCRYPT_SMIME_CAPABILITY)((BYTE *)pvStructInfo +
-                 sizeof(CRYPT_SMIME_CAPABILITIES));
-                ret = CRYPT_AsnDecodeArray(&arrayDesc,
-                 pbEncoded, cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
-                 NULL, &capabilities->cCapability, pcbStructInfo, NULL);
-            }
-        }
+        ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded,
+         dwFlags, pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -2847,29 +2767,9 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSAttributes(DWORD dwCertEncodingType,
          sizeof(CRYPT_ATTRIBUTES),
          CRYPT_AsnDecodePKCSAttributeInternal, sizeof(CRYPT_ATTRIBUTE),
          TRUE, offsetof(CRYPT_ATTRIBUTE, pszObjId) };
-        DWORD bytesNeeded;
 
-        if ((ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded,
-         cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, NULL,
-         &bytesNeeded, NULL)))
-        {
-            if (!pvStructInfo)
-                *pcbStructInfo = bytesNeeded;
-            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
-             pvStructInfo, pcbStructInfo, bytesNeeded)))
-            {
-                PCRYPT_ATTRIBUTES attrs;
-
-                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
-                    pvStructInfo = *(BYTE **)pvStructInfo;
-                attrs = pvStructInfo;
-                attrs->rgAttr = (PCRYPT_ATTRIBUTE)((BYTE *)pvStructInfo +
-                 sizeof(CRYPT_ATTRIBUTES));
-                ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded,
-                 cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL,
-                 &attrs->cAttr, &bytesNeeded, NULL);
-            }
-        }
+        ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded,
+         dwFlags, pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -3296,29 +3196,9 @@ static BOOL WINAPI CRYPT_AsnDecodeAuthorityInfoAccess(DWORD dwCertEncodingType,
          sizeof(CERT_AUTHORITY_INFO_ACCESS),
          CRYPT_AsnDecodeAccessDescription, sizeof(CERT_ACCESS_DESCRIPTION),
          TRUE, offsetof(CERT_ACCESS_DESCRIPTION, pszAccessMethod) };
-        DWORD bytesNeeded;
 
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded,
-         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, NULL, &bytesNeeded, NULL);
-        if (ret)
-        {
-            if (!pvStructInfo)
-                *pcbStructInfo = bytesNeeded;
-            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
-             pvStructInfo, pcbStructInfo, bytesNeeded)))
-            {
-                CERT_AUTHORITY_INFO_ACCESS *access;
-
-                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
-                    pvStructInfo = *(BYTE **)pvStructInfo;
-                access = pvStructInfo;
-                access->rgAccDescr = (PCERT_ACCESS_DESCRIPTION)
-                 ((BYTE *)pvStructInfo + sizeof(CERT_AUTHORITY_INFO_ACCESS));
-                ret = CRYPT_AsnDecodeArray(&arrayDesc,
-                 pbEncoded, cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
-                 NULL, &access->cAccDescr, pcbStructInfo, NULL);
-            }
-        }
+         dwFlags, pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -3733,29 +3613,9 @@ static BOOL WINAPI CRYPT_AsnDecodeCertPolicies(DWORD dwCertEncodingType,
          sizeof(CERT_POLICIES_INFO),
          CRYPT_AsnDecodeCertPolicy, sizeof(CERT_POLICY_INFO), TRUE,
          offsetof(CERT_POLICY_INFO, pszPolicyIdentifier) };
-        DWORD bytesNeeded;
 
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded,
-         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, NULL, &bytesNeeded, NULL);
-        if (ret)
-        {
-            if (!pvStructInfo)
-                *pcbStructInfo = bytesNeeded;
-            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
-             pvStructInfo, pcbStructInfo, bytesNeeded)))
-            {
-                CERT_POLICIES_INFO *info;
-
-                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
-                    pvStructInfo = *(BYTE **)pvStructInfo;
-                info = pvStructInfo;
-                info->rgPolicyInfo = (PCERT_POLICY_INFO)
-                 ((BYTE *)pvStructInfo + sizeof(CERT_POLICIES_INFO));
-                ret = CRYPT_AsnDecodeArray(&arrayDesc,
-                 pbEncoded, cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
-                 NULL, &info->cPolicyInfo, pcbStructInfo, NULL);
-            }
-        }
+         dwFlags, pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -4918,29 +4778,9 @@ static BOOL WINAPI CRYPT_AsnDecodeCRLDistPoints(DWORD dwCertEncodingType,
          sizeof(CRL_DIST_POINTS_INFO),
          CRYPT_AsnDecodeDistPoint, sizeof(CRL_DIST_POINT), TRUE,
          offsetof(CRL_DIST_POINT, DistPointName.u.FullName.rgAltEntry) };
-        DWORD bytesNeeded;
 
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded,
-         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, NULL, &bytesNeeded, NULL);
-        if (ret)
-        {
-            if (!pvStructInfo)
-                *pcbStructInfo = bytesNeeded;
-            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
-             pvStructInfo, pcbStructInfo, bytesNeeded)))
-            {
-                CRL_DIST_POINTS_INFO *info;
-
-                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
-                    pvStructInfo = *(BYTE **)pvStructInfo;
-                info = pvStructInfo;
-                info->rgDistPoint = (PCRL_DIST_POINT)
-                 ((BYTE *)pvStructInfo + sizeof(CRL_DIST_POINTS_INFO));
-                ret = CRYPT_AsnDecodeArray(&arrayDesc,
-                 pbEncoded, cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
-                 NULL, &info->cDistPoint, pcbStructInfo, NULL);
-            }
-        }
+         dwFlags, pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -4967,29 +4807,9 @@ static BOOL WINAPI CRYPT_AsnDecodeEnhancedKeyUsage(DWORD dwCertEncodingType,
          offsetof(CERT_ENHKEY_USAGE, rgpszUsageIdentifier),
          sizeof(CERT_ENHKEY_USAGE),
          CRYPT_AsnDecodeOidInternal, sizeof(LPSTR), TRUE, 0 };
-        DWORD bytesNeeded;
 
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded,
-         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, NULL, &bytesNeeded, NULL);
-        if (ret)
-        {
-            if (!pvStructInfo)
-                *pcbStructInfo = bytesNeeded;
-            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
-             pvStructInfo, pcbStructInfo, bytesNeeded)))
-            {
-                CERT_ENHKEY_USAGE *usage;
-
-                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
-                    pvStructInfo = *(BYTE **)pvStructInfo;
-                usage = pvStructInfo;
-                usage->rgpszUsageIdentifier = (LPSTR *)
-                 ((BYTE *)pvStructInfo + sizeof(CERT_ENHKEY_USAGE));
-                ret = CRYPT_AsnDecodeArray(&arrayDesc,
-                 pbEncoded, cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
-                 NULL, &usage->cUsageIdentifier, pcbStructInfo, NULL);
-            }
-        }
+         dwFlags, pDecodePara, pvStructInfo, pcbStructInfo, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
