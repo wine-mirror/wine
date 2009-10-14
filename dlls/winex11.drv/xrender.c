@@ -2170,6 +2170,7 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
         mask_pict = get_xrender_picture_source(physDevSrc);
 
         /* Use backgroundPixel as the foreground color */
+        EnterCriticalSection( &xrender_cs );
         src_pict = get_tile_pict(dst_format, physDevDst->backgroundPixel);
 
         /* Create a destination picture and fill it with textPixel color as the background color */
@@ -2181,6 +2182,7 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
 
         if(dst_pict) pXRenderFreePicture(gdi_display, dst_pict);
         wine_tsx11_unlock();
+        LeaveCriticalSection( &xrender_cs );
     }
     else /* color -> color but with different depths */
     {
