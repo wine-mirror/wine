@@ -3802,7 +3802,8 @@ static BOOL CRYPT_AsnDecodeCertPolicy(const BYTE *pbEncoded, DWORD cbEncoded,
        CRYPT_AsnDecodeOidInternal, sizeof(LPSTR), FALSE, TRUE,
        offsetof(CERT_POLICY_INFO, pszPolicyIdentifier), 0 },
      { ASN_SEQUENCEOF, offsetof(CERT_POLICY_INFO, cPolicyQualifier),
-       CRYPT_AsnDecodePolicyQualifiers, sizeof(struct GenericArray), TRUE,
+       CRYPT_AsnDecodePolicyQualifiers,
+       FINALMEMBERSIZE(CERT_POLICY_INFO, cPolicyQualifier), TRUE,
        TRUE, offsetof(CERT_POLICY_INFO, rgPolicyQualifier), 0 },
     };
     CERT_POLICY_INFO *info = pvStructInfo;
