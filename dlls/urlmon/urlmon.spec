@@ -15,7 +15,7 @@
 @ stdcall CoInternetCreateSecurityManager(ptr ptr long)
 @ stdcall CoInternetCreateZoneManager(ptr ptr long)
 @ stub CoInternetGetProtocolFlags
-@ stub CoInternetGetSecurityUrl
+@ stdcall CoInternetGetSecurityUrl(ptr ptr long long)
 @ stdcall CoInternetGetSession(long ptr long)
 @ stdcall CoInternetParseUrl(wstr long long wstr long ptr long)
 @ stdcall CoInternetQueryInfo(ptr long long ptr long ptr long)

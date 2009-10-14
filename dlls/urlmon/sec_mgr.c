@@ -1228,3 +1228,12 @@ HRESULT WINAPI CoInternetCreateZoneManager(IServiceProvider* pSP, IInternetZoneM
     TRACE("(%p %p %x)\n", pSP, ppZM, dwReserved);
     return ZoneMgrImpl_Construct(NULL, (void**)ppZM);
 }
+
+/********************************************************************
+ *      CoInternetGetSecurityUrl (URLMON.@)
+ */
+HRESULT WINAPI CoInternetGetSecurityUrl(LPCWSTR pwzUrl, LPWSTR *ppwzSecUrl, PSUACTION psuAction, DWORD dwReserved)
+{
+    FIXME("(%p,%p,%u,%u): stub\n", pwzUrl, ppwzSecUrl, psuAction, dwReserved);
+    return E_NOTIMPL;
+}
