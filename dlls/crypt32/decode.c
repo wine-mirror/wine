@@ -2425,6 +2425,68 @@ static BOOL CRYPT_AsnDecodeCTLEntries(const BYTE *pbEncoded, DWORD cbEncoded,
     return ret;
 }
 
+static BOOL CRYPT_AsnDecodeCTLExtensionsInternal(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    BOOL ret = TRUE;
+    struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
+     CRYPT_AsnDecodeExtension, sizeof(CERT_EXTENSION), TRUE,
+     offsetof(CERT_EXTENSION, pszObjId) };
+    DWORD itemSize;
+
+    TRACE("%p, %d, %08x, %p, %d, %p\n", pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, *pcbStructInfo, pcbDecoded);
+
+    ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+     NULL, NULL, &itemSize, pcbDecoded);
+    if (ret)
+    {
+        DWORD bytesNeeded;
+
+        /* The size expected by the caller includes the combination of
+         * CTL_INFO's cExtension and rgExtension, in addition to the size of
+         * all the decoded items.  CRYPT_AsnDecodeArrayNoAlloc only returns
+         * the size of the decoded items, so add the size of cExtension and
+         * rgExtension.
+         */
+        bytesNeeded = FINALMEMBERSIZE(CTL_INFO, cExtension) + itemSize;
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, NULL, pvStructInfo,
+         pcbStructInfo, bytesNeeded)))
+        {
+            CTL_INFO *info;
+
+            info = (CTL_INFO *)((BYTE *)pvStructInfo -
+             offsetof(CTL_INFO, cExtension));
+            ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded,
+             cbEncoded, &info->cExtension, info->rgExtension, &itemSize,
+             pcbDecoded);
+        }
+    }
+    return ret;
+}
+
+static BOOL CRYPT_AsnDecodeCTLExtensions(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    BOOL ret;
+    DWORD dataLen;
+
+    if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen)))
+    {
+        BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
+
+        ret = CRYPT_AsnDecodeCTLExtensionsInternal(pbEncoded + 1 + lenBytes,
+         dataLen, dwFlags, pvStructInfo, pcbStructInfo, NULL);
+        if (ret && pcbDecoded)
+            *pcbDecoded = 1 + lenBytes + dataLen;
+    }
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_AsnDecodeCTL(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
@@ -2462,8 +2524,8 @@ static BOOL WINAPI CRYPT_AsnDecodeCTL(DWORD dwCertEncodingType,
            MEMBERSIZE(CTL_INFO, cCTLEntry, cExtension),
            TRUE, TRUE, offsetof(CTL_INFO, rgCTLEntry), 0 },
          { ASN_CONTEXT | ASN_CONSTRUCTOR | 0, offsetof(CTL_INFO, cExtension),
-           CRYPT_AsnDecodeCertExtensions, sizeof(CERT_EXTENSIONS), TRUE, TRUE,
-           offsetof(CTL_INFO, rgExtension), 0 },
+           CRYPT_AsnDecodeCTLExtensions, FINALMEMBERSIZE(CTL_INFO, cExtension),
+           TRUE, TRUE, offsetof(CTL_INFO, rgExtension), 0 },
         };
 
         TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
