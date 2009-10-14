@@ -3804,14 +3804,39 @@ static BOOL CRYPT_AsnDecodeSubtreeConstraints(const BYTE *pbEncoded,
     struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
      CRYPT_AsnDecodeCopyBytes, sizeof(CERT_NAME_BLOB), TRUE,
      offsetof(CERT_NAME_BLOB, pbData) };
-    struct GenericArray *entries = pvStructInfo;
+    DWORD bytesNeeded;
 
     TRACE("%p, %d, %08x, %p, %d, %p\n", pbEncoded, cbEncoded, dwFlags,
      pvStructInfo, *pcbStructInfo, pcbDecoded);
 
-    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
-     entries ? entries->rgItems : NULL);
+    ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+     NULL, NULL, &bytesNeeded, pcbDecoded);
+    if (ret)
+    {
+        /* The size expected by the caller includes the combination of
+         * CERT_BASIC_CONSTRAINTS_INFO's cSubtreesConstraint and
+         * rgSubtreesConstraint, in addition to the size of all the decoded
+         * items.  CRYPT_AsnDecodeArrayNoAlloc only returns the size of the
+         * decoded items, so add the size of cSubtreesConstraint and
+         * rgSubtreesConstraint.
+         */
+        bytesNeeded += FINALMEMBERSIZE(CERT_BASIC_CONSTRAINTS_INFO,
+         cSubtreesConstraint);
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, NULL, pvStructInfo,
+         pcbStructInfo, bytesNeeded)))
+        {
+            CERT_BASIC_CONSTRAINTS_INFO *constraint;
+
+            constraint = (CERT_BASIC_CONSTRAINTS_INFO *)
+             ((BYTE *)pvStructInfo -
+             offsetof(CERT_BASIC_CONSTRAINTS_INFO, cSubtreesConstraint));
+            ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded,
+             cbEncoded, &constraint->cSubtreesConstraint,
+             constraint->rgSubtreesConstraint, &bytesNeeded, pcbDecoded);
+        }
+    }
     TRACE("Returning %d (%08x)\n", ret, GetLastError());
     return ret;
 }
@@ -3833,7 +3858,8 @@ static BOOL WINAPI CRYPT_AsnDecodeBasicConstraints(DWORD dwCertEncodingType,
            sizeof(struct PATH_LEN_CONSTRAINT), TRUE, FALSE, 0, 0 },
          { ASN_SEQUENCEOF, offsetof(CERT_BASIC_CONSTRAINTS_INFO,
            cSubtreesConstraint), CRYPT_AsnDecodeSubtreeConstraints,
-           sizeof(struct GenericArray), TRUE, TRUE,
+           FINALMEMBERSIZE(CERT_BASIC_CONSTRAINTS_INFO, cSubtreesConstraint),
+           TRUE, TRUE,
            offsetof(CERT_BASIC_CONSTRAINTS_INFO, rgSubtreesConstraint), 0 },
         };
 
