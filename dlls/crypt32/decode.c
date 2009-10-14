@@ -2663,21 +2663,45 @@ static BOOL CRYPT_AsnDecodeIA5String(const BYTE *pbEncoded,
     return ret;
 }
 
-static BOOL CRYPT_AsnDecodeIntArray(const BYTE *pbEncoded,
+static BOOL CRYPT_AsnDecodeNoticeNumbers(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded)
 {
     struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
      CRYPT_AsnDecodeIntInternal, sizeof(int), FALSE, 0 };
-    struct GenericArray *array = pvStructInfo;
+    DWORD bytesNeeded;
     BOOL ret;
 
     TRACE("(%p, %d, %08x, %p, %d)\n", pbEncoded, cbEncoded, dwFlags,
      pvStructInfo, pvStructInfo ? *pcbDecoded : 0);
 
-    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
-     array ? array->rgItems : NULL);
+    ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+     NULL, NULL, &bytesNeeded, pcbDecoded);
+    if (ret)
+    {
+        /* The size expected by the caller includes the combination of
+         * CERT_POLICY_QUALIFIER_NOTICE_REFERENCE's cNoticeNumbers and
+         * rgNoticeNumbers, in addition to the size of all the decoded items.
+         * CRYPT_AsnDecodeArrayNoAlloc only returns the size of the decoded
+         * items, so add the size of cNoticeNumbers and rgNoticeNumbers.
+         */
+        bytesNeeded += FINALMEMBERSIZE(CERT_POLICY_QUALIFIER_NOTICE_REFERENCE,
+         cNoticeNumbers);
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, NULL, pvStructInfo,
+         pcbStructInfo, bytesNeeded)))
+        {
+            CERT_POLICY_QUALIFIER_NOTICE_REFERENCE *ref;
+
+            ref = (CERT_POLICY_QUALIFIER_NOTICE_REFERENCE *)
+             ((BYTE *)pvStructInfo -
+             offsetof(CERT_POLICY_QUALIFIER_NOTICE_REFERENCE, cNoticeNumbers));
+            ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded,
+             cbEncoded, &ref->cNoticeNumbers, ref->rgNoticeNumbers,
+             &bytesNeeded, pcbDecoded);
+        }
+    }
     TRACE("returning %d\n", ret);
     return ret;
 }
@@ -2692,7 +2716,8 @@ static BOOL CRYPT_AsnDecodeNoticeReference(const BYTE *pbEncoded,
        pszOrganization), CRYPT_AsnDecodeIA5String, sizeof(LPSTR), FALSE, TRUE,
        offsetof(CERT_POLICY_QUALIFIER_NOTICE_REFERENCE, pszOrganization), 0 },
      { ASN_SEQUENCEOF, offsetof(CERT_POLICY_QUALIFIER_NOTICE_REFERENCE,
-       cNoticeNumbers), CRYPT_AsnDecodeIntArray, sizeof(struct GenericArray),
+       cNoticeNumbers), CRYPT_AsnDecodeNoticeNumbers,
+       FINALMEMBERSIZE(CERT_POLICY_QUALIFIER_NOTICE_REFERENCE, cNoticeNumbers),
        FALSE, TRUE, offsetof(CERT_POLICY_QUALIFIER_NOTICE_REFERENCE,
        rgNoticeNumbers), 0 },
     };
