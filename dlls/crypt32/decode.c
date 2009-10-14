@@ -1248,6 +1248,49 @@ static BOOL WINAPI CRYPT_AsnDecodeCert(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL CRYPT_AsnDecodeCRLEntryExtensions(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    BOOL ret = TRUE;
+    struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
+     CRYPT_AsnDecodeExtension, sizeof(CERT_EXTENSION), TRUE,
+     offsetof(CERT_EXTENSION, pszObjId) };
+    DWORD itemSize;
+
+    TRACE("%p, %d, %08x, %p, %d, %p\n", pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, *pcbStructInfo, pcbDecoded);
+
+    ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+     NULL, NULL, &itemSize, pcbDecoded);
+    if (ret)
+    {
+        DWORD bytesNeeded;
+
+        /* The size expected by the caller includes the combination of
+         * CRL_ENTRY's cExtension and rgExtension, in addition to the size of
+         * all the decoded items.  CRYPT_AsnDecodeArrayNoAlloc only returns
+         * the size of the decoded items, so add the size of cExtension and
+         * rgExtension.
+         */
+        bytesNeeded = FINALMEMBERSIZE(CRL_ENTRY, cExtension) + itemSize;
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, NULL, pvStructInfo,
+         pcbStructInfo, bytesNeeded)))
+        {
+            CRL_ENTRY *entry;
+
+            entry = (CRL_ENTRY *)((BYTE *)pvStructInfo -
+             offsetof(CRL_ENTRY, cExtension));
+            ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded,
+             cbEncoded, &entry->cExtension, entry->rgExtension, &itemSize,
+             pcbDecoded);
+        }
+    }
+    return ret;
+}
+
 static BOOL CRYPT_AsnDecodeCRLEntry(const BYTE *pbEncoded, DWORD cbEncoded,
  DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo, DWORD *pcbDecoded)
 {
@@ -1259,7 +1302,8 @@ static BOOL CRYPT_AsnDecodeCRLEntry(const BYTE *pbEncoded, DWORD cbEncoded,
      { 0, offsetof(CRL_ENTRY, RevocationDate),
        CRYPT_AsnDecodeChoiceOfTimeInternal, sizeof(FILETIME), FALSE, FALSE, 0 },
      { ASN_SEQUENCEOF, offsetof(CRL_ENTRY, cExtension),
-       CRYPT_AsnDecodeExtensionsInternal, sizeof(CERT_EXTENSIONS), TRUE, TRUE,
+       CRYPT_AsnDecodeCRLEntryExtensions,
+       FINALMEMBERSIZE(CRL_ENTRY, cExtension), TRUE, TRUE,
        offsetof(CRL_ENTRY, rgExtension), 0 },
     };
     PCRL_ENTRY entry = pvStructInfo;
