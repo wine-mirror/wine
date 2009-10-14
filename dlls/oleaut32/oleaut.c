@@ -298,15 +298,12 @@ int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* str, unsigned int len)
       DWORD *ptr = HeapReAlloc(GetProcessHeap(),0,((DWORD*)*old)-1,newbytelen+sizeof(WCHAR)+sizeof(DWORD));
       *old = (BSTR)(ptr+1);
       *ptr = newbytelen;
-      if (str) {
-        memmove(*old, str, newbytelen);
-        (*old)[len] = 0;
-      } else {
-	/* Subtle hidden feature: The old string data is still there
-	 * when 'in' is NULL!
-	 * Some Microsoft program needs it.
-	 */
-      }
+      /* Subtle hidden feature: The old string data is still there
+       * when 'in' is NULL!
+       * Some Microsoft program needs it.
+       */
+      if (str) memmove(*old, str, newbytelen);
+      (*old)[len] = 0;
     } else {
       /*
        * Allocate the new string

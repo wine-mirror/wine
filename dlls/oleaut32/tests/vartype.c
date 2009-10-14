@@ -5422,7 +5422,7 @@ static void test_SysReAllocStringLen(void)
       if (str)
       {
         ok (str == oldstr, "Expected reuse of the old string memory\n");
-        todo_wine ok (str[STRING_SIZE] == 0,
+        ok (str[STRING_SIZE] == 0,
             "Expected null terminator, got 0x%04X\n", str[STRING_SIZE]);
         SysFreeString(str);
       }
