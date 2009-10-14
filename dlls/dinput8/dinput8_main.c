@@ -51,7 +51,7 @@ static void UnlockModule(void)
  *	DirectInput8Create (DINPUT8.@)
  */
 HRESULT WINAPI DECLSPEC_HOTPATCH DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riid, LPVOID *ppDI, LPUNKNOWN punkOuter) {
-    HRESULT hr;
+    HRESULT hr, hrCo;
 
     TRACE("hInst (%p), dwVersion: %d, riid (%s), punkOuter (%p))\n", hinst, dwVersion, debugstr_guid(riid), punkOuter);
 
@@ -62,7 +62,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH DirectInput8Create(HINSTANCE hinst, DWORD dwVer
     if( !(IsEqualGUID(&IID_IDirectInput8A, riid) || IsEqualGUID(&IID_IDirectInput8W, riid) || IsEqualGUID(&IID_IUnknown, riid)) )
         return DIERR_INVALIDPARAM;
 
-    CoInitialize(NULL);
+    hrCo = CoInitialize(NULL);
     
     hr = CoCreateInstance( &CLSID_DirectInput8, punkOuter, CLSCTX_INPROC_SERVER, riid, ppDI);
     if(FAILED(hr)) {
@@ -70,7 +70,9 @@ HRESULT WINAPI DECLSPEC_HOTPATCH DirectInput8Create(HINSTANCE hinst, DWORD dwVer
         return DIERR_INVALIDPARAM;
     }
 
-    CoUninitialize();
+    /*  ensure balance of calls */
+    if(hrCo == S_OK || hrCo == S_FALSE)
+        CoUninitialize();
 
     /* When aggregation is used (punkOuter!=NULL) the application needs to manually call Initialize. */
     if(punkOuter == NULL && IsEqualGUID(&IID_IDirectInput8A, riid)) {
