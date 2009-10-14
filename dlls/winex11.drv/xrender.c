@@ -506,13 +506,19 @@ static Picture get_xrender_picture(X11DRV_PDEVICE *physDev)
     if (!info->pict && info->format)
     {
         XRenderPictureAttributes pa;
+        RGNDATA *clip = X11DRV_GetRegionData( physDev->region, 0 );
 
         wine_tsx11_lock();
         pa.subwindow_mode = IncludeInferiors;
         info->pict = pXRenderCreatePicture(gdi_display, physDev->drawable, info->format->pict_format,
                                            CPSubwindowMode, &pa);
+        if (info->pict && clip)
+            pXRenderSetPictureClipRectangles( gdi_display, info->pict,
+                                              physDev->dc_rect.left, physDev->dc_rect.top,
+                                              (XRectangle *)clip->Buffer, clip->rdh.nCount );
         wine_tsx11_unlock();
         TRACE("Allocing pict=%lx dc=%p drawable=%08lx\n", info->pict, physDev->hdc, physDev->drawable);
+        HeapFree( GetProcessHeap(), 0, clip );
     }
 
     return info->pict;
@@ -869,6 +875,21 @@ BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
     info->cache_index = GetCacheEntry(physDev, &lfsz);
     LeaveCriticalSection(&xrender_cs);
     return 0;
+}
+
+/***********************************************************************
+*   X11DRV_XRender_SetDeviceClipping
+*/
+void X11DRV_XRender_SetDeviceClipping(X11DRV_PDEVICE *physDev, const RGNDATA *data)
+{
+    if (physDev->xrender->pict)
+    {
+        wine_tsx11_lock();
+        pXRenderSetPictureClipRectangles( gdi_display, physDev->xrender->pict,
+                                          physDev->dc_rect.left, physDev->dc_rect.top,
+                                          (XRectangle *)data->Buffer, data->rdh.nCount );
+        wine_tsx11_unlock();
+    }
 }
 
 /***********************************************************************
@@ -1465,7 +1486,6 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 				const RECT *lprect, LPCWSTR wstr, UINT count,
 				const INT *lpDx )
 {
-    RGNDATA *data;
     XGCValues xgcval;
     gsCacheEntry *entry;
     gsCacheEntryFormat *formatEntry;
@@ -1585,16 +1605,6 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         POINT desired, current;
         int render_op = PictOpOver;
         Picture pict = get_xrender_picture(physDev);
-
-        if ((data = X11DRV_GetRegionData( physDev->region, 0 )))
-        {
-            wine_tsx11_lock();
-            pXRenderSetPictureClipRectangles( gdi_display, pict,
-                            physDev->dc_rect.left, physDev->dc_rect.top,
-                            (XRectangle *)data->Buffer, data->rdh.nCount );
-            wine_tsx11_unlock();
-            HeapFree( GetProcessHeap(), 0, data );
-        }
 
         /* There's a bug in XRenderCompositeText that ignores the xDst and yDst parameters.
            So we pass zeros to the function and move to our starting position using the first
@@ -2184,6 +2194,12 @@ void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE *physDev)
 {
   assert(0);
   return;
+}
+
+void X11DRV_XRender_SetDeviceClipping(X11DRV_PDEVICE *physDev)
+{
+    assert(0);
+    return;
 }
 
 BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
