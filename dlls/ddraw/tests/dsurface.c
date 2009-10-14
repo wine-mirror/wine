@@ -325,6 +325,37 @@ static void SrcColorKey32BlitTest(void)
     ok(ddsd.ddckCKSrcBlt.dwColorSpaceLowValue == 0x00FF00 && ddsd.ddckCKSrcBlt.dwColorSpaceHighValue == 0x00FF00,
        "GetSurfaceDesc does not return the colorkey set with SetColorKey\n");
 
+    /* Test SetColorKey with dwColorSpaceHighValue < dwColorSpaceLowValue */
+    DDColorKey.dwColorSpaceLowValue = 0x0000FF;
+    DDColorKey.dwColorSpaceHighValue = 0x000000;
+    IDirectDrawSurface_SetColorKey(lpSrc, DDCKEY_SRCBLT, &DDColorKey);
+
+    DDColorKey.dwColorSpaceLowValue = 0;
+    DDColorKey.dwColorSpaceHighValue = 0;
+    IDirectDrawSurface_GetColorKey(lpSrc, DDCKEY_SRCBLT, &DDColorKey);
+    ok(DDColorKey.dwColorSpaceLowValue == 0x0000FF && DDColorKey.dwColorSpaceHighValue == 0x0000FF,
+       "GetColorKey does not return the colorkey set with SetColorKey (%x %x)\n", DDColorKey.dwColorSpaceLowValue, DDColorKey.dwColorSpaceHighValue);
+
+    DDColorKey.dwColorSpaceLowValue = 0x0000FF;
+    DDColorKey.dwColorSpaceHighValue = 0x000001;
+    IDirectDrawSurface_SetColorKey(lpSrc, DDCKEY_SRCBLT, &DDColorKey);
+
+    DDColorKey.dwColorSpaceLowValue = 0;
+    DDColorKey.dwColorSpaceHighValue = 0;
+    IDirectDrawSurface_GetColorKey(lpSrc, DDCKEY_SRCBLT, &DDColorKey);
+    ok(DDColorKey.dwColorSpaceLowValue == 0x0000FF && DDColorKey.dwColorSpaceHighValue == 0x0000FF,
+       "GetColorKey does not return the colorkey set with SetColorKey (%x %x)\n", DDColorKey.dwColorSpaceLowValue, DDColorKey.dwColorSpaceHighValue);
+
+    DDColorKey.dwColorSpaceLowValue = 0x0000FF;
+    DDColorKey.dwColorSpaceHighValue = 0x0000FE;
+    IDirectDrawSurface_SetColorKey(lpSrc, DDCKEY_SRCBLT, &DDColorKey);
+
+    DDColorKey.dwColorSpaceLowValue = 0;
+    DDColorKey.dwColorSpaceHighValue = 0;
+    IDirectDrawSurface_GetColorKey(lpSrc, DDCKEY_SRCBLT, &DDColorKey);
+    ok(DDColorKey.dwColorSpaceLowValue == 0x0000FF && DDColorKey.dwColorSpaceHighValue == 0x0000FF,
+       "GetColorKey does not return the colorkey set with SetColorKey (%x %x)\n", DDColorKey.dwColorSpaceLowValue, DDColorKey.dwColorSpaceHighValue);
+
     IDirectDrawSurface_Release(lpSrc);
     IDirectDrawSurface_Release(lpDst);
 
