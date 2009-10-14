@@ -58,12 +58,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(cryptasn);
 WINE_DECLARE_DEBUG_CHANNEL(crypt);
 
-struct GenericArray
-{
-    DWORD cItems;
-    BYTE *rgItems;
-};
-
 typedef BOOL (WINAPI *CryptDecodeObjectFunc)(DWORD, LPCSTR, const BYTE *,
  DWORD, DWORD, void *, DWORD *);
 typedef BOOL (WINAPI *CryptDecodeObjectExFunc)(DWORD, LPCSTR, const BYTE *,
@@ -604,173 +598,6 @@ struct AsnArrayItemSize
     DWORD encodedLen;
     DWORD size;
 };
-
-/* Decodes an array of like types into a struct GenericArray.
- * The layout and decoding of the array are described by a struct
- * AsnArrayDescriptor.
- */
-static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
- const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
- PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo,
- DWORD *pcbDecoded, void *startingPointer)
-{
-    BOOL ret = TRUE;
-
-    TRACE("%p, %p, %d, %08x, %p, %p, %d, %p\n", arrayDesc, pbEncoded,
-     cbEncoded, dwFlags, pDecodePara, pvStructInfo, *pcbStructInfo,
-     startingPointer);
-
-    if (!cbEncoded)
-    {
-        SetLastError(CRYPT_E_ASN1_EOD);
-        ret = FALSE;
-    }
-    else if (!arrayDesc->tag || pbEncoded[0] == arrayDesc->tag)
-    {
-        DWORD dataLen;
-
-        if ((ret = CRYPT_GetLengthIndefinite(pbEncoded, cbEncoded, &dataLen)))
-        {
-            DWORD bytesNeeded, cItems = 0, decoded;
-            BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
-            /* There can be arbitrarily many items, but there is often only one.
-             */
-            struct AsnArrayItemSize itemSize = { 0 }, *itemSizes = &itemSize;
-
-            decoded = 1 + lenBytes;
-            bytesNeeded = sizeof(struct GenericArray);
-            if (dataLen)
-            {
-                const BYTE *ptr;
-                BOOL doneDecoding = FALSE;
-
-                for (ptr = pbEncoded + 1 + lenBytes; ret && !doneDecoding; )
-                {
-                    if (dataLen == CMSG_INDEFINITE_LENGTH)
-                    {
-                        if (ptr[0] == 0)
-                        {
-                            doneDecoding = TRUE;
-                            if (ptr[1] != 0)
-                            {
-                                SetLastError(CRYPT_E_ASN1_CORRUPT);
-                                ret = FALSE;
-                            }
-                            else
-                                decoded += 2;
-                        }
-                    }
-                    else if (ptr - pbEncoded - 1 - lenBytes >= dataLen)
-                        doneDecoding = TRUE;
-                    if (!doneDecoding)
-                    {
-                        DWORD itemEncoded, itemDataLen, itemDecoded, size = 0;
-
-                        /* Each item decoded may not tolerate extraneous bytes,
-                         * so get the length of the next element if known.
-                         */
-                        if ((ret = CRYPT_GetLengthIndefinite(ptr,
-                         cbEncoded - (ptr - pbEncoded), &itemDataLen)))
-                        {
-                            if (itemDataLen == CMSG_INDEFINITE_LENGTH)
-                                itemEncoded = cbEncoded - (ptr - pbEncoded);
-                            else
-                                itemEncoded = 1 + GET_LEN_BYTES(ptr[1]) +
-                                 itemDataLen;
-                        }
-                        if (ret)
-                            ret = arrayDesc->decodeFunc(ptr, itemEncoded,
-                             dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &size,
-                             &itemDecoded);
-                        if (ret)
-                        {
-                            cItems++;
-                            if (itemSizes != &itemSize)
-                                itemSizes = CryptMemRealloc(itemSizes,
-                                 cItems * sizeof(struct AsnArrayItemSize));
-                            else if (cItems > 1)
-                            {
-                                itemSizes =
-                                 CryptMemAlloc(
-                                 cItems * sizeof(struct AsnArrayItemSize));
-                                if (itemSizes)
-                                    memcpy(itemSizes, &itemSize,
-                                     sizeof(itemSize));
-                            }
-                            if (itemSizes)
-                            {
-                                decoded += itemDecoded;
-                                itemSizes[cItems - 1].encodedLen = itemEncoded;
-                                itemSizes[cItems - 1].size = size;
-                                bytesNeeded += size;
-                                ptr += itemEncoded;
-                            }
-                            else
-                                ret = FALSE;
-                        }
-                    }
-                }
-            }
-            if (ret)
-            {
-                if (pcbDecoded)
-                    *pcbDecoded = decoded;
-                if (!pvStructInfo)
-                    *pcbStructInfo = bytesNeeded;
-                else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags,
-                 pDecodePara, pvStructInfo, pcbStructInfo, bytesNeeded)))
-                {
-                    DWORD i;
-                    BYTE *nextData;
-                    const BYTE *ptr;
-                    struct GenericArray *array;
-
-                    if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
-                        pvStructInfo = *(BYTE **)pvStructInfo;
-                    array = pvStructInfo;
-                    array->cItems = cItems;
-                    if (startingPointer)
-                        array->rgItems = startingPointer;
-                    else
-                        array->rgItems = (BYTE *)array +
-                         sizeof(struct GenericArray);
-                    nextData = array->rgItems +
-                     array->cItems * arrayDesc->itemSize;
-                    for (i = 0, ptr = pbEncoded + 1 + lenBytes; ret &&
-                     i < cItems && ptr - pbEncoded - 1 - lenBytes <
-                     dataLen; i++)
-                    {
-                        DWORD itemDecoded;
-
-                        if (arrayDesc->hasPointer)
-                            *(BYTE **)(array->rgItems + i * arrayDesc->itemSize
-                             + arrayDesc->pointerOffset) = nextData;
-                        ret = arrayDesc->decodeFunc(ptr,
-                         itemSizes[i].encodedLen,
-                         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
-                         array->rgItems + i * arrayDesc->itemSize,
-                         &itemSizes[i].size, &itemDecoded);
-                        if (ret)
-                        {
-                            nextData += itemSizes[i].size - arrayDesc->itemSize;
-                            ptr += itemDecoded;
-                        }
-                    }
-                    if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
-                        CRYPT_FreeSpace(pDecodePara, pvStructInfo);
-                }
-            }
-            if (itemSizes != &itemSize)
-                CryptMemFree(itemSizes);
-        }
-    }
-    else
-    {
-        SetLastError(CRYPT_E_ASN1_BADTAG);
-        ret = FALSE;
-    }
-    return ret;
-}
 
 /* Decodes an array of like types into a structure described by a struct
  * AsnArrayDescriptor.  Doesn't allocate memory for the decoded items,
@@ -5128,9 +4955,29 @@ static BOOL WINAPI CRYPT_AsnDecodeEnhancedKeyUsage(DWORD dwCertEncodingType,
          offsetof(CERT_ENHKEY_USAGE, rgpszUsageIdentifier),
          sizeof(CERT_ENHKEY_USAGE),
          CRYPT_AsnDecodeOidInternal, sizeof(LPSTR), TRUE, 0 };
+        DWORD bytesNeeded;
 
-        ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
+        ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &bytesNeeded, NULL);
+        if (ret)
+        {
+            if (!pvStructInfo)
+                *pcbStructInfo = bytesNeeded;
+            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
+             pvStructInfo, pcbStructInfo, bytesNeeded)))
+            {
+                CERT_ENHKEY_USAGE *usage;
+
+                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+                    pvStructInfo = *(BYTE **)pvStructInfo;
+                usage = pvStructInfo;
+                usage->rgpszUsageIdentifier = (LPSTR *)
+                 ((BYTE *)pvStructInfo + sizeof(CERT_ENHKEY_USAGE));
+                ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc,
+                 pbEncoded, cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
+                 &usage->cUsageIdentifier, pcbStructInfo, NULL);
+            }
+        }
     }
     __EXCEPT_PAGE_FAULT
     {
