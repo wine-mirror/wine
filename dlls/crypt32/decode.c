@@ -2500,22 +2500,6 @@ static BOOL CRYPT_AsnDecodeSMIMECapability(const BYTE *pbEncoded,
     return ret;
 }
 
-static BOOL CRYPT_AsnDecodeSMIMECapabilitiesInternal(const BYTE *pbEncoded,
- DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
- DWORD *pcbDecoded)
-{
-    struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
-     CRYPT_AsnDecodeSMIMECapability, sizeof(CRYPT_SMIME_CAPABILITY), TRUE,
-     offsetof(CRYPT_SMIME_CAPABILITY, pszObjId) };
-    PCRYPT_SMIME_CAPABILITIES capabilities = pvStructInfo;
-    BOOL ret;
-
-    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
-     capabilities ? capabilities->rgCapability : NULL);
-    return ret;
-}
-
 static BOOL WINAPI CRYPT_AsnDecodeSMIMECapabilities(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
@@ -2528,11 +2512,14 @@ static BOOL WINAPI CRYPT_AsnDecodeSMIMECapabilities(DWORD dwCertEncodingType,
     __TRY
     {
         DWORD bytesNeeded;
+        struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
+         CRYPT_AsnDecodeSMIMECapability, sizeof(CRYPT_SMIME_CAPABILITY), TRUE,
+         offsetof(CRYPT_SMIME_CAPABILITY, pszObjId) };
 
-        if ((ret = CRYPT_AsnDecodeSMIMECapabilitiesInternal(pbEncoded,
-         cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &bytesNeeded,
-         NULL)))
+        if ((ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+         NULL, NULL, &bytesNeeded, NULL)))
         {
+            bytesNeeded += sizeof(CRYPT_SMIME_CAPABILITIES);
             if (!pvStructInfo)
                 *pcbStructInfo = bytesNeeded;
             else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
@@ -2546,9 +2533,9 @@ static BOOL WINAPI CRYPT_AsnDecodeSMIMECapabilities(DWORD dwCertEncodingType,
                 capabilities->rgCapability =
                  (PCRYPT_SMIME_CAPABILITY)((BYTE *)pvStructInfo +
                  sizeof(CRYPT_SMIME_CAPABILITIES));
-                ret = CRYPT_AsnDecodeSMIMECapabilitiesInternal(pbEncoded,
-                 cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo,
-                 &bytesNeeded, NULL);
+                ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc,
+                 pbEncoded, cbEncoded, &capabilities->cCapability,
+                 capabilities->rgCapability, pcbStructInfo, NULL);
             }
         }
     }
