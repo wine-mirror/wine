@@ -150,6 +150,7 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where) {
   while (TRUE) {
     switch (*s) {
       case ' ': /* Skip leading spaces */
+      case '\t': /* Treat tabs as spaces */
 	s++;
 	break;
       case '"':
@@ -175,7 +176,7 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where) {
       default:
         /* Only return where if it is for the right parameter */
         if (where != NULL && i==n) *where = s;
-	while ((*s != '\0') && (*s != ' ') && (*s != ',') && (*s != '=')) {
+	while ((*s != '\0') && (*s != ' ') && (*s != ',') && (*s != '=') && (*s != '\t')) {
 	  *p++ = *s++;
 	}
         if (i == n && (p!=param)) {
