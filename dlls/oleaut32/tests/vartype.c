@@ -5397,6 +5397,37 @@ static void test_SysReAllocStringLen(void)
 
     SysFreeString(str);
   }
+
+  /* Windows always returns null terminated strings */
+  str = SysAllocStringLen(szTest, 4);
+  ok (str != NULL, "Expected non-NULL\n");
+  if (str)
+  {
+    const int CHUNK_SIZE = 64;
+    const int STRING_SIZE = 24;
+    int changed;
+    changed = SysReAllocStringLen(&str, NULL, CHUNK_SIZE);
+    ok (changed == 1, "Expected 1, got %d\n", changed);
+    ok (str != NULL, "Expected non-NULL\n");
+    if (str)
+    {
+      BSTR oldstr = str;
+
+      /* Filling string */
+      memset (str, 0xAB, CHUNK_SIZE * sizeof (OLECHAR));
+      /* Checking null terminator */
+      changed = SysReAllocStringLen(&str, NULL, STRING_SIZE);
+      ok (changed == 1, "Expected 1, got %d\n", changed);
+      ok (str != NULL, "Expected non-NULL\n");
+      if (str)
+      {
+        ok (str == oldstr, "Expected reuse of the old string memory\n");
+        todo_wine ok (str[STRING_SIZE] == 0,
+            "Expected null terminator, got 0x%04X\n", str[STRING_SIZE]);
+        SysFreeString(str);
+      }
+    }
+  }
 }
 
 static void test_BstrCopy(void)
