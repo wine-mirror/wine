@@ -4931,15 +4931,10 @@ static BOOL CRYPT_AsnDecodeDistPointName(const BYTE *pbEncoded,
 
             if (dataLen)
             {
-                ret = CRYPT_AsnDecodeArray(&arrayDesc,
+                ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc,
                  pbEncoded + 1 + lenBytes, cbEncoded - 1 - lenBytes,
-                 0, NULL, NULL, &nameLen, NULL, NULL);
-                /* The CERT_ALT_NAME_INFO's size is included by CRYPT_AsnDecodeArray
-                 * as the sizeof(struct GenericArray), so don't include it in the
-                 * total bytes needed.
-                 */
-                bytesNeeded = sizeof(CRL_DIST_POINT_NAME) + nameLen -
-                 sizeof(CERT_ALT_NAME_INFO);
+                 NULL, NULL, &nameLen, NULL);
+                bytesNeeded = sizeof(CRL_DIST_POINT_NAME) + nameLen;
             }
             else
                 bytesNeeded = sizeof(CRL_DIST_POINT_NAME);
@@ -4961,10 +4956,10 @@ static BOOL CRYPT_AsnDecodeDistPointName(const BYTE *pbEncoded,
                 if (dataLen)
                 {
                     name->dwDistPointNameChoice = CRL_DIST_POINT_FULL_NAME;
-                    ret = CRYPT_AsnDecodeArray(&arrayDesc,
+                    ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc,
                      pbEncoded + 1 + lenBytes, cbEncoded - 1 - lenBytes,
-                     0, NULL, &name->u.FullName, &nameLen, NULL,
-                     name->u.FullName.rgAltEntry);
+                     &name->u.FullName.cAltEntry, name->u.FullName.rgAltEntry,
+                     &nameLen, NULL);
                 }
                 else
                     name->dwDistPointNameChoice = CRL_DIST_POINT_NO_NAME;
