@@ -3895,9 +3895,29 @@ static BOOL WINAPI CRYPT_AsnDecodeCertPolicies(DWORD dwCertEncodingType,
          sizeof(CERT_POLICIES_INFO),
          CRYPT_AsnDecodeCertPolicy, sizeof(CERT_POLICY_INFO), TRUE,
          offsetof(CERT_POLICY_INFO, pszPolicyIdentifier) };
+        DWORD bytesNeeded;
 
-        ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
+        ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &bytesNeeded, NULL);
+        if (ret)
+        {
+            if (!pvStructInfo)
+                *pcbStructInfo = bytesNeeded;
+            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
+             pvStructInfo, pcbStructInfo, bytesNeeded)))
+            {
+                CERT_POLICIES_INFO *info;
+
+                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+                    pvStructInfo = *(BYTE **)pvStructInfo;
+                info = pvStructInfo;
+                info->rgPolicyInfo = (PCERT_POLICY_INFO)
+                 ((BYTE *)pvStructInfo + sizeof(CERT_POLICIES_INFO));
+                ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc,
+                 pbEncoded, cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
+                 &info->cPolicyInfo, pcbStructInfo, NULL);
+            }
+        }
     }
     __EXCEPT_PAGE_FAULT
     {
