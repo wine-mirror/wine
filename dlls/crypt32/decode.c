@@ -5198,7 +5198,7 @@ static BOOL CRYPT_AsnDecodePermittedSubtree(const BYTE *pbEncoded,
     return ret;
 }
 
-static BOOL CRYPT_AsnDecodeSubtreeArray(const BYTE *pbEncoded,
+static BOOL CRYPT_AsnDecodeExcludedSubtree(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded)
 {
@@ -5206,17 +5206,32 @@ static BOOL CRYPT_AsnDecodeSubtreeArray(const BYTE *pbEncoded,
     struct AsnArrayDescriptor arrayDesc = { 0,
      CRYPT_AsnDecodeSubtree, sizeof(CERT_GENERAL_SUBTREE), TRUE,
      offsetof(CERT_GENERAL_SUBTREE, Base.u.pwszURL) };
-    struct GenericArray *array = pvStructInfo;
+    DWORD bytesNeeded;
 
     TRACE("%p, %d, %08x, %p, %d, %p\n", pbEncoded, cbEncoded, dwFlags,
      pvStructInfo, *pcbStructInfo, pcbDecoded);
 
-    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
-     array ? array->rgItems : NULL);
+    if ((ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+     NULL, NULL, &bytesNeeded, pcbDecoded)))
+    {
+        bytesNeeded += FINALMEMBERSIZE(CERT_NAME_CONSTRAINTS_INFO,
+         cExcludedSubtree);
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if ((ret = CRYPT_DecodeEnsureSpace(0, NULL, pvStructInfo,
+         pcbStructInfo, bytesNeeded)))
+        {
+            CERT_NAME_CONSTRAINTS_INFO *info = (CERT_NAME_CONSTRAINTS_INFO *)
+             ((BYTE *)pvStructInfo -
+             offsetof(CERT_NAME_CONSTRAINTS_INFO, cExcludedSubtree));
+
+            ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+             &info->cExcludedSubtree, info->rgExcludedSubtree, &bytesNeeded,
+             pcbDecoded);
+        }
+    }
     return ret;
 }
-
 
 static BOOL WINAPI CRYPT_AsnDecodeNameConstraints(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
@@ -5238,7 +5253,9 @@ static BOOL WINAPI CRYPT_AsnDecodeNameConstraints(DWORD dwCertEncodingType,
            offsetof(CERT_NAME_CONSTRAINTS_INFO, rgPermittedSubtree), 0 },
          { ASN_CONTEXT | ASN_CONSTRUCTOR | 1,
            offsetof(CERT_NAME_CONSTRAINTS_INFO, cExcludedSubtree),
-           CRYPT_AsnDecodeSubtreeArray, sizeof(struct GenericArray), TRUE, TRUE,
+           CRYPT_AsnDecodeExcludedSubtree,
+           FINALMEMBERSIZE(CERT_NAME_CONSTRAINTS_INFO, cExcludedSubtree),
+           TRUE, TRUE,
            offsetof(CERT_NAME_CONSTRAINTS_INFO, rgExcludedSubtree), 0 },
         };
 
