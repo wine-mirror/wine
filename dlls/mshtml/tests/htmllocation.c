@@ -60,7 +60,7 @@ static const struct location_test http_test = {
             "http:", FALSE,
             "www.winehq.org:80", FALSE,
             "www.winehq.org", FALSE,
-            "80", FALSE,
+            "80", TRUE,
             "", FALSE,
             "?search", FALSE,
             "#hash", FALSE
@@ -74,7 +74,7 @@ static const struct location_test http_file_test = {
             "http:", FALSE,
             "www.winehq.org:80", FALSE,
             "www.winehq.org", FALSE,
-            "80", FALSE,
+            "80", TRUE,
             "file", FALSE,
             "?search", FALSE,
             "#hash", FALSE
@@ -88,7 +88,7 @@ static const struct location_test ftp_test = {
             "ftp:", FALSE,
             "ftp.winehq.org:21", FALSE,
             "ftp.winehq.org", FALSE,
-            "21", FALSE,
+            "21", TRUE,
             "", FALSE,
             NULL, FALSE,
             NULL, FALSE
@@ -102,7 +102,7 @@ static const struct location_test ftp_file_test = {
             "ftp:", FALSE,
             "ftp.winehq.org:21", FALSE,
             "ftp.winehq.org", FALSE,
-            "21", FALSE,
+            "21", TRUE,
             "file", FALSE,
             NULL, FALSE,
             NULL, FALSE
@@ -116,7 +116,7 @@ static const struct location_test file_test = {
             "file:", FALSE,
             NULL, FALSE,
             NULL, FALSE,
-            "", FALSE,
+            "", TRUE,
             "C:\\windows\\win.ini", TRUE,
             NULL, FALSE,
             NULL, FALSE
@@ -243,7 +243,7 @@ static void test_port(IHTMLLocation *loc, const struct location_test *test)
             test->name, E_POINTER, hres);
 
     hres = IHTMLLocation_get_port(loc, &str);
-    todo_wine ok(hres == S_OK, "%s: get_port failed: 0x%08x\n", test->name, hres);
+    ok(hres == S_OK, "%s: get_port failed: 0x%08x\n", test->name, hres);
     if(hres == S_OK){
         if(test->port_ok)
             ok(str_eq_wa(str, test->port),

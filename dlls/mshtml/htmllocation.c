@@ -245,12 +245,31 @@ static HRESULT WINAPI HTMLLocation_put_port(IHTMLLocation *iface, BSTR v)
 static HRESULT WINAPI HTMLLocation_get_port(IHTMLLocation *iface, BSTR *p)
 {
     HTMLLocation *This = HTMLLOCATION_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
+    URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
 
     if(!p)
         return E_POINTER;
 
-    return E_NOTIMPL;
+    hres = get_url_components(This, &url);
+    if(FAILED(hres))
+        return hres;
+
+    if(url.nPort) {
+        const WCHAR format[] = {'%','d',0};
+        WCHAR buf[6];
+        snprintfW(buf, 6, format, url.nPort);
+        *p = SysAllocString(buf);
+    }else {
+        const WCHAR empty[] = {0};
+        *p = SysAllocString(empty);
+    }
+
+    if(!*p)
+        return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLLocation_put_pathname(IHTMLLocation *iface, BSTR v)
