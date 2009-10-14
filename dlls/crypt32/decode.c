@@ -85,12 +85,6 @@ static BOOL CRYPT_AsnDecodePubKeyInfoInternal(const BYTE *pbEncoded,
  */
 static BOOL CRYPT_AsnDecodeExtension(const BYTE *pbEncoded, DWORD cbEncoded,
  DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo, DWORD *pcbDecoded);
-/* Like CRYPT_AsnDecodeExtensions, except assumes rgExtension is set ahead of
- * time, doesn't do memory allocation, and doesn't do exception handling.
- */
-static BOOL CRYPT_AsnDecodeExtensionsInternal(const BYTE *pbEncoded,
- DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
- DWORD *pcbDecoded);
 /* Assumes algo->Parameters.pbData is set ahead of time. */
 static BOOL CRYPT_AsnDecodeAlgorithmId(const BYTE *pbEncoded, DWORD cbEncoded,
  DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo, DWORD *pcbDecoded);
@@ -1673,51 +1667,47 @@ static BOOL CRYPT_AsnDecodeExtension(const BYTE *pbEncoded, DWORD cbEncoded,
     return ret;
 }
 
-static BOOL CRYPT_AsnDecodeExtensionsInternal(const BYTE *pbEncoded,
- DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
- DWORD *pcbDecoded)
-{
-    BOOL ret = TRUE;
-    struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
-     CRYPT_AsnDecodeExtension, sizeof(CERT_EXTENSION), TRUE,
-     offsetof(CERT_EXTENSION, pszObjId) };
-    PCERT_EXTENSIONS exts = pvStructInfo;
-
-    TRACE("%p, %d, %08x, %p, %d, %p\n", pbEncoded, cbEncoded, dwFlags,
-     pvStructInfo, *pcbStructInfo, pcbDecoded);
-
-    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
-     exts ? exts->rgExtension : NULL);
-    return ret;
-}
-
 static BOOL WINAPI CRYPT_AsnDecodeExtensions(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
 {
     BOOL ret = TRUE;
 
+    TRACE("%p, %d, %08x, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, pvStructInfo ? *pcbStructInfo : 0);
+
     __TRY
     {
-        ret = CRYPT_AsnDecodeExtensionsInternal(pbEncoded, cbEncoded,
-         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, pcbStructInfo, NULL);
-        if (ret && pvStructInfo)
+        struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
+         CRYPT_AsnDecodeExtension, sizeof(CERT_EXTENSION), TRUE,
+         offsetof(CERT_EXTENSION, pszObjId) };
+        DWORD itemSize;
+
+        ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+         NULL, NULL, &itemSize, NULL);
+        if (ret)
         {
-            ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara, pvStructInfo,
-             pcbStructInfo, *pcbStructInfo);
-            if (ret)
+            DWORD bytesNeeded;
+
+            /* CRYPT_AsnDecodeArrayNoAlloc only returns the size of the decoded
+             * items, so add the size of CERT_EXTENSIONS.
+             */
+            bytesNeeded = sizeof(CERT_EXTENSIONS) + itemSize;
+            if (!pvStructInfo)
+                *pcbStructInfo = bytesNeeded;
+            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
+             pvStructInfo, pcbStructInfo, bytesNeeded)))
             {
                 CERT_EXTENSIONS *exts;
 
                 if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
                     pvStructInfo = *(BYTE **)pvStructInfo;
-                exts = pvStructInfo;
+                exts = (CERT_EXTENSIONS *)pvStructInfo;
                 exts->rgExtension = (CERT_EXTENSION *)((BYTE *)exts +
                  sizeof(CERT_EXTENSIONS));
-                ret = CRYPT_AsnDecodeExtensionsInternal(pbEncoded, cbEncoded,
-                 dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo,
-                 pcbStructInfo, NULL);
+                ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded,
+                 cbEncoded, &exts->cExtension, exts->rgExtension, &itemSize,
+                 NULL);
             }
         }
     }
