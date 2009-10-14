@@ -144,6 +144,7 @@ struct xrender_info
 {
     int                cache_index;
     Picture            pict;
+    Picture            pict_src;
     const WineXRenderFormat *format;
 };
 
@@ -522,6 +523,27 @@ static Picture get_xrender_picture(X11DRV_PDEVICE *physDev)
     }
 
     return info->pict;
+}
+
+static Picture get_xrender_picture_source(X11DRV_PDEVICE *physDev)
+{
+    struct xrender_info *info = get_xrender_info(physDev);
+    if (!info) return 0;
+
+    if (!info->pict_src && info->format)
+    {
+        XRenderPictureAttributes pa;
+
+        wine_tsx11_lock();
+        pa.subwindow_mode = IncludeInferiors;
+        info->pict_src = pXRenderCreatePicture(gdi_display, physDev->drawable, info->format->pict_format,
+                                               CPSubwindowMode, &pa);
+        wine_tsx11_unlock();
+
+        TRACE("Allocing pict_src=%lx dc=%p drawable=%08lx\n", info->pict_src, physDev->hdc, physDev->drawable);
+    }
+
+    return info->pict_src;
 }
 
 static BOOL fontcmp(LFANDSIZE *p1, LFANDSIZE *p2)
@@ -943,18 +965,28 @@ BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, const DIBSECTIO
  */
 void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
 {
-    wine_tsx11_lock();
+    struct xrender_info *info = physDev->xrender;
 
-    if(physDev->xrender->pict)
+    if (info->pict || info->pict_src)
     {
-        TRACE("freeing pict = %lx dc = %p\n", physDev->xrender->pict, physDev->hdc);
-        XFlush(gdi_display);
-        pXRenderFreePicture(gdi_display, physDev->xrender->pict);
-        physDev->xrender->pict = 0;
+        wine_tsx11_lock();
+        XFlush( gdi_display );
+        if (info->pict)
+        {
+            TRACE("freeing pict = %lx dc = %p\n", info->pict, physDev->hdc);
+            pXRenderFreePicture(gdi_display, info->pict);
+            info->pict = 0;
+        }
+        if(info->pict_src)
+        {
+            TRACE("freeing pict = %lx dc = %p\n", info->pict_src, physDev->hdc);
+            pXRenderFreePicture(gdi_display, info->pict_src);
+            info->pict_src = 0;
+        }
+        wine_tsx11_unlock();
     }
-    wine_tsx11_unlock();
 
-    physDev->xrender->format = NULL;
+    info->format = NULL;
 }
 
 /************************************************************************
@@ -2091,7 +2123,6 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
     int height = visRectDst->bottom - visRectDst->top;
     int x_src = physDevSrc->dc_rect.left + visRectSrc->left;
     int y_src = physDevSrc->dc_rect.top + visRectSrc->top;
-    const WineXRenderFormat *src_format = get_xrender_format_from_color_shifts(physDevSrc->depth, physDevSrc->color_shifts);
     const WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDevDst->depth, physDevDst->color_shifts);
     Picture src_pict=0, dst_pict=0, mask_pict=0;
 
@@ -2136,36 +2167,32 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
         get_xrender_color(dst_format, physDevDst->textPixel, &col);
 
         /* We use the source drawable as a mask */
-        wine_tsx11_lock();
-        mask_pict = pXRenderCreatePicture(gdi_display, physDevSrc->drawable, src_format->pict_format, CPSubwindowMode|CPRepeat, &pa);
+        mask_pict = get_xrender_picture_source(physDevSrc);
 
         /* Use backgroundPixel as the foreground color */
         src_pict = get_tile_pict(dst_format, physDevDst->backgroundPixel);
 
         /* Create a destination picture and fill it with textPixel color as the background color */
+        wine_tsx11_lock();
         dst_pict = pXRenderCreatePicture(gdi_display, pixmap, dst_format->pict_format, CPSubwindowMode|CPRepeat, &pa);
         pXRenderFillRectangle(gdi_display, PictOpSrc, dst_pict, &col, 0, 0, width, height);
 
         xrender_blit(src_pict, mask_pict, dst_pict, x_src, y_src, xscale, yscale, width, height);
 
         if(dst_pict) pXRenderFreePicture(gdi_display, dst_pict);
-        if(mask_pict) pXRenderFreePicture(gdi_display, mask_pict);
         wine_tsx11_unlock();
     }
     else /* color -> color but with different depths */
     {
-        wine_tsx11_lock();
-        src_pict = pXRenderCreatePicture(gdi_display,
-                                          physDevSrc->drawable, src_format->pict_format,
-                                          CPSubwindowMode|CPRepeat, &pa);
+        src_pict = get_xrender_picture_source(physDevSrc);
 
+        wine_tsx11_lock();
         dst_pict = pXRenderCreatePicture(gdi_display,
                                           pixmap, dst_format->pict_format,
                                           CPSubwindowMode|CPRepeat, &pa);
 
         xrender_blit(src_pict, 0, dst_pict, x_src, y_src, xscale, yscale, width, height);
 
-        if(src_pict) pXRenderFreePicture(gdi_display, src_pict);
         if(dst_pict) pXRenderFreePicture(gdi_display, dst_pict);
         wine_tsx11_unlock();
     }
