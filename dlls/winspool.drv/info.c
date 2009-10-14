@@ -6634,26 +6634,157 @@ BOOL WINAPI EnumPrintProcessorDatatypesW(LPWSTR pName, LPWSTR pPrintProcessorNam
 /*****************************************************************************
  *          EnumPrintProcessorsA [WINSPOOL.@]
  *
+ * See EnumPrintProcessorsW.
+ *
  */
 BOOL WINAPI EnumPrintProcessorsA(LPSTR pName, LPSTR pEnvironment, DWORD Level, 
-    LPBYTE pPrintProcessorInfo, DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcbReturned)
+                            LPBYTE pPPInfo, DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned)
 {
-    FIXME("Stub: %s %s %d %p %d %p %p\n", pName, pEnvironment, Level,
-        pPrintProcessorInfo, cbBuf, pcbNeeded, pcbReturned);
-    return FALSE;
+    BOOL    res;
+    LPBYTE  bufferW = NULL;
+    LPWSTR  nameW = NULL;
+    LPWSTR  envW = NULL;
+    DWORD   needed = 0;
+    DWORD   numentries = 0;
+    INT     len;
+
+    TRACE("(%s, %s, %d, %p, %d, %p, %p)\n", debugstr_a(pName), debugstr_a(pEnvironment),
+                Level, pPPInfo, cbBuf, pcbNeeded, pcReturned);
+
+    /* convert names to unicode */
+    if (pName) {
+        len = MultiByteToWideChar(CP_ACP, 0, pName, -1, NULL, 0);
+        nameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pName, -1, nameW, len);
+    }
+    if (pEnvironment) {
+        len = MultiByteToWideChar(CP_ACP, 0, pEnvironment, -1, NULL, 0);
+        envW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pEnvironment, -1, envW, len);
+    }
+
+    /* alloc (userbuffersize*sizeof(WCHAR) and try to enum the monitors */
+    needed = cbBuf * sizeof(WCHAR);
+    if (needed) bufferW = HeapAlloc(GetProcessHeap(), 0, needed);
+    res = EnumPrintProcessorsW(nameW, envW, Level, bufferW, needed, pcbNeeded, pcReturned);
+
+    if(!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+        if (pcbNeeded) needed = *pcbNeeded;
+        /* HeapReAlloc return NULL, when bufferW was NULL */
+        bufferW = (bufferW) ? HeapReAlloc(GetProcessHeap(), 0, bufferW, needed) :
+                              HeapAlloc(GetProcessHeap(), 0, needed);
+
+        /* Try again with the large Buffer */
+        res = EnumPrintProcessorsW(nameW, envW, Level, bufferW, needed, pcbNeeded, pcReturned);
+    }
+    numentries = pcReturned ? *pcReturned : 0;
+    needed = 0;
+
+    if (res) {
+        /* EnumPrintProcessorsW collected all Data. Parse them to calculate ANSI-Size */
+        DWORD   index;
+        LPSTR   ptr;
+        PPRINTPROCESSOR_INFO_1W ppiw;
+        PPRINTPROCESSOR_INFO_1A ppia;
+
+        /* First pass: calculate the size for all Entries */
+        ppiw = (PPRINTPROCESSOR_INFO_1W) bufferW;
+        ppia = (PPRINTPROCESSOR_INFO_1A) pPPInfo;
+        index = 0;
+        while (index < numentries) {
+            index++;
+            needed += sizeof(PRINTPROCESSOR_INFO_1A);
+            TRACE("%p: parsing #%d (%s)\n", ppiw, index, debugstr_w(ppiw->pName));
+
+            needed += WideCharToMultiByte(CP_ACP, 0, ppiw->pName, -1,
+                                            NULL, 0, NULL, NULL);
+
+            ppiw = (PPRINTPROCESSOR_INFO_1W) (((LPBYTE)ppiw) + sizeof(PRINTPROCESSOR_INFO_1W));
+            ppia = (PPRINTPROCESSOR_INFO_1A) (((LPBYTE)ppia) + sizeof(PRINTPROCESSOR_INFO_1A));
+        }
+
+        /* check for errors and quit on failure */
+        if (cbBuf < needed) {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            res = FALSE;
+            goto epp_cleanup;
+        }
+
+        len = numentries * sizeof(PRINTPROCESSOR_INFO_1A); /* room for structs */
+        ptr = (LPSTR) &pPPInfo[len];        /* start of strings */
+        cbBuf -= len ;                      /* free Bytes in the user-Buffer */
+        ppiw = (PPRINTPROCESSOR_INFO_1W) bufferW;
+        ppia = (PPRINTPROCESSOR_INFO_1A) pPPInfo;
+        index = 0;
+        /* Second Pass: Fill the User Buffer (if we have one) */
+        while ((index < numentries) && pPPInfo) {
+            index++;
+            TRACE("%p: writing PRINTPROCESSOR_INFO_1A #%d\n", ppia, index);
+            ppia->pName = ptr;
+            len = WideCharToMultiByte(CP_ACP, 0, ppiw->pName, -1,
+                                            ptr, cbBuf , NULL, NULL);
+            ptr += len;
+            cbBuf -= len;
+
+            ppiw = (PPRINTPROCESSOR_INFO_1W) (((LPBYTE)ppiw) + sizeof(PRINTPROCESSOR_INFO_1W));
+            ppia = (PPRINTPROCESSOR_INFO_1A) (((LPBYTE)ppia) + sizeof(PRINTPROCESSOR_INFO_1A));
+
+        }
+    }
+epp_cleanup:
+    if (pcbNeeded)  *pcbNeeded = needed;
+    if (pcReturned) *pcReturned = (res) ? numentries : 0;
+
+    HeapFree(GetProcessHeap(), 0, nameW);
+    HeapFree(GetProcessHeap(), 0, envW);
+    HeapFree(GetProcessHeap(), 0, bufferW);
+
+    TRACE("returning %d with %d (%d byte for %d entries)\n",
+            (res), GetLastError(), needed, numentries);
+
+    return (res);
 }
 
 /*****************************************************************************
  *          EnumPrintProcessorsW [WINSPOOL.@]
  *
+ * Enumerate available Print Processors
+ *
+ * PARAMS
+ *  pName        [I] Servername or NULL (local Computer)
+ *  pEnvironment [I] Printing-Environment or NULL (Default)
+ *  Level        [I] Structure-Level (Only 1 is allowed)
+ *  pPPInfo      [O] PTR to Buffer that receives the Result
+ *  cbBuf        [I] Size of Buffer at pMonitors
+ *  pcbNeeded    [O] PTR to DWORD that receives the size in Bytes used / required for pPPInfo
+ *  pcReturned   [O] PTR to DWORD that receives the number of Print Processors in pPPInfo
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE and in pcbNeeded the Bytes required for pPPInfo, if cbBuf is too small
+ *
  */
 BOOL WINAPI EnumPrintProcessorsW(LPWSTR pName, LPWSTR pEnvironment, DWORD Level,
-    LPBYTE pPrintProcessorInfo, DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcbReturned)
+                            LPBYTE pPPInfo, DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned)
 {
-    FIXME("Stub: %s %s %d %p %d %p %p\n", debugstr_w(pName),
-        debugstr_w(pEnvironment), Level, pPrintProcessorInfo,
-        cbBuf, pcbNeeded, pcbReturned);
-    return FALSE;
+
+    TRACE("(%s, %s, %d, %p, %d, %p, %p)\n", debugstr_w(pName), debugstr_w(pEnvironment),
+                                Level, pPPInfo, cbBuf, pcbNeeded, pcReturned);
+
+    if ((backend == NULL)  && !load_backend()) return FALSE;
+
+    if (!pcbNeeded || !pcReturned) {
+        SetLastError(RPC_X_NULL_REF_POINTER);
+        return FALSE;
+    }
+
+    if (!pPPInfo && (cbBuf > 0)) {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+
+    return backend->fpEnumPrintProcessors(pName, pEnvironment, Level, pPPInfo,
+                                          cbBuf, pcbNeeded, pcReturned);
 }
 
 /*****************************************************************************
