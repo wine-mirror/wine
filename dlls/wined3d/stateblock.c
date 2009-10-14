@@ -440,11 +440,11 @@ static void stateblock_init_lights(IWineD3DStateBlockImpl *stateblock, struct li
 
     for (i = 0; i < LIGHTMAP_SIZE; ++i)
     {
-        const PLIGHTINFOEL *src_light;
+        const struct wined3d_light_info *src_light;
 
-        LIST_FOR_EACH_ENTRY(src_light, &light_map[i], PLIGHTINFOEL, entry)
+        LIST_FOR_EACH_ENTRY(src_light, &light_map[i], struct wined3d_light_info, entry)
         {
-            PLIGHTINFOEL *dst_light = HeapAlloc(GetProcessHeap(), 0, sizeof(*dst_light));
+            struct wined3d_light_info *dst_light = HeapAlloc(GetProcessHeap(), 0, sizeof(*dst_light));
 
             *dst_light = *src_light;
             dst_light->changed = TRUE;
@@ -510,8 +510,9 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
 
         for(counter = 0; counter < LIGHTMAP_SIZE; counter++) {
             struct list *e1, *e2;
-            LIST_FOR_EACH_SAFE(e1, e2, &This->lightMap[counter]) {
-                PLIGHTINFOEL *light = LIST_ENTRY(e1, PLIGHTINFOEL, entry);
+            LIST_FOR_EACH_SAFE(e1, e2, &This->lightMap[counter])
+            {
+                struct wined3d_light_info *light = LIST_ENTRY(e1, struct wined3d_light_info, entry);
                 list_remove(&light->entry);
                 HeapFree(GetProcessHeap(), 0, light);
             }
@@ -559,12 +560,12 @@ static void record_lights(IWineD3DStateBlockImpl *This, const IWineD3DStateBlock
         struct list *e, *f;
         LIST_FOR_EACH(e, &This->lightMap[i]) {
             BOOL updated = FALSE;
-            PLIGHTINFOEL *src = LIST_ENTRY(e, PLIGHTINFOEL, entry), *realLight;
+            struct wined3d_light_info *src = LIST_ENTRY(e, struct wined3d_light_info, entry), *realLight;
             if (!src->changed && !src->enabledChanged) continue;
 
             /* Look up the light in the destination */
             LIST_FOR_EACH(f, &targetStateBlock->lightMap[i]) {
-                realLight = LIST_ENTRY(f, PLIGHTINFOEL, entry);
+                realLight = LIST_ENTRY(f, struct wined3d_light_info, entry);
                 if(realLight->OriginalIndex == src->OriginalIndex) {
                     if(src->changed) {
                         src->OriginalParms = realLight->OriginalParms;
@@ -982,8 +983,9 @@ static void apply_lights(IWineD3DDevice *pDevice, const IWineD3DStateBlockImpl *
     for(i = 0; i < LIGHTMAP_SIZE; i++) {
         struct list *e;
 
-        LIST_FOR_EACH(e, &This->lightMap[i]) {
-            const PLIGHTINFOEL *light = LIST_ENTRY(e, PLIGHTINFOEL, entry);
+        LIST_FOR_EACH(e, &This->lightMap[i])
+        {
+            const struct wined3d_light_info *light = LIST_ENTRY(e, struct wined3d_light_info, entry);
 
             if(light->changed) {
                 IWineD3DDevice_SetLight(pDevice, light->OriginalIndex, &light->OriginalParms);

@@ -2429,7 +2429,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD Index, CONST WINED3DLIGHT* pLight) {
     float rho;
-    PLIGHTINFOEL *object = NULL;
+    struct wined3d_light_info *object = NULL;
     UINT Hi = LIGHTMAP_HASHFUNC(Index);
     struct list *e;
 
@@ -2468,8 +2468,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
         return WINED3DERR_INVALIDCALL;
     }
 
-    LIST_FOR_EACH(e, &This->updateStateBlock->lightMap[Hi]) {
-        object = LIST_ENTRY(e, PLIGHTINFOEL, entry);
+    LIST_FOR_EACH(e, &This->updateStateBlock->lightMap[Hi])
+    {
+        object = LIST_ENTRY(e, struct wined3d_light_info, entry);
         if(object->OriginalIndex == Index) break;
         object = NULL;
     }
@@ -2572,15 +2573,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetLight(IWineD3DDevice *iface, DWORD Index, WINED3DLIGHT* pLight) {
-    PLIGHTINFOEL *lightInfo = NULL;
+static HRESULT WINAPI IWineD3DDeviceImpl_GetLight(IWineD3DDevice *iface, DWORD Index, WINED3DLIGHT *pLight)
+{
+    struct wined3d_light_info *lightInfo = NULL;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     DWORD Hi = LIGHTMAP_HASHFUNC(Index);
     struct list *e;
     TRACE("(%p) : Idx(%d), pLight(%p)\n", This, Index, pLight);
 
-    LIST_FOR_EACH(e, &This->stateBlock->lightMap[Hi]) {
-        lightInfo = LIST_ENTRY(e, PLIGHTINFOEL, entry);
+    LIST_FOR_EACH(e, &This->stateBlock->lightMap[Hi])
+    {
+        lightInfo = LIST_ENTRY(e, struct wined3d_light_info, entry);
         if(lightInfo->OriginalIndex == Index) break;
         lightInfo = NULL;
     }
@@ -2598,15 +2601,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetLight(IWineD3DDevice *iface, DWORD I
  * Get / Set Light Enable
  *   (Note for consistency, renamed d3dx function by adding the 'set' prefix)
  *****/
-static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, DWORD Index, BOOL Enable) {
-    PLIGHTINFOEL *lightInfo = NULL;
+static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, DWORD Index, BOOL Enable)
+{
+    struct wined3d_light_info *lightInfo = NULL;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     UINT Hi = LIGHTMAP_HASHFUNC(Index);
     struct list *e;
     TRACE("(%p) : Idx(%d), enable? %d\n", This, Index, Enable);
 
-    LIST_FOR_EACH(e, &This->updateStateBlock->lightMap[Hi]) {
-        lightInfo = LIST_ENTRY(e, PLIGHTINFOEL, entry);
+    LIST_FOR_EACH(e, &This->updateStateBlock->lightMap[Hi])
+    {
+        lightInfo = LIST_ENTRY(e, struct wined3d_light_info, entry);
         if(lightInfo->OriginalIndex == Index) break;
         lightInfo = NULL;
     }
@@ -2619,8 +2624,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
         IWineD3DDeviceImpl_SetLight(iface, Index, &WINED3D_default_light);
 
         /* Search for it again! Should be fairly quick as near head of list */
-        LIST_FOR_EACH(e, &This->updateStateBlock->lightMap[Hi]) {
-            lightInfo = LIST_ENTRY(e, PLIGHTINFOEL, entry);
+        LIST_FOR_EACH(e, &This->updateStateBlock->lightMap[Hi])
+        {
+            lightInfo = LIST_ENTRY(e, struct wined3d_light_info, entry);
             if(lightInfo->OriginalIndex == Index) break;
             lightInfo = NULL;
         }
@@ -2680,16 +2686,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetLightEnable(IWineD3DDevice *iface, DWORD Index,BOOL* pEnable) {
-
-    PLIGHTINFOEL *lightInfo = NULL;
+static HRESULT WINAPI IWineD3DDeviceImpl_GetLightEnable(IWineD3DDevice *iface, DWORD Index,BOOL* pEnable)
+{
+    struct wined3d_light_info *lightInfo = NULL;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct list *e;
     UINT Hi = LIGHTMAP_HASHFUNC(Index);
     TRACE("(%p) : for idx(%d)\n", This, Index);
 
-    LIST_FOR_EACH(e, &This->stateBlock->lightMap[Hi]) {
-        lightInfo = LIST_ENTRY(e, PLIGHTINFOEL, entry);
+    LIST_FOR_EACH(e, &This->stateBlock->lightMap[Hi])
+    {
+        lightInfo = LIST_ENTRY(e, struct wined3d_light_info, entry);
         if(lightInfo->OriginalIndex == Index) break;
         lightInfo = NULL;
     }

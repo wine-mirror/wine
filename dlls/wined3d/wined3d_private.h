@@ -1203,8 +1203,8 @@ HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwapChain *
 /*****************************************************************************
  * Internal representation of a light
  */
-typedef struct PLIGHTINFOEL PLIGHTINFOEL;
-struct PLIGHTINFOEL {
+struct wined3d_light_info
+{
     WINED3DLIGHT OriginalParms; /* Note D3D8LIGHT == D3D9LIGHT */
     DWORD        OriginalIndex;
     LONG         glIndex;
@@ -2153,7 +2153,7 @@ struct IWineD3DStateBlockImpl
 #define LIGHTMAP_SIZE 43 /* Use of a prime number recommended. Set to 1 for a linked list! */
 #define LIGHTMAP_HASHFUNC(x) ((x) % LIGHTMAP_SIZE) /* Primitive and simple function */
     struct list               lightMap[LIGHTMAP_SIZE]; /* Hash map containing the lights */
-    PLIGHTINFOEL             *activeLights[MAX_ACTIVE_LIGHTS]; /* Map of opengl lights to d3d lights */
+    const struct wined3d_light_info *activeLights[MAX_ACTIVE_LIGHTS]; /* Map of opengl lights to d3d lights */
 
     /* Clipping */
     double                    clipplane[MAX_CLIPPLANES][4];

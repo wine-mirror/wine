@@ -3724,6 +3724,7 @@ static void state_vertexblend(DWORD state, IWineD3DStateBlockImpl *stateblock, s
 
 static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
+    const struct wined3d_light_info *light = NULL;
     unsigned int k;
 
     /* If we are changing the View matrix, reset the light and clipping planes to the new view
@@ -3731,8 +3732,6 @@ static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
      *       enabled, since the call to enable it will not reset the position.
      * NOTE2: Apparently texture transforms do NOT need reapplying
      */
-
-    const PLIGHTINFOEL *light = NULL;
 
     glMatrixMode(GL_MODELVIEW);
     checkGLcall("glMatrixMode(GL_MODELVIEW)");
@@ -4684,7 +4683,7 @@ static void viewport_vertexpart(DWORD state, IWineD3DStateBlockImpl *stateblock,
 static void light(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     UINT Index = state - STATE_ACTIVELIGHT(0);
-    const PLIGHTINFOEL *lightInfo = stateblock->activeLights[Index];
+    const struct wined3d_light_info *lightInfo = stateblock->activeLights[Index];
 
     if(!lightInfo) {
         glDisable(GL_LIGHT0 + Index);
