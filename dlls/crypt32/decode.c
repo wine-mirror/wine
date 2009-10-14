@@ -2392,14 +2392,36 @@ static BOOL CRYPT_AsnDecodeCTLEntries(const BYTE *pbEncoded, DWORD cbEncoded,
     struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
      CRYPT_AsnDecodeCTLEntry, sizeof(CTL_ENTRY), TRUE,
      offsetof(CTL_ENTRY, SubjectIdentifier.pbData) };
-    struct GenericArray *entries = pvStructInfo;
+    DWORD bytesNeeded;
 
     TRACE("%p, %d, %08x, %p, %d, %p\n", pbEncoded, cbEncoded, dwFlags,
      pvStructInfo, *pcbStructInfo, pcbDecoded);
 
-    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
-     entries ? entries->rgItems : NULL);
+    ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+     NULL, NULL, &bytesNeeded, pcbDecoded);
+    if (ret)
+    {
+        /* The size expected by the caller includes the combination of
+         * CTL_INFO's cCTLEntry and rgCTLEntry, in addition to the size of
+         * all the decoded items.  CRYPT_AsnDecodeArrayNoAlloc only returns
+         * the size of the decoded items, so add the size of cCTLEntry and
+         * rgCTLEntry.
+         */
+        bytesNeeded += MEMBERSIZE(CTL_INFO, cCTLEntry, cExtension);
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, NULL, pvStructInfo,
+         pcbStructInfo, bytesNeeded)))
+        {
+            CTL_INFO *info;
+
+            info = (CTL_INFO *)((BYTE *)pvStructInfo -
+             offsetof(CTL_INFO, cCTLEntry));
+            ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded,
+             cbEncoded, &info->cCTLEntry, info->rgCTLEntry, &bytesNeeded,
+             pcbDecoded);
+        }
+    }
     return ret;
 }
 
@@ -2436,7 +2458,8 @@ static BOOL WINAPI CRYPT_AsnDecodeCTL(DWORD dwCertEncodingType,
            CRYPT_AsnDecodeAlgorithmId, sizeof(CRYPT_ALGORITHM_IDENTIFIER),
            FALSE, TRUE, offsetof(CTL_INFO, SubjectAlgorithm.pszObjId), 0 },
          { ASN_SEQUENCEOF, offsetof(CTL_INFO, cCTLEntry),
-           CRYPT_AsnDecodeCTLEntries, sizeof(struct GenericArray),
+           CRYPT_AsnDecodeCTLEntries,
+           MEMBERSIZE(CTL_INFO, cCTLEntry, cExtension),
            TRUE, TRUE, offsetof(CTL_INFO, rgCTLEntry), 0 },
          { ASN_CONTEXT | ASN_CONSTRUCTOR | 0, offsetof(CTL_INFO, cExtension),
            CRYPT_AsnDecodeCertExtensions, sizeof(CERT_EXTENSIONS), TRUE, TRUE,
