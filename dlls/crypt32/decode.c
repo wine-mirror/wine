@@ -600,8 +600,7 @@ struct AsnArrayItemSize
 };
 
 /* Decodes an array of like types into a structure described by a struct
- * AsnArrayDescriptor.  Doesn't allocate memory for the decoded items,
- * leaves that up to the caller.
+ * AsnArrayDescriptor.
  */
 static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
  const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
@@ -616,11 +615,6 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
     if (!cbEncoded)
     {
         SetLastError(CRYPT_E_ASN1_EOD);
-        ret = FALSE;
-    }
-    else if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
-    {
-        FIXME("allocation not implemented yet\n");
         ret = FALSE;
     }
     else if (!arrayDesc->tag || pbEncoded[0] == arrayDesc->tag)
@@ -713,18 +707,29 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
                     *pcbDecoded = decoded;
                 if (!pvStructInfo)
                     *pcbStructInfo = bytesNeeded;
-                else if ((ret = CRYPT_DecodeEnsureSpace(0, NULL, pvStructInfo,
-                 pcbStructInfo, bytesNeeded)))
+                else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
+                 pvStructInfo, pcbStructInfo, bytesNeeded)))
                 {
                     DWORD i, *pcItems;
                     BYTE *nextData;
                     const BYTE *ptr;
                     void *rgItems;
 
+                    if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+                        pvStructInfo = *(void **)pvStructInfo;
                     pcItems = pvStructInfo;
                     *pcItems = cItems;
-                    rgItems = *(void **)((BYTE *)pcItems -
-                     arrayDesc->countOffset + arrayDesc->arrayOffset);
+                    if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+                    {
+                        rgItems = (BYTE *)pvStructInfo +
+                         arrayDesc->minArraySize;
+                        *(void **)((BYTE *)pcItems -
+                         arrayDesc->countOffset + arrayDesc->arrayOffset) =
+                         rgItems;
+                    }
+                    else
+                        rgItems = *(void **)((BYTE *)pcItems -
+                         arrayDesc->countOffset + arrayDesc->arrayOffset);
                     nextData = (BYTE *)rgItems + cItems * arrayDesc->itemSize;
                     for (i = 0, ptr = pbEncoded + 1 + lenBytes; ret &&
                      i < cItems && ptr - pbEncoded - 1 - lenBytes <
