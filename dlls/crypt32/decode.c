@@ -111,7 +111,7 @@ static BOOL CRYPT_AsnDecodeIntegerInternal(const BYTE *pbEncoded,
 static BOOL CRYPT_AsnDecodeUnsignedIntegerInternal(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded);
-static BOOL CRYPT_AsnDecodePKCSAttributesInternal(const BYTE *pbEncoded,
+static BOOL CRYPT_AsnDecodePKCSAttributeInternal(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded);
 
@@ -2362,6 +2362,38 @@ static BOOL CRYPT_AsnDecodeCTLUsage(const BYTE *pbEncoded, DWORD cbEncoded,
     return ret;
 }
 
+static BOOL CRYPT_AsnDecodeCTLEntryAttributes(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    struct AsnArrayDescriptor arrayDesc = { 0,
+     CRYPT_AsnDecodePKCSAttributeInternal, sizeof(CRYPT_ATTRIBUTE), TRUE,
+     offsetof(CRYPT_ATTRIBUTE, pszObjId) };
+    DWORD bytesNeeded;
+    BOOL ret;
+
+    ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded, cbEncoded,
+     NULL, NULL, &bytesNeeded, pcbDecoded);
+    if (ret)
+    {
+        bytesNeeded += FINALMEMBERSIZE(CTL_ENTRY, cAttribute);
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, NULL, pvStructInfo,
+         pcbStructInfo, bytesNeeded)))
+        {
+            CTL_ENTRY *entry;
+
+            entry = (CTL_ENTRY *)((BYTE *)pvStructInfo -
+             offsetof(CTL_ENTRY, cAttribute));
+            ret = CRYPT_AsnDecodeArrayNoAlloc(&arrayDesc, pbEncoded,
+             cbEncoded, &entry->cAttribute, entry->rgAttribute, &bytesNeeded,
+             pcbDecoded);
+        }
+    }
+    return ret;
+}
+
 static BOOL CRYPT_AsnDecodeCTLEntry(const BYTE *pbEncoded, DWORD cbEncoded,
  DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo, DWORD *pcbDecoded)
 {
@@ -2370,8 +2402,9 @@ static BOOL CRYPT_AsnDecodeCTLEntry(const BYTE *pbEncoded, DWORD cbEncoded,
        CRYPT_AsnDecodeOctetsInternal, sizeof(CRYPT_DATA_BLOB), FALSE, TRUE,
        offsetof(CTL_ENTRY, SubjectIdentifier.pbData), 0 },
      { ASN_CONSTRUCTOR | ASN_SETOF, offsetof(CTL_ENTRY, cAttribute),
-       CRYPT_AsnDecodePKCSAttributesInternal, sizeof(CRYPT_ATTRIBUTES), FALSE,
-       TRUE, offsetof(CTL_ENTRY, rgAttribute), 0 },
+       CRYPT_AsnDecodeCTLEntryAttributes,
+       FINALMEMBERSIZE(CTL_ENTRY, cAttribute), FALSE, TRUE,
+       offsetof(CTL_ENTRY, rgAttribute), 0 },
     };
     BOOL ret = TRUE;
     CTL_ENTRY *entry = pvStructInfo;
