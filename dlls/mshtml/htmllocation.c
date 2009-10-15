@@ -228,12 +228,40 @@ static HRESULT WINAPI HTMLLocation_put_host(IHTMLLocation *iface, BSTR v)
 static HRESULT WINAPI HTMLLocation_get_host(IHTMLLocation *iface, BSTR *p)
 {
     HTMLLocation *This = HTMLLOCATION_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
+    URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
 
     if(!p)
         return E_POINTER;
 
-    return E_NOTIMPL;
+    url.dwHostNameLength = 1;
+    hres = get_url_components(This, &url);
+    if(FAILED(hres))
+        return hres;
+
+    if(!url.dwHostNameLength){
+        *p = NULL;
+        return S_OK;
+    }
+
+    if(url.nPort) {
+        /* <hostname>:<port> */
+        const WCHAR format[] = {'%','d',0};
+        DWORD len = url.dwHostNameLength + 1 + 5 + 1;
+        WCHAR buf[len];
+
+        memcpy(buf, url.lpszHostName, url.dwHostNameLength * sizeof(WCHAR));
+        buf[url.dwHostNameLength] = ':';
+        snprintfW(buf + url.dwHostNameLength + 1, 6, format, url.nPort);
+        *p = SysAllocString(buf);
+    }else
+        *p = SysAllocStringLen(url.lpszHostName, url.dwHostNameLength);
+
+    if(!*p)
+        return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLLocation_put_hostname(IHTMLLocation *iface, BSTR v)

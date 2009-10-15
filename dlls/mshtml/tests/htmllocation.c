@@ -58,7 +58,7 @@ static const struct location_test http_test = {
             http_url,
             "http://www.winehq.org/?search#hash", FALSE,
             "http:", TRUE,
-            "www.winehq.org:80", FALSE,
+            "www.winehq.org:80", TRUE,
             "www.winehq.org", FALSE,
             "80", TRUE,
             "", FALSE,
@@ -72,7 +72,7 @@ static const struct location_test http_file_test = {
             http_file_url,
             "http://www.winehq.org/file?search#hash", TRUE,
             "http:", TRUE,
-            "www.winehq.org:80", FALSE,
+            "www.winehq.org:80", TRUE,
             "www.winehq.org", FALSE,
             "80", TRUE,
             "file", FALSE,
@@ -86,7 +86,7 @@ static const struct location_test ftp_test = {
             ftp_url,
             "ftp://ftp.winehq.org/", TRUE,
             "ftp:", TRUE,
-            "ftp.winehq.org:21", FALSE,
+            "ftp.winehq.org:21", TRUE,
             "ftp.winehq.org", FALSE,
             "21", TRUE,
             "", FALSE,
@@ -100,7 +100,7 @@ static const struct location_test ftp_file_test = {
             ftp_file_url,
             "ftp://ftp.winehq.org/file", TRUE,
             "ftp:", TRUE,
-            "ftp.winehq.org:21", FALSE,
+            "ftp.winehq.org:21", TRUE,
             "ftp.winehq.org", FALSE,
             "21", TRUE,
             "file", FALSE,
@@ -114,7 +114,7 @@ static const struct location_test file_test = {
             file_url,
             "file:///C:/windows/win.ini", FALSE,
             "file:", TRUE,
-            NULL, FALSE,
+            NULL, TRUE,
             NULL, FALSE,
             "", TRUE,
             "C:\\windows\\win.ini", TRUE,
@@ -195,7 +195,7 @@ static void test_host(IHTMLLocation *loc, const struct location_test *test)
             test->name, E_POINTER, hres);
 
     hres = IHTMLLocation_get_host(loc, &str);
-    todo_wine ok(hres == S_OK, "%s: get_host failed: 0x%08x\n", test->name, hres);
+    ok(hres == S_OK, "%s: get_host failed: 0x%08x\n", test->name, hres);
     if(hres == S_OK){
         if(test->host_ok)
             ok(str_eq_wa(str, test->host),
