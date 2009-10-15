@@ -1415,13 +1415,13 @@ fail:
 
 void SECUR32_deinitSchannelSP(void)
 {
-    int i = schan_handle_table_size;
+    SIZE_T i = schan_handle_count;
 
     if (!libgnutls_handle) return;
 
     /* deinitialized sessions first because a pointer to the credentials
      * are stored for the session by calling gnutls_credentials_set. */
-    while (--i)
+    while (i--)
     {
         if (schan_handle_table[i].type == SCHAN_HANDLE_CTX)
         {
@@ -1430,8 +1430,8 @@ void SECUR32_deinitSchannelSP(void)
             HeapFree(GetProcessHeap(), 0, ctx);
         }
     }
-    i = schan_handle_table_size;
-    while (--i)
+    i = schan_handle_count;
+    while (i--)
     {
         if (schan_handle_table[i].type != SCHAN_HANDLE_FREE)
         {
