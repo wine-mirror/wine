@@ -1405,6 +1405,22 @@ static BOOL compare_cert_by_signature_hash(PCCERT_CONTEXT pCertContext, DWORD dw
     return ret;
 }
 
+static inline PCCERT_CONTEXT cert_compare_certs_in_store(HCERTSTORE store,
+ PCCERT_CONTEXT prev, CertCompareFunc compare, DWORD dwType, DWORD dwFlags,
+ const void *pvPara)
+{
+    BOOL matches = FALSE;
+    PCCERT_CONTEXT ret;
+
+    ret = prev;
+    do {
+        ret = CertEnumCertificatesInStore(store, ret);
+        if (ret)
+            matches = compare(ret, dwType, dwFlags, pvPara);
+    } while (ret != NULL && !matches);
+    return ret;
+}
+
 PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
  DWORD dwCertEncodingType, DWORD dwFlags, DWORD dwType, const void *pvPara,
  PCCERT_CONTEXT pPrevCertContext)
@@ -1454,14 +1470,8 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
 
     if (compare)
     {
-        BOOL matches = FALSE;
-
-        ret = pPrevCertContext;
-        do {
-            ret = CertEnumCertificatesInStore(hCertStore, ret);
-            if (ret)
-                matches = compare(ret, dwType, dwFlags, pvPara);
-        } while (ret != NULL && !matches);
+        ret = cert_compare_certs_in_store(hCertStore, pPrevCertContext,
+         compare, dwType, dwFlags, pvPara);
         if (!ret)
             SetLastError(CRYPT_E_NOT_FOUND);
     }
