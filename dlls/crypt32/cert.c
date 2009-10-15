@@ -1120,12 +1120,6 @@ DWORD WINAPI CertGetPublicKeyLength(DWORD dwCertEncodingType,
 typedef BOOL (*CertCompareFunc)(PCCERT_CONTEXT pCertContext, DWORD dwType,
  DWORD dwFlags, const void *pvPara);
 
-static BOOL compare_cert_any(PCCERT_CONTEXT pCertContext, DWORD dwType,
- DWORD dwFlags, const void *pvPara)
-{
-    return TRUE;
-}
-
 static BOOL compare_cert_by_md5_hash(PCCERT_CONTEXT pCertContext, DWORD dwType,
  DWORD dwFlags, const void *pvPara)
 {
@@ -1421,12 +1415,22 @@ static inline PCCERT_CONTEXT cert_compare_certs_in_store(HCERTSTORE store,
     return ret;
 }
 
+typedef PCCERT_CONTEXT (*CertFindFunc)(HCERTSTORE store, DWORD dwType,
+ DWORD dwFlags, const void *pvPara, PCCERT_CONTEXT prev);
+
+static PCCERT_CONTEXT find_cert_any(HCERTSTORE store, DWORD dwType,
+ DWORD dwFlags, const void *pvPara, PCCERT_CONTEXT prev)
+{
+    return CertEnumCertificatesInStore(store, prev);
+}
+
 PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
  DWORD dwCertEncodingType, DWORD dwFlags, DWORD dwType, const void *pvPara,
  PCCERT_CONTEXT pPrevCertContext)
 {
     PCCERT_CONTEXT ret;
-    CertCompareFunc compare;
+    CertFindFunc find = NULL;
+    CertCompareFunc compare = NULL;
 
     TRACE("(%p, %08x, %08x, %08x, %p, %p)\n", hCertStore, dwCertEncodingType,
 	 dwFlags, dwType, pvPara, pPrevCertContext);
@@ -1434,7 +1438,7 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
     switch (dwType >> CERT_COMPARE_SHIFT)
     {
     case CERT_COMPARE_ANY:
-        compare = compare_cert_any;
+        find = find_cert_any;
         break;
     case CERT_COMPARE_MD5_HASH:
         compare = compare_cert_by_md5_hash;
@@ -1465,21 +1469,17 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
         break;
     default:
         FIXME("find type %08x unimplemented\n", dwType);
-        compare = NULL;
     }
 
-    if (compare)
-    {
+    if (find)
+        ret = find(hCertStore, dwFlags, dwType, pvPara, pPrevCertContext);
+    else if (compare)
         ret = cert_compare_certs_in_store(hCertStore, pPrevCertContext,
          compare, dwType, dwFlags, pvPara);
-        if (!ret)
-            SetLastError(CRYPT_E_NOT_FOUND);
-    }
     else
-    {
-        SetLastError(CRYPT_E_NOT_FOUND);
         ret = NULL;
-    }
+    if (!ret)
+        SetLastError(CRYPT_E_NOT_FOUND);
     TRACE("returning %p\n", ret);
     return ret;
 }
