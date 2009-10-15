@@ -645,6 +645,7 @@ static void process_killed( struct process *process )
         free( dll );
     }
     destroy_process_classes( process );
+    free_process_user_handles( process );
     remove_process_locks( process );
     set_process_startup_state( process, STARTUP_ABORTED );
     finish_process_tracing( process );

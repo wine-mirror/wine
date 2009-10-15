@@ -166,10 +166,20 @@ void *next_user_handle( user_handle_t *handle, enum user_object type )
     return NULL;
 }
 
+/* free client-side user handles managed by the process */
+void free_process_user_handles( struct process *process )
+{
+    unsigned int i;
+
+    for (i = 0; i < nb_handles; i++)
+        if (handles[i].type == USER_CLIENT && handles[i].ptr == process)
+            free_user_entry( &handles[i] );
+}
+
 /* allocate an arbitrary user handle */
 DECL_HANDLER(alloc_user_handle)
 {
-    reply->handle = alloc_user_handle( NULL, USER_CLIENT );
+    reply->handle = alloc_user_handle( current->process, USER_CLIENT );
 }
 
 
