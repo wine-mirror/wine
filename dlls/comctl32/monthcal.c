@@ -100,6 +100,8 @@ typedef struct
 				   stored in SYSTEMTIME format */
     BOOL	firstDaySet;    /* first week day differs from locale defined */
 
+    BOOL	isUnicode;      /* value set with MCM_SETUNICODE format */
+
     int		monthRange;
     MONTHDAYSTATE *monthdayState;
     SYSTEMTIME	todaysDate;
@@ -2412,6 +2414,7 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->minSel = infoPtr->todaysDate;
   infoPtr->maxSel = infoPtr->todaysDate;
   infoPtr->curSel = infoPtr->todaysDate;
+  infoPtr->isUnicode = TRUE;
 
   /* call MONTHCAL_UpdateSize to set all of the dimensions */
   /* of the control */
@@ -2463,6 +2466,20 @@ MONTHCAL_Notify(MONTHCAL_INFO *infoPtr, NMHDR *hdr)
     }
   }
   return 0;
+}
+
+static inline BOOL
+MONTHCAL_SetUnicodeFormat(MONTHCAL_INFO *infoPtr, BOOL isUnicode)
+{
+  BOOL prev = infoPtr->isUnicode;
+  infoPtr->isUnicode = isUnicode;
+  return prev;
+}
+
+static inline BOOL
+MONTHCAL_GetUnicodeFormat(const MONTHCAL_INFO *infoPtr)
+{
+  return infoPtr->isUnicode;
 }
 
 static LRESULT WINAPI
@@ -2539,6 +2556,12 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   case MCM_GETMAXTODAYWIDTH:
     return MONTHCAL_GetMaxTodayWidth(infoPtr);
+
+  case MCM_SETUNICODEFORMAT:
+    return MONTHCAL_SetUnicodeFormat(infoPtr, (BOOL)wParam);
+
+  case MCM_GETUNICODEFORMAT:
+    return MONTHCAL_GetUnicodeFormat(infoPtr);
 
   case WM_GETDLGCODE:
     return DLGC_WANTARROWS | DLGC_WANTCHARS;
