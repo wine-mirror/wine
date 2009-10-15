@@ -167,7 +167,10 @@ static void test_surface_alignment(IDirect3DDevice9 *device_ptr)
             IDirect3DTexture9_GetLevelDesc(pTexture, j, &descr);
             hr = IDirect3DTexture9_LockRect(pTexture, j, &rc, NULL, 0);
             ok(SUCCEEDED(hr), "IDirect3DTexture9_LockRect: %08x\n", hr);
-            IDirect3DTexture9_UnlockRect(pTexture, j);
+            hr = IDirect3DTexture9_UnlockRect(pTexture, j);
+            ok(SUCCEEDED(hr), "IDirect3DTexture9_UnLockRect: %08x\n", hr);
+            hr = IDirect3DTexture9_UnlockRect(pTexture, j);
+todo_wine   ok(SUCCEEDED(hr), "Double IDirect3DTexture9_UnLockRect failed with %08x\n", hr);
 
             pitch = ((descr.Width + 3) >> 2) << 3;
             if (i > 0) pitch <<= 1;
@@ -217,6 +220,8 @@ static void test_lockrect_offset(IDirect3DDevice9 *device)
 
         hr = IDirect3DSurface9_UnlockRect(surface);
         ok(SUCCEEDED(hr), "UnlockRect failed (%08x)\n", hr);
+        hr = IDirect3DSurface9_UnlockRect(surface);
+        ok(hr == D3DERR_INVALIDCALL, "Double UnlockRect returned %08x, expected D3DERR_INVALIDCALL\n", hr);
 
         hr = IDirect3DSurface9_LockRect(surface, &locked_rect, &rect, 0);
         ok(SUCCEEDED(hr), "LockRect failed (%08x)\n", hr);
