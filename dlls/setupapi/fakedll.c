@@ -367,32 +367,18 @@ done:
     return NULL;
 }
 
-/***********************************************************************
- *            create_fake_dll
- */
-BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
+/* create the fake dll destination file */
+static HANDLE create_dest_file( const WCHAR *name )
 {
-    HANDLE h;
-    BOOL ret;
-    unsigned int size = 0;
-    void *buffer;
-
-    /* check for empty name which means to only create the directory */
-    if (name[strlenW(name) - 1] == '\\')
-    {
-        create_directories( name );
-        return TRUE;
-    }
-
     /* first check for an existing file */
-    h = CreateFileW( name, GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL );
+    HANDLE h = CreateFileW( name, GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL );
     if (h != INVALID_HANDLE_VALUE)
     {
         if (!is_fake_dll( h ))
         {
             TRACE( "%s is not a fake dll, not overwriting it\n", debugstr_w(name) );
             CloseHandle( h );
-            return TRUE;
+            return 0;
         }
         /* truncate the file */
         SetFilePointer( h, 0, NULL, FILE_BEGIN );
@@ -404,11 +390,34 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
 
         h = CreateFileW( name, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL );
         if (h == INVALID_HANDLE_VALUE)
-        {
             ERR( "failed to create %s (error=%u)\n", debugstr_w(name), GetLastError() );
-            return FALSE;
-        }
     }
+    return h;
+}
+
+/***********************************************************************
+ *            create_fake_dll
+ */
+BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
+{
+    HANDLE h;
+    BOOL ret;
+    size_t size;
+    const WCHAR *filename;
+    void *buffer;
+
+    if (!(filename = strrchrW( name, '\\' ))) filename = name;
+    else filename++;
+
+    /* check for empty name which means to only create the directory */
+    if (!filename[0])
+    {
+        create_directories( name );
+        return TRUE;
+    }
+
+    if (!(h = create_dest_file( name ))) return TRUE;  /* not a fake dll */
+    if (h == INVALID_HANDLE_VALUE) return FALSE;
 
     if ((buffer = load_fake_dll( source, &size )))
     {
