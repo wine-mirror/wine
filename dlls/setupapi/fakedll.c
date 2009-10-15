@@ -52,6 +52,9 @@ static const unsigned int section_alignment = 4096;
 
 static void *file_buffer;
 static size_t file_buffer_size;
+static unsigned int handled_count;
+static unsigned int handled_total;
+static char **handled_dlls;
 
 struct dll_info
 {
@@ -106,6 +109,66 @@ static inline void add_directory( struct dll_info *info, unsigned int idx, DWORD
 {
     info->nt->OptionalHeader.DataDirectory[idx].VirtualAddress = rva;
     info->nt->OptionalHeader.DataDirectory[idx].Size = size;
+}
+
+/* convert a dll name W->A without depending on the current codepage */
+static char *dll_name_WtoA( char *nameA, const WCHAR *nameW, unsigned int len )
+{
+    unsigned int i;
+
+    for (i = 0; i < len; i++)
+    {
+        char c = nameW[i];
+        if (nameW[i] > 127) return NULL;
+        if (c >= 'A' && c <= 'Z') c += 'a' - 'A';
+        nameA[i] = c;
+    }
+    nameA[i] = 0;
+    return nameA;
+}
+
+/* add a dll to the list of dll that have been taken care of */
+static BOOL add_handled_dll( const WCHAR *name )
+{
+    unsigned int len = strlenW( name );
+    int i, min, max, pos, res;
+    char *nameA;
+
+    if (!(nameA = HeapAlloc( GetProcessHeap(), 0, len + 1 ))) return FALSE;
+    if (!dll_name_WtoA( nameA, name, len )) goto failed;
+
+    min = 0;
+    max = handled_count - 1;
+    while (min <= max)
+    {
+        pos = (min + max) / 2;
+        res = strcmp( handled_dlls[pos], nameA );
+        if (!res) goto failed;  /* already in the list */
+        if (res < 0) min = pos + 1;
+        else max = pos - 1;
+    }
+
+    if (handled_count >= handled_total)
+    {
+        char **new_dlls;
+        unsigned int new_count = max( 64, handled_total * 2 );
+
+        if (handled_dlls) new_dlls = HeapReAlloc( GetProcessHeap(), 0, handled_dlls,
+                                                  new_count * sizeof(*handled_dlls) );
+        else new_dlls = HeapAlloc( GetProcessHeap(), 0, new_count * sizeof(*handled_dlls) );
+        if (!new_dlls) goto failed;
+        handled_dlls = new_dlls;
+        handled_total = new_count;
+    }
+
+    for (i = handled_count; i > min; i--) handled_dlls[i] = handled_dlls[i - 1];
+    handled_dlls[i] = nameA;
+    handled_count++;
+    return TRUE;
+
+failed:
+    HeapFree( GetProcessHeap(), 0, nameA );
+    return FALSE;
 }
 
 /* read in the contents of a file into the global file buffer */
@@ -320,14 +383,7 @@ static void *load_fake_dll( const WCHAR *name, size_t *size )
 
     len = strlenW( name );
     pos = maxlen - len - sizeof(".fake");
-    for (i = 0; i < len; i++)
-    {
-        /* we don't want to depend on the current codepage here */
-        char c = name[i];
-        if (name[i] > 127) goto done;
-        if (c >= 'A' && c <= 'Z') c += 'a' - 'A';
-        file[pos + i] = c;
-    }
+    if (!dll_name_WtoA( file + pos, name, len )) goto done;
     file[--pos] = '/';
 
     if (build_dir)
@@ -415,6 +471,7 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
         create_directories( name );
         return TRUE;
     }
+    add_handled_dll( filename );
 
     if (!(h = create_dest_file( name ))) return TRUE;  /* not a fake dll */
     if (h == INVALID_HANDLE_VALUE) return FALSE;
@@ -445,4 +502,6 @@ void cleanup_fake_dlls(void)
 {
     HeapFree( GetProcessHeap(), 0, file_buffer );
     file_buffer = NULL;
+    HeapFree( GetProcessHeap(), 0, handled_dlls );
+    handled_count = handled_total = 0;
 }
