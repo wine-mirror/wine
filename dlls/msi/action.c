@@ -693,6 +693,12 @@ static UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
     return ERROR_SUCCESS;
 }
 
+static BOOL needs_ui_sequence(MSIPACKAGE *package)
+{
+    INT level = msi_get_property_int(package, szUILevel, 0);
+    return (level & INSTALLUILEVEL_MASK) >= INSTALLUILEVEL_REDUCED;
+}
+
 static UINT msi_set_context(MSIPACKAGE *package)
 {
     WCHAR val[10];
@@ -714,16 +720,11 @@ static UINT msi_set_context(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
-typedef struct {
-    MSIPACKAGE* package;
-    BOOL UI;
-} iterate_action_param;
-
 static UINT ITERATE_Actions(MSIRECORD *row, LPVOID param)
 {
-    iterate_action_param *iap = param;
     UINT rc;
     LPCWSTR cond, action;
+    MSIPACKAGE *package = param;
 
     action = MSI_RecordGetString(row,1);
     if (!action)
@@ -736,21 +737,21 @@ static UINT ITERATE_Actions(MSIRECORD *row, LPVOID param)
     cond = MSI_RecordGetString(row,2);
 
     /* this is a hack to skip errors in the condition code */
-    if (MSI_EvaluateConditionW(iap->package, cond) == MSICONDITION_FALSE)
+    if (MSI_EvaluateConditionW(package, cond) == MSICONDITION_FALSE)
     {
         TRACE("Skipping action: %s (condition is false)\n", debugstr_w(action));
         return ERROR_SUCCESS;
     }
 
-    if (iap->UI)
-        rc = ACTION_PerformUIAction(iap->package,action,-1);
+    if (needs_ui_sequence(package))
+        rc = ACTION_PerformUIAction(package, action, -1);
     else
-        rc = ACTION_PerformAction(iap->package,action,-1,FALSE);
+        rc = ACTION_PerformAction(package, action, -1, FALSE);
 
     msi_dialog_check_messages( NULL );
 
-    if (iap->package->CurrentInstallState != ERROR_SUCCESS )
-        rc = iap->package->CurrentInstallState;
+    if (package->CurrentInstallState != ERROR_SUCCESS)
+        rc = package->CurrentInstallState;
 
     if (rc == ERROR_FUNCTION_NOT_CALLED)
         rc = ERROR_SUCCESS;
@@ -772,23 +773,13 @@ UINT MSI_Sequence( MSIPACKAGE *package, LPCWSTR szTable, INT iSequenceMode )
          '`','S','e','q','u','e','n','c','e','`',' ',
          '>',' ','0',' ','O','R','D','E','R',' ','B','Y',' ',
          '`','S','e','q','u','e','n','c','e','`',0};
-    iterate_action_param iap;
-
-    /*
-     * FIXME: probably should be checking UILevel in the
-     *       ACTION_PerformUIAction/ACTION_PerformAction
-     *       rather than saving the UI level here. Those
-     *       two functions can be merged too.
-     */
-    iap.package = package;
-    iap.UI = TRUE;
 
     TRACE("%p %s %i\n", package, debugstr_w(szTable), iSequenceMode );
 
     r = MSI_OpenQuery( package->db, &view, query, szTable );
     if (r == ERROR_SUCCESS)
     {
-        r = MSI_IterateRecords( view, NULL, ITERATE_Actions, &iap );
+        r = MSI_IterateRecords( view, NULL, ITERATE_Actions, package );
         msiobj_release(&view->hdr);
     }
 
@@ -806,7 +797,6 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
          '`','S','e','q','u','e','n','c','e','`',' ', '>',' ','%','i',' ',
          'O','R','D','E','R',' ', 'B','Y',' ',
          '`','S','e','q','u','e','n','c','e','`',0 };
-    MSIRECORD * row = 0;
     static const WCHAR IVQuery[] =
         {'S','E','L','E','C','T',' ','`','S','e','q','u','e','n','c','e','`',
          ' ', 'F','R','O','M',' ','`','I','n','s','t','a','l','l',
@@ -815,10 +805,6 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
          ' ','\'', 'I','n','s','t','a','l','l',
          'V','a','l','i','d','a','t','e','\'', 0};
     INT seq = 0;
-    iterate_action_param iap;
-
-    iap.package = package;
-    iap.UI = FALSE;
 
     if (package->script->ExecuteSequenceRun)
     {
@@ -831,7 +817,7 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
     /* get the sequence number */
     if (UIran)
     {
-        row = MSI_QueryGetRecord(package->db, IVQuery);
+        MSIRECORD *row = MSI_QueryGetRecord(package->db, IVQuery);
         if( !row )
             return ERROR_FUNCTION_FAILED;
         seq = MSI_RecordGetInteger(row,1);
@@ -843,7 +829,7 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
     {
         TRACE("Running the actions\n");
 
-        rc = MSI_IterateRecords(view, NULL, ITERATE_Actions, &iap);
+        rc = MSI_IterateRecords(view, NULL, ITERATE_Actions, package);
         msiobj_release(&view->hdr);
     }
 
@@ -862,18 +848,13 @@ static UINT ACTION_ProcessUISequence(MSIPACKAGE *package)
          '`','S','e','q','u','e','n','c','e','`',' ',
          '>',' ','0',' ','O','R','D','E','R',' ','B','Y',' ',
          '`','S','e','q','u','e','n','c','e','`',0};
-    iterate_action_param iap;
-
-    iap.package = package;
-    iap.UI = TRUE;
 
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
-    
     if (rc == ERROR_SUCCESS)
     {
         TRACE("Running the actions\n"); 
 
-        rc = MSI_IterateRecords(view, NULL, ITERATE_Actions, &iap);
+        rc = MSI_IterateRecords(view, NULL, ITERATE_Actions, package);
         msiobj_release(&view->hdr);
     }
 
@@ -6466,7 +6447,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     msi_clone_properties( package );
     msi_set_context( package );
 
-    if ( (msi_get_property_int(package, szUILevel, 0) & INSTALLUILEVEL_MASK) >= INSTALLUILEVEL_REDUCED )
+    if (needs_ui_sequence( package))
     {
         package->script->InWhatSequence |= SEQUENCE_UI;
         rc = ACTION_ProcessUISequence(package);
