@@ -6323,10 +6323,10 @@ UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action, UINT scrip
     return rc;
 }
 
-static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
+static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq)
 {
     UINT rc = ERROR_SUCCESS;
-    MSIRECORD *row = 0;
+    MSIRECORD *row;
 
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
@@ -6339,7 +6339,7 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
      '`', ' ', 'W','H','E','R','E',' ','`','S','e','q','u','e','n','c','e','`',
 	 ' ', '=',' ','%','i',0};
 
-    if (UI)
+    if (needs_ui_sequence(package))
         row = MSI_QueryGetRecord(package->db, UISeqQuery, seq);
     else
         row = MSI_QueryGetRecord(package->db, ExecSeqQuery, seq);
@@ -6355,25 +6355,26 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
 
         /* this is a hack to skip errors in the condition code */
         if (MSI_EvaluateConditionW(package, cond) == MSICONDITION_FALSE)
-            goto end;
+        {
+            msiobj_release(&row->hdr);
+            return ERROR_SUCCESS;
+        }
 
         action = MSI_RecordGetString(row, 1);
         if (!action)
         {
             ERR("failed to fetch action\n");
-            rc = ERROR_FUNCTION_FAILED;
-            goto end;
+            msiobj_release(&row->hdr);
+            return ERROR_FUNCTION_FAILED;
         }
 
-        if (UI)
+        if (needs_ui_sequence(package))
             rc = ACTION_PerformUIAction(package, action, -1);
         else
             rc = ACTION_PerformAction(package, action, -1, FALSE);
-end:
+
         msiobj_release(&row->hdr);
     }
-    else
-        rc = ERROR_SUCCESS;
 
     return rc;
 }
@@ -6386,7 +6387,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
                          LPCWSTR szCommandLine )
 {
     UINT rc;
-    BOOL ui = FALSE, ui_exists;
+    BOOL ui_exists;
 
     static const WCHAR szAction[] = {'A','C','T','I','O','N',0};
     static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
@@ -6451,7 +6452,6 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     {
         package->script->InWhatSequence |= SEQUENCE_UI;
         rc = ACTION_ProcessUISequence(package);
-        ui = TRUE;
         ui_exists = ui_sequence_exists(package);
         if (rc == ERROR_SUCCESS || !ui_exists)
         {
@@ -6466,13 +6466,13 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
 
     /* process the ending type action */
     if (rc == ERROR_SUCCESS)
-        ACTION_PerformActionSequence(package, -1, ui);
+        ACTION_PerformActionSequence(package, -1);
     else if (rc == ERROR_INSTALL_USEREXIT)
-        ACTION_PerformActionSequence(package, -2, ui);
+        ACTION_PerformActionSequence(package, -2);
     else if (rc == ERROR_INSTALL_SUSPEND)
-        ACTION_PerformActionSequence(package, -4, ui);
+        ACTION_PerformActionSequence(package, -4);
     else  /* failed */
-        ACTION_PerformActionSequence(package, -3, ui);
+        ACTION_PerformActionSequence(package, -3);
 
     /* finish up running custom actions */
     ACTION_FinishCustomActions(package);
