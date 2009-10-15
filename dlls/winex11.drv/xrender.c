@@ -1895,8 +1895,6 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     int y, y2;
     POINT pts[2];
     BOOL top_down = FALSE;
-    RGNDATA *rgndata;
-    const WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(devDst->depth, devDst->color_shifts);
     const WineXRenderFormat *src_format;
     int repeat_src;
 
@@ -2008,7 +2006,7 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
 
     }
 
-    rgndata = X11DRV_GetRegionData( devDst->region, 0 );
+    dst_pict = get_xrender_picture(devDst);
 
     wine_tsx11_lock();
     image = XCreateImage(gdi_display, visual, 32, ZPixmap, 0,
@@ -2022,15 +2020,6 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
         return FALSE;
     }
 
-    pa.subwindow_mode = IncludeInferiors;
-    pa.repeat = repeat_src ? RepeatNormal : RepeatNone;
-
-    /* FIXME use devDst->xrender->pict ? */
-    dst_pict = pXRenderCreatePicture(gdi_display,
-                                     devDst->drawable,
-                                     dst_format->pict_format,
-                                     CPSubwindowMode, &pa);
-    TRACE("dst_pict %08lx\n", dst_pict);
     TRACE("src_drawable = %08lx\n", devSrc->drawable);
     xpm = XCreatePixmap(gdi_display,
                         root_window,
@@ -2040,19 +2029,12 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     TRACE("xpm = %08lx\n", xpm);
     XPutImage(gdi_display, xpm, gc, image, 0, 0, 0, 0, widthSrc, heightSrc);
 
+    pa.subwindow_mode = IncludeInferiors;
+    pa.repeat = repeat_src ? RepeatNormal : RepeatNone;
     src_pict = pXRenderCreatePicture(gdi_display,
                                      xpm, src_format->pict_format,
                                      CPSubwindowMode|CPRepeat, &pa);
     TRACE("src_pict %08lx\n", src_pict);
-
-    if (rgndata)
-    {
-        pXRenderSetPictureClipRectangles( gdi_display, dst_pict,
-                                          devDst->dc_rect.left, devDst->dc_rect.top,
-                                          (XRectangle *)rgndata->Buffer, 
-                                          rgndata->rdh.nCount );
-        HeapFree( GetProcessHeap(), 0, rgndata );
-    }
 
     /* Make sure we ALWAYS set the transformation matrix even if we don't need to scale. The reason is
      * that later on we want to reuse pictures (it can bring a lot of extra performance) and each time
@@ -2069,7 +2051,6 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     pXRenderFreePicture(gdi_display, src_pict);
     XFreePixmap(gdi_display, xpm);
     XFreeGC(gdi_display, gc);
-    pXRenderFreePicture(gdi_display, dst_pict);
     image->data = NULL;
     XDestroyImage(image);
 
