@@ -128,6 +128,7 @@ enum user_obj_type
 {
     USER_WINDOW = 1,  /* window */
     USER_MENU,        /* menu */
+    USER_ACCEL,       /* accelerator */
     USER_DWP          /* DeferWindowPos structure */
 };
 
