@@ -23,6 +23,9 @@
 
 #include <stdarg.h>
 #include <fcntl.h>
+#ifdef HAVE_DIRENT_H
+# include <dirent.h>
+#endif
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
@@ -49,6 +52,7 @@ static const char fakedll_signature[] = "Wine placeholder DLL";
 
 static const unsigned int file_alignment = 512;
 static const unsigned int section_alignment = 4096;
+static const unsigned int max_dll_name_len = 64;
 
 static void *file_buffer;
 static size_t file_buffer_size;
@@ -125,6 +129,16 @@ static char *dll_name_WtoA( char *nameA, const WCHAR *nameW, unsigned int len )
     }
     nameA[i] = 0;
     return nameA;
+}
+
+/* convert a dll name A->W without depending on the current codepage */
+static WCHAR *dll_name_AtoW( WCHAR *nameW, const char *nameA, unsigned int len )
+{
+    unsigned int i;
+
+    for (i = 0; i < len; i++) nameW[i] = nameA[i];
+    nameW[i] = 0;
+    return nameW;
 }
 
 /* add a dll to the list of dll that have been taken care of */
@@ -451,6 +465,111 @@ static HANDLE create_dest_file( const WCHAR *name )
     return h;
 }
 
+/* copy a fake dll file to the dest directory */
+static void install_fake_dll( WCHAR *dest, char *file, const char *ext )
+{
+    int ret;
+    size_t size;
+    void *data;
+    DWORD written;
+    WCHAR *destname = dest + strlenW(dest);
+    char *name = strrchr( file, '/' ) + 1;
+    char *end = name + strlen(name);
+
+    if (ext) strcpy( end, ext );
+    if (!(ret = read_file( file, &data, &size ))) return;
+
+    if (end > name + 2 && !strncmp( end - 2, "16", 2 )) end -= 2;  /* remove "16" suffix */
+    dll_name_AtoW( destname, name, end - name );
+    if (!add_handled_dll( destname )) ret = -1;
+
+    if (ret != -1)
+    {
+        HANDLE h = create_dest_file( dest );
+
+        if (h && h != INVALID_HANDLE_VALUE)
+        {
+            TRACE( "%s -> %s\n", debugstr_a(file), debugstr_w(dest) );
+
+            ret = (WriteFile( h, data, size, &written, NULL ) && written == size);
+            if (!ret) ERR( "failed to write to %s (error=%u)\n", debugstr_w(dest), GetLastError() );
+            CloseHandle( h );
+            if (!ret) DeleteFileW( dest );
+        }
+    }
+    *destname = 0;  /* restore it for next file */
+}
+
+/* find and install all fake dlls in a given lib directory */
+static void install_lib_dir( WCHAR *dest, char *file, const char *default_ext )
+{
+    DIR *dir;
+    struct dirent *de;
+    char *name;
+
+    if (!(dir = opendir( file ))) return;
+    name = file + strlen(file);
+    *name++ = '/';
+    while ((de = readdir( dir )))
+    {
+        if (strlen( de->d_name ) > max_dll_name_len) continue;
+        if (!strcmp( de->d_name, "." )) continue;
+        if (!strcmp( de->d_name, ".." )) continue;
+        strcpy( name, de->d_name );
+        if (default_ext)  /* inside build dir */
+        {
+            strcat( name, "/" );
+            strcat( name, de->d_name );
+            if (!strchr( de->d_name, '.' )) strcat( name, default_ext );
+            install_fake_dll( dest, file, ".fake" );
+        }
+        else install_fake_dll( dest, file, NULL );
+    }
+    closedir( dir );
+}
+
+/* create fake dlls in dirname for all the files we can find */
+static BOOL create_wildcard_dlls( const WCHAR *dirname )
+{
+    const char *build_dir = wine_get_build_dir();
+    const char *path;
+    unsigned int i, maxlen = 0;
+    char *file;
+    WCHAR *dest;
+
+    if (build_dir) maxlen = strlen(build_dir) + sizeof("/programs/");
+    for (i = 0; (path = wine_dll_enum_load_path(i)); i++) maxlen = max( maxlen, strlen(path) );
+    maxlen += 2 * max_dll_name_len + 2 + sizeof(".dll.fake");
+    if (!(file = HeapAlloc( GetProcessHeap(), 0, maxlen ))) return FALSE;
+
+    if (!(dest = HeapAlloc( GetProcessHeap(), 0, (strlenW(dirname) + max_dll_name_len) * sizeof(WCHAR) )))
+    {
+        HeapFree( GetProcessHeap(), 0, file );
+        return FALSE;
+    }
+    strcpyW( dest, dirname );
+    dest[strlenW(dest) - 1] = 0;  /* remove wildcard */
+
+    if (build_dir)
+    {
+        strcpy( file, build_dir );
+        strcat( file, "/dlls" );
+        install_lib_dir( dest, file, ".dll" );
+        strcpy( file, build_dir );
+        strcat( file, "/programs" );
+        install_lib_dir( dest, file, ".exe" );
+    }
+    for (i = 0; (path = wine_dll_enum_load_path( i )); i++)
+    {
+        strcpy( file, path );
+        strcat( file, "/fakedlls" );
+        install_lib_dir( dest, file, NULL );
+    }
+    HeapFree( GetProcessHeap(), 0, file );
+    HeapFree( GetProcessHeap(), 0, dest );
+    return TRUE;
+}
+
 /***********************************************************************
  *            create_fake_dll
  */
@@ -471,6 +590,8 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
         create_directories( name );
         return TRUE;
     }
+    if (filename[0] == '*' && !filename[1]) return create_wildcard_dlls( name );
+
     add_handled_dll( filename );
 
     if (!(h = create_dest_file( name ))) return TRUE;  /* not a fake dll */
