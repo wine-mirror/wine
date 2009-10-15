@@ -883,6 +883,8 @@ static ALG_ID schannel_get_cipher_algid(gnutls_cipher_algorithm_t cipher)
     {
     case GNUTLS_CIPHER_UNKNOWN:
     case GNUTLS_CIPHER_NULL: return 0;
+    case GNUTLS_CIPHER_ARCFOUR_40:
+    case GNUTLS_CIPHER_ARCFOUR_128: return CALG_RC4;
     case GNUTLS_CIPHER_DES_CBC:
     case GNUTLS_CIPHER_3DES_CBC: return CALG_DES;
     case GNUTLS_CIPHER_AES_128_CBC:
