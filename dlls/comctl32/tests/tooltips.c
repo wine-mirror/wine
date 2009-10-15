@@ -23,6 +23,8 @@
 
 #include "wine/test.h"
 
+#define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
+
 static void test_create_tooltip(void)
 {
     HWND parent, hwnd;
@@ -462,6 +464,152 @@ static void test_ttm_gettoolinfo(void)
     r = SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&ti);
     ok(r, "Getting tooltip info failed\n");
     ok(0xaaaaaaaa == ti.lParam, "Expected 0xaaaaaaaa, got %lx\n", ti.lParam);
+
+    DestroyWindow(hwnd);
+
+    /* 1. test size parameter validation rules (ansi messages) */
+    hwnd = CreateWindowExA(0, TOOLTIPS_CLASSA, NULL, 0,
+                           10, 10, 300, 100,
+                           NULL, NULL, NULL, 0);
+
+    ti.cbSize = TTTOOLINFOA_V1_SIZE - 1;
+    ti.hwnd = NULL;
+    ti.hinst = GetModuleHandleA(NULL);
+    ti.uFlags = 0;
+    ti.uId = 0x1234ABCD;
+    ti.lpszText = NULL;
+    ti.lParam = 0xdeadbeef;
+    GetClientRect(hwnd, &ti.rect);
+    r = SendMessage(hwnd, TTM_ADDTOOLA, 0, (LPARAM)&ti);
+    ok(r, "Adding the tool to the tooltip failed\n");
+    r = SendMessage(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    expect(1, r);
+
+    ti.cbSize = TTTOOLINFOA_V1_SIZE - 1;
+    ti.hwnd = NULL;
+    ti.uId = 0x1234ABCD;
+    SendMessage(hwnd, TTM_DELTOOLA, 0, (LPARAM)&ti);
+    r = SendMessage(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    expect(0, r);
+
+    ti.cbSize = TTTOOLINFOA_V2_SIZE - 1;
+    ti.hwnd = NULL;
+    ti.hinst = GetModuleHandleA(NULL);
+    ti.uFlags = 0;
+    ti.uId = 0x1234ABCD;
+    ti.lpszText = NULL;
+    ti.lParam = 0xdeadbeef;
+    GetClientRect(hwnd, &ti.rect);
+    r = SendMessage(hwnd, TTM_ADDTOOLA, 0, (LPARAM)&ti);
+    ok(r, "Adding the tool to the tooltip failed\n");
+    r = SendMessage(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    expect(1, r);
+
+    ti.cbSize = TTTOOLINFOA_V2_SIZE - 1;
+    ti.hwnd = NULL;
+    ti.uId = 0x1234ABCD;
+    SendMessage(hwnd, TTM_DELTOOLA, 0, (LPARAM)&ti);
+    r = SendMessage(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    expect(0, r);
+
+    ti.cbSize = TTTOOLINFOA_V2_SIZE + 1;
+    ti.hwnd = NULL;
+    ti.hinst = GetModuleHandleA(NULL);
+    ti.uFlags = 0;
+    ti.uId = 0x1234ABCD;
+    ti.lpszText = NULL;
+    ti.lParam = 0xdeadbeef;
+    GetClientRect(hwnd, &ti.rect);
+    r = SendMessage(hwnd, TTM_ADDTOOLA, 0, (LPARAM)&ti);
+    ok(r, "Adding the tool to the tooltip failed\n");
+    r = SendMessage(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    expect(1, r);
+
+    ti.cbSize = TTTOOLINFOA_V2_SIZE + 1;
+    ti.hwnd = NULL;
+    ti.uId = 0x1234ABCD;
+    SendMessage(hwnd, TTM_DELTOOLA, 0, (LPARAM)&ti);
+    r = SendMessage(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    expect(0, r);
+
+    DestroyWindow(hwnd);
+
+    /* 2. test size parameter validation rules (w-messages) */
+    hwnd = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, 0,
+                           10, 10, 300, 100,
+                           NULL, NULL, NULL, 0);
+    if(!hwnd)
+    {
+        win_skip("CreateWindowExW() not supported. Skipping.\n");
+        return;
+    }
+
+    tiW.cbSize = TTTOOLINFOW_V1_SIZE - 1;
+    tiW.hwnd = NULL;
+    tiW.hinst = GetModuleHandleA(NULL);
+    tiW.uFlags = 0;
+    tiW.uId = 0x1234ABCD;
+    tiW.lpszText = NULL;
+    tiW.lParam = 0xdeadbeef;
+    GetClientRect(hwnd, &tiW.rect);
+    r = SendMessageW(hwnd, TTM_ADDTOOLW, 0, (LPARAM)&tiW);
+    ok(r, "Adding the tool to the tooltip failed\n");
+    r = SendMessageW(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    expect(1, r);
+
+    tiW.cbSize = TTTOOLINFOW_V1_SIZE - 1;
+    tiW.hwnd = NULL;
+    tiW.uId = 0x1234ABCD;
+    SendMessageW(hwnd, TTM_DELTOOLW, 0, (LPARAM)&tiW);
+    r = SendMessageW(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    expect(0, r);
+
+    tiW.cbSize = TTTOOLINFOW_V2_SIZE - 1;
+    tiW.hwnd = NULL;
+    tiW.hinst = GetModuleHandleA(NULL);
+    tiW.uFlags = 0;
+    tiW.uId = 0x1234ABCD;
+    tiW.lpszText = NULL;
+    tiW.lParam = 0xdeadbeef;
+    GetClientRect(hwnd, &tiW.rect);
+    r = SendMessageW(hwnd, TTM_ADDTOOLW, 0, (LPARAM)&tiW);
+    ok(r, "Adding the tool to the tooltip failed\n");
+    r = SendMessageW(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    expect(1, r);
+
+    tiW.cbSize = TTTOOLINFOW_V2_SIZE - 1;
+    tiW.hwnd = NULL;
+    tiW.uId = 0x1234ABCD;
+    SendMessageW(hwnd, TTM_DELTOOLW, 0, (LPARAM)&tiW);
+    r = SendMessageW(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    expect(0, r);
+
+    tiW.cbSize = TTTOOLINFOW_V2_SIZE + 1;
+    tiW.hwnd = NULL;
+    tiW.hinst = GetModuleHandleA(NULL);
+    tiW.uFlags = 0;
+    tiW.uId = 0x1234ABCD;
+    tiW.lpszText = NULL;
+    tiW.lParam = 0xdeadbeef;
+    GetClientRect(hwnd, &tiW.rect);
+    r = SendMessageW(hwnd, TTM_ADDTOOLA, 0, (LPARAM)&tiW);
+    ok(r, "Adding the tool to the tooltip failed\n");
+    r = SendMessageW(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    expect(1, r);
+    /* looks like TTM_DELTOOLW doesn't work with invalid size */
+    tiW.cbSize = TTTOOLINFOW_V2_SIZE + 1;
+    tiW.hwnd = NULL;
+    tiW.uId = 0x1234ABCD;
+    SendMessageW(hwnd, TTM_DELTOOLW, 0, (LPARAM)&tiW);
+    r = SendMessageW(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    expect(1, r);
+
+    tiW.cbSize = TTTOOLINFOW_V2_SIZE;
+    tiW.hwnd = NULL;
+    tiW.uId = 0x1234ABCD;
+    SendMessageW(hwnd, TTM_DELTOOLW, 0, (LPARAM)&tiW);
+    r = SendMessageW(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    expect(0, r);
 
     DestroyWindow(hwnd);
 }

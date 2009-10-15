@@ -1027,8 +1027,6 @@ TOOLTIPS_AddToolA (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOA *lpToolInfo)
 
     if (lpToolInfo == NULL)
 	return FALSE;
-    if (lpToolInfo->cbSize < TTTOOLINFOA_V1_SIZE)
-	return FALSE;
 
     TRACE("add tool (%p) %p %ld%s!\n",
 	   infoPtr->hwndSelf, lpToolInfo->hwnd, lpToolInfo->uId,
@@ -1115,8 +1113,6 @@ TOOLTIPS_AddToolW (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *lpToolInfo)
     INT nResult;
 
     if (lpToolInfo == NULL)
-	return FALSE;
-    if (lpToolInfo->cbSize < TTTOOLINFOW_V1_SIZE)
 	return FALSE;
 
     TRACE("add tool (%p) %p %ld%s!\n",
@@ -1279,8 +1275,6 @@ TOOLTIPS_DelToolA (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOA lpToolInfo)
 
     if (lpToolInfo == NULL)
 	return 0;
-    if (lpToolInfo->cbSize < TTTOOLINFOA_V1_SIZE)
-	return 0;
     if (infoPtr->uNumTools == 0)
 	return 0;
 
@@ -1299,7 +1293,8 @@ TOOLTIPS_DelToolW (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOW lpToolInfo)
 
     if (lpToolInfo == NULL)
 	return 0;
-    if (lpToolInfo->cbSize < TTTOOLINFOW_V1_SIZE)
+    if (lpToolInfo->cbSize >  TTTOOLINFOW_V2_SIZE &&
+        lpToolInfo->cbSize != TTTOOLINFOW_V3_SIZE)
 	return 0;
     if (infoPtr->uNumTools == 0)
 	return 0;
