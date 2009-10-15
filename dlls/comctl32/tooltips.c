@@ -213,15 +213,12 @@ TOOLTIPS_InitSystemSettings (TOOLTIPS_INFO *infoPtr)
 
 /* Custom draw routines */
 static void
-TOOLTIPS_customdraw_fill(NMTTCUSTOMDRAW *lpnmttcd,
-                         const HWND hwnd,
+TOOLTIPS_customdraw_fill(const TOOLTIPS_INFO *infoPtr, NMTTCUSTOMDRAW *lpnmttcd,
                          HDC hdc, const RECT *rcBounds, UINT uFlags)
 {
-    TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr(hwnd);
-
     ZeroMemory(lpnmttcd, sizeof(NMTTCUSTOMDRAW));
     lpnmttcd->uDrawFlags = uFlags;
-    lpnmttcd->nmcd.hdr.hwndFrom = hwnd;
+    lpnmttcd->nmcd.hdr.hwndFrom = infoPtr->hwndSelf;
     lpnmttcd->nmcd.hdr.code     = NM_CUSTOMDRAW;
     if (infoPtr->nCurrentTool != -1) {
         TTTOOL_INFO *toolPtr = &infoPtr->tools[infoPtr->nCurrentTool];
@@ -276,7 +273,7 @@ TOOLTIPS_Refresh (const TOOLTIPS_INFO *infoPtr, HDC hdc)
 
     /* Custom draw - Call PrePaint once initial properties set up     */
     /* Note: Contrary to MSDN, CDRF_SKIPDEFAULT still draws a tooltip */
-    TOOLTIPS_customdraw_fill(&nmttcd, infoPtr->hwndSelf, hdc, &rc, uFlags);
+    TOOLTIPS_customdraw_fill(infoPtr, &nmttcd, hdc, &rc, uFlags);
     cdmode = TOOLTIPS_notify_customdraw(CDDS_PREPAINT, &nmttcd);
     uFlags = nmttcd.uDrawFlags;
 
