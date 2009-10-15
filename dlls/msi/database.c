@@ -78,7 +78,6 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
     BOOL created = FALSE;
     WCHAR path[MAX_PATH];
 
-    static const WCHAR backslash[] = {'\\',0};
     static const WCHAR szTables[]  = { '_','T','a','b','l','e','s',0 };
 
     TRACE("%s %s\n",debugstr_w(szDBPath),debugstr_w(szPersist) );
@@ -177,7 +176,7 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
     if (!strchrW( save_path, '\\' ))
     {
         GetCurrentDirectoryW( MAX_PATH, path );
-        lstrcatW( path, backslash );
+        lstrcatW( path, szBackSlash );
         lstrcatW( path, save_path );
     }
     else
@@ -656,7 +655,6 @@ static UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
     LPWSTR **records = NULL;
     LPWSTR **temp_records;
 
-    static const WCHAR backslash[] = {'\\',0};
     static const WCHAR suminfo[] =
         {'_','S','u','m','m','a','r','y','I','n','f','o','r','m','a','t','i','o','n',0};
 
@@ -665,13 +663,13 @@ static UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
     if( folder == NULL || file == NULL )
         return ERROR_INVALID_PARAMETER;
 
-    len = lstrlenW(folder) + lstrlenW(backslash) + lstrlenW(file) + 1;
+    len = lstrlenW(folder) + lstrlenW(szBackSlash) + lstrlenW(file) + 1;
     path = msi_alloc( len * sizeof(WCHAR) );
     if (!path)
         return ERROR_OUTOFMEMORY;
 
     lstrcpyW( path, folder );
-    lstrcatW( path, backslash );
+    lstrcatW( path, szBackSlash );
     lstrcatW( path, file );
 
     data = msi_read_text_archive( path );
@@ -878,7 +876,6 @@ static UINT MSI_DatabaseExport( MSIDATABASE *db, LPCWSTR table,
 {
     static const WCHAR query[] = {
         's','e','l','e','c','t',' ','*',' ','f','r','o','m',' ','%','s',0 };
-    static const WCHAR szbs[] = { '\\', 0 };
     static const WCHAR forcecodepage[] = {
         '_','F','o','r','c','e','C','o','d','e','p','a','g','e',0 };
     MSIRECORD *rec = NULL;
@@ -899,7 +896,7 @@ static UINT MSI_DatabaseExport( MSIDATABASE *db, LPCWSTR table,
         return ERROR_OUTOFMEMORY;
 
     lstrcpyW( filename, folder );
-    lstrcatW( filename, szbs );
+    lstrcatW( filename, szBackSlash );
     lstrcatW( filename, file );
 
     handle = CreateFileW( filename, GENERIC_READ | GENERIC_WRITE, 0,

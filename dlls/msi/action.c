@@ -62,13 +62,8 @@ static const WCHAR szCreateFolders[] =
     {'C','r','e','a','t','e','F','o','l','d','e','r','s',0};
 static const WCHAR szCostFinalize[] =
     {'C','o','s','t','F','i','n','a','l','i','z','e',0};
-const WCHAR szInstallFiles[] =
-    {'I','n','s','t','a','l','l','F','i','l','e','s',0};
-const WCHAR szDuplicateFiles[] =
-    {'D','u','p','l','i','c','a','t','e','F','i','l','e','s',0};
 static const WCHAR szWriteRegistryValues[] =
-    {'W','r','i','t','e','R','e','g','i','s','t','r','y',
-            'V','a','l','u','e','s',0};
+    {'W','r','i','t','e','R','e','g','i','s','t','r','y','V','a','l','u','e','s',0};
 static const WCHAR szCostInitialize[] =
     {'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0};
 static const WCHAR szFileCost[] = 
@@ -82,12 +77,7 @@ static const WCHAR szLaunchConditions[] =
 static const WCHAR szProcessComponents[] = 
     {'P','r','o','c','e','s','s','C','o','m','p','o','n','e','n','t','s',0};
 static const WCHAR szRegisterTypeLibraries[] = 
-    {'R','e','g','i','s','t','e','r','T','y','p','e',
-            'L','i','b','r','a','r','i','e','s',0};
-const WCHAR szRegisterClassInfo[] = 
-    {'R','e','g','i','s','t','e','r','C','l','a','s','s','I','n','f','o',0};
-const WCHAR szRegisterProgIdInfo[] = 
-    {'R','e','g','i','s','t','e','r','P','r','o','g','I','d','I','n','f','o',0};
+    {'R','e','g','i','s','t','e','r','T','y','p','e','L','i','b','r','a','r','i','e','s',0};
 static const WCHAR szCreateShortcuts[] = 
     {'C','r','e','a','t','e','S','h','o','r','t','c','u','t','s',0};
 static const WCHAR szPublishProduct[] = 
@@ -103,8 +93,7 @@ static const WCHAR szRegisterProduct[] =
 static const WCHAR szInstallExecute[] = 
     {'I','n','s','t','a','l','l','E','x','e','c','u','t','e',0};
 static const WCHAR szInstallExecuteAgain[] = 
-    {'I','n','s','t','a','l','l','E','x','e','c','u','t','e',
-            'A','g','a','i','n',0};
+    {'I','n','s','t','a','l','l','E','x','e','c','u','t','e','A','g','a','i','n',0};
 static const WCHAR szInstallFinalize[] = 
     {'I','n','s','t','a','l','l','F','i','n','a','l','i','z','e',0};
 static const WCHAR szForceReboot[] = 
@@ -114,8 +103,7 @@ static const WCHAR szResolveSource[] =
 static const WCHAR szAppSearch[] = 
     {'A','p','p','S','e','a','r','c','h',0};
 static const WCHAR szAllocateRegistrySpace[] = 
-    {'A','l','l','o','c','a','t','e','R','e','g','i','s','t','r','y',
-            'S','p','a','c','e',0};
+    {'A','l','l','o','c','a','t','e','R','e','g','i','s','t','r','y','S','p','a','c','e',0};
 static const WCHAR szBindImage[] = 
     {'B','i','n','d','I','m','a','g','e',0};
 static const WCHAR szCCPSearch[] = 
@@ -126,58 +114,40 @@ static const WCHAR szDisableRollback[] =
     {'D','i','s','a','b','l','e','R','o','l','l','b','a','c','k',0};
 static const WCHAR szExecuteAction[] = 
     {'E','x','e','c','u','t','e','A','c','t','i','o','n',0};
-const WCHAR szFindRelatedProducts[] = 
-    {'F','i','n','d','R','e','l','a','t','e','d',
-            'P','r','o','d','u','c','t','s',0};
 static const WCHAR szInstallAdminPackage[] = 
-    {'I','n','s','t','a','l','l','A','d','m','i','n',
-            'P','a','c','k','a','g','e',0};
+    {'I','n','s','t','a','l','l','A','d','m','i','n','P','a','c','k','a','g','e',0};
 static const WCHAR szInstallSFPCatalogFile[] = 
-    {'I','n','s','t','a','l','l','S','F','P','C','a','t','a','l','o','g',
-            'F','i','l','e',0};
+    {'I','n','s','t','a','l','l','S','F','P','C','a','t','a','l','o','g','F','i','l','e',0};
 static const WCHAR szIsolateComponents[] = 
     {'I','s','o','l','a','t','e','C','o','m','p','o','n','e','n','t','s',0};
-const WCHAR szMigrateFeatureStates[] = 
-    {'M','i','g','r','a','t','e','F','e','a','t','u','r','e',
-            'S','t','a','t','e','s',0};
-const WCHAR szMoveFiles[] = 
+static const WCHAR szMigrateFeatureStates[] =
+    {'M','i','g','r','a','t','e','F','e','a','t','u','r','e','S','t','a','t','e','s',0};
+static const WCHAR szMoveFiles[] =
     {'M','o','v','e','F','i','l','e','s',0};
 static const WCHAR szMsiPublishAssemblies[] = 
-    {'M','s','i','P','u','b','l','i','s','h',
-            'A','s','s','e','m','b','l','i','e','s',0};
+    {'M','s','i','P','u','b','l','i','s','h','A','s','s','e','m','b','l','i','e','s',0};
 static const WCHAR szMsiUnpublishAssemblies[] = 
-    {'M','s','i','U','n','p','u','b','l','i','s','h',
-            'A','s','s','e','m','b','l','i','e','s',0};
+    {'M','s','i','U','n','p','u','b','l','i','s','h','A','s','s','e','m','b','l','i','e','s',0};
 static const WCHAR szInstallODBC[] = 
     {'I','n','s','t','a','l','l','O','D','B','C',0};
 static const WCHAR szInstallServices[] = 
     {'I','n','s','t','a','l','l','S','e','r','v','i','c','e','s',0};
-const WCHAR szPatchFiles[] = 
+static const WCHAR szPatchFiles[] =
     {'P','a','t','c','h','F','i','l','e','s',0};
 static const WCHAR szPublishComponents[] = 
     {'P','u','b','l','i','s','h','C','o','m','p','o','n','e','n','t','s',0};
 static const WCHAR szRegisterComPlus[] =
     {'R','e','g','i','s','t','e','r','C','o','m','P','l','u','s',0};
-const WCHAR szRegisterExtensionInfo[] =
-    {'R','e','g','i','s','t','e','r','E','x','t','e','n','s','i','o','n',
-            'I','n','f','o',0};
 static const WCHAR szRegisterFonts[] =
     {'R','e','g','i','s','t','e','r','F','o','n','t','s',0};
-const WCHAR szRegisterMIMEInfo[] =
-    {'R','e','g','i','s','t','e','r','M','I','M','E','I','n','f','o',0};
 static const WCHAR szRegisterUser[] =
     {'R','e','g','i','s','t','e','r','U','s','e','r',0};
-const WCHAR szRemoveDuplicateFiles[] =
-    {'R','e','m','o','v','e','D','u','p','l','i','c','a','t','e',
-            'F','i','l','e','s',0};
+static const WCHAR szRemoveDuplicateFiles[] =
+    {'R','e','m','o','v','e','D','u','p','l','i','c','a','t','e','F','i','l','e','s',0};
 static const WCHAR szRemoveEnvironmentStrings[] =
-    {'R','e','m','o','v','e','E','n','v','i','r','o','n','m','e','n','t',
-            'S','t','r','i','n','g','s',0};
-const WCHAR szRemoveExistingProducts[] =
-    {'R','e','m','o','v','e','E','x','i','s','t','i','n','g',
-            'P','r','o','d','u','c','t','s',0};
-const WCHAR szRemoveFiles[] =
-    {'R','e','m','o','v','e','F','i','l','e','s',0};
+    {'R','e','m','o','v','e','E','n','v','i','r','o','n','m','e','n','t','S','t','r','i','n','g','s',0};
+static const WCHAR szRemoveExistingProducts[] =
+    {'R','e','m','o','v','e','E','x','i','s','t','i','n','g','P','r','o','d','u','c','t','s',0};
 static const WCHAR szRemoveFolders[] =
     {'R','e','m','o','v','e','F','o','l','d','e','r','s',0};
 static const WCHAR szRemoveIniValues[] =
@@ -185,8 +155,7 @@ static const WCHAR szRemoveIniValues[] =
 static const WCHAR szRemoveODBC[] =
     {'R','e','m','o','v','e','O','D','B','C',0};
 static const WCHAR szRemoveRegistryValues[] =
-    {'R','e','m','o','v','e','R','e','g','i','s','t','r','y',
-            'V','a','l','u','e','s',0};
+    {'R','e','m','o','v','e','R','e','g','i','s','t','r','y','V','a','l','u','e','s',0};
 static const WCHAR szRemoveShortcuts[] =
     {'R','e','m','o','v','e','S','h','o','r','t','c','u','t','s',0};
 static const WCHAR szRMCCPSearch[] =
@@ -202,33 +171,27 @@ static const WCHAR szStartServices[] =
 static const WCHAR szStopServices[] =
     {'S','t','o','p','S','e','r','v','i','c','e','s',0};
 static const WCHAR szUnpublishComponents[] =
-    {'U','n','p','u','b','l','i','s','h',
-            'C','o','m','p','o','n','e','n','t','s',0};
+    {'U','n','p','u','b','l','i','s','h', 'C','o','m','p','o','n','e','n','t','s',0};
 static const WCHAR szUnpublishFeatures[] =
     {'U','n','p','u','b','l','i','s','h','F','e','a','t','u','r','e','s',0};
-const WCHAR szUnregisterClassInfo[] =
-    {'U','n','r','e','g','i','s','t','e','r','C','l','a','s','s',
-            'I','n','f','o',0};
+static const WCHAR szUnregisterClassInfo[] =
+    {'U','n','r','e','g','i','s','t','e','r','C','l','a','s','s','I','n','f','o',0};
 static const WCHAR szUnregisterComPlus[] =
     {'U','n','r','e','g','i','s','t','e','r','C','o','m','P','l','u','s',0};
-const WCHAR szUnregisterExtensionInfo[] =
-    {'U','n','r','e','g','i','s','t','e','r',
-            'E','x','t','e','n','s','i','o','n','I','n','f','o',0};
+static const WCHAR szUnregisterExtensionInfo[] =
+    {'U','n','r','e','g','i','s','t','e','r','E','x','t','e','n','s','i','o','n','I','n','f','o',0};
 static const WCHAR szUnregisterFonts[] =
     {'U','n','r','e','g','i','s','t','e','r','F','o','n','t','s',0};
-const WCHAR szUnregisterMIMEInfo[] =
+static const WCHAR szUnregisterMIMEInfo[] =
     {'U','n','r','e','g','i','s','t','e','r','M','I','M','E','I','n','f','o',0};
-const WCHAR szUnregisterProgIdInfo[] =
-    {'U','n','r','e','g','i','s','t','e','r','P','r','o','g','I','d',
-            'I','n','f','o',0};
+static const WCHAR szUnregisterProgIdInfo[] =
+    {'U','n','r','e','g','i','s','t','e','r','P','r','o','g','I','d','I','n','f','o',0};
 static const WCHAR szUnregisterTypeLibraries[] =
-    {'U','n','r','e','g','i','s','t','e','r','T','y','p','e',
-            'L','i','b','r','a','r','i','e','s',0};
+    {'U','n','r','e','g','i','s','t','e','r','T','y','p','e','L','i','b','r','a','r','i','e','s',0};
 static const WCHAR szValidateProductID[] =
     {'V','a','l','i','d','a','t','e','P','r','o','d','u','c','t','I','D',0};
 static const WCHAR szWriteEnvironmentStrings[] =
-    {'W','r','i','t','e','E','n','v','i','r','o','n','m','e','n','t',
-            'S','t','r','i','n','g','s',0};
+    {'W','r','i','t','e','E','n','v','i','r','o','n','m','e','n','t','S','t','r','i','n','g','s',0};
 
 /* action handlers */
 typedef UINT (*STANDARDACTIONHANDLER)(MSIPACKAGE*);
@@ -401,8 +364,6 @@ static LPWSTR* msi_split_string( LPCWSTR str, WCHAR sep )
 
 static UINT msi_check_transform_applicable( MSIPACKAGE *package, IStorage *patch )
 {
-    static const WCHAR szProductCode[] =
-        { 'P','r','o','d','u','c','t','C','o','d','e',0 };
     static const WCHAR szSystemLanguageID[] =
         { 'S','y','s','t','e','m','L','a','n','g','u','a','g','e','I','D',0 };
 
@@ -416,7 +377,6 @@ static UINT msi_check_transform_applicable( MSIPACKAGE *package, IStorage *patch
 
     if ( strstrW( patch_product, prod_code ) )
     {
-        static const WCHAR zero[] = {'0',0};
         MSISUMMARYINFO *si;
         const WCHAR *p;
 
@@ -450,7 +410,7 @@ static UINT msi_check_transform_applicable( MSIPACKAGE *package, IStorage *patch
         }
 
         p = strchrW( template, ';' );
-        if (p && (!strcmpW( p + 1, langid ) || !strcmpW( p + 1, zero )))
+        if (p && (!strcmpW( p + 1, langid ) || !strcmpW( p + 1, szZero )))
         {
             TRACE("applicable transform\n");
             ret = ERROR_SUCCESS;
@@ -503,11 +463,10 @@ static UINT msi_apply_substorage_transform( MSIPACKAGE *package,
 
 UINT msi_check_patch_applicable( MSIPACKAGE *package, MSISUMMARYINFO *si )
 {
-    static const WCHAR szProdCode[] = { 'P','r','o','d','u','c','t','C','o','d','e',0 };
     LPWSTR guid_list, *guids, product_code;
     UINT i, ret = ERROR_FUNCTION_FAILED;
 
-    product_code = msi_dup_property( package, szProdCode );
+    product_code = msi_dup_property( package, szProductCode );
     if (!product_code)
     {
         /* FIXME: the property ProductCode should be written into the DB somewhere */
@@ -537,7 +496,6 @@ static UINT msi_set_media_source_prop(MSIPACKAGE *package)
     LPCWSTR prop;
     UINT r;
 
-    static const WCHAR szPatch[] = {'P','A','T','C','H',0};
     static const WCHAR query[] = {'S','E','L','E','C','T',' ',
         '`','S','o','u','r','c','e','`',' ','F','R','O','M',' ',
         '`','M','e','d','i','a','`',' ','W','H','E','R','E',' ',
@@ -642,7 +600,6 @@ static UINT msi_apply_patch_package( MSIPACKAGE *package, LPCWSTR file )
 /* get the PATCH property, and apply all the patches it specifies */
 static UINT msi_apply_patches( MSIPACKAGE *package )
 {
-    static const WCHAR szPatch[] = { 'P','A','T','C','H',0 };
     LPWSTR patch_list, *patches;
     UINT i, r = ERROR_SUCCESS;
 
@@ -760,9 +717,6 @@ static UINT msi_set_context(MSIPACKAGE *package)
     DWORD num;
     UINT r;
 
-    static const WCHAR szOne[] = {'1',0};
-    static const WCHAR szAllUsers[] = {'A','L','L','U','S','E','R','S',0};
-
     package->Context = MSIINSTALLCONTEXT_USERUNMANAGED;
 
     r = MSI_GetPropertyW(package, szAllUsers, val, &sz);
@@ -786,12 +740,8 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
 {
     UINT rc;
     BOOL ui = FALSE, ui_exists;
-    static const WCHAR szUILevel[] = {'U','I','L','e','v','e','l',0};
     static const WCHAR szAction[] = {'A','C','T','I','O','N',0};
     static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
-    static const WCHAR szReinstall[] = {'R','E','I','N','S','T','A','L','L',0};
-    static const WCHAR szInstalled[] = {'I','n','s','t','a','l','l','e','d',0};
-    static const WCHAR szAll[] = {'A','L','L',0};
 
     MSI_SetPropertyW(package, szAction, szInstall);
 
@@ -816,7 +766,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
             msi_free(dir);
             dir = msi_alloc(MAX_PATH*sizeof(WCHAR));
             GetCurrentDirectoryW(MAX_PATH, dir);
-            lstrcatW(dir, cszbs);
+            lstrcatW(dir, szBackSlash);
             file = szPackagePath;
         }
 
@@ -1650,7 +1600,6 @@ static UINT load_all_files(MSIPACKAGE *package)
 static UINT load_folder( MSIRECORD *row, LPVOID param )
 {
     MSIPACKAGE *package = param;
-    static const WCHAR szDot[] = { '.',0 };
     static WCHAR szEmpty[] = { 0 };
     LPWSTR p, tgt_short, tgt_long, src_short, src_long;
     MSIFOLDER *folder;
@@ -1748,7 +1697,6 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
 {
     static const WCHAR szCosting[] =
         {'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
-    static const WCHAR szZero[] = { '0', 0 };
 
     MSI_SetPropertyW(package, szCosting, szZero);
     MSI_SetPropertyW(package, cszRootDrive, c_colon);
@@ -1841,9 +1789,6 @@ static void ACTION_GetFeatureInstallStates(MSIPACKAGE *package)
 static BOOL process_state_property(MSIPACKAGE* package, int level,
                                    LPCWSTR property, INSTALLSTATE state)
 {
-    static const WCHAR all[]={'A','L','L',0};
-    static const WCHAR remove[] = {'R','E','M','O','V','E',0};
-    static const WCHAR reinstall[] = {'R','E','I','N','S','T','A','L','L',0};
     LPWSTR override;
     MSIFEATURE *feature;
 
@@ -1853,13 +1798,13 @@ static BOOL process_state_property(MSIPACKAGE* package, int level,
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
-        if (lstrcmpW(property, remove) &&
+        if (lstrcmpW(property, szRemove) &&
             (feature->Level <= 0 || feature->Level > level))
             continue;
 
-        if (!strcmpW(property, reinstall)) state = feature->Installed;
+        if (!strcmpW(property, szReinstall)) state = feature->Installed;
 
-        if (strcmpiW(override,all)==0)
+        if (strcmpiW(override, szAll)==0)
             msi_feature_set_state(package, feature, state);
         else
         {
@@ -1898,10 +1843,6 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         {'A','D','D','L','O','C','A','L',0};
     static const WCHAR szAddSource[] =
         {'A','D','D','S','O','U','R','C','E',0};
-    static const WCHAR szRemove[] =
-        {'R','E','M','O','V','E',0};
-    static const WCHAR szReinstall[] =
-        {'R','E','I','N','S','T','A','L','L',0};
     static const WCHAR szAdvertise[] =
         {'A','D','V','E','R','T','I','S','E',0};
     BOOL override = FALSE;
@@ -1972,13 +1913,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         }
     }
     else
-    {
-        /* set the Preselected Property */
-        static const WCHAR szPreselected[] = {'P','r','e','s','e','l','e','c','t','e','d',0};
-        static const WCHAR szOne[] = { '1', 0 };
-
-        MSI_SetPropertyW(package,szPreselected,szOne);
-    }
+        MSI_SetPropertyW(package, szPreselected, szOne);
 
     /*
      * now we want to enable or disable components base on feature
@@ -2276,8 +2211,6 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         {'I','N','S','T','A','L','L','L','E','V','E','L',0};
     static const WCHAR szOutOfDiskSpace[] =
         {'O','u','t','O','f','D','i','s','k','S','p','a','c','e',0};
-    static const WCHAR szOne[] = { '1', 0 };
-    static const WCHAR szZero[] = { '0', 0 };
     MSICOMPONENT *comp;
     UINT rc;
     MSIQUERY * view;
@@ -2528,8 +2461,7 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     {
         case -1: 
             {
-                static const WCHAR szALLUSER[] = {'A','L','L','U','S','E','R','S',0};
-                LPWSTR all_users = msi_dup_property( package, szALLUSER );
+                LPWSTR all_users = msi_dup_property( package, szAllUsers );
                 if (all_users && all_users[0] == '1')
                 {
                     root_key = HKEY_LOCAL_MACHINE;
@@ -2584,7 +2516,6 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
         value_data = parse_value(package, value, &type, &size); 
     else
     {
-        static const WCHAR szEmpty[] = {0};
         value_data = (LPSTR)strdupW(szEmpty);
         size = sizeof(szEmpty);
         type = REG_SZ;
@@ -3486,9 +3417,6 @@ static UINT msi_publish_sourcelist(MSIPACKAGE *package, HKEY hkey)
     MSIMEDIADISK *disk;
     MSISOURCELISTINFO *info;
 
-    static const WCHAR szEmpty[] = {0};
-    static const WCHAR szSourceList[] = {'S','o','u','r','c','e','L','i','s','t',0};
-
     r = RegCreateKeyW(hkey, szSourceList, &source);
     if (r != ERROR_SUCCESS)
         return r;
@@ -3686,8 +3614,6 @@ static UINT msi_publish_patch(MSIPACKAGE *package, HKEY prodkey, HKEY hudkey)
     HKEY patches;
     LONG res;
     UINT r = ERROR_FUNCTION_FAILED;
-
-    static const WCHAR szPatches[] = {'P','a','t','c','h','e','s',0};
 
     res = RegCreateKeyExW(prodkey, szPatches, 0, NULL, 0, KEY_ALL_ACCESS, NULL,
                           &patches, NULL);
@@ -4054,10 +3980,9 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
             size = strlenW(feature->Feature_Parent)*sizeof(WCHAR);
         if (!absent)
         {
-            static const WCHAR emptyW[] = {0};
             size += sizeof(WCHAR);
             RegSetValueExW(hkey,feature->Feature,0,REG_SZ,
-                           (LPBYTE)(feature->Feature_Parent ? feature->Feature_Parent : emptyW),size);
+                           (LPBYTE)(feature->Feature_Parent ? feature->Feature_Parent : szEmpty),size);
         }
         else
         {
@@ -4354,8 +4279,6 @@ static UINT msi_unpublish_product(MSIPACKAGE *package)
     BOOL full_uninstall = TRUE;
     MSIFEATURE *feature;
 
-    static const WCHAR szRemove[] = {'R','E','M','O','V','E',0};
-    static const WCHAR szAll[] = {'A','L','L',0};
     static const WCHAR szUpgradeCode[] =
         {'U','p','g','r','a','d','e','C','o','d','e',0};
 
@@ -5350,7 +5273,6 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
          'C','o','n','t','r','o','l','\\',
          'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
          'E','n','v','i','r','o','n','m','e','n','t',0};
-    static const WCHAR semicolon[] = {';',0};
 
     name = MSI_RecordGetString(rec, 2);
     value = MSI_RecordGetString(rec, 3);
@@ -5436,7 +5358,7 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
             if (flags & ENV_MOD_PREFIX)
             {
                 lstrcpyW(newval, value);
-                lstrcatW(newval, semicolon);
+                lstrcatW(newval, szSemiColon);
                 ptr = newval + lstrlenW(value) + 1;
             }
 
@@ -5444,7 +5366,7 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
 
             if (flags & ENV_MOD_APPEND)
             {
-                lstrcatW(newval, semicolon);
+                lstrcatW(newval, szSemiColon);
                 lstrcatW(newval, value);
             }
         }
@@ -5697,8 +5619,6 @@ static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
     DWORD size;
     BOOL ret, wildcards;
 
-    static const WCHAR backslash[] = {'\\',0};
-
     comp = get_loaded_component(package, MSI_RecordGetString(rec, 2));
     if (!comp || !comp->Enabled ||
         !(comp->Action & (INSTALLSTATE_LOCAL | INSTALLSTATE_SOURCE)))
@@ -5736,7 +5656,7 @@ static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
 
         lstrcpyW(source, sourcedir);
         if (source[lstrlenW(source) - 1] != '\\')
-            lstrcatW(source, backslash);
+            lstrcatW(source, szBackSlash);
         lstrcatW(source, sourcename);
     }
 
@@ -5769,7 +5689,7 @@ static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
 
     lstrcpyW(dest, destdir);
     if (dest[lstrlenW(dest) - 1] != '\\')
-        lstrcatW(dest, backslash);
+        lstrcatW(dest, szBackSlash);
 
     if (destname)
         lstrcatW(dest, destname);

@@ -1189,8 +1189,6 @@ static UINT msi_stream_name( const MSITABLEVIEW *tv, UINT row, LPWSTR *pstname )
         type = tv->columns[i].type;
         if ( type & MSITYPE_KEY )
         {
-            static const WCHAR szDot[] = { '.', 0 };
-
             r = TABLE_fetch_int( view, row, i+1, &ival );
             if ( r != ERROR_SUCCESS )
                 goto err;
@@ -2377,7 +2375,6 @@ static UINT read_raw_int(const BYTE *data, UINT col, UINT bytes)
 
 static UINT msi_record_encoded_stream_name( const MSITABLEVIEW *tv, MSIRECORD *rec, LPWSTR *pstname )
 {
-    static const WCHAR szDot[] = { '.', 0 };
     LPWSTR stname = NULL, sval, p;
     DWORD len;
     UINT i, r;
