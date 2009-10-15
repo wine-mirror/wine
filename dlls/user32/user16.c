@@ -612,6 +612,85 @@ HBITMAP16 WINAPI LoadBitmap16(HINSTANCE16 hInstance, LPCSTR name)
   return HBITMAP_16(LoadBitmapA(HINSTANCE_32(hInstance), name));
 }
 
+/**********************************************************************
+ *     LoadString   (USER.176)
+ */
+INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id, LPSTR buffer, INT16 buflen )
+{
+    HGLOBAL16 hmem;
+    HRSRC16 hrsrc;
+    unsigned char *p;
+    int string_num;
+    int ret;
+
+    TRACE("inst=%04x id=%04x buff=%p len=%d\n", instance, resource_id, buffer, buflen);
+
+    hrsrc = FindResource16( instance, MAKEINTRESOURCEA((resource_id>>4)+1), (LPSTR)RT_STRING );
+    if (!hrsrc) return 0;
+    hmem = LoadResource16( instance, hrsrc );
+    if (!hmem) return 0;
+
+    p = LockResource16(hmem);
+    string_num = resource_id & 0x000f;
+    while (string_num--) p += *p + 1;
+
+    if (buffer == NULL) ret = *p;
+    else
+    {
+        ret = min(buflen - 1, *p);
+        if (ret > 0)
+        {
+            memcpy(buffer, p + 1, ret);
+            buffer[ret] = '\0';
+        }
+        else if (buflen > 1)
+        {
+	    buffer[0] = '\0';
+	    ret = 0;
+	}
+        TRACE( "%s loaded\n", debugstr_a(buffer));
+    }
+    FreeResource16( hmem );
+    return ret;
+}
+
+/**********************************************************************
+ *              LoadAccelerators  (USER.177)
+ */
+HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, LPCSTR lpTableName)
+{
+    HRSRC16 hRsrc;
+    HGLOBAL16 hMem;
+    ACCEL16 *table16;
+    HACCEL ret = 0;
+
+    TRACE("%04x %s\n", instance, debugstr_a(lpTableName) );
+
+    if (!(hRsrc = FindResource16( instance, lpTableName, (LPSTR)RT_ACCELERATOR )) ||
+        !(hMem = LoadResource16(instance,hRsrc)))
+    {
+        WARN("couldn't find %04x %s\n", instance, debugstr_a(lpTableName));
+        return 0;
+    }
+    if ((table16 = LockResource16( hMem )))
+    {
+        DWORD i, count = SizeofResource16( instance, hRsrc ) / sizeof(*table16);
+        ACCEL *table = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*table) );
+        if (table)
+        {
+            for (i = 0; i < count; i++)
+            {
+                table[i].fVirt = table16[i].fVirt & 0x7f;
+                table[i].key   = table16[i].key;
+                table[i].cmd   = table16[i].cmd;
+            }
+            ret = CreateAcceleratorTableA( table, count );
+            HeapFree( GetProcessHeap(), 0, table );
+        }
+    }
+    FreeResource16( hMem );
+    return HACCEL_16(ret);
+}
 
 /***********************************************************************
  *		GetSystemMetrics (USER.179)

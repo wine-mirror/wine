@@ -26,9 +26,6 @@
 #include "winerror.h"
 #include "winternl.h"
 #include "winnls.h"
-#include "wine/winbase16.h"
-#include "wine/winuser16.h"
-#include "wownt32.h"
 #include "wine/debug.h"
 #include "user_private.h"
 
@@ -51,24 +48,6 @@ struct accelerator
     unsigned int       count;
     PE_ACCEL           table[1];
 };
-
-/**********************************************************************
- *			LoadAccelerators	[USER.177]
- */
-HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, LPCSTR lpTableName)
-{
-    HRSRC16	hRsrc;
-
-    TRACE_(accel)("%04x %s\n", instance, debugstr_a(lpTableName) );
-
-    if (!(hRsrc = FindResource16( instance, lpTableName, (LPSTR)RT_ACCELERATOR ))) {
-      WARN_(accel)("couldn't find accelerator table resource\n");
-      return 0;
-    }
-
-    TRACE_(accel)("returning HACCEL 0x%x\n", hRsrc);
-    return LoadResource16(instance,hRsrc);
-}
 
 /**********************************************************************
  *			LoadAcceleratorsW	(USER32.@)
@@ -251,51 +230,6 @@ BOOL WINAPI DestroyAcceleratorTable( HACCEL handle )
         return FALSE;
     }
     return HeapFree( GetProcessHeap(), 0, accel );
-}
-
-/**********************************************************************
- *     LoadString   (USER.176)
- */
-INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
-                           LPSTR buffer, INT16 buflen )
-{
-    HGLOBAL16 hmem;
-    HRSRC16 hrsrc;
-    unsigned char *p;
-    int string_num;
-    int i;
-
-    TRACE("inst=%04x id=%04x buff=%p len=%d\n",
-          instance, resource_id, buffer, buflen);
-
-    hrsrc = FindResource16( instance, MAKEINTRESOURCEA((resource_id>>4)+1), (LPSTR)RT_STRING );
-    if (!hrsrc) return 0;
-    hmem = LoadResource16( instance, hrsrc );
-    if (!hmem) return 0;
-
-    p = LockResource16(hmem);
-    string_num = resource_id & 0x000f;
-    for (i = 0; i < string_num; i++)
-	p += *p + 1;
-
-    TRACE("strlen = %d\n", (int)*p );
-
-    if (buffer == NULL) return *p;
-    i = min(buflen - 1, *p);
-    if (i > 0) {
-	memcpy(buffer, p + 1, i);
-	buffer[i] = '\0';
-    } else {
-	if (buflen > 1) {
-	    buffer[0] = '\0';
-	    return 0;
-	}
-	WARN("Don't know why caller gave buflen=%d *p=%d trying to obtain string '%s'\n", buflen, *p, p + 1);
-    }
-    FreeResource16( hmem );
-
-    TRACE("'%s' loaded !\n", buffer);
-    return i;
 }
 
 /**********************************************************************
