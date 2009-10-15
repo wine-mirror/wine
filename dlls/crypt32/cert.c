@@ -1196,7 +1196,7 @@ static BOOL compare_cert_by_subject_cert(PCCERT_CONTEXT pCertContext,
 
     /* Matching serial number and subject match.. */
     ret = CertCompareCertificateName(pCertContext->dwCertEncodingType,
-     &pCertInfo->Issuer, &pCertContext->pCertInfo->Subject);
+     &pCertContext->pCertInfo->Subject, &pCertInfo->Issuer);
     if (ret)
         ret = CertCompareIntegerBlob(&pCertContext->pCertInfo->SerialNumber,
          &pCertInfo->SerialNumber);
@@ -1207,7 +1207,7 @@ static BOOL compare_cert_by_subject_cert(PCCERT_CONTEXT pCertContext,
          &pCertInfo->SerialNumber);
         if (ret)
             ret = CertCompareCertificateName(pCertContext->dwCertEncodingType,
-             &pCertInfo->Issuer, &pCertContext->pCertInfo->Issuer);
+             &pCertContext->pCertInfo->Issuer, &pCertInfo->Issuer);
     }
     TRACE("returning %d\n", ret);
     return ret;
