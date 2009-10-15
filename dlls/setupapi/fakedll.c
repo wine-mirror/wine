@@ -116,6 +116,11 @@ static int read_file( const char *name, void **data, size_t *size )
     struct stat st;
     void *buffer = static_file_buffer;
     int fd, ret = -1;
+    size_t header_size;
+    IMAGE_DOS_HEADER *dos;
+    IMAGE_NT_HEADERS *nt;
+    const size_t min_size = sizeof(*dos) + sizeof(fakedll_signature) +
+        FIELD_OFFSET( IMAGE_NT_HEADERS, OptionalHeader.MajorLinkerVersion );
 
     if ((fd = open( name, O_RDONLY | O_BINARY )) == -1) return 0;
     if (fstat( fd, &st ) == -1) goto done;
@@ -131,7 +136,27 @@ static int read_file( const char *name, void **data, size_t *size )
         buffer = file_buffer;
     }
 
-    if (pread( fd, buffer, st.st_size, 0 ) == st.st_size)
+    /* check for valid fake dll file */
+
+    if (st.st_size < min_size) goto done;
+    header_size = min( st.st_size, 4096 );
+    if (pread( fd, buffer, header_size, 0 ) != header_size) goto done;
+    dos = buffer;
+    if (dos->e_magic != IMAGE_DOS_SIGNATURE) goto done;
+    if (dos->e_lfanew < sizeof(fakedll_signature)) goto done;
+    if (memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) )) goto done;
+    if (dos->e_lfanew + FIELD_OFFSET(IMAGE_NT_HEADERS,OptionalHeader.MajorLinkerVersion) > header_size)
+        goto done;
+    nt = (IMAGE_NT_HEADERS *)((char *)buffer + dos->e_lfanew);
+    if (nt->Signature == IMAGE_NT_SIGNATURE && nt->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR_MAGIC)
+    {
+        /* wrong 32/64 type, pretend it doesn't exist */
+        ret = 0;
+        goto done;
+    }
+    if (st.st_size == header_size ||
+        pread( fd, (char *)buffer + header_size,
+               st.st_size - header_size, header_size ) == st.st_size - header_size)
     {
         *data = buffer;
         ret = 1;
