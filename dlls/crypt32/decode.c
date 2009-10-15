@@ -3915,38 +3915,40 @@ static BOOL CRYPT_AsnDecodeIntInternal(const BYTE *pbEncoded, DWORD cbEncoded,
  DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo, DWORD *pcbDecoded)
 {
     BOOL ret;
-    BYTE buf[sizeof(CRYPT_INTEGER_BLOB) + sizeof(int)];
-    CRYPT_INTEGER_BLOB *blob = (CRYPT_INTEGER_BLOB *)buf;
-    DWORD size = sizeof(buf);
+    DWORD dataLen;
 
-    blob->pbData = buf + sizeof(CRYPT_INTEGER_BLOB);
-    ret = CRYPT_AsnDecodeIntegerInternal(pbEncoded, cbEncoded, 0, buf,
-     &size, pcbDecoded);
-    if (ret)
+    if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen)))
     {
-        if (!pvStructInfo)
+        BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
+
+        if (pcbDecoded)
+            *pcbDecoded = 1 + lenBytes + dataLen;
+        if (dataLen > sizeof(int))
+        {
+            SetLastError(CRYPT_E_ASN1_LARGE);
+            ret = FALSE;
+        }
+        else if (!pvStructInfo)
             *pcbStructInfo = sizeof(int);
         else if ((ret = CRYPT_DecodeCheckSpace(pcbStructInfo, sizeof(int))))
         {
             int val, i;
 
-            if (blob->pbData[blob->cbData - 1] & 0x80)
+            if (dataLen && pbEncoded[1 + lenBytes] & 0x80)
             {
                 /* initialize to a negative value to sign-extend */
                 val = -1;
             }
             else
                 val = 0;
-            for (i = 0; i < blob->cbData; i++)
+            for (i = 0; i < dataLen; i++)
             {
                 val <<= 8;
-                val |= blob->pbData[blob->cbData - i - 1];
+                val |= pbEncoded[1 + lenBytes + i];
             }
             memcpy(pvStructInfo, &val, sizeof(int));
         }
     }
-    else if (GetLastError() == ERROR_MORE_DATA)
-        SetLastError(CRYPT_E_ASN1_LARGE);
     return ret;
 }
 
