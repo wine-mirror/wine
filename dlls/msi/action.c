@@ -46,14 +46,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 /*
- * Prototypes
- */
-static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran);
-static UINT ACTION_ProcessUISequence(MSIPACKAGE *package);
-static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI);
-static BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action, UINT* rc, BOOL force);
-
-/*
  * consts and values used
  */
 static const WCHAR c_colon[] = {'C',':','\\',0};
@@ -192,15 +184,6 @@ static const WCHAR szValidateProductID[] =
     {'V','a','l','i','d','a','t','e','P','r','o','d','u','c','t','I','D',0};
 static const WCHAR szWriteEnvironmentStrings[] =
     {'W','r','i','t','e','E','n','v','i','r','o','n','m','e','n','t','S','t','r','i','n','g','s',0};
-
-/* action handlers */
-typedef UINT (*STANDARDACTIONHANDLER)(MSIPACKAGE*);
-
-struct _actions {
-    LPCWSTR action;
-    STANDARDACTIONHANDLER handler;
-};
-
 
 /********************************************************
  * helper functions
@@ -731,166 +714,6 @@ static UINT msi_set_context(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
-/****************************************************
- * TOP level entry points 
- *****************************************************/
-
-UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
-                         LPCWSTR szCommandLine )
-{
-    UINT rc;
-    BOOL ui = FALSE, ui_exists;
-    static const WCHAR szAction[] = {'A','C','T','I','O','N',0};
-    static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
-
-    MSI_SetPropertyW(package, szAction, szInstall);
-
-    package->script = msi_alloc_zero(sizeof(MSISCRIPT));
-
-    package->script->InWhatSequence = SEQUENCE_INSTALL;
-
-    if (szPackagePath)   
-    {
-        LPWSTR p, dir;
-        LPCWSTR file;
-
-        dir = strdupW(szPackagePath);
-        p = strrchrW(dir, '\\');
-        if (p)
-        {
-            *(++p) = 0;
-            file = szPackagePath + (p - dir);
-        }
-        else
-        {
-            msi_free(dir);
-            dir = msi_alloc(MAX_PATH*sizeof(WCHAR));
-            GetCurrentDirectoryW(MAX_PATH, dir);
-            lstrcatW(dir, szBackSlash);
-            file = szPackagePath;
-        }
-
-        msi_free( package->PackagePath );
-        package->PackagePath = msi_alloc((lstrlenW(dir) + lstrlenW(file) + 1) * sizeof(WCHAR));
-        if (!package->PackagePath)
-        {
-            msi_free(dir);
-            return ERROR_OUTOFMEMORY;
-        }
-
-        lstrcpyW(package->PackagePath, dir);
-        lstrcatW(package->PackagePath, file);
-        msi_free(dir);
-
-        msi_set_sourcedir_props(package, FALSE);
-    }
-
-    msi_parse_command_line( package, szCommandLine, FALSE );
-
-    msi_apply_transforms( package );
-    msi_apply_patches( package );
-
-    if (!szCommandLine && msi_get_property_int( package, szInstalled, 0 ))
-    {
-        TRACE("setting reinstall property\n");
-        MSI_SetPropertyW( package, szReinstall, szAll );
-    }
-
-    /* properties may have been added by a transform */
-    msi_clone_properties( package );
-    msi_set_context( package );
-
-    if ( (msi_get_property_int(package, szUILevel, 0) & INSTALLUILEVEL_MASK) >= INSTALLUILEVEL_REDUCED )
-    {
-        package->script->InWhatSequence |= SEQUENCE_UI;
-        rc = ACTION_ProcessUISequence(package);
-        ui = TRUE;
-        ui_exists = ui_sequence_exists(package);
-        if (rc == ERROR_SUCCESS || !ui_exists)
-        {
-            package->script->InWhatSequence |= SEQUENCE_EXEC;
-            rc = ACTION_ProcessExecSequence(package,ui_exists);
-        }
-    }
-    else
-        rc = ACTION_ProcessExecSequence(package,FALSE);
-
-    package->script->CurrentlyScripting= FALSE;
-
-    /* process the ending type action */
-    if (rc == ERROR_SUCCESS)
-        ACTION_PerformActionSequence(package,-1,ui);
-    else if (rc == ERROR_INSTALL_USEREXIT) 
-        ACTION_PerformActionSequence(package,-2,ui);
-    else if (rc == ERROR_INSTALL_SUSPEND) 
-        ACTION_PerformActionSequence(package,-4,ui);
-    else  /* failed */
-        ACTION_PerformActionSequence(package,-3,ui);
-
-    /* finish up running custom actions */
-    ACTION_FinishCustomActions(package);
-    
-    if (rc == ERROR_SUCCESS && package->need_reboot)
-        return ERROR_SUCCESS_REBOOT_REQUIRED;
-
-    return rc;
-}
-
-static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
-{
-    UINT rc = ERROR_SUCCESS;
-    MSIRECORD * row = 0;
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','I','n','s','t','a','l','l','E','x','e','c','u','t','e',
-         'S','e','q','u','e','n','c','e','`',' ', 'W','H','E','R','E',' ',
-         '`','S','e','q','u','e','n','c','e','`',' ', '=',' ','%','i',0};
-
-    static const WCHAR UISeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-     '`','I','n','s','t','a','l','l','U','I','S','e','q','u','e','n','c','e',
-     '`', ' ', 'W','H','E','R','E',' ','`','S','e','q','u','e','n','c','e','`',
-	 ' ', '=',' ','%','i',0};
-
-    if (UI)
-        row = MSI_QueryGetRecord(package->db, UISeqQuery, seq);
-    else
-        row = MSI_QueryGetRecord(package->db, ExecSeqQuery, seq);
-
-    if (row)
-    {
-        LPCWSTR action, cond;
-
-        TRACE("Running the actions\n"); 
-
-        /* check conditions */
-        cond = MSI_RecordGetString(row,2);
-
-        /* this is a hack to skip errors in the condition code */
-        if (MSI_EvaluateConditionW(package, cond) == MSICONDITION_FALSE)
-            goto end;
-
-        action = MSI_RecordGetString(row,1);
-        if (!action)
-        {
-            ERR("failed to fetch action\n");
-            rc = ERROR_FUNCTION_FAILED;
-            goto end;
-        }
-
-        if (UI)
-            rc = ACTION_PerformUIAction(package,action,-1);
-        else
-            rc = ACTION_PerformAction(package,action,-1,FALSE);
-end:
-        msiobj_release(&row->hdr);
-    }
-    else
-        rc = ERROR_SUCCESS;
-
-    return rc;
-}
-
 typedef struct {
     MSIPACKAGE* package;
     BOOL UI;
@@ -1075,60 +898,6 @@ static BOOL ACTION_HandleCustomAction( MSIPACKAGE* package, LPCWSTR action,
     }
     return ret;
 }
-
-/* 
- * A lot of actions are really important even if they don't do anything
- * explicit... Lots of properties are set at the beginning of the installation
- * CostFinalize does a bunch of work to translate the directories and such
- * 
- * But until I get write access to the database that is hard, so I am going to
- * hack it to see if I can get something to run.
- */
-UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, UINT script, BOOL force)
-{
-    UINT rc = ERROR_SUCCESS; 
-    BOOL handled;
-
-    TRACE("Performing action (%s)\n",debugstr_w(action));
-
-    handled = ACTION_HandleStandardAction(package, action, &rc, force);
-
-    if (!handled)
-        handled = ACTION_HandleCustomAction(package, action, &rc, script, force);
-
-    if (!handled)
-    {
-        WARN("unhandled msi action %s\n",debugstr_w(action));
-        rc = ERROR_FUNCTION_NOT_CALLED;
-    }
-
-    return rc;
-}
-
-UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action, UINT script)
-{
-    UINT rc = ERROR_SUCCESS;
-    BOOL handled = FALSE;
-
-    TRACE("Performing action (%s)\n",debugstr_w(action));
-
-    handled = ACTION_HandleStandardAction(package, action, &rc,TRUE);
-
-    if (!handled)
-        handled = ACTION_HandleCustomAction(package, action, &rc, script, FALSE);
-
-    if( !handled && ACTION_DialogBox(package,action) == ERROR_SUCCESS )
-        handled = TRUE;
-
-    if (!handled)
-    {
-        WARN("unhandled msi action %s\n",debugstr_w(action));
-        rc = ERROR_FUNCTION_NOT_CALLED;
-    }
-
-    return rc;
-}
-
 
 /*
  * Actual Action Handlers
@@ -6391,7 +6160,15 @@ static UINT ACTION_UnregisterTypeLibraries( MSIPACKAGE *package )
     return msi_unimplemented_action_stub( package, "UnregisterTypeLibraries", table );
 }
 
-static const struct _actions StandardActions[] = {
+typedef UINT (*STANDARDACTIONHANDLER)(MSIPACKAGE*);
+
+static const struct
+{
+    const WCHAR *action;
+    UINT (*handler)(MSIPACKAGE *);
+}
+StandardActions[] =
+{
     { szAllocateRegistrySpace, ACTION_AllocateRegistrySpace },
     { szAppSearch, ACTION_AppSearch },
     { szBindImage, ACTION_BindImage },
@@ -6518,4 +6295,209 @@ static BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action,
         i++;
     }
     return ret;
+}
+
+UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, UINT script, BOOL force)
+{
+    UINT rc = ERROR_SUCCESS;
+    BOOL handled;
+
+    TRACE("Performing action (%s)\n", debugstr_w(action));
+
+    handled = ACTION_HandleStandardAction(package, action, &rc, force);
+
+    if (!handled)
+        handled = ACTION_HandleCustomAction(package, action, &rc, script, force);
+
+    if (!handled)
+    {
+        WARN("unhandled msi action %s\n", debugstr_w(action));
+        rc = ERROR_FUNCTION_NOT_CALLED;
+    }
+
+    return rc;
+}
+
+UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action, UINT script)
+{
+    UINT rc = ERROR_SUCCESS;
+    BOOL handled = FALSE;
+
+    TRACE("Performing action (%s)\n", debugstr_w(action));
+
+    handled = ACTION_HandleStandardAction(package, action, &rc,TRUE);
+
+    if (!handled)
+        handled = ACTION_HandleCustomAction(package, action, &rc, script, FALSE);
+
+    if( !handled && ACTION_DialogBox(package, action) == ERROR_SUCCESS )
+        handled = TRUE;
+
+    if (!handled)
+    {
+        WARN("unhandled msi action %s\n", debugstr_w(action));
+        rc = ERROR_FUNCTION_NOT_CALLED;
+    }
+
+    return rc;
+}
+
+static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
+{
+    UINT rc = ERROR_SUCCESS;
+    MSIRECORD *row = 0;
+
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','I','n','s','t','a','l','l','E','x','e','c','u','t','e',
+         'S','e','q','u','e','n','c','e','`',' ', 'W','H','E','R','E',' ',
+         '`','S','e','q','u','e','n','c','e','`',' ', '=',' ','%','i',0};
+    static const WCHAR UISeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+     '`','I','n','s','t','a','l','l','U','I','S','e','q','u','e','n','c','e',
+     '`', ' ', 'W','H','E','R','E',' ','`','S','e','q','u','e','n','c','e','`',
+	 ' ', '=',' ','%','i',0};
+
+    if (UI)
+        row = MSI_QueryGetRecord(package->db, UISeqQuery, seq);
+    else
+        row = MSI_QueryGetRecord(package->db, ExecSeqQuery, seq);
+
+    if (row)
+    {
+        LPCWSTR action, cond;
+
+        TRACE("Running the actions\n");
+
+        /* check conditions */
+        cond = MSI_RecordGetString(row, 2);
+
+        /* this is a hack to skip errors in the condition code */
+        if (MSI_EvaluateConditionW(package, cond) == MSICONDITION_FALSE)
+            goto end;
+
+        action = MSI_RecordGetString(row, 1);
+        if (!action)
+        {
+            ERR("failed to fetch action\n");
+            rc = ERROR_FUNCTION_FAILED;
+            goto end;
+        }
+
+        if (UI)
+            rc = ACTION_PerformUIAction(package, action, -1);
+        else
+            rc = ACTION_PerformAction(package, action, -1, FALSE);
+end:
+        msiobj_release(&row->hdr);
+    }
+    else
+        rc = ERROR_SUCCESS;
+
+    return rc;
+}
+
+/****************************************************
+ * TOP level entry points
+ *****************************************************/
+
+UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
+                         LPCWSTR szCommandLine )
+{
+    UINT rc;
+    BOOL ui = FALSE, ui_exists;
+
+    static const WCHAR szAction[] = {'A','C','T','I','O','N',0};
+    static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
+
+    MSI_SetPropertyW(package, szAction, szInstall);
+
+    package->script = msi_alloc_zero(sizeof(MSISCRIPT));
+    package->script->InWhatSequence = SEQUENCE_INSTALL;
+
+    if (szPackagePath)
+    {
+        LPWSTR p, dir;
+        LPCWSTR file;
+
+        dir = strdupW(szPackagePath);
+        p = strrchrW(dir, '\\');
+        if (p)
+        {
+            *(++p) = 0;
+            file = szPackagePath + (p - dir);
+        }
+        else
+        {
+            msi_free(dir);
+            dir = msi_alloc(MAX_PATH * sizeof(WCHAR));
+            GetCurrentDirectoryW(MAX_PATH, dir);
+            lstrcatW(dir, szBackSlash);
+            file = szPackagePath;
+        }
+
+        msi_free( package->PackagePath );
+        package->PackagePath = msi_alloc((lstrlenW(dir) + lstrlenW(file) + 1) * sizeof(WCHAR));
+        if (!package->PackagePath)
+        {
+            msi_free(dir);
+            return ERROR_OUTOFMEMORY;
+        }
+
+        lstrcpyW(package->PackagePath, dir);
+        lstrcatW(package->PackagePath, file);
+        msi_free(dir);
+
+        msi_set_sourcedir_props(package, FALSE);
+    }
+
+    msi_parse_command_line( package, szCommandLine, FALSE );
+
+    msi_apply_transforms( package );
+    msi_apply_patches( package );
+
+    if (!szCommandLine && msi_get_property_int( package, szInstalled, 0 ))
+    {
+        TRACE("setting reinstall property\n");
+        MSI_SetPropertyW( package, szReinstall, szAll );
+    }
+
+    /* properties may have been added by a transform */
+    msi_clone_properties( package );
+    msi_set_context( package );
+
+    if ( (msi_get_property_int(package, szUILevel, 0) & INSTALLUILEVEL_MASK) >= INSTALLUILEVEL_REDUCED )
+    {
+        package->script->InWhatSequence |= SEQUENCE_UI;
+        rc = ACTION_ProcessUISequence(package);
+        ui = TRUE;
+        ui_exists = ui_sequence_exists(package);
+        if (rc == ERROR_SUCCESS || !ui_exists)
+        {
+            package->script->InWhatSequence |= SEQUENCE_EXEC;
+            rc = ACTION_ProcessExecSequence(package, ui_exists);
+        }
+    }
+    else
+        rc = ACTION_ProcessExecSequence(package, FALSE);
+
+    package->script->CurrentlyScripting = FALSE;
+
+    /* process the ending type action */
+    if (rc == ERROR_SUCCESS)
+        ACTION_PerformActionSequence(package, -1, ui);
+    else if (rc == ERROR_INSTALL_USEREXIT)
+        ACTION_PerformActionSequence(package, -2, ui);
+    else if (rc == ERROR_INSTALL_SUSPEND)
+        ACTION_PerformActionSequence(package, -4, ui);
+    else  /* failed */
+        ACTION_PerformActionSequence(package, -3, ui);
+
+    /* finish up running custom actions */
+    ACTION_FinishCustomActions(package);
+
+    if (rc == ERROR_SUCCESS && package->need_reboot)
+        return ERROR_SUCCESS_REBOOT_REQUIRED;
+
+    return rc;
 }
