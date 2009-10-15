@@ -742,19 +742,13 @@ static BOOL CRYPT_ConstructBlobArray(DWORD *outCBlobs,
     return ret;
 }
 
-typedef struct _BlobArray
-{
-    DWORD            cBlobs;
-    PCRYPT_DATA_BLOB blobs;
-} BlobArray;
-
-static void CRYPT_FreeBlobArray(BlobArray *array)
+static void CRYPT_FreeBlobArray(DWORD cBlobs, PCRYPT_DATA_BLOB blobs)
 {
     DWORD i;
 
-    for (i = 0; i < array->cBlobs; i++)
-        CryptMemFree(array->blobs[i].pbData);
-    CryptMemFree(array->blobs);
+    for (i = 0; i < cBlobs; i++)
+        CryptMemFree(blobs[i].pbData);
+    CryptMemFree(blobs);
 }
 
 static BOOL CRYPT_ConstructAttribute(CRYPT_ATTRIBUTE *out,
@@ -1180,8 +1174,10 @@ static void CSignedEncodeMsg_Close(HCRYPTMSG hCryptMsg)
 
     CryptMemFree(msg->innerOID);
     CryptMemFree(msg->data.pbData);
-    CRYPT_FreeBlobArray((BlobArray *)&msg->msg_data.info->cCertEncoded);
-    CRYPT_FreeBlobArray((BlobArray *)&msg->msg_data.info->cCrlEncoded);
+    CRYPT_FreeBlobArray(msg->msg_data.info->cCertEncoded,
+     msg->msg_data.info->rgCertEncoded);
+    CRYPT_FreeBlobArray(msg->msg_data.info->cCrlEncoded,
+     msg->msg_data.info->rgCrlEncoded);
     for (i = 0; i < msg->msg_data.info->cSignerInfo; i++)
         CSignerInfo_Free(&msg->msg_data.info->rgSignerInfo[i]);
     CSignedMsgData_CloseHandles(&msg->msg_data);
