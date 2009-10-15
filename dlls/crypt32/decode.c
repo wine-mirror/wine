@@ -671,7 +671,8 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
                         }
                         if (ret)
                             ret = arrayDesc->decodeFunc(ptr, itemEncoded,
-                             dwFlags, NULL, &size, &itemDecoded);
+                             dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &size,
+                             &itemDecoded);
                         if (ret)
                         {
                             cItems++;
@@ -741,7 +742,8 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
                             *(BYTE **)((BYTE *)rgItems + i * arrayDesc->itemSize
                              + arrayDesc->pointerOffset) = nextData;
                         ret = arrayDesc->decodeFunc(ptr,
-                         itemSizes[i].encodedLen, 0,
+                         itemSizes[i].encodedLen,
+                         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
                          (BYTE *)rgItems + i * arrayDesc->itemSize,
                          &itemSizes[i].size, &itemDecoded);
                         if (ret)
