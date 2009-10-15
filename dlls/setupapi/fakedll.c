@@ -50,6 +50,9 @@ static const char fakedll_signature[] = "Wine placeholder DLL";
 static const unsigned int file_alignment = 512;
 static const unsigned int section_alignment = 4096;
 
+static void *file_buffer;
+static size_t file_buffer_size;
+
 struct dll_info
 {
     HANDLE            handle;
@@ -103,6 +106,39 @@ static inline void add_directory( struct dll_info *info, unsigned int idx, DWORD
 {
     info->nt->OptionalHeader.DataDirectory[idx].VirtualAddress = rva;
     info->nt->OptionalHeader.DataDirectory[idx].Size = size;
+}
+
+/* read in the contents of a file into the global file buffer */
+/* return 1 on success, 0 on nonexistent file, -1 on other error */
+static int read_file( const char *name, void **data, size_t *size )
+{
+    static char static_file_buffer[4096];
+    struct stat st;
+    void *buffer = static_file_buffer;
+    int fd, ret = -1;
+
+    if ((fd = open( name, O_RDONLY | O_BINARY )) == -1) return 0;
+    if (fstat( fd, &st ) == -1) goto done;
+    *size = st.st_size;
+    if (st.st_size > sizeof(static_file_buffer))
+    {
+        if (!file_buffer || st.st_size > file_buffer_size)
+        {
+            HeapFree( GetProcessHeap(), 0, file_buffer );
+            if (!(file_buffer = HeapAlloc( GetProcessHeap(), 0, st.st_size ))) goto done;
+            file_buffer_size = st.st_size;
+        }
+        buffer = file_buffer;
+    }
+
+    if (pread( fd, buffer, st.st_size, 0 ) == st.st_size)
+    {
+        *data = buffer;
+        ret = 1;
+    }
+done:
+    close( fd );
+    return ret;
 }
 
 /* build a complete fake dll from scratch */
@@ -238,15 +274,15 @@ static inline char *prepend( char *buffer, const char *str, size_t len )
 }
 
 /* try to load a pre-compiled fake dll */
-static void *load_fake_dll( const WCHAR *name, unsigned int *size, void *buf, unsigned int buf_size )
+static void *load_fake_dll( const WCHAR *name, size_t *size )
 {
     const char *build_dir = wine_get_build_dir();
     const char *path;
-    struct stat st;
-    char *file, *ptr, *buffer = NULL;
+    char *file, *ptr;
+    void *data = NULL;
     unsigned int i, pos, len, namelen, maxlen = 0;
     WCHAR *p;
-    int fd;
+    int res = 0;
 
     if ((p = strrchrW( name, '\\' ))) name = p + 1;
 
@@ -280,7 +316,7 @@ static void *load_fake_dll( const WCHAR *name, unsigned int *size, void *buf, un
         ptr = prepend( ptr, ptr, namelen );
         ptr = prepend( ptr, "/dlls", sizeof("/dlls") - 1 );
         ptr = prepend( ptr, build_dir, strlen(build_dir) );
-        if ((fd = open( ptr, O_RDONLY | O_BINARY )) != -1) goto found;
+        if ((res = read_file( ptr, &data, size ))) goto done;
 
         /* now as a program */
         ptr = file + pos;
@@ -289,7 +325,7 @@ static void *load_fake_dll( const WCHAR *name, unsigned int *size, void *buf, un
         ptr = prepend( ptr, ptr, namelen );
         ptr = prepend( ptr, "/programs", sizeof("/programs") - 1 );
         ptr = prepend( ptr, build_dir, strlen(build_dir) );
-        if ((fd = open( ptr, O_RDONLY | O_BINARY )) != -1) goto found;
+        if ((res = read_file( ptr, &data, size ))) goto done;
     }
 
     file[pos + len + 1] = 0;
@@ -297,31 +333,13 @@ static void *load_fake_dll( const WCHAR *name, unsigned int *size, void *buf, un
     {
         ptr = prepend( file + pos, "/fakedlls", sizeof("/fakedlls") - 1 );
         ptr = prepend( ptr, path, strlen(path) );
-        if ((fd = open( ptr, O_RDONLY | O_BINARY )) != -1) goto found;
+        if ((res = read_file( ptr, &data, size ))) break;
     }
-    goto done;
-
-found:
-    if (!fstat( fd, &st ))
-    {
-        *size = st.st_size;
-        if (st.st_size <= buf_size) buffer = buf;
-        else buffer = HeapAlloc( GetProcessHeap(), 0, st.st_size );
-        if (buffer)
-        {
-            if (read( fd, buffer, st.st_size ) != st.st_size)
-            {
-                if (buffer != buf) HeapFree( GetProcessHeap(), 0, buffer );
-                buffer = NULL;
-            }
-            else TRACE( "found %s %u bytes\n", ptr, *size);
-        }
-    }
-    close( fd );
 
 done:
     HeapFree( GetProcessHeap(), 0, file );
-    return buffer;
+    if (res == 1) return data;
+    return NULL;
 }
 
 /***********************************************************************
@@ -332,7 +350,6 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
     HANDLE h;
     BOOL ret;
     unsigned int size = 0;
-    char *temp_buffer[4096];
     void *buffer;
 
     /* check for empty name which means to only create the directory */
@@ -368,13 +385,12 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
         }
     }
 
-    if ((buffer = load_fake_dll( source, &size, temp_buffer, sizeof(temp_buffer) )))
+    if ((buffer = load_fake_dll( source, &size )))
     {
         DWORD written;
 
         ret = (WriteFile( h, buffer, size, &written, NULL ) && written == size);
         if (!ret) ERR( "failed to write to %s (error=%u)\n", debugstr_w(name), GetLastError() );
-        if (buffer != temp_buffer) HeapFree( GetProcessHeap(), 0, buffer );
     }
     else
     {
@@ -385,4 +401,14 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
     CloseHandle( h );
     if (!ret) DeleteFileW( name );
     return ret;
+}
+
+
+/***********************************************************************
+ *            cleanup_fake_dlls
+ */
+void cleanup_fake_dlls(void)
+{
+    HeapFree( GetProcessHeap(), 0, file_buffer );
+    file_buffer = NULL;
 }

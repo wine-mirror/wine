@@ -105,5 +105,6 @@ UINT CALLBACK QUEUE_callback_WtoA( void *context, UINT notification, UINT_PTR, U
 extern OSVERSIONINFOW OsVersionInfo;
 
 extern BOOL create_fake_dll( const WCHAR *name, const WCHAR *source );
+extern void cleanup_fake_dlls(void);
 
 #endif /* __SETUPAPI_PRIVATE_H */
