@@ -597,7 +597,13 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
     if (!(h = create_dest_file( name ))) return TRUE;  /* not a fake dll */
     if (h == INVALID_HANDLE_VALUE) return FALSE;
 
-    if ((buffer = load_fake_dll( source, &size )))
+    if (source[0] == '-' && !source[1])
+    {
+        /* '-' source means delete the file */
+        TRACE( "deleting %s\n", debugstr_w(name) );
+        ret = FALSE;
+    }
+    else if ((buffer = load_fake_dll( source, &size )))
     {
         DWORD written;
 

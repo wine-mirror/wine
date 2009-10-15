@@ -2455,6 +2455,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,dosx.exe
 11,,dsound.vxd
 11,,notepad.exe
+11,,winetest.exe,-
 11,,winhlp32.exe
 12,,mountmgr.sys
 16422,Internet Explorer,iexplore.exe
