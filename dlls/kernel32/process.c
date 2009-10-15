@@ -759,6 +759,7 @@ static BOOL build_command_line( WCHAR **argv )
 static void init_current_directory( CURDIR *cur_dir )
 {
     UNICODE_STRING dir_str;
+    const char *pwd;
     char *cwd;
     int size;
 
@@ -781,13 +782,25 @@ static void init_current_directory( CURDIR *cur_dir )
         break;
     }
 
+    /* try to use PWD if it is valid, so that we don't resolve symlinks */
+
+    pwd = getenv( "PWD" );
     if (cwd)
     {
+        struct stat st1, st2;
+
+        if (!pwd || stat( pwd, &st1 ) == -1 ||
+            (!stat( cwd, &st2 ) && (st1.st_dev != st2.st_dev || st1.st_ino != st2.st_ino)))
+            pwd = cwd;
+    }
+
+    if (pwd)
+    {
         WCHAR *dirW;
-        int lenW = MultiByteToWideChar( CP_UNIXCP, 0, cwd, -1, NULL, 0 );
+        int lenW = MultiByteToWideChar( CP_UNIXCP, 0, pwd, -1, NULL, 0 );
         if ((dirW = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) )))
         {
-            MultiByteToWideChar( CP_UNIXCP, 0, cwd, -1, dirW, lenW );
+            MultiByteToWideChar( CP_UNIXCP, 0, pwd, -1, dirW, lenW );
             RtlInitUnicodeString( &dir_str, dirW );
             RtlSetCurrentDirectory_U( &dir_str );
             RtlFreeUnicodeString( &dir_str );
