@@ -71,6 +71,7 @@ static void test_acquire(LPDIRECTINPUT pDI, HWND hwnd)
     HRESULT hr;
     LPDIRECTINPUTDEVICE pMouse = NULL;
     DIMOUSESTATE m_state;
+    HWND hwnd2;
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysMouse, &pMouse, NULL);
     ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
@@ -89,8 +90,10 @@ static void test_acquire(LPDIRECTINPUT pDI, HWND hwnd)
     ok(hr == S_FALSE, "IDirectInputDevice_Acquire() should have failed: %08x\n", hr);
 
     /* Foreground coop level requires window to have focus */
-    /* This should make dinput loose mouse input */
-    SetActiveWindow( 0 );
+    /* Create a temporary window, this should make dinput
+     * loose mouse input */
+    hwnd2 = CreateWindow("static", "Temporary", WS_VISIBLE,
+                         10, 210, 200, 200, NULL, NULL, NULL, NULL);
 
     hr = IDirectInputDevice_GetDeviceState(pMouse, sizeof(m_state), &m_state);
     ok(hr == DIERR_NOTACQUIRED, "GetDeviceState() should have failed: %08x\n", hr);
@@ -105,6 +108,8 @@ static void test_acquire(LPDIRECTINPUT pDI, HWND hwnd)
     ok(hr == S_OK, "Acquire() failed: %08x\n", hr);
 
     if (pMouse) IUnknown_Release(pMouse);
+
+    DestroyWindow( hwnd2 );
 }
 
 static void mouse_tests(void)
