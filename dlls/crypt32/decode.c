@@ -4872,7 +4872,8 @@ static BOOL CRYPT_AsnDecodeMaximum(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded)
 {
-    BOOL ret = FALSE;
+    BOOL ret;
+    DWORD max, size = sizeof(max);
 
     TRACE("%p, %d, %08x, %p, %d, %p\n", pbEncoded, cbEncoded, dwFlags,
      pvStructInfo, *pcbStructInfo, pcbDecoded);
@@ -4887,12 +4888,32 @@ static BOOL CRYPT_AsnDecodeMaximum(const BYTE *pbEncoded,
         SetLastError(CRYPT_E_ASN1_BADTAG);
         return FALSE;
     }
-    /* The BOOL is implicit:  if the integer is present, then it's TRUE */
-    ret = CRYPT_AsnDecodeIntInternal(pbEncoded, cbEncoded, dwFlags,
-     pvStructInfo ? (BYTE *)pvStructInfo + sizeof(BOOL) : NULL, pcbStructInfo,
-     pcbDecoded);
-    if (ret && pvStructInfo)
-        *(BOOL *)pvStructInfo = TRUE;
+    if ((ret = CRYPT_AsnDecodeIntInternal(pbEncoded, cbEncoded, dwFlags,
+     &max, &size, pcbDecoded)))
+    {
+        DWORD bytesNeeded = FINALMEMBERSIZE(CERT_GENERAL_SUBTREE, fMaximum);
+
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if (*pcbStructInfo < bytesNeeded)
+        {
+            *pcbStructInfo = bytesNeeded;
+            SetLastError(ERROR_MORE_DATA);
+            ret = FALSE;
+        }
+        else
+        {
+            CERT_GENERAL_SUBTREE *subtree = (CERT_GENERAL_SUBTREE *)
+             ((BYTE *)pvStructInfo - offsetof(CERT_GENERAL_SUBTREE, fMaximum));
+
+            *pcbStructInfo = bytesNeeded;
+            /* The BOOL is implicit:  if the integer is present, then it's
+             * TRUE.
+             */
+            subtree->fMaximum = TRUE;
+            subtree->dwMaximum = max;
+        }
+    }
     TRACE("returning %d\n", ret);
     return ret;
 }
@@ -4909,8 +4930,8 @@ static BOOL CRYPT_AsnDecodeSubtree(const BYTE *pbEncoded,
      { ASN_CONTEXT | 0, offsetof(CERT_GENERAL_SUBTREE, dwMinimum),
        CRYPT_AsnDecodeIntInternal, sizeof(DWORD), TRUE, FALSE, 0, 0 },
      { ASN_CONTEXT | 1, offsetof(CERT_GENERAL_SUBTREE, fMaximum),
-       CRYPT_AsnDecodeMaximum, sizeof(BOOL) + sizeof(DWORD), TRUE, FALSE, 0,
-       0 },
+       CRYPT_AsnDecodeMaximum, FINALMEMBERSIZE(CERT_GENERAL_SUBTREE, fMaximum),
+       TRUE, FALSE, 0, 0 },
     };
     CERT_GENERAL_SUBTREE *subtree = pvStructInfo;
 
