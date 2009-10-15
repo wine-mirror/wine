@@ -940,7 +940,8 @@ should really perform a delta so that only the changes get updated*/
         }
 
         /* Render */
-        for (i = 0; i <= This->num_contained_render_states; i++) {
+        for (i = 0; i < This->num_contained_render_states; i++)
+        {
             IWineD3DDevice_SetRenderState(pDevice, This->contained_render_states[i],
                                           This->renderState[This->contained_render_states[i]]);
         }
