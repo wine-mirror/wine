@@ -191,12 +191,31 @@ static HRESULT WINAPI HTMLLocation_put_protocol(IHTMLLocation *iface, BSTR v)
 static HRESULT WINAPI HTMLLocation_get_protocol(IHTMLLocation *iface, BSTR *p)
 {
     HTMLLocation *This = HTMLLOCATION_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
+    URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
 
     if(!p)
         return E_POINTER;
 
-    return E_NOTIMPL;
+    url.dwSchemeLength = 1;
+    hres = get_url_components(This, &url);
+    if(FAILED(hres))
+        return hres;
+
+    if(!url.dwSchemeLength) {
+        FIXME("Unexpected blank protocol\n");
+        return E_NOTIMPL;
+    }else {
+        WCHAR buf[url.dwSchemeLength + 1];
+        memcpy(buf, url.lpszScheme, url.dwSchemeLength * sizeof(WCHAR));
+        buf[url.dwSchemeLength] = ':';
+        *p = SysAllocStringLen(buf, url.dwSchemeLength + 1);
+    }
+    if(!*p)
+        return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLLocation_put_host(IHTMLLocation *iface, BSTR v)

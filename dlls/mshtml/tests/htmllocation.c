@@ -57,7 +57,7 @@ static const struct location_test http_test = {
             "HTTP",
             http_url,
             "http://www.winehq.org/?search#hash", FALSE,
-            "http:", FALSE,
+            "http:", TRUE,
             "www.winehq.org:80", FALSE,
             "www.winehq.org", FALSE,
             "80", TRUE,
@@ -71,7 +71,7 @@ static const struct location_test http_file_test = {
             "HTTP with file",
             http_file_url,
             "http://www.winehq.org/file?search#hash", TRUE,
-            "http:", FALSE,
+            "http:", TRUE,
             "www.winehq.org:80", FALSE,
             "www.winehq.org", FALSE,
             "80", TRUE,
@@ -85,7 +85,7 @@ static const struct location_test ftp_test = {
             "FTP",
             ftp_url,
             "ftp://ftp.winehq.org/", TRUE,
-            "ftp:", FALSE,
+            "ftp:", TRUE,
             "ftp.winehq.org:21", FALSE,
             "ftp.winehq.org", FALSE,
             "21", TRUE,
@@ -99,7 +99,7 @@ static const struct location_test ftp_file_test = {
             "FTP with file",
             ftp_file_url,
             "ftp://ftp.winehq.org/file", TRUE,
-            "ftp:", FALSE,
+            "ftp:", TRUE,
             "ftp.winehq.org:21", FALSE,
             "ftp.winehq.org", FALSE,
             "21", TRUE,
@@ -113,7 +113,7 @@ static const struct location_test file_test = {
             "FILE",
             file_url,
             "file:///C:/windows/win.ini", FALSE,
-            "file:", FALSE,
+            "file:", TRUE,
             NULL, FALSE,
             NULL, FALSE,
             "", TRUE,
@@ -171,7 +171,7 @@ static void test_protocol(IHTMLLocation *loc, const struct location_test *test)
             test->name, E_POINTER, hres);
 
     hres = IHTMLLocation_get_protocol(loc, &str);
-    todo_wine ok(hres == S_OK, "%s: get_protocol failed: 0x%08x\n", test->name, hres);
+    ok(hres == S_OK, "%s: get_protocol failed: 0x%08x\n", test->name, hres);
     if(hres == S_OK){
         if(test->protocol_ok)
             ok(str_eq_wa(str, test->protocol),
