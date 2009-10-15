@@ -1386,7 +1386,7 @@ void SECUR32_initSchannelSP(void)
         pgnutls_global_set_log_function(schan_gnutls_log);
     }
 
-    schan_handle_table = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 64 * sizeof(*schan_handle_table));
+    schan_handle_table = HeapAlloc(GetProcessHeap(), 0, 64 * sizeof(*schan_handle_table));
     if (!schan_handle_table)
     {
         ERR("Failed to allocate schannel handle table.\n");
