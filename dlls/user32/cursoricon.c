@@ -473,6 +473,20 @@ void CURSORICON_FreeModuleIcons( HMODULE16 hMod16 )
     LeaveCriticalSection( &IconCrst );
 }
 
+/**********************************************************************
+ *              get_icon_size
+ */
+BOOL get_icon_size( HICON handle, SIZE *size )
+{
+    CURSORICONINFO *info;
+
+    if (!(info = GlobalLock16( HICON_16(handle) ))) return FALSE;
+    size->cx = info->nWidth;
+    size->cy = info->nHeight;
+    GlobalUnlock16( HICON_16(handle) );
+    return TRUE;
+}
+
 /*
  *  The following macro functions account for the irregularities of
  *   accessing cursor and icon resources in files and resource entries.
