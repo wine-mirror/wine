@@ -719,33 +719,34 @@ static BOOL CRYPT_ConstructBlob(CRYPT_DATA_BLOB *out, const CRYPT_DATA_BLOB *in)
     return ret;
 }
 
-typedef struct _BlobArray
-{
-    DWORD            cBlobs;
-    PCRYPT_DATA_BLOB blobs;
-} BlobArray;
-
-static BOOL CRYPT_ConstructBlobArray(BlobArray *out, const BlobArray *in)
+static BOOL CRYPT_ConstructBlobArray(DWORD *outCBlobs,
+ PCRYPT_DATA_BLOB *outPBlobs, DWORD cBlobs, const PCRYPT_DATA_BLOB pBlobs)
 {
     BOOL ret = TRUE;
 
-    out->cBlobs = in->cBlobs;
-    if (out->cBlobs)
+    *outCBlobs = cBlobs;
+    if (cBlobs)
     {
-        out->blobs = CryptMemAlloc(out->cBlobs * sizeof(CRYPT_DATA_BLOB));
-        if (out->blobs)
+        *outPBlobs = CryptMemAlloc(cBlobs * sizeof(CRYPT_DATA_BLOB));
+        if (*outPBlobs)
         {
             DWORD i;
 
-            memset(out->blobs, 0, out->cBlobs * sizeof(CRYPT_DATA_BLOB));
-            for (i = 0; ret && i < out->cBlobs; i++)
-                ret = CRYPT_ConstructBlob(&out->blobs[i], &in->blobs[i]);
+            memset(*outPBlobs, 0, cBlobs * sizeof(CRYPT_DATA_BLOB));
+            for (i = 0; ret && i < cBlobs; i++)
+                ret = CRYPT_ConstructBlob(&(*outPBlobs)[i], &pBlobs[i]);
         }
         else
             ret = FALSE;
     }
     return ret;
 }
+
+typedef struct _BlobArray
+{
+    DWORD            cBlobs;
+    PCRYPT_DATA_BLOB blobs;
+} BlobArray;
 
 static void CRYPT_FreeBlobArray(BlobArray *array)
 {
@@ -765,8 +766,8 @@ static BOOL CRYPT_ConstructAttribute(CRYPT_ATTRIBUTE *out,
     if (out->pszObjId)
     {
         strcpy(out->pszObjId, in->pszObjId);
-        ret = CRYPT_ConstructBlobArray((BlobArray *)&out->cValue,
-         (const BlobArray *)&in->cValue);
+        ret = CRYPT_ConstructBlobArray(&out->cValue, &out->rgValue,
+         in->cValue, in->rgValue);
     }
     else
         ret = FALSE;
@@ -1435,13 +1436,13 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
             }
         }
         if (ret)
-            ret = CRYPT_ConstructBlobArray(
-             (BlobArray *)&msg->msg_data.info->cCertEncoded,
-             (const BlobArray *)&info->cCertEncoded);
+            ret = CRYPT_ConstructBlobArray(&msg->msg_data.info->cCertEncoded,
+             &msg->msg_data.info->rgCertEncoded, info->cCertEncoded,
+             info->rgCertEncoded);
         if (ret)
-            ret = CRYPT_ConstructBlobArray(
-             (BlobArray *)&msg->msg_data.info->cCrlEncoded,
-             (const BlobArray *)&info->cCrlEncoded);
+            ret = CRYPT_ConstructBlobArray(&msg->msg_data.info->cCrlEncoded,
+             &msg->msg_data.info->rgCrlEncoded, info->cCrlEncoded,
+             info->rgCrlEncoded);
         if (!ret)
         {
             CSignedEncodeMsg_Close(msg);
