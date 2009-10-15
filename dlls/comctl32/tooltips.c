@@ -1076,7 +1076,7 @@ TOOLTIPS_AddToolA (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOA *lpToolInfo)
 	}
     }
 
-    if (lpToolInfo->cbSize >= sizeof(TTTOOLINFOA))
+    if (lpToolInfo->cbSize >= TTTOOLINFOA_V2_SIZE)
 	toolPtr->lParam = lpToolInfo->lParam;
 
     /* install subclassing hook */
@@ -1164,7 +1164,7 @@ TOOLTIPS_AddToolW (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *lpToolInfo)
 	}
     }
 
-    if (lpToolInfo->cbSize >= sizeof(TTTOOLINFOW))
+    if (lpToolInfo->cbSize >= TTTOOLINFOW_V2_SIZE)
 	toolPtr->lParam = lpToolInfo->lParam;
 
     /* install subclassing hook */
@@ -1337,7 +1337,7 @@ TOOLTIPS_EnumToolsA (const TOOLTIPS_INFO *infoPtr, UINT uIndex, LPTTTOOLINFOA lp
 /*    lpToolInfo->lpszText = toolPtr->lpszText; */
     lpToolInfo->lpszText = NULL;  /* FIXME */
 
-    if (lpToolInfo->cbSize >= sizeof(TTTOOLINFOA))
+    if (lpToolInfo->cbSize >= TTTOOLINFOA_V2_SIZE)
 	lpToolInfo->lParam = toolPtr->lParam;
 
     return TRUE;
@@ -1369,7 +1369,7 @@ TOOLTIPS_EnumToolsW (const TOOLTIPS_INFO *infoPtr, UINT uIndex, LPTTTOOLINFOW lp
 /*    lpToolInfo->lpszText = toolPtr->lpszText; */
     lpToolInfo->lpszText = NULL;  /* FIXME */
 
-    if (lpToolInfo->cbSize >= sizeof(TTTOOLINFOW))
+    if (lpToolInfo->cbSize >= TTTOOLINFOW_V2_SIZE)
 	lpToolInfo->lParam = toolPtr->lParam;
 
     return TRUE;
@@ -1416,7 +1416,7 @@ TOOLTIPS_GetCurrentToolA (const TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOA lpToolInfo
 /*	    lpToolInfo->lpszText = toolPtr->lpszText; */
 	    lpToolInfo->lpszText = NULL;  /* FIXME */
 
-	    if (lpToolInfo->cbSize >= sizeof(TTTOOLINFOA))
+	    if (lpToolInfo->cbSize >= TTTOOLINFOA_V2_SIZE)
 		lpToolInfo->lParam = toolPtr->lParam;
 
 	    return TRUE;
@@ -1448,7 +1448,7 @@ TOOLTIPS_GetCurrentToolW (const TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOW lpToolInfo
 /*	    lpToolInfo->lpszText = toolPtr->lpszText; */
 	    lpToolInfo->lpszText = NULL;  /* FIXME */
 
-	    if (lpToolInfo->cbSize >= sizeof(TTTOOLINFOW))
+	    if (lpToolInfo->cbSize >= TTTOOLINFOW_V2_SIZE)
 		lpToolInfo->lParam = toolPtr->lParam;
 
 	    return TRUE;
@@ -1602,7 +1602,7 @@ TOOLTIPS_GetToolInfoA (const TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOA lpToolInfo)
 /*    lpToolInfo->lpszText = toolPtr->lpszText; */
     lpToolInfo->lpszText = NULL;  /* FIXME */
 
-    if (lpToolInfo->cbSize >= sizeof(TTTOOLINFOA))
+    if (lpToolInfo->cbSize >= TTTOOLINFOA_V2_SIZE)
 	lpToolInfo->lParam = toolPtr->lParam;
 
     return TRUE;
@@ -1637,7 +1637,7 @@ TOOLTIPS_GetToolInfoW (const TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOW lpToolInfo)
 /*    lpToolInfo->lpszText = toolPtr->lpszText; */
     lpToolInfo->lpszText = NULL;  /* FIXME */
 
-    if (lpToolInfo->cbSize >= sizeof(TTTOOLINFOW))
+    if (lpToolInfo->cbSize >= TTTOOLINFOW_V2_SIZE)
 	lpToolInfo->lParam = toolPtr->lParam;
 
     return TRUE;
@@ -1660,7 +1660,7 @@ TOOLTIPS_HitTestA (const TOOLTIPS_INFO *infoPtr, LPTTHITTESTINFOA lptthit)
     TRACE("tool %d!\n", nTool);
 
     /* copy tool data */
-    if (lptthit->ti.cbSize >= sizeof(TTTOOLINFOA)) {
+    if (lptthit->ti.cbSize >= TTTOOLINFOA_V1_SIZE) {
 	toolPtr = &infoPtr->tools[nTool];
 
 	lptthit->ti.uFlags   = toolPtr->uFlags;
@@ -1670,7 +1670,8 @@ TOOLTIPS_HitTestA (const TOOLTIPS_INFO *infoPtr, LPTTHITTESTINFOA lptthit)
 	lptthit->ti.hinst    = toolPtr->hinst;
 /*	lptthit->ti.lpszText = toolPtr->lpszText; */
 	lptthit->ti.lpszText = NULL;  /* FIXME */
-	lptthit->ti.lParam   = toolPtr->lParam;
+	if (lptthit->ti.cbSize >= TTTOOLINFOA_V2_SIZE)
+	    lptthit->ti.lParam   = toolPtr->lParam;
     }
 
     return TRUE;
@@ -1693,7 +1694,7 @@ TOOLTIPS_HitTestW (const TOOLTIPS_INFO *infoPtr, LPTTHITTESTINFOW lptthit)
     TRACE("tool %d!\n", nTool);
 
     /* copy tool data */
-    if (lptthit->ti.cbSize >= sizeof(TTTOOLINFOW)) {
+    if (lptthit->ti.cbSize >= TTTOOLINFOW_V1_SIZE) {
 	toolPtr = &infoPtr->tools[nTool];
 
 	lptthit->ti.uFlags   = toolPtr->uFlags;
@@ -1703,7 +1704,8 @@ TOOLTIPS_HitTestW (const TOOLTIPS_INFO *infoPtr, LPTTHITTESTINFOW lptthit)
 	lptthit->ti.hinst    = toolPtr->hinst;
 /*	lptthit->ti.lpszText = toolPtr->lpszText; */
 	lptthit->ti.lpszText = NULL;  /* FIXME */
-	lptthit->ti.lParam   = toolPtr->lParam;
+	if (lptthit->ti.cbSize >= TTTOOLINFOW_V2_SIZE)
+	    lptthit->ti.lParam   = toolPtr->lParam;
     }
 
     return TRUE;
@@ -2018,7 +2020,7 @@ TOOLTIPS_SetToolInfoA (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOA *lpToolInfo)
 	}
     }
 
-    if (lpToolInfo->cbSize >= sizeof(TTTOOLINFOA))
+    if (lpToolInfo->cbSize >= TTTOOLINFOA_V2_SIZE)
 	toolPtr->lParam = lpToolInfo->lParam;
 
     return 0;
@@ -2072,7 +2074,7 @@ TOOLTIPS_SetToolInfoW (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *lpToolInfo)
 	}
     }
 
-    if (lpToolInfo->cbSize >= sizeof(TTTOOLINFOW))
+    if (lpToolInfo->cbSize >= TTTOOLINFOW_V2_SIZE)
 	toolPtr->lParam = lpToolInfo->lParam;
 
     if (infoPtr->nCurrentTool == nTool)

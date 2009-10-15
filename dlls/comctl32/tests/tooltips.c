@@ -416,6 +416,56 @@ static void test_gettext(void)
     DestroyWindow(hwnd);
 }
 
+static void test_ttm_gettoolinfo(void)
+{
+    TTTOOLINFOA ti;
+    TTTOOLINFOW tiW;
+    HWND hwnd;
+    DWORD r;
+
+    hwnd = CreateWindowExA(0, TOOLTIPS_CLASSA, NULL, 0,
+                           10, 10, 300, 100,
+                           NULL, NULL, NULL, 0);
+
+    ti.cbSize = TTTOOLINFOA_V2_SIZE;
+    ti.hwnd = NULL;
+    ti.hinst = GetModuleHandleA(NULL);
+    ti.uFlags = 0;
+    ti.uId = 0x1234ABCD;
+    ti.lpszText = NULL;
+    ti.lParam = 0xdeadbeef;
+    GetClientRect(hwnd, &ti.rect);
+    r = SendMessageA(hwnd, TTM_ADDTOOLA, 0, (LPARAM)&ti);
+    ok(r, "Adding the tool to the tooltip failed\n");
+
+    ti.cbSize = TTTOOLINFOA_V2_SIZE;
+    ti.lParam = 0xaaaaaaaa;
+    r = SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&ti);
+    ok(r, "Getting tooltip info failed\n");
+    ok(0xdeadbeef == ti.lParam, "Expected 0xdeadbeef, got %lx\n", ti.lParam);
+
+    tiW.cbSize = TTTOOLINFOW_V2_SIZE;
+    tiW.hwnd = NULL;
+    tiW.uId = 0x1234ABCD;
+    tiW.lParam = 0xaaaaaaaa;
+    r = SendMessageA(hwnd, TTM_GETTOOLINFOW, 0, (LPARAM)&tiW);
+    ok(r, "Getting tooltip info failed\n");
+    ok(0xdeadbeef == tiW.lParam, "Expected 0xdeadbeef, got %lx\n", tiW.lParam);
+
+    ti.cbSize = TTTOOLINFOA_V2_SIZE;
+    ti.uId = 0x1234ABCD;
+    ti.lParam = 0xaaaaaaaa;
+    r = SendMessageA(hwnd, TTM_SETTOOLINFOA, 0, (LPARAM)&ti);
+
+    ti.cbSize = TTTOOLINFOA_V2_SIZE;
+    ti.lParam = 0xdeadbeef;
+    r = SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&ti);
+    ok(r, "Getting tooltip info failed\n");
+    ok(0xaaaaaaaa == ti.lParam, "Expected 0xaaaaaaaa, got %lx\n", ti.lParam);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(tooltips)
 {
     InitCommonControls();
@@ -423,4 +473,5 @@ START_TEST(tooltips)
     test_create_tooltip();
     test_customdraw();
     test_gettext();
+    test_ttm_gettoolinfo();
 }
