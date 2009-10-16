@@ -1219,13 +1219,16 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, struct WS_sockaddr* ws
         win6old->sin6_port     = uin6->sin6_port;
         win6old->sin6_flowinfo = uin6->sin6_flowinfo;
         memcpy(&win6old->sin6_addr,&uin6->sin6_addr,16); /* 16 bytes = 128 address bits */
-        *wsaddrlen = sizeof(struct WS_sockaddr_in6_old);
 #ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
         if (*wsaddrlen >= sizeof(struct WS_sockaddr_in6)) {
             struct WS_sockaddr_in6* win6 = (struct WS_sockaddr_in6*)wsaddr;
             win6->sin6_scope_id = uin6->sin6_scope_id;
             *wsaddrlen = sizeof(struct WS_sockaddr_in6);
         }
+        else
+            *wsaddrlen = sizeof(struct WS_sockaddr_in6_old);
+#else
+        *wsaddrlen = sizeof(struct WS_sockaddr_in6_old);
 #endif
         return 0;
     }
