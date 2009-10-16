@@ -133,7 +133,9 @@ int AudioUnit_InitializeWithStreamDescription(AudioUnit au, AudioStreamBasicDesc
 int AudioUnit_SetVolume(AudioUnit au, float left, float right)
 {
     OSStatus err = noErr;
-    FIXME("independent left/right volume not implemented (%f, %f)\n", left, right);
+    static int once;
+
+    if (!once++) FIXME("independent left/right volume not implemented (%f, %f)\n", left, right);
    
     err = AudioUnitSetParameter(au, kHALOutputParam_Volume, kAudioUnitParameterFlag_Output, 0, left, 0);
                                 
@@ -148,7 +150,9 @@ int AudioUnit_SetVolume(AudioUnit au, float left, float right)
 int AudioUnit_GetVolume(AudioUnit au, float *left, float *right)
 {
     OSStatus err = noErr;
-    FIXME("independent left/right volume not implemented\n");
+    static int once;
+
+    if (!once++) FIXME("independent left/right volume not implemented\n");
     
     err = AudioUnitGetParameter(au, kHALOutputParam_Volume, kAudioUnitParameterFlag_Output, 0, left);
     if (err != noErr)
