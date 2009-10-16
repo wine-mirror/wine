@@ -1015,6 +1015,10 @@ static void testFindCert(void)
     CERT_INFO certInfo = { 0 };
     CRYPT_HASH_BLOB blob;
     BYTE otherSerialNumber[] = { 2 };
+    DWORD count;
+    static const WCHAR juan[] = { 'j','u','a','n',0 };
+    static const WCHAR lang[] = { 'L','A','N','G',0 };
+    static const WCHAR malcolm[] = { 'm','a','l','c','o','l','m',0 };
 
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
@@ -1134,6 +1138,44 @@ static void testFindCert(void)
          CERT_FIND_SHA1_HASH, &certInfo.Subject, context);
         ok(context == NULL, "Expected one cert only\n");
     }
+
+    /* Searching for NULL string matches any context. */
+    count = 0;
+    context = NULL;
+    do {
+        context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+         CERT_FIND_ISSUER_STR, NULL, context);
+        if (context)
+            count++;
+    } while (context);
+    todo_wine
+    ok(count == 3, "expected 3 contexts\n");
+    count = 0;
+    context = NULL;
+    do {
+        context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+         CERT_FIND_ISSUER_STR, juan, context);
+        if (context)
+            count++;
+    } while (context);
+    todo_wine
+    ok(count == 2, "expected 2 contexts\n");
+    count = 0;
+    context = NULL;
+    do {
+        context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+         CERT_FIND_ISSUER_STR, lang, context);
+        if (context)
+            count++;
+    } while (context);
+    todo_wine
+    ok(count == 3, "expected 3 contexts\n");
+    SetLastError(0xdeadbeef);
+    context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+     CERT_FIND_ISSUER_STR, malcolm, NULL);
+    ok(!context, "expected no certs\n");
+    ok(GetLastError() == CRYPT_E_NOT_FOUND,
+     "expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
 
     CertCloseStore(store, 0);
 
