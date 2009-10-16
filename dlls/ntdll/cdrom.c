@@ -77,6 +77,7 @@
 #endif
 
 #ifdef HAVE_IOKIT_IOKITLIB_H
+# include <libkern/OSByteOrder.h>
 # include <sys/disk.h>
 # include <IOKit/IOKitLib.h>
 # include <IOKit/storage/IOMedia.h>
@@ -2025,6 +2026,51 @@ static NTSTATUS DVD_SendKey(int fd, const DVD_COPY_PROTECT_KEY *key)
 	FIXME("Unknown Keytype 0x%x\n",key->KeyType);
     }
     return ret;
+#elif defined(__APPLE__)
+    dk_dvd_send_key_t dvdsk;
+    union
+    {
+        DVDChallengeKeyInfo chal;
+        DVDKey2Info key2;
+    } key_desc;
+
+    switch(key->KeyType)
+    {
+    case DvdChallengeKey:
+        dvdsk.format = kDVDKeyFormatChallengeKey;
+        dvdsk.bufferLength = sizeof(key_desc.chal);
+        dvdsk.buffer = &key_desc.chal;
+        OSWriteBigInt16(key_desc.chal.dataLength, 0, key->KeyLength);
+        memcpy(key_desc.chal.challengeKeyValue, key->KeyData, key->KeyLength);
+        break;
+    case DvdBusKey2:
+        dvdsk.format = kDVDKeyFormatKey2;
+        dvdsk.bufferLength = sizeof(key_desc.key2);
+        dvdsk.buffer = &key_desc.key2;
+        OSWriteBigInt16(key_desc.key2.dataLength, 0, key->KeyLength);
+        memcpy(key_desc.key2.key2Value, key->KeyData, key->KeyLength);
+        break;
+    case DvdInvalidateAGID:
+        dvdsk.format = kDVDKeyFormatAGID_Invalidate;
+        break;
+    case DvdBusKey1:
+    case DvdTitleKey:
+    case DvdAsf:
+    case DvdGetRpcKey:
+    case DvdDiskKey:
+        ERR("attempted to write read-only key type 0x%x\n", key->KeyType);
+        return STATUS_NOT_SUPPORTED;
+    case DvdSetRpcKey:
+        FIXME("DvdSetRpcKey NIY\n");
+        return STATUS_NOT_SUPPORTED;
+    default:
+        FIXME("got unknown key type 0x%x\n", key->KeyType);
+        return STATUS_NOT_SUPPORTED;
+    }
+    dvdsk.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+    dvdsk.grantID = (uint8_t)key->SessionId;
+
+    return CDROM_GetStatusCode(ioctl(fd, DKIOCDVDSENDKEY, &dvdsk));
 #else
     FIXME("unsupported on this platform\n");
     return STATUS_NOT_SUPPORTED;
