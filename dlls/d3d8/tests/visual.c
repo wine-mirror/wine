@@ -433,6 +433,7 @@ static void fog_test(IDirect3DDevice8 *device)
         hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
                                                      2 /*PrimCount */, Indices, D3DFMT_INDEX16, transformed_2,
                                                      sizeof(transformed_2[0]));
+        ok(SUCCEEDED(hr), "IDirect3DDevice8_DrawIndexedPrimitiveUP returned %#x.\n", hr);
 
         hr = IDirect3DDevice8_EndScene(device);
         ok(hr == D3D_OK, "EndScene returned %#08x\n", hr);
@@ -477,7 +478,9 @@ static void present_test(IDirect3DDevice8 *device)
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 0.75, 0);
     ok(hr == D3D_OK, "IDirect3DDevice8_Clear returned %08x\n", hr);
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice8_Present returned %#x.\n", hr);
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.4, 0);
+    ok(SUCCEEDED(hr), "IDirect3DDevice8_Clear returned %#x.\n", hr);
 
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ZENABLE, D3DZB_TRUE);
     ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %08x\n", hr);
@@ -726,10 +729,12 @@ static void offscreen_test(IDirect3DDevice8 *device)
 
 out:
     hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice8_SetTexture returned %#x.\n", hr);
 
     /* restore things */
     if(backbuffer) {
         hr = IDirect3DDevice8_SetRenderTarget(device, backbuffer, depthstencil);
+        ok(SUCCEEDED(hr), "IDirect3DDevice8_SetRenderTarget returned %#x.\n", hr);
         IDirect3DSurface8_Release(backbuffer);
     }
     if(offscreenTexture) {
