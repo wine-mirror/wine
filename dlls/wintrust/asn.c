@@ -2179,62 +2179,24 @@ BOOL WINAPI WVTAsn1SpcSpOpusInfoDecode(DWORD dwCertEncodingType,
     return ret;
 }
 
-static BOOL CRYPT_AsnDecodeInteger(const BYTE *pbEncoded,
- DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo)
-{
-    BOOL ret;
-    DWORD bytesNeeded, dataLen;
-
-    if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen)))
-    {
-        BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
-
-        bytesNeeded = dataLen + sizeof(CRYPT_INTEGER_BLOB);
-        if (!pvStructInfo)
-            *pcbStructInfo = bytesNeeded;
-        else if (*pcbStructInfo < bytesNeeded)
-        {
-            *pcbStructInfo = bytesNeeded;
-            SetLastError(ERROR_MORE_DATA);
-            ret = FALSE;
-        }
-        else
-        {
-            CRYPT_INTEGER_BLOB *blob = pvStructInfo;
-
-            *pcbStructInfo = bytesNeeded;
-            blob->cbData = dataLen;
-            assert(blob->pbData);
-            if (blob->cbData)
-            {
-                DWORD i;
-
-                for (i = 0; i < blob->cbData; i++)
-                {
-                    blob->pbData[i] = *(pbEncoded + 1 + lenBytes +
-                     dataLen - i - 1);
-                }
-            }
-        }
-    }
-    return ret;
-}
-
 /* Ignores tag.  Only allows integers 4 bytes or smaller in size. */
 static BOOL WINAPI CRYPT_AsnDecodeInt(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  void *pvStructInfo, DWORD *pcbStructInfo)
 {
     BOOL ret;
-    BYTE buf[sizeof(CRYPT_INTEGER_BLOB) + sizeof(int)];
-    CRYPT_INTEGER_BLOB *blob = (CRYPT_INTEGER_BLOB *)buf;
-    DWORD size = sizeof(buf);
+    DWORD dataLen;
 
-    blob->pbData = buf + sizeof(CRYPT_INTEGER_BLOB);
-    ret = CRYPT_AsnDecodeInteger(pbEncoded, cbEncoded, 0, buf, &size);
-    if (ret)
+    if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen)))
     {
-        if (!pvStructInfo)
+        BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
+
+        if (dataLen > sizeof(int))
+        {
+            SetLastError(CRYPT_E_ASN1_LARGE);
+            ret = FALSE;
+        }
+        else if (!pvStructInfo)
             *pcbStructInfo = sizeof(int);
         else if (*pcbStructInfo < sizeof(int))
         {
@@ -2248,23 +2210,21 @@ static BOOL WINAPI CRYPT_AsnDecodeInt(DWORD dwCertEncodingType,
             DWORD i;
 
             *pcbStructInfo = sizeof(int);
-            if (blob->pbData[blob->cbData - 1] & 0x80)
+            if (dataLen && pbEncoded[1 + lenBytes] & 0x80)
             {
                 /* initialize to a negative value to sign-extend */
                 val = -1;
             }
             else
                 val = 0;
-            for (i = 0; i < blob->cbData; i++)
+            for (i = 0; i < dataLen; i++)
             {
                 val <<= 8;
-                val |= blob->pbData[blob->cbData - i - 1];
+                val |= pbEncoded[1 + lenBytes + i];
             }
             memcpy(pvStructInfo, &val, sizeof(int));
         }
     }
-    else if (GetLastError() == ERROR_MORE_DATA)
-        SetLastError(CRYPT_E_ASN1_LARGE);
     return ret;
 }
 
