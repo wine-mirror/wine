@@ -1549,7 +1549,8 @@ static void state_lastpixel(DWORD state, IWineD3DStateBlockImpl *stateblock, str
 
 static void state_pointsprite_w(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    BOOL warned = FALSE;
+    static BOOL warned;
+
     /* TODO: NV_POINT_SPRITE */
     if (!warned && stateblock->renderState[WINED3DRS_POINTSPRITEENABLE]) {
         /* A FIXME, not a WARN because point sprites should be software emulated if not supported by HW */
@@ -1561,7 +1562,8 @@ static void state_pointsprite_w(DWORD state, IWineD3DStateBlockImpl *stateblock,
 static void state_pointsprite(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     if (stateblock->renderState[WINED3DRS_POINTSPRITEENABLE]) {
-        BOOL warned = FALSE;
+        static BOOL warned;
+
         if(GL_LIMITS(point_sprite_units) < GL_LIMITS(textures) && !warned) {
             if(use_ps(stateblock) || stateblock->lowest_disabled_stage > GL_LIMITS(point_sprite_units)) {
                 FIXME("The app uses point sprite texture coordinates on more units than supported by the driver\n");
