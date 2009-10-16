@@ -3620,12 +3620,6 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
         if (y > infoPtr->rcList.bottom)
             y = infoPtr->rcList.bottom;
 
-        tmp.x = x;
-        tmp.y = y;
-
-        lvHitTestInfo.pt = tmp;
-        LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, TRUE);
-
         if (infoPtr->bMarqueeSelect)
         {
             LVITEMW item;
@@ -3707,6 +3701,12 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
         rect.right = infoPtr->ptClickPos.x + wDragWidth;
         rect.top = infoPtr->ptClickPos.y - wDragHeight;
         rect.bottom = infoPtr->ptClickPos.y + wDragHeight;
+
+        tmp.x = x;
+        tmp.y = y;
+
+        lvHitTestInfo.pt = tmp;
+        LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, TRUE);
 
         /* reset item marker */
         if (infoPtr->nLButtonDownItem != lvHitTestInfo.iItem)
