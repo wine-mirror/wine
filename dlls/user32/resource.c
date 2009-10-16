@@ -70,7 +70,6 @@ HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance, LPCWSTR name)
     memcpy( accel->table, table, count * sizeof(*table) );
     if (!(handle = alloc_user_handle( &accel->obj, USER_ACCEL )))
         HeapFree( GetProcessHeap(), 0, accel );
-    return handle;
     TRACE_(accel)("%p %s returning %p\n", instance, debugstr_w(name), handle );
     return handle;
 }
