@@ -961,6 +961,7 @@ static BOOL D3D1_createObjects(void)
     ddsd.dwWidth = 256;
     ddsd.dwHeight = 256;
     hr = IDirectDraw_CreateSurface(DirectDraw1, &ddsd, &Surface1, NULL);
+    ok(SUCCEEDED(hr), "IDirectDraw_CreateSurface returned %#x.\n", hr);
     if (!Surface1) {
         skip("DDSCAPS_3DDEVICE surface not available\n");
         return FALSE;
@@ -1388,6 +1389,7 @@ static void Direct3D1Test(void)
     vp_data.dvScaleX = 1;
     vp_data.dvScaleY = 1;
     hr = IDirect3DViewport_SetViewport(Viewport, &vp_data);
+    ok(SUCCEEDED(hr), "IDirect3DViewport_SetViewport returned %#x.\n", hr);
     i = 12345;
     hr = IDirect3DViewport_TransformVertices(Viewport, sizeof(offscreentest) / sizeof(offscreentest[0]),
                                              &transformdata, D3DTRANSFORM_CLIPPED,
@@ -1397,6 +1399,7 @@ static void Direct3D1Test(void)
     vp_data.dwWidth = 256;
     vp_data.dwHeight = 256;
     hr = IDirect3DViewport_SetViewport(Viewport, &vp_data);
+    ok(SUCCEEDED(hr), "IDirect3DViewport_SetViewport returned %#x.\n", hr);
     i = 12345;
     hr = IDirect3DViewport_TransformVertices(Viewport, sizeof(offscreentest) / sizeof(offscreentest[0]),
                                              &transformdata, D3DTRANSFORM_CLIPPED,
@@ -2598,10 +2601,12 @@ static void DeviceLoadTest(void)
             memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
             ddsd.dwSize = sizeof(ddsd);
             hr = IDirectDrawSurface7_GetSurfaceDesc(texture_levels[0][i1], &ddsd);
+            ok(SUCCEEDED(hr), "IDirectDrawSurface7_GetSurfaceDesc returned %#x.\n", hr);
 
             memset(&ddsd2, 0, sizeof(DDSURFACEDESC2));
             ddsd2.dwSize = sizeof(ddsd2);
             hr = IDirectDrawSurface7_GetSurfaceDesc(texture_levels[1][i], &ddsd2);
+            ok(SUCCEEDED(hr), "IDirectDrawSurface7_GetSurfaceDesc returned %#x.\n", hr);
 
             if (ddsd.dwWidth == ddsd2.dwWidth && ddsd.dwHeight == ddsd2.dwHeight)
             {

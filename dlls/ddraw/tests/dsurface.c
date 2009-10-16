@@ -2433,6 +2433,7 @@ static void PrivateDataTest(void)
     ref2 = getref((IUnknown *) lpDD);
     ok(ref2 == ref + 1, "Object reference is %d, expected %d\n", ref2, ref + 1);
     hr = IDirectDrawSurface7_FreePrivateData(surface7, &IID_IDirectDrawSurface7);
+    ok(SUCCEEDED(hr), "IDirectDrawSurface7_FreePrivateData returned %#x.\n", hr);
     ref2 = getref((IUnknown *) lpDD);
     ok(ref2 == ref, "Object reference is %d, expected %d\n", ref2, ref);
 

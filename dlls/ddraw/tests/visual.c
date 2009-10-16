@@ -615,10 +615,12 @@ static void offscreen_test(IDirect3DDevice7 *device)
 
 out:
     hr = IDirect3DDevice7_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice7_SetTexture returned %#x.\n", hr);
 
     /* restore things */
     if(backbuffer) {
         hr = IDirect3DDevice7_SetRenderTarget(device, backbuffer, 0);
+        ok(SUCCEEDED(hr), "IDirect3DDevice7_SetRenderTarget returned %#x.\n", hr);
         IDirectDrawSurface7_Release(backbuffer);
     }
     if(offscreen) {
