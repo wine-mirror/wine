@@ -50,7 +50,7 @@ static CHAR LocalPortA[]        = "Local Port";
 static CHAR portname_com1[]     = "COM1:";
 static CHAR portname_file[]     = "FILE:";
 static CHAR portname_lpt1[]     = "LPT1:";
-static CHAR server_does_not_exist[] = "\\does_not_exist";
+static CHAR server_does_not_exist[] = "\\\\does_not_exist";
 static CHAR version_dll[]       = "version.dll";
 static CHAR winetest[]          = "winetest";
 static CHAR xcv_localport[]     = ",XcvMonitor Local Port";
@@ -1628,41 +1628,49 @@ static void test_GetPrintProcessorDirectory(void)
     pcbNeeded = 0;
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA( NULL, NULL, 1, NULL, cbBuf, &pcbNeeded);
+    /* NT: ERROR_INVALID_USER_BUFFER, 9x: res != 0  */
+    ok( (!res && (GetLastError() == ERROR_INVALID_USER_BUFFER)) ||
+        broken(res),
+        "returned %d with %d (expected '0' with ERROR_INVALID_USER_BUFFER)\n",
+        res, GetLastError());
     }
 
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA( NULL, NULL, 1, buffer, cbBuf, NULL);
     /* NT: RPC_X_NULL_REF_POINTER, 9x: res != 0  */
-    ok( res || (GetLastError() == RPC_X_NULL_REF_POINTER),
-        "returned %d with %d (expected '!= 0' or '0' with "
-        "RPC_X_NULL_REF_POINTER)\n", res, GetLastError());
-
+    ok( (!res && (GetLastError() == RPC_X_NULL_REF_POINTER)) ||
+        broken(res),
+        "returned %d with %d (expected '0' with RPC_X_NULL_REF_POINTER)\n",
+        res, GetLastError());
 
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA( NULL, NULL, 1, NULL, cbBuf, NULL);
     /* NT: RPC_X_NULL_REF_POINTER, 9x: res != 0  */
-    ok( res || (GetLastError() == RPC_X_NULL_REF_POINTER),
-        "returned %d with %d (expected '!= 0' or '0' with "
-        "RPC_X_NULL_REF_POINTER)\n", res, GetLastError());
+    ok( (!res && (GetLastError() == RPC_X_NULL_REF_POINTER)) ||
+        broken(res),
+        "returned %d with %d (expected '0' with RPC_X_NULL_REF_POINTER)\n",
+        res, GetLastError());
 
- 
     /* with a valid buffer, but level is invalid */
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
+    res = GetPrintProcessorDirectoryA(NULL, NULL, 0, buffer, cbBuf, &pcbNeeded);
+    /* Level is ignored in win9x*/
+    ok( (!res && (GetLastError() == ERROR_INVALID_LEVEL)) ||
+        broken(res && buffer[0]),
+        "returned %d with %d (expected '0' with ERROR_INVALID_LEVEL)\n",
+        res, GetLastError());
+
+    buffer[0] = '\0';
+    SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA(NULL, NULL, 2, buffer, cbBuf, &pcbNeeded);
-    if (res && buffer[0])
-    {
-        /* Level is ignored in win9x*/
-        trace("invalid level (2) was ignored\n");
-    }
-    else
-    {
-        ok( !res && (GetLastError() == ERROR_INVALID_LEVEL),
-            "returned %d with %d (expected '0' with ERROR_INVALID_LEVEL)\n",
-            res, GetLastError());
-    }
+    /* Level is ignored in win9x*/
+    ok( (!res && (GetLastError() == ERROR_INVALID_LEVEL)) ||
+        broken(res && buffer[0]),
+        "returned %d with %d (expected '0' with ERROR_INVALID_LEVEL)\n",
+        res, GetLastError());
 
     /* Empty environment is the same as the default environment */
     buffer[0] = '\0';
@@ -1703,9 +1711,11 @@ static void test_GetPrintProcessorDirectory(void)
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA(server_does_not_exist, NULL, 1, buffer, cbBuf*2, &pcbNeeded);
-    ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER), 
-        "returned %d with %d (expected '0' with ERROR_INVALID_PARAMETER)\n",
-        res, GetLastError());
+    /* NT: RPC_S_SERVER_UNAVAILABLE, 9x: ERROR_INVALID_PARAMETER */
+    ok( !res &&
+        (GetLastError() == RPC_S_SERVER_UNAVAILABLE || GetLastError() == ERROR_INVALID_PARAMETER),
+        "returned %d with %d (expected '0' with RPC_S_SERVER_UNAVAILABLE or "
+        "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
     HeapFree(GetProcessHeap(), 0, buffer);
 }

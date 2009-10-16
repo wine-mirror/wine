@@ -175,8 +175,6 @@ static const WCHAR Version3_RegPathW[] = {'\\','V','e','r','s','i','o','n','-','
 static const WCHAR Version3_SubdirW[] = {'\\','3',0};
 
 static const WCHAR spooldriversW[] = {'\\','s','p','o','o','l','\\','d','r','i','v','e','r','s','\\',0};
-static const WCHAR spoolprtprocsW[] = {'\\','s','p','o','o','l','\\','p','r','t','p','r','o','c','s','\\',0};
-
 static const WCHAR backslashW[] = {'\\',0};
 static const WCHAR Configuration_FileW[] = {'C','o','n','f','i','g','u','r','a','t',
 				      'i','o','n',' ','F','i','l','e',0};
@@ -2162,58 +2160,25 @@ BOOL WINAPI GetPrintProcessorDirectoryW(LPWSTR server, LPWSTR env,
                                         DWORD level,  LPBYTE Info,
                                         DWORD cbBuf,  LPDWORD pcbNeeded)
 {
-    DWORD needed;
-    const printenv_t * env_t;
 
-    TRACE("(%s, %s, %d, %p, %d, %p)\n", debugstr_w(server),
-            debugstr_w(env), level, Info, cbBuf, pcbNeeded);
+    TRACE("(%s, %s, %d, %p, %d, %p)\n", debugstr_w(server), debugstr_w(env), level,
+                                        Info, cbBuf, pcbNeeded);
 
-    if(server != NULL && server[0]) {
-        FIXME("server not supported: %s\n", debugstr_w(server));
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+    if ((backend == NULL)  && !load_backend()) return FALSE;
 
-    env_t = validate_envW(env);
-    if(!env_t) return FALSE;  /* environment invalid or unsupported */
-
-    if(level != 1) {
-        WARN("(Level: %d) is ignored in win9x\n", level);
+    if (level != 1) {
+        /* (Level != 1) is ignored in win9x */
         SetLastError(ERROR_INVALID_LEVEL);
         return FALSE;
     }
 
-    /* GetSystemDirectoryW returns number of WCHAR including the '\0' */
-    needed = GetSystemDirectoryW(NULL, 0);
-    /* add the Size for the Subdirectories */
-    needed += lstrlenW(spoolprtprocsW);
-    needed += lstrlenW(env_t->subdir);
-    needed *= sizeof(WCHAR);  /* return-value is size in Bytes */
+    if (pcbNeeded == NULL) {
+        /* (pcbNeeded == NULL) is ignored in win9x */
+        SetLastError(RPC_X_NULL_REF_POINTER);
+        return FALSE;
+    }
 
-    if(pcbNeeded) *pcbNeeded = needed;
-    TRACE ("required: 0x%x/%d\n", needed, needed);
-    if (needed > cbBuf) {
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        return FALSE;
-    }
-    if(pcbNeeded == NULL) {
-        /* NT: RPC_X_NULL_REF_POINTER, 9x: ignored */
-        WARN("(pcbNeeded == NULL) is ignored in win9x\n");
-        SetLastError(RPC_X_NULL_REF_POINTER);
-        return FALSE;
-    }
-    if(Info == NULL) {
-        /* NT: RPC_X_NULL_REF_POINTER, 9x: ERROR_INVALID_PARAMETER */
-        SetLastError(RPC_X_NULL_REF_POINTER);
-        return FALSE;
-    }
-    
-    GetSystemDirectoryW((LPWSTR) Info, cbBuf/sizeof(WCHAR));
-    /* add the Subdirectories */
-    lstrcatW((LPWSTR) Info, spoolprtprocsW);
-    lstrcatW((LPWSTR) Info, env_t->subdir);
-    TRACE(" => %s\n", debugstr_w((LPWSTR) Info));
-    return TRUE;
+    return backend->fpGetPrintProcessorDirectory(server, env, level, Info, cbBuf, pcbNeeded);
 }
 
 /*****************************************************************************
