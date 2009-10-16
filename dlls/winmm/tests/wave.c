@@ -59,12 +59,16 @@ static void test_multiple_waveopens(void)
     }
 
     ret = waveOutOpen(&handle2, 0, &wfx, 0, 0, 0);
-    /* In windows this is most likely allowed, in wine an application can use the waveout
-     * interface, but so can directsound.. this causes problems if directsound goes active
+    /* Modern Windows allows for wave-out devices to be opened multiple times.
+     * Some Wine audio drivers allow that and some don't.  To avoid false alarms
+     * for those that do, don't "todo_wine ok(...)" on success.
      */
-    todo_wine ok(ret == MMSYSERR_NOERROR || broken(ret == MMSYSERR_ALLOCATED), /* winME */
-                 "waveOutOpen returns: %x\n", ret);
-    if (ret == MMSYSERR_NOERROR)
+    if (ret != MMSYSERR_NOERROR)
+    {
+        todo_wine ok(ret == MMSYSERR_NOERROR || broken(ret == MMSYSERR_ALLOCATED), /* winME */
+                     "second waveOutOpen returns: %x\n", ret);
+    }
+    else
         waveOutClose(handle2);
 
     waveOutClose(handle1);
