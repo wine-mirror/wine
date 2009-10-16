@@ -1977,6 +1977,14 @@ static NTSTATUS DVD_EndSession(int fd, const DVD_SESSION_ID *sid)
     return CDROM_GetStatusCode(ioctl(fd, DVD_AUTH, &auth_info));
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
     return STATUS_NOT_SUPPORTED;
+#elif defined(__APPLE__)
+    dk_dvd_send_key_t dvdsk;
+
+    dvdsk.format = kDVDKeyFormatAGID_Invalidate;
+    dvdsk.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+    dvdsk.grantID = (uint8_t)*sid;
+
+    return CDROM_GetStatusCode(ioctl(fd, DKIOCDVDSENDKEY, &dvdsk));
 #else
     return STATUS_NOT_SUPPORTED;
 #endif
