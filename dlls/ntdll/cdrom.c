@@ -2162,6 +2162,154 @@ static NTSTATUS DVD_ReadKey(int fd, PDVD_COPY_PROTECT_KEY key)
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
     TRACE("bsd\n");
     return STATUS_NOT_SUPPORTED;
+#elif defined(__APPLE__)
+    union
+    {
+        dk_dvd_report_key_t key;
+        dk_dvd_read_structure_t disk_key;
+    } ioc;
+    union
+    {
+        DVDDiscKeyInfo disk_key;
+        DVDChallengeKeyInfo chal;
+        DVDKey1Info key1;
+        DVDTitleKeyInfo title;
+        DVDAuthenticationSuccessFlagInfo asf;
+        DVDRegionPlaybackControlInfo rpc;
+    } desc;
+    NTSTATUS ret = STATUS_NOT_SUPPORTED;
+
+    switch(key->KeyType)
+    {
+    case DvdChallengeKey:
+        ioc.key.format = kDVDKeyFormatChallengeKey;
+        ioc.key.grantID = (uint8_t)key->SessionId;
+        ioc.key.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+        ioc.key.bufferLength = sizeof(desc.chal);
+        ioc.key.buffer = &desc.chal;
+        OSWriteBigInt16(desc.chal.dataLength, 0, key->KeyLength);
+        break;
+    case DvdBusKey1:
+        ioc.key.format = kDVDKeyFormatKey1;
+        ioc.key.grantID = (uint8_t)key->SessionId;
+        ioc.key.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+        ioc.key.bufferLength = sizeof(desc.key1);
+        ioc.key.buffer = &desc.key1;
+        OSWriteBigInt16(desc.key1.dataLength, 0, key->KeyLength);
+        break;
+    case DvdTitleKey:
+        ioc.key.format = kDVDKeyFormatTitleKey;
+        ioc.key.grantID = (uint8_t)key->SessionId;
+        ioc.key.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+        ioc.key.bufferLength = sizeof(desc.title);
+        ioc.key.buffer = &desc.title;
+        ioc.key.address = (uint32_t)(key->Parameters.TitleOffset.QuadPart>>11);
+        OSWriteBigInt16(desc.title.dataLength, 0, key->KeyLength);
+        break;
+    case DvdAsf:
+        ioc.key.format = kDVDKeyFormatASF;
+        ioc.key.grantID = (uint8_t)key->SessionId;
+        ioc.key.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+        ioc.key.bufferLength = sizeof(desc.asf);
+        ioc.key.buffer = &desc.asf;
+        OSWriteBigInt16(desc.asf.dataLength, 0, key->KeyLength);
+        break;
+    case DvdGetRpcKey:
+        ioc.key.format = kDVDKeyFormatRegionState;
+        ioc.key.grantID = (uint8_t)key->SessionId;
+        ioc.key.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+        ioc.key.bufferLength = sizeof(desc.rpc);
+        ioc.key.buffer = &desc.rpc;
+        OSWriteBigInt16(desc.rpc.dataLength, 0, key->KeyLength);
+        break;
+    case DvdDiskKey:
+        ioc.disk_key.format = kDVDStructureFormatDiscKeyInfo;
+        ioc.disk_key.grantID = (uint8_t)key->SessionId;
+        ioc.disk_key.bufferLength = sizeof(desc.disk_key);
+        ioc.disk_key.buffer = &desc.disk_key;
+        break;
+    case DvdInvalidateAGID:
+        ioc.key.format = kDVDKeyFormatAGID_Invalidate;
+        ioc.key.grantID = (uint8_t)key->SessionId;
+        ioc.key.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+        break;
+    case DvdBusKey2:
+    case DvdSetRpcKey:
+        ERR("attempted to read write-only key type 0x%x\n", key->KeyType);
+        return STATUS_NOT_SUPPORTED;
+    default:
+        FIXME("got unknown key type 0x%x\n", key->KeyType);
+        return STATUS_NOT_SUPPORTED;
+    }
+
+    ret = CDROM_GetStatusCode(ioctl(fd, (key->KeyType == DvdDiskKey ? DKIOCDVDREADSTRUCTURE : DKIOCDVDREPORTKEY), &ioc));
+
+    if (ret == STATUS_SUCCESS)
+    {
+        switch(key->KeyType)
+        {
+        case DvdChallengeKey:
+            key->KeyLength = OSReadBigInt16(desc.chal.dataLength, 0);
+            memcpy(key->KeyData, desc.chal.challengeKeyValue, key->KeyLength);
+            break;
+        case DvdBusKey1:
+            key->KeyLength = OSReadBigInt16(desc.key1.dataLength, 0);
+            memcpy(key->KeyData, desc.key1.key1Value, key->KeyLength);
+            break;
+        case DvdTitleKey:
+            key->KeyLength = OSReadBigInt16(desc.title.dataLength, 0);
+            memcpy(key->KeyData, desc.title.titleKeyValue, key->KeyLength);
+            key->KeyFlags = 0;
+            if (desc.title.CPM)
+            {
+                /*key->KeyFlags |= DVD_COPYRIGHTED;*/
+                if (desc.title.CP_SEC) key->KeyFlags |= DVD_SECTOR_PROTECTED;
+                /*else key->KeyFlags |= DVD_SECTOR_NOT_PROTECTED;*/
+#if 0
+                switch (desc.title.CGMS)
+                {
+                case 0:
+                    key->KeyFlags |= DVD_CGMS_COPY_PERMITTED;
+                    break;
+                case 2:
+                    key->KeyFlags |= DVD_CGMS_COPY_ONCE;
+                    break;
+                case 3:
+                    key->KeyFlags |= DVD_CGMS_NO_COPY;
+                    break;
+                }
+#endif
+            } /*else key->KeyFlags |= DVD_NOT_COPYRIGHTED;*/
+            break;
+        case DvdAsf:
+            key->KeyLength = OSReadBigInt16(desc.title.dataLength, 0);
+            ((PDVD_ASF)key->KeyData)->SuccessFlag = desc.asf.successFlag;
+            break;
+        case DvdGetRpcKey:
+            key->KeyLength = OSReadBigInt16(desc.rpc.dataLength, 0);
+            ((PDVD_RPC_KEY)key->KeyData)->UserResetsAvailable =
+                desc.rpc.numberUserResets;
+            ((PDVD_RPC_KEY)key->KeyData)->ManufacturerResetsAvailable =
+                desc.rpc.numberVendorResets;
+            ((PDVD_RPC_KEY)key->KeyData)->TypeCode =
+                desc.rpc.typeCode;
+            ((PDVD_RPC_KEY)key->KeyData)->RegionMask =
+                desc.rpc.driveRegion;
+            ((PDVD_RPC_KEY)key->KeyData)->RpcScheme =
+                desc.rpc.rpcScheme;
+        case DvdDiskKey:
+            key->KeyLength = OSReadBigInt16(desc.disk_key.dataLength, 0);
+            memcpy(key->KeyData, desc.disk_key.discKeyStructures, key->KeyLength);
+            break;
+        case DvdBusKey2:
+        case DvdSetRpcKey:
+        case DvdInvalidateAGID:
+        default:
+            /* Silence warning */
+            ;
+        }
+    }
+    return ret;
 #else
     TRACE("outside\n");
     return STATUS_NOT_SUPPORTED;
