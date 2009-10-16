@@ -1315,9 +1315,10 @@ static void test_EnumPrintProcessors(void)
     SetLastError(0xdeadbeef);
     pcbNeeded = 0xdeadbeef;
     res = EnumPrintProcessorsA(NULL, invalid_env, 1, buffer, cbBuf, &pcbNeeded, &pcReturned);
-    /* NT5: ERROR_INVALID_ENVIRONMENT, 9x: ERROR_INVALID_PARAMETER */
-    ok( !res && ((GetLastError() == ERROR_INVALID_ENVIRONMENT) ||
-                 (GetLastError() == ERROR_INVALID_PARAMETER)),
+    /* NT5: ERROR_INVALID_ENVIRONMENT, NT4: res != 0, 9x: ERROR_INVALID_PARAMETER */
+    ok( broken(res) || /* NT4 */
+        (GetLastError() == ERROR_INVALID_ENVIRONMENT) ||
+        (GetLastError() == ERROR_INVALID_PARAMETER),
         "got %u with %u (expected '0' with ERROR_INVALID_ENVIRONMENT or "
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
