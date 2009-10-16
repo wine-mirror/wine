@@ -482,7 +482,7 @@ unsigned char get_array_fc(const type_t *type)
         /* ref pointers cannot just be block copied. unique pointers to
          * interfaces need special treatment. either case means the array is
          * complex */
-        if (get_pointer_fc(elem_type, NULL, FALSE) == RPC_FC_RP)
+        if (get_pointer_fc(elem_type, NULL, FALSE) == RPC_FC_RP || pointer_size != 4)
             fc = RPC_FC_BOGUS_ARRAY;
         break;
     case TGT_BASIC:
