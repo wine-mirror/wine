@@ -1422,6 +1422,69 @@ static PCCERT_CONTEXT find_cert_by_issuer(HCERTSTORE store, DWORD dwType,
     return found;
 }
 
+static BOOL compare_cert_by_name_str(PCCERT_CONTEXT pCertContext,
+ DWORD dwType, DWORD dwFlags, const void *pvPara)
+{
+    PCERT_NAME_BLOB name;
+    DWORD len;
+    BOOL ret = FALSE;
+
+    if (dwType & CERT_INFO_SUBJECT_FLAG)
+        name = &pCertContext->pCertInfo->Subject;
+    else
+        name = &pCertContext->pCertInfo->Issuer;
+    len = CertNameToStrW(pCertContext->dwCertEncodingType, name,
+     CERT_SIMPLE_NAME_STR, NULL, 0);
+    if (len)
+    {
+        LPWSTR str = CryptMemAlloc(len * sizeof(WCHAR));
+
+        if (str)
+        {
+            LPWSTR ptr;
+
+            CertNameToStrW(pCertContext->dwCertEncodingType, name,
+             CERT_SIMPLE_NAME_STR, str, len);
+            for (ptr = str; *ptr; ptr++)
+                *ptr = tolowerW(*ptr);
+            if (strstrW(str, pvPara))
+                ret = TRUE;
+            CryptMemFree(str);
+        }
+    }
+    return ret;
+}
+
+static PCCERT_CONTEXT find_cert_by_name_str(HCERTSTORE store, DWORD dwType,
+ DWORD dwFlags, const void *pvPara, PCCERT_CONTEXT prev)
+{
+    PCCERT_CONTEXT found = NULL;
+
+    TRACE("%s\n", debugstr_w(pvPara));
+
+    if (pvPara)
+    {
+        DWORD len = strlenW(pvPara);
+        LPWSTR str = CryptMemAlloc((len + 1) * sizeof(WCHAR));
+
+        if (str)
+        {
+            LPCWSTR src;
+            LPWSTR dst;
+
+            for (src = pvPara, dst = str; *src; src++, dst++)
+                *dst = tolowerW(*src);
+            *dst = 0;
+           found = cert_compare_certs_in_store(store, prev,
+            compare_cert_by_name_str, dwType, dwFlags, str);
+           CryptMemFree(str);
+        }
+    }
+    else
+        found = find_cert_any(store, dwType, dwFlags, NULL, prev);
+    return found;
+}
+
 PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
  DWORD dwCertEncodingType, DWORD dwFlags, DWORD dwType, const void *pvPara,
  PCCERT_CONTEXT pPrevCertContext)
@@ -1449,6 +1512,9 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
         break;
     case CERT_COMPARE_PUBLIC_KEY:
         compare = compare_cert_by_public_key;
+        break;
+    case CERT_COMPARE_NAME_STR_W:
+        find = find_cert_by_name_str;
         break;
     case CERT_COMPARE_SUBJECT_CERT:
         compare = compare_cert_by_subject_cert;

@@ -1148,7 +1148,6 @@ static void testFindCert(void)
         if (context)
             count++;
     } while (context);
-    todo_wine
     ok(count == 3, "expected 3 contexts\n");
     count = 0;
     context = NULL;
@@ -1158,7 +1157,6 @@ static void testFindCert(void)
         if (context)
             count++;
     } while (context);
-    todo_wine
     ok(count == 2, "expected 2 contexts\n");
     count = 0;
     context = NULL;
@@ -1168,7 +1166,6 @@ static void testFindCert(void)
         if (context)
             count++;
     } while (context);
-    todo_wine
     ok(count == 3, "expected 3 contexts\n");
     SetLastError(0xdeadbeef);
     context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
