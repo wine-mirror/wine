@@ -139,6 +139,7 @@ static const WCHAR printersW[] = {'S','y','s','t','e','m','\\',
                                   'P','r','i','n','t','\\',
                                   'P','r','i','n','t','e','r','s',0};
 static const WCHAR spooldriversW[] = {'\\','s','p','o','o','l','\\','d','r','i','v','e','r','s','\\',0};
+static const WCHAR spoolprtprocsW[] = {'\\','s','p','o','o','l','\\','p','r','t','p','r','o','c','s','\\',0};
 static const WCHAR version0_regpathW[] = {'\\','V','e','r','s','i','o','n','-','0',0};
 static const WCHAR version0_subdirW[] = {'\\','0',0};
 static const WCHAR version3_regpathW[] = {'\\','V','e','r','s','i','o','n','-','3',0};
@@ -2175,6 +2176,75 @@ epp_cleanup:
 }
 
 /******************************************************************************
+ * fpGetPrintProcessorDirectory [exported through PRINTPROVIDOR]
+ *
+ * Return the PATH for the Print-Processors
+ *
+ * PARAMS
+ *  pName        [I] Servername or NULL (this computer)
+ *  pEnvironment [I] Printing-Environment or NULL (Default)
+ *  level        [I] Structure-Level (must be 1)
+ *  pPPInfo      [O] PTR to Buffer that receives the Result
+ *  cbBuf        [I] Size of Buffer at pPPInfo
+ *  pcbNeeded    [O] PTR to DWORD that receives the size in Bytes used / required for pPPInfo
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE and in pcbNeeded the Bytes required for pPPInfo, if cbBuf is too small
+ *
+ *  Native Values returned in pPPInfo on Success for this computer:
+ *| NT(Windows x64):    "%winsysdir%\\spool\\PRTPROCS\\x64"
+ *| NT(Windows NT x86): "%winsysdir%\\spool\\PRTPROCS\\w32x86"
+ *| NT(Windows 4.0):    "%winsysdir%\\spool\\PRTPROCS\\win40"
+ *
+ *  "%winsysdir%" is the Value from GetSystemDirectoryW()
+ *
+ */
+static BOOL WINAPI fpGetPrintProcessorDirectory(LPWSTR pName, LPWSTR pEnvironment, DWORD level,
+                                                LPBYTE pPPInfo, DWORD cbBuf, LPDWORD pcbNeeded)
+{
+    const printenv_t * env;
+    DWORD needed;
+    LONG  lres;
+
+    TRACE("(%s, %s, %d, %p, %d, %p)\n", debugstr_w(pName), debugstr_w(pEnvironment),
+                                        level, pPPInfo, cbBuf, pcbNeeded);
+
+    *pcbNeeded = 0;
+    lres = copy_servername_from_name(pName, NULL);
+    if (lres) {
+        FIXME("server %s not supported\n", debugstr_w(pName));
+        SetLastError(RPC_S_SERVER_UNAVAILABLE);
+        return FALSE;
+    }
+
+    env = validate_envW(pEnvironment);
+    if (!env)
+        return FALSE;   /* ERROR_INVALID_ENVIRONMENT */
+
+    /* GetSystemDirectoryW returns number of WCHAR including the '\0' */
+    needed = GetSystemDirectoryW(NULL, 0);
+    /* add the Size for the Subdirectories */
+    needed += lstrlenW(spoolprtprocsW);
+    needed += lstrlenW(env->subdir);
+    needed *= sizeof(WCHAR);  /* return-value is size in Bytes */
+
+    *pcbNeeded = needed;
+
+    if (needed > cbBuf) {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+
+    GetSystemDirectoryW((LPWSTR) pPPInfo, cbBuf/sizeof(WCHAR));
+    /* add the Subdirectories */
+    lstrcatW((LPWSTR) pPPInfo, spoolprtprocsW);
+    lstrcatW((LPWSTR) pPPInfo, env->subdir);
+    TRACE("==> %s\n", debugstr_w((LPWSTR) pPPInfo));
+    return TRUE;
+}
+
+/******************************************************************************
  * fpOpenPrinter [exported through PRINTPROVIDOR]
  *
  * Open a Printer / Printserver or a Printer-Object
@@ -2298,7 +2368,7 @@ void setup_provider(void)
         NULL,   /* fpDeletePrinterDriver */
         NULL,   /* fpAddPrintProcessor */
         fpEnumPrintProcessors,
-        NULL,   /* fpGetPrintProcessorDirectory */
+        fpGetPrintProcessorDirectory,
         NULL,   /* fpDeletePrintProcessor */
         NULL,   /* fpEnumPrintProcessorDatatypes */
         NULL,   /* fpStartDocPrinter */
