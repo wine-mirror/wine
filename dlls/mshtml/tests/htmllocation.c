@@ -56,7 +56,7 @@ static const WCHAR http_url[] = {'h','t','t','p',':','/','/','w','w','w','.','w'
 static const struct location_test http_test = {
             "HTTP",
             http_url,
-            "http://www.winehq.org/?search#hash", FALSE,
+            "http://www.winehq.org/?search#hash", TRUE,
             "http:", TRUE,
             "www.winehq.org:80", TRUE,
             "www.winehq.org", TRUE,
@@ -112,7 +112,7 @@ static const WCHAR file_url[] = {'f','i','l','e',':','/','/','C',':','\\','w','i
 static const struct location_test file_test = {
             "FILE",
             file_url,
-            "file:///C:/windows/win.ini", FALSE,
+            "file:///C:/windows/win.ini", TRUE,
             "file:", TRUE,
             NULL, TRUE,
             NULL, TRUE,
