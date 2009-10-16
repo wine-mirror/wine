@@ -1849,9 +1849,10 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
             const struct dwarf_fde *fde = _Unwind_Find_FDE( (void *)(context.Rip - 1), &bases );
             if (!fde)
             {
-                ERR( "no exception data found in %s for function %lx\n",
-                     module ? debugstr_w(module->BaseDllName.Buffer) : "system library", context.Rip );
-                break;
+                /* assume leaf function */
+                context.Rip = *(ULONG64 *)context.Rsp;
+                context.Rsp += sizeof(ULONG64);
+                continue;
             }
             status = dwarf_virtual_unwind( context.Rip, &dispatch.EstablisherFrame, &new_context,
                                            fde, &bases, &dispatch.LanguageHandler, &dispatch.HandlerData );
@@ -2712,9 +2713,10 @@ void WINAPI RtlUnwindEx( ULONG64 end_frame, ULONG64 target_ip, EXCEPTION_RECORD 
             const struct dwarf_fde *fde = _Unwind_Find_FDE( (void *)(context.Rip - 1), &bases );
             if (!fde)
             {
-                ERR( "no exception data found in %s for function %lx\n",
-                     module ? debugstr_w(module->BaseDllName.Buffer) : "system library", context.Rip );
-                raise_status( STATUS_BAD_FUNCTION_TABLE, rec );
+                /* assume leaf function */
+                context.Rip = *(ULONG64 *)context.Rsp;
+                context.Rsp += sizeof(ULONG64);
+                continue;
             }
             dispatch.FunctionEntry = NULL;
             status = dwarf_virtual_unwind( context.Rip, &dispatch.EstablisherFrame, &new_context, fde,
