@@ -335,6 +335,7 @@ static void test_filter(IDirect3DDevice9 *device) {
     }
 
     hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture returned %#x.\n", hr);
     IDirect3DTexture9_Release(texture);
 
     out:

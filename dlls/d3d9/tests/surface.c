@@ -142,6 +142,7 @@ static void test_surface_alignment(IDirect3DDevice9 *device_ptr)
          */
         ok(lockedRect.Pitch == 12, "Got pitch %d, expected 12\n", lockedRect.Pitch);
         hr = IDirect3DSurface9_UnlockRect(surface_ptr);
+        ok(SUCCEEDED(hr), "IDirect3DSurface9_UnlockRect returned %#x.\n", hr);
         IDirect3DSurface9_Release(surface_ptr);
     }
 
