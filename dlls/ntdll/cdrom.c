@@ -81,6 +81,7 @@
 # include <IOKit/IOKitLib.h>
 # include <IOKit/storage/IOMedia.h>
 # include <IOKit/storage/IOCDMediaBSDClient.h>
+# include <IOKit/storage/IODVDMediaBSDClient.h>
 # include <IOKit/scsi/SCSICmds_REQUEST_SENSE_Defs.h>
 # define SENSEBUFLEN kSenseDefaultSize
 #endif
@@ -1939,6 +1940,20 @@ static NTSTATUS DVD_StartSession(int fd, const DVD_SESSION_ID *sid_in, PDVD_SESS
     return ret;
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
     return STATUS_NOT_SUPPORTED;
+#elif defined(__APPLE__)
+    NTSTATUS ret = STATUS_NOT_SUPPORTED;
+    dk_dvd_report_key_t dvdrk;
+    DVDAuthenticationGrantIDInfo agid_info;
+
+    dvdrk.format = kDVDKeyFormatAGID_CSS;
+    dvdrk.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+    if(sid_in) dvdrk.grantID = *(uint8_t*)sid_in; /* ? */
+    dvdrk.bufferLength = sizeof(DVDAuthenticationGrantIDInfo);
+    dvdrk.buffer = &agid_info;
+
+    ret = CDROM_GetStatusCode(ioctl(fd, DKIOCDVDREPORTKEY, &dvdrk));
+    *sid_out = agid_info.grantID;
+    return ret;
 #else
     return STATUS_NOT_SUPPORTED;
 #endif
