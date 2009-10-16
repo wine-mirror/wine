@@ -6755,7 +6755,7 @@ epp_cleanup:
  *  pEnvironment [I] Printing-Environment or NULL (Default)
  *  Level        [I] Structure-Level (Only 1 is allowed)
  *  pPPInfo      [O] PTR to Buffer that receives the Result
- *  cbBuf        [I] Size of Buffer at pMonitors
+ *  cbBuf        [I] Size of Buffer at pPPInfo
  *  pcbNeeded    [O] PTR to DWORD that receives the size in Bytes used / required for pPPInfo
  *  pcReturned   [O] PTR to DWORD that receives the number of Print Processors in pPPInfo
  *
