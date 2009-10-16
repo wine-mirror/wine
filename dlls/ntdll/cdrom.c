@@ -181,12 +181,14 @@ static const char *iocodex(DWORD code)
 #define MSF_OF_FRAME(m,fr) {int f=(fr); ((UCHAR *)&(m))[2]=f%CD_FRAMES;f/=CD_FRAMES;((UCHAR *)&(m))[1]=f%CD_SECS;((UCHAR *)&(m))[0]=f/CD_SECS;}
 
 /* The documented format of DVD_LAYER_DESCRIPTOR is wrong. Even the format in the
- * DDK's header is wrong. There are four bytes at the start which always seem to
- * follow the sequence "02 08 00 00".
+ * DDK's header is wrong. There are four bytes at the start  defined by
+ * MMC-5. The first two are the size of the structure in big-endian order as
+ * defined by MMC-5. The other two are reserved.
  */
 typedef struct
 {
-    UCHAR MagicHeader[4];
+    UCHAR DataLength[2];
+    UCHAR Reserved0[2];
     UCHAR BookVersion : 4;
     UCHAR BookType : 4;
     UCHAR MinimumRate : 4;
@@ -2329,7 +2331,7 @@ static NTSTATUS DVD_GetRegion(int dev, PDVD_REGION region)
 }
 
 /******************************************************************
- *		DVD_GetRegion
+ *		DVD_ReadStructure
  *
  *
  */
@@ -2390,10 +2392,10 @@ static NTSTATUS DVD_ReadStructure(int dev, const DVD_READ_STRUCTURE *structure, 
             internal_dvd_layer_descriptor *p = (internal_dvd_layer_descriptor *) layer;
             struct dvd_layer *l = &s.physical.layer[s.physical.layer_num];
 
-            p->MagicHeader[0] = 2;
-            p->MagicHeader[1] = 8;
-            p->MagicHeader[2] = 0;
-            p->MagicHeader[3] = 0;
+            p->DataLength[0] = 2;
+            p->DataLength[1] = 8;
+            p->Reserved0[0] = 0;
+            p->Reserved0[1] = 0;
             p->BookVersion = l->book_version;
             p->BookType = l->book_type;
             p->MinimumRate = l->min_rate;
@@ -2450,6 +2452,122 @@ static NTSTATUS DVD_ReadStructure(int dev, const DVD_READ_STRUCTURE *structure, 
     case DvdMaxDescriptor: /* Suppress warning */
 	break;
     }
+#elif defined(__APPLE__)
+    NTSTATUS ret = STATUS_NOT_SUPPORTED;
+    dk_dvd_read_structure_t dvdrs;
+    union
+    {
+        DVDPhysicalFormatInfo phys;
+        DVDCopyrightInfo copy;
+        DVDDiscKeyInfo disk_key;
+        DVDManufacturingInfo manf;
+    } desc;
+    union
+    {
+        PDVD_LAYER_DESCRIPTOR layer;
+        internal_dvd_layer_descriptor *xlayer;
+        PDVD_COPYRIGHT_DESCRIPTOR copy;
+        PDVD_DISK_KEY_DESCRIPTOR disk_key;
+        PDVD_MANUFACTURER_DESCRIPTOR manf;
+    } nt_desc;
+
+    nt_desc.layer = layer;
+    dvdrs.address = (uint32_t)(structure->BlockByteOffset.QuadPart>>11);
+    dvdrs.grantID = (uint8_t)structure->SessionId;
+    dvdrs.layer = structure->LayerNumber;
+    switch(structure->Format)
+    {
+    case DvdPhysicalDescriptor:
+        dvdrs.format = kDVDStructureFormatPhysicalFormatInfo;
+        dvdrs.bufferLength = sizeof(desc.phys);
+        dvdrs.buffer = &desc.phys;
+        break;
+
+    case DvdCopyrightDescriptor:
+        dvdrs.format = kDVDStructureFormatCopyrightInfo;
+        dvdrs.bufferLength = sizeof(desc.copy);
+        dvdrs.buffer = &desc.copy;
+        break;
+
+    case DvdDiskKeyDescriptor:
+        dvdrs.format = kDVDStructureFormatDiscKeyInfo;
+        dvdrs.bufferLength = sizeof(desc.disk_key);
+        dvdrs.buffer = &desc.disk_key;
+        break;
+
+    case DvdBCADescriptor:
+        FIXME("DvdBCADescriptor NIY\n");
+        return STATUS_NOT_SUPPORTED;
+
+    case DvdManufacturerDescriptor:
+        dvdrs.format = kDVDStructureFormatManufacturingInfo;
+        dvdrs.bufferLength = sizeof(desc.manf);
+        dvdrs.buffer = &desc.manf;
+        break;
+
+    case DvdMaxDescriptor:
+    default:
+        FIXME("got unknown structure type 0x%x\n", structure->Format);
+        return STATUS_NOT_SUPPORTED;
+    }
+    ret = CDROM_GetStatusCode(ioctl(dev, DKIOCDVDREADSTRUCTURE, &dvdrs));
+    if(ret == STATUS_SUCCESS)
+    {
+        switch(structure->Format)
+        {
+        case DvdPhysicalDescriptor:
+            nt_desc.xlayer->DataLength[0] = 2;
+            nt_desc.xlayer->DataLength[1] = 8;
+            nt_desc.xlayer->Reserved0[0] = 0;
+            nt_desc.xlayer->Reserved0[1] = 0;
+            nt_desc.xlayer->BookVersion = desc.phys.partVersion;
+            nt_desc.xlayer->BookType = desc.phys.bookType;
+            nt_desc.xlayer->MinimumRate = desc.phys.minimumRate;
+            nt_desc.xlayer->DiskSize = desc.phys.discSize;
+            nt_desc.xlayer->LayerType = desc.phys.layerType;
+            nt_desc.xlayer->TrackPath = desc.phys.trackPath;
+            nt_desc.xlayer->NumberOfLayers = desc.phys.numberOfLayers;
+            nt_desc.xlayer->Reserved1 = 0;
+            nt_desc.xlayer->TrackDensity = desc.phys.trackDensity;
+            nt_desc.xlayer->LinearDensity = desc.phys.linearDensity;
+            nt_desc.xlayer->BCAFlag = desc.phys.bcaFlag;
+            nt_desc.xlayer->StartingDataSector = OSReadBigInt32(&desc.phys.zero1, 0);
+            nt_desc.xlayer->EndDataSector = OSReadBigInt32(&desc.phys.zero2, 0);
+            nt_desc.xlayer->EndLayerZeroSector = OSReadBigInt32(&desc.phys.zero3, 0);
+            nt_desc.xlayer->Reserved5 = 0;
+            nt_desc.xlayer->Reserved6 = 0;
+            break;
+
+        case DvdCopyrightDescriptor:
+            nt_desc.copy->CopyrightProtectionType =
+                desc.copy.copyrightProtectionSystemType;
+            nt_desc.copy->RegionManagementInformation =
+                desc.copy.regionMask;
+            nt_desc.copy->Reserved = 0;
+            break;
+
+        case DvdDiskKeyDescriptor:
+            memcpy(
+                nt_desc.disk_key->DiskKeyData,
+                desc.disk_key.discKeyStructures,
+                2048);
+            break;
+
+        case DvdManufacturerDescriptor:
+            memcpy(
+                nt_desc.manf->ManufacturingInformation,
+                desc.manf.discManufacturingInfo,
+                2048);
+            break;
+
+        case DvdBCADescriptor:
+        case DvdMaxDescriptor:
+        default:
+            /* Silence warning */
+            break;
+        }
+    }
+    return ret;
 #else
     FIXME("\n");
 #endif
