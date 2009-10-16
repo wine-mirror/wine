@@ -882,9 +882,6 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, ID
 
     HRESULT              hr = WINED3D_OK;
     WINED3DFORMAT        srcFormat, destFormat;
-    UINT                 srcWidth,  destWidth;
-    UINT                 srcHeight, destHeight;
-    UINT                 srcSize;
     WINED3DSURFACE_DESC  winedesc;
 
     TRACE("(%p) pSrcSur=%p, pSourceRects=%p, cRects=%d, pDstSur=%p, pDestPtsArr=%p\n", iface,
@@ -896,14 +893,9 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, ID
     wined3d_mutex_lock();
     IWineD3DSurface_GetDesc(Source->wineD3DSurface, &winedesc);
     srcFormat = winedesc.format;
-    srcWidth = winedesc.width;
-    srcHeight = winedesc.height;
-    srcSize = winedesc.size;
 
     IWineD3DSurface_GetDesc(Dest->wineD3DSurface, &winedesc);
     destFormat = winedesc.format;
-    destWidth = winedesc.width;
-    destHeight = winedesc.height;
 
     /* Check that the source and destination formats match */
     if (srcFormat != destFormat && WINED3DFMT_UNKNOWN != destFormat) {
@@ -913,7 +905,6 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, ID
     } else if (WINED3DFMT_UNKNOWN == destFormat) {
         TRACE("(%p) : Converting destination surface from WINED3DFMT_UNKNOWN to the source format\n", iface);
         IWineD3DSurface_SetFormat(Dest->wineD3DSurface, srcFormat);
-        destFormat = srcFormat;
     }
 
     /* Quick if complete copy ... */
