@@ -428,10 +428,7 @@ static HRESULT WINAPI HTMLLocation_put_pathname(IHTMLLocation *iface, BSTR v)
 static HRESULT WINAPI HTMLLocation_get_pathname(IHTMLLocation *iface, BSTR *p)
 {
     HTMLLocation *This = HTMLLOCATION_THIS(iface);
-    WCHAR buf[INTERNET_MAX_PATH_LENGTH];
-    URL_COMPONENTSW url = {sizeof(url)};
-    const WCHAR *doc_url;
-    DWORD size = 0;
+    URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -439,29 +436,17 @@ static HRESULT WINAPI HTMLLocation_get_pathname(IHTMLLocation *iface, BSTR *p)
     if(!p)
         return E_POINTER;
 
-    hres = get_url(This, &doc_url);
-    if(FAILED(hres))
-        return hres;
-
-    hres = CoInternetParseUrl(doc_url, PARSE_PATH_FROM_URL, 0, buf, sizeof(buf), &size, 0);
-    if(SUCCEEDED(hres)) {
-        *p = SysAllocString(buf);
-        if(!*p)
-            return E_OUTOFMEMORY;
-        return S_OK;
-    }
-
     url.dwUrlPathLength = 1;
+    url.dwExtraInfoLength = 1;
     hres = get_url_components(This, &url);
     if(FAILED(hres))
         return hres;
 
-    if(!url.dwUrlPathLength) {
-        *p = NULL;
-        return S_OK;
-    }
+    if(url.dwUrlPathLength && url.lpszUrlPath[0] == '/')
+        *p = SysAllocStringLen(url.lpszUrlPath + 1, url.dwUrlPathLength - 1);
+    else
+        *p = SysAllocStringLen(url.lpszUrlPath, url.dwUrlPathLength);
 
-    *p = SysAllocStringLen(url.lpszUrlPath, url.dwUrlPathLength);
     if(!*p)
         return E_OUTOFMEMORY;
     return S_OK;

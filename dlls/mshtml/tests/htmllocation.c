@@ -61,7 +61,7 @@ static const struct location_test http_test = {
             "www.winehq.org:80", TRUE,
             "www.winehq.org", TRUE,
             "80", TRUE,
-            "", FALSE,
+            "", TRUE,
             "?search", FALSE,
             "#hash", FALSE
             };
@@ -75,7 +75,7 @@ static const struct location_test http_file_test = {
             "www.winehq.org:80", TRUE,
             "www.winehq.org", TRUE,
             "80", TRUE,
-            "file", FALSE,
+            "file", TRUE,
             "?search", FALSE,
             "#hash", FALSE
             };
@@ -89,7 +89,7 @@ static const struct location_test ftp_test = {
             "ftp.winehq.org:21", TRUE,
             "ftp.winehq.org", TRUE,
             "21", TRUE,
-            "", FALSE,
+            "", TRUE,
             NULL, FALSE,
             NULL, FALSE
             };
@@ -103,7 +103,7 @@ static const struct location_test ftp_file_test = {
             "ftp.winehq.org:21", TRUE,
             "ftp.winehq.org", TRUE,
             "21", TRUE,
-            "file", FALSE,
+            "file", TRUE,
             NULL, FALSE,
             NULL, FALSE
             };
