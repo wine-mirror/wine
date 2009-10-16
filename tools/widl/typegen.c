@@ -529,8 +529,7 @@ static int type_has_pointers(const type_t *type)
     case TGT_POINTER:
         return TRUE;
     case TGT_ARRAY:
-        /* FIXME: array can be pointer */
-        return type_has_pointers(type_array_get_element(type));
+        return type_array_is_decl_as_ptr(type) || type_has_pointers(type_array_get_element(type));
     case TGT_STRUCT:
     {
         var_list_t *fields = type_struct_get_fields(type);
@@ -1704,10 +1703,9 @@ static int write_pointer_description_offsets(
     int written = 0;
     unsigned int align;
 
-    if (is_ptr(type) && type_get_type(type_pointer_get_ref(type)) != TYPE_INTERFACE)
+    if ((is_ptr(type) && type_get_type(type_pointer_get_ref(type)) != TYPE_INTERFACE) ||
+        (is_array(type) && type_array_is_decl_as_ptr(type)))
     {
-        type_t *ref = type_pointer_get_ref(type);
-
         if (offset_in_memory && offset_in_buffer)
         {
             unsigned int memsize;
@@ -1726,12 +1724,28 @@ static int write_pointer_description_offsets(
         }
         *typestring_offset += 4;
 
-        if (is_string_type(attrs, type))
-            write_string_tfs(file, attrs, type, FALSE, NULL, typestring_offset);
-        else if (processed(ref) || type_get_type(ref) == TYPE_BASIC || type_get_type(ref) == TYPE_ENUM)
-            write_pointer_tfs(file, attrs, type, FALSE, typestring_offset);
+        if (is_ptr(type))
+        {
+            type_t *ref = type_pointer_get_ref(type);
+
+            if (is_string_type(attrs, type))
+                write_string_tfs(file, attrs, type, FALSE, NULL, typestring_offset);
+            else if (processed(ref))
+                write_nonsimple_pointer(file, attrs, type, FALSE, ref->typestring_offset, typestring_offset);
+            else if (type_get_type(ref) == TYPE_BASIC || type_get_type(ref) == TYPE_ENUM)
+                *typestring_offset += write_simple_pointer(file, attrs, type, FALSE);
+            else
+                error("write_pointer_description_offsets: type format string unknown\n");
+        }
         else
-            error("write_pointer_description_offsets: type format string unknown\n");
+        {
+            unsigned int offset = type->typestring_offset;
+            /* skip over the pointer that is written for strings, since a
+             * pointer has to be written in-place here */
+            if (is_string_type(attrs, type))
+                offset += 4;
+            write_nonsimple_pointer(file, attrs, type, FALSE, offset, typestring_offset);
+        }
 
         return 1;
     }
@@ -1935,7 +1949,7 @@ static int write_varying_array_pointer_descriptions(
             *typestring_offset += 8;
 
             pointer_count = write_pointer_description_offsets(
-                file, attrs, type, offset_in_memory,
+                file, attrs, type_array_get_element(type), offset_in_memory,
                 offset_in_buffer, typestring_offset);
         }
     }
