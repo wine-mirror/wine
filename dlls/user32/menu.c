@@ -3509,6 +3509,7 @@ static LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, 
         break;
 
     case MM_GETMENUHANDLE:
+    case MN_GETHMENU:
         return GetWindowLongPtrW( hwnd, 0 );
 
     default:
