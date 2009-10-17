@@ -345,8 +345,8 @@ static LRESULT	send_message(struct IOProcList* ioProc, LPMMIOINFO mmioinfo,
     LPARAM		lp1 = lParam1, lp2 = lParam2;
 
     if (!ioProc) {
-	ERR("brrr\n");
-	result = MMSYSERR_INVALPARAM;
+	ERR("ioProc NULL\n");
+	return MMSYSERR_INVALPARAM;
     }
 
     if (ioProc->is_unicode != is_unicode) {
