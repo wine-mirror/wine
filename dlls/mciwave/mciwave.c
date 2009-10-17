@@ -884,13 +884,13 @@ cleanUp:
     }
     CloseHandle(wmw->hEvent);
 
+    wmw->dwStatus = MCI_MODE_STOP;
+
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wmw->openParms.wDeviceID,
 			dwRet ? MCI_NOTIFY_FAILURE : MCI_NOTIFY_SUCCESSFUL);
     }
-
-    wmw->dwStatus = MCI_MODE_STOP;
 
     return dwRet;
 }
@@ -1108,13 +1108,13 @@ cleanUp:
     }
     CloseHandle(wmw->hEvent);
 
+    wmw->dwStatus = MCI_MODE_STOP;
+
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wmw->openParms.wDeviceID,
 			dwRet ? MCI_NOTIFY_FAILURE : MCI_NOTIFY_SUCCESSFUL);
     }
-
-    wmw->dwStatus = MCI_MODE_STOP;
 
     return dwRet;
 
