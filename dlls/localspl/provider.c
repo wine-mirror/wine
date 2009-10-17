@@ -193,7 +193,7 @@ static LPWSTR strdupW(LPCWSTR p)
     if(!p) return NULL;
     len = (lstrlenW(p) + 1) * sizeof(WCHAR);
     ret = heap_alloc(len);
-    memcpy(ret, p, len);
+    if (ret) memcpy(ret, p, len);
     return ret;
 }
 
