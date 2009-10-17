@@ -1408,7 +1408,7 @@ static void hook_WaitForInputIdle(void *new_func)
 
     /* Search for the correct imported module by walking the import descriptors */
     import_descriptor = (PIMAGE_IMPORT_DESCRIPTOR)(base + import_directory_rva);
-    while (import_descriptor->OriginalFirstThunk != 0)
+    while (U(*import_descriptor).OriginalFirstThunk != 0)
     {
         char *import_module_name;
 
@@ -1423,7 +1423,7 @@ static void hook_WaitForInputIdle(void *new_func)
              * arrays. We need the import name table to find the imported
              * routine and the import address table to patch the address, so
              * walk them side by side */
-            int_entry = (PIMAGE_THUNK_DATA)(base + import_descriptor->OriginalFirstThunk);
+            int_entry = (PIMAGE_THUNK_DATA)(base + U(*import_descriptor).OriginalFirstThunk);
             iat_entry = (PIMAGE_THUNK_DATA)(base + import_descriptor->FirstThunk);
             while (int_entry->u1.Ordinal != 0)
             {
