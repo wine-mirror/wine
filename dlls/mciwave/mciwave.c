@@ -62,9 +62,11 @@ typedef struct {
  * ===================================================================
  * =================================================================== */
 
+typedef DWORD (*async_cmd)(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt);
+
 struct SCA {
+    async_cmd   cmd;
     UINT 	wDevID;
-    UINT 	wMsg;
     DWORD_PTR   dwParam1;
     DWORD_PTR   dwParam2;
 };
@@ -77,11 +79,11 @@ static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
     struct SCA*	sca = (struct SCA*)arg;
     DWORD		ret;
 
-    TRACE("In thread before async command (%08x,%u,%08lx,%08lx)\n",
-	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
-    ret = mciSendCommandA(sca->wDevID, sca->wMsg, sca->dwParam1 | MCI_WAIT, sca->dwParam2);
-    TRACE("In thread after async command (%08x,%u,%08lx,%08lx)\n",
-	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
+    TRACE("In thread before async command (%08x,%08lx,%08lx)\n",
+	  sca->wDevID, sca->dwParam1, sca->dwParam2);
+    ret = sca->cmd(sca->wDevID, sca->dwParam1 | MCI_WAIT, sca->dwParam2);
+    TRACE("In thread after async command (%08x,%08lx,%08lx)\n",
+	  sca->wDevID, sca->dwParam1, sca->dwParam2);
     HeapFree(GetProcessHeap(), 0, sca);
     ExitThread(ret);
     WARN("Should not happen ? what's wrong\n");
@@ -92,7 +94,7 @@ static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
 /**************************************************************************
  * 				MCI_SendCommandAsync		[internal]
  */
-static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD_PTR dwParam1,
+static	DWORD MCI_SendCommandAsync(UINT wDevID, async_cmd cmd, DWORD_PTR dwParam1,
 				   DWORD_PTR dwParam2, UINT size)
 {
     HANDLE handle;
@@ -102,7 +104,7 @@ static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD_PTR dwParam1,
 	return MCIERR_OUT_OF_MEMORY;
 
     sca->wDevID   = wDevID;
-    sca->wMsg     = wMsg;
+    sca->cmd      = cmd;
     sca->dwParam1 = dwParam1;
 
     if (size && dwParam2) {
@@ -698,8 +700,9 @@ static void WAVE_mciPlayWaitDone(WINE_MCIWAVE* wmw)
 /**************************************************************************
  * 				WAVE_mciPlay		[internal]
  */
-static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
+static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt)
 {
+    LPMCI_PLAY_PARMS    lpParms = (void*)pmt;
     DWORD		end;
     LONG		bufsize, count, left;
     DWORD		dwRet = 0;
@@ -707,7 +710,7 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lp
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
     int			whidx;
 
-    TRACE("(%u, %08X, %p);\n", wDevID, dwFlags, lpParms);
+    TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 
     if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
@@ -735,7 +738,7 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lp
     wmw->dwStatus = MCI_MODE_PLAY;
 
     if (!(dwFlags & MCI_WAIT)) {
-	return MCI_SendCommandAsync(wmw->openParms.wDeviceID, MCI_PLAY, dwFlags,
+	return MCI_SendCommandAsync(wmw->openParms.wDeviceID, WAVE_mciPlay, dwFlags,
 				    (DWORD_PTR)lpParms, sizeof(MCI_PLAY_PARMS));
     }
 
@@ -943,15 +946,16 @@ static void WAVE_mciRecordWaitDone(WINE_MCIWAVE* wmw)
 /**************************************************************************
  * 				WAVE_mciRecord			[internal]
  */
-static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpParms)
+static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt)
 {
+    LPMCI_RECORD_PARMS  lpParms = (void*)pmt;
     DWORD		end;
     DWORD		dwRet = MMSYSERR_NOERROR;
     LONG		bufsize;
     LPWAVEHDR		waveHdr = NULL;
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
 
-    TRACE("(%u, %08X, %p);\n", wDevID, dwFlags, lpParms);
+    TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 
     if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
@@ -977,7 +981,7 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_RECORD_PARM
     wmw->dwStatus = MCI_MODE_RECORD;
 
     if (!(dwFlags & MCI_WAIT)) {
-	return MCI_SendCommandAsync(wmw->openParms.wDeviceID, MCI_RECORD, dwFlags,
+	return MCI_SendCommandAsync(wmw->openParms.wDeviceID, WAVE_mciRecord, dwFlags,
 				    (DWORD_PTR)lpParms, sizeof(MCI_RECORD_PARMS));
     }
 
@@ -1623,8 +1627,8 @@ LRESULT CALLBACK MCIWAVE_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
     case MCI_OPEN_DRIVER:	return WAVE_mciOpen      (dwDevID, dwParam1, (LPMCI_WAVE_OPEN_PARMSW)  dwParam2);
     case MCI_CLOSE_DRIVER:	return WAVE_mciClose     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)     dwParam2);
     case MCI_CUE:		return WAVE_mciCue       (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)     dwParam2);
-    case MCI_PLAY:		return WAVE_mciPlay      (dwDevID, dwParam1, (LPMCI_PLAY_PARMS)        dwParam2);
-    case MCI_RECORD:		return WAVE_mciRecord    (dwDevID, dwParam1, (LPMCI_RECORD_PARMS)      dwParam2);
+    case MCI_PLAY:		return WAVE_mciPlay      (dwDevID, dwParam1, dwParam2);
+    case MCI_RECORD:		return WAVE_mciRecord    (dwDevID, dwParam1, dwParam2);
     case MCI_STOP:		return WAVE_mciStop      (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)     dwParam2);
     case MCI_SET:		return WAVE_mciSet       (dwDevID, dwParam1, (LPMCI_SET_PARMS)         dwParam2);
     case MCI_PAUSE:		return WAVE_mciPause     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)     dwParam2);
