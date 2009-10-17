@@ -368,10 +368,10 @@ static BOOL MONTHCAL_IsSelRangeValid(const MONTHCAL_INFO *infoPtr,
   SystemTimeToFileTime(range0, &ft_range0);
   SystemTimeToFileTime(range1, &ft_range1);
 
-  ul_range0.LowPart  = ft_range0.dwLowDateTime;
-  ul_range0.HighPart = ft_range0.dwHighDateTime;
-  ul_range1.LowPart  = ft_range1.dwLowDateTime;
-  ul_range1.HighPart = ft_range1.dwHighDateTime;
+  ul_range0.u.LowPart  = ft_range0.dwLowDateTime;
+  ul_range0.u.HighPart = ft_range0.dwHighDateTime;
+  ul_range1.u.LowPart  = ft_range1.dwLowDateTime;
+  ul_range1.u.HighPart = ft_range1.dwHighDateTime;
 
   cmp = CompareFileTime(&ft_range0, &ft_range1);
 
@@ -388,8 +388,8 @@ static BOOL MONTHCAL_IsSelRangeValid(const MONTHCAL_INFO *infoPtr,
        else
           ul_range0.QuadPart = ul_range1.QuadPart - DAYSTO100NSECS(infoPtr->maxSelCount - 1);
 
-       ft_range0.dwLowDateTime  = ul_range0.LowPart;
-       ft_range0.dwHighDateTime = ul_range0.HighPart;
+       ft_range0.dwLowDateTime  = ul_range0.u.LowPart;
+       ft_range0.dwHighDateTime = ul_range0.u.HighPart;
        FileTimeToSystemTime(&ft_range0, adjust);
      }
 
