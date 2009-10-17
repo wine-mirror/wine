@@ -312,7 +312,7 @@ static LRESULT TAB_SetCurFocus (TAB_INFO *infoPtr, INT iItem)
 static inline LRESULT
 TAB_SetToolTips (TAB_INFO *infoPtr, HWND hwndToolTip)
 {
-    TRACE("%p %p", infoPtr, hwndToolTip);
+    TRACE("%p %p\n", infoPtr, hwndToolTip);
     infoPtr->hwndToolTip = hwndToolTip;
     return 0;
 }
