@@ -2206,7 +2206,7 @@ void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE *physDev)
   return;
 }
 
-void X11DRV_XRender_SetDeviceClipping(X11DRV_PDEVICE *physDev)
+void X11DRV_XRender_SetDeviceClipping(X11DRV_PDEVICE *physDev, const RGNDATA *data)
 {
     assert(0);
     return;
