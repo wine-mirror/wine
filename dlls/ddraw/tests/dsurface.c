@@ -3220,7 +3220,7 @@ static void GetDCFormatTest(void)
         ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
         ddsd.dwWidth = 64;
         ddsd.dwHeight = 64;
-        ddsd.ddpfPixelFormat = testdata[i].fmt;
+        U4(ddsd).ddpfPixelFormat = testdata[i].fmt;
         ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
 
         hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
