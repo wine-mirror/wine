@@ -1130,16 +1130,23 @@ static DWORD WAVE_mciPause(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PARM
 
     TRACE("(%u, %08X, %p);\n", wDevID, dwFlags, lpParms);
 
-    if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
-    if (wmw->dwStatus == MCI_MODE_PLAY) {
+    switch (wmw->dwStatus) {
+    case MCI_MODE_PLAY:
 	wmw->dwStatus = MCI_MODE_PAUSE;
+	dwRet = waveOutPause(wmw->hWave);
+	break;
+    case MCI_MODE_RECORD:
+	wmw->dwStatus = MCI_MODE_PAUSE;
+	dwRet = waveInStop(wmw->hWave);
+	break;
+    case MCI_MODE_PAUSE:
+	dwRet = MMSYSERR_NOERROR;
+	break;
+    default:
+	return MCIERR_NONAPPLICABLE_FUNCTION;
     }
-
-    if (wmw->fInput)	dwRet = waveInStop(wmw->hWave);
-    else		dwRet = waveOutPause(wmw->hWave);
-
     return (dwRet == MMSYSERR_NOERROR) ? 0 : MCIERR_INTERNAL;
 }
 
@@ -1149,18 +1156,29 @@ static DWORD WAVE_mciPause(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PARM
 static DWORD WAVE_mciResume(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
-    DWORD		dwRet = 0;
+    DWORD		dwRet;
 
     TRACE("(%u, %08X, %p);\n", wDevID, dwFlags, lpParms);
 
     if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
-    if (wmw->dwStatus == MCI_MODE_PAUSE) {
-	wmw->dwStatus = MCI_MODE_PLAY;
+    switch (wmw->dwStatus) {
+    case MCI_MODE_PAUSE:
+	if (wmw->fInput) {
+	    wmw->dwStatus = MCI_MODE_RECORD;
+	    dwRet = waveInStart(wmw->hWave);
+	} else {
+	    wmw->dwStatus = MCI_MODE_PLAY;
+	    dwRet = waveOutRestart(wmw->hWave);
+	}
+	break;
+    case MCI_MODE_PLAY:
+    case MCI_MODE_RECORD:
+	dwRet = MMSYSERR_NOERROR;
+	break;
+    default:
+	return MCIERR_NONAPPLICABLE_FUNCTION;
     }
-
-    if (wmw->fInput)	dwRet = waveInStart(wmw->hWave);
-    else		dwRet = waveOutRestart(wmw->hWave);
     return (dwRet == MMSYSERR_NOERROR) ? 0 : MCIERR_INTERNAL;
 }
 
