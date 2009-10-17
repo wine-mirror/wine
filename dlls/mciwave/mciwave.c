@@ -1579,9 +1579,10 @@ static DWORD WAVE_mciInfo(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW l
 
     TRACE("(%u, %08X, %p);\n", wDevID, dwFlags, lpParms);
 
-    if (lpParms == NULL || lpParms->lpstrReturn == NULL) {
-	ret = MCIERR_NULL_PARAMETER_BLOCK;
-    } else if (wmw == NULL) {
+    if (!lpParms || !lpParms->lpstrReturn)
+	return MCIERR_NULL_PARAMETER_BLOCK;
+
+    if (wmw == NULL) {
 	ret = MCIERR_INVALID_DEVICE_ID;
     } else {
         static const WCHAR wszAudio  [] = {'W','i','n','e','\'','s',' ','a','u','d','i','o',' ','p','l','a','y','e','r',0};
