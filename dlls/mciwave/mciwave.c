@@ -1134,20 +1134,28 @@ static DWORD WAVE_mciPause(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PARM
 
     switch (wmw->dwStatus) {
     case MCI_MODE_PLAY:
-	wmw->dwStatus = MCI_MODE_PAUSE;
 	dwRet = waveOutPause(wmw->hWave);
+	if (dwRet==MMSYSERR_NOERROR) wmw->dwStatus = MCI_MODE_PAUSE;
+	else { /* When playthread was not started yet, winmm not opened, error 5 MMSYSERR_INVALHANDLE */
+	    ERR("waveOutPause error %d\n",dwRet);
+	    dwRet = MCIERR_INTERNAL;
+	}
 	break;
     case MCI_MODE_RECORD:
-	wmw->dwStatus = MCI_MODE_PAUSE;
 	dwRet = waveInStop(wmw->hWave);
+	if (dwRet==MMSYSERR_NOERROR) wmw->dwStatus = MCI_MODE_PAUSE;
+	else {
+	    ERR("waveInStop error %d\n",dwRet);
+	    dwRet = MCIERR_INTERNAL;
+	}
 	break;
     case MCI_MODE_PAUSE:
 	dwRet = MMSYSERR_NOERROR;
 	break;
     default:
-	return MCIERR_NONAPPLICABLE_FUNCTION;
+	dwRet = MCIERR_NONAPPLICABLE_FUNCTION;
     }
-    return (dwRet == MMSYSERR_NOERROR) ? 0 : MCIERR_INTERNAL;
+    return dwRet;
 }
 
 /**************************************************************************
@@ -1164,12 +1172,21 @@ static DWORD WAVE_mciResume(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PAR
 
     switch (wmw->dwStatus) {
     case MCI_MODE_PAUSE:
+	/* Only update dwStatus if wave* succeeds and will exchange buffers buffers. */
 	if (wmw->fInput) {
-	    wmw->dwStatus = MCI_MODE_RECORD;
 	    dwRet = waveInStart(wmw->hWave);
+	    if (dwRet==MMSYSERR_NOERROR) wmw->dwStatus = MCI_MODE_RECORD;
+	    else {
+		ERR("waveInStart error %d\n",dwRet);
+		dwRet = MCIERR_INTERNAL;
+	    }
 	} else {
-	    wmw->dwStatus = MCI_MODE_PLAY;
 	    dwRet = waveOutRestart(wmw->hWave);
+	    if (dwRet==MMSYSERR_NOERROR) wmw->dwStatus = MCI_MODE_PLAY;
+	    else {
+		ERR("waveOutRestart error %d\n",dwRet);
+		dwRet = MCIERR_INTERNAL;
+	    }
 	}
 	break;
     case MCI_MODE_PLAY:
@@ -1177,9 +1194,9 @@ static DWORD WAVE_mciResume(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PAR
 	dwRet = MMSYSERR_NOERROR;
 	break;
     default:
-	return MCIERR_NONAPPLICABLE_FUNCTION;
+	dwRet = MCIERR_NONAPPLICABLE_FUNCTION;
     }
-    return (dwRet == MMSYSERR_NOERROR) ? 0 : MCIERR_INTERNAL;
+    return dwRet;
 }
 
 /**************************************************************************
