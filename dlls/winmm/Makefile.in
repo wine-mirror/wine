@@ -18,6 +18,7 @@ C_SRCS = \
 	winmm.c
 
 C_SRCS16 = \
+	mci16.c \
 	message16.c \
 	mmio16.c \
 	mmsystem.c
