@@ -984,8 +984,8 @@ static DWORD wodClose(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo)
     OSSpinLockLock(&wwo->lock);
     if (wwo->lpQueuePtr)
     {
-        WARN("buffers still playing !\n");
         OSSpinLockUnlock(&wwo->lock);
+        WARN("buffers still playing !\n");
         ret = WAVERR_STILLPLAYING;
     } else
     {
@@ -1953,8 +1953,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         wwi->format.wf.nChannels, wwi->format.wf.nSamplesPerSec,
         wwi->format.wBitsPerSample, &frameCount))
     {
-        ERR("AudioUnit_CreateInputUnit failed\n");
         OSSpinLockUnlock(&wwi->lock);
+        ERR("AudioUnit_CreateInputUnit failed\n");
         return MMSYSERR_ERROR;
     }
 
@@ -1963,10 +1963,10 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         wwi->format.wBitsPerSample, frameCount, TRUE);
     if (wwi->bufferList == NULL)
     {
-        ERR("Failed to allocate buffer list\n");
         AudioUnitUninitialize(wwi->audioUnit);
         AudioUnit_CloseAudioUnit(wwi->audioUnit);
         OSSpinLockUnlock(&wwi->lock);
+        ERR("Failed to allocate buffer list\n");
         return MMSYSERR_NOMEM;
     }
 
@@ -1975,11 +1975,11 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwi->bufferListCopy = HeapAlloc(GetProcessHeap(), 0, AUDIOBUFFERLISTSIZE(wwi->bufferList->mNumberBuffers));
     if (wwi->bufferListCopy == NULL)
     {
-        ERR("Failed to allocate buffer list copy\n");
         widHelper_DestroyAudioBufferList(wwi->bufferList);
         AudioUnitUninitialize(wwi->audioUnit);
         AudioUnit_CloseAudioUnit(wwi->audioUnit);
         OSSpinLockUnlock(&wwi->lock);
+        ERR("Failed to allocate buffer list copy\n");
         return MMSYSERR_NOMEM;
     }
     memcpy(wwi->bufferListCopy, wwi->bufferList, AUDIOBUFFERLISTSIZE(wwi->bufferList->mNumberBuffers));
