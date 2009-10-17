@@ -928,6 +928,17 @@ static void test_itemedit(void)
     DestroyWindow(hTree);
 }
 
+static void test_treeview_classinfo(void)
+{
+    WNDCLASSA cls;
+
+    memset(&cls, 0, sizeof(cls));
+    GetClassInfo(GetModuleHandleA("comctl32.dll"), WC_TREEVIEWA, &cls);
+    ok(cls.hbrBackground == NULL, "Expected NULL background brush, got %p\n", cls.hbrBackground);
+    ok(cls.style == (CS_GLOBALCLASS | CS_DBLCLKS), "Expected got %x\n", cls.style);
+    expect(0, cls.cbClsExtra);
+}
+
 START_TEST(treeview)
 {
     HMODULE hComctl32;
@@ -976,6 +987,7 @@ START_TEST(treeview)
     test_callback();
     test_expandinvisible();
     test_itemedit();
+    test_treeview_classinfo();
 
     PostMessageA(hMainWnd, WM_CLOSE, 0, 0);
     while(GetMessageA(&msg,0,0,0)) {
