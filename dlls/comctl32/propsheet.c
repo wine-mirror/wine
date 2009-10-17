@@ -2553,6 +2553,8 @@ static LRESULT PROPSHEET_IndexToHwnd(HWND hwndDlg, int iPageIndex)
 {
     PropSheetInfo * psInfo = GetPropW(hwndDlg, PropSheetInfoStr);
     TRACE("(%p, %d)\n", hwndDlg, iPageIndex);
+    if (!psInfo)
+        return 0;
     if (iPageIndex<0 || iPageIndex>=psInfo->nPages) {
         WARN("%d out of range.\n", iPageIndex);
 	return 0;

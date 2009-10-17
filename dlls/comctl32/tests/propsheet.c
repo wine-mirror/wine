@@ -26,6 +26,7 @@
 #include "wine/test.h"
 
 static HWND parent;
+static HWND sheethwnd;
 
 static LONG active_page = -1;
 
@@ -40,12 +41,13 @@ static int CALLBACK sheet_callback(HWND hwnd, UINT msg, LPARAM lparam)
         char caption[256];
         GetWindowTextA(hwnd, caption, sizeof(caption));
         ok(!strcmp(caption,"test caption"), "caption: %s\n", caption);
+        sheethwnd = hwnd;
         return 0;
       }
     }
     return 0;
 }
-        
+
 static INT_PTR CALLBACK page_dlg_proc(HWND hwnd, UINT msg, WPARAM wparam,
                                       LPARAM lparam)
 {
@@ -71,6 +73,10 @@ static INT_PTR CALLBACK page_dlg_proc(HWND hwnd, UINT msg, WPARAM wparam,
             return FALSE;
         }
       }
+    case WM_NCDESTROY:
+        ok(!SendMessageA(sheethwnd, PSM_INDEXTOHWND, 400, 0),"Should always be 0\n");
+        return TRUE;
+
     default:
         return FALSE;
     }
