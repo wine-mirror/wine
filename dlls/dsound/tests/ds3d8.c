@@ -767,9 +767,11 @@ static HRESULT test_secondary8(LPGUID lpGuid, int play,
         }
 EXIT1:
         if (has_listener) {
-            ref=IDirectSound3DListener_Release(listener);
-            ok(ref==0,"IDirectSound3dListener_Release() listener has %d "
-               "references, should have 0\n",ref);
+            if (listener) {
+                ref=IDirectSound3DListener_Release(listener);
+                ok(ref==0,"IDirectSound3dListener_Release() listener has %d "
+                   "references, should have 0\n",ref);
+            }
         } else {
             ref=IDirectSoundBuffer_Release(primary);
             ok(ref==0,"IDirectSoundBuffer_Release() primary has %d references, "
