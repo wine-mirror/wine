@@ -1834,7 +1834,8 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
     LPWINE_MCIDRIVER	wmd;
     HKEY		hKey;
 
-    if (lpParms == NULL)			return MCIERR_NULL_PARAMETER_BLOCK;
+    if (lpParms == NULL || lpParms->lpstrReturn == NULL)
+        return MCIERR_NULL_PARAMETER_BLOCK;
 
     TRACE("(%08x, %08X, %p[num=%d, wDevTyp=%u])\n",
 	  uDevID, dwFlags, lpParms, lpParms->dwNumber, lpParms->wDeviceType);
