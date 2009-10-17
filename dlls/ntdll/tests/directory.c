@@ -184,7 +184,7 @@ static void test_NtQueryDirectoryFile(void)
 
     pNtQueryDirectoryFile( dirh, NULL, NULL, NULL, &io, data, sizeof(data),
                        FileBothDirectoryInformation, FALSE, NULL, TRUE );
-    ok (io.Status == STATUS_SUCCESS, "filed to query directory; status %x\n", io.Status);
+    ok (U(io).Status == STATUS_SUCCESS, "filed to query directory; status %x\n", U(io).Status);
     data_len = io.Information;
     ok (data_len >= sizeof(FILE_BOTH_DIRECTORY_INFORMATION), "not enough data in directory\n");
 
@@ -198,9 +198,9 @@ static void test_NtQueryDirectoryFile(void)
         if (dir_info->NextEntryOffset == 0) {
             pNtQueryDirectoryFile( dirh, 0, NULL, NULL, &io, data, sizeof(data),
                                FileBothDirectoryInformation, FALSE, NULL, FALSE );
-            if (io.Status == STATUS_NO_MORE_FILES)
+            if (U(io).Status == STATUS_NO_MORE_FILES)
                 break;
-            ok (io.Status == STATUS_SUCCESS, "filed to query directory; status %x\n", io.Status);
+            ok (U(io).Status == STATUS_SUCCESS, "filed to query directory; status %x\n", U(io).Status);
             data_len = io.Information;
             if (data_len < sizeof(FILE_BOTH_DIRECTORY_INFORMATION))
                 break;
