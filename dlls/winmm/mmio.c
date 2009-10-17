@@ -598,6 +598,8 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
     if (dwOpenFlags & (MMIO_PARSE|MMIO_EXIST)) {
 	char	buffer[MAX_PATH];
 
+	if (!szFileName)
+	    return (HMMIO)FALSE;
 	if (GetFullPathNameA(szFileName, sizeof(buffer), buffer, NULL) >= sizeof(buffer))
 	    return (HMMIO)FALSE;
 	if ((dwOpenFlags & MMIO_EXIST) && (GetFileAttributesA(buffer) == INVALID_FILE_ATTRIBUTES))
