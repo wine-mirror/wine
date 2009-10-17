@@ -151,8 +151,6 @@ typedef struct tagWINE_MCIDRIVER {
         struct tagWINE_MCIDRIVER*lpNext;
 } WINE_MCIDRIVER, *LPWINE_MCIDRIVER;
 
-#define WINE_TIMER_IS32	0x80
-
 struct IOProcList
 {
     struct IOProcList*pNext;       /* Next item in linked list */
@@ -220,8 +218,6 @@ UINT            WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
                           LPCWAVEFORMATEX lpFormat, DWORD_PTR dwCallback, 
                           DWORD_PTR dwInstance, DWORD dwFlags, BOOL bFrom32);
 
-WORD            TIME_SetEventInternal(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
-                                      DWORD_PTR dwUser, UINT wFlags);
 void		TIME_MMTimeStop(void);
 
 /* Global variables */

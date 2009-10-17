@@ -38,6 +38,7 @@
 #include "wownt32.h"
 #include "winnls.h"
 
+#include "wine/list.h"
 #include "wine/winuser16.h"
 #include "winemm.h"
 #include "winemm16.h"
@@ -50,6 +51,15 @@ static WINE_MMTHREAD*   WINMM_GetmmThread(HANDLE16);
 static LPWINE_DRIVER    DRIVER_OpenDriver16(LPCWSTR, LPCWSTR, LPARAM);
 static LRESULT          DRIVER_CloseDriver16(HDRVR16, LPARAM, LPARAM);
 static LRESULT          DRIVER_SendMessage16(HDRVR16, UINT, LPARAM, LPARAM);
+
+static CRITICAL_SECTION mmdrv_cs;
+static CRITICAL_SECTION_DEBUG mmdrv_critsect_debug =
+{
+    0, 0, &mmdrv_cs,
+    { &mmdrv_critsect_debug.ProcessLocksList, &mmdrv_critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": mmsystem_mmdrv_cs") }
+};
+static CRITICAL_SECTION mmdrv_cs = { &mmdrv_critsect_debug, -1, 0, 0, 0, 0 };
 
 /* ###################################################
  * #                  LIBRARY                        #
@@ -2371,17 +2381,66 @@ MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16 lpTime, UINT16 wSize)
     return 0;
 }
 
+struct timer_entry {
+    struct list         entry;
+    UINT                id;
+    LPTIMECALLBACK16    func16;
+    DWORD               user;
+};
+
+static struct list timer_list = LIST_INIT(timer_list);
+
+static void CALLBACK timeCB3216(UINT id, UINT uMsg, DWORD_PTR user, DWORD_PTR dw1, DWORD_PTR dw2)
+{
+    struct timer_entry* te = (void*)user;
+    WORD                args[8];
+    DWORD               ret;
+
+    args[7] = LOWORD(id);
+    args[6] = LOWORD(uMsg);
+    args[5] = HIWORD(te->user);
+    args[4] = LOWORD(te->user);
+    args[3] = HIWORD(dw1);
+    args[2] = LOWORD(dw2);
+    args[1] = HIWORD(dw2);
+    args[0] = LOWORD(dw2);
+    WOWCallback16Ex((DWORD)te->func16, WCB16_PASCAL, sizeof(args), args, &ret);
+}
+
 /**************************************************************************
  * 				timeSetEvent		[MMSYSTEM.602]
  */
 MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol, LPTIMECALLBACK16 lpFunc,
 				 DWORD dwUser, UINT16 wFlags)
 {
-    if (wFlags & WINE_TIMER_IS32)
-	WARN("Unknown windows flag... wine internally used.. ooch\n");
+    MMRESULT16          id;
+    struct timer_entry* te;
 
-    return TIME_SetEventInternal(wDelay, wResol, (LPTIMECALLBACK)lpFunc,
-                                 dwUser, wFlags & ~WINE_TIMER_IS32);
+    switch (wFlags & (TIME_CALLBACK_EVENT_SET|TIME_CALLBACK_EVENT_PULSE))
+    {
+    case TIME_CALLBACK_EVENT_SET:
+    case TIME_CALLBACK_EVENT_PULSE:
+        id = timeSetEvent(wDelay, wResol, (LPTIMECALLBACK)lpFunc, dwUser, wFlags);
+        break;
+    case TIME_CALLBACK_FUNCTION:
+        te = HeapAlloc(GetProcessHeap(), 0, sizeof(*te));
+        if (!te) return 0;
+        te->func16 = lpFunc;
+        te->user = dwUser;
+        id = te->id = timeSetEvent(wDelay, wResol, timeCB3216, (DWORD_PTR)te, wFlags);
+        if (id)
+        {
+            EnterCriticalSection(&mmdrv_cs);
+            list_add_tail(&timer_list, &te->entry);
+            LeaveCriticalSection(&mmdrv_cs);
+        }
+        else HeapFree(GetProcessHeap(), 0, te);
+        break;
+    default:
+        id = 0;
+        break;
+    }
+    return id;
 }
 
 /**************************************************************************
@@ -2389,7 +2448,24 @@ MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol, LPTIMECALLBACK16 
  */
 MMRESULT16 WINAPI timeKillEvent16(UINT16 wID)
 {
-    return timeKillEvent(wID);
+    MMRESULT16  ret = timeKillEvent(wID);
+    struct timer_entry* te;
+
+    if (ret == TIMERR_NOERROR)
+    {
+        EnterCriticalSection(&mmdrv_cs);
+        LIST_FOR_EACH_ENTRY(te, &timer_list, struct timer_entry, entry)
+        {
+            if (wID == te->id)
+            {
+                list_remove(&te->entry);
+                HeapFree(GetProcessHeap(), 0, te);
+                break;
+            }
+        }
+        LeaveCriticalSection(&mmdrv_cs);
+    }
+    return ret;
 }
 
 /**************************************************************************

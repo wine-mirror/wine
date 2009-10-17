@@ -179,8 +179,7 @@ static int TIME_MMSysTimeCallback(void)
                 if (flags & TIME_KILL_SYNCHRONOUS) EnterCriticalSection(&TIME_cbcrst);
                 LeaveCriticalSection(&WINMM_cs);
 
-                if (flags & WINE_TIMER_IS32) func(id, 0, user, 0, 0);
-                else if (pFnCallMMDrvFunc16) pFnCallMMDrvFunc16((DWORD_PTR)func, id, 0, user, 0, 0);
+                func(id, 0, user, 0, 0);
 
                 EnterCriticalSection(&WINMM_cs);
                 if (flags & TIME_KILL_SYNCHRONOUS) LeaveCriticalSection(&TIME_cbcrst);
@@ -301,10 +300,10 @@ MMRESULT WINAPI timeGetSystemTime(LPMMTIME lpTime, UINT wSize)
 }
 
 /**************************************************************************
- * 				TIME_SetEventInternal	[internal]
+ * 				timeSetEvent		[WINMM.@]
  */
-WORD	TIME_SetEventInternal(UINT wDelay, UINT wResol,
-                              LPTIMECALLBACK lpFunc, DWORD_PTR dwUser, UINT wFlags)
+MMRESULT WINAPI timeSetEvent(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
+                            DWORD_PTR dwUser, UINT wFlags)
 {
     WORD 		wNewID = 0;
     LPWINE_TIMERENTRY	lpNewTimer;
@@ -348,19 +347,6 @@ WORD	TIME_SetEventInternal(UINT wDelay, UINT wResol,
     TRACE("=> %u\n", wNewID + 1);
 
     return wNewID + 1;
-}
-
-/**************************************************************************
- * 				timeSetEvent		[WINMM.@]
- */
-MMRESULT WINAPI timeSetEvent(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
-                            DWORD_PTR dwUser, UINT wFlags)
-{
-    if (wFlags & WINE_TIMER_IS32)
-	WARN("Unknown windows flag... wine internally used.. ooch\n");
-
-    return TIME_SetEventInternal(wDelay, wResol, lpFunc,
-                                 dwUser, wFlags|WINE_TIMER_IS32);
 }
 
 /**************************************************************************
