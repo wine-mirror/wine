@@ -197,11 +197,9 @@ BOOL            MMDRV_Is32(unsigned int);
 void            MMDRV_InstallMap(unsigned int, MMDRV_MAPFUNC, MMDRV_UNMAPFUNC,
                                  MMDRV_MAPFUNC, MMDRV_UNMAPFUNC, LPDRVCALLBACK);
 
-WINE_MCIDRIVER* MCI_GetDriver(UINT16 uDevID);
 const char* 	MCI_MessageToString(UINT wMsg);
-LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD_PTR dwParam2);
-DWORD		MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2, BOOL bFrom32);
-UINT		MCI_SetCommandTable(void *table, UINT uDevType);
+DWORD           MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
+UINT            MCI_SetCommandTable(void *table, UINT uDevType);
 BOOL	        MCI_DeleteCommandTable(UINT uTbl, BOOL delete);
 LPWSTR          MCI_strdupAtoW(LPCSTR str);
 LPSTR           MCI_strdupWtoA(LPCWSTR str);
@@ -239,8 +237,6 @@ extern  WINE_MMTHREAD*  (*pFnGetMMThread16)(UINT16);
 extern  LPWINE_DRIVER   (*pFnOpenDriver16)(LPCWSTR,LPCWSTR,LPARAM);
 extern  LRESULT         (*pFnCloseDriver16)(UINT16,LPARAM,LPARAM);
 extern  LRESULT         (*pFnSendMessage16)(UINT16,UINT,LPARAM,LPARAM);
-extern  WINMM_MapType   (*pFnMciMapMsg16To32W)(WORD,WORD,DWORD,DWORD_PTR*);
-extern  WINMM_MapType   (*pFnMciUnMapMsg16To32W)(WORD,WORD,DWORD,DWORD_PTR);
 extern  WINMM_MapType   (*pFnMciMapMsg32WTo16)(WORD,WORD,DWORD,DWORD_PTR*);
 extern  WINMM_MapType   (*pFnMciUnMapMsg32WTo16)(WORD,WORD,DWORD,DWORD_PTR);
 extern  LRESULT         (*pFnCallMMDrvFunc16)(DWORD /* in fact FARPROC16 */,WORD,WORD,LONG,LONG,LONG);

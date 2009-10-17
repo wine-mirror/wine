@@ -54,3 +54,13 @@ typedef LONG			(*MCIPROC16)(DWORD, HDRVR16, WORD, DWORD, DWORD);
 #define HWAVE_16(h32)		(LOWORD(h32))
 #define HWAVEIN_16(h32)		(LOWORD(h32))
 #define HWAVEOUT_16(h32)	(LOWORD(h32))
+
+typedef enum {
+    MMSYSTEM_MAP_NOMEM, 	/* ko, memory problem */
+    MMSYSTEM_MAP_MSGERROR,      /* ko, unknown message */
+    MMSYSTEM_MAP_OK, 	        /* ok, no memory allocated. to be sent to the proc. */
+    MMSYSTEM_MAP_OKMEM, 	/* ok, some memory allocated, need to call UnMapMsg. to be sent to the proc. */
+} MMSYSTEM_MapType;
+
+extern  MMSYSTEM_MapType   MCI_MapMsg16To32W(WORD,DWORD,DWORD_PTR*);
+extern  MMSYSTEM_MapType   MCI_UnMapMsg16To32W(WORD,DWORD,DWORD_PTR);

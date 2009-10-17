@@ -33,7 +33,6 @@
 
 #include "wine/winuser16.h"
 #include "winemm16.h"
-#include "winemm.h"
 
 #include "wine/debug.h"
 
@@ -44,25 +43,118 @@ WINE_DEFAULT_DEBUG_CHANNEL(mmsys);
  * ###################################################
  */
 
+#include <pshpack1.h>
+#define MCI_MAX_THUNKS      32
+
+static struct mci_thunk
+{
+    BYTE        popl_eax;       /* popl  %eax (return address) */
+    BYTE        pushl_func;     /* pushl $pfn16 (16bit callback function) */
+    YIELDPROC16 yield16;
+    BYTE        pushl_eax;      /* pushl %eax */
+    BYTE        jmp;            /* ljmp MCI_Yield1632 */
+    DWORD       callback;
+    MCIDEVICEID id;
+} *MCI_Thunks;
+
+#include <poppack.h>
+
+static CRITICAL_SECTION mci_cs;
+static CRITICAL_SECTION_DEBUG mci_critsect_debug =
+{
+    0, 0, &mci_cs,
+    { &mci_critsect_debug.ProcessLocksList, &mci_critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": mmsystem_mci_cs") }
+};
+static CRITICAL_SECTION mci_cs = { &mci_critsect_debug, -1, 0, 0, 0, 0 };
+
+static UINT MCI_Yield1632(DWORD pfn16, MCIDEVICEID id, DWORD yield_data)
+{
+    WORD args[8];
+
+    if (!pfn16)
+    {
+        UserYield16();
+        return 0;
+    }
+
+    /* 16 bit func, call it */
+    TRACE("Function (16 bit) !\n");
+
+    args[2] = (MCIDEVICEID16)id;
+    args[1] = HIWORD(yield_data);
+    args[0] = LOWORD(yield_data);
+    return WOWCallback16Ex(pfn16, WCB16_PASCAL, sizeof(args), args, NULL);
+}
+
+/******************************************************************
+ *		MCI_AddThunk
+ *
+ */
+static struct mci_thunk*       MCI_AddThunk(MCIDEVICEID id, YIELDPROC16 pfn16)
+{
+     struct mci_thunk* thunk;
+
+     if (!MCI_Thunks)
+     {
+         MCI_Thunks = VirtualAlloc(NULL, MCI_MAX_THUNKS * sizeof(*MCI_Thunks), MEM_COMMIT,
+                                   PAGE_EXECUTE_READWRITE);
+         if (!MCI_Thunks) return NULL;
+         for (thunk = MCI_Thunks; thunk < &MCI_Thunks[MCI_MAX_THUNKS]; thunk++)
+         {
+             thunk->popl_eax     = 0x58;   /* popl  %eax */
+             thunk->pushl_func   = 0x68;   /* pushl $pfn16 */
+             thunk->yield16      = 0;
+             thunk->pushl_eax    = 0x50;   /* pushl %eax */
+             thunk->jmp          = 0xe9;   /* jmp MCI_Yield1632 */
+             thunk->callback     = (char *)MCI_Yield1632 - (char *)(&thunk->callback + 1);
+             thunk->id           = 0;
+         }
+     }
+     for (thunk = MCI_Thunks; thunk < &MCI_Thunks[MCI_MAX_THUNKS]; thunk++)
+     {
+         if (thunk->yield16 == 0)
+         {
+             thunk->yield16 = pfn16;
+             thunk->id      = id;
+             return thunk;
+         }
+     }
+     FIXME("Out of mci-thunks. Bump MCI_MAX_THUNKS\n");
+     return NULL;
+}
+
+/******************************************************************
+ *		MCI_HasThunk
+ *
+ */
+static struct mci_thunk*    MCI_HasThunk(YIELDPROC pfn)
+{
+    struct mci_thunk* thunk;
+
+    if (!MCI_Thunks) return NULL;
+    for (thunk = MCI_Thunks; thunk < &MCI_Thunks[MCI_MAX_THUNKS]; thunk++)
+    {
+        if ((YIELDPROC)thunk == pfn) return thunk;
+    }
+    return NULL;
+}
+
 /**************************************************************************
  * 				mciSetYieldProc			[MMSYSTEM.714]
  */
 BOOL16 WINAPI mciSetYieldProc16(UINT16 uDeviceID, YIELDPROC16 fpYieldProc, DWORD dwYieldData)
 {
-    LPWINE_MCIDRIVER	wmd;
+    struct mci_thunk*   thunk;
+    BOOL                ret;
 
     TRACE("(%u, %p, %08x)\n", uDeviceID, fpYieldProc, dwYieldData);
 
-    if (!(wmd = MCI_GetDriver(uDeviceID))) {
-	WARN("Bad uDeviceID\n");
-	return FALSE;
-    }
-
-    wmd->lpfnYieldProc = (YIELDPROC)fpYieldProc;
-    wmd->dwYieldData   = dwYieldData;
-    wmd->bIs32         = FALSE;
-
-    return TRUE;
+    if (!(thunk = MCI_AddThunk(uDeviceID, fpYieldProc)))
+        return FALSE;
+    ret = mciSetYieldProc(uDeviceID, (YIELDPROC)thunk, dwYieldData);
+    if (!ret) thunk->yield16 = NULL;
+    return ret;
 }
 
 /**************************************************************************
@@ -70,24 +162,17 @@ BOOL16 WINAPI mciSetYieldProc16(UINT16 uDeviceID, YIELDPROC16 fpYieldProc, DWORD
  */
 YIELDPROC16 WINAPI mciGetYieldProc16(UINT16 uDeviceID, DWORD* lpdwYieldData)
 {
-    LPWINE_MCIDRIVER	wmd;
+    YIELDPROC           yield;
+    DWORD               data;
+    struct mci_thunk*   thunk;
 
     TRACE("(%u, %p)\n", uDeviceID, lpdwYieldData);
 
-    if (!(wmd = MCI_GetDriver(uDeviceID))) {
-	WARN("Bad uDeviceID\n");
-	return NULL;
-    }
-    if (!wmd->lpfnYieldProc) {
-	WARN("No proc set\n");
-	return NULL;
-    }
-    if (wmd->bIs32) {
-	WARN("Proc is 32 bit\n");
-	return NULL;
-    }
-    if (lpdwYieldData) *lpdwYieldData = wmd->dwYieldData;
-    return (YIELDPROC16)wmd->lpfnYieldProc;
+    yield = mciGetYieldProc(uDeviceID, &data);
+    if (!yield || !(thunk = MCI_HasThunk(yield))) return NULL;
+
+    if (lpdwYieldData) *lpdwYieldData = data;
+    return thunk->yield16;
 }
 
 /**************************************************************************
@@ -127,16 +212,72 @@ BOOL16 WINAPI mciSetDriverData16(UINT16 uDeviceID, DWORD data)
 /**************************************************************************
  * 				mciSendCommand			[MMSYSTEM.701]
  */
-DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2)
+DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD p2)
 {
     DWORD		dwRet;
+    BOOL                to32;
+    DWORD_PTR           dwParam2 = p2;
 
-    TRACE("(%04X, %s, %08X, %08X)\n",
-	  wDevID, MCI_MessageToString(wMsg), dwParam1, dwParam2);
+    TRACE("(%04X, %u, %08X, %08lX)\n", wDevID, wMsg, dwParam1, dwParam2);
 
-    dwRet = MCI_SendCommand(wDevID, wMsg, dwParam1, dwParam2, FALSE);
-    dwRet = MCI_CleanUp(dwRet, wMsg, (DWORD)MapSL(dwParam2));
-    TRACE("=> %d\n", dwRet);
+    switch (wMsg) {
+    case MCI_CLOSE:
+    case MCI_OPEN:
+    case MCI_SYSINFO:
+    case MCI_BREAK:
+    case MCI_SOUND:
+        to32 = TRUE;
+	break;
+    default:
+        /* FIXME: this is suboptimal. If MCI driver is a 16bit one, we'll be
+         * doing 16=>32W, then 32W=>16 conversions.
+         * We could directly call the 16bit driver if we had the information.
+         */
+        to32 = TRUE;
+    }
+    if (to32) {
+        MMSYSTEM_MapType res;
+
+	dwRet = MCIERR_INVALID_DEVICE_ID;
+
+        switch (res = MCI_MapMsg16To32W(wMsg, dwParam1, &dwParam2)) {
+        case MMSYSTEM_MAP_MSGERROR:
+            TRACE("Not handled yet (%u)\n", wMsg);
+            dwRet = MCIERR_DRIVER_INTERNAL;
+            break;
+        case MMSYSTEM_MAP_NOMEM:
+            TRACE("Problem mapping msg=%u from 16 to 32a\n", wMsg);
+            dwRet = MCIERR_OUT_OF_MEMORY;
+            break;
+        case MMSYSTEM_MAP_OK:
+        case MMSYSTEM_MAP_OKMEM:
+            dwRet = mciSendCommandW(wDevID, wMsg, dwParam1, dwParam2);
+            if (res == MMSYSTEM_MAP_OKMEM)
+                MCI_UnMapMsg16To32W(wMsg, dwParam1, dwParam2);
+            break;
+        }
+    }
+    else
+    {
+#if 0
+	if (wDevID == MCI_ALL_DEVICE_ID) {
+	    FIXME("unhandled MCI_ALL_DEVICE_ID\n");
+	    dwRet = MCIERR_CANNOT_USE_ALL;
+	} else {
+            dwRet = SendDriverMessage(hdrv, wMsg, dwParam1, dwParam2);
+	}
+#endif
+    }
+    if (wMsg == MCI_CLOSE && dwRet == 0 && MCI_Thunks)
+    {
+        /* free yield thunks, if any */
+        unsigned    i;
+        for (i = 0; i < MCI_MAX_THUNKS; i++)
+        {
+            if (MCI_Thunks[i].id == wDevID)
+                MCI_Thunks[i].yield16 = NULL;
+        }
+    }
     return dwRet;
 }
 
@@ -155,8 +296,7 @@ UINT16 WINAPI mciGetDeviceID16(LPCSTR lpstrName)
  */
 UINT16 WINAPI mciGetDeviceIDFromElementID16(DWORD dwElementID, LPCSTR lpstrType)
 {
-    FIXME("(%u, %s) stub\n", dwElementID, lpstrType);
-    return 0;
+    return mciGetDeviceIDFromElementIDA(dwElementID, lpstrType);
 }
 
 /**************************************************************************
@@ -172,18 +312,7 @@ HTASK16 WINAPI mciGetCreatorTask16(UINT16 uDeviceID)
  */
 UINT16 WINAPI mciDriverYield16(UINT16 uDeviceID)
 {
-    LPWINE_MCIDRIVER	wmd;
-    UINT16		ret = 0;
-
-    /*    TRACE("(%04x)\n", uDeviceID); */
-
-    if (!(wmd = MCI_GetDriver(uDeviceID)) || !wmd->lpfnYieldProc || wmd->bIs32) {
-	UserYield16();
-    } else {
-	ret = wmd->lpfnYieldProc(uDeviceID, wmd->dwYieldData);
-    }
-
-    return ret;
+    return mciDriverYield(uDeviceID);
 }
 
 /**************************************************************************

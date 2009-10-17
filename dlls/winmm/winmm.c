@@ -191,7 +191,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	break;
     case DLL_PROCESS_DETACH:
         /* close all opened MCI drivers */
-        MCI_SendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_WAIT, 0L, TRUE);
+        MCI_SendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_WAIT, 0L);
         MMDRV_Exit();
         /* There's no guarantee the drivers haven't already been unloaded on
          * process shutdown.
