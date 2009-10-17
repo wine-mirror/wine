@@ -62,10 +62,11 @@ typedef struct {
  * ===================================================================
  * =================================================================== */
 
-typedef DWORD (*async_cmd)(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt);
+typedef DWORD (*async_cmd)(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, HANDLE evt);
 
 struct SCA {
     async_cmd   cmd;
+    HANDLE      evt;
     UINT 	wDevID;
     DWORD_PTR   dwParam1;
     DWORD_PTR   dwParam2;
@@ -81,7 +82,7 @@ static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
 
     TRACE("In thread before async command (%08x,%08lx,%08lx)\n",
 	  sca->wDevID, sca->dwParam1, sca->dwParam2);
-    ret = sca->cmd(sca->wDevID, sca->dwParam1 | MCI_WAIT, sca->dwParam2);
+    ret = sca->cmd(sca->wDevID, sca->dwParam1 | MCI_WAIT, sca->dwParam2, sca->evt);
     TRACE("In thread after async command (%08x,%08lx,%08lx)\n",
 	  sca->wDevID, sca->dwParam1, sca->dwParam2);
     HeapFree(GetProcessHeap(), 0, sca);
@@ -97,7 +98,7 @@ static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
 static	DWORD MCI_SendCommandAsync(UINT wDevID, async_cmd cmd, DWORD_PTR dwParam1,
 				   DWORD_PTR dwParam2, UINT size)
 {
-    HANDLE handle;
+    HANDLE handles[2];
     struct SCA*	sca = HeapAlloc(GetProcessHeap(), 0, sizeof(struct SCA) + size);
 
     if (sca == 0)
@@ -117,12 +118,22 @@ static	DWORD MCI_SendCommandAsync(UINT wDevID, async_cmd cmd, DWORD_PTR dwParam1
 	sca->dwParam2 = dwParam2;
     }
 
-    if ((handle = CreateThread(NULL, 0, MCI_SCAStarter, sca, 0, NULL)) == 0) {
+    if ((sca->evt = handles[1] = CreateEventW(NULL, FALSE, FALSE, NULL)) == NULL ||
+        (handles[0] = CreateThread(NULL, 0, MCI_SCAStarter, sca, 0, NULL)) == 0) {
 	WARN("Couldn't allocate thread for async command handling, sending synchronously\n");
+        if (handles[1]) CloseHandle(handles[1]);
+        sca->evt = NULL;
 	return MCI_SCAStarter(&sca);
     }
-    SetThreadPriority(handle, THREAD_PRIORITY_TIME_CRITICAL);
-    CloseHandle(handle);
+
+    SetThreadPriority(handles[0], THREAD_PRIORITY_TIME_CRITICAL);
+    /* wait until either:
+     * - the thread has finished (handles[0], likely an error)
+     * - init phase of async command is done (handles[1])
+     */
+    WaitForMultipleObjects(2, handles, FALSE, INFINITE);
+    CloseHandle(handles[0]);
+    CloseHandle(handles[1]);
     return 0;
 }
 
@@ -700,7 +711,7 @@ static void WAVE_mciPlayWaitDone(WINE_MCIWAVE* wmw)
 /**************************************************************************
  * 				WAVE_mciPlay		[internal]
  */
-static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt)
+static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, HANDLE hEvent)
 {
     LPMCI_PLAY_PARMS    lpParms = (void*)pmt;
     DWORD		end;
@@ -829,6 +840,7 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt)
     wmw->dwEventCount = 1L; /* for first buffer */
 
     TRACE("Playing (normalized) from byte=%u for %u bytes\n", wmw->dwPosition, left);
+    if (hEvent) SetEvent(hEvent);
 
     /* FIXME: this doesn't work if wmw->dwPosition != 0 */
     while (left > 0 && wmw->dwStatus != MCI_MODE_STOP && wmw->dwStatus != MCI_MODE_NOT_READY) {
@@ -946,7 +958,7 @@ static void WAVE_mciRecordWaitDone(WINE_MCIWAVE* wmw)
 /**************************************************************************
  * 				WAVE_mciRecord			[internal]
  */
-static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt)
+static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, HANDLE hEvent)
 {
     LPMCI_RECORD_PARMS  lpParms = (void*)pmt;
     DWORD		end;
@@ -1070,6 +1082,8 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt
     TRACE("Recording (normalized) from byte=%u for %u bytes\n", wmw->dwPosition, end - wmw->dwPosition);
 
     dwRet = waveInStart(wmw->hWave);
+
+    if (hEvent) SetEvent(hEvent);
 
     while (wmw->dwPosition < end && wmw->dwStatus != MCI_MODE_STOP && wmw->dwStatus != MCI_MODE_NOT_READY) {
 	WAVE_mciRecordWaitDone(wmw);
@@ -1627,8 +1641,8 @@ LRESULT CALLBACK MCIWAVE_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
     case MCI_OPEN_DRIVER:	return WAVE_mciOpen      (dwDevID, dwParam1, (LPMCI_WAVE_OPEN_PARMSW)  dwParam2);
     case MCI_CLOSE_DRIVER:	return WAVE_mciClose     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)     dwParam2);
     case MCI_CUE:		return WAVE_mciCue       (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)     dwParam2);
-    case MCI_PLAY:		return WAVE_mciPlay      (dwDevID, dwParam1, dwParam2);
-    case MCI_RECORD:		return WAVE_mciRecord    (dwDevID, dwParam1, dwParam2);
+    case MCI_PLAY:		return WAVE_mciPlay      (dwDevID, dwParam1, dwParam2, NULL);
+    case MCI_RECORD:		return WAVE_mciRecord    (dwDevID, dwParam1, dwParam2, NULL);
     case MCI_STOP:		return WAVE_mciStop      (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)     dwParam2);
     case MCI_SET:		return WAVE_mciSet       (dwDevID, dwParam1, (LPMCI_SET_PARMS)         dwParam2);
     case MCI_PAUSE:		return WAVE_mciPause     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)     dwParam2);
