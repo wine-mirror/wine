@@ -726,17 +726,17 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
     if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
-    wmw->fInput = FALSE;
-
     if (wmw->hFile == 0) {
 	WARN("Can't play: no file=%s!\n", debugstr_w(wmw->openParms.lpstrElementName));
 	return MCIERR_FILE_NOT_FOUND;
     }
 
-    if (wmw->dwStatus == MCI_MODE_PAUSE) {
+    if (wmw->dwStatus == MCI_MODE_PAUSE && !wmw->fInput) {
 	/* FIXME: parameters (start/end) in lpParams may not be used */
 	return WAVE_mciResume(wDevID, dwFlags, (LPMCI_GENERIC_PARMS)lpParms);
     }
+
+    wmw->fInput = FALSE;
 
     /** This function will be called again by a thread when async is used.
      * We have to set MCI_MODE_PLAY before we do this so that the app can spin
@@ -972,15 +972,15 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt
     if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
+    if (wmw->dwStatus == MCI_MODE_PAUSE && wmw->fInput) {
+        /* FIXME: parameters (start/end) in lpParams may not be used */
+        return WAVE_mciResume(wDevID, dwFlags, (LPMCI_GENERIC_PARMS)lpParms);
+    }
+
     /* FIXME : since there is no way to determine in which mode the device is
      * open (recording/playback) automatically switch from a mode to another
      */
     wmw->fInput = TRUE;
-
-    if (wmw->dwStatus == MCI_MODE_PAUSE) {
-        /* FIXME: parameters (start/end) in lpParams may not be used */
-        return WAVE_mciResume(wDevID, dwFlags, (LPMCI_GENERIC_PARMS)lpParms);
-    }
 
     /** This function will be called again by a thread when async is used.
      * We have to set MCI_MODE_PLAY before we do this so that the app can spin
