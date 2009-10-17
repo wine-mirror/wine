@@ -545,8 +545,8 @@
 @ cdecl _unlock(long) msvcrt._unlock
 @ cdecl _utime(str ptr) msvcrt._utime
 @ stub _utime64
-@ stub _vscprintf
-@ stub _vscwprintf
+@ cdecl _vscprintf(str ptr) msvcrt._vscprintf
+@ cdecl _vscwprintf(wstr ptr) msvcrt._vscwprintf
 @ cdecl _vsnprintf(ptr long ptr ptr) msvcrt._vsnprintf
 @ cdecl _vsnwprintf(ptr long wstr long) msvcrt._vsnwprintf
 @ cdecl _waccess(wstr long) msvcrt._waccess
