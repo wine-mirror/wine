@@ -233,7 +233,7 @@ static void test_recordWAVE(HWND hwnd)
 
     /* MCI seems to solely support PCM, no need for ACM conversion. */
     err = mciSendString("set x format tag 2", NULL, 0, NULL);
-    todo_wine ok(err==MCIERR_OUTOFRANGE,"mci set format tag 2 returned error: %d\n", err);
+    ok(err==MCIERR_OUTOFRANGE,"mci set format tag 2 returned error: %d\n", err);
 
     err = mciSendString("set x format tag pcm", NULL, 0, NULL);
     ok(!err,"mci set format tag pcm returned error: %d\n", err);

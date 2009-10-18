@@ -1310,6 +1310,11 @@ static DWORD WAVE_mciSet(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpPa
 	TRACE("MCI_WAVE_SET_ANYINPUT !\n");
     if (dwFlags & MCI_WAVE_SET_ANYOUTPUT)
 	TRACE("MCI_WAVE_SET_ANYOUTPUT !\n");
+    if (dwFlags & MCI_WAVE_SET_FORMATTAG) {
+	TRACE("MCI_WAVE_SET_FORMATTAG = %d\n", ((LPMCI_WAVE_SET_PARMS)lpParms)->wFormatTag);
+	if (((LPMCI_WAVE_SET_PARMS)lpParms)->wFormatTag != WAVE_FORMAT_PCM)
+	    return MCIERR_OUTOFRANGE;
+    }
     if (dwFlags & MCI_WAVE_SET_AVGBYTESPERSEC) {
 	wmw->wfxRef.nAvgBytesPerSec = ((LPMCI_WAVE_SET_PARMS)lpParms)->nAvgBytesPerSec;
 	TRACE("MCI_WAVE_SET_AVGBYTESPERSEC = %d\n", wmw->wfxRef.nAvgBytesPerSec);
@@ -1325,11 +1330,6 @@ static DWORD WAVE_mciSet(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpPa
     if (dwFlags & MCI_WAVE_SET_CHANNELS) {
 	wmw->wfxRef.nChannels = ((LPMCI_WAVE_SET_PARMS)lpParms)->nChannels;
 	TRACE("MCI_WAVE_SET_CHANNELS = %d\n", wmw->wfxRef.nChannels);
-    }
-    if (dwFlags & MCI_WAVE_SET_FORMATTAG) {
-	/* Dangerous because the correct cbSize cannot be set */
-	wmw->wfxRef.wFormatTag = ((LPMCI_WAVE_SET_PARMS)lpParms)->wFormatTag;
-	TRACE("MCI_WAVE_SET_FORMATTAG = %d\n", wmw->wfxRef.wFormatTag);
     }
     if (dwFlags & MCI_WAVE_SET_SAMPLESPERSEC) {
 	wmw->wfxRef.nSamplesPerSec = ((LPMCI_WAVE_SET_PARMS)lpParms)->nSamplesPerSec;
