@@ -216,8 +216,8 @@ static	DWORD 	WAVE_ConvertByteToTimeFormat(WINE_MCIWAVE* wmw, DWORD val, LPDWORD
     case MCI_FORMAT_BYTES:
 	ret = val;
 	break;
-    case MCI_FORMAT_SAMPLES: /* FIXME: is this correct ? */
-	ret = (val * 8) / (wmw->lpWaveFormat->wBitsPerSample ? wmw->lpWaveFormat->wBitsPerSample : 1);
+    case MCI_FORMAT_SAMPLES:
+	ret = MulDiv(val,wmw->lpWaveFormat->nSamplesPerSec,wmw->lpWaveFormat->nAvgBytesPerSec);
 	break;
     default:
 	WARN("Bad time format %u!\n", wmw->dwMciTimeFormat);
@@ -236,13 +236,13 @@ static	DWORD 	WAVE_ConvertTimeFormatToByte(WINE_MCIWAVE* wmw, DWORD val)
 
     switch (wmw->dwMciTimeFormat) {
     case MCI_FORMAT_MILLISECONDS:
-	ret = (val * wmw->lpWaveFormat->nAvgBytesPerSec) / 1000;
+	ret = MulDiv(val,wmw->lpWaveFormat->nAvgBytesPerSec,1000);
 	break;
     case MCI_FORMAT_BYTES:
 	ret = val;
 	break;
-    case MCI_FORMAT_SAMPLES: /* FIXME: is this correct ? */
-	ret = (val * wmw->lpWaveFormat->wBitsPerSample) / 8;
+    case MCI_FORMAT_SAMPLES:
+	ret = MulDiv(val,wmw->lpWaveFormat->nAvgBytesPerSec,wmw->lpWaveFormat->nSamplesPerSec);
 	break;
     default:
 	WARN("Bad time format %u!\n", wmw->dwMciTimeFormat);
@@ -514,20 +514,26 @@ static LRESULT WAVE_mciOpen(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_P
         dwRet = WAVE_mciDefaultFmt(wmw);
 
     if (dwRet == 0) {
-	if (wmw->lpWaveFormat) {
-	    switch (wmw->lpWaveFormat->wFormatTag) {
-	    case WAVE_FORMAT_PCM:
-		if (wmw->lpWaveFormat->nAvgBytesPerSec !=
-		    wmw->lpWaveFormat->nSamplesPerSec * wmw->lpWaveFormat->nBlockAlign) {
-                    WARN("Incorrect nAvgBytesPerSec (%d), setting it to %d\n",
-			wmw->lpWaveFormat->nAvgBytesPerSec,
-			wmw->lpWaveFormat->nSamplesPerSec *
-			 wmw->lpWaveFormat->nBlockAlign);
-		    wmw->lpWaveFormat->nAvgBytesPerSec =
-			wmw->lpWaveFormat->nSamplesPerSec *
-			wmw->lpWaveFormat->nBlockAlign;
-		}
-		break;
+        if (wmw->lpWaveFormat->wFormatTag == WAVE_FORMAT_PCM) {
+	    if (wmw->lpWaveFormat->nBlockAlign !=
+		wmw->lpWaveFormat->nChannels * wmw->lpWaveFormat->wBitsPerSample/8) {
+		WARN("Incorrect nBlockAlign (%d), setting it to %d\n",
+		    wmw->lpWaveFormat->nBlockAlign,
+		    wmw->lpWaveFormat->nChannels *
+		     wmw->lpWaveFormat->wBitsPerSample/8);
+		wmw->lpWaveFormat->nBlockAlign =
+		    wmw->lpWaveFormat->nChannels *
+		    wmw->lpWaveFormat->wBitsPerSample/8;
+	    }
+	    if (wmw->lpWaveFormat->nAvgBytesPerSec !=
+		wmw->lpWaveFormat->nSamplesPerSec * wmw->lpWaveFormat->nBlockAlign) {
+		WARN("Incorrect nAvgBytesPerSec (%d), setting it to %d\n",
+		    wmw->lpWaveFormat->nAvgBytesPerSec,
+		    wmw->lpWaveFormat->nSamplesPerSec *
+		     wmw->lpWaveFormat->nBlockAlign);
+		wmw->lpWaveFormat->nAvgBytesPerSec =
+		    wmw->lpWaveFormat->nSamplesPerSec *
+		    wmw->lpWaveFormat->nBlockAlign;
 	    }
 	}
 	wmw->dwPosition = 0;
@@ -716,7 +722,7 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
     LPMCI_PLAY_PARMS    lpParms = (void*)pmt;
     DWORD		end;
     LONG		bufsize, count, left;
-    DWORD		dwRet = 0;
+    DWORD		dwRet;
     LPWAVEHDR		waveHdr = NULL;
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
     int			whidx;
@@ -753,6 +759,30 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
 				    (DWORD_PTR)lpParms, sizeof(MCI_PLAY_PARMS));
     }
 
+    if (!wmw->lpWaveFormat) return MCIERR_WAVE_INPUTUNSPECIFIED;
+    if (wmw->lpWaveFormat->wFormatTag == WAVE_FORMAT_PCM) {
+        if (wmw->lpWaveFormat->nBlockAlign !=
+            wmw->lpWaveFormat->nChannels * wmw->lpWaveFormat->wBitsPerSample/8) {
+            WARN("Incorrect nBlockAlign (%d), setting it to %d\n",
+                wmw->lpWaveFormat->nBlockAlign,
+                wmw->lpWaveFormat->nChannels *
+                 wmw->lpWaveFormat->wBitsPerSample/8);
+            wmw->lpWaveFormat->nBlockAlign =
+                wmw->lpWaveFormat->nChannels *
+                wmw->lpWaveFormat->wBitsPerSample/8;
+        }
+        if (wmw->lpWaveFormat->nAvgBytesPerSec !=
+            wmw->lpWaveFormat->nSamplesPerSec * wmw->lpWaveFormat->nBlockAlign) {
+            WARN("Incorrect nAvgBytesPerSec (%d), setting it to %d\n",
+                wmw->lpWaveFormat->nAvgBytesPerSec,
+                wmw->lpWaveFormat->nSamplesPerSec *
+                 wmw->lpWaveFormat->nBlockAlign);
+            wmw->lpWaveFormat->nAvgBytesPerSec =
+                wmw->lpWaveFormat->nSamplesPerSec *
+                wmw->lpWaveFormat->nBlockAlign;
+        }
+    }
+
     end = 0xFFFFFFFF;
     if (lpParms && (dwFlags & MCI_FROM)) {
 	wmw->dwPosition = WAVE_ConvertTimeFormatToByte(wmw, lpParms->dwFrom);
@@ -772,28 +802,6 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
 
     wmw->dwPosition        = WAVE_ALIGN_ON_BLOCK(wmw, wmw->dwPosition);
     wmw->ckWaveData.cksize = WAVE_ALIGN_ON_BLOCK(wmw, wmw->ckWaveData.cksize);
-
-    if (dwRet == 0) {
-	if (wmw->lpWaveFormat) {
-	    switch (wmw->lpWaveFormat->wFormatTag) {
-	    case WAVE_FORMAT_PCM:
-		if (wmw->lpWaveFormat->nAvgBytesPerSec !=
-		    wmw->lpWaveFormat->nSamplesPerSec * wmw->lpWaveFormat->nBlockAlign) {
-                    WARN("Incorrect nAvgBytesPerSec (%d), setting it to %d\n",
-			wmw->lpWaveFormat->nAvgBytesPerSec,
-			wmw->lpWaveFormat->nSamplesPerSec *
-			 wmw->lpWaveFormat->nBlockAlign);
-		    wmw->lpWaveFormat->nAvgBytesPerSec =
-			wmw->lpWaveFormat->nSamplesPerSec *
-			wmw->lpWaveFormat->nBlockAlign;
-		}
-		break;
-	    }
-	}
-    } else {
-	TRACE("can't retrieve wave format %d\n", dwRet);
-	goto cleanUp;
-    }
 
 
     /* go back to beginning of chunk plus the requested position */
