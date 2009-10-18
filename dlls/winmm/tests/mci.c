@@ -511,7 +511,7 @@ static void test_AutoOpenWAVE(HWND hwnd)
 
     /* Do not crash on NULL buffer pointer */
     err = mciSendString("sysinfo waveaudio quantity open", NULL, 0, NULL);
-    todo_wine ok(err==MCIERR_PARAM_OVERFLOW,"mci sysinfo without buffer returned error: %d\n", err);
+    ok(err==MCIERR_PARAM_OVERFLOW,"mci sysinfo without buffer returned error: %d\n", err);
 
     err = mciSendString("sysinfo waveaudio quantity open", buf, sizeof(buf), NULL);
     ok(!err,"mci sysinfo waveaudio quantity open returned error: %d\n", err);
