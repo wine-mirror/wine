@@ -145,40 +145,29 @@ static DWORD get_scheme_code(LPCWSTR scheme, DWORD scheme_len)
 HRESULT WINAPI ParseURLA(LPCSTR x, PARSEDURLA *y)
 {
     WCHAR scheme[INTERNET_MAX_SCHEME_LENGTH];
-    DWORD cnt, len;
+    const char *ptr = x;
+    int len;
 
-    y->nScheme = URL_SCHEME_INVALID;
-    if (y->cbSize != sizeof(*y)) return E_INVALIDARG;
-    /* FIXME: leading white space generates error of 0x80041001 which
-     *        is undefined
-     */
-    if (*x <= ' ') return 0x80041001;
-    cnt = 0;
-    y->cchProtocol = 0;
-    y->pszProtocol = x;
-    while (*x) {
-	if (*x == ':') {
-	    y->cchProtocol = cnt;
-	    cnt = -1;
-	    y->pszSuffix = x+1;
-	    break;
-	}
-	x++;
-	cnt++;
-    }
+    TRACE("%s %p\n", debugstr_a(x), y);
 
-    /* check for no scheme in string start */
-    /* (apparently schemes *must* be larger than a single character)  */
-    if ((*x == '\0') || (y->cchProtocol <= 1)) {
+    if(y->cbSize != sizeof(*y))
+        return E_INVALIDARG;
+
+    while(*ptr && (isalnum(*ptr) || *ptr == '-'))
+        ptr++;
+
+    if (*ptr != ':' || ptr <= x+1) {
 	y->pszProtocol = NULL;
 	return 0x80041001;
     }
 
-    /* found scheme, set length of remainder */
-    y->cchSuffix = lstrlenA(y->pszSuffix);
+    y->pszProtocol = x;
+    y->cchProtocol = ptr-x;
+    y->pszSuffix = ptr+1;
+    y->cchSuffix = strlen(y->pszSuffix);
 
-    len = MultiByteToWideChar(CP_ACP, 0, y->pszProtocol, y->cchProtocol,
-                              scheme, sizeof(scheme)/sizeof(WCHAR));
+    len = MultiByteToWideChar(CP_ACP, 0, x, ptr-x,
+            scheme, sizeof(scheme)/sizeof(WCHAR));
     y->nScheme = get_scheme_code(scheme, len);
 
     return S_OK;
