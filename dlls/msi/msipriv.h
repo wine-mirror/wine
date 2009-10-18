@@ -228,11 +228,11 @@ typedef struct tagMSIVIEWOPS
     /*
      * get_column_info - returns the name and type of a specific column
      *
-     *  The name is HeapAlloc'ed by this function and should be freed by
-     *   the caller.
+     *  The name and tablename is HeapAlloc'ed by this function and should be
+     *  freed by the caller.
      *  The column information can be queried at any time.
      */
-    UINT (*get_column_info)( struct tagMSIVIEW *view, UINT n, LPWSTR *name, UINT *type, BOOL *temporary );
+    UINT (*get_column_info)( struct tagMSIVIEW *view, UINT n, LPWSTR *name, UINT *type, BOOL *temporary, LPWSTR *tableName);
 
     /*
      * modify - not yet implemented properly
@@ -737,7 +737,7 @@ extern UINT MSI_ViewFetch( MSIQUERY*, MSIRECORD ** );
 extern UINT MSI_ViewClose( MSIQUERY* );
 extern UINT MSI_ViewGetColumnInfo(MSIQUERY *, MSICOLINFO, MSIRECORD **);
 extern UINT MSI_ViewModify( MSIQUERY *, MSIMODIFY, MSIRECORD * );
-extern UINT VIEW_find_column( MSIVIEW *, LPCWSTR, UINT * );
+extern UINT VIEW_find_column( MSIVIEW *, LPCWSTR, LPCWSTR, UINT * );
 extern UINT msi_view_get_row(MSIDATABASE *, MSIVIEW *, UINT, MSIRECORD **);
 
 /* install internals */
