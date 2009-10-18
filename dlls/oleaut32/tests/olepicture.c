@@ -596,7 +596,7 @@ static void test_Render(void)
     PICTDESC desc;
     OLE_XSIZE_HIMETRIC pWidth;
     OLE_YSIZE_HIMETRIC pHeight;
-    COLORREF result;
+    COLORREF result, expected;
     HDC hdc = GetDC(0);
 
     /* test IPicture::Render return code on uninitialized picture */
@@ -657,18 +657,29 @@ static void test_Render(void)
     SetPixelV(hdc, 0, 0, 0x00F0F0F0);
     SetPixelV(hdc, 5, 5, 0x00F0F0F0);
     SetPixelV(hdc, 10, 10, 0x00F0F0F0);
+    expected = GetPixel(hdc, 0, 0);
 
-    IPicture_Render(pic, hdc, 1, 1, 9, 9, 0, 0, pWidth, -pHeight, NULL);
+    hres = IPicture_Render(pic, hdc, 1, 1, 9, 9, 0, 0, pWidth, -pHeight, NULL);
+    ole_expect(hres, S_OK);
 
+    if(hres != S_OK) {
+        IPicture_Release(pic);
+        ReleaseDC(NULL, hdc);
+        return;
+    }
+
+    /* Evaluate the rendered Icon */
     result = GetPixel(hdc, 0, 0);
-    ok(result == 0x00F0F0F0,
-       "Color at 0,0 should be unchanged 0xF0F0F0, but was 0x%06X\n", result);
+    ok(result == expected,
+       "Color at 0,0 should be unchanged 0x%06X, but was 0x%06X\n", expected, result);
     result = GetPixel(hdc, 5, 5);
-    ok(result != 0x00F0F0F0,
-       "Color at 5,5 should have changed, but still was 0x%06X\n", result);
+    ok(result != expected ||
+        broken(result == expected), /* WinNT 4.0 and older may claim they drew */
+                                    /* the icon, even if they didn't. */
+       "Color at 5,5 should have changed, but still was 0x%06X\n", expected);
     result = GetPixel(hdc, 10, 10);
-    ok(result == 0x00F0F0F0,
-       "Color at 10,10 should be unchanged 0xF0F0F0, but was 0x%06X\n", result);
+    ok(result == expected,
+       "Color at 10,10 should be unchanged 0x%06X, but was 0x%06X\n", expected, result);
 
     IPicture_Release(pic);
     ReleaseDC(NULL, hdc);
