@@ -2141,6 +2141,7 @@ HRESULT WINAPI UrlGetPartW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut,
 BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
 {
     PARSEDURLA base;
+    HRESULT hres;
 
     TRACE("%s\n", debugstr_a(lpstrPath));
 
@@ -2148,8 +2149,8 @@ BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
 
     /* get protocol        */
     base.cbSize = sizeof(base);
-    ParseURLA(lpstrPath, &base);
-    return (base.nScheme != URL_SCHEME_INVALID);
+    hres = ParseURLA(lpstrPath, &base);
+    return hres == S_OK && (base.nScheme != URL_SCHEME_INVALID);
 }
 
 /*************************************************************************
@@ -2160,6 +2161,7 @@ BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
 BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
 {
     PARSEDURLW base;
+    HRESULT hres;
 
     TRACE("%s\n", debugstr_w(lpstrPath));
 
@@ -2167,8 +2169,8 @@ BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
 
     /* get protocol        */
     base.cbSize = sizeof(base);
-    ParseURLW(lpstrPath, &base);
-    return (base.nScheme != URL_SCHEME_INVALID);
+    hres = ParseURLW(lpstrPath, &base);
+    return hres == S_OK && (base.nScheme != URL_SCHEME_INVALID);
 }
 
 /*************************************************************************
