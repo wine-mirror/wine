@@ -1351,6 +1351,11 @@ static void test_monthcal_monthrange(void)
     /* to be locale independent */
     SendMessage(hwnd, MCM_SETFIRSTDAYOFWEEK, 0, (LPARAM)6);
 
+    res = SendMessage(hwnd, MCM_GETMINREQRECT, 0, (LPARAM)&r);
+    expect(TRUE, res);
+    /* resize control to display two Calendars */
+    MoveWindow(hwnd, 0, 0, r.right, (5/2)*r.bottom, FALSE);
+
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     res = SendMessage(hwnd, MCM_GETMONTHRANGE, GMR_VISIBLE, (LPARAM)st_visible);
@@ -1383,7 +1388,6 @@ static void test_monthcal_monthrange(void)
     ok_sequence(sequences, MONTHCAL_SEQ_INDEX, monthcal_monthrange_seq, "monthcal monthrange", FALSE);
 
     /* resize control to display single Calendar */
-    res = SendMessage(hwnd, MCM_GETMINREQRECT, 0, (LPARAM)&r);
     MoveWindow(hwnd, 0, 0, r.right, r.bottom, FALSE);
 
     memset(&st, 0, sizeof(st));
