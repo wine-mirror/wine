@@ -228,7 +228,7 @@ static void test_recordWAVE(HWND hwnd)
 
     /* Check the default recording: 8-bits per sample, mono, 11kHz */
     err = mciSendString("status x samplespersec", buf, sizeof(buf), NULL);
-    todo_wine ok(!err,"mci status samplespersec returned error: %d\n", err);
+    ok(!err,"mci status samplespersec returned error: %d\n", err);
     if(!err) ok(!strcmp(buf,"11025"), "mci status samplespersec expected 11025, got: %s\n", buf);
 
     /* MCI seems to solely support PCM, no need for ACM conversion. */
@@ -291,6 +291,9 @@ static void test_recordWAVE(HWND hwnd)
 
     err = mciSendString("save x tempfile.wav", NULL, 0, NULL);
     ok(!err,"mci save returned error: %d\n", err);
+
+    err = mciSendString("set x channels 2", NULL, 0, NULL);
+    ok(err==MCIERR_NONAPPLICABLE_FUNCTION,"mci set channels after saving returned error: %d\n", err);
 
     err = mciSendString("close x", NULL, 0, NULL);
     ok(!err,"mci close returned error: %d\n", err);
