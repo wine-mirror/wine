@@ -304,8 +304,8 @@ static	DWORD WAVE_mciDefaultFmt(WINE_MCIWAVE* wmw)
 
     wmw->lpWaveFormat->wFormatTag = WAVE_FORMAT_PCM;
     wmw->lpWaveFormat->nChannels = 1;
-    wmw->lpWaveFormat->nSamplesPerSec = 44000;
-    wmw->lpWaveFormat->nAvgBytesPerSec = 44000;
+    wmw->lpWaveFormat->nSamplesPerSec = 11025;
+    wmw->lpWaveFormat->nAvgBytesPerSec = 11025;
     wmw->lpWaveFormat->nBlockAlign = 1;
     wmw->lpWaveFormat->wBitsPerSample = 8;
 
