@@ -1155,8 +1155,8 @@ static	DWORD	MCI_HandleReturnValues(DWORD dwRet, LPWINE_MCIDRIVER wmd, DWORD ret
 {
     static const WCHAR wszLd  [] = {'%','l','d',0};
     static const WCHAR wszLd4 [] = {'%','l','d',' ','%','l','d',' ','%','l','d',' ','%','l','d',0};
-    static const WCHAR wszCol3[] = {'%','d',':','%','d',':','%','d',0};
-    static const WCHAR wszCol4[] = {'%','d',':','%','d',':','%','d',':','%','d',0};
+    static const WCHAR wszCol3[] = {'%','0','2','d',':','%','0','2','d',':','%','0','2','d',0};
+    static const WCHAR wszCol4[] = {'%','0','2','d',':','%','0','2','d',':','%','0','2','d',':','%','0','2','d',0};
 
     if (lpstrRet) {
 	switch (retType) {
