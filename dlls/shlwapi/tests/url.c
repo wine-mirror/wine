@@ -31,6 +31,8 @@
 /* ################ */
 static HMODULE hShlwapi;
 static HRESULT (WINAPI *pUrlCanonicalizeW)(LPCWSTR, LPWSTR, LPDWORD, DWORD);
+static HRESULT (WINAPI *pParseURLA)(LPCSTR,PARSEDURLA*);
+static HRESULT (WINAPI *pParseURLW)(LPCWSTR,PARSEDURLW*);
 
 static const char* TEST_URL_1 = "http://www.winehq.org/tests?date=10/10/1923";
 static const char* TEST_URL_2 = "http://localhost:8080/tests%2e.html?date=Mon%2010/10/1923";
@@ -284,7 +286,8 @@ static const TEST_URL_COMBINE TEST_COMBINE[] = {
     {"http://xxxxxxxxx","outbind:wine17/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"outbind:wine17/dir"},
     {"xxx://xxxxxxxxx","ftp:wine18/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"ftp:wine18/dir"},
     {"ftp://xxxxxxxxx/","xxx:wine19/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"xxx:wine19/dir"},
-    {"outbind://xxxxxxxxx/","http:wine20/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"http:wine20/dir"}
+    {"outbind://xxxxxxxxx/","http:wine20/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"http:wine20/dir"},
+    {"file:///c:/dir/file.txt","index.html?test=c:/abc",URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,S_OK,"file:///c:/dir/index.html?test=c:/abc"}
 };
 
 /* ################ */
@@ -976,6 +979,83 @@ static void test_UrlUnescape(void)
 
 }
 
+static const struct parse_url_test_t {
+    const char *url;
+    HRESULT hres;
+    UINT protocol_len;
+    UINT scheme;
+} parse_url_tests[] = {
+    {"http://www.winehq.org/",S_OK,4,URL_SCHEME_HTTP},
+    {"https://www.winehq.org/",S_OK,5,URL_SCHEME_HTTPS},
+    {"ftp://www.winehq.org/",S_OK,3,URL_SCHEME_FTP},
+    {"test.txt?test=c:/dir",0x80041001},
+    {"test.txt",0x80041001},
+    {"xxx://www.winehq.org/",S_OK,3,URL_SCHEME_UNKNOWN},
+    {"1xx://www.winehq.org/",S_OK,3,URL_SCHEME_UNKNOWN},
+    {"-xx://www.winehq.org/",S_OK,3,URL_SCHEME_UNKNOWN},
+    {"xx0://www.winehq.org/",S_OK,3,URL_SCHEME_UNKNOWN},
+    {"x://www.winehq.org/",0x80041001},
+    {"xx$://www.winehq.org/",0x80041001},
+    {"htt?p://www.winehq.org/",0x80041001},
+    {"ab-://www.winehq.org/",S_OK,3,URL_SCHEME_UNKNOWN},
+    {" http://www.winehq.org/",0x80041001},
+};
+
+static void test_ParseURL(void)
+{
+    const struct parse_url_test_t *test;
+    WCHAR url[INTERNET_MAX_URL_LENGTH];
+    PARSEDURLA parseda;
+    PARSEDURLW parsedw;
+    HRESULT hres;
+
+    for(test = parse_url_tests; test < parse_url_tests + sizeof(parse_url_tests)/sizeof(*parse_url_tests); test++) {
+        memset(&parseda, 0xd0, sizeof(parseda));
+        parseda.cbSize = sizeof(parseda);
+        hres = pParseURLA(test->url, &parseda);
+        ok(hres == test->hres, "ParseURL failed: %08x, expected %08x\n", hres, test->hres);
+        if(hres == S_OK) {
+            ok(parseda.pszProtocol == test->url, "parseda.pszProtocol = %s, expected %s\n",
+               parseda.pszProtocol, test->url);
+            ok(parseda.cchProtocol == test->protocol_len, "parseda.cchProtocol = %d, expected %d\n",
+               parseda.cchProtocol, test->protocol_len);
+            ok(parseda.pszSuffix == test->url+test->protocol_len+1, "parseda.pszSuffix = %s, expected %s\n",
+               parseda.pszSuffix, test->url+test->protocol_len+1);
+            ok(parseda.cchSuffix == strlen(test->url+test->protocol_len+1),
+               "parseda.pszSuffix = %d, expected %d\n",
+               parseda.cchSuffix, strlen(test->url+test->protocol_len+1));
+            ok(parseda.nScheme == test->scheme, "parseda.nScheme = %d, expected %d\n",
+               parseda.nScheme, test->scheme);
+        }else {
+            ok(!parseda.pszProtocol, "parseda.pszProtocol = %p\n", parseda.pszProtocol);
+            ok(parseda.nScheme == 0xd0d0d0d0, "nScheme = %d\n", parseda.nScheme);
+        }
+
+        MultiByteToWideChar(CP_ACP, 0, test->url, -1, url, sizeof(url)/sizeof(WCHAR));
+
+        memset(&parsedw, 0xd0, sizeof(parsedw));
+        parsedw.cbSize = sizeof(parsedw);
+        hres = pParseURLW(url, &parsedw);
+        ok(hres == test->hres, "ParseURL failed: %08x, expected %08x\n", hres, test->hres);
+        if(hres == S_OK) {
+            ok(parsedw.pszProtocol == url, "parsedw.pszProtocol = %s, expected %s\n",
+               wine_dbgstr_w(parsedw.pszProtocol), wine_dbgstr_w(url));
+            ok(parsedw.cchProtocol == test->protocol_len, "parsedw.cchProtocol = %d, expected %d\n",
+               parsedw.cchProtocol, test->protocol_len);
+            ok(parsedw.pszSuffix == url+test->protocol_len+1, "parsedw.pszSuffix = %s, expected %s\n",
+               wine_dbgstr_w(parsedw.pszSuffix), wine_dbgstr_w(url+test->protocol_len+1));
+            ok(parsedw.cchSuffix == strlen(test->url+test->protocol_len+1),
+               "parsedw.pszSuffix = %d, expected %d\n",
+               parsedw.cchSuffix, strlen(test->url+test->protocol_len+1));
+            ok(parsedw.nScheme == test->scheme, "parsedw.nScheme = %d, expected %d\n",
+               parsedw.nScheme, test->scheme);
+        }else {
+            ok(!parsedw.pszProtocol, "parsedw.pszProtocol = %p\n", parseda.pszProtocol);
+            ok(parsedw.nScheme == 0xd0d0d0d0, "nScheme = %d\n", parsedw.nScheme);
+        }
+    }
+}
+
 /* ########################### */
 
 START_TEST(url)
@@ -983,6 +1063,8 @@ START_TEST(url)
 
   hShlwapi = GetModuleHandleA("shlwapi.dll");
   pUrlCanonicalizeW = (void *) GetProcAddress(hShlwapi, "UrlCanonicalizeW");
+  pParseURLA = (void*)GetProcAddress(hShlwapi, (LPCSTR)1);
+  pParseURLW = (void*)GetProcAddress(hShlwapi, (LPCSTR)2);
 
   test_UrlApplyScheme();
   test_UrlHash();
@@ -994,5 +1076,6 @@ START_TEST(url)
   test_UrlCreateFromPath();
   test_UrlIs();
   test_UrlUnescape();
+  test_ParseURL();
 
 }
