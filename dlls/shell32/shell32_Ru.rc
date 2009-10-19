@@ -248,6 +248,12 @@ STRINGTABLE
     IDS_SHUTDOWN_TITLE		"Выключить питание"
     IDS_SHUTDOWN_PROMPT		"Закончить работу с Wine?"
 
+    /* Run File dialog */
+    IDS_RUNDLG_ERROR           "Невозможно отобразить диалог Запуск файла (внутренняя ошибка)"
+    IDS_RUNDLG_BROWSE_ERROR    "Невозможно отобразить диалог Обзор (внутренняя ошибка)"
+    IDS_RUNDLG_BROWSE_CAPTION  "Обзор"
+    IDS_RUNDLG_BROWSE_FILTER   "Исполняемые файлы\0*.exe\0Все файлы\0*.*\0\0"
+
     /* shell folder path default values */
     IDS_PROGRAMS                "Главное меню\\Программы"
     IDS_PERSONAL                "Мои документы"
