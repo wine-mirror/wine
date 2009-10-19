@@ -1676,11 +1676,8 @@ static	DWORD MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwParam, lpParms);
 
+    /* Every device must handle MCI_NOTIFY on its own. */
     if (wDevID == MCI_ALL_DEVICE_ID) {
-	/* FIXME: shall I notify once after all is done, or for
-	 * each of the open drivers ? if the latest, which notif
-	 * to return when only one fails ?
-	 */
 	while (MciDrivers) {
             /* Retrieve the device ID under lock, but send the message without,
              * the driver might be calling some winmm functions from another
@@ -1706,11 +1703,6 @@ static	DWORD MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms
     dwRet = MCI_SendCommandFrom32(wDevID, MCI_CLOSE_DRIVER, dwParam, (DWORD_PTR)lpParms);
 
     MCI_UnLoadMciDriver(wmd);
-
-    if (dwParam & MCI_NOTIFY)
-        mciDriverNotify(lpParms ? (HWND)lpParms->dwCallback : 0,
-                        wDevID,
-                        dwRet ? MCI_NOTIFY_FAILURE : MCI_NOTIFY_SUCCESSFUL);
 
     return dwRet;
 }

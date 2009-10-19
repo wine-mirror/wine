@@ -152,6 +152,7 @@ static void test_notification1(HWND hwnd, const char* command, WPARAM type)
 static void test_openCloseWAVE(HWND hwnd)
 {
     MCIERROR err;
+    MCI_GENERIC_PARMS parm;
     const char command_open[] = "open new type waveaudio alias mysound";
     const char command_close_my[] = "close mysound notify";
     const char command_close_all[] = "close all notify";
@@ -179,7 +180,7 @@ static void test_openCloseWAVE(HWND hwnd)
     ok(!err,"mci %s returned error: %d\n", command_close_my, err);
     test_notification(hwnd, command_close_my, MCI_NOTIFY_SUCCESSFUL);
     Sleep(5);
-    todo_wine test_notification1(hwnd, command_close_my, 0);
+    test_notification(hwnd, command_close_my, 0);
 
     err = mciSendString(command_close_all, NULL, 0, NULL);
     todo_wine ok(!err,"mci %s (without buffer) returned error: %d\n", command_close_all, err);
@@ -198,10 +199,12 @@ static void test_openCloseWAVE(HWND hwnd)
     todo_wine ok(buf[0] == '0' && buf[1] == 0, "mci %s, expected output buffer '0', got: '%s'\n", command_sysinfo, buf);
 
     err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_NOTIFY, 0);
-    todo_wine ok(err == MCIERR_INVALID_DEVICE_ID ||
-        broken(!err), /* Win9x and WinMe */
-        "mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_NOTIFY, 0) returned %s instead of MCIERR_INVALID_DEVICE_ID\n",
-        dbg_mcierr(err));
+    ok(!err,"mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_NOTIFY, 0) returned %s\n", dbg_mcierr(err));
+
+    parm.dwCallback = (DWORD_PTR)hwnd;
+    err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_NOTIFY, (DWORD_PTR)&parm);
+    ok(!err,"mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_NOTIFY, hwnd) returned %s\n", dbg_mcierr(err));
+    test_notification(hwnd, command_close_all, 0); /* None left */
 }
 
 static void test_recordWAVE(HWND hwnd)
