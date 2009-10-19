@@ -2348,13 +2348,73 @@ static NTSTATUS DVD_ReadKey(int fd, PDVD_COPY_PROTECT_KEY key)
 /******************************************************************
  *		DVD_GetRegion
  *
- *
+ * This IOCTL combines information from both IOCTL_DVD_READ_KEY
+ * with key type DvdGetRpcKey and IOCTL_DVD_READ_STRUCTURE with
+ * structure type DvdCopyrightInformation into one structure.
  */
-static NTSTATUS DVD_GetRegion(int dev, PDVD_REGION region)
+static NTSTATUS DVD_GetRegion(int fd, PDVD_REGION region)
 {
-    FIXME("\n");
-    return STATUS_SUCCESS;
+#if defined(linux)
+    NTSTATUS ret = STATUS_NOT_SUPPORTED;
+    dvd_struct dvd;
+    dvd_authinfo auth_info;
 
+    dvd.type = DVD_STRUCT_COPYRIGHT;
+    dvd.copyright.layer_num = 0;
+    auth_info.type = DVD_LU_SEND_RPC_STATE;
+
+    ret = CDROM_GetStatusCode(ioctl( fd, DVD_AUTH, &auth_info ));
+
+    if (ret == STATUS_SUCCESS)
+    {
+        ret = CDROM_GetStatusCode(ioctl( fd, DVD_READ_STRUCT, &dvd ));
+
+        if (ret == STATUS_SUCCESS)
+        {
+            region->CopySystem = dvd.copyright.cpst;
+            region->RegionData = dvd.copyright.rmi;
+            region->SystemRegion = auth_info.lrpcs.region_mask;
+            region->ResetCount = auth_info.lrpcs.ucca;
+        }
+    }
+    return ret;
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+    TRACE("bsd\n");
+    return STATUS_NOT_SUPPORTED;
+#elif defined(__APPLE__)
+    dk_dvd_report_key_t key;
+    dk_dvd_read_structure_t dvd;
+    DVDRegionPlaybackControlInfo rpc;
+    DVDCopyrightInfo copy;
+    NTSTATUS ret = STATUS_NOT_SUPPORTED;
+
+    key.format = kDVDKeyFormatRegionState;
+    key.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+    key.bufferLength = sizeof(rpc);
+    key.buffer = &rpc;
+    dvd.format = kDVDStructureFormatCopyrightInfo;
+    dvd.bufferLength = sizeof(copy);
+    dvd.buffer = &copy;
+
+    ret = CDROM_GetStatusCode(ioctl( fd, DKIOCDVDREPORTKEY, &key ));
+
+    if (ret == STATUS_SUCCESS)
+    {
+        ret = CDROM_GetStatusCode(ioctl( fd, DKIOCDVDREADSTRUCTURE, &dvd ));
+
+        if (ret == STATUS_SUCCESS)
+        {
+            region->CopySystem = copy.copyrightProtectionSystemType;
+            region->RegionData = copy.regionMask;
+            region->SystemRegion = rpc.driveRegion;
+            region->ResetCount = rpc.numberUserResets;
+        }
+    }
+    return ret;
+#else
+    FIXME("\n");
+    return STATUS_NOT_SUPPORTED;
+#endif
 }
 
 /******************************************************************
