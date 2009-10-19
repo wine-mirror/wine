@@ -670,10 +670,20 @@ static NTSTATUS CDROM_GetStatusCode(int io)
  *		CDROM_GetControl
  *
  */
-static NTSTATUS CDROM_GetControl(int dev, CDROM_AUDIO_CONTROL* cac)
+static NTSTATUS CDROM_GetControl(int dev, int fd, CDROM_AUDIO_CONTROL* cac)
 {
-    cac->LbaFormat = 0; /* FIXME */
+#ifdef __APPLE__
+    uint16_t speed;
+    int io = ioctl( fd, DKIOCCDGETSPEED, &speed );
+    if (io != 0) return CDROM_GetStatusCode( io );
+    /* DKIOCCDGETSPEED returns the speed in kilobytes per second,
+     * so convert to logical blocks (assumed to be ~2 KB).
+     */
+    cac->LogicalBlocksPerSecond = speed/2;
+#else
     cac->LogicalBlocksPerSecond = 1; /* FIXME */
+#endif
+    cac->LbaFormat = 0; /* FIXME */
     return  STATUS_NOT_SUPPORTED;
 }
 
@@ -2762,7 +2772,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         sz = sizeof(CDROM_AUDIO_CONTROL);
         if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_GetControl(dev, lpOutBuffer);
+        else status = CDROM_GetControl(dev, fd, lpOutBuffer);
         break;
 
     case IOCTL_CDROM_GET_DRIVE_GEOMETRY:
