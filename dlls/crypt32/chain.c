@@ -814,6 +814,44 @@ static void dump_element(PCCERT_CONTEXT cert)
         dump_extension(&cert->pCertInfo->rgExtension[i]);
 }
 
+static BOOL CRYPT_CriticalExtensionsSupported(PCCERT_CONTEXT cert)
+{
+    BOOL ret = TRUE;
+    DWORD i;
+
+    for (i = 0; ret && i < cert->pCertInfo->cExtension; i++)
+    {
+        if (cert->pCertInfo->rgExtension[i].fCritical)
+        {
+            LPCSTR oid = cert->pCertInfo->rgExtension[i].pszObjId;
+
+            if (!strcmp(oid, szOID_BASIC_CONSTRAINTS))
+                ret = TRUE;
+            else if (!strcmp(oid, szOID_BASIC_CONSTRAINTS2))
+                ret = TRUE;
+            else if (!strcmp(oid, szOID_NAME_CONSTRAINTS))
+                ret = TRUE;
+            else if (!strcmp(oid, szOID_KEY_USAGE))
+            {
+                static int warned;
+
+                if (!warned++)
+                    FIXME("key usage extension unsupported, ignoring\n");
+                ret = TRUE;
+            }
+            else if (!strcmp(oid, szOID_SUBJECT_ALT_NAME))
+                ret = TRUE;
+            else
+            {
+                FIXME("unsupported critical extension %s\n",
+                 debugstr_a(oid));
+                ret = FALSE;
+            }
+        }
+    }
+    return ret;
+}
+
 static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
  PCERT_SIMPLE_CHAIN chain, LPFILETIME time)
 {
@@ -878,6 +916,11 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
              CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
         }
         /* FIXME: check valid usages */
+        /* Check whether every critical extension is supported */
+        if (!CRYPT_CriticalExtensionsSupported(
+         chain->rgpElement[i]->pCertContext))
+            chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
+             CERT_TRUST_INVALID_EXTENSION;
         CRYPT_CombineTrustStatus(&chain->TrustStatus,
          &chain->rgpElement[i]->TrustStatus);
     }
