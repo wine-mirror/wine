@@ -93,8 +93,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define DOM_VK_HOME     VK_HOME
 #define DOM_VK_END      VK_END
 
-static const WCHAR wszFont[] = {'f','o','n','t',0};
-static const WCHAR wszSize[] = {'s','i','z','e',0};
+static const WCHAR fontW[] = {'f','o','n','t',0};
+static const WCHAR sizeW[] = {'s','i','z','e',0};
 
 void set_dirty(HTMLDocument *This, VARIANT_BOOL dirty)
 {
@@ -292,13 +292,13 @@ static void get_font_size(HTMLDocument *This, WCHAR *ret)
             nsIDOMElement_GetTagName(elem, &tag_str);
             nsAString_GetData(&tag_str, &tag);
 
-            if(!strcmpiW(tag, wszFont)) {
+            if(!strcmpiW(tag, fontW)) {
                 nsAString size_str, val_str;
                 LPCWSTR val;
 
                 TRACE("found font tag %p\n", elem);
 
-                nsAString_Init(&size_str, wszSize);
+                nsAString_Init(&size_str, sizeW);
                 nsAString_Init(&val_str, NULL);
 
                 nsIDOMElement_GetAttribute(elem, &size_str, &val_str);
@@ -334,10 +334,9 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
 {
     nsISelection *nsselection;
     PRBool collapsed;
-    nsIDOMElement *elem;
+    nsIDOMHTMLElement *elem;
     nsIDOMRange *range;
     PRInt32 range_cnt = 0;
-    nsAString font_str;
     nsAString size_str;
     nsAString val_str;
 
@@ -359,11 +358,11 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
         }
     }
 
-    nsAString_Init(&font_str, wszFont);
-    nsAString_Init(&size_str, wszSize);
+    create_nselem(This->doc_node, fontW, &elem);
+
+    nsAString_Init(&size_str, sizeW);
     nsAString_Init(&val_str, size);
 
-    nsIDOMDocument_CreateElement(This->nsdoc, &font_str, &elem);
     nsIDOMElement_SetAttribute(elem, &size_str, &val_str);
 
     nsISelection_GetRangeAt(nsselection, 0, &range);
@@ -376,7 +375,7 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
         nsISelection_Collapse(nsselection, (nsIDOMNode*)elem, 0);
     }else {
         /* Remove all size attributes from the range */
-        remove_child_attr(elem, wszFont, &size_str);
+        remove_child_attr((nsIDOMElement*)elem, fontW, &size_str);
         nsISelection_SelectAllChildren(nsselection, (nsIDOMNode*)elem);
     }
 
@@ -384,7 +383,6 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
     nsIDOMRange_Release(range);
     nsIDOMElement_Release(elem);
 
-    nsAString_Finish(&font_str);
     nsAString_Finish(&size_str);
     nsAString_Finish(&val_str);
 
