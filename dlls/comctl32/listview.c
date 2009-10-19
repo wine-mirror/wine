@@ -9539,6 +9539,9 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
   }
   else
   {
+    if (!infoPtr->bFocus)
+        SetFocus(infoPtr->hwndSelf);
+
     /* remove all selections */
     if (!(wKey & MK_CONTROL) && !(wKey & MK_SHIFT))
         LISTVIEW_DeselectAll(infoPtr);
