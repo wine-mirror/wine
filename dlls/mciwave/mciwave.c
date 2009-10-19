@@ -562,46 +562,38 @@ static LRESULT WAVE_mciOpen(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_P
 /**************************************************************************
  *                               WAVE_mciCue             [internal]
  */
-static DWORD WAVE_mciCue(MCIDEVICEID wDevID, LPARAM dwParam, LPMCI_GENERIC_PARMS lpParms)
+static DWORD WAVE_mciCue(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
-    /*
-      FIXME
-
-      This routine is far from complete. At the moment only a check is done on the
-      MCI_WAVE_INPUT flag. No explicit check on MCI_WAVE_OUTPUT is done since that
-      is the default.
-
-      The flags MCI_NOTIFY (and the callback parameter in lpParms) and MCI_WAIT
-      are ignored
-    */
-
-    DWORD		dwRet;
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
 
-    FIXME("(%u, %08lX, %p); likely to fail\n", wDevID, dwParam, lpParms);
+    TRACE("(%u, %08X, %p);\n", wDevID, dwFlags, lpParms);
 
-    if (wmw == NULL)	return MCIERR_INVALID_DEVICE_ID;
+    /* Tests on systems without sound drivers show that Cue, like
+     * Record and Play, opens winmm, returning MCIERR_WAVE_xyPUTSUNSUITABLE.
+     * The first Cue Notify does not immediately return the
+     * notification, as if a player or recorder thread is started.
+     * PAUSE mode is reported when successful, but this mode is
+     * different from the normal Pause, because a) Pause then returns
+     * NONAPPLICABLE_FUNCTION instead of 0 and b) Set Channels etc. is
+     * still accepted, returning the original notification as ABORTED.
+     * I.e. Cue allows subsequent format changes, unlike Record or
+     * Open file, closes winmm if the format changes and stops this
+     * thread.
+     * Wine creates one player or recorder thread per async. Play or
+     * Record command.  Notification behaviour suggests that MS-W*
+     * reuses a single thread to improve response times.  Having Cue
+     * start this thread early helps to improve Play/Record's initial
+     * response time.  In effect, Cue is a performance hint, which
+     * justifies our almost no-op implementation.
+     */
 
-    /* FIXME */
-    /* always close elements ? */
-    if (wmw->hFile != 0) {
-	mmioClose(wmw->hFile, 0);
-	wmw->hFile = 0;
-    }
+    if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    if (wmw->dwStatus != MCI_MODE_STOP) return MCIERR_NONAPPLICABLE_FUNCTION;
 
-    dwRet = MMSYSERR_NOERROR;  /* assume success */
+    if ((dwFlags & MCI_NOTIFY) && lpParms)
+	WAVE_mciNotify(lpParms->dwCallback,wmw,MCI_NOTIFY_SUCCESSFUL);
 
-    if ((dwParam & MCI_WAVE_INPUT) && !wmw->fInput) {
-	dwRet = waveOutClose(wmw->hWave);
-	if (dwRet != MMSYSERR_NOERROR) return MCIERR_INTERNAL;
-	wmw->fInput = TRUE;
-    } else if (wmw->fInput) {
-	dwRet = waveInClose(wmw->hWave);
-	if (dwRet != MMSYSERR_NOERROR) return MCIERR_INTERNAL;
-	wmw->fInput = FALSE;
-    }
-    wmw->hWave = 0;
-    return (dwRet == MMSYSERR_NOERROR) ? 0 : MCIERR_INTERNAL;
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************

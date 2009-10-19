@@ -478,6 +478,10 @@ static void test_asyncWAVE(HWND hwnd)
     test_notification(hwnd,"pause aborted play #1 notification",MCI_NOTIFY_SUPERSEDED);
     test_notification(hwnd,"impossible pause notification",0);
 
+    err = mciSendString("cue mysound output notify", NULL, 0, hwnd);
+    ok(err==MCIERR_NONAPPLICABLE_FUNCTION,"mci cue output while paused returned error: %d\n", err);
+    test_notification(hwnd,"cue output notify #2",0);
+
     /* Seek or even Stop used to hang Wine on MacOS. */
     err = mciSendString("seek mysound to 0 wait", NULL, 0, NULL);
     ok(!err,"mci seek to start returned error: %d\n", err);
