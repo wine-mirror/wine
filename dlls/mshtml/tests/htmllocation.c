@@ -62,7 +62,7 @@ static const struct location_test http_test = {
             "www.winehq.org", TRUE,
             "80", TRUE,
             "", TRUE,
-            "?search", FALSE,
+            "?search", TRUE,
             "#hash", TRUE
             };
 
@@ -76,7 +76,7 @@ static const struct location_test http_file_test = {
             "www.winehq.org", TRUE,
             "80", TRUE,
             "file", TRUE,
-            "?search", FALSE,
+            "?search", TRUE,
             "#hash", TRUE
             };
 
@@ -90,7 +90,7 @@ static const struct location_test ftp_test = {
             "ftp.winehq.org", TRUE,
             "21", TRUE,
             "", TRUE,
-            NULL, FALSE,
+            NULL, TRUE,
             NULL, TRUE
             };
 
@@ -104,7 +104,7 @@ static const struct location_test ftp_file_test = {
             "ftp.winehq.org", TRUE,
             "21", TRUE,
             "file", TRUE,
-            NULL, FALSE,
+            NULL, TRUE,
             NULL, TRUE
             };
 
@@ -118,7 +118,7 @@ static const struct location_test file_test = {
             NULL, TRUE,
             "", TRUE,
             "C:\\windows\\win.ini", TRUE,
-            NULL, FALSE,
+            NULL, TRUE,
             NULL, TRUE
             };
 
@@ -291,7 +291,7 @@ static void test_search(IHTMLLocation *loc, const struct location_test *test)
             test->name, E_POINTER, hres);
 
     hres = IHTMLLocation_get_search(loc, &str);
-    todo_wine ok(hres == S_OK, "%s: get_search failed: 0x%08x\n", test->name, hres);
+    ok(hres == S_OK, "%s: get_search failed: 0x%08x\n", test->name, hres);
     if(hres == S_OK){
         if(test->search_ok)
             ok(str_eq_wa(str, test->search),
