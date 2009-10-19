@@ -667,7 +667,7 @@ ok(arr === arr.valueOf(), "arr !== arr.valueOf");
 
 arr = [1,2,3];
 tmp = arr.unshift(0);
-ok(tmp === undefined, "[1,2,3].unshift(0) returned " +tmp);
+ok(tmp === (invokeVersion < 2 ? undefined : 4), "[1,2,3].unshift(0) returned " +tmp);
 ok(arr.length === 4, "arr.length = " + arr.length);
 ok(arr.toString() === "0,1,2,3", "arr.toString() = " + arr.toString());
 
@@ -675,13 +675,13 @@ arr = new Array(3);
 arr[0] = 1;
 arr[2] = 3;
 tmp = arr.unshift(-1,0);
-ok(tmp === undefined, "unshift returned " +tmp);
+ok(tmp === (invokeVersion < 2 ? undefined : 5), "unshift returned " +tmp);
 ok(arr.length === 5, "arr.length = " + arr.length);
 ok(arr.toString() === "-1,0,1,,3", "arr.toString() = " + arr.toString());
 
 arr = [1,2,3];
 tmp = arr.unshift();
-ok(tmp === undefined, "unshift returned " +tmp);
+ok(tmp === (invokeVersion < 2 ? undefined : 3), "unshift returned " +tmp);
 ok(arr.length === 3, "arr.length = " + arr.length);
 ok(arr.toString() === "1,2,3", "arr.toString() = " + arr.toString());
 
@@ -690,7 +690,7 @@ arr.length = 2;
 arr[0] = 1;
 arr[1] = 2;
 tmp = Array.prototype.unshift.call(arr, 0);
-ok(tmp === undefined, "unshift returned " +tmp);
+ok(tmp === (invokeVersion < 2 ? undefined : 3), "unshift returned " +tmp);
 ok(arr.length === 3, "arr.length = " + arr.length);
 ok(arr[0] === 0 && arr[1] === 1 && arr[2] === 2, "unexpected array");
 
@@ -1587,7 +1587,7 @@ ok(Error.prototype.name === "Error", "Error.prototype.name = " + Error.prototype
 ok(err.name === "Error", "err.name = " + err.name);
 EvalError.prototype.message = "test";
 ok(err.toString !== Object.prototype.toString, "err.toString === Object.prototype.toString");
-ok(err.toString() === "[object Error]", "err.toString() = " + err.toString());
+ok(err.toString() === (invokeVersion < 2 ? "[object Error]" : "Error"), "err.toString() = " + err.toString());
 err = new EvalError();
 ok(EvalError.prototype.name === "EvalError", "EvalError.prototype.name = " + EvalError.prototype.name);
 ok(err.name === "EvalError", "err.name = " + err.name);
@@ -1595,37 +1595,67 @@ ok(err.toString === Error.prototype.toString, "err.toString !== Error.prototype.
 ok(err.message === "", "err.message != ''");
 err.message = date;
 ok(err.message === date, "err.message != date");
-ok(err.toString() === "[object Error]", "err.toString() = " + err.toString());
+ok(err.toString() === (invokeVersion < 2 ? "[object Error]" : "EvalError: Fri Aug 17 22:50:50 UTC+0200 85"),
+   "err.toString() = " + err.toString());
 ok(err.toString !== Object.prototype.toString, "err.toString === Object.prototype.toString");
 err = new RangeError();
 ok(RangeError.prototype.name === "RangeError", "RangeError.prototype.name = " + RangeError.prototype.name);
 ok(err.name === "RangeError", "err.name = " + err.name);
-ok(err.toString() === "[object Error]", "err.toString() = " + err.toString());
+ok(err.toString() === (invokeVersion < 2 ? "[object Error]" : "RangeError"), "err.toString() = " + err.toString());
 err = new ReferenceError();
 ok(ReferenceError.prototype.name === "ReferenceError", "ReferenceError.prototype.name = " + ReferenceError.prototype.name);
 ok(err.name === "ReferenceError", "err.name = " + err.name);
-ok(err.toString() === "[object Error]", "err.toString() = " + err.toString());
+ok(err.toString() === (invokeVersion < 2 ? "[object Error]" : "ReferenceError"), "err.toString() = " + err.toString());
 err = new SyntaxError();
 ok(SyntaxError.prototype.name === "SyntaxError", "SyntaxError.prototype.name = " + SyntaxError.prototype.name);
 ok(err.name === "SyntaxError", "err.name = " + err.name);
-ok(err.toString() === "[object Error]", "err.toString() = " + err.toString());
+ok(err.toString() === (invokeVersion < 2 ? "[object Error]" : "SyntaxError"), "err.toString() = " + err.toString());
 err = new TypeError();
 ok(TypeError.prototype.name === "TypeError", "TypeError.prototype.name = " + TypeError.prototype.name);
 ok(err.name === "TypeError", "err.name = " + err.name);
-ok(err.toString() === "[object Error]", "err.toString() = " + err.toString());
+ok(err.toString() === (invokeVersion < 2 ? "[object Error]" : "TypeError"), "err.toString() = " + err.toString());
 err = new URIError();
 ok(URIError.prototype.name === "URIError", "URIError.prototype.name = " + URIError.prototype.name);
 ok(err.name === "URIError", "err.name = " + err.name);
-ok(err.toString() === "[object Error]", "err.toString() = " + err.toString());
+ok(err.toString() === (invokeVersion < 2 ? "[object Error]" : "URIError"), "err.toString() = " + err.toString());
 err = new Error("message");
 ok(err.message === "message", "err.message !== 'message'");
-ok(err.toString() === "[object Error]", "err.toString() = " + err.toString());
+ok(err.toString() === (invokeVersion < 2 ? "[object Error]" : "Error: message"), "err.toString() = " + err.toString());
 err = new Error(123);
 ok(err.number === 123, "err.number = " + err.number);
 err = new Error(0, "message");
 ok(err.number === 0, "err.number = " + err.number);
 ok(err.message === "message", "err.message = " + err.message);
 ok(err.description === "message", "err.description = " + err.description);
+
+tmp = new Object();
+tmp.toString = function() { return "test"; };
+
+tmp = Error.prototype.toString.call(tmp);
+ok(tmp === "[object Error]", "Error.prototype.toString.call(tmp) = " + tmp);
+
+err = new Error();
+err.name = null;
+ok(err.name === null, "err.name = " + err.name + " expected null");
+if(invokeVersion >= 2)
+    ok(err.toString() === "null", "err.toString() = " + err.toString());
+
+err = new Error();
+err.message = false;
+ok(err.message === false, "err.message = " + err.message + " expected false");
+if(invokeVersion >= 2)
+    ok(err.toString() === "Error: false", "err.toString() = " + err.toString());
+
+err = new Error();
+err.message = new Object();
+err.message.toString = function() { return ""; };
+if(invokeVersion >= 2)
+    ok(err.toString() === "Error", "err.toString() = " + err.toString());
+
+err = new Error();
+err.message = undefined;
+if(invokeVersion >= 2)
+    ok(err.toString() === "Error", "err.toString() = " + err.toString());
 
 function exception_test(func, type, number) {
     ret = "";

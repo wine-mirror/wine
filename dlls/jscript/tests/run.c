@@ -81,6 +81,7 @@ DEFINE_EXPECT(GetItemInfo_testVal);
 #define DISPID_GLOBAL_NULL_DISP     0x1008
 #define DISPID_GLOBAL_TESTTHIS      0x1009
 #define DISPID_GLOBAL_TESTTHIS2     0x100a
+#define DISPID_GLOBAL_INVOKEVERSION 0x100b
 
 #define DISPID_TESTOBJ_PROP         0x2000
 
@@ -92,6 +93,7 @@ static const CHAR test_valA[] = "testVal";
 static BOOL strict_dispid_check;
 static const char *test_name = "(null)";
 static IDispatch *script_disp;
+static int invoke_version;
 
 static BSTR a2bstr(const char *str)
 {
@@ -110,6 +112,13 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     CHAR buf[512];
     WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), 0, 0);
     return lstrcmpA(buf, stra);
+}
+
+#define test_grfdex(a,b) _test_grfdex(__LINE__,a,b)
+static void _test_grfdex(unsigned line, DWORD grfdex, DWORD expect)
+{
+    expect |= invoke_version << 28;
+    ok_(__FILE__,line)(grfdex == expect, "grfdex = %x, expected %x\n", grfdex, expect);
 }
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
@@ -205,13 +214,13 @@ static HRESULT WINAPI testObj_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD
 {
     if(!strcmp_wa(bstrName, "prop")) {
         CHECK_EXPECT(testobj_prop_d);
-        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_TESTOBJ_PROP;
         return S_OK;
     }
     if(!strcmp_wa(bstrName, "noprop")) {
         CHECK_EXPECT(testobj_noprop_d);
-        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
         return DISP_E_UNKNOWNNAME;
     }
 
@@ -250,7 +259,7 @@ static HRESULT WINAPI testObj_DeleteMemberByName(IDispatchEx *iface, BSTR bstrNa
     CHECK_EXPECT(testobj_delete);
 
     ok(!strcmp_wa(bstrName, "deleteTest"), "unexpected name %s\n", wine_dbgstr_w(bstrName));
-    ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+    test_grfdex(grfdex, fdexNameCaseSensitive);
     return S_OK;
 }
 
@@ -277,40 +286,40 @@ static IDispatchEx testObj = { &testObjVtbl };
 static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     if(!strcmp_wa(bstrName, "ok")) {
-        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_OK;
         return S_OK;
     }
     if(!strcmp_wa(bstrName, "trace")) {
-        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TRACE;
         return S_OK;
     }
     if(!strcmp_wa(bstrName, "reportSuccess")) {
         CHECK_EXPECT(global_success_d);
-        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_REPORTSUCCESS;
         return S_OK;
     }
     if(!strcmp_wa(bstrName, "testPropGet")) {
         CHECK_EXPECT(global_propget_d);
-        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TESTPROPGET;
         return S_OK;
     }
     if(!strcmp_wa(bstrName, "testPropPut")) {
         CHECK_EXPECT(global_propput_d);
-        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TESTPROPPUT;
         return S_OK;
     }
     if(!strcmp_wa(bstrName, "getVT")) {
-        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_GETVT;
         return S_OK;
     }
     if(!strcmp_wa(bstrName, "testObj")) {
-        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TESTOBJ;
         return S_OK;
     }
@@ -324,19 +333,25 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
     }
     if(!strcmp_wa(bstrName, "notExists")) {
         CHECK_EXPECT(global_notexists_d);
-        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
         return DISP_E_UNKNOWNNAME;
     }
 
     if(!strcmp_wa(bstrName, "testThis")) {
-        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TESTTHIS;
         return S_OK;
     }
 
     if(!strcmp_wa(bstrName, "testThis2")) {
-        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TESTTHIS2;
+        return S_OK;
+    }
+
+    if(!strcmp_wa(bstrName, "invokeVersion")) {
+        test_grfdex(grfdex, fdexNameCaseSensitive);
+        *pid = DISPID_GLOBAL_INVOKEVERSION;
         return S_OK;
     }
 
@@ -536,6 +551,23 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         ok(V_DISPATCH(pdp->rgvarg) == script_disp, "disp != script_disp\n");
 
         return S_OK;
+
+     case DISPID_GLOBAL_INVOKEVERSION:
+        ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg != NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+
+        V_VT(pvarRes) = VT_I4;
+        V_I4(pvarRes) = invoke_version;
+
+        return S_OK;
+
     }
 
     ok(0, "unexpected call %x\n", id);
@@ -657,14 +689,39 @@ static const IActiveScriptSiteVtbl ActiveScriptSiteVtbl = {
 
 static IActiveScriptSite ActiveScriptSite = { &ActiveScriptSiteVtbl };
 
+static HRESULT set_script_prop(IActiveScript *engine, DWORD property, VARIANT *val)
+{
+    IActiveScriptProperty *script_prop;
+    HRESULT hres;
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptProperty,
+            (void**)&script_prop);
+    ok(hres == S_OK, "Could not get IActiveScriptProperty iface: %08x\n", hres);
+
+    hres = IActiveScriptProperty_SetProperty(script_prop, property, NULL, val);
+    IActiveScriptProperty_Release(script_prop);
+
+    return hres;
+}
+
 static IActiveScript *create_script(void)
 {
     IActiveScript *script;
+    VARIANT v;
     HRESULT hres;
 
     hres = CoCreateInstance(&CLSID_JScript, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IActiveScript, (void**)&script);
     ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = invoke_version;
+    hres = set_script_prop(script, SCRIPTPROP_INVOKEVERSIONING, &v);
+    ok(hres == S_OK || broken(hres == E_NOTIMPL), "SetProperty(SCRIPTPROP_INVOKEVERSIONING) failed: %08x\n", hres);
+    if(invoke_version && FAILED(hres)) {
+        IActiveScript_Release(script);
+        return NULL;
+    }
 
     return script;
 }
@@ -912,6 +969,17 @@ static void run_tests(void)
 {
     HRESULT hres;
 
+    if(invoke_version) {
+        IActiveScript *script;
+
+        script = create_script();
+        if(!script) {
+            win_skip("Could not create script\n");
+            return;
+        }
+        IActiveScript_Release(script);
+    }
+
     strict_dispid_check = TRUE;
 
     parse_script_a("");
@@ -1019,10 +1087,17 @@ START_TEST(run)
 
     CoInitialize(NULL);
 
-    if(argc > 2)
+    if(argc > 2) {
         run_from_file(argv[2]);
-    else
+    }else {
+        trace("invoke version 0\n");
+        invoke_version = 0;
         run_tests();
+
+        trace("invoke version 2\n");
+        invoke_version = 2;
+        run_tests();
+    }
 
     CoUninitialize();
 }
