@@ -1503,6 +1503,7 @@ static NTSTATUS WS2_async_shutdown( void* user, PIO_STATUS_BLOCK iosb, NTSTATUS 
         break;
     }
     iosb->u.Status = status;
+    iosb->Information = 0;
     *apc = ws2_async_apc;
     return status;
 }
