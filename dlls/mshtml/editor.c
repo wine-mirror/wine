@@ -1125,17 +1125,17 @@ static INT_PTR CALLBACK hyperlink_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LP
 
 static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    nsAString a_str, href_str, ns_url;
+    nsAString href_str, ns_url;
     nsIHTMLEditor *html_editor;
-    nsIDOMElement *anchor_elem;
+    nsIDOMHTMLElement *anchor_elem;
     PRBool insert_link_at_caret;
     nsISelection *nsselection;
     BSTR url = NULL;
     INT ret;
     HRESULT hres = E_FAIL;
 
-    static const WCHAR wszA[] = {'a',0};
-    static const WCHAR wszHref[] = {'h','r','e','f',0};
+    static const WCHAR aW[] = {'a',0};
+    static const WCHAR hrefW[] = {'h','r','e','f',0};
 
     TRACE("%p, 0x%x, %p, %p\n", This, cmdexecopt, in, out);
 
@@ -1164,16 +1164,13 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
     if (!nsselection)
         return E_FAIL;
 
-    nsAString_Init(&a_str, wszA);
-    nsAString_Init(&href_str, wszHref);
-    nsAString_Init(&ns_url, url);
-
     /* create an element for the link */
-    nsIDOMDocument_CreateElement(This->nsdoc, &a_str, &anchor_elem);
-    nsIDOMElement_SetAttribute(anchor_elem, &href_str, &ns_url);
+    create_nselem(This->doc_node, aW, &anchor_elem);
 
+    nsAString_Init(&href_str, hrefW);
+    nsAString_Init(&ns_url, url);
+    nsIDOMElement_SetAttribute(anchor_elem, &href_str, &ns_url);
     nsAString_Finish(&href_str);
-    nsAString_Finish(&a_str);
 
     nsISelection_GetIsCollapsed(nsselection, &insert_link_at_caret);
 
@@ -1197,10 +1194,10 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
 
         if (insert_link_at_caret) {
             /* add them to the document at the caret position */
-            nsres = nsIHTMLEditor_InsertElementAtSelection(html_editor, anchor_elem, FALSE);
+            nsres = nsIHTMLEditor_InsertElementAtSelection(html_editor, (nsIDOMElement*)anchor_elem, FALSE);
             nsISelection_SelectAllChildren(nsselection, (nsIDOMNode*)anchor_elem);
         }else /* add them around the selection using the magic provided to us by nsIHTMLEditor */
-            nsres = nsIHTMLEditor_InsertLinkAroundSelection(html_editor, anchor_elem);
+            nsres = nsIHTMLEditor_InsertLinkAroundSelection(html_editor, (nsIDOMElement*)anchor_elem);
 
         nsIHTMLEditor_Release(html_editor);
         hres = NS_SUCCEEDED(nsres) ? S_OK : E_FAIL;
