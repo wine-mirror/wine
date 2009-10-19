@@ -392,6 +392,11 @@ static inline void num_set_inf(VARIANT *v, BOOL positive)
 #endif
 }
 
+static inline DWORD make_grfdex(script_ctx_t *ctx, DWORD flags)
+{
+    return (ctx->version << 28) | flags;
+}
+
 const char *debugstr_variant(const VARIANT*);
 
 HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);

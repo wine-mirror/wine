@@ -223,7 +223,7 @@ void exec_release(exec_ctx_t *ctx)
     heap_free(ctx);
 }
 
-static HRESULT disp_get_id(IDispatch *disp, BSTR name, DWORD flags, DISPID *id)
+static HRESULT disp_get_id(script_ctx_t *ctx, IDispatch *disp, BSTR name, DWORD flags, DISPID *id)
 {
     IDispatchEx *dispex;
     HRESULT hres;
@@ -237,7 +237,7 @@ static HRESULT disp_get_id(IDispatch *disp, BSTR name, DWORD flags, DISPID *id)
     }
 
     *id = 0;
-    hres = IDispatchEx_GetDispID(dispex, name, flags|fdexNameCaseSensitive, id);
+    hres = IDispatchEx_GetDispID(dispex, name, make_grfdex(ctx, flags|fdexNameCaseSensitive), id);
     IDispatchEx_Release(dispex);
     return hres;
 }
@@ -402,7 +402,7 @@ static BOOL lookup_global_members(script_ctx_t *ctx, BSTR identifier, exprval_t 
 
     for(item = ctx->named_items; item; item = item->next) {
         if(item->flags & SCRIPTITEM_GLOBALMEMBERS) {
-            hres = disp_get_id(item->disp, identifier, 0, &id);
+            hres = disp_get_id(ctx, item->disp, identifier, 0, &id);
             if(SUCCEEDED(hres)) {
                 if(ret)
                     exprval_set_idref(ret, item->disp, id);
@@ -1423,7 +1423,7 @@ HRESULT array_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags,
                 return S_OK;
             }
 
-            hres = disp_get_id(obj, str, flags & EXPR_NEWREF ? fdexNameEnsure : 0, &id);
+            hres = disp_get_id(ctx->parser->script, obj, str, flags & EXPR_NEWREF ? fdexNameEnsure : 0, &id);
         }
 
         if(SUCCEEDED(hres)) {
@@ -1474,7 +1474,7 @@ HRESULT member_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags
         return S_OK;
     }
 
-    hres = disp_get_id(obj, str, flags & EXPR_NEWREF ? fdexNameEnsure : 0, &id);
+    hres = disp_get_id(ctx->parser->script, obj, str, flags & EXPR_NEWREF ? fdexNameEnsure : 0, &id);
     SysFreeString(str);
     if(SUCCEEDED(hres)) {
         exprval_set_idref(ret, obj, id);
@@ -2068,7 +2068,7 @@ static HRESULT in_eval(exec_ctx_t *ctx, VARIANT *lval, VARIANT *obj, jsexcept_t 
     if(FAILED(hres))
         return hres;
 
-    hres = disp_get_id(V_DISPATCH(obj), str, 0, &id);
+    hres = disp_get_id(ctx->parser->script, V_DISPATCH(obj), str, 0, &id);
     SysFreeString(str);
     if(SUCCEEDED(hres))
         ret = VARIANT_TRUE;
@@ -2308,7 +2308,8 @@ HRESULT delete_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags
 
         hres = IDispatch_QueryInterface(exprval.u.nameref.disp, &IID_IDispatchEx, (void**)&dispex);
         if(SUCCEEDED(hres)) {
-            hres = IDispatchEx_DeleteMemberByName(dispex, exprval.u.nameref.name, fdexNameCaseSensitive);
+            hres = IDispatchEx_DeleteMemberByName(dispex, exprval.u.nameref.name,
+                    make_grfdex(ctx->parser->script, fdexNameCaseSensitive));
             b = VARIANT_TRUE;
             IDispatchEx_Release(dispex);
         }
