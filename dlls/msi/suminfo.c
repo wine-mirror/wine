@@ -443,7 +443,6 @@ MSISUMMARYINFO *MSI_GetSummaryInformationW( IStorage *stg, UINT uiUpdateCount )
     if( !si )
         return si;
 
-    memset( si->property, 0, sizeof si->property );
     si->update_count = uiUpdateCount;
     IStorage_AddRef( stg );
     si->storage = stg;

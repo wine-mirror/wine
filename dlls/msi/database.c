@@ -191,8 +191,6 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
     db->mode = szMode;
     if (created)
         db->deletefile = strdupW( szDBPath );
-    else
-        db->deletefile = NULL;
     list_init( &db->tables );
     list_init( &db->transforms );
 

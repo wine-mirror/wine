@@ -744,15 +744,6 @@ static MSIPACKAGE *msi_alloc_package( void )
         list_init( &package->RunningActions );
         list_init( &package->sourcelist_info );
         list_init( &package->sourcelist_media );
-
-        package->patch = NULL;
-        package->ActionFormat = NULL;
-        package->LastAction = NULL;
-        package->dialog = NULL;
-        package->next_dialog = NULL;
-        package->scheduled_action_running = FALSE;
-        package->commit_action_running = FALSE;
-        package->rollback_action_running = FALSE;
     }
 
     return package;
