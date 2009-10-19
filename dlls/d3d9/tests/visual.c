@@ -6411,7 +6411,6 @@ static void test_vshader_input(IDirect3DDevice9 *device)
          */
         ok(color == 0x000000FF || color == 0x00808080 || color == 0x00000000,
            "Input test: Quad 2(different colors) returned color 0x%08x, expected 0x000000FF, 0x00808080 or 0x00000000\n", color);
-        color = getPixelColor(device, 160, 120);
 
         IDirect3DDevice9_SetVertexShader(device, NULL);
         IDirect3DDevice9_SetVertexDeclaration(device, NULL);
