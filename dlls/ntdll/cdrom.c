@@ -2182,6 +2182,8 @@ static NTSTATUS DVD_ReadKey(int fd, PDVD_COPY_PROTECT_KEY key)
 	    ((PDVD_RPC_KEY)key->KeyData)->TypeCode = auth_info.lrpcs.type;
 	    ((PDVD_RPC_KEY)key->KeyData)->RegionMask = auth_info.lrpcs.region_mask;
 	    ((PDVD_RPC_KEY)key->KeyData)->RpcScheme = auth_info.lrpcs.rpc_scheme;
+	    ((PDVD_RPC_KEY)key->KeyData)->UserResetsAvailable = auth_info.lrpcs.ucca;
+	    ((PDVD_RPC_KEY)key->KeyData)->ManufacturerResetsAvailable = auth_info.lrpcs.vra;
 	}
 	break;
     default:
