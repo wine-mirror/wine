@@ -256,10 +256,8 @@ static HRESULT WINAPI HTMLLocation_get_href(IHTMLLocation *iface, BSTR *p)
     ret = S_OK;
 
 cleanup:
-    if(buf)
-        HeapFree(GetProcessHeap(), 0, buf);
-    if(url_path)
-        HeapFree(GetProcessHeap(), 0, url_path);
+    HeapFree(GetProcessHeap(), 0, buf);
+    HeapFree(GetProcessHeap(), 0, url_path);
 
     return ret;
 }
