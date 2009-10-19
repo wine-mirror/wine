@@ -2039,9 +2039,15 @@ static HRESULT  WINAPI  IDirect3DDevice9ExImpl_SetConvolutionMonoKernel(LPDIRECT
     return WINED3DERR_INVALIDCALL;
 }
 
-static HRESULT  WINAPI  IDirect3DDevice9ExImpl_ComposeRects(LPDIRECT3DDEVICE9EX iface, IDirect3DSurface9 *pSrc, IDirect3DDevice9 *pDst, IDirect3DVertexBuffer9 *pSrcRectDescs, UINT NumRects, IDirect3DVertexBuffer9 *pDstRectDescs, D3DCOMPOSERECTSOP Operation, int Xoffset, int Yoffset) {
-    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *) iface;
-    FIXME("(%p)->(%p, %p, %p, %d, %p, %d, %d, %d) Stub!\n", This, pSrc, pDst, pSrcRectDescs, NumRects, pDstRectDescs, Operation, Xoffset, Yoffset);
+static HRESULT WINAPI IDirect3DDevice9ExImpl_ComposeRects(IDirect3DDevice9Ex *iface,
+        IDirect3DSurface9 *src_surface, IDirect3DSurface9 *dst_surface, IDirect3DVertexBuffer9 *src_descs,
+        UINT rect_count, IDirect3DVertexBuffer9 *dst_descs, D3DCOMPOSERECTSOP operation, INT offset_x, INT offset_y)
+{
+    FIXME("iface %p, src_surface %p, dst_surface %p, src_descs %p, rect_count %u,\n"
+            "dst_descs %p, operation %#x, offset_x %u, offset_y %u stub!\n",
+            iface, src_surface, dst_surface, src_descs, rect_count,
+            dst_descs, operation, offset_x, offset_y);
+
     return WINED3DERR_INVALIDCALL;
 }
 
@@ -2069,9 +2075,12 @@ static HRESULT  WINAPI  IDirect3DDevice9ExImpl_WaitForVBlank(LPDIRECT3DDEVICE9EX
     return WINED3DERR_INVALIDCALL;
 }
 
-static HRESULT  WINAPI  IDirect3DDevice9ExImpl_CheckresourceResidency(LPDIRECT3DDEVICE9EX iface, IDirect3DResource9 ** pResourceArray, UINT32 Numresources) {
-    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *) iface;
-    FIXME("(%p)->(%p, %d) Stub!\n", This, pResourceArray, Numresources);
+static HRESULT WINAPI IDirect3DDevice9ExImpl_CheckResourceResidency(IDirect3DDevice9Ex *iface,
+        IDirect3DResource9 **resources, UINT32 resource_count)
+{
+    FIXME("iface %p, resources %p, resource_count %u stub!\n",
+            iface, resources, resource_count);
+
     return WINED3DERR_INVALIDCALL;
 }
 
@@ -2088,9 +2097,10 @@ static HRESULT  WINAPI  IDirect3DDevice9ExImpl_GetMaximumFrameLatency(LPDIRECT3D
     return WINED3DERR_INVALIDCALL;
 }
 
-static HRESULT  WINAPI  IDirect3DDevice9ExImpl_CheckdeviceState(LPDIRECT3DDEVICE9EX iface, HWND hDestinationWindow) {
-    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *) iface;
-    FIXME("(%p)->(%p) Stub!\n", This, hDestinationWindow);
+static HRESULT WINAPI IDirect3DDevice9ExImpl_CheckDeviceState(IDirect3DDevice9Ex *iface, HWND dst_window)
+{
+    FIXME("iface %p, dst_window %p stub!\n", iface, dst_window);
+
     return WINED3DERR_INVALIDCALL;
 }
 
@@ -2106,9 +2116,15 @@ static HRESULT  WINAPI  IDirect3DDevice9ExImpl_CreateOffscreenPlainSurfaceEx(LPD
     return WINED3DERR_INVALIDCALL;
 }
 
-static HRESULT  WINAPI  IDirect3DDevice9ExImpl_CreateDepthStencilSurfaceEx(LPDIRECT3DDEVICE9EX iface, UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultiSampleQuality, BOOL Discard, IDirect3DSurface9 **ppSurface, HANDLE *pSharedHandle, DWORD Usage) {
-    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *) iface;
-    FIXME("(%p)->(%d, %d, %d, %d, %d, %s, %p, %p, 0x%08x) Stub!\n", This, Width, Height, Format, MultiSample, MultiSampleQuality, Discard ? "true" : "false", ppSurface, pSharedHandle, Usage);
+static HRESULT WINAPI IDirect3DDevice9ExImpl_CreateDepthStencilSurfaceEx(IDirect3DDevice9Ex *iface,
+        UINT width, UINT height, D3DFORMAT format, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality,
+        BOOL discard, IDirect3DSurface9 **surface, HANDLE *shared_handle, DWORD usage)
+{
+    FIXME("iface %p, width %u, height %u, format %#x, multisample_type %#x, multisample_quality %u,\n"
+            "discard %#x, surface %p, shared_handle %p, usage %#x stub!\n",
+            iface, width, height, format, multisample_type, multisample_quality,
+            discard, surface, shared_handle, usage);
+
     return WINED3DERR_INVALIDCALL;
 }
 
@@ -2254,10 +2270,10 @@ const IDirect3DDevice9ExVtbl Direct3DDevice9_Vtbl =
     IDirect3DDevice9ExImpl_GetGPUThreadPriority,
     IDirect3DDevice9ExImpl_SetGPUThreadPriority,
     IDirect3DDevice9ExImpl_WaitForVBlank,
-    IDirect3DDevice9ExImpl_CheckresourceResidency,
+    IDirect3DDevice9ExImpl_CheckResourceResidency,
     IDirect3DDevice9ExImpl_SetMaximumFrameLatency,
     IDirect3DDevice9ExImpl_GetMaximumFrameLatency,
-    IDirect3DDevice9ExImpl_CheckdeviceState,
+    IDirect3DDevice9ExImpl_CheckDeviceState,
     IDirect3DDevice9ExImpl_CreateRenderTargetEx,
     IDirect3DDevice9ExImpl_CreateOffscreenPlainSurfaceEx,
     IDirect3DDevice9ExImpl_CreateDepthStencilSurfaceEx,

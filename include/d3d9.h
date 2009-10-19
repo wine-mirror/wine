@@ -1708,18 +1708,22 @@ DECLARE_INTERFACE_(IDirect3DDevice9Ex,IDirect3DDevice9)
     STDMETHOD(CreateQuery)(THIS_ D3DQUERYTYPE Type, IDirect3DQuery9** ppQuery) PURE;
     /* IDirect3DDevice9Ex methods */
     STDMETHOD(SetConvolutionMonoKernel)(THIS_ UINT width, UINT height, float *rows, float *columns) PURE;
-    STDMETHOD(ComposeRects)(THIS_ IDirect3DSurface9 *pSrc, IDirect3DDevice9 *pDst, IDirect3DVertexBuffer9 *pSrcRectDescs, UINT NumRects, IDirect3DVertexBuffer9 *pDstRectDescs, D3DCOMPOSERECTSOP Operation, int Xoffset, int Yoffset) PURE;
+    STDMETHOD(ComposeRects)(THIS_ IDirect3DSurface9 *src_surface, IDirect3DSurface9 *dst_surface,
+            IDirect3DVertexBuffer9 *src_descs, UINT rect_count, IDirect3DVertexBuffer9 *dst_descs,
+            D3DCOMPOSERECTSOP operation, INT offset_x, INT offset_y) PURE;
     STDMETHOD(PresentEx)(THIS_ CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion, DWORD dwFlags) PURE;
     STDMETHOD(GetGPUThreadPriority)(THIS_ INT *pPriority) PURE;
     STDMETHOD(SetGPUThreadPriority)(THIS_ INT Priority) PURE;
     STDMETHOD(WaitForVBlank)(THIS_ UINT iSwapChain) PURE;
-    STDMETHOD(CheckresourceResidency)(THIS_ IDirect3DResource9 ** pResourceArray, UINT32 Numresources) PURE;
+    STDMETHOD(CheckResourceResidency)(THIS_ IDirect3DResource9 **resources, UINT32 resource_count) PURE;
     STDMETHOD(SetMaximumFrameLatency)(THIS_ UINT MaxLatency) PURE;
     STDMETHOD(GetMaximumFrameLatency)(THIS_ UINT *pMaxLatenxy) PURE;
-    STDMETHOD(CheckdeviceState)(THIS_ HWND hDestinationWindow) PURE;
+    STDMETHOD(CheckDeviceState)(THIS_ HWND dst_window) PURE;
     STDMETHOD(CreateRenderTargetEx)(THIS_ UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultiSampleQuality, BOOL Lockable, IDirect3DSurface9 ** ppSurface, HANDLE *pSharedHandle, DWORD Usage) PURE;
     STDMETHOD(CreateOffscreenPlainSurfaceEx)(THIS_ UINT Width, UINT Height, D3DFORMAT Format, D3DPOOL Pool, IDirect3DSurface9 **ppSurface, HANDLE *pSharedHandle, DWORD Usage) PURE;
-    STDMETHOD(CreateDepthStencilSurfaceEx)(THIS_ UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultiSampleQuality, BOOL Discard, IDirect3DSurface9 **ppSurfface, HANDLE *pSharedHandle, DWORD Usage) PURE;
+    STDMETHOD(CreateDepthStencilSurfaceEx)(THIS_ UINT width, UINT height, D3DFORMAT format,
+            D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, BOOL discard,
+            IDirect3DSurface9 **surface, HANDLE *shared_handle, DWORD usage) PURE;
     STDMETHOD(ResetEx)(THIS_ D3DPRESENT_PARAMETERS *pPresentationParameters, D3DDISPLAYMODEEX *pFullscreenDisplayMode) PURE;
     STDMETHOD(GetDisplayModeEx)(THIS_ UINT iSwapChain, D3DDISPLAYMODEEX *pMode, D3DDISPLAYROTATION *pRotation) PURE;
 };
