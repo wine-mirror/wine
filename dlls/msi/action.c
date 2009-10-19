@@ -6394,7 +6394,6 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
 
     MSI_SetPropertyW(package, szAction, szInstall);
 
-    package->script = msi_alloc_zero(sizeof(MSISCRIPT));
     package->script->InWhatSequence = SEQUENCE_INSTALL;
 
     if (szPackagePath)

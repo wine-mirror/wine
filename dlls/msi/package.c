@@ -969,6 +969,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         MSI_SetPropertyW( package, OriginalDatabase, fullpath );
     }
 
+    package->script = msi_alloc_zero( sizeof(MSISCRIPT) );
     *pPackage = package;
 
     return ERROR_SUCCESS;
