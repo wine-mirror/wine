@@ -38,6 +38,35 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define HTMLELEM_THIS(iface) DEFINE_THIS(HTMLElement, HTMLElement, iface)
 
+HRESULT create_nselem(HTMLDocumentNode *doc, const WCHAR *tag, nsIDOMHTMLElement **ret)
+{
+    nsIDOMElement *nselem;
+    nsAString tag_str;
+    nsresult nsres;
+
+    if(!doc->basedoc.nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
+    }
+
+    nsAString_Init(&tag_str, tag);
+    nsres = nsIDOMDocument_CreateElement(doc->basedoc.nsdoc, &tag_str, &nselem);
+    nsAString_Finish(&tag_str);
+    if(NS_FAILED(nsres)) {
+        ERR("CreateElement failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMHTMLElement, (void**)ret);
+    nsIDOMElement_Release(nselem);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMHTMLElement iface: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
 #define HTMLELEM_NODE_THIS(iface) DEFINE_THIS2(HTMLElement, node, iface)
 
 static HRESULT WINAPI HTMLElement_QueryInterface(IHTMLElement *iface,

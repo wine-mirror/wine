@@ -911,28 +911,18 @@ static HRESULT WINAPI HTMLDocument_createElement(IHTMLDocument2 *iface, BSTR eTa
                                                  IHTMLElement **newElem)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
-    nsIDOMElement *nselem;
+    nsIDOMHTMLElement *nselem;
     HTMLElement *elem;
-    nsAString tag_str;
-    nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(eTag), newElem);
 
-    if(!This->nsdoc) {
-        WARN("NULL nsdoc\n");
-        return E_UNEXPECTED;
-    }
-
-    nsAString_Init(&tag_str, eTag);
-    nsres = nsIDOMDocument_CreateElement(This->nsdoc, &tag_str, &nselem);
-    nsAString_Finish(&tag_str);
-    if(NS_FAILED(nsres)) {
-        ERR("CreateElement failed: %08x\n", nsres);
-        return E_FAIL;
-    }
+    hres = create_nselem(This->doc_node, eTag, &nselem);
+    if(FAILED(hres))
+        return hres;
 
     elem = HTMLElement_Create(This->doc_node, (nsIDOMNode*)nselem, TRUE);
-    nsIDOMElement_Release(nselem);
+    nsIDOMHTMLElement_Release(nselem);
 
     *newElem = HTMLELEM(elem);
     IHTMLElement_AddRef(HTMLELEM(elem));

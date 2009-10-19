@@ -659,6 +659,8 @@ void detach_selection(HTMLDocumentNode*);
 void detach_ranges(HTMLDocumentNode*);
 HRESULT get_node_text(HTMLDOMNode*,BSTR*);
 
+HRESULT create_nselem(HTMLDocumentNode*,const WCHAR*,nsIDOMHTMLElement**);
+
 HTMLDOMNode *HTMLDOMTextNode_Create(HTMLDocumentNode*,nsIDOMNode*);
 
 HTMLElement *HTMLElement_Create(HTMLDocumentNode*,nsIDOMNode*,BOOL);
