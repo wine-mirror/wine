@@ -73,6 +73,8 @@ struct dispex_dynamic_data_t {
 #define DISPID_DYNPROP_0    0x50000000
 #define DISPID_DYNPROP_MAX  0x5fffffff
 
+#define FDEX_VERSION_MASK 0xf0000000
+
 static ITypeLib *typelib;
 static ITypeInfo *typeinfos[LAST_tid];
 static struct list dispex_data_list = LIST_INIT(dispex_data_list);
@@ -743,7 +745,7 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
 
-    if(grfdex & ~(fdexNameCaseSensitive|fdexNameEnsure|fdexNameImplicit))
+    if(grfdex & ~(fdexNameCaseSensitive|fdexNameEnsure|fdexNameImplicit|FDEX_VERSION_MASK))
         FIXME("Unsupported grfdex %x\n", grfdex);
 
     data = get_dispex_data(This);
