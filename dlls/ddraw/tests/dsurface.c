@@ -3224,7 +3224,6 @@ static void GetDCFormatTest(void)
         ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
 
         hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
-        hr = E_FAIL;
         if(FAILED(hr))
         {
             ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
