@@ -488,6 +488,7 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
     "Устанавливает класс приоритета НИЖЕ СРЕДНЕГО для процесса"
     ID_PROCESS_PAGE_SETPRIORITY_LOW "Устанавливает класс приоритета НИЗКИЙ для процесса"
+    ID_PROCESS_PAGE_DEBUGCHANNELS "Управляет каналами отладки"
 END
 
 STRINGTABLE DISCARDABLE
@@ -547,6 +548,7 @@ BEGIN
     IDS_TERMINATE_MESSAGE           "ВНИМАНИЕ! Завершение процесса может\nпривести к нежелательным результатам, в том числе\nк потере данных или к нестабильной работе системы.\nВы действительно хотите завершить процесс?"
     IDS_TERMINATE_UNABLE2TERMINATE  "Невозможно завершить процесс"
     IDS_DEBUG_MESSAGE               "ВНИМАНИЕ! Отладка этого процесса может привести к потере данных.\nВы действительно хотите использовать отладчик?"
+    IDS_DEBUG_UNABLE2DEBUG          "Отладка процесса невозможна."
     IDS_AFFINITY_ERROR_MESSAGE      "Процессу должен соответствовать хотя бы один ЦП."
     IDS_AFFINITY_ERROR_TITLE        "Неправильный параметр"
     IDS_AFFINITY_UNABLE2ACCESS      "Невозможно получить доступ или установить соответствие процесса"
