@@ -30,6 +30,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 static HRESULT WINAPI IDirect3DStateBlock8Impl_QueryInterface(IDirect3DStateBlock8 *iface, REFIID riid, LPVOID *ppobj) {
     IDirect3DStateBlock8Impl *This = (IDirect3DStateBlock8Impl *)iface;
 
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), ppobj);
+
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DStateBlock8)) {
         IUnknown_AddRef(iface);
@@ -46,7 +48,7 @@ static ULONG WINAPI IDirect3DStateBlock8Impl_AddRef(IDirect3DStateBlock8 *iface)
     IDirect3DStateBlock8Impl *This = (IDirect3DStateBlock8Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) : AddRef from %d\n", This, ref - 1);
+    TRACE("%p increasing refcount to %u.\n", iface, ref);
 
     return ref;
 }
@@ -55,7 +57,7 @@ static ULONG WINAPI IDirect3DStateBlock8Impl_Release(IDirect3DStateBlock8 *iface
     IDirect3DStateBlock8Impl *This = (IDirect3DStateBlock8Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) : ReleaseRef to %d\n", This, ref);
+    TRACE("%p decreasing refcount to %u.\n", iface, ref);
 
     if (ref == 0) {
         wined3d_mutex_lock();
@@ -73,7 +75,7 @@ static HRESULT WINAPI IDirect3DStateBlock8Impl_GetDevice(IDirect3DStateBlock8 *i
     IWineD3DDevice *wined3d_device;
     HRESULT hr;
 
-    TRACE("(%p) Relay\n", This);
+    TRACE("iface %p, device %p.\n", iface, ppDevice);
 
     wined3d_mutex_lock();
     hr = IWineD3DStateBlock_GetDevice(This->wineD3DStateBlock, &wined3d_device);
@@ -91,7 +93,7 @@ static HRESULT WINAPI IDirect3DStateBlock8Impl_Capture(IDirect3DStateBlock8 *ifa
     IDirect3DStateBlock8Impl *This = (IDirect3DStateBlock8Impl *)iface;
     HRESULT hr;
 
-    TRACE("(%p) Relay\n", This);
+    TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
     hr = IWineD3DStateBlock_Capture(This->wineD3DStateBlock);
@@ -104,7 +106,7 @@ static HRESULT WINAPI IDirect3DStateBlock8Impl_Apply(IDirect3DStateBlock8 *iface
     IDirect3DStateBlock8Impl *This = (IDirect3DStateBlock8Impl *)iface;
     HRESULT hr;
 
-    TRACE("(%p) Relay\n", This);
+    TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
     hr = IWineD3DStateBlock_Apply(This->wineD3DStateBlock);
