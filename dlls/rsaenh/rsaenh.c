@@ -4459,7 +4459,8 @@ HRESULT WINAPI DllRegisterServer(void)
             {
                 static const WCHAR szName[] = { 'N','a','m','e',0 };
                 static const WCHAR szRSAName[3][54] = {
-                  { 'M','i','c','r','o','s','o','f','t',' ', 'B','a','s','e',' ',
+                  { 'M','i','c','r','o','s','o','f','t',' ',
+                    'E','n','h','a','n','c','e','d',' ',
                     'C','r','y','p','t','o','g','r','a','p','h','i','c',' ', 
                     'P','r','o','v','i','d','e','r',' ','v','1','.','0',0 },
                   { 'M','i','c','r','o','s','o','f','t',' ','R','S','A',' ',
