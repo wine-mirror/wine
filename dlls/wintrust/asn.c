@@ -1469,6 +1469,11 @@ struct AsnDecodeSequenceItem
  */
 #define ALIGN_DWORD_PTR(x) (((x) + sizeof(DWORD_PTR) - 1) & ~(sizeof(DWORD_PTR) - 1))
 
+#define FINALMEMBERSIZE(s, member) (sizeof(s) - offsetof(s, member))
+#define MEMBERSIZE(s, member, nextmember) \
+    (offsetof(s, nextmember) - offsetof(s, member))
+
+
 /* Decodes the items in a sequence, where the items are described in items,
  * the encoded data are in pbEncoded with length cbEncoded.  Decodes into
  * pvStructInfo.  nextData is a pointer to the memory location at which the
@@ -2244,7 +2249,7 @@ BOOL WINAPI WVTAsn1CatMemberInfoDecode(DWORD dwCertEncodingType,
            CRYPT_AsnDecodeBMPString, sizeof(LPWSTR), FALSE, TRUE,
            offsetof(CAT_MEMBERINFO, pwszSubjGuid), 0 },
          { ASN_INTEGER, offsetof(CAT_MEMBERINFO, dwCertVersion),
-           CRYPT_AsnDecodeInt, sizeof(DWORD),
+           CRYPT_AsnDecodeInt, FINALMEMBERSIZE(CAT_MEMBERINFO, dwCertVersion),
            FALSE, FALSE, 0, 0 },
         };
 
@@ -2277,7 +2282,8 @@ BOOL WINAPI WVTAsn1CatNameValueDecode(DWORD dwCertEncodingType,
            CRYPT_AsnDecodeBMPString, sizeof(LPWSTR), FALSE, TRUE,
            offsetof(CAT_NAMEVALUE, pwszTag), 0 },
          { ASN_INTEGER, offsetof(CAT_NAMEVALUE, fdwFlags),
-           CRYPT_AsnDecodeInt, sizeof(DWORD), FALSE, FALSE, 0, 0 },
+           CRYPT_AsnDecodeInt, MEMBERSIZE(CAT_NAMEVALUE, fdwFlags, Value),
+           FALSE, FALSE, 0, 0 },
          { ASN_OCTETSTRING, offsetof(CAT_NAMEVALUE, Value),
            CRYPT_AsnDecodeOctets, sizeof(CRYPT_DER_BLOB), FALSE, TRUE,
            offsetof(CAT_NAMEVALUE, Value.pbData), 0 },
@@ -2351,9 +2357,11 @@ BOOL WINAPI WVTAsn1SpcFinancialCriteriaInfoDecode(DWORD dwCertEncodingType,
     {
         struct AsnDecodeSequenceItem items[] = {
          { ASN_BOOL, offsetof(SPC_FINANCIAL_CRITERIA, fFinancialInfoAvailable),
-           CRYPT_AsnDecodeBool, sizeof(BOOL), FALSE, FALSE, 0, 0 },
+           CRYPT_AsnDecodeBool, MEMBERSIZE(SPC_FINANCIAL_CRITERIA,
+           fFinancialInfoAvailable, fMeetsCriteria), FALSE, FALSE, 0, 0 },
          { ASN_BOOL, offsetof(SPC_FINANCIAL_CRITERIA, fMeetsCriteria),
-           CRYPT_AsnDecodeBool, sizeof(BOOL), FALSE, FALSE, 0, 0 },
+           CRYPT_AsnDecodeBool, FINALMEMBERSIZE(SPC_FINANCIAL_CRITERIA,
+           fMeetsCriteria), FALSE, FALSE, 0, 0 },
         };
 
         ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
