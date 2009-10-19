@@ -1778,10 +1778,9 @@ static HRESULT WINAPI RangeCommandTarget_QueryStatus(IOleCommandTarget *iface, c
 
 static HRESULT exec_indent(HTMLTxtRange *This, VARIANT *in, VARIANT *out)
 {
+    nsIDOMHTMLElement *blockquote_elem, *p_elem;
     nsIDOMDocumentFragment *fragment;
-    nsIDOMElement *blockquote_elem, *p_elem;
     nsIDOMNode *tmp;
-    nsAString tag_str;
 
     static const PRUnichar blockquoteW[] = {'B','L','O','C','K','Q','U','O','T','E',0};
     static const PRUnichar pW[] = {'P',0};
@@ -1793,13 +1792,8 @@ static HRESULT exec_indent(HTMLTxtRange *This, VARIANT *in, VARIANT *out)
         return E_NOTIMPL;
     }
 
-    nsAString_Init(&tag_str, blockquoteW);
-    nsIDOMHTMLDocument_CreateElement(This->doc->basedoc.nsdoc, &tag_str, &blockquote_elem);
-    nsAString_Finish(&tag_str);
-
-    nsAString_Init(&tag_str, pW);
-    nsIDOMDocument_CreateElement(This->doc->basedoc.nsdoc, &tag_str, &p_elem);
-    nsAString_Finish(&tag_str);
+    create_nselem(This->doc, blockquoteW, &blockquote_elem);
+    create_nselem(This->doc, pW, &p_elem);
 
     nsIDOMRange_ExtractContents(This->nsrange, &fragment);
     nsIDOMElement_AppendChild(p_elem, (nsIDOMNode*)fragment, &tmp);
