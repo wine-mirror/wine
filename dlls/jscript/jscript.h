@@ -262,6 +262,7 @@ struct _script_ctx_t {
     IActiveScriptSite *site;
     IInternetHostSecurityManager *secmgr;
     DWORD safeopt;
+    DWORD version;
     LCID lcid;
 
     jsheap_t tmp_heap;

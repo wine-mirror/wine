@@ -51,6 +51,7 @@ typedef struct {
     script_ctx_t *ctx;
     LONG thread_id;
     LCID lcid;
+    DWORD version;
 
     IActiveScriptSite *site;
 
@@ -659,6 +660,7 @@ static HRESULT WINAPI JScriptParse_InitNew(IActiveScriptParse *iface)
     ctx->ref = 1;
     ctx->state = SCRIPTSTATE_UNINITIALIZED;
     ctx->safeopt = This->safeopt;
+    ctx->version = This->version;
     jsheap_init(&ctx->tmp_heap);
 
     ctx = InterlockedCompareExchangePointer((void**)&This->ctx, ctx, NULL);
@@ -822,8 +824,27 @@ static HRESULT WINAPI JScriptProperty_SetProperty(IActiveScriptProperty *iface, 
         VARIANT *pvarIndex, VARIANT *pvarValue)
 {
     JScript *This = ACTSCPPROP_THIS(iface);
-    FIXME("(%p)->(%x %p %p)\n", This, dwProperty, pvarIndex, pvarValue);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%x %s %s)\n", This, dwProperty, debugstr_variant(pvarIndex), debugstr_variant(pvarValue));
+
+    if(pvarIndex)
+        FIXME("unsupported pvarIndex\n");
+
+    switch(dwProperty) {
+    case SCRIPTPROP_INVOKEVERSIONING:
+        if(V_VT(pvarValue) != VT_I4 || V_I4(pvarValue) < 0 || V_I4(pvarValue) > 15) {
+            WARN("invalid value %s\n", debugstr_variant(pvarValue));
+            return E_INVALIDARG;
+        }
+
+        This->version = V_I4(pvarValue);
+        break;
+    default:
+        FIXME("Unimplemented property %x\n", dwProperty);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 #undef ACTSCPPROP_THIS

@@ -295,6 +295,49 @@ static void test_safety(IUnknown *unk)
     IObjectSafety_Release(safety);
 }
 
+static HRESULT set_script_prop(IActiveScript *engine, DWORD property, VARIANT *val)
+{
+    IActiveScriptProperty *script_prop;
+    HRESULT hres;
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptProperty,
+            (void**)&script_prop);
+    ok(hres == S_OK, "Could not get IActiveScriptProperty iface: %08x\n", hres);
+
+    hres = IActiveScriptProperty_SetProperty(script_prop, property, NULL, val);
+    IActiveScriptProperty_Release(script_prop);
+    return hres;
+}
+
+static void test_invoke_versioning(IActiveScript *script)
+{
+    VARIANT v;
+    HRESULT hres;
+
+    V_VT(&v) = VT_NULL;
+    hres = set_script_prop(script, SCRIPTPROP_INVOKEVERSIONING, &v);
+    if(hres == E_NOTIMPL) {
+        win_skip("SCRIPTPROP_INVOKESTRING not supported\n");
+        return;
+    }
+    ok(hres == E_INVALIDARG, "SetProperty(SCRIPTPROP_INVOKEVERSIONING) failed: %08x\n", hres);
+
+    V_VT(&v) = VT_I2;
+    V_I2(&v) = 0;
+    hres = set_script_prop(script, SCRIPTPROP_INVOKEVERSIONING, &v);
+    ok(hres == E_INVALIDARG, "SetProperty(SCRIPTPROP_INVOKEVERSIONING) failed: %08x\n", hres);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 16;
+    hres = set_script_prop(script, SCRIPTPROP_INVOKEVERSIONING, &v);
+    ok(hres == E_INVALIDARG, "SetProperty(SCRIPTPROP_INVOKEVERSIONING) failed: %08x\n", hres);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 2;
+    hres = set_script_prop(script, SCRIPTPROP_INVOKEVERSIONING, &v);
+    ok(hres == S_OK, "SetProperty(SCRIPTPROP_INVOKEVERSIONING) failed: %08x\n", hres);
+}
+
 static void test_jscript(void)
 {
     IActiveScriptParse *parse;
@@ -322,6 +365,7 @@ static void test_jscript(void)
 
     test_state(script, SCRIPTSTATE_UNINITIALIZED);
     test_safety(unk);
+    test_invoke_versioning(script);
 
     hres = IActiveScriptParse64_InitNew(parse);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
