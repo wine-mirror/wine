@@ -441,6 +441,7 @@ static BOOL CRYPT_CheckBasicConstraintsForCA(PCCERT_CONTEXT cert,
     if ((validBasicConstraints = CRYPT_DecodeBasicConstraints(cert,
      &constraints, isRoot)))
     {
+        chainConstraints->fCA = constraints.fCA;
         if (!constraints.fCA)
         {
             TRACE_(chain)("chain element %d can't be a CA\n", remainingCAs + 1);
@@ -858,7 +859,7 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
     PCERT_CHAIN_ELEMENT rootElement = chain->rgpElement[chain->cElement - 1];
     int i;
     BOOL pathLengthConstraintViolated = FALSE;
-    CERT_BASIC_CONSTRAINTS2_INFO constraints = { TRUE, FALSE, 0 };
+    CERT_BASIC_CONSTRAINTS2_INFO constraints = { FALSE, FALSE, 0 };
 
     TRACE_(chain)("checking chain with %d elements for time %s\n",
      chain->cElement, debugstr_w(filetime_to_str(time)));
