@@ -226,20 +226,27 @@ static HRESULT invoke_constructor(script_ctx_t *ctx, FunctionInstance *function,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     DispatchEx *this_obj;
+    VARIANT var;
     HRESULT hres;
 
     hres = create_object(ctx, &function->dispex, &this_obj);
     if(FAILED(hres))
         return hres;
 
-    hres = invoke_source(ctx, function, (IDispatch*)_IDispatchEx_(this_obj), dp, retv, ei, caller);
+    hres = invoke_source(ctx, function, (IDispatch*)_IDispatchEx_(this_obj), dp, &var, ei, caller);
     if(FAILED(hres)) {
         jsdisp_release(this_obj);
         return hres;
     }
 
     V_VT(retv) = VT_DISPATCH;
-    V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(this_obj);
+    if(V_VT(&var) == VT_DISPATCH) {
+        jsdisp_release(this_obj);
+        V_DISPATCH(retv) = V_DISPATCH(&var);
+    }else {
+        VariantClear(&var);
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(this_obj);
+    }
     return S_OK;
 }
 

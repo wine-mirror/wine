@@ -148,6 +148,21 @@ obj2.pvar = 3;
 testConstr1.prototype.pvar = 1;
 ok(obj2.pvar === 3, "obj2.pvar is not 3");
 
+obj1 = new Object();
+function testConstr3() {
+    return obj1;
+}
+
+obj2 = new testConstr3();
+ok(obj1 === obj2, "obj1 != obj2");
+
+function testConstr4() {
+    return 2;
+}
+
+obj2 = new testConstr3();
+ok(typeof(obj2) === "object", "typeof(obj2) = " + typeof(obj2));
+
 var obj3 = new Object;
 ok(typeof(obj3) === "object", "typeof(obj3) is not object");
 
