@@ -1892,16 +1892,33 @@ static NTSTATUS CDROM_ScsiPassThrough(int fd, PSCSI_PASS_THROUGH pPacket)
  *
  *
  */
-static NTSTATUS CDROM_ScsiGetCaps(PIO_SCSI_CAPABILITIES caps)
+static NTSTATUS CDROM_ScsiGetCaps(int fd, PIO_SCSI_CAPABILITIES caps)
 {
     NTSTATUS    ret = STATUS_NOT_IMPLEMENTED;
 
-    caps->Length = sizeof(*caps);
 #ifdef SG_SCATTER_SZ
+    caps->Length = sizeof(*caps);
     caps->MaximumTransferLength = SG_SCATTER_SZ; /* FIXME */
     caps->MaximumPhysicalPages = SG_SCATTER_SZ / getpagesize();
     caps->SupportedAsynchronousEvents = TRUE;
     caps->AlignmentMask = getpagesize();
+    caps->TaggedQueuing = FALSE; /* we could check that it works and answer TRUE */
+    caps->AdapterScansDown = FALSE; /* FIXME ? */
+    caps->AdapterUsesPio = FALSE; /* FIXME ? */
+    ret = STATUS_SUCCESS;
+#elif defined __APPLE__
+    uint64_t bytesr, bytesw, align;
+    int io = ioctl(fd, DKIOCGETMAXBYTECOUNTREAD, &bytesr);
+    if (io != 0) return CDROM_GetStatusCode(io);
+    io = ioctl(fd, DKIOCGETMAXBYTECOUNTWRITE, &bytesw);
+    if (io != 0) return CDROM_GetStatusCode(io);
+    io = ioctl(fd, DKIOCGETMINSEGMENTALIGNMENTBYTECOUNT, &align);
+    if (io != 0) return CDROM_GetStatusCode(io);
+    caps->Length = sizeof(*caps);
+    caps->MaximumTransferLength = bytesr < bytesw ? bytesr : bytesw;
+    caps->MaximumPhysicalPages = caps->MaximumTransferLength / getpagesize();
+    caps->SupportedAsynchronousEvents = TRUE;
+    caps->AlignmentMask = align-1;
     caps->TaggedQueuing = FALSE; /* we could check that it works and answer TRUE */
     caps->AdapterScansDown = FALSE; /* FIXME ? */
     caps->AdapterUsesPio = FALSE; /* FIXME ? */
@@ -2882,7 +2899,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         sz = sizeof(IO_SCSI_CAPABILITIES);
         if (lpOutBuffer == NULL) status = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sizeof(IO_SCSI_CAPABILITIES)) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_ScsiGetCaps(lpOutBuffer);
+        else status = CDROM_ScsiGetCaps(fd, lpOutBuffer);
         break;
     case IOCTL_DVD_START_SESSION:
         sz = sizeof(DVD_SESSION_ID);
