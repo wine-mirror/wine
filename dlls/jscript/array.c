@@ -967,29 +967,25 @@ static HRESULT Array_unshift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISP
         return hres;
 
     argc = arg_cnt(dp);
-    if(!argc) {
-        if(retv)
-            V_VT(retv) = VT_EMPTY;
-        return S_OK;
-    }
+    if(argc) {
+        buf_end = buf + sizeof(buf)/sizeof(WCHAR)-1;
+        *buf_end-- = 0;
+        i = length;
 
-    buf_end = buf + sizeof(buf)/sizeof(WCHAR)-1;
-    *buf_end-- = 0;
-    i = length;
+        while(i--) {
+            str = idx_to_str(i, buf_end);
 
-    while(i--) {
-        str = idx_to_str(i, buf_end);
+            hres = jsdisp_get_id(jsthis, str, 0, &id);
+            if(SUCCEEDED(hres)) {
+                hres = jsdisp_propget(jsthis, id, &var, ei, caller);
+                if(FAILED(hres))
+                    return hres;
 
-        hres = jsdisp_get_id(jsthis, str, 0, &id);
-        if(SUCCEEDED(hres)) {
-            hres = jsdisp_propget(jsthis, id, &var, ei, caller);
-            if(FAILED(hres))
-                return hres;
-
-            hres = jsdisp_propput_idx(jsthis, i+argc, &var, ei, caller);
-            VariantClear(&var);
-        }else if(hres == DISP_E_UNKNOWNNAME) {
-            hres = IDispatchEx_DeleteMemberByDispID(vthis->u.dispex, id);
+                hres = jsdisp_propput_idx(jsthis, i+argc, &var, ei, caller);
+                VariantClear(&var);
+            }else if(hres == DISP_E_UNKNOWNNAME) {
+                hres = IDispatchEx_DeleteMemberByDispID(vthis->u.dispex, id);
+            }
         }
 
         if(FAILED(hres))
@@ -1002,12 +998,21 @@ static HRESULT Array_unshift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISP
             return hres;
     }
 
-    hres = set_length(jsthis, ei, length+argc);
-    if(FAILED(hres))
-        return hres;
+    if(argc) {
+        length += argc;
+        hres = set_length(jsthis, ei, length);
+        if(FAILED(hres))
+            return hres;
+    }
 
-    if(retv)
-        V_VT(retv) = VT_EMPTY;
+    if(retv) {
+        if(ctx->version < 2) {
+            V_VT(retv) = VT_EMPTY;
+        }else {
+            V_VT(retv) = VT_I4;
+            V_I4(retv) = length;
+        }
+    }
     return S_OK;
 }
 
