@@ -480,12 +480,34 @@ static HRESULT WINAPI HTMLLocation_put_hash(IHTMLLocation *iface, BSTR v)
 static HRESULT WINAPI HTMLLocation_get_hash(IHTMLLocation *iface, BSTR *p)
 {
     HTMLLocation *This = HTMLLOCATION_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
+    URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
+    const WCHAR hash[] = {'#',0};
+    DWORD hash_pos = 0;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
 
     if(!p)
         return E_POINTER;
 
-    return E_NOTIMPL;
+    url.dwExtraInfoLength = 1;
+    hres = get_url_components(This, &url);
+    if(FAILED(hres))
+        return hres;
+
+    if(!url.dwExtraInfoLength){
+        *p = NULL;
+        return S_OK;
+    }
+
+    hash_pos = strcspnW(url.lpszExtraInfo, hash);
+    url.dwExtraInfoLength -= hash_pos;
+
+    *p = SysAllocStringLen(url.lpszExtraInfo + hash_pos, url.dwExtraInfoLength);
+
+    if(!*p)
+        return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLLocation_reload(IHTMLLocation *iface, VARIANT_BOOL flag)

@@ -63,7 +63,7 @@ static const struct location_test http_test = {
             "80", TRUE,
             "", TRUE,
             "?search", FALSE,
-            "#hash", FALSE
+            "#hash", TRUE
             };
 
 static const WCHAR http_file_url[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/','f','i','l','e','?','s','e','a','r','c','h','#','h','a','s','h',0};
@@ -77,7 +77,7 @@ static const struct location_test http_file_test = {
             "80", TRUE,
             "file", TRUE,
             "?search", FALSE,
-            "#hash", FALSE
+            "#hash", TRUE
             };
 
 static const WCHAR ftp_url[] = {'f','t','p',':','/','/','f','t','p','.','w','i','n','e','h','q','.','o','r','g','/',0};
@@ -91,7 +91,7 @@ static const struct location_test ftp_test = {
             "21", TRUE,
             "", TRUE,
             NULL, FALSE,
-            NULL, FALSE
+            NULL, TRUE
             };
 
 static const WCHAR ftp_file_url[] = {'f','t','p',':','/','/','f','t','p','.','w','i','n','e','h','q','.','o','r','g','/','f','i','l','e',0};
@@ -105,7 +105,7 @@ static const struct location_test ftp_file_test = {
             "21", TRUE,
             "file", TRUE,
             NULL, FALSE,
-            NULL, FALSE
+            NULL, TRUE
             };
 
 static const WCHAR file_url[] = {'f','i','l','e',':','/','/','C',':','\\','w','i','n','d','o','w','s','\\','w','i','n','.','i','n','i',0};
@@ -119,7 +119,7 @@ static const struct location_test file_test = {
             "", TRUE,
             "C:\\windows\\win.ini", TRUE,
             NULL, FALSE,
-            NULL, FALSE
+            NULL, TRUE
             };
 
 static int str_eq_wa(LPCWSTR strw, const char *stra)
@@ -315,7 +315,7 @@ static void test_hash(IHTMLLocation *loc, const struct location_test *test)
             test->name, E_POINTER, hres);
 
     hres = IHTMLLocation_get_hash(loc, &str);
-    todo_wine ok(hres == S_OK, "%s: get_hash failed: 0x%08x\n", test->name, hres);
+    ok(hres == S_OK, "%s: get_hash failed: 0x%08x\n", test->name, hres);
     if(hres == S_OK){
         if(test->hash_ok)
             ok(str_eq_wa(str, test->hash),
