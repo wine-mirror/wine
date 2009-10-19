@@ -777,6 +777,8 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
     peaAlgidInfo = get_algid_info(hProv, aiAlgid);
     if (!peaAlgidInfo) return (HCRYPTKEY)INVALID_HANDLE_VALUE;
 
+    TRACE("alg = %s, dwKeyLen = %d\n", debugstr_a(peaAlgidInfo->szName),
+          dwKeyLen);
     /*
      * Assume the default key length, if none is specified explicitly
      */
@@ -822,6 +824,8 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
                 dwKeyLen > peaAlgidInfo->dwMaxLen || 
                 dwKeyLen < peaAlgidInfo->dwMinLen) 
             {
+                TRACE("key len %d out of bounds (%d, %d)\n", dwKeyLen,
+                      peaAlgidInfo->dwMinLen, peaAlgidInfo->dwMaxLen);
                 SetLastError(NTE_BAD_FLAGS);
                 return (HCRYPTKEY)INVALID_HANDLE_VALUE;
             }
@@ -2948,6 +2952,8 @@ static BOOL import_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen,
         pBlobHeader->bVersion != CUR_BLOB_VERSION ||
         pBlobHeader->reserved != 0) 
     {
+        TRACE("bVersion = %d, reserved = %d\n", pBlobHeader->bVersion,
+              pBlobHeader->reserved);
         SetLastError(NTE_BAD_DATA);
         return FALSE;
     }
@@ -2956,6 +2962,7 @@ static BOOL import_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen,
      * fStoreKey's original value.
      */
     fStoreKey = fStoreKey && !(dwFlags & CRYPT_VERIFYCONTEXT);
+    TRACE("blob type: %x\n", pBlobHeader->bType);
     switch (pBlobHeader->bType)
     {
         case PRIVATEKEYBLOB:    
