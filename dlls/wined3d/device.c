@@ -4960,133 +4960,128 @@ static HRESULT IWineD3DDeviceImpl_UpdateVolume(IWineD3DDevice *iface, IWineD3DVo
     return hr;
 }
 
-/* Yet another way to update a texture, some apps use this to load default textures instead of using surface/texture lock/unlock */
-static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, IWineD3DBaseTexture *pSourceTexture,  IWineD3DBaseTexture *pDestinationTexture){
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    HRESULT hr = WINED3D_OK;
-    WINED3DRESOURCETYPE sourceType;
-    WINED3DRESOURCETYPE destinationType;
-    int i ,levels;
+static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture(IWineD3DDevice *iface,
+        IWineD3DBaseTexture *src_texture, IWineD3DBaseTexture *dst_texture)
+{
+    unsigned int level_count, i;
+    WINED3DRESOURCETYPE type;
+    HRESULT hr;
 
-    /* TODO: think about moving the code into IWineD3DBaseTexture  */
+    TRACE("iface %p, src_texture %p, dst_texture %p.\n", iface, src_texture, dst_texture);
 
-    TRACE("(%p) Source %p Destination %p\n", This, pSourceTexture, pDestinationTexture);
-
-    /* verify that the source and destination textures aren't NULL */
-    if (NULL == pSourceTexture || NULL == pDestinationTexture) {
-        WARN("(%p) : source (%p) and destination (%p) textures must not be NULL, returning WINED3DERR_INVALIDCALL\n",
-             This, pSourceTexture, pDestinationTexture);
-        hr = WINED3DERR_INVALIDCALL;
+    /* Verify that the source and destination textures are non-NULL. */
+    if (!src_texture || !dst_texture)
+    {
+        WARN("Source and destination textures must be non-NULL, returning WINED3DERR_INVALIDCALL.\n");
+        return WINED3DERR_INVALIDCALL;
     }
 
-    if (pSourceTexture == pDestinationTexture) {
-        WARN("(%p) : source (%p) and destination (%p) textures must be different, returning WINED3DERR_INVALIDCALL\n",
-             This, pSourceTexture, pDestinationTexture);
-        hr = WINED3DERR_INVALIDCALL;
-    }
-    /* Verify that the source and destination textures are the same type */
-    sourceType      = IWineD3DBaseTexture_GetType(pSourceTexture);
-    destinationType = IWineD3DBaseTexture_GetType(pDestinationTexture);
-
-    if (sourceType != destinationType) {
-        WARN("(%p) Sorce and destination types must match, returning WINED3DERR_INVALIDCALL\n",
-             This);
-        hr = WINED3DERR_INVALIDCALL;
+    if (src_texture == dst_texture)
+    {
+        WARN("Source and destination are the same object, returning WINED3DERR_INVALIDCALL.\n");
+        return WINED3DERR_INVALIDCALL;
     }
 
-    /* check that both textures have the identical numbers of levels  */
-    if (IWineD3DBaseTexture_GetLevelCount(pDestinationTexture)  != IWineD3DBaseTexture_GetLevelCount(pSourceTexture)) {
-        WARN("(%p) : source (%p) and destination (%p) textures must have identical numbers of levels, returning WINED3DERR_INVALIDCALL\n", This, pSourceTexture, pDestinationTexture);
-        hr = WINED3DERR_INVALIDCALL;
+    /* Verify that the source and destination textures are the same type. */
+    type = IWineD3DBaseTexture_GetType(src_texture);
+    if (IWineD3DBaseTexture_GetType(dst_texture) != type)
+    {
+        WARN("Source and destination have different types, returning WINED3DERR_INVALIDCALL.\n");
+        return WINED3DERR_INVALIDCALL;
     }
 
-    if (WINED3D_OK == hr) {
-        IWineD3DBaseTextureImpl *pDestImpl = (IWineD3DBaseTextureImpl *) pDestinationTexture;
+    /* Check that both textures have the identical numbers of levels. */
+    level_count = IWineD3DBaseTexture_GetLevelCount(src_texture);
+    if (IWineD3DBaseTexture_GetLevelCount(dst_texture) != level_count)
+    {
+        WARN("Source and destination have different level counts, returning WINED3DERR_INVALIDCALL.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
 
-        /* Make sure that the destination texture is loaded */
-        pDestImpl->baseTexture.internal_preload(pDestinationTexture, SRGB_RGB);
+    /* Make sure that the destination texture is loaded. */
+    ((IWineD3DBaseTextureImpl *)dst_texture)->baseTexture.internal_preload(dst_texture, SRGB_RGB);
 
-        /* Update every surface level of the texture */
-        levels = IWineD3DBaseTexture_GetLevelCount(pDestinationTexture);
-
-        switch (sourceType) {
+    /* Update every surface level of the texture. */
+    switch (type)
+    {
         case WINED3DRTYPE_TEXTURE:
-            {
-                IWineD3DSurface *srcSurface;
-                IWineD3DSurface *destSurface;
+        {
+            IWineD3DSurface *src_surface;
+            IWineD3DSurface *dst_surface;
 
-                for (i = 0 ; i < levels ; ++i) {
-                    IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)pSourceTexture,      i, &srcSurface);
-                    IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)pDestinationTexture, i, &destSurface);
-                    hr = IWineD3DDevice_UpdateSurface(iface, srcSurface, NULL, destSurface, NULL);
-                    IWineD3DSurface_Release(srcSurface);
-                    IWineD3DSurface_Release(destSurface);
-                    if (WINED3D_OK != hr) {
-                        WARN("(%p) : Call to update surface failed\n", This);
+            for (i = 0; i < level_count; ++i)
+            {
+                IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)src_texture, i, &src_surface);
+                IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)dst_texture, i, &dst_surface);
+                hr = IWineD3DDevice_UpdateSurface(iface, src_surface, NULL, dst_surface, NULL);
+                IWineD3DSurface_Release(dst_surface);
+                IWineD3DSurface_Release(src_surface);
+                if (FAILED(hr))
+                {
+                    WARN("IWineD3DDevice_UpdateSurface failed, hr %#x.\n", hr);
+                    return hr;
+                }
+            }
+            break;
+        }
+
+        case WINED3DRTYPE_CUBETEXTURE:
+        {
+            IWineD3DSurface *src_surface;
+            IWineD3DSurface *dst_surface;
+            WINED3DCUBEMAP_FACES face;
+
+            for (i = 0; i < level_count; ++i)
+            {
+                /* Update each cube face. */
+                for (face = WINED3DCUBEMAP_FACE_POSITIVE_X; face <= WINED3DCUBEMAP_FACE_NEGATIVE_Z; ++face)
+                {
+                    hr = IWineD3DCubeTexture_GetCubeMapSurface((IWineD3DCubeTexture *)src_texture,
+                            face, i, &src_surface);
+                    if (FAILED(hr)) ERR("Failed to get src cube surface face %u, level %u, hr %#x.\n", face, i, hr);
+                    hr = IWineD3DCubeTexture_GetCubeMapSurface((IWineD3DCubeTexture *)dst_texture,
+                            face, i, &dst_surface);
+                    if (FAILED(hr)) ERR("Failed to get dst cube surface face %u, level %u, hr %#x.\n", face, i, hr);
+                    hr = IWineD3DDevice_UpdateSurface(iface, src_surface, NULL, dst_surface, NULL);
+                    IWineD3DSurface_Release(dst_surface);
+                    IWineD3DSurface_Release(src_surface);
+                    if (FAILED(hr))
+                    {
+                        WARN("IWineD3DDevice_UpdateSurface failed, hr %#x.\n", hr);
                         return hr;
                     }
                 }
             }
             break;
-        case WINED3DRTYPE_CUBETEXTURE:
-            {
-                IWineD3DSurface *srcSurface;
-                IWineD3DSurface *destSurface;
-                WINED3DCUBEMAP_FACES faceType;
-
-                for (i = 0 ; i < levels ; ++i) {
-                    /* Update each cube face */
-                    for (faceType = WINED3DCUBEMAP_FACE_POSITIVE_X; faceType <= WINED3DCUBEMAP_FACE_NEGATIVE_Z; ++faceType){
-                        hr = IWineD3DCubeTexture_GetCubeMapSurface((IWineD3DCubeTexture *)pSourceTexture,      faceType, i, &srcSurface);
-                        if (WINED3D_OK != hr) {
-                            FIXME("(%p) : Failed to get src cube surface facetype %d, level %d\n", This, faceType, i);
-                        } else {
-                            TRACE("Got srcSurface %p\n", srcSurface);
-                        }
-                        hr = IWineD3DCubeTexture_GetCubeMapSurface((IWineD3DCubeTexture *)pDestinationTexture, faceType, i, &destSurface);
-                        if (WINED3D_OK != hr) {
-                            FIXME("(%p) : Failed to get src cube surface facetype %d, level %d\n", This, faceType, i);
-                        } else {
-                            TRACE("Got desrSurface %p\n", destSurface);
-                        }
-                        hr = IWineD3DDevice_UpdateSurface(iface, srcSurface, NULL, destSurface, NULL);
-                        IWineD3DSurface_Release(srcSurface);
-                        IWineD3DSurface_Release(destSurface);
-                        if (WINED3D_OK != hr) {
-                            WARN("(%p) : Call to update surface failed\n", This);
-                            return hr;
-                        }
-                    }
-                }
-            }
-            break;
+        }
 
         case WINED3DRTYPE_VOLUMETEXTURE:
-            {
-                IWineD3DVolume  *srcVolume  = NULL;
-                IWineD3DVolume  *destVolume = NULL;
+        {
+            IWineD3DVolume *src_volume;
+            IWineD3DVolume *dst_volume;
 
-                for (i = 0 ; i < levels ; ++i) {
-                    IWineD3DVolumeTexture_GetVolumeLevel((IWineD3DVolumeTexture *)pSourceTexture,      i, &srcVolume);
-                    IWineD3DVolumeTexture_GetVolumeLevel((IWineD3DVolumeTexture *)pDestinationTexture, i, &destVolume);
-                    hr =  IWineD3DDeviceImpl_UpdateVolume(iface, srcVolume, destVolume);
-                    IWineD3DVolume_Release(srcVolume);
-                    IWineD3DVolume_Release(destVolume);
-                    if (WINED3D_OK != hr) {
-                        WARN("(%p) : Call to update volume failed\n", This);
-                        return hr;
-                    }
+            for (i = 0; i < level_count; ++i)
+            {
+                IWineD3DVolumeTexture_GetVolumeLevel((IWineD3DVolumeTexture *)src_texture, i, &src_volume);
+                IWineD3DVolumeTexture_GetVolumeLevel((IWineD3DVolumeTexture *)dst_texture, i, &dst_volume);
+                hr = IWineD3DDeviceImpl_UpdateVolume(iface, src_volume, dst_volume);
+                IWineD3DVolume_Release(dst_volume);
+                IWineD3DVolume_Release(src_volume);
+                if (FAILED(hr))
+                {
+                    WARN("IWineD3DDeviceImpl_UpdateVolume failed, hr %#x.\n", hr);
+                    return hr;
                 }
             }
             break;
+        }
 
         default:
-            FIXME("(%p) : Unsupported source and destination type\n", This);
-            hr = WINED3DERR_INVALIDCALL;
-        }
+            FIXME("Unsupported texture type %#x.\n", type);
+            return WINED3DERR_INVALIDCALL;
     }
 
-    return hr;
+    return WINED3D_OK;
 }
 
 static HRESULT  WINAPI  IWineD3DDeviceImpl_GetFrontBufferData(IWineD3DDevice *iface,UINT iSwapChain, IWineD3DSurface *pDestSurface) {
