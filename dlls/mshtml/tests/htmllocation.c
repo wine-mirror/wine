@@ -28,98 +28,83 @@ struct location_test {
     const WCHAR *url;
 
     const char *href;
-    const BOOL href_ok;
-
     const char *protocol;
-    const BOOL protocol_ok;
-
     const char *host;
-    const BOOL host_ok;
-
     const char *hostname;
-    const BOOL hostname_ok;
-
     const char *port;
-    const BOOL port_ok;
-
     const char *pathname;
-    const BOOL pathname_ok;
-
     const char *search;
-    const BOOL search_ok;
-
     const char *hash;
-    const BOOL hash_ok;
 };
 
 static const WCHAR http_url[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','?','s','e','a','r','c','h','#','h','a','s','h',0};
 static const struct location_test http_test = {
             "HTTP",
             http_url,
-            "http://www.winehq.org/?search#hash", TRUE,
-            "http:", TRUE,
-            "www.winehq.org:80", TRUE,
-            "www.winehq.org", TRUE,
-            "80", TRUE,
-            "", TRUE,
-            "?search", TRUE,
-            "#hash", TRUE
+            "http://www.winehq.org/?search#hash",
+            "http:",
+            "www.winehq.org:80",
+            "www.winehq.org",
+            "80",
+            "",
+            "?search",
+            "#hash"
             };
 
 static const WCHAR http_file_url[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/','f','i','l','e','?','s','e','a','r','c','h','#','h','a','s','h',0};
 static const struct location_test http_file_test = {
             "HTTP with file",
             http_file_url,
-            "http://www.winehq.org/file?search#hash", TRUE,
-            "http:", TRUE,
-            "www.winehq.org:80", TRUE,
-            "www.winehq.org", TRUE,
-            "80", TRUE,
-            "file", TRUE,
-            "?search", TRUE,
-            "#hash", TRUE
+            "http://www.winehq.org/file?search#hash",
+            "http:",
+            "www.winehq.org:80",
+            "www.winehq.org",
+            "80",
+            "file",
+            "?search",
+            "#hash"
             };
 
 static const WCHAR ftp_url[] = {'f','t','p',':','/','/','f','t','p','.','w','i','n','e','h','q','.','o','r','g','/',0};
 static const struct location_test ftp_test = {
             "FTP",
             ftp_url,
-            "ftp://ftp.winehq.org/", TRUE,
-            "ftp:", TRUE,
-            "ftp.winehq.org:21", TRUE,
-            "ftp.winehq.org", TRUE,
-            "21", TRUE,
-            "", TRUE,
-            NULL, TRUE,
-            NULL, TRUE
+            "ftp://ftp.winehq.org/",
+            "ftp:",
+            "ftp.winehq.org:21",
+            "ftp.winehq.org",
+            "21",
+            "",
+            NULL,
+            NULL
             };
 
 static const WCHAR ftp_file_url[] = {'f','t','p',':','/','/','f','t','p','.','w','i','n','e','h','q','.','o','r','g','/','f','i','l','e',0};
 static const struct location_test ftp_file_test = {
             "FTP with file",
             ftp_file_url,
-            "ftp://ftp.winehq.org/file", TRUE,
-            "ftp:", TRUE,
-            "ftp.winehq.org:21", TRUE,
-            "ftp.winehq.org", TRUE,
-            "21", TRUE,
-            "file", TRUE,
-            NULL, TRUE,
-            NULL, TRUE
+            "ftp://ftp.winehq.org/file",
+            "ftp:",
+            "ftp.winehq.org:21",
+            "ftp.winehq.org",
+            "21",
+            "file",
+            NULL,
+            NULL
             };
 
 static const WCHAR file_url[] = {'f','i','l','e',':','/','/','C',':','\\','w','i','n','d','o','w','s','\\','w','i','n','.','i','n','i',0};
 static const struct location_test file_test = {
             "FILE",
             file_url,
-            "file:///C:/windows/win.ini", TRUE,
-            "file:", TRUE,
-            NULL, TRUE,
-            NULL, TRUE,
-            "", TRUE,
-            "C:\\windows\\win.ini", TRUE,
-            NULL, TRUE,
-            NULL, TRUE
+            "file:///C:/windows/win.ini",
+            "file:",
+            NULL,
+            NULL,
+            "",
+            "C:\\windows\\win.ini",
+            NULL,
+            NULL
             };
 
 static int str_eq_wa(LPCWSTR strw, const char *stra)
@@ -148,16 +133,10 @@ static void test_href(IHTMLLocation *loc, const struct location_test *test)
 
     hres = IHTMLLocation_get_href(loc, &str);
     ok(hres == S_OK, "%s: get_href failed: 0x%08x\n", test->name, hres);
-    if(hres == S_OK){
-        if(test->href_ok)
-            ok(str_eq_wa(str, test->href),
-                    "%s: expected retrieved href to be L\"%s\", was: %s\n",
-                    test->name, test->href, wine_dbgstr_w(str));
-        else
-            todo_wine ok(str_eq_wa(str, test->href),
-                    "%s: expected retrieved href to be L\"%s\", was: %s\n",
-                    test->name, test->href, wine_dbgstr_w(str));
-    }
+    if(hres == S_OK)
+        ok(str_eq_wa(str, test->href),
+                "%s: expected retrieved href to be L\"%s\", was: %s\n",
+                test->name, test->href, wine_dbgstr_w(str));
 }
 
 static void test_protocol(IHTMLLocation *loc, const struct location_test *test)
@@ -172,16 +151,10 @@ static void test_protocol(IHTMLLocation *loc, const struct location_test *test)
 
     hres = IHTMLLocation_get_protocol(loc, &str);
     ok(hres == S_OK, "%s: get_protocol failed: 0x%08x\n", test->name, hres);
-    if(hres == S_OK){
-        if(test->protocol_ok)
-            ok(str_eq_wa(str, test->protocol),
-                    "%s: expected retrieved protocol to be L\"%s\", was: %s\n",
-                    test->name, test->protocol, wine_dbgstr_w(str));
-        else
-            todo_wine ok(str_eq_wa(str, test->protocol),
-                    "%s: expected retrieved protocol to be L\"%s\", was: %s\n",
-                    test->name, test->protocol, wine_dbgstr_w(str));
-    }
+    if(hres == S_OK)
+        ok(str_eq_wa(str, test->protocol),
+                "%s: expected retrieved protocol to be L\"%s\", was: %s\n",
+                test->name, test->protocol, wine_dbgstr_w(str));
 }
 
 static void test_host(IHTMLLocation *loc, const struct location_test *test)
@@ -196,16 +169,10 @@ static void test_host(IHTMLLocation *loc, const struct location_test *test)
 
     hres = IHTMLLocation_get_host(loc, &str);
     ok(hres == S_OK, "%s: get_host failed: 0x%08x\n", test->name, hres);
-    if(hres == S_OK){
-        if(test->host_ok)
-            ok(str_eq_wa(str, test->host),
-                    "%s: expected retrieved host to be L\"%s\", was: %s\n",
-                    test->name, test->host, wine_dbgstr_w(str));
-        else
-            todo_wine ok(str_eq_wa(str, test->host),
-                    "%s: expected retrieved host to be L\"%s\", was: %s\n",
-                    test->name, test->host, wine_dbgstr_w(str));
-    }
+    if(hres == S_OK)
+        ok(str_eq_wa(str, test->host),
+                "%s: expected retrieved host to be L\"%s\", was: %s\n",
+                test->name, test->host, wine_dbgstr_w(str));
 }
 
 static void test_hostname(IHTMLLocation *loc, const struct location_test *test)
@@ -220,16 +187,10 @@ static void test_hostname(IHTMLLocation *loc, const struct location_test *test)
 
     hres = IHTMLLocation_get_hostname(loc, &str);
     ok(hres == S_OK, "%s: get_hostname failed: 0x%08x\n", test->name, hres);
-    if(hres == S_OK){
-        if(test->hostname_ok)
-            ok(str_eq_wa(str, test->hostname),
-                    "%s: expected retrieved hostname to be L\"%s\", was: %s\n",
-                    test->name, test->hostname, wine_dbgstr_w(str));
-        else
-            todo_wine ok(str_eq_wa(str, test->hostname),
-                    "%s: expected retrieved hostname to be L\"%s\", was: %s\n",
-                    test->name, test->hostname, wine_dbgstr_w(str));
-    }
+    if(hres == S_OK)
+        ok(str_eq_wa(str, test->hostname),
+                "%s: expected retrieved hostname to be L\"%s\", was: %s\n",
+                test->name, test->hostname, wine_dbgstr_w(str));
 }
 
 static void test_port(IHTMLLocation *loc, const struct location_test *test)
@@ -244,16 +205,10 @@ static void test_port(IHTMLLocation *loc, const struct location_test *test)
 
     hres = IHTMLLocation_get_port(loc, &str);
     ok(hres == S_OK, "%s: get_port failed: 0x%08x\n", test->name, hres);
-    if(hres == S_OK){
-        if(test->port_ok)
-            ok(str_eq_wa(str, test->port),
-                    "%s: expected retrieved port to be L\"%s\", was: %s\n",
-                    test->name, test->port, wine_dbgstr_w(str));
-        else
-            todo_wine ok(str_eq_wa(str, test->port),
-                    "%s: expected retrieved port to be L\"%s\", was: %s\n",
-                    test->name, test->port, wine_dbgstr_w(str));
-    }
+    if(hres == S_OK)
+        ok(str_eq_wa(str, test->port),
+                "%s: expected retrieved port to be L\"%s\", was: %s\n",
+                test->name, test->port, wine_dbgstr_w(str));
 }
 
 static void test_pathname(IHTMLLocation *loc, const struct location_test *test)
@@ -268,16 +223,10 @@ static void test_pathname(IHTMLLocation *loc, const struct location_test *test)
 
     hres = IHTMLLocation_get_pathname(loc, &str);
     ok(hres == S_OK, "%s: get_pathname failed: 0x%08x\n", test->name, hres);
-    if(hres == S_OK){
-        if(test->pathname_ok)
-            ok(str_eq_wa(str, test->pathname),
-                    "%s: expected retrieved pathname to be L\"%s\", was: %s\n",
-                    test->name, test->pathname, wine_dbgstr_w(str));
-        else
-            todo_wine ok(str_eq_wa(str, test->pathname),
-                    "%s: expected retrieved pathname to be L\"%s\", was: %s\n",
-                    test->name, test->pathname, wine_dbgstr_w(str));
-    }
+    if(hres == S_OK)
+        ok(str_eq_wa(str, test->pathname),
+                "%s: expected retrieved pathname to be L\"%s\", was: %s\n",
+                test->name, test->pathname, wine_dbgstr_w(str));
 }
 
 static void test_search(IHTMLLocation *loc, const struct location_test *test)
@@ -292,16 +241,10 @@ static void test_search(IHTMLLocation *loc, const struct location_test *test)
 
     hres = IHTMLLocation_get_search(loc, &str);
     ok(hres == S_OK, "%s: get_search failed: 0x%08x\n", test->name, hres);
-    if(hres == S_OK){
-        if(test->search_ok)
-            ok(str_eq_wa(str, test->search),
-                    "%s: expected retrieved search to be L\"%s\", was: %s\n",
-                    test->name, test->search, wine_dbgstr_w(str));
-        else
-            todo_wine ok(str_eq_wa(str, test->search),
-                    "%s: expected retrieved search to be L\"%s\", was: %s\n",
-                    test->name, test->search, wine_dbgstr_w(str));
-    }
+    if(hres == S_OK)
+        ok(str_eq_wa(str, test->search),
+                "%s: expected retrieved search to be L\"%s\", was: %s\n",
+                test->name, test->search, wine_dbgstr_w(str));
 }
 
 static void test_hash(IHTMLLocation *loc, const struct location_test *test)
@@ -316,16 +259,10 @@ static void test_hash(IHTMLLocation *loc, const struct location_test *test)
 
     hres = IHTMLLocation_get_hash(loc, &str);
     ok(hres == S_OK, "%s: get_hash failed: 0x%08x\n", test->name, hres);
-    if(hres == S_OK){
-        if(test->hash_ok)
-            ok(str_eq_wa(str, test->hash),
-                    "%s: expected retrieved hash to be L\"%s\", was: %s\n",
-                    test->name, test->hash, wine_dbgstr_w(str));
-        else
-            todo_wine ok(str_eq_wa(str, test->hash),
-                    "%s: expected retrieved hash to be L\"%s\", was: %s\n",
-                    test->name, test->hash, wine_dbgstr_w(str));
-    }
+    if(hres == S_OK)
+        ok(str_eq_wa(str, test->hash),
+                "%s: expected retrieved hash to be L\"%s\", was: %s\n",
+                test->name, test->hash, wine_dbgstr_w(str));
 }
 
 static void perform_test(const struct location_test* test)
