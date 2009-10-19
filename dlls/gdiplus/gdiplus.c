@@ -418,7 +418,7 @@ void convert_32bppARGB_to_32bppPARGB(UINT width, UINT height,
 }
 
 /* recursive deletion of GpRegion nodes */
-inline void delete_element(region_element* element)
+void delete_element(region_element* element)
 {
     switch(element->type)
     {

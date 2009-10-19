@@ -61,7 +61,7 @@ extern BOOL lengthen_path(GpPath *path, INT len);
 extern GpStatus trace_path(GpGraphics *graphics, GpPath *path);
 
 typedef struct region_element region_element;
-extern inline void delete_element(region_element *element);
+extern void delete_element(region_element *element);
 
 static inline INT roundr(REAL x)
 {
