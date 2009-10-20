@@ -587,6 +587,9 @@ static HRESULT WINAPI IDirect3DDevice8Impl_Reset(LPDIRECT3DDEVICE8 iface, D3DPRE
 
     wined3d_mutex_lock();
     hr = IWineD3DDevice_Reset(This->WineD3DDevice, &localParameters);
+    if(SUCCEEDED(hr)) {
+        hr = IWineD3DDevice_SetRenderState(This->WineD3DDevice, WINED3DRS_POINTSIZE_MIN, 0);
+    }
     wined3d_mutex_unlock();
 
     pPresentationParameters->BackBufferWidth                    = localParameters.BackBufferWidth;

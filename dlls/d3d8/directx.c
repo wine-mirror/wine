@@ -412,9 +412,15 @@ static HRESULT WINAPI IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapte
     }
 
     hr = IWineD3DDevice_Init3D(object->WineD3DDevice, &localParameters);
-    wined3d_mutex_unlock();
     if (hr != D3D_OK) {
+        wined3d_mutex_unlock();
         FIXME("(%p) D3D Initialization failed for WineD3DDevice %p\n", This, object->WineD3DDevice);
+        goto err;
+    }
+    hr = IWineD3DDevice_SetRenderState(object->WineD3DDevice, WINED3DRS_POINTSIZE_MIN, 0);
+    wined3d_mutex_unlock();
+    if(FAILED(hr)) {
+        FIXME("(%p) SetRenderState failed\n", This);
         goto err;
     }
 
