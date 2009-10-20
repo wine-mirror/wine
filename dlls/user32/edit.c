@@ -4714,7 +4714,8 @@ static LRESULT EDIT_WM_Destroy(EDITSTATE *es)
 		pc = pp;
 	}
 
-        SetWindowLongPtrW( es->hwndSelf, 0, 0 );
+	SetWindowLongPtrW( es->hwndSelf, 0, 0 );
+	HeapFree(GetProcessHeap(), 0, es->undo_text);
 	HeapFree(GetProcessHeap(), 0, es);
 
 	return 0;
