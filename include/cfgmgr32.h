@@ -97,6 +97,9 @@ typedef DWORD CONFIGRET;
 #define CR_INVALID_STRUCTURE_SIZE       0x3b
 #define NUM_CR_RESULTS                  0x3c
 
+#define MAX_DEVICE_ID_LEN               200
+#define MAX_DEVNODE_ID_LEN              MAX_DEVICE_ID_LEN
+
 #define MAX_CLASS_NAME_LEN              32
 #define MAX_GUID_STRING_LEN             39
 #define MAX_PROFILE_LEN                 80
