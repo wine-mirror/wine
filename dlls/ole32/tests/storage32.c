@@ -1910,6 +1910,8 @@ static void test_references(void)
             while ( c1 ) c1 = IStorage_Release(stg);
         }
     }
+
+    DeleteFileA(filenameA);
 }
 
 /* dest
