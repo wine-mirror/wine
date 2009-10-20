@@ -30,6 +30,8 @@ static HRESULT WINAPI IDirect3DSwapChain9Impl_QueryInterface(LPDIRECT3DSWAPCHAIN
 {
     IDirect3DSwapChain9Impl *This = (IDirect3DSwapChain9Impl *)iface;
 
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), ppobj);
+
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DSwapChain9)) {
         IDirect3DSwapChain9_AddRef(iface);
@@ -46,7 +48,7 @@ static ULONG WINAPI IDirect3DSwapChain9Impl_AddRef(LPDIRECT3DSWAPCHAIN9 iface) {
     IDirect3DSwapChain9Impl *This = (IDirect3DSwapChain9Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) : AddRef from %d\n", This, ref - 1);
+    TRACE("%p increasing refcount to %u.\n", iface, ref);
 
     if(ref == 1 && This->parentDevice) IDirect3DDevice9Ex_AddRef(This->parentDevice);
 
@@ -57,7 +59,7 @@ static ULONG WINAPI IDirect3DSwapChain9Impl_Release(LPDIRECT3DSWAPCHAIN9 iface) 
     IDirect3DSwapChain9Impl *This = (IDirect3DSwapChain9Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) : ReleaseRef to %d\n", This, ref);
+    TRACE("%p decreasing refcount to %u.\n", iface, ref);
 
     if (ref == 0) {
         IDirect3DDevice9Ex *parentDevice = This->parentDevice;
@@ -81,7 +83,8 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DSwapChain9Impl_Present(LPDIRECT
     IDirect3DSwapChain9Impl *This = (IDirect3DSwapChain9Impl *)iface;
     HRESULT hr;
 
-    TRACE("(%p) Relay\n", This);
+    TRACE("iface %p, src_rect %p, dst_rect %p, dst_window_override %p, dirty_region %p, flags %#x.\n",
+            iface, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
 
     wined3d_mutex_lock();
     hr = IWineD3DSwapChain_Present(This->wineD3DSwapChain, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
@@ -93,7 +96,8 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DSwapChain9Impl_Present(LPDIRECT
 static HRESULT WINAPI IDirect3DSwapChain9Impl_GetFrontBufferData(LPDIRECT3DSWAPCHAIN9 iface, IDirect3DSurface9* pDestSurface) {
     IDirect3DSwapChain9Impl *This = (IDirect3DSwapChain9Impl *)iface;
     HRESULT hr;
-    TRACE("(%p) Relay\n", This);
+
+    TRACE("iface %p, surface %p.\n", iface, pDestSurface);
 
     wined3d_mutex_lock();
     hr = IWineD3DSwapChain_GetFrontBufferData(This->wineD3DSwapChain,  ((IDirect3DSurface9Impl *)pDestSurface)->wineD3DSurface);
@@ -107,7 +111,8 @@ static HRESULT WINAPI IDirect3DSwapChain9Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN9
     HRESULT hrc = D3D_OK;
     IWineD3DSurface *mySurface = NULL;
 
-    TRACE("(%p) Relay\n", This);
+    TRACE("iface %p, backbuffer_idx %u, backbuffer_type %#x, backbuffer %p.\n",
+            iface, iBackBuffer, Type, ppBackBuffer);
 
     wined3d_mutex_lock();
     hrc = IWineD3DSwapChain_GetBackBuffer(This->wineD3DSwapChain, iBackBuffer, (WINED3DBACKBUFFER_TYPE) Type, &mySurface);
@@ -124,7 +129,8 @@ static HRESULT WINAPI IDirect3DSwapChain9Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN9
 static HRESULT WINAPI IDirect3DSwapChain9Impl_GetRasterStatus(LPDIRECT3DSWAPCHAIN9 iface, D3DRASTER_STATUS* pRasterStatus) {
     IDirect3DSwapChain9Impl *This = (IDirect3DSwapChain9Impl *)iface;
     HRESULT hr;
-    TRACE("(%p) Relay\n", This);
+
+    TRACE("iface %p, raster_status %p.\n", iface, pRasterStatus);
 
     wined3d_mutex_lock();
     hr = IWineD3DSwapChain_GetRasterStatus(This->wineD3DSwapChain, (WINED3DRASTER_STATUS *) pRasterStatus);
@@ -136,7 +142,8 @@ static HRESULT WINAPI IDirect3DSwapChain9Impl_GetRasterStatus(LPDIRECT3DSWAPCHAI
 static HRESULT WINAPI IDirect3DSwapChain9Impl_GetDisplayMode(LPDIRECT3DSWAPCHAIN9 iface, D3DDISPLAYMODE* pMode) {
     IDirect3DSwapChain9Impl *This = (IDirect3DSwapChain9Impl *)iface;
     HRESULT hr;
-    TRACE("(%p) Relay\n", This);
+
+    TRACE("iface %p, mode %p.\n", iface, pMode);
 
     wined3d_mutex_lock();
     hr = IWineD3DSwapChain_GetDisplayMode(This->wineD3DSwapChain, (WINED3DDISPLAYMODE *) pMode);
@@ -152,7 +159,7 @@ static HRESULT WINAPI IDirect3DSwapChain9Impl_GetDevice(LPDIRECT3DSWAPCHAIN9 ifa
     HRESULT hrc = D3D_OK;
     IWineD3DDevice *device = NULL;
 
-    TRACE("(%p) Relay\n", This);
+    TRACE("iface %p, device %p.\n", iface, ppDevice);
 
     wined3d_mutex_lock();
     hrc = IWineD3DSwapChain_GetDevice(This->wineD3DSwapChain, &device);
@@ -170,7 +177,7 @@ static HRESULT WINAPI IDirect3DSwapChain9Impl_GetPresentParameters(LPDIRECT3DSWA
     WINED3DPRESENT_PARAMETERS winePresentParameters;
     HRESULT hr;
 
-    TRACE("(%p)->(%p): Relay\n", This, pPresentationParameters);
+    TRACE("iface %p, parameters %p.\n", iface, pPresentationParameters);
 
     wined3d_mutex_lock();
     hr = IWineD3DSwapChain_GetPresentParameters(This->wineD3DSwapChain, &winePresentParameters);
@@ -217,7 +224,8 @@ HRESULT  WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_CreateAdditionalSwapChain
     HRESULT hrc = D3D_OK;
     WINED3DPRESENT_PARAMETERS localParameters;
 
-    TRACE("(%p) Relay\n", This);
+    TRACE("iface %p, parameters %p, swapchain %p.\n",
+            iface, pPresentationParameters, pSwapChain);
 
     object = HeapAlloc(GetProcessHeap(),  HEAP_ZERO_MEMORY, sizeof(*object));
     if (NULL == object) {
@@ -287,7 +295,8 @@ HRESULT  WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_GetSwapChain(LPDIRECT3DDE
     HRESULT hrc = D3D_OK;
     IWineD3DSwapChain *swapchain = NULL;
 
-    TRACE("(%p) Relay\n", This);
+    TRACE("iface %p, swapchain_idx %u, swapchain %p.\n",
+            iface, iSwapChain, pSwapChain);
 
     wined3d_mutex_lock();
     hrc = IWineD3DDevice_GetSwapChain(This->WineD3DDevice, iSwapChain, &swapchain);
@@ -305,7 +314,8 @@ HRESULT  WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_GetSwapChain(LPDIRECT3DDE
 UINT     WINAPI  IDirect3DDevice9Impl_GetNumberOfSwapChains(LPDIRECT3DDEVICE9EX iface) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     UINT ret;
-    TRACE("(%p) Relay\n", This);
+
+    TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
     ret = IWineD3DDevice_GetNumberOfSwapChains(This->WineD3DDevice);
