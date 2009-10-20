@@ -21,6 +21,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #include <stdarg.h>
 
 #include "windef.h"
@@ -271,6 +272,7 @@ static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, const MMCKINFO* pckMainRIFF)
 {
     MMCKINFO	mmckInfo;
     long	r;
+    LPWAVEFORMATEX pwfx;
 
     mmckInfo.ckid = mmioFOURCC('f', 'm', 't', ' ');
     if (mmioDescend(wmw->hFile, &mmckInfo, pckMainRIFF, MMIO_FINDCHUNK) != 0)
@@ -278,23 +280,28 @@ static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, const MMCKINFO* pckMainRIFF)
     TRACE("Chunk Found ckid=%.4s fccType=%.4s cksize=%08X\n",
 	  (LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType, mmckInfo.cksize);
 
-    {
-	LPWAVEFORMATEX pwfx = HeapAlloc(GetProcessHeap(), 0, mmckInfo.cksize);
-	if (!pwfx) return MCIERR_OUT_OF_MEMORY;
-	wmw->lpWaveFormat = pwfx;
-    }
-    r = mmioRead(wmw->hFile, (HPSTR)wmw->lpWaveFormat, mmckInfo.cksize);
-    if (r < sizeof(PCMWAVEFORMAT))
-	return MCIERR_INVALID_FILE;
+    pwfx = HeapAlloc(GetProcessHeap(), 0, mmckInfo.cksize);
+    if (!pwfx) return MCIERR_OUT_OF_MEMORY;
 
-    TRACE("wFormatTag=%04X !\n",   wmw->lpWaveFormat->wFormatTag);
-    TRACE("nChannels=%d\n",       wmw->lpWaveFormat->nChannels);
-    TRACE("nSamplesPerSec=%d\n",  wmw->lpWaveFormat->nSamplesPerSec);
-    TRACE("nAvgBytesPerSec=%d\n", wmw->lpWaveFormat->nAvgBytesPerSec);
-    TRACE("nBlockAlign=%d\n",     wmw->lpWaveFormat->nBlockAlign);
-    TRACE("wBitsPerSample=%u !\n", wmw->lpWaveFormat->wBitsPerSample);
+    r = mmioRead(wmw->hFile, (HPSTR)pwfx, mmckInfo.cksize);
+    if (r < sizeof(PCMWAVEFORMAT)) {
+	HeapFree(GetProcessHeap(), 0, pwfx);
+	return MCIERR_INVALID_FILE;
+    }
+    TRACE("wFormatTag=%04X !\n",   pwfx->wFormatTag);
+    TRACE("nChannels=%d\n",        pwfx->nChannels);
+    TRACE("nSamplesPerSec=%d\n",   pwfx->nSamplesPerSec);
+    TRACE("nAvgBytesPerSec=%d\n",  pwfx->nAvgBytesPerSec);
+    TRACE("nBlockAlign=%d\n",      pwfx->nBlockAlign);
+    TRACE("wBitsPerSample=%u !\n", pwfx->wBitsPerSample);
     if (r >= (long)sizeof(WAVEFORMATEX))
-	TRACE("cbSize=%u !\n", wmw->lpWaveFormat->cbSize);
+	TRACE("cbSize=%u !\n",     pwfx->cbSize);
+    if ((pwfx->wFormatTag != WAVE_FORMAT_PCM)
+	&& (r < sizeof(WAVEFORMATEX) || (r < sizeof(WAVEFORMATEX) + pwfx->cbSize))) {
+	HeapFree(GetProcessHeap(), 0, pwfx);
+	return MCIERR_INVALID_FILE;
+    }
+    wmw->lpWaveFormat = pwfx;
 
     mmioAscend(wmw->hFile, &mmckInfo, 0);
     wmw->ckWaveData.ckid = mmioFOURCC('d', 'a', 't', 'a');
@@ -304,9 +311,6 @@ static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, const MMCKINFO* pckMainRIFF)
     }
     TRACE("Chunk Found ckid=%.4s fccType=%.4s cksize=%08X\n",
 	  (LPSTR)&wmw->ckWaveData.ckid, (LPSTR)&wmw->ckWaveData.fccType, wmw->ckWaveData.cksize);
-    TRACE("nChannels=%d nSamplesPerSec=%d\n",
-	  wmw->lpWaveFormat->nChannels, wmw->lpWaveFormat->nSamplesPerSec);
-
     return 0;
 }
 
@@ -349,32 +353,32 @@ static DWORD WAVE_mciCreateRIFFSkeleton(WINE_MCIWAVE* wmw)
    ckWaveFormat.ckid    = mmioFOURCC('f', 'm', 't', ' ');
    ckWaveFormat.cksize  = sizeof(PCMWAVEFORMAT);
 
-   /* FIXME: Set wave format accepts PCM only, however open an
+   /* Set wave format accepts PCM only, however open an
     * existing ADPCM file, record into it and the MCI will
     * happily save back in that format. */
-   if (wmw->lpWaveFormat->wFormatTag != WAVE_FORMAT_PCM)
-	goto err;
-
-   if (wmw->lpWaveFormat->nBlockAlign !=
-	wmw->lpWaveFormat->nChannels * wmw->lpWaveFormat->wBitsPerSample/8) {
-	WORD size = wmw->lpWaveFormat->nChannels *
-	    wmw->lpWaveFormat->wBitsPerSample/8;
-	WARN("Incorrect nBlockAlign (%d), setting it to %d\n",
-	    wmw->lpWaveFormat->nBlockAlign, size);
-	wmw->lpWaveFormat->nBlockAlign = size;
+   if (wmw->lpWaveFormat->wFormatTag == WAVE_FORMAT_PCM) {
+	if (wmw->lpWaveFormat->nBlockAlign !=
+	    wmw->lpWaveFormat->nChannels * wmw->lpWaveFormat->wBitsPerSample/8) {
+	    WORD size = wmw->lpWaveFormat->nChannels *
+		wmw->lpWaveFormat->wBitsPerSample/8;
+	    WARN("Incorrect nBlockAlign (%d), setting it to %d\n",
+		wmw->lpWaveFormat->nBlockAlign, size);
+	    wmw->lpWaveFormat->nBlockAlign = size;
+	}
+	if (wmw->lpWaveFormat->nAvgBytesPerSec !=
+	    wmw->lpWaveFormat->nSamplesPerSec * wmw->lpWaveFormat->nBlockAlign) {
+	    DWORD speed = wmw->lpWaveFormat->nSamplesPerSec *
+		wmw->lpWaveFormat->nBlockAlign;
+	    WARN("Incorrect nAvgBytesPerSec (%d), setting it to %d\n",
+		wmw->lpWaveFormat->nAvgBytesPerSec, speed);
+	    wmw->lpWaveFormat->nAvgBytesPerSec = speed;
+	}
    }
-   if (wmw->lpWaveFormat->nAvgBytesPerSec !=
-	wmw->lpWaveFormat->nSamplesPerSec * wmw->lpWaveFormat->nBlockAlign) {
-	DWORD speed = wmw->lpWaveFormat->nSamplesPerSec *
-	    wmw->lpWaveFormat->nBlockAlign;
-	WARN("Incorrect nAvgBytesPerSec (%d), setting it to %d\n",
-	    wmw->lpWaveFormat->nAvgBytesPerSec, speed);
-	wmw->lpWaveFormat->nAvgBytesPerSec = speed;
-   }
-
    if (wmw->lpWaveFormat == &wmw->wfxRef) {
 	LPWAVEFORMATEX pwfx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WAVEFORMATEX));
 	if (!pwfx) return MCIERR_OUT_OF_MEMORY;
+	/* Set wave format accepts PCM only so the size is known. */
+	assert(wmw->wfxRef.wFormatTag == WAVE_FORMAT_PCM);
 	*pwfx = wmw->wfxRef;
 	wmw->lpWaveFormat = pwfx;
    }
@@ -382,7 +386,8 @@ static DWORD WAVE_mciCreateRIFFSkeleton(WINE_MCIWAVE* wmw)
    if (MMSYSERR_NOERROR != mmioCreateChunk(wmw->hFile, &ckWaveFormat, 0))
 	goto err;
 
-   if (-1 == mmioWrite(wmw->hFile, (HPCSTR)wmw->lpWaveFormat, sizeof(PCMWAVEFORMAT)))
+   if (-1 == mmioWrite(wmw->hFile, (HPCSTR)wmw->lpWaveFormat, (WAVE_FORMAT_PCM==wmw->lpWaveFormat->wFormatTag)
+	? sizeof(PCMWAVEFORMAT) : sizeof(WAVEFORMATEX)+wmw->lpWaveFormat->cbSize))
 	goto err;
 
    if (MMSYSERR_NOERROR != mmioAscend(wmw->hFile, &ckWaveFormat, 0))
@@ -1405,6 +1410,8 @@ static DWORD WAVE_mciSave(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_SAVE_PARMSW l
     DeleteFileW (lpParms->lpfilename);
     SetLastError(tmpRet);
 
+    /* FIXME: Open file.wav; Save; must not rename the original file.
+     * Nor must Save a.wav; Save b.wav rename a. */
     if (0 == mmioRenameW(wmw->openParms.lpstrElementName, lpParms->lpfilename, 0, 0 )) {
 	ret = MMSYSERR_NOERROR;
     }
