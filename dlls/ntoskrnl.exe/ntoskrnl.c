@@ -1237,6 +1237,7 @@ BOOLEAN WINAPI PsGetVersion(ULONG *major, ULONG *minor, ULONG *build, UNICODE_ST
 {
     RTL_OSVERSIONINFOEXW info;
 
+    info.dwOSVersionInfoSize = sizeof(info);
     RtlGetVersion( &info );
     if (major) *major = info.dwMajorVersion;
     if (minor) *minor = info.dwMinorVersion;
