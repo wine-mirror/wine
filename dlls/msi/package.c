@@ -908,6 +908,8 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         if ( UrlIsW( szPackage, URLIS_URL ) )
         {
             file = msi_download_file( szPackage, temppath );
+            if ( file != szPackage )
+                file = copy_package_to_temp( file, temppath );
 
             base_url = strdupW( szPackage );
             if ( !base_url )
