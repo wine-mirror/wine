@@ -206,24 +206,33 @@ static HRESULT WINAPI IHlink_fnSetMonikerReference( IHlink* iface,
 {
     HlinkImpl  *This = (HlinkImpl*)iface;
 
-    FIXME("(%p)->(%i %p %s)\n", This, rfHLSETF, pmkTarget,
+    TRACE("(%p)->(%i %p %s)\n", This, rfHLSETF, pmkTarget,
             debugstr_w(pwzLocation));
 
-    if (This->Moniker)
-        IMoniker_Release(This->Moniker);
+    if(rfHLSETF == 0)
+        return E_INVALIDARG;
+    if(!(rfHLSETF & (HLINKSETF_TARGET | HLINKSETF_LOCATION)))
+        return rfHLSETF;
 
-    This->Moniker = pmkTarget;
-    if (This->Moniker)
-    {
-        LPOLESTR display_name;
-        IMoniker_AddRef(This->Moniker);
-        IMoniker_GetDisplayName(This->Moniker, NULL, NULL, &display_name);
-        This->absolute = display_name && strchrW(display_name, ':');
-        CoTaskMemFree(display_name);
+    if(rfHLSETF & HLINKSETF_TARGET){
+        if (This->Moniker)
+            IMoniker_Release(This->Moniker);
+
+        This->Moniker = pmkTarget;
+        if (This->Moniker)
+        {
+            LPOLESTR display_name;
+            IMoniker_AddRef(This->Moniker);
+            IMoniker_GetDisplayName(This->Moniker, NULL, NULL, &display_name);
+            This->absolute = display_name && strchrW(display_name, ':');
+            CoTaskMemFree(display_name);
+        }
     }
 
-    heap_free(This->Location);
-    This->Location = hlink_strdupW( pwzLocation );
+    if(rfHLSETF & HLINKSETF_LOCATION){
+        heap_free(This->Location);
+        This->Location = hlink_strdupW( pwzLocation );
+    }
 
     return S_OK;
 }

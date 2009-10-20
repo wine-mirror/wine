@@ -84,7 +84,7 @@ HRESULT WINAPI HlinkCreateFromMoniker( IMoniker *pimkTrgt, LPCWSTR pwzLocation,
     if (pihlsite)
         IHlink_SetHlinkSite(hl, pihlsite, dwSiteData);
     if (pimkTrgt)
-        IHlink_SetMonikerReference(hl, 0, pimkTrgt, pwzLocation);
+        IHlink_SetMonikerReference(hl, HLINKSETF_LOCATION | HLINKSETF_TARGET, pimkTrgt, pwzLocation);
 
     *ppvObj = hl;
 
@@ -140,7 +140,7 @@ HRESULT WINAPI HlinkCreateFromString( LPCWSTR pwzTarget, LPCWSTR pwzLocation,
             return r;
         }
 
-        IHlink_SetMonikerReference(hl, 0, pTgtMk, pwzLocation);
+        IHlink_SetMonikerReference(hl, HLINKSETF_TARGET | HLINKSETF_LOCATION, pTgtMk, pwzLocation);
         IMoniker_Release(pTgtMk);
 
         IHlink_SetStringReference(hl, HLINKSETF_TARGET, pwzTarget, NULL);

@@ -1202,7 +1202,7 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url,
         hres = CreateURLMoniker(NULL, url, &mon);
 
     if(SUCCEEDED(hres)) {
-        IHlink_SetMonikerReference(hlink, 0, mon, NULL);
+        IHlink_SetMonikerReference(hlink, HLINKSETF_TARGET, mon, NULL);
 
         if(hlnf & HLNF_OPENINNEWWINDOW) {
             static const WCHAR wszBlank[] = {'_','b','l','a','n','k',0};
