@@ -228,7 +228,8 @@ PCCRL_CONTEXT WINAPI CertGetCRLFromStore(HCERTSTORE hCertStore,
 PCCRL_CONTEXT WINAPI CertDuplicateCRLContext(PCCRL_CONTEXT pCrlContext)
 {
     TRACE("(%p)\n", pCrlContext);
-    Context_AddRef((void *)pCrlContext, sizeof(CRL_CONTEXT));
+    if (pCrlContext)
+        Context_AddRef((void *)pCrlContext, sizeof(CRL_CONTEXT));
     return pCrlContext;
 }
 
