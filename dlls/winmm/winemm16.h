@@ -61,6 +61,3 @@ typedef enum {
     MMSYSTEM_MAP_OK, 	        /* ok, no memory allocated. to be sent to the proc. */
     MMSYSTEM_MAP_OKMEM, 	/* ok, some memory allocated, need to call UnMapMsg. to be sent to the proc. */
 } MMSYSTEM_MapType;
-
-extern  MMSYSTEM_MapType   MCI_MapMsg16To32W(WORD,DWORD,DWORD_PTR*);
-extern  MMSYSTEM_MapType   MCI_UnMapMsg16To32W(WORD,DWORD,DWORD_PTR);

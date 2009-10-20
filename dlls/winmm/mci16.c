@@ -21,6 +21,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <stdio.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -33,10 +34,417 @@
 
 #include "wine/winuser16.h"
 #include "winemm16.h"
+#include "digitalv.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmsys);
+
+/**************************************************************************
+ * 			MCI_MessageToString			[internal]
+ */
+static const char* MCI_MessageToString(UINT wMsg)
+{
+    static char buffer[100];
+
+#define CASE(s) case (s): return #s
+
+    switch (wMsg) {
+        CASE(DRV_LOAD);
+        CASE(DRV_ENABLE);
+        CASE(DRV_OPEN);
+        CASE(DRV_CLOSE);
+        CASE(DRV_DISABLE);
+        CASE(DRV_FREE);
+        CASE(DRV_CONFIGURE);
+        CASE(DRV_QUERYCONFIGURE);
+        CASE(DRV_INSTALL);
+        CASE(DRV_REMOVE);
+        CASE(DRV_EXITSESSION);
+        CASE(DRV_EXITAPPLICATION);
+        CASE(DRV_POWER);
+	CASE(MCI_BREAK);
+	CASE(MCI_CLOSE);
+	CASE(MCI_CLOSE_DRIVER);
+	CASE(MCI_COPY);
+	CASE(MCI_CUE);
+	CASE(MCI_CUT);
+	CASE(MCI_DELETE);
+	CASE(MCI_ESCAPE);
+	CASE(MCI_FREEZE);
+	CASE(MCI_PAUSE);
+	CASE(MCI_PLAY);
+	CASE(MCI_GETDEVCAPS);
+	CASE(MCI_INFO);
+	CASE(MCI_LOAD);
+	CASE(MCI_OPEN);
+	CASE(MCI_OPEN_DRIVER);
+	CASE(MCI_PASTE);
+	CASE(MCI_PUT);
+	CASE(MCI_REALIZE);
+	CASE(MCI_RECORD);
+	CASE(MCI_RESUME);
+	CASE(MCI_SAVE);
+	CASE(MCI_SEEK);
+	CASE(MCI_SET);
+	CASE(MCI_SPIN);
+	CASE(MCI_STATUS);
+	CASE(MCI_STEP);
+	CASE(MCI_STOP);
+	CASE(MCI_SYSINFO);
+	CASE(MCI_UNFREEZE);
+	CASE(MCI_UPDATE);
+	CASE(MCI_WHERE);
+	CASE(MCI_WINDOW);
+	/* constants for digital video */
+	CASE(MCI_CAPTURE);
+	CASE(MCI_MONITOR);
+	CASE(MCI_RESERVE);
+	CASE(MCI_SETAUDIO);
+	CASE(MCI_SIGNAL);
+	CASE(MCI_SETVIDEO);
+	CASE(MCI_QUALITY);
+	CASE(MCI_LIST);
+	CASE(MCI_UNDO);
+	CASE(MCI_CONFIGURE);
+	CASE(MCI_RESTORE);
+#undef CASE
+    default:
+	sprintf(buffer, "MCI_<<%04X>>", wMsg);
+	return buffer;
+    }
+}
+
+static LPWSTR MCI_strdupAtoW( LPCSTR str )
+{
+    LPWSTR ret;
+    INT len;
+
+    if (!str) return NULL;
+    len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+    ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    if (ret) MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
+    return ret;
+}
+
+/**************************************************************************
+ * 			MCI_MapMsg16To32W			[internal]
+ */
+static MMSYSTEM_MapType	MCI_MapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR* lParam)
+{
+    if (*lParam == 0)
+	return MMSYSTEM_MAP_OK;
+    /* FIXME: to add also (with seg/linear modifications to do):
+     * MCI_LIST, MCI_LOAD, MCI_QUALITY, MCI_RESERVE, MCI_RESTORE, MCI_SAVE
+     * MCI_SETAUDIO, MCI_SETTUNER, MCI_SETVIDEO
+     */
+    switch (wMsg) {
+	/* case MCI_CAPTURE */
+    case MCI_CLOSE:
+    case MCI_CLOSE_DRIVER:
+    case MCI_CONFIGURE:
+    case MCI_COPY:
+    case MCI_CUE:
+    case MCI_CUT:
+    case MCI_DELETE:
+    case MCI_FREEZE:
+    case MCI_GETDEVCAPS:
+	/* case MCI_INDEX: */
+	/* case MCI_MARK: */
+	/* case MCI_MONITOR: */
+    case MCI_PASTE:
+    case MCI_PAUSE:
+    case MCI_PLAY:
+    case MCI_PUT:
+    case MCI_REALIZE:
+    case MCI_RECORD:
+    case MCI_RESUME:
+    case MCI_SEEK:
+    case MCI_SET:
+	/* case MCI_SETTIMECODE:*/
+	/* case MCI_SIGNAL:*/
+    case MCI_SPIN:
+    case MCI_STATUS:		/* FIXME: is wrong for digital video */
+    case MCI_STEP:
+    case MCI_STOP:
+	/* case MCI_UNDO: */
+    case MCI_UNFREEZE:
+    case MCI_UPDATE:
+    case MCI_WHERE:
+	*lParam = (DWORD)MapSL(*lParam);
+	return MMSYSTEM_MAP_OK;
+    case MCI_WINDOW:
+	/* in fact, I would also need the dwFlags... to see
+	 * which members of lParam are effectively used
+	 */
+	*lParam = (DWORD)MapSL(*lParam);
+	FIXME("Current mapping may be wrong\n");
+	break;
+    case MCI_BREAK:
+	{
+            LPMCI_BREAK_PARMS		mbp32 = HeapAlloc(GetProcessHeap(), 0, sizeof(MCI_BREAK_PARMS));
+	    LPMCI_BREAK_PARMS16		mbp16 = MapSL(*lParam);
+
+	    if (mbp32) {
+		mbp32->dwCallback = mbp16->dwCallback;
+		mbp32->nVirtKey = mbp16->nVirtKey;
+		mbp32->hwndBreak = HWND_32(mbp16->hwndBreak);
+	    } else {
+		return MMSYSTEM_MAP_NOMEM;
+	    }
+	    *lParam = (DWORD)mbp32;
+	}
+	return MMSYSTEM_MAP_OKMEM;
+    case MCI_ESCAPE:
+	{
+            LPMCI_VD_ESCAPE_PARMSW	mvep32w = HeapAlloc(GetProcessHeap(), 0, sizeof(MCI_VD_ESCAPE_PARMSW));
+	    LPMCI_VD_ESCAPE_PARMS16	mvep16  = MapSL(*lParam);
+
+	    if (mvep32w) {
+		mvep32w->dwCallback       = mvep16->dwCallback;
+		mvep32w->lpstrCommand     = MCI_strdupAtoW(MapSL(mvep16->lpstrCommand));
+	    } else {
+		return MMSYSTEM_MAP_NOMEM;
+	    }
+	    *lParam = (DWORD)mvep32w;
+	}
+	return MMSYSTEM_MAP_OKMEM;
+    case MCI_INFO:
+	{
+            LPMCI_INFO_PARMSW	mip32w = HeapAlloc(GetProcessHeap(), 0, sizeof(LPMCI_OPEN_PARMS16) + sizeof(MCI_INFO_PARMSW));
+	    LPMCI_INFO_PARMS16	mip16  = MapSL(*lParam);
+
+	    /* FIXME this is wrong if device is of type
+	     * MCI_DEVTYPE_DIGITAL_VIDEO, some members are not mapped
+	     */
+	    if (mip32w) {
+		*(LPMCI_INFO_PARMS16*)(mip32w) = mip16;
+		mip32w = (LPMCI_INFO_PARMSW)((char*)mip32w + sizeof(LPMCI_INFO_PARMS16));
+		mip32w->dwCallback  = mip16->dwCallback;
+		mip32w->lpstrReturn = HeapAlloc(GetProcessHeap(), 0, mip16->dwRetSize * sizeof(WCHAR));
+		mip32w->dwRetSize   = mip16->dwRetSize * sizeof(WCHAR);
+	    } else {
+		return MMSYSTEM_MAP_NOMEM;
+	    }
+	    *lParam = (DWORD)mip32w;
+	}
+	return MMSYSTEM_MAP_OKMEM;
+    case MCI_OPEN:
+    case MCI_OPEN_DRIVER:
+	{
+            LPMCI_OPEN_PARMSW	mop32w = HeapAlloc(GetProcessHeap(), 0, sizeof(LPMCI_OPEN_PARMS16) + sizeof(MCI_OPEN_PARMSW) + 2 * sizeof(DWORD));
+	    LPMCI_OPEN_PARMS16	mop16  = MapSL(*lParam);
+
+	    if (mop32w) {
+		*(LPMCI_OPEN_PARMS16*)(mop32w) = mop16;
+		mop32w = (LPMCI_OPEN_PARMSW)((char*)mop32w + sizeof(LPMCI_OPEN_PARMS16));
+		mop32w->dwCallback       = mop16->dwCallback;
+		mop32w->wDeviceID        = mop16->wDeviceID;
+                if( ( dwFlags & ( MCI_OPEN_TYPE | MCI_OPEN_TYPE_ID)) == MCI_OPEN_TYPE)
+                    mop32w->lpstrDeviceType  = MCI_strdupAtoW(MapSL(mop16->lpstrDeviceType));
+                else
+                    mop32w->lpstrDeviceType  = (LPWSTR) mop16->lpstrDeviceType;
+                if( ( dwFlags & ( MCI_OPEN_ELEMENT | MCI_OPEN_ELEMENT_ID)) == MCI_OPEN_ELEMENT)
+                    mop32w->lpstrElementName = MCI_strdupAtoW(MapSL(mop16->lpstrElementName));
+                else
+                    mop32w->lpstrElementName = (LPWSTR) mop16->lpstrElementName;
+                if( ( dwFlags &  MCI_OPEN_ALIAS))
+                    mop32w->lpstrAlias = MCI_strdupAtoW(MapSL(mop16->lpstrAlias));
+                else
+                    mop32w->lpstrAlias = (LPWSTR) mop16->lpstrAlias;
+		/* copy extended information if any...
+		 * FIXME: this may seg fault if initial structure does not contain them and
+		 * the reads after msip16 fail under LDT limits...
+		 * NOTE: this should be split in two. First pass, while calling MCI_OPEN, and
+		 * should not take care of extended parameters, and should be used by MCI_Open
+		 * to fetch uDevType. When, this is known, the mapping for sending the
+		 * MCI_OPEN_DRIVER shall be done depending on uDevType.
+		 */
+		memcpy(mop32w + 1, mop16 + 1, 2 * sizeof(DWORD));
+	    } else {
+		return MMSYSTEM_MAP_NOMEM;
+	    }
+	    *lParam = (DWORD)mop32w;
+	}
+	return MMSYSTEM_MAP_OKMEM;
+    case MCI_SYSINFO:
+	{
+            LPMCI_SYSINFO_PARMSW	msip32w = HeapAlloc(GetProcessHeap(), 0, sizeof(LPMCI_OPEN_PARMS16) + sizeof(MCI_SYSINFO_PARMSW));
+	    LPMCI_SYSINFO_PARMS16	msip16  = MapSL(*lParam);
+
+	    if (msip32w) {
+		*(LPMCI_SYSINFO_PARMS16*)(msip32w) = msip16;
+		msip32w = (LPMCI_SYSINFO_PARMSW)((char*)msip32w + sizeof(LPMCI_OPEN_PARMS16));
+		msip32w->dwCallback       = msip16->dwCallback;
+		msip32w->lpstrReturn      = HeapAlloc(GetProcessHeap(), 0, msip16->dwRetSize * sizeof(WCHAR));
+		msip32w->dwRetSize        = msip16->dwRetSize;
+		msip32w->dwNumber         = msip16->dwNumber;
+		msip32w->wDeviceType      = msip16->wDeviceType;
+	    } else {
+		return MMSYSTEM_MAP_NOMEM;
+	    }
+	    *lParam = (DWORD)msip32w;
+	}
+	return MMSYSTEM_MAP_OKMEM;
+    case MCI_SOUND:
+	{
+            LPMCI_SOUND_PARMSW		mbp32 = HeapAlloc(GetProcessHeap(), 0, sizeof(MCI_SOUND_PARMSW));
+	    LPMCI_SOUND_PARMS16		mbp16 = MapSL(*lParam);
+
+	    if (mbp32) {
+		mbp32->dwCallback = mbp16->dwCallback;
+		mbp32->lpstrSoundName = MCI_strdupAtoW(MapSL(mbp16->lpstrSoundName));
+	    } else {
+		return MMSYSTEM_MAP_NOMEM;
+	    }
+	    *lParam = (DWORD)mbp32;
+	}
+	return MMSYSTEM_MAP_OKMEM;
+    case DRV_LOAD:
+    case DRV_ENABLE:
+    case DRV_OPEN:
+    case DRV_CLOSE:
+    case DRV_DISABLE:
+    case DRV_FREE:
+    case DRV_CONFIGURE:
+    case DRV_QUERYCONFIGURE:
+    case DRV_INSTALL:
+    case DRV_REMOVE:
+    case DRV_EXITSESSION:
+    case DRV_EXITAPPLICATION:
+    case DRV_POWER:
+	FIXME("This is a hack\n");
+	return MMSYSTEM_MAP_OK;
+    default:
+	FIXME("Don't know how to map msg=%s\n", MCI_MessageToString(wMsg));
+    }
+    return MMSYSTEM_MAP_MSGERROR;
+}
+
+/**************************************************************************
+ * 			MCI_UnMapMsg16To32W			[internal]
+ */
+static  MMSYSTEM_MapType	MCI_UnMapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR lParam)
+{
+    switch (wMsg) {
+	/* case MCI_CAPTURE */
+    case MCI_CLOSE:
+    case MCI_CLOSE_DRIVER:
+    case MCI_CONFIGURE:
+    case MCI_COPY:
+    case MCI_CUE:
+    case MCI_CUT:
+    case MCI_DELETE:
+    case MCI_FREEZE:
+    case MCI_GETDEVCAPS:
+	/* case MCI_INDEX: */
+	/* case MCI_MARK: */
+	/* case MCI_MONITOR: */
+    case MCI_PASTE:
+    case MCI_PAUSE:
+    case MCI_PLAY:
+    case MCI_PUT:
+    case MCI_REALIZE:
+    case MCI_RECORD:
+    case MCI_RESUME:
+    case MCI_SEEK:
+    case MCI_SET:
+	/* case MCI_SETTIMECODE:*/
+	/* case MCI_SIGNAL:*/
+    case MCI_SPIN:
+    case MCI_STATUS:
+    case MCI_STEP:
+    case MCI_STOP:
+	/* case MCI_UNDO: */
+    case MCI_UNFREEZE:
+    case MCI_UPDATE:
+    case MCI_WHERE:
+	return MMSYSTEM_MAP_OK;
+
+    case MCI_WINDOW:
+	/* FIXME ?? see Map function */
+	return MMSYSTEM_MAP_OK;
+
+    case MCI_BREAK:
+	HeapFree(GetProcessHeap(), 0, (LPVOID)lParam);
+	return MMSYSTEM_MAP_OK;
+    case MCI_ESCAPE:
+        if (lParam) {
+            LPMCI_VD_ESCAPE_PARMSW	mvep32W = (LPMCI_VD_ESCAPE_PARMSW)lParam;
+            HeapFree(GetProcessHeap(), 0, (LPVOID)mvep32W->lpstrCommand);
+            HeapFree(GetProcessHeap(), 0, (LPVOID)lParam);
+        }
+	return MMSYSTEM_MAP_OK;
+    case MCI_INFO:
+        if (lParam) {
+            LPMCI_INFO_PARMSW	        mip32w = (LPMCI_INFO_PARMSW)lParam;
+	    LPMCI_INFO_PARMS16          mip16  = *(LPMCI_INFO_PARMS16*)((char*)mip32w - sizeof(LPMCI_INFO_PARMS16));
+
+            WideCharToMultiByte(CP_ACP, 0,
+                                mip32w->lpstrReturn, mip32w->dwRetSize / sizeof(WCHAR),
+                                MapSL(mip16->lpstrReturn), mip16->dwRetSize,
+                                NULL, NULL);
+            HeapFree(GetProcessHeap(), 0, mip32w->lpstrReturn);
+            HeapFree(GetProcessHeap(), 0, (LPVOID)lParam);
+        }
+	return MMSYSTEM_MAP_OK;
+    case MCI_SYSINFO:
+        if (lParam) {
+            LPMCI_SYSINFO_PARMSW	   msip32w = (LPMCI_SYSINFO_PARMSW)lParam;
+	    LPMCI_SYSINFO_PARMS16          msip16  = *(LPMCI_SYSINFO_PARMS16*)((char*)msip32w - sizeof(LPMCI_SYSINFO_PARMS16));
+
+            WideCharToMultiByte(CP_ACP, 0,
+                                msip32w->lpstrReturn, msip32w->dwRetSize,
+                                MapSL(msip16->lpstrReturn), msip16->dwRetSize,
+                                NULL, NULL);
+            HeapFree(GetProcessHeap(), 0, msip32w->lpstrReturn);
+            HeapFree(GetProcessHeap(), 0, (LPVOID)lParam);
+        }
+	return MMSYSTEM_MAP_OK;
+    case MCI_SOUND:
+        if (lParam) {
+            LPMCI_SOUND_PARMSW          msp32W = (LPMCI_SOUND_PARMSW)lParam;
+            HeapFree(GetProcessHeap(), 0, (LPVOID)msp32W->lpstrSoundName);
+            HeapFree(GetProcessHeap(), 0, (LPVOID)lParam);
+        }
+	return MMSYSTEM_MAP_OK;
+    case MCI_OPEN:
+    case MCI_OPEN_DRIVER:
+	if (lParam) {
+            LPMCI_OPEN_PARMSW	mop32w = (LPMCI_OPEN_PARMSW)lParam;
+	    LPMCI_OPEN_PARMS16	mop16  = *(LPMCI_OPEN_PARMS16*)((char*)mop32w - sizeof(LPMCI_OPEN_PARMS16));
+
+	    mop16->wDeviceID = mop32w->wDeviceID;
+            if( ( dwFlags & ( MCI_OPEN_TYPE | MCI_OPEN_TYPE_ID)) == MCI_OPEN_TYPE)
+                HeapFree(GetProcessHeap(), 0, (LPWSTR)mop32w->lpstrDeviceType);
+            if( ( dwFlags & ( MCI_OPEN_ELEMENT | MCI_OPEN_ELEMENT_ID)) == MCI_OPEN_ELEMENT)
+                HeapFree(GetProcessHeap(), 0, (LPWSTR)mop32w->lpstrElementName);
+            if( ( dwFlags &  MCI_OPEN_ALIAS))
+                HeapFree(GetProcessHeap(), 0, (LPWSTR)mop32w->lpstrAlias);
+	    if (!HeapFree(GetProcessHeap(), 0, (LPVOID)(lParam - sizeof(LPMCI_OPEN_PARMS16))))
+		FIXME("bad free line=%d\n", __LINE__);
+	}
+	return MMSYSTEM_MAP_OK;
+    case DRV_LOAD:
+    case DRV_ENABLE:
+    case DRV_OPEN:
+    case DRV_CLOSE:
+    case DRV_DISABLE:
+    case DRV_FREE:
+    case DRV_CONFIGURE:
+    case DRV_QUERYCONFIGURE:
+    case DRV_INSTALL:
+    case DRV_REMOVE:
+    case DRV_EXITSESSION:
+    case DRV_EXITAPPLICATION:
+    case DRV_POWER:
+	FIXME("This is a hack\n");
+	return MMSYSTEM_MAP_OK;
+    default:
+	FIXME("Map/Unmap internal error on msg=%s\n", MCI_MessageToString(wMsg));
+    }
+    return MMSYSTEM_MAP_MSGERROR;
+}
 
 /* ###################################################
  * #                     MCI                         #
