@@ -769,6 +769,8 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     free_dce( wndPtr->dce, hwnd );
     wndPtr->dce = NULL;
     icon_title = wndPtr->icon_title;
+    HeapFree(GetProcessHeap(), 0, wndPtr->pScroll);
+    wndPtr->pScroll = NULL;
     WIN_ReleasePtr( wndPtr );
 
     if (icon_title) DestroyWindow( icon_title );
