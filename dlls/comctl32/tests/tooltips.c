@@ -444,7 +444,9 @@ static void test_ttm_gettoolinfo(void)
     ti.lParam = 0xaaaaaaaa;
     r = SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&ti);
     ok(r, "Getting tooltip info failed\n");
-    ok(0xdeadbeef == ti.lParam, "Expected 0xdeadbeef, got %lx\n", ti.lParam);
+    ok(0xdeadbeef == ti.lParam ||
+       broken(0xdeadbeef != ti.lParam), /* comctl32 < 5.81 */
+       "Expected 0xdeadbeef, got %lx\n", ti.lParam);
 
     tiW.cbSize = TTTOOLINFOW_V2_SIZE;
     tiW.hwnd = NULL;
@@ -452,18 +454,22 @@ static void test_ttm_gettoolinfo(void)
     tiW.lParam = 0xaaaaaaaa;
     r = SendMessageA(hwnd, TTM_GETTOOLINFOW, 0, (LPARAM)&tiW);
     ok(r, "Getting tooltip info failed\n");
-    ok(0xdeadbeef == tiW.lParam, "Expected 0xdeadbeef, got %lx\n", tiW.lParam);
+    ok(0xdeadbeef == tiW.lParam ||
+       broken(0xdeadbeef != tiW.lParam), /* comctl32 < 5.81 */
+       "Expected 0xdeadbeef, got %lx\n", tiW.lParam);
 
     ti.cbSize = TTTOOLINFOA_V2_SIZE;
     ti.uId = 0x1234ABCD;
     ti.lParam = 0xaaaaaaaa;
-    r = SendMessageA(hwnd, TTM_SETTOOLINFOA, 0, (LPARAM)&ti);
+    SendMessageA(hwnd, TTM_SETTOOLINFOA, 0, (LPARAM)&ti);
 
     ti.cbSize = TTTOOLINFOA_V2_SIZE;
     ti.lParam = 0xdeadbeef;
     r = SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&ti);
     ok(r, "Getting tooltip info failed\n");
-    ok(0xaaaaaaaa == ti.lParam, "Expected 0xaaaaaaaa, got %lx\n", ti.lParam);
+    ok(0xaaaaaaaa == ti.lParam ||
+       broken(0xaaaaaaaa != ti.lParam), /* comctl32 < 5.81 */
+       "Expected 0xaaaaaaaa, got %lx\n", ti.lParam);
 
     DestroyWindow(hwnd);
 
