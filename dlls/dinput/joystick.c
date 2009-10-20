@@ -549,7 +549,9 @@ HRESULT setup_dinput_options(JoystickGenericImpl *This, const int *default_axis_
             {
                 This->axis_map[i] = default_axis_map[i];
                 tokens = default_axis_map[i];
-                if (tokens >= 0 && tokens < 8)
+                if (tokens < 0)
+                    continue;
+                if (tokens < 8)
                     axis++;
                 else if (tokens < 15)
                 {
