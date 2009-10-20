@@ -1051,7 +1051,6 @@ struct wined3d_context
     WORD last_was_blit : 1;
     WORD last_was_ckey : 1;
     WORD fog_coord : 1;
-    WORD isPBuffer : 1;
     WORD fog_enabled : 1;
     WORD num_untracked_materials : 2;   /* Max value 2 */
     WORD current : 1;

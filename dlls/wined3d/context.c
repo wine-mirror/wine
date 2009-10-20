@@ -698,7 +698,7 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
         ERR("Failed to disable GL context.\n");
     }
 
-    if (context->isPBuffer)
+    if (context->pbuffer)
     {
         GL_EXTCALL(wglReleasePbufferDCARB(context->pbuffer, context->hdc));
         GL_EXTCALL(wglDestroyPbufferARB(context->pbuffer));
@@ -1250,7 +1250,6 @@ struct wined3d_context *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceI
     ret->gl_info = &This->adapter->gl_info;
     ret->surface = (IWineD3DSurface *) target;
     ret->current_rt = (IWineD3DSurface *)target;
-    ret->isPBuffer = create_pbuffer;
     ret->tid = GetCurrentThreadId();
     if(This->shader_backend->shader_dirtifyable_constants((IWineD3DDevice *) This)) {
         /* Create the dirty constants array and initialize them to dirty */
