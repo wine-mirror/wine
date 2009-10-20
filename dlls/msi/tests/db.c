@@ -4527,11 +4527,11 @@ static void test_rows_order(void)
     sz = sizeof(buffer);
     r = MsiRecordGetString(hrec, 1, buffer, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine ok(!lstrcmp(buffer, "A"), "Expected A, got %s\n", buffer);
+    ok(!lstrcmp(buffer, "A"), "Expected A, got %s\n", buffer);
     sz = sizeof(buffer);
     r = MsiRecordGetString(hrec, 2, buffer, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine ok(!lstrcmp(buffer, "B"), "Expected B, got %s\n", buffer);
+    ok(!lstrcmp(buffer, "B"), "Expected B, got %s\n", buffer);
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
 
@@ -4540,11 +4540,11 @@ static void test_rows_order(void)
     sz = sizeof(buffer);
     r = MsiRecordGetString(hrec, 1, buffer, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine ok(!lstrcmp(buffer, "C"), "Expected E, got %s\n", buffer);
+    ok(!lstrcmp(buffer, "C"), "Expected E, got %s\n", buffer);
     sz = sizeof(buffer);
     r = MsiRecordGetString(hrec, 2, buffer, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine ok(!lstrcmp(buffer, "E"), "Expected E, got %s\n", buffer);
+    ok(!lstrcmp(buffer, "E"), "Expected E, got %s\n", buffer);
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
 
@@ -4553,11 +4553,11 @@ static void test_rows_order(void)
     sz = sizeof(buffer);
     r = MsiRecordGetString(hrec, 1, buffer, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine ok(!lstrcmp(buffer, "D"), "Expected D, got %s\n", buffer);
+    ok(!lstrcmp(buffer, "D"), "Expected D, got %s\n", buffer);
     sz = sizeof(buffer);
     r = MsiRecordGetString(hrec, 2, buffer, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine ok(!lstrcmp(buffer, "E"), "Expected E, got %s\n", buffer);
+    ok(!lstrcmp(buffer, "E"), "Expected E, got %s\n", buffer);
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
 
@@ -4566,11 +4566,11 @@ static void test_rows_order(void)
     sz = sizeof(buffer);
     r = MsiRecordGetString(hrec, 1, buffer, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine ok(!lstrcmp(buffer, "F"), "Expected F, got %s\n", buffer);
+    ok(!lstrcmp(buffer, "F"), "Expected F, got %s\n", buffer);
     sz = sizeof(buffer);
     r = MsiRecordGetString(hrec, 2, buffer, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine ok(!lstrcmp(buffer, "A"), "Expected A, got %s\n", buffer);
+    ok(!lstrcmp(buffer, "A"), "Expected A, got %s\n", buffer);
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
 

@@ -1657,6 +1657,41 @@ static UINT table_validate_new( MSITABLEVIEW *tv, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
+static UINT find_insert_index( MSITABLEVIEW *tv, MSIRECORD *rec, UINT *pidx )
+{
+    UINT r, idx, j, ivalue, x;
+
+    TRACE("%p %p %p\n", tv, rec, pidx);
+
+    for (idx = 0; idx < tv->table->row_count; idx++)
+    {
+        for (j = 0; j < tv->num_cols; j++ )
+        {
+            r = get_table_value_from_record (tv, rec, j+1, &ivalue);
+            if (r != ERROR_SUCCESS)
+                break;
+
+            r = TABLE_fetch_int(&tv->view, idx, j + 1, &x);
+            if (r != ERROR_SUCCESS)
+                return r;
+
+            if (ivalue > x)
+                break;
+            else if (ivalue == x)
+                continue;
+            else {
+                TRACE("Found %d.\n", idx);
+                *pidx = idx;
+                return ERROR_SUCCESS;
+            }
+        }
+    }
+
+    TRACE("Found %d.\n", idx);
+    *pidx = idx;
+    return ERROR_SUCCESS;
+}
+
 static UINT TABLE_insert_row( struct tagMSIVIEW *view, MSIRECORD *rec, UINT row, BOOL temporary )
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
@@ -1668,6 +1703,13 @@ static UINT TABLE_insert_row( struct tagMSIVIEW *view, MSIRECORD *rec, UINT row,
     r = table_validate_new( tv, rec );
     if( r != ERROR_SUCCESS )
         return ERROR_FUNCTION_FAILED;
+
+    if (row == -1)
+    {
+        r = find_insert_index(tv, rec, &row);
+        if( r != ERROR_SUCCESS )
+            return ERROR_FUNCTION_FAILED;
+    }
 
     r = table_create_new_row( view, &row, temporary );
     TRACE("insert_row returned %08x\n", r);
