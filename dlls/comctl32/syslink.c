@@ -906,6 +906,22 @@ static LRESULT SYSLINK_Paint (const SYSLINK_INFO *infoPtr, HDC hdcParam)
     return 0;
 }
 
+/***********************************************************************
+ * SYSLINK_EraseBkgnd
+ * Handles the WM_ERASEBKGND message.
+ */
+static LRESULT SYSLINK_EraseBkgnd (const SYSLINK_INFO *infoPtr, HDC hdc)
+{
+   HBRUSH hbr;
+   RECT r;
+
+   GetClientRect(infoPtr->Self, &r);
+   hbr = CreateSolidBrush(comctl32_color.clrBtnFace);
+   FillRect(hdc, &r, hbr);
+   DeleteObject(hbr);
+
+   return 1;
+}
 
 /***********************************************************************
  *           SYSLINK_SetFont
@@ -1550,6 +1566,9 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
     case WM_PRINTCLIENT:
     case WM_PAINT:
         return SYSLINK_Paint (infoPtr, (HDC)wParam);
+
+    case WM_ERASEBKGND:
+        return SYSLINK_EraseBkgnd(infoPtr, (HDC)wParam);
 
     case WM_SETCURSOR:
     {
