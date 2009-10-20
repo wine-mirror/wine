@@ -633,22 +633,19 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
     struct wined3d_occlusion_query *occlusion_query;
     struct wined3d_event_query *event_query;
     struct fbo_entry *entry, *entry2;
-    BOOL has_glctx;
-
-    has_glctx = pwglMakeCurrent(context->hdc, context->glCtx);
-    if (!has_glctx) WARN("Failed to activate context. Window already destroyed?\n");
 
     ENTER_GL();
 
     LIST_FOR_EACH_ENTRY(occlusion_query, &context->occlusion_queries, struct wined3d_occlusion_query, entry)
     {
-        if (has_glctx && GL_SUPPORT(ARB_OCCLUSION_QUERY)) GL_EXTCALL(glDeleteQueriesARB(1, &occlusion_query->id));
+        if (context->valid && GL_SUPPORT(ARB_OCCLUSION_QUERY))
+            GL_EXTCALL(glDeleteQueriesARB(1, &occlusion_query->id));
         occlusion_query->context = NULL;
     }
 
     LIST_FOR_EACH_ENTRY(event_query, &context->event_queries, struct wined3d_event_query, entry)
     {
-        if (has_glctx)
+        if (context->valid)
         {
             if (GL_SUPPORT(APPLE_FENCE)) GL_EXTCALL(glDeleteFencesAPPLE(1, &event_query->id));
             else if (GL_SUPPORT(NV_FENCE)) GL_EXTCALL(glDeleteFencesNV(1, &event_query->id));
@@ -656,11 +653,13 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
         event_query->context = NULL;
     }
 
-    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry) {
-        if (!has_glctx) entry->id = 0;
+    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry)
+    {
+        if (!context->valid) entry->id = 0;
         context_destroy_fbo_entry(context, entry);
     }
-    if (has_glctx)
+
+    if (context->valid)
     {
         if (context->src_fbo)
         {
