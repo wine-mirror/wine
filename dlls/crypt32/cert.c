@@ -1855,13 +1855,19 @@ BOOL WINAPI CryptHashPublicKeyInfo(HCRYPTPROV_LEGACY hCryptProv, ALG_ID Algid,
         hCryptProv = CRYPT_GetDefaultProvider();
     if (!Algid)
         Algid = CALG_MD5;
+    if ((dwCertEncodingType & CERT_ENCODING_TYPE_MASK) != X509_ASN_ENCODING)
+    {
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
     if (ret)
     {
         BYTE *buf;
         DWORD size = 0;
 
-        ret = CryptEncodeObjectEx(dwCertEncodingType, X509_PUBLIC_KEY_INFO,
-         pInfo, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+        ret = CRYPT_AsnEncodePubKeyInfoNoNull(dwCertEncodingType,
+         X509_PUBLIC_KEY_INFO, pInfo, CRYPT_ENCODE_ALLOC_FLAG, NULL,
+         (LPBYTE)&buf, &size);
         if (ret)
         {
             ret = CryptCreateHash(hCryptProv, Algid, 0, 0, &hHash);
