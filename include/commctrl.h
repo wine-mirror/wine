@@ -5052,6 +5052,9 @@ BOOL WINAPI Str_SetPtrW (LPWSTR *, LPCWSTR);
 static const WCHAR WC_LINK[] = { 'S','y','s','L','i','n','k',0 };
 #endif
 
+/* SysLink styles */
+#define LWS_TRANSPARENT      0x0001
+
 /* SysLink messages */
 #define LM_HITTEST           (WM_USER + 768)
 #define LM_GETIDEALHEIGHT    (WM_USER + 769)

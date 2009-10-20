@@ -94,6 +94,7 @@ typedef struct
     COLORREF  TextColor;    /* Color of the text */
     COLORREF  LinkColor;    /* Color of links */
     COLORREF  VisitedColor; /* Color of visited links */
+    COLORREF  BackColor;    /* Background color, set on creation */
     WCHAR     BreakChar;    /* Break Character for the current font */
 } SYSLINK_INFO;
 
@@ -831,7 +832,7 @@ static LRESULT SYSLINK_Draw (const SYSLINK_INFO *infoPtr, HDC hdc)
 
     hOldFont = SelectObject(hdc, infoPtr->Font);
     OldTextColor = SetTextColor(hdc, infoPtr->TextColor);
-    OldBkColor = SetBkColor(hdc, comctl32_color.clrBtnFace);
+    OldBkColor = SetBkColor(hdc, infoPtr->BackColor);
     
     GetClientRect(infoPtr->Self, &rc);
     rc.right -= SL_RIGHTMARGIN + SL_LEFTMARGIN;
@@ -916,7 +917,7 @@ static LRESULT SYSLINK_EraseBkgnd (const SYSLINK_INFO *infoPtr, HDC hdc)
    RECT r;
 
    GetClientRect(infoPtr->Self, &r);
-   hbr = CreateSolidBrush(comctl32_color.clrBtnFace);
+   hbr = CreateSolidBrush(infoPtr->BackColor);
    FillRect(hdc, &r, hbr);
    DeleteObject(hbr);
 
@@ -1749,6 +1750,8 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
         infoPtr->TextColor = comctl32_color.clrWindowText;
         infoPtr->LinkColor = comctl32_color.clrHighlight;
         infoPtr->VisitedColor = comctl32_color.clrHighlight;
+        infoPtr->BackColor = infoPtr->Style & LWS_TRANSPARENT ?
+                             comctl32_color.clrWindow : comctl32_color.clrBtnFace;
         infoPtr->BreakChar = ' ';
         TRACE("SysLink Ctrl creation, hwnd=%p\n", hwnd);
         SYSLINK_SetText(infoPtr, ((LPCREATESTRUCTW)lParam)->lpszName);
@@ -1765,6 +1768,8 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
 
     case WM_SYSCOLORCHANGE:
         COMCTL32_RefreshSysColors();
+        if (infoPtr->Style & LWS_TRANSPARENT)
+            infoPtr->BackColor = comctl32_color.clrWindow;
         return 0;
 
     default:
