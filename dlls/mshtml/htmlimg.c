@@ -624,13 +624,11 @@ static HRESULT WINAPI HTMLImageElementFactory_QueryInterface(IHTMLImageElementFa
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_Unknown %p)\n", This, ppv);
         *ppv = HTMLIMGFACTORY(This);
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = HTMLIMGFACTORY(This);
     }else if(IsEqualGUID(&IID_IHTMLImageElementFactory, riid)) {
         TRACE("(%p)->(IID_IHTMLImageElementFactory %p)\n", This, ppv);
         *ppv = HTMLIMGFACTORY(This);
-    }
+    }else if(dispex_query_interface(&This->dispex, riid, ppv))
+        return *ppv ? S_OK : E_NOINTERFACE;
 
     if(*ppv) {
         IUnknown_AddRef((IUnknown*)*ppv);
@@ -758,6 +756,18 @@ static const IHTMLImageElementFactoryVtbl HTMLImageElementFactoryVtbl = {
     HTMLImageElementFactory_create
 };
 
+static const tid_t HTMLImageElementFactory_iface_tids[] = {
+    IHTMLImageElementFactory_tid,
+    0
+};
+
+static dispex_static_data_t HTMLImageElementFactory_dispex = {
+    NULL,
+    IHTMLImageElementFactory_tid,
+    NULL,
+    HTMLImageElementFactory_iface_tids
+};
+
 HTMLImageElementFactory *HTMLImageElementFactory_Create(HTMLWindow *window)
 {
     HTMLImageElementFactory *ret;
@@ -767,6 +777,8 @@ HTMLImageElementFactory *HTMLImageElementFactory_Create(HTMLWindow *window)
     ret->lpHTMLImageElementFactoryVtbl = &HTMLImageElementFactoryVtbl;
     ret->ref = 1;
     ret->window = window;
+
+    init_dispex(&ret->dispex, (IUnknown*)HTMLIMGFACTORY(ret), &HTMLImageElementFactory_dispex);
 
     return ret;
 }

@@ -104,6 +104,7 @@ typedef enum {
     IHTMLFrameBase_tid,
     IHTMLFrameBase2_tid,
     IHTMLGenericElement_tid,
+    IHTMLImageElementFactory_tid,
     IHTMLImgElement_tid,
     IHTMLInputElement_tid,
     IHTMLLocation_tid,
@@ -182,6 +183,7 @@ typedef struct {
 } HTMLOptionElementFactory;
 
 typedef struct {
+    DispatchEx dispex;
     const IHTMLImageElementFactoryVtbl *lpHTMLImageElementFactoryVtbl;
 
     LONG ref;

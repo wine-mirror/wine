@@ -342,6 +342,14 @@ static const IID * const cstyle_iids[] = {
     NULL
 };
 
+static const IID * const img_factory_iids[] = {
+    &IID_IUnknown,
+    &IID_IDispatch,
+    &IID_IDispatchEx,
+    &IID_IHTMLImageElementFactory,
+    NULL
+};
+
 typedef struct {
     const char *tag;
     REFIID *iids;
@@ -1117,6 +1125,9 @@ static IHTMLImgElement *_create_img_elem(unsigned line, IHTMLDocument2 *doc,
     hres = IHTMLWindow2_get_Image(window, &factory);
     IHTMLWindow2_Release(window);
     ok_(__FILE__,line) (hres == S_OK, "get_Image failed: %08x\n", hres);
+
+    test_ifaces((IUnknown*)factory, img_factory_iids);
+    test_disp((IUnknown*)factory, &IID_IHTMLImageElementFactory, "[object]");
 
     if(wdth >= 0){
         snprintf(buf, 16, "%d", wdth);
