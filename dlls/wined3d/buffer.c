@@ -325,8 +325,7 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This)
      */
     if (This->flags & WINED3D_BUFFER_HASDESC)
     {
-        if(((IWineD3DImpl *)device->wineD3D)->dxVersion == 7 ||
-             This->resource.format_desc->format != WINED3DFMT_VERTEXDATA) return FALSE;
+        if(This->resource.usage & WINED3DUSAGE_STATICDECL) return FALSE;
     }
 
     TRACE("Finding vertex buffer conversion information\n");

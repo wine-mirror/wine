@@ -569,8 +569,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    hr = buffer_init(object, This, Length, Usage, WINED3DFMT_UNKNOWN,
-            Pool, GL_ELEMENT_ARRAY_BUFFER_ARB, NULL, parent, parent_ops);
+    hr = buffer_init(object, This, Length, Usage | WINED3DUSAGE_STATICDECL,
+            WINED3DFMT_UNKNOWN, Pool, GL_ELEMENT_ARRAY_BUFFER_ARB, NULL, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize buffer, hr %#x\n", hr);

@@ -970,6 +970,7 @@ IDirect3DImpl_7_CreateVertexBuffer(IDirect3D7 *iface,
     IDirectDrawImpl *This = ddraw_from_d3d7(iface);
     IDirect3DVertexBufferImpl *object;
     HRESULT hr;
+    DWORD usage;
     TRACE("(%p)->(%p,%p,%08x)\n", This, Desc, VertexBuffer, Flags);
 
     TRACE("(%p) Vertex buffer description:\n", This);
@@ -1009,10 +1010,13 @@ IDirect3DImpl_7_CreateVertexBuffer(IDirect3D7 *iface,
     object->ddraw = This;
     object->fvf = Desc->dwFVF;
 
+    usage = Desc->dwCaps & D3DVBCAPS_WRITEONLY ? WINED3DUSAGE_WRITEONLY : 0;
+    usage |= WINED3DUSAGE_STATICDECL;
+
     EnterCriticalSection(&ddraw_cs);
     hr = IWineD3DDevice_CreateVertexBuffer(This->wineD3DDevice,
             get_flexible_vertex_size(Desc->dwFVF) * Desc->dwNumVertices,
-            Desc->dwCaps & D3DVBCAPS_WRITEONLY ? WINED3DUSAGE_WRITEONLY : 0, Desc->dwFVF,
+            usage, Desc->dwFVF,
             Desc->dwCaps & D3DVBCAPS_SYSTEMMEMORY ? WINED3DPOOL_SYSTEMMEM : WINED3DPOOL_DEFAULT,
             &object->wineD3DVertexBuffer, (IUnknown *)object, &ddraw_null_wined3d_parent_ops);
     if(hr != D3D_OK)
