@@ -702,11 +702,47 @@ static HRESULT WINAPI HTMLImageElementFactory_Invoke(IHTMLImageElementFactory *i
 }
 
 static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *iface,
-        VARIANT width, VARIANT height, IHTMLImgElement **elem)
+        VARIANT width, VARIANT height, IHTMLImgElement **img_elem)
 {
     HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
-    FIXME("(%p)->(%s %s %p)\n", This, debugstr_variant(&width), debugstr_variant(&height), elem);
-    return E_NOTIMPL;
+    HTMLElement *elem;
+    nsIDOMHTMLElement *nselem;
+    HRESULT hres;
+
+    static const PRUnichar imgW[] = {'I','M','G',0};
+
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_variant(&width),
+            debugstr_variant(&height), img_elem);
+
+    if(!This->window || !This->window->doc) {
+        WARN("NULL doc\n");
+        return E_UNEXPECTED;
+    }
+
+    *img_elem = NULL;
+
+    hres = create_nselem(This->window->doc, imgW, &nselem);
+    if(FAILED(hres))
+        return hres;
+
+    elem = HTMLElement_Create(This->window->doc, (nsIDOMNode*)nselem, FALSE);
+    if(!elem) {
+        ERR("HTMLElement_Create failed\n");
+        return E_FAIL;
+    }
+
+    hres = IHTMLElement_QueryInterface(HTMLELEM(elem), &IID_IHTMLImgElement, (void**)img_elem);
+    if(FAILED(hres)) {
+        ERR("IHTMLElement_QueryInterface failed: 0x%08x\n", hres);
+        return hres;
+    }
+
+    nsIDOMHTMLElement_Release(nselem);
+
+    if(V_VT(&width) != VT_EMPTY || V_VT(&height) != VT_EMPTY)
+        FIXME("Not setting image dimensions\n");
+
+    return S_OK;
 }
 
 #undef HTMLIMGFACTORY_THIS

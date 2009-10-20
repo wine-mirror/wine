@@ -1137,7 +1137,7 @@ static IHTMLImgElement *_create_img_elem(unsigned line, IHTMLDocument2 *doc,
     }
 
     hres = IHTMLImageElementFactory_create(factory, width, height, &img);
-    todo_wine ok_(__FILE__,line) (hres == S_OK, "create failed: %08x\n", hres);
+    ok_(__FILE__,line) (hres == S_OK, "create failed: %08x\n", hres);
 
     IHTMLImageElementFactory_Release(factory);
     VariantClear(&width);
