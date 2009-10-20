@@ -413,6 +413,10 @@ static HRESULT WINAPI IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapte
 
     hr = IWineD3DDevice_Init3D(object->WineD3DDevice, &localParameters);
     wined3d_mutex_unlock();
+    if (hr != D3D_OK) {
+        FIXME("(%p) D3D Initialization failed for WineD3DDevice %p\n", This, object->WineD3DDevice);
+        goto err;
+    }
 
     pPresentationParameters->BackBufferWidth                    = localParameters.BackBufferWidth;
     pPresentationParameters->BackBufferHeight                   = localParameters.BackBufferHeight;
@@ -428,25 +432,28 @@ static HRESULT WINAPI IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapte
     pPresentationParameters->FullScreen_RefreshRateInHz         = localParameters.FullScreen_RefreshRateInHz;
     pPresentationParameters->FullScreen_PresentationInterval    = localParameters.PresentationInterval;
 
-    if (hr != D3D_OK) {
-        FIXME("(%p) D3D Initialization failed for WineD3DDevice %p\n", This, object->WineD3DDevice);
-        HeapFree(GetProcessHeap(), 0, object);
-        *ppReturnedDeviceInterface = NULL;
-    }
-
     object->declArraySize = 16;
     object->decls = HeapAlloc(GetProcessHeap(), 0, object->declArraySize * sizeof(*object->decls));
     if(!object->decls) {
         ERR("Out of memory\n");
+        hr = E_OUTOFMEMORY;
+        goto err;
+    }
+    return D3D_OK;
 
+err:
+    *ppReturnedDeviceInterface = NULL;
+
+    if(!object) return hr;
+    HeapFree(GetProcessHeap(), 0, object->decls);
+    if(object->WineD3DDevice) {
         wined3d_mutex_lock();
+        IWineD3DDevice_Uninit3D(object->WineD3DDevice, D3D8CB_DestroySwapChain);
         IWineD3DDevice_Release(object->WineD3DDevice);
         wined3d_mutex_unlock();
-
-        HeapFree(GetProcessHeap(), 0, object);
-        *ppReturnedDeviceInterface = NULL;
-        hr = E_OUTOFMEMORY;
     }
+    HeapFree(GetProcessHeap(), 0, object);
+
     return hr;
 }
 
