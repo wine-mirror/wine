@@ -7109,6 +7109,51 @@ static void test_dbmerge(void)
     r = run_query(href, 0, query);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
+    query = "CREATE TABLE `One` ( "
+        "`A` CHAR(72), "
+        "`B` CHAR(56), "
+        "`C` CHAR(64) LOCALIZABLE, "
+        "`D` LONGCHAR, "
+        "`E` CHAR(72) NOT NULL, "
+        "`F` CHAR(56) NOT NULL, "
+        "`G` CHAR(64) NOT NULL LOCALIZABLE, "
+        "`H` LONGCHAR NOT NULL "
+        "PRIMARY KEY `A` )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( "
+        "`A` CHAR(64), "
+        "`B` CHAR(64), "
+        "`C` CHAR(64), "
+        "`D` CHAR(64), "
+        "`E` CHAR(64) NOT NULL, "
+        "`F` CHAR(64) NOT NULL, "
+        "`G` CHAR(64) NOT NULL, "
+        "`H` CHAR(64) NOT NULL "
+        "PRIMARY KEY `A` )";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* column sting types don't match exactly */
+    r = MsiDatabaseMergeA(hdb, href, "MergeErrors");
+    todo_wine ok(r == ERROR_SUCCESS,
+       "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* nothing in MergeErrors */
+    query = "SELECT * FROM `MergeErrors`";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_BAD_QUERY_SYNTAX,
+       "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
     query = "CREATE TABLE `One` ( `A` INT, `B` INT PRIMARY KEY `A` )";
     r = run_query(hdb, 0, query);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
