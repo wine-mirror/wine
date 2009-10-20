@@ -611,3 +611,126 @@ HTMLElement *HTMLImgElement_Create(nsIDOMHTMLElement *nselem)
 
     return &ret->element;
 }
+
+#define HTMLIMGFACTORY_THIS(iface) DEFINE_THIS(HTMLImageElementFactory, HTMLImageElementFactory, iface)
+
+static HRESULT WINAPI HTMLImageElementFactory_QueryInterface(IHTMLImageElementFactory *iface,
+        REFIID riid, void **ppv)
+{
+    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_Unknown %p)\n", This, ppv);
+        *ppv = HTMLIMGFACTORY(This);
+    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = HTMLIMGFACTORY(This);
+    }else if(IsEqualGUID(&IID_IHTMLImageElementFactory, riid)) {
+        TRACE("(%p)->(IID_IHTMLImageElementFactory %p)\n", This, ppv);
+        *ppv = HTMLIMGFACTORY(This);
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI HTMLImageElementFactory_AddRef(IHTMLImageElementFactory *iface)
+{
+    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI HTMLImageElementFactory_Release(IHTMLImageElementFactory *iface)
+{
+    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI HTMLImageElementFactory_GetTypeInfoCount(IHTMLImageElementFactory *iface,
+        UINT *pctinfo)
+{
+    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLImageElementFactory_GetTypeInfo(IHTMLImageElementFactory *iface,
+        UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLImageElementFactory_GetIDsOfNames(IHTMLImageElementFactory *iface,
+        REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid,
+        DISPID *rgDispId)
+{
+    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames,
+            cNames, lcid, rgDispId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLImageElementFactory_Invoke(IHTMLImageElementFactory *iface,
+        DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags,
+        DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo,
+        UINT *puArgErr)
+{
+    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *iface,
+        VARIANT width, VARIANT height, IHTMLImgElement **elem)
+{
+    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+    FIXME("(%p)->(%s %s %p)\n", This, debugstr_variant(&width), debugstr_variant(&height), elem);
+    return E_NOTIMPL;
+}
+
+#undef HTMLIMGFACTORY_THIS
+
+static const IHTMLImageElementFactoryVtbl HTMLImageElementFactoryVtbl = {
+    HTMLImageElementFactory_QueryInterface,
+    HTMLImageElementFactory_AddRef,
+    HTMLImageElementFactory_Release,
+    HTMLImageElementFactory_GetTypeInfoCount,
+    HTMLImageElementFactory_GetTypeInfo,
+    HTMLImageElementFactory_GetIDsOfNames,
+    HTMLImageElementFactory_Invoke,
+    HTMLImageElementFactory_create
+};
+
+HTMLImageElementFactory *HTMLImageElementFactory_Create(HTMLWindow *window)
+{
+    HTMLImageElementFactory *ret;
+
+    ret = heap_alloc(sizeof(HTMLImageElementFactory));
+
+    ret->lpHTMLImageElementFactoryVtbl = &HTMLImageElementFactoryVtbl;
+    ret->ref = 1;
+    ret->window = window;
+
+    return ret;
+}

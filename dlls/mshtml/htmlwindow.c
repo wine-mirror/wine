@@ -113,6 +113,11 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
             IHTMLOptionElementFactory_Release(HTMLOPTFACTORY(This->option_factory));
         }
 
+        if(This->image_factory) {
+            This->image_factory->window = NULL;
+            IHTMLImageElementFactory_Release(HTMLIMGFACTORY(This->image_factory));
+        }
+
         if(This->location) {
             This->location->window = NULL;
             IHTMLLocation_Release(HTMLLOCATION(This->location));
@@ -392,8 +397,16 @@ static HRESULT WINAPI HTMLWindow2_prompt(IHTMLWindow2 *iface, BSTR message,
 static HRESULT WINAPI HTMLWindow2_get_Image(IHTMLWindow2 *iface, IHTMLImageElementFactory **p)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->image_factory)
+        This->image_factory = HTMLImageElementFactory_Create(This);
+
+    *p = HTMLIMGFACTORY(This->image_factory);
+    IHTMLImageElementFactory_AddRef(*p);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_get_location(IHTMLWindow2 *iface, IHTMLLocation **p)

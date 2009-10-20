@@ -181,6 +181,14 @@ typedef struct {
     HTMLWindow *window;
 } HTMLOptionElementFactory;
 
+typedef struct {
+    const IHTMLImageElementFactoryVtbl *lpHTMLImageElementFactoryVtbl;
+
+    LONG ref;
+
+    HTMLWindow *window;
+} HTMLImageElementFactory;
+
 struct HTMLLocation {
     DispatchEx dispex;
     const IHTMLLocationVtbl *lpHTMLLocationVtbl;
@@ -210,6 +218,7 @@ struct HTMLWindow {
     struct list script_hosts;
 
     HTMLOptionElementFactory *option_factory;
+    HTMLImageElementFactory *image_factory;
     HTMLLocation *location;
 
     global_prop_t *global_props;
@@ -545,6 +554,7 @@ struct HTMLDocumentNode {
 #define HTMLTEXTCONT(x)  ((IHTMLTextContainer*)           &(x)->lpHTMLTextContainerVtbl)
 
 #define HTMLOPTFACTORY(x)  ((IHTMLOptionElementFactory*)  &(x)->lpHTMLOptionElementFactoryVtbl)
+#define HTMLIMGFACTORY(x)  ((IHTMLImageElementFactory*)  &(x)->lpHTMLImageElementFactoryVtbl)
 #define HTMLLOCATION(x)  ((IHTMLLocation*) &(x)->lpHTMLLocationVtbl)
 
 #define DISPATCHEX(x)    ((IDispatchEx*) &(x)->lpIDispatchExVtbl)
@@ -564,6 +574,7 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj*,nsIDOMWindow*,HTMLWindow**);
 void window_set_docnode(HTMLWindow*,HTMLDocumentNode*);
 HTMLWindow *nswindow_to_window(const nsIDOMWindow*);
 HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLWindow*);
+HTMLImageElementFactory *HTMLImageElementFactory_Create(HTMLWindow*);
 HRESULT HTMLLocation_Create(HTMLWindow*,HTMLLocation**);
 IOmNavigator *OmNavigator_Create(void);
 
