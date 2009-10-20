@@ -464,6 +464,25 @@ static BOOL WINAPI CRYPT_AsnEncodeCert(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnEncodePubKeyInfoNoNull(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    BOOL ret;
+    const CERT_PUBLIC_KEY_INFO *info = pvStructInfo;
+    struct AsnEncodeSequenceItem items[] = {
+     { &info->Algorithm, CRYPT_AsnEncodeAlgorithmId, 0 },
+     { &info->PublicKey, CRYPT_AsnEncodeBits, 0 },
+    };
+
+    TRACE("Encoding public key with OID %s\n",
+     debugstr_a(info->Algorithm.pszObjId));
+    ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items,
+     sizeof(items) / sizeof(items[0]), dwFlags, pEncodePara, pbEncoded,
+     pcbEncoded);
+    return ret;
+}
+
 /* Like in Windows, this blithely ignores the validity of the passed-in
  * CERT_INFO, and just encodes it as-is.  The resulting encoded data may not
  * decode properly, see CRYPT_AsnDecodeCertInfo.
@@ -484,7 +503,7 @@ static BOOL WINAPI CRYPT_AsnEncodeCertInfo(DWORD dwCertEncodingType,
          { &info->Issuer,               CRYPT_CopyEncodedBlob, 0 },
          { &info->NotBefore,            CRYPT_AsnEncodeValidity, 0 },
          { &info->Subject,              CRYPT_CopyEncodedBlob, 0 },
-         { &info->SubjectPublicKeyInfo, CRYPT_AsnEncodePubKeyInfo, 0 },
+         { &info->SubjectPublicKeyInfo, CRYPT_AsnEncodePubKeyInfoNoNull, 0 },
          { 0 }
         };
         struct AsnConstructedItem constructed[3] = { { 0 } };
