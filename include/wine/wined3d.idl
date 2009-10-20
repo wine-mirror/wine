@@ -3205,7 +3205,8 @@ interface IWineD3DDevice : IWineD3DBase
     );
     HRESULT SetRenderTarget(
         [in] DWORD render_target_idx,
-        [in] IWineD3DSurface *render_target
+        [in] IWineD3DSurface *render_target,
+        [in] BOOL set_viewport
     );
     HRESULT GetRenderTarget(
         [in] DWORD render_target_idx,

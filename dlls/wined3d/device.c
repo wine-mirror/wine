@@ -6184,9 +6184,9 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     context_release(context);
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, DWORD RenderTargetIndex, IWineD3DSurface *pRenderTarget) {
+static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, DWORD RenderTargetIndex, IWineD3DSurface *pRenderTarget,
+                                                         BOOL set_viewport) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int dxVersion = ( (IWineD3DImpl *) This->wineD3D)->dxVersion;
 
     TRACE("(%p) : Setting rendertarget %d to %p\n", This, RenderTargetIndex, pRenderTarget);
 
@@ -6220,7 +6220,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
     This->render_targets[RenderTargetIndex] = pRenderTarget;
 
     /* Render target 0 is special */
-    if(RenderTargetIndex == 0 && dxVersion > 7) {
+    if(RenderTargetIndex == 0 && set_viewport) {
         /* Finally, reset the viewport and scissor rect as the MSDN states.
          * Tests show that stateblock recording is ignored, the change goes
          * directly into the primary stateblock.

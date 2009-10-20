@@ -1005,7 +1005,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetRenderTarget(LPDIRECT3DDEVICE8 ifa
     {
         hr = IWineD3DDevice_SetDepthStencilSurface(This->WineD3DDevice, pZSurface ? pZSurface->wineD3DSurface : NULL);
         if (SUCCEEDED(hr) && pSurface)
-            hr = IWineD3DDevice_SetRenderTarget(This->WineD3DDevice, 0, pSurface->wineD3DSurface);
+            hr = IWineD3DDevice_SetRenderTarget(This->WineD3DDevice, 0, pSurface->wineD3DSurface, TRUE);
         if (FAILED(hr)) IWineD3DDevice_SetDepthStencilSurface(This->WineD3DDevice, original_ds);
     }
     if (original_ds) IWineD3DSurface_Release(original_ds);
