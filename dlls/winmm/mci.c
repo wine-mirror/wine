@@ -1500,7 +1500,6 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
 
 /**************************************************************************
  * 				mciExecute			[WINMM.@]
- * 				mciExecute			[MMSYSTEM.712]
  */
 BOOL WINAPI mciExecute(LPCSTR lpstrCommand)
 {

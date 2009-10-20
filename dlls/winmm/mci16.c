@@ -750,3 +750,11 @@ BOOL16 WINAPI mciFreeCommandResource16(UINT16 uTable)
 
     return FALSE;
 }
+
+/**************************************************************************
+ * 				mciExecute			[MMSYSTEM.712]
+ */
+BOOL16 WINAPI mciExecute16(LPCSTR lpstrCommand)
+{
+    return mciExecute(lpstrCommand);
+}

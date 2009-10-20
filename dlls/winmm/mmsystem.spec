@@ -113,7 +113,7 @@
 708    pascal  mciGetDriverData(word) mciGetDriverData16
 710    pascal  mciDriverYield(word) mciDriverYield16
 711    pascal  mciDriverNotify(word word word) mciDriverNotify16
-712    pascal  mciExecute(ptr) mciExecute
+712    pascal  mciExecute(ptr) mciExecute16
 713    pascal  mciFreeCommandResource(word) mciFreeCommandResource16
 714    pascal  mciSetYieldProc(word ptr long) mciSetYieldProc16
 715    pascal  mciGetDeviceIDFromElementID(long ptr) mciGetDeviceIDFromElementID16
