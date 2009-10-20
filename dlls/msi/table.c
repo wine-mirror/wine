@@ -1368,6 +1368,48 @@ err:
     return r;
 }
 
+static UINT get_table_value_from_record( MSITABLEVIEW *tv, MSIRECORD *rec, UINT iField, UINT *pvalue )
+{
+    MSICOLUMNINFO columninfo;
+    UINT r;
+
+    if ( (iField <= 0) ||
+         (iField > tv->num_cols) ||
+          MSI_RecordIsNull( rec, iField ) )
+        return ERROR_FUNCTION_FAILED;
+
+    columninfo = tv->columns[ iField - 1 ];
+
+    if ( MSITYPE_IS_BINARY(columninfo.type) )
+    {
+        *pvalue = 1; /* refers to the first key column */
+    }
+    else if ( columninfo.type & MSITYPE_STRING )
+    {
+        LPCWSTR sval = MSI_RecordGetString( rec, iField );
+
+        r = msi_string2idW(tv->db->strings, sval, pvalue);
+        if (r != ERROR_SUCCESS)
+           return ERROR_NOT_FOUND;
+    }
+    else if ( 2 == bytes_per_column( tv->db, &columninfo ) )
+    {
+        *pvalue = 0x8000 + MSI_RecordGetInteger( rec, iField );
+        if ( *pvalue & 0xffff0000 )
+        {
+            ERR("field %u value %d out of range\n", iField, *pvalue - 0x8000);
+            return ERROR_FUNCTION_FAILED;
+        }
+    }
+    else
+    {
+        INT ival = MSI_RecordGetInteger( rec, iField );
+        *pvalue = ival ^ 0x80000000;
+    }
+
+    return ERROR_SUCCESS;
+}
+
 static UINT TABLE_set_row( struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UINT mask )
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
@@ -1395,10 +1437,14 @@ static UINT TABLE_set_row( struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UI
         val = 0;
         if ( !MSI_RecordIsNull( rec, i + 1 ) )
         {
+            r = get_table_value_from_record (tv, rec, i + 1, &val);
             if ( MSITYPE_IS_BINARY(tv->columns[ i ].type) )
             {
                 IStream *stm;
                 LPWSTR stname;
+
+                if ( r != ERROR_SUCCESS )
+                    return ERROR_FUNCTION_FAILED;
 
                 r = MSI_RecordGetIStream( rec, i + 1, &stm );
                 if ( r != ERROR_SUCCESS )
@@ -1417,38 +1463,29 @@ static UINT TABLE_set_row( struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UI
 
                 if ( r != ERROR_SUCCESS )
                     return r;
-
-                val = 1; /* refers to the first key column */
             }
             else if ( tv->columns[i].type & MSITYPE_STRING )
             {
-                LPCWSTR sval = MSI_RecordGetString( rec, i + 1 );
-                UINT ival, x;
+                UINT x;
 
-                r = msi_string2idW(tv->db->strings, sval, &ival);
-                if (r == ERROR_SUCCESS)
+                if ( r != ERROR_SUCCESS )
+                {
+                    LPCWSTR sval = MSI_RecordGetString( rec, i + 1 );
+                    val = msi_addstringW( tv->db->strings, 0, sval, -1, 1,
+                      persistent ? StringPersistent : StringNonPersistent );
+
+                }
+                else
                 {
                     TABLE_fetch_int(&tv->view, row, i + 1, &x);
-                    if (ival == x)
+                    if (val == x)
                         continue;
-                }
-
-                val = msi_addstringW( tv->db->strings, 0, sval, -1, 1,
-                                      persistent ? StringPersistent : StringNonPersistent );
-            }
-            else if ( 2 == bytes_per_column( tv->db, &tv->columns[ i ] ) )
-            {
-                val = 0x8000 + MSI_RecordGetInteger( rec, i + 1 );
-                if ( val & 0xffff0000 )
-                {
-                    ERR("field %u value %d out of range\n", i+1, val - 0x8000 );
-                    return ERROR_FUNCTION_FAILED;
                 }
             }
             else
             {
-                INT ival = MSI_RecordGetInteger( rec, i + 1 );
-                val = ival ^ 0x80000000;
+                if ( r != ERROR_SUCCESS )
+                    return ERROR_FUNCTION_FAILED;
             }
         }
 
