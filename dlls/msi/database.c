@@ -1335,6 +1335,8 @@ static UINT merge_diff_row(MSIRECORD *rec, LPVOID param)
         }
         else if (r != ERROR_NO_MORE_ITEMS)
             goto done;
+
+        r = ERROR_SUCCESS;
     }
 
     mergerow = msi_alloc(sizeof(MERGEROW));

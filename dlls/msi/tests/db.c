@@ -7598,15 +7598,15 @@ static void test_dbmerge(void)
     MsiCloseHandle(hrec);
 
     r = MsiViewFetch(hview, &hrec);
-    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiRecordGetInteger(hrec, 1);
-    todo_wine ok(r == 2, "Expected 2, got %d\n", r);
+    ok(r == 2, "Expected 2, got %d\n", r);
 
     size = MAX_PATH;
     r = MsiRecordGetStringA(hrec, 2, buf, &size);
-    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine ok(!lstrcmpA(buf, "bar"), "Expected \"bar\", got \"%s\"\n", buf);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "bar"), "Expected \"bar\", got \"%s\"\n", buf);
 
     MsiCloseHandle(hrec);
 
