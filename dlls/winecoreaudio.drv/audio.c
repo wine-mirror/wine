@@ -1452,7 +1452,7 @@ static DWORD wodGetVolume(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo, LPDWORD lpdwV
 
     AudioUnit_GetVolume(wwo->audioUnit, &left, &right);
 
-    *lpdwVol = ((WORD) left * 0xFFFFl) + (((WORD) right * 0xFFFFl) << 16);
+    *lpdwVol = (WORD)(left * 0xFFFFl) + ((WORD)(right * 0xFFFFl) << 16);
     
     return MMSYSERR_NOERROR;
 }
