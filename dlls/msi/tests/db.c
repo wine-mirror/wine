@@ -7273,7 +7273,7 @@ static void test_dbmerge(void)
 
     /* column sting types don't match exactly */
     r = MsiDatabaseMergeA(hdb, href, "MergeErrors");
-    todo_wine ok(r == ERROR_SUCCESS,
+    ok(r == ERROR_SUCCESS,
        "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* nothing in MergeErrors */

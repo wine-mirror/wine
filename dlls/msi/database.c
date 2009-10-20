@@ -1081,6 +1081,19 @@ typedef struct _tagMERGEDATA
     struct list *tabledata;
 } MERGEDATA;
 
+static BOOL merge_type_match(LPCWSTR type1, LPCWSTR type2)
+{
+    if (((type1[0] == 'l') || (type1[0] == 's')) &&
+        ((type2[0] == 'l') || (type2[0] == 's')))
+        return TRUE;
+
+    if (((type1[0] == 'L') || (type1[0] == 'S')) &&
+        ((type2[0] == 'L') || (type2[0] == 'S')))
+        return TRUE;
+
+    return !lstrcmpW(type1, type2);
+}
+
 static UINT merge_verify_colnames(MSIQUERY *dbview, MSIQUERY *mergeview)
 {
     MSIRECORD *dbrec, *mergerec;
@@ -1126,7 +1139,7 @@ static UINT merge_verify_colnames(MSIQUERY *dbview, MSIQUERY *mergeview)
         if (!MSI_RecordGetString(mergerec, i))
             break;
 
-        if (lstrcmpW(MSI_RecordGetString(dbrec, i),
+        if (!merge_type_match(MSI_RecordGetString(dbrec, i),
                      MSI_RecordGetString(mergerec, i)))
         {
             r = ERROR_DATATYPE_MISMATCH;
