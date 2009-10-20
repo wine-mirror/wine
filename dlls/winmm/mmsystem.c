@@ -2509,62 +2509,6 @@ MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
     return timeEndPeriod(wPeriod);
 }
 
-/**************************************************************************
- *                    	mciLoadCommandResource			[MMSYSTEM.705]
- */
-UINT16 WINAPI mciLoadCommandResource16(HINSTANCE16 hInst, LPCSTR resname, UINT16 type)
-{
-    HRSRC16     res;
-    HGLOBAL16   handle;
-    const BYTE* ptr16;
-    BYTE*       ptr32;
-    unsigned    pos = 0, size = 1024, len;
-    const char* str;
-    DWORD	flg;
-    WORD	eid;
-    UINT16      ret = MCIERR_OUT_OF_MEMORY;
-
-    if (!(res = FindResource16( hInst, resname, (LPSTR)RT_RCDATA))) return MCI_NO_COMMAND_TABLE;
-    if (!(handle = LoadResource16( hInst, res ))) return MCI_NO_COMMAND_TABLE;
-    ptr16 = LockResource16(handle);
-    /* converting the 16 bit resource table into a 32W one */
-    if ((ptr32 = HeapAlloc(GetProcessHeap(), 0, size)))
-    {
-        do {
-            str = (LPCSTR)ptr16;
-            ptr16 += strlen(str) + 1;
-            flg = *(const DWORD*)ptr16;
-            eid = *(const WORD*)(ptr16 + sizeof(DWORD));
-            ptr16 += sizeof(DWORD) + sizeof(WORD);
-            len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0) * sizeof(WCHAR);
-            if (pos + len + sizeof(DWORD) + sizeof(WORD) > size)
-            {
-                while (pos + len * sizeof(WCHAR) + sizeof(DWORD) + sizeof(WORD) > size) size += 1024;
-                ptr32 = HeapReAlloc(GetProcessHeap(), 0, ptr32, size);
-                if (!ptr32) goto the_end;
-            }
-            MultiByteToWideChar(CP_ACP, 0, str, -1, (LPWSTR)(ptr32 + pos), len / sizeof(WCHAR));
-            *(DWORD*)(ptr32 + pos + len) = flg;
-            *(WORD*)(ptr32 + pos + len + sizeof(DWORD)) = eid;
-            pos += len + sizeof(DWORD) + sizeof(WORD);
-        } while (eid != MCI_END_COMMAND_LIST);
-    }
-the_end:
-    FreeResource16( handle );
-    if (ptr32) ret = MCI_SetCommandTable(ptr32, type);
-    return ret;
-}
-
-/**************************************************************************
- *                    	mciFreeCommandResource			[MMSYSTEM.713]
- */
-BOOL16 WINAPI mciFreeCommandResource16(UINT16 uTable)
-{
-    TRACE("(%04x)!\n", uTable);
-
-    return MCI_DeleteCommandTable(uTable, TRUE);
-}
-
 /* ###################################################
  * #                     JOYSTICK                    #
  * ###################################################

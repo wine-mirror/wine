@@ -197,8 +197,6 @@ void            MMDRV_InstallMap(unsigned int, MMDRV_MAPFUNC, MMDRV_UNMAPFUNC,
 
 const char* 	MCI_MessageToString(UINT wMsg);
 DWORD           MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
-UINT            MCI_SetCommandTable(void *table, UINT uDevType);
-BOOL	        MCI_DeleteCommandTable(UINT uTbl, BOOL delete);
 LPWSTR          MCI_strdupAtoW(LPCSTR str);
 LPSTR           MCI_strdupWtoA(LPCWSTR str);
 

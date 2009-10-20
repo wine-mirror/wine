@@ -84,6 +84,7 @@ static const WCHAR wszSystemIni[] = {'s','y','s','t','e','m','.','i','n','i',0};
 static WINE_MCIDRIVER *MciDrivers;
 
 static UINT WINAPI MCI_DefYieldProc(MCIDEVICEID wDevID, DWORD data);
+static UINT MCI_SetCommandTable(HGLOBAL hMem, UINT uDevType);
 
 /* dup a string and uppercase it */
 static inline LPWSTR str_dup_upper( LPCWSTR str )
@@ -581,6 +582,7 @@ static	DWORD	MCI_GetDevTypeFromFileName(LPCWSTR fileName, LPWSTR buf, UINT len)
 
 typedef struct tagWINE_MCICMDTABLE {
     UINT		uDevType;
+    HGLOBAL             hMem;
     const BYTE*		lpTable;
     UINT		nVerbs;		/* number of verbs in command table */
     LPCWSTR*		aVerbs;		/* array of verbs to speed up the verb look up process */
@@ -694,7 +696,7 @@ static	UINT		MCI_GetCommandTable(UINT uDevType)
 
 	if (hRsrc) hMem = LoadResource(hWinMM32Instance, hRsrc);
 	if (hMem) {
-	    uTbl = MCI_SetCommandTable(LockResource(hMem), uDevType);
+	    uTbl = MCI_SetCommandTable(hMem, uDevType);
 	} else {
 	    WARN("No command table found in resource %p[%s]\n",
 		 hWinMM32Instance, debugstr_w(str));
@@ -707,7 +709,7 @@ static	UINT		MCI_GetCommandTable(UINT uDevType)
 /**************************************************************************
  * 				MCI_SetCommandTable		[internal]
  */
-UINT MCI_SetCommandTable(void *table, UINT uDevType)
+static UINT MCI_SetCommandTable(HGLOBAL hMem, UINT uDevType)
 {
     int		        uTbl;
     static	BOOL	bInitDone = FALSE;
@@ -721,7 +723,7 @@ UINT MCI_SetCommandTable(void *table, UINT uDevType)
 	bInitDone = TRUE;
 	MCI_GetCommandTable(0);
     }
-    TRACE("(%p, %u)\n", table, uDevType);
+    TRACE("(%p, %u)\n", hMem, uDevType);
     for (uTbl = 0; uTbl < MAX_MCICMDTABLE; uTbl++) {
 	if (!S_MciCmdTable[uTbl].lpTable) {
 	    const BYTE* lmem;
@@ -730,7 +732,8 @@ UINT MCI_SetCommandTable(void *table, UINT uDevType)
 	    WORD	count;
 
 	    S_MciCmdTable[uTbl].uDevType = uDevType;
-	    S_MciCmdTable[uTbl].lpTable = table;
+	    S_MciCmdTable[uTbl].lpTable = LockResource(hMem);
+	    S_MciCmdTable[uTbl].hMem = hMem;
 
 	    if (TRACE_ON(mci)) {
 		MCI_DumpCommandTable(uTbl);
@@ -768,21 +771,6 @@ UINT MCI_SetCommandTable(void *table, UINT uDevType)
     }
 
     return MCI_NO_COMMAND_TABLE;
-}
-
-/**************************************************************************
- * 				MCI_DeleteCommandTable		[internal]
- */
-BOOL	MCI_DeleteCommandTable(UINT uTbl, BOOL delete)
-{
-    if (uTbl >= MAX_MCICMDTABLE || !S_MciCmdTable[uTbl].lpTable)
-	return FALSE;
-
-    if (delete) HeapFree(GetProcessHeap(), 0, (void*)S_MciCmdTable[uTbl].lpTable);
-    S_MciCmdTable[uTbl].lpTable = NULL;
-    HeapFree(GetProcessHeap(), 0, S_MciCmdTable[uTbl].aVerbs);
-    S_MciCmdTable[uTbl].aVerbs = 0;
-    return TRUE;
 }
 
 /**************************************************************************
@@ -1539,9 +1527,9 @@ BOOL WINAPI mciExecute(LPCSTR lpstrCommand)
  */
 UINT WINAPI mciLoadCommandResource(HINSTANCE hInst, LPCWSTR resNameW, UINT type)
 {
-    HRSRC	        hRsrc = 0;
-    HGLOBAL      	hMem;
-    UINT16		ret = MCI_NO_COMMAND_TABLE;
+    UINT        ret = MCI_NO_COMMAND_TABLE;
+    HRSRC	hRsrc = 0;
+    HGLOBAL     hMem;
 
     TRACE("(%p, %s, %d)!\n", hInst, debugstr_w(resNameW), type);
 
@@ -1563,13 +1551,13 @@ UINT WINAPI mciLoadCommandResource(HINSTANCE hInst, LPCWSTR resNameW, UINT type)
 	}
 #endif
     }
-    if (!(hRsrc = FindResourceW(hInst, resNameW, (LPWSTR)RT_RCDATA))) {
-	WARN("No command table found in resource\n");
-    } else if ((hMem = LoadResource(hInst, hRsrc))) {
-	ret = MCI_SetCommandTable(LockResource(hMem), type);
-    } else {
-	WARN("Couldn't load resource.\n");
+    if ((hRsrc = FindResourceW(hInst, resNameW, (LPWSTR)RT_RCDATA)) &&
+        (hMem = LoadResource(hInst, hRsrc))) {
+        ret = MCI_SetCommandTable(hMem, type);
+        FreeResource(hMem);
     }
+    else WARN("No command table found in module for %s\n", debugstr_w(resNameW));
+
     TRACE("=> %04x\n", ret);
     return ret;
 }
@@ -1581,7 +1569,16 @@ BOOL WINAPI mciFreeCommandResource(UINT uTable)
 {
     TRACE("(%08x)!\n", uTable);
 
-    return MCI_DeleteCommandTable(uTable, FALSE);
+    if (uTable >= MAX_MCICMDTABLE || !S_MciCmdTable[uTable].lpTable)
+	return FALSE;
+
+    FreeResource(S_MciCmdTable[uTable].hMem);
+    S_MciCmdTable[uTable].hMem = NULL;
+    S_MciCmdTable[uTable].lpTable = NULL;
+    HeapFree(GetProcessHeap(), 0, S_MciCmdTable[uTable].aVerbs);
+    S_MciCmdTable[uTable].aVerbs = 0;
+    S_MciCmdTable[uTable].nVerbs = 0;
+    return TRUE;
 }
 
 /**************************************************************************

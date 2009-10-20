@@ -323,3 +323,22 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrRet,
 {
     return mciSendStringA(lpstrCommand, lpstrRet, uRetLen, HWND_32(hwndCallback));
 }
+
+/**************************************************************************
+ *                    	mciLoadCommandResource			[MMSYSTEM.705]
+ */
+UINT16 WINAPI mciLoadCommandResource16(HINSTANCE16 hInst, LPCSTR resname, UINT16 type)
+{
+    TRACE("(%04x, %s, %x)!\n", hInst, resname, type);
+    return MCI_NO_COMMAND_TABLE;
+}
+
+/**************************************************************************
+ *                    	mciFreeCommandResource			[MMSYSTEM.713]
+ */
+BOOL16 WINAPI mciFreeCommandResource16(UINT16 uTable)
+{
+    TRACE("(%04x)!\n", uTable);
+
+    return FALSE;
+}
