@@ -56,32 +56,34 @@ static const CHAR manifest[] =
     "</dependency>\n"
     "</assembly>\n";
 
-static void unload_v6_module(ULONG_PTR cookie)
+static void unload_v6_module(ULONG_PTR cookie, HANDLE hCtx)
 {
     HANDLE hKernel32;
     BOOL (WINAPI *pDeactivateActCtx)(DWORD, ULONG_PTR);
+    VOID (WINAPI *pReleaseActCtx)(HANDLE);
 
     hKernel32 = GetModuleHandleA("kernel32.dll");
     pDeactivateActCtx = (void*)GetProcAddress(hKernel32, "DeactivateActCtx");
-    if (!pDeactivateActCtx)
+    pReleaseActCtx = (void*)GetProcAddress(hKernel32, "ReleaseActCtx");
+    if (!pDeactivateActCtx || !pReleaseActCtx)
     {
         win_skip("Activation contexts unsupported\n");
         return;
     }
 
     pDeactivateActCtx(0, cookie);
+    pReleaseActCtx(hCtx);
 
     DeleteFileA(manifest_name);
 }
 
-static BOOL load_v6_module(ULONG_PTR *pcookie)
+static BOOL load_v6_module(ULONG_PTR *pcookie, HANDLE *hCtx)
 {
     HANDLE hKernel32;
     HANDLE (WINAPI *pCreateActCtxA)(ACTCTXA*);
     BOOL (WINAPI *pActivateActCtx)(HANDLE, ULONG_PTR*);
 
     ACTCTXA ctx;
-    HANDLE hCtx;
     BOOL ret;
     HANDLE file;
     DWORD written;
@@ -121,10 +123,10 @@ static BOOL load_v6_module(ULONG_PTR *pcookie)
     ctx.cbSize = sizeof(ctx);
     ctx.lpSource = manifest_name;
 
-    hCtx = pCreateActCtxA(&ctx);
-    ok(hCtx != 0, "Expected context handle\n");
+    *hCtx = pCreateActCtxA(&ctx);
+    ok(*hCtx != 0, "Expected context handle\n");
 
-    ret = pActivateActCtx(hCtx, pcookie);
+    ret = pActivateActCtx(*hCtx, pcookie);
     expect(TRUE, ret);
 
     if (!ret)

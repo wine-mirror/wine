@@ -1247,6 +1247,7 @@ cleanup:
 START_TEST(imagelist)
 {
     ULONG_PTR ctx_cookie;
+    HANDLE hCtx;
 
     HMODULE hComCtl32 = GetModuleHandle("comctl32.dll");
     pImageList_Create = NULL;   /* These are not needed for non-v6.0 tests*/
@@ -1270,7 +1271,7 @@ START_TEST(imagelist)
 
     /* Now perform v6 tests */
 
-    if (!load_v6_module(&ctx_cookie))
+    if (!load_v6_module(&ctx_cookie, &hCtx))
         return;
 
     /* Reload comctl32 */
@@ -1284,5 +1285,5 @@ START_TEST(imagelist)
     test_ImageList_DrawIndirect();
     test_shell_imagelist();
 
-    unload_v6_module(ctx_cookie);
+    unload_v6_module(ctx_cookie, hCtx);
 }

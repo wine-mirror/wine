@@ -1814,6 +1814,7 @@ START_TEST(header)
 {
     HWND parent_hwnd;
     ULONG_PTR ctx_cookie;
+    HANDLE hCtx;
     HWND hwnd;
 
     if (!init())
@@ -1841,7 +1842,7 @@ START_TEST(header)
     test_hdm_unicodeformatMessages(parent_hwnd);
     test_hdm_bitmapmarginMessages(parent_hwnd);
 
-    if (!load_v6_module(&ctx_cookie))
+    if (!load_v6_module(&ctx_cookie, &hCtx))
     {
         DestroyWindow(parent_hwnd);
         return;
@@ -1856,7 +1857,7 @@ START_TEST(header)
     if (!IsWindow(hwnd))
     {
         win_skip("FIXME: failed to create Header window.\n");
-        unload_v6_module(ctx_cookie);
+        unload_v6_module(ctx_cookie, hCtx);
         DestroyWindow(parent_hwnd);
         return;
     }
@@ -1867,7 +1868,7 @@ START_TEST(header)
     test_hdf_fixedwidth(parent_hwnd);
     test_hds_nosizing(parent_hwnd);
 
-    unload_v6_module(ctx_cookie);
+    unload_v6_module(ctx_cookie, hCtx);
 
     DestroyWindow(parent_hwnd);
 }

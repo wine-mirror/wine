@@ -4064,6 +4064,7 @@ START_TEST(listview)
     BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
 
     ULONG_PTR ctx_cookie;
+    HANDLE hCtx;
     HWND hwnd;
 
     hComctl32 = GetModuleHandleA("comctl32.dll");
@@ -4116,7 +4117,7 @@ START_TEST(listview)
     test_getcolumnwidth();
     test_ApproximateViewRect();
 
-    if (!load_v6_module(&ctx_cookie))
+    if (!load_v6_module(&ctx_cookie, &hCtx))
     {
         DestroyWindow(hwndparent);
         return;
@@ -4130,7 +4131,7 @@ START_TEST(listview)
     if (!IsWindow(hwnd))
     {
         win_skip("FIXME: failed to create ListView window.\n");
-        unload_v6_module(ctx_cookie);
+        unload_v6_module(ctx_cookie, hCtx);
         DestroyWindow(hwndparent);
         return;
     }
@@ -4144,7 +4145,7 @@ START_TEST(listview)
     test_scrollnotify();
     test_LVS_EX_TRANSPARENTBKGND();
 
-    unload_v6_module(ctx_cookie);
+    unload_v6_module(ctx_cookie, hCtx);
 
     DestroyWindow(hwndparent);
 }
