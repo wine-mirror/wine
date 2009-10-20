@@ -4449,6 +4449,142 @@ static void test_tables_order(void)
     DeleteFile(msifile);
 }
 
+static void test_rows_order(void)
+{
+    const char *query;
+    MSIHANDLE hdb = 0, hview = 0, hrec = 0;
+    UINT r;
+    char buffer[100];
+    DWORD sz;
+
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
+
+    query = "CREATE TABLE `foo` ( "
+        "`bar` LONGCHAR NOT NULL PRIMARY KEY `bar`)";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to create table\n");
+
+    r = run_query(hdb, 0, "INSERT INTO `foo` "
+            "( `bar` ) VALUES ( 'A' )");
+    ok(r == ERROR_SUCCESS, "cannot add value to table\n");
+
+    r = run_query(hdb, 0, "INSERT INTO `foo` "
+            "( `bar` ) VALUES ( 'B' )");
+    ok(r == ERROR_SUCCESS, "cannot add value to table\n");
+
+    r = run_query(hdb, 0, "INSERT INTO `foo` "
+            "( `bar` ) VALUES ( 'C' )");
+    ok(r == ERROR_SUCCESS, "cannot add value to table\n");
+
+    r = run_query(hdb, 0, "INSERT INTO `foo` "
+            "( `bar` ) VALUES ( 'D' )");
+    ok(r == ERROR_SUCCESS, "cannot add value to table\n");
+
+    r = run_query(hdb, 0, "INSERT INTO `foo` "
+            "( `bar` ) VALUES ( 'E' )");
+    ok(r == ERROR_SUCCESS, "cannot add value to table\n");
+
+    r = run_query(hdb, 0, "INSERT INTO `foo` "
+            "( `bar` ) VALUES ( 'F' )");
+    ok(r == ERROR_SUCCESS, "cannot add value to table\n");
+
+    query = "CREATE TABLE `bar` ( "
+        "`foo` LONGCHAR NOT NULL, "
+        "`baz` LONGCHAR NOT NULL "
+        "PRIMARY KEY `foo` )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to create table\n");
+
+    r = run_query(hdb, 0, "INSERT INTO `bar` "
+            "( `foo`, `baz` ) VALUES ( 'C', 'E' )");
+    ok(r == ERROR_SUCCESS, "cannot add value to table\n");
+
+    r = run_query(hdb, 0, "INSERT INTO `bar` "
+            "( `foo`, `baz` ) VALUES ( 'F', 'A' )");
+    ok(r == ERROR_SUCCESS, "cannot add value to table\n");
+
+    r = run_query(hdb, 0, "INSERT INTO `bar` "
+            "( `foo`, `baz` ) VALUES ( 'A', 'B' )");
+    ok(r == ERROR_SUCCESS, "cannot add value to table\n");
+
+    r = run_query(hdb, 0, "INSERT INTO `bar` "
+            "( `foo`, `baz` ) VALUES ( 'D', 'E' )");
+    ok(r == ERROR_SUCCESS, "cannot add value to table\n");
+
+    /* The rows of the table must be ordered by the column values of
+       each row. For strings, the column value is the string id
+       in the string table.  */
+
+    query = "SELECT * FROM `bar`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 1, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmp(buffer, "A"), "Expected A, got %s\n", buffer);
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 2, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmp(buffer, "B"), "Expected B, got %s\n", buffer);
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 1, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmp(buffer, "C"), "Expected E, got %s\n", buffer);
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 2, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmp(buffer, "E"), "Expected E, got %s\n", buffer);
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 1, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmp(buffer, "D"), "Expected D, got %s\n", buffer);
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 2, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmp(buffer, "E"), "Expected E, got %s\n", buffer);
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 1, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmp(buffer, "F"), "Expected F, got %s\n", buffer);
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 2, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmp(buffer, "A"), "Expected A, got %s\n", buffer);
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    r = MsiViewClose(hview);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(hview);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    r = MsiCloseHandle(hdb);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    DeleteFile(msifile);
+}
+
 static void test_select_markers(void)
 {
     MSIHANDLE hdb = 0, rec, view, res;
@@ -8327,6 +8463,7 @@ START_TEST(db)
     test_update();
     test_special_tables();
     test_tables_order();
+    test_rows_order();
     test_select_markers();
     test_viewmodify_update();
     test_viewmodify_assign();
