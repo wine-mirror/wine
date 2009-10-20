@@ -415,7 +415,7 @@ static BOOL WINAPI CRYPT_AsnEncodePubKeyInfo(DWORD dwCertEncodingType,
     {
         const CERT_PUBLIC_KEY_INFO *info = pvStructInfo;
         struct AsnEncodeSequenceItem items[] = {
-         { &info->Algorithm, CRYPT_AsnEncodeAlgorithmId, 0 },
+         { &info->Algorithm, CRYPT_AsnEncodeAlgorithmIdWithNullParams, 0 },
          { &info->PublicKey, CRYPT_AsnEncodeBits, 0 },
         };
 

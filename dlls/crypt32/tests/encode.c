@@ -2613,8 +2613,8 @@ static void test_decodeExtensions(DWORD dwEncoding)
 
 /* MS encodes public key info with a NULL if the algorithm identifier's
  * parameters are empty.  However, when encoding an algorithm in a CERT_INFO,
- * it encodes them by omitting the algorithm parameters.  This latter approach
- * seems more correct, so accept either form.
+ * it encodes them by omitting the algorithm parameters.  It accepts either
+ * form for decoding.
  */
 struct encodedPublicKey
 {
@@ -2692,16 +2692,11 @@ static void test_encodePublicKeyInfo(DWORD dwEncoding)
          "CryptEncodeObjectEx failed: %08x\n", GetLastError());
         if (buf)
         {
-            ok(bufSize == pubKeys[i].encoded[1] + 2 ||
-             bufSize == pubKeys[i].encodedNoNull[1] + 2,
-             "Expected %d or %d bytes, got %d\n", pubKeys[i].encoded[1] + 2,
-             pubKeys[i].encodedNoNull[1] + 2, bufSize);
+            ok(bufSize == pubKeys[i].encoded[1] + 2,
+             "Expected %d bytes, got %d\n", pubKeys[i].encoded[1] + 2, bufSize);
             if (bufSize == pubKeys[i].encoded[1] + 2)
                 ok(!memcmp(buf, pubKeys[i].encoded, pubKeys[i].encoded[1] + 2),
                  "Unexpected value\n");
-            else if (bufSize == pubKeys[i].encodedNoNull[1] + 2)
-                ok(!memcmp(buf, pubKeys[i].encodedNoNull,
-                 pubKeys[i].encodedNoNull[1] + 2), "Unexpected value\n");
             LocalFree(buf);
         }
     }
