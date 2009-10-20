@@ -2883,6 +2883,8 @@ int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
                      const struct WS_timeval* ws_timeout)
 {
     struct pollfd *pollfds;
+    struct timeval tv1, tv2;
+    int torig = 0;
     int count, ret, timeout = -1;
 
     TRACE("read %p, write %p, excp %p timeout %p\n",
@@ -2894,9 +2896,32 @@ int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
         return SOCKET_ERROR;
     }
 
-    if (ws_timeout) timeout = (ws_timeout->tv_sec * 1000) + (ws_timeout->tv_usec + 999) / 1000;
+    if (ws_timeout)
+    {
+        torig = (ws_timeout->tv_sec * 1000) + (ws_timeout->tv_usec + 999) / 1000;
+        timeout = torig;
+        gettimeofday( &tv1, 0 );
+    }
 
-    ret = poll( pollfds, count, timeout );
+    while ((ret = poll( pollfds, count, timeout )) < 0)
+    {
+        if (errno == EINTR)
+        {
+            if (!ws_timeout) continue;
+            gettimeofday( &tv2, 0 );
+
+            tv2.tv_sec  -= tv1.tv_sec;
+            tv2.tv_usec -= tv1.tv_usec;
+            if (tv2.tv_usec < 0)
+            {
+                tv2.tv_usec += 1000000;
+                tv2.tv_sec  -= 1;
+            }
+
+            timeout = torig - (tv2.tv_sec * 1000) - (tv2.tv_usec + 999) / 1000;
+            if (timeout <= 0) break;
+        } else break;
+    }
     release_poll_fds( ws_readfds, ws_writefds, ws_exceptfds, pollfds );
 
     if (ret == -1) SetLastError(wsaErrno());
