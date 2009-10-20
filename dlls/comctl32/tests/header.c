@@ -954,7 +954,7 @@ static void test_hdm_sethotdivider(HWND hParent)
 static void test_hdm_imageMessages(HWND hParent)
 {
     HIMAGELIST hImageList = ImageList_Create (4, 4, 0, 1, 0);
-    HIMAGELIST hImageListRetVal;
+    HIMAGELIST hIml;
     HWND hChild;
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -964,14 +964,15 @@ static void test_hdm_imageMessages(HWND hParent)
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
-    hImageListRetVal = (HIMAGELIST) SendMessage(hChild, HDM_SETIMAGELIST, 0, (LPARAM) hImageList);
-    ok(hImageListRetVal == NULL, "Expected NULL, got %p\n", hImageListRetVal);
+    hIml = (HIMAGELIST) SendMessage(hChild, HDM_SETIMAGELIST, 0, (LPARAM) hImageList);
+    ok(hIml == NULL, "Expected NULL, got %p\n", hIml);
 
-    hImageListRetVal = (HIMAGELIST) SendMessage(hChild, HDM_GETIMAGELIST, 0, 0);
-    ok(hImageListRetVal != NULL, "Expected non-NULL handle, got %p\n", hImageListRetVal);
+    hIml = (HIMAGELIST) SendMessage(hChild, HDM_GETIMAGELIST, 0, 0);
+    ok(hIml != NULL, "Expected non-NULL handle, got %p\n", hIml);
 
-    hImageListRetVal = (HIMAGELIST) SendMessage(hChild, HDM_CREATEDRAGIMAGE, 0, 0);
-    ok(hImageListRetVal != NULL, "Expected non-NULL handle, got %p\n", hImageListRetVal);
+    hIml = (HIMAGELIST) SendMessage(hChild, HDM_CREATEDRAGIMAGE, 0, 0);
+    ok(hIml != NULL, "Expected non-NULL handle, got %p\n", hIml);
+    ImageList_Destroy(hIml);
 
     ok_sequence(sequences, HEADER_SEQ_INDEX, imageMessages_seq, "imageMessages sequence testing", FALSE);
 
