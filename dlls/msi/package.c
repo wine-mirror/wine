@@ -966,7 +966,11 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
             return GetLastError();
         }
 
-        r = MSI_OpenDatabaseW( file, MSIDBOPEN_READONLY, &db );
+        /* transforms that add binary streams require that we open the database
+         * read/write, which is safe because we always create a copy that is thrown
+         * away when we're done.
+         */
+        r = MSI_OpenDatabaseW( file, MSIDBOPEN_DIRECT, &db );
         if( r != ERROR_SUCCESS )
         {
             if (file != szPackage)
