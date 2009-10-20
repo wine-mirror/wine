@@ -485,7 +485,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_buffer *object;
-    int dxVersion = ( (IWineD3DImpl *) This->wineD3D)->dxVersion;
     HRESULT hr;
     BOOL conv;
 
@@ -543,8 +542,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
         TRACE("Not creating a vbo because the vertex buffer is in system memory\n");
     } else if(Usage & WINED3DUSAGE_DYNAMIC) {
         TRACE("Not creating a vbo because the buffer has dynamic usage\n");
-    } else if(dxVersion <= 7 && conv) {
-        TRACE("Not creating a vbo because dxVersion is 7 and the fvf needs conversion\n");
+    } else if(!(Usage & WINED3DUSAGE_OPTIMIZE) && conv) {
+        TRACE("Not creating a vbo because the fvf needs conversion, but VB optimization is disabled\n");
     } else {
         object->flags |= WINED3D_BUFFER_CREATEBO;
     }
