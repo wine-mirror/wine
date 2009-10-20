@@ -279,13 +279,6 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
         DWORD count;
         LONG rc;
 
-        if (value_name)
-        {
-            RegCloseKey(subkey);
-            reg_message(STRING_INVALID_CMDLINE);
-            return 1;
-        }
-
         rc = RegQueryInfoKeyW(subkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
             &maxValue, NULL, NULL, NULL);
         if (rc != ERROR_SUCCESS)
