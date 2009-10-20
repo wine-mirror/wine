@@ -4565,6 +4565,7 @@ static BOOL WINAPI CRYPT_ExportRsaPublicKeyInfoEx(HCRYPTPROV_OR_NCRYPT_KEY_HANDL
                         }
                         else
                         {
+                            *pcbInfo = sizeNeeded;
                             pInfo->Algorithm.pszObjId = (char *)pInfo +
                              sizeof(CERT_PUBLIC_KEY_INFO);
                             lstrcpyA(pInfo->Algorithm.pszObjId,
