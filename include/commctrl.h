@@ -5054,6 +5054,7 @@ static const WCHAR WC_LINK[] = { 'S','y','s','L','i','n','k',0 };
 
 /* SysLink styles */
 #define LWS_TRANSPARENT      0x0001
+#define LWS_IGNORERETURN     0x0002
 
 /* SysLink messages */
 #define LM_HITTEST           (WM_USER + 768)
