@@ -3802,63 +3802,6 @@ static UINT ACTION_UnpublishFeatures(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
-static UINT msi_get_local_package_name( LPWSTR path )
-{
-    static const WCHAR szInstaller[] = {
-        '\\','I','n','s','t','a','l','l','e','r','\\',0};
-    static const WCHAR fmt[] = { '%','x','.','m','s','i',0};
-    DWORD time, len, i;
-    HANDLE handle;
-
-    time = GetTickCount();
-    GetWindowsDirectoryW( path, MAX_PATH );
-    lstrcatW( path, szInstaller );
-    CreateDirectoryW( path, NULL );
-
-    len = lstrlenW(path);
-    for (i=0; i<0x10000; i++)
-    {
-        snprintfW( &path[len], MAX_PATH - len, fmt, (time+i)&0xffff );
-        handle = CreateFileW( path, GENERIC_WRITE, 0, NULL,
-                              CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
-        if (handle != INVALID_HANDLE_VALUE)
-        {
-            CloseHandle(handle);
-            break;
-        }
-        if (GetLastError() != ERROR_FILE_EXISTS &&
-            GetLastError() != ERROR_SHARING_VIOLATION)
-            return ERROR_FUNCTION_FAILED;
-    }
-
-    return ERROR_SUCCESS;
-}
-
-static UINT msi_make_package_local( MSIPACKAGE *package, HKEY hkey )
-{
-    WCHAR packagefile[MAX_PATH];
-    UINT r;
-
-    r = msi_get_local_package_name( packagefile );
-    if (r != ERROR_SUCCESS)
-        return r;
-
-    TRACE("Copying to local package %s\n",debugstr_w(packagefile));
-
-    r = CopyFileW( package->db->path, packagefile, FALSE);
-
-    if (!r)
-    {
-        ERR("Unable to copy package (%s -> %s) (error %d)\n",
-            debugstr_w(package->db->path), debugstr_w(packagefile), GetLastError());
-        return ERROR_FUNCTION_FAILED;
-    }
-
-    msi_reg_set_val_str( hkey, INSTALLPROPERTY_LOCALPACKAGEW, packagefile );
-
-    return ERROR_SUCCESS;
-}
-
 static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
 {
     LPWSTR prop, val, key;
@@ -3990,7 +3933,9 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         goto done;
 
-    msi_make_package_local(package, props);
+    msi_reg_set_val_str( props, INSTALLPROPERTY_LOCALPACKAGEW, package->db->localfile );
+    msi_free( package->db->localfile );
+    package->db->localfile = NULL;
 
     rc = msi_publish_install_properties(package, hkey);
     if (rc != ERROR_SUCCESS)

@@ -870,6 +870,38 @@ LPCWSTR msi_download_file( LPCWSTR szUrl, LPWSTR filename )
     return filename;
 }
 
+static UINT msi_get_local_package_name( LPWSTR path )
+{
+    static const WCHAR szInstaller[] = {
+        '\\','I','n','s','t','a','l','l','e','r','\\',0};
+    static const WCHAR fmt[] = { '%','x','.','m','s','i',0};
+    DWORD time, len, i;
+    HANDLE handle;
+
+    time = GetTickCount();
+    GetWindowsDirectoryW( path, MAX_PATH );
+    strcatW( path, szInstaller );
+    CreateDirectoryW( path, NULL );
+
+    len = strlenW(path);
+    for (i = 0; i < 0x10000; i++)
+    {
+        snprintfW( &path[len], MAX_PATH - len, fmt, (time + i)&0xffff );
+        handle = CreateFileW( path, GENERIC_WRITE, 0, NULL,
+                              CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
+        if (handle != INVALID_HANDLE_VALUE)
+        {
+            CloseHandle(handle);
+            break;
+        }
+        if (GetLastError() != ERROR_FILE_EXISTS &&
+            GetLastError() != ERROR_SHARING_VIOLATION)
+            return ERROR_FUNCTION_FAILED;
+    }
+
+    return ERROR_SUCCESS;
+}
+
 UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 {
     static const WCHAR OriginalDatabase[] =
@@ -880,7 +912,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     MSIHANDLE handle;
     LPWSTR ptr, base_url = NULL;
     UINT r;
-    WCHAR temppath[MAX_PATH];
+    WCHAR temppath[MAX_PATH], localfile[MAX_PATH];
     LPCWSTR file = szPackage;
 
     TRACE("%s %p\n", debugstr_w(szPackage), pPackage);
@@ -921,6 +953,19 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         else
             file = copy_package_to_temp( szPackage, temppath );
 
+        r = msi_get_local_package_name( localfile );
+        if (r != ERROR_SUCCESS)
+            return r;
+
+        TRACE("Copying to local package %s\n", debugstr_w(localfile));
+
+        if (!CopyFileW( file, localfile, FALSE ))
+        {
+            ERR("Unable to copy package (%s -> %s) (error %u)\n",
+                debugstr_w(file), debugstr_w(localfile), GetLastError());
+            return GetLastError();
+        }
+
         r = MSI_OpenDatabaseW( file, MSIDBOPEN_READONLY, &db );
         if( r != ERROR_SUCCESS )
         {
@@ -932,6 +977,8 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 
             return r;
         }
+
+        db->localfile = strdupW( localfile );
     }
 
     package = MSI_CreatePackage( db, base_url );

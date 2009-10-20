@@ -65,6 +65,11 @@ static VOID MSI_CloseDatabase( MSIOBJECTHDR *arg )
         DeleteFileW( db->deletefile );
         msi_free( db->deletefile );
     }
+    if (db->localfile)
+    {
+        DeleteFileW( db->localfile );
+        msi_free( db->localfile );
+    }
 }
 
 UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)

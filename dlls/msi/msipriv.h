@@ -76,6 +76,7 @@ typedef struct tagMSIDATABASE
     UINT bytes_per_strref;
     LPWSTR path;
     LPWSTR deletefile;
+    LPWSTR localfile;
     LPCWSTR mode;
     struct list tables;
     struct list transforms;
