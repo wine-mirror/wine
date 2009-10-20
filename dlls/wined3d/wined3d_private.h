@@ -1055,6 +1055,7 @@ struct wined3d_context
     WORD num_untracked_materials : 2;   /* Max value 2 */
     WORD current : 1;
     WORD destroyed : 1;
+    WORD valid : 1;
     BYTE texShaderBumpMap;              /* MAX_TEXTURES, 8 */
     BYTE lastWasPow2Texture;            /* MAX_TEXTURES, 8 */
     DWORD                   numbered_array_mask;

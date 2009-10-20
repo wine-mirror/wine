@@ -782,6 +782,18 @@ BOOL context_set_current(struct wined3d_context *ctx)
     return TlsSetValue(wined3d_context_tls_idx, ctx);
 }
 
+static void context_validate(struct wined3d_context *context)
+{
+    HWND wnd = WindowFromDC(context->hdc);
+
+    if (wnd != context->win_handle)
+    {
+        WARN("DC %p belongs to window %p instead of %p.\n",
+                context->hdc, wnd, context->win_handle);
+        context->valid = 0;
+    }
+}
+
 /*****************************************************************************
  * Context_MarkStateDirty
  *
@@ -1247,6 +1259,7 @@ struct wined3d_context *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceI
         }
         goto out;
     }
+    ret->valid = 1;
     ret->gl_info = &This->adapter->gl_info;
     ret->surface = (IWineD3DSurface *) target;
     ret->current_rt = (IWineD3DSurface *)target;
@@ -1771,6 +1784,7 @@ static inline struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWin
 
     if (current_context && current_context->current_rt == target)
     {
+        context_validate(current_context);
         return current_context;
     }
 
@@ -1857,6 +1871,8 @@ retry:
         old_render_offscreen = context->render_offscreen;
         context->render_offscreen = TRUE;
     }
+
+    context_validate(context);
 
     if (context->render_offscreen != old_render_offscreen)
     {
@@ -2007,6 +2023,7 @@ struct wined3d_context *ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurfac
     TRACE("(%p): Selecting context for render target %p, thread %d\n", This, target, tid);
 
     context = FindContext(This, target, tid);
+    if (!context->valid) return context;
 
     gl_info = context->gl_info;
 
