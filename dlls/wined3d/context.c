@@ -440,6 +440,13 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
 /* GL locking is done by the caller */
 static void context_apply_fbo_state(struct wined3d_context *context)
 {
+    struct fbo_entry *entry, *entry2;
+
+    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_destroy_list, struct fbo_entry, entry)
+    {
+        context_destroy_fbo_entry(context, entry);
+    }
+
     if (context->render_offscreen)
     {
         context->current_fbo = context_find_fbo_entry(context);
@@ -586,8 +593,6 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
     {
         case WINED3DRTYPE_SURFACE:
         {
-            ActivateContext(This, NULL, CTXUSAGE_RESOURCELOAD);
-
             for (i = 0; i < This->numContexts; ++i)
             {
                 struct wined3d_context *context = This->contexts[i];
@@ -596,27 +601,27 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
 
                 if (context->current_rt == (IWineD3DSurface *)resource) context->current_rt = NULL;
 
-                ENTER_GL();
-
                 LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry)
                 {
-                    BOOL destroyed = FALSE;
                     UINT j;
 
-                    for (j = 0; !destroyed && j < GL_LIMITS(buffers); ++j)
+                    if (entry->depth_stencil == (IWineD3DSurface *)resource)
+                    {
+                        list_remove(&entry->entry);
+                        list_add_head(&context->fbo_destroy_list, &entry->entry);
+                        continue;
+                    }
+
+                    for (j = 0; j < GL_LIMITS(buffers); ++j)
                     {
                         if (entry->render_targets[j] == (IWineD3DSurface *)resource)
                         {
-                            context_destroy_fbo_entry(context, entry);
-                            destroyed = TRUE;
+                            list_remove(&entry->entry);
+                            list_add_head(&context->fbo_destroy_list, &entry->entry);
+                            break;
                         }
                     }
-
-                    if (!destroyed && entry->depth_stencil == (IWineD3DSurface *)resource)
-                        context_destroy_fbo_entry(context, entry);
                 }
-
-                LEAVE_GL();
             }
 
             break;
@@ -651,6 +656,12 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
             else if (GL_SUPPORT(NV_FENCE)) GL_EXTCALL(glDeleteFencesNV(1, &event_query->id));
         }
         event_query->context = NULL;
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_destroy_list, struct fbo_entry, entry)
+    {
+        if (!context->valid) entry->id = 0;
+        context_destroy_fbo_entry(context, entry);
     }
 
     LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry)
@@ -1292,6 +1303,7 @@ struct wined3d_context *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceI
     TRACE("Successfully created new context %p\n", ret);
 
     list_init(&ret->fbo_list);
+    list_init(&ret->fbo_destroy_list);
 
     /* Set up the context defaults */
     if (!context_set_current(ret))

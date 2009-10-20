@@ -1076,6 +1076,7 @@ struct wined3d_context
     /* FBOs */
     UINT                    fbo_entry_count;
     struct list             fbo_list;
+    struct list             fbo_destroy_list;
     struct fbo_entry        *current_fbo;
     GLuint                  src_fbo;
     GLuint                  dst_fbo;
