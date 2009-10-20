@@ -151,9 +151,10 @@ extern "C" {
 #define LCID_ALTERNATE_SORTS        0x4
 
 /* Locale flags */
-#define	LOCALE_NOUSEROVERRIDE	    0x80000000
-#define	LOCALE_USE_CP_ACP	    0x40000000
-#define	LOCALE_RETURN_NUMBER	    0x20000000
+#define LOCALE_NOUSEROVERRIDE         0x80000000
+#define LOCALE_USE_CP_ACP             0x40000000
+#define LOCALE_RETURN_NUMBER          0x20000000
+#define LOCALE_RETURN_GENITIVE_NAMES  0x10000000
 
 /* Locale information types */
 #define LOCALE_ILANGUAGE            0x0001

@@ -183,6 +183,69 @@ static void test_GetLocaleInfoA(void)
   ok(!strcmp(buffer, "Monday"), "Expected 'Monday', got '%s'\n", buffer);
 }
 
+static void test_GetLocaleInfoW(void)
+{
+  LCID lcid_en = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+  LCID lcid_ru = MAKELCID(MAKELANGID(LANG_RUSSIAN, SUBLANG_NEUTRAL), SORT_DEFAULT);
+  WCHAR bufferW[80], buffer2W[80];
+  CHAR bufferA[80];
+  DWORD ret;
+  INT i;
+
+  ret = GetLocaleInfoW(lcid_en, LOCALE_SMONTHNAME1, bufferW, COUNTOF(bufferW));
+  if (!ret) {
+      win_skip("GetLocaleInfoW() isn't implemented\n");
+      return;
+  }
+  ret = GetLocaleInfoW(lcid_ru, LOCALE_SMONTHNAME1, bufferW, COUNTOF(bufferW));
+  if (!ret) {
+      win_skip("LANG_RUSSIAN locale data unavailable\n");
+      return;
+  }
+  ret = GetLocaleInfoW(lcid_ru, LOCALE_SMONTHNAME1|LOCALE_RETURN_GENITIVE_NAMES,
+                       bufferW, COUNTOF(bufferW));
+  if (!ret) {
+      win_skip("LOCALE_RETURN_GENITIVE_NAMES isn't supported\n");
+      return;
+  }
+
+  /* LOCALE_RETURN_GENITIVE_NAMES isn't supported for GetLocaleInfoA */
+  bufferA[0] = 'a';
+  ret = GetLocaleInfoA(lcid_ru, LOCALE_SMONTHNAME1|LOCALE_RETURN_GENITIVE_NAMES,
+                       bufferA, COUNTOF(bufferA));
+todo_wine {
+  ok(ret == 0, "LOCALE_RETURN_GENITIVE_NAMES should fail with GetLocaleInfoA\n");
+  ok(bufferA[0] == 'a', "Expected buffer to be untouched\n");
+}
+
+  bufferW[0] = 'a';
+  ret = GetLocaleInfoW(lcid_ru, LOCALE_RETURN_GENITIVE_NAMES,
+                       bufferW, COUNTOF(bufferW));
+todo_wine {
+  ok(ret == 0,
+     "LOCALE_RETURN_GENITIVE_NAMES itself doesn't return anything, got %d\n", ret);
+  ok(bufferW[0] == 'a', "Expected buffer to be untouched\n");
+}
+
+  for (i = 0; i < 12; i++) {
+      bufferW[0] = 0;
+      ret = GetLocaleInfoW(lcid_ru, (LOCALE_SMONTHNAME1+i)|LOCALE_RETURN_GENITIVE_NAMES,
+                           bufferW, COUNTOF(bufferW));
+      ok(ret, "Expected non zero result\n");
+      ok(ret == lstrlenW(bufferW)+1, "Expected actual length, got %d, length %d\n",
+                                    ret, lstrlenW(bufferW));
+      buffer2W[0] = 0;
+      ret = GetLocaleInfoW(lcid_ru, LOCALE_SMONTHNAME1+i,
+                           buffer2W, COUNTOF(buffer2W));
+      ok(ret, "Expected non zero result\n");
+      ok(ret == lstrlenW(buffer2W)+1, "Expected actual length, got %d, length %d\n",
+                                    ret, lstrlenW(buffer2W));
+
+      todo_wine ok(lstrcmpW(bufferW, buffer2W) != 0,
+         "Expected genitive name to differ, got the same for month %d\n", i+1);
+  }
+}
+
 static void test_GetTimeFormatA(void)
 {
   int ret;
@@ -2471,6 +2534,7 @@ START_TEST(locale)
   test_EnumTimeFormatsA();
   test_EnumDateFormatsA();
   test_GetLocaleInfoA();
+  test_GetLocaleInfoW();
   test_GetTimeFormatA();
   test_GetDateFormatA();
   test_GetDateFormatW();
