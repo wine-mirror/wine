@@ -1811,6 +1811,7 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     doc->basedoc.doc_node = doc;
     doc->basedoc.doc_obj = doc_obj;
 
+    init_mutation(doc);
     init_dispex(&doc->node.dispex, (IUnknown*)HTMLDOMNODE(&doc->node), &HTMLDocumentNode_dispex);
     init_doc(&doc->basedoc, (IUnknown*)HTMLDOMNODE(&doc->node), DISPATCHEX(&doc->node.dispex));
     HTMLDocumentNode_SecMgr_Init(doc);
@@ -1887,7 +1888,7 @@ static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
         set_current_mon(&This->basedoc, NULL);
         if(This->basedoc.doc_node) {
             if(This->basedoc.doc_node->nsdoc)
-                remove_mutation_observer(This->nscontainer, This->basedoc.doc_node->nsdoc);
+                remove_mutation_observer(This->basedoc.doc_node);
             This->basedoc.doc_node->basedoc.doc_obj = NULL;
             IHTMLDocument2_Release(HTMLDOC(&This->basedoc.doc_node->basedoc));
         }

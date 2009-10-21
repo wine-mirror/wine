@@ -360,13 +360,6 @@ typedef struct {
     NSContainer *This;
 } nsEventListener;
 
-typedef struct _mutation_queue_t {
-    DWORD type;
-    nsISupports *nsiface;
-
-    struct _mutation_queue_t *next;
-} mutation_queue_t;
-
 struct NSContainer {
     const nsIWebBrowserChromeVtbl       *lpWebBrowserChromeVtbl;
     const nsIContextMenuListenerVtbl    *lpContextMenuListenerVtbl;
@@ -376,10 +369,6 @@ struct NSContainer {
     const nsIInterfaceRequestorVtbl     *lpInterfaceRequestorVtbl;
     const nsIWeakReferenceVtbl          *lpWeakReferenceVtbl;
     const nsISupportsWeakReferenceVtbl  *lpSupportsWeakReferenceVtbl;
-
-    const nsIDocumentObserverVtbl       *lpDocumentObserverVtbl;
-
-    const nsIRunnableVtbl  *lpRunnableVtbl;
 
     nsEventListener blur_listener;
     nsEventListener focus_listener;
@@ -403,9 +392,6 @@ struct NSContainer {
     nsIURIContentListener *content_listener;
 
     HWND hwnd;
-
-    mutation_queue_t *mutation_queue;
-    mutation_queue_t *mutation_queue_tail;
 
     nsChannelBSC *bscallback; /* hack */
     HWND reset_focus; /* hack */
@@ -476,11 +462,21 @@ typedef struct {
     ConnectionPoint cp;
 } HTMLTextContainer;
 
+typedef struct _mutation_queue_t {
+    DWORD type;
+    nsISupports *nsiface;
+
+    struct _mutation_queue_t *next;
+} mutation_queue_t;
+
 struct HTMLDocumentNode {
     HTMLDOMNode node;
     HTMLDocument basedoc;
 
     const IInternetHostSecurityManagerVtbl *lpIInternetHostSecurityManagerVtbl;
+
+    const nsIDocumentObserverVtbl  *lpIDocumentObserverVtbl;
+    const nsIRunnableVtbl  *lpIRunnableVtbl;
 
     LONG ref;
 
@@ -489,6 +485,9 @@ struct HTMLDocumentNode {
     BOOL content_ready;
 
     IInternetSecurityManager *secmgr;
+
+    mutation_queue_t *mutation_queue;
+    mutation_queue_t *mutation_queue_tail;
 
     struct list selection_list;
     struct list range_list;
@@ -534,9 +533,9 @@ struct HTMLDocumentNode {
 #define NSWEAKREF(x)     ((nsIWeakReference*)             &(x)->lpWeakReferenceVtbl)
 #define NSSUPWEAKREF(x)  ((nsISupportsWeakReference*)     &(x)->lpSupportsWeakReferenceVtbl)
 
-#define NSDOCOBS(x)      ((nsIDocumentObserver*)          &(x)->lpDocumentObserverVtbl)
+#define NSDOCOBS(x)      ((nsIDocumentObserver*)          &(x)->lpIDocumentObserverVtbl)
 
-#define NSRUNNABLE(x)    ((nsIRunnable*)  &(x)->lpRunnableVtbl)
+#define NSRUNNABLE(x)    ((nsIRunnable*)  &(x)->lpIRunnableVtbl)
 
 #define NSCHANNEL(x)     ((nsIChannel*)        &(x)->lpHttpChannelVtbl)
 #define NSHTTPCHANNEL(x) ((nsIHttpChannel*)    &(x)->lpHttpChannelVtbl)
@@ -601,9 +600,9 @@ void ConnectionPointContainer_Destroy(ConnectionPointContainer*);
 NSContainer *NSContainer_Create(HTMLDocumentObj*,NSContainer*);
 void NSContainer_Release(NSContainer*);
 
-void init_mutation(NSContainer*);
-void set_mutation_observer(NSContainer*,nsIDOMHTMLDocument*);
-void remove_mutation_observer(NSContainer*,nsIDOMHTMLDocument*);
+void init_mutation(HTMLDocumentNode*);
+void set_mutation_observer(HTMLDocumentNode*);
+void remove_mutation_observer(HTMLDocumentNode*);
 
 void HTMLDocument_LockContainer(HTMLDocumentObj*,BOOL);
 void show_context_menu(HTMLDocumentObj*,DWORD,POINT*,IDispatch*);

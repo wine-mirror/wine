@@ -837,9 +837,8 @@ void update_nsdocument(HTMLDocumentObj *doc)
     }
 
     if(doc->basedoc.doc_node && doc->basedoc.doc_node->nsdoc) {
-        remove_mutation_observer(doc->nscontainer, doc->basedoc.doc_node->nsdoc);
-
         doc_node = doc->basedoc.doc_node;
+        remove_mutation_observer(doc_node);
         doc_node->basedoc.doc_obj = NULL;
         IHTMLDocument2_Release(HTMLDOC(&doc_node->basedoc));
         doc->basedoc.doc_node = NULL;
@@ -851,14 +850,13 @@ void update_nsdocument(HTMLDocumentObj *doc)
         return;
     }
 
-    set_mutation_observer(doc->nscontainer, nsdoc);
-
     hres = create_doc_from_nsdoc(nsdoc, doc, doc->basedoc.window, &doc_node);
     if(FAILED(hres)) {
         ERR("Could not create document: %08x\n", hres);
         return;
     }
 
+    set_mutation_observer(doc_node);
     doc->basedoc.doc_node = doc_node;
     window_set_docnode(doc->basedoc.window, doc_node);
 }
@@ -1693,7 +1691,6 @@ NSContainer *NSContainer_Create(HTMLDocumentObj *doc, NSContainer *parent)
 
     ret->doc = doc;
     ret->ref = 1;
-    init_mutation(ret);
 
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_WEBBROWSER_CONTRACTID,
             NULL, &IID_nsIWebBrowser, (void**)&ret->webbrowser);
