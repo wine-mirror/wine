@@ -905,6 +905,14 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
                 constraints.dwPathLenConstraint--;
             }
         }
+        else
+        {
+            /* Check whether end cert has a basic constraints extension */
+            if (!CRYPT_DecodeBasicConstraints(
+             chain->rgpElement[i]->pCertContext, &constraints, FALSE))
+                chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
+                 CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
+        }
         if (CRYPT_IsSimpleChainCyclic(chain))
         {
             /* If the chain is cyclic, then the path length constraints
