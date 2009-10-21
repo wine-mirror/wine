@@ -673,7 +673,7 @@ static void CALLBACK widCallback(HWAVEIN hWave, UINT uMsg, DWORD_PTR dwInstance,
 	return;
     }
 
-    if (hWave != wim->u.in.hInnerWave && uMsg != WIM_OPEN)
+    if (uMsg != WIM_OPEN && hWave != wim->u.in.hInnerWave)
 	ERR("Shouldn't happen (%p %p)\n", hWave, wim->u.in.hInnerWave);
 
     switch (uMsg) {
