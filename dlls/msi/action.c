@@ -5037,7 +5037,7 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
             goto done;
         }
 
-        size =  (lstrlenW(value) + 1 + size) * sizeof(WCHAR);
+        size += (lstrlenW(value) + 1) * sizeof(WCHAR);
         newval =  msi_alloc(size);
         ptr = newval;
         if (!newval)
