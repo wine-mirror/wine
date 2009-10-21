@@ -743,6 +743,33 @@ static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *i
     return S_OK;
 }
 
+static HRESULT HTMLImageElementFactory_value(IUnknown *iface, LCID lcid,
+        WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei,
+        IServiceProvider *caller)
+{
+    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+    IHTMLImgElement *img;
+    VARIANT empty, *width, *height;
+    HRESULT hres;
+    int argc = params->cArgs - params->cNamedArgs;
+
+    V_VT(res) = VT_NULL;
+
+    V_VT(&empty) = VT_EMPTY;
+
+    width = argc >= 1 ? params->rgvarg + (params->cArgs - 1) : &empty;
+    height = argc >= 2 ? params->rgvarg + (params->cArgs - 2) : &empty;
+
+    hres = IHTMLImageElementFactory_create(HTMLIMGFACTORY(This), *width, *height, &img);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(res) = VT_DISPATCH;
+    V_DISPATCH(res) = (IDispatch*)img;
+
+    return S_OK;
+}
+
 #undef HTMLIMGFACTORY_THIS
 
 static const IHTMLImageElementFactoryVtbl HTMLImageElementFactoryVtbl = {
@@ -761,8 +788,14 @@ static const tid_t HTMLImageElementFactory_iface_tids[] = {
     0
 };
 
-static dispex_static_data_t HTMLImageElementFactory_dispex = {
+static const dispex_static_data_vtbl_t HTMLImageElementFactory_dispex_vtbl = {
+    HTMLImageElementFactory_value,
     NULL,
+    NULL
+};
+
+static dispex_static_data_t HTMLImageElementFactory_dispex = {
+    &HTMLImageElementFactory_dispex_vtbl,
     IHTMLImageElementFactory_tid,
     NULL,
     HTMLImageElementFactory_iface_tids
