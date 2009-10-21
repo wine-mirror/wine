@@ -751,21 +751,12 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
 	return WAVE_mciResume(wDevID, dwFlags, (LPMCI_GENERIC_PARMS)lpParms);
     }
 
-    wmw->fInput = FALSE;
-
     /** This function will be called again by a thread when async is used.
      * We have to set MCI_MODE_PLAY before we do this so that the app can spin
      * on MCI_STATUS, so we have to allow it here if we're not going to start this thread.
      */
     if ((wmw->dwStatus != MCI_MODE_STOP) && ((wmw->dwStatus != MCI_MODE_PLAY) && (dwFlags & MCI_WAIT))) {
 	return MCIERR_INTERNAL;
-    }
-
-    wmw->dwStatus = MCI_MODE_PLAY;
-
-    if (!(dwFlags & MCI_WAIT)) {
-	return MCI_SendCommandAsync(wmw->openParms.wDeviceID, WAVE_mciPlay, dwFlags,
-				    (DWORD_PTR)lpParms, sizeof(MCI_PLAY_PARMS));
     }
 
     if (wmw->lpWaveFormat->wFormatTag == WAVE_FORMAT_PCM) {
@@ -791,12 +782,30 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
         }
     }
 
-    end = 0xFFFFFFFF;
-    if (lpParms && (dwFlags & MCI_FROM)) {
-	wmw->dwPosition = WAVE_ConvertTimeFormatToByte(wmw, lpParms->dwFrom);
-    }
+    end = wmw->ckWaveData.cksize;
     if (lpParms && (dwFlags & MCI_TO)) {
-	end = WAVE_ConvertTimeFormatToByte(wmw, lpParms->dwTo);
+	DWORD position = WAVE_ConvertTimeFormatToByte(wmw, lpParms->dwTo);
+	if (position > end)		return MCIERR_OUTOFRANGE;
+	end = position;
+    }
+    if (lpParms && (dwFlags & MCI_FROM)) {
+	DWORD position = WAVE_ConvertTimeFormatToByte(wmw, lpParms->dwFrom);
+	if (position > end)		return MCIERR_OUTOFRANGE;
+	/* Seek rounds down, so do we. */
+	position /= wmw->lpWaveFormat->nBlockAlign;
+	position *= wmw->lpWaveFormat->nBlockAlign;
+	wmw->dwPosition = position;
+    }
+    if (end < wmw->dwPosition) return MCIERR_OUTOFRANGE;
+    left = end - wmw->dwPosition;
+    if (0==left) return MMSYSERR_NOERROR; /* FIXME: NOTIFY */
+
+    wmw->fInput = FALSE; /* FIXME: waveInOpen may have been called. */
+    wmw->dwStatus = MCI_MODE_PLAY;
+
+    if (!(dwFlags & MCI_WAIT)) {
+	return MCI_SendCommandAsync(wmw->openParms.wDeviceID, WAVE_mciPlay, dwFlags,
+				    (DWORD_PTR)lpParms, sizeof(MCI_PLAY_PARMS));
     }
 
     TRACE("Playing from byte=%u to byte=%u\n", wmw->dwPosition, end);
@@ -806,16 +815,8 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
     if (oldcb) mciDriverNotify(oldcb, wDevID, MCI_NOTIFY_ABORTED);
     oldcb = NULL;
 
-    if (end <= wmw->dwPosition)
-	return MMSYSERR_NOERROR;
-
-
 #define	WAVE_ALIGN_ON_BLOCK(wmw,v) \
 ((((v) + (wmw)->lpWaveFormat->nBlockAlign - 1) / (wmw)->lpWaveFormat->nBlockAlign) * (wmw)->lpWaveFormat->nBlockAlign)
-
-    wmw->dwPosition        = WAVE_ALIGN_ON_BLOCK(wmw, wmw->dwPosition);
-    wmw->ckWaveData.cksize = WAVE_ALIGN_ON_BLOCK(wmw, wmw->ckWaveData.cksize);
-
 
     /* go back to beginning of chunk plus the requested position */
     /* FIXME: I'm not sure this is correct, notably because some data linked to
@@ -825,9 +826,6 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
      */
     mmioSeek(wmw->hFile, wmw->ckWaveData.dwDataOffset + wmw->dwPosition, SEEK_SET); /* >= 0 */
 
-    /* By default the device will be opened for output, the MCI_CUE function is there to
-     * change from output to input and back
-     */
     /* FIXME: how to choose between several output channels ? here mapper is forced */
     dwRet = waveOutOpen((HWAVEOUT *)&wmw->hWave, WAVE_MAPPER, wmw->lpWaveFormat,
 			(DWORD_PTR)WAVE_mciPlayCallback, (DWORD_PTR)wmw, CALLBACK_FUNCTION);
@@ -856,7 +854,6 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
     }
 
     whidx = 0;
-    left = min(wmw->ckWaveData.cksize, end - wmw->dwPosition);
     wmw->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     wmw->dwEventCount = 1L; /* for first buffer */
 
@@ -999,11 +996,6 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt
         return WAVE_mciResume(wDevID, dwFlags, (LPMCI_GENERIC_PARMS)lpParms);
     }
 
-    /* FIXME : since there is no way to determine in which mode the device is
-     * open (recording/playback) automatically switch from a mode to another
-     */
-    wmw->fInput = TRUE;
-
     /** This function will be called again by a thread when async is used.
      * We have to set MCI_MODE_RECORD before we do this so that the app can spin
      * on MCI_STATUS, so we have to allow it here if we're not going to start this thread.
@@ -1012,6 +1004,7 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt
 	return MCIERR_INTERNAL;
     }
 
+    wmw->fInput = TRUE; /* FIXME: waveOutOpen may have been called. */
     wmw->dwStatus = MCI_MODE_RECORD;
 
     if (!(dwFlags & MCI_WAIT)) {
@@ -1027,18 +1020,22 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt
     dwRet = create_tmp_file(&wmw->hFile, (WCHAR**)&wmw->openParms.lpstrElementName);
     if (dwRet != 0) return dwRet;
 
-    /* new RIFF file */
+    /* new RIFF file, lpWaveFormat now valid */
     dwRet = WAVE_mciCreateRIFFSkeleton(wmw);
     if (dwRet != 0) return dwRet;
 
-    end = 0xFFFFFFFF;
-    if (lpParms && (dwFlags & MCI_FROM)) {
-	wmw->dwPosition = WAVE_ConvertTimeFormatToByte(wmw, lpParms->dwFrom);
-    }
-
     if (lpParms && (dwFlags & MCI_TO)) {
 	end = WAVE_ConvertTimeFormatToByte(wmw, lpParms->dwTo);
+    } else end = 0xFFFFFFFF;
+    if (lpParms && (dwFlags & MCI_FROM)) {
+	DWORD position = WAVE_ConvertTimeFormatToByte(wmw, lpParms->dwFrom);
+	if (wmw->ckWaveData.cksize < position)	return MCIERR_OUTOFRANGE;
+	/* Seek rounds down, so do we. */
+	position /= wmw->lpWaveFormat->nBlockAlign;
+	position *= wmw->lpWaveFormat->nBlockAlign;
+	wmw->dwPosition = position;
     }
+    if (end==wmw->dwPosition) return MMSYSERR_NOERROR; /* FIXME: NOTIFY */
 
     TRACE("Recording from byte=%u to byte=%u\n", wmw->dwPosition, end);
 
@@ -1047,15 +1044,9 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt
     if (oldcb) mciDriverNotify(oldcb, wDevID, MCI_NOTIFY_ABORTED);
     oldcb = NULL;
 
-    if (end <= wmw->dwPosition)
-    {
-	return MMSYSERR_NOERROR;
-    }
-
 #define	WAVE_ALIGN_ON_BLOCK(wmw,v) \
 ((((v) + (wmw)->lpWaveFormat->nBlockAlign - 1) / (wmw)->lpWaveFormat->nBlockAlign) * (wmw)->lpWaveFormat->nBlockAlign)
 
-    wmw->dwPosition = WAVE_ALIGN_ON_BLOCK(wmw, wmw->dwPosition);
     wmw->ckWaveData.cksize = WAVE_ALIGN_ON_BLOCK(wmw, wmw->ckWaveData.cksize);
 
     /* Go back to the beginning of the chunk plus the requested position */

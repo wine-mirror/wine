@@ -332,7 +332,22 @@ static void test_playWAVE(HWND hwnd)
     err = mciSendString("cue output", NULL, 0, NULL);
     todo_wine ok(err==MCIERR_UNRECOGNIZED_COMMAND,"mci incorrect cue output returned: %s\n", dbg_mcierr(err));
 
-    /* A second play would cause Wine to hang */
+    err = mciSendString("play mysound from 0 to 0 notify", NULL, 0, hwnd);
+    ok(!err,"mci play from 0 to 0 returned error: %d\n", err);
+    todo_wine test_notification1(hwnd,"play from 0 to 0",MCI_NOTIFY_SUCCESSFUL);
+
+    err = mciSendString("status mysound mode", buf, sizeof(buf), hwnd);
+    ok(!err,"mci status mode returned error: %d\n", err);
+    ok(!strcmp(buf,"stopped"), "mci status mode: %s\n", buf);
+
+    err = mciSendString("play mysound from 250 to 0", NULL, 0, NULL);
+    ok(err==MCIERR_OUTOFRANGE,"mci play from 250 to 0 returned error: %d\n", err);
+
+    err = mciSendString("play mysound from 250 to 0 notify", NULL, 0, hwnd);
+    ok(err==MCIERR_OUTOFRANGE,"mci play from 250 to 0 notify returned error: %d\n", err);
+    /* No notification (checked below) sent if error */
+
+    /* A second play caused Wine to hang */
     err = mciSendString("play mysound from 500 to 1500 wait", NULL, 0, NULL);
     ok(!err,"mci play from 500 to 1500 returned error: %d\n", err);
 
@@ -340,6 +355,29 @@ static void test_playWAVE(HWND hwnd)
     err = mciSendString("status mysound position", buf, sizeof(buf), hwnd);
     ok(!err,"mci status position returned error: %d\n", err);
     if(!err) ok(!strcmp(buf,"1500"), "mci status position: %s\n", buf);
+
+    /* mci will not play position < current */
+    err = mciSendString("play mysound to 1000", NULL, 0, NULL);
+    ok(err==MCIERR_OUTOFRANGE,"mci play to 1000 returned error: %d\n", err);
+
+    /* mci will not play to > end */
+    err = mciSendString("play mysound to 3000 notify", NULL, 0, hwnd);
+    ok(err==MCIERR_OUTOFRANGE,"mci play to 3000 notify returned error: %d\n", err);
+    /* Again, no notification upon error */
+
+    err = mciSendString("play mysound to 2000", NULL, 0, NULL);
+    ok(!err,"mci play to 2000 returned error: %d\n", err);
+
+    /* Rejected while playing */
+    err = mciSendString("cue mysound output", NULL, 0, NULL);
+    ok(err==MCIERR_NONAPPLICABLE_FUNCTION,"mci cue output while playing returned error: %d\n", err);
+
+    err = mciSendString("play mysound to 3000", NULL, 0, NULL);
+    ok(err==MCIERR_OUTOFRANGE,"mci play to 3000 returned error: %d\n", err);
+
+    err = mciSendString("stop mysound wait", NULL, 0, NULL);
+    ok(!err,"mci stop wait returned error: %d\n", err);
+    test_notification(hwnd,"play outofrange notify #2",0);
 
     err = mciSendString("seek mysound to 250 wait notify", NULL, 0, hwnd);
     ok(!err,"mci seek to 250 wait notify returned error: %d\n", err);
@@ -356,6 +394,10 @@ static void test_playWAVE(HWND hwnd)
     err = mciSendString("status mysound mode", buf, sizeof(buf), hwnd);
     ok(!err,"mci status mode returned error: %d\n", err);
     ok(!strcmp(buf,"stopped"), "mci status mode: %s\n", buf);
+
+    err = mciSendString("play mysound to 250 wait notify", NULL, 0, hwnd);
+    ok(!err,"mci play to 250 returned error: %d\n", err);
+    todo_wine test_notification1(hwnd,"play to 250 wait notify",MCI_NOTIFY_SUCCESSFUL);
 
     err = mciSendString("close mysound", NULL, 0, NULL);
     ok(!err,"mci close returned error: %d\n", err);
