@@ -9634,6 +9634,8 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT 
  */
 static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
 {
+  INT i;
+
   TRACE("()\n");
 
   /* delete all items */
@@ -9644,6 +9646,9 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
   DPA_Destroy(infoPtr->hdpaItemIds);
   DPA_Destroy(infoPtr->hdpaPosX);
   DPA_Destroy(infoPtr->hdpaPosY);
+  /* columns */
+  for (i = 0; i < DPA_GetPtrCount(infoPtr->hdpaColumns); i++)
+      Free(DPA_GetPtr(infoPtr->hdpaColumns, i));
   DPA_Destroy(infoPtr->hdpaColumns);
   ranges_destroy(infoPtr->selectionRanges);
 
