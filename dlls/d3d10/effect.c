@@ -60,19 +60,20 @@ static struct d3d10_effect_pass null_pass =
 static struct d3d10_effect_type null_type =
         {&d3d10_effect_type_vtbl, 0, {NULL, NULL, 0}, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL};
 static struct d3d10_effect_variable null_local_buffer =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_constant_buffer_vtbl,
-        NULL, NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_constant_buffer_vtbl, &null_local_buffer,
+        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
 static struct d3d10_effect_variable null_variable =
-        {&d3d10_effect_variable_vtbl, NULL, NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
+        {&d3d10_effect_variable_vtbl, &null_local_buffer,
+        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
 static struct d3d10_effect_variable null_scalar_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl,
-        NULL, NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl, &null_local_buffer,
+        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
 static struct d3d10_effect_variable null_vector_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl,
-        NULL, NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl, &null_local_buffer,
+        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
 static struct d3d10_effect_variable null_matrix_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl,
-        NULL, NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl, &null_local_buffer,
+        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
 
 static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, const char *data, DWORD offset);
 
@@ -1144,6 +1145,7 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
         struct d3d10_effect_variable *l = &e->local_buffers[i];
         l->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_constant_buffer_vtbl;
         l->effect = e;
+        l->buffer = &null_local_buffer;
 
         hr = parse_fx10_local_buffer(l, &ptr, data);
         if (FAILED(hr)) return hr;
@@ -2206,9 +2208,11 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
 static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_variable_GetParentConstantBuffer(
         ID3D10EffectVariable *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
 
-    return NULL;
+    TRACE("iface %p\n", iface);
+
+    return (ID3D10EffectConstantBuffer *)This->buffer;
 }
 
 static struct ID3D10EffectScalarVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsScalar(
