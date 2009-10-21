@@ -53,7 +53,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
-#define LOCALE_LOCALEINFOFLAGSMASK (LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP|LOCALE_RETURN_NUMBER)
+#define LOCALE_LOCALEINFOFLAGSMASK (LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP|\
+                                    LOCALE_RETURN_NUMBER|LOCALE_RETURN_GENITIVE_NAMES)
 
 /* current code pages */
 static const union cptable *ansi_cptable;
@@ -579,6 +580,33 @@ static LCID convert_default_lcid( LCID lcid, LCTYPE lctype )
     return ConvertDefaultLocale( lcid );
 }
 
+/***********************************************************************
+ *           is_genitive_name_supported
+ *
+ * Determine could LCTYPE basically support genitive name form or not.
+ */
+static BOOL is_genitive_name_supported( LCTYPE lctype )
+{
+    switch(lctype & 0xffff)
+    {
+    case LOCALE_SMONTHNAME1:
+    case LOCALE_SMONTHNAME2:
+    case LOCALE_SMONTHNAME3:
+    case LOCALE_SMONTHNAME4:
+    case LOCALE_SMONTHNAME5:
+    case LOCALE_SMONTHNAME6:
+    case LOCALE_SMONTHNAME7:
+    case LOCALE_SMONTHNAME8:
+    case LOCALE_SMONTHNAME9:
+    case LOCALE_SMONTHNAME10:
+    case LOCALE_SMONTHNAME11:
+    case LOCALE_SMONTHNAME12:
+    case LOCALE_SMONTHNAME13:
+         return TRUE;
+    default:
+         return FALSE;
+    }
+}
 
 /***********************************************************************
  *		create_registry_key
@@ -1163,6 +1191,12 @@ INT WINAPI GetLocaleInfoA( LCID lcid, LCTYPE lctype, LPSTR buffer, INT len )
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
+    if (lctype & LOCALE_RETURN_GENITIVE_NAMES )
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
     if (!len) buffer = NULL;
 
     if (!(lenW = GetLocaleInfoW( lcid, lctype, NULL, 0 ))) return 0;
@@ -1221,6 +1255,13 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
+    if (lctype & LOCALE_RETURN_GENITIVE_NAMES &&
+       !is_genitive_name_supported( lctype ))
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
     if (!len) buffer = NULL;
 
     lcid = convert_default_lcid( lcid, lctype );
@@ -1289,7 +1330,20 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
     for (i = 0; i < (lctype & 0x0f); i++) p += *p + 1;
 
     if (lcflags & LOCALE_RETURN_NUMBER) ret = sizeof(UINT)/sizeof(WCHAR);
-    else ret = (lctype == LOCALE_FONTSIGNATURE) ? *p : *p + 1;
+    else if (is_genitive_name_supported( lctype ) && *p)
+    {
+        /* genitive form's stored after a null separator from a nominative */
+        for (i = 1; i <= *p; i++) if (!p[i]) break;
+
+        if (i <= *p && (lcflags & LOCALE_RETURN_GENITIVE_NAMES))
+        {
+            ret = *p - i - 1;
+            p += i;
+        }
+        else ret = i;
+    }
+    else
+        ret = (lctype == LOCALE_FONTSIGNATURE) ? *p : *p + 1;
 
     if (!buffer) return ret;
 
@@ -1321,7 +1375,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
     }
     else
     {
-        memcpy( buffer, p + 1, *p * sizeof(WCHAR) );
+        memcpy( buffer, p + 1, ret * sizeof(WCHAR) );
         if (lctype != LOCALE_FONTSIGNATURE) buffer[ret-1] = 0;
 
         TRACE( "(lcid=0x%x,lctype=0x%x,%p,%d) returning %d %s\n",

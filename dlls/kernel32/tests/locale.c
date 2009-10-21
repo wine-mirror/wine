@@ -211,22 +211,25 @@ static void test_GetLocaleInfoW(void)
 
   /* LOCALE_RETURN_GENITIVE_NAMES isn't supported for GetLocaleInfoA */
   bufferA[0] = 'a';
+  SetLastError(0xdeadbeef);
   ret = GetLocaleInfoA(lcid_ru, LOCALE_SMONTHNAME1|LOCALE_RETURN_GENITIVE_NAMES,
                        bufferA, COUNTOF(bufferA));
-todo_wine {
   ok(ret == 0, "LOCALE_RETURN_GENITIVE_NAMES should fail with GetLocaleInfoA\n");
   ok(bufferA[0] == 'a', "Expected buffer to be untouched\n");
-}
+  ok(GetLastError() == ERROR_INVALID_FLAGS,
+     "Expected ERROR_INVALID_FLAGS, got %x\n", GetLastError());
 
   bufferW[0] = 'a';
+  SetLastError(0xdeadbeef);
   ret = GetLocaleInfoW(lcid_ru, LOCALE_RETURN_GENITIVE_NAMES,
                        bufferW, COUNTOF(bufferW));
-todo_wine {
   ok(ret == 0,
      "LOCALE_RETURN_GENITIVE_NAMES itself doesn't return anything, got %d\n", ret);
   ok(bufferW[0] == 'a', "Expected buffer to be untouched\n");
-}
+  ok(GetLastError() == ERROR_INVALID_FLAGS,
+     "Expected ERROR_INVALID_FLAGS, got %x\n", GetLastError());
 
+  /* yes, test empty 13 month entry too */
   for (i = 0; i < 12; i++) {
       bufferW[0] = 0;
       ret = GetLocaleInfoW(lcid_ru, (LOCALE_SMONTHNAME1+i)|LOCALE_RETURN_GENITIVE_NAMES,
@@ -241,8 +244,25 @@ todo_wine {
       ok(ret == lstrlenW(buffer2W)+1, "Expected actual length, got %d, length %d\n",
                                     ret, lstrlenW(buffer2W));
 
-      todo_wine ok(lstrcmpW(bufferW, buffer2W) != 0,
-         "Expected genitive name to differ, got the same for month %d\n", i+1);
+      ok(lstrcmpW(bufferW, buffer2W) != 0,
+           "Expected genitive name to differ, got the same for month %d\n", i+1);
+
+      /* for locale without genitive names nominative returned in both cases */
+      bufferW[0] = 0;
+      ret = GetLocaleInfoW(lcid_en, (LOCALE_SMONTHNAME1+i)|LOCALE_RETURN_GENITIVE_NAMES,
+                           bufferW, COUNTOF(bufferW));
+      ok(ret, "Expected non zero result\n");
+      ok(ret == lstrlenW(bufferW)+1, "Expected actual length, got %d, length %d\n",
+                                    ret, lstrlenW(bufferW));
+      buffer2W[0] = 0;
+      ret = GetLocaleInfoW(lcid_en, LOCALE_SMONTHNAME1+i,
+                           buffer2W, COUNTOF(buffer2W));
+      ok(ret, "Expected non zero result\n");
+      ok(ret == lstrlenW(buffer2W)+1, "Expected actual length, got %d, length %d\n",
+                                    ret, lstrlenW(buffer2W));
+
+      ok(lstrcmpW(bufferW, buffer2W) == 0,
+         "Expected same names, got different for month %d\n", i+1);
   }
 }
 
