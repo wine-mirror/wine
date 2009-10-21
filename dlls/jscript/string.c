@@ -965,7 +965,7 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
                         }
 
                         idx = ptr2[1] - '0';
-                        if(isdigitW(ptr[3]) && idx*10 + (ptr[2]-'0') <= parens_cnt) {
+                        if(isdigitW(ptr2[2]) && idx*10 + (ptr2[2]-'0') <= parens_cnt) {
                             idx = idx*10 + (ptr[2]-'0');
                             ptr = ptr2+3;
                         }else if(idx && idx <= parens_cnt) {
