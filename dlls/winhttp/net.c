@@ -120,6 +120,7 @@ MAKE_FUNCPTR( i2d_X509 );
 #undef MAKE_FUNCPTR
 
 static CRITICAL_SECTION *ssl_locks;
+static unsigned int num_ssl_locks;
 
 static unsigned long ssl_thread_id(void)
 {
@@ -290,16 +291,15 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     }
 
     pCRYPTO_set_id_callback(ssl_thread_id);
-    ssl_locks = HeapAlloc(GetProcessHeap(), 0,
-            pCRYPTO_num_locks() * sizeof(HANDLE));
+    num_ssl_locks = pCRYPTO_num_locks();
+    ssl_locks = HeapAlloc(GetProcessHeap(), 0, num_ssl_locks * sizeof(CRITICAL_SECTION));
     if (!ssl_locks)
     {
         set_last_error( ERROR_OUTOFMEMORY );
         LeaveCriticalSection( &init_ssl_cs );
         return FALSE;
     }
-    for (i = 0; i < pCRYPTO_num_locks(); i++)
-        InitializeCriticalSection( &ssl_locks[i] );
+    for (i = 0; i < num_ssl_locks; i++) InitializeCriticalSection( &ssl_locks[i] );
     pCRYPTO_set_locking_callback(ssl_lock_callback);
 
     LeaveCriticalSection( &init_ssl_cs );
@@ -320,8 +320,7 @@ void netconn_unload( void )
         {
             int i;
 
-            for (i = 0; i < pCRYPTO_num_locks(); i++)
-                DeleteCriticalSection( &ssl_locks[i] );
+            for (i = 0; i < num_ssl_locks; i++) DeleteCriticalSection( &ssl_locks[i] );
             HeapFree( GetProcessHeap(), 0, ssl_locks );
         }
         wine_dlclose( libcrypto_handle, NULL, 0 );
