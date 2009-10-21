@@ -804,8 +804,16 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         return This->data->vtbl->invoke(This->outer, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
     if(wFlags == DISPATCH_CONSTRUCT) {
-        FIXME("DISPATCH_CONSTRUCT not implemented\n");
-        return E_NOTIMPL;
+        if(id == DISPID_VALUE) {
+            if(This->data->vtbl && This->data->vtbl->value) {
+                return This->data->vtbl->value(This->outer, lcid, wFlags, pdp,
+                        pvarRes, pei, pspCaller);
+            }
+            FIXME("DISPATCH_CONSTRUCT flag but missing value function\n");
+            return E_FAIL;
+        }
+        FIXME("DISPATCH_CONSTRUCT flag without DISPID_VALUE\n");
+        return E_FAIL;
     }
 
     if(is_dynamic_dispid(id)) {
