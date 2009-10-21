@@ -10326,19 +10326,23 @@ static void LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
     }
     else if (infoPtr->uView == LV_VIEW_DETAILS)
     {
-	HDLAYOUT hl;
-	WINDOWPOS wp;
+	/* if control created invisible header isn't created */
+	if (infoPtr->hwndHeader)
+	{
+	    HDLAYOUT hl;
+	    WINDOWPOS wp;
 
-	hl.prc = &infoPtr->rcList;
-	hl.pwpos = &wp;
-	SendMessageW( infoPtr->hwndHeader, HDM_LAYOUT, 0, (LPARAM)&hl );
-        TRACE("  wp.flags=0x%08x, wp=%d,%d (%dx%d)\n", wp.flags, wp.x, wp.y, wp.cx, wp.cy);
-	SetWindowPos(wp.hwnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy,
-                    wp.flags | ((infoPtr->dwStyle & LVS_NOCOLUMNHEADER)
-                        ? SWP_HIDEWINDOW : SWP_SHOWWINDOW));
-        TRACE("  after SWP wp=%d,%d (%dx%d)\n", wp.x, wp.y, wp.cx, wp.cy);
+	    hl.prc = &infoPtr->rcList;
+	    hl.pwpos = &wp;
+	    SendMessageW( infoPtr->hwndHeader, HDM_LAYOUT, 0, (LPARAM)&hl );
+            TRACE("  wp.flags=0x%08x, wp=%d,%d (%dx%d)\n", wp.flags, wp.x, wp.y, wp.cx, wp.cy);
+	    SetWindowPos(wp.hwnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy,
+                         wp.flags | ((infoPtr->dwStyle & LVS_NOCOLUMNHEADER)
+                         ? SWP_HIDEWINDOW : SWP_SHOWWINDOW));
+	    TRACE("  after SWP wp=%d,%d (%dx%d)\n", wp.x, wp.y, wp.cx, wp.cy);
 
-	infoPtr->rcList.top = max(wp.cy, 0);
+	    infoPtr->rcList.top = max(wp.cy, 0);
+	}
         infoPtr->rcList.top += (infoPtr->dwLvExStyle & LVS_EX_GRIDLINES) ? 2 : 0;
     }
 
