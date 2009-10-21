@@ -593,10 +593,13 @@ static void test_GetStandardColorSpaceProfileW(void)
 
     SetLastError(0xfaceabee); /* maybe 2nd param. */
     ret = pGetStandardColorSpaceProfileW(NULL, 0, newprofile, &sizeP);
-    WideCharToMultiByte(CP_ACP, 0, newprofile, -1, newprofileA, sizeof(newprofileA), NULL, NULL);
     if (!ret) ok( GetLastError() == ERROR_FILE_NOT_FOUND, "GetStandardColorSpaceProfileW() returns %d (GLE=%d)\n", ret, GetLastError() );
-    else ok( !lstrcmpiA( newprofileA, empty ) && GetLastError() == 0xfaceabee,
+    else
+    {
+        WideCharToMultiByte(CP_ACP, 0, newprofile, -1, newprofileA, sizeof(newprofileA), NULL, NULL);
+        ok( !lstrcmpiA( newprofileA, empty ) && GetLastError() == 0xfaceabee,
              "GetStandardColorSpaceProfileW() returns %d (GLE=%d)\n", ret, GetLastError() );
+    }
 
     /* Functional checks */
 
