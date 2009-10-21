@@ -286,7 +286,7 @@ static const struct INetFwServiceVtbl fw_service_vtbl =
     fw_service_get_GloballyOpenPorts
 };
 
-HRESULT NetFwService_create( IUnknown *pUnkOuter, LPVOID *ppObj )
+static HRESULT NetFwService_create( IUnknown *pUnkOuter, LPVOID *ppObj )
 {
     fw_service *fp;
 
@@ -433,7 +433,7 @@ static HRESULT WINAPI fw_services_Item(
     fw_services *This = impl_from_INetFwServices( iface );
 
     FIXME("%p, %u, %p\n", This, svcType, service);
-    return E_NOTIMPL;
+    return NetFwService_create( NULL, (void **)service );
 }
 
 static HRESULT WINAPI fw_services_get__NewEnum(
