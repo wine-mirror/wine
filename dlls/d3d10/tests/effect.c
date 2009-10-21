@@ -416,6 +416,189 @@ static void test_effect_variable_type(ID3D10Device *device)
     effect->lpVtbl->Release(effect);
 }
 
+/*
+ * test_effect_variable_member
+ */
+#if 0
+struct test
+{
+    float   f3 : SV_POSITION;
+    float   f4 : COLOR0;
+};
+struct test1
+{
+    float   f1;
+    float   f2;
+    test    t;
+};
+cbuffer cb
+{
+    test1 t1;
+};
+#endif
+static DWORD fx_test_evm[] = {
+0x43425844, 0xe079efed, 0x90bda0f2, 0xa6e2d0b4,
+0xd2d6c200, 0x00000001, 0x0000018c, 0x00000001,
+0x00000024, 0x30315846, 0x00000160, 0xfeff1001,
+0x00000001, 0x00000001, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x000000e0,
+0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x74006263,
+0x31747365, 0x00316600, 0x616f6c66, 0x00100074,
+0x00010000, 0x00000000, 0x00040000, 0x00100000,
+0x00040000, 0x09090000, 0x32660000, 0x74007400,
+0x00747365, 0x53003366, 0x4f505f56, 0x49544953,
+0x66004e4f, 0x4f430034, 0x30524f4c, 0x00003700,
+0x00000300, 0x00000000, 0x00000800, 0x00001000,
+0x00000800, 0x00000200, 0x00003c00, 0x00003f00,
+0x00000000, 0x00001600, 0x00004b00, 0x00004e00,
+0x00000400, 0x00001600, 0x00000700, 0x00000300,
+0x00000000, 0x00001800, 0x00002000, 0x00001000,
+0x00000300, 0x00000d00, 0x00000000, 0x00000000,
+0x00001600, 0x00003200, 0x00000000, 0x00000400,
+0x00001600, 0x00003500, 0x00000000, 0x00001000,
+0x00005500, 0x00317400, 0x00000004, 0x00000020,
+0x00000000, 0x00000001, 0xffffffff, 0x00000000,
+0x000000dd, 0x00000091, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000,
+};
+
+static void test_effect_variable_member(ID3D10Device *device)
+{
+    ID3D10Effect *effect;
+    ID3D10EffectConstantBuffer *constantbuffer;
+    ID3D10EffectVariable *variable, *variable2, *variable3, *null_variable;
+    D3D10_EFFECT_VARIABLE_DESC desc;
+    HRESULT hr;
+
+    hr = D3D10CreateEffectFromMemory(fx_test_evm, fx_test_evm[6], 0, device, NULL, &effect);
+    ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
+
+    constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
+    hr = constantbuffer->lpVtbl->GetDesc(constantbuffer, &desc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(desc.Name, "cb") == 0, "Name is \"%s\", expected \"cb\"\n", desc.Name);
+    ok(desc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", desc.Semantic);
+    ok(desc.Flags == 0, "Type is %u, expected 0\n", desc.Flags);
+    ok(desc.Annotations == 0, "Elements is %u, expected 0\n", desc.Annotations);
+    ok(desc.BufferOffset == 0, "Members is %u, expected 0\n", desc.BufferOffset);
+    ok(desc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", desc.ExplicitBindPoint);
+
+    null_variable = constantbuffer->lpVtbl->GetMemberByIndex(constantbuffer, 1);
+    hr = null_variable->lpVtbl->GetDesc(null_variable, &desc);
+    ok(hr == E_FAIL, "GetDesc got %x, expected %x\n", hr, E_FAIL);
+
+    variable = constantbuffer->lpVtbl->GetMemberByIndex(constantbuffer, 0);
+    hr = variable->lpVtbl->GetDesc(variable, &desc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    variable2 = constantbuffer->lpVtbl->GetMemberByName(constantbuffer, "t1");
+    ok(variable == variable2, "GetMemberByName got %p, expected %p\n", variable2, variable);
+    hr = variable2->lpVtbl->GetDesc(variable2, &desc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(desc.Name, "t1") == 0, "Name is \"%s\", expected \"t1\"\n", desc.Name);
+    ok(desc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", desc.Semantic);
+    ok(desc.Flags == 0, "Flags is %u, expected 0\n", desc.Flags);
+    ok(desc.Annotations == 0, "Annotations is %u, expected 0\n", desc.Annotations);
+    ok(desc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", desc.BufferOffset);
+    ok(desc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", desc.ExplicitBindPoint);
+
+    variable2 = constantbuffer->lpVtbl->GetMemberByName(constantbuffer, "invalid");
+    ok(null_variable == variable2, "GetMemberByName got %p, expected %p\n", variable2, null_variable);
+
+    variable2 = constantbuffer->lpVtbl->GetMemberByName(constantbuffer, NULL);
+    ok(null_variable == variable2, "GetMemberByName got %p, expected %p\n", variable2, null_variable);
+
+    variable2 = constantbuffer->lpVtbl->GetMemberBySemantic(constantbuffer, "invalid");
+    ok(null_variable == variable2, "GetMemberBySemantic got %p, expected %p\n", variable2, null_variable);
+
+    variable2 = constantbuffer->lpVtbl->GetMemberBySemantic(constantbuffer, NULL);
+    ok(null_variable == variable2, "GetMemberBySemantic got %p, expected %p\n", variable2, null_variable);
+
+    /* check members of "t1" */
+    variable2 = variable->lpVtbl->GetMemberByName(variable, "f1");
+    hr = variable2->lpVtbl->GetDesc(variable2, &desc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(desc.Name, "f1") == 0, "Name is \"%s\", expected \"f1\"\n", desc.Name);
+    ok(desc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", desc.Semantic);
+    ok(desc.Flags == 0, "Flags is %u, expected 0\n", desc.Flags);
+    ok(desc.Annotations == 0, "Annotations is %u, expected 0\n", desc.Annotations);
+    ok(desc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", desc.BufferOffset);
+    ok(desc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", desc.ExplicitBindPoint);
+
+    variable3 = variable->lpVtbl->GetMemberByIndex(variable, 0);
+    ok(variable2 == variable3, "GetMemberByIndex got %p, expected %p\n", variable3, variable2);
+
+    variable2 = variable->lpVtbl->GetMemberByName(variable, "f2");
+    hr = variable2->lpVtbl->GetDesc(variable2, &desc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(desc.Name, "f2") == 0, "Name is \"%s\", expected \"f2\"\n", desc.Name);
+    ok(desc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", desc.Semantic);
+    ok(desc.Flags == 0, "Flags is %u, expected 0\n", desc.Flags);
+    ok(desc.Annotations == 0, "Annotations is %u, expected 0\n", desc.Annotations);
+    ok(desc.BufferOffset == 4, "BufferOffset is %u, expected 4\n", desc.BufferOffset);
+    ok(desc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", desc.ExplicitBindPoint);
+
+    variable3 = variable->lpVtbl->GetMemberByIndex(variable, 1);
+    ok(variable2 == variable3, "GetMemberByIndex got %p, expected %p\n", variable3, variable2);
+
+    variable2 = variable->lpVtbl->GetMemberByName(variable, "t");
+    hr = variable2->lpVtbl->GetDesc(variable2, &desc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(desc.Name, "t") == 0, "Name is \"%s\", expected \"t\"\n", desc.Name);
+    ok(desc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", desc.Semantic);
+    ok(desc.Flags == 0, "Flags is %u, expected 0\n", desc.Flags);
+    ok(desc.Annotations == 0, "Annotations is %u, expected 0\n", desc.Annotations);
+    ok(desc.BufferOffset == 16, "BufferOffset is %u, expected 16\n", desc.BufferOffset);
+    ok(desc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", desc.ExplicitBindPoint);
+
+    variable3 = variable->lpVtbl->GetMemberByIndex(variable, 2);
+    ok(variable2 == variable3, "GetMemberByIndex got %p, expected %p\n", variable3, variable2);
+
+    /* check members of "t" */
+    variable3 = variable2->lpVtbl->GetMemberByName(variable2, "f3");
+    hr = variable3->lpVtbl->GetDesc(variable3, &desc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(desc.Name, "f3") == 0, "Name is \"%s\", expected \"f3\"\n", desc.Name);
+    ok(strcmp(desc.Semantic, "SV_POSITION") == 0, "Semantic is \"%s\", expected \"SV_POSITION\"\n", desc.Semantic);
+    ok(desc.Flags == 0, "Flags is %u, expected 0\n", desc.Flags);
+    ok(desc.Annotations == 0, "Annotations is %u, expected 0\n", desc.Annotations);
+    ok(desc.BufferOffset == 16, "BufferOffset is %u, expected 16\n", desc.BufferOffset);
+    ok(desc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", desc.ExplicitBindPoint);
+
+    variable = variable2->lpVtbl->GetMemberBySemantic(variable2, "SV_POSITION");
+    ok(variable == variable3, "GetMemberBySemantic got %p, expected %p\n", variable, variable3);
+
+    variable = variable2->lpVtbl->GetMemberByIndex(variable2, 0);
+    ok(variable == variable3, "GetMemberByIndex got %p, expected %p\n", variable, variable3);
+
+    variable3 = variable2->lpVtbl->GetMemberByName(variable2, "f4");
+    hr = variable3->lpVtbl->GetDesc(variable3, &desc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(desc.Name, "f4") == 0, "Name is \"%s\", expected \"f4\"\n", desc.Name);
+    ok(strcmp(desc.Semantic, "COLOR0") == 0, "Semantic is \"%s\", expected \"COLOR0\"\n", desc.Semantic);
+    ok(desc.Flags == 0, "Flags is %u, expected 0\n", desc.Flags);
+    ok(desc.Annotations == 0, "Annotations is %u, expected 0\n", desc.Annotations);
+    ok(desc.BufferOffset == 20, "BufferOffset is %u, expected 20\n", desc.BufferOffset);
+    ok(desc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", desc.ExplicitBindPoint);
+
+    variable = variable2->lpVtbl->GetMemberBySemantic(variable2, "COLOR0");
+    ok(variable == variable3, "GetMemberBySemantic got %p, expected %p\n", variable, variable3);
+
+    variable = variable2->lpVtbl->GetMemberByIndex(variable2, 1);
+    ok(variable == variable3, "GetMemberByIndex got %p, expected %p\n", variable, variable3);
+
+    effect->lpVtbl->Release(effect);
+}
+
 START_TEST(effect)
 {
     ID3D10Device *device;
@@ -430,6 +613,7 @@ START_TEST(effect)
 
     test_effect_constant_buffer_type(device);
     test_effect_variable_type(device);
+    test_effect_variable_member(device);
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left\n", refcount);
