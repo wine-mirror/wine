@@ -713,7 +713,7 @@ static IHTMLEventObj *create_event(HTMLDOMNode *target, eventid_t eid, nsIDOMEve
         nsIDOMDocumentEvent *doc_event;
         nsresult nsres;
 
-        nsres = nsIDOMHTMLDocument_QueryInterface(target->doc->basedoc.nsdoc, &IID_nsIDOMDocumentEvent,
+        nsres = nsIDOMHTMLDocument_QueryInterface(target->doc->nsdoc, &IID_nsIDOMDocumentEvent,
                  (void**)&doc_event);
         if(NS_SUCCEEDED(nsres)) {
             nsAString type_str;
@@ -827,7 +827,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, nsIDOMNode *target, nsIDOM
             nsIDOMHTMLElement *nsbody;
             nsresult nsres;
 
-            nsres = nsIDOMHTMLDocument_GetBody(doc->basedoc.nsdoc, &nsbody);
+            nsres = nsIDOMHTMLDocument_GetBody(doc->nsdoc, &nsbody);
             if(NS_SUCCEEDED(nsres) && nsbody) {
                 node = get_node(doc, (nsIDOMNode*)nsbody, FALSE);
                 if(node)

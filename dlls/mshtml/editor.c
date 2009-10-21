@@ -340,7 +340,7 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
     nsAString size_str;
     nsAString val_str;
 
-    if(!This->nsdoc) {
+    if(!This->doc_node->nsdoc) {
         WARN("NULL nsdoc\n");
         return;
     }
@@ -1155,7 +1155,7 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
             return OLECMDERR_E_CANCELED;
     }
 
-    if(!This->nsdoc) {
+    if(!This->doc_node->nsdoc) {
         WARN("NULL nsdoc\n");
         return E_UNEXPECTED;
     }
@@ -1178,7 +1178,7 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
     if (insert_link_at_caret) {
         nsIDOMNode *text_node, *unused_node;
 
-        nsIDOMDocument_CreateTextNode(This->nsdoc, &ns_url, (nsIDOMText **)&text_node);
+        nsIDOMDocument_CreateTextNode(This->doc_node->nsdoc, &ns_url, (nsIDOMText **)&text_node);
 
         /* wrap the <a> tags around the text element */
         nsIDOMElement_AppendChild(anchor_elem, text_node, &unused_node);

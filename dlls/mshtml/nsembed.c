@@ -831,14 +831,13 @@ void update_nsdocument(HTMLDocumentObj *doc)
         return;
     }
 
-    if(nsdoc == doc->basedoc.nsdoc) {
+    if(doc->basedoc.doc_node && nsdoc == doc->basedoc.doc_node->nsdoc) {
         nsIDOMHTMLDocument_Release(nsdoc);
         return;
     }
 
-    if(doc->basedoc.nsdoc) {
-        remove_mutation_observer(doc->nscontainer, doc->basedoc.nsdoc);
-        nsIDOMHTMLDocument_Release(doc->basedoc.nsdoc);
+    if(doc->basedoc.doc_node && doc->basedoc.doc_node->nsdoc) {
+        remove_mutation_observer(doc->nscontainer, doc->basedoc.doc_node->nsdoc);
 
         doc_node = doc->basedoc.doc_node;
         doc_node->basedoc.doc_obj = NULL;
@@ -846,8 +845,8 @@ void update_nsdocument(HTMLDocumentObj *doc)
         doc->basedoc.doc_node = NULL;
     }
 
-    doc->basedoc.nsdoc = nsdoc;
     if(!nsdoc) {
+        doc->basedoc.doc_node = NULL;
         window_set_docnode(doc->basedoc.window, NULL);
         return;
     }

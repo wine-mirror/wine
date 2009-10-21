@@ -205,7 +205,7 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
     return S_OK;
 }
 
-static HRESULT get_doc_string(HTMLDocument *This, char **str)
+static HRESULT get_doc_string(HTMLDocumentNode *This, char **str)
 {
     nsIDOMNode *nsnode;
     LPCWSTR strw;
@@ -462,7 +462,7 @@ static HRESULT WINAPI PersistFile_Save(IPersistFile *iface, LPCOLESTR pszFileNam
         return E_FAIL;
     }
 
-    hres = get_doc_string(This, &str);
+    hres = get_doc_string(This->doc_node, &str);
     if(SUCCEEDED(hres))
         WriteFile(file, str, strlen(str), &written, NULL);
 
@@ -569,7 +569,7 @@ static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, LPSTREAM
 
     TRACE("(%p)->(%p %x)\n", This, pStm, fClearDirty);
 
-    hres = get_doc_string(This, &str);
+    hres = get_doc_string(This->doc_node, &str);
     if(FAILED(hres))
         return hres;
 

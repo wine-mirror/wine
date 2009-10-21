@@ -73,7 +73,7 @@ void remove_mutation_observer(NSContainer *nscontainer, nsIDOMHTMLDocument *nsht
 #define IE_MAJOR_VERSION 7
 #define IE_MINOR_VERSION 0
 
-static BOOL handle_insert_comment(HTMLDocument *doc, const PRUnichar *comment)
+static BOOL handle_insert_comment(HTMLDocumentNode *doc, const PRUnichar *comment)
 {
     DWORD len;
     int majorv = 0, minorv = 0;
@@ -214,7 +214,7 @@ static void add_script_runner(NSContainer *This)
     nsIDOMNSDocument *nsdoc;
     nsresult nsres;
 
-    nsres = nsIDOMHTMLDocument_QueryInterface(This->doc->basedoc.nsdoc, &IID_nsIDOMNSDocument, (void**)&nsdoc);
+    nsres = nsIDOMHTMLDocument_QueryInterface(This->doc->basedoc.doc_node->nsdoc, &IID_nsIDOMNSDocument, (void**)&nsdoc);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIDOMNSDocument: %08x\n", nsres);
         return;
@@ -300,7 +300,7 @@ static nsresult NSAPI nsRunnable_Run(nsIRunnable *iface)
                 const PRUnichar *comment;
 
                 nsAString_GetData(&comment_str, &comment);
-                remove_comment = handle_insert_comment(&This->doc->basedoc, comment);
+                remove_comment = handle_insert_comment(This->doc->basedoc.doc_node, comment);
             }
 
             nsAString_Finish(&comment_str);

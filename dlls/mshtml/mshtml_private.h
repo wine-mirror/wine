@@ -291,7 +291,6 @@ struct HTMLDocument {
     HTMLDocumentNode *doc_node;
 
     HTMLWindow *window;
-    nsIDOMHTMLDocument *nsdoc;
 
     ConnectionPointContainer cp_container;
     ConnectionPoint cp_htmldocevents;
@@ -485,6 +484,7 @@ struct HTMLDocumentNode {
 
     LONG ref;
 
+    nsIDOMHTMLDocument *nsdoc;
     HTMLDOMNode *nodes;
     BOOL content_ready;
 
