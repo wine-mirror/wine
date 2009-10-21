@@ -155,10 +155,10 @@ static const struct {
  **********************************************************/
 
 static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, WINED3DFORMAT AdapterFormat, DWORD Usage, WINED3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat, WINED3DSURFTYPE SurfaceType);
-static const struct fragment_pipeline *select_fragment_implementation(struct WineD3DAdapter *adapter,
+static const struct fragment_pipeline *select_fragment_implementation(struct wined3d_adapter *adapter,
         WINED3DDEVTYPE DeviceType);
-static const shader_backend_t *select_shader_backend(struct WineD3DAdapter *adapter, WINED3DDEVTYPE DeviceType);
-static const struct blit_shader *select_blit_implementation(struct WineD3DAdapter *adapter, WINED3DDEVTYPE DeviceType);
+static const shader_backend_t *select_shader_backend(struct wined3d_adapter *adapter, WINED3DDEVTYPE DeviceType);
+static const struct blit_shader *select_blit_implementation(struct wined3d_adapter *adapter, WINED3DDEVTYPE DeviceType);
 
 /* lookup tables */
 const int minLookup[MAX_LOOKUPS] =
@@ -325,8 +325,9 @@ fail:
 }
 
 /* Adjust the amount of used texture memory */
-long WineD3DAdapterChangeGLRam(IWineD3DDeviceImpl *D3DDevice, long glram){
-    struct WineD3DAdapter *adapter = D3DDevice->adapter;
+long WineD3DAdapterChangeGLRam(IWineD3DDeviceImpl *D3DDevice, long glram)
+{
+    struct wined3d_adapter *adapter = D3DDevice->adapter;
 
     adapter->UsedTextureRam += glram;
     TRACE("Adjusted gl ram by %ld to %d\n", glram, adapter->UsedTextureRam);
@@ -2468,7 +2469,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     int nCfgs;
     const WineD3D_PixelFormat *cfgs;
-    const struct WineD3DAdapter *adapter;
+    const struct wined3d_adapter *adapter;
     const struct GlPixelFormatDesc *rt_format_desc;
     const struct GlPixelFormatDesc *ds_format_desc;
     int it;
@@ -2510,7 +2511,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
 {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     const struct GlPixelFormatDesc *glDesc;
-    const struct WineD3DAdapter *adapter;
+    const struct wined3d_adapter *adapter;
 
     TRACE_(d3d_caps)("(%p)-> (Adptr:%d, DevType:(%x,%s), SurfFmt:(%x,%s), Win?%d, MultiSamp:%x, pQual:%p)\n",
           This,
@@ -2690,7 +2691,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
 
 
 /* Check if we support bumpmapping for a format */
-static BOOL CheckBumpMapCapability(struct WineD3DAdapter *adapter,
+static BOOL CheckBumpMapCapability(struct wined3d_adapter *adapter,
         WINED3DDEVTYPE DeviceType, const struct GlPixelFormatDesc *format_desc)
 {
     const struct fragment_pipeline *fp;
@@ -2721,7 +2722,7 @@ static BOOL CheckBumpMapCapability(struct WineD3DAdapter *adapter,
 }
 
 /* Check if the given DisplayFormat + DepthStencilFormat combination is valid for the Adapter */
-static BOOL CheckDepthStencilCapability(struct WineD3DAdapter *adapter,
+static BOOL CheckDepthStencilCapability(struct wined3d_adapter *adapter,
         const struct GlPixelFormatDesc *display_format_desc, const struct GlPixelFormatDesc *ds_format_desc)
 {
     int it=0;
@@ -2745,7 +2746,7 @@ static BOOL CheckDepthStencilCapability(struct WineD3DAdapter *adapter,
     return FALSE;
 }
 
-static BOOL CheckFilterCapability(struct WineD3DAdapter *adapter, const struct GlPixelFormatDesc *format_desc)
+static BOOL CheckFilterCapability(struct wined3d_adapter *adapter, const struct GlPixelFormatDesc *format_desc)
 {
     /* The flags entry of a format contains the filtering capability */
     if (format_desc->Flags & WINED3DFMT_FLAG_FILTERING) return TRUE;
@@ -2754,7 +2755,7 @@ static BOOL CheckFilterCapability(struct WineD3DAdapter *adapter, const struct G
 }
 
 /* Check the render target capabilities of a format */
-static BOOL CheckRenderTargetCapability(struct WineD3DAdapter *adapter,
+static BOOL CheckRenderTargetCapability(struct wined3d_adapter *adapter,
         const struct GlPixelFormatDesc *adapter_format_desc, const struct GlPixelFormatDesc *check_format_desc)
 {
     /* Filter out non-RT formats */
@@ -2812,7 +2813,7 @@ static BOOL CheckRenderTargetCapability(struct WineD3DAdapter *adapter,
     return FALSE;
 }
 
-static BOOL CheckSrgbReadCapability(struct WineD3DAdapter *adapter, const struct GlPixelFormatDesc *format_desc)
+static BOOL CheckSrgbReadCapability(struct wined3d_adapter *adapter, const struct GlPixelFormatDesc *format_desc)
 {
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
 
@@ -2844,7 +2845,7 @@ static BOOL CheckSrgbReadCapability(struct WineD3DAdapter *adapter, const struct
     return FALSE;
 }
 
-static BOOL CheckSrgbWriteCapability(struct WineD3DAdapter *adapter,
+static BOOL CheckSrgbWriteCapability(struct wined3d_adapter *adapter,
         WINED3DDEVTYPE DeviceType, const struct GlPixelFormatDesc *format_desc)
 {
     /* Only offer SRGB writing on X8R8G8B8/A8R8G8B8 when we use ARB or GLSL shaders as we are
@@ -2867,7 +2868,7 @@ static BOOL CheckSrgbWriteCapability(struct WineD3DAdapter *adapter,
 }
 
 /* Check if a format support blending in combination with pixel shaders */
-static BOOL CheckPostPixelShaderBlendingCapability(struct WineD3DAdapter *adapter,
+static BOOL CheckPostPixelShaderBlendingCapability(struct wined3d_adapter *adapter,
         const struct GlPixelFormatDesc *format_desc)
 {
     /* The flags entry of a format contains the post pixel shader blending capability */
@@ -2876,7 +2877,7 @@ static BOOL CheckPostPixelShaderBlendingCapability(struct WineD3DAdapter *adapte
     return FALSE;
 }
 
-static BOOL CheckWrapAndMipCapability(struct WineD3DAdapter *adapter, const struct GlPixelFormatDesc *format_desc)
+static BOOL CheckWrapAndMipCapability(struct wined3d_adapter *adapter, const struct GlPixelFormatDesc *format_desc)
 {
     /* OpenGL supports mipmapping on all formats basically. Wrapping is unsupported,
      * but we have to report mipmapping so we cannot reject this flag. Tests show that
@@ -2891,7 +2892,7 @@ static BOOL CheckWrapAndMipCapability(struct WineD3DAdapter *adapter, const stru
 }
 
 /* Check if a texture format is supported on the given adapter */
-static BOOL CheckTextureCapability(struct WineD3DAdapter *adapter,
+static BOOL CheckTextureCapability(struct wined3d_adapter *adapter,
         WINED3DDEVTYPE DeviceType, const struct GlPixelFormatDesc *format_desc)
 {
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
@@ -3120,7 +3121,7 @@ static BOOL CheckTextureCapability(struct WineD3DAdapter *adapter,
     return FALSE;
 }
 
-static BOOL CheckSurfaceCapability(struct WineD3DAdapter *adapter, const struct GlPixelFormatDesc *adapter_format_desc,
+static BOOL CheckSurfaceCapability(struct wined3d_adapter *adapter, const struct GlPixelFormatDesc *adapter_format_desc,
         WINED3DDEVTYPE DeviceType, const struct GlPixelFormatDesc *check_format_desc, WINED3DSURFTYPE SurfaceType)
 {
     const struct blit_shader *blitter;
@@ -3172,7 +3173,7 @@ static BOOL CheckSurfaceCapability(struct WineD3DAdapter *adapter, const struct 
     return FALSE;
 }
 
-static BOOL CheckVertexTextureCapability(struct WineD3DAdapter *adapter, const struct GlPixelFormatDesc *format_desc)
+static BOOL CheckVertexTextureCapability(struct wined3d_adapter *adapter, const struct GlPixelFormatDesc *format_desc)
 {
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
 
@@ -3203,7 +3204,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         WINED3DSURFTYPE SurfaceType)
 {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    struct WineD3DAdapter *adapter = &This->adapters[Adapter];
+    struct wined3d_adapter *adapter = &This->adapters[Adapter];
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
     const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(CheckFormat, gl_info);
     const struct GlPixelFormatDesc *adapter_format_desc = getFormatDescEntry(AdapterFormat, gl_info);
@@ -3709,7 +3710,7 @@ static HRESULT  WINAPI IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface,
     return WINED3D_OK;
 }
 
-static const shader_backend_t *select_shader_backend(struct WineD3DAdapter *adapter, WINED3DDEVTYPE DeviceType)
+static const shader_backend_t *select_shader_backend(struct wined3d_adapter *adapter, WINED3DDEVTYPE DeviceType)
 {
     const shader_backend_t *ret;
     int vs_selected_mode;
@@ -3726,7 +3727,7 @@ static const shader_backend_t *select_shader_backend(struct WineD3DAdapter *adap
     return ret;
 }
 
-static const struct fragment_pipeline *select_fragment_implementation(struct WineD3DAdapter *adapter,
+static const struct fragment_pipeline *select_fragment_implementation(struct wined3d_adapter *adapter,
         WINED3DDEVTYPE DeviceType)
 {
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
@@ -3747,7 +3748,7 @@ static const struct fragment_pipeline *select_fragment_implementation(struct Win
     }
 }
 
-static const struct blit_shader *select_blit_implementation(struct WineD3DAdapter *adapter, WINED3DDEVTYPE DeviceType)
+static const struct blit_shader *select_blit_implementation(struct wined3d_adapter *adapter, WINED3DDEVTYPE DeviceType)
 {
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
     int vs_selected_mode;
@@ -3767,7 +3768,7 @@ static const struct blit_shader *select_blit_implementation(struct WineD3DAdapte
 static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, WINED3DCAPS* pCaps) {
 
     IWineD3DImpl    *This = (IWineD3DImpl *)iface;
-    struct WineD3DAdapter *adapter = &This->adapters[Adapter];
+    struct wined3d_adapter *adapter = &This->adapters[Adapter];
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
     int vs_selected_mode;
     int ps_selected_mode;
@@ -4344,7 +4345,7 @@ static HRESULT WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter,
 {
     IWineD3DDeviceImpl *object  = NULL;
     IWineD3DImpl       *This    = (IWineD3DImpl *)iface;
-    struct WineD3DAdapter *adapter = &This->adapters[Adapter];
+    struct wined3d_adapter *adapter = &This->adapters[Adapter];
     WINED3DDISPLAYMODE  mode;
     const struct fragment_pipeline *frag_pipeline = NULL;
     int i;
@@ -4691,7 +4692,7 @@ BOOL InitAdapters(IWineD3DImpl *This)
 
     /* For now only one default adapter */
     {
-        struct WineD3DAdapter *adapter = &This->adapters[0];
+        struct wined3d_adapter *adapter = &This->adapters[0];
         const struct wined3d_gl_info *gl_info = &adapter->gl_info;
         struct wined3d_fake_gl_ctx fake_gl_ctx = {0};
         int iPixelFormat;

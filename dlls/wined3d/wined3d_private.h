@@ -1237,7 +1237,7 @@ typedef struct WineD3D_PixelFormat
 } WineD3D_PixelFormat;
 
 /* The adapter structure */
-struct WineD3DAdapter
+struct wined3d_adapter
 {
     UINT                    num;
     BOOL                    opengl;
@@ -1347,7 +1347,7 @@ typedef struct IWineD3DImpl
     UINT                    dxVersion;
 
     UINT adapter_count;
-    struct WineD3DAdapter adapters[1];
+    struct wined3d_adapter adapters[1];
 } IWineD3DImpl;
 
 extern const IWineD3DVtbl IWineD3D_Vtbl DECLSPEC_HIDDEN;
@@ -1375,7 +1375,7 @@ struct IWineD3DDeviceImpl
     IUnknown               *parent;
     IWineD3DDeviceParent   *device_parent;
     IWineD3D               *wineD3D;
-    struct WineD3DAdapter  *adapter;
+    struct wined3d_adapter *adapter;
 
     /* Window styles to restore when switching fullscreen mode */
     LONG                    style;
