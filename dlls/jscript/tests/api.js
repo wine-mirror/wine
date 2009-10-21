@@ -1595,7 +1595,7 @@ ok(err.toString === Error.prototype.toString, "err.toString !== Error.prototype.
 ok(err.message === "", "err.message != ''");
 err.message = date;
 ok(err.message === date, "err.message != date");
-ok(err.toString() === (invokeVersion < 2 ? "[object Error]" : "EvalError: Fri Aug 17 22:50:50 UTC+0200 85"),
+ok(err.toString().substring(0,21) === (invokeVersion < 2 ? "[object Error]" : "EvalError: Fri Aug 17"),
    "err.toString() = " + err.toString());
 ok(err.toString !== Object.prototype.toString, "err.toString === Object.prototype.toString");
 err = new RangeError();
