@@ -1712,11 +1712,11 @@ static void test_GetPrintProcessorDirectory(void)
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA(server_does_not_exist, NULL, 1, buffer, cbBuf*2, &pcbNeeded);
-    /* NT: RPC_S_SERVER_UNAVAILABLE, 9x: ERROR_INVALID_PARAMETER */
-    ok( !res &&
-        (GetLastError() == RPC_S_SERVER_UNAVAILABLE || GetLastError() == ERROR_INVALID_PARAMETER),
-        "returned %d with %d (expected '0' with RPC_S_SERVER_UNAVAILABLE or "
-        "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
+    ok( !res, "expected failure\n");
+    ok( GetLastError() == RPC_S_SERVER_UNAVAILABLE || /* NT */
+        GetLastError() == ERROR_INVALID_PARAMETER ||  /* 9x */
+        GetLastError() == RPC_S_INVALID_NET_ADDR,     /* Some Vista */
+        "unexpected last error %d\n", GetLastError());
 
     HeapFree(GetProcessHeap(), 0, buffer);
 }
