@@ -1769,8 +1769,10 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
     detach_ranges(This);
     release_nodes(This);
 
-    if(This->nsdoc)
+    if(This->nsdoc) {
+        release_mutation(This);
         nsIDOMHTMLDocument_Release(This->nsdoc);
+    }
 
     destroy_htmldoc(&This->basedoc);
 }
@@ -1811,7 +1813,6 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     doc->basedoc.doc_node = doc;
     doc->basedoc.doc_obj = doc_obj;
 
-    init_mutation(doc);
     init_dispex(&doc->node.dispex, (IUnknown*)HTMLDOMNODE(&doc->node), &HTMLDocumentNode_dispex);
     init_doc(&doc->basedoc, (IUnknown*)HTMLDOMNODE(&doc->node), DISPATCHEX(&doc->node.dispex));
     HTMLDocumentNode_SecMgr_Init(doc);
@@ -1819,6 +1820,7 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
 
     nsIDOMHTMLDocument_AddRef(nsdoc);
     doc->nsdoc = nsdoc;
+    init_mutation(doc);
 
     doc->basedoc.window = window;
 
@@ -1887,8 +1889,6 @@ static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
         set_document_bscallback(&This->basedoc, NULL);
         set_current_mon(&This->basedoc, NULL);
         if(This->basedoc.doc_node) {
-            if(This->basedoc.doc_node->nsdoc)
-                remove_mutation_observer(This->basedoc.doc_node);
             This->basedoc.doc_node->basedoc.doc_obj = NULL;
             IHTMLDocument2_Release(HTMLDOC(&This->basedoc.doc_node->basedoc));
         }

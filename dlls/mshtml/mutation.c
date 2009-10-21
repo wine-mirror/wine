@@ -40,36 +40,6 @@ enum {
     MUTATION_SCRIPT
 };
 
-void set_mutation_observer(HTMLDocumentNode *doc)
-{
-    nsIDOMNSDocument *nsdoc;
-    nsresult nsres;
-
-    nsres = nsIDOMHTMLDocument_QueryInterface(doc->nsdoc, &IID_nsIDOMNSDocument, (void**)&nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMNSDocument: %08x\n", nsres);
-        return;
-    }
-
-    nsIDOMNSDocument_WineAddObserver(nsdoc, NSDOCOBS(doc));
-    nsIDOMNSDocument_Release(nsdoc);
-}
-
-void remove_mutation_observer(HTMLDocumentNode *doc)
-{
-    nsIDOMNSDocument *nsdoc;
-    nsresult nsres;
-
-    nsres = nsIDOMHTMLDocument_QueryInterface(doc->nsdoc, &IID_nsIDOMNSDocument, (void**)&nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMNSDocument: %08x\n", nsres);
-        return;
-    }
-
-    nsIDOMNSDocument_WineRemoveObserver(nsdoc, NSDOCOBS(doc));
-    nsIDOMNSDocument_Release(nsdoc);
-}
-
 #define IE_MAJOR_VERSION 7
 #define IE_MINOR_VERSION 0
 
@@ -612,6 +582,33 @@ static const nsIDocumentObserverVtbl nsDocumentObserverVtbl = {
 
 void init_mutation(HTMLDocumentNode *doc)
 {
+    nsIDOMNSDocument *nsdoc;
+    nsresult nsres;
+
     doc->lpIDocumentObserverVtbl  = &nsDocumentObserverVtbl;
     doc->lpIRunnableVtbl          = &nsRunnableVtbl;
+
+    nsres = nsIDOMHTMLDocument_QueryInterface(doc->nsdoc, &IID_nsIDOMNSDocument, (void**)&nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMNSDocument: %08x\n", nsres);
+        return;
+    }
+
+    nsIDOMNSDocument_WineAddObserver(nsdoc, NSDOCOBS(doc));
+    nsIDOMNSDocument_Release(nsdoc);
+}
+
+void release_mutation(HTMLDocumentNode *doc)
+{
+    nsIDOMNSDocument *nsdoc;
+    nsresult nsres;
+
+    nsres = nsIDOMHTMLDocument_QueryInterface(doc->nsdoc, &IID_nsIDOMNSDocument, (void**)&nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMNSDocument: %08x\n", nsres);
+        return;
+    }
+
+    nsIDOMNSDocument_WineRemoveObserver(nsdoc, NSDOCOBS(doc));
+    nsIDOMNSDocument_Release(nsdoc);
 }
