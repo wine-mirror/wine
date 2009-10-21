@@ -55,6 +55,50 @@ static void window_set_docnode(HTMLWindow *window, HTMLDocumentNode *doc_node)
     }
 }
 
+nsIDOMWindow *get_nsdoc_window(nsIDOMDocument *nsdoc)
+{
+    nsIDOMDocumentView *nsdocview;
+    nsIDOMAbstractView *nsview;
+    nsIDOMWindow *nswindow;
+    nsresult nsres;
+
+    nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMDocumentView, (void**)&nsdocview);
+    nsIDOMDocument_Release(nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMDocumentView iface: %08x\n", nsres);
+        return NULL;
+    }
+
+    nsres = nsIDOMDocumentView_GetDefaultView(nsdocview, &nsview);
+    nsIDOMDocumentView_Release(nsview);
+    if(NS_FAILED(nsres)) {
+        ERR("GetDefaultView failed: %08x\n", nsres);
+        return NULL;
+    }
+
+    nsres = nsIDOMAbstractView_QueryInterface(nsview, &IID_nsIDOMWindow, (void**)&nswindow);
+    nsIDOMAbstractView_Release(nsview);
+    if(NS_FAILED(nsres)) {
+        ERR("Coult not get nsIDOMWindow iface: %08x\n", nsres);
+        return NULL;
+    }
+
+    return nswindow;
+}
+
+static void release_children(HTMLWindow *This)
+{
+    HTMLWindow *child;
+
+    while(!list_empty(&This->children)) {
+        child = LIST_ENTRY(list_tail(&This->children), HTMLWindow, sibling_entry);
+
+        list_remove(&child->sibling_entry);
+        child->parent = NULL;
+        IHTMLWindow2_Release(HTMLWINDOW2(child));
+    }
+}
+
 #define HTMLWINDOW2_THIS(iface) DEFINE_THIS(HTMLWindow, HTMLWindow2, iface)
 
 static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID riid, void **ppv)
@@ -115,6 +159,7 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
         DWORD i;
 
         window_set_docnode(This, NULL);
+        release_children(This);
 
         if(This->option_factory) {
             This->option_factory->window = NULL;
@@ -1500,7 +1545,7 @@ static dispex_static_data_t HTMLWindow_dispex = {
     HTMLWindow_iface_tids
 };
 
-HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTMLWindow **ret)
+HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTMLWindow *parent, HTMLWindow **ret)
 {
     HTMLWindow *window;
 
@@ -1526,7 +1571,15 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
 
     update_window_doc(window);
 
+    list_init(&window->children);
     list_add_head(&window_list, &window->entry);
+
+    if(parent) {
+        IHTMLWindow2_AddRef(HTMLWINDOW2(window));
+
+        window->parent = parent;
+        list_add_tail(&parent->children, &window->sibling_entry);
+    }
 
     *ret = window;
     return S_OK;

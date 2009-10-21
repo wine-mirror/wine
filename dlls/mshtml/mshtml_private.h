@@ -211,6 +211,7 @@ struct HTMLWindow {
     HTMLDocumentNode *doc;
     HTMLDocumentObj *doc_obj;
     nsIDOMWindow *nswindow;
+    HTMLWindow *parent;
 
     event_target_t *event_target;
     IHTMLEventObj *event;
@@ -227,6 +228,8 @@ struct HTMLWindow {
     DWORD global_prop_cnt;
     DWORD global_prop_size;
 
+    struct list children;
+    struct list sibling_entry;
     struct list entry;
 };
 
@@ -571,9 +574,10 @@ HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**);
 HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument*,HTMLDocumentObj*,HTMLWindow*,HTMLDocumentNode**);
 
-HRESULT HTMLWindow_Create(HTMLDocumentObj*,nsIDOMWindow*,HTMLWindow**);
+HRESULT HTMLWindow_Create(HTMLDocumentObj*,nsIDOMWindow*,HTMLWindow*,HTMLWindow**);
 void update_window_doc(HTMLWindow*);
 HTMLWindow *nswindow_to_window(const nsIDOMWindow*);
+nsIDOMWindow *get_nsdoc_window(nsIDOMDocument*);
 HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLWindow*);
 HTMLImageElementFactory *HTMLImageElementFactory_Create(HTMLWindow*);
 HRESULT HTMLLocation_Create(HTMLWindow*,HTMLLocation**);

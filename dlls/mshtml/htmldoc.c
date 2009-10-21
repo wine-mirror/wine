@@ -1990,7 +1990,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
             ERR("GetContentDOMWindow failed: %08x\n", nsres);
     }
 
-    hres = HTMLWindow_Create(doc, nswindow, &doc->basedoc.window);
+    hres = HTMLWindow_Create(doc, nswindow, NULL /* FIXME */, &doc->basedoc.window);
     if(nswindow)
         nsIDOMWindow_Release(nswindow);
     if(FAILED(hres)) {
