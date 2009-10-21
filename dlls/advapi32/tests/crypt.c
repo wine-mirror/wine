@@ -988,7 +988,6 @@ static void test_rc2_keylen(void)
     ret = pCryptImportKey(provider, (BYTE*)&key_blob,
                           sizeof(BLOBHEADER)+sizeof(DWORD)+key_blob.key_size,
                           0, 0, &hkey);
-    todo_wine
     ok(!ret && GetLastError() == NTE_BAD_DATA,
        "expected NTE_BAD_DATA, got %08x\n", GetLastError());
     /* but importing an 8-bit (7-byte) key does.. */
