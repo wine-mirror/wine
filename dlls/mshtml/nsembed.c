@@ -958,13 +958,7 @@ static nsresult NSAPI nsWebBrowserChrome_SetStatus(nsIWebBrowserChrome *iface,
         PRUint32 statusType, const PRUnichar *status)
 {
     NSContainer *This = NSWBCHROME_THIS(iface);
-
     TRACE("(%p)->(%d %s)\n", This, statusType, debugstr_w(status));
-
-    /* FIXME: This hack should be removed when we'll load all pages by URLMoniker */
-    if(This->doc)
-        update_nsdocument(This->doc);
-
     return NS_OK;
 }
 
