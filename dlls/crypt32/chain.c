@@ -815,6 +815,106 @@ static void dump_element(PCCERT_CONTEXT cert)
         dump_extension(&cert->pCertInfo->rgExtension[i]);
 }
 
+static void trace_usage(const CRYPT_BIT_BLOB *usage)
+{
+#define trace_usage_bit(bits, bit) \
+ if ((bits) & (bit)) TRACE_(chain)("%s\n", #bit)
+    if (usage->cbData)
+    {
+        trace_usage_bit(usage->pbData[0], CERT_DIGITAL_SIGNATURE_KEY_USAGE);
+        trace_usage_bit(usage->pbData[0], CERT_NON_REPUDIATION_KEY_USAGE);
+        trace_usage_bit(usage->pbData[0], CERT_KEY_ENCIPHERMENT_KEY_USAGE);
+        trace_usage_bit(usage->pbData[0], CERT_DATA_ENCIPHERMENT_KEY_USAGE);
+        trace_usage_bit(usage->pbData[0], CERT_KEY_AGREEMENT_KEY_USAGE);
+        trace_usage_bit(usage->pbData[0], CERT_KEY_CERT_SIGN_KEY_USAGE);
+        trace_usage_bit(usage->pbData[0], CERT_CRL_SIGN_KEY_USAGE);
+        trace_usage_bit(usage->pbData[0], CERT_ENCIPHER_ONLY_KEY_USAGE);
+    }
+#undef trace_usage_bit
+    if (usage->cbData > 1 && usage->pbData[1] & CERT_DECIPHER_ONLY_KEY_USAGE)
+        TRACE_(chain)("CERT_DECIPHER_ONLY_KEY_USAGE\n");
+}
+
+static BOOL CRYPT_KeyUsageValid(PCCERT_CONTEXT cert, BOOL isRoot, BOOL isCA,
+ DWORD index)
+{
+    PCERT_EXTENSION ext;
+    BOOL ret;
+    BYTE usageBits = 0;
+
+    ext = CertFindExtension(szOID_KEY_USAGE, cert->pCertInfo->cExtension,
+     cert->pCertInfo->rgExtension);
+    if (ext)
+    {
+        CRYPT_BIT_BLOB usage;
+        DWORD size = sizeof(usage);
+
+        ret = CryptDecodeObjectEx(cert->dwCertEncodingType, X509_BITS,
+         ext->Value.pbData, ext->Value.cbData, CRYPT_DECODE_NOCOPY_FLAG, NULL,
+         &usage, &size);
+        if (!ret)
+            return FALSE;
+        else if (usage.cbData > 2)
+        {
+            /* The key usage extension only defines 9 bits => no more than 2
+             * bytes are needed to encode all known usages.
+             */
+            return FALSE;
+        }
+        else
+        {
+            /* The only bit relevant to chain validation is the keyCertSign
+             * bit, which is always in the least significant byte of the
+             * key usage bits.
+             */
+            usageBits = usage.pbData[usage.cbData - 1];
+            if (TRACE_ON(chain))
+                trace_usage(&usage);
+        }
+    }
+    if (isCA)
+    {
+        if (!ext)
+        {
+            /* MS appears to violate RFC 3280, section 4.2.1.3 (Key Usage)
+             * here.  Quoting the RFC:
+             * "This [key usage] extension MUST appear in certificates that
+             * contain public keys that are used to validate digital signatures
+             * on other public key certificates or CRLs."
+             * Most of the test chains' certs do not contain key usage
+             * extensions, yet are allowed to be CA certs.  This appears to
+             * be common usage too:  the root CA in a chain often does not have
+             * the key usage extension.  We are a little more restrictive:
+             * root certs, which commonly do not have any extensions, are
+             * allowed to sign certificates without the key usage extension.
+             */
+            WARN_(chain)("no key usage extension on a CA cert\n");
+            ret = isRoot;
+        }
+        else
+        {
+            if (!(usageBits & CERT_KEY_CERT_SIGN_KEY_USAGE))
+            {
+                WARN_(chain)("keyCertSign not asserted on a CA cert\n");
+                ret = FALSE;
+            }
+            else
+                ret = TRUE;
+        }
+    }
+    else
+    {
+        if (ext && (usageBits & CERT_KEY_CERT_SIGN_KEY_USAGE))
+        {
+            WARN_(chain)("keyCertSign asserted on a non-CA cert\n");
+            ret = FALSE;
+        }
+        else
+            ret = TRUE;
+    }
+    return ret;
+}
+
 static BOOL CRYPT_CriticalExtensionsSupported(PCCERT_CONTEXT cert)
 {
     BOOL ret = TRUE;
@@ -833,13 +933,7 @@ static BOOL CRYPT_CriticalExtensionsSupported(PCCERT_CONTEXT cert)
             else if (!strcmp(oid, szOID_NAME_CONSTRAINTS))
                 ret = TRUE;
             else if (!strcmp(oid, szOID_KEY_USAGE))
-            {
-                static int warned;
-
-                if (!warned++)
-                    FIXME("key usage extension unsupported, ignoring\n");
                 ret = TRUE;
-            }
             else if (!strcmp(oid, szOID_SUBJECT_ALT_NAME))
                 ret = TRUE;
             else
@@ -865,21 +959,21 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
      chain->cElement, debugstr_w(filetime_to_str(time)));
     for (i = chain->cElement - 1; i >= 0; i--)
     {
+        BOOL isRoot;
+
         if (TRACE_ON(chain))
             dump_element(chain->rgpElement[i]->pCertContext);
         if (CertVerifyTimeValidity(time,
          chain->rgpElement[i]->pCertContext->pCertInfo) != 0)
             chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
              CERT_TRUST_IS_NOT_TIME_VALID;
+        if (i == chain->cElement - 1)
+            isRoot = CRYPT_IsCertificateSelfSigned(
+             chain->rgpElement[i]->pCertContext);
+        else
+            isRoot = FALSE;
         if (i != 0)
         {
-            BOOL isRoot;
-
-            if (i == chain->cElement - 1)
-                isRoot = CRYPT_IsCertificateSelfSigned(
-                 chain->rgpElement[i]->pCertContext);
-            else
-                isRoot = FALSE;
             /* Check the signature of the cert this issued */
             if (!CryptVerifyCertificateSignatureEx(0, X509_ASN_ENCODING,
              CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT,
@@ -914,6 +1008,10 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
                 chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
                  CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
         }
+        if (!CRYPT_KeyUsageValid(chain->rgpElement[i]->pCertContext, isRoot,
+         constraints.fCA, i))
+            chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
+             CERT_TRUST_IS_NOT_VALID_FOR_USAGE;
         if (CRYPT_IsSimpleChainCyclic(chain))
         {
             /* If the chain is cyclic, then the path length constraints
@@ -924,7 +1022,6 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
              CERT_TRUST_IS_PARTIAL_CHAIN |
              CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
         }
-        /* FIXME: check valid usages */
         /* Check whether every critical extension is supported */
         if (!CRYPT_CriticalExtensionsSupported(
          chain->rgpElement[i]->pCertContext))

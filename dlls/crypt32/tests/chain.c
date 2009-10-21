@@ -1782,7 +1782,7 @@ static ChainCheck chainCheck[] = {
    { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_VALID_FOR_USAGE, 0 },
      1, simpleStatus15 },
-   TODO_ERROR },
+   0 },
  /* Windows XP incorrectly does not complain that the end cert's key usage is
   * invalid, so ignore that error.
   */
@@ -1791,7 +1791,7 @@ static ChainCheck chainCheck[] = {
        CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_VALID_FOR_USAGE, 0 },
      1, simpleStatus16 },
-   TODO_ERROR },
+   0 },
  { { sizeof(chain17) / sizeof(chain17[0]), chain17 },
    { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 }, 1, simpleStatus17 },
@@ -1800,7 +1800,7 @@ static ChainCheck chainCheck[] = {
    { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_VALID_FOR_USAGE, 0 },
      1, simpleStatus18 },
-   TODO_ERROR },
+   0 },
  { { sizeof(selfSignedChain) / sizeof(selfSignedChain[0]), selfSignedChain },
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_NOT_TIME_VALID | CERT_TRUST_IS_UNTRUSTED_ROOT, 0 },
