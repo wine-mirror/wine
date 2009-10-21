@@ -84,6 +84,7 @@ struct d3d10_effect_type
     DWORD row_count;
     D3D10_SHADER_VARIABLE_TYPE basetype;
     D3D10_SHADER_VARIABLE_CLASS type_class;
+    struct d3d10_effect_type *elementtype;
     struct d3d10_effect_type_member *members;
 };
 
@@ -110,6 +111,7 @@ struct d3d10_effect_variable
     DWORD flag;
     DWORD data_size;
     struct d3d10_effect_type *type;
+    struct d3d10_effect_variable *elements;
     struct d3d10_effect_variable *members;
     struct d3d10_effect_variable *annotations;
 };
