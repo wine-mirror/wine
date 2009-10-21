@@ -939,13 +939,13 @@ static const unsigned char key[key_length] =
     { 0xbf, 0xf6, 0x83, 0x4b, 0x3e, 0xa3, 0x23, 0xdd,
       0x96, 0x78, 0x70, 0x8e, 0xa1, 0x9d, 0x3b, 0x40 };
 
-static void hashtest(void)
+static void test_rc2_keylen(void)
 {
     struct KeyBlob
     {
         BLOBHEADER header;
         DWORD key_size;
-        BYTE key_data[key_length];
+        BYTE key_data[2048];
     } key_blob;
 
     HCRYPTPROV provider;
@@ -961,19 +961,91 @@ static void hashtest(void)
     key_blob.header.bVersion = CUR_BLOB_VERSION;
     key_blob.header.reserved = 0;
     key_blob.header.aiKeyAlg = CALG_RC2;
-    key_blob.key_size = key_length;
+    key_blob.key_size = sizeof(key);
     memcpy(key_blob.key_data, key, key_length);
 
+    /* Importing a 16-byte key works with the default provider. */
     SetLastError(0xdeadbeef);
     ret = pCryptImportKey(provider, (BYTE*)&key_blob,
-                      sizeof(BLOBHEADER)+sizeof(DWORD)+key_length,
+                      sizeof(BLOBHEADER)+sizeof(DWORD)+key_blob.key_size,
                       0, CRYPT_IPSEC_HMAC_KEY, &hkey);
     /* CRYPT_IPSEC_HMAC_KEY is not supported on W2K and lower */
     ok(ret ||
        broken(!ret && GetLastError() == NTE_BAD_FLAGS),
-       "CryptImportKey error %u\n", GetLastError());
+       "CryptImportKey error %08x\n", GetLastError());
 
     pCryptDestroyKey(hkey);
+    pCryptReleaseContext(provider, 0);
+
+    SetLastError(0xdeadbeef);
+    ret = pCryptAcquireContextA(&provider, NULL, MS_DEF_PROV,
+                                PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+    ok(ret, "CryptAcquireContext error %08x\n", GetLastError());
+
+    /* Importing a 16-byte key doesn't work with the base provider.. */
+    SetLastError(0xdeadbeef);
+    ret = pCryptImportKey(provider, (BYTE*)&key_blob,
+                          sizeof(BLOBHEADER)+sizeof(DWORD)+key_blob.key_size,
+                          0, 0, &hkey);
+    todo_wine
+    ok(!ret && GetLastError() == NTE_BAD_DATA,
+       "expected NTE_BAD_DATA, got %08x\n", GetLastError());
+    /* but importing an 8-bit (7-byte) key does.. */
+    key_blob.key_size = 7;
+    SetLastError(0xdeadbeef);
+    ret = pCryptImportKey(provider, (BYTE*)&key_blob,
+                          sizeof(BLOBHEADER)+sizeof(DWORD)+key_blob.key_size,
+                          0, 0, &hkey);
+    ok(ret, "CryptAcquireContext error %08x\n", GetLastError());
+    pCryptDestroyKey(hkey);
+    /* as does importing a 16-byte key with the base provider when
+     * CRYPT_IPSEC_HMAC_KEY is specified.
+     */
+    key_blob.key_size = sizeof(key);
+    SetLastError(0xdeadbeef);
+    ret = pCryptImportKey(provider, (BYTE*)&key_blob,
+                          sizeof(BLOBHEADER)+sizeof(DWORD)+key_blob.key_size,
+                          0, CRYPT_IPSEC_HMAC_KEY, &hkey);
+    /* CRYPT_IPSEC_HMAC_KEY is not supported on W2K and lower */
+    ok(ret ||
+       broken(!ret && GetLastError() == NTE_BAD_FLAGS),
+       "CryptImportKey error %08x\n", GetLastError());
+    pCryptDestroyKey(hkey);
+
+    pCryptReleaseContext(provider, 0);
+
+    key_blob.key_size = sizeof(key);
+    SetLastError(0xdeadbeef);
+    ret = pCryptAcquireContextA(&provider, NULL, NULL,
+                                PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+    ok(ret, "CryptAcquireContext error %08x\n", GetLastError());
+
+    /* Importing a 16-byte key also works with the default provider when
+     * CRYPT_IPSEC_HMAC_KEY is specified.
+     */
+    SetLastError(0xdeadbeef);
+    ret = pCryptImportKey(provider, (BYTE*)&key_blob,
+                          sizeof(BLOBHEADER)+sizeof(DWORD)+key_blob.key_size,
+                          0, CRYPT_IPSEC_HMAC_KEY, &hkey);
+    ok(ret ||
+       broken(!ret && GetLastError() == NTE_BAD_FLAGS),
+       "CryptImportKey error %08x\n", GetLastError());
+    pCryptDestroyKey(hkey);
+
+    /* There is no apparent limit to the size of the input key when
+     * CRYPT_IPSEC_HMAC_KEY is specified.
+     */
+    key_blob.key_size = sizeof(key_blob.key_data);
+    SetLastError(0xdeadbeef);
+    ret = pCryptImportKey(provider, (BYTE*)&key_blob,
+                          sizeof(BLOBHEADER)+sizeof(DWORD)+key_blob.key_size,
+                          0, CRYPT_IPSEC_HMAC_KEY, &hkey);
+    todo_wine
+    ok(ret ||
+       broken(!ret && GetLastError() == NTE_BAD_FLAGS),
+       "CryptImportKey error %08x\n", GetLastError());
+    pCryptDestroyKey(hkey);
+
     pCryptReleaseContext(provider, 0);
 }
 
@@ -982,7 +1054,7 @@ START_TEST(crypt)
     init_function_pointers();
     if (pCryptAcquireContextA && pCryptReleaseContext)
     {
-	hashtest();
+	test_rc2_keylen();
 	init_environment();
 	test_acquire_context();
 	test_incorrect_api_usage();
