@@ -72,6 +72,7 @@ static void test_heap(void)
     /* Heap*() functions */
     mem = HeapAlloc(GetProcessHeap(), 0, 0);
     ok(mem != NULL, "memory not allocated for size 0\n");
+    HeapFree(GetProcessHeap(), 0, mem);
 
     mem = HeapReAlloc(GetProcessHeap(), 0, NULL, 10);
     ok(mem == NULL, "memory allocated by HeapReAlloc\n");
@@ -248,6 +249,8 @@ static void test_heap(void)
            GetLastError() == ERROR_INVALID_PARAMETER, /* win9x */
            "Expected ERROR_INVALID_HANDLE or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     }
+
+    GlobalFree(gbl);
 
     /* ####################################### */
     /* Local*() functions */
