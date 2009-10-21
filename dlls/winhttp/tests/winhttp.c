@@ -763,6 +763,7 @@ static void test_secure_connection(void)
     size = sizeof(cert);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_SERVER_CERT_CONTEXT, &cert, &size );
     ok(ret, "failed to retrieve certificate context %u\n", GetLastError());
+    CertFreeCertificateContext(cert);
 
     size = sizeof(bitness);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_SECURITY_KEY_BITNESS, &bitness, &size );
