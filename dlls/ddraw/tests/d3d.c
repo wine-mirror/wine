@@ -960,8 +960,7 @@ static BOOL D3D1_createObjects(void)
     ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
     ddsd.dwWidth = 256;
     ddsd.dwHeight = 256;
-    hr = IDirectDraw_CreateSurface(DirectDraw1, &ddsd, &Surface1, NULL);
-    ok(SUCCEEDED(hr), "IDirectDraw_CreateSurface returned %#x.\n", hr);
+    IDirectDraw_CreateSurface(DirectDraw1, &ddsd, &Surface1, NULL);
     if (!Surface1) {
         skip("DDSCAPS_3DDEVICE surface not available\n");
         return FALSE;
