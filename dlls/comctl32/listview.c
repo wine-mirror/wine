@@ -5004,6 +5004,8 @@ static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr, BOOL destroy)
     HDPA hdpaSubItems = NULL;
     BOOL bSuppress;
     ITEMHDR *hdrItem;
+    ITEM_INFO *lpItem;
+    ITEM_ID *lpID;
     INT i, j;
 
     TRACE("()\n");
@@ -5025,13 +5027,20 @@ static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr, BOOL destroy)
     {
 	if (!(infoPtr->dwStyle & LVS_OWNERDATA))
 	{
-            /* send LVN_DELETEITEM notification, if not suppressed
-               and if it is not a virtual listview */
-            if (!bSuppress) notify_deleteitem(infoPtr, i);
-            hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, i);
+	    /* send LVN_DELETEITEM notification, if not suppressed
+	       and if it is not a virtual listview */
+	    if (!bSuppress) notify_deleteitem(infoPtr, i);
+	    hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, i);
+	    lpItem = DPA_GetPtr(hdpaSubItems, 0);
+	    /* free id struct */
+	    j = DPA_GetPtrIndex(infoPtr->hdpaItemIds, lpItem->id);
+	    lpID = DPA_GetPtr(infoPtr->hdpaItemIds, j);
+	    DPA_DeletePtr(infoPtr->hdpaItemIds, j);
+	    Free(lpID);
+	    /* both item and subitem start with ITEMHDR header */
 	    for (j = 0; j < DPA_GetPtrCount(hdpaSubItems); j++)
 	    {
-                hdrItem = DPA_GetPtr(hdpaSubItems, j);
+	        hdrItem = DPA_GetPtr(hdpaSubItems, j);
 		if (is_textW(hdrItem->pszText)) Free(hdrItem->pszText);
 		Free(hdrItem);
 	    }
