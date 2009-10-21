@@ -438,7 +438,6 @@ MMRESULT WINAPI timeEndPeriod(UINT wPeriod)
 }
 
 /**************************************************************************
- * 				timeGetTime    [MMSYSTEM.607]
  * 				timeGetTime    [WINMM.@]
  */
 DWORD WINAPI timeGetTime(void)

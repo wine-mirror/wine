@@ -103,7 +103,7 @@
 604    pascal  timeGetDevCaps(ptr word) timeGetDevCaps16
 605    pascal  timeBeginPeriod(word) timeBeginPeriod16
 606    pascal  timeEndPeriod(word) timeEndPeriod16
-607    pascal  timeGetTime() timeGetTime
+607    pascal  timeGetTime() timeGetTime16
 701    pascal  mciSendCommand(word word long long) mciSendCommand16
 702    pascal  mciSendString(str ptr word word) mciSendString16
 703    pascal  mciGetDeviceID(ptr) mciGetDeviceID16

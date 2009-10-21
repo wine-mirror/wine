@@ -2509,6 +2509,14 @@ MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
     return timeEndPeriod(wPeriod);
 }
 
+/**************************************************************************
+ * 				timeGetTime    [MMSYSTEM.607]
+ */
+DWORD WINAPI timeGetTime16(void)
+{
+    return timeGetTime();
+}
+
 /* ###################################################
  * #                     JOYSTICK                    #
  * ###################################################
