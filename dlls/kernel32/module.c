@@ -443,7 +443,7 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
         break;
     }
     case BINARY_PE:
-        *lpBinaryType = SCS_32BIT_BINARY;
+        *lpBinaryType = (binary_type & BINARY_FLAG_64BIT) ? SCS_64BIT_BINARY : SCS_32BIT_BINARY;
         ret = TRUE;
         break;
     case BINARY_WIN16:
