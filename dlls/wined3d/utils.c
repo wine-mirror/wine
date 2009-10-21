@@ -1112,6 +1112,7 @@ BOOL initPixelFormatsNoGL(struct wined3d_gl_info *gl_info)
     if (!init_format_compression_info(gl_info))
     {
         HeapFree(GetProcessHeap(), 0, gl_info->gl_formats);
+        gl_info->gl_formats = NULL;
         return FALSE;
     }
 
@@ -1135,6 +1136,7 @@ BOOL initPixelFormats(struct wined3d_gl_info *gl_info)
 
 fail:
     HeapFree(GetProcessHeap(), 0, gl_info->gl_formats);
+    gl_info->gl_formats = NULL;
     return FALSE;
 }
 

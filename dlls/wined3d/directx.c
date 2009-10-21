@@ -334,6 +334,12 @@ long WineD3DAdapterChangeGLRam(IWineD3DDeviceImpl *D3DDevice, long glram)
     return adapter->UsedTextureRam;
 }
 
+static void wined3d_adapter_cleanup(struct wined3d_adapter *adapter)
+{
+    HeapFree(GetProcessHeap(), 0, adapter->gl_info.gl_formats);
+    HeapFree(GetProcessHeap(), 0, adapter->cfgs);
+}
+
 /**********************************************************
  * IUnknown parts follows
  **********************************************************/
@@ -372,7 +378,7 @@ static ULONG WINAPI IWineD3DImpl_Release(IWineD3D *iface) {
 
         for (i = 0; i < This->adapter_count; ++i)
         {
-            HeapFree(GetProcessHeap(), 0, This->adapters[i].cfgs);
+            wined3d_adapter_cleanup(&This->adapters[i]);
         }
         HeapFree(GetProcessHeap(), 0, This);
     }
