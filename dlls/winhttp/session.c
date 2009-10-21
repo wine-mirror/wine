@@ -368,6 +368,7 @@ BOOL set_server_for_hostname( connect_t *connect, LPCWSTR server, INTERNET_PORT 
     }
     else if (server)
     {
+        heap_free( connect->servername );
         if (!(connect->servername = strdupW( server )))
         {
             ret = FALSE;
