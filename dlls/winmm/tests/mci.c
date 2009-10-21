@@ -486,6 +486,18 @@ static void test_asyncWAVE(HWND hwnd)
     err = mciSendString("seek mysound to 0 wait", NULL, 0, NULL);
     ok(!err,"mci seek to start returned error: %d\n", err);
 
+    /* Seek stops. */
+    err = mciSendString("status mysound mode", buf, sizeof(buf), NULL);
+    ok(!err,"mci status mode returned error: %d\n", err);
+    if(!err) ok(!strcmp(buf,"stopped"), "mci status mode: %s\n", buf);
+
+    err = mciSendString("seek mysound wait", NULL, 0, NULL);
+    ok(err==MCIERR_MISSING_PARAMETER,"mci seek to nowhere returned error: %d\n", err);
+
+    /* cdaudio does not detect to start to end as error */
+    err = mciSendString("seek mysound to start to 0", NULL, 0, NULL);
+    ok(err==MCIERR_FLAGS_NOT_COMPATIBLE,"mci seek to start to 0 returned error: %d\n", err);
+
     err = mciSendString("play mysound to 1000 notify", NULL, 0, hwnd);
     ok(!err,"mci play returned error: %d\n", err);
 

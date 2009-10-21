@@ -1240,26 +1240,37 @@ static DWORD WAVE_mciResume(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PAR
 static DWORD WAVE_mciSeek(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 {
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
+    DWORD		position, dwRet;
 
     TRACE("(%04X, %08X, %p);\n", wDevID, dwFlags, lpParms);
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
-    WAVE_mciStop(wDevID, MCI_WAIT, 0);
+    position = dwFlags & (MCI_SEEK_TO_START|MCI_SEEK_TO_END|MCI_TO);
+    if (!position)		return MCIERR_MISSING_PARAMETER;
+    if (position&(position-1))	return MCIERR_FLAGS_NOT_COMPATIBLE;
 
-    if (dwFlags & MCI_SEEK_TO_START) {
-	wmw->dwPosition = 0;
-    } else if (dwFlags & MCI_SEEK_TO_END) {
-	wmw->dwPosition = wmw->ckWaveData.cksize;
-    } else if (dwFlags & MCI_TO) {
-	wmw->dwPosition = WAVE_ConvertTimeFormatToByte(wmw, lpParms->dwTo);
+    /* Stop sends MCI_NOTIFY_ABORTED when needed */
+    dwRet = WAVE_mciStop(wDevID, MCI_WAIT, 0);
+    if (dwRet != MMSYSERR_NOERROR) return dwRet;
+
+    if (dwFlags & MCI_TO) {
+	position = WAVE_ConvertTimeFormatToByte(wmw, lpParms->dwTo);
+	if (position > wmw->ckWaveData.cksize)
+	    return MCIERR_OUTOFRANGE;
+    } else if (dwFlags & MCI_SEEK_TO_START) {
+	position = 0;
     } else {
-	WARN("dwFlag doesn't tell where to seek to...\n");
-	return MCIERR_MISSING_PARAMETER;
+	position = wmw->ckWaveData.cksize;
     }
-
-    TRACE("Seeking to position=%u bytes\n", wmw->dwPosition);
+    /* Seek rounds down, unless at end */
+    if (position != wmw->ckWaveData.cksize) {
+	position /= wmw->lpWaveFormat->nBlockAlign;
+	position *= wmw->lpWaveFormat->nBlockAlign;
+    }
+    wmw->dwPosition = position;
+    TRACE("Seeking to position=%u bytes\n", position);
 
     if (dwFlags & MCI_NOTIFY)
 	WAVE_mciNotify(lpParms->dwCallback, wmw, MCI_NOTIFY_SUCCESSFUL);
