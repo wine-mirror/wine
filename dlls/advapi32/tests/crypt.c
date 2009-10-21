@@ -949,7 +949,7 @@ static void test_rc2_keylen(void)
     } key_blob;
 
     HCRYPTPROV provider;
-    HCRYPTKEY hkey;
+    HCRYPTKEY hkey = 0;
     BOOL ret;
 
     SetLastError(0xdeadbeef);
@@ -970,6 +970,7 @@ static void test_rc2_keylen(void)
                       sizeof(BLOBHEADER)+sizeof(DWORD)+key_blob.key_size,
                       0, CRYPT_IPSEC_HMAC_KEY, &hkey);
     /* CRYPT_IPSEC_HMAC_KEY is not supported on W2K and lower */
+    todo_wine
     ok(ret ||
        broken(!ret && GetLastError() == NTE_BAD_FLAGS),
        "CryptImportKey error %08x\n", GetLastError());
@@ -1007,6 +1008,7 @@ static void test_rc2_keylen(void)
                           sizeof(BLOBHEADER)+sizeof(DWORD)+key_blob.key_size,
                           0, CRYPT_IPSEC_HMAC_KEY, &hkey);
     /* CRYPT_IPSEC_HMAC_KEY is not supported on W2K and lower */
+    todo_wine
     ok(ret ||
        broken(!ret && GetLastError() == NTE_BAD_FLAGS),
        "CryptImportKey error %08x\n", GetLastError());
@@ -1027,6 +1029,7 @@ static void test_rc2_keylen(void)
     ret = pCryptImportKey(provider, (BYTE*)&key_blob,
                           sizeof(BLOBHEADER)+sizeof(DWORD)+key_blob.key_size,
                           0, CRYPT_IPSEC_HMAC_KEY, &hkey);
+    todo_wine
     ok(ret ||
        broken(!ret && GetLastError() == NTE_BAD_FLAGS),
        "CryptImportKey error %08x\n", GetLastError());

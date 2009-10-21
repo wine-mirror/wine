@@ -3011,6 +3011,12 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
     TRACE("(hProv=%08lx, pbData=%p, dwDataLen=%d, hPubKey=%08lx, dwFlags=%08x, phKey=%p)\n",
         hProv, pbData, dwDataLen, hPubKey, dwFlags, phKey);
 
+    if (dwFlags & CRYPT_IPSEC_HMAC_KEY)
+    {
+        FIXME("unimplemented for CRYPT_IPSEC_HMAC_KEY\n");
+        SetLastError(NTE_BAD_FLAGS);
+        return FALSE;
+    }
     return import_key(hProv, pbData, dwDataLen, hPubKey, dwFlags, TRUE, phKey);
 }
 
