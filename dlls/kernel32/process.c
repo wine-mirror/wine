@@ -906,10 +906,15 @@ static void start_wineboot( HANDLE handles[2] )
     }
     if (GetLastError() != ERROR_ALREADY_EXISTS)  /* we created it */
     {
-        static const WCHAR command_line[] = {'\\','w','i','n','e','b','o','o','t','.','e','x','e',' ','-','-','i','n','i','t',0};
+        static const WCHAR wineboot[] = {'\\','w','i','n','e','b','o','o','t','.','e','x','e',0};
+        static const WCHAR args[] = {' ','-','-','i','n','i','t',0};
+        const DWORD expected_type = (sizeof(void*) > sizeof(int) || is_wow64) ?
+                                     SCS_64BIT_BINARY : SCS_32BIT_BINARY;
         STARTUPINFOW si;
         PROCESS_INFORMATION pi;
-        WCHAR cmdline[MAX_PATH + sizeof(command_line)/sizeof(WCHAR)];
+        DWORD type;
+        void *redir;
+        WCHAR cmdline[MAX_PATH + (sizeof(wineboot) + sizeof(args)) / sizeof(WCHAR)];
 
         memset( &si, 0, sizeof(si) );
         si.cb = sizeof(si);
@@ -919,7 +924,21 @@ static void start_wineboot( HANDLE handles[2] )
         si.hStdError  = GetStdHandle( STD_ERROR_HANDLE );
 
         GetSystemDirectoryW( cmdline, MAX_PATH );
-        lstrcatW( cmdline, command_line );
+        lstrcatW( cmdline, wineboot );
+
+        Wow64DisableWow64FsRedirection( &redir );
+        if (GetBinaryTypeW( cmdline, &type ) && type != expected_type)
+        {
+            if (type == SCS_64BIT_BINARY)
+                MESSAGE( "wine: '%s' is a 64-bit prefix, it cannot be used with 32-bit Wine.\n",
+                     wine_get_config_dir() );
+            else
+                MESSAGE( "wine: '%s' is a 32-bit prefix, it cannot be used with %s Wine.\n",
+                     wine_get_config_dir(), is_wow64 ? "wow64" : "64-bit" );
+            ExitProcess( 1 );
+        }
+
+        lstrcatW( cmdline, args );
         if (CreateProcessW( NULL, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi ))
         {
             TRACE( "started wineboot pid %04x tid %04x\n", pi.dwProcessId, pi.dwThreadId );
@@ -932,6 +951,7 @@ static void start_wineboot( HANDLE handles[2] )
             CloseHandle( handles[0] );
             handles[0] = 0;
         }
+        Wow64RevertWow64FsRedirection( redir );
     }
 }
 
