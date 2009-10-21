@@ -71,6 +71,7 @@ static ULONG STDMETHODCALLTYPE dxgi_factory_Release(IWineDXGIFactory *iface)
         {
             IDXGIAdapter_Release(This->adapters[i]);
         }
+        HeapFree(GetProcessHeap(), 0, This->adapters);
 
         EnterCriticalSection(&dxgi_cs);
         IWineD3D_Release(This->wined3d);
