@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static struct list window_list = LIST_INIT(window_list);
 
-void window_set_docnode(HTMLWindow *window, HTMLDocumentNode *doc_node)
+static void window_set_docnode(HTMLWindow *window, HTMLDocumentNode *doc_node)
 {
     if(window->doc) {
         window->doc->basedoc.window = NULL;
@@ -45,6 +45,14 @@ void window_set_docnode(HTMLWindow *window, HTMLDocumentNode *doc_node)
     window->doc = doc_node;
     if(doc_node)
         htmldoc_addref(&doc_node->basedoc);
+
+    if(window->doc_obj && window->doc_obj->basedoc.window == window) {
+        if(window->doc_obj->basedoc.doc_node)
+            htmldoc_release(&window->doc_obj->basedoc.doc_node->basedoc);
+        window->doc_obj->basedoc.doc_node = doc_node;
+        if(doc_node)
+            htmldoc_addref(&doc_node->basedoc);
+    }
 }
 
 #define HTMLWINDOW2_THIS(iface) DEFINE_THIS(HTMLWindow, HTMLWindow2, iface)
@@ -1516,10 +1524,47 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
     window->scriptmode = SCRIPTMODE_GECKO;
     list_init(&window->script_hosts);
 
+    update_window_doc(window);
+
     list_add_head(&window_list, &window->entry);
 
     *ret = window;
     return S_OK;
+}
+
+void update_window_doc(HTMLWindow *window)
+{
+    nsIDOMHTMLDocument *nshtmldoc;
+    nsIDOMDocument *nsdoc;
+    nsresult nsres;
+
+    nsres = nsIDOMWindow_GetDocument(window->nswindow, &nsdoc);
+    if(NS_FAILED(nsres) || !nsdoc) {
+        ERR("GetDocument failed: %08x\n", nsres);
+        return;
+    }
+
+    nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMHTMLDocument, (void**)&nshtmldoc);
+    nsIDOMDocument_Release(nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMHTMLDocument iface: %08x\n", nsres);
+        return;
+    }
+
+    if(!window->doc || window->doc->nsdoc != nshtmldoc) {
+        HTMLDocumentNode *doc;
+        HRESULT hres;
+
+        hres = create_doc_from_nsdoc(nshtmldoc, window->doc_obj, window, &doc);
+        if(SUCCEEDED(hres)) {
+            window_set_docnode(window, doc);
+            htmldoc_release(&doc->basedoc);
+        }else {
+            ERR("create_doc_from_nsdoc failed: %08x\n", hres);
+        }
+    }
+
+    nsIDOMHTMLDocument_Release(nshtmldoc);
 }
 
 HTMLWindow *nswindow_to_window(const nsIDOMWindow *nswindow)

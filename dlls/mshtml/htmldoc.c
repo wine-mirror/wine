@@ -1998,7 +1998,11 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
         return hres;
     }
 
-    update_nsdocument(doc);
+    if(!doc->basedoc.doc_node && doc->basedoc.window->doc) {
+        doc->basedoc.doc_node = doc->basedoc.window->doc;
+        htmldoc_addref(&doc->basedoc.doc_node->basedoc);
+    }
+
     get_thread_hwnd();
 
     return S_OK;

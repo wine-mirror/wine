@@ -353,9 +353,7 @@ static HRESULT WINAPI HTMLIFrameBase2_get_contentWindow(IHTMLFrameBase2 *iface, 
 
     if(!This->content_window) {
         nsIDOMHTMLDocument *nshtmldoc;
-        HTMLDocumentNode *content_doc;
         nsIDOMDocument *nsdoc;
-        HTMLWindow *window;
         nsresult nsres;
         HRESULT hres;
 
@@ -377,23 +375,10 @@ static HRESULT WINAPI HTMLIFrameBase2_get_contentWindow(IHTMLFrameBase2 *iface, 
             return E_FAIL;
         }
 
-        hres = create_content_window(This, nshtmldoc, &window);
-        if(FAILED(hres)) {
-            nsIDOMHTMLDocument_Release(nshtmldoc);
-            return E_FAIL;
-        }
-
-        hres = create_doc_from_nsdoc(nshtmldoc, This->element.node.doc->basedoc.doc_obj, window, &content_doc);
+        hres = create_content_window(This, nshtmldoc, &This->content_window);
         nsIDOMHTMLDocument_Release(nshtmldoc);
-        if(SUCCEEDED(hres))
-            window_set_docnode(window, content_doc);
-        else
-            IHTMLWindow2_Release(HTMLWINDOW2(window));
-        htmldoc_release(&content_doc->basedoc);
         if(FAILED(hres))
             return hres;
-
-        This->content_window = window;
     }
 
     IHTMLWindow2_AddRef(HTMLWINDOW2(This->content_window));

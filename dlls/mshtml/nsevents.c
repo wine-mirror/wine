@@ -137,7 +137,6 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     if(!This->doc)
         return NS_OK;
 
-    update_nsdocument(This->doc);
     connect_scripts(This->doc->basedoc.window);
 
     if(This->editor_controller) {

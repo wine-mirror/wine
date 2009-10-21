@@ -807,58 +807,6 @@ void set_ns_editmode(NSContainer *This)
     nsIWebBrowser_SetParentURIContentListener(This->webbrowser, NSURICL(This));
 }
 
-void update_nsdocument(HTMLDocumentObj *doc)
-{
-    HTMLDocumentNode *doc_node;
-    nsIDOMHTMLDocument *nsdoc;
-    nsIDOMDocument *nsdomdoc;
-    nsresult nsres;
-    HRESULT hres;
-
-    if(!doc->nscontainer || !doc->nscontainer->navigation)
-        return;
-
-    nsres = nsIWebNavigation_GetDocument(doc->nscontainer->navigation, &nsdomdoc);
-    if(NS_FAILED(nsres) || !nsdomdoc) {
-        ERR("GetDocument failed: %08x\n", nsres);
-        return;
-    }
-
-    nsres = nsIDOMDocument_QueryInterface(nsdomdoc, &IID_nsIDOMHTMLDocument, (void**)&nsdoc);
-    nsIDOMDocument_Release(nsdomdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMHTMLDocument iface: %08x\n", nsres);
-        return;
-    }
-
-    if(doc->basedoc.doc_node && nsdoc == doc->basedoc.doc_node->nsdoc) {
-        nsIDOMHTMLDocument_Release(nsdoc);
-        return;
-    }
-
-    if(doc->basedoc.doc_node && doc->basedoc.doc_node->nsdoc) {
-        doc_node = doc->basedoc.doc_node;
-        doc_node->basedoc.doc_obj = NULL;
-        IHTMLDocument2_Release(HTMLDOC(&doc_node->basedoc));
-        doc->basedoc.doc_node = NULL;
-    }
-
-    if(!nsdoc) {
-        doc->basedoc.doc_node = NULL;
-        window_set_docnode(doc->basedoc.window, NULL);
-        return;
-    }
-
-    hres = create_doc_from_nsdoc(nsdoc, doc, doc->basedoc.window, &doc_node);
-    if(FAILED(hres)) {
-        ERR("Could not create document: %08x\n", hres);
-        return;
-    }
-
-    doc->basedoc.doc_node = doc_node;
-    window_set_docnode(doc->basedoc.window, doc_node);
-}
-
 void close_gecko(void)
 {
     TRACE("()\n");

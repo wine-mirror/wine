@@ -572,7 +572,7 @@ HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**);
 HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument*,HTMLDocumentObj*,HTMLWindow*,HTMLDocumentNode**);
 
 HRESULT HTMLWindow_Create(HTMLDocumentObj*,nsIDOMWindow*,HTMLWindow**);
-void window_set_docnode(HTMLWindow*,HTMLDocumentNode*);
+void update_window_doc(HTMLWindow*);
 HTMLWindow *nswindow_to_window(const nsIDOMWindow*);
 HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLWindow*);
 HTMLImageElementFactory *HTMLImageElementFactory_Create(HTMLWindow*);
@@ -647,7 +647,6 @@ void get_editor_controller(NSContainer*);
 void init_nsevents(NSContainer*);
 void add_nsevent_listener(HTMLWindow*,LPCWSTR);
 nsresult get_nsinterface(nsISupports*,REFIID,void**);
-void update_nsdocument(HTMLDocumentObj*);
 
 void set_document_bscallback(HTMLDocument*,nsChannelBSC*);
 void set_current_mon(HTMLDocument*,IMoniker*);
