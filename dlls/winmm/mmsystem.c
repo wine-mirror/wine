@@ -90,16 +90,12 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
         pFnOpenDriver16     = DRIVER_OpenDriver16;
         pFnCloseDriver16    = DRIVER_CloseDriver16;
         pFnSendMessage16    = DRIVER_SendMessage16;
-        pFnReleaseThunkLock = ReleaseThunkLock;
-        pFnRestoreThunkLock = RestoreThunkLock;
         MMDRV_Init16();
 	break;
     case DLL_PROCESS_DETACH:
         pFnOpenDriver16     = NULL;
         pFnCloseDriver16    = NULL;
         pFnSendMessage16    = NULL;
-        pFnReleaseThunkLock = NULL;
-        pFnRestoreThunkLock = NULL;
         /* FIXME: add equivalent for MMDRV_Init16() */
 	break;
     case DLL_THREAD_ATTACH:
