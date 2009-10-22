@@ -139,11 +139,13 @@ static inline int getdents64( int fd, char *de, unsigned int size )
 
 #define MAX_IGNORED_FILES 4
 
-static struct
+struct file_identity
 {
     dev_t dev;
     ino_t ino;
-} ignored_files[MAX_IGNORED_FILES];
+};
+
+static struct file_identity ignored_files[MAX_IGNORED_FILES];
 static int ignored_files_count;
 
 static const unsigned int max_dir_info_size = FIELD_OFFSET( FILE_BOTH_DIR_INFORMATION, FileName[MAX_DIR_ENTRY_LEN] );
@@ -197,13 +199,17 @@ static inline void ignore_file( const char *name )
     }
 }
 
+static inline BOOL is_same_file( const struct file_identity *file, const struct stat *st )
+{
+    return st->st_dev == file->dev && st->st_ino == file->ino;
+}
+
 static inline BOOL is_ignored_file( const struct stat *st )
 {
     unsigned int i;
 
     for (i = 0; i < ignored_files_count; i++)
-        if (ignored_files[i].dev == st->st_dev && ignored_files[i].ino == st->st_ino)
-            return TRUE;
+        if (is_same_file( &ignored_files[i], st )) return TRUE;
     return FALSE;
 }
 
