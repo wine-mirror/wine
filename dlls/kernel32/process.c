@@ -863,6 +863,13 @@ static void init_windows_dirs(void)
         DIR_System = buffer;
     }
 
+    if (!CreateDirectoryW( DIR_Windows, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
+        ERR( "directory %s could not be created, error %u\n",
+             debugstr_w(DIR_Windows), GetLastError() );
+    if (!CreateDirectoryW( DIR_System, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
+        ERR( "directory %s could not be created, error %u\n",
+             debugstr_w(DIR_System), GetLastError() );
+
 #ifndef _WIN64  /* SysWow64 is always defined on 64-bit */
     if (is_wow64)
 #endif
@@ -872,14 +879,10 @@ static void init_windows_dirs(void)
         memcpy( buffer, DIR_Windows, len * sizeof(WCHAR) );
         memcpy( buffer + len, default_syswow64W, sizeof(default_syswow64W) );
         DIR_SysWow64 = buffer;
+        if (!CreateDirectoryW( DIR_SysWow64, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
+            ERR( "directory %s could not be created, error %u\n",
+                 debugstr_w(DIR_SysWow64), GetLastError() );
     }
-
-    if (!CreateDirectoryW( DIR_Windows, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
-        ERR( "directory %s could not be created, error %u\n",
-             debugstr_w(DIR_Windows), GetLastError() );
-    if (!CreateDirectoryW( DIR_System, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
-        ERR( "directory %s could not be created, error %u\n",
-             debugstr_w(DIR_System), GetLastError() );
 
     TRACE_(file)( "WindowsDir = %s\n", debugstr_w(DIR_Windows) );
     TRACE_(file)( "SystemDir  = %s\n", debugstr_w(DIR_System) );
