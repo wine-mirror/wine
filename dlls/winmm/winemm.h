@@ -97,7 +97,6 @@ typedef struct tagWINE_MLD {
        UINT			mmdIndex;		/* index to low-level driver in MMDrvs table */
        DWORD_PTR		dwDriverInstance;	/* this value is driver related, as opposed to
 							 * opendesc.dwInstance which is client (callback) related */
-       WORD			bFrom32;
        WORD			dwFlags;
        DWORD_PTR		dwCallback;
        DWORD_PTR		dwClientInstance;
@@ -183,13 +182,13 @@ BOOL		MMDRV_Init(void);
 void            MMDRV_Exit(void);
 UINT		MMDRV_GetNum(UINT);
 LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
-                            DWORD_PTR* dwCallback, DWORD_PTR* dwInstance, BOOL bFrom32);
+                            DWORD_PTR* dwCallback, DWORD_PTR* dwInstance);
 void		MMDRV_Free(HANDLE hndl, LPWINE_MLD mld);
 DWORD		MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1, DWORD dwParam2);
 DWORD		MMDRV_Close(LPWINE_MLD mld, UINT wMsg);
 LPWINE_MLD	MMDRV_Get(HANDLE hndl, UINT type, BOOL bCanBeID);
 LPWINE_MLD	MMDRV_GetRelated(HANDLE hndl, UINT srcType, BOOL bSrcCanBeID, UINT dstTyped);
-DWORD           MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2, BOOL bFrom32);
+DWORD           MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
 UINT		MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
 BOOL            MMDRV_Is32(unsigned int);
 void            MMDRV_InstallMap(unsigned int, MMDRV_MAPFUNC, MMDRV_UNMAPFUNC,

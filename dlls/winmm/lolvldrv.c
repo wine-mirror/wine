@@ -116,7 +116,7 @@ UINT	MMDRV_GetNum(UINT type)
  * 				MMDRV_Message			[internal]
  */
 DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
-                     DWORD_PTR dwParam2, BOOL bFrom32)
+                     DWORD_PTR dwParam2)
 {
     LPWINE_MM_DRIVER 		lpDrv;
     DWORD			ret;
@@ -125,9 +125,9 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
     WINMM_MapType		map;
     int				devID;
 
-    TRACE("(%s %u %u 0x%08lx 0x%08lx 0x%08lx %c)\n",
+    TRACE("(%s %u %u 0x%08lx 0x%08lx 0x%08lx)\n",
 	  llTypes[mld->type].typestr, mld->uDeviceID, wMsg,
-	  mld->dwDriverInstance, dwParam1, dwParam2, bFrom32?'Y':'N');
+	  mld->dwDriverInstance, dwParam1, dwParam2);
 
     if (mld->uDeviceID == (UINT16)-1) {
 	if (!llType->bSupportMapper) {
@@ -158,74 +158,37 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
     if (lpDrv->bIs32) {
 	assert(part->u.fnMessage32);
 
-	if (bFrom32) {
-	    TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
-		  mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
-            ret = part->u.fnMessage32(mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
-	    TRACE("=> %s\n", WINMM_ErrorToString(ret));
-	} else {
-	    map = llType->Map16To32A(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2);
-	    switch (map) {
-	    case WINMM_MAP_NOMEM:
-		ret = MMSYSERR_NOMEM;
-		break;
-	    case WINMM_MAP_MSGERROR:
-		FIXME("NIY: no conversion yet 16->32 (%u)\n", wMsg);
-		ret = MMSYSERR_ERROR;
-		break;
-	    case WINMM_MAP_OK:
-	    case WINMM_MAP_OKMEM:
-		TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
-		      mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
-		ret = part->u.fnMessage32(mld->uDeviceID, wMsg, mld->dwDriverInstance,
-					  dwParam1, dwParam2);
-	        TRACE("=> %s\n", WINMM_ErrorToString(ret));
-		if (map == WINMM_MAP_OKMEM)
-		    llType->UnMap16To32A(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2, ret);
-		break;
-	    default:
-		FIXME("NIY\n");
-		ret = MMSYSERR_NOTSUPPORTED;
-		break;
-	    }
-	}
+        TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
+              mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
+        ret = part->u.fnMessage32(mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
+        TRACE("=> %s\n", WINMM_ErrorToString(ret));
     } else {
 	assert(part->u.fnMessage16 && pFnCallMMDrvFunc16);
-        
-	if (bFrom32) {
-	    map = llType->Map32ATo16(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2);
-	    switch (map) {
-	    case WINMM_MAP_NOMEM:
-		ret = MMSYSERR_NOMEM;
-		break;
-	    case WINMM_MAP_MSGERROR:
-		FIXME("NIY: no conversion yet 32->16 (%u)\n", wMsg);
-		ret = MMSYSERR_ERROR;
-		break;
-	    case WINMM_MAP_OK:
-	    case WINMM_MAP_OKMEM:
-		TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
-		      mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
-		ret = pFnCallMMDrvFunc16((DWORD)part->u.fnMessage16, 
-                                         mld->uDeviceID, wMsg, mld->dwDriverInstance, 
-                                         dwParam1, dwParam2);
-	        TRACE("=> %s\n", WINMM_ErrorToString(ret));
-		if (map == WINMM_MAP_OKMEM)
-		    llType->UnMap32ATo16(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2, ret);
-		break;
-	    default:
-		FIXME("NIY\n");
-		ret = MMSYSERR_NOTSUPPORTED;
-		break;
-	    }
-	} else {
-	    TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
-		  mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
-            ret = pFnCallMMDrvFunc16((DWORD)part->u.fnMessage16, 
-                                     mld->uDeviceID, wMsg, mld->dwDriverInstance, 
-                                     dwParam1, dwParam2);
-	    TRACE("=> %s\n", WINMM_ErrorToString(ret));
-	}
+
+        map = llType->Map32ATo16(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2);
+        switch (map) {
+        case WINMM_MAP_NOMEM:
+            ret = MMSYSERR_NOMEM;
+            break;
+        case WINMM_MAP_MSGERROR:
+            FIXME("NIY: no conversion yet 32->16 (%u)\n", wMsg);
+            ret = MMSYSERR_ERROR;
+            break;
+        case WINMM_MAP_OK:
+        case WINMM_MAP_OKMEM:
+            TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
+                  mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
+            ret = pFnCallMMDrvFunc16((DWORD)part->u.fnMessage16, mld->uDeviceID, wMsg,
+                                     mld->dwDriverInstance, dwParam1, dwParam2);
+            TRACE("=> %s\n", WINMM_ErrorToString(ret));
+            if (map == WINMM_MAP_OKMEM)
+                llType->UnMap32ATo16(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2, ret);
+            break;
+        default:
+            FIXME("NIY\n");
+            ret = MMSYSERR_NOTSUPPORTED;
+            break;
+        }
     }
     return ret;
 }
@@ -234,12 +197,12 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
  * 				MMDRV_Alloc			[internal]
  */
 LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
-			    DWORD_PTR* dwCallback, DWORD_PTR* dwInstance, BOOL bFrom32)
+			    DWORD_PTR* dwCallback, DWORD_PTR* dwInstance)
 {
     LPWINE_MLD	mld;
     UINT_PTR i;
-    TRACE("(%d, %04x, %p, %p, %p, %p, %c)\n",
-          size, type, hndl, dwFlags, dwCallback, dwInstance, bFrom32?'Y':'N');
+    TRACE("(%d, %04x, %p, %p, %p, %p)\n",
+          size, type, hndl, dwFlags, dwCallback, dwInstance);
 
     mld = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
     if (!mld)	return NULL;
@@ -265,7 +228,6 @@ LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
 	ERR("Shouldn't happen. Bad allocation scheme\n");
     }
 
-    mld->bFrom32 = bFrom32;
     mld->dwFlags = HIWORD(*dwFlags);
     mld->dwCallback = *dwCallback;
     mld->dwClientInstance = *dwInstance;
@@ -328,14 +290,14 @@ DWORD MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1, DWORD dwFlags)
 		mld->uDeviceID = (UINT16)-1;
 		mld->mmdIndex = llType->lpMlds[-1].mmdIndex;
 		TRACE("Setting mmdIndex to %u\n", mld->mmdIndex);
-		dwRet = MMDRV_Message(mld, wMsg, dwParam1, dwFlags, TRUE);
+		dwRet = MMDRV_Message(mld, wMsg, dwParam1, dwFlags);
 	    }
 	}
     } else {
 	if (mld->uDeviceID < llType->wMaxId) {
 	    mld->mmdIndex = llType->lpMlds[mld->uDeviceID].mmdIndex;
 	    TRACE("Setting mmdIndex to %u\n", mld->mmdIndex);
-	    dwRet = MMDRV_Message(mld, wMsg, dwParam1, dwFlags, TRUE);
+	    dwRet = MMDRV_Message(mld, wMsg, dwParam1, dwFlags);
 	}
     }
     if (dwRet == MMSYSERR_NOERROR)
@@ -349,7 +311,7 @@ DWORD MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1, DWORD dwFlags)
 DWORD	MMDRV_Close(LPWINE_MLD mld, UINT wMsg)
 {
     TRACE("(%p, %04x)\n", mld, wMsg);
-    return MMDRV_Message(mld, wMsg, 0L, 0L, TRUE);
+    return MMDRV_Message(mld, wMsg, 0L, 0L);
 }
 
 /**************************************************************************
@@ -457,11 +419,11 @@ UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg,
 
     case DRV_QUERYDEVICEINTERFACE:
     case DRV_QUERYDEVICEINTERFACESIZE:
-        return MMDRV_Message(mld, uMsg, dwParam1, dwParam2, TRUE);
+        return MMDRV_Message(mld, uMsg, dwParam1, dwParam2);
 
     case DRV_QUERYDSOUNDIFACE: /* Wine-specific: Retrieve DirectSound interface */
     case DRV_QUERYDSOUNDDESC: /* Wine-specific: Retrieve DirectSound driver description*/
-	return MMDRV_Message(mld, uMsg, dwParam1, dwParam2, TRUE);
+	return MMDRV_Message(mld, uMsg, dwParam1, dwParam2);
 
     default:
 	WARN("Unknown call %04x\n", uMsg);

@@ -41,7 +41,7 @@ static  void	MMDRV_Callback(LPWINE_MLD mld, HDRVR hDev, UINT uMsg, DWORD_PTR dwP
     TRACE("CB (*%08lx)(%p %08x %08lx %08lx %08lx\n",
 	  mld->dwCallback, hDev, uMsg, mld->dwClientInstance, dwParam1, dwParam2);
 
-    if (!mld->bFrom32 && (mld->dwFlags & DCB_TYPEMASK) == DCB_FUNCTION)
+    if ((mld->dwFlags & DCB_TYPEMASK) == DCB_FUNCTION)
     {
         WORD args[8];
 	/* 16 bit func, call it */
@@ -243,7 +243,7 @@ static  void	CALLBACK MMDRV_MidiIn_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dwI
     case MIM_LONGDATA:
     case MIM_LONGERROR:
 	/* dwParam1 points to a MidiHdr, work to be done !!! */
-	if (mld->bFrom32 && !MMDRV_Is32(mld->mmdIndex)) {
+	if (!MMDRV_Is32(mld->mmdIndex)) {
 	    /* initial map is: 32 => 16 */
 	    LPMIDIHDR		mh16 = MapSL(dwParam1);
 	    LPMIDIHDR		mh32 = *(LPMIDIHDR*)((LPSTR)mh16 - sizeof(LPMIDIHDR));
@@ -253,19 +253,8 @@ static  void	CALLBACK MMDRV_MidiIn_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dwI
 	    mh32->dwBytesRecorded = mh16->dwBytesRecorded;
 	    if (mh32->reserved >= sizeof(MIDIHDR))
 		mh32->dwOffset = mh16->dwOffset;
-	} else if (!mld->bFrom32 && MMDRV_Is32(mld->mmdIndex)) {
-	    /* initial map is: 16 => 32 */
-	    LPMIDIHDR		mh32 = (LPMIDIHDR)(dwParam1);
-	    SEGPTR		segmh16 = *(SEGPTR*)((LPSTR)mh32 - sizeof(LPMIDIHDR));
-	    LPMIDIHDR		mh16 = MapSL(segmh16);
-
-	    dwParam1 = (DWORD)segmh16;
-	    mh16->dwFlags = mh32->dwFlags;
-	    mh16->dwBytesRecorded = mh32->dwBytesRecorded;
-	    if (mh16->reserved >= sizeof(MIDIHDR))
-		mh16->dwOffset = mh32->dwOffset;
 	}
-	/* else { 16 => 16 or 32 => 32, nothing to do, same struct is kept }*/
+	/* else { 32 => 32, nothing to do, same struct is kept }*/
 	break;
     /* case MOM_POSITIONCB: */
     default:
@@ -708,7 +697,7 @@ static  void	CALLBACK MMDRV_MidiOut_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dw
 	/* dwParam1 & dwParam2 are supposed to be 0, nothing to do */
 	break;
     case MOM_DONE:
-	if (mld->bFrom32 && !MMDRV_Is32(mld->mmdIndex)) {
+	if (!MMDRV_Is32(mld->mmdIndex)) {
 	    /* initial map is: 32 => 16 */
 	    LPMIDIHDR		mh16 = MapSL(dwParam1);
 	    LPMIDIHDR		mh32 = *(LPMIDIHDR*)((LPSTR)mh16 - sizeof(LPMIDIHDR));
@@ -718,18 +707,8 @@ static  void	CALLBACK MMDRV_MidiOut_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dw
 	    mh32->dwOffset = mh16->dwOffset;
 	    if (mh32->reserved >= sizeof(MIDIHDR))
 		mh32->dwOffset = mh16->dwOffset;
-	} else if (!mld->bFrom32 && MMDRV_Is32(mld->mmdIndex)) {
-	    /* initial map is: 16 => 32 */
-	    LPMIDIHDR		mh32 = (LPMIDIHDR)(dwParam1);
-	    SEGPTR		segmh16 = *(SEGPTR*)((LPSTR)mh32 - sizeof(LPMIDIHDR));
-	    LPMIDIHDR		mh16 = MapSL(segmh16);
-
-	    dwParam1 = (DWORD)segmh16;
-	    mh16->dwFlags = mh32->dwFlags;
-	    if (mh16->reserved >= sizeof(MIDIHDR))
-		mh16->dwOffset = mh32->dwOffset;
 	}
-	/* else { 16 => 16 or 32 => 32, nothing to do, same struct is kept }*/
+	/* else { 32 => 32, nothing to do, same struct is kept }*/
 	break;
     /* case MOM_POSITIONCB: */
     default:
@@ -1234,7 +1213,7 @@ static  void	CALLBACK MMDRV_WaveIn_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dwI
 	/* dwParam1 & dwParam2 are supposed to be 0, nothing to do */
 	break;
     case WIM_DATA:
-	if (mld->bFrom32 && !MMDRV_Is32(mld->mmdIndex)) {
+	if (!MMDRV_Is32(mld->mmdIndex)) {
 	    /* initial map is: 32 => 16 */
 	    LPWAVEHDR		wh16 = MapSL(dwParam1);
 	    LPWAVEHDR		wh32 = *(LPWAVEHDR*)((LPSTR)wh16 - sizeof(LPWAVEHDR));
@@ -1242,17 +1221,8 @@ static  void	CALLBACK MMDRV_WaveIn_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dwI
 	    dwParam1 = (DWORD)wh32;
 	    wh32->dwFlags = wh16->dwFlags;
 	    wh32->dwBytesRecorded = wh16->dwBytesRecorded;
-	} else if (!mld->bFrom32 && MMDRV_Is32(mld->mmdIndex)) {
-	    /* initial map is: 16 => 32 */
-	    LPWAVEHDR		wh32 = (LPWAVEHDR)(dwParam1);
-	    SEGPTR		segwh16 = *(SEGPTR*)((LPSTR)wh32 - sizeof(LPWAVEHDR));
-	    LPWAVEHDR		wh16 = MapSL(segwh16);
-
-	    dwParam1 = (DWORD)segwh16;
-	    wh16->dwFlags = wh32->dwFlags;
-	    wh16->dwBytesRecorded = wh32->dwBytesRecorded;
 	}
-	/* else { 16 => 16 or 32 => 32, nothing to do, same struct is kept }*/
+	/* else { 32 => 32, nothing to do, same struct is kept }*/
 	break;
     default:
 	ERR("Unknown msg %u\n", uMsg);
@@ -1807,23 +1777,15 @@ static  void	CALLBACK MMDRV_WaveOut_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dw
 	/* dwParam1 & dwParam2 are supposed to be 0, nothing to do */
 	break;
     case WOM_DONE:
-	if (mld->bFrom32 && !MMDRV_Is32(mld->mmdIndex)) {
+	if (!MMDRV_Is32(mld->mmdIndex)) {
 	    /* initial map is: 32 => 16 */
 	    LPWAVEHDR		wh16 = MapSL(dwParam1);
 	    LPWAVEHDR		wh32 = *(LPWAVEHDR*)((LPSTR)wh16 - sizeof(LPWAVEHDR));
 
 	    dwParam1 = (DWORD)wh32;
 	    wh32->dwFlags = wh16->dwFlags;
-	} else if (!mld->bFrom32 && MMDRV_Is32(mld->mmdIndex)) {
-	    /* initial map is: 16 => 32 */
-	    LPWAVEHDR		wh32 = (LPWAVEHDR)(dwParam1);
-	    SEGPTR		segwh16 = *(SEGPTR*)((LPSTR)wh32 - sizeof(LPWAVEHDR));
-	    LPWAVEHDR		wh16 = MapSL(segwh16);
-
-	    dwParam1 = (DWORD)segwh16;
-	    wh16->dwFlags = wh32->dwFlags;
 	}
-	/* else { 16 => 16 or 32 => 32, nothing to do, same struct is kept }*/
+	/* else { 32 => 32, nothing to do, same struct is kept }*/
 	break;
     default:
 	ERR("Unknown msg %u\n", uMsg);
