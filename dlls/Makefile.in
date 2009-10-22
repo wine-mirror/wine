@@ -21,7 +21,6 @@ WIN16_FILES = \
 	commdlg.dll16 \
 	gdi.exe16 \
 	krnl386.exe16 \
-	mmsystem.dll16 \
 	user.exe16 \
 	wprocs.dll16
 
@@ -47,9 +46,6 @@ user.exe16:
 
 wprocs.dll16:
 	echo "winedos.dll" >$@
-
-mmsystem.dll16:
-	echo "winmm.dll" >$@
 
 # Import libraries
 

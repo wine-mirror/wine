@@ -64,7 +64,6 @@ dlls/krnl386.exe16
 dlls/libd3dx9.def
 dlls/libwinspool.def
 dlls/libxinput.def
-dlls/mmsystem.dll16
 dlls/msdaps/msdaps.h
 dlls/msdaps/msdaps_i.c
 dlls/msdaps/msdaps_p.c

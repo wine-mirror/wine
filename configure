@@ -15351,6 +15351,14 @@ dlls/mmdevldr.vxd/Makefile: dlls/mmdevldr.vxd/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/mmdevldr.vxd/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/mmsystem.dll16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	mmsystem.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/mmsystem.dll16/Makefile: dlls/mmsystem.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/mmsystem.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/monodebg.vxd/Makefile"
 test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	monodebg.vxd"
@@ -18937,6 +18945,7 @@ do
     "dlls/mlang/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mlang/Makefile" ;;
     "dlls/mlang/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mlang/tests/Makefile" ;;
     "dlls/mmdevldr.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mmdevldr.vxd/Makefile" ;;
+    "dlls/mmsystem.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mmsystem.dll16/Makefile" ;;
     "dlls/monodebg.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/monodebg.vxd/Makefile" ;;
     "dlls/mountmgr.sys/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mountmgr.sys/Makefile" ;;
     "dlls/mouse.drv16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mouse.drv16/Makefile" ;;

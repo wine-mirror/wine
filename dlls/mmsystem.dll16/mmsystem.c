@@ -452,12 +452,12 @@ UINT16 WINAPI auxGetDevCaps16(UINT16 uDeviceID, LPAUXCAPS16 lpCaps, UINT16 uSize
     ret = auxGetDevCapsA(uDeviceID, &acA, sizeof(acA));
     if (ret == MMSYSERR_NOERROR) {
 	AUXCAPS16 ac16;
-	ac16.wMid           = acA.wMid; 
-	ac16.wPid           = acA.wPid; 
-	ac16.vDriverVersion = acA.vDriverVersion; 
-	strcpy(ac16.szPname, acA.szPname); 
-	ac16.wTechnology    = acA.wTechnology; 
-	ac16.dwSupport      = acA.dwSupport; 
+	ac16.wMid           = acA.wMid;
+	ac16.wPid           = acA.wPid;
+	ac16.vDriverVersion = acA.vDriverVersion;
+	strcpy(ac16.szPname, acA.szPname);
+	ac16.wTechnology    = acA.wTechnology;
+	ac16.dwSupport      = acA.dwSupport;
 	memcpy(lpCaps, &ac16, min(uSize, sizeof(ac16)));
     }
     return ret;

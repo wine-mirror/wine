@@ -17,15 +17,6 @@ C_SRCS = \
 	time.c \
 	winmm.c
 
-C_SRCS16 = \
-	mci16.c \
-	message16.c \
-	mmio16.c \
-	mmsystem.c
-
-SPEC_SRCS16 = \
-	mmsystem.spec
-
 RC_SRCS = \
 	winmm_Cs.rc \
 	winmm_Da.rc \

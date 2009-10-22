@@ -2305,6 +2305,7 @@ WINE_CONFIG_MAKEFILE([dlls/midimap/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DL
 WINE_CONFIG_MAKEFILE([dlls/mlang/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/mlang/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
 WINE_CONFIG_MAKEFILE([dlls/mmdevldr.vxd/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[enable_win16])
+WINE_CONFIG_MAKEFILE([dlls/mmsystem.dll16/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[enable_win16])
 WINE_CONFIG_MAKEFILE([dlls/monodebg.vxd/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[enable_win16])
 WINE_CONFIG_MAKEFILE([dlls/mountmgr.sys/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/mouse.drv16/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[enable_win16])
