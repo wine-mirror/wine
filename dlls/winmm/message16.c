@@ -314,18 +314,18 @@ static  void            	MMSYSTDRV_MidiIn_MapCB(UINT uMsg, DWORD_PTR* dwUser, DW
  * ================================= */
 
 /**************************************************************************
- * 				MMDRV_MidiOut_Map16To32W	[internal]
+ * 				MMSYSTDRV_MidiOut_Map16To32W	[internal]
  */
-static  WINMM_MapType	MMDRV_MidiOut_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
+static MMSYSTEM_MapType	MMSYSTDRV_MidiOut_Map16To32W  (UINT wMsg, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
 {
-    WINMM_MapType	ret = WINMM_MAP_MSGERROR;
+    MMSYSTEM_MapType	ret = MMSYSTEM_MAP_MSGERROR;
 
     switch (wMsg) {
     case MODM_GETNUMDEVS:
     case MODM_DATA:
     case MODM_RESET:
     case MODM_SETVOLUME:
-	ret = WINMM_MAP_OK;
+	ret = MMSYSTEM_MAP_OK;
 	break;
 
     case MODM_OPEN:
@@ -345,9 +345,9 @@ static  WINMM_MapType	MMDRV_MidiOut_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser,
 		*lpParam1 = (DWORD)moc32;
 		*lpParam2 = sizeof(MIDIOUTCAPSW);
 
-		ret = WINMM_MAP_OKMEM;
+		ret = MMSYSTEM_MAP_OKMEM;
 	    } else {
-		ret = WINMM_MAP_NOMEM;
+		ret = MMSYSTEM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -373,9 +373,9 @@ static  WINMM_MapType	MMDRV_MidiOut_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser,
 		*lpParam1 = (DWORD)mh32;
 		*lpParam2 = sizeof(MIDIHDR);
 
-		ret = WINMM_MAP_OKMEM;
+		ret = MMSYSTEM_MAP_OKMEM;
 	    } else {
-		ret = WINMM_MAP_NOMEM;
+		ret = MMSYSTEM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -393,7 +393,7 @@ static  WINMM_MapType	MMDRV_MidiOut_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser,
 		    mh32->dwBufferLength, mh16->dwBufferLength);
 	    } else
                 mh32->dwBufferLength = mh16->dwBufferLength;
-	    ret = WINMM_MAP_OKMEM;
+	    ret = MMSYSTEM_MAP_OKMEM;
 	}
 	break;
 
@@ -407,18 +407,18 @@ static  WINMM_MapType	MMDRV_MidiOut_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser,
 }
 
 /**************************************************************************
- * 				MMDRV_MidiOut_UnMap16To32W	[internal]
+ * 				MMSYSTDRV_MidiOut_UnMap16To32W	[internal]
  */
-static  WINMM_MapType	MMDRV_MidiOut_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
+static  MMSYSTEM_MapType	MMSYSTDRV_MidiOut_UnMap16To32W(UINT wMsg, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
 {
-    WINMM_MapType	ret = WINMM_MAP_MSGERROR;
+    MMSYSTEM_MapType	ret = MMSYSTEM_MAP_MSGERROR;
 
     switch (wMsg) {
     case MODM_GETNUMDEVS:
     case MODM_DATA:
     case MODM_RESET:
     case MODM_SETVOLUME:
-	ret = WINMM_MAP_OK;
+	ret = MMSYSTEM_MAP_OK;
 	break;
 
     case MODM_OPEN:
@@ -443,7 +443,7 @@ static  WINMM_MapType	MMDRV_MidiOut_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser,
 	    moc16->wChannelMask		= moc32->wChannelMask;
 	    moc16->dwSupport		= moc32->dwSupport;
 	    HeapFree(GetProcessHeap(), 0, (LPSTR)moc32 - sizeof(LPMIDIOUTCAPS16));
-	    ret = WINMM_MAP_OK;
+	    ret = MMSYSTEM_MAP_OK;
 	}
 	break;
     case MODM_PREPARE:
@@ -465,7 +465,7 @@ static  WINMM_MapType	MMDRV_MidiOut_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser,
 		HeapFree(GetProcessHeap(), 0, (LPSTR)mh32 - sizeof(LPMIDIHDR));
 		mh16->lpNext = 0;
 	    }
-	    ret = WINMM_MAP_OK;
+	    ret = MMSYSTEM_MAP_OK;
 	}
 	break;
 
@@ -737,6 +737,34 @@ static  void	CALLBACK MMDRV_MidiOut_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dw
     }
 
     MMDRV_Callback(mld, hDev, uMsg, dwParam1, dwParam2);
+}
+
+/******************************************************************
+ *		                        MMSYSTDRV_MidiOut_MapCB
+ */
+static  void MMSYSTDRV_MidiOut_MapCB(UINT uMsg, DWORD_PTR* dwUser, DWORD_PTR* dwParam1, DWORD_PTR* dwParam2)
+{
+    switch (uMsg) {
+    case MOM_OPEN:
+    case MOM_CLOSE:
+	/* dwParam1 & dwParam2 are supposed to be 0, nothing to do */
+	break;
+    case MOM_DONE:
+        {
+	    /* initial map is: 16 => 32 */
+	    LPMIDIHDR		mh32 = (LPMIDIHDR)(*dwParam1);
+	    SEGPTR		segmh16 = *(SEGPTR*)((LPSTR)mh32 - sizeof(LPMIDIHDR));
+	    LPMIDIHDR		mh16 = MapSL(segmh16);
+
+	    *dwParam1 = (DWORD)segmh16;
+	    mh16->dwFlags = mh32->dwFlags;
+	    if (mh16->reserved >= sizeof(MIDIHDR))
+		mh16->dwOffset = mh32->dwOffset;
+	}
+	break;
+    default:
+	ERR("Unknown msg %u\n", uMsg);
+    }
 }
 
 /* =================================
@@ -2580,6 +2608,8 @@ static  WINMM_MapType	MMDRV_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser, DWORD_P
 #define MMDRV_Mixer_UnMap16To32W        MMDRV_UnMap16To32W
 #define MMDRV_MidiIn_Map16To32W         MMDRV_Map16To32W
 #define MMDRV_MidiIn_UnMap16To32W       MMDRV_UnMap16To32W
+#define MMDRV_MidiOut_Map16To32W        MMDRV_Map16To32W
+#define MMDRV_MidiOut_UnMap16To32W      MMDRV_UnMap16To32W
 
 void    MMDRV_Init16(void)
 {
@@ -2637,6 +2667,7 @@ static struct MMSYSTDRV_Type
 {
     {MMSYSTDRV_Mixer_Map16To32W,   MMSYSTDRV_Mixer_UnMap16To32W,   MMSYSTDRV_Mixer_MapCB},
     {MMSYSTDRV_MidiIn_Map16To32W,  MMSYSTDRV_MidiIn_UnMap16To32W,  MMSYSTDRV_MidiIn_MapCB},
+    {MMSYSTDRV_MidiOut_Map16To32W, MMSYSTDRV_MidiOut_UnMap16To32W, MMSYSTDRV_MidiOut_MapCB},
 };
 
 /******************************************************************

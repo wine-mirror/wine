@@ -931,8 +931,11 @@ static	LPWINE_MIDI	MIDI_OutAlloc(HMIDIOUT* lphMidiOut, DWORD_PTR* lpdwCallback,
     return lpwm;
 }
 
-UINT MIDI_OutOpen(LPHMIDIOUT lphMidiOut, UINT uDeviceID, DWORD_PTR dwCallback,
-                  DWORD_PTR dwInstance, DWORD dwFlags, BOOL bFrom32)
+/**************************************************************************
+ * 				midiOutOpen    		[WINMM.@]
+ */
+UINT WINAPI midiOutOpen(LPHMIDIOUT lphMidiOut, UINT uDeviceID,
+                       DWORD_PTR dwCallback, DWORD_PTR dwInstance, DWORD dwFlags)
 {
     HMIDIOUT		hMidiOut;
     LPWINE_MIDI		lpwm;
@@ -944,7 +947,7 @@ UINT MIDI_OutOpen(LPHMIDIOUT lphMidiOut, UINT uDeviceID, DWORD_PTR dwCallback,
     if (lphMidiOut != NULL) *lphMidiOut = 0;
 
     lpwm = MIDI_OutAlloc(&hMidiOut, &dwCallback, &dwInstance, &dwFlags,
-			 0, NULL, bFrom32);
+			 0, NULL, TRUE);
 
     if (lpwm == NULL)
 	return MMSYSERR_NOMEM;
@@ -962,15 +965,6 @@ UINT MIDI_OutOpen(LPHMIDIOUT lphMidiOut, UINT uDeviceID, DWORD_PTR dwCallback,
     TRACE("=> %d hMidi=%p\n", dwRet, hMidiOut);
 
     return dwRet;
-}
-
-/**************************************************************************
- * 				midiOutOpen    		[WINMM.@]
- */
-UINT WINAPI midiOutOpen(LPHMIDIOUT lphMidiOut, UINT uDeviceID,
-                       DWORD_PTR dwCallback, DWORD_PTR dwInstance, DWORD dwFlags)
-{
-    return MIDI_OutOpen(lphMidiOut, uDeviceID, dwCallback, dwInstance, dwFlags, TRUE);
 }
 
 /**************************************************************************

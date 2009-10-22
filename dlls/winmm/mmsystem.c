@@ -595,12 +595,25 @@ UINT16 WINAPI midiOutGetErrorText16(UINT16 uError, LPSTR lpText, UINT16 uSize)
 UINT16 WINAPI midiOutOpen16(HMIDIOUT16* lphMidiOut, UINT16 uDeviceID,
                             DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
 {
-    HMIDIOUT	hmo;
-    UINT	ret;
+    HMIDIOUT	                hmo;
+    UINT	                ret;
+    struct mmsystdrv_thunk*     thunk;
 
-    ret = MIDI_OutOpen(&hmo, uDeviceID, dwCallback, dwInstance, dwFlags, FALSE);
-
-    if (lphMidiOut != NULL) *lphMidiOut = HMIDIOUT_16(hmo);
+    if (!(thunk = MMSYSTDRV_AddThunk(dwCallback, MMSYSTDRV_MIDIOUT)))
+    {
+        return MMSYSERR_NOMEM;
+    }
+    if ((dwFlags & CALLBACK_TYPEMASK) == CALLBACK_FUNCTION)
+    {
+        dwCallback = (DWORD)thunk;
+    }
+    ret = midiOutOpen(&hmo, uDeviceID, dwCallback, dwInstance, dwFlags);
+    if (ret == MMSYSERR_NOERROR)
+    {
+        if (lphMidiOut != NULL) *lphMidiOut = HMIDIOUT_16(hmo);
+        MMSYSTDRV_SetHandle(thunk, (void*)hmo);
+    }
+    else MMSYSTDRV_DeleteThunk(thunk);
     return ret;
 }
 
@@ -609,7 +622,11 @@ UINT16 WINAPI midiOutOpen16(HMIDIOUT16* lphMidiOut, UINT16 uDeviceID,
  */
 UINT16 WINAPI midiOutClose16(HMIDIOUT16 hMidiOut)
 {
-    return midiOutClose(HMIDIOUT_32(hMidiOut));
+    UINT        ret = midiOutClose(HMIDIOUT_32(hMidiOut));
+
+    if (ret == MMSYSERR_NOERROR)
+        MMSYSTDRV_CloseHandle((void*)HMIDIOUT_32(hMidiOut));
+    return ret;
 }
 
 /**************************************************************************
@@ -619,14 +636,9 @@ UINT16 WINAPI midiOutPrepareHeader16(HMIDIOUT16 hMidiOut,         /* [in] */
                                      SEGPTR lpsegMidiOutHdr,      /* [???] */
 				     UINT16 uSize)                /* [in] */
 {
-    LPWINE_MLD		wmld;
-
     TRACE("(%04X, %08x, %d)\n", hMidiOut, lpsegMidiOutHdr, uSize);
 
-    if ((wmld = MMDRV_Get(HMIDIOUT_32(hMidiOut), MMDRV_MIDIOUT, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    return MMDRV_Message(wmld, MODM_PREPARE, lpsegMidiOutHdr, uSize, FALSE);
+    return MMSYSTDRV_Message(HMIDIOUT_32(hMidiOut), MODM_PREPARE, lpsegMidiOutHdr, uSize);
 }
 
 /**************************************************************************
@@ -636,7 +648,6 @@ UINT16 WINAPI midiOutUnprepareHeader16(HMIDIOUT16 hMidiOut,         /* [in] */
 				       SEGPTR lpsegMidiOutHdr,      /* [???] */
 				       UINT16 uSize)                /* [in] */
 {
-    LPWINE_MLD		wmld;
     LPMIDIHDR16		lpMidiOutHdr = MapSL(lpsegMidiOutHdr);
 
     TRACE("(%04X, %08x, %d)\n", hMidiOut, lpsegMidiOutHdr, uSize);
@@ -645,10 +656,7 @@ UINT16 WINAPI midiOutUnprepareHeader16(HMIDIOUT16 hMidiOut,         /* [in] */
 	return MMSYSERR_NOERROR;
     }
 
-    if ((wmld = MMDRV_Get(HMIDIOUT_32(hMidiOut), MMDRV_MIDIOUT, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    return MMDRV_Message(wmld, MODM_UNPREPARE, lpsegMidiOutHdr, uSize, FALSE);
+    return MMSYSTDRV_Message(HMIDIOUT_32(hMidiOut), MODM_UNPREPARE, lpsegMidiOutHdr, uSize);
 }
 
 /**************************************************************************
@@ -666,14 +674,9 @@ UINT16 WINAPI midiOutLongMsg16(HMIDIOUT16 hMidiOut,          /* [in] */
                                LPMIDIHDR16 lpsegMidiOutHdr,  /* [???] NOTE: SEGPTR */
 			       UINT16 uSize)                 /* [in] */
 {
-    LPWINE_MLD		wmld;
-
     TRACE("(%04X, %p, %d)\n", hMidiOut, lpsegMidiOutHdr, uSize);
 
-    if ((wmld = MMDRV_Get(HMIDIOUT_32(hMidiOut), MMDRV_MIDIOUT, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    return MMDRV_Message(wmld, MODM_LONGDATA, (DWORD_PTR)lpsegMidiOutHdr, uSize, FALSE);
+    return MMSYSTDRV_Message(HMIDIOUT_32(hMidiOut), MODM_LONGDATA, (DWORD_PTR)lpsegMidiOutHdr, uSize);
 }
 
 /**************************************************************************
@@ -739,12 +742,7 @@ UINT16 WINAPI midiOutGetID16(HMIDIOUT16 hMidiOut, UINT16* lpuDeviceID)
 DWORD WINAPI midiOutMessage16(HMIDIOUT16 hMidiOut, UINT16 uMessage,
                               DWORD dwParam1, DWORD dwParam2)
 {
-    LPWINE_MLD		wmld;
-
     TRACE("(%04X, %04X, %08X, %08X)\n", hMidiOut, uMessage, dwParam1, dwParam2);
-
-    if ((wmld = MMDRV_Get(HMIDIOUT_32(hMidiOut), MMDRV_MIDIOUT, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
 
     switch (uMessage) {
     case MODM_OPEN:
@@ -762,7 +760,7 @@ DWORD WINAPI midiOutMessage16(HMIDIOUT16 hMidiOut, UINT16 uMessage,
     case MODM_UNPREPARE:
         return midiOutUnprepareHeader16(hMidiOut, dwParam1, dwParam2);
     }
-    return MMDRV_Message(wmld, uMessage, dwParam1, dwParam2, TRUE);
+    return MMSYSTDRV_Message(HMIDIOUT_32(hMidiOut), uMessage, dwParam1, dwParam2);
 }
 
 /**************************************************************************
