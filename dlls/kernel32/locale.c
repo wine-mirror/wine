@@ -1337,7 +1337,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
 
         if (i <= *p && (lcflags & LOCALE_RETURN_GENITIVE_NAMES))
         {
-            ret = *p - i - 1;
+            ret = *p - i + 1;
             p += i;
         }
         else ret = i;
