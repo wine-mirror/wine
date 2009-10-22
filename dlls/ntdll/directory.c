@@ -158,6 +158,8 @@ static const int is_case_sensitive = FALSE;
 UNICODE_STRING windows_dir = { 0, 0, NULL };  /* windows directory */
 UNICODE_STRING system_dir = { 0, 0, NULL };  /* system directory */
 
+static struct file_identity windir;
+
 static RTL_CRITICAL_SECTION dir_section;
 static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 {
@@ -1709,7 +1711,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
  * There must be at least MAX_DIR_ENTRY_LEN+2 chars available at pos.
  */
 static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, int length,
-                                  int check_case )
+                                  int check_case, int *is_win_dir )
 {
     WCHAR buffer[MAX_DIR_ENTRY_LEN];
     UNICODE_STRING str;
@@ -1729,7 +1731,11 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
     if (ret >= 0 && !used_default)
     {
         unix_name[pos + ret] = 0;
-        if (!stat( unix_name, &st )) return STATUS_SUCCESS;
+        if (!stat( unix_name, &st ))
+        {
+            if (is_win_dir) *is_win_dir = is_same_file( &windir, &st );
+            return STATUS_SUCCESS;
+        }
     }
     if (check_case) goto not_found;  /* we want an exact match */
 
@@ -1774,7 +1780,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
                             strcpy( unix_name + pos, de[1].d_name );
                             RtlLeaveCriticalSection( &dir_section );
                             close( fd );
-                            return STATUS_SUCCESS;
+                            goto success;
                         }
                     }
                     ret = ntdll_umbstowcs( 0, de[0].d_name, strlen(de[0].d_name),
@@ -1785,7 +1791,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
                                 de[1].d_name[0] ? de[1].d_name : de[0].d_name );
                         RtlLeaveCriticalSection( &dir_section );
                         close( fd );
-                        return STATUS_SUCCESS;
+                        goto success;
                     }
                     if (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) == -1)
                     {
@@ -1817,7 +1823,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
         {
             strcpy( unix_name + pos, de->d_name );
             closedir( dir );
-            return STATUS_SUCCESS;
+            goto success;
         }
 
         if (!is_name_8_dot_3) continue;
@@ -1831,7 +1837,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
             {
                 strcpy( unix_name + pos, de->d_name );
                 closedir( dir );
-                return STATUS_SUCCESS;
+                goto success;
             }
         }
     }
@@ -1841,8 +1847,208 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
 not_found:
     unix_name[pos - 1] = 0;
     return STATUS_OBJECT_PATH_NOT_FOUND;
+
+success:
+    if (is_win_dir && !stat( unix_name, &st )) *is_win_dir = is_same_file( &windir, &st );
+    return STATUS_SUCCESS;
 }
 
+
+#ifndef _WIN64
+
+static const WCHAR catrootW[] = {'s','y','s','t','e','m','3','2','\\','c','a','t','r','o','o','t',0};
+static const WCHAR catroot2W[] = {'s','y','s','t','e','m','3','2','\\','c','a','t','r','o','o','t','2',0};
+static const WCHAR driversstoreW[] = {'s','y','s','t','e','m','3','2','\\','d','r','i','v','e','r','s','s','t','o','r','e',0};
+static const WCHAR driversetcW[] = {'s','y','s','t','e','m','3','2','\\','d','r','i','v','e','r','s','\\','e','t','c',0};
+static const WCHAR logfilesW[] = {'s','y','s','t','e','m','3','2','\\','l','o','g','f','i','l','e','s',0};
+static const WCHAR spoolW[] = {'s','y','s','t','e','m','3','2','\\','s','p','o','o','l',0};
+static const WCHAR system32W[] = {'s','y','s','t','e','m','3','2',0};
+static const WCHAR syswow64W[] = {'s','y','s','w','o','w','6','4',0};
+static const WCHAR sysnativeW[] = {'s','y','s','n','a','t','i','v','e',0};
+static const WCHAR regeditW[] = {'r','e','g','e','d','i','t','.','e','x','e',0};
+static const WCHAR wow_regeditW[] = {'s','y','s','w','o','w','6','4','\\','r','e','g','e','d','i','t','.','e','x','e',0};
+
+static struct
+{
+    const WCHAR *source;
+    const WCHAR *dos_target;
+    const char *unix_target;
+} redirects[] =
+{
+    { catrootW, NULL, NULL },
+    { catroot2W, NULL, NULL },
+    { driversstoreW, NULL, NULL },
+    { driversetcW, NULL, NULL },
+    { logfilesW, NULL, NULL },
+    { spoolW, NULL, NULL },
+    { system32W, syswow64W, NULL },
+    { sysnativeW, system32W, NULL },
+    { regeditW, wow_regeditW, NULL }
+};
+
+static unsigned int nb_redirects;
+
+
+/***********************************************************************
+ *           get_redirect_target
+ *
+ * Find the target unix name for a redirected dir.
+ */
+static const char *get_redirect_target( const char *windows_dir, const WCHAR *name )
+{
+    int used_default, len, pos, win_len = strlen( windows_dir );
+    char *unix_name, *unix_target = NULL;
+    NTSTATUS status;
+
+    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, win_len + MAX_DIR_ENTRY_LEN + 2 )))
+        return NULL;
+    memcpy( unix_name, windows_dir, win_len );
+    pos = win_len;
+
+    while (*name)
+    {
+        const WCHAR *end, *next;
+
+        for (end = name; *end; end++) if (IS_SEPARATOR(*end)) break;
+        for (next = end; *next; next++) if (!IS_SEPARATOR(*next)) break;
+
+        status = find_file_in_dir( unix_name, pos, name, end - name, FALSE, NULL );
+        if (status == STATUS_OBJECT_PATH_NOT_FOUND && !*next)  /* not finding last element is ok */
+        {
+            len = ntdll_wcstoumbs( 0, name, end - name, unix_name + pos + 1,
+                                   MAX_DIR_ENTRY_LEN - (pos - win_len), NULL, &used_default );
+            if (len > 0 && !used_default)
+            {
+                unix_name[pos] = '/';
+                pos += len + 1;
+                unix_name[pos] = 0;
+                break;
+            }
+        }
+        if (status) goto done;
+        pos += strlen( unix_name + pos );
+        name = next;
+    }
+
+    if ((unix_target = RtlAllocateHeap( GetProcessHeap(), 0, pos - win_len )))
+        memcpy( unix_target, unix_name + win_len + 1, pos - win_len );
+
+done:
+    RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+    return unix_target;
+}
+
+
+/***********************************************************************
+ *           init_redirects
+ */
+static void init_redirects(void)
+{
+    UNICODE_STRING nt_name;
+    ANSI_STRING unix_name;
+    NTSTATUS status;
+    struct stat st;
+    unsigned int i;
+
+    if (!RtlDosPathNameToNtPathName_U( windows_dir.Buffer, &nt_name, NULL, NULL ))
+    {
+        ERR( "can't convert %s\n", debugstr_us(&windows_dir) );
+        return;
+    }
+    status = wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN_IF, FALSE );
+    RtlFreeUnicodeString( &nt_name );
+    if (status)
+    {
+        ERR( "cannot open %s (%x)\n", debugstr_us(&windows_dir), status );
+        return;
+    }
+    if (!stat( unix_name.Buffer, &st ))
+    {
+        windir.dev = st.st_dev;
+        windir.ino = st.st_ino;
+        nb_redirects = sizeof(redirects) / sizeof(redirects[0]);
+        for (i = 0; i < nb_redirects; i++)
+        {
+            if (!redirects[i].dos_target) continue;
+            redirects[i].unix_target = get_redirect_target( unix_name.Buffer, redirects[i].dos_target );
+            TRACE( "%s -> %s\n", debugstr_w(redirects[i].source), redirects[i].unix_target );
+        }
+    }
+    RtlFreeAnsiString( &unix_name );
+
+}
+
+
+/***********************************************************************
+ *           match_redirect
+ *
+ * Check if path matches a redirect name. If yes, return matched length.
+ */
+static int match_redirect( const WCHAR *path, int len, const WCHAR *redir, int check_case )
+{
+    int i = 0;
+
+    while (i < len && *redir)
+    {
+        if (IS_SEPARATOR(path[i]))
+        {
+            if (*redir++ != '\\') return 0;
+            while (i < len && IS_SEPARATOR(path[i])) i++;
+            continue;  /* move on to next path component */
+        }
+        else if (check_case)
+        {
+            if (path[i] != *redir) return 0;
+        }
+        else
+        {
+            if (tolowerW(path[i]) != tolowerW(*redir)) return 0;
+        }
+        i++;
+        redir++;
+    }
+    if (*redir) return 0;
+    if (i < len && !IS_SEPARATOR(path[i])) return 0;
+    while (i < len && IS_SEPARATOR(path[i])) i++;
+    return i;
+}
+
+
+/***********************************************************************
+ *           get_redirect_path
+ *
+ * Retrieve the Unix path corresponding to a redirected path if any.
+ */
+static int get_redirect_path( char *unix_name, int pos, const WCHAR *name, int length, int check_case )
+{
+    unsigned int i;
+    int len;
+
+    for (i = 0; i < nb_redirects; i++)
+    {
+        if ((len = match_redirect( name, length, redirects[i].source, check_case )))
+        {
+            if (!redirects[i].unix_target) break;
+            unix_name[pos++] = '/';
+            strcpy( unix_name + pos, redirects[i].unix_target );
+            return len;
+        }
+    }
+    return 0;
+}
+
+#else  /* _WIN64 */
+
+/* there are no redirects on 64-bit */
+
+static const unsigned int nb_redirects = 0;
+
+static int get_redirect_path( char *unix_name, int pos, const WCHAR *name, int length, int check_case )
+{
+    return 0;
+}
+
+#endif
 
 /***********************************************************************
  *           DIR_init_windows_dir
@@ -1853,6 +2059,10 @@ void DIR_init_windows_dir( const WCHAR *win, const WCHAR *sys )
 
     RtlCreateUnicodeString( &windows_dir, win );
     RtlCreateUnicodeString( &system_dir, sys );
+
+#ifndef _WIN64
+    if (is_wow64) init_redirects();
+#endif
 }
 
 
@@ -1984,6 +2194,7 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
     int pos, ret, name_len, unix_len, prefix_len, used_default;
     WCHAR prefix[MAX_DIR_ENTRY_LEN];
     BOOLEAN is_unix = FALSE;
+    const BOOL redirect = nb_redirects && ntdll_get_thread_data()->wow64_redir;
 
     name     = nameW->Buffer;
     name_len = nameW->Length / sizeof(WCHAR);
@@ -2080,7 +2291,7 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
         char *p;
         unix_name[pos + ret] = 0;
         for (p = unix_name + pos ; *p; p++) if (*p == '\\') *p = '/';
-        if (!stat( unix_name, &st ))
+        if ((!redirect || !strstr( unix_name, "/windows/")) && !stat( unix_name, &st ))
         {
             /* creation fails with STATUS_ACCESS_DENIED for the root of the drive */
             if (disposition == FILE_CREATE)
@@ -2097,7 +2308,7 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
         RtlFreeHeap( GetProcessHeap(), 0, unix_name );
         return STATUS_OBJECT_PATH_NOT_FOUND;
     }
-    if (check_case && (disposition == FILE_OPEN || disposition == FILE_OVERWRITE))
+    if (check_case && !redirect && (disposition == FILE_OPEN || disposition == FILE_OVERWRITE))
     {
         RtlFreeHeap( GetProcessHeap(), 0, unix_name );
         return STATUS_OBJECT_NAME_NOT_FOUND;
@@ -2108,6 +2319,7 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
     while (name_len)
     {
         const WCHAR *end, *next;
+        int is_win_dir = 0;
 
         end = name;
         while (end < name + name_len && !IS_SEPARATOR(*end)) end++;
@@ -2129,7 +2341,8 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
             unix_name = new_name;
         }
 
-        status = find_file_in_dir( unix_name, pos, name, end - name, check_case );
+        status = find_file_in_dir( unix_name, pos, name, end - name,
+                                   check_case, redirect ? &is_win_dir : NULL );
 
         /* if this is the last element, not finding it is not necessarily fatal */
         if (!name_len)
@@ -2166,10 +2379,16 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
 
         pos += strlen( unix_name + pos );
         name = next;
-    }
 
-    WARN( "%s -> %s required a case-insensitive search\n",
-          debugstr_us(nameW), debugstr_a(unix_name) );
+        if (is_win_dir && (prefix_len = get_redirect_path( unix_name, pos, name, name_len, check_case )))
+        {
+            name += prefix_len;
+            name_len -= prefix_len;
+            pos += strlen( unix_name + pos );
+            TRACE( "redirecting %s -> %s + %s\n",
+                   debugstr_us(nameW), debugstr_a(unix_name), debugstr_w(name) );
+        }
+    }
 
 done:
     TRACE( "%s -> %s\n", debugstr_us(nameW), debugstr_a(unix_name) );
