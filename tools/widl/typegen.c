@@ -4063,7 +4063,7 @@ void write_exceptions( FILE *file )
     fprintf( file, "#undef RpcAbnormalTermination\n");
     fprintf( file, "\n");
     fprintf( file, "struct __exception_frame;\n");
-    fprintf( file, "typedef int (*__filter_func)(EXCEPTION_RECORD *, struct __exception_frame *);\n");
+    fprintf( file, "typedef int (*__filter_func)(struct __exception_frame *);\n");
     fprintf( file, "typedef void (*__finally_func)(struct __exception_frame *);\n");
     fprintf( file, "\n");
     fprintf( file, "#define __DECL_EXCEPTION_FRAME \\\n");
@@ -4110,7 +4110,7 @@ void write_exceptions( FILE *file )
     fprintf( file, "        return ExceptionContinueSearch;\n");
     fprintf( file, "    }\n" );
     fprintf( file, "    exc_frame->code = record->ExceptionCode;\n");
-    fprintf( file, "    if (exc_frame->filter_level && exc_frame->filter( record, exc_frame ) == EXCEPTION_EXECUTE_HANDLER)\n" );
+    fprintf( file, "    if (exc_frame->filter_level && exc_frame->filter( exc_frame ) == EXCEPTION_EXECUTE_HANDLER)\n" );
     fprintf( file, "        __wine_rtl_unwind( frame, record, __widl_unwind_target );\n");
     fprintf( file, "    return ExceptionContinueSearch;\n");
     fprintf( file, "}\n");
