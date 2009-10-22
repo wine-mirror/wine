@@ -203,8 +203,6 @@ LPSTR           MCI_strdupWtoA(LPCWSTR str);
 BOOL            WINMM_CheckForMMSystem(void);
 const char*     WINMM_ErrorToString(MMRESULT error);
 
-UINT            MIXER_Open(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
-                           DWORD_PTR dwInstance, DWORD fdwOpen, BOOL bFrom32);
 UINT            MIDI_OutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID, DWORD_PTR dwCallback,
                              DWORD_PTR dwInstance, DWORD dwFlags, BOOL bFrom32);
 UINT            MIDI_InOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD_PTR dwCallback,

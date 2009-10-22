@@ -248,11 +248,26 @@ UINT16 WINAPI mixerGetDevCaps16(UINT16 uDeviceID, LPMIXERCAPS16 lpCaps,
 UINT16 WINAPI mixerOpen16(LPHMIXER16 lphmix, UINT16 uDeviceID, DWORD dwCallback,
 			  DWORD dwInstance, DWORD fdwOpen)
 {
-    HMIXER	hmix;
-    UINT	ret;
+    HMIXER	                hmix;
+    UINT	                ret;
+    struct mmsystdrv_thunk*     thunk;
 
-    ret = MIXER_Open(&hmix, uDeviceID, dwCallback, dwInstance, fdwOpen, FALSE);
-    if (lphmix) *lphmix = HMIXER_16(hmix);
+    if (!(thunk = MMSYSTDRV_AddThunk(dwCallback, MMSYSTDRV_MIXER)))
+    {
+        return MMSYSERR_NOMEM;
+    }
+    if ((fdwOpen & CALLBACK_TYPEMASK) == CALLBACK_FUNCTION)
+    {
+        dwCallback = (DWORD)thunk;
+    }
+
+    ret = mixerOpen(&hmix, uDeviceID, dwCallback, dwInstance, fdwOpen);
+    if (ret == MMSYSERR_NOERROR)
+    {
+        if (lphmix) *lphmix = HMIXER_16(hmix);
+        if (thunk) MMSYSTDRV_SetHandle(thunk, hmix);
+    }
+    else MMSYSTDRV_DeleteThunk(thunk);
     return ret;
 }
 
@@ -261,7 +276,11 @@ UINT16 WINAPI mixerOpen16(LPHMIXER16 lphmix, UINT16 uDeviceID, DWORD dwCallback,
  */
 UINT16 WINAPI mixerClose16(HMIXER16 hMix)
 {
-    return mixerClose(HMIXER_32(hMix));
+    UINT        ret = mixerClose(HMIXER_32(hMix));
+
+    if (ret == MMSYSERR_NOERROR)
+        MMSYSTDRV_CloseHandle((void*)HMIXER_32(hMix));
+    return ret;
 }
 
 /**************************************************************************

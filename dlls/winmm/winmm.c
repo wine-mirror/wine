@@ -325,8 +325,11 @@ static void CALLBACK MIXER_WCallback(HMIXEROBJ hmx, UINT uMsg, DWORD_PTR dwInsta
     PostMessageW(hWnd, uMsg, (WPARAM)hmx, (LPARAM)dwParam);
 }
 
-UINT  MIXER_Open(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
-                 DWORD_PTR dwInstance, DWORD fdwOpen, BOOL bFrom32)
+/**************************************************************************
+ * 				mixerOpen			[WINMM.@]
+ */
+UINT WINAPI mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
+                      DWORD_PTR dwInstance, DWORD fdwOpen)
 {
     HANDLE		hMix;
     LPWINE_MLD		wmld;
@@ -361,7 +364,7 @@ UINT  MIXER_Open(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
     }
 
     wmld = MMDRV_Alloc(sizeof(WINE_MIXER), MMDRV_MIXER, &hMix, &fdwOpen,
-		       &dwCallback, &dwInstance, bFrom32);
+		       &dwCallback, &dwInstance, TRUE);
     wmld->uDeviceID = uDeviceID;
     mod.hmx = hMix;
 
@@ -375,15 +378,6 @@ UINT  MIXER_Open(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
     TRACE("=> %d hMixer=%p\n", dwRet, hMix);
 
     return dwRet;
-}
-
-/**************************************************************************
- * 				mixerOpen			[WINMM.@]
- */
-UINT WINAPI mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
-                     DWORD_PTR dwInstance, DWORD fdwOpen)
-{
-    return MIXER_Open(lphMix, uDeviceID, dwCallback, dwInstance, fdwOpen, TRUE);
 }
 
 /**************************************************************************

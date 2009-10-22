@@ -123,17 +123,17 @@ static  void	CALLBACK MMDRV_Aux_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dwInst
  * ================================= */
 
 /**************************************************************************
- * 				xMMDRV_Mixer_Map16To32W		[internal]
+ * 				MMSYSTDRV_Mixer_Map16To32W		[internal]
  */
-static  WINMM_MapType	MMDRV_Mixer_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
+static  MMSYSTEM_MapType	MMSYSTDRV_Mixer_Map16To32W  (UINT wMsg, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
 {
-    return WINMM_MAP_MSGERROR;
+    return MMSYSTEM_MAP_MSGERROR;
 }
 
 /**************************************************************************
- * 				MMDRV_Mixer_UnMap16To32W	[internal]
+ * 				MMSYSTDRV_Mixer_UnMap16To32W	[internal]
  */
-static  WINMM_MapType	MMDRV_Mixer_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
+static  MMSYSTEM_MapType	MMSYSTDRV_Mixer_UnMap16To32W(UINT wMsg, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
 {
 #if 0
     MIXERCAPSA	micA;
@@ -149,7 +149,7 @@ static  WINMM_MapType	MMDRV_Mixer_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser, D
     }
     return ret;
 #endif
-    return WINMM_MAP_MSGERROR;
+    return MMSYSTEM_MAP_MSGERROR;
 }
 
 /**************************************************************************
@@ -177,6 +177,14 @@ static  void	CALLBACK MMDRV_Mixer_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dwIn
 
     FIXME("NIY\n");
     MMDRV_Callback(mld, hDev, uMsg, dwParam1, dwParam2);
+}
+
+/**************************************************************************
+ * 				MMSYSTDRV_Mixer_MapCB
+ */
+static  void	                MMSYSTDRV_Mixer_MapCB(DWORD uMsg, DWORD_PTR* dwUser, DWORD_PTR* dwParam1, DWORD_PTR* dwParam2)
+{
+    FIXME("NIY\n");
 }
 
 /* =================================
@@ -2525,6 +2533,18 @@ static  WINMM_MapType	MCI_UnMapMsg32WTo16(WORD uDevType, WORD wMsg, DWORD dwFlag
     return MCI_MsgMapper32WTo16_Destroy((void*)lParam, size, map, kept);
 }
 
+/* temporary hack */
+static  WINMM_MapType	MMDRV_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
+{
+    return WINMM_MAP_MSGERROR;
+}
+static  WINMM_MapType	MMDRV_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
+{
+    return WINMM_MAP_MSGERROR;
+}
+#define MMDRV_Mixer_Map16To32W          MMDRV_Map16To32W
+#define MMDRV_Mixer_UnMap16To32W        MMDRV_UnMap16To32W
+
 void    MMDRV_Init16(void)
 {
 #define A(_x,_y) MMDRV_InstallMap(_x, \
@@ -2579,6 +2599,7 @@ static struct MMSYSTDRV_Type
     MMSYSTDRV_MAPCB     mapcb;
 } MMSYSTEM_DriversType[MMSYSTDRV_MAX] =
 {
+    {MMSYSTDRV_Mixer_Map16To32W,   MMSYSTDRV_Mixer_UnMap16To32W,   MMSYSTDRV_Mixer_MapCB},
 };
 
 /******************************************************************
