@@ -17564,6 +17564,15 @@ programs/explorer/Makefile: programs/explorer/Makefile.in programs/Makeprog.rule
 ac_config_files="$ac_config_files programs/explorer/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	programs/extrac32/Makefile"
+test "x$enable_extrac32" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	extrac32" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	extrac32"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+programs/extrac32/Makefile: programs/extrac32/Makefile.in programs/Makeprog.rules"
+ac_config_files="$ac_config_files programs/extrac32/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/hh/Makefile"
 test "x$enable_hh" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
 	hh" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
@@ -19204,6 +19213,7 @@ do
     "programs/eject/Makefile") CONFIG_FILES="$CONFIG_FILES programs/eject/Makefile" ;;
     "programs/expand/Makefile") CONFIG_FILES="$CONFIG_FILES programs/expand/Makefile" ;;
     "programs/explorer/Makefile") CONFIG_FILES="$CONFIG_FILES programs/explorer/Makefile" ;;
+    "programs/extrac32/Makefile") CONFIG_FILES="$CONFIG_FILES programs/extrac32/Makefile" ;;
     "programs/hh/Makefile") CONFIG_FILES="$CONFIG_FILES programs/hh/Makefile" ;;
     "programs/icinfo/Makefile") CONFIG_FILES="$CONFIG_FILES programs/icinfo/Makefile" ;;
     "programs/iexplore/Makefile") CONFIG_FILES="$CONFIG_FILES programs/iexplore/Makefile" ;;
