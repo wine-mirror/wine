@@ -161,7 +161,7 @@ int write_process_memory( struct process *process, client_ptr_t ptr, size_t size
         return 0;
     }
 
-    if ((fd = open_proc_as( process, O_RDONLY )) == -1) return 0;
+    if ((fd = open_proc_as( process, O_WRONLY )) == -1) return 0;
 
     ret = pwrite( fd, src, size, (off_t)ptr );
     close( fd );
