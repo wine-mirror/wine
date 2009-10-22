@@ -614,8 +614,6 @@ static DWORD WAVE_mciStop(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS
 	break;
     }
 
-    wmw->dwPosition = 0;
-
     /* sanity resets */
     wmw->dwStatus = MCI_MODE_STOP;
 

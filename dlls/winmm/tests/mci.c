@@ -446,7 +446,7 @@ static void test_asyncWAVE(HWND hwnd)
     trace("position once stopped: %sms\n",buf);
     p2 = atoi(buf);
     /* An XP machine let the position increase slightly after pause. */
-    todo_wine ok(p2>=p1 && p2<=p1+16,"position changed from %ums to %ums\n",p1,p2);
+    ok(p2>=p1 && p2<=p1+16,"position changed from %ums to %ums\n",p1,p2);
 
     /* No Resume once stopped (waveaudio, sequencer and cdaudio differ). */
     err = mciSendString("resume mysound wait", NULL, 0, NULL);
