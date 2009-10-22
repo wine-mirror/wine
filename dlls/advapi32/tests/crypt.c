@@ -988,15 +988,21 @@ static void test_rc2_keylen(void)
     ret = pCryptImportKey(provider, (BYTE*)&key_blob,
                           sizeof(BLOBHEADER)+sizeof(DWORD)+key_blob.key_size,
                           0, 0, &hkey);
-    ok(!ret && GetLastError() == NTE_BAD_DATA,
-       "expected NTE_BAD_DATA, got %08x\n", GetLastError());
+    ok(!ret && (GetLastError() == NTE_BAD_DATA ||
+                GetLastError() == NTE_BAD_LEN || /* Win7 */
+                GetLastError() == NTE_BAD_TYPE || /* W2K */
+                GetLastError() == NTE_PERM), /* Win9x, WinMe and NT4 */
+       "unexpected error %08x\n", GetLastError());
     /* but importing an 8-bit (7-byte) key does.. */
     key_blob.key_size = 7;
     SetLastError(0xdeadbeef);
     ret = pCryptImportKey(provider, (BYTE*)&key_blob,
                           sizeof(BLOBHEADER)+sizeof(DWORD)+key_blob.key_size,
                           0, 0, &hkey);
-    ok(ret, "CryptAcquireContext error %08x\n", GetLastError());
+    ok(ret ||
+       broken(!ret && GetLastError() == NTE_BAD_TYPE) || /* W2K */
+       broken(!ret && GetLastError() == NTE_PERM), /* Win9x, WinMe and NT4 */
+       "CryptAcquireContext error %08x\n", GetLastError());
     pCryptDestroyKey(hkey);
     /* as does importing a 16-byte key with the base provider when
      * CRYPT_IPSEC_HMAC_KEY is specified.
