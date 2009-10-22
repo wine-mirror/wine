@@ -1398,18 +1398,32 @@ UINT16 WINAPI waveInOpen16(HWAVEIN16* lphWaveIn, UINT16 uDeviceID,
                            LPCWAVEFORMATEX lpFormat, DWORD dwCallback,
                            DWORD dwInstance, DWORD dwFlags)
 {
-    HANDLE		hWaveIn;
-    UINT		ret;
+    HWAVEIN                     hWaveIn;
+    UINT		        ret;
+    struct mmsystdrv_thunk*     thunk;
 
+    if (!(thunk = MMSYSTDRV_AddThunk(dwCallback, MMSYSTDRV_WAVEIN)))
+    {
+        return MMSYSERR_NOMEM;
+    }
+    if ((dwFlags & CALLBACK_TYPEMASK) == CALLBACK_FUNCTION)
+    {
+        dwCallback = (DWORD)thunk;
+    }
     /* since layout of WAVEFORMATEX is the same for 16/32 bits, we directly
      * call the 32 bit version
      * however, we need to promote correctly the wave mapper id
      * (0xFFFFFFFF and not 0x0000FFFF)
      */
-    ret = WAVE_Open(&hWaveIn, (uDeviceID == (UINT16)-1) ? (UINT)-1 : uDeviceID,
-                    MMDRV_WAVEIN, lpFormat, dwCallback, dwInstance, dwFlags, FALSE);
+    ret = waveInOpen(&hWaveIn, (uDeviceID == (UINT16)-1) ? (UINT)-1 : uDeviceID,
+                     lpFormat, dwCallback, dwInstance, dwFlags);
 
-    if (lphWaveIn != NULL) *lphWaveIn = HWAVEIN_16(hWaveIn);
+    if (ret == MMSYSERR_NOERROR)
+    {
+        if (lphWaveIn != NULL) *lphWaveIn = HWAVEIN_16(hWaveIn);
+        MMSYSTDRV_SetHandle(thunk, (void*)hWaveIn);
+    }
+    else MMSYSTDRV_DeleteThunk(thunk);
     return ret;
 }
 
@@ -1424,6 +1438,8 @@ UINT16 WINAPI waveInClose16(HWAVEIN16 hWaveIn)
     ReleaseThunkLock(&level);
     ret = waveInClose(HWAVEIN_32(hWaveIn));
     RestoreThunkLock(level);
+    if (ret == MMSYSERR_NOERROR)
+        MMSYSTDRV_CloseHandle((void*)HWAVEIN_32(hWaveIn));
     return ret;
 }
 
@@ -1434,19 +1450,15 @@ UINT16 WINAPI waveInPrepareHeader16(HWAVEIN16 hWaveIn,       /* [in] */
 				    SEGPTR lpsegWaveInHdr,   /* [???] */
 				    UINT16 uSize)            /* [in] */
 {
-    LPWINE_MLD		wmld;
     LPWAVEHDR		lpWaveInHdr = MapSL(lpsegWaveInHdr);
     UINT16		ret;
 
     TRACE("(%04X, %p, %u);\n", hWaveIn, lpWaveInHdr, uSize);
 
     if (lpWaveInHdr == NULL) return MMSYSERR_INVALHANDLE;
-    if ((wmld = MMDRV_Get(HWAVEIN_32(hWaveIn), MMDRV_WAVEIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
     lpWaveInHdr->dwBytesRecorded = 0;
 
-    ret = MMDRV_Message(wmld, WIDM_PREPARE, lpsegWaveInHdr, uSize, FALSE);
+    ret = MMSYSTDRV_Message(HWAVEIN_32(hWaveIn), WIDM_PREPARE, lpsegWaveInHdr, uSize);
     return ret;
 }
 
@@ -1457,7 +1469,6 @@ UINT16 WINAPI waveInUnprepareHeader16(HWAVEIN16 hWaveIn,       /* [in] */
 				      SEGPTR lpsegWaveInHdr,   /* [???] */
 				      UINT16 uSize)            /* [in] */
 {
-    LPWINE_MLD		wmld;
     LPWAVEHDR		lpWaveInHdr = MapSL(lpsegWaveInHdr);
 
     TRACE("(%04X, %08x, %u);\n", hWaveIn, lpsegWaveInHdr, uSize);
@@ -1468,10 +1479,7 @@ UINT16 WINAPI waveInUnprepareHeader16(HWAVEIN16 hWaveIn,       /* [in] */
 	return MMSYSERR_NOERROR;
     }
 
-    if ((wmld = MMDRV_Get(HWAVEIN_32(hWaveIn), MMDRV_WAVEIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    return MMDRV_Message(wmld, WIDM_UNPREPARE, lpsegWaveInHdr, uSize, FALSE);
+    return MMSYSTDRV_Message(HWAVEIN_32(hWaveIn), WIDM_UNPREPARE, lpsegWaveInHdr, uSize);
 }
 
 /**************************************************************************
@@ -1481,15 +1489,11 @@ UINT16 WINAPI waveInAddBuffer16(HWAVEIN16 hWaveIn,       /* [in] */
 				WAVEHDR* lpsegWaveInHdr, /* [???] NOTE: SEGPTR */
 				UINT16 uSize)            /* [in] */
 {
-    LPWINE_MLD		wmld;
-
     TRACE("(%04X, %p, %u);\n", hWaveIn, lpsegWaveInHdr, uSize);
 
     if (lpsegWaveInHdr == NULL) return MMSYSERR_INVALPARAM;
-    if ((wmld = MMDRV_Get(HWAVEIN_32(hWaveIn), MMDRV_WAVEIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WIDM_ADDBUFFER, (DWORD_PTR)lpsegWaveInHdr, uSize, FALSE);
+    return MMSYSTDRV_Message(HWAVEIN_32(hWaveIn), WIDM_ADDBUFFER, (DWORD_PTR)lpsegWaveInHdr, uSize);
 }
 
 /**************************************************************************
@@ -1569,24 +1573,18 @@ UINT16 WINAPI waveInGetID16(HWAVEIN16 hWaveIn, UINT16* lpuDeviceID)
 DWORD WINAPI waveInMessage16(HWAVEIN16 hWaveIn, UINT16 uMessage,
                              DWORD dwParam1, DWORD dwParam2)
 {
-    LPWINE_MLD		wmld;
-
     TRACE("(%04x, %u, %d, %d)\n", hWaveIn, uMessage, dwParam1, dwParam2);
 
-    if ((wmld = MMDRV_Get(HWAVEIN_32(hWaveIn), MMDRV_WAVEIN, FALSE)) == NULL) {
-	if ((wmld = MMDRV_Get(HWAVEIN_32(hWaveIn), MMDRV_WAVEIN, TRUE)) != NULL) {
-            if (uMessage == DRV_QUERYDRVENTRY || uMessage == DRV_QUERYDEVNODE)
-                dwParam1 = (DWORD)MapSL(dwParam1);
-	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2);
-	}
-	return MMSYSERR_INVALHANDLE;
+    if ((DWORD_PTR)hWaveIn < waveInGetNumDevs())
+    {
+        if (uMessage == DRV_QUERYDRVENTRY || uMessage == DRV_QUERYDEVNODE)
+            dwParam1 = (DWORD)MapSL(dwParam1);
     }
+    else if (uMessage < DRVM_IOCTL || (uMessage >= DRVM_IOCTL_LAST && uMessage < DRVM_MAPPER))
+        /* from M$ KB */
+        return MMSYSERR_INVALPARAM;
 
-    /* from M$ KB */
-    if (uMessage < DRVM_IOCTL || (uMessage >= DRVM_IOCTL_LAST && uMessage < DRVM_MAPPER))
-	return MMSYSERR_INVALPARAM;
-
-    return MMDRV_Message(wmld, uMessage, dwParam1, dwParam2, FALSE);
+    return MMSYSTDRV_Message(HWAVEIN_32(hWaveIn), uMessage, dwParam1, dwParam2);
 }
 
 /* ###################################################

@@ -777,18 +777,18 @@ static  void MMSYSTDRV_MidiOut_MapCB(UINT uMsg, DWORD_PTR* dwUser, DWORD_PTR* dw
  * ================================= */
 
 /**************************************************************************
- * 				MMDRV_WaveIn_Map16To32W		[internal]
+ * 				MMSYSTDRV_WaveIn_Map16To32W		[internal]
  */
-static  WINMM_MapType	MMDRV_WaveIn_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
+static  MMSYSTEM_MapType	MMSYSTDRV_WaveIn_Map16To32W  (UINT wMsg, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
 {
-    WINMM_MapType	ret = WINMM_MAP_MSGERROR;
+    MMSYSTEM_MapType	ret = MMSYSTEM_MAP_MSGERROR;
 
     switch (wMsg) {
     case WIDM_GETNUMDEVS:
     case WIDM_RESET:
     case WIDM_START:
     case WIDM_STOP:
-	ret = WINMM_MAP_OK;
+	ret = MMSYSTEM_MAP_OK;
 	break;
     case WIDM_OPEN:
     case WIDM_CLOSE:
@@ -805,9 +805,9 @@ static  WINMM_MapType	MMDRV_WaveIn_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser, 
 		*lpParam1 = (DWORD)wic32;
 		*lpParam2 = sizeof(WAVEINCAPSW);
 
-		ret = WINMM_MAP_OKMEM;
+		ret = MMSYSTEM_MAP_OKMEM;
 	    } else {
-		ret = WINMM_MAP_NOMEM;
+		ret = MMSYSTEM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -824,9 +824,9 @@ static  WINMM_MapType	MMDRV_WaveIn_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser, 
 		*lpParam1 = (DWORD)mmt32;
 		*lpParam2 = sizeof(MMTIME);
 
-		ret = WINMM_MAP_OKMEM;
+		ret = MMSYSTEM_MAP_OKMEM;
 	    } else {
-		ret = WINMM_MAP_NOMEM;
+		ret = MMSYSTEM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -850,9 +850,9 @@ static  WINMM_MapType	MMDRV_WaveIn_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser, 
 		*lpParam1 = (DWORD)wh32;
 		*lpParam2 = sizeof(WAVEHDR);
 
-		ret = WINMM_MAP_OKMEM;
+		ret = MMSYSTEM_MAP_OKMEM;
 	    } else {
-		ret = WINMM_MAP_NOMEM;
+		ret = MMSYSTEM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -870,13 +870,13 @@ static  WINMM_MapType	MMDRV_WaveIn_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser, 
 		    wh32->dwBufferLength, wh16->dwBufferLength);
 	    } else
                 wh32->dwBufferLength = wh16->dwBufferLength;
-	    ret = WINMM_MAP_OKMEM;
+	    ret = MMSYSTEM_MAP_OKMEM;
 	}
 	break;
     case WIDM_MAPPER_STATUS:
 	/* just a single DWORD */
 	*lpParam2 = (DWORD)MapSL(*lpParam2);
-	ret = WINMM_MAP_OK;
+	ret = MMSYSTEM_MAP_OK;
 	break;
     default:
 	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
@@ -886,11 +886,11 @@ static  WINMM_MapType	MMDRV_WaveIn_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser, 
 }
 
 /**************************************************************************
- * 				MMDRV_WaveIn_UnMap16To32W	[internal]
+ * 				MMSYSTDRV_WaveIn_UnMap16To32W	[internal]
  */
-static  WINMM_MapType	MMDRV_WaveIn_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
+static  MMSYSTEM_MapType	MMSYSTDRV_WaveIn_UnMap16To32W(UINT wMsg, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
 {
-    WINMM_MapType	ret = WINMM_MAP_MSGERROR;
+    MMSYSTEM_MapType	ret = MMSYSTEM_MAP_MSGERROR;
 
     switch (wMsg) {
     case WIDM_GETNUMDEVS:
@@ -898,7 +898,7 @@ static  WINMM_MapType	MMDRV_WaveIn_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser, 
     case WIDM_START:
     case WIDM_STOP:
     case WIDM_MAPPER_STATUS:
-	ret = WINMM_MAP_OK;
+	ret = MMSYSTEM_MAP_OK;
 	break;
     case WIDM_OPEN:
     case WIDM_CLOSE:
@@ -917,7 +917,7 @@ static  WINMM_MapType	MMDRV_WaveIn_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser, 
 	    wic16->dwFormats = wic32->dwFormats;
 	    wic16->wChannels = wic32->wChannels;
 	    HeapFree(GetProcessHeap(), 0, (LPSTR)wic32 - sizeof(LPWAVEINCAPS16));
-	    ret = WINMM_MAP_OK;
+	    ret = MMSYSTEM_MAP_OK;
 	}
 	break;
     case WIDM_GETPOS:
@@ -927,7 +927,7 @@ static  WINMM_MapType	MMDRV_WaveIn_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser, 
 
 	    MMSYSTEM_MMTIME32to16(mmt16, mmt32);
 	    HeapFree(GetProcessHeap(), 0, (LPSTR)mmt32 - sizeof(LPMMTIME16));
-	    ret = WINMM_MAP_OK;
+	    ret = MMSYSTEM_MAP_OK;
 	}
 	break;
     case WIDM_ADDBUFFER:
@@ -948,7 +948,7 @@ static  WINMM_MapType	MMDRV_WaveIn_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser, 
 		HeapFree(GetProcessHeap(), 0, (LPSTR)wh32 - sizeof(LPWAVEHDR));
 		wh16->lpNext = 0;
 	    }
-	    ret = WINMM_MAP_OK;
+	    ret = MMSYSTEM_MAP_OK;
 	}
 	break;
     default:
@@ -1259,6 +1259,33 @@ static  void	CALLBACK MMDRV_WaveIn_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dwI
     }
 
     MMDRV_Callback(mld, hDev, uMsg, dwParam1, dwParam2);
+}
+
+/**************************************************************************
+ * 				MMSYSTDRV_WaveIn_MapCB		[internal]
+ */
+static  void    MMSYSTDRV_WaveIn_MapCB(UINT uMsg, DWORD_PTR* dwUser, DWORD_PTR* dwParam1, DWORD_PTR* dwParam2)
+{
+    switch (uMsg) {
+    case WIM_OPEN:
+    case WIM_CLOSE:
+	/* dwParam1 & dwParam2 are supposed to be 0, nothing to do */
+	break;
+    case WIM_DATA:
+        {
+	    /* initial map is: 16 => 32 */
+	    LPWAVEHDR		wh32 = (LPWAVEHDR)(*dwParam1);
+	    SEGPTR		segwh16 = *(SEGPTR*)((LPSTR)wh32 - sizeof(LPWAVEHDR));
+	    LPWAVEHDR		wh16 = MapSL(segwh16);
+
+	    *dwParam1 = (DWORD)segwh16;
+	    wh16->dwFlags = wh32->dwFlags;
+	    wh16->dwBytesRecorded = wh32->dwBytesRecorded;
+	}
+	break;
+    default:
+	ERR("Unknown msg %u\n", uMsg);
+    }
 }
 
 /* =================================
@@ -2615,6 +2642,8 @@ static  WINMM_MapType	MMDRV_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser, DWORD_P
 #define MMDRV_MidiIn_UnMap16To32W       MMDRV_UnMap16To32W
 #define MMDRV_MidiOut_Map16To32W        MMDRV_Map16To32W
 #define MMDRV_MidiOut_UnMap16To32W      MMDRV_UnMap16To32W
+#define MMDRV_WaveIn_Map16To32W         MMDRV_Map16To32W
+#define MMDRV_WaveIn_UnMap16To32W       MMDRV_UnMap16To32W
 
 void    MMDRV_Init16(void)
 {
@@ -2673,6 +2702,7 @@ static struct MMSYSTDRV_Type
     {MMSYSTDRV_Mixer_Map16To32W,   MMSYSTDRV_Mixer_UnMap16To32W,   MMSYSTDRV_Mixer_MapCB},
     {MMSYSTDRV_MidiIn_Map16To32W,  MMSYSTDRV_MidiIn_UnMap16To32W,  MMSYSTDRV_MidiIn_MapCB},
     {MMSYSTDRV_MidiOut_Map16To32W, MMSYSTDRV_MidiOut_UnMap16To32W, MMSYSTDRV_MidiOut_MapCB},
+    {MMSYSTDRV_WaveIn_Map16To32W,  MMSYSTDRV_WaveIn_UnMap16To32W,  MMSYSTDRV_WaveIn_MapCB},
 };
 
 /******************************************************************
