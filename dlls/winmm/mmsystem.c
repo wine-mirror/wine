@@ -803,12 +803,25 @@ UINT16 WINAPI midiInGetDevCaps16(UINT16 uDeviceID, LPMIDIINCAPS16 lpCaps,
 UINT16 WINAPI midiInOpen16(HMIDIIN16* lphMidiIn, UINT16 uDeviceID,
 			   DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
 {
-    HMIDIIN	xhmid;
+    HMIDIIN	hmid;
     UINT 	ret;
+    struct mmsystdrv_thunk*     thunk;
 
-    ret = MIDI_InOpen(&xhmid, uDeviceID, dwCallback, dwInstance, dwFlags, FALSE);
-
-    if (lphMidiIn) *lphMidiIn = HMIDIIN_16(xhmid);
+    if (!(thunk = MMSYSTDRV_AddThunk(dwCallback, MMSYSTDRV_MIDIIN)))
+    {
+        return MMSYSERR_NOMEM;
+    }
+    if ((dwFlags & CALLBACK_TYPEMASK) == CALLBACK_FUNCTION)
+    {
+        dwCallback = (DWORD)thunk;
+    }
+    ret = midiInOpen(&hmid, uDeviceID, dwCallback, dwInstance, dwFlags);
+    if (ret == MMSYSERR_NOERROR)
+    {
+        if (lphMidiIn) *lphMidiIn = HMIDIIN_16(hmid);
+        MMSYSTDRV_SetHandle(thunk, (void*)hmid);
+    }
+    else MMSYSTDRV_DeleteThunk(thunk);
     return ret;
 }
 
@@ -817,7 +830,11 @@ UINT16 WINAPI midiInOpen16(HMIDIIN16* lphMidiIn, UINT16 uDeviceID,
  */
 UINT16 WINAPI midiInClose16(HMIDIIN16 hMidiIn)
 {
-    return midiInClose(HMIDIIN_32(hMidiIn));
+    UINT        ret = midiInClose(HMIDIIN_32(hMidiIn));
+
+    if (ret == MMSYSERR_NOERROR)
+        MMSYSTDRV_CloseHandle((void*)HMIDIIN_32(hMidiIn));
+    return ret;
 }
 
 /**************************************************************************
@@ -827,14 +844,9 @@ UINT16 WINAPI midiInPrepareHeader16(HMIDIIN16 hMidiIn,         /* [in] */
                                     SEGPTR lpsegMidiInHdr,     /* [???] */
 				    UINT16 uSize)              /* [in] */
 {
-    LPWINE_MLD		wmld;
-
     TRACE("(%04X, %08x, %d)\n", hMidiIn, lpsegMidiInHdr, uSize);
 
-    if ((wmld = MMDRV_Get(HMIDIIN_32(hMidiIn), MMDRV_MIDIIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    return MMDRV_Message(wmld, MIDM_PREPARE, lpsegMidiInHdr, uSize, FALSE);
+    return MMSYSTDRV_Message(HMIDIIN_32(hMidiIn), MIDM_PREPARE, lpsegMidiInHdr, uSize);
 }
 
 /**************************************************************************
@@ -844,7 +856,6 @@ UINT16 WINAPI midiInUnprepareHeader16(HMIDIIN16 hMidiIn,         /* [in] */
                                       SEGPTR lpsegMidiInHdr,     /* [???] */
 				      UINT16 uSize)              /* [in] */
 {
-    LPWINE_MLD		wmld;
     LPMIDIHDR16		lpMidiInHdr = MapSL(lpsegMidiInHdr);
 
     TRACE("(%04X, %08x, %d)\n", hMidiIn, lpsegMidiInHdr, uSize);
@@ -853,10 +864,7 @@ UINT16 WINAPI midiInUnprepareHeader16(HMIDIIN16 hMidiIn,         /* [in] */
 	return MMSYSERR_NOERROR;
     }
 
-    if ((wmld = MMDRV_Get(HMIDIIN_32(hMidiIn), MMDRV_MIDIIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    return MMDRV_Message(wmld, MIDM_UNPREPARE, lpsegMidiInHdr, uSize, FALSE);
+    return MMSYSTDRV_Message(HMIDIIN_32(hMidiIn), MIDM_UNPREPARE, lpsegMidiInHdr, uSize);
 }
 
 /**************************************************************************
@@ -866,14 +874,9 @@ UINT16 WINAPI midiInAddBuffer16(HMIDIIN16 hMidiIn,         /* [in] */
                                 MIDIHDR16* lpsegMidiInHdr, /* [???] NOTE: SEGPTR */
 				UINT16 uSize)              /* [in] */
 {
-    LPWINE_MLD		wmld;
-
     TRACE("(%04X, %p, %d)\n", hMidiIn, lpsegMidiInHdr, uSize);
 
-    if ((wmld = MMDRV_Get(HMIDIIN_32(hMidiIn), MMDRV_MIDIIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    return MMDRV_Message(wmld, MIDM_ADDBUFFER, (DWORD_PTR)lpsegMidiInHdr, uSize, FALSE);
+    return MMSYSTDRV_Message(HMIDIIN_32(hMidiIn), MIDM_ADDBUFFER, (DWORD_PTR)lpsegMidiInHdr, uSize);
 }
 
 /**************************************************************************
@@ -920,8 +923,6 @@ UINT16 WINAPI midiInGetID16(HMIDIIN16 hMidiIn, UINT16* lpuDeviceID)
 DWORD WINAPI midiInMessage16(HMIDIIN16 hMidiIn, UINT16 uMessage,
                              DWORD dwParam1, DWORD dwParam2)
 {
-    LPWINE_MLD		wmld;
-
     TRACE("(%04X, %04X, %08X, %08X)\n", hMidiIn, uMessage, dwParam1, dwParam2);
 
     switch (uMessage) {
@@ -939,11 +940,7 @@ DWORD WINAPI midiInMessage16(HMIDIIN16 hMidiIn, UINT16 uMessage,
     case MIDM_ADDBUFFER:
         return midiInAddBuffer16(hMidiIn, MapSL(dwParam1), dwParam2);
     }
-
-    if ((wmld = MMDRV_Get(HMIDIIN_32(hMidiIn), MMDRV_MIDIIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    return MMDRV_Message(wmld, uMessage, dwParam1, dwParam2, FALSE);
+    return MMSYSTDRV_Message(HMIDIIN_32(hMidiIn), uMessage, dwParam1, dwParam2);
 }
 
 /**************************************************************************

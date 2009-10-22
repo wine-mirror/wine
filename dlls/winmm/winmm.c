@@ -1229,8 +1229,11 @@ UINT WINAPI midiInGetDevCapsA(UINT_PTR uDeviceID, LPMIDIINCAPSA lpCaps, UINT uSi
     return ret;
 }
 
-UINT MIDI_InOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD_PTR dwCallback,
-                 DWORD_PTR dwInstance, DWORD dwFlags, BOOL bFrom32)
+/**************************************************************************
+ * 				midiInOpen		[WINMM.@]
+ */
+UINT WINAPI midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID,
+		       DWORD_PTR dwCallback, DWORD_PTR dwInstance, DWORD dwFlags)
 {
     HANDLE		hMidiIn;
     LPWINE_MIDI		lpwm;
@@ -1242,7 +1245,7 @@ UINT MIDI_InOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD_PTR dwCallback,
     if (lphMidiIn != NULL) *lphMidiIn = 0;
 
     lpwm = (LPWINE_MIDI)MMDRV_Alloc(sizeof(WINE_MIDI), MMDRV_MIDIIN, &hMidiIn,
-				    &dwFlags, &dwCallback, &dwInstance, bFrom32);
+				    &dwFlags, &dwCallback, &dwInstance, TRUE);
 
     if (lpwm == NULL)
 	return MMSYSERR_NOMEM;
@@ -1262,15 +1265,6 @@ UINT MIDI_InOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD_PTR dwCallback,
     TRACE("=> %d hMidi=%p\n", dwRet, hMidiIn);
 
     return dwRet;
-}
-
-/**************************************************************************
- * 				midiInOpen		[WINMM.@]
- */
-UINT WINAPI midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID,
-		       DWORD_PTR dwCallback, DWORD_PTR dwInstance, DWORD dwFlags)
-{
-    return MIDI_InOpen(lphMidiIn, uDeviceID, dwCallback, dwInstance, dwFlags, TRUE);
 }
 
 /**************************************************************************

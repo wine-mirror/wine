@@ -192,19 +192,19 @@ static  void	                MMSYSTDRV_Mixer_MapCB(DWORD uMsg, DWORD_PTR* dwUser
  * ================================= */
 
 /**************************************************************************
- * 				MMDRV_MidiIn_Map16To32W		[internal]
+ * 				MMSYSTDRV_MidiIn_Map16To32W		[internal]
  */
-static  WINMM_MapType	MMDRV_MidiIn_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
+static  MMSYSTEM_MapType	MMSYSTDRV_MidiIn_Map16To32W  (UINT wMsg, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
 {
-    return WINMM_MAP_MSGERROR;
+    return MMSYSTEM_MAP_MSGERROR;
 }
 
 /**************************************************************************
- * 				MMDRV_MidiIn_UnMap16To32W	[internal]
+ * 				MMSYSTDRV_MidiIn_UnMap16To32W	[internal]
  */
-static  WINMM_MapType	MMDRV_MidiIn_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
+static  MMSYSTEM_MapType	MMSYSTDRV_MidiIn_UnMap16To32W(UINT wMsg, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
 {
-    return WINMM_MAP_MSGERROR;
+    return MMSYSTEM_MAP_MSGERROR;
 }
 
 /**************************************************************************
@@ -273,6 +273,40 @@ static  void	CALLBACK MMDRV_MidiIn_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dwI
     }
 
     MMDRV_Callback(mld, hDev, uMsg, dwParam1, dwParam2);
+}
+
+/**************************************************************************
+ * 				MMSYSTDRV_MidiIn_MapCB		[internal]
+ */
+static  void            	MMSYSTDRV_MidiIn_MapCB(UINT uMsg, DWORD_PTR* dwUser, DWORD_PTR* dwParam1, DWORD_PTR* dwParam2)
+{
+    switch (uMsg) {
+    case MIM_OPEN:
+    case MIM_CLOSE:
+	/* dwParam1 & dwParam2 are supposed to be 0, nothing to do */
+
+    case MIM_DATA:
+    case MIM_MOREDATA:
+    case MIM_ERROR:
+	/* dwParam1 & dwParam2 are data, nothing to do */
+	break;
+    case MIM_LONGDATA:
+    case MIM_LONGERROR:
+        {
+	    LPMIDIHDR		mh32 = (LPMIDIHDR)(*dwParam1);
+	    SEGPTR		segmh16 = *(SEGPTR*)((LPSTR)mh32 - sizeof(LPMIDIHDR));
+	    LPMIDIHDR		mh16 = MapSL(segmh16);
+
+	    *dwParam1 = (DWORD)segmh16;
+	    mh16->dwFlags = mh32->dwFlags;
+	    mh16->dwBytesRecorded = mh32->dwBytesRecorded;
+	    if (mh16->reserved >= sizeof(MIDIHDR))
+		mh16->dwOffset = mh32->dwOffset;
+	}
+	break;
+    default:
+	ERR("Unknown msg %u\n", uMsg);
+    }
 }
 
 /* =================================
@@ -2544,6 +2578,8 @@ static  WINMM_MapType	MMDRV_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser, DWORD_P
 }
 #define MMDRV_Mixer_Map16To32W          MMDRV_Map16To32W
 #define MMDRV_Mixer_UnMap16To32W        MMDRV_UnMap16To32W
+#define MMDRV_MidiIn_Map16To32W         MMDRV_Map16To32W
+#define MMDRV_MidiIn_UnMap16To32W       MMDRV_UnMap16To32W
 
 void    MMDRV_Init16(void)
 {
@@ -2600,6 +2636,7 @@ static struct MMSYSTDRV_Type
 } MMSYSTEM_DriversType[MMSYSTDRV_MAX] =
 {
     {MMSYSTDRV_Mixer_Map16To32W,   MMSYSTDRV_Mixer_UnMap16To32W,   MMSYSTDRV_Mixer_MapCB},
+    {MMSYSTDRV_MidiIn_Map16To32W,  MMSYSTDRV_MidiIn_UnMap16To32W,  MMSYSTDRV_MidiIn_MapCB},
 };
 
 /******************************************************************

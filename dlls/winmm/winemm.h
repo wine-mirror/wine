@@ -205,8 +205,6 @@ const char*     WINMM_ErrorToString(MMRESULT error);
 
 UINT            MIDI_OutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID, DWORD_PTR dwCallback,
                              DWORD_PTR dwInstance, DWORD dwFlags, BOOL bFrom32);
-UINT            MIDI_InOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD_PTR dwCallback,
-                            DWORD_PTR dwInstance, DWORD dwFlags, BOOL bFrom32);
 MMRESULT        MIDI_StreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
                                 DWORD cMidi, DWORD_PTR dwCallback,
                                 DWORD_PTR dwInstance, DWORD fdwOpen, BOOL bFrom32);
