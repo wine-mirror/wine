@@ -153,6 +153,9 @@ static int show_dot_files = -1;
 /* at some point we may want to allow Winelib apps to set this */
 static const int is_case_sensitive = FALSE;
 
+UNICODE_STRING windows_dir = { 0, 0, NULL };  /* windows directory */
+UNICODE_STRING system_dir = { 0, 0, NULL };  /* system directory */
+
 static RTL_CRITICAL_SECTION dir_section;
 static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 {
@@ -1832,6 +1835,18 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
 not_found:
     unix_name[pos - 1] = 0;
     return STATUS_OBJECT_PATH_NOT_FOUND;
+}
+
+
+/***********************************************************************
+ *           DIR_init_windows_dir
+ */
+void DIR_init_windows_dir( const WCHAR *win, const WCHAR *sys )
+{
+    /* FIXME: should probably store paths as NT file names */
+
+    RtlCreateUnicodeString( &windows_dir, win );
+    RtlCreateUnicodeString( &system_dir, sys );
 }
 
 
