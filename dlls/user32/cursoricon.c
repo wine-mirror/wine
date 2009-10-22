@@ -967,7 +967,7 @@ static void riff_find_chunk( DWORD chunk_id, DWORD chunk_type, const riff_chunk_
                 || (chunk_type && *(DWORD *)ptr == chunk_type && *((DWORD *)ptr + 2) == chunk_id ))
         {
             ptr += sizeof(DWORD);
-            chunk->data_size = *(DWORD *)ptr;
+            chunk->data_size = (*(DWORD *)ptr + 1) & ~1;
             ptr += sizeof(DWORD);
             if (chunk_type == ANI_LIST_ID || chunk_type == ANI_RIFF_ID) ptr += sizeof(DWORD);
             chunk->data = ptr;
@@ -976,7 +976,7 @@ static void riff_find_chunk( DWORD chunk_id, DWORD chunk_type, const riff_chunk_
         }
 
         ptr += sizeof(DWORD);
-        ptr += *(DWORD *)ptr;
+        ptr += (*(DWORD *)ptr + 1) & ~1;
         ptr += sizeof(DWORD);
     }
 }
