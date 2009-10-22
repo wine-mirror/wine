@@ -797,7 +797,7 @@ BOOL WINAPI GetVolumeNameForVolumeMountPointW( LPCWSTR path, LPWSTR volume, DWOR
     WCHAR *p;
     char *r;
     DWORD i, i_size = 1024, o_size = 1024;
-    WCHAR nonpersist_name[200];
+    WCHAR *nonpersist_name;
     WCHAR symlink_name[MAX_PATH];
     NTSTATUS status;
     HANDLE mgr = INVALID_HANDLE_VALUE;
@@ -846,8 +846,8 @@ BOOL WINAPI GetVolumeNameForVolumeMountPointW( LPCWSTR path, LPWSTR volume, DWOR
 
     /* Take the mount point and get the "nonpersistent name" */
     /* We will then take that and get the volume name        */
-    status = read_nt_symlink( symlink_name, nonpersist_name,
-                                sizeof(nonpersist_name)/sizeof(WCHAR) );
+    nonpersist_name = (WCHAR *)(input + 1);
+    status = read_nt_symlink( symlink_name, nonpersist_name, i_size - sizeof(*input) );
     TRACE("read_nt_symlink got stat=%x, for %s, got <%s>\n", status,
             debugstr_w(symlink_name), debugstr_w(nonpersist_name));
     if (status != STATUS_SUCCESS)
@@ -862,7 +862,7 @@ BOOL WINAPI GetVolumeNameForVolumeMountPointW( LPCWSTR path, LPWSTR volume, DWOR
     memset( input, 0, sizeof(*input) );  /* clear all input parameters */
     input->DeviceNameOffset = sizeof(*input);
     input->DeviceNameLength = lstrlenW( nonpersist_name) * sizeof(WCHAR);
-    memcpy( input + 1, nonpersist_name, input->DeviceNameLength );
+    i_size = input->DeviceNameOffset + input->DeviceNameLength;
 
     output->Size = o_size;
 
