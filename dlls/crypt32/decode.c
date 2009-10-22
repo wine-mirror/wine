@@ -357,8 +357,13 @@ static BOOL CRYPT_AsnDecodeSequenceItems(struct AsnDecodeSequenceItem items[],
                          : NULL, &items[i].size, &itemDecoded);
                         if (ret)
                         {
-                            /* Account for alignment padding */
-                            items[i].size = ALIGN_DWORD_PTR(items[i].size);
+                            if (items[i].size < items[i].minSize)
+                                items[i].size = items[i].minSize;
+                            else if (items[i].size > items[i].minSize)
+                            {
+                                /* Account for alignment padding */
+                                items[i].size = ALIGN_DWORD_PTR(items[i].size);
+                            }
                             TRACE("item %d size: %d\n", i, items[i].size);
                             if (nextData && items[i].hasPointer &&
                              items[i].size > items[i].minSize)
