@@ -126,7 +126,7 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
         WINED3DPOOL pool, IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(format, &GLINFO_LOCATION);
+    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(format, gl_info);
     void (*cleanup)(IWineD3DSurfaceImpl *This);
     unsigned int resource_size;
     HRESULT hr;

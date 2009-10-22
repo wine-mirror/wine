@@ -862,7 +862,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                  */
                 max_constantsF -= count_bits(This->baseShader.reg_maps.boolean_constants);
                 /* Set by driver quirks in directx.c */
-                max_constantsF -= GLINFO_LOCATION.reserved_glsl_constants;
+                max_constantsF -= gl_info->reserved_glsl_constants;
             } else {
                 max_constantsF = GL_LIMITS(vs_glsl_constantsF);
             }
@@ -3575,7 +3575,7 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
          * Take care about the texcoord .w fixup though if we're using the fixed function fragment pipeline
          */
         device = (IWineD3DDeviceImpl *) vs->baseShader.device;
-        if (((GLINFO_LOCATION).quirks & WINED3D_QUIRK_SET_TEXCOORD_W)
+        if ((gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W)
                 && ps_major == 0 && vs_major > 0 && !device->frag_pipe->ffp_proj_control)
         {
             shader_addline(buffer, "void order_ps_input() {\n");
@@ -3622,7 +3622,7 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
             {
                 if (semantic_idx < 8)
                 {
-                    if (!((GLINFO_LOCATION).quirks & WINED3D_QUIRK_SET_TEXCOORD_W) || ps_major > 0)
+                    if (!(gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W) || ps_major > 0)
                         write_mask |= WINED3DSP_WRITEMASK_3;
 
                     shader_addline(buffer, "gl_TexCoord[%u]%s = OUT[%u]%s;\n",
@@ -3809,7 +3809,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     TRACE("Compiling shader object %u\n", shader_obj);
     GL_EXTCALL(glShaderSourceARB(shader_obj, 1, (const char**)&buffer->buffer, NULL));
     GL_EXTCALL(glCompileShaderARB(shader_obj));
-    print_glsl_info_log(&GLINFO_LOCATION, shader_obj);
+    print_glsl_info_log(gl_info, shader_obj);
 
     /* Store the shader object */
     return shader_obj;
@@ -3878,7 +3878,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     TRACE("Compiling shader object %u\n", shader_obj);
     GL_EXTCALL(glShaderSourceARB(shader_obj, 1, (const char**)&buffer->buffer, NULL));
     GL_EXTCALL(glCompileShaderARB(shader_obj));
-    print_glsl_info_log(&GLINFO_LOCATION, shader_obj);
+    print_glsl_info_log(gl_info, shader_obj);
 
     return shader_obj;
 }
@@ -4130,7 +4130,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     /* Link the program */
     TRACE("Linking GLSL shader program %u\n", programId);
     GL_EXTCALL(glLinkProgramARB(programId));
-    print_glsl_info_log(&GLINFO_LOCATION, programId);
+    print_glsl_info_log(gl_info, programId);
 
     entry->vuniformF_locations = HeapAlloc(GetProcessHeap(), 0, sizeof(GLhandleARB) * GL_LIMITS(vs_glsl_constantsF));
     for (i = 0; i < GL_LIMITS(vs_glsl_constantsF); ++i) {
@@ -4278,7 +4278,7 @@ static GLhandleARB create_glsl_blt_shader(const struct wined3d_gl_info *gl_info,
     GL_EXTCALL(glAttachObjectARB(program_id, pshader_id));
     GL_EXTCALL(glLinkProgramARB(program_id));
 
-    print_glsl_info_log(&GLINFO_LOCATION, program_id);
+    print_glsl_info_log(gl_info, program_id);
 
     /* Once linked we can mark the shaders for deletion. They will be deleted once the program
      * is destroyed

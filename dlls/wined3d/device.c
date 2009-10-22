@@ -1108,7 +1108,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
     object->orig_width = Mode.Width;
     object->orig_height = Mode.Height;
     object->orig_fmt = Mode.Format;
-    format_desc = getFormatDescEntry(Mode.Format, &GLINFO_LOCATION);
+    format_desc = getFormatDescEntry(Mode.Format, &This->adapter->gl_info);
 
     if (pPresentationParameters->Windowed &&
         ((pPresentationParameters->BackBufferWidth == 0) ||
@@ -2135,7 +2135,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, U
     DEVMODEW devmode;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     LONG ret;
-    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(pMode->Format, &GLINFO_LOCATION);
+    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(pMode->Format, &This->adapter->gl_info);
     RECT clip_rc;
 
     TRACE("(%p)->(%d,%p) Mode=%dx%dx@%d, %s\n", This, iSwapChain, pMode, pMode->Width, pMode->Height, pMode->RefreshRate, debug_d3dformat(pMode->Format));
@@ -6285,7 +6285,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
             if (SUCCEEDED(IWineD3DSurface_LockRect(pCursorBitmap, &rect, NULL, WINED3DLOCK_READONLY)))
             {
                 const struct GlPixelFormatDesc *glDesc =
-                        getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, &GLINFO_LOCATION);
+                        getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, &This->adapter->gl_info);
                 char *mem, *bits = rect.pBits;
                 GLint intfmt = glDesc->glInternal;
                 GLint format = glDesc->glFormat;

@@ -4322,7 +4322,7 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
                 curVBO = e->buffer_object;
             }
 
-            if(format != 4 || (GLINFO_LOCATION.quirks & WINED3D_QUIRK_ALLOWS_SPECULAR_ALPHA))
+            if (format != 4 || (context->gl_info->quirks & WINED3D_QUIRK_ALLOWS_SPECULAR_ALPHA))
             {
                 /* Usually specular colors only allow 3 components, since they have no alpha. In D3D, the specular alpha
                  * contains the fog coordinate, which is passed to GL with GL_EXT_fog_coord. However, the fixed function

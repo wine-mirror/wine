@@ -53,7 +53,7 @@ static BOOL need_mova_const(IWineD3DBaseShader *shader, const struct wined3d_gl_
 static inline BOOL use_nv_clip(const struct wined3d_gl_info *gl_info)
 {
     return GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION) &&
-           !(GLINFO_LOCATION.quirks & WINED3D_QUIRK_NV_CLIP_BROKEN);
+           !(gl_info->quirks & WINED3D_QUIRK_NV_CLIP_BROKEN);
 }
 
 static BOOL need_helper_const(const struct wined3d_gl_info *gl_info)
@@ -3394,8 +3394,8 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
     }
 
     /* Base Declarations */
-    next_local = shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION,
-            lconst_map, NULL, &priv_ctx);
+    next_local = shader_generate_arb_declarations((IWineD3DBaseShader *)This,
+            reg_maps, buffer, gl_info, lconst_map, NULL, &priv_ctx);
 
     for (i = 0, map = reg_maps->bumpmat; map; map >>= 1, ++i)
     {
@@ -3867,8 +3867,8 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
     shader_addline(buffer, "TEMP TA;\n");
 
     /* Base Declarations */
-    next_local = shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION,
-            lconst_map, &priv_ctx.vs_clipplanes, &priv_ctx);
+    next_local = shader_generate_arb_declarations((IWineD3DBaseShader *)This,
+            reg_maps, buffer, gl_info, lconst_map, &priv_ctx.vs_clipplanes, &priv_ctx);
 
     for(i = 0; i < MAX_CONST_I; i++)
     {
@@ -3909,7 +3909,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
     if(!GL_SUPPORT(NV_VERTEX_PROGRAM)) {
         shader_addline(buffer, "MOV result.color.secondary, -helper_const.wwwy;\n");
 
-        if ((GLINFO_LOCATION).quirks & WINED3D_QUIRK_SET_TEXCOORD_W && !device->frag_pipe->ffp_proj_control)
+        if (gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W && !device->frag_pipe->ffp_proj_control)
         {
             int i;
             for(i = 0; i < min(8, MAX_REG_TEXCRD); i++) {
