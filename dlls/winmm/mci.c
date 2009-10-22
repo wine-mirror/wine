@@ -67,9 +67,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mci);
 
-WINMM_MapType  (*pFnMciMapMsg32WTo16)  (WORD,WORD,DWORD,DWORD_PTR*) = NULL;
-WINMM_MapType  (*pFnMciUnMapMsg32WTo16)(WORD,WORD,DWORD,DWORD_PTR) = NULL;
-
 /* First MCI valid device ID (0 means error) */
 #define MCI_MAGIC 0x0001
 
@@ -815,30 +812,9 @@ static	BOOL	MCI_OpenMciDriver(LPWINE_MCIDRIVER wmd, LPCWSTR drvTyp, DWORD_PTR lp
     if (!DRIVER_GetLibName(drvTyp, wszMci, libName, sizeof(libName)))
 	return FALSE;
 
-    wmd->bIs32 = 0xFFFF;
     /* First load driver */
-    if ((wmd->hDriver = (HDRVR)DRIVER_TryOpenDriver32(libName, lp))) {
-	wmd->bIs32 = TRUE;
-    } else if (WINMM_CheckForMMSystem() && pFnMciMapMsg32WTo16) {
-	WINMM_MapType 	res;
-
-	switch (res = pFnMciMapMsg32WTo16(0, DRV_OPEN, 0, &lp)) {
-	case WINMM_MAP_MSGERROR:
-	    TRACE("Not handled yet (DRV_OPEN)\n");
-	    break;
-	case WINMM_MAP_NOMEM:
-	    TRACE("Problem mapping msg=DRV_OPEN from 32W to 16\n");
-	    break;
-	case WINMM_MAP_OK:
-	case WINMM_MAP_OKMEM:
-	    if ((wmd->hDriver = OpenDriver(drvTyp, wszMci, lp)))
-		wmd->bIs32 = FALSE;
-	    if (res == WINMM_MAP_OKMEM)
-		pFnMciUnMapMsg32WTo16(0, DRV_OPEN, 0, lp);
-	    break;
-	}
-    }
-    return (wmd->bIs32 == 0xFFFF) ? FALSE : TRUE;
+    wmd->hDriver = (HDRVR)DRIVER_TryOpenDriver32(libName, lp);
+    return wmd->hDriver != NULL;
 }
 
 /**************************************************************************
@@ -927,28 +903,7 @@ static DWORD MCI_SendCommandFrom32(MCIDEVICEID wDevID, UINT16 wMsg, DWORD_PTR dw
     LPWINE_MCIDRIVER	wmd = MCI_GetDriver(wDevID);
 
     if (wmd) {
-	if (wmd->bIs32) {
-	    dwRet = SendDriverMessage(wmd->hDriver, wMsg, dwParam1, dwParam2);
-	} else if (pFnMciMapMsg32WTo16) {
-	    WINMM_MapType	res;
-
-	    switch (res = pFnMciMapMsg32WTo16(wmd->wType, wMsg, dwParam1, &dwParam2)) {
-	    case WINMM_MAP_MSGERROR:
-		TRACE("Not handled yet (%s)\n", MCI_MessageToString(wMsg));
-		dwRet = MCIERR_DRIVER_INTERNAL;
-		break;
-	    case WINMM_MAP_NOMEM:
-		TRACE("Problem mapping msg=%s from 32a to 16\n", MCI_MessageToString(wMsg));
-		dwRet = MCIERR_OUT_OF_MEMORY;
-		break;
-	    case WINMM_MAP_OK:
-	    case WINMM_MAP_OKMEM:
-		dwRet = SendDriverMessage(wmd->hDriver, wMsg, dwParam1, dwParam2);
-		if (res == WINMM_MAP_OKMEM)
-		    pFnMciUnMapMsg32WTo16(wmd->wType, wMsg, dwParam1, dwParam2);
-		break;
-	    }
-	}
+        dwRet = SendDriverMessage(wmd->hDriver, wMsg, dwParam1, dwParam2);
     }
     return dwRet;
 }

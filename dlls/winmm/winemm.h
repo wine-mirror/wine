@@ -125,7 +125,6 @@ typedef struct tagWINE_MCIDRIVER {
         DWORD_PTR               dwPrivate;
         YIELDPROC		lpfnYieldProc;
         DWORD	                dwYieldData;
-        BOOL			bIs32;
         DWORD                   CreatorThread;
         UINT			uTypeCmdTable;
         UINT			uSpecificCmdTable;
@@ -197,8 +196,6 @@ extern HANDLE psStopEvent;
 extern  LPWINE_DRIVER   (*pFnOpenDriver16)(LPCWSTR,LPCWSTR,LPARAM);
 extern  LRESULT         (*pFnCloseDriver16)(UINT16,LPARAM,LPARAM);
 extern  LRESULT         (*pFnSendMessage16)(UINT16,UINT,LPARAM,LPARAM);
-extern  WINMM_MapType   (*pFnMciMapMsg32WTo16)(WORD,WORD,DWORD,DWORD_PTR*);
-extern  WINMM_MapType   (*pFnMciUnMapMsg32WTo16)(WORD,WORD,DWORD,DWORD_PTR);
 extern  LRESULT         (*pFnCallMMDrvFunc16)(DWORD /* in fact FARPROC16 */,WORD,WORD,LONG,LONG,LONG);
 extern  unsigned        (*pFnLoadMMDrvFunc16)(LPCSTR,LPWINE_DRIVER, LPWINE_MM_DRIVER);
 
