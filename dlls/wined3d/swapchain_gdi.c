@@ -70,6 +70,7 @@ static void WINAPI IWineGDISwapChainImpl_Destroy(IWineD3DSwapChain *iface)
         IWineD3DDevice_SetDisplayMode((IWineD3DDevice *) This->wineD3DDevice, 0, &mode);
     }
 
+    HeapFree(GetProcessHeap(), 0, This->context);
     HeapFree(GetProcessHeap(), 0, This);
 }
 
