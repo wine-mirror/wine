@@ -173,8 +173,6 @@ static void test_endpoint_mapper(RPC_CSTR protseq, RPC_CSTR address)
     status = RpcBindingReset(handle);
     ok(status == RPC_S_OK, "%s: RpcBindingReset failed with error %u\n", protseq, status);
 
-    RpcStringFree(&binding);
-
     status = RpcEpResolveBinding(handle, IFoo_v0_0_s_ifspec);
     ok(status == RPC_S_OK || broken(status == RPC_S_SERVER_UNAVAILABLE), /* win9x */
        "%s: RpcEpResolveBinding failed with error %u\n", protseq, status);
