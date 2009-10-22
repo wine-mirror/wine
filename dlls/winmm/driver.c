@@ -53,10 +53,6 @@ static LPWINE_DRIVER   lpDrvItemList  /* = NULL */;
 static const WCHAR HKLM_BASE[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
                                   'W','i','n','d','o','w','s',' ','N','T','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
 
-LPWINE_DRIVER   (*pFnOpenDriver16)(LPCWSTR,LPCWSTR,LPARAM) /* = NULL */;
-LRESULT         (*pFnCloseDriver16)(UINT16,LPARAM,LPARAM) /* = NULL */;
-LRESULT         (*pFnSendMessage16)(UINT16,UINT,LPARAM,LPARAM) /* = NULL */;
-
 static void DRIVER_Dump(const char *comment)
 {
 #if 0
@@ -90,7 +86,7 @@ static	unsigned DRIVER_GetNumberOfModuleRefs(HMODULE hModule, WINE_DRIVER** foun
     if (found) *found = NULL;
     for (lpDrv = lpDrvItemList; lpDrv; lpDrv = lpDrv->lpNextItem)
     {
-	if (!(lpDrv->dwFlags & WINE_GDF_16BIT) && lpDrv->d.d32.hModule == hModule)
+	if (lpDrv->hModule == hModule)
         {
             if (found && !*found) *found = lpDrv;
 	    count++;
@@ -121,7 +117,7 @@ LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr)
     }
     __ENDTRY;
 
-    if (d) TRACE("%p -> %p, %p\n", hDrvr, d->d.d32.lpDrvProc, (void *)d->d.d32.dwDriverID);
+    if (d) TRACE("%p -> %p, %p\n", hDrvr, d->lpDrvProc, (void *)d->dwDriverID);
     else TRACE("%p -> NULL\n", hDrvr);
 
     return d;
@@ -135,18 +131,12 @@ static inline LRESULT DRIVER_SendMessage(LPWINE_DRIVER lpDrv, UINT msg,
 {
     LRESULT		ret = 0;
 
-    if (lpDrv->dwFlags & WINE_GDF_16BIT) {
-        /* no need to check mmsystem presence: the driver must have been opened as a 16 bit one,
-         */
-        if (pFnSendMessage16)
-            ret = pFnSendMessage16(lpDrv->d.d16.hDriver16, msg, lParam1, lParam2);
-    } else {
-        TRACE("Before call32 proc=%p drvrID=%08lx hDrv=%p wMsg=%04x p1=%08lx p2=%08lx\n", 
-              lpDrv->d.d32.lpDrvProc, lpDrv->d.d32.dwDriverID, lpDrv, msg, lParam1, lParam2);
-        ret = lpDrv->d.d32.lpDrvProc(lpDrv->d.d32.dwDriverID, (HDRVR)lpDrv, msg, lParam1, lParam2);
-        TRACE("After  call32 proc=%p drvrID=%08lx hDrv=%p wMsg=%04x p1=%08lx p2=%08lx => %08lx\n", 
-              lpDrv->d.d32.lpDrvProc, lpDrv->d.d32.dwDriverID, lpDrv, msg, lParam1, lParam2, ret);
-    }
+    TRACE("Before call32 proc=%p drvrID=%08lx hDrv=%p wMsg=%04x p1=%08lx p2=%08lx\n",
+          lpDrv->lpDrvProc, lpDrv->dwDriverID, lpDrv, msg, lParam1, lParam2);
+    ret = lpDrv->lpDrvProc(lpDrv->dwDriverID, (HDRVR)lpDrv, msg, lParam1, lParam2);
+    TRACE("After  call32 proc=%p drvrID=%08lx hDrv=%p wMsg=%04x p1=%08lx p2=%08lx => %08lx\n",
+          lpDrv->lpDrvProc, lpDrv->dwDriverID, lpDrv, msg, lParam1, lParam2, ret);
+
     return ret;
 }
 
@@ -180,12 +170,10 @@ LRESULT WINAPI SendDriverMessage(HDRVR hDriver, UINT msg, LPARAM lParam1,
  */
 static	BOOL	DRIVER_RemoveFromList(LPWINE_DRIVER lpDrv)
 {
-    if (!(lpDrv->dwFlags & WINE_GDF_16BIT)) {
-        /* last of this driver in list ? */
-	if (DRIVER_GetNumberOfModuleRefs(lpDrv->d.d32.hModule, NULL) == 1) {
-	    DRIVER_SendMessage(lpDrv, DRV_DISABLE, 0L, 0L);
-	    DRIVER_SendMessage(lpDrv, DRV_FREE,    0L, 0L);
-	}
+    /* last of this driver in list ? */
+    if (DRIVER_GetNumberOfModuleRefs(lpDrv->hModule, NULL) == 1) {
+        DRIVER_SendMessage(lpDrv, DRV_DISABLE, 0L, 0L);
+        DRIVER_SendMessage(lpDrv, DRV_FREE,    0L, 0L);
     }
 
     EnterCriticalSection( &mmdriver_lock );
@@ -198,9 +186,8 @@ static	BOOL	DRIVER_RemoveFromList(LPWINE_DRIVER lpDrv)
 	lpDrv->lpNextItem->lpPrevItem = lpDrv->lpPrevItem;
     /* trash magic number */
     lpDrv->dwMagic ^= 0xa5a5a5a5;
-    lpDrv->d.d32.lpDrvProc = NULL;
-    lpDrv->d.d32.dwDriverID = 0;
-    lpDrv->d.d16.hDriver16 = 0;
+    lpDrv->lpDrvProc = NULL;
+    lpDrv->dwDriverID = 0;
 
     LeaveCriticalSection( &mmdriver_lock );
 
@@ -217,25 +204,23 @@ static	BOOL	DRIVER_AddToList(LPWINE_DRIVER lpNewDrv, LPARAM lParam1, LPARAM lPar
 {
     lpNewDrv->dwMagic = WINE_DI_MAGIC;
     /* First driver to be loaded for this module, need to load correctly the module */
-    if (!(lpNewDrv->dwFlags & WINE_GDF_16BIT)) {
-        /* first of this driver in list ? */
-	if (DRIVER_GetNumberOfModuleRefs(lpNewDrv->d.d32.hModule, NULL) == 0) {
-	    if (DRIVER_SendMessage(lpNewDrv, DRV_LOAD, 0L, 0L) != DRV_SUCCESS) {
-		TRACE("DRV_LOAD failed on driver %p\n", lpNewDrv);
-		return FALSE;
-	    }
-	    /* returned value is not checked */
-	    DRIVER_SendMessage(lpNewDrv, DRV_ENABLE, 0L, 0L);
-	}
+    /* first of this driver in list ? */
+    if (DRIVER_GetNumberOfModuleRefs(lpNewDrv->hModule, NULL) == 0) {
+        if (DRIVER_SendMessage(lpNewDrv, DRV_LOAD, 0L, 0L) != DRV_SUCCESS) {
+            TRACE("DRV_LOAD failed on driver %p\n", lpNewDrv);
+            return FALSE;
+        }
+        /* returned value is not checked */
+        DRIVER_SendMessage(lpNewDrv, DRV_ENABLE, 0L, 0L);
+    }
 
-	/* Now just open a new instance of a driver on this module */
-	lpNewDrv->d.d32.dwDriverID = DRIVER_SendMessage(lpNewDrv, DRV_OPEN, lParam1, lParam2);
+    /* Now just open a new instance of a driver on this module */
+    lpNewDrv->dwDriverID = DRIVER_SendMessage(lpNewDrv, DRV_OPEN, lParam1, lParam2);
 
-	if (lpNewDrv->d.d32.dwDriverID == 0)
-        {
-	    TRACE("DRV_OPEN failed on driver %p\n", lpNewDrv);
-	    return FALSE;
-	}
+    if (lpNewDrv->dwDriverID == 0)
+    {
+        TRACE("DRV_OPEN failed on driver %p\n", lpNewDrv);
+        return FALSE;
     }
 
     EnterCriticalSection( &mmdriver_lock );
@@ -313,18 +298,18 @@ LPWINE_DRIVER	DRIVER_TryOpenDriver32(LPCWSTR fn, LPARAM lParam2)
 
     if ((hModule = LoadLibraryW(fn)) == 0) {cause = "Not a 32 bit lib"; goto exit;}
 
-    lpDrv->d.d32.lpDrvProc = (DRIVERPROC)GetProcAddress(hModule, "DriverProc");
-    if (lpDrv->d.d32.lpDrvProc == NULL) {cause = "no DriverProc"; goto exit;}
+    lpDrv->lpDrvProc = (DRIVERPROC)GetProcAddress(hModule, "DriverProc");
+    if (lpDrv->lpDrvProc == NULL) {cause = "no DriverProc"; goto exit;}
 
-    lpDrv->dwFlags          = 0;
-    lpDrv->d.d32.hModule    = hModule;
-    lpDrv->d.d32.dwDriverID = 0;
+    lpDrv->dwFlags    = 0;
+    lpDrv->hModule    = hModule;
+    lpDrv->dwDriverID = 0;
 
     /* Win32 installable drivers must support a two phase opening scheme:
      * + first open with NULL as lParam2 (session instance),
      * + then do a second open with the real non null lParam2)
      */
-    if (DRIVER_GetNumberOfModuleRefs(lpDrv->d.d32.hModule, NULL) == 0 && lParam2)
+    if (DRIVER_GetNumberOfModuleRefs(lpDrv->hModule, NULL) == 0 && lParam2)
     {
         LPWINE_DRIVER   ret;
 
@@ -421,17 +406,6 @@ HDRVR WINAPI OpenDriver(LPCWSTR lpDriverName, LPCWSTR lpSectionName, LPARAM lPar
 	(lpDrv = DRIVER_TryOpenDriver32(libName, lParam)))
 	goto the_end;
 
-    /* now we will try a 16 bit driver (and add all the glue to make it work... which
-     * is located in our mmsystem implementation)
-     * so ensure, we can load our mmsystem, otherwise just fail
-     */
-    WINMM_CheckForMMSystem();
-    if (pFnOpenDriver16 &&
-        (lpDrv = pFnOpenDriver16(lpDriverName, lpSectionName, lParam)))
-    {
-        if (DRIVER_AddToList(lpDrv, 0, lParam)) goto the_end;
-        HeapFree(GetProcessHeap(), 0, lpDrv);
-    }
     TRACE("Failed to open driver %s from system.ini file, section %s\n", 
           debugstr_w(lpDriverName), debugstr_w(lpSectionName));
 
@@ -458,33 +432,25 @@ LRESULT WINAPI CloseDriver(HDRVR hDrvr, LPARAM lParam1, LPARAM lParam2)
 
     if ((lpDrv = DRIVER_FindFromHDrvr(hDrvr)) != NULL)
     {
-	if (lpDrv->dwFlags & WINE_GDF_16BIT)
-        {
-            if (pFnCloseDriver16)
-                pFnCloseDriver16(lpDrv->d.d16.hDriver16, lParam1, lParam2);
-        }
-	else
-	    DRIVER_SendMessage(lpDrv, DRV_CLOSE, lParam1, lParam2);
+        LPWINE_DRIVER lpDrv0;
+
+        DRIVER_SendMessage(lpDrv, DRV_CLOSE, lParam1, lParam2);
 
         DRIVER_RemoveFromList(lpDrv);
 
-        if (!(lpDrv->dwFlags & WINE_GDF_16BIT))
+        if (lpDrv->dwFlags & WINE_GDF_SESSION)
+            FIXME("WINE_GDF_SESSION: Shouldn't happen (%p)\n", lpDrv);
+        /* if driver has an opened session instance, we have to close it too */
+        if (DRIVER_GetNumberOfModuleRefs(lpDrv->hModule, &lpDrv0) == 1 &&
+            (lpDrv0->dwFlags & WINE_GDF_SESSION))
         {
-            LPWINE_DRIVER lpDrv0;
-
-            if (lpDrv->dwFlags & WINE_GDF_SESSION)
-                FIXME("WINE_GDF_SESSION: Shouldn't happen (%p)\n", lpDrv);
-            /* if driver has an opened session instance, we have to close it too */
-            if (DRIVER_GetNumberOfModuleRefs(lpDrv->d.d32.hModule, &lpDrv0) == 1 &&
-                (lpDrv0->dwFlags & WINE_GDF_SESSION))
-            {
-                DRIVER_SendMessage(lpDrv0, DRV_CLOSE, 0, 0);
-                DRIVER_RemoveFromList(lpDrv0);
-                FreeLibrary(lpDrv0->d.d32.hModule);
-                HeapFree(GetProcessHeap(), 0, lpDrv0);
-            }
-            FreeLibrary(lpDrv->d.d32.hModule);
+            DRIVER_SendMessage(lpDrv0, DRV_CLOSE, 0, 0);
+            DRIVER_RemoveFromList(lpDrv0);
+            FreeLibrary(lpDrv0->hModule);
+            HeapFree(GetProcessHeap(), 0, lpDrv0);
         }
+        FreeLibrary(lpDrv->hModule);
+
         HeapFree(GetProcessHeap(), 0, lpDrv);
         ret = TRUE;
     }
@@ -537,8 +503,7 @@ HMODULE WINAPI GetDriverModuleHandle(HDRVR hDrvr)
     TRACE("(%p);\n", hDrvr);
 
     if ((lpDrv = DRIVER_FindFromHDrvr(hDrvr)) != NULL) {
-	if (!(lpDrv->dwFlags & WINE_GDF_16BIT))
-	    hModule = lpDrv->d.d32.hModule;
+        hModule = lpDrv->hModule;
     }
     TRACE("=> %p\n", hModule);
     return hModule;

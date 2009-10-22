@@ -29,13 +29,6 @@
 #define WINE_DEFAULT_WINMM_MAPPER     "msacm32.drv"
 #define WINE_DEFAULT_WINMM_MIDI       "midimap.dll"
 
-typedef enum {
-    WINMM_MAP_NOMEM, 	/* ko, memory problem */
-    WINMM_MAP_MSGERROR, /* ko, unknown message */
-    WINMM_MAP_OK, 	/* ok, no memory allocated. to be sent to the proc. */
-    WINMM_MAP_OKMEM, 	/* ok, some memory allocated, need to call UnMapMsg. to be sent to the proc. */
-} WINMM_MapType;
-
 /* Who said goofy boy ? */
 #define	WINE_DI_MAGIC	0x900F1B01
 
@@ -44,22 +37,14 @@ typedef struct tagWINE_DRIVER
     DWORD			dwMagic;
     /* as usual LPWINE_DRIVER == hDriver32 */
     DWORD			dwFlags;
-    union {
-	struct {
-	    HMODULE			hModule;
-	    DRIVERPROC			lpDrvProc;
-	    DWORD_PTR		  	dwDriverID;
-	} d32;
-	struct {
-	    UINT16			hDriver16;
-	} d16;
-    } d;
+    HMODULE			hModule;
+    DRIVERPROC			lpDrvProc;
+    DWORD_PTR		  	dwDriverID;
     struct tagWINE_DRIVER*	lpPrevItem;
     struct tagWINE_DRIVER*	lpNextItem;
 } WINE_DRIVER, *LPWINE_DRIVER;
 
-typedef	DWORD	(CALLBACK *WINEMM_msgFunc16)(UINT16, WORD, DWORD, DWORD, DWORD);
-typedef	DWORD	(CALLBACK *WINEMM_msgFunc32)(UINT  , UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR);
+typedef	DWORD	(CALLBACK *WINEMM_msgFunc32)(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR);
 
 /* for each loaded driver and each known type of driver, this structure contains
  * the information needed to access it
@@ -67,10 +52,7 @@ typedef	DWORD	(CALLBACK *WINEMM_msgFunc32)(UINT  , UINT, DWORD_PTR, DWORD_PTR, D
 typedef struct tagWINE_MM_DRIVER_PART {
     int				nIDMin;		/* lower bound of global indexes for this type */
     int				nIDMax;		/* hhigher bound of global indexes for this type */
-    union {
-	WINEMM_msgFunc32	fnMessage32;	/* pointer to function */
-	WINEMM_msgFunc16	fnMessage16;
-    } u;
+    WINEMM_msgFunc32	        fnMessage32;	/* pointer to function */
 } WINE_MM_DRIVER_PART;
 
 #define	MMDRV_AUX		0
@@ -85,8 +67,7 @@ typedef struct tagWINE_MM_DRIVER_PART {
 typedef struct tagWINE_MM_DRIVER {
     HDRVR			hDriver;
     LPSTR			drvname;	/* name of the driver */
-    unsigned			bIs32 : 1,	/* TRUE if 32 bit driver, FALSE for 16 */
-	                        bIsMapper : 1;	/* TRUE if mapper */
+    unsigned			bIsMapper : 1;	/* TRUE if mapper */
     WINE_MM_DRIVER_PART		parts[MMDRV_MAX];/* Information for all known types */
 } WINE_MM_DRIVER, *LPWINE_MM_DRIVER;
 
@@ -151,9 +132,6 @@ typedef struct tagWINE_MMIO {
 
 /* function prototypes */
 
-typedef	WINMM_MapType	        (*MMDRV_MAPFUNC)(UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2);
-typedef	WINMM_MapType	        (*MMDRV_UNMAPFUNC)(UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT ret);
-
 LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr);
 BOOL		DRIVER_GetLibName(LPCWSTR keyName, LPCWSTR sectName, LPWSTR buf, int sz);
 LPWINE_DRIVER	DRIVER_TryOpenDriver32(LPCWSTR fn, LPARAM lParam2);
@@ -171,15 +149,12 @@ LPWINE_MLD	MMDRV_Get(HANDLE hndl, UINT type, BOOL bCanBeID);
 LPWINE_MLD	MMDRV_GetRelated(HANDLE hndl, UINT srcType, BOOL bSrcCanBeID, UINT dstTyped);
 DWORD           MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
 UINT		MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
-BOOL            MMDRV_Is32(unsigned int);
-void            MMDRV_InstallMap(unsigned int, MMDRV_MAPFUNC, MMDRV_UNMAPFUNC, LPDRVCALLBACK);
 
 const char* 	MCI_MessageToString(UINT wMsg);
 DWORD           MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
 LPWSTR          MCI_strdupAtoW(LPCSTR str);
 LPSTR           MCI_strdupWtoA(LPCWSTR str);
 
-BOOL            WINMM_CheckForMMSystem(void);
 const char*     WINMM_ErrorToString(MMRESULT error);
 
 void		TIME_MMTimeStop(void);
@@ -190,19 +165,9 @@ extern HINSTANCE hWinMM32Instance;
 extern HANDLE psLastEvent;
 extern HANDLE psStopEvent;
 
-/* pointers to 16 bit functions (if sibling MMSYSTEM.DLL is loaded
- * NULL otherwise
- */
-extern  LPWINE_DRIVER   (*pFnOpenDriver16)(LPCWSTR,LPCWSTR,LPARAM);
-extern  LRESULT         (*pFnCloseDriver16)(UINT16,LPARAM,LPARAM);
-extern  LRESULT         (*pFnSendMessage16)(UINT16,UINT,LPARAM,LPARAM);
-extern  LRESULT         (*pFnCallMMDrvFunc16)(DWORD /* in fact FARPROC16 */,WORD,WORD,LONG,LONG,LONG);
-extern  unsigned        (*pFnLoadMMDrvFunc16)(LPCSTR,LPWINE_DRIVER, LPWINE_MM_DRIVER);
-
 /* GetDriverFlags() returned bits is not documented (nor the call itself)
  * Here are Wine only definitions of the bits
  */
 #define WINE_GDF_EXIST	        0x80000000
-#define WINE_GDF_16BIT	        0x10000000
 #define WINE_GDF_EXTERNAL_MASK  0xF0000000
 #define WINE_GDF_SESSION        0x00000001
