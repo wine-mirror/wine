@@ -1187,8 +1187,8 @@ static NTSTATUS ioctl_completion( void *arg, IO_STATUS_BLOCK *io, NTSTATUS statu
             req->handle   = wine_server_obj_handle( async->handle );
             req->user_arg = wine_server_client_ptr( async );
             wine_server_set_reply( req, async->buffer, async->size );
-            if (!(status = wine_server_call( req )))
-                io->Information = wine_server_reply_size( reply );
+            status = wine_server_call( req );
+            if (status != STATUS_PENDING) io->Information = wine_server_reply_size( reply );
         }
         SERVER_END_REQ;
     }
@@ -1234,10 +1234,10 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
         req->async.cvalue   = cvalue;
         wine_server_add_data( req, in_buffer, in_size );
         wine_server_set_reply( req, out_buffer, out_size );
-        if (!(status = wine_server_call( req )))
-            io->Information = wine_server_reply_size( reply );
+        status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
+        if (status != STATUS_PENDING) io->Information = wine_server_reply_size( reply );
     }
     SERVER_END_REQ;
 
