@@ -203,9 +203,6 @@ LPSTR           MCI_strdupWtoA(LPCWSTR str);
 BOOL            WINMM_CheckForMMSystem(void);
 const char*     WINMM_ErrorToString(MMRESULT error);
 
-MMRESULT        MIDI_StreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
-                                DWORD cMidi, DWORD_PTR dwCallback,
-                                DWORD_PTR dwInstance, DWORD fdwOpen, BOOL bFrom32);
 UINT            WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
                           LPCWAVEFORMATEX lpFormat, DWORD_PTR dwCallback, 
                           DWORD_PTR dwInstance, DWORD dwFlags, BOOL bFrom32);

@@ -1780,11 +1780,11 @@ MMRESULT WINAPI midiStreamClose(HMIDISTRM hMidiStrm)
 }
 
 /**************************************************************************
- * 				MMSYSTEM_MidiStream_Open	[internal]
+ * 				midiStreamOpen			[WINMM.@]
  */
-MMRESULT MIDI_StreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID, DWORD cMidi,
-                         DWORD_PTR dwCallback, DWORD_PTR dwInstance, DWORD fdwOpen, 
-                         BOOL bFrom32)
+MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
+			       DWORD cMidi, DWORD_PTR dwCallback,
+			       DWORD_PTR dwInstance, DWORD fdwOpen)
 {
     WINE_MIDIStream*	lpMidiStrm;
     MMRESULT		ret;
@@ -1809,7 +1809,7 @@ MMRESULT MIDI_StreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID, DWORD cMidi
     mosm.dwStreamID = (DWORD)lpMidiStrm;
     /* FIXME: the correct value is not allocated yet for MAPPER */
     mosm.wDeviceID  = *lpuDeviceID;
-    lpwm = MIDI_OutAlloc(&hMidiOut, &dwCallback, &dwInstance, &fdwOpen, 1, &mosm, bFrom32);
+    lpwm = MIDI_OutAlloc(&hMidiOut, &dwCallback, &dwInstance, &fdwOpen, 1, &mosm, TRUE);
     lpMidiStrm->hDevice = hMidiOut;
     if (lphMidiStrm)
 	*lphMidiStrm = (HMIDISTRM)hMidiOut;
@@ -1845,17 +1845,6 @@ MMRESULT MIDI_StreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID, DWORD cMidi
     TRACE("=> (%u/%d) hMidi=%p ret=%d lpMidiStrm=%p\n",
 	  *lpuDeviceID, lpwm->mld.uDeviceID, *lphMidiStrm, ret, lpMidiStrm);
     return ret;
-}
-
-/**************************************************************************
- * 				midiStreamOpen			[WINMM.@]
- */
-MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
-			       DWORD cMidi, DWORD_PTR dwCallback,
-			       DWORD_PTR dwInstance, DWORD fdwOpen)
-{
-    return MIDI_StreamOpen(lphMidiStrm, lpuDeviceID, cMidi, dwCallback,
-                           dwInstance, fdwOpen, TRUE);
 }
 
 /**************************************************************************

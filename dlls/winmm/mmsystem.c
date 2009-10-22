@@ -946,7 +946,10 @@ DWORD WINAPI midiInMessage16(HMIDIIN16 hMidiIn, UINT16 uMessage,
  */
 MMRESULT16 WINAPI midiStreamClose16(HMIDISTRM16 hMidiStrm)
 {
-    return midiStreamClose(HMIDISTRM_32(hMidiStrm));
+    UINT        ret = midiStreamClose(HMIDISTRM_32(hMidiStrm));
+    if (ret == MMSYSERR_NOERROR)
+        MMSYSTDRV_CloseHandle((void*)HMIDISTRM_32(hMidiStrm));
+    return ret;
 }
 
 /**************************************************************************
@@ -956,17 +959,31 @@ MMRESULT16 WINAPI midiStreamOpen16(HMIDISTRM16* phMidiStrm, LPUINT16 devid,
 				   DWORD cMidi, DWORD dwCallback,
 				   DWORD dwInstance, DWORD fdwOpen)
 {
-    HMIDISTRM	hMidiStrm32;
-    MMRESULT 	ret;
-    UINT	devid32;
+    HMIDISTRM	                hMidiStrm32;
+    MMRESULT 	                ret;
+    UINT	                devid32;
+    struct mmsystdrv_thunk*     thunk;
 
     if (!phMidiStrm || !devid)
 	return MMSYSERR_INVALPARAM;
     devid32 = *devid;
-    ret = MIDI_StreamOpen(&hMidiStrm32, &devid32, cMidi, dwCallback,
-                          dwInstance, fdwOpen, FALSE);
-    *phMidiStrm = HMIDISTRM_16(hMidiStrm32);
-    *devid = devid32;
+
+    if (!(thunk = MMSYSTDRV_AddThunk(dwCallback, MMSYSTDRV_MIDIOUT)))
+    {
+        return MMSYSERR_NOMEM;
+    }
+    if ((fdwOpen & CALLBACK_TYPEMASK) == CALLBACK_FUNCTION)
+    {
+        dwCallback = (DWORD)thunk;
+    }
+    ret = midiStreamOpen(&hMidiStrm32, &devid32, cMidi, dwCallback, dwInstance, fdwOpen);
+    if (ret == MMSYSERR_NOERROR)
+    {
+        *phMidiStrm = HMIDISTRM_16(hMidiStrm32);
+        *devid = devid32;
+        MMSYSTDRV_SetHandle(thunk, hMidiStrm32);
+    }
+    else MMSYSTDRV_DeleteThunk(thunk);
     return ret;
 }
 

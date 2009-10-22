@@ -762,6 +762,11 @@ static  void MMSYSTDRV_MidiOut_MapCB(UINT uMsg, DWORD_PTR* dwUser, DWORD_PTR* dw
 		mh16->dwOffset = mh32->dwOffset;
 	}
 	break;
+    case MOM_POSITIONCB:
+        FIXME("NIY\n");
+        /* FIXME: would require to recreate a 16bit MIDIHDR here */
+        *dwParam1 = *dwParam2 = 0;
+        break;
     default:
 	ERR("Unknown msg %u\n", uMsg);
     }
