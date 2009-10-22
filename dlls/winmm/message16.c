@@ -1293,11 +1293,11 @@ static  void    MMSYSTDRV_WaveIn_MapCB(UINT uMsg, DWORD_PTR* dwUser, DWORD_PTR* 
  * ================================= */
 
 /**************************************************************************
- * 				MMDRV_WaveOut_Map16To32W	[internal]
+ * 				MMSYSTDRV_WaveOut_Map16To32W	[internal]
  */
-static  WINMM_MapType	MMDRV_WaveOut_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
+static  MMSYSTEM_MapType	MMSYSTDRV_WaveOut_Map16To32W  (UINT wMsg, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
 {
-    WINMM_MapType	ret = WINMM_MAP_MSGERROR;
+    MMSYSTEM_MapType	ret = MMSYSTEM_MAP_MSGERROR;
 
     switch (wMsg) {
     /* nothing to do */
@@ -1310,7 +1310,7 @@ static  WINMM_MapType	MMDRV_WaveOut_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser,
     case WODM_SETPITCH:
     case WODM_SETPLAYBACKRATE:
     case WODM_SETVOLUME:
-	ret = WINMM_MAP_OK;
+	ret = MMSYSTEM_MAP_OK;
 	break;
 
     case WODM_GETPITCH:
@@ -1331,9 +1331,9 @@ static  WINMM_MapType	MMDRV_WaveOut_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser,
 		*lpParam1 = (DWORD)woc32;
 		*lpParam2 = sizeof(WAVEOUTCAPSW);
 
-		ret = WINMM_MAP_OKMEM;
+		ret = MMSYSTEM_MAP_OKMEM;
 	    } else {
-		ret = WINMM_MAP_NOMEM;
+		ret = MMSYSTEM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -1350,9 +1350,9 @@ static  WINMM_MapType	MMDRV_WaveOut_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser,
 		*lpParam1 = (DWORD)mmt32;
 		*lpParam2 = sizeof(MMTIME);
 
-		ret = WINMM_MAP_OKMEM;
+		ret = MMSYSTEM_MAP_OKMEM;
 	    } else {
-		ret = WINMM_MAP_NOMEM;
+		ret = MMSYSTEM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -1376,9 +1376,9 @@ static  WINMM_MapType	MMDRV_WaveOut_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser,
 		*lpParam1 = (DWORD)wh32;
 		*lpParam2 = sizeof(WAVEHDR);
 
-		ret = WINMM_MAP_OKMEM;
+		ret = MMSYSTEM_MAP_OKMEM;
 	    } else {
-		ret = WINMM_MAP_NOMEM;
+		ret = MMSYSTEM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -1396,12 +1396,12 @@ static  WINMM_MapType	MMDRV_WaveOut_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser,
 		    wh32->dwBufferLength, wh16->dwBufferLength);
 	    } else
                 wh32->dwBufferLength = wh16->dwBufferLength;
-	    ret = WINMM_MAP_OKMEM;
+	    ret = MMSYSTEM_MAP_OKMEM;
 	}
 	break;
     case WODM_MAPPER_STATUS:
 	*lpParam2 = (DWORD)MapSL(*lpParam2);
-	ret = WINMM_MAP_OK;
+	ret = MMSYSTEM_MAP_OK;
 	break;
     default:
 	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
@@ -1411,11 +1411,11 @@ static  WINMM_MapType	MMDRV_WaveOut_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser,
 }
 
 /**************************************************************************
- * 				MMDRV_WaveOut_UnMap16To32W	[internal]
+ * 				MMSYSTDRV_WaveOut_UnMap16To32W	[internal]
  */
-static  WINMM_MapType	MMDRV_WaveOut_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
+static  MMSYSTEM_MapType	MMSYSTDRV_WaveOut_UnMap16To32W(UINT wMsg, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
 {
-    WINMM_MapType	ret = WINMM_MAP_MSGERROR;
+    MMSYSTEM_MapType	ret = MMSYSTEM_MAP_MSGERROR;
 
     switch (wMsg) {
     /* nothing to do */
@@ -1429,7 +1429,7 @@ static  WINMM_MapType	MMDRV_WaveOut_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser,
     case WODM_SETPLAYBACKRATE:
     case WODM_SETVOLUME:
     case WODM_MAPPER_STATUS:
-	ret = WINMM_MAP_OK;
+	ret = MMSYSTEM_MAP_OK;
 	break;
 
     case WODM_GETPITCH:
@@ -1453,7 +1453,7 @@ static  WINMM_MapType	MMDRV_WaveOut_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser,
 	    woc16->wChannels = woc32->wChannels;
 	    woc16->dwSupport = woc32->dwSupport;
 	    HeapFree(GetProcessHeap(), 0, (LPSTR)woc32 - sizeof(LPWAVEOUTCAPS16));
-	    ret = WINMM_MAP_OK;
+	    ret = MMSYSTEM_MAP_OK;
 	}
 	break;
     case WODM_GETPOS:
@@ -1463,7 +1463,7 @@ static  WINMM_MapType	MMDRV_WaveOut_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser,
 
 	    MMSYSTEM_MMTIME32to16(mmt16, mmt32);
 	    HeapFree(GetProcessHeap(), 0, (LPSTR)mmt32 - sizeof(LPMMTIME16));
-	    ret = WINMM_MAP_OK;
+	    ret = MMSYSTEM_MAP_OK;
 	}
 	break;
     case WODM_PREPARE:
@@ -1484,7 +1484,7 @@ static  WINMM_MapType	MMDRV_WaveOut_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser,
 		HeapFree(GetProcessHeap(), 0, (LPSTR)wh32 - sizeof(LPWAVEHDR));
 		wh16->lpNext = 0;
 	    }
-	    ret = WINMM_MAP_OK;
+	    ret = MMSYSTEM_MAP_OK;
 	}
 	break;
     default:
@@ -1830,6 +1830,32 @@ static  void	CALLBACK MMDRV_WaveOut_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dw
     }
 
     MMDRV_Callback(mld, hDev, uMsg, dwParam1, dwParam2);
+}
+
+/**************************************************************************
+ * 				MMDRV_WaveOut_Callback		[internal]
+ */
+static  void	MMSYSTDRV_WaveOut_MapCB(UINT uMsg, DWORD_PTR* dwUser, DWORD_PTR* dwParam1, DWORD_PTR* dwParam2)
+{
+    switch (uMsg) {
+    case WOM_OPEN:
+    case WOM_CLOSE:
+	/* dwParam1 & dwParam2 are supposed to be 0, nothing to do */
+	break;
+    case WOM_DONE:
+        {
+	    /* initial map is: 16 => 32 */
+	    LPWAVEHDR		wh32 = (LPWAVEHDR)(*dwParam1);
+	    SEGPTR		segwh16 = *(SEGPTR*)((LPSTR)wh32 - sizeof(LPWAVEHDR));
+	    LPWAVEHDR		wh16 = MapSL(segwh16);
+
+	    *dwParam1 = (DWORD)segwh16;
+	    wh16->dwFlags = wh32->dwFlags;
+	}
+	break;
+    default:
+	ERR("Unknown msg %u\n", uMsg);
+    }
 }
 
 /* =================================
@@ -2644,6 +2670,8 @@ static  WINMM_MapType	MMDRV_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser, DWORD_P
 #define MMDRV_MidiOut_UnMap16To32W      MMDRV_UnMap16To32W
 #define MMDRV_WaveIn_Map16To32W         MMDRV_Map16To32W
 #define MMDRV_WaveIn_UnMap16To32W       MMDRV_UnMap16To32W
+#define MMDRV_WaveOut_Map16To32W        MMDRV_Map16To32W
+#define MMDRV_WaveOut_UnMap16To32W      MMDRV_UnMap16To32W
 
 void    MMDRV_Init16(void)
 {
@@ -2703,6 +2731,7 @@ static struct MMSYSTDRV_Type
     {MMSYSTDRV_MidiIn_Map16To32W,  MMSYSTDRV_MidiIn_UnMap16To32W,  MMSYSTDRV_MidiIn_MapCB},
     {MMSYSTDRV_MidiOut_Map16To32W, MMSYSTDRV_MidiOut_UnMap16To32W, MMSYSTDRV_MidiOut_MapCB},
     {MMSYSTDRV_WaveIn_Map16To32W,  MMSYSTDRV_WaveIn_UnMap16To32W,  MMSYSTDRV_WaveIn_MapCB},
+    {MMSYSTDRV_WaveOut_Map16To32W, MMSYSTDRV_WaveOut_UnMap16To32W, MMSYSTDRV_WaveOut_MapCB},
 };
 
 /******************************************************************

@@ -2024,18 +2024,18 @@ MMRESULT WINAPI midiStreamStop(HMIDISTRM hMidiStrm)
     return ret;
 }
 
-UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType, 
-               LPCWAVEFORMATEX lpFormat, DWORD_PTR dwCallback, 
-               DWORD_PTR dwInstance, DWORD dwFlags, BOOL bFrom32)
+static UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
+                      LPCWAVEFORMATEX lpFormat, DWORD_PTR dwCallback,
+                      DWORD_PTR dwInstance, DWORD dwFlags)
 {
     HANDLE		handle;
     LPWINE_MLD		wmld;
     DWORD		dwRet = MMSYSERR_NOERROR;
     WAVEOPENDESC	wod;
 
-    TRACE("(%p, %d, %s, %p, %08lX, %08lX, %08X, %d);\n",
+    TRACE("(%p, %d, %s, %p, %08lX, %08lX, %08X);\n",
 	  lphndl, (int)uDeviceID, (uType==MMDRV_WAVEOUT)?"Out":"In", lpFormat, dwCallback,
-	  dwInstance, dwFlags, bFrom32?32:16);
+	  dwInstance, dwFlags);
 
     if (dwFlags & WAVE_FORMAT_QUERY)
         TRACE("WAVE_FORMAT_QUERY requested !\n");
@@ -2056,7 +2056,7 @@ UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
 	  lpFormat->nAvgBytesPerSec, lpFormat->nBlockAlign, lpFormat->wBitsPerSample);
 
     if ((wmld = MMDRV_Alloc(sizeof(WINE_WAVE), uType, &handle,
-			    &dwFlags, &dwCallback, &dwInstance, bFrom32)) == NULL) {
+			    &dwFlags, &dwCallback, &dwInstance, TRUE)) == NULL) {
         WARN("no memory\n");
 	return MMSYSERR_NOMEM;
     }
@@ -2215,7 +2215,7 @@ MMRESULT WINAPI waveOutOpen(LPHWAVEOUT lphWaveOut, UINT uDeviceID,
                        DWORD_PTR dwInstance, DWORD dwFlags)
 {
     return WAVE_Open((HANDLE*)lphWaveOut, uDeviceID, MMDRV_WAVEOUT, lpFormat,
-                     dwCallback, dwInstance, dwFlags, TRUE);
+                     dwCallback, dwInstance, dwFlags);
 }
 
 /**************************************************************************
@@ -2581,11 +2581,11 @@ UINT WINAPI waveInGetDevCapsA(UINT_PTR uDeviceID, LPWAVEINCAPSA lpCaps, UINT uSi
  * 				waveInOpen			[WINMM.@]
  */
 MMRESULT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
-		       LPCWAVEFORMATEX lpFormat, DWORD_PTR dwCallback,
-		       DWORD_PTR dwInstance, DWORD dwFlags)
+                           LPCWAVEFORMATEX lpFormat, DWORD_PTR dwCallback,
+                           DWORD_PTR dwInstance, DWORD dwFlags)
 {
     return WAVE_Open((HANDLE*)lphWaveIn, uDeviceID, MMDRV_WAVEIN, lpFormat,
-                     dwCallback, dwInstance, dwFlags, TRUE);
+                     dwCallback, dwInstance, dwFlags);
 }
 
 /**************************************************************************
