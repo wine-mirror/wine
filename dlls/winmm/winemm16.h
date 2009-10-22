@@ -61,3 +61,21 @@ typedef enum {
     MMSYSTEM_MAP_OK, 	        /* ok, no memory allocated. to be sent to the proc. */
     MMSYSTEM_MAP_OKMEM, 	/* ok, some memory allocated, need to call UnMapMsg. to be sent to the proc. */
 } MMSYSTEM_MapType;
+
+extern  CRITICAL_SECTION        mmdrv_cs;
+
+enum MMSYSTEM_DriverType
+{
+    MMSYSTDRV_MIXER,
+    MMSYSTDRV_MIDIIN,
+    MMSYSTDRV_MIDIOUT,
+    MMSYSTDRV_WAVEIN,
+    MMSYSTDRV_WAVEOUT,
+    MMSYSTDRV_MAX
+};
+
+extern  struct mmsystdrv_thunk* MMSYSTDRV_AddThunk(DWORD pfn16, enum MMSYSTEM_DriverType kind);
+extern  void                    MMSYSTDRV_DeleteThunk(struct mmsystdrv_thunk* thunk);
+extern  void                    MMSYSTDRV_SetHandle(struct mmsystdrv_thunk* thunk, void* h);
+extern  void                    MMSYSTDRV_CloseHandle(void* h);
+extern  DWORD                   MMSYSTDRV_Message(void* h, UINT msg, DWORD_PTR param1, DWORD_PTR param2);

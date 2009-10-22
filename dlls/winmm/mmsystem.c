@@ -52,14 +52,13 @@ static LPWINE_DRIVER    DRIVER_OpenDriver16(LPCWSTR, LPCWSTR, LPARAM);
 static LRESULT          DRIVER_CloseDriver16(HDRVR16, LPARAM, LPARAM);
 static LRESULT          DRIVER_SendMessage16(HDRVR16, UINT, LPARAM, LPARAM);
 
-static CRITICAL_SECTION mmdrv_cs;
 static CRITICAL_SECTION_DEBUG mmdrv_critsect_debug =
 {
     0, 0, &mmdrv_cs,
     { &mmdrv_critsect_debug.ProcessLocksList, &mmdrv_critsect_debug.ProcessLocksList },
       0, 0, { (DWORD_PTR)(__FILE__ ": mmsystem_mmdrv_cs") }
 };
-static CRITICAL_SECTION mmdrv_cs = { &mmdrv_critsect_debug, -1, 0, 0, 0, 0 };
+CRITICAL_SECTION mmdrv_cs = { &mmdrv_critsect_debug, -1, 0, 0, 0, 0 };
 
 /* ###################################################
  * #                  LIBRARY                        #
@@ -200,7 +199,6 @@ void WINAPI OutputDebugStr16(LPCSTR str)
 {
     OutputDebugStringA( str );
 }
-
 
 /* ###################################################
  * #                    MIXER                        #

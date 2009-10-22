@@ -2545,3 +2545,218 @@ MMDRV_##_y##_Callback)
     pFnMciMapMsg32WTo16   = MCI_MapMsg32WTo16;
     pFnMciUnMapMsg32WTo16 = MCI_UnMapMsg32WTo16;
 }
+
+/* ###################################################
+ * #                DRIVER THUNKING                  #
+ * ###################################################
+ */
+typedef	MMSYSTEM_MapType        (*MMSYSTDRV_MAPMSG)(UINT wMsg, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2);
+typedef	MMSYSTEM_MapType        (*MMSYSTDRV_UNMAPMSG)(UINT wMsg, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT ret);
+typedef void                    (*MMSYSTDRV_MAPCB)(DWORD wMsg, DWORD_PTR* dwUser, DWORD_PTR* dwParam1, DWORD_PTR* dwParam2);
+
+#include <pshpack1.h>
+#define MMSYSTDRV_MAX_THUNKS      32
+
+static struct mmsystdrv_thunk
+{
+    BYTE                        popl_eax;       /* popl  %eax (return address) */
+    BYTE                        pushl_func;     /* pushl $pfn16 (16bit callback function) */
+    struct mmsystdrv_thunk*     this;
+    BYTE                        pushl_eax;      /* pushl %eax */
+    BYTE                        jmp;            /* ljmp MMDRV_Callback1632 */
+    DWORD                       callback;
+    DWORD                       pfn16;
+    void*                       hMmdrv;         /* Handle to 32bit mmdrv object */
+    enum MMSYSTEM_DriverType    kind;
+} *MMSYSTDRV_Thunks;
+
+#include <poppack.h>
+
+static struct MMSYSTDRV_Type
+{
+    MMSYSTDRV_MAPMSG    mapmsg16to32W;
+    MMSYSTDRV_UNMAPMSG  unmapmsg16to32W;
+    MMSYSTDRV_MAPCB     mapcb;
+} MMSYSTEM_DriversType[MMSYSTDRV_MAX] =
+{
+};
+
+/******************************************************************
+ *		MMSYSTDRV_Callback3216
+ *
+ */
+static LRESULT CALLBACK MMSYSTDRV_Callback3216(struct mmsystdrv_thunk* thunk, DWORD uFlags, HDRVR hDev,
+                                               DWORD wMsg, DWORD_PTR dwUser, DWORD_PTR dwParam1,
+                                               DWORD_PTR dwParam2)
+{
+    assert(thunk->kind < MMSYSTDRV_MAX);
+    assert(MMSYSTEM_DriversType[thunk->kind].mapcb);
+
+    MMSYSTEM_DriversType[thunk->kind].mapcb(wMsg, &dwUser, &dwParam1, &dwParam2);
+
+    if ((uFlags & DCB_TYPEMASK) == DCB_FUNCTION)
+    {
+        WORD args[8];
+	/* 16 bit func, call it */
+	TRACE("Function (16 bit) !\n");
+
+        args[7] = HDRVR_16(hDev);
+        args[6] = wMsg;
+        args[5] = HIWORD(dwUser);
+        args[4] = LOWORD(dwUser);
+        args[3] = HIWORD(dwParam1);
+        args[2] = LOWORD(dwParam1);
+        args[1] = HIWORD(dwParam2);
+        args[0] = LOWORD(dwParam2);
+        return WOWCallback16Ex(thunk->pfn16, WCB16_PASCAL, sizeof(args), args, NULL);
+    }
+    return DriverCallback(thunk->pfn16, uFlags, hDev, wMsg, dwUser, dwParam1, dwParam2);
+}
+
+/******************************************************************
+ *		MMSYSTDRV_AddThunk
+ *
+ */
+struct mmsystdrv_thunk*       MMSYSTDRV_AddThunk(DWORD pfn16, enum MMSYSTEM_DriverType kind)
+{
+    struct mmsystdrv_thunk* thunk;
+
+    EnterCriticalSection(&mmdrv_cs);
+    if (!MMSYSTDRV_Thunks)
+    {
+        MMSYSTDRV_Thunks = VirtualAlloc(NULL, MMSYSTDRV_MAX_THUNKS * sizeof(*MMSYSTDRV_Thunks),
+                                        MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+        if (!MMSYSTDRV_Thunks)
+        {
+            LeaveCriticalSection(&mmdrv_cs);
+            return NULL;
+        }
+        for (thunk = MMSYSTDRV_Thunks; thunk < &MMSYSTDRV_Thunks[MMSYSTDRV_MAX_THUNKS]; thunk++)
+        {
+            thunk->popl_eax     = 0x58;   /* popl  %eax */
+            thunk->pushl_func   = 0x68;   /* pushl $pfn16 */
+            thunk->this         = thunk;
+            thunk->pushl_eax    = 0x50;   /* pushl %eax */
+            thunk->jmp          = 0xe9;   /* jmp MMDRV_Callback3216 */
+            thunk->callback     = (char *)MMSYSTDRV_Callback3216 - (char *)(&thunk->callback + 1);
+            thunk->pfn16        = 0;
+            thunk->hMmdrv       = NULL;
+            thunk->kind         = MMSYSTDRV_MAX;
+        }
+    }
+    for (thunk = MMSYSTDRV_Thunks; thunk < &MMSYSTDRV_Thunks[MMSYSTDRV_MAX_THUNKS]; thunk++)
+    {
+        if (thunk->pfn16 == 0 && thunk->hMmdrv == NULL)
+        {
+            thunk->pfn16 = pfn16;
+            thunk->hMmdrv = NULL;
+            thunk->kind = kind;
+            LeaveCriticalSection(&mmdrv_cs);
+            return thunk;
+        }
+    }
+    LeaveCriticalSection(&mmdrv_cs);
+    FIXME("Out of mmdrv-thunks. Bump MMDRV_MAX_THUNKS\n");
+    return NULL;
+}
+
+/******************************************************************
+ *		MMSYSTDRV_FindHandle
+ *
+ * Must be called with lock set
+ */
+static void*    MMSYSTDRV_FindHandle(void* h)
+{
+    struct mmsystdrv_thunk* thunk;
+
+    for (thunk = MMSYSTDRV_Thunks; thunk < &MMSYSTDRV_Thunks[MMSYSTDRV_MAX_THUNKS]; thunk++)
+    {
+        if (thunk->hMmdrv == h)
+        {
+            if (thunk->kind >= MMSYSTDRV_MAX) FIXME("Kind isn't properly initialized %x\n", thunk->kind);
+            return thunk;
+        }
+    }
+    return NULL;
+}
+
+/******************************************************************
+ *		MMSYSTDRV_SetHandle
+ *
+ */
+void    MMSYSTDRV_SetHandle(struct mmsystdrv_thunk* thunk, void* h)
+{
+    if (MMSYSTDRV_FindHandle(h)) FIXME("Already has a thunk for this handle %p!!!\n", h);
+    thunk->hMmdrv = h;
+}
+
+/******************************************************************
+ *		MMSYSTDRV_DeleteThunk
+ */
+void    MMSYSTDRV_DeleteThunk(struct mmsystdrv_thunk* thunk)
+{
+    thunk->pfn16 = 0;
+    thunk->hMmdrv = NULL;
+    thunk->kind = MMSYSTDRV_MAX;
+}
+
+/******************************************************************
+ *		MMSYSTDRV_CloseHandle
+ */
+void    MMSYSTDRV_CloseHandle(void* h)
+{
+    struct mmsystdrv_thunk* thunk;
+
+    EnterCriticalSection(&mmdrv_cs);
+    if ((thunk = MMSYSTDRV_FindHandle(h)))
+    {
+        MMSYSTDRV_DeleteThunk(thunk);
+    }
+    LeaveCriticalSection(&mmdrv_cs);
+}
+
+/******************************************************************
+ *		MMSYSTDRV_Message
+ */
+DWORD   MMSYSTDRV_Message(void* h, UINT msg, DWORD_PTR param1, DWORD_PTR param2)
+{
+    struct mmsystdrv_thunk*     thunk = MMSYSTDRV_FindHandle(h);
+    struct MMSYSTDRV_Type*      drvtype;
+    MMSYSTEM_MapType            map;
+    DWORD                       ret;
+
+    if (!thunk) return MMSYSERR_INVALHANDLE;
+    drvtype = &MMSYSTEM_DriversType[thunk->kind];
+
+    map = drvtype->mapmsg16to32W(msg, &param1, &param2);
+    switch (map) {
+    case MMSYSTEM_MAP_NOMEM:
+        ret = MMSYSERR_NOMEM;
+        break;
+    case MMSYSTEM_MAP_MSGERROR:
+        FIXME("NIY: no conversion yet 16->32 kind=%u msg=%u\n", thunk->kind, msg);
+        ret = MMSYSERR_ERROR;
+        break;
+    case MMSYSTEM_MAP_OK:
+    case MMSYSTEM_MAP_OKMEM:
+        TRACE("Calling message(msg=%u p1=0x%08lx p2=0x%08lx)\n",
+              msg, param1, param2);
+        switch (thunk->kind)
+        {
+        case MMSYSTDRV_MIXER:   ret = mixerMessage  (h, msg, param1, param2); break;
+        case MMSYSTDRV_MIDIIN:  ret = midiInMessage (h, msg, param1, param2); break;
+        case MMSYSTDRV_MIDIOUT: ret = midiOutMessage(h, msg, param1, param2); break;
+        case MMSYSTDRV_WAVEIN:  ret = waveInMessage (h, msg, param1, param2); break;
+        case MMSYSTDRV_WAVEOUT: ret = waveOutMessage(h, msg, param1, param2); break;
+        default: ret = MMSYSERR_INVALHANDLE; break; /* should never be reached */
+        }
+        if (map == MMSYSTEM_MAP_OKMEM)
+            drvtype->unmapmsg16to32W(msg, &param1, &param2, ret);
+        break;
+    default:
+        FIXME("NIY\n");
+        ret = MMSYSERR_NOTSUPPORTED;
+        break;
+    }
+    return ret;
+}
