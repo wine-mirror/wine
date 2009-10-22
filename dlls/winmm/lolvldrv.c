@@ -44,10 +44,8 @@ typedef struct tagWINE_LLTYPE {
     /* those attributes depend on the specification of the type */
     LPCSTR		typestr;	/* name (for debugging) */
     BOOL		bSupportMapper;	/* if type is allowed to support mapper */
-    MMDRV_MAPFUNC	Map16To32A;	/* those are function pointers to handle */
-    MMDRV_UNMAPFUNC	UnMap16To32A;	/*   the parameter conversion (16 vs 32 bit) */
-    MMDRV_MAPFUNC	Map32ATo16; 	/*   when hi-func (in mmsystem or winmm) and */
-    MMDRV_UNMAPFUNC	UnMap32ATo16;	/*   low-func (in .drv) do not match */
+    MMDRV_MAPFUNC	Map32WTo16; 	/*   when hi-func (in mmsystem or winmm) and */
+    MMDRV_UNMAPFUNC	UnMap32WTo16;	/*   low-func (in .drv) do not match */
     LPDRVCALLBACK	Callback;       /* handles callback for a specified type */
     /* those attributes reflect the loaded/current situation for the type */
     UINT		wMaxId;		/* number of loaded devices (sum across all loaded drivers) */
@@ -60,7 +58,7 @@ static WINE_MM_DRIVER	MMDrvs[8];
 static LPWINE_MLD	MM_MLDrvs[40];
 #define MAX_MM_MLDRVS	(sizeof(MM_MLDrvs) / sizeof(MM_MLDrvs[0]))
 
-#define A(_x,_y) {#_y, _x, NULL, NULL, NULL, NULL, NULL, 0, NULL, -1}
+#define A(_x,_y) {#_y, _x, NULL, NULL, NULL, 0, NULL, -1}
 /* Note: the indices of this array must match the definitions
  *	 of the MMDRV_???? manifest constants
  */
@@ -79,16 +77,13 @@ static WINE_LLTYPE	llTypes[MMDRV_MAX] = {
  *
  *
  */
-void    MMDRV_InstallMap(unsigned int drv, 
-                         MMDRV_MAPFUNC mp1632, MMDRV_UNMAPFUNC um1632,
+void    MMDRV_InstallMap(unsigned int drv,
                          MMDRV_MAPFUNC mp3216, MMDRV_UNMAPFUNC um3216,
                          LPDRVCALLBACK cb)
 {
     assert(drv < MMDRV_MAX);
-    llTypes[drv].Map16To32A   = mp1632;
-    llTypes[drv].UnMap16To32A = um1632;
-    llTypes[drv].Map32ATo16   = mp3216;
-    llTypes[drv].UnMap32ATo16 = um3216;
+    llTypes[drv].Map32WTo16   = mp3216;
+    llTypes[drv].UnMap32WTo16 = um3216;
     llTypes[drv].Callback     = cb;
 }
 
@@ -165,7 +160,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
     } else {
 	assert(part->u.fnMessage16 && pFnCallMMDrvFunc16);
 
-        map = llType->Map32ATo16(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2);
+        map = llType->Map32WTo16(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2);
         switch (map) {
         case WINMM_MAP_NOMEM:
             ret = MMSYSERR_NOMEM;
@@ -182,7 +177,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
                                      mld->dwDriverInstance, dwParam1, dwParam2);
             TRACE("=> %s\n", WINMM_ErrorToString(ret));
             if (map == WINMM_MAP_OKMEM)
-                llType->UnMap32ATo16(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2, ret);
+                llType->UnMap32WTo16(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2, ret);
             break;
         default:
             FIXME("NIY\n");

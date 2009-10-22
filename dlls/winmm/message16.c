@@ -67,22 +67,6 @@ static  void	MMDRV_Callback(LPWINE_MLD mld, HDRVR hDev, UINT uMsg, DWORD_PTR dwP
  * ================================= */
 
 /**************************************************************************
- * 				MMDRV_Aux_Map16To32W		[internal]
- */
-static  WINMM_MapType	MMDRV_Aux_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
-{
-    return WINMM_MAP_MSGERROR;
-}
-
-/**************************************************************************
- * 				MMDRV_Aux_UnMap16To32W		[internal]
- */
-static  WINMM_MapType	MMDRV_Aux_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
-{
-    return WINMM_MAP_MSGERROR;
-}
-
-/**************************************************************************
  * 				MMDRV_Aux_Map32WTo16		[internal]
  */
 static  WINMM_MapType	MMDRV_Aux_Map32WTo16  (UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
@@ -2615,30 +2599,9 @@ static  WINMM_MapType	MCI_UnMapMsg32WTo16(WORD uDevType, WORD wMsg, DWORD dwFlag
     return MCI_MsgMapper32WTo16_Destroy((void*)lParam, size, map, kept);
 }
 
-/* temporary hack */
-static  WINMM_MapType	MMDRV_Map16To32W  (UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
-{
-    return WINMM_MAP_MSGERROR;
-}
-static  WINMM_MapType	MMDRV_UnMap16To32W(UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
-{
-    return WINMM_MAP_MSGERROR;
-}
-#define MMDRV_Mixer_Map16To32W          MMDRV_Map16To32W
-#define MMDRV_Mixer_UnMap16To32W        MMDRV_UnMap16To32W
-#define MMDRV_MidiIn_Map16To32W         MMDRV_Map16To32W
-#define MMDRV_MidiIn_UnMap16To32W       MMDRV_UnMap16To32W
-#define MMDRV_MidiOut_Map16To32W        MMDRV_Map16To32W
-#define MMDRV_MidiOut_UnMap16To32W      MMDRV_UnMap16To32W
-#define MMDRV_WaveIn_Map16To32W         MMDRV_Map16To32W
-#define MMDRV_WaveIn_UnMap16To32W       MMDRV_UnMap16To32W
-#define MMDRV_WaveOut_Map16To32W        MMDRV_Map16To32W
-#define MMDRV_WaveOut_UnMap16To32W      MMDRV_UnMap16To32W
-
 void    MMDRV_Init16(void)
 {
 #define A(_x,_y) MMDRV_InstallMap(_x, \
-MMDRV_##_y##_Map16To32W, MMDRV_##_y##_UnMap16To32W, \
 MMDRV_##_y##_Map32WTo16, MMDRV_##_y##_UnMap32WTo16, \
 MMDRV_##_y##_Callback)
     A(MMDRV_AUX,        Aux);
