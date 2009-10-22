@@ -405,6 +405,7 @@ HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration9Impl *declaration,
     HeapFree(GetProcessHeap(), 0, wined3d_elements);
     if (FAILED(hr))
     {
+        HeapFree(GetProcessHeap(), 0, declaration->elements);
         WARN("Failed to create wined3d vertex declaration, hr %#x.\n", hr);
         return hr;
     }
