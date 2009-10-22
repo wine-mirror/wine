@@ -21,6 +21,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <limits.h>
 #include <locale.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -47,6 +48,7 @@ LCID MSVCRT_current_lc_all_lcid = 0;
 int MSVCRT___lc_codepage = 0;
 int MSVCRT___lc_collate_cp = 0;
 HANDLE MSVCRT___lc_handle[MSVCRT_LC_MAX - MSVCRT_LC_MIN + 1] = { 0 };
+unsigned char charmax = CHAR_MAX;
 
 /* MT */
 #define LOCK_LOCALE   _mlock(_SETLOCALE_LOCK);
@@ -571,33 +573,40 @@ int CDECL __crtGetLocaleInfoW( LCID lcid, LCTYPE type, MSVCRT_wchar_t *buffer, i
 /*********************************************************************
  *		localeconv (MSVCRT.@)
  */
-struct MSVCRT_lconv * CDECL MSVCRT_localeconv(void) {
+struct MSVCRT_lconv * CDECL MSVCRT_localeconv(void)
+{
+    static struct MSVCRT_lconv xlconv;
+    struct lconv *ylconv = localeconv();
 
-  struct lconv *ylconv;
-  static struct MSVCRT_lconv xlconv;
+    xlconv.decimal_point     = ylconv->decimal_point;
+    xlconv.thousands_sep     = ylconv->thousands_sep;
+    xlconv.grouping          = ylconv->grouping;  /* FIXME: fixup charmax here too */
+    xlconv.int_curr_symbol   = ylconv->int_curr_symbol;
+    xlconv.currency_symbol   = ylconv->currency_symbol;
+    xlconv.mon_decimal_point = ylconv->mon_decimal_point;
+    xlconv.mon_thousands_sep = ylconv->mon_thousands_sep;
+    xlconv.mon_grouping      = ylconv->mon_grouping;
+    xlconv.positive_sign     = ylconv->positive_sign;
+    xlconv.negative_sign     = ylconv->negative_sign;
+    xlconv.int_frac_digits   = ylconv->int_frac_digits;
+    xlconv.frac_digits       = ylconv->frac_digits;
+    xlconv.p_cs_precedes     = ylconv->p_cs_precedes;
+    xlconv.p_sep_by_space    = ylconv->p_sep_by_space;
+    xlconv.n_cs_precedes     = ylconv->n_cs_precedes;
+    xlconv.n_sep_by_space    = ylconv->n_sep_by_space;
+    xlconv.p_sign_posn       = ylconv->p_sign_posn;
+    xlconv.n_sign_posn       = ylconv->n_sign_posn;
 
-  ylconv = localeconv();
+    if (ylconv->int_frac_digits == CHAR_MAX) xlconv.int_frac_digits = charmax;
+    if (ylconv->frac_digits == CHAR_MAX)     xlconv.frac_digits = charmax;
+    if (ylconv->p_cs_precedes == CHAR_MAX)   xlconv.p_cs_precedes = charmax;
+    if (ylconv->p_sep_by_space == CHAR_MAX)  xlconv.p_sep_by_space = charmax;
+    if (ylconv->n_cs_precedes == CHAR_MAX)   xlconv.n_cs_precedes = charmax;
+    if (ylconv->n_sep_by_space == CHAR_MAX)  xlconv.n_sep_by_space = charmax;
+    if (ylconv->p_sign_posn == CHAR_MAX)     xlconv.p_sign_posn = charmax;
+    if (ylconv->n_sign_posn == CHAR_MAX)     xlconv.n_sign_posn = charmax;
 
-#define X(x) xlconv.x = ylconv->x;
-  X(decimal_point);
-  X(thousands_sep);
-  X(grouping);
-  X(int_curr_symbol);
-  X(currency_symbol);
-  X(mon_decimal_point);
-  X(mon_thousands_sep);
-  X(mon_grouping);
-  X(positive_sign);
-  X(negative_sign);
-  X(int_frac_digits);
-  X(frac_digits);
-  X(p_cs_precedes);
-  X(p_sep_by_space);
-  X(n_cs_precedes);
-  X(n_sep_by_space);
-  X(p_sign_posn);
-  X(n_sign_posn);
-  return &xlconv;
+    return &xlconv;
 }
 
 /*********************************************************************
@@ -605,7 +614,8 @@ struct MSVCRT_lconv * CDECL MSVCRT_localeconv(void) {
  */
 void CDECL __lconv_init(void)
 {
-  FIXME(" stub\n");
+    /* this is used to make chars unsigned */
+    charmax = 255;
 }
 
 /*********************************************************************
