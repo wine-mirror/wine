@@ -340,7 +340,8 @@ static nsresult NSAPI nsRunnable_Run(nsIRunnable *iface)
         }
 
         case MUTATION_IFRAME:
-            return init_iframe_window(This, This->mutation_queue->nsiface);
+            init_iframe_window(This, This->mutation_queue->nsiface);
+            break;
 
         case MUTATION_SCRIPT: {
             nsIDOMHTMLScriptElement *nsscript;
@@ -577,6 +578,8 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
 
     nsres = nsISupports_QueryInterface(aContent, &IID_nsIDOMHTMLIFrameElement, (void**)&nsiframe);
     if(NS_SUCCEEDED(nsres)) {
+        TRACE("iframe node\n");
+
         push_mutation_queue(This, MUTATION_IFRAME, (nsISupports*)nsiframe);
         nsIDOMHTMLIFrameElement_Release(nsiframe);
         add_script_runner(This);
@@ -594,6 +597,8 @@ static void NSAPI nsDocumentObserver_DoneAddingChildren(nsIDocumentObserver *ifa
 
     nsres = nsISupports_QueryInterface(aContent, &IID_nsIDOMHTMLScriptElement, (void**)&nsscript);
     if(NS_SUCCEEDED(nsres)) {
+        TRACE("script node\n");
+
         push_mutation_queue(This, MUTATION_SCRIPT, (nsISupports*)nsscript);
         nsIDOMHTMLScriptElement_Release(nsscript);
         add_script_runner(This);
