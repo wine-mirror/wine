@@ -87,7 +87,6 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
             return FALSE;
 	}
         /* hook in our 16 bit function pointers */
-        pFnGetMMThread16    = WINMM_GetmmThread;
         pFnOpenDriver16     = DRIVER_OpenDriver16;
         pFnCloseDriver16    = DRIVER_CloseDriver16;
         pFnSendMessage16    = DRIVER_SendMessage16;
@@ -96,7 +95,6 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
         MMDRV_Init16();
 	break;
     case DLL_PROCESS_DETACH:
-        pFnGetMMThread16    = NULL;
         pFnOpenDriver16     = NULL;
         pFnCloseDriver16    = NULL;
         pFnSendMessage16    = NULL;

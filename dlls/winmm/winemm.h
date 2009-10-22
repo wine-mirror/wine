@@ -115,24 +115,6 @@ typedef struct {
        WINE_MLD			mld;
 } WINE_MIXER, *LPWINE_MIXER;
 
-#define WINE_MMTHREAD_CREATED	0x4153494C	/* "BSIL" */
-#define WINE_MMTHREAD_DELETED	0xDEADDEAD
-
-typedef struct {
-       DWORD			dwSignature;		/* 00 "BSIL" when ok, 0xDEADDEAD when being deleted */
-       DWORD			dwCounter;		/* 04 > 1 when in mmThread functions */
-       HANDLE			hThread;		/* 08 hThread */
-       DWORD                    dwThreadID;     	/* 0C */
-       DWORD    		fpThread;		/* 10 address of thread proc (segptr or lin depending on dwFlags) */
-       DWORD			dwThreadPmt;    	/* 14 parameter to be passed upon thread creation to fpThread */
-       LONG                     dwSignalCount;	     	/* 18 counter used for signaling */
-       HANDLE                   hEvent;     		/* 1C event */
-       HANDLE                   hVxD;		     	/* 20 return from OpenVxDHandle */
-       DWORD                    dwStatus;       	/* 24 0x00, 0x10, 0x20, 0x30 */
-       DWORD			dwFlags;		/* 28 dwFlags upon creation */
-       UINT16			hTask;          	/* 2C handle to created task */
-} WINE_MMTHREAD;
-
 typedef struct tagWINE_MCIDRIVER {
         UINT			wDeviceID;
         UINT			wType;
@@ -212,7 +194,6 @@ extern HANDLE psStopEvent;
 /* pointers to 16 bit functions (if sibling MMSYSTEM.DLL is loaded
  * NULL otherwise
  */
-extern  WINE_MMTHREAD*  (*pFnGetMMThread16)(UINT16);
 extern  LPWINE_DRIVER   (*pFnOpenDriver16)(LPCWSTR,LPCWSTR,LPARAM);
 extern  LRESULT         (*pFnCloseDriver16)(UINT16,LPARAM,LPARAM);
 extern  LRESULT         (*pFnSendMessage16)(UINT16,UINT,LPARAM,LPARAM);

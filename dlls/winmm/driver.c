@@ -53,7 +53,6 @@ static LPWINE_DRIVER   lpDrvItemList  /* = NULL */;
 static const WCHAR HKLM_BASE[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
                                   'W','i','n','d','o','w','s',' ','N','T','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
 
-WINE_MMTHREAD*  (*pFnGetMMThread16)(UINT16 h) /* = NULL */;
 LPWINE_DRIVER   (*pFnOpenDriver16)(LPCWSTR,LPCWSTR,LPARAM) /* = NULL */;
 LRESULT         (*pFnCloseDriver16)(UINT16,LPARAM,LPARAM) /* = NULL */;
 LRESULT         (*pFnSendMessage16)(UINT16,UINT,LPARAM,LPARAM) /* = NULL */;
@@ -598,6 +597,10 @@ BOOL WINAPI DriverCallback(DWORD_PTR dwCallBack, DWORD uFlags, HDRVR hDev,
 	TRACE("Event(%08lx) !\n", dwCallBack);
 	SetEvent((HANDLE)dwCallBack);
 	break;
+#if 0
+        /* FIXME: for now only usable in mmsystem.dll16
+         * If needed, should be enabled back
+         */
     case 6: /* I would dub it DCB_MMTHREADSIGNAL */
 	/* this is an undocumented DCB_ value used for mmThreads
 	 * loword of dwCallBack contains the handle of the lpMMThd block
@@ -614,6 +617,7 @@ BOOL WINAPI DriverCallback(DWORD_PTR dwCallBack, DWORD uFlags, HDRVR hDev,
 	    /* some other stuff on lpMMThd->hVxD */
 	}
 	break;
+#endif
 #if 0
     case 4:
 	/* this is an undocumented DCB_ value for... I don't know */
