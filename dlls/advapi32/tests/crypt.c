@@ -993,7 +993,7 @@ static void test_rc2_keylen(void)
                 GetLastError() == NTE_BAD_TYPE || /* W2K */
                 GetLastError() == NTE_PERM), /* Win9x, WinMe and NT4 */
        "unexpected error %08x\n", GetLastError());
-    /* but importing an 8-bit (7-byte) key does.. */
+    /* but importing an 56-bit (7-byte) key does.. */
     key_blob.key_size = 7;
     SetLastError(0xdeadbeef);
     ret = pCryptImportKey(provider, (BYTE*)&key_blob,
