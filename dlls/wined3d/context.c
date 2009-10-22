@@ -88,7 +88,7 @@ static void context_clean_fbo_attachments(const struct wined3d_gl_info *gl_info)
 {
     unsigned int i;
 
-    for (i = 0; i < GL_LIMITS(buffers); ++i)
+    for (i = 0; i < gl_info->max_buffers; ++i)
     {
         gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, 0, 0);
         checkGLcall("glFramebufferTexture2D()");
@@ -289,7 +289,7 @@ static void context_check_fbo_status(struct wined3d_context *context)
         FIXME("FBO status %s (%#x)\n", debug_fbostatus(status), status);
 
         /* Dump the FBO attachments */
-        for (i = 0; i < GL_LIMITS(buffers); ++i)
+        for (i = 0; i < gl_info->max_buffers; ++i)
         {
             attachment = (IWineD3DSurfaceImpl *)context->current_fbo->render_targets[i];
             if (attachment)
@@ -316,8 +316,8 @@ static struct fbo_entry *context_create_fbo_entry(struct wined3d_context *contex
     struct fbo_entry *entry;
 
     entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry));
-    entry->render_targets = HeapAlloc(GetProcessHeap(), 0, GL_LIMITS(buffers) * sizeof(*entry->render_targets));
-    memcpy(entry->render_targets, device->render_targets, GL_LIMITS(buffers) * sizeof(*entry->render_targets));
+    entry->render_targets = HeapAlloc(GetProcessHeap(), 0, gl_info->max_buffers * sizeof(*entry->render_targets));
+    memcpy(entry->render_targets, device->render_targets, gl_info->max_buffers * sizeof(*entry->render_targets));
     entry->depth_stencil = device->stencilBufferTarget;
     entry->attached = FALSE;
     entry->id = 0;
@@ -334,7 +334,7 @@ static void context_reuse_fbo_entry(struct wined3d_context *context, struct fbo_
     context_bind_fbo(context, GL_FRAMEBUFFER, &entry->id);
     context_clean_fbo_attachments(gl_info);
 
-    memcpy(entry->render_targets, device->render_targets, GL_LIMITS(buffers) * sizeof(*entry->render_targets));
+    memcpy(entry->render_targets, device->render_targets, gl_info->max_buffers * sizeof(*entry->render_targets));
     entry->depth_stencil = device->stencilBufferTarget;
     entry->attached = FALSE;
 }
@@ -363,7 +363,8 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context)
 
     LIST_FOR_EACH_ENTRY(entry, &context->fbo_list, struct fbo_entry, entry)
     {
-        if (!memcmp(entry->render_targets, device->render_targets, GL_LIMITS(buffers) * sizeof(*entry->render_targets))
+        if (!memcmp(entry->render_targets,
+                device->render_targets, gl_info->max_buffers * sizeof(*entry->render_targets))
                 && entry->depth_stencil == device->stencilBufferTarget)
         {
             list_remove(&entry->entry);
@@ -401,7 +402,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
     if (!entry->attached)
     {
         /* Apply render targets */
-        for (i = 0; i < GL_LIMITS(buffers); ++i)
+        for (i = 0; i < gl_info->max_buffers; ++i)
         {
             IWineD3DSurface *render_target = device->render_targets[i];
             context_attach_surface_fbo(context, GL_FRAMEBUFFER, i, render_target);
@@ -418,8 +419,10 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
         context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, device->stencilBufferTarget, TRUE);
 
         entry->attached = TRUE;
-    } else {
-        for (i = 0; i < GL_LIMITS(buffers); ++i)
+    }
+    else
+    {
+        for (i = 0; i < gl_info->max_buffers; ++i)
         {
             if (device->render_targets[i])
                 context_apply_attachment_filter_states(device->render_targets[i], FALSE);
@@ -428,7 +431,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
             context_apply_attachment_filter_states(device->stencilBufferTarget, FALSE);
     }
 
-    for (i = 0; i < GL_LIMITS(buffers); ++i)
+    for (i = 0; i < gl_info->max_buffers; ++i)
     {
         if (device->render_targets[i])
             device->draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
@@ -612,7 +615,7 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
                         continue;
                     }
 
-                    for (j = 0; j < GL_LIMITS(buffers); ++j)
+                    for (j = 0; j < gl_info->max_buffers; ++j)
                     {
                         if (entry->render_targets[j] == (IWineD3DSurface *)resource)
                         {
@@ -1277,13 +1280,13 @@ struct wined3d_context *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceI
     if(This->shader_backend->shader_dirtifyable_constants((IWineD3DDevice *) This)) {
         /* Create the dirty constants array and initialize them to dirty */
         ret->vshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
-                sizeof(*ret->vshader_const_dirty) * GL_LIMITS(vshader_constantsF));
+                sizeof(*ret->vshader_const_dirty) * gl_info->max_vshader_constantsF);
         ret->pshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
-                sizeof(*ret->pshader_const_dirty) * GL_LIMITS(pshader_constantsF));
+                sizeof(*ret->pshader_const_dirty) * gl_info->max_pshader_constantsF);
         memset(ret->vshader_const_dirty, 1,
-               sizeof(*ret->vshader_const_dirty) * GL_LIMITS(vshader_constantsF));
+               sizeof(*ret->vshader_const_dirty) * gl_info->max_vshader_constantsF);
         memset(ret->pshader_const_dirty, 1,
-                sizeof(*ret->pshader_const_dirty) * GL_LIMITS(pshader_constantsF));
+                sizeof(*ret->pshader_const_dirty) * gl_info->max_pshader_constantsF);
     }
 
     ret->free_occlusion_query_size = 4;
@@ -1359,7 +1362,8 @@ struct wined3d_context *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceI
         /* Set up the previous texture input for all shader units. This applies to bump mapping, and in d3d
          * the previous texture where to source the offset from is always unit - 1.
          */
-        for(s = 1; s < GL_LIMITS(textures); s++) {
+        for (s = 1; s < gl_info->max_textures; ++s)
+        {
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + s));
             glTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, GL_TEXTURE0_ARB + s - 1);
             checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, ...");
@@ -1384,7 +1388,8 @@ struct wined3d_context *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceI
         GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(dummy_program), dummy_program));
     }
 
-    for(s = 0; s < GL_LIMITS(point_sprite_units); s++) {
+    for (s = 0; s < gl_info->max_point_sprite_units; ++s)
+    {
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + s));
         glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
         checkGLcall("glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)");
@@ -1594,7 +1599,8 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context
      * The blitting code uses (for now) the fixed function pipeline, so make sure to reset all fixed
      * function texture unit. No need to care for higher samplers
      */
-    for(i = GL_LIMITS(textures) - 1; i > 0 ; i--) {
+    for (i = gl_info->max_textures - 1; i > 0 ; --i)
+    {
         sampler = This->rev_tex_unit_map[i];
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
         checkGLcall("glActiveTextureARB");
@@ -1986,7 +1992,7 @@ static void context_apply_draw_buffer(struct wined3d_context *context, BOOL blit
             {
                 if (GL_SUPPORT(ARB_DRAW_BUFFERS))
                 {
-                    GL_EXTCALL(glDrawBuffersARB(GL_LIMITS(buffers), device->draw_buffers));
+                    GL_EXTCALL(glDrawBuffersARB(gl_info->max_buffers, device->draw_buffers));
                     checkGLcall("glDrawBuffers()");
                 }
                 else
@@ -2047,14 +2053,14 @@ struct wined3d_context *ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurfac
         if (context->vshader_const_dirty)
         {
             memset(context->vshader_const_dirty, 1,
-                    sizeof(*context->vshader_const_dirty) * GL_LIMITS(vshader_constantsF));
-            This->highest_dirty_vs_const = GL_LIMITS(vshader_constantsF);
+                    sizeof(*context->vshader_const_dirty) * gl_info->max_vshader_constantsF);
+            This->highest_dirty_vs_const = gl_info->max_vshader_constantsF;
         }
         if (context->pshader_const_dirty)
         {
             memset(context->pshader_const_dirty, 1,
-                   sizeof(*context->pshader_const_dirty) * GL_LIMITS(pshader_constantsF));
-            This->highest_dirty_ps_const = GL_LIMITS(pshader_constantsF);
+                   sizeof(*context->pshader_const_dirty) * gl_info->max_pshader_constantsF);
+            This->highest_dirty_ps_const = gl_info->max_pshader_constantsF;
         }
     }
 

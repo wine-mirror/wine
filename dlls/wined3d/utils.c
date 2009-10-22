@@ -916,7 +916,7 @@ static void init_format_filter_info(struct wined3d_gl_info *gl_info)
             TRACE("Nvidia card with texture_float support: Assuming float16 blending\n");
             filtered = TRUE;
         }
-        else if(GL_LIMITS(glsl_varyings > 44))
+        else if (gl_info->max_glsl_varyings > 44)
         {
             TRACE("More than 44 GLSL varyings - assuming d3d10 card with float16 blending\n");
             filtered = TRUE;
@@ -1139,10 +1139,6 @@ fail:
     gl_info->gl_formats = NULL;
     return FALSE;
 }
-
-#undef GLINFO_LOCATION
-
-#define GLINFO_LOCATION This->adapter->gl_info
 
 const struct GlPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt, const struct wined3d_gl_info *gl_info)
 {
@@ -2028,7 +2024,6 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, B
     glLoadMatrixf(mat);
     checkGLcall("glLoadMatrixf(mat)");
 }
-#undef GLINFO_LOCATION
 
 /* This small helper function is used to convert a bitmask into the number of masked bits */
 unsigned int count_bits(unsigned int mask)
@@ -2192,12 +2187,12 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) {
  *  FALSE otherwise
  *
  *********************************************************************/
-#define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
-
-BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]) {
+BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4])
+{
+    const struct wined3d_gl_info *gl_info = &This->resource.wineD3DDevice->adapter->gl_info;
     int x1 = Rect->left, x2 = Rect->right;
     int y1 = Rect->top, y2 = Rect->bottom;
-    GLint maxSize = GL_LIMITS(texture_size);
+    GLint maxSize = gl_info->max_texture_size;
 
     TRACE("(%p)->(%d,%d)-(%d,%d)\n", This,
           Rect->left, Rect->top, Rect->right, Rect->bottom);
@@ -2281,7 +2276,7 @@ BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]
             }
 
             if(This->pow2Height > maxSize) {
-                This->glRect.top = x1 - GL_LIMITS(texture_size) / 2;
+                This->glRect.top = x1 - gl_info->max_texture_size / 2;
                 if(This->glRect.top < 0) This->glRect.top = 0;
                 This->glRect.bottom = This->glRect.left + maxSize;
                 if(This->glRect.bottom > This->currentDesc.Height) {
@@ -2315,9 +2310,7 @@ BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]
     }
     return TRUE;
 }
-#undef GLINFO_LOCATION
 
-#define GLINFO_LOCATION stateblock->wineD3DDevice->adapter->gl_info
 void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_settings *settings, BOOL ignore_textype) {
 #define ARG1 0x01
 #define ARG2 0x02
@@ -2355,8 +2348,10 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
     DWORD ttff;
     DWORD cop, aop, carg0, carg1, carg2, aarg0, aarg1, aarg2;
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
-    for(i = 0; i < GL_LIMITS(texture_stages); i++) {
+    for (i = 0; i < gl_info->max_texture_stages; ++i)
+    {
         IWineD3DBaseTextureImpl *texture;
         settings->op[i].padding = 0;
         if(stateblock->textureState[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE) {
@@ -2557,7 +2552,6 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
         settings->emul_clipplanes = 1;
     }
 }
-#undef GLINFO_LOCATION
 
 const struct ffp_frag_desc *find_ffp_frag_shader(const struct wine_rb_tree *fragment_shaders,
         const struct ffp_frag_settings *settings)
@@ -2580,11 +2574,13 @@ void add_ffp_frag_shader(struct wine_rb_tree *shaders, struct ffp_frag_desc *des
  * Does not care for the colorop or correct gl texture unit(when using nvrc)
  * Requires the caller to activate the correct unit before
  */
-#define GLINFO_LOCATION stateblock->wineD3DDevice->adapter->gl_info
 /* GL locking is done by the caller (state handler) */
 void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    if(stateblock->textures[stage]) {
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (stateblock->textures[stage])
+    {
         switch (IWineD3DBaseTexture_GetTextureDimensions(stateblock->textures[stage])) {
             case GL_TEXTURE_2D:
                 glDisable(GL_TEXTURE_3D);
@@ -2666,13 +2662,12 @@ void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wine
     * handler takes care. Also no action is needed with pixel shaders, or if tex_colorop
     * will take care of this business
     */
-    if(mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= GL_LIMITS(textures)) return;
+    if (mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= context->gl_info->max_textures) return;
     if(sampler >= stateblock->lowest_disabled_stage) return;
     if(isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) return;
 
     texture_activate_dimensions(sampler, stateblock, context);
 }
-#undef GLINFO_LOCATION
 
 void *wined3d_rb_alloc(size_t size)
 {

@@ -76,7 +76,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
     long                      SkipnStrides = startIdx + This->stateBlock->loadBaseVertexIndex;
     BOOL                      pixelShader = use_ps(This->stateBlock);
     BOOL specular_fog = FALSE;
-    UINT texture_stages = GL_LIMITS(texture_stages);
+    UINT texture_stages = context->gl_info->max_texture_stages;
     const BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
     const BYTE *diffuse = NULL, *specular = NULL, *normal = NULL, *position = NULL;
     const struct wined3d_stream_info_element *element;
@@ -582,7 +582,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     if (This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE])
     {
         /* Invalidate the back buffer memory so LockRect will read it the next time */
-        for (i = 0; i < GL_LIMITS(buffers); ++i)
+        for (i = 0; i < This->adapter->gl_info.max_buffers; ++i)
         {
             target = (IWineD3DSurfaceImpl *)This->render_targets[i];
             if (target)
@@ -766,6 +766,7 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     float max_x = 0.0f, max_y = 0.0f, max_z = 0.0f, neg_z = 0.0f;
     struct wined3d_stream_info stream_info;
     struct wined3d_stream_info_element *e;
+    const struct wined3d_context *context;
     const BYTE *data;
     const WINED3DRECTPATCH_INFO *info = &patch->RectPatchInfo;
     DWORD vtxStride;
@@ -775,7 +776,7 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     /* Simply activate the context for blitting. This disables all the things we don't want and
      * takes care of dirtifying. Dirtifying is preferred over pushing / popping, since drawing the
      * patch (as opposed to normal draws) will most likely need different changes anyway. */
-    ActivateContext(This, NULL, CTXUSAGE_BLIT);
+    context = ActivateContext(This, NULL, CTXUSAGE_BLIT);
 
     /* First, locate the position data. This is provided in a vertex buffer in the stateblock.
      * Beware of vbos
@@ -857,7 +858,8 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
         checkGLcall("glLightModel for MODEL_AMBIENT");
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_AMBIENT));
 
-        for(i = 3; i < GL_LIMITS(lights); i++) {
+        for (i = 3; i < context->gl_info->max_lights; ++i)
+        {
             glDisable(GL_LIGHT0 + i);
             checkGLcall("glDisable(GL_LIGHT0 + i)");
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_ACTIVELIGHT(i));

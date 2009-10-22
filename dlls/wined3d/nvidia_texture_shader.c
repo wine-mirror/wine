@@ -458,6 +458,7 @@ static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage];
     BOOL tex_used = stateblock->wineD3DDevice->fixed_function_usage_map & (1 << stage);
+    const struct wined3d_gl_info *gl_info = context->gl_info;
 
     TRACE("Setting color op for stage %d\n", stage);
 
@@ -468,7 +469,8 @@ static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
 
     if (mapped_stage != WINED3D_UNMAPPED_STAGE)
     {
-        if (tex_used && mapped_stage >= GL_LIMITS(textures)) {
+        if (tex_used && mapped_stage >= gl_info->max_textures)
+        {
             FIXME("Attempt to enable unsupported stage!\n");
             return;
         }
@@ -499,7 +501,8 @@ static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
                 glDisable(GL_TEXTURE_RECTANGLE_ARB);
                 checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
             }
-            if(GL_SUPPORT(NV_TEXTURE_SHADER2) && mapped_stage < GL_LIMITS(textures)) {
+            if (gl_info->supported[NV_TEXTURE_SHADER2] && mapped_stage < gl_info->max_textures)
+            {
                 glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_NONE);
             }
         }
@@ -555,7 +558,7 @@ static void nvts_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
     * handler takes care. Also no action is needed with pixel shaders, or if tex_colorop
     * will take care of this business
     */
-    if(mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= GL_LIMITS(textures)) return;
+    if (mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= context->gl_info->max_textures) return;
     if(sampler >= stateblock->lowest_disabled_stage) return;
     if(isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) return;
 
@@ -574,7 +577,8 @@ static void nvts_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, str
      * map is read from a specified source stage(always stage - 1 for d3d). Thus set the matrix
      * for stage + 1. Keep the nvrc tex unit mapping in mind too
      */
-    if(mapped_stage < GL_LIMITS(textures)) {
+    if (mapped_stage < context->gl_info->max_textures)
+    {
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
         checkGLcall("GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage))");
 
@@ -658,8 +662,8 @@ static void nvrc_fragment_get_caps(WINED3DDEVTYPE devtype,
             WINED3DTEXOPCAPS_PREMODULATE */
 #endif
 
-    pCaps->MaxTextureBlendStages   = GL_LIMITS(texture_stages);
-    pCaps->MaxSimultaneousTextures = GL_LIMITS(textures);
+    pCaps->MaxTextureBlendStages = gl_info->max_texture_stages;
+    pCaps->MaxSimultaneousTextures = gl_info->max_textures;
 
     pCaps->PrimitiveMiscCaps |=  WINED3DPMISCCAPS_TSSARGTEMP;
 

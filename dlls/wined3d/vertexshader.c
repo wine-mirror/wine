@@ -37,6 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 static void vshader_set_limits(IWineD3DVertexShaderImpl *This)
 {
+    const struct wined3d_gl_info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
     DWORD shader_version = WINED3D_SHADER_VERSION(This->baseShader.reg_maps.shader_version.major,
             This->baseShader.reg_maps.shader_version.minor);
 
@@ -57,7 +58,7 @@ static void vshader_set_limits(IWineD3DVertexShaderImpl *This)
             This->baseShader.limits.label = 0;
             /* TODO: vs_1_1 has a minimum of 96 constants. What happens if a vs_1_1 shader is used
              * on a vs_3_0 capable card that has 256 constants? */
-            This->baseShader.limits.constant_float = min(256, GL_LIMITS(vshader_constantsF));
+            This->baseShader.limits.constant_float = min(256, gl_info->max_vshader_constantsF);
             break;
 
         case WINED3D_SHADER_VERSION(2,0):
@@ -69,7 +70,7 @@ static void vshader_set_limits(IWineD3DVertexShaderImpl *This)
             This->baseShader.limits.packed_output = 0;
             This->baseShader.limits.sampler = 0;
             This->baseShader.limits.label = 16;
-            This->baseShader.limits.constant_float = min(256, GL_LIMITS(vshader_constantsF));
+            This->baseShader.limits.constant_float = min(256, gl_info->max_vshader_constantsF);
             break;
 
         case WINED3D_SHADER_VERSION(4,0):
@@ -88,7 +89,7 @@ static void vshader_set_limits(IWineD3DVertexShaderImpl *This)
              * of supporting much more(GL drivers advertise 1024). d3d9.dll and d3d8.dll clamp the
              * wined3d-advertised maximum. Clamp the constant limit for <= 3.0 shaders to 256.s
              * use constant buffers */
-            This->baseShader.limits.constant_float = min(256, GL_LIMITS(vshader_constantsF));
+            This->baseShader.limits.constant_float = min(256, gl_info->max_vshader_constantsF);
             break;
 
         default:
@@ -99,7 +100,7 @@ static void vshader_set_limits(IWineD3DVertexShaderImpl *This)
             This->baseShader.limits.packed_output = 0;
             This->baseShader.limits.sampler = 0;
             This->baseShader.limits.label = 16;
-            This->baseShader.limits.constant_float = min(256, GL_LIMITS(vshader_constantsF));
+            This->baseShader.limits.constant_float = min(256, gl_info->max_vshader_constantsF);
             FIXME("Unrecognized vertex shader version %u.%u\n",
                     This->baseShader.reg_maps.shader_version.major,
                     This->baseShader.reg_maps.shader_version.minor);
@@ -316,14 +317,16 @@ static HRESULT vertexshader_set_function(IWineD3DVertexShaderImpl *shader,
 static HRESULT WINAPI IWIneD3DVertexShaderImpl_SetLocalConstantsF(IWineD3DVertexShader *iface,
         UINT start_idx, const float *src_data, UINT count) {
     IWineD3DVertexShaderImpl *This =(IWineD3DVertexShaderImpl *)iface;
+    const struct wined3d_gl_info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
     UINT i, end_idx;
 
     TRACE("(%p) : start_idx %u, src_data %p, count %u\n", This, start_idx, src_data, count);
 
     end_idx = start_idx + count;
-    if (end_idx > GL_LIMITS(vshader_constantsF)) {
-        WARN("end_idx %u > float constants limit %u\n", end_idx, GL_LIMITS(vshader_constantsF));
-        end_idx = GL_LIMITS(vshader_constantsF);
+    if (end_idx > gl_info->max_vshader_constantsF)
+    {
+        WARN("end_idx %u > float constants limit %u\n", end_idx, gl_info->max_vshader_constantsF);
+        end_idx = gl_info->max_vshader_constantsF;
     }
 
     for (i = start_idx; i < end_idx; ++i) {

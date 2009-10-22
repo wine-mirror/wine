@@ -633,12 +633,15 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
      * account for the helper const too because we have to declare all availabke d3d constants
      * and don't know which are actually used.
      */
-    if(pshader) {
-        max_constantsF = GL_LIMITS(ps_arb_constantsF);
-    } else {
+    if (pshader)
+    {
+        max_constantsF = gl_info->max_ps_arb_constantsF;
+    }
+    else
+    {
         if(This->baseShader.reg_maps.usesrelconstF) {
             DWORD highest_constf = 0, clip_limit;
-            max_constantsF = GL_LIMITS(vs_arb_constantsF) - reserved_vs_const(iface, gl_info);
+            max_constantsF = gl_info->max_vs_arb_constantsF - reserved_vs_const(iface, gl_info);
             max_constantsF -= count_bits(This->baseShader.reg_maps.integer_constants);
 
             for(i = 0; i < This->baseShader.limits.constant_float; i++)
@@ -650,7 +653,7 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
 
             if(use_nv_clip(gl_info) && ctx->target_version >= NV2)
             {
-                clip_limit = GL_LIMITS(clipplanes);
+                clip_limit = gl_info->max_clipplanes;
             }
             else
             {
@@ -661,14 +664,14 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
             max_constantsF -= *num_clipplanes;
             if(*num_clipplanes < clip_limit)
             {
-                WARN("Only %u clipplanes out of %u enabled\n", *num_clipplanes, GL_LIMITS(clipplanes));
+                WARN("Only %u clipplanes out of %u enabled\n", *num_clipplanes, gl_info->max_clipplanes);
             }
         }
         else
         {
-            if(ctx->target_version >= NV2) *num_clipplanes = GL_LIMITS(clipplanes);
-            else *num_clipplanes = min(GL_LIMITS(clipplanes), 4);
-            max_constantsF = GL_LIMITS(vs_arb_constantsF);
+            if (ctx->target_version >= NV2) *num_clipplanes = gl_info->max_clipplanes;
+            else *num_clipplanes = min(gl_info->max_clipplanes, 4);
+            max_constantsF = gl_info->max_vs_arb_constantsF;
         }
     }
 
@@ -2939,7 +2942,7 @@ static void vshader_add_footer(IWineD3DVertexShaderImpl *This, struct wined3d_sh
         unsigned int cur_clip = 0;
         char component[4] = {'x', 'y', 'z', 'w'};
 
-        for(i = 0; i < GL_LIMITS(clipplanes); i++)
+        for (i = 0; i < gl_info->max_clipplanes; ++i)
         {
             if(args->boolclip.clipplane_mask & (1 << i))
             {
@@ -3481,7 +3484,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
 
         struct arb_ps_np2fixup_info* const fixup = priv_ctx.cur_np2fixup_info;
         const WORD map = priv_ctx.cur_ps_args->super.np2_fixup;
-        const UINT max_lconsts = GL_LIMITS(ps_arb_local_constants);
+        const UINT max_lconsts = gl_info->max_ps_arb_local_constants;
 
         fixup->offset = next_local;
         fixup->super.active = 0;
@@ -3998,7 +4001,7 @@ static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DPixelShaderImpl *
 
         if (!device->vs_clipping)
             shader_data->clipplane_emulation = shader_find_free_input_register(&shader->baseShader.reg_maps,
-                    GL_LIMITS(texture_stages) - 1);
+                    gl_info->max_texture_stages - 1);
         else
             shader_data->clipplane_emulation = ~0U;
     }
@@ -4207,7 +4210,7 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
         args->ps_signature = ~0;
         if(!dev->vs_clipping)
         {
-            args->boolclip.clip_texcoord = ffp_clip_emul(stateblock) ? GL_LIMITS(texture_stages) : 0;
+            args->boolclip.clip_texcoord = ffp_clip_emul(stateblock) ? gl_info->max_texture_stages : 0;
         }
         /* Otherwise: Setting boolclip_compare set clip_texcoord to 0 */
     }
@@ -4527,7 +4530,7 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const struct wined3d_gl_
             pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
             TRACE_(d3d_caps)("Hardware vertex shader version 3.0 enabled (NV_VERTEX_PROGRAM3)\n");
         }
-        else if(GL_LIMITS(vs_arb_constantsF) >= 256)
+        else if (gl_info->max_vs_arb_constantsF >= 256)
         {
             /* Shader Model 2.0 requires at least 256 vertex shader constants */
             pCaps->VertexShaderVersion = WINED3DVS_VERSION(2,0);
@@ -4538,7 +4541,7 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const struct wined3d_gl_
             pCaps->VertexShaderVersion = WINED3DVS_VERSION(1,1);
             TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
         }
-        pCaps->MaxVertexShaderConst = GL_LIMITS(vs_arb_constantsF);
+        pCaps->MaxVertexShaderConst = gl_info->max_vs_arb_constantsF;
     }
 
     if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
@@ -4547,7 +4550,7 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const struct wined3d_gl_
             pCaps->PixelShaderVersion    = WINED3DPS_VERSION(3,0);
             TRACE_(d3d_caps)("Hardware pixel shader version 3.0 enabled (NV_FRAGMENT_PROGRAM2)\n");
         }
-        else if(GL_LIMITS(ps_arb_constantsF) >= 32)
+        else if (gl_info->max_ps_arb_constantsF >= 32)
         {
             /* Shader Model 2.0 requires at least 32 pixel shader constants */
             pCaps->PixelShaderVersion    = WINED3DPS_VERSION(2,0);
@@ -4559,7 +4562,7 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const struct wined3d_gl_
             TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
         }
         pCaps->PixelShader1xMaxValue = 8.0f;
-        pCaps->MaxPixelShaderConst = GL_LIMITS(ps_arb_constantsF);
+        pCaps->MaxPixelShaderConst = gl_info->max_ps_arb_constantsF;
     }
 
     pCaps->VSClipping = use_nv_clip(gl_info);
@@ -5203,7 +5206,7 @@ static void arbfp_get_caps(WINED3DDEVTYPE devtype, const struct wined3d_gl_info 
     /* TODO: Implement WINED3DTEXOPCAPS_PREMODULATE */
 
     caps->MaxTextureBlendStages   = 8;
-    caps->MaxSimultaneousTextures = min(GL_LIMITS(fragment_samplers), 8);
+    caps->MaxSimultaneousTextures = min(gl_info->max_fragment_samplers, 8);
 
     caps->PrimitiveMiscCaps |= WINED3DPMISCCAPS_TSSARGTEMP;
 }
@@ -5857,7 +5860,8 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
                 return;
             }
             new_desc->num_textures_used = 0;
-            for(i = 0; i < GL_LIMITS(texture_stages); i++) {
+            for (i = 0; i < context->gl_info->max_texture_stages; ++i)
+            {
                 if(settings.op[i].cop == WINED3DTOP_DISABLE) break;
                 new_desc->num_textures_used = i;
             }

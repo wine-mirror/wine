@@ -402,7 +402,8 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
     checkGLcall("GL_EXTCALL(glBeginFragmentShaderATI())");
 
     /* Pass 1: Generate sampling instructions for perturbation maps */
-      for(stage = 0; stage < GL_LIMITS(textures); stage++) {
+    for (stage = 0; stage < gl_info->max_textures; ++stage)
+    {
         if(op[stage].cop == WINED3DTOP_DISABLE) break;
         if(op[stage].cop != WINED3DTOP_BUMPENVMAP &&
            op[stage].cop != WINED3DTOP_BUMPENVMAPLUMINANCE) continue;
@@ -427,7 +428,8 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
     }
 
     /* Pass 2: Generate perturbation calculations */
-    for(stage = 0; stage < GL_LIMITS(textures); stage++) {
+    for (stage = 0; stage < gl_info->max_textures; ++stage)
+    {
         GLuint argmodextra_x, argmodextra_y;
         struct color_fixup_desc fixup;
 
@@ -475,7 +477,8 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
     }
 
     /* Pass 3: Generate sampling instructions for regular textures */
-    for(stage = 0; stage < GL_LIMITS(textures); stage++) {
+    for (stage = 0; stage < gl_info->max_textures; ++stage)
+    {
         if(op[stage].cop == WINED3DTOP_DISABLE) {
             break;
         }
@@ -815,7 +818,8 @@ static void set_tex_op_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, st
             return;
         }
         new_desc->num_textures_used = 0;
-        for(i = 0; i < GL_LIMITS(texture_stages); i++) {
+        for (i = 0; i < context->gl_info->max_texture_stages; ++i)
+        {
             if(settings.op[i].cop == WINED3DTOP_DISABLE) break;
             new_desc->num_textures_used = i;
         }

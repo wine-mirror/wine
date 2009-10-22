@@ -4115,6 +4115,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface)
 static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     /** Check against the maximum texture sizes supported by the video card **/
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    const struct wined3d_gl_info *gl_info = &This->resource.wineD3DDevice->adapter->gl_info;
     unsigned int pow2Width, pow2Height;
 
     This->texture_name = 0;
@@ -4149,7 +4150,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     }
 
     TRACE("%p\n", This);
-    if ((This->pow2Width > GL_LIMITS(texture_size) || This->pow2Height > GL_LIMITS(texture_size)) && !(This->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL))) {
+    if ((This->pow2Width > gl_info->max_texture_size || This->pow2Height > gl_info->max_texture_size)
+            && !(This->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL)))
+    {
         /* one of three options
         1: Do the same as we do with nonpow 2 and scale the texture, (any texture ops would require the texture to be scaled which is potentially slow)
         2: Set the texture to the maximum size (bad idea)

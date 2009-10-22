@@ -194,25 +194,31 @@ static const DWORD vertex_states_sampler[] =
  */
 static HRESULT stateblock_allocate_shader_constants(IWineD3DStateBlockImpl *object)
 {
-    IWineD3DStateBlockImpl *This = object;
+    const struct wined3d_gl_info *gl_info = &object->wineD3DDevice->adapter->gl_info;
 
     /* Allocate space for floating point constants */
-    object->pixelShaderConstantF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(float) * GL_LIMITS(pshader_constantsF) * 4);
+    object->pixelShaderConstantF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            sizeof(float) * gl_info->max_pshader_constantsF * 4);
     if (!object->pixelShaderConstantF) goto fail;
 
-    object->changed.pixelShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BOOL) * GL_LIMITS(pshader_constantsF));
+    object->changed.pixelShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            sizeof(BOOL) * gl_info->max_pshader_constantsF);
     if (!object->changed.pixelShaderConstantsF) goto fail;
 
-    object->vertexShaderConstantF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(float) * GL_LIMITS(vshader_constantsF) * 4);
+    object->vertexShaderConstantF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            sizeof(float) * gl_info->max_vshader_constantsF * 4);
     if (!object->vertexShaderConstantF) goto fail;
 
-    object->changed.vertexShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BOOL) * GL_LIMITS(vshader_constantsF));
+    object->changed.vertexShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            sizeof(BOOL) * gl_info->max_vshader_constantsF);
     if (!object->changed.vertexShaderConstantsF) goto fail;
 
-    object->contained_vs_consts_f = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) * GL_LIMITS(vshader_constantsF));
+    object->contained_vs_consts_f = HeapAlloc(GetProcessHeap(), 0,
+            sizeof(DWORD) * gl_info->max_vshader_constantsF);
     if (!object->contained_vs_consts_f) goto fail;
 
-    object->contained_ps_consts_f = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) * GL_LIMITS(pshader_constantsF));
+    object->contained_ps_consts_f = HeapAlloc(GetProcessHeap(), 0,
+            sizeof(DWORD) * gl_info->max_pshader_constantsF);
     if (!object->contained_ps_consts_f) goto fail;
 
     return WINED3D_OK;
@@ -1058,6 +1064,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
     IWineD3DDevice         *device = (IWineD3DDevice *)This->wineD3DDevice;
     IWineD3DDeviceImpl     *ThisDevice = (IWineD3DDeviceImpl *)device;
+    const struct wined3d_gl_info *gl_info = &This->wineD3DDevice->adapter->gl_info;
     union {
         WINED3DLINEPATTERN lp;
         DWORD d;
@@ -1171,7 +1178,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     tmpfloat.f = 1.0f;
     IWineD3DDevice_SetRenderState(device, WINED3DRS_PATCHSEGMENTS,            tmpfloat.d);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_DEBUGMONITORTOKEN,        0xbaadcafe);
-    tmpfloat.f = GL_LIMITS(pointsize);
+    tmpfloat.f = gl_info->max_pointsize;
     IWineD3DDevice_SetRenderState(device, WINED3DRS_POINTSIZE_MAX,            tmpfloat.d);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_INDEXEDVERTEXBLENDENABLE, FALSE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_COLORWRITEENABLE,         0x0000000F);
@@ -1265,7 +1272,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
         This->samplerState[i][WINED3DSAMP_DMAPOFFSET       ] = 0; /* TODO: Vertex offset in the presampled displacement map */
     }
 
-    for(i = 0; i < GL_LIMITS(textures); i++) {
+    for (i = 0; i < gl_info->max_textures; ++i)
+    {
         /* Note: This avoids calling SetTexture, so pretend it has been called */
         This->changed.textures |= 1 << i;
         This->textures[i]         = NULL;

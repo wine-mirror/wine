@@ -3183,7 +3183,8 @@ static BOOL CheckVertexTextureCapability(struct wined3d_adapter *adapter, const 
 {
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
 
-    if (!GL_LIMITS(vertex_samplers)) {
+    if (!gl_info->max_vertex_samplers)
+    {
         TRACE_(d3d_caps)("[FAILED]\n");
         return FALSE;
     }
@@ -4067,16 +4068,16 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
      * idea how generating the smoothing alpha values works; the result is different
      */
 
-    pCaps->MaxTextureWidth  = GL_LIMITS(texture_size);
-    pCaps->MaxTextureHeight = GL_LIMITS(texture_size);
+    pCaps->MaxTextureWidth = gl_info->max_texture_size;
+    pCaps->MaxTextureHeight = gl_info->max_texture_size;
 
     if(GL_SUPPORT(EXT_TEXTURE3D))
-        pCaps->MaxVolumeExtent = GL_LIMITS(texture3d_size);
+        pCaps->MaxVolumeExtent = gl_info->max_texture3d_size;
     else
         pCaps->MaxVolumeExtent = 0;
 
     pCaps->MaxTextureRepeat = 32768;
-    pCaps->MaxTextureAspectRatio = GL_LIMITS(texture_size);
+    pCaps->MaxTextureAspectRatio = gl_info->max_texture_size;
     pCaps->MaxVertexW = 1.0f;
 
     pCaps->GuardBandLeft = 0.0f;
@@ -4102,14 +4103,14 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
 
     pCaps->FVFCaps = WINED3DFVFCAPS_PSIZE | 0x0008; /* 8 texture coords */
 
-    pCaps->MaxUserClipPlanes       = GL_LIMITS(clipplanes);
-    pCaps->MaxActiveLights         = GL_LIMITS(lights);
+    pCaps->MaxUserClipPlanes = gl_info->max_clipplanes;
+    pCaps->MaxActiveLights = gl_info->max_lights;
 
-    pCaps->MaxVertexBlendMatrices      = GL_LIMITS(blends);
+    pCaps->MaxVertexBlendMatrices = gl_info->max_blends;
     pCaps->MaxVertexBlendMatrixIndex   = 0;
 
-    pCaps->MaxAnisotropy   = GL_LIMITS(anisotropy);
-    pCaps->MaxPointSize    = GL_LIMITS(pointsize);
+    pCaps->MaxAnisotropy = gl_info->max_anisotropy;
+    pCaps->MaxPointSize = gl_info->max_pointsize;
 
 
     /* FIXME: Add D3DVTXPCAPS_TWEENING, D3DVTXPCAPS_TEXGEN_SPHEREMAP */
@@ -4133,7 +4134,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     pCaps->AdapterOrdinalInGroup             = 0;
     pCaps->NumberOfAdaptersInGroup           = 1;
 
-    pCaps->NumSimultaneousRTs = GL_LIMITS(buffers);
+    pCaps->NumSimultaneousRTs = gl_info->max_buffers;
 
     pCaps->StretchRectFilterCaps             = WINED3DPTFILTERCAPS_MINFPOINT  |
                                                 WINED3DPTFILTERCAPS_MAGFPOINT  |
