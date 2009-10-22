@@ -33,6 +33,19 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
 
+/******************************************************************
+ *		WINMM_MMTIME16to32
+ */
+static void WINMM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16)
+{
+    mmt32->wType = mmt16->wType;
+    /* layout of rest is the same for 32/16,
+     * Note: mmt16->u is 2 bytes smaller than mmt32->u, which has padding
+     */
+    memcpy(&(mmt32->u), &(mmt16->u), sizeof(mmt16->u));
+}
+
+
 /**************************************************************************
  * 				MMDRV_Callback			[internal]
  */
@@ -1165,7 +1178,7 @@ static  WINMM_MapType	MMDRV_WaveIn_UnMap32WTo16(UINT wMsg, DWORD_PTR *lpdwUser, 
 	    LPSTR		ptr   = (LPSTR)mmt16 - sizeof(LPMMTIME);
             LPMMTIME		mmt32 = *(LPMMTIME*)ptr;
 
-	    MMSYSTEM_MMTIME16to32(mmt32, mmt16);
+	    WINMM_MMTIME16to32(mmt32, mmt16);
             UnMapLS( *lpParam1 );
             HeapFree( GetProcessHeap(), 0, ptr );
 	    ret = WINMM_MAP_OK;
@@ -1689,7 +1702,7 @@ static  WINMM_MapType	MMDRV_WaveOut_UnMap32WTo16(UINT wMsg, DWORD_PTR *lpdwUser,
 	    LPSTR		ptr   = (LPSTR)mmt16 - sizeof(LPMMTIME);
             LPMMTIME		mmt32 = *(LPMMTIME*)ptr;
 
-	    MMSYSTEM_MMTIME16to32(mmt32, mmt16);
+	    WINMM_MMTIME16to32(mmt32, mmt16);
             UnMapLS( *lpParam1 );
             HeapFree( GetProcessHeap(), 0, ptr );
 	    ret = WINMM_MAP_OK;
