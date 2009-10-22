@@ -7932,10 +7932,18 @@ static DWORD LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD dwM
             LISTVIEW_SetItemState(infoPtr, -1, &item);
 
             himl = LISTVIEW_CreateCheckBoxIL(infoPtr);
+            if(!(infoPtr->dwStyle & LVS_SHAREIMAGELISTS))
+                ImageList_Destroy(infoPtr->himlState);
         }
-        LISTVIEW_SetImageList(infoPtr, LVSIL_STATE, himl);
+        himl = LISTVIEW_SetImageList(infoPtr, LVSIL_STATE, himl);
+        /*   checkbox list replaces prevous custom list or... */
+        if(((infoPtr->dwLvExStyle & LVS_EX_CHECKBOXES) &&
+           !(infoPtr->dwStyle & LVS_SHAREIMAGELISTS)) ||
+            /* ...previous was checkbox list */
+            (dwOldExStyle & LVS_EX_CHECKBOXES))
+            ImageList_Destroy(himl);
     }
-    
+
     if((infoPtr->dwLvExStyle ^ dwOldExStyle) & LVS_EX_HEADERDRAGDROP)
     {
         DWORD dwStyle;
@@ -9664,12 +9672,9 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
   /* destroy image lists */
   if (!(infoPtr->dwStyle & LVS_SHAREIMAGELISTS))
   {
-      if (infoPtr->himlNormal)
-	  ImageList_Destroy(infoPtr->himlNormal);
-      if (infoPtr->himlSmall)
-	  ImageList_Destroy(infoPtr->himlSmall);
-      if (infoPtr->himlState)
-	  ImageList_Destroy(infoPtr->himlState);
+      ImageList_Destroy(infoPtr->himlNormal);
+      ImageList_Destroy(infoPtr->himlSmall);
+      ImageList_Destroy(infoPtr->himlState);
   }
 
   /* destroy font, bkgnd brush */
