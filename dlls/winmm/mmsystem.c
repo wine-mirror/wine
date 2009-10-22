@@ -443,6 +443,11 @@ DWORD WINAPI mixerMessage16(HMIXER16 hmix, UINT16 uMsg, DWORD dwParam1,
     return mixerMessage(HMIXER_32(hmix), uMsg, dwParam1, dwParam2);
 }
 
+/* ###################################################
+ * #                     AUX                         #
+ * ###################################################
+ */
+
 /**************************************************************************
  * 				auxGetNumDevs		[MMSYSTEM.350]
  */
@@ -450,11 +455,6 @@ UINT16 WINAPI auxGetNumDevs16(void)
 {
     return auxGetNumDevs();
 }
-
-/* ###################################################
- * #                     AUX                         #
- * ###################################################
- */
 
 /**************************************************************************
  * 				auxGetDevCaps		[MMSYSTEM.351]
@@ -509,7 +509,7 @@ DWORD WINAPI auxOutMessage16(UINT16 uDeviceID, UINT16 uMessage, DWORD dw1, DWORD
 	/* no argument conversion needed */
 	break;
     case AUXDM_GETVOLUME:
-	return auxGetVolume16(uDeviceID, MapSL(dw1));
+	return auxGetVolume(uDeviceID, MapSL(dw1));
     case AUXDM_GETDEVCAPS:
 	return auxGetDevCaps16(uDeviceID, MapSL(dw1), dw2);
     default:
