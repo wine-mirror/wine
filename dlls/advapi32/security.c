@@ -3507,8 +3507,15 @@ DWORD WINAPI SetEntriesInAclW( ULONG count, PEXPLICIT_ACCESSW pEntries,
             DWORD sid_size = FIELD_OFFSET(SID, SubAuthority[SID_MAX_SUB_AUTHORITIES]);
             DWORD domain_size = MAX_COMPUTERNAME_LENGTH + 1;
             SID_NAME_USE use;
-            if ( strcmpW( pEntries[i].Trustee.ptstrName, CURRENT_USER ) &&
-                 !LookupAccountNameW(NULL, pEntries[i].Trustee.ptstrName, ppsid[i], &sid_size, NULL, &domain_size, &use))
+            if (!strcmpW( pEntries[i].Trustee.ptstrName, CURRENT_USER ))
+            {
+                if (!lookup_user_account_name( ppsid[i], &sid_size, NULL, &domain_size, &use ))
+                {
+                    ret = GetLastError();
+                    goto exit;
+                }
+            }
+            else if (!LookupAccountNameW(NULL, pEntries[i].Trustee.ptstrName, ppsid[i], &sid_size, NULL, &domain_size, &use))
             {
                 WARN("bad user name %s for trustee %d\n", debugstr_w(pEntries[i].Trustee.ptstrName), i);
                 ret = ERROR_INVALID_PARAMETER;
