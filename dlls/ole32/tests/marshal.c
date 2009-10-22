@@ -1799,6 +1799,7 @@ static HRESULT WINAPI TestRE_IClassFactory_CreateInstance(
         BOOL ret = SendMessageTimeout(hwnd_app, WM_NULL, 0, 0, SMTO_BLOCK, 5000, &res);
         ok(ret, "Timed out sending a message to originating window during RPC call\n");
     }
+    *ppvObj = NULL;
     return S_FALSE;
 }
 
