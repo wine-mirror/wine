@@ -1941,7 +1941,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
 
             if (mimeTypeA == NULL)
             {
-                if (contentTypeW != NULL)
+                if (contentTypeW != NULL && strchrW(contentTypeW, '/'))
                     mimeTypeA = wchars_to_utf8_chars(contentTypeW);
                 else
                     mimeTypeA = heap_printf("application/x-wine-extension-%s", &extensionA[1]);
