@@ -6154,6 +6154,9 @@ static void arbfp_blit_free(IWineD3DDevice *iface) {
     GL_EXTCALL(glDeleteProgramsARB(1, &priv->yv12_2d_shader));
     checkGLcall("Delete yuv programs");
     LEAVE_GL();
+
+    HeapFree(GetProcessHeap(), 0, device->blit_priv);
+    device->blit_priv = NULL;
 }
 
 static BOOL gen_planar_yuv_read(struct wined3d_shader_buffer *buffer, enum yuv_fixup yuv_fixup,
