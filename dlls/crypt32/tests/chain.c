@@ -1778,14 +1778,15 @@ static ChainCheck chainCheck[] = {
    { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 }, 1, simpleStatus14 },
    0 },
+ /* Earlier versions of crypt32 incorrectly do not complain that the end cert's
+  * key usage is invalid, so ignore that error.
+  */
  { { sizeof(chain15) / sizeof(chain15[0]), chain15 },
-   { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
+       CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_VALID_FOR_USAGE, 0 },
      1, simpleStatus15 },
    0 },
- /* Windows XP incorrectly does not complain that the end cert's key usage is
-  * invalid, so ignore that error.
-  */
  { { sizeof(chain16) / sizeof(chain16[0]), chain16 },
    { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
        CERT_TRUST_HAS_PREFERRED_ISSUER },
@@ -1797,7 +1798,8 @@ static ChainCheck chainCheck[] = {
      { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 }, 1, simpleStatus17 },
    0 },
  { { sizeof(chain18) / sizeof(chain18[0]), chain18 },
-   { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
+       CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_VALID_FOR_USAGE, 0 },
      1, simpleStatus18 },
    0 },
