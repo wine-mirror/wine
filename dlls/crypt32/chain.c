@@ -725,8 +725,26 @@ static void CRYPT_CheckChainNameConstraints(PCERT_SIMPLE_CHAIN chain)
     }
 }
 
+static LPWSTR name_value_to_str(const CERT_NAME_BLOB *name)
+{
+    DWORD len = cert_name_to_str_with_indent(X509_ASN_ENCODING, 0, name,
+     CERT_SIMPLE_NAME_STR, NULL, 0);
+    LPWSTR str = NULL;
+
+    if (len)
+    {
+        str = CryptMemAlloc(len * sizeof(WCHAR));
+        if (str)
+            cert_name_to_str_with_indent(X509_ASN_ENCODING, 0, name,
+             CERT_SIMPLE_NAME_STR, str, len);
+    }
+    return str;
+}
+
 static void dump_alt_name_entry(const CERT_ALT_NAME_ENTRY *entry)
 {
+    LPWSTR str;
+
     switch (entry->dwAltNameChoice)
     {
     case CERT_ALT_NAME_OTHER_NAME:
@@ -742,8 +760,9 @@ static void dump_alt_name_entry(const CERT_ALT_NAME_ENTRY *entry)
          debugstr_w(entry->u.pwszDNSName));
         break;
     case CERT_ALT_NAME_DIRECTORY_NAME:
-        TRACE_(chain)("CERT_ALT_NAME_DIRECTORY_NAME: %d bytes\n",
-         entry->u.DirectoryName.cbData);
+        str = name_value_to_str(&entry->u.DirectoryName);
+        TRACE_(chain)("CERT_ALT_NAME_DIRECTORY_NAME: %s\n", debugstr_w(str));
+        CryptMemFree(str);
         break;
     case CERT_ALT_NAME_URL:
         TRACE_(chain)("CERT_ALT_NAME_URL: %s\n", debugstr_w(entry->u.pwszURL));
