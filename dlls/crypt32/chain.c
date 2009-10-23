@@ -755,12 +755,41 @@ static void dump_basic_constraints2(const CERT_EXTENSION *ext)
     }
 }
 
+static void dump_key_usage(const CERT_EXTENSION *ext)
+{
+    CRYPT_BIT_BLOB usage;
+    DWORD size = sizeof(usage);
+
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_BITS, ext->Value.pbData,
+     ext->Value.cbData, CRYPT_DECODE_NOCOPY_FLAG, NULL, &usage, &size))
+    {
+#define trace_usage_bit(bits, bit) \
+ if ((bits) & (bit)) TRACE_(chain)("%s\n", #bit)
+        if (usage.cbData)
+        {
+            trace_usage_bit(usage.pbData[0], CERT_DIGITAL_SIGNATURE_KEY_USAGE);
+            trace_usage_bit(usage.pbData[0], CERT_NON_REPUDIATION_KEY_USAGE);
+            trace_usage_bit(usage.pbData[0], CERT_KEY_ENCIPHERMENT_KEY_USAGE);
+            trace_usage_bit(usage.pbData[0], CERT_DATA_ENCIPHERMENT_KEY_USAGE);
+            trace_usage_bit(usage.pbData[0], CERT_KEY_AGREEMENT_KEY_USAGE);
+            trace_usage_bit(usage.pbData[0], CERT_KEY_CERT_SIGN_KEY_USAGE);
+            trace_usage_bit(usage.pbData[0], CERT_CRL_SIGN_KEY_USAGE);
+            trace_usage_bit(usage.pbData[0], CERT_ENCIPHER_ONLY_KEY_USAGE);
+        }
+#undef trace_usage_bit
+        if (usage.cbData > 1 && usage.pbData[1] & CERT_DECIPHER_ONLY_KEY_USAGE)
+            TRACE_(chain)("CERT_DECIPHER_ONLY_KEY_USAGE\n");
+    }
+}
+
 static void dump_extension(const CERT_EXTENSION *ext)
 {
     TRACE_(chain)("%s (%scritical)\n", debugstr_a(ext->pszObjId),
      ext->fCritical ? "" : "not ");
     if (!strcmp(ext->pszObjId, szOID_BASIC_CONSTRAINTS))
         dump_basic_constraints(ext);
+    else if (!strcmp(ext->pszObjId, szOID_KEY_USAGE))
+        dump_key_usage(ext);
     else if (!strcmp(ext->pszObjId, szOID_BASIC_CONSTRAINTS2))
         dump_basic_constraints2(ext);
 }
@@ -815,26 +844,6 @@ static void dump_element(PCCERT_CONTEXT cert)
         dump_extension(&cert->pCertInfo->rgExtension[i]);
 }
 
-static void trace_usage(const CRYPT_BIT_BLOB *usage)
-{
-#define trace_usage_bit(bits, bit) \
- if ((bits) & (bit)) TRACE_(chain)("%s\n", #bit)
-    if (usage->cbData)
-    {
-        trace_usage_bit(usage->pbData[0], CERT_DIGITAL_SIGNATURE_KEY_USAGE);
-        trace_usage_bit(usage->pbData[0], CERT_NON_REPUDIATION_KEY_USAGE);
-        trace_usage_bit(usage->pbData[0], CERT_KEY_ENCIPHERMENT_KEY_USAGE);
-        trace_usage_bit(usage->pbData[0], CERT_DATA_ENCIPHERMENT_KEY_USAGE);
-        trace_usage_bit(usage->pbData[0], CERT_KEY_AGREEMENT_KEY_USAGE);
-        trace_usage_bit(usage->pbData[0], CERT_KEY_CERT_SIGN_KEY_USAGE);
-        trace_usage_bit(usage->pbData[0], CERT_CRL_SIGN_KEY_USAGE);
-        trace_usage_bit(usage->pbData[0], CERT_ENCIPHER_ONLY_KEY_USAGE);
-    }
-#undef trace_usage_bit
-    if (usage->cbData > 1 && usage->pbData[1] & CERT_DECIPHER_ONLY_KEY_USAGE)
-        TRACE_(chain)("CERT_DECIPHER_ONLY_KEY_USAGE\n");
-}
-
 static BOOL CRYPT_KeyUsageValid(PCCERT_CONTEXT cert, BOOL isRoot, BOOL isCA,
  DWORD index)
 {
@@ -868,8 +877,6 @@ static BOOL CRYPT_KeyUsageValid(PCCERT_CONTEXT cert, BOOL isRoot, BOOL isCA,
              * key usage bits.
              */
             usageBits = usage.pbData[usage.cbData - 1];
-            if (TRACE_ON(chain))
-                trace_usage(&usage);
         }
     }
     if (isCA)
