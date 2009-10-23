@@ -3151,6 +3151,7 @@ BOOL WINAPI EnumThreadWindows( DWORD id, WNDENUMPROC func, LPARAM lParam )
 {
     HWND *list;
     int i;
+    BOOL ret = TRUE;
 
     USER_CheckNotLock();
 
@@ -3159,9 +3160,9 @@ BOOL WINAPI EnumThreadWindows( DWORD id, WNDENUMPROC func, LPARAM lParam )
     /* Now call the callback function for every window */
 
     for (i = 0; list[i]; i++)
-        if (!func( list[i], lParam )) break;
+        if (!(ret = func( list[i], lParam ))) break;
     HeapFree( GetProcessHeap(), 0, list );
-    return TRUE;
+    return ret;
 }
 
 
