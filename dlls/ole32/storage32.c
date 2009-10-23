@@ -198,6 +198,11 @@ static LONG propertyNameCmp(
     const OLECHAR *newProperty,
     const OLECHAR *currentProperty);
 
+static ULONG findElement(
+    StorageImpl *storage,
+    ULONG storageEntry,
+    const OLECHAR *name,
+    StgProperty *data);
 
 /***********************************************************************
  * Declaration of miscellaneous functions...
@@ -244,8 +249,6 @@ static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(StorageImpl* This, ULONG fir
 static void IEnumSTATSTGImpl_Destroy(IEnumSTATSTGImpl* This);
 static void IEnumSTATSTGImpl_PushSearchNode(IEnumSTATSTGImpl* This, ULONG nodeToPush);
 static ULONG IEnumSTATSTGImpl_PopSearchNode(IEnumSTATSTGImpl* This, BOOL remove);
-static ULONG IEnumSTATSTGImpl_FindProperty(IEnumSTATSTGImpl* This, const OLECHAR* lpszPropName,
-                                           StgProperty* buffer);
 static INT IEnumSTATSTGImpl_FindParentProperty(IEnumSTATSTGImpl *This, ULONG childProperty,
                                                StgProperty *currentProperty, ULONG *propertyId);
 
@@ -387,7 +390,6 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
   IStream**        ppstm)     /* [out] */
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
-  IEnumSTATSTGImpl* propertyEnumeration;
   StgStreamImpl*    newStream;
   StgProperty       currentProperty;
   ULONG             foundPropertyIndex;
@@ -433,24 +435,13 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
   }
 
   /*
-   * Create a property enumeration to search the properties
+   * Search for the element with the given name
    */
-  propertyEnumeration = IEnumSTATSTGImpl_Construct(
+  foundPropertyIndex = findElement(
     This->ancestorStorage,
-    This->rootPropertySetIndex);
-
-  /*
-   * Search the enumeration for the property with the given name
-   */
-  foundPropertyIndex = IEnumSTATSTGImpl_FindProperty(
-    propertyEnumeration,
+    This->rootPropertySetIndex,
     pwcsName,
     &currentProperty);
-
-  /*
-   * Delete the property enumeration since we don't need it anymore
-   */
-  IEnumSTATSTGImpl_Destroy(propertyEnumeration);
 
   /*
    * If it was found, construct the stream object and return a pointer to it.
@@ -502,7 +493,6 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
   StorageInternalImpl* newStorage;
-  IEnumSTATSTGImpl*      propertyEnumeration;
   StgProperty            currentProperty;
   ULONG                  foundPropertyIndex;
   HRESULT                res = STG_E_UNKNOWN;
@@ -555,16 +545,11 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
 
   *ppstg = NULL;
 
-  propertyEnumeration = IEnumSTATSTGImpl_Construct(
-                          This->ancestorStorage,
-                          This->rootPropertySetIndex);
-
-  foundPropertyIndex = IEnumSTATSTGImpl_FindProperty(
-                         propertyEnumeration,
+  foundPropertyIndex = findElement(
+                         This->ancestorStorage,
+                         This->rootPropertySetIndex,
                          pwcsName,
                          &currentProperty);
-
-  IEnumSTATSTGImpl_Destroy(propertyEnumeration);
 
   if ( (foundPropertyIndex!=PROPERTY_NULL) &&
        (currentProperty.propertyType==PROPTYPE_STORAGE) )
@@ -708,39 +693,32 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
             const OLECHAR*   pwcsNewName)  /* [in] */
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
-  IEnumSTATSTGImpl* propertyEnumeration;
   StgProperty       currentProperty;
   ULONG             foundPropertyIndex;
 
   TRACE("(%p, %s, %s)\n",
 	iface, debugstr_w(pwcsOldName), debugstr_w(pwcsNewName));
 
-  propertyEnumeration = IEnumSTATSTGImpl_Construct(This->ancestorStorage,
-                                                   This->rootPropertySetIndex);
-
-  foundPropertyIndex = IEnumSTATSTGImpl_FindProperty(propertyEnumeration,
-                                                     pwcsNewName,
-                                                     &currentProperty);
+  foundPropertyIndex = findElement(This->ancestorStorage,
+                                   This->rootPropertySetIndex,
+                                   pwcsNewName,
+                                   &currentProperty);
 
   if (foundPropertyIndex != PROPERTY_NULL)
   {
     /*
      * There is already a property with the new name
      */
-    IEnumSTATSTGImpl_Destroy(propertyEnumeration);
     return STG_E_FILEALREADYEXISTS;
   }
 
-  IEnumSTATSTG_Reset((IEnumSTATSTG*)propertyEnumeration);
-
   /*
-   * Search the enumeration for the old property name
+   * Search for the old element name
    */
-  foundPropertyIndex = IEnumSTATSTGImpl_FindProperty(propertyEnumeration,
-                                                     pwcsOldName,
-                                                     &currentProperty);
-
-  IEnumSTATSTGImpl_Destroy(propertyEnumeration);
+  foundPropertyIndex = findElement(This->ancestorStorage,
+                                   This->rootPropertySetIndex,
+                                   pwcsOldName,
+                                   &currentProperty);
 
   if (foundPropertyIndex != PROPERTY_NULL)
   {
@@ -855,7 +833,6 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
             IStream**        ppstm)     /* [out] */
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
-  IEnumSTATSTGImpl* propertyEnumeration;
   StgStreamImpl*    newStream;
   StgProperty       currentProperty, newStreamProperty;
   ULONG             foundPropertyIndex, newPropertyIndex;
@@ -904,14 +881,10 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
 
   *ppstm = 0;
 
-  propertyEnumeration = IEnumSTATSTGImpl_Construct(This->ancestorStorage,
-                                                   This->rootPropertySetIndex);
-
-  foundPropertyIndex = IEnumSTATSTGImpl_FindProperty(propertyEnumeration,
-                                                     pwcsName,
-                                                     &currentProperty);
-
-  IEnumSTATSTGImpl_Destroy(propertyEnumeration);
+  foundPropertyIndex = findElement(This->ancestorStorage,
+                                   This->rootPropertySetIndex,
+                                   pwcsName,
+                                   &currentProperty);
 
   if (foundPropertyIndex != PROPERTY_NULL)
   {
@@ -1068,7 +1041,6 @@ static HRESULT WINAPI StorageImpl_CreateStorage(
 {
   StorageImpl* const This=(StorageImpl*)iface;
 
-  IEnumSTATSTGImpl *propertyEnumeration;
   StgProperty      currentProperty;
   StgProperty      newProperty;
   ULONG            foundPropertyIndex;
@@ -1103,16 +1075,10 @@ static HRESULT WINAPI StorageImpl_CreateStorage(
     return STG_E_ACCESSDENIED;
   }
 
-  /*
-   * Create a property enumeration and search the properties
-   */
-  propertyEnumeration = IEnumSTATSTGImpl_Construct( This->base.ancestorStorage,
-                                                    This->base.rootPropertySetIndex);
-
-  foundPropertyIndex = IEnumSTATSTGImpl_FindProperty(propertyEnumeration,
-                                                     pwcsName,
-                                                     &currentProperty);
-  IEnumSTATSTGImpl_Destroy(propertyEnumeration);
+  foundPropertyIndex = findElement(This->base.ancestorStorage,
+                                   This->base.rootPropertySetIndex,
+                                   pwcsName,
+                                   &currentProperty);
 
   if (foundPropertyIndex != PROPERTY_NULL)
   {
@@ -1440,6 +1406,44 @@ static void updatePropertyChain(
   }
 }
 
+/****************************************************************************
+ *
+ * Internal Method
+ *
+ * Find and read the element of a storage with the given name.
+ */
+static ULONG findElement(StorageImpl *storage, ULONG storageEntry,
+    const OLECHAR *name, StgProperty *data)
+{
+  ULONG currentEntry;
+
+  /* Read the storage entry to find the root of the tree. */
+  StorageImpl_ReadProperty(storage, storageEntry, data);
+
+  currentEntry = data->dirProperty;
+
+  while (currentEntry != PROPERTY_NULL)
+  {
+    LONG cmp;
+
+    StorageImpl_ReadProperty(storage, currentEntry, data);
+
+    cmp = propertyNameCmp(name, data->name);
+
+    if (cmp == 0)
+      /* found it */
+      break;
+
+    else if (cmp < 0)
+      currentEntry = data->leftChild;
+
+    else if (cmp > 0)
+      currentEntry = data->rightChild;
+  }
+
+  return currentEntry;
+}
+
 
 /*************************************************************************
  * CopyTo (IStorage)
@@ -1697,7 +1701,6 @@ static HRESULT WINAPI StorageImpl_DestroyElement(
 {
   StorageImpl* const This=(StorageImpl*)iface;
 
-  IEnumSTATSTGImpl* propertyEnumeration;
   HRESULT           hr = S_OK;
   BOOL            res;
   StgProperty       propertyToDelete;
@@ -1715,16 +1718,11 @@ static HRESULT WINAPI StorageImpl_DestroyElement(
   if ( STGM_ACCESS_MODE( This->base.openFlags ) == STGM_READ )
     return STG_E_ACCESSDENIED;
 
-  propertyEnumeration = IEnumSTATSTGImpl_Construct(
+  foundPropertyIndexToDelete = findElement(
     This->base.ancestorStorage,
-    This->base.rootPropertySetIndex);
-
-  foundPropertyIndexToDelete = IEnumSTATSTGImpl_FindProperty(
-    propertyEnumeration,
+    This->base.rootPropertySetIndex,
     pwcsName,
     &propertyToDelete);
-
-  IEnumSTATSTGImpl_Destroy(propertyEnumeration);
 
   if ( foundPropertyIndexToDelete == PROPERTY_NULL )
   {
@@ -3958,49 +3956,6 @@ static INT IEnumSTATSTGImpl_FindParentProperty(
 
     else if (currentProperty->dirProperty == childProperty)
       return PROPERTY_RELATION_DIR;
-
-    /*
-     * Push the next search node in the search stack.
-     */
-    IEnumSTATSTGImpl_PushSearchNode(This, currentProperty->rightChild);
-
-    /*
-     * continue the iteration.
-     */
-    currentSearchNode = IEnumSTATSTGImpl_PopSearchNode(This, FALSE);
-  }
-
-  return PROPERTY_NULL;
-}
-
-static ULONG IEnumSTATSTGImpl_FindProperty(
-  IEnumSTATSTGImpl* This,
-  const OLECHAR*  lpszPropName,
-  StgProperty*      currentProperty)
-{
-  ULONG currentSearchNode;
-
-  /*
-   * Start with the node at the top of the stack.
-   */
-  currentSearchNode = IEnumSTATSTGImpl_PopSearchNode(This, FALSE);
-
-  while (currentSearchNode!=PROPERTY_NULL)
-  {
-    /*
-     * Remove the top node from the stack
-     */
-    IEnumSTATSTGImpl_PopSearchNode(This, TRUE);
-
-    /*
-     * Read the property from the storage.
-     */
-    StorageImpl_ReadProperty(This->parentStorage,
-      currentSearchNode,
-      currentProperty);
-
-    if (propertyNameCmp(currentProperty->name, lpszPropName) == 0)
-      return currentSearchNode;
 
     /*
      * Push the next search node in the search stack.
