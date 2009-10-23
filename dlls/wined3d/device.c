@@ -6376,12 +6376,10 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
             cursorInfo.fIcon = FALSE;
             cursorInfo.xHotspot = XHotSpot;
             cursorInfo.yHotspot = YHotSpot;
-            cursorInfo.hbmMask = CreateBitmap(pSur->currentDesc.Width,
-                                              pSur->currentDesc.Height, 1,
-                                              1, &maskBits);
-            cursorInfo.hbmColor = CreateBitmap(pSur->currentDesc.Width,
-                                               pSur->currentDesc.Height, 1,
-                                               32, lockedRect.pBits);
+            cursorInfo.hbmMask = CreateBitmap(pSur->currentDesc.Width, pSur->currentDesc.Height,
+                    1, 1, maskBits);
+            cursorInfo.hbmColor = CreateBitmap(pSur->currentDesc.Width, pSur->currentDesc.Height,
+                    1, 32, lockedRect.pBits);
             IWineD3DSurface_UnlockRect(pCursorBitmap);
             /* Create our cursor and clean up. */
             cursor = CreateIconIndirect(&cursorInfo);
