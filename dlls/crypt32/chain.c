@@ -618,8 +618,12 @@ static void CRYPT_CheckNameConstraints(
     {
         CERT_EXTENSION *ext;
 
-        if ((ext = CertFindExtension(szOID_SUBJECT_ALT_NAME, cert->cExtension,
-         cert->rgExtension)))
+        ext = CertFindExtension(szOID_SUBJECT_ALT_NAME2, cert->cExtension,
+         cert->rgExtension);
+        if (!ext)
+            ext = CertFindExtension(szOID_SUBJECT_ALT_NAME, cert->cExtension,
+             cert->rgExtension);
+        if (ext)
         {
             CERT_ALT_NAME_INFO *subjectName;
             DWORD size;
@@ -1087,6 +1091,8 @@ static BOOL CRYPT_CriticalExtensionsSupported(PCCERT_CONTEXT cert)
             else if (!strcmp(oid, szOID_KEY_USAGE))
                 ret = TRUE;
             else if (!strcmp(oid, szOID_SUBJECT_ALT_NAME))
+                ret = TRUE;
+            else if (!strcmp(oid, szOID_SUBJECT_ALT_NAME2))
                 ret = TRUE;
             else
             {
