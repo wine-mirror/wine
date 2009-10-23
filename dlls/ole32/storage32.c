@@ -773,10 +773,8 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
     renamedProperty.dirProperty = currentProperty.dirProperty;
 
     /* call CoFileTime to get the current time
-    renamedProperty.timeStampS1
-    renamedProperty.timeStampD1
-    renamedProperty.timeStampS2
-    renamedProperty.timeStampD2
+    renamedProperty.ctime
+    renamedProperty.mtime
     renamedProperty.propertyUniqueID
     */
 
@@ -967,10 +965,8 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
   newStreamProperty.dirProperty      = PROPERTY_NULL;
 
   /* call CoFileTime to get the current time
-  newStreamProperty.timeStampS1
-  newStreamProperty.timeStampD1
-  newStreamProperty.timeStampS2
-  newStreamProperty.timeStampD2
+  newStreamProperty.ctime
+  newStreamProperty.mtime
   */
 
   /*  newStreamProperty.propertyUniqueID */
@@ -1167,10 +1163,8 @@ static HRESULT WINAPI StorageImpl_CreateStorage(
   newProperty.dirProperty      = PROPERTY_NULL;
 
   /* call CoFileTime to get the current time
-  newProperty.timeStampS1
-  newProperty.timeStampD1
-  newProperty.timeStampS2
-  newProperty.timeStampD2
+  newProperty.ctime
+  newProperty.mtime
   */
 
   /*  newStorageProperty.propertyUniqueID */
@@ -3234,23 +3228,23 @@ BOOL StorageImpl_ReadProperty(
 
     StorageUtl_ReadDWord(
       currentProperty,
-      OFFSET_PS_TSS1,
-      &buffer->timeStampS1);
+      OFFSET_PS_CTIMELOW,
+      &buffer->ctime.dwLowDateTime);
 
     StorageUtl_ReadDWord(
       currentProperty,
-      OFFSET_PS_TSD1,
-      &buffer->timeStampD1);
+      OFFSET_PS_CTIMEHIGH,
+      &buffer->ctime.dwHighDateTime);
 
     StorageUtl_ReadDWord(
       currentProperty,
-      OFFSET_PS_TSS2,
-      &buffer->timeStampS2);
+      OFFSET_PS_MTIMELOW,
+      &buffer->mtime.dwLowDateTime);
 
     StorageUtl_ReadDWord(
       currentProperty,
-      OFFSET_PS_TSD2,
-      &buffer->timeStampD2);
+      OFFSET_PS_MTIMEHIGH,
+      &buffer->mtime.dwHighDateTime);
 
     StorageUtl_ReadDWord(
       currentProperty,
@@ -3320,23 +3314,23 @@ BOOL StorageImpl_WriteProperty(
 
   StorageUtl_WriteDWord(
     currentProperty,
-      OFFSET_PS_TSS1,
-      buffer->timeStampS1);
+      OFFSET_PS_CTIMELOW,
+      buffer->ctime.dwLowDateTime);
 
   StorageUtl_WriteDWord(
     currentProperty,
-      OFFSET_PS_TSD1,
-      buffer->timeStampD1);
+      OFFSET_PS_CTIMEHIGH,
+      buffer->ctime.dwHighDateTime);
 
   StorageUtl_WriteDWord(
     currentProperty,
-      OFFSET_PS_TSS2,
-      buffer->timeStampS2);
+      OFFSET_PS_MTIMELOW,
+      buffer->mtime.dwLowDateTime);
 
   StorageUtl_WriteDWord(
     currentProperty,
-      OFFSET_PS_TSD2,
-      buffer->timeStampD2);
+      OFFSET_PS_MTIMEHIGH,
+      buffer->ctime.dwHighDateTime);
 
   StorageUtl_WriteDWord(
     currentProperty,
