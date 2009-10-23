@@ -607,7 +607,7 @@ static DWORD CALLBACK enum_thread( void *arg )
     count = 0;
     ret = EnumThreadWindows( GetCurrentThreadId(), enum_proc, (LPARAM)&count );
     ok( !ret, "EnumThreadWindows should have returned FALSE\n" );
-    ok( count == 3, "count should be 1 got %d\n", count );
+    ok( count == 3, "count should be 3 got %d\n", count );
 
     if (hwnd[2]) DestroyWindow(hwnd[2]);
     DestroyWindow(hwnd[1]);
