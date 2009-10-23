@@ -148,14 +148,7 @@ void wined3d_rb_free(void *ptr) DECLSPEC_HIDDEN;
 #define MAX_ACTIVE_LIGHTS       8
 #define MAX_CLIPPLANES          WINED3DMAXUSERCLIPPLANES
 
-typedef enum _WINELOOKUP {
-    WINELOOKUP_WARPPARAM = 0,
-    MAX_LOOKUPS          = 1
-} WINELOOKUP;
-
-extern const int minLookup[MAX_LOOKUPS] DECLSPEC_HIDDEN;
-extern const int maxLookup[MAX_LOOKUPS] DECLSPEC_HIDDEN;
-extern DWORD *stateLookup[MAX_LOOKUPS] DECLSPEC_HIDDEN;
+extern GLint wrap_lookup[WINED3DTADDRESS_MIRRORONCE - WINED3DTADDRESS_WRAP + 1] DECLSPEC_HIDDEN;
 
 struct min_lookup
 {

@@ -319,29 +319,30 @@ HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surfac
 }
 
 /* GL locking is done by the caller */
-static inline void apply_wrap(const GLint textureDimensions, const DWORD state, const GLint type,
-                              BOOL cond_np2) {
-    GLint wrapParm;
+static void apply_wrap(GLenum target, WINED3DTEXTUREADDRESS d3d_wrap, GLenum param, BOOL cond_np2)
+{
+    GLint gl_wrap;
 
-    if (state < minLookup[WINELOOKUP_WARPPARAM] || state > maxLookup[WINELOOKUP_WARPPARAM]) {
-        FIXME("Unrecognized or unsupported WINED3DTADDRESS_U value %d\n", state);
-    } else {
-        if(textureDimensions==GL_TEXTURE_CUBE_MAP_ARB) {
-            /* Cubemaps are always set to clamp, regardless of the sampler state. */
-            wrapParm = GL_CLAMP_TO_EDGE;
-        } else if(cond_np2) {
-            if(state == WINED3DTADDRESS_WRAP) {
-                wrapParm = GL_CLAMP_TO_EDGE;
-            } else {
-                wrapParm = stateLookup[WINELOOKUP_WARPPARAM][state - minLookup[WINELOOKUP_WARPPARAM]];
-            }
-        } else {
-            wrapParm = stateLookup[WINELOOKUP_WARPPARAM][state - minLookup[WINELOOKUP_WARPPARAM]];
-        }
-        TRACE("Setting WRAP_S to %d for %x\n", wrapParm, textureDimensions);
-        glTexParameteri(textureDimensions, type, wrapParm);
-        checkGLcall("glTexParameteri(..., type, wrapParm)");
+    if (d3d_wrap < WINED3DTADDRESS_WRAP || d3d_wrap > WINED3DTADDRESS_MIRRORONCE)
+    {
+        FIXME("Unrecognized or unsupported WINED3DTEXTUREADDRESS %#x.\n", d3d_wrap);
+        return;
     }
+
+    if (target == GL_TEXTURE_CUBE_MAP_ARB
+            || (cond_np2 && d3d_wrap == WINED3DTADDRESS_WRAP))
+    {
+        /* Cubemaps are always set to clamp, regardless of the sampler state. */
+        gl_wrap = GL_CLAMP_TO_EDGE;
+    }
+    else
+    {
+        gl_wrap = wrap_lookup[d3d_wrap - WINED3DTADDRESS_WRAP];
+    }
+
+    TRACE("Setting param %#x to %#x for target %#x.\n", param, gl_wrap, target);
+    glTexParameteri(target, param, gl_wrap);
+    checkGLcall("glTexParameteri(target, param, gl_wrap)");
 }
 
 /* GL locking is done by the caller (state handler) */
