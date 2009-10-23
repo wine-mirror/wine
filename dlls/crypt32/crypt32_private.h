@@ -295,7 +295,7 @@ void CRYPT_FixKeyProvInfoPointers(PCRYPT_KEY_PROV_INFO info);
  */
 
 DWORD cert_name_to_str_with_indent(DWORD dwCertEncodingType, DWORD indent,
- PCERT_NAME_BLOB pName, DWORD dwStrType, LPWSTR psz, DWORD csz);
+ const CERT_NAME_BLOB *pName, DWORD dwStrType, LPWSTR psz, DWORD csz);
 
 /**
  *  Context functions
