@@ -394,7 +394,6 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
     ICOPEN		icopen;
     HDRVR		hdrv;
     WINE_HIC*           whic;
-    BOOL                bIs16;
     static const WCHAR  drv32W[] = {'d','r','i','v','e','r','s','3','2','\0'};
     reg_driver*         driver;
 
@@ -442,14 +441,7 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
         if (!hdrv) 
             return 0; 
     }
-    bIs16 = GetDriverFlags(hdrv) & 0x10000000; /* undocumented flag: WINE_GDF_16BIT */
 
-    if (bIs16)
-    {
-        FIXME("Got a 16 bit driver, but no 16 bit support in msvfw\n");
-        CloseDriver(hdrv, 0, 0);
-        return 0;
-    }
     whic = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_HIC));
     if (!whic)
     {
