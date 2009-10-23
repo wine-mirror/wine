@@ -178,6 +178,7 @@ static void test_qi_ex_to_base(void)
     IDirect3DDevice9_Release(device);
 
     IDirect3D9_Release(d3d9);
+    IDirect3D9Ex_Release(d3d9ex);
 
 out:
     DestroyWindow(window);
