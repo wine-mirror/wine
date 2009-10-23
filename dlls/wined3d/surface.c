@@ -2516,14 +2516,16 @@ BOOL palette9_changed(IWineD3DSurfaceImpl *This) {
         return FALSE;
     }
 
-    if(This->palette9) {
-        if(memcmp(This->palette9, &device->palettes[device->currentPalette], sizeof(PALETTEENTRY) * 256) == 0) {
+    if (This->palette9)
+    {
+        if (!memcmp(This->palette9, device->palettes[device->currentPalette], sizeof(PALETTEENTRY) * 256))
+        {
             return FALSE;
         }
     } else {
         This->palette9 = HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY) * 256);
     }
-    memcpy(This->palette9, &device->palettes[device->currentPalette], sizeof(PALETTEENTRY) * 256);
+    memcpy(This->palette9, device->palettes[device->currentPalette], sizeof(PALETTEENTRY) * 256);
     return TRUE;
 }
 
