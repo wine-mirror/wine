@@ -162,7 +162,7 @@ static void basic_test(void)
 
 static void rebuild_toolbar(HWND *hToolbar)
 {
-    if (*hToolbar != NULL)
+    if (*hToolbar)
         DestroyWindow(*hToolbar);
     *hToolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 0, 0,
         hMainWnd, (HMENU)5, GetModuleHandle(NULL), NULL);
@@ -1082,7 +1082,7 @@ static void restore_recalc_state(HWND hToolbar)
 
 static void test_recalc(void)
 {
-    HWND hToolbar;
+    HWND hToolbar = NULL;
     TBBUTTONINFO bi;
     CHAR test[] = "Test";
     const int EX_STYLES_COUNT = 5;
