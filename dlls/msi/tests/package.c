@@ -11391,6 +11391,7 @@ static void test_emptypackage(void)
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     }
 
+    buffer[0] = 0;
     size = MAX_PATH;
     r = MsiRecordGetString(hrec, 1, buffer, &size);
     todo_wine
