@@ -936,6 +936,32 @@ static void dump_enhanced_key_usage(const CERT_EXTENSION *ext)
     }
 }
 
+static void dump_netscape_cert_type(const CERT_EXTENSION *ext)
+{
+    CRYPT_BIT_BLOB usage;
+    DWORD size = sizeof(usage);
+
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_BITS, ext->Value.pbData,
+     ext->Value.cbData, CRYPT_DECODE_NOCOPY_FLAG, NULL, &usage, &size))
+    {
+#define trace_cert_type_bit(bits, bit) \
+ if ((bits) & (bit)) TRACE_(chain)("%s\n", #bit)
+        if (usage.cbData)
+        {
+            trace_cert_type_bit(usage.pbData[0],
+             NETSCAPE_SSL_CLIENT_AUTH_CERT_TYPE);
+            trace_cert_type_bit(usage.pbData[0],
+             NETSCAPE_SSL_SERVER_AUTH_CERT_TYPE);
+            trace_cert_type_bit(usage.pbData[0], NETSCAPE_SMIME_CERT_TYPE);
+            trace_cert_type_bit(usage.pbData[0], NETSCAPE_SIGN_CERT_TYPE);
+            trace_cert_type_bit(usage.pbData[0], NETSCAPE_SSL_CA_CERT_TYPE);
+            trace_cert_type_bit(usage.pbData[0], NETSCAPE_SMIME_CA_CERT_TYPE);
+            trace_cert_type_bit(usage.pbData[0], NETSCAPE_SIGN_CA_CERT_TYPE);
+        }
+#undef trace_cert_type_bit
+    }
+}
+
 static void dump_extension(const CERT_EXTENSION *ext)
 {
     TRACE_(chain)("%s (%scritical)\n", debugstr_a(ext->pszObjId),
@@ -960,6 +986,8 @@ static void dump_extension(const CERT_EXTENSION *ext)
         dump_cert_policies(ext);
     else if (!strcmp(ext->pszObjId, szOID_ENHANCED_KEY_USAGE))
         dump_enhanced_key_usage(ext);
+    else if (!strcmp(ext->pszObjId, szOID_NETSCAPE_CERT_TYPE))
+        dump_netscape_cert_type(ext);
 }
 
 static LPCWSTR filetime_to_str(const FILETIME *time)
