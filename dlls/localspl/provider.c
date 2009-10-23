@@ -118,6 +118,8 @@ static const WCHAR fmt_printprocessorsW[] = { 'S','y','s','t','e','m','\\',
                                   'P','r','i','n','t',' ','P','r','o','c','e','s','s','o','r','s',0 };
 static const WCHAR hardwareidW[] = {'H','a','r','d','w','a','r','e','I','D',0};
 static const WCHAR help_fileW[] = {'H','e','l','p',' ','F','i','l','e',0};
+static const WCHAR ia64_envnameW[] = {'W','i','n','d','o','w','s',' ','I','A','6','4',0};
+static const WCHAR ia64_subdirW[] = {'i','a','6','4',0};
 static const WCHAR localportW[] = {'L','o','c','a','l',' ','P','o','r','t',0};
 static const WCHAR locationW[] = {'L','o','c','a','t','i','o','n',0};
 static const WCHAR manufacturerW[] = {'M','a','n','u','f','a','c','t','u','r','e','r',0};
@@ -161,6 +163,9 @@ static const WCHAR XcvMonitorW[] = {',','X','c','v','M','o','n','i','t','o','r',
 static const WCHAR XcvPortW[] = {',','X','c','v','P','o','r','t',' ',0};
 
 
+static const printenv_t env_ia64 =  {ia64_envnameW, ia64_subdirW, 3,
+                                     version3_regpathW, version3_subdirW};
+
 static const printenv_t env_x86 =   {x86_envnameW, x86_subdirW, 3,
                                      version3_regpathW, version3_subdirW};
 
@@ -170,7 +175,7 @@ static const printenv_t env_x64 =   {x64_envnameW, x64_subdirW, 3,
 static const printenv_t env_win40 = {win40_envnameW, win40_subdirW, 0,
                                      version0_regpathW, version0_subdirW};
 
-static const printenv_t * const all_printenv[] = {&env_x86, &env_x64, &env_win40};
+static const printenv_t * const all_printenv[] = {&env_x86, &env_x64, &env_ia64, &env_win40};
 
 
 static const DWORD di_sizeof[] = {0, sizeof(DRIVER_INFO_1W), sizeof(DRIVER_INFO_2W),
