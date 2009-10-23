@@ -1566,6 +1566,16 @@ BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD bu
 }
 
 /***********************************************************************
+ *           GetVolumePathNamesForVolumeNameW   (KERNEL32.@)
+ */
+BOOL WINAPI GetVolumePathNamesForVolumeNameW(LPCWSTR volumename, LPWSTR volumepathname, DWORD buflen, PDWORD returnlen)
+{
+    FIXME("(%s, %p, %d, %p), stub!\n", debugstr_w(volumename), volumepathname, buflen, returnlen);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *           FindFirstVolumeA   (KERNEL32.@)
  */
 HANDLE WINAPI FindFirstVolumeA(LPSTR volume, DWORD len)
