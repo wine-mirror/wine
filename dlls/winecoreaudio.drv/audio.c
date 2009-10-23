@@ -170,6 +170,7 @@ typedef struct {
     CoreAudio_Device            *cadev;
     WAVEOUTCAPSW                caps;
     char                        interface_name[32];
+    DWORD                       device_volume;
 
     BOOL trace_on;
     BOOL warn_on;
@@ -620,6 +621,8 @@ LONG CoreAudio_WaveInit(void)
         WOutDev[i].caps.dwFormats |= WAVE_FORMAT_1M16;
         WOutDev[i].caps.dwFormats |= WAVE_FORMAT_1S16;
 
+        WOutDev[i].device_volume = 0xffffffff;
+
         WOutDev[i].lock = 0; /* initialize the mutex */
     }
 
@@ -903,6 +906,9 @@ static DWORD wodOpen(WORD wDevID, WINE_WAVEOUT_INSTANCE** pInstance, LPWAVEOPEND
         goto error;
     }
     auInited = TRUE;
+
+    AudioUnit_SetVolume(audioUnit, LOWORD(WOutDev[wDevID].device_volume) / 65535.0f,
+                        HIWORD(WOutDev[wDevID].device_volume) / 65535.0f);
 
     /* Our render callback CoreAudio_woAudioUnitIOProc may be called before
      * AudioOutputUnitStart returns.  Core Audio will grab its own internal
@@ -1439,9 +1445,6 @@ static DWORD wodGetPosition(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo, LPMMTIME lp
 */
 static DWORD wodGetVolume(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo, LPDWORD lpdwVol)
 {
-    float left;
-    float right;
-    
     if (wDevID >= MAX_WAVEOUTDRV)
     {
         WARN("bad device ID !\n");
@@ -1450,10 +1453,17 @@ static DWORD wodGetVolume(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo, LPDWORD lpdwV
     
     TRACE("(%u, %p, %p);\n", wDevID, wwo, lpdwVol);
 
-    AudioUnit_GetVolume(wwo->audioUnit, &left, &right);
+    if (wwo)
+    {
+        float left;
+        float right;
 
-    *lpdwVol = (WORD)(left * 0xFFFFl) + ((WORD)(right * 0xFFFFl) << 16);
-    
+        AudioUnit_GetVolume(wwo->audioUnit, &left, &right);
+        *lpdwVol = (WORD)(left * 0xFFFFl) + ((WORD)(right * 0xFFFFl) << 16);
+    }
+    else
+        *lpdwVol = WOutDev[wDevID].device_volume;
+
     return MMSYSERR_NOERROR;
 }
 
@@ -1476,7 +1486,17 @@ static DWORD wodSetVolume(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo, DWORD dwParam
     
     TRACE("(%u, %p, %08x);\n", wDevID, wwo, dwParam);
 
-    AudioUnit_SetVolume(wwo->audioUnit, left, right);
+    if (wwo)
+        AudioUnit_SetVolume(wwo->audioUnit, left, right);
+    else
+    {
+        OSSpinLockLock(&WOutDev[wDevID].lock);
+        LIST_FOR_EACH_ENTRY(wwo, &WOutDev[wDevID].instances, WINE_WAVEOUT_INSTANCE, entry)
+            AudioUnit_SetVolume(wwo->audioUnit, left, right);
+        OSSpinLockUnlock(&WOutDev[wDevID].lock);
+
+        WOutDev[wDevID].device_volume = dwParam;
+    }
 
     return MMSYSERR_NOERROR;
 }
