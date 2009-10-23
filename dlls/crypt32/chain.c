@@ -548,9 +548,13 @@ static BOOL ip_address_matches(const CRYPT_DATA_BLOB *constraint,
     TRACE("(%d, %p), (%d, %p)\n", constraint->cbData, constraint->pbData,
      name->cbData, name->pbData);
 
-    if (constraint->cbData != sizeof(DWORD) * 2)
+    /* RFC5280, section 4.2.1.10, iPAddress syntax: either 8 or 32 bytes, for
+     * IPv4 or IPv6 addresses, respectively.
+     */
+    if (constraint->cbData != sizeof(DWORD) * 2 && constraint->cbData != 32)
         *trustErrorStatus |= CERT_TRUST_INVALID_NAME_CONSTRAINTS;
-    else if (name->cbData == sizeof(DWORD))
+    else if (name->cbData == sizeof(DWORD) &&
+     constraint->cbData == sizeof(DWORD) * 2)
     {
         DWORD subnet, mask, addr;
 
@@ -561,6 +565,19 @@ static BOOL ip_address_matches(const CRYPT_DATA_BLOB *constraint,
          * don't need to swap to host order
          */
         match = (subnet & mask) == (addr & mask);
+    }
+    else if (name->cbData == 16 && constraint->cbData == 32)
+    {
+        const BYTE *subnet, *mask, *addr;
+        DWORD i;
+
+        subnet = constraint->pbData;
+        mask = constraint->pbData + 16;
+        addr = name->pbData;
+        match = TRUE;
+        for (i = 0; match && i < 16; i++)
+            if ((subnet[i] & mask[i]) != (addr[i] & mask[i]))
+                match = FALSE;
     }
     /* else: name is wrong size, no match */
 
