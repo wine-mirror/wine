@@ -782,6 +782,73 @@ static void dump_key_usage(const CERT_EXTENSION *ext)
     }
 }
 
+static void dump_alt_name_entry(const CERT_ALT_NAME_ENTRY *entry)
+{
+    switch (entry->dwAltNameChoice)
+    {
+    case CERT_ALT_NAME_OTHER_NAME:
+        TRACE_(chain)("CERT_ALT_NAME_OTHER_NAME, oid = %s\n",
+         debugstr_a(entry->u.pOtherName->pszObjId));
+         break;
+    case CERT_ALT_NAME_RFC822_NAME:
+        TRACE_(chain)("CERT_ALT_NAME_RFC822_NAME: %s\n",
+         debugstr_w(entry->u.pwszRfc822Name));
+        break;
+    case CERT_ALT_NAME_DNS_NAME:
+        TRACE_(chain)("CERT_ALT_NAME_DNS_NAME: %s\n",
+         debugstr_w(entry->u.pwszDNSName));
+        break;
+    case CERT_ALT_NAME_DIRECTORY_NAME:
+        TRACE_(chain)("CERT_ALT_NAME_DIRECTORY_NAME: %d bytes\n",
+         entry->u.DirectoryName.cbData);
+        break;
+    case CERT_ALT_NAME_URL:
+        TRACE_(chain)("CERT_ALT_NAME_URL: %s\n", debugstr_w(entry->u.pwszURL));
+        break;
+    case CERT_ALT_NAME_IP_ADDRESS:
+        TRACE_(chain)("CERT_ALT_NAME_IP_ADDRESS: %d bytes\n",
+         entry->u.IPAddress.cbData);
+        break;
+    case CERT_ALT_NAME_REGISTERED_ID:
+        TRACE_(chain)("CERT_ALT_NAME_REGISTERED_ID: %s\n",
+         debugstr_a(entry->u.pszRegisteredID));
+        break;
+    default:
+        TRACE_(chain)("dwAltNameChoice = %d\n", entry->dwAltNameChoice);
+    }
+}
+
+static void dump_general_subtree(const CERT_GENERAL_SUBTREE *subtree)
+{
+    dump_alt_name_entry(&subtree->Base);
+    TRACE_(chain)("dwMinimum = %d, fMaximum = %d, dwMaximum = %d\n",
+     subtree->dwMinimum, subtree->fMaximum, subtree->dwMaximum);
+}
+
+static void dump_name_constraints(const CERT_EXTENSION *ext)
+{
+    CERT_NAME_CONSTRAINTS_INFO *nameConstraints;
+    DWORD size;
+
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_NAME_CONSTRAINTS,
+     ext->Value.pbData, ext->Value.cbData,
+     CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL, &nameConstraints,
+     &size))
+    {
+        DWORD i;
+
+        TRACE_(chain)("%d permitted subtrees:\n",
+         nameConstraints->cPermittedSubtree);
+        for (i = 0; i < nameConstraints->cPermittedSubtree; i++)
+            dump_general_subtree(&nameConstraints->rgPermittedSubtree[i]);
+        TRACE_(chain)("%d excluded subtrees:\n",
+         nameConstraints->cExcludedSubtree);
+        for (i = 0; i < nameConstraints->cExcludedSubtree; i++)
+            dump_general_subtree(&nameConstraints->rgExcludedSubtree[i]);
+        LocalFree(nameConstraints);
+    }
+}
+
 static void dump_cert_policies(const CERT_EXTENSION *ext)
 {
     CERT_POLICIES_INFO *policies;
@@ -837,6 +904,8 @@ static void dump_extension(const CERT_EXTENSION *ext)
         dump_key_usage(ext);
     else if (!strcmp(ext->pszObjId, szOID_BASIC_CONSTRAINTS2))
         dump_basic_constraints2(ext);
+    else if (!strcmp(ext->pszObjId, szOID_NAME_CONSTRAINTS))
+        dump_name_constraints(ext);
     else if (!strcmp(ext->pszObjId, szOID_CERT_POLICIES))
         dump_cert_policies(ext);
     else if (!strcmp(ext->pszObjId, szOID_ENHANCED_KEY_USAGE))
