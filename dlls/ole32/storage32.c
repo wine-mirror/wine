@@ -763,8 +763,8 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
     renamedProperty.size.u.LowPart  = currentProperty.size.u.LowPart;
     renamedProperty.size.u.HighPart = currentProperty.size.u.HighPart;
 
-    renamedProperty.previousProperty = PROPERTY_NULL;
-    renamedProperty.nextProperty     = PROPERTY_NULL;
+    renamedProperty.leftChild = PROPERTY_NULL;
+    renamedProperty.rightChild = PROPERTY_NULL;
 
     /*
      * Bring the dirProperty link in case it is a storage and in which
@@ -960,8 +960,8 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
   newStreamProperty.size.u.LowPart  = 0;
   newStreamProperty.size.u.HighPart = 0;
 
-  newStreamProperty.previousProperty = PROPERTY_NULL;
-  newStreamProperty.nextProperty     = PROPERTY_NULL;
+  newStreamProperty.leftChild        = PROPERTY_NULL;
+  newStreamProperty.rightChild       = PROPERTY_NULL;
   newStreamProperty.dirProperty      = PROPERTY_NULL;
 
   /* call CoFileTime to get the current time
@@ -1158,8 +1158,8 @@ static HRESULT WINAPI StorageImpl_CreateStorage(
   newProperty.size.u.LowPart  = 0;
   newProperty.size.u.HighPart = 0;
 
-  newProperty.previousProperty = PROPERTY_NULL;
-  newProperty.nextProperty     = PROPERTY_NULL;
+  newProperty.leftChild        = PROPERTY_NULL;
+  newProperty.rightChild       = PROPERTY_NULL;
   newProperty.dirProperty      = PROPERTY_NULL;
 
   /* call CoFileTime to get the current time
@@ -1371,8 +1371,8 @@ static void updatePropertyChain(
                                currentProperty.dirProperty,
                                &currentProperty);
 
-    previous = currentProperty.previousProperty;
-    next     = currentProperty.nextProperty;
+    previous = currentProperty.leftChild;
+    next     = currentProperty.rightChild;
     current  = currentPropertyId;
 
     while (found == 0)
@@ -1390,7 +1390,7 @@ static void updatePropertyChain(
         }
         else
         {
-          currentProperty.previousProperty = newPropertyIndex;
+          currentProperty.leftChild = newPropertyIndex;
           StorageImpl_WriteProperty(storage->base.ancestorStorage,
                                       current,
                                       &currentProperty);
@@ -1408,7 +1408,7 @@ static void updatePropertyChain(
         }
         else
         {
-          currentProperty.nextProperty = newPropertyIndex;
+          currentProperty.rightChild = newPropertyIndex;
           StorageImpl_WriteProperty(storage->base.ancestorStorage,
                                       current,
                                       &currentProperty);
@@ -1424,8 +1424,8 @@ static void updatePropertyChain(
 	assert(FALSE);
       }
 
-      previous = currentProperty.previousProperty;
-      next     = currentProperty.nextProperty;
+      previous = currentProperty.leftChild;
+      next     = currentProperty.rightChild;
     }
   }
   else
@@ -2032,32 +2032,32 @@ static HRESULT findPlaceholder(
 
   if (typeOfRelation == PROPERTY_RELATION_PREVIOUS)
   {
-    if (storeProperty.previousProperty != PROPERTY_NULL)
+    if (storeProperty.leftChild != PROPERTY_NULL)
     {
       return findPlaceholder(
                storage,
                propertyIndexToStore,
-               storeProperty.previousProperty,
+               storeProperty.leftChild,
                typeOfRelation);
     }
     else
     {
-      storeProperty.previousProperty = propertyIndexToStore;
+      storeProperty.leftChild = propertyIndexToStore;
     }
   }
   else if (typeOfRelation == PROPERTY_RELATION_NEXT)
   {
-    if (storeProperty.nextProperty != PROPERTY_NULL)
+    if (storeProperty.rightChild != PROPERTY_NULL)
     {
       return findPlaceholder(
                storage,
                propertyIndexToStore,
-               storeProperty.nextProperty,
+               storeProperty.rightChild,
                typeOfRelation);
     }
     else
     {
-      storeProperty.nextProperty = propertyIndexToStore;
+      storeProperty.rightChild = propertyIndexToStore;
     }
   }
   else if (typeOfRelation == PROPERTY_RELATION_DIR)
@@ -2113,100 +2113,100 @@ static HRESULT adjustPropertyChain(
 
   if (typeOfRelation == PROPERTY_RELATION_PREVIOUS)
   {
-    if (propertyToDelete.previousProperty != PROPERTY_NULL)
+    if (propertyToDelete.leftChild != PROPERTY_NULL)
     {
       /*
        * Set the parent previous to the property to delete previous
        */
-      newLinkProperty = propertyToDelete.previousProperty;
+      newLinkProperty = propertyToDelete.leftChild;
 
-      if (propertyToDelete.nextProperty != PROPERTY_NULL)
+      if (propertyToDelete.rightChild != PROPERTY_NULL)
       {
         /*
          * We also need to find a storage for the other link, setup variables
          * to do this at the end...
          */
         needToFindAPlaceholder = TRUE;
-        storeNode              = propertyToDelete.previousProperty;
-        toStoreNode            = propertyToDelete.nextProperty;
+        storeNode              = propertyToDelete.leftChild;
+        toStoreNode            = propertyToDelete.rightChild;
         relationType           = PROPERTY_RELATION_NEXT;
       }
     }
-    else if (propertyToDelete.nextProperty != PROPERTY_NULL)
+    else if (propertyToDelete.rightChild != PROPERTY_NULL)
     {
       /*
        * Set the parent previous to the property to delete next
        */
-      newLinkProperty = propertyToDelete.nextProperty;
+      newLinkProperty = propertyToDelete.rightChild;
     }
 
     /*
      * Link it for real...
      */
-    parentProperty.previousProperty = newLinkProperty;
+    parentProperty.leftChild = newLinkProperty;
 
   }
   else if (typeOfRelation == PROPERTY_RELATION_NEXT)
   {
-    if (propertyToDelete.previousProperty != PROPERTY_NULL)
+    if (propertyToDelete.leftChild != PROPERTY_NULL)
     {
       /*
        * Set the parent next to the property to delete next previous
        */
-      newLinkProperty = propertyToDelete.previousProperty;
+      newLinkProperty = propertyToDelete.leftChild;
 
-      if (propertyToDelete.nextProperty != PROPERTY_NULL)
+      if (propertyToDelete.rightChild != PROPERTY_NULL)
       {
         /*
          * We also need to find a storage for the other link, setup variables
          * to do this at the end...
          */
         needToFindAPlaceholder = TRUE;
-        storeNode              = propertyToDelete.previousProperty;
-        toStoreNode            = propertyToDelete.nextProperty;
+        storeNode              = propertyToDelete.leftChild;
+        toStoreNode            = propertyToDelete.rightChild;
         relationType           = PROPERTY_RELATION_NEXT;
       }
     }
-    else if (propertyToDelete.nextProperty != PROPERTY_NULL)
+    else if (propertyToDelete.rightChild != PROPERTY_NULL)
     {
       /*
        * Set the parent next to the property to delete next
        */
-      newLinkProperty = propertyToDelete.nextProperty;
+      newLinkProperty = propertyToDelete.rightChild;
     }
 
     /*
      * Link it for real...
      */
-    parentProperty.nextProperty = newLinkProperty;
+    parentProperty.rightChild = newLinkProperty;
   }
   else /* (typeOfRelation == PROPERTY_RELATION_DIR) */
   {
-    if (propertyToDelete.previousProperty != PROPERTY_NULL)
+    if (propertyToDelete.leftChild != PROPERTY_NULL)
     {
       /*
        * Set the parent dir to the property to delete previous
        */
-      newLinkProperty = propertyToDelete.previousProperty;
+      newLinkProperty = propertyToDelete.leftChild;
 
-      if (propertyToDelete.nextProperty != PROPERTY_NULL)
+      if (propertyToDelete.rightChild != PROPERTY_NULL)
       {
         /*
          * We also need to find a storage for the other link, setup variables
          * to do this at the end...
          */
         needToFindAPlaceholder = TRUE;
-        storeNode              = propertyToDelete.previousProperty;
-        toStoreNode            = propertyToDelete.nextProperty;
+        storeNode              = propertyToDelete.leftChild;
+        toStoreNode            = propertyToDelete.rightChild;
         relationType           = PROPERTY_RELATION_NEXT;
       }
     }
-    else if (propertyToDelete.nextProperty != PROPERTY_NULL)
+    else if (propertyToDelete.rightChild != PROPERTY_NULL)
     {
       /*
        * Set the parent dir to the property to delete next
        */
-      newLinkProperty = propertyToDelete.nextProperty;
+      newLinkProperty = propertyToDelete.rightChild;
     }
 
     /*
@@ -2445,8 +2445,8 @@ static HRESULT StorageImpl_Construct(
                          sizeof(rootProp.name)/sizeof(WCHAR) );
     rootProp.sizeOfNameString = (strlenW(rootProp.name)+1) * sizeof(WCHAR);
     rootProp.propertyType     = PROPTYPE_ROOT;
-    rootProp.previousProperty = PROPERTY_NULL;
-    rootProp.nextProperty     = PROPERTY_NULL;
+    rootProp.leftChild = PROPERTY_NULL;
+    rootProp.rightChild     = PROPERTY_NULL;
     rootProp.dirProperty      = PROPERTY_NULL;
     rootProp.startingBlock    = BLOCK_END_OF_CHAIN;
     rootProp.size.u.HighPart    = 0;
@@ -3208,13 +3208,13 @@ BOOL StorageImpl_ReadProperty(
 
     StorageUtl_ReadDWord(
       currentProperty,
-      OFFSET_PS_PREVIOUSPROP,
-      &buffer->previousProperty);
+      OFFSET_PS_LEFTCHILD,
+      &buffer->leftChild);
 
     StorageUtl_ReadDWord(
       currentProperty,
-      OFFSET_PS_NEXTPROP,
-      &buffer->nextProperty);
+      OFFSET_PS_RIGHTCHILD,
+      &buffer->rightChild);
 
     StorageUtl_ReadDWord(
       currentProperty,
@@ -3294,13 +3294,13 @@ BOOL StorageImpl_WriteProperty(
 
   StorageUtl_WriteDWord(
     currentProperty,
-      OFFSET_PS_PREVIOUSPROP,
-      buffer->previousProperty);
+      OFFSET_PS_LEFTCHILD,
+      buffer->leftChild);
 
   StorageUtl_WriteDWord(
     currentProperty,
-      OFFSET_PS_NEXTPROP,
-      buffer->nextProperty);
+      OFFSET_PS_RIGHTCHILD,
+      buffer->rightChild);
 
   StorageUtl_WriteDWord(
     currentProperty,
@@ -3764,7 +3764,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
     /*
      * Push the next search node in the search stack.
      */
-    IEnumSTATSTGImpl_PushSearchNode(This, currentProperty.nextProperty);
+    IEnumSTATSTGImpl_PushSearchNode(This, currentProperty.rightChild);
 
     /*
      * continue the iteration.
@@ -3817,7 +3817,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Skip(
     /*
      * Push the next search node in the search stack.
      */
-    IEnumSTATSTGImpl_PushSearchNode(This, currentProperty.nextProperty);
+    IEnumSTATSTGImpl_PushSearchNode(This, currentProperty.rightChild);
 
     /*
      * continue the iteration.
@@ -3950,10 +3950,10 @@ static INT IEnumSTATSTGImpl_FindParentProperty(
       currentSearchNode,
       currentProperty);
 
-    if (currentProperty->previousProperty == childProperty)
+    if (currentProperty->leftChild == childProperty)
       return PROPERTY_RELATION_PREVIOUS;
 
-    else if (currentProperty->nextProperty == childProperty)
+    else if (currentProperty->rightChild == childProperty)
       return PROPERTY_RELATION_NEXT;
 
     else if (currentProperty->dirProperty == childProperty)
@@ -3962,7 +3962,7 @@ static INT IEnumSTATSTGImpl_FindParentProperty(
     /*
      * Push the next search node in the search stack.
      */
-    IEnumSTATSTGImpl_PushSearchNode(This, currentProperty->nextProperty);
+    IEnumSTATSTGImpl_PushSearchNode(This, currentProperty->rightChild);
 
     /*
      * continue the iteration.
@@ -4005,7 +4005,7 @@ static ULONG IEnumSTATSTGImpl_FindProperty(
     /*
      * Push the next search node in the search stack.
      */
-    IEnumSTATSTGImpl_PushSearchNode(This, currentProperty->nextProperty);
+    IEnumSTATSTGImpl_PushSearchNode(This, currentProperty->rightChild);
 
     /*
      * continue the iteration.
@@ -4061,7 +4061,7 @@ static void IEnumSTATSTGImpl_PushSearchNode(
     /*
      * Push the previous search node in the search stack.
      */
-    IEnumSTATSTGImpl_PushSearchNode(This, rootProperty.previousProperty);
+    IEnumSTATSTGImpl_PushSearchNode(This, rootProperty.leftChild);
   }
 }
 
