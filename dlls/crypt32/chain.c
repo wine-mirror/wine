@@ -721,6 +721,61 @@ static void CRYPT_CheckChainNameConstraints(PCERT_SIMPLE_CHAIN chain)
     }
 }
 
+static void dump_alt_name_entry(const CERT_ALT_NAME_ENTRY *entry)
+{
+    switch (entry->dwAltNameChoice)
+    {
+    case CERT_ALT_NAME_OTHER_NAME:
+        TRACE_(chain)("CERT_ALT_NAME_OTHER_NAME, oid = %s\n",
+         debugstr_a(entry->u.pOtherName->pszObjId));
+         break;
+    case CERT_ALT_NAME_RFC822_NAME:
+        TRACE_(chain)("CERT_ALT_NAME_RFC822_NAME: %s\n",
+         debugstr_w(entry->u.pwszRfc822Name));
+        break;
+    case CERT_ALT_NAME_DNS_NAME:
+        TRACE_(chain)("CERT_ALT_NAME_DNS_NAME: %s\n",
+         debugstr_w(entry->u.pwszDNSName));
+        break;
+    case CERT_ALT_NAME_DIRECTORY_NAME:
+        TRACE_(chain)("CERT_ALT_NAME_DIRECTORY_NAME: %d bytes\n",
+         entry->u.DirectoryName.cbData);
+        break;
+    case CERT_ALT_NAME_URL:
+        TRACE_(chain)("CERT_ALT_NAME_URL: %s\n", debugstr_w(entry->u.pwszURL));
+        break;
+    case CERT_ALT_NAME_IP_ADDRESS:
+        TRACE_(chain)("CERT_ALT_NAME_IP_ADDRESS: %d bytes\n",
+         entry->u.IPAddress.cbData);
+        break;
+    case CERT_ALT_NAME_REGISTERED_ID:
+        TRACE_(chain)("CERT_ALT_NAME_REGISTERED_ID: %s\n",
+         debugstr_a(entry->u.pszRegisteredID));
+        break;
+    default:
+        TRACE_(chain)("dwAltNameChoice = %d\n", entry->dwAltNameChoice);
+    }
+}
+
+static void dump_alt_name(LPCSTR type, const CERT_EXTENSION *ext)
+{
+    CERT_ALT_NAME_INFO *name;
+    DWORD size;
+
+    TRACE_(chain)("%s:\n", type);
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_ALTERNATE_NAME,
+     ext->Value.pbData, ext->Value.cbData,
+     CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL, &name, &size))
+    {
+        DWORD i;
+
+        TRACE_(chain)("%d alt name entries:\n", name->cAltEntry);
+        for (i = 0; i < name->cAltEntry; i++)
+            dump_alt_name_entry(&name->rgAltEntry[i]);
+        LocalFree(name);
+    }
+}
+
 static void dump_basic_constraints(const CERT_EXTENSION *ext)
 {
     CERT_BASIC_CONSTRAINTS_INFO *info;
@@ -779,42 +834,6 @@ static void dump_key_usage(const CERT_EXTENSION *ext)
 #undef trace_usage_bit
         if (usage.cbData > 1 && usage.pbData[1] & CERT_DECIPHER_ONLY_KEY_USAGE)
             TRACE_(chain)("CERT_DECIPHER_ONLY_KEY_USAGE\n");
-    }
-}
-
-static void dump_alt_name_entry(const CERT_ALT_NAME_ENTRY *entry)
-{
-    switch (entry->dwAltNameChoice)
-    {
-    case CERT_ALT_NAME_OTHER_NAME:
-        TRACE_(chain)("CERT_ALT_NAME_OTHER_NAME, oid = %s\n",
-         debugstr_a(entry->u.pOtherName->pszObjId));
-         break;
-    case CERT_ALT_NAME_RFC822_NAME:
-        TRACE_(chain)("CERT_ALT_NAME_RFC822_NAME: %s\n",
-         debugstr_w(entry->u.pwszRfc822Name));
-        break;
-    case CERT_ALT_NAME_DNS_NAME:
-        TRACE_(chain)("CERT_ALT_NAME_DNS_NAME: %s\n",
-         debugstr_w(entry->u.pwszDNSName));
-        break;
-    case CERT_ALT_NAME_DIRECTORY_NAME:
-        TRACE_(chain)("CERT_ALT_NAME_DIRECTORY_NAME: %d bytes\n",
-         entry->u.DirectoryName.cbData);
-        break;
-    case CERT_ALT_NAME_URL:
-        TRACE_(chain)("CERT_ALT_NAME_URL: %s\n", debugstr_w(entry->u.pwszURL));
-        break;
-    case CERT_ALT_NAME_IP_ADDRESS:
-        TRACE_(chain)("CERT_ALT_NAME_IP_ADDRESS: %d bytes\n",
-         entry->u.IPAddress.cbData);
-        break;
-    case CERT_ALT_NAME_REGISTERED_ID:
-        TRACE_(chain)("CERT_ALT_NAME_REGISTERED_ID: %s\n",
-         debugstr_a(entry->u.pszRegisteredID));
-        break;
-    default:
-        TRACE_(chain)("dwAltNameChoice = %d\n", entry->dwAltNameChoice);
     }
 }
 
@@ -898,10 +917,18 @@ static void dump_extension(const CERT_EXTENSION *ext)
 {
     TRACE_(chain)("%s (%scritical)\n", debugstr_a(ext->pszObjId),
      ext->fCritical ? "" : "not ");
-    if (!strcmp(ext->pszObjId, szOID_BASIC_CONSTRAINTS))
+    if (!strcmp(ext->pszObjId, szOID_SUBJECT_ALT_NAME))
+        dump_alt_name("subject alt name", ext);
+    else  if (!strcmp(ext->pszObjId, szOID_ISSUER_ALT_NAME))
+        dump_alt_name("issuer alt name", ext);
+    else if (!strcmp(ext->pszObjId, szOID_BASIC_CONSTRAINTS))
         dump_basic_constraints(ext);
     else if (!strcmp(ext->pszObjId, szOID_KEY_USAGE))
         dump_key_usage(ext);
+    else if (!strcmp(ext->pszObjId, szOID_SUBJECT_ALT_NAME2))
+        dump_alt_name("subject alt name 2", ext);
+    else if (!strcmp(ext->pszObjId, szOID_ISSUER_ALT_NAME2))
+        dump_alt_name("issuer alt name 2", ext);
     else if (!strcmp(ext->pszObjId, szOID_BASIC_CONSTRAINTS2))
         dump_basic_constraints2(ext);
     else if (!strcmp(ext->pszObjId, szOID_NAME_CONSTRAINTS))
