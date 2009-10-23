@@ -1174,6 +1174,8 @@ static BOOL parse_object_members_list(parse_buffer * buf)
 
 static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional)
 {
+  buf->pxo->nb_childs = 0;
+
   if (!parse_object_members_list(buf))
     return FALSE;
 
