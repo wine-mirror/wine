@@ -282,6 +282,7 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
          * detaching, then the debuggee gets a special exit code.
          */
         ok(exit_code == STATUS_DEBUGGER_INACTIVE ||
+           broken(exit_code == STATUS_ACCESS_VIOLATION) || /* Intermittent Vista+ */
            broken(exit_code == 0xffffffff) || /* Win9x */
            broken(exit_code == WAIT_ABANDONED), /* NT4, W2K */
            "wrong exit code : %08x\n", exit_code);
