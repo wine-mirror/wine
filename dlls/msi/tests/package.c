@@ -7691,6 +7691,7 @@ static void test_appsearch_complocator(void)
     DeleteFileA("FileName10.dll");
     MsiCloseHandle(hpkg);
     DeleteFileA(msifile);
+    LocalFree(usersid);
 }
 
 static void test_appsearch_reglocator(void)
