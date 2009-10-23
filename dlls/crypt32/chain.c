@@ -782,6 +782,33 @@ static void dump_key_usage(const CERT_EXTENSION *ext)
     }
 }
 
+static void dump_cert_policies(const CERT_EXTENSION *ext)
+{
+    CERT_POLICIES_INFO *policies;
+    DWORD size;
+
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CERT_POLICIES,
+     ext->Value.pbData, ext->Value.cbData, CRYPT_DECODE_ALLOC_FLAG, NULL,
+     &policies, &size))
+    {
+        DWORD i, j;
+
+        TRACE_(chain)("%d policies:\n", policies->cPolicyInfo);
+        for (i = 0; i < policies->cPolicyInfo; i++)
+        {
+            TRACE_(chain)("policy identifier: %s\n",
+             debugstr_a(policies->rgPolicyInfo[i].pszPolicyIdentifier));
+            TRACE_(chain)("%d policy qualifiers:\n",
+             policies->rgPolicyInfo[i].cPolicyQualifier);
+            for (j = 0; j < policies->rgPolicyInfo[i].cPolicyQualifier; j++)
+                TRACE_(chain)("%s\n", debugstr_a(
+                 policies->rgPolicyInfo[i].rgPolicyQualifier[j].
+                 pszPolicyQualifierId));
+        }
+        LocalFree(policies);
+    }
+}
+
 static void dump_enhanced_key_usage(const CERT_EXTENSION *ext)
 {
     CERT_ENHKEY_USAGE *usage;
@@ -810,6 +837,8 @@ static void dump_extension(const CERT_EXTENSION *ext)
         dump_key_usage(ext);
     else if (!strcmp(ext->pszObjId, szOID_BASIC_CONSTRAINTS2))
         dump_basic_constraints2(ext);
+    else if (!strcmp(ext->pszObjId, szOID_CERT_POLICIES))
+        dump_cert_policies(ext);
     else if (!strcmp(ext->pszObjId, szOID_ENHANCED_KEY_USAGE))
         dump_enhanced_key_usage(ext);
 }
