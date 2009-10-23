@@ -142,6 +142,9 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   if (!ppEnumObj)
     return DXFILEERR_BADVALUE;
 
+  /* Only lowest 4 bits are relevant in DXFILELOADOPTIONS */
+  dwLoadOptions &= 0xF;
+
   if (dwLoadOptions == DXFILELOAD_FROMFILE)
   {
     TRACE("Open source file '%s'\n", (char*)pvSource);

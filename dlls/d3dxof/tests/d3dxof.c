@@ -137,6 +137,59 @@ static void test_refcount(void)
     ok(ref == 0, "Got refcount %d, expected 0\n", ref);
 }
 
+static void test_CreateEnumObject(void)
+{
+    HRESULT hr;
+    ULONG ref;
+    LPDIRECTXFILE lpDirectXFile = NULL;
+    LPDIRECTXFILEENUMOBJECT lpdxfeo;
+    LPDIRECTXFILEDATA lpdxfd;
+    DXFILELOADMEMORY dxflm;
+    BYTE* pdata;
+    DWORD size;
+
+    if (!pDirectXFileCreate)
+    {
+        win_skip("DirectXFileCreate is not available\n");
+        return;
+    }
+
+    hr = pDirectXFileCreate(&lpDirectXFile);
+    ok(hr == DXFILE_OK, "DirectXFileCreate: %x\n", hr);
+    if(!lpDirectXFile)
+    {
+        skip("Couldn't create DirectXFile interface\n");
+        return;
+    }
+
+    hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template, strlen(template));
+    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+
+    dxflm.lpMemory = &object;
+    dxflm.dSize = strlen(object);
+    /* Check that only lowest 4 bits are relevant in DXFILELOADOPTIONS */
+    hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, 0xFFFFFFF0 + DXFILELOAD_FROMMEMORY, &lpdxfeo);
+    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+
+    hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
+    ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+
+    hr = IDirectXFileData_GetData(lpdxfd, NULL, &size, (void**)&pdata);
+    ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
+
+    ok(size == 8, "Retreived data size is wrong\n");
+    ok((*((WORD*)pdata) == 1) && (*((WORD*)(pdata+2)) == 2) && (*((DWORD*)(pdata+4)) == 3), "Retreived data is wrong\n");
+
+    ref = IDirectXFileEnumObject_Release(lpdxfeo);
+    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+
+    ref = IDirectXFile_Release(lpDirectXFile);
+    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+
+    ref = IDirectXFileData_Release(lpdxfd);
+    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+}
+
 /* Set it to 1 to expand the string when dumping the object. This is useful when there is
  * only one string in a sub-object (very common). Use with care, this may lead to a crash. */
 #define EXPAND_STRING 0
@@ -310,6 +363,7 @@ START_TEST(d3dxof)
     init_function_pointers();
 
     test_refcount();
+    test_CreateEnumObject();
     test_dump();
 
     FreeLibrary(hd3dxof);
