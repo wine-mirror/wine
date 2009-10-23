@@ -782,6 +782,24 @@ static void dump_key_usage(const CERT_EXTENSION *ext)
     }
 }
 
+static void dump_enhanced_key_usage(const CERT_EXTENSION *ext)
+{
+    CERT_ENHKEY_USAGE *usage;
+    DWORD size;
+
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_ENHANCED_KEY_USAGE,
+     ext->Value.pbData, ext->Value.cbData, CRYPT_DECODE_ALLOC_FLAG, NULL,
+     &usage, &size))
+    {
+        DWORD i;
+
+        TRACE_(chain)("%d usages:\n", usage->cUsageIdentifier);
+        for (i = 0; i < usage->cUsageIdentifier; i++)
+            TRACE_(chain)("%s\n", usage->rgpszUsageIdentifier[i]);
+        LocalFree(usage);
+    }
+}
+
 static void dump_extension(const CERT_EXTENSION *ext)
 {
     TRACE_(chain)("%s (%scritical)\n", debugstr_a(ext->pszObjId),
@@ -792,6 +810,8 @@ static void dump_extension(const CERT_EXTENSION *ext)
         dump_key_usage(ext);
     else if (!strcmp(ext->pszObjId, szOID_BASIC_CONSTRAINTS2))
         dump_basic_constraints2(ext);
+    else if (!strcmp(ext->pszObjId, szOID_ENHANCED_KEY_USAGE))
+        dump_enhanced_key_usage(ext);
 }
 
 static LPCWSTR filetime_to_str(const FILETIME *time)
