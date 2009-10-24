@@ -521,9 +521,18 @@ static HRESULT WINAPI Widget_StructArgs(
     MYSTRUCT *byptr,
     MYSTRUCT arr[5])
 {
-    ok(memcmp(&byval, &MYSTRUCT_BYVAL, sizeof(MYSTRUCT))==0, "Struct parameter passed by value corrupted\n");
-    ok(memcmp(byptr,  &MYSTRUCT_BYPTR, sizeof(MYSTRUCT))==0, "Struct parameter passed by pointer corrupted\n");
-    ok(memcmp(arr,    MYSTRUCT_ARRAY,  sizeof(MYSTRUCT_ARRAY))==0, "Array of structs corrupted\n");
+    int i, diff = 0;
+    ok(byval.field1 == MYSTRUCT_BYVAL.field1 &&
+       byval.field2 == MYSTRUCT_BYVAL.field2,
+       "Struct parameter passed by value corrupted\n");
+    ok(byptr->field1 == MYSTRUCT_BYPTR.field1 &&
+       byptr->field2 == MYSTRUCT_BYPTR.field2,
+       "Struct parameter passed by pointer corrupted\n");
+    for (i = 0; i < 5; i++)
+        if (arr[i].field1 != MYSTRUCT_ARRAY[i].field1 ||
+            arr[i].field2 != MYSTRUCT_ARRAY[i].field2)
+            diff++;
+    ok(diff == 0, "Array of structs corrupted\n");
     return S_OK;
 }
 
