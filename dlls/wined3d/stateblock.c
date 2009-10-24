@@ -194,31 +194,31 @@ static const DWORD vertex_states_sampler[] =
  */
 static HRESULT stateblock_allocate_shader_constants(IWineD3DStateBlockImpl *object)
 {
-    const struct wined3d_gl_info *gl_info = &object->wineD3DDevice->adapter->gl_info;
+    IWineD3DDeviceImpl *device = object->wineD3DDevice;
 
     /* Allocate space for floating point constants */
     object->pixelShaderConstantF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(float) * gl_info->max_pshader_constantsF * 4);
+            sizeof(float) * device->d3d_pshader_constantF * 4);
     if (!object->pixelShaderConstantF) goto fail;
 
     object->changed.pixelShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(BOOL) * gl_info->max_pshader_constantsF);
+            sizeof(BOOL) * device->d3d_pshader_constantF);
     if (!object->changed.pixelShaderConstantsF) goto fail;
 
     object->vertexShaderConstantF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(float) * gl_info->max_vshader_constantsF * 4);
+            sizeof(float) * device->d3d_vshader_constantF * 4);
     if (!object->vertexShaderConstantF) goto fail;
 
     object->changed.vertexShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(BOOL) * gl_info->max_vshader_constantsF);
+            sizeof(BOOL) * device->d3d_vshader_constantF);
     if (!object->changed.vertexShaderConstantsF) goto fail;
 
     object->contained_vs_consts_f = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(DWORD) * gl_info->max_vshader_constantsF);
+            sizeof(DWORD) * device->d3d_vshader_constantF);
     if (!object->contained_vs_consts_f) goto fail;
 
     object->contained_ps_consts_f = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(DWORD) * gl_info->max_pshader_constantsF);
+            sizeof(DWORD) * device->d3d_pshader_constantF);
     if (!object->contained_ps_consts_f) goto fail;
 
     return WINED3D_OK;
@@ -242,7 +242,7 @@ static inline void stateblock_set_bits(DWORD *map, UINT map_size)
 }
 
 /* Set all members of a stateblock savedstate to the given value */
-static void stateblock_savedstates_set_all(SAVEDSTATES *states, const struct wined3d_gl_info *gl_info)
+static void stateblock_savedstates_set_all(SAVEDSTATES *states, DWORD vs_consts, DWORD ps_consts)
 {
     unsigned int i;
 
@@ -271,11 +271,11 @@ static void stateblock_savedstates_set_all(SAVEDSTATES *states, const struct win
     states->vertexShaderConstantsI = 0xffff;
 
     /* Dynamically sized arrays */
-    memset(states->pixelShaderConstantsF, TRUE, sizeof(BOOL) * gl_info->max_pshader_constantsF);
-    memset(states->vertexShaderConstantsF, TRUE, sizeof(BOOL) * gl_info->max_vshader_constantsF);
+    memset(states->pixelShaderConstantsF, TRUE, sizeof(BOOL) * ps_consts);
+    memset(states->vertexShaderConstantsF, TRUE, sizeof(BOOL) * vs_consts);
 }
 
-static void stateblock_savedstates_set_pixel(SAVEDSTATES *states, const struct wined3d_gl_info *gl_info)
+static void stateblock_savedstates_set_pixel(SAVEDSTATES *states, const DWORD num_constants)
 {
     DWORD texture_mask = 0;
     WORD sampler_mask = 0;
@@ -298,10 +298,10 @@ static void stateblock_savedstates_set_pixel(SAVEDSTATES *states, const struct w
     states->pixelShaderConstantsB = 0xffff;
     states->pixelShaderConstantsI = 0xffff;
 
-    memset(states->pixelShaderConstantsF, TRUE, sizeof(BOOL) * gl_info->max_pshader_constantsF);
+    memset(states->pixelShaderConstantsF, TRUE, sizeof(BOOL) * num_constants);
 }
 
-static void stateblock_savedstates_set_vertex(SAVEDSTATES *states, const struct wined3d_gl_info *gl_info)
+static void stateblock_savedstates_set_vertex(SAVEDSTATES *states, const DWORD num_constants)
 {
     DWORD texture_mask = 0;
     WORD sampler_mask = 0;
@@ -325,12 +325,12 @@ static void stateblock_savedstates_set_vertex(SAVEDSTATES *states, const struct 
     states->vertexShaderConstantsB = 0xffff;
     states->vertexShaderConstantsI = 0xffff;
 
-    memset(states->vertexShaderConstantsF, TRUE, sizeof(BOOL) * gl_info->max_vshader_constantsF);
+    memset(states->vertexShaderConstantsF, TRUE, sizeof(BOOL) * num_constants);
 }
 
 void stateblock_init_contained_states(IWineD3DStateBlockImpl *stateblock)
 {
-    const struct wined3d_gl_info *gl_info = &stateblock->wineD3DDevice->adapter->gl_info;
+    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     unsigned int i, j;
 
     for (i = 0; i <= WINEHIGHEST_RENDER_STATE >> 5; ++i)
@@ -357,7 +357,7 @@ void stateblock_init_contained_states(IWineD3DStateBlockImpl *stateblock)
         }
     }
 
-    for (i = 0; i < gl_info->max_vshader_constantsF; ++i)
+    for (i = 0; i < device->d3d_vshader_constantF; ++i)
     {
         if (stateblock->changed.vertexShaderConstantsF[i])
         {
@@ -384,7 +384,7 @@ void stateblock_init_contained_states(IWineD3DStateBlockImpl *stateblock)
         }
     }
 
-    for (i = 0; i < gl_info->max_pshader_constantsF; ++i)
+    for (i = 0; i < device->d3d_pshader_constantF; ++i)
     {
         if (stateblock->changed.pixelShaderConstantsF[i])
         {
@@ -1339,7 +1339,6 @@ static const IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl =
 HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *device,
         WINED3DSTATEBLOCKTYPE type, IUnknown *parent)
 {
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     unsigned int i;
     HRESULT hr;
 
@@ -1368,16 +1367,17 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
     {
         case WINED3DSBT_ALL:
             stateblock_init_lights(stateblock, device->stateBlock->lightMap);
-            stateblock_savedstates_set_all(&stateblock->changed, gl_info);
+            stateblock_savedstates_set_all(&stateblock->changed, device->d3d_vshader_constantF,
+                                           device->d3d_pshader_constantF);
             break;
 
         case WINED3DSBT_PIXELSTATE:
-            stateblock_savedstates_set_pixel(&stateblock->changed, gl_info);
+            stateblock_savedstates_set_pixel(&stateblock->changed, device->d3d_pshader_constantF);
             break;
 
         case WINED3DSBT_VERTEXSTATE:
             stateblock_init_lights(stateblock, device->stateBlock->lightMap);
-            stateblock_savedstates_set_vertex(&stateblock->changed, gl_info);
+            stateblock_savedstates_set_vertex(&stateblock->changed, device->d3d_vshader_constantF);
             break;
 
         default:

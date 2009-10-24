@@ -247,7 +247,7 @@ static HRESULT pixelshader_set_function(IWineD3DPixelShaderImpl *shader,
     /* Second pass: figure out which registers are used, what the semantics are, etc.. */
     hr = shader_get_registers_used((IWineD3DBaseShader *)shader, fe,
             reg_maps, NULL, shader->input_signature, NULL,
-            byte_code, gl_info->max_pshader_constantsF);
+            byte_code, device->d3d_pshader_constantF);
     if (FAILED(hr)) return hr;
 
     pshader_set_limits(shader);

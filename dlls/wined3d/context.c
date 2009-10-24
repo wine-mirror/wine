@@ -1286,13 +1286,13 @@ struct wined3d_context *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceI
     if(This->shader_backend->shader_dirtifyable_constants((IWineD3DDevice *) This)) {
         /* Create the dirty constants array and initialize them to dirty */
         ret->vshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
-                sizeof(*ret->vshader_const_dirty) * gl_info->max_vshader_constantsF);
+                sizeof(*ret->vshader_const_dirty) * This->d3d_vshader_constantF);
         ret->pshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
-                sizeof(*ret->pshader_const_dirty) * gl_info->max_pshader_constantsF);
+                sizeof(*ret->pshader_const_dirty) * This->d3d_pshader_constantF);
         memset(ret->vshader_const_dirty, 1,
-               sizeof(*ret->vshader_const_dirty) * gl_info->max_vshader_constantsF);
+               sizeof(*ret->vshader_const_dirty) * This->d3d_vshader_constantF);
         memset(ret->pshader_const_dirty, 1,
-                sizeof(*ret->pshader_const_dirty) * gl_info->max_pshader_constantsF);
+                sizeof(*ret->pshader_const_dirty) * This->d3d_pshader_constantF);
     }
 
     ret->free_occlusion_query_size = 4;
@@ -2059,14 +2059,14 @@ struct wined3d_context *ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurfac
         if (context->vshader_const_dirty)
         {
             memset(context->vshader_const_dirty, 1,
-                    sizeof(*context->vshader_const_dirty) * gl_info->max_vshader_constantsF);
-            This->highest_dirty_vs_const = gl_info->max_vshader_constantsF;
+                    sizeof(*context->vshader_const_dirty) * This->d3d_vshader_constantF);
+            This->highest_dirty_vs_const = This->d3d_vshader_constantF;
         }
         if (context->pshader_const_dirty)
         {
             memset(context->pshader_const_dirty, 1,
-                   sizeof(*context->pshader_const_dirty) * gl_info->max_pshader_constantsF);
-            This->highest_dirty_ps_const = gl_info->max_pshader_constantsF;
+                   sizeof(*context->pshader_const_dirty) * This->d3d_pshader_constantF);
+            This->highest_dirty_ps_const = This->d3d_pshader_constantF;
         }
     }
 
