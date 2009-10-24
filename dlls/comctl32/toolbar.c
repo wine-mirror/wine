@@ -315,6 +315,11 @@ TOOLBAR_DumpToolbar(const TOOLBAR_INFO *iP, INT line)
     }
 }
 
+static inline BOOL
+TOOLBAR_ButtonHasString(const TBUTTON_INFO *btnPtr)
+{
+    return HIWORD(btnPtr->iString) && btnPtr->iString != -1;
+}
 
 /***********************************************************************
 * 		TOOLBAR_CheckStyle
@@ -3203,6 +3208,8 @@ TOOLBAR_DeleteButton (TOOLBAR_INFO *infoPtr, INT nIndex)
 
     if (infoPtr->nNumButtons == 1) {
 	TRACE(" simple delete!\n");
+	if (TOOLBAR_ButtonHasString(infoPtr->buttons))
+	    Free((LPWSTR)infoPtr->buttons[0].iString);
 	Free (infoPtr->buttons);
 	infoPtr->buttons = NULL;
 	infoPtr->nNumButtons = 0;
@@ -3223,6 +3230,8 @@ TOOLBAR_DeleteButton (TOOLBAR_INFO *infoPtr, INT nIndex)
                     (infoPtr->nNumButtons - nIndex) * sizeof(TBUTTON_INFO));
         }
 
+	if (TOOLBAR_ButtonHasString(oldButtons))
+	    Free((LPWSTR)oldButtons->iString);
 	Free (oldButtons);
     }
 
@@ -4331,11 +4340,10 @@ TOOLBAR_SetButtonInfoA (TOOLBAR_INFO *infoPtr, INT Id, const TBBUTTONINFOA *lptb
 	btnPtr->fsStyle = lptbbi->fsStyle;
 
     if ((lptbbi->dwMask & TBIF_TEXT) && ((INT_PTR)lptbbi->pszText != -1)) {
-        if ((HIWORD(btnPtr->iString) == 0) || (btnPtr->iString == -1))
-	    /* iString is index, zero it to make Str_SetPtr succeed */
-	    btnPtr->iString=0;
+        /* iString is index, zero it to make Str_SetPtr succeed */
+        if (!TOOLBAR_ButtonHasString(btnPtr)) btnPtr->iString = 0;
 
-         Str_SetPtrAtoW ((LPWSTR *)&btnPtr->iString, lptbbi->pszText);
+        Str_SetPtrAtoW ((LPWSTR *)&btnPtr->iString, lptbbi->pszText);
     }
 
     /* save the button rect to see if we need to redraw the whole toolbar */
@@ -4382,9 +4390,9 @@ TOOLBAR_SetButtonInfoW (TOOLBAR_INFO *infoPtr, INT Id, const TBBUTTONINFOW *lptb
 	btnPtr->fsStyle = lptbbi->fsStyle;
 
     if ((lptbbi->dwMask & TBIF_TEXT) && ((INT_PTR)lptbbi->pszText != -1)) {
-        if ((HIWORD(btnPtr->iString) == 0) || (btnPtr->iString == -1))
-	    /* iString is index, zero it to make Str_SetPtr succeed */
-	    btnPtr->iString=0;
+        /* iString is index, zero it to make Str_SetPtr succeed */
+        if (!TOOLBAR_ButtonHasString(btnPtr)) btnPtr->iString = 0;
+
         Str_SetPtrW ((LPWSTR *)&btnPtr->iString, lptbbi->pszText);
     }
 
@@ -5222,6 +5230,8 @@ TOOLBAR_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
 static LRESULT
 TOOLBAR_Destroy (TOOLBAR_INFO *infoPtr)
 {
+    INT i;
+
     /* delete tooltip control */
     if (infoPtr->hwndToolTip)
 	DestroyWindow (infoPtr->hwndToolTip);
@@ -5231,11 +5241,13 @@ TOOLBAR_Destroy (TOOLBAR_INFO *infoPtr)
     Free (infoPtr->bitmaps);            /* bitmaps list */
 
     /* delete button data */
+    for (i = 0; i < infoPtr->nNumButtons; i++)
+        if (TOOLBAR_ButtonHasString(&infoPtr->buttons[i]))
+            Free ((LPWSTR)infoPtr->buttons[i].iString);
     Free (infoPtr->buttons);
 
     /* delete strings */
     if (infoPtr->strings) {
-	INT i;
 	for (i = 0; i < infoPtr->nNumStrings; i++)
 	    Free (infoPtr->strings[i]);
 
