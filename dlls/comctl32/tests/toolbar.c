@@ -373,6 +373,8 @@ static void test_add_bitmap(void)
     addbmp.hInst = HINST_COMMCTRL;
     addbmp.nID = IDB_STD_SMALL_COLOR;
     rebuild_toolbar(&hToolbar);
+    ImageList_Destroy(himl);
+
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&addbmp) == 0, "TB_ADDBITMAP - unexpected return\n");
     CHECK_IMAGELIST(15, 16, 16);
     compare((int)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(23, 22), "%x");
@@ -980,6 +982,7 @@ static void test_sizes(void)
 
     rebuild_toolbar(&hToolbar);
     ImageList_Destroy(himl);
+    ImageList_Destroy(himl2);
 
     SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[3]);
     ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(27, 39), "Unexpected button size\n");
