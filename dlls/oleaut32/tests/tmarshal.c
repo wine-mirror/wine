@@ -1078,9 +1078,7 @@ static void test_typelibmarshal(void)
     mystruct = MYSTRUCT_BYPTR;
     memcpy(mystructArray, MYSTRUCT_ARRAY, sizeof(mystructArray));
     hr = IWidget_StructArgs(pWidget, MYSTRUCT_BYVAL, &mystruct, mystructArray);
-    todo_wine {
     ok_ole_success(hr, IWidget_StructArgs);
-    }
 
     /* call Clone */
     dispparams.cNamedArgs = 0;
