@@ -750,7 +750,7 @@
 # @ stub RtlNtPathNameToDosPathName
 @ stdcall RtlNtStatusToDosError(long)
 @ stdcall RtlNtStatusToDosErrorNoTeb(long)
-@ stub RtlNumberGenericTableElements
+@ stdcall RtlNumberGenericTableElements(ptr)
 # @ stub RtlNumberGenericTableElementsAvl
 @ stdcall RtlNumberOfClearBits(ptr)
 @ stdcall RtlNumberOfSetBits(ptr)

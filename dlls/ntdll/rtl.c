@@ -449,6 +449,15 @@ PVOID RtlEnumerateGenericTableWithoutSplaying(PVOID pTable, PVOID *RestartKey)
 }
 
 /******************************************************************************
+ *  RtlNumberGenericTableElements           [NTDLL.@]
+ */
+ULONG RtlNumberGenericTableElements(PVOID pTable)
+{
+    FIXME("(%p) stub!\n", pTable);
+    return 0;
+}
+
+/******************************************************************************
  *  RtlMoveMemory   [NTDLL.@]
  *
  * Move a block of memory that may overlap.
