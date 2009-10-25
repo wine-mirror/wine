@@ -629,13 +629,13 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
      */
     if (pshader)
     {
-        max_constantsF = gl_info->max_ps_arb_constantsF;
+        max_constantsF = gl_info->max_ps_arb_native_constants;
     }
     else
     {
         if(This->baseShader.reg_maps.usesrelconstF) {
             DWORD highest_constf = 0, clip_limit;
-            max_constantsF = gl_info->max_vs_arb_constantsF - reserved_vs_const(iface, gl_info);
+            max_constantsF = gl_info->max_vs_arb_native_constants - reserved_vs_const(iface, gl_info);
             max_constantsF -= count_bits(This->baseShader.reg_maps.integer_constants);
 
             for(i = 0; i < This->baseShader.limits.constant_float; i++)
@@ -665,7 +665,7 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
         {
             if (ctx->target_version >= NV2) *num_clipplanes = gl_info->max_clipplanes;
             else *num_clipplanes = min(gl_info->max_clipplanes, 4);
-            max_constantsF = gl_info->max_vs_arb_constantsF;
+            max_constantsF = gl_info->max_vs_arb_native_constants;
         }
     }
 
@@ -697,6 +697,21 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
             next_local = max(next_local, lconst_map[lconst->idx] + 1);
         }
     }
+
+    /* After subtracting privately used constants from the hardware limit(they are loaded as
+     * local constants), make sure the shader doesn't violate the env constant limit
+     */
+    if(pshader)
+    {
+        max_constantsF = min(max_constantsF, gl_info->max_ps_arb_constantsF);
+    }
+    else
+    {
+        max_constantsF = min(max_constantsF, gl_info->max_vs_arb_constantsF);
+    }
+
+    /* Avoid declaring more constants than needed */
+    max_constantsF = min(max_constantsF, This->baseShader.limits.constant_float);
 
     /* we use the array-based constants array if the local constants are marked for loading,
      * because then we use indirect addressing, or when the local constant list is empty,
