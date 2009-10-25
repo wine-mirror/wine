@@ -614,7 +614,8 @@ typedef enum _FSINFOCLASS {
 typedef enum _KEY_INFORMATION_CLASS {
     KeyBasicInformation,
     KeyNodeInformation,
-    KeyFullInformation
+    KeyFullInformation,
+    KeyNameInformation
 } KEY_INFORMATION_CLASS;
 
 typedef enum _KEY_VALUE_INFORMATION_CLASS {
@@ -1067,6 +1068,11 @@ typedef struct _KEY_FULL_INFORMATION
     ULONG         MaxValueDataLen;
     WCHAR         Class[1];
 } KEY_FULL_INFORMATION, *PKEY_FULL_INFORMATION;
+
+typedef struct _KEY_NAME_INFORMATION {
+    ULONG         NameLength;
+    WCHAR         Name[1];
+} KEY_NAME_INFORMATION, *PKEY_NAME_INFORMATION;
 
 typedef struct _KEY_VALUE_ENTRY
 {

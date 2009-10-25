@@ -217,6 +217,7 @@ static NTSTATUS enumerate_key( HANDLE handle, int index, KEY_INFORMATION_CLASS i
     case KeyBasicInformation: data_ptr = ((KEY_BASIC_INFORMATION *)info)->Name; break;
     case KeyFullInformation:  data_ptr = ((KEY_FULL_INFORMATION *)info)->Class; break;
     case KeyNodeInformation:  data_ptr = ((KEY_NODE_INFORMATION *)info)->Name;  break;
+    case KeyNameInformation:  data_ptr = ((KEY_NAME_INFORMATION *)info)->Name;  break;
     default:
         FIXME( "Information class %d not implemented\n", info_class );
         return STATUS_INVALID_PARAMETER;
@@ -276,6 +277,14 @@ static NTSTATUS enumerate_key( HANDLE handle, int index, KEY_INFORMATION_CLASS i
                         keyinfo.ClassLength = 0;
                         keyinfo.ClassOffset = -1;
                     }
+                    keyinfo.NameLength = reply->namelen;
+                    memcpy( info, &keyinfo, min( length, fixed_size ) );
+                }
+                break;
+            case KeyNameInformation:
+                {
+                    KEY_NAME_INFORMATION keyinfo;
+                    fixed_size = (char *)keyinfo.Name - (char *)&keyinfo;
                     keyinfo.NameLength = reply->namelen;
                     memcpy( info, &keyinfo, min( length, fixed_size ) );
                 }
