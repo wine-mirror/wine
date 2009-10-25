@@ -408,34 +408,6 @@ static void select_shader_mode(const struct wined3d_gl_info *gl_info, int *ps_se
     }
 }
 
-/** Select the number of report maximum shader constants based on the selected shader modes */
-static void select_shader_max_constants(int ps_selected_mode, int vs_selected_mode, struct wined3d_gl_info *gl_info)
-{
-    switch (vs_selected_mode) {
-        case SHADER_GLSL:
-            gl_info->max_vshader_constantsF = gl_info->max_vs_glsl_constantsF;
-            break;
-        case SHADER_ARB:
-            gl_info->max_vshader_constantsF = gl_info->max_vs_arb_constantsF;
-            break;
-        default:
-            gl_info->max_vshader_constantsF = 0;
-            break;
-    }
-
-    switch (ps_selected_mode) {
-        case SHADER_GLSL:
-            gl_info->max_pshader_constantsF = gl_info->max_ps_glsl_constantsF;
-            break;
-        case SHADER_ARB:
-            gl_info->max_pshader_constantsF = gl_info->max_ps_arb_constantsF;
-            break;
-        default:
-            gl_info->max_pshader_constantsF = 0;
-            break;
-    }
-}
-
 /**********************************************************
  * IWineD3D parts follows
  **********************************************************/
@@ -3780,10 +3752,6 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
 
     select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
 
-    /* This function should *not* be modifying GL caps
-     * TODO: move the functionality where it belongs */
-    select_shader_max_constants(ps_selected_mode, vs_selected_mode, &adapter->gl_info);
-
     /* ------------------------------------------------
        The following fields apply to both d3d8 and d3d9
        ------------------------------------------------ */
@@ -4882,7 +4850,6 @@ BOOL InitAdapters(IWineD3DImpl *This)
         WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
 
         select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
-        select_shader_max_constants(ps_selected_mode, vs_selected_mode, &adapter->gl_info);
         fillGLAttribFuncs(&adapter->gl_info);
         adapter->opengl = TRUE;
     }
