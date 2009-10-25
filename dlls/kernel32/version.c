@@ -186,3 +186,18 @@ DWORD WINAPI SetTermsrvAppInstallMode(BOOL bInstallMode)
     FIXME("(%d): stub\n", bInstallMode);
     return 0;
 }
+
+/***********************************************************************
+ *           GetProductInfo       (KERNEL32.@)
+ *
+ * Gives info about the current Windows product type, in a format compatible
+ * with the given Windows version
+ *
+ * Returns TRUE if the input is valid, FALSE otherwise
+ */
+BOOL WINAPI GetProductInfo(DWORD dwOSMajorVersion, DWORD dwOSMinorVersion, DWORD dwSpMajorVersion,
+                           DWORD dwSpMinorVersion, PDWORD pdwReturnedProductType)
+{
+    return RtlGetProductInfo(dwOSMajorVersion, dwOSMinorVersion,
+                             dwSpMajorVersion, dwSpMinorVersion, pdwReturnedProductType);
+}
