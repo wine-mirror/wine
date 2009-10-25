@@ -141,7 +141,7 @@
 @ stub ??6ostream@@QAEAAV0@M@Z  # class ostream & __thiscall ostream::operator<<(float)
 @ stub ??6ostream@@QAEAAV0@N@Z  # class ostream & __thiscall ostream::operator<<(double)
 @ stub ??6ostream@@QAEAAV0@O@Z  # class ostream & __thiscall ostream::operator<<(long double)
-@ stub ??6ostream@@QAEAAV0@P6AAAV0@AAV0@@Z@Z  # class ostream & __thiscall ostream::operator<<(class ostream & (__cdecl*)(class ostream &))
+@ cdecl -i386 -norelay ??6ostream@@QAEAAV0@P6AAAV0@AAV0@@Z@Z(ptr ptr) __thiscall_MSVCIRT_operator_sl_callback  # class ostream & __thiscall ostream::operator<<(class ostream & (__cdecl*)(class ostream &))
 @ stub ??6ostream@@QAEAAV0@P6AAAVios@@AAV1@@Z@Z  # class ostream & __thiscall ostream::operator<<(class ios & (__cdecl*)(class ios &))
 @ stub ??6ostream@@QAEAAV0@PAVstreambuf@@@Z  # class ostream & __thiscall ostream::operator<<(class streambuf *)
 @ stub ??6ostream@@QAEAAV0@PBC@Z  # class ostream & __thiscall ostream::operator<<(signed char const *)

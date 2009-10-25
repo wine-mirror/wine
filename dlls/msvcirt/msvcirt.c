@@ -73,6 +73,17 @@ void * __stdcall MSVCIRT_operator_sl_pchar(class_ostream * _this, const char * s
 }
 
 /******************************************************************
+ *		??6ostream@@QAEAAV0@P6AAAV0@AAV0@@Z@Z (MSVCRTI.@)
+ *    class ostream & __thiscall ostream::operator<<(class ostream & (__cdecl*)(class ostream &))
+ */
+DEFINE_THISCALL_WRAPPER(MSVCIRT_operator_sl_callback,8)
+void * __stdcall MSVCIRT_operator_sl_callback(class_ostream * _this, class_ostream * (__cdecl*func)(class_ostream*))
+{
+   TRACE("%p, %p\n", _this, func);
+   return func(_this);
+}
+
+/******************************************************************
  *		?endl@@YAAAVostream@@AAV1@@Z (MSVCRTI.@)
  *           class ostream & __cdecl endl(class ostream &)
  */
