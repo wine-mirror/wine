@@ -438,6 +438,8 @@ static IHTMLDocument2 *create_document(void)
     hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IHTMLDocument2, (void**)&doc);
     ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
+    if(FAILED(hres))
+        return NULL;
 
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument5, (void**)&doc5);
     if(FAILED(hres)) {

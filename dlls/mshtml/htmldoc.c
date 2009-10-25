@@ -1957,6 +1957,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
 {
     HTMLDocumentObj *doc;
     nsIDOMWindow *nswindow = NULL;
+    nsresult nsres;
     HRESULT hres;
 
     TRACE("(%p %s %p)\n", pUnkOuter, debugstr_guid(riid), ppvObject);
@@ -1972,23 +1973,26 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     doc->ref = 1;
     doc->basedoc.doc_obj = doc;
 
+    list_init(&doc->bindings);
+    doc->usermode = UNKNOWN_USERMODE;
+    doc->readystate = READYSTATE_UNINITIALIZED;
+
+    doc->nscontainer = NSContainer_Create(doc, NULL);
+    if(!doc->nscontainer) {
+        ERR("Failed to init Gecko, returning CLASS_E_CLASSNOTAVAILABLE\n");
+        htmldoc_release(&doc->basedoc);
+        return CLASS_E_CLASSNOTAVAILABLE;
+    }
+
     hres = htmldoc_query_interface(&doc->basedoc, riid, ppvObject);
     htmldoc_release(&doc->basedoc);
     if(FAILED(hres))
         return hres;
 
-    doc->nscontainer = NSContainer_Create(doc, NULL);
-    list_init(&doc->bindings);
-    doc->usermode = UNKNOWN_USERMODE;
-    doc->readystate = READYSTATE_UNINITIALIZED;
 
-    if(doc->nscontainer) {
-        nsresult nsres;
-
-        nsres = nsIWebBrowser_GetContentDOMWindow(doc->nscontainer->webbrowser, &nswindow);
-        if(NS_FAILED(nsres))
-            ERR("GetContentDOMWindow failed: %08x\n", nsres);
-    }
+    nsres = nsIWebBrowser_GetContentDOMWindow(doc->nscontainer->webbrowser, &nswindow);
+    if(NS_FAILED(nsres))
+        ERR("GetContentDOMWindow failed: %08x\n", nsres);
 
     hres = HTMLWindow_Create(doc, nswindow, NULL /* FIXME */, &doc->basedoc.window);
     if(nswindow)
