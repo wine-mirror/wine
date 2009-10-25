@@ -168,7 +168,7 @@ static void test_openCloseWAVE(HWND hwnd)
 {
     MCIERROR err;
     MCI_GENERIC_PARMS parm;
-    const char command_open[] = "open new type waveaudio alias mysound";
+    const char command_open[] = "open new type waveaudio alias mysound notify";
     const char command_close_my[] = "close mysound notify";
     const char command_close_all[] = "close all notify";
     const char command_sysinfo[] = "sysinfo waveaudio quantity open";
@@ -180,9 +180,18 @@ static void test_openCloseWAVE(HWND hwnd)
     todo_wine ok(!err,"mci %s returned %s\n", command_open, dbg_mcierr(err));
     if(!err) trace("[MCI] with %s drivers\n", buf);
 
-    err = mciSendString(command_open, buf, sizeof(buf), NULL);
+    err = mciSendString("open new type waveaudio alias r shareable", buf, sizeof(buf), NULL);
+    ok(err==MCIERR_UNSUPPORTED_FUNCTION,"mci open new shareable returned %s\n", dbg_mcierr(err));
+    if(!err) {
+        err = mciSendString("close r", NULL, 0, NULL);
+        ok(!err,"mci close shareable returned %s\n", dbg_mcierr(err));
+    }
+
+    err = mciSendString(command_open, buf, sizeof(buf), hwnd);
     ok(!err,"mci %s returned %s\n", command_open, dbg_mcierr(err));
     ok(!strcmp(buf,"1"), "mci open deviceId: %s, expected 1\n", buf);
+    /* Wine<=1.1.33 used to ignore anything past alias XY */
+    test_notification(hwnd,"open new alias notify",MCI_NOTIFY_SUCCESSFUL);
 
     err = mciSendString("status mysound time format", buf, sizeof(buf), hwnd);
     ok(!err,"mci status time format returned %s\n", dbg_mcierr(err));
@@ -514,7 +523,7 @@ static void test_asyncWAVE(HWND hwnd)
     char buf[1024];
     memset(buf, 0, sizeof(buf));
 
-    err = mciSendString("open tempfile.wav alias mysound", buf, sizeof(buf), NULL);
+    err = mciSendString("open tempfile.wav alias mysound notify", buf, sizeof(buf), hwnd);
     ok(err==ok_saved,"mci open tempfile.wav returned %s\n", dbg_mcierr(err));
     if(err) {
         skip("Cannot open tempfile.wav for playing (%s), skipping\n", dbg_mcierr(err));
@@ -523,6 +532,7 @@ static void test_asyncWAVE(HWND hwnd)
     ok(!strcmp(buf,"1"), "mci open deviceId: %s, expected 1\n", buf);
     wDeviceID = atoi(buf);
     ok(wDeviceID,"mci open DeviceID: %d\n", wDeviceID);
+    test_notification(hwnd,"open alias notify",MCI_NOTIFY_SUCCESSFUL);
 
     err = mciSendString("status mysound mode", buf, sizeof(buf), hwnd);
     ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));

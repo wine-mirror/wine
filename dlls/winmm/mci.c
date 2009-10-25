@@ -1232,7 +1232,6 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
     DWORD		data[MCI_DATA_SIZE];
     DWORD		retType;
     LPCWSTR		lpCmd = 0;
-    LPWSTR		devAlias = NULL;
     static const WCHAR  wszNew[] = {'n','e','w',0};
     static const WCHAR  wszSAliasS[] = {' ','a','l','i','a','s',' ',0};
     static const WCHAR wszTypeS[] = {'t','y','p','e',' ',0};
@@ -1311,19 +1310,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	    dwFlags |= MCI_OPEN_ELEMENT;
 	    data[3] = (DWORD)dev;
 	}
-	if ((devAlias = strstrW(args, wszSAliasS))) {
-            WCHAR*      tmp2;
-	    devAlias += 7;
-	    if (!(tmp = strchrW(devAlias,' '))) tmp = devAlias + strlenW(devAlias);
-	    if (tmp) *tmp = '\0';
-            tmp2 = HeapAlloc(GetProcessHeap(), 0, (tmp - devAlias + 1) * sizeof(WCHAR) );
-            memcpy( tmp2, devAlias, (tmp - devAlias) * sizeof(WCHAR) );
-            tmp2[tmp - devAlias] = 0;
-            data[4] = (DWORD)tmp2;
-	    /* should be done in regular options parsing */
-	    /* dwFlags |= MCI_OPEN_ALIAS; */
-	} else if (dev == 0) {
-	    /* "open new" requires alias */
+	if (!strstrW(args, wszSAliasS) && !dev) {
 	    dwRet = MCIERR_NEW_REQUIRES_ALIAS;
 	    goto errCleanUp;
 	}
