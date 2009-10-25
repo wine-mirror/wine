@@ -932,11 +932,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHICON(HICON hicon, GpBitmap** bitmap)
     TRACE("%p, %p\n", hicon, bitmap);
 
     if(!bitmap || !GetIconInfo(hicon, &iinfo))
-    {
-        DeleteObject(iinfo.hbmColor);
-        DeleteObject(iinfo.hbmMask);
         return InvalidParameter;
-    }
 
     /* get the size of the icon */
     ret = GetObjectA(iinfo.hbmColor ? iinfo.hbmColor : iinfo.hbmMask, sizeof(bm), &bm);
