@@ -967,6 +967,95 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
     return S_OK;
 }
 
+static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const char **ptr, const char *data)
+{
+    unsigned int i;
+    HRESULT hr;
+
+    hr = parse_fx10_variable_head(v, ptr, data);
+    if (FAILED(hr)) return hr;
+
+    skip_dword_unknown(ptr, 2);
+
+    switch (v->type->basetype)
+    {
+        case D3D10_SVT_TEXTURE1D:
+        case D3D10_SVT_TEXTURE1DARRAY:
+        case D3D10_SVT_TEXTURE2D:
+        case D3D10_SVT_TEXTURE2DARRAY:
+        case D3D10_SVT_TEXTURE2DMS:
+        case D3D10_SVT_TEXTURE2DMSARRAY:
+        case D3D10_SVT_TEXTURE3D:
+        case D3D10_SVT_TEXTURECUBE:
+        case D3D10_SVT_RENDERTARGETVIEW:
+        case D3D10_SVT_DEPTHSTENCILVIEW:
+            TRACE("SVT could not have elements.\n");
+            break;
+
+        case D3D10_SVT_VERTEXSHADER:
+        case D3D10_SVT_PIXELSHADER:
+        case D3D10_SVT_GEOMETRYSHADER:
+            TRACE("SVT is a shader.\n");
+            for (i = 0; i < max(v->type->element_count, 1); ++i)
+            {
+                DWORD shader_offset;
+
+                /*
+                 * TODO: Parse the shader
+                 */
+                read_dword(ptr, &shader_offset);
+                FIXME("Shader offset: %#x.\n", shader_offset);
+            }
+            break;
+
+        case D3D10_SVT_DEPTHSTENCIL:
+        case D3D10_SVT_BLEND:
+        case D3D10_SVT_RASTERIZER:
+        case D3D10_SVT_SAMPLER:
+            TRACE("SVT is a state.\n");
+            for (i = 0; i < max(v->type->element_count, 1); ++i)
+            {
+                unsigned int j;
+                DWORD object_count;
+
+                read_dword(ptr, &object_count);
+                TRACE("Object count: %#x.\n", object_count);
+
+                for (j = 0; j < object_count; ++j)
+                {
+                    skip_dword_unknown(ptr, 4);
+                }
+            }
+            break;
+
+        default:
+            FIXME("Unhandled case %s.\n", debug_d3d10_shader_variable_type(v->type->basetype));
+            return E_FAIL;
+    }
+
+    read_dword(ptr, &v->annotation_count);
+    TRACE("Variable has %u annotations.\n", v->annotation_count);
+
+    v->annotations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, v->annotation_count * sizeof(*v->annotations));
+    if (!v->annotations)
+    {
+        ERR("Failed to allocate variable annotations memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < v->annotation_count; ++i)
+    {
+        struct d3d10_effect_variable *a = &v->annotations[i];
+
+        a->effect = v->effect;
+
+        hr = parse_fx10_annotation(a, ptr, data);
+        if (FAILED(hr)) return hr;
+    }
+
+    return S_OK;
+}
+
 static HRESULT parse_fx10_local_buffer(struct d3d10_effect_variable *l, const char **ptr, const char *data)
 {
     unsigned int i;
@@ -1188,6 +1277,13 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
         return E_OUTOFMEMORY;
     }
 
+    e->local_variables = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, e->local_variable_count * sizeof(*e->local_variables));
+    if (!e->local_variables)
+    {
+        ERR("Failed to allocate local variable memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
     e->techniques = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, e->technique_count * sizeof(*e->techniques));
     if (!e->techniques)
     {
@@ -1203,6 +1299,17 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
         l->buffer = &null_local_buffer;
 
         hr = parse_fx10_local_buffer(l, &ptr, data);
+        if (FAILED(hr)) return hr;
+    }
+
+    for (i = 0; i < e->local_variable_count; ++i)
+    {
+        struct d3d10_effect_variable *v = &e->local_variables[i];
+
+        v->effect = e;
+        v->vtbl = &d3d10_effect_variable_vtbl;
+
+        hr = parse_fx10_local_variable(v, &ptr, data);
         if (FAILED(hr)) return hr;
     }
 
@@ -1235,8 +1342,8 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     read_dword(&ptr, &e->variable_count);
     TRACE("Variable count: %u\n", e->variable_count);
 
-    read_dword(&ptr, &e->object_count);
-    TRACE("Object count: %u\n", e->object_count);
+    read_dword(&ptr, &e->local_variable_count);
+    TRACE("Object count: %u\n", e->local_variable_count);
 
     read_dword(&ptr, &e->sharedbuffers_count);
     TRACE("Sharedbuffers count: %u\n", e->sharedbuffers_count);
@@ -1531,6 +1638,15 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
                 d3d10_effect_technique_destroy(&This->techniques[i]);
             }
             HeapFree(GetProcessHeap(), 0, This->techniques);
+        }
+
+        if (This->local_variables)
+        {
+            for (i = 0; i < This->local_variable_count; ++i)
+            {
+                d3d10_effect_variable_destroy(&This->local_variables[i]);
+            }
+            HeapFree(GetProcessHeap(), 0, &This->local_variables);
         }
 
         if (This->local_buffers)

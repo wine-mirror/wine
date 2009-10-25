@@ -154,7 +154,7 @@ struct d3d10_effect
     DWORD version;
     DWORD local_buffer_count;
     DWORD variable_count;
-    DWORD object_count;
+    DWORD local_variable_count;
     DWORD sharedbuffers_count;
     DWORD sharedobjects_count;
     DWORD technique_count;
@@ -171,6 +171,7 @@ struct d3d10_effect
 
     struct wine_rb_tree types;
     struct d3d10_effect_variable *local_buffers;
+    struct d3d10_effect_variable *local_variables;
     struct d3d10_effect_technique *techniques;
 };
 
