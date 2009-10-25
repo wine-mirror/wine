@@ -43,6 +43,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 #define D3D10_FX10_TYPE_CLASS_SHIFT     0
 #define D3D10_FX10_TYPE_CLASS_MASK      (0x7 << D3D10_FX10_TYPE_CLASS_SHIFT)
 
+#define D3D10_FX10_TYPE_MATRIX_COLUMN_MAJOR_MASK 0x4000
+
 static const struct ID3D10EffectTechniqueVtbl d3d10_effect_technique_vtbl;
 static const struct ID3D10EffectPassVtbl d3d10_effect_pass_vtbl;
 static const struct ID3D10EffectVariableVtbl d3d10_effect_variable_vtbl;
@@ -286,13 +288,14 @@ static HRESULT parse_shader(struct d3d10_effect_object *o, const char *data)
     return parse_dxbc(ptr, dxbc_size, shader_chunk_handler, s);
 }
 
-static D3D10_SHADER_VARIABLE_CLASS d3d10_variable_class(DWORD c)
+static D3D10_SHADER_VARIABLE_CLASS d3d10_variable_class(DWORD c, BOOL is_column_major)
 {
     switch (c)
     {
         case 1: return D3D10_SVC_SCALAR;
         case 2: return D3D10_SVC_VECTOR;
-        case 3: return D3D10_SVC_MATRIX_ROWS;
+        case 3: if (is_column_major) return D3D10_SVC_MATRIX_COLUMNS;
+                else return D3D10_SVC_MATRIX_ROWS;
         default:
             FIXME("Unknown variable class %#x.\n", c);
             return 0;
@@ -385,7 +388,7 @@ static HRESULT parse_fx10_type(struct d3d10_effect_type *t, const char *ptr, con
         t->column_count = (tmp & D3D10_FX10_TYPE_COLUMN_MASK) >> D3D10_FX10_TYPE_COLUMN_SHIFT;
         t->row_count = (tmp & D3D10_FX10_TYPE_ROW_MASK) >> D3D10_FX10_TYPE_ROW_SHIFT;
         t->basetype = d3d10_variable_type((tmp & D3D10_FX10_TYPE_BASETYPE_MASK) >> D3D10_FX10_TYPE_BASETYPE_SHIFT, FALSE);
-        t->type_class = d3d10_variable_class((tmp & D3D10_FX10_TYPE_CLASS_MASK) >> D3D10_FX10_TYPE_CLASS_SHIFT);
+        t->type_class = d3d10_variable_class((tmp & D3D10_FX10_TYPE_CLASS_MASK) >> D3D10_FX10_TYPE_CLASS_SHIFT, tmp & D3D10_FX10_TYPE_MATRIX_COLUMN_MAJOR_MASK);
 
         TRACE("Type description: %#x.\n", tmp);
         TRACE("\tcolumns: %u.\n", t->column_count);
@@ -393,7 +396,7 @@ static HRESULT parse_fx10_type(struct d3d10_effect_type *t, const char *ptr, con
         TRACE("\tbasetype: %s.\n", debug_d3d10_shader_variable_type(t->basetype));
         TRACE("\tclass: %s.\n", debug_d3d10_shader_variable_class(t->type_class));
         TRACE("\tunknown bits: %#x.\n", tmp & ~(D3D10_FX10_TYPE_COLUMN_MASK | D3D10_FX10_TYPE_ROW_MASK
-                | D3D10_FX10_TYPE_BASETYPE_MASK | D3D10_FX10_TYPE_CLASS_MASK));
+                | D3D10_FX10_TYPE_BASETYPE_MASK | D3D10_FX10_TYPE_CLASS_MASK | D3D10_FX10_TYPE_MATRIX_COLUMN_MAJOR_MASK));
     }
     else if (unknown0 == 3)
     {
