@@ -299,17 +299,49 @@ static D3D10_SHADER_VARIABLE_CLASS d3d10_variable_class(DWORD c)
     }
 }
 
-static D3D10_SHADER_VARIABLE_TYPE d3d10_variable_type(DWORD t)
+static D3D10_SHADER_VARIABLE_TYPE d3d10_variable_type(DWORD t, BOOL is_object)
 {
-    switch (t)
+    if(is_object)
     {
-        case 1: return D3D10_SVT_FLOAT;
-        case 2: return D3D10_SVT_INT;
-        case 3: return D3D10_SVT_UINT;
-        case 4: return D3D10_SVT_BOOL;
-        default:
-            FIXME("Unknown variable type %#x.\n", t);
-            return 0;
+        switch (t)
+        {
+            case 1: return D3D10_SVT_STRING;
+            case 2: return D3D10_SVT_BLEND;
+            case 3: return D3D10_SVT_DEPTHSTENCIL;
+            case 4: return D3D10_SVT_RASTERIZER;
+            case 5: return D3D10_SVT_PIXELSHADER;
+            case 6: return D3D10_SVT_VERTEXSHADER;
+            case 7: return D3D10_SVT_GEOMETRYSHADER;
+
+            case 10: return D3D10_SVT_TEXTURE1D;
+            case 11: return D3D10_SVT_TEXTURE1DARRAY;
+            case 12: return D3D10_SVT_TEXTURE2D;
+            case 13: return D3D10_SVT_TEXTURE2DARRAY;
+            case 14: return D3D10_SVT_TEXTURE2DMS;
+            case 15: return D3D10_SVT_TEXTURE2DMSARRAY;
+            case 16: return D3D10_SVT_TEXTURE3D;
+            case 17: return D3D10_SVT_TEXTURECUBE;
+
+            case 19: return D3D10_SVT_RENDERTARGETVIEW;
+            case 20: return D3D10_SVT_DEPTHSTENCILVIEW;
+            case 21: return D3D10_SVT_SAMPLER;
+            default:
+                FIXME("Unknown variable type %#x.\n", t);
+                return 0;
+        }
+    }
+    else
+    {
+        switch (t)
+        {
+            case 1: return D3D10_SVT_FLOAT;
+            case 2: return D3D10_SVT_INT;
+            case 3: return D3D10_SVT_UINT;
+            case 4: return D3D10_SVT_BOOL;
+            default:
+                FIXME("Unknown variable type %#x.\n", t);
+                return 0;
+        }
     }
 }
 
@@ -352,7 +384,7 @@ static HRESULT parse_fx10_type(struct d3d10_effect_type *t, const char *ptr, con
         read_dword(&ptr, &tmp);
         t->column_count = (tmp & D3D10_FX10_TYPE_COLUMN_MASK) >> D3D10_FX10_TYPE_COLUMN_SHIFT;
         t->row_count = (tmp & D3D10_FX10_TYPE_ROW_MASK) >> D3D10_FX10_TYPE_ROW_SHIFT;
-        t->basetype = d3d10_variable_type((tmp & D3D10_FX10_TYPE_BASETYPE_MASK) >> D3D10_FX10_TYPE_BASETYPE_SHIFT);
+        t->basetype = d3d10_variable_type((tmp & D3D10_FX10_TYPE_BASETYPE_MASK) >> D3D10_FX10_TYPE_BASETYPE_SHIFT, FALSE);
         t->type_class = d3d10_variable_class((tmp & D3D10_FX10_TYPE_CLASS_MASK) >> D3D10_FX10_TYPE_CLASS_SHIFT);
 
         TRACE("Type description: %#x.\n", tmp);
