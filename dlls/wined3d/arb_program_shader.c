@@ -4519,6 +4519,9 @@ static BOOL shader_arb_dirty_const(IWineD3DDevice *iface) {
 static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const struct wined3d_gl_info *gl_info,
         struct shader_caps *pCaps)
 {
+    DWORD vs_consts = min(gl_info->max_vs_arb_constantsF, gl_info->max_vs_arb_native_constants);
+    DWORD ps_consts = min(gl_info->max_ps_arb_constantsF, gl_info->max_ps_arb_native_constants);
+
     /* We don't have an ARB fixed function pipeline yet, so let the none backend set its caps,
      * then overwrite the shader specific ones
      */
@@ -4530,7 +4533,7 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const struct wined3d_gl_
             pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
             TRACE_(d3d_caps)("Hardware vertex shader version 3.0 enabled (NV_VERTEX_PROGRAM3)\n");
         }
-        else if (gl_info->max_vs_arb_constantsF >= 256)
+        else if (vs_consts >= 256)
         {
             /* Shader Model 2.0 requires at least 256 vertex shader constants */
             pCaps->VertexShaderVersion = WINED3DVS_VERSION(2,0);
@@ -4541,7 +4544,7 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const struct wined3d_gl_
             pCaps->VertexShaderVersion = WINED3DVS_VERSION(1,1);
             TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
         }
-        pCaps->MaxVertexShaderConst = gl_info->max_vs_arb_constantsF;
+        pCaps->MaxVertexShaderConst = vs_consts;
     }
 
     if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
@@ -4550,7 +4553,7 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const struct wined3d_gl_
             pCaps->PixelShaderVersion    = WINED3DPS_VERSION(3,0);
             TRACE_(d3d_caps)("Hardware pixel shader version 3.0 enabled (NV_FRAGMENT_PROGRAM2)\n");
         }
-        else if (gl_info->max_ps_arb_constantsF >= 32)
+        else if (ps_consts >= 32)
         {
             /* Shader Model 2.0 requires at least 32 pixel shader constants */
             pCaps->PixelShaderVersion    = WINED3DPS_VERSION(2,0);
@@ -4562,7 +4565,7 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const struct wined3d_gl_
             TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
         }
         pCaps->PixelShader1xMaxValue = 8.0f;
-        pCaps->MaxPixelShaderConst = gl_info->max_ps_arb_constantsF;
+        pCaps->MaxPixelShaderConst = ps_consts;
     }
 
     pCaps->VSClipping = use_nv_clip(gl_info);
