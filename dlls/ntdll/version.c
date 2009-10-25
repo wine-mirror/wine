@@ -527,6 +527,24 @@ done:
            current_version->wProductType );
 }
 
+/***********************************************************************
+ *           GetProductInfo       (NTDLL.@)
+ *
+ * Gives info about the current Windows product type, in a format compatible
+ * with the given Windows version
+ *
+ * Returns TRUE if the input is valid, FALSE otherwise
+ */
+BOOLEAN WINAPI RtlGetProductInfo(DWORD dwOSMajorVersion, DWORD dwOSMinorVersion, DWORD dwSpMajorVersion,
+                                 DWORD dwSpMinorVersion, PDWORD pdwReturnedProductType)
+{
+    FIXME("(%d,%d,%d,%d,%p): stub\n", dwOSMajorVersion, dwOSMinorVersion,
+          dwSpMajorVersion, dwSpMinorVersion, pdwReturnedProductType);
+
+    *pdwReturnedProductType = PRODUCT_ULTIMATE_N;
+
+    return TRUE;
+}
 
 /***********************************************************************
  *         RtlGetVersion   (NTDLL.@)
