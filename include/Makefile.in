@@ -117,6 +117,7 @@ SRCDIR_INCLUDES = \
 	cguid.h \
 	cierror.h \
 	clusapi.h \
+	cmdbas.idl \
 	commctrl.h \
 	commctrl.rh \
 	commdlg.h \

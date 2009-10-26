@@ -29,6 +29,8 @@ import "propidl.idl";
 import "urlmon.idl";
 
 typedef ULONG DBBYTEOFFSET;
+typedef LONG  DBROWOFFSET;
+typedef LONG  DBROWCOUNT;
 typedef ULONG DBCOUNTITEM;
 typedef ULONG DBLENGTH;
 typedef ULONG DBORDINAL;
@@ -40,6 +42,7 @@ typedef LONG  DB_LPARAMS;
 #include "dbs.idl"
 
 #include "access.idl"
+#include "cmdbas.idl"
 #include "dbccmd.idl"
 #include "dbcses.idl"
 #include "dbprop.idl"

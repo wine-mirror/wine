@@ -600,3 +600,48 @@ HRESULT __RPC_STUB IAccessor_ReleaseAccessor_Stub(IAccessor* This, HACCESSOR hAc
     if(FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
     return hr;
 }
+
+HRESULT CALLBACK ICommand_Cancel_Proxy(ICommand* This)
+{
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB ICommand_Cancel_Stub(ICommand* This, IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p)->(%p): stub\n", This, ppErrorInfoRem);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK ICommand_Execute_Proxy(ICommand* This, IUnknown *pUnkOuter, REFIID riid,
+                                        DBPARAMS *pParams, DBROWCOUNT *pcRowsAffected, IUnknown **ppRowset)
+{
+    FIXME("(%p)->(%p, %s, %p, %p, %p): stub\n", This, pUnkOuter, debugstr_guid(riid), pParams,
+          pcRowsAffected, ppRowset);
+    if(pParams) TRACE("params {%p, %d, %08lx}\n", pParams->pData, pParams->cParamSets, pParams->hAccessor);
+
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB ICommand_Execute_Stub(ICommand* This, IUnknown *pUnkOuter, REFIID riid, HACCESSOR hAccessor,
+                                         DB_UPARAMS cParamSets, GUID *pGuid, ULONG ulGuidOffset, RMTPACK *pInputParams,
+                                         RMTPACK *pOutputParams, DBCOUNTITEM cBindings, DBBINDING *rgBindings,
+                                         DBSTATUS *rgStatus, DBROWCOUNT *pcRowsAffected, IUnknown **ppRowset)
+{
+    FIXME("(%p)->(%p, %s, %08lx, %d, %p, %d, %p, %p, %d, %p, %p, %p, %p): stub\n", This, pUnkOuter, debugstr_guid(riid),
+          hAccessor, cParamSets, pGuid, ulGuidOffset, pInputParams, pOutputParams, cBindings, rgBindings, rgStatus,
+          pcRowsAffected, ppRowset);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK ICommand_GetDBSession_Proxy(ICommand* This, REFIID riid, IUnknown **ppSession)
+{
+    FIXME("(%p)->(%s, %p): stub\n", This, debugstr_guid(riid), ppSession);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB ICommand_GetDBSession_Stub(ICommand* This, REFIID riid, IUnknown **ppSession, IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p)->(%s, %p, %p): stub\n", This, debugstr_guid(riid), ppSession, ppErrorInfoRem);
+    return E_NOTIMPL;
+}
