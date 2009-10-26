@@ -50,6 +50,7 @@ struct wine_test
 char *tag = NULL;
 static struct wine_test *wine_tests;
 static int nr_of_files, nr_of_tests;
+static int nr_native_dlls;
 static const char whitespace[] = " \t\r\n";
 static const char testexe[] = "_test.exe";
 static char build_id[64];
@@ -679,6 +680,7 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
     {
         FreeLibrary(dll);
         xprintf ("    %s=load error Configured as native\n", dllname);
+        nr_native_dlls++;
         return TRUE;
     }
     if (!strcmp( dllname, "mshtml" ) && running_under_wine() && !gecko_check())
@@ -816,6 +818,9 @@ run_tests (char *logname, char *outdir)
     xprintf ("Test output:\n" );
 
     report (R_DELTA, 0, "Extracting: Done");
+
+    if (nr_native_dlls)
+        report( R_WARNING, "Some dlls are configured as native, you won't be able to submit results." );
 
     report (R_STATUS, "Running tests");
     report (R_PROGRESS, 1, nr_of_tests);
@@ -1054,7 +1059,7 @@ int main( int argc, char *argv[] )
 
         if (!logname) {
             logname = run_tests (NULL, outdir);
-            if (build_id[0] && !nb_filters &&
+            if (build_id[0] && !nb_filters && !nr_native_dlls &&
                 report (R_ASK, MB_YESNO, "Do you want to submit the test results?") == IDYES)
                 if (!send_file (logname) && !DeleteFileA(logname))
                     report (R_WARNING, "Can't remove logfile: %u", GetLastError());
