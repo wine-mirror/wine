@@ -340,13 +340,15 @@ end:
  */
 static void AddApplicationsToList(HWND hWnd, HIMAGELIST hList)
 {
-    APPINFO *iter = AppInfo;
+    APPINFO *iter;
     LVITEMW lvItem;
     HICON hIcon;
     int index;
 
-    while (iter)
+    for (iter = AppInfo; iter; iter = iter->next)
     {
+        if (!iter->title[0]) continue;
+
         /* get the icon */
         index = 0;
 
@@ -371,8 +373,6 @@ static void AddApplicationsToList(HWND hWnd, HIMAGELIST hList)
         /* now add the subitems (columns) */
         ListView_SetItemTextW(hWnd, index, 1, iter->publisher);
         ListView_SetItemTextW(hWnd, index, 2, iter->version);
-
-        iter = iter->next;
     }
 }
 
