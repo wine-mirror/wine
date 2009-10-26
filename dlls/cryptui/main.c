@@ -1062,6 +1062,49 @@ static void cert_mgr_do_export(HWND hwnd)
     }
 }
 
+static int CALLBACK cert_mgr_sort_by_text(HWND lv, int col, int index1,
+ int index2)
+{
+    LVITEMW item;
+    WCHAR buf1[MAX_STRING_LEN];
+    WCHAR buf2[MAX_STRING_LEN];
+
+    item.cchTextMax = sizeof(buf1) / sizeof(buf1[0]);
+    item.mask = LVIF_TEXT;
+    item.pszText = buf1;
+    item.iItem = index1;
+    item.iSubItem = col;
+    SendMessageW(lv, LVM_GETITEMW, 0, (LPARAM)&item);
+    item.pszText = buf2;
+    item.iItem = index2;
+    SendMessageW(lv, LVM_GETITEMW, 0, (LPARAM)&item);
+    return strcmpW(buf1, buf2);
+}
+
+static int CALLBACK cert_mgr_sort_by_subject(LPARAM lp1, LPARAM lp2, LPARAM lp)
+{
+    return cert_mgr_sort_by_text((HWND)lp, 0, lp1, lp2);
+}
+
+static int CALLBACK cert_mgr_sort_by_issuer(LPARAM lp1, LPARAM lp2, LPARAM lp)
+{
+    return cert_mgr_sort_by_text((HWND)lp, 1, lp1, lp2);
+}
+
+static int CALLBACK cert_mgr_sort_by_date(LPARAM lp1, LPARAM lp2, LPARAM lp)
+{
+    PCCERT_CONTEXT cert1 = (PCCERT_CONTEXT)lp1;
+    PCCERT_CONTEXT cert2 = (PCCERT_CONTEXT)lp2;
+    return CompareFileTime(&cert1->pCertInfo->NotAfter,
+     &cert2->pCertInfo->NotAfter);
+}
+
+static int CALLBACK cert_mgr_sort_by_friendly_name(LPARAM lp1, LPARAM lp2,
+ LPARAM lp)
+{
+    return cert_mgr_sort_by_text((HWND)lp, 3, lp1, lp2);
+}
+
 static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -1139,6 +1182,35 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
 
             if (lvk->wVKey == VK_DELETE)
                 cert_mgr_do_remove(hwnd);
+            break;
+        }
+        case LVN_COLUMNCLICK:
+        {
+            NMLISTVIEW *nmlv = (NMLISTVIEW *)lp;
+            HWND lv = GetDlgItem(hwnd, IDC_MGR_CERTS);
+
+            /* FIXME: doesn't support swapping sort order between ascending
+             * and descending.
+             */
+            switch (nmlv->iSubItem)
+            {
+            case 0:
+                SendMessageW(lv, LVM_SORTITEMSEX, (WPARAM)lv,
+                 (LPARAM)cert_mgr_sort_by_subject);
+                break;
+            case 1:
+                SendMessageW(lv, LVM_SORTITEMSEX, (WPARAM)lv,
+                (LPARAM)cert_mgr_sort_by_issuer);
+                break;
+            case 2:
+                SendMessageW(lv, LVM_SORTITEMS, 0,
+                 (LPARAM)cert_mgr_sort_by_date);
+                break;
+            case 3:
+                SendMessageW(lv, LVM_SORTITEMSEX, (WPARAM)lv,
+                 (LPARAM)cert_mgr_sort_by_friendly_name);
+                break;
+            }
             break;
         }
         }
