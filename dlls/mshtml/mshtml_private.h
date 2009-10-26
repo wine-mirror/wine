@@ -219,6 +219,8 @@ struct HTMLWindow {
     nsIDOMWindow *nswindow;
     HTMLWindow *parent;
 
+    nsChannelBSC *bscallback;
+
     event_target_t *event_target;
     IHTMLEventObj *event;
     BOOL *event_vector;
@@ -358,7 +360,6 @@ struct HTMLDocumentObj {
     DWORD update;
 
     /* FIXME: probably should be in document node object */
-    nsChannelBSC *bscallback;
     IMoniker *mon;
     LPOLESTR url;
     struct list bindings;
@@ -658,7 +659,7 @@ void init_nsevents(NSContainer*);
 void add_nsevent_listener(HTMLWindow*,LPCWSTR);
 nsresult get_nsinterface(nsISupports*,REFIID,void**);
 
-void set_document_bscallback(HTMLDocument*,nsChannelBSC*);
+void set_window_bscallback(HTMLWindow*,nsChannelBSC*);
 void set_current_mon(HTMLDocument*,IMoniker*);
 HRESULT start_binding(HTMLDocument*,BSCallback*,IBindCtx*);
 void detach_document_bindings(HTMLDocumentObj*);

@@ -1886,7 +1886,6 @@ static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
     TRACE("(%p) ref = %u\n", This, ref);
 
     if(!ref) {
-        set_document_bscallback(&This->basedoc, NULL);
         set_current_mon(&This->basedoc, NULL);
         if(This->basedoc.doc_node) {
             This->basedoc.doc_node->basedoc.doc_obj = NULL;

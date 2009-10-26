@@ -196,7 +196,7 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
         }
     }
 
-    set_document_bscallback(This, bscallback);
+    set_window_bscallback(This->window, bscallback);
     IUnknown_Release((IUnknown*)bscallback);
     CoTaskMemFree(url);
 
@@ -292,7 +292,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         return hres;
 
     if(!bind_complete)
-        return start_binding(This, (BSCallback*)This->doc_obj->bscallback, pibc);
+        return start_binding(This, (BSCallback*)This->window->bscallback, pibc);
 
     return S_OK;
 }
@@ -556,7 +556,7 @@ static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, LPSTREAM
     if(FAILED(hres))
         return hres;
 
-    return channelbsc_load_stream(This->doc_obj->bscallback, pStm);
+    return channelbsc_load_stream(This->window->bscallback, pStm);
 }
 
 static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, LPSTREAM pStm,

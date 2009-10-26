@@ -158,6 +158,7 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
     if(!ref) {
         DWORD i;
 
+        set_window_bscallback(This, NULL);
         window_set_docnode(This, NULL);
         release_children(This);
 

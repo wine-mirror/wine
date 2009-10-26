@@ -951,7 +951,7 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
             on_start_nsrequest(This);
 
             /* events are reset when a new document URI is loaded, so re-initialise them here */
-            if(This->bsc.doc && This->bsc.doc->doc_obj->bscallback == This && This->bsc.doc->doc_obj->nscontainer) {
+            if(This->bsc.doc && This->bsc.doc->window->bscallback == This && This->bsc.doc->doc_obj->nscontainer) {
                 update_window_doc(This->bsc.doc->window);
                 init_nsevents(This->bsc.doc->doc_obj->nscontainer);
             }
@@ -1107,27 +1107,29 @@ IMoniker *get_channelbsc_mon(nsChannelBSC *This)
     return This->bsc.mon;
 }
 
-void set_document_bscallback(HTMLDocument *doc, nsChannelBSC *callback)
+void set_window_bscallback(HTMLWindow *window, nsChannelBSC *callback)
 {
     BSCallback *iter;
 
-    if(doc->doc_obj->bscallback) {
-        if(doc->doc_obj->bscallback->bsc.binding)
-            IBinding_Abort(doc->doc_obj->bscallback->bsc.binding);
-        doc->doc_obj->bscallback->bsc.doc = NULL;
-        IBindStatusCallback_Release(STATUSCLB(&doc->doc_obj->bscallback->bsc));
+    if(window->bscallback) {
+        if(window->bscallback->bsc.binding)
+            IBinding_Abort(window->bscallback->bsc.binding);
+        window->bscallback->bsc.doc = NULL;
+        IBindStatusCallback_Release(STATUSCLB(&window->bscallback->bsc));
     }
 
-    LIST_FOR_EACH_ENTRY(iter, &doc->doc_obj->bindings, BSCallback, entry) {
-        iter->doc = NULL;
-        list_remove(&iter->entry);
+    if(window->doc_obj) {
+        LIST_FOR_EACH_ENTRY(iter, &window->doc_obj->bindings, BSCallback, entry) {
+            iter->doc = NULL;
+            list_remove(&iter->entry);
+        }
     }
 
-    doc->doc_obj->bscallback = callback;
+    window->bscallback = callback;
 
     if(callback) {
         IBindStatusCallback_AddRef(STATUSCLB(&callback->bsc));
-        callback->bsc.doc = doc;
+        callback->bsc.doc = &window->doc_obj->basedoc;
     }
 }
 
