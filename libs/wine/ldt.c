@@ -35,7 +35,7 @@
 
 #ifdef __i386__
 
-#ifdef linux
+#ifdef __linux__
 
 #ifdef HAVE_SYS_SYSCALL_H
 # include <sys/syscall.h>
