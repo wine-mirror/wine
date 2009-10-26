@@ -54,6 +54,7 @@ static const struct ID3D10EffectVectorVariableVtbl d3d10_effect_vector_variable_
 static const struct ID3D10EffectMatrixVariableVtbl d3d10_effect_matrix_variable_vtbl;
 static const struct ID3D10EffectStringVariableVtbl d3d10_effect_string_variable_vtbl;
 static const struct ID3D10EffectShaderResourceVariableVtbl d3d10_effect_shader_resource_variable_vtbl;
+static const struct ID3D10EffectRenderTargetViewVariableVtbl d3d10_effect_render_target_view_variable_vtbl;
 static const struct ID3D10EffectBlendVariableVtbl d3d10_effect_blend_variable_vtbl;
 static const struct ID3D10EffectDepthStencilVariableVtbl d3d10_effect_depth_stencil_variable_vtbl;
 static const struct ID3D10EffectRasterizerVariableVtbl d3d10_effect_rasterizer_variable_vtbl;
@@ -87,6 +88,9 @@ static struct d3d10_effect_variable null_string_variable =
         NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
 static struct d3d10_effect_variable null_shader_resource_variable =
         {(ID3D10EffectVariableVtbl *)&d3d10_effect_shader_resource_variable_vtbl, &null_local_buffer,
+        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
+static struct d3d10_effect_variable null_render_target_view_variable =
+        {(ID3D10EffectVariableVtbl *)&d3d10_effect_render_target_view_variable_vtbl, &null_local_buffer,
         NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
 static struct d3d10_effect_variable null_blend_variable =
         {(ID3D10EffectVariableVtbl *)&d3d10_effect_blend_variable_vtbl, &null_local_buffer,
@@ -4103,6 +4107,230 @@ static const struct ID3D10EffectShaderResourceVariableVtbl d3d10_effect_shader_r
     d3d10_effect_shader_resource_variable_GetResource,
     d3d10_effect_shader_resource_variable_SetResourceArray,
     d3d10_effect_shader_resource_variable_GetResourceArray,
+};
+
+/* ID3D10EffectVariable methods */
+
+static BOOL STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_IsValid(
+        ID3D10EffectRenderTargetViewVariable *iface)
+{
+    TRACE("iface %p\n", iface);
+
+    return (struct d3d10_effect_variable *)iface != &null_render_target_view_variable;
+}
+
+static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_GetType(
+        ID3D10EffectRenderTargetViewVariable *iface)
+{
+    return d3d10_effect_variable_GetType((ID3D10EffectVariable *)iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_GetDesc(
+        ID3D10EffectRenderTargetViewVariable *iface, D3D10_EFFECT_VARIABLE_DESC *desc)
+{
+    return d3d10_effect_variable_GetDesc((ID3D10EffectVariable *)iface, desc);
+}
+
+static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_GetAnnotationByIndex(
+        ID3D10EffectRenderTargetViewVariable *iface, UINT index)
+{
+    return d3d10_effect_variable_GetAnnotationByIndex((ID3D10EffectVariable *)iface, index);
+}
+
+static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_GetAnnotationByName(
+        ID3D10EffectRenderTargetViewVariable *iface, LPCSTR name)
+{
+    return d3d10_effect_variable_GetAnnotationByName((ID3D10EffectVariable *)iface, name);
+}
+
+static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_GetMemberByIndex(
+        ID3D10EffectRenderTargetViewVariable *iface, UINT index)
+{
+    return d3d10_effect_variable_GetMemberByIndex((ID3D10EffectVariable *)iface, index);
+}
+
+static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_GetMemberByName(
+        ID3D10EffectRenderTargetViewVariable *iface, LPCSTR name)
+{
+    return d3d10_effect_variable_GetMemberByName((ID3D10EffectVariable *)iface, name);
+}
+
+static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_GetMemberBySemantic(
+        ID3D10EffectRenderTargetViewVariable *iface, LPCSTR semantic)
+{
+    return d3d10_effect_variable_GetMemberBySemantic((ID3D10EffectVariable *)iface, semantic);
+}
+
+static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_GetElement(
+        ID3D10EffectRenderTargetViewVariable *iface, UINT index)
+{
+    return d3d10_effect_variable_GetElement((ID3D10EffectVariable *)iface, index);
+}
+
+static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_GetParentConstantBuffer(
+        ID3D10EffectRenderTargetViewVariable *iface)
+{
+    return d3d10_effect_variable_GetParentConstantBuffer((ID3D10EffectVariable *)iface);
+}
+
+static struct ID3D10EffectScalarVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_AsScalar(
+        ID3D10EffectRenderTargetViewVariable *iface)
+{
+    return d3d10_effect_variable_AsScalar((ID3D10EffectVariable *)iface);
+}
+
+static struct ID3D10EffectVectorVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_AsVector(
+        ID3D10EffectRenderTargetViewVariable *iface)
+{
+    return d3d10_effect_variable_AsVector((ID3D10EffectVariable *)iface);
+}
+
+static struct ID3D10EffectMatrixVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_AsMatrix(
+        ID3D10EffectRenderTargetViewVariable *iface)
+{
+    return d3d10_effect_variable_AsMatrix((ID3D10EffectVariable *)iface);
+}
+
+static struct ID3D10EffectStringVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_AsString(
+        ID3D10EffectRenderTargetViewVariable *iface)
+{
+    return d3d10_effect_variable_AsString((ID3D10EffectVariable *)iface);
+}
+
+static struct ID3D10EffectShaderResourceVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_AsShaderResource(
+        ID3D10EffectRenderTargetViewVariable *iface)
+{
+    return d3d10_effect_variable_AsShaderResource((ID3D10EffectVariable *)iface);
+}
+
+static struct ID3D10EffectRenderTargetViewVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_AsRenderTargetView(
+        ID3D10EffectRenderTargetViewVariable *iface)
+{
+    return d3d10_effect_variable_AsRenderTargetView((ID3D10EffectVariable *)iface);
+}
+
+static struct ID3D10EffectDepthStencilViewVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_AsDepthStencilView(
+        ID3D10EffectRenderTargetViewVariable *iface)
+{
+    return d3d10_effect_variable_AsDepthStencilView((ID3D10EffectVariable *)iface);
+}
+
+static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_AsConstantBuffer(
+        ID3D10EffectRenderTargetViewVariable *iface)
+{
+    return d3d10_effect_variable_AsConstantBuffer((ID3D10EffectVariable *)iface);
+}
+
+static struct ID3D10EffectShaderVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_AsShader(
+        ID3D10EffectRenderTargetViewVariable *iface)
+{
+    return d3d10_effect_variable_AsShader((ID3D10EffectVariable *)iface);
+}
+
+static struct ID3D10EffectBlendVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_AsBlend(
+        ID3D10EffectRenderTargetViewVariable *iface)
+{
+    return d3d10_effect_variable_AsBlend((ID3D10EffectVariable *)iface);
+}
+
+static struct ID3D10EffectDepthStencilVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_AsDepthStencil(
+        ID3D10EffectRenderTargetViewVariable *iface)
+{
+    return d3d10_effect_variable_AsDepthStencil((ID3D10EffectVariable *)iface);
+}
+
+static struct ID3D10EffectRasterizerVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_AsRasterizer(
+        ID3D10EffectRenderTargetViewVariable *iface)
+{
+    return d3d10_effect_variable_AsRasterizer((ID3D10EffectVariable *)iface);
+}
+
+static struct ID3D10EffectSamplerVariable * STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_AsSampler(
+        ID3D10EffectRenderTargetViewVariable *iface)
+{
+    return d3d10_effect_variable_AsSampler((ID3D10EffectVariable *)iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_SetRawValue(
+        ID3D10EffectRenderTargetViewVariable *iface, void *data, UINT offset, UINT count)
+{
+    return d3d10_effect_variable_SetRawValue((ID3D10EffectVariable *)iface, data, offset, count);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_GetRawValue(
+        ID3D10EffectRenderTargetViewVariable *iface, void *data, UINT offset, UINT count)
+{
+    return d3d10_effect_variable_GetRawValue((ID3D10EffectVariable *)iface, data, offset, count);
+}
+
+/* ID3D10EffectRenderTargetViewVariable methods */
+
+static HRESULT STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_SetRenderTarget(
+        ID3D10EffectRenderTargetViewVariable *iface, ID3D10RenderTargetView *view)
+{
+    FIXME("iface %p, view %p stub!\n", iface, view);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_GetRenderTarget(
+        ID3D10EffectRenderTargetViewVariable *iface, ID3D10RenderTargetView **view)
+{
+    FIXME("iface %p, view %p stub!\n", iface, view);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_SetRenderTargetArray(
+        ID3D10EffectRenderTargetViewVariable *iface, ID3D10RenderTargetView **views, UINT offset, UINT count)
+{
+    FIXME("iface %p, views %p, offset %u, count %u stub!\n", iface, views, offset, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_effect_render_target_view_variable_GetRenderTargetArray(
+        ID3D10EffectRenderTargetViewVariable *iface, ID3D10RenderTargetView **views, UINT offset, UINT count)
+{
+    FIXME("iface %p, views %p, offset %u, count %u stub!\n", iface, views, offset, count);
+
+    return E_NOTIMPL;
+}
+
+
+static const struct ID3D10EffectRenderTargetViewVariableVtbl d3d10_effect_render_target_view_variable_vtbl =
+{
+    /* ID3D10EffectVariable methods */
+    d3d10_effect_render_target_view_variable_IsValid,
+    d3d10_effect_render_target_view_variable_GetType,
+    d3d10_effect_render_target_view_variable_GetDesc,
+    d3d10_effect_render_target_view_variable_GetAnnotationByIndex,
+    d3d10_effect_render_target_view_variable_GetAnnotationByName,
+    d3d10_effect_render_target_view_variable_GetMemberByIndex,
+    d3d10_effect_render_target_view_variable_GetMemberByName,
+    d3d10_effect_render_target_view_variable_GetMemberBySemantic,
+    d3d10_effect_render_target_view_variable_GetElement,
+    d3d10_effect_render_target_view_variable_GetParentConstantBuffer,
+    d3d10_effect_render_target_view_variable_AsScalar,
+    d3d10_effect_render_target_view_variable_AsVector,
+    d3d10_effect_render_target_view_variable_AsMatrix,
+    d3d10_effect_render_target_view_variable_AsString,
+    d3d10_effect_render_target_view_variable_AsShaderResource,
+    d3d10_effect_render_target_view_variable_AsRenderTargetView,
+    d3d10_effect_render_target_view_variable_AsDepthStencilView,
+    d3d10_effect_render_target_view_variable_AsConstantBuffer,
+    d3d10_effect_render_target_view_variable_AsShader,
+    d3d10_effect_render_target_view_variable_AsBlend,
+    d3d10_effect_render_target_view_variable_AsDepthStencil,
+    d3d10_effect_render_target_view_variable_AsRasterizer,
+    d3d10_effect_render_target_view_variable_AsSampler,
+    d3d10_effect_render_target_view_variable_SetRawValue,
+    d3d10_effect_render_target_view_variable_GetRawValue,
+    /* ID3D10EffectRenderTargetViewVariable methods */
+    d3d10_effect_render_target_view_variable_SetRenderTarget,
+    d3d10_effect_render_target_view_variable_GetRenderTarget,
+    d3d10_effect_render_target_view_variable_SetRenderTargetArray,
+    d3d10_effect_render_target_view_variable_GetRenderTargetArray,
 };
 
 /* ID3D10EffectVariable methods */
