@@ -46,7 +46,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmsys);
 
-static WINE_MMTHREAD*   WINMM_GetmmThread(HANDLE16);
 
 static CRITICAL_SECTION_DEBUG mmdrv_critsect_debug =
 {
@@ -83,6 +82,190 @@ int WINAPI MMSYSTEM_WEP(HINSTANCE16 hInstance, WORD wDataSeg,
 {
     TRACE("STUB: Unloading MMSystem DLL ... hInst=%04X\n", hInstance);
     return TRUE;
+}
+
+/* ###################################################
+ * #                     TIME                        #
+ * ###################################################
+ */
+
+/******************************************************************
+ *		MMSYSTEM_MMTIME32to16
+ *
+ *
+ */
+void MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32)
+{
+    mmt16->wType = mmt32->wType;
+    /* layout of rest is the same for 32/16,
+     * Note: mmt16->u is 2 bytes smaller than mmt32->u, which has padding
+     */
+    memcpy(&(mmt16->u), &(mmt32->u), sizeof(mmt16->u));
+}
+
+/******************************************************************
+ *		MMSYSTEM_MMTIME16to32
+ *
+ *
+ */
+void MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16)
+{
+    mmt32->wType = mmt16->wType;
+    /* layout of rest is the same for 32/16,
+     * Note: mmt16->u is 2 bytes smaller than mmt32->u, which has padding
+     */
+    memcpy(&(mmt32->u), &(mmt16->u), sizeof(mmt16->u));
+}
+
+/**************************************************************************
+ * 				timeGetSystemTime	[MMSYSTEM.601]
+ */
+MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16 lpTime, UINT16 wSize)
+{
+    if (wSize >= sizeof(*lpTime)) {
+	lpTime->wType = TIME_MS;
+	lpTime->u.ms = GetTickCount();
+
+	TRACE("=> %u\n", lpTime->u.ms);
+    }
+
+    return 0;
+}
+
+struct timer_entry {
+    struct list         entry;
+    UINT                id;
+    LPTIMECALLBACK16    func16;
+    DWORD               user;
+};
+
+static struct list timer_list = LIST_INIT(timer_list);
+
+static void CALLBACK timeCB3216(UINT id, UINT uMsg, DWORD_PTR user, DWORD_PTR dw1, DWORD_PTR dw2)
+{
+    struct timer_entry* te = (void*)user;
+    WORD                args[8];
+    DWORD               ret;
+
+    args[7] = LOWORD(id);
+    args[6] = LOWORD(uMsg);
+    args[5] = HIWORD(te->user);
+    args[4] = LOWORD(te->user);
+    args[3] = HIWORD(dw1);
+    args[2] = LOWORD(dw2);
+    args[1] = HIWORD(dw2);
+    args[0] = LOWORD(dw2);
+    WOWCallback16Ex((DWORD)te->func16, WCB16_PASCAL, sizeof(args), args, &ret);
+}
+
+/**************************************************************************
+ * 				timeSetEvent		[MMSYSTEM.602]
+ */
+MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol, LPTIMECALLBACK16 lpFunc,
+				 DWORD dwUser, UINT16 wFlags)
+{
+    MMRESULT16          id;
+    struct timer_entry* te;
+
+    switch (wFlags & (TIME_CALLBACK_EVENT_SET|TIME_CALLBACK_EVENT_PULSE))
+    {
+    case TIME_CALLBACK_EVENT_SET:
+    case TIME_CALLBACK_EVENT_PULSE:
+        id = timeSetEvent(wDelay, wResol, (LPTIMECALLBACK)lpFunc, dwUser, wFlags);
+        break;
+    case TIME_CALLBACK_FUNCTION:
+        te = HeapAlloc(GetProcessHeap(), 0, sizeof(*te));
+        if (!te) return 0;
+        te->func16 = lpFunc;
+        te->user = dwUser;
+        id = te->id = timeSetEvent(wDelay, wResol, timeCB3216, (DWORD_PTR)te, wFlags);
+        if (id)
+        {
+            EnterCriticalSection(&mmdrv_cs);
+            list_add_tail(&timer_list, &te->entry);
+            LeaveCriticalSection(&mmdrv_cs);
+        }
+        else HeapFree(GetProcessHeap(), 0, te);
+        break;
+    default:
+        id = 0;
+        break;
+    }
+    return id;
+}
+
+/**************************************************************************
+ * 				timeKillEvent		[MMSYSTEM.603]
+ */
+MMRESULT16 WINAPI timeKillEvent16(UINT16 wID)
+{
+    MMRESULT16  ret = timeKillEvent(wID);
+    struct timer_entry* te;
+
+    if (ret == TIMERR_NOERROR)
+    {
+        EnterCriticalSection(&mmdrv_cs);
+        LIST_FOR_EACH_ENTRY(te, &timer_list, struct timer_entry, entry)
+        {
+            if (wID == te->id)
+            {
+                list_remove(&te->entry);
+                HeapFree(GetProcessHeap(), 0, te);
+                break;
+            }
+        }
+        LeaveCriticalSection(&mmdrv_cs);
+    }
+    return ret;
+}
+
+/**************************************************************************
+ * 				timeGetDevCaps		[MMSYSTEM.604]
+ */
+MMRESULT16 WINAPI timeGetDevCaps16(LPTIMECAPS16 lpCaps, UINT16 wSize)
+{
+    TIMECAPS    caps;
+    MMRESULT    ret;
+    TRACE("(%p, %u) !\n", lpCaps, wSize);
+
+    if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
+
+    ret = timeGetDevCaps(&caps, sizeof(caps));
+    if (ret == MMSYSERR_NOERROR) {
+	TIMECAPS16 tc16;
+	tc16.wPeriodMin = caps.wPeriodMin;
+	tc16.wPeriodMax = caps.wPeriodMax;
+	memcpy(lpCaps, &tc16, min(wSize, sizeof(tc16)));
+    }
+    return ret;
+}
+
+/**************************************************************************
+ * 				timeBeginPeriod	[MMSYSTEM.605]
+ */
+MMRESULT16 WINAPI timeBeginPeriod16(UINT16 wPeriod)
+{
+    TRACE("(%u) !\n", wPeriod);
+
+    return timeBeginPeriod(wPeriod);
+}
+
+/**************************************************************************
+ * 				timeEndPeriod		[MMSYSTEM.606]
+ */
+MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
+{
+    TRACE("(%u) !\n", wPeriod);
+
+    return timeEndPeriod(wPeriod);
+}
+
+/**************************************************************************
+ * 				timeGetTime    [MMSYSTEM.607]
+ */
+DWORD WINAPI timeGetTime16(void)
+{
+    return timeGetTime();
 }
 
 /* ###################################################
@@ -1684,8 +1867,6 @@ void	WINAPI	mmTaskYield16(void)
     }
 }
 
-extern DWORD	WINAPI	GetProcessFlags(DWORD);
-
 /******************************************************************
  *		WINMM_GetmmThread
  *
@@ -1696,7 +1877,102 @@ static  WINE_MMTHREAD*	WINMM_GetmmThread(HANDLE16 h)
     return MapSL(MAKESEGPTR(h, 0));
 }
 
-DWORD WINAPI WINE_mmThreadEntryPoint(LPVOID);
+static	void	MMSYSTEM_ThreadBlock(WINE_MMTHREAD* lpMMThd)
+{
+    MSG		msg;
+    DWORD	ret;
+
+    if (lpMMThd->dwThreadID != GetCurrentThreadId())
+	ERR("Not called by thread itself\n");
+
+    for (;;) {
+	ResetEvent(lpMMThd->hEvent);
+	if (InterlockedDecrement(&lpMMThd->dwSignalCount) >= 0)
+	    break;
+	InterlockedIncrement(&lpMMThd->dwSignalCount);
+
+	TRACE("S1\n");
+
+	ret = MsgWaitForMultipleObjects(1, &lpMMThd->hEvent, FALSE, INFINITE, QS_ALLINPUT);
+	switch (ret) {
+	case WAIT_OBJECT_0:	/* Event */
+	    TRACE("S2.1\n");
+	    break;
+	case WAIT_OBJECT_0 + 1:	/* Msg */
+	    TRACE("S2.2\n");
+	    if (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) {
+		TranslateMessage(&msg);
+		DispatchMessageA(&msg);
+	    }
+	    break;
+	default:
+	    WARN("S2.x unsupported ret val 0x%08x\n", ret);
+	}
+	TRACE("S3\n");
+    }
+}
+
+/**************************************************************************
+ * 				mmThreadBlock		[MMSYSTEM.1122]
+ */
+void	WINAPI mmThreadBlock16(HANDLE16 hndl)
+{
+    TRACE("(%04x)!\n", hndl);
+
+    if (hndl) {
+	WINE_MMTHREAD*	lpMMThd = WINMM_GetmmThread(hndl);
+
+	if (lpMMThd->hThread != 0) {
+	    DWORD	lc;
+
+	    ReleaseThunkLock(&lc);
+	    MMSYSTEM_ThreadBlock(lpMMThd);
+	    RestoreThunkLock(lc);
+	} else {
+	    mmTaskBlock16(lpMMThd->hTask);
+	}
+    }
+    TRACE("done\n");
+}
+
+/**************************************************************************
+ * 			        __wine_mmThreadEntryPoint (MMSYSTEM.2047)
+ */
+DWORD WINAPI WINE_mmThreadEntryPoint(LPVOID p)
+{
+    HANDLE16		hndl = (HANDLE16)(DWORD_PTR)p;
+    WINE_MMTHREAD*	lpMMThd = WINMM_GetmmThread(hndl);
+
+    TRACE("(%04x %p)\n", hndl, lpMMThd);
+
+    lpMMThd->hTask = LOWORD(GetCurrentTask());
+    TRACE("[10-%p] setting hTask to 0x%08x\n", lpMMThd->hThread, lpMMThd->hTask);
+    lpMMThd->dwStatus = 0x10;
+    MMSYSTEM_ThreadBlock(lpMMThd);
+    TRACE("[20-%p]\n", lpMMThd->hThread);
+    lpMMThd->dwStatus = 0x20;
+    if (lpMMThd->fpThread) {
+	WOWCallback16(lpMMThd->fpThread, lpMMThd->dwThreadPmt);
+    }
+    lpMMThd->dwStatus = 0x30;
+    TRACE("[30-%p]\n", lpMMThd->hThread);
+    while (lpMMThd->dwCounter) {
+	Sleep(1);
+	/* WOWYield16();*/
+    }
+    TRACE("[XX-%p]\n", lpMMThd->hThread);
+    /* paranoia */
+    lpMMThd->dwSignature = WINE_MMTHREAD_DELETED;
+    /* close lpMMThread->hVxD directIO */
+    if (lpMMThd->hEvent)
+	CloseHandle(lpMMThd->hEvent);
+    GlobalFree16(hndl);
+    TRACE("done\n");
+
+    return 0;
+}
+
+extern DWORD	WINAPI	GetProcessFlags(DWORD);
 
 /**************************************************************************
  * 				mmThreadCreate		[MMSYSTEM.1120]
@@ -1821,64 +2097,6 @@ void WINAPI mmThreadSignal16(HANDLE16 hndl)
     }
 }
 
-static	void	MMSYSTEM_ThreadBlock(WINE_MMTHREAD* lpMMThd)
-{
-    MSG		msg;
-    DWORD	ret;
-
-    if (lpMMThd->dwThreadID != GetCurrentThreadId())
-	ERR("Not called by thread itself\n");
-
-    for (;;) {
-	ResetEvent(lpMMThd->hEvent);
-	if (InterlockedDecrement(&lpMMThd->dwSignalCount) >= 0)
-	    break;
-	InterlockedIncrement(&lpMMThd->dwSignalCount);
-
-	TRACE("S1\n");
-
-	ret = MsgWaitForMultipleObjects(1, &lpMMThd->hEvent, FALSE, INFINITE, QS_ALLINPUT);
-	switch (ret) {
-	case WAIT_OBJECT_0:	/* Event */
-	    TRACE("S2.1\n");
-	    break;
-	case WAIT_OBJECT_0 + 1:	/* Msg */
-	    TRACE("S2.2\n");
-	    if (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) {
-		TranslateMessage(&msg);
-		DispatchMessageA(&msg);
-	    }
-	    break;
-	default:
-	    WARN("S2.x unsupported ret val 0x%08x\n", ret);
-	}
-	TRACE("S3\n");
-    }
-}
-
-/**************************************************************************
- * 				mmThreadBlock		[MMSYSTEM.1122]
- */
-void	WINAPI mmThreadBlock16(HANDLE16 hndl)
-{
-    TRACE("(%04x)!\n", hndl);
-
-    if (hndl) {
-	WINE_MMTHREAD*	lpMMThd = WINMM_GetmmThread(hndl);
-
-	if (lpMMThd->hThread != 0) {
-	    DWORD	lc;
-
-	    ReleaseThunkLock(&lc);
-	    MMSYSTEM_ThreadBlock(lpMMThd);
-	    RestoreThunkLock(lc);
-	} else {
-	    mmTaskBlock16(lpMMThd->hTask);
-	}
-    }
-    TRACE("done\n");
-}
-
 /**************************************************************************
  * 				mmThreadIsCurrent	[MMSYSTEM.1123]
  */
@@ -1942,43 +2160,6 @@ HANDLE16 WINAPI mmThreadGetTask16(HANDLE16 hndl)
 	ret = lpMMThd->hTask;
     }
     return ret;
-}
-
-/**************************************************************************
- * 			        __wine_mmThreadEntryPoint (MMSYSTEM.2047)
- */
-DWORD WINAPI WINE_mmThreadEntryPoint(LPVOID p)
-{
-    HANDLE16		hndl = (HANDLE16)(DWORD_PTR)p;
-    WINE_MMTHREAD*	lpMMThd = WINMM_GetmmThread(hndl);
-
-    TRACE("(%04x %p)\n", hndl, lpMMThd);
-
-    lpMMThd->hTask = LOWORD(GetCurrentTask());
-    TRACE("[10-%p] setting hTask to 0x%08x\n", lpMMThd->hThread, lpMMThd->hTask);
-    lpMMThd->dwStatus = 0x10;
-    MMSYSTEM_ThreadBlock(lpMMThd);
-    TRACE("[20-%p]\n", lpMMThd->hThread);
-    lpMMThd->dwStatus = 0x20;
-    if (lpMMThd->fpThread) {
-	WOWCallback16(lpMMThd->fpThread, lpMMThd->dwThreadPmt);
-    }
-    lpMMThd->dwStatus = 0x30;
-    TRACE("[30-%p]\n", lpMMThd->hThread);
-    while (lpMMThd->dwCounter) {
-	Sleep(1);
-	/* WOWYield16();*/
-    }
-    TRACE("[XX-%p]\n", lpMMThd->hThread);
-    /* paranoia */
-    lpMMThd->dwSignature = WINE_MMTHREAD_DELETED;
-    /* close lpMMThread->hVxD directIO */
-    if (lpMMThd->hEvent)
-	CloseHandle(lpMMThd->hEvent);
-    GlobalFree16(hndl);
-    TRACE("done\n");
-
-    return 0;
 }
 
 typedef	BOOL16 (WINAPI *MMCPLCALLBACK)(HWND, LPCSTR, LPCSTR, LPCSTR);
@@ -2091,190 +2272,6 @@ LRESULT WINAPI DriverProc16(DWORD dwDevID, HDRVR16 hDrv, WORD wMsg,
 	  dwDevID, hDrv, wMsg, dwParam1, dwParam2);
 
     return DrvDefDriverProc16(dwDevID, hDrv, wMsg, dwParam1, dwParam2);
-}
-
-/* ###################################################
- * #                     TIME                        #
- * ###################################################
- */
-
-/******************************************************************
- *		MMSYSTEM_MMTIME32to16
- *
- *
- */
-void MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32)
-{
-    mmt16->wType = mmt32->wType;
-    /* layout of rest is the same for 32/16,
-     * Note: mmt16->u is 2 bytes smaller than mmt32->u, which has padding
-     */
-    memcpy(&(mmt16->u), &(mmt32->u), sizeof(mmt16->u));
-}
-
-/******************************************************************
- *		MMSYSTEM_MMTIME16to32
- *
- *
- */
-void MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16)
-{
-    mmt32->wType = mmt16->wType;
-    /* layout of rest is the same for 32/16,
-     * Note: mmt16->u is 2 bytes smaller than mmt32->u, which has padding
-     */
-    memcpy(&(mmt32->u), &(mmt16->u), sizeof(mmt16->u));
-}
-
-/**************************************************************************
- * 				timeGetSystemTime	[MMSYSTEM.601]
- */
-MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16 lpTime, UINT16 wSize)
-{
-    if (wSize >= sizeof(*lpTime)) {
-	lpTime->wType = TIME_MS;
-	lpTime->u.ms = GetTickCount();
-
-	TRACE("=> %u\n", lpTime->u.ms);
-    }
-
-    return 0;
-}
-
-struct timer_entry {
-    struct list         entry;
-    UINT                id;
-    LPTIMECALLBACK16    func16;
-    DWORD               user;
-};
-
-static struct list timer_list = LIST_INIT(timer_list);
-
-static void CALLBACK timeCB3216(UINT id, UINT uMsg, DWORD_PTR user, DWORD_PTR dw1, DWORD_PTR dw2)
-{
-    struct timer_entry* te = (void*)user;
-    WORD                args[8];
-    DWORD               ret;
-
-    args[7] = LOWORD(id);
-    args[6] = LOWORD(uMsg);
-    args[5] = HIWORD(te->user);
-    args[4] = LOWORD(te->user);
-    args[3] = HIWORD(dw1);
-    args[2] = LOWORD(dw2);
-    args[1] = HIWORD(dw2);
-    args[0] = LOWORD(dw2);
-    WOWCallback16Ex((DWORD)te->func16, WCB16_PASCAL, sizeof(args), args, &ret);
-}
-
-/**************************************************************************
- * 				timeSetEvent		[MMSYSTEM.602]
- */
-MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol, LPTIMECALLBACK16 lpFunc,
-				 DWORD dwUser, UINT16 wFlags)
-{
-    MMRESULT16          id;
-    struct timer_entry* te;
-
-    switch (wFlags & (TIME_CALLBACK_EVENT_SET|TIME_CALLBACK_EVENT_PULSE))
-    {
-    case TIME_CALLBACK_EVENT_SET:
-    case TIME_CALLBACK_EVENT_PULSE:
-        id = timeSetEvent(wDelay, wResol, (LPTIMECALLBACK)lpFunc, dwUser, wFlags);
-        break;
-    case TIME_CALLBACK_FUNCTION:
-        te = HeapAlloc(GetProcessHeap(), 0, sizeof(*te));
-        if (!te) return 0;
-        te->func16 = lpFunc;
-        te->user = dwUser;
-        id = te->id = timeSetEvent(wDelay, wResol, timeCB3216, (DWORD_PTR)te, wFlags);
-        if (id)
-        {
-            EnterCriticalSection(&mmdrv_cs);
-            list_add_tail(&timer_list, &te->entry);
-            LeaveCriticalSection(&mmdrv_cs);
-        }
-        else HeapFree(GetProcessHeap(), 0, te);
-        break;
-    default:
-        id = 0;
-        break;
-    }
-    return id;
-}
-
-/**************************************************************************
- * 				timeKillEvent		[MMSYSTEM.603]
- */
-MMRESULT16 WINAPI timeKillEvent16(UINT16 wID)
-{
-    MMRESULT16  ret = timeKillEvent(wID);
-    struct timer_entry* te;
-
-    if (ret == TIMERR_NOERROR)
-    {
-        EnterCriticalSection(&mmdrv_cs);
-        LIST_FOR_EACH_ENTRY(te, &timer_list, struct timer_entry, entry)
-        {
-            if (wID == te->id)
-            {
-                list_remove(&te->entry);
-                HeapFree(GetProcessHeap(), 0, te);
-                break;
-            }
-        }
-        LeaveCriticalSection(&mmdrv_cs);
-    }
-    return ret;
-}
-
-/**************************************************************************
- * 				timeGetDevCaps		[MMSYSTEM.604]
- */
-MMRESULT16 WINAPI timeGetDevCaps16(LPTIMECAPS16 lpCaps, UINT16 wSize)
-{
-    TIMECAPS    caps;
-    MMRESULT    ret;
-    TRACE("(%p, %u) !\n", lpCaps, wSize);
-
-    if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
-
-    ret = timeGetDevCaps(&caps, sizeof(caps));
-    if (ret == MMSYSERR_NOERROR) {
-	TIMECAPS16 tc16;
-	tc16.wPeriodMin = caps.wPeriodMin;
-	tc16.wPeriodMax = caps.wPeriodMax;
-	memcpy(lpCaps, &tc16, min(wSize, sizeof(tc16)));
-    }
-    return ret;
-}
-
-/**************************************************************************
- * 				timeBeginPeriod	[MMSYSTEM.605]
- */
-MMRESULT16 WINAPI timeBeginPeriod16(UINT16 wPeriod)
-{
-    TRACE("(%u) !\n", wPeriod);
-
-    return timeBeginPeriod(wPeriod);
-}
-
-/**************************************************************************
- * 				timeEndPeriod		[MMSYSTEM.606]
- */
-MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
-{
-    TRACE("(%u) !\n", wPeriod);
-
-    return timeEndPeriod(wPeriod);
-}
-
-/**************************************************************************
- * 				timeGetTime    [MMSYSTEM.607]
- */
-DWORD WINAPI timeGetTime16(void)
-{
-    return timeGetTime();
 }
 
 /* ###################################################
