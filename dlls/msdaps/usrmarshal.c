@@ -645,3 +645,30 @@ HRESULT __RPC_STUB ICommand_GetDBSession_Stub(ICommand* This, REFIID riid, IUnkn
     FIXME("(%p)->(%s, %p, %p): stub\n", This, debugstr_guid(riid), ppSession, ppErrorInfoRem);
     return E_NOTIMPL;
 }
+
+HRESULT CALLBACK ICommandText_GetCommandText_Proxy(ICommandText* This, GUID *pguidDialect, LPOLESTR *ppwszCommand)
+{
+    FIXME("(%p)->(%p, %p): stub\n", This, pguidDialect, ppwszCommand);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB ICommandText_GetCommandText_Stub(ICommandText* This, GUID *pguidDialect,
+                                                    LPOLESTR *ppwszCommand, IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p)->(%p, %p, %p): stub\n", This, pguidDialect, ppwszCommand, ppErrorInfoRem);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK ICommandText_SetCommandText_Proxy(ICommandText* This, REFGUID rguidDialect, LPCOLESTR pwszCommand)
+{
+    FIXME("(%p)->(%s, %s): stub\n", This, debugstr_guid(rguidDialect), debugstr_w(pwszCommand));
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB ICommandText_SetCommandText_Stub(ICommandText* This, REFGUID rguidDialect, LPCOLESTR pwszCommand,
+                                                    IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p)->(%s, %s, %p): stub\n", This, debugstr_guid(rguidDialect), debugstr_w(pwszCommand),
+          ppErrorInfoRem);
+    return E_NOTIMPL;
+}
