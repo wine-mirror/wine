@@ -84,7 +84,7 @@ struct BSCallback {
     IMoniker *mon;
     IBinding *binding;
 
-    HTMLDocument *doc;
+    HTMLDocumentNode *doc;
 
     struct list entry;
 };
@@ -315,7 +315,7 @@ static HRESULT WINAPI BindStatusCallback_OnStartBinding(IBindStatusCallback *ifa
     This->binding = pbind;
 
     if(This->doc)
-        list_add_head(&This->doc->doc_obj->bindings, &This->entry);
+        list_add_head(&This->doc->bindings, &This->entry);
 
     return This->vtbl->start_binding(This);
 }
@@ -707,7 +707,7 @@ static void parse_post_data(nsIInputStream *post_data_stream, LPWSTR *headers_re
     *post_data_len_ret = post_data_len;
 }
 
-HRESULT start_binding(HTMLDocument *doc, BSCallback *bscallback, IBindCtx *bctx)
+HRESULT start_binding(HTMLWindow *window, HTMLDocumentNode *doc, BSCallback *bscallback, IBindCtx *bctx)
 {
     IStream *str = NULL;
     HRESULT hres;
@@ -716,7 +716,8 @@ HRESULT start_binding(HTMLDocument *doc, BSCallback *bscallback, IBindCtx *bctx)
 
     /* NOTE: IE7 calls IsSystemMoniker here*/
 
-    call_docview_84(doc->doc_obj);
+    if(window)
+        call_docview_84(window->doc_obj);
 
     if(bctx) {
         RegisterBindStatusCallback(bctx, STATUSCLB(bscallback), NULL, 0);
@@ -848,14 +849,14 @@ static BufferBSC *create_bufferbsc(IMoniker *mon)
     return ret;
 }
 
-HRESULT bind_mon_to_buffer(HTMLDocument *doc, IMoniker *mon, void **buf, DWORD *size)
+HRESULT bind_mon_to_buffer(HTMLDocumentNode *doc, IMoniker *mon, void **buf, DWORD *size)
 {
     BufferBSC *bsc = create_bufferbsc(mon);
     HRESULT hres;
 
     *buf = NULL;
 
-    hres = start_binding(doc, &bsc->bsc, NULL);
+    hres = start_binding(NULL, doc, &bsc->bsc, NULL);
     if(SUCCEEDED(hres)) {
         hres = bsc->hres;
         if(SUCCEEDED(hres)) {
@@ -873,6 +874,8 @@ HRESULT bind_mon_to_buffer(HTMLDocument *doc, IMoniker *mon, void **buf, DWORD *
 
 struct nsChannelBSC {
     BSCallback bsc;
+
+    HTMLWindow *window;
 
     nsChannel *nschannel;
     nsIStreamListener *nslistener;
@@ -950,11 +953,12 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
 
             on_start_nsrequest(This);
 
+            if(This->window)
+                update_window_doc(This->window);
+
             /* events are reset when a new document URI is loaded, so re-initialise them here */
-            if(This->bsc.doc && This->bsc.doc->window->bscallback == This && This->bsc.doc->doc_obj->nscontainer) {
-                update_window_doc(This->bsc.doc->window);
-                init_nsevents(This->bsc.doc->doc_obj->nscontainer);
-            }
+            if(This->window && This->window->doc_obj->basedoc.window == This->window)
+                init_nsevents(This->window->doc_obj->nscontainer);
         }
 
         This->bsc.readed += This->nsstream->buf_size;
@@ -1109,27 +1113,32 @@ IMoniker *get_channelbsc_mon(nsChannelBSC *This)
 
 void set_window_bscallback(HTMLWindow *window, nsChannelBSC *callback)
 {
-    BSCallback *iter;
-
     if(window->bscallback) {
         if(window->bscallback->bsc.binding)
             IBinding_Abort(window->bscallback->bsc.binding);
         window->bscallback->bsc.doc = NULL;
+        window->bscallback->window = NULL;
         IBindStatusCallback_Release(STATUSCLB(&window->bscallback->bsc));
-    }
-
-    if(window->doc_obj) {
-        LIST_FOR_EACH_ENTRY(iter, &window->doc_obj->bindings, BSCallback, entry) {
-            iter->doc = NULL;
-            list_remove(&iter->entry);
-        }
     }
 
     window->bscallback = callback;
 
     if(callback) {
+        callback->window = window;
         IBindStatusCallback_AddRef(STATUSCLB(&callback->bsc));
-        callback->bsc.doc = &window->doc_obj->basedoc;
+        callback->bsc.doc = window->doc;
+    }
+}
+
+void abort_document_bindings(HTMLDocumentNode *doc)
+{
+    BSCallback *iter;
+
+    LIST_FOR_EACH_ENTRY(iter, &doc->bindings, BSCallback, entry) {
+        if(iter->binding)
+            IBinding_Abort(iter->binding);
+        iter->doc = NULL;
+        list_remove(&iter->entry);
     }
 }
 

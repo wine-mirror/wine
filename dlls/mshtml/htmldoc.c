@@ -1825,6 +1825,7 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
 
     doc->basedoc.window = window;
 
+    list_init(&doc->bindings);
     list_init(&doc->selection_list);
     list_init(&doc->range_list);
 
@@ -1972,7 +1973,6 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     doc->ref = 1;
     doc->basedoc.doc_obj = doc;
 
-    list_init(&doc->bindings);
     doc->usermode = UNKNOWN_USERMODE;
     doc->readystate = READYSTATE_UNINITIALIZED;
 

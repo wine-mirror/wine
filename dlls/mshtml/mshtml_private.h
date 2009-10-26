@@ -213,6 +213,7 @@ struct HTMLWindow {
     LONG ref;
 
     windowref_t *window_ref;
+    LONG task_magic;
 
     HTMLDocumentNode *doc;
     HTMLDocumentObj *doc_obj;
@@ -362,9 +363,6 @@ struct HTMLDocumentObj {
     LPWSTR mime;
 
     DWORD update;
-
-    /* FIXME: probably should be in document node object */
-    struct list bindings;
 };
 
 typedef struct {
@@ -501,6 +499,7 @@ struct HTMLDocumentNode {
     mutation_queue_t *mutation_queue;
     mutation_queue_t *mutation_queue_tail;
 
+    struct list bindings;
     struct list selection_list;
     struct list range_list;
 };
@@ -663,10 +662,10 @@ nsresult get_nsinterface(nsISupports*,REFIID,void**);
 
 void set_window_bscallback(HTMLWindow*,nsChannelBSC*);
 void set_current_mon(HTMLWindow*,IMoniker*);
-HRESULT start_binding(HTMLDocument*,BSCallback*,IBindCtx*);
-void detach_document_bindings(HTMLDocumentObj*);
+HRESULT start_binding(HTMLWindow*,HTMLDocumentNode*,BSCallback*,IBindCtx*);
+void abort_document_bindings(HTMLDocumentNode*);
 
-HRESULT bind_mon_to_buffer(HTMLDocument*,IMoniker*,void**,DWORD*);
+HRESULT bind_mon_to_buffer(HTMLDocumentNode*,IMoniker*,void**,DWORD*);
 
 nsChannelBSC *create_channelbsc(IMoniker*);
 HRESULT channelbsc_load_stream(nsChannelBSC*,IStream*);

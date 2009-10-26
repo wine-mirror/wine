@@ -361,7 +361,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         return hres;
 
     if(!bind_complete)
-        return start_binding(This, (BSCallback*)This->window->bscallback, pibc);
+        return start_binding(This->window, NULL, (BSCallback*)This->window->bscallback, pibc);
 
     return S_OK;
 }

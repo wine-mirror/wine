@@ -726,7 +726,7 @@ static HTMLWindow *get_channel_window(nsChannel *This)
 
 typedef struct {
     task_t header;
-    HTMLDocument *doc;
+    HTMLDocumentNode *doc;
     nsChannelBSC *bscallback;
 } start_binding_task_t;
 
@@ -734,7 +734,21 @@ static void start_binding_proc(task_t *_task)
 {
     start_binding_task_t *task = (start_binding_task_t*)_task;
 
-    start_binding(task->doc, (BSCallback*)task->bscallback, NULL);
+    start_binding(NULL, task->doc, (BSCallback*)task->bscallback, NULL);
+}
+
+typedef struct {
+    task_t header;
+    HTMLWindow *window;
+    nsChannelBSC *bscallback;
+} start_doc_binding_task_t;
+
+static void start_doc_binding_proc(task_t *_task)
+{
+    start_doc_binding_task_t *task = (start_doc_binding_task_t*)_task;
+
+    start_binding(task->window, NULL, (BSCallback*)task->bscallback, NULL);
+    IUnknown_Release((IUnknown*)task->bscallback);
 }
 
 static nsresult async_open(nsChannel *This, HTMLWindow *window, BOOL is_doc_channel, nsIStreamListener *listener,
@@ -742,7 +756,6 @@ static nsresult async_open(nsChannel *This, HTMLWindow *window, BOOL is_doc_chan
 {
     nsChannelBSC *bscallback;
     IMoniker *mon = NULL;
-    start_binding_task_t *task;
     HRESULT hres;
 
     hres = create_mon_for_nschannel(This, &mon);
@@ -757,12 +770,22 @@ static nsresult async_open(nsChannel *This, HTMLWindow *window, BOOL is_doc_chan
 
     channelbsc_set_channel(bscallback, This, listener, context);
 
-    task = heap_alloc(sizeof(start_binding_task_t));
+    if(is_doc_channel) {
+        start_doc_binding_task_t *task;
 
-    task->doc = &window->doc_obj->basedoc;
-    task->bscallback = bscallback;
+        set_window_bscallback(window, bscallback);
 
-    push_task(&task->header, start_binding_proc, window->doc_obj->basedoc.task_magic);
+        task = heap_alloc(sizeof(start_doc_binding_task_t));
+        task->window = window;
+        task->bscallback = bscallback;
+        push_task(&task->header, start_doc_binding_proc, window->task_magic);
+    }else {
+        start_binding_task_t *task = heap_alloc(sizeof(start_binding_task_t));
+
+        task->doc = window->doc;
+        task->bscallback = bscallback;
+        push_task(&task->header, start_binding_proc, window->doc->basedoc.task_magic);
+    }
 
     return NS_OK;
 }

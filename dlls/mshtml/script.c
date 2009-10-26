@@ -645,7 +645,7 @@ static void parse_extern_script(ScriptHost *script_host, LPCWSTR src)
     if(FAILED(hres))
         return;
 
-    hres = bind_mon_to_buffer(&script_host->window->doc_obj->basedoc, mon, (void**)&buf, &size);
+    hres = bind_mon_to_buffer(script_host->window->doc, mon, (void**)&buf, &size);
     IMoniker_Release(mon);
     if(FAILED(hres))
         return;

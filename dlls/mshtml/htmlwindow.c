@@ -39,6 +39,7 @@ static struct list window_list = LIST_INIT(window_list);
 static void window_set_docnode(HTMLWindow *window, HTMLDocumentNode *doc_node)
 {
     if(window->doc) {
+        abort_document_bindings(window->doc);
         window->doc->basedoc.window = NULL;
         htmldoc_release(&window->doc->basedoc);
     }
@@ -158,6 +159,7 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
     if(!ref) {
         DWORD i;
 
+        remove_target_tasks(This->task_magic);
         set_window_bscallback(This, NULL);
         set_current_mon(This, NULL);
         window_set_docnode(This, NULL);
@@ -1584,6 +1586,7 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
     window->scriptmode = SCRIPTMODE_GECKO;
     list_init(&window->script_hosts);
 
+    window->task_magic = get_task_target_magic();
     update_window_doc(window);
 
     list_init(&window->children);
