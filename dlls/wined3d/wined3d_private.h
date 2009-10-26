@@ -1228,6 +1228,14 @@ typedef struct WineD3D_PixelFormat
     int numSamples;
 } WineD3D_PixelFormat;
 
+struct wined3d_driver_info
+{
+    const char *name;
+    const char *description;
+    DWORD version_high;
+    DWORD version_low;
+};
+
 /* The adapter structure */
 struct wined3d_adapter
 {
@@ -1235,8 +1243,7 @@ struct wined3d_adapter
     BOOL                    opengl;
     POINT                   monitorPoint;
     struct wined3d_gl_info  gl_info;
-    const char              *driver;
-    const char              *description;
+    struct wined3d_driver_info driver_info;
     WCHAR                   DeviceName[CCHDEVICENAME]; /* DeviceName for use with e.g. ChangeDisplaySettings */
     int                     nCfgs;
     WineD3D_PixelFormat     *cfgs;

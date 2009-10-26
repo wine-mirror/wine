@@ -991,6 +991,34 @@ static const struct driver_version_information driver_version_table[] =
     /* TODO: Add information about legacy ATI hardware, Intel and other cards. */
 };
 
+static void init_driver_info(struct wined3d_driver_info *driver_info, WORD vendor, WORD device)
+{
+    unsigned int i;
+
+    driver_info->name = "Display";
+    driver_info->description = "Direct3D HAL";
+    driver_info->version_high = MAKEDWORD_VERSION(7, 1);
+    driver_info->version_low = MAKEDWORD_VERSION(8, 6); /* Nvidia RIVA TNT, arbitrary */
+
+    for (i = 0; i < (sizeof(driver_version_table) / sizeof(driver_version_table[0])); ++i)
+    {
+        if (vendor == driver_version_table[i].vendor && device == driver_version_table[i].card)
+        {
+            TRACE_(d3d_caps)("Found card %04x:%04x in driver DB.\n", vendor, device);
+
+            driver_info->description = driver_version_table[i].description;
+            driver_info->version_high = MAKEDWORD_VERSION(driver_version_table[i].hipart_hi,
+                    driver_version_table[i].hipart_lo);
+            driver_info->version_low = MAKEDWORD_VERSION(driver_version_table[i].lopart_hi,
+                    driver_version_table[i].lopart_lo);
+            break;
+        }
+    }
+
+    TRACE_(d3d_caps)("Reporting (fake) driver version 0x%08x-0x%08x.\n",
+            driver_info->version_high, driver_info->version_low);
+}
+
 /* Context activation is done by the caller. */
 static void fixup_extensions(struct wined3d_gl_info *gl_info, const char *gl_renderer)
 {
@@ -1005,28 +1033,6 @@ static void fixup_extensions(struct wined3d_gl_info *gl_info, const char *gl_ren
 
     /* Find out if PBOs work as they are supposed to. */
     test_pbo_functionality(gl_info);
-
-    /* Fixup the driver version we'll report to the app. */
-    gl_info->driver_version        = MAKEDWORD_VERSION(8, 6); /* Nvidia RIVA TNT, arbitrary */
-    gl_info->driver_version_hipart = MAKEDWORD_VERSION(7, 1);
-    for (i = 0; i < (sizeof(driver_version_table) / sizeof(driver_version_table[0])); ++i)
-    {
-        if (gl_info->gl_vendor == driver_version_table[i].vendor
-                && gl_info->gl_card == driver_version_table[i].card)
-        {
-            TRACE_(d3d_caps)("Found card 0x%04x, 0x%04x in driver version DB.\n",
-                    gl_info->gl_vendor, gl_info->gl_card);
-
-            gl_info->driver_version = MAKEDWORD_VERSION(driver_version_table[i].lopart_hi,
-                    driver_version_table[i].lopart_lo);
-            gl_info->driver_version_hipart = MAKEDWORD_VERSION(driver_version_table[i].hipart_hi,
-                    driver_version_table[i].hipart_lo);
-            gl_info->driver_description = driver_version_table[i].description;
-            break;
-        }
-    }
-    TRACE_(d3d_caps)("Reporting (fake) driver version 0x%08X-0x%08X.\n",
-            gl_info->driver_version_hipart, gl_info->driver_version);
 }
 
 static DWORD wined3d_parse_gl_version(const char *gl_version)
@@ -1534,7 +1540,7 @@ static GL_Cards wined3d_guess_card(const struct wined3d_gl_info *gl_info, const 
 }
 
 /* Context activation is done by the caller. */
-static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
+static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_driver_info *driver_info, struct wined3d_gl_info *gl_info)
 {
     const char *GL_Extensions    = NULL;
     const char *WGL_Extensions   = NULL;
@@ -2075,6 +2081,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
     }
 
     fixup_extensions(gl_info, gl_renderer);
+    init_driver_info(driver_info, gl_info->gl_vendor, gl_info->gl_card);
     add_gl_compat_wrappers(gl_info);
 
     HeapFree(GetProcessHeap(), 0, gl_renderer);
@@ -2296,6 +2303,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT A
 static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, DWORD Flags,
                                                    WINED3DADAPTER_IDENTIFIER* pIdentifier) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
+    struct wined3d_adapter *adapter;
     size_t len;
 
     TRACE_(d3d_caps)("(%p}->(Adapter: %d, Flags: %x, pId=%p)\n", This, Adapter, Flags, pIdentifier);
@@ -2304,25 +2312,22 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
         return WINED3DERR_INVALIDCALL;
     }
 
+    adapter = &This->adapters[Adapter];
+
     /* Return the information requested */
     TRACE_(d3d_caps)("device/Vendor Name and Version detection using FillGLCaps\n");
 
     if (pIdentifier->driver_size)
     {
-        len = min(strlen(This->adapters[Adapter].driver), pIdentifier->driver_size - 1);
-        memcpy(pIdentifier->driver, This->adapters[Adapter].driver, len);
+        const char *name = adapter->driver_info.name;
+        len = min(strlen(name), pIdentifier->driver_size - 1);
+        memcpy(pIdentifier->driver, name, len);
         pIdentifier->driver[len] = '\0';
     }
 
     if (pIdentifier->description_size)
     {
-        const char *description;
-
-        if (This->adapters[Adapter].gl_info.driver_description)
-            description = This->adapters[Adapter].gl_info.driver_description;
-        else
-            description = This->adapters[Adapter].description;
-
+        const char *description = adapter->driver_info.description;
         len = min(strlen(description), pIdentifier->description_size - 1);
         memcpy(pIdentifier->description, description, len);
         pIdentifier->description[len] = '\0';
@@ -2344,10 +2349,10 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
         pIdentifier->device_name[len] = '\0';
     }
 
-    pIdentifier->driver_version.u.HighPart = This->adapters[Adapter].gl_info.driver_version_hipart;
-    pIdentifier->driver_version.u.LowPart = This->adapters[Adapter].gl_info.driver_version;
-    pIdentifier->vendor_id = This->adapters[Adapter].gl_info.gl_vendor;
-    pIdentifier->device_id = This->adapters[Adapter].gl_info.gl_card;
+    pIdentifier->driver_version.u.HighPart = adapter->driver_info.version_high;
+    pIdentifier->driver_version.u.LowPart = adapter->driver_info.version_low;
+    pIdentifier->vendor_id = adapter->gl_info.gl_vendor;
+    pIdentifier->device_id = adapter->gl_info.gl_card;
     pIdentifier->subsystem_id = 0;
     pIdentifier->revision = 0;
     memcpy(&pIdentifier->device_identifier, &IID_D3DDEVICE_D3DUID, sizeof(pIdentifier->device_identifier));
@@ -4702,7 +4707,7 @@ BOOL InitAdapters(IWineD3DImpl *This)
             goto nogl_adapter;
         }
 
-        ret = IWineD3DImpl_FillGLCaps(&adapter->gl_info);
+        ret = IWineD3DImpl_FillGLCaps(&adapter->driver_info, &adapter->gl_info);
         if(!ret) {
             ERR("Failed to initialize gl caps for default adapter\n");
             WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
@@ -4716,9 +4721,6 @@ BOOL InitAdapters(IWineD3DImpl *This)
         }
 
         hdc = fake_gl_ctx.dc;
-
-        adapter->driver = "Display";
-        adapter->description = "Direct3D HAL";
 
         /* Use the VideoRamSize registry setting when set */
         if(wined3d_settings.emulated_textureram)
@@ -4897,8 +4899,8 @@ nogl_adapter:
     This->adapters[0].monitorPoint.x = -1;
     This->adapters[0].monitorPoint.y = -1;
 
-    This->adapters[0].driver = "Display";
-    This->adapters[0].description = "WineD3D DirectDraw Emulation";
+    This->adapters[0].driver_info.name = "Display";
+    This->adapters[0].driver_info.description = "WineD3D DirectDraw Emulation";
     if(wined3d_settings.emulated_textureram) {
         This->adapters[0].TextureRam = wined3d_settings.emulated_textureram;
     } else {

@@ -4141,9 +4141,6 @@ struct wined3d_gl_info
     GL_Vendors gl_vendor;
     GL_Cards gl_card;
     UINT vidmem;
-    DWORD driver_version;
-    DWORD driver_version_hipart;
-    const char *driver_description;
 
     UINT max_buffers;
     UINT max_lights;
