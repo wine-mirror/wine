@@ -1749,9 +1749,36 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableByIndex(ID3D10Effect *iface, UINT index)
 {
-    FIXME("iface %p, index %u stub!\n", iface, index);
+    struct d3d10_effect *This = (struct d3d10_effect *)iface;
+    unsigned int i;
 
-    return NULL;
+    TRACE("iface %p, index %u\n", iface, index);
+
+    for (i = 0; i < This->local_buffer_count; ++i)
+    {
+        struct d3d10_effect_variable *l = &This->local_buffers[i];
+
+        if (index < l->type->member_count)
+        {
+            struct d3d10_effect_variable *v = &l->members[index];
+
+            TRACE("Returning variable %p.\n", v);
+            return (ID3D10EffectVariable *)v;
+        }
+        index -= l->type->member_count;
+    }
+
+    if (index < This->local_variable_count)
+    {
+        struct d3d10_effect_variable *v = &This->local_variables[index];
+
+        TRACE("Returning variable %p.\n", v);
+        return (ID3D10EffectVariable *)v;
+    }
+
+    WARN("Invalid index specified\n");
+
+    return (ID3D10EffectVariable *)&null_variable;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableByName(ID3D10Effect *iface, LPCSTR name)
