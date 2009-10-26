@@ -37,12 +37,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static HRESULT get_url(HTMLLocation *This, const WCHAR **ret)
 {
-    if(!This->window || !This->window->doc_obj || !This->window->doc_obj->url) {
+    if(!This->window || !This->window->url) {
         FIXME("No current URL\n");
         return E_NOTIMPL;
     }
 
-    *ret = This->window->doc_obj->url;
+    *ret = This->window->url;
     return S_OK;
 }
 

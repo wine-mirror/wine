@@ -589,7 +589,7 @@ static HRESULT WINAPI HTMLDocument_get_URL(IHTMLDocument2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", iface, p);
 
-    *p = SysAllocString(This->doc_obj->url ? This->doc_obj->url : about_blank_url);
+    *p = SysAllocString(This->window->url ? This->window->url : about_blank_url);
     return *p ? S_OK : E_OUTOFMEMORY;
 }
 
@@ -1886,7 +1886,6 @@ static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
     TRACE("(%p) ref = %u\n", This, ref);
 
     if(!ref) {
-        set_current_mon(&This->basedoc, NULL);
         if(This->basedoc.doc_node) {
             This->basedoc.doc_node->basedoc.doc_obj = NULL;
             IHTMLDocument2_Release(HTMLDOC(&This->basedoc.doc_node->basedoc));

@@ -543,9 +543,9 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
 
     This->doc_obj->usermode = EDITMODE;
 
-    if(This->doc_obj->mon) {
+    if(This->window->mon) {
         CLSID clsid = IID_NULL;
-        hres = IMoniker_GetClassID(This->doc_obj->mon, &clsid);
+        hres = IMoniker_GetClassID(This->window->mon, &clsid);
         if(SUCCEEDED(hres)) {
             /* We should use IMoniker::Save here */
             FIXME("Use CLSID %s\n", debugstr_guid(&clsid));
@@ -588,11 +588,11 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
 
     update_doc(This, UPDATE_UI);
 
-    if(This->doc_obj->mon) {
+    if(This->window->mon) {
         /* FIXME: We should find nicer way to do this */
         remove_doc_tasks(This);
 
-        mon = This->doc_obj->mon;
+        mon = This->window->mon;
         IMoniker_AddRef(mon);
     }else {
         static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};

@@ -48,31 +48,31 @@ static BOOL use_gecko_script(LPCWSTR url)
         && strncmpiW(aboutW, url, sizeof(aboutW)/sizeof(WCHAR));
 }
 
-void set_current_mon(HTMLDocument *This, IMoniker *mon)
+void set_current_mon(HTMLWindow *This, IMoniker *mon)
 {
     HRESULT hres;
 
-    if(This->doc_obj->mon) {
-        IMoniker_Release(This->doc_obj->mon);
-        This->doc_obj->mon = NULL;
+    if(This->mon) {
+        IMoniker_Release(This->mon);
+        This->mon = NULL;
     }
 
-    if(This->doc_obj->url) {
-        CoTaskMemFree(This->doc_obj->url);
-        This->doc_obj->url = NULL;
+    if(This->url) {
+        CoTaskMemFree(This->url);
+        This->url = NULL;
     }
 
     if(!mon)
         return;
 
     IMoniker_AddRef(mon);
-    This->doc_obj->mon = mon;
+    This->mon = mon;
 
-    hres = IMoniker_GetDisplayName(mon, NULL, NULL, &This->doc_obj->url);
+    hres = IMoniker_GetDisplayName(mon, NULL, NULL, &This->url);
     if(FAILED(hres))
         WARN("GetDisplayName failed: %08x\n", hres);
 
-    set_script_mode(This->window, use_gecko_script(This->doc_obj->url) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT);
+    set_script_mode(This, use_gecko_script(This->url) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT);
 }
 
 static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BOOL *bind_complete)
@@ -127,7 +127,7 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
 
     TRACE("got url: %s\n", debugstr_w(url));
 
-    set_current_mon(This, mon);
+    set_current_mon(This->window, mon);
 
     if(This->doc_obj->client) {
         VARIANT silent, offline;
@@ -318,11 +318,11 @@ static HRESULT WINAPI PersistMoniker_GetCurMoniker(IPersistMoniker *iface, IMoni
 
     TRACE("(%p)->(%p)\n", This, ppimkName);
 
-    if(!This->doc_obj->mon)
+    if(!This->window || !This->window->mon)
         return E_UNEXPECTED;
 
-    IMoniker_AddRef(This->doc_obj->mon);
-    *ppimkName = This->doc_obj->mon;
+    IMoniker_AddRef(This->window->mon);
+    *ppimkName = This->window->mon;
     return S_OK;
 }
 

@@ -737,7 +737,7 @@ static nsresult async_open(nsChannel *This, HTMLWindow *window, BOOL is_doc_chan
         return NS_ERROR_UNEXPECTED;
 
     if(is_doc_channel)
-        set_current_mon(&window->doc_obj->basedoc, mon);
+        set_current_mon(window, mon);
 
     bscallback = create_channelbsc(mon);
     IMoniker_Release(mon);
