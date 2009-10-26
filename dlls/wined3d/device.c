@@ -1357,7 +1357,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice 
         return hr;
     }
 
-    TRACE("Created verrtex declaration %p.\n", object);
+    TRACE("Created vertex declaration %p.\n", object);
     *declaration = (IWineD3DVertexDeclaration *)object;
 
     return WINED3D_OK;
