@@ -229,10 +229,36 @@ static void connect_destroy( object_header_t *hdr )
     heap_free( connect );
 }
 
+static BOOL connect_query_option( object_header_t *hdr, DWORD option, LPVOID buffer, LPDWORD buflen )
+{
+    connect_t *connect = (connect_t *)hdr;
+
+    switch (option)
+    {
+    case WINHTTP_OPTION_PARENT_HANDLE:
+    {
+        if (!buffer || *buflen < sizeof(HINTERNET))
+        {
+            *buflen = sizeof(HINTERNET);
+            set_last_error( ERROR_INSUFFICIENT_BUFFER );
+            return FALSE;
+        }
+
+        *(HINTERNET *)buffer = ((object_header_t *)connect->session)->handle;
+        *buflen = sizeof(HINTERNET);
+        return TRUE;
+    }
+    default:
+        FIXME("unimplemented option %u\n", option);
+        set_last_error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+}
+
 static const object_vtbl_t connect_vtbl =
 {
     connect_destroy,
-    NULL,
+    connect_query_option,
     NULL
 };
 
