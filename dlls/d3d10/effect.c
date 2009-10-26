@@ -1805,6 +1805,17 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
         }
     }
 
+    for (i = 0; i < This->local_variable_count; ++i)
+    {
+        struct d3d10_effect_variable *v = &This->local_variables[i];
+
+        if (!strcmp(v->name, name))
+        {
+            TRACE("Returning variable %p.\n", v);
+            return (ID3D10EffectVariable *)v;
+        }
+    }
+
     WARN("Invalid name specified\n");
 
     return (ID3D10EffectVariable *)&null_variable;
