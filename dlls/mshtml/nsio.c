@@ -636,9 +636,9 @@ static HRESULT create_mon_for_nschannel(nsChannel *channel, IMoniker **mon)
     return hres;
 }
 
-static NSContainer *get_nscontainer_from_load_group(nsChannel *This)
+static HTMLWindow *get_window_from_load_group(nsChannel *This)
 {
-    NSContainer *container;
+    HTMLWindow *window;
     nsIChannel *channel;
     nsIRequest *req;
     nsIWineURI *wine_uri;
@@ -675,10 +675,10 @@ static NSContainer *get_nscontainer_from_load_group(nsChannel *This)
         return NULL;
     }
 
-    nsIWineURI_GetNSContainer(wine_uri, &container);
+    nsIWineURI_GetWindow(wine_uri, &window);
     nsIWineURI_Release(wine_uri);
 
-    return container;
+    return window;
 }
 
 static HTMLWindow *get_channel_window(nsChannel *This)
@@ -724,49 +724,7 @@ static HTMLWindow *get_channel_window(nsChannel *This)
     return window;
 }
 
-static nsresult async_open_doc_uri(nsChannel *This, NSContainer *container,
-        nsIStreamListener *listener, nsISupports *context, BOOL *open)
-{
-    IMoniker *mon;
-    HRESULT hres;
-
-    *open = FALSE;
-
-    if(container->bscallback) {
-        channelbsc_set_channel(container->bscallback, This, listener, context);
-
-        if(container->doc && container->doc->mime) {
-            heap_free(This->content_type);
-            This->content_type = heap_strdupWtoA(container->doc->mime);
-        }
-
-        return NS_OK;
-    }else  {
-        BOOL cont = before_async_open(This, container);
-
-        if(!cont) {
-            TRACE("canceled\n");
-            return NS_ERROR_UNEXPECTED;
-        }
-
-        if(!container->doc) {
-            return This->channel
-                ?  nsIChannel_AsyncOpen(This->channel, listener, context)
-                : NS_ERROR_UNEXPECTED;
-        }
-
-        hres = create_mon_for_nschannel(This, &mon);
-        if(FAILED(hres)) {
-            return NS_ERROR_UNEXPECTED;
-        }
-        set_current_mon(&container->doc->basedoc, mon);
-    }
-
-    *open = TRUE;
-    return NS_OK;
-}
-
-static nsresult async_open(nsChannel *This, NSContainer *container, nsIStreamListener *listener,
+static nsresult async_open(nsChannel *This, HTMLWindow *window, BOOL is_doc_channel, nsIStreamListener *listener,
         nsISupports *context)
 {
     nsChannelBSC *bscallback;
@@ -778,6 +736,9 @@ static nsresult async_open(nsChannel *This, NSContainer *container, nsIStreamLis
     if(FAILED(hres))
         return NS_ERROR_UNEXPECTED;
 
+    if(is_doc_channel)
+        set_current_mon(&window->doc_obj->basedoc, mon);
+
     bscallback = create_channelbsc(mon);
     IMoniker_Release(mon);
 
@@ -785,7 +746,7 @@ static nsresult async_open(nsChannel *This, NSContainer *container, nsIStreamLis
 
     task = heap_alloc(sizeof(task_t));
 
-    task->doc = &container->doc->basedoc;
+    task->doc = &window->doc_obj->basedoc;
     task->task_id = TASK_START_BINDING;
     task->next = NULL;
     task->bscallback = bscallback;
@@ -799,8 +760,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
                                           nsISupports *aContext)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
-    NSContainer *container;
-    HTMLWindow *window;
+    HTMLWindow *window = NULL;
     PRBool is_doc_uri;
     BOOL open = TRUE;
     nsresult nsres = NS_OK;
@@ -819,32 +779,69 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
         window = get_channel_window(This);
         if(window) {
             nsIWineURI_SetWindow(This->uri, window);
-            IHTMLWindow2_Release(HTMLWINDOW2(window));
+        }else {
+            NSContainer *nscontainer;
+
+            nsIWineURI_GetNSContainer(This->uri, &nscontainer);
+            if(nscontainer) {
+                BOOL b;
+
+                /* nscontainer->doc should be NULL which means navigation to a new window */
+                if(nscontainer->doc)
+                    FIXME("nscontainer->doc = %p\n", nscontainer->doc);
+
+                b = before_async_open(This, nscontainer);
+                nsIWebBrowserChrome_Release(NSWBCHROME(nscontainer));
+                if(b)
+                    FIXME("Navigation not cancelled\n");
+                return NS_ERROR_UNEXPECTED;
+            }
         }
     }
 
-    nsIWineURI_GetNSContainer(This->uri, &container);
+    if(!window) {
+        nsIWineURI_GetWindow(This->uri, &window);
 
-    if(!container && This->load_group) {
-        container = get_nscontainer_from_load_group(This);
-        if(container)
-            nsIWineURI_SetNSContainer(This->uri, container);
+        if(!window && This->load_group) {
+            window = get_window_from_load_group(This);
+            if(window)
+                nsIWineURI_SetWindow(This->uri, window);
+        }
     }
 
-    if(!container) {
-        TRACE("container = NULL\n");
+    if(!window) {
+        TRACE("window = NULL\n");
         return This->channel
             ? nsIChannel_AsyncOpen(This->channel, aListener, aContext)
             : NS_ERROR_UNEXPECTED;
     }
 
-    if(is_doc_uri && (This->load_flags & LOAD_INITIAL_DOCUMENT_URI))
-        nsres = async_open_doc_uri(This, container, aListener, aContext, &open);
+    if(is_doc_uri && (This->load_flags & LOAD_INITIAL_DOCUMENT_URI)) {
+        if(window->doc_obj->nscontainer->bscallback) {
+            NSContainer *nscontainer = window->doc_obj->nscontainer;
+
+            channelbsc_set_channel(nscontainer->bscallback, This, aListener, aContext);
+
+            if(nscontainer->doc->mime) {
+                heap_free(This->content_type);
+                This->content_type = heap_strdupWtoA(nscontainer->doc->mime);
+            }
+
+            open = FALSE;
+        }else {
+            open = before_async_open(This, window->doc_obj->nscontainer);
+            if(!open) {
+                TRACE("canceled\n");
+                nsres = NS_ERROR_UNEXPECTED;
+            }
+        }
+    }
 
     if(open)
-        nsres = async_open(This, container, aListener, aContext);
+        nsres = async_open(This, window, is_doc_uri, aListener, aContext);
 
-    nsIWebBrowserChrome_Release(NSWBCHROME(container));
+    if(window)
+        IHTMLWindow2_Release(HTMLWINDOW2(window));
     return nsres;
 }
 
