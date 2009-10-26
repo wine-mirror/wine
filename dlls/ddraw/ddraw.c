@@ -1543,10 +1543,12 @@ IDirectDrawImpl_GetDeviceIdentifier(IDirectDraw7 *iface,
 
     /* The DDGDI_GETHOSTIDENTIFIER returns the information about the 2D
      * host adapter, if there's a secondary 3D adapter. This doesn't apply
-     * to any modern hardware, nor is it interesting for Wine, so ignore it
+     * to any modern hardware, nor is it interesting for Wine, so ignore it.
+     * Size of DDDEVICEIDENTIFIER2 may be aligned to 8 bytes and thus 4
+     * bytes too long. So only copy the relevant part of the structure
      */
 
-    *DDDI = deviceidentifier;
+    memcpy(DDDI, &deviceidentifier, FIELD_OFFSET(DDDEVICEIDENTIFIER2, dwWHQLLevel) + sizeof(DWORD));
     return DD_OK;
 }
 

@@ -645,6 +645,42 @@ static void testddraw3(void)
     if(SUCCEEDED(hr) && dd3) IDirectDraw3_Release(dd3);
 }
 
+static void testddraw7(void)
+{
+    IDirectDraw7 *dd7;
+    HRESULT hr;
+    DDDEVICEIDENTIFIER2 *pdddi2;
+    DWORD dddi2Bytes;
+    DWORD *pend;
+
+    hr = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw7, (void **) &dd7);
+    ok(hr==DD_OK, "IDirectDraw7_QueryInterface returned %08x\n", hr);
+
+    if (hr==DD_OK)
+    {
+         dddi2Bytes = FIELD_OFFSET(DDDEVICEIDENTIFIER2, dwWHQLLevel) + sizeof(DWORD);
+
+         pdddi2 = HeapAlloc( GetProcessHeap(), 0, dddi2Bytes + sizeof(DWORD) );
+         pend = (DWORD *)((char *)pdddi2 + dddi2Bytes);
+         *pend = 0xdeadbeef;
+
+         hr = IDirectDraw7_GetDeviceIdentifier(dd7, pdddi2, 0);
+         ok(hr==DD_OK, "get device identifier failed with %08x\n", hr);
+
+         if (hr==DD_OK)
+         {
+             /* check how strings are copied into the structure */
+             ok(pdddi2->szDriver[MAX_DDDEVICEID_STRING - 1]==0, "szDriver not cleared\n");
+             ok(pdddi2->szDescription[MAX_DDDEVICEID_STRING - 1]==0, "szDescription not cleared\n");
+             /* verify that 8 byte structure size alignment will not overwrite memory */
+             ok(*pend==0xdeadbeef, "memory beyond DDDEVICEIDENTIFIER2 overwritten\n");
+         }
+
+         IDirectDraw_Release(dd7);
+         HeapFree( GetProcessHeap(), 0, pdddi2 );
+    }
+}
+
 START_TEST(ddrawmodes)
 {
     init_function_pointers();
@@ -663,6 +699,7 @@ START_TEST(ddrawmodes)
         testdisplaymodes();
     flushdisplaymodes();
     testddraw3();
+    testddraw7();
     releasedirectdraw();
 
     createdirectdraw();
