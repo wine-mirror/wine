@@ -636,6 +636,61 @@ static void set_variable_vtbl(struct d3d10_effect_variable *v)
             v->vtbl = &d3d10_effect_variable_vtbl;
             break;
 
+        case D3D10_SVC_OBJECT:
+            switch(v->type->basetype)
+            {
+                case D3D10_SVT_STRING:
+                    v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_string_variable_vtbl;
+                    break;
+
+                case D3D10_SVT_TEXTURE1D:
+                case D3D10_SVT_TEXTURE1DARRAY:
+                case D3D10_SVT_TEXTURE2D:
+                case D3D10_SVT_TEXTURE2DARRAY:
+                case D3D10_SVT_TEXTURE2DMS:
+                case D3D10_SVT_TEXTURE2DMSARRAY:
+                case D3D10_SVT_TEXTURE3D:
+                case D3D10_SVT_TEXTURECUBE:
+                    v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_shader_resource_variable_vtbl;
+                    break;
+
+                case D3D10_SVT_RENDERTARGETVIEW:
+                    v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_render_target_view_variable_vtbl;
+                    break;
+
+                case D3D10_SVT_DEPTHSTENCILVIEW:
+                    v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_view_variable_vtbl;
+                    break;
+
+                case D3D10_SVT_DEPTHSTENCIL:
+                    v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_variable_vtbl;
+                    break;
+
+                case D3D10_SVT_VERTEXSHADER:
+                case D3D10_SVT_GEOMETRYSHADER:
+                case D3D10_SVT_PIXELSHADER:
+                    v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl;
+                    break;
+
+                case D3D10_SVT_BLEND:
+                    v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_blend_variable_vtbl;
+                    break;
+
+                case D3D10_SVT_RASTERIZER:
+                    v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_rasterizer_variable_vtbl;
+                    break;
+
+                case D3D10_SVT_SAMPLER:
+                    v->vtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_sampler_variable_vtbl;
+                    break;
+
+                default:
+                    FIXME("Unhandled basetype %s.\n", debug_d3d10_shader_variable_type(v->type->basetype));
+                    v->vtbl = &d3d10_effect_variable_vtbl;
+                    break;
+            }
+            break;
+
         default:
             FIXME("Unhandled type class %s.\n", debug_d3d10_shader_variable_class(v->type->type_class));
             v->vtbl = &d3d10_effect_variable_vtbl;
