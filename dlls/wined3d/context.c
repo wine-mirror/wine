@@ -288,6 +288,12 @@ static void context_check_fbo_status(struct wined3d_context *context)
         unsigned int i;
         FIXME("FBO status %s (%#x)\n", debug_fbostatus(status), status);
 
+        if (!context->current_fbo)
+        {
+            ERR("FBO 0 is incomplete, driver bug?\n");
+            return;
+        }
+
         /* Dump the FBO attachments */
         for (i = 0; i < gl_info->max_buffers; ++i)
         {
