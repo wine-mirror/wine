@@ -348,6 +348,8 @@ static CERT_ENHKEY_USAGE *create_advanced_filter(void)
     return advancedUsage;
 }
 
+static int CALLBACK cert_mgr_sort_by_subject(LPARAM lp1, LPARAM lp2, LPARAM lp);
+
 static void show_store_certs(HWND hwnd, HCERTSTORE store)
 {
     HWND lv = GetDlgItem(hwnd, IDC_MGR_CERTS);
@@ -443,6 +445,8 @@ static void show_store_certs(HWND hwnd, HCERTSTORE store)
         HeapFree(GetProcessHeap(), 0, advanced->rgpszUsageIdentifier);
         HeapFree(GetProcessHeap(), 0, advanced);
     }
+    SendMessageW(lv, LVM_SORTITEMSEX, (WPARAM)lv,
+     (LPARAM)cert_mgr_sort_by_subject);
 }
 
 static const WCHAR my[] = { 'M','y',0 };
