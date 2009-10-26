@@ -12,6 +12,7 @@ CTESTS = \
 	crypt_md4.c \
 	crypt_md5.c \
 	crypt_sha.c \
+	eventlog.c \
 	lsa.c \
 	registry.c \
 	security.c \
