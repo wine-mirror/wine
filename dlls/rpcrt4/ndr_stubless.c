@@ -1299,10 +1299,6 @@ LONG WINAPI NdrStubCall2(
 
     TRACE("NDR Version: 0x%x\n", pStubDesc->Version);
 
-    /* create the full pointer translation tables, if requested */
-    if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_FULLPTR)
-        stubMsg.FullPtrXlatTables = NdrFullPointerXlatInit(0,XLAT_SERVER);
-
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_RPCFLAGS)
     {
         const NDR_PROC_HEADER_RPC *pProcHeader = (const NDR_PROC_HEADER_RPC *)&pFormat[0];
@@ -1376,6 +1372,10 @@ LONG WINAPI NdrStubCall2(
         NdrStubInitialize(pRpcMsg, &stubMsg, pStubDesc, pChannel);
     else
         NdrServerInitializeNew(pRpcMsg, &stubMsg, pStubDesc);
+
+    /* create the full pointer translation tables, if requested */
+    if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_FULLPTR)
+        stubMsg.FullPtrXlatTables = NdrFullPointerXlatInit(0,XLAT_SERVER);
 
     /* store the RPC flags away */
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_RPCFLAGS)
