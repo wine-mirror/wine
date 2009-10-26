@@ -72,6 +72,7 @@ typedef struct list statement_list_t;
 enum attr_type
 {
     ATTR_AGGREGATABLE,
+    ATTR_ANNOTATION,
     ATTR_APPOBJECT,
     ATTR_ASYNC,
     ATTR_AUTO_HANDLE,

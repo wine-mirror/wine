@@ -194,7 +194,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token EQUALITY INEQUALITY
 %token GREATEREQUAL LESSEQUAL
 %token LOGICALOR LOGICALAND
-%token tAGGREGATABLE tALLOCATE tAPPOBJECT tASYNC tASYNCUUID
+%token tAGGREGATABLE tALLOCATE tANNOTATION tAPPOBJECT tASYNC tASYNCUUID
 %token tAUTOHANDLE tBINDABLE tBOOLEAN tBROADCAST tBYTE tBYTECOUNT
 %token tCALLAS tCALLBACK tCASE tCDECL tCHAR tCOCLASS tCODE tCOMMSTATUS
 %token tCONST tCONTEXTHANDLE tCONTEXTHANDLENOSERIALIZE
@@ -472,6 +472,7 @@ str_list: aSTRING                               { $$ = append_str( NULL, $1 ); }
 
 attribute:					{ $$ = NULL; }
 	| tAGGREGATABLE				{ $$ = make_attr(ATTR_AGGREGATABLE); }
+	| tANNOTATION '(' aSTRING ')'		{ $$ = make_attrp(ATTR_ANNOTATION, $3); }
 	| tAPPOBJECT				{ $$ = make_attr(ATTR_APPOBJECT); }
 	| tASYNC				{ $$ = make_attr(ATTR_ASYNC); }
 	| tAUTOHANDLE				{ $$ = make_attr(ATTR_AUTO_HANDLE); }
@@ -1872,6 +1873,7 @@ struct allowed_attr allowed_attr[] =
 {
     /* attr                        { D ACF I Fn ARG T En St Un Fi  L  DI M  C  <display name> } */
     /* ATTR_AGGREGATABLE */        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "aggregatable" },
+    /* ATTR_ANNOTATION */          { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, "annotation" },
     /* ATTR_APPOBJECT */           { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "appobject" },
     /* ATTR_ASYNC */               { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "async" },
     /* ATTR_AUTO_HANDLE */         { 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "auto_handle" },

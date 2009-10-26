@@ -279,6 +279,7 @@ static const struct keyword attr_keywords[] =
 {
         {"aggregatable",                tAGGREGATABLE},
         {"allocate",                    tALLOCATE},
+        {"annotation",                  tANNOTATION},
         {"appobject",                   tAPPOBJECT},
         {"async",                       tASYNC},
         {"async_uuid",                  tASYNCUUID},
