@@ -108,7 +108,7 @@ void MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32)
  *
  *
  */
-void MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16)
+static void MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16)
 {
     mmt32->wType = mmt16->wType;
     /* layout of rest is the same for 32/16,
