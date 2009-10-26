@@ -569,13 +569,34 @@ HRESULT __RPC_STUB IAccessor_GetBindings_Stub(IAccessor* This, HACCESSOR hAccess
 
 HRESULT CALLBACK IAccessor_ReleaseAccessor_Proxy(IAccessor* This, HACCESSOR hAccessor, DBREFCOUNT *pcRefCount)
 {
-    FIXME("(%p)->(%lx, %p): stub\n", This, hAccessor, pcRefCount);
-    return E_NOTIMPL;
+    HRESULT hr;
+    IErrorInfo *error;
+    DBREFCOUNT ref;
+
+    TRACE("(%p)->(%lx, %p)\n", This, hAccessor, pcRefCount);
+
+    hr = IAccessor_RemoteReleaseAccessor_Proxy(This, hAccessor, &ref, &error);
+
+    if(pcRefCount) *pcRefCount = ref;
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+    return hr;
 }
 
 HRESULT __RPC_STUB IAccessor_ReleaseAccessor_Stub(IAccessor* This, HACCESSOR hAccessor, DBREFCOUNT *pcRefCount,
                                                   IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p)->(%lx, %p, %p): stub\n", This, hAccessor, pcRefCount, ppErrorInfoRem);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%lx, %p, %p)\n", This, hAccessor, pcRefCount, ppErrorInfoRem);
+
+    *ppErrorInfoRem = NULL;
+
+    hr = IAccessor_ReleaseAccessor(This, hAccessor, pcRefCount);
+
+    if(FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+    return hr;
 }
