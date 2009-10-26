@@ -59,6 +59,7 @@ typedef struct {
     nsIURI *uri;
     nsIURL *nsurl;
     NSContainer *container;
+    windowref_t *window_ref;
     LPWSTR wine_url;
     PRBool is_doc_uri;
     BOOL use_wine_url;
@@ -67,7 +68,7 @@ typedef struct {
 #define NSURI(x)         ((nsIURI*)            &(x)->lpWineURIVtbl)
 #define NSWINEURI(x)     ((nsIWineURI*)        &(x)->lpWineURIVtbl)
 
-static nsresult create_uri(nsIURI*,NSContainer*,nsIWineURI**);
+static nsresult create_uri(nsIURI*,HTMLWindow*,NSContainer*,nsIWineURI**);
 
 static const char *debugstr_nsacstr(const nsACString *nsstr)
 {
@@ -680,6 +681,49 @@ static NSContainer *get_nscontainer_from_load_group(nsChannel *This)
     return container;
 }
 
+static HTMLWindow *get_channel_window(nsChannel *This)
+{
+    nsIRequestObserver *req_observer;
+    nsIWebProgress *web_progress;
+    nsIDOMWindow *nswindow;
+    HTMLWindow *window;
+    nsresult nsres;
+
+    if(!This->load_group) {
+        ERR("NULL load_group\n");
+        return NULL;
+    }
+
+    nsres = nsILoadGroup_GetGroupObserver(This->load_group, &req_observer);
+    if(NS_FAILED(nsres) || !req_observer) {
+        ERR("GetGroupObserver failed: %08x\n", nsres);
+        return NULL;
+    }
+
+    nsres = nsIRequestObserver_QueryInterface(req_observer, &IID_nsIWebProgress, (void**)&web_progress);
+    nsIRequestObserver_Release(req_observer);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIWebProgress iface: %08x\n", nsres);
+        return NULL;
+    }
+
+    nsres = nsIWebProgress_GetDOMWindow(web_progress, &nswindow);
+    nsIWebProgress_Release(web_progress);
+    if(NS_FAILED(nsres) || !nswindow) {
+        ERR("GetDOMWindow failed: %08x\n", nsres);
+        return NULL;
+    }
+
+    window = nswindow_to_window(nswindow);
+    nsIDOMWindow_Release(nswindow);
+
+    if(window)
+        IHTMLWindow2_AddRef(HTMLWINDOW2(window));
+    else
+        FIXME("NULL window for %p\n", nswindow);
+    return window;
+}
+
 static nsresult async_open_doc_uri(nsChannel *This, NSContainer *container,
         nsIStreamListener *listener, nsISupports *context, BOOL *open)
 {
@@ -756,11 +800,28 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
     NSContainer *container;
+    HTMLWindow *window;
     PRBool is_doc_uri;
     BOOL open = TRUE;
     nsresult nsres = NS_OK;
 
     TRACE("(%p)->(%p %p)\n", This, aListener, aContext);
+
+    if(TRACE_ON(mshtml)) {
+        LPCWSTR url;
+
+        nsIWineURI_GetWineURL(This->uri, &url);
+        TRACE("opening %s\n", debugstr_w(url));
+    }
+
+    nsIWineURI_GetIsDocumentURI(This->uri, &is_doc_uri);
+    if(is_doc_uri) {
+        window = get_channel_window(This);
+        if(window) {
+            nsIWineURI_SetWindow(This->uri, window);
+            IHTMLWindow2_Release(HTMLWINDOW2(window));
+        }
+    }
 
     nsIWineURI_GetNSContainer(This->uri, &container);
 
@@ -776,8 +837,6 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
             ? nsIChannel_AsyncOpen(This->channel, aListener, aContext)
             : NS_ERROR_UNEXPECTED;
     }
-
-    nsIWineURI_GetIsDocumentURI(This->uri, &is_doc_uri);
 
     if(is_doc_uri && (This->load_flags & LOAD_INITIAL_DOCUMENT_URI))
         nsres = async_open_doc_uri(This, container, aListener, aContext, &open);
@@ -1347,6 +1406,8 @@ static nsrefcnt NSAPI nsURI_Release(nsIWineURI *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        if(This->window_ref)
+            windowref_release(This->window_ref);
         if(This->container)
             nsIWebBrowserChrome_Release(NSWBCHROME(This->container));
         if(This->nsurl)
@@ -1708,7 +1769,7 @@ static nsresult NSAPI nsURI_Clone(nsIWineURI *iface, nsIURI **_retval)
         }
     }
 
-    nsres = create_uri(nsuri, This->container, &wine_uri);
+    nsres = create_uri(nsuri, This->window_ref ? This->window_ref->window : NULL, This->container, &wine_uri);
     if(NS_FAILED(nsres)) {
         WARN("create_uri failed: %08x\n", nsres);
         return nsres;
@@ -2081,6 +2142,48 @@ static nsresult NSAPI nsURI_SetNSContainer(nsIWineURI *iface, NSContainer *aCont
     return NS_OK;
 }
 
+static nsresult NSAPI nsURI_GetWindow(nsIWineURI *iface, HTMLWindow **aHTMLWindow)
+{
+    nsURI *This = NSURI_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, aHTMLWindow);
+
+    if(This->window_ref && This->window_ref->window) {
+        IHTMLWindow2_AddRef(HTMLWINDOW2(This->window_ref->window));
+        *aHTMLWindow = This->window_ref->window;
+    }else {
+        *aHTMLWindow = NULL;
+    }
+
+    return NS_OK;
+}
+
+static nsresult NSAPI nsURI_SetWindow(nsIWineURI *iface, HTMLWindow *aHTMLWindow)
+{
+    nsURI *This = NSURI_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, aHTMLWindow);
+
+    if(This->window_ref) {
+        if(This->window_ref->window == aHTMLWindow)
+            return NS_OK;
+        TRACE("Changing %p -> %p\n", This->window_ref->window, aHTMLWindow);
+        windowref_release(This->window_ref);
+    }
+
+    if(aHTMLWindow) {
+        windowref_addref(aHTMLWindow->window_ref);
+        This->window_ref = aHTMLWindow->window_ref;
+
+        if(aHTMLWindow->doc_obj)
+            nsIWineURI_SetNSContainer(NSWINEURI(This), aHTMLWindow->doc_obj->nscontainer);
+    }else {
+        This->window_ref = NULL;
+    }
+
+    return NS_OK;
+}
+
 static nsresult NSAPI nsURI_GetIsDocumentURI(nsIWineURI *iface, PRBool *aIsDocumentURI)
 {
     nsURI *This = NSURI_THIS(iface);
@@ -2193,26 +2296,24 @@ static const nsIWineURIVtbl nsWineURIVtbl = {
     nsURL_GetRelativeSpec,
     nsURI_GetNSContainer,
     nsURI_SetNSContainer,
+    nsURI_GetWindow,
+    nsURI_SetWindow,
     nsURI_GetIsDocumentURI,
     nsURI_SetIsDocumentURI,
     nsURI_GetWineURL,
     nsURI_SetWineURL
 };
 
-static nsresult create_uri(nsIURI *uri, NSContainer *container, nsIWineURI **_retval)
+static nsresult create_uri(nsIURI *uri, HTMLWindow *window, NSContainer *container, nsIWineURI **_retval)
 {
-    nsURI *ret = heap_alloc(sizeof(nsURI));
+    nsURI *ret = heap_alloc_zero(sizeof(nsURI));
 
     ret->lpWineURIVtbl = &nsWineURIVtbl;
     ret->ref = 1;
     ret->uri = uri;
-    ret->container = container;
-    ret->wine_url = NULL;
-    ret->is_doc_uri = FALSE;
-    ret->use_wine_url = FALSE;
 
-    if(container)
-        nsIWebBrowserChrome_AddRef(NSWBCHROME(container));
+    nsIWineURI_SetNSContainer(NSWINEURI(ret), container);
+    nsIWineURI_SetWindow(NSWINEURI(ret), window);
 
     if(uri)
         nsIURI_QueryInterface(uri, &IID_nsIURL, (void**)&ret->nsurl);
@@ -2449,7 +2550,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
         const char *aOriginCharset, nsIURI *aBaseURI, nsIURI **_retval)
 {
     const char *spec = NULL;
-    NSContainer *nscontainer = NULL;
+    HTMLWindow *window = NULL;
     nsIURI *uri = NULL;
     LPCWSTR base_wine_url = NULL;
     nsIWineURI *base_wine_uri = NULL, *wine_uri;
@@ -2493,20 +2594,20 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     if(aBaseURI) {
         nsres = nsIURI_QueryInterface(aBaseURI, &IID_nsIWineURI, (void**)&base_wine_uri);
         if(NS_SUCCEEDED(nsres)) {
-            nsIWineURI_GetNSContainer(base_wine_uri, &nscontainer);
+            nsIWineURI_GetWindow(base_wine_uri, &window);
             nsIWineURI_GetWineURL(base_wine_uri, &base_wine_url);
         }else {
             TRACE("Could not get base nsIWineURI: %08x\n", nsres);
         }
     }
 
-    TRACE("nscontainer = %p\n", nscontainer);
+    TRACE("window = %p\n", window);
 
-    nsres = create_uri(uri, nscontainer, &wine_uri);
+    nsres = create_uri(uri, window, NULL, &wine_uri);
     *_retval = (nsIURI*)wine_uri;
 
-    if(nscontainer)
-        nsIWebBrowserChrome_Release(NSWBCHROME(nscontainer));
+    if(window)
+        IHTMLWindow2_Release(HTMLWINDOW2(window));
 
     if(base_wine_url) {
         WCHAR url[INTERNET_MAX_URL_LENGTH], rel_url[INTERNET_MAX_URL_LENGTH];

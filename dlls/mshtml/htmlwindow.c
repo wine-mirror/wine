@@ -180,6 +180,10 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
             release_event_target(This->event_target);
         for(i=0; i < This->global_prop_cnt; i++)
             heap_free(This->global_props[i].name);
+
+        This->window_ref->window = NULL;
+        windowref_release(This->window_ref);
+
         heap_free(This->global_props);
         heap_free(This->event_vector);
         release_script_hosts(This);
@@ -1553,11 +1557,20 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
     if(!window)
         return E_OUTOFMEMORY;
 
+    window->window_ref = heap_alloc(sizeof(windowref_t));
+    if(!window->window_ref) {
+        heap_free(window->window_ref);
+        return E_OUTOFMEMORY;
+    }
+
     window->lpHTMLWindow2Vtbl = &HTMLWindow2Vtbl;
     window->lpHTMLWindow3Vtbl = &HTMLWindow3Vtbl;
     window->lpIDispatchExVtbl = &WindowDispExVtbl;
     window->ref = 1;
     window->doc_obj = doc_obj;
+
+    window->window_ref->window = window;
+    window->window_ref->ref = 1;
 
     init_dispex(&window->dispex, (IUnknown*)HTMLWINDOW2(window), &HTMLWindow_dispex);
 

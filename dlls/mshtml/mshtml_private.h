@@ -157,7 +157,6 @@ void release_dispex(DispatchEx*);
 BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**);
 
-typedef struct HTMLWindow HTMLWindow;
 typedef struct HTMLDocumentNode HTMLDocumentNode;
 typedef struct HTMLDocumentObj HTMLDocumentObj;
 
@@ -200,6 +199,11 @@ struct HTMLLocation {
     HTMLWindow *window;
 };
 
+typedef struct {
+    HTMLWindow *window;
+    LONG ref;
+}  windowref_t;
+
 struct HTMLWindow {
     DispatchEx dispex;
     const IHTMLWindow2Vtbl *lpHTMLWindow2Vtbl;
@@ -207,6 +211,8 @@ struct HTMLWindow {
     const IDispatchExVtbl  *lpIDispatchExVtbl;
 
     LONG ref;
+
+    windowref_t *window_ref;
 
     HTMLDocumentNode *doc;
     HTMLDocumentObj *doc_obj;
@@ -655,6 +661,7 @@ nsresult get_nsinterface(nsISupports*,REFIID,void**);
 void set_document_bscallback(HTMLDocument*,nsChannelBSC*);
 void set_current_mon(HTMLDocument*,IMoniker*);
 HRESULT start_binding(HTMLDocument*,BSCallback*,IBindCtx*);
+void detach_document_bindings(HTMLDocumentObj*);
 
 HRESULT bind_mon_to_buffer(HTMLDocument*,IMoniker*,void**,DWORD*);
 
@@ -875,6 +882,17 @@ static inline char *heap_strdupWtoA(LPCWSTR str)
     }
 
     return ret;
+}
+
+static inline void windowref_addref(windowref_t *ref)
+{
+    InterlockedIncrement(&ref->ref);
+}
+
+static inline void windowref_release(windowref_t *ref)
+{
+    if(!InterlockedDecrement(&ref->ref))
+        heap_free(ref);
 }
 
 HINSTANCE get_shdoclc(void);

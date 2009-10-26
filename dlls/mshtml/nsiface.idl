@@ -135,7 +135,6 @@ typedef nsISupports nsIDOMHTMLTableSectionElement;
 typedef nsISupports nsIDOMClientRectList;
 typedef nsISupports nsIDOMClientRect;
 typedef nsISupports nsIDOMLocation;
-typedef nsISupports nsIBoxObject;
 typedef nsISupports nsIDocument;
 typedef nsISupports nsIContent;
 typedef nsISupports nsINode;
@@ -1640,6 +1639,20 @@ interface nsIWebNavigation : nsISupports
 
 [
     object,
+    uuid(570f39d0-efd0-11d3-b093-00a024ffc08c),
+    local
+    /* FROZEN */
+]
+interface nsIWebProgress : nsISupports
+{
+    nsresult AddProgressListener(nsIWebProgressListener *aListener, PRUint32 aNotifyMask);
+    nsresult RemoveProgressListener(nsIWebProgressListener *aListener);
+    nsresult GetDOMWindow(nsIDOMWindow **aDOMWindow);
+    nsresult GetIsLoadingDocument(PRBool *aIsLoadingDocument);
+}
+
+[
+    object,
     uuid(343700dd-078b-42b6-a809-b9c1d7e951d0),
     local
     /* NOT_FROZEN */
@@ -2644,9 +2657,12 @@ interface nsIDocumentObserver : nsIMutationObserver
 interface nsIWineURI : nsIURL
 {
     typedef struct NSContainer NSContainer;
+    typedef struct HTMLWindow HTMLWindow;
 
     nsresult GetNSContainer(NSContainer **aNSContainer);
     nsresult SetNSContainer(NSContainer *aNSContainer);
+    nsresult GetWindow(HTMLWindow **aHTMLWindow);
+    nsresult SetWindow(HTMLWindow *aHTMLWindow);
     nsresult GetIsDocumentURI(PRBool *aIsDocumentURI);
     nsresult SetIsDocumentURI(PRBool aIsDocumentURI);
     nsresult GetWineURL(LPCWSTR *aURL);
