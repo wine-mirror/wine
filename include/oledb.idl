@@ -31,6 +31,11 @@ import "urlmon.idl";
 typedef ULONG DBBYTEOFFSET;
 typedef ULONG DBCOUNTITEM;
 typedef ULONG DBLENGTH;
+typedef ULONG DBORDINAL;
+typedef DWORD DB_DWRESERVE;
+typedef ULONG DBREFCOUNT;
+typedef ULONG DB_UPARAMS;
+typedef LONG  DB_LPARAMS;
 
 #include "dbs.idl"
 

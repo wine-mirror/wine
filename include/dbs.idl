@@ -151,6 +151,18 @@ enum DBTYPEENUM
     DBTYPE_RESERVED      = 0x8000
 };
 
+enum DBTYPEENUM15
+{
+    DBTYPE_HCHAPTER      = 136
+};
+
+enum DBTYPEENUM20
+{
+    DBTYPE_FILETIME      = 64,
+    DBTYPE_PROPVARIANT   = 138,
+    DBTYPE_VARNUMERIC    = 139
+};
+
 typedef DWORD DBSTATUS;
 
 enum DBSTATUSENUM
@@ -170,3 +182,125 @@ enum DBSTATUSENUM
     DBSTATUS_E_BADSTATUS = 12,
     DBSTATUS_S_DEFAULT = 13
 };
+
+typedef struct tagDBCOLUMNACCESS
+{
+    void *pData;
+    DBID columnid;
+    DBLENGTH cbDataLen;
+    DBSTATUS dwStatus;
+    DBLENGTH cbMaxLen;
+    DB_DWRESERVE dwReserved;
+    DBTYPE wType;
+    BYTE bPrecision;
+    BYTE bScale;
+} DBCOLUMNACCESS;
+
+typedef DWORD DBROWSTATUS;
+
+enum DBROWSTATUSENUM
+{
+    DBROWSTATUS_S_OK         = 0,
+    /* FIXME */
+    DBROWSTATUS_E_FAIL       = 19,
+
+};
+
+typedef DWORD DBPART;
+
+enum DBPARTENUM
+{
+    DBPART_INVALID  = 0,
+    DBPART_VALUE    = 1,
+    DBPART_LENGTH   = 2,
+    DBPART_STATUS   = 4,
+};
+
+typedef DWORD DBPARAMIO;
+
+enum DBPARAMIOENUM
+{
+    DBPARAMIO_NOTPARAM = 0,
+    DBPARAMIO_INPUT    = 1,
+    DBPARAMIO_OUTPUT   = 2,
+};
+
+typedef DWORD DBMEMOWNER;
+
+enum DBMEMOWNERENUM
+{
+    DBMEMOWNER_CLIENTOWNED    = 0,
+    DBMEMOWNER_PROVIDEROWNED  = 1,
+};
+
+typedef struct tagDBOBJECT
+{
+    DWORD dwFlags;
+    IID iid;
+} DBOBJECT;
+
+typedef struct tagDBBINDEXT
+{
+    [size_is((ULONG)ulExtension)] BYTE *pExtension;
+    DBCOUNTITEM ulExtension;
+} DBBINDEXT;
+
+typedef struct tagDBBINDING
+{
+    DBORDINAL iOrdinal;
+    DBBYTEOFFSET obValue;
+    DBBYTEOFFSET obLength;
+    DBBYTEOFFSET obStatus;
+    ITypeInfo *pTypeInfo;
+    DBOBJECT *pObject;
+    DBBINDEXT *pBindExt;
+    DBPART dwPart;
+    DBMEMOWNER dwMemOwner;
+    DBPARAMIO eParamIO;
+    DBLENGTH cbMaxLen;
+    DWORD dwFlags;
+    DBTYPE wType;
+    BYTE bPrecision;
+    BYTE bScale;
+} DBBINDING;
+
+typedef ULONG_PTR HACCESSOR;
+
+cpp_quote("#define DB_INVALID_HACCESSOR 0x00")
+
+typedef ULONG_PTR HROW;
+
+cpp_quote("#define DB_NULL_HROW 0x00")
+
+typedef ULONG_PTR HWATCHREGION;
+
+cpp_quote("#define DBWATCHREGION_NULL NULL")
+
+typedef ULONG_PTR HCHAPTER;
+
+cpp_quote("#define DB_NULL_HCHAPTER 0x00")
+
+typedef struct tagDBPARAMS
+{
+    void *pData;
+    DB_UPARAMS cParamSets;
+    HACCESSOR hAccessor;
+} DBPARAMS;
+
+typedef struct tagRMTPACK
+{
+    ISequentialStream *pISeqStream;
+    ULONG cbData;
+    ULONG cBSTR;
+    [size_is(cBSTR)] BSTR *rgBSTR;
+    ULONG cVARIANT;
+    [size_is(cVARIANT)] VARIANT *rgVARIANT;
+    ULONG cIDISPATCH;
+    [size_is(cIDISPATCH)] IDispatch **rgIDISPATCH;
+    ULONG cIUNKNOWN;
+    [size_is(cIUNKNOWN)] IUnknown **rgIUNKNOWN;
+    ULONG cPROPVARIANT;
+    [size_is(cPROPVARIANT)] PROPVARIANT *rgPROPVARIANT;
+    ULONG cArray;
+    [size_is(cArray)] VARIANT *rgArray;
+} RMTPACK;
