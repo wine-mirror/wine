@@ -506,7 +506,18 @@ static int shader_skip_unrecognized(const struct wined3d_sm1_data *priv, const D
 
 static void *shader_sm1_init(const DWORD *byte_code, const struct wined3d_shader_signature *output_signature)
 {
-    struct wined3d_sm1_data *priv = HeapAlloc(GetProcessHeap(), 0, sizeof(*priv));
+    struct wined3d_sm1_data *priv;
+    BYTE major, minor;
+
+    major = WINED3D_SM1_VERSION_MAJOR(*byte_code);
+    minor = WINED3D_SM1_VERSION_MINOR(*byte_code);
+    if (WINED3D_SHADER_VERSION(major, minor) > WINED3D_SHADER_VERSION(3, 0))
+    {
+        WARN("Invalid shader version %u.%u (%#x).\n", major, minor, *byte_code);
+        return NULL;
+    }
+
+    priv = HeapAlloc(GetProcessHeap(), 0, sizeof(*priv));
     if (!priv)
     {
         ERR("Failed to allocate private data\n");
