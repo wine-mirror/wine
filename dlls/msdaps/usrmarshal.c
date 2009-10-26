@@ -661,14 +661,31 @@ HRESULT __RPC_STUB ICommandText_GetCommandText_Stub(ICommandText* This, GUID *pg
 
 HRESULT CALLBACK ICommandText_SetCommandText_Proxy(ICommandText* This, REFGUID rguidDialect, LPCOLESTR pwszCommand)
 {
-    FIXME("(%p)->(%s, %s): stub\n", This, debugstr_guid(rguidDialect), debugstr_w(pwszCommand));
-    return E_NOTIMPL;
+    HRESULT hr;
+    IErrorInfo *error;
+
+    TRACE("(%p)->(%s, %s)\n", This, debugstr_guid(rguidDialect), debugstr_w(pwszCommand));
+
+    hr = ICommandText_RemoteSetCommandText_Proxy(This, rguidDialect, pwszCommand, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+    return hr;
 }
 
 HRESULT __RPC_STUB ICommandText_SetCommandText_Stub(ICommandText* This, REFGUID rguidDialect, LPCOLESTR pwszCommand,
                                                     IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p)->(%s, %s, %p): stub\n", This, debugstr_guid(rguidDialect), debugstr_w(pwszCommand),
+    HRESULT hr;
+
+    TRACE("(%p)->(%s, %s, %p)\n", This, debugstr_guid(rguidDialect), debugstr_w(pwszCommand),
           ppErrorInfoRem);
-    return E_NOTIMPL;
+
+    *ppErrorInfoRem = NULL;
+    hr = ICommandText_SetCommandText(This, rguidDialect, pwszCommand);
+    if(FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+
+    return hr;
 }
