@@ -492,3 +492,70 @@ HRESULT __RPC_STUB ICreateRow_CreateRow_Stub(ICreateRow* This, IUnknown *pUnkOut
     if(ppSession) *ppSession = impl_session.pSession;
     return hr;
 }
+
+HRESULT CALLBACK IAccessor_AddRefAccessor_Proxy(IAccessor* This, HACCESSOR hAccessor, DBREFCOUNT *pcRefCount)
+{
+    FIXME("(%p)->(%08lx, %p): stub\n", This, hAccessor, pcRefCount);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IAccessor_AddRefAccessor_Stub(IAccessor* This, HACCESSOR hAccessor, DBREFCOUNT *pcRefCount,
+                                                 IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p)->(%08lx, %p, %p): stub\n", This, hAccessor, pcRefCount, ppErrorInfoRem);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IAccessor_CreateAccessor_Proxy(IAccessor* This, DBACCESSORFLAGS dwAccessorFlags, DBCOUNTITEM cBindings,
+                                                const DBBINDING rgBindings[], DBLENGTH cbRowSize, HACCESSOR *phAccessor,
+                                                DBBINDSTATUS rgStatus[])
+{
+    DBCOUNTITEM i;
+    FIXME("(%p)->(%08x, %d, %p, %d, %p, %p): stub\n", This, dwAccessorFlags, cBindings, rgBindings,
+          cbRowSize, phAccessor, rgStatus);
+
+    for(i = 0; i < cBindings; i++)
+    {
+        TRACE("%d: ord %d val off %d len off %d stat off %d part %04x mem_owner %d max_len %d type %04x\n",
+              i, rgBindings[i].iOrdinal, rgBindings[i].obValue, rgBindings[i].obLength, rgBindings[i].obStatus,
+              rgBindings[i].dwPart, rgBindings[i].dwMemOwner, rgBindings[i].cbMaxLen, rgBindings[i].wType);
+    }
+
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IAccessor_CreateAccessor_Stub(IAccessor* This, DBACCESSORFLAGS dwAccessorFlags, DBCOUNTITEM cBindings,
+                                                 DBBINDING *rgBindings, DBLENGTH cbRowSize, HACCESSOR *phAccessor,
+                                                 DBBINDSTATUS *rgStatus, IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p)->(%08x, %d, %p, %d, %p, %p, %p): stub\n", This, dwAccessorFlags, cBindings, rgBindings,
+          cbRowSize, phAccessor, rgStatus, ppErrorInfoRem);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IAccessor_GetBindings_Proxy(IAccessor* This, HACCESSOR hAccessor, DBACCESSORFLAGS *pdwAccessorFlags,
+                                             DBCOUNTITEM *pcBindings, DBBINDING **prgBindings)
+{
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IAccessor_GetBindings_Stub(IAccessor* This, HACCESSOR hAccessor, DBACCESSORFLAGS *pdwAccessorFlags,
+                                              DBCOUNTITEM *pcBindings, DBBINDING **prgBindings, IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IAccessor_ReleaseAccessor_Proxy(IAccessor* This, HACCESSOR hAccessor, DBREFCOUNT *pcRefCount)
+{
+    FIXME("(%p)->(%lx, %p): stub\n", This, hAccessor, pcRefCount);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IAccessor_ReleaseAccessor_Stub(IAccessor* This, HACCESSOR hAccessor, DBREFCOUNT *pcRefCount,
+                                                  IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p)->(%lx, %p, %p): stub\n", This, hAccessor, pcRefCount, ppErrorInfoRem);
+    return E_NOTIMPL;
+}

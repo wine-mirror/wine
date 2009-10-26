@@ -96,6 +96,7 @@ SRCDIR_INCLUDES = \
 	$(IDL_TLB_SRCS) \
 	$(PUBLIC_IDL_H_SRCS) \
 	accctrl.h \
+	access.idl \
 	aclapi.h \
 	aclui.h \
 	adshlp.h \

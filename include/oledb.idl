@@ -39,6 +39,7 @@ typedef LONG  DB_LPARAMS;
 
 #include "dbs.idl"
 
+#include "access.idl"
 #include "dbccmd.idl"
 #include "dbcses.idl"
 #include "dbprop.idl"
