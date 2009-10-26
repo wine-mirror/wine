@@ -510,8 +510,11 @@ HRESULT CALLBACK IAccessor_CreateAccessor_Proxy(IAccessor* This, DBACCESSORFLAGS
                                                 const DBBINDING rgBindings[], DBLENGTH cbRowSize, HACCESSOR *phAccessor,
                                                 DBBINDSTATUS rgStatus[])
 {
+    HRESULT hr;
+    IErrorInfo *error;
     DBCOUNTITEM i;
-    FIXME("(%p)->(%08x, %d, %p, %d, %p, %p): stub\n", This, dwAccessorFlags, cBindings, rgBindings,
+
+    TRACE("(%p)->(%08x, %d, %p, %d, %p, %p)\n", This, dwAccessorFlags, cBindings, rgBindings,
           cbRowSize, phAccessor, rgStatus);
 
     for(i = 0; i < cBindings; i++)
@@ -521,16 +524,33 @@ HRESULT CALLBACK IAccessor_CreateAccessor_Proxy(IAccessor* This, DBACCESSORFLAGS
               rgBindings[i].dwPart, rgBindings[i].dwMemOwner, rgBindings[i].cbMaxLen, rgBindings[i].wType);
     }
 
-    return E_NOTIMPL;
+    hr = IAccessor_RemoteCreateAccessor_Proxy(This, dwAccessorFlags, cBindings, (DBBINDING *)rgBindings,
+                                              cbRowSize, phAccessor, rgStatus, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+
+    TRACE("returning %08x accessor %lx\n", hr, *phAccessor);
+    return hr;
 }
 
 HRESULT __RPC_STUB IAccessor_CreateAccessor_Stub(IAccessor* This, DBACCESSORFLAGS dwAccessorFlags, DBCOUNTITEM cBindings,
                                                  DBBINDING *rgBindings, DBLENGTH cbRowSize, HACCESSOR *phAccessor,
                                                  DBBINDSTATUS *rgStatus, IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p)->(%08x, %d, %p, %d, %p, %p, %p): stub\n", This, dwAccessorFlags, cBindings, rgBindings,
+    HRESULT hr;
+
+    TRACE("(%p)->(%08x, %d, %p, %d, %p, %p, %p)\n", This, dwAccessorFlags, cBindings, rgBindings,
           cbRowSize, phAccessor, rgStatus, ppErrorInfoRem);
-    return E_NOTIMPL;
+
+    *ppErrorInfoRem = NULL;
+    hr = IAccessor_CreateAccessor(This, dwAccessorFlags, cBindings, rgBindings,
+                                  cbRowSize, phAccessor, rgStatus);
+    if(FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+
+    return hr;
 }
 
 HRESULT CALLBACK IAccessor_GetBindings_Proxy(IAccessor* This, HACCESSOR hAccessor, DBACCESSORFLAGS *pdwAccessorFlags,
