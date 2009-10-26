@@ -802,10 +802,6 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
         /* Nothing to do because we locked directly into the vbo */
         if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER)) return;
 
-        if (!device->isInDraw)
-        {
-            ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
-        }
         ENTER_GL();
         GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
         checkGLcall("glBindBufferARB");
