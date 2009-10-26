@@ -305,6 +305,8 @@ struct HTMLDocument {
 
     HTMLWindow *window;
 
+    LONG task_magic;
+
     ConnectionPointContainer cp_container;
     ConnectionPoint cp_htmldocevents;
     ConnectionPoint cp_htmldocevents2;
@@ -671,6 +673,8 @@ HRESULT channelbsc_load_stream(nsChannelBSC*,IStream*);
 void channelbsc_set_channel(nsChannelBSC*,nsChannel*,nsIStreamListener*,nsISupports*);
 IMoniker *get_channelbsc_mon(nsChannelBSC*);
 
+void parse_complete(HTMLDocumentObj*);
+
 HRESULT HTMLSelectionObject_Create(HTMLDocumentNode*,nsISelection*,IHTMLSelectionObject**);
 HRESULT HTMLTxtRange_Create(HTMLDocumentNode*,nsIDOMRange*,IHTMLTxtRange**);
 IHTMLStyle *HTMLStyle_Create(nsIDOMCSSStyleDeclaration*);
@@ -758,20 +762,19 @@ void set_dirty(HTMLDocument*,VARIANT_BOOL);
 
 extern DWORD mshtml_tls;
 
-typedef struct task_t {
-    HTMLDocument *doc;
+typedef struct task_t task_t;
+typedef void (*task_proc_t)(task_t*);
 
-    enum {
-        TASK_SETDOWNLOADSTATE,
-        TASK_PARSECOMPLETE,
-        TASK_SETPROGRESS,
-        TASK_START_BINDING
-    } task_id;
-
-    nsChannelBSC *bscallback;
-
+struct task_t {
+    LONG target_magic;
+    task_proc_t proc;
     struct task_t *next;
-} task_t;
+};
+
+typedef struct {
+    task_t header;
+    HTMLDocumentObj *doc;
+} docobj_task_t;
 
 typedef struct {
     HWND thread_hwnd;
@@ -782,8 +785,11 @@ typedef struct {
 
 thread_data_t *get_thread_data(BOOL);
 HWND get_thread_hwnd(void);
-void push_task(task_t*);
-void remove_doc_tasks(const HTMLDocument*);
+
+LONG get_task_target_magic(void);
+void push_task(task_t*,task_proc_t,LONG);
+void remove_target_tasks(LONG);
+
 DWORD set_task_timer(HTMLDocument*,DWORD,BOOL,IDispatch*);
 HRESULT clear_task_timer(HTMLDocument*,BOOL,DWORD);
 

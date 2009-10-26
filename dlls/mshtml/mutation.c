@@ -472,6 +472,12 @@ static void NSAPI nsDocumentObserver_BeginLoad(nsIDocumentObserver *iface, nsIDo
 {
 }
 
+static void parse_complete_proc(task_t *_task)
+{
+    docobj_task_t *task = (docobj_task_t*)_task;
+    parse_complete(task->doc);
+}
+
 static void NSAPI nsDocumentObserver_EndLoad(nsIDocumentObserver *iface, nsIDocument *aDocument)
 {
     HTMLDocumentNode *This = NSDOCOBS_THIS(iface);
@@ -481,18 +487,19 @@ static void NSAPI nsDocumentObserver_EndLoad(nsIDocumentObserver *iface, nsIDocu
     This->content_ready = TRUE;
 
     if(This == This->basedoc.doc_obj->basedoc.doc_node) {
-        task_t *task;
-        task = heap_alloc(sizeof(task_t));
+        docobj_task_t *task;
 
-        task->doc = &This->basedoc.doc_obj->basedoc;
-        task->task_id = TASK_PARSECOMPLETE;
-        task->next = NULL;
+        task = heap_alloc(sizeof(docobj_task_t));
+        if(!task)
+            return;
+
+        task->doc = This->basedoc.doc_obj;
 
         /*
          * This should be done in the worker thread that parses HTML,
          * but we don't have such thread (Gecko parses HTML for us).
          */
-        push_task(task);
+        push_task(&task->header, &parse_complete_proc, This->basedoc.doc_obj->basedoc.task_magic);
     }
 }
 

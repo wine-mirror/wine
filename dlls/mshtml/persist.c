@@ -75,11 +75,88 @@ void set_current_mon(HTMLWindow *This, IMoniker *mon)
     set_script_mode(This, use_gecko_script(This->url) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT);
 }
 
+static void set_progress_proc(task_t *_task)
+{
+    docobj_task_t *task = (docobj_task_t*)_task;
+    IOleCommandTarget *olecmd = NULL;
+    HTMLDocumentObj *doc = task->doc;
+    HRESULT hres;
+
+    TRACE("(%p)\n", doc);
+
+    if(doc->client)
+        IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
+
+    if(olecmd) {
+        VARIANT progress_max, progress;
+
+        V_VT(&progress_max) = VT_I4;
+        V_I4(&progress_max) = 0; /* FIXME */
+        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETPROGRESSMAX, OLECMDEXECOPT_DONTPROMPTUSER,
+                               &progress_max, NULL);
+
+        V_VT(&progress) = VT_I4;
+        V_I4(&progress) = 0; /* FIXME */
+        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETPROGRESSPOS, OLECMDEXECOPT_DONTPROMPTUSER,
+                               &progress, NULL);
+    }
+
+    if(doc->usermode == EDITMODE && doc->hostui) {
+        DOCHOSTUIINFO hostinfo;
+
+        memset(&hostinfo, 0, sizeof(DOCHOSTUIINFO));
+        hostinfo.cbSize = sizeof(DOCHOSTUIINFO);
+        hres = IDocHostUIHandler_GetHostInfo(doc->hostui, &hostinfo);
+        if(SUCCEEDED(hres))
+            /* FIXME: use hostinfo */
+            TRACE("hostinfo = {%u %08x %08x %s %s}\n",
+                    hostinfo.cbSize, hostinfo.dwFlags, hostinfo.dwDoubleClick,
+                    debugstr_w(hostinfo.pchHostCss), debugstr_w(hostinfo.pchHostNS));
+    }
+}
+
+static void set_downloading_proc(task_t *_task)
+{
+    HTMLDocumentObj *doc = ((docobj_task_t*)_task)->doc;
+    IOleCommandTarget *olecmd;
+    HRESULT hres;
+
+    TRACE("(%p)\n", doc);
+
+    if(doc->frame)
+        IOleInPlaceFrame_SetStatusText(doc->frame, NULL /* FIXME */);
+
+    if(!doc->client)
+        return;
+
+    hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
+    if(SUCCEEDED(hres)) {
+        VARIANT var;
+
+        V_VT(&var) = VT_I4;
+        V_I4(&var) = 1;
+
+        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETDOWNLOADSTATE, OLECMDEXECOPT_DONTPROMPTUSER,
+                               &var, NULL);
+        IOleCommandTarget_Release(olecmd);
+    }
+
+    if(doc->hostui) {
+        IDropTarget *drop_target = NULL;
+
+        hres = IDocHostUIHandler_GetDropTarget(doc->hostui, NULL /* FIXME */, &drop_target);
+        if(drop_target) {
+            FIXME("Use IDropTarget\n");
+            IDropTarget_Release(drop_target);
+        }
+    }
+}
+
 static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BOOL *bind_complete)
 {
     nsChannelBSC *bscallback;
     LPOLESTR url = NULL;
-    task_t *task;
+    docobj_task_t *task;
     HRESULT hres;
     nsresult nsres;
 
@@ -166,22 +243,14 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
     bscallback = create_channelbsc(mon);
 
     if(This->doc_obj->frame) {
-        task = heap_alloc(sizeof(task_t));
-
-        task->doc = This;
-        task->task_id = TASK_SETPROGRESS;
-        task->next = NULL;
-
-        push_task(task);
+        task = heap_alloc(sizeof(docobj_task_t));
+        task->doc = This->doc_obj;
+        push_task(&task->header, set_progress_proc, This->doc_obj->basedoc.task_magic);
     }
 
-    task = heap_alloc(sizeof(task_t));
-
-    task->doc = This;
-    task->task_id = TASK_SETDOWNLOADSTATE;
-    task->next = NULL;
-
-    push_task(task);
+    task = heap_alloc(sizeof(docobj_task_t));
+    task->doc = This->doc_obj;
+    push_task(&task->header, set_downloading_proc, This->doc_obj->basedoc.task_magic);
 
     if(This->doc_obj->nscontainer) {
         This->doc_obj->nscontainer->bscallback = bscallback;

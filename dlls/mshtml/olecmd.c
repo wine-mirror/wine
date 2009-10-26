@@ -590,7 +590,7 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
 
     if(This->window->mon) {
         /* FIXME: We should find nicer way to do this */
-        remove_doc_tasks(This);
+        remove_target_tasks(This->task_magic);
 
         mon = This->window->mon;
         IMoniker_AddRef(mon);

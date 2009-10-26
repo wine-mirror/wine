@@ -724,12 +724,25 @@ static HTMLWindow *get_channel_window(nsChannel *This)
     return window;
 }
 
+typedef struct {
+    task_t header;
+    HTMLDocument *doc;
+    nsChannelBSC *bscallback;
+} start_binding_task_t;
+
+static void start_binding_proc(task_t *_task)
+{
+    start_binding_task_t *task = (start_binding_task_t*)_task;
+
+    start_binding(task->doc, (BSCallback*)task->bscallback, NULL);
+}
+
 static nsresult async_open(nsChannel *This, HTMLWindow *window, BOOL is_doc_channel, nsIStreamListener *listener,
         nsISupports *context)
 {
     nsChannelBSC *bscallback;
     IMoniker *mon = NULL;
-    task_t *task;
+    start_binding_task_t *task;
     HRESULT hres;
 
     hres = create_mon_for_nschannel(This, &mon);
@@ -744,14 +757,12 @@ static nsresult async_open(nsChannel *This, HTMLWindow *window, BOOL is_doc_chan
 
     channelbsc_set_channel(bscallback, This, listener, context);
 
-    task = heap_alloc(sizeof(task_t));
+    task = heap_alloc(sizeof(start_binding_task_t));
 
     task->doc = &window->doc_obj->basedoc;
-    task->task_id = TASK_START_BINDING;
-    task->next = NULL;
     task->bscallback = bscallback;
 
-    push_task(task);
+    push_task(&task->header, start_binding_proc, window->doc_obj->basedoc.task_magic);
 
     return NS_OK;
 }

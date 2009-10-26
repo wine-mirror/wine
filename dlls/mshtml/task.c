@@ -49,9 +49,13 @@ typedef struct {
     struct list entry;
 } task_timer_t;
 
-void push_task(task_t *task)
+void push_task(task_t *task, task_proc_t proc, LONG magic)
 {
     thread_data_t *thread_data = get_thread_data(TRUE);
+
+    task->target_magic = magic;
+    task->proc = proc;
+    task->next = NULL;
 
     if(thread_data->task_queue_tail)
         thread_data->task_queue_tail->next = task;
@@ -87,7 +91,7 @@ static void release_task_timer(HWND thread_hwnd, task_timer_t *timer)
     heap_free(timer);
 }
 
-void remove_doc_tasks(const HTMLDocument *doc)
+void remove_target_tasks(LONG target)
 {
     thread_data_t *thread_data = get_thread_data(FALSE);
     struct list *liter, *ltmp;
@@ -99,7 +103,7 @@ void remove_doc_tasks(const HTMLDocument *doc)
 
     LIST_FOR_EACH_SAFE(liter, ltmp, &thread_data->timer_list) {
         timer = LIST_ENTRY(liter, task_timer_t, entry);
-        if(timer->doc == doc)
+        if(timer->doc->task_magic == target)
             release_task_timer(thread_data->thread_hwnd, timer);
     }
 
@@ -109,11 +113,11 @@ void remove_doc_tasks(const HTMLDocument *doc)
     }
 
     while(thread_data->task_queue_head
-          && thread_data->task_queue_head->doc == doc)
+          && thread_data->task_queue_head->target_magic == target)
         pop_task();
 
     for(iter = thread_data->task_queue_head; iter; iter = iter->next) {
-        while(iter->next && iter->next->doc == doc) {
+        while(iter->next && iter->next->target_magic == target) {
             tmp = iter->next;
             iter->next = tmp->next;
             heap_free(tmp);
@@ -122,6 +126,12 @@ void remove_doc_tasks(const HTMLDocument *doc)
         if(!iter->next)
             thread_data->task_queue_tail = iter;
     }
+}
+
+LONG get_task_target_magic(void)
+{
+    static LONG magic = 0x10000000;
+    return InterlockedIncrement(&magic);
 }
 
 static BOOL queue_timer(thread_data_t *thread_data, task_timer_t *timer)
@@ -191,42 +201,6 @@ HRESULT clear_task_timer(HTMLDocument *doc, BOOL interval, DWORD id)
     return S_OK;
 }
 
-static void set_downloading(HTMLDocumentObj *doc)
-{
-    IOleCommandTarget *olecmd;
-    HRESULT hres;
-
-    TRACE("(%p)\n", doc);
-
-    if(doc->frame)
-        IOleInPlaceFrame_SetStatusText(doc->frame, NULL /* FIXME */);
-
-    if(!doc->client)
-        return;
-
-    hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
-    if(SUCCEEDED(hres)) {
-        VARIANT var;
-
-        V_VT(&var) = VT_I4;
-        V_I4(&var) = 1;
-
-        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETDOWNLOADSTATE, OLECMDEXECOPT_DONTPROMPTUSER,
-                               &var, NULL);
-        IOleCommandTarget_Release(olecmd);
-    }
-
-    if(doc->hostui) {
-        IDropTarget *drop_target = NULL;
-
-        hres = IDocHostUIHandler_GetDropTarget(doc->hostui, NULL /* FIXME */, &drop_target);
-        if(drop_target) {
-            FIXME("Use IDropTarget\n");
-            IDropTarget_Release(drop_target);
-        }
-    }
-}
-
 /* Calls undocumented 69 cmd of CGID_Explorer */
 static void call_explorer_69(HTMLDocumentObj *doc)
 {
@@ -248,26 +222,26 @@ static void call_explorer_69(HTMLDocumentObj *doc)
         FIXME("handle result\n");
 }
 
-static void set_parsecomplete(HTMLDocument *doc)
+void parse_complete(HTMLDocumentObj *doc)
 {
     IOleCommandTarget *olecmd = NULL;
 
     TRACE("(%p)\n", doc);
 
-    if(doc->doc_obj->usermode == EDITMODE)
-        init_editor(doc);
+    if(doc->usermode == EDITMODE)
+        init_editor(&doc->basedoc);
 
-    call_explorer_69(doc->doc_obj);
-    call_property_onchanged(&doc->cp_propnotif, 1005);
-    call_explorer_69(doc->doc_obj);
+    call_explorer_69(doc);
+    call_property_onchanged(&doc->basedoc.cp_propnotif, 1005);
+    call_explorer_69(doc);
 
     /* FIXME: IE7 calls EnableModelless(TRUE), EnableModelless(FALSE) and sets interactive state here */
 
-    doc->doc_obj->readystate = READYSTATE_INTERACTIVE;
-    call_property_onchanged(&doc->cp_propnotif, DISPID_READYSTATE);
+    doc->readystate = READYSTATE_INTERACTIVE;
+    call_property_onchanged(&doc->basedoc.cp_propnotif, DISPID_READYSTATE);
 
-    if(doc->doc_obj->client)
-        IOleClientSite_QueryInterface(doc->doc_obj->client, &IID_IOleCommandTarget, (void**)&olecmd);
+    if(doc->client)
+        IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
 
     if(olecmd) {
         VARIANT state, progress;
@@ -289,80 +263,15 @@ static void set_parsecomplete(HTMLDocument *doc)
         IOleCommandTarget_Release(olecmd);
     }
 
-    doc->doc_obj->readystate = READYSTATE_COMPLETE;
-    call_property_onchanged(&doc->cp_propnotif, DISPID_READYSTATE);
+    doc->readystate = READYSTATE_COMPLETE;
+    call_property_onchanged(&doc->basedoc.cp_propnotif, DISPID_READYSTATE);
 
-    if(doc->doc_obj->frame) {
+    if(doc->frame) {
         static const WCHAR wszDone[] = {'D','o','n','e',0};
-        IOleInPlaceFrame_SetStatusText(doc->doc_obj->frame, wszDone);
+        IOleInPlaceFrame_SetStatusText(doc->frame, wszDone);
     }
 
-    update_title(doc->doc_obj);
-}
-
-static void set_progress(HTMLDocument *doc)
-{
-    IOleCommandTarget *olecmd = NULL;
-    HRESULT hres;
-
-    TRACE("(%p)\n", doc);
-
-    if(doc->doc_obj->client)
-        IOleClientSite_QueryInterface(doc->doc_obj->client, &IID_IOleCommandTarget, (void**)&olecmd);
-
-    if(olecmd) {
-        VARIANT progress_max, progress;
-
-        V_VT(&progress_max) = VT_I4;
-        V_I4(&progress_max) = 0; /* FIXME */
-        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETPROGRESSMAX, OLECMDEXECOPT_DONTPROMPTUSER,
-                               &progress_max, NULL);
-
-        V_VT(&progress) = VT_I4;
-        V_I4(&progress) = 0; /* FIXME */
-        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETPROGRESSPOS, OLECMDEXECOPT_DONTPROMPTUSER,
-                               &progress, NULL);
-    }
-
-    if(doc->doc_obj->usermode == EDITMODE && doc->doc_obj->hostui) {
-        DOCHOSTUIINFO hostinfo;
-
-        memset(&hostinfo, 0, sizeof(DOCHOSTUIINFO));
-        hostinfo.cbSize = sizeof(DOCHOSTUIINFO);
-        hres = IDocHostUIHandler_GetHostInfo(doc->doc_obj->hostui, &hostinfo);
-        if(SUCCEEDED(hres))
-            /* FIXME: use hostinfo */
-            TRACE("hostinfo = {%u %08x %08x %s %s}\n",
-                    hostinfo.cbSize, hostinfo.dwFlags, hostinfo.dwDoubleClick,
-                    debugstr_w(hostinfo.pchHostCss), debugstr_w(hostinfo.pchHostNS));
-    }
-}
-
-static void task_start_binding(HTMLDocument *doc, BSCallback *bscallback)
-{
-    if(doc)
-        start_binding(doc, bscallback, NULL);
-    IUnknown_Release((IUnknown*)bscallback);
-}
-
-static void process_task(task_t *task)
-{
-    switch(task->task_id) {
-    case TASK_SETDOWNLOADSTATE:
-        set_downloading(task->doc->doc_obj);
-        break;
-    case TASK_PARSECOMPLETE:
-        set_parsecomplete(task->doc);
-        break;
-    case TASK_SETPROGRESS:
-        set_progress(task->doc);
-        break;
-    case TASK_START_BINDING:
-        task_start_binding(task->doc, (BSCallback*)task->bscallback);
-        break;
-    default:
-        ERR("Wrong task_id %d\n", task->task_id);
-    }
+    update_title(doc);
 }
 
 static void call_timer_disp(IDispatch *disp)
@@ -433,7 +342,7 @@ static LRESULT WINAPI hidden_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             if(!task)
                 break;
 
-            process_task(task);
+            task->proc(task);
             heap_free(task);
         }
 
