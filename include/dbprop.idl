@@ -40,7 +40,7 @@ interface IDBProperties : IUnknown {
              [in, size_is(cPropertyIDSets)] const DBPROPIDSET rgPropertyIDSets[],
              [in, out] ULONG *pcPropertyInfoSets,
              [out, size_is(,*pcPropertyInfoSets)] DBPROPINFOSET **prgPropertyInfoSets,
-             [out, /*annotation("__deref_out_z_opt")*/] OLECHAR **ppDescBuffer);
+             [out, annotation("__deref_out_z_opt")] OLECHAR **ppDescBuffer);
 
     [call_as(GetPropertyInfo)] HRESULT RemoteGetPropertyInfo(
              [in] ULONG cPropertyIDSets,

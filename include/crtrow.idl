@@ -32,7 +32,7 @@ interface ICreateRow : IUnknown
                       [in,  unique] IAuthenticate *pAuthenticate,
                       [in, out, unique] DBIMPLICITSESSION *pImplSession,
                       [in, out, unique] DBBINDURLSTATUS *pdwBindStatus,
-                      [out, /*annotation("__deref_opt_out_opt")*/] LPOLESTR *ppwszNewURL,
+                      [out, annotation("__deref_opt_out_opt")] LPOLESTR *ppwszNewURL,
                       [out, iid_is(riid)] IUnknown **ppUnk);
 
     [call_as(CreateRow)]
