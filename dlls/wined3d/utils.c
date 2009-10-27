@@ -897,7 +897,7 @@ static BOOL check_filter(const struct wined3d_gl_info *gl_info, GLenum internal)
     return ret;
 }
 
-static void init_format_filter_info(struct wined3d_gl_info *gl_info)
+static void init_format_filter_info(struct wined3d_gl_info *gl_info, enum wined3d_pci_vendor vendor)
 {
     unsigned int fmt_idx, i;
     WINED3DFORMAT fmts16[] = {
@@ -911,7 +911,7 @@ static void init_format_filter_info(struct wined3d_gl_info *gl_info)
     if(wined3d_settings.offscreen_rendering_mode != ORM_FBO)
     {
         WARN("No FBO support, or no FBO ORM, guessing filter info from GL caps\n");
-        if(gl_info->gl_vendor == VENDOR_NVIDIA && GL_SUPPORT(ARB_TEXTURE_FLOAT))
+        if (vendor == VENDOR_NVIDIA && GL_SUPPORT(ARB_TEXTURE_FLOAT))
         {
             TRACE("Nvidia card with texture_float support: Assuming float16 blending\n");
             filtered = TRUE;
@@ -1120,7 +1120,7 @@ BOOL initPixelFormatsNoGL(struct wined3d_gl_info *gl_info)
 }
 
 /* Context activation is done by the caller. */
-BOOL initPixelFormats(struct wined3d_gl_info *gl_info)
+BOOL initPixelFormats(struct wined3d_gl_info *gl_info, enum wined3d_pci_vendor vendor)
 {
     if (!init_format_base_info(gl_info)) return FALSE;
 
@@ -1130,7 +1130,7 @@ BOOL initPixelFormats(struct wined3d_gl_info *gl_info)
 
     apply_format_fixups(gl_info);
     init_format_fbo_compat_info(gl_info);
-    init_format_filter_info(gl_info);
+    init_format_filter_info(gl_info, vendor);
 
     return TRUE;
 

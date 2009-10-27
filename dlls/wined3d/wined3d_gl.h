@@ -3461,83 +3461,6 @@ typedef void (WINE_GLAPI * PGLFNVERTEXATTRIBPOINTERPROC) (GLuint index, GLint si
 /****************************************************
  * Enumerated types
  ****************************************************/
-typedef enum _GL_Vendors {
-  VENDOR_WINE   = 0x0,
-  VENDOR_MESA   = 0x1,
-  VENDOR_ATI    = 0x1002,
-  VENDOR_NVIDIA = 0x10de,
-  VENDOR_INTEL  = 0x8086
-} GL_Vendors;
-
-typedef enum _GL_Cards {
-  CARD_WINE                       =    0x0,
-
-  CARD_ATI_RAGE_128PRO            = 0x5246,
-  CARD_ATI_RADEON_7200            = 0x5144,
-  CARD_ATI_RADEON_8500            = 0x514c,
-  CARD_ATI_RADEON_9500            = 0x4144,
-  CARD_ATI_RADEON_XPRESS_200M     = 0x5955,
-  CARD_ATI_RADEON_X700            = 0x5e4c,
-  CARD_ATI_RADEON_X1600           = 0x71c2,
-  CARD_ATI_RADEON_HD2300          = 0x7210,
-  CARD_ATI_RADEON_HD2600          = 0x9581,
-  CARD_ATI_RADEON_HD2900          = 0x9400,
-  CARD_ATI_RADEON_HD3200          = 0x9620,
-  CARD_ATI_RADEON_HD4350          = 0x954f,
-  CARD_ATI_RADEON_HD4550          = 0x9540,
-  CARD_ATI_RADEON_HD4600          = 0x9495,
-  CARD_ATI_RADEON_HD4650          = 0x9498,
-  CARD_ATI_RADEON_HD4670          = 0x9490,
-  CARD_ATI_RADEON_HD4700          = 0x944e,
-  CARD_ATI_RADEON_HD4770          = 0x94b3,
-  CARD_ATI_RADEON_HD4800          = 0x944c, /* picked one value between 9440,944c,9442,9460 */
-  CARD_ATI_RADEON_HD4830          = 0x944c,
-  CARD_ATI_RADEON_HD4850          = 0x9442,
-  CARD_ATI_RADEON_HD4870          = 0x9440,
-  CARD_ATI_RADEON_HD4890          = 0x9460,
-
-  CARD_NVIDIA_RIVA_128            = 0x0018,
-  CARD_NVIDIA_RIVA_TNT            = 0x0020,
-  CARD_NVIDIA_RIVA_TNT2           = 0x0028,
-  CARD_NVIDIA_GEFORCE             = 0x0100,
-  CARD_NVIDIA_GEFORCE2_MX         = 0x0110,
-  CARD_NVIDIA_GEFORCE2            = 0x0150,
-  CARD_NVIDIA_GEFORCE3            = 0x0200,
-  CARD_NVIDIA_GEFORCE4_MX         = 0x0170,
-  CARD_NVIDIA_GEFORCE4_TI4200     = 0x0253,
-  CARD_NVIDIA_GEFORCEFX_5200      = 0x0320,
-  CARD_NVIDIA_GEFORCEFX_5600      = 0x0312,
-  CARD_NVIDIA_GEFORCEFX_5800      = 0x0302,
-  CARD_NVIDIA_GEFORCE_6200        = 0x014f,
-  CARD_NVIDIA_GEFORCE_6600GT      = 0x0140,
-  CARD_NVIDIA_GEFORCE_6800        = 0x0041,
-  CARD_NVIDIA_GEFORCE_7400        = 0x01d8,
-  CARD_NVIDIA_GEFORCE_7300        = 0x01d7, /* GeForce Go 7300 */
-  CARD_NVIDIA_GEFORCE_7600        = 0x0391,
-  CARD_NVIDIA_GEFORCE_7800GT      = 0x0092,
-  CARD_NVIDIA_GEFORCE_8300GS      = 0x0423,
-  CARD_NVIDIA_GEFORCE_8600GT      = 0x0402,
-  CARD_NVIDIA_GEFORCE_8600MGT     = 0x0407,
-  CARD_NVIDIA_GEFORCE_8800GTS     = 0x0193,
-  CARD_NVIDIA_GEFORCE_9200        = 0x086d,
-  CARD_NVIDIA_GEFORCE_9400GT      = 0x042c,
-  CARD_NVIDIA_GEFORCE_9500GT      = 0x0640,
-  CARD_NVIDIA_GEFORCE_9600GT      = 0x0622,
-  CARD_NVIDIA_GEFORCE_9800GT      = 0x0614,
-  CARD_NVIDIA_GEFORCE_GTX260      = 0x05e2,
-  CARD_NVIDIA_GEFORCE_GTX275      = 0x05e6,
-  CARD_NVIDIA_GEFORCE_GTX280      = 0x05e1,
-
-  CARD_INTEL_845G                 = 0x2562,
-  CARD_INTEL_I830G                = 0x3577,
-  CARD_INTEL_I855G                = 0x3582,
-  CARD_INTEL_I865G                = 0x2572,
-  CARD_INTEL_I915G                = 0x2582,
-  CARD_INTEL_I915GM               = 0x2592,
-  CARD_INTEL_I945GM               = 0x27a2, /* Same as GMA 950?? */
-  CARD_INTEL_X3100                = 0x2a02, /* found in macs. Same as GMA 965? */
-} GL_Cards;
-
 #define WINE_DEFAULT_VIDMEM 64*1024*1024
 
 #define MAKEDWORD_VERSION(maj, min)  ((maj & 0x0000FFFF) << 16) | (min & 0x0000FFFF)
@@ -4138,8 +4061,6 @@ struct wined3d_fbo_ops
 
 struct wined3d_gl_info
 {
-    GL_Vendors gl_vendor;
-    GL_Cards gl_card;
     UINT vidmem;
 
     UINT max_buffers;
