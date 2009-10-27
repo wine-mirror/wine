@@ -43,9 +43,9 @@ typedef struct _func_stack {
 typedef struct _parser_ctx_t {
     LONG ref;
 
-    const WCHAR *ptr;
-    const WCHAR *begin;
+    WCHAR *begin;
     const WCHAR *end;
+    const WCHAR *ptr;
 
     script_ctx_t *script;
     source_elements_t *source;
