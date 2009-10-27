@@ -641,12 +641,27 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
     }
 }
 
+static void context_validate(struct wined3d_context *context)
+{
+    HWND wnd = WindowFromDC(context->hdc);
+
+    if (wnd != context->win_handle)
+    {
+        WARN("DC %p belongs to window %p instead of %p.\n",
+                context->hdc, wnd, context->win_handle);
+        context->valid = 0;
+    }
+}
+
 static void context_destroy_gl_resources(struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_occlusion_query *occlusion_query;
     struct wined3d_event_query *event_query;
     struct fbo_entry *entry, *entry2;
+
+    context_validate(context);
+    if (context->valid) pwglMakeCurrent(context->hdc, context->glCtx);
 
     ENTER_GL();
 
@@ -712,7 +727,7 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
     HeapFree(GetProcessHeap(), 0, context->free_occlusion_queries);
     HeapFree(GetProcessHeap(), 0, context->free_event_queries);
 
-    if (!pwglMakeCurrent(NULL, NULL))
+    if (pwglGetCurrentContext() && !pwglMakeCurrent(NULL, NULL))
     {
         ERR("Failed to disable GL context.\n");
     }
@@ -799,18 +814,6 @@ BOOL context_set_current(struct wined3d_context *ctx)
     }
 
     return TlsSetValue(wined3d_context_tls_idx, ctx);
-}
-
-static void context_validate(struct wined3d_context *context)
-{
-    HWND wnd = WindowFromDC(context->hdc);
-
-    if (wnd != context->win_handle)
-    {
-        WARN("DC %p belongs to window %p instead of %p.\n",
-                context->hdc, wnd, context->win_handle);
-        context->valid = 0;
-    }
 }
 
 /*****************************************************************************
