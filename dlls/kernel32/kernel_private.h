@@ -76,20 +76,31 @@ extern WCHAR *FILE_name_AtoW( LPCSTR name, BOOL alloc );
 extern DWORD FILE_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen );
 
 /* return values for MODULE_GetBinaryType */
-#define BINARY_UNKNOWN    0x00
-#define BINARY_PE         0x01
-#define BINARY_WIN16      0x02
-#define BINARY_OS216      0x03
-#define BINARY_DOS        0x04
-#define BINARY_UNIX_EXE   0x05
-#define BINARY_UNIX_LIB   0x06
-#define BINARY_TYPE_MASK  0x0f
-#define BINARY_FLAG_DLL   0x10
-#define BINARY_FLAG_64BIT 0x20
+enum binary_type
+{
+    BINARY_UNKNOWN = 0,
+    BINARY_PE,
+    BINARY_WIN16,
+    BINARY_OS216,
+    BINARY_DOS,
+    BINARY_UNIX_EXE,
+    BINARY_UNIX_LIB
+};
+
+#define BINARY_FLAG_DLL   0x01
+#define BINARY_FLAG_64BIT 0x02
+
+struct binary_info
+{
+    enum binary_type type;
+    DWORD            flags;
+    void            *res_start;
+    void            *res_end;
+};
 
 /* module.c */
 extern WCHAR *MODULE_get_dll_load_path( LPCWSTR module );
-extern DWORD MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end );
+extern void MODULE_get_binary_info( HANDLE hfile, struct binary_info *info );
 
 extern BOOL NLS_IsUnicodeOnlyLcid(LCID);
 

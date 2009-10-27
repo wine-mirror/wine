@@ -226,7 +226,7 @@ good:
 /***********************************************************************
  *           MODULE_GetBinaryType
  */
-DWORD MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end )
+void MODULE_get_binary_info( HANDLE hfile, struct binary_info *info )
 {
     union
     {
@@ -252,39 +252,34 @@ DWORD MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end )
 
     DWORD len;
 
+    memset( info, 0, sizeof(*info) );
+
     /* Seek to the start of the file and read the header information. */
-    if (SetFilePointer( hfile, 0, NULL, SEEK_SET ) == -1)
-        return BINARY_UNKNOWN;
-    if (!ReadFile( hfile, &header, sizeof(header), &len, NULL ) || len != sizeof(header))
-        return BINARY_UNKNOWN;
+    if (SetFilePointer( hfile, 0, NULL, SEEK_SET ) == -1) return;
+    if (!ReadFile( hfile, &header, sizeof(header), &len, NULL ) || len != sizeof(header)) return;
 
     if (!memcmp( header.elf.magic, "\177ELF", 4 ))
     {
-        DWORD flags = (header.elf.class == 2) ? BINARY_FLAG_64BIT : 0;
+        if (header.elf.class == 2) info->flags |= BINARY_FLAG_64BIT;
         /* FIXME: we don't bother to check byte order, architecture, etc. */
         switch(header.elf.type)
         {
-        case 2: return flags | BINARY_UNIX_EXE;
-        case 3: return flags | BINARY_UNIX_LIB;
+        case 2: info->type = BINARY_UNIX_EXE; break;
+        case 3: info->type = BINARY_UNIX_LIB; break;
         }
-        return BINARY_UNKNOWN;
     }
-
     /* Mach-o File with Endian set to Big Endian or Little Endian */
-    if (header.macho.magic == 0xfeedface || header.macho.magic == 0xcefaedfe)
+    else if (header.macho.magic == 0xfeedface || header.macho.magic == 0xcefaedfe)
     {
-        DWORD flags = (header.macho.cputype >> 24) == 1 ? BINARY_FLAG_64BIT : 0;
+        if ((header.macho.cputype >> 24) == 1) info->flags |= BINARY_FLAG_64BIT;
         switch(header.macho.filetype)
         {
-        case 2: return flags | BINARY_UNIX_EXE;
-        case 8: return flags | BINARY_UNIX_LIB;
+        case 2: info->type = BINARY_UNIX_EXE; break;
+        case 8: info->type = BINARY_UNIX_LIB; break;
         }
-        return BINARY_UNKNOWN;
     }
-
     /* Not ELF, try DOS */
-
-    if (header.mz.e_magic == IMAGE_DOS_SIGNATURE)
+    else if (header.mz.e_magic == IMAGE_DOS_SIGNATURE)
     {
         union
         {
@@ -299,10 +294,9 @@ DWORD MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end )
          * This will tell us if there is more header information
          * to read or not.
          */
-        if (SetFilePointer( hfile, header.mz.e_lfanew, NULL, SEEK_SET ) == -1)
-            return BINARY_DOS;
-        if (!ReadFile( hfile, &ext_header, sizeof(ext_header), &len, NULL ) || len < 4)
-            return BINARY_DOS;
+        info->type = BINARY_DOS;
+        if (SetFilePointer( hfile, header.mz.e_lfanew, NULL, SEEK_SET ) == -1) return;
+        if (!ReadFile( hfile, &ext_header, sizeof(ext_header), &len, NULL ) || len < 4) return;
 
         /* Reading the magic field succeeded so
          * we will try to determine what type it is.
@@ -311,27 +305,25 @@ DWORD MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end )
         {
             if (len >= sizeof(ext_header.nt.FileHeader))
             {
-                DWORD ret = BINARY_PE;
-                if (ext_header.nt.FileHeader.Characteristics & IMAGE_FILE_DLL) ret |= BINARY_FLAG_DLL;
+                info->type = BINARY_PE;
+                if (ext_header.nt.FileHeader.Characteristics & IMAGE_FILE_DLL)
+                    info->flags |= BINARY_FLAG_DLL;
                 if (len < sizeof(ext_header.nt))  /* clear remaining part of header if missing */
                     memset( (char *)&ext_header.nt + len, 0, sizeof(ext_header.nt) - len );
                 switch (ext_header.nt.OptionalHeader.Magic)
                 {
                 case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-                    if (res_start) *res_start = (void *)(ULONG_PTR)ext_header.nt.OptionalHeader.ImageBase;
-                    if (res_end) *res_end = (void *)((ULONG_PTR)ext_header.nt.OptionalHeader.ImageBase +
+                    info->res_start = (void *)(ULONG_PTR)ext_header.nt.OptionalHeader.ImageBase;
+                    info->res_end = (void *)((ULONG_PTR)ext_header.nt.OptionalHeader.ImageBase +
                                                      ext_header.nt.OptionalHeader.SizeOfImage);
-                    return ret;
+                    break;
                 case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-                    if (res_start) *res_start = NULL;
-                    if (res_end) *res_end = NULL;
-                    return ret | BINARY_FLAG_64BIT;
+                    info->flags |= BINARY_FLAG_64BIT;
+                    break;
                 }
             }
-            return BINARY_DOS;
         }
-
-        if (!memcmp( &ext_header.os2.ne_magic, "NE", 2 ))
+        else if (!memcmp( &ext_header.os2.ne_magic, "NE", 2 ))
         {
             /* This is a Windows executable (NE) header.  This can
              * mean either a 16-bit OS/2 or a 16-bit Windows or even a
@@ -340,27 +332,20 @@ DWORD MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end )
              */
             if (len >= sizeof(ext_header.os2))
             {
-                DWORD flags = (ext_header.os2.ne_flags & NE_FFLAGS_LIBMODULE) ? BINARY_FLAG_DLL : 0;
+                if (ext_header.os2.ne_flags & NE_FFLAGS_LIBMODULE) info->flags |= BINARY_FLAG_DLL;
                 switch ( ext_header.os2.ne_exetyp )
                 {
-                case 1:  return flags | BINARY_OS216; /* OS/2 */
-                case 2:  return flags | BINARY_WIN16; /* Windows */
-                case 3:  return flags | BINARY_DOS; /* European MS-DOS 4.x */
-                case 4:  return flags | BINARY_WIN16; /* Windows 386; FIXME: is this 32bit??? */
-                case 5:  return flags | BINARY_DOS; /* BOSS, Borland Operating System Services */
+                case 1:  info->type = BINARY_OS216; break; /* OS/2 */
+                case 2:  info->type = BINARY_WIN16; break; /* Windows */
+                case 3:  info->type = BINARY_DOS; break; /* European MS-DOS 4.x */
+                case 4:  info->type = BINARY_WIN16; break; /* Windows 386; FIXME: is this 32bit??? */
+                case 5:  info->type = BINARY_DOS; break; /* BOSS, Borland Operating System Services */
                 /* other types, e.g. 0 is: "unknown" */
-                default: return flags | MODULE_Decide_OS2_OldWin(hfile, &header.mz, &ext_header.os2);
+                default: info->type = MODULE_Decide_OS2_OldWin(hfile, &header.mz, &ext_header.os2); break;
                 }
             }
-            /* Couldn't read header, so abort. */
-            return BINARY_DOS;
         }
-
-        /* Unknown extended header, but this file is nonetheless DOS-executable. */
-        return BINARY_DOS;
     }
-
-    return BINARY_UNKNOWN;
 }
 
 /***********************************************************************
@@ -400,7 +385,7 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
 {
     BOOL ret = FALSE;
     HANDLE hfile;
-    DWORD binary_type;
+    struct binary_info binary_info;
 
     TRACE("%s\n", debugstr_w(lpApplicationName) );
 
@@ -418,8 +403,8 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
 
     /* Check binary type
      */
-    binary_type = MODULE_GetBinaryType( hfile, NULL, NULL );
-    switch (binary_type & BINARY_TYPE_MASK)
+    MODULE_get_binary_info( hfile, &binary_info );
+    switch (binary_info.type)
     {
     case BINARY_UNKNOWN:
     {
@@ -443,7 +428,7 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
         break;
     }
     case BINARY_PE:
-        *lpBinaryType = (binary_type & BINARY_FLAG_64BIT) ? SCS_64BIT_BINARY : SCS_32BIT_BINARY;
+        *lpBinaryType = (binary_info.flags & BINARY_FLAG_64BIT) ? SCS_64BIT_BINARY : SCS_32BIT_BINARY;
         ret = TRUE;
         break;
     case BINARY_WIN16:
