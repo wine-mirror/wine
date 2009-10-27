@@ -1737,7 +1737,7 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
             {
                 d3d10_effect_variable_destroy(&This->local_variables[i]);
             }
-            HeapFree(GetProcessHeap(), 0, &This->local_variables);
+            HeapFree(GetProcessHeap(), 0, This->local_variables);
         }
 
         if (This->local_buffers)
