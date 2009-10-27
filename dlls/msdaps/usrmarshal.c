@@ -601,6 +601,57 @@ HRESULT __RPC_STUB IAccessor_ReleaseAccessor_Stub(IAccessor* This, HACCESSOR hAc
     return hr;
 }
 
+HRESULT CALLBACK IRowsetInfo_GetProperties_Proxy(IRowsetInfo* This, const ULONG cPropertyIDSets, const DBPROPIDSET rgPropertyIDSets[],
+                                                 ULONG *pcPropertySets, DBPROPSET **prgPropertySets)
+{
+    ULONG i;
+
+    FIXME("(%p)->(%d, %p, %p, %p): stub\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
+
+    for(i = 0; i < cPropertyIDSets; i++)
+    {
+        int j;
+        TRACE("%d: %s %d props\n", i, debugstr_guid(&rgPropertyIDSets[i].guidPropertySet), rgPropertyIDSets[i].cPropertyIDs);
+        for(j = 0; j < rgPropertyIDSets[i].cPropertyIDs; j++)
+            TRACE("\t%d: prop id %d\n", j, rgPropertyIDSets[i].rgPropertyIDs[j]);
+    }
+
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IRowsetInfo_GetProperties_Stub(IRowsetInfo* This, ULONG cPropertyIDSets, const DBPROPIDSET *rgPropertyIDSets,
+                                                  ULONG *pcPropertySets, DBPROPSET **prgPropertySets, IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p)->(%d, %p, %p, %p, %p): stub\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets, ppErrorInfoRem);
+
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IRowsetInfo_GetReferencedRowset_Proxy(IRowsetInfo* This, DBORDINAL iOrdinal, REFIID riid, IUnknown **ppReferencedRowset)
+{
+    FIXME("(%p)->(%d, %s, %p): stub\n", This, iOrdinal, debugstr_guid(riid), ppReferencedRowset);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IRowsetInfo_GetReferencedRowset_Stub(IRowsetInfo* This, DBORDINAL iOrdinal, REFIID riid, IUnknown **ppReferencedRowset,
+                                                        IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p)->(%d, %s, %p, %p): stub\n", This, iOrdinal, debugstr_guid(riid), ppReferencedRowset, ppErrorInfoRem);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IRowsetInfo_GetSpecification_Proxy(IRowsetInfo* This, REFIID riid, IUnknown **ppSpecification)
+{
+    FIXME("(%p)->(%s, %p): stub\n", This, debugstr_guid(riid), ppSpecification);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IRowsetInfo_GetSpecification_Stub(IRowsetInfo* This, REFIID riid, IUnknown **ppSpecification, IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p)->(%s, %p, %p): stub\n", This, debugstr_guid(riid), ppSpecification, ppErrorInfoRem);
+    return E_NOTIMPL;
+}
+
 HRESULT CALLBACK ICommand_Cancel_Proxy(ICommand* This)
 {
     FIXME("(%p): stub\n", This);

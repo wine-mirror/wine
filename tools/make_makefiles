@@ -125,6 +125,7 @@ my %private_idl_headers = (
     "devenum.idl" => 1,
     "dyngraph.idl" => 1,
     "opnrst.idl" => 1,
+    "rstinf.idl" => 1,
     "sesprp.idl" => 1,
     "vmrender.idl" => 1,
     "wine/wined3d.idl" => 1,
