@@ -1737,7 +1737,6 @@ void X11DRV_InitKeyboard( Display *display )
     e2.display = display;
     e2.state = 0;
 
-    OEMvkey = VK_OEM_8; /* next is available.  */
     memset(keyc2vkey, 0, sizeof(keyc2vkey));
     for (keyc = min_keycode; keyc <= max_keycode; keyc++)
     {
@@ -1854,39 +1853,54 @@ void X11DRV_InitKeyboard( Display *display )
             }
         }
 
-        if (!vkey)
+        if (vkey)
         {
-            /* Others keys: let's assign OEM virtual key codes in the allowed range,
-             * that is ([0xba,0xc0], [0xdb,0xe4], 0xe6 (given up) et [0xe9,0xf5]) */
-            do
+            TRACE("keycode %04x => vkey %04x\n", e2.keycode, vkey);
+            keyc2vkey[e2.keycode] = vkey;
+        }
+    } /* for */
+
+    /* Others keys: let's assign OEM virtual key codes in the allowed range,
+     * that is ([0xba,0xc0], [0xdb,0xe4], 0xe6 (given up) et [0xe9,0xf5]) */
+    OEMvkey = VK_OEM_8; /* next is available.  */
+    for (keyc = min_keycode; keyc <= max_keycode; keyc++)
+    {
+        if (keyc2vkey[keyc] & 0xff)
+            continue;
+
+        e2.keycode = (KeyCode)keyc;
+        keysym = XLookupKeysym(&e2, 0);
+        if (!keysym)
+           continue;
+
+        do
+        {
+            switch (++OEMvkey)
             {
-                switch (++OEMvkey)
-                {
-                case 0xc1 : OEMvkey=0xdb; break;
-                case 0xe5 : OEMvkey=0xe9; break;
-                case 0xf6 : OEMvkey=0xf5; WARN("No more OEM vkey available!\n");
-                }
-            } while (OEMvkey < 0xf5 && vkey_used[OEMvkey]);
-
-            vkey = VKEY_IF_NOT_USED(OEMvkey);
-
-            if (TRACE_ON(keyboard))
-            {
-                TRACE("OEM specific virtual key %X assigned to keycode %X:\n",
-                                 OEMvkey, e2.keycode);
-                TRACE("(");
-                for (i = 0; i < keysyms_per_keycode; i += 1)
-                {
-                    const char *ksname;
-
-                    keysym = XLookupKeysym(&e2, i);
-                    ksname = XKeysymToString(keysym);
-                    if (!ksname)
-                        ksname = "NoSymbol";
-                    TRACE( "%lX (%s) ", keysym, ksname);
-                }
-                TRACE(")\n");
+            case 0xc1 : OEMvkey=0xdb; break;
+            case 0xe5 : OEMvkey=0xe9; break;
+            case 0xf6 : OEMvkey=0xf5; WARN("No more OEM vkey available!\n");
             }
+        } while (OEMvkey < 0xf5 && vkey_used[OEMvkey]);
+
+        vkey = VKEY_IF_NOT_USED(OEMvkey);
+
+        if (TRACE_ON(keyboard))
+        {
+            TRACE("OEM specific virtual key %X assigned to keycode %X:\n",
+                             OEMvkey, e2.keycode);
+            TRACE("(");
+            for (i = 0; i < keysyms_per_keycode; i += 1)
+            {
+                const char *ksname;
+
+                keysym = XLookupKeysym(&e2, i);
+                ksname = XKeysymToString(keysym);
+                if (!ksname)
+                    ksname = "NoSymbol";
+                TRACE( "%lX (%s) ", keysym, ksname);
+            }
+            TRACE(")\n");
         }
 
         if (vkey)
