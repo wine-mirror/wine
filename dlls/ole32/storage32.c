@@ -204,6 +204,14 @@ static ULONG findElement(
     const OLECHAR *name,
     StgProperty *data);
 
+static HRESULT findTreeParent(
+    StorageImpl *storage,
+    ULONG storageEntry,
+    const OLECHAR *childName,
+    StgProperty *parentData,
+    ULONG *parentEntry,
+    ULONG *relation);
+
 /***********************************************************************
  * Declaration of miscellaneous functions...
  */
@@ -249,8 +257,6 @@ static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(StorageImpl* This, ULONG fir
 static void IEnumSTATSTGImpl_Destroy(IEnumSTATSTGImpl* This);
 static void IEnumSTATSTGImpl_PushSearchNode(IEnumSTATSTGImpl* This, ULONG nodeToPush);
 static ULONG IEnumSTATSTGImpl_PopSearchNode(IEnumSTATSTGImpl* This, BOOL remove);
-static INT IEnumSTATSTGImpl_FindParentProperty(IEnumSTATSTGImpl *This, ULONG childProperty,
-                                               StgProperty *currentProperty, ULONG *propertyId);
 
 /************************************************************************
 ** Block Functions
@@ -1444,6 +1450,67 @@ static ULONG findElement(StorageImpl *storage, ULONG storageEntry,
   return currentEntry;
 }
 
+/****************************************************************************
+ *
+ * Internal Method
+ *
+ * Find and read the binary tree parent of the element with the given name.
+ *
+ * If there is no such element, find a place where it could be inserted and
+ * return STG_E_FILENOTFOUND.
+ */
+static HRESULT findTreeParent(StorageImpl *storage, ULONG storageEntry,
+    const OLECHAR *childName, StgProperty *parentData, ULONG *parentEntry,
+    ULONG *relation)
+{
+  ULONG childEntry;
+  StgProperty childData;
+
+  /* Read the storage entry to find the root of the tree. */
+  StorageImpl_ReadProperty(storage, storageEntry, parentData);
+
+  *parentEntry = storageEntry;
+  *relation = PROPERTY_RELATION_DIR;
+
+  childEntry = parentData->dirProperty;
+
+  while (childEntry != PROPERTY_NULL)
+  {
+    LONG cmp;
+
+    StorageImpl_ReadProperty(storage, childEntry, &childData);
+
+    cmp = propertyNameCmp(childName, childData.name);
+
+    if (cmp == 0)
+      /* found it */
+      break;
+
+    else if (cmp < 0)
+    {
+      *parentData = childData;
+      *parentEntry = childEntry;
+      *relation = PROPERTY_RELATION_PREVIOUS;
+
+      childEntry = parentData->leftChild;
+    }
+
+    else if (cmp > 0)
+    {
+      *parentData = childData;
+      *parentEntry = childEntry;
+      *relation = PROPERTY_RELATION_NEXT;
+
+      childEntry = parentData->rightChild;
+    }
+  }
+
+  if (childEntry == PROPERTY_NULL)
+    return STG_E_FILENOTFOUND;
+  else
+    return S_OK;
+}
+
 
 /*************************************************************************
  * CopyTo (IStorage)
@@ -1702,7 +1769,6 @@ static HRESULT WINAPI StorageImpl_DestroyElement(
   StorageImpl* const This=(StorageImpl*)iface;
 
   HRESULT           hr = S_OK;
-  BOOL            res;
   StgProperty       propertyToDelete;
   StgProperty       parentProperty;
   ULONG             foundPropertyIndexToDelete;
@@ -1730,53 +1796,13 @@ static HRESULT WINAPI StorageImpl_DestroyElement(
   }
 
   /*
-   * Find the parent property of the property to delete (the one that
-   * link to it).  If This->dirProperty == foundPropertyIndexToDelete,
-   * the parent is This. Otherwise, the parent is one of its sibling...
+   * Find the property that links to the one we want to delete.
    */
+  hr = findTreeParent(This->base.ancestorStorage, This->base.rootPropertySetIndex,
+      pwcsName, &parentProperty, &parentPropertyId, &typeOfRelation);
 
-  /*
-   * First, read This's StgProperty..
-   */
-  res = StorageImpl_ReadProperty(
-          This->base.ancestorStorage,
-          This->base.rootPropertySetIndex,
-          &parentProperty);
-
-  assert(res);
-
-  /*
-   * Second, check to see if by any chance the actual storage (This) is not
-   * the parent of the property to delete... We never know...
-   */
-  if ( parentProperty.dirProperty == foundPropertyIndexToDelete )
-  {
-    /*
-     * Set data as it would have been done in the else part...
-     */
-    typeOfRelation   = PROPERTY_RELATION_DIR;
-    parentPropertyId = This->base.rootPropertySetIndex;
-  }
-  else
-  {
-    /*
-     * Create a property enumeration to search the parent properties, and
-     * delete it once done.
-     */
-    IEnumSTATSTGImpl* propertyEnumeration2;
-
-    propertyEnumeration2 = IEnumSTATSTGImpl_Construct(
-      This->base.ancestorStorage,
-      This->base.rootPropertySetIndex);
-
-    typeOfRelation = IEnumSTATSTGImpl_FindParentProperty(
-      propertyEnumeration2,
-      foundPropertyIndexToDelete,
-      &parentProperty,
-      &parentPropertyId);
-
-    IEnumSTATSTGImpl_Destroy(propertyEnumeration2);
-  }
+  if (hr != S_OK)
+    return hr;
 
   if ( propertyToDelete.propertyType == PROPTYPE_STORAGE )
   {
@@ -3904,71 +3930,6 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Clone(
   IEnumSTATSTGImpl_AddRef(*ppenum);
 
   return S_OK;
-}
-
-static INT IEnumSTATSTGImpl_FindParentProperty(
-  IEnumSTATSTGImpl *This,
-  ULONG             childProperty,
-  StgProperty      *currentProperty,
-  ULONG            *thisNodeId)
-{
-  ULONG currentSearchNode;
-  ULONG foundNode;
-
-  /*
-   * To avoid the special case, get another pointer to a ULONG value if
-   * the caller didn't supply one.
-   */
-  if (thisNodeId==0)
-    thisNodeId = &foundNode;
-
-  /*
-   * Start with the node at the top of the stack.
-   */
-  currentSearchNode = IEnumSTATSTGImpl_PopSearchNode(This, FALSE);
-
-
-  while (currentSearchNode!=PROPERTY_NULL)
-  {
-    /*
-     * Store the current node in the returned parameters
-     */
-    *thisNodeId = currentSearchNode;
-
-    /*
-     * Remove the top node from the stack
-     */
-    IEnumSTATSTGImpl_PopSearchNode(This, TRUE);
-
-    /*
-     * Read the property from the storage.
-     */
-    StorageImpl_ReadProperty(
-      This->parentStorage,
-      currentSearchNode,
-      currentProperty);
-
-    if (currentProperty->leftChild == childProperty)
-      return PROPERTY_RELATION_PREVIOUS;
-
-    else if (currentProperty->rightChild == childProperty)
-      return PROPERTY_RELATION_NEXT;
-
-    else if (currentProperty->dirProperty == childProperty)
-      return PROPERTY_RELATION_DIR;
-
-    /*
-     * Push the next search node in the search stack.
-     */
-    IEnumSTATSTGImpl_PushSearchNode(This, currentProperty->rightChild);
-
-    /*
-     * continue the iteration.
-     */
-    currentSearchNode = IEnumSTATSTGImpl_PopSearchNode(This, FALSE);
-  }
-
-  return PROPERTY_NULL;
 }
 
 static void IEnumSTATSTGImpl_PushSearchNode(
