@@ -169,12 +169,6 @@ static HRESULT deleteStreamProperty(
   ULONG         foundPropertyIndexToDelete,
   StgProperty   propertyToDelete);
 
-static HRESULT findPlaceholder(
-  StorageImpl *storage,
-  ULONG         propertyIndexToStore,
-  ULONG         storagePropertyIndex,
-  INT         typeOfRelation);
-
 static HRESULT adjustPropertyChain(
   StorageImpl *This,
   StgProperty   propertyToDelete,
@@ -2025,92 +2019,22 @@ static HRESULT deleteStreamProperty(
   return S_OK;
 }
 
-/*********************************************************************
- *
- * Internal Method
- *
- * Finds a placeholder for the StgProperty within the Storage
- *
- */
-static HRESULT findPlaceholder(
-  StorageImpl *storage,
-  ULONG         propertyIndexToStore,
-  ULONG         storePropertyIndex,
-  INT         typeOfRelation)
+static void setPropertyLink(StgProperty *property, ULONG relation, ULONG new_target)
 {
-  StgProperty storeProperty;
-  BOOL      res = TRUE;
-
-  /*
-   * Read the storage property
-   */
-  res = StorageImpl_ReadProperty(
-          storage->base.ancestorStorage,
-          storePropertyIndex,
-          &storeProperty);
-
-  if(! res)
+  switch (relation)
   {
-    return E_FAIL;
+    case PROPERTY_RELATION_PREVIOUS:
+      property->leftChild = new_target;
+      break;
+    case PROPERTY_RELATION_NEXT:
+      property->rightChild = new_target;
+      break;
+    case PROPERTY_RELATION_DIR:
+      property->dirProperty = new_target;
+      break;
+    default:
+      assert(0);
   }
-
-  if (typeOfRelation == PROPERTY_RELATION_PREVIOUS)
-  {
-    if (storeProperty.leftChild != PROPERTY_NULL)
-    {
-      return findPlaceholder(
-               storage,
-               propertyIndexToStore,
-               storeProperty.leftChild,
-               typeOfRelation);
-    }
-    else
-    {
-      storeProperty.leftChild = propertyIndexToStore;
-    }
-  }
-  else if (typeOfRelation == PROPERTY_RELATION_NEXT)
-  {
-    if (storeProperty.rightChild != PROPERTY_NULL)
-    {
-      return findPlaceholder(
-               storage,
-               propertyIndexToStore,
-               storeProperty.rightChild,
-               typeOfRelation);
-    }
-    else
-    {
-      storeProperty.rightChild = propertyIndexToStore;
-    }
-  }
-  else if (typeOfRelation == PROPERTY_RELATION_DIR)
-  {
-    if (storeProperty.dirProperty != PROPERTY_NULL)
-    {
-      return findPlaceholder(
-               storage,
-               propertyIndexToStore,
-               storeProperty.dirProperty,
-               typeOfRelation);
-    }
-    else
-    {
-      storeProperty.dirProperty = propertyIndexToStore;
-    }
-  }
-
-  res = StorageImpl_WriteProperty(
-         storage->base.ancestorStorage,
-         storePropertyIndex,
-         &storeProperty);
-
-  if(!res)
-  {
-    return E_FAIL;
-  }
-
-  return S_OK;
 }
 
 /*************************************************************************
@@ -2127,11 +2051,6 @@ static HRESULT adjustPropertyChain(
   ULONG         parentPropertyId,
   INT         typeOfRelation)
 {
-  ULONG   newLinkProperty        = PROPERTY_NULL;
-  BOOL  needToFindAPlaceholder = FALSE;
-  ULONG   storeNode              = PROPERTY_NULL;
-  ULONG   toStoreNode            = PROPERTY_NULL;
-  INT   relationType           = 0;
   HRESULT hr                     = S_OK;
   BOOL  res                    = TRUE;
 
@@ -2140,64 +2059,69 @@ static HRESULT adjustPropertyChain(
     /*
      * Replace the deleted entry with its left child
      */
-    newLinkProperty = propertyToDelete.leftChild;
+    setPropertyLink(&parentProperty, typeOfRelation, propertyToDelete.leftChild);
+
+    res = StorageImpl_WriteProperty(
+            This->base.ancestorStorage,
+            parentPropertyId,
+            &parentProperty);
+    if(!res)
+    {
+      return E_FAIL;
+    }
 
     if (propertyToDelete.rightChild != PROPERTY_NULL)
     {
       /*
-       * We also need to find a place for the other link, setup variables
-       * to do this at the end...
+       * We need to reinsert the right child somewhere. We already know it and
+       * its children are greater than everything in the left tree, so we
+       * insert it at the rightmost point in the left tree.
        */
-      needToFindAPlaceholder = TRUE;
-      storeNode              = propertyToDelete.leftChild;
-      toStoreNode            = propertyToDelete.rightChild;
-      relationType           = PROPERTY_RELATION_NEXT;
+      ULONG newRightChildParent = propertyToDelete.leftChild;
+      StgProperty newRightChildParentProperty;
+
+      do
+      {
+        res = StorageImpl_ReadProperty(
+                This->base.ancestorStorage,
+                newRightChildParent,
+                &newRightChildParentProperty);
+        if (!res)
+        {
+          return E_FAIL;
+        }
+
+        if (newRightChildParentProperty.rightChild != PROPERTY_NULL)
+          newRightChildParent = newRightChildParentProperty.rightChild;
+      } while (newRightChildParentProperty.rightChild != PROPERTY_NULL);
+
+      newRightChildParentProperty.rightChild = propertyToDelete.rightChild;
+
+      res = StorageImpl_WriteProperty(
+              This->base.ancestorStorage,
+              newRightChildParent,
+              &newRightChildParentProperty);
+      if (!res)
+      {
+        return E_FAIL;
+      }
     }
   }
-  else if (propertyToDelete.rightChild != PROPERTY_NULL)
+  else
   {
     /*
      * Replace the deleted entry with its right child
      */
-    newLinkProperty = propertyToDelete.rightChild;
-  }
+    setPropertyLink(&parentProperty, typeOfRelation, propertyToDelete.rightChild);
 
-  if (typeOfRelation == PROPERTY_RELATION_PREVIOUS)
-  {
-    parentProperty.leftChild = newLinkProperty;
-  }
-  else if (typeOfRelation == PROPERTY_RELATION_NEXT)
-  {
-    parentProperty.rightChild = newLinkProperty;
-  }
-  else /* (typeOfRelation == PROPERTY_RELATION_DIR) */
-  {
-    parentProperty.dirProperty = newLinkProperty;
-  }
-
-  /*
-   * Write back the parent property
-   */
-  res = StorageImpl_WriteProperty(
-          This->base.ancestorStorage,
-          parentPropertyId,
-          &parentProperty);
-  if(! res)
-  {
-    return E_FAIL;
-  }
-
-  /*
-   * If a placeholder is required for the other link, then, find one and
-   * get out of here...
-   */
-  if (needToFindAPlaceholder)
-  {
-    hr = findPlaceholder(
-           This,
-           toStoreNode,
-           storeNode,
-           relationType);
+    res = StorageImpl_WriteProperty(
+            This->base.ancestorStorage,
+            parentPropertyId,
+            &parentProperty);
+    if(!res)
+    {
+      return E_FAIL;
+    }
   }
 
   return hr;
