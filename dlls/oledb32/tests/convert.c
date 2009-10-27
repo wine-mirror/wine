@@ -1111,6 +1111,34 @@ static void test_converttobyrefwstr(void)
     IDataConvert_Release(convert);
 }
 
+static void test_converttofiletime(void)
+{
+    IDataConvert *convert;
+    HRESULT hr;
+    FILETIME dst;
+    BYTE src[20];
+    DBSTATUS dst_status;
+    DBLENGTH dst_len;
+
+    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
+    if(FAILED(hr))
+    {
+        win_skip("Unable to load oledb conversion library\n");
+        return;
+    }
+
+    memset(&dst, 0xcc, sizeof(dst));
+    ((FILETIME *)src)->dwLowDateTime = 0x12345678;
+    ((FILETIME *)src)->dwHighDateTime = 0x9abcdef0;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_FILETIME, DBTYPE_FILETIME, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %d\n", dst_len);
+    ok(dst.dwLowDateTime == 0x12345678, "got %08x\n", dst.dwLowDateTime);
+    ok(dst.dwHighDateTime == 0x9abcdef0, "got %08x\n", dst.dwHighDateTime);
+
+    IDataConvert_Release(convert);
+}
 
 START_TEST(convert)
 {
@@ -1122,5 +1150,6 @@ START_TEST(convert)
     test_converttobstr();
     test_converttowstr();
     test_converttobyrefwstr();
+    test_converttofiletime();
     OleUninitialize();
 }
