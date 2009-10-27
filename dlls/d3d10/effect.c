@@ -2629,9 +2629,14 @@ static struct ID3D10EffectShaderVariable * STDMETHODCALLTYPE d3d10_effect_variab
 
 static struct ID3D10EffectBlendVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsBlend(ID3D10EffectVariable *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
 
-    return NULL;
+    TRACE("iface %p\n", iface);
+
+    if (This->vtbl == (ID3D10EffectVariableVtbl *)&d3d10_effect_blend_variable_vtbl)
+        return (ID3D10EffectBlendVariable *)This;
+
+    return (ID3D10EffectBlendVariable *)&null_blend_variable;
 }
 
 static struct ID3D10EffectDepthStencilVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsDepthStencil(
