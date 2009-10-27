@@ -2557,9 +2557,14 @@ static struct ID3D10EffectMatrixVariable * STDMETHODCALLTYPE d3d10_effect_variab
 static struct ID3D10EffectStringVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsString(
         ID3D10EffectVariable *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
 
-    return NULL;
+    TRACE("iface %p\n", iface);
+
+    if (This->vtbl == (ID3D10EffectVariableVtbl *)&d3d10_effect_string_variable_vtbl)
+        return (ID3D10EffectStringVariable *)This;
+
+    return (ID3D10EffectStringVariable *)&null_string_variable;
 }
 
 static struct ID3D10EffectShaderResourceVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsShaderResource(
