@@ -993,7 +993,22 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
     }
     driver_info->device = device;
 
-    driver_info->name = "Display";
+    switch (vendor)
+    {
+        case VENDOR_ATI:
+            driver_info->name = "ati2dvag.dll";
+            break;
+
+        case VENDOR_NVIDIA:
+            driver_info->name = "nv4_disp.dll";
+            break;
+
+        default:
+            FIXME_(d3d_caps)("Unhandled vendor %04x.\n", vendor);
+            driver_info->name = "Display";
+            break;
+    }
+
     driver_info->description = "Direct3D HAL";
     driver_info->version_high = MAKEDWORD_VERSION(7, 1);
     driver_info->version_low = MAKEDWORD_VERSION(8, 6); /* Nvidia RIVA TNT, arbitrary */
