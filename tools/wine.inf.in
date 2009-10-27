@@ -400,7 +400,7 @@ HKLM,%CurrentVersion%,"RegisteredOwner",2,""
 HKLM,%CurrentVersion%\Controls Folder\PowerCfg,"DiskSpinDownMax",,"3600"
 HKLM,%CurrentVersion%\Controls Folder\PowerCfg,"DiskSpinDownMin",,"3"
 HKLM,%CurrentVersion%\Controls Folder\PowerCfg,"LastID",,"5"
-HKLM,%CurrentVersion%\RunServices,"winemenubuilder",2,"winemenubuilder -a -r"
+HKLM,%CurrentVersion%\RunServices,"winemenubuilder",2,"%11%\winemenubuilder.exe -a -r"
 HKLM,%CurrentVersion%\Setup,"BootDir",,"%30%"
 HKLM,%CurrentVersion%\Setup,"SharedDir",,"%25%"
 HKLM,%CurrentVersion%\Uninstall,,,""
@@ -2402,7 +2402,6 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,hhctrl.ocx,1
 11,,hlink.dll,1
 11,,hnetcfg.dll,1
-11,,iexplore.exe,1
 11,,inetcomm.dll,1
 11,,infosoft.dll,1
 11,,inseng.dll,1
@@ -2434,6 +2433,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,wintrust.dll,1
 11,,wmiutils.dll,1
 11,,wuapi.dll,1
+16422,Internet Explorer,iexplore.exe,1
 
 [FakeDllsSection]
 ; create some directories first
