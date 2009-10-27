@@ -921,7 +921,8 @@ static BOOL alloc_handler_vector(event_target_t *event_target, eventid_t eid, in
     return TRUE;
 }
 
-static HRESULT set_event_handler_disp(event_target_t **event_target_ptr, HTMLWindow *window, eventid_t eid, IDispatch *disp)
+static HRESULT set_event_handler_disp(event_target_t **event_target_ptr, HTMLDocumentNode *doc,
+        eventid_t eid, IDispatch *disp)
 {
     event_target_t *event_target;
 
@@ -940,23 +941,23 @@ static HRESULT set_event_handler_disp(event_target_t **event_target_ptr, HTMLWin
         return S_OK;
     IDispatch_AddRef(disp);
 
-    if(window->nswindow && (event_info[eid].flags & EVENT_DEFAULTLISTENER)) {
-        if(!window->event_vector) {
-            window->event_vector = heap_alloc_zero(EVENTID_LAST*sizeof(BOOL));
-            if(!window->event_vector)
+    if(doc->nsdoc && (event_info[eid].flags & EVENT_DEFAULTLISTENER)) {
+        if(!doc->event_vector) {
+            doc->event_vector = heap_alloc_zero(EVENTID_LAST*sizeof(BOOL));
+            if(!doc->event_vector)
                 return E_OUTOFMEMORY;
         }
 
-        if(!window->event_vector[eid]) {
-            window->event_vector[eid] = TRUE;
-            add_nsevent_listener(window, event_info[eid].name);
+        if(!doc->event_vector[eid]) {
+            doc->event_vector[eid] = TRUE;
+            add_nsevent_listener(doc, event_info[eid].name);
         }
     }
 
     return S_OK;
 }
 
-HRESULT set_event_handler(event_target_t **event_target, HTMLDocument *doc, eventid_t eid, VARIANT *var)
+HRESULT set_event_handler(event_target_t **event_target, HTMLDocumentNode *doc, eventid_t eid, VARIANT *var)
 {
     switch(V_VT(var)) {
     case VT_NULL:
@@ -967,7 +968,7 @@ HRESULT set_event_handler(event_target_t **event_target, HTMLDocument *doc, even
         break;
 
     case VT_DISPATCH:
-        return set_event_handler_disp(event_target, doc->window, eid, V_DISPATCH(var));
+        return set_event_handler_disp(event_target, doc, eid, V_DISPATCH(var));
 
     default:
         FIXME("not supported vt=%d\n", V_VT(var));
@@ -1048,7 +1049,7 @@ void check_event_attr(HTMLDocumentNode *doc, nsIDOMElement *nselem)
             disp = script_parse_event(doc->basedoc.window, attr_value);
             if(disp) {
                 node = get_node(doc, (nsIDOMNode*)nselem, TRUE);
-                set_event_handler_disp(get_node_event_target(node), node->doc->basedoc.window, i, disp);
+                set_event_handler_disp(get_node_event_target(node), node->doc, i, disp);
                 IDispatch_Release(disp);
             }
         }

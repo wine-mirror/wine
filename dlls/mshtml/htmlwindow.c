@@ -189,7 +189,6 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
         windowref_release(This->window_ref);
 
         heap_free(This->global_props);
-        heap_free(This->event_vector);
         release_script_hosts(This);
         list_remove(&This->entry);
         release_dispex(&This->dispex);

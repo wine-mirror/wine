@@ -1777,6 +1777,7 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
         nsIDOMHTMLDocument_Release(This->nsdoc);
     }
 
+    heap_free(This->event_vector);
     destroy_htmldoc(&This->basedoc);
 }
 

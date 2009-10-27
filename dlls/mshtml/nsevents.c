@@ -282,18 +282,18 @@ static void init_listener(nsEventListener *This, nsDocumentEventListener *listen
     This->This = listener;
 }
 
-void add_nsevent_listener(HTMLWindow *window, LPCWSTR type)
+void add_nsevent_listener(HTMLDocumentNode *doc, LPCWSTR type)
 {
     nsIDOMEventTarget *target;
     nsresult nsres;
 
-    nsres = nsIDOMWindow_QueryInterface(window->nswindow, &IID_nsIDOMEventTarget, (void**)&target);
+    nsres = nsIDOMWindow_QueryInterface(doc->basedoc.window->nswindow, &IID_nsIDOMEventTarget, (void**)&target);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIDOMEventTarget interface: %08x\n", nsres);
         return;
     }
 
-    init_event(target, type, NSEVENTLIST(&window->doc->nsevent_listener->htmlevent_listener), TRUE);
+    init_event(target, type, NSEVENTLIST(&doc->nsevent_listener->htmlevent_listener), TRUE);
     nsIDOMEventTarget_Release(target);
 }
 
