@@ -151,6 +151,7 @@ int WINAPI wWinMain(HINSTANCE hinstance,
     BOOL rc;
     static const WCHAR winefile[] = {'\\','w','i','n','e','f','i','l','e','.','e','x','e',0};
     static const WCHAR space[] = {' ',0};
+    WCHAR app[MAX_PATH];
     LPWSTR winefile_commandline = NULL;
     DWORD len = 0;
 
@@ -164,8 +165,9 @@ int WINAPI wWinMain(HINSTANCE hinstance,
     else if (parameters.root[0]) len += lstrlenW(parameters.root) + 3;
 
     winefile_commandline = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
-    GetSystemDirectoryW( winefile_commandline, len );
-    lstrcatW(winefile_commandline,winefile);
+    GetSystemDirectoryW( app, MAX_PATH - sizeof(winefile)/sizeof(WCHAR) );
+    strcatW( app, winefile );
+    strcpyW( winefile_commandline, app );
 
     if (parameters.selection[0])
     {
@@ -183,7 +185,7 @@ int WINAPI wWinMain(HINSTANCE hinstance,
         }
     }
 
-    rc = CreateProcessW(NULL, winefile_commandline, NULL, NULL, FALSE, 0, NULL,
+    rc = CreateProcessW(app, winefile_commandline, NULL, NULL, FALSE, 0, NULL,
                         parameters.root[0] ? parameters.root:NULL, &si, &info);
 
     HeapFree(GetProcessHeap(),0,winefile_commandline);
