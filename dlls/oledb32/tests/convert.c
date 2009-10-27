@@ -150,22 +150,22 @@ struct can_convert
     DWORD can_convert_to;
 } simple_convert[] =
 {
-    {DBTYPE_EMPTY,       0x23bfd9ff},
-    {DBTYPE_NULL,        0x00001002},
+    {DBTYPE_EMPTY,       0x63bfd9ff},
+    {DBTYPE_NULL,        0x40001002},
     {DBTYPE_I2,          0x3b9fd9ff},
     {DBTYPE_I4,          0x3bdfd9ff},
 
     {DBTYPE_R4,          0x3b9fd9ff},
     {DBTYPE_R8,          0x3b9fd9ff},
     {DBTYPE_CY,          0x039fd97f},
-    {DBTYPE_DATE,        0x399f99bf},
+    {DBTYPE_DATE,        0x799f99bf},
 
-    {DBTYPE_BSTR,        0x3bffd9ff},
-    {DBTYPE_IDISPATCH,   0x3bffffff},
+    {DBTYPE_BSTR,        0x7bffd9ff},
+    {DBTYPE_IDISPATCH,   0x7bffffff},
     {DBTYPE_ERROR,       0x01001500},
     {DBTYPE_BOOL,        0x039fd9ff},
 
-    {DBTYPE_VARIANT,     0x3bffffff},
+    {DBTYPE_VARIANT,     0x7bffffff},
     {DBTYPE_IUNKNOWN,    0x00003203},
     {DBTYPE_DECIMAL,     0x3b9fd97f},
     {DBTYPE_I1,          0x3b9fd9ff},
@@ -173,20 +173,21 @@ struct can_convert
     {DBTYPE_UI1,         0x3b9fd9ff},
     {DBTYPE_UI2,         0x3b9fd9ff},
     {DBTYPE_UI4,         0x3bdfd9ff},
-    {DBTYPE_I8,          0x03dfd97f},
+    {DBTYPE_I8,          0x43dfd97f},
 
-    {DBTYPE_UI8,         0x03dfd97f},
+    {DBTYPE_UI8,         0x43dfd97f},
     {DBTYPE_GUID,        0x01e01103},
     {DBTYPE_BYTES,       0x01fc110b},
-    {DBTYPE_STR,         0x3bffd9ff},
+    {DBTYPE_STR,         0x7bffd9ff},
 
-    {DBTYPE_WSTR,        0x3bffd9ff},
+    {DBTYPE_WSTR,        0x7bffd9ff},
     {DBTYPE_NUMERIC,     0x039fd97f},
     {DBTYPE_UDT,         0x00000000},
-    {DBTYPE_DBDATE,      0x39801183},
+    {DBTYPE_DBDATE,      0x79801183},
 
-    {DBTYPE_DBTIME,      0x39801183},
-    {DBTYPE_DBTIMESTAMP, 0x39801183}
+    {DBTYPE_DBTIME,      0x79801183},
+    {DBTYPE_DBTIMESTAMP, 0x79801183},
+    {DBTYPE_FILETIME,    0x79981183}
 };
 
 

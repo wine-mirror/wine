@@ -452,6 +452,7 @@ static HRESULT WINAPI convert_CanConvert(IDataConvert* iface,
         {
         case DBTYPE_DATE:
         case DBTYPE_GUID:
+        case DBTYPE_FILETIME:
             return S_OK;
         default:
             if(dst_base_type == DBTYPE_DBTIMESTAMP) return S_OK;
@@ -462,7 +463,8 @@ static HRESULT WINAPI convert_CanConvert(IDataConvert* iface,
         switch(dst_base_type)
         {
         case DBTYPE_NULL:
-        case DBTYPE_VARIANT: return S_OK;
+        case DBTYPE_VARIANT:
+        case DBTYPE_FILETIME: return S_OK;
         default: return S_FALSE;
         }
 
@@ -486,8 +488,12 @@ static HRESULT WINAPI convert_CanConvert(IDataConvert* iface,
 
     case DBTYPE_I8:
         if(common_class(dst_class)) return S_OK;
-        if(dst_base_type == DBTYPE_BYTES) return S_OK;
-        return S_FALSE;
+        switch(dst_base_type)
+        {
+        case DBTYPE_BYTES:
+        case DBTYPE_FILETIME: return S_OK;
+        default: return S_FALSE;
+        }
 
     case DBTYPE_DATE:
         switch(dst_class)
@@ -502,6 +508,7 @@ static HRESULT WINAPI convert_CanConvert(IDataConvert* iface,
         case DBTYPE_I8:
         case DBTYPE_DATE:
         case DBTYPE_DBDATE:
+        case DBTYPE_FILETIME:
             return S_OK;
         default: return S_FALSE;
         }
@@ -524,6 +531,7 @@ static HRESULT WINAPI convert_CanConvert(IDataConvert* iface,
         case DBTYPE_GUID:
         case DBTYPE_BYTES:
         case DBTYPE_DBDATE:
+        case DBTYPE_FILETIME:
             return S_OK;
         default: return S_FALSE;
         }
@@ -567,6 +575,9 @@ static HRESULT WINAPI convert_CanConvert(IDataConvert* iface,
         default: return S_FALSE;
         }
 
+    case DBTYPE_FILETIME:
+        if(dst_class == DBTYPE_I8) return S_OK;
+        /* fall through */
     case DBTYPE_DBDATE:
         switch(dst_class)
         {
@@ -576,6 +587,7 @@ static HRESULT WINAPI convert_CanConvert(IDataConvert* iface,
         case DBTYPE_BSTR:
         case DBTYPE_VARIANT:
         case DBTYPE_DBDATE:
+        case DBTYPE_FILETIME:
             return S_OK;
         default: return S_FALSE;
         }
