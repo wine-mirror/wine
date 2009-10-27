@@ -2135,107 +2135,43 @@ static HRESULT adjustPropertyChain(
   HRESULT hr                     = S_OK;
   BOOL  res                    = TRUE;
 
+  if (propertyToDelete.leftChild != PROPERTY_NULL)
+  {
+    /*
+     * Replace the deleted entry with its left child
+     */
+    newLinkProperty = propertyToDelete.leftChild;
+
+    if (propertyToDelete.rightChild != PROPERTY_NULL)
+    {
+      /*
+       * We also need to find a place for the other link, setup variables
+       * to do this at the end...
+       */
+      needToFindAPlaceholder = TRUE;
+      storeNode              = propertyToDelete.leftChild;
+      toStoreNode            = propertyToDelete.rightChild;
+      relationType           = PROPERTY_RELATION_NEXT;
+    }
+  }
+  else if (propertyToDelete.rightChild != PROPERTY_NULL)
+  {
+    /*
+     * Replace the deleted entry with its right child
+     */
+    newLinkProperty = propertyToDelete.rightChild;
+  }
+
   if (typeOfRelation == PROPERTY_RELATION_PREVIOUS)
   {
-    if (propertyToDelete.leftChild != PROPERTY_NULL)
-    {
-      /*
-       * Set the parent previous to the property to delete previous
-       */
-      newLinkProperty = propertyToDelete.leftChild;
-
-      if (propertyToDelete.rightChild != PROPERTY_NULL)
-      {
-        /*
-         * We also need to find a storage for the other link, setup variables
-         * to do this at the end...
-         */
-        needToFindAPlaceholder = TRUE;
-        storeNode              = propertyToDelete.leftChild;
-        toStoreNode            = propertyToDelete.rightChild;
-        relationType           = PROPERTY_RELATION_NEXT;
-      }
-    }
-    else if (propertyToDelete.rightChild != PROPERTY_NULL)
-    {
-      /*
-       * Set the parent previous to the property to delete next
-       */
-      newLinkProperty = propertyToDelete.rightChild;
-    }
-
-    /*
-     * Link it for real...
-     */
     parentProperty.leftChild = newLinkProperty;
-
   }
   else if (typeOfRelation == PROPERTY_RELATION_NEXT)
   {
-    if (propertyToDelete.leftChild != PROPERTY_NULL)
-    {
-      /*
-       * Set the parent next to the property to delete next previous
-       */
-      newLinkProperty = propertyToDelete.leftChild;
-
-      if (propertyToDelete.rightChild != PROPERTY_NULL)
-      {
-        /*
-         * We also need to find a storage for the other link, setup variables
-         * to do this at the end...
-         */
-        needToFindAPlaceholder = TRUE;
-        storeNode              = propertyToDelete.leftChild;
-        toStoreNode            = propertyToDelete.rightChild;
-        relationType           = PROPERTY_RELATION_NEXT;
-      }
-    }
-    else if (propertyToDelete.rightChild != PROPERTY_NULL)
-    {
-      /*
-       * Set the parent next to the property to delete next
-       */
-      newLinkProperty = propertyToDelete.rightChild;
-    }
-
-    /*
-     * Link it for real...
-     */
     parentProperty.rightChild = newLinkProperty;
   }
   else /* (typeOfRelation == PROPERTY_RELATION_DIR) */
   {
-    if (propertyToDelete.leftChild != PROPERTY_NULL)
-    {
-      /*
-       * Set the parent dir to the property to delete previous
-       */
-      newLinkProperty = propertyToDelete.leftChild;
-
-      if (propertyToDelete.rightChild != PROPERTY_NULL)
-      {
-        /*
-         * We also need to find a storage for the other link, setup variables
-         * to do this at the end...
-         */
-        needToFindAPlaceholder = TRUE;
-        storeNode              = propertyToDelete.leftChild;
-        toStoreNode            = propertyToDelete.rightChild;
-        relationType           = PROPERTY_RELATION_NEXT;
-      }
-    }
-    else if (propertyToDelete.rightChild != PROPERTY_NULL)
-    {
-      /*
-       * Set the parent dir to the property to delete next
-       */
-      newLinkProperty = propertyToDelete.rightChild;
-    }
-
-    /*
-     * Link it for real...
-     */
     parentProperty.dirProperty = newLinkProperty;
   }
 
