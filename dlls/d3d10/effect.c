@@ -2583,9 +2583,14 @@ static struct ID3D10EffectShaderResourceVariable * STDMETHODCALLTYPE d3d10_effec
 static struct ID3D10EffectRenderTargetViewVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsRenderTargetView(
         ID3D10EffectVariable *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
 
-    return NULL;
+    TRACE("iface %p\n", iface);
+
+    if (This->vtbl == (ID3D10EffectVariableVtbl *)&d3d10_effect_render_target_view_variable_vtbl)
+        return (ID3D10EffectRenderTargetViewVariable *)This;
+
+    return (ID3D10EffectRenderTargetViewVariable *)&null_render_target_view_variable;
 }
 
 static struct ID3D10EffectDepthStencilViewVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsDepthStencilView(
