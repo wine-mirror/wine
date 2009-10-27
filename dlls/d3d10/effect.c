@@ -830,6 +830,9 @@ static HRESULT parse_fx10_annotation(struct d3d10_effect_variable *a, const char
 
     skip_dword_unknown(ptr, 1);
 
+    /* mark the variable as annotation */
+    a->flag = D3D10_EFFECT_VARIABLE_ANNOTATION;
+
     return S_OK;
 }
 
@@ -2344,10 +2347,6 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_GetDesc(ID3D10EffectVaria
     if( This->flag == D3D10_EFFECT_VARIABLE_EXPLICIT_BIND_POINT)
     {
         desc->ExplicitBindPoint = This->buffer_offset;
-    }
-    else if(This->flag)
-    {
-        FIXME("Unhandled flag %#x!\n", This->flag);
     }
 
     return S_OK;
