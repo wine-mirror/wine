@@ -1688,6 +1688,10 @@ void X11DRV_InitKeyboard( Display *display )
     char ckey[4]={0,0,0,0};
     const char (*lkey)[MAIN_LEN][4];
     char vkey_used[256] = { 0 };
+
+    /* Ranges of OEM, function key, and character virtual key codes.
+     * Don't include those handled specially in X11DRV_ToUnicodeEx and
+     * X11DRV_MapVirtualKeyEx, like VK_NUMPAD0 - VK_DIVIDE. */
     static const struct {
         WORD first, last;
     } vkey_ranges[] = {
@@ -1695,6 +1699,10 @@ void X11DRV_InitKeyboard( Display *display )
         { VK_OEM_4, VK_ICO_00 },
         { 0xe6, 0xe6 },
         { 0xe9, 0xf5 },
+        { VK_OEM_NEC_EQUAL, VK_OEM_NEC_EQUAL },
+        { VK_F1, VK_F24 },
+        { 0x30, 0x39 }, /* VK_0 - VK_9 */
+        { 0x41, 0x5a }, /* VK_A - VK_Z */
         { 0, 0 }
     };
     int vkey_range;
@@ -1870,8 +1878,8 @@ void X11DRV_InitKeyboard( Display *display )
         }
     } /* for */
 
-    /* Others keys: let's assign OEM virtual key codes in the allowed range,
-     * that is ([0xba,0xc0], [0xdb,0xe4], 0xe6, and [0xe9,0xf5]) */
+    /* For any keycodes which still don't have a vkey, assign any spare
+     * character, function key, or OEM virtual key code. */
     vkey_range = 0;
     vkey = vkey_ranges[vkey_range].first;
     for (keyc = min_keycode; keyc <= max_keycode; keyc++)
@@ -1903,7 +1911,7 @@ void X11DRV_InitKeyboard( Display *display )
 
         if (TRACE_ON(keyboard))
         {
-            TRACE("OEM specific virtual key %X assigned to keycode %X:\n",
+            TRACE("spare virtual key %X assigned to keycode %X:\n",
                              vkey, e2.keycode);
             TRACE("(");
             for (i = 0; i < keysyms_per_keycode; i += 1)
