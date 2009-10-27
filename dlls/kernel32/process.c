@@ -199,7 +199,7 @@ static void *open_builtin_exe_file( const WCHAR *name, char *error, int error_si
  * Open a specific exe file, taking load order into account.
  * Returns the file handle or 0 for a builtin exe.
  */
-static HANDLE open_exe_file( const WCHAR *name )
+static HANDLE open_exe_file( const WCHAR *name, struct binary_info *binary_info )
 {
     HANDLE handle;
 
@@ -211,8 +211,16 @@ static HANDLE open_exe_file( const WCHAR *name )
         WCHAR buffer[MAX_PATH];
         /* file doesn't exist, check for builtin */
         if (contains_path( name ) && get_builtin_path( name, NULL, buffer, sizeof(buffer) ))
+        {
             handle = 0;
+            binary_info->type = BINARY_UNIX_LIB;
+            binary_info->flags = 0;
+            binary_info->res_start = NULL;
+            binary_info->res_end = NULL;
+        }
     }
+    else MODULE_get_binary_info( handle, binary_info );
+
     return handle;
 }
 
@@ -225,7 +233,8 @@ static HANDLE open_exe_file( const WCHAR *name )
  * If file exists but cannot be opened, returns TRUE and set handle to INVALID_HANDLE_VALUE.
  * If file is a builtin exe, returns TRUE and sets handle to 0.
  */
-static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen, HANDLE *handle )
+static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen,
+                           HANDLE *handle, struct binary_info *binary_info )
 {
     static const WCHAR exeW[] = {'.','e','x','e',0};
     int file_exists;
@@ -242,7 +251,10 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen, HANDLE 
             TRACE( "Trying native/Unix binary %s\n", debugstr_w(buffer) );
             if ((*handle = CreateFileW( buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_DELETE,
                                         NULL, OPEN_EXISTING, 0, 0 )) != INVALID_HANDLE_VALUE)
+            {
+                MODULE_get_binary_info( *handle, binary_info );
                 return TRUE;
+            }
         }
         return FALSE;
     }
@@ -250,13 +262,20 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen, HANDLE 
     TRACE( "Trying native exe %s\n", debugstr_w(buffer) );
     if ((*handle = CreateFileW( buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_DELETE,
                                 NULL, OPEN_EXISTING, 0, 0 )) != INVALID_HANDLE_VALUE)
+    {
+        MODULE_get_binary_info( *handle, binary_info );
         return TRUE;
+    }
 
     TRACE( "Trying built-in exe %s\n", debugstr_w(buffer) );
     open_builtin_exe_file( buffer, NULL, 0, 1, &file_exists );
     if (file_exists)
     {
         *handle = 0;
+        binary_info->type = BINARY_UNIX_LIB;
+        binary_info->flags = 0;
+        binary_info->res_start = NULL;
+        binary_info->res_end = NULL;
         return TRUE;
     }
 
@@ -1856,7 +1875,7 @@ static BOOL create_cmd_process( LPCWSTR filename, LPWSTR cmd_line, LPVOID env, L
  * Also returns a handle to the opened file if it's a Windows binary.
  */
 static LPWSTR get_file_name( LPCWSTR appname, LPWSTR cmdline, LPWSTR buffer,
-                             int buflen, HANDLE *handle )
+                             int buflen, HANDLE *handle, struct binary_info *binary_info )
 {
     static const WCHAR quotesW[] = {'"','%','s','"',0};
 
@@ -1870,7 +1889,7 @@ static LPWSTR get_file_name( LPCWSTR appname, LPWSTR cmdline, LPWSTR buffer,
     {
         /* use the unmodified app name as file name */
         lstrcpynW( buffer, appname, buflen );
-        *handle = open_exe_file( buffer );
+        *handle = open_exe_file( buffer, binary_info );
         if (!(ret = cmdline) || !cmdline[0])
         {
             /* no command-line, create one */
@@ -1890,7 +1909,7 @@ static LPWSTR get_file_name( LPCWSTR appname, LPWSTR cmdline, LPWSTR buffer,
         memcpy( name, cmdline + 1, len * sizeof(WCHAR) );
         name[len] = 0;
 
-        if (find_exe_file( name, buffer, buflen, handle ))
+        if (find_exe_file( name, buffer, buflen, handle, binary_info ))
             ret = cmdline;  /* no change necessary */
         goto done;
     }
@@ -1907,7 +1926,7 @@ static LPWSTR get_file_name( LPCWSTR appname, LPWSTR cmdline, LPWSTR buffer,
     {
         do *pos++ = *p++; while (*p && *p != ' ' && *p != '\t');
         *pos = 0;
-        if (find_exe_file( name, buffer, buflen, handle ))
+        if (find_exe_file( name, buffer, buflen, handle, binary_info ))
         {
             ret = cmdline;
             break;
@@ -1991,7 +2010,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line,
 
     TRACE("app %s cmdline %s\n", debugstr_w(app_name), debugstr_w(cmd_line) );
 
-    if (!(tidy_cmdline = get_file_name( app_name, cmd_line, name, sizeof(name)/sizeof(WCHAR), &hFile )))
+    if (!(tidy_cmdline = get_file_name( app_name, cmd_line, name, sizeof(name)/sizeof(WCHAR),
+                                        &hFile, &binary_info )))
         return FALSE;
     if (hFile == INVALID_HANDLE_VALUE) goto done;
 
@@ -2033,19 +2053,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line,
     info->hThread = info->hProcess = 0;
     info->dwProcessId = info->dwThreadId = 0;
 
-    /* Determine executable type */
-
-    if (!hFile)  /* builtin exe */
-    {
-        TRACE( "starting %s as Winelib app\n", debugstr_w(name) );
-        memset( &binary_info, 0, sizeof(binary_info) );
-        binary_info.type = BINARY_UNIX_LIB;
-        retv = create_process( 0, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
-                               inherit, flags, startup_info, info, unixdir, &binary_info, FALSE );
-        goto done;
-    }
-
-    MODULE_get_binary_info( hFile, &binary_info );
     if (binary_info.flags & BINARY_FLAG_DLL)
     {
         TRACE( "not starting %s since it is a dll\n", debugstr_w(name) );
@@ -2067,7 +2074,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line,
                                    inherit, flags, startup_info, info, unixdir, &binary_info, FALSE );
         break;
     case BINARY_UNIX_LIB:
-        TRACE( "%s is a Unix library, starting as Winelib app\n", debugstr_w(name) );
+        TRACE( "starting %s as Winelib app\n", debugstr_w(name) );
         retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                inherit, flags, startup_info, info, unixdir, &binary_info, FALSE );
         break;
@@ -2107,7 +2114,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line,
         }
         break;
     }
-    CloseHandle( hFile );
+    if (hFile) CloseHandle( hFile );
 
  done:
     if (tidy_cmdline != cmd_line) HeapFree( GetProcessHeap(), 0, tidy_cmdline );
@@ -2130,7 +2137,7 @@ static void exec_process( LPCWSTR name )
     PROCESS_INFORMATION info;
     struct binary_info binary_info;
 
-    hFile = open_exe_file( name );
+    hFile = open_exe_file( name, &binary_info );
     if (!hFile || hFile == INVALID_HANDLE_VALUE) return;
 
     memset( &startup_info, 0, sizeof(startup_info) );
@@ -2138,7 +2145,6 @@ static void exec_process( LPCWSTR name )
 
     /* Determine executable type */
 
-    MODULE_get_binary_info( hFile, &binary_info );
     if (binary_info.flags & BINARY_FLAG_DLL) return;
     switch (binary_info.type)
     {
