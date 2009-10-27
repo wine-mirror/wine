@@ -917,6 +917,7 @@ static void start_wineboot( HANDLE handles[2] )
         PROCESS_INFORMATION pi;
         DWORD type;
         void *redir;
+        WCHAR app[MAX_PATH];
         WCHAR cmdline[MAX_PATH + (sizeof(wineboot) + sizeof(args)) / sizeof(WCHAR)];
 
         memset( &si, 0, sizeof(si) );
@@ -926,11 +927,11 @@ static void start_wineboot( HANDLE handles[2] )
         si.hStdOutput = 0;
         si.hStdError  = GetStdHandle( STD_ERROR_HANDLE );
 
-        GetSystemDirectoryW( cmdline, MAX_PATH );
-        lstrcatW( cmdline, wineboot );
+        GetSystemDirectoryW( app, MAX_PATH - sizeof(wineboot)/sizeof(WCHAR) );
+        lstrcatW( app, wineboot );
 
         Wow64DisableWow64FsRedirection( &redir );
-        if (GetBinaryTypeW( cmdline, &type ) && type != expected_type)
+        if (GetBinaryTypeW( app, &type ) && type != expected_type)
         {
             if (type == SCS_64BIT_BINARY)
                 MESSAGE( "wine: '%s' is a 64-bit prefix, it cannot be used with 32-bit Wine.\n",
@@ -941,8 +942,9 @@ static void start_wineboot( HANDLE handles[2] )
             ExitProcess( 1 );
         }
 
-        lstrcatW( cmdline, args );
-        if (CreateProcessW( NULL, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi ))
+        strcpyW( cmdline, app );
+        strcatW( cmdline, args );
+        if (CreateProcessW( app, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi ))
         {
             TRACE( "started wineboot pid %04x tid %04x\n", pi.dwProcessId, pi.dwThreadId );
             CloseHandle( pi.hThread );
