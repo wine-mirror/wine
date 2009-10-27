@@ -125,15 +125,34 @@ static inline int is_special_env_var( const char *var )
 }
 
 
+/***********************************************************************
+ *           is_path_prefix
+ */
+static inline unsigned int is_path_prefix( const WCHAR *prefix, const WCHAR *filename )
+{
+    unsigned int len = strlenW( prefix );
+
+    if (strncmpiW( filename, prefix, len ) || filename[len] != '\\') return 0;
+    while (filename[len] == '\\') len++;
+    return len;
+}
+
+
 /***************************************************************************
  *	get_builtin_path
  *
  * Get the path of a builtin module when the native file does not exist.
  */
-static BOOL get_builtin_path( const WCHAR *libname, const WCHAR *ext, WCHAR *filename, UINT size )
+static BOOL get_builtin_path( const WCHAR *libname, const WCHAR *ext, WCHAR *filename,
+                              UINT size, struct binary_info *binary_info )
 {
     WCHAR *file_part;
-    UINT len = strlenW( DIR_System );
+    UINT len;
+    void *redir_disabled = 0;
+    unsigned int flags = (sizeof(void*) > sizeof(int) ? BINARY_FLAG_64BIT : 0);
+
+    if (is_wow64 && Wow64DisableWow64FsRedirection( &redir_disabled ))
+        Wow64RevertWow64FsRedirection( redir_disabled );
 
     if (contains_path( libname ))
     {
@@ -141,18 +160,27 @@ static BOOL get_builtin_path( const WCHAR *libname, const WCHAR *ext, WCHAR *fil
                                   filename, &file_part ) > size * sizeof(WCHAR))
             return FALSE;  /* too long */
 
-        if (strncmpiW( filename, DIR_System, len ) || filename[len] != '\\')
-            return FALSE;
-        while (filename[len] == '\\') len++;
+        if ((len = is_path_prefix( DIR_System, filename )))
+        {
+            if (is_wow64 && redir_disabled) flags = BINARY_FLAG_64BIT;
+        }
+        else if (DIR_SysWow64 && (len = is_path_prefix( DIR_SysWow64, filename )))
+        {
+            flags = 0;
+        }
+        else return FALSE;
+
         if (filename + len != file_part) return FALSE;
     }
     else
     {
+        len = strlenW( DIR_System );
         if (strlenW(libname) + len + 2 >= size) return FALSE;  /* too long */
         memcpy( filename, DIR_System, len * sizeof(WCHAR) );
         file_part = filename + len;
         if (file_part > filename && file_part[-1] != '\\') *file_part++ = '\\';
         strcpyW( file_part, libname );
+        if (is_wow64 && redir_disabled) flags = BINARY_FLAG_64BIT;
     }
     if (ext && !strchrW( file_part, '.' ))
     {
@@ -160,6 +188,10 @@ static BOOL get_builtin_path( const WCHAR *libname, const WCHAR *ext, WCHAR *fil
             return FALSE;  /* too long */
         strcatW( file_part, ext );
     }
+    binary_info->type = BINARY_UNIX_LIB;
+    binary_info->flags = flags;
+    binary_info->res_start = NULL;
+    binary_info->res_end = NULL;
     return TRUE;
 }
 
@@ -210,14 +242,8 @@ static HANDLE open_exe_file( const WCHAR *name, struct binary_info *binary_info 
     {
         WCHAR buffer[MAX_PATH];
         /* file doesn't exist, check for builtin */
-        if (contains_path( name ) && get_builtin_path( name, NULL, buffer, sizeof(buffer) ))
-        {
+        if (contains_path( name ) && get_builtin_path( name, NULL, buffer, sizeof(buffer), binary_info ))
             handle = 0;
-            binary_info->type = BINARY_UNIX_LIB;
-            binary_info->flags = 0;
-            binary_info->res_start = NULL;
-            binary_info->res_end = NULL;
-        }
     }
     else MODULE_get_binary_info( handle, binary_info );
 
@@ -241,22 +267,23 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen,
 
     TRACE("looking for %s\n", debugstr_w(name) );
 
-    if (!SearchPathW( NULL, name, exeW, buflen, buffer, NULL ) &&
-        !get_builtin_path( name, exeW, buffer, buflen ))
+    if (!SearchPathW( NULL, name, exeW, buflen, buffer, NULL ))
     {
-        /* no builtin found, try native without extension in case it is a Unix app */
-
-        if (SearchPathW( NULL, name, NULL, buflen, buffer, NULL ))
+        if (get_builtin_path( name, exeW, buffer, buflen, binary_info ))
         {
-            TRACE( "Trying native/Unix binary %s\n", debugstr_w(buffer) );
-            if ((*handle = CreateFileW( buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_DELETE,
-                                        NULL, OPEN_EXISTING, 0, 0 )) != INVALID_HANDLE_VALUE)
+            TRACE( "Trying built-in exe %s\n", debugstr_w(buffer) );
+            open_builtin_exe_file( buffer, NULL, 0, 1, &file_exists );
+            if (file_exists)
             {
-                MODULE_get_binary_info( *handle, binary_info );
+                *handle = 0;
                 return TRUE;
             }
+            return FALSE;
         }
-        return FALSE;
+
+        /* no builtin found, try native without extension in case it is a Unix app */
+
+        if (!SearchPathW( NULL, name, NULL, buflen, buffer, NULL )) return FALSE;
     }
 
     TRACE( "Trying native exe %s\n", debugstr_w(buffer) );
@@ -266,19 +293,6 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen,
         MODULE_get_binary_info( *handle, binary_info );
         return TRUE;
     }
-
-    TRACE( "Trying built-in exe %s\n", debugstr_w(buffer) );
-    open_builtin_exe_file( buffer, NULL, 0, 1, &file_exists );
-    if (file_exists)
-    {
-        *handle = 0;
-        binary_info->type = BINARY_UNIX_LIB;
-        binary_info->flags = 0;
-        binary_info->res_start = NULL;
-        binary_info->res_end = NULL;
-        return TRUE;
-    }
-
     return FALSE;
 }
 
@@ -1102,8 +1116,10 @@ void CDECL __wine_kernel_init(void)
     }
     else
     {
+        struct binary_info binary_info;
+
         if (!SearchPathW( NULL, __wine_main_wargv[0], exeW, MAX_PATH, main_exe_name, NULL ) &&
-            !get_builtin_path( __wine_main_wargv[0], exeW, main_exe_name, MAX_PATH ))
+            !get_builtin_path( __wine_main_wargv[0], exeW, main_exe_name, MAX_PATH, &binary_info ))
         {
             MESSAGE( "wine: cannot find '%s'\n", __wine_main_argv[0] );
             ExitProcess( GetLastError() );
