@@ -350,6 +350,12 @@ void mmap_init(void)
 
     reserve_malloc_space( 8 * 1024 * 1024 );
 
+    if (!list_head( &reserved_areas ))
+    {
+        /* if we don't have a preloader, try to reserve some space below 2Gb */
+        reserve_area( (void *)0x00110000, (void *)0x40000000 );
+    }
+
     /* check for a reserved area starting at the user space limit */
     /* to avoid wasting time trying to allocate it again */
     LIST_FOR_EACH( ptr, &reserved_areas )
