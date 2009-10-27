@@ -34,13 +34,10 @@ static void test_open_close(void)
 
     SetLastError(0xdeadbeef);
     ret = CloseEventLog(NULL);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE ||
        GetLastError() == ERROR_NOACCESS, /* W2K */
        "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    }
 
     SetLastError(0xdeadbeef);
     handle = OpenEventLogA(NULL, NULL);

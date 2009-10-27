@@ -125,8 +125,15 @@ BOOL WINAPI ClearEventLogW( HANDLE hEventLog, LPCWSTR lpBackupFileName )
  */
 BOOL WINAPI CloseEventLog( HANDLE hEventLog )
 {
-	FIXME("(%p) stub\n", hEventLog);
-	return TRUE;
+    FIXME("(%p) stub\n", hEventLog);
+
+    if (!hEventLog)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /******************************************************************************
