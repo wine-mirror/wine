@@ -395,30 +395,33 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFile
         return r;
 }
 
-static BOOL StartLinkProcessor( LPCOLESTR szLink )
+BOOL run_winemenubuilder( const WCHAR *args )
 {
-    static const WCHAR szFormat[] = {
-        'w','i','n','e','m','e','n','u','b','u','i','l','d','e','r','.','e','x','e',
-        ' ','-','w',' ','"','%','s','"',0 };
+    static const WCHAR menubuilder[] = {'\\','w','i','n','e','m','e','n','u','b','u','i','l','d','e','r','.','e','x','e',0};
     LONG len;
     LPWSTR buffer;
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
     BOOL ret;
+    WCHAR app[MAX_PATH];
 
-    len = sizeof(szFormat) + lstrlenW( szLink ) * sizeof(WCHAR);
+    GetSystemDirectoryW( app, MAX_PATH - sizeof(menubuilder)/sizeof(WCHAR) );
+    strcatW( app, menubuilder );
+
+    len = (strlenW( app ) + strlenW( args ) + 1) * sizeof(WCHAR);
     buffer = HeapAlloc( GetProcessHeap(), 0, len );
     if( !buffer )
         return FALSE;
 
-    wsprintfW( buffer, szFormat, szLink );
+    strcpyW( buffer, app );
+    strcatW( buffer, args );
 
     TRACE("starting %s\n",debugstr_w(buffer));
 
     memset(&si, 0, sizeof(si));
     si.cb = sizeof(si);
 
-    ret = CreateProcessW( NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi );
+    ret = CreateProcessW( app, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi );
 
     HeapFree( GetProcessHeap(), 0, buffer );
 
@@ -428,6 +431,24 @@ static BOOL StartLinkProcessor( LPCOLESTR szLink )
         CloseHandle( pi.hThread );
     }
 
+    return ret;
+}
+
+static BOOL StartLinkProcessor( LPCOLESTR szLink )
+{
+    static const WCHAR szFormat[] = {' ','-','w',' ','"','%','s','"',0 };
+    LONG len;
+    LPWSTR buffer;
+    BOOL ret;
+
+    len = sizeof(szFormat) + lstrlenW( szLink ) * sizeof(WCHAR);
+    buffer = HeapAlloc( GetProcessHeap(), 0, len );
+    if( !buffer )
+        return FALSE;
+
+    wsprintfW( buffer, szFormat, szLink );
+    ret = run_winemenubuilder( buffer );
+    HeapFree( GetProcessHeap(), 0, buffer );
     return ret;
 }
 

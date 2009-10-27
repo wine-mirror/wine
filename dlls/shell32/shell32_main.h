@@ -197,6 +197,8 @@ BOOL UNIXFS_is_rooted_at_desktop(void);
 extern const GUID CLSID_UnixFolder;
 extern const GUID CLSID_UnixDosFolder;
 
+extern BOOL run_winemenubuilder( const WCHAR *args );
+
 /* Default shell folder value registration */
 HRESULT SHELL_RegisterShellFolders(void);
 
