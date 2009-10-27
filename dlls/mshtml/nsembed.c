@@ -1697,8 +1697,6 @@ NSContainer *NSContainer_Create(HTMLDocumentObj *doc, NSContainer *parent)
     if(NS_FAILED(nsres))
         ERR("SetParentURIContentListener failed: %08x\n", nsres);
 
-    init_nsevents(ret);
-
     nsres = nsIWebBrowser_QueryInterface(ret->webbrowser, &IID_nsIScrollable, (void**)&scrollable);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIScrollable_SetDefaultScrollbarPreferences(scrollable,

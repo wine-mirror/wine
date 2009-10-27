@@ -955,10 +955,6 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
 
             if(This->window)
                 update_window_doc(This->window);
-
-            /* events are reset when a new document URI is loaded, so re-initialise them here */
-            if(This->window && This->window->doc_obj->basedoc.window == This->window)
-                init_nsevents(This->window->doc_obj->nscontainer);
         }
 
         This->bsc.readed += This->nsstream->buf_size;

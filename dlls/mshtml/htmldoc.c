@@ -1763,6 +1763,8 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
 {
     HTMLDocumentNode *This = HTMLDOCNODE_NODE_THIS(iface);
 
+    if(This->nsevent_listener)
+        release_nsevents(This);
     if(This->secmgr)
         IInternetSecurityManager_Release(This->secmgr);
 
@@ -1819,11 +1821,12 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     HTMLDocumentNode_SecMgr_Init(doc);
     doc->ref = 1;
 
+    doc->basedoc.window = window;
+
     nsIDOMHTMLDocument_AddRef(nsdoc);
     doc->nsdoc = nsdoc;
     init_mutation(doc);
-
-    doc->basedoc.window = window;
+    init_nsevents(doc);
 
     list_init(&doc->bindings);
     list_init(&doc->selection_list);

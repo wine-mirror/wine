@@ -365,11 +365,6 @@ struct HTMLDocumentObj {
     DWORD update;
 };
 
-typedef struct {
-    const nsIDOMEventListenerVtbl      *lpDOMEventListenerVtbl;
-    NSContainer *This;
-} nsEventListener;
-
 struct NSContainer {
     const nsIWebBrowserChromeVtbl       *lpWebBrowserChromeVtbl;
     const nsIContextMenuListenerVtbl    *lpContextMenuListenerVtbl;
@@ -379,12 +374,6 @@ struct NSContainer {
     const nsIInterfaceRequestorVtbl     *lpInterfaceRequestorVtbl;
     const nsIWeakReferenceVtbl          *lpWeakReferenceVtbl;
     const nsISupportsWeakReferenceVtbl  *lpSupportsWeakReferenceVtbl;
-
-    nsEventListener blur_listener;
-    nsEventListener focus_listener;
-    nsEventListener keypress_listener;
-    nsEventListener load_listener;
-    nsEventListener htmlevent_listener;
 
     nsIWebBrowser *webbrowser;
     nsIWebNavigation *navigation;
@@ -479,6 +468,8 @@ typedef struct _mutation_queue_t {
     struct _mutation_queue_t *next;
 } mutation_queue_t;
 
+typedef struct nsDocumentEventListener nsDocumentEventListener;
+
 struct HTMLDocumentNode {
     HTMLDOMNode node;
     HTMLDocument basedoc;
@@ -495,6 +486,7 @@ struct HTMLDocumentNode {
     BOOL content_ready;
 
     IInternetSecurityManager *secmgr;
+    nsDocumentEventListener *nsevent_listener;
 
     mutation_queue_t *mutation_queue;
     mutation_queue_t *mutation_queue_tail;
@@ -656,9 +648,11 @@ void nsAString_Finish(nsAString*);
 nsICommandParams *create_nscommand_params(void);
 HRESULT nsnode_to_nsstring(nsIDOMNode*,nsAString*);
 void get_editor_controller(NSContainer*);
-void init_nsevents(NSContainer*);
-void add_nsevent_listener(HTMLWindow*,LPCWSTR);
 nsresult get_nsinterface(nsISupports*,REFIID,void**);
+
+void init_nsevents(HTMLDocumentNode*);
+void release_nsevents(HTMLDocumentNode*);
+void add_nsevent_listener(HTMLWindow*,LPCWSTR);
 
 void set_window_bscallback(HTMLWindow*,nsChannelBSC*);
 void set_current_mon(HTMLWindow*,IMoniker*);
