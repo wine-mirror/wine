@@ -604,9 +604,11 @@ HRESULT __RPC_STUB IAccessor_ReleaseAccessor_Stub(IAccessor* This, HACCESSOR hAc
 HRESULT CALLBACK IRowsetInfo_GetProperties_Proxy(IRowsetInfo* This, const ULONG cPropertyIDSets, const DBPROPIDSET rgPropertyIDSets[],
                                                  ULONG *pcPropertySets, DBPROPSET **prgPropertySets)
 {
+    HRESULT hr;
+    IErrorInfo *error;
     ULONG i;
 
-    FIXME("(%p)->(%d, %p, %p, %p): stub\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
+    TRACE("(%p)->(%d, %p, %p, %p)\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
 
     for(i = 0; i < cPropertyIDSets; i++)
     {
@@ -616,15 +618,29 @@ HRESULT CALLBACK IRowsetInfo_GetProperties_Proxy(IRowsetInfo* This, const ULONG 
             TRACE("\t%d: prop id %d\n", j, rgPropertyIDSets[i].rgPropertyIDs[j]);
     }
 
-    return E_NOTIMPL;
+    hr = IRowsetInfo_RemoteGetProperties_Proxy(This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets, &error);
+
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+    return hr;
 }
 
 HRESULT __RPC_STUB IRowsetInfo_GetProperties_Stub(IRowsetInfo* This, ULONG cPropertyIDSets, const DBPROPIDSET *rgPropertyIDSets,
                                                   ULONG *pcPropertySets, DBPROPSET **prgPropertySets, IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p)->(%d, %p, %p, %p, %p): stub\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets, ppErrorInfoRem);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d, %p, %p, %p, %p)\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets, ppErrorInfoRem);
+
+    *ppErrorInfoRem = NULL;
+
+    hr = IRowsetInfo_GetProperties(This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
+    if(FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+    TRACE("returning %08x\n", hr);
+    return hr;
 }
 
 HRESULT CALLBACK IRowsetInfo_GetReferencedRowset_Proxy(IRowsetInfo* This, DBORDINAL iOrdinal, REFIID riid, IUnknown **ppReferencedRowset)
