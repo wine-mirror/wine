@@ -217,6 +217,8 @@ struct wined3d_fake_gl_ctx
     HDC dc;
     HWND wnd;
     HGLRC gl_ctx;
+    HDC restore_dc;
+    HGLRC restore_gl_ctx;
 };
 
 static void WineD3D_ReleaseFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
@@ -236,6 +238,11 @@ static void WineD3D_ReleaseFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
 
     ReleaseDC(ctx->wnd, ctx->dc);
     DestroyWindow(ctx->wnd);
+
+    if (ctx->restore_gl_ctx && !pwglMakeCurrent(ctx->restore_dc, ctx->restore_gl_ctx))
+    {
+        ERR_(d3d_caps)("Failed to restore previous GL context.\n");
+    }
 }
 
 static BOOL WineD3D_CreateFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
@@ -244,6 +251,9 @@ static BOOL WineD3D_CreateFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
     int iPixelFormat;
 
     TRACE("getting context...\n");
+
+    ctx->restore_dc = pwglGetCurrentDC();
+    ctx->restore_gl_ctx = pwglGetCurrentContext();
 
     /* We need a fake window as a hdc retrieved using GetDC(0) can't be used for much GL purposes. */
     ctx->wnd = CreateWindowA(WINED3D_OPENGL_WINDOW_CLASS_NAME, "WineD3D fake window",
@@ -309,6 +319,10 @@ fail:
     ctx->dc = NULL;
     if (ctx->wnd) DestroyWindow(ctx->wnd);
     ctx->wnd = NULL;
+    if (ctx->restore_gl_ctx && !pwglMakeCurrent(ctx->restore_dc, ctx->restore_gl_ctx))
+    {
+        ERR_(d3d_caps)("Failed to restore previous GL context.\n");
+    }
 
     return FALSE;
 }
