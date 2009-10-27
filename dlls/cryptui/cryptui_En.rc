@@ -117,6 +117,7 @@ STRINGTABLE DISCARDABLE
     IDS_WARN_REMOVE_DEFAULT "Are you sure you want to remove this certificate?"
     IDS_WARN_REMOVE_PLURAL_DEFAULT "Are you sure you want to remove these certificates?"
     IDS_CERT_MGR "Certificates"
+    IDS_FRIENDLY_NAME_NONE "<None>"
     IDS_PURPOSE_SERVER_AUTH "Ensures the identify of a remote computer"
     IDS_PURPOSE_CLIENT_AUTH "Proves your identity to a remote computer"
     IDS_PURPOSE_CODE_SIGNING "Ensures software came from software publisher\nProtects software from alteration after publication"

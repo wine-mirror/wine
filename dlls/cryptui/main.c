@@ -104,6 +104,7 @@ static void add_cert_to_view(HWND lv, PCCERT_CONTEXT cert, DWORD *allocatedLen,
     WCHAR dateFmt[80]; /* sufficient for LOCALE_SSHORTDATE */
     WCHAR date[80];
     SYSTEMTIME sysTime;
+    LPWSTR none;
 
     item.mask = LVIF_IMAGE | LVIF_PARAM | LVIF_TEXT;
     item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
@@ -155,8 +156,9 @@ static void add_cert_to_view(HWND lv, PCCERT_CONTEXT cert, DWORD *allocatedLen,
     item.iSubItem = 2;
     SendMessageW(lv, LVM_SETITEMTEXTW, item.iItem, (LPARAM)&item);
 
-    len = CertGetNameStringW(cert, CERT_NAME_FRIENDLY_DISPLAY_TYPE, 0, NULL,
-     NULL, 0);
+    if (!CertGetCertificateContextProperty(cert, CERT_FRIENDLY_NAME_PROP_ID,
+     NULL, &len))
+        len = LoadStringW(hInstance, IDS_FRIENDLY_NAME_NONE, (LPWSTR)&none, 0);
     if (len > *allocatedLen)
     {
         HeapFree(GetProcessHeap(), 0, *str);
@@ -166,9 +168,11 @@ static void add_cert_to_view(HWND lv, PCCERT_CONTEXT cert, DWORD *allocatedLen,
     }
     if (*str)
     {
-        CertGetNameStringW(cert, CERT_NAME_FRIENDLY_DISPLAY_TYPE, 0, NULL,
-         *str, len);
-        item.pszText = *str;
+        if (!CertGetCertificateContextProperty(cert, CERT_FRIENDLY_NAME_PROP_ID,
+         *str, &len))
+            item.pszText = none;
+        else
+            item.pszText = *str;
         item.iSubItem = 3;
         SendMessageW(lv, LVM_SETITEMTEXTW, item.iItem, (LPARAM)&item);
     }
