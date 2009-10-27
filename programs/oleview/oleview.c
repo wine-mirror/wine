@@ -21,7 +21,7 @@
 #include "main.h"
 
 GLOBALS globals;
-static WCHAR wszRegEdit[] = { 'r','e','g','e','d','i','t','.','e','x','e','\0' };
+static const WCHAR wszRegEdit[] = { '\\','r','e','g','e','d','i','t','.','e','x','e','\0' };
 static WCHAR wszFormat[] = { '<','o','b','j','e','c','t','\n',' ',' ',' ',
     'c','l','a','s','s','i','d','=','\"','c','l','s','i','d',':','%','s','\"','\n',
     '>','\n','<','/','o','b','j','e','c','t','>','\0' };
@@ -370,13 +370,17 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
         {
             STARTUPINFO si;
             PROCESS_INFORMATION pi;
+            WCHAR app[MAX_PATH];
 
+            GetWindowsDirectoryW( app, MAX_PATH - sizeof(wszRegEdit)/sizeof(WCHAR) );
+            lstrcatW( app, wszRegEdit );
             memset(&si, 0, sizeof(si));
             si.cb = sizeof(si);
-            CreateProcess(NULL, wszRegEdit, NULL, NULL, FALSE, 0,
-                    NULL, NULL, &si, &pi);
-            CloseHandle(pi.hProcess);
-            CloseHandle(pi.hThread);
+            if (CreateProcess(app, app, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+            {
+                CloseHandle(pi.hProcess);
+                CloseHandle(pi.hThread);
+            }
             break;
         }
         case IDM_STATUSBAR:
