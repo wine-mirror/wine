@@ -2127,7 +2127,9 @@ BOOL WINAPI GetQueuedCompletionStatus( HANDLE CompletionPort, LPDWORD lpNumberOf
     if (status == STATUS_SUCCESS)
     {
         *lpNumberOfBytesTransferred = iosb.Information;
-        return TRUE;
+        if (iosb.u.Status >= 0) return TRUE;
+        SetLastError( RtlNtStatusToDosError(iosb.u.Status) );
+        return FALSE;
     }
 
     if (status == STATUS_TIMEOUT) SetLastError( WAIT_TIMEOUT );
