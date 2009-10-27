@@ -44,29 +44,20 @@ static void test_open_close(void)
 
     SetLastError(0xdeadbeef);
     handle = OpenEventLogA(NULL, NULL);
-    todo_wine
-    {
     ok(handle == NULL, "Didn't expect a handle\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    }
 
     SetLastError(0xdeadbeef);
     handle = OpenEventLogA("IDontExist", NULL);
-    todo_wine
-    {
     ok(handle == NULL, "Didn't expect a handle\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    }
 
     SetLastError(0xdeadbeef);
     handle = OpenEventLogA("IDontExist", "deadbeef");
-    todo_wine
-    {
     ok(handle == NULL, "Didn't expect a handle\n");
     ok(GetLastError() == RPC_S_SERVER_UNAVAILABLE ||
        GetLastError() == RPC_S_INVALID_NET_ADDR, /* Some Vista and Win7 */
        "Expected RPC_S_SERVER_UNAVAILABLE, got %d\n", GetLastError());
-    }
 
     /* This one opens the Application log */
     handle = OpenEventLogA(NULL, "deadbeef");

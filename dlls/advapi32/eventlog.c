@@ -29,10 +29,24 @@
 #include "wmistr.h"
 #include "evntrace.h"
 
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(advapi);
 WINE_DECLARE_DEBUG_CHANNEL(eventlog);
+
+static inline LPWSTR SERV_dup( LPCSTR str )
+{
+    UINT len;
+    LPWSTR wstr;
+
+    if( !str )
+        return NULL;
+    len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+    wstr = HeapAlloc( GetProcessHeap(), 0, len*sizeof (WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, str, -1, wstr, len );
+    return wstr;
+}
 
 /******************************************************************************
  * BackupEventLogA [ADVAPI32.@]
@@ -283,8 +297,16 @@ HANDLE WINAPI OpenBackupEventLogW( LPCWSTR lpUNCServerName, LPCWSTR lpFileName )
  */
 HANDLE WINAPI OpenEventLogA( LPCSTR uncname, LPCSTR source )
 {
-	FIXME("(%s,%s) stub\n", debugstr_a(uncname), debugstr_a(source));
-	return (HANDLE)0xcafe4242;
+    LPWSTR uncnameW, sourceW;
+    HANDLE handle;
+
+    uncnameW = SERV_dup(uncname);
+    sourceW = SERV_dup(source);
+    handle = OpenEventLogW(uncnameW, sourceW);
+    HeapFree(GetProcessHeap(), 0, uncnameW);
+    HeapFree(GetProcessHeap(), 0, sourceW);
+
+    return handle;
 }
 
 /******************************************************************************
@@ -294,8 +316,22 @@ HANDLE WINAPI OpenEventLogA( LPCSTR uncname, LPCSTR source )
  */
 HANDLE WINAPI OpenEventLogW( LPCWSTR uncname, LPCWSTR source )
 {
-	FIXME("(%s,%s) stub\n", debugstr_w(uncname), debugstr_w(source));
-	return (HANDLE)0xcafe4242;
+    FIXME("(%s,%s) stub\n", debugstr_w(uncname), debugstr_w(source));
+
+    if (!source)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
+    if (uncname)
+    {
+        FIXME("Remote server not supported\n");
+        SetLastError(RPC_S_SERVER_UNAVAILABLE);
+        return NULL;
+    }
+
+    return (HANDLE)0xcafe4242;
 }
 
 /******************************************************************************
