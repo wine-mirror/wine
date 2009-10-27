@@ -1754,7 +1754,7 @@ static nsresult NSAPI nsURI_Equals(nsIWineURI *iface, nsIURI *other, PRBool *_re
     }
 
     nsIWineURI_GetWineURL(wine_uri, &other_url);
-    *_retval = !UrlCompareW(This->wine_url, other_url, TRUE);
+    *_retval = other_url && !UrlCompareW(This->wine_url, other_url, TRUE);
     nsIWineURI_Release(wine_uri);
 
     return NS_OK;
