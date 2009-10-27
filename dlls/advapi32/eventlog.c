@@ -324,7 +324,7 @@ HANDLE WINAPI OpenEventLogW( LPCWSTR uncname, LPCWSTR source )
         return NULL;
     }
 
-    if (uncname)
+    if (uncname && uncname[0])
     {
         FIXME("Remote server not supported\n");
         SetLastError(RPC_S_SERVER_UNAVAILABLE);

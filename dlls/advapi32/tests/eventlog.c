@@ -73,6 +73,11 @@ static void test_open_close(void)
     ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
     }
 
+    /* Empty servername should be read as local server */
+    handle = OpenEventLogA("", "Application");
+    ok(handle != NULL, "Expected a handle\n");
+    CloseEventLog(handle);
+
     handle = OpenEventLogA(NULL, "Application");
     ok(handle != NULL, "Expected a handle\n");
     CloseEventLog(handle);
