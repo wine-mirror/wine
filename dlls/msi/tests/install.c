@@ -3944,6 +3944,7 @@ static void test_publish_registeruser(void)
     DeleteFile(msifile);
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest");
+    LocalFree(usersid);
 }
 
 static void test_publish_processcomponents(void)
@@ -4068,6 +4069,7 @@ static void test_publish_processcomponents(void)
     DeleteFile(msifile);
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest");
+    LocalFree(usersid);
 }
 
 static void test_publish(void)
