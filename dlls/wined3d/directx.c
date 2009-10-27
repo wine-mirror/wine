@@ -979,8 +979,20 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
 {
     unsigned int i;
 
+    if (wined3d_settings.pci_vendor_id != PCI_VENDOR_NONE)
+    {
+        TRACE_(d3d_caps)("Overriding PCI vendor ID with: %04x\n", wined3d_settings.pci_vendor_id);
+        vendor = wined3d_settings.pci_vendor_id;
+    }
     driver_info->vendor = vendor;
+
+    if (wined3d_settings.pci_device_id != PCI_DEVICE_NONE)
+    {
+        TRACE_(d3d_caps)("Overriding PCI device ID with: %04x\n", wined3d_settings.pci_device_id);
+        device = wined3d_settings.pci_device_id;
+    }
     driver_info->device = device;
+
     driver_info->name = "Display";
     driver_info->description = "Direct3D HAL";
     driver_info->version_high = MAKEDWORD_VERSION(7, 1);
@@ -2352,19 +2364,6 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
     pIdentifier->subsystem_id = 0;
     pIdentifier->revision = 0;
     memcpy(&pIdentifier->device_identifier, &IID_D3DDEVICE_D3DUID, sizeof(pIdentifier->device_identifier));
-
-    if(wined3d_settings.pci_device_id != PCI_DEVICE_NONE)
-    {
-        TRACE_(d3d_caps)("Overriding pci device id with: %x\n", wined3d_settings.pci_device_id);
-        pIdentifier->device_id = wined3d_settings.pci_device_id;
-    }
-
-    if(wined3d_settings.pci_vendor_id != PCI_VENDOR_NONE)
-    {
-        TRACE_(d3d_caps)("Overriding pci vendor id with: %x\n", wined3d_settings.pci_vendor_id);
-        pIdentifier->vendor_id = wined3d_settings.pci_vendor_id;
-    }
-
     pIdentifier->whql_level = (Flags & WINED3DENUM_NO_WHQL_LEVEL) ? 0 : 1;
 
     return WINED3D_OK;
