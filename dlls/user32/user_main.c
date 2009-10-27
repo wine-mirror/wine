@@ -354,12 +354,14 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reason )
     static const WCHAR forceW[]       = { ' ','-','-','f','o','r','c','e',0 };
     static const WCHAR shutdownW[]    = { ' ','-','-','s','h','u','t','d','o','w','n',0 };
 
+    WCHAR app[MAX_PATH];
     WCHAR cmdline[MAX_PATH + 64];
     PROCESS_INFORMATION pi;
     STARTUPINFOW si;
 
-    GetSystemDirectoryW( cmdline, MAX_PATH );
-    lstrcatW( cmdline, winebootW );
+    GetSystemDirectoryW( app, MAX_PATH - sizeof(winebootW)/sizeof(WCHAR) );
+    strcatW( app, winebootW );
+    strcpyW( cmdline, app );
 
     if (flags & EWX_FORCE) lstrcatW( cmdline, killW );
     else
@@ -371,7 +373,7 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reason )
 
     memset( &si, 0, sizeof si );
     si.cb = sizeof si;
-    if (!CreateProcessW( NULL, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi ))
+    if (!CreateProcessW( app, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi ))
     {
         ERR( "Failed to run %s\n", debugstr_w(cmdline) );
         return FALSE;
