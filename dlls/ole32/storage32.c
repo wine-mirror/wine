@@ -2119,13 +2119,13 @@ static HRESULT WINAPI StorageBaseImpl_SetElementTimes(
 /******************************************************************************
  * SetStateBits (IStorage)
  */
-static HRESULT WINAPI StorageImpl_SetStateBits(
+static HRESULT WINAPI StorageBaseImpl_SetStateBits(
   IStorage*   iface,
   DWORD         grfStateBits,/* [in] */
   DWORD         grfMask)     /* [in] */
 {
-  StorageImpl* const This = (StorageImpl*)iface;
-  This->base.stateBits = (This->base.stateBits & ~grfMask) | (grfStateBits & grfMask);
+  StorageBaseImpl* const This = (StorageBaseImpl*)iface;
+  This->stateBits = (This->stateBits & ~grfMask) | (grfStateBits & grfMask);
   return S_OK;
 }
 
@@ -2150,7 +2150,7 @@ static const IStorageVtbl Storage32Impl_Vtbl =
     StorageBaseImpl_RenameElement,
     StorageBaseImpl_SetElementTimes,
     StorageBaseImpl_SetClass,
-    StorageImpl_SetStateBits,
+    StorageBaseImpl_SetStateBits,
     StorageImpl_Stat
 };
 
@@ -3958,7 +3958,7 @@ static const IStorageVtbl Storage32InternalImpl_Vtbl =
     StorageBaseImpl_RenameElement,
     StorageBaseImpl_SetElementTimes,
     StorageBaseImpl_SetClass,
-    StorageImpl_SetStateBits,
+    StorageBaseImpl_SetStateBits,
     StorageBaseImpl_Stat
 };
 
