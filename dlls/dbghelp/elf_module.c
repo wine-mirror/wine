@@ -1063,7 +1063,7 @@ static BOOL elf_load_file(struct process* pcs, const WCHAR* filename,
 
     TRACE("Processing elf file '%s' at %08lx\n", debugstr_w(filename), load_offset);
 
-    if (!elf_map_file(filename, &fmap)) goto leave;
+    if (!elf_map_file(filename, &fmap)) return ret;
 
     /* Next, we need to find a few of the internal ELF headers within
      * this thing.  We need the main executable header, and the section
