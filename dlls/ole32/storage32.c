@@ -160,12 +160,12 @@ typedef struct
  * Forward declaration of internal functions used by the method DestroyElement
  */
 static HRESULT deleteStorageProperty(
-  StorageImpl *parentStorage,
+  StorageBaseImpl *parentStorage,
   ULONG        foundPropertyIndexToDelete,
   StgProperty  propertyToDelete);
 
 static HRESULT deleteStreamProperty(
-  StorageImpl *parentStorage,
+  StorageBaseImpl *parentStorage,
   ULONG         foundPropertyIndexToDelete,
   StgProperty   propertyToDelete);
 
@@ -1745,11 +1745,11 @@ static HRESULT WINAPI StorageImpl_Revert(
  *          enumeration strategy that would give all the leaves of a storage
  *          first. (postfix order)
  */
-static HRESULT WINAPI StorageImpl_DestroyElement(
+static HRESULT WINAPI StorageBaseImpl_DestroyElement(
   IStorage*     iface,
   const OLECHAR *pwcsName)/* [string][in] */
 {
-  StorageImpl* const This=(StorageImpl*)iface;
+  StorageBaseImpl* const This=(StorageBaseImpl*)iface;
 
   HRESULT           hr = S_OK;
   StgProperty       propertyToDelete;
@@ -1761,12 +1761,12 @@ static HRESULT WINAPI StorageImpl_DestroyElement(
   if (pwcsName==NULL)
     return STG_E_INVALIDPOINTER;
 
-  if ( STGM_ACCESS_MODE( This->base.openFlags ) == STGM_READ )
+  if ( STGM_ACCESS_MODE( This->openFlags ) == STGM_READ )
     return STG_E_ACCESSDENIED;
 
   foundPropertyIndexToDelete = findElement(
-    This->base.ancestorStorage,
-    This->base.rootPropertySetIndex,
+    This->ancestorStorage,
+    This->rootPropertySetIndex,
     pwcsName,
     &propertyToDelete);
 
@@ -1797,8 +1797,8 @@ static HRESULT WINAPI StorageImpl_DestroyElement(
    * Adjust the property chain
    */
   hr = removeFromTree(
-        This->base.ancestorStorage,
-        This->base.rootPropertySetIndex,
+        This->ancestorStorage,
+        This->rootPropertySetIndex,
         foundPropertyIndexToDelete);
 
   /*
@@ -1806,7 +1806,7 @@ static HRESULT WINAPI StorageImpl_DestroyElement(
    */
   propertyToDelete.sizeOfNameString = 0;
 
-  StorageImpl_WriteProperty(This->base.ancestorStorage,
+  StorageImpl_WriteProperty(This->ancestorStorage,
                             foundPropertyIndexToDelete,
                             &propertyToDelete);
 
@@ -1876,7 +1876,7 @@ static void StorageBaseImpl_DeleteAll(StorageBaseImpl * stg)
  *
  */
 static HRESULT deleteStorageProperty(
-  StorageImpl *parentStorage,
+  StorageBaseImpl *parentStorage,
   ULONG        indexOfPropertyToDelete,
   StgProperty  propertyToDelete)
 {
@@ -1916,7 +1916,7 @@ static HRESULT deleteStorageProperty(
     hr = IEnumSTATSTG_Next(elements, 1, &currentElement, NULL);
     if (hr==S_OK)
     {
-      destroyHr = StorageImpl_DestroyElement(childStorage, currentElement.pwcsName);
+      destroyHr = IStorage_DestroyElement(childStorage, currentElement.pwcsName);
 
       CoTaskMemFree(currentElement.pwcsName);
     }
@@ -1943,7 +1943,7 @@ static HRESULT deleteStorageProperty(
  *
  */
 static HRESULT deleteStreamProperty(
-  StorageImpl *parentStorage,
+  StorageBaseImpl *parentStorage,
   ULONG         indexOfPropertyToDelete,
   StgProperty   propertyToDelete)
 {
@@ -2146,7 +2146,7 @@ static const IStorageVtbl Storage32Impl_Vtbl =
     StorageImpl_Commit,
     StorageImpl_Revert,
     StorageBaseImpl_EnumElements,
-    StorageImpl_DestroyElement,
+    StorageBaseImpl_DestroyElement,
     StorageBaseImpl_RenameElement,
     StorageImpl_SetElementTimes,
     StorageBaseImpl_SetClass,
@@ -3954,7 +3954,7 @@ static const IStorageVtbl Storage32InternalImpl_Vtbl =
     StorageInternalImpl_Commit,
     StorageInternalImpl_Revert,
     StorageBaseImpl_EnumElements,
-    StorageImpl_DestroyElement,
+    StorageBaseImpl_DestroyElement,
     StorageBaseImpl_RenameElement,
     StorageImpl_SetElementTimes,
     StorageBaseImpl_SetClass,
