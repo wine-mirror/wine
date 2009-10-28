@@ -1183,6 +1183,55 @@ static void test_converttofiletime(void)
     IDataConvert_Release(convert);
 }
 
+static void test_converttoui1(void)
+{
+    IDataConvert *convert;
+    HRESULT hr;
+    BYTE dst;
+    BYTE src[20];
+    DBSTATUS dst_status;
+    DBLENGTH dst_len;
+
+    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
+    if(FAILED(hr))
+    {
+        win_skip("Unable to load oledb conversion library\n");
+        return;
+    }
+
+    dst = 0x12;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_EMPTY, DBTYPE_UI1, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %d\n", dst_len);
+    ok(dst == 0, "got %08x\n", dst);
+
+    dst = 0x12;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_NULL, DBTYPE_UI1, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_E_BADACCESSOR, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %d\n", dst_len);
+    ok(dst == 0x12, "got %08x\n", dst);
+
+    dst = 0x12;
+    src[0] = 0x43;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_UI1, DBTYPE_UI1, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %d\n", dst_len);
+    ok(dst == 0x43, "got %08x\n", dst);
+
+    dst = 0x12;
+    src[0] = 0xfe;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_UI1, DBTYPE_UI1, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %d\n", dst_len);
+    ok(dst == 0xfe, "got %08x\n", dst);
+
+    IDataConvert_Release(convert);
+}
+
 START_TEST(convert)
 {
     OleInitialize(NULL);
@@ -1194,6 +1243,7 @@ START_TEST(convert)
     test_converttowstr();
     test_converttobyrefwstr();
     test_converttoguid();
+    test_converttoui1();
     test_converttofiletime();
     OleUninitialize();
 }
