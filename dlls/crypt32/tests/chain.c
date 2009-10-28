@@ -2217,15 +2217,16 @@ static const char *num_to_str(WORD num)
 }
 
 static void checkChainPolicyStatus(LPCSTR policy, const ChainPolicyCheck *check,
- DWORD testIndex)
+ DWORD testIndex, SYSTEMTIME *sysTime, PCERT_CHAIN_POLICY_PARA para)
+
 {
-    PCCERT_CHAIN_CONTEXT chain = getChain(&check->certs, 0, TRUE, &oct2007,
+    PCCERT_CHAIN_CONTEXT chain = getChain(&check->certs, 0, TRUE, sysTime,
      check->todo, testIndex);
 
     if (chain)
     {
         CERT_CHAIN_POLICY_STATUS policyStatus = { 0 };
-        BOOL ret = pCertVerifyCertificateChainPolicy(policy, chain, NULL,
+        BOOL ret = pCertVerifyCertificateChainPolicy(policy, chain, para,
          &policyStatus);
 
         if (check->todo & TODO_POLICY)
@@ -2375,7 +2376,8 @@ static void testVerifyCertChainPolicy(void)
 
     for (i = 0;
      i < sizeof(basePolicyCheck) / sizeof(basePolicyCheck[0]); i++)
-        checkChainPolicyStatus(CERT_CHAIN_POLICY_BASE, &basePolicyCheck[i], i);
+        checkChainPolicyStatus(CERT_CHAIN_POLICY_BASE, &basePolicyCheck[i], i,
+         &oct2007, NULL);
     /* The authenticode policy doesn't seem to check anything beyond the base
      * policy.  It might check for chains signed by the MS test cert, but none
      * of these chains is.
@@ -2383,12 +2385,12 @@ static void testVerifyCertChainPolicy(void)
     for (i = 0; i <
      sizeof(authenticodePolicyCheck) / sizeof(authenticodePolicyCheck[0]); i++)
         checkChainPolicyStatus(CERT_CHAIN_POLICY_AUTHENTICODE,
-         &authenticodePolicyCheck[i], i);
+         &authenticodePolicyCheck[i], i, &oct2007, NULL);
     for (i = 0; i <
      sizeof(basicConstraintsPolicyCheck) / sizeof(basicConstraintsPolicyCheck[0]);
      i++)
         checkChainPolicyStatus(CERT_CHAIN_POLICY_BASIC_CONSTRAINTS,
-         &basicConstraintsPolicyCheck[i], i);
+         &basicConstraintsPolicyCheck[i], i, &oct2007, NULL);
 }
 
 START_TEST(chain)
