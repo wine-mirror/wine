@@ -2036,7 +2036,7 @@ static HRESULT removeFromTree(
     setPropertyLink(&parentProperty, typeOfRelation, propertyToDelete.leftChild);
 
     res = StorageImpl_WriteProperty(
-            This->base.ancestorStorage,
+            This,
             parentPropertyId,
             &parentProperty);
     if(!res)
@@ -2057,7 +2057,7 @@ static HRESULT removeFromTree(
       do
       {
         res = StorageImpl_ReadProperty(
-                This->base.ancestorStorage,
+                This,
                 newRightChildParent,
                 &newRightChildParentProperty);
         if (!res)
@@ -2072,7 +2072,7 @@ static HRESULT removeFromTree(
       newRightChildParentProperty.rightChild = propertyToDelete.rightChild;
 
       res = StorageImpl_WriteProperty(
-              This->base.ancestorStorage,
+              This,
               newRightChildParent,
               &newRightChildParentProperty);
       if (!res)
@@ -2089,7 +2089,7 @@ static HRESULT removeFromTree(
     setPropertyLink(&parentProperty, typeOfRelation, propertyToDelete.rightChild);
 
     res = StorageImpl_WriteProperty(
-            This->base.ancestorStorage,
+            This,
             parentPropertyId,
             &parentProperty);
     if(!res)
