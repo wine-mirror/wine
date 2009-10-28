@@ -127,6 +127,8 @@ static int get_length(DBTYPE type)
     case DBTYPE_I8:
     case DBTYPE_UI8:
         return 8;
+    case DBTYPE_CY:
+        return sizeof(CY);
     case DBTYPE_BSTR:
         return sizeof(BSTR);
     case DBTYPE_FILETIME:
@@ -282,6 +284,32 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_I8:          hr = VarR4FromI8(*(LONGLONG*)src, d);           break;
         case DBTYPE_UI8:         hr = VarR4FromUI8(*(ULONGLONG*)src, d);         break;
         default: FIXME("Unimplemented conversion %04x -> R4\n", src_type); return E_NOTIMPL;
+        }
+        break;
+    }
+
+    case DBTYPE_CY:
+    {
+        CY *d = dst;
+        switch(src_type)
+        {
+        case DBTYPE_EMPTY:       d->int64 = 0; hr = S_OK;                              break;
+        case DBTYPE_I2:          hr = VarCyFromI2(*(signed short*)src, d);       break;
+        case DBTYPE_I4:          hr = VarCyFromI4(*(signed int*)src, d);         break;
+        case DBTYPE_R4:          hr = VarCyFromR4(*(FLOAT*)src, d);              break;
+        case DBTYPE_R8:          hr = VarCyFromR8(*(double*)src, d);             break;
+        case DBTYPE_CY:          *d = *(CY*)src; hr = S_OK;                      break;
+        case DBTYPE_DATE:        hr = VarCyFromDate(*(DATE*)src, d);             break;
+        case DBTYPE_BSTR:        hr = VarCyFromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
+        case DBTYPE_BOOL:        hr = VarCyFromBool(*(VARIANT_BOOL*)src, d);     break;
+        case DBTYPE_DECIMAL:     hr = VarCyFromDec((DECIMAL*)src, d);            break;
+        case DBTYPE_I1:          hr = VarCyFromI1(*(signed char*)src, d);        break;
+        case DBTYPE_UI1:         hr = VarCyFromUI1(*(BYTE*)src, d);              break;
+        case DBTYPE_UI2:         hr = VarCyFromUI2(*(WORD*)src, d);              break;
+        case DBTYPE_UI4:         hr = VarCyFromUI4(*(DWORD*)src, d);             break;
+        case DBTYPE_I8:          hr = VarCyFromI8(*(LONGLONG*)src, d);           break;
+        case DBTYPE_UI8:         hr = VarCyFromUI8(*(ULONGLONG*)src, d);         break;
+        default: FIXME("Unimplemented conversion %04x -> CY\n", src_type); return E_NOTIMPL;
         }
         break;
     }
