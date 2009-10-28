@@ -6697,8 +6697,8 @@ static DWORD OLECONVERT_WriteOLE20ToBuffer(LPSTORAGE pStorage, BYTE **pData)
     if(hRes == S_OK)
     {
         /* Copy Src Storage to the Temp Storage */
-        StorageImpl_CopyTo(pStorage, 0, NULL, NULL, pTempStorage);
-        StorageBaseImpl_Release(pTempStorage);
+        IStorage_CopyTo(pStorage, 0, NULL, NULL, pTempStorage);
+        IStorage_Release(pTempStorage);
 
         /* Open Temp Storage as a file and copy to memory */
         hFile = CreateFileW(wstrTempFile, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
