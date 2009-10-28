@@ -76,7 +76,7 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
 
     for (i = 0; i < This->num_contexts; ++i)
     {
-        DestroyContext(This->wineD3DDevice, This->context[i]);
+        context_destroy(This->wineD3DDevice, This->context[i]);
     }
     /* Restore the screen resolution if we rendered in fullscreen
      * This will restore the screen resolution to what it was before creating the swapchain. In case of d3d8 and d3d9
@@ -354,7 +354,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_SetDestWindowOverride(IWineD3DSwapCh
         memcpy(mem, r.pBits, r.Pitch * ((IWineD3DSurfaceImpl *) This->backBuffer[0])->currentDesc.Height);
         IWineD3DSurface_UnlockRect(This->backBuffer[0]);
 
-        DestroyContext(This->wineD3DDevice, This->context[0]);
+        context_destroy(This->wineD3DDevice, This->context[0]);
         This->context[0] = context_create(This->wineD3DDevice, (IWineD3DSurfaceImpl *)This->frontBuffer,
                 This->win_handle, FALSE /* pbuffer */, &This->presentParms);
         context_release(This->context[0]);
@@ -408,7 +408,7 @@ struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChain *i
     newArray = HeapAlloc(GetProcessHeap(), 0, sizeof(*newArray) * This->num_contexts + 1);
     if(!newArray) {
         ERR("Out of memory when trying to allocate a new context array\n");
-        DestroyContext(This->wineD3DDevice, ctx);
+        context_destroy(This->wineD3DDevice, ctx);
         return NULL;
     }
     memcpy(newArray, This->context, sizeof(*newArray) * This->num_contexts);

@@ -1501,7 +1501,7 @@ out:
  * destroyed or unset. context is not a valid pointer after that call.
  *
  * Similar to the former call this isn't a performance critical function. A
- * helper function for DestroyContext.
+ * helper function for context_destroy().
  *
  * Params:
  *  This: Device to activate the context for
@@ -1556,16 +1556,16 @@ static void RemoveContextFromArray(IWineD3DDeviceImpl *This, struct wined3d_cont
 }
 
 /*****************************************************************************
- * DestroyContext
+ * context_destroy
  *
- * Destroys a wineD3DContext
+ * Destroys a wined3d context
  *
  * Params:
  *  This: Device to activate the context for
  *  context: Context to destroy
  *
  *****************************************************************************/
-void DestroyContext(IWineD3DDeviceImpl *This, struct wined3d_context *context)
+void context_destroy(IWineD3DDeviceImpl *This, struct wined3d_context *context)
 {
     BOOL destroy;
 
@@ -1904,7 +1904,7 @@ retry:
                     || This->pbufferWidth < targetimpl->currentDesc.Width
                     || This->pbufferHeight < targetimpl->currentDesc.Height)
             {
-                if (This->pbufferContext) DestroyContext(This, This->pbufferContext);
+                if (This->pbufferContext) context_destroy(This, This->pbufferContext);
 
                 /* The display is irrelevant here, the window is 0. But
                  * context_create() needs a valid X connection. Create the context

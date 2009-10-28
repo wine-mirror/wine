@@ -1307,7 +1307,7 @@ error:
     if(object->context && object->context[0])
     {
         context_release(object->context[0]);
-        DestroyContext(This, object->context[0]);
+        context_destroy(This, object->context[0]);
     }
     if (object->frontBuffer) IWineD3DSurface_Release(object->frontBuffer);
     HeapFree(GetProcessHeap(), 0, object);
@@ -2011,7 +2011,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     }
 
     /* Delete the pbuffer context if there is any */
-    if(This->pbufferContext) DestroyContext(This, This->pbufferContext);
+    if(This->pbufferContext) context_destroy(This, This->pbufferContext);
 
     /* Delete the mouse cursor texture */
     if(This->cursorTexture) {
@@ -6658,8 +6658,9 @@ void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain_
 
     context_release(context);
 
-    while(This->numContexts) {
-        DestroyContext(This, This->contexts[0]);
+    while (This->numContexts)
+    {
+        context_destroy(This, This->contexts[0]);
     }
     HeapFree(GetProcessHeap(), 0, swapchain->context);
     swapchain->context = NULL;
