@@ -1582,7 +1582,7 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
         window->nswindow = nswindow;
     }
 
-    window->scriptmode = SCRIPTMODE_GECKO;
+    window->scriptmode = parent ? parent->scriptmode : SCRIPTMODE_GECKO;
     list_init(&window->script_hosts);
 
     window->task_magic = get_task_target_magic();
