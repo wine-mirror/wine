@@ -184,7 +184,7 @@ static HRESULT createDirEntry(
   ULONG *index);
 
 static void updatePropertyChain(
-  StorageImpl *storage,
+  StorageBaseImpl *storage,
   ULONG       newPropertyIndex,
   StgProperty newProperty);
 
@@ -765,7 +765,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
      * Find a spot in the property chain for our newly created property.
      */
     updatePropertyChain(
-      (StorageImpl*)This,
+      This,
       renamedPropertyIndex,
       renamedProperty);
 
@@ -945,7 +945,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
    * Find a spot in the property chain for our newly created property.
    */
   updatePropertyChain(
-    (StorageImpl*)This,
+    This,
     newPropertyIndex,
     newStreamProperty);
 
@@ -1128,7 +1128,7 @@ static HRESULT WINAPI StorageImpl_CreateStorage(
    * Find a spot in the property chain for our newly created property.
    */
   updatePropertyChain(
-    This,
+    &This->base,
     newPropertyIndex,
     newProperty);
 
@@ -1292,7 +1292,7 @@ static LONG propertyNameCmp(
  * Properly link this new element in the property chain.
  */
 static void updatePropertyChain(
-  StorageImpl *storage,
+  StorageBaseImpl *storage,
   ULONG         newPropertyIndex,
   StgProperty   newProperty)
 {
@@ -1301,8 +1301,8 @@ static void updatePropertyChain(
   /*
    * Read the root property
    */
-  StorageImpl_ReadProperty(storage->base.ancestorStorage,
-                             storage->base.rootPropertySetIndex,
+  StorageImpl_ReadProperty(storage->ancestorStorage,
+                             storage->rootPropertySetIndex,
                              &currentProperty);
 
   if (currentProperty.dirProperty != PROPERTY_NULL)
@@ -1322,7 +1322,7 @@ static void updatePropertyChain(
     /*
      * Read
      */
-    StorageImpl_ReadProperty(storage->base.ancestorStorage,
+    StorageImpl_ReadProperty(storage->ancestorStorage,
                                currentProperty.dirProperty,
                                &currentProperty);
 
@@ -1338,7 +1338,7 @@ static void updatePropertyChain(
       {
         if (previous != PROPERTY_NULL)
         {
-          StorageImpl_ReadProperty(storage->base.ancestorStorage,
+          StorageImpl_ReadProperty(storage->ancestorStorage,
                                      previous,
                                      &currentProperty);
           current = previous;
@@ -1346,7 +1346,7 @@ static void updatePropertyChain(
         else
         {
           currentProperty.leftChild = newPropertyIndex;
-          StorageImpl_WriteProperty(storage->base.ancestorStorage,
+          StorageImpl_WriteProperty(storage->ancestorStorage,
                                       current,
                                       &currentProperty);
           found = 1;
@@ -1356,7 +1356,7 @@ static void updatePropertyChain(
       {
         if (next != PROPERTY_NULL)
         {
-          StorageImpl_ReadProperty(storage->base.ancestorStorage,
+          StorageImpl_ReadProperty(storage->ancestorStorage,
                                      next,
                                      &currentProperty);
           current = next;
@@ -1364,7 +1364,7 @@ static void updatePropertyChain(
         else
         {
           currentProperty.rightChild = newPropertyIndex;
-          StorageImpl_WriteProperty(storage->base.ancestorStorage,
+          StorageImpl_WriteProperty(storage->ancestorStorage,
                                       current,
                                       &currentProperty);
           found = 1;
@@ -1389,8 +1389,8 @@ static void updatePropertyChain(
      * The root storage is empty, link the new property to its dir property
      */
     currentProperty.dirProperty = newPropertyIndex;
-    StorageImpl_WriteProperty(storage->base.ancestorStorage,
-                                storage->base.rootPropertySetIndex,
+    StorageImpl_WriteProperty(storage->ancestorStorage,
+                                storage->rootPropertySetIndex,
                                 &currentProperty);
   }
 }
