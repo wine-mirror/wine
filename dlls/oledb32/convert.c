@@ -392,6 +392,32 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         break;
     }
 
+    case DBTYPE_UI8:
+    {
+        ULONGLONG *d = dst;
+        switch(src_type)
+        {
+        case DBTYPE_EMPTY:       *d = 0; hr = S_OK;                              break;
+        case DBTYPE_I2:          hr = VarUI8FromI2(*(signed short*)src, d);      break;
+        case DBTYPE_I4:          {LONGLONG s = *(signed int*)src; hr = VarUI8FromI8(s, d);        break;}
+        case DBTYPE_R4:          hr = VarUI8FromR4(*(FLOAT*)src, d);             break;
+        case DBTYPE_R8:          hr = VarUI8FromR8(*(double*)src, d);            break;
+        case DBTYPE_CY:          hr = VarUI8FromCy(*(CY*)src, d);                break;
+        case DBTYPE_DATE:        hr = VarUI8FromDate(*(DATE*)src, d);            break;
+        case DBTYPE_BSTR:        hr = VarUI8FromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
+        case DBTYPE_BOOL:        hr = VarUI8FromBool(*(VARIANT_BOOL*)src, d);    break;
+        case DBTYPE_DECIMAL:     hr = VarUI8FromDec((DECIMAL*)src, d);           break;
+        case DBTYPE_I1:          hr = VarUI8FromI1(*(signed char*)src, d);       break;
+        case DBTYPE_UI1:         hr = VarUI8FromUI1(*(BYTE*)src, d);             break;
+        case DBTYPE_UI2:         hr = VarUI8FromUI2(*(WORD*)src, d);             break;
+        case DBTYPE_UI4:         hr = VarUI8FromUI4(*(DWORD*)src, d);            break;
+        case DBTYPE_I8:          hr = VarUI8FromI8(*(LONGLONG*)src, d);          break;
+        case DBTYPE_UI8:         *d = *(ULONGLONG*)src; hr = S_OK;               break;
+        default: FIXME("Unimplemented conversion %04x -> UI8\n", src_type); return E_NOTIMPL;
+        }
+        break;
+    }
+
     case DBTYPE_FILETIME:
     {
         FILETIME *d = dst;
