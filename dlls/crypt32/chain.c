@@ -2117,6 +2117,234 @@ static BOOL WINAPI verify_basic_constraints_policy(LPCSTR szPolicyOID,
     return TRUE;
 }
 
+static inline PCERT_EXTENSION get_subject_alt_name_ext(PCCERT_CONTEXT cert)
+{
+    PCERT_EXTENSION ext;
+
+    ext = CertFindExtension(szOID_SUBJECT_ALT_NAME2,
+     cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
+    if (!ext)
+        ext = CertFindExtension(szOID_SUBJECT_ALT_NAME,
+         cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
+    return ext;
+}
+
+static BOOL match_dns_to_subject_alt_name(PCERT_EXTENSION ext,
+ LPCWSTR server_name)
+{
+    BOOL matches = FALSE;
+    CERT_ALT_NAME_INFO *subjectName;
+    DWORD size;
+
+    TRACE_(chain)("%s\n", debugstr_w(server_name));
+    /* FIXME: This can be spoofed by the embedded NULL vulnerability.  The
+     * returned CERT_ALT_NAME_INFO doesn't have a way to indicate the
+     * encoded length of a name, so a certificate issued to
+     * winehq.org\0badsite.com will get treated as having been issued to
+     * winehq.org.
+     */
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_ALTERNATE_NAME,
+     ext->Value.pbData, ext->Value.cbData,
+     CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
+     &subjectName, &size))
+    {
+        DWORD i;
+        BOOL found = FALSE;
+
+        for (i = 0; !found && i < subjectName->cAltEntry; i++)
+        {
+            if (subjectName->rgAltEntry[i].dwAltNameChoice ==
+             CERT_ALT_NAME_DNS_NAME)
+            {
+                TRACE_(chain)("dNSName: %s\n", debugstr_w(
+                 subjectName->rgAltEntry[i].u.pwszDNSName));
+                found = TRUE;
+                if (!strcmpiW(server_name,
+                 subjectName->rgAltEntry[i].u.pwszDNSName))
+                    matches = TRUE;
+            }
+        }
+        LocalFree(subjectName);
+    }
+    return matches;
+}
+
+static BOOL find_matching_domain_component(CERT_NAME_INFO *name,
+ LPCWSTR component)
+{
+    BOOL matches = FALSE;
+    DWORD i, j;
+
+    for (i = 0; !matches && i < name->cRDN; i++)
+        for (j = 0; j < name->rgRDN[i].cRDNAttr; j++)
+            if (!strcmp(szOID_DOMAIN_COMPONENT,
+             name->rgRDN[i].rgRDNAttr[j].pszObjId))
+            {
+                PCERT_RDN_ATTR attr;
+
+                attr = &name->rgRDN[i].rgRDNAttr[j];
+                /* Compare with memicmpW rather than strcmpiW in order to avoid
+                 * a match with a string with an embedded NULL.  The component
+                 * must match one domain component attribute's entire string
+                 * value with a case-insensitive match.
+                 */
+                matches = !memicmpW(component, (LPWSTR)attr->Value.pbData,
+                 attr->Value.cbData / sizeof(WCHAR));
+            }
+    return matches;
+}
+
+static BOOL match_dns_to_subject_dn(PCCERT_CONTEXT cert, LPCWSTR server_name)
+{
+    BOOL matches = FALSE;
+    CERT_NAME_INFO *name;
+    DWORD size;
+
+    TRACE_(chain)("%s\n", debugstr_w(server_name));
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_UNICODE_NAME,
+     cert->pCertInfo->Subject.pbData, cert->pCertInfo->Subject.cbData,
+     CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
+     &name, &size))
+    {
+        /* If the subject distinguished name contains any name components,
+         * make sure all of them are present.
+         */
+        if (CertFindRDNAttr(szOID_DOMAIN_COMPONENT, name))
+        {
+            LPCWSTR ptr = server_name;
+
+            matches = TRUE;
+            do {
+                LPCWSTR dot = strchrW(ptr, '.'), end;
+                /* 254 is the maximum DNS label length, see RFC 1035 */
+                WCHAR component[255];
+                DWORD len;
+
+                end = dot ? dot : ptr + strlenW(ptr);
+                len = end - ptr;
+                if (len >= sizeof(component) / sizeof(component[0]))
+                {
+                    WARN_(chain)("domain component %s too long\n",
+                     debugstr_wn(ptr, len));
+                    matches = FALSE;
+                }
+                else
+                {
+                    memcpy(component, ptr, len * sizeof(WCHAR));
+                    component[len] = 0;
+                    matches = find_matching_domain_component(name, component);
+                }
+                ptr = dot ? dot + 1 : end;
+            } while (matches && ptr && *ptr);
+        }
+        else
+        {
+            PCERT_RDN_ATTR attr;
+
+            /* If the certificate isn't using a DN attribute in the name, make
+             * make sure the common name matches.  Again, use memicmpW rather
+             * than strcmpiW in order to avoid being fooled by an embedded NULL.
+             */
+            if ((attr = CertFindRDNAttr(szOID_COMMON_NAME, name)))
+            {
+                TRACE_(chain)("CN = %s\n", debugstr_w(
+                 (LPWSTR)attr->Value.pbData));
+                matches = !memicmpW(server_name, (LPWSTR)attr->Value.pbData,
+                 attr->Value.cbData / sizeof(WCHAR));
+            }
+        }
+        LocalFree(name);
+    }
+    return matches;
+}
+
+static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
+ PCCERT_CHAIN_CONTEXT pChainContext, PCERT_CHAIN_POLICY_PARA pPolicyPara,
+ PCERT_CHAIN_POLICY_STATUS pPolicyStatus)
+{
+    pPolicyStatus->lChainIndex = pPolicyStatus->lElementIndex = -1;
+    if (pChainContext->TrustStatus.dwErrorStatus &
+     CERT_TRUST_IS_NOT_SIGNATURE_VALID)
+    {
+        pPolicyStatus->dwError = TRUST_E_CERT_SIGNATURE;
+        find_element_with_error(pChainContext,
+         CERT_TRUST_IS_NOT_SIGNATURE_VALID, &pPolicyStatus->lChainIndex,
+         &pPolicyStatus->lElementIndex);
+    }
+    else if (pChainContext->TrustStatus.dwErrorStatus &
+     CERT_TRUST_IS_UNTRUSTED_ROOT)
+    {
+        pPolicyStatus->dwError = CERT_E_UNTRUSTEDROOT;
+        find_element_with_error(pChainContext,
+         CERT_TRUST_IS_UNTRUSTED_ROOT, &pPolicyStatus->lChainIndex,
+         &pPolicyStatus->lElementIndex);
+    }
+    else if (pChainContext->TrustStatus.dwErrorStatus & CERT_TRUST_IS_CYCLIC)
+    {
+        pPolicyStatus->dwError = CERT_E_UNTRUSTEDROOT;
+        find_element_with_error(pChainContext,
+         CERT_TRUST_IS_CYCLIC, &pPolicyStatus->lChainIndex,
+         &pPolicyStatus->lElementIndex);
+        /* For a cyclic chain, which element is a cycle isn't meaningful */
+        pPolicyStatus->lElementIndex = -1;
+    }
+    else if (pChainContext->TrustStatus.dwErrorStatus &
+     CERT_TRUST_IS_NOT_TIME_VALID)
+    {
+        pPolicyStatus->dwError = CERT_E_EXPIRED;
+        find_element_with_error(pChainContext,
+         CERT_TRUST_IS_NOT_TIME_VALID, &pPolicyStatus->lChainIndex,
+         &pPolicyStatus->lElementIndex);
+    }
+    else
+        pPolicyStatus->dwError = NO_ERROR;
+    /* We only need bother checking whether the name in the end certificate
+     * matches if the chain is otherwise okay.
+     */
+    if (!pPolicyStatus->dwError && pPolicyPara &&
+     pPolicyPara->cbSize >= sizeof(CERT_CHAIN_POLICY_PARA))
+    {
+        HTTPSPolicyCallbackData *sslPara = pPolicyPara->pvExtraPolicyPara;
+
+        if (sslPara && sslPara->u.cbSize >= sizeof(HTTPSPolicyCallbackData))
+        {
+            if (sslPara->dwAuthType == AUTHTYPE_SERVER &&
+             sslPara->pwszServerName)
+            {
+                PCCERT_CONTEXT cert;
+                PCERT_EXTENSION altNameExt;
+                BOOL matches;
+
+                cert = pChainContext->rgpChain[0]->rgpElement[0]->pCertContext;
+                altNameExt = get_subject_alt_name_ext(cert);
+                /* If the alternate name extension exists, the name it contains
+                 * is bound to the certificate, so make sure the name matches
+                 * it.  Otherwise, look for the server name in the subject
+                 * distinguished name.  RFC5280, section 4.2.1.6:
+                 * "Whenever such identities are to be bound into a
+                 *  certificate, the subject alternative name (or issuer
+                 *  alternative name) extension MUST be used; however, a DNS
+                 *  name MAY also be represented in the subject field using the
+                 *  domainComponent attribute."
+                 */
+                if (altNameExt)
+                    matches = match_dns_to_subject_alt_name(altNameExt,
+                     sslPara->pwszServerName);
+                else
+                    matches = match_dns_to_subject_dn(cert,
+                     sslPara->pwszServerName);
+                if (!matches)
+                {
+                    pPolicyStatus->dwError = CERT_E_CN_NO_MATCH;
+                    pPolicyStatus->lChainIndex = 0;
+                    pPolicyStatus->lElementIndex = 0;
+                }
+            }
+        }
+    }
+    return TRUE;
+}
+
 static BYTE msPubKey1[] = {
 0x30,0x82,0x01,0x0a,0x02,0x82,0x01,0x01,0x00,0xdf,0x08,0xba,0xe3,0x3f,0x6e,
 0x64,0x9b,0xf5,0x89,0xaf,0x28,0x96,0x4a,0x07,0x8f,0x1b,0x2e,0x8b,0x3e,0x1d,
@@ -2256,6 +2484,9 @@ BOOL WINAPI CertVerifyCertificateChainPolicy(LPCSTR szPolicyOID,
             break;
         case LOWORD(CERT_CHAIN_POLICY_AUTHENTICODE):
             verifyPolicy = verify_authenticode_policy;
+            break;
+        case LOWORD(CERT_CHAIN_POLICY_SSL):
+            verifyPolicy = verify_ssl_policy;
             break;
         case LOWORD(CERT_CHAIN_POLICY_BASIC_CONSTRAINTS):
             verifyPolicy = verify_basic_constraints_policy;
