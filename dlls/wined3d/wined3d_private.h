@@ -1162,8 +1162,6 @@ typedef enum ContextUsage {
     CTXUSAGE_CLEAR              = 4,    /* Drawable and states are set up for clearing */
 } ContextUsage;
 
-struct wined3d_context *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win,
-        BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *pPresentParms) DECLSPEC_HIDDEN;
 void DestroyContext(IWineD3DDeviceImpl *This, struct wined3d_context *context) DECLSPEC_HIDDEN;
 struct wined3d_context *context_acquire(IWineD3DDeviceImpl *This,
         IWineD3DSurface *target, enum ContextUsage usage) DECLSPEC_HIDDEN;
@@ -1178,6 +1176,8 @@ void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer) DECLSPEC_HIDDEN;
 void context_attach_surface_fbo(const struct wined3d_context *context,
         GLenum fbo_target, DWORD idx, IWineD3DSurface *surface) DECLSPEC_HIDDEN;
+struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win,
+        BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *present_parameters) DECLSPEC_HIDDEN;
 void context_free_event_query(struct wined3d_event_query *query) DECLSPEC_HIDDEN;
 void context_free_occlusion_query(struct wined3d_occlusion_query *query) DECLSPEC_HIDDEN;
 struct wined3d_context *context_get_current(void) DECLSPEC_HIDDEN;
@@ -2447,7 +2447,7 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_SetGammaRamp(IWineD3DSwapChain *iface,
 HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetGammaRamp(IWineD3DSwapChain *iface,
         WINED3DGAMMARAMP *pRamp) DECLSPEC_HIDDEN;
 
-struct wined3d_context *IWineD3DSwapChainImpl_CreateContextForThread(IWineD3DSwapChain *iface) DECLSPEC_HIDDEN;
+struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChain *iface) DECLSPEC_HIDDEN;
 
 #define DEFAULT_REFRESH_RATE 0
 

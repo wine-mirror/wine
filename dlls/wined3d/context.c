@@ -876,7 +876,7 @@ static void Context_MarkStateDirty(struct wined3d_context *context, DWORD state,
 /*****************************************************************************
  * AddContextToArray
  *
- * Adds a context to the context array. Helper function for CreateContext
+ * Adds a context to the context array. Helper function for context_create().
  *
  * This method is not called in performance-critical code paths, only when a
  * new render target or swapchain is created. Thus performance is not an issue
@@ -1110,7 +1110,7 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
 }
 
 /*****************************************************************************
- * CreateContext
+ * context_create
  *
  * Creates a new context for a window, or a pbuffer context.
  *
@@ -1122,7 +1122,7 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
  *  pPresentParameters: contains the pixelformats to use for onscreen rendering
  *
  *****************************************************************************/
-struct wined3d_context *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target,
+struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target,
         HWND win_handle, BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *pPresentParms)
 {
     const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
@@ -1446,6 +1446,8 @@ struct wined3d_context *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceI
     LEAVE_GL();
 
     This->frag_pipe->enable_extension((IWineD3DDevice *) This, TRUE);
+
+    ++ret->level;
 
     return ret;
 
@@ -1793,7 +1795,7 @@ static struct wined3d_context *findThreadContextForSwapChain(IWineD3DSwapChain *
     }
 
     /* Create a new context for the thread */
-    return IWineD3DSwapChainImpl_CreateContextForThread(swapchain);
+    return swapchain_create_context_for_thread(swapchain);
 }
 
 /*****************************************************************************
@@ -1874,14 +1876,15 @@ retry:
                 if (This->pbufferContext) DestroyContext(This, This->pbufferContext);
 
                 /* The display is irrelevant here, the window is 0. But
-                 * CreateContext needs a valid X connection. Create the context
+                 * context_create() needs a valid X connection. Create the context
                  * on the same server as the primary swapchain. The primary
                  * swapchain is exists at this point. */
-                This->pbufferContext = CreateContext(This, targetimpl,
+                This->pbufferContext = context_create(This, targetimpl,
                         ((IWineD3DSwapChainImpl *)This->swapchains[0])->context[0]->win_handle,
                         TRUE /* pbuffer */, &((IWineD3DSwapChainImpl *)This->swapchains[0])->presentParms);
                 This->pbufferWidth = targetimpl->currentDesc.Width;
                 This->pbufferHeight = targetimpl->currentDesc.Height;
+                if (This->pbufferContext) context_release(This->pbufferContext);
             }
 
             if (This->pbufferContext)

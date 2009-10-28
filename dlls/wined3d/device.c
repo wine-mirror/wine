@@ -1193,8 +1193,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
     }
     object->num_contexts = 1;
 
-    if(surface_type == SURFACE_OPENGL) {
-        object->context[0] = CreateContext(This, (IWineD3DSurfaceImpl *) object->frontBuffer, object->win_handle, FALSE /* pbuffer */, pPresentationParameters);
+    if (surface_type == SURFACE_OPENGL)
+    {
+        object->context[0] = context_create(This, (IWineD3DSurfaceImpl *)object->frontBuffer,
+                object->win_handle, FALSE /* pbuffer */, pPresentationParameters);
         if (!object->context[0]) {
             ERR("Failed to create a new context\n");
             hr = WINED3DERR_NOTAVAILABLE;
@@ -1250,6 +1252,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
         }
     }
 
+    if (object->context[0]) context_release(object->context[0]);
+
     /* Under directX swapchains share the depth stencil, so only create one depth-stencil */
     if (pPresentationParameters->EnableAutoDepthStencil && surface_type == SURFACE_OPENGL) {
         TRACE("Creating depth stencil buffer\n");
@@ -1301,7 +1305,10 @@ error:
         object->backBuffer = NULL;
     }
     if(object->context && object->context[0])
+    {
+        context_release(object->context[0]);
         DestroyContext(This, object->context[0]);
+    }
     if (object->frontBuffer) IWineD3DSurface_Release(object->frontBuffer);
     HeapFree(GetProcessHeap(), 0, object);
     return hr;
@@ -1727,6 +1734,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
     IWineD3DSwapChainImpl *swapchain = NULL;
+    struct wined3d_context *context;
     HRESULT hr;
     DWORD state;
     unsigned int i;
@@ -1843,6 +1851,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
 
     /* Setup all the devices defaults */
     IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *)This->stateBlock);
+
+    context = context_acquire(This, swapchain->frontBuffer, CTXUSAGE_RESOURCELOAD);
+
     create_dummy_textures(This);
 
     ENTER_GL();
@@ -1874,6 +1885,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
 
     TRACE("(%p) All defaults now set up, leaving Init3D with %p\n", This, This);
     LEAVE_GL();
+
+    context_release(context);
 
     /* Clear the screen */
     IWineD3DDevice_Clear((IWineD3DDevice *) This, 0, NULL,
@@ -6666,11 +6679,12 @@ HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwapChain *
     } else {
         target = (IWineD3DSurfaceImpl *) swapchain->frontBuffer;
     }
-    swapchain->context[0] = CreateContext(This, target, swapchain->win_handle, FALSE,
-                                          &swapchain->presentParms);
+    swapchain->context[0] = context_create(This, target, swapchain->win_handle, FALSE, &swapchain->presentParms);
     swapchain->num_contexts = 1;
 
     create_dummy_textures(This);
+
+    context_release(swapchain->context[0]);
 
     hr = This->shader_backend->shader_alloc_private(iface);
     if(FAILED(hr)) {

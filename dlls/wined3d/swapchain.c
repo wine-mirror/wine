@@ -355,7 +355,9 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_SetDestWindowOverride(IWineD3DSwapCh
         IWineD3DSurface_UnlockRect(This->backBuffer[0]);
 
         DestroyContext(This->wineD3DDevice, This->context[0]);
-        This->context[0] = CreateContext(This->wineD3DDevice, (IWineD3DSurfaceImpl *) This->frontBuffer, This->win_handle, FALSE /* pbuffer */, &This->presentParms);
+        This->context[0] = context_create(This->wineD3DDevice, (IWineD3DSurfaceImpl *)This->frontBuffer,
+                This->win_handle, FALSE /* pbuffer */, &This->presentParms);
+        context_release(This->context[0]);
 
         IWineD3DSurface_LockRect(This->backBuffer[0], &r, NULL, WINED3DLOCK_DISCARD);
         memcpy(r.pBits, mem, r.Pitch * ((IWineD3DSurfaceImpl *) This->backBuffer[0])->currentDesc.Height);
@@ -386,7 +388,7 @@ const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
     IWineD3DBaseSwapChainImpl_GetGammaRamp
 };
 
-struct wined3d_context *IWineD3DSwapChainImpl_CreateContextForThread(IWineD3DSwapChain *iface)
+struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChain *iface)
 {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *) iface;
     struct wined3d_context **newArray;
@@ -394,12 +396,14 @@ struct wined3d_context *IWineD3DSwapChainImpl_CreateContextForThread(IWineD3DSwa
 
     TRACE("Creating a new context for swapchain %p, thread %d\n", This, GetCurrentThreadId());
 
-    ctx = CreateContext(This->wineD3DDevice, (IWineD3DSurfaceImpl *) This->frontBuffer,
-                        This->context[0]->win_handle, FALSE /* pbuffer */, &This->presentParms);
-    if(!ctx) {
+    ctx = context_create(This->wineD3DDevice, (IWineD3DSurfaceImpl *) This->frontBuffer,
+            This->context[0]->win_handle, FALSE /* pbuffer */, &This->presentParms);
+    if (!ctx)
+    {
         ERR("Failed to create a new context for the swapchain\n");
         return NULL;
     }
+    context_release(ctx);
 
     newArray = HeapAlloc(GetProcessHeap(), 0, sizeof(*newArray) * This->num_contexts + 1);
     if(!newArray) {
