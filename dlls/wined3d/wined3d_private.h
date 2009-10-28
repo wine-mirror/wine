@@ -1060,6 +1060,8 @@ struct wined3d_context
 
     /* The actual opengl context */
     UINT level;
+    HGLRC restore_ctx;
+    HDC restore_dc;
     HGLRC                   glCtx;
     HWND                    win_handle;
     HDC                     hdc;

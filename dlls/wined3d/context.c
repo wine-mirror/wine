@@ -843,7 +843,37 @@ void context_release(struct wined3d_context *context)
             WARN("Context %p is not the current context.\n", context);
     }
 
-    --context->level;
+    if (!--context->level && context->restore_ctx)
+    {
+        TRACE("Restoring GL context %p on device context %p.\n", context->restore_ctx, context->restore_dc);
+        if (!pwglMakeCurrent(context->restore_dc, context->restore_ctx))
+        {
+            DWORD err = GetLastError();
+            ERR("Failed to restore GL context %p on device context %p, last error %#x.\n",
+                    context->restore_ctx, context->restore_dc, err);
+        }
+        context->restore_ctx = NULL;
+        context->restore_dc = NULL;
+    }
+}
+
+static void context_enter(struct wined3d_context *context)
+{
+    TRACE("Entering context %p, level %u.\n", context, context->level + 1);
+
+    if (!context->level++)
+    {
+        const struct wined3d_context *current_context = context_get_current();
+        HGLRC current_gl = pwglGetCurrentContext();
+
+        if (current_gl && (!current_context || current_context->glCtx != current_gl))
+        {
+            TRACE("Another GL context (%p on device context %p) is already current.\n",
+                    current_gl, pwglGetCurrentDC());
+            context->restore_ctx = current_gl;
+            context->restore_dc = pwglGetCurrentDC();
+        }
+    }
 }
 
 /*****************************************************************************
@@ -1347,10 +1377,13 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
     list_init(&ret->fbo_list);
     list_init(&ret->fbo_destroy_list);
 
+    context_enter(ret);
+
     /* Set up the context defaults */
     if (!context_set_current(ret))
     {
         ERR("Cannot activate context to set up defaults\n");
+        context_release(ret);
         goto out;
     }
 
@@ -1446,8 +1479,6 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
     LEAVE_GL();
 
     This->frag_pipe->enable_extension((IWineD3DDevice *) This, TRUE);
-
-    ++ret->level;
 
     return ret;
 
@@ -2078,9 +2109,7 @@ struct wined3d_context *context_acquire(IWineD3DDeviceImpl *This, IWineD3DSurfac
     TRACE("(%p): Selecting context for render target %p, thread %d\n", This, target, tid);
 
     context = FindContext(This, target, tid);
-    ++context->level;
-    TRACE("Found context %p, level %u.\n", context, context->level);
-
+    context_enter(context);
     if (!context->valid) return context;
 
     gl_info = context->gl_info;
@@ -2102,6 +2131,15 @@ struct wined3d_context *context_acquire(IWineD3DDeviceImpl *This, IWineD3DSurfac
             memset(context->pshader_const_dirty, 1,
                    sizeof(*context->pshader_const_dirty) * This->d3d_pshader_constantF);
             This->highest_dirty_ps_const = This->d3d_pshader_constantF;
+        }
+    }
+    else if (context->restore_ctx)
+    {
+        if (!pwglMakeCurrent(context->hdc, context->glCtx))
+        {
+            DWORD err = GetLastError();
+            ERR("Failed to make GL context %p current on device context %p, last error %#x.\n",
+                    context->hdc, context->glCtx, err);
         }
     }
 
