@@ -127,6 +127,7 @@ my %private_idl_headers = (
     "opnrst.idl" => 1,
     "rstbas.idl" => 1,
     "rstinf.idl" => 1,
+    "rstloc.idl" => 1,
     "sesprp.idl" => 1,
     "vmrender.idl" => 1,
     "wine/wined3d.idl" => 1,
