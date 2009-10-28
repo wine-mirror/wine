@@ -169,12 +169,10 @@ static HRESULT deleteStreamProperty(
   ULONG         foundPropertyIndexToDelete,
   StgProperty   propertyToDelete);
 
-static HRESULT adjustPropertyChain(
+static HRESULT removeFromTree(
   StorageImpl *This,
-  StgProperty   propertyToDelete,
-  StgProperty   parentProperty,
-  ULONG         parentPropertyId,
-  INT         typeOfRelation);
+  ULONG         parentStorageIndex,
+  ULONG         deletedIndex);
 
 /***********************************************************************
  * Declaration of the functions used to manipulate StgProperty
@@ -1755,10 +1753,7 @@ static HRESULT WINAPI StorageImpl_DestroyElement(
 
   HRESULT           hr = S_OK;
   StgProperty       propertyToDelete;
-  StgProperty       parentProperty;
   ULONG             foundPropertyIndexToDelete;
-  ULONG             typeOfRelation;
-  ULONG             parentPropertyId = 0;
 
   TRACE("(%p, %s)\n",
 	iface, debugstr_w(pwcsName));
@@ -1779,15 +1774,6 @@ static HRESULT WINAPI StorageImpl_DestroyElement(
   {
     return STG_E_FILENOTFOUND;
   }
-
-  /*
-   * Find the property that links to the one we want to delete.
-   */
-  hr = findTreeParent(This->base.ancestorStorage, This->base.rootPropertySetIndex,
-      pwcsName, &parentProperty, &parentPropertyId, &typeOfRelation);
-
-  if (hr != S_OK)
-    return hr;
 
   if ( propertyToDelete.propertyType == PROPTYPE_STORAGE )
   {
@@ -1810,12 +1796,10 @@ static HRESULT WINAPI StorageImpl_DestroyElement(
   /*
    * Adjust the property chain
    */
-  hr = adjustPropertyChain(
-        This,
-        propertyToDelete,
-        parentProperty,
-        parentPropertyId,
-        typeOfRelation);
+  hr = removeFromTree(
+        This->base.ancestorStorage,
+        This->base.rootPropertySetIndex,
+        foundPropertyIndexToDelete);
 
   /*
    * Invalidate the property by zeroing its name member.
@@ -2018,18 +2002,31 @@ static void setPropertyLink(StgProperty *property, ULONG relation, ULONG new_tar
  *
  * Internal Method
  *
- * This method takes the previous and the next property link of a property
- * to be deleted and find them a place in the Storage.
+ * This method removes a directory entry from its parent storage tree without
+ * freeing any resources attached to it.
  */
-static HRESULT adjustPropertyChain(
+static HRESULT removeFromTree(
   StorageImpl *This,
-  StgProperty   propertyToDelete,
-  StgProperty   parentProperty,
-  ULONG         parentPropertyId,
-  INT         typeOfRelation)
+  ULONG         parentStorageIndex,
+  ULONG         deletedIndex)
 {
   HRESULT hr                     = S_OK;
   BOOL  res                    = TRUE;
+  StgProperty   propertyToDelete;
+  StgProperty   parentProperty;
+  ULONG parentPropertyId;
+  ULONG typeOfRelation;
+
+  res = StorageImpl_ReadProperty(This, deletedIndex, &propertyToDelete);
+
+  /*
+   * Find the property that links to the one we want to delete.
+   */
+  hr = findTreeParent(This, parentStorageIndex, propertyToDelete.name,
+    &parentProperty, &parentPropertyId, &typeOfRelation);
+
+  if (hr != S_OK)
+    return hr;
 
   if (propertyToDelete.leftChild != PROPERTY_NULL)
   {
