@@ -35,6 +35,8 @@
 
 #include "wine/test.h"
 
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+
 static void test_dcinfo(void)
 {
     IDCInfo *info;
@@ -1111,6 +1113,47 @@ static void test_converttobyrefwstr(void)
     IDataConvert_Release(convert);
 }
 
+static void test_converttoguid(void)
+{
+    IDataConvert *convert;
+    HRESULT hr;
+    GUID dst;
+    BYTE src[20];
+    DBSTATUS dst_status;
+    DBLENGTH dst_len;
+
+    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
+    if(FAILED(hr))
+    {
+        win_skip("Unable to load oledb conversion library\n");
+        return;
+    }
+
+    dst = IID_IDCInfo;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_EMPTY, DBTYPE_GUID, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(GUID), "got %d\n", dst_len);
+    ok(IsEqualGUID(&dst, &GUID_NULL), "didn't get GUID_NULL\n");
+
+    dst = IID_IDCInfo;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_NULL, DBTYPE_GUID, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_E_BADACCESSOR, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(GUID), "got %d\n", dst_len);
+    ok(IsEqualGUID(&dst, &IID_IDCInfo), "dst has changed\n");
+
+    dst = IID_IDCInfo;
+    memcpy(src, &IID_IDataConvert, sizeof(GUID));
+    hr = IDataConvert_DataConvert(convert, DBTYPE_GUID, DBTYPE_GUID, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(GUID), "got %d\n", dst_len);
+    ok(IsEqualGUID(&dst, &IID_IDataConvert), "didn't get IID_IDataConvert\n");
+
+    IDataConvert_Release(convert);
+}
+
 static void test_converttofiletime(void)
 {
     IDataConvert *convert;
@@ -1150,6 +1193,7 @@ START_TEST(convert)
     test_converttobstr();
     test_converttowstr();
     test_converttobyrefwstr();
+    test_converttoguid();
     test_converttofiletime();
     OleUninitialize();
 }

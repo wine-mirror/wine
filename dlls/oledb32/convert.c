@@ -130,6 +130,8 @@ static int get_length(DBTYPE type)
         return sizeof(BSTR);
     case DBTYPE_FILETIME:
         return sizeof(FILETIME);
+    case DBTYPE_GUID:
+        return sizeof(GUID);
     case DBTYPE_WSTR:
     case DBTYPE_BYREF | DBTYPE_WSTR:
         return 0;
@@ -291,6 +293,18 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_EMPTY:       d->dwLowDateTime = d->dwHighDateTime = 0; hr = S_OK;    break;
         case DBTYPE_FILETIME:    *d = *(FILETIME*)src; hr = S_OK;                        break;
         default: FIXME("Unimplemented conversion %04x -> FILETIME\n", src_type); return E_NOTIMPL;
+        }
+        break;
+    }
+
+    case DBTYPE_GUID:
+    {
+        GUID *d = dst;
+        switch(src_type)
+        {
+        case DBTYPE_EMPTY:       *d = GUID_NULL; hr = S_OK; break;
+        case DBTYPE_GUID:        *d = *(GUID*)src; hr = S_OK; break;
+        default: FIXME("Unimplemented conversion %04x -> GUID\n", src_type); return E_NOTIMPL;
         }
         break;
     }
