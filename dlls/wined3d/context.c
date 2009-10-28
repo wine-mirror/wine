@@ -659,9 +659,15 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
     struct wined3d_occlusion_query *occlusion_query;
     struct wined3d_event_query *event_query;
     struct fbo_entry *entry, *entry2;
+    HGLRC restore_ctx;
+    HDC restore_dc;
+
+    restore_ctx = pwglGetCurrentContext();
+    restore_dc = pwglGetCurrentDC();
 
     context_validate(context);
-    if (context->valid) pwglMakeCurrent(context->hdc, context->glCtx);
+    if (context->valid && restore_ctx != context->glCtx) pwglMakeCurrent(context->hdc, context->glCtx);
+    else restore_ctx = NULL;
 
     ENTER_GL();
 
@@ -727,7 +733,16 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
     HeapFree(GetProcessHeap(), 0, context->free_occlusion_queries);
     HeapFree(GetProcessHeap(), 0, context->free_event_queries);
 
-    if (pwglGetCurrentContext() && !pwglMakeCurrent(NULL, NULL))
+    if (restore_ctx)
+    {
+        if (!pwglMakeCurrent(restore_dc, restore_ctx))
+        {
+            DWORD err = GetLastError();
+            ERR("Failed to restore GL context %p on device context %p, last error %#x.\n",
+                    restore_ctx, restore_dc, err);
+        }
+    }
+    else if (pwglGetCurrentContext() && !pwglMakeCurrent(NULL, NULL))
     {
         ERR("Failed to disable GL context.\n");
     }
@@ -1511,12 +1526,8 @@ void DestroyContext(IWineD3DDeviceImpl *This, struct wined3d_context *context)
     if (context->tid == GetCurrentThreadId() || !context->current)
     {
         context_destroy_gl_resources(context);
+        TlsSetValue(wined3d_context_tls_idx, NULL);
         destroy = TRUE;
-
-        if (!context_set_current(NULL))
-        {
-            ERR("Failed to clear current D3D context.\n");
-        }
     }
     else
     {
