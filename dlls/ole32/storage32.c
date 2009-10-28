@@ -3102,6 +3102,80 @@ HRESULT StorageImpl_WriteRawDirEntry(StorageImpl *This, ULONG index, const BYTE 
 }
 
 /******************************************************************************
+ *      UpdateRawDirEntry
+ *
+ * Update raw directory entry data from the fields in newData.
+ *
+ * buffer must be PROPSET_BLOCK_SIZE bytes long.
+ */
+void UpdateRawDirEntry(BYTE *buffer, const StgProperty *newData)
+{
+  memset(buffer, 0, PROPSET_BLOCK_SIZE);
+
+  memcpy(
+    buffer + OFFSET_PS_NAME,
+    newData->name,
+    PROPERTY_NAME_BUFFER_LEN );
+
+  memcpy(buffer + OFFSET_PS_PROPERTYTYPE, &newData->propertyType, 1);
+
+  StorageUtl_WriteWord(
+    buffer,
+      OFFSET_PS_NAMELENGTH,
+      newData->sizeOfNameString);
+
+  StorageUtl_WriteDWord(
+    buffer,
+      OFFSET_PS_LEFTCHILD,
+      newData->leftChild);
+
+  StorageUtl_WriteDWord(
+    buffer,
+      OFFSET_PS_RIGHTCHILD,
+      newData->rightChild);
+
+  StorageUtl_WriteDWord(
+    buffer,
+      OFFSET_PS_DIRPROP,
+      newData->dirProperty);
+
+  StorageUtl_WriteGUID(
+    buffer,
+      OFFSET_PS_GUID,
+      &newData->propertyUniqueID);
+
+  StorageUtl_WriteDWord(
+    buffer,
+      OFFSET_PS_CTIMELOW,
+      newData->ctime.dwLowDateTime);
+
+  StorageUtl_WriteDWord(
+    buffer,
+      OFFSET_PS_CTIMEHIGH,
+      newData->ctime.dwHighDateTime);
+
+  StorageUtl_WriteDWord(
+    buffer,
+      OFFSET_PS_MTIMELOW,
+      newData->mtime.dwLowDateTime);
+
+  StorageUtl_WriteDWord(
+    buffer,
+      OFFSET_PS_MTIMEHIGH,
+      newData->ctime.dwHighDateTime);
+
+  StorageUtl_WriteDWord(
+    buffer,
+      OFFSET_PS_STARTBLOCK,
+      newData->startingBlock);
+
+  StorageUtl_WriteDWord(
+    buffer,
+      OFFSET_PS_SIZE,
+      newData->size.u.LowPart);
+}
+
+/******************************************************************************
  *      Storage32Impl_ReadProperty
  *
  * This method will read the specified property from the property chain.
@@ -3203,69 +3277,7 @@ BOOL StorageImpl_WriteProperty(
   BYTE           currentProperty[PROPSET_BLOCK_SIZE];
   HRESULT        writeRes;
 
-  memset(currentProperty, 0, PROPSET_BLOCK_SIZE);
-
-  memcpy(
-    currentProperty + OFFSET_PS_NAME,
-    buffer->name,
-    PROPERTY_NAME_BUFFER_LEN );
-
-  memcpy(currentProperty + OFFSET_PS_PROPERTYTYPE, &buffer->propertyType, 1);
-
-  StorageUtl_WriteWord(
-    currentProperty,
-      OFFSET_PS_NAMELENGTH,
-      buffer->sizeOfNameString);
-
-  StorageUtl_WriteDWord(
-    currentProperty,
-      OFFSET_PS_LEFTCHILD,
-      buffer->leftChild);
-
-  StorageUtl_WriteDWord(
-    currentProperty,
-      OFFSET_PS_RIGHTCHILD,
-      buffer->rightChild);
-
-  StorageUtl_WriteDWord(
-    currentProperty,
-      OFFSET_PS_DIRPROP,
-      buffer->dirProperty);
-
-  StorageUtl_WriteGUID(
-    currentProperty,
-      OFFSET_PS_GUID,
-      &buffer->propertyUniqueID);
-
-  StorageUtl_WriteDWord(
-    currentProperty,
-      OFFSET_PS_CTIMELOW,
-      buffer->ctime.dwLowDateTime);
-
-  StorageUtl_WriteDWord(
-    currentProperty,
-      OFFSET_PS_CTIMEHIGH,
-      buffer->ctime.dwHighDateTime);
-
-  StorageUtl_WriteDWord(
-    currentProperty,
-      OFFSET_PS_MTIMELOW,
-      buffer->mtime.dwLowDateTime);
-
-  StorageUtl_WriteDWord(
-    currentProperty,
-      OFFSET_PS_MTIMEHIGH,
-      buffer->ctime.dwHighDateTime);
-
-  StorageUtl_WriteDWord(
-    currentProperty,
-      OFFSET_PS_STARTBLOCK,
-      buffer->startingBlock);
-
-  StorageUtl_WriteDWord(
-    currentProperty,
-      OFFSET_PS_SIZE,
-      buffer->size.u.LowPart);
+  UpdateRawDirEntry(currentProperty, buffer);
 
   writeRes = StorageImpl_WriteRawDirEntry(This, index, currentProperty);
   return SUCCEEDED(writeRes) ? TRUE : FALSE;

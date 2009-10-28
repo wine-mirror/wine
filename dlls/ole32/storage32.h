@@ -295,6 +295,10 @@ HRESULT StorageImpl_ReadRawDirEntry(
             ULONG index,
             BYTE *buffer);
 
+void UpdateRawDirEntry(
+    BYTE *buffer,
+    const StgProperty *newData);
+
 HRESULT StorageImpl_WriteRawDirEntry(
             StorageImpl *This,
             ULONG index,
