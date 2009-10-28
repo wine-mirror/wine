@@ -83,10 +83,11 @@ void basetexture_unload(IWineD3DBaseTexture *iface)
 {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    struct wined3d_context *context = NULL;
 
-    if(This->baseTexture.texture_rgb.name ||
-       This->baseTexture.texture_srgb.name) {
-        ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
+    if (This->baseTexture.texture_rgb.name || This->baseTexture.texture_srgb.name)
+    {
+        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
     }
 
     if(This->baseTexture.texture_rgb.name) {
@@ -95,6 +96,9 @@ void basetexture_unload(IWineD3DBaseTexture *iface)
     if(This->baseTexture.texture_srgb.name) {
         gltexture_delete(&This->baseTexture.texture_srgb);
     }
+
+    if (context) context_release(context);
+
     This->baseTexture.texture_rgb.dirty = TRUE;
     This->baseTexture.texture_srgb.dirty = TRUE;
 }
@@ -161,7 +165,8 @@ HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTexture *iface, WINED3DT
        * Or should we delay the applying until the texture is used for drawing? For now, apply
        * immediately.
        */
-      ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
+      struct wined3d_context *context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+
       ENTER_GL();
       glBindTexture(textureDimensions, This->baseTexture.texture_rgb.name);
       checkGLcall("glBindTexture");
@@ -183,6 +188,8 @@ HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTexture *iface, WINED3DT
               checkGLcall("glTexParameteri(textureDimensions, GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST)");
       }
       LEAVE_GL();
+
+      context_release(context);
   }
   This->baseTexture.filterType = FilterType;
   TRACE("(%p) :\n", This);

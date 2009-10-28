@@ -34,6 +34,7 @@ static void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3
     /* Override the IWineD3DResource Preload method. */
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    struct wined3d_context *context = NULL;
     unsigned int i, j;
     BOOL srgb_mode;
     BOOL *dirty;
@@ -65,9 +66,9 @@ static void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3
      * activated at the beginning of drawPrimitive. */
     if (!device->isInDraw)
     {
-        /* No danger of recursive calls, ActivateContext sets isInDraw to true
+        /* No danger of recursive calls, context_acquire() sets isInDraw to true
          * when loading offscreen render targets into their texture. */
-        ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
     }
 
     if (This->resource.format_desc->format == WINED3DFMT_P8_UINT
@@ -109,6 +110,8 @@ static void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3
 
     /* No longer dirty. */
     *dirty = FALSE;
+
+    if (context) context_release(context);
 }
 
 static void cubetexture_cleanup(IWineD3DCubeTextureImpl *This)

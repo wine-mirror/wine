@@ -4427,15 +4427,22 @@ static void shader_arb_destroy(IWineD3DBaseShader *iface) {
         UINT i;
 
         if(!shader_data) return; /* This can happen if a shader was never compiled */
-        ENTER_GL();
 
-        if(shader_data->num_gl_shaders) ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
+        if (shader_data->num_gl_shaders)
+        {
+            struct wined3d_context *context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
 
-        for(i = 0; i < shader_data->num_gl_shaders; i++) {
-            GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId));
-            checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId))");
+            ENTER_GL();
+            for (i = 0; i < shader_data->num_gl_shaders; ++i)
+            {
+                GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId));
+                checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId))");
+            }
+            LEAVE_GL();
+
+            context_release(context);
         }
-        LEAVE_GL();
+
         HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders);
         HeapFree(GetProcessHeap(), 0, shader_data);
         This->baseShader.backend_data = NULL;
@@ -4445,15 +4452,22 @@ static void shader_arb_destroy(IWineD3DBaseShader *iface) {
         UINT i;
 
         if(!shader_data) return; /* This can happen if a shader was never compiled */
-        ENTER_GL();
 
-        if(shader_data->num_gl_shaders) ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
+        if (shader_data->num_gl_shaders)
+        {
+            struct wined3d_context *context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
 
-        for(i = 0; i < shader_data->num_gl_shaders; i++) {
-            GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId));
-            checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId))");
+            ENTER_GL();
+            for (i = 0; i < shader_data->num_gl_shaders; ++i)
+            {
+                GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId));
+                checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId))");
+            }
+            LEAVE_GL();
+
+            context_release(context);
         }
-        LEAVE_GL();
+
         HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders);
         HeapFree(GetProcessHeap(), 0, shader_data);
         This->baseShader.backend_data = NULL;

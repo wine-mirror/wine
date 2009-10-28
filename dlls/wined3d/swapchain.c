@@ -97,11 +97,11 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
 
 static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion, DWORD dwFlags) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
+    struct wined3d_context *context;
     unsigned int sync;
     int retval;
 
-
-    ActivateContext(This->wineD3DDevice, This->backBuffer[0], CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(This->wineD3DDevice, This->backBuffer[0], CTXUSAGE_RESOURCELOAD);
 
     /* Render the cursor onto the back buffer, using our nifty directdraw blitting code :-) */
     if(This->wineD3DDevice->bCursorVisible && This->wineD3DDevice->cursorTexture) {
@@ -319,6 +319,8 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
                 FIXME("Unknown presentation interval %08x\n", This->presentParms.PresentationInterval);
         }
     }
+
+    context_release(context);
 
     TRACE("returning\n");
     return WINED3D_OK;

@@ -1059,6 +1059,7 @@ struct wined3d_context
     char                    *vshader_const_dirty, *pshader_const_dirty;
 
     /* The actual opengl context */
+    UINT level;
     HGLRC                   glCtx;
     HWND                    win_handle;
     HDC                     hdc;
@@ -1161,11 +1162,11 @@ typedef enum ContextUsage {
     CTXUSAGE_CLEAR              = 4,    /* Drawable and states are set up for clearing */
 } ContextUsage;
 
-struct wined3d_context *ActivateContext(IWineD3DDeviceImpl *This,
-        IWineD3DSurface *target, enum ContextUsage usage) DECLSPEC_HIDDEN;
 struct wined3d_context *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win,
         BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *pPresentParms) DECLSPEC_HIDDEN;
 void DestroyContext(IWineD3DDeviceImpl *This, struct wined3d_context *context) DECLSPEC_HIDDEN;
+struct wined3d_context *context_acquire(IWineD3DDeviceImpl *This,
+        IWineD3DSurface *target, enum ContextUsage usage) DECLSPEC_HIDDEN;
 void context_alloc_event_query(struct wined3d_context *context,
         struct wined3d_event_query *query) DECLSPEC_HIDDEN;
 void context_alloc_occlusion_query(struct wined3d_context *context,
@@ -1181,6 +1182,7 @@ void context_free_event_query(struct wined3d_event_query *query) DECLSPEC_HIDDEN
 void context_free_occlusion_query(struct wined3d_occlusion_query *query) DECLSPEC_HIDDEN;
 struct wined3d_context *context_get_current(void) DECLSPEC_HIDDEN;
 DWORD context_get_tls_idx(void) DECLSPEC_HIDDEN;
+void context_release(struct wined3d_context *context) DECLSPEC_HIDDEN;
 BOOL context_set_current(struct wined3d_context *ctx) DECLSPEC_HIDDEN;
 void context_set_tls_idx(DWORD idx) DECLSPEC_HIDDEN;
 

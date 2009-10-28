@@ -605,8 +605,9 @@ static void STDMETHODCALLTYPE buffer_UnLoad(IWineD3DBuffer *iface)
     if (This->buffer_object)
     {
         IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+        struct wined3d_context *context;
 
-        ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
 
         /* Download the buffer, but don't permanently enable double buffering */
         if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER))
@@ -621,6 +622,8 @@ static void STDMETHODCALLTYPE buffer_UnLoad(IWineD3DBuffer *iface)
         LEAVE_GL();
         This->buffer_object = 0;
         This->flags |= WINED3D_BUFFER_CREATEBO; /* Recreate the buffer object next load */
+
+        context_release(context);
     }
 }
 
@@ -688,13 +691,14 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
     struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     UINT start = 0, end = 0, vertices;
+    struct wined3d_context *context;
     BOOL decl_changed = FALSE;
     unsigned int i, j;
     BYTE *data;
 
     TRACE("iface %p\n", iface);
 
-    ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
 
     if (!This->buffer_object)
     {
@@ -706,6 +710,7 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
         }
         else
         {
+            context_release(context);
             return; /* Not doing any conversion */
         }
     }
@@ -717,7 +722,11 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
         This->flags |= WINED3D_BUFFER_HASDESC;
     }
 
-    if (!decl_changed && !(This->flags & WINED3D_BUFFER_HASDESC && This->flags & WINED3D_BUFFER_DIRTY)) return;
+    if (!decl_changed && !(This->flags & WINED3D_BUFFER_HASDESC && This->flags & WINED3D_BUFFER_DIRTY))
+    {
+        context_release(context);
+        return;
+    }
 
     /* If applications change the declaration over and over, reconverting all the time is a huge
      * performance hit. So count the declaration changes and release the VBO if there are too many
@@ -745,7 +754,7 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
              * rarely
              */
             IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
-
+            context_release(context);
             return;
         }
         buffer_check_buffer_object_size(This);
@@ -800,7 +809,11 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
         TRACE("No conversion needed\n");
 
         /* Nothing to do because we locked directly into the vbo */
-        if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER)) return;
+        if (!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER))
+        {
+            context_release(context);
+            return;
+        }
 
         ENTER_GL();
         GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
@@ -808,6 +821,8 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
         GL_EXTCALL(glBufferSubDataARB(This->buffer_type_hint, start, end-start, This->resource.allocatedMemory + start));
         checkGLcall("glBufferSubDataARB");
         LEAVE_GL();
+
+        context_release(context);
         return;
     }
 
@@ -901,6 +916,7 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
     }
 
     HeapFree(GetProcessHeap(), 0, data);
+    context_release(context);
 }
 
 static WINED3DRESOURCETYPE STDMETHODCALLTYPE buffer_GetType(IWineD3DBuffer *iface)
@@ -944,17 +960,19 @@ static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, 
         if(count == 1)
         {
             IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+            struct wined3d_context *context;
 
             if(This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
             {
                 IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_INDEXBUFFER);
             }
 
-            ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
+            context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
             ENTER_GL();
             GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
             This->resource.allocatedMemory = GL_EXTCALL(glMapBufferARB(This->buffer_type_hint, GL_READ_WRITE_ARB));
             LEAVE_GL();
+            context_release(context);
         }
     }
     else
@@ -996,17 +1014,19 @@ static HRESULT STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
     if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER) && This->buffer_object)
     {
         IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+        struct wined3d_context *context;
 
         if(This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
         {
             IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_INDEXBUFFER);
         }
 
-        ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
         GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
         GL_EXTCALL(glUnmapBufferARB(This->buffer_type_hint));
         LEAVE_GL();
+        context_release(context);
 
         This->resource.allocatedMemory = NULL;
     }

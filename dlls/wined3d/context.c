@@ -831,6 +831,21 @@ BOOL context_set_current(struct wined3d_context *ctx)
     return TlsSetValue(wined3d_context_tls_idx, ctx);
 }
 
+void context_release(struct wined3d_context *context)
+{
+    TRACE("Releasing context %p, level %u.\n", context, context->level);
+
+    if (WARN_ON(d3d))
+    {
+        if (!context->level)
+            WARN("Context %p is not active.\n", context);
+        else if (context != context_get_current())
+            WARN("Context %p is not the current context.\n", context);
+    }
+
+    --context->level;
+}
+
 /*****************************************************************************
  * Context_MarkStateDirty
  *
@@ -1954,14 +1969,14 @@ retry:
             BOOL oldInDraw = This->isInDraw;
 
             /* surface_internal_preload() requires a context to load the
-             * texture, so it will call ActivateContext. Set isInDraw to true
+             * texture, so it will call context_acquire(). Set isInDraw to true
              * to signal surface_internal_preload() that it has a context. */
 
             /* FIXME: This is just broken. There's no guarantee whatsoever
              * that the currently active context, if any, is appropriate for
              * reading back the render target. We should probably call
              * context_set_current(context) here and then rely on
-             * ActivateContext() doing the right thing. */
+             * context_acquire() doing the right thing. */
             This->isInDraw = TRUE;
 
             /* Read the back buffer of the old drawable into the destination texture. */
@@ -2035,7 +2050,7 @@ static void context_apply_draw_buffer(struct wined3d_context *context, BOOL blit
 }
 
 /*****************************************************************************
- * ActivateContext
+ * context_acquire
  *
  * Finds a rendering context and drawable matching the device and render
  * target for the current thread, activates them and puts them into the
@@ -2047,7 +2062,7 @@ static void context_apply_draw_buffer(struct wined3d_context *context, BOOL blit
  *  usage: Prepares the context for blitting, drawing or other actions
  *
  *****************************************************************************/
-struct wined3d_context *ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, enum ContextUsage usage)
+struct wined3d_context *context_acquire(IWineD3DDeviceImpl *This, IWineD3DSurface *target, enum ContextUsage usage)
 {
     struct wined3d_context *current_context = context_get_current();
     DWORD                         tid = GetCurrentThreadId();
@@ -2060,6 +2075,9 @@ struct wined3d_context *ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurfac
     TRACE("(%p): Selecting context for render target %p, thread %d\n", This, target, tid);
 
     context = FindContext(This, target, tid);
+    ++context->level;
+    TRACE("Found context %p, level %u.\n", context, context->level);
+
     if (!context->valid) return context;
 
     gl_info = context->gl_info;

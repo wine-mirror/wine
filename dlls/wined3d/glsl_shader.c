@@ -4374,10 +4374,10 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)This->baseShader.device;
     struct shader_glsl_priv *priv = device->shader_priv;
-    const struct wined3d_context *context;
     const struct wined3d_gl_info *gl_info;
     IWineD3DPixelShaderImpl *ps = NULL;
     IWineD3DVertexShaderImpl *vs = NULL;
+    struct wined3d_context *context;
 
     /* Note: Do not use QueryInterface here to find out which shader type this is because this code
      * can be called from IWineD3DBaseShader::Release
@@ -4395,7 +4395,7 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
             return;
         }
 
-        context = ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
         gl_info = context->gl_info;
 
         if (priv->glsl_program && (IWineD3DBaseShader *)priv->glsl_program->pshader == iface)
@@ -4415,7 +4415,7 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
             return;
         }
 
-        context = ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
         gl_info = context->gl_info;
 
         if (priv->glsl_program && (IWineD3DBaseShader *)priv->glsl_program->vshader == iface)
@@ -4474,6 +4474,8 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
         HeapFree(GetProcessHeap(), 0, shader_data);
         vs->baseShader.backend_data = NULL;
     }
+
+    context_release(context);
 }
 
 static int glsl_program_key_compare(const void *key, const struct wine_rb_entry *entry)

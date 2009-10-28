@@ -34,16 +34,14 @@ static void volumetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINE
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    struct wined3d_context *context = NULL;
     BOOL srgb_mode = This->baseTexture.is_srgb;
     BOOL srgb_was_toggled = FALSE;
     unsigned int i;
 
     TRACE("(%p) : About to load texture.\n", This);
 
-    if (!device->isInDraw)
-    {
-        ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
-    }
+    if (!device->isInDraw) context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
     else if (GL_SUPPORT(EXT_TEXTURE_SRGB) && This->baseTexture.bindCount > 0)
     {
         srgb_mode = device->stateBlock->samplerState[This->baseTexture.sampler][WINED3DSAMP_SRGBTEXTURE];
@@ -72,6 +70,8 @@ static void volumetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINE
     {
         TRACE("(%p) Texture not dirty, nothing to do.\n", iface);
     }
+
+    if (context) context_release(context);
 
     /* No longer dirty */
     This->baseTexture.texture_rgb.dirty = FALSE;

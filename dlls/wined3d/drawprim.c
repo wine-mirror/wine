@@ -596,10 +596,10 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     /* Signals other modules that a drawing is in progress and the stateblock finalized */
     This->isInDraw = TRUE;
 
-    context = ActivateContext(This, This->render_targets[0], CTXUSAGE_DRAWPRIM);
+    context = context_acquire(This, This->render_targets[0], CTXUSAGE_DRAWPRIM);
 
     if (This->stencilBufferTarget) {
-        /* Note that this depends on the ActivateContext call above to set
+        /* Note that this depends on the context_acquire() call above to set
          * This->render_offscreen properly. We don't currently take the
          * Z-compare function into account, but we could skip loading the
          * depthstencil for D3DCMP_NEVER and D3DCMP_ALWAYS as well. Also note
@@ -683,6 +683,8 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
 
     /* Finished updating the screen, restore lock */
     LEAVE_GL();
+    context_release(context);
+
     TRACE("Done all gl drawing\n");
 
     /* Diagnostics */
@@ -766,7 +768,7 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     float max_x = 0.0f, max_y = 0.0f, max_z = 0.0f, neg_z = 0.0f;
     struct wined3d_stream_info stream_info;
     struct wined3d_stream_info_element *e;
-    const struct wined3d_context *context;
+    struct wined3d_context *context;
     const BYTE *data;
     const WINED3DRECTPATCH_INFO *info = &patch->RectPatchInfo;
     DWORD vtxStride;
@@ -776,7 +778,7 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     /* Simply activate the context for blitting. This disables all the things we don't want and
      * takes care of dirtifying. Dirtifying is preferred over pushing / popping, since drawing the
      * patch (as opposed to normal draws) will most likely need different changes anyway. */
-    context = ActivateContext(This, NULL, CTXUSAGE_BLIT);
+    context = context_acquire(This, NULL, CTXUSAGE_BLIT);
 
     /* First, locate the position data. This is provided in a vertex buffer in the stateblock.
      * Beware of vbos
@@ -959,11 +961,13 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
         LEAVE_GL();
         ERR("Feedback failed. Expected %d elements back\n", buffer_size);
         HeapFree(GetProcessHeap(), 0, feedbuffer);
+        context_release(context);
         return WINED3DERR_DRIVERINTERNALERROR;
     } else if(i != buffer_size) {
         LEAVE_GL();
         ERR("Unexpected amount of elements returned. Expected %d, got %d\n", buffer_size, i);
         HeapFree(GetProcessHeap(), 0, feedbuffer);
+        context_release(context);
         return WINED3DERR_DRIVERINTERNALERROR;
     } else {
         TRACE("Got %d elements as expected\n", i);
@@ -1077,6 +1081,8 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     glDisable(GL_MAP2_TEXTURE_COORD_4);
     checkGLcall("glDisable vertex attrib generation");
     LEAVE_GL();
+
+    context_release(context);
 
     HeapFree(GetProcessHeap(), 0, feedbuffer);
 
