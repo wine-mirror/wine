@@ -3046,6 +3046,32 @@ static void StorageImpl_SaveFileHeader(
 }
 
 /******************************************************************************
+ *      StorageImpl_ReadRawDirEntry
+ *
+ * This method will read the raw data from a directory entry in the file.
+ *
+ * buffer must be PROPSET_BLOCK_SIZE bytes long.
+ */
+HRESULT StorageImpl_ReadRawDirEntry(StorageImpl *This, ULONG index, BYTE *buffer)
+{
+  ULARGE_INTEGER offset;
+  HRESULT hr;
+  ULONG bytesRead;
+
+  offset.u.HighPart = 0;
+  offset.u.LowPart  = index * PROPSET_BLOCK_SIZE;
+
+  hr = BlockChainStream_ReadAt(
+                    This->rootBlockChain,
+                    offset,
+                    PROPSET_BLOCK_SIZE,
+                    buffer,
+                    &bytesRead);
+
+  return hr;
+}
+
+/******************************************************************************
  *      Storage32Impl_ReadProperty
  *
  * This method will read the specified property from the property chain.
@@ -3056,19 +3082,9 @@ BOOL StorageImpl_ReadProperty(
   StgProperty*   buffer)
 {
   BYTE           currentProperty[PROPSET_BLOCK_SIZE];
-  ULARGE_INTEGER offsetInPropSet;
   HRESULT        readRes;
-  ULONG          bytesRead;
 
-  offsetInPropSet.u.HighPart = 0;
-  offsetInPropSet.u.LowPart  = index * PROPSET_BLOCK_SIZE;
-
-  readRes = BlockChainStream_ReadAt(
-                    This->rootBlockChain,
-                    offsetInPropSet,
-                    PROPSET_BLOCK_SIZE,
-                    currentProperty,
-                    &bytesRead);
+  readRes = StorageImpl_ReadRawDirEntry(This, index, currentProperty);
 
   if (SUCCEEDED(readRes))
   {
