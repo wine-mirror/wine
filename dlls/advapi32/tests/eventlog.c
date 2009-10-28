@@ -158,25 +158,20 @@ static void test_count(void)
     SetLastError(0xdeadbeef);
     ret = GetNumberOfEventLogRecords(NULL, NULL);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     count = 0xdeadbeef;
     ret = GetNumberOfEventLogRecords(NULL, &count);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
     ok(count == 0xdeadbeef, "Expected count to stay unchanged\n");
-    }
 
     handle = OpenEventLogA(NULL, "Application");
 
     SetLastError(0xdeadbeef);
     ret = GetNumberOfEventLogRecords(handle, NULL);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     count = 0xdeadbeef;

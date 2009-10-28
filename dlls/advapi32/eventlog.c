@@ -265,7 +265,18 @@ BOOL WINAPI GetNumberOfEventLogRecords( HANDLE hEventLog, PDWORD NumberOfRecords
 {
     FIXME("(%p,%p) stub\n", hEventLog, NumberOfRecords);
 
-    if (!NumberOfRecords) return FALSE;
+    if (!NumberOfRecords)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!hEventLog)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
     *NumberOfRecords = 0;
 
     return TRUE;
