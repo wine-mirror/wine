@@ -1498,7 +1498,7 @@ static HRESULT findTreeParent(StorageImpl *storage, ULONG storageEntry,
 /*************************************************************************
  * CopyTo (IStorage)
  */
-static HRESULT WINAPI StorageImpl_CopyTo(
+static HRESULT WINAPI StorageBaseImpl_CopyTo(
   IStorage*   iface,
   DWORD       ciidExclude,  /* [in] */
   const IID*  rgiidExclude, /* [size_is][unique][in] */
@@ -2141,7 +2141,7 @@ static const IStorageVtbl Storage32Impl_Vtbl =
     StorageBaseImpl_OpenStream,
     StorageBaseImpl_CreateStorage,
     StorageBaseImpl_OpenStorage,
-    StorageImpl_CopyTo,
+    StorageBaseImpl_CopyTo,
     StorageImpl_MoveElementTo,
     StorageImpl_Commit,
     StorageImpl_Revert,
@@ -3949,7 +3949,7 @@ static const IStorageVtbl Storage32InternalImpl_Vtbl =
     StorageBaseImpl_OpenStream,
     StorageBaseImpl_CreateStorage,
     StorageBaseImpl_OpenStorage,
-    StorageImpl_CopyTo,
+    StorageBaseImpl_CopyTo,
     StorageImpl_MoveElementTo,
     StorageInternalImpl_Commit,
     StorageInternalImpl_Revert,
