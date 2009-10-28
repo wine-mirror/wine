@@ -1725,7 +1725,6 @@ static DWORD CRYPT_ChainQuality(const CertificateChain *chain)
         quality &= ~CHAIN_QUALITY_TRUSTED_ROOT;
     if (IS_TRUST_ERROR_SET(&chain->context.TrustStatus,
      CERT_TRUST_IS_PARTIAL_CHAIN))
-    if (chain->context.TrustStatus.dwErrorStatus & CERT_TRUST_IS_PARTIAL_CHAIN)
         quality &= ~CHAIN_QUALITY_COMPLETE_CHAIN;
     if (IS_TRUST_ERROR_SET(&chain->context.TrustStatus,
      CERT_TRUST_IS_NOT_TIME_VALID | CERT_TRUST_IS_NOT_TIME_NESTED))
