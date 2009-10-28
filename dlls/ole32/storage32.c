@@ -180,8 +180,10 @@ static HRESULT adjustPropertyChain(
  * Declaration of the functions used to manipulate StgProperty
  */
 
-static ULONG getFreeProperty(
-  StorageImpl *storage);
+static HRESULT createDirEntry(
+  StorageImpl *storage,
+  const StgProperty *newData,
+  ULONG *index);
 
 static void updatePropertyChain(
   StorageImpl *storage,
@@ -757,17 +759,9 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
     */
 
     /*
-     * Obtain a free property in the property chain
+     * Save the new property into a new property spot
      */
-    renamedPropertyIndex = getFreeProperty(This->ancestorStorage);
-
-    /*
-     * Save the new property into the new property spot
-     */
-    StorageImpl_WriteProperty(
-      This->ancestorStorage,
-      renamedPropertyIndex,
-      &renamedProperty);
+    createDirEntry(This->ancestorStorage, &renamedProperty, &renamedPropertyIndex);
 
     /*
      * Find a spot in the property chain for our newly created property.
@@ -945,17 +939,9 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
   /*  newStreamProperty.propertyUniqueID */
 
   /*
-   * Get a free property or create a new one
+   * Save the new property into a new property spot
    */
-  newPropertyIndex = getFreeProperty(This->ancestorStorage);
-
-  /*
-   * Save the new property into the new property spot
-   */
-  StorageImpl_WriteProperty(
-    This->ancestorStorage,
-    newPropertyIndex,
-    &newStreamProperty);
+  createDirEntry(This->ancestorStorage, &newStreamProperty, &newPropertyIndex);
 
   /*
    * Find a spot in the property chain for our newly created property.
@@ -1136,17 +1122,9 @@ static HRESULT WINAPI StorageImpl_CreateStorage(
   /*  newStorageProperty.propertyUniqueID */
 
   /*
-   * Obtain a free property in the property chain
+   * Save the new property into a new property spot
    */
-  newPropertyIndex = getFreeProperty(This->base.ancestorStorage);
-
-  /*
-   * Save the new property into the new property spot
-   */
-  StorageImpl_WriteProperty(
-    This->base.ancestorStorage,
-    newPropertyIndex,
-    &newProperty);
+  createDirEntry(This->base.ancestorStorage, &newProperty, &newPropertyIndex);
 
   /*
    * Find a spot in the property chain for our newly created property.
@@ -1175,24 +1153,26 @@ static HRESULT WINAPI StorageImpl_CreateStorage(
  *
  * Internal Method
  *
- * Get a free property or create a new one.
+ * Reserve a directory entry in the file and initialize it.
  */
-static ULONG getFreeProperty(
-  StorageImpl *storage)
+static HRESULT createDirEntry(
+  StorageImpl *storage,
+  const StgProperty *newData,
+  ULONG *index)
 {
   ULONG       currentPropertyIndex = 0;
   ULONG       newPropertyIndex     = PROPERTY_NULL;
-  HRESULT readRes = S_OK;
+  HRESULT hr = S_OK;
   BYTE currentData[PROPSET_BLOCK_SIZE];
   WORD sizeOfNameString;
 
   do
   {
-    readRes = StorageImpl_ReadRawDirEntry(storage->base.ancestorStorage,
-                                          currentPropertyIndex,
-                                          currentData);
+    hr = StorageImpl_ReadRawDirEntry(storage->base.ancestorStorage,
+                                     currentPropertyIndex,
+                                     currentData);
 
-    if (SUCCEEDED(readRes))
+    if (SUCCEEDED(hr))
     {
       StorageUtl_ReadWord(
         currentData,
@@ -1221,7 +1201,7 @@ static ULONG getFreeProperty(
   /*
    * grow the property chain
    */
-  if (!SUCCEEDED(readRes))
+  if (FAILED(hr))
   {
     BYTE           emptyData[PROPSET_BLOCK_SIZE];
     ULARGE_INTEGER newSize;
@@ -1258,7 +1238,7 @@ static ULONG getFreeProperty(
     lastProperty = storage->bigBlockSize / PROPSET_BLOCK_SIZE * blockCount;
 
     for(
-      propertyIndex = newPropertyIndex;
+      propertyIndex = newPropertyIndex + 1;
       propertyIndex < lastProperty;
       propertyIndex++)
     {
@@ -1269,7 +1249,14 @@ static ULONG getFreeProperty(
     }
   }
 
-  return newPropertyIndex;
+  UpdateRawDirEntry(currentData, newData);
+
+  hr = StorageImpl_WriteRawDirEntry(storage, newPropertyIndex, currentData);
+
+  if (SUCCEEDED(hr))
+    *index = newPropertyIndex;
+
+  return hr;
 }
 
 /****************************************************************************
