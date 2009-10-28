@@ -1973,6 +1973,8 @@ static ChainCheck chainCheckNoStore[] = {
 
 /* Wednesday, Oct 1, 2007 */
 static SYSTEMTIME oct2007 = { 2007, 10, 1, 1, 0, 0, 0, 0 };
+/* Wednesday, Oct 28, 2009 */
+static SYSTEMTIME oct2009 = { 2009, 10, 3, 28, 0, 0, 0, 0 };
 
 static void testGetCertChain(void)
 {
@@ -2137,6 +2139,52 @@ static const ChainPolicyCheck basePolicyCheck[] = {
    { 0, TRUST_E_CERT_SIGNATURE, 0, 1, NULL }, NULL, 0 },
  { { sizeof(selfSignedChain) / sizeof(selfSignedChain[0]), selfSignedChain },
    { 0, CERT_E_UNTRUSTEDROOT, 0, 0, NULL }, NULL, 0 },
+};
+
+static const ChainPolicyCheck sslPolicyCheck[] = {
+ { { sizeof(chain0) / sizeof(chain0[0]), chain0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
+ { { sizeof(chain1) / sizeof(chain1[0]), chain1 },
+   { 0, TRUST_E_CERT_SIGNATURE, 0, 0, NULL }, NULL, 0 },
+ { { sizeof(chain2) / sizeof(chain2[0]), chain2 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
+ { { sizeof(chain3) / sizeof(chain3[0]), chain3 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
+ { { sizeof(chain4) / sizeof(chain4[0]), chain4 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 2, NULL }, NULL, 0 },
+ { { sizeof(chain5) / sizeof(chain5[0]), chain5 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
+ { { sizeof(chain6) / sizeof(chain6[0]), chain6 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
+ { { sizeof(chain7) / sizeof(chain7[0]), chain7 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
+ { { sizeof(chain8) / sizeof(chain8[0]), chain8 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 2, NULL }, NULL, 0 },
+ { { sizeof(chain9) / sizeof(chain9[0]), chain9 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, -1, NULL }, NULL, 0 },
+ { { sizeof(chain10) / sizeof(chain10[0]), chain10 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
+ { { sizeof(chain11) / sizeof(chain11[0]), chain11 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
+ { { sizeof(chain12) / sizeof(chain12[0]), chain12 },
+   { 0, TRUST_E_CERT_SIGNATURE, 0, 1, NULL }, NULL, 0 },
+ { { sizeof(selfSignedChain) / sizeof(selfSignedChain[0]), selfSignedChain },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 0, NULL }, NULL, 0 },
+};
+
+static const ChainPolicyCheck sslPolicyCheckWithMatchingNameExpired = {
+ { sizeof(googleChain) / sizeof(googleChain[0]), googleChain },
+ { 0, CERT_E_EXPIRED, 0, 0, NULL}, NULL, 0
+};
+
+static const ChainPolicyCheck sslPolicyCheckWithMatchingName = {
+ { sizeof(googleChain) / sizeof(googleChain[0]), googleChain },
+ { 0, 0, -1, -1, NULL}, NULL, 0
+};
+
+static const ChainPolicyCheck sslPolicyCheckWithoutMatchingName = {
+ { sizeof(iTunesChain) / sizeof(iTunesChain[0]), iTunesChain },
+ { 0, CERT_E_CN_NO_MATCH, 0, 0, NULL}, NULL, 0
 };
 
 static const ChainPolicyCheck authenticodePolicyCheck[] = {
@@ -2312,6 +2360,93 @@ static void checkChainPolicyStatus(LPCSTR policy, const ChainPolicyCheck *check,
     }
 }
 
+static void check_ssl_policy(void)
+{
+    DWORD i;
+    CERT_CHAIN_POLICY_PARA policyPara = { 0 };
+    SSL_EXTRA_CERT_CHAIN_POLICY_PARA sslPolicyPara = { { 0 } };
+    WCHAR winehq[] = { 'w','i','n','e','h','q','.','o','r','g',0 };
+    WCHAR google_dot_com[] = { 'w','w','w','.','g','o','o','g','l','e','.',
+     'c','o','m',0 };
+
+    /* Check ssl policy with no parameter */
+    for (i = 0;
+     i < sizeof(sslPolicyCheck) / sizeof(sslPolicyCheck[0]); i++)
+        checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL, &sslPolicyCheck[i], i,
+         &oct2007, NULL);
+    /* Check again with a policy parameter that specifies nothing */
+    for (i = 0;
+     i < sizeof(sslPolicyCheck) / sizeof(sslPolicyCheck[0]); i++)
+        checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL, &sslPolicyCheck[i], i,
+         &oct2007, &policyPara);
+    /* Check yet again, but specify an empty SSL_EXTRA_CERT_CHAIN_POLICY_PARA
+     * argument.
+     */
+    policyPara.pvExtraPolicyPara = &sslPolicyPara;
+    for (i = 0;
+     i < sizeof(sslPolicyCheck) / sizeof(sslPolicyCheck[0]); i++)
+        checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL, &sslPolicyCheck[i], i,
+         &oct2007, &policyPara);
+    /* And again, but specify the auth type as a client */
+    sslPolicyPara.dwAuthType = AUTHTYPE_CLIENT;
+    for (i = 0;
+     i < sizeof(sslPolicyCheck) / sizeof(sslPolicyCheck[0]); i++)
+        checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL, &sslPolicyCheck[i], i,
+         &oct2007, &policyPara);
+    /* And again, but specify the auth type as a server */
+    sslPolicyPara.dwAuthType = AUTHTYPE_SERVER;
+    for (i = 0;
+     i < sizeof(sslPolicyCheck) / sizeof(sslPolicyCheck[0]); i++)
+        checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL, &sslPolicyCheck[i], i,
+         &oct2007, &policyPara);
+    /* And again authenticating a client, but specify the size of the policy
+     * parameter.
+     */
+    sslPolicyPara.cbSize = sizeof(sslPolicyCheck);
+    sslPolicyPara.dwAuthType = AUTHTYPE_CLIENT;
+    for (i = 0;
+     i < sizeof(sslPolicyCheck) / sizeof(sslPolicyCheck[0]); i++)
+        checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL, &sslPolicyCheck[i], i,
+         &oct2007, &policyPara);
+    /* One more time authenticating a client, but specify winehq.org as the
+     * server name.
+     */
+    sslPolicyPara.pwszServerName = winehq;
+    for (i = 0;
+     i < sizeof(sslPolicyCheck) / sizeof(sslPolicyCheck[0]); i++)
+        checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL, &sslPolicyCheck[i], i,
+         &oct2007, &policyPara);
+    /* And again authenticating a server, still specifying winehq.org as the
+     * server name.
+     */
+    sslPolicyPara.dwAuthType = AUTHTYPE_SERVER;
+    for (i = 0;
+     i < sizeof(sslPolicyCheck) / sizeof(sslPolicyCheck[0]); i++)
+        checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL, &sslPolicyCheck[i], i,
+         &oct2007, &policyPara);
+    /* And again authenticating a server, this time specifying the size of the
+     * policy param.
+     */
+    policyPara.cbSize = sizeof(policyPara);
+    for (i = 0;
+     i < sizeof(sslPolicyCheck) / sizeof(sslPolicyCheck[0]); i++)
+        checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL, &sslPolicyCheck[i], i,
+         &oct2007, &policyPara);
+    /* Yet again, but checking the iTunes chain, which contains a name
+     * extension.
+     */
+    checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL,
+     &sslPolicyCheckWithoutMatchingName, 0, &oct2007, &policyPara);
+    /* And again, but checking the Google chain at a bad date */
+    sslPolicyPara.pwszServerName = google_dot_com;
+    checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL,
+     &sslPolicyCheckWithMatchingNameExpired, 0, &oct2007, &policyPara);
+    /* And again, but checking the Google chain at a good date */
+    sslPolicyPara.pwszServerName = google_dot_com;
+    checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL,
+     &sslPolicyCheckWithMatchingName, 0, &oct2009, &policyPara);
+}
+
 static void testVerifyCertChainPolicy(void)
 {
     BOOL ret;
@@ -2378,6 +2513,7 @@ static void testVerifyCertChainPolicy(void)
      i < sizeof(basePolicyCheck) / sizeof(basePolicyCheck[0]); i++)
         checkChainPolicyStatus(CERT_CHAIN_POLICY_BASE, &basePolicyCheck[i], i,
          &oct2007, NULL);
+    check_ssl_policy();
     /* The authenticode policy doesn't seem to check anything beyond the base
      * policy.  It might check for chains signed by the MS test cert, but none
      * of these chains is.
