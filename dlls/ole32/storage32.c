@@ -1166,7 +1166,7 @@ static HRESULT createDirEntry(
 
   do
   {
-    hr = StorageImpl_ReadRawDirEntry(storage->base.ancestorStorage,
+    hr = StorageImpl_ReadRawDirEntry(storage,
                                      currentPropertyIndex,
                                      currentData);
 
@@ -1211,7 +1211,7 @@ static HRESULT createDirEntry(
      * obtain the new count of property blocks
      */
     blockCount = BlockChainStream_GetCount(
-                   storage->base.ancestorStorage->rootBlockChain)+1;
+                   storage->rootBlockChain)+1;
 
     /*
      * initialize the size used by the property stream
@@ -1222,7 +1222,7 @@ static HRESULT createDirEntry(
     /*
      * add a property block to the property chain
      */
-    BlockChainStream_SetSize(storage->base.ancestorStorage->rootBlockChain, newSize);
+    BlockChainStream_SetSize(storage->rootBlockChain, newSize);
 
     /*
      * memset the empty property in order to initialize the unused newly
@@ -1241,7 +1241,7 @@ static HRESULT createDirEntry(
       propertyIndex++)
     {
       StorageImpl_WriteRawDirEntry(
-        storage->base.ancestorStorage,
+        storage,
         propertyIndex,
         emptyData);
     }
