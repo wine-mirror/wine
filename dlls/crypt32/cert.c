@@ -2807,7 +2807,10 @@ static void CRYPT_MakeCertInfo(PCERT_INFO info, const CRYPT_DATA_BLOB *pSerialNu
     assert(pSubjectIssuerBlob);
     assert(pubKey);
 
-    info->dwVersion = CERT_V3;
+    if (pExtensions && pExtensions->cExtension)
+        info->dwVersion = CERT_V3;
+    else
+        info->dwVersion = CERT_V1;
     info->SerialNumber.cbData = pSerialNumber->cbData;
     info->SerialNumber.pbData = pSerialNumber->pbData;
     if (pSignatureAlgorithm)
