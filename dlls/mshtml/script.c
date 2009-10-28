@@ -620,11 +620,14 @@ static void parse_text(ScriptHost *script_host, LPCWSTR text)
 
     VariantInit(&var);
     memset(&excepinfo, 0, sizeof(excepinfo));
+    TRACE(">>>\n");
     hres = IActiveScriptParse64_ParseScriptText(script_host->parse, text, windowW, NULL, script_endW,
                                               0, 0, SCRIPTTEXT_ISVISIBLE|SCRIPTTEXT_HOSTMANAGESSOURCE,
                                               &var, &excepinfo);
-    if(FAILED(hres))
-        WARN("ParseScriptText failed: %08x\n", hres);
+    if(SUCCEEDED(hres))
+        TRACE("<<<\n");
+    else
+        WARN("<<< %08x\n", hres);
 
 }
 
