@@ -1691,7 +1691,7 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
 /*************************************************************************
  * MoveElementTo (IStorage)
  */
-static HRESULT WINAPI StorageImpl_MoveElementTo(
+static HRESULT WINAPI StorageBaseImpl_MoveElementTo(
   IStorage*     iface,
   const OLECHAR *pwcsName,   /* [string][in] */
   IStorage      *pstgDest,   /* [unique][in] */
@@ -2142,7 +2142,7 @@ static const IStorageVtbl Storage32Impl_Vtbl =
     StorageBaseImpl_CreateStorage,
     StorageBaseImpl_OpenStorage,
     StorageBaseImpl_CopyTo,
-    StorageImpl_MoveElementTo,
+    StorageBaseImpl_MoveElementTo,
     StorageImpl_Commit,
     StorageImpl_Revert,
     StorageBaseImpl_EnumElements,
@@ -3950,7 +3950,7 @@ static const IStorageVtbl Storage32InternalImpl_Vtbl =
     StorageBaseImpl_CreateStorage,
     StorageBaseImpl_OpenStorage,
     StorageBaseImpl_CopyTo,
-    StorageImpl_MoveElementTo,
+    StorageBaseImpl_MoveElementTo,
     StorageInternalImpl_Commit,
     StorageInternalImpl_Revert,
     StorageBaseImpl_EnumElements,
