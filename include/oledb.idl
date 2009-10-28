@@ -42,6 +42,7 @@ typedef LONG  DB_LPARAMS;
 #include "dbs.idl"
 
 #include "access.idl"
+#include "rstbas.idl"
 #include "rstinf.idl"
 #include "cmdbas.idl"
 #include "cmdtxt.idl"

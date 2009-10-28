@@ -402,6 +402,7 @@ SRCDIR_INCLUDES = \
 	rpcndr.h \
 	rpcnterr.h \
 	rpcproxy.h \
+	rstbas.idl \
 	rstinf.idl \
 	rtutils.h \
 	scarderr.h \
