@@ -1182,20 +1182,24 @@ static ULONG getFreeProperty(
 {
   ULONG       currentPropertyIndex = 0;
   ULONG       newPropertyIndex     = PROPERTY_NULL;
-  BOOL      readSuccessful        = TRUE;
-  StgProperty currentProperty;
+  HRESULT readRes = S_OK;
+  BYTE currentData[PROPSET_BLOCK_SIZE];
+  WORD sizeOfNameString;
 
   do
   {
-    /*
-     * Start by reading the root property
-     */
-    readSuccessful = StorageImpl_ReadProperty(storage->base.ancestorStorage,
-                                               currentPropertyIndex,
-                                               &currentProperty);
-    if (readSuccessful)
+    readRes = StorageImpl_ReadRawDirEntry(storage->base.ancestorStorage,
+                                          currentPropertyIndex,
+                                          currentData);
+
+    if (SUCCEEDED(readRes))
     {
-      if (currentProperty.sizeOfNameString == 0)
+      StorageUtl_ReadWord(
+        currentData,
+        OFFSET_PS_NAMELENGTH,
+        &sizeOfNameString);
+
+      if (sizeOfNameString == 0)
       {
         /*
          * The property existis and is available, we found it.
@@ -1217,9 +1221,9 @@ static ULONG getFreeProperty(
   /*
    * grow the property chain
    */
-  if (! readSuccessful)
+  if (!SUCCEEDED(readRes))
   {
-    StgProperty    emptyProperty;
+    BYTE           emptyData[PROPSET_BLOCK_SIZE];
     ULARGE_INTEGER newSize;
     ULONG          propertyIndex;
     ULONG          lastProperty  = 0;
@@ -1246,7 +1250,7 @@ static ULONG getFreeProperty(
      * memset the empty property in order to initialize the unused newly
      * created property
      */
-    memset(&emptyProperty, 0, sizeof(StgProperty));
+    memset(&emptyData, 0, PROPSET_BLOCK_SIZE);
 
     /*
      * initialize them
@@ -1258,10 +1262,10 @@ static ULONG getFreeProperty(
       propertyIndex < lastProperty;
       propertyIndex++)
     {
-      StorageImpl_WriteProperty(
+      StorageImpl_WriteRawDirEntry(
         storage->base.ancestorStorage,
         propertyIndex,
-        &emptyProperty);
+        emptyData);
     }
   }
 
