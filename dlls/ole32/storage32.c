@@ -6652,8 +6652,8 @@ static void OLECONVERT_GetOLE20FromOLE10(LPSTORAGE pDestStorage, const BYTE *pBu
         hRes = StgOpenStorage(wstrTempFile, NULL, STGM_READ, NULL, 0, &pTempStorage);
         if(hRes == S_OK)
         {
-            hRes = StorageImpl_CopyTo(pTempStorage, 0, NULL, NULL, pDestStorage);
-            StorageBaseImpl_Release(pTempStorage);
+            hRes = IStorage_CopyTo(pTempStorage, 0, NULL, NULL, pDestStorage);
+            IStorage_Release(pTempStorage);
         }
         DeleteFileW(wstrTempFile);
     }
