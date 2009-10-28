@@ -2105,7 +2105,7 @@ static HRESULT removeFromTree(
 /******************************************************************************
  * SetElementTimes (IStorage)
  */
-static HRESULT WINAPI StorageImpl_SetElementTimes(
+static HRESULT WINAPI StorageBaseImpl_SetElementTimes(
   IStorage*     iface,
   const OLECHAR *pwcsName,/* [string][in] */
   const FILETIME  *pctime,  /* [in] */
@@ -2148,7 +2148,7 @@ static const IStorageVtbl Storage32Impl_Vtbl =
     StorageBaseImpl_EnumElements,
     StorageBaseImpl_DestroyElement,
     StorageBaseImpl_RenameElement,
-    StorageImpl_SetElementTimes,
+    StorageBaseImpl_SetElementTimes,
     StorageBaseImpl_SetClass,
     StorageImpl_SetStateBits,
     StorageImpl_Stat
@@ -3956,7 +3956,7 @@ static const IStorageVtbl Storage32InternalImpl_Vtbl =
     StorageBaseImpl_EnumElements,
     StorageBaseImpl_DestroyElement,
     StorageBaseImpl_RenameElement,
-    StorageImpl_SetElementTimes,
+    StorageBaseImpl_SetElementTimes,
     StorageBaseImpl_SetClass,
     StorageImpl_SetStateBits,
     StorageBaseImpl_Stat
