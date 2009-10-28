@@ -2413,11 +2413,11 @@ NTSTATUS WINAPI RtlWow64EnableFsRedirection( BOOLEAN enable )
 /******************************************************************
  *		RtlWow64EnableFsRedirectionEx   (NTDLL.@)
  */
-NTSTATUS WINAPI RtlWow64EnableFsRedirectionEx( ULONG enable, ULONG *old_value )
+NTSTATUS WINAPI RtlWow64EnableFsRedirectionEx( ULONG disable, ULONG *old_value )
 {
     if (!is_wow64) return STATUS_NOT_IMPLEMENTED;
-    *old_value = ntdll_get_thread_data()->wow64_redir;
-    ntdll_get_thread_data()->wow64_redir = enable;
+    *old_value = !ntdll_get_thread_data()->wow64_redir;
+    ntdll_get_thread_data()->wow64_redir = !disable;
     return STATUS_SUCCESS;
 }
 

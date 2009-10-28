@@ -1583,7 +1583,7 @@ BOOL WINAPI Wow64DisableWow64FsRedirection( PVOID *old_value )
  */
 BOOL WINAPI Wow64RevertWow64FsRedirection( PVOID old_value )
 {
-    NTSTATUS status = RtlWow64EnableFsRedirection( (UINT_PTR)old_value );
+    NTSTATUS status = RtlWow64EnableFsRedirection( !old_value );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }

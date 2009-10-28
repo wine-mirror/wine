@@ -45,6 +45,8 @@ static BOOL     (WINAPI *pRtlDosPathNameToNtPathName_U)( LPCWSTR, PUNICODE_STRIN
 static VOID     (WINAPI *pRtlInitUnicodeString)( PUNICODE_STRING, LPCWSTR );
 static NTSTATUS (WINAPI *pRtlMultiByteToUnicodeN)( LPWSTR dst, DWORD dstlen, LPDWORD reslen,
                                                    LPCSTR src, DWORD srclen );
+static NTSTATUS (WINAPI *pRtlWow64EnableFsRedirection)( BOOLEAN enable );
+static NTSTATUS (WINAPI *pRtlWow64EnableFsRedirectionEx)( ULONG disable, ULONG *old_value );
 
 /* The attribute sets to test */
 struct testfile_s {
@@ -221,6 +223,49 @@ done:
     tear_down_attribute_test(testdirA);
 }
 
+static void test_redirection(void)
+{
+    ULONG old, cur;
+    NTSTATUS status;
+
+    if (!pRtlWow64EnableFsRedirection || !pRtlWow64EnableFsRedirectionEx)
+    {
+        skip( "Wow64 redirection not supported\n" );
+        return;
+    }
+    status = pRtlWow64EnableFsRedirectionEx( FALSE, &old );
+    if (status == STATUS_NOT_IMPLEMENTED)
+    {
+        skip( "Wow64 redirection not supported\n" );
+        return;
+    }
+    ok( !status, "RtlWow64EnableFsRedirectionEx failed status %x\n", status );
+
+    status = pRtlWow64EnableFsRedirectionEx( FALSE, &cur );
+    ok( !status, "RtlWow64EnableFsRedirectionEx failed status %x\n", status );
+    ok( !cur, "RtlWow64EnableFsRedirectionEx got %u\n", cur );
+
+    status = pRtlWow64EnableFsRedirectionEx( TRUE, &cur );
+    ok( !status, "RtlWow64EnableFsRedirectionEx failed status %x\n", status );
+    status = pRtlWow64EnableFsRedirectionEx( TRUE, &cur );
+    ok( !status, "RtlWow64EnableFsRedirectionEx failed status %x\n", status );
+    ok( cur == 1, "RtlWow64EnableFsRedirectionEx got %u\n", cur );
+
+    status = pRtlWow64EnableFsRedirection( TRUE );
+    ok( !status, "RtlWow64EnableFsRedirectionEx failed status %x\n", status );
+    status = pRtlWow64EnableFsRedirectionEx( TRUE, &cur );
+    ok( !status, "RtlWow64EnableFsRedirectionEx failed status %x\n", status );
+    ok( !cur, "RtlWow64EnableFsRedirectionEx got %u\n", cur );
+
+    status = pRtlWow64EnableFsRedirection( FALSE );
+    ok( !status, "RtlWow64EnableFsRedirectionEx failed status %x\n", status );
+    status = pRtlWow64EnableFsRedirectionEx( FALSE, &cur );
+    ok( !status, "RtlWow64EnableFsRedirectionEx failed status %x\n", status );
+    ok( cur == 1, "RtlWow64EnableFsRedirectionEx got %u\n", cur );
+
+    pRtlWow64EnableFsRedirectionEx( old, &cur );
+}
+
 START_TEST(directory)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
@@ -237,6 +282,9 @@ START_TEST(directory)
     pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
     pRtlInitUnicodeString   = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
     pRtlMultiByteToUnicodeN = (void *)GetProcAddress(hntdll,"RtlMultiByteToUnicodeN");
+    pRtlWow64EnableFsRedirection = (void *)GetProcAddress(hntdll,"RtlWow64EnableFsRedirection");
+    pRtlWow64EnableFsRedirectionEx = (void *)GetProcAddress(hntdll,"RtlWow64EnableFsRedirectionEx");
 
     test_NtQueryDirectoryFile();
+    test_redirection();
 }
