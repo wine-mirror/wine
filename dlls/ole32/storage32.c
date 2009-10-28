@@ -1817,6 +1817,15 @@ static HRESULT WINAPI StorageImpl_DestroyElement(
         parentPropertyId,
         typeOfRelation);
 
+  /*
+   * Invalidate the property by zeroing its name member.
+   */
+  propertyToDelete.sizeOfNameString = 0;
+
+  StorageImpl_WriteProperty(This->base.ancestorStorage,
+                            foundPropertyIndexToDelete,
+                            &propertyToDelete);
+
   return hr;
 }
 
@@ -1936,15 +1945,6 @@ static HRESULT deleteStorageProperty(
 
   } while ((hr == S_OK) && (destroyHr == S_OK));
 
-  /*
-   * Invalidate the property by zeroing its name member.
-   */
-  propertyToDelete.sizeOfNameString = 0;
-
-  StorageImpl_WriteProperty(parentStorage->base.ancestorStorage,
-                            indexOfPropertyToDelete,
-                            &propertyToDelete);
-
   IStorage_Release(childStorage);
   IEnumSTATSTG_Release(elements);
 
@@ -1992,20 +1992,6 @@ static HRESULT deleteStreamProperty(
    * Release the stream object.
    */
   IStream_Release(pis);
-
-  /*
-   * Invalidate the property by zeroing its name member.
-   */
-  propertyToDelete.sizeOfNameString = 0;
-
-  /*
-   * Here we should re-read the property so we get the updated pointer
-   * but since we are here to zap it, I don't do it...
-   */
-  StorageImpl_WriteProperty(
-    parentStorage->base.ancestorStorage,
-    indexOfPropertyToDelete,
-    &propertyToDelete);
 
   return S_OK;
 }
