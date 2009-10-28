@@ -396,6 +396,7 @@ SRCDIR_INCLUDES = \
 	richedit.h \
 	rmxfguid.h \
 	row.idl \
+	rowchg.idl \
 	rpc.h \
 	rpcasync.h \
 	rpcdce.h \
