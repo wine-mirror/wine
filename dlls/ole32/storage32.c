@@ -1009,13 +1009,13 @@ static HRESULT WINAPI StorageBaseImpl_SetClass(
 */
 
 /************************************************************************
- * Storage32Impl_CreateStorage (IStorage)
+ * Storage32BaseImpl_CreateStorage (IStorage)
  *
  * This method will create the storage object within the provided storage.
  *
  * See Windows documentation for more details on IStorage methods.
  */
-static HRESULT WINAPI StorageImpl_CreateStorage(
+static HRESULT WINAPI StorageBaseImpl_CreateStorage(
   IStorage*      iface,
   const OLECHAR  *pwcsName, /* [string][in] */
   DWORD            grfMode,   /* [in] */
@@ -1023,7 +1023,7 @@ static HRESULT WINAPI StorageImpl_CreateStorage(
   DWORD            reserved2, /* [in] */
   IStorage       **ppstg)   /* [out] */
 {
-  StorageImpl* const This=(StorageImpl*)iface;
+  StorageBaseImpl* const This=(StorageBaseImpl*)iface;
 
   StgProperty      currentProperty;
   StgProperty      newProperty;
@@ -1053,14 +1053,14 @@ static HRESULT WINAPI StorageImpl_CreateStorage(
   /*
    * Check that we're compatible with the parent's storage mode
    */
-  if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( This->base.openFlags ) )
+  if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( This->openFlags ) )
   {
     WARN("access denied\n");
     return STG_E_ACCESSDENIED;
   }
 
-  foundPropertyIndex = findElement(This->base.ancestorStorage,
-                                   This->base.rootPropertySetIndex,
+  foundPropertyIndex = findElement(This->ancestorStorage,
+                                   This->rootPropertySetIndex,
                                    pwcsName,
                                    &currentProperty);
 
@@ -1070,7 +1070,7 @@ static HRESULT WINAPI StorageImpl_CreateStorage(
      * An element with this name already exists
      */
     if (STGM_CREATE_MODE(grfMode) == STGM_CREATE &&
-        STGM_ACCESS_MODE(This->base.openFlags) != STGM_READ)
+        STGM_ACCESS_MODE(This->openFlags) != STGM_READ)
     {
       hr = IStorage_DestroyElement(iface, pwcsName);
       if (FAILED(hr))
@@ -1082,7 +1082,7 @@ static HRESULT WINAPI StorageImpl_CreateStorage(
       return STG_E_FILEALREADYEXISTS;
     }
   }
-  else if (STGM_ACCESS_MODE(This->base.openFlags) == STGM_READ)
+  else if (STGM_ACCESS_MODE(This->openFlags) == STGM_READ)
   {
     WARN("read-only storage\n");
     return STG_E_ACCESSDENIED;
@@ -1122,13 +1122,13 @@ static HRESULT WINAPI StorageImpl_CreateStorage(
   /*
    * Save the new property into a new property spot
    */
-  createDirEntry(This->base.ancestorStorage, &newProperty, &newPropertyIndex);
+  createDirEntry(This->ancestorStorage, &newProperty, &newPropertyIndex);
 
   /*
    * Find a spot in the property chain for our newly created property.
    */
   updatePropertyChain(
-    &This->base,
+    This,
     newPropertyIndex,
     newProperty);
 
@@ -2139,7 +2139,7 @@ static const IStorageVtbl Storage32Impl_Vtbl =
     StorageBaseImpl_Release,
     StorageBaseImpl_CreateStream,
     StorageBaseImpl_OpenStream,
-    StorageImpl_CreateStorage,
+    StorageBaseImpl_CreateStorage,
     StorageBaseImpl_OpenStorage,
     StorageImpl_CopyTo,
     StorageImpl_MoveElementTo,
@@ -3947,7 +3947,7 @@ static const IStorageVtbl Storage32InternalImpl_Vtbl =
     StorageBaseImpl_Release,
     StorageBaseImpl_CreateStream,
     StorageBaseImpl_OpenStream,
-    StorageImpl_CreateStorage,
+    StorageBaseImpl_CreateStorage,
     StorageBaseImpl_OpenStorage,
     StorageImpl_CopyTo,
     StorageImpl_MoveElementTo,
