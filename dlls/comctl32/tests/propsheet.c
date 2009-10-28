@@ -92,7 +92,7 @@ static void test_title(void)
     memset(&psp, 0, sizeof(psp));
     psp.dwSize = sizeof(psp);
     psp.dwFlags = 0;
-    psp.hInstance = GetModuleHandleW(NULL);
+    psp.hInstance = GetModuleHandleA(NULL);
     U(psp).pszTemplate = "prop_page1";
     U2(psp).pszIcon = NULL;
     psp.pfnDlgProc = page_dlg_proc;
@@ -123,7 +123,7 @@ static void test_nopage(void)
     memset(&psp, 0, sizeof(psp));
     psp.dwSize = sizeof(psp);
     psp.dwFlags = 0;
-    psp.hInstance = GetModuleHandleW(NULL);
+    psp.hInstance = GetModuleHandleA(NULL);
     U(psp).pszTemplate = "prop_page1";
     U2(psp).pszIcon = NULL;
     psp.pfnDlgProc = page_dlg_proc;
@@ -190,7 +190,7 @@ static void test_disableowner(void)
     memset(&psp, 0, sizeof(psp));
     psp.dwSize = sizeof(psp);
     psp.dwFlags = 0;
-    psp.hInstance = GetModuleHandleW(NULL);
+    psp.hInstance = GetModuleHandleA(NULL);
     U(psp).pszTemplate = "prop_page1";
     U2(psp).pszIcon = NULL;
     psp.pfnDlgProc = NULL;
@@ -251,25 +251,25 @@ static void test_wiznavigation(void)
     memset(psp, 0, sizeof(PROPSHEETPAGEA) * 4);
 
     psp[0].dwSize = sizeof(PROPSHEETPAGEA);
-    psp[0].hInstance = GetModuleHandleW(NULL);
+    psp[0].hInstance = GetModuleHandleA(NULL);
     U(psp[0]).pszTemplate = MAKEINTRESOURCE(IDD_PROP_PAGE_INTRO);
     psp[0].pfnDlgProc = nav_page_proc;
     hpsp[0] = CreatePropertySheetPageA(&psp[0]);
 
     psp[1].dwSize = sizeof(PROPSHEETPAGEA);
-    psp[1].hInstance = GetModuleHandleW(NULL);
+    psp[1].hInstance = GetModuleHandleA(NULL);
     U(psp[1]).pszTemplate = MAKEINTRESOURCE(IDD_PROP_PAGE_EDIT);
     psp[1].pfnDlgProc = nav_page_proc;
     hpsp[1] = CreatePropertySheetPageA(&psp[1]);
 
     psp[2].dwSize = sizeof(PROPSHEETPAGEA);
-    psp[2].hInstance = GetModuleHandleW(NULL);
+    psp[2].hInstance = GetModuleHandleA(NULL);
     U(psp[2]).pszTemplate = MAKEINTRESOURCE(IDD_PROP_PAGE_RADIO);
     psp[2].pfnDlgProc = nav_page_proc;
     hpsp[2] = CreatePropertySheetPageA(&psp[2]);
 
     psp[3].dwSize = sizeof(PROPSHEETPAGEA);
-    psp[3].hInstance = GetModuleHandleW(NULL);
+    psp[3].hInstance = GetModuleHandleA(NULL);
     U(psp[3]).pszTemplate = MAKEINTRESOURCE(IDD_PROP_PAGE_EXIT);
     psp[3].pfnDlgProc = nav_page_proc;
     hpsp[3] = CreatePropertySheetPageA(&psp[3]);
@@ -363,7 +363,7 @@ static void test_buttons(void)
     memset(&psp, 0, sizeof(psp));
     psp.dwSize = sizeof(psp);
     psp.dwFlags = 0;
-    psp.hInstance = GetModuleHandleW(NULL);
+    psp.hInstance = GetModuleHandleA(NULL);
     U(psp).pszTemplate = "prop_page1";
     U2(psp).pszIcon = NULL;
     psp.pfnDlgProc = page_dlg_proc;
