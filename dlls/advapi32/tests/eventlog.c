@@ -27,6 +27,15 @@
 
 #include "wine/test.h"
 
+static BOOL (WINAPI *pGetEventLogInformation)(HANDLE,DWORD,LPVOID,DWORD,LPDWORD);
+
+static void init_function_pointers(void)
+{
+    HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
+
+    pGetEventLogInformation = (void*)GetProcAddress(hadvapi32, "GetEventLogInformation");
+}
+
 static void test_open_close(void)
 {
     HANDLE handle;
@@ -80,6 +89,66 @@ static void test_open_close(void)
     CloseEventLog(handle);
 }
 
+static void test_info(void)
+{
+    HANDLE handle;
+    BOOL ret;
+    DWORD needed;
+    EVENTLOG_FULL_INFORMATION efi;
+
+    if (!pGetEventLogInformation)
+    {
+        /* NT4 */
+        skip("GetEventLogInformation is not available\n");
+        return;
+    }
+    SetLastError(0xdeadbeef);
+    ret = pGetEventLogInformation(NULL, 1, NULL, 0, NULL);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_LEVEL, "Expected ERROR_INVALID_LEVEL, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetEventLogInformation(NULL, EVENTLOG_FULL_INFO, NULL, 0, NULL);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
+    handle = OpenEventLogA(NULL, "Application");
+
+    SetLastError(0xdeadbeef);
+    ret = pGetEventLogInformation(handle, EVENTLOG_FULL_INFO, NULL, 0, NULL);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == RPC_X_NULL_REF_POINTER, "Expected RPC_X_NULL_REF_POINTER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetEventLogInformation(handle, EVENTLOG_FULL_INFO, NULL, 0, &needed);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == RPC_X_NULL_REF_POINTER, "Expected RPC_X_NULL_REF_POINTER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetEventLogInformation(handle, EVENTLOG_FULL_INFO, (LPVOID)&efi, 0, NULL);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == RPC_X_NULL_REF_POINTER, "Expected RPC_X_NULL_REF_POINTER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    needed = 0xdeadbeef;
+    efi.dwFull = 0xdeadbeef;
+    ret = pGetEventLogInformation(handle, EVENTLOG_FULL_INFO, (LPVOID)&efi, 0, &needed);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(needed == sizeof(EVENTLOG_FULL_INFORMATION), "Expected sizeof(EVENTLOG_FULL_INFORMATION), got %d\n", needed);
+    ok(efi.dwFull == 0xdeadbeef, "Expected no change to the dwFull member\n");
+
+    /* Not that we care, but on success last error is set to ERROR_IO_PENDING */
+    efi.dwFull = 0xdeadbeef;
+    needed *= 2;
+    ret = pGetEventLogInformation(handle, EVENTLOG_FULL_INFO, (LPVOID)&efi, needed, &needed);
+    ok(ret, "Expected succes\n");
+    ok(needed == sizeof(EVENTLOG_FULL_INFORMATION), "Expected sizeof(EVENTLOG_FULL_INFORMATION), got %d\n", needed);
+    ok(efi.dwFull == 0 || efi.dwFull == 1, "Expected 0 (not full) or 1 (full), got %d\n", efi.dwFull);
+
+    CloseEventLog(handle);
+}
+
 START_TEST(eventlog)
 {
     SetLastError(0xdeadbeef);
@@ -90,6 +159,9 @@ START_TEST(eventlog)
         return;
     }
 
+    init_function_pointers();
+
     /* Parameters only */
     test_open_close();
+    test_info();
 }
