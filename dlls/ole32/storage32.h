@@ -295,6 +295,11 @@ HRESULT StorageImpl_ReadRawDirEntry(
             ULONG index,
             BYTE *buffer);
 
+HRESULT StorageImpl_WriteRawDirEntry(
+            StorageImpl *This,
+            ULONG index,
+            const BYTE *buffer);
+
 BOOL StorageImpl_ReadProperty(
             StorageImpl*    This,
             ULONG           index,

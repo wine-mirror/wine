@@ -3072,6 +3072,32 @@ HRESULT StorageImpl_ReadRawDirEntry(StorageImpl *This, ULONG index, BYTE *buffer
 }
 
 /******************************************************************************
+ *      StorageImpl_WriteRawDirEntry
+ *
+ * This method will write the raw data from a directory entry in the file.
+ *
+ * buffer must be PROPSET_BLOCK_SIZE bytes long.
+ */
+HRESULT StorageImpl_WriteRawDirEntry(StorageImpl *This, ULONG index, const BYTE *buffer)
+{
+  ULARGE_INTEGER offset;
+  HRESULT hr;
+  ULONG bytesRead;
+
+  offset.u.HighPart = 0;
+  offset.u.LowPart  = index * PROPSET_BLOCK_SIZE;
+
+  hr = BlockChainStream_WriteAt(
+                    This->rootBlockChain,
+                    offset,
+                    PROPSET_BLOCK_SIZE,
+                    buffer,
+                    &bytesRead);
+
+  return hr;
+}
+
+/******************************************************************************
  *      Storage32Impl_ReadProperty
  *
  * This method will read the specified property from the property chain.
@@ -3171,12 +3197,7 @@ BOOL StorageImpl_WriteProperty(
   const StgProperty*    buffer)
 {
   BYTE           currentProperty[PROPSET_BLOCK_SIZE];
-  ULARGE_INTEGER offsetInPropSet;
   HRESULT        writeRes;
-  ULONG          bytesWritten;
-
-  offsetInPropSet.u.HighPart = 0;
-  offsetInPropSet.u.LowPart  = index * PROPSET_BLOCK_SIZE;
 
   memset(currentProperty, 0, PROPSET_BLOCK_SIZE);
 
@@ -3242,11 +3263,7 @@ BOOL StorageImpl_WriteProperty(
       OFFSET_PS_SIZE,
       buffer->size.u.LowPart);
 
-  writeRes = BlockChainStream_WriteAt(This->rootBlockChain,
-                                      offsetInPropSet,
-                                      PROPSET_BLOCK_SIZE,
-                                      currentProperty,
-                                      &bytesWritten);
+  writeRes = StorageImpl_WriteRawDirEntry(This, index, currentProperty);
   return SUCCEEDED(writeRes) ? TRUE : FALSE;
 }
 
