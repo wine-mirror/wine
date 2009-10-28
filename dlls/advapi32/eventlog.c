@@ -190,6 +190,64 @@ ULONG WINAPI EnableTrace( ULONG enable, ULONG flag, ULONG level, LPCGUID guid, T
 }
 
 /******************************************************************************
+ * GetEventLogInformation [ADVAPI32.@]
+ *
+ * Retrieve some information about an event log.
+ *
+ * PARAMS
+ *  hEventLog      [I]   Handle to an open event log.
+ *  dwInfoLevel    [I]   Level of information (only EVENTLOG_FULL_INFO)
+ *  lpBuffer       [I/O] The buffer for the returned information
+ *  cbBufSize      [I]   The size of the buffer
+ *  pcbBytesNeeded [O]   The needed bytes to hold the information
+ *
+ * RETURNS
+ *  Success: TRUE. lpBuffer will hold the information and pcbBytesNeeded shows
+ *           the needed buffer size.
+ *  Failure: FALSE.
+ */
+BOOL WINAPI GetEventLogInformation( HANDLE hEventLog, DWORD dwInfoLevel, LPVOID lpBuffer, DWORD cbBufSize, LPDWORD pcbBytesNeeded)
+{
+    EVENTLOG_FULL_INFORMATION *efi;
+
+    FIXME("(%p, %d, %p, %d, %p) stub\n", hEventLog, dwInfoLevel, lpBuffer, cbBufSize, pcbBytesNeeded);
+
+    if (dwInfoLevel != EVENTLOG_FULL_INFO)
+    {
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
+    if (!hEventLog)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    if (!lpBuffer || !pcbBytesNeeded)
+    {
+        /* FIXME: This will be handled properly when eventlog is moved
+         * to a higher level
+         */
+        SetLastError(RPC_X_NULL_REF_POINTER);
+        return FALSE;
+    }
+
+    *pcbBytesNeeded = sizeof(EVENTLOG_FULL_INFORMATION);
+    if (cbBufSize < sizeof(EVENTLOG_FULL_INFORMATION))
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+
+    /* Pretend the log is not full */
+    efi = (EVENTLOG_FULL_INFORMATION *)lpBuffer;
+    efi->dwFull = 0;
+
+    return TRUE;
+}
+
+/******************************************************************************
  * GetNumberOfEventLogRecords [ADVAPI32.@]
  *
  * Retrieves the number of records in an event log.

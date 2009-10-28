@@ -99,7 +99,7 @@ static void test_info(void)
     if (!pGetEventLogInformation)
     {
         /* NT4 */
-        skip("GetEventLogInformation is not available\n");
+        win_skip("GetEventLogInformation is not available\n");
         return;
     }
     SetLastError(0xdeadbeef);
