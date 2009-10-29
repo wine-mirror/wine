@@ -145,12 +145,13 @@ HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d1
         const void *byte_code, SIZE_T byte_code_length) DECLSPEC_HIDDEN;
 
 /* ID3D10GeometryShader */
-extern const struct ID3D10GeometryShaderVtbl d3d10_geometry_shader_vtbl DECLSPEC_HIDDEN;
 struct d3d10_geometry_shader
 {
     const struct ID3D10GeometryShaderVtbl *vtbl;
     LONG refcount;
 };
+
+HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader);
 
 /* ID3D10PixelShader */
 struct d3d10_pixel_shader

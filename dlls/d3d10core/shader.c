@@ -352,7 +352,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_geometry_shader_SetPrivateDataInterface(I
     return E_NOTIMPL;
 }
 
-const struct ID3D10GeometryShaderVtbl d3d10_geometry_shader_vtbl =
+static const struct ID3D10GeometryShaderVtbl d3d10_geometry_shader_vtbl =
 {
     /* IUnknown methods */
     d3d10_geometry_shader_QueryInterface,
@@ -364,6 +364,14 @@ const struct ID3D10GeometryShaderVtbl d3d10_geometry_shader_vtbl =
     d3d10_geometry_shader_SetPrivateData,
     d3d10_geometry_shader_SetPrivateDataInterface,
 };
+
+HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader)
+{
+    shader->vtbl = &d3d10_geometry_shader_vtbl;
+    shader->refcount = 1;
+
+    return S_OK;
+}
 
 /* IUnknown methods */
 

@@ -965,6 +965,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShader(ID3D10Device 
         const void *byte_code, SIZE_T byte_code_length, ID3D10GeometryShader **shader)
 {
     struct d3d10_geometry_shader *object;
+    HRESULT hr;
 
     FIXME("iface %p, byte_code %p, byte_code_length %lu, shader %p stub!\n",
             iface, byte_code, byte_code_length, shader);
@@ -976,9 +977,14 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShader(ID3D10Device 
         return E_OUTOFMEMORY;
     }
 
-    object->vtbl = &d3d10_geometry_shader_vtbl;
-    object->refcount = 1;
+    hr = d3d10_geometry_shader_init(object);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize geometry shader, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+    }
 
+    TRACE("Created geometry shader %p.\n", object);
     *shader = (ID3D10GeometryShader *)object;
 
     return S_OK;
