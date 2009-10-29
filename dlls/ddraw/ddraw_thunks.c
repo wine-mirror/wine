@@ -347,19 +347,17 @@ IDirectDrawImpl_CreateSurface(LPDIRECTDRAW This, LPDDSURFACEDESC pSDesc,
      * since the data layout is the same */
     hr = IDirectDraw7_CreateSurface((IDirectDraw7 *)ddraw_from_ddraw1(This),
             (LPDDSURFACEDESC2)pSDesc, &pSurface7, pUnkOuter);
-
-    /* This coercion is safe, since the IDirectDrawSurface3 vtable has the
-     * IDirectDrawSurface vtable layout at the beginning  */
-    *ppSurface = pSurface7 ?
-            (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)pSurface7)->IDirectDrawSurface3_vtbl : NULL;
+    if (FAILED(hr))
+    {
+        *ppSurface = NULL;
+        return hr;
+    }
 
     impl = (IDirectDrawSurfaceImpl *)pSurface7;
-    if(SUCCEEDED(hr) && impl)
-    {
-        set_surf_version(impl, 1);
-        IDirectDraw7_Release((IDirectDraw7 *)ddraw_from_ddraw1(This));
-        impl->ifaceToRelease = NULL;
-    }
+    *ppSurface = (IDirectDrawSurface *)&impl->IDirectDrawSurface3_vtbl;
+    set_surf_version(impl, 1);
+    IDirectDraw7_Release((IDirectDraw7 *)ddraw_from_ddraw1(This));
+    impl->ifaceToRelease = NULL;
 
     return hr;
 }
@@ -375,19 +373,17 @@ IDirectDraw2Impl_CreateSurface(LPDIRECTDRAW2 This, LPDDSURFACEDESC pSDesc,
 
     hr = IDirectDraw7_CreateSurface((IDirectDraw7 *)ddraw_from_ddraw2(This),
             (LPDDSURFACEDESC2)pSDesc, &pSurface7, pUnkOuter);
-
-    /* This coercion is safe, since the IDirectDrawSurface3 vtable has the
-     * IDirectDrawSurface vtable layout at the beginning  */
-    *ppSurface = pSurface7 ?
-            (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)pSurface7)->IDirectDrawSurface3_vtbl : NULL;
+    if (FAILED(hr))
+    {
+        *ppSurface = NULL;
+        return hr;
+    }
 
     impl = (IDirectDrawSurfaceImpl *)pSurface7;
-    if(SUCCEEDED(hr) && impl)
-    {
-        set_surf_version(impl, 2);
-        IDirectDraw7_Release((IDirectDraw7 *)ddraw_from_ddraw2(This));
-        impl->ifaceToRelease = NULL;
-    }
+    *ppSurface = (IDirectDrawSurface *)&impl->IDirectDrawSurface3_vtbl;
+    set_surf_version(impl, 2);
+    IDirectDraw7_Release((IDirectDraw7 *)ddraw_from_ddraw2(This));
+    impl->ifaceToRelease = NULL;
 
     return hr;
 }
@@ -403,20 +399,18 @@ IDirectDraw3Impl_CreateSurface(LPDIRECTDRAW3 This, LPDDSURFACEDESC pSDesc,
 
     hr = IDirectDraw7_CreateSurface((IDirectDraw7 *)ddraw_from_ddraw3(This),
             (LPDDSURFACEDESC2)pSDesc, &pSurface7, pUnkOuter);
-
-    /* This coercion is safe, since the IDirectDrawSurface3 vtable has the
-     * IDirectDrawSurface vtable layout at the beginning  */
-    *ppSurface = pSurface7 ?
-            (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)pSurface7)->IDirectDrawSurface3_vtbl : NULL;
+    if (FAILED(hr))
+    {
+        *ppSurface = NULL;
+        return hr;
+    }
 
     impl = (IDirectDrawSurfaceImpl *)pSurface7;
-    if(SUCCEEDED(hr) && impl)
-    {
-        set_surf_version(impl, 3);
-        IDirectDraw7_Release((IDirectDraw7 *)ddraw_from_ddraw3(This));
-        IDirectDraw3_AddRef(This);
-        impl->ifaceToRelease = (IUnknown *) This;
-    }
+    *ppSurface = (IDirectDrawSurface *)&impl->IDirectDrawSurface3_vtbl;
+    set_surf_version(impl, 3);
+    IDirectDraw7_Release((IDirectDraw7 *)ddraw_from_ddraw3(This));
+    IDirectDraw3_AddRef(This);
+    impl->ifaceToRelease = (IUnknown *) This;
 
     return hr;
 }
