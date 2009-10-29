@@ -1395,10 +1395,13 @@ callTest2.apply(tmp);
 (function () { callTest2.apply(tmp, arguments); })();
 
 function callTest3() {
+    testThis(this);
     ok(arguments.length === 0, "arguments.length = " + arguments.length + " expected 0");
 }
 
 callTest3.call();
+callTest3.call(undefined);
+callTest3.call(null);
 
 tmp = Number.prototype.toString.call(3);
 ok(tmp === "3", "Number.prototype.toString.call(3) = " + tmp);

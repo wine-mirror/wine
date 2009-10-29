@@ -455,9 +455,14 @@ static HRESULT Function_call(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
 
     argc = arg_cnt(dp);
     if(argc) {
-        hres = to_object(ctx, get_arg(dp,0), &this_obj);
-        if(FAILED(hres))
-            return hres;
+        VARIANT *v = get_arg(dp,0);
+
+        if(V_VT(v) != VT_EMPTY && V_VT(v) != VT_NULL) {
+            hres = to_object(ctx, v, &this_obj);
+            if(FAILED(hres))
+                return hres;
+        }
+
         args.cArgs = argc-1;
     }
 
