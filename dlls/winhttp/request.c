@@ -652,6 +652,24 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
         if (request_only) heap_free( headers );
         return ret;
     }
+    case WINHTTP_QUERY_VERSION:
+    {
+        DWORD len = (strlenW( request->version ) + 1) * sizeof(WCHAR);
+        if (len > *buflen)
+        {
+            set_last_error( ERROR_INSUFFICIENT_BUFFER );
+            *buflen = len;
+            return FALSE;
+        }
+        else if (buffer)
+        {
+            strcpyW( buffer, request->version );
+            TRACE("returning string: %s\n", debugstr_w(buffer));
+            ret = TRUE;
+        }
+        *buflen = len - sizeof(WCHAR);
+        return ret;
+    }
     default:
     {
         if (attr >= sizeof(attribute_table)/sizeof(attribute_table[0]) || !attribute_table[attr])

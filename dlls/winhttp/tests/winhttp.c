@@ -816,7 +816,8 @@ static void test_request_parameter_defaults(void)
     static const WCHAR codeweavers[] = {'c','o','d','e','w','e','a','v','e','r','s','.','c','o','m',0};
 
     HANDLE ses, con, req;
-    DWORD size, status;
+    DWORD size, status, error;
+    WCHAR *version;
     BOOL ret;
 
     ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
@@ -849,6 +850,19 @@ static void test_request_parameter_defaults(void)
 
     ret = WinHttpReceiveResponse(req, NULL);
     ok(ret, "failed to receive response %u\n", GetLastError());
+
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_VERSION, NULL, NULL, &size, NULL);
+    error = GetLastError();
+    ok(!ret, "succeeded unexpectedly\n");
+    ok(error == ERROR_INSUFFICIENT_BUFFER, "expected ERROR_INSUFFICIENT_BUFFER, got %u\n", error);
+
+    version = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_VERSION, NULL, version, &size, NULL);
+    ok(ret, "failed unexpectedly %u\n", GetLastError());
+    ok(lstrlenW(version) == size / sizeof(WCHAR), "unexpected size %u\n", size);
+    HeapFree(GetProcessHeap(), 0, version);
 
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
