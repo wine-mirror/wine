@@ -685,6 +685,10 @@ static msi_control *msi_dialog_add_control( msi_dialog *dialog,
     name = MSI_RecordGetString( rec, 2 );
     attributes = MSI_RecordGetInteger( rec, 8 );
     text = MSI_RecordGetString( rec, 10 );
+
+    TRACE("%s, %s, %08x, %s, %08x\n", debugstr_w(szCls), debugstr_w(name),
+          attributes, debugstr_w(text), style);
+
     if( attributes & msidbControlAttributesVisible )
         style |= WS_VISIBLE;
     if( ~attributes & msidbControlAttributesEnabled )
@@ -1575,8 +1579,14 @@ end:
 static UINT msi_dialog_progress_bar( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
+    DWORD attributes, style;
 
-    control = msi_dialog_add_control( dialog, rec, PROGRESS_CLASSW, WS_VISIBLE );
+    style = WS_VISIBLE;
+    attributes = MSI_RecordGetInteger( rec, 8 );
+    if( !(attributes & msidbControlAttributesProgress95) )
+        style |= PBS_SMOOTH;
+
+    control = msi_dialog_add_control( dialog, rec, PROGRESS_CLASSW, style );
     if( !control )
         return ERROR_FUNCTION_FAILED;
 
