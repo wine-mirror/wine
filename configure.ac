@@ -1659,7 +1659,7 @@ test -z "$with_wine64" || MAIN_BINARY="wine32"
 case $host_cpu in
   *i[[3456789]]86*)
     case $host_os in
-      linux* | k*bsd*-gnu)
+      linux*)
         AC_SUBST(EXTRA_BINARIES,"wine-preloader") ;;
     esac
     ;;
