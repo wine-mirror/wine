@@ -300,7 +300,18 @@ BOOL WINAPI GetOldestEventLogRecord( HANDLE hEventLog, PDWORD OldestRecord )
 {
     FIXME("(%p,%p) stub\n", hEventLog, OldestRecord);
 
-    if (!OldestRecord) return FALSE;
+    if (!OldestRecord)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!hEventLog)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
     *OldestRecord = 0;
 
     return TRUE;
