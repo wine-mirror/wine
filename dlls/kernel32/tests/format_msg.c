@@ -121,6 +121,7 @@ static void test_message_from_string_wide(void)
     static const WCHAR s_sp001sp002[] = {' ',' ','0','0','1',',',' ',' ','0','0','0','2',0};
     static const WCHAR s_sp002sp001[] = {' ',' ','0','0','0','2',',',' ',' ','0','0','1',0};
     static const WCHAR s_sp002sp003[] = {' ',' ','0','0','0','2',',',' ','0','0','0','0','3',0};
+    static const WCHAR s_sp001004[]   = {' ',' ','0','0','1',',','0','0','0','0','0','4',0};
 
     WCHAR out[0x100] = {0};
     DWORD r, error;
@@ -337,7 +338,8 @@ static void test_message_from_string_wide(void)
     ok(r==11,"failed: r=%d\n",r);
     r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1oou3oou,
               0, 0, out, sizeof(out)/sizeof(WCHAR), 5, 3, 1, 6, 4, 2 );
-    ok(!lstrcmpW( s_sp001sp002, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW( s_sp001sp002, out) || broken(!lstrcmpW(s_sp001004, out)),
+       "failed out=[%s]\n", wine_dbgstr_w(out));
     ok(r==12,"failed: r=%d\n",r);
     /* args are not counted the same way with an argument array */
     {
@@ -573,35 +575,42 @@ static void test_message_from_string(void)
     ok(r==3, "failed: r=%d\n",r);
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!*s!",
              0, 0, out, sizeof(out), 4, "t");
-    ok(!strcmp( "   t", out),"failed out=[%s]\n",out);
-    ok(r==4,"failed: r=%d\n",r);
-    r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!4.2u!",
-             0, 0, out, sizeof(out), 3 );
-    ok(!strcmp( "  03", out),"failed out=[%s]\n",out);
-    ok(r==4,"failed: r=%d\n",r);
-    r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!*.*u!",
-             0, 0, out, sizeof(out), 5, 3, 1 );
-    ok(!strcmp( "  001", out),"failed out=[%s]\n",out);
-    ok(r==5,"failed: r=%d\n",r);
-    r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!*.*u!,%1!*.*u!",
-             0, 0, out, sizeof(out), 5, 3, 1, 4, 2 );
-    ok(!strcmp( "  001, 0002", out),"failed out=[%s]\n",out);
-    ok(r==11,"failed: r=%d\n",r);
-    r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!*.*u!,%3!*.*u!",
-             0, 0, out, sizeof(out), 5, 3, 1, 6, 4, 2 );
-    ok(!strcmp( "  001,  0002", out),"failed out=[%s]\n",out);
-    ok(r==12,"failed: r=%d\n",r);
-    /* args are not counted the same way with an argument array */
+    if (!strcmp("*s",out)) win_skip( "width/precision not supported\n" );
+    else
     {
-        ULONG_PTR args[] = { 6, 4, 2, 5, 3, 1 };
-        r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY,
-                           "%1!*.*u!,%1!*.*u!", 0, 0, out, sizeof(out), (__ms_va_list *)args );
-        ok(!strcmp("  0002, 00003", out),"failed out=[%s]\n",out);
-        ok(r==13,"failed: r=%d\n",r);
-        r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY,
-                           "%1!*.*u!,%4!*.*u!", 0, 0, out, sizeof(out), (__ms_va_list *)args );
-        ok(!strcmp("  0002,  001", out),"failed out=[%s]\n",out);
+        ok(!strcmp( "   t", out),"failed out=[%s]\n",out);
+        ok(r==4,"failed: r=%d\n",r);
+        r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!4.2u!",
+                 0, 0, out, sizeof(out), 3 );
+        ok(!strcmp( "  03", out),"failed out=[%s]\n",out);
+        ok(r==4,"failed: r=%d\n",r);
+        r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!*.*u!",
+                 0, 0, out, sizeof(out), 5, 3, 1 );
+        ok(!strcmp( "  001", out),"failed out=[%s]\n",out);
+        ok(r==5,"failed: r=%d\n",r);
+        r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!*.*u!,%1!*.*u!",
+                 0, 0, out, sizeof(out), 5, 3, 1, 4, 2 );
+        ok(!strcmp( "  001, 0002", out),"failed out=[%s]\n",out);
+        ok(r==11,"failed: r=%d\n",r);
+        r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!*.*u!,%3!*.*u!",
+                 0, 0, out, sizeof(out), 5, 3, 1, 6, 4, 2 );
+        /* older Win versions marked as broken even though this is arguably the correct behavior */
+        /* but the new (brain-damaged) behavior is specified on MSDN */
+        ok(!strcmp( "  001,  0002", out) || broken(!strcmp("  001,000004", out)),
+           "failed out=[%s]\n",out);
         ok(r==12,"failed: r=%d\n",r);
+        /* args are not counted the same way with an argument array */
+        {
+            ULONG_PTR args[] = { 6, 4, 2, 5, 3, 1 };
+            r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                               "%1!*.*u!,%1!*.*u!", 0, 0, out, sizeof(out), (__ms_va_list *)args );
+            ok(!strcmp("  0002, 00003", out),"failed out=[%s]\n",out);
+            ok(r==13,"failed: r=%d\n",r);
+            r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                               "%1!*.*u!,%4!*.*u!", 0, 0, out, sizeof(out), (__ms_va_list *)args );
+            ok(!strcmp("  0002,  001", out),"failed out=[%s]\n",out);
+            ok(r==12,"failed: r=%d\n",r);
+        }
     }
 
     /* change of pace... test the low byte of dwflags */
@@ -677,35 +686,41 @@ static void test_message_from_hmodule(void)
                          MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), out, sizeof(out)/sizeof(CHAR), NULL);
     error = GetLastError();
     ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
-    ok(error == ERROR_MR_MID_NOT_FOUND, "last error %u\n", error);
+    ok(error == ERROR_MR_MID_NOT_FOUND || error == ERROR_MUI_FILE_NOT_FOUND, "last error %u\n", error);
 
     SetLastError(0xdeadbeef);
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 3044,
                          MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), out, sizeof(out)/sizeof(CHAR), NULL);
     error = GetLastError();
     ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
-    ok(error == ERROR_MR_MID_NOT_FOUND, "last error %u\n", error);
+    ok(error == ERROR_MR_MID_NOT_FOUND || error == ERROR_MUI_FILE_NOT_LOADED, "last error %u\n", error);
 
     SetLastError(0xdeadbeef);
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 3044,
                          MAKELANGID(LANG_NEUTRAL, SUBLANG_SYS_DEFAULT), out, sizeof(out)/sizeof(CHAR), NULL);
     error = GetLastError();
     ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
-    ok(error == ERROR_MR_MID_NOT_FOUND, "last error %u\n", error);
+    ok(error == ERROR_MR_MID_NOT_FOUND || error == ERROR_MUI_FILE_NOT_LOADED, "last error %u\n", error);
 
     SetLastError(0xdeadbeef);
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 3044,
                          MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), out, sizeof(out)/sizeof(CHAR), NULL);
     error = GetLastError();
     ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
-    ok(error == ERROR_MR_MID_NOT_FOUND, "last error %u\n", error);
+    ok(error == ERROR_RESOURCE_LANG_NOT_FOUND ||
+       error == ERROR_MR_MID_NOT_FOUND ||
+       error == ERROR_MUI_FILE_NOT_LOADED,
+       "last error %u\n", error);
 
     SetLastError(0xdeadbeef);
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 3044,
                          MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_UK), out, sizeof(out)/sizeof(CHAR), NULL);
     error = GetLastError();
     ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
-    ok(error == ERROR_RESOURCE_LANG_NOT_FOUND, "last error %u\n", error);
+    ok(error == ERROR_RESOURCE_LANG_NOT_FOUND ||
+       error == ERROR_MR_MID_NOT_FOUND ||
+       error == ERROR_MUI_FILE_NOT_FOUND,
+       "last error %u\n", error);
 }
 
 START_TEST(format_msg)

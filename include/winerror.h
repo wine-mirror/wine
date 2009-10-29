@@ -1559,6 +1559,15 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 #define ERROR_SXS_THREAD_QUERIES_DISABLED                  14010
 #define ERROR_SXS_PROCESS_DEFAULT_ALREADY_SET              14011
 #define ERROR_SXS_CORRUPTION                               14083
+#define ERROR_MUI_FILE_NOT_FOUND                           15100
+#define ERROR_MUI_INVALID_FILE                             15101
+#define ERROR_MUI_INVALID_RC_CONFIG                        15102
+#define ERROR_MUI_INVALID_LOCALE_NAME                      15103
+#define ERROR_MUI_INVALID_ULTIMATEFALLBACK_NAME            15104
+#define ERROR_MUI_FILE_NOT_LOADED                          15105
+#define ERROR_RESOURCE_ENUM_USER_STOP                      15106
+#define ERROR_MUI_INTLSETTINGS_UILANG_NOT_INSTALLED        15107
+#define ERROR_MUI_INTLSETTINGS_INVALID_LOCALE_NAME         15108
 
 /* HRESULT values for OLE, SHELL and other Interface stuff */
 /* the codes 4000-40ff are reserved for OLE */
