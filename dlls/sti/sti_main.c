@@ -32,6 +32,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(sti);
 
+extern HRESULT WINAPI STI_DllGetClassObject(REFCLSID, REFIID, LPVOID *) DECLSPEC_HIDDEN;
+extern BOOL WINAPI STI_DllMain(HINSTANCE, DWORD, LPVOID) DECLSPEC_HIDDEN;
+
 typedef HRESULT (*fnCreateInstance)(REFIID riid, IUnknown *pUnkOuter, LPVOID *ppObj);
 
 typedef struct
@@ -130,16 +133,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(0x%p, %d, %p)\n",hInstDLL,fdwReason,lpvReserved);
 
-    switch(fdwReason) {
-        case DLL_WINE_PREATTACH:
-            return FALSE;
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hInstDLL);
-            break;
-        case DLL_PROCESS_DETACH:
-            break;
-    }
-    return TRUE;
+    if (fdwReason == DLL_WINE_PREATTACH)
+        return FALSE;
+    return STI_DllMain(hInstDLL, fdwReason, lpvReserved);
 }
 
 /******************************************************************************
@@ -156,8 +152,9 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
        cf = (IClassFactory *)&the_sti_cf.vtbl;
     }
 
-    if (!cf) return CLASS_E_CLASSNOTAVAILABLE;
-    return IClassFactory_QueryInterface( cf, iid, ppv );
+    if (cf)
+        return IClassFactory_QueryInterface( cf, iid, ppv );
+    return STI_DllGetClassObject( rclsid, iid, ppv );
 }
 
 /******************************************************************************

@@ -4,12 +4,18 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = sti.dll
 IMPORTLIB = sti
-IMPORTS   = uuid ole32 advapi32 kernel32
+IMPORTS   = uuid ole32 oleaut32 rpcrt4 advapi32 kernel32
+EXTRADEFS = -DENTRY_PREFIX=STI_ -DPROXY_DELEGATION -DREGISTER_PROXY_DLL
 
 C_SRCS = \
 	regsvr.c \
 	sti.c \
 	sti_main.c
+
+IDL_P_SRCS = \
+	sti_wia.idl
+
+EXTRA_OBJS = dlldata.o
 
 @MAKE_DLL_RULES@
 

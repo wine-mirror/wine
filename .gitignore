@@ -117,6 +117,8 @@ dlls/rpcrt4/tests/server_s.c
 dlls/shdocvw/shdocvw_v1.tlb
 dlls/stdole2.tlb/std_ole_v2.tlb
 dlls/stdole32.tlb/std_ole_v1.tlb
+dlls/sti/sti_wia.h
+dlls/sti/sti_wia_p.c
 dlls/user.exe16
 dlls/wprocs.dll16
 include/activaut.h
