@@ -493,10 +493,9 @@ DWORD WINAPI FormatMessageW(
                             /* possible invalid pointers */
                             xarr[1]=*(argliststart+1);
                             xarr[2]=*(argliststart+2);
-                            sprintfbuf=HeapAlloc(GetProcessHeap(),0,(strlenW((LPWSTR)argliststart[0])*2+1)*sizeof(WCHAR));
-
+                            sprintfbuf = HeapAlloc(GetProcessHeap(), 0, 1000);
                             /* CMF - This makes a BIG assumption about va_list */
-                            vsprintfW(sprintfbuf, fmtstr, (va_list) xarr);
+                            vsnprintfW(sprintfbuf, 1000, fmtstr, (va_list) xarr);
                         }
                         else if (strcmpW(fmtstr, fmt_wc) == 0) {
                             sprintfbuf = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * 2);

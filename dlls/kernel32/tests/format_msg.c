@@ -87,6 +87,14 @@ static void test_message_from_string_wide(void)
     static const WCHAR fmt_hi_crlf[] = {'h','i','\r','\n',0};
     static const WCHAR fmt_cr[]      = {'\r',0};
     static const WCHAR fmt_crcrlf[]  = {'\r','\r','\n',0};
+    static const WCHAR fmt_13s[]     = {'%','1','!','3','s','!',0};
+    static const WCHAR fmt_1os[]     = {'%','1','!','*','s','!',0};
+    static const WCHAR fmt_142u[]    = {'%','1','!','4','.','2','u','!',0};
+    static const WCHAR fmt_1oou[]    = {'%','1','!','*','.','*','u','!',0};
+    static const WCHAR fmt_1oou1oou[] = {'%','1','!','*','.','*','u','!',',','%','1','!','*','.','*','u','!',0};
+    static const WCHAR fmt_1oou3oou[] = {'%','1','!','*','.','*','u','!',',','%','3','!','*','.','*','u','!',0};
+    static const WCHAR fmt_1oou4oou[] = {'%','1','!','*','.','*','u','!',',','%','4','!','*','.','*','u','!',0};
+
     static const WCHAR s_123d[]      = {'1','2','3',0};
     static const WCHAR s_14d[]       = {' ',' ',' ','1',0};
     static const WCHAR s_14x[]       = {' ',' ',' ','b',0};
@@ -105,6 +113,14 @@ static void test_message_from_string_wide(void)
     static const WCHAR s_hi_sp[]     = {'h','i',' ',0};
     static const WCHAR s_sp[]        = {' ',0};
     static const WCHAR s_2sp[]       = {' ',' ',0};
+    static const WCHAR s_spt[]       = {' ',' ','t',0};
+    static const WCHAR s_sp3t[]      = {' ',' ',' ','t',0};
+    static const WCHAR s_sp03[]      = {' ',' ','0','3',0};
+    static const WCHAR s_sp001[]     = {' ',' ','0','0','1',0};
+    static const WCHAR s_sp001002[]  = {' ',' ','0','0','1',',',' ','0','0','0','2',0};
+    static const WCHAR s_sp001sp002[] = {' ',' ','0','0','1',',',' ',' ','0','0','0','2',0};
+    static const WCHAR s_sp002sp001[] = {' ',' ','0','0','0','2',',',' ',' ','0','0','1',0};
+
     WCHAR out[0x100] = {0};
     DWORD r, error;
 
@@ -295,6 +311,41 @@ static void test_message_from_string_wide(void)
         0, out, sizeof(out)/sizeof(WCHAR));
     ok(!lstrcmpW(s_crlfcrlf, out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
+
+    /* precision and width */
+
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_13s,
+              0, 0, out, sizeof(out)/sizeof(WCHAR), t );
+    ok(!lstrcmpW(s_spt, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+    ok(r==3, "failed: r=%d\n",r);
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1os,
+              0, 0, out, sizeof(out)/sizeof(WCHAR), 4, t );
+    ok(!lstrcmpW( s_sp3t, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+    ok(r==4,"failed: r=%d\n",r);
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_142u,
+              0, 0, out, sizeof(out)/sizeof(WCHAR), 3 );
+    ok(!lstrcmpW( s_sp03, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+    ok(r==4,"failed: r=%d\n",r);
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1oou,
+              0, 0, out, sizeof(out)/sizeof(WCHAR), 5, 3, 1 );
+    ok(!lstrcmpW( s_sp001, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+    ok(r==5,"failed: r=%d\n",r);
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1oou1oou,
+              0, 0, out, sizeof(out)/sizeof(WCHAR), 5, 3, 1, 4, 2 );
+    todo_wine ok(!lstrcmpW( s_sp001002, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+    ok(r==11,"failed: r=%d\n",r);
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1oou3oou,
+              0, 0, out, sizeof(out)/sizeof(WCHAR), 5, 3, 1, 6, 4, 2 );
+    todo_wine ok(!lstrcmpW( s_sp001sp002, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+    ok(r==12,"failed: r=%d\n",r);
+    /* args are not counted the same way with an argument array */
+    {
+        ULONG_PTR args[] = { 6, 4, 2, 5, 3, 1 };
+        r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY, fmt_1oou4oou,
+                           0, 0, out, sizeof(out)/sizeof(WCHAR), (va_list *)args );
+        ok(!lstrcmpW(s_sp002sp001, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+        ok(r==12,"failed: r=%d\n",r);
+    }
 
     /* change of pace... test the low byte of dwflags */
 
@@ -508,6 +559,41 @@ static void test_message_from_string(void)
         0, out, sizeof(out)/sizeof(CHAR));
     ok(!strcmp("\r\n\r\n", out),"failed out=[%s]\n",out);
     ok(r==4,"failed: r=%d\n",r);
+
+    /* precision and width */
+
+    r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!3s!",
+             0, 0, out, sizeof(out), "t" );
+    ok(!strcmp("  t", out),"failed out=[%s]\n",out);
+    ok(r==3, "failed: r=%d\n",r);
+    r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!*s!",
+             0, 0, out, sizeof(out), 4, "t");
+    ok(!strcmp( "   t", out),"failed out=[%s]\n",out);
+    ok(r==4,"failed: r=%d\n",r);
+    r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!4.2u!",
+             0, 0, out, sizeof(out), 3 );
+    ok(!strcmp( "  03", out),"failed out=[%s]\n",out);
+    ok(r==4,"failed: r=%d\n",r);
+    r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!*.*u!",
+             0, 0, out, sizeof(out), 5, 3, 1 );
+    ok(!strcmp( "  001", out),"failed out=[%s]\n",out);
+    ok(r==5,"failed: r=%d\n",r);
+    r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!*.*u!,%1!*.*u!",
+             0, 0, out, sizeof(out), 5, 3, 1, 4, 2 );
+    todo_wine ok(!strcmp( "  001, 0002", out),"failed out=[%s]\n",out);
+    ok(r==11,"failed: r=%d\n",r);
+    r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!*.*u!,%3!*.*u!",
+             0, 0, out, sizeof(out), 5, 3, 1, 6, 4, 2 );
+    todo_wine ok(!strcmp( "  001,  0002", out),"failed out=[%s]\n",out);
+    ok(r==12,"failed: r=%d\n",r);
+    /* args are not counted the same way with an argument array */
+    {
+        ULONG_PTR args[] = { 6, 4, 2, 5, 3, 1 };
+        r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                           "%1!*.*u!,%4!*.*u!", 0, 0, out, sizeof(out), (va_list *)args );
+        ok(!strcmp("  0002,  001", out),"failed out=[%s]\n",out);
+        ok(r==12,"failed: r=%d\n",r);
+    }
 
     /* change of pace... test the low byte of dwflags */
 
