@@ -26,29 +26,29 @@
 
 /* #define ok(cond,failstr) if(!(cond)) {printf("line %d : %s\n",__LINE__,failstr);exit(1);} */
 
-static DWORD doit(DWORD flags, LPCVOID src, DWORD msg_id, DWORD lang_id,
-           LPSTR out, DWORD outsize, ... )
+static DWORD __cdecl doit(DWORD flags, LPCVOID src, DWORD msg_id, DWORD lang_id,
+                          LPSTR out, DWORD outsize, ... )
 {
-    va_list list;
+    __ms_va_list list;
     DWORD r;
 
-    va_start(list, outsize);
+    __ms_va_start(list, outsize);
     r = FormatMessageA(flags, src, msg_id,
         lang_id, out, outsize, &list);
-    va_end(list);
+    __ms_va_end(list);
     return r;
 }
 
-static DWORD doitW(DWORD flags, LPCVOID src, DWORD msg_id, DWORD lang_id,
-           LPWSTR out, DWORD outsize, ... )
+static DWORD __cdecl doitW(DWORD flags, LPCVOID src, DWORD msg_id, DWORD lang_id,
+                           LPWSTR out, DWORD outsize, ... )
 {
-    va_list list;
+    __ms_va_list list;
     DWORD r;
 
-    va_start(list, outsize);
+    __ms_va_start(list, outsize);
     r = FormatMessageW(flags, src, msg_id,
         lang_id, out, outsize, &list);
-    va_end(list);
+    __ms_va_end(list);
     return r;
 }
 
@@ -343,11 +343,11 @@ static void test_message_from_string_wide(void)
     {
         ULONG_PTR args[] = { 6, 4, 2, 5, 3, 1 };
         r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY, fmt_1oou1oou,
-                           0, 0, out, sizeof(out)/sizeof(WCHAR), (va_list *)args );
+                           0, 0, out, sizeof(out)/sizeof(WCHAR), (__ms_va_list *)args );
         ok(!lstrcmpW(s_sp002sp003, out),"failed out=[%s]\n", wine_dbgstr_w(out));
         ok(r==13,"failed: r=%d\n",r);
         r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY, fmt_1oou4oou,
-                           0, 0, out, sizeof(out)/sizeof(WCHAR), (va_list *)args );
+                           0, 0, out, sizeof(out)/sizeof(WCHAR), (__ms_va_list *)args );
         ok(!lstrcmpW(s_sp002sp001, out),"failed out=[%s]\n", wine_dbgstr_w(out));
         ok(r==12,"failed: r=%d\n",r);
     }
@@ -595,11 +595,11 @@ static void test_message_from_string(void)
     {
         ULONG_PTR args[] = { 6, 4, 2, 5, 3, 1 };
         r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY,
-                           "%1!*.*u!,%1!*.*u!", 0, 0, out, sizeof(out), (va_list *)args );
+                           "%1!*.*u!,%1!*.*u!", 0, 0, out, sizeof(out), (__ms_va_list *)args );
         ok(!strcmp("  0002, 00003", out),"failed out=[%s]\n",out);
         ok(r==13,"failed: r=%d\n",r);
         r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY,
-                           "%1!*.*u!,%4!*.*u!", 0, 0, out, sizeof(out), (va_list *)args );
+                           "%1!*.*u!,%4!*.*u!", 0, 0, out, sizeof(out), (__ms_va_list *)args );
         ok(!strcmp("  0002,  001", out),"failed out=[%s]\n",out);
         ok(r==12,"failed: r=%d\n",r);
     }
