@@ -81,6 +81,8 @@ PUBLIC_IDL_H_SRCS = \
 	urlmon.idl \
 	vmr9.idl \
 	wbemcli.idl \
+	wia_lh.idl \
+	wia_xp.idl \
 	wincodec.idl \
 	wine/itss.idl \
 	wine/svcctl.idl \
@@ -455,6 +457,7 @@ SRCDIR_INCLUDES = \
 	vfwmsgs.h \
 	vmrender.idl \
 	wfext.h \
+	wia.h \
 	winbase.h \
 	wincon.h \
 	wincred.h \
