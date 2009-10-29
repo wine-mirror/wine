@@ -1082,8 +1082,8 @@ static void dump_element(PCCERT_CONTEXT cert)
         dump_extension(&cert->pCertInfo->rgExtension[i]);
 }
 
-static BOOL CRYPT_KeyUsageValid(PCCERT_CONTEXT cert, BOOL isRoot, BOOL isCA,
- DWORD index)
+static BOOL CRYPT_KeyUsageValid(PCertificateChainEngine engine,
+ PCCERT_CONTEXT cert, BOOL isCA, DWORD index)
 {
     PCERT_EXTENSION ext;
     BOOL ret;
@@ -1121,20 +1121,33 @@ static BOOL CRYPT_KeyUsageValid(PCCERT_CONTEXT cert, BOOL isRoot, BOOL isCA,
     {
         if (!ext)
         {
-            /* MS appears to violate RFC 3280, section 4.2.1.3 (Key Usage)
+            /* MS appears to violate RFC 5280, section 4.2.1.3 (Key Usage)
              * here.  Quoting the RFC:
              * "This [key usage] extension MUST appear in certificates that
              * contain public keys that are used to validate digital signatures
              * on other public key certificates or CRLs."
-             * Most of the test chains' certs do not contain key usage
-             * extensions, yet are allowed to be CA certs.  This appears to
-             * be common usage too:  the root CA in a chain often does not have
-             * the key usage extension.  We are a little more restrictive:
-             * root certs, which commonly do not have any extensions, are
-             * allowed to sign certificates without the key usage extension.
+             * MS appears to accept certs that do not contain key usage
+             * extensions as CA certs.  V1 and V2 certificates did not have
+             * extensions, and many root certificates are V1 certificates, so
+             * perhaps this is prudent.  On the other hand, MS also accepts V3
+             * certs without key usage extensions.  We are more restrictive:
+             * we accept locally installed V1 or V2 certs as CA certs.
              */
-            WARN_(chain)("no key usage extension on a CA cert\n");
-            ret = isRoot;
+            ret = FALSE;
+            if (cert->pCertInfo->dwVersion == CERT_V1 ||
+             cert->pCertInfo->dwVersion == CERT_V2)
+            {
+                PCCERT_CONTEXT localCert = CRYPT_FindCertInStore(
+                 engine->hWorld, cert);
+
+                if (localCert)
+                {
+                    CertFreeCertificateContext(localCert);
+                    ret = TRUE;
+                }
+            }
+            if (!ret)
+                WARN_(chain)("no key usage extension on a CA cert\n");
         }
         else
         {
@@ -1206,19 +1219,12 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
      chain->cElement, debugstr_w(filetime_to_str(time)));
     for (i = chain->cElement - 1; i >= 0; i--)
     {
-        BOOL isRoot;
-
         if (TRACE_ON(chain))
             dump_element(chain->rgpElement[i]->pCertContext);
         if (CertVerifyTimeValidity(time,
          chain->rgpElement[i]->pCertContext->pCertInfo) != 0)
             chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
              CERT_TRUST_IS_NOT_TIME_VALID;
-        if (i == chain->cElement - 1)
-            isRoot = CRYPT_IsCertificateSelfSigned(
-             chain->rgpElement[i]->pCertContext);
-        else
-            isRoot = FALSE;
         if (i != 0)
         {
             /* Check the signature of the cert this issued */
@@ -1255,7 +1261,7 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
                 chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
                  CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
         }
-        if (!CRYPT_KeyUsageValid(chain->rgpElement[i]->pCertContext, isRoot,
+        if (!CRYPT_KeyUsageValid(engine, chain->rgpElement[i]->pCertContext,
          constraints.fCA, i))
             chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
              CERT_TRUST_IS_NOT_VALID_FOR_USAGE;
