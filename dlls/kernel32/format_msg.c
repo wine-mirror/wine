@@ -39,6 +39,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(resource);
 
+struct format_args
+{
+    ULONG_PTR    *args;
+    __ms_va_list *list;
+    int           last;
+};
 
 /* Messages used by FormatMessage
  *
@@ -138,17 +144,25 @@ static LPSTR load_messageA( HMODULE module, UINT id, WORD lang )
 /**********************************************************************
  *	get_arg    (internal)
  */
-static ULONG_PTR get_arg( int nr, DWORD flags, __ms_va_list *args )
+static ULONG_PTR get_arg( int nr, DWORD flags, struct format_args *args )
 {
-    if (flags & FORMAT_MESSAGE_ARGUMENT_ARRAY) return ((ULONG_PTR *)args)[nr - 1];
-    return (*(ULONG_PTR **)args)[nr - 1];  /* FIXME */
+    if (nr == -1) nr = args->last + 1;
+    if (args->list)
+    {
+        if (!args->args) args->args = HeapAlloc( GetProcessHeap(), 0, 99 * sizeof(ULONG_PTR) );
+        while (nr > args->last)
+            args->args[args->last++] = va_arg( *args->list, ULONG_PTR );
+    }
+    if (nr > args->last) args->last = nr;
+    return args->args[nr - 1];
 }
 
 
 /**********************************************************************
  *	format_insertA    (internal)
  */
-static LPCSTR format_insertA( int insert, LPCSTR format, DWORD flags, __ms_va_list *args, LPSTR *result )
+static LPCSTR format_insertA( int insert, LPCSTR format, DWORD flags,
+                              struct format_args *args, LPSTR *result )
 {
     char *astring = NULL, *p, fmt[256];
     ULONG_PTR arg;
@@ -176,7 +190,7 @@ static LPCSTR format_insertA( int insert, LPCSTR format, DWORD flags, __ms_va_li
         if (*format == '*')
         {
             p += sprintf( p, "%lu", get_arg( insert, flags, args ));
-            insert++;
+            insert = -1;
             format++;
         }
         else *p++ = *format++;
@@ -189,7 +203,7 @@ static LPCSTR format_insertA( int insert, LPCSTR format, DWORD flags, __ms_va_li
         if (*format == '*')
         {
             p += sprintf( p, "%lu", get_arg( insert, flags, args ));
-            insert++;
+            insert = -1;
             format++;
         }
         else
@@ -269,7 +283,8 @@ static LPCSTR format_insertA( int insert, LPCSTR format, DWORD flags, __ms_va_li
 /**********************************************************************
  *	format_insertW    (internal)
  */
-static LPCWSTR format_insertW( int insert, LPCWSTR format, DWORD flags, __ms_va_list *args, LPWSTR *result)
+static LPCWSTR format_insertW( int insert, LPCWSTR format, DWORD flags,
+                               struct format_args *args, LPWSTR *result )
 {
     static const WCHAR fmt_lu[] = {'%','l','u',0};
     WCHAR *wstring = NULL, *p, fmt[256];
@@ -298,7 +313,7 @@ static LPCWSTR format_insertW( int insert, LPCWSTR format, DWORD flags, __ms_va_
         if (*format == '*')
         {
             p += sprintfW( p, fmt_lu, get_arg( insert, flags, args ));
-            insert++;
+            insert = -1;
             format++;
         }
         else *p++ = *format++;
@@ -311,7 +326,7 @@ static LPCWSTR format_insertW( int insert, LPCWSTR format, DWORD flags, __ms_va_
         if (*format == '*')
         {
             p += sprintfW( p, fmt_lu, get_arg( insert, flags, args ));
-            insert++;
+            insert = -1;
             format++;
         }
         else
@@ -399,9 +414,8 @@ DWORD WINAPI FormatMessageA(
 	DWORD	nSize,
 	__ms_va_list* args )
 {
+    struct format_args format_args;
     DWORD ret = 0;
-#if defined(__i386__) || defined(__sparc__)
-/* This implementation is completely dependent on the format of the va_list on x86 CPUs */
     LPSTR	target,t;
     DWORD	talloced;
     LPSTR	from;
@@ -420,6 +434,19 @@ DWORD WINAPI FormatMessageA(
     {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return 0;
+    }
+
+    if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
+    {
+        format_args.args = (ULONG_PTR *)args;
+        format_args.list = NULL;
+        format_args.last = 0;
+    }
+    else
+    {
+        format_args.args = NULL;
+        format_args.list = args;
+        format_args.last = 0;
     }
 
     if (width && width != FORMAT_MESSAGE_MAX_WIDTH_MASK)
@@ -484,7 +511,7 @@ DWORD WINAPI FormatMessageA(
                             f++;
                             break;
                         }
-                        f = format_insertA( insertnr, f, dwFlags, args, &str );
+                        f = format_insertA( insertnr, f, dwFlags, &format_args, &str );
                         for (x = str; *x; x++) ADD_TO_T(*x);
                         HeapFree( GetProcessHeap(), 0, str );
                         break;
@@ -546,8 +573,8 @@ DWORD WINAPI FormatMessageA(
     }
     HeapFree(GetProcessHeap(),0,target);
     HeapFree(GetProcessHeap(),0,from);
+    if (!(dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)) HeapFree( GetProcessHeap(), 0, format_args.args );
     ret = (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? strlen(*(LPSTR*)lpBuffer) : strlen(lpBuffer);
-#endif /* __i386__ */
     TRACE("-- returning %d\n", ret);
     return ret;
 }
@@ -566,8 +593,7 @@ DWORD WINAPI FormatMessageW(
 	DWORD	nSize,
 	__ms_va_list* args )
 {
-#if defined(__i386__) || defined(__sparc__)
-/* This implementation is completely dependent on the format of the va_list on x86 CPUs */
+    struct format_args format_args;
     LPWSTR target,t;
     DWORD talloced;
     LPWSTR from;
@@ -586,6 +612,19 @@ DWORD WINAPI FormatMessageW(
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
+    }
+
+    if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
+    {
+        format_args.args = (ULONG_PTR *)args;
+        format_args.list = NULL;
+        format_args.last = 0;
+    }
+    else
+    {
+        format_args.args = NULL;
+        format_args.list = args;
+        format_args.last = 0;
     }
 
     if (width && width != FORMAT_MESSAGE_MAX_WIDTH_MASK)
@@ -651,7 +690,7 @@ DWORD WINAPI FormatMessageW(
                             f++;
                             break;
                         }
-                        f = format_insertW( insertnr, f, dwFlags, args, &str );
+                        f = format_insertW( insertnr, f, dwFlags, &format_args, &str );
                         for (x = str; *x; x++) ADD_TO_T(*x);
                         HeapFree( GetProcessHeap(), 0, str );
                         break;
@@ -713,13 +752,11 @@ DWORD WINAPI FormatMessageW(
 
     HeapFree(GetProcessHeap(),0,target);
     HeapFree(GetProcessHeap(),0,from);
+    if (!(dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)) HeapFree( GetProcessHeap(), 0, format_args.args );
     TRACE("ret=%s\n", wine_dbgstr_w((dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ?
         *(LPWSTR*)lpBuffer : lpBuffer));
     return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ?
         strlenW(*(LPWSTR*)lpBuffer):
             strlenW(lpBuffer);
-#else
-    return 0;
-#endif /* __i386__ */
 }
 #undef ADD_TO_T

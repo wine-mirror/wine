@@ -120,6 +120,7 @@ static void test_message_from_string_wide(void)
     static const WCHAR s_sp001002[]  = {' ',' ','0','0','1',',',' ','0','0','0','2',0};
     static const WCHAR s_sp001sp002[] = {' ',' ','0','0','1',',',' ',' ','0','0','0','2',0};
     static const WCHAR s_sp002sp001[] = {' ',' ','0','0','0','2',',',' ',' ','0','0','1',0};
+    static const WCHAR s_sp002sp003[] = {' ',' ','0','0','0','2',',',' ','0','0','0','0','3',0};
 
     WCHAR out[0x100] = {0};
     DWORD r, error;
@@ -332,7 +333,7 @@ static void test_message_from_string_wide(void)
     ok(r==5,"failed: r=%d\n",r);
     r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1oou1oou,
               0, 0, out, sizeof(out)/sizeof(WCHAR), 5, 3, 1, 4, 2 );
-    todo_wine ok(!lstrcmpW( s_sp001002, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW( s_sp001002, out),"failed out=[%s]\n", wine_dbgstr_w(out));
     ok(r==11,"failed: r=%d\n",r);
     r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1oou3oou,
               0, 0, out, sizeof(out)/sizeof(WCHAR), 5, 3, 1, 6, 4, 2 );
@@ -341,6 +342,10 @@ static void test_message_from_string_wide(void)
     /* args are not counted the same way with an argument array */
     {
         ULONG_PTR args[] = { 6, 4, 2, 5, 3, 1 };
+        r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY, fmt_1oou1oou,
+                           0, 0, out, sizeof(out)/sizeof(WCHAR), (va_list *)args );
+        ok(!lstrcmpW(s_sp002sp003, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+        ok(r==13,"failed: r=%d\n",r);
         r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY, fmt_1oou4oou,
                            0, 0, out, sizeof(out)/sizeof(WCHAR), (va_list *)args );
         ok(!lstrcmpW(s_sp002sp001, out),"failed out=[%s]\n", wine_dbgstr_w(out));
@@ -580,7 +585,7 @@ static void test_message_from_string(void)
     ok(r==5,"failed: r=%d\n",r);
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!*.*u!,%1!*.*u!",
              0, 0, out, sizeof(out), 5, 3, 1, 4, 2 );
-    todo_wine ok(!strcmp( "  001, 0002", out),"failed out=[%s]\n",out);
+    ok(!strcmp( "  001, 0002", out),"failed out=[%s]\n",out);
     ok(r==11,"failed: r=%d\n",r);
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!*.*u!,%3!*.*u!",
              0, 0, out, sizeof(out), 5, 3, 1, 6, 4, 2 );
@@ -589,6 +594,10 @@ static void test_message_from_string(void)
     /* args are not counted the same way with an argument array */
     {
         ULONG_PTR args[] = { 6, 4, 2, 5, 3, 1 };
+        r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                           "%1!*.*u!,%1!*.*u!", 0, 0, out, sizeof(out), (va_list *)args );
+        ok(!strcmp("  0002, 00003", out),"failed out=[%s]\n",out);
+        ok(r==13,"failed: r=%d\n",r);
         r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY,
                            "%1!*.*u!,%4!*.*u!", 0, 0, out, sizeof(out), (va_list *)args );
         ok(!strcmp("  0002,  001", out),"failed out=[%s]\n",out);
