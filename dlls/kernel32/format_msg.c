@@ -210,6 +210,8 @@ static LPCSTR format_insertA( int insert, LPCSTR format, DWORD flags,
             while (isdigit(*format)) *p++ = *format++;
     }
 
+    /* replicate MS bug: drop an argument when using va_list with width/precision */
+    if (insert == -1 && args->list) args->last--;
     arg = get_arg( insert, flags, args );
 
     /* check for wide string format */
@@ -333,6 +335,8 @@ static LPCWSTR format_insertW( int insert, LPCWSTR format, DWORD flags,
             while (isdigitW(*format)) *p++ = *format++;
     }
 
+    /* replicate MS bug: drop an argument when using va_list with width/precision */
+    if (insert == -1 && args->list) args->last--;
     arg = get_arg( insert, flags, args );
 
     /* check for ascii string format */

@@ -337,7 +337,7 @@ static void test_message_from_string_wide(void)
     ok(r==11,"failed: r=%d\n",r);
     r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1oou3oou,
               0, 0, out, sizeof(out)/sizeof(WCHAR), 5, 3, 1, 6, 4, 2 );
-    todo_wine ok(!lstrcmpW( s_sp001sp002, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW( s_sp001sp002, out),"failed out=[%s]\n", wine_dbgstr_w(out));
     ok(r==12,"failed: r=%d\n",r);
     /* args are not counted the same way with an argument array */
     {
@@ -589,7 +589,7 @@ static void test_message_from_string(void)
     ok(r==11,"failed: r=%d\n",r);
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!*.*u!,%3!*.*u!",
              0, 0, out, sizeof(out), 5, 3, 1, 6, 4, 2 );
-    todo_wine ok(!strcmp( "  001,  0002", out),"failed out=[%s]\n",out);
+    ok(!strcmp( "  001,  0002", out),"failed out=[%s]\n",out);
     ok(r==12,"failed: r=%d\n",r);
     /* args are not counted the same way with an argument array */
     {
