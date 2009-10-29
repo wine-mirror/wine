@@ -1016,10 +1016,10 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
      * Likely a lot of other new bugs will be exposed. For that reason request a depth stencil surface all the
      * time. It can cause a slight performance hit but fixes a lot of regressions. A fixme reminds of that this
      * issue needs to be fixed. */
-    if (ds_format_desc->format != WINED3DFMT_S8_UINT_D24_UNORM)
+    if (ds_format_desc->format != WINED3DFMT_D24_UNORM_S8_UINT)
     {
         FIXME("Add OpenGL context recreation support to SetDepthStencilSurface\n");
-        ds_format_desc = getFormatDescEntry(WINED3DFMT_S8_UINT_D24_UNORM, &This->adapter->gl_info);
+        ds_format_desc = getFormatDescEntry(WINED3DFMT_D24_UNORM_S8_UINT, &This->adapter->gl_info);
     }
 
     getDepthStencilBits(ds_format_desc, &depthBits, &stencilBits);

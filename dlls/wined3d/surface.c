@@ -3980,7 +3980,7 @@ static HRESULT IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, const RECT *D
             case WINED3DFMT_S1_UINT_D15_UNORM:
                 depth = (float) DDBltFx->u5.dwFillDepth / (float) 0x0000fffe;
                 break;
-            case WINED3DFMT_S8_UINT_D24_UNORM:
+            case WINED3DFMT_D24_UNORM_S8_UINT:
             case WINED3DFMT_X8D24_UNORM:
                 depth = (float) DDBltFx->u5.dwFillDepth / (float) 0x00ffffff;
                 break;

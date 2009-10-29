@@ -118,7 +118,7 @@ static const struct StaticPixelFormatDesc formats[] =
     {WINED3DFMT_D16_LOCKABLE,           0x0,        0x0,        0x0,        0x0,        2,      16,     0,      FALSE},
     {WINED3DFMT_D32_UNORM,              0x0,        0x0,        0x0,        0x0,        4,      32,     0,      FALSE},
     {WINED3DFMT_S1_UINT_D15_UNORM,      0x0,        0x0,        0x0,        0x0,        2,      15,     1,      FALSE},
-    {WINED3DFMT_S8_UINT_D24_UNORM,      0x0,        0x0,        0x0,        0x0,        4,      24,     8,      FALSE},
+    {WINED3DFMT_D24_UNORM_S8_UINT,      0x0,        0x0,        0x0,        0x0,        4,      24,     8,      FALSE},
     {WINED3DFMT_X8D24_UNORM,            0x0,        0x0,        0x0,        0x0,        4,      24,     0,      FALSE},
     {WINED3DFMT_S4X4_UINT_D24_UNORM,    0x0,        0x0,        0x0,        0x0,        4,      24,     4,      FALSE},
     {WINED3DFMT_D16_UNORM,              0x0,        0x0,        0x0,        0x0,        2,      16,     0,      FALSE},
@@ -447,15 +447,15 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
             GL_DEPTH_STENCIL,           GL_UNSIGNED_INT_24_8,
             WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL,
             ARB_FRAMEBUFFER_OBJECT},
-    {WINED3DFMT_S8_UINT_D24_UNORM,      GL_DEPTH_COMPONENT24_ARB,         GL_DEPTH_COMPONENT24_ARB,               0,
+    {WINED3DFMT_D24_UNORM_S8_UINT,      GL_DEPTH_COMPONENT24_ARB,         GL_DEPTH_COMPONENT24_ARB,               0,
             GL_DEPTH_COMPONENT,         GL_UNSIGNED_INT,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_DEPTH,
             ARB_DEPTH_TEXTURE},
-    {WINED3DFMT_S8_UINT_D24_UNORM,      GL_DEPTH24_STENCIL8_EXT,          GL_DEPTH24_STENCIL8_EXT,                0,
+    {WINED3DFMT_D24_UNORM_S8_UINT,      GL_DEPTH24_STENCIL8_EXT,          GL_DEPTH24_STENCIL8_EXT,                0,
             GL_DEPTH_STENCIL_EXT,       GL_UNSIGNED_INT_24_8_EXT,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL,
             EXT_PACKED_DEPTH_STENCIL},
-    {WINED3DFMT_S8_UINT_D24_UNORM,      GL_DEPTH24_STENCIL8,              GL_DEPTH24_STENCIL8,                    0,
+    {WINED3DFMT_D24_UNORM_S8_UINT,      GL_DEPTH24_STENCIL8,              GL_DEPTH24_STENCIL8,                    0,
             GL_DEPTH_STENCIL,           GL_UNSIGNED_INT_24_8,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL,
             ARB_FRAMEBUFFER_OBJECT},
@@ -1189,7 +1189,6 @@ const char* debug_d3dformat(WINED3DFORMAT fmt) {
     FMT_TO_STR(WINED3DFMT_D16_LOCKABLE);
     FMT_TO_STR(WINED3DFMT_D32_UNORM);
     FMT_TO_STR(WINED3DFMT_S1_UINT_D15_UNORM);
-    FMT_TO_STR(WINED3DFMT_S8_UINT_D24_UNORM);
     FMT_TO_STR(WINED3DFMT_X8D24_UNORM);
     FMT_TO_STR(WINED3DFMT_S4X4_UINT_D24_UNORM);
     FMT_TO_STR(WINED3DFMT_L16_UNORM);
@@ -2083,7 +2082,7 @@ BOOL getDepthStencilBits(const struct GlPixelFormatDesc *format_desc, short *dep
         case WINED3DFMT_S1_UINT_D15_UNORM:
         case WINED3DFMT_X8D24_UNORM:
         case WINED3DFMT_S4X4_UINT_D24_UNORM:
-        case WINED3DFMT_S8_UINT_D24_UNORM:
+        case WINED3DFMT_D24_UNORM_S8_UINT:
         case WINED3DFMT_S8_UINT_D24_FLOAT:
         case WINED3DFMT_D32_UNORM:
         case WINED3DFMT_D32_FLOAT:

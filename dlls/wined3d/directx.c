@@ -2978,7 +2978,7 @@ static BOOL CheckTextureCapability(struct wined3d_adapter *adapter,
         case WINED3DFMT_S1_UINT_D15_UNORM:
         case WINED3DFMT_X8D24_UNORM:
         case WINED3DFMT_S4X4_UINT_D24_UNORM:
-        case WINED3DFMT_S8_UINT_D24_UNORM:
+        case WINED3DFMT_D24_UNORM_S8_UINT:
         case WINED3DFMT_S8_UINT_D24_FLOAT:
         case WINED3DFMT_D32_UNORM:
         case WINED3DFMT_D32_FLOAT:
