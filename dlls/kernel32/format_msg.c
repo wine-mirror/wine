@@ -2,6 +2,7 @@
  * FormatMessage implementation
  *
  * Copyright 1996 Marcus Meissner
+ * Copyright 2009 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -124,6 +125,137 @@ static LPSTR load_messageA( HMODULE module, UINT id, WORD lang )
 }
 
 
+/**********************************************************************
+ *	get_arg    (internal)
+ */
+static ULONG_PTR get_arg( int nr, DWORD flags, __ms_va_list *args )
+{
+    if (flags & FORMAT_MESSAGE_ARGUMENT_ARRAY) return ((ULONG_PTR *)args)[nr - 1];
+    return (*(ULONG_PTR **)args)[nr - 1];  /* FIXME */
+}
+
+
+/**********************************************************************
+ *	format_insertA    (internal)
+ */
+static LPCSTR format_insertA( int insert, LPCSTR format, DWORD flags, __ms_va_list *args, LPSTR *result )
+{
+    char *astring = NULL, *p, fmt[256];
+    ULONG_PTR arg;
+    int size;
+
+    if (*format != '!')  /* simple string */
+    {
+        char *str = (char *)get_arg( insert, flags, args );
+        *result = HeapAlloc( GetProcessHeap(), 0, strlen(str) + 1 );
+        strcpy( *result, str );
+        return format;
+    }
+
+    format++;
+    p = fmt;
+    *p++ = '%';
+
+    while (*format == '0' ||
+           *format == '+' ||
+           *format == '-' ||
+           *format == ' ' ||
+           *format == '*' ||
+           *format == '#')
+    {
+        if (*format == '*')
+        {
+            p += sprintf( p, "%lu", get_arg( insert, flags, args ));
+            insert++;
+            format++;
+        }
+        else *p++ = *format++;
+    }
+    while (isdigit(*format)) *p++ = *format++;
+
+    if (*format == '.')
+    {
+        *p++ = *format++;
+        if (*format == '*')
+        {
+            p += sprintf( p, "%lu", get_arg( insert, flags, args ));
+            insert++;
+            format++;
+        }
+        else
+            while (isdigit(*format)) *p++ = *format++;
+    }
+
+    arg = get_arg( insert, flags, args );
+
+    /* check for wide string format */
+    if ((format[0] == 'l' && format[1] == 's') ||
+        (format[0] == 'l' && format[1] == 'S') ||
+        (format[0] == 'w' && format[1] == 's') ||
+        (format[0] == 'S'))
+    {
+        DWORD len = WideCharToMultiByte( CP_ACP, 0, (WCHAR *)arg, -1, /*FIXME*/
+                                         NULL, 0, NULL, NULL );
+        astring = HeapAlloc( GetProcessHeap(), 0, len );
+        WideCharToMultiByte( CP_ACP, 0, (WCHAR *)arg, -1, astring, len, NULL, NULL );
+        arg = (ULONG_PTR)astring;
+        *p++ = 's';
+    }
+    /* check for wide character format */
+    else if ((format[0] == 'l' && format[1] == 'c') ||
+             (format[0] == 'l' && format[1] == 'C') ||
+             (format[0] == 'w' && format[1] == 'c') ||
+             (format[0] == 'C'))
+    {
+        WCHAR ch = arg;
+        DWORD len = WideCharToMultiByte( CP_ACP, 0, &ch, 1, NULL, 0, NULL, NULL );
+        astring = HeapAlloc( GetProcessHeap(), 0, len + 1 );
+        WideCharToMultiByte( CP_ACP, 0, &ch, 1, astring, len, NULL, NULL );
+        astring[len] = 0;
+        arg = (ULONG_PTR)astring;
+        *p++ = 's';
+    }
+    /* check for ascii string format */
+    else if ((format[0] == 'h' && format[1] == 's') ||
+             (format[0] == 'h' && format[1] == 'S'))
+    {
+        *p++ = 's';
+    }
+    /* check for ascii character format */
+    else if ((format[0] == 'h' && format[1] == 'c') ||
+             (format[0] == 'h' && format[1] == 'C'))
+    {
+        *p++ = 'c';
+    }
+    /* FIXME: handle I64 etc. */
+    else while (*format && *format != '!') *p++ = *format++;
+
+    *p = 0;
+    size = 256;
+    for (;;)
+    {
+        char *ret = HeapAlloc( GetProcessHeap(), 0, size );
+        int needed = snprintf( ret, size, fmt, arg );
+        if (needed == -1 || needed >= size)
+        {
+            HeapFree( GetProcessHeap(), 0, ret );
+            size = max( needed + 1, size * 2 );
+        }
+        else
+        {
+            *result = ret;
+            break;
+        }
+    }
+
+    while (*format && *format != '!') format++;
+    if (*format == '!') format++;
+
+    HeapFree( GetProcessHeap(), 0, astring );
+    return format;
+}
+
+
 /***********************************************************************
  *           FormatMessageA   (KERNEL32.@)
  * FIXME: missing wrap,
@@ -135,15 +267,15 @@ DWORD WINAPI FormatMessageA(
 	DWORD	dwLanguageId,
 	LPSTR	lpBuffer,
 	DWORD	nSize,
-	__ms_va_list* _args )
+	__ms_va_list* args )
 {
-    LPDWORD args=(LPDWORD)_args;
     DWORD ret = 0;
 #if defined(__i386__) || defined(__sparc__)
 /* This implementation is completely dependent on the format of the va_list on x86 CPUs */
     LPSTR	target,t;
     DWORD	talloced;
-    LPSTR	from,f;
+    LPSTR	from;
+    LPCSTR f;
     DWORD	width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
     BOOL    eos = FALSE;
     CHAR	ch;
@@ -204,11 +336,8 @@ DWORD WINAPI FormatMessageA(
             while (*f && !eos) {
                 if (*f=='%') {
                     int insertnr;
-                    char *fmtstr,*x,*lastf;
-                    DWORD *argliststart;
+                    char *str,*x;
 
-                    fmtstr = NULL;
-                    lastf = f;
                     f++;
                     if (!*f) {
                         ADD_TO_T('%');
@@ -230,65 +359,9 @@ DWORD WINAPI FormatMessageA(
                             f++;
                             break;
                         }
-                        if (*f=='!') {
-                            f++;
-                            if (NULL!=(x=strchr(f,'!'))) {
-                                *x='\0';
-                                fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f)+2);
-                                sprintf(fmtstr,"%%%s",f);
-                                f=x+1;
-                            } else {
-                                fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f)+2);
-                                sprintf(fmtstr,"%%%s",f);
-                                f+=strlen(f); /*at \0*/
-                            }
-                        } else {
-                            if(!args) break;
-                            fmtstr = HeapAlloc(GetProcessHeap(),0,3);
-                            strcpy( fmtstr, "%s" );
-                        }
-                        if (args) {
-                            int sz;
-                            LPSTR b;
-
-                            if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
-                                argliststart=args+insertnr-1;
-                            else
-                                argliststart=(*(DWORD**)args)+insertnr-1;
-
-                                /* FIXME: precision and width components are not handled correctly */
-                            if (strcmp(fmtstr, "%ls") == 0 || strcmp(fmtstr,"%S") == 0 || strcmp(fmtstr,"%ws") == 0)
-                            {
-                                sz = WideCharToMultiByte(CP_ACP, 0, *(WCHAR**)argliststart, -1, NULL, 0, NULL, NULL);
-                                b = HeapAlloc(GetProcessHeap(), 0, sz);
-                                WideCharToMultiByte(CP_ACP, 0, *(WCHAR**)argliststart, -1, b, sz, NULL, NULL);
-                            }
-                            else if (strcmp(fmtstr, "%wc") == 0)
-                            {
-                                sz = WideCharToMultiByte(CP_ACP, 0, (WCHAR *)argliststart, 1, NULL, 0, NULL, NULL);
-                                b = HeapAlloc(GetProcessHeap(), 0, sz + 1);
-                                WideCharToMultiByte(CP_ACP, 0, (WCHAR *)argliststart, 1, b, sz, NULL, NULL);
-                                b[sz] = 0;
-                            }
-                            else
-                            {
-                                b = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz = 1000);
-                                /* CMF - This makes a BIG assumption about va_list */
-                                TRACE("A BIG assumption\n");
-                                vsnprintf(b, sz, fmtstr, (va_list) argliststart);
-                            }
-                            for (x=b; *x; x++) ADD_TO_T(*x);
-
-                            HeapFree(GetProcessHeap(),0,b);
-                        } else {
-                                /* NULL args - copy formatstr
-                                 * (probably wrong)
-                                 */
-                            while ((lastf<f)&&(*lastf)) {
-                                ADD_TO_T(*lastf++);
-                            }
-                        }
-                        HeapFree(GetProcessHeap(),0,fmtstr);
+                        f = format_insertA( insertnr, f, dwFlags, args, &str );
+                        for (x = str; *x; x++) ADD_TO_T(*x);
+                        HeapFree( GetProcessHeap(), 0, str );
                         break;
                     case 'n':
                         ADD_TO_T('\r');
