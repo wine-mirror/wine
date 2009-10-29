@@ -282,6 +282,12 @@ const void *CRYPT_ReadSerializedElement(const BYTE *pbElement,
  */
 BOOL CRYPT_ReadSerializedStoreFromFile(HANDLE file, HCERTSTORE store);
 
+/* Reads contexts serialized in the blob into the memory store.  Returns FALSE
+ * if the file is not of the expected format.
+ */
+BOOL CRYPT_ReadSerializedStoreFromBlob(const CRYPT_DATA_BLOB *blob,
+ HCERTSTORE store);
+
 /* Fixes up the pointers in info, where info is assumed to be a
  * CRYPT_KEY_PROV_INFO, followed by its container name, provider name, and any
  * provider parameters, in a contiguous buffer, but where info's pointers are

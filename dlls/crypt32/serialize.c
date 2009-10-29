@@ -534,6 +534,37 @@ BOOL CRYPT_ReadSerializedStoreFromFile(HANDLE file, HCERTSTORE store)
     return CRYPT_ReadSerializedStore(file, read_file_wrapper, store);
 }
 
+struct BlobReader
+{
+    const CRYPT_DATA_BLOB *blob;
+    DWORD current;
+};
+
+static BOOL read_blob_wrapper(void *handle, void *buffer, DWORD bytesToRead,
+ DWORD *bytesRead)
+{
+    struct BlobReader *reader = handle;
+    BOOL ret;
+
+    if (reader->current < reader->blob->cbData)
+    {
+        *bytesRead = min(bytesToRead, reader->blob->cbData - reader->current);
+        memcpy(buffer, reader->blob->pbData + reader->current, *bytesRead);
+        ret = TRUE;
+    }
+    else
+        ret = FALSE;
+    return ret;
+}
+
+BOOL CRYPT_ReadSerializedStoreFromBlob(const CRYPT_DATA_BLOB *blob,
+ HCERTSTORE store)
+{
+    struct BlobReader reader = { blob, 0 };
+
+    return CRYPT_ReadSerializedStore(&reader, read_blob_wrapper, store);
+}
+
 static BOOL WINAPI CRYPT_SerializeCertNoHash(PCCERT_CONTEXT pCertContext,
  DWORD dwFlags, BYTE *pbElement, DWORD *pcbElement)
 {
