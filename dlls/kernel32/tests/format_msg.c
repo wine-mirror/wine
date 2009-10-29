@@ -647,9 +647,62 @@ static void test_message_null_buffer(void)
     ok(error == ERROR_INVALID_PARAMETER, "last error %u\n", error);
 }
 
+static void test_message_from_hmodule(void)
+{
+    DWORD ret, error;
+    HMODULE h;
+    CHAR out[0x100] = {0};
+
+    h = GetModuleHandle("kernel32.dll");
+    ok(h != 0, "GetModuleHandle failed\n");
+
+    /*Test existing messageID; as the message strings from wine's kernel32 differ from windows' kernel32 we don't compare
+    the strings but only test that FormatMessage doesn't return 0*/
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 7/*=ERROR_ARENA_TRASHED*/,
+                         MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), out, sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret != 0, "FormatMessageA returned 0\n");
+
+    /*Test non existing messageID with varying language ID's Note: FormatMessageW behaves the same*/
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 3044,
+                         MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), out, sizeof(out)/sizeof(CHAR), NULL);
+    error = GetLastError();
+    ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
+    todo_wine ok(error == ERROR_MR_MID_NOT_FOUND, "last error %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 3044,
+                         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), out, sizeof(out)/sizeof(CHAR), NULL);
+    error = GetLastError();
+    ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
+    todo_wine ok(error == ERROR_MR_MID_NOT_FOUND, "last error %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 3044,
+                         MAKELANGID(LANG_NEUTRAL, SUBLANG_SYS_DEFAULT), out, sizeof(out)/sizeof(CHAR), NULL);
+    error = GetLastError();
+    ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
+    todo_wine ok(error == ERROR_MR_MID_NOT_FOUND, "last error %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 3044,
+                         MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), out, sizeof(out)/sizeof(CHAR), NULL);
+    error = GetLastError();
+    ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
+    todo_wine ok(error == ERROR_MR_MID_NOT_FOUND, "last error %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 3044,
+                         MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_UK), out, sizeof(out)/sizeof(CHAR), NULL);
+    error = GetLastError();
+    ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
+    ok(error == ERROR_RESOURCE_LANG_NOT_FOUND, "last error %u\n", error);
+}
+
 START_TEST(format_msg)
 {
     test_message_from_string();
     test_message_from_string_wide();
     test_message_null_buffer();
+    test_message_from_hmodule();
 }
