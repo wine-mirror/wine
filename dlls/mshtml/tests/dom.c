@@ -1609,6 +1609,20 @@ static IHTMLDOMNode *_test_node_get_parent(unsigned line, IUnknown *unk)
     return parent;
 }
 
+#define node_get_next(u) _node_get_next(__LINE__,u)
+static IHTMLDOMNode *_node_get_next(unsigned line, IUnknown *unk)
+{
+    IHTMLDOMNode *node = _get_node_iface(line, unk);
+    IHTMLDOMNode *next;
+    HRESULT hres;
+
+    hres = IHTMLDOMNode_get_nextSibling(node, &next);
+    IHTMLDOMNode_Release(node);
+    ok_(__FILE__,line) (hres == S_OK, "get_nextSiblibg failed: %08x\n", hres);
+
+    return next;
+}
+
 #define test_elem_get_parent(u) _test_elem_get_parent(__LINE__,u)
 static IHTMLElement *_test_elem_get_parent(unsigned line, IUnknown *unk)
 {
@@ -5248,11 +5262,13 @@ static void test_elems(IHTMLDocument2 *doc)
         ok(hres == S_OK, "get_length failed: %08x\n", hres);
         ok(length, "length=0\n");
 
+        node2 = NULL;
         node = get_child_item(child_col, 0);
         ok(node != NULL, "node == NULL\n");
         if(node) {
             type = get_node_type((IUnknown*)node);
             ok(type == 3, "type=%d\n", type);
+            node2 = node_get_next((IUnknown*)node);
             IHTMLDOMNode_Release(node);
         }
 
@@ -5263,6 +5279,8 @@ static void test_elems(IHTMLDocument2 *doc)
             ok(type == 8, "type=%d\n", type);
 
             test_elem_id((IUnknown*)node, NULL);
+            ok(iface_cmp((IUnknown*)node2, (IUnknown*)node), "node2 != node\n");
+            IHTMLDOMNode_Release(node2);
             IHTMLDOMNode_Release(node);
         }
 
@@ -5343,6 +5361,13 @@ static void test_elems(IHTMLDocument2 *doc)
     test_elem_innerhtml((IUnknown*)elem, "inner html");
     test_elem_set_innerhtml((IUnknown*)elem, "");
     test_elem_innerhtml((IUnknown*)elem, NULL);
+    node = node_get_next((IUnknown*)elem);
+    ok(!node, "node = %p\n", node);
+
+    elem2 = get_doc_elem_by_id(doc, "x");
+    node = node_get_next((IUnknown*)elem2);
+    IHTMLDOMNode_Release(node);
+    IHTMLElement_Release(elem2);
     IHTMLElement_Release(elem);
 
     IHTMLDocument3_Release(doc3);
