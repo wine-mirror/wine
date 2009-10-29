@@ -411,6 +411,7 @@ BOOL add_request_headers( request_t *request, LPCWSTR headers, DWORD len, DWORD 
     header_t *header;
 
     if (len == ~0u) len = strlenW( headers );
+    if (!len) return TRUE;
     if (!(buffer = heap_alloc( (len + 1) * sizeof(WCHAR) ))) return FALSE;
     strcpyW( buffer, headers );
 
