@@ -99,7 +99,8 @@ static LONG encodeBase64A(const BYTE *in_buf, int in_len, LPCSTR sep,
 
     TRACE("bytes is %d, pad bytes is %d\n", bytes, pad_bytes);
     needed = bytes + pad_bytes + 1;
-    needed += (needed / 64 + 1) * strlen(sep);
+    if (sep)
+        needed += (needed / 64 + 1) * strlen(sep);
 
     if (needed > *out_len)
     {
@@ -116,7 +117,7 @@ static LONG encodeBase64A(const BYTE *in_buf, int in_len, LPCSTR sep,
     i = 0;
     while (div > 0)
     {
-        if (i && i % 64 == 0)
+        if (sep && i && i % 64 == 0)
         {
             strcpy(ptr, sep);
             ptr += strlen(sep);
@@ -162,7 +163,8 @@ static LONG encodeBase64A(const BYTE *in_buf, int in_len, LPCSTR sep,
             *ptr++ = '=';
             break;
     }
-    strcpy(ptr, sep);
+    if (sep)
+        strcpy(ptr, sep);
 
     return ERROR_SUCCESS;
 }
@@ -172,14 +174,16 @@ static BOOL BinaryToBase64A(const BYTE *pbBinary,
 {
     static const char crlf[] = "\r\n", lf[] = "\n";
     BOOL ret = TRUE;
-    LPCSTR header = NULL, trailer = NULL, sep = NULL;
+    LPCSTR header = NULL, trailer = NULL, sep;
     DWORD charsNeeded;
 
     if (dwFlags & CRYPT_STRING_NOCR)
         sep = lf;
+    else if (dwFlags & CRYPT_STRING_NOCRLF)
+        sep = NULL;
     else
         sep = crlf;
-    switch (dwFlags & 0x7fffffff)
+    switch (dwFlags & 0x0fffffff)
     {
     case CRYPT_STRING_BASE64:
         /* no header or footer */
@@ -200,7 +204,8 @@ static BOOL BinaryToBase64A(const BYTE *pbBinary,
 
     charsNeeded = 0;
     encodeBase64A(pbBinary, cbBinary, sep, NULL, &charsNeeded);
-    charsNeeded += strlen(sep);
+    if (sep)
+        charsNeeded += strlen(sep);
     if (header)
         charsNeeded += strlen(header) + strlen(sep);
     if (trailer)
@@ -214,8 +219,11 @@ static BOOL BinaryToBase64A(const BYTE *pbBinary,
         {
             strcpy(ptr, header);
             ptr += strlen(ptr);
-            strcpy(ptr, sep);
-            ptr += strlen(sep);
+            if (sep)
+            {
+                strcpy(ptr, sep);
+                ptr += strlen(sep);
+            }
         }
         encodeBase64A(pbBinary, cbBinary, sep, ptr, &size);
         ptr += size - 1;
@@ -223,8 +231,11 @@ static BOOL BinaryToBase64A(const BYTE *pbBinary,
         {
             strcpy(ptr, trailer);
             ptr += strlen(ptr);
-            strcpy(ptr, sep);
-            ptr += strlen(sep);
+            if (sep)
+            {
+                strcpy(ptr, sep);
+                ptr += strlen(sep);
+            }
         }
         *pcchString = charsNeeded - 1;
     }
@@ -258,7 +269,7 @@ BOOL WINAPI CryptBinaryToStringA(const BYTE *pbBinary,
         return FALSE;
     }
 
-    switch (dwFlags & 0x7fffffff)
+    switch (dwFlags & 0x0fffffff)
     {
     case CRYPT_STRING_BINARY:
         encoder = EncodeBinaryToBinaryA;
@@ -273,7 +284,7 @@ BOOL WINAPI CryptBinaryToStringA(const BYTE *pbBinary,
     case CRYPT_STRING_HEXASCII:
     case CRYPT_STRING_HEXADDR:
     case CRYPT_STRING_HEXASCIIADDR:
-        FIXME("Unimplemented type %d\n", dwFlags & 0x7fffffff);
+        FIXME("Unimplemented type %d\n", dwFlags & 0x0fffffff);
         /* fall through */
     default:
         SetLastError(ERROR_INVALID_PARAMETER);
@@ -293,7 +304,8 @@ static LONG encodeBase64W(const BYTE *in_buf, int in_len, LPCWSTR sep,
 
     TRACE("bytes is %d, pad bytes is %d\n", bytes, pad_bytes);
     needed = bytes + pad_bytes + 1;
-    needed += (needed / 64 + 1) * strlenW(sep);
+    if (sep)
+        needed += (needed / 64 + 1) * strlenW(sep);
 
     if (needed > *out_len)
     {
@@ -310,7 +322,7 @@ static LONG encodeBase64W(const BYTE *in_buf, int in_len, LPCWSTR sep,
     i = 0;
     while (div > 0)
     {
-        if (i && i % 64 == 0)
+        if (sep && i && i % 64 == 0)
         {
             strcpyW(ptr, sep);
             ptr += strlenW(sep);
@@ -356,7 +368,8 @@ static LONG encodeBase64W(const BYTE *in_buf, int in_len, LPCWSTR sep,
             *ptr++ = '=';
             break;
     }
-    strcpyW(ptr, sep);
+    if (sep)
+        strcpyW(ptr, sep);
 
     return ERROR_SUCCESS;
 }
@@ -366,14 +379,16 @@ static BOOL BinaryToBase64W(const BYTE *pbBinary,
 {
     static const WCHAR crlf[] = { '\r','\n',0 }, lf[] = { '\n',0 };
     BOOL ret = TRUE;
-    LPCWSTR header = NULL, trailer = NULL, sep = NULL;
+    LPCWSTR header = NULL, trailer = NULL, sep;
     DWORD charsNeeded;
 
     if (dwFlags & CRYPT_STRING_NOCR)
         sep = lf;
+    else if (dwFlags & CRYPT_STRING_NOCRLF)
+        sep = NULL;
     else
         sep = crlf;
-    switch (dwFlags & 0x7fffffff)
+    switch (dwFlags & 0x0fffffff)
     {
     case CRYPT_STRING_BASE64:
         /* no header or footer */
@@ -394,7 +409,8 @@ static BOOL BinaryToBase64W(const BYTE *pbBinary,
 
     charsNeeded = 0;
     encodeBase64W(pbBinary, cbBinary, sep, NULL, &charsNeeded);
-    charsNeeded += strlenW(sep);
+    if (sep)
+        charsNeeded += strlenW(sep);
     if (header)
         charsNeeded += strlenW(header) + strlenW(sep);
     if (trailer)
@@ -408,8 +424,11 @@ static BOOL BinaryToBase64W(const BYTE *pbBinary,
         {
             strcpyW(ptr, header);
             ptr += strlenW(ptr);
-            strcpyW(ptr, sep);
-            ptr += strlenW(sep);
+            if (sep)
+            {
+                strcpyW(ptr, sep);
+                ptr += strlenW(sep);
+            }
         }
         encodeBase64W(pbBinary, cbBinary, sep, ptr, &size);
         ptr += size - 1;
@@ -417,8 +436,11 @@ static BOOL BinaryToBase64W(const BYTE *pbBinary,
         {
             strcpyW(ptr, trailer);
             ptr += strlenW(ptr);
-            strcpyW(ptr, sep);
-            ptr += strlenW(sep);
+            if (sep)
+            {
+                strcpyW(ptr, sep);
+                ptr += strlenW(sep);
+            }
         }
         *pcchString = charsNeeded - 1;
     }
@@ -452,7 +474,7 @@ BOOL WINAPI CryptBinaryToStringW(const BYTE *pbBinary,
         return FALSE;
     }
 
-    switch (dwFlags & 0x7fffffff)
+    switch (dwFlags & 0x0fffffff)
     {
     case CRYPT_STRING_BASE64:
     case CRYPT_STRING_BASE64HEADER:
@@ -465,7 +487,7 @@ BOOL WINAPI CryptBinaryToStringW(const BYTE *pbBinary,
     case CRYPT_STRING_HEXASCII:
     case CRYPT_STRING_HEXADDR:
     case CRYPT_STRING_HEXASCIIADDR:
-        FIXME("Unimplemented type %d\n", dwFlags & 0x7fffffff);
+        FIXME("Unimplemented type %d\n", dwFlags & 0x0fffffff);
         /* fall through */
     default:
         SetLastError(ERROR_INVALID_PARAMETER);
