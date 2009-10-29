@@ -3962,6 +3962,8 @@ int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hin
     char *nodenameA, *servnameA = NULL;
     struct WS_addrinfo *resA, *hintsA = NULL;
 
+    if (!nodename) return WSAHOST_NOT_FOUND;
+
     len = WideCharToMultiByte(CP_ACP, 0, nodename, -1, NULL, 0, NULL, NULL);
     if (!(nodenameA = HeapAlloc(GetProcessHeap(), 0, len))) return EAI_MEMORY;
     WideCharToMultiByte(CP_ACP, 0, nodename, -1, nodenameA, len, NULL, NULL);
