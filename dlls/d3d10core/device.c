@@ -20,7 +20,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#define NONAMELESSUNION
 #include "d3d10core_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
@@ -700,151 +699,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Dev
     return E_NOTIMPL;
 }
 
-static IWineD3DResource *d3d10_device_wined3d_resource_from_resource(ID3D10Resource *resource)
-{
-    D3D10_RESOURCE_DIMENSION dimension;
-
-    ID3D10Resource_GetType(resource, &dimension);
-
-    switch(dimension)
-    {
-        case D3D10_RESOURCE_DIMENSION_BUFFER:
-            return (IWineD3DResource *)((struct d3d10_buffer *)resource)->wined3d_buffer;
-
-        case D3D10_RESOURCE_DIMENSION_TEXTURE2D:
-            return (IWineD3DResource *)((struct d3d10_texture2d *)resource)->wined3d_surface;
-
-        default:
-            FIXME("Unhandled resource dimension %#x\n", dimension);
-            return NULL;
-    }
-}
-
-static HRESULT d3d10_device_set_rtdesc_from_resource(D3D10_RENDER_TARGET_VIEW_DESC *desc, ID3D10Resource *resource)
-{
-    D3D10_RESOURCE_DIMENSION dimension;
-    HRESULT hr;
-
-    ID3D10Resource_GetType(resource, &dimension);
-
-    switch(dimension)
-    {
-        case D3D10_RESOURCE_DIMENSION_TEXTURE1D:
-        {
-            ID3D10Texture1D *texture;
-            D3D10_TEXTURE1D_DESC texture_desc;
-
-            hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture1D, (void **)&texture);
-            if (FAILED(hr))
-            {
-                ERR("Resource of type TEXTURE1D doesn't implement ID3D10Texture1D?\n");
-                return E_INVALIDARG;
-            }
-
-            ID3D10Texture1D_GetDesc(texture, &texture_desc);
-            ID3D10Texture1D_Release(texture);
-
-            desc->Format = texture_desc.Format;
-            if (texture_desc.ArraySize == 1)
-            {
-                desc->ViewDimension = D3D10_RTV_DIMENSION_TEXTURE1D;
-                desc->u.Texture1D.MipSlice = 0;
-            }
-            else
-            {
-                desc->ViewDimension = D3D10_RTV_DIMENSION_TEXTURE1DARRAY;
-                desc->u.Texture1DArray.MipSlice = 0;
-                desc->u.Texture1DArray.FirstArraySlice = 0;
-                desc->u.Texture1DArray.ArraySize = 1;
-            }
-
-            return S_OK;
-        }
-
-        case D3D10_RESOURCE_DIMENSION_TEXTURE2D:
-        {
-            ID3D10Texture2D *texture;
-            D3D10_TEXTURE2D_DESC texture_desc;
-
-            hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&texture);
-            if (FAILED(hr))
-            {
-                ERR("Resource of type TEXTURE2D doesn't implement ID3D10Texture2D?\n");
-                return E_INVALIDARG;
-            }
-
-            ID3D10Texture2D_GetDesc(texture, &texture_desc);
-            ID3D10Texture2D_Release(texture);
-
-            desc->Format = texture_desc.Format;
-            if (texture_desc.ArraySize == 1)
-            {
-                if (texture_desc.SampleDesc.Count == 1)
-                {
-                    desc->ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2D;
-                    desc->u.Texture2D.MipSlice = 0;
-                }
-                else
-                {
-                    desc->ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2DMS;
-                }
-            }
-            else
-            {
-                if (texture_desc.SampleDesc.Count == 1)
-                {
-                    desc->ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2DARRAY;
-                    desc->u.Texture2DArray.MipSlice = 0;
-                    desc->u.Texture2DArray.FirstArraySlice = 0;
-                    desc->u.Texture2DArray.ArraySize = 1;
-                }
-                else
-                {
-                    desc->ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2DMSARRAY;
-                    desc->u.Texture2DMSArray.FirstArraySlice = 0;
-                    desc->u.Texture2DMSArray.ArraySize = 1;
-                }
-            }
-
-            return S_OK;
-        }
-
-        case D3D10_RESOURCE_DIMENSION_TEXTURE3D:
-        {
-            ID3D10Texture3D *texture;
-            D3D10_TEXTURE3D_DESC texture_desc;
-
-            hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture3D, (void **)&texture);
-            if (FAILED(hr))
-            {
-                ERR("Resource of type TEXTURE3D doesn't implement ID3D10Texture3D?\n");
-                return E_INVALIDARG;
-            }
-
-            ID3D10Texture3D_GetDesc(texture, &texture_desc);
-            ID3D10Texture3D_Release(texture);
-
-            desc->Format = texture_desc.Format;
-            desc->ViewDimension = D3D10_RTV_DIMENSION_TEXTURE3D;
-            desc->u.Texture3D.MipSlice = 0;
-            desc->u.Texture3D.FirstWSlice = 0;
-            desc->u.Texture3D.WSize = 1;
-
-            return S_OK;
-        }
-
-        default:
-            FIXME("Unhandled resource dimension %#x\n", dimension);
-            return E_INVALIDARG;
-    }
-}
-
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRenderTargetView(ID3D10Device *iface,
         ID3D10Resource *resource, const D3D10_RENDER_TARGET_VIEW_DESC *desc, ID3D10RenderTargetView **view)
 {
-    struct d3d10_device *This = (struct d3d10_device *)iface;
     struct d3d10_rendertarget_view *object;
-    IWineD3DResource *wined3d_resource;
+    HRESULT hr;
 
     TRACE("iface %p, resource %p, desc %p, view %p stub!\n", iface, resource, desc, view);
 
@@ -855,33 +714,15 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRenderTargetView(ID3D10Devic
         return E_OUTOFMEMORY;
     }
 
-    object->vtbl = &d3d10_rendertarget_view_vtbl;
-    object->refcount = 1;
-
-    if (!desc)
+    hr = d3d10_rendertarget_view_init(object, (struct d3d10_device *)iface, resource, desc);
+    if (FAILED(hr))
     {
-        HRESULT hr = d3d10_device_set_rtdesc_from_resource(&object->desc, resource);
-        if (FAILED(hr))
-        {
-            HeapFree(GetProcessHeap(), 0, object);
-            return hr;
-        }
-    }
-    else
-    {
-        object->desc = *desc;
-    }
-
-    wined3d_resource = d3d10_device_wined3d_resource_from_resource(resource);
-    if (!wined3d_resource)
-    {
-        FIXME("Failed to get wined3d resource for d3d10 resource %p\n", resource);
+        WARN("Failed to initialize rendertarget view, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        return E_FAIL;
+        return hr;
     }
-    IWineD3DDevice_CreateRendertargetView(This->wined3d_device,
-            wined3d_resource, (IUnknown *)object, &object->wined3d_view);
 
+    TRACE("Created rendertarget view %p.\n", object);
     *view = (ID3D10RenderTargetView *)object;
 
     return S_OK;

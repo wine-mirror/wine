@@ -108,7 +108,6 @@ HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d10_device *devi
         const D3D10_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data) DECLSPEC_HIDDEN;
 
 /* ID3D10RenderTargetView */
-extern const struct ID3D10RenderTargetViewVtbl d3d10_rendertarget_view_vtbl DECLSPEC_HIDDEN;
 struct d3d10_rendertarget_view
 {
     const struct ID3D10RenderTargetViewVtbl *vtbl;
@@ -117,6 +116,9 @@ struct d3d10_rendertarget_view
     IWineD3DRendertargetView *wined3d_view;
     D3D10_RENDER_TARGET_VIEW_DESC desc;
 };
+
+HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view, struct d3d10_device *device,
+        ID3D10Resource *resource, const D3D10_RENDER_TARGET_VIEW_DESC *desc) DECLSPEC_HIDDEN;
 
 /* ID3D10InputLayout */
 struct d3d10_input_layout
