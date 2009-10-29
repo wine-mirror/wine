@@ -46,22 +46,22 @@ static BOOL need_mova_const(IWineD3DBaseShader *shader, const struct wined3d_gl_
 {
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) shader;
     if(!This->baseShader.reg_maps.usesmova) return FALSE;
-    return !GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION);
+    return !gl_info->supported[NV_VERTEX_PROGRAM2_OPTION];
 }
 
 /* Returns TRUE if result.clip from GL_NV_vertex_program2 should be used and FALSE otherwise */
 static inline BOOL use_nv_clip(const struct wined3d_gl_info *gl_info)
 {
-    return GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION) &&
-           !(gl_info->quirks & WINED3D_QUIRK_NV_CLIP_BROKEN);
+    return gl_info->supported[NV_VERTEX_PROGRAM2_OPTION]
+            && !(gl_info->quirks & WINED3D_QUIRK_NV_CLIP_BROKEN);
 }
 
 static BOOL need_helper_const(const struct wined3d_gl_info *gl_info)
 {
-    if (!GL_SUPPORT(NV_VERTEX_PROGRAM) /* Need to init colors. */
-        || gl_info->quirks & WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT /* Load the immval offset. */
-        || gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W /* Have to init texcoords. */
-        || (!use_nv_clip(gl_info)) /* Init the clip texcoord */)
+    if (!gl_info->supported[NV_VERTEX_PROGRAM] /* Need to init colors. */
+            || gl_info->quirks & WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT /* Load the immval offset. */
+            || gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W /* Have to init texcoords. */
+            || (!use_nv_clip(gl_info)) /* Init the clip texcoord */)
     {
         return TRUE;
     }
@@ -328,7 +328,8 @@ static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl *This, con
          */
     }
 
-    if(GL_SUPPORT(EXT_GPU_PROGRAM_PARAMETERS)) {
+    if (gl_info->supported[EXT_GPU_PROGRAM_PARAMETERS])
+    {
         /* TODO: Benchmark if we're better of with finding the dirty constants ourselves,
          * or just reloading *all* constants at once
          *
@@ -3330,10 +3331,13 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
     }
 
     shader_addline(buffer, "!!ARBfp1.0\n");
-    if(want_nv_prog && GL_SUPPORT(NV_FRAGMENT_PROGRAM2)) {
+    if (want_nv_prog && gl_info->supported[NV_FRAGMENT_PROGRAM2])
+    {
         shader_addline(buffer, "OPTION NV_fragment_program2;\n");
         priv_ctx.target_version = NV3;
-    } else if(want_nv_prog && GL_SUPPORT(NV_FRAGMENT_PROGRAM_OPTION)) {
+    }
+    else if (want_nv_prog && gl_info->supported[NV_FRAGMENT_PROGRAM_OPTION])
+    {
         shader_addline(buffer, "OPTION NV_fragment_program;\n");
         priv_ctx.target_version = NV2;
     } else {
@@ -3855,11 +3859,14 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
     /* Always enable the NV extension if available. Unlike fragment shaders, there is no
      * mesurable performance penalty, and we can always make use of it for clipplanes.
      */
-    if(GL_SUPPORT(NV_VERTEX_PROGRAM3)) {
+    if (gl_info->supported[NV_VERTEX_PROGRAM3])
+    {
         shader_addline(buffer, "OPTION NV_vertex_program3;\n");
         priv_ctx.target_version = NV3;
         shader_addline(buffer, "ADDRESS aL;\n");
-    } else if(GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION)) {
+    }
+    else if (gl_info->supported[NV_VERTEX_PROGRAM2_OPTION])
+    {
         shader_addline(buffer, "OPTION NV_vertex_program2;\n");
         priv_ctx.target_version = NV2;
         shader_addline(buffer, "ADDRESS aL;\n");
@@ -3918,7 +3925,8 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
      * coords, we have a flag in the opengl caps. Many cards do not require the texcoord being set, and
      * this can eat a number of instructions, so skip it unless this cap is set as well
      */
-    if(!GL_SUPPORT(NV_VERTEX_PROGRAM)) {
+    if (!gl_info->supported[NV_VERTEX_PROGRAM])
+    {
         shader_addline(buffer, "MOV result.color.secondary, -helper_const.wwwy;\n");
 
         if (gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W && !device->frag_pipe->ffp_proj_control)
@@ -4099,7 +4107,9 @@ static struct arb_vs_compiled_shader *find_arb_vshader(IWineD3DVertexShaderImpl 
      * (cache coherency etc)
      */
     for(i = 0; i < shader_data->num_gl_shaders; i++) {
-        if(vs_args_equal(&shader_data->gl_shaders[i].args, args, use_map, GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION))) {
+        if (vs_args_equal(&shader_data->gl_shaders[i].args, args,
+                use_map, gl_info->supported[NV_VERTEX_PROGRAM2_OPTION]))
+        {
             return &shader_data->gl_shaders[i];
         }
     }
@@ -4173,7 +4183,7 @@ static inline void find_arb_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWi
 
     /* Skip if unused or local, or supported natively */
     int_skip = ~shader->baseShader.reg_maps.integer_constants | shader->baseShader.reg_maps.local_int_consts;
-    if(int_skip == 0xffff || GL_SUPPORT(NV_FRAGMENT_PROGRAM_OPTION))
+    if (int_skip == 0xffff || gl_info->supported[NV_FRAGMENT_PROGRAM_OPTION])
     {
         memset(&args->loop_ctrl, 0, sizeof(args->loop_ctrl));
         return;
@@ -4248,7 +4258,8 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
 
     /* Skip if unused or local */
     int_skip = ~shader->baseShader.reg_maps.integer_constants | shader->baseShader.reg_maps.local_int_consts;
-    if(int_skip == 0xffff || GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION)) /* This is about flow control, not clipping */
+    /* This is about flow control, not clipping. */
+    if (int_skip == 0xffff || gl_info->supported[NV_VERTEX_PROGRAM2_OPTION])
     {
         memset(&args->loop_ctrl, 0, sizeof(args->loop_ctrl));
         return;
@@ -4324,7 +4335,9 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
         /* Force constant reloading for the NP2 fixup (see comment in shader_glsl_select for more info) */
         if (compiled->np2fixup_info.super.active)
             shader_arb_load_np2fixup_constants((IWineD3DDevice *)This, usePS, useVS);
-    } else if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && !priv->use_arbfp_fixed_func) {
+    }
+    else if (gl_info->supported[ARB_FRAGMENT_PROGRAM] && !priv->use_arbfp_fixed_func)
+    {
         /* Disable only if we're not using arbfp fixed function fragment processing. If this is used,
         * keep GL_FRAGMENT_PROGRAM_ARB enabled, and the fixed function pipeline will bind the fixed function
         * replacement shader
@@ -4358,14 +4371,17 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
         if(priv->last_vs_color_unclamp != compiled->need_color_unclamp) {
             priv->last_vs_color_unclamp = compiled->need_color_unclamp;
 
-            if (GL_SUPPORT(ARB_COLOR_BUFFER_FLOAT)) {
+            if (gl_info->supported[ARB_COLOR_BUFFER_FLOAT])
+            {
                 GL_EXTCALL(glClampColorARB(GL_CLAMP_VERTEX_COLOR_ARB, !compiled->need_color_unclamp));
                 checkGLcall("glClampColorARB");
             } else {
                 FIXME("vertex color clamp needs to be changed, but extension not supported.\n");
             }
         }
-    } else if(GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
+    }
+    else if (gl_info->supported[ARB_VERTEX_PROGRAM])
+    {
         priv->current_vprogram_id = 0;
         glDisable(GL_VERTEX_PROGRAM_ARB);
         checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
@@ -4550,8 +4566,9 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const struct wined3d_gl_
      */
     none_shader_backend.shader_get_caps(devtype, gl_info, pCaps);
 
-    if(GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
-        if(GL_SUPPORT(NV_VERTEX_PROGRAM3))
+    if (gl_info->supported[ARB_VERTEX_PROGRAM])
+    {
+        if (gl_info->supported[NV_VERTEX_PROGRAM3])
         {
             pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
             TRACE_(d3d_caps)("Hardware vertex shader version 3.0 enabled (NV_VERTEX_PROGRAM3)\n");
@@ -4570,8 +4587,9 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const struct wined3d_gl_
         pCaps->MaxVertexShaderConst = vs_consts;
     }
 
-    if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
-        if(GL_SUPPORT(NV_FRAGMENT_PROGRAM2))
+    if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
+    {
+        if (gl_info->supported[NV_FRAGMENT_PROGRAM2])
         {
             pCaps->PixelShaderVersion    = WINED3DPS_VERSION(3,0);
             TRACE_(d3d_caps)("Hardware pixel shader version 3.0 enabled (NV_FRAGMENT_PROGRAM2)\n");
@@ -6636,17 +6654,20 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, const struct GlPixelFormatD
 /* Context activation is done by the caller. */
 static void arbfp_blit_unset(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     ENTER_GL();
     glDisable(GL_FRAGMENT_PROGRAM_ARB);
     checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
     glDisable(GL_TEXTURE_2D);
     checkGLcall("glDisable(GL_TEXTURE_2D)");
-    if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+    if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+    {
         glDisable(GL_TEXTURE_CUBE_MAP_ARB);
         checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
     }
-    if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+    if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+    {
         glDisable(GL_TEXTURE_RECTANGLE_ARB);
         checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
     }

@@ -76,9 +76,10 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
     long                      SkipnStrides = startIdx + This->stateBlock->loadBaseVertexIndex;
     BOOL                      pixelShader = use_ps(This->stateBlock);
     BOOL specular_fog = FALSE;
-    UINT texture_stages = context->gl_info->limits.texture_stages;
     const BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
     const BYTE *diffuse = NULL, *specular = NULL, *normal = NULL, *position = NULL;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    UINT texture_stages = gl_info->limits.texture_stages;
     const struct wined3d_stream_info_element *element;
     UINT num_untracked_materials;
     DWORD tex_mask = 0;
@@ -147,7 +148,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
                     || si->elements[WINED3D_FFP_POSITION].format_desc->format == WINED3DFMT_R32G32B32A32_FLOAT)
                 && This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
         {
-            if (GL_SUPPORT(EXT_FOG_COORD))
+            if (gl_info->supported[EXT_FOG_COORD])
             {
                 if (element->format_desc->format == WINED3DFMT_B8G8R8A8_UNORM) specular_fog = TRUE;
                 else FIXME("Implement fog coordinates from %s\n", debug_d3dformat(element->format_desc->format));
@@ -165,7 +166,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
             }
         }
     }
-    else if (GL_SUPPORT(EXT_SECONDARY_COLOR))
+    else if (gl_info->supported[EXT_SECONDARY_COLOR])
     {
         GL_EXTCALL(glSecondaryColor3fEXT)(0, 0, 0);
     }
@@ -175,7 +176,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
         int coordIdx = This->stateBlock->textureState[textureNo][WINED3DTSS_TEXCOORDINDEX];
         DWORD texture_idx = This->texUnitMap[textureNo];
 
-        if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0)
+        if (!gl_info->supported[ARB_MULTITEXTURE] && textureNo > 0)
         {
             FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
             continue;
@@ -205,7 +206,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
         else
         {
             TRACE("tex: %d - Skipping tex coords, as no data supplied\n", textureNo);
-            if (GL_SUPPORT(ARB_MULTITEXTURE))
+            if (gl_info->supported[ARB_MULTITEXTURE])
                 GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + texture_idx, 0, 0, 0, 1));
             else
                 glTexCoord4f(0, 0, 0, 1);
@@ -314,6 +315,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
 /* GL locking is done by the caller */
 static inline void send_attribute(IWineD3DDeviceImpl *This, WINED3DFORMAT format, const UINT index, const void *ptr)
 {
+    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
+
     switch(format)
     {
         case WINED3DFMT_R32_FLOAT:
@@ -333,7 +336,7 @@ static inline void send_attribute(IWineD3DDeviceImpl *This, WINED3DFORMAT format
             GL_EXTCALL(glVertexAttrib4ubvARB(index, ptr));
             break;
         case WINED3DFMT_B8G8R8A8_UNORM:
-            if (GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA))
+            if (gl_info->supported[EXT_VERTEX_ARRAY_BGRA])
             {
                 const DWORD *src = ptr;
                 DWORD c = *src & 0xff00ff00;
@@ -386,20 +389,26 @@ static inline void send_attribute(IWineD3DDeviceImpl *This, WINED3DFORMAT format
             /* Are those 16 bit floats. C doesn't have a 16 bit float type. I could read the single bits and calculate a 4
              * byte float according to the IEEE standard
              */
-            if (GL_SUPPORT(NV_HALF_FLOAT)) {
+            if (gl_info->supported[NV_HALF_FLOAT])
+            {
                 /* Not supported by GL_ARB_half_float_vertex */
                 GL_EXTCALL(glVertexAttrib2hvNV(index, ptr));
-            } else {
+            }
+            else
+            {
                 float x = float_16_to_32(((const unsigned short *)ptr) + 0);
                 float y = float_16_to_32(((const unsigned short *)ptr) + 1);
                 GL_EXTCALL(glVertexAttrib2fARB(index, x, y));
             }
             break;
         case WINED3DFMT_R16G16B16A16_FLOAT:
-            if (GL_SUPPORT(NV_HALF_FLOAT)) {
+            if (gl_info->supported[NV_HALF_FLOAT])
+            {
                 /* Not supported by GL_ARB_half_float_vertex */
                 GL_EXTCALL(glVertexAttrib4hvNV(index, ptr));
-            } else {
+            }
+            else
+            {
                 float x = float_16_to_32(((const unsigned short *)ptr) + 0);
                 float y = float_16_to_32(((const unsigned short *)ptr) + 1);
                 float z = float_16_to_32(((const unsigned short *)ptr) + 2);

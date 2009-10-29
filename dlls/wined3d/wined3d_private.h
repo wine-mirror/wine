@@ -745,7 +745,6 @@ extern int num_lock DECLSPEC_HIDDEN;
 
 /* GL related defines */
 /* ------------------ */
-#define GL_SUPPORT(ExtName)           (GLINFO_LOCATION.supported[ExtName] != 0)
 #define GL_EXTCALL(FuncName)          (GLINFO_LOCATION.FuncName)
 
 #define D3DCOLOR_B_R(dw) (((dw) >> 16) & 0xFF)

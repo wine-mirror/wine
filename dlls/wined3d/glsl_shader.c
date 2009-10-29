@@ -2766,7 +2766,8 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
     DWORD sampler_idx;
     DWORD swizzle = ins->src[1].swizzle;
 
-    if(!GL_SUPPORT(ARB_SHADER_TEXTURE_LOD)) {
+    if (!gl_info->supported[ARB_SHADER_TEXTURE_LOD])
+    {
         FIXME("texldd used, but not supported by hardware. Falling back to regular tex\n");
         return shader_glsl_tex(ins);
     }
@@ -3743,10 +3744,12 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
 
     shader_addline(buffer, "#version 120\n");
 
-    if(GL_SUPPORT(ARB_SHADER_TEXTURE_LOD) && reg_maps->usestexldd) {
+    if (gl_info->supported[ARB_SHADER_TEXTURE_LOD] && reg_maps->usestexldd)
+    {
         shader_addline(buffer, "#extension GL_ARB_shader_texture_lod : enable\n");
     }
-    if (GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+    if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+    {
         /* The spec says that it doesn't have to be explicitly enabled, but the nvidia
          * drivers write a warning if we don't do so
          */
@@ -4318,11 +4321,15 @@ static void shader_glsl_select(const struct wined3d_context *context, BOOL usePS
 
     current_vertex_color_clamp = priv->glsl_program ? priv->glsl_program->vertex_color_clamp : GL_FIXED_ONLY_ARB;
 
-    if (old_vertex_color_clamp != current_vertex_color_clamp) {
-        if (GL_SUPPORT(ARB_COLOR_BUFFER_FLOAT)) {
+    if (old_vertex_color_clamp != current_vertex_color_clamp)
+    {
+        if (gl_info->supported[ARB_COLOR_BUFFER_FLOAT])
+        {
             GL_EXTCALL(glClampColorARB(GL_CLAMP_VERTEX_COLOR_ARB, current_vertex_color_clamp));
             checkGLcall("glClampColorARB");
-        } else {
+        }
+        else
+        {
             FIXME("vertex color clamp needs to be changed, but extension not supported.\n");
         }
     }

@@ -272,6 +272,8 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
 static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_GetData(IWineD3DQuery* iface, void* pData, DWORD dwSize, DWORD dwGetDataFlags) {
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *) iface;
     struct wined3d_occlusion_query *query = This->extendedData;
+    IWineD3DDeviceImpl *device = This->wineD3DDevice;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_context *context;
     DWORD* data = pData;
     GLuint available;
@@ -297,7 +299,7 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_GetData(IWineD3DQuery* iface, 
         return S_FALSE;
     }
 
-    if (!GL_SUPPORT(ARB_OCCLUSION_QUERY))
+    if (!gl_info->supported[ARB_OCCLUSION_QUERY])
     {
         WARN("(%p) : Occlusion queries not supported. Returning 1.\n", This);
         *data = 1;
@@ -373,12 +375,12 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_GetData(IWineD3DQuery* iface, void
 
     ENTER_GL();
 
-    if (GL_SUPPORT(APPLE_FENCE))
+    if (context->gl_info->supported[APPLE_FENCE])
     {
         *data = GL_EXTCALL(glTestFenceAPPLE(query->id));
         checkGLcall("glTestFenceAPPLE");
     }
-    else if (GL_SUPPORT(NV_FENCE))
+    else if (context->gl_info->supported[NV_FENCE])
     {
         *data = GL_EXTCALL(glTestFenceNV(query->id));
         checkGLcall("glTestFenceNV");
@@ -495,12 +497,12 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_Issue(IWineD3DQuery* iface,  DWORD
 
         ENTER_GL();
 
-        if (GL_SUPPORT(APPLE_FENCE))
+        if (context->gl_info->supported[APPLE_FENCE])
         {
             GL_EXTCALL(glSetFenceAPPLE(query->id));
             checkGLcall("glSetFenceAPPLE");
         }
-        else if (GL_SUPPORT(NV_FENCE))
+        else if (context->gl_info->supported[NV_FENCE])
         {
             GL_EXTCALL(glSetFenceNV(query->id, GL_ALL_COMPLETED_NV));
             checkGLcall("glSetFenceNV");
@@ -527,8 +529,10 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_Issue(IWineD3DQuery* iface,  DWORD
 
 static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_Issue(IWineD3DQuery* iface,  DWORD dwIssueFlags) {
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
+    IWineD3DDeviceImpl *device = This->wineD3DDevice;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
-    if (GL_SUPPORT(ARB_OCCLUSION_QUERY))
+    if (gl_info->supported[ARB_OCCLUSION_QUERY])
     {
         struct wined3d_occlusion_query *query = This->extendedData;
         struct wined3d_context *context;

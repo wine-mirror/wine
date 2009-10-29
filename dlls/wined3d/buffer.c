@@ -203,6 +203,8 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct win
         DWORD *stride_this_run, BOOL *float16_used)
 {
     const struct wined3d_stream_info_element *attrib = &si->elements[attrib_idx];
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     BOOL ret = FALSE;
     WINED3DFORMAT format;
 
@@ -215,7 +217,8 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct win
 
     format = attrib->format_desc->format;
     /* Look for newly appeared conversion */
-    if (!GL_SUPPORT(ARB_HALF_FLOAT_VERTEX) && (format == WINED3DFMT_R16G16_FLOAT || format == WINED3DFMT_R16G16B16A16_FLOAT))
+    if (!gl_info->supported[ARB_HALF_FLOAT_VERTEX]
+            && (format == WINED3DFMT_R16G16_FLOAT || format == WINED3DFMT_R16G16B16A16_FLOAT))
     {
         ret = buffer_process_converted_attribute(This, CONV_FLOAT16_2, attrib, stride_this_run);
 
@@ -309,6 +312,7 @@ static UINT *find_conversion_shift(struct wined3d_buffer *This,
 static BOOL buffer_find_decl(struct wined3d_buffer *This)
 {
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_stream_info *si = &device->strided_streams;
     UINT stride_this_run = 0;
     BOOL float16_used = FALSE;
@@ -415,7 +419,7 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This)
          * FLOAT16s if not supported. Also, we can't iterate over the array, so use macros to generate code for all
          * the attributes that our current fixed function pipeline implementation cares for.
          */
-        BOOL support_d3dcolor = GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA);
+        BOOL support_d3dcolor = gl_info->supported[EXT_VERTEX_ARRAY_BGRA];
         ret = buffer_check_attribute(This, si, WINED3D_FFP_POSITION,
                 TRUE, TRUE,  FALSE, &stride_this_run, &float16_used) || ret;
         ret = buffer_check_attribute(This, si, WINED3D_FFP_NORMAL,

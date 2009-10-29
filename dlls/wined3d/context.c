@@ -479,7 +479,7 @@ void context_alloc_occlusion_query(struct wined3d_context *context, struct wined
     }
     else
     {
-        if (GL_SUPPORT(ARB_OCCLUSION_QUERY))
+        if (gl_info->supported[ARB_OCCLUSION_QUERY])
         {
             ENTER_GL();
             GL_EXTCALL(glGenQueriesARB(1, &query->id));
@@ -536,7 +536,7 @@ void context_alloc_event_query(struct wined3d_context *context, struct wined3d_e
     }
     else
     {
-        if (GL_SUPPORT(APPLE_FENCE))
+        if (gl_info->supported[APPLE_FENCE])
         {
             ENTER_GL();
             GL_EXTCALL(glGenFencesAPPLE(1, &query->id));
@@ -545,7 +545,7 @@ void context_alloc_event_query(struct wined3d_context *context, struct wined3d_e
 
             TRACE("Allocated event query %u in context %p.\n", query->id, context);
         }
-        else if(GL_SUPPORT(NV_FENCE))
+        else if(gl_info->supported[NV_FENCE])
         {
             ENTER_GL();
             GL_EXTCALL(glGenFencesNV(1, &query->id));
@@ -673,7 +673,7 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
 
     LIST_FOR_EACH_ENTRY(occlusion_query, &context->occlusion_queries, struct wined3d_occlusion_query, entry)
     {
-        if (context->valid && GL_SUPPORT(ARB_OCCLUSION_QUERY))
+        if (context->valid && gl_info->supported[ARB_OCCLUSION_QUERY])
             GL_EXTCALL(glDeleteQueriesARB(1, &occlusion_query->id));
         occlusion_query->context = NULL;
     }
@@ -682,8 +682,8 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
     {
         if (context->valid)
         {
-            if (GL_SUPPORT(APPLE_FENCE)) GL_EXTCALL(glDeleteFencesAPPLE(1, &event_query->id));
-            else if (GL_SUPPORT(NV_FENCE)) GL_EXTCALL(glDeleteFencesNV(1, &event_query->id));
+            if (gl_info->supported[APPLE_FENCE]) GL_EXTCALL(glDeleteFencesAPPLE(1, &event_query->id));
+            else if (gl_info->supported[NV_FENCE]) GL_EXTCALL(glDeleteFencesNV(1, &event_query->id));
         }
         event_query->context = NULL;
     }
@@ -717,12 +717,12 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
             GL_EXTCALL(glDeleteProgramsARB(1, &context->dummy_arbfp_prog));
         }
 
-        if (GL_SUPPORT(ARB_OCCLUSION_QUERY))
+        if (gl_info->supported[ARB_OCCLUSION_QUERY])
             GL_EXTCALL(glDeleteQueriesARB(context->free_occlusion_query_count, context->free_occlusion_queries));
 
-        if (GL_SUPPORT(APPLE_FENCE))
+        if (gl_info->supported[APPLE_FENCE])
             GL_EXTCALL(glDeleteFencesAPPLE(context->free_event_query_count, context->free_event_queries));
-        else if (GL_SUPPORT(NV_FENCE))
+        else if (gl_info->supported[NV_FENCE])
             GL_EXTCALL(glDeleteFencesNV(context->free_event_query_count, context->free_event_queries));
 
         checkGLcall("context cleanup");
@@ -1254,9 +1254,10 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
 
         /* D3D only allows multisampling when SwapEffect is set to WINED3DSWAPEFFECT_DISCARD */
         if(pPresentParms->MultiSampleType && (pPresentParms->SwapEffect == WINED3DSWAPEFFECT_DISCARD)) {
-            if(!GL_SUPPORT(ARB_MULTISAMPLE))
+            if (!gl_info->supported[ARB_MULTISAMPLE])
                 ERR("The program is requesting multisampling without support!\n");
-            else {
+            else
+            {
                 ERR("Requesting MultiSampleType=%d\n", pPresentParms->MultiSampleType);
                 numSamples = pPresentParms->MultiSampleType;
             }
@@ -1290,7 +1291,9 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
 
             if(oldPixelFormat == iPixelFormat) {
                 /* We don't have to do anything as the formats are the same :) */
-            } else if(oldPixelFormat && GL_SUPPORT(WGL_WINE_PIXEL_FORMAT_PASSTHROUGH)) {
+            }
+            else if (oldPixelFormat && gl_info->supported[WGL_WINE_PIXEL_FORMAT_PASSTHROUGH])
+            {
                 res = GL_EXTCALL(wglSetPixelFormatWINE(hdc, iPixelFormat, NULL));
 
                 if(!res) {
@@ -1415,14 +1418,16 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
     glPixelStorei(GL_UNPACK_ALIGNMENT, This->surface_alignment);
     checkGLcall("glPixelStorei(GL_UNPACK_ALIGNMENT, This->surface_alignment);");
 
-    if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
+    if (gl_info->supported[APPLE_CLIENT_STORAGE])
+    {
         /* Most textures will use client storage if supported. Exceptions are non-native power of 2 textures
          * and textures in DIB sections(due to the memory protection).
          */
         glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
         checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
     }
-    if(GL_SUPPORT(ARB_VERTEX_BLEND)) {
+    if (gl_info->supported[ARB_VERTEX_BLEND])
+    {
         /* Direct3D always uses n-1 weights for n world matrices and uses 1 - sum for the last one
          * this is equal to GL_WEIGHT_SUM_UNITY_ARB. Enabling it doesn't do anything unless
          * GL_VERTEX_BLEND_ARB isn't enabled too
@@ -1430,7 +1435,8 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
         glEnable(GL_WEIGHT_SUM_UNITY_ARB);
         checkGLcall("glEnable(GL_WEIGHT_SUM_UNITY_ARB)");
     }
-    if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+    if (gl_info->supported[NV_TEXTURE_SHADER2])
+    {
         /* Set up the previous texture input for all shader units. This applies to bump mapping, and in d3d
          * the previous texture where to source the offset from is always unit - 1.
          */
@@ -1441,7 +1447,8 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
             checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, ...");
         }
     }
-    if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
+    if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
+    {
         /* MacOS(radeon X1600 at least, but most likely others too) refuses to draw if GLSL and ARBFP are
          * enabled, but the currently bound arbfp program is 0. Enabling ARBFP with prog 0 is invalid, but
          * GLSL should bypass this. This causes problems in programs that never use the fixed function pipeline,
@@ -1467,11 +1474,11 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
         checkGLcall("glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)");
     }
 
-    if (GL_SUPPORT(ARB_PROVOKING_VERTEX))
+    if (gl_info->supported[ARB_PROVOKING_VERTEX])
     {
         GL_EXTCALL(glProvokingVertex(GL_FIRST_VERTEX_CONVENTION));
     }
-    else if (GL_SUPPORT(EXT_PROVOKING_VERTEX))
+    else if (gl_info->supported[EXT_PROVOKING_VERTEX])
     {
         GL_EXTCALL(glProvokingVertexEXT(GL_FIRST_VERTEX_CONVENTION_EXT));
     }
@@ -1673,13 +1680,15 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
         checkGLcall("glActiveTextureARB");
 
-        if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+        if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+        {
             glDisable(GL_TEXTURE_CUBE_MAP_ARB);
             checkGLcall("glDisable GL_TEXTURE_CUBE_MAP_ARB");
         }
         glDisable(GL_TEXTURE_3D);
         checkGLcall("glDisable GL_TEXTURE_3D");
-        if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+        if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+        {
             glDisable(GL_TEXTURE_RECTANGLE_ARB);
             checkGLcall("glDisable GL_TEXTURE_RECTANGLE_ARB");
         }
@@ -1702,13 +1711,15 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context
 
     sampler = This->rev_tex_unit_map[0];
 
-    if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+    if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+    {
         glDisable(GL_TEXTURE_CUBE_MAP_ARB);
         checkGLcall("glDisable GL_TEXTURE_CUBE_MAP_ARB");
     }
     glDisable(GL_TEXTURE_3D);
     checkGLcall("glDisable GL_TEXTURE_3D");
-    if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+    if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+    {
         glDisable(GL_TEXTURE_RECTANGLE_ARB);
         checkGLcall("glDisable GL_TEXTURE_RECTANGLE_ARB");
     }
@@ -1722,7 +1733,8 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context
     glLoadIdentity();
     checkGLcall("glLoadIdentity()");
 
-    if (GL_SUPPORT(EXT_TEXTURE_LOD_BIAS)) {
+    if (gl_info->supported[EXT_TEXTURE_LOD_BIAS])
+    {
         glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
                   GL_TEXTURE_LOD_BIAS_EXT,
                   0.0f);
@@ -1763,7 +1775,8 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context
     glDisable(GL_SCISSOR_TEST);
     checkGLcall("glDisable GL_SCISSOR_TEST");
     Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE), StateTable);
-    if(GL_SUPPORT(ARB_POINT_SPRITE)) {
+    if (gl_info->supported[ARB_POINT_SPRITE])
+    {
         glDisable(GL_POINT_SPRITE_ARB);
         checkGLcall("glDisable GL_POINT_SPRITE_ARB");
         Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_POINTSPRITEENABLE), StateTable);
@@ -1771,7 +1784,8 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context
     glColorMask(GL_TRUE, GL_TRUE,GL_TRUE,GL_TRUE);
     checkGLcall("glColorMask");
     Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE), StateTable);
-    if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+    if (gl_info->supported[EXT_SECONDARY_COLOR])
+    {
         glDisable(GL_COLOR_SUM_EXT);
         Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SPECULARENABLE), StateTable);
         checkGLcall("glDisable(GL_COLOR_SUM_EXT)");
@@ -2059,7 +2073,7 @@ static void context_apply_draw_buffer(struct wined3d_context *context, BOOL blit
         {
             if (!blit)
             {
-                if (GL_SUPPORT(ARB_DRAW_BUFFERS))
+                if (gl_info->supported[ARB_DRAW_BUFFERS])
                 {
                     GL_EXTCALL(glDrawBuffersARB(gl_info->limits.buffers, device->draw_buffers));
                     checkGLcall("glDrawBuffers()");

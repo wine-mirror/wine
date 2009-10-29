@@ -279,7 +279,9 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         }
     }
 
-    if(This->presentParms.PresentationInterval != WINED3DPRESENT_INTERVAL_IMMEDIATE && GL_SUPPORT(SGI_VIDEO_SYNC)) {
+    if (This->presentParms.PresentationInterval != WINED3DPRESENT_INTERVAL_IMMEDIATE
+            && context->gl_info->supported[SGI_VIDEO_SYNC])
+    {
         retval = GL_EXTCALL(glXGetVideoSyncSGI(&sync));
         if(retval != 0) {
             ERR("glXGetVideoSyncSGI failed(retval = %d\n", retval);

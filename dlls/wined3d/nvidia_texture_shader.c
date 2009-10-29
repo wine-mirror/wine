@@ -132,6 +132,7 @@ static void get_src_and_opr_nvrc(DWORD stage, DWORD arg, BOOL is_alpha, GLenum* 
 
 void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3, INT texture_idx, DWORD dst) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl*)iface;
+    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
     tex_op_args tex_op_args = {{0}, {0}, {0}};
     GLenum portion = is_alpha ? GL_ALPHA : GL_RGB;
     GLenum target = GL_COMBINER0_NV + stage;
@@ -428,7 +429,8 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEX
 
         case WINED3DTOP_BUMPENVMAPLUMINANCE:
         case WINED3DTOP_BUMPENVMAP:
-            if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
+            if (gl_info->supported[NV_TEXTURE_SHADER])
+            {
                 /* The bump map stage itself isn't exciting, just read the texture. But tell the next stage to
                  * perform bump mapping and source from the current stage. Pretty much a SELECTARG2.
                  * ARG2 is passed through unmodified(apps will most likely use D3DTA_CURRENT for arg2, arg1
@@ -493,11 +495,13 @@ static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
             checkGLcall("glDisable(GL_TEXTURE_2D)");
             glDisable(GL_TEXTURE_3D);
             checkGLcall("glDisable(GL_TEXTURE_3D)");
-            if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+            if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+            {
                 glDisable(GL_TEXTURE_CUBE_MAP_ARB);
                 checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
             }
-            if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+            if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+            {
                 glDisable(GL_TEXTURE_RECTANGLE_ARB);
                 checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
             }
@@ -513,11 +517,16 @@ static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
     /* The sampler will also activate the correct texture dimensions, so no need to do it here
      * if the sampler for this stage is dirty
      */
-    if(!isStateDirty(context, STATE_SAMPLER(stage))) {
-        if (tex_used) {
-            if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+    if (!isStateDirty(context, STATE_SAMPLER(stage)))
+    {
+        if (tex_used)
+        {
+            if (gl_info->supported[NV_TEXTURE_SHADER2])
+            {
                 nvts_activate_dimensions(stage, stateblock, context);
-            } else {
+            }
+            else
+            {
                 texture_activate_dimensions(stage, stateblock, context);
             }
         }
@@ -535,7 +544,8 @@ static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
     /* In register combiners bump mapping is done in the stage AFTER the one that has the bump map operation set,
      * thus the texture shader may have to be updated
      */
-    if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+    if (gl_info->supported[NV_TEXTURE_SHADER2])
+    {
         BOOL usesBump = (stateblock->textureState[stage][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAPLUMINANCE ||
                             stateblock->textureState[stage][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAP) ? TRUE : FALSE;
         BOOL usedBump = (context->texShaderBumpMap & 1 << (stage + 1)) ? TRUE : FALSE;
@@ -600,9 +610,7 @@ static void nvrc_texfactor(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
     D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_TEXTUREFACTOR], col);
     GL_EXTCALL(glCombinerParameterfvNV(GL_CONSTANT_COLOR0_NV, &col[0]));
 }
-#undef GLINFO_LOCATION
 
-#define GLINFO_LOCATION (*gl_info)
 /* Context activation is done by the caller. */
 static void nvrc_enable(IWineD3DDevice *iface, BOOL enable) { }
 
@@ -646,7 +654,8 @@ static void nvrc_fragment_get_caps(WINED3DDEVTYPE devtype,
                             WINED3DTEXOPCAPS_MODULATEINVALPHA_ADDCOLOR  |
                             WINED3DTEXOPCAPS_MODULATEINVCOLOR_ADDALPHA;
 
-    if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+    if (gl_info->supported[NV_TEXTURE_SHADER2])
+    {
         /* Bump mapping is supported already in NV_TEXTURE_SHADER, but that extension does
          * not support 3D textures. This asks for trouble if an app uses both bump mapping
          * and 3D textures. It also allows us to keep the code simpler by having texture
@@ -669,7 +678,7 @@ static void nvrc_fragment_get_caps(WINED3DDEVTYPE devtype,
 
     /* The caps below can be supported but aren't handled yet in utils.c 'd3dta_to_combiner_input', disable them until support is fixed */
 #if 0
-    if (GL_SUPPORT(NV_REGISTER_COMBINERS2))
+    if (gl_info->supported[NV_REGISTER_COMBINERS2])
     pCaps->PrimitiveMiscCaps |=  WINED3DPMISCCAPS_PERSTAGECONSTANT;
 #endif
 }

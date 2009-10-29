@@ -553,6 +553,7 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsi
  * the correct texture. */
 /* Context activation is done by the caller. */
 static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type) {
+    const struct wined3d_gl_info *gl_info = &This->resource.wineD3DDevice->adapter->gl_info;
     const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
     BOOL enable_client_storage = FALSE;
     const BYTE *mem = NULL;
@@ -565,7 +566,8 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
 
     ENTER_GL();
 
-    if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
+    if (gl_info->supported[APPLE_CLIENT_STORAGE])
+    {
         if(This->Flags & (SFLAG_NONPOW2 | SFLAG_DIBSECTION | SFLAG_OVERSIZE | SFLAG_CONVERTED) || This->resource.allocatedMemory == NULL) {
             /* In some cases we want to disable client storage.
              * SFLAG_NONPOW2 has a bigger opengl texture than the client memory, and different pitches
@@ -1221,7 +1223,11 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
     TRACE("Updated target %d\n", This->texture_target);
 }
 
-static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This) {
+static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This)
+{
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+
     /* Performance optimization: Count how often a surface is locked, if it is locked regularly do not throw away the system memory copy.
      * This avoids the need to download the surface from opengl all the time. The surface is still downloaded if the opengl texture is
      * changed
@@ -1238,12 +1244,11 @@ static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This) {
     /* Create a PBO for dynamically locked surfaces but don't do it for converted or non-pow2 surfaces.
      * Also don't create a PBO for systemmem surfaces.
      */
-    if (GL_SUPPORT(ARB_PIXEL_BUFFER_OBJECT) && (This->Flags & SFLAG_DYNLOCK)
+    if (gl_info->supported[ARB_PIXEL_BUFFER_OBJECT] && (This->Flags & SFLAG_DYNLOCK)
             && !(This->Flags & (SFLAG_PBO | SFLAG_CONVERTED | SFLAG_NONPOW2))
             && (This->resource.pool != WINED3DPOOL_SYSTEMMEM))
     {
         GLenum error;
-        IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
         struct wined3d_context *context;
 
         context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
@@ -1735,6 +1740,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
     BOOL colorkey_active = need_alpha_ck && (This->CKeyFlags & WINEDDSD_CKSRCBLT);
     const struct GlPixelFormatDesc *glDesc = This->resource.format_desc;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     /* Default values: From the surface */
     *format = glDesc->glFormat;
@@ -1768,11 +1774,10 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
              * in which the main render target uses p8. Some games like GTA Vice City use P8 for texturing which
              * conflicts with this.
              */
-            if( !(GL_SUPPORT(EXT_PALETTED_TEXTURE) ||
-                  (GL_SUPPORT(ARB_FRAGMENT_PROGRAM) &&
-                   device->render_targets &&
-                   This == (IWineD3DSurfaceImpl*)device->render_targets[0])) ||
-                colorkey_active || !use_texturing ) {
+            if (!(gl_info->supported[EXT_PALETTED_TEXTURE] || (gl_info->supported[ARB_FRAGMENT_PROGRAM]
+                    && device->render_targets && This == (IWineD3DSurfaceImpl*)device->render_targets[0]))
+                    || colorkey_active || !use_texturing)
+            {
                 *format = GL_RGBA;
                 *internal = GL_RGBA;
                 *type = GL_UNSIGNED_BYTE;
@@ -1783,7 +1788,8 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
                     *convert = CONVERT_PALETTED;
                 }
             }
-            else if(!GL_SUPPORT(EXT_PALETTED_TEXTURE) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
+            else if (!gl_info->supported[EXT_PALETTED_TEXTURE] && gl_info->supported[ARB_FRAGMENT_PROGRAM])
+            {
                 *format = GL_ALPHA;
                 *type = GL_UNSIGNED_BYTE;
                 *target_bpp = 1;
@@ -1840,7 +1846,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             break;
 
         case WINED3DFMT_R8G8_SNORM:
-            if (GL_SUPPORT(NV_TEXTURE_SHADER)) break;
+            if (gl_info->supported[NV_TEXTURE_SHADER]) break;
             *convert = CONVERT_V8U8;
             *format = GL_BGR;
             *type = GL_UNSIGNED_BYTE;
@@ -1849,7 +1855,8 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
 
         case WINED3DFMT_R5G5_SNORM_L6_UNORM:
             *convert = CONVERT_L6V5U5;
-            if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
+            if (gl_info->supported[NV_TEXTURE_SHADER])
+            {
                 *target_bpp = 3;
                 /* Use format and types from table */
             } else {
@@ -1863,7 +1870,8 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
         case WINED3DFMT_R8G8_SNORM_L8X8_UNORM:
             *convert = CONVERT_X8L8V8U8;
             *target_bpp = 4;
-            if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
+            if (gl_info->supported[NV_TEXTURE_SHADER])
+            {
                 /* Use formats from gl table. It is a bit unfortunate, but the conversion
                  * is needed to set the X format to 255 to get 1.0 for alpha when sampling
                  * the texture. OpenGL can't use GL_DSDT8_MAG8_NV as internal format with
@@ -1877,7 +1885,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             break;
 
         case WINED3DFMT_R8G8B8A8_SNORM:
-            if (GL_SUPPORT(NV_TEXTURE_SHADER)) break;
+            if (gl_info->supported[NV_TEXTURE_SHADER]) break;
             *convert = CONVERT_Q8W8V8U8;
             *format = GL_BGRA;
             *type = GL_UNSIGNED_BYTE;
@@ -1885,7 +1893,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             break;
 
         case WINED3DFMT_R16G16_SNORM:
-            if (GL_SUPPORT(NV_TEXTURE_SHADER)) break;
+            if (gl_info->supported[NV_TEXTURE_SHADER]) break;
             *convert = CONVERT_V16U16;
             *format = GL_BGR;
             *type = GL_UNSIGNED_SHORT;
@@ -1925,8 +1933,8 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             break;
 
         case WINED3DFMT_S1_UINT_D15_UNORM:
-            if (GL_SUPPORT(ARB_FRAMEBUFFER_OBJECT)
-                    || GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
+            if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT]
+                    || gl_info->supported[EXT_PACKED_DEPTH_STENCIL])
             {
                 *convert = CONVERT_D15S1;
                 *target_bpp = 4;
@@ -1934,15 +1942,15 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             break;
 
         case WINED3DFMT_S4X4_UINT_D24_UNORM:
-            if (GL_SUPPORT(ARB_FRAMEBUFFER_OBJECT)
-                    || GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
+            if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT]
+                    || gl_info->supported[EXT_PACKED_DEPTH_STENCIL])
             {
                 *convert = CONVERT_D24X4S4;
             }
             break;
 
         case WINED3DFMT_S8_UINT_D24_FLOAT:
-            if (GL_SUPPORT(ARB_DEPTH_BUFFER_FLOAT))
+            if (gl_info->supported[ARB_DEPTH_BUFFER_FLOAT])
             {
                 *convert = CONVERT_D24FS8;
                 *target_bpp = 8;
@@ -2039,6 +2047,8 @@ static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4]
 static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UINT width,
         UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *This)
 {
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const BYTE *source;
     BYTE *dest;
     TRACE("(%p)->(%p),(%d,%d,%d,%d,%p)\n", src, dst, pitch, height, outpitch, convert,This);
@@ -2248,7 +2258,8 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
             const WORD *Source;
             unsigned char *Dest;
 
-            if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
+            if (gl_info->supported[NV_TEXTURE_SHADER])
+            {
                 /* This makes the gl surface bigger(24 bit instead of 16), but it works with
                  * fixed function and shaders without further conversion once the surface is
                  * loaded
@@ -2302,7 +2313,8 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
             const DWORD *Source;
             unsigned char *Dest;
 
-            if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
+            if (gl_info->supported[NV_TEXTURE_SHADER])
+            {
                 /* This implementation works with the fixed function pipeline and shaders
                  * without further modification after converting the surface.
                  */
@@ -2475,11 +2487,12 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     BYTE table[256][4];
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     d3dfmt_p8_init_palette(This, table, (convert == CONVERT_PALETTED_CK));
 
     /* Try to use the paletted texture extension */
-    if(GL_SUPPORT(EXT_PALETTED_TEXTURE))
+    if (gl_info->supported[EXT_PALETTED_TEXTURE])
     {
         TRACE("Using GL_EXT_PALETTED_TEXTURE for 8-bit paletted texture support\n");
         ENTER_GL();
@@ -4170,10 +4183,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     This->texture_target = GL_TEXTURE_2D;
 
     /* Non-power2 support */
-    if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO) || GL_SUPPORT(WINE_NORMALIZED_TEXRECT)) {
+    if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] || gl_info->supported[WINE_NORMALIZED_TEXRECT])
+    {
         pow2Width = This->currentDesc.Width;
         pow2Height = This->currentDesc.Height;
-    } else {
+    }
+    else
+    {
         /* Find the nearest pow2 match */
         pow2Width = pow2Height = 1;
         while (pow2Width < This->currentDesc.Width) pow2Width <<= 1;
@@ -4222,8 +4238,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
            is used in combination with texture uploads (RTL_READTEX/RTL_TEXTEX). The reason is that EXT_PALETTED_TEXTURE
            doesn't work in combination with ARB_TEXTURE_RECTANGLE.
         */
-        if (This->Flags & SFLAG_NONPOW2 && GL_SUPPORT(ARB_TEXTURE_RECTANGLE)
-                && !(This->resource.format_desc->format == WINED3DFMT_P8_UINT && GL_SUPPORT(EXT_PALETTED_TEXTURE)
+        if (This->Flags & SFLAG_NONPOW2 && gl_info->supported[ARB_TEXTURE_RECTANGLE]
+                && !(This->resource.format_desc->format == WINED3DFMT_P8_UINT
+                && gl_info->supported[EXT_PALETTED_TEXTURE]
                 && wined3d_settings.rendertargetlock_mode == RTL_READTEX))
         {
             This->texture_target = GL_TEXTURE_RECTANGLE_ARB;
@@ -4787,6 +4804,7 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
 static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, DWORD flag, const RECT *rect) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     GLenum format, internal, type;
     CONVERT_TYPES convert;
     int bpp;
@@ -4973,7 +4991,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                 This->Flags |= SFLAG_CONVERTED;
             }
             else if (This->resource.format_desc->format == WINED3DFMT_P8_UINT
-                    && (GL_SUPPORT(EXT_PALETTED_TEXTURE) || GL_SUPPORT(ARB_FRAGMENT_PROGRAM)))
+                    && (gl_info->supported[EXT_PALETTED_TEXTURE] || gl_info->supported[ARB_FRAGMENT_PROGRAM]))
             {
                 d3dfmt_p8_upload_palette(iface, convert);
                 This->Flags &= ~SFLAG_CONVERTED;
@@ -5160,16 +5178,21 @@ static HRESULT ffp_blit_set(IWineD3DDevice *iface, const struct GlPixelFormatDes
 }
 
 /* Context activation is done by the caller. */
-static void ffp_blit_unset(IWineD3DDevice *iface) {
+static void ffp_blit_unset(IWineD3DDevice *iface)
+{
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+
     ENTER_GL();
     glDisable(GL_TEXTURE_2D);
     checkGLcall("glDisable(GL_TEXTURE_2D)");
-    if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+    if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+    {
         glDisable(GL_TEXTURE_CUBE_MAP_ARB);
         checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
     }
-    if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+    if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+    {
         glDisable(GL_TEXTURE_RECTANGLE_ARB);
         checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
     }

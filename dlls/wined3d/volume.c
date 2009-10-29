@@ -30,6 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 /* Context activation is done by the caller. */
 static void volume_bind_and_dirtify(IWineD3DVolume *iface) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
+    const struct wined3d_gl_info *gl_info = &This->resource.wineD3DDevice->adapter->gl_info;
     IWineD3DVolumeTexture *texture;
     DWORD active_sampler;
 
@@ -44,7 +45,8 @@ static void volume_bind_and_dirtify(IWineD3DVolume *iface) {
      *
      * TODO: Track the current active texture per GL context instead of using glGet
      */
-    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+    if (gl_info->supported[ARB_MULTITEXTURE])
+    {
         GLint active_texture;
         ENTER_GL();
         glGetIntegerv(GL_ACTIVE_TEXTURE, &active_texture);

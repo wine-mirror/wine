@@ -371,7 +371,8 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
         int dstBlendAlpha = GL_ZERO;
 
         /* Separate alpha blending requires GL_EXT_blend_function_separate, so make sure it is around */
-        if(!GL_SUPPORT(EXT_BLEND_FUNC_SEPARATE)) {
+        if (!context->gl_info->supported[EXT_BLEND_FUNC_SEPARATE])
+        {
             WARN("Unsupported in local OpenGL implementation: glBlendFuncSeparateEXT\n");
             return;
         }
@@ -565,7 +566,7 @@ static void state_clipping(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
     if (stateblock->renderState[WINED3DRS_CLIPPING]) {
         enable  = stateblock->renderState[WINED3DRS_CLIPPLANEENABLE];
         disable = ~stateblock->renderState[WINED3DRS_CLIPPLANEENABLE];
-        if (GL_SUPPORT(ARB_DEPTH_CLAMP))
+        if (context->gl_info->supported[ARB_DEPTH_CLAMP])
         {
             glDisable(GL_DEPTH_CLAMP);
             checkGLcall("glDisable(GL_DEPTH_CLAMP)");
@@ -573,7 +574,7 @@ static void state_clipping(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
     } else {
         disable = 0xffffffff;
         enable  = 0x00;
-        if (GL_SUPPORT(ARB_DEPTH_CLAMP))
+        if (context->gl_info->supported[ARB_DEPTH_CLAMP])
         {
             glEnable(GL_DEPTH_CLAMP);
             checkGLcall("glEnable(GL_DEPTH_CLAMP)");
@@ -615,7 +616,9 @@ static void state_blendop(DWORD state, IWineD3DStateBlockImpl *stateblock, struc
     int blendEquationAlpha = GL_FUNC_ADD;
 
     /* BLENDOPALPHA requires GL_EXT_blend_equation_separate, so make sure it is around */
-    if(stateblock->renderState[WINED3DRS_BLENDOPALPHA] && !GL_SUPPORT(EXT_BLEND_EQUATION_SEPARATE)) {
+    if (stateblock->renderState[WINED3DRS_BLENDOPALPHA]
+            && !context->gl_info->supported[EXT_BLEND_EQUATION_SEPARATE])
+    {
         WARN("Unsupported in local OpenGL implementation: glBlendEquationSeparateEXT\n");
         return;
     }
@@ -704,14 +707,18 @@ static void state_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock
         }
         checkGLcall("glMaterialf(GL_SHININESS)");
 
-        if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+        if (context->gl_info->supported[EXT_SECONDARY_COLOR])
+        {
             glEnable(GL_COLOR_SUM_EXT);
-        } else {
+        }
+        else
+        {
             TRACE("Specular colors cannot be enabled in this version of opengl\n");
         }
         checkGLcall("glEnable(GL_COLOR_SUM)");
 
-        if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+        if (context->gl_info->supported[NV_REGISTER_COMBINERS])
+        {
             GL_EXTCALL(glFinalCombinerInputNV(GL_VARIABLE_B_NV, GL_SPARE0_PLUS_SECONDARY_COLOR_NV, GL_UNSIGNED_IDENTITY_NV, GL_RGB));
             checkGLcall("glFinalCombinerInputNV()");
         }
@@ -723,14 +730,18 @@ static void state_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock
         checkGLcall("glMaterialfv");
 
         /* for the case of disabled lighting: */
-        if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+        if (context->gl_info->supported[EXT_SECONDARY_COLOR])
+        {
             glDisable(GL_COLOR_SUM_EXT);
-        } else {
+        }
+        else
+        {
             TRACE("Specular colors cannot be disabled in this version of opengl\n");
         }
         checkGLcall("glDisable(GL_COLOR_SUM)");
 
-        if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+        if (context->gl_info->supported[NV_REGISTER_COMBINERS])
+        {
             GL_EXTCALL(glFinalCombinerInputNV(GL_VARIABLE_B_NV, GL_SPARE0_NV, GL_UNSIGNED_IDENTITY_NV, GL_RGB));
             checkGLcall("glFinalCombinerInputNV()");
         }
@@ -838,7 +849,8 @@ static void state_stencil(DWORD state, IWineD3DStateBlockImpl *stateblock, struc
         glEnable(GL_STENCIL_TEST);
         checkGLcall("glEnable GL_STENCIL_TEST");
 
-        if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
+        if (context->gl_info->supported[EXT_STENCIL_TWO_SIDE])
+        {
             /* Apply back first, then front. This function calls glActiveStencilFaceEXT,
              * which has an effect on the code below too. If we apply the front face
              * afterwards, we are sure that the active stencil face is set to front,
@@ -849,7 +861,9 @@ static void state_stencil(DWORD state, IWineD3DStateBlockImpl *stateblock, struc
                     func_ccw, ref, mask, stencilFail_ccw, depthFail_ccw, stencilPass_ccw);
             renderstate_stencil_twosided(context, GL_FRONT,
                     func, ref, mask, stencilFail, depthFail, stencilPass);
-        } else if(GL_SUPPORT(ATI_SEPARATE_STENCIL)) {
+        }
+        else if (context->gl_info->supported[ATI_SEPARATE_STENCIL])
+        {
             GL_EXTCALL(glStencilFuncSeparateATI(func, func_ccw, ref, mask));
             checkGLcall("glStencilFuncSeparateATI(...)");
             GL_EXTCALL(glStencilOpSeparateATI(GL_FRONT, stencilFail, depthFail, stencilPass));
@@ -859,8 +873,11 @@ static void state_stencil(DWORD state, IWineD3DStateBlockImpl *stateblock, struc
         } else {
             ERR("Separate (two sided) stencil not supported on this version of opengl. Caps weren't honored?\n");
         }
-    } else if(onesided_enable) {
-        if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
+    }
+    else if(onesided_enable)
+    {
+        if (context->gl_info->supported[EXT_STENCIL_TWO_SIDE])
+        {
             glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
             checkGLcall("glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
         }
@@ -1481,11 +1498,13 @@ static void state_pscale(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
         att[2] = C.f / scaleFactor;
     }
 
-    if(GL_SUPPORT(ARB_POINT_PARAMETERS)) {
+    if (context->gl_info->supported[ARB_POINT_PARAMETERS])
+    {
         GL_EXTCALL(glPointParameterfvARB)(GL_POINT_DISTANCE_ATTENUATION_ARB, att);
         checkGLcall("glPointParameterfvARB(GL_DISTANCE_ATTENUATION_ARB, ...)");
     }
-    else if(GL_SUPPORT(EXT_POINT_PARAMETERS)) {
+    else if (context->gl_info->supported[EXT_POINT_PARAMETERS])
+    {
         GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
         checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...)");
     } else if(stateblock->renderState[WINED3DRS_POINTSCALEENABLE]) {
@@ -1981,7 +2000,8 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
     Handled = TRUE; /* Assume will be handled */
 
     /* Other texture operations require special extensions: */
-    if (GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
+    if (context->gl_info->supported[NV_TEXTURE_ENV_COMBINE4])
+    {
         if (isAlpha) {
             opr = GL_SRC_ALPHA;
             invopr = GL_ONE_MINUS_SRC_ALPHA;
@@ -2566,7 +2586,8 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
             checkGLcall("GL_TEXTURE_ENV, scal_target, 2");
             break;
         case WINED3DTOP_SUBTRACT:
-            if (GL_SUPPORT(ARB_TEXTURE_ENV_COMBINE)) {
+            if (context->gl_info->supported[ARB_TEXTURE_ENV_COMBINE])
+            {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_SUBTRACT);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_SUBTRACT)");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2657,10 +2678,13 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
         case WINED3DTOP_DOTPRODUCT3:
-            if (GL_SUPPORT(ARB_TEXTURE_ENV_DOT3)) {
+            if (context->gl_info->supported[ARB_TEXTURE_ENV_DOT3])
+            {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA_ARB);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA_ARB");
-            } else if (GL_SUPPORT(EXT_TEXTURE_ENV_DOT3)) {
+            }
+            else if (context->gl_info->supported[EXT_TEXTURE_ENV_DOT3])
+            {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA_EXT);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA_EXT");
             } else {
@@ -2696,7 +2720,8 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
         case WINED3DTOP_ADDSMOOTH:
-            if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3)) {
+            if (context->gl_info->supported[ATI_TEXTURE_ENV_COMBINE3])
+            {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2723,7 +2748,8 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
                 Handled = FALSE;
                 break;
         case WINED3DTOP_BLENDTEXTUREALPHAPM:
-            if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3)) {
+            if (context->gl_info->supported[ATI_TEXTURE_ENV_COMBINE3])
+            {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, GL_TEXTURE);
@@ -2744,7 +2770,8 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
                 Handled = FALSE;
                 break;
         case WINED3DTOP_MODULATEALPHA_ADDCOLOR:
-            if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3)) {
+            if (context->gl_info->supported[ATI_TEXTURE_ENV_COMBINE3])
+            {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2771,7 +2798,8 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
                 Handled = FALSE;
                 break;
         case WINED3DTOP_MODULATECOLOR_ADDALPHA:
-            if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3)) {
+            if (context->gl_info->supported[ATI_TEXTURE_ENV_COMBINE3])
+            {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2798,7 +2826,8 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
                 Handled = FALSE;
                 break;
         case WINED3DTOP_MODULATEINVALPHA_ADDCOLOR:
-            if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3)) {
+            if (context->gl_info->supported[ATI_TEXTURE_ENV_COMBINE3])
+            {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2825,7 +2854,8 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
                 Handled = FALSE;
                 break;
         case WINED3DTOP_MODULATEINVCOLOR_ADDALPHA:
-            if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3)) {
+            if (context->gl_info->supported[ATI_TEXTURE_ENV_COMBINE3])
+            {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2858,7 +2888,8 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
                 Handled = FALSE;
                 break;
         case WINED3DTOP_MULTIPLYADD:
-            if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3)) {
+            if (context->gl_info->supported[ATI_TEXTURE_ENV_COMBINE3])
+            {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2880,7 +2911,8 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
                 break;
         case WINED3DTOP_BUMPENVMAPLUMINANCE:
         case WINED3DTOP_BUMPENVMAP:
-            if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+            if (context->gl_info->supported[NV_TEXTURE_SHADER2])
+            {
                 /* Technically texture shader support without register combiners is possible, but not expected to occur
                  * on real world cards, so for now a fixme should be enough
                  */
@@ -2892,7 +2924,8 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
 
     if (Handled) {
         BOOL  combineOK = TRUE;
-        if (GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
+        if (context->gl_info->supported[NV_TEXTURE_ENV_COMBINE4])
+        {
             DWORD op2;
 
             if (isAlpha) {
@@ -2971,11 +3004,13 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
             checkGLcall("glDisable(GL_TEXTURE_2D)");
             glDisable(GL_TEXTURE_3D);
             checkGLcall("glDisable(GL_TEXTURE_3D)");
-            if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+            if (context->gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+            {
                 glDisable(GL_TEXTURE_CUBE_MAP_ARB);
                 checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
             }
-            if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+            if (context->gl_info->supported[ARB_TEXTURE_RECTANGLE])
+            {
                 glDisable(GL_TEXTURE_RECTANGLE_ARB);
                 checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
             }
@@ -3088,7 +3123,8 @@ void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d
      * this if block here, and the other code(color keying, texture unit selection) are the same
      */
     TRACE("Setting alpha op for stage %d\n", stage);
-    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+    if (context->gl_info->supported[NV_REGISTER_COMBINERS])
+    {
         set_tex_op_nvrc((IWineD3DDevice *)stateblock->wineD3DDevice, TRUE, stage,
                          op, arg1, arg2, arg0,
                          mapped_stage,
@@ -3193,7 +3229,7 @@ static void loadTexCoords(const struct wined3d_context *context, IWineD3DStateBl
             GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + mapped_stage, 0, 0, 0, 1));
         }
     }
-    if (GL_SUPPORT(NV_REGISTER_COMBINERS))
+    if (context->gl_info->supported[NV_REGISTER_COMBINERS])
     {
         /* The number of the mapped stages increases monotonically, so it's fine to use the last used one. */
         for (textureNo = mapped_stage + 1; textureNo < context->gl_info->limits.textures; ++textureNo)
@@ -3279,7 +3315,7 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
         case WINED3DTSS_TCI_CAMERASPACENORMAL:
             /* Note that NV_TEXGEN_REFLECTION support is implied when
              * ARB_TEXTURE_CUBE_MAP is supported */
-            if (!GL_SUPPORT(NV_TEXGEN_REFLECTION))
+            if (!context->gl_info->supported[NV_TEXGEN_REFLECTION])
             {
                 FIXME("WINED3DTSS_TCI_CAMERASPACENORMAL not supported.\n");
                 break;
@@ -3310,7 +3346,7 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
         case WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
             /* Note that NV_TEXGEN_REFLECTION support is implied when
              * ARB_TEXTURE_CUBE_MAP is supported */
-            if (!GL_SUPPORT(NV_TEXGEN_REFLECTION))
+            if (!context->gl_info->supported[NV_TEXGEN_REFLECTION])
             {
                 FIXME("WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR not supported.\n");
                 break;
@@ -3373,7 +3409,7 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
          * and do all the things linked to it
          * TODO: Tidy that up to reload only the arrays of the changed unit
          */
-        GLuint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? ~0U : 0;
+        GLuint curVBO = context->gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] ? ~0U : 0;
 
         unloadTexCoords(context);
         loadTexCoords(context, stateblock, &stateblock->wineD3DDevice->strided_streams, &curVBO);
@@ -3475,7 +3511,8 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wine
         basetexture_apply_state_changes(stateblock->textures[sampler],
                 stateblock->textureState[sampler], stateblock->samplerState[sampler]);
 
-        if (GL_SUPPORT(EXT_TEXTURE_LOD_BIAS)) {
+        if (context->gl_info->supported[EXT_TEXTURE_LOD_BIAS])
+        {
             tmpvalue.d = stateblock->samplerState[sampler][WINED3DSAMP_MIPMAPLODBIAS];
             glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
                       GL_TEXTURE_LOD_BIAS_EXT,
@@ -3949,7 +3986,6 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
 }
 
 /* This should match any arrays loaded in loadVertexData.
- * stateblock impl is required for GL_SUPPORT
  * TODO: Only load / unload arrays if we have to.
  */
 static inline void unloadVertexData(const struct wined3d_context *context)
@@ -3957,10 +3993,12 @@ static inline void unloadVertexData(const struct wined3d_context *context)
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_COLOR_ARRAY);
-    if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+    if (context->gl_info->supported[EXT_SECONDARY_COLOR])
+    {
         glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
     }
-    if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
+    if (context->gl_info->supported[ARB_VERTEX_BLEND])
+    {
         glDisableClientState(GL_WEIGHT_ARRAY_ARB);
     }
     unloadTexCoords(context);
@@ -3996,7 +4034,7 @@ static inline void unloadNumberedArrays(IWineD3DStateBlockImpl *stateblock, stru
 static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
         const struct wined3d_stream_info *stream_info, struct wined3d_context *context)
 {
-    GLuint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? ~0U : 0;
+    GLuint curVBO = context->gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] ? ~0U : 0;
     int i;
     const UINT *offset = stateblock->streamOffset;
     struct wined3d_buffer *vb;
@@ -4098,7 +4136,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
                     GL_EXTCALL(glVertexAttrib4NubvARB(i, ptr));
                     break;
                 case WINED3DFMT_B8G8R8A8_UNORM:
-                    if (GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA))
+                    if (context->gl_info->supported[EXT_VERTEX_ARRAY_BGRA])
                     {
                         const DWORD *src = (const DWORD *)ptr;
                         DWORD c = *src & 0xff00ff00;
@@ -4172,7 +4210,7 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
         const struct wined3d_stream_info *si)
 {
     const UINT *offset = stateblock->streamOffset;
-    GLuint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? ~0U : 0;
+    GLuint curVBO = context->gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] ? ~0U : 0;
     const struct wined3d_stream_info_element *e;
 
     TRACE("Using fast vertex array code\n");
@@ -4186,7 +4224,8 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
     {
         e = &si->elements[WINED3D_FFP_BLENDWEIGHT];
 
-        if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
+        if (context->gl_info->supported[ARB_VERTEX_BLEND])
+        {
             TRACE("Blend %d %p %d\n", e->format_desc->component_count,
                     e->data + stateblock->loadBaseVertexIndex * e->stride, e->stride + offset[e->stream_idx]);
 
@@ -4227,8 +4266,11 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
              */
             WARN("unsupported blending in openGl\n");
         }
-    } else {
-        if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
+    }
+    else
+    {
+        if (context->gl_info->supported[ARB_VERTEX_BLEND])
+        {
             static const GLbyte one = 1;
             GL_EXTCALL(glWeightbvARB(1, &one));
             checkGLcall("glWeightivARB(gl_info->max_blends, weights)");
@@ -4339,7 +4381,8 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
         VTRACE(("glSecondaryColorPointer(4, GL_UNSIGNED_BYTE, %d, %p)\n", e->stride, e->data));
 
         e = &si->elements[WINED3D_FFP_SPECULAR];
-        if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+        if (context->gl_info->supported[EXT_SECONDARY_COLOR])
+        {
             GLenum type = e->format_desc->gl_vtx_type;
             GLint format = e->format_desc->gl_vtx_format;
 
@@ -4386,9 +4429,11 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
         /* Missing specular color is not critical, no warnings */
         VTRACE(("Specular colour is not supported in this GL implementation\n"));
         }
-
-    } else {
-        if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+    }
+    else
+    {
+        if (context->gl_info->supported[EXT_SECONDARY_COLOR])
+        {
             GL_EXTCALL(glSecondaryColor3fEXT)(0, 0, 0);
             checkGLcall("glSecondaryColor3fEXT(0, 0, 0)");
         } else {
@@ -4468,7 +4513,8 @@ static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wi
     else
     {
         WORD slow_mask = (1 << WINED3D_FFP_PSIZE);
-        slow_mask |= -!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) & ((1 << WINED3D_FFP_DIFFUSE) | (1 << WINED3D_FFP_SPECULAR));
+        slow_mask |= -!context->gl_info->supported[EXT_VERTEX_ARRAY_BGRA]
+                & ((1 << WINED3D_FFP_DIFFUSE) | (1 << WINED3D_FFP_SPECULAR));
 
         if (fixup || (!dataLocations->position_transformed
                 && !(dataLocations->use_map & slow_mask)))
@@ -5557,7 +5603,6 @@ static const struct StateEntryTemplate ffp_fragmentstate_template[] = {
 };
 #undef GLINFO_LOCATION
 
-#define GLINFO_LOCATION (*gl_info)
 /* Context activation is done by the caller. */
 static void ffp_enable(IWineD3DDevice *iface, BOOL enable) { }
 
@@ -5574,9 +5619,10 @@ static void ffp_fragment_get_caps(WINED3DDEVTYPE devtype,
                             WINED3DTEXOPCAPS_SELECTARG2  |
                             WINED3DTEXOPCAPS_DISABLE;
 
-    if (GL_SUPPORT(ARB_TEXTURE_ENV_COMBINE) ||
-        GL_SUPPORT(EXT_TEXTURE_ENV_COMBINE) ||
-        GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
+    if (gl_info->supported[ARB_TEXTURE_ENV_COMBINE]
+            || gl_info->supported[EXT_TEXTURE_ENV_COMBINE]
+            || gl_info->supported[NV_TEXTURE_ENV_COMBINE4])
+    {
         pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_BLENDDIFFUSEALPHA  |
                                 WINED3DTEXOPCAPS_BLENDTEXTUREALPHA  |
                                 WINED3DTEXOPCAPS_BLENDFACTORALPHA   |
@@ -5584,15 +5630,16 @@ static void ffp_fragment_get_caps(WINED3DDEVTYPE devtype,
                                 WINED3DTEXOPCAPS_LERP               |
                                 WINED3DTEXOPCAPS_SUBTRACT;
     }
-    if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3) ||
-        GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
+    if (gl_info->supported[ATI_TEXTURE_ENV_COMBINE3]
+            || gl_info->supported[NV_TEXTURE_ENV_COMBINE4])
+    {
         pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_ADDSMOOTH              |
                                 WINED3DTEXOPCAPS_MULTIPLYADD            |
                                 WINED3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR |
                                 WINED3DTEXOPCAPS_MODULATECOLOR_ADDALPHA |
                                 WINED3DTEXOPCAPS_BLENDTEXTUREALPHAPM;
     }
-    if (GL_SUPPORT(ARB_TEXTURE_ENV_DOT3))
+    if (gl_info->supported[ARB_TEXTURE_ENV_DOT3])
         pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_DOTPRODUCT3;
 
     pCaps->MaxTextureBlendStages = gl_info->limits.texture_stages;
@@ -5693,7 +5740,7 @@ HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_
              */
             if(set[cur[i].state]) continue;
             /* Skip state lines depending on unsupported extensions */
-            if (!GL_SUPPORT(cur[i].extension)) continue;
+            if (!gl_info->supported[cur[i].extension]) continue;
             set[cur[i].state] = TRUE;
             /* In some cases having an extension means that nothing has to be
              * done for a state, e.g. if GL_ARB_texture_non_power_of_two is
@@ -5760,4 +5807,3 @@ out_of_mem:
 
     return E_OUTOFMEMORY;
 }
-#undef GLINFO_LOCATION

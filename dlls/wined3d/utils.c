@@ -574,8 +574,6 @@ static BOOL init_format_compression_info(struct wined3d_gl_info *gl_info)
     return TRUE;
 }
 
-#define GLINFO_LOCATION (*gl_info)
-
 /* Context activation is done by the caller. */
 static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct GlPixelFormatDesc *format_desc)
 {
@@ -663,8 +661,8 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct GlPix
     {
         GLuint rb;
 
-        if (GL_SUPPORT(ARB_FRAMEBUFFER_OBJECT)
-                || GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
+        if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT]
+                || gl_info->supported[EXT_PACKED_DEPTH_STENCIL])
         {
             gl_info->fbo_ops.glGenRenderbuffers(1, &rb);
             gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, rb);
@@ -683,8 +681,8 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct GlPix
             format_desc->Flags &= ~WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING;
         }
 
-        if (GL_SUPPORT(ARB_FRAMEBUFFER_OBJECT)
-                || GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
+        if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT]
+                || gl_info->supported[EXT_PACKED_DEPTH_STENCIL])
         {
             gl_info->fbo_ops.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
             gl_info->fbo_ops.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
@@ -771,7 +769,7 @@ static BOOL init_format_texture_info(struct wined3d_gl_info *gl_info)
             return FALSE;
         }
 
-        if (!GL_SUPPORT(gl_formats_template[i].extension)) continue;
+        if (!gl_info->supported[gl_formats_template[i].extension]) continue;
 
         desc = &gl_info->gl_formats[fmt_idx];
         desc->glInternal = gl_formats_template[i].glInternal;
@@ -911,7 +909,7 @@ static void init_format_filter_info(struct wined3d_gl_info *gl_info, enum wined3
     if(wined3d_settings.offscreen_rendering_mode != ORM_FBO)
     {
         WARN("No FBO support, or no FBO ORM, guessing filter info from GL caps\n");
-        if (vendor == VENDOR_NVIDIA && GL_SUPPORT(ARB_TEXTURE_FLOAT))
+        if (vendor == VENDOR_NVIDIA && gl_info->supported[ARB_TEXTURE_FLOAT])
         {
             TRACE("Nvidia card with texture_float support: Assuming float16 blending\n");
             filtered = TRUE;
@@ -990,7 +988,7 @@ static void apply_format_fixups(struct wined3d_gl_info *gl_info)
      * returns 0.0 when sampling from it, DirectX 1.0. So we always have in-shader
      * conversion for this format.
      */
-    if (!GL_SUPPORT(NV_TEXTURE_SHADER))
+    if (!gl_info->supported[NV_TEXTURE_SHADER])
     {
         idx = getFmtIdx(WINED3DFMT_R8G8_SNORM);
         gl_info->gl_formats[idx].color_fixup = create_color_fixup_desc(
@@ -1009,7 +1007,7 @@ static void apply_format_fixups(struct wined3d_gl_info *gl_info)
                 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
     }
 
-    if (!GL_SUPPORT(NV_TEXTURE_SHADER))
+    if (!gl_info->supported[NV_TEXTURE_SHADER])
     {
         /* If GL_NV_texture_shader is not supported, those formats are converted, incompatibly
          * with each other
@@ -1033,20 +1031,20 @@ static void apply_format_fixups(struct wined3d_gl_info *gl_info)
          */
     }
 
-    if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_RGTC))
+    if (gl_info->supported[EXT_TEXTURE_COMPRESSION_RGTC])
     {
         idx = getFmtIdx(WINED3DFMT_ATI2N);
         gl_info->gl_formats[idx].color_fixup = create_color_fixup_desc(
                 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
     }
-    else if (GL_SUPPORT(ATI_TEXTURE_COMPRESSION_3DC))
+    else if (gl_info->supported[ATI_TEXTURE_COMPRESSION_3DC])
     {
         idx = getFmtIdx(WINED3DFMT_ATI2N);
         gl_info->gl_formats[idx].color_fixup= create_color_fixup_desc(
                 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_W, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
     }
 
-    if (!GL_SUPPORT(APPLE_YCBCR_422))
+    if (!gl_info->supported[APPLE_YCBCR_422])
     {
         idx = getFmtIdx(WINED3DFMT_YUY2);
         gl_info->gl_formats[idx].color_fixup = create_yuv_fixup_desc(YUV_FIXUP_YUY2);
@@ -1059,13 +1057,13 @@ static void apply_format_fixups(struct wined3d_gl_info *gl_info)
     gl_info->gl_formats[idx].heightscale = 1.5f;
     gl_info->gl_formats[idx].color_fixup = create_yuv_fixup_desc(YUV_FIXUP_YV12);
 
-    if (GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA))
+    if (gl_info->supported[EXT_VERTEX_ARRAY_BGRA])
     {
         idx = getFmtIdx(WINED3DFMT_B8G8R8A8_UNORM);
         gl_info->gl_formats[idx].gl_vtx_format = GL_BGRA;
     }
 
-    if (GL_SUPPORT(ARB_HALF_FLOAT_VERTEX))
+    if (gl_info->supported[ARB_HALF_FLOAT_VERTEX])
     {
         /* Do not change the size of the type, it is CPU side. We have to change the GPU-side information though.
          * It is the job of the vertex buffer code to make sure that the vbos have the right format */
@@ -2586,11 +2584,13 @@ void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock
             case GL_TEXTURE_2D:
                 glDisable(GL_TEXTURE_3D);
                 checkGLcall("glDisable(GL_TEXTURE_3D)");
-                if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+                if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+                {
                     glDisable(GL_TEXTURE_CUBE_MAP_ARB);
                     checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
                 }
-                if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+                if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+                {
                     glDisable(GL_TEXTURE_RECTANGLE_ARB);
                     checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
                 }
@@ -2602,7 +2602,8 @@ void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock
                 checkGLcall("glDisable(GL_TEXTURE_2D)");
                 glDisable(GL_TEXTURE_3D);
                 checkGLcall("glDisable(GL_TEXTURE_3D)");
-                if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+                if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+                {
                     glDisable(GL_TEXTURE_CUBE_MAP_ARB);
                     checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
                 }
@@ -2610,11 +2611,13 @@ void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock
                 checkGLcall("glEnable(GL_TEXTURE_RECTANGLE_ARB)");
                 break;
             case GL_TEXTURE_3D:
-                if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+                if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+                {
                     glDisable(GL_TEXTURE_CUBE_MAP_ARB);
                     checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
                 }
-                if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+                if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+                {
                     glDisable(GL_TEXTURE_RECTANGLE_ARB);
                     checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
                 }
@@ -2628,7 +2631,8 @@ void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock
                 checkGLcall("glDisable(GL_TEXTURE_2D)");
                 glDisable(GL_TEXTURE_3D);
                 checkGLcall("glDisable(GL_TEXTURE_3D)");
-                if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+                if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+                {
                     glDisable(GL_TEXTURE_RECTANGLE_ARB);
                     checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
                 }
@@ -2641,11 +2645,13 @@ void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock
         checkGLcall("glEnable(GL_TEXTURE_2D)");
         glDisable(GL_TEXTURE_3D);
         checkGLcall("glDisable(GL_TEXTURE_3D)");
-        if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+        if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+        {
             glDisable(GL_TEXTURE_CUBE_MAP_ARB);
             checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
         }
-        if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+        if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+        {
             glDisable(GL_TEXTURE_RECTANGLE_ARB);
             checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
         }
