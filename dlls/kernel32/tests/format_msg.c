@@ -668,28 +668,28 @@ static void test_message_from_hmodule(void)
                          MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), out, sizeof(out)/sizeof(CHAR), NULL);
     error = GetLastError();
     ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
-    todo_wine ok(error == ERROR_MR_MID_NOT_FOUND, "last error %u\n", error);
+    ok(error == ERROR_MR_MID_NOT_FOUND, "last error %u\n", error);
 
     SetLastError(0xdeadbeef);
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 3044,
                          MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), out, sizeof(out)/sizeof(CHAR), NULL);
     error = GetLastError();
     ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
-    todo_wine ok(error == ERROR_MR_MID_NOT_FOUND, "last error %u\n", error);
+    ok(error == ERROR_MR_MID_NOT_FOUND, "last error %u\n", error);
 
     SetLastError(0xdeadbeef);
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 3044,
                          MAKELANGID(LANG_NEUTRAL, SUBLANG_SYS_DEFAULT), out, sizeof(out)/sizeof(CHAR), NULL);
     error = GetLastError();
     ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
-    todo_wine ok(error == ERROR_MR_MID_NOT_FOUND, "last error %u\n", error);
+    ok(error == ERROR_MR_MID_NOT_FOUND, "last error %u\n", error);
 
     SetLastError(0xdeadbeef);
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 3044,
                          MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), out, sizeof(out)/sizeof(CHAR), NULL);
     error = GetLastError();
     ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
-    todo_wine ok(error == ERROR_MR_MID_NOT_FOUND, "last error %u\n", error);
+    ok(error == ERROR_MR_MID_NOT_FOUND, "last error %u\n", error);
 
     SetLastError(0xdeadbeef);
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 3044,

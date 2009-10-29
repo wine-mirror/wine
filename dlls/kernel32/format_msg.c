@@ -72,11 +72,16 @@ static LPWSTR load_messageW( HMODULE module, UINT id, WORD lang )
 {
     const MESSAGE_RESOURCE_ENTRY *mre;
     WCHAR *buffer;
+    NTSTATUS status;
 
     TRACE("module = %p, id = %08x\n", module, id );
 
     if (!module) module = GetModuleHandleW( NULL );
-    if (RtlFindMessage( module, RT_MESSAGETABLE, lang, id, &mre ) != STATUS_SUCCESS) return NULL;
+    if ((status = RtlFindMessage( module, RT_MESSAGETABLE, lang, id, &mre )) != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return NULL;
+    }
 
     if (mre->Flags & MESSAGE_RESOURCE_UNICODE)
     {
@@ -102,11 +107,16 @@ static LPSTR load_messageA( HMODULE module, UINT id, WORD lang )
 {
     const MESSAGE_RESOURCE_ENTRY *mre;
     char *buffer;
+    NTSTATUS status;
 
     TRACE("module = %p, id = %08x\n", module, id );
 
     if (!module) module = GetModuleHandleW( NULL );
-    if (RtlFindMessage( module, RT_MESSAGETABLE, lang, id, &mre ) != STATUS_SUCCESS) return NULL;
+    if ((status = RtlFindMessage( module, RT_MESSAGETABLE, lang, id, &mre )) != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return NULL;
+    }
 
     if (mre->Flags & MESSAGE_RESOURCE_UNICODE)
     {
@@ -426,12 +436,7 @@ DWORD WINAPI FormatMessageA(
             from = load_messageA( (HMODULE)lpSource, dwMessageId, dwLanguageId );
         if (!from && (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM))
             from = load_messageA( kernel32_handle, dwMessageId, dwLanguageId );
-
-        if (!from)
-        {
-            SetLastError (ERROR_RESOURCE_LANG_NOT_FOUND);
-            return 0;
-        }
+        if (!from) return 0;
     }
     target	= HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 100);
     t	= target;
@@ -597,12 +602,7 @@ DWORD WINAPI FormatMessageW(
             from = load_messageW( (HMODULE)lpSource, dwMessageId, dwLanguageId );
         if (!from && (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM))
             from = load_messageW( kernel32_handle, dwMessageId, dwLanguageId );
-
-        if (!from)
-        {
-            SetLastError (ERROR_RESOURCE_LANG_NOT_FOUND);
-            return 0;
-        }
+        if (!from) return 0;
     }
     target = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 100 * sizeof(WCHAR) );
     t = target;
