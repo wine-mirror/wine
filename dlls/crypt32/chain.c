@@ -69,6 +69,24 @@ static inline void CRYPT_CloseStores(DWORD cStores, HCERTSTORE *stores)
 
 static const WCHAR rootW[] = { 'R','o','o','t',0 };
 
+/* Finds cert in store by comparing the cert's hashes. */
+static PCCERT_CONTEXT CRYPT_FindCertInStore(HCERTSTORE store,
+ PCCERT_CONTEXT cert)
+{
+    PCCERT_CONTEXT matching = NULL;
+    BYTE hash[20];
+    DWORD size = sizeof(hash);
+
+    if (CertGetCertificateContextProperty(cert, CERT_HASH_PROP_ID, hash, &size))
+    {
+        CRYPT_HASH_BLOB blob = { sizeof(hash), hash };
+
+        matching = CertFindCertificateInStore(store, cert->dwCertEncodingType,
+         0, CERT_FIND_SHA1_HASH, &blob, NULL);
+    }
+    return matching;
+}
+
 static BOOL CRYPT_CheckRestrictedRoot(HCERTSTORE store)
 {
     BOOL ret = TRUE;
@@ -77,29 +95,15 @@ static BOOL CRYPT_CheckRestrictedRoot(HCERTSTORE store)
     {
         HCERTSTORE rootStore = CertOpenSystemStoreW(0, rootW);
         PCCERT_CONTEXT cert = NULL, check;
-        BYTE hash[20];
-        DWORD size;
 
         do {
             cert = CertEnumCertificatesInStore(store, cert);
             if (cert)
             {
-                size = sizeof(hash);
-
-                ret = CertGetCertificateContextProperty(cert, CERT_HASH_PROP_ID,
-                 hash, &size);
-                if (ret)
-                {
-                    CRYPT_HASH_BLOB blob = { sizeof(hash), hash };
-
-                    check = CertFindCertificateInStore(rootStore,
-                     cert->dwCertEncodingType, 0, CERT_FIND_SHA1_HASH, &blob,
-                     NULL);
-                    if (!check)
-                        ret = FALSE;
-                    else
-                        CertFreeCertificateContext(check);
-                }
+                if (!(check = CRYPT_FindCertInStore(rootStore, cert)))
+                    ret = FALSE;
+                else
+                    CertFreeCertificateContext(check);
             }
         } while (ret && cert);
         if (cert)
@@ -336,16 +340,9 @@ static void CRYPT_FreeSimpleChain(PCERT_SIMPLE_CHAIN chain)
 static void CRYPT_CheckTrustedStatus(HCERTSTORE hRoot,
  PCERT_CHAIN_ELEMENT rootElement)
 {
-    BYTE hash[20];
-    DWORD size = sizeof(hash);
-    CRYPT_HASH_BLOB blob = { sizeof(hash), hash };
-    PCCERT_CONTEXT trustedRoot;
+    PCCERT_CONTEXT trustedRoot = CRYPT_FindCertInStore(hRoot,
+     rootElement->pCertContext);
 
-    CertGetCertificateContextProperty(rootElement->pCertContext,
-     CERT_HASH_PROP_ID, hash, &size);
-    trustedRoot = CertFindCertificateInStore(hRoot,
-     rootElement->pCertContext->dwCertEncodingType, 0, CERT_FIND_SHA1_HASH,
-     &blob, NULL);
     if (!trustedRoot)
         rootElement->TrustStatus.dwErrorStatus |=
          CERT_TRUST_IS_UNTRUSTED_ROOT;
