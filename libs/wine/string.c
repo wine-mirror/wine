@@ -406,6 +406,7 @@ int vsnprintfW(WCHAR *str, size_t len, const WCHAR *format, va_list valist)
                     sprintf(buffiter, "%d", fieldlen);
                     while (*buffiter)
                         *fmta++ = *buffiter++;
+                    iter++;
                 }
                 else
                     while (isdigit(*iter))
