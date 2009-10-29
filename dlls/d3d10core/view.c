@@ -287,7 +287,7 @@ static void STDMETHODCALLTYPE d3d10_rendertarget_view_GetResource(ID3D10RenderTa
 
 /* ID3D10RenderTargetView methods */
 
-static void STDMETHODCALLTYPE d3d10_rendertarget_view_GetDesc(ID3D10RenderTargetView* iface,
+static void STDMETHODCALLTYPE d3d10_rendertarget_view_GetDesc(ID3D10RenderTargetView *iface,
         D3D10_RENDER_TARGET_VIEW_DESC *desc)
 {
     struct d3d10_rendertarget_view *This = (struct d3d10_rendertarget_view *)iface;
