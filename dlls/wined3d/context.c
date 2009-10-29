@@ -88,7 +88,7 @@ static void context_clean_fbo_attachments(const struct wined3d_gl_info *gl_info)
 {
     unsigned int i;
 
-    for (i = 0; i < gl_info->max_buffers; ++i)
+    for (i = 0; i < gl_info->limits.buffers; ++i)
     {
         gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, 0, 0);
         checkGLcall("glFramebufferTexture2D()");
@@ -295,7 +295,7 @@ static void context_check_fbo_status(struct wined3d_context *context)
         }
 
         /* Dump the FBO attachments */
-        for (i = 0; i < gl_info->max_buffers; ++i)
+        for (i = 0; i < gl_info->limits.buffers; ++i)
         {
             attachment = (IWineD3DSurfaceImpl *)context->current_fbo->render_targets[i];
             if (attachment)
@@ -322,8 +322,8 @@ static struct fbo_entry *context_create_fbo_entry(struct wined3d_context *contex
     struct fbo_entry *entry;
 
     entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry));
-    entry->render_targets = HeapAlloc(GetProcessHeap(), 0, gl_info->max_buffers * sizeof(*entry->render_targets));
-    memcpy(entry->render_targets, device->render_targets, gl_info->max_buffers * sizeof(*entry->render_targets));
+    entry->render_targets = HeapAlloc(GetProcessHeap(), 0, gl_info->limits.buffers * sizeof(*entry->render_targets));
+    memcpy(entry->render_targets, device->render_targets, gl_info->limits.buffers * sizeof(*entry->render_targets));
     entry->depth_stencil = device->stencilBufferTarget;
     entry->attached = FALSE;
     entry->id = 0;
@@ -340,7 +340,7 @@ static void context_reuse_fbo_entry(struct wined3d_context *context, struct fbo_
     context_bind_fbo(context, GL_FRAMEBUFFER, &entry->id);
     context_clean_fbo_attachments(gl_info);
 
-    memcpy(entry->render_targets, device->render_targets, gl_info->max_buffers * sizeof(*entry->render_targets));
+    memcpy(entry->render_targets, device->render_targets, gl_info->limits.buffers * sizeof(*entry->render_targets));
     entry->depth_stencil = device->stencilBufferTarget;
     entry->attached = FALSE;
 }
@@ -370,7 +370,7 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context)
     LIST_FOR_EACH_ENTRY(entry, &context->fbo_list, struct fbo_entry, entry)
     {
         if (!memcmp(entry->render_targets,
-                device->render_targets, gl_info->max_buffers * sizeof(*entry->render_targets))
+                device->render_targets, gl_info->limits.buffers * sizeof(*entry->render_targets))
                 && entry->depth_stencil == device->stencilBufferTarget)
         {
             list_remove(&entry->entry);
@@ -408,7 +408,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
     if (!entry->attached)
     {
         /* Apply render targets */
-        for (i = 0; i < gl_info->max_buffers; ++i)
+        for (i = 0; i < gl_info->limits.buffers; ++i)
         {
             IWineD3DSurface *render_target = device->render_targets[i];
             context_attach_surface_fbo(context, GL_FRAMEBUFFER, i, render_target);
@@ -428,7 +428,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
     }
     else
     {
-        for (i = 0; i < gl_info->max_buffers; ++i)
+        for (i = 0; i < gl_info->limits.buffers; ++i)
         {
             if (device->render_targets[i])
                 context_apply_attachment_filter_states(device->render_targets[i], FALSE);
@@ -437,7 +437,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
             context_apply_attachment_filter_states(device->stencilBufferTarget, FALSE);
     }
 
-    for (i = 0; i < gl_info->max_buffers; ++i)
+    for (i = 0; i < gl_info->limits.buffers; ++i)
     {
         if (device->render_targets[i])
             device->draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
@@ -621,7 +621,7 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
                         continue;
                     }
 
-                    for (j = 0; j < gl_info->max_buffers; ++j)
+                    for (j = 0; j < gl_info->limits.buffers; ++j)
                     {
                         if (entry->render_targets[j] == (IWineD3DSurface *)resource)
                         {
@@ -1434,7 +1434,7 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
         /* Set up the previous texture input for all shader units. This applies to bump mapping, and in d3d
          * the previous texture where to source the offset from is always unit - 1.
          */
-        for (s = 1; s < gl_info->max_textures; ++s)
+        for (s = 1; s < gl_info->limits.textures; ++s)
         {
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + s));
             glTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, GL_TEXTURE0_ARB + s - 1);
@@ -1460,7 +1460,7 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
         GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(dummy_program), dummy_program));
     }
 
-    for (s = 0; s < gl_info->max_point_sprite_units; ++s)
+    for (s = 0; s < gl_info->limits.point_sprite_units; ++s)
     {
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + s));
         glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
@@ -1667,7 +1667,7 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context
      * The blitting code uses (for now) the fixed function pipeline, so make sure to reset all fixed
      * function texture unit. No need to care for higher samplers
      */
-    for (i = gl_info->max_textures - 1; i > 0 ; --i)
+    for (i = gl_info->limits.textures - 1; i > 0 ; --i)
     {
         sampler = This->rev_tex_unit_map[i];
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
@@ -2061,7 +2061,7 @@ static void context_apply_draw_buffer(struct wined3d_context *context, BOOL blit
             {
                 if (GL_SUPPORT(ARB_DRAW_BUFFERS))
                 {
-                    GL_EXTCALL(glDrawBuffersARB(gl_info->max_buffers, device->draw_buffers));
+                    GL_EXTCALL(glDrawBuffersARB(gl_info->limits.buffers, device->draw_buffers));
                     checkGLcall("glDrawBuffers()");
                 }
                 else

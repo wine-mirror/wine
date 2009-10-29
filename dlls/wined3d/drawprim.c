@@ -76,7 +76,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
     long                      SkipnStrides = startIdx + This->stateBlock->loadBaseVertexIndex;
     BOOL                      pixelShader = use_ps(This->stateBlock);
     BOOL specular_fog = FALSE;
-    UINT texture_stages = context->gl_info->max_texture_stages;
+    UINT texture_stages = context->gl_info->limits.texture_stages;
     const BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
     const BYTE *diffuse = NULL, *specular = NULL, *normal = NULL, *position = NULL;
     const struct wined3d_stream_info_element *element;
@@ -582,7 +582,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     if (This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE])
     {
         /* Invalidate the back buffer memory so LockRect will read it the next time */
-        for (i = 0; i < This->adapter->gl_info.max_buffers; ++i)
+        for (i = 0; i < This->adapter->gl_info.limits.buffers; ++i)
         {
             target = (IWineD3DSurfaceImpl *)This->render_targets[i];
             if (target)
@@ -860,7 +860,7 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
         checkGLcall("glLightModel for MODEL_AMBIENT");
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_AMBIENT));
 
-        for (i = 3; i < context->gl_info->max_lights; ++i)
+        for (i = 3; i < context->gl_info->limits.lights; ++i)
         {
             glDisable(GL_LIGHT0 + i);
             checkGLcall("glDisable(GL_LIGHT0 + i)");

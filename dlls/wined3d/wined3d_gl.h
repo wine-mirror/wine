@@ -4057,46 +4057,49 @@ struct wined3d_fbo_ops
     PGLFNGLGENERATEMIPMAPPROC                       glGenerateMipmap;
 };
 
+struct wined3d_gl_limits
+{
+    UINT buffers;
+    UINT lights;
+    UINT textures;
+    UINT texture_stages;
+    UINT fragment_samplers;
+    UINT vertex_samplers;
+    UINT combined_samplers;
+    UINT sampler_stages;
+    UINT clipplanes;
+    UINT texture_size;
+    UINT texture3d_size;
+    float pointsize_max;
+    float pointsize_min;
+    UINT point_sprite_units;
+    UINT blends;
+    UINT anisotropy;
+    float shininess;
+
+    UINT glsl_varyings;
+    UINT glsl_vs_float_constants;
+    UINT glsl_ps_float_constants;
+
+    UINT arb_vs_float_constants;
+    UINT arb_vs_native_constants;
+    UINT arb_vs_instructions;
+    UINT arb_vs_temps;
+    UINT arb_ps_float_constants;
+    UINT arb_ps_local_constants;
+    UINT arb_ps_native_constants;
+    UINT arb_ps_instructions;
+    UINT arb_ps_temps;
+};
+
 #define USE_GL_FUNC(type, pfn, ext, replace) type pfn;
 
 struct wined3d_gl_info
 {
     UINT vidmem;
-
-    UINT max_buffers;
-    UINT max_lights;
-    UINT max_textures;
-    UINT max_texture_stages;
-    UINT max_fragment_samplers;
-    UINT max_vertex_samplers;
-    UINT max_combined_samplers;
-    UINT max_sampler_stages;
-    UINT max_clipplanes;
-    UINT max_texture_size;
-    UINT max_texture3d_size;
-    float max_pointsize, max_pointsizemin;
-    UINT max_point_sprite_units;
-    UINT max_blends;
-    UINT max_anisotropy;
-    UINT max_glsl_varyings;
-    float max_shininess;
-
-    unsigned int max_vs_arb_constantsF;
-    unsigned int max_vs_arb_native_constants;
-    unsigned int max_vs_arb_instructions;
-    unsigned int max_vs_arb_temps;
-    unsigned int max_ps_arb_constantsF;
-    unsigned int max_ps_arb_local_constants;
-    unsigned int max_ps_arb_native_constants;
-    unsigned int max_ps_arb_instructions;
-    unsigned int max_ps_arb_temps;
-    unsigned int max_vs_glsl_constantsF;
-    unsigned int max_ps_glsl_constantsF;
-
+    struct wined3d_gl_limits limits;
     DWORD reserved_glsl_constants;
-
     DWORD quirks;
-
     BOOL supported[WINED3D_GL_EXT_COUNT];
 
     struct wined3d_fbo_ops fbo_ops;

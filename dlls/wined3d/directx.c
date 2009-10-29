@@ -625,7 +625,7 @@ static BOOL match_dx10_capable(const struct wined3d_gl_info *gl_info, const char
      * hardcoded
      *
      * dx10 cards usually have 64 varyings */
-    return gl_info->max_glsl_varyings > 44;
+    return gl_info->limits.glsl_varyings > 44;
 }
 
 /* A GL context is provided by the caller */
@@ -712,10 +712,10 @@ static BOOL match_broken_nv_clip(const struct wined3d_gl_info *gl_info, const ch
 
 static void quirk_arb_constants(struct wined3d_gl_info *gl_info)
 {
-    TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL.\n", gl_info->max_vs_arb_native_constants);
-    gl_info->max_vs_glsl_constantsF = gl_info->max_vs_arb_native_constants;
-    TRACE_(d3d_caps)("Using ARB ps constant limit(=%u) for GLSL.\n", gl_info->max_ps_arb_native_constants);
-    gl_info->max_ps_glsl_constantsF = gl_info->max_ps_arb_native_constants;
+    TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL.\n", gl_info->limits.arb_vs_native_constants);
+    gl_info->limits.glsl_vs_float_constants = gl_info->limits.arb_vs_native_constants;
+    TRACE_(d3d_caps)("Using ARB ps constant limit(=%u) for GLSL.\n", gl_info->limits.arb_ps_native_constants);
+    gl_info->limits.glsl_ps_float_constants = gl_info->limits.arb_ps_native_constants;
 }
 
 static void quirk_apple_glsl_constants(struct wined3d_gl_info *gl_info)
@@ -745,7 +745,7 @@ static void quirk_one_point_sprite(struct wined3d_gl_info *gl_info)
     if (gl_info->supported[ARB_POINT_SPRITE])
     {
         TRACE("Limiting point sprites to one texture unit.\n");
-        gl_info->max_point_sprite_units = 1;
+        gl_info->limits.point_sprite_units = 1;
     }
 }
 
@@ -1636,40 +1636,40 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_driver_info *driver_info, str
      *  with Default values
      */
     memset(gl_info->supported, 0, sizeof(gl_info->supported));
-    gl_info->max_buffers        = 1;
-    gl_info->max_textures       = 1;
-    gl_info->max_texture_stages = 1;
-    gl_info->max_fragment_samplers = 1;
-    gl_info->max_vertex_samplers = 0;
-    gl_info->max_combined_samplers = gl_info->max_fragment_samplers + gl_info->max_vertex_samplers;
-    gl_info->max_sampler_stages = 1;
-    gl_info->max_ps_arb_temps = 0;
-    gl_info->max_ps_arb_instructions = 0;
-    gl_info->max_vs_arb_temps = 0;
-    gl_info->max_vs_arb_instructions = 0;
-    gl_info->max_vs_glsl_constantsF = 0;
-    gl_info->max_ps_glsl_constantsF = 0;
-    gl_info->max_vs_arb_constantsF = 0;
-    gl_info->max_ps_arb_constantsF = 0;
-    gl_info->max_vs_arb_native_constants = 0;
-    gl_info->max_ps_arb_local_constants = 0;
+    gl_info->limits.buffers = 1;
+    gl_info->limits.textures = 1;
+    gl_info->limits.texture_stages = 1;
+    gl_info->limits.fragment_samplers = 1;
+    gl_info->limits.vertex_samplers = 0;
+    gl_info->limits.combined_samplers = gl_info->limits.fragment_samplers + gl_info->limits.vertex_samplers;
+    gl_info->limits.sampler_stages = 1;
+    gl_info->limits.glsl_vs_float_constants = 0;
+    gl_info->limits.glsl_ps_float_constants = 0;
+    gl_info->limits.arb_vs_float_constants = 0;
+    gl_info->limits.arb_vs_native_constants = 0;
+    gl_info->limits.arb_vs_instructions = 0;
+    gl_info->limits.arb_vs_temps = 0;
+    gl_info->limits.arb_ps_float_constants = 0;
+    gl_info->limits.arb_ps_local_constants = 0;
+    gl_info->limits.arb_ps_instructions = 0;
+    gl_info->limits.arb_ps_temps = 0;
 
     /* Retrieve opengl defaults */
     glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
-    gl_info->max_clipplanes = min(WINED3DMAXUSERCLIPPLANES, gl_max);
+    gl_info->limits.clipplanes = min(WINED3DMAXUSERCLIPPLANES, gl_max);
     TRACE_(d3d_caps)("ClipPlanes support - num Planes=%d\n", gl_max);
 
     glGetIntegerv(GL_MAX_LIGHTS, &gl_max);
-    gl_info->max_lights = gl_max;
+    gl_info->limits.lights = gl_max;
     TRACE_(d3d_caps)("Lights support - max lights=%d\n", gl_max);
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_max);
-    gl_info->max_texture_size = gl_max;
+    gl_info->limits.texture_size = gl_max;
     TRACE_(d3d_caps)("Maximum texture size support - max texture size=%d\n", gl_max);
 
     glGetFloatv(GL_ALIASED_POINT_SIZE_RANGE, gl_floatv);
-    gl_info->max_pointsizemin = gl_floatv[0];
-    gl_info->max_pointsize = gl_floatv[1];
+    gl_info->limits.pointsize_min = gl_floatv[0];
+    gl_info->limits.pointsize_max = gl_floatv[1];
     TRACE_(d3d_caps)("Maximum point size support - max point size=%f\n", gl_floatv[1]);
 
     /* Parse the gl supported features, in theory enabling parts of our code appropriately. */
@@ -1798,46 +1798,46 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_driver_info *driver_info, str
     if (gl_info->supported[ARB_DRAW_BUFFERS])
     {
         glGetIntegerv(GL_MAX_DRAW_BUFFERS_ARB, &gl_max);
-        gl_info->max_buffers = gl_max;
+        gl_info->limits.buffers = gl_max;
         TRACE_(d3d_caps)("Max draw buffers: %u.\n", gl_max);
     }
     if (gl_info->supported[ARB_MULTITEXTURE])
     {
         glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
-        gl_info->max_textures = min(MAX_TEXTURES, gl_max);
-        TRACE_(d3d_caps)("Max textures: %d.\n", gl_info->max_textures);
+        gl_info->limits.textures = min(MAX_TEXTURES, gl_max);
+        TRACE_(d3d_caps)("Max textures: %d.\n", gl_info->limits.textures);
 
         if (gl_info->supported[NV_REGISTER_COMBINERS])
         {
             GLint tmp;
             glGetIntegerv(GL_MAX_GENERAL_COMBINERS_NV, &tmp);
-            gl_info->max_texture_stages = min(MAX_TEXTURES, tmp);
+            gl_info->limits.texture_stages = min(MAX_TEXTURES, tmp);
         }
         else
         {
-            gl_info->max_texture_stages = min(MAX_TEXTURES, gl_max);
+            gl_info->limits.texture_stages = min(MAX_TEXTURES, gl_max);
         }
-        TRACE_(d3d_caps)("Max texture stages: %d.\n", gl_info->max_texture_stages);
+        TRACE_(d3d_caps)("Max texture stages: %d.\n", gl_info->limits.texture_stages);
 
         if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
         {
             GLint tmp;
             glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
-            gl_info->max_fragment_samplers = min(MAX_FRAGMENT_SAMPLERS, tmp);
+            gl_info->limits.fragment_samplers = min(MAX_FRAGMENT_SAMPLERS, tmp);
         }
         else
         {
-            gl_info->max_fragment_samplers = max(gl_info->max_fragment_samplers, gl_max);
+            gl_info->limits.fragment_samplers = max(gl_info->limits.fragment_samplers, gl_max);
         }
-        TRACE_(d3d_caps)("Max fragment samplers: %d.\n", gl_info->max_fragment_samplers);
+        TRACE_(d3d_caps)("Max fragment samplers: %d.\n", gl_info->limits.fragment_samplers);
 
         if (gl_info->supported[ARB_VERTEX_SHADER])
         {
             GLint tmp;
             glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
-            gl_info->max_vertex_samplers = tmp;
+            gl_info->limits.vertex_samplers = tmp;
             glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB, &tmp);
-            gl_info->max_combined_samplers = tmp;
+            gl_info->limits.combined_samplers = tmp;
 
             /* Loading GLSL sampler uniforms is much simpler if we can assume that the sampler setup
              * is known at shader link time. In a vertex shader + pixel shader combination this isn't
@@ -1853,100 +1853,102 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_driver_info *driver_info, str
              *
              * So this is just a check to check that our assumption holds true. If not, write a warning
              * and reduce the number of vertex samplers or probably disable vertex texture fetch. */
-            if (gl_info->max_vertex_samplers && gl_info->max_combined_samplers < 12
-                    && MAX_TEXTURES + gl_info->max_vertex_samplers > gl_info->max_combined_samplers)
+            if (gl_info->limits.vertex_samplers && gl_info->limits.combined_samplers < 12
+                    && MAX_TEXTURES + gl_info->limits.vertex_samplers > gl_info->limits.combined_samplers)
             {
                 FIXME("OpenGL implementation supports %u vertex samplers and %u total samplers.\n",
-                        gl_info->max_vertex_samplers, gl_info->max_combined_samplers);
+                        gl_info->limits.vertex_samplers, gl_info->limits.combined_samplers);
                 FIXME("Expected vertex samplers + MAX_TEXTURES(=8) > combined_samplers.\n");
-                if (gl_info->max_combined_samplers > MAX_TEXTURES)
-                    gl_info->max_vertex_samplers = gl_info->max_combined_samplers - MAX_TEXTURES;
+                if (gl_info->limits.combined_samplers > MAX_TEXTURES)
+                    gl_info->limits.vertex_samplers = gl_info->limits.combined_samplers - MAX_TEXTURES;
                 else
-                    gl_info->max_vertex_samplers = 0;
+                    gl_info->limits.vertex_samplers = 0;
             }
         }
         else
         {
-            gl_info->max_combined_samplers = gl_info->max_fragment_samplers;
+            gl_info->limits.combined_samplers = gl_info->limits.fragment_samplers;
         }
-        TRACE_(d3d_caps)("Max vertex samplers: %u.\n", gl_info->max_vertex_samplers);
-        TRACE_(d3d_caps)("Max combined samplers: %u.\n", gl_info->max_combined_samplers);
+        TRACE_(d3d_caps)("Max vertex samplers: %u.\n", gl_info->limits.vertex_samplers);
+        TRACE_(d3d_caps)("Max combined samplers: %u.\n", gl_info->limits.combined_samplers);
     }
     if (gl_info->supported[ARB_VERTEX_BLEND])
     {
         glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
-        gl_info->max_blends = gl_max;
-        TRACE_(d3d_caps)("Max blends: %u.\n", gl_info->max_blends);
+        gl_info->limits.blends = gl_max;
+        TRACE_(d3d_caps)("Max blends: %u.\n", gl_info->limits.blends);
     }
     if (gl_info->supported[EXT_TEXTURE3D])
     {
         glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE_EXT, &gl_max);
-        gl_info->max_texture3d_size = gl_max;
-        TRACE_(d3d_caps)("Max texture3D size: %d.\n", gl_info->max_texture3d_size);
+        gl_info->limits.texture3d_size = gl_max;
+        TRACE_(d3d_caps)("Max texture3D size: %d.\n", gl_info->limits.texture3d_size);
     }
     if (gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC])
     {
         glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
-        gl_info->max_anisotropy = gl_max;
-        TRACE_(d3d_caps)("Max anisotropy: %d.\n", gl_info->max_anisotropy);
+        gl_info->limits.anisotropy = gl_max;
+        TRACE_(d3d_caps)("Max anisotropy: %d.\n", gl_info->limits.anisotropy);
     }
     if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
     {
         GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
-        gl_info->max_ps_arb_constantsF = gl_max;
-        TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM float constants: %d.\n", gl_info->max_ps_arb_constantsF);
+        gl_info->limits.arb_ps_float_constants = gl_max;
+        TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM float constants: %d.\n", gl_info->limits.arb_ps_float_constants);
         GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_PARAMETERS_ARB, &gl_max));
-        gl_info->max_ps_arb_native_constants = gl_max;
-        TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM native float constants: %d.\n", gl_info->max_ps_arb_native_constants);
+        gl_info->limits.arb_ps_native_constants = gl_max;
+        TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM native float constants: %d.\n",
+                gl_info->limits.arb_ps_native_constants);
         GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_TEMPORARIES_ARB, &gl_max));
-        gl_info->max_ps_arb_temps = gl_max;
-        TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM native temporaries: %d.\n", gl_info->max_ps_arb_temps);
+        gl_info->limits.arb_ps_temps = gl_max;
+        TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM native temporaries: %d.\n", gl_info->limits.arb_ps_temps);
         GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB, &gl_max));
-        gl_info->max_ps_arb_instructions = gl_max;
-        TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM native instructions: %d.\n", gl_info->max_ps_arb_instructions);
+        gl_info->limits.arb_ps_instructions = gl_max;
+        TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM native instructions: %d.\n", gl_info->limits.arb_ps_instructions);
         GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB, &gl_max));
-        gl_info->max_ps_arb_local_constants = gl_max;
-        TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM local parameters: %d.\n", gl_info->max_ps_arb_instructions);
+        gl_info->limits.arb_ps_local_constants = gl_max;
+        TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM local parameters: %d.\n", gl_info->limits.arb_ps_instructions);
     }
     if (gl_info->supported[ARB_VERTEX_PROGRAM])
     {
         GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
-        gl_info->max_vs_arb_constantsF = gl_max;
-        TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM float constants: %d.\n", gl_info->max_vs_arb_constantsF);
+        gl_info->limits.arb_vs_float_constants = gl_max;
+        TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM float constants: %d.\n", gl_info->limits.arb_vs_float_constants);
         GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_PARAMETERS_ARB, &gl_max));
-        gl_info->max_vs_arb_native_constants = gl_max;
-        TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM native float constants: %d.\n", gl_info->max_vs_arb_native_constants);
+        gl_info->limits.arb_vs_native_constants = gl_max;
+        TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM native float constants: %d.\n",
+                gl_info->limits.arb_vs_native_constants);
         GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_TEMPORARIES_ARB, &gl_max));
-        gl_info->max_vs_arb_temps = gl_max;
-        TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM native temporaries: %d.\n", gl_info->max_vs_arb_temps);
+        gl_info->limits.arb_vs_temps = gl_max;
+        TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM native temporaries: %d.\n", gl_info->limits.arb_vs_temps);
         GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB, &gl_max));
-        gl_info->max_vs_arb_instructions = gl_max;
-        TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM native instructions: %d.\n", gl_info->max_vs_arb_instructions);
+        gl_info->limits.arb_vs_instructions = gl_max;
+        TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM native instructions: %d.\n", gl_info->limits.arb_vs_instructions);
 
         if (test_arb_vs_offset_limit(gl_info)) gl_info->quirks |= WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT;
     }
     if (gl_info->supported[ARB_VERTEX_SHADER])
     {
         glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &gl_max);
-        gl_info->max_vs_glsl_constantsF = gl_max / 4;
-        TRACE_(d3d_caps)("Max ARB_VERTEX_SHADER float constants: %u.\n", gl_info->max_vs_glsl_constantsF);
+        gl_info->limits.glsl_vs_float_constants = gl_max / 4;
+        TRACE_(d3d_caps)("Max ARB_VERTEX_SHADER float constants: %u.\n", gl_info->limits.glsl_vs_float_constants);
     }
     if (gl_info->supported[ARB_FRAGMENT_SHADER])
     {
         glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &gl_max);
-        gl_info->max_ps_glsl_constantsF = gl_max / 4;
-        TRACE_(d3d_caps)("Max ARB_FRAGMENT_SHADER float constants: %u.\n", gl_info->max_ps_glsl_constantsF);
+        gl_info->limits.glsl_ps_float_constants = gl_max / 4;
+        TRACE_(d3d_caps)("Max ARB_FRAGMENT_SHADER float constants: %u.\n", gl_info->limits.glsl_ps_float_constants);
         glGetIntegerv(GL_MAX_VARYING_FLOATS_ARB, &gl_max);
-        gl_info->max_glsl_varyings = gl_max;
+        gl_info->limits.glsl_varyings = gl_max;
         TRACE_(d3d_caps)("Max GLSL varyings: %u (%u 4 component varyings).\n", gl_max, gl_max / 4);
     }
     if (gl_info->supported[NV_LIGHT_MAX_EXPONENT])
     {
-        glGetFloatv(GL_MAX_SHININESS_NV, &gl_info->max_shininess);
+        glGetFloatv(GL_MAX_SHININESS_NV, &gl_info->limits.shininess);
     }
     else
     {
-        gl_info->max_shininess = 128.0f;
+        gl_info->limits.shininess = 128.0f;
     }
     if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
     {
@@ -1975,11 +1977,11 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_driver_info *driver_info, str
     }
     if (gl_info->supported[ARB_POINT_SPRITE])
     {
-        gl_info->max_point_sprite_units = gl_info->max_textures;
+        gl_info->limits.point_sprite_units = gl_info->limits.textures;
     }
     else
     {
-        gl_info->max_point_sprite_units = 0;
+        gl_info->limits.point_sprite_units = 0;
     }
     checkGLcall("extension detection");
 
@@ -1988,7 +1990,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_driver_info *driver_info, str
     /* In some cases the number of texture stages can be larger than the number
      * of samplers. The GF4 for example can use only 2 samplers (no fragment
      * shaders), but 8 texture stages (register combiners). */
-    gl_info->max_sampler_stages = max(gl_info->max_fragment_samplers, gl_info->max_texture_stages);
+    gl_info->limits.sampler_stages = max(gl_info->limits.fragment_samplers, gl_info->limits.texture_stages);
 
     if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT])
     {
@@ -2050,8 +2052,9 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_driver_info *driver_info, str
     }
 
     /* MRTs are currently only supported when FBOs are used. */
-    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO) {
-        gl_info->max_buffers = 1;
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+    {
+        gl_info->limits.buffers = 1;
     }
 
     device = wined3d_guess_card(gl_info, gl_renderer, &vendor, &vidmem);
@@ -3194,7 +3197,7 @@ static BOOL CheckVertexTextureCapability(struct wined3d_adapter *adapter, const 
 {
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
 
-    if (!gl_info->max_vertex_samplers)
+    if (!gl_info->limits.vertex_samplers)
     {
         TRACE_(d3d_caps)("[FAILED]\n");
         return FALSE;
@@ -4075,16 +4078,16 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
      * idea how generating the smoothing alpha values works; the result is different
      */
 
-    pCaps->MaxTextureWidth = gl_info->max_texture_size;
-    pCaps->MaxTextureHeight = gl_info->max_texture_size;
+    pCaps->MaxTextureWidth = gl_info->limits.texture_size;
+    pCaps->MaxTextureHeight = gl_info->limits.texture_size;
 
-    if(GL_SUPPORT(EXT_TEXTURE3D))
-        pCaps->MaxVolumeExtent = gl_info->max_texture3d_size;
+    if (GL_SUPPORT(EXT_TEXTURE3D))
+        pCaps->MaxVolumeExtent = gl_info->limits.texture3d_size;
     else
         pCaps->MaxVolumeExtent = 0;
 
     pCaps->MaxTextureRepeat = 32768;
-    pCaps->MaxTextureAspectRatio = gl_info->max_texture_size;
+    pCaps->MaxTextureAspectRatio = gl_info->limits.texture_size;
     pCaps->MaxVertexW = 1.0f;
 
     pCaps->GuardBandLeft = 0.0f;
@@ -4110,14 +4113,14 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
 
     pCaps->FVFCaps = WINED3DFVFCAPS_PSIZE | 0x0008; /* 8 texture coords */
 
-    pCaps->MaxUserClipPlanes = gl_info->max_clipplanes;
-    pCaps->MaxActiveLights = gl_info->max_lights;
+    pCaps->MaxUserClipPlanes = gl_info->limits.clipplanes;
+    pCaps->MaxActiveLights = gl_info->limits.lights;
 
-    pCaps->MaxVertexBlendMatrices = gl_info->max_blends;
+    pCaps->MaxVertexBlendMatrices = gl_info->limits.blends;
     pCaps->MaxVertexBlendMatrixIndex   = 0;
 
-    pCaps->MaxAnisotropy = gl_info->max_anisotropy;
-    pCaps->MaxPointSize = gl_info->max_pointsize;
+    pCaps->MaxAnisotropy = gl_info->limits.anisotropy;
+    pCaps->MaxPointSize = gl_info->limits.pointsize_max;
 
 
     /* FIXME: Add D3DVTXPCAPS_TWEENING, D3DVTXPCAPS_TEXGEN_SPHEREMAP */
@@ -4141,7 +4144,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     pCaps->AdapterOrdinalInGroup             = 0;
     pCaps->NumberOfAdaptersInGroup           = 1;
 
-    pCaps->NumSimultaneousRTs = gl_info->max_buffers;
+    pCaps->NumSimultaneousRTs = gl_info->limits.buffers;
 
     pCaps->StretchRectFilterCaps             = WINED3DPTFILTERCAPS_MINFPOINT  |
                                                 WINED3DPTFILTERCAPS_MAGFPOINT  |
@@ -4201,15 +4204,17 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         use the VS 3.0 from MSDN or else if there's OpenGL spec use a hardcoded value minimum VS3.0 value. */
         pCaps->VS20Caps.Caps                     = WINED3DVS20CAPS_PREDICATION;
         pCaps->VS20Caps.DynamicFlowControlDepth  = WINED3DVS20_MAX_DYNAMICFLOWCONTROLDEPTH; /* VS 3.0 requires MAX_DYNAMICFLOWCONTROLDEPTH (24) */
-        pCaps->VS20Caps.NumTemps                 = max(32, adapter->gl_info.max_vs_arb_temps);
+        pCaps->VS20Caps.NumTemps = max(32, adapter->gl_info.limits.arb_vs_temps);
         pCaps->VS20Caps.StaticFlowControlDepth   = WINED3DVS20_MAX_STATICFLOWCONTROLDEPTH ; /* level of nesting in loops / if-statements; VS 3.0 requires MAX (4) */
 
         pCaps->MaxVShaderInstructionsExecuted    = 65535; /* VS 3.0 needs at least 65535, some cards even use 2^32-1 */
-        pCaps->MaxVertexShader30InstructionSlots = max(512, adapter->gl_info.max_vs_arb_instructions);
-    } else if(pCaps->VertexShaderVersion == WINED3DVS_VERSION(2,0)) {
+        pCaps->MaxVertexShader30InstructionSlots = max(512, adapter->gl_info.limits.arb_vs_instructions);
+    }
+    else if (pCaps->VertexShaderVersion == WINED3DVS_VERSION(2,0))
+    {
         pCaps->VS20Caps.Caps                     = 0;
         pCaps->VS20Caps.DynamicFlowControlDepth  = WINED3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH;
-        pCaps->VS20Caps.NumTemps                 = max(12, adapter->gl_info.max_vs_arb_temps);
+        pCaps->VS20Caps.NumTemps = max(12, adapter->gl_info.limits.arb_vs_temps);
         pCaps->VS20Caps.StaticFlowControlDepth   = 1;
 
         pCaps->MaxVShaderInstructionsExecuted    = 65535;
@@ -4235,17 +4240,20 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                 WINED3DPS20CAPS_NODEPENDENTREADLIMIT |
                 WINED3DPS20CAPS_NOTEXINSTRUCTIONLIMIT;
         pCaps->PS20Caps.DynamicFlowControlDepth  = WINED3DPS20_MAX_DYNAMICFLOWCONTROLDEPTH; /* PS 3.0 requires MAX_DYNAMICFLOWCONTROLDEPTH (24) */
-        pCaps->PS20Caps.NumTemps                 = max(32, adapter->gl_info.max_ps_arb_temps);
+        pCaps->PS20Caps.NumTemps = max(32, adapter->gl_info.limits.arb_ps_temps);
         pCaps->PS20Caps.StaticFlowControlDepth   = WINED3DPS20_MAX_STATICFLOWCONTROLDEPTH; /* PS 3.0 requires MAX_STATICFLOWCONTROLDEPTH (4) */
         pCaps->PS20Caps.NumInstructionSlots      = WINED3DPS20_MAX_NUMINSTRUCTIONSLOTS; /* PS 3.0 requires MAX_NUMINSTRUCTIONSLOTS (512) */
 
         pCaps->MaxPShaderInstructionsExecuted    = 65535;
-        pCaps->MaxPixelShader30InstructionSlots  = max(WINED3DMIN30SHADERINSTRUCTIONS, adapter->gl_info.max_ps_arb_instructions);
-    } else if(pCaps->PixelShaderVersion == WINED3DPS_VERSION(2,0)) {
+        pCaps->MaxPixelShader30InstructionSlots = max(WINED3DMIN30SHADERINSTRUCTIONS,
+                adapter->gl_info.limits.arb_ps_instructions);
+    }
+    else if(pCaps->PixelShaderVersion == WINED3DPS_VERSION(2,0))
+    {
         /* Below we assume PS2.0 specs, not extended 2.0a(GeforceFX)/2.0b(Radeon R3xx) ones */
         pCaps->PS20Caps.Caps                     = 0;
         pCaps->PS20Caps.DynamicFlowControlDepth  = 0; /* WINED3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH = 0 */
-        pCaps->PS20Caps.NumTemps                 = max(12, adapter->gl_info.max_ps_arb_temps);
+        pCaps->PS20Caps.NumTemps = max(12, adapter->gl_info.limits.arb_ps_temps);
         pCaps->PS20Caps.StaticFlowControlDepth   = WINED3DPS20_MIN_STATICFLOWCONTROLDEPTH; /* Minimum: 1 */
         pCaps->PS20Caps.NumInstructionSlots      = WINED3DPS20_MIN_NUMINSTRUCTIONSLOTS; /* Minimum number (64 ALU + 32 Texture), a GeforceFX uses 512 */
 

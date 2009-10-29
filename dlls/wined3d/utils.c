@@ -916,7 +916,7 @@ static void init_format_filter_info(struct wined3d_gl_info *gl_info, enum wined3
             TRACE("Nvidia card with texture_float support: Assuming float16 blending\n");
             filtered = TRUE;
         }
-        else if (gl_info->max_glsl_varyings > 44)
+        else if (gl_info->limits.glsl_varyings > 44)
         {
             TRACE("More than 44 GLSL varyings - assuming d3d10 card with float16 blending\n");
             filtered = TRUE;
@@ -2192,7 +2192,7 @@ BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]
     const struct wined3d_gl_info *gl_info = &This->resource.wineD3DDevice->adapter->gl_info;
     int x1 = Rect->left, x2 = Rect->right;
     int y1 = Rect->top, y2 = Rect->bottom;
-    GLint maxSize = gl_info->max_texture_size;
+    GLint maxSize = gl_info->limits.texture_size;
 
     TRACE("(%p)->(%d,%d)-(%d,%d)\n", This,
           Rect->left, Rect->top, Rect->right, Rect->bottom);
@@ -2275,8 +2275,9 @@ BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]
                 This->glRect.right = This->pow2Width;
             }
 
-            if(This->pow2Height > maxSize) {
-                This->glRect.top = x1 - gl_info->max_texture_size / 2;
+            if (This->pow2Height > maxSize)
+            {
+                This->glRect.top = x1 - gl_info->limits.texture_size / 2;
                 if(This->glRect.top < 0) This->glRect.top = 0;
                 This->glRect.bottom = This->glRect.left + maxSize;
                 if(This->glRect.bottom > This->currentDesc.Height) {
@@ -2350,7 +2351,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
-    for (i = 0; i < gl_info->max_texture_stages; ++i)
+    for (i = 0; i < gl_info->limits.texture_stages; ++i)
     {
         IWineD3DBaseTextureImpl *texture;
         settings->op[i].padding = 0;
@@ -2662,7 +2663,7 @@ void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wine
     * handler takes care. Also no action is needed with pixel shaders, or if tex_colorop
     * will take care of this business
     */
-    if (mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= context->gl_info->max_textures) return;
+    if (mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= context->gl_info->limits.textures) return;
     if(sampler >= stateblock->lowest_disabled_stage) return;
     if(isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) return;
 

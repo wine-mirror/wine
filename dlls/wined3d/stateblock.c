@@ -1177,7 +1177,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     tmpfloat.f = 1.0f;
     IWineD3DDevice_SetRenderState(device, WINED3DRS_PATCHSEGMENTS,            tmpfloat.d);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_DEBUGMONITORTOKEN,        0xbaadcafe);
-    tmpfloat.f = gl_info->max_pointsize;
+    tmpfloat.f = gl_info->limits.pointsize_max;
     IWineD3DDevice_SetRenderState(device, WINED3DRS_POINTSIZE_MAX,            tmpfloat.d);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_INDEXEDVERTEXBLENDENABLE, FALSE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_COLORWRITEENABLE,         0x0000000F);
@@ -1271,7 +1271,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
         This->samplerState[i][WINED3DSAMP_DMAPOFFSET       ] = 0; /* TODO: Vertex offset in the presampled displacement map */
     }
 
-    for (i = 0; i < gl_info->max_textures; ++i)
+    for (i = 0; i < gl_info->limits.textures; ++i)
     {
         /* Note: This avoids calling SetTexture, so pretend it has been called */
         This->changed.textures |= 1 << i;

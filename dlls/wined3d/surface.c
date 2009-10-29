@@ -4198,7 +4198,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     }
 
     TRACE("%p\n", This);
-    if ((This->pow2Width > gl_info->max_texture_size || This->pow2Height > gl_info->max_texture_size)
+    if ((This->pow2Width > gl_info->limits.texture_size || This->pow2Height > gl_info->limits.texture_size)
             && !(This->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL)))
     {
         /* one of three options

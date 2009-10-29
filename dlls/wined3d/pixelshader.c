@@ -261,10 +261,10 @@ static HRESULT pixelshader_set_function(IWineD3DPixelShaderImpl *shader,
 
     /* Don't do any register mapping magic if it is not needed, or if we can't
      * achieve anything anyway */
-    if (highest_reg_used < (gl_info->max_glsl_varyings / 4)
-            || num_regs_used > (gl_info->max_glsl_varyings / 4))
+    if (highest_reg_used < (gl_info->limits.glsl_varyings / 4)
+            || num_regs_used > (gl_info->limits.glsl_varyings / 4))
     {
-        if (num_regs_used > (gl_info->max_glsl_varyings / 4))
+        if (num_regs_used > (gl_info->limits.glsl_varyings / 4))
         {
             /* This happens with relative addressing. The input mapper function
              * warns about this if the higher registers are declared too, so

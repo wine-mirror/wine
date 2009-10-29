@@ -1698,7 +1698,7 @@ static void create_dummy_textures(IWineD3DDeviceImpl *This) {
         checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
     }
 
-    for (i = 0; i < This->adapter->gl_info.max_textures; ++i)
+    for (i = 0; i < This->adapter->gl_info.limits.textures; ++i)
     {
         GLubyte white = 255;
 
@@ -1761,9 +1761,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     IWineD3DStateBlock_AddRef((IWineD3DStateBlock*)This->updateStateBlock);
 
     This->render_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(IWineD3DSurface *) * gl_info->max_buffers);
+            sizeof(IWineD3DSurface *) * gl_info->limits.buffers);
     This->draw_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(GLenum) * gl_info->max_buffers);
+            sizeof(GLenum) * gl_info->limits.buffers);
 
     This->NumberOfPalettes = 1;
     This->palettes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PALETTEENTRY*));
@@ -1787,7 +1787,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     /* Initialize the texture unit mapping to a 1:1 mapping */
     for (state = 0; state < MAX_COMBINED_SAMPLERS; ++state)
     {
-        if (state < gl_info->max_fragment_samplers)
+        if (state < gl_info->limits.fragment_samplers)
         {
             This->texUnitMap[state] = state;
             This->rev_tex_unit_map[state] = state;
@@ -2738,7 +2738,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetClipPlane(IWineD3DDevice *iface, DWO
     TRACE("(%p) : for idx %d, %p\n", This, Index, pPlane);
 
     /* Validate Index */
-    if (Index >= This->adapter->gl_info.max_clipplanes)
+    if (Index >= This->adapter->gl_info.limits.clipplanes)
     {
         TRACE("Application has requested clipplane this device doesn't support\n");
         return WINED3DERR_INVALIDCALL;
@@ -2775,7 +2775,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetClipPlane(IWineD3DDevice *iface, DWO
     TRACE("(%p) : for idx %d\n", This, Index);
 
     /* Validate Index */
-    if (Index >= This->adapter->gl_info.max_clipplanes)
+    if (Index >= This->adapter->gl_info.limits.clipplanes)
     {
         TRACE("Application has requested clipplane this device doesn't support\n");
         return WINED3DERR_INVALIDCALL;
@@ -3475,7 +3475,7 @@ static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps) {
     const WINED3DSAMPLER_TEXTURE_TYPE *vshader_sampler_type =
             ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.reg_maps.sampler_type;
     const WINED3DSAMPLER_TEXTURE_TYPE *pshader_sampler_type = NULL;
-    int start = min(MAX_COMBINED_SAMPLERS, This->adapter->gl_info.max_combined_samplers) - 1;
+    int start = min(MAX_COMBINED_SAMPLERS, This->adapter->gl_info.limits.combined_samplers) - 1;
     int i;
 
     if (ps) {
@@ -4196,7 +4196,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
              * Again stage Stage doesn't need to be dirtified here, it is handled below.
              */
 
-            for (i = Stage + 1; i < This->adapter->gl_info.max_texture_stages; ++i)
+            for (i = Stage + 1; i < This->adapter->gl_info.limits.texture_stages; ++i)
             {
                 if(This->updateStateBlock->textureState[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE) {
                     break;
@@ -5905,10 +5905,10 @@ static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *ifac
 static HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice* iface,DWORD RenderTargetIndex, IWineD3DSurface **ppRenderTarget) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    if (RenderTargetIndex >= This->adapter->gl_info.max_buffers)
+    if (RenderTargetIndex >= This->adapter->gl_info.limits.buffers)
     {
         ERR("(%p) : Only %d render targets are supported.\n",
-                This, This->adapter->gl_info.max_buffers);
+                This, This->adapter->gl_info.limits.buffers);
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -6178,10 +6178,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
 
     TRACE("(%p) : Setting rendertarget %d to %p\n", This, RenderTargetIndex, pRenderTarget);
 
-    if (RenderTargetIndex >= This->adapter->gl_info.max_buffers)
+    if (RenderTargetIndex >= This->adapter->gl_info.limits.buffers)
     {
         WARN("(%p) : Unsupported target %u set, returning WINED3DERR_INVALIDCALL(only %u supported)\n",
-             This, RenderTargetIndex, This->adapter->gl_info.max_buffers);
+                This, RenderTargetIndex, This->adapter->gl_info.limits.buffers);
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -6647,7 +6647,7 @@ void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain_
     This->shader_backend->shader_free_private(iface);
 
     ENTER_GL();
-    for (i = 0; i < This->adapter->gl_info.max_textures; ++i)
+    for (i = 0; i < This->adapter->gl_info.limits.textures; ++i)
     {
         /* Textures are recreated below */
         glDeleteTextures(1, &This->dummyTextureName[i]);
@@ -6983,7 +6983,7 @@ void device_resource_released(IWineD3DDeviceImpl *This, IWineD3DResource *resour
 
             if (This->d3d_initialized)
             {
-                for (i = 0; i < This->adapter->gl_info.max_buffers; ++i)
+                for (i = 0; i < This->adapter->gl_info.limits.buffers; ++i)
                 {
                     if (This->render_targets[i] == (IWineD3DSurface *)resource) {
                         This->render_targets[i] = NULL;
