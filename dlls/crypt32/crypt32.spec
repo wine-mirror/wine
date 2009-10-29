@@ -98,7 +98,7 @@
 @ stdcall CertVerifyValidityNesting(ptr ptr)
 @ stdcall CreateFileU(wstr long long ptr long long ptr) kernel32.CreateFileW
 @ stdcall CryptBinaryToStringA(ptr long long ptr ptr)
-@ stub CryptBinaryToStringW # (ptr long long ptr ptr)
+@ stdcall CryptBinaryToStringW(ptr long long ptr ptr)
 @ stdcall CryptStringToBinaryA(str long long ptr ptr ptr ptr)
 @ stdcall CryptStringToBinaryW (wstr long long ptr ptr ptr ptr)
 @ stdcall CryptAcquireContextU(ptr wstr wstr long long) advapi32.CryptAcquireContextW
