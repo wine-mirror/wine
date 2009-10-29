@@ -182,6 +182,44 @@ static void test_count(void)
     CloseEventLog(handle);
 }
 
+static void test_oldest(void)
+{
+    HANDLE handle;
+    BOOL ret;
+    DWORD oldest;
+
+    SetLastError(0xdeadbeef);
+    ret = GetOldestEventLogRecord(NULL, NULL);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    oldest = 0xdeadbeef;
+    ret = GetOldestEventLogRecord(NULL, &oldest);
+    todo_wine
+    {
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    ok(oldest == 0xdeadbeef, "Expected oldest to stay unchanged\n");
+    }
+
+    handle = OpenEventLogA(NULL, "Application");
+
+    SetLastError(0xdeadbeef);
+    ret = GetOldestEventLogRecord(handle, NULL);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    oldest = 0xdeadbeef;
+    ret = GetOldestEventLogRecord(handle, &oldest);
+    ok(ret, "Expected succes\n");
+    ok(oldest != 0xdeadbeef, "Expected the number of the oldest record\n");
+
+    CloseEventLog(handle);
+}
+
 START_TEST(eventlog)
 {
     SetLastError(0xdeadbeef);
@@ -198,4 +236,5 @@ START_TEST(eventlog)
     test_open_close();
     test_info();
     test_count();
+    test_oldest();
 }
