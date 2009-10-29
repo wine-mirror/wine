@@ -1258,7 +1258,7 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
                 ERR("The program is requesting multisampling without support!\n");
             else
             {
-                ERR("Requesting MultiSampleType=%d\n", pPresentParms->MultiSampleType);
+                TRACE("Requesting multisample type %#x.\n", pPresentParms->MultiSampleType);
                 numSamples = pPresentParms->MultiSampleType;
             }
         }
