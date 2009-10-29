@@ -418,11 +418,18 @@ static BOOL CRYPT_DecodeBasicConstraints(PCCERT_CONTEXT cert,
 }
 
 /* Checks element's basic constraints to see if it can act as a CA, with
- * remainingCAs CAs left in this chain.  A root certificate is assumed to be
- * allowed to be a CA whether or not the basic constraints extension is present,
- * whereas an intermediate CA cert is not.  This matches the expected usage in
- * RFC 3280:  a conforming intermediate CA MUST contain the basic constraints
- * extension.  It also appears to match Microsoft's implementation.
+ * remainingCAs CAs left in this chain.  In general, a cert must include the
+ * basic constraints extension, with the CA flag asserted, in order to be
+ * allowed to be a CA.  A V1 or V2 cert, which has no extensions, is also
+ * allowed to be a CA if it's installed locally (in the engine's world store.)
+ * This matches the expected usage in RFC 5280, section 4.2.1.9:  a conforming
+ * CA MUST include the basic constraints extension in all certificates that are
+ * used to validate digital signatures on certificates.  It also matches
+ * section 6.1.4(k): "If a certificate is a v1 or v2 certificate, then the
+ * application MUST either verify that the certificate is a CA certificate
+ * through out-of-band means or reject the certificate." Rejecting the
+ * certificate prohibits a large number of commonly used certificates, so
+ * accepting locally installed ones is a compromise.
  * Updates chainConstraints with the element's constraints, if:
  * 1. chainConstraints doesn't have a path length constraint, or
  * 2. element's path length constraint is smaller than chainConstraints's
@@ -431,15 +438,36 @@ static BOOL CRYPT_DecodeBasicConstraints(PCCERT_CONTEXT cert,
  * Returns TRUE if the element can be a CA, and the length of the remaining
  * chain is valid.
  */
-static BOOL CRYPT_CheckBasicConstraintsForCA(PCCERT_CONTEXT cert,
- CERT_BASIC_CONSTRAINTS2_INFO *chainConstraints, DWORD remainingCAs,
- BOOL isRoot, BOOL *pathLengthConstraintViolated)
+static BOOL CRYPT_CheckBasicConstraintsForCA(PCertificateChainEngine engine,
+ PCCERT_CONTEXT cert, CERT_BASIC_CONSTRAINTS2_INFO *chainConstraints,
+ DWORD remainingCAs, BOOL *pathLengthConstraintViolated)
 {
-    BOOL validBasicConstraints;
+    BOOL validBasicConstraints, implicitCA = FALSE;
     CERT_BASIC_CONSTRAINTS2_INFO constraints;
 
+    if (cert->pCertInfo->dwVersion == CERT_V1 ||
+     cert->pCertInfo->dwVersion == CERT_V2)
+    {
+        BYTE hash[20];
+        DWORD size = sizeof(hash);
+
+        if (CertGetCertificateContextProperty(cert, CERT_HASH_PROP_ID,
+         hash, &size))
+        {
+            CRYPT_HASH_BLOB blob = { sizeof(hash), hash };
+            PCCERT_CONTEXT localCert = CertFindCertificateInStore(
+             engine->hWorld, cert->dwCertEncodingType, 0, CERT_FIND_SHA1_HASH,
+             &blob, NULL);
+
+            if (localCert)
+            {
+                CertFreeCertificateContext(localCert);
+                implicitCA = TRUE;
+            }
+        }
+    }
     if ((validBasicConstraints = CRYPT_DecodeBasicConstraints(cert,
-     &constraints, isRoot)))
+     &constraints, implicitCA)))
     {
         chainConstraints->fCA = constraints.fCA;
         if (!constraints.fCA)
@@ -1210,9 +1238,9 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
             if (pathLengthConstraintViolated)
                 chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
                  CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
-            else if (!CRYPT_CheckBasicConstraintsForCA(
+            else if (!CRYPT_CheckBasicConstraintsForCA(engine,
              chain->rgpElement[i]->pCertContext, &constraints, i - 1,
-             isRoot, &pathLengthConstraintViolated))
+             &pathLengthConstraintViolated))
                 chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
                  CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
             else if (constraints.fPathLenConstraint &&
