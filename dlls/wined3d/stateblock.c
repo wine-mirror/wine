@@ -26,7 +26,6 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
-#define GLINFO_LOCATION This->wineD3DDevice->adapter->gl_info
 
 static const DWORD pixel_states_render[] =
 {

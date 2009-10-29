@@ -1391,7 +1391,6 @@ static HRESULT shader_none_alloc(IWineD3DDevice *iface) {return WINED3D_OK;}
 static void shader_none_free(IWineD3DDevice *iface) {}
 static BOOL shader_none_dirty_const(IWineD3DDevice *iface) {return FALSE;}
 
-#define GLINFO_LOCATION      (*gl_info)
 static void shader_none_get_caps(WINED3DDEVTYPE devtype,
         const struct wined3d_gl_info *gl_info, struct shader_caps *pCaps)
 {
@@ -1400,7 +1399,7 @@ static void shader_none_get_caps(WINED3DDEVTYPE devtype,
     pCaps->PixelShaderVersion    = 0;
     pCaps->PixelShader1xMaxValue = 0.0f;
 }
-#undef GLINFO_LOCATION
+
 static BOOL shader_none_color_fixup_supported(struct color_fixup_desc fixup)
 {
     if (TRACE_ON(d3d_shader) && TRACE_ON(d3d))

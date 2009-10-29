@@ -27,8 +27,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 
-#define GLINFO_LOCATION (*gl_info)
-
 static void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb)
 {
     /* Override the IWineD3DResource Preload method. */
@@ -141,13 +139,9 @@ static void cubetexture_cleanup(IWineD3DCubeTextureImpl *This)
     basetexture_cleanup((IWineD3DBaseTexture *)This);
 }
 
-#undef GLINFO_LOCATION
-
 /* *******************************************
    IWineD3DCubeTexture IUnknown parts follow
    ******************************************* */
-
-#define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
 
 static HRESULT WINAPI IWineD3DCubeTextureImpl_QueryInterface(IWineD3DCubeTexture *iface, REFIID riid, LPVOID *ppobj)
 {

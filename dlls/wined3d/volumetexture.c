@@ -103,8 +103,6 @@ static void volumetexture_cleanup(IWineD3DVolumeTextureImpl *This)
    IWineD3DTexture IUnknown parts follow
    ******************************************* */
 
-#define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
-
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_QueryInterface(IWineD3DVolumeTexture *iface, REFIID riid, LPVOID *ppobj)
 {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;

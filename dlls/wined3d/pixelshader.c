@@ -33,8 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
-#define GLINFO_LOCATION ((IWineD3DDeviceImpl *) This->baseShader.device)->adapter->gl_info
-
 static HRESULT  WINAPI IWineD3DPixelShaderImpl_QueryInterface(IWineD3DPixelShader *iface, REFIID riid, LPVOID *ppobj) {
     TRACE("iface %p, riid %s, ppobj %p\n", iface, debugstr_guid(riid), ppobj);
 

@@ -33,8 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
-#define GLINFO_LOCATION ((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info
-
 static void vshader_set_limits(IWineD3DVertexShaderImpl *This)
 {
     DWORD shader_version = WINED3D_SHADER_VERSION(This->baseShader.reg_maps.shader_version.major,

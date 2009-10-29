@@ -27,8 +27,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_decl);
 
-#define GLINFO_LOCATION This->wineD3DDevice->adapter->gl_info
-
 static void dump_wined3dvertexelement(const WINED3DVERTEXELEMENT *element) {
     TRACE("     format: %s (%#x)\n", debug_d3dformat(element->format), element->format);
     TRACE(" input_slot: %u\n", element->input_slot);
