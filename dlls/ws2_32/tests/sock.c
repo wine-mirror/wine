@@ -2764,6 +2764,7 @@ static void test_WSASendTo(void)
 static void test_GetAddrInfoW(void)
 {
     static const WCHAR port[] = {'8','0',0};
+    static const WCHAR empty[] = {0};
     static const WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
 
     int ret;
@@ -2779,6 +2780,15 @@ static void test_GetAddrInfoW(void)
 
     ret = pGetAddrInfoW(NULL, NULL, NULL, &result);
     ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
+
+    result = NULL;
+    ret = pGetAddrInfoW(empty, NULL, NULL, &result);
+    todo_wine
+    {
+    ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
+    ok(result != NULL, "GetAddrInfoW failed\n");
+    }
+    pFreeAddrInfoW(result);
 
     ret = pGetAddrInfoW(localhost, NULL, NULL, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
