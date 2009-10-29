@@ -16959,6 +16959,14 @@ dlls/wbemprox/Makefile: dlls/wbemprox/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/wbemprox/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/wiaservc/Makefile"
+test "x$enable_wiaservc" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	wiaservc"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/wiaservc/Makefile: dlls/wiaservc/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/wiaservc/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/win32s16.dll16/Makefile"
 test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	win32s16.dll16"
@@ -19154,6 +19162,7 @@ do
     "dlls/w32skrnl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/w32skrnl/Makefile" ;;
     "dlls/w32sys.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/w32sys.dll16/Makefile" ;;
     "dlls/wbemprox/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wbemprox/Makefile" ;;
+    "dlls/wiaservc/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wiaservc/Makefile" ;;
     "dlls/win32s16.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/win32s16.dll16/Makefile" ;;
     "dlls/win87em.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/win87em.dll16/Makefile" ;;
     "dlls/winaspi.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winaspi.dll16/Makefile" ;;
