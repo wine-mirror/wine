@@ -321,10 +321,10 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
     }
 }
 
-static void stream_info_element_from_strided(IWineD3DDeviceImpl *This,
+static void stream_info_element_from_strided(const struct wined3d_gl_info *gl_info,
         const struct WineDirect3DStridedData *strided, struct wined3d_stream_info_element *e)
 {
-    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(strided->format, &This->adapter->gl_info);
+    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(strided->format, gl_info);
     e->format_desc = format_desc;
     e->stride = strided->dwStride;
     e->data = strided->lpData;
@@ -332,7 +332,7 @@ static void stream_info_element_from_strided(IWineD3DDeviceImpl *This,
     e->buffer_object = 0;
 }
 
-void device_stream_info_from_strided(IWineD3DDeviceImpl *This,
+void device_stream_info_from_strided(const struct wined3d_gl_info *gl_info,
         const struct WineDirect3DVertexStridedData *strided, struct wined3d_stream_info *stream_info)
 {
     unsigned int i;
@@ -340,18 +340,18 @@ void device_stream_info_from_strided(IWineD3DDeviceImpl *This,
     memset(stream_info, 0, sizeof(*stream_info));
 
     if (strided->position.lpData)
-        stream_info_element_from_strided(This, &strided->position, &stream_info->elements[WINED3D_FFP_POSITION]);
+        stream_info_element_from_strided(gl_info, &strided->position, &stream_info->elements[WINED3D_FFP_POSITION]);
     if (strided->normal.lpData)
-        stream_info_element_from_strided(This, &strided->normal, &stream_info->elements[WINED3D_FFP_NORMAL]);
+        stream_info_element_from_strided(gl_info, &strided->normal, &stream_info->elements[WINED3D_FFP_NORMAL]);
     if (strided->diffuse.lpData)
-        stream_info_element_from_strided(This, &strided->diffuse, &stream_info->elements[WINED3D_FFP_DIFFUSE]);
+        stream_info_element_from_strided(gl_info, &strided->diffuse, &stream_info->elements[WINED3D_FFP_DIFFUSE]);
     if (strided->specular.lpData)
-        stream_info_element_from_strided(This, &strided->specular, &stream_info->elements[WINED3D_FFP_SPECULAR]);
+        stream_info_element_from_strided(gl_info, &strided->specular, &stream_info->elements[WINED3D_FFP_SPECULAR]);
 
     for (i = 0; i < WINED3DDP_MAXTEXCOORD; ++i)
     {
         if (strided->texCoords[i].lpData)
-            stream_info_element_from_strided(This, &strided->texCoords[i],
+            stream_info_element_from_strided(gl_info, &strided->texCoords[i],
                     &stream_info->elements[WINED3D_FFP_TEXCOORD0 + i]);
     }
 
@@ -361,7 +361,7 @@ void device_stream_info_from_strided(IWineD3DDeviceImpl *This,
     {
         if (!stream_info->elements[i].format_desc) continue;
 
-        if (!This->adapter->gl_info.supported[EXT_VERTEX_ARRAY_BGRA]
+        if (!gl_info->supported[EXT_VERTEX_ARRAY_BGRA]
                 && stream_info->elements[i].format_desc->format == WINED3DFMT_B8G8R8A8_UNORM)
         {
             stream_info->swizzle_map |= 1 << i;
