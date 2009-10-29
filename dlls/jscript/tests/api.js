@@ -1402,6 +1402,9 @@ function callTest3() {
 callTest3.call();
 callTest3.call(undefined);
 callTest3.call(null);
+callTest3.apply();
+callTest3.apply(undefined);
+callTest3.apply(null);
 
 tmp = Number.prototype.toString.call(3);
 ok(tmp === "3", "Number.prototype.toString.call(3) = " + tmp);
