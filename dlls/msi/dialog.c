@@ -606,6 +606,8 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
         func = MSI_RecordGetInteger( rec , 1 );
         val = MSI_RecordGetInteger( rec , 2 );
 
+        TRACE("progress: func %u, val %u\n", func, val);
+
         switch (func)
         {
         case 0: /* init */
@@ -618,10 +620,12 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
             break;
         case 2: /* move */
             ctrl->progress_current += val;
-            SendMessageW(ctrl->hwnd, PBM_SETPOS, 100*(ctrl->progress_current/ctrl->progress_max), 0);
+            if (ctrl->progress_current > ctrl->progress_max)
+                ctrl->progress_current = ctrl->progress_max;
+            SendMessageW(ctrl->hwnd, PBM_SETPOS, MulDiv(100, ctrl->progress_current, ctrl->progress_max), 0);
             break;
         default:
-            ERR("Unknown progress message %d\n", func);
+            FIXME("Unknown progress message %u\n", func);
             break;
         }
     }
