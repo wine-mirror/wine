@@ -107,6 +107,15 @@ struct d3d10_buffer
 HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d10_device *device,
         const D3D10_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data) DECLSPEC_HIDDEN;
 
+/* ID3D10DepthStencilView */
+struct d3d10_depthstencil_view
+{
+    const struct ID3D10DepthStencilViewVtbl *vtbl;
+    LONG refcount;
+};
+
+HRESULT d3d10_depthstencil_view_init(struct d3d10_depthstencil_view *view) DECLSPEC_HIDDEN;
+
 /* ID3D10RenderTargetView */
 struct d3d10_rendertarget_view
 {
