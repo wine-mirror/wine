@@ -289,6 +289,7 @@ void ContextList_Delete(struct ContextList *list, void *context)
     EnterCriticalSection(&list->cs);
     list_remove(entry);
     LeaveCriticalSection(&list->cs);
+    list_init(entry);
     list->contextInterface->free(context);
 }
 
