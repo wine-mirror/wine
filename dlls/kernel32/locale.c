@@ -62,8 +62,6 @@ static const union cptable *oem_cptable;
 static const union cptable *mac_cptable;
 static const union cptable *unix_cptable;  /* NULL if UTF8 */
 
-static HANDLE NLS_RegOpenKey(HANDLE hRootKey, LPCWSTR szKeyName);
-
 static const WCHAR szNlsKeyName[] = {
     'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
@@ -769,16 +767,22 @@ void LOCALE_InitRegistry(void)
 
     if (locale_update_registry( hkey, lc_ctypeW, lcid_LC_CTYPE, NULL, 0 ))
     {
-        HKEY nls_key = NLS_RegOpenKey( 0, szCodepageKeyName );
+        OBJECT_ATTRIBUTES attr;
+        HANDLE nls_key;
 
-        for (i = 0; i < sizeof(update_cp_values)/sizeof(update_cp_values[0]); i++)
+        RtlInitUnicodeString( &nameW, szCodepageKeyName );
+        InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
+        if (!NtCreateKey( &nls_key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
         {
-            count = GetLocaleInfoW( lcid, update_cp_values[i].value | LOCALE_NOUSEROVERRIDE,
-                                    bufferW, sizeof(bufferW)/sizeof(WCHAR) );
-            RtlInitUnicodeString( &nameW, update_cp_values[i].name );
-            NtSetValueKey( nls_key, &nameW, 0, REG_SZ, bufferW, count * sizeof(WCHAR) );
+            for (i = 0; i < sizeof(update_cp_values)/sizeof(update_cp_values[0]); i++)
+            {
+                count = GetLocaleInfoW( lcid, update_cp_values[i].value | LOCALE_NOUSEROVERRIDE,
+                                        bufferW, sizeof(bufferW)/sizeof(WCHAR) );
+                RtlInitUnicodeString( &nameW, update_cp_values[i].name );
+                NtSetValueKey( nls_key, &nameW, 0, REG_SZ, bufferW, count * sizeof(WCHAR) );
+            }
+            NtClose( nls_key );
         }
-        NtClose( nls_key );
     }
 
     NtClose( hkey );

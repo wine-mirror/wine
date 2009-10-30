@@ -584,10 +584,6 @@ HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{de5aed00-a4bf-11d1-99
 
 [Nls]
 HKLM,System\CurrentControlSet\Control\Nls\Codepage,"37",,""
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"ACP",,"1252"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"MACCP",,"10000"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"OEMCP",,"437"
-
 HKLM,System\CurrentControlSet\Control\Nls\Language,"0401",,""
 HKLM,System\CurrentControlSet\Control\Nls\Language,"0402",,""
 HKLM,System\CurrentControlSet\Control\Nls\Language,"0403",,""
