@@ -2009,6 +2009,31 @@ static void CRYPT_VerifyChainRevocation(PCERT_CHAIN_CONTEXT chain,
     }
 }
 
+static void dump_usage_match(LPCSTR name, const CERT_USAGE_MATCH *usageMatch)
+{
+    DWORD i;
+
+    TRACE_(chain)("%s: %s\n", name,
+     usageMatch->dwType == USAGE_MATCH_TYPE_AND ? "AND" : "OR");
+    for (i = 0; i < usageMatch->Usage.cUsageIdentifier; i++)
+        TRACE_(chain)("%s\n", usageMatch->Usage.rgpszUsageIdentifier[i]);
+}
+
+static void dump_chain_para(const CERT_CHAIN_PARA *pChainPara)
+{
+    TRACE_(chain)("%d\n", pChainPara->cbSize);
+    if (pChainPara->cbSize >= sizeof(CERT_CHAIN_PARA_NO_EXTRA_FIELDS))
+        dump_usage_match("RequestedUsage", &pChainPara->RequestedUsage);
+    if (pChainPara->cbSize >= sizeof(CERT_CHAIN_PARA))
+    {
+        dump_usage_match("RequestedIssuancePolicy",
+         &pChainPara->RequestedIssuancePolicy);
+        TRACE_(chain)("%d\n", pChainPara->dwUrlRetrievalTimeout);
+        TRACE_(chain)("%d\n", pChainPara->fCheckRevocationFreshnessTime);
+        TRACE_(chain)("%d\n", pChainPara->dwRevocationFreshnessTime);
+    }
+}
+
 BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
  PCCERT_CONTEXT pCertContext, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
  PCERT_CHAIN_PARA pChainPara, DWORD dwFlags, LPVOID pvReserved,
@@ -2035,6 +2060,8 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
 
     if (!hChainEngine)
         hChainEngine = CRYPT_GetDefaultChainEngine();
+    if (TRACE_ON(chain))
+        dump_chain_para(pChainPara);
     /* FIXME: what about HCCE_LOCAL_MACHINE? */
     ret = CRYPT_BuildCandidateChainFromCert(hChainEngine, pCertContext, pTime,
      hAdditionalStore, &chain);
