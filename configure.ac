@@ -2589,6 +2589,7 @@ WINE_CONFIG_MAKEFILE([programs/hh/Makefile],[programs/Makeprog.rules],[programs]
 WINE_CONFIG_MAKEFILE([programs/icinfo/Makefile],[programs/Makeprog.rules],[programs],[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS])
 WINE_CONFIG_MAKEFILE([programs/iexplore/Makefile],[programs/Makeprog.rules],[programs],[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS])
 WINE_CONFIG_MAKEFILE([programs/lodctr/Makefile],[programs/Makeprog.rules],[programs],[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS])
+WINE_CONFIG_MAKEFILE([programs/mshta/Makefile],[programs/Makeprog.rules],[programs],[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS])
 WINE_CONFIG_MAKEFILE([programs/msiexec/Makefile],[programs/Makeprog.rules],[programs],[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS,ALL_PROGRAM_BIN_INSTALL_DIRS])
 WINE_CONFIG_MAKEFILE([programs/net/Makefile],[programs/Makeprog.rules],[programs],[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS])
 WINE_CONFIG_MAKEFILE([programs/notepad/Makefile],[programs/Makeprog.rules],[programs],[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS,ALL_PROGRAM_BIN_INSTALL_DIRS])

@@ -17633,6 +17633,15 @@ programs/lodctr/Makefile: programs/lodctr/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/lodctr/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	programs/mshta/Makefile"
+test "x$enable_mshta" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	mshta" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	mshta"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+programs/mshta/Makefile: programs/mshta/Makefile.in programs/Makeprog.rules"
+ac_config_files="$ac_config_files programs/mshta/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/msiexec/Makefile"
 test "x$enable_msiexec" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
 	msiexec" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
@@ -19245,6 +19254,7 @@ do
     "programs/icinfo/Makefile") CONFIG_FILES="$CONFIG_FILES programs/icinfo/Makefile" ;;
     "programs/iexplore/Makefile") CONFIG_FILES="$CONFIG_FILES programs/iexplore/Makefile" ;;
     "programs/lodctr/Makefile") CONFIG_FILES="$CONFIG_FILES programs/lodctr/Makefile" ;;
+    "programs/mshta/Makefile") CONFIG_FILES="$CONFIG_FILES programs/mshta/Makefile" ;;
     "programs/msiexec/Makefile") CONFIG_FILES="$CONFIG_FILES programs/msiexec/Makefile" ;;
     "programs/net/Makefile") CONFIG_FILES="$CONFIG_FILES programs/net/Makefile" ;;
     "programs/notepad/Makefile") CONFIG_FILES="$CONFIG_FILES programs/notepad/Makefile" ;;
