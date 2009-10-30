@@ -129,6 +129,15 @@ struct d3d10_rendertarget_view
 HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view, struct d3d10_device *device,
         ID3D10Resource *resource, const D3D10_RENDER_TARGET_VIEW_DESC *desc) DECLSPEC_HIDDEN;
 
+/* ID3D10ShaderResourceView */
+struct d3d10_shader_resource_view
+{
+    const struct ID3D10ShaderResourceViewVtbl *vtbl;
+    LONG refcount;
+};
+
+HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view) DECLSPEC_HIDDEN;
+
 /* ID3D10InputLayout */
 struct d3d10_input_layout
 {
