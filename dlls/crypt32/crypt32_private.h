@@ -346,8 +346,9 @@ typedef void (*ContextFreeFunc)(void *context);
 /* Decrements context's ref count.  If context is a link context, releases its
  * linked context as well.
  * If a data context has its ref count reach 0, calls dataContextFree on it.
+ * Returns FALSE if the reference count is <= 0 when called.
  */
-void Context_Release(void *context, size_t contextSize,
+BOOL Context_Release(void *context, size_t contextSize,
  ContextFreeFunc dataContextFree);
 
 /**

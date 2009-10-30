@@ -135,11 +135,14 @@ PCONTEXT_PROPERTY_LIST Context_GetProperties(const void *context, size_t context
      ((PDATA_CONTEXT)ptr)->properties : NULL;
 }
 
-void Context_Release(void *context, size_t contextSize,
+BOOL Context_Release(void *context, size_t contextSize,
  ContextFreeFunc dataContextFree)
 {
     PBASE_CONTEXT base = BASE_CONTEXT_FROM_CONTEXT(context, contextSize);
+    BOOL ret = TRUE;
 
+    if (base->ref <= 0)
+        return FALSE;
     if (InterlockedDecrement(&base->ref) == 0)
     {
         TRACE("freeing %p\n", context);
@@ -153,7 +156,7 @@ void Context_Release(void *context, size_t contextSize,
             /* The linked context is of the same type as this, so release
              * it as well, using the same offset and data free function.
              */
-            Context_Release(CONTEXT_FROM_BASE_CONTEXT(
+            ret = Context_Release(CONTEXT_FROM_BASE_CONTEXT(
              ((PLINK_CONTEXT)base)->linked, contextSize), contextSize,
              dataContextFree);
             break;
@@ -164,6 +167,7 @@ void Context_Release(void *context, size_t contextSize,
     }
     else
         TRACE("%p's ref count is %d\n", context, base->ref);
+    return ret;
 }
 
 void Context_CopyProperties(const void *to, const void *from,

@@ -180,12 +180,14 @@ static void CertDataContext_Free(void *context)
 
 BOOL WINAPI CertFreeCertificateContext(PCCERT_CONTEXT pCertContext)
 {
+    BOOL ret = TRUE;
+
     TRACE("(%p)\n", pCertContext);
 
     if (pCertContext)
-        Context_Release((void *)pCertContext, sizeof(CERT_CONTEXT),
+        ret = Context_Release((void *)pCertContext, sizeof(CERT_CONTEXT),
          CertDataContext_Free);
-    return TRUE;
+    return ret;
 }
 
 DWORD WINAPI CertEnumCertificateContextProperties(PCCERT_CONTEXT pCertContext,

@@ -472,12 +472,14 @@ static void CTLDataContext_Free(void *context)
 
 BOOL WINAPI CertFreeCTLContext(PCCTL_CONTEXT pCTLContext)
 {
+    BOOL ret = TRUE;
+
     TRACE("(%p)\n", pCTLContext);
 
     if (pCTLContext)
-        Context_Release((void *)pCTLContext, sizeof(CTL_CONTEXT),
+        ret = Context_Release((void *)pCTLContext, sizeof(CTL_CONTEXT),
          CTLDataContext_Free);
-    return TRUE;
+    return ret;
 }
 
 DWORD WINAPI CertEnumCTLContextProperties(PCCTL_CONTEXT pCTLContext,
