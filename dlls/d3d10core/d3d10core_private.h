@@ -198,6 +198,15 @@ struct d3d10_depthstencil_state
 
 HRESULT d3d10_depthstencil_state_init(struct d3d10_depthstencil_state *state) DECLSPEC_HIDDEN;
 
+/* ID3D10RasterizerState */
+struct d3d10_rasterizer_state
+{
+    const struct ID3D10RasterizerStateVtbl *vtbl;
+    LONG refcount;
+};
+
+HRESULT d3d10_rasterizer_state_init(struct d3d10_rasterizer_state *state) DECLSPEC_HIDDEN;
+
 /* Layered device */
 enum dxgi_device_layer_id
 {

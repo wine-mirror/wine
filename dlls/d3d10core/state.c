@@ -134,3 +134,114 @@ HRESULT d3d10_depthstencil_state_init(struct d3d10_depthstencil_state *state)
 
     return S_OK;
 }
+
+/* IUnknown methods */
+
+static HRESULT STDMETHODCALLTYPE d3d10_rasterizer_state_QueryInterface(ID3D10RasterizerState *iface,
+        REFIID riid, void **object)
+{
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    if (IsEqualGUID(riid, &IID_ID3D10RasterizerState)
+            || IsEqualGUID(riid, &IID_ID3D10DeviceChild)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IUnknown_AddRef(iface);
+        *object = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *object = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d3d10_rasterizer_state_AddRef(ID3D10RasterizerState *iface)
+{
+    struct d3d10_rasterizer_state *This = (struct d3d10_rasterizer_state *)iface;
+    ULONG refcount = InterlockedIncrement(&This->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", This, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d3d10_rasterizer_state_Release(ID3D10RasterizerState *iface)
+{
+    struct d3d10_rasterizer_state *This = (struct d3d10_rasterizer_state *)iface;
+    ULONG refcount = InterlockedDecrement(&This->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", This, refcount);
+
+    if (!refcount)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return refcount;
+}
+
+/* ID3D10DeviceChild methods */
+
+static void STDMETHODCALLTYPE d3d10_rasterizer_state_GetDevice(ID3D10RasterizerState *iface, ID3D10Device **device)
+{
+    FIXME("iface %p, device %p stub!\n", iface, device);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_rasterizer_state_GetPrivateData(ID3D10RasterizerState *iface,
+        REFGUID guid, UINT *data_size, void *data)
+{
+    FIXME("iface %p, guid %s, data_size %p, data %p stub!\n",
+            iface, debugstr_guid(guid), data_size, data);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_rasterizer_state_SetPrivateData(ID3D10RasterizerState *iface,
+        REFGUID guid, UINT data_size, const void *data)
+{
+    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n",
+            iface, debugstr_guid(guid), data_size, data);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_rasterizer_state_SetPrivateDataInterface(ID3D10RasterizerState *iface,
+        REFGUID guid, const IUnknown *data)
+{
+    FIXME("iface %p, guid %s, data %p stub!\n", iface, debugstr_guid(guid), data);
+
+    return E_NOTIMPL;
+}
+
+/* ID3D10RasterizerState methods */
+
+static void STDMETHODCALLTYPE d3d10_rasterizer_state_GetDesc(ID3D10RasterizerState *iface,
+        D3D10_RASTERIZER_DESC *desc)
+{
+    FIXME("iface %p, desc %p stub!\n", iface, desc);
+}
+
+static const struct ID3D10RasterizerStateVtbl d3d10_rasterizer_state_vtbl =
+{
+    /* IUnknown methods */
+    d3d10_rasterizer_state_QueryInterface,
+    d3d10_rasterizer_state_AddRef,
+    d3d10_rasterizer_state_Release,
+    /* ID3D10DeviceChild methods */
+    d3d10_rasterizer_state_GetDevice,
+    d3d10_rasterizer_state_GetPrivateData,
+    d3d10_rasterizer_state_SetPrivateData,
+    d3d10_rasterizer_state_SetPrivateDataInterface,
+    /* ID3D10RasterizerState methods */
+    d3d10_rasterizer_state_GetDesc,
+};
+
+HRESULT d3d10_rasterizer_state_init(struct d3d10_rasterizer_state *state)
+{
+    state->vtbl = &d3d10_rasterizer_state_vtbl;
+    state->refcount = 1;
+
+    return S_OK;
+}
