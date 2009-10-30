@@ -115,7 +115,7 @@ static const char *get_string_subst( HINF hinf, const char *str, unsigned int *l
     buffer[*len] = 0;
 
     if (SetupFindFirstLineA( hinf, "Strings", buffer, &context ) &&
-        SetupGetStringFieldA( &context, 0, subst, MAX_INF_STRING_LENGTH, NULL ))
+        SetupGetStringFieldA( &context, 1, subst, MAX_INF_STRING_LENGTH, NULL ))
     {
         *len = strlen( subst );
         return subst;
