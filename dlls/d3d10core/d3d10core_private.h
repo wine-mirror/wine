@@ -207,6 +207,15 @@ struct d3d10_rasterizer_state
 
 HRESULT d3d10_rasterizer_state_init(struct d3d10_rasterizer_state *state) DECLSPEC_HIDDEN;
 
+/* ID3D10SamplerState */
+struct d3d10_sampler_state
+{
+    const struct ID3D10SamplerStateVtbl *vtbl;
+    LONG refcount;
+};
+
+HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state) DECLSPEC_HIDDEN;
+
 /* Layered device */
 enum dxgi_device_layer_id
 {

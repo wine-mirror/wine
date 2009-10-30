@@ -985,9 +985,30 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRasterizerState(ID3D10Device
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device *iface,
         const D3D10_SAMPLER_DESC *desc, ID3D10SamplerState **sampler_state)
 {
-    FIXME("iface %p, desc %p, sampler_state %p stub!\n", iface, desc, sampler_state);
+    struct d3d10_sampler_state *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    FIXME("iface %p, desc %p, sampler_state %p.\n", iface, desc, sampler_state);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate D3D10 sampler state object memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = d3d10_sampler_state_init(object);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize sampler state, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created sampler state %p.\n", object);
+    *sampler_state = (ID3D10SamplerState *)object;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateQuery(ID3D10Device *iface,
