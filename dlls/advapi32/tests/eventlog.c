@@ -215,6 +215,54 @@ static void test_oldest(void)
     CloseEventLog(handle);
 }
 
+static void test_backup(void)
+{
+    HANDLE handle;
+    BOOL ret;
+    const char backup[] = "backup.evt";
+
+    SetLastError(0xdeadbeef);
+    ret = BackupEventLogA(NULL, NULL);
+    todo_wine
+    {
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = BackupEventLogA(NULL, backup);
+    todo_wine
+    ok(!ret, "Expected failure\n");
+    ok(GetFileAttributesA(backup) == INVALID_FILE_ATTRIBUTES, "Expected no backup file\n");
+
+    handle = OpenEventLogA(NULL, "Application");
+
+    SetLastError(0xdeadbeef);
+    ret = BackupEventLogA(handle, NULL);
+    todo_wine
+    {
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    }
+
+    ret = BackupEventLogA(handle, backup);
+    ok(ret, "Expected succes\n");
+    todo_wine
+    ok(GetFileAttributesA("backup.evt") != INVALID_FILE_ATTRIBUTES, "Expected a backup file\n");
+
+    /* Try to overwrite */
+    SetLastError(0xdeadbeef);
+    ret = BackupEventLogA(handle, backup);
+    todo_wine
+    {
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_ALREADY_EXISTS, "Expected ERROR_ALREADY_EXISTS, got %d\n", GetLastError());
+    }
+
+    CloseEventLog(handle);
+    DeleteFileA(backup);
+}
+
 START_TEST(eventlog)
 {
     SetLastError(0xdeadbeef);
@@ -232,4 +280,5 @@ START_TEST(eventlog)
     test_info();
     test_count();
     test_oldest();
+    test_backup();
 }
