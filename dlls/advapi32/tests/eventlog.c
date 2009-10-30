@@ -223,15 +223,11 @@ static void test_backup(void)
 
     SetLastError(0xdeadbeef);
     ret = BackupEventLogA(NULL, NULL);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    }
 
     SetLastError(0xdeadbeef);
     ret = BackupEventLogA(NULL, backup);
-    todo_wine
     ok(!ret, "Expected failure\n");
     ok(GetFileAttributesA(backup) == INVALID_FILE_ATTRIBUTES, "Expected no backup file\n");
 
@@ -239,11 +235,8 @@ static void test_backup(void)
 
     SetLastError(0xdeadbeef);
     ret = BackupEventLogA(handle, NULL);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    }
 
     ret = BackupEventLogA(handle, backup);
     ok(ret, "Expected succes\n");

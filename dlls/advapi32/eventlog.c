@@ -64,8 +64,14 @@ static inline LPWSTR SERV_dup( LPCSTR str )
  */
 BOOL WINAPI BackupEventLogA( HANDLE hEventLog, LPCSTR lpBackupFileName )
 {
-	FIXME("(%p,%s) stub\n", hEventLog, debugstr_a(lpBackupFileName));
-	return TRUE;
+    LPWSTR backupW;
+    BOOL ret;
+
+    backupW = SERV_dup(lpBackupFileName);
+    ret = BackupEventLogW(hEventLog, backupW);
+    HeapFree(GetProcessHeap(), 0, backupW);
+
+    return ret;
 }
 
 /******************************************************************************
@@ -75,8 +81,27 @@ BOOL WINAPI BackupEventLogA( HANDLE hEventLog, LPCSTR lpBackupFileName )
  */
 BOOL WINAPI BackupEventLogW( HANDLE hEventLog, LPCWSTR lpBackupFileName )
 {
-	FIXME("(%p,%s) stub\n", hEventLog, debugstr_w(lpBackupFileName));
-	return TRUE;
+    FIXME("(%p,%s) stub\n", hEventLog, debugstr_w(lpBackupFileName));
+
+    if (!lpBackupFileName)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!hEventLog)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    if (GetFileAttributesW(lpBackupFileName) != INVALID_FILE_ATTRIBUTES)
+    {
+        SetLastError(ERROR_ALREADY_EXISTS);
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /******************************************************************************
