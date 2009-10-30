@@ -2063,21 +2063,20 @@ void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap,
 {
     /* At depths >1, the depth of physBitmap and physDev might not be the same e.g. the physbitmap might be a 16-bit DIB while the physdev uses 24-bit */
     int depth = physBitmap->pixmap_depth == 1 ? 1 : physDev->depth;
+    const WineXRenderFormat *src_format = get_xrender_format_from_color_shifts(physBitmap->pixmap_depth, &physBitmap->pixmap_color_shifts);
+    const WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDev->depth, physDev->color_shifts);
 
     wine_tsx11_lock();
     physDev->brush.pixmap = XCreatePixmap(gdi_display, root_window, width, height, depth);
 
-    /* Use XCopyArea when the physBitmap and brush.pixmap have the same depth. */
-    if(physBitmap->pixmap_depth == 1 || physDev->depth == physBitmap->pixmap_depth)
+    /* Use XCopyArea when the physBitmap and brush.pixmap have the same format. */
+    if(physBitmap->pixmap_depth == 1 || src_format->format == dst_format->format)
     {
         XCopyArea( gdi_display, physBitmap->pixmap, physDev->brush.pixmap,
                    get_bitmap_gc(physBitmap->pixmap_depth), 0, 0, width, height, 0, 0 );
     }
-    else /* We meed depth conversion */
+    else /* We need depth conversion */
     {
-        const WineXRenderFormat *src_format = get_xrender_format_from_color_shifts(physBitmap->pixmap_depth, &physBitmap->pixmap_color_shifts);
-        const WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDev->depth, physDev->color_shifts);
-
         Picture src_pict, dst_pict;
         XRenderPictureAttributes pa;
         pa.subwindow_mode = IncludeInferiors;
