@@ -12,6 +12,7 @@ C_SRCS = \
 	device.c \
 	inputlayout.c \
 	shader.c \
+	state.c \
 	texture2d.c \
 	utils.c \
 	view.c
