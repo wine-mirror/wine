@@ -237,6 +237,7 @@ static void testMemStore(void)
          GetLastError());
         /* try deleting a copy */
         ret = CertDeleteCertificateFromStore(copy);
+        todo_wine
         ok(ret, "CertDeleteCertificateFromStore failed: %08x\n",
          GetLastError());
         /* check that the store is empty */

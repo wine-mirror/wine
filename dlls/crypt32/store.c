@@ -966,10 +966,7 @@ BOOL WINAPI CertDeleteCertificateFromStore(PCCERT_CONTEXT pCertContext)
     if (!pCertContext)
         ret = TRUE;
     else if (!pCertContext->hCertStore)
-    {
-        ret = TRUE;
-        CertFreeCertificateContext(pCertContext);
-    }
+        ret = CertFreeCertificateContext(pCertContext);
     else
     {
         PWINECRYPT_CERTSTORE hcs = pCertContext->hCertStore;
@@ -979,7 +976,7 @@ BOOL WINAPI CertDeleteCertificateFromStore(PCCERT_CONTEXT pCertContext)
         else
             ret = hcs->certs.deleteContext(hcs, (void *)pCertContext);
         if (ret)
-            CertFreeCertificateContext(pCertContext);
+            ret = CertFreeCertificateContext(pCertContext);
     }
     return ret;
 }
@@ -1105,10 +1102,7 @@ BOOL WINAPI CertDeleteCRLFromStore(PCCRL_CONTEXT pCrlContext)
     if (!pCrlContext)
         ret = TRUE;
     else if (!pCrlContext->hCertStore)
-    {
-        ret = TRUE;
-        CertFreeCRLContext(pCrlContext);
-    }
+        ret = CertFreeCRLContext(pCrlContext);
     else
     {
         PWINECRYPT_CERTSTORE hcs = pCrlContext->hCertStore;
@@ -1117,7 +1111,8 @@ BOOL WINAPI CertDeleteCRLFromStore(PCCRL_CONTEXT pCrlContext)
             ret = FALSE;
         else
             ret = hcs->crls.deleteContext(hcs, (void *)pCrlContext);
-        CertFreeCRLContext(pCrlContext);
+        if (ret)
+            ret = CertFreeCRLContext(pCrlContext);
     }
     return ret;
 }
