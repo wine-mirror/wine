@@ -2605,5 +2605,6 @@ BOOL WINAPI CertVerifyCertificateChainPolicy(LPCSTR szPolicyOID,
          pPolicyStatus);
     if (hFunc)
         CryptFreeOIDFunctionAddress(hFunc, 0);
+    TRACE("returning %d (%08x)\n", ret, pPolicyStatus->dwError);
     return ret;
 }
