@@ -2103,6 +2103,7 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
     int height = visRectDst->bottom - visRectDst->top;
     int x_src = physDevSrc->dc_rect.left + visRectSrc->left;
     int y_src = physDevSrc->dc_rect.top + visRectSrc->top;
+    struct xrender_info *src_info = get_xrender_info(physDevSrc);
     const WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDevDst->depth, physDevDst->color_shifts);
     Picture src_pict=0, dst_pict=0, mask_pict=0;
 
@@ -2130,8 +2131,8 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
     if((physDevDst->depth == 1) && (physDevSrc->depth > 1))
         return FALSE;
 
-    /* Just use traditional X copy when the depths match and we don't need stretching */
-    if((physDevSrc->depth == physDevDst->depth) && !stretch)
+    /* Just use traditional X copy when the formats match and we don't need stretching */
+    if((src_info->format->format == dst_format->format) && !stretch)
     {
         TRACE("Source and destination depth match and no stretching needed falling back to XCopyArea\n");
         wine_tsx11_lock();
