@@ -68,7 +68,7 @@ void * __stdcall MSVCIRT_operator_sl_int(class_ostream * _this, int integer)
 DEFINE_THISCALL_WRAPPER(MSVCIRT_operator_sl_pchar,8)
 void * __stdcall MSVCIRT_operator_sl_pchar(class_ostream * _this, const char * string)
 {
-   FIXME("(%p)->(%s) stub\n", _this, string);
+   FIXME("(%p)->(%s) stub\n", _this, debugstr_a(string));
    return _this;
 }
 
