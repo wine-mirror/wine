@@ -171,25 +171,22 @@ BOOL Context_Release(void *context, size_t contextSize,
 
     if (base->ref <= 0)
         return FALSE;
+    if (base->type == ContextTypeLink)
+    {
+        /* The linked context is of the same type as this, so release
+         * it as well, using the same offset and data free function.
+         */
+        ret = Context_Release(CONTEXT_FROM_BASE_CONTEXT(
+         ((PLINK_CONTEXT)base)->linked, contextSize), contextSize,
+         dataContextFree);
+    }
     if (InterlockedDecrement(&base->ref) == 0)
     {
         TRACE("freeing %p\n", context);
-        switch (base->type)
+        if (base->type == ContextTypeData)
         {
-        case ContextTypeData:
             ContextPropertyList_Free(((PDATA_CONTEXT)base)->properties);
             dataContextFree(context);
-            break;
-        case ContextTypeLink:
-            /* The linked context is of the same type as this, so release
-             * it as well, using the same offset and data free function.
-             */
-            ret = Context_Release(CONTEXT_FROM_BASE_CONTEXT(
-             ((PLINK_CONTEXT)base)->linked, contextSize), contextSize,
-             dataContextFree);
-            break;
-        default:
-            assert(0);
         }
         CryptMemFree(context);
     }
