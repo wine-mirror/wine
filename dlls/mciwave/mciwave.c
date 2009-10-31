@@ -1,5 +1,5 @@
 /*
- * Sample Wine Driver for MCI wave forms
+ * Wine Driver for MCI wave forms
  *
  * Copyright 	1994 Martin Ayotte
  *		1999,2000,2005 Eric Pouech
@@ -295,7 +295,7 @@ static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, const MMCKINFO* pckMainRIFF)
 }
 
 /**************************************************************************
- * 			WAVE_mciDefaultFmt	                 [internal]
+ * 			WAVE_mciDefaultFmt			[internal]
  */
 static	DWORD WAVE_mciDefaultFmt(WINE_MCIWAVE* wmw)
 {
@@ -697,9 +697,7 @@ static	void	CALLBACK WAVE_mciPlayCallback(HWAVEOUT hwo, UINT uMsg,
 }
 
 /******************************************************************
- *		WAVE_mciPlayWaitDone
- *
- *
+ *			WAVE_mciPlayWaitDone		[internal]
  */
 static void WAVE_mciPlayWaitDone(WINE_MCIWAVE* wmw)
 {
@@ -904,7 +902,7 @@ cleanUp:
 }
 
 /**************************************************************************
- * 				WAVE_mciPlayCallback		[internal]
+ * 				WAVE_mciRecordCallback		[internal]
  */
 static	void	CALLBACK WAVE_mciRecordCallback(HWAVEOUT hwo, UINT uMsg,
                                                 DWORD_PTR dwInstance,
@@ -947,8 +945,7 @@ static	void	CALLBACK WAVE_mciRecordCallback(HWAVEOUT hwo, UINT uMsg,
 }
 
 /******************************************************************
- *		bWAVE_mciRecordWaitDone
- *
+ *			WAVE_mciRecordWaitDone		[internal]
  */
 static void WAVE_mciRecordWaitDone(WINE_MCIWAVE* wmw)
 {
@@ -991,7 +988,7 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt
     wmw->fInput = TRUE;
 
     /** This function will be called again by a thread when async is used.
-     * We have to set MCI_MODE_PLAY before we do this so that the app can spin
+     * We have to set MCI_MODE_RECORD before we do this so that the app can spin
      * on MCI_STATUS, so we have to allow it here if we're not going to start this thread.
      */
     if ((wmw->dwStatus != MCI_MODE_STOP) && ((wmw->dwStatus != MCI_MODE_RECORD) && (dwFlags & MCI_WAIT))) {
@@ -1331,6 +1328,7 @@ static DWORD WAVE_mciSet(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpPa
 	TRACE("MCI_WAVE_SET_CHANNELS = %d\n", wmw->wfxRef.nChannels);
     }
     if (dwFlags & MCI_WAVE_SET_FORMATTAG) {
+	/* Dangerous because the correct cbSize cannot be set */
 	wmw->wfxRef.wFormatTag = ((LPMCI_WAVE_SET_PARMS)lpParms)->wFormatTag;
 	TRACE("MCI_WAVE_SET_FORMATTAG = %d\n", wmw->wfxRef.wFormatTag);
     }
@@ -1674,7 +1672,7 @@ LRESULT CALLBACK MCIWAVE_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
     case DRV_ENABLE:		return 1;
     case DRV_DISABLE:		return 1;
     case DRV_QUERYCONFIGURE:	return 1;
-    case DRV_CONFIGURE:		MessageBoxA(0, "Sample MultiMedia Driver !", "OSS Driver", MB_OK);	return 1;
+    case DRV_CONFIGURE:		MessageBoxA(0, "MCI waveaudio Driver !", "Wine Driver", MB_OK);	return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
     }
