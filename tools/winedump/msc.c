@@ -1417,36 +1417,62 @@ void codeview_dump_linetab(const char* linetab, DWORD size, BOOL pascal_str, con
 
 void codeview_dump_linetab2(const char* linetab, DWORD size, const char* strimage, DWORD strsize, const char* pfx)
 {
-    DWORD       offset;
     unsigned    i;
-    const struct codeview_linetab2_block* lbh;
-    const struct codeview_linetab2_file* fd;
+    const struct codeview_linetab2*     lt2;
+    const struct codeview_linetab2*     lt2_files = NULL;
+    const struct codeview_lt2blk_lines* lines_blk;
+    const struct codeview_linetab2_file*fd;
 
-    if (*(const DWORD*)linetab != 0x000000f4) return;
-    offset = *((const DWORD*)linetab + 1);
-    lbh = (const struct codeview_linetab2_block*)(linetab + 8 + offset);
-    while ((const char*)lbh < linetab + size)
+    /* locate LT2_FILES_BLOCK (if any) */
+    lt2 = (const struct codeview_linetab2*)linetab;
+    while ((const char*)(lt2 + 1) < linetab + size)
     {
-        if (lbh->header != 0x000000f2)
-        /* FIXME: should also check that whole lbh fits in linetab + size */
+        if (lt2->header == LT2_FILES_BLOCK)
         {
-            /* printf("%sblock end %x\n", pfx, lbh->header); */
+            lt2_files = lt2;
             break;
         }
-        printf("%sblock from %04x:%08x #%x (%x lines)\n",
-               pfx, lbh->seg, lbh->start, lbh->size, lbh->nlines);
-        fd = (const struct codeview_linetab2_file*)(linetab + 8 + lbh->file_offset);
-        printf("%s  md5=%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-               pfx, fd->md5[ 0], fd->md5[ 1], fd->md5[ 2], fd->md5[ 3],
-               fd->md5[ 4], fd->md5[ 5], fd->md5[ 6], fd->md5[ 7],
-               fd->md5[ 8], fd->md5[ 9], fd->md5[10], fd->md5[11],
-               fd->md5[12], fd->md5[13], fd->md5[14], fd->md5[15]);
-        /* FIXME: should check that string is within strimage + strsize */
-        printf("%s  file=%s\n", pfx, strimage ? strimage + fd->offset : "--none--");
-        for (i = 0; i < lbh->nlines; i++)
+        lt2 = codeview_linetab2_next_block(lt2);
+    }
+    if (!lt2_files)
+    {
+        printf("%sNo LT2_FILES_BLOCK found\n", pfx);
+        return;
+    }
+
+    lt2 = (const struct codeview_linetab2*)linetab;
+    while ((const char*)(lt2 + 1) < linetab + size)
+    {
+        /* FIXME: should also check that whole lbh fits in linetab + size */
+        switch (lt2->header)
         {
-            printf("%s  offset=%08x line=%d\n", pfx, lbh->l[i].offset, lbh->l[i].lineno ^ 0x80000000);
+        case LT2_LINES_BLOCK:
+            lines_blk = (const struct codeview_lt2blk_lines*)lt2;
+            printf("%sblock from %04x:%08x #%x (%x lines) fo=%x\n",
+                   pfx, lines_blk->seg, lines_blk->start, lines_blk->size,
+                   lines_blk->nlines, lines_blk->file_offset);
+            /* FIXME: should check that file_offset is within the LT2_FILES_BLOCK we've seen */
+            fd = (const struct codeview_linetab2_file*)((const char*)lt2_files + 8 + lines_blk->file_offset);
+            printf("%s  md5=%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+                   pfx, fd->md5[ 0], fd->md5[ 1], fd->md5[ 2], fd->md5[ 3],
+                   fd->md5[ 4], fd->md5[ 5], fd->md5[ 6], fd->md5[ 7],
+                   fd->md5[ 8], fd->md5[ 9], fd->md5[10], fd->md5[11],
+                   fd->md5[12], fd->md5[13], fd->md5[14], fd->md5[15]);
+            /* FIXME: should check that string is within strimage + strsize */
+            printf("%s  file=%s\n", pfx, strimage ? strimage + fd->offset : "--none--");
+            for (i = 0; i < lines_blk->nlines; i++)
+            {
+                printf("%s  offset=%08x line=%d\n",
+                       pfx, lines_blk->l[i].offset, lines_blk->l[i].lineno ^ 0x80000000);
+            }
+            break;
+        case LT2_FILES_BLOCK: /* skip */
+            break;
+        default:
+            printf("%sblock end %x\n", pfx, lt2->header);
+            lt2 = (const struct codeview_linetab2*)((const char*)linetab + size);
+            continue;
         }
-        lbh = (const struct codeview_linetab2_block*)((const char*)lbh + 8 + lbh->size_of_block);
+        lt2 = codeview_linetab2_next_block(lt2);
     }
 }

@@ -1362,48 +1362,72 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
 }
 
 static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const BYTE* linetab, DWORD size,
-                                     const char* strimage, DWORD strsize)
+                                    const char* strimage, DWORD strsize)
 {
-    DWORD       offset;
     unsigned    i;
     DWORD       addr;
-    const struct codeview_linetab2_block* lbh;
-    const struct codeview_linetab2_file* fd;
+    const struct codeview_linetab2*     lt2;
+    const struct codeview_linetab2*     lt2_files = NULL;
+    const struct codeview_lt2blk_lines* lines_blk;
+    const struct codeview_linetab2_file*fd;
     unsigned    source;
     struct symt_function* func;
 
-    if (*(const DWORD*)linetab != 0x000000f4) return;
-    offset = *((const DWORD*)linetab + 1);
-
-    for (lbh = (const struct codeview_linetab2_block*)(linetab + 8 + offset);
-         (const BYTE*)lbh < linetab + size;
-         lbh = (const struct codeview_linetab2_block*)((const char*)lbh + 8 + lbh->size_of_block))
+    /* locate LT2_FILES_BLOCK (if any) */
+    lt2 = (const struct codeview_linetab2*)linetab;
+    while ((const BYTE*)(lt2 + 1) < linetab + size)
     {
-        if (lbh->header != 0x000000f2)
-        /* FIXME: should also check that whole lbh fits in linetab + size */
+        if (lt2->header == LT2_FILES_BLOCK)
         {
-            TRACE("block end %x\n", lbh->header);
+            lt2_files = lt2;
             break;
         }
-        addr = codeview_get_address(msc_dbg, lbh->seg, lbh->start);
-        TRACE("block from %04x:%08x #%x (%x lines)\n",
-               lbh->seg, lbh->start, lbh->size, lbh->nlines);
-        fd = (const struct codeview_linetab2_file*)(linetab + 8 + lbh->file_offset);
-        /* FIXME: should check that string is within strimage + strsize */
-        source = source_new(msc_dbg->module, NULL, strimage + fd->offset);
-        func = (struct symt_function*)symt_find_nearest(msc_dbg->module, addr);
-        /* FIXME: at least labels support line numbers */
-        if (!func || func->symt.tag != SymTagFunction)
+        lt2 = codeview_linetab2_next_block(lt2);
+    }
+    if (!lt2_files)
+    {
+        TRACE("No LT2_FILES_BLOCK found\n");
+        return;
+    }
+
+    lt2 = (const struct codeview_linetab2*)linetab;
+    while ((const BYTE*)(lt2 + 1) < linetab + size)
+    {
+        /* FIXME: should also check that whole lines_blk fits in linetab + size */
+        switch (lt2->header)
         {
-            WARN("--not a func at %04x:%08x %x tag=%d\n",
-                 lbh->seg, lbh->start, addr, func ? func->symt.tag : -1);
+        case LT2_LINES_BLOCK:
+            lines_blk = (const struct codeview_lt2blk_lines*)lt2;
+            /* FIXME: should check that file_offset is within the LT2_FILES_BLOCK we've seen */
+            addr = codeview_get_address(msc_dbg, lines_blk->seg, lines_blk->start);
+            TRACE("block from %04x:%08x #%x (%x lines)\n",
+                  lines_blk->seg, lines_blk->start, lines_blk->size, lines_blk->nlines);
+            fd = (const struct codeview_linetab2_file*)((const char*)lt2_files + 8 + lines_blk->file_offset);
+            /* FIXME: should check that string is within strimage + strsize */
+            source = source_new(msc_dbg->module, NULL, strimage + fd->offset);
+            func = (struct symt_function*)symt_find_nearest(msc_dbg->module, addr);
+            /* FIXME: at least labels support line numbers */
+            if (!func || func->symt.tag != SymTagFunction)
+            {
+                WARN("--not a func at %04x:%08x %x tag=%d\n",
+                     lines_blk->seg, lines_blk->start, addr, func ? func->symt.tag : -1);
+                break;
+            }
+            for (i = 0; i < lines_blk->nlines; i++)
+            {
+                symt_add_func_line(msc_dbg->module, func, source,
+                                   lines_blk->l[i].lineno ^ 0x80000000,
+                                   lines_blk->l[i].offset - lines_blk->start);
+            }
+            break;
+        case LT2_FILES_BLOCK: /* skip */
+            break;
+        default:
+            TRACE("Block end %x\n", lt2->header);
+            lt2 = (const struct codeview_linetab2*)((const char*)linetab + size);
             continue;
         }
-        for (i = 0; i < lbh->nlines; i++)
-        {
-            symt_add_func_line(msc_dbg->module, func, source,
-                               lbh->l[i].lineno ^ 0x80000000, lbh->l[i].offset - lbh->start);
-        }
+        lt2 = codeview_linetab2_next_block(lt2);
     }
 }
 
