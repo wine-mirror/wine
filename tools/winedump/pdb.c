@@ -189,7 +189,12 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
            "\toffset_size:    %08x\n"
            "\thash_size:      %08x\n"
            "\tsrc_module_size %08x\n"
-           "\tpdbimport_size  %08x\n",
+           "\tpdbimport_size  %08x\n"
+           "\tresvd[0]        %08x\n"
+           "\tresvd[1]        %08x\n"
+           "\tresvd[2]        %08x\n"
+           "\tresvd[3]        %08x\n"
+           "\tresvd[4]        %08x\n",
            symbols->signature,
            symbols->version,
            symbols->unknown,
@@ -201,7 +206,12 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
            symbols->offset_size,
            symbols->hash_size,
            symbols->srcmodule_size,
-           symbols->pdbimport_size);
+           symbols->pdbimport_size,
+           symbols->resvd[0],
+           symbols->resvd[1],
+           symbols->resvd[2],
+           symbols->resvd[3],
+           symbols->resvd[4]);
 
     if (symbols->offset_size)
     {
