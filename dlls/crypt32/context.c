@@ -313,14 +313,21 @@ void *ContextList_Enum(struct ContextList *list, void *pPrev)
     return ret;
 }
 
-void ContextList_Delete(struct ContextList *list, void *context)
+BOOL ContextList_Remove(struct ContextList *list, void *context)
 {
     struct list *entry = ContextList_ContextToEntry(list, context);
+    BOOL inList = FALSE;
 
     EnterCriticalSection(&list->cs);
-    list_remove(entry);
+    if (!list_empty(entry))
+    {
+        list_remove(entry);
+        inList = TRUE;
+    }
     LeaveCriticalSection(&list->cs);
-    list_init(entry);
+    if (inList)
+        list_init(entry);
+    return inList;
 }
 
 static void ContextList_Empty(struct ContextList *list)

@@ -388,7 +388,11 @@ void *ContextList_Add(struct ContextList *list, void *toLink, void *toReplace);
 
 void *ContextList_Enum(struct ContextList *list, void *pPrev);
 
-void ContextList_Delete(struct ContextList *list, void *context);
+/* Removes a context from the list.  Returns TRUE if the context was removed,
+ * or FALSE if not.  (The context may have been duplicated, so subsequent
+ * removes have no effect.)
+ */
+BOOL ContextList_Remove(struct ContextList *list, void *context);
 
 void ContextList_Free(struct ContextList *list);
 
