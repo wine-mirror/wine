@@ -21,7 +21,9 @@
 #include "windef.h"
 #include "objbase.h"
 #include "winsvc.h"
-#include "wia.h"
+#include "wia_lh.h"
+
+#include "wiaservc_private.h"
 
 #include "wine/debug.h"
 
@@ -92,14 +94,13 @@ StartCount(void)
     if (FAILED(hr))
         return FALSE;
 
-/* FIXME: implement
     hr = CoRegisterClassObject(&CLSID_WiaDevMgr,
                                (IUnknown *) &WIASERVC_ClassFactory,
                                CLSCTX_LOCAL_SERVER, REGCLS_MULTIPLEUSE,
                                &dwReg);
     if (FAILED(hr))
         return FALSE;
- */
+
     return TRUE;
 }
 
