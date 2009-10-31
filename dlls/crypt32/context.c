@@ -106,6 +106,34 @@ void Context_AddRef(void *context, size_t contextSize)
     PBASE_CONTEXT baseContext = BASE_CONTEXT_FROM_CONTEXT(context, contextSize);
 
     InterlockedIncrement(&baseContext->ref);
+    if (baseContext->type == ContextTypeLink)
+    {
+        void *linkedContext = Context_GetLinkedContext(context, contextSize);
+        PBASE_CONTEXT linkedBase = BASE_CONTEXT_FROM_CONTEXT(linkedContext,
+         contextSize);
+
+        /* Add-ref the linked contexts too */
+        while (linkedContext && linkedBase->type == ContextTypeLink)
+        {
+            InterlockedIncrement(&linkedBase->ref);
+            linkedContext = Context_GetLinkedContext(linkedContext,
+             contextSize);
+            if (linkedContext)
+                linkedBase = BASE_CONTEXT_FROM_CONTEXT(linkedContext,
+                 contextSize);
+            else
+                linkedBase = NULL;
+        }
+        if (linkedContext)
+        {
+            /* It's not a link context, so it wasn't add-ref'ed in the while
+             * loop, so add-ref it here.
+             */
+            linkedBase = BASE_CONTEXT_FROM_CONTEXT(linkedContext,
+             contextSize);
+            InterlockedIncrement(&linkedBase->ref);
+        }
+    }
 }
 
 void *Context_GetExtra(const void *context, size_t contextSize)
