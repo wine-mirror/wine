@@ -186,7 +186,7 @@ static BOOL CRYPT_MemDeleteCert(PWINECRYPT_CERTSTORE store, void *pCertContext)
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
 
     ContextList_Delete(ms->certs, pCertContext);
-    return TRUE;
+    return CertFreeCertificateContext(pCertContext);
 }
 
 static BOOL CRYPT_MemAddCrl(PWINECRYPT_CERTSTORE store, void *crl,
@@ -227,7 +227,7 @@ static BOOL CRYPT_MemDeleteCrl(PWINECRYPT_CERTSTORE store, void *pCrlContext)
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
 
     ContextList_Delete(ms->crls, pCrlContext);
-    return TRUE;
+    return CertFreeCRLContext(pCrlContext);
 }
 
 static BOOL CRYPT_MemAddCtl(PWINECRYPT_CERTSTORE store, void *ctl,
@@ -268,7 +268,7 @@ static BOOL CRYPT_MemDeleteCtl(PWINECRYPT_CERTSTORE store, void *pCtlContext)
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
 
     ContextList_Delete(ms->ctls, pCtlContext);
-    return TRUE;
+    return CertFreeCTLContext(pCtlContext);
 }
 
 static void WINAPI CRYPT_MemCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
