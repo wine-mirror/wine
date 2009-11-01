@@ -4972,6 +4972,30 @@ typedef struct _TAPE_GET_MEDIA_PARAMETERS {
 #define EVENTLOG_AUDIT_SUCCESS          0x0008
 #define EVENTLOG_AUDIT_FAILURE          0x0010
 
+#define EVENTLOG_SEQUENTIAL_READ        0x0001
+#define EVENTLOG_SEEK_READ              0x0002
+#define EVENTLOG_FORWARDS_READ          0x0004
+#define EVENTLOG_BACKWARDS_READ         0x0008
+
+typedef struct _EVENTLOGRECORD {
+    DWORD  Length;
+    DWORD  Reserved;
+    DWORD  RecordNumber;
+    DWORD  TimeGenerated;
+    DWORD  TimeWritten;
+    DWORD  EventID;
+    WORD   EventType;
+    WORD   NumStrings;
+    WORD   EventCategory;
+    WORD   ReservedFlags;
+    DWORD  ClosingRecordNumber;
+    DWORD  StringOffset;
+    DWORD  UserSidLength;
+    DWORD  UserSidOffset;
+    DWORD  DataLength;
+    DWORD  DataOffset;
+} EVENTLOGRECORD, *PEVENTLOGRECORD;
+
 #define SERVICE_BOOT_START   0x00000000
 #define SERVICE_SYSTEM_START 0x00000001
 #define SERVICE_AUTO_START   0x00000002

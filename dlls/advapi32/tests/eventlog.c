@@ -256,6 +256,154 @@ static void test_backup(void)
     DeleteFileA(backup);
 }
 
+static void test_read(void)
+{
+    HANDLE handle;
+    BOOL ret;
+    DWORD count, toread, read, needed;
+    void *buf;
+
+    SetLastError(0xdeadbeef);
+    ret = ReadEventLogA(NULL, 0, 0, NULL, 0, NULL, NULL);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    read = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadEventLogA(NULL, 0, 0, NULL, 0, &read, NULL);
+    ok(!ret, "Expected failure\n");
+    ok(read == 0xdeadbeef, "Expected 'read' parameter to remain unchanged\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    needed = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadEventLogA(NULL, 0, 0, NULL, 0, NULL, &needed);
+    ok(!ret, "Expected failure\n");
+    ok(needed == 0xdeadbeef, "Expected 'needed' parameter to remain unchanged\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    /* 'read' and 'needed' are only filled when the needed buffer size is passed back or when the call succeeds */
+    SetLastError(0xdeadbeef);
+    ret = ReadEventLogA(NULL, 0, 0, NULL, 0, &read, &needed);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ReadEventLogA(NULL, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ, 0, NULL, 0, NULL, NULL);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ReadEventLogA(NULL, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ, 0, NULL, 0, &read, &needed);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    buf = NULL;
+    SetLastError(0xdeadbeef);
+    ret = ReadEventLogA(NULL, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ,
+                        0, buf, sizeof(EVENTLOGRECORD), &read, &needed);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    buf = HeapAlloc(GetProcessHeap(), 0, sizeof(EVENTLOGRECORD));
+    SetLastError(0xdeadbeef);
+    ret = ReadEventLogA(NULL, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ,
+                        0, buf, sizeof(EVENTLOGRECORD), &read, &needed);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    handle = OpenEventLogA(NULL, "Application");
+
+    /* Show that we need the proper dwFlags with a (for the rest) proper call */
+    buf = HeapAlloc(GetProcessHeap(), 0, sizeof(EVENTLOGRECORD));
+
+    SetLastError(0xdeadbeef);
+    ret = ReadEventLogA(handle, 0, 0, buf, sizeof(EVENTLOGRECORD), &read, &needed);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ReadEventLogA(handle, EVENTLOG_SEQUENTIAL_READ, 0, buf, sizeof(EVENTLOGRECORD), &read, &needed);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ReadEventLogA(handle, EVENTLOG_SEEK_READ, 0, buf, sizeof(EVENTLOGRECORD), &read, &needed);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ReadEventLogA(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ | EVENTLOG_BACKWARDS_READ,
+                        0, buf, sizeof(EVENTLOGRECORD), &read, &needed);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ReadEventLogA(handle, EVENTLOG_SEEK_READ | EVENTLOG_FORWARDS_READ | EVENTLOG_BACKWARDS_READ,
+                        0, buf, sizeof(EVENTLOGRECORD), &read, &needed);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ReadEventLogA(handle, EVENTLOG_SEEK_READ | EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ,
+                        0, buf, sizeof(EVENTLOGRECORD), &read, &needed);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    /* First check if there are any records (in practice only on Wine: FIXME) */
+    count = 0;
+    GetNumberOfEventLogRecords(handle, &count);
+    if (!count)
+    {
+        skip("No records in the 'Application' log\n");
+        CloseEventLog(handle);
+        return;
+    }
+
+    /* Get the buffer size for the first record */
+    buf = HeapAlloc(GetProcessHeap(), 0, sizeof(EVENTLOGRECORD));
+    read = needed = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadEventLogA(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ,
+                        0, buf, sizeof(EVENTLOGRECORD), &read, &needed);
+    ok(!ret, "Expected failure\n");
+    ok(read == 0, "Expected no bytes read\n");
+    ok(needed > sizeof(EVENTLOGRECORD), "Expected the needed buffersize to be bigger than sizeof(EVENTLOGRECORD)\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    /* Read the first record */
+    toread = needed;
+    buf = HeapReAlloc(GetProcessHeap(), 0, buf, toread);
+    read = needed = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadEventLogA(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ, 0, buf, toread, &read, &needed);
+    ok(ret, "Expected succes\n");
+    ok(read == toread ||
+       broken(read < toread), /* NT4 wants a buffer size way bigger than just 1 record */
+       "Expected the requested size to be read\n");
+    ok(needed == 0, "Expected no extra bytes to be read\n");
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    CloseEventLog(handle);
+}
+
 START_TEST(eventlog)
 {
     SetLastError(0xdeadbeef);
@@ -274,4 +422,5 @@ START_TEST(eventlog)
     test_count();
     test_oldest();
     test_backup();
+    test_read();
 }
