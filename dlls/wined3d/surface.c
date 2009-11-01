@@ -4983,7 +4983,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                 mem = HeapAlloc(GetProcessHeap(), 0, outpitch * height);
                 if(!mem) {
                     ERR("Out of memory %d, %d!\n", outpitch, height);
-                    context_release(context);
+                    if (context) context_release(context);
                     return WINED3DERR_OUTOFVIDEOMEMORY;
                 }
                 d3dfmt_convert_surface(This->resource.allocatedMemory, mem, pitch, width, height, outpitch, convert, This);
