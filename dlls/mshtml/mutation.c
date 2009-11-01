@@ -37,6 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 enum {
     MUTATION_COMMENT,
+    MUTATION_ENDLOAD,
     MUTATION_FRAME,
     MUTATION_IFRAME,
     MUTATION_SCRIPT
@@ -231,6 +232,26 @@ static nsrefcnt NSAPI nsRunnable_Release(nsIRunnable *iface)
     return htmldoc_release(&This->basedoc);
 }
 
+static void push_mutation_queue(HTMLDocumentNode *doc, DWORD type, nsISupports *nsiface)
+{
+    mutation_queue_t *elem;
+
+    elem = heap_alloc(sizeof(mutation_queue_t));
+    if(!elem)
+        return;
+
+    elem->next = NULL;
+    elem->type = type;
+    elem->nsiface = nsiface;
+    if(nsiface)
+        nsISupports_AddRef(nsiface);
+
+    if(doc->mutation_queue_tail)
+        doc->mutation_queue_tail = doc->mutation_queue_tail->next = elem;
+    else
+        doc->mutation_queue = doc->mutation_queue_tail = elem;
+}
+
 static void pop_mutation_queue(HTMLDocumentNode *doc)
 {
     mutation_queue_t *tmp = doc->mutation_queue;
@@ -242,7 +263,8 @@ static void pop_mutation_queue(HTMLDocumentNode *doc)
     if(!tmp->next)
         doc->mutation_queue_tail = NULL;
 
-    nsISupports_Release(tmp->nsiface);
+    if(tmp->nsiface)
+        nsISupports_Release(tmp->nsiface);
     heap_free(tmp);
 }
 
@@ -329,6 +351,34 @@ static nsresult init_frame_window(HTMLDocumentNode *doc, nsISupports *nsunk)
     return nsres;
 }
 
+static void parse_complete_proc(task_t *_task)
+{
+    docobj_task_t *task = (docobj_task_t*)_task;
+    parse_complete(task->doc);
+}
+
+static void handle_end_load(HTMLDocumentNode *This)
+{
+    docobj_task_t *task;
+
+    TRACE("\n");
+
+    if(This != This->basedoc.doc_obj->basedoc.doc_node)
+        return;
+
+    task = heap_alloc(sizeof(docobj_task_t));
+    if(!task)
+        return;
+
+    task->doc = This->basedoc.doc_obj;
+
+    /*
+     * This should be done in the worker thread that parses HTML,
+     * but we don't have such thread (Gecko parses HTML for us).
+     */
+    push_task(&task->header, &parse_complete_proc, This->basedoc.doc_obj->basedoc.task_magic);
+}
+
 static nsresult NSAPI nsRunnable_Run(nsIRunnable *iface)
 {
     HTMLDocumentNode *This = NSRUNNABLE_THIS(iface);
@@ -384,6 +434,10 @@ static nsresult NSAPI nsRunnable_Run(nsIRunnable *iface)
             nsIDOMComment_Release(nscomment);
             break;
         }
+
+        case MUTATION_ENDLOAD:
+            handle_end_load(This);
+            break;
 
         case MUTATION_FRAME:
             init_frame_window(This, This->mutation_queue->nsiface);
@@ -522,12 +576,6 @@ static void NSAPI nsDocumentObserver_BeginLoad(nsIDocumentObserver *iface, nsIDo
 {
 }
 
-static void parse_complete_proc(task_t *_task)
-{
-    docobj_task_t *task = (docobj_task_t*)_task;
-    parse_complete(task->doc);
-}
-
 static void NSAPI nsDocumentObserver_EndLoad(nsIDocumentObserver *iface, nsIDocument *aDocument)
 {
     HTMLDocumentNode *This = NSDOCOBS_THIS(iface);
@@ -535,22 +583,8 @@ static void NSAPI nsDocumentObserver_EndLoad(nsIDocumentObserver *iface, nsIDocu
     TRACE("\n");
 
     This->content_ready = TRUE;
-
-    if(This == This->basedoc.doc_obj->basedoc.doc_node) {
-        docobj_task_t *task;
-
-        task = heap_alloc(sizeof(docobj_task_t));
-        if(!task)
-            return;
-
-        task->doc = This->basedoc.doc_obj;
-
-        /*
-         * This should be done in the worker thread that parses HTML,
-         * but we don't have such thread (Gecko parses HTML for us).
-         */
-        push_task(&task->header, &parse_complete_proc, This->basedoc.doc_obj->basedoc.task_magic);
-    }
+    push_mutation_queue(This, MUTATION_ENDLOAD, NULL);
+    add_script_runner(This);
 }
 
 static void NSAPI nsDocumentObserver_ContentStatesChanged(nsIDocumentObserver *iface, nsIDocument *aDocument,
@@ -586,25 +620,6 @@ static void NSAPI nsDocumentObserver_StyleRuleAdded(nsIDocumentObserver *iface, 
 static void NSAPI nsDocumentObserver_StyleRuleRemoved(nsIDocumentObserver *iface, nsIDocument *aDocument,
         nsIStyleSheet *aStyleSheet, nsIStyleRule *aStyleRule)
 {
-}
-
-static void push_mutation_queue(HTMLDocumentNode *doc, DWORD type, nsISupports *nsiface)
-{
-    mutation_queue_t *elem;
-
-    elem = heap_alloc(sizeof(mutation_queue_t));
-    if(!elem)
-        return;
-
-    elem->next = NULL;
-    elem->type = type;
-    elem->nsiface = nsiface;
-    nsISupports_AddRef(nsiface);
-
-    if(doc->mutation_queue_tail)
-        doc->mutation_queue_tail = doc->mutation_queue_tail->next = elem;
-    else
-        doc->mutation_queue = doc->mutation_queue_tail = elem;
 }
 
 static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, nsIDocument *aDocument,
