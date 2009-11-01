@@ -112,6 +112,7 @@ DEFINE_EXPECT(AddNamedItem);
 DEFINE_EXPECT(ParseScriptText);
 DEFINE_EXPECT(GetScriptDispatch);
 DEFINE_EXPECT(funcDisp);
+DEFINE_EXPECT(script_divid_d);
 DEFINE_EXPECT(script_testprop_d);
 DEFINE_EXPECT(script_testprop_i);
 DEFINE_EXPECT(AXQueryInterface_IActiveScript);
@@ -369,7 +370,13 @@ static HRESULT WINAPI scriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
         return S_OK;
     }
 
-    ok(0, "unexpected call\n");
+    if(!strcmp_wa(bstrName, "divid")) {
+        CHECK_EXPECT(script_divid_d);
+        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        return E_FAIL;
+    }
+
+    ok(0, "unexpected call\b");
     return E_NOTIMPL;
 }
 
@@ -915,6 +922,33 @@ static void test_nextdispid(IDispatchEx *dispex)
     ok(id == DISPID_STARTENUM, "id != DISPID_STARTENUM\n");
 }
 
+static void test_global_id(void)
+{
+    VARIANT var;
+    DISPPARAMS dp;
+    EXCEPINFO ei;
+    BSTR tmp;
+    DISPID id;
+    HRESULT hres;
+
+    SET_EXPECT(GetScriptDispatch);
+    SET_EXPECT(script_divid_d);
+    tmp = a2bstr("divid");
+    hres = IDispatchEx_GetDispID(window_dispex, tmp, fdexNameCaseSensitive, &id);
+    ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
+    SysFreeString(tmp);
+    CHECK_CALLED(GetScriptDispatch);
+    CHECK_CALLED(script_divid_d);
+
+    VariantInit(&var);
+    memset(&ei, 0, sizeof(ei));
+    memset(&dp, 0, sizeof(dp));
+    hres = IDispatchEx_InvokeEx(window_dispex, id, 0, DISPATCH_PROPERTYGET, &dp, &var, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH, "V_VT(var) = %d\n", V_VT(&var));
+    VariantClear(&var);
+}
+
 static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *iface,
         LPCOLESTR pstrCode, LPCOLESTR pstrItemName, IUnknown *punkContext,
         LPCOLESTR pstrDelimiter, CTXARG_T dwSourceContextCookie, ULONG ulStartingLine,
@@ -1103,6 +1137,8 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
     ok(V_VT(&var) == VT_NULL, "V_VT(var) = %d\n", V_VT(&var));
     CHECK_CALLED(GetScriptDispatch);
     CHECK_CALLED(script_testprop_i);
+
+    test_global_id();
 
     test_security();
 
@@ -1421,6 +1457,7 @@ static IClassFactory script_cf = { &ClassFactoryVtbl };
 
 static const char simple_script_str[] =
     "<html><head></head><body>"
+    "<div id=\"divid\"></div>"
     "<script language=\"TestScript\">simple script</script>"
     "</body></html>";
 

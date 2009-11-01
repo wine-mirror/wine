@@ -1005,8 +1005,7 @@ static HRESULT HTMLWindow_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD fla
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    IDispatchEx *dispex;
-    IDispatch *disp;
+    global_prop_t *prop;
     DWORD idx;
     HRESULT hres;
 
@@ -1014,24 +1013,51 @@ static HRESULT HTMLWindow_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD fla
     if(idx >= This->global_prop_cnt)
         return DISP_E_MEMBERNOTFOUND;
 
-    disp = get_script_disp(This->global_props[idx].script_host);
-    if(!disp)
-        return E_UNEXPECTED;
+    prop = This->global_props+idx;
 
-    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
-    if(SUCCEEDED(hres)) {
-        TRACE("%s >>>\n", debugstr_w(This->global_props[idx].name));
-        hres = IDispatchEx_InvokeEx(dispex, This->global_props[idx].id, lcid, flags, params, res, ei, caller);
-        if(hres == S_OK)
-            TRACE("%s <<<\n", debugstr_w(This->global_props[idx].name));
-        else
-            WARN("%s <<< %08x\n", debugstr_w(This->global_props[idx].name), hres);
-        IDispatchEx_Release(dispex);
-    }else {
-        FIXME("No IDispatchEx\n");
+    switch(prop->type) {
+    case GLOBAL_SCRIPTVAR: {
+        IDispatchEx *dispex;
+        IDispatch *disp;
+
+        disp = get_script_disp(prop->script_host);
+        if(!disp)
+            return E_UNEXPECTED;
+
+        hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+        if(SUCCEEDED(hres)) {
+            TRACE("%s >>>\n", debugstr_w(prop->name));
+            hres = IDispatchEx_InvokeEx(dispex, prop->id, lcid, flags, params, res, ei, caller);
+            if(hres == S_OK)
+                TRACE("%s <<<\n", debugstr_w(prop->name));
+            else
+                WARN("%s <<< %08x\n", debugstr_w(prop->name), hres);
+            IDispatchEx_Release(dispex);
+        }else {
+            FIXME("No IDispatchEx\n");
+        }
+        IDispatch_Release(disp);
+        break;
+    }
+    case GLOBAL_ELEMENTVAR: {
+        IHTMLElement *elem;
+
+        hres = IHTMLDocument3_getElementById(HTMLDOC3(&This->doc->basedoc), prop->name, &elem);
+        if(FAILED(hres))
+            return hres;
+
+        if(!elem)
+            return DISP_E_MEMBERNOTFOUND;
+
+        V_VT(res) = VT_DISPATCH;
+        V_DISPATCH(res) = (IDispatch*)elem;
+        break;
+    }
+    default:
+        ERR("invalid type %d\n", prop->type);
+        hres = DISP_E_MEMBERNOTFOUND;
     }
 
-    IDispatch_Release(disp);
     return hres;
 }
 
@@ -1399,7 +1425,7 @@ static HRESULT WINAPI WindowDispEx_Invoke(IDispatchEx *iface, DISPID dispIdMembe
                               pVarResult, pExcepInfo, puArgErr);
 }
 
-static global_prop_t *alloc_global_prop(HTMLWindow *This, BSTR name)
+static global_prop_t *alloc_global_prop(HTMLWindow *This, global_prop_type_t type, BSTR name)
 {
     if(This->global_prop_cnt == This->global_prop_size) {
         global_prop_t *new_props;
@@ -1422,6 +1448,7 @@ static global_prop_t *alloc_global_prop(HTMLWindow *This, BSTR name)
     if(!This->global_props[This->global_prop_cnt].name)
         return NULL;
 
+    This->global_props[This->global_prop_cnt].type = type;
     return This->global_props + This->global_prop_cnt++;
 }
 
@@ -1436,6 +1463,7 @@ static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, 
     ScriptHost *script_host;
     DISPID id;
     DWORD i;
+    HRESULT hres;
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
 
@@ -1450,7 +1478,7 @@ static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, 
     if(find_global_prop(This, bstrName, grfdex, &script_host, &id)) {
         global_prop_t *prop;
 
-        prop = alloc_global_prop(This, bstrName);
+        prop = alloc_global_prop(This, GLOBAL_SCRIPTVAR, bstrName);
         if(!prop)
             return E_OUTOFMEMORY;
 
@@ -1461,7 +1489,28 @@ static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, 
         return S_OK;
     }
 
-    return IDispatchEx_GetDispID(DISPATCHEX(&This->dispex), bstrName, grfdex, pid);
+    hres = IDispatchEx_GetDispID(DISPATCHEX(&This->dispex), bstrName, grfdex, pid);
+    if(hres != DISP_E_UNKNOWNNAME)
+        return hres;
+
+    if(This->doc) {
+        global_prop_t *prop;
+        IHTMLElement *elem;
+
+        hres = IHTMLDocument3_getElementById(HTMLDOC3(&This->doc->basedoc), bstrName, &elem);
+        if(SUCCEEDED(hres) && elem) {
+            IHTMLElement_Release(elem);
+
+            prop = alloc_global_prop(This, GLOBAL_ELEMENTVAR, bstrName);
+            if(!prop)
+                return E_OUTOFMEMORY;
+
+            *pid = prop_to_dispid(This, prop);
+            return S_OK;
+        }
+    }
+
+    return DISP_E_UNKNOWNNAME;
 }
 
 static HRESULT WINAPI WindowDispEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,

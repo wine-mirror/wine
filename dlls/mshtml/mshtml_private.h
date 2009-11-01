@@ -168,7 +168,13 @@ typedef enum {
 
 typedef struct ScriptHost ScriptHost;
 
+typedef enum {
+    GLOBAL_SCRIPTVAR,
+    GLOBAL_ELEMENTVAR
+} global_prop_type_t;
+
 typedef struct {
+    global_prop_type_t type;
     WCHAR *name;
     ScriptHost *script_host;
     DISPID id;
