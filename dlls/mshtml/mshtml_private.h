@@ -460,6 +460,12 @@ typedef struct {
     ConnectionPoint cp;
 } HTMLTextContainer;
 
+typedef struct {
+    HTMLElement element;
+
+    const IHTMLFrameBaseVtbl *lpIHTMLFrameBaseVtbl;
+} HTMLFrameBase;
+
 typedef struct _mutation_queue_t {
     DWORD type;
     nsISupports *nsiface;
@@ -556,6 +562,7 @@ struct HTMLDocumentNode {
 #define HTMLDOMNODE2(x)  ((IHTMLDOMNode2*)                &(x)->lpHTMLDOMNode2Vtbl)
 
 #define HTMLTEXTCONT(x)  ((IHTMLTextContainer*)           &(x)->lpHTMLTextContainerVtbl)
+#define HTMLFRAMEBASE(x) ((IHTMLFrameBase*)               &(x)->lpIHTMLFrameBaseVtbl)
 
 #define HTMLOPTFACTORY(x)  ((IHTMLOptionElementFactory*)  &(x)->lpHTMLOptionElementFactoryVtbl)
 #define HTMLIMGFACTORY(x)  ((IHTMLImageElementFactory*)  &(x)->lpHTMLImageElementFactoryVtbl)
@@ -702,12 +709,16 @@ void HTMLElement_Init(HTMLElement*,HTMLDocumentNode*,nsIDOMHTMLElement*,dispex_s
 void HTMLElement2_Init(HTMLElement*);
 void HTMLElement3_Init(HTMLElement*);
 void HTMLTextContainer_Init(HTMLTextContainer*,HTMLDocumentNode*,nsIDOMHTMLElement*,dispex_static_data_t*);
+void HTMLFrameBase_Init(HTMLFrameBase*,HTMLDocumentNode*,nsIDOMHTMLElement*,dispex_static_data_t*);
 
 HRESULT HTMLDOMNode_QI(HTMLDOMNode*,REFIID,void**);
 void HTMLDOMNode_destructor(HTMLDOMNode*);
 
 HRESULT HTMLElement_QI(HTMLDOMNode*,REFIID,void**);
 void HTMLElement_destructor(HTMLDOMNode*);
+
+HRESULT HTMLFrameBase_QI(HTMLFrameBase*,REFIID,void**);
+void HTMLFrameBase_destructor(HTMLFrameBase*);
 
 HTMLDOMNode *get_node(HTMLDocumentNode*,nsIDOMNode*,BOOL);
 void release_nodes(HTMLDocumentNode*);
