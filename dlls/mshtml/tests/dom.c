@@ -939,8 +939,9 @@ static void test_get_set_attr(IHTMLDocument2 *doc)
     bstr = a2bstr("newattribute");
     hres = IHTMLElement_getAttribute(elem, bstr, 0, &val);
     ok(hres == S_OK, "getAttribute failed: %08x\n", hres);
-    todo_wine ok(V_VT(&val) == VT_BOOL, "variant type should have been VT_BOOL (0x%x), was: 0x%x\n", VT_BOOL, V_VT(&val));
-    todo_wine ok(V_BOOL(&val) == VARIANT_TRUE, "variant value should have been VARIANT_TRUE (0x%x), was %d\n", VARIANT_TRUE, V_BOOL(&val));
+    ok(V_VT(&val) == VT_BOOL, "variant type should have been VT_BOOL (0x%x), was: 0x%x\n", VT_BOOL, V_VT(&val));
+    ok(V_BOOL(&val) == VARIANT_TRUE, "variant value should have been VARIANT_TRUE (0x%x), was %d\n",
+       VARIANT_TRUE, V_BOOL(&val));
     VariantClear(&val);
     SysFreeString(bstr);
 
