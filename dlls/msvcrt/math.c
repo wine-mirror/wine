@@ -836,7 +836,7 @@ double CDECL _nextafter(double num, double next)
  */
 char * CDECL _ecvt( double number, int ndigits, int *decpt, int *sign )
 {
-    int prec;
+    int prec, len;
     thread_data_t *data = msvcrt_get_thread_data();
     /* FIXME: check better for overflow (native supports over 300 chars's) */
     ndigits = min( ndigits, 80 - 7); /* 7 : space for dec point, 1 for "e",
@@ -853,10 +853,10 @@ char * CDECL _ecvt( double number, int ndigits, int *decpt, int *sign )
     /* handle cases with zero ndigits or less */
     prec = ndigits;
     if( prec < 1) prec = 2;
-    snprintf(data->efcvt_buffer, 80, "%.*le", prec - 1, number);
+    len = snprintf(data->efcvt_buffer, 80, "%.*le", prec - 1, number);
     /* take the decimal "point away */
     if( prec != 1)
-        strcpy( data->efcvt_buffer + 1, data->efcvt_buffer + 2);
+        memmove( data->efcvt_buffer + 1, data->efcvt_buffer + 2, len - 1 );
     /* take the exponential "e" out */
     data->efcvt_buffer[ prec] = '\0';
     /* read the exponent */
