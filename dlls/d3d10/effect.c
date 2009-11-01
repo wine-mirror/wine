@@ -1156,6 +1156,7 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_variable *l, const ch
     DWORD offset;
     D3D10_CBUFFER_TYPE d3d10_cbuffer_type;
     HRESULT hr;
+    unsigned int stride = 0;
 
     /* Generate our own type, it isn't in the fx blob. */
     l->type = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*l->type));
@@ -1283,9 +1284,49 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_variable *l, const ch
         TRACE("Variable buffer offset: %u.\n", typem->buffer_offset);
 
         l->type->size_packed += v->type->size_packed;
-        l->type->size_unpacked += v->type->size_unpacked;
+
+        /*
+         * For the complete constantbuffer the size_unpacked = stride,
+         * the stride is calculated like this:
+         *
+         * 1) if the constant buffer variables are packed with packoffset
+         *    - stride = the highest used constant
+         *    - the complete stride has to be a multiple of 0x10
+         *
+         * 2) if the constant buffer variables are NOT packed with packoffset
+         *    - sum of unpacked size for all variables which fit in a 0x10 part
+         *    - if the size exceeds a 0x10 part, the rest of the old part is skipped
+         *      and a new part is started
+         *    - if the variable is a struct it is always used a new part
+         *    - the complete stride has to be a multiple of 0x10
+         *
+         *    e.g.:
+         *             0x4, 0x4, 0x4, 0x8, 0x4, 0x14, 0x4
+         *        part 0x10           0x10      0x20     -> 0x40
+         */
+        if (v->flag & D3D10_EFFECT_VARIABLE_EXPLICIT_BIND_POINT)
+        {
+            if ((v->type->size_unpacked + v->buffer_offset) > stride)
+            {
+                stride = v->type->size_unpacked + v->buffer_offset;
+            }
+        }
+        else
+        {
+            if (v->type->type_class == D3D10_SVC_STRUCT)
+            {
+                stride = (stride + 0xf) & ~0xf;
+            }
+
+            if ( ((stride & 0xf) + v->type->size_unpacked) > 0x10)
+            {
+                stride = (stride + 0xf) & ~0xf;
+            }
+
+            stride += v->type->size_unpacked;
+        }
     }
-    l->type->stride = l->type->size_unpacked = (l->type->size_unpacked + 0xf) & ~0xf;
+    l->type->stride = l->type->size_unpacked = (stride + 0xf) & ~0xf;
 
     TRACE("Constant buffer:\n");
     TRACE("\tType name: %s.\n", debugstr_a(l->type->name));
