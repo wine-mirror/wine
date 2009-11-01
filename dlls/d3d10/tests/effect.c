@@ -1247,6 +1247,95 @@ static DWORD fx_test_evtc[] = {
 0x000000ff, 0x00000000, 0x00000000,
 };
 
+static BOOL is_valid_check(BOOL a, BOOL b)
+{
+    return (a && b) || (!a && !b);
+}
+
+static void check_as(ID3D10EffectVariable *variable)
+{
+    ID3D10EffectVariable *variable2;
+    ID3D10EffectType *type;
+    D3D10_EFFECT_TYPE_DESC td;
+    BOOL ret, is_valid;
+    HRESULT hr;
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    variable2 = (ID3D10EffectVariable *)variable->lpVtbl->AsConstantBuffer(variable);
+    is_valid = variable2->lpVtbl->IsValid(variable2);
+    ret = is_valid_check(is_valid, td.Type == D3D10_SVT_CBUFFER);
+    ok(ret, "AsConstantBuffer valid check failed (Type is %x)\n", td.Type);
+
+    variable2 = (ID3D10EffectVariable *)variable->lpVtbl->AsString(variable);
+    is_valid = variable2->lpVtbl->IsValid(variable2);
+    ret = is_valid_check(is_valid, td.Type == D3D10_SVT_STRING);
+    ok(ret, "AsString valid check failed (Type is %x)\n", td.Type);
+
+    variable2 = (ID3D10EffectVariable *)variable->lpVtbl->AsScalar(variable);
+    is_valid = variable2->lpVtbl->IsValid(variable2);
+    ret = is_valid_check(is_valid, td.Class == D3D10_SVC_SCALAR);
+    ok(ret, "AsScalar valid check failed (Class is %x)\n", td.Class);
+
+    variable2 = (ID3D10EffectVariable *)variable->lpVtbl->AsVector(variable);
+    is_valid = variable2->lpVtbl->IsValid(variable2);
+    ret = is_valid_check(is_valid, td.Class == D3D10_SVC_VECTOR);
+    ok(ret, "AsVector valid check failed (Class is %x)\n", td.Class);
+
+    variable2 = (ID3D10EffectVariable *)variable->lpVtbl->AsMatrix(variable);
+    is_valid = variable2->lpVtbl->IsValid(variable2);
+    ret = is_valid_check(is_valid, td.Class == D3D10_SVC_MATRIX_ROWS
+        || td.Class == D3D10_SVC_MATRIX_COLUMNS);
+    ok(ret, "AsMatrix valid check failed (Class is %x)\n", td.Class);
+
+    variable2 = (ID3D10EffectVariable *)variable->lpVtbl->AsBlend(variable);
+    is_valid = variable2->lpVtbl->IsValid(variable2);
+    ret = is_valid_check(is_valid, td.Type == D3D10_SVT_BLEND);
+    ok(ret, "AsBlend valid check failed (Type is %x)\n", td.Type);
+
+    variable2 = (ID3D10EffectVariable *)variable->lpVtbl->AsDepthStencil(variable);
+    is_valid = variable2->lpVtbl->IsValid(variable2);
+    ret = is_valid_check(is_valid, td.Type == D3D10_SVT_DEPTHSTENCIL);
+    ok(ret, "AsDepthStencil valid check failed (Type is %x)\n", td.Type);
+
+    variable2 = (ID3D10EffectVariable *)variable->lpVtbl->AsRasterizer(variable);
+    is_valid = variable2->lpVtbl->IsValid(variable2);
+    ret = is_valid_check(is_valid, td.Type == D3D10_SVT_RASTERIZER);
+    ok(ret, "AsRasterizer valid check failed (Type is %x)\n", td.Type);
+
+    variable2 = (ID3D10EffectVariable *)variable->lpVtbl->AsSampler(variable);
+    is_valid = variable2->lpVtbl->IsValid(variable2);
+    ret = is_valid_check(is_valid, td.Type == D3D10_SVT_SAMPLER);
+    ok(ret, "AsSampler valid check failed (Type is %x)\n", td.Type);
+
+    variable2 = (ID3D10EffectVariable *)variable->lpVtbl->AsDepthStencilView(variable);
+    is_valid = variable2->lpVtbl->IsValid(variable2);
+    ret = is_valid_check(is_valid, td.Type == D3D10_SVT_DEPTHSTENCILVIEW);
+    ok(ret, "AsDepthStencilView valid check failed (Type is %x)\n", td.Type);
+
+    variable2 = (ID3D10EffectVariable *)variable->lpVtbl->AsRenderTargetView(variable);
+    is_valid = variable2->lpVtbl->IsValid(variable2);
+    ret = is_valid_check(is_valid, td.Type == D3D10_SVT_RENDERTARGETVIEW);
+    ok(ret, "AsRenderTargetView valid check failed (Type is %x)\n", td.Type);
+
+    variable2 = (ID3D10EffectVariable *)variable->lpVtbl->AsShaderResource(variable);
+    is_valid = variable2->lpVtbl->IsValid(variable2);
+    ret = is_valid_check(is_valid, td.Type == D3D10_SVT_TEXTURE1D
+        || td.Type == D3D10_SVT_TEXTURE1DARRAY || td.Type == D3D10_SVT_TEXTURE2D
+        || td.Type == D3D10_SVT_TEXTURE2DMS || td.Type == D3D10_SVT_TEXTURE2DARRAY
+        || td.Type == D3D10_SVT_TEXTURE2DMSARRAY || td.Type == D3D10_SVT_TEXTURE3D
+        || td.Type == D3D10_SVT_TEXTURECUBE);
+    ok(ret, "AsShaderResource valid check failed (Type is %x)\n", td.Type);
+
+    variable2 = (ID3D10EffectVariable *)variable->lpVtbl->AsShader(variable);
+    is_valid = variable2->lpVtbl->IsValid(variable2);
+    ret = is_valid_check(is_valid, td.Type == D3D10_SVT_GEOMETRYSHADER
+        || td.Type == D3D10_SVT_PIXELSHADER || td.Type == D3D10_SVT_VERTEXSHADER);
+    ok(ret, "AsShader valid check failed (Type is %x)\n", td.Type);
+}
+
 static void test_effect_variable_type_class(ID3D10Device *device)
 {
     ID3D10Effect *effect;
@@ -1272,6 +1361,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.Annotations == 1, "Elements is %u, expected 1\n", vd.Annotations);
     ok(vd.BufferOffset == 0, "Members is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    check_as((ID3D10EffectVariable *)constantbuffer);
 
     type = constantbuffer->lpVtbl->GetType(constantbuffer);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1300,6 +1391,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
+    check_as((ID3D10EffectVariable *)variable);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1326,6 +1419,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    check_as((ID3D10EffectVariable *)variable);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1354,6 +1449,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.BufferOffset == 4, "BufferOffset is %u, expected 4\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
+    check_as((ID3D10EffectVariable *)variable);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1380,6 +1477,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
     ok(vd.BufferOffset == 16, "BufferOffset is %u, expected 16\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    check_as((ID3D10EffectVariable *)variable);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1408,6 +1507,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.BufferOffset == 64, "BufferOffset is %u, expected 64\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
+    check_as((ID3D10EffectVariable *)variable);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1434,6 +1535,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    check_as((ID3D10EffectVariable *)variable);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1462,6 +1565,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
+    check_as((ID3D10EffectVariable *)variable);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1488,6 +1593,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    check_as((ID3D10EffectVariable *)variable);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1516,6 +1623,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
+    check_as((ID3D10EffectVariable *)variable);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1542,6 +1651,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    check_as((ID3D10EffectVariable *)variable);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1570,6 +1681,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
+    check_as((ID3D10EffectVariable *)variable);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1596,6 +1709,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    check_as((ID3D10EffectVariable *)variable);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1624,6 +1739,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
+    check_as((ID3D10EffectVariable *)variable);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1650,6 +1767,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    check_as((ID3D10EffectVariable *)variable);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1678,6 +1797,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
+    check_as((ID3D10EffectVariable *)variable);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1704,6 +1825,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    check_as((ID3D10EffectVariable *)variable);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1732,6 +1855,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
+    check_as((ID3D10EffectVariable *)variable);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1758,6 +1883,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    check_as((ID3D10EffectVariable *)variable);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1786,6 +1913,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
+    check_as((ID3D10EffectVariable *)variable);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1812,6 +1941,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    check_as((ID3D10EffectVariable *)variable);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1840,6 +1971,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
+    check_as((ID3D10EffectVariable *)variable);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1866,6 +1999,8 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    check_as((ID3D10EffectVariable *)variable);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
