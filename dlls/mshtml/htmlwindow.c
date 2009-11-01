@@ -1399,6 +1399,37 @@ static HRESULT WINAPI WindowDispEx_Invoke(IDispatchEx *iface, DISPID dispIdMembe
                               pVarResult, pExcepInfo, puArgErr);
 }
 
+static global_prop_t *alloc_global_prop(HTMLWindow *This, BSTR name)
+{
+    if(This->global_prop_cnt == This->global_prop_size) {
+        global_prop_t *new_props;
+        DWORD new_size;
+
+        if(This->global_props) {
+            new_size = This->global_prop_size*2;
+            new_props = heap_realloc(This->global_props, new_size*sizeof(global_prop_t));
+        }else {
+            new_size = 16;
+            new_props = heap_alloc(new_size*sizeof(global_prop_t));
+        }
+        if(!new_props)
+            return NULL;
+        This->global_props = new_props;
+        This->global_prop_size = new_size;
+    }
+
+    This->global_props[This->global_prop_cnt].name = heap_strdupW(name);
+    if(!This->global_props[This->global_prop_cnt].name)
+        return NULL;
+
+    return This->global_props + This->global_prop_cnt++;
+}
+
+static inline DWORD prop_to_dispid(HTMLWindow *This, global_prop_t *prop)
+{
+    return MSHTML_DISPID_CUSTOM_MIN + (prop-This->global_props);
+}
+
 static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     HTMLWindow *This = DISPEX_THIS(iface);
@@ -1417,31 +1448,16 @@ static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, 
     }
 
     if(find_global_prop(This, bstrName, grfdex, &script_host, &id)) {
-        if(This->global_prop_cnt == This->global_prop_size) {
-            global_prop_t *new_props;
-            DWORD new_size;
+        global_prop_t *prop;
 
-            if(This->global_props) {
-                new_size = This->global_prop_size*2;
-                new_props = heap_realloc(This->global_props, new_size*sizeof(global_prop_t));
-            }else {
-                new_size = 16;
-                new_props = heap_alloc(new_size*sizeof(global_prop_t));
-            }
-            if(!new_props)
-                return E_OUTOFMEMORY;
-            This->global_props = new_props;
-            This->global_prop_size = new_size;
-        }
-
-        This->global_props[This->global_prop_cnt].name = heap_strdupW(bstrName);
-        if(!This->global_props[This->global_prop_cnt].name)
+        prop = alloc_global_prop(This, bstrName);
+        if(!prop)
             return E_OUTOFMEMORY;
 
-        This->global_props[This->global_prop_cnt].script_host = script_host;
-        This->global_props[This->global_prop_cnt].id = id;
+        prop->script_host = script_host;
+        prop->id = id;
 
-        *pid = MSHTML_DISPID_CUSTOM_MIN + (This->global_prop_cnt++);
+        *pid = prop_to_dispid(This, prop);
         return S_OK;
     }
 
