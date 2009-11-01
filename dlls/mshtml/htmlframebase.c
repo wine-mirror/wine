@@ -257,13 +257,20 @@ HRESULT HTMLFrameBase_QI(HTMLFrameBase *This, REFIID riid, void **ppv)
 
 void HTMLFrameBase_destructor(HTMLFrameBase *This)
 {
+    if(This->content_window)
+        IHTMLWindow2_Release(HTMLWINDOW2(This->content_window));
+
     HTMLElement_destructor(&This->element.node);
 }
 
 void HTMLFrameBase_Init(HTMLFrameBase *This, HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
-        dispex_static_data_t *dispex_data)
+        HTMLWindow *content_window, dispex_static_data_t *dispex_data)
 {
     This->lpIHTMLFrameBaseVtbl = &HTMLFrameBaseVtbl;
 
     HTMLElement_Init(&This->element, doc, nselem, dispex_data);
+
+    if(content_window)
+        IHTMLWindow2_AddRef(HTMLWINDOW2(content_window));
+    This->content_window = content_window;
 }

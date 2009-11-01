@@ -38,7 +38,6 @@ typedef struct {
     LONG ref;
 
     nsIDOMHTMLIFrameElement *nsiframe;
-    HTMLWindow *content_window;
 } HTMLIFrame;
 
 #define HTMLFRAMEBASE2(x)  (&(x)->lpIHTMLFrameBase2Vtbl)
@@ -104,9 +103,9 @@ static HRESULT WINAPI HTMLIFrameBase2_get_contentWindow(IHTMLFrameBase2 *iface, 
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->content_window) {
-        IHTMLWindow2_AddRef(HTMLWINDOW2(This->content_window));
-        *p = HTMLWINDOW2(This->content_window);
+    if(This->framebase.content_window) {
+        IHTMLWindow2_AddRef(HTMLWINDOW2(This->framebase.content_window));
+        *p = HTMLWINDOW2(This->framebase.content_window);
     }else {
         WARN("NULL content window\n");
         *p = NULL;
@@ -206,8 +205,6 @@ static void HTMLIFrame_destructor(HTMLDOMNode *iface)
 {
     HTMLIFrame *This = HTMLIFRAME_NODE_THIS(iface);
 
-    if(This->content_window)
-        IHTMLWindow2_Release(HTMLWINDOW2(This->content_window));
     if(This->nsiframe)
         nsIDOMHTMLIFrameElement_Release(This->nsiframe);
 
@@ -280,8 +277,6 @@ HTMLElement *HTMLIFrame_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
     ret->lpIHTMLFrameBase2Vtbl = &HTMLIFrameBase2Vtbl;
     ret->framebase.element.node.vtbl = &HTMLIFrameImplVtbl;
 
-    HTMLFrameBase_Init(&ret->framebase, doc, nselem, &HTMLIFrame_dispex);
-
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLIFrameElement, (void**)&ret->nsiframe);
     if(NS_FAILED(nsres))
         ERR("Could not get nsIDOMHTMLIFrameElement iface: %08x\n", nsres);
@@ -289,9 +284,7 @@ HTMLElement *HTMLIFrame_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
     if(!content_window)
         content_window = get_content_window(ret->nsiframe);
 
-    if(content_window)
-        IHTMLWindow2_AddRef(HTMLWINDOW2(content_window));
-    ret->content_window = content_window;
+    HTMLFrameBase_Init(&ret->framebase, doc, nselem, content_window, &HTMLIFrame_dispex);
 
     return &ret->framebase.element;
 }

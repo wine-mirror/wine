@@ -1541,7 +1541,7 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL 
     else if(!strcmpW(class_name, wszBODY))
         ret = HTMLBodyElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszIFRAME))
-        ret = HTMLIFrame_Create(doc, nselem);
+        ret = HTMLIFrame_Create(doc, nselem, NULL);
     else if(!strcmpW(class_name, wszIMG))
         ret = HTMLImgElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszINPUT))
