@@ -595,7 +595,7 @@ static dispex_static_data_t HTMLImgElement_dispex = {
     HTMLImgElement_iface_tids
 };
 
-HTMLElement *HTMLImgElement_Create(nsIDOMHTMLElement *nselem)
+HTMLElement *HTMLImgElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
 {
     HTMLImgElement *ret = heap_alloc_zero(sizeof(HTMLImgElement));
     nsresult nsres;
@@ -607,7 +607,7 @@ HTMLElement *HTMLImgElement_Create(nsIDOMHTMLElement *nselem)
     if(NS_FAILED(nsres))
         ERR("Could not get nsIDOMHTMLImageElement: %08x\n", nsres);
 
-    HTMLElement_Init(&ret->element, &HTMLImgElement_dispex);
+    HTMLElement_Init(&ret->element, doc, nselem, &HTMLImgElement_dispex);
 
     return &ret->element;
 }

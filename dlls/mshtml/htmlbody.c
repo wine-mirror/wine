@@ -759,7 +759,7 @@ static dispex_static_data_t HTMLBodyElement_dispex = {
     HTMLBodyElement_iface_tids
 };
 
-HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
+HTMLElement *HTMLBodyElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
 {
     HTMLBodyElement *ret = heap_alloc_zero(sizeof(HTMLBodyElement));
     nsresult nsres;
@@ -769,7 +769,7 @@ HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
     ret->lpHTMLBodyElementVtbl = &HTMLBodyElementVtbl;
     ret->textcont.element.node.vtbl = &HTMLBodyElementImplVtbl;
 
-    HTMLTextContainer_Init(&ret->textcont, &HTMLBodyElement_dispex);
+    HTMLTextContainer_Init(&ret->textcont, doc, nselem, &HTMLBodyElement_dispex);
 
     ConnectionPoint_Init(&ret->cp_propnotif, &ret->textcont.element.cp_container, &IID_IPropertyNotifySink);
 

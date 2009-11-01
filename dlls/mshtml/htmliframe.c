@@ -481,7 +481,7 @@ static dispex_static_data_t HTMLIFrame_dispex = {
     HTMLIFrame_iface_tids
 };
 
-HTMLElement *HTMLIFrame_Create(nsIDOMHTMLElement *nselem)
+HTMLElement *HTMLIFrame_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
 {
     HTMLIFrame *ret;
     nsresult nsres;
@@ -492,7 +492,7 @@ HTMLElement *HTMLIFrame_Create(nsIDOMHTMLElement *nselem)
     ret->lpIHTMLFrameBase2Vtbl = &HTMLIFrameBase2Vtbl;
     ret->element.node.vtbl = &HTMLIFrameImplVtbl;
 
-    HTMLElement_Init(&ret->element, &HTMLIFrame_dispex);
+    HTMLElement_Init(&ret->element, doc, nselem, &HTMLIFrame_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLIFrameElement, (void**)&ret->nsiframe);
     if(NS_FAILED(nsres))

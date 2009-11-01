@@ -1188,7 +1188,7 @@ static dispex_static_data_t HTMLInputElement_dispex = {
     HTMLInputElement_iface_tids
 };
 
-HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement *nselem)
+HTMLElement *HTMLInputElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
 {
     HTMLInputElement *ret = heap_alloc_zero(sizeof(HTMLInputElement));
     nsresult nsres;
@@ -1197,7 +1197,7 @@ HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement *nselem)
     ret->lpHTMLInputTextElementVtbl = &HTMLInputTextElementVtbl;
     ret->element.node.vtbl = &HTMLInputElementImplVtbl;
 
-    HTMLElement_Init(&ret->element, &HTMLInputElement_dispex);
+    HTMLElement_Init(&ret->element, doc, nselem, &HTMLInputElement_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLInputElement,
                                              (void**)&ret->nsinput);

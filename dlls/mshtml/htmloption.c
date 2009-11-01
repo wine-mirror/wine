@@ -339,7 +339,7 @@ static dispex_static_data_t HTMLOptionElement_dispex = {
     HTMLOptionElement_iface_tids
 };
 
-HTMLElement *HTMLOptionElement_Create(nsIDOMHTMLElement *nselem)
+HTMLElement *HTMLOptionElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
 {
     HTMLOptionElement *ret = heap_alloc_zero(sizeof(HTMLOptionElement));
     nsresult nsres;
@@ -347,7 +347,7 @@ HTMLElement *HTMLOptionElement_Create(nsIDOMHTMLElement *nselem)
     ret->lpHTMLOptionElementVtbl = &HTMLOptionElementVtbl;
     ret->element.node.vtbl = &HTMLOptionElementImplVtbl;
 
-    HTMLElement_Init(&ret->element, &HTMLOptionElement_dispex);
+    HTMLElement_Init(&ret->element, doc, nselem, &HTMLOptionElement_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLOptionElement, (void**)&ret->nsoption);
     if(NS_FAILED(nsres))

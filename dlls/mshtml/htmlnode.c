@@ -911,7 +911,8 @@ void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsno
     node->ref = 1;
     node->doc = doc;
 
-    nsIDOMNode_AddRef(nsnode);
+    if(nsnode)
+        nsIDOMNode_AddRef(nsnode);
     node->nsnode = nsnode;
 
     node->next = doc->nodes;

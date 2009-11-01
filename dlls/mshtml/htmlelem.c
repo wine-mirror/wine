@@ -1489,16 +1489,22 @@ static dispex_static_data_t HTMLElement_dispex = {
     HTMLElement_iface_tids
 };
 
-void HTMLElement_Init(HTMLElement *This, dispex_static_data_t *dispex_data)
+void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, dispex_static_data_t *dispex_data)
 {
     This->lpHTMLElementVtbl = &HTMLElementVtbl;
-
-    ConnectionPointContainer_Init(&This->cp_container, (IUnknown*)HTMLELEM(This));
 
     HTMLElement2_Init(This);
     HTMLElement3_Init(This);
 
     init_dispex(&This->node.dispex, (IUnknown*)HTMLELEM(This), dispex_data ? dispex_data : &HTMLElement_dispex);
+
+    if(nselem)
+        nsIDOMHTMLElement_AddRef(nselem);
+    This->nselem = nselem;
+
+    HTMLDOMNode_Init(doc, &This->node, (nsIDOMNode*)nselem);
+
+    ConnectionPointContainer_Init(&This->cp_container, (IUnknown*)HTMLELEM(This));
 }
 
 HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_generic)
@@ -1531,42 +1537,40 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL 
     nsAString_GetData(&class_name_str, &class_name);
 
     if(!strcmpW(class_name, wszA))
-        ret = HTMLAnchorElement_Create(nselem);
+        ret = HTMLAnchorElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszBODY))
-        ret = HTMLBodyElement_Create(nselem);
+        ret = HTMLBodyElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszIFRAME))
-        ret = HTMLIFrame_Create(nselem);
+        ret = HTMLIFrame_Create(doc, nselem);
     else if(!strcmpW(class_name, wszIMG))
-        ret = HTMLImgElement_Create(nselem);
+        ret = HTMLImgElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszINPUT))
-        ret = HTMLInputElement_Create(nselem);
+        ret = HTMLInputElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszOPTION))
-        ret = HTMLOptionElement_Create(nselem);
+        ret = HTMLOptionElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszSCRIPT))
-        ret = HTMLScriptElement_Create(nselem);
+        ret = HTMLScriptElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszSELECT))
-        ret = HTMLSelectElement_Create(nselem);
+        ret = HTMLSelectElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszTABLE))
-        ret = HTMLTable_Create(nselem);
+        ret = HTMLTable_Create(doc, nselem);
     else if(!strcmpW(class_name, wszTR))
-        ret = HTMLTableRow_Create(nselem);
+        ret = HTMLTableRow_Create(doc, nselem);
     else if(!strcmpW(class_name, wszTEXTAREA))
-        ret = HTMLTextAreaElement_Create(nselem);
+        ret = HTMLTextAreaElement_Create(doc, nselem);
     else if(use_generic)
-        ret = HTMLGenericElement_Create(nselem);
+        ret = HTMLGenericElement_Create(doc, nselem);
 
     if(!ret) {
         ret = heap_alloc_zero(sizeof(HTMLElement));
-        HTMLElement_Init(ret, NULL);
+        HTMLElement_Init(ret, doc, nselem, NULL);
         ret->node.vtbl = &HTMLElementImplVtbl;
     }
 
     TRACE("%s ret %p\n", debugstr_w(class_name), ret);
 
+    nsIDOMElement_Release(nselem);
     nsAString_Finish(&class_name_str);
-
-    ret->nselem = nselem;
-    HTMLDOMNode_Init(doc, &ret->node, (nsIDOMNode*)nselem);
 
     return ret;
 }

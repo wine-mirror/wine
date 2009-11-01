@@ -684,24 +684,24 @@ HTMLDOMNode *HTMLDOMTextNode_Create(HTMLDocumentNode*,nsIDOMNode*);
 
 HTMLElement *HTMLElement_Create(HTMLDocumentNode*,nsIDOMNode*,BOOL);
 HTMLElement *HTMLCommentElement_Create(HTMLDocumentNode*,nsIDOMNode*);
-HTMLElement *HTMLAnchorElement_Create(nsIDOMHTMLElement*);
-HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement*);
-HTMLElement *HTMLIFrame_Create(nsIDOMHTMLElement*);
-HTMLElement *HTMLImgElement_Create(nsIDOMHTMLElement*);
-HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement*);
-HTMLElement *HTMLOptionElement_Create(nsIDOMHTMLElement*);
-HTMLElement *HTMLScriptElement_Create(nsIDOMHTMLElement*);
-HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement*);
-HTMLElement *HTMLTable_Create(nsIDOMHTMLElement*);
-HTMLElement *HTMLTableRow_Create(nsIDOMHTMLElement*);
-HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement*);
-HTMLElement *HTMLGenericElement_Create(nsIDOMHTMLElement*);
+HTMLElement *HTMLAnchorElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
+HTMLElement *HTMLBodyElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
+HTMLElement *HTMLIFrame_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
+HTMLElement *HTMLImgElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
+HTMLElement *HTMLInputElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
+HTMLElement *HTMLOptionElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
+HTMLElement *HTMLScriptElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
+HTMLElement *HTMLSelectElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
+HTMLElement *HTMLTable_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
+HTMLElement *HTMLTableRow_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
+HTMLElement *HTMLTextAreaElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
+HTMLElement *HTMLGenericElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 
 void HTMLDOMNode_Init(HTMLDocumentNode*,HTMLDOMNode*,nsIDOMNode*);
-void HTMLElement_Init(HTMLElement*,dispex_static_data_t*);
+void HTMLElement_Init(HTMLElement*,HTMLDocumentNode*,nsIDOMHTMLElement*,dispex_static_data_t*);
 void HTMLElement2_Init(HTMLElement*);
 void HTMLElement3_Init(HTMLElement*);
-void HTMLTextContainer_Init(HTMLTextContainer*,dispex_static_data_t*);
+void HTMLTextContainer_Init(HTMLTextContainer*,HTMLDocumentNode*,nsIDOMHTMLElement*,dispex_static_data_t*);
 
 HRESULT HTMLDOMNode_QI(HTMLDOMNode*,REFIID,void**);
 void HTMLDOMNode_destructor(HTMLDOMNode*);
