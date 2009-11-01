@@ -648,7 +648,10 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
 
             if(use_nv_clip(gl_info) && ctx->target_version >= NV2)
             {
-                clip_limit = gl_info->limits.clipplanes;
+                if(ctx->cur_vs_args->super.clip_enabled)
+                    clip_limit = gl_info->limits.clipplanes;
+                else
+                    clip_limit = 0;
             }
             else
             {
@@ -2942,9 +2945,12 @@ static void vshader_add_footer(IWineD3DVertexShaderImpl *This, struct wined3d_sh
 
     if(use_nv_clip(gl_info) && priv_ctx->target_version >= NV2)
     {
-        for(i = 0; i < priv_ctx->vs_clipplanes; i++)
+        if(args->super.clip_enabled)
         {
-            shader_addline(buffer, "DP4 result.clip[%u].x, TMP_OUT, state.clip[%u].plane;\n", i, i);
+            for(i = 0; i < priv_ctx->vs_clipplanes; i++)
+            {
+                shader_addline(buffer, "DP4 result.clip[%u].x, TMP_OUT, state.clip[%u].plane;\n", i, i);
+            }
         }
     }
     else if(args->boolclip.clip_texcoord)
@@ -4076,6 +4082,7 @@ static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DPixelShaderImpl *
 static inline BOOL vs_args_equal(const struct arb_vs_compile_args *stored, const struct arb_vs_compile_args *new,
                                  const DWORD use_map, BOOL skip_int) {
     if((stored->super.swizzle_map & use_map) != new->super.swizzle_map) return FALSE;
+    if(stored->super.clip_enabled != new->super.clip_enabled) return FALSE;
     if(stored->super.fog_src != new->super.fog_src) return FALSE;
     if(stored->boolclip_compare != new->boolclip_compare) return FALSE;
     if(stored->ps_signature != new->ps_signature) return FALSE;

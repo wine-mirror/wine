@@ -695,7 +695,8 @@ enum fog_src_type {
 };
 
 struct vs_compile_args {
-    WORD                        fog_src;
+    BYTE                        fog_src;
+    BYTE                        clip_enabled;
     WORD                        swizzle_map;   /* MAX_ATTRIBS, 16 */
 };
 

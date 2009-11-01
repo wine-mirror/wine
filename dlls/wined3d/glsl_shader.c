@@ -855,9 +855,13 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                  * The shader code only uses 0.5, 2.0, 1.0, 128 and -128 in vertex shader code, so one vec4 should be enough
                  * (Unfortunately the Nvidia driver doesn't store 128 and -128 in one float).
                  *
-                 * Writing gl_ClipPos requires one uniform for each clipplane as well.
+                 * Writing gl_ClipVertex requires one uniform for each clipplane as well.
                  */
-                max_constantsF = gl_info->limits.glsl_vs_float_constants - 3 - gl_info->limits.clipplanes;
+                max_constantsF = gl_info->limits.glsl_vs_float_constants - 3;
+                if(ctx_priv->cur_vs_args->clip_enabled)
+                {
+                    max_constantsF -= gl_info->limits.clipplanes;
+                }
                 max_constantsF -= count_bits(This->baseShader.reg_maps.integer_constants);
                 /* Strictly speaking a bool only uses one scalar, but the nvidia(Linux) compiler doesn't pack them properly,
                  * so each scalar requires a full vec4. We could work around this by packing the booleans ourselves, but
@@ -3874,7 +3878,9 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
      */
     shader_addline(buffer, "gl_Position.y = gl_Position.y * posFixup.y;\n");
     shader_addline(buffer, "gl_Position.xy += posFixup.zw * gl_Position.ww;\n");
-    shader_addline(buffer, "gl_ClipVertex = gl_Position;\n");
+    if(args->clip_enabled) {
+        shader_addline(buffer, "gl_ClipVertex = gl_Position;\n");
+    }
 
     /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
      *
@@ -3966,6 +3972,7 @@ static GLhandleARB find_glsl_pshader(const struct wined3d_context *context,
 static inline BOOL vs_args_equal(const struct vs_compile_args *stored, const struct vs_compile_args *new,
                                  const DWORD use_map) {
     if((stored->swizzle_map & use_map) != new->swizzle_map) return FALSE;
+    if((stored->clip_enabled) != new->clip_enabled) return FALSE;
     return stored->fog_src == new->fog_src;
 }
 
