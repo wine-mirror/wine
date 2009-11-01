@@ -246,10 +246,12 @@ static void push_mutation_queue(HTMLDocumentNode *doc, DWORD type, nsISupports *
     if(nsiface)
         nsISupports_AddRef(nsiface);
 
-    if(doc->mutation_queue_tail)
+    if(doc->mutation_queue_tail) {
         doc->mutation_queue_tail = doc->mutation_queue_tail->next = elem;
-    else
+    }else {
         doc->mutation_queue = doc->mutation_queue_tail = elem;
+        add_script_runner(doc);
+    }
 }
 
 static void pop_mutation_queue(HTMLDocumentNode *doc)
@@ -363,8 +365,10 @@ static void handle_end_load(HTMLDocumentNode *This)
 
     TRACE("\n");
 
-    if(This != This->basedoc.doc_obj->basedoc.doc_node)
+    if(This != This->basedoc.doc_obj->basedoc.doc_node) {
+        set_ready_state(This, READYSTATE_INTERACTIVE);
         return;
+    }
 
     task = heap_alloc(sizeof(docobj_task_t));
     if(!task)
@@ -584,7 +588,6 @@ static void NSAPI nsDocumentObserver_EndLoad(nsIDocumentObserver *iface, nsIDocu
 
     This->content_ready = TRUE;
     push_mutation_queue(This, MUTATION_ENDLOAD, NULL);
-    add_script_runner(This);
 }
 
 static void NSAPI nsDocumentObserver_ContentStatesChanged(nsIDocumentObserver *iface, nsIDocument *aDocument,
@@ -646,7 +649,6 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
 
         push_mutation_queue(This, MUTATION_COMMENT, (nsISupports*)nscomment);
         nsIDOMComment_Release(nscomment);
-        add_script_runner(This);
     }
 
     nsres = nsISupports_QueryInterface(aContent, &IID_nsIDOMHTMLIFrameElement, (void**)&nsiframe);
@@ -655,7 +657,6 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
 
         push_mutation_queue(This, MUTATION_IFRAME, (nsISupports*)nsiframe);
         nsIDOMHTMLIFrameElement_Release(nsiframe);
-        add_script_runner(This);
     }
 
     nsres = nsISupports_QueryInterface(aContent, &IID_nsIDOMHTMLFrameElement, (void**)&nsframe);
@@ -664,7 +665,6 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
 
         push_mutation_queue(This, MUTATION_FRAME, (nsISupports*)nsframe);
         nsIDOMHTMLFrameElement_Release(nsframe);
-        add_script_runner(This);
     }
 }
 
@@ -683,7 +683,6 @@ static void NSAPI nsDocumentObserver_DoneAddingChildren(nsIDocumentObserver *ifa
 
         push_mutation_queue(This, MUTATION_SCRIPT, (nsISupports*)nsscript);
         nsIDOMHTMLScriptElement_Release(nsscript);
-        add_script_runner(This);
     }
 }
 
