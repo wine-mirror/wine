@@ -355,7 +355,7 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
 
     /* Free up the resources we've used */
     IMAPIFolder_Release(draft_folder);
-    IMAPIFolder_Release(folder);
+    if (folder) IMAPIFolder_Release(folder);
     IMsgStore_Release(msg_store);
 
 logoff: ;
