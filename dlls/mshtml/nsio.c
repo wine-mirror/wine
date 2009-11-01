@@ -2000,11 +2000,16 @@ static nsresult NSAPI nsURL_GetRef(nsIWineURI *iface, nsACString *aRef)
 static nsresult NSAPI nsURL_SetRef(nsIWineURI *iface, const nsACString *aRef)
 {
     nsURI *This = NSURI_THIS(iface);
+    const char *refa;
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aRef));
 
     if(This->nsurl)
         return nsIURL_SetRef(This->nsurl, aRef);
+
+    nsACString_GetData(aRef, &refa);
+    if(!*refa)
+        return NS_OK;
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
