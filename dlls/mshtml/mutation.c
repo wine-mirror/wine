@@ -259,12 +259,8 @@ static nsresult init_nsdoc_window(HTMLDocumentNode *doc, nsIDOMDocument *nsdoc, 
         HRESULT hres;
 
         hres = HTMLWindow_Create(doc->basedoc.doc_obj, nswindow, doc->basedoc.window, &window);
-        if(SUCCEEDED(hres)) {
-            if(ret)
-                *ret = window;
-            else
-                IHTMLWindow2_Release(HTMLWINDOW2(window));
-        }
+        if(SUCCEEDED(hres))
+            *ret = window;
     }
 
     nsIDOMWindow_Release(nswindow);
@@ -305,6 +301,7 @@ static nsresult init_iframe_window(HTMLDocumentNode *doc, nsISupports *nsunk)
 static nsresult init_frame_window(HTMLDocumentNode *doc, nsISupports *nsunk)
 {
     nsIDOMHTMLFrameElement *nsframe;
+    HTMLWindow *window = NULL;
     nsIDOMDocument *nsdoc;
     nsresult nsres;
 
@@ -321,7 +318,12 @@ static nsresult init_frame_window(HTMLDocumentNode *doc, nsISupports *nsunk)
         return nsres;
     }
 
-    nsres = init_nsdoc_window(doc, nsdoc, NULL);
+    nsres = init_nsdoc_window(doc, nsdoc, &window);
+
+    if(window) {
+        HTMLFrameElement_Create(doc, (nsIDOMHTMLElement*)nsframe, window);
+        IHTMLWindow2_Release(HTMLWINDOW2(window));
+    }
 
     nsIDOMDocument_Release(nsdoc);
     return nsres;

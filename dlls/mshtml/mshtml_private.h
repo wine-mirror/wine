@@ -697,6 +697,7 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode*,nsIDOMNode*,BOOL);
 HTMLElement *HTMLCommentElement_Create(HTMLDocumentNode*,nsIDOMNode*);
 HTMLElement *HTMLAnchorElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLBodyElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
+HTMLElement *HTMLFrameElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLWindow*);
 HTMLElement *HTMLIFrame_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLWindow*);
 HTMLElement *HTMLImgElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLInputElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);

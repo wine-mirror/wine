@@ -278,3 +278,49 @@ void HTMLFrameBase_Init(HTMLFrameBase *This, HTMLDocumentNode *doc, nsIDOMHTMLEl
     }
     This->content_window = content_window;
 }
+
+typedef struct {
+    HTMLFrameBase framebase;
+} HTMLFrameElement;
+
+#define HTMLFRAME_NODE_THIS(iface) DEFINE_THIS2(HTMLFrameElement, framebase.element.node, iface)
+
+static HRESULT HTMLFrameElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+{
+    HTMLFrameElement *This = HTMLFRAME_NODE_THIS(iface);
+
+    return HTMLFrameBase_QI(&This->framebase, riid, ppv);
+}
+
+static void HTMLFrameElement_destructor(HTMLDOMNode *iface)
+{
+    HTMLFrameElement *This = HTMLFRAME_NODE_THIS(iface);
+
+    HTMLFrameBase_destructor(&This->framebase);
+}
+
+#undef HTMLFRAME_NODE_THIS
+
+static const NodeImplVtbl HTMLFrameElementImplVtbl = {
+    HTMLFrameElement_QI,
+    HTMLFrameElement_destructor
+};
+
+HTMLElement *HTMLFrameElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLWindow *content_window)
+{
+    nsIDOMHTMLFrameElement *nsframe;
+    HTMLFrameElement *ret;
+    nsresult nsres;
+
+    ret = heap_alloc_zero(sizeof(HTMLFrameElement));
+
+    ret->framebase.element.node.vtbl = &HTMLFrameElementImplVtbl;
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLFrameElement, (void**)&nsframe);
+    if(NS_FAILED(nsres))
+        ERR("Could not get nsIDOMHTMLFrameElement iface: %08x\n", nsres);
+
+    HTMLFrameBase_Init(&ret->framebase, doc, nselem, content_window, NULL);
+
+    return &ret->framebase.element;
+}
