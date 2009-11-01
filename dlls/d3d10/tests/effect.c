@@ -1113,6 +1113,778 @@ static void test_effect_variable_element(ID3D10Device *device)
     effect->lpVtbl->Release(effect);
 }
 
+/*
+ * test_effect_variable_type_class
+ */
+#if 0
+cbuffer cb <String s = "STRING";>
+{
+    float f;
+    vector <int, 2> i;
+    matrix <uint, 2, 3> u;
+    row_major matrix <bool, 2, 3> b;
+};
+BlendState blend;
+DepthStencilState depthstencil;
+RasterizerState rast;
+SamplerState sam;
+RenderTargetView rtv;
+DepthStencilView dsv;
+Texture1D t1;
+Texture1DArray t1a;
+Texture2D t2;
+Texture2DMS <float4, 4> t2dms;
+Texture2DArray t2a;
+Texture2DMSArray <float4, 4> t2dmsa;
+Texture3D t3;
+TextureCube tq;
+GeometryShader gs[2];
+PixelShader ps;
+VertexShader vs[1];
+#endif
+static DWORD fx_test_evtc[] = {
+0x43425844, 0xc04c50cb, 0x0afeb4ef, 0xbb93f346,
+0x97a29499, 0x00000001, 0x00000659, 0x00000001,
+0x00000024, 0x30315846, 0x0000062d, 0xfeff1001,
+0x00000001, 0x00000004, 0x00000011, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x000003d9,
+0x00000000, 0x00000008, 0x00000001, 0x00000001,
+0x00000001, 0x00000001, 0x00000001, 0x00000001,
+0x00000004, 0x00000000, 0x00000000, 0x53006263,
+0x6e697274, 0x00070067, 0x00020000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00010000,
+0x00730000, 0x49525453, 0x6600474e, 0x74616f6c,
+0x00003300, 0x00000100, 0x00000000, 0x00000400,
+0x00001000, 0x00000400, 0x00090900, 0x69006600,
+0x0032746e, 0x00000057, 0x00000001, 0x00000000,
+0x00000008, 0x00000010, 0x00000008, 0x00001112,
+0x69750069, 0x7832746e, 0x007a0033, 0x00010000,
+0x00000000, 0x00280000, 0x00300000, 0x00180000,
+0x5a1b0000, 0x00750000, 0x6c6f6f62, 0x00337832,
+0x000000a0, 0x00000001, 0x00000000, 0x0000001c,
+0x00000020, 0x00000018, 0x00001a23, 0x6c420062,
+0x53646e65, 0x65746174, 0x0000c600, 0x00000200,
+0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000200, 0x656c6200, 0x4400646e, 0x68747065,
+0x6e657453, 0x536c6963, 0x65746174, 0x0000f300,
+0x00000200, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000300, 0x70656400, 0x74736874,
+0x69636e65, 0x6152006c, 0x72657473, 0x72657a69,
+0x74617453, 0x012e0065, 0x00020000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00040000,
+0x61720000, 0x53007473, 0x6c706d61, 0x74537265,
+0x00657461, 0x0000015f, 0x00000002, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000015,
+0x006d6173, 0x646e6552, 0x61547265, 0x74656772,
+0x77656956, 0x00018c00, 0x00000200, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00001300,
+0x76747200, 0x70654400, 0x74536874, 0x69636e65,
+0x6569566c, 0x01bd0077, 0x00020000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00140000,
+0x73640000, 0x65540076, 0x72757478, 0x00443165,
+0x000001ee, 0x00000002, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x0000000a, 0x54003174,
+0x75747865, 0x44316572, 0x61727241, 0x02170079,
+0x00020000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x000b0000, 0x31740000, 0x65540061,
+0x72757478, 0x00443265, 0x00000246, 0x00000002,
+0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x0000000c, 0x54003274, 0x75747865, 0x44326572,
+0x6f00534d, 0x02000002, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x0e000000, 0x74000000,
+0x736d6432, 0x78655400, 0x65727574, 0x72414432,
+0x00796172, 0x0000029d, 0x00000002, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x0000000d,
+0x00613274, 0x74786554, 0x32657275, 0x41534d44,
+0x79617272, 0x0002cc00, 0x00000200, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000f00,
+0x64327400, 0x0061736d, 0x74786554, 0x33657275,
+0x03000044, 0x00020000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00100000, 0x33740000,
+0x78655400, 0x65727574, 0x65627543, 0x00032900,
+0x00000200, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00001100, 0x00717400, 0x6d6f6547,
+0x79727465, 0x64616853, 0x54007265, 0x02000003,
+0x02000000, 0x00000000, 0x00000000, 0x00000000,
+0x07000000, 0x67000000, 0x69500073, 0x536c6578,
+0x65646168, 0x03820072, 0x00020000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00050000,
+0x73700000, 0x72655600, 0x53786574, 0x65646168,
+0x03ad0072, 0x00020000, 0x00010000, 0x00000000,
+0x00000000, 0x00000000, 0x00060000, 0x73760000,
+0x00000400, 0x00006000, 0x00000000, 0x00000400,
+0xffffff00, 0x000001ff, 0x00002a00, 0x00000e00,
+0x00002c00, 0x00005500, 0x00003900, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00007800, 0x00005c00, 0x00000000, 0x00000400,
+0x00000000, 0x00000000, 0x00000000, 0x00009e00,
+0x00008200, 0x00000000, 0x00001000, 0x00000000,
+0x00000000, 0x00000000, 0x0000c400, 0x0000a800,
+0x00000000, 0x00004000, 0x00000000, 0x00000000,
+0x00000000, 0x0000ed00, 0x0000d100, 0x00000000,
+0xffffff00, 0x000000ff, 0x00000000, 0x00012100,
+0x00010500, 0x00000000, 0xffffff00, 0x000000ff,
+0x00000000, 0x00015a00, 0x00013e00, 0x00000000,
+0xffffff00, 0x000000ff, 0x00000000, 0x00018800,
+0x00016c00, 0x00000000, 0xffffff00, 0x000000ff,
+0x00000000, 0x0001b900, 0x00019d00, 0x00000000,
+0xffffff00, 0x000000ff, 0x0001ea00, 0x0001ce00,
+0x00000000, 0xffffff00, 0x000000ff, 0x00021400,
+0x0001f800, 0x00000000, 0xffffff00, 0x000000ff,
+0x00024200, 0x00022600, 0x00000000, 0xffffff00,
+0x000000ff, 0x00026c00, 0x00025000, 0x00000000,
+0xffffff00, 0x000000ff, 0x00029700, 0x00027b00,
+0x00000000, 0xffffff00, 0x000000ff, 0x0002c800,
+0x0002ac00, 0x00000000, 0xffffff00, 0x000000ff,
+0x0002f900, 0x0002dd00, 0x00000000, 0xffffff00,
+0x000000ff, 0x00032600, 0x00030a00, 0x00000000,
+0xffffff00, 0x000000ff, 0x00035100, 0x00033500,
+0x00000000, 0xffffff00, 0x000000ff, 0x00037f00,
+0x00036300, 0x00000000, 0xffffff00, 0x000000ff,
+0x00000000, 0x00000000, 0x0003aa00, 0x00038e00,
+0x00000000, 0xffffff00, 0x000000ff, 0x00000000,
+0x0003d600, 0x0003ba00, 0x00000000, 0xffffff00,
+0x000000ff, 0x00000000, 0x00000000,
+};
+
+static void test_effect_variable_type_class(ID3D10Device *device)
+{
+    ID3D10Effect *effect;
+    ID3D10EffectConstantBuffer *constantbuffer;
+    ID3D10EffectVariable *variable;
+    ID3D10EffectType *type;
+    D3D10_EFFECT_VARIABLE_DESC vd;
+    D3D10_EFFECT_TYPE_DESC td;
+    HRESULT hr;
+    unsigned int variable_nr = 0;
+
+    hr = D3D10CreateEffectFromMemory(fx_test_evtc, fx_test_evtc[6], 0, device, NULL, &effect);
+    ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
+
+    /* check constantbuffer cb */
+    constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
+    hr = constantbuffer->lpVtbl->GetDesc(constantbuffer, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "cb") == 0, "Name is \"%s\", expected \"cb\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Type is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 1, "Elements is %u, expected 1\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "Members is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = constantbuffer->lpVtbl->GetType(constantbuffer);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "cbuffer") == 0, "TypeName is \"%s\", expected \"cbuffer\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_CBUFFER, "Type is %x, expected %x\n", td.Type, D3D10_SVT_CBUFFER);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 4, "Members is %u, expected 4\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x3c, "PackedSize is %#x, expected 0x3c\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x60, "UnpackedSize is %#x, expected 0x60\n", td.UnpackedSize);
+    ok(td.Stride == 0x60, "Stride is %#x, expected 0x60\n", td.Stride);
+
+    /* check annotation a */
+    variable = constantbuffer->lpVtbl->GetAnnotationByIndex(constantbuffer, 0);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "s") == 0, "Name is \"%s\", expected \"s\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 2, "Flags is %u, expected 2\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "String") == 0, "TypeName is \"%s\", expected \"String\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_STRING, "Type is %x, expected %x\n", td.Type, D3D10_SVT_STRING);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    /* check float f */
+    variable = constantbuffer->lpVtbl->GetMemberByIndex(constantbuffer, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "f") == 0, "Name is \"%s\", expected \"f\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "float") == 0, "TypeName is \"%s\", expected \"float\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_SCALAR, "Class is %x, expected %x\n", td.Class, D3D10_SVC_SCALAR);
+    ok(td.Type == D3D10_SVT_FLOAT, "Type is %x, expected %x\n", td.Type, D3D10_SVT_FLOAT);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 1, "Rows is %u, expected 1\n", td.Rows);
+    ok(td.Columns == 1, "Columns is %u, expected 1\n", td.Columns);
+    ok(td.PackedSize == 0x4, "PackedSize is %#x, expected 0x4\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x4, "UnpackedSize is %#x, expected 0x4\n", td.UnpackedSize);
+    ok(td.Stride == 0x10, "Stride is %#x, expected 0x10\n", td.Stride);
+
+    /* check int2 i */
+    variable = constantbuffer->lpVtbl->GetMemberByIndex(constantbuffer, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "i") == 0, "Name is \"%s\", expected \"i\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 4, "BufferOffset is %u, expected 4\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "int2") == 0, "TypeName is \"%s\", expected \"int2\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_VECTOR, "Class is %x, expected %x\n", td.Class, D3D10_SVC_VECTOR);
+    ok(td.Type == D3D10_SVT_INT, "Type is %x, expected %x\n", td.Type, D3D10_SVT_INT);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 1, "Rows is %u, expected 1\n", td.Rows);
+    ok(td.Columns == 2, "Columns is %u, expected 2\n", td.Columns);
+    ok(td.PackedSize == 0x8, "PackedSize is %#x, expected 0x8\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x8, "UnpackedSize is %#x, expected 0x8\n", td.UnpackedSize);
+    ok(td.Stride == 0x10, "Stride is %#x, expected 0x10\n", td.Stride);
+
+    /* check uint2x3 u */
+    variable = constantbuffer->lpVtbl->GetMemberByIndex(constantbuffer, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "u") == 0, "Name is \"%s\", expected \"u\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 16, "BufferOffset is %u, expected 16\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "uint2x3") == 0, "TypeName is \"%s\", expected \"uint2x3\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_MATRIX_COLUMNS, "Class is %x, expected %x\n", td.Class, D3D10_SVC_MATRIX_COLUMNS);
+    ok(td.Type == D3D10_SVT_UINT, "Type is %x, expected %x\n", td.Type, D3D10_SVT_UINT);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 2, "Rows is %u, expected 2\n", td.Rows);
+    ok(td.Columns == 3, "Columns is %u, expected 3\n", td.Columns);
+    ok(td.PackedSize == 0x18, "PackedSize is %#x, expected 0x18\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x28, "UnpackedSize is %#x, expected 0x28\n", td.UnpackedSize);
+    ok(td.Stride == 0x30, "Stride is %#x, expected 0x30\n", td.Stride);
+
+    /* check bool2x3 b */
+    variable = constantbuffer->lpVtbl->GetMemberByIndex(constantbuffer, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "b") == 0, "Name is \"%s\", expected \"b\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 64, "BufferOffset is %u, expected 64\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "bool2x3") == 0, "TypeName is \"%s\", expected \"bool2x3\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_MATRIX_ROWS, "Class is %x, expected %x\n", td.Class, D3D10_SVC_MATRIX_ROWS);
+    ok(td.Type == D3D10_SVT_BOOL, "Type is %x, expected %x\n", td.Type, D3D10_SVT_BOOL);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 2, "Rows is %u, expected 2\n", td.Rows);
+    ok(td.Columns == 3, "Columns is %u, expected 3\n", td.Columns);
+    ok(td.PackedSize == 0x18, "PackedSize is %#x, expected 0x18\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x1c, "UnpackedSize is %#x, expected 0x1c\n", td.UnpackedSize);
+    ok(td.Stride == 0x20, "Stride is %#x, expected 0x20\n", td.Stride);
+
+    /* check BlendState blend */
+    variable = effect->lpVtbl->GetVariableByIndex(effect, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "blend") == 0, "Name is \"%s\", expected \"blend\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "BlendState") == 0, "TypeName is \"%s\", expected \"BlendState\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_BLEND, "Type is %x, expected %x\n", td.Type, D3D10_SVT_BLEND);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    /* check DepthStencilState depthstencil */
+    variable = effect->lpVtbl->GetVariableByIndex(effect, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "depthstencil") == 0, "Name is \"%s\", expected \"depthstencil\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "DepthStencilState") == 0, "TypeName is \"%s\", expected \"DepthStencilState\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_DEPTHSTENCIL, "Type is %x, expected %x\n", td.Type, D3D10_SVT_DEPTHSTENCIL);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    /* check RasterizerState rast */
+    variable = effect->lpVtbl->GetVariableByIndex(effect, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "rast") == 0, "Name is \"%s\", expected \"rast\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "RasterizerState") == 0, "TypeName is \"%s\", expected \"RasterizerState\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_RASTERIZER, "Type is %x, expected %x\n", td.Type, D3D10_SVT_RASTERIZER);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    /* check SamplerState sam */
+    variable = effect->lpVtbl->GetVariableByIndex(effect, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "sam") == 0, "Name is \"%s\", expected \"sam\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "SamplerState") == 0, "TypeName is \"%s\", expected \"SamplerState\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_SAMPLER, "Type is %x, expected %x\n", td.Type, D3D10_SVT_SAMPLER);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    /* check RenderTargetView rtv */
+    variable = effect->lpVtbl->GetVariableByIndex(effect, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "rtv") == 0, "Name is \"%s\", expected \"rtv\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "RenderTargetView") == 0, "TypeName is \"%s\", expected \"RenderTargetView\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_RENDERTARGETVIEW, "Type is %x, expected %x\n", td.Type, D3D10_SVT_RENDERTARGETVIEW);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    /* check DepthStencilView dsv */
+    variable = effect->lpVtbl->GetVariableByIndex(effect, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "dsv") == 0, "Name is \"%s\", expected \"dsv\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "DepthStencilView") == 0, "TypeName is \"%s\", expected \"DepthStencilView\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_DEPTHSTENCILVIEW, "Type is %x, expected %x\n", td.Type, D3D10_SVT_DEPTHSTENCILVIEW);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    /* check Texture1D t1 */
+    variable = effect->lpVtbl->GetVariableByIndex(effect, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "t1") == 0, "Name is \"%s\", expected \"t1\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "Texture1D") == 0, "TypeName is \"%s\", expected \"Texture1D\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_TEXTURE1D, "Type is %x, expected %x\n", td.Type, D3D10_SVT_TEXTURE1D);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    /* check Texture1DArray t1a */
+    variable = effect->lpVtbl->GetVariableByIndex(effect, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "t1a") == 0, "Name is \"%s\", expected \"t1a\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "Texture1DArray") == 0, "TypeName is \"%s\", expected \"Texture1DArray\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_TEXTURE1DARRAY, "Type is %x, expected %x\n", td.Type, D3D10_SVT_TEXTURE1DARRAY);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    /* check Texture2D t2 */
+    variable = effect->lpVtbl->GetVariableByIndex(effect, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "t2") == 0, "Name is \"%s\", expected \"t2\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "Texture2D") == 0, "TypeName is \"%s\", expected \"Texture2D\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_TEXTURE2D, "Type is %x, expected %x\n", td.Type, D3D10_SVT_TEXTURE2D);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    /* check Texture2DMS t2dms */
+    variable = effect->lpVtbl->GetVariableByIndex(effect, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "t2dms") == 0, "Name is \"%s\", expected \"t2dms\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "Texture2DMS") == 0, "TypeName is \"%s\", expected \"Texture2DMS\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_TEXTURE2DMS, "Type is %x, expected %x\n", td.Type, D3D10_SVT_TEXTURE2DMS);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    /* check Texture2DArray t2a */
+    variable = effect->lpVtbl->GetVariableByIndex(effect, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "t2a") == 0, "Name is \"%s\", expected \"t2a\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "Texture2DArray") == 0, "TypeName is \"%s\", expected \"Texture2DArray\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_TEXTURE2DARRAY, "Type is %x, expected %x\n", td.Type, D3D10_SVT_TEXTURE2DARRAY);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    /* check Texture2DMSArray t2dmsa */
+    variable = effect->lpVtbl->GetVariableByIndex(effect, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "t2dmsa") == 0, "Name is \"%s\", expected \"t2dmsa\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "Texture2DMSArray") == 0, "TypeName is \"%s\", expected \"TTexture2DMSArray\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_TEXTURE2DMSARRAY, "Type is %x, expected %x\n", td.Type, D3D10_SVT_TEXTURE2DMSARRAY);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    /* check Texture3D t3 */
+    variable = effect->lpVtbl->GetVariableByIndex(effect, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "t3") == 0, "Name is \"%s\", expected \"t3\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "Texture3D") == 0, "TypeName is \"%s\", expected \"Texture3D\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_TEXTURE3D, "Type is %x, expected %x\n", td.Type, D3D10_SVT_TEXTURE3D);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    /* check TextureCube tq */
+    variable = effect->lpVtbl->GetVariableByIndex(effect, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "tq") == 0, "Name is \"%s\", expected \"tq\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "TextureCube") == 0, "TypeName is \"%s\", expected \"TextureCube\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_TEXTURECUBE, "Type is %x, expected %x\n", td.Type, D3D10_SVT_TEXTURECUBE);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    /* check GeometryShader gs[2] */
+    variable = effect->lpVtbl->GetVariableByIndex(effect, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "gs") == 0, "Name is \"%s\", expected \"gs\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "GeometryShader") == 0, "TypeName is \"%s\", expected \"GeometryShader\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_GEOMETRYSHADER, "Type is %x, expected %x\n", td.Type, D3D10_SVT_GEOMETRYSHADER);
+    ok(td.Elements == 2, "Elements is %u, expected 2\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    /* check PixelShader ps */
+    variable = effect->lpVtbl->GetVariableByIndex(effect, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "ps") == 0, "Name is \"%s\", expected \"ps\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "PixelShader") == 0, "TypeName is \"%s\", expected \"PixelShader\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_PIXELSHADER, "Type is %x, expected %x\n", td.Type, D3D10_SVT_PIXELSHADER);
+    ok(td.Elements == 0, "Elements is %u, expected 0\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    /* check VertexShader vs[1] */
+    variable = effect->lpVtbl->GetVariableByIndex(effect, variable_nr++);
+    hr = variable->lpVtbl->GetDesc(variable, &vd);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vd.Name, "vs") == 0, "Name is \"%s\", expected \"vs\"\n", vd.Name);
+    ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
+    ok(vd.Flags == 0, "Flags is %u, expected 0\n", vd.Flags);
+    ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
+    ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
+    ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
+
+    type = variable->lpVtbl->GetType(variable);
+    hr = type->lpVtbl->GetDesc(type, &td);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(td.TypeName, "VertexShader") == 0, "TypeName is \"%s\", expected \"VertexShader\"\n", td.TypeName);
+    ok(td.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", td.Class, D3D10_SVC_OBJECT);
+    ok(td.Type == D3D10_SVT_VERTEXSHADER, "Type is %x, expected %x\n", td.Type, D3D10_SVT_VERTEXSHADER);
+    ok(td.Elements == 1, "Elements is %u, expected 1\n", td.Elements);
+    ok(td.Members == 0, "Members is %u, expected 0\n", td.Members);
+    ok(td.Rows == 0, "Rows is %u, expected 0\n", td.Rows);
+    ok(td.Columns == 0, "Columns is %u, expected 0\n", td.Columns);
+    ok(td.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", td.PackedSize);
+    ok(td.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", td.UnpackedSize);
+    ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
+
+    effect->lpVtbl->Release(effect);
+}
+
 START_TEST(effect)
 {
     ID3D10Device *device;
@@ -1129,6 +1901,7 @@ START_TEST(effect)
     test_effect_variable_type(device);
     test_effect_variable_member(device);
     test_effect_variable_element(device);
+    test_effect_variable_type_class(device);
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left\n", refcount);
