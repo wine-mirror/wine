@@ -159,6 +159,7 @@ HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**);
 
 typedef struct HTMLDocumentNode HTMLDocumentNode;
 typedef struct HTMLDocumentObj HTMLDocumentObj;
+typedef struct HTMLFrameBase HTMLFrameBase;
 
 typedef enum {
     SCRIPTMODE_GECKO,
@@ -219,6 +220,7 @@ struct HTMLWindow {
     HTMLDocumentObj *doc_obj;
     nsIDOMWindow *nswindow;
     HTMLWindow *parent;
+    HTMLFrameBase *frame_element;
 
     nsChannelBSC *bscallback;
     IMoniker *mon;
@@ -460,13 +462,13 @@ typedef struct {
     ConnectionPoint cp;
 } HTMLTextContainer;
 
-typedef struct {
+struct HTMLFrameBase {
     HTMLElement element;
 
     const IHTMLFrameBaseVtbl *lpIHTMLFrameBaseVtbl;
 
     HTMLWindow *content_window;
-} HTMLFrameBase;
+};
 
 typedef struct _mutation_queue_t {
     DWORD type;

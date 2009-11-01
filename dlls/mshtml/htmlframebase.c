@@ -257,8 +257,10 @@ HRESULT HTMLFrameBase_QI(HTMLFrameBase *This, REFIID riid, void **ppv)
 
 void HTMLFrameBase_destructor(HTMLFrameBase *This)
 {
-    if(This->content_window)
+    if(This->content_window) {
+        This->content_window->frame_element = NULL;
         IHTMLWindow2_Release(HTMLWINDOW2(This->content_window));
+    }
 
     HTMLElement_destructor(&This->element.node);
 }
@@ -270,7 +272,9 @@ void HTMLFrameBase_Init(HTMLFrameBase *This, HTMLDocumentNode *doc, nsIDOMHTMLEl
 
     HTMLElement_Init(&This->element, doc, nselem, dispex_data);
 
-    if(content_window)
+    if(content_window) {
         IHTMLWindow2_AddRef(HTMLWINDOW2(content_window));
+        content_window->frame_element = This;
+    }
     This->content_window = content_window;
 }

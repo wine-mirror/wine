@@ -246,7 +246,7 @@ static void pop_mutation_queue(HTMLDocumentNode *doc)
     heap_free(tmp);
 }
 
-static nsresult init_nsdoc_window(HTMLDocumentNode *doc, nsIDOMDocument *nsdoc)
+static nsresult init_nsdoc_window(HTMLDocumentNode *doc, nsIDOMDocument *nsdoc, HTMLWindow **ret)
 {
     nsIDOMWindow *nswindow;
 
@@ -259,8 +259,12 @@ static nsresult init_nsdoc_window(HTMLDocumentNode *doc, nsIDOMDocument *nsdoc)
         HRESULT hres;
 
         hres = HTMLWindow_Create(doc->basedoc.doc_obj, nswindow, doc->basedoc.window, &window);
-        if(SUCCEEDED(hres))
-            IHTMLWindow2_Release(HTMLWINDOW2(window));
+        if(SUCCEEDED(hres)) {
+            if(ret)
+                *ret = window;
+            else
+                IHTMLWindow2_Release(HTMLWINDOW2(window));
+        }
     }
 
     nsIDOMWindow_Release(nswindow);
@@ -270,6 +274,7 @@ static nsresult init_nsdoc_window(HTMLDocumentNode *doc, nsIDOMDocument *nsdoc)
 static nsresult init_iframe_window(HTMLDocumentNode *doc, nsISupports *nsunk)
 {
     nsIDOMHTMLIFrameElement *nsiframe;
+    HTMLWindow *window = NULL;
     nsIDOMDocument *nsdoc;
     nsresult nsres;
 
@@ -286,7 +291,12 @@ static nsresult init_iframe_window(HTMLDocumentNode *doc, nsISupports *nsunk)
         return nsres;
     }
 
-    nsres = init_nsdoc_window(doc, nsdoc);
+    nsres = init_nsdoc_window(doc, nsdoc, &window);
+
+    if(window) {
+        HTMLIFrame_Create(doc, (nsIDOMHTMLElement*)nsiframe, window);
+        IHTMLWindow2_Release(HTMLWINDOW2(window));
+    }
 
     nsIDOMDocument_Release(nsdoc);
     return nsres;
@@ -311,7 +321,7 @@ static nsresult init_frame_window(HTMLDocumentNode *doc, nsISupports *nsunk)
         return nsres;
     }
 
-    nsres = init_nsdoc_window(doc, nsdoc);
+    nsres = init_nsdoc_window(doc, nsdoc, NULL);
 
     nsIDOMDocument_Release(nsdoc);
     return nsres;
