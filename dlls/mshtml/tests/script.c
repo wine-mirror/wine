@@ -817,13 +817,13 @@ static HRESULT WINAPI ActiveScriptParse_AddScriptlet(IActiveScriptParse *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT dispex_propput(IDispatchEx *obj, DISPID id, VARIANT *var)
+static HRESULT dispex_propput(IDispatchEx *obj, DISPID id, DWORD flags, VARIANT *var)
 {
     DISPID propput_arg = DISPID_PROPERTYPUT;
     DISPPARAMS dp = {var, &propput_arg, 1, 1};
     EXCEPINFO ei = {0};
 
-    return IDispatchEx_InvokeEx(obj, id, LOCALE_NEUTRAL, DISPATCH_PROPERTYPUT, &dp, NULL, &ei, NULL);
+    return IDispatchEx_InvokeEx(obj, id, LOCALE_NEUTRAL, DISPATCH_PROPERTYPUT|flags, &dp, NULL, &ei, NULL);
 }
 
 static void test_func(IDispatchEx *obj)
@@ -871,7 +871,7 @@ static void test_func(IDispatchEx *obj)
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = 100;
-    hres = dispex_propput(obj, id, &var);
+    hres = dispex_propput(obj, id, 0, &var);
     ok(hres == E_NOTIMPL, "InvokeEx failed: %08x\n", hres);
 
     IDispatchEx_Release(dispex);
@@ -890,7 +890,7 @@ static void test_nextdispid(IDispatchEx *dispex)
     SysFreeString(name);
 
     V_VT(&var) = VT_EMPTY;
-    hres = dispex_propput(dispex, dyn_id, &var);
+    hres = dispex_propput(dispex, dyn_id, 0, &var);
 
     while(last_id != dyn_id) {
         hres = IDispatchEx_GetNextDispID(dispex, fdexEnumAll, last_id, &id);
@@ -976,7 +976,7 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = 100;
-    hres = dispex_propput(document, id, &var);
+    hres = dispex_propput(document, id, 0, &var);
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
 
     tmp = SysAllocString(testW);
@@ -990,7 +990,37 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
     hres = IDispatchEx_InvokeEx(document, id, LOCALE_NEUTRAL, INVOKE_PROPERTYGET, &dp, &var, &ei, NULL);
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
     ok(V_VT(&var) == VT_I4, "V_VT(var)=%d\n", V_VT(&var));
-    ok(V_I4(&var) == 100, "V_I4(&var) == NULL\n");
+    ok(V_I4(&var) == 100, "V_I4(&var) = %d\n", V_I4(&var));
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 200;
+    hres = dispex_propput(document, id, DISPATCH_PROPERTYPUTREF, &var);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+
+    VariantInit(&var);
+    memset(&dp, 0, sizeof(dp));
+    memset(&ei, 0, sizeof(ei));
+    hres = IDispatchEx_InvokeEx(document, id, LOCALE_NEUTRAL, INVOKE_PROPERTYGET, &dp, &var, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_I4, "V_VT(var)=%d\n", V_VT(&var));
+    ok(V_I4(&var) == 200, "V_I4(&var) = %d\n", V_I4(&var));
+
+    memset(&dp, 0, sizeof(dp));
+    memset(&ei, 0, sizeof(ei));
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 300;
+    dp.cArgs = 1;
+    dp.rgvarg = &var;
+    hres = IDispatchEx_InvokeEx(document, id, LOCALE_NEUTRAL, INVOKE_PROPERTYPUT, &dp, NULL, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+
+    VariantInit(&var);
+    memset(&dp, 0, sizeof(dp));
+    memset(&ei, 0, sizeof(ei));
+    hres = IDispatchEx_InvokeEx(document, id, LOCALE_NEUTRAL, INVOKE_PROPERTYGET, &dp, &var, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_I4, "V_VT(var)=%d\n", V_VT(&var));
+    ok(V_I4(&var) == 300, "V_I4(&var) = %d\n", V_I4(&var));
 
     unk = (void*)0xdeadbeef;
     hres = IDispatchEx_GetNameSpaceParent(window_dispex, &unk);

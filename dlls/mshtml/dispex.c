@@ -870,7 +870,15 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         }
         case DISPATCH_PROPERTYGET:
             return VariantCopy(pvarRes, var);
+        case DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYPUTREF:
         case DISPATCH_PROPERTYPUT:
+            if(pdp->cArgs != 1 || (pdp->cNamedArgs == 1 && *pdp->rgdispidNamedArgs != DISPID_PROPERTYPUT)
+               || pdp->cNamedArgs > 1) {
+                FIXME("invalid args\n");
+                return E_INVALIDARG;
+            }
+
+            TRACE("put %s\n", debugstr_variant(pdp->rgvarg));
             VariantClear(var);
             return VariantCopy(var, pdp->rgvarg);
         default:
