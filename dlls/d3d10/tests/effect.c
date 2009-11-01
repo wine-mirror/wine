@@ -1339,7 +1339,7 @@ static void check_as(ID3D10EffectVariable *variable)
 static void test_effect_variable_type_class(ID3D10Device *device)
 {
     ID3D10Effect *effect;
-    ID3D10EffectConstantBuffer *constantbuffer;
+    ID3D10EffectConstantBuffer *constantbuffer, *null_buffer, *parent;
     ID3D10EffectVariable *variable;
     ID3D10EffectType *type;
     D3D10_EFFECT_VARIABLE_DESC vd;
@@ -1349,6 +1349,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
 
     hr = D3D10CreateEffectFromMemory(fx_test_evtc, fx_test_evtc[6], 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
+
+    /* get the null_constantbuffer, so that we can compare it to variables->GetParentConstantBuffer */
+    null_buffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 1);
 
     /* check constantbuffer cb */
     constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
@@ -1363,6 +1366,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
     check_as((ID3D10EffectVariable *)constantbuffer);
+
+    parent = constantbuffer->lpVtbl->GetParentConstantBuffer(constantbuffer);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
 
     type = constantbuffer->lpVtbl->GetType(constantbuffer);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1393,6 +1399,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
 
     check_as((ID3D10EffectVariable *)variable);
 
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1421,6 +1430,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
     check_as((ID3D10EffectVariable *)variable);
+
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(constantbuffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, constantbuffer);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1451,6 +1463,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
 
     check_as((ID3D10EffectVariable *)variable);
 
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(constantbuffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, constantbuffer);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1479,6 +1494,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
     check_as((ID3D10EffectVariable *)variable);
+
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(constantbuffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, constantbuffer);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1509,6 +1527,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
 
     check_as((ID3D10EffectVariable *)variable);
 
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(constantbuffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, constantbuffer);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1537,6 +1558,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
     check_as((ID3D10EffectVariable *)variable);
+
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1567,6 +1591,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
 
     check_as((ID3D10EffectVariable *)variable);
 
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1595,6 +1622,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
     check_as((ID3D10EffectVariable *)variable);
+
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1625,6 +1655,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
 
     check_as((ID3D10EffectVariable *)variable);
 
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1653,6 +1686,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
     check_as((ID3D10EffectVariable *)variable);
+
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1683,6 +1719,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
 
     check_as((ID3D10EffectVariable *)variable);
 
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1711,6 +1750,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
     check_as((ID3D10EffectVariable *)variable);
+
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1741,6 +1783,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
 
     check_as((ID3D10EffectVariable *)variable);
 
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1769,6 +1814,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
     check_as((ID3D10EffectVariable *)variable);
+
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1799,6 +1847,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
 
     check_as((ID3D10EffectVariable *)variable);
 
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1827,6 +1878,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
     check_as((ID3D10EffectVariable *)variable);
+
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1857,6 +1911,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
 
     check_as((ID3D10EffectVariable *)variable);
 
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1885,6 +1942,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
     check_as((ID3D10EffectVariable *)variable);
+
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1915,6 +1975,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
 
     check_as((ID3D10EffectVariable *)variable);
 
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -1943,6 +2006,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
     check_as((ID3D10EffectVariable *)variable);
+
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
@@ -1973,6 +2039,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
 
     check_as((ID3D10EffectVariable *)variable);
 
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
+
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
     ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -2001,6 +2070,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
     check_as((ID3D10EffectVariable *)variable);
+
+    parent = variable->lpVtbl->GetParentConstantBuffer(variable);
+    ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
 
     type = variable->lpVtbl->GetType(variable);
     hr = type->lpVtbl->GetDesc(type, &td);
