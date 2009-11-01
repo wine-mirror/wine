@@ -190,8 +190,7 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
         }
     }
 
-    This->doc_obj->readystate = READYSTATE_LOADING;
-    call_property_onchanged(&This->cp_propnotif, DISPID_READYSTATE);
+    set_ready_state(This->window, READYSTATE_LOADING);
     update_doc(This, UPDATE_TITLE);
 
     HTMLDocument_LockContainer(This->doc_obj, TRUE);
@@ -272,6 +271,13 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
     if(bind_complete)
         *bind_complete = FALSE;
     return S_OK;
+}
+
+void set_ready_state(HTMLWindow *window, READYSTATE readystate)
+{
+    window->doc_obj->readystate = readystate;
+    if(window->doc_obj->basedoc.window == window)
+        call_property_onchanged(&window->doc_obj->basedoc.cp_propnotif, DISPID_READYSTATE);
 }
 
 static HRESULT get_doc_string(HTMLDocumentNode *This, char **str)

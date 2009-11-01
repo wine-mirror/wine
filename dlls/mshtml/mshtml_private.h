@@ -684,6 +684,7 @@ void channelbsc_set_channel(nsChannelBSC*,nsChannel*,nsIStreamListener*,nsISuppo
 IMoniker *get_channelbsc_mon(nsChannelBSC*);
 
 void parse_complete(HTMLDocumentObj*);
+void set_ready_state(HTMLWindow*,READYSTATE);
 
 HRESULT HTMLSelectionObject_Create(HTMLDocumentNode*,nsISelection*,IHTMLSelectionObject**);
 HRESULT HTMLTxtRange_Create(HTMLDocumentNode*,nsIDOMRange*,IHTMLTxtRange**);

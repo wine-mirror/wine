@@ -237,8 +237,7 @@ void parse_complete(HTMLDocumentObj *doc)
 
     /* FIXME: IE7 calls EnableModelless(TRUE), EnableModelless(FALSE) and sets interactive state here */
 
-    doc->readystate = READYSTATE_INTERACTIVE;
-    call_property_onchanged(&doc->basedoc.cp_propnotif, DISPID_READYSTATE);
+    set_ready_state(doc->basedoc.window, READYSTATE_INTERACTIVE);
 
     if(doc->client)
         IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
@@ -263,8 +262,7 @@ void parse_complete(HTMLDocumentObj *doc)
         IOleCommandTarget_Release(olecmd);
     }
 
-    doc->readystate = READYSTATE_COMPLETE;
-    call_property_onchanged(&doc->basedoc.cp_propnotif, DISPID_READYSTATE);
+    set_ready_state(doc->basedoc.window, READYSTATE_COMPLETE);
 
     if(doc->frame) {
         static const WCHAR wszDone[] = {'D','o','n','e',0};
