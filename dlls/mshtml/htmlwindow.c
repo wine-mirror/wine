@@ -1562,7 +1562,7 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
 
     window->window_ref = heap_alloc(sizeof(windowref_t));
     if(!window->window_ref) {
-        heap_free(window->window_ref);
+        heap_free(window);
         return E_OUTOFMEMORY;
     }
 
