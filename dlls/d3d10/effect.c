@@ -921,11 +921,12 @@ static HRESULT parse_fx10_pass(struct d3d10_effect_pass *p, const char **ptr, co
         return E_OUTOFMEMORY;
     }
 
-    for(i = 0; i < p->annotation_count; ++i)
+    for (i = 0; i < p->annotation_count; ++i)
     {
         struct d3d10_effect_variable *a = &p->annotations[i];
 
         a->effect = p->technique->effect;
+        a->buffer = &null_local_buffer;
 
         hr = parse_fx10_annotation(a, ptr, data);
         if (FAILED(hr)) return hr;
@@ -980,11 +981,12 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
         return E_OUTOFMEMORY;
     }
 
-    for(i = 0; i < t->annotation_count; ++i)
+    for (i = 0; i < t->annotation_count; ++i)
     {
         struct d3d10_effect_variable *a = &t->annotations[i];
 
         a->effect = t->effect;
+        a->buffer = &null_local_buffer;
 
         hr = parse_fx10_annotation(a, ptr, data);
         if (FAILED(hr)) return hr;
@@ -1053,6 +1055,7 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
         struct d3d10_effect_variable *a = &v->annotations[i];
 
         a->effect = v->effect;
+        a->buffer = &null_local_buffer;
 
         hr = parse_fx10_annotation(a, ptr, data);
         if (FAILED(hr)) return hr;
@@ -1142,6 +1145,7 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
         struct d3d10_effect_variable *a = &v->annotations[i];
 
         a->effect = v->effect;
+        a->buffer = &null_local_buffer;
 
         hr = parse_fx10_annotation(a, ptr, data);
         if (FAILED(hr)) return hr;
@@ -1225,11 +1229,12 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_variable *l, const ch
         return E_OUTOFMEMORY;
     }
 
-    for(i = 0; i < l->annotation_count; ++i)
+    for (i = 0; i < l->annotation_count; ++i)
     {
         struct d3d10_effect_variable *a = &l->annotations[i];
 
         a->effect = l->effect;
+        a->buffer = &null_local_buffer;
 
         hr = parse_fx10_annotation(a, ptr, data);
         if (FAILED(hr)) return hr;
@@ -1443,6 +1448,7 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
 
         v->effect = e;
         v->vtbl = &d3d10_effect_variable_vtbl;
+        v->buffer = &null_local_buffer;
 
         hr = parse_fx10_local_variable(v, &ptr, data);
         if (FAILED(hr)) return hr;
