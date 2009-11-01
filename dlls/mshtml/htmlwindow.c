@@ -1648,6 +1648,7 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
     }
 
     window->scriptmode = parent ? parent->scriptmode : SCRIPTMODE_GECKO;
+    window->readystate = READYSTATE_UNINITIALIZED;
     list_init(&window->script_hosts);
 
     window->task_magic = get_task_target_magic();

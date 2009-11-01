@@ -455,7 +455,7 @@ static HRESULT WINAPI HTMLDocument_get_readyState(IHTMLDocument2 *iface, BSTR *p
     if(!p)
         return E_POINTER;
 
-    *p = SysAllocString(readystate_str[This->doc_obj->readystate]);
+    *p = SysAllocString(readystate_str[This->window->readystate]);
     return S_OK;
 }
 
@@ -1503,7 +1503,7 @@ static HRESULT WINAPI DocDispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMemb
             return E_INVALIDARG;
 
         V_VT(pVarResult) = VT_I4;
-        V_I4(pVarResult) = This->doc_obj->readystate;
+        V_I4(pVarResult) = This->window->readystate;
         return S_OK;
     }
 
@@ -1978,7 +1978,6 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     doc->basedoc.doc_obj = doc;
 
     doc->usermode = UNKNOWN_USERMODE;
-    doc->readystate = READYSTATE_UNINITIALIZED;
 
     doc->nscontainer = NSContainer_Create(doc, NULL);
     if(!doc->nscontainer) {

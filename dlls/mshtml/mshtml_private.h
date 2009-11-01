@@ -227,6 +227,7 @@ struct HTMLWindow {
     nsIDOMWindow *nswindow;
     HTMLWindow *parent;
     HTMLFrameBase *frame_element;
+    READYSTATE readystate;
 
     nsChannelBSC *bscallback;
     IMoniker *mon;
@@ -366,7 +367,6 @@ struct HTMLDocumentObj {
     BOOL focus;
 
     USERMODE usermode;
-    READYSTATE readystate;
     LPWSTR mime;
 
     DWORD update;

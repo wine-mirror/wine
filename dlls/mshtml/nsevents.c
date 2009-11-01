@@ -123,7 +123,7 @@ static nsresult NSAPI handle_blur(nsIDOMEventListener *iface, nsIDOMEvent *event
 
     TRACE("(%p)\n", doc);
 
-    if(!doc)
+    if(!doc || !doc->basedoc.doc_obj)
         return NS_ERROR_FAILURE;
     doc_obj = doc->basedoc.doc_obj;
 
@@ -194,6 +194,9 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
 
     if(doc_obj->usermode == EDITMODE)
         handle_edit_load(&doc_obj->basedoc);
+
+    if(doc->basedoc.window->readystate != READYSTATE_COMPLETE)
+        set_ready_state(doc->basedoc.window, READYSTATE_COMPLETE);
 
     if(!doc->nsdoc) {
         ERR("NULL nsdoc\n");
