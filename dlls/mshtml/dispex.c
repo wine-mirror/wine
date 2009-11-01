@@ -390,6 +390,9 @@ static HRESULT get_dynamic_prop(DispatchEx *This, const WCHAR *name, DWORD flags
         }
     }
 
+    if(!alloc)
+        return DISP_E_UNKNOWNNAME;
+
     TRACE("creating dynamic prop %s\n", debugstr_w(name));
 
     if(!data->buf_size) {
