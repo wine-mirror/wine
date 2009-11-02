@@ -2047,7 +2047,8 @@ static void test_LookupAccountName(void)
         domain = HeapAlloc(GetProcessHeap(), 0, domain_size);
         ret = LookupAccountNameA(NULL, computer_name, psid, &sid_size, domain, &domain_size, &sid_use);
         ok(ret, "LookupAccountNameA failed: %d\n", GetLastError());
-        ok(sid_use == SidTypeDomain, "expected SidTypeDomain, got %d\n", sid_use);
+        ok(sid_use == SidTypeDomain ||
+           (sid_use == SidTypeUser && ! strcmp(computer_name, user_name)), "expected SidTypeDomain for %s, got %d\n", computer_name, sid_use);
         HeapFree(GetProcessHeap(), 0, domain);
         HeapFree(GetProcessHeap(), 0, psid);
     }
