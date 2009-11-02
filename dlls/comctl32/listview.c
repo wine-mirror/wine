@@ -249,7 +249,9 @@ typedef struct tagLISTVIEW_INFO
   BOOL bRButtonDown;
   BOOL bDragging;
   BOOL bMarqueeSelect;       /* marquee selection/highlight underway */
-  RECT marqueeRect;
+  RECT marqueeRect;         /* absolute coordinates of marquee selection */
+  RECT marqueeDrawRect;     /* relative coordinates for drawing marquee */
+  POINT marqueeOrigin;      /* absolute coordinates of marquee click origin */
   POINT ptClickPos;         /* point where the user clicked */ 
   BOOL bNoItemMetrics;		/* flags if item metrics are not yet computed */
   INT nItemHeight;
@@ -3595,6 +3597,103 @@ static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, I
 
 /***
  * DESCRIPTION:
+ * Utility routine to draw and highlight items within a marquee selection rectangle.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr     : valid pointer to the listview structure
+ * [I] coords_orig : original co-ordinates of the cursor
+ * [I] coords_offs : offsetted coordinates of the cursor
+ * [I] offset      : offset amount
+ * [I] scroll      : Bitmask of which directions we should scroll, if at all
+ *
+ * RETURN:
+ *   None.
+ */
+static void LISTVIEW_MarqueeHighlight(LISTVIEW_INFO *infoPtr, LPPOINT coords_orig, LPPOINT coords_offs, LPPOINT offset, INT scroll)
+{
+    BOOL controlDown = FALSE;
+    LVITEMW item;
+    ITERATOR i;
+    RECT rect;
+
+    if (coords_offs->x > infoPtr->marqueeOrigin.x)
+    {
+        rect.left = infoPtr->marqueeOrigin.x;
+        rect.right = coords_offs->x;
+    }
+    else
+    {
+        rect.left = coords_offs->x;
+        rect.right = infoPtr->marqueeOrigin.x;
+    }
+
+    if (coords_offs->y > infoPtr->marqueeOrigin.y)
+    {
+        rect.top = infoPtr->marqueeOrigin.y;
+        rect.bottom = coords_offs->y;
+    }
+    else
+    {
+        rect.top = coords_offs->y;
+        rect.bottom = infoPtr->marqueeOrigin.y;
+    }
+
+    /* Cancel out the old marquee rectangle and draw the new one */
+    LISTVIEW_InvalidateRect(infoPtr, &infoPtr->marqueeDrawRect);
+
+    /* Invert the items in the old marquee rectangle */
+    iterator_frameditems_absolute(&i, infoPtr, &infoPtr->marqueeRect);
+
+    while (iterator_next(&i))
+    {
+        if (i.nItem > -1)
+        {
+            if (LISTVIEW_GetItemState(infoPtr, i.nItem, LVIS_SELECTED) == LVIS_SELECTED)
+                item.state = 0;
+            else
+                item.state = LVIS_SELECTED;
+
+            item.stateMask = LVIS_SELECTED;
+
+            LISTVIEW_SetItemState(infoPtr, i.nItem, &item);
+        }
+    }
+
+    iterator_destroy(&i);
+
+    CopyRect(&infoPtr->marqueeRect, &rect);
+
+    CopyRect(&infoPtr->marqueeDrawRect, &rect);
+    OffsetRect(&infoPtr->marqueeDrawRect, offset->x, offset->y);
+
+    /* Iterate over the items within our marquee rectangle */
+    iterator_frameditems_absolute(&i, infoPtr, &infoPtr->marqueeRect);
+
+    if (GetKeyState(VK_CONTROL) & 0x8000)
+        controlDown = TRUE;
+
+    while (iterator_next(&i))
+    {
+        if (i.nItem > -1)
+        {
+            /* If CTRL is pressed, invert. If not, always select the item. */
+            if ((controlDown) && (LISTVIEW_GetItemState(infoPtr, i.nItem, LVIS_SELECTED)))
+                item.state = 0;
+            else
+                item.state = LVIS_SELECTED;
+
+            item.stateMask = LVIS_SELECTED;
+
+            LISTVIEW_SetItemState(infoPtr, i.nItem, &item);
+        }
+    }
+
+    iterator_destroy(&i);
+    LISTVIEW_InvalidateRect(infoPtr, &rect);
+}
+
+/***
+ * DESCRIPTION:
  * Called whenever WM_MOUSEMOVE is received.
  *
  * PARAMETER(S):
@@ -3620,93 +3719,27 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
         WORD wDragWidth = GetSystemMetrics(SM_CXDRAG);
         WORD wDragHeight= GetSystemMetrics(SM_CYDRAG);
 
-        /* Ensure coordinates are within client bounds */
-        if (x < 0)
-            x = 0;
-
-        if (y < 0)
-            y = 0;
-
-        if (x > infoPtr->rcList.right)
-            x = infoPtr->rcList.right;
-
-        if (y > infoPtr->rcList.bottom)
-            y = infoPtr->rcList.bottom;
-
         if (infoPtr->bMarqueeSelect)
         {
-            LVITEMW item;
-            ITERATOR i;
+            POINT coords_orig;
+            POINT coords_offs;
+            POINT offset;
 
-            if (x > infoPtr->ptClickPos.x)
-            {
-                rect.left = infoPtr->ptClickPos.x;
-                rect.right = x;
-            }
-            else
-            {
-                rect.left = x;
-                rect.right = infoPtr->ptClickPos.x;
-            }
+            coords_orig.x = x;
+            coords_orig.y = y;
 
-            if (y > infoPtr->ptClickPos.y)
-            {
-                rect.top = infoPtr->ptClickPos.y;
-                rect.bottom = y;
-            }
-            else
-            {
-                rect.top = y;
-                rect.bottom = infoPtr->ptClickPos.y;
-            }
+            /* Get offset */
+            LISTVIEW_GetOrigin(infoPtr, &offset);
 
-            /* Cancel out the old marquee rectangle and draw the new one */
-            LISTVIEW_InvalidateRect(infoPtr, &infoPtr->marqueeRect);
+            /* Ensure coordinates are within client bounds */
+            coords_offs.x = max(min(x, infoPtr->rcList.right), 0);
+            coords_offs.y = max(min(y, infoPtr->rcList.bottom), 0);
 
-            /* Invert the items in the old marquee rectangle */
-            iterator_frameditems(&i, infoPtr, &infoPtr->marqueeRect);
+            /* Offset coordinates by the appropriate amount */
+            coords_offs.x -= offset.x;
+            coords_offs.y -= offset.y;
 
-            while (iterator_next(&i))
-            {
-                if (i.nItem > -1)
-                {
-                    if (LISTVIEW_GetItemState(infoPtr, i.nItem, LVIS_SELECTED) == LVIS_SELECTED)
-                        item.state = 0;
-                    else
-                        item.state = LVIS_SELECTED;
-
-                    item.stateMask = LVIS_SELECTED;
-
-                    LISTVIEW_SetItemState(infoPtr, i.nItem, &item);
-                }
-            }
-
-            iterator_destroy(&i);
-
-            CopyRect(&infoPtr->marqueeRect, &rect);
-
-            /* Iterate over the items within our marquee rectangle */
-            iterator_frameditems(&i, infoPtr, &rect);
-
-            while (iterator_next(&i))
-            {
-                if (i.nItem > -1)
-                {
-                    /* If CTRL is pressed, invert. If not, always select the item. */
-                    if ((fwKeys & MK_CONTROL) && (LISTVIEW_GetItemState(infoPtr, i.nItem, LVIS_SELECTED)))
-                        item.state = 0;
-                    else
-                        item.state = LVIS_SELECTED;
-
-                    item.stateMask = LVIS_SELECTED;
-
-                    LISTVIEW_SetItemState(infoPtr, i.nItem, &item);
-                }
-            }
-
-            iterator_destroy(&i);
-
-            LISTVIEW_InvalidateRect(infoPtr, &rect);
+            LISTVIEW_MarqueeHighlight(infoPtr, &coords_orig, &coords_offs, &offset, 0);
             return 0;
         }
 
@@ -3758,6 +3791,14 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
                        If return value is non-zero, cancel. */
                     if (!(infoPtr->dwStyle & LVS_SINGLESEL) && (notify_hdr(infoPtr, LVN_MARQUEEBEGIN, &hdr) == 0))
                     {
+                        /* Store the absolute coordinates of the click */
+                        POINT offset;
+                        LISTVIEW_GetOrigin(infoPtr, &offset);
+
+                        infoPtr->marqueeOrigin.x = infoPtr->ptClickPos.x - offset.x;
+                        infoPtr->marqueeOrigin.y = infoPtr->ptClickPos.y - offset.y;
+
+                        /* Begin selection and capture mouse */
                         infoPtr->bMarqueeSelect = TRUE;
                         SetCapture(infoPtr->hwndSelf);
                     }
@@ -4767,7 +4808,7 @@ enddraw:
 
     /* Draw marquee rectangle if appropriate */
     if (infoPtr->bMarqueeSelect)
-        DrawFocusRect(hdc, &infoPtr->marqueeRect);
+        DrawFocusRect(hdc, &infoPtr->marqueeDrawRect);
 
     if (cdmode & CDRF_NOTIFYPOSTPAINT)
 	notify_postpaint(infoPtr, &nmlvcd);
@@ -9621,14 +9662,17 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT 
         /* Remove the marquee rectangle and release our mouse capture */
         if (infoPtr->bMarqueeSelect)
         {
-            LISTVIEW_InvalidateRect(infoPtr, &infoPtr->marqueeRect);
+            LISTVIEW_InvalidateRect(infoPtr, &infoPtr->marqueeDrawRect);
             ReleaseCapture();
         }
 
         SetRect(&infoPtr->marqueeRect, 0, 0, 0, 0);
+        SetRect(&infoPtr->marqueeDrawRect, 0, 0, 0, 0);
 
         infoPtr->bDragging = FALSE;
         infoPtr->bMarqueeSelect = FALSE;
+
+        KillTimer(infoPtr->hwndSelf, (UINT_PTR) infoPtr);
         return 0;
     }
 
