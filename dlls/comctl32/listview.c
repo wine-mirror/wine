@@ -1268,20 +1268,17 @@ static inline BOOL iterator_rangesitems(ITERATOR* i, RANGES ranges)
 }
 
 /***
- * Creates an iterator over the items which intersect lprc.
+ * Creates an iterator over the items which intersect frame.
+ * Uses absolute coordinates rather than compensating for the current offset.
  */
-static BOOL iterator_frameditems(ITERATOR* i, const LISTVIEW_INFO* infoPtr, const RECT *lprc)
+static BOOL iterator_frameditems_absolute(ITERATOR* i, const LISTVIEW_INFO* infoPtr, const RECT *frame)
 {
-    RECT frame = *lprc, rcItem, rcTemp;
-    POINT Origin;
+    RECT rcItem, rcTemp;
     
     /* in case we fail, we want to return an empty iterator */
     if (!iterator_empty(i)) return FALSE;
 
-    LISTVIEW_GetOrigin(infoPtr, &Origin);
-
-    TRACE("(lprc=%s)\n", wine_dbgstr_rect(lprc));
-    OffsetRect(&frame, -Origin.x, -Origin.y);
+    TRACE("(frame=%s)\n", wine_dbgstr_rect(frame));
 
     if (infoPtr->uView == LV_VIEW_ICON || infoPtr->uView == LV_VIEW_SMALLICON)
     {
@@ -1290,7 +1287,7 @@ static BOOL iterator_frameditems(ITERATOR* i, const LISTVIEW_INFO* infoPtr, cons
 	if (infoPtr->uView == LV_VIEW_ICON && infoPtr->nFocusedItem != -1)
 	{
 	    LISTVIEW_GetItemBox(infoPtr, infoPtr->nFocusedItem, &rcItem);
-	    if (IntersectRect(&rcTemp, &rcItem, lprc))
+	    if (IntersectRect(&rcTemp, &rcItem, frame))
 		i->nSpecial = infoPtr->nFocusedItem;
 	}
 	if (!(iterator_rangesitems(i, ranges_create(50)))) return FALSE;
@@ -1302,7 +1299,7 @@ static BOOL iterator_frameditems(ITERATOR* i, const LISTVIEW_INFO* infoPtr, cons
 	    rcItem.top = (LONG_PTR)DPA_GetPtr(infoPtr->hdpaPosY, nItem);
 	    rcItem.right = rcItem.left + infoPtr->nItemWidth;
 	    rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
-	    if (IntersectRect(&rcTemp, &rcItem, &frame))
+	    if (IntersectRect(&rcTemp, &rcItem, frame))
 		ranges_additem(i->ranges, nItem);
 	}
 	return TRUE;
@@ -1311,11 +1308,11 @@ static BOOL iterator_frameditems(ITERATOR* i, const LISTVIEW_INFO* infoPtr, cons
     {
 	RANGE range;
 	
-	if (frame.left >= infoPtr->nItemWidth) return TRUE;
-	if (frame.top >= infoPtr->nItemHeight * infoPtr->nItemCount) return TRUE;
+	if (frame->left >= infoPtr->nItemWidth) return TRUE;
+	if (frame->top >= infoPtr->nItemHeight * infoPtr->nItemCount) return TRUE;
 	
-	range.lower = max(frame.top / infoPtr->nItemHeight, 0);
-	range.upper = min((frame.bottom - 1) / infoPtr->nItemHeight, infoPtr->nItemCount - 1) + 1;
+	range.lower = max(frame->top / infoPtr->nItemHeight, 0);
+	range.upper = min((frame->bottom - 1) / infoPtr->nItemHeight, infoPtr->nItemCount - 1) + 1;
 	if (range.upper <= range.lower) return TRUE;
 	if (!iterator_rangeitems(i, range)) return FALSE;
 	TRACE("    report=%s\n", debugrange(&i->range));
@@ -1323,8 +1320,8 @@ static BOOL iterator_frameditems(ITERATOR* i, const LISTVIEW_INFO* infoPtr, cons
     else
     {
 	INT nPerCol = max((infoPtr->rcList.bottom - infoPtr->rcList.top) / infoPtr->nItemHeight, 1);
-	INT nFirstRow = max(frame.top / infoPtr->nItemHeight, 0);
-	INT nLastRow = min((frame.bottom - 1) / infoPtr->nItemHeight, nPerCol - 1);
+	INT nFirstRow = max(frame->top / infoPtr->nItemHeight, 0);
+	INT nLastRow = min((frame->bottom - 1) / infoPtr->nItemHeight, nPerCol - 1);
 	INT nFirstCol;
 	INT nLastCol;
 	INT lower;
@@ -1333,13 +1330,13 @@ static BOOL iterator_frameditems(ITERATOR* i, const LISTVIEW_INFO* infoPtr, cons
 
 	if (infoPtr->nItemWidth)
 	{
-	    nFirstCol = max(frame.left / infoPtr->nItemWidth, 0);
-            nLastCol  = min((frame.right - 1) / infoPtr->nItemWidth, (infoPtr->nItemCount + nPerCol - 1) / nPerCol);
+	    nFirstCol = max(frame->left / infoPtr->nItemWidth, 0);
+            nLastCol  = min((frame->right - 1) / infoPtr->nItemWidth, (infoPtr->nItemCount + nPerCol - 1) / nPerCol);
 	}
 	else
 	{
-	    nFirstCol = max(frame.left, 0);
-            nLastCol  = min(frame.right - 1, (infoPtr->nItemCount + nPerCol - 1) / nPerCol);
+	    nFirstCol = max(frame->left, 0);
+            nLastCol  = min(frame->right - 1, (infoPtr->nItemCount + nPerCol - 1) / nPerCol);
 	}
 
 	lower = nFirstCol * nPerCol + nFirstRow;
@@ -1362,6 +1359,22 @@ static BOOL iterator_frameditems(ITERATOR* i, const LISTVIEW_INFO* infoPtr, cons
     }
 
     return TRUE;
+}
+
+/***
+ * Creates an iterator over the items which intersect lprc.
+ */
+static BOOL iterator_frameditems(ITERATOR* i, const LISTVIEW_INFO* infoPtr, const RECT *lprc)
+{
+    RECT frame = *lprc;
+    POINT Origin;
+
+    TRACE("(lprc=%s)\n", wine_dbgstr_rect(lprc));
+
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
+    OffsetRect(&frame, -Origin.x, -Origin.y);
+
+    return iterator_frameditems_absolute(i, infoPtr, &frame);
 }
 
 /***
