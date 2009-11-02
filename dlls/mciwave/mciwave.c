@@ -85,9 +85,6 @@ static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
     TRACE("In thread after async command (%08x,%08lx,%08lx)\n",
 	  sca->wDevID, sca->dwParam1, sca->dwParam2);
     HeapFree(GetProcessHeap(), 0, sca);
-    ExitThread(ret);
-    WARN("Should not happen ? what's wrong\n");
-    /* should not go after this point */
     return ret;
 }
 
