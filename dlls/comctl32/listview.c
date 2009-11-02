@@ -249,6 +249,7 @@ typedef struct tagLISTVIEW_INFO
   BOOL bRButtonDown;
   BOOL bDragging;
   BOOL bMarqueeSelect;       /* marquee selection/highlight underway */
+  BOOL bScrolling;
   RECT marqueeRect;         /* absolute coordinates of marquee selection */
   RECT marqueeDrawRect;     /* relative coordinates for drawing marquee */
   POINT marqueeOrigin;      /* absolute coordinates of marquee click origin */
@@ -434,6 +435,7 @@ static HWND CreateEditLabelT(LISTVIEW_INFO *, LPCWSTR, DWORD, BOOL);
 static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *, INT, HIMAGELIST);
 static INT LISTVIEW_HitTest(const LISTVIEW_INFO *, LPLVHITTESTINFO, BOOL, BOOL);
 static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *, BOOL, BOOL);
+static BOOL LISTVIEW_Scroll(LISTVIEW_INFO *, INT, INT);
 
 /******** Text handling functions *************************************/
 
@@ -3595,6 +3597,11 @@ static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, I
     return 0;
 }
 
+#define SCROLL_LEFT   0x1
+#define SCROLL_RIGHT  0x2
+#define SCROLL_UP     0x4
+#define SCROLL_DOWN   0x8
+
 /***
  * DESCRIPTION:
  * Utility routine to draw and highlight items within a marquee selection rectangle.
@@ -3640,6 +3647,21 @@ static void LISTVIEW_MarqueeHighlight(LISTVIEW_INFO *infoPtr, LPPOINT coords_ori
 
     /* Cancel out the old marquee rectangle and draw the new one */
     LISTVIEW_InvalidateRect(infoPtr, &infoPtr->marqueeDrawRect);
+
+    /* Scroll by the appropriate distance if applicable - speed up scrolling as
+       the cursor is further away */
+
+    if ((scroll & SCROLL_LEFT) && (coords_orig->x <= 0))
+        LISTVIEW_Scroll(infoPtr, coords_orig->x, 0);
+
+    if ((scroll & SCROLL_RIGHT) && (coords_orig->x >= infoPtr->rcList.right))
+        LISTVIEW_Scroll(infoPtr, (coords_orig->x - infoPtr->rcList.right), 0);
+
+    if ((scroll & SCROLL_UP) && (coords_orig->y <= 0))
+        LISTVIEW_Scroll(infoPtr, 0, coords_orig->y);
+
+    if ((scroll & SCROLL_DOWN) && (coords_orig->y >= infoPtr->rcList.bottom))
+        LISTVIEW_Scroll(infoPtr, 0, (coords_orig->y - infoPtr->rcList.bottom));
 
     /* Invert the items in the old marquee rectangle */
     iterator_frameditems_absolute(&i, infoPtr, &infoPtr->marqueeRect);
@@ -3694,6 +3716,80 @@ static void LISTVIEW_MarqueeHighlight(LISTVIEW_INFO *infoPtr, LPPOINT coords_ori
 
 /***
  * DESCRIPTION:
+ * Called when we are in a marquee selection that involves scrolling the listview (ie,
+ * the cursor is outside the bounds of the client area). This is a TIMERPROC.
+ *
+ * PARAMETER(S):
+ * [I] hwnd : Handle to the listview
+ * [I] uMsg : WM_TIMER (ignored)
+ * [I] idEvent : The timer ID interpreted as a pointer to a LISTVIEW_INFO struct
+ * [I] dwTimer : The elapsed time (ignored)
+ *
+ * RETURN:
+ *   None.
+ */
+static VOID CALLBACK LISTVIEW_ScrollTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
+{
+    LISTVIEW_INFO *infoPtr;
+    SCROLLINFO scrollInfo;
+    POINT coords_orig;
+    POINT coords_offs;
+    POINT offset;
+    INT scroll = 0;
+
+    infoPtr = (LISTVIEW_INFO *) idEvent;
+
+    if (!infoPtr)
+        return;
+
+    /* Get the current cursor position and convert to client coordinates */
+    GetCursorPos(&coords_orig);
+    ScreenToClient(hWnd, &coords_orig);
+
+    /* Ensure coordinates are within client bounds */
+    coords_offs.x = max(min(coords_orig.x, infoPtr->rcList.right), 0);
+    coords_offs.y = max(min(coords_orig.y, infoPtr->rcList.bottom), 0);
+
+    /* Get offset */
+    LISTVIEW_GetOrigin(infoPtr, &offset);
+
+    /* Offset coordinates by the appropriate amount */
+    coords_offs.x -= offset.x;
+    coords_offs.y -= offset.y;
+
+    scrollInfo.cbSize = sizeof(SCROLLINFO);
+    scrollInfo.fMask = SIF_ALL;
+
+    /* Work out in which directions we can scroll */
+    if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo))
+    {
+        if (scrollInfo.nPos != scrollInfo.nMin)
+            scroll |= SCROLL_UP;
+
+        if (((scrollInfo.nPage + scrollInfo.nPos) - 1) != scrollInfo.nMax)
+            scroll |= SCROLL_DOWN;
+    }
+
+    if (GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo))
+    {
+        if (scrollInfo.nPos != scrollInfo.nMin)
+            scroll |= SCROLL_LEFT;
+
+        if (((scrollInfo.nPage + scrollInfo.nPos) - 1) != scrollInfo.nMax)
+            scroll |= SCROLL_RIGHT;
+    }
+
+    if (((coords_orig.x <= 0) && (scroll & SCROLL_LEFT)) ||
+        ((coords_orig.y <= 0) && (scroll & SCROLL_UP))   ||
+        ((coords_orig.x >= infoPtr->rcList.right) && (scroll & SCROLL_RIGHT)) ||
+        ((coords_orig.y >= infoPtr->rcList.bottom) && (scroll & SCROLL_DOWN)))
+    {
+        LISTVIEW_MarqueeHighlight(infoPtr, &coords_orig, &coords_offs, &offset, scroll);
+    }
+}
+
+/***
+ * DESCRIPTION:
  * Called whenever WM_MOUSEMOVE is received.
  *
  * PARAMETER(S):
@@ -3738,6 +3834,24 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
             /* Offset coordinates by the appropriate amount */
             coords_offs.x -= offset.x;
             coords_offs.y -= offset.y;
+
+            /* Enable the timer if we're going outside our bounds, in case the user doesn't
+               move the mouse again */
+
+            if ((x <= 0) || (y <= 0) || (x >= infoPtr->rcList.right) ||
+                (y >= infoPtr->rcList.bottom))
+            {
+                if (!infoPtr->bScrolling)
+                {
+                    infoPtr->bScrolling = TRUE;
+                    SetTimer(infoPtr->hwndSelf, (UINT_PTR) infoPtr, 1, LISTVIEW_ScrollTimer);
+                }
+            }
+            else
+            {
+                infoPtr->bScrolling = FALSE;
+                KillTimer(infoPtr->hwndSelf, (UINT_PTR) infoPtr);
+            }
 
             LISTVIEW_MarqueeHighlight(infoPtr, &coords_orig, &coords_offs, &offset, 0);
             return 0;
@@ -9464,6 +9578,8 @@ static LRESULT LISTVIEW_KillFocus(LISTVIEW_INFO *infoPtr)
         SetRect(&infoPtr->marqueeRect, 0, 0, 0, 0);
 
         infoPtr->bMarqueeSelect = FALSE;
+        infoPtr->bScrolling = FALSE;
+        KillTimer(infoPtr->hwndSelf, (UINT_PTR) infoPtr);
     }
 
     /* set window focus flag */
@@ -9545,6 +9661,7 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
   infoPtr->ptClickPos = pt;
   infoPtr->bDragging = FALSE;
   infoPtr->bMarqueeSelect = FALSE;
+  infoPtr->bScrolling = FALSE;
 
   lvHitTestInfo.pt.x = x;
   lvHitTestInfo.pt.y = y;
@@ -9683,6 +9800,7 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT 
 
         infoPtr->bDragging = FALSE;
         infoPtr->bMarqueeSelect = FALSE;
+        infoPtr->bScrolling = FALSE;
 
         KillTimer(infoPtr->hwndSelf, (UINT_PTR) infoPtr);
         return 0;
