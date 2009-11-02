@@ -38,7 +38,6 @@ typedef struct {
     UINT			wDevID;
     HANDLE			hWave;
     int				nUseCount;	/* Incremented for each shared open */
-    BOOL			fShareable;	/* TRUE if first open was shareable */
     HMMIO			hFile;  	/* mmio file handle open as Element */
     MCI_WAVE_OPEN_PARMSW 	openParms;
     WAVEFORMATEX		wfxRef;
@@ -476,7 +475,7 @@ static LRESULT WAVE_mciOpen(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_P
     if (wmw == NULL) 		return MCIERR_INVALID_DEVICE_ID;
 
     if (dwFlags & MCI_OPEN_SHAREABLE)
-	return MCIERR_HARDWARE;
+	return MCIERR_UNSUPPORTED_FUNCTION;
 
     if (wmw->nUseCount > 0) {
 	/* The driver is already opened on this channel
