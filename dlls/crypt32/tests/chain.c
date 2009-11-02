@@ -2117,6 +2117,7 @@ static void test_CERT_CHAIN_PARA_cbSize(void)
         pCertFreeCertificateChain(chain);
     }
 
+    CertFreeCertificateContext(cert);
     CertCloseStore(store, 0);
 }
 
