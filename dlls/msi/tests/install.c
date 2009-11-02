@@ -6871,6 +6871,39 @@ static void test_file_in_use_cab(void)
     delete_test_files();
 }
 
+INT CALLBACK handler_a(LPVOID context, UINT type, LPCSTR msg) { return IDOK; };
+INT CALLBACK handler_w(LPVOID context, UINT type, LPCWSTR msg) { return IDOK; };
+
+static void test_MsiSetExternalUI(void)
+{
+    INSTALLUI_HANDLERA ret_a;
+    INSTALLUI_HANDLERW ret_w;
+
+    ret_a = MsiSetExternalUIA(handler_a, INSTALLLOGMODE_ERROR, NULL);
+    ok(ret_a == NULL, "expected NULL, got %p\n", ret_a);
+
+    ret_a = MsiSetExternalUIA(NULL, 0, NULL);
+    ok(ret_a == handler_a, "expected %p, got %p\n", handler_a, ret_a);
+
+    ret_w = MsiSetExternalUIW(handler_w, INSTALLLOGMODE_ERROR, NULL);
+    ok(ret_w == NULL, "expected NULL, got %p\n", ret_w);
+
+    ret_w = MsiSetExternalUIW(NULL, 0, NULL);
+    ok(ret_w == handler_w, "expected %p, got %p\n", handler_w, ret_w);
+
+    ret_a = MsiSetExternalUIA(handler_a, INSTALLLOGMODE_ERROR, NULL);
+    ok(ret_a == NULL, "expected NULL, got %p\n", ret_a);
+
+    ret_w = MsiSetExternalUIW(handler_w, INSTALLLOGMODE_ERROR, NULL);
+    ok(ret_w == NULL, "expected NULL, got %p\n", ret_w);
+
+    ret_a = MsiSetExternalUIA(NULL, 0, NULL);
+    ok(ret_a == NULL, "expected NULL, got %p\n", ret_a);
+
+    ret_w = MsiSetExternalUIW(NULL, 0, NULL);
+    ok(ret_w == NULL, "expected NULL, got %p\n", ret_w);
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -6959,6 +6992,7 @@ START_TEST(install)
     test_installed_prop();
     test_file_in_use();
     test_file_in_use_cab();
+    test_MsiSetExternalUI();
 
     DeleteFileA(log_file);
 
