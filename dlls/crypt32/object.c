@@ -599,11 +599,13 @@ static BOOL CRYPT_QueryMessageObject(DWORD dwObjectType, const void *pvObject,
     {
         if (pdwFormatType)
             *pdwFormatType = formatType;
-        if (phMsg)
-            *phMsg = msg;
         if (phCertStore)
             *phCertStore = CertOpenStore(CERT_STORE_PROV_MSG, encodingType, 0,
              0, msg);
+        if (phMsg)
+            *phMsg = msg;
+        else
+            CryptMsgClose(msg);
     }
     if (blob == &fileBlob)
         CryptMemFree(blob->pbData);
