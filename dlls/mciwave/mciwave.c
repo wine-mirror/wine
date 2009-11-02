@@ -791,7 +791,7 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
     TRACE("Playing from byte=%u to byte=%u\n", wmw->dwPosition, end);
 
     if (end <= wmw->dwPosition)
-	return TRUE;
+	return MMSYSERR_NOERROR;
 
 
 #define	WAVE_ALIGN_ON_BLOCK(wmw,v) \
@@ -1026,7 +1026,7 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt
 
     if (end <= wmw->dwPosition)
     {
-	return TRUE;
+	return MMSYSERR_NOERROR;
     }
 
 #define	WAVE_ALIGN_ON_BLOCK(wmw,v) \
@@ -1471,7 +1471,7 @@ static DWORD WAVE_mciStatus(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_STATUS_PARM
 		    lpParms->dwReturn = id;
 		} else {
 		    lpParms->dwReturn = 0;
-		    ret = MCIERR_WAVE_INPUTUNSPECIFIED;
+		    ret = MCIERR_WAVE_OUTPUTUNSPECIFIED;
 		}
 	    }
 	    break;
