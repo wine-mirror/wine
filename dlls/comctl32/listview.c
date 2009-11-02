@@ -9453,7 +9453,19 @@ static LRESULT LISTVIEW_KillFocus(LISTVIEW_INFO *infoPtr)
 
     /* if we have a focus rectangle, get rid of it */
     LISTVIEW_ShowFocusRect(infoPtr, FALSE);
-    
+
+    /* if have a marquee selection, stop it */
+    if (infoPtr->bMarqueeSelect)
+    {
+        /* Remove the marquee rectangle and release our mouse capture */
+        LISTVIEW_InvalidateRect(infoPtr, &infoPtr->marqueeRect);
+        ReleaseCapture();
+
+        SetRect(&infoPtr->marqueeRect, 0, 0, 0, 0);
+
+        infoPtr->bMarqueeSelect = FALSE;
+    }
+
     /* set window focus flag */
     infoPtr->bFocus = FALSE;
 
