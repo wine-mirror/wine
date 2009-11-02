@@ -793,12 +793,12 @@ typedef void                    (*MMSYSTDRV_MAPCB)(DWORD wMsg, DWORD_PTR* dwUser
 static struct mmsystdrv_thunk
 {
     BYTE                        popl_eax;       /* popl  %eax (return address) */
-    BYTE                        pushl_func;     /* pushl $pfn16 (16bit callback function) */
+    BYTE                        pushl_this;     /* pushl this (this very thunk) */
     struct mmsystdrv_thunk*     this;
     BYTE                        pushl_eax;      /* pushl %eax */
     BYTE                        jmp;            /* ljmp MMDRV_Callback1632 */
     DWORD                       callback;
-    DWORD                       pfn16;
+    DWORD                       pfn16;          /* 16bit callback function */
     void*                       hMmdrv;         /* Handle to 32bit mmdrv object */
     enum MMSYSTEM_DriverType    kind;
 } *MMSYSTDRV_Thunks;
@@ -823,32 +823,29 @@ static struct MMSYSTDRV_Type
  *		MMSYSTDRV_Callback3216
  *
  */
-static LRESULT CALLBACK MMSYSTDRV_Callback3216(struct mmsystdrv_thunk* thunk, DWORD uFlags, HDRVR hDev,
+static LRESULT CALLBACK MMSYSTDRV_Callback3216(struct mmsystdrv_thunk* thunk, HDRVR hDev,
                                                DWORD wMsg, DWORD_PTR dwUser, DWORD_PTR dwParam1,
                                                DWORD_PTR dwParam2)
 {
+    WORD args[8];
+
     assert(thunk->kind < MMSYSTDRV_MAX);
     assert(MMSYSTEM_DriversType[thunk->kind].mapcb);
 
     MMSYSTEM_DriversType[thunk->kind].mapcb(wMsg, &dwUser, &dwParam1, &dwParam2);
 
-    if ((uFlags & DCB_TYPEMASK) == DCB_FUNCTION)
-    {
-        WORD args[8];
-	/* 16 bit func, call it */
-	TRACE("Function (16 bit) !\n");
+    /* 16 bit func, call it */
+    TRACE("Function (16 bit) %x!\n", thunk->pfn16);
 
-        args[7] = HDRVR_16(hDev);
-        args[6] = wMsg;
-        args[5] = HIWORD(dwUser);
-        args[4] = LOWORD(dwUser);
-        args[3] = HIWORD(dwParam1);
-        args[2] = LOWORD(dwParam1);
-        args[1] = HIWORD(dwParam2);
-        args[0] = LOWORD(dwParam2);
-        return WOWCallback16Ex(thunk->pfn16, WCB16_PASCAL, sizeof(args), args, NULL);
-    }
-    return DriverCallback(thunk->pfn16, uFlags, hDev, wMsg, dwUser, dwParam1, dwParam2);
+    args[7] = HDRVR_16(hDev);
+    args[6] = wMsg;
+    args[5] = HIWORD(dwUser);
+    args[4] = LOWORD(dwUser);
+    args[3] = HIWORD(dwParam1);
+    args[2] = LOWORD(dwParam1);
+    args[1] = HIWORD(dwParam2);
+    args[0] = LOWORD(dwParam2);
+    return WOWCallback16Ex(thunk->pfn16, WCB16_PASCAL, sizeof(args), args, NULL);
 }
 
 /******************************************************************
@@ -872,7 +869,7 @@ struct mmsystdrv_thunk*       MMSYSTDRV_AddThunk(DWORD pfn16, enum MMSYSTEM_Driv
         for (thunk = MMSYSTDRV_Thunks; thunk < &MMSYSTDRV_Thunks[MMSYSTDRV_MAX_THUNKS]; thunk++)
         {
             thunk->popl_eax     = 0x58;   /* popl  %eax */
-            thunk->pushl_func   = 0x68;   /* pushl $pfn16 */
+            thunk->pushl_this   = 0x68;   /* pushl this */
             thunk->this         = thunk;
             thunk->pushl_eax    = 0x50;   /* pushl %eax */
             thunk->jmp          = 0xe9;   /* jmp MMDRV_Callback3216 */
