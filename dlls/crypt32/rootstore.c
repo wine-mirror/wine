@@ -719,6 +719,7 @@ static void read_trusted_roots_from_known_locations(HCERTSTORE store)
             ret = import_certs_from_path(CRYPT_knownLocations[i], from, TRUE);
         check_and_store_certs(from, store);
     }
+    CertCloseStore(from, 0);
 }
 
 static HCERTSTORE create_root_store(void)
