@@ -413,37 +413,25 @@ static void test_openbackup(void)
 
     SetLastError(0xdeadbeef);
     handle = OpenBackupEventLogA(NULL, NULL);
-    todo_wine
-    {
     ok(handle == NULL, "Didn't expect a handle\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    }
 
     SetLastError(0xdeadbeef);
     handle = OpenBackupEventLogA(NULL, "idontexist.evt");
-    todo_wine
-    {
     ok(handle == NULL, "Didn't expect a handle\n");
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
-    }
 
     SetLastError(0xdeadbeef);
     handle = OpenBackupEventLogA("IDontExist", NULL);
-    todo_wine
-    {
     ok(handle == NULL, "Didn't expect a handle\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    }
 
     SetLastError(0xdeadbeef);
     handle = OpenBackupEventLogA("IDontExist", "idontexist.evt");
-    todo_wine
-    {
     ok(handle == NULL, "Didn't expect a handle\n");
     ok(GetLastError() == RPC_S_SERVER_UNAVAILABLE ||
        GetLastError() == RPC_S_INVALID_NET_ADDR, /* Some Vista and Win7 */
        "Expected RPC_S_SERVER_UNAVAILABLE, got %d\n", GetLastError());
-    }
 
     /* Make a backup eventlog to work with */
     DeleteFileA(backup);

@@ -378,8 +378,16 @@ BOOL WINAPI NotifyChangeEventLog( HANDLE hEventLog, HANDLE hEvent )
  */
 HANDLE WINAPI OpenBackupEventLogA( LPCSTR lpUNCServerName, LPCSTR lpFileName )
 {
-	FIXME("(%s,%s) stub\n", debugstr_a(lpUNCServerName), debugstr_a(lpFileName));
-	return (HANDLE)0xcafe4242;
+    LPWSTR uncnameW, filenameW;
+    HANDLE handle;
+
+    uncnameW = SERV_dup(lpUNCServerName);
+    filenameW = SERV_dup(lpFileName);
+    handle = OpenBackupEventLogW(uncnameW, filenameW);
+    HeapFree(GetProcessHeap(), 0, uncnameW);
+    HeapFree(GetProcessHeap(), 0, filenameW);
+
+    return handle;
 }
 
 /******************************************************************************
@@ -389,8 +397,28 @@ HANDLE WINAPI OpenBackupEventLogA( LPCSTR lpUNCServerName, LPCSTR lpFileName )
  */
 HANDLE WINAPI OpenBackupEventLogW( LPCWSTR lpUNCServerName, LPCWSTR lpFileName )
 {
-	FIXME("(%s,%s) stub\n", debugstr_w(lpUNCServerName), debugstr_w(lpFileName));
-	return (HANDLE)0xcafe4242;
+    FIXME("(%s,%s) stub\n", debugstr_w(lpUNCServerName), debugstr_w(lpFileName));
+
+    if (!lpFileName)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
+    if (lpUNCServerName && lpUNCServerName[0])
+    {
+        FIXME("Remote server not supported\n");
+        SetLastError(RPC_S_SERVER_UNAVAILABLE);
+        return NULL;
+    }
+
+    if (GetFileAttributesW(lpFileName) == INVALID_FILE_ATTRIBUTES)
+    {
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return NULL;
+    }
+
+    return (HANDLE)0xcafe4242;
 }
 
 /******************************************************************************
