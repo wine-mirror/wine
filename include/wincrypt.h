@@ -4140,6 +4140,9 @@ BOOL WINAPI CertSerializeCRLStoreElement(PCCRL_CONTEXT pCrlContext,
 BOOL WINAPI CertSerializeCTLStoreElement(PCCTL_CONTEXT pCtlContext,
  DWORD dwFlags, BYTE *pbElement, DWORD *pcbElement);
 
+BOOL WINAPI CertGetIntendedKeyUsage(DWORD dwCertEncodingType,
+ PCERT_INFO pCertInfo, BYTE *pbKeyUsage, DWORD cbKeyUsage);
+
 BOOL WINAPI CertGetEnhancedKeyUsage(PCCERT_CONTEXT pCertContext, DWORD dwFlags,
  PCERT_ENHKEY_USAGE pUsage, DWORD *pcbUsage);
 BOOL WINAPI CertSetEnhancedKeyUsage(PCCERT_CONTEXT pCertContext,
