@@ -686,10 +686,6 @@ end:
  * This method will rename the specified element.
  *
  * See Windows documentation for more details on IStorage methods.
- *
- * Implementation notes: The method used to rename consists of creating a clone
- *    of the deleted StgProperty object setting it with the new name and to
- *    perform a DestroyElement of the old StgProperty.
  */
 static HRESULT WINAPI StorageBaseImpl_RenameElement(
             IStorage*        iface,
@@ -726,81 +722,19 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
 
   if (foundPropertyIndex != PROPERTY_NULL)
   {
-    StgProperty renamedProperty;
-    ULONG       renamedPropertyIndex;
+    /* Remove the element from its current position in the tree */
+    removeFromTree(This->ancestorStorage, This->rootPropertySetIndex,
+        foundPropertyIndex);
 
-    /*
-     * Setup a new property for the renamed property
-     */
-    renamedProperty.sizeOfNameString =
-      ( lstrlenW(pwcsNewName)+1 ) * sizeof(WCHAR);
+    /* Change the name of the element */
+    strcpyW(currentProperty.name, pwcsNewName);
 
-    if (renamedProperty.sizeOfNameString > PROPERTY_NAME_BUFFER_LEN)
-      return STG_E_INVALIDNAME;
+    StorageImpl_WriteProperty(This->ancestorStorage, foundPropertyIndex,
+        &currentProperty);
 
-    strcpyW(renamedProperty.name, pwcsNewName);
-
-    renamedProperty.propertyType  = currentProperty.propertyType;
-    renamedProperty.startingBlock = currentProperty.startingBlock;
-    renamedProperty.size.u.LowPart  = currentProperty.size.u.LowPart;
-    renamedProperty.size.u.HighPart = currentProperty.size.u.HighPart;
-
-    renamedProperty.leftChild = PROPERTY_NULL;
-    renamedProperty.rightChild = PROPERTY_NULL;
-
-    /*
-     * Bring the dirProperty link in case it is a storage and in which
-     * case the renamed storage elements don't require to be reorganized.
-     */
-    renamedProperty.dirProperty = currentProperty.dirProperty;
-
-    /* call CoFileTime to get the current time
-    renamedProperty.ctime
-    renamedProperty.mtime
-    renamedProperty.propertyUniqueID
-    */
-
-    /*
-     * Save the new property into a new property spot
-     */
-    createDirEntry(This->ancestorStorage, &renamedProperty, &renamedPropertyIndex);
-
-    /*
-     * Find a spot in the property chain for our newly created property.
-     */
-    insertIntoTree(
-      This->ancestorStorage,
-      This->rootPropertySetIndex,
-      renamedPropertyIndex);
-
-    /*
-     * At this point the renamed property has been inserted in the tree,
-     * now, before Destroying the old property we must zero its dirProperty
-     * otherwise the DestroyProperty below will zap it all and we do not want
-     * this to happen.
-     * Also, we fake that the old property is a storage so the DestroyProperty
-     * will not do a SetSize(0) on the stream data.
-     *
-     * This means that we need to tweak the StgProperty if it is a stream or a
-     * non empty storage.
-     */
-    StorageImpl_ReadProperty(This->ancestorStorage,
-                             foundPropertyIndex,
-                             &currentProperty);
-
-    currentProperty.dirProperty  = PROPERTY_NULL;
-    currentProperty.propertyType = PROPTYPE_STORAGE;
-    StorageImpl_WriteProperty(
-      This->ancestorStorage,
-      foundPropertyIndex,
-      &currentProperty);
-
-    /*
-     * Invoke Destroy to get rid of the ole property and automatically redo
-     * the linking of its previous and next members...
-     */
-    IStorage_DestroyElement(iface, pwcsOldName);
-
+    /* Insert the element in a new position in the tree */
+    insertIntoTree(This->ancestorStorage, This->rootPropertySetIndex,
+        foundPropertyIndex);
   }
   else
   {
