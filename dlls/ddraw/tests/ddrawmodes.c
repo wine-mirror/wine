@@ -654,6 +654,11 @@ static void testddraw7(void)
     DWORD *pend;
 
     hr = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw7, (void **) &dd7);
+    if (hr==E_NOINTERFACE)
+    {
+        win_skip("DirectDraw7 is not supported\n");
+        return;
+    }
     ok(hr==DD_OK, "IDirectDraw7_QueryInterface returned %08x\n", hr);
 
     if (hr==DD_OK)
