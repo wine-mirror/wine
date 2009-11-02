@@ -425,14 +425,18 @@ const void *CRYPT_ReadSerializedElement(const BYTE *pbElement, DWORD cbElement,
 
 static const BYTE fileHeader[] = { 0, 0, 0, 0, 'C','E','R','T' };
 
-BOOL CRYPT_ReadSerializedStoreFromFile(HANDLE file, HCERTSTORE store)
+typedef BOOL (*read_serialized_func)(void *handle, void *buffer,
+ DWORD bytesToRead, DWORD *bytesRead);
+
+static BOOL CRYPT_ReadSerializedStore(void *handle,
+ read_serialized_func read_func, HCERTSTORE store)
 {
     BYTE fileHeaderBuf[sizeof(fileHeader)];
     DWORD read;
     BOOL ret;
 
     /* Failure reading is non-critical, we'll leave the store empty */
-    ret = ReadFile(file, fileHeaderBuf, sizeof(fileHeaderBuf), &read, NULL);
+    ret = read_func(handle, fileHeaderBuf, sizeof(fileHeaderBuf), &read);
     if (ret)
     {
         if (!read)
@@ -448,7 +452,7 @@ BOOL CRYPT_ReadSerializedStoreFromFile(HANDLE file, HCERTSTORE store)
             DWORD bufSize = 0;
 
             do {
-                ret = ReadFile(file, &propHdr, sizeof(propHdr), &read, NULL);
+                ret = read_func(handle, &propHdr, sizeof(propHdr), &read);
                 if (ret && read == sizeof(propHdr))
                 {
                     if (contextInterface && context &&
@@ -470,7 +474,7 @@ BOOL CRYPT_ReadSerializedStoreFromFile(HANDLE file, HCERTSTORE store)
                     }
                     if (buf)
                     {
-                        ret = ReadFile(file, buf, propHdr.cb, &read, NULL);
+                        ret = read_func(handle, buf, propHdr.cb, &read);
                         if (ret && read == propHdr.cb)
                         {
                             if (propHdr.propID == CERT_CERT_PROP_ID)
@@ -517,6 +521,17 @@ BOOL CRYPT_ReadSerializedStoreFromFile(HANDLE file, HCERTSTORE store)
     else
         ret = TRUE;
     return ret;
+}
+
+static BOOL read_file_wrapper(void *handle, void *buffer, DWORD bytesToRead,
+ DWORD *bytesRead)
+{
+    return ReadFile(handle, buffer, bytesToRead, bytesRead, NULL);
+}
+
+BOOL CRYPT_ReadSerializedStoreFromFile(HANDLE file, HCERTSTORE store)
+{
+    return CRYPT_ReadSerializedStore(file, read_file_wrapper, store);
 }
 
 static BOOL WINAPI CRYPT_SerializeCertNoHash(PCCERT_CONTEXT pCertContext,
