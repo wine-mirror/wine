@@ -183,6 +183,10 @@ static HRESULT createDirEntry(
   const StgProperty *newData,
   ULONG *index);
 
+static HRESULT destroyDirEntry(
+  StorageImpl *storage,
+  ULONG index);
+
 static void updatePropertyChain(
   StorageBaseImpl *storage,
   ULONG       newPropertyIndex,
@@ -1257,6 +1261,27 @@ static HRESULT createDirEntry(
   return hr;
 }
 
+/***************************************************************************
+ *
+ * Internal Method
+ *
+ * Mark a directory entry in the file as free.
+ */
+static HRESULT destroyDirEntry(
+  StorageImpl *storage,
+  ULONG index)
+{
+  HRESULT hr;
+  BYTE emptyData[PROPSET_BLOCK_SIZE];
+
+  memset(&emptyData, 0, PROPSET_BLOCK_SIZE);
+
+  hr = StorageImpl_WriteRawDirEntry(storage, index, emptyData);
+
+  return hr;
+}
+
+
 /****************************************************************************
  *
  * Internal Method
@@ -1802,13 +1827,11 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
         foundPropertyIndexToDelete);
 
   /*
-   * Invalidate the property by zeroing its name member.
+   * Invalidate the property
    */
-  propertyToDelete.sizeOfNameString = 0;
-
-  StorageImpl_WriteProperty(This->ancestorStorage,
-                            foundPropertyIndexToDelete,
-                            &propertyToDelete);
+  if (SUCCEEDED(hr))
+    destroyDirEntry(This->ancestorStorage,
+                    foundPropertyIndexToDelete);
 
   return hr;
 }
