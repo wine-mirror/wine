@@ -1902,7 +1902,8 @@ INSTALLUI_HANDLERA WINAPI MsiSetExternalUIA(INSTALLUI_HANDLERA puiHandler,
 {
     INSTALLUI_HANDLERA prev = gUIHandlerA;
 
-    TRACE("%p %x %p\n",puiHandler, dwMessageFilter,pvContext);
+    TRACE("%p %08x %p\n", puiHandler, dwMessageFilter, pvContext);
+
     gUIHandlerA = puiHandler;
     gUIFilter = dwMessageFilter;
     gUIContext = pvContext;
@@ -1915,7 +1916,8 @@ INSTALLUI_HANDLERW WINAPI MsiSetExternalUIW(INSTALLUI_HANDLERW puiHandler,
 {
     INSTALLUI_HANDLERW prev = gUIHandlerW;
 
-    TRACE("%p %x %p\n",puiHandler,dwMessageFilter,pvContext);
+    TRACE("%p %08x %p\n", puiHandler, dwMessageFilter, pvContext);
+
     gUIHandlerW = puiHandler;
     gUIFilter = dwMessageFilter;
     gUIContext = pvContext;

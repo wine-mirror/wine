@@ -1203,19 +1203,21 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
         }
     }
 
-    TRACE("(%p %x %x %s)\n", gUIHandlerA, gUIFilter, log_type,
-                             debugstr_w(message));
+    TRACE("%p %p %x %x %s\n", gUIHandlerA, gUIHandlerW,
+          gUIFilter, log_type, debugstr_w(message));
 
     /* convert it to ASCII */
-    len = WideCharToMultiByte( CP_ACP, 0, message, -1,
-                               NULL, 0, NULL, NULL );
+    len = WideCharToMultiByte( CP_ACP, 0, message, -1, NULL, 0, NULL, NULL );
     msg = msi_alloc( len );
-    WideCharToMultiByte( CP_ACP, 0, message, -1,
-                         msg, len, NULL, NULL );
+    WideCharToMultiByte( CP_ACP, 0, message, -1, msg, len, NULL, NULL );
 
-    if (gUIHandlerA && (gUIFilter & log_type))
+    if (gUIHandlerW && (gUIFilter & log_type))
     {
-        rc = gUIHandlerA(gUIContext,eMessageType,msg);
+        rc = gUIHandlerW( gUIContext, eMessageType, message );
+    }
+    else if (gUIHandlerA && (gUIFilter & log_type))
+    {
+        rc = gUIHandlerA( gUIContext, eMessageType, msg );
     }
 
     if ((!rc) && (gszLogFile[0]) && !((eMessageType & 0xff000000) ==
@@ -1234,8 +1236,7 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
         }
     }
     msi_free( msg );
-
-    msi_free( message);
+    msi_free( message );
 
     switch (eMessageType & 0xff000000)
     {
