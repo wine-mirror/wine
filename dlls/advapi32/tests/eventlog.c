@@ -404,6 +404,107 @@ static void test_read(void)
     CloseEventLog(handle);
 }
 
+static void test_openbackup(void)
+{
+    HANDLE handle, handle2, file;
+    DWORD written;
+    const char backup[] = "backup.evt";
+    const char text[] = "Just some text";
+
+    SetLastError(0xdeadbeef);
+    handle = OpenBackupEventLogA(NULL, NULL);
+    todo_wine
+    {
+    ok(handle == NULL, "Didn't expect a handle\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    }
+
+    SetLastError(0xdeadbeef);
+    handle = OpenBackupEventLogA(NULL, "idontexist.evt");
+    todo_wine
+    {
+    ok(handle == NULL, "Didn't expect a handle\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    }
+
+    SetLastError(0xdeadbeef);
+    handle = OpenBackupEventLogA("IDontExist", NULL);
+    todo_wine
+    {
+    ok(handle == NULL, "Didn't expect a handle\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    }
+
+    SetLastError(0xdeadbeef);
+    handle = OpenBackupEventLogA("IDontExist", "idontexist.evt");
+    todo_wine
+    {
+    ok(handle == NULL, "Didn't expect a handle\n");
+    ok(GetLastError() == RPC_S_SERVER_UNAVAILABLE ||
+       GetLastError() == RPC_S_INVALID_NET_ADDR, /* Some Vista and Win7 */
+       "Expected RPC_S_SERVER_UNAVAILABLE, got %d\n", GetLastError());
+    }
+
+    /* Make a backup eventlog to work with */
+    DeleteFileA(backup);
+    handle = OpenEventLogA(NULL, "Application");
+    BackupEventLogA(handle, backup);
+    CloseEventLog(handle);
+
+    /* FIXME: Wine stops here */
+    if (GetFileAttributesA(backup) == INVALID_FILE_ATTRIBUTES)
+    {
+        skip("We don't have a backup eventlog to work with\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    handle = OpenBackupEventLogA("IDontExist", backup);
+    ok(handle == NULL, "Didn't expect a handle\n");
+    ok(GetLastError() == RPC_S_SERVER_UNAVAILABLE ||
+       GetLastError() == RPC_S_INVALID_NET_ADDR, /* Some Vista and Win7 */
+       "Expected RPC_S_SERVER_UNAVAILABLE, got %d\n", GetLastError());
+
+    /* Empty servername should be read as local server */
+    handle = OpenBackupEventLogA("", backup);
+    ok(handle != NULL, "Expected a handle\n");
+    CloseEventLog(handle);
+
+    handle = OpenBackupEventLogA(NULL, backup);
+    ok(handle != NULL, "Expected a handle\n");
+
+    /* Can we open that same backup eventlog more than once? */
+    handle2 = OpenBackupEventLogA(NULL, backup);
+    ok(handle2 != NULL, "Expected a handle\n");
+    ok(handle2 != handle, "Didn't expect the same handle\n");
+    CloseEventLog(handle2);
+
+    CloseEventLog(handle);
+    DeleteFileA(backup);
+
+    /* Is there any content checking done? */
+    file = CreateFileA(backup, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
+    CloseHandle(file);
+    SetLastError(0xdeadbeef);
+    handle = OpenBackupEventLogA(NULL, backup);
+    ok(handle == NULL, "Didn't expect a handle\n");
+    ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY ||
+       GetLastError() == ERROR_EVENTLOG_FILE_CORRUPT, /* Vista and Win7 */
+       "Expected ERROR_NOT_ENOUGH_MEMORY, got %d\n", GetLastError());
+    CloseEventLog(handle);
+    DeleteFileA(backup);
+
+    file = CreateFileA(backup, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
+    WriteFile(file, text, sizeof(text), &written, NULL);
+    CloseHandle(file);
+    SetLastError(0xdeadbeef);
+    handle = OpenBackupEventLogA(NULL, backup);
+    ok(handle == NULL, "Didn't expect a handle\n");
+    ok(GetLastError() == ERROR_EVENTLOG_FILE_CORRUPT, "Expected ERROR_EVENTLOG_FILE_CORRUPT, got %d\n", GetLastError());
+    CloseEventLog(handle);
+    DeleteFileA(backup);
+}
+
 START_TEST(eventlog)
 {
     SetLastError(0xdeadbeef);
@@ -422,5 +523,6 @@ START_TEST(eventlog)
     test_count();
     test_oldest();
     test_backup();
+    test_openbackup();
     test_read();
 }
