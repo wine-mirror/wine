@@ -1203,7 +1203,7 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
         }
     }
 
-    TRACE("%p %p %x %x %s\n", gUIHandlerA, gUIHandlerW,
+    TRACE("%p %p %p %x %x %s\n", gUIHandlerA, gUIHandlerW, gUIHandlerRecord,
           gUIFilter, log_type, debugstr_w(message));
 
     /* convert it to ASCII */
@@ -1218,6 +1218,13 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
     else if (gUIHandlerA && (gUIFilter & log_type))
     {
         rc = gUIHandlerA( gUIContext, eMessageType, msg );
+    }
+    else if (gUIHandlerRecord && (gUIFilter & log_type))
+    {
+        MSIHANDLE rec = MsiCreateRecord( 1 );
+        MsiRecordSetStringW( rec, 0, message );
+        rc = gUIHandlerRecord( gUIContext, eMessageType, rec );
+        MsiCloseHandle( rec );
     }
 
     if ((!rc) && (gszLogFile[0]) && !((eMessageType & 0xff000000) ==

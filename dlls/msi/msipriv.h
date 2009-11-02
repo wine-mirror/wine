@@ -843,6 +843,7 @@ extern INSTALLUILEVEL gUILevel;
 extern HWND gUIhwnd;
 extern INSTALLUI_HANDLERA gUIHandlerA;
 extern INSTALLUI_HANDLERW gUIHandlerW;
+extern INSTALLUI_HANDLER_RECORD gUIHandlerRecord;
 extern DWORD gUIFilter;
 extern LPVOID gUIContext;
 extern WCHAR gszLogFile[MAX_PATH];

@@ -6873,17 +6873,29 @@ static void test_file_in_use_cab(void)
 
 INT CALLBACK handler_a(LPVOID context, UINT type, LPCSTR msg) { return IDOK; };
 INT CALLBACK handler_w(LPVOID context, UINT type, LPCWSTR msg) { return IDOK; };
+INT CALLBACK handler_record(LPVOID context, UINT type, MSIHANDLE record) { return IDOK; };
 
 static void test_MsiSetExternalUI(void)
 {
     INSTALLUI_HANDLERA ret_a;
     INSTALLUI_HANDLERW ret_w;
+    INSTALLUI_HANDLER_RECORD prev;
+    UINT error;
 
     ret_a = MsiSetExternalUIA(handler_a, INSTALLLOGMODE_ERROR, NULL);
     ok(ret_a == NULL, "expected NULL, got %p\n", ret_a);
 
     ret_a = MsiSetExternalUIA(NULL, 0, NULL);
     ok(ret_a == handler_a, "expected %p, got %p\n", handler_a, ret_a);
+
+    error = MsiSetExternalUIRecord(handler_record, INSTALLLOGMODE_ERROR, NULL, &prev);
+    ok(!error, "MsiSetExternalUIRecord failed %u\n", error);
+    ok(prev == NULL, "expected NULL, got %p\n", prev);
+
+    prev = (INSTALLUI_HANDLER_RECORD)0xdeadbeef;
+    error = MsiSetExternalUIRecord(NULL, INSTALLLOGMODE_ERROR, NULL, &prev);
+    ok(!error, "MsiSetExternalUIRecord failed %u\n", error);
+    ok(prev == handler_record, "expected %p, got %p\n", handler_record, prev);
 
     ret_w = MsiSetExternalUIW(handler_w, INSTALLLOGMODE_ERROR, NULL);
     ok(ret_w == NULL, "expected NULL, got %p\n", ret_w);
@@ -6897,11 +6909,27 @@ static void test_MsiSetExternalUI(void)
     ret_w = MsiSetExternalUIW(handler_w, INSTALLLOGMODE_ERROR, NULL);
     ok(ret_w == NULL, "expected NULL, got %p\n", ret_w);
 
+    prev = (INSTALLUI_HANDLER_RECORD)0xdeadbeef;
+    error = MsiSetExternalUIRecord(handler_record, INSTALLLOGMODE_ERROR, NULL, &prev);
+    ok(!error, "MsiSetExternalUIRecord failed %u\n", error);
+    ok(prev == NULL, "expected NULL, got %p\n", prev);
+
     ret_a = MsiSetExternalUIA(NULL, 0, NULL);
     ok(ret_a == NULL, "expected NULL, got %p\n", ret_a);
 
     ret_w = MsiSetExternalUIW(NULL, 0, NULL);
     ok(ret_w == NULL, "expected NULL, got %p\n", ret_w);
+
+    prev = (INSTALLUI_HANDLER_RECORD)0xdeadbeef;
+    error = MsiSetExternalUIRecord(NULL, 0, NULL, &prev);
+    ok(!error, "MsiSetExternalUIRecord failed %u\n", error);
+    ok(prev == handler_record, "expected %p, got %p\n", handler_record, prev);
+
+    error = MsiSetExternalUIRecord(handler_record, INSTALLLOGMODE_ERROR, NULL, NULL);
+    ok(!error, "MsiSetExternalUIRecord failed %u\n", error);
+
+    error = MsiSetExternalUIRecord(NULL, 0, NULL, NULL);
+    ok(!error, "MsiSetExternalUIRecord failed %u\n", error);
 }
 
 START_TEST(install)
