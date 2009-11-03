@@ -71,6 +71,44 @@ BOOL WINAPI CertAddEncodedCertificateToStore(HCERTSTORE hCertStore,
     return ret;
 }
 
+BOOL WINAPI CertAddEncodedCertificateToSystemStoreA(LPCSTR pszCertStoreName,
+ const BYTE *pbCertEncoded, DWORD cbCertEncoded)
+{
+    HCERTSTORE store;
+    BOOL ret = FALSE;
+
+    TRACE("(%s, %p, %d)\n", debugstr_a(pszCertStoreName), pbCertEncoded,
+     cbCertEncoded);
+
+    store = CertOpenSystemStoreA(0, pszCertStoreName);
+    if (store)
+    {
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         pbCertEncoded, cbCertEncoded, CERT_STORE_ADD_USE_EXISTING, NULL);
+        CertCloseStore(store, 0);
+    }
+    return ret;
+}
+
+BOOL WINAPI CertAddEncodedCertificateToSystemStoreW(LPCWSTR pszCertStoreName,
+ const BYTE *pbCertEncoded, DWORD cbCertEncoded)
+{
+    HCERTSTORE store;
+    BOOL ret = FALSE;
+
+    TRACE("(%s, %p, %d)\n", debugstr_w(pszCertStoreName), pbCertEncoded,
+     cbCertEncoded);
+
+    store = CertOpenSystemStoreW(0, pszCertStoreName);
+    if (store)
+    {
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         pbCertEncoded, cbCertEncoded, CERT_STORE_ADD_USE_EXISTING, NULL);
+        CertCloseStore(store, 0);
+    }
+    return ret;
+}
+
 BOOL WINAPI CertAddCertificateLinkToStore(HCERTSTORE hCertStore,
  PCCERT_CONTEXT pCertContext, DWORD dwAddDisposition,
  PCCERT_CONTEXT *ppCertContext)

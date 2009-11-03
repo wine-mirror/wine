@@ -4054,6 +4054,13 @@ BOOL WINAPI CertAddEncodedCertificateToStore(HCERTSTORE hCertStore,
  DWORD dwCertEncodingType, const BYTE *pbCertEncoded, DWORD cbCertEncoded,
  DWORD dwAddDisposition, PCCERT_CONTEXT *ppCertContext);
 
+BOOL WINAPI CertAddEncodedCertificateToSystemStoreA(LPCSTR pszCertStoreName,
+ const BYTE *pbCertEncoded, DWORD cbCertEncoded);
+BOOL WINAPI CertAddEncodedCertificateToSystemStoreW(LPCWSTR pszCertStoreName,
+ const BYTE *pbCertEncoded, DWORD cbCertEncoded);
+#define CertAddEncodedCertificateToSystemStore \
+ WINELIB_NAME_AW(CertAddEncodedCertificateToSystemStore)
+
 BOOL WINAPI CertAddEncodedCRLToStore(HCERTSTORE hCertStore,
  DWORD dwCertEncodingType, const BYTE *pbCrlEncoded, DWORD cbCrlEncoded,
  DWORD dwAddDisposition, PCCRL_CONTEXT *ppCrlContext);

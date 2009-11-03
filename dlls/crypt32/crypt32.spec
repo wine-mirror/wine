@@ -5,8 +5,8 @@
 @ stdcall CertAddEncodedCRLToStore(ptr long ptr long long ptr)
 @ stdcall CertAddEncodedCTLToStore(ptr long ptr long long ptr)
 @ stdcall CertAddEncodedCertificateToStore(ptr long ptr long long ptr)
-@ stub CertAddEncodedCertificateToSystemStoreA
-@ stub CertAddEncodedCertificateToSystemStoreW
+@ stdcall CertAddEncodedCertificateToSystemStoreA(str ptr long)
+@ stdcall CertAddEncodedCertificateToSystemStoreW(wstr ptr long)
 @ stdcall CertAddEnhancedKeyUsageIdentifier(ptr str)
 @ stdcall CertAddSerializedElementToStore(ptr ptr long long long long ptr ptr)
 @ stdcall CertAddStoreToCollection(ptr ptr long long)
