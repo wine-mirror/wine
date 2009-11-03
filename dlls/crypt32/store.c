@@ -283,6 +283,13 @@ static BOOL CRYPT_MemDeleteCtl(PWINECRYPT_CERTSTORE store, void *pCtlContext)
     return ret;
 }
 
+static BOOL WINAPI CRYPT_MemControl(HCERTSTORE hCertStore, DWORD dwFlags,
+ DWORD dwCtrlType, void const *pvCtrlPara)
+{
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
 static void WINAPI CRYPT_MemCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
     WINE_MEMSTORE *store = hCertStore;
@@ -326,7 +333,7 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
             store->hdr.ctls.addContext     = CRYPT_MemAddCtl;
             store->hdr.ctls.enumContext    = CRYPT_MemEnumCtl;
             store->hdr.ctls.deleteContext  = CRYPT_MemDeleteCtl;
-            store->hdr.control             = NULL;
+            store->hdr.control             = CRYPT_MemControl;
             store->certs = ContextList_Create(pCertInterface,
              sizeof(CERT_CONTEXT));
             store->crls = ContextList_Create(pCRLInterface,
