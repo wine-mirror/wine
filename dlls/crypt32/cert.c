@@ -2200,9 +2200,38 @@ BOOL WINAPI CryptVerifyCertificateSignatureEx(HCRYPTPROV_LEGACY hCryptProv,
 BOOL WINAPI CertGetIntendedKeyUsage(DWORD dwCertEncodingType,
  PCERT_INFO pCertInfo, BYTE *pbKeyUsage, DWORD cbKeyUsage)
 {
-    FIXME("(%08x, %p, %p, %d)\n", dwCertEncodingType, pCertInfo, pbKeyUsage,
+    PCERT_EXTENSION ext;
+    BOOL ret = FALSE;
+
+    TRACE("(%08x, %p, %p, %d)\n", dwCertEncodingType, pCertInfo, pbKeyUsage,
      cbKeyUsage);
-    return FALSE;
+
+    ext = CertFindExtension(szOID_KEY_USAGE, pCertInfo->cExtension,
+     pCertInfo->rgExtension);
+    if (ext)
+    {
+        CRYPT_BIT_BLOB usage;
+        DWORD size = sizeof(usage);
+
+        ret = CryptDecodeObjectEx(dwCertEncodingType, X509_BITS,
+         ext->Value.pbData, ext->Value.cbData, CRYPT_DECODE_NOCOPY_FLAG, NULL,
+         &usage, &size);
+        if (ret)
+        {
+            if (cbKeyUsage < usage.cbData)
+                ret = FALSE;
+            else
+            {
+                memcpy(pbKeyUsage, usage.pbData, usage.cbData);
+                if (cbKeyUsage > usage.cbData)
+                    memset(pbKeyUsage + usage.cbData, 0,
+                     cbKeyUsage - usage.cbData);
+            }
+        }
+    }
+    else
+        SetLastError(0);
+    return ret;
 }
 
 BOOL WINAPI CertGetEnhancedKeyUsage(PCCERT_CONTEXT pCertContext, DWORD dwFlags,

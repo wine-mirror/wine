@@ -2100,21 +2100,17 @@ static void testIntendedKeyUsage(void)
     /* The unused bytes are filled with 0. */
     ret = CertGetIntendedKeyUsage(X509_ASN_ENCODING, &info, usage_bytes,
      sizeof(usage_bytes));
-    todo_wine {
     ok(ret, "CertGetIntendedKeyUsage failed: %08x\n", GetLastError());
     ok(!memcmp(usage_bytes, expected_usage1, sizeof(expected_usage1)),
      "unexpected value\n");
-    }
     /* The usage bytes are copied in big-endian order. */
     ext.Value.cbData = sizeof(usage2);
     ext.Value.pbData = usage2;
     ret = CertGetIntendedKeyUsage(X509_ASN_ENCODING, &info, usage_bytes,
      sizeof(usage_bytes));
-    todo_wine {
     ok(ret, "CertGetIntendedKeyUsage failed: %08x\n", GetLastError());
     ok(!memcmp(usage_bytes, expected_usage2, sizeof(expected_usage2)),
      "unexpected value\n");
-    }
 }
 
 static const LPCSTR keyUsages[] = { szOID_PKIX_KP_CODE_SIGNING,
