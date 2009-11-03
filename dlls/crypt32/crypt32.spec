@@ -1,6 +1,7 @@
 @ stdcall CertAddCRLContextToStore(ptr ptr long ptr)
 @ stdcall CertAddCTLContextToStore(ptr ptr long ptr)
 @ stdcall CertAddCertificateContextToStore(ptr ptr long ptr)
+@ stdcall CertAddCertificateLinkToStore(ptr ptr long ptr)
 @ stdcall CertAddEncodedCRLToStore(ptr long ptr long long ptr)
 @ stdcall CertAddEncodedCTLToStore(ptr long ptr long long ptr)
 @ stdcall CertAddEncodedCertificateToStore(ptr long ptr long long ptr)

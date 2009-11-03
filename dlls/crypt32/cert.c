@@ -71,6 +71,15 @@ BOOL WINAPI CertAddEncodedCertificateToStore(HCERTSTORE hCertStore,
     return ret;
 }
 
+BOOL WINAPI CertAddCertificateLinkToStore(HCERTSTORE hCertStore,
+ PCCERT_CONTEXT pCertContext, DWORD dwAddDisposition,
+ PCCERT_CONTEXT *ppCertContext)
+{
+    FIXME("(%p, %p, %08x, %p)\n", hCertStore, pCertContext, dwAddDisposition,
+     ppCertContext);
+    return FALSE;
+}
+
 PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
  const BYTE *pbCertEncoded, DWORD cbCertEncoded)
 {
