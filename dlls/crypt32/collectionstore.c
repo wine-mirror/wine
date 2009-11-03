@@ -441,6 +441,45 @@ static BOOL CRYPT_CollectionDeleteCTL(PWINECRYPT_CERTSTORE store,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_CollectionControl(HCERTSTORE hCertStore, DWORD dwFlags,
+ DWORD dwCtrlType, void const *pvCtrlPara)
+{
+    BOOL ret;
+    PWINE_COLLECTIONSTORE store = hCertStore;
+    PWINE_STORE_LIST_ENTRY entry;
+
+    TRACE("(%p, %08x, %d, %p)\n", hCertStore, dwFlags, dwCtrlType,
+     pvCtrlPara);
+
+    if (!store)
+        return TRUE;
+    if (store->hdr.dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if (store->hdr.type != StoreTypeCollection)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+
+    ret = TRUE;
+    EnterCriticalSection(&store->cs);
+    LIST_FOR_EACH_ENTRY(entry, &store->stores, WINE_STORE_LIST_ENTRY, entry)
+    {
+        if (entry->store->control)
+        {
+            ret = entry->store->control(entry->store, dwFlags, dwCtrlType,
+             pvCtrlPara);
+            if (!ret)
+                break;
+        }
+    }
+    LeaveCriticalSection(&store->cs);
+    return ret;
+}
+
 PWINECRYPT_CERTSTORE CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
@@ -468,6 +507,7 @@ PWINECRYPT_CERTSTORE CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
             store->hdr.ctls.addContext     = CRYPT_CollectionAddCTL;
             store->hdr.ctls.enumContext    = CRYPT_CollectionEnumCTL;
             store->hdr.ctls.deleteContext  = CRYPT_CollectionDeleteCTL;
+            store->hdr.control             = CRYPT_CollectionControl;
             InitializeCriticalSection(&store->cs);
             store->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PWINE_COLLECTIONSTORE->cs");
             list_init(&store->stores);

@@ -658,7 +658,6 @@ static void testCollectionStore(void)
     pCertAddStoreToCollection(collection, store1, 0, 0);
     SetLastError(0xdeadbeef);
     ret = pCertControlStore(collection, 0, CERT_STORE_CTRL_COMMIT, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED,
      "expected ERROR_CALL_NOT_IMPLEMENTED, got %d\n", GetLastError());
     pCertRemoveStoreFromCollection(collection, store1);
