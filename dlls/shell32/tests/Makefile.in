@@ -9,6 +9,7 @@ CTESTS = \
 	appbar.c \
 	autocomplete.c \
 	generated.c \
+	progman_dde.c \
 	shelllink.c \
 	shellpath.c \
 	shfldr_special.c \
