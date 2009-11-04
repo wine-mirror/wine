@@ -24,7 +24,7 @@
 #include "wine/list.h"
 #include "crypt32_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(crypt);
+WINE_DEFAULT_DEBUG_CHANNEL(context);
 
 typedef enum _ContextType {
     ContextTypeData,
@@ -106,6 +106,7 @@ void Context_AddRef(void *context, size_t contextSize)
     PBASE_CONTEXT baseContext = BASE_CONTEXT_FROM_CONTEXT(context, contextSize);
 
     InterlockedIncrement(&baseContext->ref);
+    TRACE("%p's ref count is %d\n", context, baseContext->ref);
     if (baseContext->type == ContextTypeLink)
     {
         void *linkedContext = Context_GetLinkedContext(context, contextSize);
@@ -116,6 +117,7 @@ void Context_AddRef(void *context, size_t contextSize)
         while (linkedContext && linkedBase->type == ContextTypeLink)
         {
             InterlockedIncrement(&linkedBase->ref);
+            TRACE("%p's ref count is %d\n", linkedContext, linkedBase->ref);
             linkedContext = Context_GetLinkedContext(linkedContext,
              contextSize);
             if (linkedContext)
@@ -132,6 +134,7 @@ void Context_AddRef(void *context, size_t contextSize)
             linkedBase = BASE_CONTEXT_FROM_CONTEXT(linkedContext,
              contextSize);
             InterlockedIncrement(&linkedBase->ref);
+            TRACE("%p's ref count is %d\n", linkedContext, linkedBase->ref);
         }
     }
 }
