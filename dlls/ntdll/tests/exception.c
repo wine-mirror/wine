@@ -1010,7 +1010,7 @@ static void test_dpe_exceptions(void)
         /* Try access to locked page with DEP on*/
         info.exception_caught = FALSE;
         run_exception_test(dpe_exception_handler, &info, single_ret, sizeof(single_ret), PAGE_NOACCESS);
-        ok(info.exception_caught == TRUE, "Execution of disabled memory suceeded\n");
+        ok(info.exception_caught == TRUE, "Execution of disabled memory succeeded\n");
         ok(info.exception_info == EXCEPTION_READ_FAULT ||
            info.exception_info == EXCEPTION_EXECUTE_FAULT,
               "Access violation type: %08x\n", (unsigned)info.exception_info);
@@ -1022,7 +1022,7 @@ static void test_dpe_exceptions(void)
         run_exception_test(dpe_exception_handler, &info, single_ret, sizeof(single_ret), PAGE_READWRITE);
         if(has_hw_support)
         {
-            ok(info.exception_caught == TRUE, "Execution of data memory suceeded\n");
+            ok(info.exception_caught == TRUE, "Execution of data memory succeeded\n");
             ok(info.exception_info == EXCEPTION_EXECUTE_FAULT,
                   "Access violation type: %08x\n", (unsigned)info.exception_info);
         }
@@ -1052,7 +1052,7 @@ static void test_dpe_exceptions(void)
            with hardware DEP on */
         info.exception_caught = FALSE;
         run_exception_test(dpe_exception_handler, &info, single_ret, sizeof(single_ret), PAGE_NOACCESS);
-        ok(info.exception_caught == TRUE, "Execution of disabled memory suceeded\n");
+        ok(info.exception_caught == TRUE, "Execution of disabled memory succeeded\n");
         ok(info.exception_info == EXCEPTION_READ_FAULT,
               "Access violation type: %08x\n", (unsigned)info.exception_info);
     }
