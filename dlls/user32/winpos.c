@@ -1056,7 +1056,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
 
         /* Revert focus to parent */
         hFocus = GetFocus();
-        if (hwnd == hFocus || IsChild(hwnd, hFocus))
+        if (hwnd == hFocus)
         {
             HWND parent = GetAncestor(hwnd, GA_PARENT);
             if (parent == GetDesktopWindow()) parent = 0;
