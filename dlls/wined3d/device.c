@@ -1211,6 +1211,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
                 object->win_handle, object->context[0]->glCtx);
         }
     }
+    else
+    {
+        object->context[0] = NULL;
+    }
 
    /*********************
    * Create the back, front and stencil buffers
