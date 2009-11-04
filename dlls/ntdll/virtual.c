@@ -2533,7 +2533,7 @@ done:
 NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
 {
     FILE_VIEW *view;
-    NTSTATUS status = STATUS_INVALID_PARAMETER;
+    NTSTATUS status = STATUS_NOT_MAPPED_VIEW;
     sigset_t sigset;
     void *base = ROUND_ADDR( addr, page_mask );
 
@@ -2552,7 +2552,7 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
     }
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
-    if ((view = VIRTUAL_FindView( base, 0 )) && (base == view->base))
+    if ((view = VIRTUAL_FindView( base, 0 )) && (base == view->base) && !(view->protect & VPROT_VALLOC))
     {
         delete_view( view );
         status = STATUS_SUCCESS;
