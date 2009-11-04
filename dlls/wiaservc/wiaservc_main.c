@@ -25,7 +25,7 @@
 #include "olectl.h"
 #include "winsvc.h"
 
-#include "wia.h"
+#include "wia_lh.h"
 #include "initguid.h"
 
 #include "wine/debug.h"
