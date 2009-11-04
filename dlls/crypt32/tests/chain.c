@@ -2201,9 +2201,13 @@ static const ChainPolicyCheck sslPolicyCheckWithMatchingName = {
  { 0, 0, -1, -1, NULL}, NULL, 0
 };
 
+/* Windows NT 4 has a different error code when the name doesn't match. */
+static const CERT_CHAIN_POLICY_STATUS noMatchingNameBrokenStatus =
+ { 0, CERT_E_ROLE, 0, 0, NULL };
+
 static const ChainPolicyCheck sslPolicyCheckWithoutMatchingName = {
  { sizeof(iTunesChain) / sizeof(iTunesChain[0]), iTunesChain },
- { 0, CERT_E_CN_NO_MATCH, 0, 0, NULL}, NULL, 0
+ { 0, CERT_E_CN_NO_MATCH, 0, 0, NULL}, &noMatchingNameBrokenStatus, 0
 };
 
 static const ChainPolicyCheck authenticodePolicyCheck[] = {
