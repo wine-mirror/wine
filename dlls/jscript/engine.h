@@ -109,9 +109,15 @@ static inline void exec_addref(exec_ctx_t *ctx)
     ctx->ref++;
 }
 
+typedef enum {
+    EXECT_PROGRAM,
+    EXECT_FUNCTION,
+    EXECT_EVAL
+} exec_type_t;
+
 void exec_release(exec_ctx_t*);
 HRESULT create_exec_ctx(script_ctx_t*,IDispatch*,DispatchEx*,scope_chain_t*,exec_ctx_t**);
-HRESULT exec_source(exec_ctx_t*,parser_ctx_t*,source_elements_t*,jsexcept_t*,VARIANT*);
+HRESULT exec_source(exec_ctx_t*,parser_ctx_t*,source_elements_t*,exec_type_t,jsexcept_t*,VARIANT*);
 
 typedef struct _statement_t statement_t;
 typedef struct _expression_t expression_t;

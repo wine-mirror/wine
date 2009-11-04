@@ -216,7 +216,7 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
     if(FAILED(hres))
         return hres;
 
-    hres = exec_source(exec_ctx, function->parser, function->source, ei, retv);
+    hres = exec_source(exec_ctx, function->parser, function->source, EXECT_FUNCTION, ei, retv);
     exec_release(exec_ctx);
 
     return hres;

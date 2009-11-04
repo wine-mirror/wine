@@ -414,7 +414,8 @@ static BOOL lookup_global_members(script_ctx_t *ctx, BSTR identifier, exprval_t 
     return FALSE;
 }
 
-HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *source, jsexcept_t *ei, VARIANT *retv)
+HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *source, exec_type_t exec_type,
+        jsexcept_t *ei, VARIANT *retv)
 {
     script_ctx_t *script = parser->script;
     function_declaration_t *func;
@@ -493,7 +494,7 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
         return hres;
     }
 
-    if(retv)
+    if(retv && (exec_type == EXECT_EVAL || rt.type == RT_RETURN))
         *retv = val;
     else
         VariantClear(&val);

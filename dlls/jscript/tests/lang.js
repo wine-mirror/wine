@@ -109,6 +109,11 @@ ok(typeof(this) === "object", "typeof(this) is not object");
 
 ok(testFunc1(true, "test") === true, "testFunc1 not returned true");
 
+tmp = (function() {1;})();
+ok(tmp === undefined, "tmp = " + tmp);
+tmp = eval("1;");
+ok(tmp === 1, "tmp = " + tmp);
+
 var obj1 = new Object();
 ok(typeof(obj1) === "object", "typeof(obj1) is not object");
 obj1.test = true;
