@@ -164,6 +164,7 @@ static void test_count(void)
     HANDLE handle;
     BOOL ret;
     DWORD count;
+    const char backup[] = "backup.evt";
 
     SetLastError(0xdeadbeef);
     ret = GetNumberOfEventLogRecords(NULL, NULL);
@@ -190,6 +191,25 @@ static void test_count(void)
     ok(count != 0xdeadbeef, "Expected the number of records\n");
 
     CloseEventLog(handle);
+
+    /* Make a backup eventlog to work with */
+    create_backup(backup);
+
+    handle = OpenBackupEventLogA(NULL, backup);
+    todo_wine
+    ok(handle != NULL, "Expected a handle\n");
+
+    /* Does GetNumberOfEventLogRecords work with backup eventlogs? */
+    count = 0xdeadbeef;
+    ret = GetNumberOfEventLogRecords(handle, &count);
+    todo_wine
+    {
+    ok(ret, "Expected succes\n");
+    ok(count != 0xdeadbeef, "Expected the number of records\n");
+    }
+
+    CloseEventLog(handle);
+    DeleteFileA(backup);
 }
 
 static void test_oldest(void)
@@ -197,6 +217,7 @@ static void test_oldest(void)
     HANDLE handle;
     BOOL ret;
     DWORD oldest;
+    const char backup[] = "backup.evt";
 
     SetLastError(0xdeadbeef);
     ret = GetOldestEventLogRecord(NULL, NULL);
@@ -223,6 +244,25 @@ static void test_oldest(void)
     ok(oldest != 0xdeadbeef, "Expected the number of the oldest record\n");
 
     CloseEventLog(handle);
+
+    /* Make a backup eventlog to work with */
+    create_backup(backup);
+
+    handle = OpenBackupEventLogA(NULL, backup);
+    todo_wine
+    ok(handle != NULL, "Expected a handle\n");
+
+    /* Does GetOldestEventLogRecord work with backup eventlogs? */
+    oldest = 0xdeadbeef;
+    ret = GetOldestEventLogRecord(handle, &oldest);
+    todo_wine
+    {
+    ok(ret, "Expected succes\n");
+    ok(oldest != 0xdeadbeef, "Expected the number of the oldest record\n");
+    }
+
+    CloseEventLog(handle);
+    DeleteFileA(backup);
 }
 
 static void test_backup(void)
@@ -230,6 +270,7 @@ static void test_backup(void)
     HANDLE handle;
     BOOL ret;
     const char backup[] = "backup.evt";
+    const char backup2[] = "backup2.evt";
 
     SetLastError(0xdeadbeef);
     ret = BackupEventLogA(NULL, NULL);
@@ -251,7 +292,7 @@ static void test_backup(void)
     ret = BackupEventLogA(handle, backup);
     ok(ret, "Expected succes\n");
     todo_wine
-    ok(GetFileAttributesA("backup.evt") != INVALID_FILE_ATTRIBUTES, "Expected a backup file\n");
+    ok(GetFileAttributesA(backup) != INVALID_FILE_ATTRIBUTES, "Expected a backup file\n");
 
     /* Try to overwrite */
     SetLastError(0xdeadbeef);
@@ -263,7 +304,22 @@ static void test_backup(void)
     }
 
     CloseEventLog(handle);
+
+    /* Can we make a backup of a backup? */
+    handle = OpenBackupEventLogA(NULL, backup);
+    todo_wine
+    ok(handle != NULL, "Expected a handle\n");
+
+    ret = BackupEventLogA(handle, backup2);
+    todo_wine
+    {
+    ok(ret, "Expected succes\n");
+    ok(GetFileAttributesA(backup2) != INVALID_FILE_ATTRIBUTES, "Expected a backup file\n");
+    }
+
+    CloseEventLog(handle);
     DeleteFileA(backup);
+    DeleteFileA(backup2);
 }
 
 static void test_read(void)
