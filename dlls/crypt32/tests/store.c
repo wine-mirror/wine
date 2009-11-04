@@ -2096,7 +2096,6 @@ static void test_I_UpdateStore(void)
     certs = countCertsInStore(store1);
     ok(certs == 0, "Expected 0 certs, got %d\n", certs);
 
-    CertFreeCertificateContext(cert);
     CertCloseStore(store1, 0);
     CertCloseStore(store2, 0);
 }
