@@ -15,7 +15,7 @@
 @ stub D3D10GetPixelShaderProfile
 @ stub D3D10GetShaderDebugInfo
 @ stub D3D10GetVersion
-@ stub D3D10GetVertexShaderProfile
+@ stdcall D3D10GetVertexShaderProfile(ptr)
 @ stub D3D10PreprocessShader
 @ stub D3D10ReflectShader
 @ stub D3D10RegisterLayers
