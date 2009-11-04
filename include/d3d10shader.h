@@ -132,5 +132,6 @@ typedef struct _D3D10_SIGNATURE_PARAMETER_DESC
 
 LPCSTR WINAPI D3D10GetVertexShaderProfile(ID3D10Device *device);
 LPCSTR WINAPI D3D10GetGeometryShaderProfile(ID3D10Device *device);
+LPCSTR WINAPI D3D10GetPixelShaderProfile(ID3D10Device *device);
 
 #endif /* __WINE_D3D10SHADER_H */

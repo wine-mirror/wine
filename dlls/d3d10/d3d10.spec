@@ -12,7 +12,7 @@
 @ stub D3D10GetInputAndOutputSignatureBlob
 @ stub D3D10GetInputSignatureBlob
 @ stub D3D10GetOutputSignatureBlob
-@ stub D3D10GetPixelShaderProfile
+@ stdcall D3D10GetPixelShaderProfile(ptr)
 @ stub D3D10GetShaderDebugInfo
 @ stub D3D10GetVersion
 @ stdcall D3D10GetVertexShaderProfile(ptr)
