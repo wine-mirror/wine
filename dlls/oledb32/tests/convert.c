@@ -555,26 +555,31 @@ todo_wine
     dst = 0x1234;
     ((LARGE_INTEGER*)src)->QuadPart = 0x1234abcd;
     hr = IDataConvert_DataConvert(convert, DBTYPE_I8, DBTYPE_I2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    ok(hr == DB_E_ERRORSOCCURRED, "got %08x\n", hr);
-    ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
-    ok(dst_len == sizeof(dst), "got %d\n", dst_len);
-    ok(dst == 0x1234, "got %08x\n", dst);
+    ok(hr == DB_E_ERRORSOCCURRED ||
+       broken(hr == DB_E_UNSUPPORTEDCONVERSION), /* win98 */
+       "got %08x\n", hr);
+    if(hr != DB_E_UNSUPPORTEDCONVERSION) /* win98 doesn't support I8/UI8 */
+    {
+        ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
+        ok(dst_len == sizeof(dst), "got %d\n", dst_len);
+        ok(dst == 0x1234, "got %08x\n", dst);
 
-    dst = 0x1234;
-    ((LARGE_INTEGER*)src)->QuadPart = 0x4321;
-    hr = IDataConvert_DataConvert(convert, DBTYPE_I8, DBTYPE_I2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
-    ok(dst_len == sizeof(dst), "got %d\n", dst_len);
-    ok(dst == 0x4321, "got %08x\n", dst);
+        dst = 0x1234;
+        ((LARGE_INTEGER*)src)->QuadPart = 0x4321;
+        hr = IDataConvert_DataConvert(convert, DBTYPE_I8, DBTYPE_I2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+        ok(hr == S_OK, "got %08x\n", hr);
+        ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+        ok(dst_len == sizeof(dst), "got %d\n", dst_len);
+        ok(dst == 0x4321, "got %08x\n", dst);
 
-    dst = 0x1234;
-    ((ULARGE_INTEGER*)src)->QuadPart = 0x4321;
-    hr = IDataConvert_DataConvert(convert, DBTYPE_UI8, DBTYPE_I2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
-    ok(dst_len == sizeof(dst), "got %d\n", dst_len);
-    ok(dst == 0x4321, "got %08x\n", dst);
+        dst = 0x1234;
+        ((ULARGE_INTEGER*)src)->QuadPart = 0x4321;
+        hr = IDataConvert_DataConvert(convert, DBTYPE_UI8, DBTYPE_I2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+        ok(hr == S_OK, "got %08x\n", hr);
+        ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+        ok(dst_len == sizeof(dst), "got %d\n", dst_len);
+        ok(dst == 0x4321, "got %08x\n", dst);
+    }
 
     dst = 0x1234;
     strcpy((char *)src, "10");
@@ -798,18 +803,23 @@ todo_wine
     i4 = 0x12345678;
     ((LARGE_INTEGER*)src)->QuadPart = 0x1234abcd;
     hr = IDataConvert_DataConvert(convert, DBTYPE_I8, DBTYPE_I4, 0, &dst_len, src, &i4, sizeof(i4), 0, &dst_status, 0, 0, 0);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
-    ok(dst_len == sizeof(i4), "got %d\n", dst_len);
-    ok(i4 == 0x1234abcd, "got %08x\n", i4);
+    ok(hr == S_OK ||
+       broken(hr == DB_E_UNSUPPORTEDCONVERSION), /* win98 */
+       "got %08x\n", hr);
+    if(hr != DB_E_UNSUPPORTEDCONVERSION) /* win98 doesn't support I8/UI8 */
+    {
+        ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+        ok(dst_len == sizeof(i4), "got %d\n", dst_len);
+        ok(i4 == 0x1234abcd, "got %08x\n", i4);
 
-    i4 = 0x12345678;
-    ((ULARGE_INTEGER*)src)->QuadPart = 0x1234abcd;
-    hr = IDataConvert_DataConvert(convert, DBTYPE_UI8, DBTYPE_I4, 0, &dst_len, src, &i4, sizeof(i4), 0, &dst_status, 0, 0, 0);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
-    ok(dst_len == sizeof(i4), "got %d\n", dst_len);
-    ok(i4 == 0x1234abcd, "got %08x\n", i4);
+        i4 = 0x12345678;
+        ((ULARGE_INTEGER*)src)->QuadPart = 0x1234abcd;
+        hr = IDataConvert_DataConvert(convert, DBTYPE_UI8, DBTYPE_I4, 0, &dst_len, src, &i4, sizeof(i4), 0, &dst_status, 0, 0, 0);
+        ok(hr == S_OK, "got %08x\n", hr);
+        ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+        ok(dst_len == sizeof(i4), "got %d\n", dst_len);
+        ok(i4 == 0x1234abcd, "got %08x\n", i4);
+    }
 
     i4 = 0x12345678;
     strcpy((char *)src, "10");
@@ -1174,11 +1184,16 @@ static void test_converttofiletime(void)
     ((FILETIME *)src)->dwLowDateTime = 0x12345678;
     ((FILETIME *)src)->dwHighDateTime = 0x9abcdef0;
     hr = IDataConvert_DataConvert(convert, DBTYPE_FILETIME, DBTYPE_FILETIME, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
-    ok(dst_len == sizeof(dst), "got %d\n", dst_len);
-    ok(dst.dwLowDateTime == 0x12345678, "got %08x\n", dst.dwLowDateTime);
-    ok(dst.dwHighDateTime == 0x9abcdef0, "got %08x\n", dst.dwHighDateTime);
+    ok(hr == S_OK ||
+       broken(hr == DB_E_BADBINDINFO), /* win98 */
+       "got %08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+        ok(dst_len == sizeof(dst), "got %d\n", dst_len);
+        ok(dst.dwLowDateTime == 0x12345678, "got %08x\n", dst.dwLowDateTime);
+        ok(dst.dwHighDateTime == 0x9abcdef0, "got %08x\n", dst.dwHighDateTime);
+    }
 
     IDataConvert_Release(convert);
 }

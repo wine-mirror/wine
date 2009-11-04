@@ -21,6 +21,8 @@
 #ifndef __WINE_OLEDBERR_H
 #define __WINE_OLEDBERR_H
 
+#define DB_E_BADBINDINFO                    0x80040e08
+
 #define DB_E_NOTFOUND                       0x80040e19
 
 #define DB_E_UNSUPPORTEDCONVERSION          0x80040e1d
