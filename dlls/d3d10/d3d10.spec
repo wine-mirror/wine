@@ -8,7 +8,7 @@
 @ stub D3D10CreateStateBlock
 @ stub D3D10DisassembleEffect
 @ stub D3D10DisassembleShader
-@ stub D3D10GetGeometryShaderProfile
+@ stdcall D3D10GetGeometryShaderProfile(ptr)
 @ stub D3D10GetInputAndOutputSignatureBlob
 @ stub D3D10GetInputSignatureBlob
 @ stub D3D10GetOutputSignatureBlob
