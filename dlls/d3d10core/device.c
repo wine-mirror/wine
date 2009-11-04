@@ -919,9 +919,30 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePixelShader(ID3D10Device *if
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState(ID3D10Device *iface,
         const D3D10_BLEND_DESC *desc, ID3D10BlendState **blend_state)
 {
-    FIXME("iface %p, desc %p, blend_state %p stub!\n", iface, desc, blend_state);
+    struct d3d10_blend_state *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p, blend_state %p.\n", iface, desc, blend_state);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate D3D10 blend state object memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = d3d10_blend_state_init(object);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize blend state, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created blend state %p.\n", object);
+    *blend_state = (ID3D10BlendState *)object;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilState(ID3D10Device *iface,

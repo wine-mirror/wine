@@ -189,6 +189,15 @@ HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d10_
 HRESULT shader_parse_signature(const char *data, DWORD data_size, struct wined3d_shader_signature *s) DECLSPEC_HIDDEN;
 void shader_free_signature(struct wined3d_shader_signature *s) DECLSPEC_HIDDEN;
 
+/* ID3D10BlendState */
+struct d3d10_blend_state
+{
+    const struct ID3D10BlendStateVtbl *vtbl;
+    LONG refcount;
+};
+
+HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state) DECLSPEC_HIDDEN;
+
 /* ID3D10DepthStencilState */
 struct d3d10_depthstencil_state
 {
