@@ -326,8 +326,10 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
         ok(data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
          TRUST_E_NOSIGNATURE ||
          data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
-         TRUST_E_SUBJECT_FORM_UNKNOWN,
-         "Expected TRUST_E_NOSIGNATURE or TRUST_E_SUBJECT_FORM_UNKNOWN, got %08x\n",
+         TRUST_E_SUBJECT_FORM_UNKNOWN ||
+         data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
+         TRUST_E_PROVIDER_UNKNOWN,
+         "Expected TRUST_E_NOSIGNATURE or TRUST_E_SUBJECT_FORM_UNKNOWN or TRUST_E_PROVIDER_UNKNOWN, got %08x\n",
          data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
         if (data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
          TRUST_E_NOSIGNATURE)
