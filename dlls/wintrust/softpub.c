@@ -1078,7 +1078,8 @@ HRESULT WINAPI SoftpubCleanup(CRYPT_PROVIDER_DATA *data)
 
     CryptMsgClose(data->hMsg);
 
-    if (data->fOpenedFile)
+    if (data->fOpenedFile &&
+     data->pWintrustData->dwUnionChoice == WTD_CHOICE_FILE)
         CloseHandle(data->pWintrustData->u.pFile->hFile);
 
     return S_OK;
