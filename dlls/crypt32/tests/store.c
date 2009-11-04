@@ -574,6 +574,28 @@ static void testCollectionStore(void)
     CertCloseStore(collection, 0);
     CertCloseStore(store2, 0);
     CertCloseStore(store1, 0);
+
+    /* Test adding certificates to and deleting certificates from collections.
+     */
+    store1 = CertOpenSystemStoreA(0, "My");
+    collection = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+
+    ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING,
+     bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, &context);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08x\n", GetLastError());
+    CertDeleteCertificateFromStore(context);
+
+    CertAddStoreToCollection(collection, store1,
+     CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+
+    ret = CertAddEncodedCertificateToStore(collection, X509_ASN_ENCODING,
+     bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, &context);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08x\n", GetLastError());
+    CertDeleteCertificateFromStore(context);
+
+    CertCloseStore(collection, 0);
+    CertCloseStore(store1, 0);
 }
 
 /* Looks for the property with ID propID in the buffer buf.  Returns a pointer
