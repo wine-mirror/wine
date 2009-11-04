@@ -1291,6 +1291,20 @@ client(const char *test)
     ok(RPC_S_OK == RpcStringFree(&binding), "RpcStringFree\n");
     ok(RPC_S_OK == RpcBindingFree(&IServer_IfHandle), "RpcBindingFree\n");
   }
+  else if (strcmp(test, "ncalrpc_basic") == 0)
+  {
+    static unsigned char ncalrpc[] = "ncalrpc";
+    static unsigned char guid[] = "00000000-4114-0704-2301-000000000000";
+    unsigned char *binding;
+
+    ok(RPC_S_OK == RpcStringBindingCompose(NULL, ncalrpc, NULL, guid, NULL, &binding), "RpcStringBindingCompose\n");
+    ok(RPC_S_OK == RpcBindingFromStringBinding(binding, &IServer_IfHandle), "RpcBindingFromStringBinding\n");
+
+    run_tests();
+
+    ok(RPC_S_OK == RpcStringFree(&binding), "RpcStringFree\n");
+    ok(RPC_S_OK == RpcBindingFree(&IServer_IfHandle), "RpcBindingFree\n");
+  }
   else if (strcmp(test, "np_basic") == 0)
   {
     static unsigned char np[] = "ncacn_np";
@@ -1316,11 +1330,17 @@ server(void)
   static unsigned char port[] = PORT;
   static unsigned char np[] = "ncacn_np";
   static unsigned char pipe[] = PIPE;
-  RPC_STATUS status, iptcp_status, np_status;
+  static unsigned char ncalrpc[] = "ncalrpc";
+  static unsigned char guid[] = "00000000-4114-0704-2301-000000000000";
+  RPC_STATUS status, iptcp_status, np_status, ncalrpc_status;
   DWORD ret;
 
   iptcp_status = RpcServerUseProtseqEp(iptcp, 20, port, NULL);
   ok(iptcp_status == RPC_S_OK, "RpcServerUseProtseqEp(ncacn_ip_tcp) failed with status %d\n", iptcp_status);
+
+  ncalrpc_status = RpcServerUseProtseqEp(ncalrpc, 0, guid, NULL);
+  ok(ncalrpc_status == RPC_S_OK, "RpcServerUseProtseqEp(ncalrpc) failed with status %d\n", ncalrpc_status);
+
   np_status = RpcServerUseProtseqEp(np, 0, pipe, NULL);
   if (np_status == RPC_S_PROTSEQ_NOT_SUPPORTED)
     skip("Protocol sequence ncacn_np is not supported\n");
@@ -1346,6 +1366,11 @@ server(void)
     run_client("tcp_basic");
   else
     skip("tcp_basic tests skipped due to earlier failure\n");
+
+  if (ncalrpc_status == RPC_S_OK)
+    run_client("ncalrpc_basic");
+  else
+    skip("ncalrpc_basic tests skipped due to earlier failure\n");
 
   if (np_status == RPC_S_OK)
     run_client("np_basic");
