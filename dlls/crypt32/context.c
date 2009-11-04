@@ -94,7 +94,7 @@ void *Context_CreateLinkContext(unsigned int contextSize, void *linked, unsigned
         linkContext->type = ContextTypeLink;
         linkContext->linked = linkedBase;
         if (addRef)
-            InterlockedIncrement(&linkedBase->ref);
+            Context_AddRef(linked, contextSize);
         TRACE("%p's ref count is %d\n", context, linkContext->ref);
     }
     TRACE("returning %p\n", context);
