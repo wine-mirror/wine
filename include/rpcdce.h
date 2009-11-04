@@ -158,8 +158,8 @@ typedef I_RPC_HANDLE *RPC_EP_INQ_HANDLE;
 #define RPC_C_IMP_LEVEL_DELEGATE    4
 
 /* values for RPC_SECURITY_QOS*::IdentityTracking */
-#define RPC_C_QOS_IDENTIFY_STATIC   0
-#define RPC_C_QOS_IDENTIFY_DYNAMIC  1
+#define RPC_C_QOS_IDENTITY_STATIC   0
+#define RPC_C_QOS_IDENTITY_DYNAMIC  1
 
 /* flags for RPC_SECURITY_QOS*::Capabilities */
 #define RPC_C_QOS_CAPABILITIES_DEFAULT          0x0
