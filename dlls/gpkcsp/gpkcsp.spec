@@ -22,5 +22,5 @@
 @ stub CPSignHash
 @ stub CPVerifySignature
 @ stdcall DllMain(ptr long ptr)
-@ stub DllRegisterServer
-@ stub DllUnregisterServer
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()

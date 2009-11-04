@@ -44,3 +44,21 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
     return TRUE;
 }
+
+/*****************************************************
+ *    DllRegisterServer (GPKCSP.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    FIXME("Not implemented.\n");
+    return E_UNEXPECTED;
+}
+
+/*****************************************************
+ *    DllUnregisterServer (GPKCSP.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    FIXME("Not implemented.\n");
+    return E_UNEXPECTED;
+}
