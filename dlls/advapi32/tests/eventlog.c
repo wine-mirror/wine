@@ -36,6 +36,16 @@ static void init_function_pointers(void)
     pGetEventLogInformation = (void*)GetProcAddress(hadvapi32, "GetEventLogInformation");
 }
 
+static void create_backup(const char *filename)
+{
+    HANDLE handle;
+
+    DeleteFileA(filename);
+    handle = OpenEventLogA(NULL, "Application");
+    BackupEventLogA(handle, filename);
+    CloseEventLog(handle);
+}
+
 static void test_open_close(void)
 {
     HANDLE handle;
@@ -434,10 +444,7 @@ static void test_openbackup(void)
        "Expected RPC_S_SERVER_UNAVAILABLE, got %d\n", GetLastError());
 
     /* Make a backup eventlog to work with */
-    DeleteFileA(backup);
-    handle = OpenEventLogA(NULL, "Application");
-    BackupEventLogA(handle, backup);
-    CloseEventLog(handle);
+    create_backup(backup);
 
     /* FIXME: Wine stops here */
     if (GetFileAttributesA(backup) == INVALID_FILE_ATTRIBUTES)
@@ -493,6 +500,57 @@ static void test_openbackup(void)
     DeleteFileA(backup);
 }
 
+static void test_clear(void)
+{
+    HANDLE handle;
+    BOOL ret;
+    const char backup[] = "backup.evt";
+
+    SetLastError(0xdeadbeef);
+    ret = ClearEventLogA(NULL, NULL);
+    todo_wine
+    {
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    }
+
+    /* Make a backup eventlog to work with */
+    create_backup(backup);
+
+    SetLastError(0xdeadbeef);
+    ret = ClearEventLogA(NULL, backup);
+    todo_wine
+    {
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    }
+
+    handle = OpenBackupEventLogA(NULL, backup);
+    todo_wine
+    ok(handle != NULL, "Expected a handle\n");
+
+    /* A real eventlog would fail with ERROR_ALREADY_EXISTS */
+    SetLastError(0xdeadbeef);
+    ret = ClearEventLogA(handle, backup);
+    todo_wine
+    {
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    }
+
+    /* Show that ClearEventLog only works for real eventlogs. */
+    SetLastError(0xdeadbeef);
+    ret = ClearEventLogA(handle, NULL);
+    todo_wine
+    {
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    }
+
+    CloseEventLog(handle);
+    DeleteFileA(backup);
+}
+
 START_TEST(eventlog)
 {
     SetLastError(0xdeadbeef);
@@ -513,4 +571,5 @@ START_TEST(eventlog)
     test_backup();
     test_openbackup();
     test_read();
+    test_clear();
 }
