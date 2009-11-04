@@ -173,7 +173,10 @@ BOOL Context_Release(void *context, size_t contextSize,
     BOOL ret = TRUE;
 
     if (base->ref <= 0)
+    {
+        ERR("%p's ref count is %d\n", context, base->ref);
         return FALSE;
+    }
     if (base->type == ContextTypeLink)
     {
         /* The linked context is of the same type as this, so release
