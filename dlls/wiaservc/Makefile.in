@@ -11,6 +11,8 @@ C_SRCS = \
 	wiadevmgr.c \
 	wiaservc_main.c
 
+RC_SRCS = rsrc.rc
+
 @MAKE_DLL_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

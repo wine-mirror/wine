@@ -1,6 +1,6 @@
 @ stdcall -private ServiceMain(long ptr)
-@ stub DllRegisterServer
-@ stub DllUnregisterServer
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()
 @ stub wiasCreateChildAppItem
 @ stub wiasCreateDrvItem
 @ stub wiasCreateLogInstance

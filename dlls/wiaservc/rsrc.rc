@@ -1,6 +1,4 @@
 /*
- * WiaServc definitions
- *
  * Copyright 2009 Damjan Jovanovic
  *
  * This library is free software; you can redistribute it and/or
@@ -18,31 +16,5 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WIASERVC_PRIVATE__
-#define __WIASERVC_PRIVATE__
-
-typedef struct
-{
-    const IClassFactoryVtbl *lpVtbl;
-} ClassFactoryImpl;
-
-extern ClassFactoryImpl WIASERVC_ClassFactory;
-
-typedef struct
-{
-    const IWiaDevMgrVtbl *lpVtbl;
-    LONG ref;
-} wiadevmgr;
-
-HRESULT wiadevmgr_Constructor(IUnknown *pUnkOuter, LPVOID *ppObj);
-
-/* Little helper functions */
-static inline char *
-wiaservc_strdup(const char *s)
-{
-    size_t n = strlen(s) + 1;
-    char *d = HeapAlloc(GetProcessHeap(), 0, n);
-    return d ? memcpy(d, s, n) : NULL;
-}
-
-#endif /* __WIASERVC_PRIVATE__ */
+/* @makedep: wiaservc.inf */
+REGINST REGINST wiaservc.inf
