@@ -508,22 +508,16 @@ static void test_clear(void)
 
     SetLastError(0xdeadbeef);
     ret = ClearEventLogA(NULL, NULL);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    }
 
     /* Make a backup eventlog to work with */
     create_backup(backup);
 
     SetLastError(0xdeadbeef);
     ret = ClearEventLogA(NULL, backup);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    }
 
     handle = OpenBackupEventLogA(NULL, backup);
     todo_wine
@@ -532,20 +526,14 @@ static void test_clear(void)
     /* A real eventlog would fail with ERROR_ALREADY_EXISTS */
     SetLastError(0xdeadbeef);
     ret = ClearEventLogA(handle, backup);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    }
 
     /* Show that ClearEventLog only works for real eventlogs. */
     SetLastError(0xdeadbeef);
     ret = ClearEventLogA(handle, NULL);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    }
 
     CloseEventLog(handle);
     DeleteFileA(backup);

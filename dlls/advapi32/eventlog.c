@@ -107,7 +107,7 @@ BOOL WINAPI BackupEventLogW( HANDLE hEventLog, LPCWSTR lpBackupFileName )
 /******************************************************************************
  * ClearEventLogA [ADVAPI32.@]
  *
- * Clears the event log and/or saves the log to a backup file.
+ * Clears the event log and optionally saves the log to a backup file.
  *
  * PARAMS
  *  hEvenLog         [I] Handle to event log to clear.
@@ -121,8 +121,14 @@ BOOL WINAPI BackupEventLogW( HANDLE hEventLog, LPCWSTR lpBackupFileName )
  */
 BOOL WINAPI ClearEventLogA( HANDLE hEventLog, LPCSTR lpBackupFileName )
 {
-	FIXME("(%p,%s) stub\n", hEventLog, debugstr_a(lpBackupFileName));
-	return TRUE;
+    LPWSTR backupW;
+    BOOL ret;
+
+    backupW = SERV_dup(lpBackupFileName);
+    ret = ClearEventLogW(hEventLog, backupW);
+    HeapFree(GetProcessHeap(), 0, backupW);
+
+    return ret;
 }
 
 /******************************************************************************
@@ -132,8 +138,15 @@ BOOL WINAPI ClearEventLogA( HANDLE hEventLog, LPCSTR lpBackupFileName )
  */
 BOOL WINAPI ClearEventLogW( HANDLE hEventLog, LPCWSTR lpBackupFileName )
 {
-	FIXME("(%p,%s) stub\n", hEventLog, debugstr_w(lpBackupFileName));
-	return TRUE;
+    FIXME("(%p,%s) stub\n", hEventLog, debugstr_w(lpBackupFileName));
+
+    if (!hEventLog)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /******************************************************************************
