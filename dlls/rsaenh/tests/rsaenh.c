@@ -2032,6 +2032,66 @@ static void test_schannel_provider(void)
     CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_SCHANNEL, CRYPT_DELETEKEYSET);
 }
 
+/* Test that a key can be used to encrypt data and exported, and that, when
+ * the exported key is imported again, can be used to decrypt the original
+ * data again.
+ */
+static void test_rsa_round_trip(void)
+{
+    static const char test_string[] = "Well this is a fine how-do-you-do.";
+    HCRYPTPROV prov;
+    HCRYPTKEY signKey, keyExchangeKey;
+    BOOL result;
+    BYTE data[256], *exportedKey;
+    DWORD dataLen, keyLen;
+
+    CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
+     CRYPT_DELETEKEYSET);
+
+    /* Generate a new key... */
+    result = CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
+     CRYPT_NEWKEYSET);
+    ok(result, "CryptAcquireContext failed: %08x\n", GetLastError());
+    result = CryptGenKey(prov, CALG_RSA_KEYX, CRYPT_EXPORTABLE, &signKey);
+    ok(result, "CryptGenKey with CALG_RSA_KEYX failed with error %08x\n", GetLastError());
+    result = CryptGetUserKey(prov, AT_KEYEXCHANGE, &keyExchangeKey);
+    ok(result, "CryptGetUserKey failed: %08x\n", GetLastError());
+    /* encrypt some data with it... */
+    memcpy(data, test_string, strlen(test_string) + 1);
+    dataLen = strlen(test_string) + 1;
+    result = CryptEncrypt(keyExchangeKey, 0, TRUE, 0, data, &dataLen,
+                          sizeof(data));
+    ok(result, "CryptEncrypt failed: %08x\n", GetLastError());
+    /* export the key... */
+    result = CryptExportKey(keyExchangeKey, 0, PRIVATEKEYBLOB, 0, NULL,
+                            &keyLen);
+    ok(result, "CryptExportKey failed: %08x\n", GetLastError());
+    exportedKey = HeapAlloc(GetProcessHeap(), 0, keyLen);
+    result = CryptExportKey(keyExchangeKey, 0, PRIVATEKEYBLOB, 0, exportedKey,
+                            &keyLen);
+    /* destroy the key... */
+    CryptDestroyKey(keyExchangeKey);
+    CryptDestroyKey(signKey);
+    /* import the key again... */
+    result = CryptImportKey(prov, exportedKey, keyLen, 0, 0, &keyExchangeKey);
+    ok(result, "CryptImportKey failed: %08x\n", GetLastError());
+    HeapFree(GetProcessHeap(), 0, exportedKey);
+    /* and decrypt the data encrypted with the original key with the imported
+     * key.
+     */
+    result = CryptDecrypt(keyExchangeKey, 0, TRUE, 0, data, &dataLen);
+    ok(result, "CryptDecrypt failed: %08x\n", GetLastError());
+    if (result)
+    {
+        ok(dataLen == sizeof(test_string), "unexpected size %d\n", dataLen);
+        ok(!memcmp(data, test_string, sizeof(test_string)), "unexpected value");
+    }
+    CryptReleaseContext(prov, 0);
+
+    CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
+     CRYPT_DELETEKEYSET);
+}
+
 static void test_enum_container(void)
 {
     BYTE abContainerName[MAX_PATH + 2]; /* Larger than maximum name len */
@@ -2494,6 +2554,7 @@ START_TEST(rsaenh)
     test_key_initialization();
     test_schannel_provider();
     test_null_provider();
+    test_rsa_round_trip();
     if (!init_aes_environment())
         return;
     test_aes(128);
