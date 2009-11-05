@@ -1083,7 +1083,7 @@ static void dump_element(PCCERT_CONTEXT cert)
 }
 
 static BOOL CRYPT_KeyUsageValid(PCertificateChainEngine engine,
- PCCERT_CONTEXT cert, BOOL isCA, DWORD index)
+ PCCERT_CONTEXT cert, BOOL isRoot, BOOL isCA, DWORD index)
 {
     PCERT_EXTENSION ext;
     BOOL ret;
@@ -1132,20 +1132,24 @@ static BOOL CRYPT_KeyUsageValid(PCertificateChainEngine engine,
              * perhaps this is prudent.  On the other hand, MS also accepts V3
              * certs without key usage extensions.  We are more restrictive:
              * we accept locally installed V1 or V2 certs as CA certs.
+             * We also accept a lack of key usage extension on root certs,
+             * which is implied in RFC 5280, section 6.1:  the trust anchor's
+             * only requirement is that it was used to issue the next
+             * certificate in the chain.
              */
-            ret = FALSE;
-            if (cert->pCertInfo->dwVersion == CERT_V1 ||
+            if (isRoot)
+                ret = TRUE;
+            else if (cert->pCertInfo->dwVersion == CERT_V1 ||
              cert->pCertInfo->dwVersion == CERT_V2)
             {
                 PCCERT_CONTEXT localCert = CRYPT_FindCertInStore(
                  engine->hWorld, cert);
 
-                if (localCert)
-                {
-                    CertFreeCertificateContext(localCert);
-                    ret = TRUE;
-                }
+                ret = localCert != NULL;
+                CertFreeCertificateContext(localCert);
             }
+            else
+                ret = FALSE;
             if (!ret)
                 WARN_(chain)("no key usage extension on a CA cert\n");
         }
@@ -1273,8 +1277,15 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
      chain->cElement, debugstr_w(filetime_to_str(time)));
     for (i = chain->cElement - 1; i >= 0; i--)
     {
+        BOOL isRoot;
+
         if (TRACE_ON(chain))
             dump_element(chain->rgpElement[i]->pCertContext);
+        if (i == chain->cElement - 1)
+            isRoot = CRYPT_IsCertificateSelfSigned(
+             chain->rgpElement[i]->pCertContext);
+        else
+            isRoot = FALSE;
         if (CertVerifyTimeValidity(time,
          chain->rgpElement[i]->pCertContext->pCertInfo) != 0)
             chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
@@ -1316,7 +1327,7 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
                  CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
         }
         if (!CRYPT_KeyUsageValid(engine, chain->rgpElement[i]->pCertContext,
-         constraints.fCA, i))
+         isRoot, constraints.fCA, i))
             chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
              CERT_TRUST_IS_NOT_VALID_FOR_USAGE;
         if (i != 0)
