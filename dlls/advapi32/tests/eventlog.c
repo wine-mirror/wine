@@ -44,6 +44,9 @@ static void create_backup(const char *filename)
     handle = OpenEventLogA(NULL, "Application");
     BackupEventLogA(handle, filename);
     CloseEventLog(handle);
+
+    todo_wine
+    ok(GetFileAttributesA(filename) != INVALID_FILE_ATTRIBUTES, "Expected a backup file\n");
 }
 
 static void test_open_close(void)
@@ -561,6 +564,7 @@ static void test_clear(void)
     HANDLE handle;
     BOOL ret;
     const char backup[] = "backup.evt";
+    const char backup2[] = "backup2.evt";
 
     SetLastError(0xdeadbeef);
     ret = ClearEventLogA(NULL, NULL);
@@ -583,16 +587,28 @@ static void test_clear(void)
     SetLastError(0xdeadbeef);
     ret = ClearEventLogA(handle, backup);
     ok(!ret, "Expected failure\n");
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    /* The eventlog service runs under an account that doesn't have the necessary
+     * permissions on the users home directory on a default Vista+ system.
+     */
+    ok(GetLastError() == ERROR_INVALID_HANDLE ||
+       GetLastError() == ERROR_ACCESS_DENIED, /* Vista+ */
+       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     /* Show that ClearEventLog only works for real eventlogs. */
+    SetLastError(0xdeadbeef);
+    ret = ClearEventLogA(handle, backup2);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    ok(GetFileAttributesA(backup2) == INVALID_FILE_ATTRIBUTES, "Expected no backup file\n");
+
     SetLastError(0xdeadbeef);
     ret = ClearEventLogA(handle, NULL);
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     CloseEventLog(handle);
-    DeleteFileA(backup);
+    todo_wine
+    ok(DeleteFileA(backup), "Could not delete the backup file\n");
 }
 
 START_TEST(eventlog)
