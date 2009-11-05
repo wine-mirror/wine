@@ -41,8 +41,9 @@ typedef struct {
     HANDLE			hWave;
     int				nUseCount;	/* Incremented for each shared open */
     HMMIO			hFile;  	/* mmio file handle open as Element */
-    MCI_WAVE_OPEN_PARMSW 	openParms;
+    MCIDEVICEID			wNotifyDeviceID;	/* MCI device ID with a pending notification */
     HANDLE			hCallback;	/* Callback handle for pending notification */
+    LPWSTR			lpFileName;	/* Name of file (if any)                     */
     WAVEFORMATEX		wfxRef;
     LPWAVEFORMATEX		lpWaveFormat;	/* Points to wfxRef until set by OPEN or RECORD */
     BOOL			fInput;		/* FALSE = Output, TRUE = Input */
@@ -210,7 +211,7 @@ static WINE_MCIWAVE *WAVE_mciGetOpenDev(MCIDEVICEID wDevID)
  */
 static void WAVE_mciNotify(DWORD_PTR hWndCallBack, WINE_MCIWAVE* wmw, UINT wStatus)
 {
-    MCIDEVICEID wDevID = wmw->openParms.wDeviceID;
+    MCIDEVICEID wDevID = wmw->wNotifyDeviceID;
     HANDLE old = InterlockedExchangePointer(&wmw->hCallback, NULL);
     if (old) mciDriverNotify(old, wDevID, MCI_NOTIFY_SUPERSEDED);
     mciDriverNotify(HWND_32(LOWORD(hWndCallBack)), wDevID, wStatus);
@@ -421,6 +422,7 @@ static DWORD create_tmp_file(HMMIO* hFile, LPWSTR* pszTmpFileName)
 
     if (!GetTempPathW(sizeof(szTmpPath)/sizeof(szTmpPath[0]), szTmpPath)) {
         WARN("can't retrieve temp path!\n");
+        *pszTmpFileName = NULL;
         return MCIERR_FILE_NOT_FOUND;
     }
 
@@ -450,16 +452,16 @@ static DWORD create_tmp_file(HMMIO* hFile, LPWSTR* pszTmpFileName)
     return dwRet;
 }
 
-static LRESULT WAVE_mciOpenFile(WINE_MCIWAVE* wmw, const WCHAR* filename)
+static LRESULT WAVE_mciOpenFile(WINE_MCIWAVE* wmw, LPCWSTR filename)
 {
     LRESULT dwRet = MMSYSERR_NOERROR;
-    WCHAR* fn;
+    LPWSTR fn;
 
     fn = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(filename) + 1) * sizeof(WCHAR));
     if (!fn) return MCIERR_OUT_OF_MEMORY;
     strcpyW(fn, filename);
-    HeapFree(GetProcessHeap(), 0, (void*)wmw->openParms.lpstrElementName);
-    wmw->openParms.lpstrElementName = fn;
+    HeapFree(GetProcessHeap(), 0, (void*)wmw->lpFileName);
+    wmw->lpFileName = fn;
 
     if (strlenW(filename) > 0) {
         /* FIXME : what should be done if wmw->hFile is already != 0, or the driver is playin' */
@@ -528,13 +530,12 @@ static LRESULT WAVE_mciOpen(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_P
     wmw->hWave = 0;
     wmw->dwStatus = MCI_MODE_NOT_READY;
     wmw->hFile = 0;
-    memcpy(&wmw->openParms, lpOpenParms, sizeof(MCI_WAVE_OPEN_PARMSA));
-    /* will be set by WAVE_mciOpenFile */
-    wmw->openParms.lpstrElementName = NULL;
+    wmw->lpFileName = NULL; /* will be set by WAVE_mciOpenFile */
     wmw->hCallback = NULL;
     WAVE_mciDefaultFmt(wmw);
 
     TRACE("wDevID=%04X (lpParams->wDeviceID=%08X)\n", wDevID, lpOpenParms->wDeviceID);
+    wmw->wNotifyDeviceID = lpOpenParms->wDeviceID;
 
     if (dwFlags & MCI_OPEN_ELEMENT) {
 	if (dwFlags & MCI_OPEN_ELEMENT_ID) {
@@ -672,8 +673,8 @@ static DWORD WAVE_mciClose(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PARM
     if (wmw->lpWaveFormat != &wmw->wfxRef)
 	HeapFree(GetProcessHeap(), 0, wmw->lpWaveFormat);
     wmw->lpWaveFormat = &wmw->wfxRef;
-    HeapFree(GetProcessHeap(), 0, (void*)wmw->openParms.lpstrElementName);
-    wmw->openParms.lpstrElementName = NULL;
+    HeapFree(GetProcessHeap(), 0, (void*)wmw->lpFileName);
+    wmw->lpFileName = NULL;
 
     if ((dwFlags & MCI_NOTIFY) && lpParms) {
 	WAVE_mciNotify(lpParms->dwCallback, wmw,
@@ -742,7 +743,7 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
     if (wmw->hFile == 0) {
-	WARN("Can't play: no file=%s!\n", debugstr_w(wmw->openParms.lpstrElementName));
+	WARN("Can't play: no file=%s!\n", debugstr_w(wmw->lpFileName));
 	return MCIERR_FILE_NOT_FOUND;
     }
 
@@ -804,7 +805,7 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
     wmw->dwStatus = MCI_MODE_PLAY;
 
     if (!(dwFlags & MCI_WAIT)) {
-	return MCI_SendCommandAsync(wmw->openParms.wDeviceID, WAVE_mciPlay, dwFlags,
+	return MCI_SendCommandAsync(wmw->wNotifyDeviceID, WAVE_mciPlay, dwFlags,
 				    (DWORD_PTR)lpParms, sizeof(MCI_PLAY_PARMS));
     }
 
@@ -1008,7 +1009,7 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt
     wmw->dwStatus = MCI_MODE_RECORD;
 
     if (!(dwFlags & MCI_WAIT)) {
-	return MCI_SendCommandAsync(wmw->openParms.wDeviceID, WAVE_mciRecord, dwFlags,
+	return MCI_SendCommandAsync(wmw->wNotifyDeviceID, WAVE_mciRecord, dwFlags,
 				    (DWORD_PTR)lpParms, sizeof(MCI_RECORD_PARMS));
     }
 
@@ -1016,8 +1017,8 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt
      * we don't modify the wave part of an existing file (ie. we always erase an
      * existing content, we don't overwrite)
      */
-    HeapFree(GetProcessHeap(), 0, (void*)wmw->openParms.lpstrElementName);
-    dwRet = create_tmp_file(&wmw->hFile, (WCHAR**)&wmw->openParms.lpstrElementName);
+    HeapFree(GetProcessHeap(), 0, (void*)wmw->lpFileName);
+    dwRet = create_tmp_file(&wmw->hFile, (WCHAR**)&wmw->lpFileName);
     if (dwRet != 0) return dwRet;
 
     /* new RIFF file, lpWaveFormat now valid */
@@ -1414,7 +1415,7 @@ static DWORD WAVE_mciSave(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_SAVE_PARMSW l
 
     /* FIXME: Open file.wav; Save; must not rename the original file.
      * Nor must Save a.wav; Save b.wav rename a. */
-    if (0 == mmioRenameW(wmw->openParms.lpstrElementName, lpParms->lpfilename, 0, 0 )) {
+    if (0 == mmioRenameW(wmw->lpFileName, lpParms->lpfilename, 0, 0 )) {
 	ret = MMSYSERR_NOERROR;
     }
 
@@ -1645,7 +1646,7 @@ static DWORD WAVE_mciInfo(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW l
 
 	switch (dwFlags & ~(MCI_WAIT|MCI_NOTIFY)) {
 	case MCI_INFO_PRODUCT: str = wszAudio; break;
-	case MCI_INFO_FILE:    str = wmw->openParms.lpstrElementName; break;
+	case MCI_INFO_FILE:    str = wmw->lpFileName; break;
 	case MCI_WAVE_INPUT:   str = wszWaveIn; break;
 	case MCI_WAVE_OUTPUT:  str = wszWaveOut; break;
 	default:
