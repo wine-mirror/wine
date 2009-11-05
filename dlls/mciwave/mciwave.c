@@ -211,6 +211,9 @@ static WINE_MCIWAVE *WAVE_mciGetOpenDev(MCIDEVICEID wDevID)
  */
 static void WAVE_mciNotify(DWORD_PTR hWndCallBack, WINE_MCIWAVE* wmw, UINT wStatus)
 {
+    /* We simply save one parameter by not passing the wDevID local
+     * to the command.  They are the same (via mciGetDriverData).
+     */
     MCIDEVICEID wDevID = wmw->wNotifyDeviceID;
     HANDLE old = InterlockedExchangePointer(&wmw->hCallback, NULL);
     if (old) mciDriverNotify(old, wDevID, MCI_NOTIFY_SUPERSEDED);
@@ -535,7 +538,8 @@ static LRESULT WAVE_mciOpen(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_P
     WAVE_mciDefaultFmt(wmw);
 
     TRACE("wDevID=%04X (lpParams->wDeviceID=%08X)\n", wDevID, lpOpenParms->wDeviceID);
-    wmw->wNotifyDeviceID = lpOpenParms->wDeviceID;
+    /* Logs show the native winmm calls us with 0 still in lpOpenParms.wDeviceID */
+    wmw->wNotifyDeviceID = wDevID;
 
     if (dwFlags & MCI_OPEN_ELEMENT) {
 	if (dwFlags & MCI_OPEN_ELEMENT_ID) {
@@ -805,7 +809,7 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
     wmw->dwStatus = MCI_MODE_PLAY;
 
     if (!(dwFlags & MCI_WAIT)) {
-	return MCI_SendCommandAsync(wmw->wNotifyDeviceID, WAVE_mciPlay, dwFlags,
+	return MCI_SendCommandAsync(wDevID, WAVE_mciPlay, dwFlags,
 				    (DWORD_PTR)lpParms, sizeof(MCI_PLAY_PARMS));
     }
 
@@ -1009,7 +1013,7 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt
     wmw->dwStatus = MCI_MODE_RECORD;
 
     if (!(dwFlags & MCI_WAIT)) {
-	return MCI_SendCommandAsync(wmw->wNotifyDeviceID, WAVE_mciRecord, dwFlags,
+	return MCI_SendCommandAsync(wDevID, WAVE_mciRecord, dwFlags,
 				    (DWORD_PTR)lpParms, sizeof(MCI_RECORD_PARMS));
     }
 
