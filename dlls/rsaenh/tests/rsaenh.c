@@ -1842,7 +1842,6 @@ static void test_import_export(void)
 
     ok(dwDataLen == sizeof(expected_exported_priv_key), "unexpected size %d\n",
         dwDataLen);
-    todo_wine
     ok(!memcmp(exported_key, expected_exported_priv_key, dwDataLen),
         "unexpected value\n");
 
