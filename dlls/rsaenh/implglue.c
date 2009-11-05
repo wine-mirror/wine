@@ -397,24 +397,45 @@ BOOL export_private_key_impl(BYTE *pbDest, const KEY_CONTEXT *pKeyContext, DWORD
 {
     mp_to_unsigned_bin(&pKeyContext->rsa.N, pbDest);
     reverse_bytes(pbDest, dwKeyLen);
+    if (mp_unsigned_bin_size(&pKeyContext->rsa.N) < dwKeyLen)
+        memset(pbDest + mp_unsigned_bin_size(&pKeyContext->rsa.N), 0,
+               dwKeyLen - mp_unsigned_bin_size(&pKeyContext->rsa.N));
     pbDest += dwKeyLen;
     mp_to_unsigned_bin(&pKeyContext->rsa.p, pbDest);
     reverse_bytes(pbDest, (dwKeyLen+1)>>1);
+    if (mp_unsigned_bin_size(&pKeyContext->rsa.p) < (dwKeyLen+1)>>1)
+        memset(pbDest + mp_unsigned_bin_size(&pKeyContext->rsa.p), 0,
+               ((dwKeyLen+1)>>1) - mp_unsigned_bin_size(&pKeyContext->rsa.p));
     pbDest += (dwKeyLen+1)>>1;
     mp_to_unsigned_bin(&pKeyContext->rsa.q, pbDest);
     reverse_bytes(pbDest, (dwKeyLen+1)>>1);
+    if (mp_unsigned_bin_size(&pKeyContext->rsa.q) < (dwKeyLen+1)>>1)
+        memset(pbDest + mp_unsigned_bin_size(&pKeyContext->rsa.q), 0,
+               ((dwKeyLen+1)>>1) - mp_unsigned_bin_size(&pKeyContext->rsa.q));
     pbDest += (dwKeyLen+1)>>1;
     mp_to_unsigned_bin(&pKeyContext->rsa.dP, pbDest);
     reverse_bytes(pbDest, (dwKeyLen+1)>>1);
+    if (mp_unsigned_bin_size(&pKeyContext->rsa.dP) < (dwKeyLen+1)>>1)
+        memset(pbDest + mp_unsigned_bin_size(&pKeyContext->rsa.dP), 0,
+               ((dwKeyLen+1)>>1) - mp_unsigned_bin_size(&pKeyContext->rsa.dP));
     pbDest += (dwKeyLen+1)>>1;
     mp_to_unsigned_bin(&pKeyContext->rsa.dQ, pbDest);
     reverse_bytes(pbDest, (dwKeyLen+1)>>1);
+    if (mp_unsigned_bin_size(&pKeyContext->rsa.dQ) < (dwKeyLen+1)>>1)
+        memset(pbDest + mp_unsigned_bin_size(&pKeyContext->rsa.dQ), 0,
+               ((dwKeyLen+1)>>1) - mp_unsigned_bin_size(&pKeyContext->rsa.dQ));
     pbDest += (dwKeyLen+1)>>1;
     mp_to_unsigned_bin(&pKeyContext->rsa.qP, pbDest);
     reverse_bytes(pbDest, (dwKeyLen+1)>>1);
+    if (mp_unsigned_bin_size(&pKeyContext->rsa.qP) < (dwKeyLen+1)>>1)
+        memset(pbDest + mp_unsigned_bin_size(&pKeyContext->rsa.qP), 0,
+               ((dwKeyLen+1)>>1) - mp_unsigned_bin_size(&pKeyContext->rsa.qP));
     pbDest += (dwKeyLen+1)>>1;
     mp_to_unsigned_bin(&pKeyContext->rsa.d, pbDest);
     reverse_bytes(pbDest, dwKeyLen);
+    if (mp_unsigned_bin_size(&pKeyContext->rsa.d) < dwKeyLen)
+        memset(pbDest + mp_unsigned_bin_size(&pKeyContext->rsa.d), 0,
+               dwKeyLen - mp_unsigned_bin_size(&pKeyContext->rsa.d));
     *pdwPubExp = (DWORD)mp_get_int(&pKeyContext->rsa.e);
 
     return TRUE;
