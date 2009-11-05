@@ -362,6 +362,9 @@ BOOL export_public_key_impl(BYTE *pbDest, const KEY_CONTEXT *pKeyContext, DWORD 
 {
     mp_to_unsigned_bin(&pKeyContext->rsa.N, pbDest);
     reverse_bytes(pbDest, dwKeyLen);
+    if (mp_unsigned_bin_size(&pKeyContext->rsa.N) < dwKeyLen)
+        memset(pbDest + mp_unsigned_bin_size(&pKeyContext->rsa.N), 0,
+               dwKeyLen - mp_unsigned_bin_size(&pKeyContext->rsa.N));
     *pdwPubExp = (DWORD)mp_get_int(&pKeyContext->rsa.e);
     return TRUE;
 }
