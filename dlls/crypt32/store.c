@@ -1175,6 +1175,8 @@ BOOL WINAPI CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
     if ( hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC )
         return FALSE;
 
+    if (hcs->ref <= 0)
+        ERR("%p's ref count is %d\n", hcs, hcs->ref);
     if (InterlockedDecrement(&hcs->ref) == 0)
     {
         TRACE("%p's ref count is 0, freeing\n", hcs);
