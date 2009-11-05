@@ -361,7 +361,7 @@ BOOL gen_rand_impl(BYTE *pbBuffer, DWORD dwLen)
 BOOL export_public_key_impl(BYTE *pbDest, const KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,DWORD *pdwPubExp)
 {
     mp_to_unsigned_bin(&pKeyContext->rsa.N, pbDest);
-    reverse_bytes(pbDest, dwKeyLen);
+    reverse_bytes(pbDest, mp_unsigned_bin_size(&pKeyContext->rsa.N));
     if (mp_unsigned_bin_size(&pKeyContext->rsa.N) < dwKeyLen)
         memset(pbDest + mp_unsigned_bin_size(&pKeyContext->rsa.N), 0,
                dwKeyLen - mp_unsigned_bin_size(&pKeyContext->rsa.N));
