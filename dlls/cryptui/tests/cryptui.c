@@ -317,7 +317,6 @@ static BOOL find_and_delete_cert_in_store(HCERTSTORE store, PCCERT_CONTEXT cert)
         return FALSE;
 
     CertDeleteCertificateFromStore(found);
-    CertFreeCertificateContext(found);
 
     return TRUE;
 }
