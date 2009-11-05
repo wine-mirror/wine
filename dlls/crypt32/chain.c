@@ -427,6 +427,10 @@ static BOOL CRYPT_DecodeBasicConstraints(PCCERT_CONTEXT cert,
  * through out-of-band means or reject the certificate." Rejecting the
  * certificate prohibits a large number of commonly used certificates, so
  * accepting locally installed ones is a compromise.
+ * Root certificates are also allowed to be CAs even without a basic
+ * constraints extension.  This is implied by RFC 5280, section 6.1:  the
+ * root of a certificate chain's only requirement is that it was used to issue
+ * the next certificate in the chain.
  * Updates chainConstraints with the element's constraints, if:
  * 1. chainConstraints doesn't have a path length constraint, or
  * 2. element's path length constraint is smaller than chainConstraints's
@@ -437,12 +441,14 @@ static BOOL CRYPT_DecodeBasicConstraints(PCCERT_CONTEXT cert,
  */
 static BOOL CRYPT_CheckBasicConstraintsForCA(PCertificateChainEngine engine,
  PCCERT_CONTEXT cert, CERT_BASIC_CONSTRAINTS2_INFO *chainConstraints,
- DWORD remainingCAs, BOOL *pathLengthConstraintViolated)
+ DWORD remainingCAs, BOOL isRoot, BOOL *pathLengthConstraintViolated)
 {
     BOOL validBasicConstraints, implicitCA = FALSE;
     CERT_BASIC_CONSTRAINTS2_INFO constraints;
 
-    if (cert->pCertInfo->dwVersion == CERT_V1 ||
+    if (isRoot)
+        implicitCA = TRUE;
+    else if (cert->pCertInfo->dwVersion == CERT_V1 ||
      cert->pCertInfo->dwVersion == CERT_V2)
     {
         BYTE hash[20];
@@ -1307,7 +1313,7 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
                 chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
                  CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
             else if (!CRYPT_CheckBasicConstraintsForCA(engine,
-             chain->rgpElement[i]->pCertContext, &constraints, i - 1,
+             chain->rgpElement[i]->pCertContext, &constraints, i - 1, isRoot,
              &pathLengthConstraintViolated))
                 chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
                  CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
