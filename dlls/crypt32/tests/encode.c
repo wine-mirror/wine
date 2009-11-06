@@ -7643,7 +7643,6 @@ static void test_decodeCertPolicyConstraints(DWORD dwEncoding)
     ret = pCryptDecodeObjectEx(dwEncoding, X509_POLICY_CONSTRAINTS,
      emptySequence, sizeof(emptySequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
      &info, &size);
-    todo_wine {
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -7698,7 +7697,6 @@ static void test_decodeCertPolicyConstraints(DWORD dwEncoding)
         ok(info->dwInhibitPolicyMappingSkipCerts == 1, "expected 1, got %d\n",
          info->dwInhibitPolicyMappingSkipCerts);
         LocalFree(info);
-    }
     }
 }
 

@@ -3685,6 +3685,139 @@ static BOOL WINAPI CRYPT_AsnDecodeCertPolicyMappings(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL CRYPT_AsnDecodeRequireExplicit(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    BOOL ret;
+    DWORD skip, size = sizeof(skip);
+
+    if (!cbEncoded)
+    {
+        SetLastError(CRYPT_E_ASN1_EOD);
+        return FALSE;
+    }
+    if (pbEncoded[0] != (ASN_CONTEXT | 0))
+    {
+        SetLastError(CRYPT_E_ASN1_BADTAG);
+        return FALSE;
+    }
+    if ((ret = CRYPT_AsnDecodeIntInternal(pbEncoded, cbEncoded, dwFlags,
+     &skip, &size, pcbDecoded)))
+    {
+        DWORD bytesNeeded = MEMBERSIZE(CERT_POLICY_CONSTRAINTS_INFO,
+         fRequireExplicitPolicy, fInhibitPolicyMapping);
+
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if (*pcbStructInfo < bytesNeeded)
+        {
+            *pcbStructInfo = bytesNeeded;
+            SetLastError(ERROR_MORE_DATA);
+            ret = FALSE;
+        }
+        else
+        {
+            CERT_POLICY_CONSTRAINTS_INFO *info =
+             (CERT_POLICY_CONSTRAINTS_INFO *)((BYTE *)pvStructInfo -
+             offsetof(CERT_POLICY_CONSTRAINTS_INFO, fRequireExplicitPolicy));
+
+            *pcbStructInfo = bytesNeeded;
+            /* The BOOL is implicit:  if the integer is present, then it's
+             * TRUE.
+             */
+            info->fRequireExplicitPolicy = TRUE;
+            info->dwRequireExplicitPolicySkipCerts = skip;
+        }
+    }
+    return ret;
+}
+
+static BOOL CRYPT_AsnDecodeInhibitMapping(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    BOOL ret;
+    DWORD skip, size = sizeof(skip);
+
+    if (!cbEncoded)
+    {
+        SetLastError(CRYPT_E_ASN1_EOD);
+        return FALSE;
+    }
+    if (pbEncoded[0] != (ASN_CONTEXT | 1))
+    {
+        SetLastError(CRYPT_E_ASN1_BADTAG);
+        return FALSE;
+    }
+    if ((ret = CRYPT_AsnDecodeIntInternal(pbEncoded, cbEncoded, dwFlags,
+     &skip, &size, pcbDecoded)))
+    {
+        DWORD bytesNeeded = FINALMEMBERSIZE(CERT_POLICY_CONSTRAINTS_INFO,
+         fInhibitPolicyMapping);
+
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if (*pcbStructInfo < bytesNeeded)
+        {
+            *pcbStructInfo = bytesNeeded;
+            SetLastError(ERROR_MORE_DATA);
+            ret = FALSE;
+        }
+        else
+        {
+            CERT_POLICY_CONSTRAINTS_INFO *info =
+             (CERT_POLICY_CONSTRAINTS_INFO *)((BYTE *)pvStructInfo -
+             offsetof(CERT_POLICY_CONSTRAINTS_INFO, fInhibitPolicyMapping));
+
+            *pcbStructInfo = bytesNeeded;
+            /* The BOOL is implicit:  if the integer is present, then it's
+             * TRUE.
+             */
+            info->fInhibitPolicyMapping = TRUE;
+            info->dwInhibitPolicyMappingSkipCerts = skip;
+        }
+    }
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_AsnDecodeCertPolicyConstraints(
+ DWORD dwCertEncodingType, LPCSTR lpszStructType, const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, PCRYPT_DECODE_PARA pDecodePara,
+ void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret = FALSE;
+
+    TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, pvStructInfo, pvStructInfo ? *pcbStructInfo : 0);
+
+    __TRY
+    {
+        struct AsnDecodeSequenceItem items[] = {
+         { ASN_CONTEXT | 0,
+           offsetof(CERT_POLICY_CONSTRAINTS_INFO, fRequireExplicitPolicy),
+           CRYPT_AsnDecodeRequireExplicit,
+           MEMBERSIZE(CERT_POLICY_CONSTRAINTS_INFO, fRequireExplicitPolicy,
+           fInhibitPolicyMapping), TRUE, FALSE, 0, 0 },
+         { ASN_CONTEXT | 1,
+           offsetof(CERT_POLICY_CONSTRAINTS_INFO, fInhibitPolicyMapping),
+           CRYPT_AsnDecodeInhibitMapping,
+           FINALMEMBERSIZE(CERT_POLICY_CONSTRAINTS_INFO, fInhibitPolicyMapping),
+           TRUE, FALSE, 0, 0 },
+        };
+
+        ret = CRYPT_AsnDecodeSequence(items, sizeof(items) / sizeof(items[0]),
+         pbEncoded, cbEncoded, dwFlags, pDecodePara, pvStructInfo,
+         pcbStructInfo, NULL, NULL);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    return ret;
+}
+
 #define RSA1_MAGIC 0x31415352
 
 struct DECODED_RSA_PUB_KEY
@@ -5550,6 +5683,9 @@ static CryptDecodeObjectExFunc CRYPT_GetBuiltinDecoder(DWORD dwCertEncodingType,
         case LOWORD(X509_POLICY_MAPPINGS):
             decodeFunc = CRYPT_AsnDecodeCertPolicyMappings;
             break;
+        case LOWORD(X509_POLICY_CONSTRAINTS):
+            decodeFunc = CRYPT_AsnDecodeCertPolicyConstraints;
+            break;
         case LOWORD(PKCS7_SIGNER_INFO):
             decodeFunc = CRYPT_AsnDecodePKCSSignerInfo;
             break;
@@ -5596,6 +5732,8 @@ static CryptDecodeObjectExFunc CRYPT_GetBuiltinDecoder(DWORD dwCertEncodingType,
         decodeFunc = CRYPT_AsnDecodeCertPolicies;
     else if (!strcmp(lpszStructType, szOID_POLICY_MAPPINGS))
         decodeFunc = CRYPT_AsnDecodeCertPolicyMappings;
+    else if (!strcmp(lpszStructType, szOID_POLICY_CONSTRAINTS))
+        decodeFunc = CRYPT_AsnDecodeCertPolicyConstraints;
     else if (!strcmp(lpszStructType, szOID_ENHANCED_KEY_USAGE))
         decodeFunc = CRYPT_AsnDecodeEnhancedKeyUsage;
     else if (!strcmp(lpszStructType, szOID_ISSUING_DIST_POINT))
