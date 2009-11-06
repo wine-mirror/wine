@@ -7425,6 +7425,142 @@ static void test_decodeCertPolicies(DWORD dwEncoding)
     }
 }
 
+static const BYTE policyMappingWithOneMapping[] = {
+0x30,0x0a,0x30,0x08,0x06,0x02,0x2a,0x03,0x06,0x02,0x53,0x04 };
+static const BYTE policyMappingWithTwoMappings[] = {
+0x30,0x14,0x30,0x08,0x06,0x02,0x2a,0x03,0x06,0x02,0x53,0x04,0x30,0x08,0x06,
+0x02,0x2b,0x04,0x06,0x02,0x55,0x06 };
+static const LPCSTR mappingOids[] = { X509_POLICY_MAPPINGS,
+ szOID_POLICY_MAPPINGS, szOID_LEGACY_POLICY_MAPPINGS };
+
+static void test_encodeCertPolicyMappings(DWORD dwEncoding)
+{
+    static char oid2[] = "2.3.4";
+    static char oid3[] = "1.3.4";
+    static char oid4[] = "2.5.6";
+    BOOL ret;
+    CERT_POLICY_MAPPINGS_INFO info = { 0 };
+    CERT_POLICY_MAPPING mapping[2];
+    LPBYTE buf;
+    DWORD size, i;
+
+    /* Each of the mapping OIDs is equivalent, so check with all of them */
+    for (i = 0; i < sizeof(mappingOids) / sizeof(mappingOids[0]); i++)
+    {
+        todo_wine {
+        memset(&info, 0, sizeof(info));
+        ret = pCryptEncodeObjectEx(dwEncoding, mappingOids[i], &info,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+        ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+        if (ret)
+        {
+            ok(size == sizeof(emptySequence), "unexpected size %d\n", size);
+            ok(!memcmp(buf, emptySequence, sizeof(emptySequence)),
+             "unexpected value\n");
+            LocalFree(buf);
+        }
+        mapping[0].pszIssuerDomainPolicy = NULL;
+        mapping[0].pszSubjectDomainPolicy = NULL;
+        info.cPolicyMapping = 1;
+        info.rgPolicyMapping = mapping;
+        SetLastError(0xdeadbeef);
+        ret = pCryptEncodeObjectEx(dwEncoding, mappingOids[i], &info,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "expected E_INVALIDARG, got %08x\n", GetLastError());
+        mapping[0].pszIssuerDomainPolicy = oid1;
+        mapping[0].pszSubjectDomainPolicy = oid2;
+        ret = pCryptEncodeObjectEx(dwEncoding, mappingOids[i], &info,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+        ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+        if (ret)
+        {
+            ok(size == sizeof(policyMappingWithOneMapping),
+             "unexpected size %d\n", size);
+            ok(!memcmp(buf, policyMappingWithOneMapping, size),
+             "unexpected value\n");
+            LocalFree(buf);
+        }
+        mapping[1].pszIssuerDomainPolicy = oid3;
+        mapping[1].pszSubjectDomainPolicy = oid4;
+        info.cPolicyMapping = 2;
+        ret = pCryptEncodeObjectEx(dwEncoding, mappingOids[i], &info,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+        ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+        if (ret)
+        {
+            ok(size == sizeof(policyMappingWithTwoMappings),
+             "unexpected size %d\n", size);
+            ok(!memcmp(buf, policyMappingWithTwoMappings, size),
+             "unexpected value\n");
+            LocalFree(buf);
+        }
+        }
+    }
+}
+
+static void test_decodeCertPolicyMappings(DWORD dwEncoding)
+{
+    DWORD size, i;
+    CERT_POLICY_MAPPINGS_INFO *info;
+    BOOL ret;
+
+    /* Each of the mapping OIDs is equivalent, so check with all of them */
+    for (i = 0; i < sizeof(mappingOids) / sizeof(mappingOids[0]); i++)
+    {
+        todo_wine {
+        ret = pCryptDecodeObjectEx(dwEncoding, mappingOids[i],
+         emptySequence, sizeof(emptySequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
+         &info, &size);
+        ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+        if (ret)
+        {
+            ok(info->cPolicyMapping == 0,
+             "expected 0 policy mappings, got %d\n", info->cPolicyMapping);
+            LocalFree(info);
+        }
+        ret = pCryptDecodeObjectEx(dwEncoding, mappingOids[i],
+         policyMappingWithOneMapping, sizeof(policyMappingWithOneMapping),
+         CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
+        ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+        if (ret)
+        {
+            ok(info->cPolicyMapping == 1,
+             "expected 1 policy mappings, got %d\n", info->cPolicyMapping);
+            ok(!strcmp(info->rgPolicyMapping[0].pszIssuerDomainPolicy, "1.2.3"),
+             "unexpected issuer policy %s\n",
+             info->rgPolicyMapping[0].pszIssuerDomainPolicy);
+            ok(!strcmp(info->rgPolicyMapping[0].pszSubjectDomainPolicy,
+             "2.3.4"), "unexpected subject policy %s\n",
+             info->rgPolicyMapping[0].pszSubjectDomainPolicy);
+            LocalFree(info);
+        }
+        ret = pCryptDecodeObjectEx(dwEncoding, mappingOids[i],
+         policyMappingWithTwoMappings, sizeof(policyMappingWithTwoMappings),
+         CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
+        ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+        if (ret)
+        {
+            ok(info->cPolicyMapping == 2,
+             "expected 2 policy mappings, got %d\n", info->cPolicyMapping);
+            ok(!strcmp(info->rgPolicyMapping[0].pszIssuerDomainPolicy, "1.2.3"),
+             "unexpected issuer policy %s\n",
+             info->rgPolicyMapping[0].pszIssuerDomainPolicy);
+            ok(!strcmp(info->rgPolicyMapping[0].pszSubjectDomainPolicy,
+             "2.3.4"), "unexpected subject policy %s\n",
+             info->rgPolicyMapping[0].pszSubjectDomainPolicy);
+            ok(!strcmp(info->rgPolicyMapping[1].pszIssuerDomainPolicy, "1.3.4"),
+             "unexpected issuer policy %s\n",
+             info->rgPolicyMapping[1].pszIssuerDomainPolicy);
+            ok(!strcmp(info->rgPolicyMapping[1].pszSubjectDomainPolicy,
+             "2.5.6"), "unexpected subject policy %s\n",
+             info->rgPolicyMapping[1].pszSubjectDomainPolicy);
+            LocalFree(info);
+        }
+        }
+    }
+}
+
 /* Free *pInfo with HeapFree */
 static void testExportPublicKey(HCRYPTPROV csp, PCERT_PUBLIC_KEY_INFO *pInfo)
 {
@@ -7695,6 +7831,8 @@ START_TEST(encode)
         test_decodePolicyQualifierUserNotice(encodings[i]);
         test_encodeCertPolicies(encodings[i]);
         test_decodeCertPolicies(encodings[i]);
+        test_encodeCertPolicyMappings(encodings[i]);
+        test_decodeCertPolicyMappings(encodings[i]);
     }
     testPortPublicKeyInfo();
 }
