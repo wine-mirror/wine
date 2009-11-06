@@ -7506,7 +7506,6 @@ static void test_decodeCertPolicyMappings(DWORD dwEncoding)
     /* Each of the mapping OIDs is equivalent, so check with all of them */
     for (i = 0; i < sizeof(mappingOids) / sizeof(mappingOids[0]); i++)
     {
-        todo_wine {
         ret = pCryptDecodeObjectEx(dwEncoding, mappingOids[i],
          emptySequence, sizeof(emptySequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
          &info, &size);
@@ -7554,7 +7553,6 @@ static void test_decodeCertPolicyMappings(DWORD dwEncoding)
              "2.5.6"), "unexpected subject policy %s\n",
              info->rgPolicyMapping[1].pszSubjectDomainPolicy);
             LocalFree(info);
-        }
         }
     }
 }

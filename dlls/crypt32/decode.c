@@ -3632,6 +3632,59 @@ static BOOL WINAPI CRYPT_AsnDecodeCertPolicies(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL CRYPT_AsnDecodeCertPolicyMapping(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    struct AsnDecodeSequenceItem items[] = {
+     { ASN_OBJECTIDENTIFIER, offsetof(CERT_POLICY_MAPPING,
+       pszIssuerDomainPolicy), CRYPT_AsnDecodeOidInternal, sizeof(LPSTR),
+       FALSE, TRUE, offsetof(CERT_POLICY_MAPPING, pszIssuerDomainPolicy), 0 },
+     { ASN_OBJECTIDENTIFIER, offsetof(CERT_POLICY_MAPPING,
+       pszSubjectDomainPolicy), CRYPT_AsnDecodeOidInternal, sizeof(LPSTR),
+       FALSE, TRUE, offsetof(CERT_POLICY_MAPPING, pszSubjectDomainPolicy), 0 },
+    };
+    CERT_POLICY_MAPPING *mapping = pvStructInfo;
+    BOOL ret;
+
+    TRACE("%p, %d, %08x, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, pvStructInfo ? *pcbStructInfo : 0);
+
+    ret = CRYPT_AsnDecodeSequence(items, sizeof(items) / sizeof(items[0]),
+     pbEncoded, cbEncoded, dwFlags, NULL, pvStructInfo, pcbStructInfo,
+     pcbDecoded, mapping ? mapping->pszIssuerDomainPolicy : NULL);
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_AsnDecodeCertPolicyMappings(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret = FALSE;
+
+    TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, pvStructInfo, pvStructInfo ? *pcbStructInfo : 0);
+
+    __TRY
+    {
+        struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
+         offsetof(CERT_POLICY_MAPPINGS_INFO, cPolicyMapping),
+         offsetof(CERT_POLICY_MAPPINGS_INFO, rgPolicyMapping),
+         sizeof(CERT_POLICY_MAPPING),
+         CRYPT_AsnDecodeCertPolicyMapping, sizeof(CERT_POLICY_MAPPING), TRUE,
+         offsetof(CERT_POLICY_MAPPING, pszIssuerDomainPolicy) };
+
+        ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded,
+         dwFlags, pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    return ret;
+}
+
 #define RSA1_MAGIC 0x31415352
 
 struct DECODED_RSA_PUB_KEY
@@ -5494,6 +5547,9 @@ static CryptDecodeObjectExFunc CRYPT_GetBuiltinDecoder(DWORD dwCertEncodingType,
         case LOWORD(X509_NAME_CONSTRAINTS):
             decodeFunc = CRYPT_AsnDecodeNameConstraints;
             break;
+        case LOWORD(X509_POLICY_MAPPINGS):
+            decodeFunc = CRYPT_AsnDecodeCertPolicyMappings;
+            break;
         case LOWORD(PKCS7_SIGNER_INFO):
             decodeFunc = CRYPT_AsnDecodePKCSSignerInfo;
             break;
@@ -5510,6 +5566,8 @@ static CryptDecodeObjectExFunc CRYPT_GetBuiltinDecoder(DWORD dwCertEncodingType,
         decodeFunc = CRYPT_AsnDecodeSMIMECapabilities;
     else if (!strcmp(lpszStructType, szOID_AUTHORITY_KEY_IDENTIFIER))
         decodeFunc = CRYPT_AsnDecodeAuthorityKeyId;
+    else if (!strcmp(lpszStructType, szOID_LEGACY_POLICY_MAPPINGS))
+        decodeFunc = CRYPT_AsnDecodeCertPolicyMappings;
     else if (!strcmp(lpszStructType, szOID_AUTHORITY_KEY_IDENTIFIER2))
         decodeFunc = CRYPT_AsnDecodeAuthorityKeyId2;
     else if (!strcmp(lpszStructType, szOID_CRL_REASON_CODE))
@@ -5536,6 +5594,8 @@ static CryptDecodeObjectExFunc CRYPT_GetBuiltinDecoder(DWORD dwCertEncodingType,
         decodeFunc = CRYPT_AsnDecodeCRLDistPoints;
     else if (!strcmp(lpszStructType, szOID_CERT_POLICIES))
         decodeFunc = CRYPT_AsnDecodeCertPolicies;
+    else if (!strcmp(lpszStructType, szOID_POLICY_MAPPINGS))
+        decodeFunc = CRYPT_AsnDecodeCertPolicyMappings;
     else if (!strcmp(lpszStructType, szOID_ENHANCED_KEY_USAGE))
         decodeFunc = CRYPT_AsnDecodeEnhancedKeyUsage;
     else if (!strcmp(lpszStructType, szOID_ISSUING_DIST_POINT))
