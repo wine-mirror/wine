@@ -3119,7 +3119,6 @@ static void test_decodeCertToBeSigned(DWORD dwEncoding)
      v1CertWithSubjectIssuerSerialAndIssuerUniqueId,
      sizeof(v1CertWithSubjectIssuerSerialAndIssuerUniqueId),
      CRYPT_DECODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
