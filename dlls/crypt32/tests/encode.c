@@ -2979,11 +2979,9 @@ static void test_encodeCertToBeSigned(DWORD dwEncoding)
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
-        todo_wine {
         ok(size == sizeof(v1CertWithIssuerUniqueId), "Wrong size %d\n", size);
         ok(!memcmp(buf, v1CertWithIssuerUniqueId, size),
          "Got unexpected value\n");
-        }
         LocalFree(buf);
     }
     /* Test v1 cert with an issuer name, a subject name, and a serial number */
@@ -3031,7 +3029,6 @@ static void test_encodeCertToBeSigned(DWORD dwEncoding)
         ok(size == sizeof(v1CertWithSubjectIssuerSerialAndIssuerUniqueId) ||
          size == sizeof(v1CertWithSubjectIssuerSerialAndIssuerUniqueIdNoNull),
          "Wrong size %d\n", size);
-        todo_wine {
         if (size == sizeof(v1CertWithSubjectIssuerSerialAndIssuerUniqueId))
             ok(!memcmp(buf, v1CertWithSubjectIssuerSerialAndIssuerUniqueId,
              size), "unexpected value\n");
@@ -3040,7 +3037,6 @@ static void test_encodeCertToBeSigned(DWORD dwEncoding)
             ok(!memcmp(buf,
              v1CertWithSubjectIssuerSerialAndIssuerUniqueIdNoNull, size),
              "unexpected value\n");
-        }
         LocalFree(buf);
     }
     /* Remove the public key, and add a subject key identifier extension */

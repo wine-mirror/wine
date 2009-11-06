@@ -506,37 +506,37 @@ static BOOL WINAPI CRYPT_AsnEncodeCertInfo(DWORD dwCertEncodingType,
          { &info->SubjectPublicKeyInfo, CRYPT_AsnEncodePubKeyInfoNoNull, 0 },
          { 0 }
         };
-        struct AsnConstructedItem constructed[3] = { { 0 } };
-        DWORD cItem = 7, cConstructed = 0;
+        struct AsnConstructedItem constructed = { 0 };
+        struct AsnEncodeTagSwappedItem swapped[2] = { { 0 } };
+        DWORD cItem = 7, cSwapped = 0;
 
         if (info->IssuerUniqueId.cbData)
         {
-            constructed[cConstructed].tag = 1;
-            constructed[cConstructed].pvStructInfo = &info->IssuerUniqueId;
-            constructed[cConstructed].encodeFunc = CRYPT_AsnEncodeBits;
-            items[cItem].pvStructInfo = &constructed[cConstructed];
-            items[cItem].encodeFunc = CRYPT_AsnEncodeConstructed;
-            cConstructed++;
+            swapped[cSwapped].tag = ASN_CONTEXT | 1;
+            swapped[cSwapped].pvStructInfo = &info->IssuerUniqueId;
+            swapped[cSwapped].encodeFunc = CRYPT_AsnEncodeBits;
+            items[cItem].pvStructInfo = &swapped[cSwapped];
+            items[cItem].encodeFunc = CRYPT_AsnEncodeSwapTag;
+            cSwapped++;
             cItem++;
         }
         if (info->SubjectUniqueId.cbData)
         {
-            constructed[cConstructed].tag = 2;
-            constructed[cConstructed].pvStructInfo = &info->SubjectUniqueId;
-            constructed[cConstructed].encodeFunc = CRYPT_AsnEncodeBits;
-            items[cItem].pvStructInfo = &constructed[cConstructed];
-            items[cItem].encodeFunc = CRYPT_AsnEncodeConstructed;
-            cConstructed++;
+            swapped[cSwapped].tag = ASN_CONTEXT | 2;
+            swapped[cSwapped].pvStructInfo = &info->SubjectUniqueId;
+            swapped[cSwapped].encodeFunc = CRYPT_AsnEncodeBits;
+            items[cItem].pvStructInfo = &swapped[cSwapped];
+            items[cItem].encodeFunc = CRYPT_AsnEncodeSwapTag;
+            cSwapped++;
             cItem++;
         }
         if (info->cExtension)
         {
-            constructed[cConstructed].tag = 3;
-            constructed[cConstructed].pvStructInfo = &info->cExtension;
-            constructed[cConstructed].encodeFunc = CRYPT_AsnEncodeExtensions;
-            items[cItem].pvStructInfo = &constructed[cConstructed];
+            constructed.tag = 3;
+            constructed.pvStructInfo = &info->cExtension;
+            constructed.encodeFunc = CRYPT_AsnEncodeExtensions;
+            items[cItem].pvStructInfo = &constructed;
             items[cItem].encodeFunc = CRYPT_AsnEncodeConstructed;
-            cConstructed++;
             cItem++;
         }
 
