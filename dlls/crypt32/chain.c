@@ -1311,6 +1311,45 @@ static BOOL CRYPT_CriticalExtensionsSupported(PCCERT_CONTEXT cert)
     return ret;
 }
 
+static BOOL CRYPT_IsCertVersionValid(PCCERT_CONTEXT cert)
+{
+    BOOL ret = TRUE;
+
+    /* Checks whether the contents of the cert match the cert's version. */
+    switch (cert->pCertInfo->dwVersion)
+    {
+    case CERT_V1:
+        /* A V1 cert may not contain unique identifiers.  See RFC 5280,
+         * section 4.1.2.8:
+         * "These fields MUST only appear if the version is 2 or 3 (Section
+         *  4.1.2.1).  These fields MUST NOT appear if the version is 1."
+         */
+        if (cert->pCertInfo->IssuerUniqueId.cbData ||
+         cert->pCertInfo->SubjectUniqueId.cbData)
+            ret = FALSE;
+        /* A V1 cert may not contain extensions.  See RFC 5280, section 4.1.2.9:
+         * "This field MUST only appear if the version is 3 (Section 4.1.2.1)."
+         */
+        if (cert->pCertInfo->cExtension)
+            ret = FALSE;
+        break;
+    case CERT_V2:
+        /* A V2 cert may not contain extensions.  See RFC 5280, section 4.1.2.9:
+         * "This field MUST only appear if the version is 3 (Section 4.1.2.1)."
+         */
+        if (cert->pCertInfo->cExtension)
+            ret = FALSE;
+        break;
+    case CERT_V3:
+        /* Do nothing, all fields are allowed for V3 certs */
+        break;
+    default:
+        WARN_(chain)("invalid cert version %d\n", cert->pCertInfo->dwVersion);
+        ret = FALSE;
+    }
+    return ret;
+}
+
 static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
  PCERT_SIMPLE_CHAIN chain, LPFILETIME time)
 {
@@ -1332,6 +1371,14 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
              chain->rgpElement[i]->pCertContext);
         else
             isRoot = FALSE;
+        if (!CRYPT_IsCertVersionValid(chain->rgpElement[i]->pCertContext))
+        {
+            /* MS appears to accept certs whose versions don't match their
+             * contents, so there isn't an appropriate error code.
+             */
+            chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
+             CERT_TRUST_INVALID_EXTENSION;
+        }
         if (CertVerifyTimeValidity(time,
          chain->rgpElement[i]->pCertContext->pCertInfo) != 0)
             chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
