@@ -7576,7 +7576,6 @@ static void test_encodeCertPolicyConstraints(DWORD dwEncoding)
      */
     ret = pCryptEncodeObjectEx(dwEncoding, X509_POLICY_CONSTRAINTS, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine {
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -7629,7 +7628,6 @@ static void test_encodeCertPolicyConstraints(DWORD dwEncoding)
         ok(!memcmp(buf, policyConstraintsWithBoth,
          sizeof(policyConstraintsWithBoth)), "unexpected value\n");
         LocalFree(buf);
-    }
     }
 }
 

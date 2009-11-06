@@ -3048,6 +3048,53 @@ static BOOL WINAPI CRYPT_AsnEncodeCertPolicyMappings(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnEncodeCertPolicyConstraints(
+ DWORD dwCertEncodingType, LPCSTR lpszStructType, const void *pvStructInfo,
+ DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
+ DWORD *pcbEncoded)
+{
+    BOOL ret = FALSE;
+
+    __TRY
+    {
+        const CERT_POLICY_CONSTRAINTS_INFO *info = pvStructInfo;
+        struct AsnEncodeSequenceItem items[2];
+        struct AsnEncodeTagSwappedItem swapped[2];
+        DWORD cItem = 0, cSwapped = 0;
+
+        if (info->fRequireExplicitPolicy)
+        {
+            swapped[cSwapped].tag = ASN_CONTEXT | 0;
+            swapped[cSwapped].pvStructInfo =
+             &info->dwRequireExplicitPolicySkipCerts;
+            swapped[cSwapped].encodeFunc = CRYPT_AsnEncodeInt;
+            items[cItem].pvStructInfo = &swapped[cSwapped];
+            items[cItem].encodeFunc = CRYPT_AsnEncodeSwapTag;
+            cSwapped++;
+            cItem++;
+        }
+        if (info->fInhibitPolicyMapping)
+        {
+            swapped[cSwapped].tag = ASN_CONTEXT | 1;
+            swapped[cSwapped].pvStructInfo =
+             &info->dwInhibitPolicyMappingSkipCerts;
+            swapped[cSwapped].encodeFunc = CRYPT_AsnEncodeInt;
+            items[cItem].pvStructInfo = &swapped[cSwapped];
+            items[cItem].encodeFunc = CRYPT_AsnEncodeSwapTag;
+            cSwapped++;
+            cItem++;
+        }
+        ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items, cItem,
+         dwFlags, NULL, pbEncoded, pcbEncoded);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_AsnEncodeRsaPubKey(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
@@ -4413,6 +4460,9 @@ static CryptEncodeObjectExFunc CRYPT_GetBuiltinEncoder(DWORD dwCertEncodingType,
         case LOWORD(X509_POLICY_MAPPINGS):
             encodeFunc = CRYPT_AsnEncodeCertPolicyMappings;
             break;
+        case LOWORD(X509_POLICY_CONSTRAINTS):
+            encodeFunc = CRYPT_AsnEncodeCertPolicyConstraints;
+            break;
         case LOWORD(PKCS7_SIGNER_INFO):
             encodeFunc = CRYPT_AsnEncodePKCSSignerInfo;
             break;
@@ -4459,6 +4509,8 @@ static CryptEncodeObjectExFunc CRYPT_GetBuiltinEncoder(DWORD dwCertEncodingType,
         encodeFunc = CRYPT_AsnEncodeCertPolicies;
     else if (!strcmp(lpszStructType, szOID_POLICY_MAPPINGS))
         encodeFunc = CRYPT_AsnEncodeCertPolicyMappings;
+    else if (!strcmp(lpszStructType, szOID_POLICY_CONSTRAINTS))
+        encodeFunc = CRYPT_AsnEncodeCertPolicyConstraints;
     else if (!strcmp(lpszStructType, szOID_ENHANCED_KEY_USAGE))
         encodeFunc = CRYPT_AsnEncodeEnhancedKeyUsage;
     else if (!strcmp(lpszStructType, szOID_ISSUING_DIST_POINT))
