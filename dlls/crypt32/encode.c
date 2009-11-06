@@ -2969,6 +2969,85 @@ static BOOL WINAPI CRYPT_AsnEncodeCertPolicies(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL CRYPT_AsnEncodeCertPolicyMapping(DWORD dwCertEncodingType,
+ const CERT_POLICY_MAPPING *mapping, DWORD dwFlags, BYTE *pbEncoded,
+ DWORD *pcbEncoded)
+{
+    struct AsnEncodeSequenceItem items[] = {
+     { mapping->pszIssuerDomainPolicy,  CRYPT_AsnEncodeOid, 0 },
+     { mapping->pszSubjectDomainPolicy, CRYPT_AsnEncodeOid, 0 },
+    };
+
+    if (!mapping->pszIssuerDomainPolicy || !mapping->pszSubjectDomainPolicy)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    return CRYPT_AsnEncodeSequence(dwCertEncodingType, items,
+     sizeof(items) / sizeof(items[0]), dwFlags, NULL, pbEncoded, pcbEncoded);
+}
+
+static BOOL WINAPI CRYPT_AsnEncodeCertPolicyMappings(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    BOOL ret = FALSE;
+
+    __TRY
+    {
+        const CERT_POLICY_MAPPINGS_INFO *info = pvStructInfo;
+        DWORD bytesNeeded = 0, lenBytes, size, i;
+
+        ret = TRUE;
+        for (i = 0; ret && i < info->cPolicyMapping; i++)
+        {
+            ret = CRYPT_AsnEncodeCertPolicyMapping(dwCertEncodingType,
+             &info->rgPolicyMapping[i], dwFlags & ~CRYPT_ENCODE_ALLOC_FLAG,
+             NULL, &size);
+            if (ret)
+                bytesNeeded += size;
+        }
+        CRYPT_EncodeLen(bytesNeeded, NULL, &lenBytes);
+        bytesNeeded += 1 + lenBytes;
+        if (ret)
+        {
+            if (!pbEncoded)
+                *pcbEncoded = bytesNeeded;
+            else
+            {
+                if ((ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara,
+                 pbEncoded, pcbEncoded, bytesNeeded)))
+                {
+                    if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
+                        pbEncoded = *(BYTE **)pbEncoded;
+                    *pbEncoded++ = ASN_SEQUENCEOF;
+                    CRYPT_EncodeLen(bytesNeeded - lenBytes - 1, pbEncoded,
+                     &lenBytes);
+                    pbEncoded += lenBytes;
+                    for (i = 0; ret && i < info->cPolicyMapping; i++)
+                    {
+                        size = bytesNeeded;
+                        ret = CRYPT_AsnEncodeCertPolicyMapping(
+                         dwCertEncodingType, &info->rgPolicyMapping[i],
+                         dwFlags & ~CRYPT_ENCODE_ALLOC_FLAG, pbEncoded, &size);
+                        if (ret)
+                        {
+                            pbEncoded += size;
+                            bytesNeeded -= size;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_AsnEncodeRsaPubKey(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
@@ -4331,6 +4410,9 @@ static CryptEncodeObjectExFunc CRYPT_GetBuiltinEncoder(DWORD dwCertEncodingType,
         case LOWORD(X509_NAME_CONSTRAINTS):
             encodeFunc = CRYPT_AsnEncodeNameConstraints;
             break;
+        case LOWORD(X509_POLICY_MAPPINGS):
+            encodeFunc = CRYPT_AsnEncodeCertPolicyMappings;
+            break;
         case LOWORD(PKCS7_SIGNER_INFO):
             encodeFunc = CRYPT_AsnEncodePKCSSignerInfo;
             break;
@@ -4347,6 +4429,8 @@ static CryptEncodeObjectExFunc CRYPT_GetBuiltinEncoder(DWORD dwCertEncodingType,
         encodeFunc = CRYPT_AsnEncodeUtcTime;
     else if (!strcmp(lpszStructType, szOID_AUTHORITY_KEY_IDENTIFIER))
         encodeFunc = CRYPT_AsnEncodeAuthorityKeyId;
+    else if (!strcmp(lpszStructType, szOID_LEGACY_POLICY_MAPPINGS))
+        encodeFunc = CRYPT_AsnEncodeCertPolicyMappings;
     else if (!strcmp(lpszStructType, szOID_AUTHORITY_KEY_IDENTIFIER2))
         encodeFunc = CRYPT_AsnEncodeAuthorityKeyId2;
     else if (!strcmp(lpszStructType, szOID_CRL_REASON_CODE))
@@ -4373,6 +4457,8 @@ static CryptEncodeObjectExFunc CRYPT_GetBuiltinEncoder(DWORD dwCertEncodingType,
         encodeFunc = CRYPT_AsnEncodeCRLDistPoints;
     else if (!strcmp(lpszStructType, szOID_CERT_POLICIES))
         encodeFunc = CRYPT_AsnEncodeCertPolicies;
+    else if (!strcmp(lpszStructType, szOID_POLICY_MAPPINGS))
+        encodeFunc = CRYPT_AsnEncodeCertPolicyMappings;
     else if (!strcmp(lpszStructType, szOID_ENHANCED_KEY_USAGE))
         encodeFunc = CRYPT_AsnEncodeEnhancedKeyUsage;
     else if (!strcmp(lpszStructType, szOID_ISSUING_DIST_POINT))

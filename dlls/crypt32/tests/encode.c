@@ -7447,7 +7447,6 @@ static void test_encodeCertPolicyMappings(DWORD dwEncoding)
     /* Each of the mapping OIDs is equivalent, so check with all of them */
     for (i = 0; i < sizeof(mappingOids) / sizeof(mappingOids[0]); i++)
     {
-        todo_wine {
         memset(&info, 0, sizeof(info));
         ret = pCryptEncodeObjectEx(dwEncoding, mappingOids[i], &info,
          CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
@@ -7494,7 +7493,6 @@ static void test_encodeCertPolicyMappings(DWORD dwEncoding)
             ok(!memcmp(buf, policyMappingWithTwoMappings, size),
              "unexpected value\n");
             LocalFree(buf);
-        }
         }
     }
 }
