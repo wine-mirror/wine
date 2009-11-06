@@ -225,7 +225,13 @@ static void test_simpleroundtrip(const char *plaintext, int wine_fails)
     input.pbData = (unsigned char *)plaintext;
     input.cbData = strlen(plaintext);
     res = pCryptProtectData(&input, emptyW, NULL, NULL, NULL, 0, &encrypted);
-    ok(res != 0, "can't protect\n");
+    ok(res != 0 || broken(!res), "can't protect\n");
+    if (!res)
+    {
+        /* Fails on Win9x, NT4 */
+        win_skip("CryptProtectData failed\n");
+        return;
+    }
 
     res = pCryptUnprotectData(&encrypted, NULL, NULL, NULL, NULL, 0, &output);
     if (wine_fails) {
