@@ -163,9 +163,16 @@ static void test_openCloseWAVE(HWND hwnd)
     ok(!err,"mci %s returned error: %d\n", command_open, err);
     ok(!strcmp(buf,"1"), "mci open deviceId: %s, expected 1\n", buf);
 
-    err = mciSendString("status mysound time format", buf, sizeof(buf), hwnd);
-    ok(!err,"mci status time format returned error: %d\n", err);
-    ok(!strcmp(buf,"milliseconds"), "mci status time format: %s\n", buf);
+    if (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH)
+    {
+        skip("Non-english locale (test with hardcoded 'milliseconds')\n");
+    }
+    else
+    {
+        err = mciSendString("status mysound time format", buf, sizeof(buf), hwnd);
+        ok(!err,"mci status time format returned error: %d\n", err);
+        ok(!strcmp(buf,"milliseconds"), "mci status time format: %s\n", buf);
+    }
 
     err = mciSendString(command_close_my, NULL, 0, hwnd);
     ok(!err,"mci %s returned error: %d\n", command_close_my, err);
@@ -376,10 +383,17 @@ static void test_asyncWAVE(HWND hwnd)
      * will be 333ms, 667ms etc. at best. */
     Sleep(100); /* milliseconds */
 
-    buf[0]=0;
-    err = mciSendString("status mysound time format", buf, sizeof(buf), hwnd);
-    ok(!err,"mci status time format returned error: %d\n", err);
-    ok(!strcmp(buf,"milliseconds"), "mci status time format: %s\n", buf);
+    if (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH)
+    {
+        skip("Non-english locale (test with hardcoded 'milliseconds')\n");
+    }
+    else
+    {
+        buf[0]=0;
+        err = mciSendString("status mysound time format", buf, sizeof(buf), hwnd);
+        ok(!err,"mci status time format returned error: %d\n", err);
+        ok(!strcmp(buf,"milliseconds"), "mci status time format: %s\n", buf);
+    }
 
     buf[0]=0;
     err = mciSendString("status mysound position", buf, sizeof(buf), hwnd);
