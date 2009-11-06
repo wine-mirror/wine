@@ -7557,6 +7557,153 @@ static void test_decodeCertPolicyMappings(DWORD dwEncoding)
     }
 }
 
+static const BYTE policyConstraintsWithRequireExplicit[] = {
+0x30,0x03,0x80,0x01,0x00 };
+static const BYTE policyConstraintsWithInhibitMapping[] = {
+0x30,0x03,0x81,0x01,0x01 };
+static const BYTE policyConstraintsWithBoth[] = {
+0x30,0x06,0x80,0x01,0x01,0x81,0x01,0x01 };
+
+static void test_encodeCertPolicyConstraints(DWORD dwEncoding)
+{
+    CERT_POLICY_CONSTRAINTS_INFO info = { 0 };
+    LPBYTE buf;
+    DWORD size;
+    BOOL ret;
+
+    /* Even though RFC 5280 explicitly states CAs must not issue empty
+     * policy constraints (section 4.2.1.11), the API doesn't prevent it.
+     */
+    ret = pCryptEncodeObjectEx(dwEncoding, X509_POLICY_CONSTRAINTS, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine {
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(emptySequence), "unexpected size %d\n", size);
+        ok(!memcmp(buf, emptySequence, sizeof(emptySequence)),
+         "unexpected value\n");
+        LocalFree(buf);
+    }
+    /* If fRequireExplicitPolicy is set but dwRequireExplicitPolicySkipCerts
+     * is not, then a skip of 0 is encoded.
+     */
+    info.fRequireExplicitPolicy = TRUE;
+    ret = pCryptEncodeObjectEx(dwEncoding, X509_POLICY_CONSTRAINTS, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(policyConstraintsWithRequireExplicit),
+         "unexpected size %d\n", size);
+        ok(!memcmp(buf, policyConstraintsWithRequireExplicit,
+         sizeof(policyConstraintsWithRequireExplicit)), "unexpected value\n");
+        LocalFree(buf);
+    }
+    /* With inhibit policy mapping */
+    info.fRequireExplicitPolicy = FALSE;
+    info.dwRequireExplicitPolicySkipCerts = 0;
+    info.fInhibitPolicyMapping = TRUE;
+    info.dwInhibitPolicyMappingSkipCerts = 1;
+    ret = pCryptEncodeObjectEx(dwEncoding, X509_POLICY_CONSTRAINTS, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(policyConstraintsWithInhibitMapping),
+         "unexpected size %d\n", size);
+        ok(!memcmp(buf, policyConstraintsWithInhibitMapping,
+         sizeof(policyConstraintsWithInhibitMapping)), "unexpected value\n");
+        LocalFree(buf);
+    }
+    /* And with both */
+    info.fRequireExplicitPolicy = TRUE;
+    info.dwRequireExplicitPolicySkipCerts = 1;
+    ret = pCryptEncodeObjectEx(dwEncoding, X509_POLICY_CONSTRAINTS, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(policyConstraintsWithBoth), "unexpected size %d\n",
+         size);
+        ok(!memcmp(buf, policyConstraintsWithBoth,
+         sizeof(policyConstraintsWithBoth)), "unexpected value\n");
+        LocalFree(buf);
+    }
+    }
+}
+
+static void test_decodeCertPolicyConstraints(DWORD dwEncoding)
+{
+    CERT_POLICY_CONSTRAINTS_INFO *info;
+    DWORD size;
+    BOOL ret;
+
+    /* Again, even though CAs must not issue such constraints, they can be
+     * decoded.
+     */
+    ret = pCryptDecodeObjectEx(dwEncoding, X509_POLICY_CONSTRAINTS,
+     emptySequence, sizeof(emptySequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
+     &info, &size);
+    todo_wine {
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(!info->fRequireExplicitPolicy,
+         "expected require explicit = FALSE\n");
+        ok(!info->fInhibitPolicyMapping,
+         "expected implicit mapping = FALSE\n");
+        LocalFree(info);
+    }
+    ret = pCryptDecodeObjectEx(dwEncoding, X509_POLICY_CONSTRAINTS,
+     policyConstraintsWithRequireExplicit,
+     sizeof(policyConstraintsWithRequireExplicit), CRYPT_DECODE_ALLOC_FLAG,
+     NULL, &info, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(info->fRequireExplicitPolicy,
+         "expected require explicit = TRUE\n");
+        ok(info->dwRequireExplicitPolicySkipCerts == 0, "expected 0, got %d\n",
+         info->dwRequireExplicitPolicySkipCerts);
+        ok(!info->fInhibitPolicyMapping,
+         "expected implicit mapping = FALSE\n");
+        LocalFree(info);
+    }
+    ret = pCryptDecodeObjectEx(dwEncoding, X509_POLICY_CONSTRAINTS,
+     policyConstraintsWithInhibitMapping,
+     sizeof(policyConstraintsWithInhibitMapping), CRYPT_DECODE_ALLOC_FLAG,
+     NULL, &info, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(!info->fRequireExplicitPolicy,
+         "expected require explicit = FALSE\n");
+        ok(info->fInhibitPolicyMapping,
+         "expected implicit mapping = TRUE\n");
+        ok(info->dwInhibitPolicyMappingSkipCerts == 1, "expected 1, got %d\n",
+         info->dwInhibitPolicyMappingSkipCerts);
+        LocalFree(info);
+    }
+    ret = pCryptDecodeObjectEx(dwEncoding, X509_POLICY_CONSTRAINTS,
+     policyConstraintsWithBoth, sizeof(policyConstraintsWithBoth),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(info->fRequireExplicitPolicy,
+         "expected require explicit = TRUE\n");
+        ok(info->dwRequireExplicitPolicySkipCerts == 1, "expected 1, got %d\n",
+         info->dwRequireExplicitPolicySkipCerts);
+        ok(info->fInhibitPolicyMapping,
+         "expected implicit mapping = TRUE\n");
+        ok(info->dwInhibitPolicyMappingSkipCerts == 1, "expected 1, got %d\n",
+         info->dwInhibitPolicyMappingSkipCerts);
+        LocalFree(info);
+    }
+    }
+}
+
 /* Free *pInfo with HeapFree */
 static void testExportPublicKey(HCRYPTPROV csp, PCERT_PUBLIC_KEY_INFO *pInfo)
 {
@@ -7829,6 +7976,8 @@ START_TEST(encode)
         test_decodeCertPolicies(encodings[i]);
         test_encodeCertPolicyMappings(encodings[i]);
         test_decodeCertPolicyMappings(encodings[i]);
+        test_encodeCertPolicyConstraints(encodings[i]);
+        test_decodeCertPolicyConstraints(encodings[i]);
     }
     testPortPublicKeyInfo();
 }
