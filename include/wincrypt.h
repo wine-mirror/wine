@@ -2947,6 +2947,7 @@ typedef struct _CTL_FIND_SUBJECT_PARA
 #define szOID_POLICY_CONSTRAINTS            "2.5.29.36"
 #define szOID_ENHANCED_KEY_USAGE            "2.5.29.37"
 #define szOID_FRESHEST_CRL                  "2.5.29.46"
+#define szOID_INHIBIT_ANY_POLICY            "2.5.29.54"
 #define szOID_DOMAIN_COMPONENT              "0.9.2342.19200300.100.1.25"
 #define szOID_PKCS_12_FRIENDLY_NAME_ATTR     "1.2.840.113549.1.9.20"
 #define szOID_PKCS_12_LOCAL_KEY_ID           "1.2.840.113549.1.9.21"
