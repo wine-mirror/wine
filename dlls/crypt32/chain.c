@@ -728,6 +728,40 @@ static CERT_NAME_CONSTRAINTS_INFO *CRYPT_GetNameConstraints(CERT_INFO *cert)
     return info;
 }
 
+static BOOL CRYPT_IsValidNameConstraint(const CERT_NAME_CONSTRAINTS_INFO *info)
+{
+    DWORD i;
+    BOOL ret = TRUE;
+
+    /* Check that none of the constraints specifies a minimum or a maximum.
+     * See RFC 5280, section 4.2.1.10:
+     * "Within this profile, the minimum and maximum fields are not used with
+     *  any name forms, thus, the minimum MUST be zero, and maximum MUST be
+     *  absent.  However, if an application encounters a critical name
+     *  constraints extension that specifies other values for minimum or
+     *  maximum for a name form that appears in a subsequent certificate, the
+     *  application MUST either process these fields or reject the
+     *  certificate."
+     * Since it gives no guidance as to how to process these fields, we
+     * reject any name constraint that contains them.
+     */
+    for (i = 0; ret && i < info->cPermittedSubtree; i++)
+        if (info->rgPermittedSubtree[i].dwMinimum ||
+         info->rgPermittedSubtree[i].fMaximum)
+        {
+            TRACE_(chain)("found a minimum or maximum in permitted subtrees\n");
+            ret = FALSE;
+        }
+    for (i = 0; ret && i < info->cExcludedSubtree; i++)
+        if (info->rgExcludedSubtree[i].dwMinimum ||
+         info->rgExcludedSubtree[i].fMaximum)
+        {
+            TRACE_(chain)("found a minimum or maximum in excluded subtrees\n");
+            ret = FALSE;
+        }
+    return ret;
+}
+
 static void CRYPT_CheckChainNameConstraints(PCERT_SIMPLE_CHAIN chain)
 {
     int i, j;
@@ -751,21 +785,27 @@ static void CRYPT_CheckChainNameConstraints(PCERT_SIMPLE_CHAIN chain)
         if ((nameConstraints = CRYPT_GetNameConstraints(
          chain->rgpElement[i]->pCertContext->pCertInfo)))
         {
-            for (j = i - 1; j >= 0; j--)
+            if (!CRYPT_IsValidNameConstraint(nameConstraints))
+                chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
+                 CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT;
+            else
             {
-                DWORD errorStatus = 0;
-
-                /* According to RFC 3280, self-signed certs don't have name
-                 * constraints checked unless they're the end cert.
-                 */
-                if (j == 0 || !CRYPT_IsCertificateSelfSigned(
-                 chain->rgpElement[j]->pCertContext))
+                for (j = i - 1; j >= 0; j--)
                 {
-                    CRYPT_CheckNameConstraints(nameConstraints,
-                     chain->rgpElement[i]->pCertContext->pCertInfo,
-                     &errorStatus);
-                    chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
-                     errorStatus;
+                    DWORD errorStatus = 0;
+
+                    /* According to RFC 3280, self-signed certs don't have name
+                     * constraints checked unless they're the end cert.
+                     */
+                    if (j == 0 || !CRYPT_IsCertificateSelfSigned(
+                     chain->rgpElement[j]->pCertContext))
+                    {
+                        CRYPT_CheckNameConstraints(nameConstraints,
+                         chain->rgpElement[i]->pCertContext->pCertInfo,
+                         &errorStatus);
+                        chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
+                         errorStatus;
+                    }
                 }
             }
             LocalFree(nameConstraints);
