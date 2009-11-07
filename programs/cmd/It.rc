@@ -1,0 +1,282 @@
+/*
+ * Wine command prompt
+ * English Language Support
+ *
+ * Copyright (C) 1999 D A Pickles
+ * Copyright (C) 2009 Luca Bennati
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "wcmd.h"
+
+/* UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
+
+STRINGTABLE
+{
+  WCMD_ATTRIB, "Aiuto su ATTRIB\n"
+  WCMD_CALL,
+"CALL <batchfilename> si usa all'interno di un file batch per eseguire comandi\n\
+da un altro file batch. Quando il file batch esiste, il controllo torna al\n\
+file che l'ha chiamato. Il comando CALL può passare parametri alla\n\
+procedura chiamata.\n\
+\n\
+Cambiamenti alla cartella predefinita, alle variabili d'ambiente etc fatti dentro una\n\
+procedura chiamata sono ereditati dalla chiamante.\n"
+
+  WCMD_CD,     "Aiuto su CD\n"
+  WCMD_CHDIR,  "Aiuto su CHDIR\n"
+
+  WCMD_CLS,    "CLS pulisce la schermata della console\n"
+
+  WCMD_COPY,   "Aiuto su COPY\n"
+  WCMD_CTTY,   "Aiuto su CTTY\n"
+  WCMD_DATE,   "Aiuto su DATE\n"
+  WCMD_DEL,    "Aiuto su DEL\n"
+  WCMD_DIR,    "Aiuto su DIR\n"
+
+  WCMD_ECHO,
+"ECHO <string> mostra <string> sul dispositivo di terminale corrente.\n\
+\n\
+ECHO ON fa sì che tutti i comandi seguenti in un file batch siano mostrati\n\
+sul dispositivo di terminale prima di essere eseguiti.\n\
+\n\
+ECHO OFF inverte l'effetto di un precedente ECHO ON (ECHO usa OFF per\n\
+default). Si può evitare che il comando ECHO OFF sia mostrato\n\
+precedendolo con un segno @.\n"
+
+  WCMD_ERASE,  "Aiuto su ERASE\n"
+
+  WCMD_FOR,
+"Il comando FOR è usato per eseguire un comando per ciascuno di un set di files.\n\
+\n\
+Sintassi: FOR %variabile IN (set) DO comando\n\
+\n\
+La necessità di raddoppiare il segno % nell'uso di un FOR in un file batch non\n\
+esiste nel cmd di wine.\n"
+
+  WCMD_GOTO,
+"Il comando GOTO trasferisce l'esecuzione ad un'altra istruzione dentro un\n\
+file batch.\n\
+\n\
+L'etichetta che è l'obiettivo di un GOTO può essere lunga fino a 255 caratteri\n\
+ma non può includere spazi (questo è differente da altri sistemi \n\
+operativi). Se esistono due o più etichette identiche esistono in un file batch, la\n\
+prima sarà sempre eseguita. Tentare un GOTO verso un'etichetta\n\
+inesistente termina l'esecuzione del file batch.\n\
+\n\
+GOTO non ha effetto quando usato in modalità interattiva.\n"
+
+  WCMD_HELP,   "Aiuto su HELP\n"
+
+  WCMD_IF,
+"IF è usato per eseguire condizionalmente un comando.\n\
+\n\
+Sintassi:	IF [NOT] EXIST nomedelfile comando\n\
+		IF [NOT] stringa1==stringa2 comando\n\
+		IF [NOT] ERRORLEVEL numero comando\n\
+\n\
+Nella seconda forma del comando, stringa1 and stringa2 devono essere\n\
+in doppi apici. Il confronto non è sensibile alle maiuscole.\n"
+
+  WCMD_LABEL,  "LABEL è usato per creare un'etichetta del volume di un disco.\n\
+\n\
+Sintassi: LABEL [unità:]\n\
+Il comando ti chiederà la nuova etichetta di volume per l'unità specificata.\n\
+Puoi mostrare l'etichetta di volume del disco con il comando VOL.\n"
+
+  WCMD_MD,     "Aiuto su MD\n"
+  WCMD_MKDIR,  "Aiuto su MKDIR\n"
+  WCMD_MOVE,
+"MOVE sposta un file o una cartella in un punto diverso nel file system.\n\
+\n\
+Se l'oggetto che viene spostato è una cartella allora tutti i files e le sottocartelle\n\
+dentro l'oggetto saranno spostate insieme.\n\
+\n\
+MOVE fallisce se la nuova e la vecchia locazione sono su lettere di unità DOS differenti.\n"
+
+  WCMD_PATH,
+"PATH mostra o cambia il percorso di ricerca di cmd.\n\
+\n\
+Usando PATH, verrà mostrato la configurazione corrente di PATH (inizialmente questa è\n\
+il valore nel tuo file wine.conf). Per cambiarla, fai seguire al\n\
+comando PATH il nuovo valore.\n\
+\n\
+È anche possibile modificare il PATH usando la variabile d'ambiente\n\
+PATH, per esempio:\n\
+		PATH %PATH%;c:\\temp\n"
+
+  WCMD_PAUSE,
+"PAUSE mostra un messaggio sullo schermo 'Premere Invio per continuare'\n\
+e aspetta che l'utente prema Invio. È utile principalmente nei files\n\
+batch per permettere all'utente di leggere l'output di un comando precedente\n\
+prima che scorra fuori dallo schermo.\n"
+
+  WCMD_PROMPT,
+"PROMPT configura il prompt a linea di comando.\n\
+\n\
+La stringa che segue il comando PROMPT (e lo spazio immediatamente dopo)\n\
+appariranno all'inizio della linea quando cmd sta aspettando l'input dell'utente.\n\
+\n\
+Le seguenti stringhe di caratteri hanno il loro significato speciale accanto:\n\
+\n\
+$$    Segno del dollaro		$_    Linefeed		$b    Segno della pipe (|)\n\
+$d    Data attuale		$e    Escape		$g    Segno >\n\
+$l    Segno <			$n    Unità attuale	$p    Percorso corrente\n\
+$q    Segno uguale		$t    Ora attuale	$v    Versione di cmd\n\
+\n\
+Nota che inserire il comando PROMPT senza una stringa dopo resetta il\n\
+prompt al default, che è la cartella corrente (che include la\n\
+lettera dell'unità attuale) seguita da un segno maggiore (>).\n\
+(come un comando PROMPT $p$g).\n\
+\n\
+Il prompt può essere cambiato anche alterando la variabile d'ambiente PROMPT,\n\
+perciò il comando 'SET PROMPT=testo' ha lo stesso effetto di 'PROMPT testo'\n"
+
+  WCMD_REM,
+"Una linea di comando che comincia con REM (seguito da uno spazio) non esegue\n\
+alcuna azione e può, quindi, essere usata come un commento in un file batch.\n"
+
+  WCMD_REN,    "Aiuto su REN\n"
+  WCMD_RENAME, "Aiuto su RENAME\n"
+  WCMD_RD,     "Aiuto su RD\n"
+  WCMD_RMDIR,  "Aiuto su RMDIR\n"
+
+  WCMD_SET,
+"SET mostra o cambia le variabili d'ambiente di cmd.\n\
+\n\
+SET senza parametri mostra tutto dell'ambiente attuale.\n\
+\n\
+Per creare o modificare una variabile d'ambiente, la sintassi è:\n\
+\n\
+      SET <variabile>=<valore>\n\
+\n\
+dove <variabile> e <valore> sono stringhe di caratteri. Non devono esserci\n\
+spazi prima del segno uguale, né il nome della variabile può\n\
+avere spazi all'interno.\n\
+\n\
+Sotto Wine, l'ambiente del sistema operativo sottostante è\n\
+incluso nell'ambiente Win32; ci saranno quindi generalmente\n\
+molti più valori che ina implementazione nativa di Win32. Nota che non è\n\
+possibile influenzare l'ambiente del sistema operativo da dentro il cmd.\n"
+
+  WCMD_SHIFT,
+"SHIFT è usato in un file batch per rimuovere un parametro dall'inizio della\n\
+lista, perciò il parametro 2 diventa parametro 1 e così via. Non ha effetto\n\
+se chiamato dalla linea di comando.\n"
+
+  WCMD_TIME,   "Aiuto su TIME\n"
+
+  WCMD_TITLE,  "Stabilisce il titolo della finestra per quella di cmd, sintassi TITLE [stringa]\n"
+
+  WCMD_TYPE,
+"TYPE <nomedelfile> copia <nomedelfile> sul dispositivo della console (o ovunque\n\
+se rediretto). Nessun controllo è fatto se il file sia testo leggibile.\n"
+
+  WCMD_VERIFY,
+"VERIFY è usato per settare, pulire o verificare la flag di verify. Forme valide sono:\n\
+\n\
+VERIFY ON	Setta la flag\n\
+VERIFY OFF	Pulisce la flag\n\
+VERIFY		Mostra ON o OFF a seconda dei casi.\n\
+\n\
+La flag di verify non ha funzioni in Wine.\n"
+
+  WCMD_VER,
+"VER mostra la versione di cmd che stai usando\n"
+
+  WCMD_VOL,    "Aiuto su VOL\n"
+
+  WCMD_PUSHD,  "PUSHD <nomedellacartella> salva la cartella attuale su di uno\n\
+stack e poi la cambia con quella passata.\n"
+
+  WCMD_POPD,   "POPD cambia la cartella attuale con l'ultima salvata con\n\
+PUSHD.\n"
+
+  WCMD_MORE,   "MORE mostra l'output di files o l'input dalla pipe in pagine.\n"
+
+  WCMD_EXIT,
+"EXIT termina la sessione corrente di cmd e torna al\n\
+sistema operativo o alla shell dal quale hai chiamato cmd.\n"
+
+  WCMD_ALLHELP, "I comandi built-in di CMD sono:\n\
+ATTRIB\t\tMostra o cambia gli attributi dei files DOS\n\
+CALL\t\tInvoca un file batch da dentro un altro\n\
+CD (CHDIR)\tCambia la cartella di default attuale\n\
+CLS\t\tPulisce lo schermo della console\n\
+COPY\t\tCopia files\n\
+CTTY\t\tCambia il dispositivo di input/output\n\
+DATE\t\tMostra o cambia la data di sistema\n\
+DEL (ERASE)\tCancella un file o un set di files\n\
+DIR\t\tElenca il contenuto di una cartella\n\
+ECHO\t\tCopia il testo direttamente sull'output della console\n\
+HELP\t\tMostra dei semplici dettagli di aiuto su di un argomento\n\
+MD (MKDIR)\tCrea una sottocartella\n\
+MORE\t\tMostra l'output in pagine\n\
+MOVE\t\tMuove un file, set di files o un albero di cartelle\n\
+PATH\t\tConfigura o mostra il percorso di ricerca\n\
+POPD\t\tRipristina la cartella all'ultima salvata con PUSHD\n\
+PROMPT\t\tCambia il prompt dei comandi\n\
+PUSHD\t\tCambia su una nuova cartella, salvando quella attuale\n\
+REN (RENAME)\tRinomina un file\n\
+RD (RMDIR)\tCancella una sottocartella\n\
+SET\t\tConfigura o mostra le variabili d'ambiente\n\
+TIME\t\tConfigura o cambia l'orario di sistema attuale\n\
+TITLE\t\tConfigura il titolo della finestra per la sessione di CMD\n\
+TYPE\t\tInserisce il contenuto di un file di testo\n\
+VER\t\tMostra la versione attuale di CMD\n\
+VOL\t\tMostra l'etichetta di volume di un'unità disco\n\
+EXIT\t\tChiude CMD\n\n\
+Inserisci HELP <comando> per maggiori informazioni su ciascuno dei comandi soprastanti\n"
+
+  WCMD_CONFIRM, "Sei sicuro"
+  WCMD_YES, "S"
+  WCMD_NO, "N"
+  WCMD_NOASSOC, "Associazione di file mancante per l'estensione %s\n"
+  WCMD_NOFTYPE, "Nessun comando open associato con il tipo di file '%s'\n"
+  WCMD_OVERWRITE, "Sovrascrivere %s"
+  WCMD_MORESTR, "Di più..."
+  WCMD_TRUNCATEDLINE, "Linea nell'elaborazione Batch probabilmente troncata. Uso:\n"
+  WCMD_NYI, "Non ancora implementato\n\n"
+  WCMD_NOARG, "Manca un parametro\n"
+  WCMD_SYNTAXERR, "Errore di sintassi\n"
+  WCMD_FILENOTFOUND, "%s : File non trovato\n"
+  WCMD_NOCMDHELP, "Nessun aiuto disponibile per %s\n"
+  WCMD_NOTARGET, "Obiettivo del GOTO non trovato\n"
+  WCMD_CURRENTDATE, "La data attuale è  %s\n"
+  WCMD_CURRENTTIME, "L'ora attuale è  %s\n"
+  WCMD_NEWDATE, "Inserisci una nuova data: "
+  WCMD_NEWTIME, "Inserisci una nuova ora: "
+  WCMD_MISSINGENV, "Variabile d'ambiente %s non definita\n"
+  WCMD_READFAIL, "Impossibile aprire '%s'\n"
+  WCMD_CALLINSCRIPT, "Impossibile chiamare un'etichetta batch fuori da uno script batch\n"
+  WCMD_ALL, "A"
+  WCMD_DELPROMPT, "%s, Cancella"
+  WCMD_ECHOPROMPT, "Echo è %s\n"
+  WCMD_VERIFYPROMPT, "Verify è %s\n"
+  WCMD_VERIFYERR, "Verify deve essere ON o OFF\n";
+  WCMD_ARGERR, "Errore nel parametro\n"
+  WCMD_VOLUMEDETAIL, "Il volume nell'unità %c è %s\nIl numero seriale del volume è %04x-%04x\n\n"
+  WCMD_VOLUMEPROMPT, "Etichetta del volume (11 caratteri, Invio per nessuno)?"
+  WCMD_NOPATH, "PATH non trovato\n"
+  WCMD_ANYKEY,"Premere Invio per continuare: "
+  WCMD_CONSTITLE,"Prompt dei comandi di Wine"
+  WCMD_VERSION,"Versione di CMD %s\n\n"
+  WCMD_MOREPROMPT, "Di più? "
+  WCMD_LINETOOLONG, "La linea di input è troppo lunga.\n"
+}
