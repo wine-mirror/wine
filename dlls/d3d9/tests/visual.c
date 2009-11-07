@@ -4241,6 +4241,7 @@ static void x8l8v8u8_test(IDirect3DDevice9 *device)
     IDirect3D9_Release(d3d9);
     if(FAILED(hr)) {
         skip("No D3DFMT_X8L8V8U8 support\n");
+        return;
     };
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
