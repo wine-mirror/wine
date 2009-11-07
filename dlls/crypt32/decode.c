@@ -1906,9 +1906,30 @@ static BOOL WINAPI CRYPT_AsnDecodeName(DWORD dwCertEncodingType,
          sizeof(CERT_NAME_INFO),
          CRYPT_AsnDecodeRdn, sizeof(CERT_RDN), TRUE,
          offsetof(CERT_RDN, rgRDNAttr) };
+        DWORD bytesNeeded;
 
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded,
-         dwFlags, pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, NULL, &bytesNeeded,
+         NULL);
+        if (ret)
+        {
+            if (!pvStructInfo)
+                *pcbStructInfo = bytesNeeded;
+            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
+             pvStructInfo, pcbStructInfo, bytesNeeded)))
+            {
+                CERT_NAME_INFO *info;
+
+                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+                    pvStructInfo = *(BYTE **)pvStructInfo;
+                info = pvStructInfo;
+                info->rgRDN = (CERT_RDN *)((BYTE *)pvStructInfo +
+                 sizeof(CERT_NAME_INFO));
+                ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded,
+                 dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, pvStructInfo,
+                 &bytesNeeded, NULL);
+            }
+        }
     }
     __EXCEPT_PAGE_FAULT
     {
