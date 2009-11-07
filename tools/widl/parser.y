@@ -278,7 +278,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <attr> attribute type_qualifier function_specifier
 %type <attr_list> m_attributes attributes attrib_list m_type_qual_list
 %type <str_list> str_list
-%type <expr> m_expr expr expr_const expr_int_const array
+%type <expr> m_expr expr expr_const expr_int_const array m_bitfield
 %type <expr_list> m_exprs /* exprs expr_list */ expr_list_int_const
 %type <ifinfo> interfacehdr
 %type <stgclass> storage_cls_spec
@@ -294,9 +294,9 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <var> arg ne_union_field union_field s_field case enum declaration
 %type <var_list> m_args args fields ne_union_fields cases enums enum_list dispint_props field
 %type <var> m_ident ident
-%type <declarator> declarator direct_declarator init_declarator
+%type <declarator> declarator direct_declarator init_declarator struct_declarator
 %type <declarator> m_any_declarator any_declarator any_declarator_no_ident any_direct_declarator
-%type <declarator_list> declarator_list
+%type <declarator_list> declarator_list struct_declarator_list
 %type <func> funcdef
 %type <type> coclass coclasshdr coclassdef
 %type <num> pointer_type version
@@ -679,7 +679,7 @@ fields:						{ $$ = NULL; }
 	| fields field				{ $$ = append_var_list($1, $2); }
 	;
 
-field:	  m_attributes decl_spec declarator_list ';'
+field:	  m_attributes decl_spec struct_declarator_list ';'
 						{ const char *first = LIST_ENTRY(list_head($3), declarator_t, entry)->var->name;
 						  check_field_attrs(first, $1);
 						  $$ = set_var_types($1, $2, $3);
@@ -978,6 +978,22 @@ any_direct_declarator:
 declarator_list:
 	  declarator				{ $$ = append_declarator( NULL, $1 ); }
 	| declarator_list ',' declarator	{ $$ = append_declarator( $1, $3 ); }
+	;
+
+m_bitfield:					{ $$ = NULL; }
+	| ':' expr_const			{ $$ = $2; }
+	;
+
+struct_declarator: any_declarator m_bitfield	{ $$ = $1; $$->bits = $2;
+						  if (!$$->bits && !$$->var->name)
+						    error_loc("unnamed fields are not allowed");
+						}
+	;
+
+struct_declarator_list:
+	  struct_declarator			{ $$ = append_declarator( NULL, $1 ); }
+	| struct_declarator_list ',' struct_declarator
+						{ $$ = append_declarator( $1, $3 ); }
 	;
 
 init_declarator:
@@ -1529,6 +1545,9 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
         error_loc("calling convention applied to non-function-pointer type\n");
   }
 
+  if (decl->bits)
+    v->type = type_new_bitfield(v->type, decl->bits);
+
   return v;
 }
 
@@ -1620,6 +1639,7 @@ static declarator_t *make_declarator(var_t *var)
   d->type = NULL;
   d->func_type = NULL;
   d->array = NULL;
+  d->bits = NULL;
   return d;
 }
 
@@ -2211,6 +2231,7 @@ static int is_allowed_conf_type(const type_t *type)
     case TYPE_COCLASS:
     case TYPE_FUNCTION:
     case TYPE_INTERFACE:
+    case TYPE_BITFIELD:
         return FALSE;
     }
     return FALSE;
@@ -2254,24 +2275,30 @@ static void check_field_common(const type_t *container_type,
 {
     type_t *type = arg->type;
     int more_to_do;
-    const char *container_type_name = NULL;
+    const char *container_type_name;
+    const char *var_type;
 
-    switch (type_get_type_detect_alias(type))
+    switch (type_get_type(container_type))
     {
     case TYPE_STRUCT:
         container_type_name = "struct";
+        var_type = "field";
         break;
     case TYPE_UNION:
         container_type_name = "union";
+        var_type = "arm";
         break;
     case TYPE_ENCAPSULATED_UNION:
         container_type_name = "encapsulated union";
+        var_type = "arm";
         break;
     case TYPE_FUNCTION:
         container_type_name = "function";
+        var_type = "parameter";
         break;
     default:
-        break;
+        /* should be no other container types */
+        assert(0);
     }
 
     if (is_attr(arg->attrs, ATTR_LENGTHIS) &&
@@ -2331,24 +2358,35 @@ static void check_field_common(const type_t *container_type,
             check_remoting_fields(arg, type);
             break;
         case TGT_INVALID:
+        {
+            const char *reason = "is invalid";
             switch (type_get_type(type))
             {
             case TYPE_VOID:
-                error_loc_info(&arg->loc_info, "parameter \'%s\' of %s \'%s\' cannot derive from void *\n",
-                               arg->name, container_type_name, container_name);
+                reason = "cannot derive from void *";
                 break;
             case TYPE_FUNCTION:
-                error_loc_info(&arg->loc_info, "parameter \'%s\' of %s \'%s\' cannot be a function pointer\n",
-                               arg->name, container_type_name, container_name);
+                reason = "cannot be a function pointer";
+                break;
+            case TYPE_BITFIELD:
+                reason = "cannot be a bit-field";
                 break;
             case TYPE_COCLASS:
+                reason = "cannot be a class";
+                break;
             case TYPE_INTERFACE:
+                reason = "cannot be a non-pointer to an interface";
+                break;
             case TYPE_MODULE:
-                /* FIXME */
+                reason = "cannot be a module";
                 break;
             default:
                 break;
             }
+            error_loc_info(&arg->loc_info, "%s \'%s\' of %s \'%s\' %s\n",
+                           var_type, arg->name, container_type_name, container_name, reason);
+            break;
+        }
         case TGT_CTXT_HANDLE:
         case TGT_CTXT_HANDLE_POINTER:
             /* FIXME */
@@ -2451,6 +2489,16 @@ static void check_remoting_args(const var_t *func)
         }
 
         check_field_common(func->type, funcname, arg);
+    }
+
+    if (type_get_type(type_function_get_rettype(func->type)) != TYPE_VOID)
+    {
+        var_t var;
+        var = *func;
+        var.type = type_function_get_rettype(func->type);
+        var.name = xstrdup("return value");
+        check_field_common(func->type, funcname, &var);
+        free(var.name);
     }
 }
 

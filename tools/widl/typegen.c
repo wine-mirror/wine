@@ -244,6 +244,7 @@ enum typegen_type typegen_detect_type(const type_t *type, const attr_list_t *att
     case TYPE_MODULE:
     case TYPE_VOID:
     case TYPE_ALIAS:
+    case TYPE_BITFIELD:
         break;
     }
     return TGT_INVALID;
@@ -1294,10 +1295,11 @@ unsigned int type_memsize(const type_t *t, unsigned int *align)
     case TYPE_COCLASS:
     case TYPE_MODULE:
     case TYPE_FUNCTION:
+    case TYPE_BITFIELD:
         /* these types should not be encountered here due to language
          * restrictions (interface, void, coclass, module), logical
          * restrictions (alias - due to type_get_type call above) or
-         * checking restrictions (function). */
+         * checking restrictions (function, bitfield). */
         assert(0);
     }
 

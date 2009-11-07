@@ -295,6 +295,9 @@ void write_type_left(FILE *h, type_t *t, int declonly)
       case TYPE_VOID:
         fprintf(h, "void");
         break;
+      case TYPE_BITFIELD:
+        write_type_left(h, type_bitfield_get_field(t), declonly);
+        break;
       case TYPE_ALIAS:
       case TYPE_FUNCTION:
         /* handled elsewhere */
@@ -308,15 +311,38 @@ void write_type_right(FILE *h, type_t *t, int is_field)
 {
   if (!h) return;
 
-  if (type_get_type(t) == TYPE_ARRAY && !type_array_is_decl_as_ptr(t)) {
-    if (is_conformant_array(t)) {
-      fprintf(h, "[%s]", is_field ? "1" : "");
-      t = type_array_get_element(t);
+  switch (type_get_type(t))
+  {
+  case TYPE_ARRAY:
+    if (!type_array_is_decl_as_ptr(t))
+    {
+      if (is_conformant_array(t))
+      {
+        fprintf(h, "[%s]", is_field ? "1" : "");
+        t = type_array_get_element(t);
+      }
+      for ( ;
+           type_get_type(t) == TYPE_ARRAY && !type_array_is_decl_as_ptr(t);
+           t = type_array_get_element(t))
+        fprintf(h, "[%u]", type_array_get_dim(t));
     }
-    for ( ;
-         type_get_type(t) == TYPE_ARRAY && !type_array_is_decl_as_ptr(t);
-         t = type_array_get_element(t))
-      fprintf(h, "[%u]", type_array_get_dim(t));
+    break;
+  case TYPE_BITFIELD:
+    fprintf(h, " : %lu", type_bitfield_get_bits(t)->cval);
+    break;
+  case TYPE_VOID:
+  case TYPE_BASIC:
+  case TYPE_ENUM:
+  case TYPE_STRUCT:
+  case TYPE_ENCAPSULATED_UNION:
+  case TYPE_UNION:
+  case TYPE_ALIAS:
+  case TYPE_MODULE:
+  case TYPE_COCLASS:
+  case TYPE_FUNCTION:
+  case TYPE_INTERFACE:
+  case TYPE_POINTER:
+    break;
   }
 }
 

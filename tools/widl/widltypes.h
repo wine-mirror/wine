@@ -343,6 +343,12 @@ struct pointer_details
   unsigned char def_fc;
 };
 
+struct bitfield_details
+{
+  struct _type_t *field;
+  const expr_t *bits;
+};
+
 enum type_type
 {
     TYPE_VOID,
@@ -358,6 +364,7 @@ enum type_type
     TYPE_INTERFACE,
     TYPE_POINTER,
     TYPE_ARRAY,
+    TYPE_BITFIELD,
 };
 
 struct _type_t {
@@ -375,6 +382,7 @@ struct _type_t {
     struct coclass_details coclass;
     struct basic_details basic;
     struct pointer_details pointer;
+    struct bitfield_details bitfield;
   } details;
   type_t *orig;                   /* dup'd types */
   unsigned int typestring_offset;
@@ -408,6 +416,7 @@ struct _declarator_t {
   type_t *type;
   type_t *func_type;
   array_dims_t *array;
+  expr_t *bits;
 
   /* parser-internal */
   struct list entry;

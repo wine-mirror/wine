@@ -244,6 +244,10 @@ unsigned short get_type_vt(type_t *t)
   case TYPE_FUNCTION:
     error("get_type_vt: functions not supported\n");
     break;
+
+  case TYPE_BITFIELD:
+    error("get_type_vt: bitfields not supported\n");
+    break;
   }
   return 0;
 }

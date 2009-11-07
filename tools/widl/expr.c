@@ -380,6 +380,7 @@ static type_t *find_identifier(const char *identifier, const type_t *cont_type, 
         case TYPE_INTERFACE:
         case TYPE_POINTER:
         case TYPE_ARRAY:
+        case TYPE_BITFIELD:
             /* nothing to do */
             break;
         case TYPE_ALIAS:

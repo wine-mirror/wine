@@ -302,6 +302,56 @@ type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *unio
     return t;
 }
 
+static int is_valid_bitfield_type(const type_t *type)
+{
+    switch (type_get_type(type))
+    {
+    case TYPE_ENUM:
+        return TRUE;
+    case TYPE_BASIC:
+        switch (type_basic_get_type(type))
+        {
+        case TYPE_BASIC_INT8:
+        case TYPE_BASIC_INT16:
+        case TYPE_BASIC_INT32:
+        case TYPE_BASIC_INT64:
+        case TYPE_BASIC_INT:
+        case TYPE_BASIC_INT3264:
+        case TYPE_BASIC_CHAR:
+        case TYPE_BASIC_HYPER:
+        case TYPE_BASIC_BYTE:
+        case TYPE_BASIC_WCHAR:
+        case TYPE_BASIC_ERROR_STATUS_T:
+            return TRUE;
+        case TYPE_BASIC_FLOAT:
+        case TYPE_BASIC_DOUBLE:
+        case TYPE_BASIC_HANDLE:
+            return FALSE;
+        }
+        return FALSE;
+    default:
+        return FALSE;
+    }
+}
+
+type_t *type_new_bitfield(type_t *field, const expr_t *bits)
+{
+    type_t *t;
+
+    if (!is_valid_bitfield_type(field))
+        error_loc("bit-field has invalid type\n");
+
+    if (bits->cval < 0)
+        error_loc("negative width for bit-field\n");
+
+    /* FIXME: validate bits->cval <= memsize(field) * 8 */
+
+    t = make_type(TYPE_BITFIELD);
+    t->details.bitfield.field = field;
+    t->details.bitfield.bits = bits;
+    return t;
+}
+
 static int compute_method_indexes(type_t *iface)
 {
     int idx;
