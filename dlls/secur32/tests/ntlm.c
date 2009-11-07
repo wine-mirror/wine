@@ -1056,8 +1056,32 @@ static void testSignSeal(void)
 
     ok(!memcmp(crypt.pBuffers[0].pvBuffer, crypt_trailer_client,
                crypt.pBuffers[0].cbBuffer), "Crypt trailer not as expected.\n");
+    if (memcmp(crypt.pBuffers[0].pvBuffer, crypt_trailer_client,
+               crypt.pBuffers[0].cbBuffer))
+    {
+        int i;
+        for (i = 0; i < crypt.pBuffers[0].cbBuffer; i++)
+        {
+            if (i % 8 == 0) printf("     ");
+            printf("0x%02x,", ((unsigned char *)crypt.pBuffers[0].pvBuffer)[i]);
+            if (i % 8 == 7) printf("\n");
+        }
+        printf("\n");
+    }
     ok(!memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client,
                crypt.pBuffers[1].cbBuffer), "Crypt message not as expected.\n");
+    if (memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client,
+               crypt.pBuffers[1].cbBuffer))
+    {
+        int i;
+        for (i = 0; i < crypt.pBuffers[1].cbBuffer; i++)
+        {
+            if (i % 8 == 0) printf("     ");
+            printf("0x%02x,", ((unsigned char *)crypt.pBuffers[1].pvBuffer)[i]);
+            if (i % 8 == 7) printf("\n");
+        }
+        printf("\n");
+    }
 
     data[0].cbBuffer = sizeof(crypt_trailer_server);
     data[1].cbBuffer = sizeof(crypt_message_server);
@@ -1113,9 +1137,33 @@ static void testSignSeal(void)
 
     ok(!memcmp(crypt.pBuffers[3].pvBuffer, crypt_trailer_client2,
                crypt.pBuffers[3].cbBuffer), "Crypt trailer not as expected.\n");
+    if (memcmp(crypt.pBuffers[3].pvBuffer, crypt_trailer_client2,
+               crypt.pBuffers[3].cbBuffer))
+    {
+        int i;
+        for (i = 0; i < crypt.pBuffers[3].cbBuffer; i++)
+        {
+            if (i % 8 == 0) printf("     ");
+            printf("0x%02x,", ((unsigned char *)crypt.pBuffers[3].pvBuffer)[i]);
+            if (i % 8 == 7) printf("\n");
+        }
+        printf("\n");
+    }
 
     ok(!memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client2,
                crypt.pBuffers[1].cbBuffer), "Crypt message not as expected.\n");
+    if (memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client2,
+               crypt.pBuffers[1].cbBuffer))
+    {
+        int i;
+        for (i = 0; i < crypt.pBuffers[1].cbBuffer; i++)
+        {
+            if (i % 8 == 0) printf("     ");
+            printf("0x%02x,", ((unsigned char *)crypt.pBuffers[1].pvBuffer)[i]);
+            if (i % 8 == 7) printf("\n");
+        }
+        printf("\n");
+    }
 
     memcpy(complex_data[1].pvBuffer, crypt_message_server2, complex_data[1].cbBuffer);
     memcpy(complex_data[3].pvBuffer, crypt_trailer_server2, complex_data[3].cbBuffer);
