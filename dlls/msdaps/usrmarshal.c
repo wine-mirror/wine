@@ -100,17 +100,34 @@ HRESULT __RPC_STUB IDBCreateSession_CreateSession_Stub(IDBCreateSession* This, I
 HRESULT CALLBACK IDBProperties_GetProperties_Proxy(IDBProperties* This, ULONG cPropertyIDSets, const DBPROPIDSET rgPropertyIDSets[],
                                                    ULONG *pcPropertySets, DBPROPSET **prgPropertySets)
 {
-    FIXME("(%p, %d, %p, %p, %p): stub\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets,
+    HRESULT hr;
+    IErrorInfo *error;
+
+    TRACE("(%p, %d, %p, %p, %p)\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets,
           prgPropertySets);
-    return E_NOTIMPL;
+    hr = IDBProperties_RemoteGetProperties_Proxy(This, cPropertyIDSets, rgPropertyIDSets,
+                                                 pcPropertySets, prgPropertySets, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+    return hr;
 }
 
 HRESULT __RPC_STUB IDBProperties_GetProperties_Stub(IDBProperties* This, ULONG cPropertyIDSets, const DBPROPIDSET *rgPropertyIDSets,
                                                     ULONG *pcPropertySets, DBPROPSET **prgPropertySets, IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p, %d, %p, %p, %p, %p): stub\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets,
+    HRESULT hr;
+
+    TRACE("(%p, %d, %p, %p, %p, %p)\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets,
           prgPropertySets, ppErrorInfoRem);
-    return E_NOTIMPL;
+    *ppErrorInfoRem = NULL;
+    hr = IDBProperties_GetProperties(This, cPropertyIDSets, rgPropertyIDSets,
+        pcPropertySets, prgPropertySets);
+    if(FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+
+    return hr;
 }
 
 HRESULT CALLBACK IDBProperties_GetPropertyInfo_Proxy(IDBProperties* This, ULONG cPropertyIDSets, const DBPROPIDSET rgPropertyIDSets[],
