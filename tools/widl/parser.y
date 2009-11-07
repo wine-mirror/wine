@@ -1384,9 +1384,26 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
        error_loc("%s: pointer attribute applied to non-pointer type\n", v->name);
   }
 
-  if (is_attr(v->attrs, ATTR_STRING) && !is_ptr(v->type) && !arr)
-    error_loc("'%s': [string] attribute applied to non-pointer, non-array type\n",
-              v->name);
+  if (is_attr(v->attrs, ATTR_STRING))
+  {
+    type_t *t = type;
+
+    if (!is_ptr(v->type) && !arr)
+      error_loc("'%s': [string] attribute applied to non-pointer, non-array type\n",
+                v->name);
+
+    while (is_ptr(t))
+      t = type_pointer_get_ref(t);
+
+    if (type_get_type(t) != TYPE_BASIC &&
+        (get_basic_fc(t) != RPC_FC_CHAR &&
+         get_basic_fc(t) != RPC_FC_BYTE &&
+         get_basic_fc(t) != RPC_FC_WCHAR))
+    {
+      error_loc("'%s': [string] attribute is only valid on 'char', 'byte', or 'wchar_t' pointers and arrays\n",
+                v->name);
+    }
+  }
 
   if (is_attr(v->attrs, ATTR_V1ENUM))
   {
@@ -1747,26 +1764,7 @@ static void fix_incomplete_types(type_t *complete_type)
 static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, attr_list_t *attrs)
 {
   const declarator_t *decl;
-  int is_str = is_attr(attrs, ATTR_STRING);
   type_t *type = decl_spec->type;
-
-  if (is_str)
-  {
-    type_t *t = decl_spec->type;
-
-    while (is_ptr(t))
-      t = type_pointer_get_ref(t);
-
-    if (type_get_type(t) != TYPE_BASIC &&
-        (get_basic_fc(t) != RPC_FC_CHAR &&
-         get_basic_fc(t) != RPC_FC_BYTE &&
-         get_basic_fc(t) != RPC_FC_WCHAR))
-    {
-      decl = LIST_ENTRY( list_head( decls ), const declarator_t, entry );
-      error_loc("'%s': [string] attribute is only valid on 'char', 'byte', or 'wchar_t' pointers and arrays\n",
-              decl->var->name);
-    }
-  }
 
   /* We must generate names for tagless enum, struct or union.
      Typedef-ing a tagless enum, struct or union means we want the typedef
@@ -2361,6 +2359,15 @@ static void check_field_common(const type_t *container_type,
         case TGT_CTXT_HANDLE_POINTER:
             /* FIXME */
             break;
+        case TGT_STRING:
+        {
+            const type_t *t = type;
+            while (is_ptr(t))
+                t = type_pointer_get_ref(t);
+            if (is_aliaschain_attr(t, ATTR_RANGE))
+                warning_loc_info(&arg->loc_info, "%s: range not verified for a string of ranged types\n", arg->name);
+            break;
+        }
         case TGT_POINTER:
             type = type_pointer_get_ref(type);
             more_to_do = TRUE;
@@ -2370,7 +2377,6 @@ static void check_field_common(const type_t *container_type,
             more_to_do = TRUE;
             break;
         case TGT_USER_TYPE:
-        case TGT_STRING:
         case TGT_IFACE_POINTER:
         case TGT_BASIC:
         case TGT_ENUM:
