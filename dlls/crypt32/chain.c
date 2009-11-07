@@ -1112,7 +1112,7 @@ static void dump_element(PCCERT_CONTEXT cert)
     LPWSTR name = NULL;
     DWORD len, i;
 
-    TRACE_(chain)("%p\n", cert);
+    TRACE_(chain)("%p: version %d\n", cert, cert->pCertInfo->dwVersion);
     len = CertGetNameStringW(cert, CERT_NAME_SIMPLE_DISPLAY_TYPE,
      CERT_NAME_ISSUER_FLAG, NULL, NULL, 0);
     name = CryptMemAlloc(len * sizeof(WCHAR));
