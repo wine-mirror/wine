@@ -1274,6 +1274,37 @@ static void type_function_add_head_arg(type_t *type, var_t *arg)
     list_add_head( type->details.function->args, &arg->entry );
 }
 
+static int is_allowed_range_type(const type_t *type)
+{
+    switch (type_get_type(type))
+    {
+    case TYPE_ENUM:
+        return TRUE;
+    case TYPE_BASIC:
+        switch (type_basic_get_type(type))
+        {
+        case TYPE_BASIC_INT8:
+        case TYPE_BASIC_INT16:
+        case TYPE_BASIC_INT32:
+        case TYPE_BASIC_INT64:
+        case TYPE_BASIC_INT:
+        case TYPE_BASIC_BYTE:
+        case TYPE_BASIC_CHAR:
+        case TYPE_BASIC_WCHAR:
+        case TYPE_BASIC_HYPER:
+            return TRUE;
+        case TYPE_BASIC_FLOAT:
+        case TYPE_BASIC_DOUBLE:
+        case TYPE_BASIC_ERROR_STATUS_T:
+        case TYPE_BASIC_HANDLE:
+            return FALSE;
+        }
+        return FALSE;
+    default:
+        return FALSE;
+    }
+}
+
 static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type)
 {
   type_t *ptrchain_type;
@@ -1362,6 +1393,10 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
     if (type_get_type_detect_alias(v->type) != TYPE_ENUM)
       error_loc("'%s': [v1_enum] attribute applied to non-enum type\n", v->name);
   }
+
+  if (is_attr(v->attrs, ATTR_RANGE) && !is_allowed_range_type(v->type))
+    error_loc("'%s': [range] attribute applied to non-integer type\n",
+              v->name);
 
   ptype = &v->type;
   sizeless = FALSE;
@@ -2339,6 +2374,7 @@ static void check_field_common(const type_t *container_type,
         case TGT_IFACE_POINTER:
         case TGT_BASIC:
         case TGT_ENUM:
+        case TGT_RANGE:
             /* nothing to do */
             break;
         }
@@ -2388,6 +2424,7 @@ static void check_remoting_args(const var_t *func)
             {
             case TGT_BASIC:
             case TGT_ENUM:
+            case TGT_RANGE:
             case TGT_STRUCT:
             case TGT_UNION:
             case TGT_CTXT_HANDLE:

@@ -122,6 +122,19 @@ const char *string_of_type(unsigned char type)
     }
 }
 
+static void *get_aliaschain_attrp(const type_t *type, enum attr_type attr)
+{
+    const type_t *t = type;
+    for (;;)
+    {
+        if (is_attr(t->attrs, attr))
+            return get_attrp(t->attrs, attr);
+        else if (type_is_alias(t))
+            t = type_alias_get_aliasee(t);
+        else return 0;
+    }
+}
+
 unsigned char get_basic_fc(const type_t *type)
 {
     int sign = type_basic_get_sign(type);
@@ -200,8 +213,12 @@ enum typegen_type typegen_detect_type(const type_t *type, const attr_list_t *att
     switch (type_get_type(type))
     {
     case TYPE_BASIC:
+        if (is_attr(attrs, ATTR_RANGE) || is_aliaschain_attr(type, ATTR_RANGE))
+            return TGT_RANGE;
         return TGT_BASIC;
     case TYPE_ENUM:
+        if (is_attr(attrs, ATTR_RANGE) || is_aliaschain_attr(type, ATTR_RANGE))
+            return TGT_RANGE;
         return TGT_ENUM;
     case TYPE_POINTER:
         if (type_get_type(type_pointer_get_ref(type)) == TYPE_INTERFACE ||
@@ -337,6 +354,8 @@ unsigned char get_struct_fc(const type_t *type)
         }
         break;
     }
+    case TGT_RANGE:
+        return RPC_FC_BOGUS_STRUCT;
     case TGT_STRING:
         /* shouldn't get here because of TDT_IGNORE_STRINGS above. fall through */
     case TGT_INVALID:
@@ -425,6 +444,9 @@ unsigned char get_array_fc(const type_t *type)
         if (get_pointer_fc(elem_type, NULL, FALSE) == RPC_FC_RP || pointer_size != 4)
             fc = RPC_FC_BOGUS_ARRAY;
         break;
+    case TGT_RANGE:
+        fc = RPC_FC_BOGUS_ARRAY;
+        break;
     case TGT_BASIC:
     case TGT_CTXT_HANDLE:
     case TGT_CTXT_HANDLE_POINTER:
@@ -499,6 +521,7 @@ static int type_has_pointers(const type_t *type)
     case TGT_IFACE_POINTER:
     case TGT_BASIC:
     case TGT_ENUM:
+    case TGT_RANGE:
     case TGT_INVALID:
         break;
     }
@@ -552,6 +575,7 @@ static int type_has_full_pointer(const type_t *type, const attr_list_t *attrs,
     case TGT_IFACE_POINTER:
     case TGT_BASIC:
     case TGT_ENUM:
+    case TGT_RANGE:
     case TGT_INVALID:
         break;
     }
@@ -2677,6 +2701,33 @@ static unsigned int write_contexthandle_tfs(FILE *file, const type_t *type,
     return start_offset;
 }
 
+static unsigned int write_range_tfs(FILE *file, const attr_list_t *attrs,
+                                    type_t *type, expr_list_t *range_list,
+                                    unsigned int *typeformat_offset)
+{
+    unsigned char fc;
+    unsigned int start_offset = *typeformat_offset;
+    const expr_t *range_min = LIST_ENTRY(list_head(range_list), const expr_t, entry);
+    const expr_t *range_max = LIST_ENTRY(list_next(range_list, list_head(range_list)), const expr_t, entry);
+
+    if (type_get_type(type) == TYPE_BASIC)
+        fc = get_basic_fc(type);
+    else
+        fc = get_enum_fc(type);
+
+    /* fc must fit in lower 4-bits of 8-bit field below */
+    assert(fc <= 0xf);
+
+    print_file(file, 0, "/* %u */\n", *typeformat_offset);
+    print_file(file, 2, "0x%x,\t/* FC_RANGE */\n", RPC_FC_RANGE);
+    print_file(file, 2, "0x%x,\t/* %s */\n", fc, string_of_type(fc));
+    print_file(file, 2, "NdrFcLong(0x%lx),\t/* %lu */\n", range_min->cval, range_min->cval);
+    print_file(file, 2, "NdrFcLong(0x%lx),\t/* %lu */\n", range_max->cval, range_max->cval);
+    *typeformat_offset += 10;
+
+    return start_offset;
+}
+
 static unsigned int write_typeformatstring_var(FILE *file, int indent, const var_t *func,
                                                type_t *type, const var_t *var,
                                                int toplevel_param,
@@ -2724,6 +2775,13 @@ static unsigned int write_typeformatstring_var(FILE *file, int indent, const var
     case TGT_BASIC:
         /* nothing to do */
         return 0;
+    case TGT_RANGE:
+    {
+        expr_list_t *range_list = get_attrp(var->attrs, ATTR_RANGE);
+        if (!range_list)
+            range_list = get_aliaschain_attrp(type, ATTR_RANGE);
+        return write_range_tfs(file, var->attrs, type, range_list, typeformat_offset);
+    }
     case TGT_IFACE_POINTER:
         return write_ip_tfs(file, var->attrs, type, typeformat_offset);
     case TGT_POINTER:
@@ -2828,6 +2886,14 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
     case TGT_BASIC:
         /* nothing to do */
         break;
+    case TGT_RANGE:
+    {
+        expr_list_t *range_list = get_attrp(attrs, ATTR_RANGE);
+        if (!range_list)
+            range_list = get_aliaschain_attrp(type, ATTR_RANGE);
+        write_range_tfs(file, attrs, type, range_list, tfsoff);
+        break;
+    }
     case TGT_CTXT_HANDLE:
     case TGT_CTXT_HANDLE_POINTER:
     case TGT_INVALID:
@@ -3004,6 +3070,7 @@ static unsigned int get_required_buffer_size_type(
             {
             case TGT_BASIC:
             case TGT_ENUM:
+            case TGT_RANGE:
                 return get_required_buffer_size_type( ref, name, NULL, FALSE, alignment );
             case TGT_STRUCT:
                 if (get_struct_fc(ref) == RPC_FC_STRUCT)
@@ -3503,6 +3570,49 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
             print_file(file, indent+1, "0x%02x /* %s */);\n", get_enum_fc(type), string_of_type(get_enum_fc(type)));
         }
         break;
+    case TGT_RANGE:
+        if (type_get_type(type) == TYPE_ENUM)
+        {
+            if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
+            {
+                if (phase == PHASE_MARSHAL)
+                    print_file(file, indent, "NdrSimpleTypeMarshall(\n");
+                else
+                    print_file(file, indent, "NdrSimpleTypeUnmarshall(\n");
+                print_file(file, indent+1, "&__frame->_StubMsg,\n");
+                print_file(file, indent+1, "(unsigned char *)&%s%s,\n",
+                           local_var_prefix,
+                           var->name);
+                print_file(file, indent+1, "0x%02x /* %s */);\n", get_enum_fc(type), string_of_type(get_enum_fc(type)));
+            }
+        }
+        else
+        {
+            if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
+                print_phase_basetype(file, indent, local_var_prefix, phase, pass, var, var->name);
+        }
+        /* Note: this goes beyond what MIDL does - it only supports arguments
+         * with the [range] attribute in Oicf mode */
+        if (phase == PHASE_UNMARSHAL)
+        {
+            const expr_t *range_min;
+            const expr_t *range_max;
+            expr_list_t *range_list = get_attrp(var->attrs, ATTR_RANGE);
+            if (!range_list)
+                range_list = get_aliaschain_attrp(type, ATTR_RANGE);
+            range_min = LIST_ENTRY(list_head(range_list), const expr_t, entry);
+            range_max = LIST_ENTRY(list_next(range_list, list_head(range_list)), const expr_t, entry);
+
+            print_file(file, indent, "if ((%s%s < (", local_var_prefix, var->name);
+            write_type_decl(file, var->type, NULL);
+            fprintf(file, ")0x%lx) || (%s%s > (", range_min->cval, local_var_prefix, var->name);
+            write_type_decl(file, var->type, NULL);
+            fprintf(file, ")0x%lx))\n", range_max->cval);
+            print_file(file, indent, "{\n");
+            print_file(file, indent+1, "RpcRaiseException(RPC_S_INVALID_BOUND);\n");
+            print_file(file, indent, "}\n");
+        }
+        break;
     case TGT_STRUCT:
         switch (get_struct_fc(type))
         {
@@ -3543,23 +3653,23 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
     case TGT_POINTER:
     {
         const type_t *ref = type_pointer_get_ref(type);
-        if (pointer_type == RPC_FC_RP && !is_user_type(ref)) switch (type_get_type(ref))
+        if (pointer_type == RPC_FC_RP) switch (typegen_detect_type(ref, NULL, TDT_ALL_TYPES))
         {
-        case TYPE_BASIC:
+        case TGT_BASIC:
             /* base types have known sizes, so don't need a sizing pass
              * and don't have any memory to free and so don't need a
              * freeing pass */
             if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
                 print_phase_basetype(file, indent, local_var_prefix, phase, pass, var, var->name);
             break;
-        case TYPE_ENUM:
+        case TGT_ENUM:
             /* base types have known sizes, so don't need a sizing pass
              * and don't have any memory to free and so don't need a
              * freeing pass */
             if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
                 print_phase_function(file, indent, "Pointer", local_var_prefix, phase, var, start_offset);
             break;
-        case TYPE_STRUCT:
+        case TGT_STRUCT:
         {
             const char *struct_type = NULL;
             switch (get_struct_fc(ref))
@@ -3605,8 +3715,7 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
             }
             break;
         }
-        case TYPE_UNION:
-        case TYPE_ENCAPSULATED_UNION:
+        case TGT_UNION:
         {
             const char *union_type = NULL;
             if (phase == PHASE_FREE)
@@ -3625,16 +3734,17 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
                                  phase, var, start_offset);
             break;
         }
-        case TYPE_POINTER:
-        case TYPE_ARRAY:
+        case TGT_STRING:
+        case TGT_POINTER:
+        case TGT_ARRAY:
+        case TGT_RANGE:
+        case TGT_IFACE_POINTER:
+        case TGT_USER_TYPE:
+        case TGT_CTXT_HANDLE:
+        case TGT_CTXT_HANDLE_POINTER:
             print_phase_function(file, indent, "Pointer", local_var_prefix, phase, var, start_offset);
             break;
-        case TYPE_VOID:
-        case TYPE_ALIAS:
-        case TYPE_MODULE:
-        case TYPE_COCLASS:
-        case TYPE_FUNCTION:
-        case TYPE_INTERFACE:
+        case TGT_INVALID:
             assert(0);
             break;
         }
@@ -3858,6 +3968,7 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
                 case TGT_BASIC:
                 case TGT_ENUM:
                 case TGT_POINTER:
+                case TGT_RANGE:
                     print_file(file, indent, "%s_W%u = 0;\n", local_var_prefix, i);
                     break;
                 case TGT_STRUCT:

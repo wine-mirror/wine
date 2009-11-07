@@ -571,6 +571,16 @@ s_get_filename(void)
     return (char *)__FILE__;
 }
 
+int s_echo_ranged_int(int n)
+{
+    return n;
+}
+
+void s_get_ranged_enum(renum_t *re)
+{
+    *re = RE3;
+}
+
 void
 s_context_handle_test(void)
 {
@@ -762,6 +772,7 @@ basic_tests(void)
   wstr_struct_t ws = {wstring};
   str_t str;
   se_t se;
+  renum_t re;
 
   ok(int_return() == INT_CODE, "RPC int_return\n");
 
@@ -869,6 +880,14 @@ basic_tests(void)
   str = get_filename();
   ok(!strcmp(str, __FILE__), "get_filename() returned %s instead of %s\n", str, __FILE__);
   midl_user_free(str);
+
+  x = echo_ranged_int(0);
+  ok(x == 0, "echo_ranged_int() returned %d instead of 0\n", x);
+  x = echo_ranged_int(100);
+  ok(x == 100, "echo_ranged_int() returned %d instead of 100\n", x);
+
+  get_ranged_enum(&re);
+  ok(re == RE3, "get_ranged_enum() returned %d instead of RE3\n", re);
 }
 
 static void

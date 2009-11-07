@@ -56,6 +56,7 @@ enum typegen_type
     TGT_ENUM,
     TGT_STRUCT,
     TGT_UNION,
+    TGT_RANGE,
 };
 
 typedef int (*type_pred_t)(const type_t *);

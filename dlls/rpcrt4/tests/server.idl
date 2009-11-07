@@ -339,6 +339,21 @@ cpp_quote("#endif")
   void get_numbers_struct([out] numbers_struct_t **ns);
 
   str_t get_filename(void);
+
+  enum renum
+  {
+    RE0,
+    RE1,
+    RE2,
+    RE3,
+  };
+  const int RE_MIN = RE0;
+  const int RE_MAX = RE3;
+  typedef [range(RE_MIN, RE_MAX)] enum renum renum_t;
+  typedef [range(0, 100)] int rint_t;
+  rint_t echo_ranged_int([range(0, 100)] int n);
+  void get_ranged_enum([out] renum_t *re);
+
   void context_handle_test(void);
   void stop(void);
 }
