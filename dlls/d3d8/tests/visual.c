@@ -34,7 +34,8 @@ static HWND create_window(void)
     RegisterClass(&wc);
 
     ret = CreateWindow("d3d8_test_wc", "d3d8_test",
-                        WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
+                       WS_POPUP | WS_SYSMENU , 20, 20, 640, 480, 0, 0, 0, 0);
+    ShowWindow(ret, SW_SHOW);
     return ret;
 }
 
@@ -132,7 +133,7 @@ static IDirect3DDevice8 *init_d3d8(void)
     }
 
     ZeroMemory(&present_parameters, sizeof(present_parameters));
-    present_parameters.Windowed = FALSE;
+    present_parameters.Windowed = TRUE;
     present_parameters.hDeviceWindow = create_window();
     present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
     present_parameters.BackBufferWidth = 640;
