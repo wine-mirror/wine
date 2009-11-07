@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdio.h>
 #include "windows.h"
 #include "mmsystem.h"
 #include "mmreg.h"
@@ -523,8 +524,8 @@ static void test_AutoOpenWAVE(HWND hwnd)
      * fixme:winmm:MMDRV_Exit Closing while ll-driver open
      */
     MCIERROR err;
-    char buf[1024];
-    memset(buf, 0, sizeof(buf));
+    char buf[512], path[300], command[330];
+    memset(buf, 0, sizeof(buf)); memset(path, 0, sizeof(path));
 
     /* Do not crash on NULL buffer pointer */
     err = mciSendString("sysinfo waveaudio quantity open", NULL, 0, NULL);
@@ -559,8 +560,17 @@ static void test_AutoOpenWAVE(HWND hwnd)
     /* This is the alias, not necessarily a file name. */
     if(!err) ok(!strcmp(buf,"tempfile.wav"), "sysinfo name 1 open returned: %s\n", buf);
 
+    /* Save the full pathname to the file. */
+    err = mciSendString("info tempfile.wav file", path, sizeof(path), NULL);
+    ok(!err,"mci info tempfile.wav file returned error: %d\n", err);
+    if(err) strcpy(path,"tempfile.wav");
+
     err = mciSendString("status tempfile.wav mode", NULL, 0, hwnd);
     ok(!err,"mci status tempfile.wav mode without buffer returned error: %d\n", err);
+
+    sprintf(command,"status \"%s\" mode",path);
+    err = mciSendString(command, buf, sizeof(buf), hwnd);
+    ok(!err,"mci status full-path-to-tempfile.wav mode returned error: %d\n", err);
 
     buf[0]=0;
     err = mciSendString("status tempfile.wav mode", buf, sizeof(buf), hwnd);
@@ -613,7 +623,11 @@ static void test_AutoOpenWAVE(HWND hwnd)
     ok(!err,"mci sysinfo waveaudio quantity open after close returned error: %d\n", err);
     if(!err) todo_wine ok(!strcmp(buf,"0"), "sysinfo quantity open expected 0 after auto-close, got: %s\n", buf);
 
-    err = mciSendString("status tempfile.wav mode wait", buf, sizeof(buf), hwnd);
+    /* w95-WinME (not w2k/XP) switch to C:\ after auto-playing once.  Prevent
+     * MCIERR_FILE_NOT_FOUND by using the full path name from the Info file command.
+     */
+    sprintf(command,"status \"%s\" mode wait",path);
+    err = mciSendString(command, buf, sizeof(buf), hwnd);
     ok(!err,"mci re-auto-open status mode returned error: %d\n", err);
     if(!err) ok(!strcmp(buf,"stopped"), "mci re-auto-open status mode, got: %s\n", buf);
 
@@ -622,7 +636,8 @@ static void test_AutoOpenWAVE(HWND hwnd)
     if(!err) ok(!strcmp(buf,"waveaudio"), "mci capability device type response: %s\n", buf);
 
     /* waveaudio forbids Pause without Play. */
-    err = mciSendString("pause tempfile.wav", NULL, 0, hwnd);
+    sprintf(command,"pause \"%s\"",path);
+    err = mciSendString(command, NULL, 0, hwnd);
     ok(err==MCIERR_NONAPPLICABLE_FUNCTION,"mci auto-open pause returned error: %d\n", err);
 }
 
