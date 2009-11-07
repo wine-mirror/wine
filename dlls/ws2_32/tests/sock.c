@@ -2443,7 +2443,7 @@ static void test_addr_to_print(void)
     /* Test longer length is ok */
     WSASetLastError(0);
     pdst = NULL;
-    pdst = pInetNtop(AF_INET6, (void*)&in6.s6_addr, dst, 18);
+    pdst = pInetNtop(AF_INET6, (void*)&in6.s6_addr, dst6, 18);
     ok(pdst != NULL, "The pointer should be returned (%p)\n", pdst);
 }
 
