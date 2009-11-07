@@ -659,8 +659,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
             if(!strncmp(buffer, "PW", 2))
             {
                 TRACE("Using cached credentials failed.\n");
-                ret = SEC_E_NO_CREDENTIALS;
-                goto isc_end;
+                lstrcpynA(buffer, "PW AA==", max_len-1);
             }
             else /* Just do a noop on the next run */
                 lstrcpynA(buffer, "OK", max_len-1);

@@ -1309,7 +1309,6 @@ static void test_null_auth_data(void)
     status = pInitializeSecurityContextA(&cred, NULL, (SEC_CHAR *)user,
                                          ISC_REQ_CONNECTION, 0, SECURITY_NETWORK_DREP,
                                          NULL, 0, &ctx, &buffer_desc, &attr, &ttl);
-    todo_wine
     ok(status == SEC_I_CONTINUE_NEEDED, "InitializeSecurityContextA failed %s\n", getSecError(status));
 }
 
