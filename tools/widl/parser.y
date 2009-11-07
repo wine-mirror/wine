@@ -224,7 +224,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token tIMPORT tIMPORTLIB
 %token tIN tIN_LINE tINLINE
 %token tINPUTSYNC
-%token tINT tINT64
+%token tINT tINT3264 tINT64
 %token tINTERFACE
 %token tLCID
 %token tLENGTHIS tLIBRARY
@@ -767,6 +767,7 @@ int_std:  tINT					{ $$ = type_new_int(TYPE_BASIC_INT, 0); }
 	| tHYPER m_int				{ $$ = type_new_int(TYPE_BASIC_HYPER, 0); }
 	| tINT64				{ $$ = type_new_int(TYPE_BASIC_INT64, 0); }
 	| tCHAR					{ $$ = type_new_int(TYPE_BASIC_CHAR, 0); }
+	| tINT3264				{ $$ = type_new_int(TYPE_BASIC_INT3264, 0); }
 	;
 
 coclass:  tCOCLASS aIDENTIFIER			{ $$ = type_new_coclass($2); }
@@ -1281,6 +1282,7 @@ static int is_allowed_range_type(const type_t *type)
         case TYPE_BASIC_INT32:
         case TYPE_BASIC_INT64:
         case TYPE_BASIC_INT:
+        case TYPE_BASIC_INT3264:
         case TYPE_BASIC_BYTE:
         case TYPE_BASIC_CHAR:
         case TYPE_BASIC_WCHAR:

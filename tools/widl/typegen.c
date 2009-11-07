@@ -116,6 +116,8 @@ const char *string_of_type(unsigned char type)
     case RPC_FC_C_WSTRING: return "FC_C_WSTRING";
     case RPC_FC_CSTRING: return "FC_CSTRING";
     case RPC_FC_WSTRING: return "FC_WSTRING";
+    case RPC_FC_INT3264: return "FC_INT3264";
+    case RPC_FC_UINT3264: return "FC_UINT3264";
     default:
         error("string_of_type: unknown type 0x%02x\n", type);
         return NULL;
@@ -145,6 +147,7 @@ unsigned char get_basic_fc(const type_t *type)
     case TYPE_BASIC_INT32: return (sign <= 0 ? RPC_FC_LONG : RPC_FC_ULONG);
     case TYPE_BASIC_INT64: return RPC_FC_HYPER;
     case TYPE_BASIC_INT: return (sign <= 0 ? RPC_FC_LONG : RPC_FC_ULONG);
+    case TYPE_BASIC_INT3264: return (sign <= 0 ? RPC_FC_INT3264 : RPC_FC_UINT3264);
     case TYPE_BASIC_BYTE: return RPC_FC_BYTE;
     case TYPE_BASIC_CHAR: return RPC_FC_CHAR;
     case TYPE_BASIC_WCHAR: return RPC_FC_WCHAR;
@@ -153,8 +156,8 @@ unsigned char get_basic_fc(const type_t *type)
     case TYPE_BASIC_DOUBLE: return RPC_FC_DOUBLE;
     case TYPE_BASIC_ERROR_STATUS_T: return RPC_FC_ERROR_STATUS_T;
     case TYPE_BASIC_HANDLE: return RPC_FC_BIND_PRIMITIVE;
-    default: return 0;
     }
+    return 0;
 }
 
 static inline unsigned int clamp_align(unsigned int align)
@@ -299,6 +302,8 @@ unsigned char get_struct_fc(const type_t *type)
     case TGT_IFACE_POINTER:
         return RPC_FC_BOGUS_STRUCT;
     case TGT_BASIC:
+        if (type_basic_get_type(t) == TYPE_BASIC_INT3264 && pointer_size != 4)
+            return RPC_FC_BOGUS_STRUCT;
         break;
     case TGT_ENUM:
         if (get_enum_fc(t) == RPC_FC_ENUM16)
@@ -419,6 +424,11 @@ unsigned char get_array_fc(const type_t *type)
     case TGT_USER_TYPE:
         fc = RPC_FC_BOGUS_ARRAY;
         break;
+    case TGT_BASIC:
+        if (type_basic_get_type(elem_type) == TYPE_BASIC_INT3264 &&
+            pointer_size != 4)
+            fc = RPC_FC_BOGUS_ARRAY;
+        break;
     case TGT_STRUCT:
         switch (get_struct_fc(elem_type))
         {
@@ -447,7 +457,6 @@ unsigned char get_array_fc(const type_t *type)
     case TGT_RANGE:
         fc = RPC_FC_BOGUS_ARRAY;
         break;
-    case TGT_BASIC:
     case TGT_CTXT_HANDLE:
     case TGT_CTXT_HANDLE_POINTER:
     case TGT_STRING:
@@ -1220,6 +1229,12 @@ unsigned int type_memsize(const type_t *t, unsigned int *align)
         case RPC_FC_HYPER:
         case RPC_FC_DOUBLE:
             size = 8;
+            if (size > *align) *align = size;
+            break;
+        case RPC_FC_INT3264:
+        case RPC_FC_UINT3264:
+            assert( pointer_size );
+            size = pointer_size;
             if (size > *align) *align = size;
             break;
         default:
@@ -3031,6 +3046,12 @@ static unsigned int get_required_buffer_size_type(
             *alignment = 8;
             return 8;
 
+        case RPC_FC_INT3264:
+        case RPC_FC_UINT3264:
+            assert( pointer_size );
+            *alignment = pointer_size;
+            return pointer_size;
+
         case RPC_FC_IGNORE:
         case RPC_FC_BIND_PRIMITIVE:
             return 0;
@@ -3198,28 +3219,36 @@ void print_phase_basetype(FILE *file, int indent, const char *local_var_prefix,
     type_t *type = var->type;
     unsigned int size;
     unsigned int alignment = 0;
-    const type_t *ref;
 
     /* no work to do for other phases, buffer sizing is done elsewhere */
     if (phase != PHASE_MARSHAL && phase != PHASE_UNMARSHAL)
         return;
 
-    ref = is_ptr(type) ? type_pointer_get_ref(type) : type;
-    if (type_get_type(ref) == TYPE_ENUM)
+    if (type_get_type(type) == TYPE_ENUM ||
+        (type_get_type(type) == TYPE_BASIC &&
+         type_basic_get_type(type) == TYPE_BASIC_INT3264 &&
+         pointer_size != 4))
     {
-        if (get_enum_fc(ref) == RPC_FC_ENUM32)
-        {
-            size = 4;
-            alignment = 4;
-        }
-        else /* RPC_FC_ENUM16 */
-        {
-            size = 2;
-            alignment = 2;
-        }
+        unsigned char fc;
+
+        if (type_get_type(type) == TYPE_ENUM)
+            fc = get_enum_fc(type);
+        else
+            fc = get_basic_fc(type);
+
+        if (phase == PHASE_MARSHAL)
+            print_file(file, indent, "NdrSimpleTypeMarshall(\n");
+        else
+            print_file(file, indent, "NdrSimpleTypeUnmarshall(\n");
+        print_file(file, indent+1, "&__frame->_StubMsg,\n");
+        print_file(file, indent+1, "(unsigned char *)&%s%s,\n",
+                   local_var_prefix,
+                   var->name);
+        print_file(file, indent+1, "0x%02x /* %s */);\n", fc, string_of_type(fc));
     }
     else
     {
+        const type_t *ref = is_ptr(type) ? type_pointer_get_ref(type) : type;
         switch (get_basic_fc(ref))
         {
         case RPC_FC_BYTE:
@@ -3241,6 +3270,9 @@ void print_phase_basetype(FILE *file, int indent, const char *local_var_prefix,
         case RPC_FC_LONG:
         case RPC_FC_FLOAT:
         case RPC_FC_ERROR_STATUS_T:
+        /* pointer_size must be 4 if we got here in these two cases */
+        case RPC_FC_INT3264:
+        case RPC_FC_UINT3264:
             size = 4;
             alignment = 4;
             break;
@@ -3261,46 +3293,46 @@ void print_phase_basetype(FILE *file, int indent, const char *local_var_prefix,
                   var->name, get_basic_fc(ref));
             size = 0;
         }
-    }
 
-    if (phase == PHASE_MARSHAL)
-        print_file(file, indent, "MIDL_memset(__frame->_StubMsg.Buffer, 0, (0x%x - (ULONG_PTR)__frame->_StubMsg.Buffer) & 0x%x);\n", alignment, alignment - 1);
-    print_file(file, indent, "__frame->_StubMsg.Buffer = (unsigned char *)(((ULONG_PTR)__frame->_StubMsg.Buffer + %u) & ~0x%x);\n",
-                alignment - 1, alignment - 1);
+        if (phase == PHASE_MARSHAL)
+            print_file(file, indent, "MIDL_memset(__frame->_StubMsg.Buffer, 0, (0x%x - (ULONG_PTR)__frame->_StubMsg.Buffer) & 0x%x);\n", alignment, alignment - 1);
+        print_file(file, indent, "__frame->_StubMsg.Buffer = (unsigned char *)(((ULONG_PTR)__frame->_StubMsg.Buffer + %u) & ~0x%x);\n",
+                    alignment - 1, alignment - 1);
 
-    if (phase == PHASE_MARSHAL)
-    {
-        print_file(file, indent, "*(");
-        write_type_decl(file, is_ptr(type) ? type_pointer_get_ref(type) : type, NULL);
-        if (is_ptr(type))
-            fprintf(file, " *)__frame->_StubMsg.Buffer = *");
-        else
-            fprintf(file, " *)__frame->_StubMsg.Buffer = ");
-        fprintf(file, "%s%s", local_var_prefix, varname);
-        fprintf(file, ";\n");
-    }
-    else if (phase == PHASE_UNMARSHAL)
-    {
-        print_file(file, indent, "if (__frame->_StubMsg.Buffer + sizeof(");
-        write_type_decl(file, is_ptr(type) ? type_pointer_get_ref(type) : type, NULL);
-        fprintf(file, ") > __frame->_StubMsg.BufferEnd)\n");
-        print_file(file, indent, "{\n");
-        print_file(file, indent + 1, "RpcRaiseException(RPC_X_BAD_STUB_DATA);\n");
-        print_file(file, indent, "}\n");
-        print_file(file, indent, "%s%s%s",
-                   (pass == PASS_IN || pass == PASS_RETURN) ? "" : "*",
-                   local_var_prefix, varname);
-        if (pass == PASS_IN && is_ptr(type))
-            fprintf(file, " = (");
-        else
-            fprintf(file, " = *(");
-        write_type_decl(file, is_ptr(type) ? type_pointer_get_ref(type) : type, NULL);
-        fprintf(file, " *)__frame->_StubMsg.Buffer;\n");
-    }
+        if (phase == PHASE_MARSHAL)
+        {
+            print_file(file, indent, "*(");
+            write_type_decl(file, is_ptr(type) ? type_pointer_get_ref(type) : type, NULL);
+            if (is_ptr(type))
+                fprintf(file, " *)__frame->_StubMsg.Buffer = *");
+            else
+                fprintf(file, " *)__frame->_StubMsg.Buffer = ");
+            fprintf(file, "%s%s", local_var_prefix, varname);
+            fprintf(file, ";\n");
+        }
+        else if (phase == PHASE_UNMARSHAL)
+        {
+            print_file(file, indent, "if (__frame->_StubMsg.Buffer + sizeof(");
+            write_type_decl(file, is_ptr(type) ? type_pointer_get_ref(type) : type, NULL);
+            fprintf(file, ") > __frame->_StubMsg.BufferEnd)\n");
+            print_file(file, indent, "{\n");
+            print_file(file, indent + 1, "RpcRaiseException(RPC_X_BAD_STUB_DATA);\n");
+            print_file(file, indent, "}\n");
+            print_file(file, indent, "%s%s%s",
+                       (pass == PASS_IN || pass == PASS_RETURN) ? "" : "*",
+                       local_var_prefix, varname);
+            if (pass == PASS_IN && is_ptr(type))
+                fprintf(file, " = (");
+            else
+                fprintf(file, " = *(");
+            write_type_decl(file, is_ptr(type) ? type_pointer_get_ref(type) : type, NULL);
+            fprintf(file, " *)__frame->_StubMsg.Buffer;\n");
+        }
 
-    print_file(file, indent, "__frame->_StubMsg.Buffer += sizeof(");
-    write_type_decl(file, is_ptr(type) ? type_pointer_get_ref(type) : type, NULL);
-    fprintf(file, ");\n");
+        print_file(file, indent, "__frame->_StubMsg.Buffer += sizeof(");
+        write_type_decl(file, is_ptr(type) ? type_pointer_get_ref(type) : type, NULL);
+        fprintf(file, ");\n");
+    }
 }
 
 /* returns whether the MaxCount, Offset or ActualCount members need to be
@@ -3553,44 +3585,13 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
         break;
     }
     case TGT_BASIC:
-        if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
-            print_phase_basetype(file, indent, local_var_prefix, phase, pass, var, var->name);
+        print_phase_basetype(file, indent, local_var_prefix, phase, pass, var, var->name);
         break;
     case TGT_ENUM:
-        if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
-        {
-            if (phase == PHASE_MARSHAL)
-                print_file(file, indent, "NdrSimpleTypeMarshall(\n");
-            else
-                print_file(file, indent, "NdrSimpleTypeUnmarshall(\n");
-            print_file(file, indent+1, "&__frame->_StubMsg,\n");
-            print_file(file, indent+1, "(unsigned char *)&%s%s,\n",
-                       local_var_prefix,
-                       var->name);
-            print_file(file, indent+1, "0x%02x /* %s */);\n", get_enum_fc(type), string_of_type(get_enum_fc(type)));
-        }
+        print_phase_basetype(file, indent, local_var_prefix, phase, pass, var, var->name);
         break;
     case TGT_RANGE:
-        if (type_get_type(type) == TYPE_ENUM)
-        {
-            if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
-            {
-                if (phase == PHASE_MARSHAL)
-                    print_file(file, indent, "NdrSimpleTypeMarshall(\n");
-                else
-                    print_file(file, indent, "NdrSimpleTypeUnmarshall(\n");
-                print_file(file, indent+1, "&__frame->_StubMsg,\n");
-                print_file(file, indent+1, "(unsigned char *)&%s%s,\n",
-                           local_var_prefix,
-                           var->name);
-                print_file(file, indent+1, "0x%02x /* %s */);\n", get_enum_fc(type), string_of_type(get_enum_fc(type)));
-            }
-        }
-        else
-        {
-            if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
-                print_phase_basetype(file, indent, local_var_prefix, phase, pass, var, var->name);
-        }
+        print_phase_basetype(file, indent, local_var_prefix, phase, pass, var, var->name);
         /* Note: this goes beyond what MIDL does - it only supports arguments
          * with the [range] attribute in Oicf mode */
         if (phase == PHASE_UNMARSHAL)
@@ -3656,11 +3657,7 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
         if (pointer_type == RPC_FC_RP) switch (typegen_detect_type(ref, NULL, TDT_ALL_TYPES))
         {
         case TGT_BASIC:
-            /* base types have known sizes, so don't need a sizing pass
-             * and don't have any memory to free and so don't need a
-             * freeing pass */
-            if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
-                print_phase_basetype(file, indent, local_var_prefix, phase, pass, var, var->name);
+            print_phase_basetype(file, indent, local_var_prefix, phase, pass, var, var->name);
             break;
         case TGT_ENUM:
             /* base types have known sizes, so don't need a sizing pass

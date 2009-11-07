@@ -220,6 +220,7 @@ static const struct keyword keywords[] = {
 	{"TRUE",			tTRUE},
 	{"__cdecl",			tCDECL},
 	{"__fastcall",			tFASTCALL},
+	{"__int3264",			tINT3264},
 	{"__int64",			tINT64},
 	{"__pascal",			tPASCAL},
 	{"__stdcall",			tSTDCALL},

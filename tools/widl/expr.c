@@ -297,15 +297,19 @@ static int is_integer_type(const type_t *type)
         case TYPE_BASIC_INT32:
         case TYPE_BASIC_INT64:
         case TYPE_BASIC_INT:
+        case TYPE_BASIC_INT3264:
         case TYPE_BASIC_CHAR:
         case TYPE_BASIC_HYPER:
         case TYPE_BASIC_BYTE:
         case TYPE_BASIC_WCHAR:
         case TYPE_BASIC_ERROR_STATUS_T:
             return TRUE;
-        default:
+        case TYPE_BASIC_FLOAT:
+        case TYPE_BASIC_DOUBLE:
+        case TYPE_BASIC_HANDLE:
             return FALSE;
         }
+        return FALSE;
     default:
         return FALSE;
     }

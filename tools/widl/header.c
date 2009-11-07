@@ -265,6 +265,7 @@ void write_type_left(FILE *h, type_t *t, int declonly)
         case TYPE_BASIC_INT16: fprintf(h, "short"); break;
         case TYPE_BASIC_INT: fprintf(h, "int"); break;
         case TYPE_BASIC_INT64: fprintf(h, "__int64"); break;
+        case TYPE_BASIC_INT3264: fprintf(h, "__int3264"); break;
         case TYPE_BASIC_BYTE: fprintf(h, "byte"); break;
         case TYPE_BASIC_CHAR: fprintf(h, "char"); break;
         case TYPE_BASIC_WCHAR: fprintf(h, "wchar_t"); break;
