@@ -53,13 +53,13 @@ static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
 static DWORD getPixelColor(IDirect3DDevice8 *device, UINT x, UINT y)
 {
     DWORD ret;
-    IDirect3DSurface8 *surf;
-    IDirect3DTexture8 *tex;
+    IDirect3DTexture8 *tex = NULL;
+    IDirect3DSurface8 *surf = NULL, *backbuf = NULL;
     HRESULT hr;
     D3DLOCKED_RECT lockedRect;
     RECT rectToLock = {x, y, x+1, y+1};
 
-    hr = IDirect3DDevice8_CreateTexture(device, 640, 480, 1 /* Levels */, 0 /* usage */, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &tex);
+    hr = IDirect3DDevice8_CreateTexture(device, 640, 480, 1 /* Levels */, 0, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &tex);
     if(FAILED(hr) || !tex )  /* This is not a test */
     {
         trace("Can't create an offscreen plain surface to read the render target data, hr=%#08x\n", hr);
@@ -73,11 +73,18 @@ static DWORD getPixelColor(IDirect3DDevice8 *device, UINT x, UINT y)
         goto out;
     }
 
-    hr = IDirect3DDevice8_GetFrontBuffer(device, surf);
+    hr = IDirect3DDevice8_GetRenderTarget(device, &backbuf);
     if(FAILED(hr))
     {
-        trace("Can't read the front buffer data, hr=%#08x\n", hr);
+        trace("Can't get the render target, hr=%#08x\n", hr);
         ret = 0xdeadbeed;
+        goto out;
+    }
+    hr = IDirect3DDevice8_CopyRects(device, backbuf, NULL, 0, surf, NULL);
+    if(FAILED(hr))
+    {
+        trace("Can't read the render target, hr=%#08x\n", hr);
+        ret = 0xdeadbeec;
         goto out;
     }
 
@@ -85,7 +92,7 @@ static DWORD getPixelColor(IDirect3DDevice8 *device, UINT x, UINT y)
     if(FAILED(hr))
     {
         trace("Can't lock the offscreen surface, hr=%#08x\n", hr);
-        ret = 0xdeadbeec;
+        ret = 0xdeadbeeb;
         goto out;
     }
     /* Remove the X channel for now. DirectX and OpenGL have different ideas how to treat it apparently, and it isn't
@@ -99,6 +106,7 @@ static DWORD getPixelColor(IDirect3DDevice8 *device, UINT x, UINT y)
     }
 
 out:
+    if(backbuf) IDirect3DSurface8_Release(backbuf);
     if(surf) IDirect3DSurface8_Release(surf);
     if(tex) IDirect3DTexture8_Release(tex);
     return ret;
@@ -260,8 +268,6 @@ static void lighting_test(IDirect3DDevice8 *device)
         ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed with %#08x\n", hr);
     }
 
-    IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
-
     color = getPixelColor(device, 160, 360); /* lower left quad - unlit without normals */
     ok(color == 0x00ff0000, "Unlit quad without normals has color %08x\n", color);
     color = getPixelColor(device, 160, 120); /* upper left quad - lit without normals */
@@ -270,6 +276,8 @@ static void lighting_test(IDirect3DDevice8 *device)
     ok(color == 0x000000ff, "Unlit quad width normals has color %08x\n", color);
     color = getPixelColor(device, 480, 120); /* upper left quad - lit width normals */
     ok(color == 0x00000000, "Lit quad width normals has color %08x\n", color);
+
+    IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
 
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %#08x\n", hr);
@@ -311,8 +319,6 @@ static void clear_test(IDirect3DDevice8 *device)
     hr = IDirect3DDevice8_Clear(device, 1, &rect_negneg, D3DCLEAR_TARGET, 0xff00ff00, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %#08x\n", hr);
 
-    IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
-
     color = getPixelColor(device, 160, 360); /* lower left quad */
     ok(color == 0x00ffffff, "Clear rectangle 3(pos, neg) has color %08x\n", color);
     color = getPixelColor(device, 160, 120); /* upper left quad */
@@ -321,6 +327,8 @@ static void clear_test(IDirect3DDevice8 *device)
     ok(color == 0x00ffffff, "Clear rectangle 4(NULL) has color %08x\n", color);
     color = getPixelColor(device, 480, 120); /* upper right quad */
     ok(color == 0x00ffffff, "Clear rectangle 4(neg, neg) has color %08x\n", color);
+
+    IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
 }
 
 struct sVertex {
@@ -443,7 +451,6 @@ static void fog_test(IDirect3DDevice8 *device)
         ok(FALSE, "BeginScene failed\n");
     }
 
-    IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     color = getPixelColor(device, 160, 360);
     ok(color == 0x00FF0000, "Untransformed vertex with no table or vertex fog has color %08x\n", color);
     color = getPixelColor(device, 160, 120);
@@ -452,6 +459,8 @@ static void fog_test(IDirect3DDevice8 *device)
     ok(color == 0x00FFFF00, "Transformed vertex with linear vertex fog has color %08x\n", color);
     color = getPixelColor(device, 480, 360);
     ok(color == 0x0000FF00, "Transformed vertex with linear table fog has color %08x\n", color);
+
+    IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
 
     /* Turn off the fog master switch to avoid confusing other tests */
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
@@ -504,12 +513,13 @@ static void present_test(IDirect3DDevice8 *device)
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %08x\n", hr);
 
-    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "Present failed (%#08x)\n", hr);
     color = getPixelColor(device, 512, 240);
     ok(color == 0x00ffffff, "Present failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
     color = getPixelColor(device, 64, 240);
     ok(color == 0x00ff0000, "Present failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (%#08x)\n", hr);
 }
 
 static void test_rcp_rsq(IDirect3DDevice8 *device)
@@ -580,8 +590,6 @@ static void test_rcp_rsq(IDirect3DDevice8 *device)
         ok(hr == D3D_OK, "IDirect3DDevice8_EndScene returned %#08x\n", hr);
     }
 
-    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "Present failed (%#08x)\n", hr);
     color = getPixelColor(device, 320, 240);
     c1 = (color & 0x00ff0000 )>> 16;
     c2 = (color & 0x0000ff00 )>>  8;
@@ -589,6 +597,9 @@ static void test_rcp_rsq(IDirect3DDevice8 *device)
     ok(c1 == c2 && c2 == c3, "Color components differ: c1 = %02x, c2 = %02x, c3 = %02x\n",
        c1, c2, c3);
     ok(c1 >= 0x7c && c1 <= 0x84, "Color component value is %02x\n", c1);
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (%#08x)\n", hr);
 
     IDirect3DDevice8_SetVertexShader(device, 0);
     IDirect3DDevice8_DeleteVertexShader(device, shader);
@@ -613,8 +624,6 @@ static void test_rcp_rsq(IDirect3DDevice8 *device)
         ok(hr == D3D_OK, "IDirect3DDevice8_EndScene returned %#08x\n", hr);
     }
 
-    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "Present failed (%#08x)\n", hr);
     color = getPixelColor(device, 320, 240);
     c1 = (color & 0x00ff0000 )>> 16;
     c2 = (color & 0x0000ff00 )>>  8;
@@ -622,6 +631,9 @@ static void test_rcp_rsq(IDirect3DDevice8 *device)
     ok(c1 == c2 && c2 == c3, "Color components differ: c1 = %02x, c2 = %02x, c3 = %02x\n",
        c1, c2, c3);
     ok(c1 >= 0xb0 && c1 <= 0xb8, "Color component value is %02x\n", c1);
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (%#08x)\n", hr);
 
     IDirect3DDevice8_SetVertexShader(device, 0);
     IDirect3DDevice8_DeleteVertexShader(device, shader);
@@ -707,8 +719,6 @@ static void offscreen_test(IDirect3DDevice8 *device)
         IDirect3DDevice8_EndScene(device);
     }
 
-    IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
-
     /* Center quad - should be white */
     color = getPixelColor(device, 320, 240);
     ok(color == 0x00ffffff, "Offscreen failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
@@ -726,6 +736,8 @@ static void offscreen_test(IDirect3DDevice8 *device)
         color = getPixelColor(device, 10, 470);
         ok(color == 0x00ff0000, "Offscreen failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
     }
+
+    IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
 
 out:
     hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
@@ -874,8 +886,6 @@ static void alpha_test(IDirect3DDevice8 *device)
         ok(hr == D3D_OK, "IDirect3DDevice7_EndScene failed, hr = %08x\n", hr);
     }
 
-    IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
-
     color = getPixelColor(device, 160, 360);
     ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xbf, 0x40, 0x00), 1),
        "SRCALPHA on frame buffer returned color %08x, expected 0x00bf4000\n", color);
@@ -891,6 +901,8 @@ static void alpha_test(IDirect3DDevice8 *device)
     color = getPixelColor(device, 480, 120);
     ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0xff), 1),
        "DSTALPHA on texture returned color %08x, expected 0x000000ff\n", color);
+
+    IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
 
     out:
     /* restore things */
@@ -1029,9 +1041,6 @@ static void p8_texture_test(IDirect3DDevice8 *device)
         ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed, hr = %08x\n", hr);
     }
 
-    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice8_Present failed, hr = %08x\n", hr);
-
     color = getPixelColor(device, 32, 32);
     red   = (color & 0x00ff0000) >> 16;
     green = (color & 0x0000ff00) >>  8;
@@ -1045,6 +1054,9 @@ static void p8_texture_test(IDirect3DDevice8 *device)
     blue  = (color & 0x000000ff) >>  0;
     ok(red == 0 && blue == 0xff && green == 0,
     "got color %08x, expected 0x000000ff\n", color);
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice8_Present failed, hr = %08x\n", hr);
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff000000, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed, hr = %08x\n", hr);
@@ -1062,8 +1074,6 @@ static void p8_texture_test(IDirect3DDevice8 *device)
         ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed, hr = %08x\n", hr);
     }
 
-    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice8_Present failed, hr = %08x\n", hr);
 
     color = getPixelColor(device, 32, 32);
     red   = (color & 0x00ff0000) >> 16;
@@ -1071,6 +1081,9 @@ static void p8_texture_test(IDirect3DDevice8 *device)
     blue  = (color & 0x000000ff) >>  0;
     ok(red == 0 && blue == 0xff && green == 0,
     "got color %08x, expected 0x000000ff\n", color);
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice8_Present failed, hr = %08x\n", hr);
 
     /* Test palettes with alpha */
     IDirect3DDevice8_GetDeviceCaps(device, &caps);
@@ -1125,9 +1138,6 @@ static void p8_texture_test(IDirect3DDevice8 *device)
             ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed, hr = %08x\n", hr);
         }
 
-        hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
-        ok(hr == D3D_OK, "IDirect3DDevice8_Present failed, hr = %08x\n", hr);
-
         color = getPixelColor(device, 32, 32);
         red   = (color & 0x00ff0000) >> 16;
         green = (color & 0x0000ff00) >>  8;
@@ -1141,6 +1151,9 @@ static void p8_texture_test(IDirect3DDevice8 *device)
         blue  = (color & 0x000000ff) >>  0;
         ok(red == 0 && blue >= 0x7e && blue <= 0x81 && green == 0,
         "got color %08x, expected 0x00000080 or near\n", color);
+
+        hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "IDirect3DDevice8_Present failed, hr = %08x\n", hr);
     }
 
     hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
@@ -1186,8 +1199,10 @@ static void texop_test(IDirect3DDevice8 *device)
         {D3DTOP_MODULATE2X,                "MODULATE2X",                D3DTEXOPCAPS_MODULATE2X,                D3DCOLOR_ARGB(0x00, 0x00, 0x66, 0x00)},
         {D3DTOP_MODULATE4X,                "MODULATE4X",                D3DTEXOPCAPS_MODULATE4X,                D3DCOLOR_ARGB(0x00, 0x00, 0xcc, 0x00)},
         {D3DTOP_ADD,                       "ADD",                       D3DTEXOPCAPS_ADD,                       D3DCOLOR_ARGB(0x00, 0x33, 0xff, 0x33)},
+
         {D3DTOP_ADDSIGNED,                 "ADDSIGNED",                 D3DTEXOPCAPS_ADDSIGNED,                 D3DCOLOR_ARGB(0x00, 0x00, 0xb2, 0x00)},
         {D3DTOP_ADDSIGNED2X,               "ADDSIGNED2X",               D3DTEXOPCAPS_ADDSIGNED2X,               D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00)},
+
         {D3DTOP_SUBTRACT,                  "SUBTRACT",                  D3DTEXOPCAPS_SUBTRACT,                  D3DCOLOR_ARGB(0x00, 0x00, 0xcc, 0x00)},
         {D3DTOP_ADDSMOOTH,                 "ADDSMOOTH",                 D3DTEXOPCAPS_ADDSMOOTH,                 D3DCOLOR_ARGB(0x00, 0x33, 0xff, 0x33)},
         {D3DTOP_BLENDDIFFUSEALPHA,         "BLENDDIFFUSEALPHA",         D3DTEXOPCAPS_BLENDDIFFUSEALPHA,         D3DCOLOR_ARGB(0x00, 0x22, 0x77, 0x22)},
@@ -1262,12 +1277,15 @@ static void texop_test(IDirect3DDevice8 *device)
         hr = IDirect3DDevice8_EndScene(device);
         ok(SUCCEEDED(hr), "EndScene failed with 0x%08x\n", hr);
 
-        hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
-        ok(SUCCEEDED(hr), "Present failed with 0x%08x\n", hr);
-
         color = getPixelColor(device, 320, 240);
         ok(color_match(color, test_data[i].result, 3), "Operation %s returned color 0x%08x, expected 0x%08x\n",
                 test_data[i].name, color, test_data[i].result);
+
+        hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+        ok(SUCCEEDED(hr), "Present failed with 0x%08x\n", hr);
+
+        hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000, 1.0f, 0);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_Clear failed with 0x%08x\n", hr);
     }
 
     if (texture) IDirect3DTexture8_Release(texture);
@@ -1303,7 +1321,6 @@ START_TEST(visual)
         skip("Clear failed, can't assure correctness of the test results\n");
         goto cleanup;
     }
-    IDirect3DDevice8_Present(device_ptr, NULL, NULL, NULL, NULL);
 
     color = getPixelColor(device_ptr, 1, 1);
     if(color !=0x00ff0000)
@@ -1311,6 +1328,7 @@ START_TEST(visual)
         skip("Sanity check returned an incorrect color(%08x), can't assure the correctness of the tests\n", color);
         goto cleanup;
     }
+    IDirect3DDevice8_Present(device_ptr, NULL, NULL, NULL, NULL);
 
     hr = IDirect3DDevice8_Clear(device_ptr, 0, NULL, D3DCLEAR_TARGET, 0xff00ddee, 0.0, 0);
     if(FAILED(hr))
@@ -1318,7 +1336,6 @@ START_TEST(visual)
         skip("Clear failed, can't assure correctness of the test results\n");
         goto cleanup;
     }
-    IDirect3DDevice8_Present(device_ptr, NULL, NULL, NULL, NULL);
 
     color = getPixelColor(device_ptr, 639, 479);
     if(color != 0x0000ddee)
@@ -1326,6 +1343,7 @@ START_TEST(visual)
         skip("Sanity check returned an incorrect color(%08x), can't assure the correctness of the tests\n", color);
         goto cleanup;
     }
+    IDirect3DDevice8_Present(device_ptr, NULL, NULL, NULL, NULL);
 
     /* Now run the real test */
     lighting_test(device_ptr);
