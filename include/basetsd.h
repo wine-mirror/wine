@@ -102,15 +102,41 @@ typedef unsigned __int64 DECLSPEC_ALIGN(8) ULONG64, *PULONG64;
 typedef unsigned __int64 DECLSPEC_ALIGN(8) DWORD64, *PDWORD64;
 #endif
 
-/* Win32 or Win64 dependent typedef/defines. */
+/* Basic pointer-sized integer types */
 
-#ifdef _WIN64
+#if defined(__midl) || defined(__WIDL__)
+
+typedef /* [public] */ signed __int3264   INT_PTR, *PINT_PTR;
+typedef /* [public] */ signed __int3264   LONG_PTR, *PLONG_PTR;
+typedef /* [public] */ unsigned __int3264 UINT_PTR, *PUINT_PTR;
+typedef /* [public] */ unsigned __int3264 ULONG_PTR, *PULONG_PTR;
+typedef ULONG_PTR                   DWORD_PTR, *PDWORD_PTR;
+
+#elif defined(_WIN64)
+
+#define __int3264 __int64
 
 typedef signed __int64   INT_PTR, *PINT_PTR;
 typedef signed __int64   LONG_PTR, *PLONG_PTR;
 typedef unsigned __int64 UINT_PTR, *PUINT_PTR;
 typedef unsigned __int64 ULONG_PTR, *PULONG_PTR;
-typedef unsigned __int64 DWORD_PTR, *PDWORD_PTR;
+typedef ULONG_PTR        DWORD_PTR, *PDWORD_PTR;
+
+#else
+
+#define __int3264 __int32
+
+typedef long          INT_PTR, *PINT_PTR;
+typedef unsigned long UINT_PTR, *PUINT_PTR;
+typedef long          LONG_PTR, *PLONG_PTR;
+typedef unsigned long ULONG_PTR, *PULONG_PTR;
+typedef ULONG_PTR     DWORD_PTR, *PDWORD_PTR;
+
+#endif
+
+/* Win32 or Win64 dependent typedef/defines. */
+
+#ifdef _WIN64
 
 #define MAXINT_PTR 0x7fffffffffffffff
 #define MININT_PTR 0x8000000000000000
@@ -200,12 +226,6 @@ static inline void *ULongToPtr(ULONG32 ul)
 #endif  /* !__midl && !__WIDL__ */
 
 #else /* FIXME: defined(_WIN32) */
-
-typedef long INT_PTR, *PINT_PTR;
-typedef unsigned long UINT_PTR, *PUINT_PTR;
-typedef long LONG_PTR, *PLONG_PTR;
-typedef unsigned long ULONG_PTR, *PULONG_PTR;
-typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 
 #define MAXINT_PTR 0x7fffffff
 #define MININT_PTR 0x80000000
