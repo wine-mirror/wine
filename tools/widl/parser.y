@@ -121,7 +121,7 @@ static type_t *find_type_or_error2(char *name, int t);
 static var_t *reg_const(var_t *var);
 
 static char *gen_name(void);
-static void check_arg(var_t *arg);
+static void check_arg_attrs(const var_t *arg);
 static void check_statements(const statement_list_t *stmts, int is_inside_library);
 static void check_all_user_types(const statement_list_t *stmts);
 static attr_list_t *check_iface_attrs(const char *name, attr_list_t *attrs);
@@ -292,9 +292,10 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <ifref> coclass_int
 %type <ifref_list> coclass_ints
 %type <var> arg ne_union_field union_field s_field case enum declaration
-%type <var_list> m_args no_args args fields ne_union_fields cases enums enum_list dispint_props field
+%type <var_list> m_args args fields ne_union_fields cases enums enum_list dispint_props field
 %type <var> m_ident ident
 %type <declarator> declarator direct_declarator init_declarator
+%type <declarator> m_any_declarator any_declarator any_declarator_no_ident any_direct_declarator
 %type <declarator_list> declarator_list
 %type <func> funcdef
 %type <type> coclass coclasshdr coclassdef
@@ -425,23 +426,19 @@ m_args:						{ $$ = NULL; }
 	| args
 	;
 
-no_args:  tVOID					{ $$ = NULL; }
-	;
-
-args:	  arg					{ check_arg($1); $$ = append_var( NULL, $1 ); }
-	| args ',' arg				{ check_arg($3); $$ = append_var( $1, $3); }
-	| no_args
+args:	  arg					{ check_arg_attrs($1); $$ = append_var( NULL, $1 ); }
+	| args ',' arg				{ check_arg_attrs($3); $$ = append_var( $1, $3); }
 	;
 
 /* split into two rules to get bison to resolve a tVOID conflict */
-arg:	  attributes decl_spec declarator	{ $$ = $3->var;
+arg:	  attributes decl_spec m_any_declarator	{ $$ = $3->var;
 						  $$->attrs = $1;
 						  if ($2->stgclass != STG_NONE && $2->stgclass != STG_REGISTER)
 						    error_loc("invalid storage class for function parameter\n");
 						  set_type($$, $2, $3, TRUE);
 						  free($3);
 						}
-	| decl_spec declarator			{ $$ = $2->var;
+	| decl_spec m_any_declarator		{ $$ = $2->var;
 						  if ($1->stgclass != STG_NONE && $1->stgclass != STG_REGISTER)
 						    error_loc("invalid storage class for function parameter\n");
 						  set_type($$, $1, $2, TRUE);
@@ -940,6 +937,45 @@ direct_declarator:
 	| '(' declarator ')'			{ $$ = $2; }
 	| direct_declarator array		{ $$ = $1; $$->array = append_array($$->array, $2); }
 	| direct_declarator '(' m_args ')'	{ $$ = $1;
+						  $$->func_type = append_ptrchain_type($$->type, type_new_function($3));
+						  $$->type = NULL;
+						}
+	;
+
+/* abstract or non-abstract declarator */
+any_declarator:
+	  '*' m_type_qual_list m_any_declarator %prec PPTR
+						{ $$ = $3; $$->type = append_ptrchain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
+	| callconv m_any_declarator		{ $$ = $2; $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
+	| any_direct_declarator
+	;
+
+/* abstract or non-abstract declarator without accepting idents */
+any_declarator_no_ident:
+	  '*' m_type_qual_list m_any_declarator %prec PPTR
+						{ $$ = $3; $$->type = append_ptrchain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
+	| callconv m_any_declarator		{ $$ = $2; $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
+	;
+
+/* abstract or non-abstract declarator or empty */
+m_any_declarator: 				{ $$ = make_declarator(NULL); }
+	| any_declarator
+	;
+
+/* abstract or non-abstract direct declarator. note: idents aren't accepted
+ * inside brackets to avoid ambiguity with the rule for function arguments */
+any_direct_declarator:
+	  ident					{ $$ = make_declarator($1); }
+	| '(' any_declarator_no_ident ')'	{ $$ = $2; }
+	| any_direct_declarator array		{ $$ = $1; $$->array = append_array($$->array, $2); }
+	| array					{ $$ = make_declarator(NULL); $$->array = append_array($$->array, $1); }
+	| '(' m_args ')'
+						{ $$ = make_declarator(NULL);
+						  $$->func_type = append_ptrchain_type($$->type, type_new_function($2));
+						  $$->type = NULL;
+						}
+	| any_direct_declarator '(' m_args ')'
+						{ $$ = $1;
 						  $$->func_type = append_ptrchain_type($$->type, type_new_function($3));
 						  $$->type = NULL;
 						}
@@ -1532,7 +1568,7 @@ static declarator_list_t *append_declarator(declarator_list_t *list, declarator_
 static declarator_t *make_declarator(var_t *var)
 {
   declarator_t *d = xmalloc(sizeof(*d));
-  d->var = var;
+  d->var = var ? var : make_var(NULL);
   d->type = NULL;
   d->func_type = NULL;
   d->array = NULL;
@@ -1979,13 +2015,9 @@ static attr_list_t *check_function_attrs(const char *name, attr_list_t *attrs)
   return attrs;
 }
 
-static void check_arg(var_t *arg)
+static void check_arg_attrs(const var_t *arg)
 {
-  const type_t *t = arg->type;
   const attr_t *attr;
-
-  if (type_get_type(t) == TYPE_VOID)
-    error_loc("argument '%s' has void type\n", arg->name);
 
   if (arg->attrs)
   {

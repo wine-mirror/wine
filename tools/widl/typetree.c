@@ -63,9 +63,63 @@ type_t *make_type(enum type_type type)
     return t;
 }
 
+static const var_t *find_arg(const var_list_t *args, const char *name)
+{
+    const var_t *arg;
+
+    if (args) LIST_FOR_EACH_ENTRY(arg, args, const var_t, entry)
+    {
+        if (arg->name && !strcmp(name, arg->name))
+            return arg;
+    }
+
+    return NULL;
+}
+
 type_t *type_new_function(var_list_t *args)
 {
-    type_t *t = make_type(TYPE_FUNCTION);
+    var_t *arg;
+    type_t *t;
+    unsigned int i = 0;
+
+    if (args)
+    {
+        arg = LIST_ENTRY(list_head(args), var_t, entry);
+        if (list_count(args) == 1 && !arg->name && arg->type && type_get_type(arg->type) == TYPE_VOID)
+        {
+            list_remove(&arg->entry);
+            free(arg);
+            free(args);
+            args = NULL;
+        }
+    }
+    if (args) LIST_FOR_EACH_ENTRY(arg, args, var_t, entry)
+    {
+        if (arg->type && type_get_type(arg->type) == TYPE_VOID)
+            error_loc("argument '%s' has void type\n", arg->name);
+        if (!arg->name)
+        {
+            if (i > 26 * 26)
+                error_loc("too many unnamed arguments\n");
+            else
+            {
+                int unique;
+                do
+                {
+                    char name[3];
+                    name[0] = i > 26 ? 'a' + i / 26 : 'a' + i;
+                    name[1] = i > 26 ? 'a' + i % 26 : 0;
+                    name[2] = 0;
+                    unique = !find_arg(args, name);
+                    if (unique)
+                        arg->name = xstrdup(name);
+                    i++;
+                } while (!unique);
+            }
+        }
+    }
+
+    t = make_type(TYPE_FUNCTION);
     t->details.function = xmalloc(sizeof(*t->details.function));
     t->details.function->args = args;
     t->details.function->idx = -1;
