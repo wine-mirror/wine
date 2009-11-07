@@ -101,7 +101,7 @@ static attr_t *make_attrv(enum attr_type type, unsigned long val);
 static attr_t *make_attrp(enum attr_type type, void *val);
 static expr_list_t *append_expr(expr_list_t *list, expr_t *expr);
 static array_dims_t *append_array(array_dims_t *list, expr_t *expr);
-static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl, int top);
+static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const declarator_t *decl, int top);
 static var_list_t *set_var_types(attr_list_t *attrs, decl_spec_t *decl_spec, declarator_list_t *decls);
 static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface);
 static ifref_t *make_ifref(type_t *iface);
@@ -431,17 +431,14 @@ args:	  arg					{ check_arg_attrs($1); $$ = append_var( NULL, $1 ); }
 	;
 
 /* split into two rules to get bison to resolve a tVOID conflict */
-arg:	  attributes decl_spec m_any_declarator	{ $$ = $3->var;
-						  $$->attrs = $1;
-						  if ($2->stgclass != STG_NONE && $2->stgclass != STG_REGISTER)
+arg:	  attributes decl_spec m_any_declarator	{ if ($2->stgclass != STG_NONE && $2->stgclass != STG_REGISTER)
 						    error_loc("invalid storage class for function parameter\n");
-						  set_type($$, $2, $3, TRUE);
+						  $$ = declare_var($1, $2, $3, TRUE);
 						  free($3);
 						}
-	| decl_spec m_any_declarator		{ $$ = $2->var;
-						  if ($1->stgclass != STG_NONE && $1->stgclass != STG_REGISTER)
+	| decl_spec m_any_declarator		{ if ($1->stgclass != STG_NONE && $1->stgclass != STG_REGISTER)
 						    error_loc("invalid storage class for function parameter\n");
-						  set_type($$, $1, $2, TRUE);
+						  $$ = declare_var(NULL, $1, $2, TRUE);
 						  free($2);
 						}
 	;
@@ -707,17 +704,16 @@ union_field:
 	| ';'					{ $$ = NULL; }
         ;
 
-s_field:  m_attributes decl_spec declarator	{ $$ = $3->var;
-						  $$->attrs = check_field_attrs($$->name, $1);
-						  set_type($$, $2, $3, FALSE);
+s_field:  m_attributes decl_spec declarator	{ $$ = declare_var(check_field_attrs($3->var->name, $1),
+						                $2, $3, FALSE);
 						  free($3);
 						}
 	;
 
 funcdef:
-	  m_attributes decl_spec declarator	{ var_t *v = $3->var;
-						  v->attrs = check_function_attrs(v->name, $1);
-						  set_type(v, $2, $3, FALSE);
+	  m_attributes decl_spec declarator	{ var_t *v;
+						  v = declare_var(check_function_attrs($3->var->name, $1),
+						               $2, $3, FALSE);
 						  free($3);
 						  $$ = make_func(v);
 						}
@@ -725,13 +721,10 @@ funcdef:
 
 declaration:
 	  attributes decl_spec init_declarator
-						{ $$ = $3->var;
-						  $$->attrs = $1;
-						  set_type($$, $2, $3, FALSE);
+						{ $$ = declare_var($1, $2, $3, FALSE);
 						  free($3);
 						}
-	| decl_spec init_declarator		{ $$ = $2->var;
-						  set_type($$, $1, $2, FALSE);
+	| decl_spec init_declarator		{ $$ = declare_var(NULL, $1, $2, FALSE);
 						  free($2);
 						}
 	;
@@ -1317,11 +1310,12 @@ static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type)
   return ptrchain;
 }
 
-static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
-                     int top)
+static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const declarator_t *decl,
+                       int top)
 {
-  expr_list_t *sizes = get_attrp(v->attrs, ATTR_SIZEIS);
-  expr_list_t *lengs = get_attrp(v->attrs, ATTR_LENGTHIS);
+  var_t *v = decl->var;
+  expr_list_t *sizes = get_attrp(attrs, ATTR_SIZEIS);
+  expr_list_t *lengs = get_attrp(attrs, ATTR_LENGTHIS);
   int sizeless;
   expr_t *dim;
   type_t **ptype;
@@ -1346,6 +1340,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
   /* add type onto the end of the pointers in pident->type */
   v->type = append_ptrchain_type(decl ? decl->type : NULL, type);
   v->stgclass = decl_spec->stgclass;
+  v->attrs = attrs;
 
   /* check for pointer attribute being applied to non-pointer, non-array
    * type */
@@ -1531,6 +1526,8 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
       if (is_attr(t->attrs, ATTR_CALLCONV))
         error_loc("calling convention applied to non-function-pointer type\n");
   }
+
+  return v;
 }
 
 static var_list_t *set_var_types(attr_list_t *attrs, decl_spec_t *decl_spec, declarator_list_t *decls)
@@ -1540,10 +1537,7 @@ static var_list_t *set_var_types(attr_list_t *attrs, decl_spec_t *decl_spec, dec
 
   LIST_FOR_EACH_ENTRY_SAFE( decl, next, decls, declarator_t, entry )
   {
-    var_t *var = decl->var;
-
-    var->attrs = attrs;
-    set_type(var, decl_spec, decl, 0);
+    var_t *var = declare_var(attrs, decl_spec, decl, 0);
     var_list = append_var(var_list, var);
     free(decl);
   }
@@ -1784,20 +1778,18 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
 
   LIST_FOR_EACH_ENTRY( decl, decls, const declarator_t, entry )
   {
-    var_t *name = decl->var;
 
-    if (name->name) {
+    if (decl->var->name) {
       type_t *cur;
+      var_t *name;
 
-      cur = find_type(name->name, 0);
+      cur = find_type(decl->var->name, 0);
       if (cur)
           error_loc("%s: redefinition error; original definition was at %s:%d\n",
                     cur->name, cur->loc_info.input_name,
                     cur->loc_info.line_number);
 
-      /* set the attributes to allow set_type to do some checks on them */
-      name->attrs = attrs;
-      set_type(name, decl_spec, decl, 0);
+      name = declare_var(attrs, decl_spec, decl, 0);
       cur = type_new_alias(name->type, name->name);
       cur->attrs = attrs;
 
