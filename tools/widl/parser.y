@@ -194,6 +194,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token EQUALITY INEQUALITY
 %token GREATEREQUAL LESSEQUAL
 %token LOGICALOR LOGICALAND
+%token ELLIPSIS
 %token tAGGREGATABLE tALLOCATE tANNOTATION tAPPOBJECT tASYNC tASYNCUUID
 %token tAUTOHANDLE tBINDABLE tBOOLEAN tBROADCAST tBYTE tBYTECOUNT
 %token tCALLAS tCALLBACK tCASE tCDECL tCHAR tCOCLASS tCODE tCOMMSTATUS
@@ -292,7 +293,8 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <ifref> coclass_int
 %type <ifref_list> coclass_ints
 %type <var> arg ne_union_field union_field s_field case enum declaration
-%type <var_list> m_args args fields ne_union_fields cases enums enum_list dispint_props field
+%type <var_list> m_args arg_list args
+%type <var_list> fields ne_union_fields cases enums enum_list dispint_props field
 %type <var> m_ident ident
 %type <declarator> declarator direct_declarator init_declarator struct_declarator
 %type <declarator> m_any_declarator any_declarator any_declarator_no_ident any_direct_declarator
@@ -426,8 +428,12 @@ m_args:						{ $$ = NULL; }
 	| args
 	;
 
-args:	  arg					{ check_arg_attrs($1); $$ = append_var( NULL, $1 ); }
-	| args ',' arg				{ check_arg_attrs($3); $$ = append_var( $1, $3); }
+arg_list: arg					{ check_arg_attrs($1); $$ = append_var( NULL, $1 ); }
+	| arg_list ',' arg			{ check_arg_attrs($3); $$ = append_var( $1, $3 ); }
+	;
+
+args:	  arg_list
+	| arg_list ',' ELLIPSIS			{ $$ = append_var( $1, make_var(strdup("...")) ); }
 	;
 
 /* split into two rules to get bison to resolve a tVOID conflict */

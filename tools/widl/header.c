@@ -348,42 +348,46 @@ void write_type_right(FILE *h, type_t *t, int is_field)
 
 static void write_type_v(FILE *h, type_t *t, int is_field, int declonly, const char *name)
 {
-  type_t *pt;
+  type_t *pt = NULL;
   int ptr_level = 0;
 
   if (!h) return;
 
-  for (pt = t; is_ptr(pt); pt = type_pointer_get_ref(pt), ptr_level++)
-    ;
+  if (t) {
+    for (pt = t; is_ptr(pt); pt = type_pointer_get_ref(pt), ptr_level++)
+      ;
 
-  if (type_get_type_detect_alias(pt) == TYPE_FUNCTION) {
-    int i;
-    const char *callconv = get_attrp(pt->attrs, ATTR_CALLCONV);
-    if (!callconv) callconv = "";
-    if (is_attr(pt->attrs, ATTR_INLINE)) fprintf(h, "inline ");
-    write_type_left(h, type_function_get_rettype(pt), declonly);
-    fputc(' ', h);
-    if (ptr_level) fputc('(', h);
-    fprintf(h, "%s ", callconv);
-    for (i = 0; i < ptr_level; i++)
-      fputc('*', h);
-  } else
-    write_type_left(h, t, declonly);
+    if (type_get_type_detect_alias(pt) == TYPE_FUNCTION) {
+      int i;
+      const char *callconv = get_attrp(pt->attrs, ATTR_CALLCONV);
+      if (!callconv) callconv = "";
+      if (is_attr(pt->attrs, ATTR_INLINE)) fprintf(h, "inline ");
+      write_type_left(h, type_function_get_rettype(pt), declonly);
+      fputc(' ', h);
+      if (ptr_level) fputc('(', h);
+      fprintf(h, "%s ", callconv);
+      for (i = 0; i < ptr_level; i++)
+        fputc('*', h);
+    } else
+      write_type_left(h, t, declonly);
+  }
 
-  if (name) fprintf(h, "%s%s", needs_space_after(t) ? " " : "", name );
+  if (name) fprintf(h, "%s%s", !t || needs_space_after(t) ? " " : "", name );
 
-  if (type_get_type_detect_alias(pt) == TYPE_FUNCTION) {
-    const var_list_t *args = type_function_get_args(pt);
+  if (t) {
+    if (type_get_type_detect_alias(pt) == TYPE_FUNCTION) {
+      const var_list_t *args = type_function_get_args(pt);
 
-    if (ptr_level) fputc(')', h);
-    fputc('(', h);
-    if (args)
-        write_args(h, args, NULL, 0, FALSE);
-    else
-        fprintf(h, "void");
-    fputc(')', h);
-  } else
-    write_type_right(h, t, is_field);
+      if (ptr_level) fputc(')', h);
+      fputc('(', h);
+      if (args)
+          write_args(h, args, NULL, 0, FALSE);
+      else
+          fprintf(h, "void");
+      fputc(')', h);
+    } else
+      write_type_right(h, t, is_field);
+  }
 }
 
 void write_type_def_or_decl(FILE *f, type_t *t, int field, const char *name)

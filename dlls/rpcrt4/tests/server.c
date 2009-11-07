@@ -42,6 +42,9 @@ static NDR_SCONTEXT (WINAPI *pNDRSContextUnmarshall2)(RPC_BINDING_HANDLE, void*,
 static RPC_STATUS (WINAPI *pRpcServerRegisterIfEx)(RPC_IF_HANDLE,UUID*, RPC_MGR_EPV*, unsigned int,
                    unsigned int,RPC_IF_CALLBACK_FN*);
 
+/* type check statements generated in header file */
+fnprintf *p_printf = printf;
+
 static void InitFunctionPointers(void)
 {
     HMODULE hrpcrt4 = GetModuleHandleA("rpcrt4.dll");

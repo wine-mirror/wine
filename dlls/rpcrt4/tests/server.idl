@@ -27,6 +27,8 @@ typedef struct tag_vector
   int z;
 } vector_t;
 
+typedef int fnprintf(const char *format, ...);
+
 [
   uuid(00000000-4114-0704-2301-000000000000),
 #ifndef __midl

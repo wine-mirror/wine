@@ -193,6 +193,7 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
 <INITIAL,ATTR>\<=	return LESSEQUAL;
 <INITIAL,ATTR>\|\|	return LOGICALOR;
 <INITIAL,ATTR>&&	return LOGICALAND;
+<INITIAL,ATTR>\.\.\.	return ELLIPSIS;
 <INITIAL,ATTR>.		return yytext[0];
 <<EOF>>			{
 				if (import_stack_ptr)
