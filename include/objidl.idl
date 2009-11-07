@@ -1950,8 +1950,8 @@ interface IClientSecurity : IUnknown
     void *pAuthInfo;
   } SOLE_AUTHENTICATION_INFO;
 
-  const OLECHAR *COLE_DEFAULT_PRINCIPAL = /*(OLECHAR*)*/ -1;
-  const void *COLE_DEFAULT_AUTHINFO = /*(void*)*/ -1;
+  const OLECHAR *COLE_DEFAULT_PRINCIPAL = (OLECHAR*) -1;
+  const void *COLE_DEFAULT_AUTHINFO = (void*) -1;
 
   typedef struct tagSOLE_AUTHENTICATION_LIST {
     DWORD cAuthInfo;

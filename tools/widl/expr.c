@@ -101,9 +101,16 @@ expr_t *make_exprs(enum expr_type type, char *val)
     return e;
 }
 
-expr_t *make_exprt(enum expr_type type, type_t *tref, expr_t *expr)
+expr_t *make_exprt(enum expr_type type, var_t *var, expr_t *expr)
 {
     expr_t *e;
+    type_t *tref;
+
+    if (var->stgclass != STG_NONE && var->stgclass != STG_REGISTER)
+        error_loc("invalid storage class for type expression\n");
+
+    tref = var->type;
+
     e = xmalloc(sizeof(expr_t));
     e->type = type;
     e->ref = expr;
@@ -125,6 +132,7 @@ expr_t *make_exprt(enum expr_type type, type_t *tref, expr_t *expr)
         e->is_const = TRUE;
         e->cval = expr->cval;
     }
+    free(var);
     return e;
 }
 

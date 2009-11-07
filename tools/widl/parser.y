@@ -297,7 +297,8 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <var_list> fields ne_union_fields cases enums enum_list dispint_props field
 %type <var> m_ident ident
 %type <declarator> declarator direct_declarator init_declarator struct_declarator
-%type <declarator> m_any_declarator any_declarator any_declarator_no_ident any_direct_declarator
+%type <declarator> m_any_declarator any_declarator any_declarator_no_direct any_direct_declarator
+%type <declarator> m_abstract_declarator abstract_declarator abstract_declarator_no_direct abstract_direct_declarator
 %type <declarator_list> declarator_list struct_declarator_list
 %type <func> funcdef
 %type <type> coclass coclasshdr coclassdef
@@ -440,12 +441,12 @@ args:	  arg_list
 arg:	  attributes decl_spec m_any_declarator	{ if ($2->stgclass != STG_NONE && $2->stgclass != STG_REGISTER)
 						    error_loc("invalid storage class for function parameter\n");
 						  $$ = declare_var($1, $2, $3, TRUE);
-						  free($3);
+						  free($2); free($3);
 						}
 	| decl_spec m_any_declarator		{ if ($1->stgclass != STG_NONE && $1->stgclass != STG_REGISTER)
 						    error_loc("invalid storage class for function parameter\n");
 						  $$ = declare_var(NULL, $1, $2, TRUE);
-						  free($2);
+						  free($1); free($2);
 						}
 	;
 
@@ -659,8 +660,10 @@ expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
 	| '*' expr %prec PPTR			{ $$ = make_expr1(EXPR_PPTR, $2); }
 	| expr MEMBERPTR aIDENTIFIER		{ $$ = make_expr2(EXPR_MEMBER, make_expr1(EXPR_PPTR, $1), make_exprs(EXPR_IDENTIFIER, $3)); }
 	| expr '.' aIDENTIFIER			{ $$ = make_expr2(EXPR_MEMBER, $1, make_exprs(EXPR_IDENTIFIER, $3)); }
-	| '(' type ')' expr %prec CAST		{ $$ = make_exprt(EXPR_CAST, $2, $4); }
-	| tSIZEOF '(' type ')'			{ $$ = make_exprt(EXPR_SIZEOF, $3, NULL); }
+	| '(' decl_spec m_abstract_declarator ')' expr %prec CAST
+						{ $$ = make_exprt(EXPR_CAST, declare_var(NULL, $2, $3, 0), $5); free($2); free($3); }
+	| tSIZEOF '(' decl_spec m_abstract_declarator ')'
+						{ $$ = make_exprt(EXPR_SIZEOF, declare_var(NULL, $3, $4, 0), NULL); free($3); free($4); }
 	| expr '[' expr ']'			{ $$ = make_expr2(EXPR_ARRAY, $1, $3); }
 	| '(' expr ')'				{ $$ = $2; }
 	;
@@ -942,6 +945,43 @@ direct_declarator:
 						}
 	;
 
+/* abstract declarator */
+abstract_declarator:
+	  '*' m_type_qual_list m_abstract_declarator %prec PPTR
+						{ $$ = $3; $$->type = append_ptrchain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
+	| callconv m_abstract_declarator	{ $$ = $2; $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
+	| abstract_direct_declarator
+	;
+
+/* abstract declarator without accepting direct declarator */
+abstract_declarator_no_direct:
+	  '*' m_type_qual_list m_any_declarator %prec PPTR
+						{ $$ = $3; $$->type = append_ptrchain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
+	| callconv m_any_declarator		{ $$ = $2; $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
+	;
+
+/* abstract declarator or empty */
+m_abstract_declarator: 				{ $$ = make_declarator(NULL); }
+	| abstract_declarator
+	;
+
+/* abstract direct declarator */
+abstract_direct_declarator:
+	  '(' abstract_declarator_no_direct ')'	{ $$ = $2; }
+	| abstract_direct_declarator array	{ $$ = $1; $$->array = append_array($$->array, $2); }
+	| array					{ $$ = make_declarator(NULL); $$->array = append_array($$->array, $1); }
+	| '(' m_args ')'
+						{ $$ = make_declarator(NULL);
+						  $$->func_type = append_ptrchain_type($$->type, type_new_function($2));
+						  $$->type = NULL;
+						}
+	| abstract_direct_declarator '(' m_args ')'
+						{ $$ = $1;
+						  $$->func_type = append_ptrchain_type($$->type, type_new_function($3));
+						  $$->type = NULL;
+						}
+	;
+
 /* abstract or non-abstract declarator */
 any_declarator:
 	  '*' m_type_qual_list m_any_declarator %prec PPTR
@@ -950,8 +990,8 @@ any_declarator:
 	| any_direct_declarator
 	;
 
-/* abstract or non-abstract declarator without accepting idents */
-any_declarator_no_ident:
+/* abstract or non-abstract declarator without accepting direct declarator */
+any_declarator_no_direct:
 	  '*' m_type_qual_list m_any_declarator %prec PPTR
 						{ $$ = $3; $$->type = append_ptrchain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
 	| callconv m_any_declarator		{ $$ = $2; $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
@@ -962,11 +1002,12 @@ m_any_declarator: 				{ $$ = make_declarator(NULL); }
 	| any_declarator
 	;
 
-/* abstract or non-abstract direct declarator. note: idents aren't accepted
- * inside brackets to avoid ambiguity with the rule for function arguments */
+/* abstract or non-abstract direct declarator. note: direct declarators
+ * aren't accepted inside brackets to avoid ambiguity with the rule for
+ * function arguments */
 any_direct_declarator:
 	  ident					{ $$ = make_declarator($1); }
-	| '(' any_declarator_no_ident ')'	{ $$ = $2; }
+	| '(' any_declarator_no_direct ')'	{ $$ = $2; }
 	| any_direct_declarator array		{ $$ = $1; $$->array = append_array($$->array, $2); }
 	| array					{ $$ = make_declarator(NULL); $$->array = append_array($$->array, $1); }
 	| '(' m_args ')'
@@ -1568,6 +1609,7 @@ static var_list_t *set_var_types(attr_list_t *attrs, decl_spec_t *decl_spec, dec
     var_list = append_var(var_list, var);
     free(decl);
   }
+  free(decl_spec);
   return var_list;
 }
 
