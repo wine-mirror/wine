@@ -3200,6 +3200,49 @@ static void test_GetSidSubAuthority(void)
     LocalFree(psid);
 }
 
+static void test_CheckTokenMembership(void)
+{
+    PTOKEN_GROUPS token_groups;
+    DWORD size;
+    HANDLE token;
+    BOOL is_member;
+    BOOL ret;
+    DWORD i;
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
+    ok(ret, "OpenProcessToken failed with error %d\n", GetLastError());
+
+    /* groups */
+    ret = GetTokenInformation(token, TokenGroups, NULL, 0, &size);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+        "GetTokenInformation(TokenGroups) %s with error %d\n",
+        ret ? "succeeded" : "failed", GetLastError());
+    token_groups = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = GetTokenInformation(token, TokenGroups, token_groups, size, &size);
+    ok(ret, "GetTokenInformation(TokenGroups) failed with error %d\n", GetLastError());
+
+    for (i = 0; i < token_groups->GroupCount; i++)
+    {
+        if (token_groups->Groups[i].Attributes & SE_GROUP_ENABLED)
+            break;
+    }
+
+    if (i == token_groups->GroupCount)
+    {
+        HeapFree(GetProcessHeap(), 0, token_groups);
+        CloseHandle(token);
+        skip("user not a member of any group\n");
+        return;
+    }
+
+    ret = CheckTokenMembership(token, token_groups->Groups[i].Sid, &is_member);
+    ok(ret, "CheckTokenMembership failed with error %d\n", GetLastError());
+    ok(is_member, "CheckTokenMembership should have detected sid as member");
+
+    HeapFree(GetProcessHeap(), 0, token_groups);
+    CloseHandle(token);
+}
+
 START_TEST(security)
 {
     init();
@@ -3230,4 +3273,5 @@ START_TEST(security)
     test_acls();
     test_GetSecurityInfo();
     test_GetSidSubAuthority();
+    test_CheckTokenMembership();
 }

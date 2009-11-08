@@ -622,13 +622,55 @@ AdjustTokenPrivileges( HANDLE TokenHandle, BOOL DisableAllPrivileges,
  *  Failure: FALSE.
  */
 BOOL WINAPI
-CheckTokenMembership( HANDLE TokenHandle, PSID SidToCheck,
-                      PBOOL IsMember )
+CheckTokenMembership( HANDLE token, PSID sid_to_check,
+                      PBOOL is_member )
 {
-  FIXME("(%p %p %p) stub!\n", TokenHandle, SidToCheck, IsMember);
+    PTOKEN_GROUPS token_groups;
+    DWORD size, i;
 
-  *IsMember = TRUE;
-  return(TRUE);
+    TRACE("(%p %s %p)\n", token, debugstr_sid(sid_to_check), is_member);
+
+    *is_member = FALSE;
+
+    if (!token)
+    {
+        if (!OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, TRUE, &token))
+            return FALSE;
+    }
+
+    if (!GetTokenInformation(token, TokenGroups, NULL, 0, &size))
+    {
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+            return FALSE;
+    }
+
+    token_groups = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!token_groups)
+        return FALSE;
+
+    if (!GetTokenInformation(token, TokenGroups, token_groups, size, &size))
+    {
+        HeapFree(GetProcessHeap(), 0, token_groups);
+        return FALSE;
+    }
+
+    for (i = 0; i < token_groups->GroupCount; i++)
+    {
+        TRACE("Groups[%d]: {0x%x, %s}\n", i,
+            token_groups->Groups[i].Attributes,
+            debugstr_sid(token_groups->Groups[i].Sid));
+        if ((token_groups->Groups[i].Attributes & SE_GROUP_ENABLED) &&
+            EqualSid(sid_to_check, token_groups->Groups[i].Sid))
+        {
+            *is_member = TRUE;
+            TRACE("sid enabled and found in token\n");
+            break;
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, token_groups);
+
+    return TRUE;
 }
 
 /******************************************************************************
