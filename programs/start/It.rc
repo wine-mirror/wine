@@ -5,6 +5,7 @@
  * Copyright 2003 Dan Kegel
  * Copyright 2003 Ivan Leo Puoti
  * Copyright 2006 Antonio Codazzi
+ * Copyright 2009 Luca Bennati
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,38 +24,41 @@
 
 #include "resources.h"
 
+#pragma code_page(65001) /* UTF-8 */
+
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE
 {
 STRING_USAGE,                                   "Avvia un programma, o apri un documento con il programma normalmente usato per i files con quell'estensione\n\
 Usage:\n\
-start [options] nome_programma [...]\n\
-start [options] nome_documento\n\
+start [opzioni] nome_programma [...]\n\
+start [opzioni] nome_documento\n\
 \n\
 Options:\n\
 /M[inimized] Avvia il programma minimizzato.\n\
 /MAX[imized] Avvia il programma massimizato.\n\
-/R[estored]  Avvia il programma normalmente (nè minimizzato nè massimizato).\n\
+/R[estored]  Avvia il programma normalmente (nÃ© minimizzato nÃ© massimizzato).\n\
 /W[ait]      Attendi l'uscita del programma, poi esci con il suo codice di uscita.\n\
-/ProgIDOpen  Open a document using the following progID.\n\
+/Unix        Usa un nome file Unix e apre il file come windows explorer.\n\
+/ProgIDOpen  Apri un documento usando il seguente progID.\n\
 /L           Mostra l'accordo di licenza con l'utente finale.\n\
 \n\
 start.exe versione 0.2 Copyright (C) 2003, Dan Kegel\n\
-Start è fornito SENZA GARANZIA di alcun tipo; per ulteriori informazioni eseguire start con l'opzione /L.\n\
-Questo è software libero, e lo potete redistribuire\n\
+Start Ã¨ fornito SENZA GARANZIA di alcun tipo; per ulteriori informazioni eseguire start con l'opzione /L.\n\
+Questo Ã¨ software libero, e lo potete redistribuire\n\
 sotto alcune condizioni; eseguire 'start' con l'opzione /L per ulteriori infomazioni.\n\
 "
 
 STRING_LICENSE, "start.exe versione 0.2 Copyright (C) 2003, Dan Kegel\n\
-Questo programma è software libero; puoi redistribuirlo e/o\n\
+Questo programma Ã¨ software libero; puoi redistribuirlo e/o\n\
 modificarlo sotto i termini della GNU Lesser Public License\n\
-così come pubblicata dalla Free Software Foundation; sia la versione 2.1\n\
+cosÃ¬ come pubblicata dalla Free Software Foundation; sia la versione 2.1\n\
 della Licenza, o (a tua scelta) ogni altra versione successiva.\n\
 \n\
-Questo programma è distribuito nella speranza che sia utile,\n\
+Questo programma Ã¨ distribuito nella speranza che sia utile,\n\
 ma SENZA ALCUNA GARANZIA; senza neppure la garanzia implicita di\n\
-COMMERCIABILITÀ o IDONEITÀ PER UN PARTICOLARE SCOPO.  Consulta la\n\
+COMMERCIABILITÃ€ o IDONEITÃ€ PER UN PARTICOLARE SCOPO.  Consulta la\n\
 GNU Lesser Public License per ulteriori dettagli.\n\
 \n\
 Dovresti aver ricevuto una copia della GNU Lesser Public License\n\
@@ -64,7 +68,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n\
 Consulta il file COPYING.LIB per informazioni sulla licenza.\n\
 "
 
-STRING_EXECFAIL "Non è stato possibile eseguire l'applicazione, o nessuna applicazione è associata con il file specificato.\nShellExecuteEx fallito"
+STRING_EXECFAIL "Non Ã¨ stato possibile eseguire l'applicazione, o nessuna applicazione Ã¨ associata con il file specificato.\nShellExecuteEx fallito"
 
-STRING_UNIXFAIL "Non è stato possibile tradurre il nome file Unix in un nome file DOS."
+STRING_UNIXFAIL "Non Ã¨ stato possibile tradurre il nome file Unix in un nome file DOS."
 }
