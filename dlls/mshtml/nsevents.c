@@ -26,6 +26,8 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmcid.h"
+#include "shlguid.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -173,6 +175,36 @@ static nsresult NSAPI handle_keypress(nsIDOMEventListener *iface,
     return NS_OK;
 }
 
+static void handle_docobj_load(HTMLDocumentObj *doc)
+{
+    IOleCommandTarget *olecmd = NULL;
+    HRESULT hres;
+
+    if(!doc->client)
+        return;
+
+    hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
+    if(SUCCEEDED(hres)) {
+        VARIANT state, progress;
+
+        V_VT(&progress) = VT_I4;
+        V_I4(&progress) = 0;
+        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETPROGRESSPOS, OLECMDEXECOPT_DONTPROMPTUSER,
+                               &progress, NULL);
+
+        V_VT(&state) = VT_I4;
+        V_I4(&state) = 0;
+        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETDOWNLOADSTATE, OLECMDEXECOPT_DONTPROMPTUSER,
+                               &state, NULL);
+
+        IOleCommandTarget_Exec(olecmd, &CGID_ShellDocView, 103, 0, NULL, NULL);
+        IOleCommandTarget_Exec(olecmd, &CGID_MSHTML, IDM_PARSECOMPLETE, 0, NULL, NULL);
+        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_HTTPEQUIV_DONE, 0, NULL, NULL);
+
+        IOleCommandTarget_Release(olecmd);
+    }
+}
+
 static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event)
 {
     HTMLDocumentNode *doc = NSEVENTLIST_THIS(iface)->This->doc;
@@ -195,8 +227,19 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     if(doc_obj->usermode == EDITMODE)
         handle_edit_load(&doc_obj->basedoc);
 
-    if(doc->basedoc.window->readystate != READYSTATE_COMPLETE)
-        set_ready_state(doc->basedoc.window, READYSTATE_COMPLETE);
+    if(doc == doc_obj->basedoc.doc_node)
+        handle_docobj_load(doc_obj);
+
+    set_ready_state(doc->basedoc.window, READYSTATE_COMPLETE);
+
+    if(doc == doc_obj->basedoc.doc_node) {
+        if(doc_obj->frame) {
+            static const WCHAR wszDone[] = {'D','o','n','e',0};
+            IOleInPlaceFrame_SetStatusText(doc_obj->frame, wszDone);
+        }
+
+        update_title(doc_obj);
+    }
 
     if(!doc->nsdoc) {
         ERR("NULL nsdoc\n");

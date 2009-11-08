@@ -27,8 +27,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
-#include "mshtmcid.h"
-#include "shlguid.h"
 
 #include "wine/debug.h"
 
@@ -201,75 +199,10 @@ HRESULT clear_task_timer(HTMLDocument *doc, BOOL interval, DWORD id)
     return S_OK;
 }
 
-/* Calls undocumented 69 cmd of CGID_Explorer */
-static void call_explorer_69(HTMLDocumentObj *doc)
-{
-    IOleCommandTarget *olecmd;
-    VARIANT var;
-    HRESULT hres;
-
-    if(!doc->client)
-        return;
-
-    hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
-    if(FAILED(hres))
-        return;
-
-    VariantInit(&var);
-    hres = IOleCommandTarget_Exec(olecmd, &CGID_Explorer, 69, 0, NULL, &var);
-    IOleCommandTarget_Release(olecmd);
-    if(SUCCEEDED(hres) && V_VT(&var) != VT_NULL)
-        FIXME("handle result\n");
-}
-
 void parse_complete(HTMLDocumentObj *doc)
 {
-    IOleCommandTarget *olecmd = NULL;
-
     TRACE("(%p)\n", doc);
 
-    if(doc->usermode == EDITMODE)
-        init_editor(&doc->basedoc);
-
-    call_explorer_69(doc);
-    call_property_onchanged(&doc->basedoc.cp_propnotif, 1005);
-    call_explorer_69(doc);
-
-    /* FIXME: IE7 calls EnableModelless(TRUE), EnableModelless(FALSE) and sets interactive state here */
-
-    set_ready_state(doc->basedoc.window, READYSTATE_INTERACTIVE);
-
-    if(doc->client)
-        IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
-
-    if(olecmd) {
-        VARIANT state, progress;
-
-        V_VT(&progress) = VT_I4;
-        V_I4(&progress) = 0;
-        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETPROGRESSPOS, OLECMDEXECOPT_DONTPROMPTUSER,
-                               &progress, NULL);
-
-        V_VT(&state) = VT_I4;
-        V_I4(&state) = 0;
-        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETDOWNLOADSTATE, OLECMDEXECOPT_DONTPROMPTUSER,
-                               &state, NULL);
-
-        IOleCommandTarget_Exec(olecmd, &CGID_ShellDocView, 103, 0, NULL, NULL);
-        IOleCommandTarget_Exec(olecmd, &CGID_MSHTML, IDM_PARSECOMPLETE, 0, NULL, NULL);
-        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_HTTPEQUIV_DONE, 0, NULL, NULL);
-
-        IOleCommandTarget_Release(olecmd);
-    }
-
-    set_ready_state(doc->basedoc.window, READYSTATE_COMPLETE);
-
-    if(doc->frame) {
-        static const WCHAR wszDone[] = {'D','o','n','e',0};
-        IOleInPlaceFrame_SetStatusText(doc->frame, wszDone);
-    }
-
-    update_title(doc);
 }
 
 static void call_timer_disp(IDispatch *disp)

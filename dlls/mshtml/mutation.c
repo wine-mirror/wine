@@ -27,6 +27,7 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "ole2.h"
+#include "shlguid.h"
 
 #include "mshtml_private.h"
 #include "htmlevent.h"
@@ -353,10 +354,43 @@ static nsresult init_frame_window(HTMLDocumentNode *doc, nsISupports *nsunk)
     return nsres;
 }
 
-static void parse_complete_proc(task_t *_task)
+/* Calls undocumented 69 cmd of CGID_Explorer */
+static void call_explorer_69(HTMLDocumentObj *doc)
 {
-    docobj_task_t *task = (docobj_task_t*)_task;
-    parse_complete(task->doc);
+    IOleCommandTarget *olecmd;
+    VARIANT var;
+    HRESULT hres;
+
+    if(!doc->client)
+        return;
+
+    hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
+    if(FAILED(hres))
+        return;
+
+    VariantInit(&var);
+    hres = IOleCommandTarget_Exec(olecmd, &CGID_Explorer, 69, 0, NULL, &var);
+    IOleCommandTarget_Release(olecmd);
+    if(SUCCEEDED(hres) && V_VT(&var) != VT_NULL)
+        FIXME("handle result\n");
+}
+
+static void parse_complete_proc(task_t *task)
+{
+    HTMLDocumentObj *doc = ((docobj_task_t*)task)->doc;
+
+    TRACE("(%p)\n", doc);
+
+    if(doc->usermode == EDITMODE)
+        init_editor(&doc->basedoc);
+
+    call_explorer_69(doc);
+    call_property_onchanged(&doc->basedoc.cp_propnotif, 1005);
+    call_explorer_69(doc);
+
+    /* FIXME: IE7 calls EnableModelless(TRUE), EnableModelless(FALSE) and sets interactive state here */
+
+    set_ready_state(doc->basedoc.window, READYSTATE_INTERACTIVE);
 }
 
 static void handle_end_load(HTMLDocumentNode *This)
