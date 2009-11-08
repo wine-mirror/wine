@@ -191,7 +191,7 @@ static void DdeExecuteCommand(DWORD instance, HCONV hConv, const char *strCmd, H
 /*
  * Check if Window is onscreen with the appropriate name.
  *
- * Windows are not created syncronously.  So we do not know
+ * Windows are not created synchronously.  So we do not know
  * when and if the window will be created/shown on screen.
  * This function implements a polling mechanism to determine
  * creation.

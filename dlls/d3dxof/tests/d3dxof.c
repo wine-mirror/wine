@@ -177,8 +177,8 @@ static void test_CreateEnumObject(void)
     hr = IDirectXFileData_GetData(lpdxfd, NULL, &size, (void**)&pdata);
     ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
 
-    ok(size == 8, "Retreived data size is wrong\n");
-    ok((*((WORD*)pdata) == 1) && (*((WORD*)(pdata+2)) == 2) && (*((DWORD*)(pdata+4)) == 3), "Retreived data is wrong\n");
+    ok(size == 8, "Retrieved data size is wrong\n");
+    ok((*((WORD*)pdata) == 1) && (*((WORD*)(pdata+2)) == 2) && (*((DWORD*)(pdata+4)) == 3), "Retrieved data is wrong\n");
 
     ref = IDirectXFileEnumObject_Release(lpdxfeo);
     ok(ref == 0, "Got refcount %d, expected 0\n", ref);

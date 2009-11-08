@@ -155,7 +155,7 @@ static void test_info(void)
     efi.dwFull = 0xdeadbeef;
     needed *= 2;
     ret = pGetEventLogInformation(handle, EVENTLOG_FULL_INFO, (LPVOID)&efi, needed, &needed);
-    ok(ret, "Expected succes\n");
+    ok(ret, "Expected success\n");
     ok(needed == sizeof(EVENTLOG_FULL_INFORMATION), "Expected sizeof(EVENTLOG_FULL_INFORMATION), got %d\n", needed);
     ok(efi.dwFull == 0 || efi.dwFull == 1, "Expected 0 (not full) or 1 (full), got %d\n", efi.dwFull);
 
@@ -190,7 +190,7 @@ static void test_count(void)
 
     count = 0xdeadbeef;
     ret = GetNumberOfEventLogRecords(handle, &count);
-    ok(ret, "Expected succes\n");
+    ok(ret, "Expected success\n");
     ok(count != 0xdeadbeef, "Expected the number of records\n");
 
     CloseEventLog(handle);
@@ -207,7 +207,7 @@ static void test_count(void)
     ret = GetNumberOfEventLogRecords(handle, &count);
     todo_wine
     {
-    ok(ret, "Expected succes\n");
+    ok(ret, "Expected success\n");
     ok(count != 0xdeadbeef, "Expected the number of records\n");
     }
 
@@ -243,7 +243,7 @@ static void test_oldest(void)
 
     oldest = 0xdeadbeef;
     ret = GetOldestEventLogRecord(handle, &oldest);
-    ok(ret, "Expected succes\n");
+    ok(ret, "Expected success\n");
     ok(oldest != 0xdeadbeef, "Expected the number of the oldest record\n");
 
     CloseEventLog(handle);
@@ -260,7 +260,7 @@ static void test_oldest(void)
     ret = GetOldestEventLogRecord(handle, &oldest);
     todo_wine
     {
-    ok(ret, "Expected succes\n");
+    ok(ret, "Expected success\n");
     ok(oldest != 0xdeadbeef, "Expected the number of the oldest record\n");
     }
 
@@ -293,7 +293,7 @@ static void test_backup(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     ret = BackupEventLogA(handle, backup);
-    ok(ret, "Expected succes\n");
+    ok(ret, "Expected success\n");
     todo_wine
     ok(GetFileAttributesA(backup) != INVALID_FILE_ATTRIBUTES, "Expected a backup file\n");
 
@@ -316,7 +316,7 @@ static void test_backup(void)
     ret = BackupEventLogA(handle, backup2);
     todo_wine
     {
-    ok(ret, "Expected succes\n");
+    ok(ret, "Expected success\n");
     ok(GetFileAttributesA(backup2) != INVALID_FILE_ATTRIBUTES, "Expected a backup file\n");
     }
 
@@ -463,7 +463,7 @@ static void test_read(void)
     read = needed = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadEventLogA(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ, 0, buf, toread, &read, &needed);
-    ok(ret, "Expected succes\n");
+    ok(ret, "Expected success\n");
     ok(read == toread ||
        broken(read < toread), /* NT4 wants a buffer size way bigger than just 1 record */
        "Expected the requested size to be read\n");

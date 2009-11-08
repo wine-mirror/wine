@@ -490,7 +490,7 @@ HANDLE WINAPI OpenEventLogW( LPCWSTR uncname, LPCWSTR source )
 /******************************************************************************
  * QueryAllTracesW [ADVAPI32.@]
  *
- * Query informations for started event trace sessions
+ * Query information for started event trace sessions
  *
  */
 ULONG WINAPI QueryAllTracesW( PEVENT_TRACE_PROPERTIES * parray, ULONG arraycount, PULONG psessioncount )
