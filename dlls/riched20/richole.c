@@ -388,9 +388,6 @@ IRichEditOle_fnInsertObject(IRichEditOle *me, REOBJECT *reo)
     TRACE("(%p,%p)\n", This, reo);
 
     if (reo->cbStruct < sizeof(*reo)) return STG_E_INVALIDPARAMETER;
-    if (reo->poleobj)   IOleObject_AddRef(reo->poleobj);
-    if (reo->pstg)      IStorage_AddRef(reo->pstg);
-    if (reo->polesite)  IOleClientSite_AddRef(reo->polesite);
 
     ME_InsertOLEFromCursor(This->editor, reo, 0);
     ME_CommitUndo(This->editor);
