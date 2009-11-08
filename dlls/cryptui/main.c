@@ -1070,8 +1070,7 @@ static void cert_mgr_do_export(HWND hwnd)
     }
 }
 
-static int CALLBACK cert_mgr_sort_by_text(HWND lv, int col, int index1,
- int index2)
+static int cert_mgr_sort_by_text(HWND lv, int col, int index1, int index2)
 {
     LVITEMW item;
     WCHAR buf1[MAX_STRING_LEN];
