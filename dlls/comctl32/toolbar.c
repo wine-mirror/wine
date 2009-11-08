@@ -3395,24 +3395,7 @@ TOOLBAR_GetButtonSize (const TOOLBAR_INFO *infoPtr)
 
 
 static LRESULT
-TOOLBAR_GetButtonTextA (const TOOLBAR_INFO *infoPtr, INT Id, LPSTR lpText)
-{
-    INT nIndex;
-    LPWSTR lpTextW;
-
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, Id, FALSE);
-    if (nIndex == -1)
-	return -1;
-
-    lpTextW = TOOLBAR_GetText(infoPtr,&infoPtr->buttons[nIndex]);
-
-    return WideCharToMultiByte( CP_ACP, 0, lpTextW, -1,
-                                lpText, lpText ? 0x7fffffff : 0, NULL, NULL ) - 1;
-}
-
-
-static LRESULT
-TOOLBAR_GetButtonTextW (const TOOLBAR_INFO *infoPtr, INT Id, LPWSTR lpStr)
+TOOLBAR_GetButtonText (const TOOLBAR_INFO *infoPtr, INT Id, LPWSTR lpStr, BOOL isW)
 {
     INT nIndex;
     LPWSTR lpText;
@@ -3424,14 +3407,17 @@ TOOLBAR_GetButtonTextW (const TOOLBAR_INFO *infoPtr, INT Id, LPWSTR lpStr)
 
     lpText = TOOLBAR_GetText(infoPtr,&infoPtr->buttons[nIndex]);
 
-    if (lpText)
+    if (isW)
     {
-        ret = strlenW (lpText);
-
-        if (lpStr)
-            strcpyW (lpStr, lpText);
+        if (lpText)
+        {
+            ret = strlenW (lpText);
+            if (lpStr) strcpyW (lpStr, lpText);
+        }
     }
-
+    else
+        ret = WideCharToMultiByte( CP_ACP, 0, lpText, -1,
+                                  (LPSTR)lpStr, lpStr ? 0x7fffffff : 0, NULL, NULL ) - 1;
     return ret;
 }
 
@@ -6495,10 +6481,9 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_GetButtonSize (infoPtr);
 
 	case TB_GETBUTTONTEXTA:
-	    return TOOLBAR_GetButtonTextA (infoPtr, wParam, (LPSTR)lParam);
-
 	case TB_GETBUTTONTEXTW:
-	    return TOOLBAR_GetButtonTextW (infoPtr, wParam, (LPWSTR)lParam);
+	    return TOOLBAR_GetButtonText (infoPtr, wParam, (LPWSTR)lParam,
+	                                  uMsg == TB_GETBUTTONTEXTW);
 
 	case TB_GETDISABLEDIMAGELIST:
 	    return TOOLBAR_GetDisabledImageList (infoPtr, wParam);
