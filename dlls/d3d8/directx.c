@@ -450,16 +450,12 @@ static HRESULT WINAPI IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapte
 err:
     *ppReturnedDeviceInterface = NULL;
 
-    if(!object) return hr;
     HeapFree(GetProcessHeap(), 0, object->decls);
-    if(object->WineD3DDevice) {
-        wined3d_mutex_lock();
-        IWineD3DDevice_Uninit3D(object->WineD3DDevice, D3D8CB_DestroySwapChain);
-        IWineD3DDevice_Release(object->WineD3DDevice);
-        wined3d_mutex_unlock();
-    }
+    wined3d_mutex_lock();
+    IWineD3DDevice_Uninit3D(object->WineD3DDevice, D3D8CB_DestroySwapChain);
+    IWineD3DDevice_Release(object->WineD3DDevice);
+    wined3d_mutex_unlock();
     HeapFree(GetProcessHeap(), 0, object);
-
     return hr;
 }
 
