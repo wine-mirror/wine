@@ -979,10 +979,42 @@ DWORD   MMSYSTDRV_Message(void* h, UINT msg, DWORD_PTR param1, DWORD_PTR param2)
         switch (thunk->kind)
         {
         case MMSYSTDRV_MIXER:   ret = mixerMessage  (h, msg, param1, param2); break;
-        case MMSYSTDRV_MIDIIN:  ret = midiInMessage (h, msg, param1, param2); break;
-        case MMSYSTDRV_MIDIOUT: ret = midiOutMessage(h, msg, param1, param2); break;
-        case MMSYSTDRV_WAVEIN:  ret = waveInMessage (h, msg, param1, param2); break;
-        case MMSYSTDRV_WAVEOUT: ret = waveOutMessage(h, msg, param1, param2); break;
+        case MMSYSTDRV_MIDIIN:
+            switch (msg)
+            {
+            case MIDM_ADDBUFFER: ret = midiInAddBuffer(h, (LPMIDIHDR)param1, param2); break;
+            case MIDM_PREPARE:   ret = midiInPrepareHeader(h, (LPMIDIHDR)param1, param2); break;
+            case MIDM_UNPREPARE: ret = midiInUnprepareHeader(h, (LPMIDIHDR)param1, param2); break;
+            default:             ret = midiInMessage(h, msg, param1, param2); break;
+            }
+            break;
+        case MMSYSTDRV_MIDIOUT:
+            switch (msg)
+            {
+            case MODM_PREPARE:   ret = midiOutPrepareHeader(h, (LPMIDIHDR)param1, param2); break;
+            case MODM_UNPREPARE: ret = midiOutUnprepareHeader(h, (LPMIDIHDR)param1, param2); break;
+            case MODM_LONGDATA:  ret = midiOutLongMsg(h, (LPMIDIHDR)param1, param2); break;
+            default:             ret = midiOutMessage(h, msg, param1, param2); break;
+            }
+            break;
+        case MMSYSTDRV_WAVEIN:
+            switch (msg)
+            {
+            case WIDM_ADDBUFFER: ret = waveInAddBuffer(h, (LPWAVEHDR)param1, param2); break;
+            case WIDM_PREPARE:   ret = waveInPrepareHeader(h, (LPWAVEHDR)param1, param2); break;
+            case WIDM_UNPREPARE: ret = waveInUnprepareHeader(h, (LPWAVEHDR)param1, param2); break;
+            default:             ret = waveInMessage(h, msg, param1, param2); break;
+            }
+            break;
+        case MMSYSTDRV_WAVEOUT:
+            switch (msg)
+            {
+            case WODM_PREPARE:   ret = waveOutPrepareHeader(h, (LPWAVEHDR)param1, param2); break;
+            case WODM_UNPREPARE: ret = waveOutUnprepareHeader(h, (LPWAVEHDR)param1, param2); break;
+            case WODM_WRITE:     ret = waveOutWrite(h, (LPWAVEHDR)param1, param2); break;
+            default:             ret = waveOutMessage(h, msg, param1, param2); break;
+            }
+            break;
         default: ret = MMSYSERR_INVALHANDLE; break; /* should never be reached */
         }
         if (map == MMSYSTEM_MAP_OKMEM)
