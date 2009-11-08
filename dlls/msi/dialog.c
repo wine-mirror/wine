@@ -2614,14 +2614,43 @@ static void msi_dialog_vcl_add_columns( msi_dialog *dialog, msi_control *control
     }
 }
 
+static LONGLONG msi_vcl_get_cost( msi_dialog *dialog )
+{
+    MSIFEATURE *feature;
+    INT each_cost;
+    LONGLONG total_cost = 0;
+
+    LIST_FOR_EACH_ENTRY( feature, &dialog->package->features, MSIFEATURE, entry )
+    {
+        if (ERROR_SUCCESS == (MSI_GetFeatureCost(dialog->package, feature,
+                MSICOSTTREE_SELFONLY, INSTALLSTATE_LOCAL, &each_cost)))
+        {
+            /* each_cost is in 512-byte units */
+            total_cost += each_cost * 512;
+        }
+        if (ERROR_SUCCESS == (MSI_GetFeatureCost(dialog->package, feature,
+                MSICOSTTREE_SELFONLY, INSTALLSTATE_ABSENT, &each_cost)))
+        {
+            /* each_cost is in 512-byte units */
+            total_cost -= each_cost * 512;
+        }
+    }
+    return total_cost;
+}
+
 static void msi_dialog_vcl_add_drives( msi_dialog *dialog, msi_control *control )
 {
     ULARGE_INTEGER total, free;
+    LONGLONG difference, cost;
     WCHAR size_text[MAX_PATH];
+    WCHAR cost_text[MAX_PATH];
     LPWSTR drives, ptr;
     LVITEMW lvitem;
     DWORD size;
     int i = 0;
+
+    cost = msi_vcl_get_cost(dialog);
+    StrFormatByteSizeW(cost, cost_text, MAX_PATH);
 
     size = GetLogicalDriveStringsW( 0, NULL );
     if ( !size ) return;
@@ -2642,6 +2671,7 @@ static void msi_dialog_vcl_add_drives( msi_dialog *dialog, msi_control *control 
         SendMessageW( control->hwnd, LVM_INSERTITEMW, 0, (LPARAM)&lvitem );
 
         GetDiskFreeSpaceExW(ptr, &free, &total, NULL);
+        difference = free.QuadPart - cost;
 
         StrFormatByteSizeW(total.QuadPart, size_text, MAX_PATH);
         lvitem.iSubItem = 1;
@@ -2651,6 +2681,17 @@ static void msi_dialog_vcl_add_drives( msi_dialog *dialog, msi_control *control 
 
         StrFormatByteSizeW(free.QuadPart, size_text, MAX_PATH);
         lvitem.iSubItem = 2;
+        lvitem.pszText = size_text;
+        lvitem.cchTextMax = lstrlenW(size_text) + 1;
+        SendMessageW( control->hwnd, LVM_SETITEMW, 0, (LPARAM)&lvitem );
+
+        lvitem.iSubItem = 3;
+        lvitem.pszText = cost_text;
+        lvitem.cchTextMax = lstrlenW(cost_text) + 1;
+        SendMessageW( control->hwnd, LVM_SETITEMW, 0, (LPARAM)&lvitem );
+
+        StrFormatByteSizeW(difference, size_text, MAX_PATH);
+        lvitem.iSubItem = 4;
         lvitem.pszText = size_text;
         lvitem.cchTextMax = lstrlenW(size_text) + 1;
         SendMessageW( control->hwnd, LVM_SETITEMW, 0, (LPARAM)&lvitem );
