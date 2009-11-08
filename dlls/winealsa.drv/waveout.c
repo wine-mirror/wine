@@ -110,6 +110,7 @@ static BOOL wodUpdatePlayedTotal(WINE_WAVEDEV* wwo, snd_pcm_status_t* ps)
     if (state != SND_PCM_STATE_RUNNING && state != SND_PCM_STATE_PREPARED)
     {
         WARN("Unexpected state (%d) while updating Total Played, resetting\n", state);
+        snd_pcm_recover(wwo->pcm, -EPIPE, 0);
         delay=0;
     }
 
