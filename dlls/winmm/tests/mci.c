@@ -405,8 +405,8 @@ static void test_asyncWAVE(HWND hwnd)
     ok(strcmp(buf,"2000"), "mci status position: %s\n", buf);
     trace("position after Sleep: %sms\n",buf);
     p2 = atoi(buf);
-    /* MS-Windows' 15.625ms timer may return after 93ms? */
-    ok(p2>=(WORD)(((WORD)(100/15.625))*15.625),"not enough time elapsed %ums\n",p2);
+    /* Some machines reach 79ms only during the 100ms sleep. */
+    ok(p2>=67,"not enough time elapsed %ums\n",p2);
     test_notification(hwnd,"play (nowait)",0);
 
     err = mciSendString("pause mysound wait", NULL, 0, hwnd);
