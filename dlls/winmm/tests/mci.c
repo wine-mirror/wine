@@ -420,7 +420,7 @@ static void test_asyncWAVE(HWND hwnd)
     ok(!err,"mci status position returned error: %d\n", err);
     trace("position while paused: %sms\n",buf);
     p1 = atoi(buf);
-    ok(p1>=p2,"position not increasing: %u > %u",p2,p1);
+    ok(p1>=p2, "position not increasing: %u > %u\n", p2, p1);
 
     err = mciSendString("stop mysound wait", NULL, 0, NULL);
     ok(!err,"mci stop returned error: %s\n", dbg_mcierr(err));
