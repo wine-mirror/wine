@@ -376,7 +376,7 @@ static HRESULT WINAPI scriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
         return E_FAIL;
     }
 
-    ok(0, "unexpected call\b");
+    ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
