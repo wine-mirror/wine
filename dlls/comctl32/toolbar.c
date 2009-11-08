@@ -4310,57 +4310,8 @@ TOOLBAR_SetBitmapSize (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-TOOLBAR_SetButtonInfoA (TOOLBAR_INFO *infoPtr, INT Id, const TBBUTTONINFOA *lptbbi)
-{
-    TBUTTON_INFO *btnPtr;
-    INT nIndex;
-    RECT oldBtnRect;
-
-    if (lptbbi == NULL)
-	return FALSE;
-    if (lptbbi->cbSize < sizeof(TBBUTTONINFOA))
-	return FALSE;
-
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, Id, lptbbi->dwMask & TBIF_BYINDEX);
-    if (nIndex == -1)
-	return FALSE;
-
-    btnPtr = &infoPtr->buttons[nIndex];
-    if (lptbbi->dwMask & TBIF_COMMAND)
-	btnPtr->idCommand = lptbbi->idCommand;
-    if (lptbbi->dwMask & TBIF_IMAGE)
-	btnPtr->iBitmap = lptbbi->iImage;
-    if (lptbbi->dwMask & TBIF_LPARAM)
-	btnPtr->dwData = lptbbi->lParam;
-    if (lptbbi->dwMask & TBIF_SIZE)
-	btnPtr->cx = lptbbi->cx;
-    if (lptbbi->dwMask & TBIF_STATE)
-	btnPtr->fsState = lptbbi->fsState;
-    if (lptbbi->dwMask & TBIF_STYLE)
-	btnPtr->fsStyle = lptbbi->fsStyle;
-
-    if ((lptbbi->dwMask & TBIF_TEXT) && ((INT_PTR)lptbbi->pszText != -1)) {
-        /* iString is index, zero it to make Str_SetPtr succeed */
-        if (!TOOLBAR_ButtonHasString(btnPtr)) btnPtr->iString = 0;
-
-        Str_SetPtrAtoW ((LPWSTR *)&btnPtr->iString, lptbbi->pszText);
-    }
-
-    /* save the button rect to see if we need to redraw the whole toolbar */
-    oldBtnRect = btnPtr->rect;
-    TOOLBAR_LayoutToolbar(infoPtr);
-
-    if (!EqualRect(&oldBtnRect, &btnPtr->rect))
-        InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
-    else
-        InvalidateRect(infoPtr->hwndSelf, &btnPtr->rect, TRUE);
-
-    return TRUE;
-}
-
-
-static LRESULT
-TOOLBAR_SetButtonInfoW (TOOLBAR_INFO *infoPtr, INT Id, const TBBUTTONINFOW *lptbbi)
+TOOLBAR_SetButtonInfo (TOOLBAR_INFO *infoPtr, INT Id,
+                       const TBBUTTONINFOW *lptbbi, BOOL isW)
 {
     TBUTTON_INFO *btnPtr;
     INT nIndex;
@@ -4393,7 +4344,10 @@ TOOLBAR_SetButtonInfoW (TOOLBAR_INFO *infoPtr, INT Id, const TBBUTTONINFOW *lptb
         /* iString is index, zero it to make Str_SetPtr succeed */
         if (!TOOLBAR_ButtonHasString(btnPtr)) btnPtr->iString = 0;
 
-        Str_SetPtrW ((LPWSTR *)&btnPtr->iString, lptbbi->pszText);
+        if (isW)
+            Str_SetPtrW ((LPWSTR *)&btnPtr->iString, lptbbi->pszText);
+        else
+            Str_SetPtrAtoW ((LPWSTR *)&btnPtr->iString, (LPSTR)lptbbi->pszText);
     }
 
     /* save the button rect to see if we need to redraw the whole toolbar */
@@ -6672,11 +6626,9 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_SetBitmapSize (infoPtr, wParam, lParam);
 
 	case TB_SETBUTTONINFOA:
-	    return TOOLBAR_SetButtonInfoA (infoPtr, wParam, (LPTBBUTTONINFOA)lParam);
-
 	case TB_SETBUTTONINFOW:
-	    return TOOLBAR_SetButtonInfoW (infoPtr, wParam, (LPTBBUTTONINFOW)lParam);
-
+	    return TOOLBAR_SetButtonInfo (infoPtr, wParam, (LPTBBUTTONINFOW)lParam,
+                                          uMsg == TB_SETBUTTONINFOW);
 	case TB_SETBUTTONSIZE:
 	    return TOOLBAR_SetButtonSize (infoPtr, lParam);
 
