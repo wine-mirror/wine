@@ -1705,6 +1705,7 @@ exception_test(function() {eval("if(")}, "SyntaxError", -2146827286);
 exception_test(function() {eval("'unterminated")}, "SyntaxError", -2146827273);
 exception_test(function() {eval("nonexistingfunc()")}, "TypeError", -2146823281);
 exception_test(function() {RegExp(/a/, "g");}, "RegExpError", -2146823271);
+exception_test(function() {encodeURI('\udcaa');}, "URIError", -2146823264);
 
 function testThisExcept(func, number) {
     exception_test(function() {func.call(new Object())}, "TypeError", number);

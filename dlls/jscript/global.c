@@ -811,8 +811,7 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
             i = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, NULL, 0, NULL, NULL)*3;
             if(!i) {
                 SysFreeString(str);
-                FIXME("throw URIError\n");
-                return E_FAIL;
+                return throw_uri_error(ctx, ei, IDS_URI_INVALID_CHAR, NULL);
             }
 
             len += i;
