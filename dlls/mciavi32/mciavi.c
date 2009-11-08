@@ -250,29 +250,26 @@ static	DWORD	MCIAVI_mciOpen(UINT wDevID, DWORD dwFlags,
 	     * contains the hFile value ?
 	     */
 	    dwRet = MCIERR_UNRECOGNIZED_COMMAND;
-	} else if (strlenW(lpOpenParms->lpstrElementName) > 0) {
+	} else if (lpOpenParms->lpstrElementName && lpOpenParms->lpstrElementName[0]) {
 	    /* FIXME : what should be done id wma->hFile is already != 0, or the driver is playin' */
 	    TRACE("MCI_OPEN_ELEMENT %s!\n", debugstr_w(lpOpenParms->lpstrElementName));
 
-            if (lpOpenParms->lpstrElementName && (strlenW(lpOpenParms->lpstrElementName) > 0))
-            {
-                wma->lpFileName = HeapAlloc(GetProcessHeap(), 0, (strlenW(lpOpenParms->lpstrElementName) + 1) * sizeof(WCHAR));
-                strcpyW(wma->lpFileName, lpOpenParms->lpstrElementName);
+            wma->lpFileName = HeapAlloc(GetProcessHeap(), 0, (strlenW(lpOpenParms->lpstrElementName) + 1) * sizeof(WCHAR));
+            strcpyW(wma->lpFileName, lpOpenParms->lpstrElementName);
 
-		wma->hFile = mmioOpenW(lpOpenParms->lpstrElementName, NULL,
-				       MMIO_ALLOCBUF | MMIO_DENYWRITE | MMIO_READ);
+	    wma->hFile = mmioOpenW(lpOpenParms->lpstrElementName, NULL,
+				   MMIO_ALLOCBUF | MMIO_DENYWRITE | MMIO_READ);
 
-		if (wma->hFile == 0) {
-		    WARN("can't find file=%s!\n", debugstr_w(lpOpenParms->lpstrElementName));
-		    dwRet = MCIERR_FILE_NOT_FOUND;
-		} else {
-		    if (!MCIAVI_GetInfo(wma))
-			dwRet = MCIERR_INVALID_FILE;
-		    else if (!MCIAVI_OpenVideo(wma))
-			dwRet = MCIERR_CANNOT_LOAD_DRIVER;
-		    else if (!MCIAVI_CreateWindow(wma, dwFlags, lpOpenParms))
-			dwRet = MCIERR_CREATEWINDOW;
-		}
+	    if (wma->hFile == 0) {
+		WARN("can't find file=%s!\n", debugstr_w(lpOpenParms->lpstrElementName));
+		dwRet = MCIERR_FILE_NOT_FOUND;
+	    } else {
+		if (!MCIAVI_GetInfo(wma))
+		    dwRet = MCIERR_INVALID_FILE;
+		else if (!MCIAVI_OpenVideo(wma))
+		    dwRet = MCIERR_CANNOT_LOAD_DRIVER;
+		else if (!MCIAVI_CreateWindow(wma, dwFlags, lpOpenParms))
+		    dwRet = MCIERR_CREATEWINDOW;
 	    }
 	} else {
 	    FIXME("Don't record yet\n");
