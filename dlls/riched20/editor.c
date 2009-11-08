@@ -1149,8 +1149,8 @@ static BOOL ME_RTFInsertOleObject(RTF_Info *info, HENHMETAFILE hemf, HBITMAP hbm
     reobject.dwFlags = 0; /* FIXME */
     reobject.dwUser = 0;
 
-    /* FIXME: could be simpler */
-    ret = IRichEditOle_InsertObject(info->lpRichEditOle, &reobject) == S_OK;
+    ME_InsertOLEFromCursor(info->editor, &reobject, 0);
+    ret = TRUE;
   }
 
   if (lpObject)       IOleObject_Release(lpObject);
