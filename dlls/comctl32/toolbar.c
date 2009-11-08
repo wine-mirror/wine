@@ -6421,11 +6421,9 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_AddBitmap (infoPtr, (INT)wParam, (TBADDBITMAP*)lParam);
 
 	case TB_ADDBUTTONSA:
-	    return TOOLBAR_AddButtonsT(infoPtr, wParam, (LPTBBUTTON)lParam, FALSE);
-
 	case TB_ADDBUTTONSW:
-	    return TOOLBAR_AddButtonsT(infoPtr, wParam, (LPTBBUTTON)lParam, TRUE);
-
+	    return TOOLBAR_AddButtonsT (infoPtr, wParam, (LPTBBUTTON)lParam,
+	                                uMsg == TB_ADDBUTTONSW);
 	case TB_ADDSTRINGA:
 	    return TOOLBAR_AddStringA (infoPtr, (HINSTANCE)wParam, lParam);
 
@@ -6472,11 +6470,9 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_GetButton (infoPtr, wParam, (TBBUTTON*)lParam);
 
 	case TB_GETBUTTONINFOA:
-	    return TOOLBAR_GetButtonInfoT(infoPtr, wParam, (LPTBBUTTONINFOW)lParam, FALSE);
-
 	case TB_GETBUTTONINFOW:
-	    return TOOLBAR_GetButtonInfoT(infoPtr, wParam, (LPTBBUTTONINFOW)lParam, TRUE);
-
+	    return TOOLBAR_GetButtonInfoT (infoPtr, wParam, (LPTBBUTTONINFOW)lParam,
+	                                   uMsg == TB_GETBUTTONINFOW);
 	case TB_GETBUTTONSIZE:
 	    return TOOLBAR_GetButtonSize (infoPtr);
 
@@ -6554,10 +6550,9 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_Indeterminate (infoPtr, wParam, LOWORD(lParam));
 
 	case TB_INSERTBUTTONA:
-	    return TOOLBAR_InsertButtonT(infoPtr, wParam, (TBBUTTON*)lParam, FALSE);
-
 	case TB_INSERTBUTTONW:
-	    return TOOLBAR_InsertButtonT(infoPtr, wParam, (TBBUTTON*)lParam, TRUE);
+	    return TOOLBAR_InsertButtonT(infoPtr, wParam, (TBBUTTON*)lParam,
+	                                 uMsg == TB_INSERTBUTTONW);
 
 /*	case TB_INSERTMARKHITTEST:		*/ /* 4.71 */
 
