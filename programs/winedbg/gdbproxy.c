@@ -1776,10 +1776,7 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
         {
             char    buf[64];
 
-            if (gdbctx->wine_segs[0] == 0 && gdbctx->wine_segs[1] == 0 &&
-                gdbctx->wine_segs[2] == 0)
-                return packet_error;
-            snprintf(buf, sizeof(buf), 
+            snprintf(buf, sizeof(buf),
                      "Text=%08lx;Data=%08lx;Bss=%08lx",
                      gdbctx->wine_segs[0], gdbctx->wine_segs[1],
                      gdbctx->wine_segs[2]);
@@ -2284,6 +2281,8 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags)
     gdbctx->process = NULL;
     for (i = 0; i < NUM_XPOINT; i++)
         gdbctx->Xpoints[i].type = -1;
+    for (i = 0; i < sizeof(gdbctx->wine_segs) / sizeof(gdbctx->wine_segs[0]); i++)
+        gdbctx->wine_segs[i] = 0;
 
     /* wait for first trap */
     while (WaitForDebugEvent(&de, INFINITE))
