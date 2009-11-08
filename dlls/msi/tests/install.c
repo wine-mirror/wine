@@ -6874,9 +6874,20 @@ static void test_file_in_use_cab(void)
     delete_test_files();
 }
 
-INT CALLBACK handler_a(LPVOID context, UINT type, LPCSTR msg) { return IDOK; };
-INT CALLBACK handler_w(LPVOID context, UINT type, LPCWSTR msg) { return IDOK; };
-INT CALLBACK handler_record(LPVOID context, UINT type, MSIHANDLE record) { return IDOK; };
+static INT CALLBACK handler_a(LPVOID context, UINT type, LPCSTR msg)
+{
+    return IDOK;
+}
+
+static INT CALLBACK handler_w(LPVOID context, UINT type, LPCWSTR msg)
+{
+    return IDOK;
+}
+
+static INT CALLBACK handler_record(LPVOID context, UINT type, MSIHANDLE record)
+{
+    return IDOK;
+}
 
 static void test_MsiSetExternalUI(void)
 {
