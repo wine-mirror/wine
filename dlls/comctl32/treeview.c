@@ -5540,8 +5540,6 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return TREEVIEW_DeleteItem(infoPtr, (HTREEITEM)lParam);
 
     case TVM_EDITLABELA:
-	return (LRESULT)TREEVIEW_EditLabel(infoPtr, (HTREEITEM)lParam);
-
     case TVM_EDITLABELW:
 	return (LRESULT)TREEVIEW_EditLabel(infoPtr, (HTREEITEM)lParam);
 
@@ -5581,11 +5579,9 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 
     case TVM_GETITEMA:
-	return TREEVIEW_GetItemT(infoPtr, (LPTVITEMEXW)lParam, FALSE);
-
     case TVM_GETITEMW:
-	return TREEVIEW_GetItemT(infoPtr, (LPTVITEMEXW)lParam, TRUE);
-
+	return TREEVIEW_GetItemT(infoPtr, (LPTVITEMEXW)lParam,
+	                         uMsg == TVM_GETITEMW);
     case TVM_GETITEMHEIGHT:
 	return TREEVIEW_GetItemHeight(infoPtr);
 
@@ -5620,11 +5616,9 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return TREEVIEW_HitTest(infoPtr, (LPTVHITTESTINFO)lParam);
 
     case TVM_INSERTITEMA:
-	return TREEVIEW_InsertItemT(infoPtr, (LPTVINSERTSTRUCTW)lParam, FALSE);
-
     case TVM_INSERTITEMW:
-	return TREEVIEW_InsertItemT(infoPtr, (LPTVINSERTSTRUCTW)lParam, TRUE);
-
+	return TREEVIEW_InsertItemT(infoPtr, (LPTVINSERTSTRUCTW)lParam,
+	                            uMsg == TVM_INSERTITEMW);
     case TVM_SELECTITEM:
 	return TREEVIEW_SelectItem(infoPtr, (INT)wParam, (HTREEITEM)lParam);
 
@@ -5644,11 +5638,9 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return TREEVIEW_SetInsertMarkColor(infoPtr, (COLORREF)lParam);
 
     case TVM_SETITEMA:
-	return TREEVIEW_SetItemT(infoPtr, (LPTVITEMEXW)lParam, FALSE);
-
     case TVM_SETITEMW:
-        return TREEVIEW_SetItemT(infoPtr, (LPTVITEMEXW)lParam, TRUE);
-
+        return TREEVIEW_SetItemT(infoPtr, (LPTVITEMEXW)lParam,
+	                         uMsg == TVM_SETITEMW);
     case TVM_SETLINECOLOR:
 	return TREEVIEW_SetLineColor(infoPtr, (COLORREF)lParam);
 
