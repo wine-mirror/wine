@@ -1089,7 +1089,7 @@ static void testFindCert(void)
      * the issuer, not the subject
      */
     context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
-     CERT_FIND_SUBJECT_CERT, &certInfo.Subject, NULL);
+     CERT_FIND_SUBJECT_CERT, &certInfo, NULL);
     ok(context == NULL, "Expected no certificate\n");
     certInfo.Subject.pbData = NULL;
     certInfo.Subject.cbData = 0;
@@ -1102,7 +1102,7 @@ static void testFindCert(void)
     if (context)
     {
         context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
-         CERT_FIND_SUBJECT_CERT, &certInfo.Subject, context);
+         CERT_FIND_SUBJECT_CERT, &certInfo, context);
         ok(context == NULL, "Expected one cert only\n");
     }
     /* A non-matching serial number will not match. */
