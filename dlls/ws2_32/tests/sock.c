@@ -987,7 +987,7 @@ static void test_set_getsockopt(void)
     ok( !err, "get/setsockopt(SO_RCVTIMEO) failed error: %d\n", WSAGetLastError());
     ok( timeout == SOCKTIMEOUT1, "getsockopt(SO_RCVTIMEO) returned wrong value %d\n", timeout);
     /* SO_SNDTIMEO */
-    timeout = SOCKTIMEOUT2; /* 54 seconds. See remark above */ 
+    timeout = SOCKTIMEOUT2; /* 997 seconds. See remark above */
     size = sizeof(timeout);
     err = setsockopt(s, SOL_SOCKET, SO_SNDTIMEO, (char *) &timeout, size); 
     if( !err)
