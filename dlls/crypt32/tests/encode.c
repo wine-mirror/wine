@@ -1541,6 +1541,12 @@ static void test_decodeAltName(DWORD dwEncoding)
      0x00, 0x00, 0x01 };
     static const BYTE bogusType[] = { 0x30, 0x06, 0x89, 0x04, 0x7f, 0x00, 0x00,
      0x01 };
+    static const BYTE dns_embedded_null[] = { 0x30,0x10,0x82,0x0e,0x66,0x6f,
+     0x6f,0x2e,0x63,0x6f,0x6d,0x00,0x62,0x61,0x64,0x64,0x69,0x65 };
+    static const BYTE dns_embedded_bell[] = { 0x30,0x10,0x82,0x0e,0x66,0x6f,
+     0x6f,0x2e,0x63,0x6f,0x6d,0x07,0x62,0x61,0x64,0x64,0x69,0x65 };
+    static const BYTE url_embedded_null[] = { 0x30,0x10,0x86,0x0e,0x66,0x6f,
+     0x6f,0x2e,0x63,0x6f,0x6d,0x00,0x62,0x61,0x64,0x64,0x69,0x65 };
     BOOL ret;
     BYTE *buf = NULL;
     DWORD bufSize = 0;
@@ -1679,6 +1685,38 @@ static void test_decodeAltName(DWORD dwEncoding)
          "Unexpected directory name value\n");
         LocalFree(buf);
     }
+    ret = pCryptDecodeObjectEx(dwEncoding, X509_ALTERNATE_NAME,
+     dns_embedded_null, sizeof(dns_embedded_null), CRYPT_DECODE_ALLOC_FLAG,
+     NULL, &buf, &bufSize);
+    /* Fails on WinXP with CRYPT_E_ASN1_RULE.  I'm not too concerned about the
+     * particular failure, just that it doesn't decode.
+     */
+    todo_wine
+    ok(!ret, "expected failure\n");
+    /* An embedded bell character is allowed, however. */
+    ret = pCryptDecodeObjectEx(dwEncoding, X509_ALTERNATE_NAME,
+     dns_embedded_bell, sizeof(dns_embedded_bell), CRYPT_DECODE_ALLOC_FLAG,
+     NULL, &buf, &bufSize);
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        info = (CERT_ALT_NAME_INFO *)buf;
+
+        ok(info->cAltEntry == 1, "Expected 1 entries, got %d\n",
+         info->cAltEntry);
+        ok(info->rgAltEntry[0].dwAltNameChoice == CERT_ALT_NAME_DNS_NAME,
+         "Expected CERT_ALT_NAME_DNS_NAME, got %d\n",
+         info->rgAltEntry[0].dwAltNameChoice);
+        LocalFree(buf);
+    }
+    ret = pCryptDecodeObjectEx(dwEncoding, X509_ALTERNATE_NAME,
+     url_embedded_null, sizeof(dns_embedded_null), CRYPT_DECODE_ALLOC_FLAG,
+     NULL, &buf, &bufSize);
+    /* Again, fails on WinXP with CRYPT_E_ASN1_RULE.  I'm not too concerned
+     * about the particular failure, just that it doesn't decode.
+     */
+    todo_wine
+    ok(!ret, "expected failure\n");
 }
 
 struct UnicodeExpectedError
