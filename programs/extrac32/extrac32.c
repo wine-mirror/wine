@@ -21,11 +21,38 @@
 
 #include <windows.h>
 #include <shellapi.h>
+#include <setupapi.h>
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(extrac32);
+
+static UINT WINAPI ExtCabCallback(PVOID Context, UINT Notification, UINT_PTR Param1, UINT_PTR Param2)
+{
+    FILE_IN_CABINET_INFO_W *pInfo;
+    FILEPATHS_W *pFilePaths;
+
+    switch(Notification)
+    {
+        case SPFILENOTIFY_FILEINCABINET:
+            pInfo = (FILE_IN_CABINET_INFO_W*)Param1;
+            lstrcpyW(pInfo->FullTargetName, (LPCWSTR)Context);
+            lstrcatW(pInfo->FullTargetName, pInfo->NameInCabinet);
+            return FILEOP_DOIT;
+        case SPFILENOTIFY_FILEEXTRACTED:
+            pFilePaths = (FILEPATHS_W*)Param1;
+            WINE_TRACE("Extracted %s\n", wine_dbgstr_w(pFilePaths->Target));
+            return NO_ERROR;
+    }
+    return NO_ERROR;
+}
+
+static void extract(LPCWSTR cabfile, LPWSTR destdir)
+{
+    if (!SetupIterateCabinetW(cabfile, 0, ExtCabCallback, destdir))
+        WINE_ERR("Could not extract cab file %s\n", wine_dbgstr_w(cabfile));
+}
 
 int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int show)
 {
@@ -105,7 +132,7 @@ int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sho
             break;
         case 'E':
             /* Extract CAB archive */
-            WINE_FIXME("/E not implemented\n");
+            extract(cabfile, path);
             break;
         case 0:
         case 'D':
