@@ -2453,6 +2453,7 @@ static void test_ioctlsocket(void)
     int ret;
     static const LONG cmds[] = {FIONBIO, FIONREAD, SIOCATMARK};
     UINT i;
+    u_long arg = 0;
 
     sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(sock != INVALID_SOCKET, "Creating the socket failed: %d\n", WSAGetLastError());
@@ -2470,6 +2471,13 @@ static void test_ioctlsocket(void)
         ret = WSAGetLastError();
         ok(ret == WSAEFAULT, "expected WSAEFAULT, got %d instead\n", ret);
     }
+
+    /* A fresh and not connected socket has no urgent data, this test shows
+     * that normal(not urgent) data returns a non-zero value for SIOCATMARK. */
+
+    ret = ioctlsocket(sock, SIOCATMARK, &arg);
+    if(ret != SOCKET_ERROR)
+        todo_wine ok(arg, "expected a non-zero value\n");
 }
 
 static int drain_pause=0;
