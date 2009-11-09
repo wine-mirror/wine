@@ -413,7 +413,7 @@
 @ stdcall SetupGetFileQueueCount(long long ptr)
 @ stdcall SetupGetFileQueueFlags(long ptr)
 @ stub SetupGetInfFileListA
-@ stub SetupGetInfFileListW
+@ stdcall SetupGetInfFileListW(wstr long ptr long ptr)
 @ stdcall SetupGetInfInformationA(ptr long ptr long ptr)
 @ stdcall SetupGetInfInformationW(ptr long ptr long ptr)
 @ stub SetupGetInfSections

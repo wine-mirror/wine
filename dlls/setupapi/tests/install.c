@@ -52,6 +52,7 @@ static char CURR_DIR[MAX_PATH];
 
 static void (WINAPI *pInstallHinfSectionA)(HWND, HINSTANCE, LPCSTR, INT);
 static void (WINAPI *pInstallHinfSectionW)(HWND, HINSTANCE, LPCWSTR, INT);
+static BOOL (WINAPI *pSetupGetInfFileListW)(PCWSTR, DWORD, PWSTR, DWORD, PDWORD);
 
 /*
  * Helpers
@@ -466,6 +467,100 @@ cleanup:
     DeleteFile(inffile);
 }
 
+static void test_inffilelist(void)
+{
+    static const char inffile2[] = "test2.inf";
+    static const char invalid_inf[] = "invalid.inf";
+    static const char *inf =
+        "[Version]\n"
+        "Signature=\"$Chicago$\"";
+
+    WCHAR *ptr;
+    WCHAR dir[MAX_PATH] = { 0 };
+    WCHAR buffer[MAX_PATH] = { 0 };
+    DWORD expected, outsize;
+    BOOL ret;
+
+    if(!pSetupGetInfFileListW)
+    {
+        win_skip("SetupGetInfFileListW not present\n");
+        return;
+    }
+
+    /* NULL means %windir%\\inf
+     * get the value as reference
+     */
+    expected = 0;
+    ret = pSetupGetInfFileListW(NULL, INF_STYLE_WIN4, NULL, 0, &expected);
+    ok(ret, "expected SetupGetInfFileListW to succeed! Error: %d\n", GetLastError());
+    ok(expected > 0, "expected required buffersize to be at least 1\n");
+
+    /* check if an empty string doesn't behaves like NULL */
+    outsize = 0;
+    SetLastError(0xdeadbeef);
+    ret = pSetupGetInfFileListW(dir, INF_STYLE_WIN4, NULL, 0, &outsize);
+    todo_wine
+    ok(!ret, "expected SetupGetInfFileListW to fail!\n");
+
+    /* check a not existing directory
+     */
+    MultiByteToWideChar(CP_ACP, 0, CURR_DIR, -1, dir, MAX_PATH);
+    ptr = dir + lstrlenW(dir);
+    MultiByteToWideChar(CP_ACP, 0, "\\not_existent", -1, ptr, MAX_PATH - lstrlenW(dir));
+    outsize = 0xffffffff;
+    SetLastError(0xdeadbeef);
+    ret = pSetupGetInfFileListW(dir, INF_STYLE_WIN4, NULL, 0, &outsize);
+    ok(ret, "expected SetupGetInfFileListW to succeed!\n");
+    ok(outsize == 1, "expected required buffersize to be 1, got %d\n", outsize);
+    todo_wine
+    ok(ERROR_PATH_NOT_FOUND == GetLastError(),
+       "expected error ERROR_PATH_NOT_FOUND, got %d\n", GetLastError());
+    
+    create_inf_file(inffile, inf);
+    create_inf_file(inffile2, inf);
+    create_inf_file(invalid_inf, "This content does not match the inf file format");
+
+    /* pass a filename instead of a directory
+     */
+    *ptr = '\\';
+    MultiByteToWideChar(CP_ACP, 0, invalid_inf, -1, ptr+1, MAX_PATH - lstrlenW(dir));
+    outsize = 0xffffffff;
+    SetLastError(0xdeadbeef);
+    ret = pSetupGetInfFileListW(dir, INF_STYLE_WIN4, NULL, 0, &outsize);
+    todo_wine
+    ok(!ret, "expected SetupGetInfFileListW to fail!\n");
+    todo_wine
+    ok(ERROR_DIRECTORY == GetLastError(),
+       "expected error ERROR_DIRECTORY, got %d\n", GetLastError());
+
+    /* make the filename look like directory
+     */
+    dir[1 + lstrlenW(dir)] = 0;
+    dir[lstrlenW(dir)] = '\\';
+    SetLastError(0xdeadbeef);
+    ret = pSetupGetInfFileListW(dir, INF_STYLE_WIN4, NULL, 0, &outsize);
+    todo_wine
+    ok(!ret, "expected SetupGetInfFileListW to fail!\n");
+    todo_wine
+    ok(ERROR_DIRECTORY == GetLastError(),
+       "expected error ERROR_DIRECTORY, got %d\n", GetLastError());
+
+    /* now check the buffer content of a vaild call
+     */
+    *ptr = 0;
+    expected = 3 + strlen(inffile) + strlen(inffile2);
+    ret = pSetupGetInfFileListW(dir, INF_STYLE_WIN4, buffer, MAX_PATH, &outsize);
+    ok(ret, "expected SetupGetInfFileListW to succeed!\n");
+    todo_wine
+    ok(expected == outsize, "expected required buffersize to be %d, got %d\n",
+         expected, outsize);
+    
+
+    DeleteFile(inffile);
+    DeleteFile(inffile2);
+    DeleteFile(invalid_inf);
+}
+
 START_TEST(install)
 {
     HMODULE hsetupapi = GetModuleHandle("setupapi.dll");
@@ -483,6 +578,8 @@ START_TEST(install)
 
     pInstallHinfSectionA = (void *)GetProcAddress(hsetupapi, "InstallHinfSectionA");
     pInstallHinfSectionW = (void *)GetProcAddress(hsetupapi, "InstallHinfSectionW");
+    pSetupGetInfFileListW = (void *)GetProcAddress(hsetupapi, "SetupGetInfFileListW");
+
     if (pInstallHinfSectionA)
     {
         /* Check if pInstallHinfSectionA sets last error or is a stub (as on WinXP) */
@@ -518,6 +615,8 @@ START_TEST(install)
             ProfileItems needs to create a window on Windows XP. */
         test_profile_items();
     }
+
+    test_inffilelist();
 
     SetCurrentDirectory(prev_path);
 }

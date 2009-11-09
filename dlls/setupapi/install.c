@@ -1446,3 +1446,16 @@ BOOL WINAPI SetupInstallServicesFromInfSectionA( HINF Inf, PCSTR SectionName, DW
 
     return ret;
 }
+
+
+/***********************************************************************
+ *              SetupGetInfFileListW  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupGetInfFileListW(PCWSTR dir, DWORD style, PWSTR buffer,
+                                 DWORD insize, PDWORD outsize)
+{
+    FIXME("(%s %d %p %d %p) stub\n", debugstr_w(dir), style, buffer, insize, outsize);
+    if(buffer) buffer[0] = 0;
+    if(outsize) *outsize = 1;
+    return TRUE;
+}
