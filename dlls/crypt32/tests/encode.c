@@ -1264,6 +1264,9 @@ static BYTE bmpCommonNameValue[] = {
  0x61,0x00,0x6e,0x00,0x67,0x00,0x00 };
 static BYTE utf8CommonNameValue[] = {
  0x0c,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00 };
+static char embedded_null[] = "foo\0com";
+static BYTE ia5EmbeddedNull[] = {
+ 0x16,0x07,0x66,0x6f,0x6f,0x00,0x63,0x6f,0x6d };
 
 static struct EncodedNameValue nameValues[] = {
  { { CERT_RDN_OCTET_STRING, { sizeof(commonName), (BYTE *)commonName } },
@@ -1299,6 +1302,12 @@ static struct EncodedNameValue nameValues[] = {
  { { CERT_RDN_NUMERIC_STRING, { sizeof(bogusNumeric), (BYTE *)bogusNumeric } },
      bin44, sizeof(bin44) },
 };
+/* This is kept separate, because the decoding doesn't return to the original
+ * value.
+ */
+static struct EncodedNameValue embeddedNullNameValue = {
+ { CERT_RDN_IA5_STRING, { sizeof(embedded_null) - 1, (BYTE *)embedded_null } },
+   ia5EmbeddedNull, sizeof(ia5EmbeddedNull) };
 
 static void test_encodeNameValue(DWORD dwEncoding)
 {
@@ -1337,6 +1346,19 @@ static void test_encodeNameValue(DWORD dwEncoding)
             LocalFree(buf);
         }
     }
+    ret = pCryptEncodeObjectEx(dwEncoding, X509_NAME_VALUE,
+     &embeddedNullNameValue.value, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    ok(ret || broken(GetLastError() == OSS_PDU_MISMATCH) /* NT4/Win9x */,
+     "Type %d: CryptEncodeObjectEx failed: %08x\n",
+     embeddedNullNameValue.value.dwValueType, GetLastError());
+    if (ret)
+    {
+        ok(size == embeddedNullNameValue.encodedSize,
+         "Expected size %d, got %d\n", embeddedNullNameValue.encodedSize, size);
+        ok(!memcmp(buf, embeddedNullNameValue.encoded, size),
+         "Got unexpected encoding\n");
+        LocalFree(buf);
+    }
 }
 
 static void test_decodeNameValue(DWORD dwEncoding)
@@ -1360,6 +1382,21 @@ static void test_decodeNameValue(DWORD dwEncoding)
              (const CERT_NAME_VALUE *)buf);
             LocalFree(buf);
         }
+    }
+    ret = pCryptDecodeObjectEx(dwEncoding, X509_NAME_VALUE,
+     embeddedNullNameValue.encoded, embeddedNullNameValue.encodedSize,
+     CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_SHARE_OID_STRING_FLAG, NULL,
+     &buf, &bufSize);
+    ok(ret, "Value type %d: CryptDecodeObjectEx failed: %08x\n",
+     embeddedNullNameValue.value.dwValueType, GetLastError());
+    if (ret)
+    {
+        CERT_NAME_VALUE value = { CERT_RDN_ENCODED_BLOB,
+         { sizeof(ia5EmbeddedNull), ia5EmbeddedNull } };
+
+        todo_wine
+        compareNameValues(&value, (const CERT_NAME_VALUE *)buf);
+        LocalFree(buf);
     }
 }
 
