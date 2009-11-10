@@ -79,6 +79,7 @@ typedef LPSTR (WINAPI *fnGetTrusteeNameA)( PTRUSTEEA pTrustee );
 typedef BOOL (WINAPI *fnMakeSelfRelativeSD)( PSECURITY_DESCRIPTOR, PSECURITY_DESCRIPTOR, LPDWORD );
 typedef BOOL (WINAPI *fnConvertSidToStringSidA)( PSID pSid, LPSTR *str );
 typedef BOOL (WINAPI *fnConvertStringSidToSidA)( LPCSTR str, PSID pSid );
+static BOOL (WINAPI *pCheckTokenMembership)(HANDLE, PSID, PBOOL);
 static BOOL (WINAPI *pConvertStringSecurityDescriptorToSecurityDescriptorA)(LPCSTR, DWORD,
                                                                             PSECURITY_DESCRIPTOR*, PULONG );
 static BOOL (WINAPI *pConvertStringSecurityDescriptorToSecurityDescriptorW)(LPCWSTR, DWORD,
@@ -153,6 +154,7 @@ static void init(void)
     pAddAccessAllowedAceEx = (void *)GetProcAddress(hmod, "AddAccessAllowedAceEx");
     pAddAccessDeniedAceEx = (void *)GetProcAddress(hmod, "AddAccessDeniedAceEx");
     pAddAuditAccessAceEx = (void *)GetProcAddress(hmod, "AddAuditAccessAceEx");
+    pCheckTokenMembership = (void *)GetProcAddress(hmod, "CheckTokenMembership");
     pConvertStringSecurityDescriptorToSecurityDescriptorA =
         (void *)GetProcAddress(hmod, "ConvertStringSecurityDescriptorToSecurityDescriptorA" );
     pConvertStringSecurityDescriptorToSecurityDescriptorW =
@@ -3209,6 +3211,11 @@ static void test_CheckTokenMembership(void)
     BOOL ret;
     DWORD i;
 
+    if (!pCheckTokenMembership)
+    {
+        win_skip("CheckTokenMembership is not available\n");
+        return;
+    }
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
     ok(ret, "OpenProcessToken failed with error %d\n", GetLastError());
 
@@ -3235,7 +3242,7 @@ static void test_CheckTokenMembership(void)
         return;
     }
 
-    ret = CheckTokenMembership(token, token_groups->Groups[i].Sid, &is_member);
+    ret = pCheckTokenMembership(token, token_groups->Groups[i].Sid, &is_member);
     ok(ret, "CheckTokenMembership failed with error %d\n", GetLastError());
     ok(is_member, "CheckTokenMembership should have detected sid as member");
 
