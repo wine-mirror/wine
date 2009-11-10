@@ -118,7 +118,8 @@ static inline UUID *LookupObjType(UUID *ObjUuid)
 }
 
 static RpcServerInterface* RPCRT4_find_interface(UUID* object,
-                                                 const RPC_SYNTAX_IDENTIFIER* if_id,
+                                                 const RPC_SYNTAX_IDENTIFIER *if_id,
+                                                 const RPC_SYNTAX_IDENTIFIER *transfer_syntax,
                                                  BOOL check_object)
 {
   UUID* MgrType = NULL;
@@ -130,6 +131,7 @@ static RpcServerInterface* RPCRT4_find_interface(UUID* object,
   EnterCriticalSection(&server_cs);
   LIST_FOR_EACH_ENTRY(cif, &server_interfaces, RpcServerInterface, entry) {
     if (!memcmp(if_id, &cif->If->InterfaceId, sizeof(RPC_SYNTAX_IDENTIFIER)) &&
+        (!transfer_syntax || !memcmp(transfer_syntax, &cif->If->TransferSyntax, sizeof(RPC_SYNTAX_IDENTIFIER))) &&
         (check_object == FALSE || UuidEqual(MgrType, &cif->MgrTypeUuid, &status)) &&
         std_listen) {
       InterlockedIncrement(&cif->CurrentCalls);
@@ -159,16 +161,94 @@ static void RPCRT4_release_server_interface(RpcServerInterface *sif)
 static RPC_STATUS process_bind_packet(RpcConnection *conn, RpcPktBindHdr *hdr, RPC_MESSAGE *msg)
 {
   RPC_STATUS status;
-  RpcServerInterface* sif;
-  RpcPktHdr *response = NULL;
+  RpcPktHdr *response;
+  RpcContextElement *ctxt_elem;
+  unsigned int i;
 
-  /* FIXME: do more checks! */
+  for (i = 0, ctxt_elem = msg->Buffer;
+       i < hdr->num_elements;
+       i++, ctxt_elem = (RpcContextElement *)&ctxt_elem->transfer_syntaxes[ctxt_elem->num_syntaxes])
+  {
+      if (((char *)ctxt_elem - (char *)msg->Buffer) > msg->BufferLength ||
+          ((char *)&ctxt_elem->transfer_syntaxes[ctxt_elem->num_syntaxes] - (char *)msg->Buffer) > msg->BufferLength)
+      {
+          ERR("inconsistent data in packet - packet length %d, num elements %d\n",
+              msg->BufferLength, hdr->num_elements);
+          /* Report failure to client. */
+          response = RPCRT4_BuildBindNackHeader(NDR_LOCAL_DATA_REPRESENTATION,
+                                                RPC_VER_MAJOR, RPC_VER_MINOR,
+                                                REJECT_REASON_NOT_SPECIFIED);
+          goto send;
+      }
+  }
+
   if (hdr->max_tsize < RPC_MIN_PACKET_SIZE ||
       !UuidIsNil(&conn->ActiveInterface.SyntaxGUID, &status) ||
-      conn->server_binding) {
+      conn->server_binding)
+  {
     TRACE("packet size less than min size, or active interface syntax guid non-null\n");
-    sif = NULL;
-  } else {
+
+    /* Report failure to client. */
+    response = RPCRT4_BuildBindNackHeader(NDR_LOCAL_DATA_REPRESENTATION,
+                                          RPC_VER_MAJOR, RPC_VER_MINOR,
+                                          REJECT_REASON_NOT_SPECIFIED);
+  }
+  else
+  {
+    RpcResult *results = HeapAlloc(GetProcessHeap(), 0,
+                                   hdr->num_elements * sizeof(*results));
+    if (!results)
+    {
+        /* Report failure to client. */
+        response = RPCRT4_BuildBindNackHeader(NDR_LOCAL_DATA_REPRESENTATION,
+                                              RPC_VER_MAJOR, RPC_VER_MINOR,
+                                              REJECT_LOCAL_LIMIT_EXCEEDED);
+    }
+
+    for (i = 0, ctxt_elem = (RpcContextElement *)msg->Buffer;
+         i < hdr->num_elements;
+         i++, ctxt_elem = (RpcContextElement *)&ctxt_elem->transfer_syntaxes[ctxt_elem->num_syntaxes])
+    {
+        RpcServerInterface* sif = NULL;
+        unsigned int j;
+
+        for (j = 0; !sif && j < ctxt_elem->num_syntaxes; j++)
+            sif = RPCRT4_find_interface(NULL, &ctxt_elem->abstract_syntax,
+                                        &ctxt_elem->transfer_syntaxes[j], FALSE);
+
+        if (sif)
+        {
+            RPCRT4_release_server_interface(sif);
+            TRACE("accepting bind request on connection %p for %s\n", conn,
+                  debugstr_guid(&ctxt_elem->abstract_syntax.SyntaxGUID));
+            results[i].result = RESULT_ACCEPT;
+            results[i].reason = REASON_NONE;
+            results[i].transfer_syntax = ctxt_elem->transfer_syntaxes[j];
+
+            /* save the interface for later use */
+            /* FIXME: save linked list */
+            conn->ActiveInterface = ctxt_elem->abstract_syntax;
+        }
+        else if ((sif = RPCRT4_find_interface(NULL, &ctxt_elem->abstract_syntax,
+                                              NULL, FALSE)) != NULL)
+        {
+            RPCRT4_release_server_interface(sif);
+            TRACE("not accepting bind request on connection %p for %s - no transfer syntaxes supported\n",
+                  conn, debugstr_guid(&ctxt_elem->abstract_syntax.SyntaxGUID));
+            results[i].result = RESULT_PROVIDER_REJECTION;
+            results[i].reason = REASON_TRANSFER_SYNTAXES_NOT_SUPPORTED;
+            memset(&results[i].transfer_syntax, 0, sizeof(results[i].transfer_syntax));
+        }
+        else
+        {
+            TRACE("not accepting bind request on connection %p for %s - abstract syntax not supported\n",
+                  conn, debugstr_guid(&ctxt_elem->abstract_syntax.SyntaxGUID));
+            results[i].result = RESULT_PROVIDER_REJECTION;
+            results[i].reason = REASON_ABSTRACT_SYNTAX_NOT_SUPPORTED;
+            memset(&results[i].transfer_syntax, 0, sizeof(results[i].transfer_syntax));
+        }
+    }
+
     /* create temporary binding */
     if (RPCRT4_MakeBinding(&conn->server_binding, conn) == RPC_S_OK &&
         RpcServerAssoc_GetAssociation(rpcrt4_conn_get_name(conn),
@@ -176,35 +256,27 @@ static RPC_STATUS process_bind_packet(RpcConnection *conn, RpcPktBindHdr *hdr, R
                                       conn->NetworkOptions,
                                       hdr->assoc_gid,
                                       &conn->server_binding->Assoc) == RPC_S_OK)
-      sif = RPCRT4_find_interface(NULL, &hdr->abstract, FALSE);
+    {
+        response = RPCRT4_BuildBindAckHeader(NDR_LOCAL_DATA_REPRESENTATION,
+                                             RPC_MAX_PACKET_SIZE,
+                                             RPC_MAX_PACKET_SIZE,
+                                             conn->server_binding->Assoc->assoc_group_id,
+                                             conn->Endpoint, hdr->num_elements,
+                                             results);
+
+        conn->MaxTransmissionSize = hdr->max_tsize;
+    }
     else
-      sif = NULL;
-  }
-  if (sif == NULL) {
-    TRACE("rejecting bind request on connection %p\n", conn);
-    /* Report failure to client. */
-    response = RPCRT4_BuildBindNackHeader(NDR_LOCAL_DATA_REPRESENTATION,
-                                          RPC_VER_MAJOR, RPC_VER_MINOR);
-  } else {
-    TRACE("accepting bind request on connection %p for %s\n", conn,
-          debugstr_guid(&hdr->abstract.SyntaxGUID));
-
-    /* accept. */
-    response = RPCRT4_BuildBindAckHeader(NDR_LOCAL_DATA_REPRESENTATION,
-                                         RPC_MAX_PACKET_SIZE,
-                                         RPC_MAX_PACKET_SIZE,
-                                         conn->server_binding->Assoc->assoc_group_id,
-                                         conn->Endpoint,
-                                         RESULT_ACCEPT, REASON_NONE,
-                                         &sif->If->TransferSyntax);
-
-    /* save the interface for later use */
-    conn->ActiveInterface = hdr->abstract;
-    conn->MaxTransmissionSize = hdr->max_tsize;
-
-    RPCRT4_release_server_interface(sif);
+    {
+        /* Report failure to client. */
+        response = RPCRT4_BuildBindNackHeader(NDR_LOCAL_DATA_REPRESENTATION,
+                                              RPC_VER_MAJOR, RPC_VER_MINOR,
+                                              REJECT_LOCAL_LIMIT_EXCEEDED);
+    }
+    HeapFree(GetProcessHeap(), 0, results);
   }
 
+send:
   if (response)
     status = RPCRT4_Send(conn, response, NULL, 0);
   else
@@ -242,7 +314,7 @@ static RPC_STATUS process_request_packet(RpcConnection *conn, RpcPktRequestHdr *
     object_uuid = NULL;
   }
 
-  sif = RPCRT4_find_interface(object_uuid, &conn->ActiveInterface, TRUE);
+  sif = RPCRT4_find_interface(object_uuid, &conn->ActiveInterface, NULL, TRUE);
   if (!sif) {
     WARN("interface %s no longer registered, returning fault packet\n", debugstr_guid(&conn->ActiveInterface.SyntaxGUID));
     response = RPCRT4_BuildFaultHeader(NDR_LOCAL_DATA_REPRESENTATION,

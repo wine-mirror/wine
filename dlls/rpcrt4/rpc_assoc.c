@@ -263,9 +263,10 @@ static RPC_STATUS RpcAssoc_BindConnection(const RpcAssoc *assoc, RpcConnection *
         {
             unsigned short remaining = msg.BufferLength -
             ROUND_UP(FIELD_OFFSET(RpcAddressString, string[server_address->length]), 4);
-            RpcResults *results = (RpcResults*)((ULONG_PTR)server_address +
-                                                ROUND_UP(FIELD_OFFSET(RpcAddressString, string[server_address->length]), 4));
-            if ((results->num_results == 1) && (remaining >= sizeof(*results)))
+            RpcResultList *results = (RpcResultList*)((ULONG_PTR)server_address +
+                ROUND_UP(FIELD_OFFSET(RpcAddressString, string[server_address->length]), 4));
+            if ((results->num_results == 1) &&
+                (remaining >= FIELD_OFFSET(RpcResultList, results[results->num_results])))
             {
                 switch (results->results[0].result)
                 {

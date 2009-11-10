@@ -181,21 +181,24 @@ RpcPktHdr *RPCRT4_BuildBindHeader(ULONG DataRepresentation,
                                   const RPC_SYNTAX_IDENTIFIER *TransferId)
 {
   RpcPktHdr *header;
+  RpcContextElement *ctxt_elem;
 
-  header = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(header->bind));
+  header = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                     sizeof(header->bind) + FIELD_OFFSET(RpcContextElement, transfer_syntaxes[1]));
   if (header == NULL) {
     return NULL;
   }
+  ctxt_elem = (RpcContextElement *)(&header->bind + 1);
 
   RPCRT4_BuildCommonHeader(header, PKT_BIND, DataRepresentation);
-  header->common.frag_len = sizeof(header->bind);
+  header->common.frag_len = sizeof(header->bind) + FIELD_OFFSET(RpcContextElement, transfer_syntaxes[1]);
   header->bind.max_tsize = MaxTransmissionSize;
   header->bind.max_rsize = MaxReceiveSize;
   header->bind.assoc_gid = AssocGroupId;
   header->bind.num_elements = 1;
-  header->bind.num_syntaxes = 1;
-  header->bind.abstract = *AbstractId;
-  header->bind.transfer = *TransferId;
+  ctxt_elem->num_syntaxes = 1;
+  ctxt_elem->abstract_syntax = *AbstractId;
+  ctxt_elem->transfer_syntaxes[0] = *TransferId;
 
   return header;
 }
@@ -218,7 +221,8 @@ static RpcPktHdr *RPCRT4_BuildAuthHeader(ULONG DataRepresentation)
 
 RpcPktHdr *RPCRT4_BuildBindNackHeader(ULONG DataRepresentation,
                                       unsigned char RpcVersion,
-                                      unsigned char RpcVersionMinor)
+                                      unsigned char RpcVersionMinor,
+                                      unsigned short RejectReason)
 {
   RpcPktHdr *header;
 
@@ -229,7 +233,7 @@ RpcPktHdr *RPCRT4_BuildBindNackHeader(ULONG DataRepresentation,
 
   RPCRT4_BuildCommonHeader(header, PKT_BIND_NACK, DataRepresentation);
   header->common.frag_len = sizeof(header->bind_nack);
-  header->bind_nack.reject_reason = REJECT_REASON_NOT_SPECIFIED;
+  header->bind_nack.reject_reason = RejectReason;
   header->bind_nack.protocols_count = 1;
   header->bind_nack.protocols[0].rpc_ver = RpcVersion;
   header->bind_nack.protocols[0].rpc_ver_minor = RpcVersionMinor;
@@ -242,20 +246,17 @@ RpcPktHdr *RPCRT4_BuildBindAckHeader(ULONG DataRepresentation,
                                      unsigned short MaxReceiveSize,
                                      ULONG AssocGroupId,
                                      LPCSTR ServerAddress,
-                                     unsigned short Result,
-                                     unsigned short Reason,
-                                     const RPC_SYNTAX_IDENTIFIER *TransferId)
+                                     unsigned char ResultCount,
+                                     const RpcResult *Results)
 {
   RpcPktHdr *header;
   ULONG header_size;
   RpcAddressString *server_address;
-  RpcResults *results;
-  RPC_SYNTAX_IDENTIFIER *transfer_id;
+  RpcResultList *results;
 
   header_size = sizeof(header->bind_ack) +
                 ROUND_UP(FIELD_OFFSET(RpcAddressString, string[strlen(ServerAddress) + 1]), 4) +
-                sizeof(RpcResults) +
-                sizeof(RPC_SYNTAX_IDENTIFIER);
+                FIELD_OFFSET(RpcResultList, results[ResultCount]);
 
   header = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, header_size);
   if (header == NULL) {
@@ -271,12 +272,9 @@ RpcPktHdr *RPCRT4_BuildBindAckHeader(ULONG DataRepresentation,
   server_address->length = strlen(ServerAddress) + 1;
   strcpy(server_address->string, ServerAddress);
   /* results is 4-byte aligned */
-  results = (RpcResults*)((ULONG_PTR)server_address + ROUND_UP(FIELD_OFFSET(RpcAddressString, string[server_address->length]), 4));
-  results->num_results = 1;
-  results->results[0].result = Result;
-  results->results[0].reason = Reason;
-  transfer_id = (RPC_SYNTAX_IDENTIFIER*)(results + 1);
-  *transfer_id = *TransferId;
+  results = (RpcResultList*)((ULONG_PTR)server_address + ROUND_UP(FIELD_OFFSET(RpcAddressString, string[server_address->length]), 4));
+  results->num_results = ResultCount;
+  memcpy(&results->results[0], Results, ResultCount * sizeof(*Results));
 
   return header;
 }
