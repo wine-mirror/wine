@@ -666,6 +666,9 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 #define ERROR_EVENTLOG_CANT_START                          1501
 #define ERROR_LOG_FILE_FULL                                1502
 #define ERROR_EVENTLOG_FILE_CHANGED                        1503
+#define ERROR_INVALID_TASK_NAME                            1550
+#define ERROR_INVALID_TASK_INDEX                           1551
+#define ERROR_THREAD_ALREADY_IN_TASK                       1552
 #define ERROR_INSTALL_SERVICE_FAILURE                      1601
 #define ERROR_INSTALL_USEREXIT                             1602
 #define ERROR_INSTALL_FAILURE                              1603
