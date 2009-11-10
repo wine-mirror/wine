@@ -2060,7 +2060,8 @@ static void test_rsa_round_trip(void)
     dataLen = strlen(test_string) + 1;
     result = CryptEncrypt(keyExchangeKey, 0, TRUE, 0, data, &dataLen,
                           sizeof(data));
-    ok(result, "CryptEncrypt failed: %08x\n", GetLastError());
+    ok(result || broken(GetLastError() == NTE_BAD_KEY /* Win9x/2000 */),
+       "CryptEncrypt failed: %08x\n", GetLastError());
     /* export the key... */
     result = CryptExportKey(keyExchangeKey, 0, PRIVATEKEYBLOB, 0, NULL,
                             &keyLen);
@@ -2079,7 +2080,8 @@ static void test_rsa_round_trip(void)
      * key.
      */
     result = CryptDecrypt(keyExchangeKey, 0, TRUE, 0, data, &dataLen);
-    ok(result, "CryptDecrypt failed: %08x\n", GetLastError());
+    ok(result || broken(GetLastError() == NTE_BAD_KEY /* Win9x/2000 */),
+       "CryptDecrypt failed: %08x\n", GetLastError());
     if (result)
     {
         ok(dataLen == sizeof(test_string), "unexpected size %d\n", dataLen);
