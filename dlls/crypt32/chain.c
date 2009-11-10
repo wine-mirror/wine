@@ -657,6 +657,18 @@ static void CRYPT_FindMatchingNameEntry(const CERT_ALT_NAME_ENTRY *constraint,
     *trustErrorStatus |= match ? errorIfFound : errorIfNotFound;
 }
 
+static inline PCERT_EXTENSION get_subject_alt_name_ext(const CERT_INFO *cert)
+{
+    PCERT_EXTENSION ext;
+
+    ext = CertFindExtension(szOID_SUBJECT_ALT_NAME2,
+     cert->cExtension, cert->rgExtension);
+    if (!ext)
+        ext = CertFindExtension(szOID_SUBJECT_ALT_NAME,
+         cert->cExtension, cert->rgExtension);
+    return ext;
+}
+
 static void CRYPT_CheckNameConstraints(
  const CERT_NAME_CONSTRAINTS_INFO *nameConstraints, const CERT_INFO *cert,
  DWORD *trustErrorStatus)
@@ -664,13 +676,8 @@ static void CRYPT_CheckNameConstraints(
     /* If there aren't any existing constraints, don't bother checking */
     if (nameConstraints->cPermittedSubtree || nameConstraints->cExcludedSubtree)
     {
-        CERT_EXTENSION *ext;
+        CERT_EXTENSION *ext = get_subject_alt_name_ext(cert);
 
-        ext = CertFindExtension(szOID_SUBJECT_ALT_NAME2, cert->cExtension,
-         cert->rgExtension);
-        if (!ext)
-            ext = CertFindExtension(szOID_SUBJECT_ALT_NAME, cert->cExtension,
-             cert->rgExtension);
         if (ext)
         {
             CERT_ALT_NAME_INFO *subjectName;
@@ -2346,18 +2353,6 @@ static BOOL WINAPI verify_basic_constraints_policy(LPCSTR szPolicyOID,
     return TRUE;
 }
 
-static inline PCERT_EXTENSION get_subject_alt_name_ext(PCCERT_CONTEXT cert)
-{
-    PCERT_EXTENSION ext;
-
-    ext = CertFindExtension(szOID_SUBJECT_ALT_NAME2,
-     cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
-    if (!ext)
-        ext = CertFindExtension(szOID_SUBJECT_ALT_NAME,
-         cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
-    return ext;
-}
-
 static BOOL match_dns_to_subject_alt_name(PCERT_EXTENSION ext,
  LPCWSTR server_name)
 {
@@ -2545,7 +2540,7 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
                 BOOL matches;
 
                 cert = pChainContext->rgpChain[0]->rgpElement[0]->pCertContext;
-                altNameExt = get_subject_alt_name_ext(cert);
+                altNameExt = get_subject_alt_name_ext(cert->pCertInfo);
                 /* If the alternate name extension exists, the name it contains
                  * is bound to the certificate, so make sure the name matches
                  * it.  Otherwise, look for the server name in the subject
