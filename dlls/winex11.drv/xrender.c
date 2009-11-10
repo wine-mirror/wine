@@ -1956,9 +1956,6 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
         return FALSE;
     }
 
-    if ((blendfn.AlphaFormat & AC_SRC_ALPHA) && blendfn.SourceConstantAlpha != 0xff)
-        FIXME("Ignoring SourceConstantAlpha %d for AC_SRC_ALPHA\n", blendfn.SourceConstantAlpha);
-
     if(dib.dsBm.bmBitsPixel != 32) {
         FIXME("not a 32 bpp dibsection\n");
         return FALSE;
@@ -1979,11 +1976,35 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
 
     if (blendfn.AlphaFormat & AC_SRC_ALPHA)
     {
-        for(; y >= y2; y--)
+        if (blendfn.SourceConstantAlpha == 0xff)
         {
-            memcpy(dstbits, (char *)dib.dsBm.bmBits + y * dib.dsBm.bmWidthBytes + xSrc * 4,
-                   widthSrc * 4);
-            dstbits += (top_down ? -1 : 1) * widthSrc;
+            for (; y >= y2; y--)
+            {
+                memcpy(dstbits, (char *)dib.dsBm.bmBits + y * dib.dsBm.bmWidthBytes + xSrc * 4,
+                       widthSrc * 4);
+                dstbits += (top_down ? -1 : 1) * widthSrc;
+            }
+        }
+        else
+        {
+            /* SourceConstantAlpha combined with source alpha */
+            for (; y >= y2; y--)
+            {
+                int x;
+                DWORD *srcbits = (DWORD *)((char *)dib.dsBm.bmBits + y * dib.dsBm.bmWidthBytes) + xSrc;
+                for (x = 0; x < widthSrc; x++)
+                {
+                    DWORD argb = *srcbits++;
+                    BYTE *s = (BYTE *) &argb;
+                    s[0] = (s[0] * blendfn.SourceConstantAlpha) / 255;
+                    s[1] = (s[1] * blendfn.SourceConstantAlpha) / 255;
+                    s[2] = (s[2] * blendfn.SourceConstantAlpha) / 255;
+                    s[3] = (s[3] * blendfn.SourceConstantAlpha) / 255;
+                    *dstbits++ = argb;
+                }
+                if (top_down)  /* we traversed the row forward so we should go back by two rows */
+                    dstbits -= 2 * widthSrc;
+            }
         }
     }
     else
