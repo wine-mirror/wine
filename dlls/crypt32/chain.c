@@ -2363,11 +2363,10 @@ static BOOL match_dns_to_subject_alt_name(PCERT_EXTENSION ext,
     DWORD size;
 
     TRACE_(chain)("%s\n", debugstr_w(server_name));
-    /* FIXME: This can be spoofed by the embedded NULL vulnerability.  The
+    /* This could be spoofed by the embedded NULL vulnerability, since the
      * returned CERT_ALT_NAME_INFO doesn't have a way to indicate the
-     * encoded length of a name, so a certificate issued to
-     * winehq.org\0badsite.com will get treated as having been issued to
-     * winehq.org.
+     * encoded length of a name.  Fortunately CryptDecodeObjectEx fails if
+     * the encoded form of the name contains a NULL.
      */
     if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_ALTERNATE_NAME,
      ext->Value.pbData, ext->Value.cbData,
