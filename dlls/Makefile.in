@@ -72,6 +72,7 @@ IMPORT_LIBS = \
 	atl/libatl.$(IMPLIBEXT) \
 	avicap32/libavicap32.$(IMPLIBEXT) \
 	avifil32/libavifil32.$(IMPLIBEXT) \
+	avrt/libavrt.$(IMPLIBEXT) \
 	cabinet/libcabinet.$(IMPLIBEXT) \
 	capi2032/libcapi2032.$(IMPLIBEXT) \
 	cards/libcards.$(IMPLIBEXT) \
@@ -218,6 +219,7 @@ CROSS_IMPLIBS = \
 	atl/libatl.a \
 	avicap32/libavicap32.a \
 	avifil32/libavifil32.a \
+	avrt/libavrt.a \
 	cabinet/libcabinet.a \
 	capi2032/libcapi2032.a \
 	cards/libcards.a \
@@ -379,6 +381,9 @@ avicap32/libavicap32.def avicap32/libavicap32.a: avicap32/avicap32.spec $(WINEBU
 
 avifil32/libavifil32.def avifil32/libavifil32.a: avifil32/avifil32.spec $(WINEBUILD)
 	@cd avifil32 && $(MAKE) `basename $@`
+
+avrt/libavrt.def avrt/libavrt.a: avrt/avrt.spec $(WINEBUILD)
+	@cd avrt && $(MAKE) `basename $@`
 
 cabinet/libcabinet.def cabinet/libcabinet.a: cabinet/cabinet.spec $(WINEBUILD)
 	@cd cabinet && $(MAKE) `basename $@`

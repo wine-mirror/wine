@@ -13959,6 +13959,14 @@ dlls/avifile.dll16/Makefile: dlls/avifile.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/avifile.dll16/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/avrt/Makefile"
+test "x$enable_avrt" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	avrt"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/avrt/Makefile: dlls/avrt/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/avrt/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/bcrypt/Makefile"
 test "x$enable_bcrypt" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	bcrypt"
@@ -18796,6 +18804,7 @@ do
     "dlls/avicap32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/avicap32/Makefile" ;;
     "dlls/avifil32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/avifil32/Makefile" ;;
     "dlls/avifile.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/avifile.dll16/Makefile" ;;
+    "dlls/avrt/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/avrt/Makefile" ;;
     "dlls/bcrypt/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/bcrypt/Makefile" ;;
     "dlls/browseui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/browseui/Makefile" ;;
     "dlls/browseui/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/browseui/tests/Makefile" ;;

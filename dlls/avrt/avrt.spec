@@ -1,0 +1,14 @@
+@ stub AvQuerySystemResponsiveness
+@ stub AvRevertMmThreadCharacteristics
+@ stub AvRtCreateThreadOrderingGroup
+@ stub AvRtCreateThreadOrderingGroupExA
+@ stub AvRtCreateThreadOrderingGroupExW
+@ stub AvRtDeleteThreadOrderingGroup
+@ stub AvRtJoinThreadOrderingGroup
+@ stub AvRtLeaveThreadOrderingGroup
+@ stub AvRtWaitOnThreadOrderingGroup
+@ stub AvSetMmMaxThreadCharacteristicsA
+@ stub AvSetMmMaxThreadCharacteristicsW
+@ stub AvSetMmThreadCharacteristicsA
+@ stub AvSetMmThreadCharacteristicsW
+@ stub AvSetMmThreadPriority
