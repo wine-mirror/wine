@@ -416,8 +416,8 @@ static void test_asyncWAVE(HWND hwnd)
     err = mciSendString("status mysound mode notify", buf, sizeof(buf), hwnd);
     ok(!err,"mci status mode returned error: %d\n", err);
     if(!err) ok(!strcmp(buf,"paused"), "mci status mode: %s\n", buf);
-    todo_wine test_notification1(hwnd,"play",MCI_NOTIFY_SUPERSEDED);
-    todo_wine test_notification1(hwnd,"status",MCI_NOTIFY_SUCCESSFUL);
+    test_notification(hwnd,"play",MCI_NOTIFY_SUPERSEDED);
+    test_notification(hwnd,"status",MCI_NOTIFY_SUCCESSFUL);
 
     buf[0]=0;
     err = mciSendString("status mysound position", buf, sizeof(buf), hwnd);
@@ -430,13 +430,14 @@ static void test_asyncWAVE(HWND hwnd)
     ok(!err,"mci stop returned error: %s\n", dbg_mcierr(err));
 
     buf[0]=0;
-    err = mciSendString("info mysound file", buf, sizeof(buf), NULL);
+    err = mciSendString("info mysound file notify", buf, sizeof(buf), hwnd);
     ok(!err,"mci info file returned error: %d\n", err);
     if(!err) { /* fully qualified name */
         int len = strlen(buf);
         todo_wine ok(len>2 && buf[1]==':',"Expected full pathname from info file: %s\n", buf);
         ok(len>=12 && !strcmp(&buf[len-12],"tempfile.wav"), "info file returned: %s\n", buf);
     }
+    test_notification(hwnd,"info file",MCI_NOTIFY_SUCCESSFUL);
 
     buf[0]=0;
     err = mciSendString("status mysound mode", buf, sizeof(buf), hwnd);
@@ -473,8 +474,8 @@ static void test_asyncWAVE(HWND hwnd)
 
     err = mciSendString("pause mysound notify", NULL, 0, NULL); /* notify no callback */
     ok(!err,"mci pause notify returned error: %s\n", dbg_mcierr(err));
-    /* Supersede even though pause cannot not notify given no callback */
-    todo_wine test_notification1(hwnd,"pause aborted play #1 notification",MCI_NOTIFY_SUPERSEDED);
+    /* Supersede even though pause cannot notify given no callback */
+    test_notification(hwnd,"pause aborted play #1 notification",MCI_NOTIFY_SUPERSEDED);
     test_notification(hwnd,"impossible pause notification",0);
 
     /* Seek or even Stop used to hang Wine on MacOS. */
@@ -490,7 +491,7 @@ static void test_asyncWAVE(HWND hwnd)
     err = mciSendString("pause mysound wait", NULL, 0, NULL);
     ok(!err,"mci pause wait returned error: %d\n", err);
     /* Unlike sequencer and cdaudio, waveaudio's pause does not abort. */
-    todo_wine test_notification1(hwnd,"pause aborted play #2 notification",0);
+    test_notification(hwnd,"pause aborted play #2 notification",0);
 
     err = mciSendString("resume mysound wait", NULL, 0, NULL);
     ok(!err,"mci resume wait returned error: %d\n", err);
@@ -518,7 +519,7 @@ static void test_asyncWAVE(HWND hwnd)
 
     err = mciSendString("close mysound wait", NULL, 0, NULL);
     ok(!err,"mci close wait returned error: %d\n", err);
-    todo_wine test_notification1(hwnd,"play (aborted by close)",MCI_NOTIFY_ABORTED);
+    test_notification(hwnd,"play (aborted by close)",MCI_NOTIFY_ABORTED);
 }
 
 static void test_AutoOpenWAVE(HWND hwnd)

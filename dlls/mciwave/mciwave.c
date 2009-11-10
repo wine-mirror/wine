@@ -4,6 +4,7 @@
  * Copyright 	1994 Martin Ayotte
  *		1999,2000,2005 Eric Pouech
  *              2000 Francois Jacques
+ *		2009 Jörg Höhle
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -40,6 +41,7 @@ typedef struct {
     int				nUseCount;	/* Incremented for each shared open */
     HMMIO			hFile;  	/* mmio file handle open as Element */
     MCI_WAVE_OPEN_PARMSW 	openParms;
+    HANDLE			hCallback;	/* Callback handle for pending notification */
     WAVEFORMATEX		wfxRef;
     LPWAVEFORMATEX		lpWaveFormat;	/* Points to wfxRef until set by OPEN or RECORD */
     BOOL			fInput;		/* FALSE = Output, TRUE = Input */
@@ -196,6 +198,21 @@ static WINE_MCIWAVE *WAVE_mciGetOpenDev(MCIDEVICEID wDevID)
 	return 0;
     }
     return wmw;
+}
+
+/**************************************************************************
+ *				WAVE_mciNotify			[internal]
+ *
+ * Notifications in MCI work like a 1-element queue.
+ * Each new notification request supersedes the previous one.
+ * This affects Play and Record; other commands are immediate.
+ */
+static void WAVE_mciNotify(DWORD_PTR hWndCallBack, WINE_MCIWAVE* wmw, UINT wStatus)
+{
+    MCIDEVICEID wDevID = wmw->openParms.wDeviceID;
+    HANDLE old = InterlockedExchangePointer(&wmw->hCallback, NULL);
+    if (old) mciDriverNotify(old, wDevID, MCI_NOTIFY_SUPERSEDED);
+    mciDriverNotify(HWND_32(LOWORD(hWndCallBack)), wDevID, wStatus);
 }
 
 /**************************************************************************
@@ -509,6 +526,7 @@ static LRESULT WAVE_mciOpen(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_P
     memcpy(&wmw->openParms, lpOpenParms, sizeof(MCI_WAVE_OPEN_PARMSA));
     /* will be set by WAVE_mciOpenFile */
     wmw->openParms.lpstrElementName = NULL;
+    wmw->hCallback = NULL;
     WAVE_mciDefaultFmt(wmw);
 
     TRACE("wDevID=%04X (lpParams->wDeviceID=%08X)\n", wDevID, lpOpenParms->wDeviceID);
@@ -529,6 +547,9 @@ static LRESULT WAVE_mciOpen(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_P
 	wmw->dwPosition = 0;
 
 	wmw->dwStatus = MCI_MODE_STOP;
+
+	if (dwFlags & MCI_NOTIFY)
+	    WAVE_mciNotify(lpOpenParms->dwCallback, wmw, MCI_NOTIFY_SUCCESSFUL);
     } else {
 	wmw->nUseCount--;
 	if (wmw->hFile != 0)
@@ -595,6 +616,11 @@ static DWORD WAVE_mciStop(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS
 
     if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
+    if (wmw->dwStatus != MCI_MODE_STOP) {
+	HANDLE old = InterlockedExchangePointer(&wmw->hCallback, NULL);
+	if (old) mciDriverNotify(old, wDevID, MCI_NOTIFY_ABORTED);
+    }
+
     /* wait for playback thread (if any) to exit before processing further */
     switch (wmw->dwStatus) {
     case MCI_MODE_PAUSE:
@@ -614,10 +640,8 @@ static DWORD WAVE_mciStop(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS
     /* sanity resets */
     wmw->dwStatus = MCI_MODE_STOP;
 
-    if ((dwFlags & MCI_NOTIFY) && lpParms) {
-	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
-			wmw->openParms.wDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    }
+    if ((dwFlags & MCI_NOTIFY) && lpParms && MMSYSERR_NOERROR==dwRet)
+	WAVE_mciNotify(lpParms->dwCallback, wmw, MCI_NOTIFY_SUCCESSFUL);
 
     return dwRet;
 }
@@ -635,6 +659,7 @@ static DWORD WAVE_mciClose(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PARM
     if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
     if (wmw->dwStatus != MCI_MODE_STOP) {
+        /* mciStop handles MCI_NOTIFY_ABORTED */
 	dwRet = WAVE_mciStop(wDevID, MCI_WAIT, lpParms);
     }
 
@@ -654,9 +679,8 @@ static DWORD WAVE_mciClose(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PARM
     wmw->openParms.lpstrElementName = NULL;
 
     if ((dwFlags & MCI_NOTIFY) && lpParms) {
-	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
-			wmw->openParms.wDeviceID,
-			(dwRet == 0) ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
+	WAVE_mciNotify(lpParms->dwCallback, wmw,
+	    (dwRet == 0) ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
     }
 
     return 0;
@@ -712,6 +736,7 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
     DWORD		dwRet;
     LPWAVEHDR		waveHdr = NULL;
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
+    HANDLE		oldcb;
     int			whidx;
 
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
@@ -778,6 +803,11 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
     }
 
     TRACE("Playing from byte=%u to byte=%u\n", wmw->dwPosition, end);
+
+    oldcb = InterlockedExchangePointer(&wmw->hCallback,
+	(dwFlags & MCI_NOTIFY) ? HWND_32(LOWORD(lpParms->dwCallback)) : NULL);
+    if (oldcb) mciDriverNotify(oldcb, wDevID, MCI_NOTIFY_ABORTED);
+    oldcb = NULL;
 
     if (end <= wmw->dwPosition)
 	return MMSYSERR_NOERROR;
@@ -870,6 +900,9 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
     dwRet = 0;
 
 cleanUp:
+    if (dwFlags & MCI_NOTIFY)
+	oldcb = InterlockedExchangePointer(&wmw->hCallback, NULL);
+
     HeapFree(GetProcessHeap(), 0, waveHdr);
 
     if (wmw->hWave) {
@@ -880,11 +913,9 @@ cleanUp:
 
     wmw->dwStatus = MCI_MODE_STOP;
 
-    if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
-			wmw->openParms.wDeviceID,
-			dwRet ? MCI_NOTIFY_FAILURE : MCI_NOTIFY_SUCCESSFUL);
-    }
+    /* Let the potentically asynchronous commands support FAILURE notification. */
+    if (oldcb) mciDriverNotify(oldcb, wDevID,
+	dwRet ? MCI_NOTIFY_FAILURE : MCI_NOTIFY_SUCCESSFUL);
 
     return dwRet;
 }
@@ -959,6 +990,7 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt
     LONG		bufsize;
     LPWAVEHDR		waveHdr = NULL;
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
+    HANDLE		oldcb;
 
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 
@@ -1012,6 +1044,11 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt
     }
 
     TRACE("Recording from byte=%u to byte=%u\n", wmw->dwPosition, end);
+
+    oldcb = InterlockedExchangePointer(&wmw->hCallback,
+	(dwFlags & MCI_NOTIFY) ? HWND_32(LOWORD(lpParms->dwCallback)) : NULL);
+    if (oldcb) mciDriverNotify(oldcb, wDevID, MCI_NOTIFY_ABORTED);
+    oldcb = NULL;
 
     if (end <= wmw->dwPosition)
     {
@@ -1081,7 +1118,11 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt
     while (wmw->dwPosition < end && wmw->dwStatus != MCI_MODE_STOP && wmw->dwStatus != MCI_MODE_NOT_READY) {
 	WAVE_mciRecordWaitDone(wmw);
     }
-
+    /* Grab callback before another thread kicks in after we change dwStatus. */
+    if (dwFlags & MCI_NOTIFY) {
+	oldcb = InterlockedExchangePointer(&wmw->hCallback, NULL);
+	dwFlags &= ~MCI_NOTIFY;
+    }
     /* needed so that the callback above won't add again the buffers returned by the reset */
     wmw->dwStatus = MCI_MODE_STOP;
 
@@ -1093,6 +1134,9 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt
     dwRet = 0;
 
 cleanUp:
+    if (dwFlags & MCI_NOTIFY)
+	oldcb = InterlockedExchangePointer(&wmw->hCallback, NULL);
+
     HeapFree(GetProcessHeap(), 0, waveHdr);
 
     if (wmw->hWave) {
@@ -1103,11 +1147,8 @@ cleanUp:
 
     wmw->dwStatus = MCI_MODE_STOP;
 
-    if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
-			wmw->openParms.wDeviceID,
-			dwRet ? MCI_NOTIFY_FAILURE : MCI_NOTIFY_SUCCESSFUL);
-    }
+    if (oldcb) mciDriverNotify(oldcb, wDevID,
+	dwRet ? MCI_NOTIFY_FAILURE : MCI_NOTIFY_SUCCESSFUL);
 
     return dwRet;
 
@@ -1148,6 +1189,8 @@ static DWORD WAVE_mciPause(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PARM
     default:
 	dwRet = MCIERR_NONAPPLICABLE_FUNCTION;
     }
+    if (MMSYSERR_NOERROR==dwRet && (dwFlags & MCI_NOTIFY) && lpParms)
+	WAVE_mciNotify(lpParms->dwCallback, wmw, MCI_NOTIFY_SUCCESSFUL);
     return dwRet;
 }
 
@@ -1189,6 +1232,8 @@ static DWORD WAVE_mciResume(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PAR
     default:
 	dwRet = MCIERR_NONAPPLICABLE_FUNCTION;
     }
+    if (MMSYSERR_NOERROR==dwRet && (dwFlags & MCI_NOTIFY) && lpParms)
+	WAVE_mciNotify(lpParms->dwCallback, wmw, MCI_NOTIFY_SUCCESSFUL);
     return dwRet;
 }
 
@@ -1219,10 +1264,9 @@ static DWORD WAVE_mciSeek(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lp
 
     TRACE("Seeking to position=%u bytes\n", wmw->dwPosition);
 
-    if (dwFlags & MCI_NOTIFY) {
-	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
-			wmw->openParms.wDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    }
+    if (dwFlags & MCI_NOTIFY)
+	WAVE_mciNotify(lpParms->dwCallback, wmw, MCI_NOTIFY_SUCCESSFUL);
+
     return MMSYSERR_NOERROR;
 }
 
@@ -1327,6 +1371,8 @@ static DWORD WAVE_mciSet(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpPa
 	wmw->wfxRef.nSamplesPerSec = ((LPMCI_WAVE_SET_PARMS)lpParms)->nSamplesPerSec;
 	TRACE("MCI_WAVE_SET_SAMPLESPERSEC = %d\n", wmw->wfxRef.nSamplesPerSec);
     }
+    if (dwFlags & MCI_NOTIFY)
+	WAVE_mciNotify(lpParms->dwCallback, wmw, MCI_NOTIFY_SUCCESSFUL);
     return 0;
 }
 
@@ -1337,7 +1383,6 @@ static DWORD WAVE_mciSave(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_SAVE_PARMSW l
 {
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
     DWORD		ret = MCIERR_FILE_NOT_SAVED, tmpRet;
-    WPARAM           	wparam = MCI_NOTIFY_FAILURE;
 
     TRACE("%d, %08X, %p);\n", wDevID, dwFlags, lpParms);
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
@@ -1372,12 +1417,8 @@ static DWORD WAVE_mciSave(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_SAVE_PARMSW l
 	ret = MMSYSERR_NOERROR;
     }
 
-    if (dwFlags & MCI_NOTIFY) {
-	if (ret == MMSYSERR_NOERROR) wparam = MCI_NOTIFY_SUCCESSFUL;
-
-    	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
-			 wmw->openParms.wDeviceID, wparam);
-    }
+    if (MMSYSERR_NOERROR==ret && (dwFlags & MCI_NOTIFY))
+	WAVE_mciNotify(lpParms->dwCallback, wmw, MCI_NOTIFY_SUCCESSFUL);
 
     if (ret == MMSYSERR_NOERROR)
         ret = WAVE_mciOpenFile(wmw, lpParms->lpfilename);
@@ -1502,10 +1543,8 @@ static DWORD WAVE_mciStatus(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_STATUS_PARM
 	    return MCIERR_UNRECOGNIZED_COMMAND;
 	}
     }
-    if (dwFlags & MCI_NOTIFY) {
-	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
-			wmw->openParms.wDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    }
+    if ((dwFlags & MCI_NOTIFY) && HRESULT_CODE(ret)==0)
+	WAVE_mciNotify(lpParms->dwCallback, wmw, MCI_NOTIFY_SUCCESSFUL);
     return ret;
 }
 
@@ -1575,6 +1614,8 @@ static DWORD WAVE_mciGetDevCaps(MCIDEVICEID wDevID, DWORD dwFlags,
 	WARN("No GetDevCaps-Item !\n");
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
+    if ((dwFlags & MCI_NOTIFY) && HRESULT_CODE(ret)==0)
+	WAVE_mciNotify(lpParms->dwCallback, wmw, MCI_NOTIFY_SUCCESSFUL);
     return ret;
 }
 
@@ -1620,7 +1661,8 @@ static DWORD WAVE_mciInfo(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW l
     } else {
 	lpParms->lpstrReturn[0] = 0;
     }
-
+    if (MMSYSERR_NOERROR==ret && (dwFlags & MCI_NOTIFY))
+	WAVE_mciNotify(lpParms->dwCallback, wmw, MCI_NOTIFY_SUCCESSFUL);
     return ret;
 }
 
