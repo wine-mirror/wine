@@ -176,7 +176,7 @@ static int init_aes_environment(void)
     result = CryptAcquireContext(&hProv, szContainer, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT);
     if (!result && GetLastError() == NTE_PROV_TYPE_NOT_DEF)
     {
-        win_skip("RSA_ASE provider not supported\n");
+        win_skip("RSA_AES provider not supported\n");
         return 0;
     }
     ok(!result && GetLastError()==NTE_BAD_FLAGS, "%d, %08x\n", result, GetLastError());
@@ -2307,7 +2307,7 @@ static void test_null_provider(void)
     ok(result, "CryptAcquireContext failed: %08x\n", GetLastError());
     if (!result) return;
     result = CryptImportKey(prov, signBlob, sizeof(signBlob), 0, 0, &key);
-    ok(result, "CryptGenKey failed: %08x\n", GetLastError());
+    ok(result, "CryptImportKey failed: %08x\n", GetLastError());
     CryptDestroyKey(key);
     /* doesn't allow access to the key exchange key.. */
     result = CryptGetUserKey(prov, AT_KEYEXCHANGE, &key);
