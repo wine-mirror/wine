@@ -625,8 +625,10 @@ BOOL WINAPI
 CheckTokenMembership( HANDLE token, PSID sid_to_check,
                       PBOOL is_member )
 {
-    PTOKEN_GROUPS token_groups;
+    PTOKEN_GROUPS token_groups = NULL;
+    HANDLE thread_token = NULL;
     DWORD size, i;
+    BOOL ret;
 
     TRACE("(%p %s %p)\n", token, debugstr_sid(sid_to_check), is_member);
 
@@ -634,25 +636,36 @@ CheckTokenMembership( HANDLE token, PSID sid_to_check,
 
     if (!token)
     {
-        if (!OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, TRUE, &token))
-            return FALSE;
+        if (!OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, TRUE, &thread_token))
+        {
+            HANDLE process_token;
+            ret = OpenProcessToken(GetCurrentProcess(), TOKEN_DUPLICATE, &process_token);
+            if (!ret)
+                goto exit;
+            ret = DuplicateTokenEx(process_token, TOKEN_QUERY,
+                NULL, SecurityImpersonation, TokenImpersonation,
+                &thread_token);
+            CloseHandle(process_token);
+            if (!ret)
+                goto exit;
+        }
+        token = thread_token;
     }
 
-    if (!GetTokenInformation(token, TokenGroups, NULL, 0, &size))
-    {
-        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-            return FALSE;
-    }
+    ret = GetTokenInformation(token, TokenGroups, NULL, 0, &size);
+    if (!ret && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+        goto exit;
 
     token_groups = HeapAlloc(GetProcessHeap(), 0, size);
     if (!token_groups)
-        return FALSE;
-
-    if (!GetTokenInformation(token, TokenGroups, token_groups, size, &size))
     {
-        HeapFree(GetProcessHeap(), 0, token_groups);
-        return FALSE;
+        ret = FALSE;
+        goto exit;
     }
+
+    ret = GetTokenInformation(token, TokenGroups, token_groups, size, &size);
+    if (!ret)
+        goto exit;
 
     for (i = 0; i < token_groups->GroupCount; i++)
     {
@@ -668,9 +681,11 @@ CheckTokenMembership( HANDLE token, PSID sid_to_check,
         }
     }
 
+exit:
     HeapFree(GetProcessHeap(), 0, token_groups);
+    if (thread_token != NULL) CloseHandle(thread_token);
 
-    return TRUE;
+    return ret;
 }
 
 /******************************************************************************

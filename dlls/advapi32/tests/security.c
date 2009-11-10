@@ -3249,6 +3249,10 @@ static void test_CheckTokenMembership(void)
     ok(ret, "CheckTokenMembership failed with error %d\n", GetLastError());
     ok(is_member, "CheckTokenMembership should have detected sid as member\n");
 
+    ret = pCheckTokenMembership(NULL, token_groups->Groups[i].Sid, &is_member);
+    ok(ret, "CheckTokenMembership failed with error %d\n", GetLastError());
+    ok(is_member, "CheckTokenMembership should have detected sid as member\n");
+
     ret = pCheckTokenMembership(process_token, token_groups->Groups[i].Sid, &is_member);
 todo_wine {
     ok(!ret && GetLastError() == ERROR_NO_IMPERSONATION_TOKEN,
