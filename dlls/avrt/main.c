@@ -23,6 +23,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wine/debug.h"
 #include "avrt.h"
 
@@ -44,4 +45,48 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
 
     return TRUE;
+}
+
+HANDLE WINAPI AvSetMmThreadCharacteristicsA(LPCSTR TaskName, LPDWORD TaskIndex)
+{
+    HANDLE ret;
+    LPWSTR str = NULL;
+
+    if (TaskName)
+    {
+        DWORD len = (lstrlenA(TaskName)+1);
+        str = HeapAlloc(GetProcessHeap, 0, len*sizeof(WCHAR));
+        if (!str)
+        {
+            SetLastError(ERROR_OUTOFMEMORY);
+            return NULL;
+        }
+        MultiByteToWideChar(CP_ACP, 0, TaskName, len, str, len);
+    }
+    ret = AvSetMmThreadCharacteristicsW(str, TaskIndex);
+    HeapFree(GetProcessHeap(), 0, str);
+    return ret;
+}
+
+HANDLE WINAPI AvSetMmThreadCharacteristicsW(LPCWSTR TaskName, LPDWORD TaskIndex)
+{
+    FIXME("(%s,%p): stub\n", debugstr_w(TaskName), TaskIndex);
+
+    if (!TaskName)
+    {
+        SetLastError(ERROR_INVALID_TASK_NAME);
+        return NULL;
+    }
+    if (!TaskIndex)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return NULL;
+    }
+    return (HANDLE)0x12345678;
+}
+
+BOOL WINAPI AvRevertMmThreadCharacteristics(HANDLE AvrtHandle)
+{
+    FIXME("(%p): stub\n", AvrtHandle);
+    return 1;
 }
