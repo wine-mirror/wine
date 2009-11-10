@@ -74,6 +74,7 @@ PUBLIC_IDL_H_SRCS = \
 	shobjidl.idl \
 	shtypes.idl \
 	strmif.idl \
+	structuredquerycondition.idl \
 	textstor.idl \
 	tom.idl \
 	unknwn.idl \

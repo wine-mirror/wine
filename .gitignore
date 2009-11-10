@@ -189,6 +189,7 @@ include/shtypes.h
 include/stamp-h
 include/stdole2.tlb
 include/strmif.h
+include/structuredquerycondition.h
 include/textstor.h
 include/tom.h
 include/unknwn.h
