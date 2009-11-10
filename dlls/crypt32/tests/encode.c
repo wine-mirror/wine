@@ -1691,7 +1691,6 @@ static void test_decodeAltName(DWORD dwEncoding)
     /* Fails on WinXP with CRYPT_E_ASN1_RULE.  I'm not too concerned about the
      * particular failure, just that it doesn't decode.
      */
-    todo_wine
     ok(!ret, "expected failure\n");
     /* An embedded bell character is allowed, however. */
     ret = pCryptDecodeObjectEx(dwEncoding, X509_ALTERNATE_NAME,
@@ -1715,7 +1714,6 @@ static void test_decodeAltName(DWORD dwEncoding)
     /* Again, fails on WinXP with CRYPT_E_ASN1_RULE.  I'm not too concerned
      * about the particular failure, just that it doesn't decode.
      */
-    todo_wine
     ok(!ret, "expected failure\n");
 }
 

@@ -2990,7 +2990,13 @@ static BOOL CRYPT_AsnDecodeAltNameEntry(const BYTE *pbEncoded, DWORD cbEncoded,
         case 1: /* rfc822Name */
         case 2: /* dNSName */
         case 6: /* uniformResourceIdentifier */
-            bytesNeeded += (dataLen + 1) * sizeof(WCHAR);
+            if (memchr(pbEncoded + 1 + lenBytes, 0, dataLen))
+            {
+                SetLastError(CRYPT_E_ASN1_RULE);
+                ret = FALSE;
+            }
+            else
+                bytesNeeded += (dataLen + 1) * sizeof(WCHAR);
             break;
         case 4: /* directoryName */
         case 7: /* iPAddress */
