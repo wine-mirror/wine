@@ -118,14 +118,14 @@ typedef struct StorageImpl         StorageImpl;
 typedef struct BlockChainStream      BlockChainStream;
 typedef struct SmallBlockChainStream SmallBlockChainStream;
 typedef struct IEnumSTATSTGImpl      IEnumSTATSTGImpl;
-typedef struct StgProperty           StgProperty;
+typedef struct DirEntry              DirEntry;
 typedef struct StgStreamImpl         StgStreamImpl;
 
 /*
- * This utility structure is used to read/write the information in a storage
- * property.
+ * This utility structure is used to read/write the information in a directory
+ * entry.
  */
-struct StgProperty
+struct DirEntry
 {
   WCHAR	         name[PROPERTY_NAME_MAX_LEN];
   WORD	         sizeOfNameString;
@@ -295,7 +295,7 @@ HRESULT StorageImpl_ReadRawDirEntry(
 
 void UpdateRawDirEntry(
     BYTE *buffer,
-    const StgProperty *newData);
+    const DirEntry *newData);
 
 HRESULT StorageImpl_WriteRawDirEntry(
             StorageImpl *This,
@@ -305,12 +305,12 @@ HRESULT StorageImpl_WriteRawDirEntry(
 BOOL StorageImpl_ReadProperty(
             StorageImpl*    This,
             ULONG           index,
-            StgProperty*    buffer);
+            DirEntry*       buffer);
 
 BOOL StorageImpl_WriteProperty(
             StorageImpl*        This,
             ULONG               index,
-            const StgProperty*  buffer);
+            const DirEntry*     buffer);
 
 BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
                       StorageImpl* This,
@@ -419,7 +419,7 @@ void StorageUtl_WriteULargeInteger(BYTE* buffer, ULONG offset,
  const ULARGE_INTEGER *value);
 void StorageUtl_ReadGUID(const BYTE* buffer, ULONG offset, GUID* value);
 void StorageUtl_WriteGUID(BYTE* buffer, ULONG offset, const GUID* value);
-void StorageUtl_CopyPropertyToSTATSTG(STATSTG* destination, const StgProperty* source,
+void StorageUtl_CopyPropertyToSTATSTG(STATSTG* destination, const DirEntry* source,
  int statFlags);
 
 /****************************************************************************

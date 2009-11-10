@@ -187,7 +187,7 @@ static ULONG WINAPI StgStreamImpl_Release(
 static void StgStreamImpl_OpenBlockChain(
         StgStreamImpl* This)
 {
-  StgProperty    curProperty;
+  DirEntry     curProperty;
   BOOL         readSuccessful;
 
   /*
@@ -545,7 +545,7 @@ static HRESULT WINAPI StgStreamImpl_SetSize(
 {
   StgStreamImpl* const This=(StgStreamImpl*)iface;
 
-  StgProperty    curProperty;
+  DirEntry     curProperty;
   BOOL         Success;
 
   TRACE("(%p, %d)\n", iface, libNewSize.u.LowPart);
@@ -834,7 +834,7 @@ static HRESULT WINAPI StgStreamImpl_Stat(
 {
   StgStreamImpl* const This=(StgStreamImpl*)iface;
 
-  StgProperty    curProperty;
+  DirEntry     curProperty;
   BOOL         readSuccessful;
 
   TRACE("%p %p %d\n", This, pstatstg, grfStatFlag);
