@@ -650,7 +650,7 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
     goto end;
   }
 
-  readSuccessful = StorageImpl_ReadProperty(
+  readSuccessful = StorageImpl_ReadDirEntry(
                     This->ancestorStorage,
                     This->rootPropertySetIndex,
                     &curProperty);
@@ -925,7 +925,7 @@ static HRESULT WINAPI StorageBaseImpl_SetClass(
 
   TRACE("(%p, %p)\n", iface, clsid);
 
-  success = StorageImpl_ReadProperty(This->ancestorStorage,
+  success = StorageImpl_ReadDirEntry(This->ancestorStorage,
                                        This->rootPropertySetIndex,
                                        &curProperty);
   if (success)
@@ -1261,14 +1261,14 @@ static HRESULT insertIntoTree(
   /*
    * Read the inserted property
    */
-  StorageImpl_ReadProperty(This,
+  StorageImpl_ReadDirEntry(This,
                            newPropertyIndex,
                            &newProperty);
 
   /*
    * Read the root property
    */
-  StorageImpl_ReadProperty(This,
+  StorageImpl_ReadDirEntry(This,
                              parentStorageIndex,
                              &currentProperty);
 
@@ -1289,7 +1289,7 @@ static HRESULT insertIntoTree(
     /*
      * Read
      */
-    StorageImpl_ReadProperty(This,
+    StorageImpl_ReadDirEntry(This,
                                currentProperty.dirProperty,
                                &currentProperty);
 
@@ -1305,7 +1305,7 @@ static HRESULT insertIntoTree(
       {
         if (previous != PROPERTY_NULL)
         {
-          StorageImpl_ReadProperty(This,
+          StorageImpl_ReadDirEntry(This,
                                      previous,
                                      &currentProperty);
           current = previous;
@@ -1323,7 +1323,7 @@ static HRESULT insertIntoTree(
       {
         if (next != PROPERTY_NULL)
         {
-          StorageImpl_ReadProperty(This,
+          StorageImpl_ReadDirEntry(This,
                                      next,
                                      &currentProperty);
           current = next;
@@ -1376,7 +1376,7 @@ static ULONG findElement(StorageImpl *storage, ULONG storageEntry,
   ULONG currentEntry;
 
   /* Read the storage entry to find the root of the tree. */
-  StorageImpl_ReadProperty(storage, storageEntry, data);
+  StorageImpl_ReadDirEntry(storage, storageEntry, data);
 
   currentEntry = data->dirProperty;
 
@@ -1384,7 +1384,7 @@ static ULONG findElement(StorageImpl *storage, ULONG storageEntry,
   {
     LONG cmp;
 
-    StorageImpl_ReadProperty(storage, currentEntry, data);
+    StorageImpl_ReadDirEntry(storage, currentEntry, data);
 
     cmp = propertyNameCmp(name, data->name);
 
@@ -1419,7 +1419,7 @@ static HRESULT findTreeParent(StorageImpl *storage, ULONG storageEntry,
   DirEntry childData;
 
   /* Read the storage entry to find the root of the tree. */
-  StorageImpl_ReadProperty(storage, storageEntry, parentData);
+  StorageImpl_ReadDirEntry(storage, storageEntry, parentData);
 
   *parentEntry = storageEntry;
   *relation = PROPERTY_RELATION_DIR;
@@ -1430,7 +1430,7 @@ static HRESULT findTreeParent(StorageImpl *storage, ULONG storageEntry,
   {
     LONG cmp;
 
-    StorageImpl_ReadProperty(storage, childEntry, &childData);
+    StorageImpl_ReadDirEntry(storage, childEntry, &childData);
 
     cmp = propertyNameCmp(childName, childData.name);
 
@@ -1984,7 +1984,7 @@ static HRESULT removeFromTree(
   ULONG parentPropertyId;
   ULONG typeOfRelation;
 
-  res = StorageImpl_ReadProperty(This, deletedIndex, &propertyToDelete);
+  res = StorageImpl_ReadDirEntry(This, deletedIndex, &propertyToDelete);
 
   /*
    * Find the property that links to the one we want to delete.
@@ -2023,7 +2023,7 @@ static HRESULT removeFromTree(
 
       do
       {
-        res = StorageImpl_ReadProperty(
+        res = StorageImpl_ReadDirEntry(
                 This,
                 newRightChildParent,
                 &newRightChildParentProperty);
@@ -2287,7 +2287,7 @@ static HRESULT StorageImpl_Construct(
 
   do
   {
-    readSuccessful = StorageImpl_ReadProperty(
+    readSuccessful = StorageImpl_ReadDirEntry(
                       This,
                       currentPropertyIndex,
                       &currentProperty);
@@ -3117,7 +3117,7 @@ void UpdateRawDirEntry(BYTE *buffer, const DirEntry *newData)
  *
  * This method will read the specified property from the property chain.
  */
-BOOL StorageImpl_ReadProperty(
+BOOL StorageImpl_ReadDirEntry(
   StorageImpl* This,
   ULONG          index,
   DirEntry*      buffer)
@@ -3384,7 +3384,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
    * Change the property information. This chain is now a big block chain
    * and it doesn't reside in the small blocks chain anymore.
    */
-  StorageImpl_ReadProperty(This, propertyIndex, &chainProperty);
+  StorageImpl_ReadDirEntry(This, propertyIndex, &chainProperty);
 
   chainProperty.startingBlock = bbHeadOfChain;
 
@@ -3475,7 +3475,7 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
     BlockChainStream_Destroy(*ppbbChain);
     *ppbbChain = NULL;
 
-    StorageImpl_ReadProperty(This, propertyIndex, &chainProperty);
+    StorageImpl_ReadDirEntry(This, propertyIndex, &chainProperty);
     chainProperty.startingBlock = sbHeadOfChain;
     StorageImpl_WriteProperty(This, propertyIndex, &chainProperty);
 
@@ -3614,7 +3614,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
     /*
      * Read the property from the storage.
      */
-    StorageImpl_ReadProperty(This->parentStorage,
+    StorageImpl_ReadDirEntry(This->parentStorage,
       currentSearchNode,
       &currentProperty);
 
@@ -3675,7 +3675,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Skip(
     /*
      * Read the property from the storage.
      */
-    StorageImpl_ReadProperty(This->parentStorage,
+    StorageImpl_ReadDirEntry(This->parentStorage,
       currentSearchNode,
       &currentProperty);
 
@@ -3717,7 +3717,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Reset(
   /*
    * Read the root property from the storage.
    */
-  readSuccessful = StorageImpl_ReadProperty(
+  readSuccessful = StorageImpl_ReadDirEntry(
                     This->parentStorage,
                     This->firstPropertyNode,
                     &rootProperty);
@@ -3811,7 +3811,7 @@ static void IEnumSTATSTGImpl_PushSearchNode(
   /*
    * Read the root property from the storage.
    */
-  readSuccessful = StorageImpl_ReadProperty(
+  readSuccessful = StorageImpl_ReadDirEntry(
                     This->parentStorage,
                     nodeToPush,
                     &rootProperty);
@@ -4163,7 +4163,7 @@ static ULONG BlockChainStream_GetHeadOfChain(BlockChainStream* This)
 
   if (This->ownerPropertyIndex != PROPERTY_NULL)
   {
-    readSuccessful = StorageImpl_ReadProperty(
+    readSuccessful = StorageImpl_ReadDirEntry(
                       This->parentStorage,
                       This->ownerPropertyIndex,
                       &chainProperty);
@@ -4500,7 +4500,7 @@ static BOOL BlockChainStream_Enlarge(BlockChainStream* This,
       DirEntry chainProp;
       assert(This->ownerPropertyIndex != PROPERTY_NULL);
 
-      StorageImpl_ReadProperty(
+      StorageImpl_ReadDirEntry(
         This->parentStorage,
         This->ownerPropertyIndex,
         &chainProp);
@@ -4625,7 +4625,7 @@ static ULARGE_INTEGER BlockChainStream_GetSize(BlockChainStream* This)
      * This chain is a data stream read the property and return
      * the appropriate size
      */
-    StorageImpl_ReadProperty(
+    StorageImpl_ReadDirEntry(
       This->parentStorage,
       This->ownerPropertyIndex,
       &chainProperty);
@@ -4692,7 +4692,7 @@ static ULONG SmallBlockChainStream_GetHeadOfChain(
 
   if (This->ownerPropertyIndex)
   {
-    readSuccessful = StorageImpl_ReadProperty(
+    readSuccessful = StorageImpl_ReadDirEntry(
                       This->parentStorage,
                       This->ownerPropertyIndex,
                       &chainProperty);
@@ -4898,7 +4898,7 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
           sbStartIndex,
           BLOCK_END_OF_CHAIN);
 
-        StorageImpl_ReadProperty(
+        StorageImpl_ReadDirEntry(
           This->parentStorage,
           This->parentStorage->base.rootPropertySetIndex,
           &rootProp);
@@ -4928,7 +4928,7 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
     DirEntry rootProp;
     ULONG blocksRequired = (blockIndex / smallBlocksPerBigBlock) + 1;
 
-    StorageImpl_ReadProperty(
+    StorageImpl_ReadDirEntry(
       This->parentStorage,
       This->parentStorage->base.rootPropertySetIndex,
       &rootProp);
@@ -5177,7 +5177,7 @@ static BOOL SmallBlockChainStream_Shrink(
   {
     DirEntry chainProp;
 
-    StorageImpl_ReadProperty(This->parentStorage,
+    StorageImpl_ReadDirEntry(This->parentStorage,
 			     This->ownerPropertyIndex,
 			     &chainProp);
 
@@ -5255,7 +5255,7 @@ static BOOL SmallBlockChainStream_Enlarge(
     {
       DirEntry chainProp;
 
-      StorageImpl_ReadProperty(This->parentStorage, This->ownerPropertyIndex,
+      StorageImpl_ReadDirEntry(This->parentStorage, This->ownerPropertyIndex,
                                    &chainProp);
 
       chainProp.startingBlock = blockIndex;
@@ -5383,7 +5383,7 @@ static ULARGE_INTEGER SmallBlockChainStream_GetSize(SmallBlockChainStream* This)
     return result;
   }
 
-  StorageImpl_ReadProperty(
+  StorageImpl_ReadDirEntry(
     This->parentStorage,
     This->ownerPropertyIndex,
     &chainProperty);
