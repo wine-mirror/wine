@@ -2444,7 +2444,7 @@ static CONST_DATA_BLOB chain19[] = {
 };
 static const CERT_TRUST_STATUS elementStatus19[] = {
  { CERT_TRUST_NO_ERROR, CERT_TRUST_HAS_NAME_MATCH_ISSUER },
- { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT,
+ { CERT_TRUST_IS_UNTRUSTED_ROOT,
    CERT_TRUST_IS_SELF_SIGNED | CERT_TRUST_HAS_NAME_MATCH_ISSUER },
 };
 static const SimpleChainStatusCheck simpleStatus19[] = {
@@ -2469,7 +2469,7 @@ static CONST_DATA_BLOB chain21[] = {
 };
 static const CERT_TRUST_STATUS elementStatus21[] = {
  { CERT_TRUST_NO_ERROR, CERT_TRUST_HAS_NAME_MATCH_ISSUER },
- { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT,
+ { CERT_TRUST_IS_UNTRUSTED_ROOT,
    CERT_TRUST_IS_SELF_SIGNED | CERT_TRUST_HAS_NAME_MATCH_ISSUER },
 };
 static const SimpleChainStatusCheck simpleStatus21[] = {
@@ -2725,11 +2725,17 @@ static ChainCheck chainCheck[] = {
      { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_VALID_FOR_USAGE, 0 },
      1, simpleStatus18 },
    0 },
+ /* Older versions of crypt32 set CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT
+  * even though the constraint and alt name match.
+  * They also do not set CERT_TRUST_HAS_VALID_NAME_CONSTRAINTS, since they
+  * incorrectly find a name constraint error.
+  */
  { { sizeof(chain19) / sizeof(chain19[0]), chain19 },
-   { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
-       CERT_TRUST_HAS_PREFERRED_ISSUER },
-     { CERT_TRUST_IS_UNTRUSTED_ROOT |
-       CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT, 0 },
+   { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_IS_NOT_VALID_FOR_USAGE |
+       CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT,
+       CERT_TRUST_HAS_PREFERRED_ISSUER | CERT_TRUST_HAS_VALID_NAME_CONSTRAINTS
+     },
+     { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 },
      1, simpleStatus19 },
    0 },
  { { sizeof(chain20) / sizeof(chain20[0]), chain20 },
@@ -2741,10 +2747,11 @@ static ChainCheck chainCheck[] = {
      1, simpleStatus20 },
    TODO_ERROR },
  { { sizeof(chain21) / sizeof(chain21[0]), chain21 },
-   { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
-       CERT_TRUST_HAS_PREFERRED_ISSUER },
-     { CERT_TRUST_IS_UNTRUSTED_ROOT |
-       CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT, 0 },
+   { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_IS_NOT_VALID_FOR_USAGE |
+       CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT,
+       CERT_TRUST_HAS_PREFERRED_ISSUER | CERT_TRUST_HAS_VALID_NAME_CONSTRAINTS
+     },
+     { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 },
      1, simpleStatus21 },
    0 },
  { { sizeof(chain22) / sizeof(chain22[0]), chain22 },
