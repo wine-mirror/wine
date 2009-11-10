@@ -108,6 +108,7 @@ SRCDIR_INCLUDES = \
 	audevcod.h \
 	audiosessiontypes.h \
 	aviriff.h \
+	avrt.h \
 	axcore.idl \
 	axextend.idl \
 	basetsd.h \
