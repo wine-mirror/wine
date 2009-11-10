@@ -860,7 +860,7 @@ static HRESULT WINAPI StgStreamImpl_Stat(
   {
     StorageImpl *root = This->parentStorage->ancestorStorage;
 
-    StorageUtl_CopyPropertyToSTATSTG(pstatstg,
+    StorageUtl_CopyDirEntryToSTATSTG(pstatstg,
 				     &curProperty,
 				     grfStatFlag);
 

@@ -657,7 +657,7 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
 
   if (readSuccessful)
   {
-    StorageUtl_CopyPropertyToSTATSTG(
+    StorageUtl_CopyDirEntryToSTATSTG(
       pstatstg,
       &curProperty,
       grfStatFlag);
@@ -3621,7 +3621,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
     /*
      * Copy the information to the return buffer.
      */
-    StorageUtl_CopyPropertyToSTATSTG(currentReturnStruct,
+    StorageUtl_CopyDirEntryToSTATSTG(currentReturnStruct,
       &currentProperty,
       STATFLAG_DEFAULT);
 
@@ -4050,7 +4050,7 @@ void StorageUtl_WriteGUID(BYTE* buffer, ULONG offset, const GUID* value)
   memcpy(buffer+offset+8, value->Data4, sizeof(value->Data4));
 }
 
-void StorageUtl_CopyPropertyToSTATSTG(
+void StorageUtl_CopyDirEntryToSTATSTG(
   STATSTG*              destination,
   const DirEntry*       source,
   int                   statFlags)
