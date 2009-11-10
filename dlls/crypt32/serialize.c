@@ -499,8 +499,18 @@ static BOOL CRYPT_ReadSerializedStore(void *handle,
                                  CERT_STORE_ADD_NEW, &context);
                             }
                             else
-                                ret = CRYPT_ReadContextProp(contextInterface,
-                                 context, &propHdr, buf, read);
+                            {
+                                if (!contextInterface)
+                                {
+                                    WARN("prop id %d before a context id\n",
+                                     propHdr.propID);
+                                    ret = FALSE;
+                                }
+                                else
+                                    ret = CRYPT_ReadContextProp(
+                                     contextInterface, context, &propHdr, buf,
+                                     read);
+                            }
                         }
                     }
                     else
