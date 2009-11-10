@@ -1044,6 +1044,7 @@ static void test_substorage_share(void)
     HRESULT r;
     static const WCHAR stgname[] = { 'P','E','R','M','S','T','G',0 };
     static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
+    static const WCHAR othername[] = { 'N','E','W','N','A','M','E',0 };
 
     DeleteFileA(filenameA);
 
@@ -1069,6 +1070,11 @@ static void test_substorage_share(void)
 
         if (r == S_OK)
             IStorage_Release(stg3);
+
+        /* cannot rename the storage while it's open */
+        r = IStorage_RenameElement(stg, stgname, othername);
+        todo_wine ok(r==STG_E_ACCESSDENIED, "IStorage->RenameElement should fail %08x\n", r);
+        if (SUCCEEDED(r)) IStorage_RenameElement(stg, othername, stgname);
 
 #if 0
         /* This crashes on Wine. */
@@ -1104,6 +1110,11 @@ static void test_substorage_share(void)
 
         if (r == S_OK)
             IStorage_Release(stm2);
+
+        /* cannot rename the stream while it's open */
+        r = IStorage_RenameElement(stg, stmname, othername);
+        todo_wine ok(r==STG_E_ACCESSDENIED, "IStorage->RenameElement should fail %08x\n", r);
+        if (SUCCEEDED(r)) IStorage_RenameElement(stg, othername, stmname);
 
         /* destroying an object while it's open invalidates it */
         r = IStorage_DestroyElement(stg, stmname);
@@ -2319,6 +2330,75 @@ cleanup:
     DeleteFileW(file2_name);
 }
 
+static void test_rename(void)
+{
+    IStorage *stg, *stg2;
+    IStream *stm;
+    HRESULT r;
+    static const WCHAR stgname[] = { 'P','E','R','M','S','T','G',0 };
+    static const WCHAR stgname2[] = { 'S','T','G',0 };
+    static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
+    static const WCHAR stmname2[] = { 'E','N','T','S',0 };
+
+    DeleteFileA(filenameA);
+
+    /* create the file */
+    r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE |
+                            STGM_READWRITE, 0, &stg);
+    ok(r==S_OK, "StgCreateDocfile failed\n");
+
+    /* create a substorage */
+    r = IStorage_CreateStorage(stg, stgname, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stg2);
+    ok(r==S_OK, "IStorage->CreateStorage failed, hr=%08x\n", r);
+
+    /* create a stream in the substorage */
+    r = IStorage_CreateStream(stg2, stmname, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
+    ok(r==S_OK, "IStorage->CreateStream failed, hr=%08x\n", r);
+    IStream_Release(stm);
+
+    /* rename the stream */
+    r = IStorage_RenameElement(stg2, stmname, stmname2);
+    ok(r==S_OK, "IStorage->RenameElement failed, hr=%08x\n", r);
+
+    /* cannot open stream with old name */
+    r = IStorage_OpenStream(stg2, stmname, NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &stm);
+    ok(r==STG_E_FILENOTFOUND, "IStorage_OpenStream should fail, hr=%08x\n", r);
+    if (SUCCEEDED(r)) IStream_Release(stm);
+
+    /* can open stream with new name */
+    r = IStorage_OpenStream(stg2, stmname2, NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &stm);
+    ok(r==S_OK, "IStorage_OpenStream failed, hr=%08x\n", r);
+    if (SUCCEEDED(r)) IStream_Release(stm);
+
+    IStorage_Release(stg2);
+
+    /* rename the storage */
+    IStorage_RenameElement(stg, stgname, stgname2);
+
+    /* cannot open storage with old name */
+    r = IStorage_OpenStorage(stg, stgname, NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, NULL, 0, &stg2);
+    ok(r==STG_E_FILENOTFOUND, "IStorage_OpenStream should fail, hr=%08x\n", r);
+    if (SUCCEEDED(r)) IStorage_Release(stg2);
+
+    /* can open storage with new name */
+    r = IStorage_OpenStorage(stg, stgname2, NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, NULL, 0, &stg2);
+    ok(r==S_OK, "IStorage_OpenStream should fail, hr=%08x\n", r);
+    if (SUCCEEDED(r))
+    {
+        /* opened storage still has the stream */
+        r = IStorage_OpenStream(stg2, stmname2, NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &stm);
+        ok(r==S_OK, "IStorage_OpenStream failed, hr=%08x\n", r);
+        if (SUCCEEDED(r)) IStream_Release(stm);
+
+        IStorage_Release(stg2);
+    }
+
+    IStorage_Release(stg);
+
+    r = DeleteFileA(filenameA);
+    ok( r == TRUE, "deleted file\n");
+}
+
 START_TEST(storage32)
 {
     CHAR temp[MAX_PATH];
@@ -2354,4 +2434,5 @@ START_TEST(storage32)
     test_copyto_snbexclusions();
     test_copyto_iidexclusions_storage();
     test_copyto_iidexclusions_stream();
+    test_rename();
 }
