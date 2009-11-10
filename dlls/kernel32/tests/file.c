@@ -650,8 +650,10 @@ static void test_CopyFileA(void)
 
     ret = CopyFileA(source, dest, FALSE);
     todo_wine {
-        ok(!ret && GetLastError() == ERROR_USER_MAPPED_FILE,
-            "CopyFileA with mapped dest file: expected ERROR_USER_MAPPED_FILE, got %d\n", GetLastError());
+        ok(!ret, "CopyFileA: expected failure\n");
+        ok(GetLastError() == ERROR_USER_MAPPED_FILE ||
+           broken(GetLastError() == ERROR_SHARING_VIOLATION), /* Win9x and WinMe */
+           "CopyFileA with mapped dest file: expected ERROR_USER_MAPPED_FILE, got %d\n", GetLastError());
     }
 
     CloseHandle(hmapfile);
@@ -1325,7 +1327,9 @@ static void test_MoveFileA(void)
     ret = MoveFileA(source, dest);
     todo_wine {
         ok(!ret, "MoveFileA: expected failure\n");
-        ok(GetLastError() == ERROR_SHARING_VIOLATION, "MoveFileA: expected ERROR_SHARING_VIOLATION, got %d\n", GetLastError());
+        ok(GetLastError() == ERROR_SHARING_VIOLATION ||
+           broken(GetLastError() == ERROR_ACCESS_DENIED), /* Win9x and WinMe */
+           "MoveFileA: expected ERROR_SHARING_VIOLATION, got %d\n", GetLastError());
     }
 
     CloseHandle(hmapfile);
@@ -1343,7 +1347,9 @@ static void test_MoveFileA(void)
     ret = MoveFileA(source, dest);
     todo_wine {
         ok(!ret, "MoveFileA: expected failure\n");
-        ok(GetLastError() == ERROR_SHARING_VIOLATION, "MoveFileA: expected ERROR_SHARING_VIOLATION, got %d\n", GetLastError());
+        ok(GetLastError() == ERROR_SHARING_VIOLATION ||
+           broken(GetLastError() == ERROR_ACCESS_DENIED), /* Win9x and WinMe */
+           "MoveFileA: expected ERROR_SHARING_VIOLATION, got %d\n", GetLastError());
     }
 
     CloseHandle(hmapfile);
