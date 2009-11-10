@@ -729,7 +729,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
     /* Change the name of the element */
     strcpyW(currentProperty.name, pwcsNewName);
 
-    StorageImpl_WriteProperty(This->ancestorStorage, foundPropertyIndex,
+    StorageImpl_WriteDirEntry(This->ancestorStorage, foundPropertyIndex,
         &currentProperty);
 
     /* Insert the element in a new position in the tree */
@@ -932,7 +932,7 @@ static HRESULT WINAPI StorageBaseImpl_SetClass(
   {
     curProperty.propertyUniqueID = *clsid;
 
-    success =  StorageImpl_WriteProperty(This->ancestorStorage,
+    success =  StorageImpl_WriteDirEntry(This->ancestorStorage,
                                            This->rootPropertySetIndex,
                                            &curProperty);
     if (success)
@@ -1313,7 +1313,7 @@ static HRESULT insertIntoTree(
         else
         {
           currentProperty.leftChild = newPropertyIndex;
-          StorageImpl_WriteProperty(This,
+          StorageImpl_WriteDirEntry(This,
                                       current,
                                       &currentProperty);
           found = 1;
@@ -1331,7 +1331,7 @@ static HRESULT insertIntoTree(
         else
         {
           currentProperty.rightChild = newPropertyIndex;
-          StorageImpl_WriteProperty(This,
+          StorageImpl_WriteDirEntry(This,
                                       current,
                                       &currentProperty);
           found = 1;
@@ -1356,7 +1356,7 @@ static HRESULT insertIntoTree(
      * The root storage is empty, link the new property to its dir property
      */
     currentProperty.dirProperty = newPropertyIndex;
-    StorageImpl_WriteProperty(This,
+    StorageImpl_WriteDirEntry(This,
                                 parentStorageIndex,
                                 &currentProperty);
   }
@@ -2002,7 +2002,7 @@ static HRESULT removeFromTree(
      */
     setPropertyLink(&parentProperty, typeOfRelation, propertyToDelete.leftChild);
 
-    res = StorageImpl_WriteProperty(
+    res = StorageImpl_WriteDirEntry(
             This,
             parentPropertyId,
             &parentProperty);
@@ -2038,7 +2038,7 @@ static HRESULT removeFromTree(
 
       newRightChildParentProperty.rightChild = propertyToDelete.rightChild;
 
-      res = StorageImpl_WriteProperty(
+      res = StorageImpl_WriteDirEntry(
               This,
               newRightChildParent,
               &newRightChildParentProperty);
@@ -2055,7 +2055,7 @@ static HRESULT removeFromTree(
      */
     setPropertyLink(&parentProperty, typeOfRelation, propertyToDelete.rightChild);
 
-    res = StorageImpl_WriteProperty(
+    res = StorageImpl_WriteDirEntry(
             This,
             parentPropertyId,
             &parentProperty);
@@ -2277,7 +2277,7 @@ static HRESULT StorageImpl_Construct(
     rootProp.size.u.HighPart    = 0;
     rootProp.size.u.LowPart     = 0;
 
-    StorageImpl_WriteProperty(This, 0, &rootProp);
+    StorageImpl_WriteDirEntry(This, 0, &rootProp);
   }
 
   /*
@@ -3206,7 +3206,7 @@ BOOL StorageImpl_ReadDirEntry(
 /*********************************************************************
  * Write the specified property into the property chain
  */
-BOOL StorageImpl_WriteProperty(
+BOOL StorageImpl_WriteDirEntry(
   StorageImpl*          This,
   ULONG                 index,
   const DirEntry*       buffer)
@@ -3388,7 +3388,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
 
   chainProperty.startingBlock = bbHeadOfChain;
 
-  StorageImpl_WriteProperty(This, propertyIndex, &chainProperty);
+  StorageImpl_WriteDirEntry(This, propertyIndex, &chainProperty);
 
   /*
    * Destroy the temporary propertyless big block chain.
@@ -3477,7 +3477,7 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
 
     StorageImpl_ReadDirEntry(This, propertyIndex, &chainProperty);
     chainProperty.startingBlock = sbHeadOfChain;
-    StorageImpl_WriteProperty(This, propertyIndex, &chainProperty);
+    StorageImpl_WriteDirEntry(This, propertyIndex, &chainProperty);
 
     SmallBlockChainStream_Destroy(sbTempChain);
     return SmallBlockChainStream_Construct(This, NULL, propertyIndex);
@@ -4507,7 +4507,7 @@ static BOOL BlockChainStream_Enlarge(BlockChainStream* This,
 
       chainProp.startingBlock = blockIndex;
 
-      StorageImpl_WriteProperty(
+      StorageImpl_WriteDirEntry(
         This->parentStorage,
         This->ownerPropertyIndex,
         &chainProp);
@@ -4907,7 +4907,7 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
         rootProp.size.u.HighPart = 0;
         rootProp.size.u.LowPart  = This->parentStorage->bigBlockSize;
 
-        StorageImpl_WriteProperty(
+        StorageImpl_WriteDirEntry(
           This->parentStorage,
           This->parentStorage->base.rootPropertySetIndex,
           &rootProp);
@@ -4942,7 +4942,7 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
         This->parentStorage->smallBlockRootChain,
         rootProp.size);
 
-      StorageImpl_WriteProperty(
+      StorageImpl_WriteDirEntry(
         This->parentStorage,
         This->parentStorage->base.rootPropertySetIndex,
         &rootProp);
@@ -5183,7 +5183,7 @@ static BOOL SmallBlockChainStream_Shrink(
 
     chainProp.startingBlock = BLOCK_END_OF_CHAIN;
 
-    StorageImpl_WriteProperty(This->parentStorage,
+    StorageImpl_WriteDirEntry(This->parentStorage,
 			      This->ownerPropertyIndex,
 			      &chainProp);
 
@@ -5260,7 +5260,7 @@ static BOOL SmallBlockChainStream_Enlarge(
 
       chainProp.startingBlock = blockIndex;
 
-      StorageImpl_WriteProperty(This->parentStorage, This->ownerPropertyIndex,
+      StorageImpl_WriteDirEntry(This->parentStorage, This->ownerPropertyIndex,
                                   &chainProp);
     }
   }

@@ -659,7 +659,7 @@ static HRESULT WINAPI StgStreamImpl_SetSize(
 
   if (Success)
   {
-    StorageImpl_WriteProperty(This->parentStorage->ancestorStorage,
+    StorageImpl_WriteDirEntry(This->parentStorage->ancestorStorage,
 				This->ownerProperty,
 				&curProperty);
   }

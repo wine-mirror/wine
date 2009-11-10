@@ -307,7 +307,7 @@ BOOL StorageImpl_ReadDirEntry(
             ULONG           index,
             DirEntry*       buffer);
 
-BOOL StorageImpl_WriteProperty(
+BOOL StorageImpl_WriteDirEntry(
             StorageImpl*        This,
             ULONG               index,
             const DirEntry*     buffer);
