@@ -3676,6 +3676,9 @@ static void SLTG_ProcessDispatch(char *pBlk, ITypeInfoImpl *pTI,
   if (pTITail->funcs_off != 0xffff)
     SLTG_DoFuncs(pBlk, pBlk + pTITail->funcs_off, pTI, pTITail->cFuncs, pNameTable, ref_lookup);
 
+  if (pTITail->impls_off != 0xffff)
+    SLTG_DoImpls(pBlk + pTITail->impls_off, pTI, FALSE, ref_lookup);
+
   /* this is necessary to cope with MSFT typelibs that set cFuncs to the number
    * of dispinterface functions including the IDispatch ones, so
    * ITypeInfo::GetFuncDesc takes the real value for cFuncs from cbSizeVft */
