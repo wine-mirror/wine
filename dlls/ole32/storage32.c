@@ -450,7 +450,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
   /*
    * If it was found, construct the stream object and return a pointer to it.
    */
-  if ( (foundPropertyIndex!=PROPERTY_NULL) &&
+  if ( (foundPropertyIndex!=DIRENTRY_NULL) &&
        (currentProperty.propertyType==STGTY_STREAM) )
   {
     newStream = StgStreamImpl_Construct(This, grfMode, foundPropertyIndex);
@@ -555,7 +555,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
                          pwcsName,
                          &currentProperty);
 
-  if ( (foundPropertyIndex!=PROPERTY_NULL) &&
+  if ( (foundPropertyIndex!=DIRENTRY_NULL) &&
        (currentProperty.propertyType==STGTY_STORAGE) )
   {
     newStorage = StorageInternalImpl_Construct(
@@ -704,7 +704,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
                                    pwcsNewName,
                                    &currentProperty);
 
-  if (foundPropertyIndex != PROPERTY_NULL)
+  if (foundPropertyIndex != DIRENTRY_NULL)
   {
     /*
      * There is already a property with the new name
@@ -720,7 +720,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
                                    pwcsOldName,
                                    &currentProperty);
 
-  if (foundPropertyIndex != PROPERTY_NULL)
+  if (foundPropertyIndex != DIRENTRY_NULL)
   {
     /* Remove the element from its current position in the tree */
     removeFromTree(This->ancestorStorage, This->rootPropertySetIndex,
@@ -816,7 +816,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
                                    pwcsName,
                                    &currentProperty);
 
-  if (foundPropertyIndex != PROPERTY_NULL)
+  if (foundPropertyIndex != DIRENTRY_NULL)
   {
     /*
      * An element with this name already exists
@@ -863,9 +863,9 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
   newStreamProperty.size.u.LowPart  = 0;
   newStreamProperty.size.u.HighPart = 0;
 
-  newStreamProperty.leftChild        = PROPERTY_NULL;
-  newStreamProperty.rightChild       = PROPERTY_NULL;
-  newStreamProperty.dirProperty      = PROPERTY_NULL;
+  newStreamProperty.leftChild        = DIRENTRY_NULL;
+  newStreamProperty.rightChild       = DIRENTRY_NULL;
+  newStreamProperty.dirProperty      = DIRENTRY_NULL;
 
   /* call CoFileTime to get the current time
   newStreamProperty.ctime
@@ -1002,7 +1002,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
                                    pwcsName,
                                    &currentProperty);
 
-  if (foundPropertyIndex != PROPERTY_NULL)
+  if (foundPropertyIndex != DIRENTRY_NULL)
   {
     /*
      * An element with this name already exists
@@ -1046,9 +1046,9 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
   newProperty.size.u.LowPart  = 0;
   newProperty.size.u.HighPart = 0;
 
-  newProperty.leftChild        = PROPERTY_NULL;
-  newProperty.rightChild       = PROPERTY_NULL;
-  newProperty.dirProperty      = PROPERTY_NULL;
+  newProperty.leftChild        = DIRENTRY_NULL;
+  newProperty.rightChild       = DIRENTRY_NULL;
+  newProperty.dirProperty      = DIRENTRY_NULL;
 
   /* call CoFileTime to get the current time
   newProperty.ctime
@@ -1097,7 +1097,7 @@ static HRESULT createDirEntry(
   ULONG *index)
 {
   ULONG       currentPropertyIndex = 0;
-  ULONG       newPropertyIndex     = PROPERTY_NULL;
+  ULONG       newPropertyIndex     = DIRENTRY_NULL;
   HRESULT hr = S_OK;
   BYTE currentData[PROPSET_BLOCK_SIZE];
   WORD sizeOfNameString;
@@ -1132,7 +1132,7 @@ static HRESULT createDirEntry(
     }
     currentPropertyIndex++;
 
-  } while (newPropertyIndex == PROPERTY_NULL);
+  } while (newPropertyIndex == DIRENTRY_NULL);
 
   /*
    * grow the property chain
@@ -1272,7 +1272,7 @@ static HRESULT insertIntoTree(
                              parentStorageIndex,
                              &currentProperty);
 
-  if (currentProperty.dirProperty != PROPERTY_NULL)
+  if (currentProperty.dirProperty != DIRENTRY_NULL)
   {
     /*
      * The root storage contains some element, therefore, start the research
@@ -1303,7 +1303,7 @@ static HRESULT insertIntoTree(
 
       if (diff < 0)
       {
-        if (previous != PROPERTY_NULL)
+        if (previous != DIRENTRY_NULL)
         {
           StorageImpl_ReadDirEntry(This,
                                      previous,
@@ -1321,7 +1321,7 @@ static HRESULT insertIntoTree(
       }
       else if (diff > 0)
       {
-        if (next != PROPERTY_NULL)
+        if (next != DIRENTRY_NULL)
         {
           StorageImpl_ReadDirEntry(This,
                                      next,
@@ -1380,7 +1380,7 @@ static ULONG findElement(StorageImpl *storage, ULONG storageEntry,
 
   currentEntry = data->dirProperty;
 
-  while (currentEntry != PROPERTY_NULL)
+  while (currentEntry != DIRENTRY_NULL)
   {
     LONG cmp;
 
@@ -1426,7 +1426,7 @@ static HRESULT findTreeParent(StorageImpl *storage, ULONG storageEntry,
 
   childEntry = parentData->dirProperty;
 
-  while (childEntry != PROPERTY_NULL)
+  while (childEntry != DIRENTRY_NULL)
   {
     LONG cmp;
 
@@ -1457,7 +1457,7 @@ static HRESULT findTreeParent(StorageImpl *storage, ULONG storageEntry,
     }
   }
 
-  if (childEntry == PROPERTY_NULL)
+  if (childEntry == DIRENTRY_NULL)
     return STG_E_FILENOTFOUND;
   else
     return S_OK;
@@ -1739,7 +1739,7 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
     pwcsName,
     &propertyToDelete);
 
-  if ( foundPropertyIndexToDelete == PROPERTY_NULL )
+  if ( foundPropertyIndexToDelete == DIRENTRY_NULL )
   {
     return STG_E_FILENOTFOUND;
   }
@@ -1995,7 +1995,7 @@ static HRESULT removeFromTree(
   if (hr != S_OK)
     return hr;
 
-  if (propertyToDelete.leftChild != PROPERTY_NULL)
+  if (propertyToDelete.leftChild != DIRENTRY_NULL)
   {
     /*
      * Replace the deleted entry with its left child
@@ -2011,7 +2011,7 @@ static HRESULT removeFromTree(
       return E_FAIL;
     }
 
-    if (propertyToDelete.rightChild != PROPERTY_NULL)
+    if (propertyToDelete.rightChild != DIRENTRY_NULL)
     {
       /*
        * We need to reinsert the right child somewhere. We already know it and
@@ -2032,9 +2032,9 @@ static HRESULT removeFromTree(
           return E_FAIL;
         }
 
-        if (newRightChildParentProperty.rightChild != PROPERTY_NULL)
+        if (newRightChildParentProperty.rightChild != DIRENTRY_NULL)
           newRightChildParent = newRightChildParentProperty.rightChild;
-      } while (newRightChildParentProperty.rightChild != PROPERTY_NULL);
+      } while (newRightChildParentProperty.rightChild != DIRENTRY_NULL);
 
       newRightChildParentProperty.rightChild = propertyToDelete.rightChild;
 
@@ -2248,12 +2248,12 @@ static HRESULT StorageImpl_Construct(
    * Create the block chain abstractions.
    */
   if(!(This->rootBlockChain =
-       BlockChainStream_Construct(This, &This->rootStartBlock, PROPERTY_NULL)))
+       BlockChainStream_Construct(This, &This->rootStartBlock, DIRENTRY_NULL)))
     return STG_E_READFAULT;
 
   if(!(This->smallBlockDepotChain =
        BlockChainStream_Construct(This, &This->smallBlockDepotStart,
-				  PROPERTY_NULL)))
+				  DIRENTRY_NULL)))
     return STG_E_READFAULT;
 
   /*
@@ -2270,9 +2270,9 @@ static HRESULT StorageImpl_Construct(
                          sizeof(rootProp.name)/sizeof(WCHAR) );
     rootProp.sizeOfNameString = (strlenW(rootProp.name)+1) * sizeof(WCHAR);
     rootProp.propertyType     = STGTY_ROOT;
-    rootProp.leftChild = PROPERTY_NULL;
-    rootProp.rightChild     = PROPERTY_NULL;
-    rootProp.dirProperty      = PROPERTY_NULL;
+    rootProp.leftChild = DIRENTRY_NULL;
+    rootProp.rightChild     = DIRENTRY_NULL;
+    rootProp.dirProperty      = DIRENTRY_NULL;
     rootProp.startingBlock    = BLOCK_END_OF_CHAIN;
     rootProp.size.u.HighPart    = 0;
     rootProp.size.u.LowPart     = 0;
@@ -2303,7 +2303,7 @@ static HRESULT StorageImpl_Construct(
 
     currentPropertyIndex++;
 
-  } while (readSuccessful && (This->base.rootPropertySetIndex == PROPERTY_NULL) );
+  } while (readSuccessful && (This->base.rootPropertySetIndex == DIRENTRY_NULL) );
 
   if (!readSuccessful)
   {
@@ -3316,7 +3316,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
    */
   bbTempChain = BlockChainStream_Construct(This,
                                            &bbHeadOfChain,
-                                           PROPERTY_NULL);
+                                           DIRENTRY_NULL);
   if(!bbTempChain) return NULL;
   /*
    * Grow the big block chain.
@@ -3422,7 +3422,7 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
     TRACE("%p %p\n", This, ppbbChain);
 
     sbTempChain = SmallBlockChainStream_Construct(This, &sbHeadOfChain,
-            PROPERTY_NULL);
+            DIRENTRY_NULL);
 
     if(!sbTempChain)
         return NULL;
@@ -3604,7 +3604,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
   currentSearchNode = IEnumSTATSTGImpl_PopSearchNode(This, FALSE);
 
   while ( ( *pceltFetched < celt) &&
-          ( currentSearchNode!=PROPERTY_NULL) )
+          ( currentSearchNode!=DIRENTRY_NULL) )
   {
     /*
      * Remove the top node from the stack
@@ -3665,7 +3665,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Skip(
   currentSearchNode = IEnumSTATSTGImpl_PopSearchNode(This, FALSE);
 
   while ( (objectFetched < celt) &&
-          (currentSearchNode!=PROPERTY_NULL) )
+          (currentSearchNode!=DIRENTRY_NULL) )
   {
     /*
      * Remove the top node from the stack
@@ -3788,7 +3788,7 @@ static void IEnumSTATSTGImpl_PushSearchNode(
   /*
    * First, make sure we're not trying to push an unexisting node.
    */
-  if (nodeToPush==PROPERTY_NULL)
+  if (nodeToPush==DIRENTRY_NULL)
     return;
 
   /*
@@ -3834,7 +3834,7 @@ static ULONG IEnumSTATSTGImpl_PopSearchNode(
   ULONG topNode;
 
   if (This->stackSize == 0)
-    return PROPERTY_NULL;
+    return DIRENTRY_NULL;
 
   topNode = This->stackToVisit[This->stackSize-1];
 
@@ -4161,7 +4161,7 @@ static ULONG BlockChainStream_GetHeadOfChain(BlockChainStream* This)
   if (This->headOfStreamPlaceHolder != 0)
     return *(This->headOfStreamPlaceHolder);
 
-  if (This->ownerPropertyIndex != PROPERTY_NULL)
+  if (This->ownerPropertyIndex != DIRENTRY_NULL)
   {
     readSuccessful = StorageImpl_ReadDirEntry(
                       This->parentStorage,
@@ -4498,7 +4498,7 @@ static BOOL BlockChainStream_Enlarge(BlockChainStream* This,
     else
     {
       DirEntry chainProp;
-      assert(This->ownerPropertyIndex != PROPERTY_NULL);
+      assert(This->ownerPropertyIndex != DIRENTRY_NULL);
 
       StorageImpl_ReadDirEntry(
         This->parentStorage,

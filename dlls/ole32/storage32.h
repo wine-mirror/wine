@@ -72,7 +72,7 @@ static const ULONG BLOCK_EXTBBDEPOT          = 0xFFFFFFFC;
 static const ULONG BLOCK_SPECIAL             = 0xFFFFFFFD;
 static const ULONG BLOCK_END_OF_CHAIN        = 0xFFFFFFFE;
 static const ULONG BLOCK_UNUSED              = 0xFFFFFFFF;
-static const ULONG PROPERTY_NULL             = 0xFFFFFFFF;
+static const ULONG DIRENTRY_NULL             = 0xFFFFFFFF;
 
 #define PROPERTY_NAME_MAX_LEN    0x20
 #define PROPERTY_NAME_BUFFER_LEN 0x40
