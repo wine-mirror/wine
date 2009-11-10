@@ -2793,7 +2793,7 @@ static ChainCheck chainCheck[] = {
      { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_INVALID_NAME_CONSTRAINTS |
        CERT_TRUST_INVALID_EXTENSION, 0 },
      1, simpleStatus27 },
-   TODO_ERROR },
+   0 },
  { { sizeof(chain28) / sizeof(chain28[0]), chain28 },
    { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
        CERT_TRUST_HAS_PREFERRED_ISSUER },

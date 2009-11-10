@@ -695,6 +695,10 @@ static void CRYPT_CheckNameConstraints(
                      0, CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT);
                 LocalFree(subjectName);
             }
+            else
+                *trustErrorStatus |=
+                 CERT_TRUST_INVALID_EXTENSION |
+                 CERT_TRUST_INVALID_NAME_CONSTRAINTS;
         }
         else
         {
