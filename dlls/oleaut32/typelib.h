@@ -413,7 +413,7 @@ typedef struct {
 /*0e*/	DWORD res0e;		/* 0xffffffff */
 /*12*/	WORD major_version;	/* major version number */
 /*14*/  WORD minor_version;	/* minor version number */
-/*16*/	DWORD res16;	/* 0xfffe0000 */
+/*16*/	DWORD res16;	/* 0xfffe0000 or 0xfffc0000 (on dual interfaces?) */
 /*1a*/	BYTE typeflags1;/* 0x02 | top 5 bits hold l5sbs of TYPEFLAGS */
 /*1b*/	BYTE typeflags2;/* TYPEFLAGS >> 5 */
 /*1c*/	BYTE typeflags3;/* 0x02*/
