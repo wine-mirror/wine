@@ -1391,11 +1391,35 @@ static void test_decodeNameValue(DWORD dwEncoding)
      embeddedNullNameValue.value.dwValueType, GetLastError());
     if (ret)
     {
-        CERT_NAME_VALUE value = { CERT_RDN_ENCODED_BLOB,
+        CERT_NAME_VALUE rdnEncodedValue = { CERT_RDN_ENCODED_BLOB,
          { sizeof(ia5EmbeddedNull), ia5EmbeddedNull } };
+        CERT_NAME_VALUE embeddedNullValue = { CERT_RDN_IA5_STRING,
+         { sizeof(embedded_null) - 1, (BYTE *)embedded_null } };
+        const CERT_NAME_VALUE *got = (const CERT_NAME_VALUE *)buf,
+         *expected = NULL;
 
-        todo_wine
-        compareNameValues(&value, (const CERT_NAME_VALUE *)buf);
+        /* Some Windows versions decode name values with embedded NULLs,
+         * others leave them encoded, even with the same version of crypt32.
+         * Accept either.
+         */
+        ok(got->dwValueType == CERT_RDN_ENCODED_BLOB ||
+         got->dwValueType == CERT_RDN_IA5_STRING,
+         "Expected CERT_RDN_ENCODED_BLOB or CERT_RDN_IA5_STRING, got %d\n",
+         got->dwValueType);
+        if (got->dwValueType == CERT_RDN_ENCODED_BLOB)
+            expected = &rdnEncodedValue;
+        else if (got->dwValueType == CERT_RDN_IA5_STRING)
+            expected = &embeddedNullValue;
+        if (expected)
+        {
+            ok(got->Value.cbData == expected->Value.cbData,
+             "String type %d: unexpected data size, got %d, expected %d\n",
+             got->dwValueType, got->Value.cbData, expected->Value.cbData);
+            if (got->Value.cbData && got->Value.pbData)
+                ok(!memcmp(got->Value.pbData, expected->Value.pbData,
+                 min(got->Value.cbData, expected->Value.cbData)),
+                 "String type %d: unexpected value\n", expected->dwValueType);
+        }
         LocalFree(buf);
     }
 }
