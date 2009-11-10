@@ -5503,8 +5503,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeOfImplType(
       */
       if( This->TypeAttr.typekind != TKIND_DISPATCH) return E_INVALIDARG;
 
-      if (This->TypeAttr.wTypeFlags & TYPEFLAG_FDISPATCHABLE &&
-          This->TypeAttr.wTypeFlags & TYPEFLAG_FDUAL )
+      if (This->TypeAttr.wTypeFlags & TYPEFLAG_FDUAL)
       {
         *pRefType = -1;
       }
