@@ -1914,101 +1914,134 @@ static void test_shader_constant_apply(IDirect3DDevice8 *device)
     static const float initial[] = {0.0f, 0.0f, 0.0f, 0.0f};
     static const float vs_const[] = {1.0f, 2.0f, 3.0f, 4.0f};
     static const float ps_const[] = {5.0f, 6.0f, 7.0f, 8.0f};
+    DWORD vs_version, ps_version;
     DWORD stateblock;
+    D3DCAPS8 caps;
     float ret[4];
     HRESULT hr;
 
-    hr = IDirect3DDevice8_SetVertexShaderConstant(device, 0, initial, 1);
-    ok(SUCCEEDED(hr), "SetVertexShaderConstant returned %#x\n", hr);
-    hr = IDirect3DDevice8_SetVertexShaderConstant(device, 1, initial, 1);
-    ok(SUCCEEDED(hr), "SetVertexShaderConstant returned %#x\n", hr);
-    hr = IDirect3DDevice8_SetPixelShaderConstant(device, 0, initial, 1);
-    ok(SUCCEEDED(hr), "SetPixelShaderConstant returned %#x\n", hr);
-    hr = IDirect3DDevice8_SetPixelShaderConstant(device, 1, initial, 1);
-    ok(SUCCEEDED(hr), "SetPixelShaderConstant returned %#x\n", hr);
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "GetDeviceCaps returned %#x.\n", hr);
+    vs_version = caps.VertexShaderVersion & 0xffff;
+    ps_version = caps.PixelShaderVersion & 0xffff;
 
-    hr = IDirect3DDevice8_GetVertexShaderConstant(device, 0, ret, 1);
-    ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x\n", hr);
-    ok(!memcmp(ret, initial, sizeof(initial)),
-            "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-            ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
-    hr = IDirect3DDevice8_GetVertexShaderConstant(device, 1, ret, 1);
-    ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x\n", hr);
-    ok(!memcmp(ret, initial, sizeof(initial)),
-            "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-            ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
-    hr = IDirect3DDevice8_GetPixelShaderConstant(device, 0, ret, 1);
-    ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x\n", hr);
-    ok(!memcmp(ret, initial, sizeof(initial)),
-            "GetpixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-            ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
-    hr = IDirect3DDevice8_GetPixelShaderConstant(device, 1, ret, 1);
-    ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x\n", hr);
-    ok(!memcmp(ret, initial, sizeof(initial)),
-            "GetPixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-            ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+    if (vs_version)
+    {
+        hr = IDirect3DDevice8_SetVertexShaderConstant(device, 0, initial, 1);
+        ok(SUCCEEDED(hr), "SetVertexShaderConstant returned %#x.\n", hr);
+        hr = IDirect3DDevice8_SetVertexShaderConstant(device, 1, initial, 1);
+        ok(SUCCEEDED(hr), "SetVertexShaderConstant returned %#x.\n", hr);
 
-    hr = IDirect3DDevice8_SetVertexShaderConstant(device, 0, vs_const, 1);
-    ok(SUCCEEDED(hr), "SetVertexShaderConstant returned %#x\n", hr);
-    hr = IDirect3DDevice8_SetPixelShaderConstant(device, 0, ps_const, 1);
-    ok(SUCCEEDED(hr), "SetPixelShaderConstant returned %#x\n", hr);
+        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x.\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+
+        hr = IDirect3DDevice8_SetVertexShaderConstant(device, 0, vs_const, 1);
+        ok(SUCCEEDED(hr), "SetVertexShaderConstant returned %#x.\n", hr);
+    }
+    if (ps_version)
+    {
+        hr = IDirect3DDevice8_SetPixelShaderConstant(device, 0, initial, 1);
+        ok(SUCCEEDED(hr), "SetPixelShaderConstant returned %#x.\n", hr);
+        hr = IDirect3DDevice8_SetPixelShaderConstant(device, 1, initial, 1);
+        ok(SUCCEEDED(hr), "SetPixelShaderConstant returned %#x.\n", hr);
+
+        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x.\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "GetpixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x.\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "GetPixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+
+        hr = IDirect3DDevice8_SetPixelShaderConstant(device, 0, ps_const, 1);
+        ok(SUCCEEDED(hr), "SetPixelShaderConstant returned %#x.\n", hr);
+    }
 
     hr = IDirect3DDevice8_BeginStateBlock(device);
     ok(SUCCEEDED(hr), "BeginStateBlock returned %#x\n", hr);
 
-    hr = IDirect3DDevice8_SetVertexShaderConstant(device, 1, vs_const, 1);
-    ok(SUCCEEDED(hr), "SetVertexShaderConstant returned %#x\n", hr);
-    hr = IDirect3DDevice8_SetPixelShaderConstant(device, 1, ps_const, 1);
-    ok(SUCCEEDED(hr), "SetPixelShaderConstant returned %#x\n", hr);
+    if (vs_version)
+    {
+        hr = IDirect3DDevice8_SetVertexShaderConstant(device, 1, vs_const, 1);
+        ok(SUCCEEDED(hr), "SetVertexShaderConstant returned %#x.\n", hr);
+    }
+    if (ps_version)
+    {
+        hr = IDirect3DDevice8_SetPixelShaderConstant(device, 1, ps_const, 1);
+        ok(SUCCEEDED(hr), "SetPixelShaderConstant returned %#x.\n", hr);
+    }
 
     hr = IDirect3DDevice8_EndStateBlock(device, &stateblock);
     ok(SUCCEEDED(hr), "EndStateBlock returned %#x\n", hr);
 
-    hr = IDirect3DDevice8_GetVertexShaderConstant(device, 0, ret, 1);
-    ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x\n", hr);
-    ok(!memcmp(ret, vs_const, sizeof(vs_const)),
-            "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-            ret[0], ret[1], ret[2], ret[3], vs_const[0], vs_const[1], vs_const[2], vs_const[3]);
-    hr = IDirect3DDevice8_GetVertexShaderConstant(device, 1, ret, 1);
-    ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x\n", hr);
-    ok(!memcmp(ret, initial, sizeof(initial)),
-            "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-            ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
-    hr = IDirect3DDevice8_GetPixelShaderConstant(device, 0, ret, 1);
-    ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x\n", hr);
-    ok(!memcmp(ret, ps_const, sizeof(ps_const)),
-            "GetPixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-            ret[0], ret[1], ret[2], ret[3], ps_const[0], ps_const[1], ps_const[2], ps_const[3]);
-    hr = IDirect3DDevice8_GetPixelShaderConstant(device, 1, ret, 1);
-    ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x\n", hr);
-    ok(!memcmp(ret, initial, sizeof(initial)),
-            "GetPixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-            ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+    if (vs_version)
+    {
+        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x.\n", hr);
+        ok(!memcmp(ret, vs_const, sizeof(vs_const)),
+                "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
+                ret[0], ret[1], ret[2], ret[3], vs_const[0], vs_const[1], vs_const[2], vs_const[3]);
+        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x.\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+    }
+    if (ps_version)
+    {
+        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x.\n", hr);
+        ok(!memcmp(ret, ps_const, sizeof(ps_const)),
+                "GetPixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
+                ret[0], ret[1], ret[2], ret[3], ps_const[0], ps_const[1], ps_const[2], ps_const[3]);
+        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x.\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "GetPixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+    }
 
+    /* Apply doesn't overwrite constants that aren't explicitly set on the source stateblock. */
     hr = IDirect3DDevice8_ApplyStateBlock(device, stateblock);
     ok(SUCCEEDED(hr), "Apply returned %#x\n", hr);
 
-    /* Apply doesn't overwrite constants that aren't explicitly set on the source stateblock. */
-    hr = IDirect3DDevice8_GetVertexShaderConstant(device, 0, ret, 1);
-    ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x\n", hr);
-    ok(!memcmp(ret, vs_const, sizeof(vs_const)),
-            "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-            ret[0], ret[1], ret[2], ret[3], vs_const[0], vs_const[1], vs_const[2], vs_const[3]);
-    hr = IDirect3DDevice8_GetVertexShaderConstant(device, 1, ret, 1);
-    ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x\n", hr);
-    ok(!memcmp(ret, vs_const, sizeof(vs_const)),
-            "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-            ret[0], ret[1], ret[2], ret[3], vs_const[0], vs_const[1], vs_const[2], vs_const[3]);
-    hr = IDirect3DDevice8_GetPixelShaderConstant(device, 0, ret, 1);
-    ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x\n", hr);
-    ok(!memcmp(ret, ps_const, sizeof(ps_const)),
-            "GetPixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-            ret[0], ret[1], ret[2], ret[3], ps_const[0], ps_const[1], ps_const[2], ps_const[3]);
-    hr = IDirect3DDevice8_GetPixelShaderConstant(device, 1, ret, 1);
-    ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x\n", hr);
-    ok(!memcmp(ret, ps_const, sizeof(ps_const)),
-            "GetPixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-            ret[0], ret[1], ret[2], ret[3], ps_const[0], ps_const[1], ps_const[2], ps_const[3]);
+    if (vs_version)
+    {
+        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x.\n", hr);
+        ok(!memcmp(ret, vs_const, sizeof(vs_const)),
+                "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
+                ret[0], ret[1], ret[2], ret[3], vs_const[0], vs_const[1], vs_const[2], vs_const[3]);
+        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x.\n", hr);
+        ok(!memcmp(ret, vs_const, sizeof(vs_const)),
+                "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
+                ret[0], ret[1], ret[2], ret[3], vs_const[0], vs_const[1], vs_const[2], vs_const[3]);
+    }
+    if (ps_version)
+    {
+        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x.\n", hr);
+        ok(!memcmp(ret, ps_const, sizeof(ps_const)),
+                "GetPixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
+                ret[0], ret[1], ret[2], ret[3], ps_const[0], ps_const[1], ps_const[2], ps_const[3]);
+        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x.\n", hr);
+        ok(!memcmp(ret, ps_const, sizeof(ps_const)),
+                "GetPixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
+                ret[0], ret[1], ret[2], ret[3], ps_const[0], ps_const[1], ps_const[2], ps_const[3]);
+    }
 
     IDirect3DDevice8_DeleteStateBlock(device, stateblock);
 }
