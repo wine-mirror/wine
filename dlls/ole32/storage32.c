@@ -451,7 +451,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
    * If it was found, construct the stream object and return a pointer to it.
    */
   if ( (foundPropertyIndex!=PROPERTY_NULL) &&
-       (currentProperty.propertyType==PROPTYPE_STREAM) )
+       (currentProperty.propertyType==STGTY_STREAM) )
   {
     newStream = StgStreamImpl_Construct(This, grfMode, foundPropertyIndex);
 
@@ -556,7 +556,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
                          &currentProperty);
 
   if ( (foundPropertyIndex!=PROPERTY_NULL) &&
-       (currentProperty.propertyType==PROPTYPE_STORAGE) )
+       (currentProperty.propertyType==STGTY_STORAGE) )
   {
     newStorage = StorageInternalImpl_Construct(
                    This->ancestorStorage,
@@ -858,7 +858,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
 
   strcpyW(newStreamProperty.name, pwcsName);
 
-  newStreamProperty.propertyType  = PROPTYPE_STREAM;
+  newStreamProperty.propertyType  = STGTY_STREAM;
   newStreamProperty.startingBlock = BLOCK_END_OF_CHAIN;
   newStreamProperty.size.u.LowPart  = 0;
   newStreamProperty.size.u.HighPart = 0;
@@ -1041,7 +1041,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
 
   strcpyW(newProperty.name, pwcsName);
 
-  newProperty.propertyType  = PROPTYPE_STORAGE;
+  newProperty.propertyType  = STGTY_STORAGE;
   newProperty.startingBlock = BLOCK_END_OF_CHAIN;
   newProperty.size.u.LowPart  = 0;
   newProperty.size.u.HighPart = 0;
@@ -1744,14 +1744,14 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
     return STG_E_FILENOTFOUND;
   }
 
-  if ( propertyToDelete.propertyType == PROPTYPE_STORAGE )
+  if ( propertyToDelete.propertyType == STGTY_STORAGE )
   {
     hr = deleteStorageProperty(
            This,
            foundPropertyIndexToDelete,
            propertyToDelete);
   }
-  else if ( propertyToDelete.propertyType == PROPTYPE_STREAM )
+  else if ( propertyToDelete.propertyType == STGTY_STREAM )
   {
     hr = deleteStreamProperty(
            This,
@@ -2269,7 +2269,7 @@ static HRESULT StorageImpl_Construct(
     MultiByteToWideChar( CP_ACP, 0, rootPropertyName, -1, rootProp.name,
                          sizeof(rootProp.name)/sizeof(WCHAR) );
     rootProp.sizeOfNameString = (strlenW(rootProp.name)+1) * sizeof(WCHAR);
-    rootProp.propertyType     = PROPTYPE_ROOT;
+    rootProp.propertyType     = STGTY_ROOT;
     rootProp.leftChild = PROPERTY_NULL;
     rootProp.rightChild     = PROPERTY_NULL;
     rootProp.dirProperty      = PROPERTY_NULL;
@@ -2295,7 +2295,7 @@ static HRESULT StorageImpl_Construct(
     if (readSuccessful)
     {
       if ( (currentProperty.sizeOfNameString != 0 ) &&
-           (currentProperty.propertyType     == PROPTYPE_ROOT) )
+           (currentProperty.propertyType     == STGTY_ROOT) )
       {
         This->base.rootPropertySetIndex = currentPropertyIndex;
       }
@@ -3054,7 +3054,7 @@ void UpdateRawDirEntry(BYTE *buffer, const StgProperty *newData)
     newData->name,
     PROPERTY_NAME_BUFFER_LEN );
 
-  memcpy(buffer + OFFSET_PS_PROPERTYTYPE, &newData->propertyType, 1);
+  memcpy(buffer + OFFSET_PS_STGTYPE, &newData->propertyType, 1);
 
   StorageUtl_WriteWord(
     buffer,
@@ -3140,7 +3140,7 @@ BOOL StorageImpl_ReadProperty(
       PROPERTY_NAME_BUFFER_LEN );
     TRACE("storage name: %s\n", debugstr_w(buffer->name));
 
-    memcpy(&buffer->propertyType, currentProperty + OFFSET_PS_PROPERTYTYPE, 1);
+    memcpy(&buffer->propertyType, currentProperty + OFFSET_PS_STGTYPE, 1);
 
     StorageUtl_ReadWord(
       currentProperty,
@@ -4074,11 +4074,11 @@ void StorageUtl_CopyPropertyToSTATSTG(
 
   switch (source->propertyType)
   {
-    case PROPTYPE_STORAGE:
-    case PROPTYPE_ROOT:
+    case STGTY_STORAGE:
+    case STGTY_ROOT:
       destination->type = STGTY_STORAGE;
       break;
-    case PROPTYPE_STREAM:
+    case STGTY_STREAM:
       destination->type = STGTY_STREAM;
       break;
     default:

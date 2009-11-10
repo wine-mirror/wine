@@ -53,7 +53,7 @@ static const ULONG OFFSET_EXTBBDEPOTCOUNT    = 0x00000048;
 static const ULONG OFFSET_BBDEPOTSTART	     = 0x0000004C;
 static const ULONG OFFSET_PS_NAME            = 0x00000000;
 static const ULONG OFFSET_PS_NAMELENGTH	     = 0x00000040;
-static const ULONG OFFSET_PS_PROPERTYTYPE    = 0x00000042;
+static const ULONG OFFSET_PS_STGTYPE         = 0x00000042;
 static const ULONG OFFSET_PS_LEFTCHILD       = 0x00000044;
 static const ULONG OFFSET_PS_RIGHTCHILD      = 0x00000048;
 static const ULONG OFFSET_PS_DIRPROP	     = 0x0000004C;
@@ -87,11 +87,9 @@ static const ULONG PROPERTY_NULL             = 0xFFFFFFFF;
 #define PROPERTY_RELATION_DIR      2
 
 /*
- * Property type constants
+ * type constant used in files for the root storage
  */
-#define PROPTYPE_STORAGE 0x01
-#define PROPTYPE_STREAM  0x02
-#define PROPTYPE_ROOT    0x05
+#define STGTY_ROOT 0x05
 
 /*
  * These defines assume a hardcoded blocksize. The code will assert
