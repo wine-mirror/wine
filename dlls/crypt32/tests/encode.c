@@ -7523,7 +7523,13 @@ static void test_encodeCertPolicyMappings(DWORD dwEncoding)
         memset(&info, 0, sizeof(info));
         ret = pCryptEncodeObjectEx(dwEncoding, mappingOids[i], &info,
          CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-        ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+        ok(ret || broken(GetLastError() == ERROR_FILE_NOT_FOUND),
+         "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+        if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND)
+        {
+            win_skip("no policy mappings support\n");
+            return;
+        }
         if (ret)
         {
             ok(size == sizeof(emptySequence), "unexpected size %d\n", size);
@@ -7582,7 +7588,13 @@ static void test_decodeCertPolicyMappings(DWORD dwEncoding)
         ret = pCryptDecodeObjectEx(dwEncoding, mappingOids[i],
          emptySequence, sizeof(emptySequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
          &info, &size);
-        ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+        ok(ret || broken(GetLastError() == ERROR_FILE_NOT_FOUND),
+         "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+        if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND)
+        {
+            win_skip("no policy mappings support\n");
+            return;
+        }
         if (ret)
         {
             ok(info->cPolicyMapping == 0,
@@ -7649,7 +7661,13 @@ static void test_encodeCertPolicyConstraints(DWORD dwEncoding)
      */
     ret = pCryptEncodeObjectEx(dwEncoding, X509_POLICY_CONSTRAINTS, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    ok(ret || broken(GetLastError() == ERROR_FILE_NOT_FOUND),
+     "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND)
+    {
+        win_skip("no policy constraints support\n");
+        return;
+    }
     if (ret)
     {
         ok(size == sizeof(emptySequence), "unexpected size %d\n", size);
@@ -7716,7 +7734,13 @@ static void test_decodeCertPolicyConstraints(DWORD dwEncoding)
     ret = pCryptDecodeObjectEx(dwEncoding, X509_POLICY_CONSTRAINTS,
      emptySequence, sizeof(emptySequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
      &info, &size);
-    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    ok(ret || broken(GetLastError() == ERROR_FILE_NOT_FOUND),
+     "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND)
+    {
+        win_skip("no policy mappings support\n");
+        return;
+    }
     if (ret)
     {
         ok(!info->fRequireExplicitPolicy,
