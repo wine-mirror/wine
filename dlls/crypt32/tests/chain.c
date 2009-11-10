@@ -2731,7 +2731,7 @@ static ChainCheck chainCheck[] = {
      { CERT_TRUST_IS_UNTRUSTED_ROOT |
        CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT, 0 },
      1, simpleStatus19 },
-   TODO_ERROR },
+   0 },
  { { sizeof(chain20) / sizeof(chain20[0]), chain20 },
    { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
        CERT_TRUST_HAS_PREFERRED_ISSUER },
@@ -2746,7 +2746,7 @@ static ChainCheck chainCheck[] = {
      { CERT_TRUST_IS_UNTRUSTED_ROOT |
        CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT, 0 },
      1, simpleStatus21 },
-   TODO_ERROR },
+   0 },
  { { sizeof(chain22) / sizeof(chain22[0]), chain22 },
    { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
        CERT_TRUST_HAS_PREFERRED_ISSUER },

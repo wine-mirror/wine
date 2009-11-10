@@ -699,7 +699,8 @@ static void CRYPT_CheckNameConstraints(
                     CRYPT_FindMatchingNameEntry(
                      &nameConstraints->rgPermittedSubtree[i].Base, subjectName,
                      trustErrorStatus,
-                     0, CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT);
+                     CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT,
+                     CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT);
                 LocalFree(subjectName);
             }
             else
@@ -711,6 +712,7 @@ static void CRYPT_CheckNameConstraints(
         {
             if (nameConstraints->cPermittedSubtree)
                 *trustErrorStatus |=
+                 CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT |
                  CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
             if (nameConstraints->cExcludedSubtree)
                 *trustErrorStatus |=
