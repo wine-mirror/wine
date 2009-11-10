@@ -3206,7 +3206,7 @@ static void test_CheckTokenMembership(void)
 {
     PTOKEN_GROUPS token_groups;
     DWORD size;
-    HANDLE token;
+    HANDLE process_token, token;
     BOOL is_member;
     BOOL ret;
     DWORD i;
@@ -3216,8 +3216,11 @@ static void test_CheckTokenMembership(void)
         win_skip("CheckTokenMembership is not available\n");
         return;
     }
-    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_DUPLICATE|TOKEN_QUERY, &process_token);
     ok(ret, "OpenProcessToken failed with error %d\n", GetLastError());
+
+    ret = DuplicateToken(process_token, SecurityImpersonation, &token);
+    ok(ret, "DuplicateToken failed with error %d\n", GetLastError());
 
     /* groups */
     ret = GetTokenInformation(token, TokenGroups, NULL, 0, &size);
@@ -3244,10 +3247,19 @@ static void test_CheckTokenMembership(void)
 
     ret = pCheckTokenMembership(token, token_groups->Groups[i].Sid, &is_member);
     ok(ret, "CheckTokenMembership failed with error %d\n", GetLastError());
-    ok(is_member, "CheckTokenMembership should have detected sid as member");
+    ok(is_member, "CheckTokenMembership should have detected sid as member\n");
+
+    ret = pCheckTokenMembership(process_token, token_groups->Groups[i].Sid, &is_member);
+todo_wine {
+    ok(!ret && GetLastError() == ERROR_NO_IMPERSONATION_TOKEN,
+        "CheckTokenMembership with process token %s with error %d\n",
+        ret ? "succeeded" : "failed", GetLastError());
+    ok(!is_member, "CheckTokenMembership should have cleared is_member\n");
+}
 
     HeapFree(GetProcessHeap(), 0, token_groups);
     CloseHandle(token);
+    CloseHandle(process_token);
 }
 
 START_TEST(security)
