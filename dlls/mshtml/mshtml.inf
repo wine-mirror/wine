@@ -272,6 +272,10 @@ HKLM,"Software\Microsoft\Internet Explorer\Default Behaviors","TIME",, "CLSID:47
 
 [FileAssoc.Reg]
 
+;; AVI
+HKCR,"MIME\Database\Content Type\video/avi","Extension",,".avi"
+HKCR,".avi","Content Type",,"video/avi"
+
 ;; BMP
 HKCR,"MIME\Database\Content Type\image/bmp","Extension",,".bmp"
 HKCR,"MIME\Database\Content Type\image/bmp","Image Filter CLSID",,"%CLSID_IImageDecodeFilter%"
@@ -284,6 +288,14 @@ HKCR,".css","Content Type",,"text/css"
 
 ;; DIB
 HKCR,".dib","Content Type",,"image/bmp"
+
+;; DLL
+HKCR,".dll","Content Type",,"application/x-msdownload"
+HKCR,".dll",,,"dllfile"
+
+;; EXE
+HKCR,".exe","Content Type",,"application/x-msdownload"
+HKCR,".exe",,,"exefile"
 
 ;; GIF
 HKCR,"MIME\Database\Content Type\image/gif","CLSID",,"%CLSID_HTMLDocument%"
@@ -321,6 +333,10 @@ HKCR,"htmlfile\CLSID",,,"%CLSID_HTMLDocument%"
 HKCR,"htmlfile_FullWindowEmbed",,,"HTML Plugin Document"
 HKCR,"htmlfile_FullWindowEmbed\BrowseInPlace",,,""
 HKCR,"htmlfile_FullWindowEmbed\CLSID",,,"%CLSID_HTMLPluginDocument%"
+HKCR,".htm",,,"htmlfile"
+HKCR,".htm","Content Type",,"text/html"
+HKCR,".html",,,"htmlfile"
+HKCR,".html","Content Type",,"text/html"
 
 ;; ICO
 HKCR,"MIME\Database\Content Type\image/x-icon","CLSID",,"%CLSID_HTMLDocument%"
@@ -403,11 +419,20 @@ HKCR,"pngfile\shell\open\ddeexec",,,"""file:%%1"",,-1,,,,,"
 HKCR,"pngfile\shell\open\ddeexec\Topic",,,"WWW_OpenURL"
 ;; HKCR,"pngfile\DefaultIcon",,,"%IEXPLORE%,9"
 
+;; TIFF
+HKCR,"MIME\Database\Content Type\image/tiff","Extension",,".tiff"
+HKCR,".tif","Content Type",,"image/tiff"
+HKCR,".tiff","Content Type",,"image/tiff"
+
 ;; TXT
 HKCR,"MIME\Database\Content Type\text/plain","CLSID",,"%CLSID_HTMLDocument%"
 HKCR,"MIME\Database\Content Type\text/plain","Extension",,".txt"
 HKCR,"MIME\Database\Content Type\text/plain","Encoding",1,07,00,00,00
+HKCR,".txt",,,"txtfile"
 HKCR,".txt","Content Type",,"text/plain"
+
+;; WAV
+HKCR,".wav","Content Type",,"audio/wav"
 
 ;; XBM
 HKCR,"MIME\Database\Content Type\image/xbm","Extension",,".xbm"
@@ -420,3 +445,9 @@ HKCR,"xbmfile\shell\open\ddeexec",,,"""file:%%1"",,-1,,,,,"
 ;; HKCR,"xbmfile\shell\open\ddeexec\Application",,,"IExplore"
 HKCR,"xbmfile\shell\open\ddeexec\Topic",,,"WWW_OpenURL"
 ;; HKCR,"xbmfile\DefaultIcon",,,"%IEXPLORE%,9"
+
+;; XML
+HKCR,".xml",,,"xmlfile"
+HKCR,".xml","Content Type",,"text/xml"
+HKCR,".xsl",,,"xslfile"
+HKCR,".xsl","Content Type",,"text/xml"
