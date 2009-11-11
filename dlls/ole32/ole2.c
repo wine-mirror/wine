@@ -1140,8 +1140,8 @@ HRESULT WINAPI OleLockRunning(LPUNKNOWN pUnknown, BOOL fLock, BOOL fLastUnlockCl
 
     return hres;
   }
-  else
-    return E_INVALIDARG;
+
+  return S_OK;
 }
 
 
