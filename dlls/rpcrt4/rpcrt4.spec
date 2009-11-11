@@ -341,10 +341,10 @@
 @ stdcall RpcBindingFree(ptr)
 @ stdcall RpcBindingFromStringBindingA(str  ptr)
 @ stdcall RpcBindingFromStringBindingW(wstr ptr)
-@ stub RpcBindingInqAuthClientA
-@ stub RpcBindingInqAuthClientExA
-@ stub RpcBindingInqAuthClientExW
-@ stub RpcBindingInqAuthClientW
+@ stdcall RpcBindingInqAuthClientA(ptr ptr ptr ptr ptr ptr)
+@ stdcall RpcBindingInqAuthClientExA(ptr ptr ptr ptr ptr ptr long)
+@ stdcall RpcBindingInqAuthClientExW(ptr ptr ptr ptr ptr ptr long)
+@ stdcall RpcBindingInqAuthClientW(ptr ptr ptr ptr ptr ptr)
 @ stdcall RpcBindingInqAuthInfoA(ptr ptr ptr ptr ptr ptr)
 @ stdcall RpcBindingInqAuthInfoExA(ptr ptr ptr ptr ptr ptr long ptr)
 @ stdcall RpcBindingInqAuthInfoExW(ptr ptr ptr ptr ptr ptr long ptr)

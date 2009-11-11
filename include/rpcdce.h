@@ -509,6 +509,28 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
                           ULONG *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, ULONG *AuthzSvc );
 #define RpcBindingInqAuthInfo WINELIB_NAME_AW(RpcBindingInqAuthInfo)
 
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingInqAuthClientA( RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE *Privs,
+                            RPC_CSTR *ServerPrincName, ULONG *AuthnLevel, ULONG *AuthnSvc,
+                            ULONG *AuthzSvc );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingInqAuthClientW( RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE *Privs,
+                            RPC_WSTR *ServerPrincName, ULONG *AuthnLevel, ULONG *AuthnSvc,
+                            ULONG *AuthzSvc );
+#define RpcBindingInqAuthClient WINELIB_NAME_AW(RpcBindingInqAuthClient)
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingInqAuthClientExA( RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE *Privs,
+                              RPC_CSTR *ServerPrincName, ULONG *AuthnLevel, ULONG *AuthnSvc,
+                              ULONG *AuthzSvc, ULONG Flags );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingInqAuthClientExW( RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE *Privs,
+                              RPC_WSTR *ServerPrincName, ULONG *AuthnLevel, ULONG *AuthnSvc,
+                              ULONG *AuthzSvc, ULONG Flags );
+#define RpcBindingInqAuthClientEx WINELIB_NAME_AW(RpcBindingInqAuthClientEx)
+
 RPCRTAPI RPC_STATUS RPC_ENTRY RpcCancelThread(void*);
 RPCRTAPI RPC_STATUS RPC_ENTRY RpcCancelThreadEx(void*,LONG);
 

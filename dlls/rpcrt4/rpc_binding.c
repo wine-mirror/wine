@@ -1493,6 +1493,90 @@ RpcBindingInqAuthInfoW( RPC_BINDING_HANDLE Binding, RPC_WSTR *ServerPrincName, U
 }
 
 /***********************************************************************
+ *             RpcBindingInqAuthClientA (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcBindingInqAuthClientA( RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE *Privs,
+                          RPC_CSTR *ServerPrincName, ULONG *AuthnLevel, ULONG *AuthnSvc,
+                          ULONG *AuthzSvc )
+{
+    return RpcBindingInqAuthClientExA(ClientBinding, Privs, ServerPrincName, AuthnLevel,
+                                      AuthnSvc, AuthzSvc, 0);
+}
+
+/***********************************************************************
+ *             RpcBindingInqAuthClientW (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcBindingInqAuthClientW( RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE *Privs,
+                          RPC_WSTR *ServerPrincName, ULONG *AuthnLevel, ULONG *AuthnSvc,
+                          ULONG *AuthzSvc )
+{
+    return RpcBindingInqAuthClientExW(ClientBinding, Privs, ServerPrincName, AuthnLevel,
+                                      AuthnSvc, AuthzSvc, 0);
+}
+
+/***********************************************************************
+ *             RpcBindingInqAuthClientExA (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcBindingInqAuthClientExA( RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE *Privs,
+                            RPC_CSTR *ServerPrincName, ULONG *AuthnLevel, ULONG *AuthnSvc,
+                            ULONG *AuthzSvc, ULONG Flags )
+{
+    RPC_STATUS status;
+    RPC_WSTR principal;
+
+    TRACE("%p %p %p %p %p %p 0x%x\n", ClientBinding, Privs, ServerPrincName, AuthnLevel,
+          AuthnSvc, AuthzSvc, Flags);
+
+    status = RpcBindingInqAuthClientExW(ClientBinding, Privs, ServerPrincName ? &principal : NULL,
+                                        AuthnLevel, AuthnSvc, AuthzSvc, Flags);
+    if (status == RPC_S_OK && ServerPrincName)
+    {
+        *ServerPrincName = (RPC_CSTR)RPCRT4_strdupWtoA(principal);
+        RpcStringFreeW(&principal);
+        if (!*ServerPrincName) return ERROR_OUTOFMEMORY;
+    }
+
+    return status;
+}
+
+/***********************************************************************
+ *             RpcBindingInqAuthClientExW (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcBindingInqAuthClientExW( RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE *Privs,
+                            RPC_WSTR *ServerPrincName, ULONG *AuthnLevel, ULONG *AuthnSvc,
+                            ULONG *AuthzSvc, ULONG Flags )
+{
+    RpcBinding *bind = ClientBinding;
+
+    TRACE("%p %p %p %p %p %p 0x%x\n", ClientBinding, Privs, ServerPrincName, AuthnLevel,
+          AuthnSvc, AuthzSvc, Flags);
+
+    if (!bind->AuthInfo) return RPC_S_BINDING_HAS_NO_AUTH;
+
+    if (Privs) *Privs = (RPC_AUTHZ_HANDLE)bind->AuthInfo->identity;
+    if (ServerPrincName)
+    {
+        *ServerPrincName = RPCRT4_strdupW(bind->AuthInfo->server_principal_name);
+        if (!*ServerPrincName) return ERROR_OUTOFMEMORY;
+    }
+    if (AuthnLevel) *AuthnLevel = bind->AuthInfo->AuthnLevel;
+    if (AuthnSvc) *AuthnSvc = bind->AuthInfo->AuthnSvc;
+    if (AuthzSvc)
+    {
+        FIXME("authorization service not implemented\n");
+        *AuthzSvc = RPC_C_AUTHZ_NONE;
+    }
+    if (Flags)
+        FIXME("flags 0x%x not implemented\n", Flags);
+
+    return RPC_S_OK;
+}
+
+/***********************************************************************
  *             RpcBindingSetAuthInfoExA (RPCRT4.@)
  */
 RPCRTAPI RPC_STATUS RPC_ENTRY
