@@ -2547,6 +2547,15 @@ static const CERT_TRUST_STATUS elementStatus27[] = {
 static const SimpleChainStatusCheck simpleStatus27[] = {
  { sizeof(elementStatus27) / sizeof(elementStatus27[0]), elementStatus27 },
 };
+static const CERT_TRUST_STATUS elementStatus27Broken[] = {
+ { CERT_TRUST_NO_ERROR, CERT_TRUST_HAS_NAME_MATCH_ISSUER },
+ { CERT_TRUST_IS_UNTRUSTED_ROOT,
+   CERT_TRUST_IS_SELF_SIGNED | CERT_TRUST_HAS_NAME_MATCH_ISSUER },
+};
+static const SimpleChainStatusCheck simpleStatus27Broken[] = {
+ { sizeof(elementStatus27Broken) / sizeof(elementStatus27Broken[0]),
+   elementStatus27Broken },
+};
 static CONST_DATA_BLOB chain28[] = {
  { sizeof(chain28_0), chain28_0 },
  { sizeof(chain28_1), chain28_1 },
@@ -2797,13 +2806,7 @@ static ChainCheck chainCheck[] = {
        CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT, 0 },
      1, simpleStatus26 },
    0 },
- { { sizeof(chain27) / sizeof(chain27[0]), chain27 },
-   { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
-       CERT_TRUST_HAS_PREFERRED_ISSUER },
-     { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_INVALID_NAME_CONSTRAINTS |
-       CERT_TRUST_INVALID_EXTENSION, 0 },
-     1, simpleStatus27 },
-   0 },
+ /* chain27 is handled separately elsewhere */
  { { sizeof(chain28) / sizeof(chain28[0]), chain28 },
    { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_IS_NOT_VALID_FOR_USAGE |
        CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT |
@@ -2851,6 +2854,29 @@ static ChainCheck chainCheckNoStore[] = {
      1, simpleStatus8NoStore },
    0 },
 };
+
+/* Chain27 checks a certificate with a subject alternate name containing an
+ * embedded NULL.  Newer crypt32 versions fail to decode such alternate names,
+ * correctly prohibiting them.  Older crypt32 versions do not.  Rather than
+ * ignoring the expected error bits, check each version separately depending
+ * on the chain's error status.
+ */
+static ChainCheck chainCheckEmbeddedNull = {
+ { sizeof(chain27) / sizeof(chain27[0]), chain27 },
+ { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
+     CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_INVALID_NAME_CONSTRAINTS |
+     CERT_TRUST_INVALID_EXTENSION, 0 },
+   1, simpleStatus27 },
+ 0 };
+static ChainCheck chainCheckEmbeddedNullBroken = {
+ { sizeof(chain27) / sizeof(chain27[0]), chain27 },
+ { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_IS_NOT_VALID_FOR_USAGE |
+     CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT,
+     CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 },
+   1, simpleStatus27Broken },
+ 0 };
 
 /* Wednesday, Oct 1, 2007 */
 static SYSTEMTIME oct2007 = { 2007, 10, 1, 1, 0, 0, 0, 0 };
@@ -2945,6 +2971,19 @@ static void testGetCertChain(void)
              chainCheckNoStore[i].todo, i);
             pCertFreeCertificateChain(chain);
         }
+    }
+    chain = getChain(&chainCheckEmbeddedNull.certs, 0, TRUE, &oct2007,
+     chainCheckEmbeddedNull.todo, 0);
+    if (chain)
+    {
+        if (chainCheckEmbeddedNull.status.status.dwErrorStatus ==
+         chain->TrustStatus.dwErrorStatus)
+            checkChainStatus(chain, &chainCheckEmbeddedNull.status,
+             chainCheckEmbeddedNull.todo, 0);
+        else
+            checkChainStatus(chain, &chainCheckEmbeddedNullBroken.status,
+             chainCheckEmbeddedNullBroken.todo, 0);
+        pCertFreeCertificateChain(chain);
     }
 }
 
