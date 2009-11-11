@@ -108,6 +108,11 @@ typedef I_RPC_HANDLE *RPC_EP_INQ_HANDLE;
 #define RPC_C_LISTEN_MAX_CALLS_DEFAULT 1234
 #define RPC_C_PROTSEQ_MAX_REQS_DEFAULT 10
 
+#define RPC_PROTSEQ_TCP     0x1
+#define RPC_PROTSEQ_NMP     0x2
+#define RPC_PROTSEQ_LRPC    0x3
+#define RPC_PROTSEQ_HTTP    0x4
+
 /* RPC_POLICY EndpointFlags */
 #define RPC_C_BIND_TO_ALL_NICS          0x1
 #define RPC_C_USE_INTERNET_PORT         0x1
