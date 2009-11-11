@@ -59,6 +59,16 @@
 
 #define DDE_TEST_NUMMASK           0x0000ffff
 
+static BOOL (WINAPI *pSHGetSpecialFolderPathA)(HWND, LPSTR, int, BOOL);
+
+static void init_function_pointers(void)
+{
+    HMODULE hmod;
+
+    hmod = GetModuleHandleA("shell32.dll");
+    pSHGetSpecialFolderPathA = (void*)GetProcAddress(hmod, "SHGetSpecialFolderPathA");
+}
+
 static HDDEDATA CALLBACK DdeCallback(UINT type, UINT format, HCONV hConv, HSZ hsz1, HSZ hsz2,
                                      HDDEDATA hDDEData, ULONG_PTR data1, ULONG_PTR data2)
 {
@@ -233,6 +243,9 @@ static void CheckFileExistsInProgramGroups(const char *nameToCheck, int shouldEx
     DWORD attributes;
     int len;
 
+    if (!pSHGetSpecialFolderPathA)
+        return;
+
     path = HeapAlloc(GetProcessHeap(), 0, MAX_PATH);
     if (path != NULL)
     {
@@ -243,13 +256,13 @@ static void CheckFileExistsInProgramGroups(const char *nameToCheck, int shouldEx
         if (testParams & DDE_TEST_COMMON)
         {
             specialFolder = CSIDL_COMMON_PROGRAMS;
-            err = SHGetSpecialFolderPath(NULL, path, specialFolder, FALSE);
+            err = pSHGetSpecialFolderPathA(NULL, path, specialFolder, FALSE);
             /* Win 9x fails, use CSIDL_PROGRAMS (err == FALSE) */
         }
         if (err == FALSE)
         {
             specialFolder = CSIDL_PROGRAMS;
-            err = SHGetSpecialFolderPath(NULL, path, specialFolder, FALSE);
+            err = pSHGetSpecialFolderPathA(NULL, path, specialFolder, FALSE);
         }
         len = strlen(path) + strlen(nameToCheck)+1;
         if (groupName != NULL)
@@ -525,6 +538,12 @@ START_TEST(progman_dde)
     HSZ hszProgman;
     HCONV hConv;
     int testnum;
+
+    init_function_pointers();
+
+    /* Only report this once */
+    if (!pSHGetSpecialFolderPathA)
+        win_skip("SHGetSpecialFolderPathA is not available\n");
 
     /* Initialize DDE Instance */
     err = DdeInitialize(&instance, DdeCallback, APPCMD_CLIENTONLY, 0);
