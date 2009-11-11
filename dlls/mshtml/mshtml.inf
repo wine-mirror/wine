@@ -273,6 +273,7 @@ HKLM,"Software\Microsoft\Internet Explorer\Default Behaviors","TIME",, "CLSID:47
 [FileAssoc.Reg]
 
 ;; AVI
+HKCR,"MIME\Database\Content Type\video/avi","CLSID",,"{CD3AFA88-B84F-48F0-9393-7EDC34128127}"
 HKCR,"MIME\Database\Content Type\video/avi","Extension",,".avi"
 HKCR,".avi","Content Type",,"video/avi"
 
@@ -311,6 +312,10 @@ HKCR,"giffile\shell\open\ddeexec",,,"""file:%%1"",,-1,,,,,"
 ;; HKCR,"giffile\shell\open\ddeexec\Application",,,"IExplore"
 HKCR,"giffile\shell\open\ddeexec\Topic",,,"WWW_OpenURL"
 ;; HKCR,"giffile\DefaultIcon",,,"%IEXPLORE%,9"
+
+;; GZIP
+HKCR,"MIME\Database\Content Type\application/x-gzip","Extension",,".gz"
+HKCR,".gz","Content Type",,"application/x-gzip"
 
 ;; HTC
 HKCR,"MIME\Database\Content Type\text/x-component","CLSID",,"%CLSID_CHtmlComponentConstructor%"
@@ -391,6 +396,18 @@ HKCR,"mhtmlfile",,,"MHTML Document"
 HKCR,"mhtmlfile\BrowseInPlace",,,""
 HKCR,"mhtmlfile\CLSID",,,"%CLSID_MHTMLDocument%"
 
+;; MPEG
+HKCR,"MIME\Database\Content Type\audio/mpeg","CLSID",,"{CD3AFA76-B84F-48F0-9393-7EDC34128127}"
+HKCR,"MIME\Database\Content Type\audio/mpeg","Extension",,".mp3"
+HKCR,"MIME\Database\Content Type\audio/mpg","CLSID",,"{CD3AFA76-B84F-48F0-9393-7EDC34128127}"
+HKCR,"MIME\Database\Content Type\audio/mpg","Extension",,".mp3"
+HKCR,"MIME\Database\Content Type\video/mpeg","CLSID",,"{CD3AFA89-B84F-48F0-9393-7EDC34128127}"
+HKCR,"MIME\Database\Content Type\video/mpeg","Extension",,".mpeg"
+HKCR,".mp3","Content Type",,"audio/mpeg"
+HKCR,".mpe","Content Type",,"video/mpeg"
+HKCR,".mpeg","Content Type",,"video/mpeg"
+HKCR,".mpg","Content Type",,"video/mpeg"
+
 ;; PJPG
 HKCR,"MIME\Database\Content Type\image/pjpeg","CLSID",,"%CLSID_HTMLDocument%"
 HKCR,"MIME\Database\Content Type\image/pjpeg","Extension",,".jpg"
@@ -419,6 +436,20 @@ HKCR,"pngfile\shell\open\ddeexec",,,"""file:%%1"",,-1,,,,,"
 HKCR,"pngfile\shell\open\ddeexec\Topic",,,"WWW_OpenURL"
 ;; HKCR,"pngfile\DefaultIcon",,,"%IEXPLORE%,9"
 
+;; PS
+HKCR,"MIME\Database\Content Type\application/postscript","Extension",,".ps"
+HKCR,".ai","Content Type",,"application/postscript"
+HKCR,".eps","Content Type",,"application/postscript"
+HKCR,".ps","Content Type",,"application/postscript"
+
+;; TAR
+HKCR,"MIME\Database\Content Type\application/x-tar","Extension",,".tar"
+HKCR,".tar","Content Type",,"application/x-tar"
+
+;; TGZ
+HKCR,"MIME\Database\Content Type\application/x-compressed","Extension",,".tgz"
+HKCR,".tgz","Content Type",,"application/x-compressed"
+
 ;; TIFF
 HKCR,"MIME\Database\Content Type\image/tiff","Extension",,".tiff"
 HKCR,".tif","Content Type",,"image/tiff"
@@ -432,6 +463,8 @@ HKCR,".txt",,,"txtfile"
 HKCR,".txt","Content Type",,"text/plain"
 
 ;; WAV
+HKCR,"MIME\Database\Content Type\audio/wav","CLSID",,"{CD3AFA7B-B84F-48F0-9393-7EDC34128127}"
+HKCR,"MIME\Database\Content Type\audio/wav","Extension",,".wav"
 HKCR,".wav","Content Type",,"audio/wav"
 
 ;; XBM
@@ -447,7 +480,17 @@ HKCR,"xbmfile\shell\open\ddeexec\Topic",,,"WWW_OpenURL"
 ;; HKCR,"xbmfile\DefaultIcon",,,"%IEXPLORE%,9"
 
 ;; XML
+HKCR,"MIME\Database\Content Type\application/xml","CLSID",,"{48123BC4-99D9-11D1-A6B3-00C04FD91555}"
+HKCR,"MIME\Database\Content Type\application/xml","Extension",,".xml"
+HKCR,"MIME\Database\Content Type\application/xml","Encoding",1,08,00,00,00
+HKCR,"MIME\Database\Content Type\text/xml","CLSID",,"{48123BC4-99D9-11D1-A6B3-00C04FD91555}"
+HKCR,"MIME\Database\Content Type\text/xml","Extension",,".xml"
+HKCR,"MIME\Database\Content Type\text/xml","Encoding",1,08,00,00,00
 HKCR,".xml",,,"xmlfile"
 HKCR,".xml","Content Type",,"text/xml"
 HKCR,".xsl",,,"xslfile"
 HKCR,".xsl","Content Type",,"text/xml"
+
+;; ZIP
+HKCR,"MIME\Database\Content Type\application/x-zip-compressed","Extension",,".zip"
+HKCR,".zip","Content Type",,"application/x-zip-compressed"
