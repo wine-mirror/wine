@@ -476,11 +476,13 @@ static void set_focus( Display *display, HWND hwnd, Time time )
 {
     HWND focus;
     Window win;
+    GUITHREADINFO threadinfo;
 
     TRACE( "setting foreground window to %p\n", hwnd );
     SetForegroundWindow( hwnd );
 
-    focus = GetFocus();
+    GetGUIThreadInfo(0, &threadinfo);
+    focus = threadinfo.hwndFocus;
     if (focus) focus = GetAncestor( focus, GA_ROOT );
     win = X11DRV_get_whole_window(focus);
 
