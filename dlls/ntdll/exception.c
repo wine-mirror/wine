@@ -248,30 +248,6 @@ ULONG WINAPI RtlRemoveVectoredExceptionHandler( PVOID handler )
 }
 
 
-/*************************************************************************
- * RtlCaptureStackBackTrace   [NTDLL.@]
- *
- * Captures stack backtrace
- *
- * PARAMS
- *  Skip   [I] Number of stack frames to skip before starting a capture
- *  Count  [I] Number of stack frames to capture into Buffer
- *  Buffer [O] Array of backtrace pointers captured from stack
- *  Hash   [O] Optional pointer to variable where backtrace hash should be stored
- *
- * RETURNS
- *  Number of captured stack frames or 0 if error occurred
- *
- * NOTES
- *   Unimplemented
- */
-USHORT WINAPI RtlCaptureStackBackTrace(ULONG Skip, ULONG Count, PVOID *Buffer, ULONG *Hash)
-{
-    FIXME("(%d, %d, %p, %p) stub!\n", Skip, Count, Buffer, Hash);
-    return 0;
-}
-
-
 /*************************************************************
  *            __wine_spec_unimplemented_stub
  *

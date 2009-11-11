@@ -1086,6 +1086,15 @@ void WINAPI RtlRaiseException( EXCEPTION_RECORD *rec )
     if (status) raise_status( status, rec );
 }
 
+/*************************************************************************
+ *		RtlCaptureStackBackTrace (NTDLL.@)
+ */
+USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, ULONG *hash )
+{
+    FIXME( "(%d, %d, %p, %p) stub!\n", skip, count, buffer, hash );
+    return 0;
+}
+
 /***********************************************************************
  *           call_thread_entry_point
  */

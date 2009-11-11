@@ -2882,6 +2882,16 @@ void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 DEFINE_REGS_ENTRYPOINT( RtlRaiseException, 1 )
 
 
+/*************************************************************************
+ *		RtlCaptureStackBackTrace (NTDLL.@)
+ */
+USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, ULONG *hash )
+{
+    FIXME( "(%d, %d, %p, %p) stub!\n", skip, count, buffer, hash );
+    return 0;
+}
+
+
 /***********************************************************************
  *           call_thread_func
  */
