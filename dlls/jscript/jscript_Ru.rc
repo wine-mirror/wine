@@ -44,6 +44,7 @@ STRINGTABLE DISCARDABLE
     IDS_NOT_BOOL            "Ожидается объект типа 'bool'"
     IDS_JSCRIPT_EXPECTED    "Ожидается объект типа 'JScript'"
     IDS_REGEXP_SYNTAX_ERROR "Синтаксическая ошибка в регулярном выражении"
+    IDS_URI_INVALID_CHAR    "URI содержит неверные символы"
     IDS_INVALID_LENGTH      "Длиной массива должно быть конечное положительное число"
     IDS_ARRAY_EXPECTED      "Ожидается объект типа 'Array'"
 }
