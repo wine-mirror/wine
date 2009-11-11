@@ -2285,8 +2285,30 @@ DEFINE_REGS_ENTRYPOINT( RtlRaiseException, 1 )
  */
 USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, ULONG *hash )
 {
-    FIXME( "(%d, %d, %p, %p) stub!\n", skip, count, buffer, hash );
-    return 0;
+    CONTEXT context;
+    ULONG i;
+    ULONG *frame;
+
+    RtlCaptureContext( &context );
+    if (hash) *hash = 0;
+    frame = (ULONG *)context.Ebp;
+
+    while (skip--)
+    {
+        if (((void *)frame < NtCurrentTeb()->Tib.StackLimit) ||
+            ((void *)(frame + 1) >= NtCurrentTeb()->Tib.StackBase)) return 0;
+        frame = (ULONG *)*frame;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        if (((void *)frame < NtCurrentTeb()->Tib.StackLimit) ||
+            ((void *)(frame + 1) >= NtCurrentTeb()->Tib.StackBase)) break;
+        buffer[i] = (void *)frame[1];
+        if (hash) *hash += frame[1];
+        frame = (ULONG *)*frame;
+    }
+    return i;
 }
 
 
