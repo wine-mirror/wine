@@ -54,6 +54,7 @@ typedef DWORD DBHASHVALUE;
 #include "dbprop.idl"
 #include "dbinit.idl"
 #include "dbdsad.idl"
+#include "asynot.idl"
 #include "sesprp.idl"
 #include "opnrst.idl"
 #include "row.idl"

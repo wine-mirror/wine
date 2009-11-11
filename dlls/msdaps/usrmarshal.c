@@ -773,3 +773,47 @@ HRESULT __RPC_STUB ICommandText_SetCommandText_Stub(ICommandText* This, REFGUID 
 
     return hr;
 }
+
+HRESULT CALLBACK IDBAsynchNotify_OnLowResource_Proxy(IDBAsynchNotify* This, DB_DWRESERVE dwReserved)
+{
+    FIXME("(%p)->(%08x): stub\n", This, dwReserved);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IDBAsynchNotify_OnLowResource_Stub(IDBAsynchNotify* This, DB_DWRESERVE dwReserved)
+{
+    FIXME("(%p)->(%08x): stub\n", This, dwReserved);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IDBAsynchNotify_OnProgress_Proxy(IDBAsynchNotify* This, HCHAPTER hChapter, DBASYNCHOP eOperation,
+                                                  DBCOUNTITEM ulProgress, DBCOUNTITEM ulProgressMax, DBASYNCHPHASE eAsynchPhase,
+                                                  LPOLESTR pwszStatusText)
+{
+    FIXME("(%p)->(%lx, %d, %d, %d, %d, %s): stub\n", This, hChapter, eOperation, ulProgress, ulProgressMax,
+          eAsynchPhase, debugstr_w(pwszStatusText));
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IDBAsynchNotify_OnProgress_Stub(IDBAsynchNotify* This, HCHAPTER hChapter, DBASYNCHOP eOperation,
+                                                   DBCOUNTITEM ulProgress, DBCOUNTITEM ulProgressMax, DBASYNCHPHASE eAsynchPhase,
+                                                   LPOLESTR pwszStatusText)
+{
+    FIXME("(%p)->(%lx, %d, %d, %d, %d, %s): stub\n", This, hChapter, eOperation, ulProgress, ulProgressMax,
+          eAsynchPhase, debugstr_w(pwszStatusText));
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IDBAsynchNotify_OnStop_Proxy(IDBAsynchNotify* This, HCHAPTER hChapter, DBASYNCHOP eOperation,
+                                              HRESULT hrStatus, LPOLESTR pwszStatusText)
+{
+    FIXME("(%p)->(%lx, %d, %08x, %s): stub\n", This, hChapter, eOperation, hrStatus, debugstr_w(pwszStatusText));
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IDBAsynchNotify_OnStop_Stub(IDBAsynchNotify* This, HCHAPTER hChapter, DBASYNCHOP eOperation,
+                                               HRESULT hrStatus, LPOLESTR pwszStatusText)
+{
+    FIXME("(%p)->(%lx, %d, %08x, %s): stub\n", This, hChapter, eOperation, hrStatus, debugstr_w(pwszStatusText));
+    return E_NOTIMPL;
+}
