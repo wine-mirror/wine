@@ -77,7 +77,7 @@ static const ULONG DIRENTRY_NULL             = 0xFFFFFFFF;
 #define DIRENTRY_NAME_MAX_LEN    0x20
 #define DIRENTRY_NAME_BUFFER_LEN 0x40
 
-#define PROPSET_BLOCK_SIZE 0x00000080
+#define RAW_DIRENTRY_SIZE 0x00000080
 
 /*
  * Property type of relation

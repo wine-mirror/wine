@@ -1099,7 +1099,7 @@ static HRESULT createDirEntry(
   ULONG       currentPropertyIndex = 0;
   ULONG       newPropertyIndex     = DIRENTRY_NULL;
   HRESULT hr = S_OK;
-  BYTE currentData[PROPSET_BLOCK_SIZE];
+  BYTE currentData[RAW_DIRENTRY_SIZE];
   WORD sizeOfNameString;
 
   do
@@ -1139,7 +1139,7 @@ static HRESULT createDirEntry(
    */
   if (FAILED(hr))
   {
-    BYTE           emptyData[PROPSET_BLOCK_SIZE];
+    BYTE           emptyData[RAW_DIRENTRY_SIZE];
     ULARGE_INTEGER newSize;
     ULONG          propertyIndex;
     ULONG          lastProperty  = 0;
@@ -1166,12 +1166,12 @@ static HRESULT createDirEntry(
      * memset the empty property in order to initialize the unused newly
      * created property
      */
-    memset(&emptyData, 0, PROPSET_BLOCK_SIZE);
+    memset(&emptyData, 0, RAW_DIRENTRY_SIZE);
 
     /*
      * initialize them
      */
-    lastProperty = storage->bigBlockSize / PROPSET_BLOCK_SIZE * blockCount;
+    lastProperty = storage->bigBlockSize / RAW_DIRENTRY_SIZE * blockCount;
 
     for(
       propertyIndex = newPropertyIndex + 1;
@@ -1206,9 +1206,9 @@ static HRESULT destroyDirEntry(
   ULONG index)
 {
   HRESULT hr;
-  BYTE emptyData[PROPSET_BLOCK_SIZE];
+  BYTE emptyData[RAW_DIRENTRY_SIZE];
 
-  memset(&emptyData, 0, PROPSET_BLOCK_SIZE);
+  memset(&emptyData, 0, RAW_DIRENTRY_SIZE);
 
   hr = StorageImpl_WriteRawDirEntry(storage, index, emptyData);
 
@@ -3000,12 +3000,12 @@ HRESULT StorageImpl_ReadRawDirEntry(StorageImpl *This, ULONG index, BYTE *buffer
   ULONG bytesRead;
 
   offset.u.HighPart = 0;
-  offset.u.LowPart  = index * PROPSET_BLOCK_SIZE;
+  offset.u.LowPart  = index * RAW_DIRENTRY_SIZE;
 
   hr = BlockChainStream_ReadAt(
                     This->rootBlockChain,
                     offset,
-                    PROPSET_BLOCK_SIZE,
+                    RAW_DIRENTRY_SIZE,
                     buffer,
                     &bytesRead);
 
@@ -3026,12 +3026,12 @@ HRESULT StorageImpl_WriteRawDirEntry(StorageImpl *This, ULONG index, const BYTE 
   ULONG bytesRead;
 
   offset.u.HighPart = 0;
-  offset.u.LowPart  = index * PROPSET_BLOCK_SIZE;
+  offset.u.LowPart  = index * RAW_DIRENTRY_SIZE;
 
   hr = BlockChainStream_WriteAt(
                     This->rootBlockChain,
                     offset,
-                    PROPSET_BLOCK_SIZE,
+                    RAW_DIRENTRY_SIZE,
                     buffer,
                     &bytesRead);
 
@@ -3047,7 +3047,7 @@ HRESULT StorageImpl_WriteRawDirEntry(StorageImpl *This, ULONG index, const BYTE 
  */
 void UpdateRawDirEntry(BYTE *buffer, const DirEntry *newData)
 {
-  memset(buffer, 0, PROPSET_BLOCK_SIZE);
+  memset(buffer, 0, RAW_DIRENTRY_SIZE);
 
   memcpy(
     buffer + OFFSET_PS_NAME,
@@ -3122,7 +3122,7 @@ BOOL StorageImpl_ReadDirEntry(
   ULONG          index,
   DirEntry*      buffer)
 {
-  BYTE           currentProperty[PROPSET_BLOCK_SIZE];
+  BYTE           currentProperty[RAW_DIRENTRY_SIZE];
   HRESULT        readRes;
 
   readRes = StorageImpl_ReadRawDirEntry(This, index, currentProperty);
@@ -3211,7 +3211,7 @@ BOOL StorageImpl_WriteDirEntry(
   ULONG                 index,
   const DirEntry*       buffer)
 {
-  BYTE           currentProperty[PROPSET_BLOCK_SIZE];
+  BYTE           currentProperty[RAW_DIRENTRY_SIZE];
   HRESULT        writeRes;
 
   UpdateRawDirEntry(currentProperty, buffer);
