@@ -827,4 +827,13 @@ typedef union switch(DWORD tyspec)
         } ByObjectId;
 } uCLSSPEC;
 
+cpp_quote("#ifndef PROPERTYKEY_DEFINED")
+cpp_quote("#define PROPERTYKEY_DEFINED")
+typedef struct _tagpropertykey
+{
+    GUID fmtid;
+    DWORD pid;
+} PROPERTYKEY;
+cpp_quote("#endif /*PROPERTYKEY_DEFINED*/")
+
 } /* interface IWinTypes */
