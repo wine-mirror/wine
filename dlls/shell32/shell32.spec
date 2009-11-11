@@ -58,7 +58,7 @@
   60 stdcall -noname ExitWindowsDialog(long)
   61 stdcall -noname RunFileDlg(long long long str str long) RunFileDlgAW
   62 stdcall -noname PickIconDlg(long long long long)
-  63 stdcall -noname GetFileNameFromBrowse(long long long long str str str)
+  63 stdcall -noname GetFileNameFromBrowse(long long long long str str str) GetFileNameFromBrowseAW
   64 stdcall -noname DriveType(long)
   65 stdcall -noname InvalidateDriveType(long)
   66 stdcall -noname IsNetDrive(long)

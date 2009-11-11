@@ -167,10 +167,9 @@ DWORD WINAPI ParseFieldAW(LPCVOID src, DWORD nField, LPVOID dst, DWORD len)
 }
 
 /*************************************************************************
- * GetFileNameFromBrowse			[SHELL32.63]
- *
+ * GetFileNameFromBrowseA			[internal]
  */
-BOOL WINAPI GetFileNameFromBrowse(
+BOOL WINAPI GetFileNameFromBrowseA(
 	HWND hwndOwner,
 	LPSTR lpstrFile,
 	DWORD nMaxFile,
@@ -212,6 +211,72 @@ BOOL WINAPI GetFileNameFromBrowse(
 
     FreeLibrary(hmodule);
     return ret;
+}
+
+/*************************************************************************
+ * GetFileNameFromBrowseW			[internal]
+ */
+BOOL WINAPI GetFileNameFromBrowseW(
+	HWND hwndOwner,
+	LPWSTR lpstrFile,
+	DWORD nMaxFile,
+	LPCWSTR lpstrInitialDir,
+	LPCWSTR lpstrDefExt,
+	LPCWSTR lpstrFilter,
+	LPCWSTR lpstrTitle)
+{
+    HMODULE hmodule;
+    BOOL (WINAPI *pGetOpenFileNameW)(LPOPENFILENAMEW);
+    OPENFILENAMEW ofn;
+    BOOL ret;
+
+    TRACE("%p, %s, %d, %s, %s, %s, %s)\n",
+	  hwndOwner, debugstr_w(lpstrFile), nMaxFile, debugstr_w(lpstrInitialDir), debugstr_w(lpstrDefExt),
+	  debugstr_w(lpstrFilter), debugstr_w(lpstrTitle));
+
+    hmodule = LoadLibraryA("comdlg32.dll");
+    if(!hmodule) return FALSE;
+    pGetOpenFileNameW = (void *)GetProcAddress(hmodule, "GetOpenFileNameW");
+    if(!pGetOpenFileNameW)
+    {
+	FreeLibrary(hmodule);
+	return FALSE;
+    }
+
+    memset(&ofn, 0, sizeof(ofn));
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hwndOwner;
+    ofn.lpstrFilter = lpstrFilter;
+    ofn.lpstrFile = lpstrFile;
+    ofn.nMaxFile = nMaxFile;
+    ofn.lpstrInitialDir = lpstrInitialDir;
+    ofn.lpstrTitle = lpstrTitle;
+    ofn.lpstrDefExt = lpstrDefExt;
+    ofn.Flags = OFN_EXPLORER | OFN_HIDEREADONLY | OFN_FILEMUSTEXIST;
+    ret = pGetOpenFileNameW(&ofn);
+
+    FreeLibrary(hmodule);
+    return ret;
+}
+
+/*************************************************************************
+ * GetFileNameFromBrowse			[SHELL32.63]
+ *
+ */
+BOOL WINAPI GetFileNameFromBrowseAW(
+	HWND hwndOwner,
+	LPVOID lpstrFile,
+	DWORD nMaxFile,
+	LPCVOID lpstrInitialDir,
+	LPCVOID lpstrDefExt,
+	LPCVOID lpstrFilter,
+	LPCVOID lpstrTitle)
+{
+    if (SHELL_OsIsUnicode())
+        return GetFileNameFromBrowseW(hwndOwner, lpstrFile, nMaxFile, lpstrInitialDir, lpstrDefExt, lpstrFilter, lpstrTitle);
+
+    return GetFileNameFromBrowseA(hwndOwner, lpstrFile, nMaxFile, lpstrInitialDir, lpstrDefExt, lpstrFilter, lpstrTitle);
 }
 
 /*************************************************************************
