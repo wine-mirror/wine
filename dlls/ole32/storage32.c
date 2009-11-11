@@ -853,7 +853,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
   newStreamProperty.sizeOfNameString =
       ( lstrlenW(pwcsName)+1 ) * sizeof(WCHAR);
 
-  if (newStreamProperty.sizeOfNameString > PROPERTY_NAME_BUFFER_LEN)
+  if (newStreamProperty.sizeOfNameString > DIRENTRY_NAME_BUFFER_LEN)
     return STG_E_INVALIDNAME;
 
   strcpyW(newStreamProperty.name, pwcsName);
@@ -1033,7 +1033,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
 
   newProperty.sizeOfNameString = (lstrlenW(pwcsName)+1)*sizeof(WCHAR);
 
-  if (newProperty.sizeOfNameString > PROPERTY_NAME_BUFFER_LEN)
+  if (newProperty.sizeOfNameString > DIRENTRY_NAME_BUFFER_LEN)
   {
     FIXME("name too long\n");
     return STG_E_INVALIDNAME;
@@ -3052,7 +3052,7 @@ void UpdateRawDirEntry(BYTE *buffer, const DirEntry *newData)
   memcpy(
     buffer + OFFSET_PS_NAME,
     newData->name,
-    PROPERTY_NAME_BUFFER_LEN );
+    DIRENTRY_NAME_BUFFER_LEN );
 
   memcpy(buffer + OFFSET_PS_STGTYPE, &newData->propertyType, 1);
 
@@ -3137,7 +3137,7 @@ BOOL StorageImpl_ReadDirEntry(
     memcpy(
       buffer->name,
       propName,
-      PROPERTY_NAME_BUFFER_LEN );
+      DIRENTRY_NAME_BUFFER_LEN );
     TRACE("storage name: %s\n", debugstr_w(buffer->name));
 
     memcpy(&buffer->propertyType, currentProperty + OFFSET_PS_STGTYPE, 1);
@@ -5840,8 +5840,8 @@ HRESULT WINAPI StgOpenStorage(
 
   /* prepare the file name string given in lieu of the root property name */
   GetFullPathNameW(pwcsName, MAX_PATH, fullname, NULL);
-  memcpy(newStorage->filename, fullname, PROPERTY_NAME_BUFFER_LEN);
-  newStorage->filename[PROPERTY_NAME_BUFFER_LEN-1] = '\0';
+  memcpy(newStorage->filename, fullname, DIRENTRY_NAME_BUFFER_LEN);
+  newStorage->filename[DIRENTRY_NAME_BUFFER_LEN-1] = '\0';
 
   /*
    * Get an "out" pointer for the caller.

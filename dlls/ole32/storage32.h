@@ -74,8 +74,8 @@ static const ULONG BLOCK_END_OF_CHAIN        = 0xFFFFFFFE;
 static const ULONG BLOCK_UNUSED              = 0xFFFFFFFF;
 static const ULONG DIRENTRY_NULL             = 0xFFFFFFFF;
 
-#define PROPERTY_NAME_MAX_LEN    0x20
-#define PROPERTY_NAME_BUFFER_LEN 0x40
+#define DIRENTRY_NAME_MAX_LEN    0x20
+#define DIRENTRY_NAME_BUFFER_LEN 0x40
 
 #define PROPSET_BLOCK_SIZE 0x00000080
 
@@ -127,7 +127,7 @@ typedef struct StgStreamImpl         StgStreamImpl;
  */
 struct DirEntry
 {
-  WCHAR	         name[PROPERTY_NAME_MAX_LEN];
+  WCHAR	         name[DIRENTRY_NAME_MAX_LEN];
   WORD	         sizeOfNameString;
   BYTE	         propertyType;
   ULONG          leftChild;
@@ -255,7 +255,7 @@ struct StorageImpl
                                   The behaviour of STGM_SIMPLE depends on this */
 
   /* FIXME: should this be in Storage32BaseImpl ? */
-  WCHAR            filename[PROPERTY_NAME_BUFFER_LEN];
+  WCHAR            filename[DIRENTRY_NAME_BUFFER_LEN];
 
   /*
    * File header
