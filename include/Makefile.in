@@ -65,6 +65,7 @@ PUBLIC_IDL_H_SRCS = \
 	optary.idl \
 	perhist.idl \
 	propidl.idl \
+	propsys.idl \
 	pstore.idl \
 	qedit.idl \
 	richole.idl \

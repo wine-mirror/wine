@@ -177,6 +177,7 @@ include/oleidl.h
 include/optary.h
 include/perhist.h
 include/propidl.h
+include/propsys.h
 include/pstore.h
 include/qedit.h
 include/richole.h
