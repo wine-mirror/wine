@@ -491,7 +491,13 @@ static void test_inffilelist(void)
      * get the value as reference
      */
     expected = 0;
+    SetLastError(0xdeadbeef);
     ret = pSetupGetInfFileListW(NULL, INF_STYLE_WIN4, NULL, 0, &expected);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("SetupGetInfFileListW not implemented\n");
+        return;
+    }
     ok(ret, "expected SetupGetInfFileListW to succeed! Error: %d\n", GetLastError());
     ok(expected > 0, "expected required buffersize to be at least 1\n");
 
