@@ -1714,8 +1714,10 @@ static void test_decodeAltName(DWORD dwEncoding)
      NULL, &buf, &bufSize);
     /* Fails on WinXP with CRYPT_E_ASN1_RULE.  I'm not too concerned about the
      * particular failure, just that it doesn't decode.
+     * It succeeds on (broken) Windows versions that haven't addressed
+     * embedded NULLs in alternate names.
      */
-    ok(!ret, "expected failure\n");
+    ok(!ret || broken(ret), "expected failure\n");
     /* An embedded bell character is allowed, however. */
     ret = pCryptDecodeObjectEx(dwEncoding, X509_ALTERNATE_NAME,
      dns_embedded_bell, sizeof(dns_embedded_bell), CRYPT_DECODE_ALLOC_FLAG,
@@ -1737,8 +1739,10 @@ static void test_decodeAltName(DWORD dwEncoding)
      NULL, &buf, &bufSize);
     /* Again, fails on WinXP with CRYPT_E_ASN1_RULE.  I'm not too concerned
      * about the particular failure, just that it doesn't decode.
+     * It succeeds on (broken) Windows versions that haven't addressed
+     * embedded NULLs in alternate names.
      */
-    ok(!ret, "expected failure\n");
+    ok(!ret || broken(ret), "expected failure\n");
 }
 
 struct UnicodeExpectedError
@@ -3073,7 +3077,8 @@ static void test_encodeCertToBeSigned(DWORD dwEncoding)
     info.IssuerUniqueId.pbData = (BYTE *)serialNum;
     ret = pCryptEncodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    ok(ret || broken(GetLastError() == OSS_BAD_PTR /* Win98 */),
+     "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
         ok(size == sizeof(v1CertWithIssuerUniqueId), "Wrong size %d\n", size);
