@@ -459,7 +459,7 @@ static void test_block_cipher_modes(void)
     result = derive_key(CALG_RC2, &hKey, 40);
     if (!result) return;
 
-    memcpy(abData, plain, sizeof(abData));
+    memcpy(abData, plain, sizeof(plain));
 
     dwMode = CRYPT_MODE_ECB;
     result = CryptSetKeyParam(hKey, KP_MODE, (BYTE*)&dwMode, 0);
