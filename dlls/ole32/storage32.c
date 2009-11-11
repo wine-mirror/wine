@@ -1422,7 +1422,7 @@ static HRESULT findTreeParent(StorageImpl *storage, ULONG storageEntry,
   StorageImpl_ReadDirEntry(storage, storageEntry, parentData);
 
   *parentEntry = storageEntry;
-  *relation = PROPERTY_RELATION_DIR;
+  *relation = DIRENTRY_RELATION_DIR;
 
   childEntry = parentData->dirRootEntry;
 
@@ -1442,7 +1442,7 @@ static HRESULT findTreeParent(StorageImpl *storage, ULONG storageEntry,
     {
       *parentData = childData;
       *parentEntry = childEntry;
-      *relation = PROPERTY_RELATION_PREVIOUS;
+      *relation = DIRENTRY_RELATION_PREVIOUS;
 
       childEntry = parentData->leftChild;
     }
@@ -1451,7 +1451,7 @@ static HRESULT findTreeParent(StorageImpl *storage, ULONG storageEntry,
     {
       *parentData = childData;
       *parentEntry = childEntry;
-      *relation = PROPERTY_RELATION_NEXT;
+      *relation = DIRENTRY_RELATION_NEXT;
 
       childEntry = parentData->rightChild;
     }
@@ -1951,13 +1951,13 @@ static void setPropertyLink(DirEntry *property, ULONG relation, ULONG new_target
 {
   switch (relation)
   {
-    case PROPERTY_RELATION_PREVIOUS:
+    case DIRENTRY_RELATION_PREVIOUS:
       property->leftChild = new_target;
       break;
-    case PROPERTY_RELATION_NEXT:
+    case DIRENTRY_RELATION_NEXT:
       property->rightChild = new_target;
       break;
-    case PROPERTY_RELATION_DIR:
+    case DIRENTRY_RELATION_DIR:
       property->dirRootEntry = new_target;
       break;
     default:

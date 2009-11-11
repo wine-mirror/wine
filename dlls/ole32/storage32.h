@@ -80,11 +80,11 @@ static const ULONG DIRENTRY_NULL             = 0xFFFFFFFF;
 #define RAW_DIRENTRY_SIZE 0x00000080
 
 /*
- * Property type of relation
+ * Type of child entry link
  */
-#define PROPERTY_RELATION_PREVIOUS 0
-#define PROPERTY_RELATION_NEXT     1
-#define PROPERTY_RELATION_DIR      2
+#define DIRENTRY_RELATION_PREVIOUS 0
+#define DIRENTRY_RELATION_NEXT     1
+#define DIRENTRY_RELATION_DIR      2
 
 /*
  * type constant used in files for the root storage
