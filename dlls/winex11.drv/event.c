@@ -678,6 +678,7 @@ static void X11DRV_FocusOut( HWND hwnd, XEvent *xev )
         wine_tsx11_unlock();
     }
     if (hwnd != GetForegroundWindow()) return;
+    if (root_window != DefaultRootWindow(event->display)) return;
     SendMessageW( hwnd, WM_CANCELMODE, 0, 0 );
 
     /* don't reset the foreground window, if the window which is
