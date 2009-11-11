@@ -865,7 +865,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
 
   newStreamProperty.leftChild        = DIRENTRY_NULL;
   newStreamProperty.rightChild       = DIRENTRY_NULL;
-  newStreamProperty.dirProperty      = DIRENTRY_NULL;
+  newStreamProperty.dirRootEntry     = DIRENTRY_NULL;
 
   /* call CoFileTime to get the current time
   newStreamProperty.ctime
@@ -1048,7 +1048,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
 
   newProperty.leftChild        = DIRENTRY_NULL;
   newProperty.rightChild       = DIRENTRY_NULL;
-  newProperty.dirProperty      = DIRENTRY_NULL;
+  newProperty.dirRootEntry     = DIRENTRY_NULL;
 
   /* call CoFileTime to get the current time
   newProperty.ctime
@@ -1272,7 +1272,7 @@ static HRESULT insertIntoTree(
                              parentStorageIndex,
                              &currentProperty);
 
-  if (currentProperty.dirProperty != DIRENTRY_NULL)
+  if (currentProperty.dirRootEntry != DIRENTRY_NULL)
   {
     /*
      * The root storage contains some element, therefore, start the research
@@ -1284,13 +1284,13 @@ static HRESULT insertIntoTree(
     /*
      * Keep the DirEntry sequence number of the storage first property
      */
-    currentPropertyId = currentProperty.dirProperty;
+    currentPropertyId = currentProperty.dirRootEntry;
 
     /*
      * Read
      */
     StorageImpl_ReadDirEntry(This,
-                               currentProperty.dirProperty,
+                               currentProperty.dirRootEntry,
                                &currentProperty);
 
     previous = currentProperty.leftChild;
@@ -1355,7 +1355,7 @@ static HRESULT insertIntoTree(
     /*
      * The root storage is empty, link the new property to its dir property
      */
-    currentProperty.dirProperty = newPropertyIndex;
+    currentProperty.dirRootEntry = newPropertyIndex;
     StorageImpl_WriteDirEntry(This,
                                 parentStorageIndex,
                                 &currentProperty);
@@ -1378,7 +1378,7 @@ static ULONG findElement(StorageImpl *storage, ULONG storageEntry,
   /* Read the storage entry to find the root of the tree. */
   StorageImpl_ReadDirEntry(storage, storageEntry, data);
 
-  currentEntry = data->dirProperty;
+  currentEntry = data->dirRootEntry;
 
   while (currentEntry != DIRENTRY_NULL)
   {
@@ -1424,7 +1424,7 @@ static HRESULT findTreeParent(StorageImpl *storage, ULONG storageEntry,
   *parentEntry = storageEntry;
   *relation = PROPERTY_RELATION_DIR;
 
-  childEntry = parentData->dirProperty;
+  childEntry = parentData->dirRootEntry;
 
   while (childEntry != DIRENTRY_NULL)
   {
@@ -1958,7 +1958,7 @@ static void setPropertyLink(DirEntry *property, ULONG relation, ULONG new_target
       property->rightChild = new_target;
       break;
     case PROPERTY_RELATION_DIR:
-      property->dirProperty = new_target;
+      property->dirRootEntry = new_target;
       break;
     default:
       assert(0);
@@ -2272,7 +2272,7 @@ static HRESULT StorageImpl_Construct(
     rootProp.propertyType     = STGTY_ROOT;
     rootProp.leftChild = DIRENTRY_NULL;
     rootProp.rightChild     = DIRENTRY_NULL;
-    rootProp.dirProperty      = DIRENTRY_NULL;
+    rootProp.dirRootEntry     = DIRENTRY_NULL;
     rootProp.startingBlock    = BLOCK_END_OF_CHAIN;
     rootProp.size.u.HighPart    = 0;
     rootProp.size.u.LowPart     = 0;
@@ -3073,8 +3073,8 @@ void UpdateRawDirEntry(BYTE *buffer, const DirEntry *newData)
 
   StorageUtl_WriteDWord(
     buffer,
-      OFFSET_PS_DIRPROP,
-      newData->dirProperty);
+      OFFSET_PS_DIRROOT,
+      newData->dirRootEntry);
 
   StorageUtl_WriteGUID(
     buffer,
@@ -3159,8 +3159,8 @@ BOOL StorageImpl_ReadDirEntry(
 
     StorageUtl_ReadDWord(
       currentProperty,
-      OFFSET_PS_DIRPROP,
-      &buffer->dirProperty);
+      OFFSET_PS_DIRROOT,
+      &buffer->dirRootEntry);
 
     StorageUtl_ReadGUID(
       currentProperty,
@@ -3729,7 +3729,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Reset(
     /*
      * Push the search node in the search stack.
      */
-    IEnumSTATSTGImpl_PushSearchNode(This, rootProperty.dirProperty);
+    IEnumSTATSTGImpl_PushSearchNode(This, rootProperty.dirRootEntry);
   }
 
   return S_OK;

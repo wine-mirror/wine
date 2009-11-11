@@ -56,7 +56,7 @@ static const ULONG OFFSET_PS_NAMELENGTH	     = 0x00000040;
 static const ULONG OFFSET_PS_STGTYPE         = 0x00000042;
 static const ULONG OFFSET_PS_LEFTCHILD       = 0x00000044;
 static const ULONG OFFSET_PS_RIGHTCHILD      = 0x00000048;
-static const ULONG OFFSET_PS_DIRPROP	     = 0x0000004C;
+static const ULONG OFFSET_PS_DIRROOT	     = 0x0000004C;
 static const ULONG OFFSET_PS_GUID            = 0x00000050;
 static const ULONG OFFSET_PS_CTIMELOW        = 0x00000064;
 static const ULONG OFFSET_PS_CTIMEHIGH       = 0x00000068;
@@ -132,7 +132,7 @@ struct DirEntry
   BYTE	         propertyType;
   ULONG          leftChild;
   ULONG          rightChild;
-  ULONG          dirProperty;
+  ULONG          dirRootEntry;
   GUID           propertyUniqueID;
   FILETIME       ctime;
   FILETIME       mtime;
