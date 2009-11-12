@@ -208,12 +208,15 @@ static RPC_IF_HANDLE IFoo_v0_0_s_ifspec = (RPC_IF_HANDLE)& IFoo___RpcServerInter
 static void test_rpc_ncacn_ip_tcp(void)
 {
     RPC_STATUS status;
-    unsigned char *binding;
+    unsigned char *binding, *principal;
     handle_t IFoo_IfHandle;
+    ULONG level, authnsvc, authzsvc;
+    RPC_AUTH_IDENTITY_HANDLE identity;
     static unsigned char foo[] = "foo";
     static unsigned char ncacn_ip_tcp[] = "ncacn_ip_tcp";
     static unsigned char address[] = "127.0.0.1";
     static unsigned char endpoint[] = "4114";
+    static unsigned char spn[] = "principal";
 
     status = RpcNetworkIsProtseqValid(foo);
     ok(status == RPC_S_INVALID_RPC_PROTSEQ, "return wrong\n");
@@ -264,6 +267,29 @@ todo_wine {
                                    RPC_C_AUTHN_WINNT, NULL, RPC_C_AUTHZ_NAME);
     ok(status == RPC_S_OK || broken(status == RPC_S_UNKNOWN_AUTHN_SERVICE), /* win9x */
        "RpcBindingSetAuthInfo failed (%u)\n", status);
+
+    status = RpcBindingInqAuthInfo(IFoo_IfHandle, NULL, NULL, NULL, NULL, NULL);
+    ok(status == RPC_S_BINDING_HAS_NO_AUTH, "RpcBindingInqAuthInfo failed (%u)\n",
+       status);
+
+    status = RpcBindingSetAuthInfo(IFoo_IfHandle, spn, RPC_C_AUTHN_LEVEL_PKT_PRIVACY,
+                                   RPC_C_AUTHN_WINNT, NULL, RPC_C_AUTHZ_NAME);
+    ok(status == RPC_S_OK, "RpcBindingSetAuthInfo failed (%u)\n", status);
+
+    level = authnsvc = authzsvc = 0;
+    principal = (unsigned char *)0xdeadbeef;
+    identity = (RPC_AUTH_IDENTITY_HANDLE *)0xdeadbeef;
+    status = RpcBindingInqAuthInfo(IFoo_IfHandle, &principal, &level, &authnsvc,
+                                   &identity, &authzsvc);
+
+    ok(status == RPC_S_OK, "RpcBindingInqAuthInfo failed (%u)\n", status);
+    ok(identity == NULL, "expected NULL identity\n");
+    ok(principal != (unsigned char *)0xdeadbeef, "expected valid principal\n");
+    ok(level == RPC_C_AUTHN_LEVEL_PKT_PRIVACY, "expected RPC_C_AUTHN_LEVEL_PKT_PRIVACY\n");
+    ok(authnsvc == RPC_C_AUTHN_WINNT, "expected RPC_C_AUTHN_WINNT\n");
+    todo_wine ok(authzsvc == RPC_C_AUTHZ_NAME, "expected RPC_C_AUTHZ_NAME\n");
+
+    RpcStringFree(&principal);
 
     status = RpcMgmtStopServerListening(NULL);
     ok(status == RPC_S_OK, "RpcMgmtStopServerListening failed (%u)\n",
