@@ -1142,12 +1142,16 @@ HRESULT channelbsc_load_stream(nsChannelBSC *bscallback, IStream *stream)
 {
     HRESULT hres;
 
-    const char text_html[] = "text/html";
+    if(!bscallback->nschannel) {
+        ERR("NULL nschannel\n");
+        return E_FAIL;
+    }
+
+    bscallback->nschannel->content_type = heap_strdupA("text/html");
+    if(!bscallback->nschannel->content_type)
+        return E_OUTOFMEMORY;
 
     add_nsrequest(bscallback);
-
-    if(bscallback->nschannel)
-        bscallback->nschannel->content_type = heap_strdupA(text_html);
 
     hres = read_stream_data(bscallback, stream);
     IBindStatusCallback_OnStopBinding(STATUSCLB(&bscallback->bsc), hres, ERROR_SUCCESS);
