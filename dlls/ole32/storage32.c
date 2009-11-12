@@ -3574,7 +3574,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
 {
   IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
 
-  DirEntry    currentProperty;
+  DirEntry    currentEntry;
   STATSTG*    currentReturnStruct = rgelt;
   ULONG       objectFetched       = 0;
   ULONG      currentSearchNode;
@@ -3609,17 +3609,17 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
     IEnumSTATSTGImpl_PopSearchNode(This, TRUE);
 
     /*
-     * Read the property from the storage.
+     * Read the entry from the storage.
      */
     StorageImpl_ReadDirEntry(This->parentStorage,
       currentSearchNode,
-      &currentProperty);
+      &currentEntry);
 
     /*
      * Copy the information to the return buffer.
      */
     StorageUtl_CopyDirEntryToSTATSTG(currentReturnStruct,
-      &currentProperty,
+      &currentEntry,
       STATFLAG_DEFAULT);
 
     /*
@@ -3631,7 +3631,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
     /*
      * Push the next search node in the search stack.
      */
-    IEnumSTATSTGImpl_PushSearchNode(This, currentProperty.rightChild);
+    IEnumSTATSTGImpl_PushSearchNode(This, currentEntry.rightChild);
 
     /*
      * continue the iteration.
@@ -3652,7 +3652,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Skip(
 {
   IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
 
-  DirEntry    currentProperty;
+  DirEntry    currentEntry;
   ULONG       objectFetched       = 0;
   ULONG       currentSearchNode;
 
@@ -3670,11 +3670,11 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Skip(
     IEnumSTATSTGImpl_PopSearchNode(This, TRUE);
 
     /*
-     * Read the property from the storage.
+     * Read the entry from the storage.
      */
     StorageImpl_ReadDirEntry(This->parentStorage,
       currentSearchNode,
-      &currentProperty);
+      &currentEntry);
 
     /*
      * Step to the next item in the iteration
@@ -3684,7 +3684,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Skip(
     /*
      * Push the next search node in the search stack.
      */
-    IEnumSTATSTGImpl_PushSearchNode(This, currentProperty.rightChild);
+    IEnumSTATSTGImpl_PushSearchNode(This, currentEntry.rightChild);
 
     /*
      * continue the iteration.
@@ -3703,7 +3703,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Reset(
 {
   IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
 
-  DirEntry  rootProperty;
+  DirEntry  storageEntry;
   BOOL      readSuccessful;
 
   /*
@@ -3712,21 +3712,21 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Reset(
   This->stackSize = 0;
 
   /*
-   * Read the root property from the storage.
+   * Read the storage entry from the top-level storage.
    */
   readSuccessful = StorageImpl_ReadDirEntry(
                     This->parentStorage,
                     This->storageDirEntry,
-                    &rootProperty);
+                    &storageEntry);
 
   if (readSuccessful)
   {
-    assert(rootProperty.sizeOfNameString!=0);
+    assert(storageEntry.sizeOfNameString!=0);
 
     /*
      * Push the search node in the search stack.
      */
-    IEnumSTATSTGImpl_PushSearchNode(This, rootProperty.dirRootEntry);
+    IEnumSTATSTGImpl_PushSearchNode(This, storageEntry.dirRootEntry);
   }
 
   return S_OK;
@@ -3779,7 +3779,7 @@ static void IEnumSTATSTGImpl_PushSearchNode(
   IEnumSTATSTGImpl* This,
   ULONG             nodeToPush)
 {
-  DirEntry  rootProperty;
+  DirEntry  storageEntry;
   BOOL      readSuccessful;
 
   /*
@@ -3806,21 +3806,21 @@ static void IEnumSTATSTGImpl_PushSearchNode(
   This->stackSize++;
 
   /*
-   * Read the root property from the storage.
+   * Read the storage entry from the top-level storage.
    */
   readSuccessful = StorageImpl_ReadDirEntry(
                     This->parentStorage,
                     nodeToPush,
-                    &rootProperty);
+                    &storageEntry);
 
   if (readSuccessful)
   {
-    assert(rootProperty.sizeOfNameString!=0);
+    assert(storageEntry.sizeOfNameString!=0);
 
     /*
      * Push the previous search node in the search stack.
      */
-    IEnumSTATSTGImpl_PushSearchNode(This, rootProperty.leftChild);
+    IEnumSTATSTGImpl_PushSearchNode(This, storageEntry.leftChild);
   }
 }
 
