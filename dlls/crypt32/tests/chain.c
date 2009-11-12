@@ -3032,7 +3032,8 @@ static const SimpleChainStatusCheck simpleStatus27[] = {
 static const CERT_TRUST_STATUS elementStatus27Broken[] = {
  { CERT_TRUST_NO_ERROR, CERT_TRUST_HAS_NAME_MATCH_ISSUER },
  { CERT_TRUST_IS_UNTRUSTED_ROOT,
-   CERT_TRUST_IS_SELF_SIGNED | CERT_TRUST_HAS_NAME_MATCH_ISSUER },
+   CERT_TRUST_IS_SELF_SIGNED | CERT_TRUST_HAS_NAME_MATCH_ISSUER |
+   CERT_TRUST_HAS_VALID_NAME_CONSTRAINTS },
 };
 static const SimpleChainStatusCheck simpleStatus27Broken[] = {
  { sizeof(elementStatus27Broken) / sizeof(elementStatus27Broken[0]),
@@ -3405,7 +3406,7 @@ static ChainCheck chainCheckEmbeddedNullBroken = {
  { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_IS_NOT_VALID_FOR_USAGE |
      CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT,
      CERT_TRUST_HAS_PREFERRED_ISSUER },
-   { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 },
+   { CERT_TRUST_IS_UNTRUSTED_ROOT, CERT_TRUST_HAS_VALID_NAME_CONSTRAINTS },
    1, simpleStatus27Broken },
  0 };
 
