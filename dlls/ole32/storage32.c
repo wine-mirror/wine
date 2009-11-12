@@ -2128,9 +2128,9 @@ static HRESULT StorageImpl_Construct(
   BOOL         create)
 {
   HRESULT     hr = S_OK;
-  DirEntry currentProperty;
+  DirEntry currentEntry;
   BOOL      readSuccessful;
-  ULONG       currentPropertyIndex;
+  ULONG       currentEntryRef;
 
   if ( FAILED( validateSTGM(openFlags) ))
     return STG_E_INVALIDFLAG;
@@ -2183,7 +2183,7 @@ static HRESULT StorageImpl_Construct(
     /*
      * Initialize all header variables:
      * - The big block depot consists of one block and it is at block 0
-     * - The properties start at block 1
+     * - The directory table starts at block 1
      * - There is no small block depot
      */
     memset( This->bigBlockDepotStart,
@@ -2202,7 +2202,7 @@ static HRESULT StorageImpl_Construct(
     StorageImpl_SaveFileHeader(This);
 
     /*
-     * Add one block for the big block depot and one block for the properties
+     * Add one block for the big block depot and one block for the directory table
      */
     size.u.HighPart = 0;
     size.u.LowPart  = This->bigBlockSize * 3;
@@ -2254,51 +2254,51 @@ static HRESULT StorageImpl_Construct(
     return STG_E_READFAULT;
 
   /*
-   * Write the root property (memory only)
+   * Write the root storage entry (memory only)
    */
   if (create)
   {
-    DirEntry rootProp;
+    DirEntry rootEntry;
     /*
-     * Initialize the property chain
+     * Initialize the directory table
      */
-    memset(&rootProp, 0, sizeof(rootProp));
-    MultiByteToWideChar( CP_ACP, 0, rootEntryName, -1, rootProp.name,
-                         sizeof(rootProp.name)/sizeof(WCHAR) );
-    rootProp.sizeOfNameString = (strlenW(rootProp.name)+1) * sizeof(WCHAR);
-    rootProp.stgType          = STGTY_ROOT;
-    rootProp.leftChild = DIRENTRY_NULL;
-    rootProp.rightChild     = DIRENTRY_NULL;
-    rootProp.dirRootEntry     = DIRENTRY_NULL;
-    rootProp.startingBlock    = BLOCK_END_OF_CHAIN;
-    rootProp.size.u.HighPart    = 0;
-    rootProp.size.u.LowPart     = 0;
+    memset(&rootEntry, 0, sizeof(rootEntry));
+    MultiByteToWideChar( CP_ACP, 0, rootEntryName, -1, rootEntry.name,
+                         sizeof(rootEntry.name)/sizeof(WCHAR) );
+    rootEntry.sizeOfNameString = (strlenW(rootEntry.name)+1) * sizeof(WCHAR);
+    rootEntry.stgType          = STGTY_ROOT;
+    rootEntry.leftChild = DIRENTRY_NULL;
+    rootEntry.rightChild     = DIRENTRY_NULL;
+    rootEntry.dirRootEntry     = DIRENTRY_NULL;
+    rootEntry.startingBlock    = BLOCK_END_OF_CHAIN;
+    rootEntry.size.u.HighPart    = 0;
+    rootEntry.size.u.LowPart     = 0;
 
-    StorageImpl_WriteDirEntry(This, 0, &rootProp);
+    StorageImpl_WriteDirEntry(This, 0, &rootEntry);
   }
 
   /*
-   * Find the ID of the root in the property sets.
+   * Find the ID of the root storage.
    */
-  currentPropertyIndex = 0;
+  currentEntryRef = 0;
 
   do
   {
     readSuccessful = StorageImpl_ReadDirEntry(
                       This,
-                      currentPropertyIndex,
-                      &currentProperty);
+                      currentEntryRef,
+                      &currentEntry);
 
     if (readSuccessful)
     {
-      if ( (currentProperty.sizeOfNameString != 0 ) &&
-           (currentProperty.stgType          == STGTY_ROOT) )
+      if ( (currentEntry.sizeOfNameString != 0 ) &&
+           (currentEntry.stgType          == STGTY_ROOT) )
       {
-        This->base.storageDirEntry = currentPropertyIndex;
+        This->base.storageDirEntry = currentEntryRef;
       }
     }
 
-    currentPropertyIndex++;
+    currentEntryRef++;
 
   } while (readSuccessful && (This->base.storageDirEntry == DIRENTRY_NULL) );
 
