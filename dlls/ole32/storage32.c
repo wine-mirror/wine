@@ -236,11 +236,11 @@ struct IEnumSTATSTGImpl
 
   LONG           ref;                   /* Reference count */
   StorageImpl*   parentStorage;         /* Reference to the parent storage */
-  ULONG          firstPropertyNode;     /* Index of the root of the storage to enumerate */
+  ULONG          storageDirEntry;     /* Directory entry of the storage to enumerate */
 
   /*
    * The current implementation of the IEnumSTATSTGImpl class uses a stack
-   * to walk the property sets to get the content of a storage. This stack
+   * to walk the directory entries to get the content of a storage. This stack
    * is implemented by the following 3 data members
    */
   ULONG          stackSize;
@@ -251,7 +251,7 @@ struct IEnumSTATSTGImpl
 };
 
 
-static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(StorageImpl* This, ULONG firstPropertyNode);
+static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(StorageImpl* This, ULONG storageDirEntry);
 static void IEnumSTATSTGImpl_Destroy(IEnumSTATSTGImpl* This);
 static void IEnumSTATSTGImpl_PushSearchNode(IEnumSTATSTGImpl* This, ULONG nodeToPush);
 static ULONG IEnumSTATSTGImpl_PopSearchNode(IEnumSTATSTGImpl* This, BOOL remove);
@@ -3719,7 +3719,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Reset(
    */
   readSuccessful = StorageImpl_ReadDirEntry(
                     This->parentStorage,
-                    This->firstPropertyNode,
+                    This->storageDirEntry,
                     &rootProperty);
 
   if (readSuccessful)
@@ -3750,7 +3750,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Clone(
     return E_INVALIDARG;
 
   newClone = IEnumSTATSTGImpl_Construct(This->parentStorage,
-               This->firstPropertyNode);
+               This->storageDirEntry);
 
 
   /*
@@ -3864,7 +3864,7 @@ static const IEnumSTATSTGVtbl IEnumSTATSTGImpl_Vtbl =
 
 static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
   StorageImpl* parentStorage,
-  ULONG          firstPropertyNode)
+  ULONG          storageDirEntry)
 {
   IEnumSTATSTGImpl* newEnumeration;
 
@@ -3885,7 +3885,7 @@ static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
     newEnumeration->parentStorage = parentStorage;
     IStorage_AddRef((IStorage*)newEnumeration->parentStorage);
 
-    newEnumeration->firstPropertyNode   = firstPropertyNode;
+    newEnumeration->storageDirEntry   = storageDirEntry;
 
     /*
      * Initialize the search stack
