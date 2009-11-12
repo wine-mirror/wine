@@ -190,7 +190,7 @@ static HRESULT destroyDirEntry(
 static HRESULT insertIntoTree(
   StorageImpl *This,
   ULONG         parentStorageIndex,
-  ULONG         newPropertyIndex);
+  ULONG         newEntryIndex);
 
 static LONG propertyNameCmp(
     const OLECHAR *newProperty,
@@ -1253,53 +1253,53 @@ static LONG propertyNameCmp(
 static HRESULT insertIntoTree(
   StorageImpl *This,
   ULONG         parentStorageIndex,
-  ULONG         newPropertyIndex)
+  ULONG         newEntryIndex)
 {
-  DirEntry currentProperty;
-  DirEntry newProperty;
+  DirEntry currentEntry;
+  DirEntry newEntry;
 
   /*
    * Read the inserted property
    */
   StorageImpl_ReadDirEntry(This,
-                           newPropertyIndex,
-                           &newProperty);
+                           newEntryIndex,
+                           &newEntry);
 
   /*
    * Read the root property
    */
   StorageImpl_ReadDirEntry(This,
                              parentStorageIndex,
-                             &currentProperty);
+                             &currentEntry);
 
-  if (currentProperty.dirRootEntry != DIRENTRY_NULL)
+  if (currentEntry.dirRootEntry != DIRENTRY_NULL)
   {
     /*
      * The root storage contains some element, therefore, start the research
      * for the appropriate location.
      */
     BOOL found = 0;
-    ULONG  current, next, previous, currentPropertyId;
+    ULONG  current, next, previous, currentEntryId;
 
     /*
      * Keep the DirEntry sequence number of the storage first property
      */
-    currentPropertyId = currentProperty.dirRootEntry;
+    currentEntryId = currentEntry.dirRootEntry;
 
     /*
      * Read
      */
     StorageImpl_ReadDirEntry(This,
-                               currentProperty.dirRootEntry,
-                               &currentProperty);
+                               currentEntry.dirRootEntry,
+                               &currentEntry);
 
-    previous = currentProperty.leftChild;
-    next     = currentProperty.rightChild;
-    current  = currentPropertyId;
+    previous = currentEntry.leftChild;
+    next     = currentEntry.rightChild;
+    current  = currentEntryId;
 
     while (found == 0)
     {
-      LONG diff = propertyNameCmp( newProperty.name, currentProperty.name);
+      LONG diff = propertyNameCmp( newEntry.name, currentEntry.name);
 
       if (diff < 0)
       {
@@ -1307,15 +1307,15 @@ static HRESULT insertIntoTree(
         {
           StorageImpl_ReadDirEntry(This,
                                      previous,
-                                     &currentProperty);
+                                     &currentEntry);
           current = previous;
         }
         else
         {
-          currentProperty.leftChild = newPropertyIndex;
+          currentEntry.leftChild = newEntryIndex;
           StorageImpl_WriteDirEntry(This,
                                       current,
-                                      &currentProperty);
+                                      &currentEntry);
           found = 1;
         }
       }
@@ -1325,15 +1325,15 @@ static HRESULT insertIntoTree(
         {
           StorageImpl_ReadDirEntry(This,
                                      next,
-                                     &currentProperty);
+                                     &currentEntry);
           current = next;
         }
         else
         {
-          currentProperty.rightChild = newPropertyIndex;
+          currentEntry.rightChild = newEntryIndex;
           StorageImpl_WriteDirEntry(This,
                                       current,
-                                      &currentProperty);
+                                      &currentEntry);
           found = 1;
         }
       }
@@ -1346,8 +1346,8 @@ static HRESULT insertIntoTree(
 	return STG_E_FILEALREADYEXISTS;
       }
 
-      previous = currentProperty.leftChild;
-      next     = currentProperty.rightChild;
+      previous = currentEntry.leftChild;
+      next     = currentEntry.rightChild;
     }
   }
   else
@@ -1355,10 +1355,10 @@ static HRESULT insertIntoTree(
     /*
      * The root storage is empty, link the new property to its dir property
      */
-    currentProperty.dirRootEntry = newPropertyIndex;
+    currentEntry.dirRootEntry = newEntryIndex;
     StorageImpl_WriteDirEntry(This,
                                 parentStorageIndex,
-                                &currentProperty);
+                                &currentEntry);
   }
 
   return S_OK;
