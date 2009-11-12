@@ -3933,7 +3933,7 @@ static const IStorageVtbl Storage32InternalImpl_Vtbl =
 static StorageInternalImpl* StorageInternalImpl_Construct(
   StorageImpl* ancestorStorage,
   DWORD        openFlags,
-  ULONG        rootPropertyIndex)
+  ULONG        storageDirEntry)
 {
   StorageInternalImpl* newStorage;
 
@@ -3959,9 +3959,9 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
     newStorage->base.ancestorStorage = ancestorStorage;
 
     /*
-     * Keep the index of the root property set for this storage,
+     * Keep a reference to the directory entry of this storage
      */
-    newStorage->base.storageDirEntry = rootPropertyIndex;
+    newStorage->base.storageDirEntry = storageDirEntry;
 
     return newStorage;
   }
