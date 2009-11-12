@@ -133,7 +133,7 @@ struct DirEntry
   ULONG          leftChild;
   ULONG          rightChild;
   ULONG          dirRootEntry;
-  GUID           propertyUniqueID;
+  GUID           clsid;
   FILETIME       ctime;
   FILETIME       mtime;
   ULONG          startingBlock;

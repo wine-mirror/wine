@@ -930,7 +930,7 @@ static HRESULT WINAPI StorageBaseImpl_SetClass(
                                        &curProperty);
   if (success)
   {
-    curProperty.propertyUniqueID = *clsid;
+    curProperty.clsid = *clsid;
 
     success =  StorageImpl_WriteDirEntry(This->ancestorStorage,
                                            This->rootPropertySetIndex,
@@ -3079,7 +3079,7 @@ void UpdateRawDirEntry(BYTE *buffer, const DirEntry *newData)
   StorageUtl_WriteGUID(
     buffer,
       OFFSET_PS_GUID,
-      &newData->propertyUniqueID);
+      &newData->clsid);
 
   StorageUtl_WriteDWord(
     buffer,
@@ -3165,7 +3165,7 @@ BOOL StorageImpl_ReadDirEntry(
     StorageUtl_ReadGUID(
       currentProperty,
       OFFSET_PS_GUID,
-      &buffer->propertyUniqueID);
+      &buffer->clsid);
 
     StorageUtl_ReadDWord(
       currentProperty,
@@ -4094,7 +4094,7 @@ void StorageUtl_CopyDirEntryToSTATSTG(
 */
   destination->grfMode           = 0;
   destination->grfLocksSupported = 0;
-  destination->clsid             = source->propertyUniqueID;
+  destination->clsid             = source->clsid;
   destination->grfStateBits      = 0;
   destination->reserved          = 0;
 }
