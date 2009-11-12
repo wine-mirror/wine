@@ -3375,7 +3375,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
   /*
    * Destroy the small block chain.
    */
-  propertyIndex = (*ppsbChain)->ownerPropertyIndex;
+  propertyIndex = (*ppsbChain)->ownerDirEntry;
   SmallBlockChainStream_SetSize(*ppsbChain, size);
   SmallBlockChainStream_Destroy(*ppsbChain);
   *ppsbChain = 0;
@@ -4657,7 +4657,7 @@ static ULARGE_INTEGER BlockChainStream_GetSize(BlockChainStream* This)
 SmallBlockChainStream* SmallBlockChainStream_Construct(
   StorageImpl* parentStorage,
   ULONG*         headOfStreamPlaceHolder,
-  ULONG          propertyIndex)
+  ULONG          dirEntry)
 {
   SmallBlockChainStream* newStream;
 
@@ -4665,7 +4665,7 @@ SmallBlockChainStream* SmallBlockChainStream_Construct(
 
   newStream->parentStorage      = parentStorage;
   newStream->headOfStreamPlaceHolder = headOfStreamPlaceHolder;
-  newStream->ownerPropertyIndex = propertyIndex;
+  newStream->ownerDirEntry      = dirEntry;
 
   return newStream;
 }
@@ -4690,11 +4690,11 @@ static ULONG SmallBlockChainStream_GetHeadOfChain(
   if (This->headOfStreamPlaceHolder != NULL)
     return *(This->headOfStreamPlaceHolder);
 
-  if (This->ownerPropertyIndex)
+  if (This->ownerDirEntry)
   {
     readSuccessful = StorageImpl_ReadDirEntry(
                       This->parentStorage,
-                      This->ownerPropertyIndex,
+                      This->ownerDirEntry,
                       &chainProperty);
 
     if (readSuccessful)
@@ -5178,13 +5178,13 @@ static BOOL SmallBlockChainStream_Shrink(
     DirEntry chainProp;
 
     StorageImpl_ReadDirEntry(This->parentStorage,
-			     This->ownerPropertyIndex,
+			     This->ownerDirEntry,
 			     &chainProp);
 
     chainProp.startingBlock = BLOCK_END_OF_CHAIN;
 
     StorageImpl_WriteDirEntry(This->parentStorage,
-			      This->ownerPropertyIndex,
+			      This->ownerDirEntry,
 			      &chainProp);
 
     /*
@@ -5255,12 +5255,12 @@ static BOOL SmallBlockChainStream_Enlarge(
     {
       DirEntry chainProp;
 
-      StorageImpl_ReadDirEntry(This->parentStorage, This->ownerPropertyIndex,
+      StorageImpl_ReadDirEntry(This->parentStorage, This->ownerDirEntry,
                                    &chainProp);
 
       chainProp.startingBlock = blockIndex;
 
-      StorageImpl_WriteDirEntry(This->parentStorage, This->ownerPropertyIndex,
+      StorageImpl_WriteDirEntry(This->parentStorage, This->ownerDirEntry,
                                   &chainProp);
     }
   }
@@ -5385,7 +5385,7 @@ static ULARGE_INTEGER SmallBlockChainStream_GetSize(SmallBlockChainStream* This)
 
   StorageImpl_ReadDirEntry(
     This->parentStorage,
-    This->ownerPropertyIndex,
+    This->ownerDirEntry,
     &chainProperty);
 
   return chainProperty.size;

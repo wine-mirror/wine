@@ -476,7 +476,7 @@ BOOL BlockChainStream_SetSize(
 struct SmallBlockChainStream
 {
   StorageImpl* parentStorage;
-  ULONG          ownerPropertyIndex;
+  ULONG          ownerDirEntry;
   ULONG*         headOfStreamPlaceHolder;
 };
 
@@ -486,7 +486,7 @@ struct SmallBlockChainStream
 SmallBlockChainStream* SmallBlockChainStream_Construct(
            StorageImpl*   parentStorage,
            ULONG*         headOfStreamPlaceHolder,
-           ULONG          propertyIndex);
+           ULONG          dirEntry);
 
 void SmallBlockChainStream_Destroy(
 	       SmallBlockChainStream* This);
