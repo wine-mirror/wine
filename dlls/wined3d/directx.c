@@ -924,13 +924,32 @@ static const struct driver_quirk quirk_table[] =
  * reporting a driver version is moot because we are not the Windows driver, and we have different
  * bugs, features, etc.
  *
- * If a card is not found in this table, the GL driver version is reported. */
+ * The driver version has the form "x.y.z.w".
+ *
+ * "x" is the Windows version the driver is meant for:
+ * 4 -> 95/98/NT4
+ * 5 -> 2000
+ * 6 -> 2000/XP
+ * 7 -> Vista
+ * 8 -> Win 7
+ *
+ * "y" is the Direct3D level the driver supports:
+ * 11 -> d3d6
+ * 12 -> d3d7
+ * 13 -> d3d8
+ * 14 -> d3d9
+ * 15 -> d3d10
+ *
+ * "z" is unknown, possibly vendor specific.
+ *
+ * "w" is the vendor specific driver version.
+ */
 struct driver_version_information
 {
     WORD vendor;                    /* reported PCI card vendor ID  */
     WORD card;                      /* reported PCI card device ID  */
     const char *description;        /* Description of the card e.g. NVIDIA RIVA TNT */
-    WORD hipart_hi, hipart_lo;      /* driver hiword to report      */
+    WORD d3d_level;                 /* driver hiword to report      */
     WORD lopart_hi, lopart_lo;      /* driver loword to report      */
 };
 
@@ -942,48 +961,48 @@ static const struct driver_version_information driver_version_table[] =
      * TNT/Geforce1/2 up to 71.x - driver uses numbering 7.1.8.6 for 71.86
      *
      * All version numbers used below are from the Linux nvidia drivers. */
-    {VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT,           "NVIDIA RIVA TNT",                  7,  1,  8,  6      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT2,          "NVIDIA RIVA TNT2/TNT2 Pro",        7,  1,  8,  6      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE,            "NVIDIA GeForce 256",               7,  1,  8,  6      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2_MX,        "NVIDIA GeForce2 MX/MX 400",        9,  6,  4,  3      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2,           "NVIDIA GeForce2 GTS/GeForce2 Pro", 7,  1,  8,  6      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE3,           "NVIDIA GeForce3",                  9,  6,  10, 9371   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_MX,        "NVIDIA GeForce4 MX 460",           9,  6,  10, 9371   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_TI4200,    "NVIDIA GeForce4 Ti 4200",          9,  6,  10, 9371   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5200,     "NVIDIA GeForce FX 5200",           7,  15, 11, 7516   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5600,     "NVIDIA GeForce FX 5600",           7,  15, 11, 7516   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5800,     "NVIDIA GeForce FX 5800",           7,  15, 11, 7516   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6200,       "NVIDIA GeForce 6200",              7,  15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6600GT,     "NVIDIA GeForce 6600 GT",           7,  15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6800,       "NVIDIA GeForce 6800",              7,  15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7300,       "NVIDIA GeForce Go 7300",           7,  15, 11, 8585   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7400,       "NVIDIA GeForce Go 7400",           7,  15, 11, 8585   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7600,       "NVIDIA GeForce 7600 GT",           7,  15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7800GT,     "NVIDIA GeForce 7800 GT",           7,  15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8300GS,     "NVIDIA GeForce 8300 GS",           7,  15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600GT,     "NVIDIA GeForce 8600 GT",           7,  15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600MGT,    "NVIDIA GeForce 8600M GT",          7,  15, 11, 8585   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    "NVIDIA GeForce 8800 GTS",          7,  15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9200,       "NVIDIA GeForce 9200",              7,  15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9400GT,     "NVIDIA GeForce 9400 GT",           7,  15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9500GT,     "NVIDIA GeForce 9500 GT",           7,  15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9600GT,     "NVIDIA GeForce 9600 GT",           7,  15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9800GT,     "NVIDIA GeForce 9800 GT",           7,  15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX260,     "NVIDIA GeForce GTX 260",           7,  15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX275,     "NVIDIA GeForce GTX 275",           7,  15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX280,     "NVIDIA GeForce GTX 280",           7,  15, 11, 8618   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT,           "NVIDIA RIVA TNT",                  1,  8,  6      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT2,          "NVIDIA RIVA TNT2/TNT2 Pro",        1,  8,  6      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE,            "NVIDIA GeForce 256",               1,  8,  6      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2_MX,        "NVIDIA GeForce2 MX/MX 400",        6,  4,  3      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2,           "NVIDIA GeForce2 GTS/GeForce2 Pro", 1,  8,  6      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE3,           "NVIDIA GeForce3",                  6,  10, 9371   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_MX,        "NVIDIA GeForce4 MX 460",           6,  10, 9371   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_TI4200,    "NVIDIA GeForce4 Ti 4200",          6,  10, 9371   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5200,     "NVIDIA GeForce FX 5200",           15, 11, 7516   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5600,     "NVIDIA GeForce FX 5600",           15, 11, 7516   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5800,     "NVIDIA GeForce FX 5800",           15, 11, 7516   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6200,       "NVIDIA GeForce 6200",              15, 11, 8618   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6600GT,     "NVIDIA GeForce 6600 GT",           15, 11, 8618   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6800,       "NVIDIA GeForce 6800",              15, 11, 8618   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7300,       "NVIDIA GeForce Go 7300",           15, 11, 8585   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7400,       "NVIDIA GeForce Go 7400",           15, 11, 8585   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7600,       "NVIDIA GeForce 7600 GT",           15, 11, 8618   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7800GT,     "NVIDIA GeForce 7800 GT",           15, 11, 8618   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8300GS,     "NVIDIA GeForce 8300 GS",           15, 11, 8618   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600GT,     "NVIDIA GeForce 8600 GT",           15, 11, 8618   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600MGT,    "NVIDIA GeForce 8600M GT",          15, 11, 8585   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    "NVIDIA GeForce 8800 GTS",          15, 11, 8618   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9200,       "NVIDIA GeForce 9200",              15, 11, 8618   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9400GT,     "NVIDIA GeForce 9400 GT",           15, 11, 8618   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9500GT,     "NVIDIA GeForce 9500 GT",           15, 11, 8618   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9600GT,     "NVIDIA GeForce 9600 GT",           15, 11, 8618   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9800GT,     "NVIDIA GeForce 9800 GT",           15, 11, 8618   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX260,     "NVIDIA GeForce GTX 260",           15, 11, 8618   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX275,     "NVIDIA GeForce GTX 275",           15, 11, 8618   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX280,     "NVIDIA GeForce GTX 280",           15, 11, 8618   },
 
     /* ATI cards. The driver versions are somewhat similar, but not quite the same. Let's hardcode. */
-    {VENDOR_ATI,        CARD_ATI_RADEON_9500,           "ATI Radeon 9500",                  6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_X700,           "ATI Radeon X700 SE",               6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_X1600,          "ATI Radeon X1600 Series",          6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD2300,         "ATI Mobility Radeon HD 2300",      6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD2600,         "ATI Mobility Radeon HD 2600",      6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD2900,         "ATI Radeon HD 2900 XT",            6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD4350,         "ATI Radeon HD 4350",               6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD4600,         "ATI Radeon HD 4600 Series",        6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD4700,         "ATI Radeon HD 4700 Series",        6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD4800,         "ATI Radeon HD 4800 Series",        6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_9500,           "ATI Radeon 9500",                  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_X700,           "ATI Radeon X700 SE",               14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_X1600,          "ATI Radeon X1600 Series",          14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD2300,         "ATI Mobility Radeon HD 2300",      14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD2600,         "ATI Mobility Radeon HD 2600",      14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD2900,         "ATI Radeon HD 2900 XT",            14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD4350,         "ATI Radeon HD 4350",               14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD4600,         "ATI Radeon HD 4600 Series",        14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD4700,         "ATI Radeon HD 4700 Series",        14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD4800,         "ATI Radeon HD 4800 Series",        14, 10, 6764    },
 
     /* TODO: Add information about legacy ATI hardware, Intel and other cards. */
 };
@@ -991,6 +1010,8 @@ static const struct driver_version_information driver_version_table[] =
 static void init_driver_info(struct wined3d_driver_info *driver_info,
         enum wined3d_pci_vendor vendor, enum wined3d_pci_device device)
 {
+    OSVERSIONINFOW os_version;
+    WORD driver_os_version;
     unsigned int i;
 
     if (wined3d_settings.pci_vendor_id != PCI_VENDOR_NONE)
@@ -1023,8 +1044,52 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
             break;
     }
 
+    memset(&os_version, 0, sizeof(os_version));
+    os_version.dwOSVersionInfoSize = sizeof(os_version);
+    if (!GetVersionExW(&os_version))
+    {
+        ERR("Failed to get OS version, reporting 2000/XP.\n");
+        driver_os_version = 6;
+    }
+    else
+    {
+        TRACE("OS version %u.%u.\n", os_version.dwMajorVersion, os_version.dwMinorVersion);
+        switch (os_version.dwMajorVersion)
+        {
+            case 4:
+                driver_os_version = 4;
+                break;
+
+            case 5:
+                driver_os_version = 6;
+                break;
+
+            case 6:
+                if (os_version.dwMinorVersion == 0)
+                {
+                    driver_os_version = 7;
+                }
+                else
+                {
+                    if (os_version.dwMinorVersion > 1)
+                    {
+                        FIXME("Unhandled OS version %u.%u, reporting Win 7.\n",
+                                os_version.dwMajorVersion, os_version.dwMinorVersion);
+                    }
+                    driver_os_version = 8;
+                }
+                break;
+
+            default:
+                FIXME("Unhandled OS version %u.%u, reporting 2000/XP.\n",
+                        os_version.dwMajorVersion, os_version.dwMinorVersion);
+                driver_os_version = 6;
+                break;
+        }
+    }
+
     driver_info->description = "Direct3D HAL";
-    driver_info->version_high = MAKEDWORD_VERSION(7, 1);
+    driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, 15);
     driver_info->version_low = MAKEDWORD_VERSION(8, 6); /* Nvidia RIVA TNT, arbitrary */
 
     for (i = 0; i < (sizeof(driver_version_table) / sizeof(driver_version_table[0])); ++i)
@@ -1034,8 +1099,7 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
             TRACE_(d3d_caps)("Found card %04x:%04x in driver DB.\n", vendor, device);
 
             driver_info->description = driver_version_table[i].description;
-            driver_info->version_high = MAKEDWORD_VERSION(driver_version_table[i].hipart_hi,
-                    driver_version_table[i].hipart_lo);
+            driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, driver_version_table[i].d3d_level);
             driver_info->version_low = MAKEDWORD_VERSION(driver_version_table[i].lopart_hi,
                     driver_version_table[i].lopart_lo);
             break;
