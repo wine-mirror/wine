@@ -506,6 +506,16 @@ BOOL16 WINAPI SetMessageQueue16( INT16 size )
 
 
 /***********************************************************************
+ *		UserYield (USER.332)
+ */
+void WINAPI UserYield16(void)
+{
+    MSG msg;
+    PeekMessageW( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE );
+}
+
+
+/***********************************************************************
  *		GetQueueStatus (USER.334)
  */
 DWORD WINAPI GetQueueStatus16( UINT16 flags )

@@ -784,7 +784,6 @@
 @ stdcall GetDriverModuleHandle16(long)
 @ stdcall OpenDriver16(str str long)
 @ stdcall SendDriverMessage16(long long long long)
-@ stdcall UserYield16()
 
 ################################################################
 # Wine dll separation hacks, these will go away, don't use them
