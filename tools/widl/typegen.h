@@ -40,6 +40,7 @@ enum typegen_detect_flags
 {
     TDT_ALL_TYPES =      1 << 0,
     TDT_IGNORE_STRINGS = 1 << 1,
+    TDT_IGNORE_RANGES =  1 << 2,
 };
 
 enum typegen_type

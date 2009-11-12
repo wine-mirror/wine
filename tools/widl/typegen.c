@@ -216,11 +216,13 @@ enum typegen_type typegen_detect_type(const type_t *type, const attr_list_t *att
     switch (type_get_type(type))
     {
     case TYPE_BASIC:
-        if (is_attr(attrs, ATTR_RANGE) || is_aliaschain_attr(type, ATTR_RANGE))
+        if (!(flags & TDT_IGNORE_RANGES) &&
+            (is_attr(attrs, ATTR_RANGE) || is_aliaschain_attr(type, ATTR_RANGE)))
             return TGT_RANGE;
         return TGT_BASIC;
     case TYPE_ENUM:
-        if (is_attr(attrs, ATTR_RANGE) || is_aliaschain_attr(type, ATTR_RANGE))
+        if (!(flags & TDT_IGNORE_RANGES) &&
+            (is_attr(attrs, ATTR_RANGE) || is_aliaschain_attr(type, ATTR_RANGE)))
             return TGT_RANGE;
         return TGT_ENUM;
     case TYPE_POINTER:
@@ -3012,7 +3014,7 @@ static unsigned int get_required_buffer_size_type(
     const type_t *type, const char *name, const attr_list_t *attrs, int toplevel_param, unsigned int *alignment)
 {
     *alignment = 0;
-    switch (typegen_detect_type(type, NULL, TDT_IGNORE_STRINGS))
+    switch (typegen_detect_type(type, NULL, TDT_IGNORE_STRINGS|TDT_IGNORE_RANGES))
     {
     case TGT_USER_TYPE:
     {
