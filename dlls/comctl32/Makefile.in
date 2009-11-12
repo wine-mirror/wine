@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = comctl32.dll
 IMPORTLIB = comctl32
-IMPORTS   = user32 gdi32 advapi32 kernel32
+IMPORTS   = uuid user32 gdi32 advapi32 kernel32
 DELAYIMPORTS = winmm uxtheme
 
 C_SRCS = \

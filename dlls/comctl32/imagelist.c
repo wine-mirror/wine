@@ -51,6 +51,7 @@
 #include "winuser.h"
 #include "commctrl.h"
 #include "comctl32.h"
+#include "commoncontrols.h"
 #include "imagelist.h"
 #include "wine/debug.h"
 
@@ -79,6 +80,7 @@ typedef struct
 static INTERNALDRAG InternalDrag = { 0, 0, 0, 0, 0, 0, FALSE, 0 };
 
 static HBITMAP ImageList_CreateImage(HDC hdc, HIMAGELIST himl, UINT count, UINT width);
+static HRESULT ImageListImpl_CreateInstance(const IUnknown *pUnkOuter, REFIID iid, void** ppv);
 
 static inline BOOL is_valid(HIMAGELIST himl)
 {
@@ -599,8 +601,8 @@ ImageList_Create (INT cx, INT cy, UINT flags,
 
     TRACE("(%d %d 0x%x %d %d)\n", cx, cy, flags, cInitial, cGrow);
 
-    himl = Alloc (sizeof(struct _IMAGELIST));
-    if (!himl)
+    /* Create the IImageList interface for the image list */
+    if (!SUCCEEDED(ImageListImpl_CreateInstance(NULL, &IID_IImageList, (void **) &himl)))
         return NULL;
 
     cGrow = (cGrow < 4) ? 4 : (cGrow + 3) & ~3;
@@ -713,9 +715,8 @@ ImageList_Destroy (HIMAGELIST himl)
     if (himl->hbrBlend50)
         DeleteObject (himl->hbrBlend50);
 
-    ZeroMemory(himl, sizeof(*himl));
-    Free (himl);
-
+    /* Free the IImageList instance */
+    IImageList_Release((IImageList *) himl);
     return TRUE;
 }
 
@@ -2926,9 +2927,294 @@ ImageList_SetColorTable (HIMAGELIST himl, UINT uStartIndex, UINT cEntries, CONST
 HRESULT WINAPI
 ImageList_CoCreateInstance (REFCLSID rclsid, const IUnknown *punkOuter, REFIID riid, void **ppv)
 {
-    FIXME("STUB: %s %p %s %p\n", debugstr_guid(rclsid), punkOuter, debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
+    TRACE("(%s,%p,%s,%p)\n", debugstr_guid(rclsid), punkOuter, debugstr_guid(riid), ppv);
+
+    if (!IsEqualCLSID(&CLSID_ImageList, rclsid))
+        return E_NOINTERFACE;
+
+    return ImageListImpl_CreateInstance(punkOuter, riid, ppv);
 }
+
+
+/*************************************************************************
+ * IImageList implementation
+ */
+
+static HRESULT WINAPI ImageListImpl_QueryInterface(IImageList *iface,
+    REFIID iid, void **ppv)
+{
+    HIMAGELIST This = (HIMAGELIST) iface;
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) || IsEqualIID(&IID_IImageList, iid))
+        *ppv = This;
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI ImageListImpl_AddRef(IImageList *iface)
+{
+    HIMAGELIST This = (HIMAGELIST) iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+    return ref;
+}
+
+static ULONG WINAPI ImageListImpl_Release(IImageList *iface)
+{
+    HIMAGELIST This = (HIMAGELIST) iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (ref == 0)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI ImageListImpl_Add(IImageList *iface, HBITMAP hbmImage,
+    HBITMAP hbmMask, int *pi)
+{
+    FIXME("STUB: %p %p %p %p\n", iface, hbmImage, hbmMask, pi);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_ReplaceIcon(IImageList *iface, int i,
+    HICON hicon, int *pi)
+{
+    FIXME("STUB: %p %d %p %p\n", iface, i, hicon, pi);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_SetOverlayImage(IImageList *iface,
+    int iImage, int iOverlay)
+{
+    FIXME("STUB: %p %d %d\n", iface, iImage, iOverlay);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_Replace(IImageList *iface, int i,
+    HBITMAP hbmImage, HBITMAP hbmMask)
+{
+    FIXME("STUB: %p %d %p %p\n", iface, i, hbmImage, hbmMask);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_AddMasked(IImageList *iface, HBITMAP hbmImage,
+    COLORREF crMask, int *pi)
+{
+    FIXME("STUB: %p %p %x %p\n", iface, hbmImage, crMask, pi);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_Draw(IImageList *iface,
+    IMAGELISTDRAWPARAMS *pimldp)
+{
+    FIXME("STUB: %p %p\n", iface, pimldp);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_Remove(IImageList *iface, int i)
+{
+    FIXME("STUB: %p %d\n", iface, i);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_GetIcon(IImageList *iface, int i, UINT flags,
+    HICON *picon)
+{
+    FIXME("STUB: %p %d %x %p\n", iface, i, flags, picon);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_GetImageInfo(IImageList *iface, int i,
+    IMAGEINFO *pImageInfo)
+{
+    FIXME("STUB: %p %d %p\n", iface, i, pImageInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_Copy(IImageList *iface, int iDst,
+    IUnknown *punkSrc, int iSrc, UINT uFlags)
+{
+    FIXME("STUB: %p %d %p %d %x\n", iface, iDst, punkSrc, iSrc, uFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_Merge(IImageList *iface, int i1,
+    IUnknown *punk2, int i2, int dx, int dy, REFIID riid, PVOID *ppv)
+{
+    FIXME("STUB: %p %d %p %d %d %d %s %p\n", iface, i1, punk2, i2, dx, dy,
+        debugstr_guid(riid), ppv);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_Clone(IImageList *iface, REFIID riid,
+    PVOID *ppv)
+{
+    FIXME("STUB: %p %s %p\n", iface, debugstr_guid(riid), ppv);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_GetImageRect(IImageList *iface, int i,
+    RECT *prc)
+{
+    FIXME("STUB: %p %d %p\n", iface, i, prc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_GetIconSize(IImageList *iface, int *cx,
+    int *cy)
+{
+    FIXME("STUB: %p %p %p\n", iface, cx, cy);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_SetIconSize(IImageList *iface, int cx,
+    int cy)
+{
+    FIXME("STUB: %p %d %d\n", iface, cx, cy);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_GetImageCount(IImageList *iface, int *pi)
+{
+    FIXME("STUB: %p %p\n", iface, pi);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_SetImageCount(IImageList *iface,
+    UINT uNewCount)
+{
+    FIXME("STUB: %p %d\n", iface, uNewCount);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_SetBkColor(IImageList *iface, COLORREF clrBk,
+    COLORREF *pclr)
+{
+    FIXME("STUB: %p %x %p\n", iface, clrBk, pclr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_GetBkColor(IImageList *iface, COLORREF *pclr)
+{
+    FIXME("STUB: %p %p\n", iface, pclr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_BeginDrag(IImageList *iface, int iTrack,
+    int dxHotspot, int dyHotspot)
+{
+    FIXME("STUB: %p %d %d %d\n", iface, iTrack, dxHotspot, dyHotspot);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_EndDrag(IImageList *iface)
+{
+    FIXME("STUB: %p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_DragEnter(IImageList *iface, HWND hwndLock,
+    int x, int y)
+{
+    FIXME("STUB: %p %p %d %d\n", iface, hwndLock, x, y);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_DragLeave(IImageList *iface, HWND hwndLock)
+{
+    FIXME("STUB: %p %p\n", iface, hwndLock);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_DragMove(IImageList *iface, int x, int y)
+{
+    FIXME("STUB: %p %d %d\n", iface, x, y);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_SetDragCursorImage(IImageList *iface,
+    IUnknown *punk, int iDrag, int dxHotspot, int dyHotspot)
+{
+    FIXME("STUB: %p %p %d %d %d\n", iface, punk, iDrag, dxHotspot, dyHotspot);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_DragShowNolock(IImageList *iface, BOOL fShow)
+{
+    FIXME("STUB: %p %d\n", iface, fShow);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_GetDragImage(IImageList *iface, POINT *ppt,
+    POINT *pptHotspot, REFIID riid, PVOID *ppv)
+{
+    FIXME("STUB: %p %p %p %s %p\n", iface, ppt, pptHotspot, debugstr_guid(riid),
+        ppv);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_GetItemFlags(IImageList *iface, int i,
+    DWORD *dwFlags)
+{
+    FIXME("STUB: %p %d %p\n", iface, i, dwFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ImageListImpl_GetOverlayImage(IImageList *iface, int iOverlay,
+    int *piIndex)
+{
+    FIXME("STUB: %p %d %p\n", iface, iOverlay, piIndex);
+    return E_NOTIMPL;
+}
+
+
+static const IImageListVtbl ImageListImpl_Vtbl = {
+    ImageListImpl_QueryInterface,
+    ImageListImpl_AddRef,
+    ImageListImpl_Release,
+    ImageListImpl_Add,
+    ImageListImpl_ReplaceIcon,
+    ImageListImpl_SetOverlayImage,
+    ImageListImpl_Replace,
+    ImageListImpl_AddMasked,
+    ImageListImpl_Draw,
+    ImageListImpl_Remove,
+    ImageListImpl_GetIcon,
+    ImageListImpl_GetImageInfo,
+    ImageListImpl_Copy,
+    ImageListImpl_Merge,
+    ImageListImpl_Clone,
+    ImageListImpl_GetImageRect,
+    ImageListImpl_GetIconSize,
+    ImageListImpl_SetIconSize,
+    ImageListImpl_GetImageCount,
+    ImageListImpl_SetImageCount,
+    ImageListImpl_SetBkColor,
+    ImageListImpl_GetBkColor,
+    ImageListImpl_BeginDrag,
+    ImageListImpl_EndDrag,
+    ImageListImpl_DragEnter,
+    ImageListImpl_DragLeave,
+    ImageListImpl_DragMove,
+    ImageListImpl_SetDragCursorImage,
+    ImageListImpl_DragShowNolock,
+    ImageListImpl_GetDragImage,
+    ImageListImpl_GetItemFlags,
+    ImageListImpl_GetOverlayImage
+};
 
 /*************************************************************************
  * HIMAGELIST_QueryInterface [COMCTL32.@]
@@ -2948,6 +3234,31 @@ ImageList_CoCreateInstance (REFCLSID rclsid, const IUnknown *punkOuter, REFIID r
 HRESULT WINAPI
 HIMAGELIST_QueryInterface (HIMAGELIST himl, REFIID riid, void **ppv)
 {
-    FIXME("STUB: %p %s %p\n", himl, debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
+    TRACE("(%p,%s,%p)\n", himl, debugstr_guid(riid), ppv);
+    return IImageList_QueryInterface((IImageList *) himl, riid, ppv);
+}
+
+static HRESULT ImageListImpl_CreateInstance(const IUnknown *pUnkOuter, REFIID iid, void** ppv)
+{
+    HIMAGELIST This;
+    HRESULT ret;
+
+    TRACE("(%p,%s,%p)\n", pUnkOuter, debugstr_guid(iid), ppv);
+
+    *ppv = NULL;
+
+    if (pUnkOuter) return CLASS_E_NOAGGREGATION;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(struct _IMAGELIST));
+    if (!This) return E_OUTOFMEMORY;
+
+    ZeroMemory(This, sizeof(struct _IMAGELIST));
+
+    This->lpVtbl = &ImageListImpl_Vtbl;
+    This->ref = 1;
+
+    ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
+    IUnknown_Release((IUnknown*)This);
+
+    return ret;
 }
