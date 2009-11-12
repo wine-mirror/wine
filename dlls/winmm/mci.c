@@ -2131,37 +2131,21 @@ UINT WINAPI mciGetDeviceIDW(LPCWSTR lpwstrName)
     return MCI_GetDriverFromString(lpwstrName); 
 }
 
-/******************************************************************
- *		MyUserYield
- *
- * Internal wrapper to call USER.UserYield16 (in fact through a Wine only export from USER32).
- */
-static void MyUserYield(void)
-{
-    HMODULE mod = GetModuleHandleA( "user32.dll" );
-    if (mod)
-    {
-        FARPROC proc = GetProcAddress( mod, "UserYield16" );
-        if (proc) proc();
-    }
-}
-
 /**************************************************************************
  * 				MCI_DefYieldProc	       	[internal]
  */
 static UINT WINAPI MCI_DefYieldProc(MCIDEVICEID wDevID, DWORD data)
 {
     INT16	ret;
+    MSG		msg;
 
     TRACE("(0x%04x, 0x%08x)\n", wDevID, data);
 
     if ((HIWORD(data) != 0 && HWND_16(GetActiveWindow()) != HIWORD(data)) ||
 	(GetAsyncKeyState(LOWORD(data)) & 1) == 0) {
-	MyUserYield();
+        PeekMessageW(&msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE);
 	ret = 0;
     } else {
-	MSG		msg;
-
 	msg.hwnd = HWND_32(HIWORD(data));
 	while (!PeekMessageW(&msg, msg.hwnd, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE));
 	ret = -1;
@@ -2263,7 +2247,8 @@ UINT WINAPI mciDriverYield(MCIDEVICEID uDeviceID)
     TRACE("(%04x)\n", uDeviceID);
 
     if (!(wmd = MCI_GetDriver(uDeviceID)) || !wmd->lpfnYieldProc) {
-	MyUserYield();
+        MSG msg;
+        PeekMessageW(&msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE);
     } else {
 	ret = wmd->lpfnYieldProc(uDeviceID, wmd->dwYieldData);
     }
