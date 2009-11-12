@@ -152,7 +152,7 @@ static void set_downloading_proc(task_t *_task)
     }
 }
 
-static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BOOL *bind_complete)
+static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc)
 {
     nsChannelBSC *bscallback;
     LPOLESTR url = NULL;
@@ -268,8 +268,6 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
     IUnknown_Release((IUnknown*)bscallback);
     CoTaskMemFree(url);
 
-    if(bind_complete)
-        *bind_complete = FALSE;
     return S_OK;
 }
 
@@ -357,19 +355,15 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         IMoniker *pimkName, LPBC pibc, DWORD grfMode)
 {
     HTMLDocument *This = PERSISTMON_THIS(iface);
-    BOOL bind_complete = FALSE;
     HRESULT hres;
 
     TRACE("(%p)->(%x %p %p %08x)\n", This, fFullyAvailable, pimkName, pibc, grfMode);
 
-    hres = set_moniker(This, pimkName, pibc, &bind_complete);
+    hres = set_moniker(This, pimkName, pibc);
     if(FAILED(hres))
         return hres;
 
-    if(!bind_complete)
-        return start_binding(This->window, NULL, (BSCallback*)This->window->bscallback, pibc);
-
-    return S_OK;
+    return start_binding(This->window, NULL, (BSCallback*)This->window->bscallback, pibc);
 }
 
 static HRESULT WINAPI PersistMoniker_Save(IPersistMoniker *iface, IMoniker *pimkName,
@@ -626,7 +620,7 @@ static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, LPSTREAM
         return hres;
     }
 
-    hres = set_moniker(This, mon, NULL, NULL);
+    hres = set_moniker(This, mon, NULL);
     IMoniker_Release(mon);
     if(FAILED(hres))
         return hres;
