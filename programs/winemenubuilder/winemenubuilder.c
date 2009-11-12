@@ -730,6 +730,26 @@ static char* heap_printf(const char *format, ...)
     return ret;
 }
 
+static void write_xml_text(FILE *file, const char *text)
+{
+    int i;
+    for (i = 0; text[i]; i++)
+    {
+        if (text[i] == '&')
+            fputs("&amp;", file);
+        else if (text[i] == '<')
+            fputs("&lt;", file);
+        else if (text[i] == '>')
+            fputs("&gt;", file);
+        else if (text[i] == '\'')
+            fputs("&apos;", file);
+        else if (text[i] == '"')
+            fputs("&quot;", file);
+        else
+            fputc(text[i], file);
+    }
+}
+
 static BOOL create_directories(char *directory)
 {
     BOOL ret = TRUE;
@@ -1805,10 +1825,18 @@ static BOOL write_freedesktop_mime_type_entry(const char *packages_dir, const ch
         {
             fprintf(packageFile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
             fprintf(packageFile, "<mime-info xmlns=\"http://www.freedesktop.org/standards/shared-mime-info\">\n");
-            fprintf(packageFile, "  <mime-type type=\"%s\">\n", mime_type);
-            fprintf(packageFile, "    <glob pattern=\"*%s\"/>\n", dot_extension);
+            fprintf(packageFile, "  <mime-type type=\"");
+            write_xml_text(packageFile, mime_type);
+            fprintf(packageFile, "\">\n");
+            fprintf(packageFile, "    <glob pattern=\"*");
+            write_xml_text(packageFile, dot_extension);
+            fprintf(packageFile, "\"/>\n");
             if (comment)
-                fprintf(packageFile, "    <comment>%s</comment>\n", comment);
+            {
+                fprintf(packageFile, "    <comment>");
+                write_xml_text(packageFile, comment);
+                fprintf(packageFile, "</comment>\n");
+            }
             fprintf(packageFile, "  </mime-type>\n");
             fprintf(packageFile, "</mime-info>\n");
             ret = TRUE;
