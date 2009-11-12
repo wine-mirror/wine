@@ -1486,6 +1486,40 @@ NTSTATUS WINAPI NtSetVolumeInformationFile(
 	return 0;
 }
 
+static NTSTATUS server_get_unix_name( HANDLE handle, ANSI_STRING *unix_name )
+{
+    data_size_t size = 1024;
+    NTSTATUS ret;
+    char *name;
+
+    for (;;)
+    {
+        name = RtlAllocateHeap( GetProcessHeap(), 0, size + 1 );
+        if (!name) return STATUS_NO_MEMORY;
+        unix_name->MaximumLength = size + 1;
+
+        SERVER_START_REQ( get_handle_unix_name )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            wine_server_set_reply( req, name, size );
+            ret = wine_server_call( req );
+            size = reply->name_len;
+        }
+        SERVER_END_REQ;
+
+        if (!ret)
+        {
+            name[size] = 0;
+            unix_name->Buffer = name;
+            unix_name->Length = size;
+            break;
+        }
+        RtlFreeHeap( GetProcessHeap(), 0, name );
+        if (ret != STATUS_BUFFER_OVERFLOW) break;
+    }
+    return ret;
+}
+
 /******************************************************************************
  *  NtQueryInformationFile		[NTDLL.@]
  *  ZwQueryInformationFile		[NTDLL.@]
@@ -1772,6 +1806,42 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
                 }
             }
             SERVER_END_REQ;
+        }
+        break;
+    case FileNameInformation:
+        {
+            FILE_NAME_INFORMATION *info = ptr;
+            ANSI_STRING unix_name;
+
+            if (!(io->u.Status = server_get_unix_name( hFile, &unix_name )))
+            {
+                LONG name_len = len - FIELD_OFFSET(FILE_NAME_INFORMATION, FileName);
+                UNICODE_STRING nt_name;
+
+                io->u.Status = wine_unix_to_nt_file_name( &unix_name, &nt_name );
+                RtlFreeAnsiString( &unix_name );
+
+                if (!io->u.Status)
+                {
+                    const WCHAR *ptr = nt_name.Buffer;
+                    const WCHAR *end = ptr + (nt_name.Length / sizeof(WCHAR));
+
+                    /* Skip the volume mount point. */
+                    while (ptr != end && *ptr == '\\') ++ptr;
+                    while (ptr != end && *ptr != '\\') ++ptr;
+                    while (ptr != end && *ptr == '\\') ++ptr;
+                    while (ptr != end && *ptr != '\\') ++ptr;
+
+                    info->FileNameLength = (end - ptr) * sizeof(WCHAR);
+                    if (name_len < info->FileNameLength) io->u.Status = STATUS_BUFFER_OVERFLOW;
+                    else name_len = info->FileNameLength;
+
+                    memcpy( info->FileName, ptr, name_len );
+                    RtlFreeUnicodeString( &nt_name );
+
+                    io->Information = FIELD_OFFSET(FILE_NAME_INFORMATION, FileName) + name_len;
+                }
+            }
         }
         break;
     default:
