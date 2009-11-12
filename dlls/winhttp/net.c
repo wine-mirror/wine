@@ -91,6 +91,7 @@ static void *libcrypto_handle;
 
 static SSL_METHOD *method;
 static SSL_CTX *ctx;
+static int hostname_idx;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 
@@ -106,6 +107,9 @@ MAKE_FUNCPTR( SSL_connect );
 MAKE_FUNCPTR( SSL_shutdown );
 MAKE_FUNCPTR( SSL_write );
 MAKE_FUNCPTR( SSL_read );
+MAKE_FUNCPTR( SSL_get_ex_new_index );
+MAKE_FUNCPTR( SSL_get_ex_data );
+MAKE_FUNCPTR( SSL_set_ex_data );
 MAKE_FUNCPTR( SSL_get_verify_result );
 MAKE_FUNCPTR( SSL_get_peer_certificate );
 MAKE_FUNCPTR( SSL_CTX_set_default_verify_paths );
@@ -254,6 +258,9 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     LOAD_FUNCPTR( SSL_shutdown );
     LOAD_FUNCPTR( SSL_write );
     LOAD_FUNCPTR( SSL_read );
+    LOAD_FUNCPTR( SSL_get_ex_new_index );
+    LOAD_FUNCPTR( SSL_get_ex_data );
+    LOAD_FUNCPTR( SSL_set_ex_data );
     LOAD_FUNCPTR( SSL_get_verify_result );
     LOAD_FUNCPTR( SSL_get_peer_certificate );
     LOAD_FUNCPTR( SSL_CTX_set_default_verify_paths );
@@ -289,6 +296,7 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
         LeaveCriticalSection( &init_ssl_cs );
         return FALSE;
     }
+    hostname_idx = pSSL_get_ex_new_index( 0, (void *)"hostname index", NULL, NULL, NULL );
 
     pCRYPTO_set_id_callback(ssl_thread_id);
     num_ssl_locks = pCRYPTO_num_locks();
@@ -442,6 +450,7 @@ BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname )
         set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
         goto fail;
     }
+    pSSL_set_ex_data( conn->ssl_conn, hostname_idx, hostname );
     if (!(cert = pSSL_get_peer_certificate( conn->ssl_conn )))
     {
         ERR("No certificate for server: %s\n", pERR_error_string( pERR_get_error(), 0 ));
