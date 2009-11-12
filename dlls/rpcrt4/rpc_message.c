@@ -226,13 +226,13 @@ RpcPktHdr *RPCRT4_BuildBindNackHeader(ULONG DataRepresentation,
 {
   RpcPktHdr *header;
 
-  header = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(header->bind_nack));
+  header = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET(RpcPktHdr, bind_nack.protocols[1]));
   if (header == NULL) {
     return NULL;
   }
 
   RPCRT4_BuildCommonHeader(header, PKT_BIND_NACK, DataRepresentation);
-  header->common.frag_len = sizeof(header->bind_nack);
+  header->common.frag_len = FIELD_OFFSET(RpcPktHdr, bind_nack.protocols[1]);
   header->bind_nack.reject_reason = RejectReason;
   header->bind_nack.protocols_count = 1;
   header->bind_nack.protocols[0].rpc_ver = RpcVersion;
