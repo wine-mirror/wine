@@ -65,7 +65,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(storage);
 static const BYTE STORAGE_magic[8]    ={0xd0,0xcf,0x11,0xe0,0xa1,0xb1,0x1a,0xe1};
 static const BYTE STORAGE_oldmagic[8] ={0xd0,0xcf,0x11,0xe0,0x0e,0x11,0xfc,0x0d};
 
-static const char rootPropertyName[] = "Root Entry";
+static const char rootEntryName[] = "Root Entry";
 
 /****************************************************************************
  * Storage32InternalImpl definitions.
@@ -2266,7 +2266,7 @@ static HRESULT StorageImpl_Construct(
      * Initialize the property chain
      */
     memset(&rootProp, 0, sizeof(rootProp));
-    MultiByteToWideChar( CP_ACP, 0, rootPropertyName, -1, rootProp.name,
+    MultiByteToWideChar( CP_ACP, 0, rootEntryName, -1, rootProp.name,
                          sizeof(rootProp.name)/sizeof(WCHAR) );
     rootProp.sizeOfNameString = (strlenW(rootProp.name)+1) * sizeof(WCHAR);
     rootProp.stgType          = STGTY_ROOT;
