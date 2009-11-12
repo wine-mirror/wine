@@ -819,10 +819,12 @@ void WINAPI Yield16(void)
         HMODULE mod = GetModuleHandleA( "user32.dll" );
         if (mod)
         {
-            FARPROC proc = GetProcAddress( mod, "UserYield16" );
-            if (proc)
+            BOOL (WINAPI *pPeekMessageW)( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags );
+            pPeekMessageW = (void *)GetProcAddress( mod, "PeekMessageW" );
+            if (pPeekMessageW)
             {
-                proc();
+                MSG msg;
+                pPeekMessageW( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE );
                 return;
             }
         }
