@@ -41,7 +41,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(driver);
 
 typedef struct tagWINE_DRIVER
 {
-    char			szAliasName[128];
     /* as usual LPWINE_DRIVER == hDriver32 */
     HDRVR16			hDriver16;
     HMODULE16			hModule16;
@@ -53,30 +52,6 @@ typedef struct tagWINE_DRIVER
 
 static LPWINE_DRIVER	lpDrvItemList = NULL;
 
-
-/**************************************************************************
- *			LoadStartupDrivers			[internal]
- */
-#if 0
-static void DRIVER_LoadStartupDrivers(void)
-{
-    char  	str[256];
-
-    if (GetPrivateProfileStringA("drivers", NULL, "", str, sizeof(str), "SYSTEM.INI") < 2) {
-    	ERR("Can't find drivers section in system.ini\n");
-    } else {
-	HDRVR16	hDrv;
-	LPSTR	ptr;
-
-	for (ptr = str; *ptr; ptr += strlen(ptr) + 1) {
-	    TRACE("str='%s'\n", ptr);
-	    hDrv = OpenDriver16(ptr, "drivers", 0L);
-	    TRACE("hDrv=%04x\n", hDrv);
-	}
-	TRACE("end of list !\n");
-    }
-}
-#endif
 
 /**************************************************************************
  *			DRIVER_GetNumberOfModuleRefs		[internal]
@@ -138,10 +113,9 @@ static inline LRESULT DRIVER_SendMessage(LPWINE_DRIVER lpDrv, UINT16 msg,
 }
 
 /**************************************************************************
- *		SendDriverMessage (USER.251)
+ *		DrvSendMessage (MMSYSTEM.1102)
  */
-LRESULT WINAPI SendDriverMessage16(HDRVR16 hDriver, UINT16 msg, LPARAM lParam1,
-                                   LPARAM lParam2)
+LRESULT WINAPI DrvSendMessage16(HDRVR16 hDriver, UINT16 msg, LPARAM lParam1, LPARAM lParam2)
 {
     LPWINE_DRIVER 	lpDrv;
     LRESULT 		retval = 0;
@@ -262,7 +236,6 @@ static	LPWINE_DRIVER	DRIVER_TryOpenDriver16(LPCSTR lpFileName, LPARAM lParam2)
     lpDrv->dwDriverID  = 0;
     while (DRIVER_FindFromHDrvr16(++DRIVER_hDrvr16Counter));
     lpDrv->hDriver16   = DRIVER_hDrvr16Counter;
-    lstrcpynA(lpDrv->szAliasName, lpSFN, sizeof(lpDrv->szAliasName));
     lpDrv->hModule16   = hModule;
     lpDrv->lpDrvProc   = lpProc;
 
@@ -277,9 +250,9 @@ static	LPWINE_DRIVER	DRIVER_TryOpenDriver16(LPCSTR lpFileName, LPARAM lParam2)
 }
 
 /**************************************************************************
- *		OpenDriver (USER.252)
+ *		DrvOpen (MMSYSTEM.1100)
  */
-HDRVR16 WINAPI OpenDriver16(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lParam2)
+HDRVR16 WINAPI DrvOpen16(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lParam2)
 {
     LPWINE_DRIVER	lpDrv = NULL;
     char		drvName[128];
@@ -310,9 +283,9 @@ HDRVR16 WINAPI OpenDriver16(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lP
 }
 
 /**************************************************************************
- *		CloseDriver (USER.253)
+ *		DrvClose16 (MMSYSTEM.1101)
  */
-LRESULT WINAPI CloseDriver16(HDRVR16 hDrvr, LPARAM lParam1, LPARAM lParam2)
+LRESULT WINAPI DrvClose16(HDRVR16 hDrvr, LPARAM lParam1, LPARAM lParam2)
 {
     LPWINE_DRIVER	lpDrv;
 
@@ -331,9 +304,9 @@ LRESULT WINAPI CloseDriver16(HDRVR16 hDrvr, LPARAM lParam1, LPARAM lParam2)
 }
 
 /**************************************************************************
- *		GetDriverModuleHandle (USER.254)
+ *		DrvGetModuleHandle (MMSYSTEM.1103)
  */
-HMODULE16 WINAPI GetDriverModuleHandle16(HDRVR16 hDrvr)
+HMODULE16 WINAPI DrvGetModuleHandle16(HDRVR16 hDrvr)
 {
     LPWINE_DRIVER 	lpDrv;
     HMODULE16 		hModule = 0;
@@ -348,10 +321,10 @@ HMODULE16 WINAPI GetDriverModuleHandle16(HDRVR16 hDrvr)
 }
 
 /**************************************************************************
- *		DefDriverProc (USER.255)
+ *		DrvDefDriverProc (MMSYSTEM.1104)
  */
-LRESULT WINAPI DefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg,
-                               LPARAM lParam1, LPARAM lParam2)
+LRESULT WINAPI DrvDefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg,
+                                  LPARAM lParam1, LPARAM lParam2)
 {
     TRACE("devID=0x%08x hDrv=0x%04x wMsg=%04x lP1=0x%08lx lP2=0x%08lx\n",
 	  dwDevID, hDriv, wMsg, lParam1, lParam2);
@@ -378,63 +351,10 @@ LRESULT WINAPI DefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg,
 }
 
 /**************************************************************************
- *		GetDriverInfo (USER.256)
+ *		DriverProc (MMSYSTEM.6)
  */
-BOOL16 WINAPI GetDriverInfo16(HDRVR16 hDrvr, LPDRIVERINFOSTRUCT16 lpDrvInfo)
+LRESULT WINAPI DriverProc16(DWORD dwDevID, HDRVR16 hDrv, WORD wMsg,
+			    DWORD dwParam1, DWORD dwParam2)
 {
-    LPWINE_DRIVER 	lpDrv;
-    BOOL16		ret = FALSE;
-
-    TRACE("(%04x, %p);\n", hDrvr, lpDrvInfo);
-
-    if (lpDrvInfo == NULL || lpDrvInfo->length != sizeof(DRIVERINFOSTRUCT16))
-	return FALSE;
-
-    if ((lpDrv = DRIVER_FindFromHDrvr16(hDrvr)) != NULL) {
-	lpDrvInfo->hDriver = lpDrv->hDriver16;
-	lpDrvInfo->hModule = lpDrv->hModule16;
-	lstrcpynA(lpDrvInfo->szAliasName, lpDrv->szAliasName, sizeof(lpDrvInfo->szAliasName));
-	ret = TRUE;
-    }
-
-    return ret;
-}
-
-/**************************************************************************
- *		GetNextDriver (USER.257)
- */
-HDRVR16 WINAPI GetNextDriver16(HDRVR16 hDrvr, DWORD dwFlags)
-{
-    HDRVR16 		hRetDrv = 0;
-    LPWINE_DRIVER 	lpDrv;
-
-    TRACE("(%04x, %08X);\n", hDrvr, dwFlags);
-
-    if (hDrvr == 0) {
-	if (lpDrvItemList == NULL) {
-	    FIXME("drivers list empty !\n");
-	    /* FIXME: code was using DRIVER_LoadStartupDrivers(); before ?
-	     * I (EPP) don't quite understand this
-	     */
-	    if (lpDrvItemList == NULL)
-		return 0;
-	}
-	lpDrv = lpDrvItemList;
-	if (dwFlags & GND_REVERSE) {
-	    while (lpDrv->lpNextItem)
-		lpDrv = lpDrv->lpNextItem;
-	}
-    } else {
-	if ((lpDrv = DRIVER_FindFromHDrvr16(hDrvr)) != NULL) {
-	    if (dwFlags & GND_REVERSE) {
-		lpDrv = (lpDrv->lpPrevItem) ? lpDrv->lpPrevItem : NULL;
-	    } else {
-		lpDrv = (lpDrv->lpNextItem) ? lpDrv->lpNextItem : NULL;
-	    }
-	}
-    }
-
-    hRetDrv = (lpDrv) ? lpDrv->hDriver16 : 0;
-    TRACE("return %04x !\n", hRetDrv);
-    return hRetDrv;
+    return DrvDefDriverProc16(dwDevID, hDrv, wMsg, dwParam1, dwParam2);
 }

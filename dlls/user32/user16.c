@@ -946,6 +946,80 @@ UINT16 WINAPI GetMenuState16( HMENU16 hMenu, UINT16 wItemID, UINT16 wFlags )
 }
 
 
+/**************************************************************************
+ *		SendDriverMessage (USER.251)
+ */
+LRESULT WINAPI SendDriverMessage16(HDRVR16 hDriver, UINT16 msg, LPARAM lParam1,
+                                   LPARAM lParam2)
+{
+    FIXME("(%04x, %04x, %08lx, %08lx): stub\n", hDriver, msg, lParam1, lParam2);
+    return 0;
+}
+
+
+/**************************************************************************
+ *		OpenDriver (USER.252)
+ */
+HDRVR16 WINAPI OpenDriver16(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lParam2)
+{
+    FIXME( "(%s, %s, %08lx): stub\n", debugstr_a(lpDriverName), debugstr_a(lpSectionName), lParam2);
+    return 0;
+}
+
+
+/**************************************************************************
+ *		CloseDriver (USER.253)
+ */
+LRESULT WINAPI CloseDriver16(HDRVR16 hDrvr, LPARAM lParam1, LPARAM lParam2)
+{
+    FIXME( "(%04x, %08lx, %08lx): stub\n", hDrvr, lParam1, lParam2);
+    return FALSE;
+}
+
+
+/**************************************************************************
+ *		GetDriverModuleHandle (USER.254)
+ */
+HMODULE16 WINAPI GetDriverModuleHandle16(HDRVR16 hDrvr)
+{
+    FIXME("(%04x): stub\n", hDrvr);
+    return 0;
+}
+
+
+/**************************************************************************
+ *		DefDriverProc (USER.255)
+ */
+LRESULT WINAPI DefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg,
+                               LPARAM lParam1, LPARAM lParam2)
+{
+    FIXME( "devID=0x%08x hDrv=0x%04x wMsg=%04x lP1=0x%08lx lP2=0x%08lx: stub\n",
+	  dwDevID, hDriv, wMsg, lParam1, lParam2);
+    return 0;
+}
+
+
+/**************************************************************************
+ *		GetDriverInfo (USER.256)
+ */
+struct DRIVERINFOSTRUCT16;
+BOOL16 WINAPI GetDriverInfo16(HDRVR16 hDrvr, struct DRIVERINFOSTRUCT16 *lpDrvInfo)
+{
+    FIXME( "(%04x, %p): stub\n", hDrvr, lpDrvInfo);
+    return FALSE;
+}
+
+
+/**************************************************************************
+ *		GetNextDriver (USER.257)
+ */
+HDRVR16 WINAPI GetNextDriver16(HDRVR16 hDrvr, DWORD dwFlags)
+{
+    FIXME( "(%04x, %08x): stub\n", hDrvr, dwFlags);
+    return 0;
+}
+
+
 /**********************************************************************
  *         GetMenuItemCount    (USER.263)
  */

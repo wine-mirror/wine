@@ -27,7 +27,6 @@ C_SRCS = \
 	dialog.c \
 	dialog16.c \
 	driver.c \
-	driver16.c \
 	edit.c \
 	exticon.c \
 	focus.c \
