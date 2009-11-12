@@ -122,6 +122,11 @@ typedef struct DirEntry              DirEntry;
 typedef struct StgStreamImpl         StgStreamImpl;
 
 /*
+ * A reference to a directory entry in the file or a transacted cache.
+ */
+typedef ULONG DirRef;
+
+/*
  * This utility structure is used to read/write the information in a directory
  * entry.
  */
@@ -130,9 +135,9 @@ struct DirEntry
   WCHAR	         name[DIRENTRY_NAME_MAX_LEN];
   WORD	         sizeOfNameString;
   BYTE	         stgType;
-  ULONG          leftChild;
-  ULONG          rightChild;
-  ULONG          dirRootEntry;
+  DirRef         leftChild;
+  DirRef         rightChild;
+  DirRef         dirRootEntry;
   GUID           clsid;
   FILETIME       ctime;
   FILETIME       mtime;
@@ -209,7 +214,7 @@ struct StorageBaseImpl
   /*
    * Index of the directory entry of this storage
    */
-  ULONG storageDirEntry;
+  DirRef storageDirEntry;
 
   /*
    * virtual Destructor method.
@@ -303,12 +308,12 @@ HRESULT StorageImpl_WriteRawDirEntry(
 
 BOOL StorageImpl_ReadDirEntry(
             StorageImpl*    This,
-            ULONG           index,
+            DirRef          index,
             DirEntry*       buffer);
 
 BOOL StorageImpl_WriteDirEntry(
             StorageImpl*        This,
-            ULONG               index,
+            DirRef              index,
             const DirEntry*     buffer);
 
 BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
@@ -354,7 +359,7 @@ struct StgStreamImpl
   /*
    * Index of the directory entry that owns (points to) this stream.
    */
-  ULONG              dirEntry;
+  DirRef             dirEntry;
 
   /*
    * Helper variable that contains the size of the stream
@@ -381,7 +386,7 @@ struct StgStreamImpl
 StgStreamImpl* StgStreamImpl_Construct(
 		StorageBaseImpl* parentStorage,
     DWORD            grfMode,
-    ULONG            dirEntry);
+    DirRef           dirEntry);
 
 
 /******************************************************************************
@@ -431,7 +436,7 @@ struct BlockChainStream
 {
   StorageImpl* parentStorage;
   ULONG*       headOfStreamPlaceHolder;
-  ULONG        ownerDirEntry;
+  DirRef       ownerDirEntry;
   ULONG        lastBlockNoInSequence;
   ULONG        lastBlockNoInSequenceIndex;
   ULONG        tailIndex;
@@ -444,7 +449,7 @@ struct BlockChainStream
 BlockChainStream* BlockChainStream_Construct(
 		StorageImpl* parentStorage,
 		ULONG*         headOfStreamPlaceHolder,
-		ULONG          dirEntry);
+		DirRef         dirEntry);
 
 void BlockChainStream_Destroy(
 		BlockChainStream* This);
@@ -476,7 +481,7 @@ BOOL BlockChainStream_SetSize(
 struct SmallBlockChainStream
 {
   StorageImpl* parentStorage;
-  ULONG          ownerDirEntry;
+  DirRef         ownerDirEntry;
   ULONG*         headOfStreamPlaceHolder;
 };
 
@@ -486,7 +491,7 @@ struct SmallBlockChainStream
 SmallBlockChainStream* SmallBlockChainStream_Construct(
            StorageImpl*   parentStorage,
            ULONG*         headOfStreamPlaceHolder,
-           ULONG          dirEntry);
+           DirRef         dirEntry);
 
 void SmallBlockChainStream_Destroy(
 	       SmallBlockChainStream* This);

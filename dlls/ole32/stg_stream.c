@@ -962,7 +962,7 @@ static const IStreamVtbl StgStreamImpl_Vtbl =
 StgStreamImpl* StgStreamImpl_Construct(
 		StorageBaseImpl* parentStorage,
     DWORD            grfMode,
-    ULONG            dirEntry)
+    DirRef           dirEntry)
 {
   StgStreamImpl* newStream;
 

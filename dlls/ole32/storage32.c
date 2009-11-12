@@ -85,7 +85,7 @@ typedef struct StorageInternalImpl StorageInternalImpl;
 
 /* Method definitions for the Storage32InternalImpl class. */
 static StorageInternalImpl* StorageInternalImpl_Construct(StorageImpl* ancestorStorage,
-                                                          DWORD openFlags, ULONG rootTropertyIndex);
+                                                          DWORD openFlags, DirRef storageDirEntry);
 static void StorageImpl_Destroy(StorageBaseImpl* iface);
 static BOOL StorageImpl_ReadBigBlock(StorageImpl* This, ULONG blockIndex, void* buffer);
 static BOOL StorageImpl_WriteBigBlock(StorageImpl* This, ULONG blockIndex, const void* buffer);
@@ -161,18 +161,18 @@ typedef struct
  */
 static HRESULT deleteStorageContents(
   StorageBaseImpl *parentStorage,
-  ULONG        indexToDelete,
+  DirRef       indexToDelete,
   DirEntry     entryDataToDelete);
 
 static HRESULT deleteStreamContents(
   StorageBaseImpl *parentStorage,
-  ULONG         indexToDelete,
+  DirRef        indexToDelete,
   DirEntry      entryDataToDelete);
 
 static HRESULT removeFromTree(
   StorageImpl *This,
-  ULONG         parentStorageIndex,
-  ULONG         deletedIndex);
+  DirRef        parentStorageIndex,
+  DirRef        deletedIndex);
 
 /***********************************************************************
  * Declaration of the functions used to manipulate DirEntry
@@ -181,33 +181,33 @@ static HRESULT removeFromTree(
 static HRESULT createDirEntry(
   StorageImpl *storage,
   const DirEntry *newData,
-  ULONG *index);
+  DirRef *index);
 
 static HRESULT destroyDirEntry(
   StorageImpl *storage,
-  ULONG index);
+  DirRef index);
 
 static HRESULT insertIntoTree(
   StorageImpl *This,
-  ULONG         parentStorageIndex,
-  ULONG         newEntryIndex);
+  DirRef        parentStorageIndex,
+  DirRef        newEntryIndex);
 
 static LONG entryNameCmp(
     const OLECHAR *name1,
     const OLECHAR *name2);
 
-static ULONG findElement(
+static DirRef findElement(
     StorageImpl *storage,
-    ULONG storageEntry,
+    DirRef storageEntry,
     const OLECHAR *name,
     DirEntry *data);
 
 static HRESULT findTreeParent(
     StorageImpl *storage,
-    ULONG storageEntry,
+    DirRef storageEntry,
     const OLECHAR *childName,
     DirEntry *parentData,
-    ULONG *parentEntry,
+    DirRef *parentEntry,
     ULONG *relation);
 
 /***********************************************************************
@@ -236,7 +236,7 @@ struct IEnumSTATSTGImpl
 
   LONG           ref;                   /* Reference count */
   StorageImpl*   parentStorage;         /* Reference to the parent storage */
-  ULONG          storageDirEntry;     /* Directory entry of the storage to enumerate */
+  DirRef         storageDirEntry;     /* Directory entry of the storage to enumerate */
 
   /*
    * The current implementation of the IEnumSTATSTGImpl class uses a stack
@@ -245,16 +245,16 @@ struct IEnumSTATSTGImpl
    */
   ULONG          stackSize;
   ULONG          stackMaxSize;
-  ULONG*         stackToVisit;
+  DirRef*        stackToVisit;
 
 #define ENUMSTATSGT_SIZE_INCREMENT 10
 };
 
 
-static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(StorageImpl* This, ULONG storageDirEntry);
+static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(StorageImpl* This, DirRef storageDirEntry);
 static void IEnumSTATSTGImpl_Destroy(IEnumSTATSTGImpl* This);
-static void IEnumSTATSTGImpl_PushSearchNode(IEnumSTATSTGImpl* This, ULONG nodeToPush);
-static ULONG IEnumSTATSTGImpl_PopSearchNode(IEnumSTATSTGImpl* This, BOOL remove);
+static void IEnumSTATSTGImpl_PushSearchNode(IEnumSTATSTGImpl* This, DirRef nodeToPush);
+static DirRef IEnumSTATSTGImpl_PopSearchNode(IEnumSTATSTGImpl* This, BOOL remove);
 
 /************************************************************************
 ** Block Functions
@@ -396,7 +396,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
   StgStreamImpl*    newStream;
   DirEntry          currentEntry;
-  ULONG             streamEntryRef;
+  DirRef            streamEntryRef;
   HRESULT           res = STG_E_UNKNOWN;
 
   TRACE("(%p, %s, %p, %x, %d, %p)\n",
@@ -498,7 +498,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
   StorageInternalImpl* newStorage;
   DirEntry               currentEntry;
-  ULONG                  storageEntryRef;
+  DirRef                 storageEntryRef;
   HRESULT                res = STG_E_UNKNOWN;
 
   TRACE("(%p, %s, %p, %x, %p, %d, %p)\n",
@@ -694,7 +694,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
   DirEntry          currentEntry;
-  ULONG             currentEntryRef;
+  DirRef            currentEntryRef;
 
   TRACE("(%p, %s, %s)\n",
 	iface, debugstr_w(pwcsOldName), debugstr_w(pwcsNewName));
@@ -765,7 +765,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
   StgStreamImpl*    newStream;
   DirEntry          currentEntry, newStreamEntry;
-  ULONG             currentEntryRef, newStreamEntryRef;
+  DirRef            currentEntryRef, newStreamEntryRef;
 
   TRACE("(%p, %s, %x, %d, %d, %p)\n",
 	iface, debugstr_w(pwcsName), grfMode,
@@ -965,8 +965,8 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
 
   DirEntry         currentEntry;
   DirEntry         newEntry;
-  ULONG            currentEntryRef;
-  ULONG            newEntryRef;
+  DirRef           currentEntryRef;
+  DirRef           newEntryRef;
   HRESULT          hr;
 
   TRACE("(%p, %s, %x, %d, %d, %p)\n",
@@ -1091,7 +1091,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
 static HRESULT createDirEntry(
   StorageImpl *storage,
   const DirEntry *newData,
-  ULONG *index)
+  DirRef *index)
 {
   ULONG       currentEntryIndex    = 0;
   ULONG       newEntryIndex        = DIRENTRY_NULL;
@@ -1200,7 +1200,7 @@ static HRESULT createDirEntry(
  */
 static HRESULT destroyDirEntry(
   StorageImpl *storage,
-  ULONG index)
+  DirRef index)
 {
   HRESULT hr;
   BYTE emptyData[RAW_DIRENTRY_SIZE];
@@ -1249,8 +1249,8 @@ static LONG entryNameCmp(
  */
 static HRESULT insertIntoTree(
   StorageImpl *This,
-  ULONG         parentStorageIndex,
-  ULONG         newEntryIndex)
+  DirRef        parentStorageIndex,
+  DirRef        newEntryIndex)
 {
   DirEntry currentEntry;
   DirEntry newEntry;
@@ -1276,7 +1276,7 @@ static HRESULT insertIntoTree(
      * for the appropriate location.
      */
     BOOL found = 0;
-    ULONG  current, next, previous, currentEntryId;
+    DirRef current, next, previous, currentEntryId;
 
     /*
      * Keep a reference to the root of the storage's element tree
@@ -1367,10 +1367,10 @@ static HRESULT insertIntoTree(
  *
  * Find and read the element of a storage with the given name.
  */
-static ULONG findElement(StorageImpl *storage, ULONG storageEntry,
+static DirRef findElement(StorageImpl *storage, DirRef storageEntry,
     const OLECHAR *name, DirEntry *data)
 {
-  ULONG currentEntry;
+  DirRef currentEntry;
 
   /* Read the storage entry to find the root of the tree. */
   StorageImpl_ReadDirEntry(storage, storageEntry, data);
@@ -1408,11 +1408,11 @@ static ULONG findElement(StorageImpl *storage, ULONG storageEntry,
  * If there is no such element, find a place where it could be inserted and
  * return STG_E_FILENOTFOUND.
  */
-static HRESULT findTreeParent(StorageImpl *storage, ULONG storageEntry,
-    const OLECHAR *childName, DirEntry *parentData, ULONG *parentEntry,
+static HRESULT findTreeParent(StorageImpl *storage, DirRef storageEntry,
+    const OLECHAR *childName, DirEntry *parentData, DirRef *parentEntry,
     ULONG *relation)
 {
-  ULONG childEntry;
+  DirRef childEntry;
   DirEntry childData;
 
   /* Read the storage entry to find the root of the tree. */
@@ -1719,7 +1719,7 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
 
   HRESULT           hr = S_OK;
   DirEntry          entryToDelete;
-  ULONG             entryToDeleteRef;
+  DirRef            entryToDeleteRef;
 
   TRACE("(%p, %s)\n",
 	iface, debugstr_w(pwcsName));
@@ -1841,7 +1841,7 @@ static void StorageBaseImpl_DeleteAll(StorageBaseImpl * stg)
  */
 static HRESULT deleteStorageContents(
   StorageBaseImpl *parentStorage,
-  ULONG        indexToDelete,
+  DirRef       indexToDelete,
   DirEntry     entryDataToDelete)
 {
   IEnumSTATSTG *elements     = 0;
@@ -1908,7 +1908,7 @@ static HRESULT deleteStorageContents(
  */
 static HRESULT deleteStreamContents(
   StorageBaseImpl *parentStorage,
-  ULONG         indexToDelete,
+  DirRef        indexToDelete,
   DirEntry      entryDataToDelete)
 {
   IStream      *pis;
@@ -1944,7 +1944,7 @@ static HRESULT deleteStreamContents(
   return S_OK;
 }
 
-static void setEntryLink(DirEntry *entry, ULONG relation, ULONG new_target)
+static void setEntryLink(DirEntry *entry, ULONG relation, DirRef new_target)
 {
   switch (relation)
   {
@@ -1971,14 +1971,14 @@ static void setEntryLink(DirEntry *entry, ULONG relation, ULONG new_target)
  */
 static HRESULT removeFromTree(
   StorageImpl *This,
-  ULONG         parentStorageIndex,
-  ULONG         deletedIndex)
+  DirRef        parentStorageIndex,
+  DirRef        deletedIndex)
 {
   HRESULT hr                     = S_OK;
   BOOL  res                    = TRUE;
   DirEntry   entryToDelete;
   DirEntry   parentEntry;
-  ULONG parentEntryRef;
+  DirRef parentEntryRef;
   ULONG typeOfRelation;
 
   res = StorageImpl_ReadDirEntry(This, deletedIndex, &entryToDelete);
@@ -2015,7 +2015,7 @@ static HRESULT removeFromTree(
        * its children are greater than everything in the left tree, so we
        * insert it at the rightmost point in the left tree.
        */
-      ULONG newRightChildParent = entryToDelete.leftChild;
+      DirRef newRightChildParent = entryToDelete.leftChild;
       DirEntry newRightChildParentEntry;
 
       do
@@ -2130,7 +2130,7 @@ static HRESULT StorageImpl_Construct(
   HRESULT     hr = S_OK;
   DirEntry currentEntry;
   BOOL      readSuccessful;
-  ULONG       currentEntryRef;
+  DirRef      currentEntryRef;
 
   if ( FAILED( validateSTGM(openFlags) ))
     return STG_E_INVALIDFLAG;
@@ -3116,7 +3116,7 @@ void UpdateRawDirEntry(BYTE *buffer, const DirEntry *newData)
  */
 BOOL StorageImpl_ReadDirEntry(
   StorageImpl* This,
-  ULONG          index,
+  DirRef         index,
   DirEntry*      buffer)
 {
   BYTE           currentEntry[RAW_DIRENTRY_SIZE];
@@ -3205,7 +3205,7 @@ BOOL StorageImpl_ReadDirEntry(
  */
 BOOL StorageImpl_WriteDirEntry(
   StorageImpl*          This,
-  ULONG                 index,
+  DirRef                index,
   const DirEntry*       buffer)
 {
   BYTE           currentEntry[RAW_DIRENTRY_SIZE];
@@ -3298,7 +3298,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
   ULARGE_INTEGER size, offset;
   ULONG cbRead, cbWritten;
   ULARGE_INTEGER cbTotalRead;
-  ULONG streamEntryRef;
+  DirRef streamEntryRef;
   HRESULT resWrite = S_OK;
   HRESULT resRead;
   DirEntry streamEntry;
@@ -3410,7 +3410,8 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
                            BlockChainStream** ppbbChain)
 {
     ULARGE_INTEGER size, offset, cbTotalRead;
-    ULONG cbRead, cbWritten, streamEntryRef, sbHeadOfChain = BLOCK_END_OF_CHAIN;
+    ULONG cbRead, cbWritten, sbHeadOfChain = BLOCK_END_OF_CHAIN;
+    DirRef streamEntryRef;
     HRESULT resWrite = S_OK, resRead;
     DirEntry streamEntry;
     BYTE* buffer;
@@ -3577,7 +3578,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
   DirEntry    currentEntry;
   STATSTG*    currentReturnStruct = rgelt;
   ULONG       objectFetched       = 0;
-  ULONG      currentSearchNode;
+  DirRef      currentSearchNode;
 
   if ( (rgelt==0) || ( (celt!=1) && (pceltFetched==0) ) )
     return E_INVALIDARG;
@@ -3654,7 +3655,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Skip(
 
   DirEntry    currentEntry;
   ULONG       objectFetched       = 0;
-  ULONG       currentSearchNode;
+  DirRef      currentSearchNode;
 
   /*
    * Start with the node at the top of the stack.
@@ -3762,7 +3763,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Clone(
   memcpy(
     newClone->stackToVisit,
     This->stackToVisit,
-    sizeof(ULONG) * newClone->stackSize);
+    sizeof(DirRef) * newClone->stackSize);
 
   *ppenum = (IEnumSTATSTG*)newClone;
 
@@ -3777,7 +3778,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Clone(
 
 static void IEnumSTATSTGImpl_PushSearchNode(
   IEnumSTATSTGImpl* This,
-  ULONG             nodeToPush)
+  DirRef            nodeToPush)
 {
   DirEntry  storageEntry;
   BOOL      readSuccessful;
@@ -3799,7 +3800,7 @@ static void IEnumSTATSTGImpl_PushSearchNode(
                            GetProcessHeap(),
                            0,
                            This->stackToVisit,
-                           sizeof(ULONG) * This->stackMaxSize);
+                           sizeof(DirRef) * This->stackMaxSize);
   }
 
   This->stackToVisit[This->stackSize] = nodeToPush;
@@ -3824,11 +3825,11 @@ static void IEnumSTATSTGImpl_PushSearchNode(
   }
 }
 
-static ULONG IEnumSTATSTGImpl_PopSearchNode(
+static DirRef IEnumSTATSTGImpl_PopSearchNode(
   IEnumSTATSTGImpl* This,
   BOOL            remove)
 {
-  ULONG topNode;
+  DirRef topNode;
 
   if (This->stackSize == 0)
     return DIRENTRY_NULL;
@@ -3861,7 +3862,7 @@ static const IEnumSTATSTGVtbl IEnumSTATSTGImpl_Vtbl =
 
 static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
   StorageImpl* parentStorage,
-  ULONG          storageDirEntry)
+  DirRef         storageDirEntry)
 {
   IEnumSTATSTGImpl* newEnumeration;
 
@@ -3890,7 +3891,7 @@ static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
     newEnumeration->stackSize    = 0;
     newEnumeration->stackMaxSize = ENUMSTATSGT_SIZE_INCREMENT;
     newEnumeration->stackToVisit =
-      HeapAlloc(GetProcessHeap(), 0, sizeof(ULONG)*ENUMSTATSGT_SIZE_INCREMENT);
+      HeapAlloc(GetProcessHeap(), 0, sizeof(DirRef)*ENUMSTATSGT_SIZE_INCREMENT);
 
     /*
      * Make sure the current node of the iterator is the first one.
@@ -3933,7 +3934,7 @@ static const IStorageVtbl Storage32InternalImpl_Vtbl =
 static StorageInternalImpl* StorageInternalImpl_Construct(
   StorageImpl* ancestorStorage,
   DWORD        openFlags,
-  ULONG        storageDirEntry)
+  DirRef       storageDirEntry)
 {
   StorageInternalImpl* newStorage;
 
@@ -4103,7 +4104,7 @@ void StorageUtl_CopyDirEntryToSTATSTG(
 BlockChainStream* BlockChainStream_Construct(
   StorageImpl* parentStorage,
   ULONG*         headOfStreamPlaceHolder,
-  ULONG          dirEntry)
+  DirRef         dirEntry)
 {
   BlockChainStream* newStream;
   ULONG blockIndex;
@@ -4653,7 +4654,7 @@ static ULARGE_INTEGER BlockChainStream_GetSize(BlockChainStream* This)
 SmallBlockChainStream* SmallBlockChainStream_Construct(
   StorageImpl* parentStorage,
   ULONG*         headOfStreamPlaceHolder,
-  ULONG          dirEntry)
+  DirRef         dirEntry)
 {
   SmallBlockChainStream* newStream;
 
