@@ -2418,6 +2418,134 @@ static BOOL find_matching_domain_component(CERT_NAME_INFO *name,
     return matches;
 }
 
+static BOOL match_domain_component(LPCWSTR allowed_component, DWORD allowed_len,
+ LPCWSTR server_component, DWORD server_len, BOOL allow_wildcards,
+ BOOL *see_wildcard)
+{
+    LPCWSTR allowed_ptr, server_ptr;
+    BOOL matches = TRUE;
+
+    *see_wildcard = FALSE;
+    if (server_len < allowed_len)
+    {
+        WARN_(chain)("domain component %s too short for %s\n",
+         debugstr_wn(server_component, server_len),
+         debugstr_wn(allowed_component, allowed_len));
+        /* A domain component can't contain a wildcard character, so a domain
+         * component shorter than the allowed string can't produce a match.
+         */
+        return FALSE;
+    }
+    for (allowed_ptr = allowed_component, server_ptr = server_component;
+         matches && allowed_ptr - allowed_component < allowed_len;
+         allowed_ptr++, server_ptr++)
+    {
+        if (*allowed_ptr == '*')
+        {
+            if (allowed_ptr - allowed_component < allowed_len - 1)
+            {
+                WARN_(chain)("non-wildcard characters after wildcard not supported\n");
+                matches = FALSE;
+            }
+            else if (!allow_wildcards)
+            {
+                WARN_(chain)("wildcard after non-wildcard component\n");
+                matches = FALSE;
+            }
+            else
+            {
+                /* the preceding characters must have matched, so the rest of
+                 * the component also matches.
+                 */
+                *see_wildcard = TRUE;
+                break;
+            }
+        }
+        matches = tolowerW(*allowed_ptr) == tolowerW(*server_ptr);
+    }
+    if (matches && server_ptr - server_component < server_len)
+    {
+        /* If there are unmatched characters in the server domain component,
+         * the server domain only matches if the allowed string ended in a '*'.
+         */
+        matches = *allowed_ptr == '*';
+    }
+    return matches;
+}
+
+static BOOL match_common_name(LPCWSTR server_name, PCERT_RDN_ATTR nameAttr)
+{
+    LPCWSTR allowed = (LPCWSTR)nameAttr->Value.pbData;
+    LPCWSTR allowed_component = allowed;
+    DWORD allowed_len = nameAttr->Value.cbData / sizeof(WCHAR);
+    LPCWSTR server_component = server_name;
+    DWORD server_len = strlenW(server_name);
+    BOOL matches = TRUE, allow_wildcards = TRUE;
+
+    TRACE_(chain)("CN = %s\n", debugstr_wn(allowed_component, allowed_len));
+
+    /* From RFC 2818 (HTTP over TLS), section 3.1:
+     * "Names may contain the wildcard character * which is considered to match
+     *  any single domain name component or component fragment. E.g.,
+     *  *.a.com matches foo.a.com but not bar.foo.a.com. f*.com matches foo.com
+     *  but not bar.com."
+     *
+     * And from RFC 2595 (Using TLS with IMAP, POP3 and ACAP), section 2.4:
+     * "A "*" wildcard character MAY be used as the left-most name component in
+     *  the certificate.  For example, *.example.com would match a.example.com,
+     *  foo.example.com, etc. but would not match example.com."
+     *
+     * There are other protocols which use TLS, and none of them is
+     * authoritative.  This accepts certificates in common usage, e.g.
+     * *.domain.com matches www.domain.com but not domain.com, and
+     * www*.domain.com matches www1.domain.com but not mail.domain.com.
+     */
+    do {
+        LPCWSTR allowed_dot, server_dot;
+
+        allowed_dot = memchrW(allowed_component, '.',
+         allowed_len - (allowed_component - allowed));
+        server_dot = memchrW(server_component, '.',
+         server_len - (server_component - server_name));
+        /* The number of components must match */
+        if ((!allowed_dot && server_dot) || (allowed_dot && !server_dot))
+        {
+            if (!allowed_dot)
+                WARN_(chain)("%s: too many components for CN=%s\n",
+                 debugstr_w(server_name), debugstr_wn(allowed, allowed_len));
+            else
+                WARN_(chain)("%s: not enough components for CN=%s\n",
+                 debugstr_w(server_name), debugstr_wn(allowed, allowed_len));
+            matches = FALSE;
+        }
+        else
+        {
+            LPCWSTR allowed_end, server_end;
+            BOOL has_wildcard;
+
+            allowed_end = allowed_dot ? allowed_dot : allowed + allowed_len;
+            server_end = server_dot ? server_dot : server_name + server_len;
+            matches = match_domain_component(allowed_component,
+             allowed_end - allowed_component, server_component,
+             server_end - server_component, allow_wildcards, &has_wildcard);
+            /* Once a non-wildcard component is seen, no wildcard components
+             * may follow
+             */
+            if (!has_wildcard)
+                allow_wildcards = FALSE;
+            if (matches)
+            {
+                allowed_component = allowed_dot ? allowed_dot + 1 : allowed_end;
+                server_component = server_dot ? server_dot + 1 : server_end;
+            }
+        }
+    } while (matches && allowed_component &&
+     allowed_component - allowed < allowed_len &&
+     server_component && server_component - server_name < server_len);
+    TRACE_(chain)("returning %d\n", matches);
+    return matches;
+}
+
 static BOOL match_dns_to_subject_dn(PCCERT_CONTEXT cert, LPCWSTR server_name)
 {
     BOOL matches = FALSE;
@@ -2466,16 +2594,10 @@ static BOOL match_dns_to_subject_dn(PCCERT_CONTEXT cert, LPCWSTR server_name)
             PCERT_RDN_ATTR attr;
 
             /* If the certificate isn't using a DN attribute in the name, make
-             * make sure the common name matches.  Again, use memicmpW rather
-             * than strcmpiW in order to avoid being fooled by an embedded NULL.
+             * make sure the common name matches.
              */
             if ((attr = CertFindRDNAttr(szOID_COMMON_NAME, name)))
-            {
-                TRACE_(chain)("CN = %s\n", debugstr_w(
-                 (LPWSTR)attr->Value.pbData));
-                matches = !memicmpW(server_name, (LPWSTR)attr->Value.pbData,
-                 attr->Value.cbData / sizeof(WCHAR));
-            }
+                matches = match_common_name(server_name, attr);
         }
         LocalFree(name);
     }

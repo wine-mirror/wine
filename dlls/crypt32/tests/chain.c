@@ -3392,7 +3392,7 @@ static const ChainPolicyCheck iTunesPolicyCheckWithoutMatchingName = {
 
 static const ChainPolicyCheck opensslPolicyCheckWithMatchingName = {
  { sizeof(opensslChain) / sizeof(opensslChain[0]), opensslChain },
- { 0, 0, -1, -1, NULL}, NULL, TODO_ERROR
+ { 0, 0, -1, -1, NULL}, NULL, 0
 };
 
 static const ChainPolicyCheck opensslPolicyCheckWithoutMatchingName = {
