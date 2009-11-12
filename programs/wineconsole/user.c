@@ -1015,7 +1015,7 @@ static void WCUSER_HandleSelectionKey(struct inner_data* data, BOOL down,
  * generates input_record from windows WM_KEYUP/WM_KEYDOWN messages
  */
 static void    WCUSER_GenerateKeyInputRecord(struct inner_data* data, BOOL down,
-                                             WPARAM wParam, LPARAM lParam, BOOL sys)
+                                             WPARAM wParam, LPARAM lParam)
 {
     INPUT_RECORD	ir;
     DWORD		n;
@@ -1033,7 +1033,6 @@ static void    WCUSER_GenerateKeyInputRecord(struct inner_data* data, BOOL down,
     ir.Event.KeyEvent.uChar.UnicodeChar = 0;
     ir.Event.KeyEvent.dwControlKeyState = WCUSER_GetCtrlKeyState(keyState);
     if (lParam & (1L << 24))		ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY;
-    if (sys)				ir.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED; /* FIXME: gotta choose one */
 
     if (down)
     {
@@ -1112,11 +1111,11 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
         if (PRIVATE(data)->has_selection)
             WCUSER_HandleSelectionKey(data, uMsg == WM_KEYDOWN, wParam, lParam);
         else
-            WCUSER_GenerateKeyInputRecord(data, uMsg == WM_KEYDOWN, wParam, lParam, FALSE);
+            WCUSER_GenerateKeyInputRecord(data, uMsg == WM_KEYDOWN, wParam, lParam);
 	break;
     case WM_SYSKEYDOWN:
     case WM_SYSKEYUP:
-	WCUSER_GenerateKeyInputRecord(data, uMsg == WM_SYSKEYDOWN, wParam, lParam, TRUE);
+	WCUSER_GenerateKeyInputRecord(data, uMsg == WM_SYSKEYDOWN, wParam, lParam);
 	break;
     case WM_LBUTTONDOWN:
         if (data->curcfg.quick_edit || PRIVATE(data)->has_selection)
