@@ -68,9 +68,9 @@ HBRUSH WINAPI Ctl3dCtlColorEx16(UINT16 msg, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *		Ctl3dDlgFramePaint (CTL3D.20)
  */
-LONG WINAPI Ctl3dDlgFramePaint16(HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
+LRESULT WINAPI Ctl3dDlgFramePaint16(HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
 {
-    return DefWindowProc16(hwnd, msg, wParam, lParam);
+    return 0;
 }
 
 /***********************************************************************
