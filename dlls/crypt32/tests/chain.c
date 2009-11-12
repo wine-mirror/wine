@@ -3371,12 +3371,12 @@ static const ChainPolicyCheck sslPolicyCheck[] = {
    { 0, CERT_E_UNTRUSTEDROOT, 0, 0, NULL }, NULL, 0 },
 };
 
-static const ChainPolicyCheck sslPolicyCheckWithMatchingNameExpired = {
+static const ChainPolicyCheck googlePolicyCheckWithMatchingNameExpired = {
  { sizeof(googleChain) / sizeof(googleChain[0]), googleChain },
  { 0, CERT_E_EXPIRED, 0, 0, NULL}, NULL, 0
 };
 
-static const ChainPolicyCheck sslPolicyCheckWithMatchingName = {
+static const ChainPolicyCheck googlePolicyCheckWithMatchingName = {
  { sizeof(googleChain) / sizeof(googleChain[0]), googleChain },
  { 0, 0, -1, -1, NULL}, NULL, 0
 };
@@ -3385,10 +3385,21 @@ static const ChainPolicyCheck sslPolicyCheckWithMatchingName = {
 static const CERT_CHAIN_POLICY_STATUS noMatchingNameBrokenStatus =
  { 0, CERT_E_ROLE, 0, 0, NULL };
 
-static const ChainPolicyCheck sslPolicyCheckWithoutMatchingName = {
+static const ChainPolicyCheck iTunesPolicyCheckWithoutMatchingName = {
  { sizeof(iTunesChain) / sizeof(iTunesChain[0]), iTunesChain },
  { 0, CERT_E_CN_NO_MATCH, 0, 0, NULL}, &noMatchingNameBrokenStatus, 0
 };
+
+static const ChainPolicyCheck opensslPolicyCheckWithMatchingName = {
+ { sizeof(opensslChain) / sizeof(opensslChain[0]), opensslChain },
+ { 0, 0, -1, -1, NULL}, NULL, TODO_ERROR
+};
+
+static const ChainPolicyCheck opensslPolicyCheckWithoutMatchingName = {
+ { sizeof(opensslChain) / sizeof(opensslChain[0]), opensslChain },
+ { 0, CERT_E_CN_NO_MATCH, 0, 0, NULL}, NULL, 0
+};
+
 
 static const ChainPolicyCheck authenticodePolicyCheck[] = {
  { { sizeof(chain0) / sizeof(chain0[0]), chain0 },
@@ -3595,6 +3606,13 @@ static void check_ssl_policy(void)
     WCHAR winehq[] = { 'w','i','n','e','h','q','.','o','r','g',0 };
     WCHAR google_dot_com[] = { 'w','w','w','.','g','o','o','g','l','e','.',
      'c','o','m',0 };
+    WCHAR a_dot_openssl_dot_org[] = { 'a','.','o','p','e','n','s','s','l','.',
+     'o','r','g',0 };
+    WCHAR openssl_dot_org[] = { 'o','p','e','n','s','s','l','.','o','r','g',0 };
+    WCHAR fopenssl_dot_org[] = { 'f','o','p','e','n','s','s','l','.',
+     'o','r','g',0 };
+    WCHAR a_dot_b_dot_openssl_dot_org[] = { 'a','.','b','.',
+     'o','p','e','n','s','s','l','.','o','r','g',0 };
 
     /* Check ssl policy with no parameter */
     for (i = 0;
@@ -3663,15 +3681,34 @@ static void check_ssl_policy(void)
      * extension.
      */
     checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL,
-     &sslPolicyCheckWithoutMatchingName, 0, &oct2007, &policyPara);
+     &iTunesPolicyCheckWithoutMatchingName, 0, &oct2007, &policyPara);
     /* And again, but checking the Google chain at a bad date */
     sslPolicyPara.pwszServerName = google_dot_com;
     checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL,
-     &sslPolicyCheckWithMatchingNameExpired, 0, &oct2007, &policyPara);
+     &googlePolicyCheckWithMatchingNameExpired, 0, &oct2007, &policyPara);
     /* And again, but checking the Google chain at a good date */
     sslPolicyPara.pwszServerName = google_dot_com;
     checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL,
-     &sslPolicyCheckWithMatchingName, 0, &oct2009, &policyPara);
+     &googlePolicyCheckWithMatchingName, 0, &oct2009, &policyPara);
+    /* Check again with the openssl cert, which has a wildcard in its name,
+     * with various combinations of matching and non-matching names.
+     * With "a.openssl.org": match
+     */
+    sslPolicyPara.pwszServerName = a_dot_openssl_dot_org;
+    checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL,
+     &opensslPolicyCheckWithMatchingName, 0, &oct2009, &policyPara);
+    /* With "openssl.org": no match */
+    sslPolicyPara.pwszServerName = openssl_dot_org;
+    checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL,
+     &opensslPolicyCheckWithoutMatchingName, 0, &oct2009, &policyPara);
+    /* With "fopenssl.org": no match */
+    sslPolicyPara.pwszServerName = fopenssl_dot_org;
+    checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL,
+     &opensslPolicyCheckWithoutMatchingName, 0, &oct2009, &policyPara);
+    /* with "a.b.openssl.org": no match */
+    sslPolicyPara.pwszServerName = a_dot_b_dot_openssl_dot_org;
+    checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL,
+     &opensslPolicyCheckWithoutMatchingName, 0, &oct2009, &policyPara);
 }
 
 static void testVerifyCertChainPolicy(void)
