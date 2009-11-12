@@ -1615,7 +1615,7 @@ NSContainer *NSContainer_Create(HTMLDocumentObj *doc, NSContainer *parent)
     NSContainer *ret;
     nsresult nsres;
 
-    if(!load_gecko(FALSE))
+    if(!load_gecko(TRUE))
         return NULL;
 
     ret = heap_alloc_zero(sizeof(NSContainer));
