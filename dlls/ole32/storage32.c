@@ -2988,7 +2988,7 @@ static void StorageImpl_SaveFileHeader(
  *
  * This method will read the raw data from a directory entry in the file.
  *
- * buffer must be PROPSET_BLOCK_SIZE bytes long.
+ * buffer must be RAW_DIRENTRY_SIZE bytes long.
  */
 HRESULT StorageImpl_ReadRawDirEntry(StorageImpl *This, ULONG index, BYTE *buffer)
 {
@@ -3014,7 +3014,7 @@ HRESULT StorageImpl_ReadRawDirEntry(StorageImpl *This, ULONG index, BYTE *buffer
  *
  * This method will write the raw data from a directory entry in the file.
  *
- * buffer must be PROPSET_BLOCK_SIZE bytes long.
+ * buffer must be RAW_DIRENTRY_SIZE bytes long.
  */
 HRESULT StorageImpl_WriteRawDirEntry(StorageImpl *This, ULONG index, const BYTE *buffer)
 {
@@ -3040,7 +3040,7 @@ HRESULT StorageImpl_WriteRawDirEntry(StorageImpl *This, ULONG index, const BYTE 
  *
  * Update raw directory entry data from the fields in newData.
  *
- * buffer must be PROPSET_BLOCK_SIZE bytes long.
+ * buffer must be RAW_DIRENTRY_SIZE bytes long.
  */
 void UpdateRawDirEntry(BYTE *buffer, const DirEntry *newData)
 {
@@ -3110,87 +3110,87 @@ void UpdateRawDirEntry(BYTE *buffer, const DirEntry *newData)
 }
 
 /******************************************************************************
- *      Storage32Impl_ReadProperty
+ *      Storage32Impl_ReadDirEntry
  *
- * This method will read the specified property from the property chain.
+ * This method will read the specified directory entry.
  */
 BOOL StorageImpl_ReadDirEntry(
   StorageImpl* This,
   ULONG          index,
   DirEntry*      buffer)
 {
-  BYTE           currentProperty[RAW_DIRENTRY_SIZE];
+  BYTE           currentEntry[RAW_DIRENTRY_SIZE];
   HRESULT        readRes;
 
-  readRes = StorageImpl_ReadRawDirEntry(This, index, currentProperty);
+  readRes = StorageImpl_ReadRawDirEntry(This, index, currentEntry);
 
   if (SUCCEEDED(readRes))
   {
     /* replace the name of root entry (often "Root Entry") by the file name */
-    WCHAR *propName = (index == This->base.storageDirEntry) ?
-	    		This->filename : (WCHAR *)currentProperty+OFFSET_PS_NAME;
+    WCHAR *entryName = (index == This->base.storageDirEntry) ?
+			This->filename : (WCHAR *)currentEntry+OFFSET_PS_NAME;
 
     memset(buffer->name, 0, sizeof(buffer->name));
     memcpy(
       buffer->name,
-      propName,
+      entryName,
       DIRENTRY_NAME_BUFFER_LEN );
     TRACE("storage name: %s\n", debugstr_w(buffer->name));
 
-    memcpy(&buffer->stgType, currentProperty + OFFSET_PS_STGTYPE, 1);
+    memcpy(&buffer->stgType, currentEntry + OFFSET_PS_STGTYPE, 1);
 
     StorageUtl_ReadWord(
-      currentProperty,
+      currentEntry,
       OFFSET_PS_NAMELENGTH,
       &buffer->sizeOfNameString);
 
     StorageUtl_ReadDWord(
-      currentProperty,
+      currentEntry,
       OFFSET_PS_LEFTCHILD,
       &buffer->leftChild);
 
     StorageUtl_ReadDWord(
-      currentProperty,
+      currentEntry,
       OFFSET_PS_RIGHTCHILD,
       &buffer->rightChild);
 
     StorageUtl_ReadDWord(
-      currentProperty,
+      currentEntry,
       OFFSET_PS_DIRROOT,
       &buffer->dirRootEntry);
 
     StorageUtl_ReadGUID(
-      currentProperty,
+      currentEntry,
       OFFSET_PS_GUID,
       &buffer->clsid);
 
     StorageUtl_ReadDWord(
-      currentProperty,
+      currentEntry,
       OFFSET_PS_CTIMELOW,
       &buffer->ctime.dwLowDateTime);
 
     StorageUtl_ReadDWord(
-      currentProperty,
+      currentEntry,
       OFFSET_PS_CTIMEHIGH,
       &buffer->ctime.dwHighDateTime);
 
     StorageUtl_ReadDWord(
-      currentProperty,
+      currentEntry,
       OFFSET_PS_MTIMELOW,
       &buffer->mtime.dwLowDateTime);
 
     StorageUtl_ReadDWord(
-      currentProperty,
+      currentEntry,
       OFFSET_PS_MTIMEHIGH,
       &buffer->mtime.dwHighDateTime);
 
     StorageUtl_ReadDWord(
-      currentProperty,
+      currentEntry,
       OFFSET_PS_STARTBLOCK,
       &buffer->startingBlock);
 
     StorageUtl_ReadDWord(
-      currentProperty,
+      currentEntry,
       OFFSET_PS_SIZE,
       &buffer->size.u.LowPart);
 
@@ -3201,19 +3201,19 @@ BOOL StorageImpl_ReadDirEntry(
 }
 
 /*********************************************************************
- * Write the specified property into the property chain
+ * Write the specified directory entry to the file
  */
 BOOL StorageImpl_WriteDirEntry(
   StorageImpl*          This,
   ULONG                 index,
   const DirEntry*       buffer)
 {
-  BYTE           currentProperty[RAW_DIRENTRY_SIZE];
+  BYTE           currentEntry[RAW_DIRENTRY_SIZE];
   HRESULT        writeRes;
 
-  UpdateRawDirEntry(currentProperty, buffer);
+  UpdateRawDirEntry(currentEntry, buffer);
 
-  writeRes = StorageImpl_WriteRawDirEntry(This, index, currentProperty);
+  writeRes = StorageImpl_WriteRawDirEntry(This, index, currentEntry);
   return SUCCEEDED(writeRes) ? TRUE : FALSE;
 }
 
