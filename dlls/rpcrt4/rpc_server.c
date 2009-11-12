@@ -213,8 +213,12 @@ static RPC_STATUS process_bind_packet(RpcConnection *conn, RpcPktBindHdr *hdr, R
         unsigned int j;
 
         for (j = 0; !sif && j < ctxt_elem->num_syntaxes; j++)
+        {
             sif = RPCRT4_find_interface(NULL, &ctxt_elem->abstract_syntax,
                                         &ctxt_elem->transfer_syntaxes[j], FALSE);
+            if (sif)
+                break;
+        }
 
         if (sif)
         {
