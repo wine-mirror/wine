@@ -3298,17 +3298,17 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
   ULARGE_INTEGER size, offset;
   ULONG cbRead, cbWritten;
   ULARGE_INTEGER cbTotalRead;
-  ULONG propertyIndex;
+  ULONG streamEntryRef;
   HRESULT resWrite = S_OK;
   HRESULT resRead;
-  DirEntry chainProperty;
+  DirEntry streamEntry;
   BYTE *buffer;
   BlockChainStream *bbTempChain = NULL;
   BlockChainStream *bigBlockChain = NULL;
 
   /*
    * Create a temporary big block chain that doesn't have
-   * an associated property. This temporary chain will be
+   * an associated directory entry. This temporary chain will be
    * used to copy data from small blocks to big blocks.
    */
   bbTempChain = BlockChainStream_Construct(This,
@@ -3372,29 +3372,29 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
   /*
    * Destroy the small block chain.
    */
-  propertyIndex = (*ppsbChain)->ownerDirEntry;
+  streamEntryRef = (*ppsbChain)->ownerDirEntry;
   SmallBlockChainStream_SetSize(*ppsbChain, size);
   SmallBlockChainStream_Destroy(*ppsbChain);
   *ppsbChain = 0;
 
   /*
-   * Change the property information. This chain is now a big block chain
+   * Change the directory entry. This chain is now a big block chain
    * and it doesn't reside in the small blocks chain anymore.
    */
-  StorageImpl_ReadDirEntry(This, propertyIndex, &chainProperty);
+  StorageImpl_ReadDirEntry(This, streamEntryRef, &streamEntry);
 
-  chainProperty.startingBlock = bbHeadOfChain;
+  streamEntry.startingBlock = bbHeadOfChain;
 
-  StorageImpl_WriteDirEntry(This, propertyIndex, &chainProperty);
+  StorageImpl_WriteDirEntry(This, streamEntryRef, &streamEntry);
 
   /*
-   * Destroy the temporary propertyless big block chain.
-   * Create a new big block chain associated with this property.
+   * Destroy the temporary entryless big block chain.
+   * Create a new big block chain associated with this entry.
    */
   BlockChainStream_Destroy(bbTempChain);
   bigBlockChain = BlockChainStream_Construct(This,
                                              NULL,
-                                             propertyIndex);
+                                             streamEntryRef);
 
   return bigBlockChain;
 }
@@ -3410,9 +3410,9 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
                            BlockChainStream** ppbbChain)
 {
     ULARGE_INTEGER size, offset, cbTotalRead;
-    ULONG cbRead, cbWritten, propertyIndex, sbHeadOfChain = BLOCK_END_OF_CHAIN;
+    ULONG cbRead, cbWritten, streamEntryRef, sbHeadOfChain = BLOCK_END_OF_CHAIN;
     HRESULT resWrite = S_OK, resRead;
-    DirEntry chainProperty;
+    DirEntry streamEntry;
     BYTE* buffer;
     SmallBlockChainStream* sbTempChain;
 
@@ -3467,17 +3467,17 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
     }
 
     /* destroy the original big block chain */
-    propertyIndex = (*ppbbChain)->ownerDirEntry;
+    streamEntryRef = (*ppbbChain)->ownerDirEntry;
     BlockChainStream_SetSize(*ppbbChain, size);
     BlockChainStream_Destroy(*ppbbChain);
     *ppbbChain = NULL;
 
-    StorageImpl_ReadDirEntry(This, propertyIndex, &chainProperty);
-    chainProperty.startingBlock = sbHeadOfChain;
-    StorageImpl_WriteDirEntry(This, propertyIndex, &chainProperty);
+    StorageImpl_ReadDirEntry(This, streamEntryRef, &streamEntry);
+    streamEntry.startingBlock = sbHeadOfChain;
+    StorageImpl_WriteDirEntry(This, streamEntryRef, &streamEntry);
 
     SmallBlockChainStream_Destroy(sbTempChain);
-    return SmallBlockChainStream_Construct(This, NULL, propertyIndex);
+    return SmallBlockChainStream_Construct(This, NULL, streamEntryRef);
 }
 
 static void StorageInternalImpl_Destroy( StorageBaseImpl *iface)
