@@ -883,6 +883,7 @@ static HRESULT WINAPI KeystrokeMgr_PreserveKey(ITfKeystrokeMgr *iface,
     newkey->guid  = *rguid;
     newkey->prekey = *prekey;
     newkey->tid = tid;
+    newkey->description = NULL;
     if (cchDesc)
     {
         newkey->description = HeapAlloc(GetProcessHeap(),0,cchDesc * sizeof(WCHAR));
