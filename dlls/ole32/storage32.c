@@ -3470,7 +3470,7 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
     }
 
     /* destroy the original big block chain */
-    propertyIndex = (*ppbbChain)->ownerPropertyIndex;
+    propertyIndex = (*ppbbChain)->ownerDirEntry;
     BlockChainStream_SetSize(*ppbbChain, size);
     BlockChainStream_Destroy(*ppbbChain);
     *ppbbChain = NULL;
@@ -4106,7 +4106,7 @@ void StorageUtl_CopyDirEntryToSTATSTG(
 BlockChainStream* BlockChainStream_Construct(
   StorageImpl* parentStorage,
   ULONG*         headOfStreamPlaceHolder,
-  ULONG          propertyIndex)
+  ULONG          dirEntry)
 {
   BlockChainStream* newStream;
   ULONG blockIndex;
@@ -4115,7 +4115,7 @@ BlockChainStream* BlockChainStream_Construct(
 
   newStream->parentStorage           = parentStorage;
   newStream->headOfStreamPlaceHolder = headOfStreamPlaceHolder;
-  newStream->ownerPropertyIndex      = propertyIndex;
+  newStream->ownerDirEntry           = dirEntry;
   newStream->lastBlockNoInSequence   = 0xFFFFFFFF;
   newStream->tailIndex               = BLOCK_END_OF_CHAIN;
   newStream->numBlocks               = 0;
@@ -4161,11 +4161,11 @@ static ULONG BlockChainStream_GetHeadOfChain(BlockChainStream* This)
   if (This->headOfStreamPlaceHolder != 0)
     return *(This->headOfStreamPlaceHolder);
 
-  if (This->ownerPropertyIndex != DIRENTRY_NULL)
+  if (This->ownerDirEntry != DIRENTRY_NULL)
   {
     readSuccessful = StorageImpl_ReadDirEntry(
                       This->parentStorage,
-                      This->ownerPropertyIndex,
+                      This->ownerDirEntry,
                       &chainProperty);
 
     if (readSuccessful)
@@ -4498,18 +4498,18 @@ static BOOL BlockChainStream_Enlarge(BlockChainStream* This,
     else
     {
       DirEntry chainProp;
-      assert(This->ownerPropertyIndex != DIRENTRY_NULL);
+      assert(This->ownerDirEntry != DIRENTRY_NULL);
 
       StorageImpl_ReadDirEntry(
         This->parentStorage,
-        This->ownerPropertyIndex,
+        This->ownerDirEntry,
         &chainProp);
 
       chainProp.startingBlock = blockIndex;
 
       StorageImpl_WriteDirEntry(
         This->parentStorage,
-        This->ownerPropertyIndex,
+        This->ownerDirEntry,
         &chainProp);
     }
 
@@ -4627,7 +4627,7 @@ static ULARGE_INTEGER BlockChainStream_GetSize(BlockChainStream* This)
      */
     StorageImpl_ReadDirEntry(
       This->parentStorage,
-      This->ownerPropertyIndex,
+      This->ownerDirEntry,
       &chainProperty);
 
     return chainProperty.size;

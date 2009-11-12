@@ -431,7 +431,7 @@ struct BlockChainStream
 {
   StorageImpl* parentStorage;
   ULONG*       headOfStreamPlaceHolder;
-  ULONG        ownerPropertyIndex;
+  ULONG        ownerDirEntry;
   ULONG        lastBlockNoInSequence;
   ULONG        lastBlockNoInSequenceIndex;
   ULONG        tailIndex;
@@ -444,7 +444,7 @@ struct BlockChainStream
 BlockChainStream* BlockChainStream_Construct(
 		StorageImpl* parentStorage,
 		ULONG*         headOfStreamPlaceHolder,
-		ULONG          propertyIndex);
+		ULONG          dirEntry);
 
 void BlockChainStream_Destroy(
 		BlockChainStream* This);
