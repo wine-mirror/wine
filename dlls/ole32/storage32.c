@@ -1093,8 +1093,8 @@ static HRESULT createDirEntry(
   const DirEntry *newData,
   ULONG *index)
 {
-  ULONG       currentPropertyIndex = 0;
-  ULONG       newPropertyIndex     = DIRENTRY_NULL;
+  ULONG       currentEntryIndex    = 0;
+  ULONG       newEntryIndex        = DIRENTRY_NULL;
   HRESULT hr = S_OK;
   BYTE currentData[RAW_DIRENTRY_SIZE];
   WORD sizeOfNameString;
@@ -1102,7 +1102,7 @@ static HRESULT createDirEntry(
   do
   {
     hr = StorageImpl_ReadRawDirEntry(storage,
-                                     currentPropertyIndex,
+                                     currentEntryIndex,
                                      currentData);
 
     if (SUCCEEDED(hr))
@@ -1115,79 +1115,79 @@ static HRESULT createDirEntry(
       if (sizeOfNameString == 0)
       {
         /*
-         * The property existis and is available, we found it.
+         * The entry exists and is available, we found it.
          */
-        newPropertyIndex = currentPropertyIndex;
+        newEntryIndex = currentEntryIndex;
       }
     }
     else
     {
       /*
-       * We exhausted the property list, we will create more space below
+       * We exhausted the directory entries, we will create more space below
        */
-      newPropertyIndex = currentPropertyIndex;
+      newEntryIndex = currentEntryIndex;
     }
-    currentPropertyIndex++;
+    currentEntryIndex++;
 
-  } while (newPropertyIndex == DIRENTRY_NULL);
+  } while (newEntryIndex == DIRENTRY_NULL);
 
   /*
-   * grow the property chain
+   * grow the directory stream
    */
   if (FAILED(hr))
   {
     BYTE           emptyData[RAW_DIRENTRY_SIZE];
     ULARGE_INTEGER newSize;
-    ULONG          propertyIndex;
-    ULONG          lastProperty  = 0;
+    ULONG          entryIndex;
+    ULONG          lastEntry     = 0;
     ULONG          blockCount    = 0;
 
     /*
-     * obtain the new count of property blocks
+     * obtain the new count of blocks in the directory stream
      */
     blockCount = BlockChainStream_GetCount(
                    storage->rootBlockChain)+1;
 
     /*
-     * initialize the size used by the property stream
+     * initialize the size used by the directory stream
      */
     newSize.u.HighPart = 0;
     newSize.u.LowPart  = storage->bigBlockSize * blockCount;
 
     /*
-     * add a property block to the property chain
+     * add a block to the directory stream
      */
     BlockChainStream_SetSize(storage->rootBlockChain, newSize);
 
     /*
-     * memset the empty property in order to initialize the unused newly
-     * created property
+     * memset the empty entry in order to initialize the unused newly
+     * created entries
      */
     memset(&emptyData, 0, RAW_DIRENTRY_SIZE);
 
     /*
      * initialize them
      */
-    lastProperty = storage->bigBlockSize / RAW_DIRENTRY_SIZE * blockCount;
+    lastEntry = storage->bigBlockSize / RAW_DIRENTRY_SIZE * blockCount;
 
     for(
-      propertyIndex = newPropertyIndex + 1;
-      propertyIndex < lastProperty;
-      propertyIndex++)
+      entryIndex = newEntryIndex + 1;
+      entryIndex < lastEntry;
+      entryIndex++)
     {
       StorageImpl_WriteRawDirEntry(
         storage,
-        propertyIndex,
+        entryIndex,
         emptyData);
     }
   }
 
   UpdateRawDirEntry(currentData, newData);
 
-  hr = StorageImpl_WriteRawDirEntry(storage, newPropertyIndex, currentData);
+  hr = StorageImpl_WriteRawDirEntry(storage, newEntryIndex, currentData);
 
   if (SUCCEEDED(hr))
-    *index = newPropertyIndex;
+    *index = newEntryIndex;
 
   return hr;
 }
@@ -1245,7 +1245,7 @@ static LONG entryNameCmp(
  *
  * Internal Method
  *
- * Properly link this new element in the property chain.
+ * Add a directory entry to a storage
  */
 static HRESULT insertIntoTree(
   StorageImpl *This,
@@ -1256,14 +1256,14 @@ static HRESULT insertIntoTree(
   DirEntry newEntry;
 
   /*
-   * Read the inserted property
+   * Read the inserted entry
    */
   StorageImpl_ReadDirEntry(This,
                            newEntryIndex,
                            &newEntry);
 
   /*
-   * Read the root property
+   * Read the storage entry
    */
   StorageImpl_ReadDirEntry(This,
                              parentStorageIndex,
@@ -1279,7 +1279,7 @@ static HRESULT insertIntoTree(
     ULONG  current, next, previous, currentEntryId;
 
     /*
-     * Keep the DirEntry sequence number of the storage first property
+     * Keep a reference to the root of the storage's element tree
      */
     currentEntryId = currentEntry.dirRootEntry;
 
@@ -1350,7 +1350,7 @@ static HRESULT insertIntoTree(
   else
   {
     /*
-     * The root storage is empty, link the new property to its dir property
+     * The storage is empty, make the new entry the root of its element tree
      */
     currentEntry.dirRootEntry = newEntryIndex;
     StorageImpl_WriteDirEntry(This,
@@ -1944,18 +1944,18 @@ static HRESULT deleteStreamContents(
   return S_OK;
 }
 
-static void setPropertyLink(DirEntry *property, ULONG relation, ULONG new_target)
+static void setEntryLink(DirEntry *entry, ULONG relation, ULONG new_target)
 {
   switch (relation)
   {
     case DIRENTRY_RELATION_PREVIOUS:
-      property->leftChild = new_target;
+      entry->leftChild = new_target;
       break;
     case DIRENTRY_RELATION_NEXT:
-      property->rightChild = new_target;
+      entry->rightChild = new_target;
       break;
     case DIRENTRY_RELATION_DIR:
-      property->dirRootEntry = new_target;
+      entry->dirRootEntry = new_target;
       break;
     default:
       assert(0);
@@ -1976,69 +1976,69 @@ static HRESULT removeFromTree(
 {
   HRESULT hr                     = S_OK;
   BOOL  res                    = TRUE;
-  DirEntry   propertyToDelete;
-  DirEntry   parentProperty;
-  ULONG parentPropertyId;
+  DirEntry   entryToDelete;
+  DirEntry   parentEntry;
+  ULONG parentEntryRef;
   ULONG typeOfRelation;
 
-  res = StorageImpl_ReadDirEntry(This, deletedIndex, &propertyToDelete);
+  res = StorageImpl_ReadDirEntry(This, deletedIndex, &entryToDelete);
 
   /*
-   * Find the property that links to the one we want to delete.
+   * Find the element that links to the one we want to delete.
    */
-  hr = findTreeParent(This, parentStorageIndex, propertyToDelete.name,
-    &parentProperty, &parentPropertyId, &typeOfRelation);
+  hr = findTreeParent(This, parentStorageIndex, entryToDelete.name,
+    &parentEntry, &parentEntryRef, &typeOfRelation);
 
   if (hr != S_OK)
     return hr;
 
-  if (propertyToDelete.leftChild != DIRENTRY_NULL)
+  if (entryToDelete.leftChild != DIRENTRY_NULL)
   {
     /*
      * Replace the deleted entry with its left child
      */
-    setPropertyLink(&parentProperty, typeOfRelation, propertyToDelete.leftChild);
+    setEntryLink(&parentEntry, typeOfRelation, entryToDelete.leftChild);
 
     res = StorageImpl_WriteDirEntry(
             This,
-            parentPropertyId,
-            &parentProperty);
+            parentEntryRef,
+            &parentEntry);
     if(!res)
     {
       return E_FAIL;
     }
 
-    if (propertyToDelete.rightChild != DIRENTRY_NULL)
+    if (entryToDelete.rightChild != DIRENTRY_NULL)
     {
       /*
        * We need to reinsert the right child somewhere. We already know it and
        * its children are greater than everything in the left tree, so we
        * insert it at the rightmost point in the left tree.
        */
-      ULONG newRightChildParent = propertyToDelete.leftChild;
-      DirEntry newRightChildParentProperty;
+      ULONG newRightChildParent = entryToDelete.leftChild;
+      DirEntry newRightChildParentEntry;
 
       do
       {
         res = StorageImpl_ReadDirEntry(
                 This,
                 newRightChildParent,
-                &newRightChildParentProperty);
+                &newRightChildParentEntry);
         if (!res)
         {
           return E_FAIL;
         }
 
-        if (newRightChildParentProperty.rightChild != DIRENTRY_NULL)
-          newRightChildParent = newRightChildParentProperty.rightChild;
-      } while (newRightChildParentProperty.rightChild != DIRENTRY_NULL);
+        if (newRightChildParentEntry.rightChild != DIRENTRY_NULL)
+          newRightChildParent = newRightChildParentEntry.rightChild;
+      } while (newRightChildParentEntry.rightChild != DIRENTRY_NULL);
 
-      newRightChildParentProperty.rightChild = propertyToDelete.rightChild;
+      newRightChildParentEntry.rightChild = entryToDelete.rightChild;
 
       res = StorageImpl_WriteDirEntry(
               This,
               newRightChildParent,
-              &newRightChildParentProperty);
+              &newRightChildParentEntry);
       if (!res)
       {
         return E_FAIL;
@@ -2050,12 +2050,12 @@ static HRESULT removeFromTree(
     /*
      * Replace the deleted entry with its right child
      */
-    setPropertyLink(&parentProperty, typeOfRelation, propertyToDelete.rightChild);
+    setEntryLink(&parentEntry, typeOfRelation, entryToDelete.rightChild);
 
     res = StorageImpl_WriteDirEntry(
             This,
-            parentPropertyId,
-            &parentProperty);
+            parentEntryRef,
+            &parentEntry);
     if(!res)
     {
       return E_FAIL;
