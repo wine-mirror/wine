@@ -190,6 +190,7 @@ struct fd
     unsigned int         access;      /* file access (FILE_READ_DATA etc.) */
     unsigned int         options;     /* file options (FILE_DELETE_ON_CLOSE, FILE_SYNCHRONOUS...) */
     unsigned int         sharing;     /* file sharing mode */
+    char                *unix_name;   /* unix file name */
     int                  unix_fd;     /* unix file descriptor */
     unsigned int         no_fd_status;/* status to return when unix_fd is -1 */
     unsigned int         signaled :1; /* is the fd signaled? */
@@ -1368,6 +1369,7 @@ static void fd_destroy( struct object *obj )
 
     if (fd->completion) release_object( fd->completion );
     remove_fd_locks( fd );
+    free( fd->unix_name );
     list_remove( &fd->inode_entry );
     if (fd->poll_index != -1) remove_poll_user( fd, fd->poll_index );
     if (fd->inode)
@@ -1438,6 +1440,7 @@ static struct fd *alloc_fd_object(void)
     fd->options    = 0;
     fd->sharing    = 0;
     fd->unix_fd    = -1;
+    fd->unix_name  = NULL;
     fd->signaled   = 1;
     fd->fs_locks   = 1;
     fd->poll_index = -1;
@@ -1470,6 +1473,7 @@ struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *use
     fd->access     = 0;
     fd->options    = options;
     fd->sharing    = 0;
+    fd->unix_name  = NULL;
     fd->unix_fd    = -1;
     fd->signaled   = 0;
     fd->fs_locks   = 0;
@@ -1576,6 +1580,9 @@ struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned int acce
         else rw_mode = O_WRONLY;
     }
     else rw_mode = O_RDONLY;
+
+    if (!(fd->unix_name = mem_alloc( strlen(name) + 1 ))) goto error;
+    strcpy( fd->unix_name, name );
 
     if ((fd->unix_fd = open( name, rw_mode | (flags & ~O_TRUNC), *mode )) == -1)
     {
@@ -2001,6 +2008,24 @@ DECL_HANDLER(open_file_object)
     }
 
     if (root) release_object( root );
+}
+
+/* get the Unix name from a file handle */
+DECL_HANDLER(get_handle_unix_name)
+{
+    struct fd *fd;
+
+    if ((fd = get_handle_fd_obj( current->process, req->handle, 0 )))
+    {
+        if (fd->unix_name)
+        {
+            data_size_t name_len = strlen( fd->unix_name );
+            reply->name_len = name_len;
+            if (name_len <= get_reply_max_size()) set_reply_data( fd->unix_name, name_len );
+            else set_error( STATUS_BUFFER_OVERFLOW );
+        }
+        release_object( fd );
+    }
 }
 
 /* get a Unix fd to access a file */

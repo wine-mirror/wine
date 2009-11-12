@@ -1003,6 +1003,15 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @END
 
 
+/* Get the Unix name from a file handle */
+@REQ(get_handle_unix_name)
+    obj_handle_t   handle;      /* file handle */
+@REPLY
+    data_size_t    name_len;    /* unix name length */
+    VARARG(name,string);        /* unix name */
+@END
+
+
 /* Get a Unix fd to access a file */
 @REQ(get_handle_fd)
     obj_handle_t handle;        /* handle to the file */

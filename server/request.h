@@ -148,6 +148,7 @@ DECL_HANDLER(open_semaphore);
 DECL_HANDLER(create_file);
 DECL_HANDLER(open_file_object);
 DECL_HANDLER(alloc_file_handle);
+DECL_HANDLER(get_handle_unix_name);
 DECL_HANDLER(get_handle_fd);
 DECL_HANDLER(flush_file);
 DECL_HANDLER(lock_file);
@@ -394,6 +395,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_create_file,
     (req_handler)req_open_file_object,
     (req_handler)req_alloc_file_handle,
+    (req_handler)req_get_handle_unix_name,
     (req_handler)req_get_handle_fd,
     (req_handler)req_flush_file,
     (req_handler)req_lock_file,
@@ -846,6 +848,9 @@ C_ASSERT( FIELD_OFFSET(struct alloc_file_handle_request, attributes) == 16 );
 C_ASSERT( FIELD_OFFSET(struct alloc_file_handle_request, fd) == 20 );
 C_ASSERT( FIELD_OFFSET(struct alloc_file_handle_reply, handle) == 8 );
 C_ASSERT( sizeof(struct alloc_file_handle_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_handle_unix_name_request, handle) == 12 );
+C_ASSERT( FIELD_OFFSET(struct get_handle_unix_name_reply, name_len) == 8 );
+C_ASSERT( sizeof(struct get_handle_unix_name_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_handle_fd_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct get_handle_fd_reply, type) == 8 );
 C_ASSERT( FIELD_OFFSET(struct get_handle_fd_reply, removable) == 12 );
