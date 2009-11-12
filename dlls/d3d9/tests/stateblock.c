@@ -1966,7 +1966,7 @@ static void resource_test_data_init(IDirect3DDevice9 *device,
     data->tex = HeapAlloc(GetProcessHeap(), 0, arg->tex_count * sizeof(*data->tex));
     for (i = 0; i < arg->tex_count; ++i)
     {
-        hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, D3DUSAGE_DYNAMIC,
+        hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, 0,
                 D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &data->tex[i], NULL);
         ok(SUCCEEDED(hr), "CreateTexture (%u) returned %#x.\n", i, hr);
     }
