@@ -352,9 +352,9 @@ struct StgStreamImpl
   DWORD grfMode;
 
   /*
-   * Index of the property that owns (points to) this stream.
+   * Index of the directory entry that owns (points to) this stream.
    */
-  ULONG              ownerProperty;
+  ULONG              dirEntry;
 
   /*
    * Helper variable that contains the size of the stream
@@ -381,7 +381,7 @@ struct StgStreamImpl
 StgStreamImpl* StgStreamImpl_Construct(
 		StorageBaseImpl* parentStorage,
     DWORD            grfMode,
-    ULONG            ownerProperty);
+    ULONG            dirEntry);
 
 
 /******************************************************************************

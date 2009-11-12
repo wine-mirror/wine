@@ -827,7 +827,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
 
       LIST_FOR_EACH_ENTRY(strm, &This->strmHead, StgStreamImpl, StrmListEntry)
       {
-        if (strm->ownerProperty == foundPropertyIndex)
+        if (strm->dirEntry == foundPropertyIndex)
         {
           TRACE("Stream deleted %p\n", strm);
           strm->parentStorage = NULL;
