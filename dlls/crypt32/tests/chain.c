@@ -3688,11 +3688,6 @@ static const ChainPolicyCheck stanfordPolicyCheckWithMatchingName = {
  { 0, 0, -1, -1, NULL}, NULL, 0
 };
 
-static const ChainPolicyCheck stanfordPolicyCheckWithMatchingNameTodo = {
- { sizeof(stanfordChain) / sizeof(stanfordChain[0]), stanfordChain },
- { 0, 0, -1, -1, NULL}, NULL, TODO_ERROR
-};
-
 static const ChainPolicyCheck stanfordPolicyCheckWithoutMatchingName = {
  { sizeof(stanfordChain) / sizeof(stanfordChain[0]), stanfordChain },
  { 0, CERT_E_CN_NO_MATCH, 0, 0, NULL}, NULL, 0
@@ -4022,7 +4017,7 @@ static void check_ssl_policy(void)
     /* With "www.cs.stanford.edu": match */
     sslPolicyPara.pwszServerName = www_dot_cs_dot_stanford_dot_edu;
     checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL,
-     &stanfordPolicyCheckWithMatchingNameTodo, 0, &oct2009, &policyPara);
+     &stanfordPolicyCheckWithMatchingName, 0, &oct2009, &policyPara);
     /* With "a.cs.stanford.edu": no match */
     sslPolicyPara.pwszServerName = a_dot_cs_dot_stanford_dot_edu;
     checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL,

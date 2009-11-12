@@ -2373,16 +2373,21 @@ static BOOL match_dns_to_subject_alt_name(PCERT_EXTENSION ext,
      &subjectName, &size))
     {
         DWORD i;
-        BOOL found = FALSE;
 
-        for (i = 0; !found && i < subjectName->cAltEntry; i++)
+        /* RFC 5280 states that multiple instances of each name type may exist,
+         * in section 4.2.1.6:
+         * "Multiple name forms, and multiple instances of each name form,
+         *  MAY be included."
+         * It doesn't specify the behavior in such cases, but common usage is
+         * to accept a certificate if any name matches.
+         */
+        for (i = 0; !matches && i < subjectName->cAltEntry; i++)
         {
             if (subjectName->rgAltEntry[i].dwAltNameChoice ==
              CERT_ALT_NAME_DNS_NAME)
             {
                 TRACE_(chain)("dNSName: %s\n", debugstr_w(
                  subjectName->rgAltEntry[i].u.pwszDNSName));
-                found = TRUE;
                 if (!strcmpiW(server_name,
                  subjectName->rgAltEntry[i].u.pwszDNSName))
                     matches = TRUE;
