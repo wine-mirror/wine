@@ -74,6 +74,9 @@ static HIMAGELIST (WINAPI *pImageList_Create)(int, int, UINT, int, int);
 static int (WINAPI *pImageList_Add)(HIMAGELIST, HBITMAP, HBITMAP);
 static BOOL (WINAPI *pImageList_DrawIndirect)(IMAGELISTDRAWPARAMS*);
 static BOOL (WINAPI *pImageList_SetImageCount)(HIMAGELIST,UINT);
+static HRESULT (WINAPI *pImageList_CoCreateInstance)(REFCLSID,const IUnknown *,
+    REFIID,void **);
+static HRESULT (WINAPI *pHIMAGELIST_QueryInterface)(HIMAGELIST,REFIID,void **);
 
 static HDC desktopDC;
 static HINSTANCE hinst;
@@ -1244,6 +1247,38 @@ cleanup:
     }
 }
 
+static void test_iimagelist(void)
+{
+    IImageList *imgl;
+    HIMAGELIST himl;
+    HRESULT hr;
+
+    if (!pImageList_CoCreateInstance || !pHIMAGELIST_QueryInterface)
+    {
+        win_skip("Vista imagelist functions not available\n");
+        return;
+    }
+
+    hr = pImageList_CoCreateInstance(&CLSID_ImageList, NULL, &IID_IImageList, (void **) &imgl);
+    ok(SUCCEEDED(hr), "ImageList_CoCreateInstance failed, hr=%x\n", hr);
+
+    if (hr == S_OK)
+        IImageList_Release(imgl);
+
+    himl = createImageList(32, 32);
+
+    if (!himl)
+        return;
+
+    hr = (pHIMAGELIST_QueryInterface)(himl, &IID_IImageList, (void **) &imgl);
+    ok(SUCCEEDED(hr), "HIMAGELIST_QueryInterface failed, hr=%x\n", hr);
+
+    if (hr == S_OK)
+        IImageList_Release(imgl);
+
+    ImageList_Destroy(himl);
+}
+
 START_TEST(imagelist)
 {
     ULONG_PTR ctx_cookie;
@@ -1280,10 +1315,17 @@ START_TEST(imagelist)
     pImageList_Add = (void*)GetProcAddress(hComCtl32, "ImageList_Add");
     pImageList_DrawIndirect = (void*)GetProcAddress(hComCtl32, "ImageList_DrawIndirect");
     pImageList_SetImageCount = (void*)GetProcAddress(hComCtl32, "ImageList_SetImageCount");
+    pImageList_CoCreateInstance = (void*)GetProcAddress(hComCtl32, "ImageList_CoCreateInstance");
+    pHIMAGELIST_QueryInterface = (void*)GetProcAddress(hComCtl32, "HIMAGELIST_QueryInterface");
+
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     /* Do v6.0 tests */
     test_ImageList_DrawIndirect();
     test_shell_imagelist();
+    test_iimagelist();
+
+    CoUninitialize();
 
     unload_v6_module(ctx_cookie, hCtx);
 }
