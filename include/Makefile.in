@@ -107,6 +107,7 @@ SRCDIR_INCLUDES = \
 	af_irda.h \
 	appmgmt.h \
 	asynot.idl \
+	asysta.idl \
 	audevcod.h \
 	audiosessiontypes.h \
 	aviriff.h \

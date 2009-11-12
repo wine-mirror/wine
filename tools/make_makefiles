@@ -111,6 +111,7 @@ my %exported_wine_headers = (
 my %private_idl_headers = (
     "access.idl" => 1,
     "asynot.idl" => 1,
+    "asysta.idl" => 1,
     "axcore.idl" => 1,
     "axextend.idl" => 1,
     "binres.idl" => 1,

@@ -817,3 +817,34 @@ HRESULT __RPC_STUB IDBAsynchNotify_OnStop_Stub(IDBAsynchNotify* This, HCHAPTER h
     FIXME("(%p)->(%lx, %d, %08x, %s): stub\n", This, hChapter, eOperation, hrStatus, debugstr_w(pwszStatusText));
     return E_NOTIMPL;
 }
+
+HRESULT CALLBACK IDBAsynchStatus_Abort_Proxy(IDBAsynchStatus* This, HCHAPTER hChapter, DBASYNCHOP eOperation)
+{
+    FIXME("(%p)->(%lx, %d): stub\n", This, hChapter, eOperation);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IDBAsynchStatus_Abort_Stub(IDBAsynchStatus* This, HCHAPTER hChapter, DBASYNCHOP eOperation,
+                                              IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p)->(%lx, %d, %p): stub\n", This, hChapter, eOperation, ppErrorInfoRem);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IDBAsynchStatus_GetStatus_Proxy(IDBAsynchStatus* This, HCHAPTER hChapter, DBASYNCHOP eOperation,
+                                                 DBCOUNTITEM *pulProgress, DBCOUNTITEM *pulProgressMax, DBASYNCHPHASE *peAsynchPhase,
+                                                 LPOLESTR *ppwszStatusText)
+{
+    FIXME("(%p)->(%lx, %d, %p, %p, %p, %p): stub\n", This, hChapter, eOperation, pulProgress, pulProgressMax,
+          peAsynchPhase, ppwszStatusText);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IDBAsynchStatus_GetStatus_Stub(IDBAsynchStatus* This, HCHAPTER hChapter, DBASYNCHOP eOperation,
+                                                  DBCOUNTITEM *pulProgress, DBCOUNTITEM *pulProgressMax, DBASYNCHPHASE *peAsynchPhase,
+                                                  LPOLESTR *ppwszStatusText, IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p)->(%lx, %d, %p, %p, %p, %p, %p): stub\n", This, hChapter, eOperation, pulProgress, pulProgressMax,
+          peAsynchPhase, ppwszStatusText, ppErrorInfoRem);
+    return E_NOTIMPL;
+}
