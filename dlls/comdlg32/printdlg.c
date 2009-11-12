@@ -42,17 +42,53 @@
 #include "commdlg.h"
 #include "dlgs.h"
 #include "cderr.h"
+#include "cdlg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
-
-#include "cdlg.h"
-#include "printdlg.h"
 
 /* Yes these constants are the same, but we're just copying win98 */
 #define UPDOWN_ID 0x270f
 #define MAX_COPIES 9999
 
+/* This PRINTDLGA internal structure stores
+ * pointers to several throughout useful structures.
+ */
+
+typedef struct
+{
+  LPDEVMODEA        lpDevMode;
+  LPPRINTDLGA       lpPrintDlg;
+  LPPRINTER_INFO_2A lpPrinterInfo;
+  LPDRIVER_INFO_3A  lpDriverInfo;
+  UINT              HelpMessageID;
+  HICON             hCollateIcon;    /* PrintDlg only */
+  HICON             hNoCollateIcon;  /* PrintDlg only */
+  HICON             hPortraitIcon;   /* PrintSetupDlg only */
+  HICON             hLandscapeIcon;  /* PrintSetupDlg only */
+  HWND              hwndUpDown;
+} PRINT_PTRA;
+
+typedef struct
+{
+  LPDEVMODEW        lpDevMode;
+  LPPRINTDLGW       lpPrintDlg;
+  LPPRINTER_INFO_2W lpPrinterInfo;
+  LPDRIVER_INFO_3W  lpDriverInfo;
+  UINT              HelpMessageID;
+  HICON             hCollateIcon;    /* PrintDlg only */
+  HICON             hNoCollateIcon;  /* PrintDlg only */
+  HICON             hPortraitIcon;   /* PrintSetupDlg only */
+  HICON             hLandscapeIcon;  /* PrintSetupDlg only */
+  HWND              hwndUpDown;
+} PRINT_PTRW;
+
 /* Debugging info */
+struct pd_flags
+{
+  DWORD  flag;
+  LPCSTR name;
+};
+
 static const struct pd_flags psd_flags[] = {
   {PSD_MINMARGINS,"PSD_MINMARGINS"},
   {PSD_MARGINS,"PSD_MARGINS"},
@@ -73,6 +109,31 @@ static const struct pd_flags psd_flags[] = {
   {-1, NULL}
 };
 
+static const struct pd_flags pd_flags[] = {
+  {PD_SELECTION, "PD_SELECTION "},
+  {PD_PAGENUMS, "PD_PAGENUMS "},
+  {PD_NOSELECTION, "PD_NOSELECTION "},
+  {PD_NOPAGENUMS, "PD_NOPAGENUMS "},
+  {PD_COLLATE, "PD_COLLATE "},
+  {PD_PRINTTOFILE, "PD_PRINTTOFILE "},
+  {PD_PRINTSETUP, "PD_PRINTSETUP "},
+  {PD_NOWARNING, "PD_NOWARNING "},
+  {PD_RETURNDC, "PD_RETURNDC "},
+  {PD_RETURNIC, "PD_RETURNIC "},
+  {PD_RETURNDEFAULT, "PD_RETURNDEFAULT "},
+  {PD_SHOWHELP, "PD_SHOWHELP "},
+  {PD_ENABLEPRINTHOOK, "PD_ENABLEPRINTHOOK "},
+  {PD_ENABLESETUPHOOK, "PD_ENABLESETUPHOOK "},
+  {PD_ENABLEPRINTTEMPLATE, "PD_ENABLEPRINTTEMPLATE "},
+  {PD_ENABLESETUPTEMPLATE, "PD_ENABLESETUPTEMPLATE "},
+  {PD_ENABLEPRINTTEMPLATEHANDLE, "PD_ENABLEPRINTTEMPLATEHANDLE "},
+  {PD_ENABLESETUPTEMPLATEHANDLE, "PD_ENABLESETUPTEMPLATEHANDLE "},
+  {PD_USEDEVMODECOPIES, "PD_USEDEVMODECOPIES[ANDCOLLATE] "},
+  {PD_DISABLEPRINTTOFILE, "PD_DISABLEPRINTTOFILE "},
+  {PD_HIDEPRINTTOFILE, "PD_HIDEPRINTTOFILE "},
+  {PD_NONETWORKBUTTON, "PD_NONETWORKBUTTON "},
+  {-1, NULL}
+};
 /* address of wndproc for subclassed Static control */
 static WNDPROC lpfnStaticWndProc;
 static WNDPROC edit_wndproc;
@@ -147,7 +208,7 @@ static DEVMODEA *convert_to_devmodeA(const DEVMODEW *dmW)
  *
  * Returns TRUE on success else FALSE
  */
-BOOL PRINTDLG_OpenDefaultPrinter(HANDLE *hprn)
+static BOOL PRINTDLG_OpenDefaultPrinter(HANDLE *hprn)
 {
     WCHAR buf[260];
     DWORD dwBufLen = sizeof(buf) / sizeof(buf[0]);
@@ -173,7 +234,7 @@ BOOL PRINTDLG_OpenDefaultPrinter(HANDLE *hprn)
  *
  * Returns number of printers added to list.
  */
-INT PRINTDLG_SetUpPrinterListComboA(HWND hDlg, UINT id, LPCSTR name)
+static INT PRINTDLG_SetUpPrinterListComboA(HWND hDlg, UINT id, LPCSTR name)
 {
     DWORD needed, num;
     INT i;
@@ -837,8 +898,7 @@ static void PRINTDLG_UpdatePrinterInfoTextsW(HWND hDlg, const PRINTER_INFO_2W *p
  *                 PRINTDLG_ChangePrinter
  *
  */
-BOOL PRINTDLG_ChangePrinterA(HWND hDlg, char *name,
-				   PRINT_PTRA *PrintStructures)
+static BOOL PRINTDLG_ChangePrinterA(HWND hDlg, char *name, PRINT_PTRA *PrintStructures)
 {
     LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
     LPDEVMODEA lpdm = NULL;
@@ -1443,8 +1503,8 @@ static LRESULT PRINTDLG_WMInitDialogW(HWND hDlg, WPARAM wParam,
 /***********************************************************************
  *                              PRINTDLG_WMCommand               [internal]
  */
-LRESULT PRINTDLG_WMCommandA(HWND hDlg, WPARAM wParam,
-			LPARAM lParam, PRINT_PTRA* PrintStructures)
+static LRESULT PRINTDLG_WMCommandA(HWND hDlg, WPARAM wParam,
+                                   LPARAM lParam, PRINT_PTRA* PrintStructures)
 {
     LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
     UINT PrinterComboID = (lppd->Flags & PD_PRINTSETUP) ? cmb1 : cmb4;
