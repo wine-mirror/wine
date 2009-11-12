@@ -4146,13 +4146,13 @@ void BlockChainStream_Destroy(BlockChainStream* This)
  *      BlockChainStream_GetHeadOfChain
  *
  * Returns the head of this stream chain.
- * Some special chains don't have properties, their heads are kept in
+ * Some special chains don't have directory entries, their heads are kept in
  * This->headOfStreamPlaceHolder.
  *
  */
 static ULONG BlockChainStream_GetHeadOfChain(BlockChainStream* This)
 {
-  DirEntry  chainProperty;
+  DirEntry  chainEntry;
   BOOL      readSuccessful;
 
   if (This->headOfStreamPlaceHolder != 0)
@@ -4163,11 +4163,11 @@ static ULONG BlockChainStream_GetHeadOfChain(BlockChainStream* This)
     readSuccessful = StorageImpl_ReadDirEntry(
                       This->parentStorage,
                       This->ownerDirEntry,
-                      &chainProperty);
+                      &chainEntry);
 
     if (readSuccessful)
     {
-      return chainProperty.startingBlock;
+      return chainEntry.startingBlock;
     }
   }
 
@@ -4494,20 +4494,20 @@ static BOOL BlockChainStream_Enlarge(BlockChainStream* This,
     }
     else
     {
-      DirEntry chainProp;
+      DirEntry chainEntry;
       assert(This->ownerDirEntry != DIRENTRY_NULL);
 
       StorageImpl_ReadDirEntry(
         This->parentStorage,
         This->ownerDirEntry,
-        &chainProp);
+        &chainEntry);
 
-      chainProp.startingBlock = blockIndex;
+      chainEntry.startingBlock = blockIndex;
 
       StorageImpl_WriteDirEntry(
         This->parentStorage,
         This->ownerDirEntry,
-        &chainProp);
+        &chainEntry);
     }
 
     This->tailIndex = blockIndex;
@@ -4610,29 +4610,28 @@ BOOL BlockChainStream_SetSize(
  *      BlockChainStream_GetSize
  *
  * Returns the size of this chain.
- * Will return the block count if this chain doesn't have a property.
+ * Will return the block count if this chain doesn't have a directory entry.
  */
 static ULARGE_INTEGER BlockChainStream_GetSize(BlockChainStream* This)
 {
-  DirEntry chainProperty;
+  DirEntry chainEntry;
 
   if(This->headOfStreamPlaceHolder == NULL)
   {
     /*
-     * This chain is a data stream read the property and return
-     * the appropriate size
+     * This chain has a directory entry so use the size value from there.
      */
     StorageImpl_ReadDirEntry(
       This->parentStorage,
       This->ownerDirEntry,
-      &chainProperty);
+      &chainEntry);
 
-    return chainProperty.size;
+    return chainEntry.size;
   }
   else
   {
     /*
-     * this chain is a chain that does not have a property, figure out the
+     * this chain is a chain that does not have a directory entry, figure out the
      * size by making the product number of used blocks times the
      * size of them
      */
