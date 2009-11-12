@@ -129,7 +129,7 @@ struct DirEntry
 {
   WCHAR	         name[DIRENTRY_NAME_MAX_LEN];
   WORD	         sizeOfNameString;
-  BYTE	         propertyType;
+  BYTE	         stgType;
   ULONG          leftChild;
   ULONG          rightChild;
   ULONG          dirRootEntry;
