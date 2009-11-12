@@ -395,8 +395,8 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
   StgStreamImpl*    newStream;
-  DirEntry          currentProperty;
-  ULONG             foundPropertyIndex;
+  DirEntry          currentEntry;
+  ULONG             streamEntryRef;
   HRESULT           res = STG_E_UNKNOWN;
 
   TRACE("(%p, %s, %p, %x, %d, %p)\n",
@@ -441,19 +441,19 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
   /*
    * Search for the element with the given name
    */
-  foundPropertyIndex = findElement(
+  streamEntryRef = findElement(
     This->ancestorStorage,
     This->storageDirEntry,
     pwcsName,
-    &currentProperty);
+    &currentEntry);
 
   /*
    * If it was found, construct the stream object and return a pointer to it.
    */
-  if ( (foundPropertyIndex!=DIRENTRY_NULL) &&
-       (currentProperty.stgType==STGTY_STREAM) )
+  if ( (streamEntryRef!=DIRENTRY_NULL) &&
+       (currentEntry.stgType==STGTY_STREAM) )
   {
-    newStream = StgStreamImpl_Construct(This, grfMode, foundPropertyIndex);
+    newStream = StgStreamImpl_Construct(This, grfMode, streamEntryRef);
 
     if (newStream!=0)
     {
@@ -497,8 +497,8 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
   StorageInternalImpl* newStorage;
-  DirEntry               currentProperty;
-  ULONG                  foundPropertyIndex;
+  DirEntry               currentEntry;
+  ULONG                  storageEntryRef;
   HRESULT                res = STG_E_UNKNOWN;
 
   TRACE("(%p, %s, %p, %x, %p, %d, %p)\n",
@@ -549,19 +549,19 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
 
   *ppstg = NULL;
 
-  foundPropertyIndex = findElement(
+  storageEntryRef = findElement(
                          This->ancestorStorage,
                          This->storageDirEntry,
                          pwcsName,
-                         &currentProperty);
+                         &currentEntry);
 
-  if ( (foundPropertyIndex!=DIRENTRY_NULL) &&
-       (currentProperty.stgType==STGTY_STORAGE) )
+  if ( (storageEntryRef!=DIRENTRY_NULL) &&
+       (currentEntry.stgType==STGTY_STORAGE) )
   {
     newStorage = StorageInternalImpl_Construct(
                    This->ancestorStorage,
                    grfMode,
-                   foundPropertyIndex);
+                   storageEntryRef);
 
     if (newStorage != 0)
     {
@@ -588,7 +588,7 @@ end:
  * Storage32BaseImpl_EnumElements (IStorage)
  *
  * This method will create an enumerator object that can be used to
- * retrieve information about all the properties in the storage object.
+ * retrieve information about all the elements in the storage object.
  *
  * See Windows documentation for more details on IStorage methods.
  */
@@ -637,7 +637,7 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
   DWORD            grfStatFlag)  /* [in] */
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
-  DirEntry       curProperty;
+  DirEntry       currentEntry;
   BOOL           readSuccessful;
   HRESULT        res = STG_E_UNKNOWN;
 
@@ -653,13 +653,13 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
   readSuccessful = StorageImpl_ReadDirEntry(
                     This->ancestorStorage,
                     This->storageDirEntry,
-                    &curProperty);
+                    &currentEntry);
 
   if (readSuccessful)
   {
     StorageUtl_CopyDirEntryToSTATSTG(
       pstatstg,
-      &curProperty,
+      &currentEntry,
       grfStatFlag);
 
     pstatstg->grfMode = This->openFlags;
@@ -693,21 +693,21 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
             const OLECHAR*   pwcsNewName)  /* [in] */
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
-  DirEntry          currentProperty;
-  ULONG             foundPropertyIndex;
+  DirEntry          currentEntry;
+  ULONG             currentEntryRef;
 
   TRACE("(%p, %s, %s)\n",
 	iface, debugstr_w(pwcsOldName), debugstr_w(pwcsNewName));
 
-  foundPropertyIndex = findElement(This->ancestorStorage,
+  currentEntryRef = findElement(This->ancestorStorage,
                                    This->storageDirEntry,
                                    pwcsNewName,
-                                   &currentProperty);
+                                   &currentEntry);
 
-  if (foundPropertyIndex != DIRENTRY_NULL)
+  if (currentEntryRef != DIRENTRY_NULL)
   {
     /*
-     * There is already a property with the new name
+     * There is already an element with the new name
      */
     return STG_E_FILEALREADYEXISTS;
   }
@@ -715,31 +715,31 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
   /*
    * Search for the old element name
    */
-  foundPropertyIndex = findElement(This->ancestorStorage,
+  currentEntryRef = findElement(This->ancestorStorage,
                                    This->storageDirEntry,
                                    pwcsOldName,
-                                   &currentProperty);
+                                   &currentEntry);
 
-  if (foundPropertyIndex != DIRENTRY_NULL)
+  if (currentEntryRef != DIRENTRY_NULL)
   {
     /* Remove the element from its current position in the tree */
     removeFromTree(This->ancestorStorage, This->storageDirEntry,
-        foundPropertyIndex);
+        currentEntryRef);
 
     /* Change the name of the element */
-    strcpyW(currentProperty.name, pwcsNewName);
+    strcpyW(currentEntry.name, pwcsNewName);
 
-    StorageImpl_WriteDirEntry(This->ancestorStorage, foundPropertyIndex,
-        &currentProperty);
+    StorageImpl_WriteDirEntry(This->ancestorStorage, currentEntryRef,
+        &currentEntry);
 
     /* Insert the element in a new position in the tree */
     insertIntoTree(This->ancestorStorage, This->storageDirEntry,
-        foundPropertyIndex);
+        currentEntryRef);
   }
   else
   {
     /*
-     * There is no property with the old name
+     * There is no element with the old name
      */
     return STG_E_FILENOTFOUND;
   }
@@ -764,8 +764,8 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
   StgStreamImpl*    newStream;
-  DirEntry          currentProperty, newStreamProperty;
-  ULONG             foundPropertyIndex, newPropertyIndex;
+  DirEntry          currentEntry, newStreamEntry;
+  ULONG             currentEntryRef, newStreamEntryRef;
 
   TRACE("(%p, %s, %x, %d, %d, %p)\n",
 	iface, debugstr_w(pwcsName), grfMode,
@@ -811,12 +811,12 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
 
   *ppstm = 0;
 
-  foundPropertyIndex = findElement(This->ancestorStorage,
+  currentEntryRef = findElement(This->ancestorStorage,
                                    This->storageDirEntry,
                                    pwcsName,
-                                   &currentProperty);
+                                   &currentEntry);
 
-  if (foundPropertyIndex != DIRENTRY_NULL)
+  if (currentEntryRef != DIRENTRY_NULL)
   {
     /*
      * An element with this name already exists
@@ -827,7 +827,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
 
       LIST_FOR_EACH_ENTRY(strm, &This->strmHead, StgStreamImpl, StrmListEntry)
       {
-        if (strm->dirEntry == foundPropertyIndex)
+        if (strm->dirEntry == currentEntryRef)
         {
           TRACE("Stream deleted %p\n", strm);
           strm->parentStorage = NULL;
@@ -846,51 +846,51 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
   }
 
   /*
-   * memset the empty property
+   * memset the empty entry
    */
-  memset(&newStreamProperty, 0, sizeof(DirEntry));
+  memset(&newStreamEntry, 0, sizeof(DirEntry));
 
-  newStreamProperty.sizeOfNameString =
+  newStreamEntry.sizeOfNameString =
       ( lstrlenW(pwcsName)+1 ) * sizeof(WCHAR);
 
-  if (newStreamProperty.sizeOfNameString > DIRENTRY_NAME_BUFFER_LEN)
+  if (newStreamEntry.sizeOfNameString > DIRENTRY_NAME_BUFFER_LEN)
     return STG_E_INVALIDNAME;
 
-  strcpyW(newStreamProperty.name, pwcsName);
+  strcpyW(newStreamEntry.name, pwcsName);
 
-  newStreamProperty.stgType       = STGTY_STREAM;
-  newStreamProperty.startingBlock = BLOCK_END_OF_CHAIN;
-  newStreamProperty.size.u.LowPart  = 0;
-  newStreamProperty.size.u.HighPart = 0;
+  newStreamEntry.stgType       = STGTY_STREAM;
+  newStreamEntry.startingBlock = BLOCK_END_OF_CHAIN;
+  newStreamEntry.size.u.LowPart  = 0;
+  newStreamEntry.size.u.HighPart = 0;
 
-  newStreamProperty.leftChild        = DIRENTRY_NULL;
-  newStreamProperty.rightChild       = DIRENTRY_NULL;
-  newStreamProperty.dirRootEntry     = DIRENTRY_NULL;
+  newStreamEntry.leftChild        = DIRENTRY_NULL;
+  newStreamEntry.rightChild       = DIRENTRY_NULL;
+  newStreamEntry.dirRootEntry     = DIRENTRY_NULL;
 
   /* call CoFileTime to get the current time
-  newStreamProperty.ctime
-  newStreamProperty.mtime
+  newStreamEntry.ctime
+  newStreamEntry.mtime
   */
 
-  /*  newStreamProperty.propertyUniqueID */
+  /*  newStreamEntry.clsid */
 
   /*
-   * Save the new property into a new property spot
+   * Create an entry with the new data
    */
-  createDirEntry(This->ancestorStorage, &newStreamProperty, &newPropertyIndex);
+  createDirEntry(This->ancestorStorage, &newStreamEntry, &newStreamEntryRef);
 
   /*
-   * Find a spot in the property chain for our newly created property.
+   * Insert the new entry in the parent storage's tree.
    */
   insertIntoTree(
     This->ancestorStorage,
     This->storageDirEntry,
-    newPropertyIndex);
+    newStreamEntryRef);
 
   /*
    * Open the stream to return it.
    */
-  newStream = StgStreamImpl_Construct(This, grfMode, newPropertyIndex);
+  newStream = StgStreamImpl_Construct(This, grfMode, newStreamEntryRef);
 
   if (newStream != 0)
   {
@@ -909,7 +909,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
 /************************************************************************
  * Storage32BaseImpl_SetClass (IStorage)
  *
- * This method will write the specified CLSID in the property of this
+ * This method will write the specified CLSID in the directory entry of this
  * storage.
  *
  * See Windows documentation for more details on IStorage methods.
@@ -920,21 +920,21 @@ static HRESULT WINAPI StorageBaseImpl_SetClass(
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
   HRESULT hRes = E_FAIL;
-  DirEntry curProperty;
+  DirEntry currentEntry;
   BOOL success;
 
   TRACE("(%p, %p)\n", iface, clsid);
 
   success = StorageImpl_ReadDirEntry(This->ancestorStorage,
                                        This->storageDirEntry,
-                                       &curProperty);
+                                       &currentEntry);
   if (success)
   {
-    curProperty.clsid = *clsid;
+    currentEntry.clsid = *clsid;
 
     success =  StorageImpl_WriteDirEntry(This->ancestorStorage,
                                            This->storageDirEntry,
-                                           &curProperty);
+                                           &currentEntry);
     if (success)
       hRes = S_OK;
   }
@@ -963,10 +963,10 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
 {
   StorageBaseImpl* const This=(StorageBaseImpl*)iface;
 
-  DirEntry         currentProperty;
-  DirEntry         newProperty;
-  ULONG            foundPropertyIndex;
-  ULONG            newPropertyIndex;
+  DirEntry         currentEntry;
+  DirEntry         newEntry;
+  ULONG            currentEntryRef;
+  ULONG            newEntryRef;
   HRESULT          hr;
 
   TRACE("(%p, %s, %x, %d, %d, %p)\n",
@@ -997,12 +997,12 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
     return STG_E_ACCESSDENIED;
   }
 
-  foundPropertyIndex = findElement(This->ancestorStorage,
+  currentEntryRef = findElement(This->ancestorStorage,
                                    This->storageDirEntry,
                                    pwcsName,
-                                   &currentProperty);
+                                   &currentEntry);
 
-  if (foundPropertyIndex != DIRENTRY_NULL)
+  if (currentEntryRef != DIRENTRY_NULL)
   {
     /*
      * An element with this name already exists
@@ -1026,49 +1026,46 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
     return STG_E_ACCESSDENIED;
   }
 
-  /*
-   * memset the empty property
-   */
-  memset(&newProperty, 0, sizeof(DirEntry));
+  memset(&newEntry, 0, sizeof(DirEntry));
 
-  newProperty.sizeOfNameString = (lstrlenW(pwcsName)+1)*sizeof(WCHAR);
+  newEntry.sizeOfNameString = (lstrlenW(pwcsName)+1)*sizeof(WCHAR);
 
-  if (newProperty.sizeOfNameString > DIRENTRY_NAME_BUFFER_LEN)
+  if (newEntry.sizeOfNameString > DIRENTRY_NAME_BUFFER_LEN)
   {
     FIXME("name too long\n");
     return STG_E_INVALIDNAME;
   }
 
-  strcpyW(newProperty.name, pwcsName);
+  strcpyW(newEntry.name, pwcsName);
 
-  newProperty.stgType       = STGTY_STORAGE;
-  newProperty.startingBlock = BLOCK_END_OF_CHAIN;
-  newProperty.size.u.LowPart  = 0;
-  newProperty.size.u.HighPart = 0;
+  newEntry.stgType       = STGTY_STORAGE;
+  newEntry.startingBlock = BLOCK_END_OF_CHAIN;
+  newEntry.size.u.LowPart  = 0;
+  newEntry.size.u.HighPart = 0;
 
-  newProperty.leftChild        = DIRENTRY_NULL;
-  newProperty.rightChild       = DIRENTRY_NULL;
-  newProperty.dirRootEntry     = DIRENTRY_NULL;
+  newEntry.leftChild        = DIRENTRY_NULL;
+  newEntry.rightChild       = DIRENTRY_NULL;
+  newEntry.dirRootEntry     = DIRENTRY_NULL;
 
   /* call CoFileTime to get the current time
-  newProperty.ctime
-  newProperty.mtime
+  newEntry.ctime
+  newEntry.mtime
   */
 
-  /*  newStorageProperty.propertyUniqueID */
+  /*  newEntry.clsid */
 
   /*
-   * Save the new property into a new property spot
+   * Create a new directory entry for the storage
    */
-  createDirEntry(This->ancestorStorage, &newProperty, &newPropertyIndex);
+  createDirEntry(This->ancestorStorage, &newEntry, &newEntryRef);
 
   /*
-   * Find a spot in the property chain for our newly created property.
+   * Insert the new directory entry into the parent storage's tree
    */
   insertIntoTree(
     This->ancestorStorage,
     This->storageDirEntry,
-    newPropertyIndex);
+    newEntryRef);
 
   /*
    * Open it to get a pointer to return.
@@ -1721,8 +1718,8 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
   StorageBaseImpl* const This=(StorageBaseImpl*)iface;
 
   HRESULT           hr = S_OK;
-  DirEntry          propertyToDelete;
-  ULONG             foundPropertyIndexToDelete;
+  DirEntry          entryToDelete;
+  ULONG             entryToDeleteRef;
 
   TRACE("(%p, %s)\n",
 	iface, debugstr_w(pwcsName));
@@ -1733,49 +1730,49 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
   if ( STGM_ACCESS_MODE( This->openFlags ) == STGM_READ )
     return STG_E_ACCESSDENIED;
 
-  foundPropertyIndexToDelete = findElement(
+  entryToDeleteRef = findElement(
     This->ancestorStorage,
     This->storageDirEntry,
     pwcsName,
-    &propertyToDelete);
+    &entryToDelete);
 
-  if ( foundPropertyIndexToDelete == DIRENTRY_NULL )
+  if ( entryToDeleteRef == DIRENTRY_NULL )
   {
     return STG_E_FILENOTFOUND;
   }
 
-  if ( propertyToDelete.stgType == STGTY_STORAGE )
+  if ( entryToDelete.stgType == STGTY_STORAGE )
   {
     hr = deleteStorageContents(
            This,
-           foundPropertyIndexToDelete,
-           propertyToDelete);
+           entryToDeleteRef,
+           entryToDelete);
   }
-  else if ( propertyToDelete.stgType == STGTY_STREAM )
+  else if ( entryToDelete.stgType == STGTY_STREAM )
   {
     hr = deleteStreamContents(
            This,
-           foundPropertyIndexToDelete,
-           propertyToDelete);
+           entryToDeleteRef,
+           entryToDelete);
   }
 
   if (hr!=S_OK)
     return hr;
 
   /*
-   * Adjust the property chain
+   * Remove the entry from its parent storage
    */
   hr = removeFromTree(
         This->ancestorStorage,
         This->storageDirEntry,
-        foundPropertyIndexToDelete);
+        entryToDeleteRef);
 
   /*
-   * Invalidate the property
+   * Invalidate the entry
    */
   if (SUCCEEDED(hr))
     destroyDirEntry(This->ancestorStorage,
-                    foundPropertyIndexToDelete);
+                    entryToDeleteRef);
 
   return hr;
 }
