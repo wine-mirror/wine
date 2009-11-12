@@ -159,15 +159,15 @@ typedef struct
 /***********************************************************************
  * Forward declaration of internal functions used by the method DestroyElement
  */
-static HRESULT deleteStorageProperty(
+static HRESULT deleteStorageContents(
   StorageBaseImpl *parentStorage,
-  ULONG        foundPropertyIndexToDelete,
-  DirEntry     propertyToDelete);
+  ULONG        indexToDelete,
+  DirEntry     entryDataToDelete);
 
-static HRESULT deleteStreamProperty(
+static HRESULT deleteStreamContents(
   StorageBaseImpl *parentStorage,
-  ULONG         foundPropertyIndexToDelete,
-  DirEntry      propertyToDelete);
+  ULONG         indexToDelete,
+  DirEntry      entryDataToDelete);
 
 static HRESULT removeFromTree(
   StorageImpl *This,
@@ -1746,14 +1746,14 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
 
   if ( propertyToDelete.stgType == STGTY_STORAGE )
   {
-    hr = deleteStorageProperty(
+    hr = deleteStorageContents(
            This,
            foundPropertyIndexToDelete,
            propertyToDelete);
   }
   else if ( propertyToDelete.stgType == STGTY_STREAM )
   {
-    hr = deleteStreamProperty(
+    hr = deleteStreamContents(
            This,
            foundPropertyIndexToDelete,
            propertyToDelete);
@@ -1839,13 +1839,13 @@ static void StorageBaseImpl_DeleteAll(StorageBaseImpl * stg)
  *
  * Internal Method
  *
- * Perform the deletion of a complete storage node
+ * Delete the contents of a storage entry.
  *
  */
-static HRESULT deleteStorageProperty(
+static HRESULT deleteStorageContents(
   StorageBaseImpl *parentStorage,
-  ULONG        indexOfPropertyToDelete,
-  DirEntry     propertyToDelete)
+  ULONG        indexToDelete,
+  DirEntry     entryDataToDelete)
 {
   IEnumSTATSTG *elements     = 0;
   IStorage   *childStorage = 0;
@@ -1858,7 +1858,7 @@ static HRESULT deleteStorageProperty(
    */
   hr = StorageBaseImpl_OpenStorage(
         (IStorage*)parentStorage,
-        propertyToDelete.name,
+        entryDataToDelete.name,
         0,
         STGM_WRITE | STGM_SHARE_EXCLUSIVE,
         0,
@@ -1906,13 +1906,13 @@ static HRESULT deleteStorageProperty(
  *
  * Internal Method
  *
- * Perform the deletion of a stream node
+ * Perform the deletion of a stream's data
  *
  */
-static HRESULT deleteStreamProperty(
+static HRESULT deleteStreamContents(
   StorageBaseImpl *parentStorage,
-  ULONG         indexOfPropertyToDelete,
-  DirEntry      propertyToDelete)
+  ULONG         indexToDelete,
+  DirEntry      entryDataToDelete)
 {
   IStream      *pis;
   HRESULT        hr;
@@ -1922,7 +1922,7 @@ static HRESULT deleteStreamProperty(
   size.u.LowPart = 0;
 
   hr = StorageBaseImpl_OpenStream((IStorage*)parentStorage,
-        propertyToDelete.name, NULL, STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, &pis);
+        entryDataToDelete.name, NULL, STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, &pis);
 
   if (hr!=S_OK)
   {
