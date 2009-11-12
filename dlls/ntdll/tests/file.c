@@ -40,6 +40,8 @@
 #define IO_COMPLETION_ALL_ACCESS 0x001F0003
 #endif
 
+static BOOL     (WINAPI * pGetVolumePathNameW)(LPCWSTR, LPWSTR, DWORD);
+
 static NTSTATUS (WINAPI *pRtlFreeUnicodeString)( PUNICODE_STRING );
 static VOID     (WINAPI *pRtlInitUnicodeString)( PUNICODE_STRING, LPCWSTR );
 static BOOL     (WINAPI *pRtlDosPathNameToNtPathName_U)( LPCWSTR, PUNICODE_STRING, PWSTR*, CURDIR* );
@@ -950,6 +952,12 @@ static void test_file_name_information(void)
     HANDLE h;
     UINT len;
 
+    /* GetVolumePathName is not present before w2k */
+    if (!pGetVolumePathNameW) {
+        win_skip("GetVolumePathNameW not found\n");
+        return;
+    }
+
     file_name_size = GetSystemDirectoryW( NULL, 0 );
     file_name = HeapAlloc( GetProcessHeap(), 0, file_name_size * sizeof(*file_name) );
     volume_prefix = HeapAlloc( GetProcessHeap(), 0, file_name_size * sizeof(*volume_prefix) );
@@ -960,7 +968,7 @@ static void test_file_name_information(void)
             "GetSystemDirectoryW returned %u, expected %u.\n",
             len, file_name_size - 1);
 
-    len = GetVolumePathNameW( file_name, volume_prefix, file_name_size );
+    len = pGetVolumePathNameW( file_name, volume_prefix, file_name_size );
     ok(len, "GetVolumePathNameW failed.\n");
 
     len = lstrlenW( volume_prefix );
@@ -1018,12 +1026,15 @@ static void test_file_name_information(void)
 
 START_TEST(file)
 {
+    HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
     if (!hntdll)
     {
         skip("not running on NT, skipping test\n");
         return;
     }
+
+    pGetVolumePathNameW = (void *)GetProcAddress(hkernel32, "GetVolumePathNameW");
 
     pRtlFreeUnicodeString   = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
     pRtlInitUnicodeString   = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
