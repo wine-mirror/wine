@@ -192,9 +192,9 @@ static HRESULT insertIntoTree(
   ULONG         parentStorageIndex,
   ULONG         newEntryIndex);
 
-static LONG propertyNameCmp(
-    const OLECHAR *newProperty,
-    const OLECHAR *currentProperty);
+static LONG entryNameCmp(
+    const OLECHAR *name1,
+    const OLECHAR *name2);
 
 static ULONG findElement(
     StorageImpl *storage,
@@ -1223,22 +1223,22 @@ static HRESULT destroyDirEntry(
  * Case insensitive comparison of DirEntry.name by first considering
  * their size.
  *
- * Returns <0 when newProperty < currentProperty
- *         >0 when newProperty > currentProperty
- *          0 when newProperty == currentProperty
+ * Returns <0 when name1 < name2
+ *         >0 when name1 > name2
+ *          0 when name1 == name2
  */
-static LONG propertyNameCmp(
-    const OLECHAR *newProperty,
-    const OLECHAR *currentProperty)
+static LONG entryNameCmp(
+    const OLECHAR *name1,
+    const OLECHAR *name2)
 {
-  LONG diff      = lstrlenW(newProperty) - lstrlenW(currentProperty);
+  LONG diff      = lstrlenW(name1) - lstrlenW(name2);
 
   if (diff == 0)
   {
     /*
      * We compare the string themselves only when they are of the same length
      */
-    diff = lstrcmpiW( newProperty, currentProperty);
+    diff = lstrcmpiW( name1, name2);
   }
 
   return diff;
@@ -1299,7 +1299,7 @@ static HRESULT insertIntoTree(
 
     while (found == 0)
     {
-      LONG diff = propertyNameCmp( newEntry.name, currentEntry.name);
+      LONG diff = entryNameCmp( newEntry.name, currentEntry.name);
 
       if (diff < 0)
       {
@@ -1386,7 +1386,7 @@ static ULONG findElement(StorageImpl *storage, ULONG storageEntry,
 
     StorageImpl_ReadDirEntry(storage, currentEntry, data);
 
-    cmp = propertyNameCmp(name, data->name);
+    cmp = entryNameCmp(name, data->name);
 
     if (cmp == 0)
       /* found it */
@@ -1432,7 +1432,7 @@ static HRESULT findTreeParent(StorageImpl *storage, ULONG storageEntry,
 
     StorageImpl_ReadDirEntry(storage, childEntry, &childData);
 
-    cmp = propertyNameCmp(childName, childData.name);
+    cmp = entryNameCmp(childName, childData.name);
 
     if (cmp == 0)
       /* found it */
