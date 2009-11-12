@@ -206,29 +206,4 @@ int CC_HSLtoRGB(char c, int hue, int sat, int lum);
 void CC_EditSetRGB( HWND hDlg, COLORREF cr );
 void CC_PaintUserColorArray( HWND hDlg, int rows, int cols, const COLORREF* lpcr );
 
-typedef struct
-{
-  HWND hWnd1;
-  HWND hWnd2;
-  LPCHOOSEFONTW lpcf32w;
-  int  added;
-} CFn_ENUMSTRUCT, *LPCFn_ENUMSTRUCT;
-
-INT AddFontFamily(const ENUMLOGFONTEXW *lpElfex, const NEWTEXTMETRICEXW *lpNTM,
-                  UINT nFontType, const CHOOSEFONTW *lpcf, HWND hwnd,
-                  LPCFn_ENUMSTRUCT e);
-INT AddFontStyle(const ENUMLOGFONTEXW *lpElfex, const NEWTEXTMETRICEXW *metrics,
-                 UINT nFontType, const CHOOSEFONTW *lpcf, HWND hcmb2, HWND hcmb3,
-                 HWND hDlg, BOOL iswin16);
-void _dump_cf_flags(DWORD cflags);
-
-LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
-                         LPCHOOSEFONTW lpcf);
-LRESULT CFn_WMMeasureItem(HWND hDlg, WPARAM wParam, LPARAM lParam);
-LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam);
-LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
-                      LPCHOOSEFONTW lpcf);
-LRESULT CFn_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam,
-                      const CHOOSEFONTW *lpcf);
-
 #endif /* _WINE_DLL_CDLG_H */
