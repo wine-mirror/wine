@@ -977,6 +977,9 @@ static void test_file_name_information(void)
             NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 );
     ok(h != INVALID_HANDLE_VALUE, "Failed to open file.\n");
 
+    hr = pNtQueryInformationFile( h, &io, info, sizeof(*info) - 1, FileNameInformation );
+    ok(hr == STATUS_INFO_LENGTH_MISMATCH, "NtQueryInformationFile returned %#x.\n", hr);
+
     memset( info, 0xcc, info_size );
     hr = pNtQueryInformationFile( h, &io, info, sizeof(*info), FileNameInformation );
     ok(hr == STATUS_BUFFER_OVERFLOW, "NtQueryInformationFile returned %#x, expected %#x.\n",
