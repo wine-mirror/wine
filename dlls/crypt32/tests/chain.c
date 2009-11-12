@@ -3230,6 +3230,12 @@ static void testGetCertChain(void)
      chainCheckEmbeddedNull.todo, 0);
     if (chain)
     {
+        ok(chain->TrustStatus.dwErrorStatus ==
+         chainCheckEmbeddedNull.status.status.dwErrorStatus ||
+         broken(chain->TrustStatus.dwErrorStatus ==
+         chainCheckEmbeddedNullBroken.status.status.dwErrorStatus),
+         "unexpected chain error status %08x\n",
+         chain->TrustStatus.dwErrorStatus);
         if (chainCheckEmbeddedNull.status.status.dwErrorStatus ==
          chain->TrustStatus.dwErrorStatus)
             checkChainStatus(chain, &chainCheckEmbeddedNull.status,
