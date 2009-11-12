@@ -957,7 +957,7 @@ static BOOL open_connection( request_t *request )
                 return FALSE;
             }
         }
-        if (!netconn_secure_connect( &request->netconn ))
+        if (!netconn_secure_connect( &request->netconn, connect->servername ))
         {
             netconn_close( &request->netconn );
             heap_free( addressW );

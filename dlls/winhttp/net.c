@@ -418,7 +418,7 @@ BOOL netconn_connect( netconn_t *conn, const struct sockaddr *sockaddr, unsigned
     return ret;
 }
 
-BOOL netconn_secure_connect( netconn_t *conn )
+BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname )
 {
 #ifdef SONAME_LIBSSL
     X509 *cert;

@@ -219,7 +219,7 @@ void netconn_unload( void );
 BOOL netconn_query_data_available( netconn_t *, DWORD * );
 BOOL netconn_recv( netconn_t *, void *, size_t, int, int * );
 BOOL netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr *, socklen_t * );
-BOOL netconn_secure_connect( netconn_t * );
+BOOL netconn_secure_connect( netconn_t *, WCHAR * );
 BOOL netconn_send( netconn_t *, const void *, size_t, int, int * );
 DWORD netconn_set_timeout( netconn_t *, BOOL, int );
 const void *netconn_get_certificate( netconn_t * );
