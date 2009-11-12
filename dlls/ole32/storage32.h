@@ -207,10 +207,9 @@ struct StorageBaseImpl
   StorageImpl* ancestorStorage;
 
   /*
-   * Index of the property for the root of
-   * this storage
+   * Index of the directory entry of this storage
    */
-  ULONG rootPropertySetIndex;
+  ULONG storageDirEntry;
 
   /*
    * virtual Destructor method.

@@ -443,7 +443,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
    */
   foundPropertyIndex = findElement(
     This->ancestorStorage,
-    This->rootPropertySetIndex,
+    This->storageDirEntry,
     pwcsName,
     &currentProperty);
 
@@ -551,7 +551,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
 
   foundPropertyIndex = findElement(
                          This->ancestorStorage,
-                         This->rootPropertySetIndex,
+                         This->storageDirEntry,
                          pwcsName,
                          &currentProperty);
 
@@ -610,7 +610,7 @@ static HRESULT WINAPI StorageBaseImpl_EnumElements(
 
   newEnum = IEnumSTATSTGImpl_Construct(
               This->ancestorStorage,
-              This->rootPropertySetIndex);
+              This->storageDirEntry);
 
   if (newEnum!=0)
   {
@@ -652,7 +652,7 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
 
   readSuccessful = StorageImpl_ReadDirEntry(
                     This->ancestorStorage,
-                    This->rootPropertySetIndex,
+                    This->storageDirEntry,
                     &curProperty);
 
   if (readSuccessful)
@@ -700,7 +700,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
 	iface, debugstr_w(pwcsOldName), debugstr_w(pwcsNewName));
 
   foundPropertyIndex = findElement(This->ancestorStorage,
-                                   This->rootPropertySetIndex,
+                                   This->storageDirEntry,
                                    pwcsNewName,
                                    &currentProperty);
 
@@ -716,14 +716,14 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
    * Search for the old element name
    */
   foundPropertyIndex = findElement(This->ancestorStorage,
-                                   This->rootPropertySetIndex,
+                                   This->storageDirEntry,
                                    pwcsOldName,
                                    &currentProperty);
 
   if (foundPropertyIndex != DIRENTRY_NULL)
   {
     /* Remove the element from its current position in the tree */
-    removeFromTree(This->ancestorStorage, This->rootPropertySetIndex,
+    removeFromTree(This->ancestorStorage, This->storageDirEntry,
         foundPropertyIndex);
 
     /* Change the name of the element */
@@ -733,7 +733,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
         &currentProperty);
 
     /* Insert the element in a new position in the tree */
-    insertIntoTree(This->ancestorStorage, This->rootPropertySetIndex,
+    insertIntoTree(This->ancestorStorage, This->storageDirEntry,
         foundPropertyIndex);
   }
   else
@@ -812,7 +812,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
   *ppstm = 0;
 
   foundPropertyIndex = findElement(This->ancestorStorage,
-                                   This->rootPropertySetIndex,
+                                   This->storageDirEntry,
                                    pwcsName,
                                    &currentProperty);
 
@@ -884,7 +884,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
    */
   insertIntoTree(
     This->ancestorStorage,
-    This->rootPropertySetIndex,
+    This->storageDirEntry,
     newPropertyIndex);
 
   /*
@@ -926,14 +926,14 @@ static HRESULT WINAPI StorageBaseImpl_SetClass(
   TRACE("(%p, %p)\n", iface, clsid);
 
   success = StorageImpl_ReadDirEntry(This->ancestorStorage,
-                                       This->rootPropertySetIndex,
+                                       This->storageDirEntry,
                                        &curProperty);
   if (success)
   {
     curProperty.clsid = *clsid;
 
     success =  StorageImpl_WriteDirEntry(This->ancestorStorage,
-                                           This->rootPropertySetIndex,
+                                           This->storageDirEntry,
                                            &curProperty);
     if (success)
       hRes = S_OK;
@@ -998,7 +998,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
   }
 
   foundPropertyIndex = findElement(This->ancestorStorage,
-                                   This->rootPropertySetIndex,
+                                   This->storageDirEntry,
                                    pwcsName,
                                    &currentProperty);
 
@@ -1067,7 +1067,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
    */
   insertIntoTree(
     This->ancestorStorage,
-    This->rootPropertySetIndex,
+    This->storageDirEntry,
     newPropertyIndex);
 
   /*
@@ -1735,7 +1735,7 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
 
   foundPropertyIndexToDelete = findElement(
     This->ancestorStorage,
-    This->rootPropertySetIndex,
+    This->storageDirEntry,
     pwcsName,
     &propertyToDelete);
 
@@ -1767,7 +1767,7 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
    */
   hr = removeFromTree(
         This->ancestorStorage,
-        This->rootPropertySetIndex,
+        This->storageDirEntry,
         foundPropertyIndexToDelete);
 
   /*
@@ -2297,13 +2297,13 @@ static HRESULT StorageImpl_Construct(
       if ( (currentProperty.sizeOfNameString != 0 ) &&
            (currentProperty.stgType          == STGTY_ROOT) )
       {
-        This->base.rootPropertySetIndex = currentPropertyIndex;
+        This->base.storageDirEntry = currentPropertyIndex;
       }
     }
 
     currentPropertyIndex++;
 
-  } while (readSuccessful && (This->base.rootPropertySetIndex == DIRENTRY_NULL) );
+  } while (readSuccessful && (This->base.storageDirEntry == DIRENTRY_NULL) );
 
   if (!readSuccessful)
   {
@@ -2315,7 +2315,7 @@ static HRESULT StorageImpl_Construct(
    * Create the block chain abstraction for the small block root chain.
    */
   if(!(This->smallBlockRootChain =
-       BlockChainStream_Construct(This, NULL, This->base.rootPropertySetIndex)))
+       BlockChainStream_Construct(This, NULL, This->base.storageDirEntry)))
     return STG_E_READFAULT;
 
   return hr;
@@ -3130,7 +3130,7 @@ BOOL StorageImpl_ReadDirEntry(
   if (SUCCEEDED(readRes))
   {
     /* replace the name of root entry (often "Root Entry") by the file name */
-    WCHAR *propName = (index == This->base.rootPropertySetIndex) ?
+    WCHAR *propName = (index == This->base.storageDirEntry) ?
 	    		This->filename : (WCHAR *)currentProperty+OFFSET_PS_NAME;
 
     memset(buffer->name, 0, sizeof(buffer->name));
@@ -3964,7 +3964,7 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
     /*
      * Keep the index of the root property set for this storage,
      */
-    newStorage->base.rootPropertySetIndex = rootPropertyIndex;
+    newStorage->base.storageDirEntry = rootPropertyIndex;
 
     return newStorage;
   }
@@ -4900,7 +4900,7 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
 
         StorageImpl_ReadDirEntry(
           This->parentStorage,
-          This->parentStorage->base.rootPropertySetIndex,
+          This->parentStorage->base.storageDirEntry,
           &rootProp);
 
         rootProp.startingBlock = sbStartIndex;
@@ -4909,7 +4909,7 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
 
         StorageImpl_WriteDirEntry(
           This->parentStorage,
-          This->parentStorage->base.rootPropertySetIndex,
+          This->parentStorage->base.storageDirEntry,
           &rootProp);
       }
       else
@@ -4930,7 +4930,7 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
 
     StorageImpl_ReadDirEntry(
       This->parentStorage,
-      This->parentStorage->base.rootPropertySetIndex,
+      This->parentStorage->base.storageDirEntry,
       &rootProp);
 
     if (rootProp.size.u.LowPart <
@@ -4944,7 +4944,7 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
 
       StorageImpl_WriteDirEntry(
         This->parentStorage,
-        This->parentStorage->base.rootPropertySetIndex,
+        This->parentStorage->base.storageDirEntry,
         &rootProp);
     }
   }
