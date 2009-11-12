@@ -1,0 +1,18 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = commdlg.dll16
+IMPORTS   = comdlg32 user32 gdi32 kernel32
+EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,comdlg32.dll
+
+C_SRCS = \
+	colordlg.c \
+	filedlg.c \
+	finddlg.c \
+	fontdlg.c \
+	printdlg.c
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

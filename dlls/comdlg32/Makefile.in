@@ -13,18 +13,9 @@ C_SRCS = \
 	filedlg.c \
 	filedlg31.c \
 	filedlgbrowser.c \
-	finddlg32.c \
+	finddlg.c \
 	fontdlg.c \
 	printdlg.c
-
-C_SRCS16 = \
-	colordlg16.c \
-	filedlg16.c \
-	finddlg16.c \
-	fontdlg16.c \
-	printdlg16.c
-
-SPEC_SRCS16 = commdlg.spec
 
 RC_SRCS = \
 	cdlg_Bg.rc \

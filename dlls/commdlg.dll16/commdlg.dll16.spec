@@ -18,7 +18,7 @@
 22  pascal   PrintSetupDlgProc(word word word long) PrintSetupDlgProc16
 #23  pascal  EDITINTEGERONLY exported, shared data
 #25  pascal  WANTARROWS exported, shared data
-26  pascal   CommDlgExtendedError() CommDlgExtendedError
+26  pascal   CommDlgExtendedError() CommDlgExtendedError16
 27  pascal -ret16 GetFileTitle(str ptr word) GetFileTitle16
 #28  pascal  WEP exported, shared data
 #29  pascal  DWLBSUBCLASS exported, shared data

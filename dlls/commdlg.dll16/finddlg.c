@@ -315,3 +315,12 @@ BOOL16 CALLBACK ReplaceTextDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam
 {
     return replace_text_dlgproc( HWND_32(hWnd16), wMsg, wParam, lParam );
 }
+
+
+/***********************************************************************
+ *	CommDlgExtendedError			(COMMDLG.26)
+ */
+DWORD WINAPI CommDlgExtendedError16(void)
+{
+    return CommDlgExtendedError();
+}

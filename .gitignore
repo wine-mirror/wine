@@ -44,7 +44,6 @@ dlls/actxprxy/actxprxy_urlhist_p.c
 dlls/advapi32/svcctl.h
 dlls/advapi32/svcctl_c.c
 dlls/atl/atliface.h
-dlls/commdlg.dll16
 dlls/dxdiagn/fil_data.h
 dlls/gdi.exe16
 dlls/jscript/jsglobal.tlb
