@@ -184,26 +184,4 @@ extern LPVOID (WINAPI *COMDLG32_SHAlloc)(DWORD);
 extern DWORD (WINAPI *COMDLG32_SHFree)(LPVOID);
 extern BOOL (WINAPI *COMDLG32_SHGetFolderPathW)(HWND,int,HANDLE,DWORD,LPWSTR);
 
-/*
- * Internal Functions
- * Do NOT Export to other programs and dlls
- */
-
-BOOL CC_HookCallChk( const CHOOSECOLORW *lpcc );
-int CC_MouseCheckResultWindow( HWND hDlg, LPARAM lParam );
-LRESULT CC_WMLButtonDown( HWND hDlg, WPARAM wParam, LPARAM lParam );
-LRESULT CC_WMLButtonUp( HWND hDlg, WPARAM wParam, LPARAM lParam );
-LRESULT CC_WMMouseMove( HWND hDlg, LPARAM lParam );
-LRESULT CC_WMPaint( HWND hDlg, WPARAM wParam, LPARAM lParam );
-void CC_SwitchToFullSize( HWND hDlg, COLORREF result, LPCRECT lprect );
-void CC_PaintSelectedColor( HWND hDlg, COLORREF cr );
-int CC_RGBtoHSL(char c, int r, int g, int b);
-void CC_PaintCross( HWND hDlg, int x, int y);
-void CC_PaintTriangle( HWND hDlg, int y);
-int CC_CheckDigitsInEdit( HWND hwnd, int maxval );
-void CC_EditSetHSL( HWND hDlg, int h, int s, int l );
-int CC_HSLtoRGB(char c, int hue, int sat, int lum);
-void CC_EditSetRGB( HWND hDlg, COLORREF cr );
-void CC_PaintUserColorArray( HWND hDlg, int rows, int cols, const COLORREF* lpcr );
-
 #endif /* _WINE_DLL_CDLG_H */
