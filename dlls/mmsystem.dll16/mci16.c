@@ -482,7 +482,8 @@ static UINT MCI_Yield1632(DWORD pfn16, MCIDEVICEID id, DWORD yield_data)
 
     if (!pfn16)
     {
-        UserYield16();
+        MSG msg;
+        PeekMessageW( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE );
         return 0;
     }
 

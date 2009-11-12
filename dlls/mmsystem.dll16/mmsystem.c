@@ -2059,7 +2059,8 @@ LRESULT	WINAPI mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE16 lpHndl, DWORD
 		WARN("Couldn't resume thread\n");
 
 	    while (lpMMThd->dwStatus != 0x10) { /* test also HIWORD of dwStatus */
-		UserYield16();
+                MSG msg;
+                PeekMessageW( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE );
 	    }
 	}
     }
