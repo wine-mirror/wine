@@ -168,21 +168,21 @@ static HRESULT WINAPI Test_DBProperties_GetProperties(
     todo_wine
     ok(*pcPropertySets == 0, "Expected *pcPropertySets to be 0 instead of %d\n", *pcPropertySets);
     *pcPropertySets = 1;
-    prgPropertySets[0] = CoTaskMemAlloc(sizeof(DBPROPSET));
-    prgPropertySets[0]->rgProperties = CoTaskMemAlloc(sizeof(DBPROP));
-    prgPropertySets[0]->rgProperties[0].dwPropertyID = TEST_PROPID;
-    prgPropertySets[0]->rgProperties[0].dwOptions = DBPROPOPTIONS_REQUIRED;
-    prgPropertySets[0]->rgProperties[0].dwStatus = S_OK;
-    prgPropertySets[0]->rgProperties[0].colid.eKind = DBKIND_GUID_NAME;
+    *prgPropertySets = CoTaskMemAlloc(sizeof(DBPROPSET));
+    (*prgPropertySets)[0].rgProperties = CoTaskMemAlloc(sizeof(DBPROP));
+    (*prgPropertySets)[0].rgProperties[0].dwPropertyID = TEST_PROPID;
+    (*prgPropertySets)[0].rgProperties[0].dwOptions = DBPROPOPTIONS_REQUIRED;
+    (*prgPropertySets)[0].rgProperties[0].dwStatus = S_OK;
+    (*prgPropertySets)[0].rgProperties[0].colid.eKind = DBKIND_GUID_NAME;
     /* colid contents */
-    prgPropertySets[0]->rgProperties[0].colid.uGuid.guid = IID_IDBProperties;
-    prgPropertySets[0]->rgProperties[0].colid.uName.pwszName = CoTaskMemAlloc(sizeof(wszDBPropertyColumnName));
-    memcpy(prgPropertySets[0]->rgProperties[0].colid.uName.pwszName, wszDBPropertyColumnName, sizeof(wszDBPropertyColumnName));
+    (*prgPropertySets)[0].rgProperties[0].colid.uGuid.guid = IID_IDBProperties;
+    (*prgPropertySets)[0].rgProperties[0].colid.uName.pwszName = CoTaskMemAlloc(sizeof(wszDBPropertyColumnName));
+    memcpy((*prgPropertySets)[0].rgProperties[0].colid.uName.pwszName, wszDBPropertyColumnName, sizeof(wszDBPropertyColumnName));
     /* vValue contents */
-    V_VT(&prgPropertySets[0]->rgProperties[0].vValue) = VT_BSTR;
-    V_BSTR(&prgPropertySets[0]->rgProperties[0].vValue) = SysAllocString(wszDBPropertyTestString);
-    prgPropertySets[0]->cProperties = 1;
-    prgPropertySets[0]->guidPropertySet = IID_IDBProperties;
+    V_VT(&(*prgPropertySets)[0].rgProperties[0].vValue) = VT_BSTR;
+    V_BSTR(&(*prgPropertySets)[0].rgProperties[0].vValue) = SysAllocString(wszDBPropertyTestString);
+    (*prgPropertySets)[0].cProperties = 1;
+    (*prgPropertySets)[0].guidPropertySet = IID_IDBProperties;
 
     return S_OK;
 }
