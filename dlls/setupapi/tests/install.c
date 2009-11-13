@@ -35,6 +35,7 @@
 #include "wine/test.h"
 
 static const char inffile[] = "test.inf";
+static const WCHAR inffileW[] = {'t','e','s','t','.','i','n','f',0};
 static char CURR_DIR[MAX_PATH];
 
 /* Notes on InstallHinfSectionA/W:
@@ -470,12 +471,13 @@ cleanup:
 static void test_inffilelist(void)
 {
     static const char inffile2[] = "test2.inf";
+    static const WCHAR inffile2W[] = {'t','e','s','t','2','.','i','n','f',0};
     static const char invalid_inf[] = "invalid.inf";
     static const char *inf =
         "[Version]\n"
         "Signature=\"$Chicago$\"";
 
-    WCHAR *ptr;
+    WCHAR *p, *ptr;
     WCHAR dir[MAX_PATH] = { 0 };
     WCHAR buffer[MAX_PATH] = { 0 };
     DWORD expected, outsize;
@@ -560,7 +562,9 @@ static void test_inffilelist(void)
     todo_wine
     ok(expected == outsize, "expected required buffersize to be %d, got %d\n",
          expected, outsize);
-    
+    for(p = buffer; lstrlenW(p) && (outsize > (p - buffer)); p+=lstrlenW(p) + 1)
+        ok(!lstrcmpW(p,inffile2W) || !lstrcmpW(p,inffileW),
+            "unexpected filename %s\n",wine_dbgstr_w(p));
 
     DeleteFile(inffile);
     DeleteFile(inffile2);
