@@ -137,6 +137,7 @@ include/control.h
 include/ctxtcall.h
 include/d3d10.h
 include/ddstream.h
+include/devicetopology.h
 include/dimm.h
 include/dispex.h
 include/docobj.h
