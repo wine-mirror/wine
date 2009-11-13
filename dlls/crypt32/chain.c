@@ -2382,8 +2382,8 @@ static BOOL match_dns_to_subject_alt_name(PCERT_EXTENSION ext,
          * in section 4.2.1.6:
          * "Multiple name forms, and multiple instances of each name form,
          *  MAY be included."
-         * It doesn't specify the behavior in such cases, but common usage is
-         * to accept a certificate if any name matches.
+         * It doesn't specify the behavior in such cases, but both RFC 2818
+         * and RFC 2595 explicitly accept a certificate if any name matches.
          */
         for (i = 0; !matches && i < subjectName->cAltEntry; i++)
         {
