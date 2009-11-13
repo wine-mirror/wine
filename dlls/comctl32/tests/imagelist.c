@@ -78,7 +78,6 @@ static HRESULT (WINAPI *pImageList_CoCreateInstance)(REFCLSID,const IUnknown *,
     REFIID,void **);
 static HRESULT (WINAPI *pHIMAGELIST_QueryInterface)(HIMAGELIST,REFIID,void **);
 
-static HDC desktopDC;
 static HINSTANCE hinst;
 
 /* These macros build cursor/bitmap data in 4x4 pixel blocks */
@@ -1290,7 +1289,6 @@ START_TEST(imagelist)
     pImageList_DrawIndirect = (void*)GetProcAddress(hComCtl32, "ImageList_DrawIndirect");
     pImageList_SetImageCount = (void*)GetProcAddress(hComCtl32, "ImageList_SetImageCount");
 
-    desktopDC=GetDC(NULL);
     hinst = GetModuleHandleA(NULL);
 
     InitCommonControls();
