@@ -3102,23 +3102,70 @@ static HRESULT WINAPI ImageListImpl_GetImageInfo(IImageList *iface, int i,
 static HRESULT WINAPI ImageListImpl_Copy(IImageList *iface, int iDst,
     IUnknown *punkSrc, int iSrc, UINT uFlags)
 {
-    FIXME("STUB: %p %d %p %d %x\n", iface, iDst, punkSrc, iSrc, uFlags);
-    return E_NOTIMPL;
+    HIMAGELIST This = (HIMAGELIST) iface;
+    IImageList *src = NULL;
+    HRESULT ret;
+
+    if (!punkSrc)
+        return E_FAIL;
+
+    /* TODO: Add test for IID_ImageList2 too */
+    if (!SUCCEEDED(IImageList_QueryInterface(punkSrc, &IID_IImageList,
+            (void **) &src)))
+        return E_FAIL;
+
+    if (ImageList_Copy(This, iDst, (HIMAGELIST) src, iSrc, uFlags))
+        ret = S_OK;
+    else
+        ret = E_FAIL;
+
+    IImageList_Release(src);
+    return ret;
 }
 
 static HRESULT WINAPI ImageListImpl_Merge(IImageList *iface, int i1,
     IUnknown *punk2, int i2, int dx, int dy, REFIID riid, PVOID *ppv)
 {
-    FIXME("STUB: %p %d %p %d %d %d %s %p\n", iface, i1, punk2, i2, dx, dy,
-        debugstr_guid(riid), ppv);
-    return E_NOTIMPL;
+    HIMAGELIST This = (HIMAGELIST) iface;
+    IImageList *iml2 = NULL;
+    HIMAGELIST hNew;
+    HRESULT ret = E_FAIL;
+
+    if (!punk2 || !ppv)
+        return E_FAIL;
+
+    /* TODO: Add test for IID_ImageList2 too */
+    if (!SUCCEEDED(IImageList_QueryInterface(punk2, &IID_IImageList,
+            (void **) &iml2)))
+        return E_FAIL;
+
+    hNew = ImageList_Merge(This, i1, (HIMAGELIST) iml2, i2, dx, dy);
+
+    /* Get the interface for the new image list */
+    if (hNew)
+        ret = HIMAGELIST_QueryInterface(hNew, riid, ppv);
+
+    IImageList_Release(iml2);
+    return ret;
 }
 
 static HRESULT WINAPI ImageListImpl_Clone(IImageList *iface, REFIID riid,
     PVOID *ppv)
 {
-    FIXME("STUB: %p %s %p\n", iface, debugstr_guid(riid), ppv);
-    return E_NOTIMPL;
+    HIMAGELIST This = (HIMAGELIST) iface;
+    HIMAGELIST hNew;
+    HRESULT ret = E_FAIL;
+
+    if (!ppv)
+        return E_FAIL;
+
+    hNew = ImageList_Duplicate(This);
+
+    /* Get the interface for the new image list */
+    if (hNew)
+        ret = HIMAGELIST_QueryInterface(hNew, riid, ppv);
+
+    return ret;
 }
 
 static HRESULT WINAPI ImageListImpl_GetImageRect(IImageList *iface, int i,
