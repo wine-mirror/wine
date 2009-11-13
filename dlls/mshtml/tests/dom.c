@@ -58,6 +58,10 @@ static const char cond_comment_str[] =
     "<html><head><title>test</title></head><body>"
     "<!--[if gte IE 4]> <br> <![endif]-->"
     "</body></html>";
+static const char frameset_str[] =
+    "<html><head><title>frameset test</title></head><frameset rows=\"28, *\">"
+    "<frame src=\"about:blank\" id=\"fr1\"><frame src=\"about:blank\" id=\"fr2\">"
+    "</frameset></html>";
 
 static WCHAR characterW[] = {'c','h','a','r','a','c','t','e','r',0};
 static WCHAR texteditW[] = {'t','e','x','t','e','d','i','t',0};
@@ -5548,6 +5552,167 @@ static void test_cond_comment(IHTMLDocument2 *doc)
     IHTMLElementCollection_Release(col);
 }
 
+static void test_frame(IDispatch *disp, const char *exp_id)
+{
+    IHTMLWindow4 *frame;
+    IHTMLFrameBase *frame_elem;
+    IHTMLElement *html_elem;
+    BSTR bstr;
+    HRESULT hres;
+
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLWindow4, (void**)&frame);
+    ok(hres == S_OK, "Could not get IHTMLWindow4 interface: 0x%08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IHTMLWindow4_get_frameElement(frame, &frame_elem);
+    ok(hres == S_OK, "IHTMLWindow4_get_frameElement failed: 0x%08x\n", hres);
+    IHTMLWindow4_Release(frame);
+    if(FAILED(hres))
+        return;
+
+    hres = IHTMLFrameBase_QueryInterface(frame_elem, &IID_IHTMLElement, (void**)&html_elem);
+    ok(hres == S_OK, "Could not get IHTMLElement interface: 0x%08x\n", hres);
+    IHTMLFrameBase_Release(frame_elem);
+    if(FAILED(hres))
+        return;
+
+    hres = IHTMLElement_get_id(html_elem, &bstr);
+    ok(hres == S_OK, "IHTMLElement_get_id failed: 0x%08x\n", hres);
+    ok(!strcmp_wa(bstr, exp_id), "Expected ID: \"%s\", found ID: %s\n", exp_id, wine_dbgstr_w(bstr));
+    IHTMLElement_Release(html_elem);
+    SysFreeString(bstr);
+}
+
+static void test_frameset(IHTMLDocument2 *doc)
+{
+    IHTMLWindow2 *window;
+    IHTMLFramesCollection2 *frames;
+    LONG length;
+    VARIANT index_var, result_var;
+    HRESULT hres;
+
+    window = get_doc_window(doc);
+
+    /* test using IHTMLFramesCollection object */
+
+    hres = IHTMLWindow2_get_frames(window, &frames);
+    ok(hres == S_OK, "IHTMLWindow2_get_frames failed: 0x%08x\n", hres);
+    IHTMLWindow2_Release(window);
+    if(FAILED(hres))
+        return;
+
+    /* test result length */
+    hres = IHTMLFramesCollection2_get_length(frames, &length);
+    ok(hres == S_OK, "IHTMLFramesCollection2_get_length failed: 0x%08x\n", hres);
+    ok(length == 2, "IHTMLFramesCollection2_get_length should have been 2, was: %d\n", length);
+
+    /* test first frame */
+    V_VT(&index_var) = VT_I4;
+    V_I4(&index_var) = 0;
+    hres = IHTMLFramesCollection2_item(frames, &index_var, &result_var);
+    todo_wine ok(hres == S_OK, "IHTMLFramesCollection2_item failed: 0x%08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
+        test_frame((IDispatch*)V_DISPATCH(&result_var), "fr1");
+    }
+    VariantClear(&result_var);
+
+    /* test second frame */
+    V_I4(&index_var) = 1;
+    hres = IHTMLFramesCollection2_item(frames, &index_var, &result_var);
+    todo_wine ok(hres == S_OK, "IHTMLFramesCollection2_item failed: 0x%08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
+        test_frame((IDispatch*)V_DISPATCH(&result_var), "fr2");
+    }
+    VariantClear(&result_var);
+
+    /* fail on third frame */
+    V_I4(&index_var) = 2;
+    hres = IHTMLFramesCollection2_item(frames, &index_var, &result_var);
+    todo_wine ok(hres == DISP_E_MEMBERNOTFOUND, "IHTMLFramesCollection2_item should have"
+           "failed with DISP_E_MEMBERNOTFOUND, instead: 0x%08x\n", hres);
+    VariantClear(&result_var);
+
+    /* string argument (element id lookup) */
+    V_VT(&index_var) = VT_BSTR;
+    V_BSTR(&index_var) = a2bstr("fr1");
+    hres = IHTMLFramesCollection2_item(frames, &index_var, &result_var);
+    todo_wine ok(hres == S_OK, "IHTMLFramesCollection2_item failed: 0x%08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
+        test_frame((IDispatch*)V_DISPATCH(&result_var), "fr1");
+    }
+    VariantClear(&result_var);
+    VariantClear(&index_var);
+
+    /* invalid argument */
+    V_VT(&index_var) = VT_BOOL;
+    V_BOOL(&index_var) = VARIANT_TRUE;
+    hres = IHTMLFramesCollection2_item(frames, &index_var, &result_var);
+    todo_wine ok(hres == E_INVALIDARG, "IHTMLFramesCollection2_item should have"
+           "failed with E_INVALIDARG, instead: 0x%08x\n", hres);
+    VariantClear(&result_var);
+
+    IHTMLFramesCollection2_Release(frames);
+
+    /* test using IHTMLWindow2 inheritance */
+
+    /* test result length */
+    hres = IHTMLWindow2_get_length(window, &length);
+    ok(hres == S_OK, "IHTMLWindow2_get_length failed: 0x%08x\n", hres);
+    ok(length == 2, "IHTMLWindow2_get_length should have been 2, was: %d\n", length);
+
+    /* test first frame */
+    V_VT(&index_var) = VT_I4;
+    V_I4(&index_var) = 0;
+    hres = IHTMLWindow2_item(window, &index_var, &result_var);
+    todo_wine ok(hres == S_OK, "IHTMLWindow2_item failed: 0x%08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
+        test_frame((IDispatch*)V_DISPATCH(&result_var), "fr1");
+    }
+    VariantClear(&result_var);
+
+    /* test second frame */
+    V_I4(&index_var) = 1;
+    hres = IHTMLWindow2_item(window, &index_var, &result_var);
+    todo_wine ok(hres == S_OK, "IHTMLWindow2_item failed: 0x%08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
+        test_frame((IDispatch*)V_DISPATCH(&result_var), "fr2");
+    }
+    VariantClear(&result_var);
+
+    /* fail on third frame */
+    V_I4(&index_var) = 2;
+    hres = IHTMLWindow2_item(window, &index_var, &result_var);
+    todo_wine ok(hres == DISP_E_MEMBERNOTFOUND, "IHTMLWindow2_item should have"
+           "failed with DISP_E_MEMBERNOTFOUND, instead: 0x%08x\n", hres);
+    VariantClear(&result_var);
+
+    /* string argument (element id lookup) */
+    V_VT(&index_var) = VT_BSTR;
+    V_BSTR(&index_var) = a2bstr("fr2");
+    hres = IHTMLWindow2_item(window, &index_var, &result_var);
+    todo_wine ok(hres == S_OK, "IHTMLWindow2_item failed: 0x%08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
+        test_frame((IDispatch*)V_DISPATCH(&result_var), "fr2");
+    }
+    VariantClear(&result_var);
+    VariantClear(&index_var);
+
+    /* invalid argument */
+    V_VT(&index_var) = VT_BOOL;
+    V_BOOL(&index_var) = VARIANT_TRUE;
+    hres = IHTMLWindow2_item(window, &index_var, &result_var);
+    todo_wine ok(hres == E_INVALIDARG, "IHTMLWindow2_item should have"
+           "failed with E_INVALIDARG, instead: 0x%08x\n", hres);
+    VariantClear(&result_var);
+}
+
 static IHTMLDocument2 *notif_doc;
 static BOOL doc_complete;
 
@@ -5738,6 +5903,7 @@ START_TEST(dom)
     run_domtest(doc_blank, test_defaults);
     run_domtest(indent_test_str, test_indent);
     run_domtest(cond_comment_str, test_cond_comment);
+    run_domtest(frameset_str, test_frameset);
 
     CoUninitialize();
     gecko_installer_workaround(FALSE);

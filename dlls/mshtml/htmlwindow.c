@@ -271,8 +271,12 @@ static HRESULT WINAPI HTMLWindow2_get_length(IHTMLWindow2 *iface, LONG *p)
 static HRESULT WINAPI HTMLWindow2_get_frames(IHTMLWindow2 *iface, IHTMLFramesCollection2 **p)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    FIXME("(%p)->(%p): semi-stub\n", This, p);
+
+    /* FIXME: Should return a separate Window object */
+    *p = (IHTMLFramesCollection2*)HTMLWINDOW2(This);
+    HTMLWindow2_AddRef(iface);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_put_defaultStatus(IHTMLWindow2 *iface, BSTR v)
