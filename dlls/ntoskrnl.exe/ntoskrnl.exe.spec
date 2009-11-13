@@ -655,7 +655,7 @@
 @ stub MmAddVerifierThunks
 @ stub MmAdjustWorkingSetSize
 @ stub MmAdvanceMdl
-@ stub MmAllocateContiguousMemory
+@ stdcall MmAllocateContiguousMemory(long double)
 @ stub MmAllocateContiguousMemorySpecifyCache
 @ stub MmAllocateMappingAddress
 @ stdcall MmAllocateNonCachedMemory(long)

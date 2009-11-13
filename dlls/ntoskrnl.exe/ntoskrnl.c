@@ -1118,6 +1118,15 @@ PVOID WINAPI MmAllocateNonCachedMemory( SIZE_T size )
 }
 
 /***********************************************************************
+ *           MmAllocateContiguousMemory   (NTOSKRNL.EXE.@)
+ */
+PVOID WINAPI MmAllocateContiguousMemory( SIZE_T size, PHYSICAL_ADDRESS highest_valid_address )
+{
+    FIXME( "%lu, %s stub\n", size, wine_dbgstr_longlong(highest_valid_address.QuadPart) );
+    return NULL;
+}
+
+/***********************************************************************
  *           MmAllocatePagesForMdl   (NTOSKRNL.EXE.@)
  */
 PMDL WINAPI MmAllocatePagesForMdl(PHYSICAL_ADDRESS lowaddress, PHYSICAL_ADDRESS highaddress,
