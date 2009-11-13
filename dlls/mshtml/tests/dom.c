@@ -5611,7 +5611,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     V_VT(&index_var) = VT_I4;
     V_I4(&index_var) = 0;
     hres = IHTMLFramesCollection2_item(frames, &index_var, &result_var);
-    todo_wine ok(hres == S_OK, "IHTMLFramesCollection2_item failed: 0x%08x\n", hres);
+    ok(hres == S_OK, "IHTMLFramesCollection2_item failed: 0x%08x\n", hres);
     if(SUCCEEDED(hres)) {
         ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
         test_frame((IDispatch*)V_DISPATCH(&result_var), "fr1");
@@ -5621,7 +5621,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     /* test second frame */
     V_I4(&index_var) = 1;
     hres = IHTMLFramesCollection2_item(frames, &index_var, &result_var);
-    todo_wine ok(hres == S_OK, "IHTMLFramesCollection2_item failed: 0x%08x\n", hres);
+    ok(hres == S_OK, "IHTMLFramesCollection2_item failed: 0x%08x\n", hres);
     if(SUCCEEDED(hres)) {
         ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
         test_frame((IDispatch*)V_DISPATCH(&result_var), "fr2");
@@ -5631,7 +5631,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     /* fail on third frame */
     V_I4(&index_var) = 2;
     hres = IHTMLFramesCollection2_item(frames, &index_var, &result_var);
-    todo_wine ok(hres == DISP_E_MEMBERNOTFOUND, "IHTMLFramesCollection2_item should have"
+    ok(hres == DISP_E_MEMBERNOTFOUND, "IHTMLFramesCollection2_item should have"
            "failed with DISP_E_MEMBERNOTFOUND, instead: 0x%08x\n", hres);
     VariantClear(&result_var);
 
@@ -5639,7 +5639,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     V_VT(&index_var) = VT_BSTR;
     V_BSTR(&index_var) = a2bstr("fr1");
     hres = IHTMLFramesCollection2_item(frames, &index_var, &result_var);
-    todo_wine ok(hres == S_OK, "IHTMLFramesCollection2_item failed: 0x%08x\n", hres);
+    ok(hres == S_OK, "IHTMLFramesCollection2_item failed: 0x%08x\n", hres);
     if(SUCCEEDED(hres)) {
         ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
         test_frame((IDispatch*)V_DISPATCH(&result_var), "fr1");
@@ -5651,7 +5651,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     V_VT(&index_var) = VT_BOOL;
     V_BOOL(&index_var) = VARIANT_TRUE;
     hres = IHTMLFramesCollection2_item(frames, &index_var, &result_var);
-    todo_wine ok(hres == E_INVALIDARG, "IHTMLFramesCollection2_item should have"
+    ok(hres == E_INVALIDARG, "IHTMLFramesCollection2_item should have"
            "failed with E_INVALIDARG, instead: 0x%08x\n", hres);
     VariantClear(&result_var);
 
@@ -5668,7 +5668,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     V_VT(&index_var) = VT_I4;
     V_I4(&index_var) = 0;
     hres = IHTMLWindow2_item(window, &index_var, &result_var);
-    todo_wine ok(hres == S_OK, "IHTMLWindow2_item failed: 0x%08x\n", hres);
+    ok(hres == S_OK, "IHTMLWindow2_item failed: 0x%08x\n", hres);
     if(SUCCEEDED(hres)) {
         ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
         test_frame((IDispatch*)V_DISPATCH(&result_var), "fr1");
@@ -5678,7 +5678,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     /* test second frame */
     V_I4(&index_var) = 1;
     hres = IHTMLWindow2_item(window, &index_var, &result_var);
-    todo_wine ok(hres == S_OK, "IHTMLWindow2_item failed: 0x%08x\n", hres);
+    ok(hres == S_OK, "IHTMLWindow2_item failed: 0x%08x\n", hres);
     if(SUCCEEDED(hres)) {
         ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
         test_frame((IDispatch*)V_DISPATCH(&result_var), "fr2");
@@ -5688,7 +5688,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     /* fail on third frame */
     V_I4(&index_var) = 2;
     hres = IHTMLWindow2_item(window, &index_var, &result_var);
-    todo_wine ok(hres == DISP_E_MEMBERNOTFOUND, "IHTMLWindow2_item should have"
+    ok(hres == DISP_E_MEMBERNOTFOUND, "IHTMLWindow2_item should have"
            "failed with DISP_E_MEMBERNOTFOUND, instead: 0x%08x\n", hres);
     VariantClear(&result_var);
 
@@ -5696,7 +5696,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     V_VT(&index_var) = VT_BSTR;
     V_BSTR(&index_var) = a2bstr("fr2");
     hres = IHTMLWindow2_item(window, &index_var, &result_var);
-    todo_wine ok(hres == S_OK, "IHTMLWindow2_item failed: 0x%08x\n", hres);
+    ok(hres == S_OK, "IHTMLWindow2_item failed: 0x%08x\n", hres);
     if(SUCCEEDED(hres)) {
         ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
         test_frame((IDispatch*)V_DISPATCH(&result_var), "fr2");
@@ -5708,7 +5708,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     V_VT(&index_var) = VT_BOOL;
     V_BOOL(&index_var) = VARIANT_TRUE;
     hres = IHTMLWindow2_item(window, &index_var, &result_var);
-    todo_wine ok(hres == E_INVALIDARG, "IHTMLWindow2_item should have"
+    ok(hres == E_INVALIDARG, "IHTMLWindow2_item should have"
            "failed with E_INVALIDARG, instead: 0x%08x\n", hres);
     VariantClear(&result_var);
 }
