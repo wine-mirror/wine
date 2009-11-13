@@ -1344,6 +1344,85 @@ static void DoTest1_v6(void)
     ok(DestroyIcon(hicon3),"icon 3 wasn't deleted\n");
 }
 
+static void DoTest3_v6(void)
+{
+    IImageList *imgl;
+    HIMAGELIST himl;
+
+    HBITMAP hbm1;
+    HBITMAP hbm2;
+    HBITMAP hbm3;
+
+    IMAGELISTDRAWPARAMS imldp;
+    HWND hwndfortest;
+    HDC hdc;
+    int ret;
+
+    hwndfortest = create_a_window();
+    hdc = GetDC(hwndfortest);
+    ok(hdc!=NULL, "couldn't get DC\n");
+
+    /* create an imagelist to play with */
+    himl = ImageList_Create(48,48,0x10,0,3);
+    ok(himl!=0,"failed to create imagelist\n");
+
+    imgl = (IImageList *) himl;
+
+    /* load the icons to add to the image list */
+    hbm1 = CreateBitmap(48, 48, 1, 1, bitmap_bits);
+    ok(hbm1 != 0, "no bitmap 1\n");
+    hbm2 = CreateBitmap(48, 48, 1, 1, bitmap_bits);
+    ok(hbm2 != 0, "no bitmap 2\n");
+    hbm3 = CreateBitmap(48, 48, 1, 1, bitmap_bits);
+    ok(hbm3 != 0, "no bitmap 3\n");
+
+    /* add three */
+    ok(SUCCEEDED(IImageList_Add(imgl, hbm1, 0, &ret)) && (ret == 0), "failed to add bitmap 1\n");
+    ok(SUCCEEDED(IImageList_Add(imgl, hbm2, 0, &ret)) && (ret == 1), "failed to add bitmap 2\n");
+
+    ok(SUCCEEDED(IImageList_SetImageCount(imgl, 3)), "Setimage count failed\n");
+    ok(SUCCEEDED(IImageList_Replace(imgl, 2, hbm3, 0)), "failed to replace bitmap 3\n");
+
+    memset(&imldp, 0, sizeof (imldp));
+    ok(SUCCEEDED(!IImageList_Draw(imgl, &imldp)), "zero data succeeded!\n");
+    imldp.cbSize = sizeof (imldp);
+    ok(SUCCEEDED(!IImageList_Draw(imgl, &imldp)), "zero hdc succeeded!\n");
+    imldp.hdcDst = hdc;
+    ok(SUCCEEDED(!IImageList_Draw(imgl, &imldp)), "zero himl succeeded!\n");
+
+    REDRAW(hwndfortest);
+    WAIT;
+
+    imldp.fStyle = SRCCOPY;
+    imldp.rgbBk = CLR_DEFAULT;
+    imldp.rgbFg = CLR_DEFAULT;
+    imldp.y = 100;
+    imldp.x = 100;
+    ok(SUCCEEDED(IImageList_Draw(imgl, &imldp)), "should succeed\n");
+    imldp.i ++;
+    ok(SUCCEEDED(IImageList_Draw(imgl, &imldp)), "should succeed\n");
+    imldp.i ++;
+    ok(SUCCEEDED(IImageList_Draw(imgl, &imldp)), "should succeed\n");
+    imldp.i ++;
+    ok(!SUCCEEDED(IImageList_Draw(imgl, &imldp)), "should fail\n");
+
+    /* remove three */
+    ok(SUCCEEDED(IImageList_Remove(imgl, 0)), "removing 1st bitmap\n");
+    ok(SUCCEEDED(IImageList_Remove(imgl, 0)), "removing 2nd bitmap\n");
+    ok(SUCCEEDED(IImageList_Remove(imgl, 0)), "removing 3rd bitmap\n");
+
+    /* destroy it */
+    ok(SUCCEEDED(IImageList_Release(imgl)), "release imagelist failed\n");
+
+    /* bitmaps should not be deleted by the imagelist */
+    ok(DeleteObject(hbm1),"bitmap 1 can't be deleted\n");
+    ok(DeleteObject(hbm2),"bitmap 2 can't be deleted\n");
+    ok(DeleteObject(hbm3),"bitmap 3 can't be deleted\n");
+
+    ReleaseDC(hwndfortest, hdc);
+    DestroyWindow(hwndfortest);
+}
+
 START_TEST(imagelist)
 {
     ULONG_PTR ctx_cookie;
@@ -1389,6 +1468,7 @@ START_TEST(imagelist)
     test_shell_imagelist();
     test_iimagelist();
     DoTest1_v6();
+    DoTest3_v6();
 
     CoUninitialize();
 
