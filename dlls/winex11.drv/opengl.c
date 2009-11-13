@@ -795,8 +795,10 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
     ++cur;
   }
 
-  /* Apply the OR'd drawable type bitmask now EVEN when WGL_DRAW_TO* is unset.
-   * It is needed in all cases because GLX_DRAWABLE_TYPE default to GLX_WINDOW_BIT. */
+  /* By default glXChooseFBConfig defaults to GLX_WINDOW_BIT. wglChoosePixelFormatARB searches through
+   * all formats. Unless drawattrib is set to a non-zero value override it with ~0, so that pixmap and pbuffer
+   * formats appear as well. */
+  if(!drawattrib) drawattrib = ~0;
   PUSH2(oGLXAttr, GLX_DRAWABLE_TYPE, drawattrib);
   TRACE("pAttr[?] = GLX_DRAWABLE_TYPE: %#x\n", drawattrib);
 
