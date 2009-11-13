@@ -5554,6 +5554,8 @@ static void test_cond_comment(IHTMLDocument2 *doc)
 
 static void test_frame(IDispatch *disp, const char *exp_id)
 {
+    IHTMLWindow2 *frame2, *parent;
+    IHTMLDocument2 *parent_doc;
     IHTMLWindow4 *frame;
     IHTMLFrameBase *frame_elem;
     IHTMLElement *html_elem;
@@ -5581,6 +5583,29 @@ static void test_frame(IDispatch *disp, const char *exp_id)
     ok(hres == S_OK, "IHTMLElement_get_id failed: 0x%08x\n", hres);
     ok(!strcmp_wa(bstr, exp_id), "Expected ID: \"%s\", found ID: %s\n", exp_id, wine_dbgstr_w(bstr));
     IHTMLElement_Release(html_elem);
+    SysFreeString(bstr);
+
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLWindow2, (void**)&frame2);
+    ok(hres == S_OK, "Could not get IHTMLWindow2 interface: 0x%08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IHTMLWindow2_get_parent(frame2, &parent);
+    ok(hres == S_OK, "IHTMLWindow2_get_parent failed: 0x%08x\n", hres);
+    IHTMLWindow2_Release(frame2);
+    if(FAILED(hres))
+        return;
+
+    hres = IHTMLWindow2_get_document(parent, &parent_doc);
+    ok(hres == S_OK, "IHTMLWindow2_get_document failed: 0x%08x\n", hres);
+    IHTMLWindow2_Release(parent);
+    if(FAILED(hres))
+        return;
+
+    hres = IHTMLDocument2_get_title(parent_doc, &bstr);
+    ok(hres == S_OK, "IHTMLDocument2_get_title failed: 0x%08x\n", hres);
+    ok(!strcmp_wa(bstr, "frameset test"), "Did not get the right parent. Expected \"frameset test\", found %s\n", wine_dbgstr_w(bstr));
+    IHTMLDocument2_Release(parent_doc);
     SysFreeString(bstr);
 }
 
