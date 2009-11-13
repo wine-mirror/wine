@@ -1850,8 +1850,8 @@ static void enum_compartments(ITfCompartmentMgr *cmpmgr, REFGUID present, REFGUI
         {
             WCHAR str[50];
             CHAR strA[50];
-            StringFromGUID2(&g,str,50);
-            WideCharToMultiByte(CP_ACP,0,str,50,strA,50,0,0);
+            StringFromGUID2(&g,str,sizeof(str)/sizeof(str[0]));
+            WideCharToMultiByte(CP_ACP,0,str,-1,strA,sizeof(strA),0,0);
             trace("found %s\n",strA);
             if (present && IsEqualGUID(present,&g))
                 found = TRUE;
