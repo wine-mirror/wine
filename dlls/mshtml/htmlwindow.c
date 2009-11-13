@@ -1425,8 +1425,15 @@ static HRESULT WINAPI HTMLWindow4_createPopup(IHTMLWindow4 *iface, VARIANT *varA
 static HRESULT WINAPI HTMLWindow4_get_frameElement(IHTMLWindow4 *iface, IHTMLFrameBase **p)
 {
     HTMLWindow *This = HTMLWINDOW4_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->frame_element) {
+        *p = HTMLFRAMEBASE(This->frame_element);
+        IHTMLFrameBase_AddRef(*p);
+    }else
+        *p = NULL;
+
+    return S_OK;
 }
 
 #undef HTMLWINDOW4_THIS
