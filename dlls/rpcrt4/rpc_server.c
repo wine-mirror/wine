@@ -203,6 +203,7 @@ static RPC_STATUS process_bind_packet(RpcConnection *conn, RpcPktBindHdr *hdr, R
         response = RPCRT4_BuildBindNackHeader(NDR_LOCAL_DATA_REPRESENTATION,
                                               RPC_VER_MAJOR, RPC_VER_MINOR,
                                               REJECT_LOCAL_LIMIT_EXCEEDED);
+        goto send;
     }
 
     for (i = 0, ctxt_elem = (RpcContextElement *)msg->Buffer;
