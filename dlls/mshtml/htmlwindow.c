@@ -126,6 +126,9 @@ static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID rii
     }else if(IsEqualGUID(&IID_IHTMLWindow3, riid)) {
         TRACE("(%p)->(IID_IHTMLWindow3 %p)\n", This, ppv);
         *ppv = HTMLWINDOW3(This);
+    }else if(IsEqualGUID(&IID_IHTMLWindow4, riid)) {
+        TRACE("(%p)->(IID_IHTMLWindow4 %p)\n", This, ppv);
+        *ppv = HTMLWINDOW4(This);
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }
@@ -1354,6 +1357,92 @@ static const IHTMLWindow3Vtbl HTMLWindow3Vtbl = {
     HTMLWindow3_showModelessDialog
 };
 
+#define HTMLWINDOW4_THIS(iface) DEFINE_THIS(HTMLWindow, HTMLWindow4, iface)
+
+static HRESULT WINAPI HTMLWindow4_QueryInterface(IHTMLWindow4 *iface, REFIID riid, void **ppv)
+{
+    HTMLWindow *This = HTMLWINDOW4_THIS(iface);
+
+    return IHTMLWindow2_QueryInterface(HTMLWINDOW2(This), riid, ppv);
+}
+
+static ULONG WINAPI HTMLWindow4_AddRef(IHTMLWindow4 *iface)
+{
+    HTMLWindow *This = HTMLWINDOW4_THIS(iface);
+
+    return IHTMLWindow2_AddRef(HTMLWINDOW2(This));
+}
+
+static ULONG WINAPI HTMLWindow4_Release(IHTMLWindow4 *iface)
+{
+    HTMLWindow *This = HTMLWINDOW4_THIS(iface);
+
+    return IHTMLWindow2_Release(HTMLWINDOW2(This));
+}
+
+static HRESULT WINAPI HTMLWindow4_GetTypeInfoCount(IHTMLWindow4 *iface, UINT *pctinfo)
+{
+    HTMLWindow *This = HTMLWINDOW4_THIS(iface);
+
+    return IDispatchEx_GetTypeInfoCount(DISPATCHEX(This), pctinfo);
+}
+
+static HRESULT WINAPI HTMLWindow4_GetTypeInfo(IHTMLWindow4 *iface, UINT iTInfo,
+                                              LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLWindow *This = HTMLWINDOW4_THIS(iface);
+
+    return IDispatchEx_GetTypeInfo(DISPATCHEX(This), iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLWindow4_GetIDsOfNames(IHTMLWindow4 *iface, REFIID riid,
+                                                LPOLESTR *rgszNames, UINT cNames,
+                                                LCID lcid, DISPID *rgDispId)
+{
+    HTMLWindow *This = HTMLWINDOW4_THIS(iface);
+
+    return IDispatchEx_GetIDsOfNames(DISPATCHEX(This), riid, rgszNames, cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLWindow4_Invoke(IHTMLWindow4 *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLWindow *This = HTMLWINDOW4_THIS(iface);
+
+    return IDispatchEx_Invoke(DISPATCHEX(This), dispIdMember, riid, lcid, wFlags, pDispParams,
+            pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLWindow4_createPopup(IHTMLWindow4 *iface, VARIANT *varArgIn,
+                            IDispatch **ppPopup)
+{
+    HTMLWindow *This = HTMLWINDOW4_THIS(iface);
+    FIXME("(%p)->(%p %p)\n", This, varArgIn, ppPopup);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow4_get_frameElement(IHTMLWindow4 *iface, IHTMLFrameBase **p)
+{
+    HTMLWindow *This = HTMLWINDOW4_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+#undef HTMLWINDOW4_THIS
+
+static const IHTMLWindow4Vtbl HTMLWindow4Vtbl = {
+    HTMLWindow4_QueryInterface,
+    HTMLWindow4_AddRef,
+    HTMLWindow4_Release,
+    HTMLWindow4_GetTypeInfoCount,
+    HTMLWindow4_GetTypeInfo,
+    HTMLWindow4_GetIDsOfNames,
+    HTMLWindow4_Invoke,
+    HTMLWindow4_createPopup,
+    HTMLWindow4_get_frameElement
+};
+
 #define DISPEX_THIS(iface) DEFINE_THIS(HTMLWindow, IDispatchEx, iface)
 
 static HRESULT WINAPI WindowDispEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
@@ -1601,6 +1690,7 @@ static const IDispatchExVtbl WindowDispExVtbl = {
 static const tid_t HTMLWindow_iface_tids[] = {
     IHTMLWindow2_tid,
     IHTMLWindow3_tid,
+    IHTMLWindow4_tid,
     0
 };
 
@@ -1633,6 +1723,7 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
 
     window->lpHTMLWindow2Vtbl = &HTMLWindow2Vtbl;
     window->lpHTMLWindow3Vtbl = &HTMLWindow3Vtbl;
+    window->lpHTMLWindow4Vtbl = &HTMLWindow4Vtbl;
     window->lpIDispatchExVtbl = &WindowDispExVtbl;
     window->ref = 1;
     window->doc_obj = doc_obj;

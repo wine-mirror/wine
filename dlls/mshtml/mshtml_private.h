@@ -120,6 +120,7 @@ typedef enum {
     IHTMLUniqueName_tid,
     IHTMLWindow2_tid,
     IHTMLWindow3_tid,
+    IHTMLWindow4_tid,
     IOmNavigator_tid,
     LAST_tid
 } tid_t;
@@ -215,6 +216,7 @@ struct HTMLWindow {
     DispatchEx dispex;
     const IHTMLWindow2Vtbl *lpHTMLWindow2Vtbl;
     const IHTMLWindow3Vtbl *lpHTMLWindow3Vtbl;
+    const IHTMLWindow4Vtbl *lpHTMLWindow4Vtbl;
     const IDispatchExVtbl  *lpIDispatchExVtbl;
 
     LONG ref;
@@ -514,6 +516,7 @@ struct HTMLDocumentNode {
 
 #define HTMLWINDOW2(x)   ((IHTMLWindow2*)                 &(x)->lpHTMLWindow2Vtbl)
 #define HTMLWINDOW3(x)   ((IHTMLWindow3*)                 &(x)->lpHTMLWindow3Vtbl)
+#define HTMLWINDOW4(x)   ((IHTMLWindow4*)                 &(x)->lpHTMLWindow4Vtbl)
 
 #define HTMLDOC(x)       ((IHTMLDocument2*)               &(x)->lpHTMLDocument2Vtbl)
 #define HTMLDOC3(x)      ((IHTMLDocument3*)               &(x)->lpHTMLDocument3Vtbl)

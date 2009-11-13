@@ -144,6 +144,7 @@ static REFIID tid_ids[] = {
     &IID_IHTMLUniqueName,
     &IID_IHTMLWindow2,
     &IID_IHTMLWindow3,
+    &IID_IHTMLWindow4,
     &IID_IOmNavigator
 };
 
