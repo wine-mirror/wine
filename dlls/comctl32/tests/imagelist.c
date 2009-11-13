@@ -1278,6 +1278,72 @@ static void test_iimagelist(void)
     ImageList_Destroy(himl);
 }
 
+static void DoTest1_v6(void)
+{
+    IImageList *imgl;
+    HIMAGELIST himl;
+    HRESULT hr;
+
+    HICON hicon1;
+    HICON hicon2;
+    HICON hicon3;
+
+    int ret = 0;
+
+    /* create an imagelist to play with */
+    himl = ImageList_Create(84,84,0x10,0,3);
+    ok(himl != 0,"failed to create imagelist\n");
+
+    imgl = (IImageList *) himl;
+
+    /* load the icons to add to the image list */
+    hicon1 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
+    ok(hicon1 != 0, "no hicon1\n");
+    hicon2 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
+    ok(hicon2 != 0, "no hicon2\n");
+    hicon3 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
+    ok(hicon3 != 0, "no hicon3\n");
+
+    /* remove when nothing exists */
+    hr = IImageList_Remove(imgl, 0);
+    ok(!(SUCCEEDED(hr)), "removed nonexistent icon\n");
+
+    /* removing everything from an empty imagelist should succeed */
+    hr = IImageList_Remove(imgl, -1);
+    ok(SUCCEEDED(hr), "removed nonexistent icon\n");
+
+    /* add three */
+    ok(SUCCEEDED(IImageList_ReplaceIcon(imgl, -1, hicon1, &ret)) && (ret == 0),"failed to add icon1\n");
+    ok(SUCCEEDED(IImageList_ReplaceIcon(imgl, -1, hicon2, &ret)) && (ret == 1),"failed to add icon2\n");
+    ok(SUCCEEDED(IImageList_ReplaceIcon(imgl, -1, hicon3, &ret)) && (ret == 2),"failed to add icon3\n");
+
+    /* remove an index out of range */
+    ok(!SUCCEEDED(IImageList_Remove(imgl,4711)),"removed nonexistent icon\n");
+
+    /* remove three */
+    ok(SUCCEEDED(IImageList_Remove(imgl,0)),"can't remove 0\n");
+    ok(SUCCEEDED(IImageList_Remove(imgl,0)),"can't remove 0\n");
+    ok(SUCCEEDED(IImageList_Remove(imgl,0)),"can't remove 0\n");
+
+    /* remove one extra */
+    ok(!SUCCEEDED(IImageList_Remove(imgl,0)),"removed nonexistent icon\n");
+
+    /* check SetImageCount/GetImageCount */
+    ok(SUCCEEDED(IImageList_SetImageCount(imgl, 3)), "couldn't increase image count\n");
+    ok(SUCCEEDED(IImageList_GetImageCount(imgl, &ret)) && (ret == 3), "invalid image count after increase\n");
+    ok(SUCCEEDED(IImageList_SetImageCount(imgl, 1)), "couldn't decrease image count\n");
+    ok(SUCCEEDED(IImageList_GetImageCount(imgl, &ret)) && (ret == 1), "invalid image count after decrease to 1\n");
+    ok(SUCCEEDED(IImageList_SetImageCount(imgl, 0)), "couldn't decrease image count\n");
+    ok(SUCCEEDED(IImageList_GetImageCount(imgl, &ret)) && (ret == 0), "invalid image count after decrease to 0\n");
+
+    /* destroy it */
+    ok(SUCCEEDED(IImageList_Release(imgl)),"release imagelist failed\n");
+
+    ok(DestroyIcon(hicon1),"icon 1 wasn't deleted\n");
+    ok(DestroyIcon(hicon2),"icon 2 wasn't deleted\n");
+    ok(DestroyIcon(hicon3),"icon 3 wasn't deleted\n");
+}
+
 START_TEST(imagelist)
 {
     ULONG_PTR ctx_cookie;
@@ -1322,6 +1388,7 @@ START_TEST(imagelist)
     test_ImageList_DrawIndirect();
     test_shell_imagelist();
     test_iimagelist();
+    DoTest1_v6();
 
     CoUninitialize();
 
