@@ -815,8 +815,12 @@ static void CRYPT_CheckChainNameConstraints(PCERT_SIMPLE_CHAIN chain)
                         CRYPT_CheckNameConstraints(nameConstraints,
                          chain->rgpElement[j]->pCertContext->pCertInfo,
                          &errorStatus);
-                        chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
-                         errorStatus;
+                        if (errorStatus)
+                            chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
+                             errorStatus;
+                        else
+                            chain->rgpElement[i]->TrustStatus.dwInfoStatus |=
+                             CERT_TRUST_HAS_VALID_NAME_CONSTRAINTS;
                     }
                 }
             }

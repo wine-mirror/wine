@@ -2927,7 +2927,8 @@ static CONST_DATA_BLOB chain19[] = {
 static const CERT_TRUST_STATUS elementStatus19[] = {
  { CERT_TRUST_NO_ERROR, CERT_TRUST_HAS_NAME_MATCH_ISSUER },
  { CERT_TRUST_IS_UNTRUSTED_ROOT,
-   CERT_TRUST_IS_SELF_SIGNED | CERT_TRUST_HAS_NAME_MATCH_ISSUER },
+   CERT_TRUST_IS_SELF_SIGNED | CERT_TRUST_HAS_NAME_MATCH_ISSUER |
+   CERT_TRUST_HAS_VALID_NAME_CONSTRAINTS },
 };
 static const SimpleChainStatusCheck simpleStatus19[] = {
  { sizeof(elementStatus19) / sizeof(elementStatus19[0]), elementStatus19 },
@@ -2951,7 +2952,8 @@ static CONST_DATA_BLOB chain21[] = {
 static const CERT_TRUST_STATUS elementStatus21[] = {
  { CERT_TRUST_NO_ERROR, CERT_TRUST_HAS_NAME_MATCH_ISSUER },
  { CERT_TRUST_IS_UNTRUSTED_ROOT,
-   CERT_TRUST_IS_SELF_SIGNED | CERT_TRUST_HAS_NAME_MATCH_ISSUER },
+   CERT_TRUST_IS_SELF_SIGNED | CERT_TRUST_HAS_NAME_MATCH_ISSUER |
+   CERT_TRUST_HAS_VALID_NAME_CONSTRAINTS },
 };
 static const SimpleChainStatusCheck simpleStatus21[] = {
  { sizeof(elementStatus21) / sizeof(elementStatus21[0]), elementStatus21 },
@@ -3257,7 +3259,7 @@ static ChainCheck chainCheck[] = {
        CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT,
        CERT_TRUST_HAS_PREFERRED_ISSUER | CERT_TRUST_HAS_VALID_NAME_CONSTRAINTS
      },
-     { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 },
+     { CERT_TRUST_IS_UNTRUSTED_ROOT, CERT_TRUST_HAS_VALID_NAME_CONSTRAINTS },
      1, simpleStatus19 },
    0 },
  /* Older versions of crypt32 do not set
@@ -3278,7 +3280,7 @@ static ChainCheck chainCheck[] = {
        CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT,
        CERT_TRUST_HAS_PREFERRED_ISSUER | CERT_TRUST_HAS_VALID_NAME_CONSTRAINTS
      },
-     { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 },
+     { CERT_TRUST_IS_UNTRUSTED_ROOT, CERT_TRUST_HAS_VALID_NAME_CONSTRAINTS },
      1, simpleStatus21 },
    0 },
  { { sizeof(chain22) / sizeof(chain22[0]), chain22 },
