@@ -1117,6 +1117,16 @@ PVOID WINAPI MmAllocateNonCachedMemory( SIZE_T size )
     return VirtualAlloc( NULL, size, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE|PAGE_NOCACHE );
 }
 
+/***********************************************************************
+ *           MmAllocatePagesForMdl   (NTOSKRNL.EXE.@)
+ */
+PMDL WINAPI MmAllocatePagesForMdl(PHYSICAL_ADDRESS lowaddress, PHYSICAL_ADDRESS highaddress,
+                                  PHYSICAL_ADDRESS skipbytes, SIZE_T size)
+{
+    FIXME("%s %s %s %lu: stub\n", wine_dbgstr_longlong(lowaddress.QuadPart), wine_dbgstr_longlong(highaddress.QuadPart),
+                                  wine_dbgstr_longlong(skipbytes.QuadPart), size);
+    return NULL;
+}
 
 /***********************************************************************
  *           MmFreeNonCachedMemory   (NTOSKRNL.EXE.@)
