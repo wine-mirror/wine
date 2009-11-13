@@ -2985,15 +2985,37 @@ static ULONG WINAPI ImageListImpl_Release(IImageList *iface)
 static HRESULT WINAPI ImageListImpl_Add(IImageList *iface, HBITMAP hbmImage,
     HBITMAP hbmMask, int *pi)
 {
-    FIXME("STUB: %p %p %p %p\n", iface, hbmImage, hbmMask, pi);
-    return E_NOTIMPL;
+    HIMAGELIST This = (HIMAGELIST) iface;
+    int ret;
+
+    if (!pi)
+        return E_FAIL;
+
+    ret = ImageList_Add(This, hbmImage, hbmMask);
+
+    if (ret == -1)
+        return E_FAIL;
+
+    *pi = ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI ImageListImpl_ReplaceIcon(IImageList *iface, int i,
     HICON hicon, int *pi)
 {
-    FIXME("STUB: %p %d %p %p\n", iface, i, hicon, pi);
-    return E_NOTIMPL;
+    HIMAGELIST This = (HIMAGELIST) iface;
+    int ret;
+
+    if (!pi)
+        return E_FAIL;
+
+    ret = ImageList_ReplaceIcon(This, i, hicon);
+
+    if (ret == -1)
+        return E_FAIL;
+
+    *pi = ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI ImageListImpl_SetOverlayImage(IImageList *iface,
@@ -3026,8 +3048,7 @@ static HRESULT WINAPI ImageListImpl_Draw(IImageList *iface,
 
 static HRESULT WINAPI ImageListImpl_Remove(IImageList *iface, int i)
 {
-    FIXME("STUB: %p %d\n", iface, i);
-    return E_NOTIMPL;
+    return (ImageList_Remove((HIMAGELIST) iface, i) == 0) ? E_FAIL : S_OK;
 }
 
 static HRESULT WINAPI ImageListImpl_GetIcon(IImageList *iface, int i, UINT flags,
@@ -3089,15 +3110,17 @@ static HRESULT WINAPI ImageListImpl_SetIconSize(IImageList *iface, int cx,
 
 static HRESULT WINAPI ImageListImpl_GetImageCount(IImageList *iface, int *pi)
 {
-    FIXME("STUB: %p %p\n", iface, pi);
-    return E_NOTIMPL;
+    if (!pi)
+        return E_FAIL;
+
+    *pi = ImageList_GetImageCount((HIMAGELIST) iface);
+    return S_OK;
 }
 
 static HRESULT WINAPI ImageListImpl_SetImageCount(IImageList *iface,
     UINT uNewCount)
 {
-    FIXME("STUB: %p %d\n", iface, uNewCount);
-    return E_NOTIMPL;
+    return ImageList_SetImageCount((HIMAGELIST) iface, uNewCount) ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI ImageListImpl_SetBkColor(IImageList *iface, COLORREF clrBk,
