@@ -723,7 +723,7 @@ static  unsigned        dump_threads(struct dump_context* dc,
 {
     MINIDUMP_THREAD             mdThd;
     MINIDUMP_THREAD_LIST        mdThdList;
-    unsigned                    i;
+    unsigned                    i, sz;
     RVA                         rva_base;
     DWORD                       flags_out;
     CONTEXT                     ctx;
@@ -731,8 +731,7 @@ static  unsigned        dump_threads(struct dump_context* dc,
     mdThdList.NumberOfThreads = 0;
 
     rva_base = dc->rva;
-    dc->rva += sizeof(mdThdList.NumberOfThreads) +
-        dc->spi->dwThreadCount * sizeof(mdThd);
+    dc->rva += sz = sizeof(mdThdList.NumberOfThreads) + dc->spi->dwThreadCount * sizeof(mdThd);
 
     for (i = 0; i < dc->spi->dwThreadCount; i++)
     {
@@ -800,7 +799,7 @@ static  unsigned        dump_threads(struct dump_context* dc,
     writeat(dc, rva_base,
             &mdThdList.NumberOfThreads, sizeof(mdThdList.NumberOfThreads));
 
-    return dc->rva - rva_base;
+    return sz;
 }
 
 /******************************************************************
