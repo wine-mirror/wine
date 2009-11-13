@@ -126,7 +126,7 @@ BOOL16 WINAPI PrintDlg16( LPPRINTDLG16 lppd )
     if (lppd->Flags & PD_ENABLEPRINTHOOK)
         FIXME( "custom print hook %p no longer supported\n", lppd->lpfnPrintHook );
     if (lppd->Flags & PD_ENABLESETUPHOOK)
-        FIXME( "custom print hook %p no longer supported\n", lppd->lpfnSetupHook );
+        FIXME( "custom setup hook %p no longer supported\n", lppd->lpfnSetupHook );
 
     if ((ret = PrintDlgA( &pd32 )))
     {
