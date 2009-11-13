@@ -3021,29 +3021,54 @@ static HRESULT WINAPI ImageListImpl_ReplaceIcon(IImageList *iface, int i,
 static HRESULT WINAPI ImageListImpl_SetOverlayImage(IImageList *iface,
     int iImage, int iOverlay)
 {
-    FIXME("STUB: %p %d %d\n", iface, iImage, iOverlay);
-    return E_NOTIMPL;
+    return ImageList_SetOverlayImage((HIMAGELIST) iface, iImage, iOverlay)
+        ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI ImageListImpl_Replace(IImageList *iface, int i,
     HBITMAP hbmImage, HBITMAP hbmMask)
 {
-    FIXME("STUB: %p %d %p %p\n", iface, i, hbmImage, hbmMask);
-    return E_NOTIMPL;
+    return ImageList_Replace((HIMAGELIST) iface, i, hbmImage, hbmMask) ? S_OK :
+        E_FAIL;
 }
 
 static HRESULT WINAPI ImageListImpl_AddMasked(IImageList *iface, HBITMAP hbmImage,
     COLORREF crMask, int *pi)
 {
-    FIXME("STUB: %p %p %x %p\n", iface, hbmImage, crMask, pi);
-    return E_NOTIMPL;
+    HIMAGELIST This = (HIMAGELIST) iface;
+    int ret;
+
+    if (!pi)
+        return E_FAIL;
+
+    ret = ImageList_AddMasked(This, hbmImage, crMask);
+
+    if (ret == -1)
+        return E_FAIL;
+
+    *pi = ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI ImageListImpl_Draw(IImageList *iface,
     IMAGELISTDRAWPARAMS *pimldp)
 {
-    FIXME("STUB: %p %p\n", iface, pimldp);
-    return E_NOTIMPL;
+    HIMAGELIST This = (HIMAGELIST) iface;
+    HIMAGELIST old_himl = 0;
+    int ret = 0;
+
+    if (!pimldp)
+        return E_FAIL;
+
+    /* As far as I can tell, Windows simply ignores the contents of pimldp->himl
+       so we shall simulate the same */
+    old_himl = pimldp->himl;
+    pimldp->himl = This;
+
+    ret = ImageList_DrawIndirect(pimldp);
+
+    pimldp->himl = old_himl;
+    return ret ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI ImageListImpl_Remove(IImageList *iface, int i)
@@ -3054,15 +3079,24 @@ static HRESULT WINAPI ImageListImpl_Remove(IImageList *iface, int i)
 static HRESULT WINAPI ImageListImpl_GetIcon(IImageList *iface, int i, UINT flags,
     HICON *picon)
 {
-    FIXME("STUB: %p %d %x %p\n", iface, i, flags, picon);
-    return E_NOTIMPL;
+    HICON hIcon;
+
+    if (!picon)
+        return E_FAIL;
+
+    hIcon = ImageList_GetIcon((HIMAGELIST) iface, i, flags);
+
+    if (hIcon == NULL)
+        return E_FAIL;
+
+    *picon = hIcon;
+    return S_OK;
 }
 
 static HRESULT WINAPI ImageListImpl_GetImageInfo(IImageList *iface, int i,
     IMAGEINFO *pImageInfo)
 {
-    FIXME("STUB: %p %d %p\n", iface, i, pImageInfo);
-    return E_NOTIMPL;
+    return ImageList_GetImageInfo((HIMAGELIST) iface, i, pImageInfo) ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI ImageListImpl_Copy(IImageList *iface, int iDst,
