@@ -1505,7 +1505,10 @@ static PCCERT_CONTEXT CRYPT_GetIssuer(HCERTSTORE store, PCCERT_CONTEXT subject,
                  subject->dwCertEncodingType, 0, CERT_FIND_CERT_ID, &id,
                  prevIssuer);
                 if (issuer)
+                {
+                    TRACE_(chain)("issuer found by issuer/serial number\n");
                     *infoStatus = CERT_TRUST_HAS_EXACT_MATCH_ISSUER;
+                }
             }
             else if (info->KeyId.cbData)
             {
@@ -1515,7 +1518,10 @@ static PCCERT_CONTEXT CRYPT_GetIssuer(HCERTSTORE store, PCCERT_CONTEXT subject,
                  subject->dwCertEncodingType, 0, CERT_FIND_CERT_ID, &id,
                  prevIssuer);
                 if (issuer)
+                {
+                    TRACE_(chain)("issuer found by key id\n");
                     *infoStatus = CERT_TRUST_HAS_KEY_MATCH_ISSUER;
+                }
             }
             LocalFree(info);
         }
@@ -1558,7 +1564,10 @@ static PCCERT_CONTEXT CRYPT_GetIssuer(HCERTSTORE store, PCCERT_CONTEXT subject,
                      subject->dwCertEncodingType, 0, CERT_FIND_CERT_ID, &id,
                      prevIssuer);
                     if (issuer)
+                    {
+                        TRACE_(chain)("issuer found by directory name\n");
                         *infoStatus = CERT_TRUST_HAS_EXACT_MATCH_ISSUER;
+                    }
                 }
                 else
                     FIXME("no supported name type in authority key id2\n");
@@ -1571,7 +1580,10 @@ static PCCERT_CONTEXT CRYPT_GetIssuer(HCERTSTORE store, PCCERT_CONTEXT subject,
                  subject->dwCertEncodingType, 0, CERT_FIND_CERT_ID, &id,
                  prevIssuer);
                 if (issuer)
+                {
+                    TRACE_(chain)("issuer found by key id\n");
                     *infoStatus = CERT_TRUST_HAS_KEY_MATCH_ISSUER;
+                }
             }
             LocalFree(info);
         }
@@ -1581,6 +1593,7 @@ static PCCERT_CONTEXT CRYPT_GetIssuer(HCERTSTORE store, PCCERT_CONTEXT subject,
         issuer = CertFindCertificateInStore(store,
          subject->dwCertEncodingType, 0, CERT_FIND_SUBJECT_NAME,
          &subject->pCertInfo->Issuer, prevIssuer);
+        TRACE_(chain)("issuer found by name\n");
         *infoStatus = CERT_TRUST_HAS_NAME_MATCH_ISSUER;
     }
     return issuer;
