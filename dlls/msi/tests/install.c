@@ -174,7 +174,9 @@ static const CHAR environment_dat[] = "Environment\tName\tValue\tComponent_\n"
                                       "Var1\t=-MSITESTVAR1\t1\tOne\n"
                                       "Var2\tMSITESTVAR2\t1\tOne\n"
                                       "Var3\t=-MSITESTVAR3\t1\tOne\n"
-                                      "Var4\tMSITESTVAR4\t1\tOne\n";
+                                      "Var4\tMSITESTVAR4\t1\tOne\n"
+                                      "Var5\t-MSITESTVAR5\t\tOne\n"
+                                      "Var6\tMSITESTVAR6\t\tOne\n";
 
 static const CHAR condition_dat[] = "Feature_\tLevel\tCondition\n"
                                     "s38\ti2\tS255\n"
@@ -6609,6 +6611,12 @@ static void test_envvar(void)
 
     res = RegDeleteValueA(env, "MSITESTVAR4");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    res = RegDeleteValueA(env, "MSITESTVAR5");
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+    res = RegDeleteValueA(env, "MSITESTVAR6");
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
     RegCloseKey(env);
 
