@@ -756,7 +756,6 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
           ERR("trying to use WGL_render_texture Attributes without support (was %x)\n", iWGLAttr[cur]);
           return -1; /** error: don't support it */
         } else {
-          PUSH2(oGLXAttr, GLX_X_RENDERABLE, pop);
           drawattrib |= GLX_PBUFFER_BIT;
         }
       }
