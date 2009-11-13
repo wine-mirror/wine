@@ -25,6 +25,12 @@
 #include "mmreg.h"
 #include "wine/test.h"
 
+typedef union {
+      MCI_STATUS_PARMS    status;
+      MCI_WAVE_SET_PARMS  set;
+      MCI_WAVE_OPEN_PARMS open;
+    } MCI_PARMS_UNION;
+
 static const char* dbg_mcierr(MCIERROR err)
 {
      switch (err) {
@@ -165,15 +171,12 @@ static void test_openCloseWAVE(HWND hwnd)
     ok(!err,"mci %s returned error: %d\n", command_open, err);
     ok(!strcmp(buf,"1"), "mci open deviceId: %s, expected 1\n", buf);
 
-    if (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH)
-    {
-        skip("Non-english locale (test with hardcoded 'milliseconds')\n");
-    }
-    else
-    {
-        err = mciSendString("status mysound time format", buf, sizeof(buf), hwnd);
-        ok(!err,"mci status time format returned error: %d\n", err);
-        ok(!strcmp(buf,"milliseconds"), "mci status time format: %s\n", buf);
+    err = mciSendString("status mysound time format", buf, sizeof(buf), hwnd);
+    ok(!err,"mci status time format returned error: %d\n", err);
+    if(!err) {
+        if (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) == LANG_ENGLISH)
+            ok(!strcmp(buf,"milliseconds"), "mci status time format: %s\n", buf);
+        else trace("locale-dependent time format: %s (ms)\n", buf);
     }
 
     err = mciSendString(command_close_my, NULL, 0, hwnd);
@@ -198,6 +201,9 @@ static void test_openCloseWAVE(HWND hwnd)
     ok(!err,"mci %s returned error: %d\n", command_sysinfo, err);
     todo_wine ok(buf[0] == '0' && buf[1] == 0, "mci %s, expected output buffer '0', got: '%s'\n", command_sysinfo, buf);
 
+    err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_WAIT, 0); /* from MSDN */
+    ok(!err,"mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_NOTIFY, 0) returned %s\n", dbg_mcierr(err));
+
     err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_NOTIFY, 0);
     ok(!err,"mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_NOTIFY, 0) returned %s\n", dbg_mcierr(err));
 
@@ -214,11 +220,7 @@ static void test_recordWAVE(HWND hwnd)
     DWORD nsamp = 16000, expect;
     MCIERROR err;
     MCIDEVICEID wDeviceID;
-    union {
-      MCI_STATUS_PARMS    status;
-      MCI_WAVE_SET_PARMS  set;
-      MCI_WAVE_OPEN_PARMS open;
-    } parm;
+    MCI_PARMS_UNION parm;
     char buf[1024];
     memset(buf, 0, sizeof(buf));
 
@@ -246,8 +248,11 @@ static void test_recordWAVE(HWND hwnd)
     err = mciSendString("set x format tag 2", NULL, 0, NULL);
     ok(err==MCIERR_OUTOFRANGE,"mci set format tag 2 returned error: %d\n", err);
 
+    /* MCI appears to scan the available devices for support of this format,
+     * returning MCIERR_OUTOFRANGE on machines with no sound.
+     * Don't skip here, record will fail below. */
     err = mciSendString("set x format tag pcm", NULL, 0, NULL);
-    ok(!err,"mci set format tag pcm returned error: %d\n", err);
+    ok(!err || err==MCIERR_OUTOFRANGE,"mci set format tag pcm returned error: %d\n", err);
 
     /* Investigate: on w2k, set samplespersec 22050 sets nChannels to 2!
      *  err = mciSendString("set x samplespersec 22050", NULL, 0, NULL);
@@ -264,12 +269,16 @@ static void test_recordWAVE(HWND hwnd)
         MCI_WAVE_SET_SAMPLESPERSEC | MCI_WAVE_SET_CHANNELS |
         MCI_WAVE_SET_BITSPERSAMPLE | MCI_WAVE_SET_BLOCKALIGN |
         MCI_WAVE_SET_AVGBYTESPERSEC| MCI_WAVE_SET_FORMATTAG, (DWORD_PTR)&parm);
-    ok(!err,"mci returned error: %d\n", err);
+    ok(!err || err==MCIERR_OUTOFRANGE,"mciCommand set wave format returned error: %d\n", err);
 
     err = mciSendString("record x to 2000 wait", NULL, 0, hwnd);
     ok(!err,"mci record to 2000 returned error: %d\n", err);
     if(err==MCIERR_WAVE_INPUTSUNSUITABLE) {
         skip("Please install audio driver. Tests will fail\n");
+
+        err = mciSendString("close x", NULL, 0, NULL);
+        ok(!err,"mci close returned error: %d\n", err);
+        test_notification(hwnd,"record skipped",0);
         return;
     }
 
@@ -315,15 +324,14 @@ static void test_playWAVE(HWND hwnd)
 {
     MCIERROR err;
     char buf[1024];
-
     memset(buf, 0, sizeof(buf));
-    err = mciSendString("open waveaudio!tempfile.wav alias mysound", buf, sizeof(buf), NULL);
-    ok(!err,"mci open waveaudio!tempfile.wav returned error: %d\n", err);
+
+    err = mciSendString("open waveaudio!tempfile.wav alias mysound", NULL, 0, NULL);
+    ok(!err,"mci open waveaudio!tempfile.wav returned %s\n", dbg_mcierr(err));
     if(err) {
-        skip("tempfile.wav was not found (not saved), skipping\n");
+        skip("Cannot open tempfile.wav for playing #1, skipping\n");
         return;
     }
-    ok(!strcmp(buf,"1"), "mci open deviceId: %s, expected 1\n", buf);
 
     err = mciSendString("status mysound length", buf, sizeof(buf), NULL);
     ok(!err,"mci status length returned error: %d\n", err);
@@ -406,16 +414,21 @@ static void test_playWAVE(HWND hwnd)
 
 static void test_asyncWAVE(HWND hwnd)
 {
+    MCIDEVICEID wDeviceID;
+    MCI_PARMS_UNION parm;
     int err, p1, p2;
     char buf[1024];
     memset(buf, 0, sizeof(buf));
 
-    err = mciSendString("open tempfile.wav alias mysound", NULL, 0, NULL);
-    ok(!err,"mci open tempfile.wav returned error: %d\n", err);
+    err = mciSendString("open tempfile.wav alias mysound", buf, sizeof(buf), NULL);
+    ok(!err,"mci open tempfile.wav returned %s\n", dbg_mcierr(err));
     if(err) {
-        skip("tempfile.wav was not found (not saved), skipping\n");
+        skip("Cannot open tempfile.wav for playing #2, skipping\n");
         return;
     }
+    ok(!strcmp(buf,"1"), "mci open deviceId: %s, expected 1\n", buf);
+    wDeviceID = atoi(buf);
+    ok(wDeviceID,"mci open DeviceID: %d\n", wDeviceID);
 
     err = mciSendString("status mysound mode", buf, sizeof(buf), hwnd);
     ok(!err,"mci status mode returned error: %d\n", err);
@@ -429,22 +442,20 @@ static void test_asyncWAVE(HWND hwnd)
      * will be 333ms, 667ms etc. at best. */
     Sleep(100); /* milliseconds */
 
-    if (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH)
-    {
-        skip("Non-english locale (test with hardcoded 'milliseconds')\n");
-    }
-    else
-    {
-        buf[0]=0;
-        err = mciSendString("status mysound time format", buf, sizeof(buf), hwnd);
-        ok(!err,"mci status time format returned error: %d\n", err);
-        ok(!strcmp(buf,"milliseconds"), "mci status time format: %s\n", buf);
-    }
+    /* Do not query time format as string because result depends on locale! */
+    parm.status.dwItem = MCI_STATUS_TIME_FORMAT;
+    err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
+    ok(!err,"mciCommand status time format returned error: %d\n",err);
+    if(!err) ok(parm.status.dwReturn==MCI_FORMAT_MILLISECONDS,"status time format: %ld\n",parm.status.dwReturn);
+
+    parm.set.dwTimeFormat = MCI_FORMAT_MILLISECONDS;
+    err = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD_PTR)&parm);
+    ok(!err,"mciCommand set time format returned error: %d\n",err);
 
     buf[0]=0;
     err = mciSendString("status mysound position", buf, sizeof(buf), hwnd);
     ok(!err,"mci status position returned error: %d\n", err);
-    ok(strcmp(buf,"2000"), "mci status position: %s\n", buf);
+    ok(strcmp(buf,"2000"), "mci status position: %s, expected 2000\n", buf);
     trace("position after Sleep: %sms\n",buf);
     p2 = atoi(buf);
     /* Some machines reach 79ms only during the 100ms sleep. */
@@ -597,11 +608,16 @@ static void test_AutoOpenWAVE(HWND hwnd)
     ok(!err,"mci sysinfo waveaudio quantity open returned error: %d\n", err);
     if(!err) todo_wine ok(!strcmp(buf,"0"), "sysinfo quantity open expected 0, got: %s\n", buf);
 
+    buf[0]=0;
+    err = mciSendString("sysinfo waveaudio name 1 open", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_OUTOFRANGE,"sysinfo waveaudio name 1 returned error: %d\n", err);
+    if(!err) trace("sysinfo dangling open alias: %s\n", buf);
+
     err = mciSendString("play no-such-file-exists.wav notify", buf, sizeof(buf), NULL);
     if(err==MCIERR_FILE_NOT_FOUND) {
-	/* Unsupported auto-open leaves the file open, preventing clean-up */
-	skip("Skipping auto-open tests in Wine\n");
-	return;
+        /* Unsupported auto-open leaves the file open, preventing clean-up */
+        skip("Skipping auto-open tests in Wine\n");
+        return;
     }
 
     err = mciSendString("play tempfile.wav notify", buf, sizeof(buf), hwnd);
@@ -610,6 +626,10 @@ static void test_AutoOpenWAVE(HWND hwnd)
     if(err) /* FIXME: don't open twice yet, it confuses Wine. */
     err = mciSendString("play tempfile.wav", buf, sizeof(buf), hwnd);
     ok(!err,"mci auto-open play returned error: %d\n", err);
+    if(err==MCIERR_FILE_NOT_FOUND) {
+        skip("Cannot open tempfile.wav for auto-play, skipping\n");
+        return;
+    }
 
     buf[0]=0;
     err = mciSendString("sysinfo waveaudio quantity open", buf, sizeof(buf), NULL);
@@ -705,6 +725,7 @@ static void test_AutoOpenWAVE(HWND hwnd)
 
 START_TEST(mci)
 {
+    MCIERROR err;
     HWND hwnd;
     hwnd = CreateWindowExA(0, "static", "winmm test", WS_POPUP, 0,0,100,100,
                            0, 0, 0, NULL);
@@ -713,6 +734,9 @@ START_TEST(mci)
     test_playWAVE(hwnd);
     test_asyncWAVE(hwnd);
     test_AutoOpenWAVE(hwnd);
+    /* Win9X hangs when exiting with something still open. */
+    err = mciSendString("close all", NULL, 0, hwnd);
+    todo_wine ok(!err,"final close all returned %s\n", dbg_mcierr(err));
     ok(DeleteFile("tempfile.wav"),"Delete tempfile.wav (cause auto-open?)\n");
     DestroyWindow(hwnd);
 }
