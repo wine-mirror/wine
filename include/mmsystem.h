@@ -1809,7 +1809,7 @@ YIELDPROC       WINAPI  mciGetYieldProc(MCIDEVICEID,DWORD*);
 
 #define MCI_USER_MESSAGES               (0x400 + DRV_MCI_FIRST)
 
-#define MCI_ALL_DEVICE_ID               0xFFFF
+#define MCI_ALL_DEVICE_ID               0xFFFFFFFF
 
 #define MCI_DEVTYPE_VCR                 (MCI_STRING_OFFSET + 1)
 #define MCI_DEVTYPE_VIDEODISC           (MCI_STRING_OFFSET + 2)

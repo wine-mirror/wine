@@ -99,7 +99,7 @@ static inline LPWSTR str_dup_upper( LPCWSTR str )
 /**************************************************************************
  * 				MCI_GetDriver			[internal]
  */
-static LPWINE_MCIDRIVER	MCI_GetDriver(UINT16 wDevID)
+static LPWINE_MCIDRIVER	MCI_GetDriver(UINT wDevID)
 {
     LPWINE_MCIDRIVER	wmd = 0;
 
@@ -1669,7 +1669,7 @@ errCleanUp:
 /**************************************************************************
  * 			MCI_Close				[internal]
  */
-static	DWORD MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
+static	DWORD MCI_Close(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 {
     DWORD		dwRet;
     LPWINE_MCIDRIVER	wmd;
@@ -1677,7 +1677,7 @@ static	DWORD MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms
     TRACE("(%04x, %08X, %p)\n", wDevID, dwParam, lpParms);
 
     /* Every device must handle MCI_NOTIFY on its own. */
-    if (wDevID == MCI_ALL_DEVICE_ID) {
+    if ((UINT16)wDevID == (UINT16)MCI_ALL_DEVICE_ID) {
 	while (MciDrivers) {
             /* Retrieve the device ID under lock, but send the message without,
              * the driver might be calling some winmm functions from another
@@ -1894,7 +1894,7 @@ DWORD	MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dw
         dwRet = MCI_Sound(wDevID, dwParam1, (LPMCI_SOUND_PARMSW)dwParam2);
 	break;
     default:
-	if (wDevID == MCI_ALL_DEVICE_ID) {
+      if ((UINT16)wDevID == (UINT16)MCI_ALL_DEVICE_ID) {
 	    FIXME("unhandled MCI_ALL_DEVICE_ID\n");
 	    dwRet = MCIERR_CANNOT_USE_ALL;
 	} else {
