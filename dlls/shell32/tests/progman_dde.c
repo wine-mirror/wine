@@ -26,6 +26,13 @@
  *           as documented
  *         Better AddItem Tests (Lots of parameters to test)
  *         Tests for Invalid Characters in Names / Invalid Parameters
+ * - Technically, calling as an administrator creates groups in the CSIDL_COMMON_PROGRAMS
+ *   directory.  Win 9x and non-administrator calls us CSIDL_PROGRAMS directory.
+ *   Original plans were to check that items/groups were created in appropriate
+ *   places.  As of this writing and in order to simplify the test code, it now
+ *   checks for existence in either place.  From web searches, it is not at all
+ *   obvious or trivial to detect if the call is coming from an administrator or
+ *   non-administrator. IsUserAnAdmin
  */
 
 #include <stdio.h>
@@ -39,9 +46,9 @@
 /* Timeout on DdeClientTransaction Call */
 #define MS_TIMEOUT_VAL 1000
 /* # of times to poll for window creation */
-#define PDDE_POLL_NUM 50
+#define PDDE_POLL_NUM 150
 /* time to sleep between polls */
-#define PDDE_POLL_TIME 200
+#define PDDE_POLL_TIME 300
 
 /* Call Info */
 #define DDE_TEST_MISC            0x00010000
@@ -121,7 +128,6 @@ static const char * GetStringFromTestParams(int testParams)
 #define DMLERR_TO_STR(x) case x: return#x;
 static const char * GetStringFromError(UINT err)
 {
-    const char * retstr;
     switch (err)
     {
     DMLERR_TO_STR(DMLERR_NO_ERROR);
@@ -144,11 +150,8 @@ static const char * GetStringFromError(UINT err)
     DMLERR_TO_STR(DMLERR_UNADVACKTIMEOUT);
     DMLERR_TO_STR(DMLERR_UNFOUND_QUEUE_ID);
     default:
-        retstr = "Unknown DML Error";
-        break;
+        return "Unknown DML Error";
     }
-
-    return retstr;
 }
 
 /* Helper Function to Transfer DdeGetLastError into a String */
@@ -196,6 +199,7 @@ static void DdeExecuteCommand(DWORD instance, HCONV hConv, const char *strCmd, H
                *hData, GetStringFromTestParams(testParams));
         }
     }
+    DdeFreeDataHandle(command);
 }
 
 /*
@@ -553,8 +557,13 @@ START_TEST(progman_dde)
     hszProgman = DdeCreateStringHandle(instance, "PROGMAN", CP_WINANSI);
     ok (hszProgman != NULL, "DdeCreateStringHandle Error %s\n", GetDdeLastErrorStr(instance));
     hConv = DdeConnect(instance, hszProgman, hszProgman, NULL);
-    ok (hConv != NULL, "DdeConnect Error %s\n", GetDdeLastErrorStr(instance));
     ok (DdeFreeStringHandle(instance, hszProgman), "DdeFreeStringHandle failure\n");
+    /* Seeing failures on early versions of Windows Connecting to progman, exit if connection fails */
+    if (hConv == NULL)
+    {
+        ok (DdeUninitialize(instance), "DdeUninitialize failed\n");
+        return;
+    }
 
     /* Run Tests */
     testnum = DdeTestProgman(instance, hConv);
