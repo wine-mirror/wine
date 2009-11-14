@@ -30,11 +30,9 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "commdlg.h"
-#include "wine/debug.h"
 #include "cderr.h"
 #include "cdlg16.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 
 /***********************************************************************
