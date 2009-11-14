@@ -517,14 +517,58 @@ static BOOL url_matches(LPCWSTR constraint, LPCWSTR name,
         *trustErrorStatus |= CERT_TRUST_INVALID_NAME_CONSTRAINTS;
     else if (!name)
         ; /* no match */
-    else if (constraint[0] == '.')
-    {
-        if (lstrlenW(name) > lstrlenW(constraint))
-            match = !lstrcmpiW(name + lstrlenW(name) - lstrlenW(constraint),
-             constraint);
-    }
     else
-        match = !lstrcmpiW(constraint, name);
+    {
+        LPCWSTR colon, authority_end, at, hostname = NULL;
+        /* The maximum length for a hostname is 254 in the DNS, see RFC 1034 */
+        WCHAR hostname_buf[255];
+
+        /* RFC 5280: only the hostname portion of the URL is compared.  From
+         * section 4.2.1.10:
+         * "For URIs, the constraint applies to the host part of the name.
+         *  The constraint MUST be specified as a fully qualified domain name
+         *  and MAY specify a host or a domain."
+         * The format for URIs is in RFC 2396.
+         *
+         * First, remove any scheme that's present. */
+        colon = strchrW(name, ':');
+        if (colon && *(colon + 1) == '/' && *(colon + 2) == '/')
+            name = colon + 3;
+        /* Next, find the end of the authority component.  (The authority is
+         * generally just the hostname, but it may contain a username or a port.
+         * Those are removed next.)
+         */
+        authority_end = strchrW(name, '/');
+        if (!authority_end)
+            authority_end = strchrW(name, '?');
+        if (!authority_end)
+            authority_end = name + strlenW(name);
+        /* Remove any port number from the authority */
+        for (colon = authority_end; colon >= name && *colon != ':'; colon--)
+            ;
+        if (*colon == ':')
+            authority_end = colon;
+        /* Remove any username from the authority */
+        if ((at = strchrW(name, '@')))
+            name = at;
+        /* Ignore any path or query portion of the URL. */
+        if (*authority_end)
+        {
+            if (authority_end - name < sizeof(hostname_buf) /
+             sizeof(hostname_buf[0]))
+            {
+                memcpy(hostname_buf, name,
+                 (authority_end - name) * sizeof(WCHAR));
+                hostname_buf[authority_end - name] = 0;
+                hostname = hostname_buf;
+            }
+            /* else: Hostname is too long, not a match */
+        }
+        else
+            hostname = name;
+        if (hostname)
+            match = !lstrcmpiW(constraint, hostname);
+    }
     return match;
 }
 
