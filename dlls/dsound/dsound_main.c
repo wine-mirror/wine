@@ -400,51 +400,21 @@ HRESULT WINAPI DirectSoundEnumerateW(
  *    Success: DS_OK
  *    Failure: DSERR_INVALIDPARAM
  */
-HRESULT WINAPI
-DirectSoundCaptureEnumerateA(
+HRESULT WINAPI DirectSoundCaptureEnumerateA(
     LPDSENUMCALLBACKA lpDSEnumCallback,
     LPVOID lpContext)
 {
-    unsigned devs, wid;
-    DSDRIVERDESC desc;
-    GUID guid;
-    int err;
-
-    TRACE("(%p,%p)\n", lpDSEnumCallback, lpContext );
+    struct morecontext context;
 
     if (lpDSEnumCallback == NULL) {
-	WARN("invalid parameter: lpDSEnumCallback == NULL\n");
+        WARN("invalid parameter: lpDSEnumCallback == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
-    devs = waveInGetNumDevs();
-    if (devs > 0) {
-	if (GetDeviceID(&DSDEVID_DefaultCapture, &guid) == DS_OK) {
-	    for (wid = 0; wid < devs; ++wid) {
-                if (IsEqualGUID( &guid, &DSOUND_capture_guids[wid] ) ) {
-                    err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
-                    if (err == DS_OK) {
-                        TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
-                              "Primary Sound Capture Driver",desc.szDrvname,lpContext);
-                        if (lpDSEnumCallback(NULL, "Primary Sound Capture Driver", desc.szDrvname, lpContext) == FALSE)
-                            return DS_OK;
-                    }
-                }
-	    }
-	}
-    }
+    context.callA = lpDSEnumCallback;
+    context.data = lpContext;
 
-    for (wid = 0; wid < devs; ++wid) {
-        err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
-	if (err == DS_OK) {
-            TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-                  debugstr_guid(&DSOUND_capture_guids[wid]),desc.szDesc,desc.szDrvname,lpContext);
-            if (lpDSEnumCallback(&DSOUND_capture_guids[wid], desc.szDesc, desc.szDrvname, lpContext) == FALSE)
-                return DS_OK;
-	}
-    }
-
-    return DS_OK;
+    return DirectSoundCaptureEnumerateW(a_to_w_callback, &context);
 }
 
 /***************************************************************************
