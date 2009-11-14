@@ -642,9 +642,35 @@ static BOOL dns_name_matches(LPCWSTR constraint, LPCWSTR name,
         *trustErrorStatus |= CERT_TRUST_INVALID_NAME_CONSTRAINTS;
     else if (!name)
         ; /* no match */
-    else if (lstrlenW(name) >= lstrlenW(constraint))
+    /* RFC 5280, section 4.2.1.10:
+     * "DNS name restrictions are expressed as host.example.com.  Any DNS name
+     *  that can be constructed by simply adding zero or more labels to the
+     *  left-hand side of the name satisfies the name constraint.  For example,
+     *  www.host.example.com would satisfy the constraint but host1.example.com
+     *  would not."
+     */
+    else if (lstrlenW(name) == lstrlenW(constraint))
+        match = !lstrcmpiW(name, constraint);
+    else if (lstrlenW(name) > lstrlenW(constraint))
+    {
         match = !lstrcmpiW(name + lstrlenW(name) - lstrlenW(constraint),
          constraint);
+        if (match)
+        {
+            BOOL dot = FALSE;
+            LPCWSTR ptr;
+
+            /* This only matches if name is a subdomain of constraint, i.e.
+             * there's a '.' between the beginning of the name and the
+             * matching portion of the name.
+             */
+            for (ptr = name + lstrlenW(name) - lstrlenW(constraint);
+             !dot && ptr >= name; ptr--)
+                if (*ptr == '.')
+                    dot = TRUE;
+            match = dot;
+        }
+    }
     /* else:  name is too short, no match */
 
     return match;
