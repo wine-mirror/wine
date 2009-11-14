@@ -991,8 +991,12 @@ static BOOL write_menu_file(const char *unix_link, const char *filename)
             struct stat st;
             name[i] = 0;
             fprintf(tempfile, "  <Menu>\n");
-            fprintf(tempfile, "    <Name>%s%s</Name>\n", count ? "" : "wine-", name);
-            fprintf(tempfile, "    <Directory>%s%s.directory</Directory>\n", count ? "" : "wine-", name);
+            fprintf(tempfile, "    <Name>%s", count ? "" : "wine-");
+            write_xml_text(tempfile, name);
+            fprintf(tempfile, "</Name>\n");
+            fprintf(tempfile, "    <Directory>%s", count ? "" : "wine-");
+            write_xml_text(tempfile, name);
+            fprintf(tempfile, ".directory</Directory>\n");
             dir_file_name = heap_printf("%s/desktop-directories/%s%s.directory",
                 xdg_data_dir, count ? "" : "wine-", name);
             if (dir_file_name)
@@ -1009,7 +1013,9 @@ static BOOL write_menu_file(const char *unix_link, const char *filename)
     name[i] = 0;
 
     fprintf(tempfile, "    <Include>\n");
-    fprintf(tempfile, "      <Filename>%s</Filename>\n", name);
+    fprintf(tempfile, "      <Filename>");
+    write_xml_text(tempfile, name);
+    fprintf(tempfile, "</Filename>\n");
     fprintf(tempfile, "    </Include>\n");
     for (i = 0; i < count; i++)
          fprintf(tempfile, "  </Menu>\n");
