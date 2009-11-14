@@ -506,6 +506,41 @@ static BOOL CRYPT_CheckBasicConstraintsForCA(PCertificateChainEngine engine,
     return validBasicConstraints;
 }
 
+static BOOL domain_name_matches(LPCWSTR constraint, LPCWSTR name)
+{
+    BOOL match;
+
+    /* RFC 5280, section 4.2.1.10:
+     * "For URIs, the constraint applies to the host part of the name...
+     *  When the constraint begins with a period, it MAY be expanded with one
+     *  or more labels.  That is, the constraint ".example.com" is satisfied by
+     *  both host.example.com and my.host.example.com.  However, the constraint
+     *  ".example.com" is not satisfied by "example.com".  When the constraint
+     *  does not begin with a period, it specifies a host."
+     * and for email addresses,
+     * "To indicate all Internet mail addresses on a particular host, the
+     *  constraint is specified as the host name.  For example, the constraint
+     *  "example.com" is satisfied by any mail address at the host
+     *  "example.com".  To specify any address within a domain, the constraint
+     *  is specified with a leading period (as with URIs)."
+     */
+    if (constraint[0] == '.')
+    {
+        /* Must be strictly greater than, a name can't begin with '.' */
+        if (lstrlenW(name) > lstrlenW(constraint))
+            match = !lstrcmpiW(name + lstrlenW(name) - lstrlenW(constraint),
+             constraint);
+        else
+        {
+            /* name is too short, no match */
+            match = FALSE;
+        }
+    }
+    else
+        match = !lstrcmpiW(name, constraint);
+     return match;
+}
+
 static BOOL url_matches(LPCWSTR constraint, LPCWSTR name,
  DWORD *trustErrorStatus)
 {
@@ -567,7 +602,7 @@ static BOOL url_matches(LPCWSTR constraint, LPCWSTR name,
         else
             hostname = name;
         if (hostname)
-            match = !lstrcmpiW(constraint, hostname);
+            match = domain_name_matches(constraint, hostname);
     }
     return match;
 }
@@ -589,7 +624,7 @@ static BOOL rfc822_name_matches(LPCWSTR constraint, LPCWSTR name,
     else
     {
         if ((at = strchrW(name, '@')))
-            match = url_matches(constraint, at + 1, trustErrorStatus);
+            match = domain_name_matches(constraint, at + 1);
         else
             match = !lstrcmpiW(constraint, name);
     }
