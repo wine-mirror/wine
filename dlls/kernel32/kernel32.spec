@@ -236,7 +236,7 @@
 @ stub CreateKernelThread
 @ stdcall CreateMailslotA(ptr long long ptr)
 @ stdcall CreateMailslotW(ptr long long ptr)
-# @ stub CreateMemoryResourceNotification
+@ stdcall CreateMemoryResourceNotification(long)
 @ stdcall CreateMutexA(ptr long str)
 @ stdcall CreateMutexExA(ptr str long long)
 @ stdcall CreateMutexExW(ptr wstr long long)

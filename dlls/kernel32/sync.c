@@ -2171,6 +2171,18 @@ BOOL WINAPI BindIoCompletionCallback( HANDLE FileHandle, LPOVERLAPPED_COMPLETION
     return FALSE;
 }
 
+
+/***********************************************************************
+ *           CreateMemoryResourceNotification   (KERNEL32.@)
+ */
+HANDLE WINAPI CreateMemoryResourceNotification(MEMORY_RESOURCE_NOTIFICATION_TYPE nt)
+{
+    FIXME("(%d) stub\n", nt);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}
+
+
 #ifdef __i386__
 
 /***********************************************************************
