@@ -37,6 +37,49 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
+/*****************************************************************************
+ * IDirectSoundFullDuplex implementation structure
+ */
+typedef struct IDirectSoundFullDuplexImpl
+{
+    /* IUnknown fields */
+    const IDirectSoundFullDuplexVtbl *lpVtbl;
+    LONG                              ref;
+
+    /* IDirectSoundFullDuplexImpl fields */
+    DirectSoundDevice                *renderer_device;
+    DirectSoundCaptureDevice         *capture_device;
+
+    LPUNKNOWN                         pUnknown;
+    LPDIRECTSOUND                     pDS;
+    LPDIRECTSOUND8                    pDS8;
+    LPDIRECTSOUNDCAPTURE              pDSC;
+} IDirectSoundFullDuplexImpl;
+
+typedef struct IDirectSoundFullDuplex_IUnknown {
+    const IUnknownVtbl         *lpVtbl;
+    LONG                        ref;
+    IDirectSoundFullDuplexImpl *pdsfd;
+} IDirectSoundFullDuplex_IUnknown;
+
+typedef struct IDirectSoundFullDuplex_IDirectSound {
+    const IDirectSoundVtbl     *lpVtbl;
+    LONG                        ref;
+    IDirectSoundFullDuplexImpl *pdsfd;
+} IDirectSoundFullDuplex_IDirectSound;
+
+typedef struct IDirectSoundFullDuplex_IDirectSound8 {
+    const IDirectSound8Vtbl    *lpVtbl;
+    LONG                        ref;
+    IDirectSoundFullDuplexImpl *pdsfd;
+} IDirectSoundFullDuplex_IDirectSound8;
+
+typedef struct IDirectSoundFullDuplex_IDirectSoundCapture {
+    const IDirectSoundCaptureVtbl *lpVtbl;
+    LONG                           ref;
+    IDirectSoundFullDuplexImpl    *pdsfd;
+} IDirectSoundFullDuplex_IDirectSoundCapture;
+
 /*******************************************************************************
  * IUnknown
  */

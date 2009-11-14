@@ -52,11 +52,6 @@ typedef struct IDirectSound8_IDirectSound8   IDirectSound8_IDirectSound8;
 typedef struct IDirectSoundBufferImpl        IDirectSoundBufferImpl;
 typedef struct IDirectSoundCaptureImpl       IDirectSoundCaptureImpl;
 typedef struct IDirectSoundCaptureBufferImpl IDirectSoundCaptureBufferImpl;
-typedef struct IDirectSoundFullDuplexImpl    IDirectSoundFullDuplexImpl;
-typedef struct IDirectSoundFullDuplex_IUnknown IDirectSoundFullDuplex_IUnknown;
-typedef struct IDirectSoundFullDuplex_IDirectSound IDirectSoundFullDuplex_IDirectSound;
-typedef struct IDirectSoundFullDuplex_IDirectSound8 IDirectSoundFullDuplex_IDirectSound8;
-typedef struct IDirectSoundFullDuplex_IDirectSoundCapture IDirectSoundFullDuplex_IDirectSoundCapture;
 typedef struct IDirectSoundNotifyImpl        IDirectSoundNotifyImpl;
 typedef struct IDirectSoundCaptureNotifyImpl IDirectSoundCaptureNotifyImpl;
 typedef struct IDirectSound3DListenerImpl    IDirectSound3DListenerImpl;
@@ -308,52 +303,6 @@ HRESULT IDirectSoundCaptureBufferImpl_Create(
     DirectSoundCaptureDevice *device,
     IDirectSoundCaptureBufferImpl ** ppobj,
     LPCDSCBUFFERDESC lpcDSCBufferDesc);
-
-/*****************************************************************************
- * IDirectSoundFullDuplex implementation structure
- */
-struct IDirectSoundFullDuplexImpl
-{
-    /* IUnknown fields */
-    const IDirectSoundFullDuplexVtbl *lpVtbl;
-    LONG                              ref;
-
-    /* IDirectSoundFullDuplexImpl fields */
-    DirectSoundDevice                *renderer_device;
-    DirectSoundCaptureDevice         *capture_device;
-
-    LPUNKNOWN                         pUnknown;
-    LPDIRECTSOUND                     pDS;
-    LPDIRECTSOUND8                    pDS8;
-    LPDIRECTSOUNDCAPTURE              pDSC;
-};
-
-/*****************************************************************************
- * IDirectSoundFullDuplex COM components
- */
-struct IDirectSoundFullDuplex_IUnknown {
-    const IUnknownVtbl         *lpVtbl;
-    LONG                        ref;
-    IDirectSoundFullDuplexImpl *pdsfd;
-};
-
-struct IDirectSoundFullDuplex_IDirectSound {
-    const IDirectSoundVtbl     *lpVtbl;
-    LONG                        ref;
-    IDirectSoundFullDuplexImpl *pdsfd;
-};
-
-struct IDirectSoundFullDuplex_IDirectSound8 {
-    const IDirectSound8Vtbl    *lpVtbl;
-    LONG                        ref;
-    IDirectSoundFullDuplexImpl *pdsfd;
-};
-
-struct IDirectSoundFullDuplex_IDirectSoundCapture {
-    const IDirectSoundCaptureVtbl *lpVtbl;
-    LONG                           ref;
-    IDirectSoundFullDuplexImpl    *pdsfd;
-};
 
 /*****************************************************************************
  *  IDirectSound3DListener implementation structure
