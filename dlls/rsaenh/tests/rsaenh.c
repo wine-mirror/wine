@@ -2085,7 +2085,7 @@ static void test_rsa_round_trip(void)
     if (result)
     {
         ok(dataLen == sizeof(test_string), "unexpected size %d\n", dataLen);
-        ok(!memcmp(data, test_string, sizeof(test_string)), "unexpected value");
+        ok(!memcmp(data, test_string, sizeof(test_string)), "unexpected value\n");
     }
     CryptReleaseContext(prov, 0);
 
