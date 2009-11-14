@@ -112,7 +112,11 @@ static const char* dbg_mcierr(MCIERROR err)
      X(MCIERR_FILE_WRITE)
      X(MCIERR_NO_IDENTITY)
 #undef X
-     default: return "unknown error";
+     default: {
+         static char name[20]; /* Not to be called twice in a parameter list! */
+         sprintf(name, "MMSYSERR %u", err);
+         return name;
+         }
      }
 }
 
@@ -168,11 +172,11 @@ static void test_openCloseWAVE(HWND hwnd)
     test_notification(hwnd, "-prior to any command-", 0);
 
     err = mciSendString(command_open, buf, sizeof(buf), NULL);
-    ok(!err,"mci %s returned error: %d\n", command_open, err);
+    ok(!err,"mci %s returned %s\n", command_open, dbg_mcierr(err));
     ok(!strcmp(buf,"1"), "mci open deviceId: %s, expected 1\n", buf);
 
     err = mciSendString("status mysound time format", buf, sizeof(buf), hwnd);
-    ok(!err,"mci status time format returned error: %d\n", err);
+    ok(!err,"mci status time format returned %s\n", dbg_mcierr(err));
     if(!err) {
         if (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) == LANG_ENGLISH)
             ok(!strcmp(buf,"milliseconds"), "mci status time format: %s\n", buf);
@@ -180,17 +184,17 @@ static void test_openCloseWAVE(HWND hwnd)
     }
 
     err = mciSendString(command_close_my, NULL, 0, hwnd);
-    ok(!err,"mci %s returned error: %d\n", command_close_my, err);
+    ok(!err,"mci %s returned %s\n", command_close_my, dbg_mcierr(err));
     test_notification(hwnd, command_close_my, MCI_NOTIFY_SUCCESSFUL);
     Sleep(5);
     test_notification(hwnd, command_close_my, 0);
 
     err = mciSendString(command_close_all, NULL, 0, NULL);
-    todo_wine ok(!err,"mci %s (without buffer) returned error: %d\n", command_close_all, err);
+    todo_wine ok(!err,"mci %s (without buffer) returned %s\n", command_close_all, dbg_mcierr(err));
 
     memset(buf, 0, sizeof(buf));
     err = mciSendString(command_close_all, buf, sizeof(buf), hwnd);
-    todo_wine ok(!err,"mci %s (with output buffer) returned error: %d\n", command_close_all, err);
+    todo_wine ok(!err,"mci %s (with output buffer) returned %s\n", command_close_all, dbg_mcierr(err));
     ok(buf[0] == 0, "mci %s changed output buffer: %s\n", command_close_all, buf);
     /* No notification left, everything closed already */
     test_notification(hwnd, command_close_all, 0);
@@ -198,7 +202,7 @@ static void test_openCloseWAVE(HWND hwnd)
 
     memset(buf, 0, sizeof(buf));
     err = mciSendString(command_sysinfo, buf, sizeof(buf), NULL);
-    ok(!err,"mci %s returned error: %d\n", command_sysinfo, err);
+    ok(!err,"mci %s returned %s\n", command_sysinfo, dbg_mcierr(err));
     todo_wine ok(buf[0] == '0' && buf[1] == 0, "mci %s, expected output buffer '0', got: '%s'\n", command_sysinfo, buf);
 
     err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_WAIT, 0); /* from MSDN */
@@ -230,33 +234,33 @@ static void test_recordWAVE(HWND hwnd)
     err = mciSendCommand(0, MCI_OPEN,
         MCI_OPEN_ELEMENT | MCI_OPEN_TYPE | MCI_OPEN_ALIAS,
         (DWORD_PTR)&parm);
-    ok(!err,"mciCommand open new type waveaudio alias x: %d\n",err);
+    ok(!err,"mciCommand open new type waveaudio alias x: %s\n", dbg_mcierr(err));
     wDeviceID = parm.open.wDeviceID;
 
     /* Do not query time format as string because result depends on locale! */
     parm.status.dwItem = MCI_STATUS_TIME_FORMAT;
     err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
-    ok(!err,"mciCommand status time format: %d\n",err);
+    ok(!err,"mciCommand status time format: %s\n", dbg_mcierr(err));
     ok(parm.status.dwReturn==MCI_FORMAT_MILLISECONDS,"status time format: %ld\n",parm.status.dwReturn);
 
     /* Check the default recording: 8-bits per sample, mono, 11kHz */
     err = mciSendString("status x samplespersec", buf, sizeof(buf), NULL);
-    ok(!err,"mci status samplespersec returned error: %d\n", err);
+    ok(!err,"mci status samplespersec returned %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf,"11025"), "mci status samplespersec expected 11025, got: %s\n", buf);
 
     /* MCI seems to solely support PCM, no need for ACM conversion. */
     err = mciSendString("set x format tag 2", NULL, 0, NULL);
-    ok(err==MCIERR_OUTOFRANGE,"mci set format tag 2 returned error: %d\n", err);
+    ok(err==MCIERR_OUTOFRANGE,"mci set format tag 2 returned %s\n", dbg_mcierr(err));
 
     /* MCI appears to scan the available devices for support of this format,
      * returning MCIERR_OUTOFRANGE on machines with no sound.
      * Don't skip here, record will fail below. */
     err = mciSendString("set x format tag pcm", NULL, 0, NULL);
-    ok(!err || err==MCIERR_OUTOFRANGE,"mci set format tag pcm returned error: %d\n", err);
+    ok(!err || err==MCIERR_OUTOFRANGE,"mci set format tag pcm returned %s\n", dbg_mcierr(err));
 
     /* Investigate: on w2k, set samplespersec 22050 sets nChannels to 2!
      *  err = mciSendString("set x samplespersec 22050", NULL, 0, NULL);
-     *  ok(!err,"mci set samplespersec returned error: %d\n", err);
+     *  ok(!err,"mci set samplespersec returned %s\n", dbg_mcierr(err));
      */
 
     parm.set.wFormatTag = WAVE_FORMAT_PCM;
@@ -269,54 +273,54 @@ static void test_recordWAVE(HWND hwnd)
         MCI_WAVE_SET_SAMPLESPERSEC | MCI_WAVE_SET_CHANNELS |
         MCI_WAVE_SET_BITSPERSAMPLE | MCI_WAVE_SET_BLOCKALIGN |
         MCI_WAVE_SET_AVGBYTESPERSEC| MCI_WAVE_SET_FORMATTAG, (DWORD_PTR)&parm);
-    ok(!err || err==MCIERR_OUTOFRANGE,"mciCommand set wave format returned error: %d\n", err);
+    ok(!err || err==MCIERR_OUTOFRANGE,"mciCommand set wave format: %s\n", dbg_mcierr(err));
 
     err = mciSendString("record x to 2000 wait", NULL, 0, hwnd);
-    ok(!err,"mci record to 2000 returned error: %d\n", err);
+    ok(!err,"mci record to 2000 returned %s\n", dbg_mcierr(err));
     if(err==MCIERR_WAVE_INPUTSUNSUITABLE) {
         skip("Please install audio driver. Tests will fail\n");
 
         err = mciSendString("close x", NULL, 0, NULL);
-        ok(!err,"mci close returned error: %d\n", err);
+        ok(!err,"mci close returned %s\n", dbg_mcierr(err));
         test_notification(hwnd,"record skipped",0);
         return;
     }
 
     /* Query some wave format parameters depending on the time format. */
     err = mciSendString("status x position", buf, sizeof(buf), NULL);
-    ok(!err,"mci status position returned error: %d\n", err);
+    ok(!err,"mci status position returned %s\n", dbg_mcierr(err));
     if(!err) todo_wine ok(!strcmp(buf,"2000"), "mci status position gave %s, expected 2000, some tests will fail\n", buf);
 
     err = mciSendString("set x time format 8", NULL, 0, NULL); /* bytes */
-    ok(!err,"mci returned error: %d\n", err);
+    ok(!err,"mci returned %s\n", dbg_mcierr(err));
 
     parm.status.dwItem = MCI_STATUS_POSITION;
     err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
-    ok(!err,"mci returned error: %d\n", err);
+    ok(!err,"mciCommand status position: %s\n", dbg_mcierr(err));
     expect = 2 * nsamp * nch * nbits/8;
     if(!err) todo_wine ok(parm.status.dwReturn==expect,"recorded %lu bytes, expected %u\n",parm.status.dwReturn,expect);
 
     parm.set.dwTimeFormat = MCI_FORMAT_SAMPLES;
     err = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD_PTR)&parm);
-    ok(!err,"mci returned error: %d\n", err);
+    ok(!err,"mciCommand set time format samples: %s\n", dbg_mcierr(err));
 
     parm.status.dwItem = MCI_STATUS_POSITION;
     err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
-    ok(!err,"mci returned error: %d\n", err);
+    ok(!err,"mciCommand status position: %s\n", dbg_mcierr(err));
     expect = 2 * nsamp;
     if(!err) todo_wine ok(parm.status.dwReturn==expect,"recorded %lu samples, expected %u\n",parm.status.dwReturn,expect);
 
     err = mciSendString("set x time format milliseconds", NULL, 0, NULL);
-    ok(!err,"mci returned error: %d\n", err);
+    ok(!err,"mci set time format milliseconds returned %s\n", dbg_mcierr(err));
 
     err = mciSendString("save x tempfile.wav", NULL, 0, NULL);
-    ok(!err,"mci save returned error: %d\n", err);
+    ok(!err,"mci save returned %s\n", dbg_mcierr(err));
 
     err = mciSendString("set x channels 2", NULL, 0, NULL);
-    ok(err==MCIERR_NONAPPLICABLE_FUNCTION,"mci set channels after saving returned error: %d\n", err);
+    ok(err==MCIERR_NONAPPLICABLE_FUNCTION,"mci set channels after saving returned %s\n", dbg_mcierr(err));
 
     err = mciSendString("close x", NULL, 0, NULL);
-    ok(!err,"mci close returned error: %d\n", err);
+    ok(!err,"mci close returned %s\n", dbg_mcierr(err));
     test_notification(hwnd,"record complete",0);
 }
 
@@ -334,81 +338,81 @@ static void test_playWAVE(HWND hwnd)
     }
 
     err = mciSendString("status mysound length", buf, sizeof(buf), NULL);
-    ok(!err,"mci status length returned error: %d\n", err);
+    ok(!err,"mci status length returned %s\n", dbg_mcierr(err));
     todo_wine ok(!strcmp(buf,"2000"), "mci status length gave %s, expected 2000, some tests will fail.\n", buf);
 
     err = mciSendString("cue output", NULL, 0, NULL);
-    todo_wine ok(err==MCIERR_UNRECOGNIZED_COMMAND,"mci incorrect cue output returned: %s\n", dbg_mcierr(err));
+    todo_wine ok(err==MCIERR_UNRECOGNIZED_COMMAND,"mci incorrect cue output returned %s\n", dbg_mcierr(err));
 
     err = mciSendString("play mysound from 0 to 0 notify", NULL, 0, hwnd);
-    ok(!err,"mci play from 0 to 0 returned error: %d\n", err);
+    ok(!err,"mci play from 0 to 0 returned %s\n", dbg_mcierr(err));
     todo_wine test_notification1(hwnd,"play from 0 to 0",MCI_NOTIFY_SUCCESSFUL);
 
     err = mciSendString("status mysound mode", buf, sizeof(buf), hwnd);
-    ok(!err,"mci status mode returned error: %d\n", err);
+    ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));
     ok(!strcmp(buf,"stopped"), "mci status mode: %s\n", buf);
 
     err = mciSendString("play mysound from 250 to 0", NULL, 0, NULL);
-    ok(err==MCIERR_OUTOFRANGE,"mci play from 250 to 0 returned error: %d\n", err);
+    ok(err==MCIERR_OUTOFRANGE,"mci play from 250 to 0 returned %s\n", dbg_mcierr(err));
 
     err = mciSendString("play mysound from 250 to 0 notify", NULL, 0, hwnd);
-    ok(err==MCIERR_OUTOFRANGE,"mci play from 250 to 0 notify returned error: %d\n", err);
+    ok(err==MCIERR_OUTOFRANGE,"mci play from 250 to 0 notify returned %s\n", dbg_mcierr(err));
     /* No notification (checked below) sent if error */
 
     /* A second play caused Wine to hang */
     err = mciSendString("play mysound from 500 to 1500 wait", NULL, 0, NULL);
-    ok(!err,"mci play from 500 to 1500 returned error: %d\n", err);
+    ok(!err,"mci play from 500 to 1500 returned %s\n", dbg_mcierr(err));
 
     memset(buf, 0, sizeof(buf));
     err = mciSendString("status mysound position", buf, sizeof(buf), hwnd);
-    ok(!err,"mci status position returned error: %d\n", err);
+    ok(!err,"mci status position returned %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf,"1500"), "mci status position: %s\n", buf);
 
     /* mci will not play position < current */
     err = mciSendString("play mysound to 1000", NULL, 0, NULL);
-    ok(err==MCIERR_OUTOFRANGE,"mci play to 1000 returned error: %d\n", err);
+    ok(err==MCIERR_OUTOFRANGE,"mci play to 1000 returned %s\n", dbg_mcierr(err));
 
     /* mci will not play to > end */
     err = mciSendString("play mysound to 3000 notify", NULL, 0, hwnd);
-    ok(err==MCIERR_OUTOFRANGE,"mci play to 3000 notify returned error: %d\n", err);
+    ok(err==MCIERR_OUTOFRANGE,"mci play to 3000 notify returned %s\n", dbg_mcierr(err));
     /* Again, no notification upon error */
 
     err = mciSendString("play mysound to 2000", NULL, 0, NULL);
-    ok(!err,"mci play to 2000 returned error: %d\n", err);
+    ok(!err,"mci play to 2000 returned %s\n", dbg_mcierr(err));
 
     /* Rejected while playing */
     err = mciSendString("cue mysound output", NULL, 0, NULL);
-    ok(err==MCIERR_NONAPPLICABLE_FUNCTION,"mci cue output while playing returned error: %d\n", err);
+    ok(err==MCIERR_NONAPPLICABLE_FUNCTION,"mci cue output while playing returned %s\n", dbg_mcierr(err));
 
     err = mciSendString("play mysound to 3000", NULL, 0, NULL);
-    ok(err==MCIERR_OUTOFRANGE,"mci play to 3000 returned error: %d\n", err);
+    ok(err==MCIERR_OUTOFRANGE,"mci play to 3000 returned %s\n", dbg_mcierr(err));
 
     err = mciSendString("stop mysound wait", NULL, 0, NULL);
-    ok(!err,"mci stop wait returned error: %d\n", err);
+    ok(!err,"mci stop wait returned %s\n", dbg_mcierr(err));
     test_notification(hwnd,"play outofrange notify #2",0);
 
     err = mciSendString("seek mysound to 250 wait notify", NULL, 0, hwnd);
-    ok(!err,"mci seek to 250 wait notify returned error: %d\n", err);
+    ok(!err,"mci seek to 250 wait notify returned %s\n", dbg_mcierr(err));
     test_notification(hwnd,"seek wait notify",MCI_NOTIFY_SUCCESSFUL);
 
     memset(buf, 0, sizeof(buf));
     err = mciSendString("status mysound position notify", buf, sizeof(buf), hwnd);
-    ok(!err,"mci status position notify returned error: %d\n", err);
+    ok(!err,"mci status position notify returned %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf,"250"), "mci status position: %s\n", buf);
     /* Immediate commands like status also send notifications. */
     test_notification(hwnd,"status position",MCI_NOTIFY_SUCCESSFUL);
 
     memset(buf, 0, sizeof(buf));
     err = mciSendString("status mysound mode", buf, sizeof(buf), hwnd);
-    ok(!err,"mci status mode returned error: %d\n", err);
+    ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));
     ok(!strcmp(buf,"stopped"), "mci status mode: %s\n", buf);
 
     err = mciSendString("play mysound to 250 wait notify", NULL, 0, hwnd);
-    ok(!err,"mci play to 250 returned error: %d\n", err);
+    ok(!err,"mci play to 250 returned %s\n", dbg_mcierr(err));
     todo_wine test_notification1(hwnd,"play to 250 wait notify",MCI_NOTIFY_SUCCESSFUL);
 
     err = mciSendString("close mysound", NULL, 0, NULL);
-    ok(!err,"mci close returned error: %d\n", err);
+    ok(!err,"mci close returned %s\n", dbg_mcierr(err));
     test_notification(hwnd,"after close",0);
 }
 
@@ -431,11 +435,11 @@ static void test_asyncWAVE(HWND hwnd)
     ok(wDeviceID,"mci open DeviceID: %d\n", wDeviceID);
 
     err = mciSendString("status mysound mode", buf, sizeof(buf), hwnd);
-    ok(!err,"mci status mode returned error: %d\n", err);
+    ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));
     ok(!strcmp(buf,"stopped"), "mci status mode: %s\n", buf);
 
     err = mciSendString("play mysound notify", NULL, 0, hwnd);
-    ok(!err,"mci play returned error: %d\n", err);
+    ok(!err,"mci play returned %s\n", dbg_mcierr(err));
 
     /* Give Wine's asynchronous thread time to start up.  Furthermore,
      * it uses 3 buffers per second, so that the positions reported
@@ -445,16 +449,16 @@ static void test_asyncWAVE(HWND hwnd)
     /* Do not query time format as string because result depends on locale! */
     parm.status.dwItem = MCI_STATUS_TIME_FORMAT;
     err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
-    ok(!err,"mciCommand status time format returned error: %d\n",err);
+    ok(!err,"mciCommand status time format: %s\n", dbg_mcierr(err));
     if(!err) ok(parm.status.dwReturn==MCI_FORMAT_MILLISECONDS,"status time format: %ld\n",parm.status.dwReturn);
 
     parm.set.dwTimeFormat = MCI_FORMAT_MILLISECONDS;
     err = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD_PTR)&parm);
-    ok(!err,"mciCommand set time format returned error: %d\n",err);
+    ok(!err,"mciCommand set time format ms: %s\n", dbg_mcierr(err));
 
     buf[0]=0;
     err = mciSendString("status mysound position", buf, sizeof(buf), hwnd);
-    ok(!err,"mci status position returned error: %d\n", err);
+    ok(!err,"mci status position returned %s\n", dbg_mcierr(err));
     ok(strcmp(buf,"2000"), "mci status position: %s, expected 2000\n", buf);
     trace("position after Sleep: %sms\n",buf);
     p2 = atoi(buf);
@@ -463,28 +467,28 @@ static void test_asyncWAVE(HWND hwnd)
     test_notification(hwnd,"play (nowait)",0);
 
     err = mciSendString("pause mysound wait", NULL, 0, hwnd);
-    ok(!err,"mci pause wait returned error: %s\n", dbg_mcierr(err));
+    ok(!err,"mci pause wait returned %s\n", dbg_mcierr(err));
 
     buf[0]=0;
     err = mciSendString("status mysound mode notify", buf, sizeof(buf), hwnd);
-    ok(!err,"mci status mode returned error: %d\n", err);
+    ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf,"paused"), "mci status mode: %s\n", buf);
     test_notification(hwnd,"play",MCI_NOTIFY_SUPERSEDED);
     test_notification(hwnd,"status",MCI_NOTIFY_SUCCESSFUL);
 
     buf[0]=0;
     err = mciSendString("status mysound position", buf, sizeof(buf), hwnd);
-    ok(!err,"mci status position returned error: %d\n", err);
+    ok(!err,"mci status position returned %s\n", dbg_mcierr(err));
     trace("position while paused: %sms\n",buf);
     p1 = atoi(buf);
     ok(p1>=p2, "position not increasing: %u > %u\n", p2, p1);
 
     err = mciSendString("stop mysound wait", NULL, 0, NULL);
-    ok(!err,"mci stop returned error: %s\n", dbg_mcierr(err));
+    ok(!err,"mci stop returned %s\n", dbg_mcierr(err));
 
     buf[0]=0;
     err = mciSendString("info mysound file notify", buf, sizeof(buf), hwnd);
-    ok(!err,"mci info file returned error: %d\n", err);
+    ok(!err,"mci info file returned %s\n", dbg_mcierr(err));
     if(!err) { /* fully qualified name */
         int len = strlen(buf);
         todo_wine ok(len>2 && buf[1]==':',"Expected full pathname from info file: %s\n", buf);
@@ -494,12 +498,12 @@ static void test_asyncWAVE(HWND hwnd)
 
     buf[0]=0;
     err = mciSendString("status mysound mode", buf, sizeof(buf), hwnd);
-    ok(!err,"mci status mode returned error: %d\n", err);
+    ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));
     ok(!strcmp(buf,"stopped"), "mci status mode: %s\n", buf);
 
     buf[0]=0;
     err = mciSendString("status mysound position", buf, sizeof(buf), hwnd);
-    ok(!err,"mci status position returned error: %d\n", err);
+    ok(!err,"mci status position returned %s\n", dbg_mcierr(err));
     trace("position once stopped: %sms\n",buf);
     p2 = atoi(buf);
     /* An XP machine let the position increase slightly after pause. */
@@ -507,79 +511,79 @@ static void test_asyncWAVE(HWND hwnd)
 
     /* No Resume once stopped (waveaudio, sequencer and cdaudio differ). */
     err = mciSendString("resume mysound wait", NULL, 0, NULL);
-    ok(err==MCIERR_NONAPPLICABLE_FUNCTION,"mci resume wait returned error: %s\n", dbg_mcierr(err));
+    ok(err==MCIERR_NONAPPLICABLE_FUNCTION,"mci resume wait returned %s\n", dbg_mcierr(err));
 
     err = mciSendString("play mysound wait", NULL, 0, NULL);
-    ok(!err,"mci play wait returned error: %d\n", err);
+    ok(!err,"mci play wait returned %s\n", dbg_mcierr(err));
 
     buf[0]=0;
     err = mciSendString("status mysound position", buf, sizeof(buf), hwnd);
-    ok(!err,"mci status position returned error: %d\n", err);
+    ok(!err,"mci status position returned %s\n", dbg_mcierr(err));
     todo_wine ok(!strcmp(buf,"2000"), "mci status position: %s\n", buf);
 
     err = mciSendString("seek mysound to start wait", NULL, 0, NULL);
-    ok(!err,"mci seek to start wait returned error: %d\n", err);
+    ok(!err,"mci seek to start wait returned %s\n", dbg_mcierr(err));
 
     err = mciSendString("play mysound to 1000 notify", NULL, 0, hwnd);
-    ok(!err,"mci play returned error: %d\n", err);
+    ok(!err,"mci play returned %s\n", dbg_mcierr(err));
 
     Sleep(200); /* Give Wine play thread time to start up, not needed with MS-Windows. */
 
     err = mciSendString("pause mysound notify", NULL, 0, NULL); /* notify no callback */
-    ok(!err,"mci pause notify returned error: %s\n", dbg_mcierr(err));
+    ok(!err,"mci pause notify returned %s\n", dbg_mcierr(err));
     /* Supersede even though pause cannot notify given no callback */
     test_notification(hwnd,"pause aborted play #1 notification",MCI_NOTIFY_SUPERSEDED);
     test_notification(hwnd,"impossible pause notification",0);
 
     err = mciSendString("cue mysound output notify", NULL, 0, hwnd);
-    ok(err==MCIERR_NONAPPLICABLE_FUNCTION,"mci cue output while paused returned error: %d\n", err);
+    ok(err==MCIERR_NONAPPLICABLE_FUNCTION,"mci cue output while paused returned %s\n", dbg_mcierr(err));
     test_notification(hwnd,"cue output notify #2",0);
 
     /* Seek or even Stop used to hang Wine on MacOS. */
     err = mciSendString("seek mysound to 0 wait", NULL, 0, NULL);
-    ok(!err,"mci seek to start returned error: %d\n", err);
+    ok(!err,"mci seek to start returned %s\n", dbg_mcierr(err));
 
     /* Seek stops. */
     err = mciSendString("status mysound mode", buf, sizeof(buf), NULL);
-    ok(!err,"mci status mode returned error: %d\n", err);
+    ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf,"stopped"), "mci status mode: %s\n", buf);
 
     err = mciSendString("seek mysound wait", NULL, 0, NULL);
-    ok(err==MCIERR_MISSING_PARAMETER,"mci seek to nowhere returned error: %d\n", err);
+    ok(err==MCIERR_MISSING_PARAMETER,"mci seek to nowhere returned %s\n", dbg_mcierr(err));
 
     /* cdaudio does not detect to start to end as error */
     err = mciSendString("seek mysound to start to 0", NULL, 0, NULL);
-    ok(err==MCIERR_FLAGS_NOT_COMPATIBLE,"mci seek to start to 0 returned error: %d\n", err);
+    ok(err==MCIERR_FLAGS_NOT_COMPATIBLE,"mci seek to start to 0 returned %s\n", dbg_mcierr(err));
 
     err = mciSendString("play mysound to 1000 notify", NULL, 0, hwnd);
-    ok(!err,"mci play returned error: %d\n", err);
+    ok(!err,"mci play returned %s\n", dbg_mcierr(err));
 
     Sleep(200); /* Give Wine more than the 333ms for the first buffer? */
     /* Give it 400ms and resume will appear to complete below. */
 
     err = mciSendString("pause mysound wait", NULL, 0, NULL);
-    ok(!err,"mci pause wait returned error: %d\n", err);
+    ok(!err,"mci pause wait returned %s\n", dbg_mcierr(err));
     /* Unlike sequencer and cdaudio, waveaudio's pause does not abort. */
     test_notification(hwnd,"pause aborted play #2 notification",0);
 
     err = mciSendString("resume mysound wait", NULL, 0, NULL);
-    ok(!err,"mci resume wait returned error: %d\n", err);
+    ok(!err,"mci resume wait returned %s\n", dbg_mcierr(err));
     /* Resume is a short asynchronous call, something else is playing. */
 
     err = mciSendString("status mysound mode", buf, sizeof(buf), NULL);
-    ok(!err,"mci status mode returned error: %d\n", err);
+    ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf,"playing"), "mci status mode: %s\n", buf);
 
     err = mciSendString("pause mysound wait", NULL, 0, NULL);
-    ok(!err,"mci pause wait returned error: %d\n", err);
+    ok(!err,"mci pause wait returned %s\n", dbg_mcierr(err));
 
     err = mciSendString("pause mysound wait", NULL, 0, NULL);
-    ok(!err,"mci pause wait returned error: %d\n", err);
+    ok(!err,"mci pause wait returned %s\n", dbg_mcierr(err));
 
     /* Better ask position only when paused, is it updated while playing? */
     buf[0]='\0';
     err = mciSendString("status mysound position", buf, sizeof(buf), NULL);
-    ok(!err,"mci status position returned error: %d\n", err);
+    ok(!err,"mci status position returned %s\n", dbg_mcierr(err));
     /* TODO compare position < 900 */
     ok(strcmp(buf,"1000"), "mci resume waited\n");
     ok(strcmp(buf,"2000"), "mci resume played to end\n");
@@ -587,7 +591,7 @@ static void test_asyncWAVE(HWND hwnd)
     test_notification(hwnd,"play (aborted by pause/resume/pause)",0);
 
     err = mciSendString("close mysound wait", NULL, 0, NULL);
-    ok(!err,"mci close wait returned error: %d\n", err);
+    ok(!err,"mci close wait returned %s\n", dbg_mcierr(err));
     test_notification(hwnd,"play (aborted by close)",MCI_NOTIFY_ABORTED);
 }
 
@@ -602,15 +606,15 @@ static void test_AutoOpenWAVE(HWND hwnd)
 
     /* Do not crash on NULL buffer pointer */
     err = mciSendString("sysinfo waveaudio quantity open", NULL, 0, NULL);
-    ok(err==MCIERR_PARAM_OVERFLOW,"mci sysinfo without buffer returned error: %d\n", err);
+    ok(err==MCIERR_PARAM_OVERFLOW,"mci sysinfo without buffer returned %s\n", dbg_mcierr(err));
 
     err = mciSendString("sysinfo waveaudio quantity open", buf, sizeof(buf), NULL);
-    ok(!err,"mci sysinfo waveaudio quantity open returned error: %d\n", err);
+    ok(!err,"mci sysinfo waveaudio quantity open returned %s\n", dbg_mcierr(err));
     if(!err) todo_wine ok(!strcmp(buf,"0"), "sysinfo quantity open expected 0, got: %s\n", buf);
 
     buf[0]=0;
     err = mciSendString("sysinfo waveaudio name 1 open", buf, sizeof(buf), NULL);
-    todo_wine ok(err==MCIERR_OUTOFRANGE,"sysinfo waveaudio name 1 returned error: %d\n", err);
+    todo_wine ok(err==MCIERR_OUTOFRANGE,"sysinfo waveaudio name 1 returned %s\n", dbg_mcierr(err));
     if(!err) trace("sysinfo dangling open alias: %s\n", buf);
 
     err = mciSendString("play no-such-file-exists.wav notify", buf, sizeof(buf), NULL);
@@ -621,11 +625,11 @@ static void test_AutoOpenWAVE(HWND hwnd)
     }
 
     err = mciSendString("play tempfile.wav notify", buf, sizeof(buf), hwnd);
-    todo_wine ok(err==MCIERR_NOTIFY_ON_AUTO_OPEN,"mci auto-open play notify returned error: %d\n", err);
+    todo_wine ok(err==MCIERR_NOTIFY_ON_AUTO_OPEN,"mci auto-open play notify returned %s\n", dbg_mcierr(err));
 
     if(err) /* FIXME: don't open twice yet, it confuses Wine. */
     err = mciSendString("play tempfile.wav", buf, sizeof(buf), hwnd);
-    ok(!err,"mci auto-open play returned error: %d\n", err);
+    ok(!err,"mci auto-open play returned %s\n", dbg_mcierr(err));
     if(err==MCIERR_FILE_NOT_FOUND) {
         skip("Cannot open tempfile.wav for auto-play, skipping\n");
         return;
@@ -633,34 +637,34 @@ static void test_AutoOpenWAVE(HWND hwnd)
 
     buf[0]=0;
     err = mciSendString("sysinfo waveaudio quantity open", buf, sizeof(buf), NULL);
-    ok(!err,"mci sysinfo waveaudio quantity after auto-open returned error: %d\n", err);
+    ok(!err,"mci sysinfo waveaudio quantity after auto-open returned %s\n", dbg_mcierr(err));
     if(!err) todo_wine ok(!strcmp(buf,"1"), "sysinfo quantity open expected 1, got: %s\n", buf);
 
     buf[0]=0;
     err = mciSendString("sysinfo waveaudio name 1 open", buf, sizeof(buf), NULL);
-    todo_wine ok(!err,"mci sysinfo waveaudio name after auto-open returned error: %d\n", err);
+    todo_wine ok(!err,"mci sysinfo waveaudio name after auto-open returned %s\n", dbg_mcierr(err));
     /* This is the alias, not necessarily a file name. */
-    if(!err) ok(!strcmp(buf,"tempfile.wav"), "sysinfo name 1 open returned: %s\n", buf);
+    if(!err) ok(!strcmp(buf,"tempfile.wav"), "sysinfo name 1 open: %s\n", buf);
 
     /* Save the full pathname to the file. */
     err = mciSendString("info tempfile.wav file", path, sizeof(path), NULL);
-    ok(!err,"mci info tempfile.wav file returned error: %d\n", err);
+    ok(!err,"mci info tempfile.wav file returned %s\n", dbg_mcierr(err));
     if(err) strcpy(path,"tempfile.wav");
 
     err = mciSendString("status tempfile.wav mode", NULL, 0, hwnd);
-    ok(!err,"mci status tempfile.wav mode without buffer returned error: %d\n", err);
+    ok(!err,"mci status tempfile.wav mode without buffer returned %s\n", dbg_mcierr(err));
 
     sprintf(command,"status \"%s\" mode",path);
     err = mciSendString(command, buf, sizeof(buf), hwnd);
-    ok(!err,"mci status full-path-to-tempfile.wav mode returned error: %d\n", err);
+    ok(!err,"mci status full-path-to-tempfile.wav mode returned %s\n", dbg_mcierr(err));
 
     buf[0]=0;
     err = mciSendString("status tempfile.wav mode", buf, sizeof(buf), hwnd);
-    ok(!err,"mci status tempfile.wav mode returned error: %d\n", err);
+    ok(!err,"mci status tempfile.wav mode returned %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf,"playing"), "mci auto-open status mode, got: %s\n", buf);
 
     err = mciSendString("open tempfile.wav", buf, sizeof(buf), NULL);
-    todo_wine ok(err==MCIERR_DEVICE_OPEN, "mci open from auto-open returned error: %s\n", dbg_mcierr(err));
+    todo_wine ok(err==MCIERR_DEVICE_OPEN, "mci open from auto-open returned %s\n", dbg_mcierr(err));
 
     /* w2k/xp and Wine differ. While the device is busy playing, it is
      * regularly open and accessible via the filename: subsequent
@@ -674,8 +678,8 @@ static void test_AutoOpenWAVE(HWND hwnd)
      * command.
      */
     err = mciSendString("status tempfile.wav mode notify", buf, sizeof(buf), hwnd);
-    trace("mci auto-open status notify return value: %d\n",err);
-    todo_wine ok(err==MCIERR_NOTIFY_ON_AUTO_OPEN, "mci auto-open status notify: %s\n", dbg_mcierr(err));
+    trace("mci status auto-open notify returned %s\n", dbg_mcierr(err));
+    todo_wine ok(err==MCIERR_NOTIFY_ON_AUTO_OPEN, "mci status auto-open notify returned %s\n", dbg_mcierr(err));
     if(!err) { /* Wine style */
         trace("New style MCI auto-close upon notification behaviour.\n");
         todo_wine ok(!strcmp(buf,"playing"), "mci auto-open status mode notify, got: %s\n", buf);
@@ -689,20 +693,20 @@ static void test_AutoOpenWAVE(HWND hwnd)
         trace("Old style MCI auto-open forbids notification behaviour.\n");
 
         err = mciSendString("pause tempfile.wav", NULL, 0, hwnd);
-        ok(!err,"mci auto-still-open pause returned error: %d\n", err);
+        ok(!err,"mci auto-still-open pause returned %s\n", dbg_mcierr(err));
 
         err = mciSendString("status tempfile.wav mode", buf, sizeof(buf), hwnd);
-        ok(!err,"mci status mode returned error: %d\n", err);
+        ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));
         if(!err) ok(!strcmp(buf,"paused"), "mci auto-open status mode, got: %s\n", buf);
 
         /* Auto-close */
         err = mciSendString("stop tempfile.wav", NULL, 0, hwnd);
-        ok(!err,"mci auto-still-open stop returned error: %d\n", err);
+        ok(!err,"mci auto-still-open stop returned %s\n", dbg_mcierr(err));
         Sleep(16); /* makes sysinfo quantity open below succeed */
     }
 
     err = mciSendString("sysinfo waveaudio quantity open", buf, sizeof(buf), NULL);
-    ok(!err,"mci sysinfo waveaudio quantity open after close returned error: %d\n", err);
+    ok(!err,"mci sysinfo waveaudio quantity open after close returned %s\n", dbg_mcierr(err));
     if(!err) todo_wine ok(!strcmp(buf,"0"), "sysinfo quantity open expected 0 after auto-close, got: %s\n", buf);
 
     /* w95-WinME (not w2k/XP) switch to C:\ after auto-playing once.  Prevent
@@ -710,17 +714,17 @@ static void test_AutoOpenWAVE(HWND hwnd)
      */
     sprintf(command,"status \"%s\" mode wait",path);
     err = mciSendString(command, buf, sizeof(buf), hwnd);
-    ok(!err,"mci re-auto-open status mode returned error: %d\n", err);
+    ok(!err,"mci re-auto-open status mode returned %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf,"stopped"), "mci re-auto-open status mode, got: %s\n", buf);
 
     err = mciSendString("capability waveaudio device type", buf, sizeof(buf), hwnd);
-    ok(!err,"mci capability device type returned error: %d\n", err);
+    ok(!err,"mci capability device type returned %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf,"waveaudio"), "mci capability device type response: %s\n", buf);
 
     /* waveaudio forbids Pause without Play. */
     sprintf(command,"pause \"%s\"",path);
     err = mciSendString(command, NULL, 0, hwnd);
-    ok(err==MCIERR_NONAPPLICABLE_FUNCTION,"mci auto-open pause returned error: %d\n", err);
+    ok(err==MCIERR_NONAPPLICABLE_FUNCTION,"mci auto-open pause returned %s\n", dbg_mcierr(err));
 }
 
 START_TEST(mci)
