@@ -1695,6 +1695,14 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
     if (trans & (WINEDDBLTFAST_SRCCOLORKEY | WINEDDBLTFAST_DESTCOLORKEY))
     {
         DWORD keylow, keyhigh;
+        DWORD mask = Src->resource.format_desc->red_mask |
+                     Src->resource.format_desc->green_mask |
+                     Src->resource.format_desc->blue_mask;
+
+        /* For some 8-bit formats like L8 and P8 color masks don't make sense */
+        if(!mask && bpp==1)
+            mask = 0xff;
+
         TRACE("Color keyed copy\n");
         if (trans & WINEDDBLTFAST_SRCCOLORKEY)
         {
@@ -1716,7 +1724,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
         for (y = 0; y < h; y++) { \
         for (x = 0; x < w; x++) { \
         tmp = s[x]; \
-        if (tmp < keylow || tmp > keyhigh) d[x] = tmp; \
+        if ((tmp & mask) < keylow || (tmp & mask) > keyhigh) d[x] = tmp; \
     } \
         s = (const type *)((const BYTE *)s + slock.Pitch); \
         d = (type *)((BYTE *)d + dlock.Pitch); \
