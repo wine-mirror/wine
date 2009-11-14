@@ -1033,7 +1033,7 @@ m_bitfield:					{ $$ = NULL; }
 
 struct_declarator: any_declarator m_bitfield	{ $$ = $1; $$->bits = $2;
 						  if (!$$->bits && !$$->var->name)
-						    error_loc("unnamed fields are not allowed");
+						    error_loc("unnamed fields are not allowed\n");
 						}
 	;
 
