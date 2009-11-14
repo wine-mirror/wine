@@ -169,7 +169,7 @@ DWORD WINAPI ParseFieldAW(LPCVOID src, DWORD nField, LPVOID dst, DWORD len)
 /*************************************************************************
  * GetFileNameFromBrowseA			[internal]
  */
-BOOL WINAPI GetFileNameFromBrowseA(
+static BOOL GetFileNameFromBrowseA(
 	HWND hwndOwner,
 	LPSTR lpstrFile,
 	DWORD nMaxFile,
@@ -216,7 +216,7 @@ BOOL WINAPI GetFileNameFromBrowseA(
 /*************************************************************************
  * GetFileNameFromBrowseW			[internal]
  */
-BOOL WINAPI GetFileNameFromBrowseW(
+static BOOL GetFileNameFromBrowseW(
 	HWND hwndOwner,
 	LPWSTR lpstrFile,
 	DWORD nMaxFile,
