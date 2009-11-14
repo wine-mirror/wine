@@ -272,6 +272,22 @@ HRESULT WINAPI GetDeviceID(LPCGUID pGuidSrc, LPGUID pGuidDest)
     return DS_OK;
 }
 
+struct morecontext
+{
+    LPDSENUMCALLBACKA callA;
+    LPVOID data;
+};
+
+static BOOL CALLBACK a_to_w_callback(LPGUID guid, LPCWSTR descW, LPCWSTR modW, LPVOID data)
+{
+    struct morecontext *context = data;
+    char descA[MAXPNAMELEN], modA[MAXPNAMELEN];
+
+    WideCharToMultiByte(CP_ACP, 0, descW, -1, descA, sizeof(descA), NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, modW, -1, modA, sizeof(modA), NULL, NULL);
+
+    return context->callA(guid, descA, modA, context->data);
+}
 
 /***************************************************************************
  * DirectSoundEnumerateA [DSOUND.2]
@@ -290,46 +306,17 @@ HRESULT WINAPI DirectSoundEnumerateA(
     LPDSENUMCALLBACKA lpDSEnumCallback,
     LPVOID lpContext)
 {
-    unsigned devs, wod;
-    DSDRIVERDESC desc;
-    GUID guid;
-    int err;
-
-    TRACE("lpDSEnumCallback = %p, lpContext = %p\n",
-	lpDSEnumCallback, lpContext);
+    struct morecontext context;
 
     if (lpDSEnumCallback == NULL) {
-	WARN("invalid parameter: lpDSEnumCallback == NULL\n");
-	return DSERR_INVALIDPARAM;
+        WARN("invalid parameter: lpDSEnumCallback == NULL\n");
+        return DSERR_INVALIDPARAM;
     }
 
-    devs = waveOutGetNumDevs();
-    if (devs > 0) {
-	if (GetDeviceID(&DSDEVID_DefaultPlayback, &guid) == DS_OK) {
-	    for (wod = 0; wod < devs; ++wod) {
-                if (IsEqualGUID( &guid, &DSOUND_renderer_guids[wod]) ) {
-                    err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
-                    if (err == DS_OK) {
-                        TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
-                              "Primary Sound Driver","",lpContext);
-                        if (lpDSEnumCallback(NULL, "Primary Sound Driver", "", lpContext) == FALSE)
-                            return DS_OK;
-		    }
-		}
-	    }
-	}
-    }
+    context.callA = lpDSEnumCallback;
+    context.data = lpContext;
 
-    for (wod = 0; wod < devs; ++wod) {
-        err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
-	if (err == DS_OK) {
-            TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-                  debugstr_guid(&DSOUND_renderer_guids[wod]),desc.szDesc,desc.szDrvname,lpContext);
-            if (lpDSEnumCallback(&DSOUND_renderer_guids[wod], desc.szDesc, desc.szDrvname, lpContext) == FALSE)
-                return DS_OK;
-	}
-    }
-    return DS_OK;
+    return DirectSoundEnumerateW(a_to_w_callback, &context);
 }
 
 /***************************************************************************
