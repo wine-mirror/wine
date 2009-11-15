@@ -181,12 +181,13 @@ static void str_array_init(struct array* a)
  *		str_array_push
  * Adding a new string to an array
  */
-static void str_array_push(struct parsed_symbol* sym, const char* ptr, int len,
+static BOOL str_array_push(struct parsed_symbol* sym, const char* ptr, int len,
                            struct array* a)
 {
     assert(ptr);
     assert(a);
-    assert(a->num < MAX_ARRAY_ELTS);
+    if (a->num >= MAX_ARRAY_ELTS) return FALSE;
+
     if (len == -1) len = strlen(ptr);
     a->elts[a->num] = und_alloc(sym, len + 1);
     assert(a->elts[a->num]);
@@ -205,6 +206,8 @@ static void str_array_push(struct parsed_symbol* sym, const char* ptr, int len,
             TRACE("%p\t%d%c %s\n", a, i, c, a->elts[i]);
         }
     }
+
+    return TRUE;
 }
 
 /******************************************************************
@@ -365,8 +368,9 @@ static char* get_args(struct parsed_symbol* sym, struct array* pmt_ref, BOOL z_t
             return NULL;
         /* 'void' terminates an argument list in a function */
         if (z_term && !strcmp(ct.left, "void")) break;
-        str_array_push(sym, str_printf(sym, "%s%s", ct.left, ct.right), -1, 
-                       &arg_collect);
+        if (!str_array_push(sym, str_printf(sym, "%s%s", ct.left, ct.right), -1,
+                            &arg_collect))
+            return NULL;
         if (!strcmp(ct.left, "...")) break;
     }
     /* Functions are always terminated by 'Z'. If we made it this far and
@@ -496,7 +500,8 @@ static char* get_literal_string(struct parsed_symbol* sym)
         }
     } while (*++sym->current != '@');
     sym->current++;
-    str_array_push(sym, ptr, sym->current - 1 - ptr, &sym->names);
+    if (!str_array_push(sym, ptr, sym->current - 1 - ptr, &sym->names))
+        return NULL;
 
     return str_array_get_ref(&sym->names, sym->names.num - sym->names.start - 1);
 }
@@ -564,17 +569,17 @@ static BOOL get_class(struct parsed_symbol* sym)
             if (*++sym->current == '$') 
             {
                 sym->current++;
-                if ((name = get_template_name(sym)))
-                    str_array_push(sym, name, -1, &sym->names);
+                if ((name = get_template_name(sym)) &&
+                    !str_array_push(sym, name, -1, &sym->names))
+                    return FALSE;
             }
             break;
         default:
             name = get_literal_string(sym);
             break;
         }
-        if (!name)
+        if (!name || !str_array_push(sym, name, -1, &sym->stack))
             return FALSE;
-        str_array_push(sym, name, -1, &sym->stack);
     }
     sym->current++;
     return TRUE;
@@ -918,8 +923,9 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
     if (add_pmt && pmt_ref && in_args)
     {
         /* left and right are pushed as two separate strings */
-        str_array_push(sym, ct->left ? ct->left : "", -1, pmt_ref);
-        str_array_push(sym, ct->right ? ct->right : "", -1, pmt_ref);
+        if (!str_array_push(sym, ct->left ? ct->left : "", -1, pmt_ref) ||
+            !str_array_push(sym, ct->right ? ct->right : "", -1, pmt_ref))
+            return FALSE;
     }
 done:
     
@@ -1334,7 +1340,8 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
             ret = TRUE;
             goto done;
         default:
-            str_array_push(sym, function_name, -1, &sym->stack);
+            if (!str_array_push(sym, function_name, -1, &sym->stack))
+                return FALSE;
             break;
         }
     }
