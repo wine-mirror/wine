@@ -1228,10 +1228,18 @@ static void test_token_attr(void)
     ok(ret, "OpenProcessToken failed with error %d\n", GetLastError());
 
     /* groups */
+    SetLastError(0xdeadbeef);
     ret = GetTokenInformation(Token, TokenGroups, NULL, 0, &Size);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+        "GetTokenInformation(TokenGroups) %s with error %d\n",
+        ret ? "succeeded" : "failed", GetLastError());
     Groups = HeapAlloc(GetProcessHeap(), 0, Size);
+    SetLastError(0xdeadbeef);
     ret = GetTokenInformation(Token, TokenGroups, Groups, Size, &Size);
     ok(ret, "GetTokenInformation(TokenGroups) failed with error %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef,
+       "GetTokenInformation shouldn't have set last error to %d\n",
+       GetLastError());
     trace("TokenGroups:\n");
     for (i = 0; i < Groups->GroupCount; i++)
     {
@@ -3266,6 +3274,66 @@ todo_wine {
     CloseHandle(process_token);
 }
 
+static void test_EqualSid(void)
+{
+    PSID sid1, sid2;
+    BOOL ret;
+    SID_IDENTIFIER_AUTHORITY SIDAuthWorld = { SECURITY_WORLD_SID_AUTHORITY };
+    SID_IDENTIFIER_AUTHORITY SIDAuthNT = { SECURITY_NT_AUTHORITY };
+
+    SetLastError(0xdeadbeef);
+    ret = AllocateAndInitializeSid(&SIDAuthNT, 2, SECURITY_BUILTIN_DOMAIN_RID,
+        DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &sid1);
+    ok(ret, "AllocateAndInitializeSid failed with error %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef,
+       "AllocateAndInitializeSid shouldn't have set last error to %d\n",
+       GetLastError());
+
+    ret = AllocateAndInitializeSid(&SIDAuthWorld, 1, SECURITY_WORLD_RID,
+        0, 0, 0, 0, 0, 0, 0, &sid2);
+    ok(ret, "AllocateAndInitializeSid failed with error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = EqualSid(sid1, sid2);
+    ok(!ret, "World and domain admins sids shouldn't have been equal\n");
+    todo_wine
+    ok(GetLastError() == ERROR_SUCCESS,
+       "EqualSid should have set last error to ERROR_SUCCESS instead of %d\n",
+       GetLastError());
+
+    SetLastError(0xdeadbeef);
+    sid2 = FreeSid(sid2);
+    ok(!sid2, "FreeSid should have returned NULL instead of %p\n", sid2);
+    ok(GetLastError() == 0xdeadbeef,
+       "FreeSid shouldn't have set last error to %d\n",
+       GetLastError());
+
+    ret = AllocateAndInitializeSid(&SIDAuthNT, 2, SECURITY_BUILTIN_DOMAIN_RID,
+        DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &sid2);
+    ok(ret, "AllocateAndInitializeSid failed with error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = EqualSid(sid1, sid2);
+    ok(ret, "Same sids should have been equal\n");
+    todo_wine
+    ok(GetLastError() == ERROR_SUCCESS,
+       "EqualSid should have set last error to ERROR_SUCCESS instead of %d\n",
+       GetLastError());
+
+    ((SID *)sid2)->Revision = 2;
+    SetLastError(0xdeadbeef);
+    ret = EqualSid(sid1, sid2);
+    ok(!ret, "EqualSid with invalid sid should have returned FALSE\n");
+    todo_wine
+    ok(GetLastError() == ERROR_SUCCESS,
+       "EqualSid should have set last error to ERROR_SUCCESS instead of %d\n",
+       GetLastError());
+    ((SID *)sid2)->Revision = SID_REVISION;
+
+    FreeSid(sid1);
+    FreeSid(sid2);
+}
+
 START_TEST(security)
 {
     init();
@@ -3297,4 +3365,5 @@ START_TEST(security)
     test_GetSecurityInfo();
     test_GetSidSubAuthority();
     test_CheckTokenMembership();
+    test_EqualSid();
 }
