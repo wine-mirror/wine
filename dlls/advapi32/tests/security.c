@@ -3296,7 +3296,6 @@ static void test_EqualSid(void)
     SetLastError(0xdeadbeef);
     ret = EqualSid(sid1, sid2);
     ok(!ret, "World and domain admins sids shouldn't have been equal\n");
-    todo_wine
     ok(GetLastError() == ERROR_SUCCESS,
        "EqualSid should have set last error to ERROR_SUCCESS instead of %d\n",
        GetLastError());
@@ -3315,7 +3314,6 @@ static void test_EqualSid(void)
     SetLastError(0xdeadbeef);
     ret = EqualSid(sid1, sid2);
     ok(ret, "Same sids should have been equal\n");
-    todo_wine
     ok(GetLastError() == ERROR_SUCCESS,
        "EqualSid should have set last error to ERROR_SUCCESS instead of %d\n",
        GetLastError());
@@ -3324,7 +3322,6 @@ static void test_EqualSid(void)
     SetLastError(0xdeadbeef);
     ret = EqualSid(sid1, sid2);
     ok(!ret, "EqualSid with invalid sid should have returned FALSE\n");
-    todo_wine
     ok(GetLastError() == ERROR_SUCCESS,
        "EqualSid should have set last error to ERROR_SUCCESS instead of %d\n",
        GetLastError());

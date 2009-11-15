@@ -1055,7 +1055,9 @@ IsValidSid( PSID pSid )
 BOOL WINAPI
 EqualSid( PSID pSid1, PSID pSid2 )
 {
-	return RtlEqualSid( pSid1, pSid2 );
+	BOOL ret = RtlEqualSid( pSid1, pSid2 );
+	SetLastError(ERROR_SUCCESS);
+	return ret;
 }
 
 /******************************************************************************
