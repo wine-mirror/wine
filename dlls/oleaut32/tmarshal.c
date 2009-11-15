@@ -2105,7 +2105,7 @@ TMStubImpl_Invoke(
     nrofargs = 0;
     for (i=0;i<fdesc->cParams;i++)
 	nrofargs += _argsize(&fdesc->lprgelemdescParam[i].tdesc, tinfo);
-    args = HeapAlloc(GetProcessHeap(),0,(nrofargs+1)*sizeof(DWORD));
+    args = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,(nrofargs+1)*sizeof(DWORD));
     if (!args)
     {
         hres = E_OUTOFMEMORY;
