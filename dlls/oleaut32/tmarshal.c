@@ -894,6 +894,8 @@ serialize_param(
 	    if (debugout && (i<arrsize-1)) TRACE_(olerelay)(",");
 	}
 	if (debugout) TRACE_(olerelay)("]");
+	if (dealloc)
+	    HeapFree(GetProcessHeap(), 0, *(void **)arg);
 	return S_OK;
     }
     case VT_SAFEARRAY: {
@@ -904,6 +906,11 @@ serialize_param(
             xbuf_resize(buf, size);
             LPSAFEARRAY_UserMarshal(&flags, buf->base + buf->curoff, (LPSAFEARRAY *)arg);
             buf->curoff = size;
+        }
+        if (dealloc)
+        {
+            ULONG flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
+            LPSAFEARRAY_UserFree(&flags, (LPSAFEARRAY *)arg);
         }
         return S_OK;
     }
