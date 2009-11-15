@@ -73,13 +73,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
  *              
  */
 
-#define MAX_ARRAY_ELTS  32
 struct array
 {
     unsigned            start;          /* first valid reference in array */
     unsigned            num;            /* total number of used elts */
     unsigned            max;
-    char*               elts[MAX_ARRAY_ELTS];
+    unsigned            alloc;
+    char**              elts;
 };
 
 /* Structure holding a parsed symbol */
@@ -174,7 +174,8 @@ static void und_free_all(struct parsed_symbol* sym)
  */
 static void str_array_init(struct array* a)
 {
-    a->start = a->num = a->max = 0;
+    a->start = a->num = a->max = a->alloc = 0;
+    a->elts = NULL;
 }
 
 /******************************************************************
@@ -184,10 +185,25 @@ static void str_array_init(struct array* a)
 static BOOL str_array_push(struct parsed_symbol* sym, const char* ptr, int len,
                            struct array* a)
 {
+    char**      new;
+
     assert(ptr);
     assert(a);
-    if (a->num >= MAX_ARRAY_ELTS) return FALSE;
 
+    if (!a->alloc)
+    {
+        new = und_alloc(sym, (a->alloc = 32) * sizeof(a->elts[0]));
+        if (!new) return FALSE;
+        a->elts = new;
+    }
+    else if (a->max >= a->alloc)
+    {
+        new = und_alloc(sym, (a->alloc * 2) * sizeof(a->elts[0]));
+        if (!new) return FALSE;
+        memcpy(new, a->elts, a->alloc * sizeof(a->elts[0]));
+        a->alloc *= 2;
+        a->elts = new;
+    }
     if (len == -1) len = strlen(ptr);
     a->elts[a->num] = und_alloc(sym, len + 1);
     assert(a->elts[a->num]);
@@ -1332,8 +1348,8 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
         switch (do_after)
         {
         case 1: case 2:
-            sym->stack.num = sym->stack.max = 1;
-            sym->stack.elts[0] = dashed_null;
+            if (!str_array_push(sym, dashed_null, -1, &sym->stack))
+                return FALSE;
             break;
         case 4:
             sym->result = (char*)function_name;
