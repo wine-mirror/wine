@@ -81,11 +81,7 @@ static INTERNALDRAG InternalDrag = { 0, 0, 0, 0, 0, 0, FALSE, 0 };
 
 static HBITMAP ImageList_CreateImage(HDC hdc, HIMAGELIST himl, UINT count, UINT width);
 static HRESULT ImageListImpl_CreateInstance(const IUnknown *pUnkOuter, REFIID iid, void** ppv);
-
-static inline BOOL is_valid(HIMAGELIST himl)
-{
-    return himl && himl->magic == IMAGELIST_MAGIC;
-}
+static inline BOOL is_valid(HIMAGELIST himl);
 
 /*
  * An imagelist with N images is tiled like this:
@@ -607,7 +603,6 @@ ImageList_Create (INT cx, INT cy, UINT flags,
 
     cGrow = (cGrow < 4) ? 4 : (cGrow + 3) & ~3;
 
-    himl->magic     = IMAGELIST_MAGIC;
     himl->cx        = cx;
     himl->cy        = cy;
     himl->flags     = flags;
@@ -3319,6 +3314,11 @@ static const IImageListVtbl ImageListImpl_Vtbl = {
     ImageListImpl_GetItemFlags,
     ImageListImpl_GetOverlayImage
 };
+
+static inline BOOL is_valid(HIMAGELIST himl)
+{
+    return himl && himl->lpVtbl == &ImageListImpl_Vtbl;
+}
 
 /*************************************************************************
  * HIMAGELIST_QueryInterface [COMCTL32.@]
