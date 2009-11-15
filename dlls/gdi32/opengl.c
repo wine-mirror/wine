@@ -279,7 +279,7 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
     OPENGL_Context ctx = (OPENGL_Context)hglrc1;
 
     TRACE("hglrc1: (%p); hglrc: (%p)\n", hglrc1, hglrc2);
-    if(ctx == NULL)
+    if(ctx == NULL || hglrc2 == NULL)
         return FALSE;
 
     /* Retrieve the HDC associated with the context to access the display driver */

@@ -103,6 +103,8 @@ typedef struct wine_glpixelformat {
 typedef struct wine_glcontext {
     HDC hdc;
     BOOL do_escape;
+    BOOL has_been_current;
+    BOOL sharing;
     XVisualInfo *vis;
     WineGLPixelFormat *fmt;
     GLXContext ctx;
@@ -1698,15 +1700,16 @@ HGLRC CDECL X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
         return NULL;
     }
 
-    /* The context will be allocated in the wglMakeCurrent call */
     wine_tsx11_lock();
     ret = alloc_context();
-    wine_tsx11_unlock();
     ret->hdc = hdc;
     ret->fmt = fmt;
+    ret->has_been_current = FALSE;
+    ret->sharing = FALSE;
 
-    /*ret->vis = vis;*/
     ret->vis = pglXGetVisualFromFBConfig(gdi_display, fmt->fbconfig);
+    ret->ctx = create_glxcontext(gdi_display, ret, NULL);
+    wine_tsx11_unlock();
 
     TRACE(" creating context %p (GL context creation delayed)\n", ret);
     return (HGLRC) ret;
@@ -1824,25 +1827,20 @@ BOOL CDECL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
         ret = FALSE;
     } else {
         Drawable drawable = get_glxdrawable(physDev);
-        if (ctx->ctx == NULL) {
-            /* The describe lines below are for debugging purposes only */
-            if (TRACE_ON(wgl)) {
-                describeDrawable(physDev);
-                describeContext(ctx);
-            }
 
-            /* Create a GLX context using the same visual as chosen earlier in wglCreateContext.
-             * We are certain that the drawable and context are compatible as we only allow compatible formats.
-             */
-            TRACE(" Creating GLX Context\n");
-            ctx->ctx = create_glxcontext(gdi_display, ctx, NULL);
-            TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
+        /* The describe lines below are for debugging purposes only */
+        if (TRACE_ON(wgl)) {
+            describeDrawable(physDev);
+            describeContext(ctx);
         }
+
         TRACE(" make current for dis %p, drawable %p, ctx %p\n", gdi_display, (void*) drawable, ctx->ctx);
         ret = pglXMakeCurrent(gdi_display, drawable, ctx->ctx);
         NtCurrentTeb()->glContext = ctx;
+
         if(ret)
         {
+            ctx->has_been_current = TRUE;
             ctx->hdc = hdc;
             ctx->read_hdc = hdc;
             ctx->drawables[0] = drawable;
@@ -1886,10 +1884,7 @@ BOOL CDECL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* pDrawDev, X11DRV_PDEV
             Drawable d_draw = get_glxdrawable(pDrawDev);
             Drawable d_read = get_glxdrawable(pReadDev);
 
-            if (ctx->ctx == NULL) {
-                ctx->ctx = create_glxcontext(gdi_display, ctx, NULL);
-                TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
-            }
+            ctx->has_been_current = TRUE;
             ctx->hdc = pDrawDev->hdc;
             ctx->read_hdc = pReadDev->hdc;
             ctx->drawables[0] = d_draw;
@@ -1918,30 +1913,48 @@ BOOL CDECL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
 
     if (!has_opengl()) return FALSE;
 
-    if (NULL != dest && dest->ctx != NULL) {
-        ERR("Could not share display lists, context already created !\n");
+    /* Sharing of display lists works differently in GLX and WGL. In case of GLX it is done
+     * at context creation time but in case of WGL it is done using wglShareLists.
+     * In the past we tried to emulate wglShareLists by delaying GLX context creation until
+     * either a wglMakeCurrent or wglShareLists. This worked fine for most apps but it causes
+     * issues for OpenGL 3 because there wglCreateContextAttribsARB can fail in a lot of cases,
+     * so there delaying context creation doesn't work.
+     *
+     * The new approach is to create a GLX context in wglCreateContext / wglCreateContextAttribsARB
+     * and when a program requests sharing we recreate the destination context if it hasn't been made
+     * current or when it hasn't shared display lists before.
+     */
+
+    if((org->has_been_current && dest->has_been_current) || dest->has_been_current)
+    {
+        ERR("Could not share display lists, one of the contexts has been current already !\n");
         return FALSE;
-    } else {
-        if(org && dest && (GetObjectType(org->hdc) == OBJ_MEMDC) ^ (GetObjectType(dest->hdc) == OBJ_MEMDC)) {
+    }
+    else if(dest->sharing)
+    {
+        ERR("Could not share display lists because hglrc2 has already shared lists before\n");
+        return FALSE;
+    }
+    else
+    {
+        if((GetObjectType(org->hdc) == OBJ_MEMDC) ^ (GetObjectType(dest->hdc) == OBJ_MEMDC))
+        {
             WARN("Attempting to share a context between a direct and indirect rendering context, expect issues!\n");
         }
 
-        if (org->ctx == NULL) {
-            wine_tsx11_lock();
-            describeContext(org);
+        wine_tsx11_lock();
+        describeContext(org);
+        describeContext(dest);
 
-            org->ctx = create_glxcontext(gdi_display, org, NULL);
-            wine_tsx11_unlock();
-            TRACE(" created a delayed OpenGL context (%p) for Wine context %p\n", org->ctx, org);
-        }
-        if (NULL != dest) {
-            wine_tsx11_lock();
-            describeContext(dest);
-            dest->ctx = create_glxcontext(gdi_display, dest, org->ctx);
-            wine_tsx11_unlock();
-            TRACE(" created a delayed OpenGL context (%p) for Wine context %p sharing lists with OpenGL ctx %p\n", dest->ctx, dest, org->ctx);
-            return TRUE;
-        }
+        /* Re-create the GLX context and share display lists */
+        pglXDestroyContext(gdi_display, dest->ctx);
+        dest->ctx = create_glxcontext(gdi_display, dest, org->ctx);
+        wine_tsx11_unlock();
+        TRACE(" re-created an OpenGL context (%p) for Wine context %p sharing lists with OpenGL ctx %p\n", dest->ctx, dest, org->ctx);
+
+        org->sharing = TRUE;
+        dest->sharing = TRUE;
+        return TRUE;
     }
     return FALSE;
 }
