@@ -4691,10 +4691,10 @@ static LRESULT EDIT_WM_Create(EDITSTATE *es, LPCWSTR name)
 
 /*********************************************************************
  *
- *	WM_DESTROY
+ *	WM_NCDESTROY
  *
  */
-static LRESULT EDIT_WM_Destroy(EDITSTATE *es)
+static LRESULT EDIT_WM_NCDestroy(EDITSTATE *es)
 {
 	LINEDEF *pc, *pp;
 
@@ -4762,7 +4762,7 @@ static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
 	if (!es && msg != WM_NCCREATE)
 		return DefWindowProcT(hwnd, msg, wParam, lParam, unicode);
 
-	if (es && (msg != WM_DESTROY)) EDIT_LockBuffer(es);
+	if (es && (msg != WM_NCDESTROY)) EDIT_LockBuffer(es);
 
 	switch (msg) {
 	case EM_GETSEL16:
@@ -5102,8 +5102,8 @@ static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
 		result = EDIT_WM_NCCreate(hwnd, (LPCREATESTRUCTW)lParam, unicode);
 		break;
 
-	case WM_DESTROY:
-		result = EDIT_WM_Destroy(es);
+	case WM_NCDESTROY:
+		result = EDIT_WM_NCDestroy(es);
 		es = NULL;
 		break;
 
