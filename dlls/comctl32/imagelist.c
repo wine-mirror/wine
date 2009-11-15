@@ -673,7 +673,7 @@ ImageList_Create (INT cx, INT cy, UINT flags,
     return himl;
 
 cleanup:
-    if (himl) ImageList_Destroy(himl);
+    ImageList_Destroy(himl);
     return NULL;
 }
 
