@@ -692,25 +692,6 @@ ImageList_Destroy (HIMAGELIST himl)
     if (!is_valid(himl))
 	return FALSE;
 
-    /* delete image bitmaps */
-    if (himl->hbmImage)
-        DeleteObject (himl->hbmImage);
-    if (himl->hbmMask)
-        DeleteObject (himl->hbmMask);
-
-    /* delete image & mask DCs */
-    if (himl->hdcImage)
-        DeleteDC(himl->hdcImage);
-    if (himl->hdcMask)
-        DeleteDC(himl->hdcMask);
-
-    /* delete blending brushes */
-    if (himl->hbrBlend25)
-        DeleteObject (himl->hbrBlend25);
-    if (himl->hbrBlend50)
-        DeleteObject (himl->hbrBlend50);
-
-    /* Free the IImageList instance */
     IImageList_Release((IImageList *) himl);
     return TRUE;
 }
@@ -2972,7 +2953,22 @@ static ULONG WINAPI ImageListImpl_Release(IImageList *iface)
     TRACE("(%p) refcount=%u\n", iface, ref);
 
     if (ref == 0)
+    {
+        /* delete image bitmaps */
+        if (This->hbmImage) DeleteObject (This->hbmImage);
+        if (This->hbmMask)  DeleteObject (This->hbmMask);
+
+        /* delete image & mask DCs */
+        if (This->hdcImage) DeleteDC (This->hdcImage);
+        if (This->hdcMask)  DeleteDC (This->hdcMask);
+
+        /* delete blending brushes */
+        if (This->hbrBlend25) DeleteObject (This->hbrBlend25);
+        if (This->hbrBlend50) DeleteObject (This->hbrBlend50);
+
+        This->lpVtbl = NULL;
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }

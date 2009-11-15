@@ -1251,8 +1251,36 @@ static void test_iimagelist(void)
     IImageList *imgl;
     HIMAGELIST himl;
     HRESULT hr;
+    ULONG ret;
 
-    if (!pImageList_CoCreateInstance || !pHIMAGELIST_QueryInterface)
+    if (!pHIMAGELIST_QueryInterface)
+    {
+        win_skip("XP imagelist functions not available\n");
+        return;
+    }
+
+    /* test reference counting on destruction */
+    imgl = (IImageList*)createImageList(32, 32);
+    ret = IUnknown_AddRef(imgl);
+    ok(ret == 2, "Expected 2, got %d\n", ret);
+    ret = ImageList_Destroy((HIMAGELIST)imgl);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    ret = ImageList_Destroy((HIMAGELIST)imgl);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    ret = ImageList_Destroy((HIMAGELIST)imgl);
+    ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
+
+    imgl = (IImageList*)createImageList(32, 32);
+    ret = IUnknown_AddRef(imgl);
+    ok(ret == 2, "Expected 2, got %d\n", ret);
+    ret = ImageList_Destroy((HIMAGELIST)imgl);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    ret = IImageList_Release(imgl);
+    ok(ret == 0, "Expected 0, got %d\n", ret);
+    ret = ImageList_Destroy((HIMAGELIST)imgl);
+    ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
+
+    if (!pImageList_CoCreateInstance)
     {
         win_skip("Vista imagelist functions not available\n");
         return;
