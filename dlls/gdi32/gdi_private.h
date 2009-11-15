@@ -302,7 +302,6 @@ typedef struct tagDC
     INT           MapMode;
     INT           GraphicsMode;      /* Graphics mode */
     ABORTPROC     pAbortProc;        /* AbortProc for Printing */
-    ABORTPROC16   pAbortProc16;
     INT           CursPosX;          /* Current position */
     INT           CursPosY;
     INT           ArcDirection;

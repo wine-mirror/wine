@@ -82,47 +82,6 @@ BOOL16 WINAPI QueryAbort16(HDC16 hdc16, INT16 reserved)
 }
 
 
-/**********************************************************************
- *           call_abort_proc16
- */
-static BOOL CALLBACK call_abort_proc16( HDC hdc, INT code )
-{
-    ABORTPROC16 proc16;
-    DC *dc = get_dc_ptr( hdc );
-
-    if (!dc) return FALSE;
-    proc16 = dc->pAbortProc16;
-    release_dc_ptr( dc );
-    if (proc16)
-    {
-        WORD args[2];
-        DWORD ret;
-
-        args[1] = HDC_16(hdc);
-        args[0] = code;
-        WOWCallback16Ex( (DWORD)proc16, WCB16_PASCAL, sizeof(args), args, &ret );
-        return LOWORD(ret);
-    }
-    return TRUE;
-}
-
-
-/**********************************************************************
- *           SetAbortProc   (GDI.381)
- */
-INT16 WINAPI SetAbortProc16(HDC16 hdc16, ABORTPROC16 abrtprc)
-{
-    HDC hdc = HDC_32( hdc16 );
-    DC *dc = get_dc_ptr( hdc );
-
-    if (!dc) return FALSE;
-    dc->pAbortProc16 = abrtprc;
-    dc->pAbortProc   = call_abort_proc16;
-    release_dc_ptr( dc );
-    return TRUE;
-}
-
-
 /****************** misc. printer related functions */
 
 /*

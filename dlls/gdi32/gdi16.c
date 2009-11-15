@@ -34,6 +34,127 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 #define HGDIOBJ_32(handle16)    ((HGDIOBJ)(ULONG_PTR)(handle16))
 #define HGDIOBJ_16(handle32)    ((HGDIOBJ16)(ULONG_PTR)(handle32))
 
+/*
+ * ############################################################################
+ */
+
+#include <pshpack1.h>
+#define GDI_MAX_THUNKS      32
+
+static struct gdi_thunk
+{
+    BYTE                        popl_eax;       /* popl  %eax (return address) */
+    BYTE                        pushl_pfn16;    /* pushl pfn16 */
+    DWORD                       pfn16;          /* pfn16 */
+    BYTE                        pushl_eax;      /* pushl %eax */
+    BYTE                        jmp;            /* ljmp GDI_Callback3216 */
+    DWORD                       callback;
+    HDC16                       hdc;
+} *GDI_Thunks;
+
+#include <poppack.h>
+
+/**********************************************************************
+ *           GDI_Callback3216
+ */
+static BOOL CALLBACK GDI_Callback3216( DWORD pfn16, HDC hdc, INT code )
+{
+    if (pfn16)
+    {
+        WORD args[2];
+        DWORD ret;
+
+        args[1] = HDC_16(hdc);
+        args[0] = code;
+        WOWCallback16Ex( pfn16, WCB16_PASCAL, sizeof(args), args, &ret );
+        return LOWORD(ret);
+    }
+    return TRUE;
+}
+
+
+/******************************************************************
+ *		GDI_AddThunk
+ *
+ */
+static struct gdi_thunk* GDI_AddThunk(HDC16 dc16, ABORTPROC16 pfn16)
+{
+    struct gdi_thunk* thunk;
+
+    if (!GDI_Thunks)
+    {
+        GDI_Thunks = VirtualAlloc(NULL, GDI_MAX_THUNKS * sizeof(*GDI_Thunks),
+                                        MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+        if (!GDI_Thunks)
+        {
+            return NULL;
+        }
+        for (thunk = GDI_Thunks; thunk < &GDI_Thunks[GDI_MAX_THUNKS]; thunk++)
+        {
+            thunk->popl_eax     = 0x58;   /* popl  %eax */
+            thunk->pushl_pfn16  = 0x68;   /* pushl pfn16 */
+            thunk->pfn16        = 0;
+            thunk->pushl_eax    = 0x50;   /* pushl %eax */
+            thunk->jmp          = 0xe9;   /* jmp GDI_Callback3216 */
+            thunk->callback     = (char *)GDI_Callback3216 - (char *)(&thunk->callback + 1);
+        }
+    }
+    for (thunk = GDI_Thunks; thunk < &GDI_Thunks[GDI_MAX_THUNKS]; thunk++)
+    {
+        if (thunk->pfn16 == 0)
+        {
+            thunk->pfn16 = (DWORD)pfn16;
+            thunk->hdc   = dc16;
+            return thunk;
+        }
+    }
+    FIXME("Out of mmdrv-thunks. Bump GDI_MAX_THUNKS\n");
+    return NULL;
+}
+
+/******************************************************************
+ *		GDI_DeleteThunk
+ */
+static void    GDI_DeleteThunk(struct gdi_thunk* thunk)
+{
+    thunk->pfn16 = 0;
+}
+
+/******************************************************************
+ *		GDI_FindThunk
+ */
+static struct gdi_thunk*        GDI_FindThunk(HDC16 hdc)
+{
+    struct gdi_thunk* thunk;
+
+    for (thunk = GDI_Thunks; thunk < &GDI_Thunks[GDI_MAX_THUNKS]; thunk++)
+    {
+        if (thunk->hdc == hdc)  return thunk;
+    }
+    return NULL;
+}
+
+/**********************************************************************
+ *           SetAbortProc   (GDI.381)
+ */
+INT16 WINAPI SetAbortProc16(HDC16 hdc16, ABORTPROC16 abrtprc)
+{
+    struct gdi_thunk*   thunk;
+
+    thunk = GDI_AddThunk(hdc16, abrtprc);
+    if (!thunk) return FALSE;
+    if (!SetAbortProc(HDC_32( hdc16 ), (ABORTPROC)thunk))
+    {
+        GDI_DeleteThunk(thunk);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/*
+ * ############################################################################
+ */
+
 struct callback16_info
 {
     FARPROC16 proc;
@@ -1167,7 +1288,14 @@ HBRUSH16 WINAPI CreateSolidBrush16( COLORREF color )
  */
 BOOL16 WINAPI DeleteDC16( HDC16 hdc )
 {
-    return DeleteDC( HDC_32(hdc) );
+    if (DeleteDC( HDC_32(hdc) ))
+    {
+        struct gdi_thunk* thunk;
+        if ((thunk = GDI_FindThunk(hdc)))
+            GDI_DeleteThunk(thunk);
+        return TRUE;
+    }
+    return FALSE;
 }
 
 
