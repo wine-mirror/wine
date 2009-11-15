@@ -550,7 +550,7 @@ UPDOWN_Buddy_SubclassProc(HWND  hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
  *
  * Sets bud as a new Buddy.
  * Then, it should subclass the buddy
- * If window has the UDS_ARROWKEYS, it subcalsses the buddy window to
+ * If window has the UDS_ARROWKEYS, it subclasses the buddy window to
  * process the UP/DOWN arrow keys.
  * If window has the UDS_ALIGNLEFT or UDS_ALIGNRIGHT style
  * the size/pos of the buddy and the control are adjusted accordingly.
@@ -659,7 +659,7 @@ static HWND UPDOWN_SetBuddy (UPDOWN_INFO* infoPtr, HWND bud)
  * 'delta' amount according to the 'action' flag which can be a
  * combination of FLAG_INCR and FLAG_DECR
  * It notifies the parent as required.
- * It handles wraping and non-wraping correctly.
+ * It handles wrapping and non-wrapping correctly.
  * It is assumed that delta>0
  */
 static void UPDOWN_DoAction (UPDOWN_INFO *infoPtr, int delta, int action)
