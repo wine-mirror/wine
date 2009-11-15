@@ -1636,7 +1636,7 @@ static void state_wrap(DWORD state, IWineD3DStateBlockImpl *stateblock, struct w
        stateblock->renderState[WINED3DRS_WRAP13] ||
        stateblock->renderState[WINED3DRS_WRAP14] ||
        stateblock->renderState[WINED3DRS_WRAP15] ) {
-        FIXME("(WINED3DRS_WRAP0) Texture wraping not yet supported\n");
+        FIXME("(WINED3DRS_WRAP0) Texture wrapping not yet supported\n");
     }
 }
 
