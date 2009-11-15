@@ -57,31 +57,6 @@ static const char DefaultDevMode[]    = "Default DevMode";
 static const char PrinterDriverData[] = "PrinterDriverData";
 static const char Printers[]          = "System\\CurrentControlSet\\Control\\Print\\Printers\\";
 
-/**********************************************************************
- *           QueryAbort   (GDI.155)
- *
- *  Calls the app's AbortProc function if avail.
- *
- * RETURNS
- * TRUE if no AbortProc avail or AbortProc wants to continue printing.
- * FALSE if AbortProc wants to abort printing.
- */
-BOOL16 WINAPI QueryAbort16(HDC16 hdc16, INT16 reserved)
-{
-    BOOL ret = TRUE;
-    HDC hdc = HDC_32( hdc16 );
-    DC *dc = get_dc_ptr( hdc );
-
-    if(!dc) {
-        ERR("Invalid hdc %p\n", hdc);
-	return FALSE;
-    }
-    if (dc->pAbortProc) ret = dc->pAbortProc(hdc, 0);
-    release_dc_ptr( dc );
-    return ret;
-}
-
-
 /****************** misc. printer related functions */
 
 /*

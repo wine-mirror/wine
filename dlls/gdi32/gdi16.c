@@ -135,6 +135,27 @@ static struct gdi_thunk*        GDI_FindThunk(HDC16 hdc)
 }
 
 /**********************************************************************
+ *           QueryAbort   (GDI.155)
+ *
+ *  Calls the app's AbortProc function if avail.
+ *
+ * RETURNS
+ * TRUE if no AbortProc avail or AbortProc wants to continue printing.
+ * FALSE if AbortProc wants to abort printing.
+ */
+BOOL16 WINAPI QueryAbort16(HDC16 hdc16, INT16 reserved)
+{
+    struct gdi_thunk* thunk = GDI_FindThunk(hdc16);
+
+    if (!thunk) {
+        ERR("Invalid hdc 0x%x\n", hdc16);
+	return FALSE;
+    }
+    return GDI_Callback3216( thunk->pfn16, HDC_32(hdc16), 0 );
+}
+
+
+/**********************************************************************
  *           SetAbortProc   (GDI.381)
  */
 INT16 WINAPI SetAbortProc16(HDC16 hdc16, ABORTPROC16 abrtprc)
