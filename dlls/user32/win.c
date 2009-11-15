@@ -769,7 +769,9 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     free_dce( wndPtr->dce, hwnd );
     wndPtr->dce = NULL;
     icon_title = wndPtr->icon_title;
-    HeapFree(GetProcessHeap(), 0, wndPtr->pScroll);
+    HeapFree( GetProcessHeap(), 0, wndPtr->text );
+    wndPtr->text = NULL;
+    HeapFree( GetProcessHeap(), 0, wndPtr->pScroll );
     wndPtr->pScroll = NULL;
     WIN_ReleasePtr( wndPtr );
 
