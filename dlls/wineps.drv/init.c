@@ -111,6 +111,8 @@ static const LOGFONTA DefaultLogFont = {
     DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, ""
 };
 
+static const CHAR default_devmodeA[] = "Default DevMode";
+
 /*********************************************************************
  *	     DllMain
  *
@@ -532,7 +534,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     PRINTERINFO *pi = PSDRV_PrinterList, **last = &PSDRV_PrinterList;
     FONTNAME *font;
     const AFM *afm;
-    HANDLE hPrinter;
+    HANDLE hPrinter = 0;
     const char *ppd = NULL;
     DWORD ppdType;
     char* ppdFileName = NULL;
@@ -556,31 +558,32 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     if (!(pi->FriendlyName = HeapAlloc( PSDRV_Heap, 0, strlen(name)+1 ))) goto fail;
     strcpy( pi->FriendlyName, name );
 
-    /* Use Get|SetPrinterDataExA instead? */
+    if (OpenPrinterA (pi->FriendlyName, &hPrinter, NULL) == 0) {
+        ERR ("OpenPrinterA failed with code %i\n", GetLastError ());
+        goto cleanup;
+    }
 
-    res = DrvGetPrinterData16((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE, &type,
-			    NULL, 0, &needed );
+    needed = 0;
+    res = GetPrinterDataExA(hPrinter, NULL, default_devmodeA, &type, NULL, 0, &needed);
 
-    if(res == ERROR_INVALID_PRINTER_NAME || needed != sizeof(DefaultDevmode)) {
+    if (needed < sizeof(DefaultDevmode)) {
         pi->Devmode = HeapAlloc( PSDRV_Heap, 0, sizeof(DefaultDevmode) );
-	if (pi->Devmode == NULL)
-	    goto cleanup;
-	*pi->Devmode = DefaultDevmode;
-	lstrcpynA((LPSTR)pi->Devmode->dmPublic.dmDeviceName,name,CCHDEVICENAME);
-	using_default_devmode = TRUE;
+        if (pi->Devmode == NULL)
+            goto closeprinter;
 
-	/* need to do something here AddPrinter?? */
+        *pi->Devmode = DefaultDevmode;
+        lstrcpynA((LPSTR)pi->Devmode->dmPublic.dmDeviceName,name,CCHDEVICENAME);
+        using_default_devmode = TRUE;
     }
     else {
         pi->Devmode = HeapAlloc( PSDRV_Heap, 0, needed );
-	DrvGetPrinterData16((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE, &type,
-			  (LPBYTE)pi->Devmode, needed, &needed);
+        if (pi->Devmode == NULL)
+            goto closeprinter;
+
+        GetPrinterDataExA(hPrinter, NULL, default_devmodeA, &type, (LPBYTE)pi->Devmode, needed, &needed);
     }
 
-    if (OpenPrinterA (pi->FriendlyName, &hPrinter, NULL) == 0) {
-	ERR ("OpenPrinterA failed with code %i\n", GetLastError ());
-	goto cleanup;
-    }
+
 
 #ifdef SONAME_LIBCUPS
     if (cupshandle != (void*)-1) {
@@ -687,8 +690,9 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 	    dm.dmPublic.u1.s1.dmPaperSize = papersize;
 	    PSDRV_MergeDevmodes(pi->Devmode, &dm, pi);
 	}
-	DrvSetPrinterData16((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE,
-		 REG_BINARY, (LPBYTE)pi->Devmode, sizeof(DefaultDevmode) );
+
+        SetPrinterDataExA(hPrinter, NULL, default_devmodeA, REG_BINARY,
+                            (LPBYTE)pi->Devmode, sizeof(DefaultDevmode));
     }
 
     if(pi->ppd->DefaultPageSize) { /* We'll let the ppd override the devmode */

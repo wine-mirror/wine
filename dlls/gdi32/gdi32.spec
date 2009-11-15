@@ -514,8 +514,6 @@
 # Wine extensions: Win16 functions that are needed by other dlls
 #
 @ stdcall CloseJob16(long)
-@ stdcall DrvGetPrinterData16(str str ptr ptr long ptr)
-@ stdcall DrvSetPrinterData16(str str long ptr long)
 @ stdcall GetDCHook(long ptr)
 @ stdcall OpenJob16(str str long)
 @ stdcall SelectVisRgn(long long)
