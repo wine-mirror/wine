@@ -3162,22 +3162,30 @@ static HRESULT WINAPI ImageListImpl_Clone(IImageList *iface, REFIID riid,
 static HRESULT WINAPI ImageListImpl_GetImageRect(IImageList *iface, int i,
     RECT *prc)
 {
-    FIXME("STUB: %p %d %p\n", iface, i, prc);
-    return E_NOTIMPL;
+    HIMAGELIST This = (HIMAGELIST) iface;
+    IMAGEINFO info;
+
+    if (!prc)
+        return E_FAIL;
+
+    if (!ImageList_GetImageInfo(This, i, &info))
+        return E_FAIL;
+
+    return CopyRect(prc, &info.rcImage) ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI ImageListImpl_GetIconSize(IImageList *iface, int *cx,
     int *cy)
 {
-    FIXME("STUB: %p %p %p\n", iface, cx, cy);
-    return E_NOTIMPL;
+    HIMAGELIST This = (HIMAGELIST) iface;
+
+    return ImageList_GetIconSize(This, cx, cy) ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI ImageListImpl_SetIconSize(IImageList *iface, int cx,
     int cy)
 {
-    FIXME("STUB: %p %d %d\n", iface, cx, cy);
-    return E_NOTIMPL;
+    return ImageList_SetIconSize((HIMAGELIST) iface, cx, cy) ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI ImageListImpl_GetImageCount(IImageList *iface, int *pi)
@@ -3198,14 +3206,20 @@ static HRESULT WINAPI ImageListImpl_SetImageCount(IImageList *iface,
 static HRESULT WINAPI ImageListImpl_SetBkColor(IImageList *iface, COLORREF clrBk,
     COLORREF *pclr)
 {
-    FIXME("STUB: %p %x %p\n", iface, clrBk, pclr);
-    return E_NOTIMPL;
+    if (!pclr)
+        return E_FAIL;
+
+    *pclr = ImageList_SetBkColor((HIMAGELIST) iface, clrBk);
+    return *pclr == CLR_NONE ? E_FAIL : S_OK;
 }
 
 static HRESULT WINAPI ImageListImpl_GetBkColor(IImageList *iface, COLORREF *pclr)
 {
-    FIXME("STUB: %p %p\n", iface, pclr);
-    return E_NOTIMPL;
+    if (!pclr)
+        return E_FAIL;
+
+    *pclr = ImageList_GetBkColor((HIMAGELIST) iface);
+    return S_OK;
 }
 
 static HRESULT WINAPI ImageListImpl_BeginDrag(IImageList *iface, int iTrack,
