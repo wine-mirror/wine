@@ -284,6 +284,9 @@ void mdmp_dump(void)
             case PROCESSOR_ARCHITECTURE_PPC:
                 str = "PowerPC";
                 break;
+            case PROCESSOR_ARCHITECTURE_ARM:
+                str = "ARM";
+                break;
             default:
                 str = "???";
                 break;
