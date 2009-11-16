@@ -686,7 +686,8 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
      * 4. PROXY_SENDRECEIVE - send/receive buffer
      * 5. PROXY_UNMARHSAL - unmarshal [out] params from buffer
      */
-    if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
+    if ((pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT) ||
+        (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_HAS_COMM_OR_FAULT))
     {
         __TRY
         {
@@ -696,13 +697,56 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                 switch (phase)
                 {
                 case PROXY_GETBUFFER:
-                    /* allocate the buffer */
-                    NdrProxyGetBuffer(This, &stubMsg);
+                    if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
+                    {
+                        /* allocate the buffer */
+                        NdrProxyGetBuffer(This, &stubMsg);
+                    }
+                    else
+                    {
+                        /* allocate the buffer */
+                        if (Oif_flags.HasPipes)
+                            /* NdrGetPipeBuffer(...) */
+                            FIXME("pipes not supported yet\n");
+                        else
+                        {
+                            if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
+#if 0
+                                NdrNsGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
+#else
+                                FIXME("using auto handle - call NdrNsGetBuffer when it gets implemented\n");
+#endif
+                            else
+                                NdrGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
+                        }
+                    }
                     break;
                 case PROXY_SENDRECEIVE:
-                    /* send the [in] params and receive the [out] and [retval]
-                     * params */
-                    NdrProxySendReceive(This, &stubMsg);
+                    if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
+                    {
+                        /* send the [in] params and receive the [out] and [retval]
+                         * params */
+                        NdrProxySendReceive(This, &stubMsg);
+                    }
+                    else
+                    {
+                        /* send the [in] params and receive the [out] and [retval]
+                         * params */
+                        if (Oif_flags.HasPipes)
+                            /* NdrPipesSendReceive(...) */
+                            FIXME("pipes not supported yet\n");
+                        else
+                        {
+                            if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
+#if 0
+                                NdrNsSendReceive(&stubMsg, stubMsg.Buffer, pStubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle);
+#else
+                                FIXME("using auto handle - call NdrNsSendReceive when it gets implemented\n");
+#endif
+                            else
+                                NdrSendReceive(&stubMsg, stubMsg.Buffer);
+                        }
+                    }
 
                     /* convert strings, floating point values and endianess into our
                      * preferred format */
@@ -729,7 +773,33 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         }
         __EXCEPT_ALL
         {
-            RetVal = NdrProxyErrorHandler(GetExceptionCode());
+            if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
+                RetVal = NdrProxyErrorHandler(GetExceptionCode());
+            else
+            {
+                const COMM_FAULT_OFFSETS *comm_fault_offsets = &pStubDesc->CommFaultOffsets[procedure_number];
+                ULONG *comm_status;
+                ULONG *fault_status;
+
+                TRACE("comm_fault_offsets = {0x%hx, 0x%hx}\n", comm_fault_offsets->CommOffset, comm_fault_offsets->FaultOffset);
+
+                if (comm_fault_offsets->CommOffset == -1)
+                    comm_status = (ULONG *)&RetVal;
+                else if (comm_fault_offsets->CommOffset >= 0)
+                    comm_status = *(ULONG **)ARG_FROM_OFFSET(stubMsg.StackTop, comm_fault_offsets->CommOffset);
+                else
+                    comm_status = NULL;
+
+                if (comm_fault_offsets->FaultOffset == -1)
+                    fault_status = (ULONG *)&RetVal;
+                else if (comm_fault_offsets->FaultOffset >= 0)
+                    fault_status = *(ULONG **)ARG_FROM_OFFSET(stubMsg.StackTop, comm_fault_offsets->CommOffset);
+                else
+                    fault_status = NULL;
+
+                NdrMapCommAndFaultStatus(&stubMsg, comm_status, fault_status,
+                                         GetExceptionCode());
+            }
         }
         __ENDTRY
     }
