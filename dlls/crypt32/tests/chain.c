@@ -3512,8 +3512,10 @@ static void testGetCertChain(void)
     {
         ok(chain->TrustStatus.dwErrorStatus ==
          chainCheckEmbeddedNull.status.status.dwErrorStatus ||
-         broken(chain->TrustStatus.dwErrorStatus ==
-         chainCheckEmbeddedNullBroken.status.status.dwErrorStatus),
+         broken((chain->TrustStatus.dwErrorStatus &
+         ~chainCheckEmbeddedNullBroken.status.statusToIgnore.dwErrorStatus) ==
+         (chainCheckEmbeddedNullBroken.status.status.dwErrorStatus &
+         ~chainCheckEmbeddedNullBroken.status.statusToIgnore.dwErrorStatus)),
          "unexpected chain error status %08x\n",
          chain->TrustStatus.dwErrorStatus);
         if (chainCheckEmbeddedNull.status.status.dwErrorStatus ==
