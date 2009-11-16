@@ -122,6 +122,7 @@ HRESULT __RPC_STUB IDBProperties_GetProperties_Stub(IDBProperties* This, ULONG c
 
     TRACE("(%p, %d, %p, %p, %p, %p)\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets,
           prgPropertySets, ppErrorInfoRem);
+    *pcPropertySets = 0;
     *ppErrorInfoRem = NULL;
     hr = IDBProperties_GetProperties(This, cPropertyIDSets, rgPropertyIDSets,
         pcPropertySets, prgPropertySets);

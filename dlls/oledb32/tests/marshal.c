@@ -165,7 +165,6 @@ static HRESULT WINAPI Test_DBProperties_GetProperties(
         DBPROPSET **prgPropertySets)
 {
     ok(cPropertyIDSets == 0, "Expected cPropertyIDSets to be 0 instead of %d\n", cPropertyIDSets);
-    todo_wine
     ok(*pcPropertySets == 0, "Expected *pcPropertySets to be 0 instead of %d\n", *pcPropertySets);
     *pcPropertySets = 1;
     *prgPropertySets = CoTaskMemAlloc(sizeof(DBPROPSET));
