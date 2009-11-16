@@ -1832,6 +1832,14 @@ PCERT_RDN_ATTR WINAPI CertFindRDNAttr(LPCSTR pszObjId, PCERT_NAME_INFO pName)
     return ret;
 }
 
+BOOL WINAPI CertIsRDNAttrsInCertificateName(DWORD dwCertEncodingType,
+ DWORD dwFlags, PCERT_NAME_BLOB pCertName, PCERT_RDN pRDN)
+{
+    FIXME("(%08x, %08x, %p, %p): stub\n", dwCertEncodingType, dwFlags,
+     pCertName, pRDN);
+    return FALSE;
+}
+
 LONG WINAPI CertVerifyTimeValidity(LPFILETIME pTimeToVerify,
  PCERT_INFO pCertInfo)
 {
