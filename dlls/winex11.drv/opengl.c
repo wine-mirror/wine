@@ -1630,41 +1630,7 @@ BOOL CDECL X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask) {
 
     TRACE("hglrcSrc: (%p), hglrcDst: (%p), mask: %#x\n", hglrcSrc, hglrcDst, mask);
 
-    /* There is a slight difference in the way GL contexts share display lists in WGL and GLX.
-     * In case of GLX you need to specify this at context creation time but in case of WGL you
-     * do this using wglShareLists which you can call after creating the context.
-     * To emulate WGL we try to delay the creation of the context until wglShareLists or wglMakeCurrent.
-     * Up to now that works fine.
-     *
-     * The delayed GLX context creation could cause issues for wglCopyContext as it might get called
-     * when there is no GLX context yet. The chance this will cause problems is small as at the time of
-     * writing Wine has had OpenGL support for more than 7 years and this function has remained a stub
-     * ever since then.
-     */
-    if(!src->ctx || !dst->ctx) {
-        /* NOTE: As a special case, if both GLX contexts are NULL, that means
-         * neither WGL context was made current. In that case, both contexts
-         * are in a default state, so any copy would no-op.
-         */
-        if(!src->ctx && !dst->ctx) {
-            TRACE("No source or destination contexts set. No-op.\n");
-            return TRUE;
-        }
-
-        if (!src->ctx) {
-            wine_tsx11_lock();
-            src->ctx = create_glxcontext(gdi_display, src, NULL);
-            TRACE(" created a delayed OpenGL context (%p)\n", src->ctx);
-        }
-        else if (!dst->ctx) {
-            wine_tsx11_lock();
-            dst->ctx = create_glxcontext(gdi_display, dst, NULL);
-            TRACE(" created a delayed OpenGL context (%p)\n", dst->ctx);
-        }
-    }
-    else
-        wine_tsx11_lock();
-
+    wine_tsx11_lock();
     pglXCopyContext(gdi_display, src->ctx, dst->ctx, mask);
     wine_tsx11_unlock();
 
