@@ -455,6 +455,15 @@ enum module_type module_get_type_by_name(const WCHAR* name)
     return DMT_PE;
 }
 
+/******************************************************************
+ *		                refresh_module_list
+ */
+static BOOL refresh_module_list(struct process* pcs)
+{
+    /* force transparent ELF and Mach-O loading / unloading */
+    return elf_synchronize_module_list(pcs) || macho_synchronize_module_list(pcs);
+}
+
 /***********************************************************************
  *			SymLoadModule (DBGHELP.@)
  */
@@ -536,9 +545,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     if (Flags & ~(SLMFLAG_VIRTUAL))
         FIXME("Unsupported Flags %08x for %s\n", Flags, debugstr_w(wImageName));
 
-    /* force transparent ELF and Mach-O loading / unloading */
-    elf_synchronize_module_list(pcs);
-    macho_synchronize_module_list(pcs);
+    refresh_module_list(pcs);
 
     /* this is a Wine extension to the API just to redo the synchronisation */
     if (!wImageName && !hFile) return 0;
@@ -1058,6 +1065,11 @@ void module_reset_debug_info(struct module* module)
  */
 BOOL WINAPI SymRefreshModuleList(HANDLE hProcess)
 {
-    FIXME("(%p) stub\n", hProcess);
-    return FALSE;
+    struct process*     pcs;
+
+    TRACE("(%p)\n", hProcess);
+
+    if (!(pcs = process_find_by_handle(hProcess))) return FALSE;
+
+    return refresh_module_list(pcs);
 }
