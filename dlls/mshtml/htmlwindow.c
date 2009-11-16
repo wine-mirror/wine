@@ -730,9 +730,16 @@ static HRESULT WINAPI HTMLWindow2_get_self(IHTMLWindow2 *iface, IHTMLWindow2 **p
 
 static HRESULT WINAPI HTMLWindow2_get_top(IHTMLWindow2 *iface, IHTMLWindow2 **p)
 {
-    HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    HTMLWindow *This = HTMLWINDOW2_THIS(iface), *curr;
+    TRACE("(%p)->(%p)\n", This, p);
+
+    curr = This;
+    while(curr->parent)
+        curr = curr->parent;
+    *p = HTMLWINDOW2(curr);
+    IHTMLWindow2_AddRef(*p);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_get_window(IHTMLWindow2 *iface, IHTMLWindow2 **p)

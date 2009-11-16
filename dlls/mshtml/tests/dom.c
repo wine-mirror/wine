@@ -5601,8 +5601,8 @@ static void test_cond_comment(IHTMLDocument2 *doc)
 
 static void test_frame(IDispatch *disp, const char *exp_id)
 {
-    IHTMLWindow2 *frame2, *parent;
-    IHTMLDocument2 *parent_doc;
+    IHTMLWindow2 *frame2, *parent, *top;
+    IHTMLDocument2 *parent_doc, *top_doc;
     IHTMLWindow4 *frame;
     IHTMLFrameBase *frame_elem;
     IHTMLElement *html_elem;
@@ -5639,20 +5639,42 @@ static void test_frame(IDispatch *disp, const char *exp_id)
 
     hres = IHTMLWindow2_get_parent(frame2, &parent);
     ok(hres == S_OK, "IHTMLWindow2_get_parent failed: 0x%08x\n", hres);
-    IHTMLWindow2_Release(frame2);
-    if(FAILED(hres))
+    if(FAILED(hres)){
+        IHTMLWindow2_Release(frame2);
         return;
+    }
 
     hres = IHTMLWindow2_get_document(parent, &parent_doc);
     ok(hres == S_OK, "IHTMLWindow2_get_document failed: 0x%08x\n", hres);
     IHTMLWindow2_Release(parent);
-    if(FAILED(hres))
+    if(FAILED(hres)){
+        IHTMLWindow2_Release(frame2);
         return;
+    }
 
     hres = IHTMLDocument2_get_title(parent_doc, &bstr);
     ok(hres == S_OK, "IHTMLDocument2_get_title failed: 0x%08x\n", hres);
     ok(!strcmp_wa(bstr, "frameset test"), "Did not get the right parent. Expected \"frameset test\", found %s\n", wine_dbgstr_w(bstr));
     IHTMLDocument2_Release(parent_doc);
+    SysFreeString(bstr);
+
+    /* test get_top */
+    hres = IHTMLWindow2_get_top(frame2, &top);
+    ok(hres == S_OK, "IHTMLWindow2_get_top failed: 0x%08x\n", hres);
+    IHTMLWindow2_Release(frame2);
+    if(FAILED(hres))
+        return;
+
+    hres = IHTMLWindow2_get_document(top, &top_doc);
+    ok(hres == S_OK, "IHTMLWindow2_get_document failed: 0x%08x\n", hres);
+    IHTMLWindow2_Release(top);
+    if(FAILED(hres))
+        return;
+
+    hres = IHTMLDocument2_get_title(top_doc, &bstr);
+    ok(hres == S_OK, "IHTMLDocument2_get_title failed: 0x%08x\n", hres);
+    ok(!strcmp_wa(bstr, "frameset test"), "Did not get the right parent. Expected \"frameset test\", found %s\n", wine_dbgstr_w(bstr));
+    IHTMLDocument2_Release(top_doc);
     SysFreeString(bstr);
 }
 
