@@ -31,13 +31,19 @@
 
 static BOOL (WINAPI *pCreateWellKnownSid)(WELL_KNOWN_SID_TYPE,PSID,PSID,DWORD*);
 static BOOL (WINAPI *pGetEventLogInformation)(HANDLE,DWORD,LPVOID,DWORD,LPDWORD);
+static BOOL (WINAPI *pWow64DisableWow64FsRedirection)(PVOID *);
+static BOOL (WINAPI *pWow64RevertWow64FsRedirection)(PVOID);
 
 static void init_function_pointers(void)
 {
     HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
+    HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
 
     pCreateWellKnownSid = (void*)GetProcAddress(hadvapi32, "CreateWellKnownSid");
     pGetEventLogInformation = (void*)GetProcAddress(hadvapi32, "GetEventLogInformation");
+
+    pWow64DisableWow64FsRedirection = (void*)GetProcAddress(hkernel32, "Wow64DisableWow64FsRedirection");
+    pWow64RevertWow64FsRedirection = (void*)GetProcAddress(hkernel32, "Wow64RevertWow64FsRedirection");
 }
 
 static void create_backup(const char *filename)
@@ -945,6 +951,7 @@ static void test_autocreation(void)
     char *p;
     char sources[sizeof(eventsources)];
     char sysdir[MAX_PATH];
+    void *redir = 0;
 
     RegOpenKeyA(HKEY_LOCAL_MACHINE, eventlogsvc, &key);
     RegOpenKeyA(key, eventlogname, &eventkey);
@@ -974,6 +981,10 @@ static void test_autocreation(void)
     RegCloseKey(eventkey);
     RegCloseKey(key);
 
+    /* The directory that holds the eventlog files could be redirected */
+    if (pWow64DisableWow64FsRedirection)
+        pWow64DisableWow64FsRedirection(&redir);
+
     /* On Windows we also automatically get an eventlog file */
     GetSystemDirectoryA(sysdir, sizeof(sysdir));
 
@@ -994,6 +1005,9 @@ static void test_autocreation(void)
 
     ok(GetFileAttributesA(eventlogfile) != INVALID_FILE_ATTRIBUTES,
        "Expected an eventlog file\n");
+
+    if (pWow64RevertWow64FsRedirection)
+        pWow64RevertWow64FsRedirection(redir);
 }
 
 static void cleanup_eventlog(void)
