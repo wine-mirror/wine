@@ -1394,7 +1394,7 @@ static void DoTest1_v6(void)
     int ret = 0;
 
     /* create an imagelist to play with */
-    himl = ImageList_Create(84,84,0x10,0,3);
+    himl = ImageList_Create(84, 84, ILC_COLOR16, 0, 3);
     ok(himl != 0,"failed to create imagelist\n");
 
     imgl = (IImageList *) himl;
@@ -1466,7 +1466,7 @@ static void DoTest3_v6(void)
     ok(hdc!=NULL, "couldn't get DC\n");
 
     /* create an imagelist to play with */
-    himl = ImageList_Create(48,48,0x10,0,3);
+    himl = ImageList_Create(48, 48, ILC_COLOR16, 0, 3);
     ok(himl!=0,"failed to create imagelist\n");
 
     imgl = (IImageList *) himl;
