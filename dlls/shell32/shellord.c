@@ -46,6 +46,7 @@
 #include "pidl.h"
 #include "shlwapi.h"
 #include "commdlg.h"
+#include "commoncontrols.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 WINE_DECLARE_DEBUG_CHANNEL(pidl);
@@ -2173,10 +2174,41 @@ void WINAPI SHFlushSFCache(void)
 {
 }
 
+/*************************************************************************
+ *              SHGetImageList (SHELL32.727)
+ *
+ * Returns a copy of a shell image list.
+ *
+ * NOTES
+ *   Windows XP features 4 sizes of image list, and Vista 5. Wine currently
+ *   only supports 2, so requests for the others will currently fail.
+ */
 HRESULT WINAPI SHGetImageList(int iImageList, REFIID riid, void **ppv)
 {
-    FIXME("STUB: %i %s\n",iImageList,debugstr_guid(riid));
-    return E_NOINTERFACE;
+    HIMAGELIST hLarge, hSmall;
+    HIMAGELIST hNew;
+    HRESULT ret = E_FAIL;
+
+    /* Wine currently only maintains large and small image lists */
+    if ((iImageList != SHIL_LARGE) && (iImageList != SHIL_SMALL))
+    {
+        FIXME("Unsupported image list %i requested\n", iImageList);
+        return E_FAIL;
+    }
+
+    Shell_GetImageList(&hLarge, &hSmall);
+    hNew = ImageList_Duplicate(iImageList == SHIL_LARGE ? hLarge : hSmall);
+
+    /* Get the interface for the new image list */
+    if (hNew)
+    {
+        ret = HIMAGELIST_QueryInterface(hNew, riid, ppv);
+
+        if (!SUCCEEDED(ret))
+            ImageList_Destroy(hNew);
+    }
+
+    return ret;
 }
 
 /*************************************************************************
