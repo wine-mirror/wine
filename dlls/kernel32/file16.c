@@ -555,6 +555,7 @@ INT16 WINAPI GetPrivateProfileString16( LPCSTR section, LPCSTR entry,
             ret = GetPrivateProfileSectionA( section, data, size, filename );
             if (!ret)
             {
+                if (len) *buffer = 0;
                 HeapFree( GetProcessHeap(), 0, data );
                 return 0;
             }
