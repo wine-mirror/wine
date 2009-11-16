@@ -1306,6 +1306,81 @@ static void test_iimagelist(void)
     ImageList_Destroy(himl);
 }
 
+static void testHotspot_v6(void)
+{
+    struct hotspot {
+        int dx;
+        int dy;
+    };
+
+#define SIZEX1 47
+#define SIZEY1 31
+#define SIZEX2 11
+#define SIZEY2 17
+#define HOTSPOTS_MAX 4       /* Number of entries in hotspots */
+    static const struct hotspot hotspots[HOTSPOTS_MAX] = {
+        { 10, 7 },
+        { SIZEX1, SIZEY1 },
+        { -9, -8 },
+        { -7, 35 }
+    };
+    int i, j;
+    HIMAGELIST himl1 = createImageList(SIZEX1, SIZEY1);
+    HIMAGELIST himl2 = createImageList(SIZEX2, SIZEY2);
+    IImageList *imgl1, *imgl2;
+    HRESULT hr;
+
+    /* cast to IImageList */
+    imgl1 = (IImageList *) himl1;
+    imgl2 = (IImageList *) himl2;
+
+    for (i = 0; i < HOTSPOTS_MAX; i++) {
+        for (j = 0; j < HOTSPOTS_MAX; j++) {
+            int dx1 = hotspots[i].dx;
+            int dy1 = hotspots[i].dy;
+            int dx2 = hotspots[j].dx;
+            int dy2 = hotspots[j].dy;
+            int correctx, correcty, newx, newy;
+            char loc[256];
+            IImageList *imglNew;
+            POINT ppt;
+
+            hr = IImageList_BeginDrag(imgl1, 0, dx1, dy1);
+            ok(SUCCEEDED(hr), "BeginDrag failed for { %d, %d }\n", dx1, dy1);
+            sprintf(loc, "BeginDrag (%d,%d)\n", i, j);
+
+            /* check merging the dragged image with a second image */
+            hr = IImageList_SetDragCursorImage(imgl2, (IUnknown *) imgl2, 0, dx2, dy2);
+            ok(SUCCEEDED(hr), "SetDragCursorImage failed for {%d, %d}{%d, %d}\n",
+                    dx1, dy1, dx2, dy2);
+            sprintf(loc, "SetDragCursorImage (%d,%d)\n", i, j);
+
+            /* check new hotspot, it should be the same like the old one */
+            hr = IImageList_GetDragImage(imgl2, NULL, &ppt, &IID_IImageList, (PVOID *) &imglNew);
+            ok(SUCCEEDED(hr), "GetDragImage failed\n");
+            ok(ppt.x == dx1 && ppt.y == dy1,
+                    "Expected drag hotspot [%d,%d] got [%d,%d]\n",
+                    dx1, dy1, ppt.x, ppt.y);
+            /* check size of new dragged image */
+            IImageList_GetIconSize(imglNew, &newx, &newy);
+            correctx = max(SIZEX1, max(SIZEX2 + dx2, SIZEX1 - dx2));
+            correcty = max(SIZEY1, max(SIZEY2 + dy2, SIZEY1 - dy2));
+            ok(newx == correctx && newy == correcty,
+                    "Expected drag image size [%d,%d] got [%d,%d]\n",
+                    correctx, correcty, newx, newy);
+            sprintf(loc, "GetDragImage (%d,%d)\n", i, j);
+            IImageList_EndDrag(imgl2);
+        }
+    }
+#undef SIZEX1
+#undef SIZEY1
+#undef SIZEX2
+#undef SIZEY2
+#undef HOTSPOTS_MAX
+    IImageList_Release(imgl2);
+    IImageList_Release(imgl1);
+}
+
 static void DoTest1_v6(void)
 {
     IImageList *imgl;
@@ -1571,6 +1646,8 @@ START_TEST(imagelist)
     test_ImageList_DrawIndirect();
     test_shell_imagelist();
     test_iimagelist();
+
+    testHotspot_v6();
     DoTest1_v6();
     DoTest3_v6();
     testMerge_v6();
