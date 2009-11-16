@@ -1451,6 +1451,82 @@ static void DoTest3_v6(void)
     DestroyWindow(hwndfortest);
 }
 
+static void testMerge_v6(void)
+{
+    HIMAGELIST himl1, himl2;
+    IImageList *imgl1, *imgl2, *merge;
+    HICON hicon1;
+    HWND hwnd = create_a_window();
+    HRESULT hr;
+    int ret;
+
+    himl1 = ImageList_Create(32,32,0,0,3);
+    ok(himl1 != NULL,"failed to create himl1\n");
+
+    himl2 = ImageList_Create(32,32,0,0,3);
+    ok(himl2 != NULL,"failed to create himl2\n");
+
+    hicon1 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
+    ok(hicon1 != NULL, "failed to create hicon1\n");
+
+    if (!himl1 || !himl2 || !hicon1)
+        return;
+
+    /* cast to IImageList */
+    imgl1 = (IImageList *) himl1;
+    imgl2 = (IImageList *) himl2;
+
+    ok(SUCCEEDED(IImageList_ReplaceIcon(imgl2, -1, hicon1, &ret)) && (ret == 0),"add icon1 to himl2 failed\n");
+
+    /* If himl1 has no images, merge still succeeds */
+    hr = IImageList_Merge(imgl1, -1, (IUnknown *) imgl2, 0, 0, 0, &IID_IImageList, (void **) &merge);
+    ok(SUCCEEDED(hr), "merge himl1,-1 failed\n");
+    if (SUCCEEDED(hr)) IImageList_Release(merge);
+
+    hr = IImageList_Merge(imgl1, 0, (IUnknown *) imgl2, 0, 0, 0, &IID_IImageList, (void **) &merge);
+    ok(SUCCEEDED(hr), "merge himl1,0 failed\n");
+    if (SUCCEEDED(hr)) IImageList_Release(merge);
+
+    /* Same happens if himl2 is empty */
+    IImageList_Release(imgl2);
+    himl2 = ImageList_Create(32,32,0,0,3);
+    ok(himl2 != NULL,"failed to recreate himl2\n");
+
+    imgl2 = (IImageList *) himl2;
+
+    hr = IImageList_Merge(imgl1, -1, (IUnknown *) imgl2, -1, 0, 0, &IID_IImageList, (void **) &merge);
+    ok(SUCCEEDED(hr), "merge himl2,-1 failed\n");
+    if (SUCCEEDED(hr)) IImageList_Release(merge);
+
+    hr = IImageList_Merge(imgl1, -1, (IUnknown *) imgl2, 0, 0, 0, &IID_IImageList, (void **) &merge);
+    ok(SUCCEEDED(hr), "merge himl2,0 failed\n");
+    if (SUCCEEDED(hr)) IImageList_Release(merge);
+
+    /* Now try merging an image with itself */
+    ok(SUCCEEDED(IImageList_ReplaceIcon(imgl2, -1, hicon1, &ret)) && (ret == 0),"re-add icon1 to himl2 failed\n");
+
+    hr = IImageList_Merge(imgl2, 0, (IUnknown *) imgl2, 0, 0, 0, &IID_IImageList, (void **) &merge);
+    ok(SUCCEEDED(hr), "merge himl2 with itself failed\n");
+    if (SUCCEEDED(hr)) IImageList_Release(merge);
+
+    /* Try merging 2 different image lists */
+    ok(SUCCEEDED(IImageList_ReplaceIcon(imgl1, -1, hicon1, &ret)) && (ret == 0),"add icon1 to himl1 failed\n");
+
+    hr = IImageList_Merge(imgl1, 0, (IUnknown *) imgl2, 0, 0, 0, &IID_IImageList, (void **) &merge);
+    ok(SUCCEEDED(hr), "merge himl1 with himl2 failed\n");
+    if (SUCCEEDED(hr)) IImageList_Release(merge);
+
+    hr = IImageList_Merge(imgl1, 0, (IUnknown *) imgl2, 0, 8, 16, &IID_IImageList, (void **) &merge);
+    ok(SUCCEEDED(hr), "merge himl1 with himl2 8,16 failed\n");
+    if (SUCCEEDED(hr)) IImageList_Release(merge);
+
+    IImageList_Release(imgl1);
+    IImageList_Release(imgl2);
+
+    DestroyIcon(hicon1);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(imagelist)
 {
     ULONG_PTR ctx_cookie;
@@ -1497,6 +1573,7 @@ START_TEST(imagelist)
     test_iimagelist();
     DoTest1_v6();
     DoTest3_v6();
+    testMerge_v6();
 
     CoUninitialize();
 
