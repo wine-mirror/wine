@@ -800,6 +800,17 @@ static void test_UuidCreate(void)
     }
 }
 
+static void test_RpcBindingFree(void)
+{
+    RPC_BINDING_HANDLE binding = NULL;
+    RPC_STATUS status;
+
+    status = RpcBindingFree(&binding);
+    ok(status == RPC_S_INVALID_BINDING,
+       "RpcBindingFree should have retured RPC_S_INVALID_BINDING instead of %d\n",
+       status);
+}
+
 START_TEST( rpc )
 {
     UuidConversionAndComparison();
@@ -811,4 +822,5 @@ START_TEST( rpc )
     test_I_RpcExceptionFilter();
     test_RpcStringBindingFromBinding();
     test_UuidCreate();
+    test_RpcBindingFree();
 }
