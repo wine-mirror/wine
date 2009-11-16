@@ -908,8 +908,63 @@ static HRESULT WINAPI HTMLElement_get_innerText(IHTMLElement *iface, BSTR *p)
 static HRESULT WINAPI HTMLElement_put_outerHTML(IHTMLElement *iface, BSTR v)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsIDOMDocumentFragment *nsfragment;
+    nsIDOMDocumentRange *nsdocrange;
+    nsIDOMNSRange *nsrange;
+    nsIDOMNode *nsparent;
+    nsIDOMRange *range;
+    nsAString html_str;
+    nsresult nsres;
+    HRESULT hres = S_OK;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsres = nsIDOMHTMLDocument_QueryInterface(This->node.doc->nsdoc, &IID_nsIDOMDocumentRange, (void**)&nsdocrange);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    nsres = nsIDOMDocumentRange_CreateRange(nsdocrange, &range);
+    nsIDOMDocumentRange_Release(nsdocrange);
+    if(NS_FAILED(nsres)) {
+        ERR("CreateRange failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMRange_QueryInterface(range, &IID_nsIDOMNSRange, (void**)&nsrange);
+    nsIDOMRange_Release(range);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMNSRange: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsAString_Init(&html_str, v);
+    nsIDOMNSRange_CreateContextualFragment(nsrange, &html_str, &nsfragment);
+    nsIDOMNSRange_Release(nsrange);
+    nsAString_Finish(&html_str);
+    if(NS_FAILED(nsres)) {
+        ERR("CreateContextualFragment failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMNode_GetParentNode(This->node.nsnode, &nsparent);
+    if(NS_SUCCEEDED(nsres) && nsparent) {
+        nsIDOMNode *nstmp;
+
+        nsres = nsIDOMNode_ReplaceChild(nsparent, (nsIDOMNode*)nsfragment, This->node.nsnode, &nstmp);
+        nsIDOMNode_Release(nsparent);
+        if(NS_FAILED(nsres)) {
+            ERR("ReplaceChild failed: %08x\n", nsres);
+            hres = E_FAIL;
+        }else if(nstmp) {
+            nsIDOMNode_Release(nstmp);
+        }
+    }else {
+        ERR("GetParentNode failed: %08x\n", nsres);
+        hres = E_FAIL;
+    }
+
+    nsIDOMDocumentFragment_Release(nsfragment);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLElement_get_outerHTML(IHTMLElement *iface, BSTR *p)

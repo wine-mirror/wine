@@ -52,6 +52,11 @@ static const char elem_test_str[] =
     "<img id=\"imgid\"/>"
     "<iframe src=\"about:blank\" id=\"ifr\"></iframe>"
     "</body></html>";
+static const char elem_test2_str[] =
+    "<html><head><title>test</title><style>.body { margin-right: 0px; }</style>"
+    "<body><div id=\"divid\"></div></body>"
+    "</html>";
+
 static const char indent_test_str[] =
     "<html><head><title>test</title></head><body>abc<br /><a href=\"about:blank\">123</a></body></html>";
 static const char cond_comment_str[] =
@@ -1567,6 +1572,21 @@ static void _test_elem_set_innerhtml(unsigned line, IUnknown *unk, const char *i
     html = a2bstr(inner_html);
     hres = IHTMLElement_put_innerHTML(elem, html);
     ok_(__FILE__,line)(hres == S_OK, "put_innerHTML failed: %08x\n", hres);
+
+    IHTMLElement_Release(elem);
+    SysFreeString(html);
+}
+
+#define test_elem_set_outerhtml(e,t) _test_elem_set_outerhtml(__LINE__,e,t)
+static void _test_elem_set_outerhtml(unsigned line, IUnknown *unk, const char *outer_html)
+{
+    IHTMLElement *elem = _get_elem_iface(line, unk);
+    BSTR html;
+    HRESULT hres;
+
+    html = a2bstr(outer_html);
+    hres = IHTMLElement_put_outerHTML(elem, html);
+    ok_(__FILE__,line)(hres == S_OK, "put_outerHTML failed: %08x\n", hres);
 
     IHTMLElement_Release(elem);
     SysFreeString(html);
@@ -5390,6 +5410,33 @@ static void test_elems(IHTMLDocument2 *doc)
     IHTMLWindow2_Release(window);
 }
 
+static void test_elems2(IHTMLDocument2 *doc)
+{
+    IHTMLElement *elem, *elem2;
+
+    static const elem_type_t outer_types[] = {
+        ET_BR,
+        ET_A
+    };
+
+    elem = get_doc_elem_by_id(doc, "divid");
+
+    test_elem_set_innerhtml((IUnknown*)elem, "<div id=\"innerid\"></div>");
+    elem2 = get_doc_elem_by_id(doc, "innerid");
+    ok(elem2 != NULL, "elem2 == NULL\n");
+    test_elem_set_outerhtml((IUnknown*)elem2, "<br><a href=\"about:blank\" id=\"aid\">a</a>");
+    test_elem_all((IUnknown*)elem, outer_types, sizeof(outer_types)/sizeof(*outer_types));
+    IHTMLElement_Release(elem2);
+
+    elem2 = get_doc_elem_by_id(doc, "aid");
+    ok(elem2 != NULL, "elem2 == NULL\n");
+    test_elem_set_outerhtml((IUnknown*)elem2, "");
+    test_elem_all((IUnknown*)elem, outer_types, 1);
+    IHTMLElement_Release(elem2);
+
+    IHTMLElement_Release(elem);
+}
+
 static void test_create_elems(IHTMLDocument2 *doc)
 {
     IHTMLElement *elem, *body, *elem2;
@@ -5924,6 +5971,7 @@ START_TEST(dom)
     }else {
         skip("IE running in Enhanced Security Configuration\n");
     }
+    run_domtest(elem_test2_str, test_elems2);
     run_domtest(doc_blank, test_create_elems);
     run_domtest(doc_blank, test_defaults);
     run_domtest(indent_test_str, test_indent);
