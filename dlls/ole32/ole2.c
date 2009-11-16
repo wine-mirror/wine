@@ -190,6 +190,9 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
   if (FAILED(hr))
     return hr;
 
+  if (!COM_CurrentInfo()->ole_inits)
+    hr = S_OK;
+
   /*
    * Then, it has to initialize the OLE specific modules.
    * This includes:

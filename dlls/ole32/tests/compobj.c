@@ -1415,7 +1415,7 @@ static void test_CoInitializeEx(void)
     /* Calling OleInitialize for the first time should yield S_OK even with
      * apartment already initialized by previous CoInitialize(Ex) calls. */
     hr = OleInitialize(NULL);
-    todo_wine ok(hr == S_OK, "OleInitialize failed with error 0x%08x\n", hr);
+    ok(hr == S_OK, "OleInitialize failed with error 0x%08x\n", hr);
 
     /* Subsequent calls to OleInitialize should return S_FALSE */
     hr = OleInitialize(NULL);
