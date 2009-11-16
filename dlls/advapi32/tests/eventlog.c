@@ -870,7 +870,7 @@ static void test_readwrite(void)
 
             /* We are already DWORD aligned, there should still be some padding */
             if ((((UINT_PTR)buf + calculated_sidoffset) % sizeof(DWORD)) == 0)
-                ok(*(DWORD_PTR *)((BYTE *)buf + calculated_sidoffset) == 0, "Expected 0\n");
+                ok(*(DWORD *)((BYTE *)buf + calculated_sidoffset) == 0, "Expected 0\n");
 
             ok((((UINT_PTR)buf + record->UserSidOffset) % sizeof(DWORD)) == 0, "Expected DWORD alignment\n");
         }
@@ -894,7 +894,7 @@ static void test_readwrite(void)
             ptr += lstrlenA(ptr) + 1;
         }
 
-        ok(record->Length == *(DWORD_PTR *)((BYTE *)buf + record->Length - sizeof(DWORD)),
+        ok(record->Length == *(DWORD *)((BYTE *)buf + record->Length - sizeof(DWORD)),
            "Expected the closing DWORD to contain the length of the record\n");
 
         HeapFree(GetProcessHeap(), 0, buf);
