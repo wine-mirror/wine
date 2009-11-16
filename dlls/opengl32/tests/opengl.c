@@ -591,7 +591,7 @@ static void test_opengl3(HDC hdc)
         HGLRC gl3Ctx;
         DWORD error;
         gl3Ctx = pwglCreateContextAttribsARB(hdc, (HGLRC)0xdeadbeef, 0);
-        ok(gl3Ctx == 0, "pwglCreateContextAttribsARB using an invalid shareList passed\n");
+        todo_wine ok(gl3Ctx == 0, "pwglCreateContextAttribsARB using an invalid shareList passed\n");
         error = GetLastError();
         todo_wine ok(error == ERROR_INVALID_OPERATION, "Expected ERROR_INVALID_OPERATION, got error=%x\n", error);
         wglDeleteContext(gl3Ctx);

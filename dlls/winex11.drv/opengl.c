@@ -105,8 +105,11 @@ typedef struct wine_glcontext {
     BOOL do_escape;
     BOOL has_been_current;
     BOOL sharing;
+    BOOL gl3_context;
     XVisualInfo *vis;
     WineGLPixelFormat *fmt;
+    int numAttribs; /* This is needed for delaying wglCreateContextAttribsARB */
+    int attribList[16]; /* This is needed for delaying wglCreateContextAttribsARB */
     GLXContext ctx;
     HDC read_hdc;
     Drawable drawables[2];
@@ -240,6 +243,7 @@ MAKE_FUNCPTR(glXQueryDrawable)
 MAKE_FUNCPTR(glXGetCurrentReadDrawable)
 
 /* GLX Extensions */
+static GLXContext (*pglXCreateContextAttribsARB)(Display *dpy, GLXFBConfig config, GLXContext share_context, Bool direct, const int *attrib_list);
 static void* (*pglXGetProcAddressARB)(const GLubyte *);
 static int   (*pglXSwapIntervalSGI)(int);
 
@@ -273,6 +277,12 @@ MAKE_FUNCPTR(glTexImage2D)
 MAKE_FUNCPTR(glFinish)
 MAKE_FUNCPTR(glFlush)
 #undef MAKE_FUNCPTR
+
+static int GLXErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
+{
+    /* In the future we might want to find the exact X or GLX error to report back to the app */
+    return 1;
+}
 
 static BOOL infoInitialized = FALSE;
 static BOOL X11DRV_WineGL_InitOpenglInfo(void)
@@ -442,6 +452,8 @@ static BOOL has_opengl(void)
    the associated extension is available (and if a driver reports the extension
    is available but fails to provide the functions, it's quite broken) */
 #define LOAD_FUNCPTR(f) p##f = (void*)pglXGetProcAddressARB((const unsigned char*)#f)
+    /* ARB GLX Extension */
+    LOAD_FUNCPTR(glXCreateContextAttribsARB);
     /* NV GLX Extension */
     LOAD_FUNCPTR(glXAllocateMemoryNV);
     LOAD_FUNCPTR(glXFreeMemoryNV);
@@ -1066,7 +1078,14 @@ static GLXContext create_glxcontext(Display *display, Wine_GLContext *context, G
     /* We use indirect rendering for rendering to bitmaps. See get_formats for a comment about this. */
     BOOL indirect = (context->fmt->dwFlags & PFD_DRAW_TO_BITMAP) ? FALSE : TRUE;
 
-    if(context->vis)
+    if(context->gl3_context)
+    {
+        if(context->numAttribs)
+            ctx = pglXCreateContextAttribsARB(gdi_display, context->fmt->fbconfig, shareList, indirect, context->attribList);
+        else
+            ctx = pglXCreateContextAttribsARB(gdi_display, context->fmt->fbconfig, shareList, indirect, NULL);
+    }
+    else if(context->vis)
         ctx = pglXCreateContext(gdi_display, context->vis, shareList, indirect);
     else /* Create a GLX Context for a pbuffer */
         ctx = pglXCreateNewContext(gdi_display, context->fmt->fbconfig, context->fmt->render_type, shareList, TRUE);
@@ -2169,6 +2188,94 @@ static void WINAPI X11DRV_wglFlush(void)
     pglFlush();
     wine_tsx11_unlock();
     if (ctx) ExtEscape(ctx->hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
+}
+
+/**
+ * X11DRV_wglCreateContextAttribsARB
+ *
+ * WGL_ARB_create_context: wglCreateContextAttribsARB
+ */
+HGLRC X11DRV_wglCreateContextAttribsARB(X11DRV_PDEVICE *physDev, HGLRC hShareContext, const int* attribList)
+{
+    Wine_GLContext *ret;
+    WineGLPixelFormat *fmt;
+    int hdcPF = physDev->current_pf;
+    int fmt_count = 0;
+
+    TRACE("(%p %p %p)\n", physDev, hShareContext, attribList);
+
+    if (!has_opengl()) return 0;
+
+    fmt = ConvertPixelFormatWGLtoGLX(gdi_display, hdcPF, TRUE /* Offscreen */, &fmt_count);
+    /* wglCreateContextAttribsARB supports ALL pixel formats, so also offscreen ones.
+     * If this fails something is very wrong on the system. */
+    if(!fmt)
+    {
+        ERR("Cannot get FB Config for iPixelFormat %d, expect problems!\n", hdcPF);
+        SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+        return NULL;
+    }
+
+    wine_tsx11_lock();
+    ret = alloc_context();
+    wine_tsx11_unlock();
+    ret->hdc = physDev->hdc;
+    ret->fmt = fmt;
+    ret->vis = NULL; /* glXCreateContextAttribsARB requires a fbconfig instead of a visual */
+    ret->gl3_context = TRUE;
+
+    ret->numAttribs = 0;
+    if(attribList)
+    {
+        int *pAttribList = (int*)attribList;
+        int *pContextAttribList = &ret->attribList[0];
+        /* attribList consists of pairs {token, value] terminated with 0 */
+        while(pAttribList[0] != 0)
+        {
+            TRACE("%#x %#x\n", pAttribList[0], pAttribList[1]);
+            switch(pAttribList[0])
+            {
+                case WGL_CONTEXT_MAJOR_VERSION_ARB:
+                    pContextAttribList[0] = GLX_CONTEXT_MAJOR_VERSION_ARB;
+                    pContextAttribList[1] = pAttribList[1];
+                    break;
+                case WGL_CONTEXT_MINOR_VERSION_ARB:
+                    pContextAttribList[0] = GLX_CONTEXT_MINOR_VERSION_ARB;
+                    pContextAttribList[1] = pAttribList[1];
+                    break;
+                case WGL_CONTEXT_LAYER_PLANE_ARB:
+                    break;
+                case WGL_CONTEXT_FLAGS_ARB:
+                    pContextAttribList[0] = GLX_CONTEXT_FLAGS_ARB;
+                    pContextAttribList[1] = pAttribList[1];
+                    break;
+                default:
+                    ERR("Unhandled attribList pair: %#x %#x\n", pAttribList[0], pAttribList[1]);
+            }
+
+            ret->numAttribs++;
+            pAttribList += 2;
+            pContextAttribList += 2;
+        }
+    }
+
+    wine_tsx11_lock();
+    X11DRV_expect_error(gdi_display, GLXErrorHandler, NULL);
+    ret->ctx = create_glxcontext(gdi_display, ret, NULL);
+
+    XSync(gdi_display, False);
+    if(X11DRV_check_error() || !ret->ctx)
+    {
+        /* In the future we should convert the GLX error to a win32 one here if needed */
+        ERR("Context creation failed\n");
+        free_context(ret);
+        wine_tsx11_unlock();
+        return NULL;
+    }
+
+    wine_tsx11_unlock();
+    TRACE(" creating context %p\n", ret);
+    return (HGLRC) ret;
 }
 
 /**
@@ -3322,6 +3429,14 @@ static const WineGLExtension WGL_internal_functions =
 };
 
 
+static const WineGLExtension WGL_ARB_create_context =
+{
+  "WGL_ARB_create_context",
+  {
+    { "wglCreateContextAttribsARB", X11DRV_wglCreateContextAttribsARB },
+  }
+};
+
 static const WineGLExtension WGL_ARB_extensions_string =
 {
   "WGL_ARB_extensions_string",
@@ -3421,6 +3536,11 @@ static void X11DRV_WineGL_LoadExtensions(void)
     register_extension(&WGL_internal_functions);
 
     /* ARB Extensions */
+
+    if(glxRequireExtension("GLX_ARB_create_context"))
+    {
+        register_extension(&WGL_ARB_create_context);
+    }
 
     if(glxRequireExtension("GLX_ARB_fbconfig_float"))
     {
@@ -3689,6 +3809,17 @@ BOOL CDECL X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask) {
  * For OpenGL32 wglCreateContext.
  */
 HGLRC CDECL X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev) {
+    opengl_error();
+    return NULL;
+}
+
+/**
+ * X11DRV_wglCreateContextAttribsARB
+ *
+ * WGL_ARB_create_context: wglCreateContextAttribsARB
+ */
+HGLRC X11DRV_wglCreateContextAttribsARB(X11DRV_PDEVICE *physDev, HGLRC hShareContext, const int* attribList)
+{
     opengl_error();
     return NULL;
 }

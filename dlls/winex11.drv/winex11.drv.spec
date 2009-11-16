@@ -133,6 +133,7 @@
 # OpenGL
 @ cdecl wglCopyContext(long long long) X11DRV_wglCopyContext
 @ cdecl wglCreateContext(ptr) X11DRV_wglCreateContext
+@ cdecl wglCreateContextAttribsARB(ptr long ptr) X11DRV_wglCreateContextAttribsARB
 @ cdecl wglDeleteContext(long) X11DRV_wglDeleteContext
 @ cdecl wglGetProcAddress(str) X11DRV_wglGetProcAddress
 @ cdecl wglGetPbufferDCARB(ptr ptr) X11DRV_wglGetPbufferDCARB

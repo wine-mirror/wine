@@ -199,6 +199,7 @@ typedef struct tagDC_FUNCS
     /* OpenGL32 */
     BOOL     (CDECL *pwglCopyContext)(HGLRC, HGLRC, UINT);
     HGLRC    (CDECL *pwglCreateContext)(PHYSDEV);
+    HGLRC    (CDECL *pwglCreateContextAttribsARB)(PHYSDEV, HGLRC, const int*);
     BOOL     (CDECL *pwglDeleteContext)(HGLRC);
     PROC     (CDECL *pwglGetProcAddress)(LPCSTR);
     HDC      (CDECL *pwglGetPbufferDCARB)(PHYSDEV, void*);

@@ -104,6 +104,25 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
     return ret;
 }
 
+/***********************************************************************
+ *      wglCreateContextAttribsARB
+ */
+HGLRC WINAPI wglCreateContextAttribsARB(HDC hdc, HGLRC hShareContext, const int *attributeList)
+{
+    HGLRC ret = 0;
+    DC * dc = get_dc_ptr( hdc );
+
+    TRACE("(%p)\n",hdc);
+
+    if (!dc) return 0;
+
+    update_dc( dc );
+    if (!dc->funcs->pwglCreateContextAttribsARB) FIXME(" :stub\n");
+    else ret = dc->funcs->pwglCreateContextAttribsARB(dc->physDev, hShareContext, attributeList);
+
+    release_dc_ptr( dc );
+    return ret;
+}
 
 /***********************************************************************
  *		wglDeleteContext (OPENGL32.@)
@@ -358,7 +377,9 @@ PROC WINAPI wglGetProcAddress(LPCSTR func)
      * when a non-NULL value is returned by wglGetProcAddress), we return the address
      * of a wrapper function which will handle the HDC->PhysDev conversion.
      */
-    if(ret && strcmp(func, "wglMakeContextCurrentARB") == 0)
+    if(ret && strcmp(func, "wglCreateContextAttribsARB") == 0)
+        return (PROC)wglCreateContextAttribsARB;
+    else if(ret && strcmp(func, "wglMakeContextCurrentARB") == 0)
         return (PROC)wglMakeContextCurrentARB;
     else if(ret && strcmp(func, "wglGetPbufferDCARB") == 0)
         return (PROC)wglGetPbufferDCARB;
