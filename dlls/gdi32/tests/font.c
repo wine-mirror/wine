@@ -3013,15 +3013,12 @@ void test_CreateFontIndirect(void)
     ok(hfont != 0, "CreateFontIndirectA failed\n");
     ret = GetObject(hfont, sizeof(getobj_lf), &getobj_lf);
     ok(lf.lfItalic == getobj_lf.lfItalic, "lfItalic: expect %02x got %02x\n", lf.lfItalic, getobj_lf.lfItalic);
-    todo_wine
-    {
     ok(lf.lfWeight == getobj_lf.lfWeight ||
        broken((SHORT)lf.lfWeight == getobj_lf.lfWeight), /* win9x */
        "lfWeight: expect %08x got %08x\n", lf.lfWeight, getobj_lf.lfWeight);
     ok(!lstrcmpA(lf.lfFaceName, getobj_lf.lfFaceName) ||
        broken(!memcmp(lf.lfFaceName, getobj_lf.lfFaceName, LF_FACESIZE-1)), /* win9x doesn't ensure '\0' termination */
        "font names don't match: %s != %s\n", lf.lfFaceName, getobj_lf.lfFaceName);
-    }
     DeleteObject(hfont);
 
     lf.lfItalic = FALSE;
@@ -3033,13 +3030,10 @@ void test_CreateFontIndirect(void)
     ok(lf.lfWeight == getobj_lf.lfWeight ||
        broken((SHORT)lf.lfWeight == getobj_lf.lfWeight), /* win9x */
        "lfWeight: expect %08x got %08x\n", lf.lfWeight, getobj_lf.lfWeight);
-    todo_wine
-    {
     ok(lf.lfItalic == getobj_lf.lfItalic, "lfItalic: expect %02x got %02x\n", lf.lfItalic, getobj_lf.lfItalic);
     ok(!lstrcmpA(lf.lfFaceName, getobj_lf.lfFaceName) ||
        broken(!memcmp(lf.lfFaceName, getobj_lf.lfFaceName, LF_FACESIZE-1)), /* win9x doesn't ensure '\0' termination */
        "font names don't match: %s != %s\n", lf.lfFaceName, getobj_lf.lfFaceName);
-    }
     DeleteObject(hfont);
 }
 
