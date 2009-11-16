@@ -1052,3 +1052,12 @@ void module_reset_debug_info(struct module* module)
     module->sources_used = module->sources_alloc = 0;
     module->sources = NULL;
 }
+
+/******************************************************************
+ *              SymRefreshModuleList (DBGHELP.@)
+ */
+BOOL WINAPI SymRefreshModuleList(HANDLE hProcess)
+{
+    FIXME("(%p) stub\n", hProcess);
+    return FALSE;
+}

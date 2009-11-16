@@ -144,7 +144,7 @@
 @ stub SymNextW
 @ stub SymPrev
 @ stub SymPrevW
-@ stub SymRefreshModuleList
+@ stdcall SymRefreshModuleList(long)
 @ stdcall SymRegisterCallback(long ptr ptr)
 @ stdcall SymRegisterCallback64(long ptr double)
 @ stdcall SymRegisterCallbackW64(long ptr double)
