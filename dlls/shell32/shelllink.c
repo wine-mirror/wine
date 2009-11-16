@@ -1497,9 +1497,13 @@ static HRESULT WINAPI IShellLinkA_fnSetArguments(IShellLinkA * iface, LPCSTR psz
     TRACE("(%p)->(args=%s)\n",This, pszArgs);
 
     HeapFree(GetProcessHeap(), 0, This->sArgs);
-    This->sArgs = HEAP_strdupAtoW( GetProcessHeap(), 0, pszArgs);
-    if( !This->sArgs )
-        return E_OUTOFMEMORY;
+    if (pszArgs)
+    {
+        This->sArgs = HEAP_strdupAtoW( GetProcessHeap(), 0, pszArgs);
+        if( !This->sArgs )
+            return E_OUTOFMEMORY;
+    }
+    else This->sArgs = NULL;
 
     This->bDirty = TRUE;
 
@@ -1877,11 +1881,16 @@ static HRESULT WINAPI IShellLinkW_fnSetArguments(IShellLinkW * iface, LPCWSTR ps
     TRACE("(%p)->(args=%s)\n",This, debugstr_w(pszArgs));
 
     HeapFree(GetProcessHeap(), 0, This->sArgs);
-    This->sArgs = HeapAlloc( GetProcessHeap(), 0,
-                             (lstrlenW( pszArgs )+1)*sizeof (WCHAR) );
-    if ( !This->sArgs )
-        return E_OUTOFMEMORY;
-    lstrcpyW( This->sArgs, pszArgs );
+    if (pszArgs)
+    {
+        This->sArgs = HeapAlloc( GetProcessHeap(), 0,
+                                 (lstrlenW( pszArgs )+1)*sizeof (WCHAR) );
+        if ( !This->sArgs )
+            return E_OUTOFMEMORY;
+        lstrcpyW( This->sArgs, pszArgs );
+    }
+    else This->sArgs = NULL;
+
     This->bDirty = TRUE;
 
     return S_OK;
