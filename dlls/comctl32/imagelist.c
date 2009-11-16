@@ -3225,54 +3225,74 @@ static HRESULT WINAPI ImageListImpl_GetBkColor(IImageList *iface, COLORREF *pclr
 static HRESULT WINAPI ImageListImpl_BeginDrag(IImageList *iface, int iTrack,
     int dxHotspot, int dyHotspot)
 {
-    FIXME("STUB: %p %d %d %d\n", iface, iTrack, dxHotspot, dyHotspot);
-    return E_NOTIMPL;
+    return ImageList_BeginDrag((HIMAGELIST) iface, iTrack, dxHotspot, dyHotspot) ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI ImageListImpl_EndDrag(IImageList *iface)
 {
-    FIXME("STUB: %p\n", iface);
-    return E_NOTIMPL;
+    ImageList_EndDrag();
+    return S_OK;
 }
 
 static HRESULT WINAPI ImageListImpl_DragEnter(IImageList *iface, HWND hwndLock,
     int x, int y)
 {
-    FIXME("STUB: %p %p %d %d\n", iface, hwndLock, x, y);
-    return E_NOTIMPL;
+    return ImageList_DragEnter(hwndLock, x, y) ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI ImageListImpl_DragLeave(IImageList *iface, HWND hwndLock)
 {
-    FIXME("STUB: %p %p\n", iface, hwndLock);
-    return E_NOTIMPL;
+    return ImageList_DragLeave(hwndLock) ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI ImageListImpl_DragMove(IImageList *iface, int x, int y)
 {
-    FIXME("STUB: %p %d %d\n", iface, x, y);
-    return E_NOTIMPL;
+    return ImageList_DragMove(x, y) ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI ImageListImpl_SetDragCursorImage(IImageList *iface,
     IUnknown *punk, int iDrag, int dxHotspot, int dyHotspot)
 {
-    FIXME("STUB: %p %p %d %d %d\n", iface, punk, iDrag, dxHotspot, dyHotspot);
-    return E_NOTIMPL;
+    IImageList *iml2 = NULL;
+    HRESULT ret;
+
+    if (!punk)
+        return E_FAIL;
+
+    /* TODO: Add test for IID_ImageList2 too */
+    if (!SUCCEEDED(IImageList_QueryInterface(punk, &IID_IImageList,
+            (void **) &iml2)))
+        return E_FAIL;
+
+    ret = ImageList_SetDragCursorImage((HIMAGELIST) iml2, iDrag, dxHotspot,
+        dyHotspot);
+
+    IImageList_Release(iml2);
+
+    return ret ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI ImageListImpl_DragShowNolock(IImageList *iface, BOOL fShow)
 {
-    FIXME("STUB: %p %d\n", iface, fShow);
-    return E_NOTIMPL;
+    return ImageList_DragShowNolock(fShow) ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI ImageListImpl_GetDragImage(IImageList *iface, POINT *ppt,
     POINT *pptHotspot, REFIID riid, PVOID *ppv)
 {
-    FIXME("STUB: %p %p %p %s %p\n", iface, ppt, pptHotspot, debugstr_guid(riid),
-        ppv);
-    return E_NOTIMPL;
+    HRESULT ret = E_FAIL;
+    HIMAGELIST hNew;
+
+    if (!ppv)
+        return E_FAIL;
+
+    hNew = ImageList_GetDragImage(ppt, pptHotspot);
+
+    /* Get the interface for the new image list */
+    if (hNew)
+        ret = HIMAGELIST_QueryInterface(hNew, riid, ppv);
+
+    return ret;
 }
 
 static HRESULT WINAPI ImageListImpl_GetItemFlags(IImageList *iface, int i,
@@ -3285,8 +3305,22 @@ static HRESULT WINAPI ImageListImpl_GetItemFlags(IImageList *iface, int i,
 static HRESULT WINAPI ImageListImpl_GetOverlayImage(IImageList *iface, int iOverlay,
     int *piIndex)
 {
-    FIXME("STUB: %p %d %p\n", iface, iOverlay, piIndex);
-    return E_NOTIMPL;
+    HIMAGELIST This = (HIMAGELIST) iface;
+    int i;
+
+    if ((iOverlay < 0) || (iOverlay > This->cCurImage))
+        return E_FAIL;
+
+    for (i = 0; i < MAX_OVERLAYIMAGE; i++)
+    {
+        if (This->nOvlIdx[i] == iOverlay)
+        {
+            *piIndex = i + 1;
+            return S_OK;
+        }
+    }
+
+    return E_FAIL;
 }
 
 
