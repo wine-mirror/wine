@@ -2924,18 +2924,19 @@ enum message_type
     VARARG(privileges,LUID_AND_ATTRIBUTES); /* privileges used during access check */
 @END
 
-@REQ(get_token_user)
+@REQ(get_token_sid)
     obj_handle_t    handle;       /* handle to the token */
+    unsigned int    which_sid;    /* which SID to retrieve from the token */
 @REPLY
-    data_size_t     user_len;     /* length needed to store user */
-    VARARG(user,SID);             /* sid of the user the token represents */
+    data_size_t     sid_len;      /* length needed to store sid */
+    VARARG(sid,SID);              /* the sid specified by which_sid from the token */
 @END
 
 @REQ(get_token_groups)
     obj_handle_t    handle;       /* handle to the token */
 @REPLY
     data_size_t     user_len;     /* length needed to store user */
-    VARARG(user,token_groups); /* groups the token's user belongs to */
+    VARARG(user,token_groups);    /* groups the token's user belongs to */
 @END
 
 @REQ(get_token_default_dacl)

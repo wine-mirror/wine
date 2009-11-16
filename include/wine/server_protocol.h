@@ -4123,16 +4123,17 @@ struct access_check_reply
     char __pad_20[4];
 };
 
-struct get_token_user_request
+struct get_token_sid_request
 {
     struct request_header __header;
     obj_handle_t    handle;
+    unsigned int    which_sid;
 };
-struct get_token_user_reply
+struct get_token_sid_reply
 {
     struct reply_header __header;
-    data_size_t     user_len;
-    /* VARARG(user,SID); */
+    data_size_t     sid_len;
+    /* VARARG(sid,SID); */
     char __pad_12[4];
 };
 
@@ -4862,7 +4863,7 @@ enum request
     REQ_check_token_privileges,
     REQ_duplicate_token,
     REQ_access_check,
-    REQ_get_token_user,
+    REQ_get_token_sid,
     REQ_get_token_groups,
     REQ_get_token_default_dacl,
     REQ_set_token_default_dacl,
@@ -5110,7 +5111,7 @@ union generic_request
     struct check_token_privileges_request check_token_privileges_request;
     struct duplicate_token_request duplicate_token_request;
     struct access_check_request access_check_request;
-    struct get_token_user_request get_token_user_request;
+    struct get_token_sid_request get_token_sid_request;
     struct get_token_groups_request get_token_groups_request;
     struct get_token_default_dacl_request get_token_default_dacl_request;
     struct set_token_default_dacl_request set_token_default_dacl_request;
@@ -5356,7 +5357,7 @@ union generic_reply
     struct check_token_privileges_reply check_token_privileges_reply;
     struct duplicate_token_reply duplicate_token_reply;
     struct access_check_reply access_check_reply;
-    struct get_token_user_reply get_token_user_reply;
+    struct get_token_sid_reply get_token_sid_reply;
     struct get_token_groups_reply get_token_groups_reply;
     struct get_token_default_dacl_reply get_token_default_dacl_reply;
     struct set_token_default_dacl_reply set_token_default_dacl_reply;
@@ -5393,6 +5394,6 @@ union generic_reply
     struct free_user_handle_reply free_user_handle_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 393
+#define SERVER_PROTOCOL_VERSION 394
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

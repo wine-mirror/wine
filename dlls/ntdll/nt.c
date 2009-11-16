@@ -257,12 +257,6 @@ NTSTATUS WINAPI NtQueryInformationToken(
 
     switch (tokeninfoclass)
     {
-    case TokenOwner:
-        len = sizeof(TOKEN_OWNER) + sizeof(SID);
-        break;
-    case TokenPrimaryGroup:
-        len = sizeof(TOKEN_PRIMARY_GROUP);
-        break;
     case TokenSource:
         len = sizeof(TOKEN_SOURCE);
         break;
@@ -287,16 +281,17 @@ NTSTATUS WINAPI NtQueryInformationToken(
     switch (tokeninfoclass)
     {
     case TokenUser:
-        SERVER_START_REQ( get_token_user )
+        SERVER_START_REQ( get_token_sid )
         {
             TOKEN_USER * tuser = tokeninfo;
             PSID sid = tuser + 1;
             DWORD sid_len = tokeninfolength < sizeof(TOKEN_USER) ? 0 : tokeninfolength - sizeof(TOKEN_USER);
 
             req->handle = wine_server_obj_handle( token );
+            req->which_sid = tokeninfoclass;
             wine_server_set_reply( req, sid, sid_len );
             status = wine_server_call( req );
-            if (retlen) *retlen = reply->user_len + sizeof(TOKEN_USER);
+            if (retlen) *retlen = reply->sid_len + sizeof(TOKEN_USER);
             if (status == STATUS_SUCCESS)
             {
                 tuser->User.Sid = sid;
@@ -372,17 +367,21 @@ NTSTATUS WINAPI NtQueryInformationToken(
         break;
     }
     case TokenPrimaryGroup:
-        if (tokeninfo)
+        SERVER_START_REQ( get_token_sid )
         {
             TOKEN_PRIMARY_GROUP *tgroup = tokeninfo;
-            SID_IDENTIFIER_AUTHORITY sid = {SECURITY_NT_AUTHORITY};
-            RtlAllocateAndInitializeSid( &sid,
-                                         2,
-                                         SECURITY_BUILTIN_DOMAIN_RID,
-                                         DOMAIN_ALIAS_RID_ADMINS,
-                                         0, 0, 0, 0, 0, 0,
-                                         &(tgroup->PrimaryGroup));
+            PSID sid = tgroup + 1;
+            DWORD sid_len = tokeninfolength < sizeof(TOKEN_PRIMARY_GROUP) ? 0 : tokeninfolength - sizeof(TOKEN_PRIMARY_GROUP);
+
+            req->handle = wine_server_obj_handle( token );
+            req->which_sid = tokeninfoclass;
+            wine_server_set_reply( req, sid, sid_len );
+            status = wine_server_call( req );
+            if (retlen) *retlen = reply->sid_len + sizeof(TOKEN_PRIMARY_GROUP);
+            if (status == STATUS_SUCCESS)
+                tgroup->PrimaryGroup = sid;
         }
+        SERVER_END_REQ;
         break;
     case TokenPrivileges:
         SERVER_START_REQ( get_token_privileges )
@@ -398,15 +397,21 @@ NTSTATUS WINAPI NtQueryInformationToken(
         SERVER_END_REQ;
         break;
     case TokenOwner:
-        if (tokeninfo)
+        SERVER_START_REQ( get_token_sid )
         {
-            TOKEN_OWNER *owner = tokeninfo;
-            PSID sid = owner + 1;
-            SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
-            RtlInitializeSid(sid, &localSidAuthority, 1);
-            *(RtlSubAuthoritySid(sid, 0)) = SECURITY_INTERACTIVE_RID;
-            owner->Owner = sid;
+            TOKEN_OWNER *towner = tokeninfo;
+            PSID sid = towner + 1;
+            DWORD sid_len = tokeninfolength < sizeof(TOKEN_OWNER) ? 0 : tokeninfolength - sizeof(TOKEN_OWNER);
+
+            req->handle = wine_server_obj_handle( token );
+            req->which_sid = tokeninfoclass;
+            wine_server_set_reply( req, sid, sid_len );
+            status = wine_server_call( req );
+            if (retlen) *retlen = reply->sid_len + sizeof(TOKEN_OWNER);
+            if (status == STATUS_SUCCESS)
+                towner->Owner = sid;
         }
+        SERVER_END_REQ;
         break;
     case TokenImpersonationLevel:
         SERVER_START_REQ( get_token_impersonation_level )

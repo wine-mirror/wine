@@ -1225,27 +1225,51 @@ DECL_HANDLER(access_check)
 }
 
 /* retrieves the SID of the user that the token represents */
-DECL_HANDLER(get_token_user)
+DECL_HANDLER(get_token_sid)
 {
     struct token *token;
 
-    reply->user_len = 0;
+    reply->sid_len = 0;
 
     if ((token = (struct token *)get_handle_obj( current->process, req->handle,
                                                  TOKEN_QUERY,
                                                  &token_ops )))
     {
-        const SID *user = token->user;
+        const SID *sid = NULL;
 
-        reply->user_len = FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
-        if (reply->user_len <= get_reply_max_size())
+        switch (req->which_sid)
         {
-            SID *user_reply = set_reply_data_size( reply->user_len );
-            if (user_reply)
-                memcpy( user_reply, user, reply->user_len );
+        case TokenUser:
+            assert(token->user);
+            sid = token->user;
+            break;
+        case TokenPrimaryGroup:
+            sid = token->primary_group;
+            break;
+        case TokenOwner:
+        {
+            struct group *group;
+            LIST_FOR_EACH_ENTRY( group, &token->groups, struct group, entry )
+            {
+                if (group->owner)
+                {
+                    sid = &group->sid;
+                    break;
+                }
+            }
+            break;
         }
-        else set_error( STATUS_BUFFER_TOO_SMALL );
+        default:
+            set_error( STATUS_INVALID_PARAMETER );
+            break;
+        }
 
+        if (sid)
+        {
+            reply->sid_len = FIELD_OFFSET(SID, SubAuthority[sid->SubAuthorityCount]);
+            if (reply->sid_len <= get_reply_max_size()) set_reply_data( sid, reply->sid_len );
+            else set_error( STATUS_BUFFER_TOO_SMALL );
+        }
         release_object( token );
     }
 }
