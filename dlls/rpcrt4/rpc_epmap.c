@@ -108,8 +108,8 @@ static inline BOOL is_epm_destination_local(RPC_BINDING_HANDLE handle)
     const char *protseq = bind->Protseq;
     const char *network_addr = bind->NetworkAddr;
 
-    return ((!strcmp(protseq, "ncalrpc") && !network_addr) ||
-            (!strcmp(protseq, "ncacn_np") &&
+    return (!strcmp(protseq, "ncalrpc") ||
+           (!strcmp(protseq, "ncacn_np") &&
                 (!network_addr || !strcmp(network_addr, "."))));
 }
 
