@@ -1014,19 +1014,13 @@ static HRESULT HTMLElement_InsertAdjacentNode(HTMLElement *This, BSTR where, nsI
     static const WCHAR wszAfterEnd[] = {'a','f','t','e','r','E','n','d',0};
     nsresult nsres;
 
-    if(!This->nselem) {
-        FIXME("NULL nselem\n");
-        return E_NOTIMPL;
-    }
-
     if (!strcmpiW(where, wszBeforeBegin))
     {
         nsIDOMNode *unused;
         nsIDOMNode *parent;
-        nsres = nsIDOMNode_GetParentNode(This->nselem, &parent);
+        nsres = nsIDOMNode_GetParentNode(This->node.nsnode, &parent);
         if (!parent) return E_INVALIDARG;
-        nsres = nsIDOMNode_InsertBefore(parent, nsnode,
-                                        (nsIDOMNode *)This->nselem, &unused);
+        nsres = nsIDOMNode_InsertBefore(parent, nsnode, This->node.nsnode, &unused);
         if (unused) nsIDOMNode_Release(unused);
         nsIDOMNode_Release(parent);
     }
@@ -1034,15 +1028,15 @@ static HRESULT HTMLElement_InsertAdjacentNode(HTMLElement *This, BSTR where, nsI
     {
         nsIDOMNode *unused;
         nsIDOMNode *first_child;
-        nsIDOMNode_GetFirstChild(This->nselem, &first_child);
-        nsres = nsIDOMNode_InsertBefore(This->nselem, nsnode, first_child, &unused);
+        nsIDOMNode_GetFirstChild(This->node.nsnode, &first_child);
+        nsres = nsIDOMNode_InsertBefore(This->node.nsnode, nsnode, first_child, &unused);
         if (unused) nsIDOMNode_Release(unused);
         if (first_child) nsIDOMNode_Release(first_child);
     }
     else if (!strcmpiW(where, wszBeforeEnd))
     {
         nsIDOMNode *unused;
-        nsres = nsIDOMNode_AppendChild(This->nselem, nsnode, &unused);
+        nsres = nsIDOMNode_AppendChild(This->node.nsnode, nsnode, &unused);
         if (unused) nsIDOMNode_Release(unused);
     }
     else if (!strcmpiW(where, wszAfterEnd))
@@ -1050,10 +1044,10 @@ static HRESULT HTMLElement_InsertAdjacentNode(HTMLElement *This, BSTR where, nsI
         nsIDOMNode *unused;
         nsIDOMNode *next_sibling;
         nsIDOMNode *parent;
-        nsIDOMNode_GetParentNode(This->nselem, &parent);
+        nsIDOMNode_GetParentNode(This->node.nsnode, &parent);
         if (!parent) return E_INVALIDARG;
 
-        nsIDOMNode_GetNextSibling(This->nselem, &next_sibling);
+        nsIDOMNode_GetNextSibling(This->node.nsnode, &next_sibling);
         if (next_sibling)
         {
             nsres = nsIDOMNode_InsertBefore(parent, nsnode, next_sibling, &unused);
@@ -1109,7 +1103,7 @@ static HRESULT WINAPI HTMLElement_insertAdjacentHTML(IHTMLElement *iface, BSTR w
         return E_FAIL;
     }
 
-    nsIDOMRange_SetStartBefore(range, (nsIDOMNode *)This->nselem);
+    nsIDOMRange_SetStartBefore(range, This->node.nsnode);
 
     nsIDOMRange_QueryInterface(range, &IID_nsIDOMNSRange, (void **)&nsrange);
     nsIDOMRange_Release(range);
