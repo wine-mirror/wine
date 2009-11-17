@@ -850,6 +850,17 @@ static BOOL CRYPT_IsValidNameConstraint(const CERT_NAME_CONSTRAINTS_INFO *info)
     DWORD i;
     BOOL ret = TRUE;
 
+    /* Make sure at least one permitted or excluded subtree is present.  From
+     * RFC 5280, section 4.2.1.10:
+     * "Conforming CAs MUST NOT issue certificates where name constraints is an
+     *  empty sequence.  That is, either the permittedSubtrees field or the
+     *  excludedSubtrees MUST be present."
+     */
+    if (!info->cPermittedSubtree && !info->cExcludedSubtree)
+    {
+        WARN_(chain)("constraints contain no permitted nor excluded subtree\n");
+        ret = FALSE;
+    }
     /* Check that none of the constraints specifies a minimum or a maximum.
      * See RFC 5280, section 4.2.1.10:
      * "Within this profile, the minimum and maximum fields are not used with
