@@ -1011,7 +1011,7 @@ static void compare_subject_with_constraints(const CERT_NAME_BLOB *subjectName,
      */
     if (nameConstraints->cPermittedSubtree && !CRYPT_IsEmptyName(subjectName))
     {
-        BOOL match = FALSE;
+        BOOL match = FALSE, hasDirectoryConstraint = FALSE;
 
         for (i = 0; !match && i < nameConstraints->cPermittedSubtree; i++)
         {
@@ -1019,10 +1019,13 @@ static void compare_subject_with_constraints(const CERT_NAME_BLOB *subjectName,
              &nameConstraints->rgPermittedSubtree[i].Base;
 
             if (constraint->dwAltNameChoice == CERT_ALT_NAME_DIRECTORY_NAME)
+            {
+                hasDirectoryConstraint = TRUE;
                 match = directory_name_matches(&constraint->u.DirectoryName,
                  subjectName);
+            }
         }
-        if (!match)
+        if (hasDirectoryConstraint && !match)
             *trustErrorStatus |= CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
     }
 }
