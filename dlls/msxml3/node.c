@@ -944,36 +944,62 @@ static HRESULT WINAPI xmlnode_get_definition(
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI xmlnode_get_dataType(IXMLDOMNode*, VARIANT*);
+
+inline HRESULT VARIANT_from_xmlChar(xmlChar *str, VARIANT *v, BSTR type)
+{
+    if(!type || !lstrcmpiW(type, szString))
+    {
+        V_VT(v) = VT_BSTR;
+        V_BSTR(v) = bstr_from_xmlChar(str);
+
+        if(!V_BSTR(v))
+            return E_OUTOFMEMORY;
+    }
+    else
+    {
+        FIXME("Type handling not yet implemented\n");
+        V_VT(v) = VT_BSTR;
+        V_BSTR(v) = bstr_from_xmlChar(str);
+
+        if(!V_BSTR(v))
+            return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI xmlnode_get_nodeTypedValue(
     IXMLDOMNode *iface,
     VARIANT* typedValue)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
-    HRESULT r = S_FALSE;
+    VARIANT type;
+    xmlChar *content;
+    HRESULT hres = S_FALSE;
 
-    FIXME("ignoring data type %p %p\n", This, typedValue);
+    TRACE("iface %p\n", iface);
 
     if(!typedValue)
         return E_INVALIDARG;
 
     V_VT(typedValue) = VT_NULL;
 
-    switch ( This->node->type )
-    {
-    case XML_ELEMENT_NODE:
-    {
-        xmlChar *content = xmlNodeGetContent(This->node);
-        V_VT(typedValue) = VT_BSTR;
-        V_BSTR(typedValue) = bstr_from_xmlChar( content );
-        xmlFree(content);
-        r = S_OK;
-        break;
-    }
-    default:
-        r = xmlnode_get_nodeValue(iface, typedValue);
-    }
+    if(This->node->type == XML_ELEMENT_NODE ||
+            This->node->type == XML_TEXT_NODE ||
+            This->node->type == XML_ENTITY_REF_NODE)
+        hres = xmlnode_get_dataType(iface, &type);
 
-    return r;
+    if(hres != S_OK && This->node->type != XML_ELEMENT_NODE)
+        return xmlnode_get_nodeValue(iface, typedValue);
+
+    content = xmlNodeGetContent(This->node);
+    hres = VARIANT_from_xmlChar(content, typedValue,
+            hres==S_OK ? V_BSTR(&type) : NULL);
+    xmlFree(content);
+    VariantClear(&type);
+
+    return hres;
 }
 
 static HRESULT WINAPI xmlnode_put_nodeTypedValue(

@@ -147,8 +147,11 @@ static  const CHAR szTransformOutput[] =
 "</h1></body></html>";
 
 static const CHAR szTypeValueXML[] =
-"<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-"<string>Wine</string>";
+"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+"<root xmlns:dt=\"urn:schemas-microsoft-com:datatypes\">\n"
+"   <string>Wine</string>\n"
+"   <string2 dt:dt=\"string\">String</string2>\n"
+"</root>";
 
 static const CHAR szBasicTransformSSXMLPart1[] =
 "<?xml version=\"1.0\"?>"
@@ -3972,7 +3975,7 @@ static void test_NodeTypeValue(void)
         hr = IXMLDOMDocument2_get_nodeTypedValue(doc, &v);
         ok(hr == S_FALSE, "ret %08x\n", hr );
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("string"), &pNode);
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/string"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -3987,7 +3990,21 @@ static void test_NodeTypeValue(void)
 
             hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
             ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_BSTR, "incorrect type\n");
             ok(!lstrcmpW( V_BSTR(&v), _bstr_("Wine") ), "incorrect value\n");
+            VariantClear( &v );
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/string2"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_BSTR, "incorrect type\n");
+            ok(!lstrcmpW( V_BSTR(&v), _bstr_("String") ), "incorrect value\n");
             VariantClear( &v );
 
             IXMLDOMNode_Release(pNode);
