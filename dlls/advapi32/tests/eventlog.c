@@ -707,7 +707,7 @@ static void test_readwrite(void)
     PSID user;
     DWORD sidsize, count;
     BOOL ret, sidavailable;
-    BOOL on_vista = FALSE; /* Used to indicate Vista or higher */
+    BOOL on_vista = FALSE; /* Used to indicate Vista, W2K8 or Win7 */
     int i;
     char localcomputer[MAX_COMPUTERNAME_LENGTH + 1];
     DWORD len = sizeof(localcomputer);
@@ -740,6 +740,31 @@ static void test_readwrite(void)
     {
         win_skip("Win7 fails when using incorrect event types\n");
         ret = ReportEvent(handle, 0, 0, 0, NULL, 0, 0, NULL, NULL);
+    }
+    else
+    {
+        void *buf;
+        DWORD read, needed;
+        EVENTLOGRECORD *record;
+
+        /* Needed to catch earlier Vista (with no ServicePack for example) */
+        buf = HeapAlloc(GetProcessHeap(), 0, sizeof(EVENTLOGRECORD));
+        ReadEventLogA(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ,
+                      0, buf, sizeof(EVENTLOGRECORD), &read, &needed);
+
+        buf = HeapReAlloc(GetProcessHeap(), 0, buf, needed);
+        ReadEventLogA(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ,
+                      0, buf, needed, &read, &needed);
+
+        record = (EVENTLOGRECORD *)buf;
+
+        /* Vista and W2K8 return EVENTLOG_SUCCESS, Windows versions before return
+         * the written eventtype (0x20 in this case).
+         */
+        if (record->EventType == EVENTLOG_SUCCESS)
+            on_vista = TRUE;
+
+        HeapFree(GetProcessHeap(), 0, buf);
     }
     ok(ret, "Expected success : %d\n", GetLastError());
 
@@ -778,7 +803,7 @@ static void test_readwrite(void)
         ret = GetOldestEventLogRecord(handle, &oldest);
         ok(ret, "Expected success\n");
         ok(oldest == 1 ||
-           oldest == 2, /* Vista+ */
+           oldest == 2, /* Vista SP1, W2K8 and Win7 */
            "Expected oldest to be 1 or 2, got %d\n", oldest);
         if (oldest == 2)
             on_vista = TRUE;
@@ -805,7 +830,7 @@ static void test_readwrite(void)
 
     /* Report only once */
     if (on_vista)
-        skip("There is no DWORD alignment for UserSid on Vista or higher\n");
+        skip("There is no DWORD alignment for UserSid on Vista, W2K8 or Win7\n");
 
     /* Read all events from our created eventlog, one by one */
     handle = OpenEventLogA(NULL, eventlogname);
