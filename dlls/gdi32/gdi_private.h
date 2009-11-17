@@ -359,9 +359,6 @@ extern HBITMAP BITMAP_CopyBitmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, DC *dc ) DECLSPEC_HIDDEN;
 extern INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp ) DECLSPEC_HIDDEN;
 
-/* brush.c */
-extern BOOL BRUSH_SetSolid( HGDIOBJ handle, COLORREF new_color ) DECLSPEC_HIDDEN;
-
 /* clipping.c */
 extern void CLIPPING_UpdateGCRegion( DC * dc ) DECLSPEC_HIDDEN;
 

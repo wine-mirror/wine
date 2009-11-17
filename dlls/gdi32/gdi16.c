@@ -3521,9 +3521,8 @@ BOOL16 WINAPI SetLayout16( HDC16 hdc, DWORD layout )
  */
 BOOL16 WINAPI SetSolidBrush16(HBRUSH16 hBrush, COLORREF newColor )
 {
-    TRACE("(hBrush %04x, newColor %08x)\n", hBrush, newColor);
-
-    return BRUSH_SetSolid( HBRUSH_32(hBrush), newColor );
+    FIXME( "%04x %08x no longer supported\n", hBrush, newColor );
+    return FALSE;
 }
 
 
