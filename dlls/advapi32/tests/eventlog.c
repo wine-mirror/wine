@@ -1000,7 +1000,8 @@ static void test_autocreation(void)
         }
         lstrcpyA(p, eventlogname);
 
-        ok(!memcmp(sources, sources_verify, size), "Expected a correct 'Sources' value\n");
+        ok(!memcmp(sources, sources_verify, size),
+           "Expected a correct 'Sources' value (size : %d)\n", size);
     }
 
     RegCloseKey(eventkey);
