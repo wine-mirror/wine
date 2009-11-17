@@ -1604,58 +1604,6 @@ static BOOL CRYPT_KeyUsageValid(PCertificateChainEngine engine,
     return ret;
 }
 
-static BOOL CRYPT_ExtendedKeyUsageValidForCA(PCCERT_CONTEXT cert)
-{
-    PCERT_EXTENSION ext;
-    BOOL ret;
-
-    /* RFC 5280, section 4.2.1.12:  "In general, this extension will only
-     * appear in end entity certificates."  And, "If a certificate contains
-     * both a key usage extension and an extended key usage extension, then
-     * both extensions MUST be processed independently and the certificate MUST
-     * only be used for a purpose consistent with both extensions."  This seems
-     * to imply that it should be checked if present, and ignored if not.
-     * Unfortunately some CAs, e.g. the Thawte SGC CA, don't include the code
-     * signing extended key usage, whereas they do include the keyCertSign
-     * key usage.  Thus, when checking for a CA, we only require the
-     * code signing extended key usage if the extended key usage is critical.
-     */
-    ext = CertFindExtension(szOID_ENHANCED_KEY_USAGE,
-     cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
-    if (ext && ext->fCritical)
-    {
-        CERT_ENHKEY_USAGE *usage;
-        DWORD size;
-
-        ret = CryptDecodeObjectEx(cert->dwCertEncodingType,
-         X509_ENHANCED_KEY_USAGE, ext->Value.pbData, ext->Value.cbData,
-         CRYPT_DECODE_ALLOC_FLAG, NULL, &usage, &size);
-        if (ret)
-        {
-            DWORD i;
-
-            /* Explicitly require the code signing extended key usage for a CA
-             * with an extended key usage extension.  That is, don't assume
-             * a cert is allowed to be a CA if it specifies the
-             * anyExtendedKeyUsage usage oid.  See again RFC 5280, section
-             * 4.2.1.12: "Applications that require the presence of a
-             * particular purpose MAY reject certificates that include the
-             * anyExtendedKeyUsage OID but not the particular OID expected for
-             * the application."
-             */
-            ret = FALSE;
-            for (i = 0; !ret && i < usage->cUsageIdentifier; i++)
-                if (!strcmp(usage->rgpszUsageIdentifier[i],
-                 szOID_PKIX_KP_CODE_SIGNING))
-                    ret = TRUE;
-            LocalFree(usage);
-        }
-    }
-    else
-        ret = TRUE;
-    return ret;
-}
-
 static BOOL CRYPT_CriticalExtensionsSupported(PCCERT_CONTEXT cert)
 {
     BOOL ret = TRUE;
@@ -1804,11 +1752,6 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
          isRoot, constraints.fCA, i))
             chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
              CERT_TRUST_IS_NOT_VALID_FOR_USAGE;
-        if (i != 0)
-            if (!CRYPT_ExtendedKeyUsageValidForCA(
-             chain->rgpElement[i]->pCertContext))
-                chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
-                 CERT_TRUST_IS_NOT_VALID_FOR_USAGE;
         if (CRYPT_IsSimpleChainCyclic(chain))
         {
             /* If the chain is cyclic, then the path length constraints
