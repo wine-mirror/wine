@@ -959,12 +959,26 @@ inline HRESULT VARIANT_from_xmlChar(xmlChar *str, VARIANT *v, BSTR type)
     }
     else
     {
-        FIXME("Type handling not yet implemented\n");
-        V_VT(v) = VT_BSTR;
-        V_BSTR(v) = bstr_from_xmlChar(str);
+        VARIANT src;
+        HRESULT hres;
 
-        if(!V_BSTR(v))
+        if(!lstrcmpiW(type, szInt))
+            V_VT(v) = VT_I4;
+        else
+        {
+            FIXME("Type handling not yet implemented\n");
+            V_VT(v) = VT_BSTR;
+        }
+
+        V_VT(&src) = VT_BSTR;
+        V_BSTR(&src) = bstr_from_xmlChar(str);
+
+        if(!V_BSTR(&src))
             return E_OUTOFMEMORY;
+
+        hres = VariantChangeType(v, &src, 0, V_VT(v));
+        VariantClear(&src);
+        return hres;
     }
 
     return S_OK;
