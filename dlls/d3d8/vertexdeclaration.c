@@ -301,7 +301,8 @@ static const wined3d_usage_t wined3d_usage_lookup[] = {
 };
 
 /* TODO: find out where rhw (or positionT) is for declaration8 */
-UINT convert_to_wined3d_declaration(const DWORD *d3d8_elements, DWORD *d3d8_elements_size, WINED3DVERTEXELEMENT **wined3d_elements)
+static UINT convert_to_wined3d_declaration(const DWORD *d3d8_elements, DWORD *d3d8_elements_size,
+        WINED3DVERTEXELEMENT **wined3d_elements)
 {
     const DWORD *token = d3d8_elements;
     WINED3DVERTEXELEMENT *element;

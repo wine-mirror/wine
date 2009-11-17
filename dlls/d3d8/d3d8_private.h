@@ -618,8 +618,6 @@ HRESULT pixelshader_init(IDirect3DPixelShader8Impl *shader, IDirect3DDevice8Impl
 D3DFORMAT d3dformat_from_wined3dformat(WINED3DFORMAT format) DECLSPEC_HIDDEN;
 WINED3DFORMAT wined3dformat_from_d3dformat(D3DFORMAT format) DECLSPEC_HIDDEN;
 void load_local_constants(const DWORD *d3d8_elements, IWineD3DVertexShader *wined3d_vertex_shader) DECLSPEC_HIDDEN;
-UINT convert_to_wined3d_declaration(const DWORD *d3d8_elements, DWORD *d3d8_elements_size,
-        WINED3DVERTEXELEMENT **wined3d_elements) DECLSPEC_HIDDEN;
 size_t parse_token(const DWORD *pToken) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_D3DX8_PRIVATE_H */
