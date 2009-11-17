@@ -876,14 +876,18 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
 	 */
 	waveHdr[whidx].dwBufferLength = count;
 	waveHdr[whidx].dwFlags &= ~WHDR_DONE;
-	TRACE("before WODM_WRITE lpWaveHdr=%p dwBufferLength=%u dwBytesRecorded=%u\n",
-	      &waveHdr[whidx], waveHdr[whidx].dwBufferLength,
-	      waveHdr[whidx].dwBytesRecorded);
+	TRACE("before WODM_WRITE lpWaveHdr=%p dwBufferLength=%u\n",
+	      &waveHdr[whidx], waveHdr[whidx].dwBufferLength);
 	dwRet = waveOutWrite(wmw->hWave, &waveHdr[whidx], sizeof(WAVEHDR));
+	if (dwRet) {
+	    ERR("Aborting play loop, WODM_WRITE error %d\n", dwRet);
+	    dwRet = MCIERR_HARDWARE;
+	    break;
+	}
 	left -= count;
 	wmw->dwPosition += count;
 	TRACE("after WODM_WRITE dwPosition=%u\n", wmw->dwPosition);
-
+	/* InterlockedDecrement if and only if waveOutWrite is successful */
 	WAVE_mciPlayWaitDone(wmw);
 	whidx ^= 1;
     }
@@ -895,8 +899,6 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
 
     waveOutUnprepareHeader(wmw->hWave, &waveHdr[0], sizeof(WAVEHDR));
     waveOutUnprepareHeader(wmw->hWave, &waveHdr[1], sizeof(WAVEHDR));
-
-    dwRet = 0;
 
 cleanUp:
     if (dwFlags & MCI_NOTIFY)
