@@ -127,6 +127,7 @@ static struct gdi_thunk*        GDI_FindThunk(HDC16 hdc)
 {
     struct gdi_thunk* thunk;
 
+    if (!GDI_Thunks) return NULL;
     for (thunk = GDI_Thunks; thunk < &GDI_Thunks[GDI_MAX_THUNKS]; thunk++)
     {
         if (thunk->hdc == hdc)  return thunk;
