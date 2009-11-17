@@ -3662,13 +3662,8 @@ void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
  */
 DWORD WINAPI SetDCOrg16( HDC16 hdc16, INT16 x, INT16 y )
 {
-    DWORD prevOrg = 0;
-    HDC hdc = HDC_32( hdc16 );
-    DC *dc = get_dc_ptr( hdc );
-    if (!dc) return 0;
-    if (dc->funcs->pSetDCOrg) prevOrg = dc->funcs->pSetDCOrg( dc->physDev, x, y );
-    release_dc_ptr( dc );
-    return prevOrg;
+    FIXME( "%04x %d,%d no longer supported\n", hdc16, x, y );
+    return 0;
 }
 
 
