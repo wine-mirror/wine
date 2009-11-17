@@ -2469,8 +2469,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetStreamSource(LPDIRECT3DDEVICE8 ifa
     return rc;
 }
 
-
-const IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl =
+static const IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl =
 {
     IDirect3DDevice8Impl_QueryInterface,
     IDirect3DDevice8Impl_AddRef,
@@ -2798,7 +2797,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
     return hr;
 }
 
-const IWineD3DDeviceParentVtbl d3d8_wined3d_device_parent_vtbl =
+static const IWineD3DDeviceParentVtbl d3d8_wined3d_device_parent_vtbl =
 {
     /* IUnknown methods */
     device_parent_QueryInterface,
@@ -2812,3 +2811,102 @@ const IWineD3DDeviceParentVtbl d3d8_wined3d_device_parent_vtbl =
     device_parent_CreateVolume,
     device_parent_CreateSwapChain,
 };
+
+HRESULT device_init(IDirect3DDevice8Impl *device, IWineD3D *wined3d, UINT adapter,
+        D3DDEVTYPE device_type, HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters)
+{
+    WINED3DPRESENT_PARAMETERS wined3d_parameters;
+    HRESULT hr;
+
+    device->lpVtbl = &Direct3DDevice8_Vtbl;
+    device->device_parent_vtbl = &d3d8_wined3d_device_parent_vtbl;
+    device->ref = 1;
+    device->handle_table.entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            D3D8_INITIAL_HANDLE_TABLE_SIZE * sizeof(*device->handle_table.entries));
+    if (!device->handle_table.entries)
+    {
+        ERR("Failed to allocate handle table memory.\n");
+        return E_OUTOFMEMORY;
+    }
+    device->handle_table.table_size = D3D8_INITIAL_HANDLE_TABLE_SIZE;
+
+    wined3d_mutex_lock();
+    hr = IWineD3D_CreateDevice(wined3d, adapter, device_type, focus_window, flags, (IUnknown *)device,
+            (IWineD3DDeviceParent *)&device->device_parent_vtbl, &device->WineD3DDevice);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d device, hr %#x.\n", hr);
+        wined3d_mutex_unlock();
+        HeapFree(GetProcessHeap(), 0, device->handle_table.entries);
+        return hr;
+    }
+
+    if (flags & D3DCREATE_MULTITHREADED) IWineD3DDevice_SetMultithreaded(device->WineD3DDevice);
+
+    wined3d_parameters.BackBufferWidth = parameters->BackBufferWidth;
+    wined3d_parameters.BackBufferHeight = parameters->BackBufferHeight;
+    wined3d_parameters.BackBufferFormat = wined3dformat_from_d3dformat(parameters->BackBufferFormat);
+    wined3d_parameters.BackBufferCount = parameters->BackBufferCount;
+    wined3d_parameters.MultiSampleType = parameters->MultiSampleType;
+    wined3d_parameters.MultiSampleQuality = 0; /* d3d9 only */
+    wined3d_parameters.SwapEffect = parameters->SwapEffect;
+    wined3d_parameters.hDeviceWindow = parameters->hDeviceWindow;
+    wined3d_parameters.Windowed = parameters->Windowed;
+    wined3d_parameters.EnableAutoDepthStencil = parameters->EnableAutoDepthStencil;
+    wined3d_parameters.AutoDepthStencilFormat = wined3dformat_from_d3dformat(parameters->AutoDepthStencilFormat);
+    wined3d_parameters.Flags = parameters->Flags;
+    wined3d_parameters.FullScreen_RefreshRateInHz = parameters->FullScreen_RefreshRateInHz;
+    wined3d_parameters.PresentationInterval = parameters->FullScreen_PresentationInterval;
+    wined3d_parameters.AutoRestoreDisplayMode = TRUE;
+
+    hr = IWineD3DDevice_Init3D(device->WineD3DDevice, &wined3d_parameters);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize 3D, hr %#x.\n", hr);
+        IWineD3DDevice_Release(device->WineD3DDevice);
+        wined3d_mutex_unlock();
+        HeapFree(GetProcessHeap(), 0, device->handle_table.entries);
+        return hr;
+    }
+
+    hr = IWineD3DDevice_SetRenderState(device->WineD3DDevice, WINED3DRS_POINTSIZE_MIN, 0);
+    wined3d_mutex_unlock();
+    if (FAILED(hr))
+    {
+        ERR("Failed to set minimum pointsize, hr %#x.\n", hr);
+        goto err;
+    }
+
+    parameters->BackBufferWidth = wined3d_parameters.BackBufferWidth;
+    parameters->BackBufferHeight = wined3d_parameters.BackBufferHeight;
+    parameters->BackBufferFormat = d3dformat_from_wined3dformat(wined3d_parameters.BackBufferFormat);
+    parameters->BackBufferCount = wined3d_parameters.BackBufferCount;
+    parameters->MultiSampleType = wined3d_parameters.MultiSampleType;
+    parameters->SwapEffect = wined3d_parameters.SwapEffect;
+    parameters->hDeviceWindow = wined3d_parameters.hDeviceWindow;
+    parameters->Windowed = wined3d_parameters.Windowed;
+    parameters->EnableAutoDepthStencil = wined3d_parameters.EnableAutoDepthStencil;
+    parameters->AutoDepthStencilFormat = d3dformat_from_wined3dformat(wined3d_parameters.AutoDepthStencilFormat);
+    parameters->Flags = wined3d_parameters.Flags;
+    parameters->FullScreen_RefreshRateInHz = wined3d_parameters.FullScreen_RefreshRateInHz;
+    parameters->FullScreen_PresentationInterval = wined3d_parameters.PresentationInterval;
+
+    device->declArraySize = 16;
+    device->decls = HeapAlloc(GetProcessHeap(), 0, device->declArraySize * sizeof(*device->decls));
+    if (!device->decls)
+    {
+        ERR("Failed to allocate FVF vertex delcaration map memory.\n");
+        hr = E_OUTOFMEMORY;
+        goto err;
+    }
+
+    return D3D_OK;
+
+err:
+    wined3d_mutex_lock();
+    IWineD3DDevice_Uninit3D(device->WineD3DDevice, D3D8CB_DestroySwapChain);
+    IWineD3DDevice_Release(device->WineD3DDevice);
+    wined3d_mutex_unlock();
+    HeapFree(GetProcessHeap(), 0, device->handle_table.entries);
+    return hr;
+}

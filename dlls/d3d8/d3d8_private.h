@@ -148,16 +148,6 @@ struct IDirect3D8Impl
     IWineD3D               *WineD3D;
 };
 
-/* ---------------- */
-/* IDirect3DDevice8 */
-/* ---------------- */
-
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl DECLSPEC_HIDDEN;
-extern const IWineD3DDeviceParentVtbl d3d8_wined3d_device_parent_vtbl DECLSPEC_HIDDEN;
-
 /*****************************************************************************
  * IDirect3DDevice8 implementation structure
  */
@@ -210,6 +200,9 @@ struct IDirect3DDevice8Impl
     /* Avoids recursion with nested ReleaseRef to 0 */
     BOOL                          inDestruction;
 };
+
+HRESULT device_init(IDirect3DDevice8Impl *device, IWineD3D *wined3d, UINT adapter,
+        D3DDEVTYPE device_type, HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters) DECLSPEC_HIDDEN;
 
 /* ---------------- */
 /* IDirect3DVolume8 */

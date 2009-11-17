@@ -341,122 +341,35 @@ ULONG WINAPI D3D8CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain) {
     return IUnknown_Release(swapChainParent);
 }
 
-static HRESULT WINAPI IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow,
-                                            DWORD BehaviourFlags, D3DPRESENT_PARAMETERS* pPresentationParameters,
-                                            IDirect3DDevice8** ppReturnedDeviceInterface) {
-
-    IDirect3D8Impl       *This   = (IDirect3D8Impl *)iface;
-    IDirect3DDevice8Impl *object = NULL;
-    WINED3DPRESENT_PARAMETERS localParameters;
+static HRESULT WINAPI IDirect3D8Impl_CreateDevice(IDirect3D8 *iface, UINT adapter, D3DDEVTYPE device_type,
+        HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters, IDirect3DDevice8 **device)
+{
+    IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+    IDirect3DDevice8Impl *object;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, device_type %#x, focus_window %p, flags %#x, parameters %p, device %p.\n",
-            iface, Adapter, DeviceType, hFocusWindow, BehaviourFlags, pPresentationParameters,
-            ppReturnedDeviceInterface);
+            iface, adapter, device_type, focus_window, flags, parameters, device);
 
-    /* Check the validity range of the adapter parameter */
-    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
-        *ppReturnedDeviceInterface = NULL;
-        return D3DERR_INVALIDCALL;
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate device memory.\n");
+        return E_OUTOFMEMORY;
     }
 
-    /* Allocate the storage for the device object */
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DDevice8Impl));
-    if (NULL == object) {
-        FIXME("Allocation of memory failed\n");
-        *ppReturnedDeviceInterface = NULL;
-        return D3DERR_OUTOFVIDEOMEMORY;
-    }
-
-    object->lpVtbl = &Direct3DDevice8_Vtbl;
-    object->device_parent_vtbl = &d3d8_wined3d_device_parent_vtbl;
-    object->ref = 1;
-    object->handle_table.entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            D3D8_INITIAL_HANDLE_TABLE_SIZE * sizeof(*object->handle_table.entries));
-    object->handle_table.table_size = D3D8_INITIAL_HANDLE_TABLE_SIZE;
-    *ppReturnedDeviceInterface = (IDirect3DDevice8 *)object;
-
-    /* Allocate an associated WineD3DDevice object */
-    wined3d_mutex_lock();
-    hr = IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags,
-            (IUnknown *)object, (IWineD3DDeviceParent *)&object->device_parent_vtbl, &object->WineD3DDevice);
-
-    if (hr != D3D_OK) {
+    hr = device_init(object, This->WineD3D, adapter, device_type, focus_window, flags, parameters);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize device, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppReturnedDeviceInterface = NULL;
-        wined3d_mutex_unlock();
-
         return hr;
     }
 
-    TRACE("(%p) : Created Device %p\n", This, object);
+    TRACE("Created device %p.\n", object);
+    *device = (IDirect3DDevice8 *)object;
 
-    localParameters.BackBufferWidth                             = pPresentationParameters->BackBufferWidth;
-    localParameters.BackBufferHeight                            = pPresentationParameters->BackBufferHeight;
-    localParameters.BackBufferFormat                            = wined3dformat_from_d3dformat(pPresentationParameters->BackBufferFormat);
-    localParameters.BackBufferCount                             = pPresentationParameters->BackBufferCount;
-    localParameters.MultiSampleType                             = pPresentationParameters->MultiSampleType;
-    localParameters.MultiSampleQuality                          = 0; /* d3d9 only */
-    localParameters.SwapEffect                                  = pPresentationParameters->SwapEffect;
-    localParameters.hDeviceWindow                               = pPresentationParameters->hDeviceWindow;
-    localParameters.Windowed                                    = pPresentationParameters->Windowed;
-    localParameters.EnableAutoDepthStencil                      = pPresentationParameters->EnableAutoDepthStencil;
-    localParameters.AutoDepthStencilFormat                      = wined3dformat_from_d3dformat(pPresentationParameters->AutoDepthStencilFormat);
-    localParameters.Flags                                       = pPresentationParameters->Flags;
-    localParameters.FullScreen_RefreshRateInHz                  = pPresentationParameters->FullScreen_RefreshRateInHz;
-    localParameters.PresentationInterval                        = pPresentationParameters->FullScreen_PresentationInterval;
-    localParameters.AutoRestoreDisplayMode                      = TRUE;
-
-    if(BehaviourFlags & D3DCREATE_MULTITHREADED) {
-        IWineD3DDevice_SetMultithreaded(object->WineD3DDevice);
-    }
-
-    hr = IWineD3DDevice_Init3D(object->WineD3DDevice, &localParameters);
-    if (hr != D3D_OK) {
-        wined3d_mutex_unlock();
-        FIXME("(%p) D3D Initialization failed for WineD3DDevice %p\n", This, object->WineD3DDevice);
-        goto err;
-    }
-    hr = IWineD3DDevice_SetRenderState(object->WineD3DDevice, WINED3DRS_POINTSIZE_MIN, 0);
-    wined3d_mutex_unlock();
-    if(FAILED(hr)) {
-        FIXME("(%p) SetRenderState failed\n", This);
-        goto err;
-    }
-
-    pPresentationParameters->BackBufferWidth                    = localParameters.BackBufferWidth;
-    pPresentationParameters->BackBufferHeight                   = localParameters.BackBufferHeight;
-    pPresentationParameters->BackBufferFormat                   = d3dformat_from_wined3dformat(localParameters.BackBufferFormat);
-    pPresentationParameters->BackBufferCount                    = localParameters.BackBufferCount;
-    pPresentationParameters->MultiSampleType                    = localParameters.MultiSampleType;
-    pPresentationParameters->SwapEffect                         = localParameters.SwapEffect;
-    pPresentationParameters->hDeviceWindow                      = localParameters.hDeviceWindow;
-    pPresentationParameters->Windowed                           = localParameters.Windowed;
-    pPresentationParameters->EnableAutoDepthStencil             = localParameters.EnableAutoDepthStencil;
-    pPresentationParameters->AutoDepthStencilFormat             = d3dformat_from_wined3dformat(localParameters.AutoDepthStencilFormat);
-    pPresentationParameters->Flags                              = localParameters.Flags;
-    pPresentationParameters->FullScreen_RefreshRateInHz         = localParameters.FullScreen_RefreshRateInHz;
-    pPresentationParameters->FullScreen_PresentationInterval    = localParameters.PresentationInterval;
-
-    object->declArraySize = 16;
-    object->decls = HeapAlloc(GetProcessHeap(), 0, object->declArraySize * sizeof(*object->decls));
-    if(!object->decls) {
-        ERR("Out of memory\n");
-        hr = E_OUTOFMEMORY;
-        goto err;
-    }
     return D3D_OK;
-
-err:
-    *ppReturnedDeviceInterface = NULL;
-
-    HeapFree(GetProcessHeap(), 0, object->decls);
-    wined3d_mutex_lock();
-    IWineD3DDevice_Uninit3D(object->WineD3DDevice, D3D8CB_DestroySwapChain);
-    IWineD3DDevice_Release(object->WineD3DDevice);
-    wined3d_mutex_unlock();
-    HeapFree(GetProcessHeap(), 0, object);
-    return hr;
 }
 
 const IDirect3D8Vtbl Direct3D8_Vtbl =
