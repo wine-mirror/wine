@@ -743,12 +743,14 @@ static BOOL directory_name_matches(const CERT_NAME_BLOB *constraint,
 }
 
 static BOOL alt_name_matches(const CERT_ALT_NAME_ENTRY *name,
- const CERT_ALT_NAME_ENTRY *constraint, DWORD *trustErrorStatus)
+ const CERT_ALT_NAME_ENTRY *constraint, DWORD *trustErrorStatus, BOOL *present)
 {
     BOOL match = FALSE;
 
     if (name->dwAltNameChoice == constraint->dwAltNameChoice)
     {
+        if (present)
+            *present = TRUE;
         switch (constraint->dwAltNameChoice)
         {
         case CERT_ALT_NAME_RFC822_NAME:
@@ -778,6 +780,8 @@ static BOOL alt_name_matches(const CERT_ALT_NAME_ENTRY *name,
              CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT;
         }
     }
+    else if (present)
+        *present = FALSE;
     return match;
 }
 
@@ -789,19 +793,21 @@ static BOOL alt_name_matches_excluded_name(const CERT_ALT_NAME_ENTRY *name,
 
     for (i = 0; !match && i < nameConstraints->cExcludedSubtree; i++)
         match = alt_name_matches(name,
-         &nameConstraints->rgExcludedSubtree[i].Base, trustErrorStatus);
+         &nameConstraints->rgExcludedSubtree[i].Base, trustErrorStatus, NULL);
     return match;
 }
 
 static BOOL alt_name_matches_permitted_name(const CERT_ALT_NAME_ENTRY *name,
- const CERT_NAME_CONSTRAINTS_INFO *nameConstraints, DWORD *trustErrorStatus)
+ const CERT_NAME_CONSTRAINTS_INFO *nameConstraints, DWORD *trustErrorStatus,
+ BOOL *present)
 {
     DWORD i;
     BOOL match = FALSE;
 
     for (i = 0; !match && i < nameConstraints->cPermittedSubtree; i++)
         match = alt_name_matches(name,
-         &nameConstraints->rgPermittedSubtree[i].Base, trustErrorStatus);
+         &nameConstraints->rgPermittedSubtree[i].Base, trustErrorStatus,
+         present);
     return match;
 }
 
@@ -837,14 +843,23 @@ static void CRYPT_CheckNameConstraints(
 
             for (i = 0; i < subjectName->cAltEntry; i++)
             {
+                 BOOL nameFormPresent;
+
+                 /* A name constraint only applies if the name form is present.
+                  * From RFC 5280, section 4.2.1.10:
+                  * "Restrictions apply only when the specified name form is
+                  *  present.  If no name of the type is in the certificate,
+                  *  the certificate is acceptable."
+                  */
                 if (alt_name_matches_excluded_name(
                  &subjectName->rgAltEntry[i], nameConstraints,
                  trustErrorStatus))
                     *trustErrorStatus |=
                      CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT;
+                nameFormPresent = FALSE;
                 if (!alt_name_matches_permitted_name(
                  &subjectName->rgAltEntry[i], nameConstraints,
-                 trustErrorStatus))
+                 trustErrorStatus, &nameFormPresent) && nameFormPresent)
                     *trustErrorStatus |=
                      CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
             }
