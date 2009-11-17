@@ -1233,6 +1233,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
     static const WCHAR  wszNew[] = {'n','e','w',0};
     static const WCHAR  wszSAliasS[] = {' ','a','l','i','a','s',' ',0};
     static const WCHAR  wszTypeS[] = {'t','y','p','e',' ',0};
+    static const WCHAR  wszSysinfo[] = {'s','y','s','i','n','f','o',0};
 
     TRACE("(%s, %p, %d, %p)\n", 
           debugstr_w(lpstrCommand), lpstrRet, uRetLen, hwndCallback);
@@ -1325,6 +1326,20 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	if (dwRet) {
 	    MCI_UnLoadMciDriver(wmd);
 	    goto errCleanUp;
+	}
+    } else if (!strcmpW(verb, wszSysinfo)) {
+	/* System commands are not subject to auto-open. */
+	/* It's too early to handle Sysinfo here because the
+	 * requirements on dev depend on the flags:
+	 * alias with INSTALLNAME, name like "waveaudio"
+	 * with QUANTITY and NAME. */
+	data[4] = MCI_ALL_DEVICE_ID;
+	if (MCI_ALL_DEVICE_ID != uDevID) {
+	    /* FIXME: Map device name like waveaudio to MCI_DEVTYPE_xyz */
+	    uDevID = mciGetDeviceIDW(dev);
+	    wmd = MCI_GetDriver(uDevID);
+	    if (wmd)
+		data[4] = wmd->wType;
 	}
     } else if ((MCI_ALL_DEVICE_ID != uDevID) && !(wmd = MCI_GetDriver(mciGetDeviceIDW(dev)))) {
 	/* auto open */
