@@ -367,6 +367,7 @@ static char* get_args(struct parsed_symbol* sym, struct array* pmt_ref, BOOL z_t
     struct datatype_t   ct;
     struct array        arg_collect;
     char*               args_str = NULL;
+    char*               last;
     unsigned int        i;
 
     str_array_init(&arg_collect);
@@ -402,7 +403,8 @@ static char* get_args(struct parsed_symbol* sym, struct array* pmt_ref, BOOL z_t
         args_str = str_printf(sym, "%s,%s", args_str, arg_collect.elts[i]);
     }
 
-    if (close_char == '>' && args_str && args_str[strlen(args_str) - 1] == '>')
+    last = args_str ? args_str : arg_collect.elts[0];
+    if (close_char == '>' && last[strlen(last) - 1] == '>')
         args_str = str_printf(sym, "%c%s%s %c", 
                               open_char, arg_collect.elts[0], args_str, close_char);
     else
