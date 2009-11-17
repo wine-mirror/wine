@@ -1288,6 +1288,50 @@ static void test_revert(void)
     ok( r == TRUE, "deleted file\n");
 }
 
+static void test_parent_free(void)
+{
+    IStorage *stg = NULL, *stg2 = NULL;
+    HRESULT r;
+    IStream *stm = NULL;
+    static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
+    static const WCHAR stgname[] = { 'P','E','R','M','S','T','G',0 };
+    ULONG ref;
+
+    DeleteFileA(filenameA);
+
+    /* create the file */
+    r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE |
+                            STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
+    ok(r==S_OK, "StgCreateDocfile failed\n");
+
+    /* commit a new storage */
+    r = IStorage_CreateStorage(stg, stgname, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stg2);
+    ok(r==S_OK, "IStorage->CreateStorage failed, hr=%08x\n", r);
+
+    if (r == S_OK)
+    {
+        /* now create a stream inside the new storage */
+        r = IStorage_CreateStream(stg2, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
+        ok(r==S_OK, "IStorage->CreateStream failed\n");
+
+        ref = IStorage_Release(stg2);
+        ok(ref == 0, "IStorage still has %u references\n", ref);
+
+        if (r == S_OK)
+        {
+            r = IStream_Write(stm, "this should fail\n", 17, NULL);
+            ok(r==STG_E_REVERTED, "IStream->Write sould fail, hr=%x\n", r);
+
+            IStream_Release(stm);
+        }
+    }
+
+    IStorage_Release(stg);
+
+    r = DeleteFileA(filenameA);
+    ok( r == TRUE, "deleted file\n");
+}
+
 static void test_nonroot_transacted(void)
 {
     IStorage *stg = NULL, *stg2 = NULL;
@@ -2422,6 +2466,7 @@ START_TEST(storage32)
     test_transact();
     test_substorage_share();
     test_revert();
+    test_parent_free();
     test_nonroot_transacted();
     test_ReadClassStm();
     test_access();
