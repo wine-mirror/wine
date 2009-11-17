@@ -484,7 +484,6 @@ extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut ) DECLSPE
 extern HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg);
 extern UINT WINAPI GDIRealizePalette( HDC hdc );
 extern HPALETTE PALETTE_Init(void) DECLSPEC_HIDDEN;
-extern HPALETTE hPrimaryPalette DECLSPEC_HIDDEN;
 
 /* region.c */
 extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y ) DECLSPEC_HIDDEN;

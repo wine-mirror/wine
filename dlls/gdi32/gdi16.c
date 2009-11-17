@@ -25,7 +25,6 @@
 #include "wingdi.h"
 #include "wownt32.h"
 #include "wine/wingdi16.h"
-#include "gdi_private.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 
@@ -42,6 +41,8 @@ struct saved_visrgn
 };
 
 static struct list saved_regions = LIST_INIT( saved_regions );
+
+static HPALETTE16 hPrimaryPalette;
 
 /*
  * ############################################################################
@@ -2421,7 +2422,9 @@ HPALETTE16 WINAPI CreatePalette16( const LOGPALETTE* palette )
  */
 HPALETTE16 WINAPI GDISelectPalette16( HDC16 hdc, HPALETTE16 hpalette, WORD wBkg )
 {
-    return HPALETTE_16( GDISelectPalette( HDC_32(hdc), HPALETTE_32(hpalette), wBkg ));
+    HPALETTE16 ret = HPALETTE_16( SelectPalette( HDC_32(hdc), HPALETTE_32(hpalette), wBkg ));
+    if (ret && !wBkg) hPrimaryPalette = hpalette;
+    return ret;
 }
 
 
@@ -2430,7 +2433,7 @@ HPALETTE16 WINAPI GDISelectPalette16( HDC16 hdc, HPALETTE16 hpalette, WORD wBkg 
  */
 UINT16 WINAPI GDIRealizePalette16( HDC16 hdc )
 {
-    return GDIRealizePalette( HDC_32(hdc) );
+    return RealizePalette( HDC_32(hdc) );
 }
 
 
@@ -3539,16 +3542,8 @@ void WINAPI Copy16( LPVOID src, LPVOID dst, WORD size )
  */
 UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
 {
-    UINT16 ret = 0;
-    DC          *dc;
-
-    TRACE("%04x\n", hdc );
-
-    if (!(dc = get_dc_ptr( HDC_32(hdc) ))) return 0;
-
-    if (dc->funcs->pRealizeDefaultPalette) ret = dc->funcs->pRealizeDefaultPalette( dc->physDev );
-    release_dc_ptr( dc );
-    return ret;
+    FIXME( "%04x semi-stub\n", hdc );
+    return GDIRealizePalette16( hdc );
 }
 
 /***********************************************************************
@@ -3556,14 +3551,7 @@ UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
  */
 BOOL16 WINAPI IsDCCurrentPalette16(HDC16 hDC)
 {
-    DC *dc = get_dc_ptr( HDC_32(hDC) );
-    if (dc)
-    {
-      BOOL bRet = dc->hPalette == hPrimaryPalette;
-      release_dc_ptr( dc );
-      return bRet;
-    }
-    return FALSE;
+    return HPALETTE_16( GetCurrentObject( HDC_32(hDC), OBJ_PAL )) == hPrimaryPalette;
 }
 
 /*********************************************************************
