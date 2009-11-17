@@ -144,7 +144,6 @@ DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic )
     dc->BoundsRect.top      = 0;
     dc->BoundsRect.right    = 0;
     dc->BoundsRect.bottom   = 0;
-    dc->saved_visrgn        = NULL;
     PATH_InitGdiPath(&dc->path);
 
     if (!(dc->hSelf = alloc_gdi_handle( &dc->header, magic, &dc_funcs )))
@@ -403,7 +402,6 @@ INT save_dc_state( HDC hdc )
 
     newdc->pAbortProc = NULL;
     newdc->hookProc   = NULL;
-    newdc->saved_visrgn = NULL;
 
     if (!(newdc->hSelf = alloc_gdi_handle( &newdc->header, dc->header.type, &dc_funcs )))
     {
@@ -843,14 +841,6 @@ BOOL WINAPI DeleteDC( HDC hdc )
         funcs = dc->funcs;
         if (dc->funcs->pDeleteDC) dc->funcs->pDeleteDC(dc->physDev);
         dc->physDev = NULL;
-    }
-
-    while (dc->saved_visrgn)
-    {
-        struct saved_visrgn *next = dc->saved_visrgn->next;
-        DeleteObject( dc->saved_visrgn->hrgn );
-        HeapFree( GetProcessHeap(), 0, dc->saved_visrgn );
-        dc->saved_visrgn = next;
     }
 
     free_dc_ptr( dc );

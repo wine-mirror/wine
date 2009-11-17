@@ -34,6 +34,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 #define HGDIOBJ_32(handle16)    ((HGDIOBJ)(ULONG_PTR)(handle16))
 #define HGDIOBJ_16(handle32)    ((HGDIOBJ16)(ULONG_PTR)(handle32))
 
+struct saved_visrgn
+{
+    struct list entry;
+    HDC         hdc;
+    HRGN        hrgn;
+};
+
+static struct list saved_regions = LIST_INIT( saved_regions );
+
 /*
  * ############################################################################
  */
@@ -1312,9 +1321,18 @@ BOOL16 WINAPI DeleteDC16( HDC16 hdc )
 {
     if (DeleteDC( HDC_32(hdc) ))
     {
+        struct saved_visrgn *saved, *next;
         struct gdi_thunk* thunk;
-        if ((thunk = GDI_FindThunk(hdc)))
-            GDI_DeleteThunk(thunk);
+
+        if ((thunk = GDI_FindThunk(hdc))) GDI_DeleteThunk(thunk);
+
+        LIST_FOR_EACH_ENTRY_SAFE( saved, next, &saved_regions, struct saved_visrgn, entry )
+        {
+            if (saved->hdc != HDC_32(hdc)) continue;
+            list_remove( &saved->entry );
+            DeleteObject( saved->hrgn );
+            HeapFree( GetProcessHeap(), 0, saved );
+        }
         return TRUE;
     }
     return FALSE;
@@ -3704,24 +3722,19 @@ HRGN16 WINAPI SaveVisRgn16( HDC16 hdc16 )
 {
     struct saved_visrgn *saved;
     HDC hdc = HDC_32( hdc16 );
-    DC *dc = get_dc_ptr( hdc );
 
-    if (!dc) return 0;
     TRACE("%p\n", hdc );
 
-    update_dc( dc );
-    if (!(saved = HeapAlloc( GetProcessHeap(), 0, sizeof(*saved) ))) goto error;
-    if (!(saved->hrgn = CreateRectRgn( 0, 0, 0, 0 ))) goto error;
-    CombineRgn( saved->hrgn, dc->hVisRgn, 0, RGN_COPY );
-    saved->next = dc->saved_visrgn;
-    dc->saved_visrgn = saved;
-    release_dc_ptr( dc );
+    if (!(saved = HeapAlloc( GetProcessHeap(), 0, sizeof(*saved) ))) return 0;
+    if (!(saved->hrgn = CreateRectRgn( 0, 0, 0, 0 )))
+    {
+        HeapFree( GetProcessHeap(), 0, saved );
+        return 0;
+    }
+    saved->hdc = hdc;
+    GetRandomRgn( hdc, saved->hrgn, SYSRGN );
+    list_add_head( &saved_regions, &saved->entry );
     return HRGN_16(saved->hrgn);
-
-error:
-    release_dc_ptr( dc );
-    HeapFree( GetProcessHeap(), 0, saved );
-    return 0;
 }
 
 
@@ -3732,22 +3745,19 @@ INT16 WINAPI RestoreVisRgn16( HDC16 hdc16 )
 {
     struct saved_visrgn *saved;
     HDC hdc = HDC_32( hdc16 );
-    DC *dc = get_dc_ptr( hdc );
     INT16 ret = ERROR;
-
-    if (!dc) return ERROR;
 
     TRACE("%p\n", hdc );
 
-    if (!(saved = dc->saved_visrgn)) goto done;
-
-    ret = CombineRgn( dc->hVisRgn, saved->hrgn, 0, RGN_COPY );
-    dc->saved_visrgn = saved->next;
-    DeleteObject( saved->hrgn );
-    HeapFree( GetProcessHeap(), 0, saved );
-    CLIPPING_UpdateGCRegion( dc );
- done:
-    release_dc_ptr( dc );
+    LIST_FOR_EACH_ENTRY( saved, &saved_regions, struct saved_visrgn, entry )
+    {
+        if (saved->hdc != hdc) continue;
+        ret = SelectVisRgn( hdc, saved->hrgn );
+        list_remove( &saved->entry );
+        DeleteObject( saved->hrgn );
+        HeapFree( GetProcessHeap(), 0, saved );
+        break;
+    }
     return ret;
 }
 
