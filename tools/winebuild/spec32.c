@@ -37,6 +37,7 @@
 #define IMAGE_FILE_MACHINE_ALPHA   0x0184
 #define IMAGE_FILE_MACHINE_POWERPC 0x01f0
 #define IMAGE_FILE_MACHINE_AMD64   0x8664
+#define IMAGE_FILE_MACHINE_ARM     0x01C0
 
 #define IMAGE_SIZEOF_NT_OPTIONAL32_HEADER 224
 #define IMAGE_SIZEOF_NT_OPTIONAL64_HEADER 240
@@ -369,6 +370,9 @@ static void output_asm_constructor( const char *constructor )
         case CPU_ALPHA:
             output( "\tjsr $26,%s\n", asm_name(constructor) );
             break;
+        case CPU_ARM:
+            output( "\tblx %s\n", asm_name(constructor) );
+            break;
         case CPU_POWERPC:
             output( "\tbl %s\n", asm_name(constructor) );
             break;
@@ -412,6 +416,7 @@ void output_module( DLLSPEC *spec )
         case CPU_SPARC:
             output( "\tjmp 1f\n" );
             break;
+        case CPU_ARM:
         case CPU_POWERPC:
             output( "\tb 1f\n" );
             break;
@@ -434,6 +439,7 @@ void output_module( DLLSPEC *spec )
     {
     case CPU_x86:     machine = IMAGE_FILE_MACHINE_I386; break;
     case CPU_x86_64:  machine = IMAGE_FILE_MACHINE_AMD64; break;
+    case CPU_ARM:     machine = IMAGE_FILE_MACHINE_ARM; break;
     case CPU_POWERPC: machine = IMAGE_FILE_MACHINE_POWERPC; break;
     case CPU_ALPHA:   machine = IMAGE_FILE_MACHINE_ALPHA; break;
     case CPU_SPARC:   machine = IMAGE_FILE_MACHINE_UNKNOWN; break;
@@ -623,6 +629,7 @@ void output_fake_module( DLLSPEC *spec )
     case CPU_POWERPC: put_word( IMAGE_FILE_MACHINE_POWERPC ); break;
     case CPU_ALPHA:   put_word( IMAGE_FILE_MACHINE_ALPHA ); break;
     case CPU_SPARC:   put_word( IMAGE_FILE_MACHINE_UNKNOWN ); break;
+    case CPU_ARM:     put_word( IMAGE_FILE_MACHINE_ARM ); break;
     }
     put_word( nb_sections );                         /* NumberOfSections */
     put_dword( 0 );                                  /* TimeDateStamp */

@@ -57,7 +57,8 @@ static const struct
     { "x86_64",  CPU_x86_64 },
     { "sparc",   CPU_SPARC },
     { "alpha",   CPU_ALPHA },
-    { "powerpc", CPU_POWERPC }
+    { "powerpc", CPU_POWERPC },
+    { "arm", CPU_ARM }
 };
 
 /* atexit handler to clean tmp files */
@@ -795,6 +796,7 @@ unsigned int get_alignment(unsigned int align)
     case CPU_x86:
     case CPU_x86_64:
     case CPU_SPARC:
+    case CPU_ARM:
         if (target_platform != PLATFORM_APPLE) return align;
         /* fall through */
     case CPU_POWERPC:
@@ -816,6 +818,7 @@ unsigned int get_page_size(void)
     case CPU_x86:     return 4096;
     case CPU_x86_64:  return 4096;
     case CPU_POWERPC: return 4096;
+    case CPU_ARM:     return 4096;
     case CPU_SPARC:   return 8192;
     case CPU_ALPHA:   return 8192;
     }
@@ -833,6 +836,7 @@ unsigned int get_ptr_size(void)
     case CPU_POWERPC:
     case CPU_SPARC:
     case CPU_ALPHA:
+    case CPU_ARM:
         return 4;
     case CPU_x86_64:
         return 8;
@@ -873,7 +877,15 @@ const char *func_declaration( const char *func )
         sprintf( buffer, ".def _%s; .scl 2; .type 32; .endef", func );
         break;
     default:
-        sprintf( buffer, ".type %s,@function", func );
+        switch(target_cpu)
+        {
+        case CPU_ARM:
+            sprintf( buffer, ".type %s,%%function", func );
+            break;
+        default:
+            sprintf( buffer, ".type %s,@function", func );
+            break;
+        }
         break;
     }
     return buffer;
@@ -902,7 +914,15 @@ void output_gnu_stack_note(void)
     case PLATFORM_APPLE:
         break;
     default:
-        output( "\t.section .note.GNU-stack,\"\",@progbits\n" );
+        switch(target_cpu)
+        {
+        case CPU_ARM:
+            output( "\t.section .note.GNU-stack,\"\",%%progbits\n" );
+            break;
+        default:
+            output( "\t.section .note.GNU-stack,\"\",@progbits\n" );
+            break;
+        }
         break;
     }
 }

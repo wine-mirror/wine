@@ -699,6 +699,10 @@ static void output_import_thunk( const char *name, const char *table, int pos )
         output( "\tlda $0,%d($0)\n", pos );
         output( "\tjmp $31,($0)\n" );
         break;
+    case CPU_ARM:
+        output( "\tmov r4, #%s\n", table );
+        output( "\tldr r15, [r4, #%d]\n", pos );
+        break;
     case CPU_POWERPC:
         output( "\tmr %s, %s\n", ppc_reg(0), ppc_reg(31) );
         if (target_platform == PLATFORM_APPLE)
@@ -1005,6 +1009,11 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output( "\tjsr $26,%s\n", asm_name("__wine_spec_delay_load") );
         output( "\tjmp $31,($0)\n" );
         break;
+    case CPU_ARM:
+        output( "\tstmfd  sp!, {r4, r5, r6, r7, r8, r9, r10, lr}\n" );
+        output( "\tblx %s\n", asm_name("__wine_spec_delay_load") );
+        output( "\tldmfd  sp!, {r4, r5, r6, r7, r8, r9, r10, pc}\n" );
+        break;
     case CPU_POWERPC:
         if (target_platform == PLATFORM_APPLE) extra_stack_storage = 56;
 
@@ -1087,6 +1096,9 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
                 output( "\tlda $0,%d($31)\n", j);
                 output( "\tldah $0,%d($0)\n", idx);
                 output( "\tjmp $31,%s\n", asm_name("__wine_delay_load_asm") );
+                break;
+            case CPU_ARM:
+                output( "\tb %s\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_POWERPC:
                 switch(target_platform)
