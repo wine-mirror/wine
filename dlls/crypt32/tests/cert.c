@@ -2662,18 +2662,15 @@ static void testIsRDNAttrsInCertificateName(void)
     }
     SetLastError(0xdeadbeef);
     ret = CertIsRDNAttrsInCertificateName(0, 0, &name, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
      "expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
     ret = CertIsRDNAttrsInCertificateName(X509_ASN_ENCODING, 0, &name, &rdn);
-    todo_wine
     ok(ret, "CertIsRDNAttrsInCertificateName failed: %08x\n", GetLastError());
     attr[0].pszObjId = oid_1_2_3;
     rdn.rgRDNAttr = attr;
     rdn.cRDNAttr = 1;
     SetLastError(0xdeadbeef);
     ret = CertIsRDNAttrsInCertificateName(X509_ASN_ENCODING, 0, &name, &rdn);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
     attr[0].pszObjId = oid_common_name;
@@ -2681,28 +2678,24 @@ static void testIsRDNAttrsInCertificateName(void)
     attr[0].Value.cbData = strlen(juan);
     attr[0].Value.pbData = (BYTE *)juan;
     ret = CertIsRDNAttrsInCertificateName(X509_ASN_ENCODING, 0, &name, &rdn);
-    todo_wine
     ok(ret, "CertIsRDNAttrsInCertificateName failed: %08x\n", GetLastError());
     /* Again, spaces are not removed for name comparison. */
     attr[0].Value.cbData = strlen(juan_with_leading_space);
     attr[0].Value.pbData = (BYTE *)juan_with_leading_space;
     SetLastError(0xdeadbeef);
     ret = CertIsRDNAttrsInCertificateName(X509_ASN_ENCODING, 0, &name, &rdn);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
     attr[0].Value.cbData = strlen(juan_with_intermediate_space);
     attr[0].Value.pbData = (BYTE *)juan_with_intermediate_space;
     SetLastError(0xdeadbeef);
     ret = CertIsRDNAttrsInCertificateName(X509_ASN_ENCODING, 0, &name, &rdn);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
     attr[0].Value.cbData = strlen(juan_with_trailing_space);
     attr[0].Value.pbData = (BYTE *)juan_with_trailing_space;
     SetLastError(0xdeadbeef);
     ret = CertIsRDNAttrsInCertificateName(X509_ASN_ENCODING, 0, &name, &rdn);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
     /* The lower case name isn't matched unless a case insensitive match is
@@ -2712,12 +2705,10 @@ static void testIsRDNAttrsInCertificateName(void)
     attr[0].Value.pbData = (BYTE *)juan_lower_case;
     SetLastError(0xdeadbeef);
     ret = CertIsRDNAttrsInCertificateName(X509_ASN_ENCODING, 0, &name, &rdn);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
     ret = CertIsRDNAttrsInCertificateName(X509_ASN_ENCODING,
      CERT_CASE_INSENSITIVE_IS_RDN_ATTRS_FLAG, &name, &rdn);
-    todo_wine
     ok(ret, "CertIsRDNAttrsInCertificateName failed: %08x\n", GetLastError());
     /* The values don't match unless they have the same RDN type */
     attr[0].dwValueType = CERT_RDN_UNICODE_STRING;
@@ -2725,13 +2716,11 @@ static void testIsRDNAttrsInCertificateName(void)
     attr[0].Value.pbData = (BYTE *)juanW;
     SetLastError(0xdeadbeef);
     ret = CertIsRDNAttrsInCertificateName(X509_ASN_ENCODING, 0, &name, &rdn);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CertIsRDNAttrsInCertificateName(X509_ASN_ENCODING,
      CERT_UNICODE_IS_RDN_ATTRS_FLAG, &name, &rdn);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
     attr[0].dwValueType = CERT_RDN_IA5_STRING;
@@ -2739,7 +2728,6 @@ static void testIsRDNAttrsInCertificateName(void)
     attr[0].Value.pbData = (BYTE *)juan;
     SetLastError(0xdeadbeef);
     ret = CertIsRDNAttrsInCertificateName(X509_ASN_ENCODING, 0, &name, &rdn);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
     /* All attributes must be present */
@@ -2753,20 +2741,17 @@ static void testIsRDNAttrsInCertificateName(void)
     rdn.cRDNAttr = 2;
     SetLastError(0xdeadbeef);
     ret = CertIsRDNAttrsInCertificateName(X509_ASN_ENCODING, 0, &name, &rdn);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
     /* Order also matters */
     name.pbData = cnThenO;
     name.cbData = sizeof(cnThenO);
     ret = CertIsRDNAttrsInCertificateName(X509_ASN_ENCODING, 0, &name, &rdn);
-    todo_wine
     ok(ret, "CertIsRDNAttrsInCertificateName failed: %08x\n", GetLastError());
     name.pbData = oThenCN;
     name.cbData = sizeof(oThenCN);
     SetLastError(0xdeadbeef);
     ret = CertIsRDNAttrsInCertificateName(X509_ASN_ENCODING, 0, &name, &rdn);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
 }
