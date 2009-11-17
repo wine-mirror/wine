@@ -778,50 +778,43 @@ static void CRYPT_CheckNameConstraints(
  const CERT_NAME_CONSTRAINTS_INFO *nameConstraints, const CERT_INFO *cert,
  DWORD *trustErrorStatus)
 {
-    /* If there aren't any existing constraints, don't bother checking */
-    if (nameConstraints->cPermittedSubtree || nameConstraints->cExcludedSubtree)
+    CERT_EXTENSION *ext = get_subject_alt_name_ext(cert);
+
+    if (ext)
     {
-        CERT_EXTENSION *ext = get_subject_alt_name_ext(cert);
+        CERT_ALT_NAME_INFO *subjectName;
+        DWORD size;
 
-        if (ext)
+        if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_ALTERNATE_NAME,
+         ext->Value.pbData, ext->Value.cbData,
+         CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
+         &subjectName, &size))
         {
-            CERT_ALT_NAME_INFO *subjectName;
-            DWORD size;
+            DWORD i;
 
-            if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_ALTERNATE_NAME,
-             ext->Value.pbData, ext->Value.cbData,
-             CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
-             &subjectName, &size))
-            {
-                DWORD i;
-
-                for (i = 0; i < nameConstraints->cExcludedSubtree; i++)
-                    CRYPT_FindMatchingNameEntry(
-                     &nameConstraints->rgExcludedSubtree[i].Base, subjectName,
-                     trustErrorStatus,
-                     CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT, 0);
-                for (i = 0; i < nameConstraints->cPermittedSubtree; i++)
-                    CRYPT_FindMatchingNameEntry(
-                     &nameConstraints->rgPermittedSubtree[i].Base, subjectName,
-                     trustErrorStatus, 0,
-                     CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT);
-                LocalFree(subjectName);
-            }
-            else
-                *trustErrorStatus |=
-                 CERT_TRUST_INVALID_EXTENSION |
-                 CERT_TRUST_INVALID_NAME_CONSTRAINTS;
+            for (i = 0; i < nameConstraints->cExcludedSubtree; i++)
+                CRYPT_FindMatchingNameEntry(
+                 &nameConstraints->rgExcludedSubtree[i].Base, subjectName,
+                 trustErrorStatus, CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT, 0);
+            for (i = 0; i < nameConstraints->cPermittedSubtree; i++)
+                CRYPT_FindMatchingNameEntry(
+                 &nameConstraints->rgPermittedSubtree[i].Base, subjectName,
+                 trustErrorStatus, 0,
+                 CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT);
+            LocalFree(subjectName);
         }
         else
-        {
-            if (nameConstraints->cPermittedSubtree)
-                *trustErrorStatus |=
-                 CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT |
-                 CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
-            if (nameConstraints->cExcludedSubtree)
-                *trustErrorStatus |=
-                 CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT;
-        }
+            *trustErrorStatus |=
+             CERT_TRUST_INVALID_EXTENSION | CERT_TRUST_INVALID_NAME_CONSTRAINTS;
+    }
+    else
+    {
+        if (nameConstraints->cPermittedSubtree)
+            *trustErrorStatus |=
+             CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT |
+             CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
+        if (nameConstraints->cExcludedSubtree)
+            *trustErrorStatus |= CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT;
     }
 }
 
