@@ -449,9 +449,6 @@ extern BOOL GDI_hdc_not_using_object(HGDIOBJ obj, HDC hdc) DECLSPEC_HIDDEN;
 /* metafile.c */
 extern HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh) DECLSPEC_HIDDEN;
 extern METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mr, LPCVOID filename, BOOL unicode ) DECLSPEC_HIDDEN;
-extern METAHEADER *MF_ReadMetaFile(HANDLE hfile) DECLSPEC_HIDDEN;
-extern METAHEADER *MF_LoadDiskBasedMetaFile(METAHEADER *mh) DECLSPEC_HIDDEN;
-extern BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh) DECLSPEC_HIDDEN;
 
 /* path.c */
 

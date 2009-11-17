@@ -30,11 +30,14 @@
 #include "wine/wingdi16.h"
 #include "wownt32.h"
 #include "winreg.h"
-#include "winternl.h"
-#include "gdi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
+
+#define METAFILE_MEMORY 1
+#define METAFILE_DISK   2
+#define MFHEADERSIZE (sizeof(METAHEADER))
+#define MFVERSION 0x300
 
 /******************************************************************
  *         MF_GetMetaHeader16
@@ -58,26 +61,38 @@ static BOOL16 MF_ReleaseMetaHeader16( HMETAFILE16 hmf )
 }
 
 /******************************************************************
- *         MF_Create_HMETATFILE16
+ *         create_metafile16
  *
- * Creates a HMETAFILE16 object from a METAHEADER
- *
- * HMETAFILE16s are Global memory handles.
+ * Create a 16-bit metafile from a 32-bit one. The 32-bit one is deleted.
  */
-static HMETAFILE16 MF_Create_HMETAFILE16(METAHEADER *mh)
+static HMETAFILE16 create_metafile16( HMETAFILE hmf )
 {
-    HMETAFILE16 hmf;
-    DWORD size = mh->mtSize * sizeof(WORD);
+    UINT size;
+    HMETAFILE16 hmf16;
 
-    hmf = GlobalAlloc16(GMEM_MOVEABLE, size);
-    if(hmf)
+    if (!hmf) return 0;
+    size = GetMetaFileBitsEx( hmf, 0, NULL );
+    hmf16 = GlobalAlloc16( GMEM_MOVEABLE, size );
+    if (hmf16)
     {
-	METAHEADER *mh_dest = GlobalLock16(hmf);
-	memcpy(mh_dest, mh, size);
-	GlobalUnlock16(hmf);
+        void *buffer = GlobalLock16( hmf16 );
+        GetMetaFileBitsEx( hmf, size, buffer );
+        GlobalUnlock16( hmf16 );
     }
-    HeapFree(GetProcessHeap(), 0, mh);
-    return hmf;
+    DeleteMetaFile( hmf );
+    return hmf16;
+}
+
+/******************************************************************
+ *         create_metafile32
+ *
+ * Create a 32-bit metafile from a 16-bit one.
+ */
+static HMETAFILE create_metafile32( HMETAFILE16 hmf16 )
+{
+    METAHEADER *mh = MF_GetMetaHeader16( hmf16 );
+    if (!mh) return 0;
+    return SetMetaFileBitsEx( mh->mtSize * 2, (BYTE *)mh );
 }
 
 /**********************************************************************
@@ -93,23 +108,7 @@ HDC16 WINAPI CreateMetaFile16( LPCSTR filename )
  */
 HMETAFILE16 WINAPI CloseMetaFile16(HDC16 hdc)
 {
-    HMETAFILE16 hmf16 = 0;
-    HMETAFILE hmf = CloseMetaFile( HDC_32(hdc) );
-
-    if (hmf)
-    {
-        UINT size = GetMetaFileBitsEx( hmf, 0, NULL );
-
-        hmf16 = GlobalAlloc16( GMEM_MOVEABLE, size );
-        if (hmf16)
-        {
-            void *buffer = GlobalLock16( hmf16 );
-            GetMetaFileBitsEx( hmf, size, buffer );
-            GlobalUnlock16( hmf16 );
-        }
-        DeleteMetaFile( hmf );
-    }
-    return hmf16;
+    return create_metafile16( CloseMetaFile( HDC_32(hdc) ));
 }
 
 /******************************************************************
@@ -125,22 +124,7 @@ BOOL16 WINAPI DeleteMetaFile16(  HMETAFILE16 hmf )
  */
 HMETAFILE16 WINAPI GetMetaFile16( LPCSTR lpFilename )
 {
-    METAHEADER *mh;
-    HANDLE hFile;
-
-    TRACE("%s\n", lpFilename);
-
-    if(!lpFilename)
-        return 0;
-
-    if((hFile = CreateFileA(lpFilename, GENERIC_READ, FILE_SHARE_READ, NULL,
-			    OPEN_EXISTING, 0, 0)) == INVALID_HANDLE_VALUE)
-        return 0;
-
-    mh = MF_ReadMetaFile(hFile);
-    CloseHandle(hFile);
-    if(!mh) return 0;
-    return MF_Create_HMETAFILE16( mh );
+    return create_metafile16( GetMetaFileA( lpFilename ));
 }
 
 /******************************************************************
@@ -148,35 +132,10 @@ HMETAFILE16 WINAPI GetMetaFile16( LPCSTR lpFilename )
  */
 HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
 {
-    METAHEADER *mh = MF_GetMetaHeader16( hSrcMetaFile );
-    METAHEADER *mh2 = NULL;
-    HANDLE hFile;
-
-    TRACE("(%08x,%s)\n", hSrcMetaFile, lpFilename);
-
-    if(!mh) return 0;
-
-    if(mh->mtType == METAFILE_DISK)
-        mh2 = MF_LoadDiskBasedMetaFile(mh);
-    else {
-        mh2 = HeapAlloc( GetProcessHeap(), 0, mh->mtSize * 2 );
-        memcpy( mh2, mh, mh->mtSize * 2 );
-    }
-    MF_ReleaseMetaHeader16( hSrcMetaFile );
-
-    if(lpFilename) {         /* disk based metafile */
-        DWORD w;
-        if((hFile = CreateFileA(lpFilename, GENERIC_WRITE, 0, NULL,
-				CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
-	    HeapFree( GetProcessHeap(), 0, mh2 );
-	    return 0;
-	}
-	WriteFile(hFile, mh2, mh2->mtSize * 2, &w, NULL);
-	CloseHandle(hFile);
-	mh2 = MF_CreateMetaHeaderDisk(mh2, lpFilename, FALSE);
-    }
-
-    return MF_Create_HMETAFILE16( mh2 );
+    HMETAFILE hmf = create_metafile32( hSrcMetaFile );
+    HMETAFILE hmf2 = CopyMetaFileA( hmf, lpFilename );
+    DeleteMetaFile( hmf );
+    return create_metafile16( hmf2 );
 }
 
 /******************************************************************
@@ -212,12 +171,11 @@ BOOL16 WINAPI IsValidMetaFile16(HMETAFILE16 hmf)
  *         PlayMetaFile   (GDI.123)
  *
  */
-BOOL16 WINAPI PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
+BOOL16 WINAPI PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf16 )
 {
-    BOOL16 ret;
-    METAHEADER *mh = MF_GetMetaHeader16( hmf );
-    ret = MF_PlayMetaFile( HDC_32(hdc), mh );
-    MF_ReleaseMetaHeader16( hmf );
+    HMETAFILE hmf = create_metafile32( hmf16 );
+    BOOL ret = PlayMetaFile( HDC_32(hdc), hmf );
+    DeleteMetaFile( hmf );
     return ret;
 }
 
@@ -241,16 +199,11 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc16, HMETAFILE16 hmf,
     HBRUSH hBrush;
     HFONT hFont;
     WORD args[8];
-    BOOL16 result = TRUE, loaded = FALSE;
+    BOOL16 result = TRUE;
 
     TRACE("(%p, %04x, %p, %08lx)\n", hdc, hmf, lpEnumFunc, lpData);
 
     if(!mh) return FALSE;
-    if(mh->mtType == METAFILE_DISK) { /* Create a memory-based copy */
-        mh = MF_LoadDiskBasedMetaFile(mh);
-	if(!mh) return FALSE;
-	loaded = TRUE;
-    }
 
     /* save the current pen, brush and font */
     hPen = GetCurrentObject(hdc, OBJ_PEN);
@@ -308,8 +261,6 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc16, HMETAFILE16 hmf,
 
     /* free handle table */
     GlobalFree16(hHT);
-    if(loaded)
-        HeapFree( GetProcessHeap(), 0, mh );
     MF_ReleaseMetaHeader16(hmf);
     return result;
 }

@@ -175,7 +175,7 @@ BOOL WINAPI DeleteMetaFile( HMETAFILE hmf )
  * Returns a pointer to a memory based METAHEADER read in from file HFILE
  *
  */
-METAHEADER *MF_ReadMetaFile(HANDLE hfile)
+static METAHEADER *MF_ReadMetaFile(HANDLE hfile)
 {
     METAHEADER *mh;
     DWORD BytesRead, size;
@@ -266,7 +266,7 @@ HMETAFILE WINAPI GetMetaFileW( LPCWSTR lpFilename )
  *
  * Creates a new memory-based metafile from a disk-based one.
  */
-METAHEADER *MF_LoadDiskBasedMetaFile(METAHEADER *mh)
+static METAHEADER *MF_LoadDiskBasedMetaFile(METAHEADER *mh)
 {
     METAHEADERDISK *mhd;
     HANDLE hfile;
@@ -384,7 +384,7 @@ HMETAFILE WINAPI CopyMetaFileA( HMETAFILE hSrcMetaFile, LPCSTR lpFilename )
  *
  * Helper for PlayMetaFile
  */
-BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
+static BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
 {
 
     METARECORD *mr;
