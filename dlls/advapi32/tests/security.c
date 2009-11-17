@@ -3301,7 +3301,8 @@ static void test_EqualSid(void)
     SetLastError(0xdeadbeef);
     ret = EqualSid(sid1, sid2);
     ok(!ret, "World and domain admins sids shouldn't have been equal\n");
-    ok(GetLastError() == ERROR_SUCCESS,
+    ok(GetLastError() == ERROR_SUCCESS ||
+       broken(GetLastError() == 0xdeadbeef), /* NT4 */
        "EqualSid should have set last error to ERROR_SUCCESS instead of %d\n",
        GetLastError());
 
@@ -3319,7 +3320,8 @@ static void test_EqualSid(void)
     SetLastError(0xdeadbeef);
     ret = EqualSid(sid1, sid2);
     ok(ret, "Same sids should have been equal\n");
-    ok(GetLastError() == ERROR_SUCCESS,
+    ok(GetLastError() == ERROR_SUCCESS ||
+       broken(GetLastError() == 0xdeadbeef), /* NT4 */
        "EqualSid should have set last error to ERROR_SUCCESS instead of %d\n",
        GetLastError());
 
@@ -3327,7 +3329,8 @@ static void test_EqualSid(void)
     SetLastError(0xdeadbeef);
     ret = EqualSid(sid1, sid2);
     ok(!ret, "EqualSid with invalid sid should have returned FALSE\n");
-    ok(GetLastError() == ERROR_SUCCESS,
+    ok(GetLastError() == ERROR_SUCCESS ||
+       broken(GetLastError() == 0xdeadbeef), /* NT4 */
        "EqualSid should have set last error to ERROR_SUCCESS instead of %d\n",
        GetLastError());
     ((SID *)sid2)->Revision = SID_REVISION;
