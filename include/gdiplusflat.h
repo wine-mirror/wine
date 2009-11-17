@@ -350,6 +350,7 @@ GpStatus WINGDIPAPI GdipTransformPath(GpPath*,GpMatrix*);
 GpStatus WINGDIPAPI GdipCreateHatchBrush(HatchStyle,ARGB,ARGB,GpHatch**);
 GpStatus WINGDIPAPI GdipGetHatchBackgroundColor(GpHatch*,ARGB*);
 GpStatus WINGDIPAPI GdipGetHatchForegroundColor(GpHatch*,ARGB*);
+GpStatus WINGDIPAPI GdipGetHatchStyle(GpHatch*,HatchStyle*);
 
 /* Image */
 GpStatus WINGDIPAPI GdipCloneImage(GpImage*, GpImage**);
@@ -430,11 +431,18 @@ GpStatus WINGDIPAPI GdipSetLinePresetBlend(GpLineGradient*,GDIPCONST ARGB*,
     GDIPCONST REAL*,INT);
 GpStatus WINGDIPAPI GdipGetLinePresetBlend(GpLineGradient*,ARGB*,REAL*,INT);
 GpStatus WINGDIPAPI GdipGetLinePresetBlendCount(GpLineGradient*,INT*);
+GpStatus WINGDIPAPI GdipResetLineTransform(GpLineGradient*);
+GpStatus WINGDIPAPI GdipRotateLineTransform(GpLineGradient*,REAL,GpMatrixOrder);
+GpStatus WINGDIPAPI GdipScaleLineTransform(GpLineGradient*,REAL,REAL,
+    GpMatrixOrder);
 GpStatus WINGDIPAPI GdipSetLineColors(GpLineGradient*,ARGB,ARGB);
 GpStatus WINGDIPAPI GdipSetLineGammaCorrection(GpLineGradient*,BOOL);
 GpStatus WINGDIPAPI GdipSetLineSigmaBlend(GpLineGradient*,REAL,REAL);
+GpStatus WINGDIPAPI GdipSetLineTransform(GpLineGradient*,GDIPCONST GpMatrix*);
 GpStatus WINGDIPAPI GdipSetLineLinearBlend(GpLineGradient*,REAL,REAL);
 GpStatus WINGDIPAPI GdipSetLineWrapMode(GpLineGradient*,GpWrapMode);
+GpStatus WINGDIPAPI GdipTranslateLineTransform(GpLineGradient*,REAL,REAL,
+    GpMatrixOrder);
 
 /* Matrix */
 GpStatus WINGDIPAPI GdipCloneMatrix(GpMatrix*,GpMatrix**);
@@ -493,6 +501,8 @@ GpStatus WINGDIPAPI GdipGetPathGradientCenterPointI(GpPathGradient*,GpPoint*);
 GpStatus WINGDIPAPI GdipGetPathGradientFocusScales(GpPathGradient*,REAL*,REAL*);
 GpStatus WINGDIPAPI GdipGetPathGradientGammaCorrection(GpPathGradient*,BOOL*);
 GpStatus WINGDIPAPI GdipGetPathGradientPointCount(GpPathGradient*,INT*);
+GpStatus WINGDIPAPI GdipSetPathGradientPresetBlend(GpPathGradient*,
+    GDIPCONST ARGB*,GDIPCONST REAL*,INT);
 GpStatus WINGDIPAPI GdipGetPathGradientRect(GpPathGradient*,GpRectF*);
 GpStatus WINGDIPAPI GdipGetPathGradientRectI(GpPathGradient*,GpRect*);
 GpStatus WINGDIPAPI GdipGetPathGradientSurroundColorsWithCount(GpPathGradient*,
@@ -638,9 +648,15 @@ GpStatus WINGDIPAPI GdipCreateTextureIAI(GpImage*,GDIPCONST GpImageAttributes*,
     INT,INT,INT,INT,GpTexture**);
 GpStatus WINGDIPAPI GdipGetTextureTransform(GpTexture*,GpMatrix*);
 GpStatus WINGDIPAPI GdipGetTextureWrapMode(GpTexture*, GpWrapMode*);
+GpStatus WINGDIPAPI GdipMultiplyTextureTransform(GpTexture*,
+    GDIPCONST GpMatrix*,GpMatrixOrder);
 GpStatus WINGDIPAPI GdipResetTextureTransform(GpTexture*);
+GpStatus WINGDIPAPI GdipRotateTextureTransform(GpTexture*,REAL,GpMatrixOrder);
+GpStatus WINGDIPAPI GdipScaleTextureTransform(GpTexture*,REAL,REAL,GpMatrixOrder);
 GpStatus WINGDIPAPI GdipSetTextureTransform(GpTexture *,GDIPCONST GpMatrix*);
 GpStatus WINGDIPAPI GdipSetTextureWrapMode(GpTexture*, GpWrapMode);
+GpStatus WINGDIPAPI GdipTranslateTextureTransform(GpTexture*,REAL,REAL,
+    GpMatrixOrder);
 
 /* Without wrapper methods */
 GpStatus WINGDIPAPI GdipCreateStreamOnFile(GDIPCONST WCHAR*,UINT,IStream**);
