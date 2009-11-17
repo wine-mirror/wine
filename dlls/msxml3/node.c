@@ -948,7 +948,8 @@ static HRESULT WINAPI xmlnode_get_dataType(IXMLDOMNode*, VARIANT*);
 
 inline HRESULT VARIANT_from_xmlChar(xmlChar *str, VARIANT *v, BSTR type)
 {
-    if(!type || !lstrcmpiW(type, szString))
+    if(!type || !lstrcmpiW(type, szString) ||
+            !lstrcmpiW(type, szNumber))
     {
         V_VT(v) = VT_BSTR;
         V_BSTR(v) = bstr_from_xmlChar(str);
