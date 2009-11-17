@@ -859,7 +859,17 @@ HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
 
     if ((dc = get_dc_ptr( hdc )))
     {
-        if (dc->funcs->pResetDC) ret = dc->funcs->pResetDC( dc->physDev, devmode );
+        if (dc->funcs->pResetDC)
+        {
+            ret = dc->funcs->pResetDC( dc->physDev, devmode );
+            if (ret)  /* reset the visible region */
+            {
+                dc->dirty = 0;
+                SetRectRgn( dc->hVisRgn, 0, 0, GetDeviceCaps( hdc, DESKTOPHORZRES ),
+                            GetDeviceCaps( hdc, DESKTOPVERTRES ) );
+                CLIPPING_UpdateGCRegion( dc );
+            }
+        }
         release_dc_ptr( dc );
     }
     return ret;

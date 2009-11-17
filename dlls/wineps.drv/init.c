@@ -401,14 +401,10 @@ BOOL CDECL PSDRV_DeleteDC( PSDRV_PDEVICE *physDev )
 HDC CDECL PSDRV_ResetDC( PSDRV_PDEVICE *physDev, const DEVMODEW *lpInitData )
 {
     if(lpInitData) {
-        HRGN hrgn;
         DEVMODEA *devmodeA = DEVMODEdupWtoA(PSDRV_Heap, lpInitData);
         PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODEA *)devmodeA, physDev->pi);
         HeapFree(PSDRV_Heap, 0, devmodeA);
         PSDRV_UpdateDevCaps(physDev);
-        hrgn = CreateRectRgn(0, 0, physDev->horzRes, physDev->vertRes);
-        SelectVisRgn( physDev->hdc, hrgn );
-        DeleteObject(hrgn);
     }
     return physDev->hdc;
 }
