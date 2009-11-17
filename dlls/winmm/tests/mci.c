@@ -230,7 +230,7 @@ static void test_openCloseWAVE(HWND hwnd)
     memset(buf, 0, sizeof(buf));
     err = mciSendString(command_sysinfo, buf, sizeof(buf), NULL);
     ok(!err,"mci %s returned %s\n", command_sysinfo, dbg_mcierr(err));
-    todo_wine ok(buf[0] == '0' && buf[1] == 0, "mci %s, expected output buffer '0', got: '%s'\n", command_sysinfo, buf);
+    ok(buf[0] == '0' && buf[1] == 0, "mci %s, expected output buffer '0', got: '%s'\n", command_sysinfo, buf);
 
     err = mciSendString("open new type waveaudio", buf, sizeof(buf), NULL);
     ok(err==MCIERR_NEW_REQUIRES_ALIAS,"mci open new without alias returned %s\n", dbg_mcierr(err));
@@ -724,7 +724,7 @@ static void test_AutoOpenWAVE(HWND hwnd)
 
     err = mciSendString("sysinfo waveaudio quantity open", buf, sizeof(buf), NULL);
     ok(!err,"mci sysinfo waveaudio quantity open returned %s\n", dbg_mcierr(err));
-    if(!err) todo_wine ok(!strcmp(buf,"0"), "sysinfo quantity open expected 0, got: %s, some more tests will fail.\n", buf);
+    if(!err) ok(!strcmp(buf,"0"), "sysinfo quantity open expected 0, got: %s, some more tests will fail.\n", buf);
 
     /* Who knows why some machines pass all tests but return MCIERR_HARDWARE here? */
     err = mciSendString("sound NoSuchSoundDefined wait", NULL, 0, NULL);
@@ -736,7 +736,7 @@ static void test_AutoOpenWAVE(HWND hwnd)
 
     buf[0]=0;
     err = mciSendString("sysinfo waveaudio name 1 open", buf, sizeof(buf), NULL);
-    todo_wine ok(err==MCIERR_OUTOFRANGE,"sysinfo waveaudio name 1 returned %s\n", dbg_mcierr(err));
+    ok(err==MCIERR_OUTOFRANGE,"sysinfo waveaudio name 1 returned %s\n", dbg_mcierr(err));
     if(!err) trace("sysinfo dangling open alias: %s\n", buf);
 
     err = mciSendString("play no-such-file-exists.wav notify", buf, sizeof(buf), NULL);

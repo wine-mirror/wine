@@ -1733,10 +1733,16 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 
     TRACE("(%08x, %08X, %p[num=%d, wDevTyp=%u])\n",
 	  uDevID, dwFlags, lpParms, lpParms->dwNumber, lpParms->wDeviceType);
+    if ((WORD)MCI_ALL_DEVICE_ID == LOWORD(uDevID))
+	uDevID = MCI_ALL_DEVICE_ID; /* Be compatible with Win9x */
 
-    switch (dwFlags & ~MCI_SYSINFO_OPEN) {
+    switch (dwFlags & ~(MCI_SYSINFO_OPEN|MCI_NOTIFY|MCI_WAIT)) {
     case MCI_SYSINFO_QUANTITY:
-	if (lpParms->wDeviceType < MCI_DEVTYPE_FIRST || lpParms->wDeviceType > MCI_DEVTYPE_LAST) {
+	if (lpParms->dwRetSize < sizeof(DWORD))
+	    return MCIERR_PARAM_OVERFLOW;
+	/* Win9x returns 0 for 0 < uDevID < (UINT16)MCI_ALL_DEVICE_ID */
+	if (uDevID == MCI_ALL_DEVICE_ID) {
+	    /* wDeviceType == MCI_ALL_DEVICE_ID is not recognized. */
 	    if (dwFlags & MCI_SYSINFO_OPEN) {
 		TRACE("MCI_SYSINFO_QUANTITY: # of open MCI drivers\n");
 		EnterCriticalSection(&WINMM_cs);
@@ -1756,14 +1762,14 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 	    }
 	} else {
 	    if (dwFlags & MCI_SYSINFO_OPEN) {
-		TRACE("MCI_SYSINFO_QUANTITY: # of open MCI drivers of type %u\n", lpParms->wDeviceType);
+		TRACE("MCI_SYSINFO_QUANTITY: # of open MCI drivers of type %d\n", lpParms->wDeviceType);
 		EnterCriticalSection(&WINMM_cs);
 		for (wmd = MciDrivers; wmd; wmd = wmd->lpNext) {
 		    if (wmd->wType == lpParms->wDeviceType) cnt++;
 		}
 		LeaveCriticalSection(&WINMM_cs);
 	    } else {
-		TRACE("MCI_SYSINFO_QUANTITY: # of installed MCI drivers of type %u\n", lpParms->wDeviceType);
+		TRACE("MCI_SYSINFO_QUANTITY: # of installed MCI drivers of type %d\n", lpParms->wDeviceType);
 		FIXME("Don't know how to get # of MCI devices of a given type\n");
 		cnt = 1;
 	    }
@@ -1771,6 +1777,7 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 	*(DWORD*)lpParms->lpstrReturn = cnt;
 	TRACE("(%d) => '%d'\n", lpParms->dwNumber, *(DWORD*)lpParms->lpstrReturn);
 	ret = MCI_INTEGER_RETURNED;
+	/* return ret; Only Win9x sends a notification in this case. */
 	break;
     case MCI_SYSINFO_INSTALLNAME:
 	TRACE("MCI_SYSINFO_INSTALLNAME\n");
@@ -1784,12 +1791,27 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 	TRACE("(%d) => %s\n", lpParms->dwNumber, debugstr_w(lpParms->lpstrReturn));
 	break;
     case MCI_SYSINFO_NAME:
-	TRACE("MCI_SYSINFO_NAME\n");
+	s = NULL;
 	if (dwFlags & MCI_SYSINFO_OPEN) {
-	    FIXME("Don't handle MCI_SYSINFO_NAME|MCI_SYSINFO_OPEN (yet)\n");
-	    ret = MCIERR_UNRECOGNIZED_COMMAND;
-	} else {
-	    s = NULL;
+	    /* Win9x returns 0 for 0 < uDevID < (UINT16)MCI_ALL_DEVICE_ID */
+	    TRACE("MCI_SYSINFO_NAME: nth alias of type %d\n",
+		  uDevID == MCI_ALL_DEVICE_ID ? MCI_ALL_DEVICE_ID : lpParms->wDeviceType);
+	    EnterCriticalSection(&WINMM_cs);
+	    for (wmd = MciDrivers; wmd; wmd = wmd->lpNext) {
+		/* wDeviceType == MCI_ALL_DEVICE_ID is not recognized. */
+		if (uDevID == MCI_ALL_DEVICE_ID ||
+		    lpParms->wDeviceType == wmd->wType) {
+		    cnt++;
+		    if (cnt == lpParms->dwNumber) {
+			s = wmd->lpstrAlias;
+			break;
+		    }
+		}
+	    }
+	    LeaveCriticalSection(&WINMM_cs);
+	    ret = s ? MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize / sizeof(WCHAR), s) : MCIERR_OUTOFRANGE;
+	} else if (MCI_ALL_DEVICE_ID == uDevID) {
+	    TRACE("MCI_SYSINFO_NAME: device #%d\n", lpParms->dwNumber);
 	    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, wszHklmMci, 0, 
                                KEY_QUERY_VALUE, &hKey ) == ERROR_SUCCESS) {
 		if (RegQueryInfoKeyW( hKey, 0, 0, 0, &cnt, 
@@ -1814,13 +1836,26 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 		}
 	    }
 	    ret = s ? MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize / sizeof(WCHAR), s) : MCIERR_OUTOFRANGE;
+	} else {
+	    FIXME("MCI_SYSINFO_NAME: nth device of type %d\n", lpParms->wDeviceType);
+	    /* Cheating: what is asked for is the nth device from the registry. */
+	    if (1 != lpParms->dwNumber || /* Handle only one of each kind. */
+		lpParms->wDeviceType < MCI_DEVTYPE_FIRST || lpParms->wDeviceType > MCI_DEVTYPE_LAST)
+		ret = MCIERR_OUTOFRANGE;
+	    else {
+		LoadStringW(hWinMM32Instance, LOWORD(lpParms->wDeviceType),
+			    lpParms->lpstrReturn, lpParms->dwRetSize / sizeof(WCHAR));
+		ret = 0;
+	    }
 	}
 	TRACE("(%d) => %s\n", lpParms->dwNumber, debugstr_w(lpParms->lpstrReturn));
 	break;
     default:
 	TRACE("Unsupported flag value=%08x\n", dwFlags);
-	ret = MCIERR_UNRECOGNIZED_COMMAND;
+	ret = MCIERR_UNRECOGNIZED_KEYWORD;
     }
+    if ((dwFlags & MCI_NOTIFY) && HRESULT_CODE(ret)==0)
+	mciDriverNotify((HWND)lpParms->dwCallback, uDevID, MCI_NOTIFY_SUCCESSFUL);
     return ret;
 }
 
