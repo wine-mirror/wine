@@ -849,14 +849,22 @@ static void compare_alt_name_with_constraints(const CERT_EXTENSION *altNameExt,
             if (alt_name_matches_excluded_name(
              &subjectAltName->rgAltEntry[i], nameConstraints,
              trustErrorStatus))
+            {
+                TRACE_(chain)("subject alternate name form %d excluded\n",
+                 subjectAltName->rgAltEntry[i].dwAltNameChoice);
                 *trustErrorStatus |=
                  CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT;
+            }
             nameFormPresent = FALSE;
             if (!alt_name_matches_permitted_name(
              &subjectAltName->rgAltEntry[i], nameConstraints,
              trustErrorStatus, &nameFormPresent) && nameFormPresent)
+            {
+                TRACE_(chain)("subject alternate name form %d not permitted\n",
+                 subjectAltName->rgAltEntry[i].dwAltNameChoice);
                 *trustErrorStatus |=
                  CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
+            }
         }
         LocalFree(subjectAltName);
     }
@@ -934,14 +942,22 @@ static void compare_subject_with_email_constraints(
                     if (rfc822_attr_matches_excluded_name(
                      &name->rgRDN[i].rgRDNAttr[j], nameConstraints,
                      trustErrorStatus))
+                    {
+                        TRACE_(chain)(
+                         "email address in subject name is excluded\n");
                         *trustErrorStatus |=
                          CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT;
+                    }
                     nameFormPresent = FALSE;
                     if (!rfc822_attr_matches_permitted_name(
                      &name->rgRDN[i].rgRDNAttr[j], nameConstraints,
                      trustErrorStatus, &nameFormPresent) && nameFormPresent)
+                    {
+                        TRACE_(chain)(
+                         "email address in subject name is not permitted\n");
                         *trustErrorStatus |=
                          CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
+                    }
                 }
         LocalFree(name);
     }
@@ -1000,8 +1016,11 @@ static void compare_subject_with_constraints(const CERT_NAME_BLOB *subjectName,
 
         if (constraint->dwAltNameChoice == CERT_ALT_NAME_DIRECTORY_NAME &&
          directory_name_matches(&constraint->u.DirectoryName, subjectName))
+        {
+            TRACE_(chain)("subject name is excluded\n");
             *trustErrorStatus |=
              CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT;
+        }
     }
     /* RFC 5280, section 4.2.1.10:
      * "Restrictions apply only when the specified name form is present.
@@ -1026,7 +1045,10 @@ static void compare_subject_with_constraints(const CERT_NAME_BLOB *subjectName,
             }
         }
         if (hasDirectoryConstraint && !match)
+        {
+            TRACE_(chain)("subject name is not permitted\n");
             *trustErrorStatus |= CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
+        }
     }
 }
 
