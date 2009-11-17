@@ -3284,6 +3284,11 @@ static void test_EqualSid(void)
     SetLastError(0xdeadbeef);
     ret = AllocateAndInitializeSid(&SIDAuthNT, 2, SECURITY_BUILTIN_DOMAIN_RID,
         DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &sid1);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("AllocateAndInitializeSid is not implemented\n");
+        return;
+    }
     ok(ret, "AllocateAndInitializeSid failed with error %d\n", GetLastError());
     ok(GetLastError() == 0xdeadbeef,
        "AllocateAndInitializeSid shouldn't have set last error to %d\n",
