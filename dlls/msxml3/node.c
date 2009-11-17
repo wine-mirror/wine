@@ -966,6 +966,8 @@ inline HRESULT VARIANT_from_xmlChar(xmlChar *str, VARIANT *v, BSTR type)
             V_VT(v) = VT_I4;
         else if(!lstrcmpiW(type, szFixed))
             V_VT(v) = VT_CY;
+        else if(!lstrcmpiW(type, szBoolean))
+            V_VT(v) = VT_BOOL;
         else
         {
             FIXME("Type handling not yet implemented\n");

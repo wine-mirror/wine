@@ -155,6 +155,7 @@ static const CHAR szTypeValueXML[] =
 "   <number2 dt:dt=\"NUMbEr\">-3.71e3</number2>\n"
 "   <int dt:dt=\"int\">-13</int>\n"
 "   <fixed dt:dt=\"fixed.14.4\">7322.9371</fixed>\n"
+"   <bool dt:dt=\"boolean\">1</bool>\n"
 "</root>";
 
 static const CHAR szBasicTransformSSXMLPart1[] =
@@ -4070,6 +4071,19 @@ static void test_NodeTypeValue(void)
             ok(VarCyCmp(V_CY(&v), V_CY(&hlp_out)) == VARCMP_EQ, "incorrect value\n");
             VariantClear(&hlp_out);
             VariantClear(&v);
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/bool"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_BOOL, "incorrect type\n");
+            ok(V_BOOL(&v) == VARIANT_TRUE, "incorrect value\n");
+            VariantClear( &v );
 
             IXMLDOMNode_Release(pNode);
         }
