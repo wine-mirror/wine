@@ -957,6 +957,73 @@ inline HRESULT VARIANT_from_xmlChar(xmlChar *str, VARIANT *v, BSTR type)
         if(!V_BSTR(v))
             return E_OUTOFMEMORY;
     }
+    else if(!lstrcmpiW(type, szDateTime) || !lstrcmpiW(type, szDateTimeTZ) ||
+            !lstrcmpiW(type, szDate) || !lstrcmpiW(type, szTime) ||
+            !lstrcmpiW(type, szTimeTZ))
+    {
+        VARIANT src;
+        WCHAR *p, *e;
+        SYSTEMTIME st;
+        DOUBLE date = 0.0;
+
+        st.wYear = 1899;
+        st.wMonth = 12;
+        st.wDay = 30;
+        st.wDayOfWeek = st.wHour = st.wMinute = st.wSecond = st.wMilliseconds = 0;
+
+        V_VT(&src) = VT_BSTR;
+        V_BSTR(&src) = bstr_from_xmlChar(str);
+
+        if(!V_BSTR(&src))
+            return E_OUTOFMEMORY;
+
+        p = V_BSTR(&src);
+        e = p + SysStringLen(V_BSTR(&src));
+
+        if(p+4<e && *(p+4)=='-') /* parse date (yyyy-mm-dd) */
+        {
+            st.wYear = atoiW(p);
+            st.wMonth = atoiW(p+5);
+            st.wDay = atoiW(p+8);
+            p += 10;
+
+            if(*p == 'T') p++;
+        }
+
+        if(p+2<e && *(p+2)==':') /* parse time (hh:mm:ss.?) */
+        {
+            st.wHour = atoiW(p);
+            st.wMinute = atoiW(p+3);
+            st.wSecond = atoiW(p+6);
+            p += 8;
+
+            if(*p == '.')
+            {
+                int ms;
+
+                p++;
+                ms = (*(p++) - '0') * 10;
+                if(isdigitW(*p)) ms += *(p++) - '0';
+                ms *= 10;
+                if(isdigitW(*p)) ms += *(p++) - '0';
+
+                st.wMilliseconds = ms;
+
+                while(isdigitW(*p)) p++;
+            }
+        }
+
+        SystemTimeToVariantTime(&st, &date);
+        V_VT(v) = VT_DATE;
+        V_DATE(v) = date;
+
+        if(*p == '+') /* parse timezone offset (+hh:mm) */
+            V_DATE(v) += (DOUBLE)atoiW(p+1)/24 + (DOUBLE)atoiW(p+4)/1440;
+        else if(*p == '-') /* parse timezone offset (-hh:mm) */
+            V_DATE(v) -= (DOUBLE)atoiW(p+1)/24 + (DOUBLE)atoiW(p+4)/1440;
+
+        VariantClear(&src);
+    }
     else
     {
         VARIANT src;

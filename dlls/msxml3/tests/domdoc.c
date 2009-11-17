@@ -156,6 +156,11 @@ static const CHAR szTypeValueXML[] =
 "   <int dt:dt=\"int\">-13</int>\n"
 "   <fixed dt:dt=\"fixed.14.4\">7322.9371</fixed>\n"
 "   <bool dt:dt=\"boolean\">1</bool>\n"
+"   <datetime dt:dt=\"datetime\">2009-11-18T03:21:33.12</datetime>\n"
+"   <datetimetz dt:dt=\"datetime.tz\">2003-07-11T11:13:57+03:00</datetimetz>\n"
+"   <date dt:dt=\"date\">3721-11-01</date>\n"
+"   <time dt:dt=\"time\">13:57:12.31321</time>\n"
+"   <timetz dt:dt=\"time.tz\">23:21:01.13+03:21</timetz>\n"
 "</root>";
 
 static const CHAR szBasicTransformSSXMLPart1[] =
@@ -251,6 +256,8 @@ static WCHAR szStrangeChars[] = {'&','x',' ',0x2103, 0};
     HRESULT r = expr; \
     ok(r == (expect), #expr " returned %x, expected %x\n", r, expect); \
 }
+
+#define double_eq(x, y) ok((x)-(y)<=1e-14*(x) && (x)-(y)>=-1e-14*(x), "expected %.16g, got %.16g\n", x, y)
 
 static BSTR alloc_str_from_narrow(const char *str)
 {
@@ -4083,6 +4090,71 @@ static void test_NodeTypeValue(void)
             ok(hr == S_OK, "ret %08x\n", hr );
             ok(V_VT(&v) == VT_BOOL, "incorrect type\n");
             ok(V_BOOL(&v) == VARIANT_TRUE, "incorrect value\n");
+            VariantClear( &v );
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/datetime"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_DATE, "incorrect type\n");
+            double_eq(40135.13996666666, V_DATE(&v));
+            VariantClear( &v );
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/datetimetz"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_DATE, "incorrect type\n");
+            double_eq(37813.59302083334, V_DATE(&v));
+            VariantClear( &v );
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/date"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_DATE, "incorrect type\n");
+            double_eq(665413.0, V_DATE(&v));
+            VariantClear( &v );
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/time"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_DATE, "incorrect type\n");
+            double_eq(0.581392511574074, V_DATE(&v));
+            VariantClear( &v );
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/timetz"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_DATE, "incorrect type\n");
+            double_eq(1.112513078703703, V_DATE(&v));
             VariantClear( &v );
 
             IXMLDOMNode_Release(pNode);
