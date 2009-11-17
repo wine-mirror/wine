@@ -3659,14 +3659,11 @@ DWORD WINAPI SetDCOrg16( HDC16 hdc16, INT16 x, INT16 y )
  */
 HRGN16 WINAPI InquireVisRgn16( HDC16 hdc )
 {
-    HRGN16 ret = 0;
-    DC * dc = get_dc_ptr( HDC_32(hdc) );
-    if (dc)
-    {
-        ret = HRGN_16(dc->hVisRgn);
-        release_dc_ptr( dc );
-    }
-    return ret;
+    static HRGN hrgn;
+
+    if (!hrgn) hrgn = CreateRectRgn( 0, 0, 0, 0 );
+    GetRandomRgn( HDC_32(hdc), hrgn, SYSRGN );
+    return HRGN_16(hrgn);
 }
 
 
@@ -3760,14 +3757,11 @@ INT16 WINAPI RestoreVisRgn16( HDC16 hdc16 )
  */
 HRGN16 WINAPI GetClipRgn16( HDC16 hdc )
 {
-    HRGN16 ret = 0;
-    DC * dc = get_dc_ptr( HDC_32(hdc) );
-    if (dc)
-    {
-        ret = HRGN_16(dc->hClipRgn);
-        release_dc_ptr( dc );
-    }
-    return ret;
+    static HRGN hrgn;
+
+    if (!hrgn) hrgn = CreateRectRgn( 0, 0, 0, 0 );
+    GetClipRgn( HDC_32(hdc), hrgn );
+    return HRGN_16(hrgn);
 }
 
 
