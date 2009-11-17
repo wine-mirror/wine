@@ -865,6 +865,36 @@ static void compare_alt_name_with_constraints(const CERT_EXTENSION *altNameExt,
          CERT_TRUST_INVALID_EXTENSION | CERT_TRUST_INVALID_NAME_CONSTRAINTS;
 }
 
+static void compare_subject_with_constraints(const CERT_NAME_BLOB *subjectName,
+ const CERT_NAME_CONSTRAINTS_INFO *nameConstraints, DWORD *trustErrorStatus)
+{
+    DWORD i;
+
+    for (i = 0; i < nameConstraints->cExcludedSubtree; i++)
+    {
+        CERT_ALT_NAME_ENTRY *constraint =
+         &nameConstraints->rgExcludedSubtree[i].Base;
+
+        if (constraint->dwAltNameChoice == CERT_ALT_NAME_DIRECTORY_NAME &&
+         directory_name_matches(&constraint->u.DirectoryName, subjectName))
+            *trustErrorStatus |=
+             CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT;
+    }
+    for (i = 0; i < nameConstraints->cPermittedSubtree; i++)
+    {
+        CERT_ALT_NAME_ENTRY *constraint =
+         &nameConstraints->rgPermittedSubtree[i].Base;
+
+        if (constraint->dwAltNameChoice == CERT_ALT_NAME_DIRECTORY_NAME)
+        {
+            if (!directory_name_matches(&constraint->u.DirectoryName,
+             subjectName))
+                *trustErrorStatus |=
+                 CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
+        }
+    }
+}
+
 static void CRYPT_CheckNameConstraints(
  const CERT_NAME_CONSTRAINTS_INFO *nameConstraints, const CERT_INFO *cert,
  DWORD *trustErrorStatus)
@@ -874,15 +904,13 @@ static void CRYPT_CheckNameConstraints(
     if (ext)
         compare_alt_name_with_constraints(ext, nameConstraints,
          trustErrorStatus);
-    else
-    {
-        if (nameConstraints->cPermittedSubtree)
-            *trustErrorStatus |=
-             CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT |
-             CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
-        if (nameConstraints->cExcludedSubtree)
-            *trustErrorStatus |= CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT;
-    }
+    /* Name constraints apply to the subject alternative name as well as the
+     * subject name.  From RFC 5280, section 4.2.1.10:
+     * "Restrictions apply to the subject distinguished name and apply to
+     *  subject alternative names."
+     */
+    compare_subject_with_constraints(&cert->Subject, nameConstraints,
+     trustErrorStatus);
 }
 
 /* Gets cert's name constraints, if any.  Free with LocalFree. */
