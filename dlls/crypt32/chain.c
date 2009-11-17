@@ -720,6 +720,28 @@ static BOOL ip_address_matches(const CRYPT_DATA_BLOB *constraint,
     return match;
 }
 
+static BOOL directory_name_matches(const CERT_NAME_BLOB *constraint,
+ const CERT_NAME_BLOB *name)
+{
+    CERT_NAME_INFO *constraintName;
+    DWORD size;
+    BOOL match = FALSE;
+
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_NAME, constraint->pbData,
+     constraint->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &constraintName, &size))
+    {
+        DWORD i;
+
+        match = TRUE;
+        for (i = 0; match && i < constraintName->cRDN; i++)
+            match = CertIsRDNAttrsInCertificateName(X509_ASN_ENCODING,
+             CERT_CASE_INSENSITIVE_IS_RDN_ATTRS_FLAG,
+             (CERT_NAME_BLOB *)name, &constraintName->rgRDN[i]);
+        LocalFree(constraintName);
+    }
+    return match;
+}
+
 static BOOL alt_name_matches(const CERT_ALT_NAME_ENTRY *name,
  const CERT_ALT_NAME_ENTRY *constraint, DWORD *trustErrorStatus)
 {
@@ -746,6 +768,9 @@ static BOOL alt_name_matches(const CERT_ALT_NAME_ENTRY *name,
              &name->u.IPAddress, trustErrorStatus);
             break;
         case CERT_ALT_NAME_DIRECTORY_NAME:
+            match = directory_name_matches(&constraint->u.DirectoryName,
+             &name->u.DirectoryName);
+            break;
         default:
             ERR("name choice %d unsupported in this context\n",
              constraint->dwAltNameChoice);
