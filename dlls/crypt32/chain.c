@@ -720,9 +720,8 @@ static BOOL ip_address_matches(const CRYPT_DATA_BLOB *constraint,
     return match;
 }
 
-static void CRYPT_FindMatchingNameEntry(const CERT_ALT_NAME_ENTRY *constraint,
- const CERT_ALT_NAME_INFO *subjectName, DWORD *trustErrorStatus,
- DWORD errorIfFound, DWORD errorIfNotFound)
+static BOOL CRYPT_FindMatchingNameEntry(const CERT_ALT_NAME_ENTRY *constraint,
+ const CERT_ALT_NAME_INFO *subjectName, DWORD *trustErrorStatus)
 {
     DWORD i;
     BOOL match = FALSE;
@@ -759,7 +758,7 @@ static void CRYPT_FindMatchingNameEntry(const CERT_ALT_NAME_ENTRY *constraint,
             }
         }
     }
-    *trustErrorStatus |= match ? errorIfFound : errorIfNotFound;
+    return match;
 }
 
 static inline PCERT_EXTENSION get_subject_alt_name_ext(const CERT_INFO *cert)
@@ -793,14 +792,21 @@ static void CRYPT_CheckNameConstraints(
             DWORD i;
 
             for (i = 0; i < nameConstraints->cExcludedSubtree; i++)
-                CRYPT_FindMatchingNameEntry(
+            {
+                if (CRYPT_FindMatchingNameEntry(
                  &nameConstraints->rgExcludedSubtree[i].Base, subjectName,
-                 trustErrorStatus, CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT, 0);
+                 trustErrorStatus))
+                    *trustErrorStatus |=
+                     CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT;
+            }
             for (i = 0; i < nameConstraints->cPermittedSubtree; i++)
-                CRYPT_FindMatchingNameEntry(
+            {
+                if (!CRYPT_FindMatchingNameEntry(
                  &nameConstraints->rgPermittedSubtree[i].Base, subjectName,
-                 trustErrorStatus, 0,
-                 CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT);
+                 trustErrorStatus))
+                    *trustErrorStatus |=
+                     CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
+            }
             LocalFree(subjectName);
         }
         else
