@@ -163,7 +163,6 @@ static struct graphics_driver *create_driver( HMODULE module )
         GET_FUNC(SetBkColor);
         GET_FUNC(SetBkMode);
         GET_FUNC(SetDCBrushColor);
-        GET_FUNC(SetDCOrg);
         GET_FUNC(SetDCPenColor);
         GET_FUNC(SetDIBColorTable);
         GET_FUNC(SetDIBits);
