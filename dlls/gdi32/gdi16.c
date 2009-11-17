@@ -3675,17 +3675,8 @@ HRGN16 WINAPI InquireVisRgn16( HDC16 hdc )
  */
 INT16 WINAPI OffsetVisRgn16( HDC16 hdc16, INT16 x, INT16 y )
 {
-    INT16 retval;
-    HDC hdc = HDC_32( hdc16 );
-    DC * dc = get_dc_ptr( hdc );
-
-    if (!dc) return ERROR;
-    TRACE("%p %d,%d\n", hdc, x, y );
-    update_dc( dc );
-    retval = OffsetRgn( dc->hVisRgn, x, y );
-    CLIPPING_UpdateGCRegion( dc );
-    release_dc_ptr( dc );
-    return retval;
+    FIXME( "%04x %d,%d no longer supported\n", hdc16, x, y );
+    return ERROR;
 }
 
 
@@ -3694,32 +3685,8 @@ INT16 WINAPI OffsetVisRgn16( HDC16 hdc16, INT16 x, INT16 y )
  */
 INT16 WINAPI ExcludeVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right, INT16 bottom )
 {
-    HRGN tempRgn;
-    INT16 ret;
-    POINT pt[2];
-    HDC hdc = HDC_32( hdc16 );
-    DC * dc = get_dc_ptr( hdc );
-    if (!dc) return ERROR;
-
-    pt[0].x = left;
-    pt[0].y = top;
-    pt[1].x = right;
-    pt[1].y = bottom;
-
-    LPtoDP( hdc, pt, 2 );
-
-    TRACE("%p %d,%d - %d,%d\n", hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
-
-    if (!(tempRgn = CreateRectRgn( pt[0].x, pt[0].y, pt[1].x, pt[1].y ))) ret = ERROR;
-    else
-    {
-        update_dc( dc );
-        ret = CombineRgn( dc->hVisRgn, dc->hVisRgn, tempRgn, RGN_DIFF );
-        DeleteObject( tempRgn );
-    }
-    if (ret != ERROR) CLIPPING_UpdateGCRegion( dc );
-    release_dc_ptr( dc );
-    return ret;
+    FIXME( "%04x %d,%d-%d,%d no longer supported\n", hdc16, left, top, right, bottom );
+    return ERROR;
 }
 
 
@@ -3728,32 +3695,8 @@ INT16 WINAPI ExcludeVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right, 
  */
 INT16 WINAPI IntersectVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right, INT16 bottom )
 {
-    HRGN tempRgn;
-    INT16 ret;
-    POINT pt[2];
-    HDC hdc = HDC_32( hdc16 );
-    DC * dc = get_dc_ptr( hdc );
-    if (!dc) return ERROR;
-
-    pt[0].x = left;
-    pt[0].y = top;
-    pt[1].x = right;
-    pt[1].y = bottom;
-
-    LPtoDP( hdc, pt, 2 );
-
-    TRACE("%p %d,%d - %d,%d\n", hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
-
-    if (!(tempRgn = CreateRectRgn( pt[0].x, pt[0].y, pt[1].x, pt[1].y ))) ret = ERROR;
-    else
-    {
-        update_dc( dc );
-        ret = CombineRgn( dc->hVisRgn, dc->hVisRgn, tempRgn, RGN_AND );
-        DeleteObject( tempRgn );
-    }
-    if (ret != ERROR) CLIPPING_UpdateGCRegion( dc );
-    release_dc_ptr( dc );
-    return ret;
+    FIXME( "%04x %d,%d-%d,%d no longer supported\n", hdc16, left, top, right, bottom );
+    return ERROR;
 }
 
 
