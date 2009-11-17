@@ -720,44 +720,63 @@ static BOOL ip_address_matches(const CRYPT_DATA_BLOB *constraint,
     return match;
 }
 
-static BOOL CRYPT_FindMatchingNameEntry(const CERT_ALT_NAME_ENTRY *constraint,
- const CERT_ALT_NAME_INFO *subjectName, DWORD *trustErrorStatus)
+static BOOL alt_name_matches(const CERT_ALT_NAME_ENTRY *name,
+ const CERT_ALT_NAME_ENTRY *constraint, DWORD *trustErrorStatus)
+{
+    BOOL match = FALSE;
+
+    if (name->dwAltNameChoice == constraint->dwAltNameChoice)
+    {
+        switch (constraint->dwAltNameChoice)
+        {
+        case CERT_ALT_NAME_RFC822_NAME:
+            match = rfc822_name_matches(constraint->u.pwszURL,
+             name->u.pwszURL, trustErrorStatus);
+            break;
+        case CERT_ALT_NAME_DNS_NAME:
+            match = dns_name_matches(constraint->u.pwszURL,
+             name->u.pwszURL, trustErrorStatus);
+            break;
+        case CERT_ALT_NAME_URL:
+            match = url_matches(constraint->u.pwszURL,
+             name->u.pwszURL, trustErrorStatus);
+            break;
+        case CERT_ALT_NAME_IP_ADDRESS:
+            match = ip_address_matches(&constraint->u.IPAddress,
+             &name->u.IPAddress, trustErrorStatus);
+            break;
+        case CERT_ALT_NAME_DIRECTORY_NAME:
+        default:
+            ERR("name choice %d unsupported in this context\n",
+             constraint->dwAltNameChoice);
+            *trustErrorStatus |=
+             CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT;
+        }
+    }
+    return match;
+}
+
+static BOOL alt_name_matches_excluded_name(const CERT_ALT_NAME_ENTRY *name,
+ const CERT_NAME_CONSTRAINTS_INFO *nameConstraints, DWORD *trustErrorStatus)
 {
     DWORD i;
     BOOL match = FALSE;
 
-    for (i = 0; i < subjectName->cAltEntry; i++)
-    {
-        if (subjectName->rgAltEntry[i].dwAltNameChoice ==
-         constraint->dwAltNameChoice)
-        {
-            switch (constraint->dwAltNameChoice)
-            {
-            case CERT_ALT_NAME_RFC822_NAME:
-                match = rfc822_name_matches(constraint->u.pwszURL,
-                 subjectName->rgAltEntry[i].u.pwszURL, trustErrorStatus);
-                break;
-            case CERT_ALT_NAME_DNS_NAME:
-                match = dns_name_matches(constraint->u.pwszURL,
-                 subjectName->rgAltEntry[i].u.pwszURL, trustErrorStatus);
-                break;
-            case CERT_ALT_NAME_URL:
-                match = url_matches(constraint->u.pwszURL,
-                 subjectName->rgAltEntry[i].u.pwszURL, trustErrorStatus);
-                break;
-            case CERT_ALT_NAME_IP_ADDRESS:
-                match = ip_address_matches(&constraint->u.IPAddress,
-                 &subjectName->rgAltEntry[i].u.IPAddress, trustErrorStatus);
-                break;
-            case CERT_ALT_NAME_DIRECTORY_NAME:
-            default:
-                ERR("name choice %d unsupported in this context\n",
-                 constraint->dwAltNameChoice);
-                *trustErrorStatus |=
-                 CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT;
-            }
-        }
-    }
+    for (i = 0; !match && i < nameConstraints->cExcludedSubtree; i++)
+        match = alt_name_matches(name,
+         &nameConstraints->rgExcludedSubtree[i].Base, trustErrorStatus);
+    return match;
+}
+
+static BOOL alt_name_matches_permitted_name(const CERT_ALT_NAME_ENTRY *name,
+ const CERT_NAME_CONSTRAINTS_INFO *nameConstraints, DWORD *trustErrorStatus)
+{
+    DWORD i;
+    BOOL match = FALSE;
+
+    for (i = 0; !match && i < nameConstraints->cPermittedSubtree; i++)
+        match = alt_name_matches(name,
+         &nameConstraints->rgPermittedSubtree[i].Base, trustErrorStatus);
     return match;
 }
 
@@ -791,18 +810,15 @@ static void CRYPT_CheckNameConstraints(
         {
             DWORD i;
 
-            for (i = 0; i < nameConstraints->cExcludedSubtree; i++)
+            for (i = 0; i < subjectName->cAltEntry; i++)
             {
-                if (CRYPT_FindMatchingNameEntry(
-                 &nameConstraints->rgExcludedSubtree[i].Base, subjectName,
+                if (alt_name_matches_excluded_name(
+                 &subjectName->rgAltEntry[i], nameConstraints,
                  trustErrorStatus))
                     *trustErrorStatus |=
                      CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT;
-            }
-            for (i = 0; i < nameConstraints->cPermittedSubtree; i++)
-            {
-                if (!CRYPT_FindMatchingNameEntry(
-                 &nameConstraints->rgPermittedSubtree[i].Base, subjectName,
+                if (!alt_name_matches_permitted_name(
+                 &subjectName->rgAltEntry[i], nameConstraints,
                  trustErrorStatus))
                     *trustErrorStatus |=
                      CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
