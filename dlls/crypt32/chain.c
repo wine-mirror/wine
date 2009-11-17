@@ -987,18 +987,21 @@ static void compare_subject_with_constraints(const CERT_NAME_BLOB *subjectName,
             *trustErrorStatus |=
              CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT;
     }
-    for (i = 0; i < nameConstraints->cPermittedSubtree; i++)
+    if (nameConstraints->cPermittedSubtree)
     {
-        CERT_ALT_NAME_ENTRY *constraint =
-         &nameConstraints->rgPermittedSubtree[i].Base;
+        BOOL match = FALSE;
 
-        if (constraint->dwAltNameChoice == CERT_ALT_NAME_DIRECTORY_NAME)
+        for (i = 0; !match && i < nameConstraints->cPermittedSubtree; i++)
         {
-            if (!directory_name_matches(&constraint->u.DirectoryName,
-             subjectName))
-                *trustErrorStatus |=
-                 CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
+            CERT_ALT_NAME_ENTRY *constraint =
+             &nameConstraints->rgPermittedSubtree[i].Base;
+
+            if (constraint->dwAltNameChoice == CERT_ALT_NAME_DIRECTORY_NAME)
+                match = directory_name_matches(&constraint->u.DirectoryName,
+                 subjectName);
         }
+        if (!match)
+            *trustErrorStatus |= CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
     }
 }
 
