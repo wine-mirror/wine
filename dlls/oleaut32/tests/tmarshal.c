@@ -587,6 +587,13 @@ static HRESULT WINAPI Widget_get_prop_uint(
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_ByRefUInt(
+    IWidget* iface, UINT *i)
+{
+    *i = 42;
+    return S_OK;
+}
+
 static const struct IWidgetVtbl Widget_VTable =
 {
     Widget_QueryInterface,
@@ -618,7 +625,8 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_put_prop_with_lcid,
     Widget_get_prop_with_lcid,
     Widget_get_prop_int,
-    Widget_get_prop_uint
+    Widget_get_prop_uint,
+    Widget_ByRefUInt,
 };
 
 static HRESULT WINAPI StaticWidget_QueryInterface(IStaticWidget *iface, REFIID riid, void **ppvObject)
@@ -935,6 +943,7 @@ static void test_typelibmarshal(void)
     ITypeInfo *pTypeInfo;
     MYSTRUCT mystruct;
     MYSTRUCT mystructArray[5];
+    UINT uval;
 
     ok(pKEW != NULL, "Widget creation failed\n");
 
@@ -1341,6 +1350,25 @@ static void test_typelibmarshal(void)
     ok(V_VT(&varresult) == VT_UI4, "got %x\n", V_VT(&varresult));
     ok(V_UI4(&varresult) == 42, "got %x\n", V_UI4(&varresult));
     VariantClear(&varresult);
+
+    /* test byref marshalling */
+    uval = 666;
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_UI4|VT_BYREF;
+    V_UI4REF(&vararg[0]) = &uval;
+    dispparams.cNamedArgs = 0;
+    dispparams.cArgs = 1;
+    dispparams.rgvarg = vararg;
+    dispparams.rgdispidNamedArgs = NULL;
+    hr = IDispatch_Invoke(pDispatch, DISPID_TM_BYREF_UINT, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
+    ok_ole_success(hr, ITypeInfo_Invoke);
+    ok(V_VT(&varresult) == VT_EMPTY, "varresult should be VT_EMPTY\n");
+    ok(V_VT(&vararg[0]) == (VT_UI4|VT_BYREF), "arg VT not unmarshalled correctly: %x\n", V_VT(&vararg[0]));
+    todo_wine
+    ok(V_UI4REF(&vararg[0]) == &uval, "Byref pointer not preserved: %p/%p\n", &uval, V_UI4REF(&vararg[0]));
+    ok(*V_UI4REF(&vararg[0]) == 42, "Expected 42 to be returned instead of %u\n", *V_UI4REF(&vararg[0]));
+    VariantClear(&varresult);
+    VariantClear(&vararg[0]);
 
     IDispatch_Release(pDispatch);
     IWidget_Release(pWidget);

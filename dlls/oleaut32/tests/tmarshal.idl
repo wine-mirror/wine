@@ -137,6 +137,9 @@ library TestTypelib
 
         [id(DISPID_TM_PROP_UINT), propget]
         HRESULT prop_uint([out,retval] UINT *i);
+
+        [id(DISPID_TM_BYREF_UINT)]
+        HRESULT ByRefUInt([in, out] UINT *i);
     }
 
     [
