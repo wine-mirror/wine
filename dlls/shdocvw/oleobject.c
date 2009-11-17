@@ -282,7 +282,9 @@ static ULONG WINAPI OleObject_Release(IOleObject *iface)
 static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE pClientSite)
 {
     WebBrowser *This = OLEOBJ_THIS(iface);
+    IDocHostUIHandler *hostui;
     IOleContainer *container;
+    IDispatch *disp;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, pClientSite);
@@ -322,11 +324,15 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
 
     IOleClientSite_AddRef(pClientSite);
 
-    IOleClientSite_QueryInterface(This->client, &IID_IDispatch,
-                                  (void**)&This->doc_host.client_disp);
+    hres = IOleClientSite_QueryInterface(This->client, &IID_IDispatch,
+            (void**)&disp);
+    if(SUCCEEDED(hres))
+        This->doc_host.client_disp = disp;
 
-    IOleClientSite_QueryInterface(This->client, &IID_IDocHostUIHandler,
-                                  (void**)&This->doc_host.hostui);
+    hres = IOleClientSite_QueryInterface(This->client, &IID_IDocHostUIHandler,
+            (void**)&hostui);
+    if(SUCCEEDED(hres))
+        This->doc_host.hostui = hostui;
 
     hres = IOleClientSite_GetContainer(This->client, &container);
     if(SUCCEEDED(hres)) {
