@@ -823,6 +823,48 @@ static inline PCERT_EXTENSION get_subject_alt_name_ext(const CERT_INFO *cert)
     return ext;
 }
 
+static void compare_alt_name_with_constraints(const CERT_EXTENSION *altNameExt,
+ const CERT_NAME_CONSTRAINTS_INFO *nameConstraints, DWORD *trustErrorStatus)
+{
+    CERT_ALT_NAME_INFO *subjectAltName;
+    DWORD size;
+
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_ALTERNATE_NAME,
+     altNameExt->Value.pbData, altNameExt->Value.cbData,
+     CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
+     &subjectAltName, &size))
+    {
+        DWORD i;
+
+        for (i = 0; i < subjectAltName->cAltEntry; i++)
+        {
+             BOOL nameFormPresent;
+
+             /* A name constraint only applies if the name form is present.
+              * From RFC 5280, section 4.2.1.10:
+              * "Restrictions apply only when the specified name form is
+              *  present.  If no name of the type is in the certificate,
+              *  the certificate is acceptable."
+              */
+            if (alt_name_matches_excluded_name(
+             &subjectAltName->rgAltEntry[i], nameConstraints,
+             trustErrorStatus))
+                *trustErrorStatus |=
+                 CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT;
+            nameFormPresent = FALSE;
+            if (!alt_name_matches_permitted_name(
+             &subjectAltName->rgAltEntry[i], nameConstraints,
+             trustErrorStatus, &nameFormPresent) && nameFormPresent)
+                *trustErrorStatus |=
+                 CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
+        }
+        LocalFree(subjectAltName);
+    }
+    else
+        *trustErrorStatus |=
+         CERT_TRUST_INVALID_EXTENSION | CERT_TRUST_INVALID_NAME_CONSTRAINTS;
+}
+
 static void CRYPT_CheckNameConstraints(
  const CERT_NAME_CONSTRAINTS_INFO *nameConstraints, const CERT_INFO *cert,
  DWORD *trustErrorStatus)
@@ -830,45 +872,8 @@ static void CRYPT_CheckNameConstraints(
     CERT_EXTENSION *ext = get_subject_alt_name_ext(cert);
 
     if (ext)
-    {
-        CERT_ALT_NAME_INFO *subjectName;
-        DWORD size;
-
-        if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_ALTERNATE_NAME,
-         ext->Value.pbData, ext->Value.cbData,
-         CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
-         &subjectName, &size))
-        {
-            DWORD i;
-
-            for (i = 0; i < subjectName->cAltEntry; i++)
-            {
-                 BOOL nameFormPresent;
-
-                 /* A name constraint only applies if the name form is present.
-                  * From RFC 5280, section 4.2.1.10:
-                  * "Restrictions apply only when the specified name form is
-                  *  present.  If no name of the type is in the certificate,
-                  *  the certificate is acceptable."
-                  */
-                if (alt_name_matches_excluded_name(
-                 &subjectName->rgAltEntry[i], nameConstraints,
-                 trustErrorStatus))
-                    *trustErrorStatus |=
-                     CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT;
-                nameFormPresent = FALSE;
-                if (!alt_name_matches_permitted_name(
-                 &subjectName->rgAltEntry[i], nameConstraints,
-                 trustErrorStatus, &nameFormPresent) && nameFormPresent)
-                    *trustErrorStatus |=
-                     CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
-            }
-            LocalFree(subjectName);
-        }
-        else
-            *trustErrorStatus |=
-             CERT_TRUST_INVALID_EXTENSION | CERT_TRUST_INVALID_NAME_CONSTRAINTS;
-    }
+        compare_alt_name_with_constraints(ext, nameConstraints,
+         trustErrorStatus);
     else
     {
         if (nameConstraints->cPermittedSubtree)
