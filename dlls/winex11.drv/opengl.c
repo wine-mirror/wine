@@ -2249,6 +2249,10 @@ HGLRC X11DRV_wglCreateContextAttribsARB(X11DRV_PDEVICE *physDev, HGLRC hShareCon
                     pContextAttribList[0] = GLX_CONTEXT_FLAGS_ARB;
                     pContextAttribList[1] = pAttribList[1];
                     break;
+                case WGL_CONTEXT_PROFILE_MASK_ARB:
+                    pContextAttribList[0] = GLX_CONTEXT_PROFILE_MASK_ARB;
+                    pContextAttribList[1] = pAttribList[1];
+                    break;
                 default:
                     ERR("Unhandled attribList pair: %#x %#x\n", pAttribList[0], pAttribList[1]);
             }
@@ -3540,6 +3544,9 @@ static void X11DRV_WineGL_LoadExtensions(void)
     if(glxRequireExtension("GLX_ARB_create_context"))
     {
         register_extension(&WGL_ARB_create_context);
+
+        if(glxRequireExtension("GLX_ARB_create_context_profile"))
+            register_extension_string("WGL_ARB_create_context_profile");
     }
 
     if(glxRequireExtension("GLX_ARB_fbconfig_float"))
