@@ -154,6 +154,7 @@ static const CHAR szTypeValueXML[] =
 "   <number dt:dt=\"number\">12.44</number>\n"
 "   <number2 dt:dt=\"NUMbEr\">-3.71e3</number2>\n"
 "   <int dt:dt=\"int\">-13</int>\n"
+"   <fixed dt:dt=\"fixed.14.4\">7322.9371</fixed>\n"
 "</root>";
 
 static const CHAR szBasicTransformSSXMLPart1[] =
@@ -4048,6 +4049,27 @@ static void test_NodeTypeValue(void)
             ok(V_VT(&v) == VT_I4, "incorrect type\n");
             ok(V_I4(&v) == -13, "incorrect value\n");
             VariantClear( &v );
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/fixed"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            VARIANT hlp_in, hlp_out;
+            V_VT(&hlp_in) = VT_BSTR;
+            V_BSTR(&hlp_in) = _bstr_("7322.9371");
+            V_VT(&hlp_out) = VT_CY;
+            ok(VariantChangeType(&hlp_out, &hlp_in, 0, VT_CY) == S_OK, "VariantChangeType failed\n");
+            VariantClear(&hlp_in);
+
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_CY, "incorrect type\n");
+            ok(VarCyCmp(V_CY(&v), V_CY(&hlp_out)) == VARCMP_EQ, "incorrect value\n");
+            VariantClear(&hlp_out);
+            VariantClear(&v);
 
             IXMLDOMNode_Release(pNode);
         }
