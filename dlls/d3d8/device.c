@@ -253,6 +253,17 @@ static void *d3d8_get_object(struct d3d8_handle_table *t, DWORD handle, enum d3d
     return entry->object;
 }
 
+static ULONG WINAPI D3D8CB_DestroySwapChain(IWineD3DSwapChain *swapchain)
+{
+    IUnknown *parent;
+
+    TRACE("swapchain %p.\n", swapchain);
+
+    IWineD3DSwapChain_GetParent(swapchain, &parent);
+    IUnknown_Release(parent);
+    return IUnknown_Release(parent);
+}
+
 /* IDirect3D IUnknown parts follow: */
 static HRESULT WINAPI IDirect3DDevice8Impl_QueryInterface(LPDIRECT3DDEVICE8 iface,REFIID riid,LPVOID *ppobj)
 {

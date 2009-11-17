@@ -331,16 +331,6 @@ static HMONITOR WINAPI  IDirect3D8Impl_GetAdapterMonitor(LPDIRECT3D8 iface, UINT
     return ret;
 }
 
-ULONG WINAPI D3D8CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain) {
-    IUnknown* swapChainParent;
-
-    TRACE("swapchain %p.\n", pSwapChain);
-
-    IWineD3DSwapChain_GetParent(pSwapChain, &swapChainParent);
-    IUnknown_Release(swapChainParent);
-    return IUnknown_Release(swapChainParent);
-}
-
 static HRESULT WINAPI IDirect3D8Impl_CreateDevice(IDirect3D8 *iface, UINT adapter, D3DDEVTYPE device_type,
         HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters, IDirect3DDevice8 **device)
 {

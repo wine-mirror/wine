@@ -622,7 +622,4 @@ UINT convert_to_wined3d_declaration(const DWORD *d3d8_elements, DWORD *d3d8_elem
         WINED3DVERTEXELEMENT **wined3d_elements) DECLSPEC_HIDDEN;
 size_t parse_token(const DWORD *pToken) DECLSPEC_HIDDEN;
 
-/* Callbacks */
-extern ULONG WINAPI D3D8CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain) DECLSPEC_HIDDEN;
-
 #endif /* __WINE_D3DX8_PRIVATE_H */
