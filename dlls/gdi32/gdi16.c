@@ -3564,17 +3564,29 @@ VOID WINAPI SetMagicColors16(HDC16 hDC, COLORREF color, UINT16 index)
  */
 BOOL16 WINAPI DPtoLP16( HDC16 hdc, LPPOINT16 points, INT16 count )
 {
-    DC * dc = get_dc_ptr( HDC_32(hdc) );
-    if (!dc) return FALSE;
+    POINT points32[8], *pt32 = points32;
+    int i;
+    BOOL ret;
 
-    while (count--)
+    if (count > 8)
     {
-        points->x = MulDiv( points->x - dc->vportOrgX, dc->wndExtX, dc->vportExtX ) + dc->wndOrgX;
-        points->y = MulDiv( points->y - dc->vportOrgY, dc->wndExtY, dc->vportExtY ) + dc->wndOrgY;
-        points++;
+        if (!(pt32 = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*pt32) ))) return FALSE;
     }
-    release_dc_ptr( dc );
-    return TRUE;
+    for (i = 0; i < count; i++)
+    {
+        pt32[i].x = points[i].x;
+        pt32[i].y = points[i].y;
+    }
+    if ((ret = DPtoLP( HDC_32(hdc), pt32, count )))
+    {
+        for (i = 0; i < count; i++)
+        {
+            points[i].x = pt32[i].x;
+            points[i].y = pt32[i].y;
+        }
+    }
+    if (pt32 != points32) HeapFree( GetProcessHeap(), 0, pt32 );
+    return ret;
 }
 
 
@@ -3583,17 +3595,29 @@ BOOL16 WINAPI DPtoLP16( HDC16 hdc, LPPOINT16 points, INT16 count )
  */
 BOOL16 WINAPI LPtoDP16( HDC16 hdc, LPPOINT16 points, INT16 count )
 {
-    DC * dc = get_dc_ptr( HDC_32(hdc) );
-    if (!dc) return FALSE;
+    POINT points32[8], *pt32 = points32;
+    int i;
+    BOOL ret;
 
-    while (count--)
+    if (count > 8)
     {
-        points->x = MulDiv( points->x - dc->wndOrgX, dc->vportExtX, dc->wndExtX ) + dc->vportOrgX;
-        points->y = MulDiv( points->y - dc->wndOrgY, dc->vportExtY, dc->wndExtY ) + dc->vportOrgY;
-        points++;
+        if (!(pt32 = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*pt32) ))) return FALSE;
     }
-    release_dc_ptr( dc );
-    return TRUE;
+    for (i = 0; i < count; i++)
+    {
+        pt32[i].x = points[i].x;
+        pt32[i].y = points[i].y;
+    }
+    if ((ret = LPtoDP( HDC_32(hdc), pt32, count )))
+    {
+        for (i = 0; i < count; i++)
+        {
+            points[i].x = pt32[i].x;
+            points[i].y = pt32[i].y;
+        }
+    }
+    if (pt32 != points32) HeapFree( GetProcessHeap(), 0, pt32 );
+    return ret;
 }
 
 
