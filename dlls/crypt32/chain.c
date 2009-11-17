@@ -865,11 +865,118 @@ static void compare_alt_name_with_constraints(const CERT_EXTENSION *altNameExt,
          CERT_TRUST_INVALID_EXTENSION | CERT_TRUST_INVALID_NAME_CONSTRAINTS;
 }
 
-static void compare_subject_with_constraints(const CERT_NAME_BLOB *subjectName,
+static BOOL rfc822_attr_matches_excluded_name(const CERT_RDN_ATTR *attr,
  const CERT_NAME_CONSTRAINTS_INFO *nameConstraints, DWORD *trustErrorStatus)
 {
     DWORD i;
+    BOOL match = FALSE;
 
+    for (i = 0; !match && i < nameConstraints->cExcludedSubtree; i++)
+    {
+        const CERT_ALT_NAME_ENTRY *constraint =
+         &nameConstraints->rgExcludedSubtree[i].Base;
+
+        if (constraint->dwAltNameChoice == CERT_ALT_NAME_RFC822_NAME)
+            match = rfc822_name_matches(constraint->u.pwszRfc822Name,
+             (LPCWSTR)attr->Value.pbData, trustErrorStatus);
+    }
+    return match;
+}
+
+static BOOL rfc822_attr_matches_permitted_name(const CERT_RDN_ATTR *attr,
+ const CERT_NAME_CONSTRAINTS_INFO *nameConstraints, DWORD *trustErrorStatus,
+ BOOL *present)
+{
+    DWORD i;
+    BOOL match = FALSE;
+
+    for (i = 0; !match && i < nameConstraints->cPermittedSubtree; i++)
+    {
+        const CERT_ALT_NAME_ENTRY *constraint =
+         &nameConstraints->rgPermittedSubtree[i].Base;
+
+        if (constraint->dwAltNameChoice == CERT_ALT_NAME_RFC822_NAME)
+        {
+            *present = TRUE;
+            match = rfc822_name_matches(constraint->u.pwszRfc822Name,
+             (LPCWSTR)attr->Value.pbData, trustErrorStatus);
+        }
+    }
+    return match;
+}
+
+static void compare_subject_with_email_constraints(
+ const CERT_NAME_BLOB *subjectName,
+ const CERT_NAME_CONSTRAINTS_INFO *nameConstraints, DWORD *trustErrorStatus)
+{
+    CERT_NAME_INFO *name;
+    DWORD size;
+
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_UNICODE_NAME,
+     subjectName->pbData, subjectName->cbData,
+     CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL, &name, &size))
+    {
+        DWORD i, j;
+
+        for (i = 0; i < name->cRDN; i++)
+            for (j = 0; j < name->rgRDN[i].cRDNAttr; j++)
+                if (!strcmp(name->rgRDN[i].rgRDNAttr[j].pszObjId,
+                 szOID_RSA_emailAddr))
+                {
+                    BOOL nameFormPresent;
+
+                    /* A name constraint only applies if the name form is
+                     * present.  From RFC 5280, section 4.2.1.10:
+                     * "Restrictions apply only when the specified name form is
+                     *  present.  If no name of the type is in the certificate,
+                     *  the certificate is acceptable."
+                     */
+                    if (rfc822_attr_matches_excluded_name(
+                     &name->rgRDN[i].rgRDNAttr[j], nameConstraints,
+                     trustErrorStatus))
+                        *trustErrorStatus |=
+                         CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT;
+                    nameFormPresent = FALSE;
+                    if (!rfc822_attr_matches_permitted_name(
+                     &name->rgRDN[i].rgRDNAttr[j], nameConstraints,
+                     trustErrorStatus, &nameFormPresent) && nameFormPresent)
+                        *trustErrorStatus |=
+                         CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
+                }
+        LocalFree(name);
+    }
+    else
+        *trustErrorStatus |=
+         CERT_TRUST_INVALID_EXTENSION | CERT_TRUST_INVALID_NAME_CONSTRAINTS;
+}
+
+static void compare_subject_with_constraints(const CERT_NAME_BLOB *subjectName,
+ const CERT_NAME_CONSTRAINTS_INFO *nameConstraints, DWORD *trustErrorStatus)
+{
+    BOOL hasEmailConstraint = FALSE;
+    DWORD i;
+
+    /* In general, a subject distinguished name only matches a directory name
+     * constraint.  However, an exception exists for email addresses.
+     * From RFC 5280, section 4.2.1.6:
+     * "Legacy implementations exist where an electronic mail address is
+     *  embedded in the subject distinguished name as an emailAddress
+     *  attribute [RFC2985]."
+     * If an email address constraint exists, check that constraint separately.
+     */
+    for (i = 0; !hasEmailConstraint && i < nameConstraints->cExcludedSubtree;
+     i++)
+        if (nameConstraints->rgExcludedSubtree[i].Base.dwAltNameChoice ==
+         CERT_ALT_NAME_RFC822_NAME)
+            hasEmailConstraint = TRUE;
+    for (i = 0; !hasEmailConstraint && i < nameConstraints->cPermittedSubtree;
+     i++)
+        if (nameConstraints->rgPermittedSubtree[i].Base.dwAltNameChoice ==
+         CERT_ALT_NAME_RFC822_NAME)
+            hasEmailConstraint = TRUE;
+    if (hasEmailConstraint)
+        compare_subject_with_email_constraints(subjectName, nameConstraints,
+         trustErrorStatus);
     for (i = 0; i < nameConstraints->cExcludedSubtree; i++)
     {
         CERT_ALT_NAME_ENTRY *constraint =
