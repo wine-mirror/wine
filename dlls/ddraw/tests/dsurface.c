@@ -3136,7 +3136,7 @@ static void GetDCFormatTest(void)
                 sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
                        {32}, {0xC0000000}, {0x3FF00000}, {0x000FFC00}, {0x000003FF}
             },
-            FALSE
+            TRUE
         },
         /*
          * GetDC on a P8 surface fails unless the display mode is 8 bpp. This is not
