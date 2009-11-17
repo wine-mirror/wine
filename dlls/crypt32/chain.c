@@ -950,6 +950,22 @@ static void compare_subject_with_email_constraints(
          CERT_TRUST_INVALID_EXTENSION | CERT_TRUST_INVALID_NAME_CONSTRAINTS;
 }
 
+static BOOL CRYPT_IsEmptyName(const CERT_NAME_BLOB *name)
+{
+    BOOL empty;
+
+    if (!name->cbData)
+        empty = TRUE;
+    else if (name->cbData == 2 && name->pbData[1] == 0)
+    {
+        /* An empty sequence is also empty */
+        empty = TRUE;
+    }
+    else
+        empty = FALSE;
+    return empty;
+}
+
 static void compare_subject_with_constraints(const CERT_NAME_BLOB *subjectName,
  const CERT_NAME_CONSTRAINTS_INFO *nameConstraints, DWORD *trustErrorStatus)
 {
@@ -987,7 +1003,13 @@ static void compare_subject_with_constraints(const CERT_NAME_BLOB *subjectName,
             *trustErrorStatus |=
              CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT;
     }
-    if (nameConstraints->cPermittedSubtree)
+    /* RFC 5280, section 4.2.1.10:
+     * "Restrictions apply only when the specified name form is present.
+     *  If no name of the type is in the certificate, the certificate is
+     *  acceptable."
+     * An empty name can't have the name form present, so don't check it.
+     */
+    if (nameConstraints->cPermittedSubtree && !CRYPT_IsEmptyName(subjectName))
     {
         BOOL match = FALSE;
 
