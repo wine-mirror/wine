@@ -923,7 +923,7 @@ static BOOLEAN match_filename( const UNICODE_STRING *name_str, const UNICODE_STR
  *
  * helper for NtQueryDirectoryFile
  */
-static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, ULONG_PTR *pos, ULONG max_length,
+static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, IO_STATUS_BLOCK *io, ULONG max_length,
                                                 const char *long_name, const char *short_name,
                                                 const UNICODE_STRING *mask )
 {
@@ -935,6 +935,7 @@ static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, ULONG_PTR *pos, 
     UNICODE_STRING str;
     ULONG attributes = 0;
 
+    io->u.Status = STATUS_SUCCESS;
     long_len = ntdll_umbstowcs( 0, long_name, strlen(long_name), long_nameW, MAX_DIR_ENTRY_LEN );
     if (long_len == -1) return NULL;
 
@@ -969,11 +970,6 @@ static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, ULONG_PTR *pos, 
         if (!match_filename( &str, mask )) return NULL;
     }
 
-    total_len = (sizeof(*info) - sizeof(info->FileName) + long_len*sizeof(WCHAR) + 3) & ~3;
-    info = (FILE_BOTH_DIR_INFORMATION *)((char *)info_ptr + *pos);
-
-    if (*pos + total_len > max_length) total_len = max_length - *pos;
-
     if (lstat( long_name, &st ) == -1) return NULL;
     if (S_ISLNK( st.st_mode ))
     {
@@ -988,6 +984,14 @@ static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, ULONG_PTR *pos, 
     if (!show_dot_files && long_name[0] == '.' && long_name[1] && (long_name[1] != '.' || long_name[2]))
         attributes |= FILE_ATTRIBUTE_HIDDEN;
 
+    total_len = (sizeof(*info) - sizeof(info->FileName) + long_len*sizeof(WCHAR) + 3) & ~3;
+    if (io->Information + total_len > max_length)
+    {
+        total_len = max_length - io->Information;
+        io->u.Status = STATUS_BUFFER_OVERFLOW;
+    }
+
+    info = (FILE_BOTH_DIR_INFORMATION *)((char *)info_ptr + io->Information);
     fill_stat_info( &st, info, FileBothDirectoryInformation );
     info->NextEntryOffset = total_len;
     info->FileIndex = 0;  /* NTFS always has 0 here, so let's not bother with it */
@@ -999,7 +1003,7 @@ static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, ULONG_PTR *pos, 
     memcpy( info->FileName, long_nameW,
             min( info->FileNameLength, total_len-sizeof(*info)+sizeof(info->FileName) ));
 
-    *pos += total_len;
+    io->Information += total_len;
     return info;
 }
 
@@ -1080,19 +1084,14 @@ static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
             de[1].d_name[len] = 0;
 
             if (de[1].d_name[0])
-                info = append_entry( buffer, &io->Information, length,
-                                     de[1].d_name, de[0].d_name, mask );
+                info = append_entry( buffer, io, length, de[1].d_name, de[0].d_name, mask );
             else
-                info = append_entry( buffer, &io->Information, length,
-                                     de[0].d_name, NULL, mask );
+                info = append_entry( buffer, io, length, de[0].d_name, NULL, mask );
             if (info)
             {
                 last_info = info;
-                if ((char *)info->FileName + info->FileNameLength > (char *)buffer + length)
-                {
-                    io->u.Status = STATUS_BUFFER_OVERFLOW;
+                if (io->u.Status == STATUS_BUFFER_OVERFLOW)
                     lseek( fd, old_pos, SEEK_SET );  /* restore pos to previous entry */
-                }
                 break;
             }
             old_pos = lseek( fd, 0, SEEK_CUR );
@@ -1112,11 +1111,9 @@ static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
             de[1].d_name[len] = 0;
 
             if (de[1].d_name[0])
-                info = append_entry( buffer, &io->Information, length,
-                                     de[1].d_name, de[0].d_name, mask );
+                info = append_entry( buffer, io, length, de[1].d_name, de[0].d_name, mask );
             else
-                info = append_entry( buffer, &io->Information, length,
-                                     de[0].d_name, NULL, mask );
+                info = append_entry( buffer, io, length, de[0].d_name, NULL, mask );
             if (info)
             {
                 last_info = info;
@@ -1210,9 +1207,9 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
 
         if (fake_dot_dot)
         {
-            if ((info = append_entry( buffer, &io->Information, length, ".", NULL, mask )))
+            if ((info = append_entry( buffer, io, length, ".", NULL, mask )))
                 last_info = info;
-            if ((info = append_entry( buffer, &io->Information, length, "..", NULL, mask )))
+            if ((info = append_entry( buffer, io, length, "..", NULL, mask )))
                 last_info = info;
 
             /* check if we still have enough space for the largest possible entry */
@@ -1229,12 +1226,11 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
         res -= de->d_reclen;
         if (de->d_ino &&
             !(fake_dot_dot && (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." ))) &&
-            (info = append_entry( buffer, &io->Information, length, de->d_name, NULL, mask )))
+            (info = append_entry( buffer, io, length, de->d_name, NULL, mask )))
         {
             last_info = info;
-            if ((char *)info->FileName + info->FileNameLength > (char *)buffer + length)
+            if (io->u.Status == STATUS_BUFFER_OVERFLOW)
             {
-                io->u.Status = STATUS_BUFFER_OVERFLOW;
                 lseek( fd, old_pos, SEEK_SET );  /* restore pos to previous entry */
                 break;
             }
@@ -1374,9 +1370,9 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
 
         if (fake_dot_dot)
         {
-            if ((info = append_entry( buffer, &io->Information, length, ".", NULL, mask )))
+            if ((info = append_entry( buffer, io, length, ".", NULL, mask )))
                 last_info = info;
-            if ((info = append_entry( buffer, &io->Information, length, "..", NULL, mask )))
+            if ((info = append_entry( buffer, io, length, "..", NULL, mask )))
                 last_info = info;
 
             restart_last_info = last_info;
@@ -1396,25 +1392,22 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
         res -= de->d_reclen;
         if (de->d_fileno &&
             !(fake_dot_dot && (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." ))) &&
-            ((info = append_entry( buffer, &io->Information, length, de->d_name, NULL, mask ))))
+            ((info = append_entry( buffer, io, length, de->d_name, NULL, mask ))))
         {
             last_info = info;
-            if ((char *)info->FileName + info->FileNameLength > (char *)buffer + length)
+            if (io->u.Status == STATUS_BUFFER_OVERFLOW)
             {
                 lseek( fd, (unsigned long)restart_pos, SEEK_SET );
                 if (restart_info_pos)  /* if we have a complete read already, return it */
                 {
+                    io->u.Status = STATUS_SUCCESS;
                     io->Information = restart_info_pos;
                     last_info = restart_last_info;
                     break;
                 }
                 /* otherwise restart from the start with a smaller size */
                 size = (char *)de - data;
-                if (!size)
-                {
-                    io->u.Status = STATUS_BUFFER_OVERFLOW;
-                    break;
-                }
+                if (!size) break;
                 io->Information = 0;
                 last_info = NULL;
                 goto restart;
@@ -1501,13 +1494,13 @@ static void read_directory_readdir( int fd, IO_STATUS_BLOCK *io, void *buffer, U
     for (;;)
     {
         if (old_pos == 0)
-            info = append_entry( buffer, &io->Information, length, ".", NULL, mask );
+            info = append_entry( buffer, io, length, ".", NULL, mask );
         else if (old_pos == 1)
-            info = append_entry( buffer, &io->Information, length, "..", NULL, mask );
+            info = append_entry( buffer, io, length, "..", NULL, mask );
         else if ((de = readdir( dir )))
         {
             if (strcmp( de->d_name, "." ) && strcmp( de->d_name, ".." ))
-                info = append_entry( buffer, &io->Information, length, de->d_name, NULL, mask );
+                info = append_entry( buffer, io, length, de->d_name, NULL, mask );
             else
                 info = NULL;
         }
@@ -1517,9 +1510,8 @@ static void read_directory_readdir( int fd, IO_STATUS_BLOCK *io, void *buffer, U
         if (info)
         {
             last_info = info;
-            if ((char *)info->FileName + info->FileNameLength > (char *)buffer + length)
+            if (io->u.Status == STATUS_BUFFER_OVERFLOW)
             {
-                io->u.Status = STATUS_BUFFER_OVERFLOW;
                 old_pos--;  /* restore pos to previous entry */
                 break;
             }
@@ -1577,14 +1569,11 @@ static int read_directory_stat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
         ret = stat( unix_name, &st );
         if (!ret)
         {
-            FILE_BOTH_DIR_INFORMATION *info = append_entry( buffer, &io->Information, length, unix_name, NULL, NULL );
+            FILE_BOTH_DIR_INFORMATION *info = append_entry( buffer, io, length, unix_name, NULL, NULL );
             if (info)
             {
                 info->NextEntryOffset = 0;
-                if ((char *)info->FileName + info->FileNameLength > (char *)buffer + length)
-                    io->u.Status = STATUS_BUFFER_OVERFLOW;
-                else
-                    lseek( fd, 1, SEEK_CUR );
+                if (io->u.Status != STATUS_BUFFER_OVERFLOW) lseek( fd, 1, SEEK_CUR );
             }
             else io->u.Status = STATUS_NO_MORE_FILES;
         }
