@@ -154,8 +154,6 @@ union file_directory_info
     FILE_BOTH_DIRECTORY_INFORMATION    both;
 };
 
-static const unsigned int max_dir_info_size = FIELD_OFFSET( FILE_BOTH_DIR_INFORMATION, FileName[MAX_DIR_ENTRY_LEN] );
-
 static int show_dot_files = -1;
 
 /* at some point we may want to allow Winelib apps to set this */
@@ -220,6 +218,23 @@ static inline BOOL is_ignored_file( const struct stat *st )
         if (is_same_file( &ignored_files[i], st )) return TRUE;
     return FALSE;
 }
+
+static inline unsigned int dir_info_size( FILE_INFORMATION_CLASS class, unsigned int len )
+{
+    switch (class)
+    {
+    case FileBothDirectoryInformation:
+        return (FIELD_OFFSET( FILE_BOTH_DIR_INFORMATION, FileName[len] ) + 3) & ~3;
+    default:
+        assert(0);
+    }
+}
+
+static inline unsigned int max_dir_info_size( FILE_INFORMATION_CLASS class )
+{
+    return dir_info_size( class, MAX_DIR_ENTRY_LEN );
+}
+
 
 /***********************************************************************
  *           get_default_com_device
@@ -990,7 +1005,7 @@ static union file_directory_info *append_entry( void *info_ptr, IO_STATUS_BLOCK 
     if (!show_dot_files && long_name[0] == '.' && long_name[1] && (long_name[1] != '.' || long_name[2]))
         attributes |= FILE_ATTRIBUTE_HIDDEN;
 
-    total_len = (FIELD_OFFSET(FILE_BOTH_DIR_INFORMATION, FileName[long_len]) + 3) & ~3;
+    total_len = dir_info_size( class, long_len );
     if (io->Information + total_len > max_length)
     {
         total_len = max_length - io->Information;
@@ -1082,7 +1097,7 @@ static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
 
     if (restart_scan) lseek( fd, 0, SEEK_SET );
 
-    if (length < max_dir_info_size)  /* we may have to return a partial entry here */
+    if (length < max_dir_info_size(class))  /* we may have to return a partial entry here */
     {
         off_t old_pos = lseek( fd, 0, SEEK_CUR );
 
@@ -1132,7 +1147,7 @@ static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
                 last_info = info;
                 if (single_entry) break;
                 /* check if we still have enough space for the largest possible entry */
-                if (io->Information + max_dir_info_size > length) break;
+                if (io->Information + max_dir_info_size(class) > length) break;
             }
             if (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) == -1) break;
         }
@@ -1169,7 +1184,7 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
     }
 
     if (restart_scan) lseek( fd, 0, SEEK_SET );
-    else if (length < max_dir_info_size)  /* we may have to return a partial entry here */
+    else if (length < max_dir_info_size(class))  /* we may have to return a partial entry here */
     {
         old_pos = lseek( fd, 0, SEEK_CUR );
         if (old_pos == -1 && errno == ENOENT)
@@ -1209,8 +1224,7 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
         /* make sure we have enough room for both entries */
         if (fake_dot_dot)
         {
-            static const ULONG min_info_size = (FIELD_OFFSET(FILE_BOTH_DIR_INFORMATION, FileName[1]) +
-                                                FIELD_OFFSET(FILE_BOTH_DIR_INFORMATION, FileName[2]) + 3) & ~3;
+            const ULONG min_info_size = dir_info_size( class, 1 ) + dir_info_size( class, 2 );
             if (length < min_info_size || single_entry)
             {
                 FIXME( "not enough room %u/%u for fake . and .. entries\n", length, single_entry );
@@ -1226,7 +1240,7 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
                 last_info = info;
 
             /* check if we still have enough space for the largest possible entry */
-            if (last_info && io->Information + max_dir_info_size > length)
+            if (last_info && io->Information + max_dir_info_size(class) > length)
             {
                 lseek( fd, 0, SEEK_SET );  /* reset pos to first entry */
                 res = 0;
@@ -1248,7 +1262,7 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
                 break;
             }
             /* check if we still have enough space for the largest possible entry */
-            if (single_entry || io->Information + max_dir_info_size > length)
+            if (single_entry || io->Information + max_dir_info_size(class) > length)
             {
                 if (res > 0) lseek( fd, de->d_off, SEEK_SET );  /* set pos to next entry */
                 break;
@@ -1372,8 +1386,7 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
         /* make sure we have enough room for both entries */
         if (fake_dot_dot)
         {
-            static const ULONG min_info_size = (FIELD_OFFSET(FILE_BOTH_DIR_INFORMATION, FileName[1]) +
-                                                FIELD_OFFSET(FILE_BOTH_DIR_INFORMATION, FileName[2]) + 3) & ~3;
+            const ULONG min_info_size = dir_info_size( class, 1 ) + dir_info_size( class, 2 );
             if (length < min_info_size || single_entry)
             {
                 FIXME( "not enough room %u/%u for fake . and .. entries\n", length, single_entry );
@@ -1392,7 +1405,7 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
             restart_info_pos = io->Information;
 
             /* check if we still have enough space for the largest possible entry */
-            if (last_info && io->Information + max_dir_info_size > length)
+            if (last_info && io->Information + max_dir_info_size(class) > length)
             {
                 lseek( fd, 0, SEEK_SET );  /* reset pos to first entry */
                 res = 0;
@@ -1426,7 +1439,7 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
                 goto restart;
             }
             /* if we have to return but the buffer contains more data, restart with a smaller size */
-            if (res > 0 && (single_entry || io->Information + max_dir_info_size > length))
+            if (res > 0 && (single_entry || io->Information + max_dir_info_size(class) > length))
             {
                 lseek( fd, (unsigned long)restart_pos, SEEK_SET );
                 size = (char *)de - data;
@@ -1444,7 +1457,7 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
         if (size < initial_size) break;  /* already restarted once, give up now */
         size = min( size, length - io->Information );
         /* if size is too small don't bother to continue */
-        if (size < max_dir_info_size && last_info) break;
+        if (size < max_dir_info_size(class) && last_info) break;
         restart_last_info = last_info;
         restart_info_pos = io->Information;
     restart:
@@ -1530,7 +1543,7 @@ static void read_directory_readdir( int fd, IO_STATUS_BLOCK *io, void *buffer, U
             }
             if (single_entry) break;
             /* check if we still have enough space for the largest possible entry */
-            if (io->Information + max_dir_info_size > length) break;
+            if (io->Information + max_dir_info_size(class) > length) break;
         }
     }
 
@@ -1638,7 +1651,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
     switch (info_class)
     {
     case FileBothDirectoryInformation:
-        if (length < sizeof(FILE_BOTH_DIR_INFORMATION)) return io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
+        if (length < dir_info_size( info_class, 1 )) return io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
         break;
     default:
         FIXME( "Unsupported file info class %d\n", info_class );
