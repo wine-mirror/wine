@@ -2273,7 +2273,7 @@ static HRESULT  WINAPI  IDirect3DDevice9ExImpl_GetDisplayModeEx(IDirect3DDevice9
     return WINED3DERR_INVALIDCALL;
 }
 
-const IDirect3DDevice9ExVtbl Direct3DDevice9_Vtbl =
+static const IDirect3DDevice9ExVtbl Direct3DDevice9_Vtbl =
 {
     /* IUnknown */
     IDirect3DDevice9Impl_QueryInterface,
@@ -2645,7 +2645,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
     return hr;
 }
 
-const IWineD3DDeviceParentVtbl d3d9_wined3d_device_parent_vtbl =
+static const IWineD3DDeviceParentVtbl d3d9_wined3d_device_parent_vtbl =
 {
     /* IUnknown methods */
     device_parent_QueryInterface,
@@ -2659,3 +2659,111 @@ const IWineD3DDeviceParentVtbl d3d9_wined3d_device_parent_vtbl =
     device_parent_CreateVolume,
     device_parent_CreateSwapChain,
 };
+
+HRESULT device_init(IDirect3DDevice9Impl *device, IWineD3D *wined3d, UINT adapter, D3DDEVTYPE device_type,
+        HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters)
+{
+    WINED3DPRESENT_PARAMETERS *wined3d_parameters;
+    UINT i, count = 1;
+    HRESULT hr;
+
+    device->lpVtbl = &Direct3DDevice9_Vtbl;
+    device->device_parent_vtbl = &d3d9_wined3d_device_parent_vtbl;
+    device->ref = 1;
+
+    wined3d_mutex_lock();
+    hr = IWineD3D_CreateDevice(wined3d, adapter, device_type, focus_window, flags, (IUnknown *)device,
+            (IWineD3DDeviceParent *)&device->device_parent_vtbl, &device->WineD3DDevice);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d device, hr %#x.\n", hr);
+        wined3d_mutex_unlock();
+        return hr;
+    }
+
+    if (flags & D3DCREATE_ADAPTERGROUP_DEVICE)
+    {
+        WINED3DCAPS caps;
+
+        IWineD3D_GetDeviceCaps(wined3d, adapter, device_type, &caps);
+        count = caps.NumberOfAdaptersInGroup;
+    }
+
+    if (flags & D3DCREATE_MULTITHREADED) IWineD3DDevice_SetMultithreaded(device->WineD3DDevice);
+
+    wined3d_parameters = HeapAlloc(GetProcessHeap(), 0, sizeof(*wined3d_parameters) * count);
+    if (!wined3d_parameters)
+    {
+        ERR("Failed to allocate wined3d parameters.\n");
+        IWineD3DDevice_Release(device->WineD3DDevice);
+        wined3d_mutex_unlock();
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        wined3d_parameters[i].BackBufferWidth = parameters[i].BackBufferWidth;
+        wined3d_parameters[i].BackBufferHeight = parameters[i].BackBufferHeight;
+        wined3d_parameters[i].BackBufferFormat = wined3dformat_from_d3dformat(parameters[i].BackBufferFormat);
+        wined3d_parameters[i].BackBufferCount = parameters[i].BackBufferCount;
+        wined3d_parameters[i].MultiSampleType = parameters[i].MultiSampleType;
+        wined3d_parameters[i].MultiSampleQuality = parameters[i].MultiSampleQuality;
+        wined3d_parameters[i].SwapEffect = parameters[i].SwapEffect;
+        wined3d_parameters[i].hDeviceWindow = parameters[i].hDeviceWindow;
+        wined3d_parameters[i].Windowed = parameters[i].Windowed;
+        wined3d_parameters[i].EnableAutoDepthStencil = parameters[i].EnableAutoDepthStencil;
+        wined3d_parameters[i].AutoDepthStencilFormat =
+                wined3dformat_from_d3dformat(parameters[i].AutoDepthStencilFormat);
+        wined3d_parameters[i].Flags = parameters[i].Flags;
+        wined3d_parameters[i].FullScreen_RefreshRateInHz = parameters[i].FullScreen_RefreshRateInHz;
+        wined3d_parameters[i].PresentationInterval = parameters[i].PresentationInterval;
+        wined3d_parameters[i].AutoRestoreDisplayMode = TRUE;
+    }
+
+    hr = IWineD3DDevice_Init3D(device->WineD3DDevice, wined3d_parameters);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize 3D, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, wined3d_parameters);
+        IWineD3DDevice_Release(device->WineD3DDevice);
+        wined3d_mutex_unlock();
+        return hr;
+    }
+
+    wined3d_mutex_unlock();
+
+    for (i = 0; i < count; ++i)
+    {
+        parameters[i].BackBufferWidth = wined3d_parameters[i].BackBufferWidth;
+        parameters[i].BackBufferHeight = wined3d_parameters[i].BackBufferHeight;
+        parameters[i].BackBufferFormat = d3dformat_from_wined3dformat(wined3d_parameters[i].BackBufferFormat);
+        parameters[i].BackBufferCount = wined3d_parameters[i].BackBufferCount;
+        parameters[i].MultiSampleType = wined3d_parameters[i].MultiSampleType;
+        parameters[i].MultiSampleQuality = wined3d_parameters[i].MultiSampleQuality;
+        parameters[i].SwapEffect = wined3d_parameters[i].SwapEffect;
+        parameters[i].hDeviceWindow = wined3d_parameters[i].hDeviceWindow;
+        parameters[i].Windowed = wined3d_parameters[i].Windowed;
+        parameters[i].EnableAutoDepthStencil = wined3d_parameters[i].EnableAutoDepthStencil;
+        parameters[i].AutoDepthStencilFormat =
+                d3dformat_from_wined3dformat(wined3d_parameters[i].AutoDepthStencilFormat);
+        parameters[i].Flags = wined3d_parameters[i].Flags;
+        parameters[i].FullScreen_RefreshRateInHz = wined3d_parameters[i].FullScreen_RefreshRateInHz;
+        parameters[i].PresentationInterval = wined3d_parameters[i].PresentationInterval;
+    }
+    HeapFree(GetProcessHeap(), 0, wined3d_parameters);
+
+    /* Initialize the converted declaration array. This creates a valid pointer
+     * and when adding decls HeapReAlloc() can be used without further checking. */
+    device->convertedDecls = HeapAlloc(GetProcessHeap(), 0, 0);
+    if (!device->convertedDecls)
+    {
+        ERR("Failed to allocate FVF vertex declaration map memory.\n");
+        wined3d_mutex_lock();
+        IWineD3DDevice_Uninit3D(device->WineD3DDevice, D3D9CB_DestroySwapChain);
+        IWineD3DDevice_Release(device->WineD3DDevice);
+        wined3d_mutex_unlock();
+        return E_OUTOFMEMORY;
+    }
+
+    return D3D_OK;
+}

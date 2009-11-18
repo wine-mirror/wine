@@ -417,119 +417,36 @@ ULONG WINAPI D3D9CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain) {
     return IDirect3DSwapChain9_Release((IDirect3DSwapChain9*) swapChainParent);
 }
 
-static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3D9Impl_CreateDevice(LPDIRECT3D9EX iface, UINT Adapter, D3DDEVTYPE DeviceType,
-                                                            HWND hFocusWindow, DWORD BehaviourFlags,
-                                                            D3DPRESENT_PARAMETERS* pPresentationParameters,
-                                                            IDirect3DDevice9** ppReturnedDeviceInterface) {
-
-    IDirect3D9Impl       *This   = (IDirect3D9Impl *)iface;
-    IDirect3DDevice9Impl *object = NULL;
-    WINED3DPRESENT_PARAMETERS *localParameters;
-    UINT i, count = 1;
+static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3D9Impl_CreateDevice(IDirect3D9Ex *iface, UINT adapter,
+        D3DDEVTYPE device_type, HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters,
+        IDirect3DDevice9 **device)
+{
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
+    IDirect3DDevice9Impl *object;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, device_type %#x, focus_window %p, flags %#x, parameters %p, device %p.\n",
-            iface, Adapter, DeviceType, hFocusWindow, BehaviourFlags, pPresentationParameters,
-            ppReturnedDeviceInterface);
+            iface, adapter, device_type, focus_window, flags, parameters, device);
 
-    /* Check the validity range of the adapter parameter */
-    if (Adapter >= IDirect3D9Impl_GetAdapterCount(iface)) {
-        *ppReturnedDeviceInterface = NULL;
-        return D3DERR_INVALIDCALL;
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate device memory.\n");
+        return E_OUTOFMEMORY;
     }
 
-    /* Allocate the storage for the device object */
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DDevice9Impl));
-    if (NULL == object) {
-        FIXME("Allocation of memory failed\n");
-        *ppReturnedDeviceInterface = NULL;
-        return D3DERR_OUTOFVIDEOMEMORY;
-    }
-
-    object->lpVtbl = &Direct3DDevice9_Vtbl;
-    object->device_parent_vtbl = &d3d9_wined3d_device_parent_vtbl;
-    object->ref = 1;
-    *ppReturnedDeviceInterface = (IDirect3DDevice9 *)object;
-
-    /* Allocate an associated WineD3DDevice object */
-    wined3d_mutex_lock();
-    hr = IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags,
-            (IUnknown *)object, (IWineD3DDeviceParent *)&object->device_parent_vtbl, &object->WineD3DDevice);
-    if (hr != D3D_OK) {
+    hr = device_init(object, This->WineD3D, adapter, device_type, focus_window, flags, parameters);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize device, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppReturnedDeviceInterface = NULL;
-        wined3d_mutex_unlock();
-
         return hr;
     }
 
-    TRACE("(%p) : Created Device %p\n", This, object);
+    TRACE("Created device %p.\n", object);
+    *device = (IDirect3DDevice9 *)object;
 
-    if (BehaviourFlags & D3DCREATE_ADAPTERGROUP_DEVICE)
-    {
-        WINED3DCAPS caps;
-
-        IWineD3D_GetDeviceCaps(This->WineD3D, Adapter, DeviceType, &caps);
-        count = caps.NumberOfAdaptersInGroup;
-    }
-
-    if(BehaviourFlags & D3DCREATE_MULTITHREADED) {
-        IWineD3DDevice_SetMultithreaded(object->WineD3DDevice);
-    }
-
-    localParameters = HeapAlloc(GetProcessHeap(), 0, sizeof(*localParameters) * count);
-    for (i = 0; i < count; ++i)
-    {
-        localParameters[i].BackBufferWidth = pPresentationParameters[i].BackBufferWidth;
-        localParameters[i].BackBufferHeight = pPresentationParameters[i].BackBufferHeight;
-        localParameters[i].BackBufferFormat = wined3dformat_from_d3dformat(pPresentationParameters[i].BackBufferFormat);
-        localParameters[i].BackBufferCount = pPresentationParameters[i].BackBufferCount;
-        localParameters[i].MultiSampleType = pPresentationParameters[i].MultiSampleType;
-        localParameters[i].MultiSampleQuality = pPresentationParameters[i].MultiSampleQuality;
-        localParameters[i].SwapEffect = pPresentationParameters[i].SwapEffect;
-        localParameters[i].hDeviceWindow = pPresentationParameters[i].hDeviceWindow;
-        localParameters[i].Windowed = pPresentationParameters[i].Windowed;
-        localParameters[i].EnableAutoDepthStencil = pPresentationParameters[i].EnableAutoDepthStencil;
-        localParameters[i].AutoDepthStencilFormat = wined3dformat_from_d3dformat(pPresentationParameters[i].AutoDepthStencilFormat);
-        localParameters[i].Flags = pPresentationParameters[i].Flags;
-        localParameters[i].FullScreen_RefreshRateInHz = pPresentationParameters[i].FullScreen_RefreshRateInHz;
-        localParameters[i].PresentationInterval = pPresentationParameters[i].PresentationInterval;
-        localParameters[i].AutoRestoreDisplayMode = TRUE;
-    }
-
-    hr = IWineD3DDevice_Init3D(object->WineD3DDevice, localParameters);
-    if (hr != D3D_OK) {
-        FIXME("(%p) D3D Initialization failed for WineD3DDevice %p\n", This, object->WineD3DDevice);
-        HeapFree(GetProcessHeap(), 0, object);
-        *ppReturnedDeviceInterface = NULL;
-    }
-
-    for (i = 0; i < count; ++i)
-    {
-        pPresentationParameters[i].BackBufferWidth = localParameters[i].BackBufferWidth;
-        pPresentationParameters[i].BackBufferHeight = localParameters[i].BackBufferHeight;
-        pPresentationParameters[i].BackBufferFormat = d3dformat_from_wined3dformat(localParameters[i].BackBufferFormat);
-        pPresentationParameters[i].BackBufferCount = localParameters[i].BackBufferCount;
-        pPresentationParameters[i].MultiSampleType = localParameters[i].MultiSampleType;
-        pPresentationParameters[i].MultiSampleQuality = localParameters[i].MultiSampleQuality;
-        pPresentationParameters[i].SwapEffect = localParameters[i].SwapEffect;
-        pPresentationParameters[i].hDeviceWindow = localParameters[i].hDeviceWindow;
-        pPresentationParameters[i].Windowed = localParameters[i].Windowed;
-        pPresentationParameters[i].EnableAutoDepthStencil = localParameters[i].EnableAutoDepthStencil;
-        pPresentationParameters[i].AutoDepthStencilFormat = d3dformat_from_wined3dformat(localParameters[i].AutoDepthStencilFormat);
-        pPresentationParameters[i].Flags = localParameters[i].Flags;
-        pPresentationParameters[i].FullScreen_RefreshRateInHz = localParameters[i].FullScreen_RefreshRateInHz;
-        pPresentationParameters[i].PresentationInterval = localParameters[i].PresentationInterval;
-    }
-    HeapFree(GetProcessHeap(), 0, localParameters);
-
-    /* Initialize the converted declaration array. This creates a valid pointer and when adding decls HeapReAlloc
-     * can be used without further checking
-     */
-    object->convertedDecls = HeapAlloc(GetProcessHeap(), 0, 0);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return D3D_OK;
 }
 
 static UINT WINAPI IDirect3D9ExImpl_GetAdapterModeCountEx(IDirect3D9Ex *iface,
