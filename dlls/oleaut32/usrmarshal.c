@@ -1180,6 +1180,8 @@ HRESULT CALLBACK IDispatch_Invoke_Proxy(
       if (V_ISBYREF(arg)) {
 	rgVarRefIdx[cVarRef] = u;
 	VariantInit(&rgVarRef[cVarRef]);
+	VariantCopy(&rgVarRef[cVarRef], arg);
+	VariantClear(arg);
 	cVarRef++;
       }
     }
@@ -1265,6 +1267,12 @@ HRESULT __RPC_STUB IDispatch_Invoke_Stub(
   }
 
   if (SUCCEEDED(hr)) {
+    /* copy ref args to arg array */
+    for (u=0; u<cVarRef; u++) {
+      unsigned i = rgVarRefIdx[u];
+      VariantCopy(&arg[i], &rgVarRef[u]);
+    }
+
     pDispParams->rgvarg = arg;
 
     hr = IDispatch_Invoke(This,
@@ -1277,14 +1285,10 @@ HRESULT __RPC_STUB IDispatch_Invoke_Stub(
 			  pExcepInfo,
 			  pArgErr);
 
-    /* copy ref args to out list */
+    /* copy ref args from arg array */
     for (u=0; u<cVarRef; u++) {
       unsigned i = rgVarRefIdx[u];
-      VariantInit(&rgVarRef[u]);
       VariantCopy(&rgVarRef[u], &arg[i]);
-      /* clear original if equal, to avoid double-free */
-      if (V_BYREF(&rgVarRef[u]) == V_BYREF(&rgvarg[i]))
-        VariantClear(&rgvarg[i]);
     }
   }
 

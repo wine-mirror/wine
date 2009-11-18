@@ -1364,7 +1364,6 @@ static void test_typelibmarshal(void)
     ok_ole_success(hr, ITypeInfo_Invoke);
     ok(V_VT(&varresult) == VT_EMPTY, "varresult should be VT_EMPTY\n");
     ok(V_VT(&vararg[0]) == (VT_UI4|VT_BYREF), "arg VT not unmarshalled correctly: %x\n", V_VT(&vararg[0]));
-    todo_wine
     ok(V_UI4REF(&vararg[0]) == &uval, "Byref pointer not preserved: %p/%p\n", &uval, V_UI4REF(&vararg[0]));
     ok(*V_UI4REF(&vararg[0]) == 42, "Expected 42 to be returned instead of %u\n", *V_UI4REF(&vararg[0]));
     VariantClear(&varresult);
