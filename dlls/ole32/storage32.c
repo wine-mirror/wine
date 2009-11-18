@@ -1903,10 +1903,10 @@ static HRESULT deleteStreamContents(
   IStream      *pis;
   HRESULT        hr;
   ULARGE_INTEGER size;
-  StgStreamImpl *strm;
+  StgStreamImpl *strm, *strm2;
 
   /* Invalidate any open stream objects. */
-  LIST_FOR_EACH_ENTRY(strm, &parentStorage->strmHead, StgStreamImpl, StrmListEntry)
+  LIST_FOR_EACH_ENTRY_SAFE(strm, strm2, &parentStorage->strmHead, StgStreamImpl, StrmListEntry)
   {
     if (strm->dirEntry == indexToDelete)
     {
