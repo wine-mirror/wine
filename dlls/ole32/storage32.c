@@ -3485,6 +3485,8 @@ static void StorageInternalImpl_Destroy( StorageBaseImpl *iface)
 {
   StorageInternalImpl* This = (StorageInternalImpl*) iface;
 
+  StorageBaseImpl_DeleteAll(&This->base);
+
   HeapFree(GetProcessHeap(), 0, This);
 }
 
