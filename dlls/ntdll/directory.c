@@ -931,7 +931,7 @@ static BOOLEAN match_filename( const UNICODE_STRING *name_str, const UNICODE_STR
  */
 static union file_directory_info *append_entry( void *info_ptr, IO_STATUS_BLOCK *io, ULONG max_length,
                                                 const char *long_name, const char *short_name,
-                                                const UNICODE_STRING *mask )
+                                                const UNICODE_STRING *mask, FILE_INFORMATION_CLASS class )
 {
     union file_directory_info *info;
     int i, long_len, short_len, total_len;
@@ -996,20 +996,26 @@ static union file_directory_info *append_entry( void *info_ptr, IO_STATUS_BLOCK 
         total_len = max_length - io->Information;
         io->u.Status = STATUS_BUFFER_OVERFLOW;
     }
-
     info = (union file_directory_info *)((char *)info_ptr + io->Information);
-    fill_stat_info( &st, &info->both, FileBothDirectoryInformation );
-    info->both.NextEntryOffset = total_len;
-    info->both.FileIndex = 0;  /* NTFS always has 0 here, so let's not bother with it */
-    info->both.FileAttributes |= attributes;
-    info->both.EaSize = 0; /* FIXME */
-    info->both.ShortNameLength = short_len * sizeof(WCHAR);
-    for (i = 0; i < short_len; i++) info->both.ShortName[i] = toupperW(short_nameW[i]);
-    info->both.FileNameLength = long_len * sizeof(WCHAR);
-    memcpy( info->both.FileName, long_nameW,
-            min( info->both.FileNameLength,
-                 total_len - FIELD_OFFSET( FILE_BOTH_DIR_INFORMATION, FileName )));
 
+    switch (class)
+    {
+    case FileBothDirectoryInformation:
+        fill_stat_info( &st, &info->both, class );
+        info->both.NextEntryOffset = total_len;
+        info->both.FileIndex = 0;  /* NTFS always has 0 here, so let's not bother with it */
+        info->both.FileAttributes |= attributes;
+        info->both.EaSize = 0; /* FIXME */
+        info->both.ShortNameLength = short_len * sizeof(WCHAR);
+        for (i = 0; i < short_len; i++) info->both.ShortName[i] = toupperW(short_nameW[i]);
+        info->both.FileNameLength = long_len * sizeof(WCHAR);
+        memcpy( info->both.FileName, long_nameW,
+                min( info->both.FileNameLength,
+                     total_len - FIELD_OFFSET( FILE_BOTH_DIR_INFORMATION, FileName )));
+        break;
+    default:
+        assert(0);
+    }
     io->Information += total_len;
     return info;
 }
@@ -1065,7 +1071,7 @@ static KERNEL_DIRENT *start_vfat_ioctl( int fd )
  */
 static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG length,
                                 BOOLEAN single_entry, const UNICODE_STRING *mask,
-                                BOOLEAN restart_scan )
+                                BOOLEAN restart_scan, FILE_INFORMATION_CLASS class )
 
 {
     size_t len;
@@ -1091,9 +1097,9 @@ static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
             de[1].d_name[len] = 0;
 
             if (de[1].d_name[0])
-                info = append_entry( buffer, io, length, de[1].d_name, de[0].d_name, mask );
+                info = append_entry( buffer, io, length, de[1].d_name, de[0].d_name, mask, class );
             else
-                info = append_entry( buffer, io, length, de[0].d_name, NULL, mask );
+                info = append_entry( buffer, io, length, de[0].d_name, NULL, mask, class );
             if (info)
             {
                 last_info = info;
@@ -1118,9 +1124,9 @@ static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
             de[1].d_name[len] = 0;
 
             if (de[1].d_name[0])
-                info = append_entry( buffer, io, length, de[1].d_name, de[0].d_name, mask );
+                info = append_entry( buffer, io, length, de[1].d_name, de[0].d_name, mask, class );
             else
-                info = append_entry( buffer, io, length, de[0].d_name, NULL, mask );
+                info = append_entry( buffer, io, length, de[0].d_name, NULL, mask, class );
             if (info)
             {
                 last_info = info;
@@ -1147,7 +1153,7 @@ static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
 #ifdef USE_GETDENTS
 static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG length,
                                     BOOLEAN single_entry, const UNICODE_STRING *mask,
-                                    BOOLEAN restart_scan )
+                                    BOOLEAN restart_scan, FILE_INFORMATION_CLASS class )
 {
     off_t old_pos = 0;
     size_t size = length;
@@ -1214,9 +1220,9 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
 
         if (fake_dot_dot)
         {
-            if ((info = append_entry( buffer, io, length, ".", NULL, mask )))
+            if ((info = append_entry( buffer, io, length, ".", NULL, mask, class )))
                 last_info = info;
-            if ((info = append_entry( buffer, io, length, "..", NULL, mask )))
+            if ((info = append_entry( buffer, io, length, "..", NULL, mask, class )))
                 last_info = info;
 
             /* check if we still have enough space for the largest possible entry */
@@ -1233,7 +1239,7 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
         res -= de->d_reclen;
         if (de->d_ino &&
             !(fake_dot_dot && (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." ))) &&
-            (info = append_entry( buffer, io, length, de->d_name, NULL, mask )))
+            (info = append_entry( buffer, io, length, de->d_name, NULL, mask, class )))
         {
             last_info = info;
             if (io->u.Status == STATUS_BUFFER_OVERFLOW)
@@ -1319,7 +1325,7 @@ static inline int wine_getdirentries(int fd, char *buf, int nbytes, long *basep)
  */
 static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG length,
                                          BOOLEAN single_entry, const UNICODE_STRING *mask,
-                                         BOOLEAN restart_scan )
+                                         BOOLEAN restart_scan, FILE_INFORMATION_CLASS class )
 {
     long restart_pos;
     ULONG_PTR restart_info_pos = 0;
@@ -1377,9 +1383,9 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
 
         if (fake_dot_dot)
         {
-            if ((info = append_entry( buffer, io, length, ".", NULL, mask )))
+            if ((info = append_entry( buffer, io, length, ".", NULL, mask, class )))
                 last_info = info;
-            if ((info = append_entry( buffer, io, length, "..", NULL, mask )))
+            if ((info = append_entry( buffer, io, length, "..", NULL, mask, class )))
                 last_info = info;
 
             restart_last_info = last_info;
@@ -1399,7 +1405,7 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
         res -= de->d_reclen;
         if (de->d_fileno &&
             !(fake_dot_dot && (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." ))) &&
-            ((info = append_entry( buffer, io, length, de->d_name, NULL, mask ))))
+            ((info = append_entry( buffer, io, length, de->d_name, NULL, mask, class ))))
         {
             last_info = info;
             if (io->u.Status == STATUS_BUFFER_OVERFLOW)
@@ -1469,7 +1475,7 @@ done:
  */
 static void read_directory_readdir( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG length,
                                     BOOLEAN single_entry, const UNICODE_STRING *mask,
-                                    BOOLEAN restart_scan )
+                                    BOOLEAN restart_scan, FILE_INFORMATION_CLASS class )
 {
     DIR *dir;
     off_t i, old_pos = 0;
@@ -1501,13 +1507,13 @@ static void read_directory_readdir( int fd, IO_STATUS_BLOCK *io, void *buffer, U
     for (;;)
     {
         if (old_pos == 0)
-            info = append_entry( buffer, io, length, ".", NULL, mask );
+            info = append_entry( buffer, io, length, ".", NULL, mask, class );
         else if (old_pos == 1)
-            info = append_entry( buffer, io, length, "..", NULL, mask );
+            info = append_entry( buffer, io, length, "..", NULL, mask, class );
         else if ((de = readdir( dir )))
         {
             if (strcmp( de->d_name, "." ) && strcmp( de->d_name, ".." ))
-                info = append_entry( buffer, io, length, de->d_name, NULL, mask );
+                info = append_entry( buffer, io, length, de->d_name, NULL, mask, class );
             else
                 info = NULL;
         }
@@ -1543,7 +1549,7 @@ static void read_directory_readdir( int fd, IO_STATUS_BLOCK *io, void *buffer, U
  */
 static int read_directory_stat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG length,
                                 BOOLEAN single_entry, const UNICODE_STRING *mask,
-                                BOOLEAN restart_scan )
+                                BOOLEAN restart_scan, FILE_INFORMATION_CLASS class )
 {
     int unix_len, ret, used_default;
     char *unix_name;
@@ -1576,7 +1582,7 @@ static int read_directory_stat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
         ret = stat( unix_name, &st );
         if (!ret)
         {
-            union file_directory_info *info = append_entry( buffer, io, length, unix_name, NULL, NULL );
+            union file_directory_info *info = append_entry( buffer, io, length, unix_name, NULL, NULL, class );
             if (info)
             {
                 info->next = 0;
@@ -1624,15 +1630,17 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
           length, info_class, single_entry, debugstr_us(mask),
           restart_scan);
 
-    if (length < sizeof(FILE_BOTH_DIR_INFORMATION)) return STATUS_INFO_LENGTH_MISMATCH;
-
     if (event || apc_routine)
     {
         FIXME( "Unsupported yet option\n" );
         return io->u.Status = STATUS_NOT_IMPLEMENTED;
     }
-    if (info_class != FileBothDirectoryInformation)
+    switch (info_class)
     {
+    case FileBothDirectoryInformation:
+        if (length < sizeof(FILE_BOTH_DIR_INFORMATION)) return io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    default:
         FIXME( "Unsupported file info class %d\n", info_class );
         return io->u.Status = STATUS_NOT_IMPLEMENTED;
     }
@@ -1650,20 +1658,20 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
     if (fchdir( fd ) != -1)
     {
 #ifdef VFAT_IOCTL_READDIR_BOTH
-        if ((read_directory_vfat( fd, io, buffer, length, single_entry, mask, restart_scan )) != -1)
-            goto done;
+        if ((read_directory_vfat( fd, io, buffer, length, single_entry,
+                                  mask, restart_scan, info_class )) != -1) goto done;
 #endif
         if (mask && !mempbrkW( mask->Buffer, wszWildcards, mask->Length / sizeof(WCHAR) ) &&
-            read_directory_stat( fd, io, buffer, length, single_entry, mask, restart_scan ) != -1)
-            goto done;
+            read_directory_stat( fd, io, buffer, length, single_entry,
+                                 mask, restart_scan, info_class ) != -1) goto done;
 #ifdef USE_GETDENTS
-        if ((read_directory_getdents( fd, io, buffer, length, single_entry, mask, restart_scan )) != -1)
-            goto done;
+        if ((read_directory_getdents( fd, io, buffer, length, single_entry,
+                                      mask, restart_scan, info_class )) != -1) goto done;
 #elif defined HAVE_GETDIRENTRIES
-        if ((read_directory_getdirentries( fd, io, buffer, length, single_entry, mask, restart_scan )) != -1)
-            goto done;
+        if ((read_directory_getdirentries( fd, io, buffer, length, single_entry,
+                                           mask, restart_scan, info_class )) != -1) goto done;
 #endif
-        read_directory_readdir( fd, io, buffer, length, single_entry, mask, restart_scan );
+        read_directory_readdir( fd, io, buffer, length, single_entry, mask, restart_scan, info_class );
 
     done:
         if (cwd == -1 || fchdir( cwd ) == -1) chdir( "/" );
