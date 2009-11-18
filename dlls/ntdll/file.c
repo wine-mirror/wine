@@ -1578,7 +1578,25 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         0,                                             /* FileReparsePointInformation */
         0,                                             /* FileNetworkOpenInformation */
         0,                                             /* FileAttributeTagInformation */
-        0                                              /* FileTrackingInformation */
+        0,                                             /* FileTrackingInformation */
+        0,                                             /* FileIdBothDirectoryInformation */
+        0,                                             /* FileIdFullDirectoryInformation */
+        0,                                             /* FileValidDataLengthInformation */
+        0,                                             /* FileShortNameInformation */
+        0,
+        0,
+        0,
+        0,                                             /* FileSfioReserveInformation */
+        0,                                             /* FileSfioVolumeInformation */
+        0,                                             /* FileHardLinkInformation */
+        0,
+        0,                                             /* FileNormalizedNameInformation */
+        0,
+        0,                                             /* FileIdGlobalTxDirectoryInformation */
+        0,
+        0,
+        0,
+        0                                              /* FileStandardLinkInformation */
     };
 
     struct stat st;
