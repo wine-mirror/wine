@@ -2709,7 +2709,9 @@ static void testIsRDNAttrsInCertificateName(void)
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
     ret = CertIsRDNAttrsInCertificateName(X509_ASN_ENCODING,
      CERT_CASE_INSENSITIVE_IS_RDN_ATTRS_FLAG, &name, &rdn);
-    ok(ret, "CertIsRDNAttrsInCertificateName failed: %08x\n", GetLastError());
+    ok(ret ||
+     broken(!ret && GetLastError() == CRYPT_E_NO_MATCH), /* Older crypt32 */
+     "CertIsRDNAttrsInCertificateName failed: %08x\n", GetLastError());
     /* The values don't match unless they have the same RDN type */
     attr[0].dwValueType = CERT_RDN_UNICODE_STRING;
     attr[0].Value.cbData = lstrlenW(juanW) * sizeof(WCHAR);
