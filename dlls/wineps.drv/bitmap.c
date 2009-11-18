@@ -242,6 +242,7 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
     if (!get_bitmap_info( info, &fullSrcWidth, &fullSrcHeight, &bpp, &compression )) return FALSE;
 
     stride = get_dib_width_bytes(fullSrcWidth, bpp);
+    if(fullSrcHeight < 0) stride = -stride; /* top-down */
 
     TRACE("full size=%dx%d bpp=%d compression=%d rop=%08x\n", fullSrcWidth,
 	  fullSrcHeight, bpp, compression, dwRop);
@@ -272,6 +273,7 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 	PSDRV_WriteImageMaskHeader(physDev, info, xDst, yDst, widthDst, heightDst,
                                    widthSrc, heightSrc);
 	src_ptr = bits;
+        if(stride < 0) src_ptr += (fullSrcHeight + 1) * stride;
 	src_ptr += (ySrc * stride);
 	if(xSrc & 7)
 	    FIXME("This won't work...\n");
@@ -287,6 +289,7 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
 	src_ptr = bits;
+        if(stride < 0) src_ptr += (fullSrcHeight + 1) * stride;
 	src_ptr += (ySrc * stride);
 	if(xSrc & 1)
 	    FIXME("This won't work...\n");
@@ -302,6 +305,7 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
 	src_ptr = bits;
+        if(stride < 0) src_ptr += (fullSrcHeight + 1) * stride;
 	src_ptr += (ySrc * stride);
         bitmap_size = heightSrc * widthSrc;
         dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
@@ -318,6 +322,7 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 
 
         src_ptr = bits;
+        if(stride < 0) src_ptr += (fullSrcHeight + 1) * stride;
         src_ptr += (ySrc * stride);
         bitmap_size = heightSrc * widthSrc * 3;
         dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
@@ -350,6 +355,7 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 			       widthSrc, heightSrc);
 
         src_ptr = bits;
+        if(stride < 0) src_ptr += (fullSrcHeight + 1) * stride;
         src_ptr += (ySrc * stride);
         bitmap_size = heightSrc * widthSrc * 3;
         dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
@@ -372,6 +378,7 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 			       widthSrc, heightSrc);
 
         src_ptr = bits;
+        if(stride < 0) src_ptr += (fullSrcHeight + 1) * stride;
         src_ptr += (ySrc * stride);
         bitmap_size = heightSrc * widthSrc * 3;
         dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
