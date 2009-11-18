@@ -5707,7 +5707,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     hres = IHTMLFramesCollection2_item(frames, &index_var, &result_var);
     ok(hres == S_OK, "IHTMLFramesCollection2_item failed: 0x%08x\n", hres);
     if(SUCCEEDED(hres)) {
-        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
+        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x\n", V_VT(&result_var));
         test_frame((IDispatch*)V_DISPATCH(&result_var), "fr1");
     }
     VariantClear(&result_var);
@@ -5717,7 +5717,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     hres = IHTMLFramesCollection2_item(frames, &index_var, &result_var);
     ok(hres == S_OK, "IHTMLFramesCollection2_item failed: 0x%08x\n", hres);
     if(SUCCEEDED(hres)) {
-        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
+        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x\n", V_VT(&result_var));
         test_frame((IDispatch*)V_DISPATCH(&result_var), "fr2");
     }
     VariantClear(&result_var);
@@ -5735,7 +5735,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     hres = IHTMLFramesCollection2_item(frames, &index_var, &result_var);
     ok(hres == S_OK, "IHTMLFramesCollection2_item failed: 0x%08x\n", hres);
     if(SUCCEEDED(hres)) {
-        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
+        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x\n", V_VT(&result_var));
         test_frame((IDispatch*)V_DISPATCH(&result_var), "fr1");
     }
     VariantClear(&result_var);
@@ -5764,7 +5764,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     hres = IHTMLWindow2_item(window, &index_var, &result_var);
     ok(hres == S_OK, "IHTMLWindow2_item failed: 0x%08x\n", hres);
     if(SUCCEEDED(hres)) {
-        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
+        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x\n", V_VT(&result_var));
         test_frame((IDispatch*)V_DISPATCH(&result_var), "fr1");
     }
     VariantClear(&result_var);
@@ -5774,7 +5774,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     hres = IHTMLWindow2_item(window, &index_var, &result_var);
     ok(hres == S_OK, "IHTMLWindow2_item failed: 0x%08x\n", hres);
     if(SUCCEEDED(hres)) {
-        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
+        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x\n", V_VT(&result_var));
         test_frame((IDispatch*)V_DISPATCH(&result_var), "fr2");
     }
     VariantClear(&result_var);
@@ -5792,7 +5792,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     hres = IHTMLWindow2_item(window, &index_var, &result_var);
     ok(hres == S_OK, "IHTMLWindow2_item failed: 0x%08x\n", hres);
     if(SUCCEEDED(hres)) {
-        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x", V_VT(&result_var));
+        ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x\n", V_VT(&result_var));
         test_frame((IDispatch*)V_DISPATCH(&result_var), "fr2");
     }
     VariantClear(&result_var);
