@@ -935,7 +935,7 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
     if (type == RPC_FC_FP)
       NdrFullPointerInsertRefId(pStubMsg->FullPtrXlatTables, pointer_id,
-                                base_ptr_val);
+                                *pPointer);
   }
 
   TRACE("pointer=%p\n", *pPointer);
