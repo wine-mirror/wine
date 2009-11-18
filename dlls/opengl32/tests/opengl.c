@@ -553,18 +553,6 @@ static void test_dc(HWND hwnd, HDC hdc)
 
 static void test_opengl3(HDC hdc)
 {
-    /* Try to create a context using an invalid OpenGL version namely 0.x */
-    {
-        HGLRC gl3Ctx;
-        int attribs[] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 0, 0};
-
-        gl3Ctx = pwglCreateContextAttribsARB(hdc, 0, attribs);
-        ok(gl3Ctx == 0, "wglCreateContextAttribs with major version=0 should fail!\n");
-
-        if(gl3Ctx)
-            wglDeleteContext(gl3Ctx);
-    }
-
     /* Try to create a context compatible with OpenGL 1.x; 1.0-2.1 is allowed */
     {
         HGLRC gl3Ctx;
