@@ -74,7 +74,7 @@ static void uniquecontainer(char *unique)
     DWORD size = MAX_PATH;
 
     /* Get the MachineGUID */
-    RegOpenKeyA(HKEY_LOCAL_MACHINE, szCryptography, &hkey);
+    RegOpenKeyExA(HKEY_LOCAL_MACHINE, szCryptography, 0, KEY_READ | KEY_WOW64_64KEY, &hkey);
     RegQueryValueExA(hkey, szMachineGuid, NULL, NULL, (LPBYTE)guid, &size);
     RegCloseKey(hkey);
 
