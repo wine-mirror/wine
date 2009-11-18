@@ -1047,7 +1047,6 @@ static void test_fullpointer_xlat(void)
     /* "unmarshaling" phase */
 
     ret = NdrFullPointerQueryRefId(pXlatTables, 0x0, 0, &Pointer);
-    todo_wine
     ok(ret == 1, "ret should be 1 instead of 0x%x\n", ret);
 
     ret = NdrFullPointerQueryRefId(pXlatTables, 0x2, 0, &Pointer);
