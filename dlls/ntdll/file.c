@@ -1486,6 +1486,79 @@ NTSTATUS WINAPI NtSetVolumeInformationFile(
 	return 0;
 }
 
+/* fill in the file information that depends on the stat info */
+static NTSTATUS fill_stat_info( const struct stat *st, void *ptr, FILE_INFORMATION_CLASS class )
+{
+    switch (class)
+    {
+    case FileBasicInformation:
+        {
+            FILE_BASIC_INFORMATION *info = ptr;
+
+            if (S_ISDIR(st->st_mode)) info->FileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+            else info->FileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+            if (!(st->st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
+                info->FileAttributes |= FILE_ATTRIBUTE_READONLY;
+            RtlSecondsSince1970ToTime( st->st_mtime, &info->LastWriteTime );
+            RtlSecondsSince1970ToTime( st->st_ctime, &info->ChangeTime );
+            RtlSecondsSince1970ToTime( st->st_atime, &info->LastAccessTime );
+#ifdef HAVE_STRUCT_STAT_ST_MTIM
+            info->LastWriteTime.QuadPart += st->st_mtim.tv_nsec / 100;
+#endif
+#ifdef HAVE_STRUCT_STAT_ST_CTIM
+            info->ChangeTime.QuadPart += st->st_ctim.tv_nsec / 100;
+#endif
+#ifdef HAVE_STRUCT_STAT_ST_ATIM
+            info->LastAccessTime.QuadPart += st->st_atim.tv_nsec / 100;
+#endif
+            info->CreationTime = info->LastWriteTime;
+        }
+        break;
+    case FileStandardInformation:
+        {
+            FILE_STANDARD_INFORMATION *info = ptr;
+
+            if ((info->Directory = S_ISDIR(st->st_mode)))
+            {
+                info->AllocationSize.QuadPart = 0;
+                info->EndOfFile.QuadPart      = 0;
+                info->NumberOfLinks           = 1;
+            }
+            else
+            {
+                info->AllocationSize.QuadPart = (ULONGLONG)st->st_blocks * 512;
+                info->EndOfFile.QuadPart      = st->st_size;
+                info->NumberOfLinks           = st->st_nlink;
+            }
+        }
+        break;
+    case FileInternalInformation:
+        {
+            FILE_INTERNAL_INFORMATION *info = ptr;
+            info->IndexNumber.QuadPart = st->st_ino;
+        }
+        break;
+    case FileEndOfFileInformation:
+        {
+            FILE_END_OF_FILE_INFORMATION *info = ptr;
+            info->EndOfFile.QuadPart = S_ISDIR(st->st_mode) ? 0 : st->st_size;
+        }
+        break;
+    case FileAllInformation:
+        {
+            FILE_ALL_INFORMATION *info = ptr;
+            fill_stat_info( st, &info->BasicInformation, FileBasicInformation );
+            fill_stat_info( st, &info->StandardInformation, FileStandardInformation );
+            fill_stat_info( st, &info->InternalInformation, FileInternalInformation );
+        }
+        break;
+
+    default:
+        return STATUS_INVALID_INFO_CLASS;
+    }
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS server_get_unix_name( HANDLE handle, ANSI_STRING *unix_name )
 {
     data_size_t size = 1024;
@@ -1625,35 +1698,12 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
     switch (class)
     {
     case FileBasicInformation:
-        {
-            FILE_BASIC_INFORMATION *info = ptr;
-
-            if (fstat( fd, &st ) == -1)
-                io->u.Status = FILE_GetNtStatus();
-            else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
-                io->u.Status = STATUS_INVALID_INFO_CLASS;
-            else
-            {
-                if (S_ISDIR(st.st_mode)) info->FileAttributes = FILE_ATTRIBUTE_DIRECTORY;
-                else info->FileAttributes = FILE_ATTRIBUTE_ARCHIVE;
-                if (!(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
-                    info->FileAttributes |= FILE_ATTRIBUTE_READONLY;
-                RtlSecondsSince1970ToTime( st.st_mtime, &info->CreationTime);
-                RtlSecondsSince1970ToTime( st.st_mtime, &info->LastWriteTime);
-                RtlSecondsSince1970ToTime( st.st_ctime, &info->ChangeTime);
-                RtlSecondsSince1970ToTime( st.st_atime, &info->LastAccessTime);
-#ifdef HAVE_STRUCT_STAT_ST_MTIM
-                info->CreationTime.QuadPart += st.st_mtim.tv_nsec / 100;
-                info->LastWriteTime.QuadPart += st.st_mtim.tv_nsec / 100;
-#endif
-#ifdef HAVE_STRUCT_STAT_ST_CTIM
-                info->ChangeTime.QuadPart += st.st_ctim.tv_nsec / 100;
-#endif
-#ifdef HAVE_STRUCT_STAT_ST_ATIM
-                info->LastAccessTime.QuadPart += st.st_atim.tv_nsec / 100;
-#endif
-            }
-        }
+        if (fstat( fd, &st ) == -1)
+            io->u.Status = FILE_GetNtStatus();
+        else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
+            io->u.Status = STATUS_INVALID_INFO_CLASS;
+        else
+            fill_stat_info( &st, ptr, class );
         break;
     case FileStandardInformation:
         {
@@ -1662,20 +1712,8 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
             if (fstat( fd, &st ) == -1) io->u.Status = FILE_GetNtStatus();
             else
             {
-                if ((info->Directory = S_ISDIR(st.st_mode)))
-                {
-                    info->AllocationSize.QuadPart = 0;
-                    info->EndOfFile.QuadPart      = 0;
-                    info->NumberOfLinks           = 1;
-                    info->DeletePending           = FALSE;
-                }
-                else
-                {
-                    info->AllocationSize.QuadPart = (ULONGLONG)st.st_blocks * 512;
-                    info->EndOfFile.QuadPart      = st.st_size;
-                    info->NumberOfLinks           = st.st_nlink;
-                    info->DeletePending           = FALSE; /* FIXME */
-                }
+                fill_stat_info( &st, info, class );
+                info->DeletePending = FALSE; /* FIXME */
             }
         }
         break;
@@ -1688,12 +1726,8 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         }
         break;
     case FileInternalInformation:
-        {
-            FILE_INTERNAL_INFORMATION *info = ptr;
-
-            if (fstat( fd, &st ) == -1) io->u.Status = FILE_GetNtStatus();
-            else info->IndexNumber.QuadPart = st.st_ino;
-        }
+        if (fstat( fd, &st ) == -1) io->u.Status = FILE_GetNtStatus();
+        else fill_stat_info( &st, ptr, class );
         break;
     case FileEaInformation:
         {
@@ -1702,12 +1736,8 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         }
         break;
     case FileEndOfFileInformation:
-        {
-            FILE_END_OF_FILE_INFORMATION *info = ptr;
-
-            if (fstat( fd, &st ) == -1) io->u.Status = FILE_GetNtStatus();
-            else info->EndOfFile.QuadPart = S_ISDIR(st.st_mode) ? 0 : st.st_size;
-        }
+        if (fstat( fd, &st ) == -1) io->u.Status = FILE_GetNtStatus();
+        else fill_stat_info( &st, ptr, class );
         break;
     case FileAllInformation:
         {
@@ -1718,39 +1748,8 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
                 io->u.Status = STATUS_INVALID_INFO_CLASS;
             else
             {
-                if ((info->StandardInformation.Directory = S_ISDIR(st.st_mode)))
-                {
-                    info->BasicInformation.FileAttributes = FILE_ATTRIBUTE_DIRECTORY;
-                    info->StandardInformation.AllocationSize.QuadPart = 0;
-                    info->StandardInformation.EndOfFile.QuadPart      = 0;
-                    info->StandardInformation.NumberOfLinks           = 1;
-                    info->StandardInformation.DeletePending           = FALSE;
-                }
-                else
-                {
-                    info->BasicInformation.FileAttributes = FILE_ATTRIBUTE_ARCHIVE;
-                    info->StandardInformation.AllocationSize.QuadPart = (ULONGLONG)st.st_blocks * 512;
-                    info->StandardInformation.EndOfFile.QuadPart      = st.st_size;
-                    info->StandardInformation.NumberOfLinks           = st.st_nlink;
-                    info->StandardInformation.DeletePending           = FALSE; /* FIXME */
-                }
-                if (!(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
-                    info->BasicInformation.FileAttributes |= FILE_ATTRIBUTE_READONLY;
-                RtlSecondsSince1970ToTime( st.st_mtime, &info->BasicInformation.CreationTime);
-                RtlSecondsSince1970ToTime( st.st_mtime, &info->BasicInformation.LastWriteTime);
-                RtlSecondsSince1970ToTime( st.st_ctime, &info->BasicInformation.ChangeTime);
-                RtlSecondsSince1970ToTime( st.st_atime, &info->BasicInformation.LastAccessTime);
-#ifdef HAVE_STRUCT_STAT_ST_MTIM
-                info->BasicInformation.CreationTime.QuadPart += st.st_mtim.tv_nsec / 100;
-                info->BasicInformation.LastWriteTime.QuadPart += st.st_mtim.tv_nsec / 100;
-#endif
-#ifdef HAVE_STRUCT_STAT_ST_CTIM
-                info->BasicInformation.ChangeTime.QuadPart += st.st_ctim.tv_nsec / 100;
-#endif
-#ifdef HAVE_STRUCT_STAT_ST_ATIM
-                info->BasicInformation.LastAccessTime.QuadPart += st.st_atim.tv_nsec / 100;
-#endif
-                info->InternalInformation.IndexNumber.QuadPart = st.st_ino;
+                fill_stat_info( &st, info, FileAllInformation );
+                info->StandardInformation.DeletePending = FALSE; /* FIXME */
                 info->EaInformation.EaSize = 0;
                 info->AccessInformation.AccessFlags = 0;  /* FIXME */
                 info->PositionInformation.CurrentByteOffset.QuadPart = lseek( fd, 0, SEEK_CUR );
@@ -2054,10 +2053,10 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
 
 
 /******************************************************************************
- *              FILE_QueryFullAttributesFile   (internal)
+ *              NtQueryFullAttributesFile   (NTDLL.@)
  */
-static NTSTATUS FILE_QueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
-                                              FILE_NETWORK_OPEN_INFORMATION *info )
+NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
+                                           FILE_NETWORK_OPEN_INFORMATION *info )
 {
     ANSI_STRING unix_name;
     NTSTATUS status;
@@ -2073,24 +2072,19 @@ static NTSTATUS FILE_QueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
             status = STATUS_INVALID_INFO_CLASS;
         else
         {
-            if (S_ISDIR(st.st_mode))
-            {
-                info->FileAttributes          = FILE_ATTRIBUTE_DIRECTORY;
-                info->AllocationSize.QuadPart = 0;
-                info->EndOfFile.QuadPart      = 0;
-            }
-            else
-            {
-                info->FileAttributes          = FILE_ATTRIBUTE_ARCHIVE;
-                info->AllocationSize.QuadPart = (ULONGLONG)st.st_blocks * 512;
-                info->EndOfFile.QuadPart      = st.st_size;
-            }
-            if (!(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
-                info->FileAttributes |= FILE_ATTRIBUTE_READONLY;
-            RtlSecondsSince1970ToTime( st.st_mtime, &info->CreationTime );
-            RtlSecondsSince1970ToTime( st.st_mtime, &info->LastWriteTime );
-            RtlSecondsSince1970ToTime( st.st_ctime, &info->ChangeTime );
-            RtlSecondsSince1970ToTime( st.st_atime, &info->LastAccessTime );
+            FILE_BASIC_INFORMATION basic;
+            FILE_STANDARD_INFORMATION std;
+
+            fill_stat_info( &st, &basic, FileBasicInformation );
+            fill_stat_info( &st, &std, FileStandardInformation );
+
+            info->CreationTime   = basic.CreationTime;
+            info->LastAccessTime = basic.LastAccessTime;
+            info->LastWriteTime  = basic.LastWriteTime;
+            info->ChangeTime     = basic.ChangeTime;
+            info->AllocationSize = std.AllocationSize;
+            info->EndOfFile      = std.EndOfFile;
+            info->FileAttributes = basic.FileAttributes;
             if (DIR_is_hidden_file( attr->ObjectName ))
                 info->FileAttributes |= FILE_ATTRIBUTE_HIDDEN;
         }
@@ -2100,15 +2094,6 @@ static NTSTATUS FILE_QueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
     return status;
 }
 
-/******************************************************************************
- *              NtQueryFullAttributesFile   (NTDLL.@)
- */
-NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
-                                           FILE_NETWORK_OPEN_INFORMATION *info )
-{
-    return FILE_QueryFullAttributesFile( attr, info );
-}
-
 
 /******************************************************************************
  *              NtQueryAttributesFile   (NTDLL.@)
@@ -2116,17 +2101,27 @@ NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
  */
 NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC_INFORMATION *info )
 {
-    FILE_NETWORK_OPEN_INFORMATION full_info;
+    ANSI_STRING unix_name;
     NTSTATUS status;
 
-    if (!(status = FILE_QueryFullAttributesFile( attr, &full_info )))
+    if (!(status = wine_nt_to_unix_file_name( attr->ObjectName, &unix_name, FILE_OPEN,
+                                              !(attr->Attributes & OBJ_CASE_INSENSITIVE) )))
     {
-        info->CreationTime.QuadPart   = full_info.CreationTime.QuadPart;
-        info->LastAccessTime.QuadPart = full_info.LastAccessTime.QuadPart;
-        info->LastWriteTime.QuadPart  = full_info.LastWriteTime.QuadPart;
-        info->ChangeTime.QuadPart     = full_info.ChangeTime.QuadPart;
-        info->FileAttributes          = full_info.FileAttributes;
+        struct stat st;
+
+        if (stat( unix_name.Buffer, &st ) == -1)
+            status = FILE_GetNtStatus();
+        else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
+            status = STATUS_INVALID_INFO_CLASS;
+        else
+        {
+            status = fill_stat_info( &st, info, FileBasicInformation );
+            if (DIR_is_hidden_file( attr->ObjectName ))
+                info->FileAttributes |= FILE_ATTRIBUTE_HIDDEN;
+        }
+        RtlFreeAnsiString( &unix_name );
     }
+    else WARN("%s not found (%x)\n", debugstr_us(attr->ObjectName), status );
     return status;
 }
 
