@@ -280,22 +280,19 @@ static ULONG WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_Release(LPDIRECT3DDEV
 }
 
 /* IDirect3DDevice Interface follow: */
-static HRESULT  WINAPI  IDirect3DDevice9Impl_TestCooperativeLevel(LPDIRECT3DDEVICE9EX iface) {
+static HRESULT WINAPI IDirect3DDevice9Impl_TestCooperativeLevel(IDirect3DDevice9Ex *iface)
+{
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    HRESULT hr;
 
     TRACE("iface %p.\n", iface);
 
-    wined3d_mutex_lock();
-    hr = IWineD3DDevice_TestCooperativeLevel(This->WineD3DDevice);
-    wined3d_mutex_unlock();
-
-    if(hr == WINED3D_OK && This->notreset) {
-        TRACE("D3D9 Device is marked not reset\n");
-        hr = D3DERR_DEVICENOTRESET;
+    if (This->notreset)
+    {
+        TRACE("D3D9 device is marked not reset.\n");
+        return D3DERR_DEVICENOTRESET;
     }
 
-    return hr;
+    return D3D_OK;
 }
 
 static UINT     WINAPI  IDirect3DDevice9Impl_GetAvailableTextureMem(LPDIRECT3DDEVICE9EX iface) {

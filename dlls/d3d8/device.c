@@ -334,17 +334,11 @@ static ULONG WINAPI IDirect3DDevice8Impl_Release(LPDIRECT3DDEVICE8 iface) {
 }
 
 /* IDirect3DDevice Interface follow: */
-static HRESULT WINAPI IDirect3DDevice8Impl_TestCooperativeLevel(LPDIRECT3DDEVICE8 iface) {
-    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-    HRESULT hr;
-
+static HRESULT WINAPI IDirect3DDevice8Impl_TestCooperativeLevel(IDirect3DDevice8 *iface)
+{
     TRACE("iface %p.\n", iface);
 
-    wined3d_mutex_lock();
-    hr = IWineD3DDevice_TestCooperativeLevel(This->WineD3DDevice);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return D3D_OK;
 }
 
 static UINT WINAPI  IDirect3DDevice8Impl_GetAvailableTextureMem(LPDIRECT3DDEVICE8 iface) {

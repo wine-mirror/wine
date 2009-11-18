@@ -6494,31 +6494,6 @@ static BOOL     WINAPI  IWineD3DDeviceImpl_ShowCursor(IWineD3DDevice* iface, BOO
     return oldVisible;
 }
 
-static HRESULT  WINAPI  IWineD3DDeviceImpl_TestCooperativeLevel(IWineD3DDevice* iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    IWineD3DResourceImpl *resource;
-    TRACE("(%p) : state (%u)\n", This, This->state);
-
-    /* TODO: Implement wrapping of the WndProc so that mimimize and maximize can be monitored and the states adjusted. */
-    switch (This->state) {
-    case WINED3D_OK:
-        return WINED3D_OK;
-    case WINED3DERR_DEVICELOST:
-        {
-            LIST_FOR_EACH_ENTRY(resource, &This->resources, IWineD3DResourceImpl, resource.resource_list_entry) {
-                if (resource->resource.pool == WINED3DPOOL_DEFAULT)
-                    return WINED3DERR_DEVICENOTRESET;
-            }
-            return WINED3DERR_DEVICELOST;
-        }
-    case WINED3DERR_DRIVERINTERNALERROR:
-        return WINED3DERR_DRIVERINTERNALERROR;
-    }
-
-    /* Unknown state */
-    return WINED3DERR_DRIVERINTERNALERROR;
-}
-
 static HRESULT WINAPI evict_managed_resource(IWineD3DResource *resource, void *data) {
     TRACE("checking resource %p for eviction\n", resource);
     if(((IWineD3DResourceImpl *) resource)->resource.pool == WINED3DPOOL_MANAGED) {
@@ -7154,7 +7129,6 @@ static const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_SetCursorProperties,
     IWineD3DDeviceImpl_SetCursorPosition,
     IWineD3DDeviceImpl_ShowCursor,
-    IWineD3DDeviceImpl_TestCooperativeLevel,
     /*** Getters and setters **/
     IWineD3DDeviceImpl_SetClipPlane,
     IWineD3DDeviceImpl_GetClipPlane,
@@ -7278,9 +7252,6 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
     device->surface_alignment = wined3d->dxVersion == 7 ? DDRAW_PITCH_ALIGNMENT : D3D8_PITCH_ALIGNMENT;
     device->posFixup[0] = 1.0f; /* This is needed to get the x coord unmodified through a MAD. */
 
-    /* Set the state up as invalid until the device is fully created. */
-    device->state = WINED3DERR_DRIVERINTERNALERROR;
-
     /* Get the initial screen setup for ddraw. */
     hr = IWineD3D_GetAdapterDisplayMode((IWineD3D *)wined3d, adapter_idx, &mode);
     if (FAILED(hr))
@@ -7329,9 +7300,6 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
     }
 
     device->blitter = select_blit_implementation(adapter, device_type);
-
-    /* Set the state of the device to valid. */
-    device->state = WINED3D_OK;
 
     return WINED3D_OK;
 }

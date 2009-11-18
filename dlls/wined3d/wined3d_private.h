@@ -1555,9 +1555,6 @@ struct IWineD3DDeviceImpl
     /* Textures for when no other textures are mapped */
     UINT                          dummyTextureName[MAX_TEXTURES];
 
-    /* Device state management */
-    HRESULT                 state;
-
     /* DirectDraw stuff */
     DWORD ddraw_width, ddraw_height;
     WINED3DFORMAT ddraw_format;

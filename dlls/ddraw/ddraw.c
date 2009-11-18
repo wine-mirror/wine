@@ -1187,53 +1187,8 @@ static HRESULT WINAPI IDirectDrawImpl_GetScanLine(IDirectDraw7 *iface, DWORD *Sc
 static HRESULT WINAPI
 IDirectDrawImpl_TestCooperativeLevel(IDirectDraw7 *iface)
 {
-    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    HRESULT hr;
-    TRACE("(%p)\n", This);
+    TRACE("iface %p.\n", iface);
 
-    EnterCriticalSection(&ddraw_cs);
-    /* Description from MSDN:
-     * For fullscreen apps return DDERR_NOEXCLUSIVEMODE if the user switched
-     * away from the app with e.g. alt-tab. Windowed apps receive
-     * DDERR_EXCLUSIVEMODEALREADYSET if another application created a
-     * DirectDraw object in exclusive mode. DDERR_WRONGMODE is returned,
-     * when the video mode has changed
-     */
-
-    hr =  IWineD3DDevice_TestCooperativeLevel(This->wineD3DDevice);
-
-    /* Fix the result value. These values are mapped from their
-     * d3d9 counterpart.
-     */
-    switch(hr)
-    {
-        case WINED3DERR_DEVICELOST:
-            if(This->cooperative_level & DDSCL_EXCLUSIVE)
-            {
-                LeaveCriticalSection(&ddraw_cs);
-                return DDERR_NOEXCLUSIVEMODE;
-            }
-            else
-            {
-                LeaveCriticalSection(&ddraw_cs);
-                return DDERR_EXCLUSIVEMODEALREADYSET;
-            }
-
-        case WINED3DERR_DEVICENOTRESET:
-            LeaveCriticalSection(&ddraw_cs);
-            return DD_OK;
-
-        case WINED3D_OK:
-            LeaveCriticalSection(&ddraw_cs);
-            return DD_OK;
-
-        case WINED3DERR_DRIVERINTERNALERROR:
-        default:
-            ERR("(%p) Unexpected return value %08x from wineD3D, "
-                " returning DD_OK\n", This, hr);
-    }
-
-    LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
 

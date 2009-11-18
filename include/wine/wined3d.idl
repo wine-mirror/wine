@@ -3076,8 +3076,6 @@ interface IWineD3DDevice : IWineD3DBase
     BOOL ShowCursor(
         [in] BOOL show
     );
-    HRESULT TestCooperativeLevel(
-    );
     HRESULT SetClipPlane(
         [in] DWORD plane_idx,
         [in] const float *plane
