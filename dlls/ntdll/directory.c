@@ -148,6 +148,12 @@ struct file_identity
 static struct file_identity ignored_files[MAX_IGNORED_FILES];
 static int ignored_files_count;
 
+union file_directory_info
+{
+    ULONG                              next;
+    FILE_BOTH_DIRECTORY_INFORMATION    both;
+};
+
 static const unsigned int max_dir_info_size = FIELD_OFFSET( FILE_BOTH_DIR_INFORMATION, FileName[MAX_DIR_ENTRY_LEN] );
 
 static int show_dot_files = -1;
@@ -923,11 +929,11 @@ static BOOLEAN match_filename( const UNICODE_STRING *name_str, const UNICODE_STR
  *
  * helper for NtQueryDirectoryFile
  */
-static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, IO_STATUS_BLOCK *io, ULONG max_length,
+static union file_directory_info *append_entry( void *info_ptr, IO_STATUS_BLOCK *io, ULONG max_length,
                                                 const char *long_name, const char *short_name,
                                                 const UNICODE_STRING *mask )
 {
-    FILE_BOTH_DIR_INFORMATION *info;
+    union file_directory_info *info;
     int i, long_len, short_len, total_len;
     struct stat st;
     WCHAR long_nameW[MAX_DIR_ENTRY_LEN];
@@ -984,24 +990,25 @@ static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, IO_STATUS_BLOCK 
     if (!show_dot_files && long_name[0] == '.' && long_name[1] && (long_name[1] != '.' || long_name[2]))
         attributes |= FILE_ATTRIBUTE_HIDDEN;
 
-    total_len = (sizeof(*info) - sizeof(info->FileName) + long_len*sizeof(WCHAR) + 3) & ~3;
+    total_len = (FIELD_OFFSET(FILE_BOTH_DIR_INFORMATION, FileName[long_len]) + 3) & ~3;
     if (io->Information + total_len > max_length)
     {
         total_len = max_length - io->Information;
         io->u.Status = STATUS_BUFFER_OVERFLOW;
     }
 
-    info = (FILE_BOTH_DIR_INFORMATION *)((char *)info_ptr + io->Information);
-    fill_stat_info( &st, info, FileBothDirectoryInformation );
-    info->NextEntryOffset = total_len;
-    info->FileIndex = 0;  /* NTFS always has 0 here, so let's not bother with it */
-    info->FileAttributes |= attributes;
-    info->EaSize = 0; /* FIXME */
-    info->ShortNameLength = short_len * sizeof(WCHAR);
-    for (i = 0; i < short_len; i++) info->ShortName[i] = toupperW(short_nameW[i]);
-    info->FileNameLength = long_len * sizeof(WCHAR);
-    memcpy( info->FileName, long_nameW,
-            min( info->FileNameLength, total_len-sizeof(*info)+sizeof(info->FileName) ));
+    info = (union file_directory_info *)((char *)info_ptr + io->Information);
+    fill_stat_info( &st, &info->both, FileBothDirectoryInformation );
+    info->both.NextEntryOffset = total_len;
+    info->both.FileIndex = 0;  /* NTFS always has 0 here, so let's not bother with it */
+    info->both.FileAttributes |= attributes;
+    info->both.EaSize = 0; /* FIXME */
+    info->both.ShortNameLength = short_len * sizeof(WCHAR);
+    for (i = 0; i < short_len; i++) info->both.ShortName[i] = toupperW(short_nameW[i]);
+    info->both.FileNameLength = long_len * sizeof(WCHAR);
+    memcpy( info->both.FileName, long_nameW,
+            min( info->both.FileNameLength,
+                 total_len - FIELD_OFFSET( FILE_BOTH_DIR_INFORMATION, FileName )));
 
     io->Information += total_len;
     return info;
@@ -1063,7 +1070,7 @@ static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
 {
     size_t len;
     KERNEL_DIRENT *de;
-    FILE_BOTH_DIR_INFORMATION *info, *last_info = NULL;
+    union file_directory_info *info, *last_info = NULL;
 
     io->u.Status = STATUS_SUCCESS;
 
@@ -1125,7 +1132,7 @@ static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
         }
     }
 
-    if (last_info) last_info->NextEntryOffset = 0;
+    if (last_info) last_info->next = 0;
     else io->u.Status = restart_scan ? STATUS_NO_SUCH_FILE : STATUS_NO_MORE_FILES;
     return 0;
 }
@@ -1147,7 +1154,7 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
     int res, fake_dot_dot = 1;
     char *data, local_buffer[8192];
     KERNEL_DIRENT64 *de;
-    FILE_BOTH_DIR_INFORMATION *info, *last_info = NULL;
+    union file_directory_info *info, *last_info = NULL;
 
     if (size <= sizeof(local_buffer) || !(data = RtlAllocateHeap( GetProcessHeap(), 0, size )))
     {
@@ -1251,7 +1258,7 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
         }
     }
 
-    if (last_info) last_info->NextEntryOffset = 0;
+    if (last_info) last_info->next = 0;
     else io->u.Status = restart_scan ? STATUS_NO_SUCH_FILE : STATUS_NO_MORE_FILES;
     res = 0;
 done:
@@ -1320,7 +1327,7 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
     int res, fake_dot_dot = 1;
     char *data, local_buffer[8192];
     struct dirent *de;
-    FILE_BOTH_DIR_INFORMATION *info, *last_info = NULL, *restart_last_info = NULL;
+    union file_directory_info *info, *last_info = NULL, *restart_last_info = NULL;
 
     size = initial_size;
     data = local_buffer;
@@ -1439,7 +1446,7 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
         de = (struct dirent *)data;
     }
 
-    if (last_info) last_info->NextEntryOffset = 0;
+    if (last_info) last_info->next = 0;
     else io->u.Status = restart_scan ? STATUS_NO_SUCH_FILE : STATUS_NO_MORE_FILES;
     res = 0;
 done:
@@ -1467,7 +1474,7 @@ static void read_directory_readdir( int fd, IO_STATUS_BLOCK *io, void *buffer, U
     DIR *dir;
     off_t i, old_pos = 0;
     struct dirent *de;
-    FILE_BOTH_DIR_INFORMATION *info, *last_info = NULL;
+    union file_directory_info *info, *last_info = NULL;
 
     if (!(dir = opendir( "." )))
     {
@@ -1524,7 +1531,7 @@ static void read_directory_readdir( int fd, IO_STATUS_BLOCK *io, void *buffer, U
     lseek( fd, old_pos, SEEK_SET );  /* store dir offset as filepos for fd */
     closedir( dir );
 
-    if (last_info) last_info->NextEntryOffset = 0;
+    if (last_info) last_info->next = 0;
     else io->u.Status = restart_scan ? STATUS_NO_SUCH_FILE : STATUS_NO_MORE_FILES;
 }
 
@@ -1569,10 +1576,10 @@ static int read_directory_stat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
         ret = stat( unix_name, &st );
         if (!ret)
         {
-            FILE_BOTH_DIR_INFORMATION *info = append_entry( buffer, io, length, unix_name, NULL, NULL );
+            union file_directory_info *info = append_entry( buffer, io, length, unix_name, NULL, NULL );
             if (info)
             {
-                info->NextEntryOffset = 0;
+                info->next = 0;
                 if (io->u.Status != STATUS_BUFFER_OVERFLOW) lseek( fd, 1, SEEK_CUR );
             }
             else io->u.Status = STATUS_NO_MORE_FILES;
