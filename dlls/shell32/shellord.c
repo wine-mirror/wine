@@ -2203,9 +2203,7 @@ HRESULT WINAPI SHGetImageList(int iImageList, REFIID riid, void **ppv)
     if (hNew)
     {
         ret = HIMAGELIST_QueryInterface(hNew, riid, ppv);
-
-        if (!SUCCEEDED(ret))
-            ImageList_Destroy(hNew);
+        ImageList_Destroy(hNew);
     }
 
     return ret;
