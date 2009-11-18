@@ -1490,11 +1490,18 @@ static void DoTest3_v6(void)
     ok(SUCCEEDED(IImageList_Replace(imgl, 2, hbm3, 0)), "failed to replace bitmap 3\n");
 
     memset(&imldp, 0, sizeof (imldp));
-    ok(SUCCEEDED(!IImageList_Draw(imgl, &imldp)), "zero data succeeded!\n");
+    ok(FAILED(IImageList_Draw(imgl, &imldp)), "zero data succeeded!\n");
+
     imldp.cbSize = sizeof (imldp);
-    ok(SUCCEEDED(!IImageList_Draw(imgl, &imldp)), "zero hdc succeeded!\n");
     imldp.hdcDst = hdc;
-    ok(SUCCEEDED(!IImageList_Draw(imgl, &imldp)), "zero himl succeeded!\n");
+    imldp.himl = himl;
+
+    if (FAILED(IImageList_Draw(imgl, &imldp)))
+    {
+       /* Earlier versions of native comctl32 use a smaller structure */
+       imldp.cbSize -= 3 * sizeof(DWORD);
+       ok(SUCCEEDED(IImageList_Draw(imgl, &imldp)), "should succeed\n");
+    }
 
     REDRAW(hwndfortest);
     WAIT;
@@ -1510,7 +1517,7 @@ static void DoTest3_v6(void)
     imldp.i ++;
     ok(SUCCEEDED(IImageList_Draw(imgl, &imldp)), "should succeed\n");
     imldp.i ++;
-    ok(!SUCCEEDED(IImageList_Draw(imgl, &imldp)), "should fail\n");
+    ok(FAILED(IImageList_Draw(imgl, &imldp)), "should fail\n");
 
     /* remove three */
     ok(SUCCEEDED(IImageList_Remove(imgl, 0)), "removing 1st bitmap\n");
