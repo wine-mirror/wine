@@ -563,8 +563,4 @@ typedef struct IDirect3DQuery9Impl {
     LPDIRECT3DDEVICE9EX    parentDevice;
 } IDirect3DQuery9Impl;
 
-
-/* Callbacks */
-extern ULONG WINAPI D3D9CB_DestroySwapChain (IWineD3DSwapChain *pSwapChain) DECLSPEC_HIDDEN;
-
 #endif /* __WINE_D3D9_PRIVATE_H */

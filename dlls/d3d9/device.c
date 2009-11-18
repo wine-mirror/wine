@@ -181,6 +181,17 @@ static UINT vertex_count_from_primitive_count(D3DPRIMITIVETYPE primitive_type, U
     }
 }
 
+static ULONG WINAPI D3D9CB_DestroySwapChain(IWineD3DSwapChain *swapchain)
+{
+    IDirect3DSwapChain9Impl *parent;
+
+    TRACE("swapchain %p.\n", swapchain);
+
+    IWineD3DSwapChain_GetParent(swapchain, (IUnknown **)&parent);
+    parent->isImplicit = FALSE;
+    return IDirect3DSwapChain9_Release((IDirect3DSwapChain9 *)parent);
+}
+
 /* IDirect3D IUnknown parts follow: */
 static HRESULT WINAPI IDirect3DDevice9Impl_QueryInterface(LPDIRECT3DDEVICE9EX iface, REFIID riid, LPVOID* ppobj) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
