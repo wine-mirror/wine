@@ -1121,7 +1121,7 @@ static void test_substorage_share(void)
         ok(r==S_OK, "IStorage->DestroyElement failed, hr=%08x\n", r);
 
         r = IStream_Write(stm, "this shouldn't work\n", 20, NULL);
-        todo_wine ok(r==STG_E_REVERTED, "IStream_Write should fail %08x\n", r);
+        ok(r==STG_E_REVERTED, "IStream_Write should fail %08x\n", r);
 
         IStorage_Release(stm);
     }

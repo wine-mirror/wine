@@ -823,17 +823,6 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
      */
     if (STGM_CREATE_MODE(grfMode) == STGM_CREATE)
     {
-      StgStreamImpl *strm;
-
-      LIST_FOR_EACH_ENTRY(strm, &This->strmHead, StgStreamImpl, StrmListEntry)
-      {
-        if (strm->dirEntry == currentEntryRef)
-        {
-          TRACE("Stream deleted %p\n", strm);
-          strm->parentStorage = NULL;
-          list_remove(&strm->StrmListEntry);
-        }
-      }
       IStorage_DestroyElement(iface, pwcsName);
     }
     else
@@ -1914,6 +1903,18 @@ static HRESULT deleteStreamContents(
   IStream      *pis;
   HRESULT        hr;
   ULARGE_INTEGER size;
+  StgStreamImpl *strm;
+
+  /* Invalidate any open stream objects. */
+  LIST_FOR_EACH_ENTRY(strm, &parentStorage->strmHead, StgStreamImpl, StrmListEntry)
+  {
+    if (strm->dirEntry == indexToDelete)
+    {
+      TRACE("Stream deleted %p\n", strm);
+      strm->parentStorage = NULL;
+      list_remove(&strm->StrmListEntry);
+    }
+  }
 
   size.u.HighPart = 0;
   size.u.LowPart = 0;
