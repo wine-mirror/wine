@@ -7106,7 +7106,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EnumResources(IWineD3DDevice *iface, D3
  * IWineD3DDevice VTbl follows
  **********************************************************/
 
-const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
+static const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
 {
     /*** IUnknown methods ***/
     IWineD3DDeviceImpl_QueryInterface,
@@ -7252,6 +7252,90 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     /*** object tracking ***/
     IWineD3DDeviceImpl_EnumResources
 };
+
+HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
+        UINT adapter_idx, WINED3DDEVTYPE device_type, HWND focus_window, DWORD flags,
+        IUnknown *parent, IWineD3DDeviceParent *device_parent)
+{
+    struct wined3d_adapter *adapter = &wined3d->adapters[adapter_idx];
+    const struct fragment_pipeline *fragment_pipeline;
+    struct shader_caps shader_caps;
+    struct fragment_caps ffp_caps;
+    WINED3DDISPLAYMODE mode;
+    unsigned int i;
+    HRESULT hr;
+
+    device->lpVtbl = &IWineD3DDevice_Vtbl;
+    device->ref = 1;
+    device->wineD3D = (IWineD3D *)wined3d;
+    IWineD3D_AddRef(device->wineD3D);
+    device->adapter = wined3d->adapter_count ? adapter : NULL;
+    device->parent  = parent;
+    device->device_parent = device_parent;
+    list_init(&device->resources);
+    list_init(&device->shaders);
+
+    device->surface_alignment = wined3d->dxVersion == 7 ? DDRAW_PITCH_ALIGNMENT : D3D8_PITCH_ALIGNMENT;
+    device->posFixup[0] = 1.0f; /* This is needed to get the x coord unmodified through a MAD. */
+
+    /* Set the state up as invalid until the device is fully created. */
+    device->state = WINED3DERR_DRIVERINTERNALERROR;
+
+    /* Get the initial screen setup for ddraw. */
+    hr = IWineD3D_GetAdapterDisplayMode((IWineD3D *)wined3d, adapter_idx, &mode);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get the adapter's display mode, hr %#x.\n", hr);
+        IWineD3D_Release(device->wineD3D);
+        return hr;
+    }
+    device->ddraw_width = mode.Width;
+    device->ddraw_height = mode.Height;
+    device->ddraw_format = mode.Format;
+
+    /* Save the creation parameters. */
+    device->createParms.AdapterOrdinal = adapter_idx;
+    device->createParms.DeviceType = device_type;
+    device->createParms.hFocusWindow = focus_window;
+    device->createParms.BehaviorFlags = flags;
+
+    device->adapterNo = adapter_idx;
+    device->devType = device_type;
+    for (i = 0; i < PATCHMAP_SIZE; ++i) list_init(&device->patches[i]);
+
+    select_shader_mode(&adapter->gl_info, &device->ps_selected_mode, &device->vs_selected_mode);
+    device->shader_backend = select_shader_backend(adapter, device_type);
+
+    memset(&shader_caps, 0, sizeof(shader_caps));
+    device->shader_backend->shader_get_caps(device_type, &adapter->gl_info, &shader_caps);
+    device->d3d_vshader_constantF = shader_caps.MaxVertexShaderConst;
+    device->d3d_pshader_constantF = shader_caps.MaxPixelShaderConst;
+    device->vs_clipping = shader_caps.VSClipping;
+
+    memset(&ffp_caps, 0, sizeof(ffp_caps));
+    fragment_pipeline = select_fragment_implementation(adapter, device_type);
+    device->frag_pipe = fragment_pipeline;
+    fragment_pipeline->get_caps(device_type, &adapter->gl_info, &ffp_caps);
+    device->max_ffp_textures = ffp_caps.MaxSimultaneousTextures;
+    device->max_ffp_texture_stages = ffp_caps.MaxTextureBlendStages;
+
+    hr = compile_state_table(device->StateTable, device->multistate_funcs, &adapter->gl_info,
+            ffp_vertexstate_template, fragment_pipeline, misc_state_template);
+    if (FAILED(hr))
+    {
+        ERR("Failed to compile state table, hr %#x.\n", hr);
+        IWineD3D_Release(device->wineD3D);
+        return hr;
+    }
+
+    device->blitter = select_blit_implementation(adapter, device_type);
+
+    /* Set the state of the device to valid. */
+    device->state = WINED3D_OK;
+
+    return WINED3D_OK;
+}
+
 
 void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) {
     DWORD rep = This->StateTable[state].representative;

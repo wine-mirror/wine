@@ -4370,113 +4370,45 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     return WINED3D_OK;
 }
 
-/* Note due to structure differences between dx8 and dx9 D3DPRESENT_PARAMETERS,
-   and fields being inserted in the middle, a new structure is used in place    */
-static HRESULT WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter,
-        WINED3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviourFlags, IUnknown *parent,
-        IWineD3DDeviceParent *device_parent, IWineD3DDevice **ppReturnedDeviceInterface)
+static HRESULT WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT adapter_idx,
+        WINED3DDEVTYPE device_type, HWND focus_window, DWORD flags, IUnknown *parent,
+        IWineD3DDeviceParent *device_parent, IWineD3DDevice **device)
 {
-    IWineD3DDeviceImpl *object  = NULL;
-    IWineD3DImpl       *This    = (IWineD3DImpl *)iface;
-    struct wined3d_adapter *adapter = &This->adapters[Adapter];
-    WINED3DDISPLAYMODE  mode;
-    const struct fragment_pipeline *frag_pipeline = NULL;
-    int i;
-    struct fragment_caps ffp_caps;
-    struct shader_caps shader_caps;
+    IWineD3DImpl *This = (IWineD3DImpl *)iface;
+    IWineD3DDeviceImpl *object;
     HRESULT hr;
 
+    TRACE("iface %p, adapter_idx %u, device_type %#x, focus_window %p, flags %#x.\n"
+            "parent %p, device_parent %p, device %p.\n",
+            iface, adapter_idx, device_type, focus_window, flags,
+            parent, device_parent, device);
+
     /* Validate the adapter number. If no adapters are available(no GL), ignore the adapter
-     * number and create a device without a 3D adapter for 2D only operation.
-     */
-    if (IWineD3D_GetAdapterCount(iface) && Adapter >= IWineD3D_GetAdapterCount(iface)) {
+     * number and create a device without a 3D adapter for 2D only operation. */
+    if (IWineD3D_GetAdapterCount(iface) && adapter_idx >= IWineD3D_GetAdapterCount(iface))
+    {
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* Create a WineD3DDevice object */
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DDeviceImpl));
-    *ppReturnedDeviceInterface = (IWineD3DDevice *)object;
-    TRACE("Created WineD3DDevice object @ %p\n", object);
-    if (NULL == object) {
-      return WINED3DERR_OUTOFVIDEOMEMORY;
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate device memory.\n");
+        return E_OUTOFMEMORY;
     }
 
-    /* Set up initial COM information */
-    object->lpVtbl  = &IWineD3DDevice_Vtbl;
-    object->ref     = 1;
-    object->wineD3D = iface;
-    object->adapter = This->adapter_count ? adapter : NULL;
-    IWineD3D_AddRef(object->wineD3D);
-    object->parent  = parent;
-    object->device_parent = device_parent;
-    list_init(&object->resources);
-    list_init(&object->shaders);
-
-    if(This->dxVersion == 7) {
-        object->surface_alignment = DDRAW_PITCH_ALIGNMENT;
-    } else {
-        object->surface_alignment = D3D8_PITCH_ALIGNMENT;
-    }
-    object->posFixup[0] = 1.0f; /* This is needed to get the x coord unmodified through a MAD. */
-
-    /* Set the state up as invalid until the device is fully created */
-    object->state   = WINED3DERR_DRIVERINTERNALERROR;
-
-    TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %p, BehFlags: %x, RetDevInt: %p)\n", This, Adapter, DeviceType,
-          hFocusWindow, BehaviourFlags, ppReturnedDeviceInterface);
-
-    /* Save the creation parameters */
-    object->createParms.AdapterOrdinal = Adapter;
-    object->createParms.DeviceType     = DeviceType;
-    object->createParms.hFocusWindow   = hFocusWindow;
-    object->createParms.BehaviorFlags  = BehaviourFlags;
-
-    /* Initialize other useful values */
-    object->adapterNo                    = Adapter;
-    object->devType                      = DeviceType;
-
-    select_shader_mode(&adapter->gl_info, &object->ps_selected_mode, &object->vs_selected_mode);
-    object->shader_backend = select_shader_backend(adapter, DeviceType);
-
-    memset(&shader_caps, 0, sizeof(shader_caps));
-    object->shader_backend->shader_get_caps(DeviceType, &adapter->gl_info, &shader_caps);
-    object->d3d_vshader_constantF = shader_caps.MaxVertexShaderConst;
-    object->d3d_pshader_constantF = shader_caps.MaxPixelShaderConst;
-    object->vs_clipping = shader_caps.VSClipping;
-
-    memset(&ffp_caps, 0, sizeof(ffp_caps));
-    frag_pipeline = select_fragment_implementation(adapter, DeviceType);
-    object->frag_pipe = frag_pipeline;
-    frag_pipeline->get_caps(DeviceType, &adapter->gl_info, &ffp_caps);
-    object->max_ffp_textures = ffp_caps.MaxSimultaneousTextures;
-    object->max_ffp_texture_stages = ffp_caps.MaxTextureBlendStages;
-    hr = compile_state_table(object->StateTable, object->multistate_funcs, &adapter->gl_info,
-                        ffp_vertexstate_template, frag_pipeline, misc_state_template);
-
-    if (FAILED(hr)) {
-        IWineD3D_Release(object->wineD3D);
+    hr = device_init(object, This, adapter_idx, device_type, focus_window, flags, parent, device_parent);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize device, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-
         return hr;
     }
 
-    object->blitter = select_blit_implementation(adapter, DeviceType);
+    TRACE("Created device %p.\n", object);
+    *device = (IWineD3DDevice *)object;
 
-    /* set the state of the device to valid */
-    object->state = WINED3D_OK;
-
-    /* Get the initial screen setup for ddraw */
-    IWineD3DImpl_GetAdapterDisplayMode(iface, Adapter, &mode);
-
-    object->ddraw_width = mode.Width;
-    object->ddraw_height = mode.Height;
-    object->ddraw_format = mode.Format;
-
-    for(i = 0; i < PATCHMAP_SIZE; i++) {
-        list_init(&object->patches[i]);
-    }
-
-    IWineD3DDeviceParent_WineD3DDeviceCreated(device_parent, *ppReturnedDeviceInterface);
+    IWineD3DDeviceParent_WineD3DDeviceCreated(device_parent, *device);
 
     return WINED3D_OK;
 }
