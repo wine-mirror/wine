@@ -999,16 +999,7 @@ inline HRESULT VARIANT_from_xmlChar(xmlChar *str, VARIANT *v, BSTR type)
 
             if(*p == '.')
             {
-                int ms;
-
                 p++;
-                ms = (*(p++) - '0') * 10;
-                if(isdigitW(*p)) ms += *(p++) - '0';
-                ms *= 10;
-                if(isdigitW(*p)) ms += *(p++) - '0';
-
-                st.wMilliseconds = ms;
-
                 while(isdigitW(*p)) p++;
             }
         }

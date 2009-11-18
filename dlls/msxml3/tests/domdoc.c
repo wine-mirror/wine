@@ -4103,7 +4103,7 @@ static void test_NodeTypeValue(void)
             hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
             ok(hr == S_OK, "ret %08x\n", hr );
             ok(V_VT(&v) == VT_DATE, "incorrect type\n");
-            double_eq(40135.13996666666, V_DATE(&v));
+            double_eq(40135.13996527778, V_DATE(&v));
             VariantClear( &v );
 
             IXMLDOMNode_Release(pNode);
@@ -4142,7 +4142,7 @@ static void test_NodeTypeValue(void)
             hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
             ok(hr == S_OK, "ret %08x\n", hr );
             ok(V_VT(&v) == VT_DATE, "incorrect type\n");
-            double_eq(0.581392511574074, V_DATE(&v));
+            double_eq(0.5813888888888888, V_DATE(&v));
             VariantClear( &v );
 
             IXMLDOMNode_Release(pNode);
@@ -4155,7 +4155,7 @@ static void test_NodeTypeValue(void)
             hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
             ok(hr == S_OK, "ret %08x\n", hr );
             ok(V_VT(&v) == VT_DATE, "incorrect type\n");
-            double_eq(1.112513078703703, V_DATE(&v));
+            double_eq(1.112511574074074, V_DATE(&v));
             VariantClear( &v );
 
             IXMLDOMNode_Release(pNode);
