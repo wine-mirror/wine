@@ -1388,7 +1388,6 @@ HRESULT WINAPI VarDateFromUdateEx(UDATE *pUdateIn, LCID lcid, ULONG dwFlags, DAT
   dateVal += ud.st.wHour / 24.0;
   dateVal += ud.st.wMinute / 1440.0;
   dateVal += ud.st.wSecond / 86400.0;
-  dateVal += ud.st.wMilliseconds / 86400000.0;
 
   TRACE("Returning %g\n", dateVal);
   *pDateOut = dateVal;

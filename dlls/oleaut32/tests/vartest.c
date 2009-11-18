@@ -1646,6 +1646,9 @@ static void test_VarDateFromUdate(void)
   UD2T(31,12,9999,0,0,0,0,0,0,0,S_OK,2958465.0);  /* 31 Dec 9999 - Max */
   UD2T(1,1,10000,0,0,0,0,0,0,0,E_INVALIDARG,0.0); /* > 31 Dec 9999 => err  */
 
+  UD2T(30,12,1899,0,0,0,0,0,0,0,S_OK,0.0); /* 30 Dec 1899 0:00:00  */
+  UD2T(30,12,1899,0,0,0,999,0,0,0,S_OK,0.0); /* Ignore milliseconds  */
+
   UD2T(1,1,1980,18,1,16,0,2,1,0,S_OK,29221.75087962963); /* 6:18:02 PM */
   todo_wine UD2T(0,1,1980,42,1,16,0,2,1,0,S_OK,29221.75087962963); /* Test rolled hours */
   todo_wine UD2T(1,1,1980,17,61,16,0,2,1,0,S_OK,29221.75087962963); /* Test rolled minutes */

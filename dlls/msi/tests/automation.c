@@ -1506,8 +1506,7 @@ static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *in
 
         hr = SummaryInfo_PropertyGet(pSummaryInfo, PID_LASTSAVE_DTM, &varresult, V_VT(&var));
         ok(hr == S_OK, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
-        /* FIXME: Off by one second */
-        todo_wine ok(V_DATE(&var) == V_DATE(&varresult), "SummaryInfo_PropertyGet expected %lf, but returned %lf\n", V_DATE(&var), V_DATE(&varresult));
+        ok(V_DATE(&var) == V_DATE(&varresult), "SummaryInfo_PropertyGet expected %lf, but returned %lf\n", V_DATE(&var), V_DATE(&varresult));
         VariantClear(&varresult);
         VariantClear(&var);
 
