@@ -2181,7 +2181,8 @@ void WINAPI SHFlushSFCache(void)
  *
  * NOTES
  *   Windows XP features 4 sizes of image list, and Vista 5. Wine currently
- *   only supports 2, so requests for the others will currently fail.
+ *   only supports the traditional small and large image lists, so requests
+ *   for the others will currently fail.
  */
 HRESULT WINAPI SHGetImageList(int iImageList, REFIID riid, void **ppv)
 {
@@ -2190,7 +2191,7 @@ HRESULT WINAPI SHGetImageList(int iImageList, REFIID riid, void **ppv)
     HRESULT ret = E_FAIL;
 
     /* Wine currently only maintains large and small image lists */
-    if ((iImageList != SHIL_LARGE) && (iImageList != SHIL_SMALL))
+    if ((iImageList != SHIL_LARGE) && (iImageList != SHIL_SMALL) && (iImageList != SHIL_SYSSMALL))
     {
         FIXME("Unsupported image list %i requested\n", iImageList);
         return E_FAIL;
