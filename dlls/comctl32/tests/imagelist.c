@@ -998,6 +998,7 @@ static void test_shell_imagelist(void)
     HRESULT hr;
     int out = 0;
     RECT rect;
+    int cx, cy;
 
     /* Try to load function from shell32 */
     hShell32 = LoadLibrary("shell32.dll");
@@ -1010,7 +1011,7 @@ static void test_shell_imagelist(void)
     }
 
     /* Get system image list */
-    hr = (pSHGetImageList)(SHIL_LARGE, &IID_IImageList, (void**)&iml);
+    hr = (pSHGetImageList)(SHIL_SYSSMALL, &IID_IImageList, (void**)&iml);
 
     ok(SUCCEEDED(hr), "SHGetImageList failed, hr=%x\n", hr);
 
@@ -1020,11 +1021,13 @@ static void test_shell_imagelist(void)
     IImageList_GetImageCount(iml, &out);
     ok(out > 0, "IImageList_GetImageCount returned out <= 0\n");
 
-    /* right and bottom should be 32x32 for large icons, or 48x48 if larger
-       icons enabled in control panel */
+    /* Fetch the small icon size */
+    cx = GetSystemMetrics(SM_CXSMICON);
+    cy = GetSystemMetrics(SM_CYSMICON);
+
+    /* Check icon size matches */
     IImageList_GetImageRect(iml, 0, &rect);
-    ok((((rect.right == 32) && (rect.bottom == 32)) ||
-                  ((rect.right == 48) && (rect.bottom == 48))),
+    ok(((rect.right == cx) && (rect.bottom == cy)),
                  "IImageList_GetImageRect returned r:%d,b:%d\n",
                  rect.right, rect.bottom);
 
