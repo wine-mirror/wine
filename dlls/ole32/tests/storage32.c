@@ -1113,7 +1113,7 @@ static void test_substorage_share(void)
 
         /* cannot rename the stream while it's open */
         r = IStorage_RenameElement(stg, stmname, othername);
-        todo_wine ok(r==STG_E_ACCESSDENIED, "IStorage->RenameElement should fail %08x\n", r);
+        ok(r==STG_E_ACCESSDENIED, "IStorage->RenameElement should fail %08x\n", r);
         if (SUCCEEDED(r)) IStorage_RenameElement(stg, othername, stmname);
 
         /* destroying an object while it's open invalidates it */

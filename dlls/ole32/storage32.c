@@ -731,6 +731,12 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
 
   if (currentEntryRef != DIRENTRY_NULL)
   {
+    if (StorageBaseImpl_IsStreamOpen(This, currentEntryRef))
+    {
+      WARN("Stream is already open; cannot rename.\n");
+      return STG_E_ACCESSDENIED;
+    }
+
     /* Remove the element from its current position in the tree */
     removeFromTree(This->ancestorStorage, This->storageDirEntry,
         currentEntryRef);
