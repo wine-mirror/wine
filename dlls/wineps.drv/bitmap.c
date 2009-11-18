@@ -228,7 +228,7 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
                                const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
 {
     LONG fullSrcWidth, fullSrcHeight;
-    INT widthbytes;
+    INT stride;
     WORD bpp, compression;
     INT line;
     POINT pt[2];
@@ -241,7 +241,7 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 
     if (!get_bitmap_info( info, &fullSrcWidth, &fullSrcHeight, &bpp, &compression )) return FALSE;
 
-    widthbytes = get_dib_width_bytes(fullSrcWidth, bpp);
+    stride = get_dib_width_bytes(fullSrcWidth, bpp);
 
     TRACE("full size=%dx%d bpp=%d compression=%d rop=%08x\n", fullSrcWidth,
 	  fullSrcHeight, bpp, compression, dwRop);
@@ -272,12 +272,12 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 	PSDRV_WriteImageMaskHeader(physDev, info, xDst, yDst, widthDst, heightDst,
                                    widthSrc, heightSrc);
 	src_ptr = bits;
-	src_ptr += (ySrc * widthbytes);
+	src_ptr += (ySrc * stride);
 	if(xSrc & 7)
 	    FIXME("This won't work...\n");
         bitmap_size = heightSrc * ((widthSrc + 7) / 8);
         dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
-        for(line = 0; line < heightSrc; line++, src_ptr += widthbytes, dst_ptr += ((widthSrc + 7) / 8))
+        for(line = 0; line < heightSrc; line++, src_ptr += stride, dst_ptr += ((widthSrc + 7) / 8))
             memcpy(dst_ptr, src_ptr + xSrc / 8, (widthSrc + 7) / 8);
 	break;
 
@@ -287,12 +287,12 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
 	src_ptr = bits;
-	src_ptr += (ySrc * widthbytes);
+	src_ptr += (ySrc * stride);
 	if(xSrc & 1)
 	    FIXME("This won't work...\n");
         bitmap_size = heightSrc * ((widthSrc + 1) / 2);
         dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
-        for(line = 0; line < heightSrc; line++, src_ptr += widthbytes, dst_ptr += ((widthSrc + 1) / 2))
+        for(line = 0; line < heightSrc; line++, src_ptr += stride, dst_ptr += ((widthSrc + 1) / 2))
 	    memcpy(dst_ptr, src_ptr + xSrc/2, (widthSrc+1)/2);
 	break;
 
@@ -302,10 +302,10 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
 	src_ptr = bits;
-	src_ptr += (ySrc * widthbytes);
+	src_ptr += (ySrc * stride);
         bitmap_size = heightSrc * widthSrc;
         dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
-        for(line = 0; line < heightSrc; line++, src_ptr += widthbytes, dst_ptr += widthSrc)
+        for(line = 0; line < heightSrc; line++, src_ptr += stride, dst_ptr += widthSrc)
 	    memcpy(dst_ptr, src_ptr + xSrc, widthSrc);
 	break;
 
@@ -318,11 +318,11 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 
 
         src_ptr = bits;
-        src_ptr += (ySrc * widthbytes);
+        src_ptr += (ySrc * stride);
         bitmap_size = heightSrc * widthSrc * 3;
         dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
         
-        for(line = 0; line < heightSrc; line++, src_ptr += widthbytes) {
+        for(line = 0; line < heightSrc; line++, src_ptr += stride) {
             const WORD *words = (const WORD *)src_ptr + xSrc;
             int i;
             for(i = 0; i < widthSrc; i++) {
@@ -350,10 +350,10 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 			       widthSrc, heightSrc);
 
         src_ptr = bits;
-        src_ptr += (ySrc * widthbytes);
+        src_ptr += (ySrc * stride);
         bitmap_size = heightSrc * widthSrc * 3;
         dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
-        for(line = 0; line < heightSrc; line++, src_ptr += widthbytes) {
+        for(line = 0; line < heightSrc; line++, src_ptr += stride) {
             const BYTE *byte = src_ptr + xSrc * 3;
             int i;
             for(i = 0; i < widthSrc; i++) {
@@ -372,10 +372,10 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 			       widthSrc, heightSrc);
 
         src_ptr = bits;
-        src_ptr += (ySrc * widthbytes);
+        src_ptr += (ySrc * stride);
         bitmap_size = heightSrc * widthSrc * 3;
         dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
-        for(line = 0; line < heightSrc; line++, src_ptr += widthbytes) {
+        for(line = 0; line < heightSrc; line++, src_ptr += stride) {
             const BYTE *byte = src_ptr + xSrc * 4;
             int i;
             for(i = 0; i < widthSrc; i++) {
