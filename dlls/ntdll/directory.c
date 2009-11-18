@@ -933,6 +933,7 @@ static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, ULONG_PTR *pos, 
     WCHAR long_nameW[MAX_DIR_ENTRY_LEN];
     WCHAR short_nameW[12];
     UNICODE_STRING str;
+    ULONG attributes = 0;
 
     long_len = ntdll_umbstowcs( 0, long_name, strlen(long_name), long_nameW, MAX_DIR_ENTRY_LEN );
     if (long_len == -1) return NULL;
@@ -973,45 +974,24 @@ static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, ULONG_PTR *pos, 
 
     if (*pos + total_len > max_length) total_len = max_length - *pos;
 
-    info->FileAttributes = 0;
     if (lstat( long_name, &st ) == -1) return NULL;
     if (S_ISLNK( st.st_mode ))
     {
         if (stat( long_name, &st ) == -1) return NULL;
-        if (S_ISDIR( st.st_mode )) info->FileAttributes |= FILE_ATTRIBUTE_REPARSE_POINT;
+        if (S_ISDIR( st.st_mode )) attributes |= FILE_ATTRIBUTE_REPARSE_POINT;
     }
     if (is_ignored_file( &st ))
     {
         TRACE( "ignoring file %s\n", long_name );
         return NULL;
     }
+    if (!show_dot_files && long_name[0] == '.' && long_name[1] && (long_name[1] != '.' || long_name[2]))
+        attributes |= FILE_ATTRIBUTE_HIDDEN;
 
+    fill_stat_info( &st, info, FileBothDirectoryInformation );
     info->NextEntryOffset = total_len;
     info->FileIndex = 0;  /* NTFS always has 0 here, so let's not bother with it */
-
-    RtlSecondsSince1970ToTime( st.st_mtime, &info->CreationTime );
-    RtlSecondsSince1970ToTime( st.st_mtime, &info->LastWriteTime );
-    RtlSecondsSince1970ToTime( st.st_atime, &info->LastAccessTime );
-    RtlSecondsSince1970ToTime( st.st_ctime, &info->ChangeTime );
-
-    if (S_ISDIR(st.st_mode))
-    {
-        info->EndOfFile.QuadPart = info->AllocationSize.QuadPart = 0;
-        info->FileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
-    }
-    else
-    {
-        info->EndOfFile.QuadPart = st.st_size;
-        info->AllocationSize.QuadPart = (ULONGLONG)st.st_blocks * 512;
-        info->FileAttributes |= FILE_ATTRIBUTE_ARCHIVE;
-    }
-
-    if (!(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
-        info->FileAttributes |= FILE_ATTRIBUTE_READONLY;
-
-    if (!show_dot_files && long_name[0] == '.' && long_name[1] && (long_name[1] != '.' || long_name[2]))
-        info->FileAttributes |= FILE_ATTRIBUTE_HIDDEN;
-
+    info->FileAttributes |= attributes;
     info->EaSize = 0; /* FIXME */
     info->ShortNameLength = short_len * sizeof(WCHAR);
     for (i = 0; i < short_len; i++) info->ShortName[i] = toupperW(short_nameW[i]);

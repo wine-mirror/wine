@@ -1486,8 +1486,26 @@ NTSTATUS WINAPI NtSetVolumeInformationFile(
 	return 0;
 }
 
+static inline void get_file_times( const struct stat *st, LARGE_INTEGER *mtime, LARGE_INTEGER *ctime,
+                                   LARGE_INTEGER *atime, LARGE_INTEGER *creation )
+{
+    RtlSecondsSince1970ToTime( st->st_mtime, mtime );
+    RtlSecondsSince1970ToTime( st->st_ctime, ctime );
+    RtlSecondsSince1970ToTime( st->st_atime, atime );
+#ifdef HAVE_STRUCT_STAT_ST_MTIM
+    mtime->QuadPart += st->st_mtim.tv_nsec / 100;
+#endif
+#ifdef HAVE_STRUCT_STAT_ST_CTIM
+    ctime->QuadPart += st->st_ctim.tv_nsec / 100;
+#endif
+#ifdef HAVE_STRUCT_STAT_ST_ATIM
+    atime->QuadPart += st->st_atim.tv_nsec / 100;
+#endif
+    *creation = *mtime;
+}
+
 /* fill in the file information that depends on the stat info */
-static NTSTATUS fill_stat_info( const struct stat *st, void *ptr, FILE_INFORMATION_CLASS class )
+NTSTATUS fill_stat_info( const struct stat *st, void *ptr, FILE_INFORMATION_CLASS class )
 {
     switch (class)
     {
@@ -1495,23 +1513,12 @@ static NTSTATUS fill_stat_info( const struct stat *st, void *ptr, FILE_INFORMATI
         {
             FILE_BASIC_INFORMATION *info = ptr;
 
+            get_file_times( st, &info->LastWriteTime, &info->ChangeTime,
+                            &info->LastAccessTime, &info->CreationTime );
             if (S_ISDIR(st->st_mode)) info->FileAttributes = FILE_ATTRIBUTE_DIRECTORY;
             else info->FileAttributes = FILE_ATTRIBUTE_ARCHIVE;
             if (!(st->st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
                 info->FileAttributes |= FILE_ATTRIBUTE_READONLY;
-            RtlSecondsSince1970ToTime( st->st_mtime, &info->LastWriteTime );
-            RtlSecondsSince1970ToTime( st->st_ctime, &info->ChangeTime );
-            RtlSecondsSince1970ToTime( st->st_atime, &info->LastAccessTime );
-#ifdef HAVE_STRUCT_STAT_ST_MTIM
-            info->LastWriteTime.QuadPart += st->st_mtim.tv_nsec / 100;
-#endif
-#ifdef HAVE_STRUCT_STAT_ST_CTIM
-            info->ChangeTime.QuadPart += st->st_ctim.tv_nsec / 100;
-#endif
-#ifdef HAVE_STRUCT_STAT_ST_ATIM
-            info->LastAccessTime.QuadPart += st->st_atim.tv_nsec / 100;
-#endif
-            info->CreationTime = info->LastWriteTime;
         }
         break;
     case FileStandardInformation:
@@ -1550,6 +1557,45 @@ static NTSTATUS fill_stat_info( const struct stat *st, void *ptr, FILE_INFORMATI
             fill_stat_info( st, &info->BasicInformation, FileBasicInformation );
             fill_stat_info( st, &info->StandardInformation, FileStandardInformation );
             fill_stat_info( st, &info->InternalInformation, FileInternalInformation );
+        }
+        break;
+    /* all directory structures start with the FileDirectoryInformation layout */
+    case FileBothDirectoryInformation:
+    case FileFullDirectoryInformation:
+    case FileDirectoryInformation:
+        {
+            FILE_DIRECTORY_INFORMATION *info = ptr;
+
+            get_file_times( st, &info->LastWriteTime, &info->ChangeTime,
+                            &info->LastAccessTime, &info->CreationTime );
+            if (S_ISDIR(st->st_mode))
+            {
+                info->AllocationSize.QuadPart = 0;
+                info->EndOfFile.QuadPart      = 0;
+                info->FileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+            }
+            else
+            {
+                info->AllocationSize.QuadPart = (ULONGLONG)st->st_blocks * 512;
+                info->EndOfFile.QuadPart      = st->st_size;
+                info->FileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+            }
+            if (!(st->st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
+                info->FileAttributes |= FILE_ATTRIBUTE_READONLY;
+        }
+        break;
+    case FileIdFullDirectoryInformation:
+        {
+            FILE_ID_FULL_DIRECTORY_INFORMATION *info = ptr;
+            info->FileId.QuadPart = st->st_ino;
+            fill_stat_info( st, info, FileDirectoryInformation );
+        }
+        break;
+    case FileIdBothDirectoryInformation:
+        {
+            FILE_ID_BOTH_DIRECTORY_INFORMATION *info = ptr;
+            info->FileId.QuadPart = st->st_ino;
+            fill_stat_info( st, info, FileDirectoryInformation );
         }
         break;
 
