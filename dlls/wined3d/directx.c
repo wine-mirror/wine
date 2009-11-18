@@ -155,10 +155,6 @@ static const struct {
  **********************************************************/
 
 static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, WINED3DFORMAT AdapterFormat, DWORD Usage, WINED3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat, WINED3DSURFTYPE SurfaceType);
-static const struct fragment_pipeline *select_fragment_implementation(struct wined3d_adapter *adapter,
-        WINED3DDEVTYPE DeviceType);
-static const shader_backend_t *select_shader_backend(struct wined3d_adapter *adapter, WINED3DDEVTYPE DeviceType);
-static const struct blit_shader *select_blit_implementation(struct wined3d_adapter *adapter, WINED3DDEVTYPE DeviceType);
 
 GLint wrap_lookup[WINED3DTADDRESS_MIRRORONCE - WINED3DTADDRESS_WRAP + 1];
 
@@ -387,39 +383,6 @@ static ULONG WINAPI IWineD3DImpl_Release(IWineD3D *iface) {
     }
 
     return ref;
-}
-
-/* Set the shader type for this device, depending on the given capabilities
- * and the user preferences in wined3d_settings. */
-static void select_shader_mode(const struct wined3d_gl_info *gl_info, int *ps_selected, int *vs_selected)
-{
-    if (wined3d_settings.vs_mode == VS_NONE) {
-        *vs_selected = SHADER_NONE;
-    } else if (gl_info->supported[ARB_VERTEX_SHADER] && wined3d_settings.glslRequested) {
-        /* Geforce4 cards support GLSL but for vertex shaders only. Further its reported GLSL caps are
-         * wrong. This combined with the fact that glsl won't offer more features or performance, use ARB
-         * shaders only on this card. */
-        if (gl_info->supported[NV_VERTEX_PROGRAM] && !gl_info->supported[NV_VERTEX_PROGRAM2])
-            *vs_selected = SHADER_ARB;
-        else
-            *vs_selected = SHADER_GLSL;
-    } else if (gl_info->supported[ARB_VERTEX_PROGRAM]) {
-        *vs_selected = SHADER_ARB;
-    } else {
-        *vs_selected = SHADER_NONE;
-    }
-
-    if (wined3d_settings.ps_mode == PS_NONE) {
-        *ps_selected = SHADER_NONE;
-    } else if (gl_info->supported[ARB_FRAGMENT_SHADER] && wined3d_settings.glslRequested) {
-        *ps_selected = SHADER_GLSL;
-    } else if (gl_info->supported[ARB_FRAGMENT_PROGRAM]) {
-        *ps_selected = SHADER_ARB;
-    } else if (gl_info->supported[ATI_FRAGMENT_SHADER]) {
-        *ps_selected = SHADER_ATI;
-    } else {
-        *ps_selected = SHADER_NONE;
-    }
 }
 
 /**********************************************************
@@ -3808,72 +3771,6 @@ static HRESULT  WINAPI IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface,
           SourceFormat, debug_d3dformat(SourceFormat),
           TargetFormat, debug_d3dformat(TargetFormat));
     return WINED3D_OK;
-}
-
-static const shader_backend_t *select_shader_backend(struct wined3d_adapter *adapter, WINED3DDEVTYPE DeviceType)
-{
-    const shader_backend_t *ret;
-    int vs_selected_mode;
-    int ps_selected_mode;
-
-    select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
-    if (vs_selected_mode == SHADER_GLSL || ps_selected_mode == SHADER_GLSL) {
-        ret = &glsl_shader_backend;
-    } else if (vs_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_ARB) {
-        ret = &arb_program_shader_backend;
-    } else {
-        ret = &none_shader_backend;
-    }
-    return ret;
-}
-
-static const struct fragment_pipeline *select_fragment_implementation(struct wined3d_adapter *adapter,
-        WINED3DDEVTYPE DeviceType)
-{
-    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
-    int vs_selected_mode;
-    int ps_selected_mode;
-
-    select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
-    if ((ps_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_GLSL)
-            && gl_info->supported[ARB_FRAGMENT_PROGRAM])
-    {
-        return &arbfp_fragment_pipeline;
-    }
-    else if (ps_selected_mode == SHADER_ATI)
-    {
-        return &atifs_fragment_pipeline;
-    }
-    else if (gl_info->supported[NV_REGISTER_COMBINERS] && gl_info->supported[NV_TEXTURE_SHADER2])
-    {
-        return &nvts_fragment_pipeline;
-    }
-    else if (gl_info->supported[NV_REGISTER_COMBINERS])
-    {
-        return &nvrc_fragment_pipeline;
-    }
-    else
-    {
-        return &ffp_fragment_pipeline;
-    }
-}
-
-static const struct blit_shader *select_blit_implementation(struct wined3d_adapter *adapter, WINED3DDEVTYPE DeviceType)
-{
-    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
-    int vs_selected_mode;
-    int ps_selected_mode;
-
-    select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
-    if ((ps_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_GLSL)
-            && gl_info->supported[ARB_FRAGMENT_PROGRAM])
-    {
-        return &arbfp_blit;
-    }
-    else
-    {
-        return &ffp_blit;
-    }
 }
 
 /* Note: d3d8 passes in a pointer to a D3DCAPS8 structure, which is a true

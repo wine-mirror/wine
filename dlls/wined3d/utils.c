@@ -2772,3 +2772,63 @@ UINT wined3d_log2i(UINT32 x)
 
     return (i = x >> 16) ? (x = i >> 8) ? l[x] + 24 : l[i] + 16 : (i = x >> 8) ? l[i] + 8 : l[x];
 }
+
+/* Set the shader type for this device, depending on the given capabilities
+ * and the user preferences in wined3d_settings. */
+void select_shader_mode(const struct wined3d_gl_info *gl_info, int *ps_selected, int *vs_selected)
+{
+    if (wined3d_settings.vs_mode == VS_NONE) *vs_selected = SHADER_NONE;
+    else if (gl_info->supported[ARB_VERTEX_SHADER] && wined3d_settings.glslRequested)
+    {
+        /* Geforce4 cards support GLSL but for vertex shaders only. Further its reported GLSL caps are
+         * wrong. This combined with the fact that glsl won't offer more features or performance, use ARB
+         * shaders only on this card. */
+        if (gl_info->supported[NV_VERTEX_PROGRAM] && !gl_info->supported[NV_VERTEX_PROGRAM2]) *vs_selected = SHADER_ARB;
+        else *vs_selected = SHADER_GLSL;
+    }
+    else if (gl_info->supported[ARB_VERTEX_PROGRAM]) *vs_selected = SHADER_ARB;
+    else *vs_selected = SHADER_NONE;
+
+    if (wined3d_settings.ps_mode == PS_NONE) *ps_selected = SHADER_NONE;
+    else if (gl_info->supported[ARB_FRAGMENT_SHADER] && wined3d_settings.glslRequested) *ps_selected = SHADER_GLSL;
+    else if (gl_info->supported[ARB_FRAGMENT_PROGRAM]) *ps_selected = SHADER_ARB;
+    else if (gl_info->supported[ATI_FRAGMENT_SHADER]) *ps_selected = SHADER_ATI;
+    else *ps_selected = SHADER_NONE;
+}
+
+const shader_backend_t *select_shader_backend(struct wined3d_adapter *adapter, WINED3DDEVTYPE device_type)
+{
+    int vs_selected_mode, ps_selected_mode;
+
+    select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
+    if (vs_selected_mode == SHADER_GLSL || ps_selected_mode == SHADER_GLSL) return &glsl_shader_backend;
+    if (vs_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_ARB) return &arb_program_shader_backend;
+    return &none_shader_backend;
+}
+
+const struct fragment_pipeline *select_fragment_implementation(struct wined3d_adapter *adapter,
+        WINED3DDEVTYPE device_type)
+{
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
+    int vs_selected_mode, ps_selected_mode;
+
+    select_shader_mode(gl_info, &ps_selected_mode, &vs_selected_mode);
+    if ((ps_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_GLSL)
+            && gl_info->supported[ARB_FRAGMENT_PROGRAM]) return &arbfp_fragment_pipeline;
+    else if (ps_selected_mode == SHADER_ATI) return &atifs_fragment_pipeline;
+    else if (gl_info->supported[NV_REGISTER_COMBINERS]
+            && gl_info->supported[NV_TEXTURE_SHADER2]) return &nvts_fragment_pipeline;
+    else if (gl_info->supported[NV_REGISTER_COMBINERS]) return &nvrc_fragment_pipeline;
+    else return &ffp_fragment_pipeline;
+}
+
+const struct blit_shader *select_blit_implementation(struct wined3d_adapter *adapter, WINED3DDEVTYPE device_type)
+{
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
+    int vs_selected_mode, ps_selected_mode;
+
+    select_shader_mode(gl_info, &ps_selected_mode, &vs_selected_mode);
+    if ((ps_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_GLSL)
+            && gl_info->supported[ARB_FRAGMENT_PROGRAM]) return &arbfp_blit;
+    else return &ffp_blit;
+}
