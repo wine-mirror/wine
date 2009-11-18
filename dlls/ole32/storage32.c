@@ -110,6 +110,8 @@ static BOOL StorageImpl_WriteDWordToBigBlock( StorageImpl* This,
 static BOOL StorageImpl_ReadDWordFromBigBlock( StorageImpl*  This,
     ULONG blockIndex, ULONG offset, DWORD* value);
 
+static BOOL StorageBaseImpl_IsStreamOpen(StorageBaseImpl * stg, DirRef streamEntry);
+
 /* OLESTREAM memory structure to use for Get and Put Routines */
 /* Used for OleConvertIStorageToOLESTREAM and OleConvertOLESTREAMToIStorage */
 typedef struct
@@ -453,6 +455,13 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
   if ( (streamEntryRef!=DIRENTRY_NULL) &&
        (currentEntry.stgType==STGTY_STREAM) )
   {
+    if (StorageBaseImpl_IsStreamOpen(This, streamEntryRef))
+    {
+      /* A single stream cannot be opened a second time. */
+      res = STG_E_ACCESSDENIED;
+      goto end;
+    }
+
     newStream = StgStreamImpl_Construct(This, grfMode, streamEntryRef);
 
     if (newStream!=0)
@@ -1805,6 +1814,21 @@ void StorageBaseImpl_RemoveStream(StorageBaseImpl * stg, StgStreamImpl * strm)
 {
   TRACE("Stream removed (stg=%p strm=%p)\n", stg,strm);
   list_remove(&(strm->StrmListEntry));
+}
+
+static BOOL StorageBaseImpl_IsStreamOpen(StorageBaseImpl * stg, DirRef streamEntry)
+{
+  StgStreamImpl *strm;
+
+  LIST_FOR_EACH_ENTRY(strm, &stg->strmHead, StgStreamImpl, StrmListEntry)
+  {
+    if (strm->dirEntry == streamEntry)
+    {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
 }
 
 static void StorageBaseImpl_DeleteAll(StorageBaseImpl * stg)

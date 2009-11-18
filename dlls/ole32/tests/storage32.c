@@ -1100,13 +1100,13 @@ static void test_substorage_share(void)
     if (r == S_OK)
     {
         r = IStorage_OpenStream(stg, stmname, NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &stm2);
-        todo_wine ok(r==STG_E_ACCESSDENIED, "IStorage->OpenStream should fail %08x\n", r);
+        ok(r==STG_E_ACCESSDENIED, "IStorage->OpenStream should fail %08x\n", r);
 
         if (r == S_OK)
             IStorage_Release(stm2);
 
         r = IStorage_OpenStream(stg, stmname, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stm2);
-        todo_wine ok(r==STG_E_ACCESSDENIED, "IStorage->OpenStream should fail %08x\n", r);
+        ok(r==STG_E_ACCESSDENIED, "IStorage->OpenStream should fail %08x\n", r);
 
         if (r == S_OK)
             IStorage_Release(stm2);
