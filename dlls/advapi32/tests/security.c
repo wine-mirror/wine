@@ -3156,8 +3156,10 @@ static void test_GetSecurityInfo(void)
     ok(sd != NULL, "GetSecurityInfo\n");
     ok(owner != NULL, "GetSecurityInfo\n");
     ok(group != NULL, "GetSecurityInfo\n");
-    ok(dacl != NULL, "GetSecurityInfo\n");
-    ok(IsValidAcl(dacl), "GetSecurityInfo\n");
+    if (dacl != NULL)
+        ok(IsValidAcl(dacl), "GetSecurityInfo\n");
+    else
+        win_skip("No ACL information returned\n");
 
     LocalFree(sd);
 
@@ -3176,8 +3178,10 @@ static void test_GetSecurityInfo(void)
     ok(ret == ERROR_SUCCESS, "GetSecurityInfo returned %d\n", ret);
     ok(owner != NULL, "GetSecurityInfo\n");
     ok(group != NULL, "GetSecurityInfo\n");
-    ok(dacl != NULL, "GetSecurityInfo\n");
-    ok(IsValidAcl(dacl), "GetSecurityInfo\n");
+    if (dacl != NULL)
+        ok(IsValidAcl(dacl), "GetSecurityInfo\n");
+    else
+        win_skip("No ACL information returned\n");
 
     CloseHandle(obj);
 }
