@@ -6146,7 +6146,8 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                         else
                         {
                             VARIANTARG *missing_arg = INVBUF_GET_MISSING_ARG_ARRAY(buffer, func_desc->cParams);
-                            hres = VariantCopy(&missing_arg[i], src_arg);
+                            if (wParamFlags & PARAMFLAG_FIN)
+                                hres = VariantCopy(&missing_arg[i], src_arg);
                             V_VARIANTREF(&rgvarg[i]) = &missing_arg[i];
                         }
                         V_VT(&rgvarg[i]) = rgvt[i];
@@ -6184,8 +6185,10 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     else if ((rgvt[i] & VT_BYREF) && !V_ISBYREF(src_arg))
                     {
                         VARIANTARG *missing_arg = INVBUF_GET_MISSING_ARG_ARRAY(buffer, func_desc->cParams);
-                        V_VT(&missing_arg[i]) = V_VT(src_arg);
-                        hres = VariantChangeType(&missing_arg[i], src_arg, 0, rgvt[i] & ~VT_BYREF);
+                        if (wParamFlags & PARAMFLAG_FIN)
+                            hres = VariantChangeType(&missing_arg[i], src_arg, 0, rgvt[i] & ~VT_BYREF);
+                        else
+                            V_VT(&missing_arg[i]) = rgvt[i] & ~VT_BYREF;
                         V_BYREF(&rgvarg[i]) = &V_NONE(&missing_arg[i]);
                         V_VT(&rgvarg[i]) = rgvt[i];
                     }
@@ -6268,6 +6271,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             for (i = 0; i < func_desc->cParams; i++)
             {
                 USHORT wParamFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
+                VARIANTARG *missing_arg = INVBUF_GET_MISSING_ARG_ARRAY(buffer, func_desc->cParams);
 
                 if (wParamFlags & PARAMFLAG_FLCID)
                     continue;
@@ -6286,33 +6290,23 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                         hres = VariantCopyInd(pVarResult, prgpvarg[i]);
                     }
 
-                    /* free data stored in varresult. Note that
-                     * VariantClear doesn't do what we want because we are
-                     * working with byref types. */
-                    /* FIXME: clear safearrays, bstrs, records and
-                     * variants here too */
-                    if ((V_VT(prgpvarg[i]) == (VT_UNKNOWN | VT_BYREF)) ||
-                         (V_VT(prgpvarg[i]) == (VT_DISPATCH | VT_BYREF)))
-                    {
-                        if(*V_UNKNOWNREF(prgpvarg[i]))
-                            IUnknown_Release(*V_UNKNOWNREF(prgpvarg[i]));
-                    }
-                    break;
+                    VARIANT_ClearInd(prgpvarg[i]);
                 }
                 else if (vargs_converted < pDispParams->cArgs)
                 {
+                    VARIANTARG *arg = &pDispParams->rgvarg[pDispParams->cArgs - 1 - vargs_converted];
                     if (wParamFlags & PARAMFLAG_FOUT)
                     {
-                        VARIANTARG *arg = &pDispParams->rgvarg[pDispParams->cArgs - 1 - vargs_converted];
-
-                        if ((rgvt[i] == VT_BYREF) && (V_VT(arg) != VT_BYREF))
+                        if ((rgvt[i] & VT_BYREF) && !(V_VT(arg) & VT_BYREF))
+                        {
                             hres = VariantChangeType(arg, &rgvarg[i], 0, V_VT(arg));
 
-                        if (FAILED(hres))
-                        {
-                            ERR("failed to convert param %d to vt %d\n", i,
-                                V_VT(&pDispParams->rgvarg[pDispParams->cArgs - 1 - vargs_converted]));
-                            break;
+                            if (FAILED(hres))
+                            {
+                                ERR("failed to convert param %d to vt %d\n", i,
+                                    V_VT(&pDispParams->rgvarg[pDispParams->cArgs - 1 - vargs_converted]));
+                                break;
+                            }
                         }
                     }
                     else if (V_VT(prgpvarg[i]) == (VT_VARIANT | VT_ARRAY) &&
@@ -6351,6 +6345,8 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     if (wParamFlags & PARAMFLAG_FHASDEFAULT)
                         VariantClear(&rgvarg[i]);
                 }
+
+                VariantClear(&missing_arg[i]);
             }
 
             if ((V_VT(&varresult) == VT_ERROR) && FAILED(V_ERROR(&varresult)))

@@ -578,6 +578,66 @@ void WINAPI VariantInit(VARIANTARG* pVarg)
   V_VT(pVarg) = VT_EMPTY; /* Native doesn't set any other fields */
 }
 
+HRESULT VARIANT_ClearInd(VARIANTARG *pVarg)
+{
+    HRESULT hres;
+
+    TRACE("(%p->(%s%s))\n", pVarg, debugstr_VT(pVarg), debugstr_VF(pVarg));
+
+    hres = VARIANT_ValidateType(V_VT(pVarg));
+    if (FAILED(hres))
+        return hres;
+
+    switch (V_VT(pVarg))
+    {
+    case VT_DISPATCH:
+    case VT_UNKNOWN:
+        if (V_UNKNOWN(pVarg))
+            IUnknown_Release(V_UNKNOWN(pVarg));
+        break;
+    case VT_UNKNOWN | VT_BYREF:
+    case VT_DISPATCH | VT_BYREF:
+        if(*V_UNKNOWNREF(pVarg))
+            IUnknown_Release(*V_UNKNOWNREF(pVarg));
+        break;
+    case VT_BSTR:
+        SysFreeString(V_BSTR(pVarg));
+        break;
+    case VT_BSTR | VT_BYREF:
+        SysFreeString(*V_BSTRREF(pVarg));
+        break;
+    case VT_VARIANT | VT_BYREF:
+        VariantClear(V_VARIANTREF(pVarg));
+        break;
+    case VT_RECORD:
+    case VT_RECORD | VT_BYREF:
+    {
+        struct __tagBRECORD* pBr = &V_UNION(pVarg,brecVal);
+        if (pBr->pRecInfo)
+        {
+            IRecordInfo_RecordClear(pBr->pRecInfo, pBr->pvRecord);
+            IRecordInfo_Release(pBr->pRecInfo);
+        }
+        break;
+    }
+    default:
+        if (V_ISARRAY(pVarg) || (V_VT(pVarg) & ~VT_BYREF) == VT_SAFEARRAY)
+        {
+            if (V_ISBYREF(pVarg))
+            {
+                if (*V_ARRAYREF(pVarg))
+                    hres = SafeArrayDestroy(*V_ARRAYREF(pVarg));
+            }
+            else if (V_ARRAY(pVarg))
+                hres = SafeArrayDestroy(V_ARRAY(pVarg));
+        }
+        break;
+    }
+
+    V_VT(pVarg) = VT_EMPTY;
+    return hres;
+}
+
 /******************************************************************************
  *		VariantClear	[OLEAUT32.9]
  *
