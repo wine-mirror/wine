@@ -717,6 +717,21 @@ s_get_numbers_struct(numbers_struct_t **ns)
 }
 
 void
+s_full_pointer_test(int *a, int *b)
+{
+    ok(*a == 42, "Expected *a to be 42 instead of %d\n", *a);
+    ok(*b == 42, "Expected *b to be 42 instead of %d\n", *a);
+    ok(a == b, "Expected a (%p) to point to the same memory as b (%p)\n", a, b);
+}
+
+void
+s_full_pointer_null_test(int *a, int *b)
+{
+    ok(*a == 42, "Expected *a to be 42 instead of %d\n", *a);
+    ok(b == NULL, "Expected b to be NULL instead of %p\n", b);
+}
+
+void
 s_stop(void)
 {
   ok(RPC_S_OK == RpcMgmtStopServerListening(NULL), "RpcMgmtStopServerListening\n");
@@ -1077,6 +1092,7 @@ pointer_tests(void)
   void *buffer;
   int *pa2;
   s123_t *s123;
+  int val = 42;
 
   ok(test_list_length(list) == 3, "RPC test_list_length\n");
   ok(square_puint(p1) == 121, "RPC square_puint\n");
@@ -1137,6 +1153,9 @@ pointer_tests(void)
   s123 = get_s123();
   ok(s123->f1 == 1 && s123->f2 == 2 && s123->f3 == 3, "RPC get_s123\n");
   MIDL_user_free(s123);
+
+  full_pointer_test(&val, &val);
+  full_pointer_null_test(&val, NULL);
 }
 
 static int

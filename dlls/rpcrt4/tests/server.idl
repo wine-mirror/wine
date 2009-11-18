@@ -357,5 +357,9 @@ cpp_quote("#endif")
   void get_ranged_enum([out] renum_t *re);
 
   void context_handle_test(void);
+
+  void full_pointer_test([in, ptr] int *a, [in, ptr] int *b);
+  void full_pointer_null_test([in, ptr] int *a, [in, ptr] int *b);
+
   void stop(void);
 }
