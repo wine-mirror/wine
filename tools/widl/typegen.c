@@ -3298,7 +3298,7 @@ void print_phase_basetype(FILE *file, int indent, const char *local_var_prefix,
             size = 0;
         }
 
-        if (phase == PHASE_MARSHAL)
+        if (phase == PHASE_MARSHAL && alignment > 1)
             print_file(file, indent, "MIDL_memset(__frame->_StubMsg.Buffer, 0, (0x%x - (ULONG_PTR)__frame->_StubMsg.Buffer) & 0x%x);\n", alignment, alignment - 1);
         print_file(file, indent, "__frame->_StubMsg.Buffer = (unsigned char *)(((ULONG_PTR)__frame->_StubMsg.Buffer + %u) & ~0x%x);\n",
                     alignment - 1, alignment - 1);
