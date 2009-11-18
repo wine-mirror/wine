@@ -161,6 +161,7 @@ static const CHAR szTypeValueXML[] =
 "   <date dt:dt=\"date\">3721-11-01</date>\n"
 "   <time dt:dt=\"time\">13:57:12.31321</time>\n"
 "   <timetz dt:dt=\"time.tz\">23:21:01.13+03:21</timetz>\n"
+"   <i1 dt:dt=\"i1\">-13</i1>\n"
 "</root>";
 
 static const CHAR szBasicTransformSSXMLPart1[] =
@@ -4155,6 +4156,19 @@ static void test_NodeTypeValue(void)
             ok(hr == S_OK, "ret %08x\n", hr );
             ok(V_VT(&v) == VT_DATE, "incorrect type\n");
             double_eq(1.112513078703703, V_DATE(&v));
+            VariantClear( &v );
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/i1"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_I1, "incorrect type\n");
+            ok(V_I1(&v) == -13, "incorrect value\n");
             VariantClear( &v );
 
             IXMLDOMNode_Release(pNode);
