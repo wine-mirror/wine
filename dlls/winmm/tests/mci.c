@@ -25,6 +25,10 @@
 #include "mmreg.h"
 #include "wine/test.h"
 
+/* The tests use the MCI's own save capability to create the tempfile.wav to play.
+ * To use a pre-existing file, write-protect it. */
+static MCIERROR ok_saved = MCIERR_FILE_NOT_FOUND;
+
 typedef union {
       MCI_STATUS_PARMS    status;
       MCI_WAVE_SET_PARMS  set;
@@ -244,7 +248,7 @@ static void test_recordWAVE(HWND hwnd)
     WORD nch    = 1;
     WORD nbits  = 16;
     DWORD nsamp = 16000, expect;
-    MCIERROR err;
+    MCIERROR err, ok_pcm;
     MCIDEVICEID wDeviceID;
     MCI_PARMS_UNION parm;
     char buf[1024];
@@ -289,9 +293,10 @@ static void test_recordWAVE(HWND hwnd)
      * Don't skip here, record will fail below. */
     err = mciSendString("set x format tag pcm", NULL, 0, NULL);
     ok(!err || err==MCIERR_OUTOFRANGE,"mci set format tag pcm returned %s\n", dbg_mcierr(err));
+    ok_pcm = err;
 
     err = mciSendString("set x samplespersec 41000 alignment 4 channels 2", NULL, 0, NULL);
-    ok(!err,"mci set samples+align+channels returned %s\n", dbg_mcierr(err));
+    ok(err==ok_pcm,"mci set samples+align+channels returned %s\n", dbg_mcierr(err));
 
     /* Investigate: on w2k, set samplespersec 22050 sets nChannels to 2!
      *  err = mciSendString("set x samplespersec 22050", NULL, 0, NULL);
@@ -308,12 +313,16 @@ static void test_recordWAVE(HWND hwnd)
         MCI_WAVE_SET_SAMPLESPERSEC | MCI_WAVE_SET_CHANNELS |
         MCI_WAVE_SET_BITSPERSAMPLE | MCI_WAVE_SET_BLOCKALIGN |
         MCI_WAVE_SET_AVGBYTESPERSEC| MCI_WAVE_SET_FORMATTAG, (DWORD_PTR)&parm);
-    ok(!err || err==MCIERR_OUTOFRANGE,"mciCommand set wave format: %s\n", dbg_mcierr(err));
+    ok(err==ok_pcm,"mciCommand set wave format: %s\n", dbg_mcierr(err));
 
+    /* A few ME machines pass all tests except set format tag pcm! */
     err = mciSendString("record x to 2000 wait", NULL, 0, hwnd);
-    ok(!err,"mci record to 2000 returned %s\n", dbg_mcierr(err));
-    if(err==MCIERR_WAVE_INPUTSUNSUITABLE) {
-        skip("Please install audio driver. Tests will fail\n");
+    ok(err || !ok_pcm,"can record yet set wave format pcm returned %s\n", dbg_mcierr(ok_pcm));
+    ok(!err || err==(ok_pcm==MCIERR_OUTOFRANGE ? MCIERR_WAVE_INPUTSUNSUITABLE : 0),"mci record to 2000 returned %s\n", dbg_mcierr(err));
+    if(err) {
+        if (err==MCIERR_WAVE_INPUTSUNSUITABLE)
+             skip("Please install audio driver. Everything is skipped.\n");
+        else skip("Cannot record cause %s. Everything is skipped.\n", dbg_mcierr(err));
 
         err = mciSendString("close x", NULL, 0, NULL);
         ok(!err,"mci close returned %s\n", dbg_mcierr(err));
@@ -353,6 +362,7 @@ static void test_recordWAVE(HWND hwnd)
 
     err = mciSendString("save x tempfile.wav", NULL, 0, NULL);
     ok(!err,"mci save returned %s\n", dbg_mcierr(err));
+    if(!err) ok_saved = 0;
 
     /* Save must not rename the original file. */
     if (!DeleteFile("tempfile1.wav"))
@@ -386,9 +396,9 @@ static void test_playWAVE(HWND hwnd)
     memset(buf, 0, sizeof(buf));
 
     err = mciSendString("open waveaudio!tempfile.wav alias mysound", NULL, 0, NULL);
-    ok(!err,"mci open waveaudio!tempfile.wav returned %s\n", dbg_mcierr(err));
+    ok(err==ok_saved,"mci open waveaudio!tempfile.wav returned %s\n", dbg_mcierr(err));
     if(err) {
-        skip("Cannot open tempfile.wav for playing #1, skipping\n");
+        skip("Cannot open waveaudio!tempfile.wav for playing (%s), skipping\n", dbg_mcierr(err));
         return;
     }
 
@@ -505,9 +515,9 @@ static void test_asyncWAVE(HWND hwnd)
     memset(buf, 0, sizeof(buf));
 
     err = mciSendString("open tempfile.wav alias mysound", buf, sizeof(buf), NULL);
-    ok(!err,"mci open tempfile.wav returned %s\n", dbg_mcierr(err));
+    ok(err==ok_saved,"mci open tempfile.wav returned %s\n", dbg_mcierr(err));
     if(err) {
-        skip("Cannot open tempfile.wav for playing #2, skipping\n");
+        skip("Cannot open tempfile.wav for playing (%s), skipping\n", dbg_mcierr(err));
         return;
     }
     ok(!strcmp(buf,"1"), "mci open deviceId: %s, expected 1\n", buf);
@@ -685,7 +695,7 @@ static void test_AutoOpenWAVE(HWND hwnd)
     /* This test used(?) to cause intermittent crashes when Wine exits, after
      * fixme:winmm:MMDRV_Exit Closing while ll-driver open
      */
-    MCIERROR err;
+    MCIERROR err, ok_snd;
     char buf[512], path[300], command[330];
     memset(buf, 0, sizeof(buf)); memset(path, 0, sizeof(path));
 
@@ -697,11 +707,12 @@ static void test_AutoOpenWAVE(HWND hwnd)
     ok(!err,"mci sysinfo waveaudio quantity open returned %s\n", dbg_mcierr(err));
     if(!err) todo_wine ok(!strcmp(buf,"0"), "sysinfo quantity open expected 0, got: %s, some more tests will fail.\n", buf);
 
+    ok_snd = waveOutGetNumDevs() ? 0 : MCIERR_HARDWARE;
     err = mciSendString("sound NoSuchSoundDefined wait", NULL, 0, NULL);
-    todo_wine ok(!err,"mci sound NoSuchSoundDefined returned %s\n", dbg_mcierr(err));
+    todo_wine ok(err==ok_snd,"mci sound NoSuchSoundDefined returned %s\n", dbg_mcierr(err));
 
     err = mciSendString("sound SystemExclamation notify wait", NULL, 0, hwnd);
-    todo_wine ok(!err,"mci sound SystemExclamation returned %s\n", dbg_mcierr(err));
+    todo_wine ok(err==ok_snd,"mci sound SystemExclamation returned %s\n", dbg_mcierr(err));
     test_notification(hwnd, "sound notify", err ? 0 : MCI_NOTIFY_SUCCESSFUL);
 
     buf[0]=0;
@@ -710,7 +721,7 @@ static void test_AutoOpenWAVE(HWND hwnd)
     if(!err) trace("sysinfo dangling open alias: %s\n", buf);
 
     err = mciSendString("play no-such-file-exists.wav notify", buf, sizeof(buf), NULL);
-    if(err==MCIERR_FILE_NOT_FOUND) {
+    if(err==MCIERR_FILE_NOT_FOUND) { /* a Wine detector */
         /* Unsupported auto-open leaves the file open, preventing clean-up */
         skip("Skipping auto-open tests in Wine\n");
         return;
@@ -721,7 +732,8 @@ static void test_AutoOpenWAVE(HWND hwnd)
 
     if(err) /* FIXME: don't open twice yet, it confuses Wine. */
     err = mciSendString("play tempfile.wav", buf, sizeof(buf), hwnd);
-    ok(!err,"mci auto-open play returned %s\n", dbg_mcierr(err));
+    ok(err==ok_saved,"mci auto-open play returned %s\n", dbg_mcierr(err));
+
     if(err==MCIERR_FILE_NOT_FOUND) {
         skip("Cannot open tempfile.wav for auto-play, skipping\n");
         return;
@@ -771,8 +783,9 @@ static void test_AutoOpenWAVE(HWND hwnd)
      */
     err = mciSendString("status tempfile.wav mode notify", buf, sizeof(buf), hwnd);
     todo_wine ok(err==MCIERR_NOTIFY_ON_AUTO_OPEN, "mci status auto-open notify returned %s\n", dbg_mcierr(err));
-    if(!err) { /* Wine style */
-        trace("New style MCI auto-close upon notification behaviour.\n");
+    if(!err) {
+        trace("Wine style MCI auto-close upon notification\n");
+
         /* "playing" because auto-close comes after the status call. */
         todo_wine ok(!strcmp(buf,"playing"), "mci auto-open status mode notify, got: %s\n", buf);
         /* fixme:winmm:MMDRV_Exit Closing while ll-driver open
@@ -782,7 +795,7 @@ static void test_AutoOpenWAVE(HWND hwnd)
         Sleep(16);
         test_notification(hwnd,"auto-open",0);
     } else if(err==MCIERR_NOTIFY_ON_AUTO_OPEN) { /* MS style */
-        trace("Old style MCI auto-open forbids notification behaviour.\n");
+        trace("MS style MCI auto-open forbids notification\n");
 
         err = mciSendString("pause tempfile.wav", NULL, 0, hwnd);
         ok(!err,"mci auto-still-open pause returned %s\n", dbg_mcierr(err));
@@ -833,6 +846,6 @@ START_TEST(mci)
     /* Win9X hangs when exiting with something still open. */
     err = mciSendString("close all", NULL, 0, hwnd);
     todo_wine ok(!err,"final close all returned %s\n", dbg_mcierr(err));
-    ok(DeleteFile("tempfile.wav"),"Delete tempfile.wav (cause auto-open?)\n");
+    ok(DeleteFile("tempfile.wav")||ok_saved,"Delete tempfile.wav (cause auto-open?)\n");
     DestroyWindow(hwnd);
 }
