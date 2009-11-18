@@ -182,7 +182,7 @@ static BOOL install_from_unix_file(const char *file_name)
     int fd;
     BOOL ret;
 
-    static WCHAR *(*wine_get_dos_file_name)(const char*);
+    static WCHAR * (CDECL *wine_get_dos_file_name)(const char*);
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
 
     fd = open(file_name, O_RDONLY);
