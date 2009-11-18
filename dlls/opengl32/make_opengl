@@ -571,6 +571,9 @@ while (my $line = <REGISTRY>) {
 		if ($ext =~ /array/) {
 		    # This is a pointer
 		    $ptr = 1;
+		} elsif ($ext =~ /reference/) {
+		    # This is a pointer
+		    $ptr = 1;
 		} elsif ($ext =~ /value/) {
 		    # And this a 'normal' value
 		    $ptr = 0;
