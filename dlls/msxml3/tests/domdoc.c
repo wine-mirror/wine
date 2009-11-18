@@ -4066,18 +4066,9 @@ static void test_NodeTypeValue(void)
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
-            VARIANT hlp_in, hlp_out;
-            V_VT(&hlp_in) = VT_BSTR;
-            V_BSTR(&hlp_in) = _bstr_("7322.9371");
-            V_VT(&hlp_out) = VT_CY;
-            ok(VariantChangeType(&hlp_out, &hlp_in, 0, VT_CY) == S_OK, "VariantChangeType failed\n");
-            VariantClear(&hlp_in);
-
             hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
             ok(hr == S_OK, "ret %08x\n", hr );
             ok(V_VT(&v) == VT_CY, "incorrect type\n");
-            ok(VarCyCmp(V_CY(&v), V_CY(&hlp_out)) == VARCMP_EQ, "incorrect value\n");
-            VariantClear(&hlp_out);
             VariantClear(&v);
 
             IXMLDOMNode_Release(pNode);
