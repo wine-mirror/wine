@@ -390,7 +390,6 @@ static void testFindCRL(void)
     issuedForPara.pIssuerCert = cert;
     context = pCertFindCRLInStore(store, 0, 0, CRL_FIND_ISSUED_FOR,
      &issuedForPara, NULL);
-    todo_wine
     ok(context != NULL, "Expected a context\n");
     if (context)
     {
@@ -433,12 +432,10 @@ static void testFindCRL(void)
      * match cert's issuer, but verisignCRL does not, so the expected count
      * is 0.
      */
-    todo_wine
     ok(count == 3, "expected 3 matching CRLs, got %d\n", count);
     /* Only v1CRLWithIssuerAndEntry and v2CRLWithIssuingDistPoint contain
      * entries, so the count of CRL entries that match cert is 2.
      */
-    todo_wine
     ok(revoked_count == 2, "expected 2 matching CRL entries, got %d\n",
      revoked_count);
 
@@ -495,7 +492,6 @@ static void testFindCRL(void)
                 revoked_count++;
         }
     } while (context);
-    todo_wine
     ok(count == 1, "expected 1 matching CRLs, got %d\n", count);
     ok(revoked_count == 0, "expected 0 matching CRL entries, got %d\n",
      revoked_count);

@@ -137,6 +137,20 @@ static BOOL compare_crl_existing(PCCRL_CONTEXT pCrlContext, DWORD dwType,
     return ret;
 }
 
+static BOOL compare_crl_issued_for(PCCRL_CONTEXT pCrlContext, DWORD dwType,
+ DWORD dwFlags, const void *pvPara)
+{
+    const CRL_FIND_ISSUED_FOR_PARA *para = pvPara;
+    BOOL ret;
+
+    ret = CertCompareCertificateName(para->pIssuerCert->dwCertEncodingType,
+     &para->pIssuerCert->pCertInfo->Issuer, &pCrlContext->pCrlInfo->Issuer);
+    if (ret)
+        ret = CertIsValidCRLForCertificate(para->pSubjectCert, pCrlContext,
+         0, NULL);
+    return ret;
+}
+
 PCCRL_CONTEXT WINAPI CertFindCRLInStore(HCERTSTORE hCertStore,
  DWORD dwCertEncodingType, DWORD dwFindFlags, DWORD dwFindType,
  const void *pvFindPara, PCCRL_CONTEXT pPrevCrlContext)
@@ -157,6 +171,9 @@ PCCRL_CONTEXT WINAPI CertFindCRLInStore(HCERTSTORE hCertStore,
         break;
     case CRL_FIND_EXISTING:
         compare = compare_crl_existing;
+        break;
+    case CRL_FIND_ISSUED_FOR:
+        compare = compare_crl_issued_for;
         break;
     default:
         FIXME("find type %08x unimplemented\n", dwFindType);
