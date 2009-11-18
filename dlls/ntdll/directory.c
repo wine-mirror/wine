@@ -151,7 +151,11 @@ static int ignored_files_count;
 union file_directory_info
 {
     ULONG                              next;
+    FILE_DIRECTORY_INFORMATION         dir;
     FILE_BOTH_DIRECTORY_INFORMATION    both;
+    FILE_FULL_DIRECTORY_INFORMATION    full;
+    FILE_ID_BOTH_DIRECTORY_INFORMATION id_both;
+    FILE_ID_FULL_DIRECTORY_INFORMATION id_full;
 };
 
 static int show_dot_files = -1;
@@ -223,8 +227,16 @@ static inline unsigned int dir_info_size( FILE_INFORMATION_CLASS class, unsigned
 {
     switch (class)
     {
+    case FileDirectoryInformation:
+        return (FIELD_OFFSET( FILE_DIRECTORY_INFORMATION, FileName[len] ) + 3) & ~3;
     case FileBothDirectoryInformation:
-        return (FIELD_OFFSET( FILE_BOTH_DIR_INFORMATION, FileName[len] ) + 3) & ~3;
+        return (FIELD_OFFSET( FILE_BOTH_DIRECTORY_INFORMATION, FileName[len] ) + 3) & ~3;
+    case FileFullDirectoryInformation:
+        return (FIELD_OFFSET( FILE_FULL_DIRECTORY_INFORMATION, FileName[len] ) + 3) & ~3;
+    case FileIdBothDirectoryInformation:
+        return (FIELD_OFFSET( FILE_ID_BOTH_DIRECTORY_INFORMATION, FileName[len] ) + 3) & ~3;
+    case FileIdFullDirectoryInformation:
+        return (FIELD_OFFSET( FILE_ID_FULL_DIRECTORY_INFORMATION, FileName[len] ) + 3) & ~3;
     default:
         assert(0);
     }
@@ -953,6 +965,7 @@ static union file_directory_info *append_entry( void *info_ptr, IO_STATUS_BLOCK 
     struct stat st;
     WCHAR long_nameW[MAX_DIR_ENTRY_LEN];
     WCHAR short_nameW[12];
+    WCHAR *filename;
     UNICODE_STRING str;
     ULONG attributes = 0;
 
@@ -1012,25 +1025,51 @@ static union file_directory_info *append_entry( void *info_ptr, IO_STATUS_BLOCK 
         io->u.Status = STATUS_BUFFER_OVERFLOW;
     }
     info = (union file_directory_info *)((char *)info_ptr + io->Information);
+    /* all the structures start with a FileDirectoryInformation layout */
+    fill_stat_info( &st, info, class );
+    info->dir.NextEntryOffset = total_len;
+    info->dir.FileIndex = 0;  /* NTFS always has 0 here, so let's not bother with it */
+    info->dir.FileAttributes |= attributes;
 
     switch (class)
     {
+    case FileDirectoryInformation:
+        info->dir.FileNameLength = long_len * sizeof(WCHAR);
+        filename = info->dir.FileName;
+        break;
+
+    case FileFullDirectoryInformation:
+        info->full.EaSize = 0; /* FIXME */
+        info->full.FileNameLength = long_len * sizeof(WCHAR);
+        filename = info->full.FileName;
+        break;
+
+    case FileIdFullDirectoryInformation:
+        info->id_full.EaSize = 0; /* FIXME */
+        info->id_full.FileNameLength = long_len * sizeof(WCHAR);
+        filename = info->id_full.FileName;
+        break;
+
     case FileBothDirectoryInformation:
-        fill_stat_info( &st, &info->both, class );
-        info->both.NextEntryOffset = total_len;
-        info->both.FileIndex = 0;  /* NTFS always has 0 here, so let's not bother with it */
-        info->both.FileAttributes |= attributes;
         info->both.EaSize = 0; /* FIXME */
         info->both.ShortNameLength = short_len * sizeof(WCHAR);
         for (i = 0; i < short_len; i++) info->both.ShortName[i] = toupperW(short_nameW[i]);
         info->both.FileNameLength = long_len * sizeof(WCHAR);
-        memcpy( info->both.FileName, long_nameW,
-                min( info->both.FileNameLength,
-                     total_len - FIELD_OFFSET( FILE_BOTH_DIR_INFORMATION, FileName )));
+        filename = info->both.FileName;
         break;
+
+    case FileIdBothDirectoryInformation:
+        info->id_both.EaSize = 0; /* FIXME */
+        info->id_both.ShortNameLength = short_len * sizeof(WCHAR);
+        for (i = 0; i < short_len; i++) info->id_both.ShortName[i] = toupperW(short_nameW[i]);
+        info->id_both.FileNameLength = long_len * sizeof(WCHAR);
+        filename = info->id_both.FileName;
+        break;
+
     default:
         assert(0);
     }
+    memcpy( filename, long_nameW, total_len - ((char *)filename - (char *)info) );
     io->Information += total_len;
     return info;
 }
@@ -1650,7 +1689,11 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
     }
     switch (info_class)
     {
+    case FileDirectoryInformation:
     case FileBothDirectoryInformation:
+    case FileFullDirectoryInformation:
+    case FileIdBothDirectoryInformation:
+    case FileIdFullDirectoryInformation:
         if (length < dir_info_size( info_class, 1 )) return io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
         break;
     default:
