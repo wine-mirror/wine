@@ -641,10 +641,13 @@ static void test_opengl3(HDC hdc)
         gl3Ctx = pwglCreateContextAttribsARB(hdc, 0, attribs);
         ok(gl3Ctx != 0, "pwglCreateContextAttribsARB for a 3.0 context failed!\n");
 
-        /* OpenGL 3.0 allows offscreen rendering WITHOUT a drawable */
-        /* NOTE: Nvidia's 177.89 beta drivers don't allow this yet */
+        /* OpenGL 3.0 allows offscreen rendering WITHOUT a drawable
+         * Neither AMD or Nvidia support it at this point. The WGL_ARB_create_context specs also say that
+         * it is hard because drivers use the HDC to enter the display driver and it sounds like they don't
+         * expect drivers to ever offer it.
+         */
         res = wglMakeCurrent(0, gl3Ctx);
-        todo_wine ok(res == TRUE, "OpenGL 3.0 should allow windowless rendering, but the test failed!\n");
+        ok(res == FALSE, "Wow, OpenGL 3.0 windowless rendering passed while it was expected not to!\n");
         if(res)
             wglMakeCurrent(0, 0);
 
