@@ -172,6 +172,7 @@ static const CHAR szTypeValueXML[] =
 "   <float dt:dt=\"float\">41221.421</float>\n"
 "   <uuid dt:dt=\"uuid\">333C7BC4-460F-11D0-BC04-0080C7055a83</uuid>\n"
 "   <binhex dt:dt=\"bin.hex\">fffca012003c</binhex>\n"
+"   <binbase64 dt:dt=\"bin.base64\">YmFzZTY0IHRlc3Q=</binbase64>\n"
 "</root>";
 
 static const CHAR szBasicTransformSSXMLPart1[] =
@@ -4303,6 +4304,23 @@ static void test_NodeTypeValue(void)
             ok(V_VT(&v) == (VT_ARRAY|VT_UI1), "incorrect type\n");
             ok(V_ARRAY(&v)->rgsabound[0].cElements == 6, "incorrect array size\n");
             if(V_ARRAY(&v)->rgsabound[0].cElements == 6)
+                ok(!memcmp(bytes, V_ARRAY(&v)->pvData, sizeof(bytes)), "incorrect value\n");
+            VariantClear(&v);
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/binbase64"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            BYTE bytes[] = {0x62,0x61,0x73,0x65,0x36,0x34,0x20,0x74,0x65,0x73,0x74};
+
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == (VT_ARRAY|VT_UI1), "incorrect type\n");
+            ok(V_ARRAY(&v)->rgsabound[0].cElements == 11, "incorrect array size\n");
+            if(V_ARRAY(&v)->rgsabound[0].cElements == 11)
                 ok(!memcmp(bytes, V_ARRAY(&v)->pvData, sizeof(bytes)), "incorrect value\n");
             VariantClear(&v);
 

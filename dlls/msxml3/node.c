@@ -953,6 +953,15 @@ inline BYTE hex_to_byte(xmlChar c)
     return c-'a'+10;
 }
 
+inline BYTE base64_to_byte(xmlChar c)
+{
+    if(c == '+') return 62;
+    if(c == '/') return 63;
+    if(c <= '9') return c-'0'+52;
+    if(c <= 'Z') return c-'A';
+    return c-'a'+26;
+}
+
 inline HRESULT VARIANT_from_xmlChar(xmlChar *str, VARIANT *v, BSTR type)
 {
     if(!type || !lstrcmpiW(type, szString) ||
@@ -1040,6 +1049,37 @@ inline HRESULT VARIANT_from_xmlChar(xmlChar *str, VARIANT *v, BSTR type)
         for(i=0; i<len; i++)
             ((BYTE*)V_ARRAY(v)->pvData)[i] = (hex_to_byte(str[2*i])<<4)
                 + hex_to_byte(str[2*i+1]);
+    }
+    else if(!lstrcmpiW(type, szBinBase64))
+    {
+        SAFEARRAYBOUND sab;
+        int i, len;
+
+        len  = xmlStrlen(str);
+        if(str[len-2] == '=') i = 2;
+        else if(str[len-1] == '=') i = 1;
+        else i = 0;
+
+        sab.lLbound = 0;
+        sab.cElements = len/4*3-i;
+
+        V_VT(v) = (VT_ARRAY|VT_UI1);
+        V_ARRAY(v) = SafeArrayCreate(VT_UI1, 1, &sab);
+
+        if(!V_ARRAY(v))
+            return E_OUTOFMEMORY;
+
+        for(i=0; i<len/4; i++)
+        {
+            ((BYTE*)V_ARRAY(v)->pvData)[3*i] = (base64_to_byte(str[4*i])<<2)
+                + (base64_to_byte(str[4*i+1])>>4);
+            if(3*i+1 < sab.cElements)
+                ((BYTE*)V_ARRAY(v)->pvData)[3*i+1] = (base64_to_byte(str[4*i+1])<<4)
+                    + (base64_to_byte(str[4*i+2])>>2);
+            if(3*i+2 < sab.cElements)
+                ((BYTE*)V_ARRAY(v)->pvData)[3*i+2] = (base64_to_byte(str[4*i+2])<<6)
+                    + base64_to_byte(str[4*i+3]);
+        }
     }
     else
     {
