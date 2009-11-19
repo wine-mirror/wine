@@ -1467,6 +1467,11 @@ BOOL WINAPI CertDllVerifyRevocation(DWORD dwEncodingType, DWORD dwRevType,
         SetLastError(E_INVALIDARG);
         return FALSE;
     }
+    if (!cContext)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
     memset(&pRevStatus->dwIndex, 0, pRevStatus->cbSize - sizeof(DWORD));
     if (dwRevType != CERT_CONTEXT_REVOCATION_TYPE)
     {

@@ -506,19 +506,16 @@ static void test_verifyRevocation(void)
     }
     SetLastError(0xdeadbeef);
     ret = pCertVerifyRevocation(0, 0, 0, NULL, 0, NULL, &status);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, 0, 0, NULL, 0, NULL,
      &status);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE, 0, NULL, 0,
      NULL, &status);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     certs[0] = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
