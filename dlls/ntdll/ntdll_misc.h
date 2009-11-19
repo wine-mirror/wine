@@ -59,9 +59,10 @@ extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handl
                                                  const LARGE_INTEGER *timeout, HANDLE signal_object );
 
 /* init routines */
+extern NTSTATUS signal_alloc_thread( TEB **teb );
+extern void signal_free_thread( TEB *teb );
 extern void signal_init_thread( TEB *teb );
 extern void signal_init_process(void);
-extern size_t get_signal_stack_total_size(void);
 extern void version_init( const WCHAR *appname );
 extern void debug_init(void);
 extern HANDLE thread_init(void);

@@ -965,19 +965,6 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 }
 
 
-/**********************************************************************
- *		get_signal_stack_total_size
- *
- * Retrieve the size to allocate for the signal stack, including the TEB at the bottom.
- * Must be a power of two.
- */
-size_t get_signal_stack_total_size(void)
-{
-    assert( sizeof(TEB) <= getpagesize() );
-    return getpagesize();  /* this is just for the TEB, we don't need a signal stack */
-}
-
-
 /***********************************************************************
  *           __wine_set_signal_handler   (NTDLL.@)
  */
@@ -987,6 +974,52 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
     if (handlers[sig] != NULL) return -2;
     handlers[sig] = wsh;
     return 0;
+}
+
+
+/**********************************************************************
+ *		signal_alloc_thread
+ */
+NTSTATUS signal_alloc_thread( TEB **teb )
+{
+    static size_t sigstack_zero_bits;
+    SIZE_T size;
+    NTSTATUS status;
+
+    if (!sigstack_zero_bits)
+    {
+        size_t min_size = getpagesize();  /* this is just for the TEB, we don't use a signal stack yet */
+        /* find the first power of two not smaller than min_size */
+        while ((1u << sigstack_zero_bits) < min_size) sigstack_zero_bits++;
+        assert( sizeof(TEB) <= min_size );
+    }
+
+    size = 1 << sigstack_zero_bits;
+    *teb = NULL;
+    if (!(status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)teb, sigstack_zero_bits,
+                                            &size, MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE )))
+    {
+        (*teb)->Tib.Self = &(*teb)->Tib;
+        (*teb)->Tib.ExceptionList = (void *)~0UL;
+    }
+    return status;
+}
+
+
+/**********************************************************************
+ *		signal_free_thread
+ */
+void signal_free_thread( TEB *teb )
+{
+    SIZE_T size;
+
+    if (teb->DeallocationStack)
+    {
+        size = 0;
+        NtFreeVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, &size, MEM_RELEASE );
+    }
+    size = 0;
+    NtFreeVirtualMemory( NtCurrentProcess(), (void **)&teb, &size, MEM_RELEASE );
 }
 
 
