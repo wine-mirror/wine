@@ -466,7 +466,7 @@ static void testFindCRL(void)
     /* Try various find flags */
     context = pCertFindCRLInStore(store, 0, CRL_FIND_ISSUED_BY_SIGNATURE_FLAG,
      CRL_FIND_ISSUED_BY, cert, NULL);
-    ok(!context, "unexpected context\n");
+    ok(!context || broken(context != NULL /* Win9x */), "unexpected context\n");
     /* The CRL doesn't have an AKI extension, so it matches any cert */
     context = pCertFindCRLInStore(store, 0, CRL_FIND_ISSUED_BY_AKI_FLAG,
      CRL_FIND_ISSUED_BY, cert, NULL);
@@ -487,7 +487,8 @@ static void testFindCRL(void)
     issuedForPara.pIssuerCert = cert;
     context = pCertFindCRLInStore(store, 0, 0, CRL_FIND_ISSUED_FOR,
      &issuedForPara, NULL);
-    ok(context != NULL, "Expected a context\n");
+    ok(context != NULL || broken(!context /* Win9x, NT4 */),
+     "Expected a context\n");
     if (context)
     {
         ok(context->cbCrlEncoded == sizeof(signedCRL),
@@ -529,12 +530,13 @@ static void testFindCRL(void)
      * match cert's issuer, but verisignCRL does not, so the expected count
      * is 0.
      */
-    ok(count == 3, "expected 3 matching CRLs, got %d\n", count);
+    ok(count == 3 || broken(count == 0 /* NT4, Win9x */),
+     "expected 3 matching CRLs, got %d\n", count);
     /* Only v1CRLWithIssuerAndEntry and v2CRLWithIssuingDistPoint contain
      * entries, so the count of CRL entries that match cert is 2.
      */
-    ok(revoked_count == 2, "expected 2 matching CRL entries, got %d\n",
-     revoked_count);
+    ok(revoked_count == 2 || broken(revoked_count == 0 /* NT4, Win9x */),
+     "expected 2 matching CRL entries, got %d\n", revoked_count);
 
     CertFreeCertificateContext(cert);
 
@@ -589,7 +591,8 @@ static void testFindCRL(void)
                 revoked_count++;
         }
     } while (context);
-    ok(count == 1, "expected 1 matching CRLs, got %d\n", count);
+    ok(count == 1 || broken(count == 0 /* Win9x, NT4 */),
+     "expected 1 matching CRLs, got %d\n", count);
     ok(revoked_count == 0, "expected 0 matching CRL entries, got %d\n",
      revoked_count);
     CertFreeCertificateContext(cert);
@@ -628,9 +631,10 @@ static void testFindCRL(void)
                 revoked_count++;
         }
     } while (context);
-    ok(count == 1, "expected 1 matching CRLs, got %d\n", count);
-    ok(revoked_count == 1, "expected 1 matching CRL entries, got %d\n",
-     revoked_count);
+    ok(count == 1 || broken(count == 0 /* Win9x, NT4 */),
+     "expected 1 matching CRLs, got %d\n", count);
+    ok(revoked_count == 1 || broken(revoked_count == 0 /* Win9x, NT4 */),
+     "expected 1 matching CRL entries, got %d\n", revoked_count);
 
     /* Test CRL_FIND_ISSUED_BY flags */
     count = revoked_count = 0;
@@ -701,7 +705,8 @@ static void testFindCRL(void)
         }
     } while (context);
     todo_wine
-    ok(count == 0, "expected 0 matching CRLs, got %d\n", count);
+    ok(count == 0 || broken(count == 1 /* Win9x */),
+     "expected 1 matching CRLs, got %d\n", count);
     ok(revoked_count == 0, "expected 0 matching CRL entries, got %d\n",
      revoked_count);
     count = revoked_count = 0;
