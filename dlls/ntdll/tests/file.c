@@ -41,6 +41,7 @@
 #endif
 
 static BOOL     (WINAPI * pGetVolumePathNameW)(LPCWSTR, LPWSTR, DWORD);
+static UINT     (WINAPI *pGetSystemWow64DirectoryW)( LPWSTR, UINT );
 
 static NTSTATUS (WINAPI *pRtlFreeUnicodeString)( PUNICODE_STRING );
 static VOID     (WINAPI *pRtlInitUnicodeString)( PUNICODE_STRING, LPCWSTR );
@@ -947,7 +948,7 @@ static void test_file_name_information(void)
 {
     WCHAR *file_name, *volume_prefix, *expected;
     FILE_NAME_INFORMATION *info;
-    ULONG old_redir, tmp;
+    ULONG old_redir = 1, tmp;
     UINT file_name_size;
     IO_STATUS_BLOCK io;
     UINT info_size;
@@ -1026,6 +1027,51 @@ static void test_file_name_information(void)
     HeapFree( GetProcessHeap(), 0, info );
     HeapFree( GetProcessHeap(), 0, expected );
     HeapFree( GetProcessHeap(), 0, volume_prefix );
+
+    if (old_redir || !pGetSystemWow64DirectoryW || !(file_name_size = pGetSystemWow64DirectoryW( NULL, 0 )))
+    {
+        skip("Not running on WoW64, skipping test.\n");
+        HeapFree( GetProcessHeap(), 0, file_name );
+        return;
+    }
+
+    h = CreateFileW( file_name, GENERIC_READ,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 );
+    ok(h != INVALID_HANDLE_VALUE, "Failed to open file.\n");
+    HeapFree( GetProcessHeap(), 0, file_name );
+
+    file_name = HeapAlloc( GetProcessHeap(), 0, file_name_size * sizeof(*file_name) );
+    volume_prefix = HeapAlloc( GetProcessHeap(), 0, file_name_size * sizeof(*volume_prefix) );
+    expected = HeapAlloc( GetProcessHeap(), 0, file_name_size * sizeof(*expected) );
+
+    len = pGetSystemWow64DirectoryW( file_name, file_name_size );
+    ok(len == file_name_size - 1,
+            "GetSystemWow64DirectoryW returned %u, expected %u.\n",
+            len, file_name_size - 1);
+
+    len = pGetVolumePathNameW( file_name, volume_prefix, file_name_size );
+    ok(len, "GetVolumePathNameW failed.\n");
+
+    len = lstrlenW( volume_prefix );
+    if (len && volume_prefix[len - 1] == '\\') --len;
+    memcpy( expected, file_name + len, (file_name_size - len - 1) * sizeof(WCHAR) );
+    expected[file_name_size - len - 1] = '\0';
+
+    info_size = sizeof(*info) + (file_name_size * sizeof(WCHAR));
+    info = HeapAlloc( GetProcessHeap(), 0, info_size );
+
+    memset( info, 0xcc, info_size );
+    hr = pNtQueryInformationFile( h, &io, info, info_size, FileNameInformation );
+    ok(hr == STATUS_SUCCESS, "NtQueryInformationFile returned %#x, expected %#x.\n", hr, STATUS_SUCCESS);
+    info->FileName[info->FileNameLength / sizeof(WCHAR)] = '\0';
+    ok(!lstrcmpiW( info->FileName, expected ), "info->FileName is %s, expected %s.\n",
+            wine_dbgstr_w( info->FileName ), wine_dbgstr_w( expected ));
+
+    CloseHandle( h );
+    HeapFree( GetProcessHeap(), 0, info );
+    HeapFree( GetProcessHeap(), 0, expected );
+    HeapFree( GetProcessHeap(), 0, volume_prefix );
     HeapFree( GetProcessHeap(), 0, file_name );
 }
 
@@ -1040,6 +1086,7 @@ START_TEST(file)
     }
 
     pGetVolumePathNameW = (void *)GetProcAddress(hkernel32, "GetVolumePathNameW");
+    pGetSystemWow64DirectoryW = (void *)GetProcAddress(hkernel32, "GetSystemWow64DirectoryW");
 
     pRtlFreeUnicodeString   = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
     pRtlInitUnicodeString   = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
