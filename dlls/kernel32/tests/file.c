@@ -1616,7 +1616,7 @@ static void test_LockFile(void)
     DeleteFileA( filename );
 }
 
-static inline int is_sharing_compatible( DWORD access1, DWORD sharing1, DWORD access2, DWORD sharing2, BOOL is_win9x )
+static int is_sharing_compatible( DWORD access1, DWORD sharing1, DWORD access2, DWORD sharing2, BOOL is_win9x )
 {
     if (!is_win9x)
     {
@@ -1641,6 +1641,13 @@ static inline int is_sharing_compatible( DWORD access1, DWORD sharing1, DWORD ac
     return 1;
 }
 
+static int is_sharing_map_compatible( DWORD map_access, DWORD access2, DWORD sharing2 )
+{
+    if ((map_access == PAGE_READWRITE || map_access == PAGE_EXECUTE_READWRITE) &&
+        !(sharing2 & FILE_SHARE_WRITE)) return 0;
+    return 1;
+}
+
 static void test_file_sharing(void)
 {
     static const DWORD access_modes[] =
@@ -1651,10 +1658,14 @@ static void test_file_sharing(void)
           FILE_SHARE_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
           FILE_SHARE_DELETE, FILE_SHARE_READ|FILE_SHARE_DELETE,
           FILE_SHARE_WRITE|FILE_SHARE_DELETE, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE };
+    static const DWORD mapping_modes[] =
+        { PAGE_READONLY, PAGE_WRITECOPY, PAGE_READWRITE };
+    static const char dummy[] = "dummy";
     int a1, s1, a2, s2;
     int ret;
     HANDLE h, h2;
     BOOL is_win9x = FALSE;
+    DWORD written;
 
     /* make sure the file exists */
     h = CreateFileA( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
@@ -1664,6 +1675,7 @@ static void test_file_sharing(void)
         return;
     }
     is_win9x = GetFileAttributesW(filenameW) == INVALID_FILE_ATTRIBUTES;
+    WriteFile( h, dummy, strlen(dummy), &written, NULL );
     CloseHandle( h );
 
     for (a1 = 0; a1 < sizeof(access_modes)/sizeof(access_modes[0]); a1++)
@@ -1693,12 +1705,10 @@ static void test_file_sharing(void)
                     SetLastError(0xdeadbeef);
                     h2 = CreateFileA( filename, access_modes[a2], sharing_modes[s2],
                                       NULL, OPEN_EXISTING, 0, 0 );
-
+                    ret = GetLastError();
                     if (is_sharing_compatible( access_modes[a1], sharing_modes[s1],
                                                access_modes[a2], sharing_modes[s2], is_win9x ))
                     {
-                        ret = GetLastError();
-
                         ok( h2 != INVALID_HANDLE_VALUE,
                             "open failed for modes %x/%x/%x/%x\n",
                             access_modes[a1], sharing_modes[s1],
@@ -1706,13 +1716,9 @@ static void test_file_sharing(void)
                         ok( ret == 0xdeadbeef /* Win9x */ ||
                             ret == 0, /* XP */
                              "wrong error code %d\n", ret );
-
-                        CloseHandle( h2 );
                     }
                     else
                     {
-                        ret = GetLastError();
-
                         ok( h2 == INVALID_HANDLE_VALUE,
                             "open succeeded for modes %x/%x/%x/%x\n",
                             access_modes[a1], sharing_modes[s1],
@@ -1720,10 +1726,65 @@ static void test_file_sharing(void)
                          ok( ret == ERROR_SHARING_VIOLATION,
                              "wrong error code %d\n", ret );
                     }
+                    if (h2 != INVALID_HANDLE_VALUE) CloseHandle( h2 );
                 }
             }
             CloseHandle( h );
         }
+    }
+
+    for (a1 = 0; a1 < sizeof(mapping_modes)/sizeof(mapping_modes[0]); a1++)
+    {
+        HANDLE m;
+
+        SetLastError(0xdeadbeef);
+        h = CreateFileA( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0 );
+        if (h == INVALID_HANDLE_VALUE)
+        {
+            ok(0,"couldn't create file \"%s\" (err=%d)\n",filename,GetLastError());
+            return;
+        }
+        m = CreateFileMappingA( h, NULL, mapping_modes[a1], 0, 0, NULL );
+        ok( m != 0, "failed to create mapping %x err %u\n", mapping_modes[a1], GetLastError() );
+        CloseHandle( h );
+        if (!m) continue;
+
+        for (a2 = 0; a2 < sizeof(access_modes)/sizeof(access_modes[0]); a2++)
+        {
+            for (s2 = 0; s2 < sizeof(sharing_modes)/sizeof(sharing_modes[0]); s2++)
+            {
+                /* Win9x doesn't support FILE_SHARE_DELETE */
+                if (is_win9x && (sharing_modes[s2] & FILE_SHARE_DELETE))
+                    continue;
+
+                SetLastError(0xdeadbeef);
+                h2 = CreateFileA( filename, access_modes[a2], sharing_modes[s2],
+                                  NULL, OPEN_EXISTING, 0, 0 );
+
+                ret = GetLastError();
+                if (h2 == INVALID_HANDLE_VALUE)
+                {
+                    if (is_sharing_map_compatible(mapping_modes[a1], access_modes[a2], sharing_modes[s2]))
+                        todo_wine ok( is_win9x, /* there's no sharing at all with a mapping on win9x */
+                                      "open failed for modes map %x/%x/%x\n",
+                                      mapping_modes[a1], access_modes[a2], sharing_modes[s2] );
+                    ok( ret == ERROR_SHARING_VIOLATION,
+                        "wrong error code %d\n", ret );
+                }
+                else
+                {
+                    if (!is_sharing_map_compatible(mapping_modes[a1], access_modes[a2], sharing_modes[s2]))
+                        todo_wine ok( broken(1),  /* no checking on nt4 */
+                            "open succeeded for modes map %x/%x/%x\n",
+                            mapping_modes[a1], access_modes[a2], sharing_modes[s2] );
+                    ok( ret == 0xdeadbeef /* Win9x */ ||
+                        ret == 0, /* XP */
+                        "wrong error code %d\n", ret );
+                    CloseHandle( h2 );
+                }
+            }
+        }
+        CloseHandle( m );
     }
 
     SetLastError(0xdeadbeef);
