@@ -2379,7 +2379,7 @@ static void CRYPT_VerifyChainRevocation(PCERT_CHAIN_CONTEXT chain,
     if (cContext)
     {
         PCCERT_CONTEXT *contexts =
-         CryptMemAlloc(cContext * sizeof(PCCERT_CONTEXT *));
+         CryptMemAlloc(cContext * sizeof(PCCERT_CONTEXT));
 
         if (contexts)
         {
