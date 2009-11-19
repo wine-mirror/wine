@@ -765,9 +765,10 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
 
   if (currentEntryRef != DIRENTRY_NULL)
   {
-    if (StorageBaseImpl_IsStreamOpen(This, currentEntryRef))
+    if (StorageBaseImpl_IsStreamOpen(This, currentEntryRef) ||
+        StorageBaseImpl_IsStorageOpen(This, currentEntryRef))
     {
-      WARN("Stream is already open; cannot rename.\n");
+      WARN("Element is already open; cannot rename.\n");
       return STG_E_ACCESSDENIED;
     }
 
