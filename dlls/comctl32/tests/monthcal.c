@@ -1243,6 +1243,7 @@ static void test_monthcal_today(void)
     /* Setter and Getters for "today" information */
 
     /* check for overflow, should be ok */
+    memset(&st_test, 0, sizeof(st_test));
     st_test.wDay = 38;
     st_test.wMonth = 38;
 
