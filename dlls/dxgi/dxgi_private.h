@@ -36,6 +36,38 @@
 
 extern CRITICAL_SECTION dxgi_cs DECLSPEC_HIDDEN;
 
+/* Layered device */
+enum dxgi_device_layer_id
+{
+    DXGI_DEVICE_LAYER_DEBUG1        = 0x8,
+    DXGI_DEVICE_LAYER_THREAD_SAFE   = 0x10,
+    DXGI_DEVICE_LAYER_DEBUG2        = 0x20,
+    DXGI_DEVICE_LAYER_SWITCH_TO_REF = 0x30,
+    DXGI_DEVICE_LAYER_D3D10_DEVICE  = 0xffffffff,
+};
+
+struct layer_get_size_args
+{
+    DWORD unknown0;
+    DWORD unknown1;
+    DWORD *unknown2;
+    DWORD *unknown3;
+    IDXGIAdapter *adapter;
+    WORD interface_major;
+    WORD interface_minor;
+    WORD version_build;
+    WORD version_revision;
+};
+
+struct dxgi_device_layer
+{
+    enum dxgi_device_layer_id id;
+    HRESULT (WINAPI *init)(enum dxgi_device_layer_id id, DWORD *count, DWORD *values);
+    UINT (WINAPI *get_size)(enum dxgi_device_layer_id id, struct layer_get_size_args *args, DWORD unknown0);
+    HRESULT (WINAPI *create)(enum dxgi_device_layer_id id, void **layer_base, DWORD unknown0,
+            void *device_object, REFIID riid, void **device_layer);
+};
+
 /* TRACE helper functions */
 const char *debug_dxgi_format(DXGI_FORMAT format) DECLSPEC_HIDDEN;
 
@@ -53,7 +85,6 @@ struct dxgi_factory
 };
 
 /* IDXGIDevice */
-extern const struct IWineDXGIDeviceVtbl dxgi_device_vtbl DECLSPEC_HIDDEN;
 struct dxgi_device
 {
     const struct IWineDXGIDeviceVtbl *vtbl;
@@ -62,6 +93,9 @@ struct dxgi_device
     IWineD3DDevice *wined3d_device;
     IWineDXGIFactory *factory;
 };
+
+HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *layer,
+        IDXGIFactory *factory, IDXGIAdapter *adapter) DECLSPEC_HIDDEN;
 
 /* IDXGIOutput */
 struct dxgi_output
@@ -102,38 +136,6 @@ struct dxgi_surface
     const struct IUnknownVtbl *inner_unknown_vtbl;
     IUnknown *outer_unknown;
     LONG refcount;
-};
-
-/* Layered device */
-enum dxgi_device_layer_id
-{
-    DXGI_DEVICE_LAYER_DEBUG1        = 0x8,
-    DXGI_DEVICE_LAYER_THREAD_SAFE   = 0x10,
-    DXGI_DEVICE_LAYER_DEBUG2        = 0x20,
-    DXGI_DEVICE_LAYER_SWITCH_TO_REF = 0x30,
-    DXGI_DEVICE_LAYER_D3D10_DEVICE  = 0xffffffff,
-};
-
-struct layer_get_size_args
-{
-    DWORD unknown0;
-    DWORD unknown1;
-    DWORD *unknown2;
-    DWORD *unknown3;
-    IDXGIAdapter *adapter;
-    WORD interface_major;
-    WORD interface_minor;
-    WORD version_build;
-    WORD version_revision;
-};
-
-struct dxgi_device_layer
-{
-    enum dxgi_device_layer_id id;
-    HRESULT (WINAPI *init)(enum dxgi_device_layer_id id, DWORD *count, DWORD *values);
-    UINT (WINAPI *get_size)(enum dxgi_device_layer_id id, struct layer_get_size_args *args, DWORD unknown0);
-    HRESULT (WINAPI *create)(enum dxgi_device_layer_id id, void **layer_base, DWORD unknown0,
-            void *device_object, REFIID riid, void **device_layer);
 };
 
 #endif /* __WINE_DXGI_PRIVATE_H */

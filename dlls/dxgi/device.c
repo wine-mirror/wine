@@ -312,7 +312,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_swapchain(IWineDXGIDevice *i
     return S_OK;
 }
 
-const struct IWineDXGIDeviceVtbl dxgi_device_vtbl =
+static const struct IWineDXGIDeviceVtbl dxgi_device_vtbl =
 {
     /* IUnknown methods */
     dxgi_device_QueryInterface,
@@ -334,3 +334,80 @@ const struct IWineDXGIDeviceVtbl dxgi_device_vtbl =
     dxgi_device_create_surface,
     dxgi_device_create_swapchain,
 };
+
+HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *layer,
+        IDXGIFactory *factory, IDXGIAdapter *adapter)
+{
+    IWineD3DDeviceParent *wined3d_device_parent;
+    IWineDXGIAdapter *wine_adapter;
+    UINT adapter_ordinal;
+    IWineD3D *wined3d;
+    void *layer_base;
+    HRESULT hr;
+
+    device->vtbl = &dxgi_device_vtbl;
+    device->refcount = 1;
+
+    layer_base = device + 1;
+
+    hr = layer->create(layer->id, &layer_base, 0,
+            device, &IID_IUnknown, (void **)&device->child_layer);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create device, returning %#x.\n", hr);
+        goto fail;
+    }
+
+    hr = IDXGIFactory_QueryInterface(factory, &IID_IWineDXGIFactory, (void **)&device->factory);
+    if (FAILED(hr))
+    {
+        WARN("This is not the factory we're looking for, returning %#x.\n", hr);
+        goto fail;
+    }
+    wined3d = IWineDXGIFactory_get_wined3d(device->factory);
+
+    hr = IDXGIAdapter_QueryInterface(adapter, &IID_IWineDXGIAdapter, (void **)&wine_adapter);
+    if (FAILED(hr))
+    {
+        WARN("This is not the adapter we're looking for, returning %#x.\n", hr);
+        EnterCriticalSection(&dxgi_cs);
+        IWineD3D_Release(wined3d);
+        LeaveCriticalSection(&dxgi_cs);
+        goto fail;
+    }
+    adapter_ordinal = IWineDXGIAdapter_get_ordinal(wine_adapter);
+    IWineDXGIAdapter_Release(wine_adapter);
+
+    hr = IUnknown_QueryInterface((IUnknown *)device, &IID_IWineD3DDeviceParent, (void **)&wined3d_device_parent);
+    if (FAILED(hr))
+    {
+        ERR("DXGI device should implement IWineD3DDeviceParent.\n");
+        goto fail;
+    }
+
+    FIXME("Ignoring adapter type.\n");
+    EnterCriticalSection(&dxgi_cs);
+    hr = IWineD3D_CreateDevice(wined3d, adapter_ordinal, WINED3DDEVTYPE_HAL, NULL, 0,
+            (IUnknown *)device, wined3d_device_parent, &device->wined3d_device);
+    IWineD3DDeviceParent_Release(wined3d_device_parent);
+    IWineD3D_Release(wined3d);
+    LeaveCriticalSection(&dxgi_cs);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create a wined3d device, returning %#x.\n", hr);
+        goto fail;
+    }
+
+    return S_OK;
+
+fail:
+    if (device->wined3d_device)
+    {
+        EnterCriticalSection(&dxgi_cs);
+        IWineD3DDevice_Release(device->wined3d_device);
+        LeaveCriticalSection(&dxgi_cs);
+    }
+    if (device->factory) IWineDXGIFactory_Release(device->factory);
+    if (device->child_layer) IUnknown_Release(device->child_layer);
+    return hr;
+}
