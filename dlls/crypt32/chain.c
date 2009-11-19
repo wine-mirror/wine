@@ -2426,7 +2426,11 @@ static void CRYPT_VerifyChainRevocation(PCERT_CHAIN_CONTEXT chain,
                 case CRYPT_E_NO_REVOCATION_CHECK:
                 case CRYPT_E_NO_REVOCATION_DLL:
                 case CRYPT_E_NOT_IN_REVOCATION_DATABASE:
-                    error = CERT_TRUST_REVOCATION_STATUS_UNKNOWN;
+                    /* If the revocation status is unknown, it's assumed to be
+                     * offline too.
+                     */
+                    error = CERT_TRUST_REVOCATION_STATUS_UNKNOWN |
+                     CERT_TRUST_IS_OFFLINE_REVOCATION;
                     break;
                 case CRYPT_E_REVOCATION_OFFLINE:
                     error = CERT_TRUST_IS_OFFLINE_REVOCATION;

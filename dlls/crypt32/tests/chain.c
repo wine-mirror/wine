@@ -3688,7 +3688,6 @@ static void testGetCertChain(void)
         /* The cert is rather old, so its revocation list can't be retrieved,
          * and its revocation status should be both offline and unknown.
          */
-        todo_wine
         ok((chain->TrustStatus.dwErrorStatus & revocationFlags) ==
          (CERT_TRUST_REVOCATION_STATUS_UNKNOWN |
          CERT_TRUST_IS_OFFLINE_REVOCATION),
@@ -3709,7 +3708,6 @@ static void testGetCertChain(void)
     if (ret)
     {
         /* Even with a CRL in the store, the revocation status doesn't change */
-        todo_wine
         ok((chain->TrustStatus.dwErrorStatus & revocationFlags) ==
          (CERT_TRUST_REVOCATION_STATUS_UNKNOWN |
          CERT_TRUST_IS_OFFLINE_REVOCATION),
@@ -3744,7 +3742,6 @@ static void testGetCertChain(void)
         /* The cert doesn't have a way to retrieve its CRL, so its revocation
          * status should be both offline and unknown.
          */
-        todo_wine
         ok((chain->TrustStatus.dwErrorStatus & revocationFlags) ==
          (CERT_TRUST_REVOCATION_STATUS_UNKNOWN |
          CERT_TRUST_IS_OFFLINE_REVOCATION),
@@ -3765,7 +3762,6 @@ static void testGetCertChain(void)
     if (ret)
     {
         /* Even with a CRL in the store, the revocation status doesn't change */
-        todo_wine
         ok((chain->TrustStatus.dwErrorStatus & revocationFlags) ==
          (CERT_TRUST_REVOCATION_STATUS_UNKNOWN |
          CERT_TRUST_IS_OFFLINE_REVOCATION),
@@ -3795,7 +3791,6 @@ static void testGetCertChain(void)
     if (ret)
     {
         /* Even with a CRL in the store, the revocation status doesn't change */
-        todo_wine
         ok((chain->TrustStatus.dwErrorStatus & revocationFlags) ==
          (CERT_TRUST_REVOCATION_STATUS_UNKNOWN |
          CERT_TRUST_IS_OFFLINE_REVOCATION),
@@ -3824,7 +3819,6 @@ static void testGetCertChain(void)
     if (ret)
     {
         /* Even with a CRL in the store, the revocation status doesn't change */
-        todo_wine
         ok((chain->TrustStatus.dwErrorStatus & revocationFlags) ==
          (CERT_TRUST_REVOCATION_STATUS_UNKNOWN |
          CERT_TRUST_IS_OFFLINE_REVOCATION),
