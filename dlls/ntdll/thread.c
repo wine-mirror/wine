@@ -451,7 +451,6 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     pthread_t pthread_id;
     pthread_attr_t attr;
     struct ntdll_thread_data *thread_data;
-    struct ntdll_thread_regs *thread_regs;
     struct startup_info *info = NULL;
     HANDLE handle = 0;
     TEB *teb = NULL;
@@ -524,19 +523,10 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     info->entry_arg   = param;
 
     thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
-    thread_regs = (struct ntdll_thread_regs *)teb->SpareBytes1;
     thread_data->request_fd  = request_pipe[1];
     thread_data->reply_fd    = -1;
     thread_data->wait_fd[0]  = -1;
     thread_data->wait_fd[1]  = -1;
-
-    /* inherit debug registers from parent thread */
-    thread_regs->dr0 = ntdll_get_thread_regs()->dr0;
-    thread_regs->dr1 = ntdll_get_thread_regs()->dr1;
-    thread_regs->dr2 = ntdll_get_thread_regs()->dr2;
-    thread_regs->dr3 = ntdll_get_thread_regs()->dr3;
-    thread_regs->dr6 = ntdll_get_thread_regs()->dr6;
-    thread_regs->dr7 = ntdll_get_thread_regs()->dr7;
 
     if ((status = virtual_alloc_thread_stack( teb, stack_reserve, stack_commit ))) goto error;
 
