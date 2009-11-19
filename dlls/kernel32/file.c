@@ -821,6 +821,7 @@ BOOL WINAPI GetFileInformationByHandle( HANDLE hFile, BY_HANDLE_FILE_INFORMATION
     NTSTATUS status;
 
     status = NtQueryInformationFile( hFile, &io, &all_info, sizeof(all_info), FileAllInformation );
+    if (status == STATUS_BUFFER_OVERFLOW) status = STATUS_SUCCESS;
     if (status == STATUS_SUCCESS)
     {
         info->dwFileAttributes                = all_info.BasicInformation.FileAttributes;
