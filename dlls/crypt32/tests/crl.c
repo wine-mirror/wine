@@ -382,7 +382,6 @@ static void testFindCRL(void)
     /* Try various find flags */
     context = pCertFindCRLInStore(store, 0, CRL_FIND_ISSUED_BY_SIGNATURE_FLAG,
      CRL_FIND_ISSUED_BY, cert, NULL);
-    todo_wine
     ok(!context, "unexpected context\n");
     /* The CRL doesn't have an AKI extension, so it matches any cert */
     context = pCertFindCRLInStore(store, 0, CRL_FIND_ISSUED_BY_AKI_FLAG,

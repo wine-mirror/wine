@@ -116,6 +116,11 @@ static BOOL compare_crl_issued_by(PCCRL_CONTEXT pCrlContext, DWORD dwType,
 
         ret = CertCompareCertificateName(issuer->dwCertEncodingType,
          &issuer->pCertInfo->Issuer, &pCrlContext->pCrlInfo->Issuer);
+        if (ret && (dwFlags & CRL_FIND_ISSUED_BY_SIGNATURE_FLAG))
+            ret = CryptVerifyCertificateSignatureEx(0,
+             issuer->dwCertEncodingType,
+             CRYPT_VERIFY_CERT_SIGN_SUBJECT_CRL, (void *)pCrlContext,
+             CRYPT_VERIFY_CERT_SIGN_ISSUER_CERT, (void *)issuer, 0, NULL);
     }
     else
         ret = TRUE;
