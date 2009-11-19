@@ -530,6 +530,7 @@ static void testFindCRL(void)
      * match cert's issuer, but verisignCRL does not, so the expected count
      * is 0.
      */
+    todo_wine {
     ok(count == 3 || broken(count == 0 /* NT4, Win9x */),
      "expected 3 matching CRLs, got %d\n", count);
     /* Only v1CRLWithIssuerAndEntry and v2CRLWithIssuingDistPoint contain
@@ -537,6 +538,7 @@ static void testFindCRL(void)
      */
     ok(revoked_count == 2 || broken(revoked_count == 0 /* NT4, Win9x */),
      "expected 2 matching CRL entries, got %d\n", revoked_count);
+    }
 
     CertFreeCertificateContext(cert);
 
@@ -1000,11 +1002,9 @@ static void testIsValidCRLForCert(void)
      sizeof(v2CRLWithIssuingDistPoint));
     ok(crl != NULL, "CertCreateCRLContext failed: %08x\n", GetLastError());
 
-    todo_wine {
     ret = pCertIsValidCRLForCertificate(cert1, crl, 0, NULL);
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
-    }
     ret = pCertIsValidCRLForCertificate(cert2, crl, 0, NULL);
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());

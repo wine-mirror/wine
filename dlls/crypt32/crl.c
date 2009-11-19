@@ -649,15 +649,11 @@ BOOL WINAPI CertIsValidCRLForCertificate(PCCERT_CONTEXT pCert,
             }
             else
             {
-                /* no CRL dist points extension in cert, compare CRL's issuer
-                 * to cert's issuer.
+                /* no CRL dist points extension in cert, can't match the CRL
+                 * (which has an issuing dist point extension)
                  */
-                if (!CertCompareCertificateName(pCrl->dwCertEncodingType,
-                 &pCrl->pCrlInfo->Issuer, &pCert->pCertInfo->Issuer))
-                {
-                    ret = FALSE;
-                    SetLastError(CRYPT_E_NO_MATCH);
-                }
+                ret = FALSE;
+                SetLastError(CRYPT_E_NO_MATCH);
             }
             LocalFree(idp);
         }
