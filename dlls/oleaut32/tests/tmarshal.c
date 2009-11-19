@@ -915,6 +915,7 @@ static ITypeInfo *NonOleAutomation_GetTypeInfo(void)
         ITypeInfo *pTypeInfo;
         hr = ITypeLib_GetTypeInfoOfGuid(pTypeLib, &IID_INonOleAutomation, &pTypeInfo);
         ok_ole_success(hr, ITypeLib_GetTypeInfoOfGuid);
+        ITypeLib_Release(pTypeLib);
         return pTypeInfo;
     }
     return NULL;
@@ -1260,10 +1261,8 @@ static void test_typelibmarshal(void)
     dispparams.cArgs = 1;
     dispparams.rgvarg = vararg;
     VariantInit(&varresult);
-#if 0 /* NULL unknown not currently marshaled correctly */
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_NAME, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_PROPERTYPUT, &dispparams, &varresult, &excepinfo, NULL);
     ok(hr == DISP_E_TYPEMISMATCH, "IDispatch_Invoke should have returned DISP_E_TYPEMISMATCH instead of 0x%08x\n", hr);
-#endif
     VariantClear(&varresult);
 
     /* tests bad param type */
