@@ -45,6 +45,8 @@ static BOOL     (WINAPI * pGetVolumePathNameW)(LPCWSTR, LPWSTR, DWORD);
 static NTSTATUS (WINAPI *pRtlFreeUnicodeString)( PUNICODE_STRING );
 static VOID     (WINAPI *pRtlInitUnicodeString)( PUNICODE_STRING, LPCWSTR );
 static BOOL     (WINAPI *pRtlDosPathNameToNtPathName_U)( LPCWSTR, PUNICODE_STRING, PWSTR*, CURDIR* );
+static NTSTATUS (WINAPI *pRtlWow64EnableFsRedirectionEx)( ULONG, ULONG * );
+
 static NTSTATUS (WINAPI *pNtCreateMailslotFile)( PHANDLE, ULONG, POBJECT_ATTRIBUTES, PIO_STATUS_BLOCK,
                                        ULONG, ULONG, ULONG, PLARGE_INTEGER );
 static NTSTATUS (WINAPI *pNtDeleteFile)(POBJECT_ATTRIBUTES ObjectAttributes);
@@ -945,6 +947,7 @@ static void test_file_name_information(void)
 {
     WCHAR *file_name, *volume_prefix, *expected;
     FILE_NAME_INFORMATION *info;
+    ULONG old_redir, tmp;
     UINT file_name_size;
     IO_STATUS_BLOCK io;
     UINT info_size;
@@ -980,9 +983,11 @@ static void test_file_name_information(void)
     info_size = sizeof(*info) + (file_name_size * sizeof(WCHAR));
     info = HeapAlloc( GetProcessHeap(), 0, info_size );
 
+    if (pRtlWow64EnableFsRedirectionEx) pRtlWow64EnableFsRedirectionEx( TRUE, &old_redir );
     h = CreateFileW( file_name, GENERIC_READ,
             FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
             NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 );
+    if (pRtlWow64EnableFsRedirectionEx) pRtlWow64EnableFsRedirectionEx( old_redir, &tmp );
     ok(h != INVALID_HANDLE_VALUE, "Failed to open file.\n");
 
     hr = pNtQueryInformationFile( h, &io, info, sizeof(*info) - 1, FileNameInformation );
@@ -1039,6 +1044,7 @@ START_TEST(file)
     pRtlFreeUnicodeString   = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
     pRtlInitUnicodeString   = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
     pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
+    pRtlWow64EnableFsRedirectionEx = (void *)GetProcAddress(hntdll, "RtlWow64EnableFsRedirectionEx");
     pNtCreateMailslotFile   = (void *)GetProcAddress(hntdll, "NtCreateMailslotFile");
     pNtDeleteFile           = (void *)GetProcAddress(hntdll, "NtDeleteFile");
     pNtReadFile             = (void *)GetProcAddress(hntdll, "NtReadFile");
