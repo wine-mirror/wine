@@ -162,6 +162,15 @@ static const CHAR szTypeValueXML[] =
 "   <time dt:dt=\"time\">13:57:12.31321</time>\n"
 "   <timetz dt:dt=\"time.tz\">23:21:01.13+03:21</timetz>\n"
 "   <i1 dt:dt=\"i1\">-13</i1>\n"
+"   <i2 dt:dt=\"i2\">31915</i2>\n"
+"   <i4 dt:dt=\"i4\">-312232</i4>\n"
+"   <ui1 dt:dt=\"ui1\">123</ui1>\n"
+"   <ui2 dt:dt=\"ui2\">48282</ui2>\n"
+"   <ui4 dt:dt=\"ui4\">949281</ui4>\n"
+"   <r4 dt:dt=\"r4\">213124.0</r4>\n"
+"   <r8 dt:dt=\"r8\">0.412</r8>\n"
+"   <float dt:dt=\"float\">41221.421</float>\n"
+"   <uuid dt:dt=\"uuid\">333C7BC4-460F-11D0-BC04-0080C7055a83</uuid>\n"
 "</root>";
 
 static const CHAR szBasicTransformSSXMLPart1[] =
@@ -4161,6 +4170,123 @@ static void test_NodeTypeValue(void)
             ok(V_VT(&v) == VT_I1, "incorrect type\n");
             ok(V_I1(&v) == -13, "incorrect value\n");
             VariantClear( &v );
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/i2"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_I2, "incorrect type\n");
+            ok(V_I2(&v) == 31915, "incorrect value\n");
+            VariantClear( &v );
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/i4"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_I4, "incorrect type\n");
+            ok(V_I4(&v) == -312232, "incorrect value\n");
+            VariantClear(&v);
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/ui1"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_UI1, "incorrect type\n");
+            ok(V_UI1(&v) == 123, "incorrect value\n");
+            VariantClear(&v);
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/ui2"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_UI2, "incorrect type\n");
+            ok(V_UI2(&v) == 48282, "incorrect value\n");
+            VariantClear(&v);
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/ui4"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_UI4, "incorrect type\n");
+            ok(V_UI4(&v) == 949281, "incorrect value\n");
+            VariantClear(&v);
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/r4"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_R4, "incorrect type\n");
+            double_eq(213124.0, V_R4(&v));
+            VariantClear(&v);
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/r8"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_R8, "incorrect type\n");
+            double_eq(0.412, V_R8(&v));
+            VariantClear(&v);
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/float"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_R8, "incorrect type\n");
+            double_eq(41221.421, V_R8(&v));
+            VariantClear(&v);
+
+            IXMLDOMNode_Release(pNode);
+        }
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/uuid"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_BSTR, "incorrect type\n");
+            ok(!lstrcmpW(V_BSTR(&v), _bstr_("333C7BC4-460F-11D0-BC04-0080C7055a83")), "incorrect value\n");
+            VariantClear(&v);
 
             IXMLDOMNode_Release(pNode);
         }

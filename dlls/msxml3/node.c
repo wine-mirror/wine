@@ -949,7 +949,7 @@ static HRESULT WINAPI xmlnode_get_dataType(IXMLDOMNode*, VARIANT*);
 inline HRESULT VARIANT_from_xmlChar(xmlChar *str, VARIANT *v, BSTR type)
 {
     if(!type || !lstrcmpiW(type, szString) ||
-            !lstrcmpiW(type, szNumber))
+            !lstrcmpiW(type, szNumber) || !lstrcmpiW(type, szUUID))
     {
         V_VT(v) = VT_BSTR;
         V_BSTR(v) = bstr_from_xmlChar(str);
@@ -1020,7 +1020,7 @@ inline HRESULT VARIANT_from_xmlChar(xmlChar *str, VARIANT *v, BSTR type)
         VARIANT src;
         HRESULT hres;
 
-        if(!lstrcmpiW(type, szInt))
+        if(!lstrcmpiW(type, szInt) || !lstrcmpiW(type, szI4))
             V_VT(v) = VT_I4;
         else if(!lstrcmpiW(type, szFixed))
             V_VT(v) = VT_CY;
@@ -1028,6 +1028,18 @@ inline HRESULT VARIANT_from_xmlChar(xmlChar *str, VARIANT *v, BSTR type)
             V_VT(v) = VT_BOOL;
         else if(!lstrcmpiW(type, szI1))
             V_VT(v) = VT_I1;
+        else if(!lstrcmpiW(type, szI2))
+            V_VT(v) = VT_I2;
+        else if(!lstrcmpiW(type, szIU1))
+            V_VT(v) = VT_UI1;
+        else if(!lstrcmpiW(type, szIU2))
+            V_VT(v) = VT_UI2;
+        else if(!lstrcmpiW(type, szIU4))
+            V_VT(v) = VT_UI4;
+        else if(!lstrcmpiW(type, szR4))
+            V_VT(v) = VT_R4;
+        else if(!lstrcmpiW(type, szR8) || !lstrcmpiW(type, szFloat))
+            V_VT(v) = VT_R8;
         else
         {
             FIXME("Type handling not yet implemented\n");
