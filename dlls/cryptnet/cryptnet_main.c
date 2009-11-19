@@ -1246,20 +1246,24 @@ static BOOL WINAPI CRYPT_CreateAny(LPCSTR pszObjectOid,
                         if (!CertAddCertificateContextToStore(store,
                          context, CERT_STORE_ADD_ALWAYS, NULL))
                             ret = FALSE;
+                        CertFreeCertificateContext(context);
                         break;
                     case CERT_QUERY_CONTENT_CRL:
                         if (!CertAddCRLContextToStore(store,
                          context, CERT_STORE_ADD_ALWAYS, NULL))
                              ret = FALSE;
+                        CertFreeCRLContext(context);
                         break;
                     case CERT_QUERY_CONTENT_CTL:
                         if (!CertAddCTLContextToStore(store,
                          context, CERT_STORE_ADD_ALWAYS, NULL))
                              ret = FALSE;
+                        CertFreeCTLContext(context);
                         break;
                     default:
                         CertAddStoreToCollection(store, contextStore, 0, 0);
                     }
+                    CertCloseStore(contextStore, 0);
                 }
                 else
                     ret = FALSE;
