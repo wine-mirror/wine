@@ -376,10 +376,13 @@ static void test_retrieveObjectByUrl(void)
         skip("no usable CertificateContext\n");
         return;
     }
+    CertFreeCertificateContext(cert);
 
     aux.pLastSyncTime = &ft;
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE, 0, 0,
      (void **)&cert, NULL, NULL, NULL, &aux);
+    ok(ret, "CryptRetrieveObjectByUrlA failed: %08x\n", GetLastError());
+    CertFreeCertificateContext(cert);
     ok(ft.dwLowDateTime || ft.dwHighDateTime,
      "Expected last sync time to be set\n");
     DeleteFileA(tmpfile);
