@@ -278,7 +278,7 @@ HANDLE thread_init(void)
     teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
 
-    thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
+    thread_data = (struct ntdll_thread_data *)teb->SpareBytes1;
     thread_data->request_fd = -1;
     thread_data->reply_fd   = -1;
     thread_data->wait_fd[0] = -1;
@@ -389,7 +389,7 @@ void exit_thread( int status )
 
     if ((teb = interlocked_xchg_ptr( &prev_teb, NtCurrentTeb() )))
     {
-        struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
+        struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SpareBytes1;
 
         pthread_join( thread_data->pthread_id, NULL );
         signal_free_thread( teb );
@@ -411,7 +411,7 @@ void exit_thread( int status )
 static void start_thread( struct startup_info *info )
 {
     TEB *teb = info->teb;
-    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
+    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SpareBytes1;
     PRTL_THREAD_START_ROUTINE func = info->entry_point;
     void *arg = info->entry_arg;
     struct debug_info debug_info;
@@ -522,7 +522,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     info->entry_point = start;
     info->entry_arg   = param;
 
-    thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
+    thread_data = (struct ntdll_thread_data *)teb->SpareBytes1;
     thread_data->request_fd  = request_pipe[1];
     thread_data->reply_fd    = -1;
     thread_data->wait_fd[0]  = -1;
@@ -704,10 +704,12 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     self = (handle == GetCurrentThread());
     if (self && (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386)))
     {
-        struct ntdll_thread_regs * const regs = ntdll_get_thread_regs();
-        self = (regs->dr0 == context->Dr0 && regs->dr1 == context->Dr1 &&
-                regs->dr2 == context->Dr2 && regs->dr3 == context->Dr3 &&
-                regs->dr6 == context->Dr6 && regs->dr7 == context->Dr7);
+        self = (ntdll_get_thread_data()->dr0 == context->Dr0 &&
+                ntdll_get_thread_data()->dr1 == context->Dr1 &&
+                ntdll_get_thread_data()->dr2 == context->Dr2 &&
+                ntdll_get_thread_data()->dr3 == context->Dr3 &&
+                ntdll_get_thread_data()->dr6 == context->Dr6 &&
+                ntdll_get_thread_data()->dr7 == context->Dr7);
     }
 #endif
 
@@ -862,13 +864,12 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         /* update the cached version of the debug registers */
         if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386))
         {
-            struct ntdll_thread_regs * const regs = ntdll_get_thread_regs();
-            regs->dr0 = context->Dr0;
-            regs->dr1 = context->Dr1;
-            regs->dr2 = context->Dr2;
-            regs->dr3 = context->Dr3;
-            regs->dr6 = context->Dr6;
-            regs->dr7 = context->Dr7;
+            ntdll_get_thread_data()->dr0 = context->Dr0;
+            ntdll_get_thread_data()->dr1 = context->Dr1;
+            ntdll_get_thread_data()->dr2 = context->Dr2;
+            ntdll_get_thread_data()->dr3 = context->Dr3;
+            ntdll_get_thread_data()->dr6 = context->Dr6;
+            ntdll_get_thread_data()->dr7 = context->Dr7;
         }
 #endif
     }
