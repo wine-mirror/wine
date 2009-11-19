@@ -1290,12 +1290,13 @@ static void test_revert(void)
 
 static void test_parent_free(void)
 {
-    IStorage *stg = NULL, *stg2 = NULL;
+    IStorage *stg = NULL, *stg2 = NULL, *stg3 = NULL;
     HRESULT r;
     IStream *stm = NULL;
     static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
     static const WCHAR stgname[] = { 'P','E','R','M','S','T','G',0 };
     ULONG ref;
+    STATSTG statstg;
 
     DeleteFileA(filenameA);
 
@@ -1304,7 +1305,7 @@ static void test_parent_free(void)
                             STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
     ok(r==S_OK, "StgCreateDocfile failed\n");
 
-    /* commit a new storage */
+    /* create a new storage */
     r = IStorage_CreateStorage(stg, stgname, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stg2);
     ok(r==S_OK, "IStorage->CreateStorage failed, hr=%08x\n", r);
 
@@ -1314,15 +1315,32 @@ static void test_parent_free(void)
         r = IStorage_CreateStream(stg2, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
         ok(r==S_OK, "IStorage->CreateStream failed\n");
 
+        if (r == S_OK)
+        {
+            /* create a storage inside the new storage */
+            r = IStorage_CreateStorage(stg2, stgname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stg3 );
+            ok(r==S_OK, "IStorage->CreateStorage failed\n");
+        }
+
+        /* free the parent */
         ref = IStorage_Release(stg2);
         ok(ref == 0, "IStorage still has %u references\n", ref);
 
+        /* child objects are invalid */
         if (r == S_OK)
         {
             r = IStream_Write(stm, "this should fail\n", 17, NULL);
             ok(r==STG_E_REVERTED, "IStream->Write sould fail, hr=%x\n", r);
 
             IStream_Release(stm);
+
+            r = IStorage_Stat(stg3, &statstg, STATFLAG_NONAME);
+            todo_wine ok(r==STG_E_REVERTED, "IStorage_Stat should fail %08x\n", r);
+
+            r = IStorage_SetStateBits(stg3, 1, 1);
+            todo_wine ok(r==STG_E_REVERTED, "IStorage_Stat should fail %08x\n", r);
+
+            IStorage_Release(stg3);
         }
     }
 
