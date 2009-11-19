@@ -19,10 +19,12 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
 #include "wincrypt.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 #include "crypt32_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
@@ -484,11 +486,155 @@ BOOL WINAPI CertSetCRLContextProperty(PCCRL_CONTEXT pCRLContext,
     return ret;
 }
 
+static BOOL compare_dist_point_name(const CRL_DIST_POINT_NAME *name1,
+ const CRL_DIST_POINT_NAME *name2)
+{
+    BOOL match;
+
+    if (name1->dwDistPointNameChoice == name2->dwDistPointNameChoice)
+    {
+        match = TRUE;
+        if (name1->dwDistPointNameChoice == CRL_DIST_POINT_FULL_NAME)
+        {
+            if (name1->u.FullName.cAltEntry == name2->u.FullName.cAltEntry)
+            {
+                DWORD i;
+
+                for (i = 0; match && i < name1->u.FullName.cAltEntry; i++)
+                {
+                    const CERT_ALT_NAME_ENTRY *entry1 =
+                     &name1->u.FullName.rgAltEntry[i];
+                    const CERT_ALT_NAME_ENTRY *entry2 =
+                     &name2->u.FullName.rgAltEntry[i];
+
+                    if (entry1->dwAltNameChoice == entry2->dwAltNameChoice)
+                    {
+                        switch (entry1->dwAltNameChoice)
+                        {
+                        case CERT_ALT_NAME_URL:
+                            match = !strcmpiW(entry1->u.pwszURL,
+                             entry2->u.pwszURL);
+                            break;
+                        case CERT_ALT_NAME_DIRECTORY_NAME:
+                            match = (entry1->u.DirectoryName.cbData ==
+                             entry2->u.DirectoryName.cbData) &&
+                             !memcmp(entry1->u.DirectoryName.pbData,
+                             entry2->u.DirectoryName.pbData,
+                             entry1->u.DirectoryName.cbData);
+                            break;
+                        default:
+                            FIXME("unimplemented for type %d\n",
+                             entry1->dwAltNameChoice);
+                            match = FALSE;
+                        }
+                    }
+                    else
+                        match = FALSE;
+                }
+            }
+            else
+                match = FALSE;
+        }
+    }
+    else
+        match = FALSE;
+    return match;
+}
+
+static BOOL match_dist_point_with_issuing_dist_point(
+ const CRL_DIST_POINT *distPoint, const CRL_ISSUING_DIST_POINT *idp)
+{
+    BOOL match;
+
+    /* While RFC 5280, section 4.2.1.13 recommends against segmenting
+     * CRL distribution points by reasons, it doesn't preclude doing so.
+     * "This profile RECOMMENDS against segmenting CRLs by reason code."
+     * If the issuing distribution point for this CRL is only valid for
+     * some reasons, only match if the reasons covered also match the
+     * reasons in the CRL distribution point.
+     */
+    if (idp->OnlySomeReasonFlags.cbData)
+    {
+        if (idp->OnlySomeReasonFlags.cbData == distPoint->ReasonFlags.cbData)
+        {
+            DWORD i;
+
+            match = TRUE;
+            for (i = 0; match && i < distPoint->ReasonFlags.cbData; i++)
+                if (idp->OnlySomeReasonFlags.pbData[i] !=
+                 distPoint->ReasonFlags.pbData[i])
+                    match = FALSE;
+        }
+        else
+            match = FALSE;
+    }
+    else
+        match = TRUE;
+    if (match)
+        match = compare_dist_point_name(&idp->DistPointName,
+         &distPoint->DistPointName);
+    return match;
+}
+
 BOOL WINAPI CertIsValidCRLForCertificate(PCCERT_CONTEXT pCert,
  PCCRL_CONTEXT pCrl, DWORD dwFlags, void *pvReserved)
 {
+    PCERT_EXTENSION ext;
+    BOOL ret;
+
     TRACE("(%p, %p, %08x, %p)\n", pCert, pCrl, dwFlags, pvReserved);
-    return TRUE;
+
+    if (!pCert)
+        return TRUE;
+
+    if ((ext = CertFindExtension(szOID_ISSUING_DIST_POINT,
+     pCrl->pCrlInfo->cExtension, pCrl->pCrlInfo->rgExtension)))
+    {
+        CRL_ISSUING_DIST_POINT *idp;
+        DWORD size;
+
+        if ((ret = CryptDecodeObjectEx(pCrl->dwCertEncodingType,
+         X509_ISSUING_DIST_POINT, ext->Value.pbData, ext->Value.cbData,
+         CRYPT_DECODE_ALLOC_FLAG, NULL, &idp, &size)))
+        {
+            if ((ext = CertFindExtension(szOID_CRL_DIST_POINTS,
+             pCert->pCertInfo->cExtension, pCert->pCertInfo->rgExtension)))
+            {
+                CRL_DIST_POINTS_INFO *distPoints;
+
+                if ((ret = CryptDecodeObjectEx(pCert->dwCertEncodingType,
+                 X509_CRL_DIST_POINTS, ext->Value.pbData, ext->Value.cbData,
+                 CRYPT_DECODE_ALLOC_FLAG, NULL, &distPoints, &size)))
+                {
+                    DWORD i;
+
+                    ret = FALSE;
+                    for (i = 0; !ret && i < distPoints->cDistPoint; i++)
+                        ret = match_dist_point_with_issuing_dist_point(
+                         &distPoints->rgDistPoint[i], idp);
+                    if (!ret)
+                        SetLastError(CRYPT_E_NO_MATCH);
+                    LocalFree(distPoints);
+                }
+            }
+            else
+            {
+                /* no CRL dist points extension in cert, compare CRL's issuer
+                 * to cert's issuer.
+                 */
+                if (!CertCompareCertificateName(pCrl->dwCertEncodingType,
+                 &pCrl->pCrlInfo->Issuer, &pCert->pCertInfo->Issuer))
+                {
+                    ret = FALSE;
+                    SetLastError(CRYPT_E_NO_MATCH);
+                }
+            }
+            LocalFree(idp);
+        }
+    }
+    else
+        ret = TRUE;
+    return ret;
 }
 
 static PCRL_ENTRY CRYPT_FindCertificateInCRL(PCERT_INFO cert, const CRL_INFO *crl)

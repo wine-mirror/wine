@@ -755,10 +755,10 @@ static void testIsValidCRLForCert(void)
     ret = pCertIsValidCRLForCertificate(cert1, crl, 0, NULL);
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
+    }
     ret = pCertIsValidCRLForCertificate(cert2, crl, 0, NULL);
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
-    }
 
     /* With a CRL_ISSUING_DIST_POINT in the CRL, it matches the cert containing
      * a CRL_DIST_POINTS_INFO extension.
