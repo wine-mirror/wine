@@ -379,6 +379,18 @@ static void testFindCRL(void)
     if (context)
         CertFreeCRLContext(context);
 
+    /* Try various find flags */
+    context = pCertFindCRLInStore(store, 0, CRL_FIND_ISSUED_BY_SIGNATURE_FLAG,
+     CRL_FIND_ISSUED_BY, cert, NULL);
+    todo_wine
+    ok(!context, "unexpected context\n");
+    /* The CRL doesn't have an AKI extension, so it matches any cert */
+    context = pCertFindCRLInStore(store, 0, CRL_FIND_ISSUED_BY_AKI_FLAG,
+     CRL_FIND_ISSUED_BY, cert, NULL);
+    ok(context != NULL, "Expected a context\n");
+    if (context)
+        CertFreeCRLContext(context);
+
     if (0)
     {
         /* Crash or return NULL/STATUS_ACCESS_VIOLATION */
