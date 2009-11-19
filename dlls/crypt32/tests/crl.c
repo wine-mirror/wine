@@ -530,7 +530,6 @@ static void testFindCRL(void)
      * match cert's issuer, but verisignCRL does not, so the expected count
      * is 0.
      */
-    todo_wine {
     ok(count == 3 || broken(count == 0 /* NT4, Win9x */),
      "expected 3 matching CRLs, got %d\n", count);
     /* Only v1CRLWithIssuerAndEntry and v2CRLWithIssuingDistPoint contain
@@ -538,7 +537,6 @@ static void testFindCRL(void)
      */
     ok(revoked_count == 2 || broken(revoked_count == 0 /* NT4, Win9x */),
      "expected 2 matching CRL entries, got %d\n", revoked_count);
-    }
 
     CertFreeCertificateContext(cert);
 

@@ -177,9 +177,6 @@ static BOOL compare_crl_issued_for(PCCRL_CONTEXT pCrlContext, DWORD dwType,
 
     ret = CertCompareCertificateName(para->pIssuerCert->dwCertEncodingType,
      &para->pIssuerCert->pCertInfo->Issuer, &pCrlContext->pCrlInfo->Issuer);
-    if (ret)
-        ret = CertIsValidCRLForCertificate(para->pSubjectCert, pCrlContext,
-         0, NULL);
     return ret;
 }
 
