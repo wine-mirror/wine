@@ -1936,6 +1936,16 @@ static HRESULT deleteStorageContents(
   STATSTG      currentElement;
   HRESULT      hr;
   HRESULT      destroyHr = S_OK;
+  StorageInternalImpl *stg, *stg2;
+
+  /* Invalidate any open storage objects. */
+  LIST_FOR_EACH_ENTRY_SAFE(stg, stg2, &parentStorage->storageHead, StorageInternalImpl, ParentListEntry)
+  {
+    if (stg->base.storageDirEntry == indexToDelete)
+    {
+      StorageInternalImpl_Invalidate(stg);
+    }
+  }
 
   /*
    * Open the storage and enumerate it

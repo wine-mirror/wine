@@ -1076,19 +1076,15 @@ static void test_substorage_share(void)
         ok(r==STG_E_ACCESSDENIED, "IStorage->RenameElement should fail %08x\n", r);
         if (SUCCEEDED(r)) IStorage_RenameElement(stg, othername, stgname);
 
-#if 0
-        /* This crashes on Wine. */
-
         /* destroying an object while it's open invalidates it */
         r = IStorage_DestroyElement(stg, stgname);
         ok(r==S_OK, "IStorage->DestroyElement failed, hr=%08x\n", r);
 
         r = IStorage_CreateStream(stg2, stmname, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
-        todo_wine ok(r==STG_E_REVERTED, "IStorage->CreateStream failed, hr=%08x\n", r);
+        ok(r==STG_E_REVERTED, "IStorage->CreateStream failed, hr=%08x\n", r);
 
         if (r == S_OK)
             IStorage_Release(stm);
-#endif
 
         IStorage_Release(stg2);
     }
