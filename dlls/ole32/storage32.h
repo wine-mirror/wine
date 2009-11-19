@@ -202,6 +202,11 @@ struct StorageBaseImpl
   struct list strmHead;
 
   /*
+   * Storage tracking list
+   */
+  struct list storageHead;
+
+  /*
    * Reference count of this object
    */
   LONG ref;

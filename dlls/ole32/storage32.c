@@ -77,9 +77,11 @@ static const char rootEntryName[] = "Root Entry";
 struct StorageInternalImpl
 {
   struct StorageBaseImpl base;
+
   /*
-   * There is no specific data for this class.
+   * Entry in the parent's stream tracking list
    */
+  struct list ParentListEntry;
 };
 typedef struct StorageInternalImpl StorageInternalImpl;
 
@@ -111,6 +113,7 @@ static BOOL StorageImpl_ReadDWordFromBigBlock( StorageImpl*  This,
     ULONG blockIndex, ULONG offset, DWORD* value);
 
 static BOOL StorageBaseImpl_IsStreamOpen(StorageBaseImpl * stg, DirRef streamEntry);
+static void StorageInternalImpl_Invalidate( StorageInternalImpl *This );
 
 /* OLESTREAM memory structure to use for Get and Put Routines */
 /* Used for OleConvertIStorageToOLESTREAM and OleConvertOLESTREAMToIStorage */
@@ -428,6 +431,12 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
     goto end;
   }
 
+  if (!This->ancestorStorage)
+  {
+    res = STG_E_REVERTED;
+    goto end;
+  }
+
   /*
    * Check that we're compatible with the parent's storage mode, but
    * only if we are not in transacted mode
@@ -544,6 +553,9 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
     goto end;
   }
 
+  if (!This->ancestorStorage)
+    return STG_E_REVERTED;
+
   /*
    * Check that we're compatible with the parent's storage mode,
    * but only if we are not transacted
@@ -577,6 +589,8 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
       *ppstg = (IStorage*)newStorage;
 
       StorageBaseImpl_AddRef(*ppstg);
+
+      list_add_tail(&This->storageHead, &newStorage->ParentListEntry);
 
       res = S_OK;
       goto end;
@@ -617,6 +631,9 @@ static HRESULT WINAPI StorageBaseImpl_EnumElements(
   if ( (This==0) || (ppenum==0))
     return E_INVALIDARG;
 
+  if (!This->ancestorStorage)
+    return STG_E_REVERTED;
+
   newEnum = IEnumSTATSTGImpl_Construct(
               This->ancestorStorage,
               This->storageDirEntry);
@@ -656,6 +673,12 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
   if ( (This==0) || (pstatstg==0))
   {
     res = E_INVALIDARG;
+    goto end;
+  }
+
+  if (!This->ancestorStorage)
+  {
+    res = STG_E_REVERTED;
     goto end;
   }
 
@@ -707,6 +730,9 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
 
   TRACE("(%p, %s, %s)\n",
 	iface, debugstr_w(pwcsOldName), debugstr_w(pwcsNewName));
+
+  if (!This->ancestorStorage)
+    return STG_E_REVERTED;
 
   currentEntryRef = findElement(This->ancestorStorage,
                                    This->storageDirEntry,
@@ -800,6 +826,9 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
 
   if (STGM_SHARE_MODE(grfMode) != STGM_SHARE_EXCLUSIVE) 
     return STG_E_INVALIDFLAG;
+
+  if (!This->ancestorStorage)
+    return STG_E_REVERTED;
 
   /*
    * As documented.
@@ -929,6 +958,9 @@ static HRESULT WINAPI StorageBaseImpl_SetClass(
 
   TRACE("(%p, %p)\n", iface, clsid);
 
+  if (!This->ancestorStorage)
+    return STG_E_REVERTED;
+
   success = StorageImpl_ReadDirEntry(This->ancestorStorage,
                                        This->storageDirEntry,
                                        &currentEntry);
@@ -991,6 +1023,9 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
     WARN("bad grfMode: 0x%x\n", grfMode);
     return STG_E_INVALIDFLAG;
   }
+
+  if (!This->ancestorStorage)
+    return STG_E_REVERTED;
 
   /*
    * Check that we're compatible with the parent's storage mode
@@ -1731,6 +1766,9 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
   if (pwcsName==NULL)
     return STG_E_INVALIDPOINTER;
 
+  if (!This->ancestorStorage)
+    return STG_E_REVERTED;
+
   if ( STGM_ACCESS_MODE( This->openFlags ) == STGM_READ )
     return STG_E_ACCESSDENIED;
 
@@ -1841,12 +1879,18 @@ static void StorageBaseImpl_DeleteAll(StorageBaseImpl * stg)
 {
   struct list *cur, *cur2;
   StgStreamImpl *strm=NULL;
+  StorageInternalImpl *childstg=NULL;
 
   LIST_FOR_EACH_SAFE(cur, cur2, &stg->strmHead) {
     strm = LIST_ENTRY(cur,StgStreamImpl,StrmListEntry);
-    TRACE("Streams deleted (stg=%p strm=%p next=%p prev=%p)\n", stg,strm,cur->next,cur->prev);
+    TRACE("Streams invalidated (stg=%p strm=%p next=%p prev=%p)\n", stg,strm,cur->next,cur->prev);
     strm->parentStorage = NULL;
     list_remove(cur);
+  }
+
+  LIST_FOR_EACH_SAFE(cur, cur2, &stg->storageHead) {
+    childstg = LIST_ENTRY(cur,StorageInternalImpl,ParentListEntry);
+    StorageInternalImpl_Invalidate( childstg );
   }
 }
 
@@ -2120,6 +2164,10 @@ static HRESULT WINAPI StorageBaseImpl_SetStateBits(
   DWORD         grfMask)     /* [in] */
 {
   StorageBaseImpl* const This = (StorageBaseImpl*)iface;
+
+  if (!This->ancestorStorage)
+    return STG_E_REVERTED;
+
   This->stateBits = (This->stateBits & ~grfMask) | (grfStateBits & grfMask);
   return S_OK;
 }
@@ -2169,6 +2217,8 @@ static HRESULT StorageImpl_Construct(
   memset(This, 0, sizeof(StorageImpl));
 
   list_init(&This->base.strmHead);
+
+  list_init(&This->base.storageHead);
 
   This->base.lpVtbl = &Storage32Impl_Vtbl;
   This->base.pssVtbl = &IPropertySetStorage_Vtbl;
@@ -3512,11 +3562,25 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
     return SmallBlockChainStream_Construct(This, NULL, streamEntryRef);
 }
 
+static void StorageInternalImpl_Invalidate( StorageInternalImpl *This )
+{
+  if (This->base.ancestorStorage)
+  {
+    TRACE("Storage invalidated (stg=%p)\n", This);
+
+    This->base.ancestorStorage = NULL;
+
+    StorageBaseImpl_DeleteAll(&This->base);
+
+    list_remove(&This->ParentListEntry);
+  }
+}
+
 static void StorageInternalImpl_Destroy( StorageBaseImpl *iface)
 {
   StorageInternalImpl* This = (StorageInternalImpl*) iface;
 
-  StorageBaseImpl_DeleteAll(&This->base);
+  StorageInternalImpl_Invalidate(This);
 
   HeapFree(GetProcessHeap(), 0, This);
 }
@@ -3975,10 +4039,9 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
 
   if (newStorage!=0)
   {
-    /*
-     * Initialize the stream list
-     */
     list_init(&newStorage->base.strmHead);
+
+    list_init(&newStorage->base.storageHead);
 
     /*
      * Initialize the virtual function table.

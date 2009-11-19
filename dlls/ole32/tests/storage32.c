@@ -1335,10 +1335,10 @@ static void test_parent_free(void)
             IStream_Release(stm);
 
             r = IStorage_Stat(stg3, &statstg, STATFLAG_NONAME);
-            todo_wine ok(r==STG_E_REVERTED, "IStorage_Stat should fail %08x\n", r);
+            ok(r==STG_E_REVERTED, "IStorage_Stat should fail %08x\n", r);
 
             r = IStorage_SetStateBits(stg3, 1, 1);
-            todo_wine ok(r==STG_E_REVERTED, "IStorage_Stat should fail %08x\n", r);
+            ok(r==STG_E_REVERTED, "IStorage_Stat should fail %08x\n", r);
 
             IStorage_Release(stg3);
         }
