@@ -1048,7 +1048,7 @@ typedef struct tagITypeInfoImpl
     const ITypeInfo2Vtbl *lpVtbl;
     const ITypeCompVtbl  *lpVtblTypeComp;
     LONG ref;
-    BOOL no_free_data; /* don't free data structures */
+    BOOL not_attached_to_typelib;
     TYPEATTR TypeAttr ;         /* _lots_ of type information. */
     ITypeLibImpl * pTypeLib;        /* back pointer to typelib */
     int index;                  /* index in this typelib; */
@@ -1085,6 +1085,7 @@ static const ITypeInfo2Vtbl tinfvt;
 static const ITypeCompVtbl  tcompvt;
 
 static ITypeInfo2 * ITypeInfo_Constructor(void);
+static void ITypeInfo_fnDestroy(ITypeInfoImpl *This);
 
 typedef struct tagTLBContext
 {
@@ -4089,6 +4090,7 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
       TLBRefType *ref_type;
       void *cursor2;
       int i;
+      ITypeInfoImpl *pTI, *pTINext;
 
       /* remove cache entry */
       if(This->path)
@@ -4145,8 +4147,11 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
           TLB_Free(ref_type);
       }
 
-      if (This->pTypeInfo) /* can be NULL */
-      	  ITypeInfo_Release((ITypeInfo*) This->pTypeInfo);
+      for (pTI = This->pTypeInfo; pTI; pTI = pTINext)
+      {
+          pTINext = pTI->next;
+          ITypeInfo_fnDestroy(pTI);
+      }
       HeapFree(GetProcessHeap(),0,This);
       return 0;
     }
@@ -4887,7 +4892,7 @@ static ITypeInfo2 * ITypeInfo_Constructor(void)
     {
       pTypeInfoImpl->lpVtbl = &tinfvt;
       pTypeInfoImpl->lpVtblTypeComp = &tcompvt;
-      pTypeInfoImpl->ref=1;
+      pTypeInfoImpl->ref = 0;
       pTypeInfoImpl->hreftype = -1;
       pTypeInfoImpl->TypeAttr.memidConstructor = MEMBERID_NIL;
       pTypeInfoImpl->TypeAttr.memidDestructor = MEMBERID_NIL;
@@ -4929,10 +4934,76 @@ static ULONG WINAPI ITypeInfo_fnAddRef( ITypeInfo2 *iface)
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    ITypeLib2_AddRef((ITypeLib2*)This->pTypeLib);
-
     TRACE("(%p)->ref is %u\n",This, ref);
+
+    if (ref == 1 /* incremented from 0 */)
+        ITypeLib2_AddRef((ITypeLib2*)This->pTypeLib);
+
     return ref;
+}
+
+static void ITypeInfo_fnDestroy(ITypeInfoImpl *This)
+{
+    TLBFuncDesc *pFInfo, *pFInfoNext;
+    TLBVarDesc *pVInfo, *pVInfoNext;
+    TLBImplType *pImpl, *pImplNext;
+
+    TRACE("destroying ITypeInfo(%p)\n",This);
+
+    SysFreeString(This->Name);
+    This->Name = NULL;
+
+    SysFreeString(This->DocString);
+    This->DocString = NULL;
+
+    SysFreeString(This->DllName);
+    This->DllName = NULL;
+
+    for (pFInfo = This->funclist; pFInfo; pFInfo = pFInfoNext)
+    {
+        INT i;
+        for(i = 0;i < pFInfo->funcdesc.cParams; i++)
+        {
+            ELEMDESC *elemdesc = &pFInfo->funcdesc.lprgelemdescParam[i];
+            if (elemdesc->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
+            {
+                VariantClear(&elemdesc->u.paramdesc.pparamdescex->varDefaultValue);
+                TLB_Free(elemdesc->u.paramdesc.pparamdescex);
+            }
+            SysFreeString(pFInfo->pParamDesc[i].Name);
+        }
+        TLB_Free(pFInfo->funcdesc.lprgelemdescParam);
+        TLB_Free(pFInfo->pParamDesc);
+        TLB_FreeCustData(pFInfo->pCustData);
+        if (HIWORD(pFInfo->Entry) != 0 && pFInfo->Entry != (BSTR)-1)
+            SysFreeString(pFInfo->Entry);
+        SysFreeString(pFInfo->HelpString);
+        SysFreeString(pFInfo->Name);
+
+        pFInfoNext = pFInfo->next;
+        TLB_Free(pFInfo);
+    }
+    for (pVInfo = This->varlist; pVInfo; pVInfo = pVInfoNext)
+    {
+        if (pVInfo->vardesc.varkind == VAR_CONST)
+        {
+            VariantClear(pVInfo->vardesc.u.lpvarValue);
+            TLB_Free(pVInfo->vardesc.u.lpvarValue);
+        }
+        TLB_FreeCustData(pVInfo->pCustData);
+        SysFreeString(pVInfo->Name);
+        pVInfoNext = pVInfo->next;
+        TLB_Free(pVInfo);
+    }
+    for (pImpl = This->impltypelist; pImpl; pImpl = pImplNext)
+    {
+        TLB_FreeCustData(pImpl->pCustData);
+        pImplNext = pImpl->next;
+        TLB_Free(pImpl);
+    }
+    TLB_FreeCustData(This->pCustData);
+
+    HeapFree(GetProcessHeap(), 0, This);
 }
 
 /* ITypeInfo::Release
@@ -4944,82 +5015,15 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
 
     TRACE("(%p)->(%u)\n",This, ref);
 
-    if (ref)   {
-      /* We don't release ITypeLib when ref=0 because
-         it means that function is called by ITypeLib2_Release */
-      ITypeLib2_Release((ITypeLib2*)This->pTypeLib);
-    } else   {
-      TLBFuncDesc *pFInfo, *pFInfoNext;
-      TLBVarDesc *pVInfo, *pVInfoNext;
-      TLBImplType *pImpl, *pImplNext;
-
-      TRACE("destroying ITypeInfo(%p)\n",This);
-
-      if (This->no_free_data)
-          goto finish_free;
-
-      SysFreeString(This->Name);
-      This->Name = NULL;
-
-      SysFreeString(This->DocString);
-      This->DocString = NULL;
-
-      SysFreeString(This->DllName);
-      This->DllName = NULL;
-
-      for (pFInfo = This->funclist; pFInfo; pFInfo = pFInfoNext)
-      {
-          INT i;
-          for(i = 0;i < pFInfo->funcdesc.cParams; i++)
-          {
-              ELEMDESC *elemdesc = &pFInfo->funcdesc.lprgelemdescParam[i];
-              if (elemdesc->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
-              {
-                  VariantClear(&elemdesc->u.paramdesc.pparamdescex->varDefaultValue);
-                  TLB_Free(elemdesc->u.paramdesc.pparamdescex);
-              }
-              SysFreeString(pFInfo->pParamDesc[i].Name);
-          }
-          TLB_Free(pFInfo->funcdesc.lprgelemdescParam);
-          TLB_Free(pFInfo->pParamDesc);
-          TLB_FreeCustData(pFInfo->pCustData);
-          if (HIWORD(pFInfo->Entry) != 0 && pFInfo->Entry != (BSTR)-1) 
-              SysFreeString(pFInfo->Entry);
-          SysFreeString(pFInfo->HelpString);
-          SysFreeString(pFInfo->Name);
-
-          pFInfoNext = pFInfo->next;
-          TLB_Free(pFInfo);
-      }
-      for (pVInfo = This->varlist; pVInfo; pVInfo = pVInfoNext)
-      {
-          if (pVInfo->vardesc.varkind == VAR_CONST)
-          {
-              VariantClear(pVInfo->vardesc.u.lpvarValue);
-              TLB_Free(pVInfo->vardesc.u.lpvarValue);
-          }
-          TLB_FreeCustData(pVInfo->pCustData);
-          SysFreeString(pVInfo->Name);
-          pVInfoNext = pVInfo->next;
-          TLB_Free(pVInfo);
-      }
-      for(pImpl = This->impltypelist; pImpl; pImpl = pImplNext)
-      {
-          TLB_FreeCustData(pImpl->pCustData);
-          pImplNext = pImpl->next;
-          TLB_Free(pImpl);
-      }
-      TLB_FreeCustData(This->pCustData);
-
-finish_free:
-      if (This->next)
-      {
-        ITypeInfo_Release((ITypeInfo*)This->next);
-      }
-
-      HeapFree(GetProcessHeap(),0,This);
-      return 0;
+    if (!ref)
+    {
+        BOOL not_attached_to_typelib = This->not_attached_to_typelib;
+        ITypeLib2_Release((ITypeLib2*)This->pTypeLib);
+        if (not_attached_to_typelib)
+            HeapFree(GetProcessHeap(), 0, This);
+        /* otherwise This will be freed when typelib is freed */
     }
+
     return ref;
 }
 
@@ -6654,12 +6658,11 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
 
 	  *ppTInfo = (ITypeInfo*) pTypeInfoImpl;
 
-	  /* we use data structures from This, so we need to keep a reference
-	   * to it to stop it being destroyed and signal to the new instance to
+	  /* the AddRef implicitly adds a reference to the parent typelib, which
+	   * stops the copied data from being destroyed until the new typeinfo's
+	   * refcount goes to zero, but we need to signal to the new instance to
 	   * not free its data structures when it is destroyed */
-	  pTypeInfoImpl->no_free_data = TRUE;
-	  pTypeInfoImpl->next = This;
-	  ITypeInfo_AddRef((ITypeInfo*) This);
+	  pTypeInfoImpl->not_attached_to_typelib = TRUE;
 
 	  ITypeInfo_AddRef(*ppTInfo);
 
