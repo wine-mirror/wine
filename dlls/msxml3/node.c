@@ -946,6 +946,13 @@ static HRESULT WINAPI xmlnode_get_definition(
 
 static HRESULT WINAPI xmlnode_get_dataType(IXMLDOMNode*, VARIANT*);
 
+inline BYTE hex_to_byte(xmlChar c)
+{
+    if(c <= '9') return c-'0';
+    if(c <= 'F') return c-'A'+10;
+    return c-'a'+10;
+}
+
 inline HRESULT VARIANT_from_xmlChar(xmlChar *str, VARIANT *v, BSTR type)
 {
     if(!type || !lstrcmpiW(type, szString) ||
@@ -1014,6 +1021,25 @@ inline HRESULT VARIANT_from_xmlChar(xmlChar *str, VARIANT *v, BSTR type)
             V_DATE(v) -= (DOUBLE)atoiW(p+1)/24 + (DOUBLE)atoiW(p+4)/1440;
 
         VariantClear(&src);
+    }
+    else if(!lstrcmpiW(type, szBinHex))
+    {
+        SAFEARRAYBOUND sab;
+        int i, len;
+
+        len = xmlStrlen(str)/2;
+        sab.lLbound = 0;
+        sab.cElements = len;
+
+        V_VT(v) = (VT_ARRAY|VT_UI1);
+        V_ARRAY(v) = SafeArrayCreate(VT_UI1, 1, &sab);
+
+        if(!V_ARRAY(v))
+            return E_OUTOFMEMORY;
+
+        for(i=0; i<len; i++)
+            ((BYTE*)V_ARRAY(v)->pvData)[i] = (hex_to_byte(str[2*i])<<4)
+                + hex_to_byte(str[2*i+1]);
     }
     else
     {
