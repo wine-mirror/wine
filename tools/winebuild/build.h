@@ -119,7 +119,7 @@ typedef struct
 
 enum target_cpu
 {
-    CPU_x86, CPU_x86_64, CPU_SPARC, CPU_ALPHA, CPU_POWERPC, CPU_ARM
+    CPU_x86, CPU_x86_64, CPU_SPARC, CPU_ALPHA, CPU_POWERPC, CPU_ARM, CPU_LAST = CPU_ARM
 };
 
 enum target_platform
@@ -148,7 +148,7 @@ extern enum target_platform target_platform;
 #define FLAG_EXT_LINK  0x200  /* function links to an external symbol */
 
 #define FLAG_CPU(cpu)  (0x01000 << (cpu))
-#define FLAG_CPU_MASK  0x1f000
+#define FLAG_CPU_MASK  (FLAG_CPU(CPU_LAST + 1) - FLAG_CPU(0))
 #define FLAG_CPU_WIN64 (FLAG_CPU(CPU_x86_64))
 #define FLAG_CPU_WIN32 (FLAG_CPU_MASK & ~FLAG_CPU_WIN64)
 
