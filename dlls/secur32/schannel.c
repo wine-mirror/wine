@@ -1203,6 +1203,9 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
                 return SEC_E_INTERNAL_ERROR;
             }
         }
+        else if (!ret)
+            break;
+
         received += ret;
     }
 
