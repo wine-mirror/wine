@@ -55,7 +55,7 @@ HANDLE WINAPI AvSetMmThreadCharacteristicsA(LPCSTR TaskName, LPDWORD TaskIndex)
     if (TaskName)
     {
         DWORD len = (lstrlenA(TaskName)+1);
-        str = HeapAlloc(GetProcessHeap, 0, len*sizeof(WCHAR));
+        str = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
         if (!str)
         {
             SetLastError(ERROR_OUTOFMEMORY);
