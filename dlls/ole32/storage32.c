@@ -113,6 +113,7 @@ static BOOL StorageImpl_ReadDWordFromBigBlock( StorageImpl*  This,
     ULONG blockIndex, ULONG offset, DWORD* value);
 
 static BOOL StorageBaseImpl_IsStreamOpen(StorageBaseImpl * stg, DirRef streamEntry);
+static BOOL StorageBaseImpl_IsStorageOpen(StorageBaseImpl * stg, DirRef storageEntry);
 static void StorageInternalImpl_Invalidate( StorageInternalImpl *This );
 
 /* OLESTREAM memory structure to use for Get and Put Routines */
@@ -579,6 +580,13 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
   if ( (storageEntryRef!=DIRENTRY_NULL) &&
        (currentEntry.stgType==STGTY_STORAGE) )
   {
+    if (StorageBaseImpl_IsStorageOpen(This, storageEntryRef))
+    {
+      /* A single storage cannot be opened a second time. */
+      res = STG_E_ACCESSDENIED;
+      goto end;
+    }
+
     newStorage = StorageInternalImpl_Construct(
                    This->ancestorStorage,
                    grfMode,
@@ -1867,6 +1875,21 @@ static BOOL StorageBaseImpl_IsStreamOpen(StorageBaseImpl * stg, DirRef streamEnt
   LIST_FOR_EACH_ENTRY(strm, &stg->strmHead, StgStreamImpl, StrmListEntry)
   {
     if (strm->dirEntry == streamEntry)
+    {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+static BOOL StorageBaseImpl_IsStorageOpen(StorageBaseImpl * stg, DirRef storageEntry)
+{
+  StorageInternalImpl *childstg;
+
+  LIST_FOR_EACH_ENTRY(childstg, &stg->storageHead, StorageInternalImpl, ParentListEntry)
+  {
+    if (childstg->base.storageDirEntry == storageEntry)
     {
       return TRUE;
     }

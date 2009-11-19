@@ -1060,13 +1060,13 @@ static void test_substorage_share(void)
     if (r == S_OK)
     {
         r = IStorage_OpenStorage(stg, stgname, NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stg3);
-        todo_wine ok(r==STG_E_ACCESSDENIED, "IStorage->OpenStorage should fail %08x\n", r);
+        ok(r==STG_E_ACCESSDENIED, "IStorage->OpenStorage should fail %08x\n", r);
 
         if (r == S_OK)
             IStorage_Release(stg3);
 
         r = IStorage_OpenStorage(stg, stgname, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, 0, &stg3);
-        todo_wine ok(r==STG_E_ACCESSDENIED, "IStorage->OpenStorage should fail %08x\n", r);
+        ok(r==STG_E_ACCESSDENIED, "IStorage->OpenStorage should fail %08x\n", r);
 
         if (r == S_OK)
             IStorage_Release(stg3);
