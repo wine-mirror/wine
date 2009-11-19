@@ -121,6 +121,31 @@ static BOOL compare_crl_issued_by(PCCRL_CONTEXT pCrlContext, DWORD dwType,
              issuer->dwCertEncodingType,
              CRYPT_VERIFY_CERT_SIGN_SUBJECT_CRL, (void *)pCrlContext,
              CRYPT_VERIFY_CERT_SIGN_ISSUER_CERT, (void *)issuer, 0, NULL);
+        if (ret && (dwFlags & CRL_FIND_ISSUED_BY_AKI_FLAG))
+        {
+            PCERT_EXTENSION aki = CertFindExtension(
+             szOID_AUTHORITY_KEY_IDENTIFIER2, pCrlContext->pCrlInfo->cExtension,
+             pCrlContext->pCrlInfo->rgExtension);
+
+            if (aki)
+            {
+                CERT_EXTENSION *ski;
+
+                if ((ski = CertFindExtension(szOID_SUBJECT_KEY_IDENTIFIER,
+                 issuer->pCertInfo->cExtension,
+                 issuer->pCertInfo->rgExtension)))
+                {
+                    if (aki->Value.cbData == ski->Value.cbData)
+                        ret = !memcmp(aki->Value.pbData, ski->Value.pbData,
+                         aki->Value.cbData);
+                    else
+                        ret = FALSE;
+                }
+                else
+                    ret = FALSE;
+            }
+            /* else: a CRL without an AKI matches any cert */
+        }
     }
     else
         ret = TRUE;
