@@ -110,6 +110,12 @@ static void test_title(void)
     psh.pfnCallback = sheet_callback;
 
     hdlg = (HWND)PropertySheetA(&psh);
+    if (hdlg == INVALID_HANDLE_VALUE)
+    {
+        win_skip("comctl32 4.70 needs dwSize adjustment\n");
+        psh.dwSize = sizeof(psh) - sizeof(HBITMAP) - sizeof(HPALETTE) - sizeof(HBITMAP);
+        hdlg = (HWND)PropertySheetA(&psh);
+    }
     DestroyWindow(hdlg);
 }
 
@@ -141,6 +147,12 @@ static void test_nopage(void)
     psh.pfnCallback = sheet_callback;
 
     hdlg = (HWND)PropertySheetA(&psh);
+    if (hdlg == INVALID_HANDLE_VALUE)
+    {
+        win_skip("comctl32 4.70 needs dwSize adjustment\n");
+        psh.dwSize = sizeof(psh) - sizeof(HBITMAP) - sizeof(HPALETTE) - sizeof(HBITMAP);
+        hdlg = (HWND)PropertySheetA(&psh);
+    }
     ShowWindow(hdlg,SW_NORMAL);
     SendMessage(hdlg, PSM_REMOVEPAGE, 0, 0);
     RedrawWindow(hdlg,NULL,NULL,RDW_UPDATENOW|RDW_ERASENOW);
@@ -183,6 +195,7 @@ static void test_disableowner(void)
     HPROPSHEETPAGE hpsp[1];
     PROPSHEETPAGEA psp;
     PROPSHEETHEADERA psh;
+    INT_PTR p;
 
     register_parent_wnd_class();
     parent = CreateWindowA("parent class", "", WS_CAPTION | WS_SYSMENU | WS_VISIBLE, 100, 100, 100, 100, GetDesktopWindow(), NULL, GetModuleHandleA(NULL), 0);
@@ -207,7 +220,9 @@ static void test_disableowner(void)
     U3(psh).phpage = hpsp;
     psh.pfnCallback = disableowner_callback;
 
-    PropertySheetA(&psh);
+    p = PropertySheetA(&psh);
+    todo_wine
+    ok(p == 0, "Expected 0, got %ld\n", p);
     ok(IsWindowEnabled(parent) != 0, "parent window should be enabled\n");
     DestroyWindow(parent);
 }
@@ -283,6 +298,12 @@ static void test_wiznavigation(void)
     psh.hwndParent = GetDesktopWindow();
     U3(psh).phpage = hpsp;
     hdlg = (HWND)PropertySheetA(&psh);
+    if (hdlg == INVALID_HANDLE_VALUE)
+    {
+        win_skip("comctl32 4.70 needs dwSize adjustment\n");
+        psh.dwSize = sizeof(psh) - sizeof(HBITMAP) - sizeof(HPALETTE) - sizeof(HBITMAP);
+        hdlg = (HWND)PropertySheetA(&psh);
+    }
 
     ok(active_page == 0, "Active page should be 0. Is: %d\n", active_page);
 
@@ -381,6 +402,12 @@ static void test_buttons(void)
     psh.pfnCallback = sheet_callback;
 
     hdlg = (HWND)PropertySheetA(&psh);
+    if (hdlg == INVALID_HANDLE_VALUE)
+    {
+        win_skip("comctl32 4.70 needs dwSize adjustment\n");
+        psh.dwSize = sizeof(psh) - sizeof(HBITMAP) - sizeof(HPALETTE) - sizeof(HBITMAP);
+        hdlg = (HWND)PropertySheetA(&psh);
+    }
 
     /* OK button */
     button = GetDlgItem(hdlg, IDOK);
