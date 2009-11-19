@@ -1765,6 +1765,8 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
 
     if(This->nsevent_listener)
         release_nsevents(This);
+    if(This->catmgr)
+        ICatInformation_Release(This->catmgr);
     if(This->secmgr)
         IInternetSecurityManager_Release(This->secmgr);
 

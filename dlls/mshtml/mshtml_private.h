@@ -18,6 +18,7 @@
 
 #include "wingdi.h"
 #include "docobj.h"
+#include "comcat.h"
 #include "mshtml.h"
 #include "mshtmhst.h"
 #include "hlink.h"
@@ -503,6 +504,7 @@ struct HTMLDocumentNode {
     BOOL content_ready;
 
     IInternetSecurityManager *secmgr;
+    ICatInformation *catmgr;
     nsDocumentEventListener *nsevent_listener;
     BOOL *event_vector;
 

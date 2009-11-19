@@ -121,6 +121,7 @@ DEFINE_EXPECT(AXGetInterfaceSafetyOptions);
 DEFINE_EXPECT(AXSetInterfaceSafetyOptions);
 
 #define TESTSCRIPT_CLSID "{178fc163-f585-4e24-9c13-4bb7faf80746}"
+#define TESTACTIVEX_CLSID "{178fc163-f585-4e24-9c13-4bb7faf80646}"
 
 #define DISPID_SCRIPT_TESTPROP   0x100000
 
@@ -133,6 +134,7 @@ static IHTMLDocument2 *notif_doc;
 static IDispatchEx *window_dispex;
 static BOOL doc_complete;
 static IDispatch *script_disp;
+static BOOL ax_objsafe;
 
 static const char *debugstr_guid(REFIID riid)
 {
@@ -163,6 +165,28 @@ static BSTR a2bstr(const char *str)
     MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
 
     return ret;
+}
+
+static BOOL init_key(const char *key_name, const char *def_value, BOOL init)
+{
+    HKEY hkey;
+    DWORD res;
+
+    if(!init) {
+        RegDeleteKey(HKEY_CLASSES_ROOT, key_name);
+        return TRUE;
+    }
+
+    res = RegCreateKeyA(HKEY_CLASSES_ROOT, key_name, &hkey);
+    if(res != ERROR_SUCCESS)
+        return FALSE;
+
+    if(def_value)
+        res = RegSetValueA(hkey, NULL, REG_SZ, def_value, strlen(def_value));
+
+    RegCloseKey(hkey);
+
+    return res == ERROR_SUCCESS;
 }
 
 static HRESULT WINAPI PropertyNotifySink_QueryInterface(IPropertyNotifySink *iface,
@@ -599,6 +623,8 @@ static HRESULT WINAPI AXObjectSafety_QueryInterface(IObjectSafety *iface, REFIID
 
     if(IsEqualGUID(&IID_IObjectSafety, riid)) {
         CHECK_EXPECT(AXQueryInterface_IObjectSafety);
+        if(!ax_objsafe)
+            return E_NOINTERFACE;
         *ppv = iface;
         return S_OK;
     }
@@ -647,6 +673,12 @@ static const IObjectSafetyVtbl AXObjectSafetyVtbl = {
 
 static IObjectSafety AXObjectSafety = { &AXObjectSafetyVtbl };
 
+static BOOL set_safe_reg(BOOL init)
+{
+    return init_key("CLSID\\"TESTACTIVEX_CLSID"\\Implemented Categories\\{7dd95801-9882-11cf-9fa9-00aa006c42c4}",
+                    NULL, init);
+}
+
 static void test_security(void)
 {
     IInternetHostSecurityManager *sec_mgr;
@@ -673,6 +705,7 @@ static void test_security(void)
     cs.pUnk = (IUnknown*)&AXObjectSafety;
     cs.dwFlags = 0;
 
+    ax_objsafe = TRUE;
     SET_EXPECT(AXQueryInterface_IActiveScript);
     SET_EXPECT(AXQueryInterface_IObjectSafety);
     SET_EXPECT(AXGetInterfaceSafetyOptions);
@@ -688,6 +721,55 @@ static void test_security(void)
     ok(policy_size == sizeof(DWORD), "policy_size = %d\n", policy_size);
     ok(*(DWORD*)ppolicy == URLPOLICY_ALLOW, "policy = %x\n", *(DWORD*)ppolicy);
     CoTaskMemFree(ppolicy);
+
+    ax_objsafe = FALSE;
+    SET_EXPECT(AXQueryInterface_IActiveScript);
+    SET_EXPECT(AXQueryInterface_IObjectSafety);
+    hres = IInternetHostSecurityManager_QueryCustomPolicy(sec_mgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
+            &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
+    CHECK_CALLED(AXQueryInterface_IActiveScript);
+    CHECK_CALLED(AXQueryInterface_IObjectSafety);
+
+    ok(hres == S_OK, "QueryCusromPolicy failed: %08x\n", hres);
+    ok(policy_size == sizeof(DWORD), "policy_size = %d\n", policy_size);
+    ok(*(DWORD*)ppolicy == URLPOLICY_DISALLOW, "policy = %x\n", *(DWORD*)ppolicy);
+    CoTaskMemFree(ppolicy);
+
+    if(set_safe_reg(TRUE)) {
+        ax_objsafe = FALSE;
+        SET_EXPECT(AXQueryInterface_IActiveScript);
+        SET_EXPECT(AXQueryInterface_IObjectSafety);
+        hres = IInternetHostSecurityManager_QueryCustomPolicy(sec_mgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
+                 &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
+        CHECK_CALLED(AXQueryInterface_IActiveScript);
+        CHECK_CALLED(AXQueryInterface_IObjectSafety);
+
+        ok(hres == S_OK, "QueryCusromPolicy failed: %08x\n", hres);
+        ok(policy_size == sizeof(DWORD), "policy_size = %d\n", policy_size);
+        ok(*(DWORD*)ppolicy == URLPOLICY_ALLOW, "policy = %x\n", *(DWORD*)ppolicy);
+        CoTaskMemFree(ppolicy);
+
+        ax_objsafe = TRUE;
+        SET_EXPECT(AXQueryInterface_IActiveScript);
+        SET_EXPECT(AXQueryInterface_IObjectSafety);
+        SET_EXPECT(AXGetInterfaceSafetyOptions);
+        SET_EXPECT(AXSetInterfaceSafetyOptions);
+        hres = IInternetHostSecurityManager_QueryCustomPolicy(sec_mgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
+                &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
+        CHECK_CALLED(AXQueryInterface_IActiveScript);
+        CHECK_CALLED(AXQueryInterface_IObjectSafety);
+        CHECK_CALLED(AXGetInterfaceSafetyOptions);
+        CHECK_CALLED(AXSetInterfaceSafetyOptions);
+
+        ok(hres == S_OK, "QueryCusromPolicy failed: %08x\n", hres);
+        ok(policy_size == sizeof(DWORD), "policy_size = %d\n", policy_size);
+        ok(*(DWORD*)ppolicy == URLPOLICY_ALLOW, "policy = %x\n", *(DWORD*)ppolicy);
+        CoTaskMemFree(ppolicy);
+
+        set_safe_reg(FALSE);
+    }else {
+        skip("Could not set safety registry\n");
+    }
 
     IInternetHostSecurityManager_Release(sec_mgr);
 }
@@ -1508,28 +1590,6 @@ static void test_simple_script(void)
 
     CHECK_CALLED(SetScriptState_DISCONNECTED);
     CHECK_CALLED(Close);
-}
-
-static BOOL init_key(const char *key_name, const char *def_value, BOOL init)
-{
-    HKEY hkey;
-    DWORD res;
-
-    if(!init) {
-        RegDeleteKey(HKEY_CLASSES_ROOT, key_name);
-        return TRUE;
-    }
-
-    res = RegCreateKeyA(HKEY_CLASSES_ROOT, key_name, &hkey);
-    if(res != ERROR_SUCCESS)
-        return FALSE;
-
-    if(def_value)
-        res = RegSetValueA(hkey, NULL, REG_SZ, def_value, strlen(def_value));
-
-    RegCloseKey(hkey);
-
-    return res == ERROR_SUCCESS;
 }
 
 static BOOL init_registry(BOOL init)
