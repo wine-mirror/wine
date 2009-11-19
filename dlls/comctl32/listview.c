@@ -7395,7 +7395,7 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
             hItem  = DPA_GetPtr( infoPtr->hdpaItems, i);
             item_s = (ITEM_INFO*)DPA_GetPtr(hItem, 0);
 
-            cmpv = textcmpWT(item_s->hdr.pszText, lpLVItem->pszText, TRUE);
+            cmpv = textcmpWT(item_s->hdr.pszText, lpLVItem->pszText, isW);
             if (infoPtr->dwStyle & LVS_SORTDESCENDING) cmpv *= -1;
 
             if (cmpv >= 0) break;
@@ -10986,10 +10986,8 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   /* case LVM_INSERTGROUPSORTED: */
 
   case LVM_INSERTITEMA:
-    return LISTVIEW_InsertItemT(infoPtr, (LPLVITEMW)lParam, FALSE);
-
   case LVM_INSERTITEMW:
-    return LISTVIEW_InsertItemT(infoPtr, (LPLVITEMW)lParam, TRUE);
+    return LISTVIEW_InsertItemT(infoPtr, (LPLVITEMW)lParam, uMsg == LVM_INSERTITEMW);
 
   /* case LVM_INSERTMARKHITTEST: */
 
