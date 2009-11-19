@@ -67,9 +67,6 @@ HRESULT parse_dxbc(const char *data, SIZE_T data_size,
         HRESULT (*chunk_handler)(const char *data, DWORD data_size, DWORD tag, void *ctx), void *ctx) DECLSPEC_HIDDEN;
 
 /* IDirect3D10Device */
-extern const struct ID3D10DeviceVtbl d3d10_device_vtbl DECLSPEC_HIDDEN;
-extern const struct IUnknownVtbl d3d10_device_inner_unknown_vtbl DECLSPEC_HIDDEN;
-extern const struct IWineD3DDeviceParentVtbl d3d10_wined3d_device_parent_vtbl DECLSPEC_HIDDEN;
 struct d3d10_device
 {
     const struct ID3D10DeviceVtbl *vtbl;
@@ -80,6 +77,8 @@ struct d3d10_device
 
     IWineD3DDevice *wined3d_device;
 };
+
+void d3d10_device_init(struct d3d10_device *device, void *outer_unknown) DECLSPEC_HIDDEN;
 
 /* ID3D10Texture2D */
 struct d3d10_texture2d

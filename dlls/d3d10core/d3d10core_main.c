@@ -81,13 +81,7 @@ static HRESULT WINAPI layer_create(enum dxgi_device_layer_id id, void **layer_ba
     }
 
     object = *layer_base;
-
-    object->vtbl = &d3d10_device_vtbl;
-    object->inner_unknown_vtbl = &d3d10_device_inner_unknown_vtbl;
-    object->device_parent_vtbl = &d3d10_wined3d_device_parent_vtbl;
-    object->refcount = 1;
-
-    object->outer_unknown = device_object;
+    d3d10_device_init(object, device_object);
     *device_layer = &object->inner_unknown_vtbl;
 
     TRACE("Created d3d10 device at %p\n", object);
