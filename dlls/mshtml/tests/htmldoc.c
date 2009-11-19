@@ -184,7 +184,6 @@ static const WCHAR about_blank_url[] = {'a','b','o','u','t',':','b','l','a','n',
 
 static HRESULT QueryInterface(REFIID riid, void **ppv);
 static void test_MSHTML_QueryStatus(IUnknown*,DWORD);
-static BOOL nogecko = FALSE;
 
 #define test_readyState(u) _test_readyState(__LINE__,u)
 static void _test_readyState(unsigned,IUnknown*);
@@ -2919,26 +2918,12 @@ static void test_download(DWORD flags)
     if(flags & DWL_TRYCSS)
         SET_CALLED(Exec_ShellDocView_84);
     if(flags & DWL_CSS) {
-        if(called_CreateInstance) {
-            CHECK_CALLED(CreateInstance);
-            CHECK_CALLED(Start);
-            CHECK_CALLED(LockRequest);
-            CHECK_CALLED(Terminate);
-            CHECK_CALLED(Protocol_Read);
-            CHECK_CALLED(UnlockRequest);
-        }else {
-            skip("CreateInstance not called. Assuming no Gecko installed.\n");
-
-            SET_CALLED(Exec_ShellDocView_84);
-            SET_CALLED(CreateInstance);
-            SET_CALLED(Start);
-            SET_CALLED(LockRequest);
-            SET_CALLED(Terminate);
-            SET_CALLED(Protocol_Read);
-            SET_CALLED(UnlockRequest);
-
-            nogecko = TRUE;
-        }
+        CHECK_CALLED(CreateInstance);
+        CHECK_CALLED(Start);
+        CHECK_CALLED(LockRequest);
+        CHECK_CALLED(Terminate);
+        CHECK_CALLED(Protocol_Read);
+        CHECK_CALLED(UnlockRequest);
     }
     SET_CALLED(Exec_Explorer_69);
     SET_CALLED(EnableModeless_TRUE); /* IE7 */
@@ -3327,13 +3312,12 @@ static void test_exec_fontname(IUnknown *unk, LPCWSTR name, LPCWSTR exname)
    }
 
    hres = IOleCommandTarget_Exec(cmdtrg, &CGID_MSHTML, IDM_FONTNAME, 0, in, out);
-   if(!nogecko)
-       ok(hres == S_OK, "Exec(IDM_FONTNAME) failed: %08x\n", hres);
+   ok(hres == S_OK, "Exec(IDM_FONTNAME) failed: %08x\n", hres);
 
    if(in)
        VariantClear(in);
 
-   if(out && !nogecko) {
+   if(out) {
        ok(V_VT(out) == VT_BSTR, "V_VT(out) = %x\n", V_VT(out));
        if(V_VT(out) == VT_BSTR) {
            if(exname)
@@ -4300,17 +4284,15 @@ static void test_editing_mode(BOOL do_load)
 
         test_exec_noargs(unk, IDM_JUSTIFYRIGHT);
         test_timer(EXPECT_UPDATEUI);
-        if(!nogecko)
-            test_QueryStatus(unk, &CGID_MSHTML, IDM_JUSTIFYRIGHT,
-                             OLECMDF_SUPPORTED|OLECMDF_ENABLED|OLECMDF_LATCHED);
+        test_QueryStatus(unk, &CGID_MSHTML, IDM_JUSTIFYRIGHT,
+                         OLECMDF_SUPPORTED|OLECMDF_ENABLED|OLECMDF_LATCHED);
 
         test_exec_noargs(unk, IDM_JUSTIFYCENTER);
         test_timer(EXPECT_UPDATEUI);
         test_QueryStatus(unk, &CGID_MSHTML, IDM_JUSTIFYRIGHT,
                          OLECMDF_SUPPORTED|OLECMDF_ENABLED);
-        if(!nogecko)
-            test_QueryStatus(unk, &CGID_MSHTML, IDM_JUSTIFYCENTER,
-                             OLECMDF_SUPPORTED|OLECMDF_ENABLED|OLECMDF_LATCHED);
+        test_QueryStatus(unk, &CGID_MSHTML, IDM_JUSTIFYCENTER,
+                         OLECMDF_SUPPORTED|OLECMDF_ENABLED|OLECMDF_LATCHED);
 
         test_exec_noargs(unk, IDM_HORIZONTALLINE);
         test_timer(EXPECT_UPDATEUI);
@@ -4346,36 +4328,6 @@ static void register_protocol(void)
     ok(hres == S_OK, "RegisterNameSpace failed: %08x\n", hres);
 
     IInternetSession_Release(session);
-}
-
-static void gecko_installer_workaround(BOOL disable)
-{
-    HKEY hkey;
-    DWORD res;
-
-    static BOOL has_url = FALSE;
-    static char url[2048];
-
-    if(!disable && !has_url)
-        return;
-
-    res = RegOpenKey(HKEY_CURRENT_USER, "Software\\Wine\\MSHTML", &hkey);
-    if(res != ERROR_SUCCESS)
-        return;
-
-    if(disable) {
-        DWORD type, size = sizeof(url);
-
-        res = RegQueryValueEx(hkey, "GeckoUrl", NULL, &type, (PVOID)url, &size);
-        if(res == ERROR_SUCCESS && type == REG_SZ)
-            has_url = TRUE;
-
-        RegDeleteValue(hkey, "GeckoUrl");
-    }else {
-        RegSetValueEx(hkey, "GeckoUrl", 0, REG_SZ, (PVOID)url, lstrlenA(url)+1);
-    }
-
-    RegCloseKey(hkey);
 }
 
 static void test_HTMLDoc_ISupportErrorInfo(void)
@@ -4425,8 +4377,6 @@ static void test_IPersistHistory(void)
 
 START_TEST(htmldoc)
 {
-    gecko_installer_workaround(TRUE);
-
     CoInitialize(NULL);
     container_hwnd = create_container_window();
     register_protocol();
@@ -4445,6 +4395,4 @@ START_TEST(htmldoc)
 
     DestroyWindow(container_hwnd);
     CoUninitialize();
-
-    gecko_installer_workaround(FALSE);
 }

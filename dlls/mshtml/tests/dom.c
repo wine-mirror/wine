@@ -5917,10 +5917,8 @@ typedef void (*domtest_t)(IHTMLDocument2*);
 static void run_domtest(const char *str, domtest_t test)
 {
     IHTMLDocument2 *doc;
-    IHTMLElement *body = NULL;
     ULONG ref;
     MSG msg;
-    HRESULT hres;
 
     doc = create_doc_with_string(str);
     if(!doc)
@@ -5933,15 +5931,7 @@ static void run_domtest(const char *str, domtest_t test)
         DispatchMessage(&msg);
     }
 
-    hres = IHTMLDocument2_get_body(doc, &body);
-    ok(hres == S_OK, "get_body failed: %08x\n", hres);
-
-    if(body) {
-        IHTMLElement_Release(body);
-        test(doc);
-    }else {
-        skip("Could not get document body. Assuming no Gecko installed.\n");
-    }
+    test(doc);
 
     ref = IHTMLDocument2_Release(doc);
     ok(!ref ||
@@ -5949,39 +5939,8 @@ static void run_domtest(const char *str, domtest_t test)
        "ref = %d\n", ref);
 }
 
-static void gecko_installer_workaround(BOOL disable)
-{
-    HKEY hkey;
-    DWORD res;
-
-    static BOOL has_url = FALSE;
-    static char url[2048];
-
-    if(!disable && !has_url)
-        return;
-
-    res = RegOpenKey(HKEY_CURRENT_USER, "Software\\Wine\\MSHTML", &hkey);
-    if(res != ERROR_SUCCESS)
-        return;
-
-    if(disable) {
-        DWORD type, size = sizeof(url);
-
-        res = RegQueryValueEx(hkey, "GeckoUrl", NULL, &type, (PVOID)url, &size);
-        if(res == ERROR_SUCCESS && type == REG_SZ)
-            has_url = TRUE;
-
-        RegDeleteValue(hkey, "GeckoUrl");
-    }else {
-        RegSetValueEx(hkey, "GeckoUrl", 0, REG_SZ, (PVOID)url, lstrlenA(url)+1);
-    }
-
-    RegCloseKey(hkey);
-}
-
 START_TEST(dom)
 {
-    gecko_installer_workaround(TRUE);
     CoInitialize(NULL);
 
     run_domtest(doc_str1, test_doc_elem);
@@ -6001,5 +5960,4 @@ START_TEST(dom)
     run_domtest(frameset_str, test_frameset);
 
     CoUninitialize();
-    gecko_installer_workaround(FALSE);
 }
