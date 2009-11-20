@@ -2456,12 +2456,15 @@ static void CRYPT_VerifyChainRevocation(PCERT_CHAIN_CONTEXT chain,
 
 static void dump_usage_match(LPCSTR name, const CERT_USAGE_MATCH *usageMatch)
 {
-    DWORD i;
+    if (usageMatch->Usage.cUsageIdentifier)
+    {
+        DWORD i;
 
-    TRACE_(chain)("%s: %s\n", name,
-     usageMatch->dwType == USAGE_MATCH_TYPE_AND ? "AND" : "OR");
-    for (i = 0; i < usageMatch->Usage.cUsageIdentifier; i++)
-        TRACE_(chain)("%s\n", usageMatch->Usage.rgpszUsageIdentifier[i]);
+        TRACE_(chain)("%s: %s\n", name,
+         usageMatch->dwType == USAGE_MATCH_TYPE_AND ? "AND" : "OR");
+        for (i = 0; i < usageMatch->Usage.cUsageIdentifier; i++)
+            TRACE_(chain)("%s\n", usageMatch->Usage.rgpszUsageIdentifier[i]);
+    }
 }
 
 static void dump_chain_para(const CERT_CHAIN_PARA *pChainPara)
