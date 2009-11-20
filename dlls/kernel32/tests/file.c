@@ -1616,6 +1616,71 @@ static void test_LockFile(void)
     DeleteFileA( filename );
 }
 
+static BOOL create_fake_dll( LPCSTR filename )
+{
+    IMAGE_DOS_HEADER *dos;
+    IMAGE_NT_HEADERS *nt;
+    IMAGE_SECTION_HEADER *sec;
+    BYTE *buffer;
+    DWORD lfanew = sizeof(*dos);
+    DWORD size = lfanew + sizeof(*nt) + sizeof(*sec);
+    DWORD written;
+    BOOL ret;
+
+    HANDLE file = CreateFileA( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    if (file == INVALID_HANDLE_VALUE) return FALSE;
+
+    buffer = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
+
+    dos = (IMAGE_DOS_HEADER *)buffer;
+    dos->e_magic    = IMAGE_DOS_SIGNATURE;
+    dos->e_cblp     = sizeof(*dos);
+    dos->e_cp       = 1;
+    dos->e_cparhdr  = lfanew / 16;
+    dos->e_minalloc = 0;
+    dos->e_maxalloc = 0xffff;
+    dos->e_ss       = 0x0000;
+    dos->e_sp       = 0x00b8;
+    dos->e_lfarlc   = lfanew;
+    dos->e_lfanew   = lfanew;
+
+    nt = (IMAGE_NT_HEADERS *)(buffer + lfanew);
+    nt->Signature = IMAGE_NT_SIGNATURE;
+    nt->FileHeader.Machine = IMAGE_FILE_MACHINE_I386;
+    nt->FileHeader.NumberOfSections = 1;
+    nt->FileHeader.SizeOfOptionalHeader = IMAGE_SIZEOF_NT_OPTIONAL_HEADER;
+    nt->FileHeader.Characteristics = IMAGE_FILE_DLL | IMAGE_FILE_EXECUTABLE_IMAGE;
+    nt->OptionalHeader.Magic = IMAGE_NT_OPTIONAL_HDR_MAGIC;
+    nt->OptionalHeader.MajorLinkerVersion = 1;
+    nt->OptionalHeader.MinorLinkerVersion = 0;
+    nt->OptionalHeader.ImageBase = 0x10000000;
+    nt->OptionalHeader.SectionAlignment = 0x1000;
+    nt->OptionalHeader.FileAlignment = 0x1000;
+    nt->OptionalHeader.MajorOperatingSystemVersion = 1;
+    nt->OptionalHeader.MinorOperatingSystemVersion = 0;
+    nt->OptionalHeader.MajorImageVersion = 1;
+    nt->OptionalHeader.MinorImageVersion = 0;
+    nt->OptionalHeader.MajorSubsystemVersion = 4;
+    nt->OptionalHeader.MinorSubsystemVersion = 0;
+    nt->OptionalHeader.SizeOfImage = 0x2000;
+    nt->OptionalHeader.SizeOfHeaders = size;
+    nt->OptionalHeader.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
+    nt->OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
+
+    sec = (IMAGE_SECTION_HEADER *)(nt + 1);
+    memcpy( sec->Name, ".rodata", sizeof(".rodata") );
+    sec->Misc.VirtualSize = 0x1000;
+    sec->VirtualAddress   = 0x1000;
+    sec->SizeOfRawData    = 0;
+    sec->PointerToRawData = 0;
+    sec->Characteristics  = IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE;
+
+    ret = WriteFile( file, buffer, size, &written, NULL ) && written == size;
+    HeapFree( GetProcessHeap(), 0, buffer );
+    CloseHandle( file );
+    return ret;
+}
+
 static int is_sharing_compatible( DWORD access1, DWORD sharing1, DWORD access2, DWORD sharing2, BOOL is_win9x )
 {
     if (!is_win9x)
@@ -1645,6 +1710,7 @@ static int is_sharing_map_compatible( DWORD map_access, DWORD access2, DWORD sha
 {
     if ((map_access == PAGE_READWRITE || map_access == PAGE_EXECUTE_READWRITE) &&
         !(sharing2 & FILE_SHARE_WRITE)) return 0;
+    if ((map_access & SEC_IMAGE) && (access2 & GENERIC_WRITE)) return 0;
     return 1;
 }
 
@@ -1659,24 +1725,19 @@ static void test_file_sharing(void)
           FILE_SHARE_DELETE, FILE_SHARE_READ|FILE_SHARE_DELETE,
           FILE_SHARE_WRITE|FILE_SHARE_DELETE, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE };
     static const DWORD mapping_modes[] =
-        { PAGE_READONLY, PAGE_WRITECOPY, PAGE_READWRITE };
-    static const char dummy[] = "dummy";
+        { PAGE_READONLY, PAGE_WRITECOPY, PAGE_READWRITE, SEC_IMAGE | PAGE_WRITECOPY };
     int a1, s1, a2, s2;
     int ret;
     HANDLE h, h2;
     BOOL is_win9x = FALSE;
-    DWORD written;
 
     /* make sure the file exists */
-    h = CreateFileA( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
-    if (h == INVALID_HANDLE_VALUE)
+    if (!create_fake_dll( filename ))
     {
         ok(0, "couldn't create file \"%s\" (err=%d)\n", filename, GetLastError());
         return;
     }
     is_win9x = GetFileAttributesW(filenameW) == INVALID_FILE_ATTRIBUTES;
-    WriteFile( h, dummy, strlen(dummy), &written, NULL );
-    CloseHandle( h );
 
     for (a1 = 0; a1 < sizeof(access_modes)/sizeof(access_modes[0]); a1++)
     {
@@ -1737,6 +1798,7 @@ static void test_file_sharing(void)
     {
         HANDLE m;
 
+        create_fake_dll( filename );
         SetLastError(0xdeadbeef);
         h = CreateFileA( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0 );
         if (h == INVALID_HANDLE_VALUE)
@@ -1784,6 +1846,39 @@ static void test_file_sharing(void)
                 }
             }
         }
+
+        /* try CREATE_ALWAYS over an existing mapping */
+        SetLastError(0xdeadbeef);
+        h2 = CreateFileA( filename, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                          NULL, CREATE_ALWAYS, 0, 0 );
+        ret = GetLastError();
+        ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
+        if ((mapping_modes[a1] & SEC_IMAGE) || is_win9x)
+            ok( ret == ERROR_SHARING_VIOLATION, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
+        else todo_wine
+            ok( ret == ERROR_USER_MAPPED_FILE, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
+
+        /* try DELETE_ON_CLOSE over an existing mapping */
+        SetLastError(0xdeadbeef);
+        h2 = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                          NULL, OPEN_EXISTING, FILE_FLAG_DELETE_ON_CLOSE, 0 );
+        ret = GetLastError();
+        if (is_win9x)
+        {
+            ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
+            ok( ret == ERROR_SHARING_VIOLATION, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
+        }
+        else if (mapping_modes[a1] & SEC_IMAGE)
+        {
+            ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
+            todo_wine ok( ret == ERROR_ACCESS_DENIED, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
+        }
+        else todo_wine
+        {
+            ok( h2 != INVALID_HANDLE_VALUE, "open failed for map %x err %u\n", mapping_modes[a1], ret );
+        }
+        if (h2 != INVALID_HANDLE_VALUE) CloseHandle( h2 );
+
         CloseHandle( m );
     }
 
