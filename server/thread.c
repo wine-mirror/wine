@@ -415,7 +415,7 @@ void set_thread_affinity( struct thread *thread, affinity_t affinity )
         return;
     }
 #ifdef HAVE_SCHED_SETAFFINITY
-    if (thread->unix_pid != -1)
+    if (thread->unix_tid != -1)
     {
         cpu_set_t set;
         int i;
@@ -425,7 +425,7 @@ void set_thread_affinity( struct thread *thread, affinity_t affinity )
         for (i = 0, mask = 1; mask; i++, mask <<= 1)
             if (affinity & mask) CPU_SET( i, &set );
 
-        if (!sched_setaffinity( thread->unix_pid, sizeof(set), &set ))
+        if (!sched_setaffinity( thread->unix_tid, sizeof(set), &set ))
             thread->affinity = affinity;
         else
             file_set_error();
