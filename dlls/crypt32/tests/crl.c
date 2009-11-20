@@ -1148,8 +1148,8 @@ static void testVerifyCRLRevocation(void)
     CertFreeCRLContext(crl);
 
     /* Check against CRL with different issuer and entry for the cert */
-    crl = CertCreateCRLContext(X509_ASN_ENCODING, v1CRLWithIssuerAndEntry,
-     sizeof(v1CRLWithIssuerAndEntry));
+    crl = CertCreateCRLContext(X509_ASN_ENCODING, crlWithDifferentIssuer,
+     sizeof(crlWithDifferentIssuer));
     ok(crl != NULL, "CertCreateCRLContext failed: %08x\n", GetLastError());
     ret = CertVerifyCRLRevocation(X509_ASN_ENCODING, cert->pCertInfo, 1,
      (PCRL_INFO *)&crl->pCrlInfo);
