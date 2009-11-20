@@ -612,11 +612,6 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
         set_error( STATUS_KEY_DELETED );
         return NULL;
     }
-    if (!(flags & KEY_VOLATILE) && (key->flags & KEY_VOLATILE))
-    {
-        set_error( STATUS_CHILD_MUST_BE_VOLATILE );
-        return NULL;
-    }
 
     token.str = NULL;
     if (!get_path_token( name, &token )) return NULL;
@@ -632,6 +627,11 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
     /* create the remaining part */
 
     if (!token.len) goto done;
+    if (!(flags & KEY_VOLATILE) && (key->flags & KEY_VOLATILE))
+    {
+        set_error( STATUS_CHILD_MUST_BE_VOLATILE );
+        return NULL;
+    }
     *created = 1;
     if (flags & KEY_DIRTY) make_dirty( key );
     if (!(key = alloc_subkey( key, &token, index, modif ))) return NULL;
