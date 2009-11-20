@@ -1441,6 +1441,15 @@ BOOL WINAPI CryptRetrieveObjectByUrlW(LPCWSTR pszURL, LPCSTR pszObjectOid,
     return ret;
 }
 
+typedef struct _CERT_REVOCATION_PARA_NO_EXTRA_FIELDS {
+    DWORD                     cbSize;
+    PCCERT_CONTEXT            pIssuerCert;
+    DWORD                     cCertStore;
+    HCERTSTORE               *rgCertStore;
+    HCERTSTORE                hCrlStore;
+    LPFILETIME                pftTimeToUse;
+} CERT_REVOCATION_PARA_NO_EXTRA_FIELDS, *PCERT_REVOCATION_PARA_NO_EXTRA_FIELDS;
+
 typedef struct _OLD_CERT_REVOCATION_STATUS {
     DWORD cbSize;
     DWORD dwIndex;
@@ -1457,6 +1466,8 @@ BOOL WINAPI CertDllVerifyRevocation(DWORD dwEncodingType, DWORD dwRevType,
 {
     DWORD error = 0, i;
     BOOL ret;
+    FILETIME now;
+    LPFILETIME pTime = NULL;
 
     TRACE("(%08x, %d, %d, %p, %08x, %p, %p)\n", dwEncodingType, dwRevType,
      cContext, rgpvContext, dwFlags, pRevPara, pRevStatus);
@@ -1471,6 +1482,14 @@ BOOL WINAPI CertDllVerifyRevocation(DWORD dwEncodingType, DWORD dwRevType,
     {
         SetLastError(E_INVALIDARG);
         return FALSE;
+    }
+    if (pRevPara && pRevPara->cbSize >=
+     sizeof(CERT_REVOCATION_PARA_NO_EXTRA_FIELDS))
+        pTime = pRevPara->pftTimeToUse;
+    if (!pTime)
+    {
+        GetSystemTimeAsFileTime(&now);
+        pTime = &now;
     }
     memset(&pRevStatus->dwIndex, 0, pRevStatus->cbSize - sizeof(DWORD));
     if (dwRevType != CERT_CONTEXT_REVOCATION_TYPE)
@@ -1524,18 +1543,27 @@ BOOL WINAPI CertDllVerifyRevocation(DWORD dwEncodingType, DWORD dwRevType,
                          (void **)&crl, NULL, NULL, NULL, NULL);
                         if (ret)
                         {
-                            PCRL_ENTRY entry = NULL;
-
-                            CertFindCertificateInCRL(
-                             rgpvContext[i], crl, 0, NULL,
-                             &entry);
-                            if (entry)
+                            if (CertVerifyCRLTimeValidity(pTime, crl->pCrlInfo))
                             {
-                                error = CRYPT_E_REVOKED;
-                                pRevStatus->dwIndex = i;
+                                /* The CRL isn't time valid */
+                                error = CRYPT_E_NO_REVOCATION_CHECK;
                                 ret = FALSE;
                             }
-                            else if (timeout)
+                            else
+                            {
+                                PCRL_ENTRY entry = NULL;
+
+                                CertFindCertificateInCRL(
+                                 rgpvContext[i], crl, 0, NULL,
+                                 &entry);
+                                if (entry)
+                                {
+                                    error = CRYPT_E_REVOKED;
+                                    pRevStatus->dwIndex = i;
+                                    ret = FALSE;
+                                }
+                            }
+                            if (ret && timeout)
                             {
                                 DWORD time = GetTickCount();
 
