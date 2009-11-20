@@ -1525,9 +1525,26 @@ static void test_ITEMIDLIST_format(void) {
                     pFileStructA->uFileTime == pFileStructW->uTime,
                     "Last write time should match creation time!\n");
 
-                ok (pFileStructA->uFileDate == pFileStructW->uDate2 &&
-                    pFileStructA->uFileTime == pFileStructW->uTime2,
-                    "Last write time should match last access time!\n");
+                /* On FAT filesystems the last access time is midnight
+                   local time, so the values of uDate2 and uTime2 will
+                   depend on the local timezone.  If the times are exactly
+                   equal then the dates should be identical for both FAT
+                   and NTFS as no timezone is more than 1 day away from UTC.
+                */
+                if (pFileStructA->uFileTime == pFileStructW->uTime2)
+                {
+                    ok (pFileStructA->uFileDate == pFileStructW->uDate2,
+                        "Last write date and time should match last access date and time!\n");
+                }
+                else
+                {
+                    /* Filesystem may be FAT. Check date within 1 day
+                       and seconds are zero. */
+                    trace ("Filesystem may be FAT. Performing less strict atime test.\n");
+                    ok ((pFileStructW->uTime2 & 0x1F) == 0,
+                        "Last access time on FAT filesystems should have zero seconds.\n");
+                    /* TODO: Perform check for date being within one day.*/
+                }
 
                 ok (!lstrcmpW(wszFile[i], pFileStructW->wszName) ||
                     !lstrcmpW(wszFile[i], (WCHAR *)(pFileStructW->abFooBar2 + 22)) || /* Vista */
