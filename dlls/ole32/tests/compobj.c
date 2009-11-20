@@ -837,6 +837,14 @@ static void test_CoRegisterClassObject(void)
     hr = CoRevokeClassObject(cookie);
     ok_ole_success(hr, "CoRevokeClassObject");
 
+    /* test whether an object that doesn't support IClassFactory can be
+     * registered for CLSCTX_LOCAL_SERVER */
+    hr = CoRegisterClassObject(&CLSID_WineOOPTest, &Test_Unknown,
+                               CLSCTX_LOCAL_SERVER, REGCLS_SINGLEUSE, &cookie);
+    ok_ole_success(hr, "CoRegisterClassObject");
+    hr = CoRevokeClassObject(cookie);
+    ok_ole_success(hr, "CoRevokeClassObject");
+
     /* test whether registered class becomes invalid when apartment is destroyed */
     hr = CoRegisterClassObject(&CLSID_WineOOPTest, (IUnknown *)&Test_ClassFactory,
                                CLSCTX_INPROC_SERVER, REGCLS_SINGLEUSE, &cookie);

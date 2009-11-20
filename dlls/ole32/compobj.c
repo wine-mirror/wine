@@ -2130,7 +2130,7 @@ HRESULT WINAPI CoRegisterClassObject(
           FIXME("Failed to create stream on hglobal, %x\n", hr);
           return hr;
       }
-      hr = CoMarshalInterface(newClass->pMarshaledData, &IID_IClassFactory,
+      hr = CoMarshalInterface(newClass->pMarshaledData, &IID_IUnknown,
                               newClass->classObject, MSHCTX_LOCAL, NULL,
                               MSHLFLAGS_TABLESTRONG);
       if (hr) {
