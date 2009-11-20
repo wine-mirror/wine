@@ -660,9 +660,7 @@ static void test_curfocus(HWND parent_wnd, INT nTabs)
 
     /* Testing CurFocus with value larger than number of tabs */
     focusIndex = SendMessage(hTab, TCM_SETCURSEL, 1, 0);
-    todo_wine{
-        expect(-1, focusIndex);
-    }
+    expect(-1, focusIndex);
 
     SendMessage(hTab, TCM_SETCURFOCUS, nTabs+1, 0);
     focusIndex = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
@@ -1059,7 +1057,7 @@ static void test_insert_focus(HWND parent_wnd)
     expect(2, r);
 
     ok_sequence(sequences, TAB_SEQ_INDEX, insert_focus_seq, "insert_focus test sequence", FALSE);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "insert_focus parent test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "insert_focus parent test sequence", TRUE);
 
     DestroyWindow(hTab);
 }
@@ -1108,7 +1106,7 @@ static void test_delete_focus(HWND parent_wnd)
     expect(-1, r);
 
     ok_sequence(sequences, TAB_SEQ_INDEX, delete_focus_seq, "delete_focus test sequence", FALSE);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "delete_focus parent test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "delete_focus parent test sequence", TRUE);
 
     DestroyWindow(hTab);
 }

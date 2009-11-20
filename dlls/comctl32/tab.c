@@ -269,8 +269,14 @@ static LRESULT TAB_SetCurFocus (TAB_INFO *infoPtr, INT iItem)
 {
   TRACE("(%p %d)\n", infoPtr, iItem);
 
-  if (iItem < 0)
+  if (iItem < 0) {
       infoPtr->uFocus = -1;
+      if (infoPtr->iSelected != -1) {
+          infoPtr->iSelected = -1;
+          TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGE);
+          TAB_InvalidateTabArea(infoPtr);
+      }
+  }
   else if (iItem < infoPtr->uNumItem) {
     if (infoPtr->dwStyle & TCS_BUTTONS) {
       /* set focus to new item, leave selection as is */
