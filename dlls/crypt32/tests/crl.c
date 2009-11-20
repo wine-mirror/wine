@@ -704,7 +704,7 @@ static void testFindCRL(void)
     } while (context);
     todo_wine
     ok(count == 0 || broken(count == 1 /* Win9x */),
-     "expected 1 matching CRLs, got %d\n", count);
+     "expected 0 matching CRLs, got %d\n", count);
     ok(revoked_count == 0, "expected 0 matching CRL entries, got %d\n",
      revoked_count);
     count = revoked_count = 0;
