@@ -5727,6 +5727,7 @@ for ac_header in \
 	openssl/ssl.h \
 	png.h \
 	poll.h \
+	port.h \
 	process.h \
 	pthread.h \
 	pwd.h \
@@ -12109,6 +12110,7 @@ for ac_func in \
 	pipe2 \
 	poll \
 	popen \
+	port_create \
 	prctl \
 	pread \
 	pwrite \

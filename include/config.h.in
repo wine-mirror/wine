@@ -591,6 +591,12 @@
 /* Define to 1 if you have the `popen' function. */
 #undef HAVE_POPEN
 
+/* Define to 1 if you have the `port_create' function. */
+#undef HAVE_PORT_CREATE
+
+/* Define to 1 if you have the <port.h> header file. */
+#undef HAVE_PORT_H
+
 /* Define if we can use ppdev.h for parallel port access */
 #undef HAVE_PPDEV
 

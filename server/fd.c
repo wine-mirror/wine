@@ -162,6 +162,10 @@ static inline int epoll_wait( int epfd, struct epoll_event *events, int maxevent
 
 #endif /* linux && __i386__ && HAVE_STDINT_H */
 
+#if defined(HAVE_PORT_H) && defined(HAVE_PORT_CREATE)
+# include <port.h>
+# define USE_EVENT_PORTS
+#endif /* HAVE_PORT_H && HAVE_PORT_CREATE */
 
 /* Because of the stupid Posix locking semantics, we need to keep
  * track of all file descriptors referencing a given file, and not
@@ -672,6 +676,107 @@ static inline void main_loop_epoll(void)
             long user = (long)events[i].udata;
             if (pollfd[user].revents) fd_poll_event( poll_users[user], pollfd[user].revents );
             pollfd[user].revents = 0;
+        }
+    }
+}
+
+#elif defined(USE_EVENT_PORTS)
+
+static int port_fd = -1;
+
+static inline void init_epoll(void)
+{
+    port_fd = port_create();
+}
+
+static inline void set_fd_epoll_events( struct fd *fd, int user, int events )
+{
+    int ret;
+
+    if (port_fd == -1) return;
+
+    if (events == -1)  /* stop waiting on this fd completely */
+    {
+        if (pollfd[user].fd == -1) return;  /* already removed */
+        port_dissociate( port_fd, PORT_SOURCE_FD, fd->unix_fd );
+    }
+    else if (pollfd[user].fd == -1)
+    {
+        if (pollfd[user].events) return;  /* stopped waiting on it, don't restart */
+        ret = port_associate( port_fd, PORT_SOURCE_FD, fd->unix_fd, events, (void *)user );
+    }
+    else
+    {
+        if (pollfd[user].events == events) return;  /* nothing to do */
+        ret = port_associate( port_fd, PORT_SOURCE_FD, fd->unix_fd, events, (void *)user );
+    }
+
+    if (ret == -1)
+    {
+        if (errno == ENOMEM)  /* not enough memory, give up on port_associate */
+        {
+            close( port_fd );
+            port_fd = -1;
+        }
+        else perror( "port_associate" );  /* should not happen */
+    }
+}
+
+static inline void remove_epoll_user( struct fd *fd, int user )
+{
+    if (port_fd == -1) return;
+
+    if (pollfd[user].fd != -1)
+    {
+        port_dissociate( port_fd, PORT_SOURCE_FD, fd->unix_fd );
+    }
+}
+
+static inline void main_loop_epoll(void)
+{
+    int i, nget, ret, timeout;
+    port_event_t events[128];
+
+    if (port_fd == -1) return;
+
+    while (active_users)
+    {
+        timeout = get_next_timeout();
+        nget = 1;
+
+        if (!active_users) break;  /* last user removed by a timeout */
+        if (port_fd == -1) break;  /* an error occurred with event completion */
+
+        if (timeout != -1)
+        {
+            struct timespec ts;
+
+            ts.tv_sec = timeout / 1000;
+            ts.tv_nsec = (timeout % 1000) * 1000000;
+            ret = port_getn( port_fd, events, sizeof(events)/sizeof(events[0]), &nget, &ts );
+        }
+        else ret = port_getn( port_fd, events, sizeof(events)/sizeof(events[0]), &nget, NULL );
+
+	if (ret == -1) break;  /* an error occurred with event completion */
+
+        set_current_time();
+
+        /* put the events into the pollfd array first, like poll does */
+        for (i = 0; i < nget; i++)
+        {
+            long user = (long)events[i].portev_user;
+            pollfd[user].revents = events[i].portev_events;
+        }
+
+        /* read events from the pollfd array, as set_fd_events may modify them */
+        for (i = 0; i < nget; i++)
+        {
+            long user = (long)events[i].portev_user;
+            if (pollfd[user].revents) fd_poll_event( poll_users[user], pollfd[user].revents );
+            /* if we are still interested, reassociate the fd */
+            if (pollfd[user].fd != -1) {
+                port_associate( port_fd, PORT_SOURCE_FD, pollfd[user].fd, pollfd[user].events, (void *)user );
+            }
         }
     }
 }

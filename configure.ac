@@ -364,6 +364,7 @@ AC_CHECK_HEADERS(\
 	openssl/ssl.h \
 	png.h \
 	poll.h \
+	port.h \
 	process.h \
 	pthread.h \
 	pwd.h \
@@ -1709,6 +1710,7 @@ AC_CHECK_FUNCS(\
 	pipe2 \
 	poll \
 	popen \
+	port_create \
 	prctl \
 	pread \
 	pwrite \
