@@ -651,11 +651,9 @@ static void testFindCRL(void)
                 revoked_count++;
         }
     } while (context);
-    todo_wine {
     ok(count == 0, "expected 0 matching CRLs, got %d\n", count);
     ok(revoked_count == 0, "expected 0 matching CRL entries, got %d\n",
      revoked_count);
-    }
     count = revoked_count = 0;
     do {
         context = pCertFindCRLInStore(store, 0, 0, CRL_FIND_ISSUED_BY,
