@@ -1176,6 +1176,28 @@ static void test_removeimage(HWND parent_wnd)
     DestroyIcon(hicon);
 }
 
+static void test_delete_selection(HWND parent_wnd)
+{
+    HWND hTab;
+    DWORD ret;
+
+    hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE, 4);
+    ok(hTab != NULL, "Failed to create tab control\n");
+
+    ret = SendMessage(hTab, TCM_SETCURSEL, 3, 0);
+    expect(0, ret);
+    ret = SendMessage(hTab, TCM_GETCURSEL, 0, 0);
+    expect(3, ret);
+    /* delete selected item - selection goes to -1 */
+    ret = SendMessage(hTab, TCM_DELETEITEM, 3, 0);
+    expect(TRUE, ret);
+
+    ret = SendMessage(hTab, TCM_GETCURSEL, 0, 0);
+    expect(-1, ret);
+
+    DestroyWindow(hTab);
+}
+
 START_TEST(tab)
 {
     HWND parent_wnd;
@@ -1218,6 +1240,7 @@ START_TEST(tab)
 
     test_insert_focus(parent_wnd);
     test_delete_focus(parent_wnd);
+    test_delete_selection(parent_wnd);
     test_removeimage(parent_wnd);
 
     DestroyWindow(parent_wnd);

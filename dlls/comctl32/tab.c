@@ -2916,10 +2916,9 @@ static LRESULT TAB_DeleteItem (TAB_INFO *infoPtr, INT iItem)
 	Free(oldItems);
 
 	/* Readjust the selected index */
-	if ((iItem == infoPtr->iSelected) && (iItem > 0))
-	    infoPtr->iSelected--;
-
-	if (iItem < infoPtr->iSelected)
+	if (iItem == infoPtr->iSelected)
+	    infoPtr->iSelected = -1;
+	else if (iItem < infoPtr->iSelected)
 	    infoPtr->iSelected--;
 
 	if (infoPtr->uNumItem == 0)
