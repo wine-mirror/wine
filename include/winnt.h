@@ -296,7 +296,7 @@ extern "C" {
 #endif
 
 /* Eliminate Microsoft C/C++ compiler warning 4715 */
-#if (_MSC_VER > 1200)
+#if defined(_MSC_VER) && (_MSC_VER > 1200)
 # define DEFAULT_UNREACHABLE default: __assume(0)
 #else
 # define DEFAULT_UNREACHABLE
