@@ -1853,7 +1853,10 @@ static BOOL find_matching_rdn_attr(DWORD dwFlags, const CERT_NAME_INFO *name,
                      (LPCWSTR)name->rgRDN[i].rgRDNAttr[j].Value.pbData;
                     LPCWSTR attrStr = (LPCWSTR)attr->Value.pbData;
 
-                    if (dwFlags & CERT_CASE_INSENSITIVE_IS_RDN_ATTRS_FLAG)
+                    if (attr->Value.cbData !=
+                     name->rgRDN[i].rgRDNAttr[j].Value.cbData)
+                        match = FALSE;
+                    else if (dwFlags & CERT_CASE_INSENSITIVE_IS_RDN_ATTRS_FLAG)
                         match = !strncmpiW(nameStr, attrStr,
                          attr->Value.cbData / sizeof(WCHAR));
                     else
@@ -1870,7 +1873,10 @@ static BOOL find_matching_rdn_attr(DWORD dwFlags, const CERT_NAME_INFO *name,
                      (LPCSTR)name->rgRDN[i].rgRDNAttr[j].Value.pbData;
                     LPCSTR attrStr = (LPCSTR)attr->Value.pbData;
 
-                    if (dwFlags & CERT_CASE_INSENSITIVE_IS_RDN_ATTRS_FLAG)
+                    if (attr->Value.cbData !=
+                     name->rgRDN[i].rgRDNAttr[j].Value.cbData)
+                        match = FALSE;
+                    else if (dwFlags & CERT_CASE_INSENSITIVE_IS_RDN_ATTRS_FLAG)
                         match = !strncasecmp(nameStr, attrStr,
                          attr->Value.cbData);
                     else
