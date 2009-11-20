@@ -1670,9 +1670,7 @@ typedef struct _RTL_HANDLE_TABLE
 #define FILE_PIPE_SERVER_END            0x00000001
 #define FILE_PIPE_CLIENT_END            0x00000000
 
-#if (_WIN32_WINNT >= 0x0501)
 #define INTERNAL_TS_ACTIVE_CONSOLE_ID ( *((volatile ULONG*)(0x7ffe02d8)) )
-#endif /* (_WIN32_WINNT >= 0x0501) */
 
 #define LOGONID_CURRENT    ((ULONG)-1)
 
