@@ -1019,7 +1019,7 @@ static void testIsValidCRLForCert(void)
 
     CertFreeCRLContext(crl);
 
-    /* And again, with a real CRL, the CRL is valid for both certs. */
+    /* And again, with a real CRL, the CRL is valid for all three certs. */
     crl = CertCreateCRLContext(X509_ASN_ENCODING, verisignCRL,
      sizeof(verisignCRL));
     ok(crl != NULL, "CertCreateCRLContext failed: %08x\n", GetLastError());
@@ -1027,6 +1027,8 @@ static void testIsValidCRLForCert(void)
     ret = pCertIsValidCRLForCertificate(cert1, crl, 0, NULL);
     ok(ret, "CertIsValidCRLForCertificate failed: %08x\n", GetLastError());
     ret = pCertIsValidCRLForCertificate(cert2, crl, 0, NULL);
+    ok(ret, "CertIsValidCRLForCertificate failed: %08x\n", GetLastError());
+    ret = pCertIsValidCRLForCertificate(cert3, crl, 0, NULL);
     ok(ret, "CertIsValidCRLForCertificate failed: %08x\n", GetLastError());
 
     CertFreeCRLContext(crl);
@@ -1045,6 +1047,8 @@ static void testIsValidCRLForCert(void)
     ret = pCertIsValidCRLForCertificate(cert1, crl, 0, NULL);
     ok(ret, "CertIsValidCRLForCertificate failed: %08x\n", GetLastError());
     ret = pCertIsValidCRLForCertificate(cert2, crl, 0, NULL);
+    ok(ret, "CertIsValidCRLForCertificate failed: %08x\n", GetLastError());
+    ret = pCertIsValidCRLForCertificate(cert3, crl, 0, NULL);
     ok(ret, "CertIsValidCRLForCertificate failed: %08x\n", GetLastError());
 
     CertFreeCRLContext(crl);
