@@ -65,7 +65,7 @@ static const char cond_comment_str[] =
     "</body></html>";
 static const char frameset_str[] =
     "<html><head><title>frameset test</title></head><frameset rows=\"28, *\">"
-    "<frame src=\"about:blank\" id=\"fr1\"><frame src=\"about:blank\" id=\"fr2\">"
+    "<frame src=\"about:blank\" name=\"nm1\" id=\"fr1\"><frame src=\"about:blank\" name=\"nm2\" id=\"fr2\">"
     "</frameset></html>";
 
 static WCHAR characterW[] = {'c','h','a','r','a','c','t','e','r',0};
@@ -5396,6 +5396,7 @@ static void test_elems(IHTMLDocument2 *doc)
     ok(!node, "node = %p\n", node);
 
     elem2 = get_doc_elem_by_id(doc, "x");
+    test_elem_tag((IUnknown*)elem2, "A");
     node = node_get_next((IUnknown*)elem2);
     IHTMLDOMNode_Release(node);
     IHTMLElement_Release(elem2);
@@ -5682,6 +5683,7 @@ static void test_frameset(IHTMLDocument2 *doc)
 {
     IHTMLWindow2 *window;
     IHTMLFramesCollection2 *frames;
+    IHTMLElement *elem;
     LONG length;
     VARIANT index_var, result_var;
     HRESULT hres;
@@ -5805,6 +5807,11 @@ static void test_frameset(IHTMLDocument2 *doc)
     ok(hres == E_INVALIDARG, "IHTMLWindow2_item should have"
            "failed with E_INVALIDARG, instead: 0x%08x\n", hres);
     VariantClear(&result_var);
+
+    /* getElementById with node name attributes */
+    elem = get_doc_elem_by_id(doc, "nm1");
+    test_elem_id((IUnknown*)elem, "fr1");
+    IHTMLElement_Release(elem);
 }
 
 static IHTMLDocument2 *notif_doc;
