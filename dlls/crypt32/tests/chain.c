@@ -3606,6 +3606,9 @@ static void testGetCertChain(void)
      CERT_TRUST_IS_REVOKED | CERT_TRUST_REVOCATION_STATUS_UNKNOWN |
      CERT_TRUST_IS_OFFLINE_REVOCATION;
     HCERTSTORE store;
+    static char one_two_three[] = "1.2.3";
+    static char oid_server_auth[] = szOID_PKIX_KP_SERVER_AUTH;
+    LPSTR oids[2];
 
     /* Basic parameter checks */
     if (0)
@@ -3824,6 +3827,70 @@ static void testGetCertChain(void)
          CERT_TRUST_IS_OFFLINE_REVOCATION),
          "unexpected revocation status %08x\n",
          chain->TrustStatus.dwErrorStatus & revocationFlags);
+        CertFreeCertificateChain(chain);
+    }
+    CertCloseStore(store, 0);
+    CertFreeCertificateContext(cert);
+
+    /* Test usage match with Google's cert */
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     verisignCA, sizeof(verisignCA), CERT_STORE_ADD_ALWAYS, NULL);
+    CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     thawte_sgc_ca, sizeof(thawte_sgc_ca), CERT_STORE_ADD_ALWAYS, NULL);
+    cert = CertCreateCertificateContext(X509_ASN_ENCODING,
+     google, sizeof(google));
+    SystemTimeToFileTime(&oct2009, &fileTime);
+    memset(&para, 0, sizeof(para));
+    para.cbSize = sizeof(para);
+    oids[0] = one_two_three;
+    para.RequestedUsage.dwType = USAGE_MATCH_TYPE_AND;
+    para.RequestedUsage.Usage.rgpszUsageIdentifier = oids;
+    para.RequestedUsage.Usage.cUsageIdentifier = 1;
+    ret = pCertGetCertificateChain(NULL, cert, &fileTime, store, &para,
+     0, NULL, &chain);
+    ok(ret, "CertGetCertificateChain failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        todo_wine
+        ok(chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
+         "expected CERT_TRUST_IS_NOT_VALID_FOR_USAGE\n");
+        CertFreeCertificateChain(chain);
+    }
+    oids[0] = oid_server_auth;
+    ret = pCertGetCertificateChain(NULL, cert, &fileTime, store, &para,
+     0, NULL, &chain);
+    ok(ret, "CertGetCertificateChain failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(!(chain->TrustStatus.dwErrorStatus &
+         CERT_TRUST_IS_NOT_VALID_FOR_USAGE),
+         "didn't expect CERT_TRUST_IS_NOT_VALID_FOR_USAGE\n");
+        CertFreeCertificateChain(chain);
+    }
+    oids[1] = one_two_three;
+    para.RequestedUsage.Usage.cUsageIdentifier = 2;
+    para.RequestedUsage.dwType = USAGE_MATCH_TYPE_AND;
+    ret = pCertGetCertificateChain(NULL, cert, &fileTime, store, &para,
+     0, NULL, &chain);
+    ok(ret, "CertGetCertificateChain failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        todo_wine
+        ok(chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
+         "expected CERT_TRUST_IS_NOT_VALID_FOR_USAGE\n");
+        CertFreeCertificateChain(chain);
+    }
+    para.RequestedUsage.dwType = USAGE_MATCH_TYPE_OR;
+    ret = pCertGetCertificateChain(NULL, cert, &fileTime, store, &para,
+     0, NULL, &chain);
+    ok(ret, "CertGetCertificateChain failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(!(chain->TrustStatus.dwErrorStatus &
+         CERT_TRUST_IS_NOT_VALID_FOR_USAGE),
+         "didn't expect CERT_TRUST_IS_NOT_VALID_FOR_USAGE\n");
         CertFreeCertificateChain(chain);
     }
     CertCloseStore(store, 0);
