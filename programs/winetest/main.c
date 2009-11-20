@@ -209,6 +209,7 @@ static void print_version (void)
     const char *(CDECL *wine_get_build_id)(void);
     void (CDECL *wine_get_host_version)( const char **sysname, const char **release );
     BOOL (WINAPI *pIsWow64Process)(HANDLE hProcess, PBOOL Wow64Process);
+    BOOL (WINAPI *pGetProductInfo)(DWORD, DWORD, DWORD, DWORD, DWORD *);
 
     ver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
     if (!(ext = GetVersionEx ((OSVERSIONINFO *) &ver)))
@@ -247,6 +248,15 @@ static void print_version (void)
              "    wSuiteMask=%d\n    wProductType=%d\n    wReserved=%d\n",
              ver.wServicePackMajor, ver.wServicePackMinor, ver.wSuiteMask,
              ver.wProductType, ver.wReserved);
+
+    pGetProductInfo = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"),"GetProductInfo");
+    if (pGetProductInfo && !running_under_wine())
+    {
+        DWORD prodtype = 0;
+
+        pGetProductInfo(ver.dwMajorVersion, ver.dwMinorVersion, ver.wServicePackMajor, ver.wServicePackMinor, &prodtype);
+        xprintf("    dwProductInfo=%u\n", prodtype);
+    }
 }
 
 static inline int is_dot_dir(const char* x)
