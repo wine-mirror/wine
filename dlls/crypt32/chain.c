@@ -2454,6 +2454,111 @@ static void CRYPT_VerifyChainRevocation(PCERT_CHAIN_CONTEXT chain,
     }
 }
 
+static void CRYPT_CheckUsages(PCERT_CHAIN_CONTEXT chain,
+ const CERT_CHAIN_PARA *pChainPara)
+{
+    if (pChainPara->cbSize >= sizeof(CERT_CHAIN_PARA_NO_EXTRA_FIELDS) &&
+     pChainPara->RequestedUsage.Usage.cUsageIdentifier)
+    {
+        PCCERT_CONTEXT endCert;
+        PCERT_EXTENSION ext;
+        BOOL validForUsage;
+
+        /* A chain, if created, always includes the end certificate */
+        endCert = chain->rgpChain[0]->rgpElement[0]->pCertContext;
+        /* The extended key usage extension specifies how a certificate's
+         * public key may be used.  From RFC 5280, section 4.2.1.12:
+         * "This extension indicates one or more purposes for which the
+         *  certified public key may be used, in addition to or in place of the
+         *  basic purposes indicated in the key usage extension."
+         * If the extension is present, it only satisfies the requested usage
+         * if that usage is included in the extension:
+         * "If the extension is present, then the certificate MUST only be used
+         *  for one of the purposes indicated."
+         * There is also the special anyExtendedKeyUsage OID, but it doesn't
+         * have to be respected:
+         * "Applications that require the presence of a particular purpose
+         *  MAY reject certificates that include the anyExtendedKeyUsage OID
+         *  but not the particular OID expected for the application."
+         * For now, I'm being more conservative and ignoring the presence of
+         * the anyExtendedKeyUsage OID.
+         */
+        if ((ext = CertFindExtension(szOID_ENHANCED_KEY_USAGE,
+         endCert->pCertInfo->cExtension, endCert->pCertInfo->rgExtension)))
+        {
+            const CERT_ENHKEY_USAGE *requestedUsage =
+             &pChainPara->RequestedUsage.Usage;
+            CERT_ENHKEY_USAGE *usage;
+            DWORD size;
+
+            if (CryptDecodeObjectEx(X509_ASN_ENCODING,
+             X509_ENHANCED_KEY_USAGE, ext->Value.pbData, ext->Value.cbData,
+             CRYPT_DECODE_ALLOC_FLAG, NULL, &usage, &size))
+            {
+                if (pChainPara->RequestedUsage.dwType == USAGE_MATCH_TYPE_AND)
+                {
+                    DWORD i, j;
+
+                    /* For AND matches, all usages must be present */
+                    validForUsage = TRUE;
+                    for (i = 0; validForUsage &&
+                     i < requestedUsage->cUsageIdentifier; i++)
+                    {
+                        BOOL match = FALSE;
+
+                        for (j = 0; !match && j < usage->cUsageIdentifier; j++)
+                            match = !strcmp(usage->rgpszUsageIdentifier[j],
+                             requestedUsage->rgpszUsageIdentifier[i]);
+                        if (!match)
+                            validForUsage = FALSE;
+                    }
+                }
+                else
+                {
+                    DWORD i, j;
+
+                    /* For OR matches, any matching usage suffices */
+                    validForUsage = FALSE;
+                    for (i = 0; !validForUsage &&
+                     i < requestedUsage->cUsageIdentifier; i++)
+                    {
+                        for (j = 0; !validForUsage &&
+                         j < usage->cUsageIdentifier; j++)
+                            validForUsage =
+                             !strcmp(usage->rgpszUsageIdentifier[j],
+                             requestedUsage->rgpszUsageIdentifier[i]);
+                    }
+                }
+                LocalFree(usage);
+            }
+            else
+                validForUsage = FALSE;
+        }
+        else
+        {
+            /* If the extension isn't present, any interpretation is valid:
+             * "Certificate using applications MAY require that the extended
+             *  key usage extension be present and that a particular purpose
+             *  be indicated in order for the certificate to be acceptable to
+             *  that application."
+             * For now I'm being more conservative and disallowing it.
+             */
+            WARN_(chain)("requested usage from a certificate with no usages\n");
+            validForUsage = FALSE;
+        }
+        if (!validForUsage)
+        {
+            chain->TrustStatus.dwErrorStatus |=
+             CERT_TRUST_IS_NOT_VALID_FOR_USAGE;
+            chain->rgpChain[0]->rgpElement[0]->TrustStatus.dwErrorStatus |=
+             CERT_TRUST_IS_NOT_VALID_FOR_USAGE;
+        }
+    }
+    if (pChainPara->cbSize >= sizeof(CERT_CHAIN_PARA) &&
+     pChainPara->RequestedIssuancePolicy.Usage.cUsageIdentifier)
+        FIXME("unimplemented for RequestedIssuancePolicy\n");
+}
+
 static void dump_usage_match(LPCSTR name, const CERT_USAGE_MATCH *usageMatch)
 {
     if (usageMatch->Usage.cUsageIdentifier)
@@ -2534,6 +2639,7 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
             CRYPT_FreeLowerQualityChains(chain);
         pChain = (PCERT_CHAIN_CONTEXT)chain;
         CRYPT_VerifyChainRevocation(pChain, pTime, pChainPara, dwFlags);
+        CRYPT_CheckUsages(pChain, pChainPara);
         if (ppChainContext)
             *ppChainContext = pChain;
         else

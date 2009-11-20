@@ -3853,7 +3853,6 @@ static void testGetCertChain(void)
     ok(ret, "CertGetCertificateChain failed: %08x\n", GetLastError());
     if (ret)
     {
-        todo_wine
         ok(chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
          "expected CERT_TRUST_IS_NOT_VALID_FOR_USAGE\n");
         CertFreeCertificateChain(chain);
@@ -3877,7 +3876,6 @@ static void testGetCertChain(void)
     ok(ret, "CertGetCertificateChain failed: %08x\n", GetLastError());
     if (ret)
     {
-        todo_wine
         ok(chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
          "expected CERT_TRUST_IS_NOT_VALID_FOR_USAGE\n");
         CertFreeCertificateChain(chain);
