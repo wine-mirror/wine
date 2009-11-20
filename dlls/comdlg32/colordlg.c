@@ -1081,7 +1081,7 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
 /***********************************************************************
  *                              CC_WMPaint                    [internal]
  */
-static LRESULT CC_WMPaint( HWND hDlg, WPARAM wParam, LPARAM lParam )
+static LRESULT CC_WMPaint( HWND hDlg )
 {
     PAINTSTRUCT ps;
     LPCCPRIV lpp = GetPropW( hDlg, szColourDialogProp );
@@ -1103,7 +1103,7 @@ static LRESULT CC_WMPaint( HWND hDlg, WPARAM wParam, LPARAM lParam )
 /***********************************************************************
  *                              CC_WMLButtonUp              [internal]
  */
-static LRESULT CC_WMLButtonUp( HWND hDlg, WPARAM wParam, LPARAM lParam )
+static LRESULT CC_WMLButtonUp( HWND hDlg )
 {
    LPCCPRIV lpp = GetPropW( hDlg, szColourDialogProp );
 
@@ -1158,7 +1158,7 @@ static LRESULT CC_WMMouseMove( HWND hDlg, LPARAM lParam )
 /***********************************************************************
  *                              CC_WMLButtonDown              [internal]
  */
-static LRESULT CC_WMLButtonDown( HWND hDlg, WPARAM wParam, LPARAM lParam )
+static LRESULT CC_WMLButtonDown( HWND hDlg, LPARAM lParam )
 {
    LPCCPRIV lpp = GetPropW( hDlg, szColourDialogProp );
    int r, g, b, i;
@@ -1252,7 +1252,7 @@ static INT_PTR CALLBACK ColorDlgProc( HWND hDlg, UINT message,
 	                   return TRUE;
 	                break;
 	  case WM_PAINT:
-	                if ( CC_WMPaint(hDlg, wParam, lParam))
+	                if (CC_WMPaint(hDlg))
 	                   return TRUE;
 	                break;
 	  case WM_LBUTTONDBLCLK:
@@ -1264,11 +1264,11 @@ static INT_PTR CALLBACK ColorDlgProc( HWND hDlg, UINT message,
 			  return TRUE;
 			break;
 	  case WM_LBUTTONUP:  /* FIXME: ClipCursor off (if in color graph)*/
-                        if (CC_WMLButtonUp(hDlg, wParam, lParam))
+                        if (CC_WMLButtonUp(hDlg))
                            return TRUE;
 			break;
 	  case WM_LBUTTONDOWN:/* FIXME: ClipCursor on  (if in color graph)*/
-	                if (CC_WMLButtonDown(hDlg, wParam, lParam))
+	                if (CC_WMLButtonDown(hDlg, lParam))
 	                   return TRUE;
 	                break;
 	}
