@@ -876,7 +876,7 @@ static void test_arrange(void)
     }
 }
 
-static CHAR WINDIR[MAX_PATH];
+static CHAR SYSDIR[MAX_PATH];
 
 static UINT_PTR CALLBACK path_hook_proc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -896,8 +896,8 @@ static UINT_PTR CALLBACK path_hook_proc( HWND hDlg, UINT msg, WPARAM wParam, LPA
 
             memset(buf, 0x66, sizeof(buf));
             ret = SendMessageA( GetParent(hDlg), CDM_GETFOLDERPATH, sizeof(buf), (LPARAM)buf);
-            ok(!lstrcmpA(WINDIR, buf), "Expected '%s', got '%s'\n", WINDIR, buf);
-            ok(lstrlenA(WINDIR) + 1 == ret, "Expected %d, got %d\n", lstrlenA(WINDIR) + 1, ret);
+            ok(!lstrcmpiA(SYSDIR, buf), "Expected '%s', got '%s'\n", SYSDIR, buf);
+            ok(lstrlenA(SYSDIR) + 1 == ret, "Expected %d, got %d\n", lstrlenA(SYSDIR) + 1, ret);
         }
     }
 
@@ -911,8 +911,11 @@ static void test_getfolderpath(void)
     char szFileName[MAX_PATH] = "";
     char szInitialDir[MAX_PATH];
 
-    GetWindowsDirectory(szInitialDir, MAX_PATH);
-    lstrcpyA(WINDIR, szInitialDir);
+    /* We need to pick a different directory as the other tests because of new
+     * Windows 7 behavior.
+     */
+    GetSystemDirectory(szInitialDir, MAX_PATH);
+    lstrcpyA(SYSDIR, szInitialDir);
 
     ZeroMemory(&ofn, sizeof(ofn));
 
