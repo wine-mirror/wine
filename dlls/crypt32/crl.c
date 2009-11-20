@@ -123,26 +123,71 @@ static BOOL compare_crl_issued_by(PCCRL_CONTEXT pCrlContext, DWORD dwType,
              CRYPT_VERIFY_CERT_SIGN_ISSUER_CERT, (void *)issuer, 0, NULL);
         if (ret && (dwFlags & CRL_FIND_ISSUED_BY_AKI_FLAG))
         {
-            PCERT_EXTENSION aki = CertFindExtension(
+            PCERT_EXTENSION ext = CertFindExtension(
              szOID_AUTHORITY_KEY_IDENTIFIER2, pCrlContext->pCrlInfo->cExtension,
              pCrlContext->pCrlInfo->rgExtension);
 
-            if (aki)
+            if (ext)
             {
-                CERT_EXTENSION *ski;
+                CERT_AUTHORITY_KEY_ID2_INFO *info;
+                DWORD size;
 
-                if ((ski = CertFindExtension(szOID_SUBJECT_KEY_IDENTIFIER,
-                 issuer->pCertInfo->cExtension,
-                 issuer->pCertInfo->rgExtension)))
+                if ((ret = CryptDecodeObjectEx(X509_ASN_ENCODING,
+                 X509_AUTHORITY_KEY_ID2, ext->Value.pbData, ext->Value.cbData,
+                 CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size)))
                 {
-                    if (aki->Value.cbData == ski->Value.cbData)
-                        ret = !memcmp(aki->Value.pbData, ski->Value.pbData,
-                         aki->Value.cbData);
+                    if (info->AuthorityCertIssuer.cAltEntry &&
+                     info->AuthorityCertSerialNumber.cbData)
+                    {
+                        PCERT_ALT_NAME_ENTRY directoryName = NULL;
+                        DWORD i;
+
+                        for (i = 0; !directoryName &&
+                         i < info->AuthorityCertIssuer.cAltEntry; i++)
+                            if (info->AuthorityCertIssuer.rgAltEntry[i].
+                             dwAltNameChoice == CERT_ALT_NAME_DIRECTORY_NAME)
+                                directoryName =
+                                 &info->AuthorityCertIssuer.rgAltEntry[i];
+                        if (directoryName)
+                        {
+                            ret = CertCompareCertificateName(
+                             issuer->dwCertEncodingType,
+                             &issuer->pCertInfo->Subject,
+                             &directoryName->u.DirectoryName);
+                            if (ret)
+                                ret = CertCompareIntegerBlob(
+                                 &issuer->pCertInfo->SerialNumber,
+                                 &info->AuthorityCertSerialNumber);
+                        }
+                        else
+                        {
+                            FIXME("no supported name type in authority key id2\n");
+                            ret = FALSE;
+                        }
+                    }
+                    else if (info->KeyId.cbData)
+                    {
+                        if ((ext = CertFindExtension(
+                         szOID_SUBJECT_KEY_IDENTIFIER,
+                         issuer->pCertInfo->cExtension,
+                         issuer->pCertInfo->rgExtension)))
+                        {
+                            if (info->KeyId.cbData == ext->Value.cbData)
+                                ret = !memcmp(info->KeyId.pbData,
+                                 ext->Value.pbData, info->KeyId.cbData);
+                            else
+                                ret = FALSE;
+                        }
+                        else
+                            ret = FALSE;
+                    }
                     else
+                    {
+                        FIXME("unsupported value for AKI extension\n");
                         ret = FALSE;
+                    }
+                    LocalFree(info);
                 }
-                else
-                    ret = FALSE;
             }
             /* else: a CRL without an AKI matches any cert */
         }
