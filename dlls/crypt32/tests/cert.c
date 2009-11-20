@@ -3200,21 +3200,28 @@ static void testVerifyRevocation(void)
     SetLastError(0xdeadbeef);
     ret = CertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
      1, (void **)&certs[1], 0, NULL, &status);
-    todo_wine
-    ok(!ret && GetLastError() == CRYPT_E_REVOCATION_OFFLINE,
-     "expected CRYPT_E_REVOCATION_OFFLINE, got %08x\n", GetLastError());
-    todo_wine
-    ok(status.dwError == CRYPT_E_REVOCATION_OFFLINE,
-     "expected CRYPT_E_REVOCATION_OFFLINE, got %08x\n", status.dwError);
+    ok(!ret && (GetLastError() == CRYPT_E_NO_REVOCATION_CHECK /* Win9x */ ||
+     GetLastError() == CRYPT_E_REVOCATION_OFFLINE),
+     "expected CRYPT_E_NO_REVOCATION_CHECK or CRYPT_E_REVOCATION_OFFLINE, got %08x\n",
+     GetLastError());
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK /* Win9x */ ||
+     status.dwError == CRYPT_E_REVOCATION_OFFLINE,
+     "expected CRYPT_E_NO_REVOCATION_CHECK or CRYPT_E_REVOCATION_OFFLINE, got %08x\n",
+     status.dwError);
     ok(status.dwIndex == 0, "expected index 0, got %d\n", status.dwIndex);
     /* Both certs together can't, either (they're not CRLs) */
     SetLastError(0xdeadbeef);
     ret = CertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
      2, (void **)certs, 0, NULL, &status);
-    ok(!ret && GetLastError() == CRYPT_E_NO_REVOCATION_CHECK,
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", GetLastError());
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK,
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", status.dwError);
+    ok(!ret && (GetLastError() == CRYPT_E_NO_REVOCATION_CHECK ||
+     GetLastError() == CRYPT_E_REVOCATION_OFFLINE /* WinME */),
+     "expected CRYPT_E_NO_REVOCATION_CHECK or CRYPT_E_REVOCATION_OFFLINE, got %08x\n",
+     GetLastError());
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK ||
+     status.dwError == CRYPT_E_REVOCATION_OFFLINE /* WinME */,
+     "expected CRYPT_E_NO_REVOCATION_CHECK or CRYPT_E_REVOCATION_OFFLINE, got %08x\n",
+     status.dwError);
+    ok(status.dwIndex == 0, "expected index 0, got %d\n", status.dwIndex);
     ok(status.dwIndex == 0, "expected index 0, got %d\n", status.dwIndex);
     /* Now add a CRL to the hCrlStore */
     revPara.hCrlStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
@@ -3224,10 +3231,14 @@ static void testVerifyRevocation(void)
     SetLastError(0xdeadbeef);
     ret = CertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
      2, (void **)certs, 0, &revPara, &status);
-    ok(!ret && GetLastError() == CRYPT_E_NO_REVOCATION_CHECK,
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", GetLastError());
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK,
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", status.dwError);
+    ok(!ret && (GetLastError() == CRYPT_E_NO_REVOCATION_CHECK ||
+     GetLastError() == CRYPT_E_REVOCATION_OFFLINE /* WinME */),
+     "expected CRYPT_E_NO_REVOCATION_CHECK or CRYPT_E_REVOCATION_OFFLINE, got %08x\n",
+     GetLastError());
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK ||
+     status.dwError == CRYPT_E_REVOCATION_OFFLINE /* WinME */,
+     "expected CRYPT_E_NO_REVOCATION_CHECK or CRYPT_E_REVOCATION_OFFLINE, got %08x\n",
+     status.dwError);
     ok(status.dwIndex == 0, "expected index 0, got %d\n", status.dwIndex);
     /* Specifying CERT_VERIFY_REV_CHAIN_FLAG doesn't change things either */
     SetLastError(0xdeadbeef);
