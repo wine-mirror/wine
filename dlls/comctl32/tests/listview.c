@@ -4023,7 +4023,7 @@ static void test_LVS_EX_TRANSPARENTBKGND(void)
     DestroyWindow(hwnd);
 }
 
-static void test_ApproximateViewRect(void)
+static void test_approximate_viewrect(void)
 {
     HWND hwnd;
     DWORD ret;
@@ -4097,6 +4097,40 @@ static void test_ApproximateViewRect(void)
     DestroyWindow(hwnd);
 }
 
+static void test_finditem(void)
+{
+    LVFINDINFOA fi;
+    static char f[5];
+    HWND hwnd;
+    DWORD r;
+
+    hwnd = create_listview_control(0);
+    insert_item(hwnd, 0);
+
+    memset(&fi, 0, sizeof(fi));
+
+    /* full string search, inserted text was "foo" */
+    strcpy(f, "foo");
+    fi.flags = LVFI_STRING;
+    fi.psz = f;
+    r = SendMessage(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
+    expect(0, r);
+    /* partial string search, inserted text was "foo" */
+    strcpy(f, "fo");
+    fi.flags = LVFI_STRING | LVFI_PARTIAL;
+    fi.psz = f;
+    r = SendMessage(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
+    expect(0, r);
+    /* partial string search, part after start char */
+    strcpy(f, "oo");
+    fi.flags = LVFI_STRING | LVFI_PARTIAL;
+    fi.psz = f;
+    r = SendMessage(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
+    expect(-1, r);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -4154,7 +4188,8 @@ START_TEST(listview)
     test_indentation();
     test_getitemspacing();
     test_getcolumnwidth();
-    test_ApproximateViewRect();
+    test_approximate_viewrect();
+    test_finditem();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {

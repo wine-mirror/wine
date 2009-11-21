@@ -5949,12 +5949,13 @@ again:
             else
                 continue;
         }
-	
+
         if (lvItem.mask & LVIF_TEXT)
 	{
             if (lpFindInfo->flags & LVFI_PARTIAL)
             {
-            	if (strstrW(lvItem.pszText, lpFindInfo->psz) == NULL) continue;
+		WCHAR *p = strstrW(lvItem.pszText, lpFindInfo->psz);
+		if (!p || p != lvItem.pszText) continue;
             }
             else
             {
@@ -5963,7 +5964,7 @@ again:
 	}
 
         if (!bNearest) return nItem;
-	
+
 	/* This is very inefficient. To do a good job here,
 	 * we need a sorted array of (x,y) item positions */
 	LISTVIEW_GetItemOrigin(infoPtr, nItem, &Position);
