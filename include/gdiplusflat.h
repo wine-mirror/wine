@@ -350,6 +350,9 @@ GpStatus WINGDIPAPI GdipSetPathFillMode(GpPath*,GpFillMode);
 GpStatus WINGDIPAPI GdipSetPathMarker(GpPath*);
 GpStatus WINGDIPAPI GdipStartPathFigure(GpPath*);
 GpStatus WINGDIPAPI GdipTransformPath(GpPath*,GpMatrix*);
+GpStatus WINGDIPAPI GdipWarpPath(GpPath*,GpMatrix*,GDIPCONST GpPointF*,INT,REAL,
+    REAL,REAL,REAL,WarpMode,REAL);
+GpStatus WINGDIPAPI GdipWidenPath(GpPath*,GpPen*,GpMatrix*,REAL);
 
 /* HatchBrush */
 GpStatus WINGDIPAPI GdipCreateHatchBrush(HatchStyle,ARGB,ARGB,GpHatch**);
