@@ -1410,7 +1410,7 @@ static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const 
             {
                 symt_add_func_line(msc_dbg->module, func, source,
                                    lines_blk->l[i].lineno ^ 0x80000000,
-                                   lines_blk->l[i].offset - lines_blk->start);
+                                   lines_blk->l[i].offset);
             }
             break;
         case LT2_FILES_BLOCK: /* skip */
