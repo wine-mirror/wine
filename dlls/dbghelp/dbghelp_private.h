@@ -246,7 +246,7 @@ struct symt_array
 {
     struct symt                 symt;
     int		                start;
-    int		                end;
+    int		                end;            /* end index if > 0, or -array_len (in bytes) if < 0 */
     struct symt*                base_type;
     struct symt*                index_type;
 };

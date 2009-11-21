@@ -304,6 +304,21 @@ struct symt_array* symt_new_array(struct module* module, int min, int max,
     return sym;
 }
 
+static inline DWORD symt_array_count(const struct symt_array* array)
+{
+    if (array->end < 0)
+    {
+        DWORD64 elem_size;
+        /* One could want to also set the array->end field in array, but we won't do it
+         * as long as all the get_type() helpers use const objects
+         */
+        if (symt_get_info(array->base_type, TI_GET_LENGTH, &elem_size) && elem_size)
+            return -array->end / (DWORD)elem_size;
+        return 0;
+    }
+    return array->end - array->start + 1;
+}
+
 struct symt_function_signature* symt_new_function_signature(struct module* module, 
                                                             struct symt* ret_type,
                                                             enum CV_call_e call_conv)
@@ -597,8 +612,7 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         switch (type->tag)
         {
         case SymTagArrayType:
-            X(DWORD) = ((const struct symt_array*)type)->end - 
-                ((const struct symt_array*)type)->start + 1;
+            X(DWORD) = symt_array_count((const struct symt_array*)type);
             break;
         case SymTagFunctionType:
             /* this seems to be wrong for (future) C++ methods, where 'this' parameter
@@ -643,8 +657,7 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
             if (!symt_get_info(((const struct symt_array*)type)->base_type, 
                                TI_GET_LENGTH, pInfo))
                 return FALSE;
-            X(DWORD64) *= ((const struct symt_array*)type)->end - 
-                ((const struct symt_array*)type)->start + 1;
+            X(DWORD64) *= symt_array_count((const struct symt_array*)type);
             break;
         case SymTagPublicSymbol:
             X(DWORD64) = ((const struct symt_public*)type)->size;
