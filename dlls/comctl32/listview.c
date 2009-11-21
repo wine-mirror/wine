@@ -5585,16 +5585,11 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, BOOL storeText, BOOL 
         bSame = (lstrcmpW(dispInfo.item.pszText, tmp) == 0);
         textfreeT(tmp, FALSE);
     }
-    if (bSame)
-    {
-        res = TRUE;
-        goto cleanup;
-    }
 
     /* add the text from the edit in */
     dispInfo.item.mask |= LVIF_TEXT;
-    dispInfo.item.pszText = pszText;
-    dispInfo.item.cchTextMax = textlenT(pszText, isW);
+    dispInfo.item.pszText = bSame ? NULL : pszText;
+    dispInfo.item.cchTextMax = bSame ? 0 : textlenT(pszText, isW);
 
     /* Do we need to update the Item Text */
     if (!notify_dispinfoT(infoPtr, LVN_ENDLABELEDITW, &dispInfo, isW))
@@ -5608,6 +5603,11 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, BOOL storeText, BOOL 
 	goto cleanup;
     }
     if (!pszText) return TRUE;
+    if (bSame)
+    {
+        res = TRUE;
+        goto cleanup;
+    }
 
     if (!(infoPtr->dwStyle & LVS_OWNERDATA))
     {

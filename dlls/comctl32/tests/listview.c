@@ -272,7 +272,7 @@ static const struct message lvs_ex_transparentbkgnd_seq[] = {
 };
 
 static const struct message edit_end_nochange[] = {
-    { WM_NOTIFY, sent|id, 0, 0, LVN_ENDLABELEDITA }, /* todo */
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ENDLABELEDITA },
     { WM_NOTIFY, sent|id, 0, 0, NM_CUSTOMDRAW },     /* todo */
     { WM_NOTIFY, sent|id, 0, 0, NM_SETFOCUS },
     { 0 }
@@ -321,8 +321,12 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
               return blockEdit;
 
           case LVN_ENDLABELEDIT:
+              {
               /* always accept new item text */
+              NMLVDISPINFO *di = (NMLVDISPINFO*)lParam;
+              trace("LVN_ENDLABELEDIT: text=%s\n", di->item.pszText);
               return TRUE;
+              }
           case LVN_BEGINSCROLL:
           case LVN_ENDSCROLL:
               {
@@ -3426,9 +3430,24 @@ static void test_editbox(void)
     r = SendMessage(hwnd, LVM_GETITEMTEXTA, 0, (LPARAM)&item);
     expect(lstrlen(item.pszText), r);
     ok(strcmp(buffer, testitem1A) == 0, "Expected item text to change\n");
+    ok(!IsWindow(hwndedit), "Expected Edit window to be freed\n");
     /* end edit without saving */
+    SetFocus(hwnd);
+    hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
     r = SendMessage(hwndedit, WM_KEYDOWN, VK_ESCAPE, 0);
     expect(0, r);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, edit_end_nochange,
+                "edit box - end edit, no change, escape", TRUE);
+    /* end edit with saving */
+    SetFocus(hwnd);
+    hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    r = SendMessage(hwndedit, WM_KEYDOWN, VK_RETURN, 0);
+    expect(0, r);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, edit_end_nochange,
+                "edit box - end edit, no change, return", TRUE);
+
     memset(&item, 0, sizeof(item));
     item.pszText = buffer;
     item.cchTextMax = 10;
