@@ -5081,11 +5081,14 @@ static DWORD LISTVIEW_ApproximateViewRect(const LISTVIEW_INFO *infoPtr, INT nIte
  */
 static LRESULT LISTVIEW_CancelEditLabel(LISTVIEW_INFO *infoPtr)
 {
-    /* handle value will be lost after LISTVIEW_EndEditLabelT */
-    HWND edit = infoPtr->hwndEdit;
+    if (infoPtr->hwndEdit)
+    {
+        /* handle value will be lost after LISTVIEW_EndEditLabelT */
+        HWND edit = infoPtr->hwndEdit;
 
-    LISTVIEW_EndEditLabelT(infoPtr, TRUE, IsWindowUnicode(infoPtr->hwndEdit));
-    SendMessageW(edit, WM_CLOSE, 0, 0);
+        LISTVIEW_EndEditLabelT(infoPtr, TRUE, IsWindowUnicode(infoPtr->hwndEdit));
+        SendMessageW(edit, WM_CLOSE, 0, 0);
+    }
 
     return TRUE;
 }

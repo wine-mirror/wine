@@ -3720,8 +3720,11 @@ static void test_canceleditlabel(void)
     insert_item(hwnd, 0);
 
     /* try without edit created */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
     ret = SendMessage(hwnd, LVM_CANCELEDITLABEL, 0, 0);
     expect(TRUE, ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
+                "cancel edit label without edit", FALSE);
 
     /* cancel without data change */
     SetFocus(hwnd);
