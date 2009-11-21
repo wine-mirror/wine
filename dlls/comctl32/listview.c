@@ -237,86 +237,120 @@ typedef struct tagDELAYED_ITEM_EDIT
 
 typedef struct tagLISTVIEW_INFO
 {
+  /* control window */
   HWND hwndSelf;
-  HBRUSH hBkBrush;
-  COLORREF clrBk;
-  COLORREF clrText;
-  COLORREF clrTextBk;
-  HIMAGELIST himlNormal;
-  HIMAGELIST himlSmall;
-  HIMAGELIST himlState;
-  BOOL bLButtonDown;
-  BOOL bRButtonDown;
-  BOOL bDragging;
-  BOOL bMarqueeSelect;       /* marquee selection/highlight underway */
-  BOOL bScrolling;
-  RECT marqueeRect;         /* absolute coordinates of marquee selection */
-  RECT marqueeDrawRect;     /* relative coordinates for drawing marquee */
-  POINT marqueeOrigin;      /* absolute coordinates of marquee click origin */
-  POINT ptClickPos;         /* point where the user clicked */ 
-  BOOL bNoItemMetrics;		/* flags if item metrics are not yet computed */
-  INT nItemHeight;
-  INT nItemWidth;
-  RANGES selectionRanges;
-  INT nSelectionMark;
-  INT nHotItem;
-  SHORT notifyFormat;
-  HWND hwndNotify;
   RECT rcList;                 /* This rectangle is really the window
 				* client rectangle possibly reduced by the 
 				* horizontal scroll bar and/or header - see 
 				* LISTVIEW_UpdateSize. This rectangle offset
 				* by the LISTVIEW_GetOrigin value is in
 				* client coordinates   */
-  SIZE iconSize;
-  SIZE iconSpacing;
-  SIZE iconStateSize;
-  UINT uCallbackMask;
-  HWND hwndHeader;
-  HCURSOR hHotCursor;
-  HFONT hDefaultFont;
-  HFONT hFont;
-  INT ntmHeight;		/* Some cached metrics of the font used */
-  INT ntmMaxCharWidth;		/* by the listview to draw items */
-  INT nEllipsisWidth;
-  BOOL bRedraw;  		/* Turns on/off repaints & invalidations */
-  BOOL bAutoarrange;		/* Autoarrange flag when NOT in LVS_AUTOARRANGE */
-  BOOL bFocus;
+
+  /* notification window */
+  SHORT notifyFormat;
+  HWND hwndNotify;
   BOOL bDoChangeNotify;         /* send change notification messages? */
-  INT nFocusedItem;
-  RECT rcFocus;
-  DWORD dwStyle;		/* the cached window GWL_STYLE */
-  DWORD dwLvExStyle;		/* extended listview style */
-  DWORD uView;			/* current view available through LVM_[G,S]ETVIEW */
+  UINT uCallbackMask;
+
+  /* tooltips */
+  HWND hwndToolTip;
+
+  /* items */
   INT nItemCount;		/* the number of items in the list */
   HDPA hdpaItems;               /* array ITEM_INFO pointers */
   HDPA hdpaItemIds;             /* array of ITEM_ID pointers */
   HDPA hdpaPosX;		/* maintains the (X, Y) coordinates of the */
   HDPA hdpaPosY;		/* items in LVS_ICON, and LVS_SMALLICON modes */
+  RANGES selectionRanges;
+  INT nSelectionMark;           /* item to start next multiselection from */
+  INT nHotItem;
+  BOOL bAutoarrange;		/* Autoarrange flag when NOT in LVS_AUTOARRANGE */
+
+  /* columns */
   HDPA hdpaColumns;		/* array of COLUMN_INFO pointers */
   BOOL colRectsDirty;		/* trigger column rectangles requery from header */
-  POINT currIconPos;		/* this is the position next icon will be placed */
-  PFNLVCOMPARE pfnCompare;
+
+  /* item metrics */
+  BOOL bNoItemMetrics;		/* flags if item metrics are not yet computed */
+  INT nItemHeight;
+  INT nItemWidth;
+
+  /* sorting */
+  PFNLVCOMPARE pfnCompare;      /* sorting callback pointer */
   LPARAM lParamSort;
+
+  /* style */
+  DWORD dwStyle;		/* the cached window GWL_STYLE */
+  DWORD dwLvExStyle;		/* extended listview style */
+  DWORD uView;			/* current view available through LVM_[G,S]ETVIEW */
+
+  /* edit item */
   HWND hwndEdit;
   WNDPROC EditWndProc;
   INT nEditLabelItem;
-  INT nLButtonDownItem;		/* tracks item to reset multiselection on WM_LBUTTONUP */
+  DELAYED_ITEM_EDIT itemEdit;   /* Pointer to this structure will be the timer ID */
+
+  /* icons */
+  HIMAGELIST himlNormal;
+  HIMAGELIST himlSmall;
+  HIMAGELIST himlState;
+  SIZE iconSize;
+  SIZE iconSpacing;
+  SIZE iconStateSize;
+  POINT currIconPos;        /* this is the position next icon will be placed */
+
+  /* header */
+  HWND hwndHeader;
+  INT xTrackLine;           /* The x coefficient of the track line or -1 if none */
+
+  /* marquee selection */
+  BOOL bMarqueeSelect;      /* marquee selection/highlight underway */
+  BOOL bScrolling;
+  RECT marqueeRect;         /* absolute coordinates of marquee selection */
+  RECT marqueeDrawRect;     /* relative coordinates for drawing marquee */
+  POINT marqueeOrigin;      /* absolute coordinates of marquee click origin */
+
+  /* focus drawing */
+  BOOL bFocus;              /* control has focus */
+  INT nFocusedItem;
+  RECT rcFocus;             /* focus bounds */
+
+  /* colors */
+  HBRUSH hBkBrush;
+  COLORREF clrBk;
+  COLORREF clrText;
+  COLORREF clrTextBk;
+
+  /* font */
+  HFONT hDefaultFont;
+  HFONT hFont;
+  INT ntmHeight;            /* Some cached metrics of the font used */
+  INT ntmMaxCharWidth;      /* by the listview to draw items */
+  INT nEllipsisWidth;
+
+  /* mouse operation */
+  BOOL bLButtonDown;
+  BOOL bRButtonDown;
+  BOOL bDragging;
+  POINT ptClickPos;         /* point where the user clicked */
+  INT nLButtonDownItem;     /* tracks item to reset multiselection on WM_LBUTTONUP */
   DWORD dwHoverTime;
-  HWND hwndToolTip;
+  HCURSOR hHotCursor;
 
-  DWORD cditemmode;             /* Keep the custom draw flags for an item/row */
-
+  /* keyboard operation */
   DWORD lastKeyPressTimestamp;
   WPARAM charCode;
   INT nSearchParamLength;
   WCHAR szSearchParam[ MAX_PATH ];
-  BOOL bIsDrawing;
-  INT nMeasureItemHeight;
-  INT xTrackLine;               /* The x coefficient of the track line or -1 if none */
-  DELAYED_ITEM_EDIT itemEdit;   /* Pointer to this structure will be the timer ID */
 
-  DWORD iVersion; /* CCM_[G,S]ETVERSION */
+  /* painting */
+  DWORD cditemmode;        /* Keep the custom draw flags for an item/row */
+  BOOL bIsDrawing;         /* Drawing in progress */
+  INT nMeasureItemHeight;  /* WM_MEASUREITEM result */
+  BOOL bRedraw;            /* WM_SETREDRAW switch */
+
+  /* misc */
+  DWORD iVersion;          /* CCM_[G,S]ETVERSION */
 } LISTVIEW_INFO;
 
 /*
