@@ -1794,3 +1794,37 @@ HRESULT WINAPI ScriptGetLogicalWidths(const SCRIPT_ANALYSIS *sa, int nbchars, in
     for (i = 0; i < nbchars; i++) widths[i] = glyph_width[i];
     return S_OK;
 }
+
+/***********************************************************************
+ *      ScriptApplyLogicalWidth (USP10.@)
+ *
+ * Generate glyph advance widths.
+ *
+ * PARAMS
+ *  dx          [I]   Array of logical advance widths.
+ *  num_chars   [I]   Number of characters.
+ *  num_glyphs  [I]   Number of glyphs.
+ *  log_clust   [I]   Array of logical clusters.
+ *  sva         [I]   Visual attributes.
+ *  advance     [I]   Array of glyph advance widths.
+ *  sa          [I]   Script analysis.
+ *  abc         [I/O] Summed ABC widths.
+ *  justify     [O]   Array of glyph advance widths.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: a non-zero HRESULT.
+ */
+HRESULT WINAPI ScriptApplyLogicalWidth(const int *dx, int num_chars, int num_glyphs,
+                                       const WORD *log_clust, const SCRIPT_VISATTR *sva,
+                                       const int *advance, const SCRIPT_ANALYSIS *sa,
+                                       ABC *abc, int *justify)
+{
+    int i;
+
+    FIXME("(%p, %d, %d, %p, %p, %p, %p, %p, %p)\n",
+          dx, num_chars, num_glyphs, log_clust, sva, advance, sa, abc, justify);
+
+    for (i = 0; i < num_chars; i++) justify[i] = advance[i];
+    return S_OK;
+}

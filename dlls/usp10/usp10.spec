@@ -1,6 +1,6 @@
 @ stub LpkPresent
 @ stdcall ScriptApplyDigitSubstitution(ptr ptr ptr)
-@ stub ScriptApplyLogicalWidth
+@ stdcall ScriptApplyLogicalWidth(ptr long long ptr ptr ptr ptr ptr ptr)
 @ stdcall ScriptBreak(ptr long ptr ptr)
 @ stdcall ScriptCPtoX(long long long long ptr ptr ptr ptr ptr)
 @ stdcall ScriptCacheGetHeight(ptr ptr ptr)
