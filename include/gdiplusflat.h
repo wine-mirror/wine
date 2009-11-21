@@ -107,6 +107,8 @@ GpStatus WINGDIPAPI GdipNewInstalledFontCollection(GpFontCollection**);
 GpStatus WINGDIPAPI GdipNewPrivateFontCollection(GpFontCollection**);
 GpStatus WINGDIPAPI GdipDeletePrivateFontCollection(GpFontCollection**);
 GpStatus WINGDIPAPI GdipPrivateAddFontFile(GpFontCollection*, GDIPCONST WCHAR*);
+GpStatus WINGDIPAPI GdipPrivateAddMemoryFont(GpFontCollection*,
+        GDIPCONST void*,INT);
 GpStatus WINGDIPAPI GdipGetFontCollectionFamilyCount(GpFontCollection*, INT*);
 GpStatus WINGDIPAPI GdipGetFontCollectionFamilyList(GpFontCollection*, INT,
         GpFontFamily*[], INT*);
