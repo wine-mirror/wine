@@ -6205,8 +6205,13 @@ static HIMAGELIST LISTVIEW_GetImageList(const LISTVIEW_INFO *infoPtr, INT nImage
     switch (nImageList)
     {
     case LVSIL_NORMAL: return infoPtr->himlNormal;
-    case LVSIL_SMALL: return infoPtr->himlSmall;
-    case LVSIL_STATE: return infoPtr->himlState;
+    case LVSIL_SMALL:  return infoPtr->himlSmall;
+    case LVSIL_STATE:  return infoPtr->himlState;
+    case LVSIL_GROUPHEADER:
+        FIXME("LVSIL_GROUPHEADER not supported\n");
+        break;
+    default:
+        WARN("got unknown imagelist index - %d\n", nImageList);
     }
     return NULL;
 }

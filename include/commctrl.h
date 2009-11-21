@@ -3015,6 +3015,7 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVSIL_NORMAL            0
 #define LVSIL_SMALL             1
 #define LVSIL_STATE             2
+#define LVSIL_GROUPHEADER       3
 
 /* following 2 flags only for LVS_OWNERDATA listviews */
 /* and only in report or list mode */
