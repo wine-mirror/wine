@@ -97,8 +97,8 @@ extern "C" {
 
 #define small char
 typedef unsigned char byte;
-#define hyper __int64
-#define MIDL_uhyper unsigned __int64
+typedef INT64 hyper;
+typedef UINT64 MIDL_uhyper;
 typedef unsigned char boolean;
 
 #define __RPC_CALLEE WINAPI
