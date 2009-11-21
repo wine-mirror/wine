@@ -254,6 +254,7 @@ void write_type_left(FILE *h, type_t *t, int declonly)
         break;
       case TYPE_BASIC:
         if (type_basic_get_type(t) != TYPE_BASIC_INT32 &&
+            type_basic_get_type(t) != TYPE_BASIC_INT64 &&
             type_basic_get_type(t) != TYPE_BASIC_HYPER)
         {
           if (type_basic_get_sign(t) < 0) fprintf(h, "signed ");
@@ -264,7 +265,6 @@ void write_type_left(FILE *h, type_t *t, int declonly)
         case TYPE_BASIC_INT8: fprintf(h, "small"); break;
         case TYPE_BASIC_INT16: fprintf(h, "short"); break;
         case TYPE_BASIC_INT: fprintf(h, "int"); break;
-        case TYPE_BASIC_INT64: fprintf(h, "__int64"); break;
         case TYPE_BASIC_INT3264: fprintf(h, "__int3264"); break;
         case TYPE_BASIC_BYTE: fprintf(h, "byte"); break;
         case TYPE_BASIC_CHAR: fprintf(h, "char"); break;
@@ -278,6 +278,12 @@ void write_type_left(FILE *h, type_t *t, int declonly)
             fprintf(h, "ULONG");
           else
             fprintf(h, "LONG");
+          break;
+        case TYPE_BASIC_INT64:
+          if (type_basic_get_sign(t) > 0)
+            fprintf(h, "UINT64");
+          else
+            fprintf(h, "INT64");
           break;
         case TYPE_BASIC_HYPER:
           if (type_basic_get_sign(t) > 0)
