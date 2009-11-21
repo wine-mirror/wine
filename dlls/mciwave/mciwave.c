@@ -1518,15 +1518,34 @@ static DWORD WAVE_mciStatus(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_STATUS_PARM
 	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_WAVE_INPUT:
-	    lpParms->dwReturn = wmw->wInput;
+	    if (wmw->wInput != (WORD)WAVE_MAPPER)
+		lpParms->dwReturn = wmw->wInput;
+	    else {
+		lpParms->dwReturn = MAKEMCIRESOURCE(WAVE_MAPPER, WAVE_MAPPER_S);
+		ret = MCI_RESOURCE_RETURNED;
+	    }
 	    TRACE("MCI_WAVE_INPUT => %d\n", (signed)wmw->wInput);
 	    break;
 	case MCI_WAVE_OUTPUT:
-	    lpParms->dwReturn = wmw->wOutput;
+	    if (wmw->wOutput != (WORD)WAVE_MAPPER)
+		lpParms->dwReturn = wmw->wOutput;
+	    else {
+		lpParms->dwReturn = MAKEMCIRESOURCE(WAVE_MAPPER, WAVE_MAPPER_S);
+		ret = MCI_RESOURCE_RETURNED;
+	    }
 	    TRACE("MCI_WAVE_OUTPUT => %d\n", (signed)wmw->wOutput);
 	    break;
 	/* It is always ok to query wave format parameters,
 	 * except on auto-open yield MCIERR_UNSUPPORTED_FUNCTION. */
+	case MCI_WAVE_STATUS_FORMATTAG:
+	    if (wmw->lpWaveFormat->wFormatTag != WAVE_FORMAT_PCM)
+		lpParms->dwReturn = wmw->lpWaveFormat->wFormatTag;
+	    else {
+		lpParms->dwReturn = MAKEMCIRESOURCE(WAVE_FORMAT_PCM, WAVE_FORMAT_PCM_S);
+		ret = MCI_RESOURCE_RETURNED;
+	    }
+	    TRACE("MCI_WAVE_FORMATTAG => %lu\n", lpParms->dwReturn);
+	    break;
 	case MCI_WAVE_STATUS_AVGBYTESPERSEC:
 	    lpParms->dwReturn = wmw->lpWaveFormat->nAvgBytesPerSec;
 	    TRACE("MCI_WAVE_STATUS_AVGBYTESPERSEC => %lu\n", lpParms->dwReturn);
@@ -1542,10 +1561,6 @@ static DWORD WAVE_mciStatus(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_STATUS_PARM
 	case MCI_WAVE_STATUS_CHANNELS:
 	    lpParms->dwReturn = wmw->lpWaveFormat->nChannels;
 	    TRACE("MCI_WAVE_STATUS_CHANNELS => %lu\n", lpParms->dwReturn);
-	    break;
-	case MCI_WAVE_STATUS_FORMATTAG:
-	    lpParms->dwReturn = wmw->lpWaveFormat->wFormatTag;
-	    TRACE("MCI_WAVE_FORMATTAG => %lu\n", lpParms->dwReturn);
 	    break;
 	case MCI_WAVE_STATUS_SAMPLESPERSEC:
 	    lpParms->dwReturn = wmw->lpWaveFormat->nSamplesPerSec;
