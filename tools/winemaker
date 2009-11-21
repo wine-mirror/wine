@@ -582,6 +582,7 @@ sub source_scan_project_file($$$)
 
             if (/^\# Microsoft Developer Studio Project File - Name=\"([^\"]+)/) {
                 $prj_name="$1";
+                $prj_name=~s/\s+/_/g;
                 #print $prj_name;
                 next;
             } elsif (/^# TARGTYPE/) {
@@ -852,6 +853,7 @@ sub source_scan_project_file($$$)
             foreach my $vc_project_attr ($vc_project->attributes) {
                 if ($vc_project_attr->getName eq "Name") {
                     $prj_name=$vc_project_attr->getValue;
+                    $prj_name=~s/\s+/_/g;
                     last;
                 }
             }
