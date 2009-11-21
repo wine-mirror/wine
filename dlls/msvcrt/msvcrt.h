@@ -64,8 +64,8 @@ typedef unsigned int   MSVCRT__dev_t;
 typedef int MSVCRT__off_t;
 typedef int MSVCRT_clock_t;
 typedef int MSVCRT___time32_t;
-typedef __int64 MSVCRT___time64_t;
-typedef __int64 MSVCRT_fpos_t;
+typedef __int64 DECLSPEC_ALIGN(8) MSVCRT___time64_t;
+typedef __int64 DECLSPEC_ALIGN(8) MSVCRT_fpos_t;
 
 typedef void (*__cdecl MSVCRT_terminate_handler)(void);
 typedef void (*__cdecl MSVCRT_terminate_function)(void);
@@ -316,7 +316,7 @@ struct MSVCRT__finddata32i64_t {
   MSVCRT___time32_t time_create;
   MSVCRT___time32_t time_access;
   MSVCRT___time32_t time_write;
-  __int64           size;
+  __int64 DECLSPEC_ALIGN(8) size;
   char              name[260];
 };
 
@@ -334,7 +334,7 @@ struct MSVCRT__finddata64_t {
   MSVCRT___time64_t time_create;
   MSVCRT___time64_t time_access;
   MSVCRT___time64_t time_write;
-  __int64           size;
+  __int64 DECLSPEC_ALIGN(8) size;
   char              name[260];
 };
 
@@ -352,7 +352,7 @@ struct MSVCRT__wfinddata32i64_t {
   MSVCRT___time32_t time_create;
   MSVCRT___time32_t time_access;
   MSVCRT___time32_t time_write;
-  __int64           size;
+  __int64 DECLSPEC_ALIGN(8) size;
   MSVCRT_wchar_t    name[260];
 };
 
@@ -370,7 +370,7 @@ struct MSVCRT__wfinddata64_t {
   MSVCRT___time64_t time_create;
   MSVCRT___time64_t time_access;
   MSVCRT___time64_t time_write;
-  __int64           size;
+  __int64 DECLSPEC_ALIGN(8) size;
   MSVCRT_wchar_t    name[260];
 };
 

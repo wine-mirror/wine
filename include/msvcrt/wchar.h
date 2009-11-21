@@ -111,7 +111,7 @@ struct _wfinddatai64_t {
   time_t time_create;
   time_t time_access;
   time_t time_write;
-  __int64        size;
+  __int64 DECLSPEC_ALIGN(8) size;
   wchar_t name[260];
 };
 

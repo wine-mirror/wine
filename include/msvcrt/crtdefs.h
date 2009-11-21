@@ -80,6 +80,16 @@
 # endif
 #endif
 
+#ifndef DECLSPEC_ALIGN
+# if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
+#  define DECLSPEC_ALIGN(x) __declspec(align(x))
+# elif defined(__GNUC__)
+#  define DECLSPEC_ALIGN(x) __attribute__((aligned(x)))
+# else
+#  define DECLSPEC_ALIGN(x)
+# endif
+#endif
+
 #ifndef _MSVCRT_LONG_DEFINED
 #define _MSVCRT_LONG_DEFINED
 /* we need 32-bit longs even on 64-bit */
@@ -129,7 +139,7 @@ typedef __msvcrt_long __time32_t;
 #endif
 
 #ifndef _TIME64_T_DEFINED
-typedef __int64 __time64_t;
+typedef __int64 DECLSPEC_ALIGN(8) __time64_t;
 #define _TIME64_T_DEFINED
 #endif
 

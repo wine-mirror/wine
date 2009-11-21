@@ -58,7 +58,7 @@ typedef struct _CSADDR_INFO {
 typedef struct WS(sockaddr_storage) {
         short ss_family;
         char __ss_pad1[WS(_SS_PAD1SIZE)];
-        __int64 __ss_align;
+        __int64 DECLSPEC_ALIGN(8) __ss_align;
         char __ss_pad2[WS(_SS_PAD2SIZE)];
 } SOCKADDR_STORAGE, *PSOCKADDR_STORAGE, *LPSOCKADDR_STORAGE;
 
