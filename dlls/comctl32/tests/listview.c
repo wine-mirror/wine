@@ -271,6 +271,13 @@ static const struct message lvs_ex_transparentbkgnd_seq[] = {
     { 0 }
 };
 
+static const struct message edit_end_nochange[] = {
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ENDLABELEDITA }, /* todo */
+    { WM_NOTIFY, sent|id, 0, 0, NM_CUSTOMDRAW },     /* todo */
+    { WM_NOTIFY, sent|id, 0, 0, NM_SETFOCUS },
+    { 0 }
+};
+
 static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
@@ -3472,6 +3479,16 @@ static void test_editbox(void)
     /* testing only sizing messages */
     ok_sequence(sequences, EDITBOX_SEQ_INDEX, editbox_create_pos,
                 "edit box create - sizing", FALSE);
+
+    /* WM_COMMAND with EN_KILLFOCUS isn't forwared to parent */
+    SetFocus(hwnd);
+    hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
+    ok(IsWindow(hwndedit), "Expected Edit window to be created\n");
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    r = SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)hwndedit);
+    expect(0, r);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, edit_end_nochange,
+                "edit box WM_COMMAND (EN_KILLFOCUS)", TRUE);
 
     DestroyWindow(hwnd);
 }

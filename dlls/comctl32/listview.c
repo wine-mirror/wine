@@ -11409,6 +11409,7 @@ static LRESULT LISTVIEW_Command(LISTVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lP
 	case EN_KILLFOCUS:
 	{
 	    LISTVIEW_CancelEditLabel(infoPtr);
+	    break;
 	}
 
 	default:
