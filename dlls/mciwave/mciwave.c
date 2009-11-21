@@ -1609,10 +1609,10 @@ static DWORD WAVE_mciGetDevCaps(MCIDEVICEID wDevID, DWORD dwFlags,
 	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_WAVE_GETDEVCAPS_INPUTS:
-	    lpParms->dwReturn = 1;
+	    lpParms->dwReturn = waveInGetNumDevs();
 	    break;
 	case MCI_WAVE_GETDEVCAPS_OUTPUTS:
-	    lpParms->dwReturn = 1;
+	    lpParms->dwReturn = waveOutGetNumDevs();
 	    break;
 	default:
             FIXME("Unknown capability (%08x) !\n", lpParms->dwItem);
