@@ -1828,3 +1828,14 @@ HRESULT WINAPI ScriptApplyLogicalWidth(const int *dx, int num_chars, int num_gly
     for (i = 0; i < num_chars; i++) justify[i] = advance[i];
     return S_OK;
 }
+
+HRESULT WINAPI ScriptJustify(const SCRIPT_VISATTR *sva, const int *advance,
+                             int num_glyphs, int dx, int min_kashida, int *justify)
+{
+    int i;
+
+    FIXME("(%p, %p, %d, %d, %d, %p)\n", sva, advance, num_glyphs, dx, min_kashida, justify);
+
+    for (i = 0; i < num_glyphs; i++) justify[i] = advance[i];
+    return S_OK;
+}
