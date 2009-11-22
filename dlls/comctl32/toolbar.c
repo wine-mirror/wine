@@ -3230,8 +3230,8 @@ TOOLBAR_DeleteButton (TOOLBAR_INFO *infoPtr, INT nIndex)
                     (infoPtr->nNumButtons - nIndex) * sizeof(TBUTTON_INFO));
         }
 
-	if (TOOLBAR_ButtonHasString(oldButtons))
-	    Free((LPWSTR)oldButtons->iString);
+        if (TOOLBAR_ButtonHasString(&oldButtons[nIndex]))
+            Free((LPWSTR)oldButtons[nIndex].iString);
 	Free (oldButtons);
     }
 
