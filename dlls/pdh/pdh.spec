@@ -38,10 +38,10 @@
 @ stub PdhEnumObjectsW
 @ stub PdhExpandCounterPathA
 @ stub PdhExpandCounterPathW
-@ stub PdhExpandWildCardPathA
+@ stdcall PdhExpandWildCardPathA(str str ptr ptr long)
 @ stub PdhExpandWildCardPathHA
 @ stub PdhExpandWildCardPathHW
-@ stub PdhExpandWildCardPathW
+@ stdcall PdhExpandWildCardPathW(wstr wstr ptr ptr long)
 @ stub PdhFormatFromRawValue
 @ stdcall PdhGetCounterInfoA(ptr long ptr ptr)
 @ stdcall PdhGetCounterInfoW(ptr long ptr ptr)
