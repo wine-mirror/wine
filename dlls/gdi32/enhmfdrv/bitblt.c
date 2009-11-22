@@ -119,12 +119,7 @@ static BOOL EMFDRV_BitBlockTransfer(
     pEMR->dwRop = rop;
     pEMR->xSrc = xSrc;
     pEMR->ySrc = ySrc;
-    pEMR->xformSrc.eM11 = 1.0;  /** FIXME:           */
-    pEMR->xformSrc.eM12 = 0.0;  /** Setting default  */
-    pEMR->xformSrc.eM21 = 0.0;  /** value.           */
-    pEMR->xformSrc.eM22 = 1.0;  /** Where should we  */
-    pEMR->xformSrc.eDx = 0.0;   /** get that info    */
-    pEMR->xformSrc.eDy = 0.0;   /** ????             */
+    GetWorldTransform(physDevSrc->hdc, &pEMR->xformSrc);
     pEMR->crBkColorSrc = GetBkColor(physDevSrc->hdc);
     pEMR->iUsageSrc = DIB_RGB_COLORS;
     pEMR->offBmiSrc = emrSize;
