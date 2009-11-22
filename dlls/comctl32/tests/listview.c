@@ -4128,6 +4128,35 @@ static void test_finditem(void)
     r = SendMessage(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
     expect(-1, r);
 
+    /* try with LVFI_SUBSTRING */
+    strcpy(f, "fo");
+    fi.flags = LVFI_SUBSTRING;
+    fi.psz = f;
+    r = SendMessage(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
+    if (r == -1)
+    {
+        win_skip("LVFI_SUBSTRING not supported\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+    expect(0, r);
+    strcpy(f, "f");
+    fi.flags = LVFI_SUBSTRING;
+    fi.psz = f;
+    r = SendMessage(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
+    expect(0, r);
+    strcpy(f, "o");
+    fi.flags = LVFI_SUBSTRING;
+    fi.psz = f;
+    r = SendMessage(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
+    expect(-1, r);
+
+    strcpy(f, "f");
+    fi.flags = LVFI_SUBSTRING | LVFI_STRING;
+    fi.psz = f;
+    r = SendMessage(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
+    expect(0, r);
+
     DestroyWindow(hwnd);
 }
 

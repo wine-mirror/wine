@@ -5888,7 +5888,8 @@ static INT LISTVIEW_FindItemW(const LISTVIEW_INFO *infoPtr, INT nStart,
     if (!lpFindInfo || nItem < 0) return -1;
     
     lvItem.mask = 0;
-    if (lpFindInfo->flags & (LVFI_STRING | LVFI_PARTIAL))
+    if (lpFindInfo->flags & (LVFI_STRING | LVFI_PARTIAL) ||
+        lpFindInfo->flags &  LVFI_SUBSTRING)
     {
         lvItem.mask |= LVIF_TEXT;
         lvItem.pszText = szDispText;
@@ -5952,7 +5953,7 @@ again:
 
         if (lvItem.mask & LVIF_TEXT)
 	{
-            if (lpFindInfo->flags & LVFI_PARTIAL)
+            if (lpFindInfo->flags & (LVFI_PARTIAL | LVFI_SUBSTRING))
             {
 		WCHAR *p = strstrW(lvItem.pszText, lpFindInfo->psz);
 		if (!p || p != lvItem.pszText) continue;
@@ -6009,7 +6010,8 @@ again:
 static INT LISTVIEW_FindItemA(const LISTVIEW_INFO *infoPtr, INT nStart,
                               const LVFINDINFOA *lpFindInfo)
 {
-    BOOL hasText = lpFindInfo->flags & (LVFI_STRING | LVFI_PARTIAL);
+    BOOL hasText = lpFindInfo->flags & (LVFI_STRING | LVFI_PARTIAL) ||
+                   lpFindInfo->flags &  LVFI_SUBSTRING;
     LVFINDINFOW fiw;
     INT res;
     LPWSTR strW = NULL;
