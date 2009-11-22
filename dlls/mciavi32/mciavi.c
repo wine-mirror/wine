@@ -387,13 +387,13 @@ static DWORD MCIAVI_mciPlay_async(WINE_MCIAVI *wma, DWORD dwFlags, LPMCI_PLAY_PA
 static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
     WINE_MCIAVI *wma;
-    DWORD		tc;
     DWORD		frameTime;
-    DWORD		delta;
     DWORD		dwRet;
     LPWAVEHDR		waveHdr = NULL;
     unsigned		i, nHdr = 0;
     DWORD		dwFromFrame, dwToFrame;
+    DWORD		numEvents = 1;
+    HANDLE		events[2];
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
@@ -467,6 +467,7 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     /* time is in microseconds, we should convert it to milliseconds */
     frameTime = (wma->mah.dwMicroSecPerFrame + 500) / 1000;
 
+    events[0] = wma->hStopEvent;
     if (wma->lpWaveFormat) {
        if (MCIAVI_OpenAudio(wma, &nHdr, &waveHdr) != 0)
         {
@@ -474,14 +475,19 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
             HeapFree(GetProcessHeap(), 0, wma->lpWaveFormat);
             wma->lpWaveFormat = NULL;
         }
-        else
-	/* fill the queue with as many wave headers as possible */
-	MCIAVI_PlayAudioBlocks(wma, nHdr, waveHdr);
+       else
+       {
+            /* fill the queue with as many wave headers as possible */
+            MCIAVI_PlayAudioBlocks(wma, nHdr, waveHdr);
+            events[1] = wma->hEvent;
+            numEvents = 2;
+       }
     }
 
     while (wma->dwStatus == MCI_MODE_PLAY)
     {
         HDC hDC;
+        DWORD tc, delta;
         DWORD ret;
 
 	tc = GetTickCount();
@@ -493,21 +499,8 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
             ReleaseDC(wma->hWndPaint, hDC);
         }
 
-	if (wma->lpWaveFormat) {
-            HANDLE events[2];
-
-            events[0] = wma->hStopEvent;
-            events[1] = wma->hEvent;
-
+        if (wma->lpWaveFormat)
 	    MCIAVI_PlayAudioBlocks(wma, nHdr, waveHdr);
-	    delta = GetTickCount() - tc;
-
-            LeaveCriticalSection(&wma->cs);
-            ret = WaitForMultipleObjects(2, events, FALSE, (delta >= frameTime) ? 0 : frameTime - delta);
-            EnterCriticalSection(&wma->cs);
-
-            if (ret == WAIT_OBJECT_0 || wma->dwStatus != MCI_MODE_PLAY) break;
-	}
 
 	delta = GetTickCount() - tc;
 	if (delta < frameTime)
@@ -516,9 +509,9 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
             delta = 0;
 
         LeaveCriticalSection(&wma->cs);
-        ret = WaitForMultipleObjects(1, &wma->hStopEvent, FALSE, delta);
+        ret = WaitForMultipleObjects(numEvents, events, FALSE, delta);
         EnterCriticalSection(&wma->cs);
-        if (ret == WAIT_OBJECT_0) break;
+        if (ret == WAIT_OBJECT_0 || wma->dwStatus != MCI_MODE_PLAY) break;
 
        if (wma->dwCurrVideoFrame < dwToFrame)
            wma->dwCurrVideoFrame++;
