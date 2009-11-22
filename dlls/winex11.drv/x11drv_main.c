@@ -170,6 +170,7 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "XdndSelection",
     "XdndTarget",
     "XdndTypeList",
+    "HTML Format",
     "WCF_DIB",
     "image/gif",
     "image/jpeg",

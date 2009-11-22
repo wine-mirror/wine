@@ -167,6 +167,8 @@ static HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(Display *display, Window reque
     Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
 static HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(Display *display, Window requestor, Atom aTarget,
     Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
+static HANDLE X11DRV_CLIPBOARD_ExportTextHtml(Display *display, Window requestor, Atom aTarget,
+    Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
 static WINE_CLIPFORMAT *X11DRV_CLIPBOARD_InsertClipboardFormat(LPCWSTR FormatName, Atom prop);
 static BOOL X11DRV_CLIPBOARD_RenderSynthesizedText(Display *display, UINT wFormatID);
 static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData);
@@ -295,6 +297,7 @@ static const WCHAR wszRichTextFormat[] = {'R','i','c','h',' ','T','e','x','t',' 
 static const WCHAR wszGIF[] = {'G','I','F',0};
 static const WCHAR wszJFIF[] = {'J','F','I','F',0};
 static const WCHAR wszPNG[] = {'P','N','G',0};
+static const WCHAR wszHTMLFormat[] = {'H','T','M','L',' ','F','o','r','m','a','t',0};
 static const struct
 {
     LPCWSTR lpszFormat;
@@ -306,6 +309,7 @@ static const struct
     { wszGIF, XATOM_image_gif },
     { wszJFIF, XATOM_image_jpeg },
     { wszPNG, XATOM_image_png },
+    { wszHTMLFormat, XATOM_HTML_Format }, /* prefer this to text/html */
 };
 
 
@@ -356,10 +360,15 @@ static Window thread_selection_wnd(void)
 void X11DRV_InitClipboard(void)
 {
     UINT i;
+    WINE_CLIPFORMAT *format;
 
     /* Register known mapping between window formats and X properties */
     for (i = 0; i < sizeof(PropertyFormatMap)/sizeof(PropertyFormatMap[0]); i++)
         X11DRV_CLIPBOARD_InsertClipboardFormat(PropertyFormatMap[i].lpszFormat, GET_ATOM(PropertyFormatMap[i].prop));
+
+    /* Set up a conversion function from "HTML Format" to "text/html" */
+    format = X11DRV_CLIPBOARD_InsertClipboardFormat(wszHTMLFormat, GET_ATOM(XATOM_text_html));
+    format->lpDrvExportFunc = X11DRV_CLIPBOARD_ExportTextHtml;
 }
 
 
@@ -1814,6 +1823,113 @@ static HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(Display *display, Window reques
     }
 
     return X11DRV_CLIPBOARD_SerializeMetafile(CF_ENHMETAFILE, lpdata->hData32, lpBytes, TRUE);
+}
+
+
+/**************************************************************************
+ *		get_html_description_field
+ *
+ *  Find the value of a field in an HTML Format description.
+ */
+static LPCSTR get_html_description_field(LPCSTR data, LPCSTR keyword)
+{
+    LPCSTR pos=data;
+
+    while (pos && *pos && *pos != '<')
+    {
+        if (memcmp(pos, keyword, strlen(keyword)) == 0)
+            return pos+strlen(keyword);
+
+        pos = strchr(pos, '\n');
+        if (pos) pos++;
+    }
+
+    return NULL;
+}
+
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_ExportTextHtml
+ *
+ *  Export HTML Format to text/html.
+ *
+ * FIXME: We should attempt to add an <a base> tag and convert windows paths.
+ */
+static HANDLE X11DRV_CLIPBOARD_ExportTextHtml(Display *display, Window requestor, Atom aTarget,
+    Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+{
+    HANDLE hdata;
+    UINT datasize;
+    LPCSTR data, field_value;
+    UINT fragmentstart, fragmentend, htmlsize;
+    HANDLE hhtmldata=NULL;
+    LPSTR htmldata;
+
+    *lpBytes = 0;
+
+    if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
+    {
+        ERR("Failed to export %04x format\n", lpdata->wFormatID);
+        return 0;
+    }
+
+    hdata = lpdata->hData32;
+
+    datasize = GlobalSize(hdata);
+
+    data = GlobalLock(hdata);
+    if (!data)
+    {
+        ERR("Failed to lock HTML Format data\n");
+        return 0;
+    }
+
+    /* read the important fields */
+    field_value = get_html_description_field(data, "StartFragment:");
+    if (!field_value)
+    {
+        ERR("Couldn't find StartFragment value\n");
+        goto end;
+    }
+    fragmentstart = atoi(field_value);
+
+    field_value = get_html_description_field(data, "EndFragment:");
+    if (!field_value)
+    {
+        ERR("Couldn't find EndFragment value\n");
+        goto end;
+    }
+    fragmentend = atoi(field_value);
+
+    /* export only the fragment */
+    htmlsize = fragmentend - fragmentstart + 1;
+
+    hhtmldata = GlobalAlloc(0, htmlsize);
+
+    if (hhtmldata)
+    {
+        htmldata = GlobalLock(hhtmldata);
+
+        if (!htmldata)
+        {
+            GlobalFree(hhtmldata);
+            htmldata = NULL;
+            goto end;
+        }
+
+        memcpy(htmldata, &data[fragmentstart], fragmentend-fragmentstart);
+        htmldata[htmlsize-1] = '\0';
+
+        *lpBytes = htmlsize;
+
+        GlobalUnlock(htmldata);
+    }
+
+end:
+
+    GlobalUnlock(hdata);
+
+    return hhtmldata;
 }
 
 
