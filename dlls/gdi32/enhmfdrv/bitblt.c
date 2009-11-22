@@ -149,10 +149,8 @@ static BOOL EMFDRV_BitBlockTransfer(
     /* Assume the bitmap isn't compressed and set the BI_RGB flag. */
     lpBmiH->biCompression = BI_RGB;
     lpBmiH->biSizeImage = bitsSize;
-    lpBmiH->biYPelsPerMeter = /* 1 meter  = 39.37 inch */
-        MulDiv(GetDeviceCaps(physDevSrc->hdc,LOGPIXELSX),3937,100);
-    lpBmiH->biXPelsPerMeter = 
-        MulDiv(GetDeviceCaps(physDevSrc->hdc,LOGPIXELSY),3937,100);
+    lpBmiH->biYPelsPerMeter = 0;
+    lpBmiH->biXPelsPerMeter = 0;
     lpBmiH->biClrUsed   = nBPP <= 8 ? 1 << nBPP : 0;
     /* Set biClrImportant to 0, indicating that all of the 
        device colors are important. */
