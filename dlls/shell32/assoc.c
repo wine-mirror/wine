@@ -320,16 +320,25 @@ static HRESULT ASSOC_GetExecutable(IQueryAssociationsImpl *This,
   {
     pszStart = pszCommand + 1;
     pszEnd = strchrW(pszStart, '"');
+    if (pszEnd)
+      *pszEnd = 0;
+    *len = SearchPathW(NULL, pszStart, NULL, pathlen, path, NULL);
   }
   else
   {
     pszStart = pszCommand;
-    pszEnd = strchrW(pszStart, ' ');
+    for (pszEnd = pszStart; (pszEnd = strchrW(pszEnd, ' ')); pszEnd++)
+    {
+      WCHAR c = *pszEnd;
+      *pszEnd = 0;
+      if ((*len = SearchPathW(NULL, pszStart, NULL, pathlen, path, NULL)))
+        break;
+      *pszEnd = c;
+    }
+    if (!pszEnd)
+      *len = SearchPathW(NULL, pszStart, NULL, pathlen, path, NULL);
   }
-  if (pszEnd)
-    *pszEnd = 0;
 
-  *len = SearchPathW(NULL, pszStart, NULL, pathlen, path, NULL);
   HeapFree(GetProcessHeap(), 0, pszCommand);
   if (!*len)
     return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
