@@ -2380,7 +2380,7 @@ HRESULT WINAPI CoGetClassObject(
     if (CLSCTX_REMOTE_SERVER & dwClsContext)
     {
         FIXME ("CLSCTX_REMOTE_SERVER not supported\n");
-        hres = E_NOINTERFACE;
+        hres = REGDB_E_CLASSNOTREG;
     }
 
     if (FAILED(hres))
