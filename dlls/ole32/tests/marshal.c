@@ -1278,10 +1278,7 @@ static void test_lock_object_external(void)
 
     CoLockObjectExternal((IUnknown*)&Test_ClassFactory, FALSE, FALSE);
 
-    todo_wine
     ok_no_locks();
-    if (cLocks > 0)
-        CoDisconnectObject((IUnknown*)&Test_ClassFactory, 0);
 
     /* test CoLockObjectExternal doesn't release the last reference to an
      * object with fLastUnlockReleases as TRUE and there is a weak reference
