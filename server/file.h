@@ -58,6 +58,7 @@ extern struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned i
                            unsigned int sharing, unsigned int options );
 extern struct fd *create_anonymous_fd( const struct fd_ops *fd_user_ops,
                                        int unix_fd, struct object *user, unsigned int options );
+extern struct fd *dup_fd_object( struct fd *orig );
 extern void *get_fd_user( struct fd *fd );
 extern void set_fd_user( struct fd *fd, const struct fd_ops *ops, struct object *user );
 extern unsigned int get_fd_options( struct fd *fd );
@@ -79,8 +80,11 @@ extern void default_poll_event( struct fd *fd, int event );
 extern struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type );
 extern void fd_async_wake_up( struct fd *fd, int type, unsigned int status );
 extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
+extern obj_handle_t no_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async,
+                                 int blocking, const void *data, data_size_t size );
 extern obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async,
                                       int blocking, const void *data, data_size_t size );
+extern void no_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 extern void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 extern void default_fd_reselect_async( struct fd *fd, struct async_queue *queue );
 extern void default_fd_cancel_async( struct fd *fd, struct process *process, struct thread *thread, client_ptr_t iosb );

@@ -70,6 +70,7 @@ static struct object_type *mapping_get_type( struct object *obj );
 static struct fd *mapping_get_fd( struct object *obj );
 static unsigned int mapping_map_access( struct object *obj, unsigned int access );
 static void mapping_destroy( struct object *obj );
+static enum server_fd_type mapping_get_fd_type( struct fd *fd );
 
 static const struct object_ops mapping_ops =
 {
@@ -89,6 +90,18 @@ static const struct object_ops mapping_ops =
     no_open_file,                /* open_file */
     fd_close_handle,             /* close_handle */
     mapping_destroy              /* destroy */
+};
+
+static const struct fd_ops mapping_fd_ops =
+{
+    default_fd_get_poll_events,   /* get_poll_events */
+    default_poll_event,           /* poll_event */
+    no_flush,                     /* flush */
+    mapping_get_fd_type,          /* get_fd_type */
+    no_fd_ioctl,                  /* ioctl */
+    no_fd_queue_async,            /* queue_async */
+    default_fd_reselect_async,    /* reselect_async */
+    default_fd_cancel_async       /* cancel_async */
 };
 
 static struct list shared_list = LIST_INIT(shared_list);
@@ -396,6 +409,8 @@ static struct object *create_mapping( struct directory *root, const struct unico
                                       obj_handle_t handle, const struct security_descriptor *sd )
 {
     struct mapping *mapping;
+    struct file *file;
+    struct fd *fd;
     int access = 0;
     int unix_fd;
     struct stat st;
@@ -428,8 +443,14 @@ static struct object *create_mapping( struct directory *root, const struct unico
             set_error( STATUS_INVALID_PARAMETER );
             goto error;
         }
-        if (!(mapping->file = get_file_obj( current->process, handle, access ))) goto error;
-        mapping->fd = get_obj_fd( (struct object *)mapping->file );
+        if (!(file = get_file_obj( current->process, handle, access ))) goto error;
+        fd = get_obj_fd( (struct object *)file );
+        mapping->fd = dup_fd_object( fd );
+        release_object( file );
+        release_object( fd );
+        if (!mapping->fd) goto error;
+
+        set_fd_user( mapping->fd, &mapping_fd_ops, &mapping->obj );
         if ((unix_fd = get_unix_fd( mapping->fd )) == -1) goto error;
         if (protect & VPROT_IMAGE)
         {
@@ -525,6 +546,11 @@ static void mapping_destroy( struct object *obj )
         list_remove( &mapping->shared_entry );
     }
     free( mapping->committed );
+}
+
+static enum server_fd_type mapping_get_fd_type( struct fd *fd )
+{
+    return FD_TYPE_FILE;
 }
 
 int get_page_size(void)

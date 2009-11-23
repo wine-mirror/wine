@@ -1488,6 +1488,59 @@ struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *use
     return fd;
 }
 
+/* duplicate an fd object for a different user */
+struct fd *dup_fd_object( struct fd *orig )
+{
+    struct fd *fd = alloc_object( &fd_ops );
+
+    if (!fd) return NULL;
+
+    fd->fd_ops     = NULL;
+    fd->user       = NULL;
+    fd->inode      = NULL;
+    fd->closed     = NULL;
+    fd->access     = orig->access;
+    fd->options    = orig->options;
+    fd->sharing    = orig->sharing;
+    fd->unix_fd    = -1;
+    fd->signaled   = 0;
+    fd->fs_locks   = 0;
+    fd->poll_index = -1;
+    fd->read_q     = NULL;
+    fd->write_q    = NULL;
+    fd->wait_q     = NULL;
+    fd->completion = NULL;
+    list_init( &fd->inode_entry );
+    list_init( &fd->locks );
+
+    if (!(fd->unix_name = mem_alloc( strlen(orig->unix_name) + 1 ))) goto failed;
+    strcpy( fd->unix_name, orig->unix_name );
+    if ((fd->poll_index = add_poll_user( fd )) == -1) goto failed;
+
+    if (orig->inode)
+    {
+        struct closed_fd *closed = mem_alloc( sizeof(*closed) );
+        if (!closed) goto failed;
+        if ((fd->unix_fd = dup( orig->unix_fd )) == -1)
+        {
+            free( closed );
+            goto failed;
+        }
+        closed->unix_fd = fd->unix_fd;
+        closed->unlink[0] = 0;
+        fd->closed = closed;
+        fd->inode = (struct inode *)grab_object( orig->inode );
+        list_add_head( &fd->inode->open, &fd->inode_entry );
+    }
+    else if ((fd->unix_fd = dup( orig->unix_fd )) == -1) goto failed;
+
+    return fd;
+
+failed:
+    release_object( fd );
+    return NULL;
+}
+
 /* set the status to return when the fd has no associated unix fd */
 void set_no_fd_status( struct fd *fd, unsigned int status )
 {
@@ -1839,6 +1892,11 @@ void fd_reselect_async( struct fd *fd, struct async_queue *queue )
     fd->fd_ops->reselect_async( fd, queue );
 }
 
+void no_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
+{
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
+}
+
 void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
 {
     struct async *async;
@@ -1925,6 +1983,13 @@ static void unmount_device( struct fd *device_fd )
     list_remove( &device->entry );
     list_init( &device->entry );
     release_object( device );
+}
+
+obj_handle_t no_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async,
+                          int blocking, const void *data, data_size_t size )
+{
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
+    return 0;
 }
 
 /* default ioctl() routine */
