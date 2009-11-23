@@ -103,6 +103,7 @@ static REFIID tid_ids[] = {
     &DIID_DispHTMLTableRow,
     &DIID_DispHTMLUnknownElement,
     &DIID_DispHTMLWindow2,
+    &DIID_HTMLDocumentEvents,
     &IID_IHTMLAnchorElement,
     &IID_IHTMLBodyElement,
     &IID_IHTMLBodyElement2,
@@ -302,6 +303,61 @@ static dispex_data_t *preprocess_dispex_data(DispatchEx *This)
     }
 
     return data;
+}
+
+static int id_cmp(const void *p1, const void *p2)
+{
+    return *(DISPID*)p1 - *(DISPID*)p2;
+}
+
+HRESULT get_dispids(tid_t tid, DWORD *ret_size, DISPID **ret)
+{
+    unsigned i, func_cnt;
+    FUNCDESC *funcdesc;
+    ITypeInfo *ti;
+    TYPEATTR *attr;
+    DISPID *ids;
+    HRESULT hres;
+
+    hres = get_typeinfo(tid, &ti);
+    if(FAILED(hres))
+        return hres;
+
+    hres = ITypeInfo_GetTypeAttr(ti, &attr);
+    if(FAILED(hres)) {
+        ITypeInfo_Release(ti);
+        return hres;
+    }
+
+    func_cnt = attr->cFuncs;
+    ITypeInfo_ReleaseTypeAttr(ti, attr);
+
+    ids = heap_alloc(func_cnt*sizeof(DISPID));
+    if(!ids) {
+        ITypeInfo_Release(ti);
+        return E_OUTOFMEMORY;
+    }
+
+    for(i=0; i < func_cnt; i++) {
+        hres = ITypeInfo_GetFuncDesc(ti, i, &funcdesc);
+        if(FAILED(hres))
+            break;
+
+        ids[i] = funcdesc->memid;
+        ITypeInfo_ReleaseFuncDesc(ti, funcdesc);
+    }
+
+    ITypeInfo_Release(ti);
+    if(FAILED(hres)) {
+        heap_free(ids);
+        return hres;
+    }
+
+    qsort(ids, func_cnt, sizeof(DISPID), id_cmp);
+
+    *ret_size = func_cnt;
+    *ret = ids;
+    return S_OK;
 }
 
 static CRITICAL_SECTION cs_dispex_static_data;

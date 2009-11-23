@@ -198,7 +198,7 @@ static const IConnectionPointVtbl ConnectionPointVtbl =
     ConnectionPoint_EnumConnections
 };
 
-void ConnectionPoint_Init(ConnectionPoint *cp, ConnectionPointContainer *container, REFIID riid)
+void ConnectionPoint_Init(ConnectionPoint *cp, ConnectionPointContainer *container, REFIID riid, cp_static_data_t *data)
 {
     cp->lpConnectionPointVtbl = &ConnectionPointVtbl;
     cp->container = CONPTCONT(container);
@@ -206,6 +206,7 @@ void ConnectionPoint_Init(ConnectionPoint *cp, ConnectionPointContainer *contain
     cp->sinks_size = 0;
     cp->iid = riid;
     cp->next = NULL;
+    cp->data = data;
 
     cp->next = container->cp_list;
     container->cp_list = cp;

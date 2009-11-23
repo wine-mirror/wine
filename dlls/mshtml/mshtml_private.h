@@ -80,6 +80,7 @@ typedef enum {
     DispHTMLTableRow_tid,
     DispHTMLUnknownElement_tid,
     DispHTMLWindow2_tid,
+    HTMLDocumentEvents_tid,
     IHTMLAnchorElement_tid,
     IHTMLBodyElement_tid,
     IHTMLBodyElement2_tid,
@@ -158,6 +159,7 @@ void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*);
 void release_dispex(DispatchEx*);
 BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**);
+HRESULT get_dispids(tid_t,DWORD*,DISPID**);
 
 typedef struct HTMLDocumentNode HTMLDocumentNode;
 typedef struct HTMLDocumentObj HTMLDocumentObj;
@@ -261,6 +263,12 @@ typedef enum {
     EDITMODE        
 } USERMODE;
 
+typedef struct {
+    tid_t tid;
+    DWORD id_cnt;
+    DISPID *ids;
+} cp_static_data_t;
+
 typedef struct ConnectionPointContainer {
     const IConnectionPointContainerVtbl  *lpConnectionPointContainerVtbl;
 
@@ -282,6 +290,7 @@ struct ConnectionPoint {
     DWORD sinks_size;
 
     const IID *iid;
+    cp_static_data_t *data;
 
     ConnectionPoint *next;
 };
@@ -449,6 +458,7 @@ struct HTMLDOMNode {
     nsIDOMNode *nsnode;
     HTMLDocumentNode *doc;
     event_target_t *event_target;
+    ConnectionPointContainer *cp_container;
 
     HTMLDOMNode *next;
 };
@@ -620,7 +630,7 @@ void HTMLDocumentNode_SecMgr_Init(HTMLDocumentNode*);
 
 HRESULT HTMLCurrentStyle_Create(HTMLElement*,IHTMLCurrentStyle**);
 
-void ConnectionPoint_Init(ConnectionPoint*,ConnectionPointContainer*,REFIID);
+void ConnectionPoint_Init(ConnectionPoint*,ConnectionPointContainer*,REFIID,cp_static_data_t*);
 void ConnectionPointContainer_Init(ConnectionPointContainer*,IUnknown*);
 void ConnectionPointContainer_Destroy(ConnectionPointContainer*);
 
