@@ -4629,6 +4629,7 @@ static const struct
     { "TOO_MANY_OPENED_FILES",       STATUS_TOO_MANY_OPENED_FILES },
     { "UNSUCCESSFUL",                STATUS_UNSUCCESSFUL },
     { "USER_APC",                    STATUS_USER_APC },
+    { "USER_MAPPED_FILE",            STATUS_USER_MAPPED_FILE },
     { "VOLUME_DISMOUNTED",           STATUS_VOLUME_DISMOUNTED },
     { "WAS_LOCKED",                  STATUS_WAS_LOCKED },
     { NULL, 0 }

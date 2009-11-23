@@ -649,12 +649,10 @@ static void test_CopyFileA(void)
     ok(hmapfile != NULL, "CreateFileMapping: error %d\n", GetLastError());
 
     ret = CopyFileA(source, dest, FALSE);
-    todo_wine {
-        ok(!ret, "CopyFileA: expected failure\n");
-        ok(GetLastError() == ERROR_USER_MAPPED_FILE ||
-           broken(GetLastError() == ERROR_SHARING_VIOLATION), /* Win9x and WinMe */
-           "CopyFileA with mapped dest file: expected ERROR_USER_MAPPED_FILE, got %d\n", GetLastError());
-    }
+    ok(!ret, "CopyFileA: expected failure\n");
+    ok(GetLastError() == ERROR_USER_MAPPED_FILE ||
+       broken(GetLastError() == ERROR_SHARING_VIOLATION), /* Win9x */
+       "CopyFileA with mapped dest file: expected ERROR_USER_MAPPED_FILE, got %d\n", GetLastError());
 
     CloseHandle(hmapfile);
     CloseHandle(hfile);
@@ -1857,7 +1855,7 @@ static void test_file_sharing(void)
             ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
             ok( ret == ERROR_SHARING_VIOLATION, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
         }
-        else todo_wine
+        else
         {
             ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
             ok( ret == ERROR_USER_MAPPED_FILE, "wrong error code %d for %x\n", ret, mapping_modes[a1] );

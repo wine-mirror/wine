@@ -160,7 +160,8 @@ extern void fd_copy_completion( struct fd *src, struct fd *dst );
 #define FILE_UNIX_WRITE_ACCESS (FILE_WRITE_DATA|FILE_WRITE_ATTRIBUTES|FILE_WRITE_EA)
 
 /* magic file access rights for mappings */
-#define FILE_MAPPING_IMAGE  0x80000000
-#define FILE_MAPPING_WRITE  0x40000000
+#define FILE_MAPPING_IMAGE  0x80000000  /* set for SEC_IMAGE mappings */
+#define FILE_MAPPING_WRITE  0x40000000  /* set for writable shared mappings */
+#define FILE_MAPPING_ACCESS 0x20000000  /* set for all mappings */
 
 #endif  /* __WINE_SERVER_FILE_H */

@@ -1549,7 +1549,8 @@ void set_no_fd_status( struct fd *fd, unsigned int status )
 
 /* check if the desired access is possible without violating */
 /* the sharing mode of other opens of the same file */
-static int check_sharing( struct fd *fd, unsigned int access, unsigned int sharing )
+static unsigned int check_sharing( struct fd *fd, unsigned int access, unsigned int sharing,
+                                   unsigned int open_flags, unsigned int options )
 {
     unsigned int existing_sharing = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
     unsigned int existing_access = 0;
@@ -1569,16 +1570,21 @@ static int check_sharing( struct fd *fd, unsigned int access, unsigned int shari
         }
     }
 
-    if ((access & FILE_UNIX_READ_ACCESS) && !(existing_sharing & FILE_SHARE_READ)) return 0;
-    if ((access & FILE_UNIX_WRITE_ACCESS) && !(existing_sharing & FILE_SHARE_WRITE)) return 0;
-    if ((access & DELETE) && !(existing_sharing & FILE_SHARE_DELETE)) return 0;
-    if ((existing_access & FILE_MAPPING_WRITE) && !(sharing & FILE_SHARE_WRITE)) return 0;
-    if ((existing_access & FILE_MAPPING_IMAGE) && (access & FILE_SHARE_WRITE)) return 0;
-    if (!access) return 1;  /* if access mode is 0, sharing mode is ignored (except for mappings) */
-    if ((existing_access & FILE_UNIX_READ_ACCESS) && !(sharing & FILE_SHARE_READ)) return 0;
-    if ((existing_access & FILE_UNIX_WRITE_ACCESS) && !(sharing & FILE_SHARE_WRITE)) return 0;
-    if ((existing_access & DELETE) && !(sharing & FILE_SHARE_DELETE)) return 0;
-    return 1;
+    if (((access & FILE_UNIX_READ_ACCESS) && !(existing_sharing & FILE_SHARE_READ)) ||
+        ((access & FILE_UNIX_WRITE_ACCESS) && !(existing_sharing & FILE_SHARE_WRITE)) ||
+        ((access & DELETE) && !(existing_sharing & FILE_SHARE_DELETE)))
+        return STATUS_SHARING_VIOLATION;
+    if (((existing_access & FILE_MAPPING_WRITE) && !(sharing & FILE_SHARE_WRITE)) ||
+        ((existing_access & FILE_MAPPING_IMAGE) && (access & FILE_SHARE_WRITE)))
+        return STATUS_SHARING_VIOLATION;
+    if ((existing_access & FILE_MAPPING_ACCESS) && (open_flags & O_TRUNC))
+        return STATUS_USER_MAPPED_FILE;
+    if (!access) return 0;  /* if access mode is 0, sharing mode is ignored (except for mappings) */
+    if (((existing_access & FILE_UNIX_READ_ACCESS) && !(sharing & FILE_SHARE_READ)) ||
+        ((existing_access & FILE_UNIX_WRITE_ACCESS) && !(sharing & FILE_SHARE_WRITE)) ||
+        ((existing_access & DELETE) && !(sharing & FILE_SHARE_DELETE)))
+        return STATUS_SHARING_VIOLATION;
+    return 0;
 }
 
 /* sets the user of an fd that previously had no user */
@@ -1659,6 +1665,7 @@ struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned int acce
     /* only bother with an inode for normal files and directories */
     if (S_ISREG(st.st_mode) || S_ISDIR(st.st_mode))
     {
+        unsigned int err;
         struct inode *inode = get_inode( st.st_dev, st.st_ino, fd->unix_fd );
 
         if (!inode)
@@ -1685,10 +1692,10 @@ struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned int acce
             set_error( STATUS_FILE_IS_A_DIRECTORY );
             return NULL;
         }
-        if (!check_sharing( fd, access, sharing ))
+        if ((err = check_sharing( fd, access, sharing, flags, options )))
         {
             release_object( fd );
-            set_error( STATUS_SHARING_VIOLATION );
+            set_error( err );
             return NULL;
         }
         strcpy( closed_fd->unlink, unlink_name );

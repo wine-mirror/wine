@@ -457,7 +457,7 @@ static struct object *create_mapping( struct directory *root, const struct unico
 
     if (handle)
     {
-        unsigned int mapping_access = 0;
+        unsigned int mapping_access = FILE_MAPPING_ACCESS;
 
         if (!(protect & VPROT_COMMITTED))
         {
