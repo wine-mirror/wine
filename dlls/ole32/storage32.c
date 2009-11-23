@@ -2233,14 +2233,15 @@ static const IStorageVtbl Storage32Impl_Vtbl =
 };
 
 static HRESULT StorageImpl_Construct(
-  StorageImpl* This,
   HANDLE       hFile,
   LPCOLESTR    pwcsName,
   ILockBytes*  pLkbyt,
   DWORD        openFlags,
   BOOL         fileBased,
-  BOOL         create)
+  BOOL         create,
+  StorageImpl** result)
 {
+  StorageImpl* This;
   HRESULT     hr = S_OK;
   DirEntry currentEntry;
   BOOL      readSuccessful;
@@ -2248,6 +2249,10 @@ static HRESULT StorageImpl_Construct(
 
   if ( FAILED( validateSTGM(openFlags) ))
     return STG_E_INVALIDFLAG;
+
+  This = HeapAlloc(GetProcessHeap(), 0, sizeof(StorageImpl));
+  if (!This)
+    return E_OUTOFMEMORY;
 
   memset(This, 0, sizeof(StorageImpl));
 
@@ -2259,6 +2264,7 @@ static HRESULT StorageImpl_Construct(
   This->base.pssVtbl = &IPropertySetStorage_Vtbl;
   This->base.v_destructor = StorageImpl_Destroy;
   This->base.openFlags = (openFlags & ~STGM_CREATE);
+  This->base.ref = 1;
   This->create = create;
 
   /*
@@ -2273,7 +2279,10 @@ static HRESULT StorageImpl_Construct(
       This->pwcsName = HeapAlloc(GetProcessHeap(), 0,
                                 (lstrlenW(pwcsName)+1)*sizeof(WCHAR));
       if (!This->pwcsName)
-         return STG_E_INSUFFICIENTMEMORY;
+      {
+         hr = STG_E_INSUFFICIENTMEMORY;
+         goto end;
+      }
       strcpyW(This->pwcsName, pwcsName);
   }
 
@@ -2289,7 +2298,10 @@ static HRESULT StorageImpl_Construct(
                                                 fileBased);
 
   if (This->bigBlockFile == 0)
-    return E_FAIL;
+  {
+    hr = E_FAIL;
+    goto end;
+  }
 
   if (create)
   {
@@ -2341,9 +2353,7 @@ static HRESULT StorageImpl_Construct(
 
     if (FAILED(hr))
     {
-      BIGBLOCKFILE_Destructor(This->bigBlockFile);
-
-      return hr;
+      goto end;
     }
   }
 
@@ -2362,12 +2372,18 @@ static HRESULT StorageImpl_Construct(
    */
   if(!(This->rootBlockChain =
        BlockChainStream_Construct(This, &This->rootStartBlock, DIRENTRY_NULL)))
-    return STG_E_READFAULT;
+  {
+    hr = STG_E_READFAULT;
+    goto end;
+  }
 
   if(!(This->smallBlockDepotChain =
        BlockChainStream_Construct(This, &This->smallBlockDepotStart,
 				  DIRENTRY_NULL)))
-    return STG_E_READFAULT;
+  {
+    hr = STG_E_READFAULT;
+    goto end;
+  }
 
   /*
    * Write the root storage entry (memory only)
@@ -2420,8 +2436,8 @@ static HRESULT StorageImpl_Construct(
 
   if (!readSuccessful)
   {
-    /* TODO CLEANUP */
-    return STG_E_READFAULT;
+    hr = STG_E_READFAULT;
+    goto end;
   }
 
   /*
@@ -2429,7 +2445,18 @@ static HRESULT StorageImpl_Construct(
    */
   if(!(This->smallBlockRootChain =
        BlockChainStream_Construct(This, NULL, This->base.storageDirEntry)))
-    return STG_E_READFAULT;
+  {
+    hr = STG_E_READFAULT;
+  }
+
+end:
+  if (FAILED(hr))
+  {
+    IStorage_Release((IStorage*)This);
+    *result = NULL;
+  }
+  else
+    *result = This;
 
   return hr;
 }
@@ -2447,7 +2474,8 @@ static void StorageImpl_Destroy(StorageBaseImpl* iface)
   BlockChainStream_Destroy(This->rootBlockChain);
   BlockChainStream_Destroy(This->smallBlockDepotChain);
 
-  BIGBLOCKFILE_Destructor(This->bigBlockFile);
+  if (This->bigBlockFile)
+    BIGBLOCKFILE_Destructor(This->bigBlockFile);
   HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -5663,36 +5691,25 @@ HRESULT WINAPI StgCreateDocfile(
   /*
    * Allocate and initialize the new IStorage32object.
    */
-  newStorage = HeapAlloc(GetProcessHeap(), 0, sizeof(StorageImpl));
-
-  if (newStorage == 0)
-  {
-    hr = STG_E_INSUFFICIENTMEMORY;
-    goto end;
-  }
-
   hr = StorageImpl_Construct(
-         newStorage,
          hFile,
         pwcsName,
          NULL,
          grfMode,
          TRUE,
-         TRUE);
+         TRUE,
+         &newStorage);
 
   if (FAILED(hr))
   {
-    HeapFree(GetProcessHeap(), 0, newStorage);
     goto end;
   }
 
   /*
    * Get an "out" pointer for the caller.
    */
-  hr = StorageBaseImpl_QueryInterface(
-         (IStorage*)newStorage,
-         &IID_IStorage,
-         (void**)ppstgOpen);
+  *ppstgOpen = (IStorage*)newStorage;
+
 end:
   TRACE("<-- %p  r = %08x\n", *ppstgOpen, hr);
 
@@ -5947,27 +5964,17 @@ HRESULT WINAPI StgOpenStorage(
   /*
    * Allocate and initialize the new IStorage32object.
    */
-  newStorage = HeapAlloc(GetProcessHeap(), 0, sizeof(StorageImpl));
-
-  if (newStorage == 0)
-  {
-    hr = STG_E_INSUFFICIENTMEMORY;
-    goto end;
-  }
-
-  /* Initialize the storage */
   hr = StorageImpl_Construct(
-         newStorage,
          hFile,
          pwcsName,
          NULL,
          grfMode,
          TRUE,
-         FALSE );
+         FALSE,
+         &newStorage);
 
   if (FAILED(hr))
   {
-    HeapFree(GetProcessHeap(), 0, newStorage);
     /*
      * According to the docs if the file is not a storage, return STG_E_FILEALREADYEXISTS
      */
@@ -5984,10 +5991,7 @@ HRESULT WINAPI StgOpenStorage(
   /*
    * Get an "out" pointer for the caller.
    */
-  hr = StorageBaseImpl_QueryInterface(
-         (IStorage*)newStorage,
-         &IID_IStorage,
-         (void**)ppstgOpen);
+  *ppstgOpen = (IStorage*)newStorage;
 
 end:
   TRACE("<-- %08x, IStorage %p\n", hr, ppstgOpen ? *ppstgOpen : NULL);
@@ -6012,33 +6016,24 @@ HRESULT WINAPI StgCreateDocfileOnILockBytes(
   /*
    * Allocate and initialize the new IStorage object.
    */
-  newStorage = HeapAlloc(GetProcessHeap(), 0, sizeof(StorageImpl));
-
-  if (newStorage == 0)
-    return STG_E_INSUFFICIENTMEMORY;
-
   hr = StorageImpl_Construct(
-         newStorage,
          0,
         0,
          plkbyt,
          grfMode,
          FALSE,
-         TRUE);
+         TRUE,
+         &newStorage);
 
   if (FAILED(hr))
   {
-    HeapFree(GetProcessHeap(), 0, newStorage);
     return hr;
   }
 
   /*
    * Get an "out" pointer for the caller.
    */
-  hr = StorageBaseImpl_QueryInterface(
-         (IStorage*)newStorage,
-         &IID_IStorage,
-         (void**)ppstgOpen);
+  *ppstgOpen = (IStorage*)newStorage;
 
   return hr;
 }
@@ -6068,33 +6063,24 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(
   /*
    * Allocate and initialize the new IStorage object.
    */
-  newStorage = HeapAlloc(GetProcessHeap(), 0, sizeof(StorageImpl));
-
-  if (newStorage == 0)
-    return STG_E_INSUFFICIENTMEMORY;
-
   hr = StorageImpl_Construct(
-         newStorage,
          0,
          0,
          plkbyt,
          grfMode,
          FALSE,
-         FALSE);
+         FALSE,
+         &newStorage);
 
   if (FAILED(hr))
   {
-    HeapFree(GetProcessHeap(), 0, newStorage);
     return hr;
   }
 
   /*
    * Get an "out" pointer for the caller.
    */
-  hr = StorageBaseImpl_QueryInterface(
-         (IStorage*)newStorage,
-         &IID_IStorage,
-         (void**)ppstgOpen);
+  *ppstgOpen = (IStorage*)newStorage;
 
   return hr;
 }
