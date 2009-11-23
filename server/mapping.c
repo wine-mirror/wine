@@ -128,13 +128,10 @@ static void init_page_size(void)
 
 
 /* extend a file beyond the current end of file */
-static int extend_file( struct file *file, file_pos_t new_size )
+static int grow_file( int unix_fd, file_pos_t new_size )
 {
     static const char zero;
-    int unix_fd = get_file_unix_fd( file );
     off_t size = new_size;
-
-    if (unix_fd == -1) return 0;
 
     if (sizeof(new_size) > sizeof(size) && size != new_size)
     {
@@ -152,30 +149,13 @@ static int extend_file( struct file *file, file_pos_t new_size )
     return 0;
 }
 
-/* try to grow the file to the specified size */
-static int grow_file( struct file *file, file_pos_t size )
-{
-    struct stat st;
-    int unix_fd = get_file_unix_fd( file );
-
-    if (unix_fd == -1) return 0;
-
-    if (fstat( unix_fd, &st ) == -1)
-    {
-        file_set_error();
-        return 0;
-    }
-    if (st.st_size >= size) return 1;  /* already large enough */
-    return extend_file( file, size );
-}
-
 /* find the shared PE mapping for a given mapping */
 static struct file *get_shared_file( struct mapping *mapping )
 {
     struct mapping *ptr;
 
     LIST_FOR_EACH_ENTRY( ptr, &shared_list, struct mapping, shared_entry )
-        if (is_same_file( ptr->file, mapping->file ))
+        if (is_same_file_fd( ptr->fd, mapping->fd ))
             return (struct file *)grab_object( ptr->shared_file );
     return NULL;
 }
@@ -301,8 +281,8 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
     /* create a temp file for the mapping */
 
     if (!(mapping->shared_file = create_temp_file( FILE_GENERIC_READ|FILE_GENERIC_WRITE ))) return 0;
-    if (!grow_file( mapping->shared_file, total_size )) goto error;
     if ((shared_fd = get_file_unix_fd( mapping->shared_file )) == -1) goto error;
+    if (!grow_file( shared_fd, total_size )) goto error;
 
     if (!(buffer = malloc( max_size ))) goto error;
 
@@ -343,7 +323,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
 }
 
 /* retrieve the mapping parameters for an executable (PE) image */
-static int get_image_params( struct mapping *mapping )
+static int get_image_params( struct mapping *mapping, int unix_fd )
 {
     IMAGE_DOS_HEADER dos;
     IMAGE_SECTION_HEADER *sec = NULL;
@@ -357,14 +337,11 @@ static int get_image_params( struct mapping *mapping )
             IMAGE_OPTIONAL_HEADER64 hdr64;
         } opt;
     } nt;
-    struct fd *fd;
     off_t pos;
-    int unix_fd, size;
+    int size;
 
     /* load the headers */
 
-    if (!(fd = mapping_get_fd( &mapping->obj ))) return 0;
-    if ((unix_fd = get_unix_fd( fd )) == -1) goto error;
     if (pread( unix_fd, &dos, sizeof(dos), 0 ) != sizeof(dos)) goto error;
     if (dos.e_magic != IMAGE_DOS_SIGNATURE) goto error;
     pos = dos.e_lfanew;
@@ -406,25 +383,12 @@ static int get_image_params( struct mapping *mapping )
 
     mapping->protect = VPROT_IMAGE;
     free( sec );
-    release_object( fd );
     return 1;
 
  error:
     free( sec );
-    release_object( fd );
     set_error( STATUS_INVALID_FILE_FOR_SECTION );
     return 0;
-}
-
-/* get the size of the unix file associated with the mapping */
-static inline int get_file_size( struct file *file, mem_size_t *size )
-{
-    struct stat st;
-    int unix_fd = get_file_unix_fd( file );
-
-    if (unix_fd == -1 || fstat( unix_fd, &st ) == -1) return 0;
-    *size = st.st_size;
-    return 1;
 }
 
 static struct object *create_mapping( struct directory *root, const struct unicode_str *name,
@@ -433,6 +397,8 @@ static struct object *create_mapping( struct directory *root, const struct unico
 {
     struct mapping *mapping;
     int access = 0;
+    int unix_fd;
+    struct stat st;
 
     if (!page_mask) init_page_size();
 
@@ -464,24 +430,26 @@ static struct object *create_mapping( struct directory *root, const struct unico
         }
         if (!(mapping->file = get_file_obj( current->process, handle, access ))) goto error;
         mapping->fd = get_obj_fd( (struct object *)mapping->file );
+        if ((unix_fd = get_unix_fd( mapping->fd )) == -1) goto error;
         if (protect & VPROT_IMAGE)
         {
-            if (!get_image_params( mapping )) goto error;
+            if (!get_image_params( mapping, unix_fd )) goto error;
             return &mapping->obj;
+        }
+        if (fstat( unix_fd, &st ) == -1)
+        {
+            file_set_error();
+            goto error;
         }
         if (!size)
         {
-            if (!get_file_size( mapping->file, &size )) goto error;
-            if (!size)
+            if (!(size = st.st_size))
             {
                 set_error( STATUS_MAPPED_FILE_SIZE_ZERO );
                 goto error;
             }
         }
-        else
-        {
-            if (!grow_file( mapping->file, size )) goto error;
-        }
+        else if (st.st_size < size && !grow_file( unix_fd, size )) goto error;
     }
     else  /* Anonymous mapping (no associated file) */
     {
@@ -498,7 +466,8 @@ static struct object *create_mapping( struct directory *root, const struct unico
         }
         if (!(mapping->file = create_temp_file( access ))) goto error;
         mapping->fd = get_obj_fd( (struct object *)mapping->file );
-        if (!grow_file( mapping->file, size )) goto error;
+        if ((unix_fd = get_unix_fd( mapping->fd )) == -1) goto error;
+        if (!grow_file( unix_fd, size )) goto error;
     }
     mapping->size    = (size + page_mask) & ~((mem_size_t)page_mask);
     mapping->protect = protect;
