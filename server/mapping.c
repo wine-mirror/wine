@@ -56,6 +56,7 @@ struct mapping
     struct object   obj;             /* object header */
     mem_size_t      size;            /* mapping size */
     int             protect;         /* protection flags */
+    struct fd      *fd;              /* fd for mapped file */
     struct file    *file;            /* file mapped */
     int             header_size;     /* size of headers (for PE image mapping) */
     client_ptr_t    base;            /* default base addr (for PE image mapping) */
@@ -446,6 +447,7 @@ static struct object *create_mapping( struct directory *root, const struct unico
                                                SACL_SECURITY_INFORMATION );
     mapping->header_size = 0;
     mapping->base        = 0;
+    mapping->fd          = NULL;
     mapping->file        = NULL;
     mapping->shared_file = NULL;
     mapping->committed   = NULL;
@@ -461,6 +463,7 @@ static struct object *create_mapping( struct directory *root, const struct unico
             goto error;
         }
         if (!(mapping->file = get_file_obj( current->process, handle, access ))) goto error;
+        mapping->fd = get_obj_fd( (struct object *)mapping->file );
         if (protect & VPROT_IMAGE)
         {
             if (!get_image_params( mapping )) goto error;
@@ -494,6 +497,7 @@ static struct object *create_mapping( struct directory *root, const struct unico
             mapping->committed->max   = 8;
         }
         if (!(mapping->file = create_temp_file( access ))) goto error;
+        mapping->fd = get_obj_fd( (struct object *)mapping->file );
         if (!grow_file( mapping->file, size )) goto error;
     }
     mapping->size    = (size + page_mask) & ~((mem_size_t)page_mask);
@@ -509,10 +513,10 @@ static void mapping_dump( struct object *obj, int verbose )
 {
     struct mapping *mapping = (struct mapping *)obj;
     assert( obj->ops == &mapping_ops );
-    fprintf( stderr, "Mapping size=%08x%08x prot=%08x file=%p header_size=%08x base=%08lx "
+    fprintf( stderr, "Mapping size=%08x%08x prot=%08x fd=%p header_size=%08x base=%08lx "
              "shared_file=%p ",
              (unsigned int)(mapping->size >> 32), (unsigned int)mapping->size,
-             mapping->protect, mapping->file, mapping->header_size,
+             mapping->protect, mapping->fd, mapping->header_size,
              (unsigned long)mapping->base, mapping->shared_file );
     dump_object_name( &mapping->obj );
     fputc( '\n', stderr );
@@ -528,7 +532,7 @@ static struct object_type *mapping_get_type( struct object *obj )
 static struct fd *mapping_get_fd( struct object *obj )
 {
     struct mapping *mapping = (struct mapping *)obj;
-    return get_obj_fd( (struct object *)mapping->file );
+    return (struct fd *)grab_object( mapping->fd );
 }
 
 static unsigned int mapping_map_access( struct object *obj, unsigned int access )
@@ -545,6 +549,7 @@ static void mapping_destroy( struct object *obj )
     struct mapping *mapping = (struct mapping *)obj;
     assert( obj->ops == &mapping_ops );
     if (mapping->file) release_object( mapping->file );
+    if (mapping->fd) release_object( mapping->fd );
     if (mapping->shared_file)
     {
         release_object( mapping->shared_file );
