@@ -769,9 +769,10 @@ static void test_readwrite(void)
     ok(ret, "Expected success : %d\n", GetLastError());
 
     /* This will clear the eventlog. The record numbering for new
-     * events however differs on Vista+. Before Vista the first
-     * event would be numbered 1, on Vista+ it's now 2 as we already
-     * had one event.
+     * events however differs on Vista SP1+. Before Vista the first
+     * event would be numbered 1, on Vista SP1+ it's higher as we already
+     * had at least one event (more in case of multiple test runs without
+     * a reboot).
      */
     ClearEventLogA(handle, NULL);
     CloseEventLog(handle);
@@ -803,9 +804,9 @@ static void test_readwrite(void)
         ret = GetOldestEventLogRecord(handle, &oldest);
         ok(ret, "Expected success\n");
         ok(oldest == 1 ||
-           oldest == 2, /* Vista SP1, W2K8 and Win7 */
-           "Expected oldest to be 1 or 2, got %d\n", oldest);
-        if (oldest == 2)
+           (oldest > 1 && oldest != 0xdeadbeef), /* Vista SP1+, W2K8 and Win7 */
+           "Expected oldest to be 1 or higher, got %d\n", oldest);
+        if (oldest > 1 && oldest != 0xdeadbeef)
             on_vista = TRUE;
 
         if (i % 2)
@@ -830,7 +831,7 @@ static void test_readwrite(void)
 
     /* Report only once */
     if (on_vista)
-        skip("There is no DWORD alignment for UserSid on Vista, W2K8 or Win7\n");
+        skip("There is no DWORD alignment enforced for UserSid on Vista, W2K8 or Win7\n");
 
     /* Read all events from our created eventlog, one by one */
     handle = OpenEventLogA(NULL, eventlogname);
@@ -870,8 +871,8 @@ static void test_readwrite(void)
         ok(record->Reserved == 0x654c664c,
            "Expected 0x654c664c, got %d\n", record->Reserved);
         ok(record->RecordNumber == i + 1 ||
-           (on_vista && (record->RecordNumber == i + 2)),
-           "Expected %d or %d, got %d\n", i + 1, i + 2, record->RecordNumber);
+           (on_vista && (record->RecordNumber > i + 1)),
+           "Expected %d or higher, got %d\n", i + 1, record->RecordNumber);
         ok(record->EventID == read_write[i].evt_id,
            "Expected %d, got %d\n", read_write[i].evt_id, record->EventID);
         ok(record->EventType == read_write[i].evt_type,
