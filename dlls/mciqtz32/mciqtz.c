@@ -105,6 +105,7 @@ static DWORD MCIQTZ_drvClose(DWORD dwDevID)
         /* finish all outstanding things */
         MCIQTZ_mciClose(dwDevID, MCI_WAIT, NULL);
 
+        mciSetDriverData(dwDevID, 0);
         HeapFree(GetProcessHeap(), 0, wma);
         return 1;
     }
@@ -166,7 +167,7 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
         goto err;
     }
 
-    if (!((dwFlags & MCI_OPEN_ELEMENT) && (dwFlags & MCI_OPEN_ELEMENT))) {
+    if (!(dwFlags & MCI_OPEN_ELEMENT) || (dwFlags & MCI_OPEN_ELEMENT_ID)) {
         TRACE("Wrong dwFlags %x\n", dwFlags);
         goto err;
     }
