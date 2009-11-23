@@ -115,7 +115,7 @@ static inline int is_overlapped( const struct file *file )
 
 /* create a file from a file descriptor */
 /* if the function fails the fd is closed */
-static struct file *create_file_for_fd( int fd, unsigned int access, unsigned int sharing )
+struct file *create_file_for_fd( int fd, unsigned int access, unsigned int sharing )
 {
     struct file *file;
     struct stat st;
@@ -224,23 +224,6 @@ done:
 int is_same_file( struct file *file1, struct file *file2 )
 {
     return is_same_file_fd( file1->fd, file2->fd );
-}
-
-/* create a temp file for anonymous mappings */
-struct file *create_temp_file( int access )
-{
-    char tmpfn[16];
-    int fd;
-
-    sprintf( tmpfn, "anonmap.XXXXXX" );  /* create it in the server directory */
-    fd = mkstemps( tmpfn, 0 );
-    if (fd == -1)
-    {
-        file_set_error();
-        return NULL;
-    }
-    unlink( tmpfn );
-    return create_file_for_fd( fd, access, 0 );
 }
 
 static void file_dump( struct object *obj, int verbose )

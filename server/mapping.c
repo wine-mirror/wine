@@ -162,6 +162,23 @@ static int grow_file( int unix_fd, file_pos_t new_size )
     return 0;
 }
 
+/* create a temp file for anonymous mappings */
+static struct file *create_temp_file( unsigned int access )
+{
+    char tmpfn[16];
+    int fd;
+
+    sprintf( tmpfn, "anonmap.XXXXXX" );  /* create it in the server directory */
+    fd = mkstemps( tmpfn, 0 );
+    if (fd == -1)
+    {
+        file_set_error();
+        return NULL;
+    }
+    unlink( tmpfn );
+    return create_file_for_fd( fd, access, 0 );
+}
+
 /* find the shared PE mapping for a given mapping */
 static struct file *get_shared_file( struct mapping *mapping )
 {
