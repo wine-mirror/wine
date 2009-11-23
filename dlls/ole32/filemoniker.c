@@ -960,20 +960,32 @@ FileMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOther,IMoniker** p
     if(mkSys==MKSYS_FILEMONIKER){
         HRESULT ret;
 
-        CreateBindCtx(0,&pbind);
+        ret = CreateBindCtx(0,&pbind);
+        if (FAILED(ret))
+            return ret;
 
         /* create a string based on common part of the two paths */
 
-        IMoniker_GetDisplayName(iface,pbind,NULL,&pathThis);
-        IMoniker_GetDisplayName(pmkOther,pbind,NULL,&pathOther);
+        ret = IMoniker_GetDisplayName(iface,pbind,NULL,&pathThis);
+        if (FAILED(ret))
+            return ret;
+        ret = IMoniker_GetDisplayName(pmkOther,pbind,NULL,&pathOther);
+        if (FAILED(ret))
+            return ret;
 
         nb1=FileMonikerImpl_DecomposePath(pathThis,&stringTable1);
+        if (FAILED(nb1))
+            return nb1;
         nb2=FileMonikerImpl_DecomposePath(pathOther,&stringTable2);
+        if (FAILED(nb2))
+            return nb2;
 
         if (nb1==0 || nb2==0)
             return MK_E_NOPREFIX;
 
         commonPath=HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*(min(lstrlenW(pathThis),lstrlenW(pathOther))+1));
+        if (!commonPath)
+            return E_OUTOFMEMORY;
 
         *commonPath=0;
 
