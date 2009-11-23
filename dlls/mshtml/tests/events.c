@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "ole2.h"
 #include "mshtml.h"
+#include "mshtmdid.h"
 #include "docobj.h"
 #include "hlink.h"
 #include "dispex.h"
@@ -61,6 +62,7 @@ DEFINE_EXPECT(body_onclick);
 DEFINE_EXPECT(div_onclick);
 DEFINE_EXPECT(div_onclick_attached);
 DEFINE_EXPECT(timeout);
+DEFINE_EXPECT(doccp_onclick);
 
 static HWND container_hwnd = NULL;
 static IHTMLWindow2 *window;
@@ -847,6 +849,74 @@ static HRESULT WINAPI nocall(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFla
 
 EVENT_HANDLER_FUNC_OBJ(nocall);
 
+#define CONNECTION_POINT_OBJ(cpname, diid) \
+    static HRESULT WINAPI cpname ## _QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv) \
+    { \
+        *ppv = NULL; \
+        if(IsEqualGUID(riid, &IID_IUnknown) \
+           || IsEqualGUID(riid, &IID_IDispatch) \
+           || IsEqualGUID(riid, &diid)) \
+            *ppv = iface; \
+        else { \
+            ok(0, "unexpected riid %s\n", debugstr_guid(riid)); \
+            return E_NOINTERFACE; \
+        } \
+        return S_OK; \
+    } \
+    static IDispatchExVtbl cpname ## Vtbl = { \
+        cpname ## _QueryInterface, \
+        DispatchEx_AddRef,  \
+        DispatchEx_Release, \
+        DispatchEx_GetTypeInfoCount, \
+        DispatchEx_GetTypeInfo, \
+        DispatchEx_GetIDsOfNames, \
+        cpname, \
+        DispatchEx_GetDispID, \
+        DispatchEx_InvokeEx, \
+        DispatchEx_DeleteMemberByName, \
+        DispatchEx_DeleteMemberByDispID, \
+        DispatchEx_GetMemberProperties, \
+        DispatchEx_GetMemberName, \
+        DispatchEx_GetNextDispID, \
+        DispatchEx_GetNameSpaceParent \
+    }; \
+    static IDispatchEx cpname ## _obj = { &cpname ## Vtbl }
+
+#define test_cp_args(a,b,c,d,e,f) _test_cp_args(__LINE__,a,b,c,d,e,f)
+static void _test_cp_args(unsigned line, REFIID riid, WORD flags, DISPPARAMS *dp, VARIANT *vres, EXCEPINFO *ei, UINT *argerr)
+{
+    ok_(__FILE__,line)(IsEqualGUID(&IID_NULL, riid), "riid = %s\n", debugstr_guid(riid));
+    ok_(__FILE__,line)(flags == DISPATCH_METHOD, "flags = %x\n", flags);
+    ok_(__FILE__,line)(dp != NULL, "dp == NULL\n");
+    ok_(__FILE__,line)(!dp->cArgs, "dp->cArgs = %d\n", dp->cArgs);
+    ok_(__FILE__,line)(!dp->rgvarg, "dp->rgvarg = %p\n", dp->rgvarg);
+    ok_(__FILE__,line)(!dp->cNamedArgs, "dp->cNamedArgs = %d\n", dp->cNamedArgs);
+    ok_(__FILE__,line)(!dp->rgdispidNamedArgs, "dp->rgdispidNamedArgs = %p\n", dp->rgdispidNamedArgs);
+    ok_(__FILE__,line)(vres != NULL, "vres == NULL\n");
+    ok_(__FILE__,line)(V_VT(vres) == VT_EMPTY, "V_VT(vres) = %d\n", V_VT(vres));
+    ok_(__FILE__,line)(ei != NULL, "ei == NULL\n");
+    ok_(__FILE__,line)(argerr != NULL, "argerr == NULL\n");
+}
+
+static HRESULT WINAPI doccp(IDispatchEx *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+                            VARIANT *pVarResult, EXCEPINFO *pei, UINT *puArgErr)
+{
+    switch(dispIdMember) {
+    case DISPID_HTMLDOCUMENTEVENTS_ONCLICK:
+        CHECK_EXPECT(doccp_onclick);
+        test_cp_args(riid, wFlags, pdp, pVarResult, pei, puArgErr);
+        break;
+    default:
+        ok(0, "unexpected call %d\n", dispIdMember);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+CONNECTION_POINT_OBJ(doccp, DIID_HTMLDocumentEvents);
+
 static HRESULT WINAPI timeoutFunc_Invoke(IDispatchEx *iface, DISPID dispIdMember,
                             REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
@@ -899,9 +969,51 @@ static void pump_msgs(BOOL *b)
     }
 }
 
+static IConnectionPoint *get_cp(IUnknown *unk, REFIID riid)
+{
+    IConnectionPointContainer *cp_container;
+    IConnectionPoint *cp;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IConnectionPointContainer, (void**)&cp_container);
+    ok(hres == S_OK, "Could not get IConnectionPointContainer: %08x\n", hres);
+
+    hres = IConnectionPointContainer_FindConnectionPoint(cp_container, riid, &cp);
+    IConnectionPointContainer_Release(cp_container);
+    ok(hres == S_OK, "FindConnectionPoint failed: %08x\n", hres);
+
+    return cp;
+}
+
+static DWORD register_cp(IUnknown *unk, REFIID riid, IUnknown *sink)
+{
+    IConnectionPoint *cp;
+    DWORD cookie;
+    HRESULT hres;
+
+    cp = get_cp(unk, riid);
+    hres = IConnectionPoint_Advise(cp, sink, &cookie);
+    IConnectionPoint_Release(cp);
+    ok(hres == S_OK, "Advise failed: %08x\n", hres);
+
+    return cookie;
+}
+
+static void unregister_cp(IUnknown *unk, REFIID riid, DWORD cookie)
+{
+    IConnectionPoint *cp;
+    HRESULT hres;
+
+    cp = get_cp(unk, riid);
+    hres = IConnectionPoint_Unadvise(cp, cookie);
+    IConnectionPoint_Release(cp);
+    ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
+}
+
 static void test_onclick(IHTMLDocument2 *doc)
 {
     IHTMLElement *div, *body;
+    DWORD cp_cookie;
     VARIANT v;
     HRESULT hres;
 
@@ -990,6 +1102,25 @@ static void test_onclick(IHTMLDocument2 *doc)
     CHECK_CALLED(div_onclick_attached);
     CHECK_CALLED(body_onclick);
     CHECK_CALLED(document_onclick);
+
+    cp_cookie = register_cp((IUnknown*)doc, &DIID_HTMLDocumentEvents, (IUnknown*)&doccp_obj);
+
+    SET_EXPECT(div_onclick);
+    SET_EXPECT(div_onclick_attached);
+    SET_EXPECT(body_onclick);
+    SET_EXPECT(document_onclick);
+    SET_EXPECT(doccp_onclick);
+
+    hres = IHTMLElement_click(div);
+    ok(hres == S_OK, "click failed: %08x\n", hres);
+
+    CHECK_CALLED(div_onclick);
+    CHECK_CALLED(div_onclick_attached);
+    CHECK_CALLED(body_onclick);
+    CHECK_CALLED(document_onclick);
+    CHECK_CALLED(doccp_onclick);
+
+    unregister_cp((IUnknown*)doc, &DIID_HTMLDocumentEvents, cp_cookie);
 
     IHTMLElement_Release(div);
     IHTMLElement_Release(body);
