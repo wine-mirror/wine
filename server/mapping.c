@@ -57,7 +57,6 @@ struct mapping
     mem_size_t      size;            /* mapping size */
     int             protect;         /* protection flags */
     struct fd      *fd;              /* fd for mapped file */
-    struct file    *file;            /* file mapped */
     int             header_size;     /* size of headers (for PE image mapping) */
     client_ptr_t    base;            /* default base addr (for PE image mapping) */
     struct ranges  *committed;       /* list of committed ranges in this mapping */
@@ -163,20 +162,24 @@ static int grow_file( int unix_fd, file_pos_t new_size )
 }
 
 /* create a temp file for anonymous mappings */
-static struct file *create_temp_file( unsigned int access )
+static int create_temp_file( file_pos_t size )
 {
     char tmpfn[16];
     int fd;
 
     sprintf( tmpfn, "anonmap.XXXXXX" );  /* create it in the server directory */
     fd = mkstemps( tmpfn, 0 );
-    if (fd == -1)
+    if (fd != -1)
     {
-        file_set_error();
-        return NULL;
+        if (!grow_file( fd, size ))
+        {
+            close( fd );
+            fd = -1;
+        }
+        unlink( tmpfn );
     }
-    unlink( tmpfn );
-    return create_file_for_fd( fd, access, 0 );
+    else file_set_error();
+    return fd;
 }
 
 /* find the shared PE mapping for a given mapping */
@@ -310,9 +313,9 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
 
     /* create a temp file for the mapping */
 
-    if (!(mapping->shared_file = create_temp_file( FILE_GENERIC_READ|FILE_GENERIC_WRITE ))) return 0;
-    if ((shared_fd = get_file_unix_fd( mapping->shared_file )) == -1) goto error;
-    if (!grow_file( shared_fd, total_size )) goto error;
+    if ((shared_fd = create_temp_file( total_size )) == -1) return 0;
+    if (!(mapping->shared_file = create_file_for_fd( shared_fd, FILE_GENERIC_READ|FILE_GENERIC_WRITE, 0 )))
+        return 0;
 
     if (!(buffer = malloc( max_size ))) goto error;
 
@@ -446,7 +449,6 @@ static struct object *create_mapping( struct directory *root, const struct unico
     mapping->header_size = 0;
     mapping->base        = 0;
     mapping->fd          = NULL;
-    mapping->file        = NULL;
     mapping->shared_file = NULL;
     mapping->committed   = NULL;
 
@@ -502,10 +504,9 @@ static struct object *create_mapping( struct directory *root, const struct unico
             mapping->committed->count = 0;
             mapping->committed->max   = 8;
         }
-        if (!(mapping->file = create_temp_file( access ))) goto error;
-        mapping->fd = get_obj_fd( (struct object *)mapping->file );
-        if ((unix_fd = get_unix_fd( mapping->fd )) == -1) goto error;
-        if (!grow_file( unix_fd, size )) goto error;
+        if ((unix_fd = create_temp_file( size )) == -1) goto error;
+        if (!(mapping->fd = create_anonymous_fd( &mapping_fd_ops, unix_fd, &mapping->obj,
+                                                 FILE_SYNCHRONOUS_IO_NONALERT ))) goto error;
     }
     mapping->size    = (size + page_mask) & ~((mem_size_t)page_mask);
     mapping->protect = protect;
@@ -555,7 +556,6 @@ static void mapping_destroy( struct object *obj )
 {
     struct mapping *mapping = (struct mapping *)obj;
     assert( obj->ops == &mapping_ops );
-    if (mapping->file) release_object( mapping->file );
     if (mapping->fd) release_object( mapping->fd );
     if (mapping->shared_file)
     {
