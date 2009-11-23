@@ -1257,7 +1257,7 @@ static void test_lock_object_external(void)
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoReleaseMarshalData(pStream);
     ok_ole_success(hr, CoReleaseMarshalData);
-    IStream_Release(pStream);
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
 
     ok_more_than_one_lock();
 
@@ -1268,6 +1268,42 @@ static void test_lock_object_external(void)
     CoLockObjectExternal((IUnknown*)&Test_ClassFactory, FALSE, TRUE);
 
     ok_no_locks();
+
+    /* test CoLockObjectExternal releases reference to object with
+     * fLastUnlockReleases as TRUE and there are only strong references on
+     * the object */
+    CoLockObjectExternal((IUnknown*)&Test_ClassFactory, TRUE, FALSE);
+
+    ok_more_than_one_lock();
+
+    CoLockObjectExternal((IUnknown*)&Test_ClassFactory, FALSE, FALSE);
+
+    todo_wine
+    ok_no_locks();
+    if (cLocks > 0)
+        CoDisconnectObject((IUnknown*)&Test_ClassFactory, 0);
+
+    /* test CoLockObjectExternal doesn't release the last reference to an
+     * object with fLastUnlockReleases as TRUE and there is a weak reference
+     * on the object */
+    hr = CoMarshalInterface(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_TABLEWEAK);
+    ok_ole_success(hr, CoMarshalInterface);
+
+    ok_more_than_one_lock();
+
+    CoLockObjectExternal((IUnknown*)&Test_ClassFactory, TRUE, FALSE);
+
+    ok_more_than_one_lock();
+
+    CoLockObjectExternal((IUnknown*)&Test_ClassFactory, FALSE, FALSE);
+
+    ok_more_than_one_lock();
+
+    CoDisconnectObject((IUnknown*)&Test_ClassFactory, 0);
+
+    ok_no_locks();
+
+    IStream_Release(pStream);
 }
 
 /* tests disconnecting stubs */
