@@ -540,8 +540,6 @@ HKLM,System\CurrentControlSet\Control\Session Manager,,,""
 HKLM,System\CurrentControlSet\Control\VMM32Files,,,""
 HKCU,AppEvents\Schemes\Apps\Explorer\Navigating\.Current,,,""
 HKCU,Software\Microsoft\Protected Storage System Provider,,,""
-HKLM,HARDWARE\DEVICEMAP\PARALLEL PORTS,,,""
-HKLM,HARDWARE\DEVICEMAP\SERIALCOMM,,,""
 ; Some apps requires at least four subkeys of Active Setup\Installed Components
 HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{44BBA855-CC51-11CF-AAFA-00AA00B6015F},,2,"DirectDrawEx"
 HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{44BBA855-CC51-11CF-AAFA-00AA00B6015F},"ComponentID",2,"DirectDrawEx"
