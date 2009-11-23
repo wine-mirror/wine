@@ -2314,7 +2314,6 @@ static void test_inproc_handler(void)
     reg_unreg_wine_test_class(TRUE);
 
     hr = CoCreateInstance(&CLSID_WineTest, NULL, CLSCTX_INPROC_HANDLER, &IID_IUnknown, (void **)&pObject);
-    todo_wine
     ok_ole_success(hr, "CoCreateInstance");
 
     if (SUCCEEDED(hr))

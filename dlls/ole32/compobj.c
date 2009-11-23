@@ -4106,6 +4106,33 @@ HRESULT WINAPI CoGetContextToken( ULONG_PTR *token )
     return S_OK;
 }
 
+HRESULT Handler_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+{
+    static const WCHAR wszInprocHandler32[] = {'I','n','p','r','o','c','H','a','n','d','l','e','r','3','2',0};
+    HKEY hkey;
+    HRESULT hres;
+
+    hres = COM_OpenKeyForCLSID(rclsid, wszInprocHandler32, KEY_READ, &hkey);
+    if (SUCCEEDED(hres))
+    {
+        WCHAR dllpath[MAX_PATH+1];
+
+        if (COM_RegReadPath(hkey, NULL, NULL, dllpath, ARRAYSIZE(dllpath)) == ERROR_SUCCESS)
+        {
+            static const WCHAR wszOle32[] = {'o','l','e','3','2','.','d','l','l',0};
+            if (!strcmpiW(dllpath, wszOle32))
+            {
+                RegCloseKey(hkey);
+                return HandlerCF_Create(rclsid, riid, ppv);
+            }
+        }
+        else
+            WARN("not creating object for inproc handler path %s\n", debugstr_w(dllpath));
+        RegCloseKey(hkey);
+    }
+
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
 
 /***********************************************************************
  *		DllMain (OLE32.@)

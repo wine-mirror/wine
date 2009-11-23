@@ -2122,3 +2122,77 @@ HRESULT WINAPI OleCreateDefaultHandler(REFCLSID clsid, LPUNKNOWN pUnkOuter,
     return OleCreateEmbeddingHelper(clsid, pUnkOuter, EMBDHLP_INPROC_HANDLER | EMBDHLP_CREATENOW,
                                     NULL, riid, ppvObj);
 }
+
+typedef struct HandlerCF
+{
+    const IClassFactoryVtbl *lpVtbl;
+    LONG refs;
+    CLSID clsid;
+} HandlerCF;
+
+static HRESULT WINAPI
+HandlerCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid, LPVOID *ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid,&IID_IUnknown) ||
+        IsEqualIID(riid,&IID_IClassFactory))
+    {
+        *ppv = iface;
+        IClassFactory_AddRef(iface);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI HandlerCF_AddRef(LPCLASSFACTORY iface)
+{
+    HandlerCF *This = (HandlerCF *)iface;
+    return InterlockedIncrement(&This->refs);
+}
+
+static ULONG WINAPI HandlerCF_Release(LPCLASSFACTORY iface)
+{
+    HandlerCF *This = (HandlerCF *)iface;
+    ULONG refs = InterlockedDecrement(&This->refs);
+    if (!refs)
+        HeapFree(GetProcessHeap(), 0, This);
+    return refs;
+}
+
+static HRESULT WINAPI
+HandlerCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pUnk,
+                         REFIID riid, LPVOID *ppv)
+{
+    HandlerCF *This = (HandlerCF *)iface;
+    return OleCreateDefaultHandler(&This->clsid, pUnk, riid, ppv);
+}
+
+static HRESULT WINAPI HandlerCF_LockServer(LPCLASSFACTORY iface, BOOL fLock)
+{
+    FIXME("(%d), stub!\n",fLock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl HandlerClassFactoryVtbl = {
+    HandlerCF_QueryInterface,
+    HandlerCF_AddRef,
+    HandlerCF_Release,
+    HandlerCF_CreateInstance,
+    HandlerCF_LockServer
+};
+
+HRESULT HandlerCF_Create(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+{
+    HRESULT hr;
+    HandlerCF *This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This) return E_OUTOFMEMORY;
+    This->lpVtbl = &HandlerClassFactoryVtbl;
+    This->refs = 0;
+    This->clsid = *rclsid;
+
+    hr = IUnknown_QueryInterface((IUnknown *)&This->lpVtbl, riid, ppv);
+    if (FAILED(hr))
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return hr;
+}
