@@ -551,6 +551,8 @@ static void test_dc(HWND hwnd, HDC hdc)
     }
 }
 
+/* Nvidia converts win32 error codes to (0xc007 << 16) | win32_error_code */
+#define NVIDIA_HRESULT_FROM_WIN32(x) (HRESULT_FROM_WIN32(x) | 0x40000000)
 static void test_opengl3(HDC hdc)
 {
     /* Try to create a context compatible with OpenGL 1.x; 1.0-2.1 is allowed */
@@ -571,7 +573,7 @@ static void test_opengl3(HDC hdc)
         ok(gl3Ctx == 0, "pwglCreateContextAttribsARB using an invalid HDC passed\n");
         error = GetLastError();
         todo_wine ok(error == ERROR_DC_NOT_FOUND ||
-                     broken(HRESULT_FROM_WIN32(ERROR_INVALID_DATA)), /* Nvidia Vista + Win7 */
+                     broken(error == NVIDIA_HRESULT_FROM_WIN32(ERROR_INVALID_DATA)), /* Nvidia Vista + Win7 */
                      "Expected ERROR_DC_NOT_FOUND, got error=%x\n", error);
         wglDeleteContext(gl3Ctx);
     }
@@ -585,7 +587,7 @@ static void test_opengl3(HDC hdc)
         error = GetLastError();
         /* The Nvidia implementation seems to return hresults instead of win32 error codes */
         todo_wine ok(error == ERROR_INVALID_OPERATION ||
-                     error == HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION), "Expected ERROR_INVALID_OPERATION, got error=%x\n", error);
+                     error == NVIDIA_HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION), "Expected ERROR_INVALID_OPERATION, got error=%x\n", error);
         wglDeleteContext(gl3Ctx);
     }
 
