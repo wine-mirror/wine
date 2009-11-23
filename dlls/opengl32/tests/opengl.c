@@ -570,7 +570,9 @@ static void test_opengl3(HDC hdc)
         gl3Ctx = pwglCreateContextAttribsARB((HDC)0xdeadbeef, 0, 0);
         ok(gl3Ctx == 0, "pwglCreateContextAttribsARB using an invalid HDC passed\n");
         error = GetLastError();
-        todo_wine ok(error == ERROR_DC_NOT_FOUND, "Expected ERROR_DC_NOT_FOUND, got error=%x\n", error);
+        todo_wine ok(error == ERROR_DC_NOT_FOUND ||
+                     broken(HRESULT_FROM_WIN32(ERROR_INVALID_DATA)), /* Nvidia Vista + Win7 */
+                     "Expected ERROR_DC_NOT_FOUND, got error=%x\n", error);
         wglDeleteContext(gl3Ctx);
     }
 
