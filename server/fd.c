@@ -1577,6 +1577,8 @@ static unsigned int check_sharing( struct fd *fd, unsigned int access, unsigned 
     if (((existing_access & FILE_MAPPING_WRITE) && !(sharing & FILE_SHARE_WRITE)) ||
         ((existing_access & FILE_MAPPING_IMAGE) && (access & FILE_SHARE_WRITE)))
         return STATUS_SHARING_VIOLATION;
+    if ((existing_access & FILE_MAPPING_IMAGE) && (options & FILE_DELETE_ON_CLOSE))
+        return STATUS_CANNOT_DELETE;
     if ((existing_access & FILE_MAPPING_ACCESS) && (open_flags & O_TRUNC))
         return STATUS_USER_MAPPED_FILE;
     if (!access) return 0;  /* if access mode is 0, sharing mode is ignored (except for mappings) */

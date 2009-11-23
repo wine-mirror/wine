@@ -1872,7 +1872,7 @@ static void test_file_sharing(void)
             ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
             ok( ret == ERROR_SHARING_VIOLATION, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
         }
-        else if (mapping_modes[a1] & SEC_IMAGE) todo_wine
+        else if (mapping_modes[a1] & SEC_IMAGE)
         {
             ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
             ok( ret == ERROR_ACCESS_DENIED, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
