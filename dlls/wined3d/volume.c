@@ -187,11 +187,13 @@ static HRESULT WINAPI IWineD3DVolumeImpl_GetContainer(IWineD3DVolume *iface, REF
 
     if (!ppContainer) {
         ERR("Called without a valid ppContainer.\n");
+        return E_FAIL;
     }
 
     /* Although surfaces can be standalone, volumes can't */
     if (!This->container) {
         ERR("Volume without an container. Should not happen.\n");
+        return E_FAIL;
     }
 
     TRACE("Relaying to QueryInterface\n");
