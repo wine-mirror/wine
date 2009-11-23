@@ -1030,6 +1030,10 @@ static void test_domnode( void )
         CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
     if( r != S_OK )
         return;
+    if (!doc) {
+        ok( FALSE, "no document\n");
+        return;
+    }
 
     b = FALSE;
     str = SysAllocString( szComplete4 );
@@ -1038,19 +1042,14 @@ static void test_domnode( void )
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     SysFreeString( str );
 
-    if (doc)
-    {
-        b = 1;
-        r = IXMLDOMNode_hasChildNodes( doc, &b );
-        ok( r == S_OK, "hasChildNoes bad return\n");
-        ok( b == VARIANT_TRUE, "hasChildNoes wrong result\n");
+    b = 1;
+    r = IXMLDOMNode_hasChildNodes( doc, &b );
+    ok( r == S_OK, "hasChildNoes bad return\n");
+    ok( b == VARIANT_TRUE, "hasChildNoes wrong result\n");
 
-        r = IXMLDOMDocument_get_documentElement( doc, &element );
-        ok( r == S_OK, "should be a document element\n");
-        ok( element != NULL, "should be an element\n");
-    }
-    else
-        ok( FALSE, "no document\n");
+    r = IXMLDOMDocument_get_documentElement( doc, &element );
+    ok( r == S_OK, "should be a document element\n");
+    ok( element != NULL, "should be an element\n");
 
     VariantInit(&var);
     ok( V_VT(&var) == VT_EMPTY, "variant init failed\n");
@@ -1439,8 +1438,7 @@ todo_wine
 
     if (element)
         IXMLDOMElement_Release( element );
-    if (doc)
-        ok(IXMLDOMDocument_Release( doc ) == 0, "document is not destroyed\n");
+    ok(IXMLDOMDocument_Release( doc ) == 0, "document is not destroyed\n");
 }
 
 static void test_refs(void)
