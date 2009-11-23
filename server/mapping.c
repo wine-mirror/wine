@@ -457,6 +457,8 @@ static struct object *create_mapping( struct directory *root, const struct unico
 
     if (handle)
     {
+        unsigned int mapping_access = 0;
+
         if (!(protect & VPROT_COMMITTED))
         {
             set_error( STATUS_INVALID_PARAMETER );
@@ -464,7 +466,13 @@ static struct object *create_mapping( struct directory *root, const struct unico
         }
         if (!(file = get_file_obj( current->process, handle, access ))) goto error;
         fd = get_obj_fd( (struct object *)file );
-        mapping->fd = dup_fd_object( fd );
+
+        /* file sharing rules for mappings are different so we use magic the access rights */
+        if (protect & VPROT_IMAGE) mapping_access |= FILE_MAPPING_IMAGE;
+        else if (protect & VPROT_WRITE) mapping_access |= FILE_MAPPING_WRITE;
+        mapping->fd = dup_fd_object( fd, mapping_access,
+                                     FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                                     FILE_SYNCHRONOUS_IO_NONALERT );
         release_object( file );
         release_object( fd );
         if (!mapping->fd) goto error;

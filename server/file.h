@@ -58,7 +58,8 @@ extern struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned i
                            unsigned int sharing, unsigned int options );
 extern struct fd *create_anonymous_fd( const struct fd_ops *fd_user_ops,
                                        int unix_fd, struct object *user, unsigned int options );
-extern struct fd *dup_fd_object( struct fd *orig );
+extern struct fd *dup_fd_object( struct fd *orig, unsigned int access, unsigned int sharing,
+                                 unsigned int options );
 extern void *get_fd_user( struct fd *fd );
 extern void set_fd_user( struct fd *fd, const struct fd_ops *ops, struct object *user );
 extern unsigned int get_fd_options( struct fd *fd );
@@ -157,5 +158,9 @@ extern void fd_copy_completion( struct fd *src, struct fd *dst );
 
 /* access rights that require Unix write permission */
 #define FILE_UNIX_WRITE_ACCESS (FILE_WRITE_DATA|FILE_WRITE_ATTRIBUTES|FILE_WRITE_EA)
+
+/* magic file access rights for mappings */
+#define FILE_MAPPING_IMAGE  0x80000000
+#define FILE_MAPPING_WRITE  0x40000000
 
 #endif  /* __WINE_SERVER_FILE_H */

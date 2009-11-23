@@ -1489,7 +1489,7 @@ struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *use
 }
 
 /* duplicate an fd object for a different user */
-struct fd *dup_fd_object( struct fd *orig )
+struct fd *dup_fd_object( struct fd *orig, unsigned int access, unsigned int sharing, unsigned int options )
 {
     struct fd *fd = alloc_object( &fd_ops );
 
@@ -1499,9 +1499,9 @@ struct fd *dup_fd_object( struct fd *orig )
     fd->user       = NULL;
     fd->inode      = NULL;
     fd->closed     = NULL;
-    fd->access     = orig->access;
-    fd->options    = orig->options;
-    fd->sharing    = orig->sharing;
+    fd->access     = access;
+    fd->options    = options;
+    fd->sharing    = sharing;
     fd->unix_fd    = -1;
     fd->signaled   = 0;
     fd->fs_locks   = 0;
@@ -1555,8 +1555,6 @@ static int check_sharing( struct fd *fd, unsigned int access, unsigned int shari
     unsigned int existing_access = 0;
     struct list *ptr;
 
-    /* if access mode is 0, sharing mode is ignored */
-    if (!access) sharing = existing_sharing;
     fd->access = access;
     fd->sharing = sharing;
 
@@ -1565,7 +1563,8 @@ static int check_sharing( struct fd *fd, unsigned int access, unsigned int shari
         struct fd *fd_ptr = LIST_ENTRY( ptr, struct fd, inode_entry );
         if (fd_ptr != fd)
         {
-            existing_sharing &= fd_ptr->sharing;
+            /* if access mode is 0, sharing mode is ignored */
+            if (fd_ptr->access) existing_sharing &= fd_ptr->sharing;
             existing_access  |= fd_ptr->access;
         }
     }
@@ -1573,6 +1572,9 @@ static int check_sharing( struct fd *fd, unsigned int access, unsigned int shari
     if ((access & FILE_UNIX_READ_ACCESS) && !(existing_sharing & FILE_SHARE_READ)) return 0;
     if ((access & FILE_UNIX_WRITE_ACCESS) && !(existing_sharing & FILE_SHARE_WRITE)) return 0;
     if ((access & DELETE) && !(existing_sharing & FILE_SHARE_DELETE)) return 0;
+    if ((existing_access & FILE_MAPPING_WRITE) && !(sharing & FILE_SHARE_WRITE)) return 0;
+    if ((existing_access & FILE_MAPPING_IMAGE) && (access & FILE_SHARE_WRITE)) return 0;
+    if (!access) return 1;  /* if access mode is 0, sharing mode is ignored (except for mappings) */
     if ((existing_access & FILE_UNIX_READ_ACCESS) && !(sharing & FILE_SHARE_READ)) return 0;
     if ((existing_access & FILE_UNIX_WRITE_ACCESS) && !(sharing & FILE_SHARE_WRITE)) return 0;
     if ((existing_access & DELETE) && !(sharing & FILE_SHARE_DELETE)) return 0;

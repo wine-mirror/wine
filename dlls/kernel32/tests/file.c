@@ -1827,16 +1827,16 @@ static void test_file_sharing(void)
                 if (h2 == INVALID_HANDLE_VALUE)
                 {
                     if (is_sharing_map_compatible(mapping_modes[a1], access_modes[a2], sharing_modes[s2]))
-                        todo_wine ok( is_win9x, /* there's no sharing at all with a mapping on win9x */
-                                      "open failed for modes map %x/%x/%x\n",
-                                      mapping_modes[a1], access_modes[a2], sharing_modes[s2] );
+                        ok( is_win9x, /* there's no sharing at all with a mapping on win9x */
+                            "open failed for modes map %x/%x/%x\n",
+                            mapping_modes[a1], access_modes[a2], sharing_modes[s2] );
                     ok( ret == ERROR_SHARING_VIOLATION,
                         "wrong error code %d\n", ret );
                 }
                 else
                 {
                     if (!is_sharing_map_compatible(mapping_modes[a1], access_modes[a2], sharing_modes[s2]))
-                        todo_wine ok( broken(1),  /* no checking on nt4 */
+                        ok( broken(1),  /* no checking on nt4 */
                             "open succeeded for modes map %x/%x/%x\n",
                             mapping_modes[a1], access_modes[a2], sharing_modes[s2] );
                     ok( ret == 0xdeadbeef /* Win9x */ ||
@@ -1852,11 +1852,17 @@ static void test_file_sharing(void)
         h2 = CreateFileA( filename, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
                           NULL, CREATE_ALWAYS, 0, 0 );
         ret = GetLastError();
-        ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
         if ((mapping_modes[a1] & SEC_IMAGE) || is_win9x)
+        {
+            ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
             ok( ret == ERROR_SHARING_VIOLATION, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
+        }
         else todo_wine
+        {
+            ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
             ok( ret == ERROR_USER_MAPPED_FILE, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
+        }
+        if (h2 != INVALID_HANDLE_VALUE) CloseHandle( h2 );
 
         /* try DELETE_ON_CLOSE over an existing mapping */
         SetLastError(0xdeadbeef);
@@ -1868,12 +1874,12 @@ static void test_file_sharing(void)
             ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
             ok( ret == ERROR_SHARING_VIOLATION, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
         }
-        else if (mapping_modes[a1] & SEC_IMAGE)
+        else if (mapping_modes[a1] & SEC_IMAGE) todo_wine
         {
             ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
-            todo_wine ok( ret == ERROR_ACCESS_DENIED, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
+            ok( ret == ERROR_ACCESS_DENIED, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
         }
-        else todo_wine
+        else
         {
             ok( h2 != INVALID_HANDLE_VALUE, "open failed for map %x err %u\n", mapping_modes[a1], ret );
         }
