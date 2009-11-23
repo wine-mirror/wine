@@ -698,6 +698,7 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
   if (readSuccessful)
   {
     StorageUtl_CopyDirEntryToSTATSTG(
+      This->ancestorStorage,
       pstatstg,
       &currentEntry,
       grfStatFlag);
@@ -3241,14 +3242,10 @@ BOOL StorageImpl_ReadDirEntry(
 
   if (SUCCEEDED(readRes))
   {
-    /* replace the name of root entry (often "Root Entry") by the file name */
-    WCHAR *entryName = (index == This->base.storageDirEntry) ?
-			This->filename : (WCHAR *)currentEntry+OFFSET_PS_NAME;
-
     memset(buffer->name, 0, sizeof(buffer->name));
     memcpy(
       buffer->name,
-      entryName,
+      (WCHAR *)currentEntry+OFFSET_PS_NAME,
       DIRENTRY_NAME_BUFFER_LEN );
     TRACE("storage name: %s\n", debugstr_w(buffer->name));
 
@@ -3750,7 +3747,8 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
     /*
      * Copy the information to the return buffer.
      */
-    StorageUtl_CopyDirEntryToSTATSTG(currentReturnStruct,
+    StorageUtl_CopyDirEntryToSTATSTG(This->parentStorage,
+      currentReturnStruct,
       &currentEntry,
       STATFLAG_DEFAULT);
 
@@ -4179,25 +4177,38 @@ void StorageUtl_WriteGUID(BYTE* buffer, ULONG offset, const GUID* value)
 }
 
 void StorageUtl_CopyDirEntryToSTATSTG(
+  StorageImpl*          storage,
   STATSTG*              destination,
   const DirEntry*       source,
   int                   statFlags)
 {
+  LPCWSTR entryName;
+
+  if (source->stgType == STGTY_ROOT)
+  {
+    /* replace the name of root entry (often "Root Entry") by the file name */
+    entryName = storage->filename;
+  }
+  else
+  {
+    entryName = source->name;
+  }
+
   /*
    * The copy of the string occurs only when the flag is not set
    */
   if( ((statFlags & STATFLAG_NONAME) != 0) || 
-       (source->name == NULL) || 
-       (source->name[0] == 0) )
+       (entryName == NULL) ||
+       (entryName[0] == 0) )
   {
     destination->pwcsName = 0;
   }
   else
   {
     destination->pwcsName =
-      CoTaskMemAlloc((lstrlenW(source->name)+1)*sizeof(WCHAR));
+      CoTaskMemAlloc((lstrlenW(entryName)+1)*sizeof(WCHAR));
 
-    strcpyW(destination->pwcsName, source->name);
+    strcpyW(destination->pwcsName, entryName);
   }
 
   switch (source->stgType)

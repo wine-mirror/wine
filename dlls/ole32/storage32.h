@@ -428,8 +428,8 @@ void StorageUtl_WriteULargeInteger(BYTE* buffer, ULONG offset,
  const ULARGE_INTEGER *value);
 void StorageUtl_ReadGUID(const BYTE* buffer, ULONG offset, GUID* value);
 void StorageUtl_WriteGUID(BYTE* buffer, ULONG offset, const GUID* value);
-void StorageUtl_CopyDirEntryToSTATSTG(STATSTG* destination, const DirEntry* source,
- int statFlags);
+void StorageUtl_CopyDirEntryToSTATSTG(StorageImpl *storage,STATSTG* destination,
+ const DirEntry* source, int statFlags);
 
 /****************************************************************************
  * BlockChainStream definitions.
