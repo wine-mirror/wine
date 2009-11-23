@@ -261,11 +261,12 @@ typedef enum {
     EDITMODE        
 } USERMODE;
 
-typedef struct {
+typedef struct ConnectionPointContainer {
     const IConnectionPointContainerVtbl  *lpConnectionPointContainerVtbl;
 
     ConnectionPoint *cp_list;
     IUnknown *outer;
+    struct ConnectionPointContainer *forward_container;
 } ConnectionPointContainer;
 
 struct ConnectionPoint {

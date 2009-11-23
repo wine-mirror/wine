@@ -260,6 +260,9 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_cp_guid(riid), ppCP);
 
+    if(This->forward_container)
+        return IConnectionPointContainer_FindConnectionPoint(CONPTCONT(This), riid, ppCP);
+
     *ppCP = NULL;
 
     for(iter = This->cp_list; iter; iter = iter->next) {

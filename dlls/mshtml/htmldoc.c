@@ -1825,6 +1825,8 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     doc->ref = 1;
 
     doc->basedoc.window = window;
+    if(window == doc_obj->basedoc.window)
+        doc->basedoc.cp_container.forward_container = &doc_obj->basedoc.cp_container;
 
     nsIDOMHTMLDocument_AddRef(nsdoc);
     doc->nsdoc = nsdoc;
