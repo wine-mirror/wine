@@ -745,22 +745,8 @@ DirectSoundFullDuplexCreate(
         return DSERR_INVALIDPARAM;
     }
 
-    /* Get dsound configuration */
-    setup_dsound_options();
-
-    This = HeapAlloc(GetProcessHeap(),
-        HEAP_ZERO_MEMORY, sizeof(IDirectSoundFullDuplexImpl));
-
-    if (This == NULL) {
-        WARN("out of memory\n");
-        *ppDSFD = NULL;
-        return DSERR_OUTOFMEMORY;
-    }
-
-    This->lpVtbl = &dsfdvt;
-    This->ref = 1;
-    This->capture_device = NULL;
-    This->renderer_device = NULL;
+    hres = DSOUND_FullDuplexCreate(&IID_IDirectSoundFullDuplex, (LPDIRECTSOUNDFULLDUPLEX*)&This);
+    if (FAILED(hres)) return hres;
 
     hres = IDirectSoundFullDuplexImpl_Initialize((LPDIRECTSOUNDFULLDUPLEX)This,
                                                  pcGuidCaptureDevice,
@@ -770,7 +756,7 @@ DirectSoundFullDuplexCreate(
                                                  hWnd, dwLevel, ppDSCBuffer8,
                                                  ppDSBuffer8);
     if (hres != DS_OK) {
-        HeapFree(GetProcessHeap(), 0, This);
+        IUnknown_Release((LPDIRECTSOUNDFULLDUPLEX)This);
         WARN("IDirectSoundFullDuplexImpl_Initialize failed\n");
         *ppDSFD = NULL;
     } else
