@@ -485,7 +485,8 @@ typedef struct {
 struct HTMLFrameBase {
     HTMLElement element;
 
-    const IHTMLFrameBaseVtbl *lpIHTMLFrameBaseVtbl;
+    const IHTMLFrameBaseVtbl   *lpIHTMLFrameBaseVtbl;
+    const IHTMLFrameBase2Vtbl  *lpIHTMLFrameBase2Vtbl;
 
     HTMLWindow *content_window;
 };
@@ -589,6 +590,7 @@ struct HTMLDocumentNode {
 
 #define HTMLTEXTCONT(x)  ((IHTMLTextContainer*)           &(x)->lpHTMLTextContainerVtbl)
 #define HTMLFRAMEBASE(x) ((IHTMLFrameBase*)               &(x)->lpIHTMLFrameBaseVtbl)
+#define HTMLFRAMEBASE2(x) ((IHTMLFrameBase2*)             &(x)->lpIHTMLFrameBase2Vtbl)
 
 #define HTMLOPTFACTORY(x)  ((IHTMLOptionElementFactory*)  &(x)->lpHTMLOptionElementFactoryVtbl)
 #define HTMLIMGFACTORY(x)  ((IHTMLImageElementFactory*)  &(x)->lpHTMLImageElementFactoryVtbl)

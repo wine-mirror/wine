@@ -242,11 +242,154 @@ static const IHTMLFrameBaseVtbl HTMLFrameBaseVtbl = {
     HTMLFrameBase_get_scrolling
 };
 
+#define HTMLFRAMEBASE2_THIS(iface) DEFINE_THIS(HTMLFrameBase, IHTMLFrameBase2, iface)
+
+static HRESULT WINAPI HTMLFrameBase2_QueryInterface(IHTMLFrameBase2 *iface, REFIID riid, void **ppv)
+{
+    HTMLFrameBase *This = HTMLFRAMEBASE2_THIS(iface);
+
+    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->element.node), riid, ppv);
+}
+
+static ULONG WINAPI HTMLFrameBase2_AddRef(IHTMLFrameBase2 *iface)
+{
+    HTMLFrameBase *This = HTMLFRAMEBASE2_THIS(iface);
+
+    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->element.node));
+}
+
+static ULONG WINAPI HTMLFrameBase2_Release(IHTMLFrameBase2 *iface)
+{
+    HTMLFrameBase *This = HTMLFRAMEBASE2_THIS(iface);
+
+    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->element.node));
+}
+
+static HRESULT WINAPI HTMLFrameBase2_GetTypeInfoCount(IHTMLFrameBase2 *iface, UINT *pctinfo)
+{
+    HTMLFrameBase *This = HTMLFRAMEBASE2_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLFrameBase2_GetTypeInfo(IHTMLFrameBase2 *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLFrameBase *This = HTMLFRAMEBASE2_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLFrameBase2_GetIDsOfNames(IHTMLFrameBase2 *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLFrameBase *This = HTMLFRAMEBASE2_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLFrameBase2_Invoke(IHTMLFrameBase2 *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLFrameBase *This = HTMLFRAMEBASE2_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLFrameBase2_get_contentWindow(IHTMLFrameBase2 *iface, IHTMLWindow2 **p)
+{
+    HTMLFrameBase *This = HTMLFRAMEBASE2_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->content_window) {
+        IHTMLWindow2_AddRef(HTMLWINDOW2(This->content_window));
+        *p = HTMLWINDOW2(This->content_window);
+    }else {
+        WARN("NULL content window\n");
+        *p = NULL;
+    }
+    return S_OK;
+}
+
+static HRESULT WINAPI HTMLFrameBase2_put_onload(IHTMLFrameBase2 *iface, VARIANT v)
+{
+    HTMLFrameBase *This = HTMLFRAMEBASE2_THIS(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLFrameBase2_get_onload(IHTMLFrameBase2 *iface, VARIANT *p)
+{
+    HTMLFrameBase *This = HTMLFRAMEBASE2_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLFrameBase2_put_onreadystatechange(IHTMLFrameBase2 *iface, VARIANT v)
+{
+    HTMLFrameBase *This = HTMLFRAMEBASE2_THIS(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLFrameBase2_get_onreadystatechange(IHTMLFrameBase2 *iface, VARIANT *p)
+{
+    HTMLFrameBase *This = HTMLFRAMEBASE2_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLFrameBase2_get_readyState(IHTMLFrameBase2 *iface, BSTR *p)
+{
+    HTMLFrameBase *This = HTMLFRAMEBASE2_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLFrameBase2_put_allowTransparency(IHTMLFrameBase2 *iface, VARIANT_BOOL v)
+{
+    HTMLFrameBase *This = HTMLFRAMEBASE2_THIS(iface);
+    FIXME("(%p)->(%x)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLFrameBase2_get_allowTransparency(IHTMLFrameBase2 *iface, VARIANT_BOOL *p)
+{
+    HTMLFrameBase *This = HTMLFRAMEBASE2_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+#undef HTMLFRAMEBASE2_THIS
+
+static const IHTMLFrameBase2Vtbl HTMLFrameBase2Vtbl = {
+    HTMLFrameBase2_QueryInterface,
+    HTMLFrameBase2_AddRef,
+    HTMLFrameBase2_Release,
+    HTMLFrameBase2_GetTypeInfoCount,
+    HTMLFrameBase2_GetTypeInfo,
+    HTMLFrameBase2_GetIDsOfNames,
+    HTMLFrameBase2_Invoke,
+    HTMLFrameBase2_get_contentWindow,
+    HTMLFrameBase2_put_onload,
+    HTMLFrameBase2_get_onload,
+    HTMLFrameBase2_put_onreadystatechange,
+    HTMLFrameBase2_get_onreadystatechange,
+    HTMLFrameBase2_get_readyState,
+    HTMLFrameBase2_put_allowTransparency,
+    HTMLFrameBase2_get_allowTransparency
+};
+
 HRESULT HTMLFrameBase_QI(HTMLFrameBase *This, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IHTMLFrameBase, riid)) {
         TRACE("(%p)->(IID_IHTMLFrameBase %p)\n", This, ppv);
         *ppv = HTMLFRAMEBASE(This);
+    }else if(IsEqualGUID(&IID_IHTMLFrameBase2, riid)) {
+        TRACE("(%p)->(IID_IHTMLFrameBase2 %p)\n", This, ppv);
+        *ppv = HTMLFRAMEBASE2(This);
     }else {
         return HTMLElement_QI(&This->element.node, riid, ppv);
     }
@@ -269,6 +412,7 @@ void HTMLFrameBase_Init(HTMLFrameBase *This, HTMLDocumentNode *doc, nsIDOMHTMLEl
         HTMLWindow *content_window, dispex_static_data_t *dispex_data)
 {
     This->lpIHTMLFrameBaseVtbl = &HTMLFrameBaseVtbl;
+    This->lpIHTMLFrameBase2Vtbl = &HTMLFrameBase2Vtbl;
 
     HTMLElement_Init(&This->element, doc, nselem, dispex_data);
 
