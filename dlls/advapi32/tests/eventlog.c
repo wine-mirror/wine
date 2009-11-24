@@ -741,6 +741,27 @@ static void test_readwrite(void)
         return;
     }
 
+    count = 0xdeadbeef;
+    GetNumberOfEventLogRecords(handle, &count);
+    if (count != 0)
+    {
+        /* Needed for W2K3 without a service pack */
+        win_skip("We most likely opened the Application eventlog\n");
+        CloseEventLog(handle);
+        Sleep(2000);
+
+        handle = OpenEventLogA(NULL, eventlogname);
+        count = 0xdeadbeef;
+        GetNumberOfEventLogRecords(handle, &count);
+        if (count != 0)
+        {
+            win_skip("We didn't open our new eventlog\n");
+            HeapFree(GetProcessHeap(), 0, user);
+            CloseEventLog(handle);
+            return;
+        }
+    }
+
     SetLastError(0xdeadbeef);
     ret = ReportEvent(handle, 0x20, 0, 0, NULL, 0, 0, NULL, NULL);
     if (!ret && GetLastError() == ERROR_CRC)
