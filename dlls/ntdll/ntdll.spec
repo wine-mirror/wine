@@ -632,7 +632,7 @@
 @ stdcall RtlGetLongestNtPathLength()
 # @ stub RtlGetNativeSystemInformation
 # @ stub RtlGetNextRange
-@ stub RtlGetNtGlobalFlags
+@ stdcall RtlGetNtGlobalFlags()
 @ stdcall RtlGetNtProductType(ptr)
 @ stdcall RtlGetNtVersionNumbers(ptr ptr ptr)
 @ stdcall RtlGetOwnerSecurityDescriptor(ptr ptr ptr)

@@ -73,6 +73,15 @@ PEB * WINAPI RtlGetCurrentPeb(void)
     return NtCurrentTeb()->Peb;
 }
 
+/******************************************************************************
+ *  RtlGetNtGlobalFlags  [NTDLL.@]
+ *
+ */
+ULONG WINAPI RtlGetNtGlobalFlags(void)
+{
+    return NtCurrentTeb()->Peb->NtGlobalFlag;
+}
+
 /***********************************************************************
  *           __wine_make_process_system   (NTDLL.@)
  *
