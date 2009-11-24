@@ -445,6 +445,7 @@ typedef struct {
     HRESULT (*call_event)(HTMLDOMNode*,DWORD,BOOL*);
     HRESULT (*put_disabled)(HTMLDOMNode*,VARIANT_BOOL);
     HRESULT (*get_disabled)(HTMLDOMNode*,VARIANT_BOOL*);
+    HRESULT (*get_document)(HTMLDOMNode*,IDispatch**);
 } NodeImplVtbl;
 
 struct HTMLDOMNode {

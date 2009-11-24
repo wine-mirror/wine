@@ -569,9 +569,11 @@ static HRESULT WINAPI HTMLElement_get_document(IHTMLElement *iface, IDispatch **
     if(!p)
         return E_POINTER;
 
+    if(This->node.vtbl->get_document)
+        return This->node.vtbl->get_document(&This->node, p);
+
     *p = (IDispatch*)HTMLDOC(&This->node.doc->basedoc);
     IDispatch_AddRef(*p);
-
     return S_OK;
 }
 

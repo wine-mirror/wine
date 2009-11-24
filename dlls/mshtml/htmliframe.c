@@ -58,11 +58,30 @@ static void HTMLIFrame_destructor(HTMLDOMNode *iface)
     HTMLFrameBase_destructor(&This->framebase);
 }
 
+static HRESULT HTMLIFrame_get_document(HTMLDOMNode *iface, IDispatch **p)
+{
+    HTMLIFrame *This = HTMLIFRAME_NODE_THIS(iface);
+
+    if(!This->framebase.content_window || !This->framebase.content_window->doc) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    *p = (IDispatch*)HTMLDOC(&This->framebase.content_window->doc->basedoc);
+    IDispatch_AddRef(*p);
+    return S_OK;
+}
+
 #undef HTMLIFRAME_NODE_THIS
 
 static const NodeImplVtbl HTMLIFrameImplVtbl = {
     HTMLIFrame_QI,
-    HTMLIFrame_destructor
+    HTMLIFrame_destructor,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    HTMLIFrame_get_document
 };
 
 static const tid_t HTMLIFrame_iface_tids[] = {

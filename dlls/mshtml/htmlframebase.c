@@ -443,11 +443,30 @@ static void HTMLFrameElement_destructor(HTMLDOMNode *iface)
     HTMLFrameBase_destructor(&This->framebase);
 }
 
+static HRESULT HTMLFrameElement_get_document(HTMLDOMNode *iface, IDispatch **p)
+{
+    HTMLFrameElement *This = HTMLFRAME_NODE_THIS(iface);
+
+    if(!This->framebase.content_window || !This->framebase.content_window->doc) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    *p = (IDispatch*)HTMLDOC(&This->framebase.content_window->doc->basedoc);
+    IDispatch_AddRef(*p);
+    return S_OK;
+}
+
 #undef HTMLFRAME_NODE_THIS
 
 static const NodeImplVtbl HTMLFrameElementImplVtbl = {
     HTMLFrameElement_QI,
-    HTMLFrameElement_destructor
+    HTMLFrameElement_destructor,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    HTMLFrameElement_get_document
 };
 
 HTMLElement *HTMLFrameElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLWindow *content_window)
