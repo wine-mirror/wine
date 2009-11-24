@@ -70,6 +70,7 @@ static BOOL  (WINAPI * pGetDefaultPrinterA)(LPSTR, LPDWORD);
 static BOOL  (WINAPI * pSetDefaultPrinterA)(LPCSTR);
 static DWORD (WINAPI * pXcvDataW)(HANDLE, LPCWSTR, PBYTE, DWORD, PBYTE, DWORD, PDWORD, PDWORD);
 static BOOL  (WINAPI * pAddPortExA)(LPSTR, DWORD, LPBYTE, LPSTR);
+static BOOL  (WINAPI * pGetPrinterDriverW)(HANDLE, LPWSTR, DWORD, LPBYTE, DWORD, LPDWORD);
 
 
 /* ################################ */
@@ -2260,6 +2261,15 @@ static void test_GetPrinterDriver(void)
             continue;
         }
 
+        /* GetPrinterDriverA returns the same number of bytes as GetPrinterDriverW */
+        if (! ret && pGetPrinterDriverW)
+        {
+            DWORD double_needed;
+            ret = pGetPrinterDriverW(hprn, NULL, level, NULL, 0, &double_needed);
+            todo_wine
+            ok(double_needed == needed, "GetPrinterDriverA returned different size %d than GetPrinterDriverW (%d)\n", needed, double_needed);
+        }
+
         buf = HeapAlloc(GetProcessHeap(), 0, needed);
 
         SetLastError(0xdeadbeef);
@@ -2536,6 +2546,7 @@ START_TEST(info)
     hwinspool = GetModuleHandleA("winspool.drv");
     pGetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "GetDefaultPrinterA");
     pSetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "SetDefaultPrinterA");
+    pGetPrinterDriverW = (void *) GetProcAddress(hwinspool, "GetPrinterDriverW");
     pXcvDataW = (void *) GetProcAddress(hwinspool, "XcvDataW");
     pAddPortExA = (void *) GetProcAddress(hwinspool, "AddPortExA");
 
