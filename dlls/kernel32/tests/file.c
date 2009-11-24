@@ -1644,7 +1644,15 @@ static BOOL create_fake_dll( LPCSTR filename )
 
     nt = (IMAGE_NT_HEADERS *)(buffer + lfanew);
     nt->Signature = IMAGE_NT_SIGNATURE;
+#if defined __i386__
     nt->FileHeader.Machine = IMAGE_FILE_MACHINE_I386;
+#elif defined __x86_64__
+    nt->FileHeader.Machine = IMAGE_FILE_MACHINE_AMD64;
+#elif defined __powerpc__
+    nt->FileHeader.Machine = IMAGE_FILE_MACHINE_POWERPC;
+#else
+# error You must specify the machine type
+#endif
     nt->FileHeader.NumberOfSections = 1;
     nt->FileHeader.SizeOfOptionalHeader = IMAGE_SIZEOF_NT_OPTIONAL_HEADER;
     nt->FileHeader.Characteristics = IMAGE_FILE_DLL | IMAGE_FILE_EXECUTABLE_IMAGE;
