@@ -2977,7 +2977,7 @@ static void test_GetTextMetrics2(const char *fontname, int font_height)
     ok(ratio >= 90 && ratio <= 110, "expected width/height ratio 90-110, got %d\n", ratio);
 }
 
-void test_CreateFontIndirect(void)
+static void test_CreateFontIndirect(void)
 {
     LOGFONTA lf, getobj_lf;
     int ret, i;
