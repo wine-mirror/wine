@@ -44,6 +44,7 @@ typedef struct wine_ALCcontext {
 
     ALboolean been_current;
 
+    ALvoid (AL_APIENTRY*alBufferDataStatic)(const ALuint bid, ALenum format, const ALvoid* data, ALsizei size, ALsizei freq);
     ALvoid (AL_APIENTRY*alGenFilters)(ALsizei n, ALuint* filters);
     ALvoid (AL_APIENTRY*alDeleteFilters)(ALsizei n, const ALuint* filters);
     ALboolean (AL_APIENTRY*alIsFilter)(ALuint fid);
@@ -190,6 +191,7 @@ ALCboolean CDECL wine_alcMakeContextCurrent(ALCcontext *context)
         CurrentCtx->been_current = AL_TRUE;
 
 #define LOADFUNC(x) CurrentCtx->x = alGetProcAddress(#x)
+        LOADFUNC(alBufferDataStatic);
         LOADFUNC(alGenFilters);
         LOADFUNC(alDeleteFilters);
         LOADFUNC(alIsFilter);
@@ -620,6 +622,11 @@ ALvoid CDECL wine_alBufferData(ALuint bid, ALenum format, const ALvoid* data, AL
     alBufferData(bid, format, data, size, freq);
 }
 
+ALvoid CDECL wine_alBufferDataStatic(const ALuint bid, ALenum format, const ALvoid* data, ALsizei size, ALsizei freq)
+{
+    CurrentCtx->alBufferDataStatic(bid, format, data, size, freq);
+}
+
 ALvoid CDECL wine_alGetBufferf(ALuint bid, ALenum param, ALfloat* value)
 {
     alGetBufferf(bid, param, value);
@@ -1008,6 +1015,7 @@ static const struct FuncList ALFuncs[] = {
     { "alDeleteBuffers",            wine_alDeleteBuffers         },
     { "alIsBuffer",                 wine_alIsBuffer              },
     { "alBufferData",               wine_alBufferData            },
+    { "alBufferDataStatic",         wine_alBufferDataStatic      },
     { "alBufferf",                  wine_alBufferf               },
     { "alBuffer3f",                 wine_alBuffer3f              },
     { "alBufferfv",                 wine_alBufferfv              },
