@@ -13,7 +13,7 @@
 @ stub AuthzInitializeContextFromToken
 @ stub AuthzInitializeObjectAccessAuditEvent
 @ stub AuthzInitializeObjectAccessAuditEvent2
-@ stub AuthzInitializeResourceManager
+@ stdcall AuthzInitializeResourceManager(long ptr ptr ptr wstr ptr)
 @ stub AuthzInstallSecurityEventSource
 @ stub AuthzOpenObjectAudit
 @ stub AuthzRegisterSecurityEventSource

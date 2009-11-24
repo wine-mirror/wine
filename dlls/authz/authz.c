@@ -42,3 +42,17 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     return TRUE;
 }
+
+/***********************************************************************
+ *              AuthzInitializeResourceManager (AUTHZ.@)
+ */
+BOOL WINAPI AuthzInitializeResourceManager(DWORD flags, LPVOID pfnAccessChecker,
+    LPVOID pfnComputeDynGroups, LPVOID pfnFreeDynGroups,
+    LPCWSTR managerName, LPVOID lpManagerHandle )
+{
+    FIXME("(0x%X,%p,%p,%p,%s,%p): stub\n", flags, pfnAccessChecker,
+        pfnComputeDynGroups, pfnFreeDynGroups,
+        debugstr_w(managerName), lpManagerHandle);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
