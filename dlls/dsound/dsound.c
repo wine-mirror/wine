@@ -109,8 +109,6 @@ static HRESULT IDirectSoundImpl_Create(LPDIRECTSOUND8 * ppds);
 static ULONG WINAPI IDirectSound_IUnknown_AddRef(LPUNKNOWN iface);
 static ULONG WINAPI IDirectSound_IDirectSound_AddRef(LPDIRECTSOUND iface);
 
-static HRESULT DirectSoundDevice_VerifyCertification(DirectSoundDevice * device, LPDWORD pdwCertified);
-
 const char * dumpCooperativeLevel(DWORD level)
 {
 #define LE(x) case x: return #x
@@ -1773,7 +1771,7 @@ HRESULT DirectSoundDevice_SetSpeakerConfig(
     return DS_OK;
 }
 
-static HRESULT DirectSoundDevice_VerifyCertification(
+HRESULT DirectSoundDevice_VerifyCertification(
     DirectSoundDevice * device,
     LPDWORD pdwCertified)
 {

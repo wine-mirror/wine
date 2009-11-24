@@ -152,6 +152,8 @@ HRESULT DirectSoundDevice_GetSpeakerConfig(
 HRESULT DirectSoundDevice_SetSpeakerConfig(
     DirectSoundDevice * device,
     DWORD config);
+HRESULT DirectSoundDevice_VerifyCertification(DirectSoundDevice * device,
+    LPDWORD pdwCertified);
 
 /*****************************************************************************
  * IDirectSoundBuffer implementation structure
