@@ -733,6 +733,13 @@ static void test_readwrite(void)
      * but succeed on all others, hence it's not part of the struct.
      */
     handle = OpenEventLogA(NULL, eventlogname);
+    if (!handle)
+    {
+        /* Intermittently seen on NT4 when tests are run immediately after boot */
+        win_skip("Could not get a handle to the eventlog\n");
+        HeapFree(GetProcessHeap(), 0, user);
+        return;
+    }
 
     SetLastError(0xdeadbeef);
     ret = ReportEvent(handle, 0x20, 0, 0, NULL, 0, 0, NULL, NULL);
