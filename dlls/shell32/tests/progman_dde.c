@@ -99,9 +99,9 @@ static void init_strings(void)
         BOOL ret;
         char commonprog[MAX_PATH], startup[MAX_PATH];
 
-        ret = SHGetSpecialFolderPathA(NULL, commonprog, CSIDL_COMMON_PROGRAMS, FALSE);
+        ret = pSHGetSpecialFolderPathA(NULL, commonprog, CSIDL_COMMON_PROGRAMS, FALSE);
         if (!ret) /* Win9x */
-            SHGetSpecialFolderPathA(NULL, commonprog, CSIDL_PROGRAMS, FALSE);
+            pSHGetSpecialFolderPathA(NULL, commonprog, CSIDL_PROGRAMS, FALSE);
         lstrcpyA(Group1Title, commonprog);
         lstrcatA(Group1Title, "\\Group1");
         lstrcpyA(Group2Title, commonprog);
@@ -109,7 +109,7 @@ static void init_strings(void)
         lstrcpyA(Group3Title, commonprog);
         lstrcatA(Group3Title, "\\Group3");
 
-        SHGetSpecialFolderPathA(NULL, startup, CSIDL_STARTUP, FALSE);
+        pSHGetSpecialFolderPathA(NULL, startup, CSIDL_STARTUP, FALSE);
         lstrcpyA(StartupTitle, startup);
         lstrcpyA(Startup, (strrchr(StartupTitle, '\\') + 1));
     }
