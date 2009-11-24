@@ -1960,9 +1960,21 @@ static DefaultHandler* DefaultHandler_Construct(
                        &IID_IUnknown,
                        (void**)&This->dataCache);
   if(SUCCEEDED(hr))
+  {
     hr = IUnknown_QueryInterface(This->dataCache, &IID_IPersistStorage, (void**)&This->dataCache_PersistStg);
+    /* keeping a reference to This->dataCache_PersistStg causes us to keep a
+     * reference on the outer object */
+    if (SUCCEEDED(hr))
+        IUnknown_Release(This->outerUnknown);
+    else
+        IUnknown_Release(This->dataCache);
+  }
   if(FAILED(hr))
+  {
     ERR("Unexpected error creating data cache\n");
+    HeapFree(GetProcessHeap(), 0, This);
+    return NULL;
+  }
 
   This->clsid = *clsid;
   This->clientSite = NULL;
@@ -2009,6 +2021,13 @@ static DefaultHandler* DefaultHandler_Construct(
 static void DefaultHandler_Destroy(
   DefaultHandler* This)
 {
+  TRACE("(%p)\n", This);
+
+  /* AddRef/Release may be called on this object during destruction.
+   * Prevent the object being destroyed recursively by artificially raising
+   * the reference count. */
+  This->ref = 10000;
+
   /* release delegates */
   DefaultHandler_Stop(This);
   release_delegates(This);
@@ -2020,6 +2039,9 @@ static void DefaultHandler_Destroy(
 
   if (This->dataCache)
   {
+    /* to balance out the release of dataCache_PersistStg which will result
+     * in a reference being released from the outer unknown */
+    IUnknown_AddRef(This->outerUnknown);
     IPersistStorage_Release(This->dataCache_PersistStg);
     IUnknown_Release(This->dataCache);
     This->dataCache_PersistStg = NULL;
