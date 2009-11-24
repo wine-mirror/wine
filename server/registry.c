@@ -1257,7 +1257,6 @@ static int load_value( struct key *key, const char *buffer, struct file_load_inf
     value->data = newptr;
     value->len  = len;
     value->type = type;
-    make_dirty( key );
     return 1;
 
  error:
@@ -1266,7 +1265,6 @@ static int load_value( struct key *key, const char *buffer, struct file_load_inf
     value->data = NULL;
     value->len  = 0;
     value->type = REG_NONE;
-    make_dirty( key );
     return 0;
 }
 
@@ -1304,7 +1302,6 @@ static void load_keys( struct key *key, const char *filename, FILE *f, int prefi
     struct key *subkey = NULL;
     struct file_load_info info;
     char *p;
-    int flags = (key->flags & KEY_VOLATILE) ? KEY_VOLATILE : KEY_DIRTY;
 
     info.filename = filename;
     info.file   = f;
@@ -1334,7 +1331,7 @@ static void load_keys( struct key *key, const char *filename, FILE *f, int prefi
         case '[':   /* new key */
             if (subkey) release_object( subkey );
             if (prefix_len == -1) prefix_len = get_prefix_len( key, p + 1, &info );
-            if (!(subkey = load_key( key, p + 1, flags, prefix_len, &info )))
+            if (!(subkey = load_key( key, p + 1, key->flags, prefix_len, &info )))
                 file_read_error( "Error creating key", &info );
             break;
         case '@':   /* default value */
