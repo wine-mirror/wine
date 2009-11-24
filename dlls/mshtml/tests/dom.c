@@ -883,6 +883,25 @@ static void _test_window_length(unsigned line, IHTMLWindow2 *window, LONG exlen)
     ok_(__FILE__,line)(length == exlen, "length = %d, expected %d\n", length, exlen);
 }
 
+#define get_frame_content_window(e) _get_frame_content_window(__LINE__,e)
+static IHTMLWindow2 *_get_frame_content_window(unsigned line, IUnknown *elem)
+{
+    IHTMLFrameBase2 *base2;
+    IHTMLWindow2 *window;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(elem, &IID_IHTMLFrameBase2, (void**)&base2);
+    ok(hres == S_OK, "Could not get IHTMFrameBase2 iface: %08x\n", hres);
+
+    window = NULL;
+    hres = IHTMLFrameBase2_get_contentWindow(base2, &window);
+    IHTMLFrameBase2_Release(base2);
+    ok(hres == S_OK, "get_contentWindow failed: %08x\n", hres);
+    ok(window != NULL, "contentWindow = NULL\n");
+
+    return window;
+}
+
 static void test_get_set_attr(IHTMLDocument2 *doc)
 {
     IHTMLElement *elem;
@@ -2200,6 +2219,40 @@ static void _test_elem_client_rect(unsigned line, IUnknown *unk)
     ok_(__FILE__,line) (!l, "clientTop = %d\n", l);
 
     IHTMLElement2_Release(elem);
+}
+
+#define get_elem_doc(e) _get_elem_doc(__LINE__,e)
+static IHTMLDocument2 *_get_elem_doc(unsigned line, IUnknown *unk)
+{
+    IHTMLElement *elem = _get_elem_iface(line, unk);
+    IHTMLDocument2 *doc;
+    IDispatch *disp;
+    HRESULT hres;
+
+    disp = NULL;
+    hres = IHTMLElement_get_document(elem, &disp);
+    ok(hres == S_OK, "get_document failed: %08x\n", hres);
+    ok(disp != NULL, "disp == NULL\n");
+
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLDocument2, (void**)&doc);
+    IDispatch_Release(disp);
+    ok(hres == S_OK, "Could not get IHTMLDocument2 iface: %08x\n", hres);
+
+    return doc;
+}
+
+#define get_window_doc(e) _get_window_doc(__LINE__,e)
+static IHTMLDocument2 *_get_window_doc(unsigned line, IHTMLWindow2 *window)
+{
+    IHTMLDocument2 *doc;
+    HRESULT hres;
+
+    doc = NULL;
+    hres = IHTMLWindow2_get_document(window, &doc);
+    ok(hres == S_OK, "get_document failed: %08x\n", hres);
+    ok(doc != NULL, "disp == NULL\n");
+
+    return doc;
 }
 
 #define test_create_elem(d,t) _test_create_elem(__LINE__,d,t)
@@ -4806,12 +4859,27 @@ static void doc_write(IHTMLDocument2 *doc, BOOL ln, const char *text)
     SafeArrayDestroy(sa);
 }
 
+static void test_frame_doc(IUnknown *frame_elem)
+{
+    IHTMLDocument2 *window_doc, *elem_doc;
+    IHTMLWindow2 *content_window;
+
+    content_window = get_frame_content_window(frame_elem);
+    window_doc = get_window_doc(content_window);
+    IHTMLWindow2_Release(content_window);
+
+    elem_doc = get_elem_doc(frame_elem);
+    ok(iface_cmp((IUnknown*)window_doc, (IUnknown*)elem_doc), "content_doc != elem_doc\n");
+
+    IHTMLDocument2_Release(elem_doc);
+    IHTMLDocument2_Release(window_doc);
+}
+
 static void test_iframe_elem(IHTMLElement *elem)
 {
     IHTMLDocument2 *content_doc, *owner_doc;
     IHTMLElementCollection *col;
     IHTMLWindow2 *content_window;
-    IHTMLFrameBase2 *base2;
     IDispatch *disp;
     VARIANT errv;
     BSTR str;
@@ -4825,23 +4893,13 @@ static void test_iframe_elem(IHTMLElement *elem)
         ET_BR
     };
 
-    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLFrameBase2, (void**)&base2);
-    ok(hres == S_OK, "Could not get IHTMFrameBase2 iface: %08x\n", hres);
-    if (!base2) return;
+    test_frame_doc((IUnknown*)elem);
 
-    content_window = NULL;
-    hres = IHTMLFrameBase2_get_contentWindow(base2, &content_window);
-    IHTMLFrameBase2_Release(base2);
-    ok(hres == S_OK, "get_contentWindow failed: %08x\n", hres);
-    ok(content_window != NULL, "contentWindow = NULL\n");
-
+    content_window = get_frame_content_window((IUnknown*)elem);
     test_window_length(content_window, 0);
 
-    content_doc = NULL;
-    hres = IHTMLWindow2_get_document(content_window, &content_doc);
+    content_doc = get_window_doc(content_window);
     IHTMLWindow2_Release(content_window);
-    ok(hres == S_OK, "get_document failed: %08x\n", hres);
-    ok(content_doc != NULL, "content_doc = NULL\n");
 
     str = a2bstr("text/html");
     V_VT(&errv) = VT_ERROR;
@@ -5114,7 +5172,7 @@ static void test_elems(IHTMLDocument2 *doc)
     elem = get_elem_by_id(doc, "s", TRUE);
     if(elem) {
         IHTMLSelectElement *select;
-        IHTMLDocument2 *doc_node;
+        IHTMLDocument2 *doc_node, *elem_doc;
 
         hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLSelectElement, (void**)&select);
         ok(hres == S_OK, "Could not get IHTMLSelectElement interface: %08x\n", hres);
@@ -5138,12 +5196,12 @@ static void test_elems(IHTMLDocument2 *doc)
 
         IHTMLSelectElement_Release(select);
 
-        hres = IHTMLElement_get_document(elem, &disp);
-        ok(hres == S_OK, "get_document failed: %08x\n", hres);
+        elem_doc = get_elem_doc((IUnknown*)elem);
 
         doc_node = get_doc_node(doc);
-        ok(iface_cmp((IUnknown*)disp, (IUnknown*)doc_node), "disp != doc\n");
+        ok(iface_cmp((IUnknown*)elem_doc, (IUnknown*)doc_node), "disp != doc\n");
         IHTMLDocument2_Release(doc_node);
+        IHTMLDocument2_Release(elem_doc);
 
         IHTMLElement_Release(elem);
     }
@@ -5619,6 +5677,7 @@ static void test_frame(IDispatch *disp, const char *exp_id)
     if(FAILED(hres))
         return;
 
+    test_frame_doc((IUnknown*)frame_elem);
     test_elem_id((IUnknown*)frame_elem, exp_id);
     IHTMLElement_Release(frame_elem);
 
@@ -5721,7 +5780,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     ok(hres == S_OK, "IHTMLFramesCollection2_item failed: 0x%08x\n", hres);
     if(SUCCEEDED(hres)) {
         ok(V_VT(&result_var) == VT_DISPATCH, "result type should have been VT_DISPATCH, was: 0x%x\n", V_VT(&result_var));
-        test_frame((IDispatch*)V_DISPATCH(&result_var), "fr1");
+        test_frame(V_DISPATCH(&result_var), "fr1");
     }
     VariantClear(&result_var);
     VariantClear(&index_var);
