@@ -1735,7 +1735,7 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
         hr = IStream_Write(This->stm, cf_hdr, sizeof(cf_hdr), &count);
         if (FAILED(hr))
             goto end;
-        hr = IStream_Write(This->stm, &var->u.pclipdata->pClipData, len, &count);
+        hr = IStream_Write(This->stm, var->u.pclipdata->pClipData, len, &count);
         if (FAILED(hr))
             goto end;
         bytesWritten = count + sizeof cf_hdr;
