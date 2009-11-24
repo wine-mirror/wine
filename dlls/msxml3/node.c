@@ -946,14 +946,14 @@ static HRESULT WINAPI xmlnode_get_definition(
 
 static HRESULT WINAPI xmlnode_get_dataType(IXMLDOMNode*, VARIANT*);
 
-inline BYTE hex_to_byte(xmlChar c)
+static inline BYTE hex_to_byte(xmlChar c)
 {
     if(c <= '9') return c-'0';
     if(c <= 'F') return c-'A'+10;
     return c-'a'+10;
 }
 
-inline BYTE base64_to_byte(xmlChar c)
+static inline BYTE base64_to_byte(xmlChar c)
 {
     if(c == '+') return 62;
     if(c == '/') return 63;
@@ -962,7 +962,7 @@ inline BYTE base64_to_byte(xmlChar c)
     return c-'a'+26;
 }
 
-inline HRESULT VARIANT_from_xmlChar(xmlChar *str, VARIANT *v, BSTR type)
+static inline HRESULT VARIANT_from_xmlChar(xmlChar *str, VARIANT *v, BSTR type)
 {
     if(!type || !lstrcmpiW(type, szString) ||
             !lstrcmpiW(type, szNumber) || !lstrcmpiW(type, szUUID))
