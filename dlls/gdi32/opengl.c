@@ -107,7 +107,7 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
 /***********************************************************************
  *      wglCreateContextAttribsARB
  */
-HGLRC WINAPI wglCreateContextAttribsARB(HDC hdc, HGLRC hShareContext, const int *attributeList)
+static HGLRC WINAPI wglCreateContextAttribsARB(HDC hdc, HGLRC hShareContext, const int *attributeList)
 {
     HGLRC ret = 0;
     DC * dc = get_dc_ptr( hdc );
