@@ -363,7 +363,7 @@
 @ cdecl _lfind(ptr ptr ptr long ptr) msvcrt._lfind
 @ cdecl _loaddll(str) msvcrt._loaddll
 @ cdecl _local_unwind2(ptr long) msvcrt._local_unwind2
-@ stub _localtime64
+@ cdecl _localtime64(ptr) msvcrt._localtime64
 @ cdecl _lock(long) msvcrt._lock
 @ cdecl _locking(long long long) msvcrt._locking
 @ cdecl _logb(double) msvcrt._logb
@@ -435,7 +435,7 @@
 @ cdecl _memicmp(str str long) msvcrt._memicmp
 @ cdecl _mkdir(str) msvcrt._mkdir
 @ cdecl _mktemp(str) msvcrt._mktemp
-@ stub _mktime64
+@ cdecl _mktime64(ptr) msvcrt._mktime64
 @ cdecl _msize(ptr) msvcrt._msize
 @ cdecl _nextafter(double double) msvcrt._nextafter
 @ cdecl _onexit(ptr) msvcrt._onexit
@@ -527,7 +527,7 @@
 @ cdecl _tell(long) msvcrt._tell
 @ cdecl -ret64 _telli64(long) msvcrt._telli64
 @ cdecl _tempnam(str str) msvcrt._tempnam
-@ stub _time64
+@ cdecl _time64(ptr) msvcrt._time64
 @ extern _timezone msvcrt._timezone
 @ cdecl _tolower(long) msvcrt._tolower
 @ cdecl _toupper(long) msvcrt._toupper
