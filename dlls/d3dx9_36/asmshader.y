@@ -79,6 +79,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
         DWORD           mod;
         DWORD           shift;
     } modshift;
+    BWRITER_COMPARISON_TYPE comptype;
     struct rel_reg      rel_reg;
     struct src_regs     sregs;
 }
@@ -178,6 +179,14 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %token MOD_PP
 %token MOD_CENTROID
 
+/* Compare tokens */
+%token COMP_GT
+%token COMP_LT
+%token COMP_GE
+%token COMP_LE
+%token COMP_EQ
+%token COMP_NE
+
 /* Source register modifiers */
 %token SMOD_ABS
 %token SMOD_NOT
@@ -198,6 +207,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %type <sw_components> sw_components
 %type <modshift> omods
 %type <modshift> omodifier
+%type <comptype> comp
 %type <rel_reg> rel_reg
 %type <immval> immsum
 %type <sregs> sregs
@@ -473,6 +483,11 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 TRACE("IF\n");
                                 asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_IF, 0, 0, 0, 0, &$2, 1);
                             }
+                    | INSTR_IF comp sregs
+                            {
+                                TRACE("IFC\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_IFC, 0, 0, $2, 0, &$3, 2);
+                            }
                     | INSTR_ELSE
                             {
                                 TRACE("ELSE\n");
@@ -487,6 +502,11 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                             {
                                 TRACE("BREAK\n");
                                 asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_BREAK, 0, 0, 0, 0, 0, 0);
+                            }
+                    | INSTR_BREAK comp sregs
+                            {
+                                TRACE("BREAKC\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_BREAKC, 0, 0, $2, 0, &$3, 2);
                             }
                     | INSTR_CALL sregs
                             {
@@ -995,6 +1015,13 @@ sreg_name:            REG_TEMP
                         {
                             $$.regnum = $1; $$.type = BWRITERSPR_LABEL;
                         }
+
+comp:                 COMP_GT           { $$ = BWRITER_COMPARISON_GT;       }
+                    | COMP_LT           { $$ = BWRITER_COMPARISON_LT;       }
+                    | COMP_GE           { $$ = BWRITER_COMPARISON_GE;       }
+                    | COMP_LE           { $$ = BWRITER_COMPARISON_LE;       }
+                    | COMP_EQ           { $$ = BWRITER_COMPARISON_EQ;       }
+                    | COMP_NE           { $$ = BWRITER_COMPARISON_NE;       }
 
 %%
 

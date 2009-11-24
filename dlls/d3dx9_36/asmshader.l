@@ -243,6 +243,14 @@ ps_3_0                  {return VER_PS30;       }
 \_pp                    {return MOD_PP;             }
 \_centroid              {return MOD_CENTROID;       }
 
+    /* compare params */
+\_gt                    {return COMP_GT;            }
+\_lt                    {return COMP_LT;            }
+\_ge                    {return COMP_GE;            }
+\_le                    {return COMP_LE;            }
+\_eq                    {return COMP_EQ;            }
+\_ne                    {return COMP_NE;            }
+
 {IMMVAL}                {
                             asmshader_lval.immval.val = atof(yytext);
                             asmshader_lval.immval.integer = ((strstr(yytext, ".") == NULL) && (strstr(yytext, "f") == NULL));

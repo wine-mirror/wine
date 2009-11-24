@@ -91,6 +91,20 @@ DWORD d3d9_dstmod(DWORD bwriter_mod) {
     return ret;
 }
 
+DWORD d3d9_comparetype(DWORD asmshader_comparetype) {
+    switch(asmshader_comparetype) {
+        case BWRITER_COMPARISON_GT:     return D3DSPC_GT;
+        case BWRITER_COMPARISON_EQ:     return D3DSPC_EQ;
+        case BWRITER_COMPARISON_GE:     return D3DSPC_GE;
+        case BWRITER_COMPARISON_LT:     return D3DSPC_LT;
+        case BWRITER_COMPARISON_NE:     return D3DSPC_NE;
+        case BWRITER_COMPARISON_LE:     return D3DSPC_LE;
+        default:
+            FIXME("Unexpected BWRITER_COMPARISON type %u\n", asmshader_comparetype);
+            return 0;
+    }
+}
+
 DWORD d3d9_register(DWORD bwriter_register) {
     if(bwriter_register == BWRITERSPR_TEMP)         return D3DSPR_TEMP;
     if(bwriter_register == BWRITERSPR_INPUT)        return D3DSPR_INPUT;
@@ -157,9 +171,11 @@ DWORD d3d9_opcode(DWORD bwriter_opcode) {
         case BWRITERSIO_REP:         return D3DSIO_REP;
         case BWRITERSIO_ENDREP:      return D3DSIO_ENDREP;
         case BWRITERSIO_IF:          return D3DSIO_IF;
+        case BWRITERSIO_IFC:         return D3DSIO_IFC;
         case BWRITERSIO_ELSE:        return D3DSIO_ELSE;
         case BWRITERSIO_ENDIF:       return D3DSIO_ENDIF;
         case BWRITERSIO_BREAK:       return D3DSIO_BREAK;
+        case BWRITERSIO_BREAKC:      return D3DSIO_BREAKC;
         case BWRITERSIO_MOVA:        return D3DSIO_MOVA;
         case BWRITERSIO_EXPP:        return D3DSIO_EXPP;
         case BWRITERSIO_LOGP:        return D3DSIO_LOGP;
@@ -362,6 +378,19 @@ const char *debug_print_srcreg(const struct shader_reg *reg, shader_type st) {
     return "Unknown modifier";
 }
 
+const char *debug_print_comp(DWORD comp) {
+    switch(comp) {
+        case BWRITER_COMPARISON_NONE: return "";
+        case BWRITER_COMPARISON_GT:   return "_gt";
+        case BWRITER_COMPARISON_EQ:   return "_eq";
+        case BWRITER_COMPARISON_GE:   return "_ge";
+        case BWRITER_COMPARISON_LT:   return "_lt";
+        case BWRITER_COMPARISON_NE:   return "_ne";
+        case BWRITER_COMPARISON_LE:   return "_le";
+        default: return "_unknown";
+    }
+}
+
 const char *debug_print_opcode(DWORD opcode) {
     switch(opcode){
         case BWRITERSIO_NOP:          return "nop";
@@ -404,9 +433,11 @@ const char *debug_print_opcode(DWORD opcode) {
         case BWRITERSIO_REP:          return "rep";
         case BWRITERSIO_ENDREP:       return "endrep";
         case BWRITERSIO_IF:           return "if";
+        case BWRITERSIO_IFC:          return "ifc";
         case BWRITERSIO_ELSE:         return "else";
         case BWRITERSIO_ENDIF:        return "endif";
         case BWRITERSIO_BREAK:        return "break";
+        case BWRITERSIO_BREAKC:       return "breakc";
         case BWRITERSIO_MOVA:         return "mova";
         case BWRITERSIO_EXPP:         return "expp";
         case BWRITERSIO_LOGP:         return "logp";

@@ -196,6 +196,8 @@ static void sm_2_opcode(struct bc_writer *This,
     /* From sm 2 onwards instruction length is encoded in the opcode field */
     int dsts = instr->has_dst ? 1 : 0;
     token |= instrlen(instr, instr->num_srcs, dsts) << D3DSI_INSTLENGTH_SHIFT;
+    if(instr->comptype)
+        token |= (d3d9_comparetype(instr->comptype) << 16) & (0xf << 16);
     put_dword(buffer,token);
 }
 
@@ -324,9 +326,11 @@ static const struct instr_handler_table vs_3_handlers[] = {
     {BWRITERSIO_ENDREP,         instr_handler},
     {BWRITERSIO_IF,             instr_handler},
     {BWRITERSIO_LABEL,          instr_handler},
+    {BWRITERSIO_IFC,            instr_handler},
     {BWRITERSIO_ELSE,           instr_handler},
     {BWRITERSIO_ENDIF,          instr_handler},
     {BWRITERSIO_BREAK,          instr_handler},
+    {BWRITERSIO_BREAKC,         instr_handler},
     {BWRITERSIO_LOOP,           instr_handler},
     {BWRITERSIO_RET,            instr_handler},
     {BWRITERSIO_ENDLOOP,        instr_handler},

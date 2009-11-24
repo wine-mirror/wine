@@ -137,7 +137,13 @@ typedef enum _shader_type {
 } shader_type;
 
 typedef enum BWRITER_COMPARISON_TYPE {
-    BWRITER_COMPARISON_NONE = 0,
+    BWRITER_COMPARISON_NONE,
+    BWRITER_COMPARISON_GT,
+    BWRITER_COMPARISON_EQ,
+    BWRITER_COMPARISON_GE,
+    BWRITER_COMPARISON_LT,
+    BWRITER_COMPARISON_NE,
+    BWRITER_COMPARISON_LE
 } BWRITER_COMPARISON_TYPE;
 
 struct shader_reg {
@@ -345,6 +351,7 @@ const char *debug_print_dstreg(const struct shader_reg *reg, shader_type st);
 const char *debug_print_srcreg(const struct shader_reg *reg, shader_type st);
 const char *debug_print_swizzle(DWORD swizzle);
 const char *debug_print_writemask(DWORD mask);
+const char *debug_print_comp(DWORD comp);
 const char *debug_print_opcode(DWORD opcode);
 
 /* Utilities for internal->d3d constant mapping */
@@ -352,6 +359,7 @@ DWORD d3d9_swizzle(DWORD bwriter_swizzle);
 DWORD d3d9_writemask(DWORD bwriter_writemask);
 DWORD d3d9_srcmod(DWORD bwriter_srcmod);
 DWORD d3d9_dstmod(DWORD bwriter_mod);
+DWORD d3d9_comparetype(DWORD bwriter_comparetype);
 DWORD d3d9_register(DWORD bwriter_register);
 DWORD d3d9_opcode(DWORD bwriter_opcode);
 
@@ -403,9 +411,11 @@ typedef enum _BWRITERSHADER_INSTRUCTION_OPCODE_TYPE {
     BWRITERSIO_REP,
     BWRITERSIO_ENDREP,
     BWRITERSIO_IF,
+    BWRITERSIO_IFC,
     BWRITERSIO_ELSE,
     BWRITERSIO_ENDIF,
     BWRITERSIO_BREAK,
+    BWRITERSIO_BREAKC,
     BWRITERSIO_MOVA,
 
     BWRITERSIO_EXPP,
