@@ -270,6 +270,34 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         IWineD3DSwapChain_SetDestWindowOverride(iface, hDestWindowOverride);
     }
 
+    /* Rendering to a window of different size, presenting partial rectangles,
+     * or rendering to a different window needs help from FBO_blit or a textured
+     * draw. Render the swapchain to a FBO in the future.
+     *
+     * Note that FBO_blit from the backbuffer to the frontbuffer cannot solve
+     * all these issues - this fails if the window is smaller than the backbuffer.
+     */
+    if(This->presentParms.Windowed && !This->render_to_fbo &&
+       wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    {
+        RECT window_size;
+        GetClientRect(This->win_handle, &window_size);
+        if(window_size.bottom != This->presentParms.BackBufferHeight ||
+           window_size.right != This->presentParms.BackBufferWidth)
+        {
+            TRACE("Window size changed from %ux%u to %ux%u, switching to render-to-fbo mode\n",
+                This->presentParms.BackBufferWidth, This->presentParms.BackBufferHeight,
+                window_size.right, window_size.bottom);
+
+            IWineD3DSurface_LoadLocation(This->backBuffer[0], SFLAG_INTEXTURE, NULL);
+            IWineD3DSurface_ModifyLocation(This->backBuffer[0], SFLAG_INDRAWABLE, FALSE);
+            This->render_to_fbo = TRUE;
+
+            /* Force the context manager to update the render target configuration next draw */
+            context->current_rt = NULL;
+        }
+    }
+
     if(This->render_to_fbo)
     {
         /* This codepath should only be hit with the COPY swapeffect. Otherwise a backbuffer-
