@@ -109,7 +109,7 @@ static ULONG WINAPI IDirectSoundFullDuplex_IUnknown_Release(
     ULONG ref = InterlockedDecrement(&(This->ref));
     TRACE("(%p) ref was %d\n", This, ref + 1);
     if (!ref) {
-        IDirectSound_Release(This->pdsfd->pUnknown);
+        This->pdsfd->pUnknown = NULL;
         HeapFree(GetProcessHeap(), 0, This);
         TRACE("(%p) released\n", This);
     }
@@ -185,7 +185,7 @@ static ULONG WINAPI IDirectSoundFullDuplex_IDirectSound_Release(
     ULONG ref = InterlockedDecrement(&(This->ref));
     TRACE("(%p) ref was %d\n", This, ref + 1);
     if (!ref) {
-        IDirectSound_Release(This->pdsfd->pDS);
+        This->pdsfd->pDS = NULL;
         HeapFree(GetProcessHeap(), 0, This);
         TRACE("(%p) released\n", This);
     }
@@ -350,7 +350,7 @@ static ULONG WINAPI IDirectSoundFullDuplex_IDirectSound8_Release(
     ULONG ref = InterlockedDecrement(&(This->ref));
     TRACE("(%p) ref was %d\n", This, ref + 1);
     if (!ref) {
-        IDirectSound_Release(This->pdsfd->pDS8);
+        This->pdsfd->pDS8 = NULL;
         HeapFree(GetProcessHeap(), 0, This);
         TRACE("(%p) released\n", This);
     }
@@ -515,7 +515,7 @@ static ULONG WINAPI IDirectSoundFullDuplex_IDirectSoundCapture_Release(
     ULONG ref = InterlockedDecrement(&(This->ref));
     TRACE("(%p) ref was %d\n", This, ref + 1);
     if (!ref) {
-        IDirectSoundCapture_Release(This->pdsfd->pDSC);
+        This->pdsfd->pDSC = NULL;
         HeapFree(GetProcessHeap(), 0, This);
         TRACE("(%p) released\n", This);
     }
