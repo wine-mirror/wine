@@ -1316,7 +1316,6 @@ todo_wine
     /* now traverse the tree from the root element */
     if (element)
     {
-        IXMLDOMNode *node;
         r = IXMLDOMNode_get_childNodes( element, &list );
         ok( r == S_OK, "get_childNodes returned wrong code\n");
 
@@ -1332,18 +1331,18 @@ todo_wine
         IXMLDOMNodeList_AddRef(list);
         expect_list_and_release(list, "E1.E2.D1 E2.E2.D1 E3.E2.D1 E4.E2.D1");
         ole_check(IXMLDOMNodeList_reset(list));
+
+        node = (void*)0xdeadbeef;
+        r = IXMLDOMNode_selectSingleNode( element, szdl, &node );
+        ok( r == S_FALSE, "ret %08x\n", r );
+        ok( node == NULL, "node %p\n", node );
+        r = IXMLDOMNode_selectSingleNode( element, szbs, &node );
+        ok( r == S_OK, "ret %08x\n", r );
+        r = IXMLDOMNode_Release( node );
+        ok( r == 0, "ret %08x\n", r );
     }
     else
         ok( FALSE, "no element\n");
-
-    node = (void*)0xdeadbeef;
-    r = IXMLDOMNode_selectSingleNode( element, szdl, &node );
-    ok( r == S_FALSE, "ret %08x\n", r );
-    ok( node == NULL, "node %p\n", node );
-    r = IXMLDOMNode_selectSingleNode( element, szbs, &node );
-    ok( r == S_OK, "ret %08x\n", r );
-    r = IXMLDOMNode_Release( node );
-    ok( r == 0, "ret %08x\n", r );
 
     if (list)
     {
