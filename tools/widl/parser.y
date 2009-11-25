@@ -841,7 +841,7 @@ dispinterfacedef: dispinterfacehdr '{'
 	;
 
 inherit:					{ $$ = NULL; }
-	| ':' aKNOWNTYPE			{ $$ = find_type_or_error2($2, 0); }
+	| ':' aKNOWNTYPE			{ $$ = find_type_or_error2($2, 0); is_object_interface = 1; }
 	;
 
 interface: tINTERFACE aIDENTIFIER		{ $$ = get_type(TYPE_INTERFACE, $2, 0); }
@@ -852,9 +852,9 @@ interfacehdr: attributes interface		{ $$.interface = $2;
 						  $$.old_pointer_default = pointer_default;
 						  if (is_attr($1, ATTR_POINTERDEFAULT))
 						    pointer_default = get_attrv($1, ATTR_POINTERDEFAULT);
-						  is_object_interface = is_object($1);
 						  check_def($2);
 						  $2->attrs = check_iface_attrs($2->name, $1);
+						  is_object_interface = is_object($2);
 						  $2->defined = TRUE;
 						}
 	;

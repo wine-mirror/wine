@@ -431,7 +431,7 @@ static void write_id_data_stmts(const statement_list_t *stmts)
       if (type_get_type(type) == TYPE_INTERFACE)
       {
         const UUID *uuid;
-        if (!is_object(type->attrs) && !is_attr(type->attrs, ATTR_DISPINTERFACE))
+        if (!is_object(type) && !is_attr(type->attrs, ATTR_DISPINTERFACE))
           continue;
         uuid = get_attrp(type->attrs, ATTR_UUID);
         write_guid(idfile, is_attr(type->attrs, ATTR_DISPINTERFACE) ? "DIID" : "IID",
