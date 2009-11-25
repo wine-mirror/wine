@@ -472,7 +472,8 @@ static void test_GetDisplayName(void)
     /* WinXP and up store the filenames as both ANSI and UNICODE in the pidls */
     if (pidlLast->mkid.cb >= 76) {
         ok(!lstrcmpW((WCHAR*)&pidlLast->mkid.abID[46], wszFileName) ||
-            (pidlLast->mkid.cb >= 94 && !lstrcmpW((WCHAR*)&pidlLast->mkid.abID[64], wszFileName)), /* Vista */
+            (pidlLast->mkid.cb >= 94 && !lstrcmpW((WCHAR*)&pidlLast->mkid.abID[64], wszFileName)) ||  /* Vista */
+            (pidlLast->mkid.cb >= 98 && !lstrcmpW((WCHAR*)&pidlLast->mkid.abID[68], wszFileName)), /* Win7 */
             "Filename should be stored as wchar-string at this position!\n");
     }
     
@@ -1529,7 +1530,8 @@ static void test_ITEMIDLIST_format(void) {
                     "Last write time should match last access time!\n");
 
                 ok (!lstrcmpW(wszFile[i], pFileStructW->wszName) ||
-                    !lstrcmpW(wszFile[i], (WCHAR *)(pFileStructW->abFooBar2 + 22)), /* Vista */
+                    !lstrcmpW(wszFile[i], (WCHAR *)(pFileStructW->abFooBar2 + 22)) || /* Vista */
+                    !lstrcmpW(wszFile[i], (WCHAR *)(pFileStructW->abFooBar2 + 26)), /* Win7 */
                     "The filename should be stored in unicode at this position!\n");
             }
         }
