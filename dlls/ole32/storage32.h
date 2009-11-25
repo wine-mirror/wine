@@ -114,6 +114,7 @@ static const ULONG DIRENTRY_NULL             = 0xFFFFFFFF;
  * module.
  */
 typedef struct StorageBaseImpl     StorageBaseImpl;
+typedef struct StorageBaseImplVtbl StorageBaseImplVtbl;
 typedef struct StorageImpl         StorageImpl;
 typedef struct BlockChainStream      BlockChainStream;
 typedef struct SmallBlockChainStream SmallBlockChainStream;
@@ -179,6 +180,7 @@ HRESULT        BIGBLOCKFILE_WriteAt(LPBIGBLOCKFILE This, ULARGE_INTEGER offset,
 void OLECONVERT_CreateOleStream(LPSTORAGE pStorage);
 HRESULT OLECONVERT_CreateCompObjStream(LPSTORAGE pStorage, LPCSTR strOleTypeName);
 
+
 /****************************************************************************
  * Storage32BaseImpl definitions.
  *
@@ -222,9 +224,9 @@ struct StorageBaseImpl
   DirRef storageDirEntry;
 
   /*
-   * virtual Destructor method.
+   * virtual methods.
    */
-  void (*v_destructor)(StorageBaseImpl*);
+  const StorageBaseImplVtbl *baseVtbl;
 
   /*
    * flags that this storage was opened or created with
@@ -242,6 +244,16 @@ struct StorageBaseImpl
   BOOL             create;     /* Was the storage created or opened.
                                   The behaviour of STGM_SIMPLE depends on this */
 };
+
+/* virtual methods for StorageBaseImpl objects */
+struct StorageBaseImplVtbl {
+  void (*Destroy)(StorageBaseImpl*);
+};
+
+static inline void StorageBaseImpl_Destroy(StorageBaseImpl *This)
+{
+  This->baseVtbl->Destroy(This);
+}
 
 /****************************************************************************
  * StorageBaseImpl stream list handlers

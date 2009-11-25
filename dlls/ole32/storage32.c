@@ -378,7 +378,7 @@ static ULONG WINAPI StorageBaseImpl_Release(
      * destructor of the appropriate derived class. To do this, we are
      * using virtual functions to implement the destructor.
      */
-    This->v_destructor(This);
+    StorageBaseImpl_Destroy(This);
   }
 
   return ref;
@@ -2219,6 +2219,11 @@ static const IStorageVtbl Storage32Impl_Vtbl =
     StorageBaseImpl_Stat
 };
 
+static const StorageBaseImplVtbl StorageImpl_BaseVtbl =
+{
+  StorageImpl_Destroy
+};
+
 static HRESULT StorageImpl_Construct(
   HANDLE       hFile,
   LPCOLESTR    pwcsName,
@@ -2249,7 +2254,7 @@ static HRESULT StorageImpl_Construct(
 
   This->base.lpVtbl = &Storage32Impl_Vtbl;
   This->base.pssVtbl = &IPropertySetStorage_Vtbl;
-  This->base.v_destructor = StorageImpl_Destroy;
+  This->base.baseVtbl = &StorageImpl_BaseVtbl;
   This->base.openFlags = (openFlags & ~STGM_CREATE);
   This->base.ref = 1;
   This->base.create = create;
@@ -4074,6 +4079,11 @@ static const IStorageVtbl Storage32InternalImpl_Vtbl =
     StorageBaseImpl_Stat
 };
 
+static const StorageBaseImplVtbl StorageInternalImpl_BaseVtbl =
+{
+  StorageInternalImpl_Destroy
+};
+
 /******************************************************************************
 ** Storage32InternalImpl implementation
 */
@@ -4097,7 +4107,7 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
      * Initialize the virtual function table.
      */
     newStorage->base.lpVtbl = &Storage32InternalImpl_Vtbl;
-    newStorage->base.v_destructor = StorageInternalImpl_Destroy;
+    newStorage->base.baseVtbl = &StorageInternalImpl_BaseVtbl;
     newStorage->base.openFlags = (openFlags & ~STGM_CREATE);
 
     /*
