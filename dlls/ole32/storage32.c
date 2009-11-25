@@ -690,8 +690,8 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
     goto end;
   }
 
-  res = StorageImpl_ReadDirEntry(
-                    This->ancestorStorage,
+  res = StorageBaseImpl_ReadDirEntry(
+                    This,
                     This->storageDirEntry,
                     &currentEntry);
 
@@ -964,9 +964,9 @@ static HRESULT WINAPI StorageBaseImpl_SetClass(
   if (!This->ancestorStorage)
     return STG_E_REVERTED;
 
-  hRes = StorageImpl_ReadDirEntry(This->ancestorStorage,
-                                  This->storageDirEntry,
-                                  &currentEntry);
+  hRes = StorageBaseImpl_ReadDirEntry(This,
+                                      This->storageDirEntry,
+                                      &currentEntry);
   if (SUCCEEDED(hRes))
   {
     currentEntry.clsid = *clsid;
@@ -2189,6 +2189,13 @@ static HRESULT StorageImpl_BaseWriteDirEntry(StorageBaseImpl *base,
   return StorageImpl_WriteDirEntry(This, index, data);
 }
 
+static HRESULT StorageImpl_BaseReadDirEntry(StorageBaseImpl *base,
+  DirRef index, DirEntry *data)
+{
+  StorageImpl *This = (StorageImpl*)base;
+  return StorageImpl_ReadDirEntry(This, index, data);
+}
+
 /*
  * Virtual function table for the IStorage32Impl class.
  */
@@ -2218,7 +2225,8 @@ static const StorageBaseImplVtbl StorageImpl_BaseVtbl =
 {
   StorageImpl_Destroy,
   StorageImpl_CreateDirEntry,
-  StorageImpl_BaseWriteDirEntry
+  StorageImpl_BaseWriteDirEntry,
+  StorageImpl_BaseReadDirEntry,
 };
 
 static HRESULT StorageImpl_Construct(
@@ -3649,6 +3657,13 @@ static HRESULT StorageInternalImpl_WriteDirEntry(StorageBaseImpl *base,
     index, data);
 }
 
+static HRESULT StorageInternalImpl_ReadDirEntry(StorageBaseImpl *base,
+  DirRef index, DirEntry *data)
+{
+  return StorageBaseImpl_ReadDirEntry(&base->ancestorStorage->base,
+    index, data);
+}
+
 /******************************************************************************
 **
 ** Storage32InternalImpl_Commit
@@ -4093,7 +4108,8 @@ static const StorageBaseImplVtbl StorageInternalImpl_BaseVtbl =
 {
   StorageInternalImpl_Destroy,
   StorageInternalImpl_CreateDirEntry,
-  StorageInternalImpl_WriteDirEntry
+  StorageInternalImpl_WriteDirEntry,
+  StorageInternalImpl_ReadDirEntry
 };
 
 /******************************************************************************

@@ -208,7 +208,7 @@ static void StgStreamImpl_OpenBlockChain(
   /*
    * Read the information from the directory entry.
    */
-  hr = StorageImpl_ReadDirEntry(This->parentStorage->ancestorStorage,
+  hr = StorageBaseImpl_ReadDirEntry(This->parentStorage,
 					     This->dirEntry,
 					     &currentEntry);
 
@@ -605,7 +605,7 @@ static HRESULT WINAPI StgStreamImpl_SetSize(
   /*
    * Read this stream's size to see if it's small blocks or big blocks
    */
-  StorageImpl_ReadDirEntry(This->parentStorage->ancestorStorage,
+  StorageBaseImpl_ReadDirEntry(This->parentStorage,
                                        This->dirEntry,
                                        &currentEntry);
   /*
@@ -650,7 +650,7 @@ static HRESULT WINAPI StgStreamImpl_SetSize(
   /*
    * Write the new information about this stream to the directory entry
    */
-  hr = StorageImpl_ReadDirEntry(This->parentStorage->ancestorStorage,
+  hr = StorageBaseImpl_ReadDirEntry(This->parentStorage,
                                        This->dirEntry,
                                        &currentEntry);
 
@@ -852,7 +852,7 @@ static HRESULT WINAPI StgStreamImpl_Stat(
   /*
    * Read the information from the directory entry.
    */
-  hr = StorageImpl_ReadDirEntry(This->parentStorage->ancestorStorage,
+  hr = StorageBaseImpl_ReadDirEntry(This->parentStorage,
 					     This->dirEntry,
 					     &currentEntry);
 

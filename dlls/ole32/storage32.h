@@ -250,6 +250,7 @@ struct StorageBaseImplVtbl {
   void (*Destroy)(StorageBaseImpl*);
   HRESULT (*CreateDirEntry)(StorageBaseImpl*,const DirEntry*,DirRef*);
   HRESULT (*WriteDirEntry)(StorageBaseImpl*,DirRef,const DirEntry*);
+  HRESULT (*ReadDirEntry)(StorageBaseImpl*,DirRef,DirEntry*);
 };
 
 static inline void StorageBaseImpl_Destroy(StorageBaseImpl *This)
@@ -267,6 +268,12 @@ static inline HRESULT StorageBaseImpl_WriteDirEntry(StorageBaseImpl *This,
   DirRef index, const DirEntry *data)
 {
   return This->baseVtbl->WriteDirEntry(This, index, data);
+}
+
+static inline HRESULT StorageBaseImpl_ReadDirEntry(StorageBaseImpl *This,
+  DirRef index, DirEntry *data)
+{
+  return This->baseVtbl->ReadDirEntry(This, index, data);
 }
 
 /****************************************************************************
