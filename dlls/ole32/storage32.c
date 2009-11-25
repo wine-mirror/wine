@@ -184,11 +184,6 @@ static HRESULT removeFromTree(
  * Declaration of the functions used to manipulate DirEntry
  */
 
-static HRESULT createDirEntry(
-  StorageImpl *storage,
-  const DirEntry *newData,
-  DirRef *index);
-
 static HRESULT destroyDirEntry(
   StorageImpl *storage,
   DirRef index);
@@ -926,8 +921,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
   /*
    * Create an entry with the new data
    */
-  createDirEntry(This->ancestorStorage, &newStreamEntry, &newStreamEntryRef);
-
+  StorageBaseImpl_CreateDirEntry(This, &newStreamEntry, &newStreamEntryRef);
   /*
    * Insert the new entry in the parent storage's tree.
    */
@@ -1117,7 +1111,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
   /*
    * Create a new directory entry for the storage
    */
-  createDirEntry(This->ancestorStorage, &newEntry, &newEntryRef);
+  StorageBaseImpl_CreateDirEntry(This, &newEntry, &newEntryRef);
 
   /*
    * Insert the new directory entry into the parent storage's tree
@@ -1148,11 +1142,12 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
  *
  * Reserve a directory entry in the file and initialize it.
  */
-static HRESULT createDirEntry(
-  StorageImpl *storage,
+static HRESULT StorageImpl_CreateDirEntry(
+  StorageBaseImpl *base,
   const DirEntry *newData,
   DirRef *index)
 {
+  StorageImpl *storage = (StorageImpl*)base;
   ULONG       currentEntryIndex    = 0;
   ULONG       newEntryIndex        = DIRENTRY_NULL;
   HRESULT hr = S_OK;
@@ -2221,7 +2216,8 @@ static const IStorageVtbl Storage32Impl_Vtbl =
 
 static const StorageBaseImplVtbl StorageImpl_BaseVtbl =
 {
-  StorageImpl_Destroy
+  StorageImpl_Destroy,
+  StorageImpl_CreateDirEntry
 };
 
 static HRESULT StorageImpl_Construct(
@@ -3639,6 +3635,13 @@ static void StorageInternalImpl_Destroy( StorageBaseImpl *iface)
   HeapFree(GetProcessHeap(), 0, This);
 }
 
+static HRESULT StorageInternalImpl_CreateDirEntry(StorageBaseImpl *base,
+  const DirEntry *newData, DirRef *index)
+{
+  return StorageBaseImpl_CreateDirEntry(&base->ancestorStorage->base,
+    newData, index);
+}
+
 /******************************************************************************
 **
 ** Storage32InternalImpl_Commit
@@ -4081,7 +4084,8 @@ static const IStorageVtbl Storage32InternalImpl_Vtbl =
 
 static const StorageBaseImplVtbl StorageInternalImpl_BaseVtbl =
 {
-  StorageInternalImpl_Destroy
+  StorageInternalImpl_Destroy,
+  StorageInternalImpl_CreateDirEntry
 };
 
 /******************************************************************************
