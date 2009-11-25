@@ -2481,7 +2481,7 @@ static void test_DeviceCapabilities(void)
     papers = HeapAlloc(GetProcessHeap(), 0, sizeof(*papers) * n_papers);
     ret = DeviceCapabilities(device, port, DC_PAPERS, (LPSTR)papers, NULL);
     ok(ret == n_papers, "expected %d, got %d\n", n_papers, ret);
-#if VERBOSE
+#ifdef VERBOSE
     for (ret = 0; ret < n_papers; ret++)
         trace("papers[%d] = %d\n", ret, papers[ret]);
 #endif
@@ -2493,7 +2493,7 @@ static void test_DeviceCapabilities(void)
     paper_size = HeapAlloc(GetProcessHeap(), 0, sizeof(*paper_size) * n_paper_size);
     ret = DeviceCapabilities(device, port, DC_PAPERSIZE, (LPSTR)paper_size, NULL);
     ok(ret == n_paper_size, "expected %d, got %d\n", n_paper_size, ret);
-#if VERBOSE
+#ifdef VERBOSE
     for (ret = 0; ret < n_paper_size; ret++)
         trace("paper_size[%d] = %d x %d\n", ret, paper_size[ret].x, paper_size[ret].y);
 #endif
@@ -2505,7 +2505,7 @@ static void test_DeviceCapabilities(void)
     paper_name = HeapAlloc(GetProcessHeap(), 0, sizeof(*paper_name) * n_paper_names);
     ret = DeviceCapabilities(device, port, DC_PAPERNAMES, (LPSTR)paper_name, NULL);
     ok(ret == n_paper_names, "expected %d, got %d\n", n_paper_names, ret);
-#if VERBOSE
+#ifdef VERBOSE
     for (ret = 0; ret < n_paper_names; ret++)
         trace("paper_name[%u] = %s\n", ret, paper_name[ret].name);
 #endif
