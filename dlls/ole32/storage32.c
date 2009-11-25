@@ -775,7 +775,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
     /* Change the name of the element */
     strcpyW(currentEntry.name, pwcsNewName);
 
-    StorageImpl_WriteDirEntry(This->ancestorStorage, currentEntryRef,
+    StorageBaseImpl_WriteDirEntry(This, currentEntryRef,
         &currentEntry);
 
     /* Insert the element in a new position in the tree */
@@ -971,9 +971,9 @@ static HRESULT WINAPI StorageBaseImpl_SetClass(
   {
     currentEntry.clsid = *clsid;
 
-    hRes = StorageImpl_WriteDirEntry(This->ancestorStorage,
-                                     This->storageDirEntry,
-                                     &currentEntry);
+    hRes = StorageBaseImpl_WriteDirEntry(This,
+                                         This->storageDirEntry,
+                                         &currentEntry);
   }
 
   return hRes;
@@ -2182,6 +2182,13 @@ static HRESULT WINAPI StorageBaseImpl_SetStateBits(
   return S_OK;
 }
 
+static HRESULT StorageImpl_BaseWriteDirEntry(StorageBaseImpl *base,
+  DirRef index, const DirEntry *data)
+{
+  StorageImpl *This = (StorageImpl*)base;
+  return StorageImpl_WriteDirEntry(This, index, data);
+}
+
 /*
  * Virtual function table for the IStorage32Impl class.
  */
@@ -2210,7 +2217,8 @@ static const IStorageVtbl Storage32Impl_Vtbl =
 static const StorageBaseImplVtbl StorageImpl_BaseVtbl =
 {
   StorageImpl_Destroy,
-  StorageImpl_CreateDirEntry
+  StorageImpl_CreateDirEntry,
+  StorageImpl_BaseWriteDirEntry
 };
 
 static HRESULT StorageImpl_Construct(
@@ -3634,6 +3642,13 @@ static HRESULT StorageInternalImpl_CreateDirEntry(StorageBaseImpl *base,
     newData, index);
 }
 
+static HRESULT StorageInternalImpl_WriteDirEntry(StorageBaseImpl *base,
+  DirRef index, const DirEntry *data)
+{
+  return StorageBaseImpl_WriteDirEntry(&base->ancestorStorage->base,
+    index, data);
+}
+
 /******************************************************************************
 **
 ** Storage32InternalImpl_Commit
@@ -4077,7 +4092,8 @@ static const IStorageVtbl Storage32InternalImpl_Vtbl =
 static const StorageBaseImplVtbl StorageInternalImpl_BaseVtbl =
 {
   StorageInternalImpl_Destroy,
-  StorageInternalImpl_CreateDirEntry
+  StorageInternalImpl_CreateDirEntry,
+  StorageInternalImpl_WriteDirEntry
 };
 
 /******************************************************************************

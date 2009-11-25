@@ -659,7 +659,7 @@ static HRESULT WINAPI StgStreamImpl_SetSize(
 
   if (SUCCEEDED(hr))
   {
-    StorageImpl_WriteDirEntry(This->parentStorage->ancestorStorage,
+    StorageBaseImpl_WriteDirEntry(This->parentStorage,
 				This->dirEntry,
 				&currentEntry);
   }
