@@ -978,11 +978,9 @@ static HRESULT WINAPI StorageBaseImpl_SetClass(
   {
     currentEntry.clsid = *clsid;
 
-    success =  StorageImpl_WriteDirEntry(This->ancestorStorage,
-                                           This->storageDirEntry,
-                                           &currentEntry);
-    if (success)
-      hRes = S_OK;
+    hRes = StorageImpl_WriteDirEntry(This->ancestorStorage,
+                                     This->storageDirEntry,
+                                     &currentEntry);
   }
 
   return hRes;
@@ -2091,13 +2089,13 @@ static HRESULT removeFromTree(
      */
     setEntryLink(&parentEntry, typeOfRelation, entryToDelete.leftChild);
 
-    res = StorageImpl_WriteDirEntry(
+    hr = StorageImpl_WriteDirEntry(
             This,
             parentEntryRef,
             &parentEntry);
-    if(!res)
+    if(FAILED(hr))
     {
-      return E_FAIL;
+      return hr;
     }
 
     if (entryToDelete.rightChild != DIRENTRY_NULL)
@@ -2127,13 +2125,13 @@ static HRESULT removeFromTree(
 
       newRightChildParentEntry.rightChild = entryToDelete.rightChild;
 
-      res = StorageImpl_WriteDirEntry(
+      hr = StorageImpl_WriteDirEntry(
               This,
               newRightChildParent,
               &newRightChildParentEntry);
-      if (!res)
+      if (FAILED(hr))
       {
-        return E_FAIL;
+        return hr;
       }
     }
   }
@@ -2144,13 +2142,13 @@ static HRESULT removeFromTree(
      */
     setEntryLink(&parentEntry, typeOfRelation, entryToDelete.rightChild);
 
-    res = StorageImpl_WriteDirEntry(
+    hr = StorageImpl_WriteDirEntry(
             This,
             parentEntryRef,
             &parentEntry);
-    if(!res)
+    if(FAILED(hr))
     {
-      return E_FAIL;
+      return hr;
     }
   }
 
@@ -3334,7 +3332,7 @@ BOOL StorageImpl_ReadDirEntry(
 /*********************************************************************
  * Write the specified directory entry to the file
  */
-BOOL StorageImpl_WriteDirEntry(
+HRESULT StorageImpl_WriteDirEntry(
   StorageImpl*          This,
   DirRef                index,
   const DirEntry*       buffer)
@@ -3345,7 +3343,7 @@ BOOL StorageImpl_WriteDirEntry(
   UpdateRawDirEntry(currentEntry, buffer);
 
   writeRes = StorageImpl_WriteRawDirEntry(This, index, currentEntry);
-  return SUCCEEDED(writeRes) ? TRUE : FALSE;
+  return writeRes;
 }
 
 static BOOL StorageImpl_ReadBigBlock(

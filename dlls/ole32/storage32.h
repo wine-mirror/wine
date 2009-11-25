@@ -336,7 +336,7 @@ BOOL StorageImpl_ReadDirEntry(
             DirRef          index,
             DirEntry*       buffer);
 
-BOOL StorageImpl_WriteDirEntry(
+HRESULT StorageImpl_WriteDirEntry(
             StorageImpl*        This,
             DirRef              index,
             const DirEntry*     buffer);
