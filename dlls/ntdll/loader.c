@@ -1073,6 +1073,7 @@ static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved )
             wm->ldr.Flags |= LDR_PROCESS_ATTACHED;
         else
         {
+            MODULE_InitDLL( wm, DLL_PROCESS_DETACH, lpReserved );
             /* point to the name so LdrInitializeThunk can print it */
             last_failed_modref = wm;
             WARN("Initialization of %s failed\n", debugstr_w(wm->ldr.BaseDllName.Buffer));
