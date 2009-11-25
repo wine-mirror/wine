@@ -673,7 +673,6 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
   DirEntry       currentEntry;
-  BOOL           readSuccessful;
   HRESULT        res = STG_E_UNKNOWN;
 
   TRACE("(%p, %p, %x)\n",
@@ -691,12 +690,12 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
     goto end;
   }
 
-  readSuccessful = StorageImpl_ReadDirEntry(
+  res = StorageImpl_ReadDirEntry(
                     This->ancestorStorage,
                     This->storageDirEntry,
                     &currentEntry);
 
-  if (readSuccessful)
+  if (SUCCEEDED(res))
   {
     StorageUtl_CopyDirEntryToSTATSTG(
       This,
@@ -706,12 +705,7 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
 
     pstatstg->grfMode = This->openFlags;
     pstatstg->grfStateBits = This->stateBits;
-
-    res = S_OK;
-    goto end;
   }
-
-  res = E_FAIL;
 
 end:
   if (res == S_OK)
@@ -962,19 +956,18 @@ static HRESULT WINAPI StorageBaseImpl_SetClass(
   REFCLSID         clsid) /* [in] */
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
-  HRESULT hRes = E_FAIL;
+  HRESULT hRes;
   DirEntry currentEntry;
-  BOOL success;
 
   TRACE("(%p, %p)\n", iface, clsid);
 
   if (!This->ancestorStorage)
     return STG_E_REVERTED;
 
-  success = StorageImpl_ReadDirEntry(This->ancestorStorage,
-                                       This->storageDirEntry,
-                                       &currentEntry);
-  if (success)
+  hRes = StorageImpl_ReadDirEntry(This->ancestorStorage,
+                                  This->storageDirEntry,
+                                  &currentEntry);
+  if (SUCCEEDED(hRes))
   {
     currentEntry.clsid = *clsid;
 
@@ -2065,13 +2058,15 @@ static HRESULT removeFromTree(
   DirRef        deletedIndex)
 {
   HRESULT hr                     = S_OK;
-  BOOL  res                    = TRUE;
   DirEntry   entryToDelete;
   DirEntry   parentEntry;
   DirRef parentEntryRef;
   ULONG typeOfRelation;
 
-  res = StorageImpl_ReadDirEntry(This, deletedIndex, &entryToDelete);
+  hr = StorageImpl_ReadDirEntry(This, deletedIndex, &entryToDelete);
+
+  if (hr != S_OK)
+    return hr;
 
   /*
    * Find the element that links to the one we want to delete.
@@ -2110,13 +2105,13 @@ static HRESULT removeFromTree(
 
       do
       {
-        res = StorageImpl_ReadDirEntry(
+        hr = StorageImpl_ReadDirEntry(
                 This,
                 newRightChildParent,
                 &newRightChildParentEntry);
-        if (!res)
+        if (FAILED(hr))
         {
-          return E_FAIL;
+          return hr;
         }
 
         if (newRightChildParentEntry.rightChild != DIRENTRY_NULL)
@@ -2230,7 +2225,6 @@ static HRESULT StorageImpl_Construct(
   StorageImpl* This;
   HRESULT     hr = S_OK;
   DirEntry currentEntry;
-  BOOL      readSuccessful;
   DirRef      currentEntryRef;
 
   if ( FAILED( validateSTGM(openFlags) ))
@@ -2405,12 +2399,12 @@ static HRESULT StorageImpl_Construct(
 
   do
   {
-    readSuccessful = StorageImpl_ReadDirEntry(
+    hr = StorageImpl_ReadDirEntry(
                       This,
                       currentEntryRef,
                       &currentEntry);
 
-    if (readSuccessful)
+    if (SUCCEEDED(hr))
     {
       if ( (currentEntry.sizeOfNameString != 0 ) &&
            (currentEntry.stgType          == STGTY_ROOT) )
@@ -2421,9 +2415,9 @@ static HRESULT StorageImpl_Construct(
 
     currentEntryRef++;
 
-  } while (readSuccessful && (This->base.storageDirEntry == DIRENTRY_NULL) );
+  } while (SUCCEEDED(hr) && (This->base.storageDirEntry == DIRENTRY_NULL) );
 
-  if (!readSuccessful)
+  if (FAILED(hr))
   {
     hr = STG_E_READFAULT;
     goto end;
@@ -3247,7 +3241,7 @@ void UpdateRawDirEntry(BYTE *buffer, const DirEntry *newData)
  *
  * This method will read the specified directory entry.
  */
-BOOL StorageImpl_ReadDirEntry(
+HRESULT StorageImpl_ReadDirEntry(
   StorageImpl* This,
   DirRef         index,
   DirEntry*      buffer)
@@ -3326,7 +3320,7 @@ BOOL StorageImpl_ReadDirEntry(
     buffer->size.u.HighPart = 0;
   }
 
-  return SUCCEEDED(readRes) ? TRUE : FALSE;
+  return readRes;
 }
 
 /*********************************************************************
@@ -3858,7 +3852,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Reset(
   IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
 
   DirEntry  storageEntry;
-  BOOL      readSuccessful;
+  HRESULT   hr;
 
   /*
    * Re-initialize the search stack to an empty stack
@@ -3868,12 +3862,12 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Reset(
   /*
    * Read the storage entry from the top-level storage.
    */
-  readSuccessful = StorageImpl_ReadDirEntry(
+  hr = StorageImpl_ReadDirEntry(
                     This->parentStorage,
                     This->storageDirEntry,
                     &storageEntry);
 
-  if (readSuccessful)
+  if (SUCCEEDED(hr))
   {
     assert(storageEntry.sizeOfNameString!=0);
 
@@ -3883,7 +3877,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Reset(
     IEnumSTATSTGImpl_PushSearchNode(This, storageEntry.dirRootEntry);
   }
 
-  return S_OK;
+  return hr;
 }
 
 static HRESULT WINAPI IEnumSTATSTGImpl_Clone(
@@ -3934,7 +3928,7 @@ static void IEnumSTATSTGImpl_PushSearchNode(
   DirRef            nodeToPush)
 {
   DirEntry  storageEntry;
-  BOOL      readSuccessful;
+  HRESULT   hr;
 
   /*
    * First, make sure we're not trying to push an unexisting node.
@@ -3962,12 +3956,12 @@ static void IEnumSTATSTGImpl_PushSearchNode(
   /*
    * Read the storage entry from the top-level storage.
    */
-  readSuccessful = StorageImpl_ReadDirEntry(
+  hr = StorageImpl_ReadDirEntry(
                     This->parentStorage,
                     nodeToPush,
                     &storageEntry);
 
-  if (readSuccessful)
+  if (SUCCEEDED(hr))
   {
     assert(storageEntry.sizeOfNameString!=0);
 
@@ -4327,19 +4321,19 @@ void BlockChainStream_Destroy(BlockChainStream* This)
 static ULONG BlockChainStream_GetHeadOfChain(BlockChainStream* This)
 {
   DirEntry  chainEntry;
-  BOOL      readSuccessful;
+  HRESULT   hr;
 
   if (This->headOfStreamPlaceHolder != 0)
     return *(This->headOfStreamPlaceHolder);
 
   if (This->ownerDirEntry != DIRENTRY_NULL)
   {
-    readSuccessful = StorageImpl_ReadDirEntry(
+    hr = StorageImpl_ReadDirEntry(
                       This->parentStorage,
                       This->ownerDirEntry,
                       &chainEntry);
 
-    if (readSuccessful)
+    if (SUCCEEDED(hr))
     {
       return chainEntry.startingBlock;
     }
@@ -4855,19 +4849,19 @@ static ULONG SmallBlockChainStream_GetHeadOfChain(
   SmallBlockChainStream* This)
 {
   DirEntry  chainEntry;
-  BOOL      readSuccessful;
+  HRESULT   hr;
 
   if (This->headOfStreamPlaceHolder != NULL)
     return *(This->headOfStreamPlaceHolder);
 
   if (This->ownerDirEntry)
   {
-    readSuccessful = StorageImpl_ReadDirEntry(
+    hr = StorageImpl_ReadDirEntry(
                       This->parentStorage,
                       This->ownerDirEntry,
                       &chainEntry);
 
-    if (readSuccessful)
+    if (SUCCEEDED(hr))
     {
       return chainEntry.startingBlock;
     }

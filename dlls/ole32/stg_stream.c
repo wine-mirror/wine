@@ -188,7 +188,7 @@ static void StgStreamImpl_OpenBlockChain(
         StgStreamImpl* This)
 {
   DirEntry     currentEntry;
-  BOOL         readSuccessful;
+  HRESULT      hr;
 
   /*
    * Make sure no old object is left over.
@@ -208,11 +208,11 @@ static void StgStreamImpl_OpenBlockChain(
   /*
    * Read the information from the directory entry.
    */
-  readSuccessful = StorageImpl_ReadDirEntry(This->parentStorage->ancestorStorage,
+  hr = StorageImpl_ReadDirEntry(This->parentStorage->ancestorStorage,
 					     This->dirEntry,
 					     &currentEntry);
 
-  if (readSuccessful)
+  if (SUCCEEDED(hr))
   {
     This->streamSize = currentEntry.size;
 
@@ -546,7 +546,7 @@ static HRESULT WINAPI StgStreamImpl_SetSize(
   StgStreamImpl* const This=(StgStreamImpl*)iface;
 
   DirEntry     currentEntry;
-  BOOL         Success;
+  HRESULT      hr;
 
   TRACE("(%p, %d)\n", iface, libNewSize.u.LowPart);
 
@@ -605,7 +605,7 @@ static HRESULT WINAPI StgStreamImpl_SetSize(
   /*
    * Read this stream's size to see if it's small blocks or big blocks
    */
-  Success = StorageImpl_ReadDirEntry(This->parentStorage->ancestorStorage,
+  StorageImpl_ReadDirEntry(This->parentStorage->ancestorStorage,
                                        This->dirEntry,
                                        &currentEntry);
   /*
@@ -640,24 +640,24 @@ static HRESULT WINAPI StgStreamImpl_SetSize(
 
   if (This->smallBlockChain!=0)
   {
-    Success = SmallBlockChainStream_SetSize(This->smallBlockChain, libNewSize);
+    SmallBlockChainStream_SetSize(This->smallBlockChain, libNewSize);
   }
   else
   {
-    Success = BlockChainStream_SetSize(This->bigBlockChain, libNewSize);
+    BlockChainStream_SetSize(This->bigBlockChain, libNewSize);
   }
 
   /*
    * Write the new information about this stream to the directory entry
    */
-  Success = StorageImpl_ReadDirEntry(This->parentStorage->ancestorStorage,
+  hr = StorageImpl_ReadDirEntry(This->parentStorage->ancestorStorage,
                                        This->dirEntry,
                                        &currentEntry);
 
   currentEntry.size.u.HighPart = libNewSize.u.HighPart;
   currentEntry.size.u.LowPart = libNewSize.u.LowPart;
 
-  if (Success)
+  if (SUCCEEDED(hr))
   {
     StorageImpl_WriteDirEntry(This->parentStorage->ancestorStorage,
 				This->dirEntry,
@@ -835,7 +835,7 @@ static HRESULT WINAPI StgStreamImpl_Stat(
   StgStreamImpl* const This=(StgStreamImpl*)iface;
 
   DirEntry     currentEntry;
-  BOOL         readSuccessful;
+  HRESULT      hr;
 
   TRACE("%p %p %d\n", This, pstatstg, grfStatFlag);
 
@@ -852,11 +852,11 @@ static HRESULT WINAPI StgStreamImpl_Stat(
   /*
    * Read the information from the directory entry.
    */
-  readSuccessful = StorageImpl_ReadDirEntry(This->parentStorage->ancestorStorage,
+  hr = StorageImpl_ReadDirEntry(This->parentStorage->ancestorStorage,
 					     This->dirEntry,
 					     &currentEntry);
 
-  if (readSuccessful)
+  if (SUCCEEDED(hr))
   {
     StorageUtl_CopyDirEntryToSTATSTG(This->parentStorage,
                      pstatstg,
@@ -873,7 +873,7 @@ static HRESULT WINAPI StgStreamImpl_Stat(
   }
 
   WARN("failed to read entry\n");
-  return E_FAIL;
+  return hr;
 }
 
 /***

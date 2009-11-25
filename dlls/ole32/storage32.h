@@ -331,7 +331,7 @@ HRESULT StorageImpl_WriteRawDirEntry(
             ULONG index,
             const BYTE *buffer);
 
-BOOL StorageImpl_ReadDirEntry(
+HRESULT StorageImpl_ReadDirEntry(
             StorageImpl*    This,
             DirRef          index,
             DirEntry*       buffer);
