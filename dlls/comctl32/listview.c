@@ -453,7 +453,6 @@ static void LISTVIEW_GetItemBox(const LISTVIEW_INFO *, INT, LPRECT);
 static void LISTVIEW_GetItemOrigin(const LISTVIEW_INFO *, INT, LPPOINT);
 static BOOL LISTVIEW_GetItemPosition(const LISTVIEW_INFO *, INT, LPPOINT);
 static BOOL LISTVIEW_GetItemRect(const LISTVIEW_INFO *, INT, LPRECT);
-static INT LISTVIEW_GetLabelWidth(const LISTVIEW_INFO *, INT);
 static void LISTVIEW_GetOrigin(const LISTVIEW_INFO *, LPPOINT);
 static BOOL LISTVIEW_GetViewRect(const LISTVIEW_INFO *, LPRECT);
 static void LISTVIEW_UpdateSize(LISTVIEW_INFO *);
@@ -2786,11 +2785,23 @@ static INT LISTVIEW_CalculateItemWidth(const LISTVIEW_INFO *infoPtr)
     }
     else /* LV_VIEW_SMALLICON, or LV_VIEW_LIST */
     {
+	WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
+	LVITEMW lvItem;
 	BOOL empty;
 	INT i;
 
+	lvItem.mask = LVIF_TEXT;
+	lvItem.iSubItem = 0;
+
 	for (i = 0; i < infoPtr->nItemCount; i++)
-	    nItemWidth = max(LISTVIEW_GetLabelWidth(infoPtr, i), nItemWidth);
+	{
+	    lvItem.iItem = i;
+	    lvItem.pszText = szDispText;
+	    lvItem.cchTextMax = DISP_TEXT_SIZE;
+	    if (LISTVIEW_GetItemW(infoPtr, &lvItem))
+		nItemWidth = max(LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE),
+				 nItemWidth);
+	}
 	empty = nItemWidth == 0;
 
         if (infoPtr->himlSmall) nItemWidth += infoPtr->iconSize.cx; 
@@ -6820,35 +6831,6 @@ static BOOL LISTVIEW_GetSubItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPR
 
     OffsetRect(lprc, 0, Position.y);
     return TRUE;
-}
-
-
-/***
- * DESCRIPTION:
- * Retrieves the width of a label.
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- *
- * RETURN:
- *   SUCCESS : string width (in pixels)
- *   FAILURE : zero
- */
-static INT LISTVIEW_GetLabelWidth(const LISTVIEW_INFO *infoPtr, INT nItem)
-{
-    WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
-    LVITEMW lvItem;
-
-    TRACE("(nItem=%d)\n", nItem);
-
-    lvItem.mask = LVIF_TEXT;
-    lvItem.iItem = nItem;
-    lvItem.iSubItem = 0;
-    lvItem.pszText = szDispText;
-    lvItem.cchTextMax = DISP_TEXT_SIZE;
-    if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return 0;
-  
-    return LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE);
 }
 
 /***
