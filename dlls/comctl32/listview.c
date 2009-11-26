@@ -10930,10 +10930,8 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 
   case LVM_GETITEMA:
-    return LISTVIEW_GetItemExtT(infoPtr, (LPLVITEMW)lParam, FALSE);
-
   case LVM_GETITEMW:
-    return LISTVIEW_GetItemExtT(infoPtr, (LPLVITEMW)lParam, TRUE);
+    return LISTVIEW_GetItemExtT(infoPtr, (LPLVITEMW)lParam, uMsg == LVM_GETITEMW);
 
   case LVM_GETITEMCOUNT:
     return infoPtr->nItemCount;
@@ -10951,10 +10949,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_GetItemState(infoPtr, (INT)wParam, (UINT)lParam);
 
   case LVM_GETITEMTEXTA:
-    return LISTVIEW_GetItemTextT(infoPtr, (INT)wParam, (LPLVITEMW)lParam, FALSE);
-
   case LVM_GETITEMTEXTW:
-    return LISTVIEW_GetItemTextT(infoPtr, (INT)wParam, (LPLVITEMW)lParam, TRUE);
+    return LISTVIEW_GetItemTextT(infoPtr, (INT)wParam, (LPLVITEMW)lParam,
+                                 uMsg == LVM_GETITEMTEXTW);
 
   case LVM_GETNEXTITEM:
     return LISTVIEW_GetNextItem(infoPtr, (INT)wParam, LOWORD(lParam));
@@ -10981,10 +10978,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return infoPtr->nSelectionMark;
 
   case LVM_GETSTRINGWIDTHA:
-    return LISTVIEW_GetStringWidthT(infoPtr, (LPCWSTR)lParam, FALSE);
-
   case LVM_GETSTRINGWIDTHW:
-    return LISTVIEW_GetStringWidthT(infoPtr, (LPCWSTR)lParam, TRUE);
+    return LISTVIEW_GetStringWidthT(infoPtr, (LPCWSTR)lParam,
+                                    uMsg == LVM_GETSTRINGWIDTHW);
 
   case LVM_GETSUBITEMRECT:
     return LISTVIEW_GetSubItemRect(infoPtr, (UINT)wParam, (LPRECT)lParam);
@@ -11026,10 +11022,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_HitTest(infoPtr, (LPLVHITTESTINFO)lParam, FALSE, TRUE);
 
   case LVM_INSERTCOLUMNA:
-    return LISTVIEW_InsertColumnT(infoPtr, (INT)wParam, (LPLVCOLUMNW)lParam, FALSE);
-
   case LVM_INSERTCOLUMNW:
-    return LISTVIEW_InsertColumnT(infoPtr, (INT)wParam, (LPLVCOLUMNW)lParam, TRUE);
+    return LISTVIEW_InsertColumnT(infoPtr, (INT)wParam, (LPLVCOLUMNW)lParam,
+                                  uMsg == LVM_INSERTCOLUMNW);
 
   /* case LVM_INSERTGROUP: */
 
@@ -11076,10 +11071,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return TRUE;
 
   case LVM_SETCOLUMNA:
-    return LISTVIEW_SetColumnT(infoPtr, (INT)wParam, (LPLVCOLUMNW)lParam, FALSE);
-
   case LVM_SETCOLUMNW:
-    return LISTVIEW_SetColumnT(infoPtr, (INT)wParam, (LPLVCOLUMNW)lParam, TRUE);
+    return LISTVIEW_SetColumnT(infoPtr, (INT)wParam, (LPLVCOLUMNW)lParam,
+                               uMsg == LVM_SETCOLUMNW);
 
   case LVM_SETCOLUMNORDERARRAY:
     return LISTVIEW_SetColumnOrderArray(infoPtr, (INT)wParam, (LPINT)lParam);
@@ -11142,10 +11136,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_SetItemState(infoPtr, (INT)wParam, (LPLVITEMW)lParam);
 
   case LVM_SETITEMTEXTA:
-    return LISTVIEW_SetItemTextT(infoPtr, (INT)wParam, (LPLVITEMW)lParam, FALSE);
-
   case LVM_SETITEMTEXTW:
-    return LISTVIEW_SetItemTextT(infoPtr, (INT)wParam, (LPLVITEMW)lParam, TRUE);
+    return LISTVIEW_SetItemTextT(infoPtr, (INT)wParam, (LPLVITEMW)lParam,
+                                 uMsg == LVM_SETITEMTEXTW);
 
   /* case LVM_SETOUTLINECOLOR: */
 
