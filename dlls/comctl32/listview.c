@@ -8489,34 +8489,35 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, POINT pt)
+static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, POINT *pt)
 {
-    POINT Origin;
+    POINT Origin, Pt;
 
-    TRACE("(nItem=%d, &pt=%s\n", nItem, wine_dbgstr_point(&pt));
+    TRACE("(nItem=%d, pt=%s\n", nItem, wine_dbgstr_point(pt));
 
-    if (nItem < 0 || nItem >= infoPtr->nItemCount ||
+    if (!pt || nItem < 0 || nItem >= infoPtr->nItemCount ||
 	!(infoPtr->uView == LV_VIEW_ICON || infoPtr->uView == LV_VIEW_SMALLICON)) return FALSE;
 
+    Pt = *pt;
     LISTVIEW_GetOrigin(infoPtr, &Origin);
 
     /* This point value seems to be an undocumented feature.
      * The best guess is that it means either at the origin, 
      * or at true beginning of the list. I will assume the origin. */
-    if ((pt.x == -1) && (pt.y == -1))
-	pt = Origin;
+    if ((Pt.x == -1) && (Pt.y == -1))
+	Pt = Origin;
     
     if (infoPtr->uView == LV_VIEW_ICON)
     {
-	pt.x -= (infoPtr->nItemWidth - infoPtr->iconSize.cx) / 2;
-	pt.y -= ICON_TOP_PADDING;
+	Pt.x -= (infoPtr->nItemWidth - infoPtr->iconSize.cx) / 2;
+	Pt.y -= ICON_TOP_PADDING;
     }
-    pt.x -= Origin.x;
-    pt.y -= Origin.y;
+    Pt.x -= Origin.x;
+    Pt.y -= Origin.y;
 
     infoPtr->bAutoarrange = FALSE;
 
-    return LISTVIEW_MoveIconTo(infoPtr, nItem, &pt, FALSE);
+    return LISTVIEW_MoveIconTo(infoPtr, nItem, &Pt, FALSE);
 }
 
 /***
@@ -11124,12 +11125,11 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	POINT pt;
         pt.x = (short)LOWORD(lParam);
         pt.y = (short)HIWORD(lParam);
-        return LISTVIEW_SetItemPosition(infoPtr, (INT)wParam, pt);
+        return LISTVIEW_SetItemPosition(infoPtr, (INT)wParam, &pt);
     }
 
   case LVM_SETITEMPOSITION32:
-    if (lParam == 0) return FALSE;
-    return LISTVIEW_SetItemPosition(infoPtr, (INT)wParam, *((POINT*)lParam));
+    return LISTVIEW_SetItemPosition(infoPtr, (INT)wParam, (POINT*)lParam);
 
   case LVM_SETITEMSTATE:
     if (lParam == 0) return FALSE;
