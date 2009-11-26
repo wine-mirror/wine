@@ -10124,7 +10124,8 @@ static BOOL LISTVIEW_NCPaint(const LISTVIEW_INFO *infoPtr, HRGN region)
     int cxEdge = GetSystemMetrics (SM_CXEDGE),
         cyEdge = GetSystemMetrics (SM_CYEDGE);
 
-    if (!theme) return FALSE;
+    if (!theme)
+       return DefWindowProcW (infoPtr->hwndSelf, WM_NCPAINT, (WPARAM)region, 0);
 
     GetWindowRect(infoPtr->hwndSelf, &r);
 
@@ -10145,7 +10146,7 @@ static BOOL LISTVIEW_NCPaint(const LISTVIEW_INFO *infoPtr, HRGN region)
     /* Call default proc to get the scrollbars etc. painted */
     DefWindowProcW (infoPtr->hwndSelf, WM_NCPAINT, (WPARAM)cliprgn, 0);
 
-    return TRUE;
+    return FALSE;
 }
 
 /***
@@ -10395,20 +10396,24 @@ static LRESULT LISTVIEW_RButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT 
  * TRUE if cursor is set
  * FALSE otherwise
  */
-static BOOL LISTVIEW_SetCursor(const LISTVIEW_INFO *infoPtr, HWND hwnd, UINT nHittest, UINT wMouseMsg)
+static BOOL LISTVIEW_SetCursor(const LISTVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     LVHITTESTINFO lvHitTestInfo;
 
-    if(!(LISTVIEW_isHotTracking(infoPtr))) return FALSE;
+    if (!(LISTVIEW_isHotTracking(infoPtr))) goto forward;
 
-    if(!infoPtr->hHotCursor)  return FALSE;
+    if (!infoPtr->hHotCursor) goto forward;
 
     GetCursorPos(&lvHitTestInfo.pt);
-    if (LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, FALSE, FALSE) < 0) return FALSE;
+    if (LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, FALSE, FALSE) < 0) goto forward;
 
     SetCursor(infoPtr->hHotCursor);
 
     return TRUE;
+
+forward:
+
+    return DefWindowProcW(infoPtr->hwndSelf, WM_SETCURSOR, wParam, lParam);
 }
 
 /***
@@ -11245,9 +11250,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_NCDestroy(infoPtr);
 
   case WM_NCPAINT:
-    if (LISTVIEW_NCPaint(infoPtr, (HRGN)wParam))
-        return 0;
-    goto fwd_msg;
+    return LISTVIEW_NCPaint(infoPtr, (HRGN)wParam);
 
   case WM_NOTIFY:
     if (lParam && ((LPNMHDR)lParam)->hwndFrom == infoPtr->hwndHeader)
@@ -11273,9 +11276,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_RButtonUp(infoPtr, (WORD)wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
   case WM_SETCURSOR:
-    if(LISTVIEW_SetCursor(infoPtr, (HWND)wParam, LOWORD(lParam), HIWORD(lParam)))
-      return TRUE;
-    goto fwd_msg;
+    return LISTVIEW_SetCursor(infoPtr, wParam, lParam);
 
   case WM_SETFOCUS:
     return LISTVIEW_SetFocus(infoPtr, (HWND)wParam);
@@ -11337,8 +11338,6 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     if ((uMsg >= WM_USER) && (uMsg < WM_APP) && !COMCTL32_IsReflectedMessage(uMsg))
       ERR("unknown msg %04x wp=%08lx lp=%08lx\n", uMsg, wParam, lParam);
 
-  fwd_msg:
-    /* call default window procedure */
     return DefWindowProcW(hwnd, uMsg, wParam, lParam);
   }
 
