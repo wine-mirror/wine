@@ -217,8 +217,6 @@ static	DWORD	MCIAVI_mciOpen(UINT wDevID, DWORD dwFlags,
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpOpenParms);
 
-    MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
-
     if (lpOpenParms == NULL) 		return MCIERR_NULL_PARAMETER_BLOCK;
 
     wma = (WINE_MCIAVI *)mciGetDriverData(wDevID);
@@ -299,8 +297,6 @@ DWORD MCIAVI_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
     DWORD		dwRet = 0;
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
-
-    MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL) 	return MCIERR_INVALID_DEVICE_ID;
@@ -676,12 +672,12 @@ static	DWORD	MCIAVI_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
-    MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
-
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+
+    MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
 
     EnterCriticalSection(&wma->cs);
 
@@ -718,12 +714,12 @@ static DWORD	MCIAVI_mciLoad(UINT wDevID, DWORD dwFlags, LPMCI_DGV_LOAD_PARMSW lp
 
     FIXME("(%04x, %08x, %p) : stub\n", wDevID, dwFlags, lpParms);
 
-    MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
-
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+
+    MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
 
     return 0;
 }
@@ -736,8 +732,6 @@ static	DWORD	MCIAVI_mciRealize(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS l
     WINE_MCIAVI *wma;
 
     FIXME("(%04x, %08x, %p) : stub\n", wDevID, dwFlags, lpParms);
-
-    MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
@@ -780,12 +774,12 @@ static	DWORD	MCIAVI_mciStep(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STEP_PARMS lpP
 
     FIXME("(%04x, %08x, %p) : stub\n", wDevID, dwFlags, lpParms);
 
-    MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
-
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+
+    MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
 
     return 0;
 }
@@ -798,8 +792,6 @@ static	DWORD	MCIAVI_mciCue(UINT wDevID, DWORD dwFlags, LPMCI_DGV_CUE_PARMS lpPar
     WINE_MCIAVI *wma;
 
     FIXME("(%04x, %08x, %p) : stub\n", wDevID, dwFlags, lpParms);
-
-    MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
@@ -818,8 +810,6 @@ static	DWORD	MCIAVI_mciSetAudio(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SETAUDIO_P
 
     FIXME("(%04x, %08x, %p) : stub\n", wDevID, dwFlags, lpParms);
 
-    MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
-
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
@@ -836,8 +826,6 @@ static	DWORD	MCIAVI_mciSignal(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SIGNAL_PARMS
     WINE_MCIAVI *wma;
 
     FIXME("(%04x, %08x, %p) : stub\n", wDevID, dwFlags, lpParms);
-
-    MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
@@ -856,8 +844,6 @@ static	DWORD	MCIAVI_mciSetVideo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SETVIDEO_P
 
     FIXME("(%04x, %08x, %p) : stub\n", wDevID, dwFlags, lpParms);
 
-    MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
-
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
@@ -874,8 +860,6 @@ static	DWORD	MCIAVI_mciConfigure(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS
     WINE_MCIAVI *wma;
 
     FIXME("(%04x, %08x, %p) : stub\n", wDevID, dwFlags, lpParms);
-
-    MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
