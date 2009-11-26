@@ -3124,6 +3124,20 @@ static void test_getitemrect(void)
     INT order[2];
     POINT pt;
 
+    /* rectangle isn't empty for empty text items */
+    hwnd = create_custom_listview_control(LVS_LIST);
+    memset(&item, 0, sizeof(item));
+    item.mask = 0;
+    item.iItem = 0;
+    r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
+    expect(0, r);
+    rect.left = LVIR_LABEL;
+    SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(0, rect.left);
+    expect(0, rect.top);
+    todo_wine expect(96, rect.right);
+    DestroyWindow(hwnd);
+
     hwnd = create_listview_control(0);
     ok(hwnd != NULL, "failed to create a listview window\n");
 
@@ -3921,6 +3935,7 @@ static void test_getcolumnwidth(void)
     DWORD ret;
     DWORD_PTR style;
     LVCOLUMNA col;
+    LVITEMA itema;
 
     /* default column width */
     hwnd = create_custom_listview_control(0);
@@ -3937,6 +3952,14 @@ static void test_getcolumnwidth(void)
     expect(0, ret);
     ret = SendMessage(hwnd, LVM_GETCOLUMNWIDTH, 0, 0);
     expect(10, ret);
+    DestroyWindow(hwnd);
+
+    /* default column width with item added */
+    hwnd = create_custom_listview_control(LVS_LIST);
+    memset(&itema, 0, sizeof(itema));
+    SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&itema);
+    ret = SendMessage(hwnd, LVM_GETCOLUMNWIDTH, 0, 0);
+    expect(96, ret);
     DestroyWindow(hwnd);
 }
 
