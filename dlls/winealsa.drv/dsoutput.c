@@ -536,8 +536,6 @@ static HRESULT SetFormat(IDsDriverBufferImpl *This, LPWAVEFORMATEX pwfx)
     }
 
     err = snd_pcm_hw_params(pcm, hw_params);
-    err = snd_pcm_sw_params(pcm, This->sw_params);
-    snd_pcm_prepare(pcm);
 
     /* ALSA needs at least 3 buffers to work successfully */
     This->mmap_commitahead = 3 * psize;
