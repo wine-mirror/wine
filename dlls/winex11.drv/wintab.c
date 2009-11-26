@@ -1125,8 +1125,12 @@ UINT CDECL X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
             switch (nIndex)
             {
                 case 0:
-                    rc = CopyTabletData(lpOutput, &gSysContext,
-                            sizeof(LOGCONTEXTW));
+                    /* report 0 if wintab is disabled */
+                    if (0 == gNumCursors)
+                        rc = 0;
+                    else
+                        rc = CopyTabletData(lpOutput, &gSysContext,
+                                sizeof(LOGCONTEXTW));
                     break;
                 case CTX_NAME:
                     rc = CopyTabletData(lpOutput, gSysContext.lcName,
