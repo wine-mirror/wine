@@ -89,23 +89,47 @@ static void init_strings(void)
 {
     HKEY key;
     DWORD fullpath = 0;
-    DWORD size = sizeof(DWORD);
+    DWORD size;
     char startup[MAX_PATH];
 
-    if (!pSHGetSpecialFolderPathA)
-        return;
-
-    /* FIXME: On Vista+ we should only use CSIDL_PROGRAMS */
-    pSHGetSpecialFolderPathA(NULL, Programs, CSIDL_PROGRAMS, FALSE);
-    if (!pSHGetSpecialFolderPathA(NULL, CommonPrograms, CSIDL_COMMON_PROGRAMS, FALSE))
+    if (pSHGetSpecialFolderPathA)
     {
-        /* Win9x */
-        lstrcpyA(CommonPrograms, Programs);
+        /* FIXME: On Vista+ we should only use CSIDL_PROGRAMS */
+        pSHGetSpecialFolderPathA(NULL, Programs, CSIDL_PROGRAMS, FALSE);
+        if (!pSHGetSpecialFolderPathA(NULL, CommonPrograms, CSIDL_COMMON_PROGRAMS, FALSE))
+        {
+            /* Win9x */
+            lstrcpyA(CommonPrograms, Programs);
+        }
+        pSHGetSpecialFolderPathA(NULL, startup, CSIDL_STARTUP, FALSE);
+        lstrcpyA(Startup, (strrchr(startup, '\\') + 1));
     }
-    pSHGetSpecialFolderPathA(NULL, startup, CSIDL_STARTUP, FALSE);
-    lstrcpyA(Startup, (strrchr(startup, '\\') + 1));
+    else
+    {
+        LONG res;
+
+        /* Older Win9x and NT4 */
+        RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders", &key);
+        size = sizeof(CommonPrograms);
+        res = RegQueryValueExA(key, "Common Programs", NULL, NULL, (LPBYTE)&CommonPrograms, &size);
+        RegCloseKey(key);
+        if (res != ERROR_SUCCESS)
+        {
+            /* Win9x */
+            lstrcpyA(CommonPrograms, Programs);
+        }
+
+        RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders", &key);
+        size = sizeof(Programs);
+        RegQueryValueExA(key, "Programs", NULL, NULL, (LPBYTE)&Programs, &size);
+        size = sizeof(startup);
+        RegQueryValueExA(key, "Startup", NULL, NULL, (LPBYTE)&startup, &size);
+        lstrcpyA(Startup, (strrchr(startup, '\\') + 1));
+        RegCloseKey(key);
+    }
 
     RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\CabinetState", &key);
+    size = sizeof(DWORD);
     RegQueryValueExA(key, "FullPath", NULL, NULL, (LPBYTE)&fullpath, &size);
     RegCloseKey(key);
     if (fullpath == 1)
@@ -290,9 +314,6 @@ static void CheckFileExistsInProgramGroups(const char *nameToCheck, int shouldEx
     char *path;
     DWORD attributes;
     int len;
-
-    if (!pSHGetSpecialFolderPathA)
-        return;
 
     path = HeapAlloc(GetProcessHeap(), 0, MAX_PATH);
     if (path != NULL)
@@ -579,10 +600,6 @@ START_TEST(progman_dde)
 
     init_function_pointers();
     init_strings();
-
-    /* Only report this once */
-    if (!pSHGetSpecialFolderPathA)
-        win_skip("SHGetSpecialFolderPathA is not available\n");
 
     /* Initialize DDE Instance */
     err = DdeInitialize(&instance, DdeCallback, APPCMD_CLIENTONLY, 0);
