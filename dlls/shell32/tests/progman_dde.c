@@ -76,6 +76,9 @@ static void init_function_pointers(void)
     pSHGetSpecialFolderPathA = (void*)GetProcAddress(hmod, "SHGetSpecialFolderPathA");
 }
 
+static char CommonPrograms[MAX_PATH];
+static char Programs[MAX_PATH];
+
 static char Group1Title[MAX_PATH]  = "Group1";
 static char Group2Title[MAX_PATH]  = "Group2";
 static char Group3Title[MAX_PATH]  = "Group3";
@@ -87,31 +90,34 @@ static void init_strings(void)
     HKEY key;
     DWORD fullpath = 0;
     DWORD size = sizeof(DWORD);
+    char startup[MAX_PATH];
 
     if (!pSHGetSpecialFolderPathA)
         return;
+
+    /* FIXME: On Vista+ we should only use CSIDL_PROGRAMS */
+    pSHGetSpecialFolderPathA(NULL, Programs, CSIDL_PROGRAMS, FALSE);
+    if (!pSHGetSpecialFolderPathA(NULL, CommonPrograms, CSIDL_COMMON_PROGRAMS, FALSE))
+    {
+        /* Win9x */
+        lstrcpyA(CommonPrograms, Programs);
+    }
+    pSHGetSpecialFolderPathA(NULL, startup, CSIDL_STARTUP, FALSE);
+    lstrcpyA(Startup, (strrchr(startup, '\\') + 1));
 
     RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\CabinetState", &key);
     RegQueryValueExA(key, "FullPath", NULL, NULL, (LPBYTE)&fullpath, &size);
     RegCloseKey(key);
     if (fullpath == 1)
     {
-        BOOL ret;
-        char commonprog[MAX_PATH], startup[MAX_PATH];
-
-        ret = pSHGetSpecialFolderPathA(NULL, commonprog, CSIDL_COMMON_PROGRAMS, FALSE);
-        if (!ret) /* Win9x */
-            pSHGetSpecialFolderPathA(NULL, commonprog, CSIDL_PROGRAMS, FALSE);
-        lstrcpyA(Group1Title, commonprog);
+        lstrcpyA(Group1Title, CommonPrograms);
         lstrcatA(Group1Title, "\\Group1");
-        lstrcpyA(Group2Title, commonprog);
+        lstrcpyA(Group2Title, CommonPrograms);
         lstrcatA(Group2Title, "\\Group2");
-        lstrcpyA(Group3Title, commonprog);
+        lstrcpyA(Group3Title, CommonPrograms);
         lstrcatA(Group3Title, "\\Group3");
 
-        pSHGetSpecialFolderPathA(NULL, startup, CSIDL_STARTUP, FALSE);
         lstrcpyA(StartupTitle, startup);
-        lstrcpyA(Startup, (strrchr(StartupTitle, '\\') + 1));
     }
 }
 
@@ -282,7 +288,6 @@ static void CheckFileExistsInProgramGroups(const char *nameToCheck, int shouldEx
                                            const char *groupName, int testParams)
 {
     char *path;
-    int err;
     DWORD attributes;
     int len;
 
@@ -292,21 +297,11 @@ static void CheckFileExistsInProgramGroups(const char *nameToCheck, int shouldEx
     path = HeapAlloc(GetProcessHeap(), 0, MAX_PATH);
     if (path != NULL)
     {
-        int specialFolder;
-
-        err = FALSE;
-        /* Win 9x doesn't support common */
         if (testParams & DDE_TEST_COMMON)
-        {
-            specialFolder = CSIDL_COMMON_PROGRAMS;
-            err = pSHGetSpecialFolderPathA(NULL, path, specialFolder, FALSE);
-            /* Win 9x fails, use CSIDL_PROGRAMS (err == FALSE) */
-        }
-        if (err == FALSE)
-        {
-            specialFolder = CSIDL_PROGRAMS;
-            err = pSHGetSpecialFolderPathA(NULL, path, specialFolder, FALSE);
-        }
+            lstrcpyA(path, CommonPrograms);
+        else
+            lstrcpyA(path, Programs);
+
         len = strlen(path) + strlen(nameToCheck)+1;
         if (groupName != NULL)
         {
