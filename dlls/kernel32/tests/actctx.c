@@ -960,15 +960,15 @@ static void test_actctx(void)
         pReleaseActCtx(handle);
     }
 
-    if(!create_manifest_file("test3.manifest", manifest2, -1, "testdep.manifest", testdep_manifest2)) {
+    if(!create_manifest_file("test2-2.manifest", manifest2, -1, "testdep.manifest", testdep_manifest2)) {
         skip("Could not create manifest file\n");
         return;
     }
 
     trace("manifest2 depmanifest2\n");
 
-    handle = test_create("test3.manifest", manifest2);
-    DeleteFileA("test3.manifest");
+    handle = test_create("test2-2.manifest", manifest2);
+    DeleteFileA("test2-2.manifest");
     DeleteFileA("testdep.manifest");
     if(handle != INVALID_HANDLE_VALUE) {
         test_basic_info(handle);
