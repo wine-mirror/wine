@@ -10766,7 +10766,7 @@ static INT LISTVIEW_StyleChanging(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
  * RETURN:
  * Zero
  */
-static LRESULT LISTVIEW_ShowWindow(LISTVIEW_INFO *infoPtr, BOOL bShown, INT iStatus)
+static LRESULT LISTVIEW_ShowWindow(LISTVIEW_INFO *infoPtr, WPARAM bShown, LPARAM iStatus)
 {
   /* header delayed creation */
   if ((infoPtr->uView == LV_VIEW_DETAILS) && bShown)
@@ -10777,7 +10777,7 @@ static LRESULT LISTVIEW_ShowWindow(LISTVIEW_INFO *infoPtr, BOOL bShown, INT iSta
       ShowWindow(infoPtr->hwndHeader, SW_SHOWNORMAL);
   }
 
-  return 0;
+  return DefWindowProcW(infoPtr->hwndSelf, WM_SHOWWINDOW, bShown, iStatus);
 }
 
 /***
@@ -10859,12 +10859,10 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_DELETEITEM:
     return LISTVIEW_DeleteItem(infoPtr, (INT)wParam);
 
-  case LVM_EDITLABELW:
-    return (LRESULT)LISTVIEW_EditLabelT(infoPtr, (INT)wParam, TRUE);
-
   case LVM_EDITLABELA:
-    return (LRESULT)LISTVIEW_EditLabelT(infoPtr, (INT)wParam, FALSE);
-
+  case LVM_EDITLABELW:
+    return (LRESULT)LISTVIEW_EditLabelT(infoPtr, (INT)wParam,
+                                        uMsg == LVM_EDITLABELW);
   /* case LVM_ENABLEGROUPVIEW: */
 
   case LVM_ENSUREVISIBLE:
@@ -10885,10 +10883,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return infoPtr->uCallbackMask;
 
   case LVM_GETCOLUMNA:
-    return LISTVIEW_GetColumnT(infoPtr, (INT)wParam, (LPLVCOLUMNW)lParam, FALSE);
-
   case LVM_GETCOLUMNW:
-    return LISTVIEW_GetColumnT(infoPtr, (INT)wParam, (LPLVCOLUMNW)lParam, TRUE);
+    return LISTVIEW_GetColumnT(infoPtr, (INT)wParam, (LPLVCOLUMNW)lParam,
+                               uMsg == LVM_GETCOLUMNW);
 
   case LVM_GETCOLUMNORDERARRAY:
     return LISTVIEW_GetColumnOrderArray(infoPtr, (INT)wParam, (LPINT)lParam);
@@ -11178,11 +11175,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   /* case LVM_SORTGROUPS: */
 
   case LVM_SORTITEMS:
-    return LISTVIEW_SortItems(infoPtr, (PFNLVCOMPARE)lParam, (LPARAM)wParam, FALSE);
-
   case LVM_SORTITEMSEX:
-    return LISTVIEW_SortItems(infoPtr, (PFNLVCOMPARE)lParam, (LPARAM)wParam, TRUE);
-
+    return LISTVIEW_SortItems(infoPtr, (PFNLVCOMPARE)lParam, (LPARAM)wParam,
+                              uMsg == LVM_SORTITEMSEX);
   case LVM_SUBITEMHITTEST:
     return LISTVIEW_HitTest(infoPtr, (LPLVHITTESTINFO)lParam, TRUE, FALSE);
 
@@ -11288,8 +11283,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_SetRedraw(infoPtr, (BOOL)wParam);
 
   case WM_SHOWWINDOW:
-    LISTVIEW_ShowWindow(infoPtr, (BOOL)wParam, (INT)lParam);
-    return DefWindowProcW(hwnd, uMsg, wParam, lParam);
+    return LISTVIEW_ShowWindow(infoPtr, wParam, lParam);
 
   case WM_SIZE:
     return LISTVIEW_Size(infoPtr, (short)LOWORD(lParam), (short)HIWORD(lParam));
