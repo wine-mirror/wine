@@ -320,56 +320,47 @@ static void CheckWindowCreated(const char *winName, int closeWindow, int testPar
 static void CheckFileExistsInProgramGroups(const char *nameToCheck, int shouldExist, int isGroup,
                                            const char *groupName, int testParams)
 {
-    char *path;
+    char path[MAX_PATH];
     DWORD attributes;
     int len;
 
-    path = HeapAlloc(GetProcessHeap(), 0, MAX_PATH);
-    if (path != NULL)
-    {
-        if (testParams & DDE_TEST_COMMON)
-            lstrcpyA(path, CommonPrograms);
-        else
-            lstrcpyA(path, Programs);
+    if (testParams & DDE_TEST_COMMON)
+        lstrcpyA(path, CommonPrograms);
+    else
+        lstrcpyA(path, Programs);
 
-        len = strlen(path) + strlen(nameToCheck)+1;
+    len = strlen(path) + strlen(nameToCheck)+1;
+    if (groupName != NULL)
+    {
+        len += strlen(groupName)+1;
+    }
+    ok (len <= MAX_PATH, "Path Too Long.%s\n", GetStringFromTestParams(testParams));
+    if (len <= MAX_PATH)
+    {
         if (groupName != NULL)
         {
-            len += strlen(groupName)+1;
-        }
-        ok (len <= MAX_PATH, "Path Too Long.%s\n", GetStringFromTestParams(testParams));
-        if (len <= MAX_PATH)
-        {
-            if (groupName != NULL)
-            {
-                strcat(path, "\\");
-                strcat(path, groupName);
-            }
             strcat(path, "\\");
-            strcat(path, nameToCheck);
-            attributes = GetFileAttributes(path);
-            if (!shouldExist)
+            strcat(path, groupName);
+        }
+        strcat(path, "\\");
+        strcat(path, nameToCheck);
+        attributes = GetFileAttributes(path);
+        if (!shouldExist)
+        {
+            ok (attributes == INVALID_FILE_ATTRIBUTES , "File exists and shouldn't %s.%s\n",
+                path, GetStringFromTestParams(testParams));
+        } else {
+            if (attributes == INVALID_FILE_ATTRIBUTES)
             {
-                ok (attributes == INVALID_FILE_ATTRIBUTES , "File exists and shouldn't %s.%s\n",
-                    path, GetStringFromTestParams(testParams));
+                ok (FALSE, "Created File %s doesn't exist.%s\n", path, GetStringFromTestParams(testParams));
+            } else if (isGroup) {
+                ok (attributes & FILE_ATTRIBUTE_DIRECTORY, "%s is not a folder (attr=%x).%s\n",
+                    path, attributes, GetStringFromTestParams(testParams));
             } else {
-                if (attributes == INVALID_FILE_ATTRIBUTES)
-                {
-                    ok (FALSE, "Created File %s doesn't exist.%s\n", path, GetStringFromTestParams(testParams));
-                } else if (isGroup) {
-                    ok (attributes & FILE_ATTRIBUTE_DIRECTORY, "%s is not a folder (attr=%x).%s\n",
-                        path, attributes, GetStringFromTestParams(testParams));
-                } else {
-                    ok (attributes & FILE_ATTRIBUTE_ARCHIVE, "Created File %s has wrong attributes (%x).%s\n",
-                        path, attributes, GetStringFromTestParams(testParams));
-                }
+                ok (attributes & FILE_ATTRIBUTE_ARCHIVE, "Created File %s has wrong attributes (%x).%s\n",
+                    path, attributes, GetStringFromTestParams(testParams));
             }
         }
-        HeapFree(GetProcessHeap(), 0, path);
-    }
-    else
-    {
-        ok (FALSE, "Could not Allocate Path Buffer\n");
     }
 }
 
