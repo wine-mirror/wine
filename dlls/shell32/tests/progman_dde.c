@@ -96,11 +96,18 @@ static void init_strings(void)
 
     if (pSHGetSpecialFolderPathA)
     {
-        /* FIXME: On Vista+ we should only use CSIDL_PROGRAMS */
         pSHGetSpecialFolderPathA(NULL, Programs, CSIDL_PROGRAMS, FALSE);
         if (!pSHGetSpecialFolderPathA(NULL, CommonPrograms, CSIDL_COMMON_PROGRAMS, FALSE))
         {
             /* Win9x */
+            lstrcpyA(CommonPrograms, Programs);
+        }
+        if (GetProcAddress(GetModuleHandleA("shell32.dll"), "SHGetKnownFolderPath"))
+        {
+            /* Vista and higher use CSIDL_PROGRAMS for these tests.
+             * Wine doesn't have SHGetKnownFolderPath yet but should most likely follow
+             * this new ProgMan DDE behavior once implemented.
+             */
             lstrcpyA(CommonPrograms, Programs);
         }
         pSHGetSpecialFolderPathA(NULL, startup, CSIDL_STARTUP, FALSE);
@@ -542,12 +549,25 @@ static void CompoundCommandTest(DWORD instance, HCONV hConv, const char *command
     }
 }
 
+static void CreateAddItemText(char *itemtext, const char *cmdline, const char *name)
+{
+    lstrcpyA(itemtext, "[AddItem(");
+    lstrcatA(itemtext, cmdline);
+    lstrcatA(itemtext, ",");
+    lstrcatA(itemtext, name);
+    lstrcatA(itemtext, ")]");
+}
+
 /* 1st set of tests */
 static int DdeTestProgman(DWORD instance, HCONV hConv)
 {
     HDDEDATA hData;
     UINT error;
     int testnum;
+    char temppath[MAX_PATH];
+    char f1g1[MAX_PATH], f2g1[MAX_PATH], f3g1[MAX_PATH], f1g3[MAX_PATH], f2g3[MAX_PATH];
+    char itemtext[MAX_PATH + 20];
+    char comptext[2 * (MAX_PATH + 20) + 21];
 
     testnum = 1;
     /* Invalid Command */
@@ -555,12 +575,23 @@ static int DdeTestProgman(DWORD instance, HCONV hConv)
     ok (error == DMLERR_NOTPROCESSED, "InvalidCommand(), expected error %s, received %s.\n",
         GetStringFromError(DMLERR_NOTPROCESSED), GetStringFromError(error));
 
+    /* On Vista+ the files have to exist when adding a link */
+    GetTempPathA(MAX_PATH, temppath);
+    GetTempFileNameA(temppath, "dde", 0, f1g1);
+    GetTempFileNameA(temppath, "dde", 0, f2g1);
+    GetTempFileNameA(temppath, "dde", 0, f3g1);
+    GetTempFileNameA(temppath, "dde", 0, f1g3);
+    GetTempFileNameA(temppath, "dde", 0, f2g3);
+
     /* CreateGroup Tests (including AddItem, DeleteItem) */
     CreateGroupTest(instance, hConv, "[CreateGroup(Group1)]", DMLERR_NO_ERROR, "Group1", Group1Title, DDE_TEST_COMMON|DDE_TEST_CREATEGROUP|testnum++);
-    AddItemTest(instance, hConv, "[AddItem(c:\\f1g1,f1g1Name)]", DMLERR_NO_ERROR, "f1g1Name.lnk", "Group1", DDE_TEST_COMMON|DDE_TEST_ADDITEM|testnum++);
-    AddItemTest(instance, hConv, "[AddItem(c:\\f2g1,f2g1Name)]", DMLERR_NO_ERROR, "f2g1Name.lnk", "Group1", DDE_TEST_COMMON|DDE_TEST_ADDITEM|testnum++);
+    CreateAddItemText(itemtext, f1g1, "f1g1Name");
+    AddItemTest(instance, hConv, itemtext, DMLERR_NO_ERROR, "f1g1Name.lnk", "Group1", DDE_TEST_COMMON|DDE_TEST_ADDITEM|testnum++);
+    CreateAddItemText(itemtext, f2g1, "f2g1Name");
+    AddItemTest(instance, hConv, itemtext, DMLERR_NO_ERROR, "f2g1Name.lnk", "Group1", DDE_TEST_COMMON|DDE_TEST_ADDITEM|testnum++);
     DeleteItemTest(instance, hConv, "[DeleteItem(f2g1Name)]", DMLERR_NO_ERROR, "f2g1Name.lnk", "Group1", DDE_TEST_COMMON|DDE_TEST_DELETEITEM|testnum++);
-    AddItemTest(instance, hConv, "[AddItem(c:\\f3g1,f3g1Name)]", DMLERR_NO_ERROR, "f3g1Name.lnk", "Group1", DDE_TEST_COMMON|DDE_TEST_ADDITEM|testnum++);
+    CreateAddItemText(itemtext, f3g1, "f3g1Name");
+    AddItemTest(instance, hConv, itemtext, DMLERR_NO_ERROR, "f3g1Name.lnk", "Group1", DDE_TEST_COMMON|DDE_TEST_ADDITEM|testnum++);
     CreateGroupTest(instance, hConv, "[CreateGroup(Group2)]", DMLERR_NO_ERROR, "Group2", Group2Title, DDE_TEST_COMMON|DDE_TEST_CREATEGROUP|testnum++);
     /* Create Group that already exists - same instance */
     CreateGroupTest(instance, hConv, "[CreateGroup(Group1)]", DMLERR_NO_ERROR, "Group1", Group1Title, DDE_TEST_COMMON|DDE_TEST_CREATEGROUP|testnum++);
@@ -575,11 +606,23 @@ static int DdeTestProgman(DWORD instance, HCONV hConv)
     DeleteGroupTest(instance, hConv, "[DeleteGroup(Group1)]", DMLERR_NO_ERROR, "Group1", DDE_TEST_DELETEGROUP|testnum++);
 
     /* Compound Execute String Command */
-    CompoundCommandTest(instance, hConv, "[CreateGroup(Group3)][AddItem(c:\\f1g3,f1g3Name)][AddItem(c:\\f2g3,f2g3Name)]", DMLERR_NO_ERROR, "Group3", Group3Title, "f1g3Name.lnk", "f2g3Name.lnk", DDE_TEST_COMMON|DDE_TEST_COMPOUND|testnum++);
+    lstrcpyA(comptext, "[CreateGroup(Group3)]");
+    CreateAddItemText(itemtext, f1g3, "f1g3Name");
+    lstrcatA(comptext, itemtext);
+    CreateAddItemText(itemtext, f2g3, "f2g3Name");
+    lstrcatA(comptext, itemtext);
+    CompoundCommandTest(instance, hConv, comptext, DMLERR_NO_ERROR, "Group3", Group3Title, "f1g3Name.lnk", "f2g3Name.lnk", DDE_TEST_COMMON|DDE_TEST_COMPOUND|testnum++);
+
     DeleteGroupTest(instance, hConv, "[DeleteGroup(Group3)]", DMLERR_NO_ERROR, "Group3", DDE_TEST_DELETEGROUP|testnum++);
 
     /* Full Parameters of Add Item */
     /* AddItem(CmdLine[,Name[,IconPath[,IconIndex[,xPos,yPos[,DefDir[,HotKey[,fMinimize[fSeparateSpace]]]]]]]) */
+
+    DeleteFileA(f1g1);
+    DeleteFileA(f2g1);
+    DeleteFileA(f3g1);
+    DeleteFileA(f1g3);
+    DeleteFileA(f2g3);
 
     return testnum;
 }
