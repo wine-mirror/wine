@@ -99,7 +99,6 @@
  *   -- LVN_GETINFOTIP
  *   -- LVN_HOTTRACK
  *   -- LVN_SETDISPINFO
- *   -- NM_HOVER
  *   -- LVN_BEGINRDRAG
  *
  * Messages:
@@ -3654,18 +3653,22 @@ static inline BOOL LISTVIEW_IsHotTracking(const LISTVIEW_INFO *infoPtr)
  */
 static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, INT y)
 {
+    NMHDR hdr;
+
+    if (notify_hdr(infoPtr, NM_HOVER, &hdr)) return 0;
+
     if (LISTVIEW_IsHotTracking(infoPtr))
     {
         LVITEMW item;
         POINT pt;
-
-        SetFocus(infoPtr->hwndSelf);
 
         pt.x = x;
         pt.y = y;
 
         if (LISTVIEW_GetItemAtPt(infoPtr, &item, pt))
             LISTVIEW_SetSelection(infoPtr, item.iItem);
+
+        SetFocus(infoPtr->hwndSelf);
     }
 
     return 0;

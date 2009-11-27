@@ -46,7 +46,9 @@ static const WCHAR testparentclassW[] =
 
 HWND hwndparent, hwndparentW;
 /* prevents edit box creation, LVN_BEGINLABELEDIT return value */
-BOOL blockEdit;
+static BOOL blockEdit;
+/* return nonzero on NM_HOVER */
+static BOOL g_block_hover;
 /* dumps LVN_ITEMCHANGED message data */
 static BOOL g_dump_itemchanged;
 /* format reported to control:
@@ -278,6 +280,12 @@ static const struct message edit_end_nochange[] = {
     { 0 }
 };
 
+static const struct message hover_parent[] = {
+    { WM_GETDLGCODE, sent }, /* todo_wine */
+    { WM_NOTIFY, sent|id, 0, 0, NM_HOVER },
+    { 0 }
+};
+
 static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
@@ -343,6 +351,9 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
                   trace("LVN_ITEMCHANGED: item=%d,new=%x,old=%x,changed=%x\n",
                          nmlv->iItem, nmlv->uNewState, nmlv->uOldState, nmlv->uChanged);
               }
+              break;
+          case NM_HOVER:
+              if (g_block_hover) return 1;
               break;
           }
           break;
@@ -4247,6 +4258,28 @@ static void test_LVS_EX_HEADERINALLVIEWS(void)
     DestroyWindow(hwnd);
 }
 
+static void test_hover(void)
+{
+    HWND hwnd;
+    DWORD r;
+
+    hwnd = create_custom_listview_control(LVS_ICON);
+
+    /* test WM_MOUSEHOVER forwarding */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    r = SendMessage(hwnd, WM_MOUSEHOVER, 0, 0);
+    expect(0, r);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, hover_parent, "NM_HOVER allow test", TRUE);
+    g_block_hover = TRUE;
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    r = SendMessage(hwnd, WM_MOUSEHOVER, 0, 0);
+    expect(0, r);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, hover_parent, "NM_HOVER block test", TRUE);
+    g_block_hover = FALSE;
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -4306,6 +4339,7 @@ START_TEST(listview)
     test_getcolumnwidth();
     test_approximate_viewrect();
     test_finditem();
+    test_hover();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
