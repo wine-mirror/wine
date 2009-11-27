@@ -3627,7 +3627,7 @@ static BOOL LISTVIEW_GetItemAtPt(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVIte
     return LISTVIEW_GetItemT(infoPtr, lpLVItem, TRUE);
 }
 
-static inline BOOL LISTVIEW_isHotTracking(const LISTVIEW_INFO *infoPtr)
+static inline BOOL LISTVIEW_IsHotTracking(const LISTVIEW_INFO *infoPtr)
 {
     return ((infoPtr->dwLvExStyle & LVS_EX_TRACKSELECT) ||
             (infoPtr->dwLvExStyle & LVS_EX_ONECLICKACTIVATE) ||
@@ -3654,10 +3654,12 @@ static inline BOOL LISTVIEW_isHotTracking(const LISTVIEW_INFO *infoPtr)
  */
 static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, INT y)
 {
-    if (LISTVIEW_isHotTracking(infoPtr))
+    if (LISTVIEW_IsHotTracking(infoPtr))
     {
         LVITEMW item;
         POINT pt;
+
+        SetFocus(infoPtr->hwndSelf);
 
         pt.x = x;
         pt.y = y;
@@ -3874,8 +3876,6 @@ static VOID CALLBACK LISTVIEW_ScrollTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent
  */
 static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, INT y)
 {
-    TRACKMOUSEEVENT trackinfo;
-
     if (!(fwKeys & MK_LBUTTON))
         infoPtr->bLButtonDown = FALSE;
 
@@ -4007,18 +4007,19 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
     }
 
     /* see if we are supposed to be tracking mouse hovering */
-    if (LISTVIEW_isHotTracking(infoPtr)) {
-        /* fill in the trackinfo struct */
+    if (LISTVIEW_IsHotTracking(infoPtr)) {
+        TRACKMOUSEEVENT trackinfo;
+
         trackinfo.cbSize = sizeof(TRACKMOUSEEVENT);
         trackinfo.dwFlags = TME_QUERY;
-        trackinfo.hwndTrack = infoPtr->hwndSelf;
-        trackinfo.dwHoverTime = infoPtr->dwHoverTime;
 
         /* see if we are already tracking this hwnd */
         _TrackMouseEvent(&trackinfo);
 
-        if(!(trackinfo.dwFlags & TME_HOVER)) {
-            trackinfo.dwFlags = TME_HOVER;
+        if(!(trackinfo.dwFlags & TME_HOVER) || trackinfo.hwndTrack != infoPtr->hwndSelf) {
+            trackinfo.dwFlags     = TME_HOVER;
+            trackinfo.dwHoverTime = infoPtr->dwHoverTime;
+            trackinfo.hwndTrack   = infoPtr->hwndSelf;
 
             /* call TRACKMOUSEEVENT so we receive WM_MOUSEHOVER messages */
             _TrackMouseEvent(&trackinfo);
@@ -9079,7 +9080,7 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING);
   infoPtr->nEditLabelItem = -1;
   infoPtr->nLButtonDownItem = -1;
-  infoPtr->dwHoverTime = -1; /* default system hover time */
+  infoPtr->dwHoverTime = HOVER_DEFAULT; /* default system hover time */
   infoPtr->nMeasureItemHeight = 0;
   infoPtr->xTrackLine = -1;  /* no track line */
   infoPtr->itemEdit.fEnabled = FALSE;
@@ -10425,7 +10426,7 @@ static BOOL LISTVIEW_SetCursor(const LISTVIEW_INFO *infoPtr, WPARAM wParam, LPAR
 {
     LVHITTESTINFO lvHitTestInfo;
 
-    if (!(LISTVIEW_isHotTracking(infoPtr))) goto forward;
+    if (!LISTVIEW_IsHotTracking(infoPtr)) goto forward;
 
     if (!infoPtr->hHotCursor) goto forward;
 
