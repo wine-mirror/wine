@@ -1253,6 +1253,8 @@ static void test_create(void)
     LVCOLUMNA col;
     RECT rect;
     WNDCLASSEX cls;
+    DWORD style;
+
     cls.cbSize = sizeof(WNDCLASSEX);
     ok(GetClassInfoEx(GetModuleHandle(NULL), "SysListView32", &cls), "GetClassInfoEx failed\n");
     listviewWndProc = cls.lpfnWndProc;
@@ -1292,6 +1294,8 @@ static void test_create(void)
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
     ok(IsWindow(hHeader), "Header should be created\n");
     ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
+    style = GetWindowLong(hHeader, GWL_STYLE);
+    ok(!(style & HDS_HIDDEN), "Not expected HDS_HIDDEN\n");
     DestroyWindow(hList);
 
     hList = CreateWindow("SysListView32", "Test", WS_VISIBLE|LVS_LIST, 0, 0, 100, 100, NULL, NULL,
@@ -4183,6 +4187,66 @@ static void test_finditem(void)
     DestroyWindow(hwnd);
 }
 
+static void test_LVS_EX_HEADERINALLVIEWS(void)
+{
+    HWND hwnd, header;
+    DWORD style;
+
+    hwnd = create_custom_listview_control(LVS_ICON);
+
+    SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_HEADERINALLVIEWS,
+                                                    LVS_EX_HEADERINALLVIEWS);
+
+    header = (HWND)SendMessage(hwnd, LVM_GETHEADER, 0, 0);
+    if (!IsWindow(header))
+    {
+        win_skip("LVS_EX_HEADERINALLVIEWS unsupported\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+
+    /* LVS_NOCOLUMNHEADER works as before */
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    SetWindowLongW(hwnd, GWL_STYLE, style | LVS_NOCOLUMNHEADER);
+    style = GetWindowLongA(header, GWL_STYLE);
+    ok(style & HDS_HIDDEN, "Expected HDS_HIDDEN\n");
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    SetWindowLongW(hwnd, GWL_STYLE, style & ~LVS_NOCOLUMNHEADER);
+    style = GetWindowLongA(header, GWL_STYLE);
+    ok(!(style & HDS_HIDDEN), "Expected HDS_HIDDEN to be unset\n");
+
+    /* try to remove style */
+    SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_HEADERINALLVIEWS, 0);
+    header = (HWND)SendMessage(hwnd, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(header), "Expected header to be created\n");
+    style = GetWindowLongA(header, GWL_STYLE);
+    ok(!(style & HDS_HIDDEN), "HDS_HIDDEN not expected\n");
+
+    DestroyWindow(hwnd);
+
+    /* check other styles */
+    hwnd = create_custom_listview_control(LVS_LIST);
+    SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_HEADERINALLVIEWS,
+                                                    LVS_EX_HEADERINALLVIEWS);
+    header = (HWND)SendMessage(hwnd, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(header), "Expected header to be created\n");
+    DestroyWindow(hwnd);
+
+    hwnd = create_custom_listview_control(LVS_SMALLICON);
+    SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_HEADERINALLVIEWS,
+                                                    LVS_EX_HEADERINALLVIEWS);
+    header = (HWND)SendMessage(hwnd, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(header), "Expected header to be created\n");
+    DestroyWindow(hwnd);
+
+    hwnd = create_custom_listview_control(LVS_REPORT);
+    SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_HEADERINALLVIEWS,
+                                                    LVS_EX_HEADERINALLVIEWS);
+    header = (HWND)SendMessage(hwnd, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(header), "Expected header to be created\n");
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -4270,6 +4334,7 @@ START_TEST(listview)
     test_mapidindex();
     test_scrollnotify();
     test_LVS_EX_TRANSPARENTBKGND();
+    test_LVS_EX_HEADERINALLVIEWS();
 
     unload_v6_module(ctx_cookie, hCtx);
 

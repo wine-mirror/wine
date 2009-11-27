@@ -1588,6 +1588,13 @@ static inline void LISTVIEW_GetHeaderRect(const LISTVIEW_INFO *infoPtr, INT nSub
 {
     *lprc = LISTVIEW_GetColumnInfo(infoPtr, nSubItem)->rcHeader;
 }
+
+static inline BOOL LISTVIEW_IsHeaderEnabled(const LISTVIEW_INFO *infoPtr)
+{
+    return (infoPtr->uView == LV_VIEW_DETAILS ||
+            infoPtr->dwLvExStyle & LVS_EX_HEADERINALLVIEWS) &&
+          !(infoPtr->dwStyle & LVS_NOCOLUMNHEADER);
+}
 	
 static inline BOOL LISTVIEW_GetItemW(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem)
 {
@@ -1926,7 +1933,23 @@ static void LISTVIEW_UpdateScroll(const LISTVIEW_INFO *infoPtr)
 
 	if (LISTVIEW_GetViewRect(infoPtr, &rcView)) horzInfo.nMax = rcView.right - rcView.left;
     }
-  
+
+    if (LISTVIEW_IsHeaderEnabled(infoPtr))
+    {
+	if (DPA_GetPtrCount(infoPtr->hdpaColumns))
+	{
+	    RECT rcHeader;
+	    INT index;
+
+	    index = SendMessageW(infoPtr->hwndHeader, HDM_ORDERTOINDEX,
+                                 DPA_GetPtrCount(infoPtr->hdpaColumns) - 1, 0);
+
+	    LISTVIEW_GetHeaderRect(infoPtr, index, &rcHeader);
+	    horzInfo.nMax = rcHeader.right;
+	    TRACE("horzInfo.nMax=%d\n", horzInfo.nMax);
+	}
+    }
+
     horzInfo.fMask = SIF_RANGE | SIF_PAGE;
     horzInfo.nMax = max(horzInfo.nMax - 1, 0);
     dx = GetScrollPos(infoPtr->hwndSelf, SB_HORZ);
@@ -1976,7 +1999,7 @@ static void LISTVIEW_UpdateScroll(const LISTVIEW_INFO *infoPtr)
     }
 
     /* Update the Header Control */
-    if (infoPtr->uView == LV_VIEW_DETAILS)
+    if (infoPtr->hwndHeader)
     {
 	horzInfo.fMask = SIF_POS;
 	GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &horzInfo);
@@ -8171,6 +8194,16 @@ static DWORD LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD dwM
             LISTVIEW_SetBkColor(infoPtr, CLR_NONE);
     }
 
+    if((infoPtr->dwLvExStyle ^ dwOldExStyle) & LVS_EX_HEADERINALLVIEWS)
+    {
+        if (infoPtr->dwLvExStyle & LVS_EX_HEADERINALLVIEWS)
+            LISTVIEW_CreateHeader(infoPtr);
+        else
+            ShowWindow(infoPtr->hwndHeader, SW_HIDE);
+        LISTVIEW_UpdateSize(infoPtr);
+        LISTVIEW_UpdateScroll(infoPtr);
+    }
+
     LISTVIEW_InvalidateList(infoPtr);
     return dwOldExStyle;
 }
@@ -9412,21 +9445,20 @@ static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
     scrollInfo.fMask = SIF_POS;
     scrollInfo.nPos = nNewScrollPos;
     nNewScrollPos = SetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo, TRUE);
-    
+
     /* carry on only if it really changed */
     if (nNewScrollPos == nOldScrollPos) return 0;
-    
-    if (infoPtr->uView == LV_VIEW_DETAILS)
-        LISTVIEW_UpdateHeaderSize(infoPtr, nNewScrollPos);
-      
+
+    if (infoPtr->hwndHeader) LISTVIEW_UpdateHeaderSize(infoPtr, nNewScrollPos);
+
     /* now adjust to client coordinates */
     nScrollDiff = nOldScrollPos - nNewScrollPos;
     if (infoPtr->uView == LV_VIEW_LIST) nScrollDiff *= infoPtr->nItemWidth;
-   
+
     /* and scroll the window */
     scroll_list(infoPtr, nScrollDiff, 0);
 
-  return 0;
+    return 0;
 }
 
 static LRESULT LISTVIEW_MouseWheel(LISTVIEW_INFO *infoPtr, INT wheelDelta)
@@ -10077,6 +10109,9 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
 
 	case HDN_DIVIDERDBLCLICKW:
 	case HDN_DIVIDERDBLCLICKA:
+            /* FIXME: for LVS_EX_HEADERINALLVIEWS and not LV_VIEW_DETAILS
+                      we should use LVSCW_AUTOSIZE_USEHEADER, helper rework or
+                      split needed for that */
             LISTVIEW_SetColumnWidth(infoPtr, lpnmh->iItem, LVSCW_AUTOSIZE);
             notify_forward_header(infoPtr, lpnmh);
             break;
@@ -10568,27 +10603,34 @@ static void LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
 	    infoPtr->rcList.bottom -= GetSystemMetrics(SM_CYHSCROLL);
         infoPtr->rcList.bottom = max (infoPtr->rcList.bottom - 2, 0);
     }
-    else if (infoPtr->uView == LV_VIEW_DETAILS)
+
+    /* if control created invisible header isn't created */
+    if (infoPtr->hwndHeader)
     {
-	/* if control created invisible header isn't created */
-	if (infoPtr->hwndHeader)
+	HDLAYOUT hl;
+	WINDOWPOS wp;
+
+	hl.prc = &infoPtr->rcList;
+	hl.pwpos = &wp;
+	SendMessageW( infoPtr->hwndHeader, HDM_LAYOUT, 0, (LPARAM)&hl );
+	TRACE("  wp.flags=0x%08x, wp=%d,%d (%dx%d)\n", wp.flags, wp.x, wp.y, wp.cx, wp.cy);
+
+	if (LISTVIEW_IsHeaderEnabled(infoPtr))
+	    wp.flags |= SWP_SHOWWINDOW;
+	else
 	{
-	    HDLAYOUT hl;
-	    WINDOWPOS wp;
-
-	    hl.prc = &infoPtr->rcList;
-	    hl.pwpos = &wp;
-	    SendMessageW( infoPtr->hwndHeader, HDM_LAYOUT, 0, (LPARAM)&hl );
-            TRACE("  wp.flags=0x%08x, wp=%d,%d (%dx%d)\n", wp.flags, wp.x, wp.y, wp.cx, wp.cy);
-	    SetWindowPos(wp.hwnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy,
-                         wp.flags | ((infoPtr->dwStyle & LVS_NOCOLUMNHEADER)
-                         ? SWP_HIDEWINDOW : SWP_SHOWWINDOW));
-	    TRACE("  after SWP wp=%d,%d (%dx%d)\n", wp.x, wp.y, wp.cx, wp.cy);
-
-	    infoPtr->rcList.top = max(wp.cy, 0);
+	    wp.flags |= SWP_HIDEWINDOW;
+	    wp.cy = 0;
 	}
-        infoPtr->rcList.top += (infoPtr->dwLvExStyle & LVS_EX_GRIDLINES) ? 2 : 0;
+
+	SetWindowPos(wp.hwnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
+	TRACE("  after SWP wp=%d,%d (%dx%d)\n", wp.x, wp.y, wp.cx, wp.cy);
+
+	infoPtr->rcList.top = max(wp.cy, 0);
     }
+    /* extra padding for grid */
+    if (infoPtr->uView == LV_VIEW_DETAILS && infoPtr->dwLvExStyle & LVS_EX_GRIDLINES)
+	infoPtr->rcList.top += 2;
 
     TRACE("  rcList=%s\n", wine_dbgstr_rect(&infoPtr->rcList));
 }
@@ -10669,7 +10711,7 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
 	LISTVIEW_UpdateItemSize(infoPtr);
     }
 
-    if (uNewView == LVS_REPORT)
+    if (uNewView == LVS_REPORT || infoPtr->dwLvExStyle & LVS_EX_HEADERINALLVIEWS)
     {
         if ((lpss->styleOld ^ lpss->styleNew) & LVS_NOCOLUMNHEADER)
         {
