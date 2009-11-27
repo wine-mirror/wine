@@ -279,13 +279,13 @@ HRESULT WINAPI AdvInstallFileW(HWND hwnd, LPCWSTR lpszSourceDir, LPCWSTR lpszSou
     if (lpszDestFile)
     {
         dwLen = lstrlenW(lpszDestFile);
-        szDestFilename = HeapAlloc(GetProcessHeap(), 0, dwLen * sizeof(WCHAR));
+        szDestFilename = HeapAlloc(GetProcessHeap(), 0, (dwLen+1) * sizeof(WCHAR));
         lstrcpyW(szDestFilename, lpszDestFile);
     }
     else
     {
         dwLen = lstrlenW(lpszSourceFile);
-        szDestFilename = HeapAlloc(GetProcessHeap(), 0, dwLen * sizeof(WCHAR));
+        szDestFilename = HeapAlloc(GetProcessHeap(), 0, (dwLen+1) * sizeof(WCHAR));
         lstrcpyW(szDestFilename, lpszSourceFile);
     }
 
