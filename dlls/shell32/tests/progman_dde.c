@@ -67,6 +67,7 @@
 #define DDE_TEST_NUMMASK           0x0000ffff
 
 static BOOL (WINAPI *pSHGetSpecialFolderPathA)(HWND, LPSTR, int, BOOL);
+static BOOL (WINAPI *pReadCabinetState)(CABINETSTATE *, int);
 
 static void init_function_pointers(void)
 {
@@ -74,6 +75,9 @@ static void init_function_pointers(void)
 
     hmod = GetModuleHandleA("shell32.dll");
     pSHGetSpecialFolderPathA = (void*)GetProcAddress(hmod, "SHGetSpecialFolderPathA");
+    pReadCabinetState = (void*)GetProcAddress(hmod, "ReadCabinetState");
+    if (!pReadCabinetState)
+        pReadCabinetState = (void*)GetProcAddress(hmod, (LPSTR)651);
 }
 
 static char CommonPrograms[MAX_PATH];
@@ -87,10 +91,8 @@ static char StartupTitle[MAX_PATH] = "Startup";
 
 static void init_strings(void)
 {
-    HKEY key;
-    DWORD fullpath = 0;
-    DWORD size;
     char startup[MAX_PATH];
+    CABINETSTATE cs;
 
     if (pSHGetSpecialFolderPathA)
     {
@@ -106,6 +108,8 @@ static void init_strings(void)
     }
     else
     {
+        HKEY key;
+        DWORD size;
         LONG res;
 
         /* Older Win9x and NT4 */
@@ -128,11 +132,9 @@ static void init_strings(void)
         RegCloseKey(key);
     }
 
-    RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\CabinetState", &key);
-    size = sizeof(DWORD);
-    RegQueryValueExA(key, "FullPath", NULL, NULL, (LPBYTE)&fullpath, &size);
-    RegCloseKey(key);
-    if (fullpath == 1)
+    memset(&cs, 0, sizeof(cs));
+    pReadCabinetState(&cs, sizeof(cs));
+    if (cs.fFullPathTitle == -1)
     {
         lstrcpyA(Group1Title, CommonPrograms);
         lstrcatA(Group1Title, "\\Group1");
