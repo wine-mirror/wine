@@ -81,6 +81,7 @@ DWORD	MCIAVI_mciGetDevCaps(UINT wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_PARMS l
     if (lpParms == NULL) 	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
     if (!(dwFlags & MCI_GETDEVCAPS_ITEM)) return MCIERR_MISSING_PARAMETER;
+    if (dwFlags & MCI_TEST)	return 0;
 
     EnterCriticalSection(&wma->cs);
 
@@ -163,7 +164,7 @@ DWORD	MCIAVI_mciGetDevCaps(UINT wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_PARMS l
 	    break;
 	case MCI_DGV_GETDEVCAPS_CAN_TEST:
 	    TRACE("MCI_DGV_GETDEVCAPS_CAN_TEST !\n");
-	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE); /* FIXME */
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
 	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_DGV_GETDEVCAPS_PALETTES:
@@ -196,6 +197,7 @@ DWORD	MCIAVI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSW lpParms)
     if (lpParms == NULL || lpParms->lpstrReturn == NULL)
 	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL) return MCIERR_INVALID_DEVICE_ID;
+    if (dwFlags & MCI_TEST)	return 0;
 
     TRACE("buf=%p, len=%u\n", lpParms->lpstrReturn, lpParms->dwRetSize);
 
@@ -232,6 +234,7 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    if (dwFlags & MCI_TEST)	return 0;
 
     EnterCriticalSection(&wma->cs);
 
@@ -368,6 +371,7 @@ DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSW lpPar
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    if (dwFlags & MCI_TEST)	return 0;
 
     EnterCriticalSection(&wma->cs);
 

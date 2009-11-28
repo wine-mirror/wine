@@ -398,6 +398,7 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
     if (dwFlags & MCI_DGV_PLAY_REVERSE) return MCIERR_UNSUPPORTED_FUNCTION;
+    if (dwFlags & MCI_TEST)	return 0;
 
     EnterCriticalSection(&wma->cs);
 
@@ -571,6 +572,7 @@ static	DWORD	MCIAVI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    if (dwFlags & MCI_TEST)	return 0;
 
     EnterCriticalSection(&wma->cs);
 
@@ -623,6 +625,7 @@ static	DWORD	MCIAVI_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    if (dwFlags & MCI_TEST)	return 0;
 
     EnterCriticalSection(&wma->cs);
 
@@ -649,6 +652,7 @@ static	DWORD	MCIAVI_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lp
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    if (dwFlags & MCI_TEST)	return 0;
 
     EnterCriticalSection(&wma->cs);
 
@@ -677,6 +681,7 @@ static	DWORD	MCIAVI_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    if (dwFlags & MCI_TEST)	return 0;
 
     MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
 
@@ -736,6 +741,7 @@ static	DWORD	MCIAVI_mciRealize(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS l
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    if (dwFlags & MCI_TEST)	return 0;
 
     return 0;
 }
@@ -753,6 +759,7 @@ static	DWORD	MCIAVI_mciUpdate(UINT wDevID, DWORD dwFlags, LPMCI_DGV_UPDATE_PARMS
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    /* Ignore MCI_TEST flag. */
 
     EnterCriticalSection(&wma->cs);
 
@@ -777,6 +784,7 @@ static	DWORD	MCIAVI_mciStep(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STEP_PARMS lpP
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    if (dwFlags & MCI_TEST)	return 0;
 
     MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
 
@@ -797,6 +805,7 @@ static	DWORD	MCIAVI_mciCue(UINT wDevID, DWORD dwFlags, LPMCI_DGV_CUE_PARMS lpPar
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
     if (dwFlags & MCI_DGV_CUE_INPUT) return MCIERR_UNSUPPORTED_FUNCTION;
+    if (dwFlags & MCI_TEST)	return 0;
 
     return 0;
 }
@@ -865,6 +874,7 @@ static	DWORD	MCIAVI_mciConfigure(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    if (dwFlags & MCI_TEST)	return 0;
 
     return 0;
 }
