@@ -397,6 +397,7 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    if (dwFlags & MCI_DGV_PLAY_REVERSE) return MCIERR_UNSUPPORTED_FUNCTION;
 
     EnterCriticalSection(&wma->cs);
 
@@ -457,7 +458,7 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     /* signal the state change */
     SetEvent(wma->ack_event);
 
-    if (dwFlags & (MCI_DGV_PLAY_REPEAT|MCI_DGV_PLAY_REVERSE|MCI_MCIAVI_PLAY_WINDOW|MCI_MCIAVI_PLAY_FULLSCREEN))
+    if (dwFlags & (MCI_DGV_PLAY_REPEAT|MCI_MCIAVI_PLAY_WINDOW|MCI_MCIAVI_PLAY_FULLSCREEN))
 	FIXME("Unsupported flag %08x\n", dwFlags);
 
     /* time is in microseconds, we should convert it to milliseconds */
@@ -719,9 +720,7 @@ static DWORD	MCIAVI_mciLoad(UINT wDevID, DWORD dwFlags, LPMCI_DGV_LOAD_PARMSW lp
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
-    MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
-
-    return 0;
+    return MCIERR_UNSUPPORTED_FUNCTION; /* like w2k */
 }
 
 /******************************************************************************
@@ -797,6 +796,7 @@ static	DWORD	MCIAVI_mciCue(UINT wDevID, DWORD dwFlags, LPMCI_DGV_CUE_PARMS lpPar
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    if (dwFlags & MCI_DGV_CUE_INPUT) return MCIERR_UNSUPPORTED_FUNCTION;
 
     return 0;
 }
@@ -815,7 +815,7 @@ static	DWORD	MCIAVI_mciSetAudio(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SETAUDIO_P
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
-    return 0;
+    return MCIERR_UNSUPPORTED_FUNCTION; /* like w2k */
 }
 
 /******************************************************************************
@@ -849,7 +849,7 @@ static	DWORD	MCIAVI_mciSetVideo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SETVIDEO_P
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
-    return 0;
+    return MCIERR_UNSUPPORTED_FUNCTION; /* like w2k */
 }
 
 /******************************************************************************
