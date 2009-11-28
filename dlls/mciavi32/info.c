@@ -80,6 +80,7 @@ DWORD	MCIAVI_mciGetDevCaps(UINT wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_PARMS l
 
     if (lpParms == NULL) 	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    if (!(dwFlags & MCI_GETDEVCAPS_ITEM)) return MCIERR_MISSING_PARAMETER;
 
     EnterCriticalSection(&wma->cs);
 
@@ -130,14 +131,52 @@ DWORD	MCIAVI_mciGetDevCaps(UINT wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_PARMS l
 	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
 	    ret = MCI_RESOURCE_RETURNED;
 	    break;
+	case MCI_DGV_GETDEVCAPS_CAN_REVERSE:
+	    TRACE("MCI_DGV_GETDEVCAPS_CAN_REVERSE !\n");
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE); /* FIXME */
+	    ret = MCI_RESOURCE_RETURNED;
+	    break;
+	case MCI_DGV_GETDEVCAPS_CAN_STRETCH:
+	    TRACE("MCI_DGV_GETDEVCAPS_CAN_STRETCH !\n");
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE); /* FIXME */
+	    ret = MCI_RESOURCE_RETURNED;
+	    break;
+	case MCI_DGV_GETDEVCAPS_CAN_LOCK:
+	    TRACE("MCI_DGV_GETDEVCAPS_CAN_LOCK !\n");
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
+	    break;
+	case MCI_DGV_GETDEVCAPS_CAN_FREEZE:
+	    TRACE("MCI_DGV_GETDEVCAPS_CAN_FREEZE !\n");
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
+	    break;
+	case MCI_DGV_GETDEVCAPS_CAN_STR_IN:
+	    TRACE("MCI_DGV_GETDEVCAPS_CAN_STRETCH_INPUT !\n");
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
+	    break;
+	case MCI_DGV_GETDEVCAPS_HAS_STILL:
+	    TRACE("MCI_DGV_GETDEVCAPS_HAS_STILL !\n");
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
+	    break;
+	case MCI_DGV_GETDEVCAPS_CAN_TEST:
+	    TRACE("MCI_DGV_GETDEVCAPS_CAN_TEST !\n");
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE); /* FIXME */
+	    ret = MCI_RESOURCE_RETURNED;
+	    break;
+	case MCI_DGV_GETDEVCAPS_PALETTES:
+	    TRACE("MCI_DGV_GETDEVCAPS_PALETTES !\n");
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE); /* FIXME */
+	    ret = MCI_RESOURCE_RETURNED;
+	    break;
+	/* w2k does not know MAX_WINDOWS or MAX/MINIMUM_RATE */
 	default:
             FIXME("Unknown capability (%08x) !\n", lpParms->dwItem);
-           ret = MCIERR_UNRECOGNIZED_COMMAND;
+            ret = MCIERR_UNSUPPORTED_FUNCTION;
             break;
 	}
-    } else {
-	WARN("No GetDevCaps-Item !\n");
-       ret = MCIERR_UNRECOGNIZED_COMMAND;
     }
 
     LeaveCriticalSection(&wma->cs);
