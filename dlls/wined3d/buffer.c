@@ -79,22 +79,17 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This)
     }
 
     /* Don't use static, because dx apps tend to update the buffer
-    * quite often even if they specify 0 usage. Because we always keep the local copy
-    * we never read from the vbo and can create a write only opengl buffer.
-    */
-    switch(This->resource.usage & (WINED3DUSAGE_WRITEONLY | WINED3DUSAGE_DYNAMIC))
+     * quite often even if they specify 0 usage.
+     */
+    if(This->resource.usage & WINED3DUSAGE_DYNAMIC)
     {
-        case WINED3DUSAGE_WRITEONLY | WINED3DUSAGE_DYNAMIC:
-        case WINED3DUSAGE_DYNAMIC:
-            TRACE("Gl usage = GL_STREAM_DRAW\n");
-            gl_usage = GL_STREAM_DRAW_ARB;
-            break;
-
-        case WINED3DUSAGE_WRITEONLY:
-        default:
-            TRACE("Gl usage = GL_DYNAMIC_DRAW\n");
-            gl_usage = GL_DYNAMIC_DRAW_ARB;
-            break;
+        TRACE("Gl usage = GL_DYNAMIC_DRAW\n");
+        gl_usage = GL_DYNAMIC_DRAW_ARB;
+    }
+    else
+    {
+        TRACE("Gl usage = GL_STREAM_DRAW\n");
+        gl_usage = GL_STREAM_DRAW_ARB;
     }
 
     /* Reserve memory for the buffer. The amount of data won't change
