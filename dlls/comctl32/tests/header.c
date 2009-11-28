@@ -1267,6 +1267,7 @@ static void test_hds_nosizing(HWND hParent)
 
     hChild = create_custom_header_control(hParent, FALSE);
 
+    memset(&hdItem, 0, sizeof(hdItem));
     hdItem.mask = HDI_WIDTH;
     hdItem.cxy = 80;
 
