@@ -674,6 +674,7 @@ static	DWORD	MCIAVI_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lp
 static	DWORD	MCIAVI_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 {
     WINE_MCIAVI *wma;
+    DWORD position;
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
@@ -681,27 +682,28 @@ static	DWORD	MCIAVI_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+
+    position = dwFlags & (MCI_SEEK_TO_START|MCI_SEEK_TO_END|MCI_TO);
+    if (!position)		return MCIERR_MISSING_PARAMETER;
+    if (position&(position-1))	return MCIERR_FLAGS_NOT_COMPATIBLE;
+
+    if (dwFlags & MCI_TO) {
+	position = MCIAVI_ConvertTimeFormatToFrame(wma, lpParms->dwTo);
+	if (position >= wma->dwPlayableVideoFrames)
+	    return MCIERR_OUTOFRANGE;
+    } else if (dwFlags & MCI_SEEK_TO_START) {
+	position = 0;
+    } else {
+	position = wma->dwPlayableVideoFrames - 1;
+    }
     if (dwFlags & MCI_TEST)	return 0;
 
     MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
 
     EnterCriticalSection(&wma->cs);
 
-    if (dwFlags & MCI_SEEK_TO_START) {
-	wma->dwCurrVideoFrame = 0;
-    } else if (dwFlags & MCI_SEEK_TO_END) {
-	wma->dwCurrVideoFrame = wma->dwPlayableVideoFrames - 1;
-    } else if (dwFlags & MCI_TO) {
-        if (lpParms->dwTo > wma->dwPlayableVideoFrames - 1)
-            lpParms->dwTo = wma->dwPlayableVideoFrames - 1;
-	wma->dwCurrVideoFrame = MCIAVI_ConvertTimeFormatToFrame(wma, lpParms->dwTo);
-    } else {
-	WARN("dwFlag doesn't tell where to seek to...\n");
-	LeaveCriticalSection(&wma->cs);
-	return MCIERR_MISSING_PARAMETER;
-    }
-
-    TRACE("Seeking to frame=%u bytes\n", wma->dwCurrVideoFrame);
+    wma->dwCurrVideoFrame = position;
+    TRACE("Seeking to frame=%u\n", wma->dwCurrVideoFrame);
 
     if (dwFlags & MCI_NOTIFY) {
 	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
@@ -777,17 +779,34 @@ static	DWORD	MCIAVI_mciUpdate(UINT wDevID, DWORD dwFlags, LPMCI_DGV_UPDATE_PARMS
 static	DWORD	MCIAVI_mciStep(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STEP_PARMS lpParms)
 {
     WINE_MCIAVI *wma;
+    DWORD position;
+    int delta = 1;
 
-    FIXME("(%04x, %08x, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08x, %p)\n", wDevID, dwFlags, lpParms);
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+
+    if (dwFlags & MCI_DGV_STEP_FRAMES)  delta = lpParms->dwFrames;
+    if (dwFlags & MCI_DGV_STEP_REVERSE) delta = -delta;
+    position = wma->dwCurrVideoFrame + delta;
+    if (position >= wma->dwPlayableVideoFrames) return MCIERR_OUTOFRANGE;
     if (dwFlags & MCI_TEST)	return 0;
 
     MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
 
+    EnterCriticalSection(&wma->cs);
+
+    wma->dwCurrVideoFrame = position;
+    TRACE("Stepping to frame=%u\n", wma->dwCurrVideoFrame);
+
+    if (dwFlags & MCI_NOTIFY) {
+	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
+                       wDevID, MCI_NOTIFY_SUCCESSFUL);
+    }
+    LeaveCriticalSection(&wma->cs);
     return 0;
 }
 
