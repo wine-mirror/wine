@@ -4277,6 +4277,11 @@ static void test_hover(void)
     ok_sequence(sequences, PARENT_SEQ_INDEX, hover_parent, "NM_HOVER block test", TRUE);
     g_block_hover = FALSE;
 
+    r = SendMessage(hwnd, LVM_SETHOVERTIME, 0, 500);
+    expect(HOVER_DEFAULT, r);
+    r = SendMessage(hwnd, LVM_GETHOVERTIME, 0, 0);
+    expect(500, r);
+
     DestroyWindow(hwnd);
 }
 

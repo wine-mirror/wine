@@ -11134,7 +11134,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_SetHotItem(infoPtr, (INT)wParam);
 
   case LVM_SETHOVERTIME:
-    return LISTVIEW_SetHoverTime(infoPtr, (DWORD)wParam);
+    return LISTVIEW_SetHoverTime(infoPtr, (DWORD)lParam);
 
   case LVM_SETICONSPACING:
     return LISTVIEW_SetIconSpacing(infoPtr, (short)LOWORD(lParam), (short)HIWORD(lParam));
