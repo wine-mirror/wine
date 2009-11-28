@@ -667,6 +667,7 @@ static void test_TxSetText(void)
     ok(memcmp(rettext,settext,SysStringByteLen(rettext)) == 0,
                  "String returned differs\n");
 
+    SysFreeString(rettext);
     IUnknown_Release(txtserv);
     CoTaskMemFree(dummyTextHost);
 }
