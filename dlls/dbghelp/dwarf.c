@@ -490,7 +490,9 @@ static void dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
         break;
 
     case DW_FORM_data8:
-        FIXME("Unhandled 64bits support\n");
+        attr->u.block.size = 8;
+        attr->u.block.ptr  = data;
+        data += 8;
         break;
 
     case DW_FORM_ref1:
@@ -1411,6 +1413,11 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
             break;
 
         case DW_FORM_data8:
+	    v.n1.n2.vt = VT_I1 | VT_BYREF;
+	    v.n1.n2.n3.byref = pool_alloc(&subpgm->ctx->module->pool, value.u.block.size);
+	    memcpy(v.n1.n2.n3.byref, value.u.block.ptr, value.u.block.size);
+	    break;
+
         default:
             FIXME("Unsupported form for const value %s (%lx)\n",
                   name.u.string, value.form);
