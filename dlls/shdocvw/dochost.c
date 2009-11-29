@@ -753,5 +753,5 @@ void DocHost_Release(DocHost *This)
 
     ConnectionPointContainer_Destroy(&This->cps);
 
-    SysFreeString(This->url);
+    CoTaskMemFree(This->url);
 }
