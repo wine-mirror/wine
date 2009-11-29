@@ -828,6 +828,16 @@ static DWORD COM_RegReadPath(HKEY hkeyroot, const WCHAR *keyname, const WCHAR *v
             if (keytype == REG_EXPAND_SZ) {
               if (dstlen <= ExpandEnvironmentStringsW(src, dst, dstlen)) ret = ERROR_MORE_DATA;
             } else {
+              const WCHAR *quote_start;
+              quote_start = strchrW(src, '\"');
+              if (quote_start) {
+                const WCHAR *quote_end = strchrW(quote_start + 1, '\"');
+                if (quote_end) {
+                  memmove(src, quote_start + 1,
+                          (quote_end - quote_start - 1) * sizeof(WCHAR));
+                  src[quote_end - quote_start - 1] = '\0';
+                }
+              }
               lstrcpynW(dst, src, dstlen);
             }
 	  }
