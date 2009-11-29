@@ -1048,7 +1048,7 @@ int FileMonikerImpl_DecomposePath(LPCOLESTR str, LPOLESTR** stringTable)
 
     TRACE("%s, %p\n", debugstr_w(str), *stringTable);
 
-    strgtable = CoTaskMemAlloc(len*sizeof(*strgtable));
+    strgtable = CoTaskMemAlloc((len + 1)*sizeof(*strgtable));
 
     if (strgtable==NULL)
 	return E_OUTOFMEMORY;
