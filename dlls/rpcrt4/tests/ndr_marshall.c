@@ -1879,6 +1879,7 @@ static void test_conf_complex_struct(void)
     StubMsg.pfnFree(mem);
 
     HeapFree(GetProcessHeap(), 0, StubMsg.RpcMsg->Buffer);
+    HeapFree(GetProcessHeap(), 0, memsrc);
 }
 
 static void test_ndr_buffer(void)
