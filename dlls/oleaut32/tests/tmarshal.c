@@ -1388,7 +1388,7 @@ static void test_DispCallFunc(void)
     V_VT(&vararg[0]) = VT_R8;
     V_R8(&vararg[0]) = 3.141;
     V_VT(&vararg[1]) = VT_BSTR;
-    V_BSTR(&vararg[1]) = SysAllocString(szEmpty);
+    V_BSTRREF(&vararg[1]) = CoTaskMemAlloc(sizeof(BSTR));
     V_VT(&vararg[2]) = VT_BSTR;
     V_BSTR(&vararg[2]) = SysAllocString(szEmpty);
     V_VT(&vararg[3]) = VT_VARIANT|VT_BYREF;
@@ -1399,7 +1399,8 @@ static void test_DispCallFunc(void)
     hr = DispCallFunc(pWidget, 9*sizeof(void*), CC_STDCALL, VT_UI4, 4, rgvt, rgpvarg, &varresult);
     ok_ole_success(hr, DispCallFunc);
     VariantClear(&varresult);
-    VariantClear(&vararg[1]);
+    SysFreeString(*V_BSTRREF(&vararg[1]));
+    CoTaskMemFree(V_BSTRREF(&vararg[1]));
     VariantClear(&vararg[2]);
     IWidget_Release(pWidget);
 }
