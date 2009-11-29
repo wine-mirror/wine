@@ -3405,7 +3405,7 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
     http_request_t *lpwhr;
     http_session_t *lpwhs = NULL;
     appinfo_t *hIC = NULL;
-    BOOL r;
+    DWORD res = ERROR_SUCCESS;
 
     TRACE("%p, %s, %i, %p, %i)\n", hHttpRequest,
             debugstr_wn(lpszHeaders, dwHeaderLength), dwHeaderLength, lpOptional, dwOptionalLength);
@@ -3413,24 +3413,21 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
     lpwhr = (http_request_t*) WININET_GetObject( hHttpRequest );
     if (NULL == lpwhr || lpwhr->hdr.htype != WH_HHTTPREQ)
     {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	r = FALSE;
+        res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
         goto lend;
     }
 
     lpwhs = lpwhr->lpHttpSession;
     if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
     {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	r = FALSE;
+        res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
         goto lend;
     }
 
     hIC = lpwhs->lpAppInfo;
     if (NULL == hIC ||  hIC->hdr.htype != WH_HINIT)
     {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	r = FALSE;
+        res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
         goto lend;
     }
 
@@ -3464,19 +3461,23 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         /*
          * This is from windows.
          */
-        INTERNET_SetLastError(ERROR_IO_PENDING);
-        r = FALSE;
+        res = ERROR_IO_PENDING;
     }
     else
     {
-	r = HTTP_HttpSendRequestW(lpwhr, lpszHeaders,
+	BOOL r = HTTP_HttpSendRequestW(lpwhr, lpszHeaders,
 		dwHeaderLength, lpOptional, dwOptionalLength,
 		dwOptionalLength, TRUE);
+        if(!r)
+            res = INTERNET_GetLastError();
     }
 lend:
     if( lpwhr )
         WININET_Release( &lpwhr->hdr );
-    return r;
+
+    if(res != ERROR_SUCCESS)
+        SetLastError(res);
+    return res == ERROR_SUCCESS;
 }
 
 /***********************************************************************
