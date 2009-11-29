@@ -2491,17 +2491,20 @@ done:
 
 static BOOL HTTPREQ_WriteFile(object_header_t *hdr, const void *buffer, DWORD size, DWORD *written)
 {
-    BOOL ret;
+    DWORD res;
     http_request_t *lpwhr = (http_request_t*)hdr;
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext, INTERNET_STATUS_SENDING_REQUEST, NULL, 0);
 
     *written = 0;
-    if ((ret = NETCON_send(&lpwhr->netConnection, buffer, size, 0, (LPINT)written)))
+    res = NETCON_send(&lpwhr->netConnection, buffer, size, 0, (LPINT)written);
+    if (res == ERROR_SUCCESS)
         lpwhr->dwBytesWritten += *written;
+    else
+        SetLastError(res);
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext, INTERNET_STATUS_REQUEST_SENT, written, sizeof(DWORD));
-    return ret;
+    return res == ERROR_SUCCESS;
 }
 
 static void HTTPREQ_AsyncQueryDataAvailableProc(WORKREQUEST *workRequest)
@@ -3756,7 +3759,7 @@ static BOOL HTTP_SecureProxyConnect(http_request_t *lpwhr)
     INT cnt;
     INT responseLen;
     char *ascii_req;
-    BOOL ret;
+    DWORD res;
     static const WCHAR szConnect[] = {'C','O','N','N','E','C','T',0};
     static const WCHAR szFormat[] = {'%','s',':','%','d',0};
     http_session_t *lpwhs = lpwhr->lpHttpSession;
@@ -3778,10 +3781,12 @@ static BOOL HTTP_SecureProxyConnect(http_request_t *lpwhr)
 
     TRACE("full request -> %s\n", debugstr_an( ascii_req, len ) );
 
-    ret = NETCON_send( &lpwhr->netConnection, ascii_req, len, 0, &cnt );
+    res = NETCON_send( &lpwhr->netConnection, ascii_req, len, 0, &cnt );
     HeapFree( GetProcessHeap(), 0, ascii_req );
-    if (!ret || cnt < 0)
+    if (res != ERROR_SUCCESS || cnt < 0) {
+        INTERNET_SetLastError(res);
         return FALSE;
+    }
 
     responseLen = HTTP_GetResponseHeaders( lpwhr, TRUE );
     if (!responseLen)
@@ -4377,7 +4382,8 @@ static BOOL HTTP_OpenConnection(http_request_t *lpwhr)
         if (hIC->lpszProxy && !HTTP_SecureProxyConnect(lpwhr))
             goto lend;
 
-        if (!NETCON_secure_connect(&lpwhr->netConnection, lpwhs->lpszHostName))
+        res = NETCON_secure_connect(&lpwhr->netConnection, lpwhs->lpszHostName);
+        if(res != ERROR_SUCCESS)
         {
             WARN("Couldn't connect securely to host\n");
             goto lend;

@@ -435,8 +435,8 @@ DWORD NETCON_create(WININET_NETCONNECTION *connection, int domain,
 BOOL NETCON_close(WININET_NETCONNECTION *connection);
 DWORD NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *serv_addr,
 		    unsigned int addrlen);
-BOOL NETCON_secure_connect(WININET_NETCONNECTION *connection, LPCWSTR hostname);
-BOOL NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len, int flags,
+DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPCWSTR hostname);
+DWORD NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len, int flags,
 		int *sent /* out */);
 BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int flags,
 		int *recvd /* out */);
