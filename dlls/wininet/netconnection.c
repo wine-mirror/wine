@@ -532,25 +532,22 @@ fail:
  * NETCON_connect
  * Connects to the specified address.
  */
-BOOL NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *serv_addr,
+DWORD NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *serv_addr,
 		    unsigned int addrlen)
 {
     int result;
-
-    if (!NETCON_connected(connection)) return FALSE;
 
     result = connect(connection->socketFD, serv_addr, addrlen);
     if (result == -1)
     {
         WARN("Unable to connect to host (%s)\n", strerror(errno));
-        INTERNET_SetLastError(sock_get_error(errno));
 
         closesocket(connection->socketFD);
         connection->socketFD = -1;
-        return FALSE;
+        return sock_get_error(errno);
     }
 
-    return TRUE;
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************************

@@ -433,7 +433,7 @@ void NETCON_unload(void);
 DWORD NETCON_create(WININET_NETCONNECTION *connection, int domain,
 	      int type, int protocol);
 BOOL NETCON_close(WININET_NETCONNECTION *connection);
-BOOL NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *serv_addr,
+DWORD NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *serv_addr,
 		    unsigned int addrlen);
 BOOL NETCON_secure_connect(WININET_NETCONNECTION *connection, LPCWSTR hostname);
 BOOL NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len, int flags,

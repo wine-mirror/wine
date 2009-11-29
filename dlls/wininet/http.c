@@ -4361,8 +4361,9 @@ static BOOL HTTP_OpenConnection(http_request_t *lpwhr)
         goto lend;
     }
 
-    if (!NETCON_connect(&lpwhr->netConnection, (struct sockaddr *)&lpwhs->socketAddress,
-                      lpwhs->sa_len))
+    res = NETCON_connect(&lpwhr->netConnection, (struct sockaddr *)&lpwhs->socketAddress,
+                         lpwhs->sa_len);
+    if(res != ERROR_SUCCESS)
        goto lend;
 
     if (lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE)
