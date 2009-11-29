@@ -258,7 +258,7 @@ static void test_pointer_marshal(const unsigned char *formattypes,
 
     StubMsg.Buffer = StubMsg.BufferStart;
     StubMsg.MemorySize = 0;
-    mem_orig = mem = HeapAlloc(GetProcessHeap(), 0, size); 
+    mem_orig = mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 
     if(formattypes[1] & 0x10 /* FC_POINTER_DEREF */)
         *(void**)mem = NULL;
