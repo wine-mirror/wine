@@ -1159,6 +1159,8 @@ void CDECL __wine_kernel_init(void)
 
     if (!(peb->ImageBaseAddress = LoadLibraryExW( main_exe_name, 0, DONT_RESOLVE_DLL_REFERENCES )))
     {
+        DWORD_PTR args[1];
+        WCHAR msgW[1024];
         char msg[1024];
         DWORD error = GetLastError();
 
@@ -1182,8 +1184,11 @@ void CDECL __wine_kernel_init(void)
                 ExitProcess( ERROR_BAD_EXE_FORMAT );
             }
         }
-        FormatMessageA( FORMAT_MESSAGE_FROM_SYSTEM, NULL, error, 0, msg, sizeof(msg), NULL );
-        MESSAGE( "wine: could not load %s: %s", debugstr_w(main_exe_name), msg );
+        args[0] = (DWORD_PTR)main_exe_name;
+        FormatMessageW( FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                        NULL, error, 0, msgW, sizeof(msgW)/sizeof(WCHAR), (__ms_va_list *)args );
+        WideCharToMultiByte( CP_ACP, 0, msgW, -1, msg, sizeof(msg), NULL, NULL );
+        MESSAGE( "wine: %s", msg );
         ExitProcess( error );
     }
 
