@@ -5377,7 +5377,7 @@ static HRESULT TLB_AllocAndInitVarDesc( const VARDESC *src, VARDESC **dest_ptr )
         hr = VariantCopy(dest->u.lpvarValue, src->u.lpvarValue);
         if (FAILED(hr))
         {
-            SysFreeString((BSTR)dest_ptr);
+            SysFreeString((BSTR)dest);
             return hr;
         }
     }
