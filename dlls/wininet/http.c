@@ -198,7 +198,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION authcache_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static BOOL HTTP_OpenConnection(http_request_t *req);
+static DWORD HTTP_OpenConnection(http_request_t *req);
 static BOOL HTTP_GetResponseHeaders(http_request_t *req, BOOL clear);
 static BOOL HTTP_ProcessHeader(http_request_t *req, LPCWSTR field, LPCWSTR value, DWORD dwModifier);
 static LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer);
@@ -1610,7 +1610,7 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *lpwhs, http_reque
 #define INET6_ADDRSTRLEN 46
 #endif
 
-static BOOL HTTP_ResolveName(http_request_t *lpwhr)
+static DWORD HTTP_ResolveName(http_request_t *lpwhr)
 {
     char szaddr[INET6_ADDRSTRLEN];
     http_session_t *lpwhs = lpwhr->lpHttpSession;
@@ -1624,10 +1624,7 @@ static BOOL HTTP_ResolveName(http_request_t *lpwhr)
     lpwhs->sa_len = sizeof(lpwhs->socketAddress);
     if (!GetAddress(lpwhs->lpszServerName, lpwhs->nServerPort,
                     (struct sockaddr *)&lpwhs->socketAddress, &lpwhs->sa_len))
-    {
-        INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
-        return FALSE;
-    }
+        return ERROR_INTERNET_NAME_NOT_RESOLVED;
 
     switch (lpwhs->socketAddress.ss_family)
     {
@@ -1639,8 +1636,7 @@ static BOOL HTTP_ResolveName(http_request_t *lpwhr)
         break;
     default:
         WARN("unsupported family %d\n", lpwhs->socketAddress.ss_family);
-        INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
-        return FALSE;
+        return ERROR_INTERNET_NAME_NOT_RESOLVED;
     }
     inet_ntop(lpwhs->socketAddress.ss_family, addr, szaddr, sizeof(szaddr));
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
@@ -1648,7 +1644,7 @@ static BOOL HTTP_ResolveName(http_request_t *lpwhr)
                           szaddr, strlen(szaddr)+1);
 
     TRACE("resolved %s to %s\n", debugstr_w(lpwhs->lpszServerName), szaddr);
-    return TRUE;
+    return ERROR_SUCCESS;
 }
 
 
@@ -3680,12 +3676,17 @@ static BOOL HTTP_HandleRedirect(http_request_t *lpwhr, LPCWSTR lpszUrl)
         {
             if (strcmpiW(lpwhs->lpszServerName, hostName) || lpwhs->nServerPort != urlComponents.nPort)
             {
+                DWORD res;
+
                 HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
                 lpwhs->lpszServerName = heap_strdupW(hostName);
                 lpwhs->nServerPort = urlComponents.nPort;
 
                 NETCON_close(&lpwhr->netConnection);
-                if (!HTTP_ResolveName(lpwhr)) return FALSE;
+                if ((res = HTTP_ResolveName(lpwhr)) != ERROR_SUCCESS) {
+                    INTERNET_SetLastError(res);
+                    return FALSE;
+                }
                 if (!NETCON_init(&lpwhr->netConnection, lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE)) return FALSE;
                 lpwhr->read_pos = lpwhr->read_size = 0;
                 lpwhr->read_chunked = FALSE;
@@ -3749,7 +3750,7 @@ static LPWSTR HTTP_build_req( LPCWSTR *list, int len )
     return str;
 }
 
-static BOOL HTTP_SecureProxyConnect(http_request_t *lpwhr)
+static DWORD HTTP_SecureProxyConnect(http_request_t *lpwhr)
 {
     LPWSTR lpszPath;
     LPWSTR requestString;
@@ -3781,16 +3782,14 @@ static BOOL HTTP_SecureProxyConnect(http_request_t *lpwhr)
 
     res = NETCON_send( &lpwhr->netConnection, ascii_req, len, 0, &cnt );
     HeapFree( GetProcessHeap(), 0, ascii_req );
-    if (res != ERROR_SUCCESS || cnt < 0) {
-        INTERNET_SetLastError(res);
-        return FALSE;
-    }
+    if (res != ERROR_SUCCESS)
+        return res;
 
     responseLen = HTTP_GetResponseHeaders( lpwhr, TRUE );
     if (!responseLen)
-        return FALSE;
+        return ERROR_HTTP_INVALID_HEADER;
 
-    return TRUE;
+    return ERROR_SUCCESS;
 }
 
 static void HTTP_InsertCookies(http_request_t *lpwhr)
@@ -3847,6 +3846,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
     static const WCHAR szContentLength[] =
         { 'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ','%','l','i','\r','\n',0 };
     WCHAR contentLengthStr[sizeof szContentLength/2 /* includes \r\n */ + 20 /* int */ ];
+    DWORD res;
 
     TRACE("--> %p\n", lpwhr);
 
@@ -3936,8 +3936,10 @@ BOOL WINAPI HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
         TRACE("Request header -> %s\n", debugstr_w(requestString) );
 
         /* Send the request and store the results */
-        if (!HTTP_OpenConnection(lpwhr))
+        if ((res = HTTP_OpenConnection(lpwhr)) != ERROR_SUCCESS) {
+            INTERNET_SetLastError(res);
             goto lend;
+        }
 
         /* send the request as ASCII, tack on the optional data */
         if (!lpOptional || redirected)
@@ -4310,9 +4312,8 @@ lerror:
  *   TRUE  on success
  *   FALSE on failure
  */
-static BOOL HTTP_OpenConnection(http_request_t *lpwhr)
+static DWORD HTTP_OpenConnection(http_request_t *lpwhr)
 {
-    BOOL bSuccess = FALSE;
     http_session_t *lpwhs;
     appinfo_t *hIC = NULL;
     char szaddr[INET6_ADDRSTRLEN];
@@ -4324,16 +4325,13 @@ static BOOL HTTP_OpenConnection(http_request_t *lpwhr)
 
     if (lpwhr->hdr.htype != WH_HHTTPREQ)
     {
-        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        res = ERROR_INVALID_PARAMETER;
         goto lend;
     }
 
     if (NETCON_connected(&lpwhr->netConnection))
-    {
-        bSuccess = TRUE;
         goto lend;
-    }
-    if (!HTTP_ResolveName(lpwhr)) goto lend;
+    if ((res = HTTP_ResolveName(lpwhr)) != ERROR_SUCCESS) goto lend;
 
     lpwhs = lpwhr->lpHttpSession;
 
@@ -4348,8 +4346,7 @@ static BOOL HTTP_OpenConnection(http_request_t *lpwhr)
         break;
     default:
         WARN("unsupported family %d\n", lpwhs->socketAddress.ss_family);
-        INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
-        return FALSE;
+        return ERROR_INTERNET_NAME_NOT_RESOLVED;
     }
     inet_ntop(lpwhs->socketAddress.ss_family, addr, szaddr, sizeof(szaddr));
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
@@ -4377,7 +4374,7 @@ static BOOL HTTP_OpenConnection(http_request_t *lpwhr)
          * behaviour to be more correct and to not cause any incompatibilities
          * because using a secure connection through a proxy server is a rare
          * case that would be hard for anyone to depend on */
-        if (hIC->lpszProxy && !HTTP_SecureProxyConnect(lpwhr))
+        if (hIC->lpszProxy && (res = HTTP_SecureProxyConnect(lpwhr)) != ERROR_SUCCESS)
             goto lend;
 
         res = NETCON_secure_connect(&lpwhr->netConnection, lpwhs->lpszHostName);
@@ -4392,17 +4389,12 @@ static BOOL HTTP_OpenConnection(http_request_t *lpwhr)
                           INTERNET_STATUS_CONNECTED_TO_SERVER,
                           szaddr, strlen(szaddr)+1);
 
-    bSuccess = TRUE;
-
 lend:
     lpwhr->read_pos = lpwhr->read_size = 0;
     lpwhr->read_chunked = FALSE;
 
-    if(res != ERROR_SUCCESS)
-        INTERNET_SetLastError(res);
-
-    TRACE("%d <--\n", bSuccess);
-    return bSuccess;
+    TRACE("%d <--\n", res);
+    return res;
 }
 
 
