@@ -1328,7 +1328,8 @@ BOOLEAN WINAPI RtlValidAcl(PACL pAcl)
                             ret = FALSE;
                             break;
                         }
-                        ace = (PACE_HEADER)(((BYTE*)ace)+ace->AceSize);
+                        if (i != pAcl->AceCount)
+                            ace = (PACE_HEADER)(((BYTE*)ace)+ace->AceSize);
                     }
                 }
 	}
