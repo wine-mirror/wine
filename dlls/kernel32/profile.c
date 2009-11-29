@@ -1173,14 +1173,13 @@ INT WINAPI GetPrivateProfileStringA( LPCSTR section, LPCSTR entry,
                                      filenameW.Buffer);
     if (len)
     {
-        ret = WideCharToMultiByte(CP_ACP, 0, bufferW, retW + 1, buffer, len, NULL, NULL);
-        if (!ret)
+        if (retW)
         {
-            ret = len - 1;
-            buffer[ret] = 0;
+            ret = WideCharToMultiByte(CP_ACP, 0, bufferW, retW, buffer, len - 1, NULL, NULL);
+            if (!ret)
+                ret = len - 1;
         }
-        else
-            ret--; /* strip terminating 0 */
+        buffer[ret] = 0;
     }
 
     RtlFreeUnicodeString(&sectionW);
