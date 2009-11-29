@@ -1143,8 +1143,8 @@ static HRESULT PropertyStorage_ReadProperty(PropertyStorage_impl *This,
                 prop->u.pclipdata = CoTaskMemAlloc(sizeof (CLIPDATA));
                 prop->u.pclipdata->cbSize = len;
                 prop->u.pclipdata->ulClipFmt = tag;
-                prop->u.pclipdata->pClipData = CoTaskMemAlloc(len);
-                memcpy(prop->u.pclipdata->pClipData, data+8, len);
+                prop->u.pclipdata->pClipData = CoTaskMemAlloc(len - sizeof(prop->u.pclipdata->ulClipFmt));
+                memcpy(prop->u.pclipdata->pClipData, data+8, len - sizeof(prop->u.pclipdata->ulClipFmt));
             }
             else
                 hr = STG_E_INVALIDPARAMETER;
@@ -1735,7 +1735,8 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
         hr = IStream_Write(This->stm, cf_hdr, sizeof(cf_hdr), &count);
         if (FAILED(hr))
             goto end;
-        hr = IStream_Write(This->stm, var->u.pclipdata->pClipData, len, &count);
+        hr = IStream_Write(This->stm, var->u.pclipdata->pClipData,
+                           len - sizeof(var->u.pclipdata->ulClipFmt), &count);
         if (FAILED(hr))
             goto end;
         bytesWritten = count + sizeof cf_hdr;
