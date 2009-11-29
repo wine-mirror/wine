@@ -1156,7 +1156,7 @@ static DWORD FTPFILE_ReadFileExW(object_header_t *hdr, INTERNET_BUFFERSW *buffer
     return FTPFILE_ReadFile(hdr, buffers->lpvBuffer, buffers->dwBufferLength, &buffers->dwBufferLength);
 }
 
-static BOOL FTPFILE_WriteFile(object_header_t *hdr, const void *buffer, DWORD size, DWORD *written)
+static DWORD FTPFILE_WriteFile(object_header_t *hdr, const void *buffer, DWORD size, DWORD *written)
 {
     ftp_file_t *lpwh = (ftp_file_t*) hdr;
     int res;
@@ -1164,7 +1164,7 @@ static BOOL FTPFILE_WriteFile(object_header_t *hdr, const void *buffer, DWORD si
     res = send(lpwh->nDataSocket, buffer, size, 0);
 
     *written = res>0 ? res : 0;
-    return res >= 0;
+    return res >= 0 ? ERROR_SUCCESS : sock_get_error(errno);
 }
 
 static void FTP_ReceiveRequestData(ftp_file_t *file, BOOL first_notif)

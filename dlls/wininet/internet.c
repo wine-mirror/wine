@@ -1862,7 +1862,7 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer,
 	DWORD dwNumOfBytesToWrite, LPDWORD lpdwNumOfBytesWritten)
 {
     object_header_t *lpwh;
-    BOOL retval = FALSE;
+    BOOL res;
 
     TRACE("(%p %p %d %p)\n", hFile, lpBuffer, dwNumOfBytesToWrite, lpdwNumOfBytesWritten);
 
@@ -1874,16 +1874,17 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer,
     }
 
     if(lpwh->vtbl->WriteFile) {
-        retval = lpwh->vtbl->WriteFile(lpwh, lpBuffer, dwNumOfBytesToWrite, lpdwNumOfBytesWritten);
+        res = lpwh->vtbl->WriteFile(lpwh, lpBuffer, dwNumOfBytesToWrite, lpdwNumOfBytesWritten);
     }else {
         WARN("No Writefile method.\n");
-        SetLastError(ERROR_INVALID_HANDLE);
-        retval = FALSE;
+        res = ERROR_INVALID_HANDLE;
     }
 
     WININET_Release( lpwh );
 
-    return retval;
+    if(res != ERROR_SUCCESS)
+        SetLastError(res);
+    return res == ERROR_SUCCESS;
 }
 
 

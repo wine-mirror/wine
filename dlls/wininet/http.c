@@ -2489,7 +2489,7 @@ done:
     return res;
 }
 
-static BOOL HTTPREQ_WriteFile(object_header_t *hdr, const void *buffer, DWORD size, DWORD *written)
+static DWORD HTTPREQ_WriteFile(object_header_t *hdr, const void *buffer, DWORD size, DWORD *written)
 {
     DWORD res;
     http_request_t *lpwhr = (http_request_t*)hdr;
@@ -2500,11 +2500,9 @@ static BOOL HTTPREQ_WriteFile(object_header_t *hdr, const void *buffer, DWORD si
     res = NETCON_send(&lpwhr->netConnection, buffer, size, 0, (LPINT)written);
     if (res == ERROR_SUCCESS)
         lpwhr->dwBytesWritten += *written;
-    else
-        SetLastError(res);
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext, INTERNET_STATUS_REQUEST_SENT, written, sizeof(DWORD));
-    return res == ERROR_SUCCESS;
+    return res;
 }
 
 static void HTTPREQ_AsyncQueryDataAvailableProc(WORKREQUEST *workRequest)

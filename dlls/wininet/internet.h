@@ -143,7 +143,7 @@ typedef struct {
     DWORD (*ReadFile)(object_header_t*,void*,DWORD,DWORD*);
     DWORD (*ReadFileExA)(object_header_t*,INTERNET_BUFFERSA*,DWORD,DWORD_PTR);
     DWORD (*ReadFileExW)(object_header_t*,INTERNET_BUFFERSW*,DWORD,DWORD_PTR);
-    BOOL (*WriteFile)(object_header_t*,const void*,DWORD,DWORD*);
+    DWORD (*WriteFile)(object_header_t*,const void*,DWORD,DWORD*);
     DWORD (*QueryDataAvailable)(object_header_t*,DWORD*,DWORD,DWORD_PTR);
     DWORD (*FindNextFileW)(object_header_t*,void*);
 } object_vtbl_t;
@@ -443,6 +443,7 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
 BOOL NETCON_query_data_available(WININET_NETCONNECTION *connection, DWORD *available);
 LPCVOID NETCON_GetCert(WININET_NETCONNECTION *connection);
 DWORD NETCON_set_timeout(WININET_NETCONNECTION *connection, BOOL send, int value);
+int sock_get_error(int);
 
 extern void URLCacheContainers_CreateDefaults(void);
 extern void URLCacheContainers_DeleteAll(void);

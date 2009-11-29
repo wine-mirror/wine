@@ -315,7 +315,7 @@ BOOL NETCON_connected(WININET_NETCONNECTION *connection)
 }
 
 /* translate a unix error code into a winsock one */
-static int sock_get_error( int err )
+int sock_get_error( int err )
 {
 #if !defined(__MINGW32__) && !defined (_MSC_VER)
     switch (err)
