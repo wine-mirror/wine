@@ -432,7 +432,7 @@ BOOL NETCON_init(WININET_NETCONNECTION *connnection, BOOL useSSL);
 void NETCON_unload(void);
 DWORD NETCON_create(WININET_NETCONNECTION *connection, int domain,
 	      int type, int protocol);
-BOOL NETCON_close(WININET_NETCONNECTION *connection);
+DWORD NETCON_close(WININET_NETCONNECTION *connection);
 DWORD NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *serv_addr,
 		    unsigned int addrlen);
 DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPCWSTR hostname);

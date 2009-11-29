@@ -404,11 +404,11 @@ DWORD NETCON_create(WININET_NETCONNECTION *connection, int domain,
  * NETCON_close
  * Basically calls 'close()' unless we should use SSL
  */
-BOOL NETCON_close(WININET_NETCONNECTION *connection)
+DWORD NETCON_close(WININET_NETCONNECTION *connection)
 {
     int result;
 
-    if (!NETCON_connected(connection)) return FALSE;
+    if (!NETCON_connected(connection)) return ERROR_SUCCESS;
 
 #ifdef SONAME_LIBSSL
     if (connection->useSSL)
@@ -425,11 +425,8 @@ BOOL NETCON_close(WININET_NETCONNECTION *connection)
     connection->socketFD = -1;
 
     if (result == -1)
-    {
-        INTERNET_SetLastError(sock_get_error(errno));
-        return FALSE;
-    }
-    return TRUE;
+        return sock_get_error(errno);
+    return ERROR_SUCCESS;
 }
 #ifdef SONAME_LIBSSL
 static BOOL check_hostname(X509 *cert, char *hostname)
