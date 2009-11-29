@@ -385,21 +385,19 @@ static int sock_get_error( int err )
  * NETCON_create
  * Basically calls 'socket()'
  */
-BOOL NETCON_create(WININET_NETCONNECTION *connection, int domain,
+DWORD NETCON_create(WININET_NETCONNECTION *connection, int domain,
 	      int type, int protocol)
 {
 #ifdef SONAME_LIBSSL
     if (connection->useSSL)
-        return FALSE;
+        return ERROR_NOT_SUPPORTED;
 #endif
 
     connection->socketFD = socket(domain, type, protocol);
     if (connection->socketFD == -1)
-    {
-        INTERNET_SetLastError(sock_get_error(errno));
-        return FALSE;
-    }
-    return TRUE;
+        return sock_get_error(errno);
+
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************************

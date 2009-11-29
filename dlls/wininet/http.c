@@ -4314,6 +4314,7 @@ static BOOL HTTP_OpenConnection(http_request_t *lpwhr)
     appinfo_t *hIC = NULL;
     char szaddr[INET6_ADDRSTRLEN];
     const void *addr;
+    DWORD res = ERROR_SUCCESS;
 
     TRACE("-->\n");
 
@@ -4353,10 +4354,10 @@ static BOOL HTTP_OpenConnection(http_request_t *lpwhr)
                           szaddr,
                           strlen(szaddr)+1);
 
-    if (!NETCON_create(&lpwhr->netConnection, lpwhs->socketAddress.ss_family,
-                         SOCK_STREAM, 0))
+    res = NETCON_create(&lpwhr->netConnection, lpwhs->socketAddress.ss_family, SOCK_STREAM, 0);
+    if (res != ERROR_SUCCESS)
     {
-        WARN("Socket creation failed: %u\n", INTERNET_GetLastError());
+        WARN("Socket creation failed: %u\n", res);
         goto lend;
     }
 
@@ -4391,6 +4392,9 @@ static BOOL HTTP_OpenConnection(http_request_t *lpwhr)
 lend:
     lpwhr->read_pos = lpwhr->read_size = 0;
     lpwhr->read_chunked = FALSE;
+
+    if(res != ERROR_SUCCESS)
+        INTERNET_SetLastError(res);
 
     TRACE("%d <--\n", bSuccess);
     return bSuccess;
