@@ -2594,7 +2594,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(http_session_t *lpwhs,
     LPWSTR lpszHostName = NULL;
     HINTERNET handle = NULL;
     static const WCHAR szHostForm[] = {'%','s',':','%','u',0};
-    DWORD len;
+    DWORD len, res;
 
     TRACE("-->\n");
 
@@ -2636,10 +2636,11 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(http_session_t *lpwhs,
         goto lend;
     }
 
-    if (!NETCON_init(&lpwhr->netConnection, dwFlags & INTERNET_FLAG_SECURE))
+    if ((res = NETCON_init(&lpwhr->netConnection, dwFlags & INTERNET_FLAG_SECURE)) != ERROR_SUCCESS)
     {
         InternetCloseHandle( handle );
         handle = NULL;
+        INTERNET_SetLastError(res);
         goto lend;
     }
 
@@ -3694,7 +3695,11 @@ static BOOL HTTP_HandleRedirect(http_request_t *lpwhr, LPCWSTR lpszUrl)
                     INTERNET_SetLastError(res);
                     return FALSE;
                 }
-                if (!NETCON_init(&lpwhr->netConnection, lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE)) return FALSE;
+                res = NETCON_init(&lpwhr->netConnection, lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE);
+                if (res != ERROR_SUCCESS) {
+                    INTERNET_SetLastError(res);
+                    return FALSE;
+                }
                 lpwhr->read_pos = lpwhr->read_size = 0;
                 lpwhr->read_chunked = FALSE;
             }

@@ -163,7 +163,7 @@ static void ssl_lock_callback(int mode, int type, const char *file, int line)
 
 #endif
 
-BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
+DWORD NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 {
     connection->useSSL = FALSE;
     connection->socketFD = -1;
@@ -177,25 +177,23 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	if (OpenSSL_ssl_handle) /* already initialized everything */
         {
             LeaveCriticalSection(&init_ssl_cs);
-            return TRUE;
+            return ERROR_SUCCESS;
         }
 	OpenSSL_ssl_handle = wine_dlopen(SONAME_LIBSSL, RTLD_NOW, NULL, 0);
 	if (!OpenSSL_ssl_handle)
 	{
 	    ERR("trying to use a SSL connection, but couldn't load %s. Expect trouble.\n",
 		SONAME_LIBSSL);
-            INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR);
             LeaveCriticalSection(&init_ssl_cs);
-            return FALSE;
+            return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
 	}
 	OpenSSL_crypto_handle = wine_dlopen(SONAME_LIBCRYPTO, RTLD_NOW, NULL, 0);
 	if (!OpenSSL_crypto_handle)
 	{
 	    ERR("trying to use a SSL connection, but couldn't load %s. Expect trouble.\n",
 		SONAME_LIBCRYPTO);
-            INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR);
             LeaveCriticalSection(&init_ssl_cs);
-            return FALSE;
+            return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
 	}
 
         /* mmm nice ugly macroness */
@@ -204,9 +202,8 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
     if (!p##x) \
     { \
         ERR("failed to load symbol %s\n", #x); \
-        INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR); \
         LeaveCriticalSection(&init_ssl_cs); \
-        return FALSE; \
+        return ERROR_INTERNET_SECURITY_CHANNEL_ERROR; \
     }
 
 	DYNSSL(SSL_library_init);
@@ -234,9 +231,8 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
     if (!p##x) \
     { \
         ERR("failed to load symbol %s\n", #x); \
-        INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR); \
         LeaveCriticalSection(&init_ssl_cs); \
-        return FALSE; \
+        return ERROR_INTERNET_SECURITY_CHANNEL_ERROR; \
     }
 	DYNCRYPTO(BIO_new_fp);
 	DYNCRYPTO(CRYPTO_num_locks);
@@ -257,9 +253,8 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
         {
             ERR("SSL_CTX_set_default_verify_paths failed: %s\n",
                 pERR_error_string(pERR_get_error(), 0));
-            INTERNET_SetLastError(ERROR_OUTOFMEMORY);
             LeaveCriticalSection(&init_ssl_cs);
-            return FALSE;
+            return ERROR_OUTOFMEMORY;
         }
 
         pCRYPTO_set_id_callback(ssl_thread_id);
@@ -267,9 +262,8 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
                 pCRYPTO_num_locks() * sizeof(CRITICAL_SECTION));
         if (!ssl_locks)
         {
-            INTERNET_SetLastError(ERROR_OUTOFMEMORY);
             LeaveCriticalSection(&init_ssl_cs);
-            return FALSE;
+            return ERROR_OUTOFMEMORY;
         }
         for (i = 0; i < pCRYPTO_num_locks(); i++)
             InitializeCriticalSection(&ssl_locks[i]);
@@ -277,11 +271,10 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
         LeaveCriticalSection(&init_ssl_cs);
 #else
 	FIXME("can't use SSL, not compiled in.\n");
-        INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR);
-        return FALSE;
+        return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
 #endif
     }
-    return TRUE;
+    return ERROR_SUCCESS;
 }
 
 void NETCON_unload(void)
