@@ -113,7 +113,6 @@ static struct mixer	MIX_Mixers[MAX_MIXERDRV];
 
 static const char * getMessage(UINT uMsg)
 {
-    static char str[64];
 #define MSG_TO_STR(x) case x: return #x;
     switch (uMsg) {
     MSG_TO_STR(DRVM_INIT);
@@ -130,13 +129,11 @@ static const char * getMessage(UINT uMsg)
     MSG_TO_STR(MXDM_SETCONTROLDETAILS);
     }
 #undef MSG_TO_STR
-    sprintf(str, "UNKNOWN(%08x)", uMsg);
-    return str;
+    return wine_dbg_sprintf("UNKNOWN(%08x)", uMsg);
 }
 
 static const char * getIoctlCommand(int command)
 {
-    static char str[64];
 #define IOCTL_TO_STR(x) case x: return #x;
     switch (command) {
     IOCTL_TO_STR(SOUND_MIXER_VOLUME);
@@ -172,13 +169,11 @@ static const char * getIoctlCommand(int command)
 #endif
     }
 #undef IOCTL_TO_STR
-    sprintf(str, "UNKNOWN(%08x)", command);
-    return str;
+    return wine_dbg_sprintf("UNKNOWN(%08x)", command);
 }
 
 static const char * getControlType(DWORD dwControlType)
 {
-    static char str[64];
 #define TYPE_TO_STR(x) case x: return #x
     switch (dwControlType) {
     TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_CUSTOM);
@@ -214,13 +209,11 @@ static const char * getControlType(DWORD dwControlType)
     TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_MILLITIME);
     }
 #undef TYPE_TO_STR
-    sprintf(str, "UNKNOWN(%08x)", dwControlType);
-    return str;
+    return wine_dbg_sprintf("UNKNOWN(%08x)", dwControlType);
 }
 
 static const char * getComponentType(DWORD dwComponentType)
 {
-    static char str[64];
 #define TYPE_TO_STR(x) case x: return #x;
     switch (dwComponentType) {
     TYPE_TO_STR(MIXERLINE_COMPONENTTYPE_DST_UNDEFINED);
@@ -245,13 +238,11 @@ static const char * getComponentType(DWORD dwComponentType)
     TYPE_TO_STR(MIXERLINE_COMPONENTTYPE_SRC_ANALOG);
     }
 #undef TYPE_TO_STR
-    sprintf(str, "UNKNOWN(%08x)", dwComponentType);
-    return str;
+    return wine_dbg_sprintf("UNKNOWN(%08x)", dwComponentType);
 }
 
 static const char * getTargetType(DWORD dwType)
 {
-    static char str[64];
 #define TYPE_TO_STR(x) case x: return #x;
     switch (dwType) {
     TYPE_TO_STR(MIXERLINE_TARGETTYPE_UNDEFINED);
@@ -262,8 +253,7 @@ static const char * getTargetType(DWORD dwType)
     TYPE_TO_STR(MIXERLINE_TARGETTYPE_AUX);
     }
 #undef TYPE_TO_STR
-    sprintf(str, "UNKNOWN(%08x)", dwType);
-    return str;
+    return wine_dbg_sprintf("UNKNOWN(%08x)", dwType);
 }
 
 static const WCHAR sz_short_volume [] = {'V','o','l',0};

@@ -107,7 +107,6 @@ unsigned        numInDev;
 /* These strings used only for tracing */
 static const char * getCmdString(enum win_wm_message msg)
 {
-    static char unknown[32];
 #define MSG_TO_STR(x) case x: return #x
     switch(msg) {
     MSG_TO_STR(WINE_WM_PAUSING);
@@ -121,8 +120,7 @@ static const char * getCmdString(enum win_wm_message msg)
     MSG_TO_STR(WINE_WM_STOPPING);
     }
 #undef MSG_TO_STR
-    sprintf(unknown, "UNKNOWN(0x%08x)", msg);
-    return unknown;
+    return wine_dbg_sprintf("UNKNOWN(0x%08x)", msg);
 }
 
 int getEnables(OSS_DEVICE *ossdev)
@@ -133,7 +131,6 @@ int getEnables(OSS_DEVICE *ossdev)
 
 static const char * getMessage(UINT msg)
 {
-    static char unknown[32];
 #define MSG_TO_STR(x) case x: return #x
     switch(msg) {
     MSG_TO_STR(DRVM_INIT);
@@ -175,8 +172,7 @@ static const char * getMessage(UINT msg)
     MSG_TO_STR(DRV_QUERYDSOUNDDESC);
     }
 #undef MSG_TO_STR
-    sprintf(unknown, "UNKNOWN(0x%04x)", msg);
-    return unknown;
+    return wine_dbg_sprintf("UNKNOWN(0x%04x)", msg);
 }
 
 static DWORD wodDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
