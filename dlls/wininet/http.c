@@ -200,9 +200,9 @@ static CRITICAL_SECTION authcache_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static DWORD HTTP_OpenConnection(http_request_t *req);
 static BOOL HTTP_GetResponseHeaders(http_request_t *req, BOOL clear);
-static BOOL HTTP_ProcessHeader(http_request_t *req, LPCWSTR field, LPCWSTR value, DWORD dwModifier);
+static DWORD HTTP_ProcessHeader(http_request_t *req, LPCWSTR field, LPCWSTR value, DWORD dwModifier);
 static LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer);
-static BOOL HTTP_InsertCustomHeader(http_request_t *req, LPHTTPHEADERW lpHdr);
+static DWORD HTTP_InsertCustomHeader(http_request_t *req, LPHTTPHEADERW lpHdr);
 static INT HTTP_GetCustomHeaderIndex(http_request_t *req, LPCWSTR lpszField, INT index, BOOL Request);
 static BOOL HTTP_DeleteCustomHeader(http_request_t *req, DWORD index);
 static LPWSTR HTTP_build_req( LPCWSTR *list, int len );
@@ -884,14 +884,13 @@ static BOOL HTTP_DoAuthorization( http_request_t *lpwhr, LPCWSTR pszAuthValue,
 /***********************************************************************
  *           HTTP_HttpAddRequestHeadersW (internal)
  */
-static BOOL HTTP_HttpAddRequestHeadersW(http_request_t *lpwhr,
+static DWORD HTTP_HttpAddRequestHeadersW(http_request_t *lpwhr,
 	LPCWSTR lpszHeader, DWORD dwHeaderLength, DWORD dwModifier)
 {
     LPWSTR lpszStart;
     LPWSTR lpszEnd;
     LPWSTR buffer;
-    BOOL bSuccess = FALSE;
-    DWORD len;
+    DWORD len, res = ERROR_HTTP_INVALID_HEADER;
 
     TRACE("copying header: %s\n", debugstr_wn(lpszHeader, dwHeaderLength));
 
@@ -930,25 +929,25 @@ static BOOL HTTP_HttpAddRequestHeadersW(http_request_t *lpwhr,
         {
             /* Skip 0-length headers */
             lpszStart = lpszEnd;
-            bSuccess = TRUE;
+            res = ERROR_SUCCESS;
             continue;
         }
         pFieldAndValue = HTTP_InterpretHttpHeader(lpszStart);
         if (pFieldAndValue)
         {
-            bSuccess = HTTP_VerifyValidHeader(lpwhr, pFieldAndValue[0]);
-            if (bSuccess)
-                bSuccess = HTTP_ProcessHeader(lpwhr, pFieldAndValue[0],
+            res = HTTP_VerifyValidHeader(lpwhr, pFieldAndValue[0]);
+            if (res == ERROR_SUCCESS)
+                res = HTTP_ProcessHeader(lpwhr, pFieldAndValue[0],
                     pFieldAndValue[1], dwModifier | HTTP_ADDHDR_FLAG_REQ);
             HTTP_FreeTokens(pFieldAndValue);
         }
 
         lpszStart = lpszEnd;
-    } while (bSuccess);
+    } while (res == ERROR_SUCCESS);
 
     HeapFree(GetProcessHeap(), 0, buffer);
 
-    return bSuccess;
+    return res;
 }
 
 /***********************************************************************
@@ -970,8 +969,8 @@ static BOOL HTTP_HttpAddRequestHeadersW(http_request_t *lpwhr,
 BOOL WINAPI HttpAddRequestHeadersW(HINTERNET hHttpRequest,
 	LPCWSTR lpszHeader, DWORD dwHeaderLength, DWORD dwModifier)
 {
-    BOOL bSuccess = FALSE;
     http_request_t *lpwhr;
+    DWORD res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
 
     TRACE("%p, %s, %i, %i\n", hHttpRequest, debugstr_wn(lpszHeader, dwHeaderLength), dwHeaderLength, dwModifier);
 
@@ -979,17 +978,14 @@ BOOL WINAPI HttpAddRequestHeadersW(HINTERNET hHttpRequest,
       return TRUE;
 
     lpwhr = (http_request_t*) WININET_GetObject( hHttpRequest );
-    if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
-    {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-        goto lend;
-    }
-    bSuccess = HTTP_HttpAddRequestHeadersW( lpwhr, lpszHeader, dwHeaderLength, dwModifier );
-lend:
+    if (lpwhr && lpwhr->hdr.htype == WH_HHTTPREQ)
+        res = HTTP_HttpAddRequestHeadersW( lpwhr, lpszHeader, dwHeaderLength, dwModifier );
     if( lpwhr )
         WININET_Release( &lpwhr->hdr );
 
-    return bSuccess;
+    if(res != ERROR_SUCCESS)
+        SetLastError(res);
+    return res == ERROR_SUCCESS;
 }
 
 /***********************************************************************
@@ -4665,12 +4661,12 @@ static LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer)
 
 #define COALESCEFLAGS (HTTP_ADDHDR_FLAG_COALESCE|HTTP_ADDHDR_FLAG_COALESCE_WITH_COMMA|HTTP_ADDHDR_FLAG_COALESCE_WITH_SEMICOLON)
 
-static BOOL HTTP_ProcessHeader(http_request_t *lpwhr, LPCWSTR field, LPCWSTR value, DWORD dwModifier)
+static DWORD HTTP_ProcessHeader(http_request_t *lpwhr, LPCWSTR field, LPCWSTR value, DWORD dwModifier)
 {
     LPHTTPHEADERW lphttpHdr = NULL;
-    BOOL bSuccess = FALSE;
     INT index = -1;
     BOOL request_only = dwModifier & HTTP_ADDHDR_FLAG_REQ;
+    DWORD res = ERROR_HTTP_INVALID_HEADER;
 
     TRACE("--> %s: %s - 0x%08x\n", debugstr_w(field), debugstr_w(value), dwModifier);
 
@@ -4686,9 +4682,7 @@ static BOOL HTTP_ProcessHeader(http_request_t *lpwhr, LPCWSTR field, LPCWSTR val
     if (index >= 0)
     {
         if (dwModifier & HTTP_ADDHDR_FLAG_ADD_IF_NEW)
-        {
-            return FALSE;
-        }
+            return ERROR_HTTP_INVALID_HEADER;
         lphttpHdr = &lpwhr->pCustHeaders[index];
     }
     else if (value)
@@ -4705,7 +4699,7 @@ static BOOL HTTP_ProcessHeader(http_request_t *lpwhr, LPCWSTR field, LPCWSTR val
         return HTTP_InsertCustomHeader(lpwhr, &hdr);
     }
     /* no value to delete */
-    else return TRUE;
+    else return ERROR_SUCCESS;
 
     if (dwModifier & HTTP_ADDHDR_FLAG_REQ)
 	    lphttpHdr->wFlags |= HDR_ISREQUEST;
@@ -4730,7 +4724,7 @@ static BOOL HTTP_ProcessHeader(http_request_t *lpwhr, LPCWSTR field, LPCWSTR val
             return HTTP_InsertCustomHeader(lpwhr, &hdr);
         }
 
-        return TRUE;
+        return ERROR_SUCCESS;
     }
     else if (dwModifier & COALESCEFLAGS)
     {
@@ -4768,16 +4762,16 @@ static BOOL HTTP_ProcessHeader(http_request_t *lpwhr, LPCWSTR field, LPCWSTR val
 
             memcpy(&lphttpHdr->lpszValue[origlen], value, valuelen*sizeof(WCHAR));
             lphttpHdr->lpszValue[len] = '\0';
-            bSuccess = TRUE;
+            res = ERROR_SUCCESS;
         }
         else
         {
             WARN("HeapReAlloc (%d bytes) failed\n",len+1);
-            INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+            res = ERROR_OUTOFMEMORY;
         }
     }
-    TRACE("<-- %d\n",bSuccess);
-    return bSuccess;
+    TRACE("<-- %d\n", res);
+    return res;
 }
 
 
@@ -4848,11 +4842,10 @@ static INT HTTP_GetCustomHeaderIndex(http_request_t *lpwhr, LPCWSTR lpszField,
  * Insert header into array
  *
  */
-static BOOL HTTP_InsertCustomHeader(http_request_t *lpwhr, LPHTTPHEADERW lpHdr)
+static DWORD HTTP_InsertCustomHeader(http_request_t *lpwhr, LPHTTPHEADERW lpHdr)
 {
     INT count;
     LPHTTPHEADERW lph = NULL;
-    BOOL r = FALSE;
 
     TRACE("--> %s: %s\n", debugstr_w(lpHdr->lpszField), debugstr_w(lpHdr->lpszValue));
     count = lpwhr->nCustHeaders + 1;
@@ -4861,22 +4854,17 @@ static BOOL HTTP_InsertCustomHeader(http_request_t *lpwhr, LPHTTPHEADERW lpHdr)
     else
 	lph = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(HTTPHEADERW) * count);
 
-    if (NULL != lph)
-    {
-	lpwhr->pCustHeaders = lph;
-        lpwhr->pCustHeaders[count-1].lpszField = heap_strdupW(lpHdr->lpszField);
-        lpwhr->pCustHeaders[count-1].lpszValue = heap_strdupW(lpHdr->lpszValue);
-        lpwhr->pCustHeaders[count-1].wFlags = lpHdr->wFlags;
-        lpwhr->pCustHeaders[count-1].wCount= lpHdr->wCount;
-	lpwhr->nCustHeaders++;
-        r = TRUE;
-    }
-    else
-    {
-        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
-    }
+    if (!lph)
+        return ERROR_OUTOFMEMORY;
 
-    return r;
+    lpwhr->pCustHeaders = lph;
+    lpwhr->pCustHeaders[count-1].lpszField = heap_strdupW(lpHdr->lpszField);
+    lpwhr->pCustHeaders[count-1].lpszValue = heap_strdupW(lpHdr->lpszValue);
+    lpwhr->pCustHeaders[count-1].wFlags = lpHdr->wFlags;
+    lpwhr->pCustHeaders[count-1].wCount= lpHdr->wCount;
+    lpwhr->nCustHeaders++;
+
+    return ERROR_SUCCESS;
 }
 
 
@@ -4915,9 +4903,9 @@ static BOOL HTTP_VerifyValidHeader(http_request_t *lpwhr, LPCWSTR field)
 {
     /* Accept-Encoding is stripped from HTTP/1.0 requests. It is invalid */
     if (!strcmpW(lpwhr->lpszVersion, g_szHttp1_0) && !strcmpiW(field, szAccept_Encoding))
-        return FALSE;
+        return ERROR_HTTP_INVALID_HEADER;
 
-    return TRUE;
+    return ERROR_SUCCESS;
 }
 
 /***********************************************************************
