@@ -1582,8 +1582,34 @@ static DWORD verify_cert_revocation(PCCERT_CONTEXT cert, DWORD index,
      0, NULL, &cbUrlArray, NULL, NULL, NULL);
     if (!ret && GetLastError() == CRYPT_E_NOT_FOUND)
     {
-        error = CRYPT_E_NO_REVOCATION_CHECK;
-        pRevStatus->dwIndex = index;
+        if (pRevPara && pRevPara->hCrlStore && pRevPara->pIssuerCert)
+        {
+            PCCRL_CONTEXT crl;
+
+            /* If the caller was helpful enough to tell us where to find a CRL
+             * for the cert, look for one and check it.
+             */
+            crl = CertFindCRLInStore(pRevPara->hCrlStore,
+             cert->dwCertEncodingType,
+             CRL_FIND_ISSUED_BY_SIGNATURE_FLAG | CRL_FIND_ISSUED_BY_AKI_FLAG,
+             CRL_FIND_ISSUED_BY, pRevPara->pIssuerCert, NULL);
+            if (crl)
+            {
+                error = verify_cert_revocation_with_crl(cert, crl, index,
+                 pTime, pRevStatus);
+                CertFreeCRLContext(crl);
+            }
+            else
+            {
+                error = CRYPT_E_NO_REVOCATION_CHECK;
+                pRevStatus->dwIndex = index;
+            }
+        }
+        else
+        {
+            error = CRYPT_E_NO_REVOCATION_CHECK;
+            pRevStatus->dwIndex = index;
+        }
     }
     else if (ret)
     {
