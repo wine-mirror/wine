@@ -435,7 +435,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
    * Check that we're compatible with the parent's storage mode, but
    * only if we are not in transacted mode
    */
-  if(!(This->ancestorStorage->base.openFlags & STGM_TRANSACTED)) {
+  if(!(This->openFlags & STGM_TRANSACTED)) {
     if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( This->openFlags ) )
     {
       res = STG_E_ACCESSDENIED;
@@ -560,7 +560,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
    * Check that we're compatible with the parent's storage mode,
    * but only if we are not transacted
    */
-  if(!(This->ancestorStorage->base.openFlags & STGM_TRANSACTED)) {
+  if(!(This->openFlags & STGM_TRANSACTED)) {
     if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( This->openFlags ) )
     {
       res = STG_E_ACCESSDENIED;
@@ -848,7 +848,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
    * Check that we're compatible with the parent's storage mode
    * if not in transacted mode
    */
-  if(!(This->ancestorStorage->base.openFlags & STGM_TRANSACTED)) {
+  if(!(This->openFlags & STGM_TRANSACTED)) {
     if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( This->openFlags ) )
       return STG_E_ACCESSDENIED;
   }
