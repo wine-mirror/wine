@@ -3720,14 +3720,14 @@ BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 }
 
 /*****************************************************************************
- *          WINSPOOL_EnumPrinters
+ *          WINSPOOL_EnumPrintersW
  *
- *    Implementation of EnumPrintersA|W
+ *    Implementation of EnumPrintersW
  */
-static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
+static BOOL WINSPOOL_EnumPrintersW(DWORD dwType, LPWSTR lpszName,
 				  DWORD dwLevel, LPBYTE lpbPrinters,
 				  DWORD cbBuf, LPDWORD lpdwNeeded,
-				  LPDWORD lpdwReturned, BOOL unicode)
+				  LPDWORD lpdwReturned)
 
 {
     HKEY hkeyPrinters, hkeyPrinter;
@@ -3824,25 +3824,25 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
 	switch(dwLevel) {
 	case 1:
 	    WINSPOOL_GetPrinter_1(hkeyPrinter, (PRINTER_INFO_1W *)pi, buf,
-				  left, &needed, unicode);
+				  left, &needed, TRUE);
 	    used += needed;
 	    if(pi) pi += sizeof(PRINTER_INFO_1W);
 	    break;
 	case 2:
 	    WINSPOOL_GetPrinter_2(hkeyPrinter, (PRINTER_INFO_2W *)pi, buf,
-				  left, &needed, unicode);
+				  left, &needed, TRUE);
 	    used += needed;
 	    if(pi) pi += sizeof(PRINTER_INFO_2W);
 	    break;
 	case 4:
 	    WINSPOOL_GetPrinter_4(hkeyPrinter, (PRINTER_INFO_4W *)pi, buf,
-				  left, &needed, unicode);
+				  left, &needed, TRUE);
 	    used += needed;
 	    if(pi) pi += sizeof(PRINTER_INFO_4W);
 	    break;
 	case 5:
 	    WINSPOOL_GetPrinter_5(hkeyPrinter, (PRINTER_INFO_5W *)pi, buf,
-				  left, &needed, unicode);
+				  left, &needed, TRUE);
 	    used += needed;
 	    if(pi) pi += sizeof(PRINTER_INFO_5W);
 	    break;
@@ -3932,8 +3932,8 @@ BOOL  WINAPI EnumPrintersW(
 		LPDWORD lpdwReturned /* [out] number of entries returned */
 		)
 {
-    return WINSPOOL_EnumPrinters(dwType, lpszName, dwLevel, lpbPrinters, cbBuf,
-				 lpdwNeeded, lpdwReturned, TRUE);
+    return WINSPOOL_EnumPrintersW(dwType, lpszName, dwLevel, lpbPrinters, cbBuf,
+				 lpdwNeeded, lpdwReturned);
 }
 
 /******************************************************************
