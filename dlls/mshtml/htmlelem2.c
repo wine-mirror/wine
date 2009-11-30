@@ -689,7 +689,7 @@ static HRESULT WINAPI HTMLElement2_put_onreadystatechange(IHTMLElement2 *iface, 
 {
     HTMLElement *This = HTMLELEM2_THIS(iface);
 
-    FIXME("(%p)->(%s): semi-stub\n", This, debugstr_variant(&v));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
     return set_node_event(&This->node, EVENTID_READYSTATECHANGE, &v);
 }

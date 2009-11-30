@@ -36,6 +36,7 @@
 #include "wine/unicode.h"
 
 #include "mshtml_private.h"
+#include "htmlevent.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -274,8 +275,11 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc)
 void set_ready_state(HTMLWindow *window, READYSTATE readystate)
 {
     window->readystate = readystate;
-    if(window->doc_obj->basedoc.window == window)
+    if(window->doc_obj && window->doc_obj->basedoc.window == window)
         call_property_onchanged(&window->doc_obj->basedoc.cp_propnotif, DISPID_READYSTATE);
+    if(window->frame_element)
+        fire_event(window->frame_element->element.node.doc, EVENTID_READYSTATECHANGE,
+                   window->frame_element->element.node.nsnode, NULL);
 }
 
 static HRESULT get_doc_string(HTMLDocumentNode *This, char **str)
