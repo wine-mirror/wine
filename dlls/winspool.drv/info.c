@@ -3514,16 +3514,18 @@ static BOOL WINSPOOL_GetPrinter_7(HKEY hkeyPrinter, PRINTER_INFO_7W *pi7, LPBYTE
 
     *pcbNeeded = 0;
 
-    if (WINSPOOL_GetStringFromReg(hkeyPrinter, ObjectGUIDW, ptr, left, &size, unicode))
+    if (! WINSPOOL_GetStringFromReg(hkeyPrinter, ObjectGUIDW, ptr, left, &size, unicode))
     {
-        if (space && size <= left) {
-            pi7->pszObjectGUID = (LPWSTR)ptr;
-            ptr += size;
-            left -= size;
-        } else
-            space = FALSE;
-        *pcbNeeded += size;
+        ptr = NULL;
+        size = sizeof(pi7->pszObjectGUID);
     }
+    if (space && size <= left) {
+        pi7->pszObjectGUID = (LPWSTR)ptr;
+        ptr += size;
+        left -= size;
+    } else
+        space = FALSE;
+    *pcbNeeded += size;
     if (pi7) {
         /* We do not have a Directory Service */
         pi7->dwAction = DSPRINT_UNPUBLISH;

@@ -2260,13 +2260,7 @@ static void test_GetPrinter(void)
         SetLastError(0xdeadbeef);
         filled = -1;
         ret = GetPrinter(hprn, level, buf, needed, &filled);
-        if (level == 7 && needed == sizeof(PRINTER_INFO_7A))
-        {
-            todo_wine
-            ok(ret, "level %d: GetPrinter error %d\n", level, GetLastError());
-        }
-        else
-            ok(needed == filled, "needed %d != filled %d\n", needed, filled);
+        ok(needed == filled, "needed %d != filled %d\n", needed, filled);
 
         if (level == 2)
         {
