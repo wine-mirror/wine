@@ -293,7 +293,8 @@ static inline HRESULT StorageBaseImpl_StreamReadAt(StorageBaseImpl *This,
   return This->baseVtbl->StreamReadAt(This, index, offset, size, buffer, bytesRead);
 }
 
-/* Write size bytes to this directory entry's stream at the given offset. */
+/* Write size bytes to this directory entry's stream at the given offset,
+ * growing the stream if necessary. */
 static inline HRESULT StorageBaseImpl_StreamWriteAt(StorageBaseImpl *This,
   DirRef index, ULARGE_INTEGER offset, ULONG size, const void *buffer, ULONG *bytesWritten)
 {
@@ -431,22 +432,9 @@ struct StgStreamImpl
   DirRef             dirEntry;
 
   /*
-   * Helper variable that contains the size of the stream
-   */
-  ULARGE_INTEGER     streamSize;
-
-  /*
    * This is the current position of the cursor in the stream
    */
   ULARGE_INTEGER     currentPosition;
-
-  /*
-   * The information in the stream is represented by a chain of small blocks
-   * or a chain of large blocks. Depending on the case, one of the two
-   * following variables points to that information.
-   */
-  BlockChainStream*      bigBlockChain;
-  SmallBlockChainStream* smallBlockChain;
 };
 
 /*

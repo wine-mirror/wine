@@ -75,21 +75,6 @@ static void StgStreamImpl_Destroy(StgStreamImpl* This)
   This->parentStorage = 0;
 
   /*
-   * Make sure we clean-up the block chain stream objects that we were using.
-   */
-  if (This->bigBlockChain != 0)
-  {
-    BlockChainStream_Destroy(This->bigBlockChain);
-    This->bigBlockChain = 0;
-  }
-
-  if (This->smallBlockChain != 0)
-  {
-    SmallBlockChainStream_Destroy(This->smallBlockChain);
-    This->smallBlockChain = 0;
-  }
-
-  /*
    * Finally, free the memory used-up by the class.
    */
   HeapFree(GetProcessHeap(), 0, This);
@@ -180,73 +165,6 @@ static ULONG WINAPI StgStreamImpl_Release(
 }
 
 /***
- * This method will open the block chain pointed by the directory entry
- * that describes the stream.
- * If the stream's size is null, no chain is opened.
- */
-static void StgStreamImpl_OpenBlockChain(
-        StgStreamImpl* This)
-{
-  DirEntry     currentEntry;
-  HRESULT      hr;
-
-  /*
-   * Make sure no old object is left over.
-   */
-  if (This->smallBlockChain != 0)
-  {
-    SmallBlockChainStream_Destroy(This->smallBlockChain);
-    This->smallBlockChain = 0;
-  }
-
-  if (This->bigBlockChain != 0)
-  {
-    BlockChainStream_Destroy(This->bigBlockChain);
-    This->bigBlockChain = 0;
-  }
-
-  /*
-   * Read the information from the directory entry.
-   */
-  hr = StorageBaseImpl_ReadDirEntry(This->parentStorage,
-					     This->dirEntry,
-					     &currentEntry);
-
-  if (SUCCEEDED(hr))
-  {
-    This->streamSize = currentEntry.size;
-
-    /*
-     * This code supports only streams that are <32 bits in size.
-     */
-    assert(This->streamSize.u.HighPart == 0);
-
-    if(currentEntry.startingBlock == BLOCK_END_OF_CHAIN)
-    {
-      assert( (This->streamSize.u.HighPart == 0) && (This->streamSize.u.LowPart == 0) );
-    }
-    else
-    {
-      if ( (This->streamSize.u.HighPart == 0) &&
-	   (This->streamSize.u.LowPart < LIMIT_TO_USE_SMALL_BLOCK) )
-      {
-	This->smallBlockChain = SmallBlockChainStream_Construct(
-								This->parentStorage->ancestorStorage,
-								NULL,
-								This->dirEntry);
-      }
-      else
-      {
-	This->bigBlockChain = BlockChainStream_Construct(
-							 This->parentStorage->ancestorStorage,
-							 NULL,
-							 This->dirEntry);
-      }
-    }
-  }
-}
-
-/***
  * This method is part of the ISequentialStream interface.
  *
  * It reads a block of information from the stream at the current
@@ -319,7 +237,6 @@ static HRESULT WINAPI StgStreamImpl_Write(
 {
   StgStreamImpl* const This=(StgStreamImpl*)iface;
 
-  ULARGE_INTEGER newSize;
   ULONG bytesWritten = 0;
   HRESULT res;
 
@@ -365,22 +282,6 @@ static HRESULT WINAPI StgStreamImpl_Write(
     TRACE("<-- S_OK, written 0\n");
     return S_OK;
   }
-  else
-  {
-    newSize.u.HighPart = 0;
-    newSize.u.LowPart = This->currentPosition.u.LowPart + cb;
-  }
-
-  /*
-   * Verify if we need to grow the stream
-   */
-  if (newSize.u.LowPart > This->streamSize.u.LowPart)
-  {
-    /* grow stream */
-    res = IStream_SetSize(iface, newSize);
-    if (FAILED(res))
-      return res;
-  }
 
   res = StorageBaseImpl_StreamWriteAt(This->parentStorage,
                                       This->dirEntry,
@@ -415,6 +316,8 @@ static HRESULT WINAPI StgStreamImpl_Seek(
   StgStreamImpl* const This=(StgStreamImpl*)iface;
 
   ULARGE_INTEGER newPosition;
+  DirEntry currentEntry;
+  HRESULT hr;
 
   TRACE("(%p, %d, %d, %p)\n",
 	iface, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
@@ -453,7 +356,9 @@ static HRESULT WINAPI StgStreamImpl_Seek(
       *plibNewPosition = This->currentPosition;
       break;
     case STREAM_SEEK_END:
-      *plibNewPosition = This->streamSize;
+      hr = StorageBaseImpl_ReadDirEntry(This->parentStorage, This->dirEntry, &currentEntry);
+      if (FAILED(hr)) return hr;
+      *plibNewPosition = currentEntry.size;
       break;
     default:
       WARN("invalid dwOrigin %d\n", dwOrigin);
@@ -511,16 +416,7 @@ static HRESULT WINAPI StgStreamImpl_SetSize(
     return STG_E_ACCESSDENIED;
   }
 
-  if (This->streamSize.u.LowPart == libNewSize.u.LowPart)
-    return S_OK;
-
   hr = StorageBaseImpl_StreamSetSize(This->parentStorage, This->dirEntry, libNewSize);
-
-  if (SUCCEEDED(hr))
-  {
-    This->streamSize = libNewSize;
-  }
-
   return hr;
 }
 
@@ -852,20 +748,6 @@ StgStreamImpl* StgStreamImpl_Construct(
      */
     newStream->currentPosition.u.HighPart = 0;
     newStream->currentPosition.u.LowPart = 0;
-
-    /*
-     * Initialize the rest of the data.
-     */
-    newStream->streamSize.u.HighPart = 0;
-    newStream->streamSize.u.LowPart  = 0;
-    newStream->bigBlockChain       = 0;
-    newStream->smallBlockChain     = 0;
-
-    /*
-     * Read the size from the directory entry and determine if the blocks forming
-     * this stream are large or small.
-     */
-    StgStreamImpl_OpenBlockChain(newStream);
 
     /* add us to the storage's list of active streams */
     StorageBaseImpl_AddStream(parentStorage, newStream);

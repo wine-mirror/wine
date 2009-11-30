@@ -2339,16 +2339,22 @@ static HRESULT StorageImpl_StreamWriteAt(StorageBaseImpl *base, DirRef index,
   StorageImpl *This = (StorageImpl*)base;
   DirEntry data;
   HRESULT hr;
+  ULARGE_INTEGER newSize;
 
   hr = StorageImpl_ReadDirEntry(This, index, &data);
   if (FAILED(hr)) return hr;
 
-  /* FIXME: Enlarge the stream first if necessary. */
+  /* Grow the stream if necessary */
+  newSize.QuadPart = 0;
+  newSize.QuadPart = offset.QuadPart + size;
 
-  if (data.size.QuadPart == 0)
+  if (newSize.QuadPart > data.size.QuadPart)
   {
-    /* This shouldn't happen for now, because the stream object will set the size. */
-    assert(FALSE);
+    hr = StorageImpl_StreamSetSize(base, index, newSize);
+    if (FAILED(hr))
+      return hr;
+
+    data.size = newSize;
   }
 
   if (data.size.QuadPart < LIMIT_TO_USE_SMALL_BLOCK)
