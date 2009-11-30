@@ -119,7 +119,6 @@ typedef nsISupports nsIDOMDOMImplementation;
 typedef nsISupports nsIDOMCDATASection;
 typedef nsISupports nsIDOMProcessingInstruction;
 typedef nsISupports nsIDOMEntityReference;
-typedef nsISupports nsIDOMHTMLFormElement;
 typedef nsISupports nsIDOMHTMLOptionsCollection;
 typedef nsISupports nsIWebProgressListener;
 typedef nsISupports nsIDOMCSSValue;
@@ -1218,6 +1217,32 @@ interface nsIDOMHTMLBodyElement : nsIDOMHTMLElement
     nsresult SetText(const nsAString *aText);
     nsresult GetVLink(nsAString *aVLink);
     nsresult SetVLink(const nsAString *aVLink);
+}
+
+[
+    object,
+    uuid(a6cf908f-15b3-11d2-932e-00805f8add32),
+    local
+    /* FROZEN */
+]
+interface nsIDOMHTMLFormElement : nsIDOMHTMLElement
+{
+    nsresult GetElements(nsIDOMHTMLCollection **aElements);
+    nsresult GetLength(PRInt32 *aLength);
+    nsresult GetName(nsAString *aName);
+    nsresult SetName(const nsAString *aName);
+    nsresult GetAcceptCharset(nsAString *aAcceptCharset);
+    nsresult SetAcceptCharset(const nsAString *aAcceptCharset);
+    nsresult GetAction(nsAString *aAction);
+    nsresult SetAction(const nsAString *aAction);
+    nsresult GetEnctype(nsAString *aEnctype);
+    nsresult SetEnctype(const nsAString *aEnctype);
+    nsresult GetMethod(nsAString *aMethod);
+    nsresult SetMethod(const nsAString *aMethod);
+    nsresult GetTarget(nsAString *aTarget);
+    nsresult SetTarget(const nsAString *aTarget);
+    nsresult Submit();
+    nsresult Reset();
 }
 
 [

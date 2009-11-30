@@ -67,6 +67,7 @@ typedef enum {
     DispHTMLDocument_tid,
     DispHTMLDOMTextNode_tid,
     DispHTMLElementCollection_tid,
+    DispHTMLFormElement_tid,
     DispHTMLGenericElement_tid,
     DispHTMLIFrame_tid,
     DispHTMLImg_tid,
@@ -104,6 +105,7 @@ typedef enum {
     IHTMLElement4_tid,
     IHTMLElementCollection_tid,
     IHTMLEventObj_tid,
+    IHTMLFormElement_tid,
     IHTMLFrameBase_tid,
     IHTMLFrameBase2_tid,
     IHTMLGenericElement_tid,
@@ -728,6 +730,7 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode*,nsIDOMNode*,BOOL);
 HTMLElement *HTMLCommentElement_Create(HTMLDocumentNode*,nsIDOMNode*);
 HTMLElement *HTMLAnchorElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLBodyElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
+HTMLElement *HTMLFormElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLFrameElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLWindow*);
 HTMLElement *HTMLIFrame_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLWindow*);
 HTMLElement *HTMLImgElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
