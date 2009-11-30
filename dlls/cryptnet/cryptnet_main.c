@@ -1544,6 +1544,33 @@ BOOL WINAPI CryptRetrieveObjectByUrlW(LPCWSTR pszURL, LPCSTR pszObjectOid,
     return ret;
 }
 
+static DWORD verify_cert_revocation_with_crl(PCCERT_CONTEXT cert,
+ PCCRL_CONTEXT crl, DWORD index, FILETIME *pTime,
+ PCERT_REVOCATION_STATUS pRevStatus)
+{
+    DWORD error;
+
+    if (CertVerifyCRLTimeValidity(pTime, crl->pCrlInfo))
+    {
+        /* The CRL isn't time valid */
+        error = CRYPT_E_NO_REVOCATION_CHECK;
+    }
+    else
+    {
+        PCRL_ENTRY entry = NULL;
+
+        CertFindCertificateInCRL(cert, crl, 0, NULL, &entry);
+        if (entry)
+        {
+            error = CRYPT_E_REVOKED;
+            pRevStatus->dwIndex = index;
+        }
+        else
+            error = ERROR_SUCCESS;
+    }
+    return error;
+}
+
 static DWORD verify_cert_revocation(PCCERT_CONTEXT cert, DWORD index,
  FILETIME *pTime, DWORD dwFlags, PCERT_REVOCATION_PARA pRevPara,
  PCERT_REVOCATION_STATUS pRevStatus)
@@ -1591,22 +1618,8 @@ static DWORD verify_cert_revocation(PCCERT_CONTEXT cert, DWORD index,
                  NULL, NULL, NULL, NULL);
                 if (ret)
                 {
-                    if (CertVerifyCRLTimeValidity(pTime, crl->pCrlInfo))
-                    {
-                        /* The CRL isn't time valid */
-                        error = CRYPT_E_NO_REVOCATION_CHECK;
-                    }
-                    else
-                    {
-                        PCRL_ENTRY entry = NULL;
-
-                        CertFindCertificateInCRL(cert, crl, 0, NULL, &entry);
-                        if (entry)
-                        {
-                            error = CRYPT_E_REVOKED;
-                            pRevStatus->dwIndex = index;
-                        }
-                    }
+                    error = verify_cert_revocation_with_crl(cert, crl, index,
+                     pTime, pRevStatus);
                     if (!error && timeout)
                     {
                         DWORD time = GetTickCount();
