@@ -27,9 +27,12 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "ole2.h"
 #include "hlguids.h"
 #include "shlguid.h"
+#include "wininet.h"
+#include "shlwapi.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -40,8 +43,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define CONTENT_LENGTH "Content-Length"
 #define UTF16_STR "utf-16"
-
-static WCHAR emptyW[] = {0};
 
 typedef struct {
     const nsIInputStreamVtbl *lpInputStreamVtbl;
@@ -1231,30 +1232,39 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url,
     return hres;
 }
 
-HRESULT navigate_url(HTMLDocumentNode *doc, OLECHAR *url)
+
+HRESULT navigate_url(HTMLWindow *window, const WCHAR *new_url, const WCHAR *base_url)
 {
-    OLECHAR *translated_url = NULL;
+    WCHAR url[INTERNET_MAX_URL_LENGTH];
     HRESULT hres;
 
-    if(!url)
-        url = emptyW;
+    if(!new_url) {
+        *url = 0;
+    }else if(base_url) {
+        DWORD len = 0;
 
-    if(doc->basedoc.doc_obj->hostui) {
-        hres = IDocHostUIHandler_TranslateUrl(doc->basedoc.doc_obj->hostui, 0, url,
+        hres = CoInternetCombineUrl(base_url, new_url, URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,
+                url, sizeof(url)/sizeof(WCHAR), &len, 0);
+        if(FAILED(hres))
+            return hres;
+    }else {
+        strcpyW(url, new_url);
+    }
+
+    if(window->doc_obj && window->doc_obj->hostui) {
+        OLECHAR *translated_url = NULL;
+
+        hres = IDocHostUIHandler_TranslateUrl(window->doc_obj->hostui, 0, url,
                 &translated_url);
-        if(hres == S_OK)
-            url = translated_url;
+        if(hres == S_OK) {
+            strcpyW(url, translated_url);
+            CoTaskMemFree(translated_url);
+        }
     }
 
-    if(doc != doc->basedoc.doc_obj->basedoc.doc_node) {
-        FIXME("navigation in frame\n");
-        return E_NOTIMPL;
-    }
-
-    hres = hlink_frame_navigate(&doc->basedoc, url, NULL, 0);
+    hres = hlink_frame_navigate(&window->doc->basedoc, url, NULL, 0);
     if(FAILED(hres))
         FIXME("hlink_frame_navigate failed: %08x\n", hres);
 
-    CoTaskMemFree(translated_url);
     return hres;
 }
