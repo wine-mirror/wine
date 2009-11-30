@@ -584,30 +584,25 @@ DWORD NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len
  * Basically calls 'recv()' unless we should use SSL
  * number of chars received is put in *recvd
  */
-BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int flags,
+DWORD NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int flags,
 		int *recvd /* out */)
 {
     *recvd = 0;
-    if (!NETCON_connected(connection)) return FALSE;
+    if (!NETCON_connected(connection)) return ERROR_INTERNET_CONNECTION_ABORTED;
     if (!len)
-        return TRUE;
+        return ERROR_SUCCESS;
     if (!connection->useSSL)
     {
 	*recvd = recv(connection->socketFD, buf, len, flags);
-	if (*recvd == -1)
-	{
-	    INTERNET_SetLastError(sock_get_error(errno));
-	    return FALSE;
-	}
-        return TRUE;
+	return *recvd == -1 ? sock_get_error(errno) :  ERROR_SUCCESS;
     }
     else
     {
 #ifdef SONAME_LIBSSL
 	*recvd = pSSL_read(connection->ssl_s, buf, len);
-	return *recvd > 0 || !len;
+        return *recvd > 0 ? ERROR_SUCCESS : ERROR_INTERNET_CONNECTION_ABORTED;
 #else
-	return FALSE;
+	return ERROR_NOT_SUPPORTED;
 #endif
     }
 }

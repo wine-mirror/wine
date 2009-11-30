@@ -438,7 +438,7 @@ DWORD NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *s
 DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPCWSTR hostname);
 DWORD NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len, int flags,
 		int *sent /* out */);
-BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int flags,
+DWORD NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int flags,
 		int *recvd /* out */);
 BOOL NETCON_query_data_available(WININET_NETCONNECTION *connection, DWORD *available);
 LPCVOID NETCON_GetCert(WININET_NETCONNECTION *connection);

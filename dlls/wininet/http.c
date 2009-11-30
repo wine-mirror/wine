@@ -2018,6 +2018,7 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
 /* read some more data into the read buffer (the read section must be held) */
 static BOOL read_more_data( http_request_t *req, int maxlen )
 {
+    DWORD res;
     int len;
 
     if (req->read_pos)
@@ -2030,9 +2031,12 @@ static BOOL read_more_data( http_request_t *req, int maxlen )
 
     if (maxlen == -1) maxlen = sizeof(req->read_buf);
 
-    if(!NETCON_recv( &req->netConnection, req->read_buf + req->read_size,
-                     maxlen - req->read_size, 0, &len ))
+    res = NETCON_recv( &req->netConnection, req->read_buf + req->read_size,
+                       maxlen - req->read_size, 0, &len );
+    if(res != ERROR_SUCCESS) {
+        INTERNET_SetLastError(res);
         return FALSE;
+    }
 
     req->read_size += len;
     return TRUE;
@@ -2304,7 +2308,7 @@ static DWORD HTTPREQ_Read(http_request_t *req, void *buffer, DWORD size, DWORD *
 
         if (size > bytes_read && (!bytes_read || sync)) {
             if (NETCON_recv( &req->netConnection, (char *)buffer + bytes_read, size - bytes_read,
-                             sync ? MSG_WAITALL : 0, &len))
+                             sync ? MSG_WAITALL : 0, &len) == ERROR_SUCCESS)
                 bytes_read += len;
             /* always return success, even if the network layer returns an error */
         }
