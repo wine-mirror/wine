@@ -77,7 +77,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mixer);
 
 static const char * getMessage(UINT uMsg)
 {
-    static char str[64];
 #define MSG_TO_STR(x) case x: return #x;
     switch (uMsg){
     MSG_TO_STR(DRVM_INIT);
@@ -95,8 +94,7 @@ static const char * getMessage(UINT uMsg)
     default: break;
     }
 #undef MSG_TO_STR
-    sprintf(str, "UNKNOWN(%08x)", uMsg);
-    return str;
+    return wine_dbg_sprintf("UNKNOWN(%08x)", uMsg);
 }
 
 static const char * getControlType(DWORD dwControlType)

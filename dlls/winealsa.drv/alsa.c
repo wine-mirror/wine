@@ -220,7 +220,6 @@ int ALSA_RetrieveRingMessage(ALSA_MSG_RING* omr, enum win_wm_message *msg,
 /* These strings used only for tracing */
 const char * ALSA_getCmdString(enum win_wm_message msg)
 {
-    static char unknown[32];
 #define MSG_TO_STR(x) case x: return #x
     switch(msg) {
     MSG_TO_STR(WINE_WM_PAUSING);
@@ -234,13 +233,11 @@ const char * ALSA_getCmdString(enum win_wm_message msg)
     MSG_TO_STR(WINE_WM_STOPPING);
     }
 #undef MSG_TO_STR
-    sprintf(unknown, "UNKNOWN(0x%08x)", msg);
-    return unknown;
+    return wine_dbg_sprintf("UNKNOWN(0x%08x)", msg);
 }
 
 const char * ALSA_getMessage(UINT msg)
 {
-    static char unknown[32];
 #define MSG_TO_STR(x) case x: return #x
     switch(msg) {
     MSG_TO_STR(DRVM_INIT);
@@ -282,13 +279,11 @@ const char * ALSA_getMessage(UINT msg)
     MSG_TO_STR(DRV_QUERYDSOUNDDESC);
     }
 #undef MSG_TO_STR
-    sprintf(unknown, "UNKNOWN(0x%04x)", msg);
-    return unknown;
+    return wine_dbg_sprintf("UNKNOWN(0x%04x)", msg);
 }
 
 const char * ALSA_getFormat(WORD wFormatTag)
 {
-    static char unknown[32];
 #define FMT_TO_STR(x) case x: return #x
     switch(wFormatTag) {
     FMT_TO_STR(WAVE_FORMAT_PCM);
@@ -298,8 +293,7 @@ const char * ALSA_getFormat(WORD wFormatTag)
     FMT_TO_STR(WAVE_FORMAT_ADPCM);
     }
 #undef FMT_TO_STR
-    sprintf(unknown, "UNKNOWN(0x%04x)", wFormatTag);
-    return unknown;
+    return wine_dbg_sprintf("UNKNOWN(0x%04x)", wFormatTag);
 }
 
 /* Allow 1% deviation for sample rates (some ES137x cards) */
