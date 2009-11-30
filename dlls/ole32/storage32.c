@@ -234,7 +234,7 @@ struct IEnumSTATSTGImpl
 				* since we want to cast this in an IEnumSTATSTG pointer */
 
   LONG           ref;                   /* Reference count */
-  StorageImpl*   parentStorage;         /* Reference to the parent storage */
+  StorageBaseImpl* parentStorage;         /* Reference to the parent storage */
   DirRef         storageDirEntry;     /* Directory entry of the storage to enumerate */
 
   /*
@@ -250,7 +250,7 @@ struct IEnumSTATSTGImpl
 };
 
 
-static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(StorageImpl* This, DirRef storageDirEntry);
+static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(StorageBaseImpl* This, DirRef storageDirEntry);
 static void IEnumSTATSTGImpl_Destroy(IEnumSTATSTGImpl* This);
 static void IEnumSTATSTGImpl_PushSearchNode(IEnumSTATSTGImpl* This, DirRef nodeToPush);
 static DirRef IEnumSTATSTGImpl_PopSearchNode(IEnumSTATSTGImpl* This, BOOL remove);
@@ -642,7 +642,7 @@ static HRESULT WINAPI StorageBaseImpl_EnumElements(
     return STG_E_REVERTED;
 
   newEnum = IEnumSTATSTGImpl_Construct(
-              This->ancestorStorage,
+              This,
               This->storageDirEntry);
 
   if (newEnum!=0)
@@ -4034,14 +4034,14 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
     /*
      * Read the entry from the storage.
      */
-    StorageImpl_ReadDirEntry(This->parentStorage,
+    StorageBaseImpl_ReadDirEntry(This->parentStorage,
       currentSearchNode,
       &currentEntry);
 
     /*
      * Copy the information to the return buffer.
      */
-    StorageUtl_CopyDirEntryToSTATSTG(&This->parentStorage->base,
+    StorageUtl_CopyDirEntryToSTATSTG(This->parentStorage,
       currentReturnStruct,
       &currentEntry,
       STATFLAG_DEFAULT);
@@ -4096,7 +4096,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Skip(
     /*
      * Read the entry from the storage.
      */
-    StorageImpl_ReadDirEntry(This->parentStorage,
+    StorageBaseImpl_ReadDirEntry(This->parentStorage,
       currentSearchNode,
       &currentEntry);
 
@@ -4138,7 +4138,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Reset(
   /*
    * Read the storage entry from the top-level storage.
    */
-  hr = StorageImpl_ReadDirEntry(
+  hr = StorageBaseImpl_ReadDirEntry(
                     This->parentStorage,
                     This->storageDirEntry,
                     &storageEntry);
@@ -4232,7 +4232,7 @@ static void IEnumSTATSTGImpl_PushSearchNode(
   /*
    * Read the storage entry from the top-level storage.
    */
-  hr = StorageImpl_ReadDirEntry(
+  hr = StorageBaseImpl_ReadDirEntry(
                     This->parentStorage,
                     nodeToPush,
                     &storageEntry);
@@ -4284,7 +4284,7 @@ static const IEnumSTATSTGVtbl IEnumSTATSTGImpl_Vtbl =
 */
 
 static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
-  StorageImpl* parentStorage,
+  StorageBaseImpl* parentStorage,
   DirRef         storageDirEntry)
 {
   IEnumSTATSTGImpl* newEnumeration;
