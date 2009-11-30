@@ -2191,29 +2191,15 @@ BOOL WINAPI GetPrintProcessorDirectoryW(LPWSTR server, LPWSTR env,
  *    the opened hkey on success
  *    NULL on error
  */
-static HKEY WINSPOOL_OpenDriverReg( LPCVOID pEnvironment, BOOL unicode)
+static HKEY WINSPOOL_OpenDriverReg( LPCVOID pEnvironment)
 {   
     HKEY  retval = NULL;
     LPWSTR buffer;
     const printenv_t * env;
 
-    TRACE("(%s, %d)\n",
-	  (unicode) ? debugstr_w(pEnvironment) : debugstr_a(pEnvironment), unicode);
+    TRACE("(%s)\n", debugstr_w(pEnvironment));
 
-    if (!pEnvironment || unicode) {
-        /* pEnvironment was NULL or a Unicode-String: use it direct */
-        env = validate_envW(pEnvironment);
-    }
-    else
-    {
-        /* pEnvironment was an ANSI-String: convert to unicode first */
-        LPWSTR  buffer;
-        INT len = MultiByteToWideChar(CP_ACP, 0, pEnvironment, -1, NULL, 0);
-        buffer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        if (buffer) MultiByteToWideChar(CP_ACP, 0, pEnvironment, -1, buffer, len);
-        env = validate_envW(buffer);
-        HeapFree(GetProcessHeap(), 0, buffer);
-    }
+    env = validate_envW(pEnvironment);
     if (!env) return NULL;
 
     buffer = HeapAlloc( GetProcessHeap(), 0,
@@ -2275,7 +2261,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 	}
 	RegCloseKey(hkeyPrinter);
     }
-    hkeyDrivers = WINSPOOL_OpenDriverReg( NULL, TRUE);
+    hkeyDrivers = WINSPOOL_OpenDriverReg(NULL);
     if(!hkeyDrivers) {
         ERR("Can't create Drivers key\n");
 	RegCloseKey(hkeyPrinters);
@@ -4304,7 +4290,7 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPCWSTR pEnvironment,
 	return FALSE;
     }
 
-    hkeyDrivers = WINSPOOL_OpenDriverReg( pEnvironment, TRUE);
+    hkeyDrivers = WINSPOOL_OpenDriverReg(pEnvironment);
     if(!hkeyDrivers) {
         ERR("Can't create Drivers key\n");
 	return FALSE;
@@ -4669,7 +4655,7 @@ static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPCWSTR pEnvironment,
     *pcbNeeded  = 0;
     *pcReturned = 0;
 
-    hkeyDrivers = WINSPOOL_OpenDriverReg(pEnvironment, TRUE);
+    hkeyDrivers = WINSPOOL_OpenDriverReg(pEnvironment);
     if(!hkeyDrivers) {
         ERR("Can't open Drivers key\n");
         return FALSE;
@@ -6163,7 +6149,7 @@ BOOL WINAPI DeletePrinterDriverExW( LPWSTR pName, LPWSTR pEnvironment,
         return FALSE;
     }
 
-    hkey_drivers = WINSPOOL_OpenDriverReg(pEnvironment, TRUE);
+    hkey_drivers = WINSPOOL_OpenDriverReg(pEnvironment);
 
     if(!hkey_drivers)
     {
