@@ -72,6 +72,13 @@ static HRESULT HTMLIFrame_get_document(HTMLDOMNode *iface, IDispatch **p)
     return S_OK;
 }
 
+static HRESULT HTMLIFrame_get_readystate(HTMLDOMNode *iface, BSTR *p)
+{
+    HTMLIFrame *This = HTMLIFRAME_NODE_THIS(iface);
+
+    return IHTMLFrameBase2_get_readyState(HTMLFRAMEBASE2(&This->framebase), p);
+}
+
 #undef HTMLIFRAME_NODE_THIS
 
 static const NodeImplVtbl HTMLIFrameImplVtbl = {
@@ -81,7 +88,8 @@ static const NodeImplVtbl HTMLIFrameImplVtbl = {
     NULL,
     NULL,
     NULL,
-    HTMLIFrame_get_document
+    HTMLIFrame_get_document,
+    HTMLIFrame_get_readystate
 };
 
 static const tid_t HTMLIFrame_iface_tids[] = {

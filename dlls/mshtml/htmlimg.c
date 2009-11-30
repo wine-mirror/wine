@@ -39,7 +39,7 @@ typedef struct {
     nsIDOMHTMLImageElement *nsimg;
 } HTMLImgElement;
 
-#define HTMLIMG(x)  (&(x)->lpHTMLImgElementVtbl)
+#define HTMLIMG(x)  ((IHTMLImgElement*)  &(x)->lpHTMLImgElementVtbl)
 
 #define HTMLIMG_THIS(iface) DEFINE_THIS(HTMLImgElement, HTMLImgElement, iface)
 
@@ -572,11 +572,24 @@ static void HTMLImgElement_destructor(HTMLDOMNode *iface)
     HTMLElement_destructor(&This->element.node);
 }
 
+static HRESULT HTMLImgElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
+{
+    HTMLImgElement *This = HTMLIMG_NODE_THIS(iface);
+
+    return IHTMLImgElement_get_readyState(HTMLIMG(This), p);
+}
+
 #undef HTMLIMG_NODE_THIS
 
 static const NodeImplVtbl HTMLImgElementImplVtbl = {
     HTMLImgElement_QI,
-    HTMLImgElement_destructor
+    HTMLImgElement_destructor,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    HTMLImgElement_get_readystate
 };
 
 static const tid_t HTMLImgElement_iface_tids[] = {
