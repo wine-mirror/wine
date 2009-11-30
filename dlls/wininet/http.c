@@ -1177,60 +1177,6 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
 }
 
 /***********************************************************************
- *           HttpOpenRequestW (WININET.@)
- *
- * Open a HTTP request handle
- *
- * RETURNS
- *    HINTERNET  a HTTP request handle on success
- *    NULL 	 on failure
- *
- */
-HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
-	LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion,
-	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
-	DWORD dwFlags, DWORD_PTR dwContext)
-{
-    http_session_t *lpwhs;
-    HINTERNET handle = NULL;
-
-    TRACE("(%p, %s, %s, %s, %s, %p, %08x, %08lx)\n", hHttpSession,
-          debugstr_w(lpszVerb), debugstr_w(lpszObjectName),
-          debugstr_w(lpszVersion), debugstr_w(lpszReferrer), lpszAcceptTypes,
-          dwFlags, dwContext);
-    if(lpszAcceptTypes!=NULL)
-    {
-        int i;
-        for(i=0;lpszAcceptTypes[i]!=NULL;i++)
-            TRACE("\taccept type: %s\n",debugstr_w(lpszAcceptTypes[i]));
-    }    
-
-    lpwhs = (http_session_t*) WININET_GetObject( hHttpSession );
-    if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
-    {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	goto lend;
-    }
-
-    /*
-     * My tests seem to show that the windows version does not
-     * become asynchronous until after this point. And anyhow
-     * if this call was asynchronous then how would you get the
-     * necessary HINTERNET pointer returned by this function.
-     *
-     */
-    handle = HTTP_HttpOpenRequestW(lpwhs, lpszVerb, lpszObjectName,
-                                   lpszVersion, lpszReferrer, lpszAcceptTypes,
-                                   dwFlags, dwContext);
-lend:
-    if( lpwhs )
-        WININET_Release( &lpwhs->hdr );
-    TRACE("returning %p\n", handle);
-    return handle;
-}
-
-
-/***********************************************************************
  *           HttpOpenRequestA (WININET.@)
  *
  * Open a HTTP request handle
@@ -2584,7 +2530,7 @@ static const object_vtbl_t HTTPREQVtbl = {
  *    NULL 	 on failure
  *
  */
-HINTERNET WINAPI HTTP_HttpOpenRequestW(http_session_t *lpwhs,
+static HINTERNET WINAPI HTTP_HttpOpenRequestW(http_session_t *lpwhs,
 	LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion,
 	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
 	DWORD dwFlags, DWORD_PTR dwContext)
@@ -2719,6 +2665,59 @@ lend:
         WININET_Release( &lpwhr->hdr );
 
     TRACE("<-- %p (%p)\n", handle, lpwhr);
+    return handle;
+}
+
+/***********************************************************************
+ *           HttpOpenRequestW (WININET.@)
+ *
+ * Open a HTTP request handle
+ *
+ * RETURNS
+ *    HINTERNET  a HTTP request handle on success
+ *    NULL 	 on failure
+ *
+ */
+HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
+	LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion,
+	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
+	DWORD dwFlags, DWORD_PTR dwContext)
+{
+    http_session_t *lpwhs;
+    HINTERNET handle = NULL;
+
+    TRACE("(%p, %s, %s, %s, %s, %p, %08x, %08lx)\n", hHttpSession,
+          debugstr_w(lpszVerb), debugstr_w(lpszObjectName),
+          debugstr_w(lpszVersion), debugstr_w(lpszReferrer), lpszAcceptTypes,
+          dwFlags, dwContext);
+    if(lpszAcceptTypes!=NULL)
+    {
+        int i;
+        for(i=0;lpszAcceptTypes[i]!=NULL;i++)
+            TRACE("\taccept type: %s\n",debugstr_w(lpszAcceptTypes[i]));
+    }
+
+    lpwhs = (http_session_t*) WININET_GetObject( hHttpSession );
+    if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
+    {
+        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+	goto lend;
+    }
+
+    /*
+     * My tests seem to show that the windows version does not
+     * become asynchronous until after this point. And anyhow
+     * if this call was asynchronous then how would you get the
+     * necessary HINTERNET pointer returned by this function.
+     *
+     */
+    handle = HTTP_HttpOpenRequestW(lpwhs, lpszVerb, lpszObjectName,
+                                   lpszVersion, lpszReferrer, lpszAcceptTypes,
+                                   dwFlags, dwContext);
+lend:
+    if( lpwhs )
+        WININET_Release( &lpwhs->hdr );
+    TRACE("returning %p\n", handle);
     return handle;
 }
 

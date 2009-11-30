@@ -414,10 +414,6 @@ LPSTR INTERNET_GetNextLine(INT nSocket, LPDWORD dwLen);
 BOOLAPI HTTP_HttpSendRequestW(http_request_t *req, LPCWSTR lpszHeaders,
 	DWORD dwHeaderLength, LPVOID lpOptional, DWORD dwOptionalLength,
 	DWORD dwContentLength, BOOL bEndRequest);
-INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestW(http_session_t *session,
-	LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion,
-	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
-	DWORD dwFlags, DWORD_PTR dwContext);
 
 VOID SendAsyncCallback(object_header_t *hdr, DWORD_PTR dwContext,
                        DWORD dwInternetStatus, LPVOID lpvStatusInfo,
