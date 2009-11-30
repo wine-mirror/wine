@@ -252,6 +252,7 @@ struct StorageBaseImplVtbl {
   HRESULT (*WriteDirEntry)(StorageBaseImpl*,DirRef,const DirEntry*);
   HRESULT (*ReadDirEntry)(StorageBaseImpl*,DirRef,DirEntry*);
   HRESULT (*DestroyDirEntry)(StorageBaseImpl*,DirRef);
+  HRESULT (*StreamReadAt)(StorageBaseImpl*,DirRef,ULARGE_INTEGER,ULONG,void*,ULONG*);
 };
 
 static inline void StorageBaseImpl_Destroy(StorageBaseImpl *This)
@@ -281,6 +282,13 @@ static inline HRESULT StorageBaseImpl_DestroyDirEntry(StorageBaseImpl *This,
   DirRef index)
 {
   return This->baseVtbl->DestroyDirEntry(This, index);
+}
+
+/* Read up to size bytes from this directory entry's stream at the given offset. */
+static inline HRESULT StorageBaseImpl_StreamReadAt(StorageBaseImpl *This,
+  DirRef index, ULARGE_INTEGER offset, ULONG size, void *buffer, ULONG *bytesRead)
+{
+  return This->baseVtbl->StreamReadAt(This, index, offset, size, buffer, bytesRead);
 }
 
 /****************************************************************************

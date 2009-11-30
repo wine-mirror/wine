@@ -264,7 +264,6 @@ static HRESULT WINAPI StgStreamImpl_Read(
   StgStreamImpl* const This=(StgStreamImpl*)iface;
 
   ULONG bytesReadBuffer;
-  ULONG bytesToReadFromBuffer;
   HRESULT res;
 
   TRACE("(%p, %p, %d, %p)\n",
@@ -283,60 +282,21 @@ static HRESULT WINAPI StgStreamImpl_Read(
   if (pcbRead==0)
     pcbRead = &bytesReadBuffer;
 
-  /*
-   * Using the known size of the stream, calculate the number of bytes
-   * to read from the block chain
-   */
-  bytesToReadFromBuffer = min( This->streamSize.u.LowPart - This->currentPosition.u.LowPart, cb);
-
-  /*
-   * Depending on the type of chain that was opened when the stream was constructed,
-   * we delegate the work to the method that reads the block chains.
-   */
-  if (This->smallBlockChain!=0)
-  {
-    res = SmallBlockChainStream_ReadAt(This->smallBlockChain,
-				 This->currentPosition,
-				 bytesToReadFromBuffer,
-				 pv,
-				 pcbRead);
-
-  }
-  else if (This->bigBlockChain!=0)
-  {
-    res = BlockChainStream_ReadAt(This->bigBlockChain,
-                 This->currentPosition,
-                 bytesToReadFromBuffer,
-                 pv,
-                 pcbRead);
-  }
-  else
-  {
-    /*
-     * Small and big block chains are both NULL. This case will happen
-     * when a stream starts with BLOCK_END_OF_CHAIN and has size zero.
-     */
-
-    *pcbRead = 0;
-    res = S_OK;
-    goto end;
-  }
+  res = StorageBaseImpl_StreamReadAt(This->parentStorage,
+                                     This->dirEntry,
+                                     This->currentPosition,
+                                     cb,
+                                     pv,
+                                     pcbRead);
 
   if (SUCCEEDED(res))
   {
-      /*
-       * We should always be able to read the proper amount of data from the
-       * chain.
-       */
-      assert(bytesToReadFromBuffer == *pcbRead);
-
-      /*
-       * Advance the pointer for the number of positions read.
-       */
-      This->currentPosition.u.LowPart += *pcbRead;
+    /*
+     * Advance the pointer for the number of positions read.
+     */
+    This->currentPosition.u.LowPart += *pcbRead;
   }
 
-end:
   TRACE("<-- %08x\n", res);
   return res;
 }
