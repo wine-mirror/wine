@@ -72,6 +72,7 @@ static DWORD (WINAPI * pXcvDataW)(HANDLE, LPCWSTR, PBYTE, DWORD, PBYTE, DWORD, P
 static BOOL  (WINAPI * pAddPortExA)(LPSTR, DWORD, LPBYTE, LPSTR);
 static BOOL  (WINAPI * pGetPrinterDriverW)(HANDLE, LPWSTR, DWORD, LPBYTE, DWORD, LPDWORD);
 static BOOL  (WINAPI * pGetPrinterW)(HANDLE, DWORD, LPBYTE, DWORD, LPDWORD);
+static BOOL  (WINAPI * pEnumPrinterDriversW)(LPWSTR, LPWSTR, DWORD, LPBYTE, DWORD, LPDWORD, LPDWORD);
 
 
 /* ################################ */
@@ -1152,6 +1153,16 @@ static void test_EnumPrinterDrivers(void)
         if (!cbBuf) {
             skip("no valid buffer size returned\n");
             continue;
+        }
+
+        /* EnumPrinterDriversA returns the same number of bytes as EnumPrinterDriversW */
+        if (pEnumPrinterDriversW)
+        {
+            DWORD double_needed;
+            DWORD double_returned;
+            pEnumPrinterDriversW(NULL, NULL, level, NULL, 0, &double_needed, &double_returned);
+            todo_wine
+            ok(double_needed == cbBuf, "level %d: EnumPrinterDriversA returned different size %d than EnumPrinterDriversW (%d)\n", level, cbBuf, double_needed);
         }
 
         buffer = HeapAlloc(GetProcessHeap(), 0, cbBuf + 4);
@@ -2618,6 +2629,7 @@ START_TEST(info)
     pGetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "GetDefaultPrinterA");
     pSetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "SetDefaultPrinterA");
     pGetPrinterDriverW = (void *) GetProcAddress(hwinspool, "GetPrinterDriverW");
+    pEnumPrinterDriversW = (void *) GetProcAddress(hwinspool, "EnumPrinterDriversW");
     pGetPrinterW = (void *) GetProcAddress(hwinspool, "GetPrinterW");
     pXcvDataW = (void *) GetProcAddress(hwinspool, "XcvDataW");
     pAddPortExA = (void *) GetProcAddress(hwinspool, "AddPortExA");
