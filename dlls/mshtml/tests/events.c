@@ -63,6 +63,9 @@ DEFINE_EXPECT(div_onclick);
 DEFINE_EXPECT(div_onclick_attached);
 DEFINE_EXPECT(timeout);
 DEFINE_EXPECT(doccp_onclick);
+DEFINE_EXPECT(iframe_onreadystatechange_loading);
+DEFINE_EXPECT(iframe_onreadystatechange_interactive);
+DEFINE_EXPECT(iframe_onreadystatechange_complete);
 
 static HWND container_hwnd = NULL;
 static IHTMLWindow2 *window;
@@ -86,6 +89,9 @@ static const char click_doc_str[] =
     "<html><body>"
     "<div id=\"clickdiv\" style=\"text-align: center; background: red; font-size: 32\">click here</div>"
     "</body></html>";
+
+static const char readystate_doc_str[] =
+    "<<html><body><iframe id=\"iframe\"></iframe></body></html>";
 
 static const char *debugstr_guid(REFIID riid)
 {
@@ -336,8 +342,8 @@ static void _test_attached_event_args(unsigned line, DISPID id, WORD wFlags, DIS
     IHTMLEventObj_Release(event);
 }
 
-#define test_event_src(t) _test_event_src(__LINE__,t)
-static void _test_event_src(unsigned line, const char *src_tag)
+#define get_event_src(t) _get_event_src(__LINE__)
+static IHTMLElement *_get_event_src(unsigned line)
 {
     IHTMLEventObj *event = _get_event_obj(line);
     IHTMLElement *src_elem = NULL;
@@ -346,6 +352,14 @@ static void _test_event_src(unsigned line, const char *src_tag)
     hres = IHTMLEventObj_get_srcElement(event, &src_elem);
     IHTMLEventObj_Release(event);
     ok_(__FILE__,line) (hres == S_OK, "get_srcElement failed: %08x\n", hres);
+
+    return src_elem;
+}
+
+#define test_event_src(t) _test_event_src(__LINE__,t)
+static void _test_event_src(unsigned line, const char *src_tag)
+{
+    IHTMLElement *src_elem = _get_event_src(line);
 
     if(src_tag) {
         ok_(__FILE__,line) (src_elem != NULL, "src_elem = NULL\n");
@@ -833,6 +847,54 @@ static HRESULT WINAPI body_onclick(IDispatchEx *iface, DISPID id, LCID lcid, WOR
 
 EVENT_HANDLER_FUNC_OBJ(body_onclick);
 
+static HRESULT WINAPI iframe_onreadystatechange(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    IHTMLFrameBase2 *iframe;
+    IHTMLElement2 *elem2;
+    IHTMLElement *elem;
+    VARIANT v;
+    BSTR str;
+    HRESULT hres;
+
+    test_event_args(&DIID_DispHTMLIFrame, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    test_event_src("IFRAME");
+
+    elem = get_event_src();
+    elem2 = get_elem2_iface((IUnknown*)elem);
+    IHTMLElement_Release(elem);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLElement2_get_readyState(elem2, &v);
+    ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(readyState) = %d\n", V_VT(&v));
+
+    hres = IHTMLElement2_QueryInterface(elem2, &IID_IHTMLFrameBase2, (void**)&iframe);
+    IHTMLElement2_Release(elem2);
+    ok(hres == S_OK, "Could not get IHTMLFrameBase2 iface: %08x\n", hres);
+
+    str = NULL;
+    hres = IHTMLFrameBase2_get_readyState(iframe, &str);
+    IHTMLFrameBase2_Release(iframe);
+    ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
+    ok(str != NULL, "readyState == NULL\n");
+    ok(!lstrcmpW(str, V_BSTR(&v)), "ready states differ\n");
+    VariantClear(&v);
+
+    if(!strcmp_wa(str, "loading"))
+        CHECK_EXPECT(iframe_onreadystatechange_loading);
+    else if(!strcmp_wa(str, "interactive"))
+        CHECK_EXPECT(iframe_onreadystatechange_interactive);
+    else if(!strcmp_wa(str, "complete"))
+        CHECK_EXPECT(iframe_onreadystatechange_complete);
+    else
+        ok(0, "unexpected state %s\n", wine_dbgstr_w(str));
+
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(iframe_onreadystatechange);
+
 static HRESULT WINAPI nocall(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
@@ -1117,6 +1179,55 @@ static void test_onclick(IHTMLDocument2 *doc)
 
     IHTMLElement_Release(div);
     IHTMLElement_Release(body);
+}
+
+static void test_onreadystatechange(IHTMLDocument2 *doc)
+{
+    IHTMLFrameBase *iframe;
+    IHTMLElement2 *elem2;
+    IHTMLElement *elem;
+    VARIANT v;
+    BSTR str;
+    HRESULT hres;
+
+    elem = get_elem_id(doc, "iframe");
+    elem2 = get_elem2_iface((IUnknown*)elem);
+    IHTMLElement_Release(elem);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLElement2_get_onreadystatechange(elem2, &v);
+    ok(hres == S_OK, "get_onreadystatechange failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_NULL, "V_VT(onreadystatechange) = %d\n", V_VT(&v));
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)&iframe_onreadystatechange_obj;
+    hres = IHTMLElement2_put_onreadystatechange(elem2, v);
+    ok(hres == S_OK, "put_onreadystatechange failed: %08x\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLElement2_get_onreadystatechange(elem2, &v);
+    ok(hres == S_OK, "get_onreadystatechange failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(onreadystatechange) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) == (IDispatch*)&iframe_onreadystatechange_obj, "unexpected onreadystatechange value\n");
+
+    hres = IHTMLElement2_QueryInterface(elem2, &IID_IHTMLFrameBase, (void**)&iframe);
+    IHTMLElement2_Release(elem2);
+    ok(hres == S_OK, "Could not get IHTMLFrameBase iface: %08x\n", hres);
+
+    hres = IHTMLFrameBase_put_src(iframe, (str = a2bstr("about:blank")));
+    SysFreeString(str);
+    ok(hres == S_OK, "put_src failed: %08x\n", hres);
+
+    SET_EXPECT(iframe_onreadystatechange_loading);
+    SET_EXPECT(iframe_onreadystatechange_interactive);
+    SET_EXPECT(iframe_onreadystatechange_complete);
+    pump_msgs(&called_iframe_onreadystatechange_complete);
+    todo_wine
+    CHECK_CALLED(iframe_onreadystatechange_loading);
+    CHECK_CALLED(iframe_onreadystatechange_interactive);
+    CHECK_CALLED(iframe_onreadystatechange_complete);
+
+    IHTMLFrameBase_Release(iframe);
 }
 
 static void test_timeout(IHTMLDocument2 *doc)
@@ -1746,6 +1857,7 @@ START_TEST(events)
 
     run_test(empty_doc_str, test_timeout);
     run_test(click_doc_str, test_onclick);
+    run_test(readystate_doc_str, test_onreadystatechange);
 
     DestroyWindow(container_hwnd);
     CoUninitialize();
