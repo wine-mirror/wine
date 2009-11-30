@@ -189,7 +189,7 @@ static HRESULT destroyDirEntry(
   DirRef index);
 
 static HRESULT insertIntoTree(
-  StorageImpl *This,
+  StorageBaseImpl *This,
   DirRef        parentStorageIndex,
   DirRef        newEntryIndex);
 
@@ -779,7 +779,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
         &currentEntry);
 
     /* Insert the element in a new position in the tree */
-    insertIntoTree(This->ancestorStorage, This->storageDirEntry,
+    insertIntoTree(This, This->storageDirEntry,
         currentEntryRef);
   }
   else
@@ -920,7 +920,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
    * Insert the new entry in the parent storage's tree.
    */
   insertIntoTree(
-    This->ancestorStorage,
+    This,
     This->storageDirEntry,
     newStreamEntryRef);
 
@@ -1108,7 +1108,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
    * Insert the new directory entry into the parent storage's tree
    */
   insertIntoTree(
-    This->ancestorStorage,
+    This,
     This->storageDirEntry,
     newEntryRef);
 
@@ -1294,7 +1294,7 @@ static LONG entryNameCmp(
  * Add a directory entry to a storage
  */
 static HRESULT insertIntoTree(
-  StorageImpl *This,
+  StorageBaseImpl *This,
   DirRef        parentStorageIndex,
   DirRef        newEntryIndex)
 {
@@ -1304,16 +1304,16 @@ static HRESULT insertIntoTree(
   /*
    * Read the inserted entry
    */
-  StorageImpl_ReadDirEntry(This,
-                           newEntryIndex,
-                           &newEntry);
+  StorageBaseImpl_ReadDirEntry(This,
+                               newEntryIndex,
+                               &newEntry);
 
   /*
    * Read the storage entry
    */
-  StorageImpl_ReadDirEntry(This,
-                             parentStorageIndex,
-                             &currentEntry);
+  StorageBaseImpl_ReadDirEntry(This,
+                               parentStorageIndex,
+                               &currentEntry);
 
   if (currentEntry.dirRootEntry != DIRENTRY_NULL)
   {
@@ -1332,9 +1332,9 @@ static HRESULT insertIntoTree(
     /*
      * Read
      */
-    StorageImpl_ReadDirEntry(This,
-                               currentEntry.dirRootEntry,
-                               &currentEntry);
+    StorageBaseImpl_ReadDirEntry(This,
+                                 currentEntry.dirRootEntry,
+                                 &currentEntry);
 
     previous = currentEntry.leftChild;
     next     = currentEntry.rightChild;
@@ -1348,17 +1348,17 @@ static HRESULT insertIntoTree(
       {
         if (previous != DIRENTRY_NULL)
         {
-          StorageImpl_ReadDirEntry(This,
-                                     previous,
-                                     &currentEntry);
+          StorageBaseImpl_ReadDirEntry(This,
+                                       previous,
+                                       &currentEntry);
           current = previous;
         }
         else
         {
           currentEntry.leftChild = newEntryIndex;
-          StorageImpl_WriteDirEntry(This,
-                                      current,
-                                      &currentEntry);
+          StorageBaseImpl_WriteDirEntry(This,
+                                        current,
+                                        &currentEntry);
           found = 1;
         }
       }
@@ -1366,17 +1366,17 @@ static HRESULT insertIntoTree(
       {
         if (next != DIRENTRY_NULL)
         {
-          StorageImpl_ReadDirEntry(This,
-                                     next,
-                                     &currentEntry);
+          StorageBaseImpl_ReadDirEntry(This,
+                                       next,
+                                       &currentEntry);
           current = next;
         }
         else
         {
           currentEntry.rightChild = newEntryIndex;
-          StorageImpl_WriteDirEntry(This,
-                                      current,
-                                      &currentEntry);
+          StorageBaseImpl_WriteDirEntry(This,
+                                        current,
+                                        &currentEntry);
           found = 1;
         }
       }
@@ -1399,9 +1399,9 @@ static HRESULT insertIntoTree(
      * The storage is empty, make the new entry the root of its element tree
      */
     currentEntry.dirRootEntry = newEntryIndex;
-    StorageImpl_WriteDirEntry(This,
-                                parentStorageIndex,
-                                &currentEntry);
+    StorageBaseImpl_WriteDirEntry(This,
+                                  parentStorageIndex,
+                                  &currentEntry);
   }
 
   return S_OK;
