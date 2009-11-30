@@ -4879,10 +4879,13 @@ scroll:
 }
 
 static LRESULT
-TREEVIEW_MouseWheel(TREEVIEW_INFO *infoPtr, WPARAM wParam)
+TREEVIEW_MouseWheel(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     short gcWheelDelta;
     UINT pulScrollLines = 3;
+
+    if (wParam & (MK_SHIFT | MK_CONTROL))
+        return DefWindowProcW(infoPtr->hwnd, WM_MOUSEWHEEL, wParam, lParam);
 
     if (infoPtr->firstVisible == NULL)
 	return TRUE;
@@ -5275,6 +5278,8 @@ TREEVIEW_MouseMove (TREEVIEW_INFO * infoPtr, LPARAM lParam)
     TRACKMOUSEEVENT trackinfo;
     TREEVIEW_ITEM * item;
 
+    if (!(infoPtr->dwStyle & TVS_TRACKSELECT)) return 0;
+
     /* fill in the TRACKMOUSEEVENT struct */
     trackinfo.cbSize = sizeof(TRACKMOUSEEVENT);
     trackinfo.dwFlags = TME_QUERY;
@@ -5314,7 +5319,7 @@ TREEVIEW_MouseMove (TREEVIEW_INFO * infoPtr, LPARAM lParam)
 }
 
 /* Draw themed border */
-static BOOL nc_paint (const TREEVIEW_INFO *infoPtr, HRGN region)
+static BOOL TREEVIEW_NCPaint (const TREEVIEW_INFO *infoPtr, HRGN region, LPARAM lParam)
 {
     HTHEME theme = GetWindowTheme (infoPtr->hwnd);
     HDC dc;
@@ -5323,7 +5328,8 @@ static BOOL nc_paint (const TREEVIEW_INFO *infoPtr, HRGN region)
     int cxEdge = GetSystemMetrics (SM_CXEDGE),
         cyEdge = GetSystemMetrics (SM_CYEDGE);
 
-    if (!theme) return FALSE;
+    if (!theme)
+        return DefWindowProcW (infoPtr->hwnd, WM_NCPAINT, (WPARAM)region, lParam);
 
     GetWindowRect(infoPtr->hwnd, &r);
 
@@ -5506,7 +5512,7 @@ TREEVIEW_KillFocus(const TREEVIEW_INFO *infoPtr)
 }
 
 /* update theme after a WM_THEMECHANGED message */
-static LRESULT theme_changed(const TREEVIEW_INFO *infoPtr)
+static LRESULT TREEVIEW_ThemeChanged(const TREEVIEW_INFO *infoPtr)
 {
     HTHEME theme = GetWindowTheme (infoPtr->hwnd);
     CloseThemeData (theme);
@@ -5706,10 +5712,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return TREEVIEW_MouseLeave(infoPtr);
 
     case WM_MOUSEMOVE:
-        if (infoPtr->dwStyle & TVS_TRACKSELECT)
-            return TREEVIEW_MouseMove(infoPtr, lParam);
-        else
-            return 0;
+	return TREEVIEW_MouseMove(infoPtr, lParam);
 
     case WM_NCLBUTTONDOWN:
         if (infoPtr->hwndEdit)
@@ -5717,9 +5720,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         goto def;
 
     case WM_NCPAINT:
-        if (nc_paint (infoPtr, (HRGN)wParam))
-            return 0;
-        goto def;
+        return TREEVIEW_NCPaint (infoPtr, (HRGN)wParam, lParam);
 
     case WM_NOTIFY:
 	return TREEVIEW_Notify(infoPtr, wParam, lParam);
@@ -5764,7 +5765,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return TREEVIEW_HandleTimer(infoPtr, wParam);
 
     case WM_THEMECHANGED:
-        return theme_changed (infoPtr);
+        return TREEVIEW_ThemeChanged (infoPtr);
 
     case WM_VSCROLL:
 	return TREEVIEW_VScroll(infoPtr, wParam);
@@ -5772,9 +5773,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	/* WM_WININICHANGE */
 
     case WM_MOUSEWHEEL:
-	if (wParam & (MK_SHIFT | MK_CONTROL))
-	    goto def;
-	return TREEVIEW_MouseWheel(infoPtr, wParam);
+	return TREEVIEW_MouseWheel(infoPtr, wParam, lParam);
 
     case WM_DRAWITEM:
 	TRACE("drawItem\n");
