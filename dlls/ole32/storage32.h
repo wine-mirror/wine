@@ -219,6 +219,11 @@ struct StorageBaseImpl
   StorageImpl* ancestorStorage;
 
   /*
+   * TRUE if this object has been invalidated
+   */
+  int reverted;
+
+  /*
    * Index of the directory entry of this storage
    */
   DirRef storageDirEntry;

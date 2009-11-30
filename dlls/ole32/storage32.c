@@ -425,7 +425,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
     goto end;
   }
 
-  if (!This->ancestorStorage)
+  if (This->reverted)
   {
     res = STG_E_REVERTED;
     goto end;
@@ -553,7 +553,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
     goto end;
   }
 
-  if (!This->ancestorStorage)
+  if (This->reverted)
     return STG_E_REVERTED;
 
   /*
@@ -638,7 +638,7 @@ static HRESULT WINAPI StorageBaseImpl_EnumElements(
   if ( (This==0) || (ppenum==0))
     return E_INVALIDARG;
 
-  if (!This->ancestorStorage)
+  if (This->reverted)
     return STG_E_REVERTED;
 
   newEnum = IEnumSTATSTGImpl_Construct(
@@ -682,7 +682,7 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
     goto end;
   }
 
-  if (!This->ancestorStorage)
+  if (This->reverted)
   {
     res = STG_E_REVERTED;
     goto end;
@@ -733,7 +733,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
   TRACE("(%p, %s, %s)\n",
 	iface, debugstr_w(pwcsOldName), debugstr_w(pwcsNewName));
 
-  if (!This->ancestorStorage)
+  if (This->reverted)
     return STG_E_REVERTED;
 
   currentEntryRef = findElement(This->ancestorStorage,
@@ -830,7 +830,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
   if (STGM_SHARE_MODE(grfMode) != STGM_SHARE_EXCLUSIVE) 
     return STG_E_INVALIDFLAG;
 
-  if (!This->ancestorStorage)
+  if (This->reverted)
     return STG_E_REVERTED;
 
   /*
@@ -959,7 +959,7 @@ static HRESULT WINAPI StorageBaseImpl_SetClass(
 
   TRACE("(%p, %p)\n", iface, clsid);
 
-  if (!This->ancestorStorage)
+  if (This->reverted)
     return STG_E_REVERTED;
 
   hRes = StorageBaseImpl_ReadDirEntry(This,
@@ -1028,7 +1028,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
     return STG_E_INVALIDFLAG;
   }
 
-  if (!This->ancestorStorage)
+  if (This->reverted)
     return STG_E_REVERTED;
 
   /*
@@ -1772,7 +1772,7 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
   if (pwcsName==NULL)
     return STG_E_INVALIDPOINTER;
 
-  if (!This->ancestorStorage)
+  if (This->reverted)
     return STG_E_REVERTED;
 
   if ( STGM_ACCESS_MODE( This->openFlags ) == STGM_READ )
@@ -2173,7 +2173,7 @@ static HRESULT WINAPI StorageBaseImpl_SetStateBits(
 {
   StorageBaseImpl* const This = (StorageBaseImpl*)iface;
 
-  if (!This->ancestorStorage)
+  if (This->reverted)
     return STG_E_REVERTED;
 
   This->stateBits = (This->stateBits & ~grfMask) | (grfStateBits & grfMask);
@@ -2464,6 +2464,8 @@ static HRESULT StorageImpl_Construct(
    * to this.
    */
   This->base.ancestorStorage = This;
+
+  This->base.reverted = 0;
 
   This->hFile = hFile;
 
@@ -3826,6 +3828,10 @@ static void StorageInternalImpl_Invalidate( StorageInternalImpl *This )
 
     This->base.ancestorStorage = NULL;
 
+    This->base.reverted = 1;
+
+    This->parentStorage = NULL;
+
     StorageBaseImpl_DeleteAll(&This->base);
 
     list_remove(&This->ParentListEntry);
@@ -4386,6 +4392,8 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
      * Keep the ancestor storage pointer but do not nail a reference to it.
      */
     newStorage->base.ancestorStorage = parentStorage->ancestorStorage;
+
+    newStorage->base.reverted = 0;
 
     newStorage->parentStorage = parentStorage;
 
