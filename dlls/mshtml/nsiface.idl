@@ -142,6 +142,14 @@ typedef nsISupports nsIStyleSheet;
 typedef nsISupports nsIStyleRule;
 typedef nsISupports nsIVariant;
 typedef nsISupports nsIDOMUserDataHandler;
+typedef nsISupports nsIDocShellLoadInfo;
+typedef nsISupports nsISHEntry;
+typedef nsISupports nsIPresShell;
+typedef nsISupports nsIContentViewer;
+typedef nsISupports nsIDocumentCharsetInfo;
+typedef nsISupports nsILayoutHistoryState;
+typedef nsISupports nsISecureBrowserUI;
+typedef nsISupports nsIDOMStorage;
 
 [
     object,
@@ -2648,6 +2656,88 @@ interface nsIHTMLEditor : nsISupports
     nsresult IsAnonymousElement([in] nsIDOMElement *aElement, [out] PRBool *_retval);
     nsresult GetReturnInParagraphCreatesNewParagraph([out] PRBool *_retval);
     nsresult SetReturnInParagraphCreatesNewParagraph([in] PRBool prb);
+}
+
+[
+    object,
+    uuid(8adfb831-1053-4a19-884d-bcdad7277b4b),
+    local
+    /* NOT_FROZEN */
+]
+interface nsIDocShell : nsISupports
+{
+    nsresult LoadURI(nsIURI *uri, nsIDocShellLoadInfo *loadInfo, PRUint32 aLoadFlags, PRBool firstParty);
+    nsresult LoadStream(nsIInputStream *aStream, nsIURI *aURI, const nsACString *aContentType,
+            const nsACString *aContentCharset, nsIDocShellLoadInfo *aLoadInfo);
+    nsresult InternalLoad(nsIURI *aURI, nsIURI *aReferrer, nsISupports *aOwner, PRUint32 aFlags, const PRUnichar *aWindowTarget,
+            const char *aTypeHint, nsIInputStream *aPostDataStream, nsIInputStream *aHeadersStream, PRUint32 aLoadFlags,
+            nsISHEntry *aSHEntry, PRBool firstParty, nsIDocShell **aDocShell, nsIRequest **aRequest);
+    nsresult CreateLoadInfo(nsIDocShellLoadInfo **loadInfo);
+    nsresult PrepareForNewContentModel();
+    nsresult SetCurrentURI(nsIURI *aURI);
+    nsresult FirePageHideNotification(PRBool isUnload);
+    nsresult GetPresContext(void /*nsPresContext*/ **aPresContext);
+    nsresult GetPresShell(nsIPresShell **aPresShell);
+    nsresult GetEldestPresShell(nsIPresShell **aEldestPresShell);
+    nsresult GetContentViewer(nsIContentViewer **aContentViewer);
+    nsresult GetChromeEventHandler(nsIDOMEventTarget **aChromeEventHandler);
+    nsresult SetChromeEventHandler(nsIDOMEventTarget *aChromeEventHandler);
+    nsresult GetDocumentCharsetInfo(nsIDocumentCharsetInfo **aDocumentCharsetInfo);
+    nsresult SetDocumentCharsetInfo(nsIDocumentCharsetInfo *aDocumentCharsetInfo);
+    nsresult GetAllowPlugins(PRBool *aAllowPlugins);
+    nsresult SetAllowPlugins(PRBool aAllowPlugins);
+    nsresult GetAllowJavascript(PRBool *aAllowJavascript);
+    nsresult SetAllowJavascript(PRBool aAllowJavascript);
+    nsresult GetAllowMetaRedirects(PRBool *aAllowMetaRedirects);
+    nsresult SetAllowMetaRedirects(PRBool aAllowMetaRedirects);
+    nsresult GetAllowSubframes(PRBool *aAllowSubframes);
+    nsresult SetAllowSubframes(PRBool aAllowSubframes);
+    nsresult GetAllowImages(PRBool *aAllowImages);
+    nsresult SetAllowImages(PRBool aAllowImages);
+    nsresult GetAllowDNSPrefetch(PRBool *aAllowDNSPrefetch);
+    nsresult SetAllowDNSPrefetch(PRBool aAllowDNSPrefetch);
+    nsresult GetDocShellEnumerator(PRInt32 aItemType, PRInt32 aDirection, nsISimpleEnumerator **_retval);
+    nsresult GetAppType(PRUint32 *aAppType);
+    nsresult SetAppType(PRUint32 aAppType);
+    nsresult GetAllowAuth(PRBool *aAllowAuth);
+    nsresult SetAllowAuth(PRBool aAllowAuth);
+    nsresult GetZoom(float *aZoom);
+    nsresult SetZoom(float aZoom);
+    nsresult GetMarginWidth(PRInt32 *aMarginWidth);
+    nsresult SetMarginWidth(PRInt32 aMarginWidth);
+    nsresult GetMarginHeight(PRInt32 *aMarginHeight);
+    nsresult SetMarginHeight(PRInt32 aMarginHeight);
+    nsresult TabToTreeOwner(PRBool forward, PRBool *tookFocus);
+    nsresult GetBusyFlags(PRUint32 *aBusyFlags);
+    nsresult GetLoadType(PRUint32 *aLoadType);
+    nsresult SetLoadType(PRUint32 aLoadType);
+    nsresult IsBeingDestroyed(PRBool *_retval);
+    nsresult GetIsExecutingOnLoadHandler(PRBool *aIsExecutingOnLoadHandler);
+    nsresult GetLayoutHistoryState(nsILayoutHistoryState **aLayoutHistoryState);
+    nsresult SetLayoutHistoryState(nsILayoutHistoryState *aLayoutHistoryState);
+    nsresult GetShouldSaveLayoutState(PRBool *aShouldSaveLayoutState);
+    nsresult GetSecurityUI(nsISecureBrowserUI **aSecurityUI);
+    nsresult SetSecurityUI(nsISecureBrowserUI *aSecurityUI);
+    nsresult SuspendRefreshURIs();
+    nsresult ResumeRefreshURIs();
+    nsresult BeginRestore(nsIContentViewer *viewer, PRBool top);
+    nsresult FinishRestore();
+    nsresult GetRestoringDocument(PRBool *aRestoringDocument);
+    nsresult GetUseErrorPages(PRBool *aUseErrorPages);
+    nsresult SetUseErrorPages(PRBool aUseErrorPages);
+    nsresult GetPreviousTransIndex(PRInt32 *aPreviousTransIndex);
+    nsresult GetLoadedTransIndex(PRInt32 *aLoadedTransIndex);
+    nsresult HistoryPurged(PRInt32 numEntries);
+    nsresult GetSessionStorageForURI(nsIURI *uri, nsIDOMStorage **_retval);
+    nsresult GetSessionStorageForPrincipal(nsIPrincipal *principal, PRBool create, nsIDOMStorage **_retval);
+    nsresult AddSessionStorage(nsIPrincipal *principal, nsIDOMStorage *storage);
+    nsresult GetCurrentDocumentChannel(nsIChannel * *aCurrentDocumentChannel);
+    nsresult SetChildOffset(PRUint32 offset);
+    nsresult GetIsInUnload(PRBool *aIsInUnload);
+    nsresult GetChannelIsUnsafe(PRBool *aChannelIsUnsafe);
+    void DetachEditorFromWindow();
+    nsresult GetIsOffScreenBrowser(PRBool *aIsOffScreenBrowser);
+    nsresult SetIsOffScreenBrowser(PRBool aIsOffScreenBrowser);
 }
 
 [

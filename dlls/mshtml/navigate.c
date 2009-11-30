@@ -1236,6 +1236,10 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url,
 HRESULT navigate_url(HTMLWindow *window, const WCHAR *new_url, const WCHAR *base_url)
 {
     WCHAR url[INTERNET_MAX_URL_LENGTH];
+    nsIWebNavigation *web_navigation;
+    nsIDocShell *doc_shell;
+    nsIWineURI *uri;
+    nsresult nsres;
     HRESULT hres;
 
     if(!new_url) {
@@ -1262,9 +1266,38 @@ HRESULT navigate_url(HTMLWindow *window, const WCHAR *new_url, const WCHAR *base
         }
     }
 
-    hres = hlink_frame_navigate(&window->doc->basedoc, url, NULL, 0);
-    if(FAILED(hres))
-        FIXME("hlink_frame_navigate failed: %08x\n", hres);
+    if(window->doc_obj && window == window->doc_obj->basedoc.window) {
+        hres = hlink_frame_navigate(&window->doc->basedoc, url, NULL, 0);
+        if(SUCCEEDED(hres))
+            return S_OK;
+        TRACE("hlink_frame_navigate failed: %08x\n", hres);
+    }
 
-    return hres;
+    nsres = get_nsinterface((nsISupports*)window->nswindow, &IID_nsIWebNavigation, (void**)&web_navigation);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIWebNavigation interface: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIWebNavigation_QueryInterface(web_navigation, &IID_nsIDocShell, (void**)&doc_shell);
+    nsIWebNavigation_Release(web_navigation);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDocShell: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    hres = create_doc_uri(window, url, &uri);
+    if(FAILED(hres)) {
+        nsIDocShell_Release(doc_shell);
+        return hres;
+    }
+
+    nsres = nsIDocShell_LoadURI(doc_shell, (nsIURI*)uri, NULL, 0, FALSE);
+    nsIDocShell_Release(doc_shell);
+    if(NS_FAILED(nsres)) {
+        WARN("LoadURI failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }

@@ -2365,6 +2365,22 @@ static nsresult create_uri(nsIURI *uri, HTMLWindow *window, NSContainer *contain
     return NS_OK;
 }
 
+HRESULT create_doc_uri(HTMLWindow *window, WCHAR *url, nsIWineURI **ret)
+{
+    nsIWineURI *uri;
+    nsresult nsres;
+
+    nsres = create_uri(NULL, window, window->doc_obj->nscontainer, &uri);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    nsIWineURI_SetWineURL(uri, url);
+    nsIWineURI_SetIsDocumentURI(uri, TRUE);
+
+    *ret = uri;
+    return S_OK;
+}
+
 typedef struct {
     const nsIProtocolHandlerVtbl  *lpProtocolHandlerVtbl;
 

@@ -666,6 +666,7 @@ void release_nsio(void);
 BOOL install_wine_gecko(BOOL);
 
 HRESULT nsuri_to_url(LPCWSTR,BOOL,BSTR*);
+HRESULT create_doc_uri(HTMLWindow*,WCHAR*,nsIWineURI**);
 
 HRESULT hlink_frame_navigate(HTMLDocument*,LPCWSTR,nsIInputStream*,DWORD);
 HRESULT navigate_url(HTMLWindow*,const WCHAR*,const WCHAR*);
