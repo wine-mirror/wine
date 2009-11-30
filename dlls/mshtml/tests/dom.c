@@ -3035,7 +3035,11 @@ static void test_navigator(IHTMLDocument2 *doc)
 static void test_screen(IHTMLWindow2 *window)
 {
     IHTMLScreen *screen, *screen2;
+    LONG l, exl;
+    HDC hdc;
     HRESULT hres;
+
+    static const WCHAR displayW[] = {'D','I','S','P','L','A','Y',0};
 
     screen = NULL;
     hres = IHTMLWindow2_get_screen(window, &screen);
@@ -3050,6 +3054,17 @@ static void test_screen(IHTMLWindow2 *window)
     IHTMLScreen_Release(screen2);
 
     test_disp((IUnknown*)screen, &DIID_DispHTMLScreen, "[object]");
+
+    hdc = CreateICW(displayW, NULL, NULL, NULL);
+
+    exl = GetDeviceCaps(hdc, HORZRES);
+
+    l = 0xdeadbeef;
+    hres = IHTMLScreen_get_width(screen, &l);
+    ok(hres == S_OK, "get_width failed: %08x\n", hres);
+    ok(l == exl, "width = %d, expected %d\n", l, exl);
+
+    DeleteObject(hdc);
 
     IHTMLScreen_Release(screen);
 }

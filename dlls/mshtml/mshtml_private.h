@@ -940,6 +940,7 @@ static inline void windowref_release(windowref_t *ref)
         heap_free(ref);
 }
 
+HDC get_display_dc(void);
 HINSTANCE get_shdoclc(void);
 
 extern HINSTANCE hInst;
