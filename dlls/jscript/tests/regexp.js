@@ -298,4 +298,70 @@ ok(re === RegExp(re, undefined), "re !== RegExp(re, undefined)");
 re = /abc/;
 ok(re === RegExp(re, undefined, 1), "re !== RegExp(re, undefined, 1)");
 
+re = /a/g;
+ok(re.lastIndex === 0, "re.lastIndex = " + re.lastIndex + " expected 0");
+
+m = re.exec(" a   ");
+ok(re.lastIndex === 2, "re.lastIndex = " + re.lastIndex + " expected 2");
+ok(m.index === 1, "m.index = " + m.index + " expected 1");
+
+m = re.exec(" a   ");
+ok(re.lastIndex === 0, "re.lastIndex = " + re.lastIndex + " expected 0");
+ok(m === null, "m = " + m + " expected null");
+
+re.lastIndex = 2;
+m = re.exec(" a a ");
+ok(re.lastIndex === 4, "re.lastIndex = " + re.lastIndex + " expected 4");
+ok(m.index === 3, "m.index = " + m.index + " expected 3");
+
+re.lastIndex = "2";
+ok(re.lastIndex === "2", "re.lastIndex = " + re.lastIndex + " expected '2'");
+m = re.exec(" a a ");
+ok(re.lastIndex === 4, "re.lastIndex = " + re.lastIndex + " expected 4");
+ok(m.index === 3, "m.index = " + m.index + " expected 3");
+
+var li = 0;
+var obj = new Object();
+obj.valueOf = function() { return li; };
+
+re.lastIndex = obj;
+ok(re.lastIndex === obj, "re.lastIndex = " + re.lastIndex + " expected obj");
+li = 2;
+m = re.exec(" a a ");
+ok(re.lastIndex === 2, "re.lastIndex = " + re.lastIndex + " expected 2");
+ok(m.index === 1, "m.index = " + m.index + " expected 1");
+
+re.lastIndex = 3;
+re.lastIndex = "test";
+ok(re.lastIndex === "test", "re.lastIndex = " + re.lastIndex + " expected 'test'");
+m = re.exec(" a a ");
+ok(re.lastIndex === 2, "re.lastIndex = " + re.lastIndex + " expected 2");
+ok(m.index === 1, "m.index = " + m.index + " expected 1");
+
+re.lastIndex = 0;
+re.lastIndex = 3.9;
+ok(re.lastIndex === 3.9, "re.lastIndex = " + re.lastIndex + " expected 3.9");
+m = re.exec(" a a ");
+ok(re.lastIndex === 4, "re.lastIndex = " + re.lastIndex + " expected 4");
+ok(m.index === 3, "m.index = " + m.index + " expected 3");
+
+obj.valueOf = function() { throw 0; }
+re.lastIndex = obj;
+ok(re.lastIndex === obj, "unexpected re.lastIndex");
+m = re.exec(" a a ");
+ok(re.lastIndex === 2, "re.lastIndex = " + re.lastIndex + " expected 2");
+ok(m.index === 1, "m.index = " + m.index + " expected 1");
+
+re.lastIndex = -3;
+ok(re.lastIndex === -3, "re.lastIndex = " + re.lastIndex + " expected -3");
+m = re.exec(" a a ");
+ok(re.lastIndex === 0, "re.lastIndex = " + re.lastIndex + " expected 0");
+ok(m === null, "m = " + m + " expected null");
+
+re.lastIndex = -1;
+ok(re.lastIndex === -1, "re.lastIndex = " + re.lastIndex + " expected -1");
+m = re.exec("  ");
+ok(re.lastIndex === 0, "re.lastIndex = " + re.lastIndex + " expected 0");
+ok(m === null, "m = " + m + " expected null");
+
 reportSuccess();
