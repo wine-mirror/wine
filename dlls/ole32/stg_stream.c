@@ -483,7 +483,6 @@ static HRESULT WINAPI StgStreamImpl_SetSize(
 {
   StgStreamImpl* const This=(StgStreamImpl*)iface;
 
-  DirEntry     currentEntry;
   HRESULT      hr;
 
   TRACE("(%p, %d)\n", iface, libNewSize.u.LowPart);
@@ -512,99 +511,17 @@ static HRESULT WINAPI StgStreamImpl_SetSize(
     return STG_E_ACCESSDENIED;
   }
 
-  /* In simple mode keep the stream size above the small block limit */
-  if (This->parentStorage->openFlags & STGM_SIMPLE)
-    libNewSize.u.LowPart = max(libNewSize.u.LowPart, LIMIT_TO_USE_SMALL_BLOCK);
-
   if (This->streamSize.u.LowPart == libNewSize.u.LowPart)
     return S_OK;
 
-  /*
-   * This will happen if we're creating a stream
-   */
-  if ((This->smallBlockChain == 0) && (This->bigBlockChain == 0))
-  {
-    if (libNewSize.u.LowPart < LIMIT_TO_USE_SMALL_BLOCK)
-    {
-      This->smallBlockChain = SmallBlockChainStream_Construct(
-                                    This->parentStorage->ancestorStorage,
-                                    NULL,
-                                    This->dirEntry);
-    }
-    else
-    {
-      This->bigBlockChain = BlockChainStream_Construct(
-                                This->parentStorage->ancestorStorage,
-                                NULL,
-                                This->dirEntry);
-    }
-  }
-
-  /*
-   * Read this stream's size to see if it's small blocks or big blocks
-   */
-  StorageBaseImpl_ReadDirEntry(This->parentStorage,
-                                       This->dirEntry,
-                                       &currentEntry);
-  /*
-   * Determine if we have to switch from small to big blocks or vice versa
-   */
-  if ( (This->smallBlockChain!=0) &&
-       (currentEntry.size.u.LowPart < LIMIT_TO_USE_SMALL_BLOCK) )
-  {
-    if (libNewSize.u.LowPart >= LIMIT_TO_USE_SMALL_BLOCK)
-    {
-      /*
-       * Transform the small block chain into a big block chain
-       */
-      This->bigBlockChain = Storage32Impl_SmallBlocksToBigBlocks(
-                                This->parentStorage->ancestorStorage,
-                                &This->smallBlockChain);
-    }
-  }
-  else if ( (This->bigBlockChain!=0) &&
-            (currentEntry.size.u.LowPart >= LIMIT_TO_USE_SMALL_BLOCK) )
-  {
-    if (libNewSize.u.LowPart < LIMIT_TO_USE_SMALL_BLOCK)
-    {
-      /*
-       * Transform the big block chain into a small block chain
-       */
-      This->smallBlockChain = Storage32Impl_BigBlocksToSmallBlocks(
-                                This->parentStorage->ancestorStorage,
-                                &This->bigBlockChain);
-    }
-  }
-
-  if (This->smallBlockChain!=0)
-  {
-    SmallBlockChainStream_SetSize(This->smallBlockChain, libNewSize);
-  }
-  else
-  {
-    BlockChainStream_SetSize(This->bigBlockChain, libNewSize);
-  }
-
-  /*
-   * Write the new information about this stream to the directory entry
-   */
-  hr = StorageBaseImpl_ReadDirEntry(This->parentStorage,
-                                       This->dirEntry,
-                                       &currentEntry);
-
-  currentEntry.size.u.HighPart = libNewSize.u.HighPart;
-  currentEntry.size.u.LowPart = libNewSize.u.LowPart;
+  hr = StorageBaseImpl_StreamSetSize(This->parentStorage, This->dirEntry, libNewSize);
 
   if (SUCCEEDED(hr))
   {
-    StorageBaseImpl_WriteDirEntry(This->parentStorage,
-				This->dirEntry,
-				&currentEntry);
+    This->streamSize = libNewSize;
   }
 
-  This->streamSize = libNewSize;
-
-  return S_OK;
+  return hr;
 }
 
 /***

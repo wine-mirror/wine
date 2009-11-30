@@ -2246,6 +2246,93 @@ static HRESULT StorageImpl_StreamReadAt(StorageBaseImpl *base, DirRef index,
   }
 }
 
+static HRESULT StorageImpl_StreamSetSize(StorageBaseImpl *base, DirRef index,
+  ULARGE_INTEGER newsize)
+{
+  StorageImpl *This = (StorageImpl*)base;
+  DirEntry data;
+  HRESULT hr;
+  SmallBlockChainStream *smallblock=NULL;
+  BlockChainStream *bigblock=NULL;
+
+  hr = StorageImpl_ReadDirEntry(This, index, &data);
+  if (FAILED(hr)) return hr;
+
+  /* In simple mode keep the stream size above the small block limit */
+  if (This->base.openFlags & STGM_SIMPLE)
+    newsize.QuadPart = max(newsize.QuadPart, LIMIT_TO_USE_SMALL_BLOCK);
+
+  if (data.size.QuadPart == newsize.QuadPart)
+    return S_OK;
+
+  /* Create a block chain object of the appropriate type */
+  if (data.size.QuadPart == 0)
+  {
+    if (newsize.QuadPart < LIMIT_TO_USE_SMALL_BLOCK)
+    {
+      smallblock = SmallBlockChainStream_Construct(This, NULL, index);
+      if (!smallblock) return E_OUTOFMEMORY;
+    }
+    else
+    {
+      bigblock = BlockChainStream_Construct(This, NULL, index);
+      if (!bigblock) return E_OUTOFMEMORY;
+    }
+  }
+  else if (data.size.QuadPart < LIMIT_TO_USE_SMALL_BLOCK)
+  {
+    smallblock = SmallBlockChainStream_Construct(This, NULL, index);
+    if (!smallblock) return E_OUTOFMEMORY;
+  }
+  else
+  {
+    bigblock = BlockChainStream_Construct(This, NULL, index);
+    if (!bigblock) return E_OUTOFMEMORY;
+  }
+
+  /* Change the block chain type if necessary. */
+  if (smallblock && newsize.QuadPart >= LIMIT_TO_USE_SMALL_BLOCK)
+  {
+    bigblock = Storage32Impl_SmallBlocksToBigBlocks(This, &smallblock);
+    if (!bigblock)
+    {
+      SmallBlockChainStream_Destroy(smallblock);
+      return E_FAIL;
+    }
+  }
+  else if (bigblock && newsize.QuadPart < LIMIT_TO_USE_SMALL_BLOCK)
+  {
+    smallblock = Storage32Impl_BigBlocksToSmallBlocks(This, &bigblock);
+    if (!smallblock)
+    {
+      BlockChainStream_Destroy(bigblock);
+      return E_FAIL;
+    }
+  }
+
+  /* Set the size of the block chain. */
+  if (smallblock)
+  {
+    SmallBlockChainStream_SetSize(smallblock, newsize);
+    SmallBlockChainStream_Destroy(smallblock);
+  }
+  else
+  {
+    BlockChainStream_SetSize(bigblock, newsize);
+    BlockChainStream_Destroy(bigblock);
+  }
+
+  /* Set the size in the directory entry. */
+  hr = StorageImpl_ReadDirEntry(This, index, &data);
+  if (SUCCEEDED(hr))
+  {
+    data.size = newsize;
+
+    hr = StorageImpl_WriteDirEntry(This, index, &data);
+  }
+  return hr;
+}
+
 static HRESULT StorageImpl_StreamWriteAt(StorageBaseImpl *base, DirRef index,
   ULARGE_INTEGER offset, ULONG size, const void *buffer, ULONG *bytesWritten)
 {
@@ -2325,7 +2412,8 @@ static const StorageBaseImplVtbl StorageImpl_BaseVtbl =
   StorageImpl_BaseReadDirEntry,
   StorageImpl_DestroyDirEntry,
   StorageImpl_StreamReadAt,
-  StorageImpl_StreamWriteAt
+  StorageImpl_StreamWriteAt,
+  StorageImpl_StreamSetSize
 };
 
 static HRESULT StorageImpl_Construct(
@@ -3787,6 +3875,13 @@ static HRESULT StorageInternalImpl_StreamWriteAt(StorageBaseImpl *base,
     index, offset, size, buffer, bytesWritten);
 }
 
+static HRESULT StorageInternalImpl_StreamSetSize(StorageBaseImpl *base,
+  DirRef index, ULARGE_INTEGER newsize)
+{
+  return StorageBaseImpl_StreamSetSize(&base->ancestorStorage->base,
+    index, newsize);
+}
+
 /******************************************************************************
 **
 ** Storage32InternalImpl_Commit
@@ -4235,7 +4330,8 @@ static const StorageBaseImplVtbl StorageInternalImpl_BaseVtbl =
   StorageInternalImpl_ReadDirEntry,
   StorageInternalImpl_DestroyDirEntry,
   StorageInternalImpl_StreamReadAt,
-  StorageInternalImpl_StreamWriteAt
+  StorageInternalImpl_StreamWriteAt,
+  StorageInternalImpl_StreamSetSize
 };
 
 /******************************************************************************
