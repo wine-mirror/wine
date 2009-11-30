@@ -2693,19 +2693,13 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
 
     TRACE("(%p %p)\n", aURI, _retval);
 
-    nsres = nsIIOService_NewChannelFromURI(nsio, aURI, &channel);
-    if(NS_FAILED(nsres) && nsres != NS_ERROR_UNKNOWN_PROTOCOL) {
-        WARN("NewChannelFromURI failed: %08x\n", nsres);
-        *_retval = channel;
-        return nsres;
-    }
-
     nsres = nsIURI_QueryInterface(aURI, &IID_nsIWineURI, (void**)&wine_uri);
     if(NS_FAILED(nsres)) {
-        WARN("Could not get nsIWineURI: %08x\n", nsres);
-        *_retval = channel;
-        return channel ? NS_OK : NS_ERROR_UNEXPECTED;
+        TRACE("Could not get nsIWineURI: %08x\n", nsres);
+        return nsIIOService_NewChannelFromURI(nsio, aURI, _retval);
     }
+
+    nsIIOService_NewChannelFromURI(nsio, aURI, &channel);
 
     ret = heap_alloc_zero(sizeof(nsChannel));
 
