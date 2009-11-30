@@ -3049,6 +3049,8 @@ static void test_screen(IHTMLWindow2 *window)
     ok(iface_cmp((IUnknown*)screen2, (IUnknown*)screen), "screen2 != screen\n");
     IHTMLScreen_Release(screen2);
 
+    test_disp((IUnknown*)screen, &DIID_DispHTMLScreen, "[object]");
+
     IHTMLScreen_Release(screen);
 }
 

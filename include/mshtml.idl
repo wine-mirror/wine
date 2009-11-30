@@ -9759,6 +9759,69 @@ interface IHTMLWindow5 : IDispatch
 };
 
 /*****************************************************************************
+ *    DispHTMLScreen dispinterface
+ */
+[
+    hidden,
+    uuid(3050f591-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLScreen
+{
+properties:
+methods:
+    [propget, id(DISPID_IHTMLSCREEN_COLORDEPTH)]
+    long colorDepth();
+
+    [propput, id(DISPID_IHTMLSCREEN_BUFFERDEPTH)]
+    void bufferDepth(long v);
+
+    [propget, id(DISPID_IHTMLSCREEN_BUFFERDEPTH)]
+    long bufferDepth();
+
+    [propget, id(DISPID_IHTMLSCREEN_WIDTH)]
+    long width();
+
+    [propget, id(DISPID_IHTMLSCREEN_HEIGHT)]
+    long height();
+
+    [propput, id(DISPID_IHTMLSCREEN_UPDATEINTERVAL)]
+    void updateInterval(long v);
+
+    [propget, id(DISPID_IHTMLSCREEN_UPDATEINTERVAL)]
+    long updateInterval();
+
+    [propget, id(DISPID_IHTMLSCREEN_AVAILHEIGHT)]
+    long availHeight();
+
+    [propget, id(DISPID_IHTMLSCREEN_AVAILWIDTH)]
+    long availWidth();
+
+    [propget, id(DISPID_IHTMLSCREEN_FONTSMOOTHINGENABLED)]
+    VARIANT_BOOL fontSmoothingEnabled();
+
+    [propget, id(DISPID_IHTMLSCREEN2_LOGICALXDPI)]
+    long logicalXDPI();
+
+    [propget, id(DISPID_IHTMLSCREEN2_LOGICALYDPI)]
+    long logicalYDPI();
+
+    [propget, id(DISPID_IHTMLSCREEN2_DEVICEXDPI)]
+    long deviceXDPI();
+
+    [propget, id(DISPID_IHTMLSCREEN2_DEVICEYDPI)]
+    long deviceYDPI();
+
+    [propget, id(DISPID_IHTMLSCREEN3_SYSTEMXDPI)]
+    long systemXDPI();
+
+    [propget, id(DISPID_IHTMLSCREEN3_SYSTEMYDPI)]
+    long systemYDPI();
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
+    IDispatch *constructor();
+}
+
+/*****************************************************************************
  *    DispHTMLWindow2 dispinterface
  */
 [

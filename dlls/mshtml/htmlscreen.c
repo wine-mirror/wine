@@ -32,6 +32,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 typedef struct {
+    DispatchEx dispex;
     const IHTMLScreenVtbl *lpIHTMLScreenVtbl;
 
     LONG ref;
@@ -50,12 +51,11 @@ static HRESULT WINAPI HTMLScreen_QueryInterface(IHTMLScreen *iface, REFIID riid,
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = HTMLSCREEN(This);
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = HTMLSCREEN(This);
     }else if(IsEqualGUID(&IID_IHTMLScreen, riid)) {
         TRACE("(%p)->(IID_IHTMLScreen %p)\n", This, ppv);
         *ppv = HTMLSCREEN(This);
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+        return *ppv ? S_OK : E_NOINTERFACE;
     }
 
     if(*ppv) {
@@ -84,8 +84,10 @@ static ULONG WINAPI HTMLScreen_Release(IHTMLScreen *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        release_dispex(&This->dispex);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -214,6 +216,17 @@ static const IHTMLScreenVtbl HTMLSreenVtbl = {
     HTMLScreen_get_fontSmoothingEnabled
 };
 
+static const tid_t HTMLScreen_iface_tids[] = {
+    IHTMLScreen_tid,
+    0
+};
+static dispex_static_data_t HTMLScreen_dispex = {
+    NULL,
+    DispHTMLScreen_tid,
+    NULL,
+    HTMLScreen_iface_tids
+};
+
 HRESULT HTMLScreen_Create(IHTMLScreen **ret)
 {
     HTMLScreen *screen;
@@ -224,6 +237,8 @@ HRESULT HTMLScreen_Create(IHTMLScreen **ret)
 
     screen->lpIHTMLScreenVtbl = &HTMLSreenVtbl;
     screen->ref = 1;
+
+    init_dispex(&screen->dispex, (IUnknown*)HTMLSCREEN(screen), &HTMLScreen_dispex);
 
     *ret = HTMLSCREEN(screen);
     return S_OK;
