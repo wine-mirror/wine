@@ -184,10 +184,6 @@ static HRESULT removeFromTree(
  * Declaration of the functions used to manipulate DirEntry
  */
 
-static HRESULT destroyDirEntry(
-  StorageImpl *storage,
-  DirRef index);
-
 static HRESULT insertIntoTree(
   StorageBaseImpl *This,
   DirRef        parentStorageIndex,
@@ -1244,12 +1240,13 @@ static HRESULT StorageImpl_CreateDirEntry(
  *
  * Mark a directory entry in the file as free.
  */
-static HRESULT destroyDirEntry(
-  StorageImpl *storage,
+static HRESULT StorageImpl_DestroyDirEntry(
+  StorageBaseImpl *base,
   DirRef index)
 {
   HRESULT hr;
   BYTE emptyData[RAW_DIRENTRY_SIZE];
+  StorageImpl *storage = (StorageImpl*)base;
 
   memset(&emptyData, 0, RAW_DIRENTRY_SIZE);
 
@@ -1820,8 +1817,7 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
    * Invalidate the entry
    */
   if (SUCCEEDED(hr))
-    destroyDirEntry(This->ancestorStorage,
-                    entryToDeleteRef);
+    StorageBaseImpl_DestroyDirEntry(This, entryToDeleteRef);
 
   return hr;
 }
@@ -2227,6 +2223,7 @@ static const StorageBaseImplVtbl StorageImpl_BaseVtbl =
   StorageImpl_CreateDirEntry,
   StorageImpl_BaseWriteDirEntry,
   StorageImpl_BaseReadDirEntry,
+  StorageImpl_DestroyDirEntry
 };
 
 static HRESULT StorageImpl_Construct(
@@ -3667,6 +3664,13 @@ static HRESULT StorageInternalImpl_ReadDirEntry(StorageBaseImpl *base,
     index, data);
 }
 
+static HRESULT StorageInternalImpl_DestroyDirEntry(StorageBaseImpl *base,
+  DirRef index)
+{
+  return StorageBaseImpl_DestroyDirEntry(&base->ancestorStorage->base,
+    index);
+}
+
 /******************************************************************************
 **
 ** Storage32InternalImpl_Commit
@@ -4112,7 +4116,8 @@ static const StorageBaseImplVtbl StorageInternalImpl_BaseVtbl =
   StorageInternalImpl_Destroy,
   StorageInternalImpl_CreateDirEntry,
   StorageInternalImpl_WriteDirEntry,
-  StorageInternalImpl_ReadDirEntry
+  StorageInternalImpl_ReadDirEntry,
+  StorageInternalImpl_DestroyDirEntry
 };
 
 /******************************************************************************
