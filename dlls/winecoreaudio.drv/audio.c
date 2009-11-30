@@ -264,7 +264,6 @@ OSStatus CoreAudio_wiAudioUnitIOProc(void *inRefCon,
 
 static const char * getMessage(UINT msg)
 {
-    static char unknown[32];
 #define MSG_TO_STR(x) case x: return #x
     switch(msg) {
         MSG_TO_STR(DRVM_INIT);
@@ -306,8 +305,7 @@ static const char * getMessage(UINT msg)
         MSG_TO_STR(DRV_QUERYDSOUNDDESC);
     }
 #undef MSG_TO_STR
-    sprintf(unknown, "UNKNOWN(0x%04x)", msg);
-    return unknown;
+    return wine_dbg_sprintf("UNKNOWN(0x%04x)", msg);
 }
 
 #define kStopLoopMessage 0
