@@ -1245,6 +1245,15 @@ static void test_EnumPrinterDrivers(void)
     buffer = HeapAlloc(GetProcessHeap(), 0, pcbNeeded);
     res = EnumPrinterDriversA(NULL, env_all, 1, buffer, pcbNeeded, &pcbNeeded, &pcReturned);
     ok(res, "EnumPrinterDriversA failed %u\n", GetLastError());
+    if (res && pcReturned > 0)
+    {
+        DRIVER_INFO_1 *di_1 = (DRIVER_INFO_1 *)buffer;
+        todo_wine
+        ok((LPBYTE) di_1->pName == NULL || (LPBYTE) di_1->pName < buffer ||
+            (LPBYTE) di_1->pName >= (LPBYTE)(di_1 + pcReturned),
+            "Driver Information not in sequence; pName %p, top of data %p\n",
+            di_1->pName, di_1 + pcReturned);
+    }
 
     HeapFree(GetProcessHeap(), 0, buffer);
 }
