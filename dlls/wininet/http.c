@@ -2530,10 +2530,10 @@ static const object_vtbl_t HTTPREQVtbl = {
  *    NULL 	 on failure
  *
  */
-static HINTERNET WINAPI HTTP_HttpOpenRequestW(http_session_t *lpwhs,
-	LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion,
-	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
-	DWORD dwFlags, DWORD_PTR dwContext)
+static DWORD HTTP_HttpOpenRequestW(http_session_t *lpwhs,
+        LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion,
+        LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
+        DWORD dwFlags, DWORD_PTR dwContext, HINTERNET *ret)
 {
     appinfo_t *hIC = NULL;
     http_request_t *lpwhr;
@@ -2550,7 +2550,7 @@ static HINTERNET WINAPI HTTP_HttpOpenRequestW(http_session_t *lpwhs,
     lpwhr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(http_request_t));
     if (NULL == lpwhr)
     {
-        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+        res = ERROR_OUTOFMEMORY;
         goto lend;
     }
     lpwhr->hdr.htype = WH_HHTTPREQ;
@@ -2571,14 +2571,14 @@ static HINTERNET WINAPI HTTP_HttpOpenRequestW(http_session_t *lpwhs,
             (strlenW(lpwhs->lpszHostName) + 7 /* length of ":65535" + 1 */));
     if (NULL == lpszHostName)
     {
-        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+        res = ERROR_OUTOFMEMORY;
         goto lend;
     }
 
     handle = WININET_AllocHandle( &lpwhr->hdr );
     if (NULL == handle)
     {
-        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+        res = ERROR_OUTOFMEMORY;
         goto lend;
     }
 
@@ -2586,7 +2586,6 @@ static HINTERNET WINAPI HTTP_HttpOpenRequestW(http_session_t *lpwhs,
     {
         InternetCloseHandle( handle );
         handle = NULL;
-        INTERNET_SetLastError(res);
         goto lend;
     }
 
@@ -2665,7 +2664,8 @@ lend:
         WININET_Release( &lpwhr->hdr );
 
     TRACE("<-- %p (%p)\n", handle, lpwhr);
-    return handle;
+    *ret = handle;
+    return res;
 }
 
 /***********************************************************************
@@ -2685,6 +2685,7 @@ HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
 {
     http_session_t *lpwhs;
     HINTERNET handle = NULL;
+    DWORD res;
 
     TRACE("(%p, %s, %s, %s, %s, %p, %08x, %08lx)\n", hHttpSession,
           debugstr_w(lpszVerb), debugstr_w(lpszObjectName),
@@ -2700,8 +2701,8 @@ HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
     lpwhs = (http_session_t*) WININET_GetObject( hHttpSession );
     if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
     {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	goto lend;
+        res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
+        goto lend;
     }
 
     /*
@@ -2711,13 +2712,15 @@ HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
      * necessary HINTERNET pointer returned by this function.
      *
      */
-    handle = HTTP_HttpOpenRequestW(lpwhs, lpszVerb, lpszObjectName,
-                                   lpszVersion, lpszReferrer, lpszAcceptTypes,
-                                   dwFlags, dwContext);
+    res = HTTP_HttpOpenRequestW(lpwhs, lpszVerb, lpszObjectName,
+                                lpszVersion, lpszReferrer, lpszAcceptTypes,
+                                dwFlags, dwContext, &handle);
 lend:
     if( lpwhs )
         WININET_Release( &lpwhs->hdr );
     TRACE("returning %p\n", handle);
+    if(res != ERROR_SUCCESS)
+        SetLastError(res);
     return handle;
 }
 
