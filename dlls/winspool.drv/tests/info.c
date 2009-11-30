@@ -71,6 +71,7 @@ static BOOL  (WINAPI * pSetDefaultPrinterA)(LPCSTR);
 static DWORD (WINAPI * pXcvDataW)(HANDLE, LPCWSTR, PBYTE, DWORD, PBYTE, DWORD, PDWORD, PDWORD);
 static BOOL  (WINAPI * pAddPortExA)(LPSTR, DWORD, LPBYTE, LPSTR);
 static BOOL  (WINAPI * pGetPrinterDriverW)(HANDLE, LPWSTR, DWORD, LPBYTE, DWORD, LPDWORD);
+static BOOL  (WINAPI * pGetPrinterW)(HANDLE, DWORD, LPBYTE, DWORD, LPDWORD);
 
 
 /* ################################ */
@@ -2212,6 +2213,83 @@ static void test_XcvDataW_PortIsValid(void)
 
 /* ########################### */
 
+static void test_GetPrinter(void)
+{
+    HANDLE hprn;
+    BOOL ret;
+    BYTE *buf;
+    INT level;
+    DWORD needed, filled;
+
+    if (!default_printer)
+    {
+        skip("There is no default printer installed\n");
+        return;
+    }
+
+    hprn = 0;
+    ret = OpenPrinter(default_printer, &hprn, NULL);
+    if (!ret)
+    {
+        skip("Unable to open the default printer (%s)\n", default_printer);
+        return;
+    }
+    ok(hprn != 0, "wrong hprn %p\n", hprn);
+
+    for (level = 1; level <= 9; level++)
+    {
+        SetLastError(0xdeadbeef);
+        needed = (DWORD)-1;
+        ret = GetPrinter(hprn, level, NULL, 0, &needed);
+        ok(!ret, "level %d: GetPrinter should fail\n", level);
+        /* Not all levels are supported on all Windows-Versions */
+        if(GetLastError() == ERROR_INVALID_LEVEL) continue;
+        ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %d\n", GetLastError());
+        ok(needed > 0,"not expected needed buffer size %d\n", needed);
+
+        /* GetPrinterA returns the same number of bytes as GetPrinterW */
+        if (! ret && pGetPrinterW && level != 6 && level != 7)
+        {
+            DWORD double_needed;
+            ret = pGetPrinterW(hprn, level, NULL, 0, &double_needed);
+            todo_wine
+            ok(double_needed == needed, "level %d: GetPrinterA returned different size %d than GetPrinterW (%d)\n", level, needed, double_needed);
+        }
+
+        buf = HeapAlloc(GetProcessHeap(), 0, needed);
+
+        SetLastError(0xdeadbeef);
+        filled = -1;
+        ret = GetPrinter(hprn, level, buf, needed, &filled);
+        if (level == 7 && needed == sizeof(PRINTER_INFO_7A))
+        {
+            todo_wine
+            ok(ret, "level %d: GetPrinter error %d\n", level, GetLastError());
+        }
+        else
+            ok(needed == filled, "needed %d != filled %d\n", needed, filled);
+
+        if (level == 2)
+        {
+            PRINTER_INFO_2 *pi_2 = (PRINTER_INFO_2 *)buf;
+
+            ok(pi_2->pPrinterName!= NULL, "not expected NULL ptr\n");
+            ok(pi_2->pDriverName!= NULL, "not expected NULL ptr\n");
+
+            trace("pPrinterName %s\n", pi_2->pPrinterName);
+            trace("pDriverName %s\n", pi_2->pDriverName);
+        }
+
+        HeapFree(GetProcessHeap(), 0, buf);
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = ClosePrinter(hprn);
+    ok(ret, "ClosePrinter error %d\n", GetLastError());
+}
+
+/* ########################### */
+
 static void test_GetPrinterDriver(void)
 {
     HANDLE hprn;
@@ -2547,6 +2625,7 @@ START_TEST(info)
     pGetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "GetDefaultPrinterA");
     pSetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "SetDefaultPrinterA");
     pGetPrinterDriverW = (void *) GetProcAddress(hwinspool, "GetPrinterDriverW");
+    pGetPrinterW = (void *) GetProcAddress(hwinspool, "GetPrinterW");
     pXcvDataW = (void *) GetProcAddress(hwinspool, "XcvDataW");
     pAddPortExA = (void *) GetProcAddress(hwinspool, "AddPortExA");
 
@@ -2573,6 +2652,7 @@ START_TEST(info)
     test_GetPrinterDriverDirectory();
     test_GetPrintProcessorDirectory();
     test_OpenPrinter();
+    test_GetPrinter();
     test_GetPrinterDriver();
     test_SetDefaultPrinter();
     test_XcvDataW_MonitorUI();
