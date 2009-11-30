@@ -1506,7 +1506,7 @@ static nsresult NSAPI nsURI_GetScheme(nsIWineURI *iface, nsACString *aScheme)
 
     TRACE("(%p)->(%p)\n", This, aScheme);
 
-    if(This->use_wine_url && strcmpW(This->wine_url, about_blankW)) {
+    if(This->use_wine_url) {
         /*
          * For Gecko we set scheme to unknown so it won't be handled
          * as any special case.
