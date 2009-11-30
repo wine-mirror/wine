@@ -82,11 +82,13 @@ struct StorageInternalImpl
    * Entry in the parent's stream tracking list
    */
   struct list ParentListEntry;
+
+  StorageBaseImpl *parentStorage;
 };
 typedef struct StorageInternalImpl StorageInternalImpl;
 
 /* Method definitions for the Storage32InternalImpl class. */
-static StorageInternalImpl* StorageInternalImpl_Construct(StorageImpl* ancestorStorage,
+static StorageInternalImpl* StorageInternalImpl_Construct(StorageBaseImpl* parentStorage,
                                                           DWORD openFlags, DirRef storageDirEntry);
 static void StorageImpl_Destroy(StorageBaseImpl* iface);
 static BOOL StorageImpl_ReadBigBlock(StorageImpl* This, ULONG blockIndex, void* buffer);
@@ -585,7 +587,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
     }
 
     newStorage = StorageInternalImpl_Construct(
-                   This->ancestorStorage,
+                   This,
                    grfMode,
                    storageEntryRef);
 
@@ -3842,49 +3844,63 @@ static void StorageInternalImpl_Destroy( StorageBaseImpl *iface)
 static HRESULT StorageInternalImpl_CreateDirEntry(StorageBaseImpl *base,
   const DirEntry *newData, DirRef *index)
 {
-  return StorageBaseImpl_CreateDirEntry(&base->ancestorStorage->base,
+  StorageInternalImpl* This = (StorageInternalImpl*) base;
+
+  return StorageBaseImpl_CreateDirEntry(This->parentStorage,
     newData, index);
 }
 
 static HRESULT StorageInternalImpl_WriteDirEntry(StorageBaseImpl *base,
   DirRef index, const DirEntry *data)
 {
-  return StorageBaseImpl_WriteDirEntry(&base->ancestorStorage->base,
+  StorageInternalImpl* This = (StorageInternalImpl*) base;
+
+  return StorageBaseImpl_WriteDirEntry(This->parentStorage,
     index, data);
 }
 
 static HRESULT StorageInternalImpl_ReadDirEntry(StorageBaseImpl *base,
   DirRef index, DirEntry *data)
 {
-  return StorageBaseImpl_ReadDirEntry(&base->ancestorStorage->base,
+  StorageInternalImpl* This = (StorageInternalImpl*) base;
+
+  return StorageBaseImpl_ReadDirEntry(This->parentStorage,
     index, data);
 }
 
 static HRESULT StorageInternalImpl_DestroyDirEntry(StorageBaseImpl *base,
   DirRef index)
 {
-  return StorageBaseImpl_DestroyDirEntry(&base->ancestorStorage->base,
+  StorageInternalImpl* This = (StorageInternalImpl*) base;
+
+  return StorageBaseImpl_DestroyDirEntry(This->parentStorage,
     index);
 }
 
 static HRESULT StorageInternalImpl_StreamReadAt(StorageBaseImpl *base,
   DirRef index, ULARGE_INTEGER offset, ULONG size, void *buffer, ULONG *bytesRead)
 {
-  return StorageBaseImpl_StreamReadAt(&base->ancestorStorage->base,
+  StorageInternalImpl* This = (StorageInternalImpl*) base;
+
+  return StorageBaseImpl_StreamReadAt(This->parentStorage,
     index, offset, size, buffer, bytesRead);
 }
 
 static HRESULT StorageInternalImpl_StreamWriteAt(StorageBaseImpl *base,
   DirRef index, ULARGE_INTEGER offset, ULONG size, const void *buffer, ULONG *bytesWritten)
 {
-  return StorageBaseImpl_StreamWriteAt(&base->ancestorStorage->base,
+  StorageInternalImpl* This = (StorageInternalImpl*) base;
+
+  return StorageBaseImpl_StreamWriteAt(This->parentStorage,
     index, offset, size, buffer, bytesWritten);
 }
 
 static HRESULT StorageInternalImpl_StreamSetSize(StorageBaseImpl *base,
   DirRef index, ULARGE_INTEGER newsize)
 {
-  return StorageBaseImpl_StreamSetSize(&base->ancestorStorage->base,
+  StorageInternalImpl* This = (StorageInternalImpl*) base;
+
+  return StorageBaseImpl_StreamSetSize(This->parentStorage,
     index, newsize);
 }
 
@@ -4345,7 +4361,7 @@ static const StorageBaseImplVtbl StorageInternalImpl_BaseVtbl =
 */
 
 static StorageInternalImpl* StorageInternalImpl_Construct(
-  StorageImpl* ancestorStorage,
+  StorageBaseImpl* parentStorage,
   DWORD        openFlags,
   DirRef       storageDirEntry)
 {
@@ -4369,7 +4385,9 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
     /*
      * Keep the ancestor storage pointer but do not nail a reference to it.
      */
-    newStorage->base.ancestorStorage = ancestorStorage;
+    newStorage->base.ancestorStorage = parentStorage->ancestorStorage;
+
+    newStorage->parentStorage = parentStorage;
 
     /*
      * Keep a reference to the directory entry of this storage
