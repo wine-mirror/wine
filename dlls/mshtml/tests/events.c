@@ -87,13 +87,6 @@ static const char click_doc_str[] =
     "<div id=\"clickdiv\" style=\"text-align: center; background: red; font-size: 32\">click here</div>"
     "</body></html>";
 
-static const char *debugstr_w(LPCWSTR str)
-{
-    static char buf[1024];
-    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
-    return buf;
-}
-
 static const char *debugstr_guid(REFIID riid)
 {
     static char buf[50];
@@ -264,7 +257,7 @@ static void _test_elem_tag(unsigned line, IUnknown *unk, const char *extag)
     hres = IHTMLElement_get_tagName(elem, &tag);
     IHTMLElement_Release(elem);
     ok_(__FILE__, line) (hres == S_OK, "get_tagName failed: %08x\n", hres);
-    ok_(__FILE__, line) (!strcmp_wa(tag, extag), "got tag: %s, expected %s\n", debugstr_w(tag), extag);
+    ok_(__FILE__, line) (!strcmp_wa(tag, extag), "got tag: %s, expected %s\n", wine_dbgstr_w(tag), extag);
 
     SysFreeString(tag);
 }
@@ -737,7 +730,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
 {
-    ok(0, "unexpected call %s %x\n", debugstr_w(bstrName), grfdex);
+    ok(0, "unexpected call %s %x\n", wine_dbgstr_w(bstrName), grfdex);
     return E_NOTIMPL;
 }
 
