@@ -158,8 +158,11 @@ static HRESULT WINAPI HTMLScreen_get_width(IHTMLScreen *iface, LONG *p)
 static HRESULT WINAPI HTMLScreen_get_height(IHTMLScreen *iface, LONG *p)
 {
     HTMLScreen *This = HTMLSCREEN_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = GetDeviceCaps(get_display_dc(), VERTRES);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLScreen_put_updateInterval(IHTMLScreen *iface, LONG v)

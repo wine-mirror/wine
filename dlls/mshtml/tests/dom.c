@@ -3058,11 +3058,16 @@ static void test_screen(IHTMLWindow2 *window)
     hdc = CreateICW(displayW, NULL, NULL, NULL);
 
     exl = GetDeviceCaps(hdc, HORZRES);
-
     l = 0xdeadbeef;
     hres = IHTMLScreen_get_width(screen, &l);
     ok(hres == S_OK, "get_width failed: %08x\n", hres);
     ok(l == exl, "width = %d, expected %d\n", l, exl);
+
+    exl = GetDeviceCaps(hdc, VERTRES);
+    l = 0xdeadbeef;
+    hres = IHTMLScreen_get_height(screen, &l);
+    ok(hres == S_OK, "get_height failed: %08x\n", hres);
+    ok(l == exl, "height = %d, expected %d\n", l, exl);
 
     DeleteObject(hdc);
 
