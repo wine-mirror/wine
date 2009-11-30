@@ -850,7 +850,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
             : NS_ERROR_UNEXPECTED;
     }
 
-    if(is_doc_uri && (This->load_flags & LOAD_INITIAL_DOCUMENT_URI)) {
+    if(is_doc_uri && (This->load_flags & LOAD_INITIAL_DOCUMENT_URI) && window == window->doc_obj->basedoc.window) {
         if(window->doc_obj->nscontainer->bscallback) {
             NSContainer *nscontainer = window->doc_obj->nscontainer;
 
