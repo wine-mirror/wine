@@ -152,6 +152,10 @@ static void init_strings(void)
 
         lstrcpyA(StartupTitle, startup);
     }
+    else
+    {
+        lstrcpyA(StartupTitle, Startup);
+    }
 }
 
 static HDDEDATA CALLBACK DdeCallback(UINT type, UINT format, HCONV hConv, HSZ hsz1, HSZ hsz2,
