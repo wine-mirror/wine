@@ -221,25 +221,26 @@ void _dump_diactionformatA(LPDIACTIONFORMATA lpdiActionFormat) {
     FIXME("diaf.dwDataSize = %d\n", lpdiActionFormat->dwDataSize);
     FIXME("diaf.dwNumActions = %d\n", lpdiActionFormat->dwNumActions);
     FIXME("diaf.rgoAction = %p\n", lpdiActionFormat->rgoAction);
-    for (i=0;i<lpdiActionFormat->dwNumActions;i++) {
-        FIXME("diaf.rgoAction[%u]:\n", i);
-        FIXME("\tuAppData=%lx\n", lpdiActionFormat->rgoAction[i].uAppData);
-        FIXME("\tdwSemantic=%x\n", lpdiActionFormat->rgoAction[i].dwSemantic);
-        FIXME("\tdwFlags=%x\n", lpdiActionFormat->rgoAction[i].dwFlags);
-        FIXME("\tszActionName=%s\n", debugstr_a(lpdiActionFormat->rgoAction[i].u.lptszActionName));
-        FIXME("\tguidInstance=%s\n", debugstr_guid(&lpdiActionFormat->rgoAction[i].guidInstance));
-        FIXME("\tdwObjID=%x\n", lpdiActionFormat->rgoAction[i].dwObjID);
-        FIXME("\tdwHow=%x\n", lpdiActionFormat->rgoAction[i].dwHow);
-    }
     FIXME("diaf.guidActionMap = %s\n", debugstr_guid(&lpdiActionFormat->guidActionMap));
-    FIXME("diaf.dwGenre = %d\n", lpdiActionFormat->dwGenre);
+    FIXME("diaf.dwGenre = 0x%08x\n", lpdiActionFormat->dwGenre);
     FIXME("diaf.dwBufferSize = %d\n", lpdiActionFormat->dwBufferSize);
     FIXME("diaf.lAxisMin = %d\n", lpdiActionFormat->lAxisMin);
     FIXME("diaf.lAxisMax = %d\n", lpdiActionFormat->lAxisMax);
     FIXME("diaf.hInstString = %p\n", lpdiActionFormat->hInstString);
     FIXME("diaf.ftTimeStamp ...\n");
-    FIXME("diaf.dwCRC = %x\n", lpdiActionFormat->dwCRC);
+    FIXME("diaf.dwCRC = 0x%x\n", lpdiActionFormat->dwCRC);
     FIXME("diaf.tszActionMap = %s\n", debugstr_a(lpdiActionFormat->tszActionMap));
+    for (i = 0; i < lpdiActionFormat->dwNumActions; i++)
+    {
+        FIXME("diaf.rgoAction[%u]:\n", i);
+        FIXME("\tuAppData=0x%lx\n", lpdiActionFormat->rgoAction[i].uAppData);
+        FIXME("\tdwSemantic=0x%08x\n", lpdiActionFormat->rgoAction[i].dwSemantic);
+        FIXME("\tdwFlags=0x%x\n", lpdiActionFormat->rgoAction[i].dwFlags);
+        FIXME("\tszActionName=%s\n", debugstr_a(lpdiActionFormat->rgoAction[i].u.lptszActionName));
+        FIXME("\tguidInstance=%s\n", debugstr_guid(&lpdiActionFormat->rgoAction[i].guidInstance));
+        FIXME("\tdwObjID=0x%x\n", lpdiActionFormat->rgoAction[i].dwObjID);
+        FIXME("\tdwHow=0x%x\n", lpdiActionFormat->rgoAction[i].dwHow);
+    }
 }
 
 /******************************************************************************
