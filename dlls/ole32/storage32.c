@@ -2459,12 +2459,6 @@ static HRESULT StorageImpl_Construct(
   This->base.ref = 1;
   This->base.create = create;
 
-  /*
-   * This is the top-level storage so initialize the ancestor pointer
-   * to this.
-   */
-  This->base.ancestorStorage = This;
-
   This->base.reverted = 0;
 
   This->hFile = hFile;
@@ -3822,11 +3816,9 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
 
 static void StorageInternalImpl_Invalidate( StorageInternalImpl *This )
 {
-  if (This->base.ancestorStorage)
+  if (!This->base.reverted)
   {
     TRACE("Storage invalidated (stg=%p)\n", This);
-
-    This->base.ancestorStorage = NULL;
 
     This->base.reverted = 1;
 
@@ -4387,11 +4379,6 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
     newStorage->base.lpVtbl = &Storage32InternalImpl_Vtbl;
     newStorage->base.baseVtbl = &StorageInternalImpl_BaseVtbl;
     newStorage->base.openFlags = (openFlags & ~STGM_CREATE);
-
-    /*
-     * Keep the ancestor storage pointer but do not nail a reference to it.
-     */
-    newStorage->base.ancestorStorage = parentStorage->ancestorStorage;
 
     newStorage->base.reverted = 0;
 

@@ -214,11 +214,6 @@ struct StorageBaseImpl
   LONG ref;
 
   /*
-   * Ancestor storage (top level)
-   */
-  StorageImpl* ancestorStorage;
-
-  /*
    * TRUE if this object has been invalidated
    */
   int reverted;
