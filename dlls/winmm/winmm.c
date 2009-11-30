@@ -104,7 +104,6 @@ static	void WINMM_DeleteIData(void)
 const char* WINMM_ErrorToString(MMRESULT error)
 {
 #define ERR_TO_STR(dev) case dev: return #dev
-    static char unknown[32];
     switch (error) {
     ERR_TO_STR(MMSYSERR_NOERROR);
     ERR_TO_STR(MMSYSERR_ERROR);
@@ -132,9 +131,8 @@ const char* WINMM_ErrorToString(MMRESULT error)
     ERR_TO_STR(WAVERR_UNPREPARED);
     ERR_TO_STR(WAVERR_SYNC);
     }
-    sprintf(unknown, "Unknown(0x%08x)", error);
-    return unknown;
 #undef ERR_TO_STR
+    return wine_dbg_sprintf("Unknown(0x%08x)", error);
 }
 
 /**************************************************************************

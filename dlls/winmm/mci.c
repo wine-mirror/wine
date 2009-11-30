@@ -151,8 +151,6 @@ static UINT MCI_GetDriverFromString(LPCWSTR lpstrName)
  */
 const char* MCI_MessageToString(UINT wMsg)
 {
-    static char buffer[100];
-
 #define CASE(s) case (s): return #s
 
     switch (wMsg) {
@@ -216,8 +214,7 @@ const char* MCI_MessageToString(UINT wMsg)
 	CASE(MCI_RESTORE);
 #undef CASE
     default:
-	sprintf(buffer, "MCI_<<%04X>>", wMsg);
-	return buffer;
+        return wine_dbg_sprintf("MCI_<<%04X>>", wMsg);
     }
 }
 
