@@ -614,8 +614,7 @@ static void joy_polldev(JoystickGenericImpl *This_in) {
             }
         }
         if (inst_id >= 0)
-            queue_event((LPDIRECTINPUTDEVICE8A)This,
-                        id_to_offset(&This->generic.base.data_format, inst_id),
+            queue_event((LPDIRECTINPUTDEVICE8A)This, inst_id,
                         value, jse.time, This->generic.base.dinput->evsequence++);
     }
 }

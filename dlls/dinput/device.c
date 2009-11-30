@@ -533,10 +533,10 @@ int find_property(const DataFormat *df, LPCDIPROPHEADER ph)
  *	queue_event - add new event to the ring queue
  */
 
-void queue_event(LPDIRECTINPUTDEVICE8A iface, int ofs, DWORD data, DWORD time, DWORD seq)
+void queue_event(LPDIRECTINPUTDEVICE8A iface, int inst_id, DWORD data, DWORD time, DWORD seq)
 {
     IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
-    int next_pos;
+    int next_pos, ofs = id_to_offset(&This->data_format, inst_id);
 
     /* Event is being set regardless of the queue state */
     if (This->hEvent) SetEvent(This->hEvent);
