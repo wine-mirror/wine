@@ -113,7 +113,6 @@ static HRESULT DirectSoundDevice_VerifyCertification(DirectSoundDevice * device,
 
 const char * dumpCooperativeLevel(DWORD level)
 {
-    static char unknown[32];
 #define LE(x) case x: return #x
     switch (level) {
         LE(DSSCL_NORMAL);
@@ -122,8 +121,7 @@ const char * dumpCooperativeLevel(DWORD level)
         LE(DSSCL_WRITEPRIMARY);
     }
 #undef LE
-    sprintf(unknown, "Unknown(%08x)", level);
-    return unknown;
+    return wine_dbg_sprintf("Unknown(%08x)", level);
 }
 
 static void _dump_DSCAPS(DWORD xmask) {
