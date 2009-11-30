@@ -196,7 +196,7 @@ static LONG entryNameCmp(
     const OLECHAR *name2);
 
 static DirRef findElement(
-    StorageImpl *storage,
+    StorageBaseImpl *storage,
     DirRef storageEntry,
     const OLECHAR *name,
     DirEntry *data);
@@ -447,7 +447,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
    * Search for the element with the given name
    */
   streamEntryRef = findElement(
-    This->ancestorStorage,
+    This,
     This->storageDirEntry,
     pwcsName,
     &currentEntry);
@@ -571,7 +571,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
   *ppstg = NULL;
 
   storageEntryRef = findElement(
-                         This->ancestorStorage,
+                         This,
                          This->storageDirEntry,
                          pwcsName,
                          &currentEntry);
@@ -736,7 +736,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
   if (This->reverted)
     return STG_E_REVERTED;
 
-  currentEntryRef = findElement(This->ancestorStorage,
+  currentEntryRef = findElement(This,
                                    This->storageDirEntry,
                                    pwcsNewName,
                                    &currentEntry);
@@ -752,7 +752,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
   /*
    * Search for the old element name
    */
-  currentEntryRef = findElement(This->ancestorStorage,
+  currentEntryRef = findElement(This,
                                    This->storageDirEntry,
                                    pwcsOldName,
                                    &currentEntry);
@@ -858,7 +858,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
 
   *ppstm = 0;
 
-  currentEntryRef = findElement(This->ancestorStorage,
+  currentEntryRef = findElement(This,
                                    This->storageDirEntry,
                                    pwcsName,
                                    &currentEntry);
@@ -1040,7 +1040,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
     return STG_E_ACCESSDENIED;
   }
 
-  currentEntryRef = findElement(This->ancestorStorage,
+  currentEntryRef = findElement(This,
                                    This->storageDirEntry,
                                    pwcsName,
                                    &currentEntry);
@@ -1412,13 +1412,13 @@ static HRESULT insertIntoTree(
  *
  * Find and read the element of a storage with the given name.
  */
-static DirRef findElement(StorageImpl *storage, DirRef storageEntry,
+static DirRef findElement(StorageBaseImpl *storage, DirRef storageEntry,
     const OLECHAR *name, DirEntry *data)
 {
   DirRef currentEntry;
 
   /* Read the storage entry to find the root of the tree. */
-  StorageImpl_ReadDirEntry(storage, storageEntry, data);
+  StorageBaseImpl_ReadDirEntry(storage, storageEntry, data);
 
   currentEntry = data->dirRootEntry;
 
@@ -1426,7 +1426,7 @@ static DirRef findElement(StorageImpl *storage, DirRef storageEntry,
   {
     LONG cmp;
 
-    StorageImpl_ReadDirEntry(storage, currentEntry, data);
+    StorageBaseImpl_ReadDirEntry(storage, currentEntry, data);
 
     cmp = entryNameCmp(name, data->name);
 
@@ -1779,7 +1779,7 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
     return STG_E_ACCESSDENIED;
 
   entryToDeleteRef = findElement(
-    This->ancestorStorage,
+    This,
     This->storageDirEntry,
     pwcsName,
     &entryToDelete);
