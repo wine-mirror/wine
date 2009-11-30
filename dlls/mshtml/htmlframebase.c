@@ -351,8 +351,15 @@ static HRESULT WINAPI HTMLFrameBase2_get_onreadystatechange(IHTMLFrameBase2 *ifa
 static HRESULT WINAPI HTMLFrameBase2_get_readyState(IHTMLFrameBase2 *iface, BSTR *p)
 {
     HTMLFrameBase *This = HTMLFRAMEBASE2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->content_window || !This->content_window->doc) {
+        FIXME("no document associated\n");
+        return E_FAIL;
+    }
+
+    return IHTMLDocument2_get_readyState(HTMLDOC(&This->content_window->doc->basedoc), p);
 }
 
 static HRESULT WINAPI HTMLFrameBase2_put_allowTransparency(IHTMLFrameBase2 *iface, VARIANT_BOOL v)
