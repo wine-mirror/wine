@@ -33,6 +33,7 @@ C_SRCS = \
 	htmllocation.c \
 	htmlnode.c \
 	htmloption.c \
+	htmlscreen.c \
 	htmlscript.c \
 	htmlselect.c \
 	htmlstyle.c \

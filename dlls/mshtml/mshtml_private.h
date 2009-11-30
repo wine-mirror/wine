@@ -247,6 +247,7 @@ struct HTMLWindow {
     HTMLOptionElementFactory *option_factory;
     HTMLImageElementFactory *image_factory;
     HTMLLocation *location;
+    IHTMLScreen *screen;
 
     global_prop_t *global_props;
     DWORD global_prop_cnt;
@@ -594,8 +595,8 @@ struct HTMLDocumentNode {
 #define HTMLFRAMEBASE2(x) ((IHTMLFrameBase2*)             &(x)->lpIHTMLFrameBase2Vtbl)
 
 #define HTMLOPTFACTORY(x)  ((IHTMLOptionElementFactory*)  &(x)->lpHTMLOptionElementFactoryVtbl)
-#define HTMLIMGFACTORY(x)  ((IHTMLImageElementFactory*)  &(x)->lpHTMLImageElementFactoryVtbl)
-#define HTMLLOCATION(x)  ((IHTMLLocation*) &(x)->lpHTMLLocationVtbl)
+#define HTMLIMGFACTORY(x)  ((IHTMLImageElementFactory*)   &(x)->lpHTMLImageElementFactoryVtbl)
+#define HTMLLOCATION(x)    ((IHTMLLocation*)              &(x)->lpHTMLLocationVtbl)
 
 #define DISPATCHEX(x)    ((IDispatchEx*) &(x)->lpIDispatchExVtbl)
 
@@ -618,6 +619,7 @@ HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLWindow*);
 HTMLImageElementFactory *HTMLImageElementFactory_Create(HTMLWindow*);
 HRESULT HTMLLocation_Create(HTMLWindow*,HTMLLocation**);
 IOmNavigator *OmNavigator_Create(void);
+HRESULT HTMLScreen_Create(IHTMLScreen**);
 
 void HTMLDocument_HTMLDocument3_Init(HTMLDocument*);
 void HTMLDocument_HTMLDocument5_Init(HTMLDocument*);

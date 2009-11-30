@@ -3032,6 +3032,26 @@ static void test_navigator(IHTMLDocument2 *doc)
     ok(!ref, "navigator should be destroyed here\n");
 }
 
+static void test_screen(IHTMLWindow2 *window)
+{
+    IHTMLScreen *screen, *screen2;
+    HRESULT hres;
+
+    screen = NULL;
+    hres = IHTMLWindow2_get_screen(window, &screen);
+    ok(hres == S_OK, "get_screen failed: %08x\n", hres);
+    ok(screen != NULL, "screen == NULL\n");
+
+    screen2 = NULL;
+    hres = IHTMLWindow2_get_screen(window, &screen2);
+    ok(hres == S_OK, "get_screen failed: %08x\n", hres);
+    ok(screen2 != NULL, "screen == NULL\n");
+    ok(iface_cmp((IUnknown*)screen2, (IUnknown*)screen), "screen2 != screen\n");
+    IHTMLScreen_Release(screen2);
+
+    IHTMLScreen_Release(screen);
+}
+
 static void test_current_style(IHTMLCurrentStyle *current_style)
 {
     BSTR str;
@@ -4654,6 +4674,7 @@ static void test_window(IHTMLDocument2 *doc)
     test_window_name(window, NULL);
     set_window_name(window, "test");
     test_window_length(window, 0);
+    test_screen(window);
 
     IHTMLWindow2_Release(window);
 }

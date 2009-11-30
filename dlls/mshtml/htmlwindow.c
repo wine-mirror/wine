@@ -950,8 +950,20 @@ static HRESULT WINAPI HTMLWindow2_showHelp(IHTMLWindow2 *iface, BSTR helpURL, VA
 static HRESULT WINAPI HTMLWindow2_get_screen(IHTMLWindow2 *iface, IHTMLScreen **p)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->screen) {
+        HRESULT hres;
+
+        hres = HTMLScreen_Create(&This->screen);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    *p = This->screen;
+    IHTMLScreen_AddRef(This->screen);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_get_Option(IHTMLWindow2 *iface, IHTMLOptionElementFactory **p)
