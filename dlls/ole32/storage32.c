@@ -2246,6 +2246,52 @@ static HRESULT StorageImpl_StreamReadAt(StorageBaseImpl *base, DirRef index,
   }
 }
 
+static HRESULT StorageImpl_StreamWriteAt(StorageBaseImpl *base, DirRef index,
+  ULARGE_INTEGER offset, ULONG size, const void *buffer, ULONG *bytesWritten)
+{
+  StorageImpl *This = (StorageImpl*)base;
+  DirEntry data;
+  HRESULT hr;
+
+  hr = StorageImpl_ReadDirEntry(This, index, &data);
+  if (FAILED(hr)) return hr;
+
+  /* FIXME: Enlarge the stream first if necessary. */
+
+  if (data.size.QuadPart == 0)
+  {
+    /* This shouldn't happen for now, because the stream object will set the size. */
+    assert(FALSE);
+  }
+
+  if (data.size.QuadPart < LIMIT_TO_USE_SMALL_BLOCK)
+  {
+    SmallBlockChainStream *stream;
+
+    stream = SmallBlockChainStream_Construct(This, NULL, index);
+    if (!stream) return E_OUTOFMEMORY;
+
+    hr = SmallBlockChainStream_WriteAt(stream, offset, size, buffer, bytesWritten);
+
+    SmallBlockChainStream_Destroy(stream);
+
+    return hr;
+  }
+  else
+  {
+    BlockChainStream *stream;
+
+    stream = BlockChainStream_Construct(This, NULL, index);
+    if (!stream) return E_OUTOFMEMORY;
+
+    hr = BlockChainStream_WriteAt(stream, offset, size, buffer, bytesWritten);
+
+    BlockChainStream_Destroy(stream);
+
+    return hr;
+  }
+}
+
 /*
  * Virtual function table for the IStorage32Impl class.
  */
@@ -2278,7 +2324,8 @@ static const StorageBaseImplVtbl StorageImpl_BaseVtbl =
   StorageImpl_BaseWriteDirEntry,
   StorageImpl_BaseReadDirEntry,
   StorageImpl_DestroyDirEntry,
-  StorageImpl_StreamReadAt
+  StorageImpl_StreamReadAt,
+  StorageImpl_StreamWriteAt
 };
 
 static HRESULT StorageImpl_Construct(
@@ -3733,6 +3780,13 @@ static HRESULT StorageInternalImpl_StreamReadAt(StorageBaseImpl *base,
     index, offset, size, buffer, bytesRead);
 }
 
+static HRESULT StorageInternalImpl_StreamWriteAt(StorageBaseImpl *base,
+  DirRef index, ULARGE_INTEGER offset, ULONG size, const void *buffer, ULONG *bytesWritten)
+{
+  return StorageBaseImpl_StreamWriteAt(&base->ancestorStorage->base,
+    index, offset, size, buffer, bytesWritten);
+}
+
 /******************************************************************************
 **
 ** Storage32InternalImpl_Commit
@@ -4180,7 +4234,8 @@ static const StorageBaseImplVtbl StorageInternalImpl_BaseVtbl =
   StorageInternalImpl_WriteDirEntry,
   StorageInternalImpl_ReadDirEntry,
   StorageInternalImpl_DestroyDirEntry,
-  StorageInternalImpl_StreamReadAt
+  StorageInternalImpl_StreamReadAt,
+  StorageInternalImpl_StreamWriteAt
 };
 
 /******************************************************************************

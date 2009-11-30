@@ -382,34 +382,12 @@ static HRESULT WINAPI StgStreamImpl_Write(
       return res;
   }
 
-  /*
-   * Depending on the type of chain that was opened when the stream was constructed,
-   * we delegate the work to the method that readwrites to the block chains.
-   */
-  if (This->smallBlockChain!=0)
-  {
-    res = SmallBlockChainStream_WriteAt(This->smallBlockChain,
-				  This->currentPosition,
-				  cb,
-				  pv,
-				  pcbWritten);
-
-  }
-  else if (This->bigBlockChain!=0)
-  {
-    res = BlockChainStream_WriteAt(This->bigBlockChain,
-			     This->currentPosition,
-			     cb,
-			     pv,
-			     pcbWritten);
-  }
-  else
-  {
-    /* this should never happen because the IStream_SetSize call above will
-     * make sure a big or small block chain is created */
-    assert(FALSE);
-    res = 0;
-  }
+  res = StorageBaseImpl_StreamWriteAt(This->parentStorage,
+                                      This->dirEntry,
+                                      This->currentPosition,
+                                      cb,
+                                      pv,
+                                      pcbWritten);
 
   /*
    * Advance the position pointer for the number of positions written.
