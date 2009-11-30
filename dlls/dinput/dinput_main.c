@@ -224,7 +224,7 @@ void _dump_diactionformatA(LPDIACTIONFORMATA lpdiActionFormat) {
     for (i=0;i<lpdiActionFormat->dwNumActions;i++) {
         FIXME("diaf.rgoAction[%u]:\n", i);
         FIXME("\tuAppData=%lx\n", lpdiActionFormat->rgoAction[i].uAppData);
-        FIXME("\tdwSemantics=%x\n", lpdiActionFormat->rgoAction[i].dwSemantics);
+        FIXME("\tdwSemantic=%x\n", lpdiActionFormat->rgoAction[i].dwSemantic);
         FIXME("\tdwFlags=%x\n", lpdiActionFormat->rgoAction[i].dwFlags);
         FIXME("\tszActionName=%s\n", debugstr_a(lpdiActionFormat->rgoAction[i].u.lptszActionName));
         FIXME("\tguidInstance=%s\n", debugstr_guid(&lpdiActionFormat->rgoAction[i].guidInstance));

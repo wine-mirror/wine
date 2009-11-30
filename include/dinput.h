@@ -1106,7 +1106,7 @@ typedef BOOL (CALLBACK *LPDIENUMEFFECTSINFILECALLBACK)(LPCDIFILEEFFECT , LPVOID)
 /* DInput 8 structures and types */
 typedef struct _DIACTIONA {
 	UINT_PTR	uAppData;
-	DWORD		dwSemantics;
+	DWORD		dwSemantic;
 	DWORD		dwFlags;
 	union {
 		LPCSTR	lptszActionName;
@@ -1120,7 +1120,7 @@ typedef const DIACTIONA *LPCDIACTIONA;
 
 typedef struct _DIACTIONW {
 	UINT_PTR	uAppData;
-	DWORD		dwSemantics;
+	DWORD		dwSemantic;
 	DWORD		dwFlags;
 	union {
 		LPCWSTR	lptszActionName;
