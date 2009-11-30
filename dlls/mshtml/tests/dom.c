@@ -3069,6 +3069,12 @@ static void test_screen(IHTMLWindow2 *window)
     ok(hres == S_OK, "get_height failed: %08x\n", hres);
     ok(l == exl, "height = %d, expected %d\n", l, exl);
 
+    exl = GetDeviceCaps(hdc, BITSPIXEL);
+    l = 0xdeadbeef;
+    hres = IHTMLScreen_get_colorDepth(screen, &l);
+    ok(hres == S_OK, "get_height failed: %08x\n", hres);
+    ok(l == exl, "height = %d, expected %d\n", l, exl);
+
     DeleteObject(hdc);
 
     IHTMLScreen_Release(screen);
