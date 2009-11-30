@@ -2638,6 +2638,7 @@ static void _test_readyState(unsigned line, IUnknown *unk)
 {
     IHTMLDocument2 *htmldoc;
     DISPPARAMS dispparams;
+    IHTMLElement *elem;
     BSTR state;
     VARIANT out;
     HRESULT hres;
@@ -2672,6 +2673,26 @@ static void _test_readyState(unsigned line, IUnknown *unk)
         (!strcmp_wa(state, expected_state[load_state]), "unexpected state %s, expected %d\n",
          wine_dbgstr_w(state), load_state);
     SysFreeString(state);
+
+    hres = IHTMLDocument2_get_body(htmldoc, &elem);
+    ok_(__FILE__,line)(hres == S_OK, "get_body failed: %08x\n", hres);
+    if(elem) {
+        IHTMLElement2 *elem2;
+        VARIANT var;
+
+        hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLElement2, (void**)&elem2);
+        IHTMLElement_Release(elem);
+        ok(hres == S_OK, "Could not get IHTMLElement2 iface: %08x\n", hres);
+
+        hres = IHTMLElement2_get_readyState(elem2, &var);
+        IHTMLElement2_Release(elem2);
+        ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
+        ok(V_VT(&var) == VT_BSTR, "V_VT(state) = %d\n", V_VT(&var));
+        ok(!strcmp_wa(V_BSTR(&var), "complete"), "unexpected body state %s\n", wine_dbgstr_w(V_BSTR(&var)));
+        VariantClear(&var);
+    }else {
+        ok_(__FILE__,line)(load_state != LD_COMPLETE, "body is NULL in complete state\n");
+    }
 
     dispparams.cArgs = 0;
     dispparams.cNamedArgs = 0;
