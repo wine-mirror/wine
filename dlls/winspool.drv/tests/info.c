@@ -2348,7 +2348,6 @@ static void test_GetPrinterDriver(void)
         {
             DWORD double_needed;
             ret = pGetPrinterDriverW(hprn, NULL, level, NULL, 0, &double_needed);
-            todo_wine
             ok(double_needed == needed, "GetPrinterDriverA returned different size %d than GetPrinterDriverW (%d)\n", needed, double_needed);
         }
 

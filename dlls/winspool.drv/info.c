@@ -1410,6 +1410,188 @@ static void convert_printerinfo_W_to_A(LPBYTE out, LPBYTE pPrintersW,
     }
 }
 
+/******************************************************************
+ * convert_driverinfo_W_to_A [internal]
+ *
+ */
+static void convert_driverinfo_W_to_A(LPBYTE out, LPBYTE pDriversW,
+                                       DWORD level, DWORD outlen, DWORD numentries)
+{
+    DWORD id = 0;
+    LPSTR ptr;
+    INT len;
+
+    TRACE("(%p, %p, %d, %u, %u)\n", out, pDriversW, level, outlen, numentries);
+
+    len = di_sizeof[level] * numentries;
+    ptr = (LPSTR) out + len;
+    outlen -= len;
+
+    /* copy the numbers of all PRINTER_INFO_* first */
+    memcpy(out, pDriversW, len);
+
+#define COPY_STRING(fld) \
+                    { if (diW->fld){ \
+                        diA->fld = ptr; \
+                        len = WideCharToMultiByte(CP_ACP, 0, diW->fld, -1, ptr, outlen, NULL, NULL);\
+                        ptr += len; outlen -= len;\
+                    }}
+#define COPY_MULTIZ_STRING(fld) \
+                    { LPWSTR p = diW->fld; if (p){ \
+                        diA->fld = ptr; \
+                        do {\
+                        len = WideCharToMultiByte(CP_ACP, 0, p, -1, ptr, outlen, NULL, NULL);\
+                        ptr += len; outlen -= len; p += len;\
+                        }\
+                        while(len > 1 && outlen > 0); \
+                    }}
+
+    while (id < numentries)
+    {
+        switch (level)
+        {
+            case 1:
+                {
+                    DRIVER_INFO_1W * diW = (DRIVER_INFO_1W *) pDriversW;
+                    DRIVER_INFO_1A * diA = (DRIVER_INFO_1A *) out;
+
+                    TRACE("(%u) #%u: %s\n", level, id, debugstr_w(diW->pName));
+
+                    COPY_STRING(pName);
+                    break;
+                }
+            case 2:
+                {
+                    DRIVER_INFO_2W * diW = (DRIVER_INFO_2W *) pDriversW;
+                    DRIVER_INFO_2A * diA = (DRIVER_INFO_2A *) out;
+
+                    TRACE("(%u) #%u: %s\n", level, id, debugstr_w(diW->pName));
+
+                    COPY_STRING(pName);
+                    COPY_STRING(pEnvironment);
+                    COPY_STRING(pDriverPath);
+                    COPY_STRING(pDataFile);
+                    COPY_STRING(pConfigFile);
+                    break;
+                }
+            case 3:
+                {
+                    DRIVER_INFO_3W * diW = (DRIVER_INFO_3W *) pDriversW;
+                    DRIVER_INFO_3A * diA = (DRIVER_INFO_3A *) out;
+
+                    TRACE("(%u) #%u: %s\n", level, id, debugstr_w(diW->pName));
+
+                    COPY_STRING(pName);
+                    COPY_STRING(pEnvironment);
+                    COPY_STRING(pDriverPath);
+                    COPY_STRING(pDataFile);
+                    COPY_STRING(pConfigFile);
+                    COPY_STRING(pHelpFile);
+                    COPY_MULTIZ_STRING(pDependentFiles);
+                    COPY_STRING(pMonitorName);
+                    COPY_STRING(pDefaultDataType);
+                    break;
+                }
+            case 4:
+                {
+                    DRIVER_INFO_4W * diW = (DRIVER_INFO_4W *) pDriversW;
+                    DRIVER_INFO_4A * diA = (DRIVER_INFO_4A *) out;
+
+                    TRACE("(%u) #%u: %s\n", level, id, debugstr_w(diW->pName));
+
+                    COPY_STRING(pName);
+                    COPY_STRING(pEnvironment);
+                    COPY_STRING(pDriverPath);
+                    COPY_STRING(pDataFile);
+                    COPY_STRING(pConfigFile);
+                    COPY_STRING(pHelpFile);
+                    COPY_MULTIZ_STRING(pDependentFiles);
+                    COPY_STRING(pMonitorName);
+                    COPY_STRING(pDefaultDataType);
+                    COPY_MULTIZ_STRING(pszzPreviousNames);
+                    break;
+                }
+            case 5:
+                {
+                    DRIVER_INFO_5W * diW = (DRIVER_INFO_5W *) pDriversW;
+                    DRIVER_INFO_5A * diA = (DRIVER_INFO_5A *) out;
+
+                    TRACE("(%u) #%u: %s\n", level, id, debugstr_w(diW->pName));
+
+                    COPY_STRING(pName);
+                    COPY_STRING(pEnvironment);
+                    COPY_STRING(pDriverPath);
+                    COPY_STRING(pDataFile);
+                    COPY_STRING(pConfigFile);
+                    break;
+                }
+            case 6:
+                {
+                    DRIVER_INFO_6W * diW = (DRIVER_INFO_6W *) pDriversW;
+                    DRIVER_INFO_6A * diA = (DRIVER_INFO_6A *) out;
+
+                    TRACE("(%u) #%u: %s\n", level, id, debugstr_w(diW->pName));
+
+                    COPY_STRING(pName);
+                    COPY_STRING(pEnvironment);
+                    COPY_STRING(pDriverPath);
+                    COPY_STRING(pDataFile);
+                    COPY_STRING(pConfigFile);
+                    COPY_STRING(pHelpFile);
+                    COPY_MULTIZ_STRING(pDependentFiles);
+                    COPY_STRING(pMonitorName);
+                    COPY_STRING(pDefaultDataType);
+                    COPY_MULTIZ_STRING(pszzPreviousNames);
+                    COPY_STRING(pszMfgName);
+                    COPY_STRING(pszOEMUrl);
+                    COPY_STRING(pszHardwareID);
+                    COPY_STRING(pszProvider);
+                    break;
+                }
+            case 8:
+                {
+                    DRIVER_INFO_8W * diW = (DRIVER_INFO_8W *) pDriversW;
+                    DRIVER_INFO_8A * diA = (DRIVER_INFO_8A *) out;
+
+                    TRACE("(%u) #%u: %s\n", level, id, debugstr_w(diW->pName));
+
+                    COPY_STRING(pName);
+                    COPY_STRING(pEnvironment);
+                    COPY_STRING(pDriverPath);
+                    COPY_STRING(pDataFile);
+                    COPY_STRING(pConfigFile);
+                    COPY_STRING(pHelpFile);
+                    COPY_MULTIZ_STRING(pDependentFiles);
+                    COPY_STRING(pMonitorName);
+                    COPY_STRING(pDefaultDataType);
+                    COPY_MULTIZ_STRING(pszzPreviousNames);
+                    COPY_STRING(pszMfgName);
+                    COPY_STRING(pszOEMUrl);
+                    COPY_STRING(pszHardwareID);
+                    COPY_STRING(pszProvider);
+                    COPY_STRING(pszPrintProcessor);
+                    COPY_STRING(pszVendorSetup);
+                    COPY_MULTIZ_STRING(pszzColorProfiles);
+                    COPY_STRING(pszInfPath);
+                    COPY_MULTIZ_STRING(pszzCoreDriverDependencies);
+                    break;
+                }
+
+
+            default:
+                FIXME("for level %u\n", level);
+        }
+
+        pDriversW += di_sizeof[level];
+        out += di_sizeof[level];
+        id++;
+
+    }
+#undef COPY_STRING
+#undef COPY_MULTIZ_STRING
+}
+
+
 /***********************************************************
  *             PRINTER_INFO_2AtoW
  * Creates a unicode copy of PRINTER_INFO_2A on heap
@@ -4279,12 +4461,11 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
 }
 
 /*****************************************************************************
- *          WINSPOOL_GetPrinterDriver
+ *          GetPrinterDriverW  [WINSPOOL.@]
  */
-static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPCWSTR pEnvironment,
-				      DWORD Level, LPBYTE pDriverInfo,
-				      DWORD cbBuf, LPDWORD pcbNeeded,
-				      BOOL unicode)
+BOOL WINAPI GetPrinterDriverW(HANDLE hPrinter, LPWSTR pEnvironment,
+                                  DWORD Level, LPBYTE pDriverInfo,
+                                  DWORD cbBuf, LPDWORD pcbNeeded)
 {
     LPCWSTR name;
     WCHAR DriverName[100];
@@ -4346,7 +4527,7 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPCWSTR pEnvironment,
     if(!WINSPOOL_GetDriverInfoFromReg(hkeyDrivers, DriverName,
                          env, Level, pDriverInfo, ptr,
                          (cbBuf < size) ? 0 : cbBuf - size,
-                         &needed, unicode)) {
+                         &needed, TRUE)) {
             RegCloseKey(hkeyDrivers);
             return FALSE;
     }
@@ -4370,22 +4551,21 @@ BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
     BOOL ret;
     UNICODE_STRING pEnvW;
     PWSTR pwstrEnvW;
+    LPBYTE buf = NULL;
+
+    if (cbBuf)
+        buf = HeapAlloc(GetProcessHeap(), 0, cbBuf);
     
     pwstrEnvW = asciitounicode(&pEnvW, pEnvironment);
-    ret = WINSPOOL_GetPrinterDriver(hPrinter, pwstrEnvW, Level, pDriverInfo,
-				    cbBuf, pcbNeeded, FALSE);
+    ret = GetPrinterDriverW(hPrinter, pwstrEnvW, Level, buf,
+				    cbBuf, pcbNeeded);
+    if (ret)
+        convert_driverinfo_W_to_A(pDriverInfo, buf, Level, cbBuf, 1);
+
+    HeapFree(GetProcessHeap(), 0, buf);
+
     RtlFreeUnicodeString(&pEnvW);
     return ret;
-}
-/*****************************************************************************
- *          GetPrinterDriverW  [WINSPOOL.@]
- */
-BOOL WINAPI GetPrinterDriverW(HANDLE hPrinter, LPWSTR pEnvironment,
-                                  DWORD Level, LPBYTE pDriverInfo,
-                                  DWORD cbBuf, LPDWORD pcbNeeded)
-{
-    return WINSPOOL_GetPrinterDriver(hPrinter, pEnvironment, Level,
-				     pDriverInfo, cbBuf, pcbNeeded, TRUE);
 }
 
 /*****************************************************************************
