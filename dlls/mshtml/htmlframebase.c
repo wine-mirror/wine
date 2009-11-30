@@ -91,8 +91,15 @@ static HRESULT WINAPI HTMLFrameBase_Invoke(IHTMLFrameBase *iface, DISPID dispIdM
 static HRESULT WINAPI HTMLFrameBase_put_src(IHTMLFrameBase *iface, BSTR v)
 {
     HTMLFrameBase *This = HTMLFRAMEBASE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    if(!This->content_window || !This->element.node.doc || !This->element.node.doc->basedoc.window) {
+        FIXME("detached element\n");
+        return E_FAIL;
+    }
+
+    return navigate_url(This->content_window, v, This->element.node.doc->basedoc.window->url);
 }
 
 static HRESULT WINAPI HTMLFrameBase_get_src(IHTMLFrameBase *iface, BSTR *p)
