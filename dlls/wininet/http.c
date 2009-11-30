@@ -2016,7 +2016,7 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
 }
 
 /* read some more data into the read buffer (the read section must be held) */
-static BOOL read_more_data( http_request_t *req, int maxlen )
+static DWORD read_more_data( http_request_t *req, int maxlen )
 {
     DWORD res;
     int len;
@@ -2033,13 +2033,10 @@ static BOOL read_more_data( http_request_t *req, int maxlen )
 
     res = NETCON_recv( &req->netConnection, req->read_buf + req->read_size,
                        maxlen - req->read_size, 0, &len );
-    if(res != ERROR_SUCCESS) {
-        INTERNET_SetLastError(res);
-        return FALSE;
-    }
+    if(res == ERROR_SUCCESS)
+        req->read_size += len;
 
-    req->read_size += len;
-    return TRUE;
+    return res;
 }
 
 /* remove some amount of data from the read buffer (the read section must be held) */
@@ -2052,6 +2049,7 @@ static void remove_data( http_request_t *req, int count )
 static BOOL read_line( http_request_t *req, LPSTR buffer, DWORD *len )
 {
     int count, bytes_read, pos = 0;
+    DWORD res;
 
     EnterCriticalSection( &req->read_section );
     for (;;)
@@ -2071,11 +2069,12 @@ static BOOL read_line( http_request_t *req, LPSTR buffer, DWORD *len )
         remove_data( req, bytes_read );
         if (eol) break;
 
-        if (!read_more_data( req, -1 ) || !req->read_size)
+        if ((res = read_more_data( req, -1 )) != ERROR_SUCCESS || !req->read_size)
         {
             *len = 0;
             TRACE( "returning empty string\n" );
             LeaveCriticalSection( &req->read_section );
+            INTERNET_SetLastError(res);
             return FALSE;
         }
     }
@@ -2092,8 +2091,10 @@ static BOOL read_line( http_request_t *req, LPSTR buffer, DWORD *len )
 }
 
 /* discard data contents until we reach end of line (the read section must be held) */
-static BOOL discard_eol( http_request_t *req )
+static DWORD discard_eol( http_request_t *req )
 {
+    DWORD res;
+
     do
     {
         BYTE *eol = memchr( req->read_buf + req->read_pos, '\n', req->read_size );
@@ -2103,21 +2104,21 @@ static BOOL discard_eol( http_request_t *req )
             break;
         }
         req->read_pos = req->read_size = 0;  /* discard everything */
-        if (!read_more_data( req, -1 )) return FALSE;
+        if ((res = read_more_data( req, -1 )) != ERROR_SUCCESS) return res;
     } while (req->read_size);
-    return TRUE;
+    return ERROR_SUCCESS;
 }
 
 /* read the size of the next chunk (the read section must be held) */
-static BOOL start_next_chunk( http_request_t *req )
+static DWORD start_next_chunk( http_request_t *req )
 {
-    DWORD chunk_size = 0;
+    DWORD chunk_size = 0, res;
 
-    if (!req->dwContentLength) return TRUE;
+    if (!req->dwContentLength) return ERROR_SUCCESS;
     if (req->dwContentLength == req->dwContentRead)
     {
         /* read terminator for the previous chunk */
-        if (!discard_eol( req )) return FALSE;
+        if ((res = discard_eol( req )) != ERROR_SUCCESS) return res;
         req->dwContentLength = ~0u;
         req->dwContentRead = 0;
     }
@@ -2134,16 +2135,15 @@ static BOOL start_next_chunk( http_request_t *req )
                 TRACE( "reading %u byte chunk\n", chunk_size );
                 req->dwContentLength = chunk_size;
                 req->dwContentRead = 0;
-                if (!discard_eol( req )) return FALSE;
-                return TRUE;
+                return discard_eol( req );
             }
             remove_data( req, 1 );
         }
-        if (!read_more_data( req, -1 )) return FALSE;
+        if ((res = read_more_data( req, -1 )) != ERROR_SUCCESS) return res;
         if (!req->read_size)
         {
             req->dwContentLength = req->dwContentRead = 0;
-            return TRUE;
+            return ERROR_SUCCESS;
         }
     }
 }
@@ -2158,21 +2158,22 @@ static BOOL end_of_read_data( http_request_t *req )
 }
 
 /* fetch some more data into the read buffer (the read section must be held) */
-static BOOL refill_buffer( http_request_t *req )
+static DWORD refill_buffer( http_request_t *req )
 {
     int len = sizeof(req->read_buf);
+    DWORD res;
 
     if (req->read_chunked && (req->dwContentLength == ~0u || req->dwContentLength == req->dwContentRead))
     {
-        if (!start_next_chunk( req )) return FALSE;
+        if ((res = start_next_chunk( req )) != ERROR_SUCCESS) return res;
     }
 
     if (req->dwContentLength != ~0u) len = min( len, req->dwContentLength - req->dwContentRead );
-    if (len <= req->read_size) return TRUE;
+    if (len <= req->read_size) return ERROR_SUCCESS;
 
-    if (!read_more_data( req, len )) return FALSE;
+    if ((res = read_more_data( req, len )) != ERROR_SUCCESS) return res;
     if (!req->read_size) req->dwContentLength = req->dwContentRead = 0;
-    return TRUE;
+    return ERROR_SUCCESS;
 }
 
 static DWORD read_gzip_data(http_request_t *req, BYTE *buf, int size, BOOL sync, int *read_ret)
@@ -2186,7 +2187,7 @@ static DWORD read_gzip_data(http_request_t *req, BYTE *buf, int size, BOOL sync,
 
     while(read < size && !req->gzip_stream->end_of_data) {
         if(!req->read_size) {
-            if(!sync || !refill_buffer(req))
+            if(!sync || refill_buffer(req) != ERROR_SUCCESS)
                 break;
         }
 
@@ -2249,16 +2250,17 @@ static DWORD get_avail_data( http_request_t *req )
 static void HTTP_ReceiveRequestData(http_request_t *req, BOOL first_notif)
 {
     INTERNET_ASYNC_RESULT iar;
+    DWORD res;
 
     TRACE("%p\n", req);
 
     EnterCriticalSection( &req->read_section );
-    if (refill_buffer( req )) {
+    if ((res = refill_buffer( req )) == ERROR_SUCCESS) {
         iar.dwResult = (DWORD_PTR)req->hdr.hInternet;
         iar.dwError = first_notif ? 0 : get_avail_data(req);
     }else {
         iar.dwResult = 0;
-        iar.dwError = INTERNET_GetLastError();
+        iar.dwError = res;
     }
     LeaveCriticalSection( &req->read_section );
 
@@ -2277,7 +2279,7 @@ static DWORD HTTPREQ_Read(http_request_t *req, void *buffer, DWORD size, DWORD *
 
     if (req->read_chunked && (req->dwContentLength == ~0u || req->dwContentLength == req->dwContentRead))
     {
-        if (!start_next_chunk( req )) goto done;
+        if (start_next_chunk( req ) != ERROR_SUCCESS) goto done;
     }
 
     if(req->gzip_stream) {
