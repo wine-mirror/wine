@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmdid.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -98,6 +99,22 @@ static void release_children(HTMLWindow *This)
         child->parent = NULL;
         IHTMLWindow2_Release(HTMLWINDOW2(child));
     }
+}
+
+static HRESULT get_location(HTMLWindow *This, HTMLLocation **ret)
+{
+    if(This->location) {
+        IHTMLLocation_AddRef(HTMLLOCATION(This->location));
+    }else {
+        HRESULT hres;
+
+        hres = HTMLLocation_Create(This, &This->location);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    *ret = This->location;
+    return S_OK;
 }
 
 #define HTMLWINDOW2_THIS(iface) DEFINE_THIS(HTMLWindow, HTMLWindow2, iface)
@@ -183,6 +200,9 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
             IHTMLLocation_Release(HTMLLOCATION(This->location));
         }
 
+        if(This->screen)
+            IHTMLScreen_Release(This->screen);
+
         if(This->event_target)
             release_event_target(This->event_target);
         for(i=0; i < This->global_prop_cnt; i++)
@@ -193,6 +213,10 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
 
         heap_free(This->global_props);
         release_script_hosts(This);
+
+        if(This->nswindow)
+            nsIDOMWindow_Release(This->nswindow);
+
         list_remove(&This->entry);
         release_dispex(&This->dispex);
         heap_free(This);
@@ -590,20 +614,16 @@ static HRESULT WINAPI HTMLWindow2_get_Image(IHTMLWindow2 *iface, IHTMLImageEleme
 static HRESULT WINAPI HTMLWindow2_get_location(IHTMLWindow2 *iface, IHTMLLocation **p)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
+    HTMLLocation *location;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->location) {
-        IHTMLLocation_AddRef(HTMLLOCATION(This->location));
-    }else {
-        HRESULT hres;
+    hres = get_location(This, &location);
+    if(FAILED(hres))
+        return hres;
 
-        hres = HTMLLocation_Create(This, &This->location);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    *p = HTMLLOCATION(This->location);
+    *p = HTMLLOCATION(location);
     return S_OK;
 }
 
@@ -1756,6 +1776,21 @@ static HRESULT WINAPI WindowDispEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
     HTMLWindow *This = DISPEX_THIS(iface);
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+
+    if(id == DISPID_IHTMLWINDOW2_LOCATION && (wFlags & DISPATCH_PROPERTYPUT)) {
+        HTMLLocation *location;
+        HRESULT hres;
+
+        TRACE("forwarding to location.href\n");
+
+        hres = get_location(This, &location);
+        if(FAILED(hres))
+            return hres;
+
+        hres = IDispatchEx_InvokeEx(DISPATCHEX(&location->dispex), DISPID_VALUE, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+        IHTMLLocation_Release(HTMLLOCATION(location));
+        return hres;
+    }
 
     return IDispatchEx_InvokeEx(DISPATCHEX(&This->dispex), id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 }

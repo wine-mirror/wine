@@ -1246,6 +1246,11 @@ HRESULT navigate_url(HTMLDocumentNode *doc, OLECHAR *url)
             url = translated_url;
     }
 
+    if(doc != doc->basedoc.doc_obj->basedoc.doc_node) {
+        FIXME("navigation in frame\n");
+        return E_NOTIMPL;
+    }
+
     hres = hlink_frame_navigate(&doc->basedoc, url, NULL, 0);
     if(FAILED(hres))
         FIXME("hlink_frame_navigate failed: %08x\n", hres);
