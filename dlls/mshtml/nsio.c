@@ -2267,11 +2267,15 @@ static nsresult NSAPI nsURI_SetWineURL(nsIWineURI *iface, LPCWSTR aURL)
         This->wine_url = heap_alloc(len*sizeof(WCHAR));
         memcpy(This->wine_url, aURL, len*sizeof(WCHAR));
 
-        /* FIXME: Always use wine url */
-        This->use_wine_url =
-               strncmpW(aURL, wszFtp,   sizeof(wszFtp)/sizeof(WCHAR))
-            && strncmpW(aURL, wszHttp,  sizeof(wszHttp)/sizeof(WCHAR))
-            && strncmpW(aURL, wszHttps, sizeof(wszHttps)/sizeof(WCHAR));
+        if(This->uri) {
+            /* FIXME: Always use wine url */
+            This->use_wine_url =
+                   strncmpW(aURL, wszFtp,   sizeof(wszFtp)/sizeof(WCHAR))
+                && strncmpW(aURL, wszHttp,  sizeof(wszHttp)/sizeof(WCHAR))
+                && strncmpW(aURL, wszHttps, sizeof(wszHttps)/sizeof(WCHAR));
+        }else {
+            This->use_wine_url = TRUE;
+        }
     }else {
         This->wine_url = NULL;
         This->use_wine_url = FALSE;
