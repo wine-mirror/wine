@@ -1424,7 +1424,7 @@ static void DoTest1_v6(void)
     ok(SUCCEEDED(IImageList_ReplaceIcon(imgl, -1, hicon3, &ret)) && (ret == 2),"failed to add icon3\n");
 
     /* remove an index out of range */
-    ok(!SUCCEEDED(IImageList_Remove(imgl,4711)),"removed nonexistent icon\n");
+    ok(FAILED(IImageList_Remove(imgl, 4711)),"removed nonexistent icon\n");
 
     /* remove three */
     ok(SUCCEEDED(IImageList_Remove(imgl,0)),"can't remove 0\n");
@@ -1432,7 +1432,7 @@ static void DoTest1_v6(void)
     ok(SUCCEEDED(IImageList_Remove(imgl,0)),"can't remove 0\n");
 
     /* remove one extra */
-    ok(!SUCCEEDED(IImageList_Remove(imgl,0)),"removed nonexistent icon\n");
+    ok(FAILED(IImageList_Remove(imgl, 0)),"removed nonexistent icon\n");
 
     /* check SetImageCount/GetImageCount */
     ok(SUCCEEDED(IImageList_SetImageCount(imgl, 3)), "couldn't increase image count\n");

@@ -598,7 +598,7 @@ ImageList_Create (INT cx, INT cy, UINT flags,
     TRACE("(%d %d 0x%x %d %d)\n", cx, cy, flags, cInitial, cGrow);
 
     /* Create the IImageList interface for the image list */
-    if (!SUCCEEDED(ImageListImpl_CreateInstance(NULL, &IID_IImageList, (void **) &himl)))
+    if (FAILED(ImageListImpl_CreateInstance(NULL, &IID_IImageList, (void **)&himl)))
         return NULL;
 
     cGrow = (cGrow < 4) ? 4 : (cGrow + 3) & ~3;
@@ -3101,7 +3101,7 @@ static HRESULT WINAPI ImageListImpl_Copy(IImageList *iface, int iDst,
         return E_FAIL;
 
     /* TODO: Add test for IID_ImageList2 too */
-    if (!SUCCEEDED(IImageList_QueryInterface(punkSrc, &IID_IImageList,
+    if (FAILED(IImageList_QueryInterface(punkSrc, &IID_IImageList,
             (void **) &src)))
         return E_FAIL;
 
@@ -3126,7 +3126,7 @@ static HRESULT WINAPI ImageListImpl_Merge(IImageList *iface, int i1,
         return E_FAIL;
 
     /* TODO: Add test for IID_ImageList2 too */
-    if (!SUCCEEDED(IImageList_QueryInterface(punk2, &IID_IImageList,
+    if (FAILED(IImageList_QueryInterface(punk2, &IID_IImageList,
             (void **) &iml2)))
         return E_FAIL;
 
@@ -3260,7 +3260,7 @@ static HRESULT WINAPI ImageListImpl_SetDragCursorImage(IImageList *iface,
         return E_FAIL;
 
     /* TODO: Add test for IID_ImageList2 too */
-    if (!SUCCEEDED(IImageList_QueryInterface(punk, &IID_IImageList,
+    if (FAILED(IImageList_QueryInterface(punk, &IID_IImageList,
             (void **) &iml2)))
         return E_FAIL;
 
