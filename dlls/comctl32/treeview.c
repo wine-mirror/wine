@@ -4451,13 +4451,8 @@ TREEVIEW_SelectItem(TREEVIEW_INFO *infoPtr, INT wParam, HTREEITEM item)
  *
  *  TREEVIEW_ProcessLetterKeys
  */
-static INT TREEVIEW_ProcessLetterKeys(
-    HWND hwnd, /* handle to the window */
-    WPARAM charCode, /* the character code, the actual character */
-    LPARAM keyData /* key data */
-    )
+static INT TREEVIEW_ProcessLetterKeys(TREEVIEW_INFO *infoPtr, WPARAM charCode, LPARAM keyData)
 {
-    TREEVIEW_INFO *infoPtr;
     HTREEITEM nItem;
     HTREEITEM endidx,idx;
     TVITEMEXW item;
@@ -4465,12 +4460,7 @@ static INT TREEVIEW_ProcessLetterKeys(
     DWORD timestamp,elapsed;
 
     /* simple parameter checking */
-    if (!hwnd || !charCode || !keyData)
-        return 0;
-
-    infoPtr=(TREEVIEW_INFO*)GetWindowLongPtrW(hwnd, 0);
-    if (!infoPtr)
-        return 0;
+    if (!charCode || !keyData) return 0;
 
     /* only allow the valid WM_CHARs through */
     if (!isalnum(charCode) &&
@@ -5672,7 +5662,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return TREEVIEW_SortChildrenCB(infoPtr, (LPTVSORTCB)lParam);
 
     case WM_CHAR:
-        return TREEVIEW_ProcessLetterKeys( hwnd, wParam, lParam );
+        return TREEVIEW_ProcessLetterKeys(infoPtr, wParam, lParam);
 
     case WM_COMMAND:
 	return TREEVIEW_Command(infoPtr, wParam, lParam);
