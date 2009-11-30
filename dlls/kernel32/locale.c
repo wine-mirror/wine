@@ -3017,7 +3017,7 @@ static HANDLE NLS_RegOpenKey(HANDLE hRootKey, LPCWSTR szKeyName)
     RtlInitUnicodeString( &keyName, szKeyName );
     InitializeObjectAttributes(&attr, &keyName, 0, hRootKey, NULL);
 
-    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS)
+    if (NtOpenKey( &hkey, KEY_READ, &attr ) != STATUS_SUCCESS)
         hkey = 0;
 
     return hkey;

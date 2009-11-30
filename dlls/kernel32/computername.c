@@ -206,12 +206,12 @@ static BOOL get_use_dns_option(void)
     BOOL ret = TRUE;
 
     _init_attr( &attr, &nameW );
-    RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
+    RtlOpenCurrentUser( KEY_READ, &root );
     attr.RootDirectory = root;
     RtlInitUnicodeString( &nameW, NetworkW );
 
     /* @@ Wine registry key: HKCU\Software\Wine\Network */
-    if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
+    if (!NtOpenKey( &hkey, KEY_READ, &attr ))
     {
         RtlInitUnicodeString( &nameW, UseDNSW );
         if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
@@ -321,12 +321,12 @@ BOOL WINAPI GetComputerNameW(LPWSTR name,LPDWORD size)
 
     _init_attr ( &attr, &nameW );
     RtlInitUnicodeString( &nameW, ComputerW );
-    if ( ( st = NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) ) != STATUS_SUCCESS )
+    if ( ( st = NtOpenKey( &hkey, KEY_READ, &attr ) ) != STATUS_SUCCESS )
         goto out;
          
     attr.RootDirectory = hkey;
     RtlInitUnicodeString( &nameW, ActiveComputerNameW );
-    if ( ( st = NtOpenKey( &hsubkey, KEY_ALL_ACCESS, &attr ) ) != STATUS_SUCCESS )
+    if ( ( st = NtOpenKey( &hsubkey, KEY_READ, &attr ) ) != STATUS_SUCCESS )
         goto out;
     
     RtlInitUnicodeString( &nameW, ComputerNameW );

@@ -432,7 +432,7 @@ static BOOL set_registry_environment(void)
 
     /* first the system environment variables */
     RtlInitUnicodeString( &nameW, env_keyW );
-    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) == STATUS_SUCCESS)
+    if (NtOpenKey( &hkey, KEY_READ, &attr ) == STATUS_SUCCESS)
     {
         set_registry_variables( hkey, REG_SZ );
         set_registry_variables( hkey, REG_EXPAND_SZ );
@@ -441,9 +441,9 @@ static BOOL set_registry_environment(void)
     }
 
     /* then the ones for the current user */
-    if (RtlOpenCurrentUser( KEY_ALL_ACCESS, &attr.RootDirectory ) != STATUS_SUCCESS) return ret;
+    if (RtlOpenCurrentUser( KEY_READ, &attr.RootDirectory ) != STATUS_SUCCESS) return ret;
     RtlInitUnicodeString( &nameW, envW );
-    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) == STATUS_SUCCESS)
+    if (NtOpenKey( &hkey, KEY_READ, &attr ) == STATUS_SUCCESS)
     {
         set_registry_variables( hkey, REG_SZ );
         set_registry_variables( hkey, REG_EXPAND_SZ );
@@ -542,7 +542,7 @@ static void set_additional_environment(void)
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, profile_keyW );
-    if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
+    if (!NtOpenKey( &hkey, KEY_READ, &attr ))
     {
         profile_dir = get_reg_value( hkey, profiles_valueW );
         all_users_dir = get_reg_value( hkey, all_users_valueW );

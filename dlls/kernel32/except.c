@@ -212,7 +212,7 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, AeDebugW );
 
-    if (!NtOpenKey( &hDbgConf, KEY_ALL_ACCESS, &attr ))
+    if (!NtOpenKey( &hDbgConf, KEY_READ, &attr ))
     {
         char buffer[64];
         KEY_VALUE_PARTIAL_INFORMATION *info;

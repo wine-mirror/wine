@@ -119,7 +119,7 @@ void RELAY16_InitDebugLists(void)
     static const WCHAR SnoopIncludeW[] = {'S','n','o','o','p','I','n','c','l','u','d','e',0};
     static const WCHAR SnoopExcludeW[] = {'S','n','o','o','p','E','x','c','l','u','d','e',0};
 
-    RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
+    RtlOpenCurrentUser( KEY_READ, &root );
     attr.Length = sizeof(attr);
     attr.RootDirectory = root;
     attr.ObjectName = &name;
@@ -129,7 +129,7 @@ void RELAY16_InitDebugLists(void)
     RtlInitUnicodeString( &name, configW );
 
     /* @@ Wine registry key: HKCU\Software\Wine\Debug */
-    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) hkey = 0;
+    if (NtOpenKey( &hkey, KEY_READ, &attr )) hkey = 0;
     NtClose( root );
     if (!hkey) return;
 
