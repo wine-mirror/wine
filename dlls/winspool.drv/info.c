@@ -1356,6 +1356,51 @@ static void convert_printerinfo_W_to_A(LPBYTE out, LPBYTE pPrintersW,
                     break;
                 }
 
+            case 6:  /* 6A and 6W are the same structure */
+                break;
+
+            case 7:
+                {
+                    PRINTER_INFO_7W * piW = (PRINTER_INFO_7W *) pPrintersW;
+                    PRINTER_INFO_7A * piA = (PRINTER_INFO_7A *) out;
+
+                    TRACE("(%u) #%u\n", level, id);
+                    if (piW->pszObjectGUID) {
+                        piA->pszObjectGUID = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pszObjectGUID, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    break;
+                }
+
+            case 9:
+                {
+                    PRINTER_INFO_9W * piW = (PRINTER_INFO_9W *) pPrintersW;
+                    PRINTER_INFO_9A * piA = (PRINTER_INFO_9A *) out;
+                    LPDEVMODEA dmA;
+
+                    TRACE("(%u) #%u\n", level, id);
+                    dmA = DEVMODEdupWtoA(piW->pDevMode);
+                    if (dmA) {
+                        /* align DEVMODEA to a DWORD boundary */
+                        len = (4 - ( (DWORD_PTR) ptr & 3)) & 3;
+                        ptr += len;
+                        outlen -= len;
+
+                        piA->pDevMode = (LPDEVMODEA) ptr;
+                        len = dmA->dmSize + dmA->dmDriverExtra;
+                        memcpy(ptr, dmA, len);
+                        HeapFree(GetProcessHeap(), 0, dmA);
+
+                        ptr += len;
+                        outlen -= len;
+                    }
+
+                    break;
+                }
+
             default:
                 FIXME("for level %u\n", level);
         }
@@ -3528,14 +3573,10 @@ static BOOL WINSPOOL_GetPrinter_9(HKEY hkeyPrinter, PRINTER_INFO_9W *pi9, LPBYTE
 }
 
 /*****************************************************************************
- *          WINSPOOL_GetPrinter
- *
- *    Implementation of GetPrinterA|W.  Relies on PRINTER_INFO_*W being
- *    essentially the same as PRINTER_INFO_*A. i.e. the structure itself is
- *    just a collection of pointers to strings.
+ *          GetPrinterW  [WINSPOOL.@]
  */
-static BOOL WINSPOOL_GetPrinter(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
-				DWORD cbBuf, LPDWORD pcbNeeded, BOOL unicode)
+BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
+			DWORD cbBuf, LPDWORD pcbNeeded)
 {
     LPCWSTR name;
     DWORD size, needed = 0;
@@ -3578,7 +3619,7 @@ static BOOL WINSPOOL_GetPrinter(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 	    cbBuf = 0;
 	}
 	ret = WINSPOOL_GetPrinter_2(hkeyPrinter, pi2, ptr, cbBuf, &needed,
-				    unicode);
+				    TRUE);
 	needed += size;
 	break;
       }
@@ -3597,7 +3638,7 @@ static BOOL WINSPOOL_GetPrinter(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 	    cbBuf = 0;
 	}
 	ret = WINSPOOL_GetPrinter_4(hkeyPrinter, pi4, ptr, cbBuf, &needed,
-				    unicode);
+				    TRUE);
 	needed += size;
 	break;
       }
@@ -3618,7 +3659,7 @@ static BOOL WINSPOOL_GetPrinter(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 	}
 
 	ret = WINSPOOL_GetPrinter_5(hkeyPrinter, pi5, ptr, cbBuf, &needed,
-				    unicode);
+				    TRUE);
 	needed += size;
 	break;
       }
@@ -3655,7 +3696,7 @@ static BOOL WINSPOOL_GetPrinter(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
             cbBuf = 0;
         }
 
-        ret = WINSPOOL_GetPrinter_7(hkeyPrinter, pi7, ptr, cbBuf, &needed, unicode);
+        ret = WINSPOOL_GetPrinter_7(hkeyPrinter, pi7, ptr, cbBuf, &needed, TRUE);
         needed += size;
         break;
       }
@@ -3675,7 +3716,7 @@ static BOOL WINSPOOL_GetPrinter(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
             cbBuf = 0;
         }
 
-        ret = WINSPOOL_GetPrinter_9(hkeyPrinter, pi9, ptr, cbBuf, &needed, unicode);
+        ret = WINSPOOL_GetPrinter_9(hkeyPrinter, pi9, ptr, cbBuf, &needed, TRUE);
         needed += size;
         break;
       }
@@ -3700,23 +3741,23 @@ static BOOL WINSPOOL_GetPrinter(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 }
 
 /*****************************************************************************
- *          GetPrinterW  [WINSPOOL.@]
- */
-BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
-			DWORD cbBuf, LPDWORD pcbNeeded)
-{
-    return WINSPOOL_GetPrinter(hPrinter, Level, pPrinter, cbBuf, pcbNeeded,
-			       TRUE);
-}
-
-/*****************************************************************************
  *          GetPrinterA  [WINSPOOL.@]
  */
 BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
                     DWORD cbBuf, LPDWORD pcbNeeded)
 {
-    return WINSPOOL_GetPrinter(hPrinter, Level, pPrinter, cbBuf, pcbNeeded,
-			       FALSE);
+    BOOL ret;
+    LPBYTE buf = NULL;
+
+    if (cbBuf)
+        buf = HeapAlloc(GetProcessHeap(), 0, cbBuf);
+
+    ret = GetPrinterW(hPrinter, Level, buf, cbBuf, pcbNeeded);
+    if (ret)
+        convert_printerinfo_W_to_A(pPrinter, buf, Level, cbBuf, 1);
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    return ret;
 }
 
 /*****************************************************************************
