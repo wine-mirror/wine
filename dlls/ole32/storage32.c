@@ -176,7 +176,7 @@ static HRESULT deleteStreamContents(
   DirEntry      entryDataToDelete);
 
 static HRESULT removeFromTree(
-  StorageImpl *This,
+  StorageBaseImpl *This,
   DirRef        parentStorageIndex,
   DirRef        deletedIndex);
 
@@ -204,7 +204,7 @@ static DirRef findElement(
     DirEntry *data);
 
 static HRESULT findTreeParent(
-    StorageImpl *storage,
+    StorageBaseImpl *storage,
     DirRef storageEntry,
     const OLECHAR *childName,
     DirEntry *parentData,
@@ -769,7 +769,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
     }
 
     /* Remove the element from its current position in the tree */
-    removeFromTree(This->ancestorStorage, This->storageDirEntry,
+    removeFromTree(This, This->storageDirEntry,
         currentEntryRef);
 
     /* Change the name of the element */
@@ -1454,7 +1454,7 @@ static DirRef findElement(StorageImpl *storage, DirRef storageEntry,
  * If there is no such element, find a place where it could be inserted and
  * return STG_E_FILENOTFOUND.
  */
-static HRESULT findTreeParent(StorageImpl *storage, DirRef storageEntry,
+static HRESULT findTreeParent(StorageBaseImpl *storage, DirRef storageEntry,
     const OLECHAR *childName, DirEntry *parentData, DirRef *parentEntry,
     ULONG *relation)
 {
@@ -1462,7 +1462,7 @@ static HRESULT findTreeParent(StorageImpl *storage, DirRef storageEntry,
   DirEntry childData;
 
   /* Read the storage entry to find the root of the tree. */
-  StorageImpl_ReadDirEntry(storage, storageEntry, parentData);
+  StorageBaseImpl_ReadDirEntry(storage, storageEntry, parentData);
 
   *parentEntry = storageEntry;
   *relation = DIRENTRY_RELATION_DIR;
@@ -1473,7 +1473,7 @@ static HRESULT findTreeParent(StorageImpl *storage, DirRef storageEntry,
   {
     LONG cmp;
 
-    StorageImpl_ReadDirEntry(storage, childEntry, &childData);
+    StorageBaseImpl_ReadDirEntry(storage, childEntry, &childData);
 
     cmp = entryNameCmp(childName, childData.name);
 
@@ -1812,7 +1812,7 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
    * Remove the entry from its parent storage
    */
   hr = removeFromTree(
-        This->ancestorStorage,
+        This,
         This->storageDirEntry,
         entryToDeleteRef);
 
@@ -2053,7 +2053,7 @@ static void setEntryLink(DirEntry *entry, ULONG relation, DirRef new_target)
  * freeing any resources attached to it.
  */
 static HRESULT removeFromTree(
-  StorageImpl *This,
+  StorageBaseImpl *This,
   DirRef        parentStorageIndex,
   DirRef        deletedIndex)
 {
@@ -2063,7 +2063,7 @@ static HRESULT removeFromTree(
   DirRef parentEntryRef;
   ULONG typeOfRelation;
 
-  hr = StorageImpl_ReadDirEntry(This, deletedIndex, &entryToDelete);
+  hr = StorageBaseImpl_ReadDirEntry(This, deletedIndex, &entryToDelete);
 
   if (hr != S_OK)
     return hr;
@@ -2084,7 +2084,7 @@ static HRESULT removeFromTree(
      */
     setEntryLink(&parentEntry, typeOfRelation, entryToDelete.leftChild);
 
-    hr = StorageImpl_WriteDirEntry(
+    hr = StorageBaseImpl_WriteDirEntry(
             This,
             parentEntryRef,
             &parentEntry);
@@ -2105,7 +2105,7 @@ static HRESULT removeFromTree(
 
       do
       {
-        hr = StorageImpl_ReadDirEntry(
+        hr = StorageBaseImpl_ReadDirEntry(
                 This,
                 newRightChildParent,
                 &newRightChildParentEntry);
@@ -2120,7 +2120,7 @@ static HRESULT removeFromTree(
 
       newRightChildParentEntry.rightChild = entryToDelete.rightChild;
 
-      hr = StorageImpl_WriteDirEntry(
+      hr = StorageBaseImpl_WriteDirEntry(
               This,
               newRightChildParent,
               &newRightChildParentEntry);
@@ -2137,7 +2137,7 @@ static HRESULT removeFromTree(
      */
     setEntryLink(&parentEntry, typeOfRelation, entryToDelete.rightChild);
 
-    hr = StorageImpl_WriteDirEntry(
+    hr = StorageBaseImpl_WriteDirEntry(
             This,
             parentEntryRef,
             &parentEntry);
