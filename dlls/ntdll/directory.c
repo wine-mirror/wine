@@ -2412,7 +2412,7 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
         if (status != STATUS_SUCCESS)
         {
             /* couldn't find it at all, fail */
-            WARN( "%s not found in %s\n", debugstr_w(name), unix_name );
+            TRACE( "%s not found in %s\n", debugstr_w(name), unix_name );
             RtlFreeHeap( GetProcessHeap(), 0, unix_name );
             return status;
         }
