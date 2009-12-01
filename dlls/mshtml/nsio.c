@@ -844,7 +844,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     }
 
     if(!window) {
-        TRACE("window = NULL\n");
+        ERR("window = NULL\n");
         return This->channel
             ? nsIChannel_AsyncOpen(This->channel, aListener, aContext)
             : NS_ERROR_UNEXPECTED;
@@ -2627,37 +2627,24 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     }
 
     if(aBaseURI) {
-        nsACString base_uri_str;
-        const char *base_uri = NULL;
+        PARSEDURLA parsed_url = {sizeof(PARSEDURLA)};
 
-        nsACString_Init(&base_uri_str, NULL);
-
-        nsres = nsIURI_GetSpec(aBaseURI, &base_uri_str);
+        nsres = nsIURI_QueryInterface(aBaseURI, &IID_nsIWineURI, (void**)&base_wine_uri);
         if(NS_SUCCEEDED(nsres)) {
-            nsACString_GetData(&base_uri_str, &base_uri);
-            TRACE("base_uri=%s\n", debugstr_a(base_uri));
+            nsIWineURI_GetWineURL(base_wine_uri, &base_wine_url);
+            nsIWineURI_GetWindow(base_wine_uri, &window);
+            TRACE("base url: %s window: %p\n", debugstr_w(base_wine_url), window);
+        }else if(FAILED(ParseURLA(spec, &parsed_url))) {
+            TRACE("not wraping\n");
+            return nsIIOService_NewURI(nsio, aSpec, aOriginCharset, aBaseURI, _retval);
         }else {
-            ERR("GetSpec failed: %08x\n", nsres);
+            WARN("Could not get base nsIWineURI: %08x\n", nsres);
         }
-
-        nsACString_Finish(&base_uri_str);
     }
 
     nsres = nsIIOService_NewURI(nsio, aSpec, aOriginCharset, aBaseURI, &uri);
     if(NS_FAILED(nsres))
         TRACE("NewURI failed: %08x\n", nsres);
-
-    if(aBaseURI) {
-        nsres = nsIURI_QueryInterface(aBaseURI, &IID_nsIWineURI, (void**)&base_wine_uri);
-        if(NS_SUCCEEDED(nsres)) {
-            nsIWineURI_GetWindow(base_wine_uri, &window);
-            nsIWineURI_GetWineURL(base_wine_uri, &base_wine_url);
-        }else {
-            TRACE("Could not get base nsIWineURI: %08x\n", nsres);
-        }
-    }
-
-    TRACE("window = %p\n", window);
 
     nsres = create_uri(uri, window, NULL, &wine_uri);
     *_retval = (nsIURI*)wine_uri;
