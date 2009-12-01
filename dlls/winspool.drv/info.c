@@ -3224,34 +3224,26 @@ static BOOL get_filename_from_reg(HKEY hkey, LPCWSTR driverdir, DWORD dirlen, LP
  *    WINSPOOL_GetStringFromReg
  *
  * Get ValueName from hkey storing result in ptr.  buflen is space left in ptr
- * String is stored either as unicode or ascii.
- * Bit of a hack here to get the ValueName if we want ascii.
+ * String is stored as unicode.
  */
 static BOOL WINSPOOL_GetStringFromReg(HKEY hkey, LPCWSTR ValueName, LPBYTE ptr,
-				      DWORD buflen, DWORD *needed,
-				      BOOL unicode)
+				      DWORD buflen, DWORD *needed)
 {
     DWORD sz = buflen, type;
     LONG ret;
 
-    if(unicode)
-        ret = RegQueryValueExW(hkey, ValueName, 0, &type, ptr, &sz);
-    else {
-        LPSTR ValueNameA = strdupWtoA(ValueName);
-        ret = RegQueryValueExA(hkey, ValueNameA, 0, &type, ptr, &sz);
-	HeapFree(GetProcessHeap(),0,ValueNameA);
-    }
+    ret = RegQueryValueExW(hkey, ValueName, 0, &type, ptr, &sz);
     if(ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA) {
         WARN("Got ret = %d\n", ret);
 	*needed = 0;
 	return FALSE;
     }
     /* add space for terminating '\0' */
-    sz += unicode ? sizeof(WCHAR) : 1;
+    sz += sizeof(WCHAR);
     *needed = sz;
 
     if (ptr)
-        TRACE("%s: %s\n", debugstr_w(ValueName), unicode ? debugstr_w((LPCWSTR)ptr) : debugstr_a((LPCSTR)ptr));
+        TRACE("%s: %s\n", debugstr_w(ValueName), debugstr_w((LPCWSTR)ptr));
 
     return TRUE;
 }
@@ -3384,8 +3376,7 @@ static BOOL WINSPOOL_GetPrinter_1(HKEY hkeyPrinter, PRINTER_INFO_1W *pi1,
 
     *pcbNeeded = 0;
 
-    if(WINSPOOL_GetStringFromReg(hkeyPrinter, NameW, ptr, left, &size,
-				 TRUE)) {
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, NameW, ptr, left, &size)) {
         if(space && size <= left) {
 	    pi1->pName = (LPWSTR)ptr;
 	    ptr += size;
@@ -3396,8 +3387,7 @@ static BOOL WINSPOOL_GetPrinter_1(HKEY hkeyPrinter, PRINTER_INFO_1W *pi1,
     }
 
     /* FIXME: pDescription should be something like "Name,Driver_Name,". */
-    if(WINSPOOL_GetStringFromReg(hkeyPrinter, NameW, ptr, left, &size,
-				 TRUE)) {
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, NameW, ptr, left, &size)) {
         if(space && size <= left) {
 	    pi1->pDescription = (LPWSTR)ptr;
 	    ptr += size;
@@ -3407,8 +3397,7 @@ static BOOL WINSPOOL_GetPrinter_1(HKEY hkeyPrinter, PRINTER_INFO_1W *pi1,
 	*pcbNeeded += size;
     }
 
-    if(WINSPOOL_GetStringFromReg(hkeyPrinter, DescriptionW, ptr, left, &size,
-				 TRUE)) {
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, DescriptionW, ptr, left, &size)) {
         if(space && size <= left) {
 	    pi1->pComment = (LPWSTR)ptr;
 	    ptr += size;
@@ -3439,8 +3428,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 
     *pcbNeeded = 0;
 
-    if(WINSPOOL_GetStringFromReg(hkeyPrinter, NameW, ptr, left, &size,
-				 TRUE)) {
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, NameW, ptr, left, &size)) {
         if(space && size <= left) {
 	    pi2->pPrinterName = (LPWSTR)ptr;
 	    ptr += size;
@@ -3449,8 +3437,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	    space = FALSE;
 	*pcbNeeded += size;
     }
-    if(WINSPOOL_GetStringFromReg(hkeyPrinter, Share_NameW, ptr, left, &size,
-				 TRUE)) {
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, Share_NameW, ptr, left, &size)) {
         if(space && size <= left) {
 	    pi2->pShareName = (LPWSTR)ptr;
 	    ptr += size;
@@ -3459,8 +3446,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	    space = FALSE;
 	*pcbNeeded += size;
     }
-    if(WINSPOOL_GetStringFromReg(hkeyPrinter, PortW, ptr, left, &size,
-				 TRUE)) {
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, PortW, ptr, left, &size)) {
         if(space && size <= left) {
 	    pi2->pPortName = (LPWSTR)ptr;
 	    ptr += size;
@@ -3469,8 +3455,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	    space = FALSE;
 	*pcbNeeded += size;
     }
-    if(WINSPOOL_GetStringFromReg(hkeyPrinter, Printer_DriverW, ptr, left,
-				 &size, TRUE)) {
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, Printer_DriverW, ptr, left, &size)) {
         if(space && size <= left) {
 	    pi2->pDriverName = (LPWSTR)ptr;
 	    ptr += size;
@@ -3479,8 +3464,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	    space = FALSE;
 	*pcbNeeded += size;
     }
-    if(WINSPOOL_GetStringFromReg(hkeyPrinter, DescriptionW, ptr, left, &size,
-				 TRUE)) {
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, DescriptionW, ptr, left, &size)) {
         if(space && size <= left) {
 	    pi2->pComment = (LPWSTR)ptr;
 	    ptr += size;
@@ -3489,8 +3473,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	    space = FALSE;
 	*pcbNeeded += size;
     }
-    if(WINSPOOL_GetStringFromReg(hkeyPrinter, LocationW, ptr, left, &size,
-				 TRUE)) {
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, LocationW, ptr, left, &size)) {
         if(space && size <= left) {
 	    pi2->pLocation = (LPWSTR)ptr;
 	    ptr += size;
@@ -3520,8 +3503,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	    space = FALSE;
 	*pcbNeeded += size;
     }
-    if(WINSPOOL_GetStringFromReg(hkeyPrinter, Separator_FileW, ptr, left,
-				 &size, TRUE)) {
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, Separator_FileW, ptr, left, &size)) {
         if(space && size <= left) {
             pi2->pSepFile = (LPWSTR)ptr;
 	    ptr += size;
@@ -3530,8 +3512,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	    space = FALSE;
 	*pcbNeeded += size;
     }
-    if(WINSPOOL_GetStringFromReg(hkeyPrinter, Print_ProcessorW, ptr, left,
-				 &size, TRUE)) {
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, Print_ProcessorW, ptr, left, &size)) {
         if(space && size <= left) {
 	    pi2->pPrintProcessor = (LPWSTR)ptr;
 	    ptr += size;
@@ -3540,8 +3521,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	    space = FALSE;
 	*pcbNeeded += size;
     }
-    if(WINSPOOL_GetStringFromReg(hkeyPrinter, DatatypeW, ptr, left,
-				 &size, TRUE)) {
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, DatatypeW, ptr, left, &size)) {
         if(space && size <= left) {
 	    pi2->pDatatype = (LPWSTR)ptr;
 	    ptr += size;
@@ -3550,8 +3530,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	    space = FALSE;
 	*pcbNeeded += size;
     }
-    if(WINSPOOL_GetStringFromReg(hkeyPrinter, ParametersW, ptr, left,
-				 &size, TRUE)) {
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, ParametersW, ptr, left, &size)) {
         if(space && size <= left) {
 	    pi2->pParameters = (LPWSTR)ptr;
 	    ptr += size;
@@ -3589,8 +3568,7 @@ static BOOL WINSPOOL_GetPrinter_4(HKEY hkeyPrinter, PRINTER_INFO_4W *pi4,
 
     *pcbNeeded = 0;
 
-    if(WINSPOOL_GetStringFromReg(hkeyPrinter, NameW, ptr, left, &size,
-				 TRUE)) {
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, NameW, ptr, left, &size)) {
         if(space && size <= left) {
 	    pi4->pPrinterName = (LPWSTR)ptr;
 	    ptr += size;
@@ -3623,8 +3601,7 @@ static BOOL WINSPOOL_GetPrinter_5(HKEY hkeyPrinter, PRINTER_INFO_5W *pi5,
 
     *pcbNeeded = 0;
 
-    if(WINSPOOL_GetStringFromReg(hkeyPrinter, NameW, ptr, left, &size,
-				 TRUE)) {
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, NameW, ptr, left, &size)) {
         if(space && size <= left) {
 	    pi5->pPrinterName = (LPWSTR)ptr;
 	    ptr += size;
@@ -3633,8 +3610,7 @@ static BOOL WINSPOOL_GetPrinter_5(HKEY hkeyPrinter, PRINTER_INFO_5W *pi5,
 	    space = FALSE;
 	*pcbNeeded += size;
     }
-    if(WINSPOOL_GetStringFromReg(hkeyPrinter, PortW, ptr, left, &size,
-				 TRUE)) {
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, PortW, ptr, left, &size)) {
         if(space && size <= left) {
 	    pi5->pPortName = (LPWSTR)ptr;
 	    ptr += size;
@@ -3671,7 +3647,7 @@ static BOOL WINSPOOL_GetPrinter_7(HKEY hkeyPrinter, PRINTER_INFO_7W *pi7, LPBYTE
 
     *pcbNeeded = 0;
 
-    if (! WINSPOOL_GetStringFromReg(hkeyPrinter, ObjectGUIDW, ptr, left, &size, TRUE))
+    if (! WINSPOOL_GetStringFromReg(hkeyPrinter, ObjectGUIDW, ptr, left, &size))
     {
         ptr = NULL;
         size = sizeof(pi7->pszObjectGUID);
@@ -4315,20 +4291,20 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
     }
 
     /* .pMonitorName is the optional Language Monitor */
-    if (WINSPOOL_GetStringFromReg(hkeyDriver, MonitorW, strPtr, 0, &size, TRUE)) {
+    if (WINSPOOL_GetStringFromReg(hkeyDriver, MonitorW, strPtr, 0, &size)) {
         *pcbNeeded += size;
         if (*pcbNeeded <= cbBuf)
-            WINSPOOL_GetStringFromReg(hkeyDriver, MonitorW, strPtr, size, &size, TRUE);
+            WINSPOOL_GetStringFromReg(hkeyDriver, MonitorW, strPtr, size, &size);
 
         if (di) di->pMonitorName = (LPWSTR)strPtr;
         strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
     }
 
     /* .pDefaultDataType */
-    if (WINSPOOL_GetStringFromReg(hkeyDriver, DatatypeW, strPtr, 0, &size, TRUE)) {
+    if (WINSPOOL_GetStringFromReg(hkeyDriver, DatatypeW, strPtr, 0, &size)) {
         *pcbNeeded += size;
         if(*pcbNeeded <= cbBuf)
-            WINSPOOL_GetStringFromReg(hkeyDriver, DatatypeW, strPtr, size, &size, TRUE);
+            WINSPOOL_GetStringFromReg(hkeyDriver, DatatypeW, strPtr, size, &size);
 
         if (di) di->pDefaultDataType = (LPWSTR)strPtr;
         strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
@@ -4341,10 +4317,10 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
     }
 
     /* .pszzPreviousNames */
-    if (WINSPOOL_GetStringFromReg(hkeyDriver, Previous_NamesW, strPtr, 0, &size, TRUE)) {
+    if (WINSPOOL_GetStringFromReg(hkeyDriver, Previous_NamesW, strPtr, 0, &size)) {
         *pcbNeeded += size;
         if(*pcbNeeded <= cbBuf)
-            WINSPOOL_GetStringFromReg(hkeyDriver, Previous_NamesW, strPtr, size, &size, TRUE);
+            WINSPOOL_GetStringFromReg(hkeyDriver, Previous_NamesW, strPtr, size, &size);
 
         if (di) di->pszzPreviousNames = (LPWSTR)strPtr;
         strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
@@ -4360,40 +4336,40 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
     TRACE("%s: DriverDate + DriverVersion not supported\n", debugstr_w(DriverName));
 
     /* .pszMfgName */
-    if (WINSPOOL_GetStringFromReg(hkeyDriver, ManufacturerW, strPtr, 0, &size, TRUE)) {
+    if (WINSPOOL_GetStringFromReg(hkeyDriver, ManufacturerW, strPtr, 0, &size)) {
         *pcbNeeded += size;
         if(*pcbNeeded <= cbBuf)
-            WINSPOOL_GetStringFromReg(hkeyDriver, ManufacturerW, strPtr, size, &size, TRUE);
+            WINSPOOL_GetStringFromReg(hkeyDriver, ManufacturerW, strPtr, size, &size);
 
         if (di) di->pszMfgName = (LPWSTR)strPtr;
         strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
     }
 
     /* .pszOEMUrl */
-    if (WINSPOOL_GetStringFromReg(hkeyDriver, OEM_UrlW, strPtr, 0, &size, TRUE)) {
+    if (WINSPOOL_GetStringFromReg(hkeyDriver, OEM_UrlW, strPtr, 0, &size)) {
         *pcbNeeded += size;
         if(*pcbNeeded <= cbBuf)
-            WINSPOOL_GetStringFromReg(hkeyDriver, OEM_UrlW, strPtr, size, &size, TRUE);
+            WINSPOOL_GetStringFromReg(hkeyDriver, OEM_UrlW, strPtr, size, &size);
 
         if (di) di->pszOEMUrl = (LPWSTR)strPtr;
         strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
     }
 
     /* .pszHardwareID */
-    if (WINSPOOL_GetStringFromReg(hkeyDriver, HardwareIDW, strPtr, 0, &size, TRUE)) {
+    if (WINSPOOL_GetStringFromReg(hkeyDriver, HardwareIDW, strPtr, 0, &size)) {
         *pcbNeeded += size;
         if(*pcbNeeded <= cbBuf)
-            WINSPOOL_GetStringFromReg(hkeyDriver, HardwareIDW, strPtr, size, &size, TRUE);
+            WINSPOOL_GetStringFromReg(hkeyDriver, HardwareIDW, strPtr, size, &size);
 
         if (di) di->pszHardwareID = (LPWSTR)strPtr;
         strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
     }
 
     /* .pszProvider */
-    if (WINSPOOL_GetStringFromReg(hkeyDriver, ProviderW, strPtr, 0, &size, TRUE)) {
+    if (WINSPOOL_GetStringFromReg(hkeyDriver, ProviderW, strPtr, 0, &size)) {
         *pcbNeeded += size;
         if(*pcbNeeded <= cbBuf)
-            WINSPOOL_GetStringFromReg(hkeyDriver, ProviderW, strPtr, size, &size, TRUE);
+            WINSPOOL_GetStringFromReg(hkeyDriver, ProviderW, strPtr, size, &size);
 
         if (di) di->pszProvider = (LPWSTR)strPtr;
         strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
