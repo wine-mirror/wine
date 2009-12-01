@@ -2236,17 +2236,20 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
         name_len--;
     }
 
-    if (ret > 0 && !used_default)  /* if we used the default char the name didn't convert properly */
+    if (ret >= 0 && !used_default)  /* if we used the default char the name didn't convert properly */
     {
         char *p;
         unix_name[pos + ret] = 0;
         for (p = unix_name + pos ; *p; p++) if (*p == '\\') *p = '/';
-        if ((!redirect || !strstr( unix_name, "/windows/")) && !stat( unix_name, &st ))
+        if (!redirect || (!strstr( unix_name, "/windows/") && strncmp( unix_name, "windows/", 8 )))
         {
-            /* creation fails with STATUS_ACCESS_DENIED for the root of the drive */
-            if (disposition == FILE_CREATE)
-                return name_len ? STATUS_OBJECT_NAME_COLLISION : STATUS_ACCESS_DENIED;
-            return STATUS_SUCCESS;
+            if (!stat( unix_name, &st ))
+            {
+                /* creation fails with STATUS_ACCESS_DENIED for the root of the drive */
+                if (disposition == FILE_CREATE)
+                    return name_len ? STATUS_OBJECT_NAME_COLLISION : STATUS_ACCESS_DENIED;
+                return STATUS_SUCCESS;
+            }
         }
     }
 
@@ -2321,6 +2324,80 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
         }
     }
 
+    return status;
+}
+
+
+/******************************************************************************
+ *           nt_to_unix_file_name_attr
+ */
+NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *unix_name_ret,
+                                    UINT disposition )
+{
+    static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, 0 };
+    enum server_fd_type type;
+    int old_cwd, root_fd, needs_close;
+    const WCHAR *name, *p;
+    char *unix_name;
+    int name_len, unix_len;
+    NTSTATUS status;
+    BOOLEAN check_case = !(attr->Attributes & OBJ_CASE_INSENSITIVE);
+
+    if (!attr->RootDirectory)  /* without root dir fall back to normal lookup */
+        return wine_nt_to_unix_file_name( attr->ObjectName, unix_name_ret, disposition, check_case );
+
+    name     = attr->ObjectName->Buffer;
+    name_len = attr->ObjectName->Length / sizeof(WCHAR);
+
+    if (name_len && IS_SEPARATOR(name[0])) return STATUS_OBJECT_PATH_SYNTAX_BAD;
+
+    /* check for invalid characters */
+    for (p = name; p < name + name_len; p++)
+        if (*p < 32 || strchrW( invalid_charsW, *p )) return STATUS_OBJECT_NAME_INVALID;
+
+    unix_len = ntdll_wcstoumbs( 0, name, name_len, NULL, 0, NULL, NULL );
+    unix_len += MAX_DIR_ENTRY_LEN + 3;
+    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
+        return STATUS_NO_MEMORY;
+    unix_name[0] = '.';
+
+    if (!(status = server_get_unix_fd( attr->RootDirectory, FILE_READ_DATA, &root_fd,
+                                       &needs_close, &type, NULL )))
+    {
+        if (type != FD_TYPE_DIR)
+        {
+            if (needs_close) close( root_fd );
+            status = STATUS_BAD_DEVICE_TYPE;
+        }
+        else
+        {
+            RtlEnterCriticalSection( &dir_section );
+            if ((old_cwd = open( ".", O_RDONLY )) != -1 && fchdir( root_fd ) != -1)
+            {
+                status = lookup_unix_name( name, name_len, &unix_name, unix_len, 1,
+                                           disposition, check_case );
+                if (fchdir( old_cwd ) == -1) chdir( "/" );
+            }
+            else status = FILE_GetNtStatus();
+            RtlLeaveCriticalSection( &dir_section );
+            if (old_cwd != -1) close( old_cwd );
+            if (needs_close) close( root_fd );
+        }
+    }
+    else if (status == STATUS_OBJECT_TYPE_MISMATCH) status = STATUS_BAD_DEVICE_TYPE;
+
+    if (status == STATUS_SUCCESS || status == STATUS_NO_SUCH_FILE)
+    {
+        TRACE( "%s -> %s\n", debugstr_us(attr->ObjectName), debugstr_a(unix_name) );
+        unix_name_ret->Buffer = unix_name;
+        unix_name_ret->Length = strlen(unix_name);
+        unix_name_ret->MaximumLength = unix_len;
+    }
+    else
+    {
+        TRACE( "%s not found in %s\n", debugstr_w(name), unix_name );
+        RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+    }
     return status;
 }
 

@@ -115,9 +115,7 @@ static NTSTATUS FILE_CreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATT
 
     if (alloc_size) FIXME( "alloc_size not supported\n" );
 
-    if (attr->RootDirectory ||
-        (io->u.Status = wine_nt_to_unix_file_name( attr->ObjectName, &unix_name, disposition,
-                                 !(attr->Attributes & OBJ_CASE_INSENSITIVE) )) == STATUS_BAD_DEVICE_TYPE)
+    if ((io->u.Status = nt_to_unix_file_name_attr( attr, &unix_name, disposition )) == STATUS_BAD_DEVICE_TYPE)
     {
         SERVER_START_REQ( open_file_object )
         {
@@ -147,7 +145,7 @@ static NTSTATUS FILE_CreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATT
         struct security_descriptor *sd = NULL;
         struct object_attributes objattr;
 
-        objattr.rootdir = 0;
+        objattr.rootdir = wine_server_obj_handle( attr->RootDirectory );
         objattr.sd_len = 0;
         objattr.name_len = 0;
         if (attr)
@@ -2117,8 +2115,7 @@ NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
     ANSI_STRING unix_name;
     NTSTATUS status;
 
-    if (!(status = wine_nt_to_unix_file_name( attr->ObjectName, &unix_name, FILE_OPEN,
-                                              !(attr->Attributes & OBJ_CASE_INSENSITIVE) )))
+    if (!(status = nt_to_unix_file_name_attr( attr, &unix_name, FILE_OPEN )))
     {
         struct stat st;
 
@@ -2160,8 +2157,7 @@ NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC
     ANSI_STRING unix_name;
     NTSTATUS status;
 
-    if (!(status = wine_nt_to_unix_file_name( attr->ObjectName, &unix_name, FILE_OPEN,
-                                              !(attr->Attributes & OBJ_CASE_INSENSITIVE) )))
+    if (!(status = nt_to_unix_file_name_attr( attr, &unix_name, FILE_OPEN )))
     {
         struct stat st;
 
