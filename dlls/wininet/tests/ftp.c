@@ -360,6 +360,20 @@ static void test_getfile(HINTERNET hFtp, HINTERNET hConnect)
         "Expected ERROR_INTERNET_INCORRECT_HANDLE_TYPE, got %d\n", GetLastError());
 }
 
+static void trace_extended_error(DWORD error)
+{
+    DWORD code, buflen = 0;
+
+    if (error != ERROR_INTERNET_EXTENDED_ERROR) return;
+    if (!InternetGetLastResponseInfoA(&code, NULL, &buflen) && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    {
+        char *text = HeapAlloc(GetProcessHeap(), 0, ++buflen);
+        InternetGetLastResponseInfoA(&code, text, &buflen);
+        trace("%u %s\n", code, text);
+        HeapFree(GetProcessHeap(), 0, text);
+    }
+}
+
 static void test_openfile(HINTERNET hFtp, HINTERNET hConnect)
 {
     HINTERNET hOpenFile;
@@ -414,21 +428,26 @@ static void test_openfile(HINTERNET hFtp, HINTERNET hConnect)
     if (hOpenFile)
     {
         BOOL bRet;
+        DWORD error;
         HINTERNET hOpenFile2;
         HANDLE    hFile;
 
         /* We have a handle so all ftp calls should fail (TODO: Put all ftp-calls in here) */
         SetLastError(0xdeadbeef);
         bRet = FtpCreateDirectoryA(hFtp, "new_directory_deadbeef");
+        error = GetLastError();
         ok ( bRet == FALSE, "Expected FtpCreateDirectoryA to fail\n");
-        ok ( GetLastError() == ERROR_FTP_TRANSFER_IN_PROGRESS,
-            "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", GetLastError());
+        ok ( error == ERROR_FTP_TRANSFER_IN_PROGRESS,
+            "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", error);
+        trace_extended_error(error);
 
         SetLastError(0xdeadbeef);
         bRet = FtpDeleteFileA(hFtp, "non_existent_file_deadbeef");
+        error = GetLastError();
         ok ( bRet == FALSE, "Expected FtpDeleteFileA to fail\n");
-        ok ( GetLastError() == ERROR_FTP_TRANSFER_IN_PROGRESS,
-            "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", GetLastError());
+        ok ( error == ERROR_FTP_TRANSFER_IN_PROGRESS,
+            "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", error);
+        trace_extended_error(error);
 
         SetLastError(0xdeadbeef);
         bRet = FtpGetFileA(hFtp, "welcome.msg", "should_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
