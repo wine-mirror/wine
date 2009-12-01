@@ -2653,9 +2653,14 @@ static void selection_acquire(void)
     }
 }
 
-static DWORD WINAPI selection_thread_proc(LPVOID unused)
+static DWORD WINAPI selection_thread_proc(LPVOID p)
 {
+    HANDLE event = p;
+
+    TRACE("\n");
+
     selection_acquire();
+    SetEvent(event);
 
     while (selectionAcquired)
     {
@@ -2705,7 +2710,8 @@ int CDECL X11DRV_AcquireClipboard(HWND hWndClipWindow)
     }
     else
     {
-        selectionThread = CreateThread(NULL, 0, &selection_thread_proc, NULL, 0, NULL);
+        HANDLE event = CreateEventW(NULL, FALSE, FALSE, NULL);
+        selectionThread = CreateThread(NULL, 0, &selection_thread_proc, event, 0, NULL);
 
         if (!selectionThread)
         {
@@ -2713,6 +2719,8 @@ int CDECL X11DRV_AcquireClipboard(HWND hWndClipWindow)
             return 0;
         }
 
+        WaitForSingleObject(event, INFINITE);
+        CloseHandle(event);
         CloseHandle(selectionThread);
     }
 
