@@ -338,11 +338,148 @@ static void HTMLFormElement_destructor(HTMLDOMNode *iface)
     HTMLElement_destructor(&This->element.node);
 }
 
+static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
+        BSTR name, DWORD grfdex, DISPID *pid)
+{
+    HTMLFormElement *This = HTMLFORM_NODE_THIS(iface);
+    nsIDOMHTMLCollection *elements;
+    PRUint32 len, i;
+    static const PRUnichar nameW[] = {'n','a','m','e',0};
+    nsAString nsname;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s %x %p)\n", This, wine_dbgstr_w(name), grfdex, pid);
+
+    nsres = nsIDOMHTMLFormElement_GetElements(This->nsform, &elements);
+    if(NS_FAILED(nsres)) {
+        FIXME("GetElements failed: 0x%08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMHTMLCollection_GetLength(elements, &len);
+    if(NS_FAILED(nsres)) {
+        FIXME("GetLength failed: 0x%08x\n", nsres);
+        nsIDOMHTMLCollection_Release(elements);
+        return E_FAIL;
+    }
+
+    nsAString_Init(&nsname, nameW);
+    for(i = 0; i < len; ++i) {
+        nsIDOMNode *nsitem;
+        nsIDOMHTMLElement *nshtml_elem;
+        nsAString nsstr;
+        const PRUnichar *str;
+
+        nsres = nsIDOMHTMLCollection_Item(elements, i, &nsitem);
+        if(NS_FAILED(nsres)) {
+            FIXME("Item failed: 0x%08x\n", nsres);
+            nsAString_Finish(&nsname);
+            nsIDOMHTMLCollection_Release(elements);
+            return E_FAIL;
+        }
+
+        nsres = nsIDOMNode_QueryInterface(nsitem, &IID_nsIDOMHTMLElement, (void**)&nshtml_elem);
+        nsIDOMNode_Release(nsitem);
+        if(NS_FAILED(nsres)) {
+            FIXME("Failed to get nsIDOMHTMLNode interface: 0x%08x\n", nsres);
+            nsAString_Finish(&nsname);
+            nsIDOMHTMLCollection_Release(elements);
+            return E_FAIL;
+        }
+
+        /* compare by id attr */
+        nsAString_Init(&nsstr, NULL);
+        nsres = nsIDOMHTMLElement_GetId(nshtml_elem, &nsstr);
+        if(NS_FAILED(nsres)) {
+            FIXME("GetId failed: 0x%08x\n", nsres);
+            nsAString_Finish(&nsname);
+            nsIDOMHTMLElement_Release(nshtml_elem);
+            nsIDOMHTMLCollection_Release(elements);
+            return E_FAIL;
+        }
+        nsAString_GetData(&nsstr, &str);
+        if(!strcmpiW(str, name)) {
+            /* FIXME: using index for dispid */
+            *pid = MSHTML_DISPID_CUSTOM_MIN + i;
+            nsAString_Finish(&nsname);
+            nsAString_Finish(&nsstr);
+            nsIDOMHTMLElement_Release(nshtml_elem);
+            nsIDOMHTMLCollection_Release(elements);
+            return S_OK;
+        }
+
+        /* compare by name attr */
+        nsres = nsIDOMHTMLElement_GetAttribute(nshtml_elem, &nsname, &nsstr);
+        nsAString_GetData(&nsstr, &str);
+        if(!strcmpiW(str, name)) {
+            /* FIXME: using index for dispid */
+            *pid = MSHTML_DISPID_CUSTOM_MIN + i;
+            nsAString_Finish(&nsname);
+            nsAString_Finish(&nsstr);
+            nsIDOMHTMLElement_Release(nshtml_elem);
+            nsIDOMHTMLCollection_Release(elements);
+            return S_OK;
+        }
+        nsAString_Finish(&nsstr);
+
+        nsIDOMHTMLElement_Release(nshtml_elem);
+    }
+    nsAString_Finish(&nsname);
+
+    nsIDOMHTMLCollection_Release(elements);
+
+    return DISP_E_UNKNOWNNAME;
+}
+
+static HRESULT HTMLFormElement_invoke(HTMLDOMNode *iface,
+        DISPID id, LCID lcid, WORD flags, DISPPARAMS *params, VARIANT *res,
+        EXCEPINFO *ei, IServiceProvider *caller)
+{
+    HTMLFormElement *This = HTMLFORM_NODE_THIS(iface);
+    nsIDOMHTMLCollection *elements;
+    nsIDOMNode *item;
+    HTMLDOMNode *node;
+    nsresult nsres;
+
+    TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, flags, params, res, ei, caller);
+
+    nsres = nsIDOMHTMLFormElement_GetElements(This->nsform, &elements);
+    if(NS_FAILED(nsres)) {
+        FIXME("GetElements failed: 0x%08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMHTMLCollection_Item(elements, id - MSHTML_DISPID_CUSTOM_MIN, &item);
+    nsIDOMHTMLCollection_Release(elements);
+    if(NS_FAILED(nsres)) {
+        FIXME("Item failed: 0x%08x\n", nsres);
+        return E_FAIL;
+    }
+
+    node = get_node(This->element.node.doc, item, TRUE);
+
+    V_VT(res) = VT_DISPATCH;
+    V_DISPATCH(res) = (IDispatch*)node;
+
+    IHTMLDOMNode_AddRef(HTMLDOMNODE(node));
+    nsIDOMNode_Release(item);
+
+    return S_OK;
+}
+
 #undef HTMLFORM_NODE_THIS
 
 static const NodeImplVtbl HTMLFormElementImplVtbl = {
     HTMLFormElement_QI,
-    HTMLFormElement_destructor
+    HTMLFormElement_destructor,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    HTMLFormElement_get_dispid,
+    HTMLFormElement_invoke
 };
 
 static const tid_t HTMLFormElement_iface_tids[] = {
