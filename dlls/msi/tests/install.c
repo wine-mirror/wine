@@ -2849,7 +2849,7 @@ static void test_readonlyfile_cab(void)
         ReadFile(file, buf, sizeof(buf) - 1, &size, NULL);
         CloseHandle(file);
     }
-    ok( !lstrcmp( buf, "maximus" ), "Expected file to be overwritten, got '%s'\n", buf );
+    ok(!memcmp( buf, "maximus", sizeof("maximus")-1 ), "Expected file to be overwritten, got '%s'\n", buf);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
