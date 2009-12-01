@@ -50,6 +50,7 @@ static NTSTATUS (WINAPI *pRtlWow64EnableFsRedirectionEx)( ULONG, ULONG * );
 
 static NTSTATUS (WINAPI *pNtCreateMailslotFile)( PHANDLE, ULONG, POBJECT_ATTRIBUTES, PIO_STATUS_BLOCK,
                                        ULONG, ULONG, ULONG, PLARGE_INTEGER );
+static NTSTATUS (WINAPI *pNtOpenFile)(PHANDLE,ACCESS_MASK,POBJECT_ATTRIBUTES,PIO_STATUS_BLOCK,ULONG,ULONG);
 static NTSTATUS (WINAPI *pNtDeleteFile)(POBJECT_ATTRIBUTES ObjectAttributes);
 static NTSTATUS (WINAPI *pNtReadFile)(HANDLE hFile, HANDLE hEvent,
                                       PIO_APC_ROUTINE apc, void* apc_user,
@@ -147,6 +148,65 @@ static void WINAPI apc( void *arg, IO_STATUS_BLOCK *iosb, ULONG reserved )
            iosb, U(*iosb).Status, iosb->Information );
     (*count)++;
     ok( !reserved, "reserved is not 0: %x\n", reserved );
+}
+
+static void open_file_test(void)
+{
+    NTSTATUS status;
+    HANDLE dir, handle;
+    WCHAR path[MAX_PATH];
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    UNICODE_STRING nameW;
+    UINT i, len;
+
+    len = GetWindowsDirectoryW( path, MAX_PATH );
+    pRtlDosPathNameToNtPathName_U( path, &nameW, NULL, NULL );
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    status = pNtOpenFile( &dir, GENERIC_READ, &attr, &io,
+                          FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE );
+    ok( !status, "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
+
+    /* test opening system dir with RootDirectory set to windows dir */
+    GetSystemDirectoryW( path, MAX_PATH );
+    while (path[len] == '\\') len++;
+    nameW.Buffer = path + len;
+    nameW.Length = lstrlenW(path + len) * sizeof(WCHAR);
+    attr.RootDirectory = dir;
+    status = pNtOpenFile( &handle, GENERIC_READ, &attr, &io,
+                          FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE );
+    ok( !status, "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
+    CloseHandle( handle );
+
+    /* try uppercase name */
+    for (i = len; path[i]; i++) if (path[i] >= 'a' && path[i] <= 'z') path[i] -= 'a' - 'A';
+    status = pNtOpenFile( &handle, GENERIC_READ, &attr, &io,
+                          FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE );
+    ok( !status, "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
+    CloseHandle( handle );
+
+    /* try with leading backslash */
+    nameW.Buffer--;
+    nameW.Length += sizeof(WCHAR);
+    status = pNtOpenFile( &handle, GENERIC_READ, &attr, &io,
+                          FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE );
+    ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD,
+        "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
+    if (!status) CloseHandle( handle );
+
+    /* try with empty name */
+    nameW.Length = 0;
+    status = pNtOpenFile( &handle, GENERIC_READ, &attr, &io,
+                          FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE );
+    ok( !status, "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
+    CloseHandle( handle );
+
+    CloseHandle( dir );
 }
 
 static void delete_file_test(void)
@@ -1233,6 +1293,7 @@ START_TEST(file)
     pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
     pRtlWow64EnableFsRedirectionEx = (void *)GetProcAddress(hntdll, "RtlWow64EnableFsRedirectionEx");
     pNtCreateMailslotFile   = (void *)GetProcAddress(hntdll, "NtCreateMailslotFile");
+    pNtOpenFile             = (void *)GetProcAddress(hntdll, "NtOpenFile");
     pNtDeleteFile           = (void *)GetProcAddress(hntdll, "NtDeleteFile");
     pNtReadFile             = (void *)GetProcAddress(hntdll, "NtReadFile");
     pNtWriteFile            = (void *)GetProcAddress(hntdll, "NtWriteFile");
@@ -1247,6 +1308,7 @@ START_TEST(file)
     pNtSetInformationFile   = (void *)GetProcAddress(hntdll, "NtSetInformationFile");
     pNtQueryInformationFile = (void *)GetProcAddress(hntdll, "NtQueryInformationFile");
 
+    open_file_test();
     delete_file_test();
     read_file_test();
     nt_mailslot_test();
