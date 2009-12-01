@@ -4285,6 +4285,108 @@ static void test_default_style(IHTMLStyle *style)
     ok(hres == S_OK, "put_borderColor failed: %08x\n", hres);
     SysFreeString(sDefault);
 
+    /* BorderRight */
+    hres = IHTMLStyle_get_borderRight(style, &sDefault);
+    ok(hres == S_OK, "get_borderRight failed: %08x\n", hres);
+
+    str = a2bstr("thick dotted red");
+    hres = IHTMLStyle_put_borderRight(style, str);
+    ok(hres == S_OK, "put_borderRight failed: %08x\n", hres);
+    SysFreeString(str);
+
+    /* IHTMLStyle_get_borderRight appears to have a bug where
+        it returns the first letter of the color.  So we check
+        each style individually.
+     */
+    V_BSTR(&v) = NULL;
+    hres = IHTMLStyle_get_borderRightColor(style, &v);
+    todo_wine ok(hres == S_OK, "get_borderRightColor failed: %08x\n", hres);
+    todo_wine ok(!strcmp_wa(V_BSTR(&v), "red"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_BSTR(&v) = NULL;
+    hres = IHTMLStyle_get_borderRightWidth(style, &v);
+    ok(hres == S_OK, "get_borderRightWidth failed: %08x\n", hres);
+    ok(!strcmp_wa(V_BSTR(&v), "thick"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    hres = IHTMLStyle_get_borderRightStyle(style, &str);
+    ok(hres == S_OK, "get_borderRightStyle failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "dotted"), "str=%s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hres = IHTMLStyle_put_borderRight(style, sDefault);
+    ok(hres == S_OK, "put_borderRight failed: %08x\n", hres);
+    SysFreeString(sDefault);
+
+    /* BorderTop */
+    hres = IHTMLStyle_get_borderTop(style, &sDefault);
+    ok(hres == S_OK, "get_borderTop failed: %08x\n", hres);
+
+    str = a2bstr("thick dotted red");
+    hres = IHTMLStyle_put_borderTop(style, str);
+    ok(hres == S_OK, "put_borderTop failed: %08x\n", hres);
+    SysFreeString(str);
+
+    /* IHTMLStyle_get_borderTop appears to have a bug where
+        it returns the first letter of the color.  So we check
+        each style individually.
+     */
+    V_BSTR(&v) = NULL;
+    hres = IHTMLStyle_get_borderTopColor(style, &v);
+    todo_wine ok(hres == S_OK, "get_borderTopColor failed: %08x\n", hres);
+    todo_wine ok(!strcmp_wa(V_BSTR(&v), "red"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_BSTR(&v) = NULL;
+    hres = IHTMLStyle_get_borderTopWidth(style, &v);
+    ok(hres == S_OK, "get_borderTopWidth failed: %08x\n", hres);
+    ok(!strcmp_wa(V_BSTR(&v), "thick"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    hres = IHTMLStyle_get_borderTopStyle(style, &str);
+    ok(hres == S_OK, "get_borderTopStyle failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "dotted"), "str=%s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hres = IHTMLStyle_put_borderTop(style, sDefault);
+    ok(hres == S_OK, "put_borderTop failed: %08x\n", hres);
+    SysFreeString(sDefault);
+
+    /* BorderBottom */
+    hres = IHTMLStyle_get_borderBottom(style, &sDefault);
+    ok(hres == S_OK, "get_borderBottom failed: %08x\n", hres);
+
+    str = a2bstr("thick dotted red");
+    hres = IHTMLStyle_put_borderBottom(style, str);
+    ok(hres == S_OK, "put_borderBottom failed: %08x\n", hres);
+    SysFreeString(str);
+
+    /* IHTMLStyle_get_borderBottom appears to have a bug where
+        it returns the first letter of the color.  So we check
+        each style individually.
+     */
+    V_BSTR(&v) = NULL;
+    hres = IHTMLStyle_get_borderBottomColor(style, &v);
+    todo_wine ok(hres == S_OK, "get_borderBottomColor failed: %08x\n", hres);
+    todo_wine ok(!strcmp_wa(V_BSTR(&v), "red"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_BSTR(&v) = NULL;
+    hres = IHTMLStyle_get_borderBottomWidth(style, &v);
+    ok(hres == S_OK, "get_borderBottomWidth failed: %08x\n", hres);
+    ok(!strcmp_wa(V_BSTR(&v), "thick"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    hres = IHTMLStyle_get_borderBottomStyle(style, &str);
+    ok(hres == S_OK, "get_borderBottomStyle failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "dotted"), "str=%s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hres = IHTMLStyle_put_borderBottom(style, sDefault);
+    ok(hres == S_OK, "put_borderBottom failed: %08x\n", hres);
+    SysFreeString(sDefault);
+
     /* BorderLeft */
     hres = IHTMLStyle_get_borderLeft(style, &sDefault);
     ok(hres == S_OK, "get_borderLeft failed: %08x\n", hres);
