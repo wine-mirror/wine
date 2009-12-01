@@ -534,6 +534,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
 
     if (Flags & SLMFLAG_VIRTUAL)
     {
+        if (!wImageName) return FALSE;
         module = module_new(pcs, wImageName, module_get_type_by_name(wImageName),
                             TRUE, (DWORD)BaseOfDll, SizeOfDll, 0, 0);
         if (!module) return FALSE;
@@ -594,7 +595,8 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
      */
     if (wModuleName)
         module_set_module(module, wModuleName);
-    lstrcpynW(module->module.ImageName, wImageName,
+    if (wImageName)
+        lstrcpynW(module->module.ImageName, wImageName,
               sizeof(module->module.ImageName) / sizeof(WCHAR));
 
     return module->module.BaseOfImage;
