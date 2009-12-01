@@ -4838,45 +4838,22 @@ BOOL WINAPI EnumJobsW(HANDLE hPrinter, DWORD FirstJob, DWORD NoJobs,
  */
 static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPCWSTR pEnvironment,
                                         DWORD Level, LPBYTE pDriverInfo,
+                                        DWORD driver_index,
                                         DWORD cbBuf, LPDWORD pcbNeeded,
-                                        LPDWORD pcReturned, BOOL unicode)
+                                        LPDWORD pcFound, DWORD data_offset)
 
 {   HKEY  hkeyDrivers;
-    DWORD i, needed, number = 0, size = 0;
-    WCHAR DriverNameW[255];
-    PBYTE ptr;
+    DWORD i, size = 0;
     const printenv_t * env;
 
-    TRACE("%s,%s,%d,%p,%d,%d\n",
+    TRACE("%s,%s,%d,%p,%d,%d,%d\n",
           debugstr_w(pName), debugstr_w(pEnvironment),
-          Level, pDriverInfo, cbBuf, unicode);
-
-    /* check for local drivers */
-    if((pName) && (pName[0])) {
-        FIXME("remote drivers (%s) not supported!\n", debugstr_w(pName));
-        SetLastError(ERROR_ACCESS_DENIED);
-        return FALSE;
-    }
+          Level, pDriverInfo, driver_index, cbBuf, data_offset);
 
     env = validate_envW(pEnvironment);
     if (!env) return FALSE;     /* SetLastError() is in validate_envW */
 
-    /* check input parameter */
-    if ((Level < 1) || (Level == 7) || (Level > 8)) {
-        SetLastError(ERROR_INVALID_LEVEL);
-        return FALSE;
-    }
-
-    if ((pcbNeeded == NULL) || (pcReturned == NULL)) {
-        SetLastError(RPC_X_NULL_REF_POINTER);
-        return FALSE;
-    }
-
-    /* initialize return values */
-    if(pDriverInfo)
-        memset( pDriverInfo, 0, cbBuf);
-    *pcbNeeded  = 0;
-    *pcReturned = 0;
+    *pcFound = 0;
 
     hkeyDrivers = WINSPOOL_OpenDriverReg(pEnvironment);
     if(!hkeyDrivers) {
@@ -4884,39 +4861,49 @@ static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPCWSTR pEnvironment,
         return FALSE;
     }
 
-    if(RegQueryInfoKeyA(hkeyDrivers, NULL, NULL, NULL, &number, NULL, NULL,
+    if(RegQueryInfoKeyA(hkeyDrivers, NULL, NULL, NULL, pcFound, NULL, NULL,
                         NULL, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) {
         RegCloseKey(hkeyDrivers);
         ERR("Can't query Drivers key\n");
         return FALSE;
     }
-    TRACE("Found %d Drivers\n", number);
+    TRACE("Found %d Drivers\n", *pcFound);
 
     /* get size of single struct
      * unicode and ascii structure have the same size
      */
     size = di_sizeof[Level];
 
-    /* calculate required buffer size */
-    *pcbNeeded = size * number;
+    if (data_offset == 0)
+        data_offset = size * (*pcFound);
+    *pcbNeeded = data_offset;
 
-    for( i = 0,  ptr = (pDriverInfo && (cbBuf >= size)) ? pDriverInfo : NULL ;
-         i < number;
-         i++, ptr = (ptr && (cbBuf >= size * i)) ? ptr + size : NULL) {
+    for( i = 0; i < *pcFound; i++) {
+        WCHAR DriverNameW[255];
+        PBYTE table_ptr = NULL;
+        PBYTE data_ptr = NULL;
+        DWORD needed = 0;
+
         if(RegEnumKeyW(hkeyDrivers, i, DriverNameW, sizeof(DriverNameW)/sizeof(DriverNameW[0]))
                        != ERROR_SUCCESS) {
             ERR("Can't enum key number %d\n", i);
             RegCloseKey(hkeyDrivers);
             return FALSE;
         }
+
+        if (pDriverInfo && ((driver_index + i + 1) * size) <= cbBuf)
+            table_ptr = pDriverInfo + (driver_index + i) * size;
+        if (pDriverInfo && *pcbNeeded <= cbBuf)
+            data_ptr = pDriverInfo + *pcbNeeded;
+
         if(!WINSPOOL_GetDriverInfoFromReg(hkeyDrivers, DriverNameW,
-                         env, Level, ptr,
-                         (cbBuf < *pcbNeeded) ? NULL : pDriverInfo + *pcbNeeded,
+                         env, Level, table_ptr, data_ptr,
                          (cbBuf < *pcbNeeded) ? 0 : cbBuf - *pcbNeeded,
-                         &needed, unicode)) {
+                         &needed, TRUE)) {
             RegCloseKey(hkeyDrivers);
             return FALSE;
         }
+
         *pcbNeeded += needed;
     }
 
@@ -4927,7 +4914,6 @@ static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPCWSTR pEnvironment,
         return FALSE;
     }
 
-    *pcReturned = number;
     return TRUE;
 }
 
@@ -4941,30 +4927,78 @@ BOOL WINAPI EnumPrinterDriversW(LPWSTR pName, LPWSTR pEnvironment, DWORD Level,
                                 LPDWORD pcbNeeded, LPDWORD pcReturned)
 {
     static const WCHAR allW[] = {'a','l','l',0};
+    BOOL ret;
+    DWORD found;
 
+    if ((pcbNeeded == NULL) || (pcReturned == NULL))
+    {
+        SetLastError(RPC_X_NULL_REF_POINTER);
+        return FALSE;
+    }
+
+    /* check for local drivers */
+    if((pName) && (pName[0])) {
+        FIXME("remote drivers (%s) not supported!\n", debugstr_w(pName));
+        SetLastError(ERROR_ACCESS_DENIED);
+        return FALSE;
+    }
+
+    /* check input parameter */
+    if ((Level < 1) || (Level == 7) || (Level > 8)) {
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
+    if(pDriverInfo && cbBuf > 0)
+        memset( pDriverInfo, 0, cbBuf);
+
+    /* Exception:  pull all printers */
     if (pEnvironment && !strcmpW(pEnvironment, allW))
     {
-        BOOL ret;
-        DWORD i, needed, returned, bufsize = cbBuf;
+        DWORD i, needed, bufsize = cbBuf;
+        DWORD total_needed = 0;
+        DWORD total_found = 0;
+        DWORD data_offset;
 
+        /* Precompute the overall total; we need this to know
+           where pointers end and data begins (i.e. data_offset) */
         for (i = 0; i < sizeof(all_printenv)/sizeof(all_printenv[0]); i++)
         {
-            needed = returned = 0;
+            needed = found = 0;
             ret = WINSPOOL_EnumPrinterDrivers(pName, all_printenv[i]->envname, Level,
-                                              pDriverInfo, bufsize, &needed, &returned, TRUE);
+                                              NULL, 0, 0, &needed, &found, 0);
+            if (!ret && GetLastError() != ERROR_INSUFFICIENT_BUFFER) return FALSE;
+            total_needed += needed;
+            total_found += found;
+        }
+
+        data_offset = di_sizeof[Level] * total_found;
+
+        *pcReturned = 0;
+        *pcbNeeded = 0;
+        total_found = 0;
+        for (i = 0; i < sizeof(all_printenv)/sizeof(all_printenv[0]); i++)
+        {
+            needed = found = 0;
+            ret = WINSPOOL_EnumPrinterDrivers(pName, all_printenv[i]->envname, Level,
+                                              pDriverInfo, total_found, bufsize, &needed, &found, data_offset);
             if (!ret && GetLastError() != ERROR_INSUFFICIENT_BUFFER) return FALSE;
             else if (ret)
-            {
-                bufsize -= needed;
-                if (pDriverInfo) pDriverInfo += needed;
-                if (pcReturned) *pcReturned += returned;
-            }
-            if (pcbNeeded) *pcbNeeded += needed;
+                *pcReturned += found;
+            *pcbNeeded = needed;
+            data_offset = needed;
+            total_found += found;
         }
         return ret;
     }
-    return WINSPOOL_EnumPrinterDrivers(pName, pEnvironment, Level, pDriverInfo,
-                                       cbBuf, pcbNeeded, pcReturned, TRUE);
+
+    /* Normal behavior */
+    ret = WINSPOOL_EnumPrinterDrivers(pName, pEnvironment, Level, pDriverInfo,
+                                       0, cbBuf, pcbNeeded, &found, 0);
+    if (ret)
+        *pcReturned = found;
+
+    return ret;
 }
 
 /*****************************************************************************
@@ -4979,32 +5013,21 @@ BOOL WINAPI EnumPrinterDriversA(LPSTR pName, LPSTR pEnvironment, DWORD Level,
     BOOL ret;
     UNICODE_STRING pNameW, pEnvironmentW;
     PWSTR pwstrNameW, pwstrEnvironmentW;
+    LPBYTE buf = NULL;
+
+    if (cbBuf)
+        buf = HeapAlloc(GetProcessHeap(), 0, cbBuf);
 
     pwstrNameW = asciitounicode(&pNameW, pName);
     pwstrEnvironmentW = asciitounicode(&pEnvironmentW, pEnvironment);
 
-    if (pEnvironment && !strcmp(pEnvironment, "all"))
-    {
-        DWORD i, needed, returned, bufsize = cbBuf;
+    ret = EnumPrinterDriversW(pwstrNameW, pwstrEnvironmentW, Level,
+                                buf, cbBuf, pcbNeeded, pcReturned);
+    if (ret)
+        convert_driverinfo_W_to_A(pDriverInfo, buf, Level, cbBuf, *pcReturned);
 
-        for (i = 0; i < sizeof(all_printenv)/sizeof(all_printenv[0]); i++)
-        {
-            needed = returned = 0;
-            ret = WINSPOOL_EnumPrinterDrivers(pwstrNameW, all_printenv[i]->envname, Level,
-                                              pDriverInfo, bufsize, &needed, &returned, FALSE);
-            if (!ret && GetLastError() != ERROR_INSUFFICIENT_BUFFER) break;
-            else if (ret)
-            {
-                bufsize -= needed;
-                if (pDriverInfo) pDriverInfo += needed;
-                if (pcReturned) *pcReturned += returned;
-            }
-            if (pcbNeeded) *pcbNeeded += needed;
-        }
-    }
-    else ret = WINSPOOL_EnumPrinterDrivers(pwstrNameW, pwstrEnvironmentW,
-                                           Level, pDriverInfo, cbBuf, pcbNeeded,
-                                           pcReturned, FALSE);
+    HeapFree(GetProcessHeap(), 0, buf);
+
     RtlFreeUnicodeString(&pNameW);
     RtlFreeUnicodeString(&pEnvironmentW);
 

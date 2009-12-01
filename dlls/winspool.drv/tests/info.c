@@ -1161,7 +1161,6 @@ static void test_EnumPrinterDrivers(void)
             DWORD double_needed;
             DWORD double_returned;
             pEnumPrinterDriversW(NULL, NULL, level, NULL, 0, &double_needed, &double_returned);
-            todo_wine
             ok(double_needed == cbBuf, "level %d: EnumPrinterDriversA returned different size %d than EnumPrinterDriversW (%d)\n", level, cbBuf, double_needed);
         }
 
@@ -1248,7 +1247,6 @@ static void test_EnumPrinterDrivers(void)
     if (res && pcReturned > 0)
     {
         DRIVER_INFO_1 *di_1 = (DRIVER_INFO_1 *)buffer;
-        todo_wine
         ok((LPBYTE) di_1->pName == NULL || (LPBYTE) di_1->pName < buffer ||
             (LPBYTE) di_1->pName >= (LPBYTE)(di_1 + pcReturned),
             "Driver Information not in sequence; pName %p, top of data %p\n",
