@@ -3320,8 +3320,7 @@ static void WINSPOOL_GetDefaultDevMode(
  */
 static BOOL WINSPOOL_GetDevModeFromReg(HKEY hkey, LPCWSTR ValueName,
 				       LPBYTE ptr,
-				       DWORD buflen, DWORD *needed,
-				       BOOL unicode)
+				       DWORD buflen, DWORD *needed)
 {
     DWORD sz = buflen, type;
     LONG ret;
@@ -3337,13 +3336,11 @@ static BOOL WINSPOOL_GetDevModeFromReg(HKEY hkey, LPCWSTR ValueName,
     /* ensures that dmSize is not erratically bogus if registry is invalid */
     if (ptr && ((DEVMODEA*)ptr)->dmSize < sizeof(DEVMODEA))
         ((DEVMODEA*)ptr)->dmSize = sizeof(DEVMODEA);
-    if(unicode) {
-	sz += (CCHDEVICENAME + CCHFORMNAME);
-	if(buflen >= sz) {
-	    DEVMODEW *dmW = GdiConvertToDevmodeW((DEVMODEA*)ptr);
-	    memcpy(ptr, dmW, sz);
-	    HeapFree(GetProcessHeap(),0,dmW);
-	}
+    sz += (CCHDEVICENAME + CCHFORMNAME);
+    if(buflen >= sz) {
+        DEVMODEW *dmW = GdiConvertToDevmodeW((DEVMODEA*)ptr);
+        memcpy(ptr, dmW, sz);
+        HeapFree(GetProcessHeap(),0,dmW);
     }
     *needed = sz;
     return TRUE;
@@ -3469,8 +3466,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	    space = FALSE;
 	*pcbNeeded += size;
     }
-    if(WINSPOOL_GetDevModeFromReg(hkeyPrinter, Default_DevModeW, ptr, left,
-				  &size, TRUE)) {
+    if(WINSPOOL_GetDevModeFromReg(hkeyPrinter, Default_DevModeW, ptr, left, &size)) {
         if(space && size <= left) {
 	    pi2->pDevMode = (LPDEVMODEW)ptr;
 	    ptr += size;
@@ -3670,7 +3666,7 @@ static BOOL WINSPOOL_GetPrinter_9(HKEY hkeyPrinter, PRINTER_INFO_9W *pi9, LPBYTE
 
     *pcbNeeded = 0;
 
-    if(WINSPOOL_GetDevModeFromReg(hkeyPrinter, Default_DevModeW, buf, cbBuf, &size, TRUE)) {
+    if(WINSPOOL_GetDevModeFromReg(hkeyPrinter, Default_DevModeW, buf, cbBuf, &size)) {
         if(space && size <= cbBuf) {
             pi9->pDevMode = (LPDEVMODEW)buf;
         } else
