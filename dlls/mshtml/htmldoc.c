@@ -611,8 +611,17 @@ static HRESULT WINAPI HTMLDocument_get_domain(IHTMLDocument2 *iface, BSTR *p)
 static HRESULT WINAPI HTMLDocument_put_cookie(IHTMLDocument2 *iface, BSTR v)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    BOOL bret;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    bret = InternetSetCookieExW(This->window->url, NULL, v, 0, 0);
+    if(!bret) {
+        FIXME("InternetSetCookieExW failed: %u\n", GetLastError());
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument_get_cookie(IHTMLDocument2 *iface, BSTR *p)
