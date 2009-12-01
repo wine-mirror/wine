@@ -1075,6 +1075,146 @@ static void test_file_name_information(void)
     HeapFree( GetProcessHeap(), 0, file_name );
 }
 
+static void test_file_all_name_information(void)
+{
+    WCHAR *file_name, *volume_prefix, *expected;
+    FILE_ALL_INFORMATION *info;
+    ULONG old_redir = 1, tmp;
+    UINT file_name_size;
+    IO_STATUS_BLOCK io;
+    UINT info_size;
+    HRESULT hr;
+    HANDLE h;
+    UINT len;
+
+    /* GetVolumePathName is not present before w2k */
+    if (!pGetVolumePathNameW) {
+        win_skip("GetVolumePathNameW not found\n");
+        return;
+    }
+
+    file_name_size = GetSystemDirectoryW( NULL, 0 );
+    file_name = HeapAlloc( GetProcessHeap(), 0, file_name_size * sizeof(*file_name) );
+    volume_prefix = HeapAlloc( GetProcessHeap(), 0, file_name_size * sizeof(*volume_prefix) );
+    expected = HeapAlloc( GetProcessHeap(), 0, file_name_size * sizeof(*volume_prefix) );
+
+    len = GetSystemDirectoryW( file_name, file_name_size );
+    ok(len == file_name_size - 1,
+            "GetSystemDirectoryW returned %u, expected %u.\n",
+            len, file_name_size - 1);
+
+    len = pGetVolumePathNameW( file_name, volume_prefix, file_name_size );
+    ok(len, "GetVolumePathNameW failed.\n");
+
+    len = lstrlenW( volume_prefix );
+    if (len && volume_prefix[len - 1] == '\\') --len;
+    memcpy( expected, file_name + len, (file_name_size - len - 1) * sizeof(WCHAR) );
+    expected[file_name_size - len - 1] = '\0';
+
+    /* A bit more than we actually need, but it keeps the calculation simple. */
+    info_size = sizeof(*info) + (file_name_size * sizeof(WCHAR));
+    info = HeapAlloc( GetProcessHeap(), 0, info_size );
+
+    if (pRtlWow64EnableFsRedirectionEx) pRtlWow64EnableFsRedirectionEx( TRUE, &old_redir );
+    h = CreateFileW( file_name, GENERIC_READ,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 );
+    if (pRtlWow64EnableFsRedirectionEx) pRtlWow64EnableFsRedirectionEx( old_redir, &tmp );
+    ok(h != INVALID_HANDLE_VALUE, "Failed to open file.\n");
+
+    hr = pNtQueryInformationFile( h, &io, info, sizeof(*info) - 1, FileAllInformation );
+    ok(hr == STATUS_INFO_LENGTH_MISMATCH, "NtQueryInformationFile returned %#x, expected %#x.\n",
+            hr, STATUS_INFO_LENGTH_MISMATCH);
+
+    memset( info, 0xcc, info_size );
+    hr = pNtQueryInformationFile( h, &io, info, sizeof(*info), FileAllInformation );
+    ok(hr == STATUS_BUFFER_OVERFLOW, "NtQueryInformationFile returned %#x, expected %#x.\n",
+            hr, STATUS_BUFFER_OVERFLOW);
+    ok(U(io).Status == STATUS_BUFFER_OVERFLOW, "io.Status is %#x, expected %#x.\n",
+            U(io).Status, STATUS_BUFFER_OVERFLOW);
+    ok(info->NameInformation.FileNameLength == lstrlenW( expected ) * sizeof(WCHAR),
+            "info->NameInformation.FileNameLength is %u, expected %u.\n",
+            info->NameInformation.FileNameLength, lstrlenW( expected ) * sizeof(WCHAR));
+    ok(info->NameInformation.FileName[2] == 0xcccc,
+            "info->NameInformation.FileName[2] is %#x, expected 0xcccc.\n", info->NameInformation.FileName[2]);
+    ok(CharLowerW((LPWSTR)(UINT_PTR)info->NameInformation.FileName[1]) == CharLowerW((LPWSTR)(UINT_PTR)expected[1]),
+            "info->NameInformation.FileName[1] is %p, expected %p.\n",
+            CharLowerW((LPWSTR)(UINT_PTR)info->NameInformation.FileName[1]), CharLowerW((LPWSTR)(UINT_PTR)expected[1]));
+    ok(io.Information == sizeof(*info), "io.Information is %lu, expected %u.\n", io.Information, sizeof(*info));
+
+    memset( info, 0xcc, info_size );
+    hr = pNtQueryInformationFile( h, &io, info, info_size, FileAllInformation );
+    ok(hr == STATUS_SUCCESS, "NtQueryInformationFile returned %#x, expected %#x.\n", hr, STATUS_SUCCESS);
+    ok(U(io).Status == STATUS_SUCCESS, "io.Status is %#x, expected %#x.\n", U(io).Status, STATUS_SUCCESS);
+    ok(info->NameInformation.FileNameLength == lstrlenW( expected ) * sizeof(WCHAR),
+            "info->NameInformation.FileNameLength is %u, expected %u.\n",
+            info->NameInformation.FileNameLength, lstrlenW( expected ) * sizeof(WCHAR));
+    ok(info->NameInformation.FileName[info->NameInformation.FileNameLength / sizeof(WCHAR)] == 0xcccc,
+            "info->NameInformation.FileName[%u] is %#x, expected 0xcccc.\n",
+            info->NameInformation.FileNameLength / sizeof(WCHAR),
+            info->NameInformation.FileName[info->NameInformation.FileNameLength / sizeof(WCHAR)]);
+    info->NameInformation.FileName[info->NameInformation.FileNameLength / sizeof(WCHAR)] = '\0';
+    ok(!lstrcmpiW( info->NameInformation.FileName, expected ),
+            "info->NameInformation.FileName is %s, expected %s.\n",
+            wine_dbgstr_w( info->NameInformation.FileName ), wine_dbgstr_w( expected ));
+    ok(io.Information == FIELD_OFFSET(FILE_ALL_INFORMATION, NameInformation.FileName)
+            + info->NameInformation.FileNameLength,
+            "io.Information is %lu, expected %u.\n",
+            io.Information,
+            FIELD_OFFSET(FILE_ALL_INFORMATION, NameInformation.FileName) + info->NameInformation.FileNameLength);
+
+    CloseHandle( h );
+    HeapFree( GetProcessHeap(), 0, info );
+    HeapFree( GetProcessHeap(), 0, expected );
+    HeapFree( GetProcessHeap(), 0, volume_prefix );
+
+    if (old_redir || !pGetSystemWow64DirectoryW || !(file_name_size = pGetSystemWow64DirectoryW( NULL, 0 )))
+    {
+        skip("Not running on WoW64, skipping test.\n");
+        HeapFree( GetProcessHeap(), 0, file_name );
+        return;
+    }
+
+    h = CreateFileW( file_name, GENERIC_READ,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 );
+    ok(h != INVALID_HANDLE_VALUE, "Failed to open file.\n");
+    HeapFree( GetProcessHeap(), 0, file_name );
+
+    file_name = HeapAlloc( GetProcessHeap(), 0, file_name_size * sizeof(*file_name) );
+    volume_prefix = HeapAlloc( GetProcessHeap(), 0, file_name_size * sizeof(*volume_prefix) );
+    expected = HeapAlloc( GetProcessHeap(), 0, file_name_size * sizeof(*expected) );
+
+    len = pGetSystemWow64DirectoryW( file_name, file_name_size );
+    ok(len == file_name_size - 1,
+            "GetSystemWow64DirectoryW returned %u, expected %u.\n",
+            len, file_name_size - 1);
+
+    len = pGetVolumePathNameW( file_name, volume_prefix, file_name_size );
+    ok(len, "GetVolumePathNameW failed.\n");
+
+    len = lstrlenW( volume_prefix );
+    if (len && volume_prefix[len - 1] == '\\') --len;
+    memcpy( expected, file_name + len, (file_name_size - len - 1) * sizeof(WCHAR) );
+    expected[file_name_size - len - 1] = '\0';
+
+    info_size = sizeof(*info) + (file_name_size * sizeof(WCHAR));
+    info = HeapAlloc( GetProcessHeap(), 0, info_size );
+
+    memset( info, 0xcc, info_size );
+    hr = pNtQueryInformationFile( h, &io, info, info_size, FileAllInformation );
+    ok(hr == STATUS_SUCCESS, "NtQueryInformationFile returned %#x, expected %#x.\n", hr, STATUS_SUCCESS);
+    info->NameInformation.FileName[info->NameInformation.FileNameLength / sizeof(WCHAR)] = '\0';
+    ok(!lstrcmpiW( info->NameInformation.FileName, expected ), "info->NameInformation.FileName is %s, expected %s.\n",
+            wine_dbgstr_w( info->NameInformation.FileName ), wine_dbgstr_w( expected ));
+
+    CloseHandle( h );
+    HeapFree( GetProcessHeap(), 0, info );
+    HeapFree( GetProcessHeap(), 0, expected );
+    HeapFree( GetProcessHeap(), 0, volume_prefix );
+    HeapFree( GetProcessHeap(), 0, file_name );
+}
+
 START_TEST(file)
 {
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
@@ -1115,4 +1255,5 @@ START_TEST(file)
     test_file_all_information();
     test_file_both_information();
     test_file_name_information();
+    test_file_all_name_information();
 }
