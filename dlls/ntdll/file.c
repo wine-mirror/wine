@@ -1679,7 +1679,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         sizeof(FILE_FULL_EA_INFORMATION),              /* FileFullEaInformation */
         sizeof(FILE_MODE_INFORMATION),                 /* FileModeInformation */
         sizeof(FILE_ALIGNMENT_INFORMATION),            /* FileAlignmentInformation */
-        sizeof(FILE_ALL_INFORMATION)-sizeof(WCHAR),    /* FileAllInformation */
+        sizeof(FILE_ALL_INFORMATION),                  /* FileAllInformation */
         sizeof(FILE_ALLOCATION_INFORMATION),           /* FileAllocationInformation */
         sizeof(FILE_END_OF_FILE_INFORMATION),          /* FileEndOfFileInformation */
         0,                                             /* FileAlternateNameInformation */
