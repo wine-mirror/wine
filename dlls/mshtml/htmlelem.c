@@ -1374,6 +1374,31 @@ static HRESULT WINAPI HTMLElement_get_all(IHTMLElement *iface, IDispatch **p)
     return S_OK;
 }
 
+static HRESULT HTMLElement_get_dispid(IUnknown *iface, BSTR name,
+        DWORD grfdex, DISPID *pid)
+{
+    HTMLElement *This = HTMLELEM_THIS(iface);
+
+    if(This->node.vtbl->get_dispid)
+        return This->node.vtbl->get_dispid(&This->node, name, grfdex, pid);
+
+    return DISP_E_UNKNOWNNAME;
+}
+
+static HRESULT HTMLElement_invoke(IUnknown *iface, DISPID id, LCID lcid,
+        WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei,
+        IServiceProvider *caller)
+{
+    HTMLElement *This = HTMLELEM_THIS(iface);
+
+    if(This->node.vtbl->invoke)
+        return This->node.vtbl->invoke(&This->node, id, lcid, flags,
+                params, res, ei, caller);
+
+    ERR("(%p): element has no invoke method\n", This);
+    return E_NOTIMPL;
+}
+
 #undef HTMLELEM_THIS
 
 static const IHTMLElementVtbl HTMLElementVtbl = {
@@ -1533,8 +1558,14 @@ static const tid_t HTMLElement_iface_tids[] = {
     0
 };
 
-static dispex_static_data_t HTMLElement_dispex = {
+static dispex_static_data_vtbl_t HTMLElement_dispex_vtbl = {
     NULL,
+    HTMLElement_get_dispid,
+    HTMLElement_invoke
+};
+
+static dispex_static_data_t HTMLElement_dispex = {
+    &HTMLElement_dispex_vtbl,
     DispHTMLUnknownElement_tid,
     NULL,
     HTMLElement_iface_tids
@@ -1547,6 +1578,8 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMHTMLElemen
     HTMLElement2_Init(This);
     HTMLElement3_Init(This);
 
+    if(dispex_data && !dispex_data->vtbl)
+        dispex_data->vtbl = &HTMLElement_dispex_vtbl;
     init_dispex(&This->node.dispex, (IUnknown*)HTMLELEM(This), dispex_data ? dispex_data : &HTMLElement_dispex);
 
     if(nselem)
