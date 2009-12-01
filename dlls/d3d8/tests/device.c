@@ -1084,9 +1084,9 @@ static void test_shader(void)
 
         /* Check for double delete. */
         hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader2);
-        ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %#08x\n", hr);
+        ok(hr == D3DERR_INVALIDCALL || broken(hr == D3D_OK), "IDirect3DDevice8_DeletePixelShader returned %#08x\n", hr);
         hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader);
-        ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %#08x\n", hr);
+        ok(hr == D3DERR_INVALIDCALL || broken(hr == D3D_OK), "IDirect3DDevice8_DeletePixelShader returned %#08x\n", hr);
     }
     else
     {
