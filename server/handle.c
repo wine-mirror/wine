@@ -286,17 +286,13 @@ static struct handle_entry *get_handle( struct process *process, obj_handle_t ha
         handle = handle_global_to_local(handle);
         table = global_table;
     }
-    if (!table) goto error;
+    if (!table) return NULL;
     index = handle_to_index( handle );
-    if (index < 0) goto error;
-    if (index > table->last) goto error;
+    if (index < 0) return NULL;
+    if (index > table->last) return NULL;
     entry = table->entries + index;
-    if (!entry->ptr) goto error;
+    if (!entry->ptr) return NULL;
     return entry;
-
- error:
-    set_error( STATUS_INVALID_HANDLE );
-    return NULL;
 }
 
 /* attempt to shrink a table */
@@ -358,7 +354,11 @@ int close_handle( struct process *process, obj_handle_t handle )
     struct handle_entry *entry;
     struct object *obj;
 
-    if (!(entry = get_handle( process, handle ))) return 0;
+    if (!(entry = get_handle( process, handle )))
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return 0;
+    }
     if (entry->access & RESERVED_CLOSE_PROTECT)
     {
         set_error( STATUS_HANDLE_NOT_CLOSABLE );
@@ -402,7 +402,11 @@ struct object *get_handle_obj( struct process *process, obj_handle_t handle,
 
     if (!(obj = get_magic_handle( handle )))
     {
-        if (!(entry = get_handle( process, handle ))) return NULL;
+        if (!(entry = get_handle( process, handle )))
+        {
+            set_error( STATUS_INVALID_HANDLE );
+            return NULL;
+        }
         if ((entry->access & access) != access)
         {
             set_error( STATUS_ACCESS_DENIED );
@@ -481,7 +485,11 @@ static int set_handle_flags( struct process *process, obj_handle_t handle, int m
         if (mask) set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
-    if (!(entry = get_handle( process, handle ))) return -1;
+    if (!(entry = get_handle( process, handle )))
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return -1;
+    }
     old_access = entry->access;
     mask  = (mask << RESERVED_SHIFT) & RESERVED_ALL;
     flags = (flags << RESERVED_SHIFT) & mask;
@@ -502,10 +510,7 @@ obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, str
     if ((entry = get_handle( src, src_handle )))
         src_access = entry->access;
     else  /* pseudo-handle, give it full access */
-    {
         src_access = obj->ops->map_access( obj, GENERIC_ALL );
-        clear_error();
-    }
     src_access &= ~RESERVED_ALL;
 
     if (options & DUP_HANDLE_SAME_ACCESS)
