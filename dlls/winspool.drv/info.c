@@ -3373,12 +3373,10 @@ static BOOL WINSPOOL_GetDevModeFromReg(HKEY hkey, LPCWSTR ValueName,
 /*********************************************************************
  *    WINSPOOL_GetPrinter_1
  *
- * Fills out a PRINTER_INFO_1A|W struct storing the strings in buf.
- * The strings are either stored as unicode or ascii.
+ * Fills out a PRINTER_INFO_1W struct storing the strings in buf.
  */
 static BOOL WINSPOOL_GetPrinter_1(HKEY hkeyPrinter, PRINTER_INFO_1W *pi1,
-				  LPBYTE buf, DWORD cbBuf, LPDWORD pcbNeeded,
-				  BOOL unicode)
+				  LPBYTE buf, DWORD cbBuf, LPDWORD pcbNeeded)
 {
     DWORD size, left = cbBuf;
     BOOL space = (cbBuf > 0);
@@ -3387,7 +3385,7 @@ static BOOL WINSPOOL_GetPrinter_1(HKEY hkeyPrinter, PRINTER_INFO_1W *pi1,
     *pcbNeeded = 0;
 
     if(WINSPOOL_GetStringFromReg(hkeyPrinter, NameW, ptr, left, &size,
-				 unicode)) {
+				 TRUE)) {
         if(space && size <= left) {
 	    pi1->pName = (LPWSTR)ptr;
 	    ptr += size;
@@ -3399,7 +3397,7 @@ static BOOL WINSPOOL_GetPrinter_1(HKEY hkeyPrinter, PRINTER_INFO_1W *pi1,
 
     /* FIXME: pDescription should be something like "Name,Driver_Name,". */
     if(WINSPOOL_GetStringFromReg(hkeyPrinter, NameW, ptr, left, &size,
-				 unicode)) {
+				 TRUE)) {
         if(space && size <= left) {
 	    pi1->pDescription = (LPWSTR)ptr;
 	    ptr += size;
@@ -3410,7 +3408,7 @@ static BOOL WINSPOOL_GetPrinter_1(HKEY hkeyPrinter, PRINTER_INFO_1W *pi1,
     }
 
     if(WINSPOOL_GetStringFromReg(hkeyPrinter, DescriptionW, ptr, left, &size,
-				 unicode)) {
+				 TRUE)) {
         if(space && size <= left) {
 	    pi1->pComment = (LPWSTR)ptr;
 	    ptr += size;
@@ -3430,12 +3428,10 @@ static BOOL WINSPOOL_GetPrinter_1(HKEY hkeyPrinter, PRINTER_INFO_1W *pi1,
 /*********************************************************************
  *    WINSPOOL_GetPrinter_2
  *
- * Fills out a PRINTER_INFO_2A|W struct storing the strings in buf.
- * The strings are either stored as unicode or ascii.
+ * Fills out a PRINTER_INFO_2W struct storing the strings in buf.
  */
 static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
-				  LPBYTE buf, DWORD cbBuf, LPDWORD pcbNeeded,
-				  BOOL unicode)
+				  LPBYTE buf, DWORD cbBuf, LPDWORD pcbNeeded)
 {
     DWORD size, left = cbBuf;
     BOOL space = (cbBuf > 0);
@@ -3444,7 +3440,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
     *pcbNeeded = 0;
 
     if(WINSPOOL_GetStringFromReg(hkeyPrinter, NameW, ptr, left, &size,
-				 unicode)) {
+				 TRUE)) {
         if(space && size <= left) {
 	    pi2->pPrinterName = (LPWSTR)ptr;
 	    ptr += size;
@@ -3454,7 +3450,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	*pcbNeeded += size;
     }
     if(WINSPOOL_GetStringFromReg(hkeyPrinter, Share_NameW, ptr, left, &size,
-				 unicode)) {
+				 TRUE)) {
         if(space && size <= left) {
 	    pi2->pShareName = (LPWSTR)ptr;
 	    ptr += size;
@@ -3464,7 +3460,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	*pcbNeeded += size;
     }
     if(WINSPOOL_GetStringFromReg(hkeyPrinter, PortW, ptr, left, &size,
-				 unicode)) {
+				 TRUE)) {
         if(space && size <= left) {
 	    pi2->pPortName = (LPWSTR)ptr;
 	    ptr += size;
@@ -3474,7 +3470,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	*pcbNeeded += size;
     }
     if(WINSPOOL_GetStringFromReg(hkeyPrinter, Printer_DriverW, ptr, left,
-				 &size, unicode)) {
+				 &size, TRUE)) {
         if(space && size <= left) {
 	    pi2->pDriverName = (LPWSTR)ptr;
 	    ptr += size;
@@ -3484,7 +3480,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	*pcbNeeded += size;
     }
     if(WINSPOOL_GetStringFromReg(hkeyPrinter, DescriptionW, ptr, left, &size,
-				 unicode)) {
+				 TRUE)) {
         if(space && size <= left) {
 	    pi2->pComment = (LPWSTR)ptr;
 	    ptr += size;
@@ -3494,7 +3490,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	*pcbNeeded += size;
     }
     if(WINSPOOL_GetStringFromReg(hkeyPrinter, LocationW, ptr, left, &size,
-				 unicode)) {
+				 TRUE)) {
         if(space && size <= left) {
 	    pi2->pLocation = (LPWSTR)ptr;
 	    ptr += size;
@@ -3504,7 +3500,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	*pcbNeeded += size;
     }
     if(WINSPOOL_GetDevModeFromReg(hkeyPrinter, Default_DevModeW, ptr, left,
-				  &size, unicode)) {
+				  &size, TRUE)) {
         if(space && size <= left) {
 	    pi2->pDevMode = (LPDEVMODEW)ptr;
 	    ptr += size;
@@ -3515,7 +3511,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
     }
     else
     {
-	WINSPOOL_GetDefaultDevMode(ptr, left, &size, unicode);
+	WINSPOOL_GetDefaultDevMode(ptr, left, &size, TRUE);
         if(space && size <= left) {
 	    pi2->pDevMode = (LPDEVMODEW)ptr;
 	    ptr += size;
@@ -3525,7 +3521,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	*pcbNeeded += size;
     }
     if(WINSPOOL_GetStringFromReg(hkeyPrinter, Separator_FileW, ptr, left,
-				 &size, unicode)) {
+				 &size, TRUE)) {
         if(space && size <= left) {
             pi2->pSepFile = (LPWSTR)ptr;
 	    ptr += size;
@@ -3535,7 +3531,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	*pcbNeeded += size;
     }
     if(WINSPOOL_GetStringFromReg(hkeyPrinter, Print_ProcessorW, ptr, left,
-				 &size, unicode)) {
+				 &size, TRUE)) {
         if(space && size <= left) {
 	    pi2->pPrintProcessor = (LPWSTR)ptr;
 	    ptr += size;
@@ -3545,7 +3541,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	*pcbNeeded += size;
     }
     if(WINSPOOL_GetStringFromReg(hkeyPrinter, DatatypeW, ptr, left,
-				 &size, unicode)) {
+				 &size, TRUE)) {
         if(space && size <= left) {
 	    pi2->pDatatype = (LPWSTR)ptr;
 	    ptr += size;
@@ -3555,7 +3551,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	*pcbNeeded += size;
     }
     if(WINSPOOL_GetStringFromReg(hkeyPrinter, ParametersW, ptr, left,
-				 &size, unicode)) {
+				 &size, TRUE)) {
         if(space && size <= left) {
 	    pi2->pParameters = (LPWSTR)ptr;
 	    ptr += size;
@@ -3585,8 +3581,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
  * Fills out a PRINTER_INFO_4 struct storing the strings in buf.
  */
 static BOOL WINSPOOL_GetPrinter_4(HKEY hkeyPrinter, PRINTER_INFO_4W *pi4,
-				  LPBYTE buf, DWORD cbBuf, LPDWORD pcbNeeded,
-				  BOOL unicode)
+				  LPBYTE buf, DWORD cbBuf, LPDWORD pcbNeeded)
 {
     DWORD size, left = cbBuf;
     BOOL space = (cbBuf > 0);
@@ -3595,7 +3590,7 @@ static BOOL WINSPOOL_GetPrinter_4(HKEY hkeyPrinter, PRINTER_INFO_4W *pi4,
     *pcbNeeded = 0;
 
     if(WINSPOOL_GetStringFromReg(hkeyPrinter, NameW, ptr, left, &size,
-				 unicode)) {
+				 TRUE)) {
         if(space && size <= left) {
 	    pi4->pPrinterName = (LPWSTR)ptr;
 	    ptr += size;
@@ -3620,8 +3615,7 @@ static BOOL WINSPOOL_GetPrinter_4(HKEY hkeyPrinter, PRINTER_INFO_4W *pi4,
  * Fills out a PRINTER_INFO_5 struct storing the strings in buf.
  */
 static BOOL WINSPOOL_GetPrinter_5(HKEY hkeyPrinter, PRINTER_INFO_5W *pi5,
-				  LPBYTE buf, DWORD cbBuf, LPDWORD pcbNeeded,
-				  BOOL unicode)
+				  LPBYTE buf, DWORD cbBuf, LPDWORD pcbNeeded)
 {
     DWORD size, left = cbBuf;
     BOOL space = (cbBuf > 0);
@@ -3630,7 +3624,7 @@ static BOOL WINSPOOL_GetPrinter_5(HKEY hkeyPrinter, PRINTER_INFO_5W *pi5,
     *pcbNeeded = 0;
 
     if(WINSPOOL_GetStringFromReg(hkeyPrinter, NameW, ptr, left, &size,
-				 unicode)) {
+				 TRUE)) {
         if(space && size <= left) {
 	    pi5->pPrinterName = (LPWSTR)ptr;
 	    ptr += size;
@@ -3640,7 +3634,7 @@ static BOOL WINSPOOL_GetPrinter_5(HKEY hkeyPrinter, PRINTER_INFO_5W *pi5,
 	*pcbNeeded += size;
     }
     if(WINSPOOL_GetStringFromReg(hkeyPrinter, PortW, ptr, left, &size,
-				 unicode)) {
+				 TRUE)) {
         if(space && size <= left) {
 	    pi5->pPortName = (LPWSTR)ptr;
 	    ptr += size;
@@ -3669,7 +3663,7 @@ static BOOL WINSPOOL_GetPrinter_5(HKEY hkeyPrinter, PRINTER_INFO_5W *pi5,
  * Fills out a PRINTER_INFO_7 struct storing the strings in buf.
  */
 static BOOL WINSPOOL_GetPrinter_7(HKEY hkeyPrinter, PRINTER_INFO_7W *pi7, LPBYTE buf,
-                                  DWORD cbBuf, LPDWORD pcbNeeded, BOOL unicode)
+                                  DWORD cbBuf, LPDWORD pcbNeeded)
 {
     DWORD size, left = cbBuf;
     BOOL space = (cbBuf > 0);
@@ -3677,7 +3671,7 @@ static BOOL WINSPOOL_GetPrinter_7(HKEY hkeyPrinter, PRINTER_INFO_7W *pi7, LPBYTE
 
     *pcbNeeded = 0;
 
-    if (! WINSPOOL_GetStringFromReg(hkeyPrinter, ObjectGUIDW, ptr, left, &size, unicode))
+    if (! WINSPOOL_GetStringFromReg(hkeyPrinter, ObjectGUIDW, ptr, left, &size, TRUE))
     {
         ptr = NULL;
         size = sizeof(pi7->pszObjectGUID);
@@ -3703,18 +3697,17 @@ static BOOL WINSPOOL_GetPrinter_7(HKEY hkeyPrinter, PRINTER_INFO_7W *pi7, LPBYTE
 /*********************************************************************
  *    WINSPOOL_GetPrinter_9
  *
- * Fills out a PRINTER_INFO_9A|W struct storing the strings in buf.
- * The strings are either stored as unicode or ascii.
+ * Fills out a PRINTER_INFO_9AW struct storing the strings in buf.
  */
 static BOOL WINSPOOL_GetPrinter_9(HKEY hkeyPrinter, PRINTER_INFO_9W *pi9, LPBYTE buf,
-                                  DWORD cbBuf, LPDWORD pcbNeeded, BOOL unicode)
+                                  DWORD cbBuf, LPDWORD pcbNeeded)
 {
     DWORD size;
     BOOL space = (cbBuf > 0);
 
     *pcbNeeded = 0;
 
-    if(WINSPOOL_GetDevModeFromReg(hkeyPrinter, Default_DevModeW, buf, cbBuf, &size, unicode)) {
+    if(WINSPOOL_GetDevModeFromReg(hkeyPrinter, Default_DevModeW, buf, cbBuf, &size, TRUE)) {
         if(space && size <= cbBuf) {
             pi9->pDevMode = (LPDEVMODEW)buf;
         } else
@@ -3723,7 +3716,7 @@ static BOOL WINSPOOL_GetPrinter_9(HKEY hkeyPrinter, PRINTER_INFO_9W *pi9, LPBYTE
     }
     else
     {
-        WINSPOOL_GetDefaultDevMode(buf, cbBuf, &size, unicode);
+        WINSPOOL_GetDefaultDevMode(buf, cbBuf, &size, TRUE);
         if(space && size <= cbBuf) {
             pi9->pDevMode = (LPDEVMODEW)buf;
         } else
@@ -3783,8 +3776,7 @@ BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 	    pi2 = NULL;
 	    cbBuf = 0;
 	}
-	ret = WINSPOOL_GetPrinter_2(hkeyPrinter, pi2, ptr, cbBuf, &needed,
-				    TRUE);
+	ret = WINSPOOL_GetPrinter_2(hkeyPrinter, pi2, ptr, cbBuf, &needed);
 	needed += size;
 	break;
       }
@@ -3802,8 +3794,7 @@ BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 	    pi4 = NULL;
 	    cbBuf = 0;
 	}
-	ret = WINSPOOL_GetPrinter_4(hkeyPrinter, pi4, ptr, cbBuf, &needed,
-				    TRUE);
+	ret = WINSPOOL_GetPrinter_4(hkeyPrinter, pi4, ptr, cbBuf, &needed);
 	needed += size;
 	break;
       }
@@ -3823,8 +3814,7 @@ BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 	    cbBuf = 0;
 	}
 
-	ret = WINSPOOL_GetPrinter_5(hkeyPrinter, pi5, ptr, cbBuf, &needed,
-				    TRUE);
+	ret = WINSPOOL_GetPrinter_5(hkeyPrinter, pi5, ptr, cbBuf, &needed);
 	needed += size;
 	break;
       }
@@ -3861,7 +3851,7 @@ BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
             cbBuf = 0;
         }
 
-        ret = WINSPOOL_GetPrinter_7(hkeyPrinter, pi7, ptr, cbBuf, &needed, TRUE);
+        ret = WINSPOOL_GetPrinter_7(hkeyPrinter, pi7, ptr, cbBuf, &needed);
         needed += size;
         break;
       }
@@ -3881,7 +3871,7 @@ BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
             cbBuf = 0;
         }
 
-        ret = WINSPOOL_GetPrinter_9(hkeyPrinter, pi9, ptr, cbBuf, &needed, TRUE);
+        ret = WINSPOOL_GetPrinter_9(hkeyPrinter, pi9, ptr, cbBuf, &needed);
         needed += size;
         break;
       }
@@ -4030,25 +4020,25 @@ static BOOL WINSPOOL_EnumPrintersW(DWORD dwType, LPWSTR lpszName,
 	switch(dwLevel) {
 	case 1:
 	    WINSPOOL_GetPrinter_1(hkeyPrinter, (PRINTER_INFO_1W *)pi, buf,
-				  left, &needed, TRUE);
+				  left, &needed);
 	    used += needed;
 	    if(pi) pi += sizeof(PRINTER_INFO_1W);
 	    break;
 	case 2:
 	    WINSPOOL_GetPrinter_2(hkeyPrinter, (PRINTER_INFO_2W *)pi, buf,
-				  left, &needed, TRUE);
+				  left, &needed);
 	    used += needed;
 	    if(pi) pi += sizeof(PRINTER_INFO_2W);
 	    break;
 	case 4:
 	    WINSPOOL_GetPrinter_4(hkeyPrinter, (PRINTER_INFO_4W *)pi, buf,
-				  left, &needed, TRUE);
+				  left, &needed);
 	    used += needed;
 	    if(pi) pi += sizeof(PRINTER_INFO_4W);
 	    break;
 	case 5:
 	    WINSPOOL_GetPrinter_5(hkeyPrinter, (PRINTER_INFO_5W *)pi, buf,
-				  left, &needed, TRUE);
+				  left, &needed);
 	    used += needed;
 	    if(pi) pi += sizeof(PRINTER_INFO_5W);
 	    break;
