@@ -29,6 +29,7 @@
 #include "ole2.h"
 #include "mshtml.h"
 #include "docobj.h"
+#include "wininet.h"
 #include "mshtmhst.h"
 #include "mshtmdid.h"
 #include "mshtmcid.h"
@@ -179,6 +180,9 @@ static const char html_page[] =
 
 static const char css_data[] = "body {color: red}";
 
+static const WCHAR http_urlW[] =
+    {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g',0};
+
 static const WCHAR doc_url[] = {'w','i','n','e','t','e','s','t',':','d','o','c',0};
 static const WCHAR about_blank_url[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
 
@@ -210,6 +214,18 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     CHAR buf[512];
     WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
     return lstrcmpA(stra, buf);
+}
+
+static const WCHAR *strstrW( const WCHAR *str, const WCHAR *sub )
+{
+    while (*str)
+    {
+        const WCHAR *p1 = str, *p2 = sub;
+        while (*p1 && *p2 && *p1 == *p2) { p1++; p2++; }
+        if (!*p2) return str;
+        str++;
+    }
+    return NULL;
 }
 
 static BSTR a2bstr(const char *str)
@@ -764,6 +780,7 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
     case 1012:
         CHECK_EXPECT(OnChanged_1012);
         return S_OK;
+    case 1030:
     case 3000029:
     case 3000030:
         /* TODO */
@@ -4119,15 +4136,69 @@ static void test_HTMLDocument_hlink(void)
     ok(ref == 0, "ref=%d, expected 0\n", ref);
 }
 
+static void test_cookies(IUnknown *unk)
+{
+    WCHAR buf[1024];
+    IHTMLDocument2 *doc;
+    DWORD size;
+    BSTR str, str2;
+    BOOL b;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDocument2, (void**)&doc);
+    ok(hres == S_OK, "QueryInterface(IID_IHTMLDocument2) failed: %08x\n", hres);
+
+    hres = IHTMLDocument2_get_cookie(doc, &str);
+    ok(hres == S_OK, "get_cookie failed: %08x\n", hres);
+    if(str) {
+        size = sizeof(buf)/sizeof(WCHAR);
+        b = InternetGetCookieExW(http_urlW, NULL, buf, &size, 0, NULL);
+        ok(b, "InternetGetCookieEx failed: %08x\n", GetLastError());
+        ok(!lstrcmpW(buf, str), "cookie = %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(buf));
+        SysFreeString(str);
+    }
+
+    str = a2bstr("test=testval");
+    hres = IHTMLDocument2_put_cookie(doc, str);
+    ok(hres == S_OK, "put_cookie failed: %08x\n", hres);
+
+    str2 = NULL;
+    hres = IHTMLDocument2_get_cookie(doc, &str2);
+    ok(hres == S_OK, "get_cookie failed: %08x\n", hres);
+    ok(str2 != NULL, "cookie = NULL\n");
+    size = sizeof(buf)/sizeof(WCHAR);
+    b = InternetGetCookieExW(http_urlW, NULL, buf, &size, 0, NULL);
+    ok(b, "InternetGetCookieEx failed: %08x\n", GetLastError());
+    ok(!lstrcmpW(buf, str2), "cookie = %s, expected %s\n", wine_dbgstr_w(str2), wine_dbgstr_w(buf));
+    ok(strstrW(str2, str) != NULL, "could not find %s in %s\n", wine_dbgstr_w(str), wine_dbgstr_w(str2));
+    SysFreeString(str);
+    SysFreeString(str2);
+
+    str = a2bstr("test=testval2");
+    hres = IHTMLDocument2_put_cookie(doc, str);
+    ok(hres == S_OK, "put_cookie failed: %08x\n", hres);
+
+    str2 = NULL;
+    hres = IHTMLDocument2_get_cookie(doc, &str2);
+    ok(hres == S_OK, "get_cookie failed: %08x\n", hres);
+    ok(str2 != NULL, "cookie = NULL\n");
+    size = sizeof(buf)/sizeof(WCHAR);
+    b = InternetGetCookieExW(http_urlW, NULL, buf, &size, 0, NULL);
+    ok(b, "InternetGetCookieEx failed: %08x\n", GetLastError());
+    ok(!lstrcmpW(buf, str2), "cookie = %s, expected %s\n", wine_dbgstr_w(str2), wine_dbgstr_w(buf));
+    ok(strstrW(str2, str) != NULL, "could not find %s in %s\n", wine_dbgstr_w(str), wine_dbgstr_w(str2));
+    SysFreeString(str);
+    SysFreeString(str2);
+
+    IHTMLDocument2_Release(doc);
+}
+
 static void test_HTMLDocument_http(void)
 {
     IMoniker *http_mon;
     IUnknown *unk;
     ULONG ref;
     HRESULT hres;
-
-    static const WCHAR http_urlW[] =
-        {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g',0};
 
     trace("Testing HTMLDocument (http)...\n");
 
@@ -4156,6 +4227,7 @@ static void test_HTMLDocument_http(void)
     else
         win_skip("IE running in Enhanced Security Configuration\n");
 
+    test_cookies(unk);
     test_IsDirty(unk, S_FALSE);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
 
