@@ -347,35 +347,22 @@ struct handle_table *copy_handle_table( struct process *process, struct process 
 }
 
 /* close a handle and decrement the refcount of the associated object */
-/* return 1 if OK, 0 on error */
-int close_handle( struct process *process, obj_handle_t handle )
+unsigned int close_handle( struct process *process, obj_handle_t handle )
 {
     struct handle_table *table;
     struct handle_entry *entry;
     struct object *obj;
 
-    if (!(entry = get_handle( process, handle )))
-    {
-        set_error( STATUS_INVALID_HANDLE );
-        return 0;
-    }
-    if (entry->access & RESERVED_CLOSE_PROTECT)
-    {
-        set_error( STATUS_HANDLE_NOT_CLOSABLE );
-        return 0;
-    }
+    if (!(entry = get_handle( process, handle ))) return STATUS_INVALID_HANDLE;
+    if (entry->access & RESERVED_CLOSE_PROTECT) return STATUS_HANDLE_NOT_CLOSABLE;
     obj = entry->ptr;
-    if (!obj->ops->close_handle( obj, process, handle ))
-    {
-        set_error( STATUS_HANDLE_NOT_CLOSABLE );
-        return 0;
-    }
+    if (!obj->ops->close_handle( obj, process, handle )) return STATUS_HANDLE_NOT_CLOSABLE;
     entry->ptr = NULL;
     table = handle_is_global(handle) ? global_table : process->handles;
     if (entry < table->entries + table->free) table->free = entry - table->entries;
     if (entry == table->entries + table->last) shrink_handle_table( table );
     release_object( obj );
-    return 1;
+    return STATUS_SUCCESS;
 }
 
 /* retrieve the object corresponding to one of the magic pseudo-handles */
@@ -567,7 +554,8 @@ unsigned int get_handle_table_count( struct process *process )
 /* close a handle */
 DECL_HANDLER(close_handle)
 {
-    close_handle( current->process, req->handle );
+    unsigned int err = close_handle( current->process, req->handle );
+    set_error( err );
 }
 
 /* set a handle information */
@@ -596,12 +584,7 @@ DECL_HANDLER(dup_handle)
             release_object( dst );
         }
         /* close the handle no matter what happened */
-        if (req->options & DUP_HANDLE_CLOSE_SOURCE)
-        {
-            unsigned int err = get_error();  /* don't overwrite error from the above calls */
-            reply->closed = close_handle( src, req->src_handle );
-            set_error( err );
-        }
+        if (req->options & DUP_HANDLE_CLOSE_SOURCE) reply->closed = !close_handle( src, req->src_handle );
         reply->self = (src == current->process);
         release_object( src );
     }
