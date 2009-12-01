@@ -2293,7 +2293,7 @@ static void reg_unreg_wine_test_class(BOOL Register)
     {
         error = RegCreateKeyEx(HKEY_CLASSES_ROOT, buffer, 0, NULL, 0, KEY_SET_VALUE, NULL, &hkey, &dwDisposition);
         ok(error == ERROR_SUCCESS, "RegCreateKeyEx failed with error %d\n", error);
-        error = RegSetValueEx(hkey, NULL, 0, REG_SZ, (const unsigned char *)"\"ole32.dll\" \"a\"", strlen("\"ole32.dll\" \"a\"") + 1);
+        error = RegSetValueEx(hkey, NULL, 0, REG_SZ, (const unsigned char *)"\"ole32.dll\"", strlen("\"ole32.dll\"") + 1);
         ok(error == ERROR_SUCCESS, "RegSetValueEx failed with error %d\n", error);
         RegCloseKey(hkey);
     }
