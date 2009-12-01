@@ -1133,8 +1133,39 @@ static DWORD FTPFILE_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         *size = sizeof(DWORD);
         *(DWORD*)buffer = INTERNET_HANDLE_TYPE_FTP_FILE;
         return ERROR_SUCCESS;
-    }
+    case INTERNET_OPTION_DATAFILE_NAME:
+    {
+        DWORD required;
+        ftp_file_t *file = (ftp_file_t *)hdr;
 
+        TRACE("INTERNET_OPTION_DATAFILE_NAME\n");
+
+        if (!file->cache_file)
+        {
+            *size = 0;
+            return ERROR_INTERNET_ITEM_NOT_FOUND;
+        }
+        if (unicode)
+        {
+            required = (lstrlenW(file->cache_file) + 1) * sizeof(WCHAR);
+            if (*size < required)
+                return ERROR_INSUFFICIENT_BUFFER;
+
+            *size = required;
+            memcpy(buffer, file->cache_file, *size);
+            return ERROR_SUCCESS;
+        }
+        else
+        {
+            required = WideCharToMultiByte(CP_ACP, 0, file->cache_file, -1, NULL, 0, NULL, NULL);
+            if (required > *size)
+                return ERROR_INSUFFICIENT_BUFFER;
+
+            *size = WideCharToMultiByte(CP_ACP, 0, file->cache_file, -1, buffer, *size, NULL, NULL);
+            return ERROR_SUCCESS;
+        }
+    }
+    }
     return INET_QueryOption(option, buffer, size, unicode);
 }
 
