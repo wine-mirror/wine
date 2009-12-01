@@ -441,6 +441,7 @@ typedef struct {
     char *content_type;
     char *charset;
     PRUint32 response_status;
+    UINT url_scheme;
 } nsChannel;
 
 typedef struct {

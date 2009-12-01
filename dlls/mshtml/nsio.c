@@ -158,6 +158,11 @@ static BOOL before_async_open(nsChannel *channel, NSContainer *container)
     return hres != S_OK;
 }
 
+static inline BOOL is_http_channel(nsChannel *This)
+{
+    return This->url_scheme == URL_SCHEME_HTTP || This->url_scheme == URL_SCHEME_HTTP;
+}
+
 #define NSCHANNEL_THIS(iface) DEFINE_THIS(nsChannel, HttpChannel, iface)
 
 static nsresult NSAPI nsChannel_QueryInterface(nsIHttpChannel *iface, nsIIDRef riid, nsQIResult result)
@@ -175,13 +180,13 @@ static nsresult NSAPI nsChannel_QueryInterface(nsIHttpChannel *iface, nsIIDRef r
         *result = NSCHANNEL(This);
     }else if(IsEqualGUID(&IID_nsIHttpChannel, riid)) {
         TRACE("(%p)->(IID_nsIHttpChannel %p)\n", This, result);
-        *result = This->http_channel ? NSHTTPCHANNEL(This) : NULL;
+        *result = is_http_channel(This) ? NSHTTPCHANNEL(This) : NULL;
     }else if(IsEqualGUID(&IID_nsIUploadChannel, riid)) {
         TRACE("(%p)->(IID_nsIUploadChannel %p)\n", This, result);
         *result = NSUPCHANNEL(This);
     }else if(IsEqualGUID(&IID_nsIHttpChannelInternal, riid)) {
         TRACE("(%p)->(IID_nsIHttpChannelInternal %p)\n", This, result);
-        *result = This->http_channel_internal ? NSHTTPINTERNAL(This) : NULL;
+        *result = is_http_channel(This) ? NSHTTPINTERNAL(This) : NULL;
     }else {
         TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), result);
         *result = NULL;
@@ -2689,9 +2694,11 @@ static nsresult NSAPI nsIOService_NewFileURI(nsIIOService *iface, nsIFile *aFile
 static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI *aURI,
                                                      nsIChannel **_retval)
 {
+    PARSEDURLW parsed_url = {sizeof(PARSEDURLW)};
     nsIChannel *channel = NULL;
     nsChannel *ret;
     nsIWineURI *wine_uri;
+    const WCHAR *url;
     nsresult nsres;
 
     TRACE("(%p %p)\n", aURI, _retval);
@@ -2715,6 +2722,9 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
 
     nsIURI_AddRef(aURI);
     ret->original_uri = aURI;
+
+    nsIWineURI_GetWineURL(wine_uri, &url);
+    ret->url_scheme = url && SUCCEEDED(ParseURLW(url, &parsed_url)) ? parsed_url.nScheme : URL_SCHEME_UNKNOWN;
 
     if(channel) {
         nsIChannel_QueryInterface(channel, &IID_nsIHttpChannel, (void**)&ret->http_channel);
