@@ -76,6 +76,8 @@ typedef struct
     ftp_session_t *lpFtpSession;
     BOOL session_deleted;
     int nDataSocket;
+    WCHAR *cache_file;
+    HANDLE cache_file_handle;
 } ftp_file_t;
 
 struct _ftp_session_t
@@ -88,6 +90,8 @@ struct _ftp_session_t
     ftp_file_t *download_in_progress;
     struct sockaddr_in socketAddress;
     struct sockaddr_in lstnSocketAddress;
+    LPWSTR servername;
+    INTERNET_PORT serverport;
     LPWSTR  lpszPassword;
     LPWSTR  lpszUserName;
 };
@@ -1098,6 +1102,11 @@ static void FTPFILE_Destroy(object_header_t *hdr)
 
     TRACE("\n");
 
+    if (lpwh->cache_file_handle != INVALID_HANDLE_VALUE)
+        CloseHandle(lpwh->cache_file_handle);
+
+    HeapFree(GetProcessHeap(), 0, lpwh->cache_file);
+
     if (!lpwh->session_deleted)
         lpwfs->download_in_progress = NULL;
 
@@ -1133,6 +1142,7 @@ static DWORD FTPFILE_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DW
 {
     ftp_file_t *file = (ftp_file_t*)hdr;
     int res;
+    DWORD error;
 
     if (file->nDataSocket == -1)
         return ERROR_INTERNET_DISCONNECTED;
@@ -1141,7 +1151,15 @@ static DWORD FTPFILE_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DW
     res = recv(file->nDataSocket, buffer, size, MSG_WAITALL);
     *read = res>0 ? res : 0;
 
-    return res>=0 ? ERROR_SUCCESS : INTERNET_ERROR_BASE; /* FIXME*/
+    error = res >= 0 ? ERROR_SUCCESS : INTERNET_ERROR_BASE; /* FIXME */
+    if (error == ERROR_SUCCESS && file->cache_file)
+    {
+        DWORD bytes_written;
+
+        if (!WriteFile(file->cache_file_handle, buffer, *read, &bytes_written, NULL))
+            WARN("WriteFile failed: %u\n", GetLastError());
+    }
+    return error;
 }
 
 static DWORD FTPFILE_ReadFileExA(object_header_t *hdr, INTERNET_BUFFERSA *buffers,
@@ -1297,7 +1315,9 @@ HINTERNET FTP_FtpOpenFileW(ftp_session_t *lpwfs,
         lpwh->hdr.refs = 1;
         lpwh->hdr.lpfnStatusCB = lpwfs->hdr.lpfnStatusCB;
         lpwh->nDataSocket = nDataSocket;
-	lpwh->session_deleted = FALSE;
+        lpwh->cache_file = NULL;
+        lpwh->cache_file_handle = INVALID_HANDLE_VALUE;
+        lpwh->session_deleted = FALSE;
 
         WININET_AddRef( &lpwfs->hdr );
         lpwh->lpFtpSession = lpwfs;
@@ -1315,6 +1335,41 @@ HINTERNET FTP_FtpOpenFileW(ftp_session_t *lpwfs,
     {
         closesocket(lpwfs->lstnSocket);
         lpwfs->lstnSocket = -1;
+    }
+
+    if (bSuccess && fdwAccess == GENERIC_READ)
+    {
+        WCHAR filename[MAX_PATH + 1];
+        URL_COMPONENTSW uc;
+        DWORD len;
+
+        memset(&uc, 0, sizeof(uc));
+        uc.dwStructSize = sizeof(uc);
+        uc.nScheme      = INTERNET_SCHEME_FTP;
+        uc.lpszHostName = lpwfs->servername;
+        uc.nPort        = lpwfs->serverport;
+        uc.lpszUserName = lpwfs->lpszUserName;
+        uc.lpszUrlPath  = heap_strdupW(lpszFileName);
+
+        if (!InternetCreateUrlW(&uc, 0, NULL, &len) && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+        {
+            WCHAR *url = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+            if (url && InternetCreateUrlW(&uc, 0, url, &len) && CreateUrlCacheEntryW(url, 0, NULL, filename, 0))
+            {
+                lpwh->cache_file = heap_strdupW(filename);
+                lpwh->cache_file_handle = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_READ,
+                                                      NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+                if (lpwh->cache_file_handle == INVALID_HANDLE_VALUE)
+                {
+                    WARN("Could not create cache file: %u\n", GetLastError());
+                    HeapFree(GetProcessHeap(), 0, lpwh->cache_file);
+                    lpwh->cache_file = NULL;
+                }
+                HeapFree(GetProcessHeap(), 0, url);
+            }
+        }
+        HeapFree(GetProcessHeap(), 0, uc.lpszUrlPath);
     }
 
     hIC = lpwfs->lpAppInfo;
@@ -2256,6 +2311,7 @@ static void FTPSESSION_Destroy(object_header_t *hdr)
 
     HeapFree(GetProcessHeap(), 0, lpwfs->lpszPassword);
     HeapFree(GetProcessHeap(), 0, lpwfs->lpszUserName);
+    HeapFree(GetProcessHeap(), 0, lpwfs->servername);
     HeapFree(GetProcessHeap(), 0, lpwfs);
 }
 
@@ -2374,7 +2430,9 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     }
 
     if (nServerPort == INTERNET_INVALID_PORT_NUMBER)
-	nServerPort = INTERNET_DEFAULT_FTP_PORT;
+        lpwfs->serverport = INTERNET_DEFAULT_FTP_PORT;
+    else
+        lpwfs->serverport = nServerPort;
 
     lpwfs->hdr.htype = WH_HFTPSESSION;
     lpwfs->hdr.vtbl = &FTPSESSIONVtbl;
@@ -2430,6 +2488,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         lpwfs->lpszUserName = heap_strdupW(lpszUserName);
         lpwfs->lpszPassword = heap_strdupW(lpszPassword ? lpszPassword : szEmpty);
     }
+    lpwfs->servername = heap_strdupW(lpszServerName);
     
     /* Don't send a handle created callback if this handle was created with InternetOpenUrl */
     if (!(lpwfs->hdr.dwInternalFlags & INET_OPENURL))
@@ -2448,8 +2507,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         (LPWSTR) lpszServerName, strlenW(lpszServerName));
 
     sock_namelen = sizeof(socketAddr);
-    if (!GetAddress(lpszServerName, nServerPort,
-        (struct sockaddr *)&socketAddr, &sock_namelen))
+    if (!GetAddress(lpszServerName, lpwfs->serverport, (struct sockaddr *)&socketAddr, &sock_namelen))
     {
 	INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
         goto lerror;
