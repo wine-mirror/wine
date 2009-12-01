@@ -392,12 +392,15 @@ BOOL WINAPI FileMenu_AppendItemAW(
 {
 	BOOL ret;
 
-	if ((SHELL_OsIsUnicode() && (lpText!=FM_SEPARATOR)) || (lpText == NULL))
+        if (!lpText) return FALSE;
+
+	if (SHELL_OsIsUnicode() || lpText == FM_SEPARATOR)
 	  ret = FileMenu_AppendItemW(hMenu, lpText, uID, icon, hMenuPopup, nItemHeight);
         else
 	{
 	  DWORD len = MultiByteToWideChar( CP_ACP, 0, lpText, -1, NULL, 0 );
 	  LPWSTR lpszText = HeapAlloc ( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+	  if (!lpszText) return FALSE;
 	  MultiByteToWideChar( CP_ACP, 0, lpText, -1, lpszText, len );
 	  ret = FileMenu_AppendItemW(hMenu, lpszText, uID, icon, hMenuPopup, nItemHeight);
 	  HeapFree( GetProcessHeap(), 0, lpszText );
