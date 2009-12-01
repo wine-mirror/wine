@@ -1580,7 +1580,9 @@ static DWORD verify_cert_revocation(PCCERT_CONTEXT cert, DWORD index,
             }
             else
                 endTime = timeout = 0;
-            for (j = 0; ret && j < urlArray->cUrl; j++)
+            if (!ret)
+                error = GetLastError();
+            for (j = 0; !error && j < urlArray->cUrl; j++)
             {
                 PCCRL_CONTEXT crl;
 
@@ -1593,7 +1595,6 @@ static DWORD verify_cert_revocation(PCCERT_CONTEXT cert, DWORD index,
                     {
                         /* The CRL isn't time valid */
                         error = CRYPT_E_NO_REVOCATION_CHECK;
-                        ret = FALSE;
                     }
                     else
                     {
@@ -1604,10 +1605,9 @@ static DWORD verify_cert_revocation(PCCERT_CONTEXT cert, DWORD index,
                         {
                             error = CRYPT_E_REVOKED;
                             pRevStatus->dwIndex = index;
-                            ret = FALSE;
                         }
                     }
-                    if (ret && timeout)
+                    if (!error && timeout)
                     {
                         DWORD time = GetTickCount();
 
@@ -1615,7 +1615,6 @@ static DWORD verify_cert_revocation(PCCERT_CONTEXT cert, DWORD index,
                         {
                             error = ERROR_TIMEOUT;
                             pRevStatus->dwIndex = index;
-                            ret = FALSE;
                         }
                         else
                             timeout = endTime - time;
