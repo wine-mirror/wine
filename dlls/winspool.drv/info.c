@@ -3257,18 +3257,17 @@ static BOOL WINSPOOL_GetStringFromReg(HKEY hkey, LPCWSTR ValueName, LPBYTE ptr,
 
 static void WINSPOOL_GetDefaultDevMode(
 	LPBYTE ptr,
-	DWORD buflen, DWORD *needed,
-	BOOL unicode)
+	DWORD buflen, DWORD *needed)
 {
-    DEVMODEA	dm;
-    static const char szwps[] = "wineps.drv";
+    DEVMODEW	dm;
+    static const WCHAR szWwps[] = {'w', 'i', 'n', 'e', 'p', 's', '.', 'd', 'r', 'v', 0 };
 
 	/* fill default DEVMODE - should be read from ppd... */
 	ZeroMemory( &dm, sizeof(dm) );
-	memcpy(dm.dmDeviceName,szwps,sizeof szwps);
+	memcpy(dm.dmDeviceName,szWwps,sizeof szWwps);
 	dm.dmSpecVersion = DM_SPECVERSION;
 	dm.dmDriverVersion = 1;
-	dm.dmSize = sizeof(DEVMODEA);
+	dm.dmSize = sizeof(DEVMODEW);
 	dm.dmDriverExtra = 0;
 	dm.dmFields =
 		DM_ORIENTATION | DM_PAPERSIZE |
@@ -3308,21 +3307,9 @@ static void WINSPOOL_GetDefaultDevMode(
 	/* dm.dmPanningWidth */
 	/* dm.dmPanningHeight */
 
-    if(unicode) {
-	if(buflen >= sizeof(DEVMODEW)) {
-	    DEVMODEW *pdmW = GdiConvertToDevmodeW(&dm);
-	    memcpy(ptr, pdmW, sizeof(DEVMODEW));
-	    HeapFree(GetProcessHeap(),0,pdmW);
-	}
-	*needed = sizeof(DEVMODEW);
-    }
-    else
-    {
-	if(buflen >= sizeof(DEVMODEA)) {
-	    memcpy(ptr, &dm, sizeof(DEVMODEA));
-	}
-	*needed = sizeof(DEVMODEA);
-    }
+    if(buflen >= sizeof(DEVMODEW))
+        memcpy(ptr, &dm, sizeof(DEVMODEW));
+    *needed = sizeof(DEVMODEW);
 }
 
 /*****************************************************************************
@@ -3494,7 +3481,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
     }
     else
     {
-	WINSPOOL_GetDefaultDevMode(ptr, left, &size, TRUE);
+	WINSPOOL_GetDefaultDevMode(ptr, left, &size);
         if(space && size <= left) {
 	    pi2->pDevMode = (LPDEVMODEW)ptr;
 	    ptr += size;
@@ -3692,7 +3679,7 @@ static BOOL WINSPOOL_GetPrinter_9(HKEY hkeyPrinter, PRINTER_INFO_9W *pi9, LPBYTE
     }
     else
     {
-        WINSPOOL_GetDefaultDevMode(buf, cbBuf, &size, TRUE);
+        WINSPOOL_GetDefaultDevMode(buf, cbBuf, &size);
         if(space && size <= cbBuf) {
             pi9->pDevMode = (LPDEVMODEW)buf;
         } else
