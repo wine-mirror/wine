@@ -2212,6 +2212,120 @@ static inline int get_dos_prefix_len( const UNICODE_STRING *name )
 
 
 /******************************************************************************
+ *           lookup_unix_name
+ *
+ * Helper for nt_to_unix_file_name
+ */
+static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer, int unix_len, int pos,
+                                  UINT disposition, BOOLEAN check_case )
+{
+    NTSTATUS status;
+    int ret, used_default, len;
+    struct stat st;
+    char *unix_name = *buffer;
+    const BOOL redirect = nb_redirects && ntdll_get_thread_data()->wow64_redir;
+
+    /* try a shortcut first */
+
+    ret = ntdll_wcstoumbs( 0, name, name_len, unix_name + pos, unix_len - pos - 1,
+                           NULL, &used_default );
+
+    while (name_len && IS_SEPARATOR(*name))
+    {
+        name++;
+        name_len--;
+    }
+
+    if (ret > 0 && !used_default)  /* if we used the default char the name didn't convert properly */
+    {
+        char *p;
+        unix_name[pos + ret] = 0;
+        for (p = unix_name + pos ; *p; p++) if (*p == '\\') *p = '/';
+        if ((!redirect || !strstr( unix_name, "/windows/")) && !stat( unix_name, &st ))
+        {
+            /* creation fails with STATUS_ACCESS_DENIED for the root of the drive */
+            if (disposition == FILE_CREATE)
+                return name_len ? STATUS_OBJECT_NAME_COLLISION : STATUS_ACCESS_DENIED;
+            return STATUS_SUCCESS;
+        }
+    }
+
+    if (!name_len)  /* empty name -> drive root doesn't exist */
+        return STATUS_OBJECT_PATH_NOT_FOUND;
+    if (check_case && !redirect && (disposition == FILE_OPEN || disposition == FILE_OVERWRITE))
+        return STATUS_OBJECT_NAME_NOT_FOUND;
+
+    /* now do it component by component */
+
+    while (name_len)
+    {
+        const WCHAR *end, *next;
+        int is_win_dir = 0;
+
+        end = name;
+        while (end < name + name_len && !IS_SEPARATOR(*end)) end++;
+        next = end;
+        while (next < name + name_len && IS_SEPARATOR(*next)) next++;
+        name_len -= next - name;
+
+        /* grow the buffer if needed */
+
+        if (unix_len - pos < MAX_DIR_ENTRY_LEN + 2)
+        {
+            char *new_name;
+            unix_len += 2 * MAX_DIR_ENTRY_LEN;
+            if (!(new_name = RtlReAllocateHeap( GetProcessHeap(), 0, unix_name, unix_len )))
+                return STATUS_NO_MEMORY;
+            unix_name = *buffer = new_name;
+        }
+
+        status = find_file_in_dir( unix_name, pos, name, end - name,
+                                   check_case, redirect ? &is_win_dir : NULL );
+
+        /* if this is the last element, not finding it is not necessarily fatal */
+        if (!name_len)
+        {
+            if (status == STATUS_OBJECT_PATH_NOT_FOUND)
+            {
+                status = STATUS_OBJECT_NAME_NOT_FOUND;
+                if (disposition != FILE_OPEN && disposition != FILE_OVERWRITE)
+                {
+                    ret = ntdll_wcstoumbs( 0, name, end - name, unix_name + pos + 1,
+                                           MAX_DIR_ENTRY_LEN, NULL, &used_default );
+                    if (ret > 0 && !used_default)
+                    {
+                        unix_name[pos] = '/';
+                        unix_name[pos + 1 + ret] = 0;
+                        status = STATUS_NO_SUCH_FILE;
+                        break;
+                    }
+                }
+            }
+            else if (status == STATUS_SUCCESS && disposition == FILE_CREATE)
+            {
+                status = STATUS_OBJECT_NAME_COLLISION;
+            }
+        }
+
+        if (status != STATUS_SUCCESS) break;
+
+        pos += strlen( unix_name + pos );
+        name = next;
+
+        if (is_win_dir && (len = get_redirect_path( unix_name, pos, name, name_len, check_case )))
+        {
+            name += len;
+            name_len -= len;
+            pos += strlen( unix_name + pos );
+            TRACE( "redirecting -> %s + %s\n", debugstr_a(unix_name), debugstr_w(name) );
+        }
+    }
+
+    return status;
+}
+
+
+/******************************************************************************
  *           wine_nt_to_unix_file_name  (NTDLL.@) Not a Windows API
  *
  * Convert a file name from NT namespace to Unix namespace.
@@ -2234,7 +2348,6 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
     int pos, ret, name_len, unix_len, prefix_len, used_default;
     WCHAR prefix[MAX_DIR_ENTRY_LEN];
     BOOLEAN is_unix = FALSE;
-    const BOOL redirect = nb_redirects && ntdll_get_thread_data()->wow64_redir;
 
     name     = nameW->Buffer;
     name_len = nameW->Length / sizeof(WCHAR);
@@ -2315,126 +2428,19 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
         }
     }
 
-    /* try a shortcut first */
-
-    ret = ntdll_wcstoumbs( 0, name, name_len, unix_name + pos, unix_len - pos - 1,
-                           NULL, &used_default );
-
-    while (name_len && IS_SEPARATOR(*name))
+    status = lookup_unix_name( name, name_len, &unix_name, unix_len, pos, disposition, check_case );
+    if (status == STATUS_SUCCESS || status == STATUS_NO_SUCH_FILE)
     {
-        name++;
-        name_len--;
+        TRACE( "%s -> %s\n", debugstr_us(nameW), debugstr_a(unix_name) );
+        unix_name_ret->Buffer = unix_name;
+        unix_name_ret->Length = strlen(unix_name);
+        unix_name_ret->MaximumLength = unix_len;
     }
-
-    if (ret > 0 && !used_default)  /* if we used the default char the name didn't convert properly */
+    else
     {
-        char *p;
-        unix_name[pos + ret] = 0;
-        for (p = unix_name + pos ; *p; p++) if (*p == '\\') *p = '/';
-        if ((!redirect || !strstr( unix_name, "/windows/")) && !stat( unix_name, &st ))
-        {
-            /* creation fails with STATUS_ACCESS_DENIED for the root of the drive */
-            if (disposition == FILE_CREATE)
-            {
-                RtlFreeHeap( GetProcessHeap(), 0, unix_name );
-                return name_len ? STATUS_OBJECT_NAME_COLLISION : STATUS_ACCESS_DENIED;
-            }
-            goto done;
-        }
-    }
-
-    if (!name_len)  /* empty name -> drive root doesn't exist */
-    {
+        TRACE( "%s not found in %s\n", debugstr_w(name), unix_name );
         RtlFreeHeap( GetProcessHeap(), 0, unix_name );
-        return STATUS_OBJECT_PATH_NOT_FOUND;
     }
-    if (check_case && !redirect && (disposition == FILE_OPEN || disposition == FILE_OVERWRITE))
-    {
-        RtlFreeHeap( GetProcessHeap(), 0, unix_name );
-        return STATUS_OBJECT_NAME_NOT_FOUND;
-    }
-
-    /* now do it component by component */
-
-    while (name_len)
-    {
-        const WCHAR *end, *next;
-        int is_win_dir = 0;
-
-        end = name;
-        while (end < name + name_len && !IS_SEPARATOR(*end)) end++;
-        next = end;
-        while (next < name + name_len && IS_SEPARATOR(*next)) next++;
-        name_len -= next - name;
-
-        /* grow the buffer if needed */
-
-        if (unix_len - pos < MAX_DIR_ENTRY_LEN + 2)
-        {
-            char *new_name;
-            unix_len += 2 * MAX_DIR_ENTRY_LEN;
-            if (!(new_name = RtlReAllocateHeap( GetProcessHeap(), 0, unix_name, unix_len )))
-            {
-                RtlFreeHeap( GetProcessHeap(), 0, unix_name );
-                return STATUS_NO_MEMORY;
-            }
-            unix_name = new_name;
-        }
-
-        status = find_file_in_dir( unix_name, pos, name, end - name,
-                                   check_case, redirect ? &is_win_dir : NULL );
-
-        /* if this is the last element, not finding it is not necessarily fatal */
-        if (!name_len)
-        {
-            if (status == STATUS_OBJECT_PATH_NOT_FOUND)
-            {
-                status = STATUS_OBJECT_NAME_NOT_FOUND;
-                if (disposition != FILE_OPEN && disposition != FILE_OVERWRITE)
-                {
-                    ret = ntdll_wcstoumbs( 0, name, end - name, unix_name + pos + 1,
-                                           MAX_DIR_ENTRY_LEN, NULL, &used_default );
-                    if (ret > 0 && !used_default)
-                    {
-                        unix_name[pos] = '/';
-                        unix_name[pos + 1 + ret] = 0;
-                        status = STATUS_NO_SUCH_FILE;
-                        break;
-                    }
-                }
-            }
-            else if (status == STATUS_SUCCESS && disposition == FILE_CREATE)
-            {
-                status = STATUS_OBJECT_NAME_COLLISION;
-            }
-        }
-
-        if (status != STATUS_SUCCESS)
-        {
-            /* couldn't find it at all, fail */
-            TRACE( "%s not found in %s\n", debugstr_w(name), unix_name );
-            RtlFreeHeap( GetProcessHeap(), 0, unix_name );
-            return status;
-        }
-
-        pos += strlen( unix_name + pos );
-        name = next;
-
-        if (is_win_dir && (prefix_len = get_redirect_path( unix_name, pos, name, name_len, check_case )))
-        {
-            name += prefix_len;
-            name_len -= prefix_len;
-            pos += strlen( unix_name + pos );
-            TRACE( "redirecting %s -> %s + %s\n",
-                   debugstr_us(nameW), debugstr_a(unix_name), debugstr_w(name) );
-        }
-    }
-
-done:
-    TRACE( "%s -> %s\n", debugstr_us(nameW), debugstr_a(unix_name) );
-    unix_name_ret->Buffer = unix_name;
-    unix_name_ret->Length = strlen(unix_name);
-    unix_name_ret->MaximumLength = unix_len;
     return status;
 }
 
