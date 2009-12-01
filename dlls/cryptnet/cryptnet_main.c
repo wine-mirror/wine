@@ -1616,7 +1616,8 @@ BOOL WINAPI CertDllVerifyRevocation(DWORD dwEncodingType, DWORD dwRevType,
                      NULL);
                     if (dwFlags & CERT_VERIFY_CACHE_ONLY_BASED_REVOCATION)
                         retrievalFlags |= CRYPT_CACHE_ONLY_RETRIEVAL;
-                    if (dwFlags & CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG &&
+                    if ((dwFlags & CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG) &&
+                     pRevPara &&
                      pRevPara->cbSize >= offsetof(CERT_REVOCATION_PARA,
                      dwUrlRetrievalTimeout) + sizeof(DWORD))
                     {
