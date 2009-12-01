@@ -30,6 +30,7 @@
 #define WIN32_NO_STATUS
 #include "request.h"
 #include "object.h"
+#include "process.h"
 #include "user.h"
 #include "winuser.h"
 #include "winternl.h"
@@ -112,9 +113,10 @@ static struct clipboard *get_process_clipboard(void)
 void cleanup_clipboard_thread(struct thread *thread)
 {
     struct clipboard *clipboard;
-    struct winstation *winstation = get_process_winstation( thread->process, WINSTA_ACCESSCLIPBOARD );
+    struct winstation *winstation;
 
-    if (!winstation) return;
+    if (!thread->process->winstation) return;
+    if (!(winstation = get_process_winstation( thread->process, WINSTA_ACCESSCLIPBOARD ))) return;
 
     if ((clipboard = winstation->clipboard))
     {

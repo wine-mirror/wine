@@ -632,6 +632,8 @@ static void process_killed( struct process *process )
     handles = process->handles;
     process->handles = NULL;
     if (handles) release_object( handles );
+    process->winstation = 0;
+    process->desktop = 0;
 
     /* close the console attached to this process, if any */
     free_console( process );
