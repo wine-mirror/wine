@@ -2589,7 +2589,7 @@ static void test_write_events(void)
         goto end;
     }
 
-    buffer = HeapAlloc(GetProcessHeap(), 0, bufferSize);
+    buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bufferSize);
     if (buffer == NULL)
     {
         ok(0, "could not allocate memory for test\n");
