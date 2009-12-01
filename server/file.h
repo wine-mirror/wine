@@ -54,8 +54,8 @@ struct fd_ops
 extern struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *user,
                                    unsigned int options );
 extern void set_no_fd_status( struct fd *fd, unsigned int status );
-extern struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned int access,
-                           unsigned int sharing, unsigned int options );
+extern struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode,
+                           unsigned int access, unsigned int sharing, unsigned int options );
 extern struct fd *create_anonymous_fd( const struct fd_ops *fd_user_ops,
                                        int unix_fd, struct object *user, unsigned int options );
 extern struct fd *dup_fd_object( struct fd *orig, unsigned int access, unsigned int sharing,
@@ -125,6 +125,7 @@ extern mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner
 extern void do_change_notify( int unix_fd );
 extern void sigio_callback(void);
 extern struct object *create_dir_obj( struct fd *fd, unsigned int access, mode_t mode );
+extern struct dir *get_dir_obj( struct process *process, obj_handle_t handle, unsigned int access );
 
 /* completion */
 

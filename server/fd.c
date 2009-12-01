@@ -1702,14 +1702,34 @@ void set_fd_user( struct fd *fd, const struct fd_ops *user_ops, struct object *u
     fd->user   = user;
 }
 
+static char *dup_fd_name( struct fd *root, const char *name )
+{
+    char *ret;
+
+    if (!root) return strdup( name );
+    if (!root->unix_name) return NULL;
+
+    /* skip . prefix */
+    if (name[0] == '.' && (!name[1] || name[1] == '/')) name++;
+
+    if ((ret = malloc( strlen(root->unix_name) + strlen(name) + 2 )))
+    {
+        strcpy( ret, root->unix_name );
+        if (name[0] && name[0] != '/') strcat( ret, "/" );
+        strcat( ret, name );
+    }
+    return ret;
+}
+
 /* open() wrapper that returns a struct fd with no fd user set */
-struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned int access,
+struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, unsigned int access,
                     unsigned int sharing, unsigned int options )
 {
     struct stat st;
     struct closed_fd *closed_fd;
     struct fd *fd;
     const char *unlink_name = "";
+    int root_fd = -1;
     int rw_mode;
 
     if ((options & FILE_DELETE_ON_CLOSE) && !(access & DELETE))
@@ -1726,6 +1746,17 @@ struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned int acce
     {
         release_object( fd );
         return NULL;
+    }
+
+    if (root)
+    {
+        if ((root_fd = get_unix_fd( root )) == -1) goto error;
+        if (fchdir( root_fd ) == -1)
+        {
+            file_set_error();
+            root_fd = -1;
+            goto error;
+        }
     }
 
     /* create the directory if needed */
@@ -1749,8 +1780,7 @@ struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned int acce
     }
     else rw_mode = O_RDONLY;
 
-    if (!(fd->unix_name = mem_alloc( strlen(name) + 1 ))) goto error;
-    strcpy( fd->unix_name, name );
+    fd->unix_name = dup_fd_name( root, name );
 
     if ((fd->unix_fd = open( name, rw_mode | (flags & ~O_TRUNC), *mode )) == -1)
     {
@@ -1827,6 +1857,7 @@ struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned int acce
 error:
     release_object( fd );
     free( closed_fd );
+    if (root_fd != -1) fchdir( server_dir_fd ); /* go back to the server dir */
     return NULL;
 }
 

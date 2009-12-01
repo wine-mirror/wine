@@ -419,8 +419,7 @@ static void dir_destroy( struct object *obj )
     }
 }
 
-static struct dir *
-get_dir_obj( struct process *process, obj_handle_t handle, unsigned int access )
+struct dir *get_dir_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
     return (struct dir *)get_handle_obj( process, handle, access, &dir_ops );
 }

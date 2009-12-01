@@ -154,9 +154,10 @@ static struct object *create_file_obj( struct fd *fd, unsigned int access, mode_
     return &file->obj;
 }
 
-static struct object *create_file( const char *nameptr, data_size_t len, unsigned int access,
-                                   unsigned int sharing, int create, unsigned int options,
-                                   unsigned int attrs, const struct security_descriptor *sd )
+static struct object *create_file( struct fd *root, const char *nameptr, data_size_t len,
+                                   unsigned int access, unsigned int sharing, int create,
+                                   unsigned int options, unsigned int attrs,
+                                   const struct security_descriptor *sd )
 {
     struct object *obj = NULL;
     struct fd *fd;
@@ -164,6 +165,11 @@ static struct object *create_file( const char *nameptr, data_size_t len, unsigne
     char *name;
     mode_t mode;
 
+    if (!len || ((nameptr[0] == '/') ^ !root))
+    {
+        set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
+        return NULL;
+    }
     if (!(name = mem_alloc( len + 1 ))) return NULL;
     memcpy( name, nameptr, len );
     name[len] = 0;
@@ -203,7 +209,7 @@ static struct object *create_file( const char *nameptr, data_size_t len, unsigne
     access = generic_file_map_access( access );
 
     /* FIXME: should set error to STATUS_OBJECT_NAME_COLLISION if file existed before */
-    fd = open_fd( name, flags | O_NONBLOCK | O_LARGEFILE, &mode, access, sharing, options );
+    fd = open_fd( root, name, flags | O_NONBLOCK | O_LARGEFILE, &mode, access, sharing, options );
     if (!fd) goto done;
 
     if (S_ISDIR(mode))
@@ -628,6 +634,7 @@ struct file *grab_file_unless_removable( struct file *file )
 DECL_HANDLER(create_file)
 {
     struct object *file;
+    struct fd *root_fd = NULL;
     const struct object_attributes *objattr = get_req_data();
     const struct security_descriptor *sd;
     const char *name;
@@ -644,19 +651,29 @@ DECL_HANDLER(create_file)
         return;
     }
 
+    if (objattr->rootdir)
+    {
+        struct dir *root;
+
+        if (!(root = get_dir_obj( current->process, objattr->rootdir, 0 ))) return;
+        root_fd = get_obj_fd( (struct object *)root );
+        release_object( root );
+        if (!root_fd) return;
+    }
+
     sd = objattr->sd_len ? (const struct security_descriptor *)(objattr + 1) : NULL;
 
     name = (const char *)get_req_data() + sizeof(*objattr) + objattr->sd_len;
     name_len = get_req_data_size() - sizeof(*objattr) - objattr->sd_len;
 
     reply->handle = 0;
-    if ((file = create_file( name, name_len, req->access,
-                             req->sharing, req->create, req->options,
-                             req->attrs, sd )))
+    if ((file = create_file( root_fd, name, name_len, req->access, req->sharing,
+                             req->create, req->options, req->attrs, sd )))
     {
         reply->handle = alloc_handle( current->process, file, req->access, req->attributes );
         release_object( file );
     }
+    if (root_fd) release_object( root_fd );
 }
 
 /* allocate a file handle for a Unix fd */
