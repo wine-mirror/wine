@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "wininet.h"
 #include "ole2.h"
 #include "perhist.h"
 #include "mshtmdid.h"
@@ -617,8 +618,42 @@ static HRESULT WINAPI HTMLDocument_put_cookie(IHTMLDocument2 *iface, BSTR v)
 static HRESULT WINAPI HTMLDocument_get_cookie(IHTMLDocument2 *iface, BSTR *p)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    DWORD size;
+    BOOL bret;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    size = 0;
+    bret = InternetGetCookieExW(This->window->url, NULL, NULL, &size, 0, NULL);
+    if(!bret) {
+        switch(GetLastError()) {
+        case ERROR_INSUFFICIENT_BUFFER:
+            break;
+        case ERROR_NO_MORE_ITEMS:
+            *p = NULL;
+            return S_OK;
+        default:
+            FIXME("InternetGetCookieExW failed: %u\n", GetLastError());
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+    }
+
+    if(!size) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    *p = SysAllocStringLen(NULL, size-1);
+    if(!*p)
+        return E_OUTOFMEMORY;
+
+    bret = InternetGetCookieExW(This->window->url, NULL, *p, &size, 0, NULL);
+    if(!bret) {
+        ERR("InternetGetCookieExW failed: %u\n", GetLastError());
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument_put_expando(IHTMLDocument2 *iface, VARIANT_BOOL v)
