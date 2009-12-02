@@ -1397,8 +1397,8 @@ HINTERNET FTP_FtpOpenFileW(ftp_session_t *lpwfs,
                     HeapFree(GetProcessHeap(), 0, lpwh->cache_file);
                     lpwh->cache_file = NULL;
                 }
-                HeapFree(GetProcessHeap(), 0, url);
             }
+            HeapFree(GetProcessHeap(), 0, url);
         }
         HeapFree(GetProcessHeap(), 0, uc.lpszUrlPath);
     }
