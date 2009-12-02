@@ -4053,7 +4053,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD 
     IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
     TRACE("(%p)->(%d, %d, %p, %p, %08x\n", iface, dstx, dsty, Source, rsrc, trans);
 
-    if ( (This->Flags & SFLAG_LOCKED) || ((srcImpl != NULL) && (srcImpl->Flags & SFLAG_LOCKED)))
+    if ( (This->Flags & SFLAG_LOCKED) || (srcImpl->Flags & SFLAG_LOCKED))
     {
         WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
         return WINEDDERR_SURFACEBUSY;
@@ -4061,14 +4061,14 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD 
 
     if(myDevice->inScene &&
        (iface == myDevice->stencilBufferTarget ||
-       (Source && Source == myDevice->stencilBufferTarget))) {
+       (Source == myDevice->stencilBufferTarget))) {
         TRACE("Attempt to access the depth stencil surface in a BeginScene / EndScene pair, returning WINED3DERR_INVALIDCALL\n");
         return WINED3DERR_INVALIDCALL;
     }
 
     /* Special cases for RenderTargets */
     if( (This->resource.usage & WINED3DUSAGE_RENDERTARGET) ||
-        ( srcImpl && (srcImpl->resource.usage & WINED3DUSAGE_RENDERTARGET) )) {
+        (srcImpl->resource.usage & WINED3DUSAGE_RENDERTARGET) ) {
 
         RECT SrcRect, DstRect;
         DWORD Flags=0;
