@@ -142,20 +142,16 @@ static NTSTATUS FILE_CreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATT
 
     if (io->u.Status == STATUS_SUCCESS)
     {
-        struct security_descriptor *sd = NULL;
+        struct security_descriptor *sd;
         struct object_attributes objattr;
 
         objattr.rootdir = wine_server_obj_handle( attr->RootDirectory );
-        objattr.sd_len = 0;
         objattr.name_len = 0;
-        if (attr)
+        io->u.Status = NTDLL_create_struct_sd( attr->SecurityDescriptor, &sd, &objattr.sd_len );
+        if (io->u.Status != STATUS_SUCCESS)
         {
-            io->u.Status = NTDLL_create_struct_sd( attr->SecurityDescriptor, &sd, &objattr.sd_len );
-            if (io->u.Status != STATUS_SUCCESS)
-            {
-                RtlFreeAnsiString( &unix_name );
-                return io->u.Status;
-            }
+            RtlFreeAnsiString( &unix_name );
+            return io->u.Status;
         }
 
         SERVER_START_REQ( create_file )
