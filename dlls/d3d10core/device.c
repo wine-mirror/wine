@@ -202,7 +202,8 @@ static void STDMETHODCALLTYPE d3d10_device_IASetVertexBuffers(ID3D10Device *ifac
     for (i = 0; i < buffer_count; ++i)
     {
         IWineD3DDevice_SetStreamSource(This->wined3d_device, start_slot,
-                ((struct d3d10_buffer *)buffers[i])->wined3d_buffer, offsets[i], strides[i]);
+                buffers[i] ? ((struct d3d10_buffer *)buffers[i])->wined3d_buffer : NULL,
+                offsets[i], strides[i]);
     }
 }
 
