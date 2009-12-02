@@ -556,6 +556,7 @@ MSVCRT___sighandler_t CDECL MSVCRT_signal(int sig, MSVCRT___sighandler_t func)
     case MSVCRT_SIGSEGV:
     case MSVCRT_SIGINT:
     case MSVCRT_SIGTERM:
+    case MSVCRT_SIGBREAK:
         ret = sighandlers[sig];
         sighandlers[sig] = func;
         break;
@@ -582,6 +583,7 @@ int CDECL MSVCRT_raise(int sig)
     case MSVCRT_SIGSEGV:
     case MSVCRT_SIGINT:
     case MSVCRT_SIGTERM:
+    case MSVCRT_SIGBREAK:
         handler = sighandlers[sig];
         if (handler == MSVCRT_SIG_DFL) MSVCRT__exit(3);
         if (handler != MSVCRT_SIG_IGN)

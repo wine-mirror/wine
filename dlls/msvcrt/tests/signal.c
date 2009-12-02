@@ -37,11 +37,11 @@ static void test_signal(void)
     int res;
 
     old = signal(SIGBREAK, sighandler);
-    todo_wine ok(old != SIG_ERR, "Failed to install signal handler for SIGBREAK\n");
+    ok(old != SIG_ERR, "Failed to install signal handler for SIGBREAK\n");
     test_value = 0;
     res = raise(SIGBREAK);
-    todo_wine ok(res == 0, "Failed to raise SIGBREAK\n");
-    todo_wine ok(test_value == 1, "SIGBREAK handler not invoked\n");
+    ok(res == 0, "Failed to raise SIGBREAK\n");
+    ok(test_value == 1, "SIGBREAK handler not invoked\n");
 }
 
 START_TEST(signal)
