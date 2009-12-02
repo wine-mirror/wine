@@ -147,6 +147,7 @@ extern BOOL DIR_is_hidden_file( const UNICODE_STRING *name );
 extern NTSTATUS DIR_unmount_device( HANDLE handle );
 extern NTSTATUS DIR_get_unix_cwd( char **cwd );
 extern unsigned int DIR_get_drives_info( struct drive_info info[MAX_DOS_DRIVES] );
+extern NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *unix_name_ret );
 extern NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *unix_name_ret,
                                            UINT disposition );
 

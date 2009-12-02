@@ -2218,6 +2218,86 @@ static inline int get_dos_prefix_len( const UNICODE_STRING *name )
 
 
 /******************************************************************************
+ *           file_id_to_unix_file_name
+ *
+ * Lookup a file from its file id instead of its name.
+ */
+NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *unix_name_ret )
+{
+    enum server_fd_type type;
+    int old_cwd, root_fd, needs_close;
+    char *unix_name;
+    int unix_len;
+    NTSTATUS status;
+    ULONGLONG file_id;
+    struct stat st, root_st;
+    DIR *dir;
+    struct dirent *de;
+
+    if (attr->ObjectName->Length != sizeof(ULONGLONG)) return STATUS_OBJECT_PATH_SYNTAX_BAD;
+    if (!attr->RootDirectory) return STATUS_INVALID_PARAMETER;
+    memcpy( &file_id, attr->ObjectName->Buffer, sizeof(file_id) );
+
+    unix_len = MAX_DIR_ENTRY_LEN + 1;
+    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
+        return STATUS_NO_MEMORY;
+    unix_name[0] = 0;
+
+    if (!(status = server_get_unix_fd( attr->RootDirectory, FILE_READ_DATA, &root_fd,
+                                       &needs_close, &type, NULL )))
+    {
+        if (type != FD_TYPE_DIR)
+        {
+            if (needs_close) close( root_fd );
+            status = STATUS_OBJECT_TYPE_MISMATCH;
+        }
+        else
+        {
+            fstat( root_fd, &root_st );
+            RtlEnterCriticalSection( &dir_section );
+            if ((old_cwd = open( ".", O_RDONLY )) != -1 && fchdir( root_fd ) != -1)
+            {
+                if (!(dir = opendir( "." ))) status = FILE_GetNtStatus();
+                else
+                {
+                    while ((de = readdir( dir )))
+                    {
+                        if (stat( de->d_name, &st ) == -1) continue;
+                        if (st.st_dev == root_st.st_dev && st.st_ino == file_id)
+                        {
+                            strcpy( unix_name, de->d_name );
+                            break;
+                        }
+                    }
+                    closedir( dir );
+                    if (!unix_name[0]) status = STATUS_OBJECT_NAME_NOT_FOUND;
+                }
+                if (fchdir( old_cwd ) == -1) chdir( "/" );
+            }
+            else status = FILE_GetNtStatus();
+            RtlLeaveCriticalSection( &dir_section );
+            if (old_cwd != -1) close( old_cwd );
+            if (needs_close) close( root_fd );
+        }
+    }
+
+    if (status == STATUS_SUCCESS)
+    {
+        TRACE( "%s -> %s\n", wine_dbgstr_longlong(file_id), debugstr_a(unix_name) );
+        unix_name_ret->Buffer = unix_name;
+        unix_name_ret->Length = strlen(unix_name);
+        unix_name_ret->MaximumLength = unix_len;
+    }
+    else
+    {
+        TRACE( "%s not found in %s\n", wine_dbgstr_longlong(file_id), unix_name );
+        RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+    }
+    return status;
+}
+
+
+/******************************************************************************
  *           lookup_unix_name
  *
  * Helper for nt_to_unix_file_name

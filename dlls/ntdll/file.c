@@ -115,7 +115,12 @@ static NTSTATUS FILE_CreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATT
 
     if (alloc_size) FIXME( "alloc_size not supported\n" );
 
-    if ((io->u.Status = nt_to_unix_file_name_attr( attr, &unix_name, disposition )) == STATUS_BAD_DEVICE_TYPE)
+    if (options & FILE_OPEN_BY_FILE_ID)
+        io->u.Status = file_id_to_unix_file_name( attr, &unix_name );
+    else
+        io->u.Status = nt_to_unix_file_name_attr( attr, &unix_name, disposition );
+
+    if (io->u.Status == STATUS_BAD_DEVICE_TYPE)
     {
         SERVER_START_REQ( open_file_object )
         {
