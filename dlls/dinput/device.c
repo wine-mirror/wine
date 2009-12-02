@@ -510,7 +510,7 @@ int id_to_object(LPCDIDATAFORMAT df, int id)
     return -1;
 }
 
-int id_to_offset(const DataFormat *df, int id)
+static int id_to_offset(const DataFormat *df, int id)
 {
     int obj = id_to_object(df->wine_df, id);
 
