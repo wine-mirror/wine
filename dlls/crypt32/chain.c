@@ -2638,7 +2638,8 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
         if (!(dwFlags & CERT_CHAIN_RETURN_LOWER_QUALITY_CONTEXTS))
             CRYPT_FreeLowerQualityChains(chain);
         pChain = (PCERT_CHAIN_CONTEXT)chain;
-        CRYPT_VerifyChainRevocation(pChain, pTime, pChainPara, dwFlags);
+        if (!pChain->TrustStatus.dwErrorStatus)
+            CRYPT_VerifyChainRevocation(pChain, pTime, pChainPara, dwFlags);
         CRYPT_CheckUsages(pChain, pChainPara);
         if (ppChainContext)
             *ppChainContext = pChain;
