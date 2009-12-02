@@ -572,6 +572,7 @@ static void test_instances(void)
     SetClassLongPtrA( hwnd, GCLP_HMODULE, 0xdeadbeef );
     check_instance( "EDIT", (HINSTANCE)0x12345678, (HINSTANCE)0x12345678, (HINSTANCE)0xdeadbeef );
     check_thread_instance( "EDIT", (HINSTANCE)0x12345678, (HINSTANCE)0x12345678, (HINSTANCE)0xdeadbeef );
+    DestroyWindow(hwnd);
 }
 
 static void test_builtinproc(void)
