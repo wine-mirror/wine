@@ -72,6 +72,8 @@ static NTSTATUS (WINAPI *pNtRemoveIoCompletion)(HANDLE, PULONG_PTR, PULONG_PTR, 
 static NTSTATUS (WINAPI *pNtSetIoCompletion)(HANDLE, ULONG_PTR, ULONG_PTR, NTSTATUS, ULONG);
 static NTSTATUS (WINAPI *pNtSetInformationFile)(HANDLE, PIO_STATUS_BLOCK, PVOID, ULONG, FILE_INFORMATION_CLASS);
 static NTSTATUS (WINAPI *pNtQueryInformationFile)(HANDLE, PIO_STATUS_BLOCK, PVOID, ULONG, FILE_INFORMATION_CLASS);
+static NTSTATUS (WINAPI *pNtQueryDirectoryFile)(HANDLE,HANDLE,PIO_APC_ROUTINE,PVOID,PIO_STATUS_BLOCK,
+                                                PVOID,ULONG,FILE_INFORMATION_CLASS,BOOLEAN,PUNICODE_STRING,BOOLEAN);
 
 static inline BOOL is_signaled( HANDLE obj )
 {
@@ -155,10 +157,12 @@ static void open_file_test(void)
     NTSTATUS status;
     HANDLE dir, handle;
     WCHAR path[MAX_PATH];
+    BYTE data[8192];
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
     UNICODE_STRING nameW;
     UINT i, len;
+    BOOL restart = TRUE;
 
     len = GetWindowsDirectoryW( path, MAX_PATH );
     pRtlDosPathNameToNtPathName_U( path, &nameW, NULL, NULL );
@@ -205,6 +209,46 @@ static void open_file_test(void)
                           FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE );
     ok( !status, "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
     CloseHandle( handle );
+
+    /* try open by file id */
+
+    while (!pNtQueryDirectoryFile( dir, NULL, NULL, NULL, &io, data, sizeof(data),
+                                   FileIdBothDirectoryInformation, FALSE, NULL, restart ))
+    {
+        FILE_ID_BOTH_DIRECTORY_INFORMATION *info = (FILE_ID_BOTH_DIRECTORY_INFORMATION *)data;
+
+        restart = FALSE;
+        for (;;)
+        {
+            if (!info->FileId.QuadPart) goto next;
+            nameW.Buffer = (WCHAR *)&info->FileId;
+            nameW.Length = sizeof(info->FileId);
+            info->FileName[info->FileNameLength/sizeof(WCHAR)] = 0;
+            status = pNtOpenFile( &handle, GENERIC_READ, &attr, &io,
+                                  FILE_SHARE_READ|FILE_SHARE_WRITE,
+                                  FILE_OPEN_BY_FILE_ID |
+                                  ((info->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? FILE_DIRECTORY_FILE : 0) );
+            ok( status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED,
+                "open %s failed %x\n", wine_dbgstr_w(info->FileName), status );
+            if (!status)
+            {
+                FILE_ALL_INFORMATION all_info;
+
+                if (!pNtQueryInformationFile( handle, &io, &all_info, sizeof(all_info), FileAllInformation ))
+                {
+                    /* check that it's the same file */
+                    ok( info->EndOfFile.QuadPart == all_info.StandardInformation.EndOfFile.QuadPart,
+                        "mismatched file size for %s\n", wine_dbgstr_w(info->FileName));
+                    ok( info->LastWriteTime.QuadPart == all_info.BasicInformation.LastWriteTime.QuadPart,
+                        "mismatched write time for %s\n", wine_dbgstr_w(info->FileName));
+                }
+                CloseHandle( handle );
+            }
+        next:
+            if (!info->NextEntryOffset) break;
+            info = (FILE_ID_BOTH_DIRECTORY_INFORMATION *)((char *)info + info->NextEntryOffset);
+        }
+    }
 
     CloseHandle( dir );
 }
@@ -1307,6 +1351,7 @@ START_TEST(file)
     pNtSetIoCompletion      = (void *)GetProcAddress(hntdll, "NtSetIoCompletion");
     pNtSetInformationFile   = (void *)GetProcAddress(hntdll, "NtSetInformationFile");
     pNtQueryInformationFile = (void *)GetProcAddress(hntdll, "NtQueryInformationFile");
+    pNtQueryDirectoryFile   = (void *)GetProcAddress(hntdll, "NtQueryDirectoryFile");
 
     open_file_test();
     delete_file_test();
