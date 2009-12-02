@@ -2594,84 +2594,84 @@ static void CRYPT_VerifyChainRevocation(PCERT_CHAIN_CONTEXT chain,
         cContext = 0;
     if (cContext)
     {
-        PCCERT_CONTEXT *contexts =
-         CryptMemAlloc(cContext * sizeof(PCCERT_CONTEXT));
+        DWORD i, j, iContext, revocationFlags;
+        CERT_REVOCATION_PARA revocationPara = { sizeof(revocationPara), 0 };
+        CERT_REVOCATION_STATUS revocationStatus =
+         { sizeof(revocationStatus), 0 };
+        BOOL ret;
 
-        if (contexts)
+        revocationFlags = CERT_VERIFY_REV_CHAIN_FLAG;
+        if (chainFlags & CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY)
+            revocationFlags |= CERT_VERIFY_CACHE_ONLY_BASED_REVOCATION;
+        if (chainFlags & CERT_CHAIN_REVOCATION_ACCUMULATIVE_TIMEOUT)
+            revocationFlags |= CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG;
+        revocationPara.pftTimeToUse = pTime;
+        if (hAdditionalStore)
         {
-            DWORD i, j, iContext, revocationFlags;
-            CERT_REVOCATION_PARA revocationPara = { sizeof(revocationPara), 0 };
-            CERT_REVOCATION_STATUS revocationStatus =
-             { sizeof(revocationStatus), 0 };
-            BOOL ret;
+            revocationPara.cCertStore = 1;
+            revocationPara.rgCertStore = &hAdditionalStore;
+            revocationPara.hCrlStore = hAdditionalStore;
+        }
+        if (pChainPara->cbSize == sizeof(CERT_CHAIN_PARA))
+        {
+            revocationPara.dwUrlRetrievalTimeout =
+             pChainPara->dwUrlRetrievalTimeout;
+            revocationPara.fCheckFreshnessTime =
+             pChainPara->fCheckRevocationFreshnessTime;
+            revocationPara.dwFreshnessTime =
+             pChainPara->dwRevocationFreshnessTime;
+        }
+        for (i = 0, iContext = 0; iContext < cContext && i < chain->cChain; i++)
+        {
+            for (j = 0; iContext < cContext &&
+             j < chain->rgpChain[i]->cElement; j++, iContext++)
+            {
+                PCCERT_CONTEXT certToCheck =
+                 chain->rgpChain[i]->rgpElement[j]->pCertContext;
 
-            for (i = 0, iContext = 0; iContext < cContext && i < chain->cChain;
-             i++)
-            {
-                for (j = 0; iContext < cContext &&
-                 j < chain->rgpChain[i]->cElement; j++)
-                    contexts[iContext++] =
-                     chain->rgpChain[i]->rgpElement[j]->pCertContext;
-            }
-            revocationFlags = CERT_VERIFY_REV_CHAIN_FLAG;
-            if (chainFlags & CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY)
-                revocationFlags |= CERT_VERIFY_CACHE_ONLY_BASED_REVOCATION;
-            if (chainFlags & CERT_CHAIN_REVOCATION_ACCUMULATIVE_TIMEOUT)
-                revocationFlags |= CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG;
-            revocationPara.pftTimeToUse = pTime;
-            if (hAdditionalStore)
-            {
-                revocationPara.cCertStore = 1;
-                revocationPara.rgCertStore = &hAdditionalStore;
-                revocationPara.hCrlStore = hAdditionalStore;
-            }
-            if (pChainPara->cbSize == sizeof(CERT_CHAIN_PARA))
-            {
-                revocationPara.dwUrlRetrievalTimeout =
-                 pChainPara->dwUrlRetrievalTimeout;
-                revocationPara.fCheckFreshnessTime =
-                 pChainPara->fCheckRevocationFreshnessTime;
-                revocationPara.dwFreshnessTime =
-                 pChainPara->dwRevocationFreshnessTime;
-            }
-            ret = CertVerifyRevocation(X509_ASN_ENCODING,
-             CERT_CONTEXT_REVOCATION_TYPE, cContext, (void **)contexts,
-             revocationFlags, &revocationPara, &revocationStatus);
-            if (!ret)
-            {
-                PCERT_CHAIN_ELEMENT element =
-                 CRYPT_FindIthElementInChain(chain, revocationStatus.dwIndex);
-                DWORD error;
+                if (j < chain->rgpChain[i]->cElement - 1)
+                    revocationPara.pIssuerCert =
+                     chain->rgpChain[i]->rgpElement[j + 1]->pCertContext;
+                else
+                    revocationPara.pIssuerCert = NULL;
+                ret = CertVerifyRevocation(X509_ASN_ENCODING,
+                 CERT_CONTEXT_REVOCATION_TYPE, 1, (void **)&certToCheck,
+                 revocationFlags, &revocationPara, &revocationStatus);
+                if (!ret)
+                {
+                    PCERT_CHAIN_ELEMENT element = CRYPT_FindIthElementInChain(
+                     chain, iContext);
+                    DWORD error;
 
-                switch (revocationStatus.dwError)
-                {
-                case CRYPT_E_NO_REVOCATION_CHECK:
-                case CRYPT_E_NO_REVOCATION_DLL:
-                case CRYPT_E_NOT_IN_REVOCATION_DATABASE:
-                    /* If the revocation status is unknown, it's assumed to be
-                     * offline too.
-                     */
-                    error = CERT_TRUST_REVOCATION_STATUS_UNKNOWN |
-                     CERT_TRUST_IS_OFFLINE_REVOCATION;
-                    break;
-                case CRYPT_E_REVOCATION_OFFLINE:
-                    error = CERT_TRUST_IS_OFFLINE_REVOCATION;
-                    break;
-                case CRYPT_E_REVOKED:
-                    error = CERT_TRUST_IS_REVOKED;
-                    break;
-                default:
-                    WARN("unmapped error %08x\n", revocationStatus.dwError);
-                    error = 0;
+                    switch (revocationStatus.dwError)
+                    {
+                    case CRYPT_E_NO_REVOCATION_CHECK:
+                    case CRYPT_E_NO_REVOCATION_DLL:
+                    case CRYPT_E_NOT_IN_REVOCATION_DATABASE:
+                        /* If the revocation status is unknown, it's assumed
+                         * to be offline too.
+                         */
+                        error = CERT_TRUST_REVOCATION_STATUS_UNKNOWN |
+                         CERT_TRUST_IS_OFFLINE_REVOCATION;
+                        break;
+                    case CRYPT_E_REVOCATION_OFFLINE:
+                        error = CERT_TRUST_IS_OFFLINE_REVOCATION;
+                        break;
+                    case CRYPT_E_REVOKED:
+                        error = CERT_TRUST_IS_REVOKED;
+                        break;
+                    default:
+                        WARN("unmapped error %08x\n", revocationStatus.dwError);
+                        error = 0;
+                    }
+                    if (element)
+                    {
+                        /* FIXME: set element's pRevocationInfo member */
+                        element->TrustStatus.dwErrorStatus |= error;
+                    }
+                    chain->TrustStatus.dwErrorStatus |= error;
                 }
-                if (element)
-                {
-                    /* FIXME: set element's pRevocationInfo member */
-                    element->TrustStatus.dwErrorStatus |= error;
-                }
-                chain->TrustStatus.dwErrorStatus |= error;
             }
-            CryptMemFree(contexts);
         }
     }
 }
