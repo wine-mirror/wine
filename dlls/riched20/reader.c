@@ -1109,7 +1109,10 @@ static void ReadStyleSheet(RTF_Info *info)
 				}
 				sep = New (RTFStyleElt);
 				if (sep == NULL)
+                                {
 					ERR ( "%s: cannot allocate style element\n", fn);
+					break;
+				}
 				sep->rtfSEClass = info->rtfClass;
 				sep->rtfSEMajor = info->rtfMajor;
 				sep->rtfSEMinor = info->rtfMinor;
