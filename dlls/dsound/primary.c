@@ -465,7 +465,7 @@ LPWAVEFORMATEX DSOUND_CopyFormat(LPCWAVEFORMATEX wfex)
 	return pwfx;
 }
 
-HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex, BOOL forced)
+static HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex, BOOL forced)
 {
 	HRESULT err = DSERR_BUFFERLOST;
 	int i;
