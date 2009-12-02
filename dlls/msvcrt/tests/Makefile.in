@@ -18,6 +18,7 @@ CTESTS = \
 	heap.c \
 	printf.c \
 	scanf.c \
+	signal.c \
 	string.c \
 	time.c
 
