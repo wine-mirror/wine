@@ -3209,7 +3209,7 @@ static void test_GetSidSubAuthority(void)
     ok(*pGetSidSubAuthority(psid,1) == 93476,"GetSidSubAuthority gave %d expected 93476\n",*pGetSidSubAuthority(psid,1));
     ok(GetLastError() == 0,"GetLastError returned %d instead of 0\n",GetLastError());
     SetLastError(0xbebecaca);
-    todo_wine ok(*pGetSidSubAuthority(psid,4) == 0,"GetSidSubAuthority gave %d,expected 0\n",*pGetSidSubAuthority(psid,4));
+    ok(pGetSidSubAuthority(psid,4) != NULL,"Expected out of bounds GetSidSubAuthority to return a non-NULL pointer\n");
     ok(GetLastError() == 0,"GetLastError returned %d instead of 0\n",GetLastError());
     LocalFree(psid);
 }
