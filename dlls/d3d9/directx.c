@@ -481,9 +481,23 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3D9ExImpl_CreateDeviceEx(IDirect3
 
 static HRESULT WINAPI IDirect3D9ExImpl_GetAdapterLUID(IDirect3D9Ex *iface, UINT adapter, LUID *luid)
 {
-    FIXME("iface %p, adapter %u, luid %p stub!\n", iface, adapter, luid);
+    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
+    WINED3DADAPTER_IDENTIFIER adapter_id;
+    HRESULT hr;
 
-    return D3DERR_DRIVERINTERNALERROR;
+    TRACE("iface %p, adapter %u, luid %p.\n", iface, adapter, luid);
+
+    adapter_id.driver_size = 0;
+    adapter_id.description_size = 0;
+    adapter_id.device_name_size = 0;
+
+    wined3d_mutex_lock();
+    hr = IWineD3D_GetAdapterIdentifier(This->WineD3D, adapter, 0, &adapter_id);
+    wined3d_mutex_unlock();
+
+    memcpy(luid, &adapter_id.adapter_luid, sizeof(*luid));
+
+    return hr;
 }
 
 

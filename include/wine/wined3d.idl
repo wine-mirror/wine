@@ -42,6 +42,12 @@ typedef struct _RGNDATA
     RGNDATAHEADER rdh;
     char Buffer[1];
 } RGNDATA;
+
+typedef struct _LUID
+{
+    DWORD LowPart;
+    LONG HighPart;
+} LUID, *PLUID;
 cpp_quote("#endif")
 
 cpp_quote("#define WINED3D_OK                                  S_OK")
@@ -1699,6 +1705,7 @@ typedef struct _WINED3DADAPTER_IDENTIFIER
     DWORD revision;
     GUID device_identifier;
     DWORD whql_level;
+    LUID adapter_luid;
 } WINED3DADAPTER_IDENTIFIER;
 
 typedef struct _WINED3DPRESENT_PARAMETERS

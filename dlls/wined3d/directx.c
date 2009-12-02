@@ -2424,6 +2424,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
     pIdentifier->revision = 0;
     memcpy(&pIdentifier->device_identifier, &IID_D3DDEVICE_D3DUID, sizeof(pIdentifier->device_identifier));
     pIdentifier->whql_level = (Flags & WINED3DENUM_NO_WHQL_LEVEL) ? 0 : 1;
+    memcpy(&pIdentifier->adapter_luid, &adapter->luid, sizeof(pIdentifier->adapter_luid));
 
     return WINED3D_OK;
 }
@@ -4677,6 +4678,15 @@ BOOL InitAdapters(IWineD3DImpl *This)
         adapter->num = 0;
         adapter->monitorPoint.x = -1;
         adapter->monitorPoint.y = -1;
+
+        if (!AllocateLocallyUniqueId(&adapter->luid))
+        {
+            DWORD err = GetLastError();
+            ERR("Failed to set adapter LUID (%#x).\n", err);
+            goto nogl_adapter;
+        }
+        TRACE("Allocated LUID %08x:%08x for adapter.\n",
+                adapter->luid.HighPart, adapter->luid.LowPart);
 
         if (!WineD3D_CreateFakeGLContext(&fake_gl_ctx))
         {
