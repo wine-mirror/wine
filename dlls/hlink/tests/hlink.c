@@ -660,6 +660,7 @@ static void test_HlinkParseDisplayName(void)
     ok(hres == S_OK, "IsSystemMoniker failed: %08x\n", hres);
     ok(issys == MKSYS_FILEMONIKER, "issys=%x\n", issys);
 
+    IMoniker_Release(mon);
     IBindCtx_Release(bctx);
 }
 
@@ -1061,6 +1062,7 @@ static void test_HlinkGetSetMonikerReference(void)
     ok(found_trgt == dummy2, "Found target should've been %p, was: %p\n", dummy2, found_trgt);
     ok(lstrcmpW(found_loc, two) == 0, "Found location should've been %s, was: %s\n", wine_dbgstr_w(two), wine_dbgstr_w(found_loc));
     IMoniker_Release(found_trgt);
+    CoTaskMemFree(found_loc);
 
     /* set target => dummy, location => one */
     hres = IHlink_SetMonikerReference(hlink, HLINKSETF_TARGET | HLINKSETF_LOCATION, dummy, one);
@@ -1070,6 +1072,7 @@ static void test_HlinkGetSetMonikerReference(void)
     ok(found_trgt == dummy, "Found target should've been %p, was: %p\n", dummy, found_trgt);
     ok(lstrcmpW(found_loc, one) == 0, "Found location should've been %s, was: %s\n", wine_dbgstr_w(one), wine_dbgstr_w(found_loc));
     IMoniker_Release(found_trgt);
+    CoTaskMemFree(found_loc);
 
     /* no HLINKSETF flags */
     hres = IHlink_SetMonikerReference(hlink, 0, dummy2, two);
@@ -1079,6 +1082,7 @@ static void test_HlinkGetSetMonikerReference(void)
     ok(found_trgt == dummy, "Found target should've been %p, was: %p\n", dummy, found_trgt);
     ok(lstrcmpW(found_loc, one) == 0, "Found location should've been %s, was: %s\n", wine_dbgstr_w(one), wine_dbgstr_w(found_loc));
     IMoniker_Release(found_trgt);
+    CoTaskMemFree(found_loc);
 
     /* invalid HLINKSETF flags */
     hres = IHlink_SetMonikerReference(hlink, 12, dummy2, two);
@@ -1088,6 +1092,7 @@ static void test_HlinkGetSetMonikerReference(void)
     ok(found_trgt == dummy, "Found target should've been %p, was: %p\n", dummy, found_trgt);
     ok(lstrcmpW(found_loc, one) == 0, "Found location should've been %s, was: %s\n", wine_dbgstr_w(one), wine_dbgstr_w(found_loc));
     IMoniker_Release(found_trgt);
+    CoTaskMemFree(found_loc);
 
     /* valid & invalid HLINKSETF flags */
     hres = IHlink_SetMonikerReference(hlink, 12 | HLINKSETF_TARGET, dummy2, two);
@@ -1097,6 +1102,7 @@ static void test_HlinkGetSetMonikerReference(void)
     ok(found_trgt == dummy2, "Found target should've been %p, was: %p\n", dummy2, found_trgt);
     ok(lstrcmpW(found_loc, one) == 0, "Found location should've been %s, was: %s\n", wine_dbgstr_w(one), wine_dbgstr_w(found_loc));
     IMoniker_Release(found_trgt);
+    CoTaskMemFree(found_loc);
 
     /* NULL args */
     hres = IHlink_SetMonikerReference(hlink, HLINKSETF_TARGET | HLINKSETF_LOCATION, NULL, NULL);
