@@ -166,6 +166,7 @@ static const int is_case_sensitive = FALSE;
 UNICODE_STRING windows_dir = { 0, 0, NULL };  /* windows directory */
 UNICODE_STRING system_dir = { 0, 0, NULL };  /* system directory */
 
+static struct file_identity curdir;
 static struct file_identity windir;
 
 static RTL_CRITICAL_SECTION dir_section;
@@ -1025,6 +1026,7 @@ static union file_directory_info *append_entry( void *info_ptr, IO_STATUS_BLOCK 
         io->u.Status = STATUS_BUFFER_OVERFLOW;
     }
     info = (union file_directory_info *)((char *)info_ptr + io->Information);
+    if (st.st_dev != curdir.dev) st.st_ino = 0;  /* ignore inode if on a different device */
     /* all the structures start with a FileDirectoryInformation layout */
     fill_stat_info( &st, info, class );
     info->dir.NextEntryOffset = total_len;
@@ -1713,6 +1715,10 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
     cwd = open( ".", O_RDONLY );
     if (fchdir( fd ) != -1)
     {
+        struct stat st;
+        fstat( fd, &st );
+        curdir.dev = st.st_dev;
+        curdir.ino = st.st_ino;
 #ifdef VFAT_IOCTL_READDIR_BOTH
         if ((read_directory_vfat( fd, io, buffer, length, single_entry,
                                   mask, restart_scan, info_class )) != -1) goto done;
