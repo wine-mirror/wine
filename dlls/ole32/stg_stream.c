@@ -575,7 +575,7 @@ static HRESULT WINAPI StgStreamImpl_SetSize(
   }
 
   /* In simple mode keep the stream size above the small block limit */
-  if (This->parentStorage->ancestorStorage->base.openFlags & STGM_SIMPLE)
+  if (This->parentStorage->openFlags & STGM_SIMPLE)
     libNewSize.u.LowPart = max(libNewSize.u.LowPart, LIMIT_TO_USE_SMALL_BLOCK);
 
   if (This->streamSize.u.LowPart == libNewSize.u.LowPart)
@@ -868,7 +868,7 @@ static HRESULT WINAPI StgStreamImpl_Stat(
     pstatstg->grfMode = This->grfMode;
 
     /* In simple create mode cbSize is the current pos */
-    if((root->base.openFlags & STGM_SIMPLE) && root->create)
+    if((This->parentStorage->openFlags & STGM_SIMPLE) && root->create)
       pstatstg->cbSize = This->currentPosition;
 
     return S_OK;

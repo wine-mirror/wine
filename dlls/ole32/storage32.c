@@ -866,7 +866,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
       return STG_E_ACCESSDENIED;
   }
 
-  if(This->ancestorStorage->base.openFlags & STGM_SIMPLE)
+  if(This->openFlags & STGM_SIMPLE)
     if(grfMode & STGM_CREATE) return STG_E_INVALIDFLAG;
 
   *ppstm = 0;
