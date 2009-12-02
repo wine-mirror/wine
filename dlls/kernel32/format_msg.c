@@ -356,7 +356,7 @@ static LPCWSTR format_insertW( int insert, LPCWSTR format, DWORD flags,
              (format[0] == 'C'))
     {
         char ch = arg;
-        wstring = HeapAlloc( GetProcessHeap(), 0, 2 );
+        wstring = HeapAlloc( GetProcessHeap(), 0, 2 * sizeof(WCHAR) );
         MultiByteToWideChar( CP_ACP, 0, &ch, 1, wstring, 1 );
         wstring[1] = 0;
         arg = (ULONG_PTR)wstring;
