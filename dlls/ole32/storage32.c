@@ -118,6 +118,22 @@ static BOOL StorageImpl_ReadDWordFromBigBlock( StorageImpl*  This,
 static BOOL StorageBaseImpl_IsStreamOpen(StorageBaseImpl * stg, DirRef streamEntry);
 static BOOL StorageBaseImpl_IsStorageOpen(StorageBaseImpl * stg, DirRef storageEntry);
 
+/****************************************************************************
+ * Transacted storage object that reads/writes a snapshot file.
+ */
+typedef struct TransactedSnapshotImpl
+{
+  struct StorageBaseImpl base;
+
+  /*
+   * Changes are committed to the transacted parent.
+   */
+  StorageBaseImpl *transactedParent;
+} TransactedSnapshotImpl;
+
+/* Generic function to create a transacted wrapper for a direct storage object. */
+static HRESULT Storage_ConstructTransacted(StorageBaseImpl* parent, StorageBaseImpl** result);
+
 /* OLESTREAM memory structure to use for Get and Put Routines */
 /* Used for OleConvertIStorageToOLESTREAM and OleConvertOLESTREAMToIStorage */
 typedef struct
@@ -508,7 +524,8 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
   IStorage**       ppstg)         /* [out] */
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
-  StorageInternalImpl* newStorage;
+  StorageInternalImpl*   newStorage;
+  StorageBaseImpl*       newTransactedStorage;
   DirEntry               currentEntry;
   DirRef                 storageEntryRef;
   HRESULT                res = STG_E_UNKNOWN;
@@ -593,7 +610,22 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
 
     if (newStorage != 0)
     {
-      *ppstg = (IStorage*)newStorage;
+      if (grfMode & STGM_TRANSACTED)
+      {
+        res = Storage_ConstructTransacted(&newStorage->base, &newTransactedStorage);
+
+        if (FAILED(res))
+        {
+          HeapFree(GetProcessHeap(), 0, newStorage);
+          goto end;
+        }
+
+        *ppstg = (IStorage*)newTransactedStorage;
+      }
+      else
+      {
+        *ppstg = (IStorage*)newStorage;
+      }
 
       list_add_tail(&This->storageHead, &newStorage->ParentListEntry);
 
@@ -1885,6 +1917,13 @@ static void StorageBaseImpl_DeleteAll(StorageBaseImpl * stg)
   LIST_FOR_EACH_SAFE(cur, cur2, &stg->storageHead) {
     childstg = LIST_ENTRY(cur,StorageInternalImpl,ParentListEntry);
     StorageBaseImpl_Invalidate( &childstg->base );
+  }
+
+  if (stg->transactedChild)
+  {
+    StorageBaseImpl_Invalidate(stg->transactedChild);
+
+    stg->transactedChild = NULL;
   }
 }
 
@@ -3820,6 +3859,223 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
 
     SmallBlockChainStream_Destroy(sbTempChain);
     return SmallBlockChainStream_Construct(This, NULL, streamEntryRef);
+}
+
+static HRESULT WINAPI TransactedSnapshotImpl_Commit(
+  IStorage*            iface,
+  DWORD                  grfCommitFlags)  /* [in] */
+{
+  FIXME("(%p,%x): stub\n", iface, grfCommitFlags);
+  return S_OK;
+}
+
+static HRESULT WINAPI TransactedSnapshotImpl_Revert(
+  IStorage*            iface)
+{
+  FIXME("(%p): stub\n", iface);
+  return S_OK;
+}
+
+static void TransactedSnapshotImpl_Invalidate(StorageBaseImpl* This)
+{
+  if (!This->reverted)
+  {
+    TRACE("Storage invalidated (stg=%p)\n", This);
+
+    This->reverted = 1;
+
+    StorageBaseImpl_DeleteAll(This);
+  }
+}
+
+static void TransactedSnapshotImpl_Destroy( StorageBaseImpl *iface)
+{
+  TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) iface;
+
+  TransactedSnapshotImpl_Invalidate(iface);
+
+  IStorage_Release((IStorage*)This->transactedParent);
+
+  HeapFree(GetProcessHeap(), 0, This);
+}
+
+static HRESULT TransactedSnapshotImpl_CreateDirEntry(StorageBaseImpl *base,
+  const DirEntry *newData, DirRef *index)
+{
+  TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) base;
+
+  return StorageBaseImpl_CreateDirEntry(This->transactedParent,
+    newData, index);
+}
+
+static HRESULT TransactedSnapshotImpl_WriteDirEntry(StorageBaseImpl *base,
+  DirRef index, const DirEntry *data)
+{
+  TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) base;
+
+  return StorageBaseImpl_WriteDirEntry(This->transactedParent,
+    index, data);
+}
+
+static HRESULT TransactedSnapshotImpl_ReadDirEntry(StorageBaseImpl *base,
+  DirRef index, DirEntry *data)
+{
+  TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) base;
+
+  return StorageBaseImpl_ReadDirEntry(This->transactedParent,
+    index, data);
+}
+
+static HRESULT TransactedSnapshotImpl_DestroyDirEntry(StorageBaseImpl *base,
+  DirRef index)
+{
+  TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) base;
+
+  return StorageBaseImpl_DestroyDirEntry(This->transactedParent,
+    index);
+}
+
+static HRESULT TransactedSnapshotImpl_StreamReadAt(StorageBaseImpl *base,
+  DirRef index, ULARGE_INTEGER offset, ULONG size, void *buffer, ULONG *bytesRead)
+{
+  TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) base;
+
+  return StorageBaseImpl_StreamReadAt(This->transactedParent,
+    index, offset, size, buffer, bytesRead);
+}
+
+static HRESULT TransactedSnapshotImpl_StreamWriteAt(StorageBaseImpl *base,
+  DirRef index, ULARGE_INTEGER offset, ULONG size, const void *buffer, ULONG *bytesWritten)
+{
+  TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) base;
+
+  return StorageBaseImpl_StreamWriteAt(This->transactedParent,
+    index, offset, size, buffer, bytesWritten);
+}
+
+static HRESULT TransactedSnapshotImpl_StreamSetSize(StorageBaseImpl *base,
+  DirRef index, ULARGE_INTEGER newsize)
+{
+  TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) base;
+
+  return StorageBaseImpl_StreamSetSize(This->transactedParent,
+    index, newsize);
+}
+
+static const IStorageVtbl TransactedSnapshotImpl_Vtbl =
+{
+    StorageBaseImpl_QueryInterface,
+    StorageBaseImpl_AddRef,
+    StorageBaseImpl_Release,
+    StorageBaseImpl_CreateStream,
+    StorageBaseImpl_OpenStream,
+    StorageBaseImpl_CreateStorage,
+    StorageBaseImpl_OpenStorage,
+    StorageBaseImpl_CopyTo,
+    StorageBaseImpl_MoveElementTo,
+    TransactedSnapshotImpl_Commit,
+    TransactedSnapshotImpl_Revert,
+    StorageBaseImpl_EnumElements,
+    StorageBaseImpl_DestroyElement,
+    StorageBaseImpl_RenameElement,
+    StorageBaseImpl_SetElementTimes,
+    StorageBaseImpl_SetClass,
+    StorageBaseImpl_SetStateBits,
+    StorageBaseImpl_Stat
+};
+
+static const StorageBaseImplVtbl TransactedSnapshotImpl_BaseVtbl =
+{
+  TransactedSnapshotImpl_Destroy,
+  TransactedSnapshotImpl_Invalidate,
+  TransactedSnapshotImpl_CreateDirEntry,
+  TransactedSnapshotImpl_WriteDirEntry,
+  TransactedSnapshotImpl_ReadDirEntry,
+  TransactedSnapshotImpl_DestroyDirEntry,
+  TransactedSnapshotImpl_StreamReadAt,
+  TransactedSnapshotImpl_StreamWriteAt,
+  TransactedSnapshotImpl_StreamSetSize
+};
+
+static HRESULT TransactedSnapshotImpl_Construct(StorageBaseImpl *parentStorage,
+  TransactedSnapshotImpl** result)
+{
+  *result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(TransactedSnapshotImpl));
+  if (*result)
+  {
+    (*result)->base.lpVtbl = &TransactedSnapshotImpl_Vtbl;
+
+    /* This is OK because the property set storage functions use the IStorage functions. */
+    (*result)->base.pssVtbl = parentStorage->pssVtbl;
+
+    (*result)->base.baseVtbl = &TransactedSnapshotImpl_BaseVtbl;
+
+    list_init(&(*result)->base.strmHead);
+
+    list_init(&(*result)->base.storageHead);
+
+    (*result)->base.ref = 1;
+
+    (*result)->base.storageDirEntry = parentStorage->storageDirEntry;
+
+    (*result)->base.openFlags = parentStorage->openFlags;
+
+    (*result)->base.filename = parentStorage->filename;
+
+    /* parentStorage already has 1 reference, which we take over here. */
+    (*result)->transactedParent = parentStorage;
+
+    parentStorage->transactedChild = (StorageBaseImpl*)*result;
+
+    return S_OK;
+  }
+  else
+    return E_OUTOFMEMORY;
+}
+
+static HRESULT Storage_ConstructTransacted(StorageBaseImpl *parentStorage,
+  StorageBaseImpl** result)
+{
+  static int fixme=0;
+
+  if (parentStorage->openFlags & (STGM_NOSCRATCH|STGM_NOSNAPSHOT) && !fixme++)
+  {
+    FIXME("Unimplemented flags %x\n", parentStorage->openFlags);
+  }
+
+  return TransactedSnapshotImpl_Construct(parentStorage,
+    (TransactedSnapshotImpl**)result);
+}
+
+static HRESULT Storage_Construct(
+  HANDLE       hFile,
+  LPCOLESTR    pwcsName,
+  ILockBytes*  pLkbyt,
+  DWORD        openFlags,
+  BOOL         fileBased,
+  BOOL         create,
+  StorageBaseImpl** result)
+{
+  StorageImpl *newStorage;
+  StorageBaseImpl *newTransactedStorage;
+  HRESULT hr;
+
+  hr = StorageImpl_Construct(hFile, pwcsName, pLkbyt, openFlags, fileBased, create, &newStorage);
+  if (FAILED(hr)) goto end;
+
+  if (openFlags & STGM_TRANSACTED)
+  {
+    hr = Storage_ConstructTransacted(&newStorage->base, &newTransactedStorage);
+    if (FAILED(hr))
+      IStorage_Release((IStorage*)newStorage);
+    else
+      *result = newTransactedStorage;
+  }
+  else
+    *result = &newStorage->base;
+
+end:
+  return hr;
 }
 
 static void StorageInternalImpl_Invalidate( StorageBaseImpl *base )
@@ -5866,7 +6122,7 @@ HRESULT WINAPI StgCreateDocfile(
   DWORD       reserved,
   IStorage  **ppstgOpen)
 {
-  StorageImpl* newStorage = 0;
+  StorageBaseImpl* newStorage = 0;
   HANDLE       hFile      = INVALID_HANDLE_VALUE;
   HRESULT        hr         = STG_E_INVALIDFLAG;
   DWORD          shareMode;
@@ -5975,7 +6231,7 @@ HRESULT WINAPI StgCreateDocfile(
   /*
    * Allocate and initialize the new IStorage32object.
    */
-  hr = StorageImpl_Construct(
+  hr = Storage_Construct(
          hFile,
         pwcsName,
          NULL,
@@ -6108,7 +6364,7 @@ HRESULT WINAPI StgOpenStorage(
   DWORD          reserved,
   IStorage     **ppstgOpen)
 {
-  StorageImpl*   newStorage = 0;
+  StorageBaseImpl* newStorage = 0;
   HRESULT        hr = S_OK;
   HANDLE         hFile = 0;
   DWORD          shareMode;
@@ -6247,7 +6503,7 @@ HRESULT WINAPI StgOpenStorage(
   /*
    * Allocate and initialize the new IStorage32object.
    */
-  hr = StorageImpl_Construct(
+  hr = Storage_Construct(
          hFile,
          pwcsName,
          NULL,
@@ -6285,7 +6541,7 @@ HRESULT WINAPI StgCreateDocfileOnILockBytes(
       DWORD reserved,
       IStorage** ppstgOpen)
 {
-  StorageImpl*   newStorage = 0;
+  StorageBaseImpl* newStorage = 0;
   HRESULT        hr         = S_OK;
 
   if ((ppstgOpen == 0) || (plkbyt == 0))
@@ -6294,7 +6550,7 @@ HRESULT WINAPI StgCreateDocfileOnILockBytes(
   /*
    * Allocate and initialize the new IStorage object.
    */
-  hr = StorageImpl_Construct(
+  hr = Storage_Construct(
          0,
         0,
          plkbyt,
@@ -6327,7 +6583,7 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(
       DWORD reserved,
       IStorage **ppstgOpen)
 {
-  StorageImpl* newStorage = 0;
+  StorageBaseImpl* newStorage = 0;
   HRESULT        hr = S_OK;
 
   if ((plkbyt == 0) || (ppstgOpen == 0))
@@ -6341,7 +6597,7 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(
   /*
    * Allocate and initialize the new IStorage object.
    */
-  hr = StorageImpl_Construct(
+  hr = Storage_Construct(
          0,
          0,
          plkbyt,

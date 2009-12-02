@@ -243,6 +243,11 @@ struct StorageBaseImpl
 
   BOOL             create;     /* Was the storage created or opened.
                                   The behaviour of STGM_SIMPLE depends on this */
+  /*
+   * If this storage was opened in transacted mode, the object that implements
+   * the transacted snapshot or cache.
+   */
+  StorageBaseImpl *transactedChild;
 };
 
 /* virtual methods for StorageBaseImpl objects */
