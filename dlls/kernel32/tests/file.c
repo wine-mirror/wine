@@ -702,33 +702,22 @@ static void test_CopyFileW(void)
 /*
  *   Debugging routine to dump a buffer in a hexdump-like fashion.
  */
-static void dumpmem(unsigned char* mem, int len) {
-    int x,y;
-    char buf[200];
-    int ln=0;
+static void dumpmem(unsigned char *mem, int len)
+{
+    int x = 0;
+    char hex[49], *p;
+    char txt[17], *c;
 
-    for (x=0; x<len; x+=16) {
-        ln += sprintf(buf+ln, "%04x: ",x);
-        for (y=0; y<16; y++) {
-            if ((x+y)>len) {
-                ln += sprintf(buf+ln, "   ");
-            } else {
-                ln += sprintf(buf+ln, "%02hhx ",mem[x+y]);
-            }
-        }
-        ln += sprintf(buf+ln, "- ");
-        for (y=0; y<16; y++) {
-            if ((x+y)<=len) {
-                if (mem[x+y]<32 || mem[x+y]>127) {
-                    ln += sprintf(buf+ln, ".");
-                } else {
-                    ln += sprintf(buf+ln, "%c",mem[x+y]);
-                }
-            }
-        }
-        sprintf(buf+ln, "\n");
-        trace(buf);
-        ln = 0;
+    while (x < len)
+    {
+        p = hex;
+        c = txt;
+        do {
+            p += sprintf(p, "%02hhx ", mem[x]);
+            *c++ = (mem[x] >= 32 && mem[x] <= 127) ? mem[x] : '.';
+        } while (++x % 16 && x < len);
+        *c = '\0';
+        trace("%04x: %-48s- %s\n", x, hex, txt);
     }
 }
 
