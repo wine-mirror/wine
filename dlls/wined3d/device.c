@@ -1783,11 +1783,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     This->palettes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PALETTEENTRY*));
     if(!This->palettes || !This->render_targets || !This->draw_buffers) {
         ERR("Out of memory!\n");
+        hr = E_OUTOFMEMORY;
         goto err_out;
     }
     This->palettes[0] = HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY) * 256);
     if(!This->palettes[0]) {
         ERR("Out of memory!\n");
+        hr = E_OUTOFMEMORY;
         goto err_out;
     }
     for (i = 0; i < 256; ++i) {
