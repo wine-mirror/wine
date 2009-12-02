@@ -631,7 +631,8 @@ MMRESULT16 WINAPI mmioRename16(LPCSTR szFileName, LPCSTR szNewFileName,
         inst = TRUE;
     }
     memset(&mmioinfo, 0, sizeof(mmioinfo));
-    mmioinfo.fccIOProc = lpmmioinfo->fccIOProc;
+    if (lpmmioinfo)
+        mmioinfo.fccIOProc = lpmmioinfo->fccIOProc;
     ret = mmioRenameA(szFileName, szNewFileName, &mmioinfo, dwRenameFlags);
     if (inst) {
         mmioInstallIOProc16(lpmmioinfo->fccIOProc, NULL, MMIO_REMOVEPROC);
