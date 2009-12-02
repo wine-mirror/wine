@@ -589,9 +589,14 @@ static void test_verifyRevocation(void)
     SetLastError(0xdeadbeef);
     ret = CertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
      1, (void **)&certs[1], 0, &revPara, &status);
-    ok(!ret && GetLastError() == CRYPT_E_NO_REVOCATION_CHECK,
+    /* Win2k thinks the cert is revoked, and it is, except the CRL is out of
+     * date, hence the revocation status should be unknown.
+     */
+    ok(!ret && (GetLastError() == CRYPT_E_NO_REVOCATION_CHECK ||
+     broken(GetLastError() == CRYPT_E_REVOKED /* Win2k */)),
      "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", GetLastError());
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK,
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK ||
+     broken(status.dwError == CRYPT_E_REVOKED /* Win2k */),
      "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", status.dwError);
     ok(status.dwIndex == 0, "expected index 0, got %d\n", status.dwIndex);
     CertCloseStore(revPara.hCrlStore, 0);
