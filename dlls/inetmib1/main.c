@@ -393,7 +393,7 @@ static UINT findNextOidInTable(AsnObjectIdentifier *oid,
              * an infinite loop.
              */
             for (++index; index <= table->numEntries && compare(key,
-                &table->entries[tableEntrySize * index]) == 0; ++index)
+                &table->entries[tableEntrySize * (index - 1)]) == 0; ++index)
                 ;
         }
         HeapFree(GetProcessHeap(), 0, key);
