@@ -2013,7 +2013,7 @@ static void test_UnpackDDElParam(void)
        broken(hi == 0xbeef), /* win2k */
        "Expected 0, got %08lx\n", hi);
 
-    hglobal = GlobalAlloc(GMEM_DDESHARE, 2);
+    hglobal = GlobalAlloc(GMEM_DDESHARE, 2 * sizeof(*ptr));
     ptr = GlobalLock(hglobal);
     ptr[0] = 0xcafebabe;
     ptr[1] = 0xdeadbeef;
