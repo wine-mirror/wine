@@ -821,7 +821,7 @@ DSOUND_capture_callback(HWAVEIN hwi, UINT msg, DWORD_PTR dwUser, DWORD_PTR dw1,
     TRACE("completed\n");
 }
 
-HRESULT IDirectSoundCaptureBufferImpl_Create(
+static HRESULT IDirectSoundCaptureBufferImpl_Create(
     DirectSoundCaptureDevice *device,
     IDirectSoundCaptureBufferImpl ** ppobj,
     LPCDSCBUFFERDESC lpcDSCBufferDesc)
@@ -1006,7 +1006,7 @@ static HRESULT DirectSoundCaptureDevice_Create(
     return DS_OK;
 }
 
-ULONG DirectSoundCaptureDevice_Release(
+static ULONG DirectSoundCaptureDevice_Release(
     DirectSoundCaptureDevice * device)
 {
     ULONG ref = InterlockedDecrement(&(device->ref));
@@ -1033,7 +1033,7 @@ ULONG DirectSoundCaptureDevice_Release(
     return ref;
 }
 
-HRESULT DirectSoundCaptureDevice_Initialize(
+static HRESULT DirectSoundCaptureDevice_Initialize(
     DirectSoundCaptureDevice ** ppDevice,
     LPCGUID lpcGUID)
 {
@@ -1221,7 +1221,7 @@ IDirectSoundCaptureImpl_Release( LPDIRECTSOUNDCAPTURE iface )
     return ref;
 }
 
-HRESULT WINAPI IDirectSoundCaptureImpl_CreateCaptureBuffer(
+static HRESULT WINAPI IDirectSoundCaptureImpl_CreateCaptureBuffer(
     LPDIRECTSOUNDCAPTURE iface,
     LPCDSCBUFFERDESC lpcDSCBufferDesc,
     LPDIRECTSOUNDCAPTUREBUFFER* lplpDSCaptureBuffer,
@@ -1262,7 +1262,7 @@ HRESULT WINAPI IDirectSoundCaptureImpl_CreateCaptureBuffer(
     return hr;
 }
 
-HRESULT WINAPI IDirectSoundCaptureImpl_GetCaps(
+static HRESULT WINAPI IDirectSoundCaptureImpl_GetCaps(
     LPDIRECTSOUNDCAPTURE iface,
     LPDSCCAPS lpDSCCaps )
 {
@@ -1294,7 +1294,7 @@ HRESULT WINAPI IDirectSoundCaptureImpl_GetCaps(
     return DS_OK;
 }
 
-HRESULT WINAPI IDirectSoundCaptureImpl_Initialize(
+static HRESULT WINAPI IDirectSoundCaptureImpl_Initialize(
     LPDIRECTSOUNDCAPTURE iface,
     LPCGUID lpcGUID )
 {

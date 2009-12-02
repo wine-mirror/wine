@@ -273,12 +273,6 @@ struct DirectSoundCaptureDevice
     CRITICAL_SECTION                   lock;
 };
 
-HRESULT DirectSoundCaptureDevice_Initialize(
-    DirectSoundCaptureDevice ** ppDevice,
-    LPCGUID lpcGUID);
-ULONG DirectSoundCaptureDevice_Release(
-    DirectSoundCaptureDevice * device);
-
 /*****************************************************************************
  * IDirectSoundCaptureBuffer implementation structure
  */
@@ -300,11 +294,6 @@ struct IDirectSoundCaptureBufferImpl
     int                                 nrofnotifies;
     PIDSDRIVERNOTIFY                    hwnotify;
 };
-
-HRESULT IDirectSoundCaptureBufferImpl_Create(
-    DirectSoundCaptureDevice *device,
-    IDirectSoundCaptureBufferImpl ** ppobj,
-    LPCDSCBUFFERDESC lpcDSCBufferDesc);
 
 /*****************************************************************************
  *  IDirectSound3DListener implementation structure
@@ -416,17 +405,6 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb);
  
 HRESULT DSOUND_CaptureCreate(REFIID riid, LPDIRECTSOUNDCAPTURE *ppDSC);
 HRESULT DSOUND_CaptureCreate8(REFIID riid, LPDIRECTSOUNDCAPTURE8 *ppDSC8);
-HRESULT WINAPI IDirectSoundCaptureImpl_CreateCaptureBuffer(
-    LPDIRECTSOUNDCAPTURE iface,
-    LPCDSCBUFFERDESC lpcDSCBufferDesc,
-    LPDIRECTSOUNDCAPTUREBUFFER* lplpDSCaptureBuffer,
-    LPUNKNOWN pUnk);
-HRESULT WINAPI IDirectSoundCaptureImpl_GetCaps(
-    LPDIRECTSOUNDCAPTURE iface,
-    LPDSCCAPS lpDSCCaps);
-HRESULT WINAPI IDirectSoundCaptureImpl_Initialize(
-    LPDIRECTSOUNDCAPTURE iface,
-    LPCGUID lpcGUID);
 
 #define STATE_STOPPED   0
 #define STATE_STARTING  1
