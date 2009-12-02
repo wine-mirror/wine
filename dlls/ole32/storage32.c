@@ -704,7 +704,7 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
   if (readSuccessful)
   {
     StorageUtl_CopyDirEntryToSTATSTG(
-      This->ancestorStorage,
+      This,
       pstatstg,
       &currentEntry,
       grfStatFlag);
@@ -1841,30 +1841,6 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
 }
 
 
-/************************************************************************
- * StorageImpl_Stat (IStorage)
- *
- * This method will retrieve information about this storage object.
- *
- * See Windows documentation for more details on IStorage methods.
- */
-static HRESULT WINAPI StorageImpl_Stat( IStorage* iface,
-                                 STATSTG*  pstatstg,     /* [out] */
-                                 DWORD     grfStatFlag)  /* [in] */
-{
-  StorageImpl* const This = (StorageImpl*)iface;
-  HRESULT result = StorageBaseImpl_Stat( iface, pstatstg, grfStatFlag );
-
-  if ( SUCCEEDED(result) && ((grfStatFlag & STATFLAG_NONAME) == 0) && This->pwcsName )
-  {
-      CoTaskMemFree(pstatstg->pwcsName);
-      pstatstg->pwcsName = CoTaskMemAlloc((lstrlenW(This->pwcsName)+1)*sizeof(WCHAR));
-      strcpyW(pstatstg->pwcsName, This->pwcsName);
-  }
-
-  return result;
-}
-
 /******************************************************************************
  * Internal stream list handlers
  */
@@ -2240,7 +2216,7 @@ static const IStorageVtbl Storage32Impl_Vtbl =
     StorageBaseImpl_SetElementTimes,
     StorageBaseImpl_SetClass,
     StorageBaseImpl_SetStateBits,
-    StorageImpl_Stat
+    StorageBaseImpl_Stat
 };
 
 static HRESULT StorageImpl_Construct(
@@ -2295,6 +2271,9 @@ static HRESULT StorageImpl_Construct(
          goto end;
       }
       strcpyW(This->pwcsName, pwcsName);
+
+      memcpy(This->base.filename, pwcsName, DIRENTRY_NAME_BUFFER_LEN-1);
+      This->base.filename[DIRENTRY_NAME_BUFFER_LEN-1] = 0;
   }
 
   /*
@@ -3786,7 +3765,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
     /*
      * Copy the information to the return buffer.
      */
-    StorageUtl_CopyDirEntryToSTATSTG(This->parentStorage,
+    StorageUtl_CopyDirEntryToSTATSTG(&This->parentStorage->base,
       currentReturnStruct,
       &currentEntry,
       STATFLAG_DEFAULT);
@@ -4218,7 +4197,7 @@ void StorageUtl_WriteGUID(BYTE* buffer, ULONG offset, const GUID* value)
 }
 
 void StorageUtl_CopyDirEntryToSTATSTG(
-  StorageImpl*          storage,
+  StorageBaseImpl*      storage,
   STATSTG*              destination,
   const DirEntry*       source,
   int                   statFlags)
@@ -5998,8 +5977,8 @@ HRESULT WINAPI StgOpenStorage(
 
   /* prepare the file name string given in lieu of the root property name */
   GetFullPathNameW(pwcsName, MAX_PATH, fullname, NULL);
-  memcpy(newStorage->filename, fullname, DIRENTRY_NAME_BUFFER_LEN);
-  newStorage->filename[DIRENTRY_NAME_BUFFER_LEN-1] = '\0';
+  memcpy(newStorage->base.filename, fullname, DIRENTRY_NAME_BUFFER_LEN);
+  newStorage->base.filename[DIRENTRY_NAME_BUFFER_LEN-1] = '\0';
 
   /*
    * Get an "out" pointer for the caller.

@@ -236,6 +236,9 @@ struct StorageBaseImpl
    */
   DWORD stateBits;
 
+  /* If set, this overrides the root storage name returned by IStorage_Stat */
+  WCHAR            filename[DIRENTRY_NAME_BUFFER_LEN];
+
   BOOL             create;     /* Was the storage created or opened.
                                   The behaviour of STGM_SIMPLE depends on this */
 };
@@ -263,9 +266,6 @@ struct StorageImpl
    */
   HANDLE           hFile;      /* Physical support for the Docfile */
   LPOLESTR         pwcsName;   /* Full path of the document file */
-
-  /* FIXME: should this be in Storage32BaseImpl ? */
-  WCHAR            filename[DIRENTRY_NAME_BUFFER_LEN];
 
   /*
    * File header
@@ -429,7 +429,7 @@ void StorageUtl_WriteULargeInteger(BYTE* buffer, ULONG offset,
  const ULARGE_INTEGER *value);
 void StorageUtl_ReadGUID(const BYTE* buffer, ULONG offset, GUID* value);
 void StorageUtl_WriteGUID(BYTE* buffer, ULONG offset, const GUID* value);
-void StorageUtl_CopyDirEntryToSTATSTG(StorageImpl *storage,STATSTG* destination,
+void StorageUtl_CopyDirEntryToSTATSTG(StorageBaseImpl *storage,STATSTG* destination,
  const DirEntry* source, int statFlags);
 
 /****************************************************************************
