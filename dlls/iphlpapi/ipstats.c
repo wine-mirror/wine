@@ -353,7 +353,7 @@ DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
         for ( end = buf + needed; buf < end; buf += ifm->ifm_msglen)
         {
             ifm = (struct if_msghdr *) buf;
-            if(ifm->ifm_type == RTM_IFINFO && ifm->ifm_data.ifi_type == IFT_ETHER)
+            if(ifm->ifm_type == RTM_IFINFO)
             {
                 ifdata = ifm->ifm_data;
                 entry->dwMtu = ifdata.ifi_mtu;
