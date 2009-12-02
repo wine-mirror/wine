@@ -1774,9 +1774,10 @@ static void test_simple(void)
 {
     /* Tests for STGM_SIMPLE mode */
 
-    IStorage *stg;
+    IStorage *stg, *stg2;
     HRESULT r;
     IStream *stm;
+    static const WCHAR stgname[] = { 'S','t','g',0 };
     static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
     static const WCHAR stmname2[] = { 'S','m','a','l','l',0 };
     LARGE_INTEGER pos;
@@ -1788,6 +1789,10 @@ static void test_simple(void)
 
     r = StgCreateDocfile( filename, STGM_SIMPLE | STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &stg);
     ok(r == S_OK, "got %08x\n", r);
+
+    r = IStorage_CreateStorage(stg, stgname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stg2);
+    ok(r == STG_E_INVALIDFUNCTION, "got %08x\n", r);
+    if (SUCCEEDED(r)) IStorage_Release(stg2);
 
     r = IStorage_CreateStream(stg, stmname, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm);
     ok(r == STG_E_INVALIDFLAG, "got %08x\n", r);
@@ -1852,6 +1857,10 @@ static void test_simple(void)
         return;
     }
     ok(r == S_OK, "got %08x\n", r);
+
+    r = IStorage_OpenStorage(stg, stgname, NULL, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, NULL, 0, &stg2);
+    ok(r == STG_E_INVALIDFUNCTION, "got %08x\n", r);
+    if (SUCCEEDED(r)) IStorage_Release(stg2);
 
     r = IStorage_OpenStream(stg, stmname, NULL, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &stm);
     ok(r == S_OK, "got %08x\n", r);

@@ -530,6 +530,12 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
     goto end;
   }
 
+  if (This->openFlags & STGM_SIMPLE)
+  {
+    res = STG_E_INVALIDFUNCTION;
+    goto end;
+  }
+
   /* as documented */
   if (snbExclude != NULL)
   {
@@ -1021,6 +1027,11 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
 
   if (ppstg == 0)
     return STG_E_INVALIDPOINTER;
+
+  if (This->openFlags & STGM_SIMPLE)
+  {
+    return STG_E_INVALIDFUNCTION;
+  }
 
   if (pwcsName == 0)
     return STG_E_INVALIDNAME;
