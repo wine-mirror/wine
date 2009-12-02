@@ -595,8 +595,6 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
     {
       *ppstg = (IStorage*)newStorage;
 
-      StorageBaseImpl_AddRef(*ppstg);
-
       list_add_tail(&This->storageHead, &newStorage->ParentListEntry);
 
       res = S_OK;
@@ -4381,6 +4379,8 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
     newStorage->base.openFlags = (openFlags & ~STGM_CREATE);
 
     newStorage->base.reverted = 0;
+
+    newStorage->base.ref = 1;
 
     newStorage->parentStorage = parentStorage;
 
