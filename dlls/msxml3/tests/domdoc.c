@@ -209,6 +209,9 @@ static const CHAR szBasicTransformOutput[] =
 static const WCHAR szNonExistentFile[] = {
     'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', '.', 'x', 'm', 'l', 0
 };
+static const WCHAR szNonExistentAttribute[] = {
+    'n','o','n','E','x','i','s','i','t','i','n','g','A','t','t','r','i','b','u','t','e',0
+};
 static const WCHAR szDocument[] = {
     '#', 'd', 'o', 'c', 'u', 'm', 'e', 'n', 't', 0
 };
@@ -1110,7 +1113,7 @@ static void test_domnode( void )
         SysFreeString( str );
 
         attr = (IXMLDOMAttribute*)0xdeadbeef;
-        str = _bstr_("nonExisitingAttribute");
+        str = SysAllocString( szNonExistentAttribute );
         r = IXMLDOMElement_getAttributeNode( element, str, &attr);
         ok( r == S_FALSE, "getAttributeNode ret %08x\n", r );
         ok( attr == NULL, "getAttributeNode ret %p, expected NULL\n", attr );
