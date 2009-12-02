@@ -486,6 +486,9 @@ static const BYTE rootSignedCRL[] = {
 BOOL (WINAPI *pCertVerifyRevocation)(DWORD, DWORD, DWORD, void **, DWORD,
  PCERT_REVOCATION_PARA, PCERT_REVOCATION_STATUS);
 
+/* Wednesday, Oct 1, 2007 */
+static SYSTEMTIME oct2007 = { 2007, 10, 1, 1, 0, 0, 0, 0 };
+
 static void test_verifyRevocation(void)
 {
     HMODULE hCryptNet = GetModuleHandleA("cryptnet.dll");
@@ -493,6 +496,7 @@ static void test_verifyRevocation(void)
     CERT_REVOCATION_STATUS status = { sizeof(status), 0 };
     PCCERT_CONTEXT certs[2];
     CERT_REVOCATION_PARA revPara = { sizeof(revPara), 0 };
+    FILETIME time;
 
     pCertVerifyRevocation = (void *)GetProcAddress(hCryptNet,
      "CertDllVerifyRevocation");
@@ -597,6 +601,16 @@ static void test_verifyRevocation(void)
      "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", GetLastError());
     ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK ||
      broken(status.dwError == CRYPT_E_REVOKED /* Win2k */),
+     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", status.dwError);
+    ok(status.dwIndex == 0, "expected index 0, got %d\n", status.dwIndex);
+    /* Specifying the time to check: still no change */
+    SystemTimeToFileTime(&oct2007, &time);
+    revPara.pftTimeToUse = &time;
+    ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
+     1, (void **)&certs[1], 0, &revPara, &status);
+    ok(!ret && GetLastError() == CRYPT_E_NO_REVOCATION_CHECK,
+     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", GetLastError());
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK,
      "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", status.dwError);
     ok(status.dwIndex == 0, "expected index 0, got %d\n", status.dwIndex);
     CertCloseStore(revPara.hCrlStore, 0);
