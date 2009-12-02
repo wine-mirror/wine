@@ -2276,7 +2276,7 @@ static HRESULT StorageImpl_Construct(
   This->base.v_destructor = StorageImpl_Destroy;
   This->base.openFlags = (openFlags & ~STGM_CREATE);
   This->base.ref = 1;
-  This->create = create;
+  This->base.create = create;
 
   /*
    * This is the top-level storage so initialize the ancestor pointer
@@ -4130,6 +4130,8 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
      * Keep a reference to the directory entry of this storage
      */
     newStorage->base.storageDirEntry = storageDirEntry;
+
+    newStorage->base.create = 0;
 
     return newStorage;
   }

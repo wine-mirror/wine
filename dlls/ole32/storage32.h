@@ -235,6 +235,9 @@ struct StorageBaseImpl
    * State bits appear to only be preserved while running. No in the stream
    */
   DWORD stateBits;
+
+  BOOL             create;     /* Was the storage created or opened.
+                                  The behaviour of STGM_SIMPLE depends on this */
 };
 
 /****************************************************************************
@@ -260,8 +263,6 @@ struct StorageImpl
    */
   HANDLE           hFile;      /* Physical support for the Docfile */
   LPOLESTR         pwcsName;   /* Full path of the document file */
-  BOOL             create;     /* Was the storage created or opened.
-                                  The behaviour of STGM_SIMPLE depends on this */
 
   /* FIXME: should this be in Storage32BaseImpl ? */
   WCHAR            filename[DIRENTRY_NAME_BUFFER_LEN];

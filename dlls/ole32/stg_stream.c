@@ -868,7 +868,7 @@ static HRESULT WINAPI StgStreamImpl_Stat(
     pstatstg->grfMode = This->grfMode;
 
     /* In simple create mode cbSize is the current pos */
-    if((This->parentStorage->openFlags & STGM_SIMPLE) && root->create)
+    if((This->parentStorage->openFlags & STGM_SIMPLE) && This->parentStorage->create)
       pstatstg->cbSize = This->currentPosition;
 
     return S_OK;
