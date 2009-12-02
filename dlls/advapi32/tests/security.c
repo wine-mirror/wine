@@ -256,6 +256,7 @@ static void test_sid(void)
     ok(pisid->SubAuthority[0] == 21, "Invalid subauthority 0 - expceted 21, got %d\n", pisid->SubAuthority[0]);
     ok(pisid->SubAuthority[3] == 4576, "Invalid subauthority 0 - expceted 4576, got %d\n", pisid->SubAuthority[3]);
     LocalFree(str);
+    LocalFree(psid);
 
     for( i = 0; i < sizeof(refs) / sizeof(refs[0]); i++ )
     {
@@ -1248,12 +1249,12 @@ static void test_token_attr(void)
         DWORD DomainLength = 255;
         TCHAR Domain[255];
         SID_NAME_USE SidNameUse;
-        pConvertSidToStringSidA(Groups->Groups[i].Sid, &SidString);
         Name[0] = '\0';
         Domain[0] = '\0';
         ret = LookupAccountSid(NULL, Groups->Groups[i].Sid, Name, &NameLength, Domain, &DomainLength, &SidNameUse);
         if (ret)
         {
+            pConvertSidToStringSidA(Groups->Groups[i].Sid, &SidString);
             trace("%s, %s\\%s use: %d attr: 0x%08x\n", SidString, Domain, Name, SidNameUse, Groups->Groups[i].Attributes);
             LocalFree(SidString);
         }
@@ -1488,6 +1489,8 @@ static void test_CreateWellKnownSid(void)
             ok(memcmp(buf2, sid_buffer, cb) == 0, "SID create with domain is different than without (%d)\n", i);
         }
     }
+
+    LocalFree(domainsid);
 }
 
 static void test_LookupAccountSid(void)
@@ -2773,7 +2776,7 @@ static void test_ConvertStringSecurityDescriptor(void)
     ret = pConvertStringSecurityDescriptorToSecurityDescriptorW(
         Blank, SDDL_REVISION_1, &pSD, NULL);
     ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
-
+    LocalFree(pSD);
 }
 
 static void test_ConvertSecurityDescriptorToString(void)
@@ -2885,6 +2888,9 @@ static void test_ConvertSecurityDescriptorToString(void)
         CHECK_ONE_OF_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576D:S:(AU;OICINPIOIDSAFA;CCDCLCSWRPRC;;;SU)(AU;NPSA;0x12019f;;;SU)", /* XP */
             "O:SYG:S-1-5-21-93476-23408-4576D:NO_ACCESS_CONTROLS:(AU;OICINPIOIDSAFA;CCDCLCSWRPRC;;;SU)(AU;NPSA;0x12019f;;;SU)" /* Vista */);
     }
+
+    LocalFree(psid2);
+    LocalFree(psid);
 }
 
 static void test_SetSecurityDescriptorControl (PSECURITY_DESCRIPTOR sec)
