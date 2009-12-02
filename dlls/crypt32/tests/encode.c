@@ -1387,8 +1387,9 @@ static void test_decodeNameValue(DWORD dwEncoding)
      embeddedNullNameValue.encoded, embeddedNullNameValue.encodedSize,
      CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_SHARE_OID_STRING_FLAG, NULL,
      &buf, &bufSize);
-    ok(ret, "Value type %d: CryptDecodeObjectEx failed: %08x\n",
-     embeddedNullNameValue.value.dwValueType, GetLastError());
+    /* Some Windows versions disallow name values with embedded NULLs, so
+     * either success or failure is acceptable.
+     */
     if (ret)
     {
         CERT_NAME_VALUE rdnEncodedValue = { CERT_RDN_ENCODED_BLOB,
