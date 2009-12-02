@@ -184,6 +184,38 @@ out:
     DestroyWindow(window);
 }
 
+static void test_get_adapter_luid(void)
+{
+    HWND window = create_window();
+    IDirect3D9Ex *d3d9ex;
+    UINT count;
+    HRESULT hr;
+    LUID luid;
+
+    hr = pDirect3DCreate9Ex(D3D_SDK_VERSION, &d3d9ex);
+    if (FAILED(hr))
+    {
+        skip("Direct3D9Ex is not available.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    count = IDirect3D9Ex_GetAdapterCount(d3d9ex);
+    if (!count)
+    {
+        skip("No adapters available.\n");
+        IDirect3D9Ex_Release(d3d9ex);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3D9Ex_GetAdapterLUID(d3d9ex, D3DADAPTER_DEFAULT, &luid);
+    ok(SUCCEEDED(hr), "GetAdapterLUID failed, hr %#x.\n", hr);
+    trace("adapter luid: %08x:%08x.\n", luid.HighPart, luid.LowPart);
+
+    IDirect3D9Ex_Release(d3d9ex);
+}
+
 START_TEST(d3d9ex)
 {
     d3d9_handle = LoadLibraryA("d3d9.dll");
@@ -206,4 +238,5 @@ START_TEST(d3d9ex)
 
     test_qi_base_to_ex();
     test_qi_ex_to_base();
+    test_get_adapter_luid();
 }
