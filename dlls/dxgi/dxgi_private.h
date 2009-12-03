@@ -102,9 +102,10 @@ struct dxgi_output
 {
     const struct IDXGIOutputVtbl *vtbl;
     LONG refcount;
+    struct dxgi_adapter *adapter;
 };
 
-void dxgi_output_init(struct dxgi_output *output) DECLSPEC_HIDDEN;
+void dxgi_output_init(struct dxgi_output *output, struct dxgi_adapter *adapter) DECLSPEC_HIDDEN;
 
 /* IDXGIAdapter */
 struct dxgi_adapter

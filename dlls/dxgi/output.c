@@ -98,9 +98,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetPrivateData(IDXGIOutput *iface,
 static HRESULT STDMETHODCALLTYPE dxgi_output_GetParent(IDXGIOutput *iface,
         REFIID riid, void **parent)
 {
-    FIXME("iface %p, riid %s, parent %p stub!\n", iface, debugstr_guid(riid), parent);
+    struct dxgi_output *This = (struct dxgi_output *)iface;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, riid %s, parent %p.\n", iface, debugstr_guid(riid), parent);
+
+    return IDXGIAdapter_QueryInterface((IDXGIAdapter *)This->adapter, riid, parent);
 }
 
 /* IDXGIOutput methods */
@@ -217,8 +219,9 @@ static const struct IDXGIOutputVtbl dxgi_output_vtbl =
     dxgi_output_GetFrameStatistics,
 };
 
-void dxgi_output_init(struct dxgi_output *output)
+void dxgi_output_init(struct dxgi_output *output, struct dxgi_adapter *adapter)
 {
     output->vtbl = &dxgi_output_vtbl;
     output->refcount = 1;
+    output->adapter = adapter;
 }

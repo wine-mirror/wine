@@ -189,7 +189,7 @@ HRESULT dxgi_adapter_init(struct dxgi_adapter *adapter, IDXGIFactory *parent, UI
     {
         return E_OUTOFMEMORY;
     }
-    dxgi_output_init(output);
+    dxgi_output_init(output, adapter);
     adapter->output = (IDXGIOutput *)output;
 
     return S_OK;
