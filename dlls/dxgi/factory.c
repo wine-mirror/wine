@@ -110,9 +110,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_GetPrivateData(IWineDXGIFactory *i
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_GetParent(IWineDXGIFactory *iface, REFIID riid, void **parent)
 {
-    FIXME("iface %p, riid %s, parent %p stub!\n", iface, debugstr_guid(riid), parent);
+    WARN("iface %p, riid %s, parent %p.\n", iface, debugstr_guid(riid), parent);
 
-    return E_NOTIMPL;
+    *parent = NULL;
+
+    return E_NOINTERFACE;
 }
 
 /* IDXGIFactory methods */
