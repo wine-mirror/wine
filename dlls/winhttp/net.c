@@ -273,7 +273,8 @@ static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, HCERTSTORE store,
     TRACE("verifying %s\n", debugstr_w( server ));
     chainPara.RequestedUsage.Usage.cUsageIdentifier = 1;
     chainPara.RequestedUsage.Usage.rgpszUsageIdentifier = server_auth;
-    if ((ret = CertGetCertificateChain( NULL, cert, NULL, store, &chainPara, 0,
+    if ((ret = CertGetCertificateChain( NULL, cert, NULL, store, &chainPara,
+                                        CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT,
                                         NULL, &chain )))
     {
         if (chain->TrustStatus.dwErrorStatus)
