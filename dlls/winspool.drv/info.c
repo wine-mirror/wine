@@ -3337,7 +3337,7 @@ static BOOL WINSPOOL_GetDevModeFromReg(HKEY hkey, LPCWSTR ValueName,
     if (ptr && ((DEVMODEA*)ptr)->dmSize < sizeof(DEVMODEA))
         ((DEVMODEA*)ptr)->dmSize = sizeof(DEVMODEA);
     sz += (CCHDEVICENAME + CCHFORMNAME);
-    if(buflen >= sz) {
+    if (ptr && (buflen >= sz)) {
         DEVMODEW *dmW = GdiConvertToDevmodeW((DEVMODEA*)ptr);
         memcpy(ptr, dmW, sz);
         HeapFree(GetProcessHeap(),0,dmW);
