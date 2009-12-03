@@ -120,6 +120,14 @@ static void init_strings(void)
         LONG res;
 
         /* Older Win9x and NT4 */
+        RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders", &key);
+        size = sizeof(Programs);
+        RegQueryValueExA(key, "Programs", NULL, NULL, (LPBYTE)&Programs, &size);
+        size = sizeof(startup);
+        RegQueryValueExA(key, "Startup", NULL, NULL, (LPBYTE)&startup, &size);
+        lstrcpyA(Startup, (strrchr(startup, '\\') + 1));
+        RegCloseKey(key);
+
         RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders", &key);
         size = sizeof(CommonPrograms);
         res = RegQueryValueExA(key, "Common Programs", NULL, NULL, (LPBYTE)&CommonPrograms, &size);
@@ -129,14 +137,6 @@ static void init_strings(void)
             /* Win9x */
             lstrcpyA(CommonPrograms, Programs);
         }
-
-        RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders", &key);
-        size = sizeof(Programs);
-        RegQueryValueExA(key, "Programs", NULL, NULL, (LPBYTE)&Programs, &size);
-        size = sizeof(startup);
-        RegQueryValueExA(key, "Startup", NULL, NULL, (LPBYTE)&startup, &size);
-        lstrcpyA(Startup, (strrchr(startup, '\\') + 1));
-        RegCloseKey(key);
     }
 
     memset(&cs, 0, sizeof(cs));
