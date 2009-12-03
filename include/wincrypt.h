@@ -1339,14 +1339,18 @@ typedef struct _CRYPT_URL_INFO {
     DWORD *rgcGroupEntry;
 } CRYPT_URL_INFO, *PCRYPT_URL_INFO;
 
-#define URL_OID_CERTIFICATE_ISSUER         ((LPCSTR)1)
-#define URL_OID_CERTIFICATE_CRL_DIST_POINT ((LPCSTR)2)
-#define URL_OID_CTL_ISSUER                 ((LPCSTR)3)
-#define URL_OID_CTL_NEXT_UPDATE            ((LPCSTR)4)
-#define URL_OID_CRL_ISSUER                 ((LPCSTR)5)
-#define URL_OID_CERTIFICATE_FRESHEST_CRL   ((LPCSTR)6)
-#define URL_OID_CRL_FRESHEST_CRL           ((LPCSTR)7)
-#define URL_OID_CROSS_CERT_DIST_POINT      ((LPCSTR)8)
+#define URL_OID_CERTIFICATE_ISSUER                  ((LPCSTR)1)
+#define URL_OID_CERTIFICATE_CRL_DIST_POINT          ((LPCSTR)2)
+#define URL_OID_CTL_ISSUER                          ((LPCSTR)3)
+#define URL_OID_CTL_NEXT_UPDATE                     ((LPCSTR)4)
+#define URL_OID_CRL_ISSUER                          ((LPCSTR)5)
+#define URL_OID_CERTIFICATE_FRESHEST_CRL            ((LPCSTR)6)
+#define URL_OID_CRL_FRESHEST_CRL                    ((LPCSTR)7)
+#define URL_OID_CROSS_CERT_DIST_POINT               ((LPCSTR)8)
+#define URL_OID_CERTIFICATE_OCSP                    ((LPCSTR)9)
+#define URL_OID_CERTIFICATE_OCSP_AND_CRL_DIST_POINT ((LPCSTR)10)
+#define URL_OID_CERTIFICATE_CRL_DIST_POINT_AND_OCSP ((LPCSTR)11)
+#define URL_OID_CROSS_CERT_SUBJECT_INFO_ACCESS      ((LPCSTR)12)
 
 #define URL_OID_GET_OBJECT_URL_FUNC "UrlDllGetObjectUrl"
 
