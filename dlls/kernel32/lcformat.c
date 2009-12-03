@@ -355,11 +355,7 @@ static INT NLS_GetDateTimeFormatW(LCID lcid, DWORD dwFlags,
 
   /* Verify our arguments */
   if ((cchOut && !lpStr) || !(node = NLS_GetFormats(lcid, dwFlags)))
-  {
-NLS_GetDateTimeFormatW_InvalidParameter:
-    SetLastError(ERROR_INVALID_PARAMETER);
-    return 0;
-  }
+    goto invalid_parameter;
 
   if (dwFlags & ~(DATE_DATEVARSONLY|TIME_TIMEVARSONLY))
   {
@@ -367,15 +363,13 @@ NLS_GetDateTimeFormatW_InvalidParameter:
         ((dwFlags & DATE_DATEVARSONLY && dwFlags & ~DATE_FORMAT_FLAGS) ||
          (dwFlags & TIME_TIMEVARSONLY && dwFlags & ~TIME_FORMAT_FLAGS)))
     {
-NLS_GetDateTimeFormatW_InvalidFlags:
-      SetLastError(ERROR_INVALID_FLAGS);
-      return 0;
+      goto invalid_flags;
     }
 
     if (dwFlags & DATE_DATEVARSONLY)
     {
       if ((dwFlags & (DATE_LTRREADING|DATE_RTLREADING)) == (DATE_LTRREADING|DATE_RTLREADING))
-        goto NLS_GetDateTimeFormatW_InvalidFlags;
+        goto invalid_flags;
       else if (dwFlags & (DATE_LTRREADING|DATE_RTLREADING))
         FIXME("Unsupported flags: DATE_LTRREADING/DATE_RTLREADING\n");
 
@@ -387,10 +381,10 @@ NLS_GetDateTimeFormatW_InvalidFlags:
       case DATE_LONGDATE:
       case DATE_YEARMONTH:
         if (lpFormat)
-          goto NLS_GetDateTimeFormatW_InvalidFlags;
+          goto invalid_flags;
         break;
       default:
-        goto NLS_GetDateTimeFormatW_InvalidFlags;
+        goto invalid_flags;
       }
     }
   }
@@ -429,7 +423,7 @@ NLS_GetDateTimeFormatW_InvalidFlags:
       st.wDay = lpTime->wDay;
 
       if (st.wDay > 31 || st.wMonth > 12 || !SystemTimeToFileTime(&st, &ftTmp))
-        goto NLS_GetDateTimeFormatW_InvalidParameter;
+        goto invalid_parameter;
 
       FileTimeToSystemTime(&ftTmp, &st);
       lpTime = &st;
@@ -439,7 +433,7 @@ NLS_GetDateTimeFormatW_InvalidFlags:
     {
       /* Verify the time */
       if (lpTime->wHour > 24 || lpTime->wMinute > 59 || lpTime->wSecond > 59)
-        goto NLS_GetDateTimeFormatW_InvalidParameter;
+        goto invalid_parameter;
     }
   }
 
@@ -464,7 +458,7 @@ NLS_GetDateTimeFormatW_InvalidFlags:
         if (!cchOut)
           cchWritten++;   /* Count size only */
         else if (cchWritten >= cchOut)
-          goto NLS_GetDateTimeFormatW_Overrun;
+          goto overrun;
         else if (!bSkipping)
         {
           lpStr[cchWritten] = *lpFormat;
@@ -624,7 +618,7 @@ NLS_GetDateTimeFormatW_InvalidFlags:
         else
         {
           memcpy(lpStr + cchWritten, szAdd, (cchOut - cchWritten) * sizeof(WCHAR));
-          goto NLS_GetDateTimeFormatW_Overrun;
+          goto overrun;
         }
       }
       cchWritten += dwLen;
@@ -636,7 +630,7 @@ NLS_GetDateTimeFormatW_InvalidFlags:
       if (!cchOut)
         cchWritten++;   /* Count size only */
       else if (cchWritten >= cchOut)
-        goto NLS_GetDateTimeFormatW_Overrun;
+        goto overrun;
       else if (!bSkipping || *lpFormat == ' ')
       {
         lpStr[cchWritten] = *lpFormat;
@@ -650,7 +644,7 @@ NLS_GetDateTimeFormatW_InvalidFlags:
   if (cchOut)
   {
    if (cchWritten >= cchOut)
-     goto NLS_GetDateTimeFormatW_Overrun;
+     goto overrun;
    else
      lpStr[cchWritten] = '\0';
   }
@@ -659,9 +653,17 @@ NLS_GetDateTimeFormatW_InvalidFlags:
   TRACE("returning length=%d, ouput=%s\n", cchWritten, debugstr_w(lpStr));
   return cchWritten;
 
-NLS_GetDateTimeFormatW_Overrun:
+overrun:
   TRACE("returning 0, (ERROR_INSUFFICIENT_BUFFER)\n");
   SetLastError(ERROR_INSUFFICIENT_BUFFER);
+  return 0;
+
+invalid_parameter:
+  SetLastError(ERROR_INVALID_PARAMETER);
+  return 0;
+
+invalid_flags:
+  SetLastError(ERROR_INVALID_FLAGS);
   return 0;
 }
 
