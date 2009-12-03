@@ -265,7 +265,6 @@ static void test_getObjectUrl(void)
          */
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_ISSUER,
          (void *)cert, 0, NULL, &urlArraySize, NULL, NULL, NULL);
-        todo_wine
         ok(ret, "CryptGetObjectUrl failed: %08x\n", GetLastError());
         if (ret)
         {

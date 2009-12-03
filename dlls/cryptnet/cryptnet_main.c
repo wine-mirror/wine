@@ -120,61 +120,6 @@ static const char *url_oid_to_str(LPCSTR oid)
 typedef BOOL (WINAPI *UrlDllGetObjectUrlFunc)(LPCSTR, LPVOID, DWORD,
  PCRYPT_URL_ARRAY, DWORD *, PCRYPT_URL_INFO, DWORD *, LPVOID);
 
-static LPWSTR name_value_to_str(CERT_NAME_BLOB *name)
-{
-    DWORD len = CertNameToStrW(X509_ASN_ENCODING, name, CERT_SIMPLE_NAME_STR,
-     NULL, 0);
-    LPWSTR str = NULL;
-
-    if (len)
-    {
-        str = CryptMemAlloc(len * sizeof(WCHAR));
-        if (str)
-            CertNameToStrW(X509_ASN_ENCODING, name, CERT_SIMPLE_NAME_STR,
-             str, len);
-    }
-    return str;
-}
-
-static void dump_alt_name_entry(CERT_ALT_NAME_ENTRY *entry)
-{
-    LPWSTR str;
-
-    switch (entry->dwAltNameChoice)
-    {
-    case CERT_ALT_NAME_OTHER_NAME:
-        TRACE("CERT_ALT_NAME_OTHER_NAME, oid = %s\n",
-         debugstr_a(entry->u.pOtherName->pszObjId));
-         break;
-    case CERT_ALT_NAME_RFC822_NAME:
-        TRACE("CERT_ALT_NAME_RFC822_NAME: %s\n",
-         debugstr_w(entry->u.pwszRfc822Name));
-        break;
-    case CERT_ALT_NAME_DNS_NAME:
-        TRACE("CERT_ALT_NAME_DNS_NAME: %s\n",
-         debugstr_w(entry->u.pwszDNSName));
-        break;
-    case CERT_ALT_NAME_DIRECTORY_NAME:
-        str = name_value_to_str(&entry->u.DirectoryName);
-        TRACE("CERT_ALT_NAME_DIRECTORY_NAME: %s\n", debugstr_w(str));
-        CryptMemFree(str);
-        break;
-    case CERT_ALT_NAME_URL:
-        TRACE("CERT_ALT_NAME_URL: %s\n", debugstr_w(entry->u.pwszURL));
-        break;
-    case CERT_ALT_NAME_IP_ADDRESS:
-        TRACE("CERT_ALT_NAME_IP_ADDRESS: %d bytes\n",
-         entry->u.IPAddress.cbData);
-        break;
-    case CERT_ALT_NAME_REGISTERED_ID:
-        TRACE("CERT_ALT_NAME_REGISTERED_ID: %s\n",
-         debugstr_a(entry->u.pszRegisteredID));
-        break;
-    default:
-        TRACE("dwAltNameChoice = %d\n", entry->dwAltNameChoice);
-    }
-}
-
 static BOOL WINAPI CRYPT_GetUrlFromCertificateIssuer(LPCSTR pszUrlOid,
  LPVOID pvPara, DWORD dwFlags, PCRYPT_URL_ARRAY pUrlArray, DWORD *pcbUrlArray,
  PCRYPT_URL_INFO pUrlInfo, DWORD *pcbUrlInfo, LPVOID pvReserved)
@@ -200,23 +145,89 @@ static BOOL WINAPI CRYPT_GetUrlFromCertificateIssuer(LPCSTR pszUrlOid,
          &aia, &size);
         if (ret)
         {
-            DWORD i;
+            DWORD i, cUrl, bytesNeeded = sizeof(CRYPT_URL_ARRAY);
 
-            TRACE("%d access descriptions:\n", aia->cAccDescr);
-            for (i = 0; i < aia->cAccDescr; i++)
-            {
+            for (i = 0, cUrl = 0; i < aia->cAccDescr; i++)
                 if (!strcmp(aia->rgAccDescr[i].pszAccessMethod,
-                 szOID_PKIX_OCSP))
-                    TRACE("OCSP:\n");
-                else if (!strcmp(aia->rgAccDescr[i].pszAccessMethod,
                  szOID_PKIX_CA_ISSUERS))
-                    TRACE("CA issuers:\n");
-                dump_alt_name_entry(&aia->rgAccDescr[i].AccessLocation);
+                {
+                    if (aia->rgAccDescr[i].AccessLocation.dwAltNameChoice ==
+                     CERT_ALT_NAME_URL)
+                    {
+                        if (aia->rgAccDescr[i].AccessLocation.u.pwszURL)
+                        {
+                            cUrl++;
+                            bytesNeeded += sizeof(LPWSTR) +
+                             (lstrlenW(aia->rgAccDescr[i].AccessLocation.u.
+                             pwszURL) + 1) * sizeof(WCHAR);
+                        }
+                    }
+                    else
+                        FIXME("unsupported alt name type %d\n",
+                         aia->rgAccDescr[i].AccessLocation.dwAltNameChoice);
+                }
+            if (!pcbUrlArray)
+            {
+                SetLastError(E_INVALIDARG);
+                ret = FALSE;
+            }
+            else if (!pUrlArray)
+                *pcbUrlArray = bytesNeeded;
+            else if (*pcbUrlArray < bytesNeeded)
+            {
+                SetLastError(ERROR_MORE_DATA);
+                *pcbUrlArray = bytesNeeded;
+                ret = FALSE;
+            }
+            else
+            {
+                LPWSTR nextUrl;
+
+                *pcbUrlArray = bytesNeeded;
+                pUrlArray->cUrl = 0;
+                pUrlArray->rgwszUrl =
+                 (LPWSTR *)((BYTE *)pUrlArray + sizeof(CRYPT_URL_ARRAY));
+                nextUrl = (LPWSTR)((BYTE *)pUrlArray + sizeof(CRYPT_URL_ARRAY)
+                 + cUrl * sizeof(LPWSTR));
+                for (i = 0; i < aia->cAccDescr; i++)
+                    if (!strcmp(aia->rgAccDescr[i].pszAccessMethod,
+                     szOID_PKIX_CA_ISSUERS))
+                    {
+                        if (aia->rgAccDescr[i].AccessLocation.dwAltNameChoice
+                         == CERT_ALT_NAME_URL)
+                        {
+                            if (aia->rgAccDescr[i].AccessLocation.u.pwszURL)
+                            {
+                                lstrcpyW(nextUrl,
+                                 aia->rgAccDescr[i].AccessLocation.u.pwszURL);
+                                pUrlArray->rgwszUrl[pUrlArray->cUrl++] =
+                                 nextUrl;
+                                nextUrl += (lstrlenW(nextUrl) + 1);
+                            }
+                        }
+                    }
+            }
+            if (ret)
+            {
+                if (pcbUrlInfo)
+                {
+                    FIXME("url info: stub\n");
+                    if (!pUrlInfo)
+                        *pcbUrlInfo = sizeof(CRYPT_URL_INFO);
+                    else if (*pcbUrlInfo < sizeof(CRYPT_URL_INFO))
+                    {
+                        *pcbUrlInfo = sizeof(CRYPT_URL_INFO);
+                        SetLastError(ERROR_MORE_DATA);
+                        ret = FALSE;
+                    }
+                    else
+                    {
+                        *pcbUrlInfo = sizeof(CRYPT_URL_INFO);
+                        memset(pUrlInfo, 0, sizeof(CRYPT_URL_INFO));
+                    }
+                }
             }
             LocalFree(aia);
-            FIXME("authority info access unsupported\n");
-            SetLastError(CRYPT_E_NOT_FOUND);
-            ret = FALSE;
         }
     }
     else
