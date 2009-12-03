@@ -85,7 +85,7 @@ BEGIN
                     IDC_STATIC,15,20,227,20
     CONTROL         "Aplicações",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,50,230,150
-    PUSHBUTTON	    "&Adiconar aplicação...",IDC_APP_ADDAPP, 90,204,75,14
+    PUSHBUTTON	    "&Adicionar aplicação...",IDC_APP_ADDAPP, 90,204,75,14
     PUSHBUTTON	    "&Remover aplicação",IDC_APP_REMOVEAPP, 170,204,75,14
     LTEXT           "Versão do &Windows:",IDC_STATIC,17,226,58,8
     COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
@@ -102,10 +102,10 @@ BEGIN
                     IDC_STATIC,15,20,227,45
     CONTROL         "Aplicações",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,55,230,140
-    PUSHBUTTON	    "&Adiconar aplicação...",IDC_APP_ADDAPP, 90,204,75,14
+    PUSHBUTTON	    "&Adicionar aplicação...",IDC_APP_ADDAPP, 90,204,75,14
     PUSHBUTTON	    "&Remover aplicação",IDC_APP_REMOVEAPP, 170,204,75,14
-    LTEXT           "Versão &Windows:",IDC_STATIC,17,226,58,8
-    COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Versão do &Windows:",IDC_STATIC,17,226,68,8
+    COMBOBOX        IDC_WINVER,90,224,156,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 
