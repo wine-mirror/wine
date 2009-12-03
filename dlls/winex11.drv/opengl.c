@@ -29,12 +29,20 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
+
 #include "x11drv.h"
 #include "winternl.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #ifdef SONAME_LIBGL
 
@@ -350,6 +358,19 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
     TRACE("Client GLX version     : %s.\n", WineGLInfo.glxClientVersion);
     TRACE("Client GLX vendor:     : %s.\n", WineGLInfo.glxClientVendor);
     TRACE("Direct rendering enabled: %s\n", WineGLInfo.glxDirect ? "True" : "False");
+
+    if(!WineGLInfo.glxDirect)
+    {
+        int fd = ConnectionNumber(gdi_display);
+        struct sockaddr_un uaddr;
+        unsigned int uaddrlen = sizeof(struct sockaddr_un);
+
+        /* In general indirect rendering on a local X11 server indicates a driver problem.
+         * Detect a local X11 server by checking whether the X11 socket is a Unix socket.
+         */
+        if(!getsockname(fd, &uaddr, &uaddrlen) && uaddr.sun_family == AF_UNIX)
+            ERR_(winediag)("Direct rendering is disabled, most likely your OpenGL drivers haven't been installed correctly\n");
+    }
 
     if(vis) XFree(vis);
     if(ctx) {
