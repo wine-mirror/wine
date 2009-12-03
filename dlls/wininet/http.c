@@ -3701,20 +3701,19 @@ static void AsyncHttpSendRequestProc(WORKREQUEST *workRequest)
 }
 
 
-static BOOL HTTP_HttpEndRequestW(http_request_t *lpwhr, DWORD dwFlags, DWORD_PTR dwContext)
+static DWORD HTTP_HttpEndRequestW(http_request_t *lpwhr, DWORD dwFlags, DWORD_PTR dwContext)
 {
-    BOOL rc = FALSE;
     INT responseLen;
     DWORD dwBufferSize;
     INTERNET_ASYNC_RESULT iar;
-    DWORD res;
+    DWORD res = ERROR_SUCCESS;
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                   INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
 
     responseLen = HTTP_GetResponseHeaders(lpwhr, TRUE);
-    if (responseLen)
-        rc = TRUE;
+    if (!responseLen)
+        res = ERROR_HTTP_HEADER_NOT_FOUND;
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                   INTERNET_STATUS_RESPONSE_RECEIVED, &responseLen, sizeof(DWORD));
@@ -3742,16 +3741,14 @@ static BOOL HTTP_HttpEndRequestW(http_request_t *lpwhr, DWORD dwFlags, DWORD_PTR
                 HTTP_DrainContent(lpwhr);
                 if ((new_url = HTTP_GetRedirectURL( lpwhr, szNewLocation )))
                 {
+                    BOOL rc;
                     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext, INTERNET_STATUS_REDIRECT,
                                           new_url, (strlenW(new_url) + 1) * sizeof(WCHAR));
                     rc = HTTP_HandleRedirect(lpwhr, new_url);
-                    if (rc) {
+                    if (rc)
                         res = HTTP_HttpSendRequestW(lpwhr, NULL, 0, NULL, 0, 0, TRUE);
-                        if(res != ERROR_SUCCESS) {
-                            rc = FALSE;
-                            INTERNET_SetLastError(res);
-                        }
-                    }
+                    else
+                        res = INTERNET_GetLastError();
                     HeapFree( GetProcessHeap(), 0, new_url );
                 }
             }
@@ -3759,12 +3756,12 @@ static BOOL HTTP_HttpEndRequestW(http_request_t *lpwhr, DWORD dwFlags, DWORD_PTR
     }
 
     iar.dwResult = (DWORD_PTR)lpwhr->hdr.hInternet;
-    iar.dwError = rc ? 0 : INTERNET_GetLastError();
+    iar.dwError = res;
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_REQUEST_COMPLETE, &iar,
                           sizeof(INTERNET_ASYNC_RESULT));
-    return rc;
+    return res;
 }
 
 /***********************************************************************
@@ -3814,14 +3811,14 @@ static void AsyncHttpEndRequestProc(WORKREQUEST *work)
 BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
         LPINTERNET_BUFFERSW lpBuffersOut, DWORD dwFlags, DWORD_PTR dwContext)
 {
-    BOOL rc = FALSE;
     http_request_t *lpwhr;
+    DWORD res;
 
     TRACE("-->\n");
 
     if (lpBuffersOut)
     {
-        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
@@ -3829,7 +3826,7 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
 
     if (NULL == lpwhr || lpwhr->hdr.htype != WH_HHTTPREQ)
     {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+        SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
         if (lpwhr)
             WININET_Release( &lpwhr->hdr );
         return FALSE;
@@ -3849,14 +3846,16 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
         request->dwContext = dwContext;
 
         INTERNET_AsyncCall(&work);
-        INTERNET_SetLastError(ERROR_IO_PENDING);
+        res = ERROR_IO_PENDING;
     }
     else
-        rc = HTTP_HttpEndRequestW(lpwhr, dwFlags, dwContext);
+        res = HTTP_HttpEndRequestW(lpwhr, dwFlags, dwContext);
 
     WININET_Release( &lpwhr->hdr );
-    TRACE("%i <--\n",rc);
-    return rc;
+    TRACE("%u <--\n", res);
+    if(res != ERROR_SUCCESS)
+        SetLastError(res);
+    return res == ERROR_SUCCESS;
 }
 
 /***********************************************************************
