@@ -495,9 +495,13 @@ static int SIC_LoadOverlayIcon(int icon_idx)
 	    {
 		LPWSTR p = strchrW(buffer, ',');
 
-		if (p)
-		    *p++ = 0;
-
+		if (!p)
+		{
+		    ERR("Icon index in %s/%s corrupted, no comma.\n", debugstr_w(wszShellIcons),debugstr_w(wszIdx));
+		    RegCloseKey(hKeyShellIcons);
+		    return -1;
+		}
+		*p++ = 0;
 		iconPath = buffer;
 		iconIdx = atoiW(p);
 	    }
