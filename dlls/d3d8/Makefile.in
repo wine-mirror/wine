@@ -13,7 +13,6 @@ C_SRCS = \
 	directx.c \
 	indexbuffer.c \
 	pixelshader.c \
-	stateblock.c \
 	surface.c \
 	swapchain.c \
 	texture.c \

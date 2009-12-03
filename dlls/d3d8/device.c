@@ -1335,9 +1335,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_BeginStateBlock(LPDIRECT3DDEVICE8 ifa
 
 static HRESULT WINAPI IDirect3DDevice8Impl_EndStateBlock(LPDIRECT3DDEVICE8 iface, DWORD* pToken) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
+    IWineD3DStateBlock *stateblock;
     HRESULT hr;
-    IWineD3DStateBlock* wineD3DStateBlock;
-    IDirect3DStateBlock8Impl* object;
 
     TRACE("iface %p, token %p.\n", iface, pToken);
 
@@ -1345,52 +1344,47 @@ static HRESULT WINAPI IDirect3DDevice8Impl_EndStateBlock(LPDIRECT3DDEVICE8 iface
      * of memory later and cause locking problems)
      */
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_EndStateBlock(This->WineD3DDevice , &wineD3DStateBlock);
+    hr = IWineD3DDevice_EndStateBlock(This->WineD3DDevice , &stateblock);
     if (hr != D3D_OK) {
         WARN("IWineD3DDevice_EndStateBlock returned an error\n");
         wined3d_mutex_unlock();
         return hr;
     }
 
-    /* allocate a new IDirectD3DStateBlock */
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY ,sizeof(IDirect3DStateBlock8Impl));
-    object->ref = 1;
-    object->lpVtbl = &Direct3DStateBlock8_Vtbl;
-
-    object->wineD3DStateBlock = wineD3DStateBlock;
-
-    *pToken = d3d8_allocate_handle(&This->handle_table, object, D3D8_HANDLE_SB);
+    *pToken = d3d8_allocate_handle(&This->handle_table, stateblock, D3D8_HANDLE_SB);
     wined3d_mutex_unlock();
 
     if (*pToken == D3D8_INVALID_HANDLE)
     {
         ERR("Failed to create a handle\n");
-        IDirect3DStateBlock8_Release((IDirect3DStateBlock8 *)object);
+        wined3d_mutex_lock();
+        IWineD3DStateBlock_Release(stateblock);
+        wined3d_mutex_unlock();
         return E_FAIL;
     }
     ++*pToken;
 
-    TRACE("Returning %#x (%p).\n", *pToken, object);
+    TRACE("Returning %#x (%p).\n", *pToken, stateblock);
 
     return hr;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, DWORD Token) {
     IDirect3DDevice8Impl     *This = (IDirect3DDevice8Impl *)iface;
-    IDirect3DStateBlock8Impl *pSB;
+    IWineD3DStateBlock *stateblock;
     HRESULT hr;
 
     TRACE("iface %p, token %#x.\n", iface, Token);
 
     wined3d_mutex_lock();
-    pSB = d3d8_get_object(&This->handle_table, Token - 1, D3D8_HANDLE_SB);
-    if (!pSB)
+    stateblock = d3d8_get_object(&This->handle_table, Token - 1, D3D8_HANDLE_SB);
+    if (!stateblock)
     {
         WARN("Invalid handle (%#x) passed.\n", Token);
         wined3d_mutex_unlock();
         return D3DERR_INVALIDCALL;
     }
-    hr = IWineD3DStateBlock_Apply(pSB->wineD3DStateBlock);
+    hr = IWineD3DStateBlock_Apply(stateblock);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1398,20 +1392,20 @@ static HRESULT WINAPI IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 ifa
 
 static HRESULT WINAPI IDirect3DDevice8Impl_CaptureStateBlock(LPDIRECT3DDEVICE8 iface, DWORD Token) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-    IDirect3DStateBlock8Impl *pSB;
+    IWineD3DStateBlock *stateblock;
     HRESULT hr;
 
     TRACE("iface %p, token %#x.\n", iface, Token);
 
     wined3d_mutex_lock();
-    pSB = d3d8_get_object(&This->handle_table, Token - 1, D3D8_HANDLE_SB);
-    if (!pSB)
+    stateblock = d3d8_get_object(&This->handle_table, Token - 1, D3D8_HANDLE_SB);
+    if (!stateblock)
     {
         WARN("Invalid handle (%#x) passed.\n", Token);
         wined3d_mutex_unlock();
         return D3DERR_INVALIDCALL;
     }
-    hr = IWineD3DStateBlock_Capture(pSB->wineD3DStateBlock);
+    hr = IWineD3DStateBlock_Capture(stateblock);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1419,24 +1413,25 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CaptureStateBlock(LPDIRECT3DDEVICE8 i
 
 static HRESULT WINAPI IDirect3DDevice8Impl_DeleteStateBlock(LPDIRECT3DDEVICE8 iface, DWORD Token) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-    IDirect3DStateBlock8Impl *pSB;
+    IWineD3DStateBlock *stateblock;
 
     TRACE("iface %p, token %#x.\n", iface, Token);
 
     wined3d_mutex_lock();
-    pSB = d3d8_free_handle(&This->handle_table, Token - 1, D3D8_HANDLE_SB);
-    wined3d_mutex_unlock();
+    stateblock = d3d8_free_handle(&This->handle_table, Token - 1, D3D8_HANDLE_SB);
 
-    if (!pSB)
+    if (!stateblock)
     {
         WARN("Invalid handle (%#x) passed.\n", Token);
+        wined3d_mutex_unlock();
         return D3DERR_INVALIDCALL;
     }
 
-    if (IUnknown_Release((IUnknown *)pSB))
+    if (IWineD3DStateBlock_Release((IUnknown *)stateblock))
     {
-        ERR("Stateblock %p has references left, this shouldn't happen.\n", pSB);
+        ERR("Stateblock %p has references left, this shouldn't happen.\n", stateblock);
     }
+    wined3d_mutex_unlock();
 
     return D3D_OK;
 }
@@ -1445,7 +1440,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateStateBlock(IDirect3DDevice8 *if
         D3DSTATEBLOCKTYPE Type, DWORD *handle)
 {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-    IDirect3DStateBlock8Impl *object;
+    IWineD3DStateBlock *stateblock;
     HRESULT hr;
 
     TRACE("iface %p, type %#x, handle %p.\n", iface, Type, handle);
@@ -1458,39 +1453,30 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateStateBlock(IDirect3DDevice8 *if
         return D3DERR_INVALIDCALL;
     }
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DStateBlock8Impl));
-    if (!object)
-    {
-        ERR("Failed to allocate memory.\n");
-        return E_OUTOFMEMORY;
-    }
-
-    object->lpVtbl = &Direct3DStateBlock8_Vtbl;
-    object->ref = 1;
-
     wined3d_mutex_lock();
     hr = IWineD3DDevice_CreateStateBlock(This->WineD3DDevice, (WINED3DSTATEBLOCKTYPE)Type,
-            &object->wineD3DStateBlock, (IUnknown *)object);
+            &stateblock, NULL);
     if (FAILED(hr))
     {
         wined3d_mutex_unlock();
         ERR("IWineD3DDevice_CreateStateBlock failed, hr %#x\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
         return hr;
     }
 
-    *handle = d3d8_allocate_handle(&This->handle_table, object, D3D8_HANDLE_SB);
+    *handle = d3d8_allocate_handle(&This->handle_table, stateblock, D3D8_HANDLE_SB);
     wined3d_mutex_unlock();
 
     if (*handle == D3D8_INVALID_HANDLE)
     {
         ERR("Failed to allocate a handle.\n");
-        IDirect3DStateBlock8_Release((IDirect3DStateBlock8 *)object);
+        wined3d_mutex_lock();
+        IWineD3DStateBlock_Release(stateblock);
+        wined3d_mutex_unlock();
         return E_FAIL;
     }
     ++*handle;
 
-    TRACE("Returning %#x (%p).\n", *handle, object);
+    TRACE("Returning %#x (%p).\n", *handle, stateblock);
 
     return hr;
 }

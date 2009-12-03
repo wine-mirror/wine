@@ -112,14 +112,6 @@ typedef struct IDirect3DSwapChain8Impl IDirect3DSwapChain8Impl;
 typedef struct IDirect3DResource8Impl IDirect3DResource8Impl;
 typedef struct IDirect3DVolume8Impl IDirect3DVolume8Impl;
 typedef struct IDirect3DVertexBuffer8Impl IDirect3DVertexBuffer8Impl;
-
-/** Private Interfaces: */
-typedef struct IDirect3DStateBlockImpl IDirect3DStateBlockImpl;
-typedef struct IDirect3DVertexShaderImpl IDirect3DVertexShaderImpl;
-typedef struct IDirect3DPixelShaderImpl IDirect3DPixelShaderImpl;
-typedef struct IDirect3DVertexShaderDeclarationImpl IDirect3DVertexShaderDeclarationImpl;
-
-/* Advance declaration of structures to satisfy compiler */
 typedef struct IDirect3DVertexShader8Impl IDirect3DVertexShader8Impl;
 
 /* ===========================================================================
@@ -443,15 +435,6 @@ struct IDirect3DVolumeTexture8Impl
 HRESULT volumetexture_init(IDirect3DVolumeTexture8Impl *texture, IDirect3DDevice8Impl *device,
         UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
 
-/* ----------------------- */
-/* IDirect3DStateBlockImpl */
-/* ----------------------- */
-
-/* TODO: Generate a valid GUIDs */
-/* {83B073CE-6F30-11d9-C687-00046142C14F} */
-DEFINE_GUID(IID_IDirect3DStateBlock8,
-0x83b073ce, 0x6f30, 0x11d9, 0xc6, 0x87, 0x0, 0x4, 0x61, 0x42, 0xc1, 0x4f);
-
 DEFINE_GUID(IID_IDirect3DVertexDeclaration8,
 0x5dd7478d, 0xcbf3, 0x41a6, 0x8c, 0xfd, 0xfd, 0x19, 0x2b, 0x11, 0xc7, 0x90);
 
@@ -460,50 +443,6 @@ DEFINE_GUID(IID_IDirect3DVertexShader8,
 
 DEFINE_GUID(IID_IDirect3DPixelShader8,
 0x6d3bdbdc, 0x5b02, 0x4415, 0xb8, 0x52, 0xce, 0x5e, 0x8b, 0xcc, 0xb2, 0x89);
-
-
-/*****************************************************************************
- * IDirect3DStateBlock8 interface
- */
-#define INTERFACE IDirect3DStateBlock8
-DECLARE_INTERFACE_(IDirect3DStateBlock8, IUnknown)
-{
-    /*** IUnknown methods ***/
-    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
-    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
-    STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IDirect3DStateBlock9 methods ***/
-    STDMETHOD(GetDevice)(THIS_ struct IDirect3DDevice8** ppDevice) PURE;
-    STDMETHOD(Capture)(THIS) PURE;
-    STDMETHOD(Apply)(THIS) PURE;
-};
-#undef INTERFACE
-
-/*** IUnknown methods ***/
-#define IDirect3DStateBlock8_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirect3DStateBlock8_AddRef(p)              (p)->lpVtbl->AddRef(p)
-#define IDirect3DStateBlock8_Release(p)             (p)->lpVtbl->Release(p)
-/*** IDirect3DStateBlock9 methods ***/
-#define IDirect3DStateBlock8_GetDevice(p,a)         (p)->lpVtbl->GetDevice(p,a)
-#define IDirect3DStateBlock8_Capture(p)             (p)->lpVtbl->Capture(p)
-#define IDirect3DStateBlock8_Apply(p)               (p)->lpVtbl->Apply(p)
-
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DStateBlock8Vtbl Direct3DStateBlock8_Vtbl DECLSPEC_HIDDEN;
-
-/*****************************************************************************
- * IDirect3DStateBlock implementation structure
- */
-typedef struct  IDirect3DStateBlock8Impl {
-    /* IUnknown fields */
-    const IDirect3DStateBlock8Vtbl *lpVtbl;
-    LONG                   ref;
-
-    /* IDirect3DResource8 fields */
-    IWineD3DStateBlock             *wineD3DStateBlock;
-} IDirect3DStateBlock8Impl;
 
 /*****************************************************************************
  * IDirect3DVertexDeclaration8 interface
