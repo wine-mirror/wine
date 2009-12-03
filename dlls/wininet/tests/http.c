@@ -2056,7 +2056,6 @@ static void test_http1_1(int port)
         ok(req != NULL, "HttpOpenRequest failed\n");
 
         ret = HttpSendRequest(req, NULL, 0, NULL, 0);
-        todo_wine
         ok(ret, "HttpSendRequest failed\n");
     }
 
@@ -2242,7 +2241,7 @@ static void test_response_without_headers(int port)
 
     SetLastError(0xdeadbeef);
     r = HttpSendRequest(hr, NULL, 0, NULL, 0);
-    todo_wine ok(r, "HttpSendRequest failed %u\n", GetLastError());
+    ok(r, "HttpSendRequest failed %u\n", GetLastError());
 
     count = 0;
     memset(buffer, 0, sizeof buffer);
