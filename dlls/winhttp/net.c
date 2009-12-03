@@ -110,9 +110,12 @@ MAKE_FUNCPTR( SSL_read );
 MAKE_FUNCPTR( SSL_get_ex_new_index );
 MAKE_FUNCPTR( SSL_get_ex_data );
 MAKE_FUNCPTR( SSL_set_ex_data );
+MAKE_FUNCPTR( SSL_get_ex_data_X509_STORE_CTX_idx );
 MAKE_FUNCPTR( SSL_get_verify_result );
 MAKE_FUNCPTR( SSL_get_peer_certificate );
 MAKE_FUNCPTR( SSL_CTX_set_default_verify_paths );
+MAKE_FUNCPTR( SSL_CTX_set_verify );
+MAKE_FUNCPTR( X509_STORE_CTX_get_ex_data );
 
 MAKE_FUNCPTR( BIO_new_fp );
 MAKE_FUNCPTR( CRYPTO_num_locks );
@@ -208,6 +211,19 @@ static int sock_get_error( int err )
     return err;
 }
 
+#ifdef SONAME_LIBSSL
+static int netconn_secure_verify( int preverify_ok, X509_STORE_CTX *ctx )
+{
+    SSL *ssl;
+    WCHAR *server;
+
+    ssl = pX509_STORE_CTX_get_ex_data( ctx, pSSL_get_ex_data_X509_STORE_CTX_idx() );
+    server = pSSL_get_ex_data( ssl, hostname_idx );
+    FIXME("verify %s\n", debugstr_w(server));
+    return preverify_ok;
+}
+#endif
+
 BOOL netconn_init( netconn_t *conn, BOOL secure )
 {
 #if defined(SONAME_LIBSSL) && defined(SONAME_LIBCRYPTO)
@@ -261,9 +277,12 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     LOAD_FUNCPTR( SSL_get_ex_new_index );
     LOAD_FUNCPTR( SSL_get_ex_data );
     LOAD_FUNCPTR( SSL_set_ex_data );
+    LOAD_FUNCPTR( SSL_get_ex_data_X509_STORE_CTX_idx );
     LOAD_FUNCPTR( SSL_get_verify_result );
     LOAD_FUNCPTR( SSL_get_peer_certificate );
     LOAD_FUNCPTR( SSL_CTX_set_default_verify_paths );
+    LOAD_FUNCPTR( SSL_CTX_set_verify );
+    LOAD_FUNCPTR( X509_STORE_CTX_get_ex_data );
 #undef LOAD_FUNCPTR
 
 #define LOAD_FUNCPTR(x) \
@@ -297,6 +316,14 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
         return FALSE;
     }
     hostname_idx = pSSL_get_ex_new_index( 0, (void *)"hostname index", NULL, NULL, NULL );
+    if (hostname_idx == -1)
+    {
+        ERR("SSL_get_ex_new_index failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
+        set_last_error( ERROR_OUTOFMEMORY );
+        LeaveCriticalSection( &init_ssl_cs );
+        return FALSE;
+    }
+    pSSL_CTX_set_verify( ctx, SSL_VERIFY_PEER, netconn_secure_verify );
 
     pCRYPTO_set_id_callback(ssl_thread_id);
     num_ssl_locks = pCRYPTO_num_locks();
@@ -429,13 +456,18 @@ BOOL netconn_connect( netconn_t *conn, const struct sockaddr *sockaddr, unsigned
 BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname )
 {
 #ifdef SONAME_LIBSSL
-    X509 *cert;
     long res;
 
     if (!(conn->ssl_conn = pSSL_new( ctx )))
     {
         ERR("SSL_new failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
         set_last_error( ERROR_OUTOFMEMORY );
+        goto fail;
+    }
+    if (!pSSL_set_ex_data( conn->ssl_conn, hostname_idx, hostname ))
+    {
+        ERR("SSL_set_ex_data failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
+        set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
         goto fail;
     }
     if (!pSSL_set_fd( conn->ssl_conn, conn->socket ))
@@ -447,13 +479,6 @@ BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname )
     if (pSSL_connect( conn->ssl_conn ) <= 0)
     {
         ERR("SSL_connect failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
-        set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
-        goto fail;
-    }
-    pSSL_set_ex_data( conn->ssl_conn, hostname_idx, hostname );
-    if (!(cert = pSSL_get_peer_certificate( conn->ssl_conn )))
-    {
-        ERR("No certificate for server: %s\n", pERR_error_string( pERR_get_error(), 0 ));
         set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
         goto fail;
     }
