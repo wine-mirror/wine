@@ -780,7 +780,7 @@ static HRESULT call_cp_func(IDispatch *disp, DISPID dispid)
 static BOOL is_cp_event(ConnectionPoint *cp, DISPID dispid)
 {
     cp_static_data_t *data;
-    unsigned min, max, i;
+    int min, max, i;
     HRESULT hres;
 
     data = cp->data;
@@ -790,11 +790,11 @@ static BOOL is_cp_event(ConnectionPoint *cp, DISPID dispid)
     if(!data->ids) {
         hres = get_dispids(data->tid, &data->id_cnt, &data->ids);
         if(FAILED(hres))
-            return hres;
+            return FALSE;
     }
 
     min = 0;
-    max = data->id_cnt;
+    max = data->id_cnt-1;
     while(min <= max) {
         i = (min+max)/2;
         if(data->ids[i] == dispid)
