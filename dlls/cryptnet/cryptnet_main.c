@@ -235,6 +235,113 @@ static BOOL WINAPI CRYPT_GetUrlFromCertificateIssuer(LPCSTR pszUrlOid,
     return ret;
 }
 
+static BOOL CRYPT_GetUrlFromCRLDistPointsExt(const CRYPT_DATA_BLOB *value,
+ PCRYPT_URL_ARRAY pUrlArray, DWORD *pcbUrlArray, PCRYPT_URL_INFO pUrlInfo,
+ DWORD *pcbUrlInfo)
+{
+    BOOL ret;
+    CRL_DIST_POINTS_INFO *info;
+    DWORD size;
+
+    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CRL_DIST_POINTS,
+     value->pbData, value->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
+    if (ret)
+    {
+        DWORD i, cUrl, bytesNeeded = sizeof(CRYPT_URL_ARRAY);
+
+        for (i = 0, cUrl = 0; i < info->cDistPoint; i++)
+            if (info->rgDistPoint[i].DistPointName.dwDistPointNameChoice
+             == CRL_DIST_POINT_FULL_NAME)
+            {
+                DWORD j;
+                CERT_ALT_NAME_INFO *name =
+                 &info->rgDistPoint[i].DistPointName.u.FullName;
+
+                for (j = 0; j < name->cAltEntry; j++)
+                    if (name->rgAltEntry[j].dwAltNameChoice ==
+                     CERT_ALT_NAME_URL)
+                    {
+                        if (name->rgAltEntry[j].u.pwszURL)
+                        {
+                            cUrl++;
+                            bytesNeeded += sizeof(LPWSTR) +
+                             (lstrlenW(name->rgAltEntry[j].u.pwszURL) + 1)
+                             * sizeof(WCHAR);
+                        }
+                    }
+            }
+        if (!pcbUrlArray)
+        {
+            SetLastError(E_INVALIDARG);
+            ret = FALSE;
+        }
+        else if (!pUrlArray)
+            *pcbUrlArray = bytesNeeded;
+        else if (*pcbUrlArray < bytesNeeded)
+        {
+            SetLastError(ERROR_MORE_DATA);
+            *pcbUrlArray = bytesNeeded;
+            ret = FALSE;
+        }
+        else
+        {
+            LPWSTR nextUrl;
+
+            *pcbUrlArray = bytesNeeded;
+            pUrlArray->cUrl = 0;
+            pUrlArray->rgwszUrl =
+             (LPWSTR *)((BYTE *)pUrlArray + sizeof(CRYPT_URL_ARRAY));
+            nextUrl = (LPWSTR)((BYTE *)pUrlArray + sizeof(CRYPT_URL_ARRAY)
+             + cUrl * sizeof(LPWSTR));
+            for (i = 0; i < info->cDistPoint; i++)
+                if (info->rgDistPoint[i].DistPointName.dwDistPointNameChoice
+                 == CRL_DIST_POINT_FULL_NAME)
+                {
+                    DWORD j;
+                    CERT_ALT_NAME_INFO *name =
+                     &info->rgDistPoint[i].DistPointName.u.FullName;
+
+                    for (j = 0; j < name->cAltEntry; j++)
+                        if (name->rgAltEntry[j].dwAltNameChoice ==
+                         CERT_ALT_NAME_URL)
+                        {
+                            if (name->rgAltEntry[j].u.pwszURL)
+                            {
+                                lstrcpyW(nextUrl,
+                                 name->rgAltEntry[j].u.pwszURL);
+                                pUrlArray->rgwszUrl[pUrlArray->cUrl++] =
+                                 nextUrl;
+                                nextUrl +=
+                                 (lstrlenW(name->rgAltEntry[j].u.pwszURL) + 1);
+                            }
+                        }
+                }
+        }
+        if (ret)
+        {
+            if (pcbUrlInfo)
+            {
+                FIXME("url info: stub\n");
+                if (!pUrlInfo)
+                    *pcbUrlInfo = sizeof(CRYPT_URL_INFO);
+                else if (*pcbUrlInfo < sizeof(CRYPT_URL_INFO))
+                {
+                    *pcbUrlInfo = sizeof(CRYPT_URL_INFO);
+                    SetLastError(ERROR_MORE_DATA);
+                    ret = FALSE;
+                }
+                else
+                {
+                    *pcbUrlInfo = sizeof(CRYPT_URL_INFO);
+                    memset(pUrlInfo, 0, sizeof(CRYPT_URL_INFO));
+                }
+            }
+        }
+        LocalFree(info);
+    }
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_GetUrlFromCertificateCRLDistPoint(LPCSTR pszUrlOid,
  LPVOID pvPara, DWORD dwFlags, PCRYPT_URL_ARRAY pUrlArray, DWORD *pcbUrlArray,
  PCRYPT_URL_INFO pUrlInfo, DWORD *pcbUrlInfo, LPVOID pvReserved)
@@ -251,108 +358,8 @@ static BOOL WINAPI CRYPT_GetUrlFromCertificateCRLDistPoint(LPCSTR pszUrlOid,
     }
     if ((ext = CertFindExtension(szOID_CRL_DIST_POINTS,
      cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
-    {
-        CRL_DIST_POINTS_INFO *info;
-        DWORD size;
-
-        ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CRL_DIST_POINTS,
-         ext->Value.pbData, ext->Value.cbData, CRYPT_DECODE_ALLOC_FLAG, NULL,
-         &info, &size);
-        if (ret)
-        {
-            DWORD i, cUrl, bytesNeeded = sizeof(CRYPT_URL_ARRAY);
-
-            for (i = 0, cUrl = 0; i < info->cDistPoint; i++)
-                if (info->rgDistPoint[i].DistPointName.dwDistPointNameChoice
-                 == CRL_DIST_POINT_FULL_NAME)
-                {
-                    DWORD j;
-                    CERT_ALT_NAME_INFO *name =
-                     &info->rgDistPoint[i].DistPointName.u.FullName;
-
-                    for (j = 0; j < name->cAltEntry; j++)
-                        if (name->rgAltEntry[j].dwAltNameChoice ==
-                         CERT_ALT_NAME_URL)
-                        {
-                            if (name->rgAltEntry[j].u.pwszURL)
-                            {
-                                cUrl++;
-                                bytesNeeded += sizeof(LPWSTR) +
-                                 (lstrlenW(name->rgAltEntry[j].u.pwszURL) + 1)
-                                 * sizeof(WCHAR);
-                            }
-                        }
-                }
-            if (!pcbUrlArray)
-            {
-                SetLastError(E_INVALIDARG);
-                ret = FALSE;
-            }
-            else if (!pUrlArray)
-                *pcbUrlArray = bytesNeeded;
-            else if (*pcbUrlArray < bytesNeeded)
-            {
-                SetLastError(ERROR_MORE_DATA);
-                *pcbUrlArray = bytesNeeded;
-                ret = FALSE;
-            }
-            else
-            {
-                LPWSTR nextUrl;
-
-                *pcbUrlArray = bytesNeeded;
-                pUrlArray->cUrl = 0;
-                pUrlArray->rgwszUrl =
-                 (LPWSTR *)((BYTE *)pUrlArray + sizeof(CRYPT_URL_ARRAY));
-                nextUrl = (LPWSTR)((BYTE *)pUrlArray + sizeof(CRYPT_URL_ARRAY)
-                 + cUrl * sizeof(LPWSTR));
-                for (i = 0; i < info->cDistPoint; i++)
-                    if (info->rgDistPoint[i].DistPointName.dwDistPointNameChoice
-                     == CRL_DIST_POINT_FULL_NAME)
-                    {
-                        DWORD j;
-                        CERT_ALT_NAME_INFO *name =
-                         &info->rgDistPoint[i].DistPointName.u.FullName;
-
-                        for (j = 0; j < name->cAltEntry; j++)
-                            if (name->rgAltEntry[j].dwAltNameChoice ==
-                             CERT_ALT_NAME_URL)
-                            {
-                                if (name->rgAltEntry[j].u.pwszURL)
-                                {
-                                    lstrcpyW(nextUrl,
-                                     name->rgAltEntry[j].u.pwszURL);
-                                    pUrlArray->rgwszUrl[pUrlArray->cUrl++] =
-                                     nextUrl;
-                                    nextUrl +=
-                                     (lstrlenW(name->rgAltEntry[j].u.pwszURL) + 1);
-                                }
-                            }
-                    }
-            }
-            if (ret)
-            {
-                if (pcbUrlInfo)
-                {
-                    FIXME("url info: stub\n");
-                    if (!pUrlInfo)
-                        *pcbUrlInfo = sizeof(CRYPT_URL_INFO);
-                    else if (*pcbUrlInfo < sizeof(CRYPT_URL_INFO))
-                    {
-                        *pcbUrlInfo = sizeof(CRYPT_URL_INFO);
-                        SetLastError(ERROR_MORE_DATA);
-                        ret = FALSE;
-                    }
-                    else
-                    {
-                        *pcbUrlInfo = sizeof(CRYPT_URL_INFO);
-                        memset(pUrlInfo, 0, sizeof(CRYPT_URL_INFO));
-                    }
-                }
-            }
-            LocalFree(info);
-        }
-    }
+        ret = CRYPT_GetUrlFromCRLDistPointsExt(&ext->Value, pUrlArray,
+         pcbUrlArray, pUrlInfo, pcbUrlInfo);
     else
         SetLastError(CRYPT_E_NOT_FOUND);
     return ret;
