@@ -470,7 +470,6 @@ static INT NLS_GetDateTimeFormatW(LCID lcid, DWORD dwFlags,
     else if ((dwFlags & DATE_DATEVARSONLY && IsDateFmtChar(*lpFormat)) ||
              (dwFlags & TIME_TIMEVARSONLY && IsTimeFmtChar(*lpFormat)))
     {
-      char  buffA[32];
       WCHAR buff[32], fmtChar;
       LPCWSTR szAdd = NULL;
       DWORD dwVal = 0;
@@ -604,9 +603,9 @@ static INT NLS_GetDateTimeFormatW(LCID lcid, DWORD dwFlags,
 
       if (szAdd == buff && buff[0] == '\0')
       {
+        static const WCHAR fmtW[] = {'%','.','*','d',0};
         /* We have a numeric value to add */
-        sprintf(buffA, "%.*d", count, dwVal);
-        MultiByteToWideChar(CP_ACP, 0, buffA, -1, buff, sizeof(buff)/sizeof(WCHAR));
+        snprintfW(buff, sizeof(buff)/sizeof(WCHAR), fmtW, count, dwVal);
       }
 
       dwLen = szAdd ? strlenW(szAdd) : 0;
