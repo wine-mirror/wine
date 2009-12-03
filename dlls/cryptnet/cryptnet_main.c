@@ -669,7 +669,7 @@ static BOOL CRYPT_DownloadObject(DWORD dwRetrievalFlags, HINTERNET hHttp,
                         }
                     }
                     if (ret)
-                        object.cbData += bytesAvailable;
+                        object.cbData += buffer.dwBufferLength;
                 }
                 else
                 {
