@@ -185,6 +185,9 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
         window_set_docnode(This, NULL);
         release_children(This);
 
+        if(This->frame_element)
+            This->frame_element->content_window = NULL;
+
         if(This->option_factory) {
             This->option_factory->window = NULL;
             IHTMLOptionElementFactory_Release(HTMLOPTFACTORY(This->option_factory));
