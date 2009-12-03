@@ -146,7 +146,7 @@ static void test_add_certificate(void)
     cert->wCertificateType = WIN_CERT_TYPE_PKCS_SIGNED_DATA;
     CopyMemory(cert->bCertificate, test_cert_data, sizeof(test_cert_data));
 
-    todo_wine ok(pImageAddCertificate(hFile, cert, &index), "Unable to add certificate to image, error %x\n", GetLastError());
+    ok(pImageAddCertificate(hFile, cert, &index), "Unable to add certificate to image, error %x\n", GetLastError());
 
     HeapFree(GetProcessHeap(), 0, cert);
     CloseHandle(hFile);
@@ -170,7 +170,7 @@ static void test_get_certificate(void)
     ret = pImageGetCertificateData(hFile, 0, NULL, &cert_len);
     err = GetLastError();
 
-    todo_wine ok ((ret == FALSE) && (err == ERROR_INSUFFICIENT_BUFFER), "ImageGetCertificateData gave unexpected result; ret=%d / err=%x\n", ret, err);
+    ok ((ret == FALSE) && (err == ERROR_INSUFFICIENT_BUFFER), "ImageGetCertificateData gave unexpected result; ret=%d / err=%x\n", ret, err);
 
     cert = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cert_len);
 
@@ -181,8 +181,8 @@ static void test_get_certificate(void)
         return;
     }
 
-    todo_wine ok(ret = pImageGetCertificateData(hFile, 0, cert, &cert_len), "Unable to retrieve certificate; err=%x\n", GetLastError());
-    todo_wine ok(memcmp(cert->bCertificate, test_cert_data, cert_len - sizeof(WIN_CERTIFICATE)) == 0, "Certificate retrieved did not match original\n");
+    ok(ret = pImageGetCertificateData(hFile, 0, cert, &cert_len), "Unable to retrieve certificate; err=%x\n", GetLastError());
+    ok(memcmp(cert->bCertificate, test_cert_data, cert_len - sizeof(WIN_CERTIFICATE)) == 0, "Certificate retrieved did not match original\n");
 
     HeapFree(GetProcessHeap(), 0, cert);
     CloseHandle(hFile);
@@ -204,7 +204,7 @@ static void test_remove_certificate(void)
     todo_wine ok (pImageRemoveCertificate(hFile, 0), "Unable to remove certificate from file; err=%x\n", GetLastError());
 
     /* Test to see if the certificate has actually been removed */
-    ok(pImageGetCertificateHeader(hFile, 0, &cert) == FALSE, "Certificate header retrieval succeeded when it should have failed\n");
+    todo_wine ok(pImageGetCertificateHeader(hFile, 0, &cert) == FALSE, "Certificate header retrieval succeeded when it should have failed\n");
 
     CloseHandle(hFile);
 }
