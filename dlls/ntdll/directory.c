@@ -2349,7 +2349,7 @@ NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *
     name     = attr->ObjectName->Buffer;
     name_len = attr->ObjectName->Length / sizeof(WCHAR);
 
-    if (name_len && IS_SEPARATOR(name[0])) return STATUS_OBJECT_PATH_SYNTAX_BAD;
+    if (name_len && IS_SEPARATOR(name[0])) return STATUS_INVALID_PARAMETER;
 
     /* check for invalid characters */
     for (p = name; p < name + name_len; p++)

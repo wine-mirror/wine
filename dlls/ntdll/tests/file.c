@@ -195,7 +195,7 @@ static void open_file_test(void)
     nameW.Length += sizeof(WCHAR);
     status = pNtOpenFile( &handle, GENERIC_READ, &attr, &io,
                           FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE );
-    ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD,
+    ok( status == STATUS_INVALID_PARAMETER || status == STATUS_OBJECT_PATH_SYNTAX_BAD,  /* nt4 */
         "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
     if (!status) CloseHandle( handle );
 
