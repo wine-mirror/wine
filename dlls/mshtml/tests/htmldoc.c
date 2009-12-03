@@ -4152,8 +4152,8 @@ static void test_cookies(IUnknown *unk)
     ok(hres == S_OK, "get_cookie failed: %08x\n", hres);
     if(str) {
         size = sizeof(buf)/sizeof(WCHAR);
-        b = InternetGetCookieExW(http_urlW, NULL, buf, &size, 0, NULL);
-        ok(b, "InternetGetCookieEx failed: %08x\n", GetLastError());
+        b = InternetGetCookieW(http_urlW, NULL, buf, &size);
+        ok(b, "InternetGetCookieW failed: %08x\n", GetLastError());
         ok(!lstrcmpW(buf, str), "cookie = %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(buf));
         SysFreeString(str);
     }
@@ -4167,8 +4167,8 @@ static void test_cookies(IUnknown *unk)
     ok(hres == S_OK, "get_cookie failed: %08x\n", hres);
     ok(str2 != NULL, "cookie = NULL\n");
     size = sizeof(buf)/sizeof(WCHAR);
-    b = InternetGetCookieExW(http_urlW, NULL, buf, &size, 0, NULL);
-    ok(b, "InternetGetCookieEx failed: %08x\n", GetLastError());
+    b = InternetGetCookieW(http_urlW, NULL, buf, &size);
+    ok(b, "InternetGetCookieW failed: %08x\n", GetLastError());
     ok(!lstrcmpW(buf, str2), "cookie = %s, expected %s\n", wine_dbgstr_w(str2), wine_dbgstr_w(buf));
     ok(strstrW(str2, str) != NULL, "could not find %s in %s\n", wine_dbgstr_w(str), wine_dbgstr_w(str2));
     SysFreeString(str);
@@ -4183,8 +4183,8 @@ static void test_cookies(IUnknown *unk)
     ok(hres == S_OK, "get_cookie failed: %08x\n", hres);
     ok(str2 != NULL, "cookie = NULL\n");
     size = sizeof(buf)/sizeof(WCHAR);
-    b = InternetGetCookieExW(http_urlW, NULL, buf, &size, 0, NULL);
-    ok(b, "InternetGetCookieEx failed: %08x\n", GetLastError());
+    b = InternetGetCookieW(http_urlW, NULL, buf, &size);
+    ok(b, "InternetGetCookieW failed: %08x\n", GetLastError());
     ok(!lstrcmpW(buf, str2), "cookie = %s, expected %s\n", wine_dbgstr_w(str2), wine_dbgstr_w(buf));
     ok(strstrW(str2, str) != NULL, "could not find %s in %s\n", wine_dbgstr_w(str), wine_dbgstr_w(str2));
     SysFreeString(str);
