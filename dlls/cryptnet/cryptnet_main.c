@@ -1654,6 +1654,42 @@ static DWORD verify_cert_revocation_from_dist_points_ext(
     return error;
 }
 
+static DWORD verify_cert_revocation_from_aia_ext(
+ const CRYPT_DATA_BLOB *value, PCCERT_CONTEXT cert, DWORD index,
+ FILETIME *pTime, DWORD dwFlags, PCERT_REVOCATION_PARA pRevPara,
+ PCERT_REVOCATION_STATUS pRevStatus)
+{
+    BOOL ret;
+    DWORD error, size;
+    CERT_AUTHORITY_INFO_ACCESS *aia;
+
+    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_AUTHORITY_INFO_ACCESS,
+     value->pbData, value->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &aia, &size);
+    if (ret)
+    {
+        DWORD i;
+
+        for (i = 0; i < aia->cAccDescr; i++)
+            if (!strcmp(aia->rgAccDescr[i].pszAccessMethod,
+             szOID_PKIX_OCSP))
+            {
+                if (aia->rgAccDescr[i].AccessLocation.dwAltNameChoice ==
+                 CERT_ALT_NAME_URL)
+                    FIXME("OCSP URL = %s\n",
+                     debugstr_w(aia->rgAccDescr[i].AccessLocation.u.pwszURL));
+                else
+                    FIXME("unsupported AccessLocation type %d\n",
+                     aia->rgAccDescr[i].AccessLocation.dwAltNameChoice);
+            }
+        LocalFree(aia);
+        /* FIXME: lie and pretend OCSP validated the cert */
+        error = ERROR_SUCCESS;
+    }
+    else
+        error = GetLastError();
+    return error;
+}
+
 static DWORD verify_cert_revocation(PCCERT_CONTEXT cert, DWORD index,
  FILETIME *pTime, DWORD dwFlags, PCERT_REVOCATION_PARA pRevPara,
  PCERT_REVOCATION_STATUS pRevStatus)
@@ -1664,6 +1700,10 @@ static DWORD verify_cert_revocation(PCCERT_CONTEXT cert, DWORD index,
     if ((ext = CertFindExtension(szOID_CRL_DIST_POINTS,
      cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
         error = verify_cert_revocation_from_dist_points_ext(&ext->Value, cert,
+         index, pTime, dwFlags, pRevPara, pRevStatus);
+    else if ((ext = CertFindExtension(szOID_AUTHORITY_INFO_ACCESS,
+     cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
+        error = verify_cert_revocation_from_aia_ext(&ext->Value, cert,
          index, pTime, dwFlags, pRevPara, pRevStatus);
     else
     {
