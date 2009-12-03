@@ -71,7 +71,7 @@ typedef struct
 #define AUTOPRESS_DELAY	250    /* time to keep arrow pressed on KEY_DOWN */
 #define REPEAT_DELAY	50     /* delay between auto-increments */
 
-#define DEFAULT_WIDTH	    14 /* default width of the ctrl */
+#define DEFAULT_WIDTH	    16 /* default width of the ctrl */
 #define DEFAULT_XSEP         0 /* default separation between buddy and ctrl */
 #define DEFAULT_ADDTOP       0 /* amount to extend above the buddy window */
 #define DEFAULT_ADDBOT       0 /* amount to extend below the buddy window */
@@ -200,7 +200,7 @@ static void UPDOWN_GetArrowRect (const UPDOWN_INFO* infoPtr, RECT *rect, int arr
     /* now figure out if we need a space away from the buddy */
     if (IsWindow(infoPtr->Buddy) ) {
 	if (infoPtr->dwStyle & UDS_ALIGNLEFT) rect->right -= spacer;
-	else rect->left += spacer;
+	else if (infoPtr->dwStyle & UDS_ALIGNRIGHT) rect->left += spacer;
     }
 
     /*
@@ -854,13 +854,16 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
     switch(message)
     {
         case WM_CREATE:
+	    {
+	    CREATESTRUCTW *pcs = (CREATESTRUCTW*)lParam;
+
             infoPtr = Alloc (sizeof(UPDOWN_INFO));
 	    SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 
 	    /* initialize the info struct */
 	    infoPtr->Self = hwnd;
-	    infoPtr->Notify = ((LPCREATESTRUCTW)lParam)->hwndParent;
-            infoPtr->dwStyle = ((LPCREATESTRUCTW)lParam)->style;
+	    infoPtr->Notify  = pcs->hwndParent;
+	    infoPtr->dwStyle = pcs->style;
 	    infoPtr->AccelCount = 0;
 	    infoPtr->AccelVect = 0;
 	    infoPtr->AccelIndex = -1;
@@ -872,6 +875,9 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	    infoPtr->Flags = (infoPtr->dwStyle & UDS_SETBUDDYINT) ? FLAG_BUDDYINT : 0;
 
             SetWindowLongW (hwnd, GWL_STYLE, infoPtr->dwStyle & ~WS_BORDER);
+	    if (!(infoPtr->dwStyle & UDS_HORZ))
+	        SetWindowPos (hwnd, NULL, 0, 0, DEFAULT_WIDTH, pcs->cy,
+	                      SWP_NOOWNERZORDER | SWP_NOMOVE);
 
             /* Do we pick the buddy win ourselves? */
 	    if (infoPtr->dwStyle & UDS_AUTOBUDDY)
@@ -880,6 +886,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
             OpenThemeData (hwnd, themeClass);
 
 	    TRACE("UpDown Ctrl creation, hwnd=%p\n", hwnd);
+	    }
 	    break;
 
 	case WM_DESTROY:

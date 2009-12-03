@@ -559,6 +559,7 @@ static void test_updown_create(void)
 {
     CHAR text[MAX_PATH];
     HWND updown;
+    RECT r;
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -573,6 +574,55 @@ static void test_updown_create(void)
     ok(lstrlenA(text) == 0, "Expected empty string\n");
     ok_sequence(sequences, EDIT_SEQ_INDEX, get_edit_text_seq, "get edit text", FALSE);
 
+    DestroyWindow(updown);
+
+    /* create with zero width */
+    updown = CreateWindowA (UPDOWN_CLASSA, 0, WS_CHILD | WS_BORDER | WS_VISIBLE, 0, 0, 0, 0,
+                   parent_wnd, (HMENU)(DWORD_PTR)1, GetModuleHandleA(NULL), 0);
+    ok(updown != NULL, "Failed to create updown control\n");
+    r.right = 0;
+    GetClientRect(updown, &r);
+    ok(r.right > 0, "Expected default width, got %d\n", r.right);
+    DestroyWindow(updown);
+    /* create with really small width */
+    updown = CreateWindowA (UPDOWN_CLASSA, 0, WS_CHILD | WS_BORDER | WS_VISIBLE, 0, 0, 2, 0,
+                   parent_wnd, (HMENU)(DWORD_PTR)1, GetModuleHandleA(NULL), 0);
+    ok(updown != NULL, "Failed to create updown control\n");
+    r.right = 0;
+    GetClientRect(updown, &r);
+    ok(r.right != 2 && r.right > 0, "Expected default width, got %d\n", r.right);
+    DestroyWindow(updown);
+    /* create with width greater than default */
+    updown = CreateWindowA (UPDOWN_CLASSA, 0, WS_CHILD | WS_BORDER | WS_VISIBLE, 0, 0, 100, 0,
+                   parent_wnd, (HMENU)(DWORD_PTR)1, GetModuleHandleA(NULL), 0);
+    ok(updown != NULL, "Failed to create updown control\n");
+    r.right = 0;
+    GetClientRect(updown, &r);
+    ok(r.right < 100 && r.right > 0, "Expected default width, got %d\n", r.right);
+    DestroyWindow(updown);
+    /* create with zero height, UDS_HORZ */
+    updown = CreateWindowA (UPDOWN_CLASSA, 0, UDS_HORZ | WS_CHILD | WS_BORDER | WS_VISIBLE, 0, 0, 0, 0,
+                   parent_wnd, (HMENU)(DWORD_PTR)1, GetModuleHandleA(NULL), 0);
+    ok(updown != NULL, "Failed to create updown control\n");
+    r.bottom = 0;
+    GetClientRect(updown, &r);
+    ok(r.bottom == 0, "Expected zero height, got %d\n", r.bottom);
+    DestroyWindow(updown);
+    /* create with really small height, UDS_HORZ */
+    updown = CreateWindowA (UPDOWN_CLASSA, 0, UDS_HORZ | WS_CHILD | WS_BORDER | WS_VISIBLE, 0, 0, 0, 2,
+                   parent_wnd, (HMENU)(DWORD_PTR)1, GetModuleHandleA(NULL), 0);
+    ok(updown != NULL, "Failed to create updown control\n");
+    r.bottom = 0;
+    GetClientRect(updown, &r);
+    ok(r.bottom == 0, "Expected zero height, got %d\n", r.bottom);
+    DestroyWindow(updown);
+    /* create with height greater than default, UDS_HORZ */
+    updown = CreateWindowA (UPDOWN_CLASSA, 0, UDS_HORZ | WS_CHILD | WS_BORDER | WS_VISIBLE, 0, 0, 0, 100,
+                   parent_wnd, (HMENU)(DWORD_PTR)1, GetModuleHandleA(NULL), 0);
+    ok(updown != NULL, "Failed to create updown control\n");
+    r.bottom = 0;
+    GetClientRect(updown, &r);
+    ok(r.bottom < 100 && r.bottom > 0, "Expected default height, got %d\n", r.bottom);
     DestroyWindow(updown);
 }
 
