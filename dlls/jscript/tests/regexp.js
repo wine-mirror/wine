@@ -71,6 +71,11 @@ m = re.exec();
 ok(m === null, "m is not null");
 ok(re.lastIndex === 0, "re.lastIndex = " + re.lastIndex);
 
+m = /(a|b)+|(c)/.exec("aa");
+ok(m[0] === "aa", "m[0] = " + m[0]);
+ok(m[1] === "a", "m[1] = " + m[1]);
+ok(m[2] === "", "m[2] = " + m[2]);
+
 b = re.test("  a ");
 ok(b === true, "re.test('  a ') returned " + b);
 ok(re.lastIndex === 3, "re.lastIndex = " + re.lastIndex);

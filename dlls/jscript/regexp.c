@@ -3349,8 +3349,13 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, c
         *parens_cnt = regexp->jsregexp->parenCount;
 
         for(i=0; i < regexp->jsregexp->parenCount; i++) {
-            (*parens)[i].str = *cp + result->parens[i].index;
-            (*parens)[i].len = result->parens[i].length;
+            if(result->parens[i].index == -1) {
+                (*parens)[i].str = NULL;
+                (*parens)[i].len = 0;
+            }else {
+                (*parens)[i].str = *cp + result->parens[i].index;
+                (*parens)[i].len = result->parens[i].length;
+            }
         }
     }
 
