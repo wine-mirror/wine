@@ -1578,20 +1578,97 @@ static DWORD verify_cert_revocation_with_crl(PCCERT_CONTEXT cert,
     return error;
 }
 
+static DWORD verify_cert_revocation_from_dist_points_ext(
+ const CRYPT_DATA_BLOB *value, PCCERT_CONTEXT cert, DWORD index,
+ FILETIME *pTime, DWORD dwFlags, PCERT_REVOCATION_PARA pRevPara,
+ PCERT_REVOCATION_STATUS pRevStatus)
+{
+    DWORD error = ERROR_SUCCESS, cbUrlArray;
+
+    if (CRYPT_GetUrlFromCRLDistPointsExt(value, NULL, &cbUrlArray, NULL, NULL))
+    {
+        CRYPT_URL_ARRAY *urlArray = CryptMemAlloc(cbUrlArray);
+
+        if (urlArray)
+        {
+            DWORD j, retrievalFlags = 0, startTime, endTime, timeout;
+            BOOL ret;
+
+            ret = CRYPT_GetUrlFromCRLDistPointsExt(value, urlArray,
+             &cbUrlArray, NULL, NULL);
+            if (dwFlags & CERT_VERIFY_CACHE_ONLY_BASED_REVOCATION)
+                retrievalFlags |= CRYPT_CACHE_ONLY_RETRIEVAL;
+            if (dwFlags & CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG &&
+             pRevPara && pRevPara->cbSize >= offsetof(CERT_REVOCATION_PARA,
+             dwUrlRetrievalTimeout) + sizeof(DWORD))
+            {
+                startTime = GetTickCount();
+                endTime = startTime + pRevPara->dwUrlRetrievalTimeout;
+                timeout = pRevPara->dwUrlRetrievalTimeout;
+            }
+            else
+                endTime = timeout = 0;
+            if (!ret)
+                error = GetLastError();
+            for (j = 0; !error && j < urlArray->cUrl; j++)
+            {
+                PCCRL_CONTEXT crl;
+
+                ret = CryptRetrieveObjectByUrlW(urlArray->rgwszUrl[j],
+                 CONTEXT_OID_CRL, retrievalFlags, timeout, (void **)&crl,
+                 NULL, NULL, NULL, NULL);
+                if (ret)
+                {
+                    error = verify_cert_revocation_with_crl(cert, crl, index,
+                     pTime, pRevStatus);
+                    if (!error && timeout)
+                    {
+                        DWORD time = GetTickCount();
+
+                        if ((int)(endTime - time) <= 0)
+                        {
+                            error = ERROR_TIMEOUT;
+                            pRevStatus->dwIndex = index;
+                        }
+                        else
+                            timeout = endTime - time;
+                    }
+                    CertFreeCRLContext(crl);
+                }
+                else
+                    error = CRYPT_E_REVOCATION_OFFLINE;
+            }
+            CryptMemFree(urlArray);
+        }
+        else
+        {
+            error = ERROR_OUTOFMEMORY;
+            pRevStatus->dwIndex = index;
+        }
+    }
+    else
+    {
+        error = GetLastError();
+        pRevStatus->dwIndex = index;
+    }
+    return error;
+}
+
 static DWORD verify_cert_revocation(PCCERT_CONTEXT cert, DWORD index,
  FILETIME *pTime, DWORD dwFlags, PCERT_REVOCATION_PARA pRevPara,
  PCERT_REVOCATION_STATUS pRevStatus)
 {
-    BOOL ret;
-    DWORD error = ERROR_SUCCESS, cbUrlArray;
+    DWORD error = ERROR_SUCCESS;
+    PCERT_EXTENSION ext;
 
-    ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_CRL_DIST_POINT, (void *)cert,
-     0, NULL, &cbUrlArray, NULL, NULL, NULL);
-    if (!ret && GetLastError() == CRYPT_E_NOT_FOUND)
+    if ((ext = CertFindExtension(szOID_CRL_DIST_POINTS,
+     cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
+        error = verify_cert_revocation_from_dist_points_ext(&ext->Value, cert,
+         index, pTime, dwFlags, pRevPara, pRevStatus);
+    else
     {
         if (pRevPara && pRevPara->hCrlStore && pRevPara->pIssuerCert)
         {
-            PCERT_EXTENSION ext;
             PCCRL_CONTEXT crl = NULL;
             BOOL canSignCRLs;
 
@@ -1653,71 +1730,6 @@ static DWORD verify_cert_revocation(PCCERT_CONTEXT cert, DWORD index,
             error = CRYPT_E_NO_REVOCATION_CHECK;
             pRevStatus->dwIndex = index;
         }
-    }
-    else if (ret)
-    {
-        CRYPT_URL_ARRAY *urlArray = CryptMemAlloc(cbUrlArray);
-
-        if (urlArray)
-        {
-            DWORD j, retrievalFlags = 0, startTime, endTime, timeout;
-
-            ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_CRL_DIST_POINT,
-             (void *)cert, 0, urlArray, &cbUrlArray, NULL, NULL, NULL);
-            if (dwFlags & CERT_VERIFY_CACHE_ONLY_BASED_REVOCATION)
-                retrievalFlags |= CRYPT_CACHE_ONLY_RETRIEVAL;
-            if (dwFlags & CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG &&
-             pRevPara && pRevPara->cbSize >= offsetof(CERT_REVOCATION_PARA,
-             dwUrlRetrievalTimeout) + sizeof(DWORD))
-            {
-                startTime = GetTickCount();
-                endTime = startTime + pRevPara->dwUrlRetrievalTimeout;
-                timeout = pRevPara->dwUrlRetrievalTimeout;
-            }
-            else
-                endTime = timeout = 0;
-            if (!ret)
-                error = GetLastError();
-            for (j = 0; !error && j < urlArray->cUrl; j++)
-            {
-                PCCRL_CONTEXT crl;
-
-                ret = CryptRetrieveObjectByUrlW(urlArray->rgwszUrl[j],
-                 CONTEXT_OID_CRL, retrievalFlags, timeout, (void **)&crl,
-                 NULL, NULL, NULL, NULL);
-                if (ret)
-                {
-                    error = verify_cert_revocation_with_crl(cert, crl, index,
-                     pTime, pRevStatus);
-                    if (!error && timeout)
-                    {
-                        DWORD time = GetTickCount();
-
-                        if ((int)(endTime - time) <= 0)
-                        {
-                            error = ERROR_TIMEOUT;
-                            pRevStatus->dwIndex = index;
-                        }
-                        else
-                            timeout = endTime - time;
-                    }
-                    CertFreeCRLContext(crl);
-                }
-                else
-                    error = CRYPT_E_REVOCATION_OFFLINE;
-            }
-            CryptMemFree(urlArray);
-        }
-        else
-        {
-            error = ERROR_OUTOFMEMORY;
-            pRevStatus->dwIndex = index;
-        }
-    }
-    else
-    {
-        error = GetLastError();
-        pRevStatus->dwIndex = index;
     }
     return error;
 }
