@@ -31,6 +31,32 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+HRESULT set_frame_doc(HTMLFrameBase *frame, nsIDOMDocument *nsdoc)
+{
+    nsIDOMWindow *nswindow;
+    HTMLWindow *window;
+    HRESULT hres = S_OK;
+
+    if(frame->content_window)
+        return S_OK;
+
+    nswindow = get_nsdoc_window(nsdoc);
+    if(!nswindow)
+        return E_FAIL;
+
+    window = nswindow_to_window(nswindow);
+    if(!window)
+        hres = HTMLWindow_Create(frame->element.node.doc->basedoc.doc_obj, nswindow,
+                frame->element.node.doc->basedoc.window, &window);
+    nsIDOMWindow_Release(nswindow);
+    if(FAILED(hres))
+        return hres;
+
+    frame->content_window = window;
+    window->frame_element = frame;
+    return S_OK;
+}
+
 #define HTMLFRAMEBASE_THIS(iface) DEFINE_THIS(HTMLFrameBase, IHTMLFrameBase, iface)
 
 static HRESULT WINAPI HTMLFrameBase_QueryInterface(IHTMLFrameBase *iface, REFIID riid, void **ppv)
@@ -414,27 +440,19 @@ HRESULT HTMLFrameBase_QI(HTMLFrameBase *This, REFIID riid, void **ppv)
 
 void HTMLFrameBase_destructor(HTMLFrameBase *This)
 {
-    if(This->content_window) {
+    if(This->content_window)
         This->content_window->frame_element = NULL;
-        IHTMLWindow2_Release(HTMLWINDOW2(This->content_window));
-    }
 
     HTMLElement_destructor(&This->element.node);
 }
 
 void HTMLFrameBase_Init(HTMLFrameBase *This, HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
-        HTMLWindow *content_window, dispex_static_data_t *dispex_data)
+        dispex_static_data_t *dispex_data)
 {
     This->lpIHTMLFrameBaseVtbl = &HTMLFrameBaseVtbl;
     This->lpIHTMLFrameBase2Vtbl = &HTMLFrameBase2Vtbl;
 
     HTMLElement_Init(&This->element, doc, nselem, dispex_data);
-
-    if(content_window) {
-        IHTMLWindow2_AddRef(HTMLWINDOW2(content_window));
-        content_window->frame_element = This;
-    }
-    This->content_window = content_window;
 }
 
 typedef struct {
@@ -471,6 +489,30 @@ static HRESULT HTMLFrameElement_get_document(HTMLDOMNode *iface, IDispatch **p)
     return S_OK;
 }
 
+static HRESULT HTMLFrameElement_bind_to_tree(HTMLDOMNode *iface)
+{
+    HTMLFrameElement *This = HTMLFRAME_NODE_THIS(iface);
+    nsIDOMHTMLFrameElement *nsframe;
+    nsIDOMDocument *nsdoc;
+    nsresult nsres;
+    HRESULT hres;
+
+    nsres = nsIDOMHTMLElement_QueryInterface(This->framebase.element.nselem, &IID_nsIDOMHTMLFrameElement, (void**)&nsframe);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    nsres = nsIDOMHTMLFrameElement_GetContentDocument(nsframe, &nsdoc);
+    nsIDOMHTMLFrameElement_Release(nsframe);
+    if(NS_FAILED(nsres) || !nsdoc) {
+        ERR("GetContentDocument failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    hres = set_frame_doc(&This->framebase, nsdoc);
+    nsIDOMDocument_Release(nsdoc);
+    return hres;
+}
+
 #undef HTMLFRAME_NODE_THIS
 
 static const NodeImplVtbl HTMLFrameElementImplVtbl = {
@@ -480,10 +522,14 @@ static const NodeImplVtbl HTMLFrameElementImplVtbl = {
     NULL,
     NULL,
     NULL,
-    HTMLFrameElement_get_document
+    HTMLFrameElement_get_document,
+    NULL,
+    NULL,
+    NULL,
+    HTMLFrameElement_bind_to_tree
 };
 
-HTMLElement *HTMLFrameElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLWindow *content_window)
+HTMLElement *HTMLFrameElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
 {
     nsIDOMHTMLFrameElement *nsframe;
     HTMLFrameElement *ret;
@@ -497,7 +543,7 @@ HTMLElement *HTMLFrameElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *n
     if(NS_FAILED(nsres))
         ERR("Could not get nsIDOMHTMLFrameElement iface: %08x\n", nsres);
 
-    HTMLFrameBase_Init(&ret->framebase, doc, nselem, content_window, NULL);
+    HTMLFrameBase_Init(&ret->framebase, doc, nselem, NULL);
 
     return &ret->framebase.element;
 }

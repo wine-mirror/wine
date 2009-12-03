@@ -79,6 +79,24 @@ static HRESULT HTMLIFrame_get_readystate(HTMLDOMNode *iface, BSTR *p)
     return IHTMLFrameBase2_get_readyState(HTMLFRAMEBASE2(&This->framebase), p);
 }
 
+static HRESULT HTMLIFrame_bind_to_tree(HTMLDOMNode *iface)
+{
+    HTMLIFrame *This = HTMLIFRAME_NODE_THIS(iface);
+    nsIDOMDocument *nsdoc;
+    nsresult nsres;
+    HRESULT hres;
+
+    nsres = nsIDOMHTMLIFrameElement_GetContentDocument(This->nsiframe, &nsdoc);
+    if(NS_FAILED(nsres) || !nsdoc) {
+        ERR("GetContentDocument failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    hres = set_frame_doc(&This->framebase, nsdoc);
+    nsIDOMDocument_Release(nsdoc);
+    return hres;
+}
+
 #undef HTMLIFRAME_NODE_THIS
 
 static const NodeImplVtbl HTMLIFrameImplVtbl = {
@@ -89,7 +107,10 @@ static const NodeImplVtbl HTMLIFrameImplVtbl = {
     NULL,
     NULL,
     HTMLIFrame_get_document,
-    HTMLIFrame_get_readystate
+    HTMLIFrame_get_readystate,
+    NULL,
+    NULL,
+    HTMLIFrame_bind_to_tree
 };
 
 static const tid_t HTMLIFrame_iface_tids[] = {
@@ -110,38 +131,7 @@ static dispex_static_data_t HTMLIFrame_dispex = {
     HTMLIFrame_iface_tids
 };
 
-static HTMLWindow *get_content_window(nsIDOMHTMLIFrameElement *nsiframe)
-{
-    HTMLWindow *ret;
-    nsIDOMWindow *nswindow;
-    nsIDOMDocument *nsdoc;
-    nsresult nsres;
-
-    nsres = nsIDOMHTMLIFrameElement_GetContentDocument(nsiframe, &nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("GetContentDocument failed: %08x\n", nsres);
-        return NULL;
-    }
-
-    if(!nsdoc) {
-        FIXME("NULL contentDocument\n");
-        return NULL;
-    }
-
-    nswindow = get_nsdoc_window(nsdoc);
-    nsIDOMDocument_Release(nsdoc);
-    if(!nswindow)
-        return NULL;
-
-    ret = nswindow_to_window(nswindow);
-    nsIDOMWindow_Release(nswindow);
-    if(!ret)
-        ERR("Could not get window object\n");
-
-    return ret;
-}
-
-HTMLElement *HTMLIFrame_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLWindow *content_window)
+HTMLElement *HTMLIFrame_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
 {
     HTMLIFrame *ret;
     nsresult nsres;
@@ -154,10 +144,7 @@ HTMLElement *HTMLIFrame_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
     if(NS_FAILED(nsres))
         ERR("Could not get nsIDOMHTMLIFrameElement iface: %08x\n", nsres);
 
-    if(!content_window)
-        content_window = get_content_window(ret->nsiframe);
-
-    HTMLFrameBase_Init(&ret->framebase, doc, nselem, content_window, &HTMLIFrame_dispex);
+    HTMLFrameBase_Init(&ret->framebase, doc, nselem, &HTMLIFrame_dispex);
 
     return &ret->framebase.element;
 }

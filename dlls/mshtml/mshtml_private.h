@@ -455,6 +455,7 @@ typedef struct {
     HRESULT (*get_readystate)(HTMLDOMNode*,BSTR*);
     HRESULT (*get_dispid)(HTMLDOMNode*,BSTR,DWORD,DISPID*);
     HRESULT (*invoke)(HTMLDOMNode*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
+    HRESULT (*bind_to_tree)(HTMLDOMNode*);
 } NodeImplVtbl;
 
 struct HTMLDOMNode {
@@ -675,6 +676,7 @@ HRESULT create_doc_uri(HTMLWindow*,WCHAR*,nsIWineURI**);
 
 HRESULT hlink_frame_navigate(HTMLDocument*,LPCWSTR,nsIInputStream*,DWORD);
 HRESULT navigate_url(HTMLWindow*,const WCHAR*,const WCHAR*);
+HRESULT set_frame_doc(HTMLFrameBase*,nsIDOMDocument*);
 
 void call_property_onchanged(ConnectionPoint*,DISPID);
 HRESULT call_set_active_object(IOleInPlaceUIWindow*,IOleInPlaceActiveObject*);
@@ -734,8 +736,8 @@ HTMLElement *HTMLCommentElement_Create(HTMLDocumentNode*,nsIDOMNode*);
 HTMLElement *HTMLAnchorElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLBodyElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLFormElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
-HTMLElement *HTMLFrameElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLWindow*);
-HTMLElement *HTMLIFrame_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLWindow*);
+HTMLElement *HTMLFrameElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
+HTMLElement *HTMLIFrame_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLImgElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLInputElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLOptionElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
@@ -751,7 +753,7 @@ void HTMLElement_Init(HTMLElement*,HTMLDocumentNode*,nsIDOMHTMLElement*,dispex_s
 void HTMLElement2_Init(HTMLElement*);
 void HTMLElement3_Init(HTMLElement*);
 void HTMLTextContainer_Init(HTMLTextContainer*,HTMLDocumentNode*,nsIDOMHTMLElement*,dispex_static_data_t*);
-void HTMLFrameBase_Init(HTMLFrameBase*,HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLWindow*,dispex_static_data_t*);
+void HTMLFrameBase_Init(HTMLFrameBase*,HTMLDocumentNode*,nsIDOMHTMLElement*,dispex_static_data_t*);
 
 HRESULT HTMLDOMNode_QI(HTMLDOMNode*,REFIID,void**);
 void HTMLDOMNode_destructor(HTMLDOMNode*);

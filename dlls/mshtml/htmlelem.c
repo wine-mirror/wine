@@ -1602,6 +1602,7 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL 
     static const WCHAR wszA[]        = {'A',0};
     static const WCHAR wszBODY[]     = {'B','O','D','Y',0};
     static const WCHAR wszFORM[]     = {'F','O','R','M',0};
+    static const WCHAR wszFRAME[]    = {'F','R','A','M','E',0};
     static const WCHAR wszIFRAME[]   = {'I','F','R','A','M','E',0};
     static const WCHAR wszIMG[]      = {'I','M','G',0};
     static const WCHAR wszINPUT[]    = {'I','N','P','U','T',0};
@@ -1627,8 +1628,10 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL 
         ret = HTMLBodyElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszFORM))
         ret = HTMLFormElement_Create(doc, nselem);
+    else if(!strcmpW(class_name, wszFRAME))
+        ret = HTMLFrameElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszIFRAME))
-        ret = HTMLIFrame_Create(doc, nselem, NULL);
+        ret = HTMLIFrame_Create(doc, nselem);
     else if(!strcmpW(class_name, wszIMG))
         ret = HTMLImgElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszINPUT))
