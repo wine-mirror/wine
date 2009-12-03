@@ -10748,9 +10748,9 @@ cleanup:
 
         IDirect3DDevice9_GetSwapChain(device_ptr, 0, &swapchain);
         IDirect3DSwapChain9_GetPresentParameters(swapchain, &present_parameters);
-        DestroyWindow(present_parameters.hDeviceWindow);
         IDirect3DSwapChain9_Release(swapchain);
         ref = IDirect3DDevice9_Release(device_ptr);
         ok(ref == 0, "The device was not properly freed: refcount %u\n", ref);
+        DestroyWindow(present_parameters.hDeviceWindow);
     }
 }
