@@ -321,7 +321,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 BOOL WINAPI InternetInitializeAutoProxyDll(DWORD dwReserved)
 {
     FIXME("STUB\n");
-    INTERNET_SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
 
@@ -338,7 +338,7 @@ BOOL WINAPI DetectAutoProxyUrl(LPSTR lpszAutoProxyUrl,
 	DWORD dwAutoProxyUrlLength, DWORD dwDetectFlags)
 {
     FIXME("STUB\n");
-    INTERNET_SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
 
@@ -2920,7 +2920,7 @@ static HINTERNET INTERNET_InternetOpenUrlW(appinfo_t *hIC, LPCWSTR lpszUrl,
 	/* gopher doesn't seem to be implemented in wine, but it's supposed
 	 * to be supported by InternetOpenUrlA. */
     default:
-        INTERNET_SetLastError(ERROR_INTERNET_UNRECOGNIZED_SCHEME);
+        SetLastError(ERROR_INTERNET_UNRECOGNIZED_SCHEME);
 	break;
     }
 
@@ -2965,13 +2965,13 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 
     if (!lpszUrl)
     {
-        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        SetLastError(ERROR_INVALID_PARAMETER);
         goto lend;
     }
 
     hIC = (appinfo_t*)WININET_GetObject( hInternet );
     if (NULL == hIC ||  hIC->hdr.htype != WH_HINIT) {
-	INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+	SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
  	goto lend;
     }
     
@@ -2992,7 +2992,7 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 	/*
 	 * This is from windows.
 	 */
-	INTERNET_SetLastError(ERROR_IO_PENDING);
+	SetLastError(ERROR_IO_PENDING);
     } else {
 	ret = INTERNET_InternetOpenUrlW(hIC, lpszUrl, lpszHeaders, dwHeadersLength, dwFlags, dwContext);
     }
@@ -3266,7 +3266,7 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
 
     hdr = WININET_GetObject( hFile );
     if (!hdr) {
-        INTERNET_SetLastError(ERROR_INVALID_HANDLE);
+        SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
 
@@ -3604,7 +3604,7 @@ BOOL WINAPI InternetCreateUrlA(LPURL_COMPONENTSA lpUrlComponents, DWORD dwFlags,
 
     if (!lpUrlComponents || lpUrlComponents->dwStructSize != sizeof(URL_COMPONENTSW) || !lpdwUrlLength)
     {
-        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
