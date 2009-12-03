@@ -208,7 +208,6 @@ static BOOL HTTP_DeleteCustomHeader(http_request_t *req, DWORD index);
 static LPWSTR HTTP_build_req( LPCWSTR *list, int len );
 static BOOL HTTP_HttpQueryInfoW(http_request_t*, DWORD, LPVOID, LPDWORD, LPDWORD);
 static LPWSTR HTTP_GetRedirectURL(http_request_t *req, LPCWSTR lpszUrl);
-static BOOL HTTP_HandleRedirect(http_request_t *req, LPCWSTR lpszUrl);
 static UINT HTTP_DecodeBase64(LPCWSTR base64, LPSTR bin);
 static BOOL HTTP_VerifyValidHeader(http_request_t *req, LPCWSTR field);
 static void HTTP_DrainContent(http_request_t *req);
@@ -3132,7 +3131,7 @@ static LPWSTR HTTP_GetRedirectURL(http_request_t *lpwhr, LPCWSTR lpszUrl)
 /***********************************************************************
  *           HTTP_HandleRedirect (internal)
  */
-static BOOL HTTP_HandleRedirect(http_request_t *lpwhr, LPCWSTR lpszUrl)
+static DWORD HTTP_HandleRedirect(http_request_t *lpwhr, LPCWSTR lpszUrl)
 {
     http_session_t *lpwhs = lpwhr->lpHttpSession;
     appinfo_t *hIC = lpwhs->lpAppInfo;
@@ -3170,7 +3169,7 @@ static BOOL HTTP_HandleRedirect(http_request_t *lpwhr, LPCWSTR lpszUrl)
         urlComponents.lpszExtraInfo = NULL;
         urlComponents.dwExtraInfoLength = 0;
         if(!InternetCrackUrlW(lpszUrl, strlenW(lpszUrl), 0, &urlComponents))
-            return FALSE;
+            return INTERNET_GetLastError();
 
         if (!strncmpW(szHttp, urlComponents.lpszScheme, strlenW(szHttp)) &&
             (lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE))
@@ -3244,15 +3243,13 @@ static BOOL HTTP_HandleRedirect(http_request_t *lpwhr, LPCWSTR lpszUrl)
                 lpwhs->nServerPort = urlComponents.nPort;
 
                 NETCON_close(&lpwhr->netConnection);
-                if ((res = HTTP_ResolveName(lpwhr)) != ERROR_SUCCESS) {
-                    INTERNET_SetLastError(res);
-                    return FALSE;
-                }
+                if ((res = HTTP_ResolveName(lpwhr)) != ERROR_SUCCESS)
+                    return res;
+
                 res = NETCON_init(&lpwhr->netConnection, lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE);
-                if (res != ERROR_SUCCESS) {
-                    INTERNET_SetLastError(res);
-                    return FALSE;
-                }
+                if (res != ERROR_SUCCESS)
+                    return res;
+
                 lpwhr->read_pos = lpwhr->read_size = 0;
                 lpwhr->read_chunked = FALSE;
             }
@@ -3289,7 +3286,7 @@ static BOOL HTTP_HandleRedirect(http_request_t *lpwhr, LPCWSTR lpszUrl)
     if (0 <= index)
         HTTP_DeleteCustomHeader(lpwhr, index);
 
-    return TRUE;
+    return ERROR_SUCCESS;
 }
 
 /***********************************************************************
@@ -3571,16 +3568,13 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
                     HTTP_DrainContent(lpwhr);
                     if ((new_url = HTTP_GetRedirectURL( lpwhr, szNewLocation )))
                     {
-                        BOOL bSuccess;
                         INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext, INTERNET_STATUS_REDIRECT,
                                               new_url, (strlenW(new_url) + 1) * sizeof(WCHAR));
-                        bSuccess = HTTP_HandleRedirect(lpwhr, new_url);
-                        if (bSuccess)
+                        res = HTTP_HandleRedirect(lpwhr, new_url);
+                        if (res == ERROR_SUCCESS)
                         {
                             HeapFree(GetProcessHeap(), 0, requestString);
                             loop_next = TRUE;
-                        }else {
-                            res = INTERNET_GetLastError();
                         }
                         HeapFree( GetProcessHeap(), 0, new_url );
                     }
@@ -3741,14 +3735,11 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *lpwhr, DWORD dwFlags, DWORD_PT
                 HTTP_DrainContent(lpwhr);
                 if ((new_url = HTTP_GetRedirectURL( lpwhr, szNewLocation )))
                 {
-                    BOOL rc;
                     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext, INTERNET_STATUS_REDIRECT,
                                           new_url, (strlenW(new_url) + 1) * sizeof(WCHAR));
-                    rc = HTTP_HandleRedirect(lpwhr, new_url);
-                    if (rc)
+                    res = HTTP_HandleRedirect(lpwhr, new_url);
+                    if (res == ERROR_SUCCESS)
                         res = HTTP_HttpSendRequestW(lpwhr, NULL, 0, NULL, 0, 0, TRUE);
-                    else
-                        res = INTERNET_GetLastError();
                     HeapFree( GetProcessHeap(), 0, new_url );
                 }
             }
