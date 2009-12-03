@@ -501,7 +501,7 @@ static BOOL _test_get_dispid(unsigned line, IUnknown *unk, IID *iid)
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IDispatchEx, (void**)&dispex);
-    ok_(__FILE__,line) (hres == S_OK, "Could not get IDispatch: %08x\n", hres);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IDispatchEx: %08x\n", hres);
     if(FAILED(hres))
         return FALSE;
 
@@ -3050,6 +3050,7 @@ static void test_navigator(IHTMLDocument2 *doc)
 static void test_screen(IHTMLWindow2 *window)
 {
     IHTMLScreen *screen, *screen2;
+    IDispatchEx *dispex;
     LONG l, exl;
     HDC hdc;
     HRESULT hres;
@@ -3068,7 +3069,12 @@ static void test_screen(IHTMLWindow2 *window)
     ok(iface_cmp((IUnknown*)screen2, (IUnknown*)screen), "screen2 != screen\n");
     IHTMLScreen_Release(screen2);
 
-    test_disp((IUnknown*)screen, &DIID_DispHTMLScreen, "[object]");
+    hres = IHTMLScreen_QueryInterface(screen, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK || broken(hres == E_NOINTERFACE), "Could not get IDispatchEx interface: %08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        test_disp((IUnknown*)screen, &DIID_DispHTMLScreen, "[object]");
+        IDispatchEx_Release(dispex);
+    }
 
     hdc = CreateICW(displayW, NULL, NULL, NULL);
 
