@@ -179,8 +179,12 @@ static void test_utils(SAFE_PROVIDER_FUNCTIONS *funcs)
             ok(data.pasSigners[0].pasCertChain != NULL,
              "Expected pasCertChain to be allocated\n");
             if (data.pasSigners[0].pasCertChain)
+            {
                 ok(data.pasSigners[0].pasCertChain[0].pCert == cert,
                  "Unexpected cert\n");
+                CertFreeCertificateContext(
+                 data.pasSigners[0].pasCertChain[0].pCert);
+            }
             CertFreeCertificateContext(cert);
         }
         else
@@ -433,6 +437,9 @@ static void testCertTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
              (CERT_CONFIDENCE_SIG | CERT_CONFIDENCE_TIMENEST),
              "Expected CERT_CONFIDENCE_SIG | CERT_CONFIDENCE_TIMENEST, got %08x\n",
              data.pasSigners[0].pasCertChain[0].dwConfidence);
+            CertFreeCertificateContext(
+             data.pasSigners[0].pasCertChain[0].pCert);
+            CertFreeCertificateChain(data.pasSigners[0].pChainContext);
             CertFreeCertificateContext(cert);
         }
     }
