@@ -1584,15 +1584,51 @@ static DWORD verify_cert_revocation(PCCERT_CONTEXT cert, DWORD index,
     {
         if (pRevPara && pRevPara->hCrlStore && pRevPara->pIssuerCert)
         {
-            PCCRL_CONTEXT crl;
+            PCERT_EXTENSION ext;
+            PCCRL_CONTEXT crl = NULL;
+            BOOL canSignCRLs;
 
-            /* If the caller was helpful enough to tell us where to find a CRL
-             * for the cert, look for one and check it.
+            /* If the caller told us about the issuer, make sure the issuer
+             * can sign CRLs before looking for one.
              */
-            crl = CertFindCRLInStore(pRevPara->hCrlStore,
-             cert->dwCertEncodingType,
-             CRL_FIND_ISSUED_BY_SIGNATURE_FLAG | CRL_FIND_ISSUED_BY_AKI_FLAG,
-             CRL_FIND_ISSUED_BY, pRevPara->pIssuerCert, NULL);
+            if ((ext = CertFindExtension(szOID_KEY_USAGE,
+             pRevPara->pIssuerCert->pCertInfo->cExtension,
+             pRevPara->pIssuerCert->pCertInfo->rgExtension)))
+            {
+                CRYPT_BIT_BLOB usage;
+                DWORD size = sizeof(usage);
+
+                if (!CryptDecodeObjectEx(cert->dwCertEncodingType, X509_BITS,
+                 ext->Value.pbData, ext->Value.cbData,
+                 CRYPT_DECODE_NOCOPY_FLAG, NULL, &usage, &size))
+                    canSignCRLs = FALSE;
+                else if (usage.cbData > 2)
+                {
+                    /* The key usage extension only defines 9 bits => no more
+                     * than 2 bytes are needed to encode all known usages.
+                     */
+                    canSignCRLs = FALSE;
+                }
+                else
+                {
+                    BYTE usageBits = usage.pbData[usage.cbData - 1];
+
+                    canSignCRLs = usageBits & CERT_CRL_SIGN_KEY_USAGE;
+                }
+            }
+            else
+                canSignCRLs = TRUE;
+            if (canSignCRLs)
+            {
+                /* If the caller was helpful enough to tell us where to find a
+                 * CRL for the cert, look for one and check it.
+                 */
+                crl = CertFindCRLInStore(pRevPara->hCrlStore,
+                 cert->dwCertEncodingType,
+                 CRL_FIND_ISSUED_BY_SIGNATURE_FLAG |
+                 CRL_FIND_ISSUED_BY_AKI_FLAG,
+                 CRL_FIND_ISSUED_BY, pRevPara->pIssuerCert, NULL);
+            }
             if (crl)
             {
                 error = verify_cert_revocation_with_crl(cert, crl, index,
