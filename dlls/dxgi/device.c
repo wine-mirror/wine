@@ -112,9 +112,22 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetPrivateData(IWineDXGIDevice *ifa
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_GetParent(IWineDXGIDevice *iface, REFIID riid, void **parent)
 {
-    FIXME("iface %p, riid %s, parent %p stub!\n", iface, debugstr_guid(riid), parent);
+    IDXGIAdapter *adapter;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, riid %s, parent %p.\n", iface, debugstr_guid(riid), parent);
+
+    hr = IDXGIDevice_GetAdapter(iface, &adapter);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get adapter, hr %#x.\n", hr);
+        return hr;
+    }
+
+    hr = IDXGIAdapter_QueryInterface(adapter, riid, parent);
+    IDXGIAdapter_Release(adapter);
+
+    return hr;
 }
 
 /* IDXGIDevice methods */
