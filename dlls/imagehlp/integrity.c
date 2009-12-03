@@ -3,6 +3,7 @@
  *
  *	Copyright 1998	Patrik Stridvall
  *	Copyright 2003	Mike McCormack
+ *	Copyright 2009  Owen Rudge for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -36,49 +37,129 @@ WINE_DEFAULT_DEBUG_CHANNEL(imagehlp);
  *   http://www.cs.auckland.ac.nz/~pgut001/pubs/authenticode.txt
  */
 
+#define HDR_FAIL   -1
+#define HDR_NT32    0
+#define HDR_NT64    1
+
+/***********************************************************************
+ * IMAGEHLP_GetNTHeaders (INTERNAL)
+ *
+ * Return the IMAGE_NT_HEADERS for a PE file, after validating magic
+ * numbers and distinguishing between 32-bit and 64-bit files.
+ */
+static int IMAGEHLP_GetNTHeaders(HANDLE handle, DWORD *pe_offset, IMAGE_NT_HEADERS32 *nt32, IMAGE_NT_HEADERS64 *nt64)
+{
+    IMAGE_DOS_HEADER dos_hdr;
+    DWORD count;
+    BOOL r;
+
+    TRACE("handle %p\n", handle);
+
+    if ((!nt32) || (!nt64))
+        return HDR_FAIL;
+
+    /* read the DOS header */
+    count = SetFilePointer(handle, 0, NULL, FILE_BEGIN);
+
+    if (count == INVALID_SET_FILE_POINTER)
+        return HDR_FAIL;
+
+    count = 0;
+
+    r = ReadFile(handle, &dos_hdr, sizeof dos_hdr, &count, NULL);
+
+    if (!r)
+        return HDR_FAIL;
+
+    if (count != sizeof dos_hdr)
+        return HDR_FAIL;
+
+    /* verify magic number of 'MZ' */
+    if (dos_hdr.e_magic != 0x5A4D)
+        return HDR_FAIL;
+
+    if (pe_offset != NULL)
+        *pe_offset = dos_hdr.e_lfanew;
+
+    /* read the PE header */
+    count = SetFilePointer(handle, dos_hdr.e_lfanew, NULL, FILE_BEGIN);
+
+    if (count == INVALID_SET_FILE_POINTER)
+        return HDR_FAIL;
+
+    count = 0;
+
+    r = ReadFile(handle, nt32, sizeof(IMAGE_NT_HEADERS32), &count, NULL);
+
+    if (!r)
+        return HDR_FAIL;
+
+    if (count != sizeof(IMAGE_NT_HEADERS32))
+        return HDR_FAIL;
+
+    /* verify NT signature */
+    if (nt32->Signature != IMAGE_NT_SIGNATURE)
+        return HDR_FAIL;
+
+    /* check if we have a 32-bit or 64-bit executable */
+    switch (nt32->OptionalHeader.Magic)
+    {
+        case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+            return HDR_NT32;
+
+        case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+            /* Re-read as 64-bit */
+
+            count = SetFilePointer(handle, dos_hdr.e_lfanew, NULL, FILE_BEGIN);
+
+            if (count == INVALID_SET_FILE_POINTER)
+                return HDR_FAIL;
+
+            count = 0;
+
+            r = ReadFile(handle, nt64, sizeof(IMAGE_NT_HEADERS64), &count, NULL);
+
+            if (!r)
+                return HDR_FAIL;
+
+            if (count != sizeof(IMAGE_NT_HEADERS64))
+                return HDR_FAIL;
+
+            /* verify NT signature */
+            if (nt64->Signature != IMAGE_NT_SIGNATURE)
+                return HDR_FAIL;
+
+            return HDR_NT64;
+    }
+
+    return HDR_FAIL;
+}
+
 /***********************************************************************
  * IMAGEHLP_GetSecurityDirOffset (INTERNAL)
  *
- * Read a file's PE header, and return the offset and size of the 
+ * Read a file's PE header, and return the offset and size of the
  *  security directory.
  */
-static BOOL IMAGEHLP_GetSecurityDirOffset( HANDLE handle, 
+static BOOL IMAGEHLP_GetSecurityDirOffset( HANDLE handle,
                                            DWORD *pdwOfs, DWORD *pdwSize )
 {
-    IMAGE_DOS_HEADER dos_hdr;
-    IMAGE_NT_HEADERS nt_hdr;
-    DWORD count;
-    BOOL r;
+    IMAGE_NT_HEADERS32 nt_hdr32;
+    IMAGE_NT_HEADERS64 nt_hdr64;
     IMAGE_DATA_DIRECTORY *sd;
+    int ret;
 
-    TRACE("handle %p\n", handle );
+    ret = IMAGEHLP_GetNTHeaders(handle, NULL, &nt_hdr32, &nt_hdr64);
 
-    /* read the DOS header */
-    count = SetFilePointer( handle, 0, NULL, FILE_BEGIN );
-    if( count == INVALID_SET_FILE_POINTER )
-        return FALSE;
-    count = 0;
-    r = ReadFile( handle, &dos_hdr, sizeof dos_hdr, &count, NULL );
-    if( !r )
-        return FALSE;
-    if( count != sizeof dos_hdr )
+    if (ret == HDR_NT32)
+        sd = &nt_hdr32.OptionalHeader.DataDirectory[IMAGE_FILE_SECURITY_DIRECTORY];
+    else if (ret == HDR_NT64)
+        sd = &nt_hdr64.OptionalHeader.DataDirectory[IMAGE_FILE_SECURITY_DIRECTORY];
+    else
         return FALSE;
 
-    /* read the PE header */
-    count = SetFilePointer( handle, dos_hdr.e_lfanew, NULL, FILE_BEGIN );
-    if( count == INVALID_SET_FILE_POINTER )
-        return FALSE;
-    count = 0;
-    r = ReadFile( handle, &nt_hdr, sizeof nt_hdr, &count, NULL );
-    if( !r )
-        return FALSE;
-    if( count != sizeof nt_hdr )
-        return FALSE;
+    TRACE("ret = %d size = %x addr = %x\n", ret, sd->Size, sd->VirtualAddress);
 
-    sd = &nt_hdr.OptionalHeader.
-                    DataDirectory[IMAGE_FILE_SECURITY_DIRECTORY];
-
-    TRACE("size = %x addr = %x\n", sd->Size, sd->VirtualAddress);
     *pdwSize = sd->Size;
     *pdwOfs = sd->VirtualAddress;
 
@@ -126,6 +207,11 @@ static BOOL IMAGEHLP_GetCertificateOffset( HANDLE handle, DWORD num,
 
         /* calculate the offset of the next certificate */
         offset += len;
+
+        /* padded out to the nearest 8-byte boundary */
+        if( len % 8 )
+            offset += 8 - (len % 8);
+
         if( offset >= size )
             return FALSE;
     }
@@ -207,6 +293,11 @@ BOOL WINAPI ImageEnumerateCertificates(
 
         /* next certificate */
         offset += hdr.dwLength;
+
+        /* padded out to the nearest 8-byte boundary */
+        if (hdr.dwLength % 8)
+            offset += 8 - (hdr.dwLength % 8);
+
         index++;
     }
 
