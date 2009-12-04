@@ -201,10 +201,10 @@ static void test_remove_certificate(void)
         return;
     }
 
-    todo_wine ok (pImageRemoveCertificate(hFile, 0), "Unable to remove certificate from file; err=%x\n", GetLastError());
+    ok (pImageRemoveCertificate(hFile, 0), "Unable to remove certificate from file; err=%x\n", GetLastError());
 
     /* Test to see if the certificate has actually been removed */
-    todo_wine ok(pImageGetCertificateHeader(hFile, 0, &cert) == FALSE, "Certificate header retrieval succeeded when it should have failed\n");
+    ok(pImageGetCertificateHeader(hFile, 0, &cert) == FALSE, "Certificate header retrieval succeeded when it should have failed\n");
 
     CloseHandle(hFile);
 }
