@@ -31,6 +31,7 @@ static HMODULE hImageHlp;
 static char test_dll_path[MAX_PATH];
 
 static BOOL (WINAPI *pImageAddCertificate)(HANDLE, LPWIN_CERTIFICATE, PDWORD);
+static BOOL (WINAPI *pImageEnumerateCertificates)(HANDLE, WORD, PDWORD, PDWORD, DWORD);
 static BOOL (WINAPI *pImageGetCertificateData)(HANDLE, DWORD, LPWIN_CERTIFICATE, PDWORD);
 static BOOL (WINAPI *pImageGetCertificateHeader)(HANDLE, DWORD, LPWIN_CERTIFICATE);
 static BOOL (WINAPI *pImageRemoveCertificate)(HANDLE, DWORD);
@@ -87,6 +88,8 @@ static char test_cert_data[] =
 ,0x46,0xCA,0xEB,0xEA,0x67,0x89,0x49,0x7C,0x43,0xA2,0x52,0xD9,0x41,0xCC,0x65
 ,0xED,0x2D,0xA1,0x00,0x31,0x00};
 
+static char test_cert_data_2[] = {0xDE,0xAD,0xBE,0xEF,0x01,0x02,0x03};
+
 static BOOL copy_dll_file(void)
 {
     char sys_dir[MAX_PATH+15];
@@ -116,7 +119,17 @@ static BOOL copy_dll_file(void)
     return TRUE;
 }
 
-static void test_add_certificate(void)
+static DWORD get_file_size(void)
+{
+    WIN32_FILE_ATTRIBUTE_DATA info;
+
+    if (GetFileAttributesEx(test_dll_path, GetFileExInfoStandard, &info))
+        return 0;
+
+    return info.nFileSizeLow;
+}
+
+static void test_add_certificate(char *cert_data, int len)
 {
     HANDLE hFile;
     LPWIN_CERTIFICATE cert;
@@ -131,7 +144,7 @@ static void test_add_certificate(void)
         return;
     }
 
-    cert_len = sizeof(WIN_CERTIFICATE) + sizeof(test_cert_data);
+    cert_len = sizeof(WIN_CERTIFICATE) + len;
     cert = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cert_len);
 
     if (!cert)
@@ -144,7 +157,7 @@ static void test_add_certificate(void)
     cert->dwLength = cert_len;
     cert->wRevision = WIN_CERT_REVISION_1_0;
     cert->wCertificateType = WIN_CERT_TYPE_PKCS_SIGNED_DATA;
-    CopyMemory(cert->bCertificate, test_cert_data, sizeof(test_cert_data));
+    CopyMemory(cert->bCertificate, cert_data, len);
 
     ok(pImageAddCertificate(hFile, cert, &index), "Unable to add certificate to image, error %x\n", GetLastError());
 
@@ -152,7 +165,7 @@ static void test_add_certificate(void)
     CloseHandle(hFile);
 }
 
-static void test_get_certificate(void)
+static void test_get_certificate(char *cert_data, int index)
 {
     HANDLE hFile;
     LPWIN_CERTIFICATE cert;
@@ -167,7 +180,7 @@ static void test_get_certificate(void)
         return;
     }
 
-    ret = pImageGetCertificateData(hFile, 0, NULL, &cert_len);
+    ret = pImageGetCertificateData(hFile, index, NULL, &cert_len);
     err = GetLastError();
 
     ok ((ret == FALSE) && (err == ERROR_INSUFFICIENT_BUFFER), "ImageGetCertificateData gave unexpected result; ret=%d / err=%x\n", ret, err);
@@ -181,17 +194,17 @@ static void test_get_certificate(void)
         return;
     }
 
-    ok(ret = pImageGetCertificateData(hFile, 0, cert, &cert_len), "Unable to retrieve certificate; err=%x\n", GetLastError());
-    ok(memcmp(cert->bCertificate, test_cert_data, cert_len - sizeof(WIN_CERTIFICATE)) == 0, "Certificate retrieved did not match original\n");
+    ok(ret = pImageGetCertificateData(hFile, index, cert, &cert_len), "Unable to retrieve certificate; err=%x\n", GetLastError());
+    ok(memcmp(cert->bCertificate, cert_data, cert_len - sizeof(WIN_CERTIFICATE)) == 0, "Certificate retrieved did not match original\n");
 
     HeapFree(GetProcessHeap(), 0, cert);
     CloseHandle(hFile);
 }
 
-static void test_remove_certificate(void)
+static void test_remove_certificate(int index)
 {
+    DWORD orig_count = 0, count = 0;
     HANDLE hFile;
-    WIN_CERTIFICATE cert;
 
     hFile = CreateFileA(test_dll_path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -201,16 +214,21 @@ static void test_remove_certificate(void)
         return;
     }
 
-    ok (pImageRemoveCertificate(hFile, 0), "Unable to remove certificate from file; err=%x\n", GetLastError());
+    ok (pImageEnumerateCertificates(hFile, CERT_SECTION_TYPE_ANY, &orig_count, NULL, 0), "Unable to enumerate certificates in file; err=%x\n", GetLastError());
+
+    ok (pImageRemoveCertificate(hFile, index), "Unable to remove certificate from file; err=%x\n", GetLastError());
 
     /* Test to see if the certificate has actually been removed */
-    ok(pImageGetCertificateHeader(hFile, 0, &cert) == FALSE, "Certificate header retrieval succeeded when it should have failed\n");
+    pImageEnumerateCertificates(hFile, CERT_SECTION_TYPE_ANY, &count, NULL, 0);
+    ok (count == orig_count - 1, "Certificate count mismatch; orig=%d new=%d\n", orig_count, count);
 
     CloseHandle(hFile);
 }
 
 START_TEST(integrity)
 {
+    DWORD file_size, file_size_orig;
+
     hImageHlp = LoadLibraryA("imagehlp.dll");
 
     if (!hImageHlp)
@@ -225,14 +243,36 @@ START_TEST(integrity)
         return;
     }
 
+    file_size_orig = get_file_size();
+
     pImageAddCertificate = (void *) GetProcAddress(hImageHlp, "ImageAddCertificate");
+    pImageEnumerateCertificates = (void *) GetProcAddress(hImageHlp, "ImageEnumerateCertificates");
     pImageGetCertificateData = (void *) GetProcAddress(hImageHlp, "ImageGetCertificateData");
     pImageGetCertificateHeader = (void *) GetProcAddress(hImageHlp, "ImageGetCertificateHeader");
     pImageRemoveCertificate = (void *) GetProcAddress(hImageHlp, "ImageRemoveCertificate");
 
-    test_add_certificate();
-    test_get_certificate();
-    test_remove_certificate();
+    test_add_certificate(test_cert_data, sizeof(test_cert_data));
+    test_get_certificate(test_cert_data, 0);
+    test_remove_certificate(0);
+
+    file_size = get_file_size();
+    ok(file_size == file_size_orig, "File size different after add and remove (old: %d; new: %d)\n", file_size_orig, file_size);
+
+    /* Try adding multiple certificates */
+    test_add_certificate(test_cert_data, sizeof(test_cert_data));
+    test_add_certificate(test_cert_data_2, sizeof(test_cert_data_2));
+
+    test_get_certificate(test_cert_data, 0);
+    test_get_certificate(test_cert_data_2, 1);
+
+    /* Remove the first one and verify the second certificate is intact */
+    test_remove_certificate(0);
+    test_get_certificate(test_cert_data_2, 0);
+
+    test_remove_certificate(0);
+
+    file_size = get_file_size();
+    ok(file_size == file_size_orig, "File size different after add and remove (old: %d; new: %d)\n", file_size_orig, file_size);
 
     FreeLibrary(hImageHlp);
     DeleteFile(test_dll_path);
