@@ -126,6 +126,11 @@ typedef struct TransactedSnapshotImpl
   struct StorageBaseImpl base;
 
   /*
+   * Changes are temporarily saved to the snapshot.
+   */
+  StorageBaseImpl *snapshot;
+
+  /*
    * Changes are committed to the transacted parent.
    */
   StorageBaseImpl *transactedParent;
@@ -1283,6 +1288,46 @@ static HRESULT StorageImpl_DestroyDirEntry(
   memset(&emptyData, 0, RAW_DIRENTRY_SIZE);
 
   hr = StorageImpl_WriteRawDirEntry(storage, index, emptyData);
+
+  return hr;
+}
+
+
+/***************************************************************************
+ *
+ * Internal Method
+ *
+ * Destroy an entry, its attached data, and all entries reachable from it.
+ */
+static HRESULT DestroyReachableEntries(
+  StorageBaseImpl *base,
+  DirRef index)
+{
+  HRESULT hr = S_OK;
+  DirEntry data;
+  ULARGE_INTEGER zero;
+
+  zero.QuadPart = 0;
+
+  if (index != DIRENTRY_NULL)
+  {
+    hr = StorageBaseImpl_ReadDirEntry(base, index, &data);
+
+    if (SUCCEEDED(hr))
+      hr = DestroyReachableEntries(base, data.dirRootEntry);
+
+    if (SUCCEEDED(hr))
+      hr = DestroyReachableEntries(base, data.leftChild);
+
+    if (SUCCEEDED(hr))
+      hr = DestroyReachableEntries(base, data.rightChild);
+
+    if (SUCCEEDED(hr))
+      hr = StorageBaseImpl_StreamSetSize(base, index, zero);
+
+    if (SUCCEEDED(hr))
+      hr = StorageBaseImpl_DestroyDirEntry(base, index);
+  }
 
   return hr;
 }
@@ -3861,12 +3906,139 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
     return SmallBlockChainStream_Construct(This, NULL, streamEntryRef);
 }
 
+static HRESULT CreateSnapshotFile(StorageBaseImpl* original, StorageBaseImpl **snapshot)
+{
+  HRESULT hr;
+  DirEntry parentData, snapshotData;
+
+  hr = StgCreateDocfile(NULL, STGM_READWRITE|STGM_SHARE_EXCLUSIVE|STGM_DELETEONRELEASE,
+      0, (IStorage**)snapshot);
+
+  if (SUCCEEDED(hr))
+  {
+    hr = StorageBaseImpl_ReadDirEntry(original,
+      original->storageDirEntry, &parentData);
+
+    if (SUCCEEDED(hr))
+      hr = StorageBaseImpl_ReadDirEntry((*snapshot),
+        (*snapshot)->storageDirEntry, &snapshotData);
+
+    if (SUCCEEDED(hr))
+    {
+      memcpy(snapshotData.name, parentData.name, sizeof(snapshotData.name));
+      snapshotData.sizeOfNameString = parentData.sizeOfNameString;
+      snapshotData.stgType = parentData.stgType;
+      snapshotData.clsid = parentData.clsid;
+      snapshotData.ctime = parentData.ctime;
+      snapshotData.mtime = parentData.mtime;
+      hr = StorageBaseImpl_WriteDirEntry((*snapshot),
+        (*snapshot)->storageDirEntry, &snapshotData);
+    }
+
+    if (SUCCEEDED(hr))
+      hr = IStorage_CopyTo((IStorage*)original, 0, NULL, NULL,
+          (IStorage*)(*snapshot));
+
+    if (FAILED(hr)) IStorage_Release((IStorage*)(*snapshot));
+  }
+
+  return hr;
+}
+
 static HRESULT WINAPI TransactedSnapshotImpl_Commit(
   IStorage*            iface,
   DWORD                  grfCommitFlags)  /* [in] */
 {
-  FIXME("(%p,%x): stub\n", iface, grfCommitFlags);
-  return S_OK;
+  TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) iface;
+  HRESULT hr;
+  DirEntry data, tempStorageData, snapshotRootData;
+  DirRef tempStorageEntry, oldDirRoot;
+  StorageInternalImpl *tempStorage;
+
+  TRACE("(%p,%x)\n", iface, grfCommitFlags);
+
+  /* Cannot commit a read-only transacted storage */
+  if ( STGM_ACCESS_MODE( This->base.openFlags ) == STGM_READ )
+    return STG_E_ACCESSDENIED;
+
+  /* To prevent data loss, we create the new structure in the file before we
+   * delete the old one, so that in case of errors the old data is intact. We
+   * shouldn't do this if STGC_OVERWRITE is set, but that flag should only be
+   * needed in the rare situation where we have just enough free disk space to
+   * overwrite the existing data. */
+
+  /* Create an orphaned storage in the parent for the new directory structure. */
+  memset(&data, 0, sizeof(data));
+  data.name[0] = 'D';
+  data.sizeOfNameString = 1;
+  data.stgType = STGTY_STORAGE;
+  data.leftChild = DIRENTRY_NULL;
+  data.rightChild = DIRENTRY_NULL;
+  data.dirRootEntry = DIRENTRY_NULL;
+  hr = StorageBaseImpl_CreateDirEntry(This->transactedParent, &data, &tempStorageEntry);
+
+  if (FAILED(hr)) return hr;
+
+  tempStorage = StorageInternalImpl_Construct(This->transactedParent,
+    STGM_READWRITE|STGM_SHARE_EXCLUSIVE, tempStorageEntry);
+  if (tempStorage)
+  {
+    hr = IStorage_CopyTo((IStorage*)This->snapshot, 0, NULL, NULL,
+        (IStorage*)tempStorage);
+
+    list_init(&tempStorage->ParentListEntry);
+
+    IStorage_Release((IStorage*) tempStorage);
+  }
+  else
+    hr = E_OUTOFMEMORY;
+
+  if (FAILED(hr))
+  {
+    DestroyReachableEntries(This->transactedParent, tempStorageEntry);
+    return hr;
+  }
+
+  /* Update the storage to use the new data in one step. */
+  hr = StorageBaseImpl_ReadDirEntry(This->transactedParent,
+    This->transactedParent->storageDirEntry, &data);
+
+  if (SUCCEEDED(hr))
+  {
+    hr = StorageBaseImpl_ReadDirEntry(This->transactedParent,
+      tempStorageEntry, &tempStorageData);
+  }
+
+  if (SUCCEEDED(hr))
+  {
+    hr = StorageBaseImpl_ReadDirEntry(This->snapshot,
+      This->snapshot->storageDirEntry, &snapshotRootData);
+  }
+
+  if (SUCCEEDED(hr))
+  {
+    oldDirRoot = data.dirRootEntry;
+    data.dirRootEntry = tempStorageData.dirRootEntry;
+    data.clsid = snapshotRootData.clsid;
+    data.ctime = snapshotRootData.ctime;
+    data.mtime = snapshotRootData.mtime;
+
+    hr = StorageBaseImpl_WriteDirEntry(This->transactedParent,
+      This->transactedParent->storageDirEntry, &data);
+  }
+
+  if (SUCCEEDED(hr))
+  {
+    /* Destroy the old now-orphaned data. */
+    DestroyReachableEntries(This->transactedParent, oldDirRoot);
+    StorageBaseImpl_DestroyDirEntry(This->transactedParent, tempStorageEntry);
+  }
+  else
+  {
+    DestroyReachableEntries(This->transactedParent, tempStorageEntry);
+  }
+
+  return hr;
 }
 
 static HRESULT WINAPI TransactedSnapshotImpl_Revert(
@@ -3896,6 +4068,8 @@ static void TransactedSnapshotImpl_Destroy( StorageBaseImpl *iface)
 
   IStorage_Release((IStorage*)This->transactedParent);
 
+  IStorage_Release((IStorage*)This->snapshot);
+
   HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -3904,7 +4078,7 @@ static HRESULT TransactedSnapshotImpl_CreateDirEntry(StorageBaseImpl *base,
 {
   TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) base;
 
-  return StorageBaseImpl_CreateDirEntry(This->transactedParent,
+  return StorageBaseImpl_CreateDirEntry(This->snapshot,
     newData, index);
 }
 
@@ -3913,7 +4087,7 @@ static HRESULT TransactedSnapshotImpl_WriteDirEntry(StorageBaseImpl *base,
 {
   TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) base;
 
-  return StorageBaseImpl_WriteDirEntry(This->transactedParent,
+  return StorageBaseImpl_WriteDirEntry(This->snapshot,
     index, data);
 }
 
@@ -3922,7 +4096,7 @@ static HRESULT TransactedSnapshotImpl_ReadDirEntry(StorageBaseImpl *base,
 {
   TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) base;
 
-  return StorageBaseImpl_ReadDirEntry(This->transactedParent,
+  return StorageBaseImpl_ReadDirEntry(This->snapshot,
     index, data);
 }
 
@@ -3931,7 +4105,7 @@ static HRESULT TransactedSnapshotImpl_DestroyDirEntry(StorageBaseImpl *base,
 {
   TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) base;
 
-  return StorageBaseImpl_DestroyDirEntry(This->transactedParent,
+  return StorageBaseImpl_DestroyDirEntry(This->snapshot,
     index);
 }
 
@@ -3940,7 +4114,7 @@ static HRESULT TransactedSnapshotImpl_StreamReadAt(StorageBaseImpl *base,
 {
   TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) base;
 
-  return StorageBaseImpl_StreamReadAt(This->transactedParent,
+  return StorageBaseImpl_StreamReadAt(This->snapshot,
     index, offset, size, buffer, bytesRead);
 }
 
@@ -3949,7 +4123,7 @@ static HRESULT TransactedSnapshotImpl_StreamWriteAt(StorageBaseImpl *base,
 {
   TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) base;
 
-  return StorageBaseImpl_StreamWriteAt(This->transactedParent,
+  return StorageBaseImpl_StreamWriteAt(This->snapshot,
     index, offset, size, buffer, bytesWritten);
 }
 
@@ -3958,7 +4132,7 @@ static HRESULT TransactedSnapshotImpl_StreamSetSize(StorageBaseImpl *base,
 {
   TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) base;
 
-  return StorageBaseImpl_StreamSetSize(This->transactedParent,
+  return StorageBaseImpl_StreamSetSize(This->snapshot,
     index, newsize);
 }
 
@@ -4000,6 +4174,8 @@ static const StorageBaseImplVtbl TransactedSnapshotImpl_BaseVtbl =
 static HRESULT TransactedSnapshotImpl_Construct(StorageBaseImpl *parentStorage,
   TransactedSnapshotImpl** result)
 {
+  HRESULT hr;
+
   *result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(TransactedSnapshotImpl));
   if (*result)
   {
@@ -4016,18 +4192,26 @@ static HRESULT TransactedSnapshotImpl_Construct(StorageBaseImpl *parentStorage,
 
     (*result)->base.ref = 1;
 
-    (*result)->base.storageDirEntry = parentStorage->storageDirEntry;
-
     (*result)->base.openFlags = parentStorage->openFlags;
 
     (*result)->base.filename = parentStorage->filename;
 
-    /* parentStorage already has 1 reference, which we take over here. */
-    (*result)->transactedParent = parentStorage;
+    /* Create a new temporary storage to act as the snapshot */
+    hr = CreateSnapshotFile(parentStorage, &(*result)->snapshot);
 
-    parentStorage->transactedChild = (StorageBaseImpl*)*result;
+    if (SUCCEEDED(hr))
+    {
+        (*result)->base.storageDirEntry = (*result)->snapshot->storageDirEntry;
 
-    return S_OK;
+        /* parentStorage already has 1 reference, which we take over here. */
+        (*result)->transactedParent = parentStorage;
+
+        parentStorage->transactedChild = (StorageBaseImpl*)*result;
+    }
+
+    if (FAILED(hr)) HeapFree(GetProcessHeap(), 0, (*result));
+
+    return hr;
   }
   else
     return E_OUTOFMEMORY;

@@ -1003,17 +1003,13 @@ static void test_transact(void)
     r = IStorage_OpenStorage(stg, stmname, NULL, STGM_TRANSACTED|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, NULL, 0, &stg2 );
     ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStream failed %08x\n", r);
 
-    todo_wine {
     r = IStorage_OpenStream(stg, stmname, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
     ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStream should fail %08x\n", r);
-    }
     if (r == S_OK)
         IStream_Release(stm);
 
-    todo_wine {
     r = IStorage_OpenStorage(stg, stgname2, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, NULL, 0, &stg2 );
     ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStorage should fail %08x\n", r);
-    }
     if (r == S_OK)
         IStorage_Release(stg2);
 
@@ -1035,7 +1031,7 @@ static void test_transact(void)
             IStorage_Release(stg3);
 
         r = IStorage_OpenStorage(stg2, stgname2, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, NULL, 0, &stg3 );
-        todo_wine ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStorage should fail %08x\n", r);
+        ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStorage should fail %08x\n", r);
         if (r == S_OK)
             IStorage_Release(stg3);
 
@@ -1423,7 +1419,7 @@ static void test_nonroot_transacted(void)
 
         /* But changes cannot be committed. */
         r = IStorage_Commit(stg2, 0);
-        todo_wine ok(r==STG_E_ACCESSDENIED, "IStorage->Commit should fail, hr=%08x\n", r);
+        ok(r==STG_E_ACCESSDENIED, "IStorage->Commit should fail, hr=%08x\n", r);
 
         IStorage_Release(stg2);
     }
