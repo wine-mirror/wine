@@ -954,7 +954,7 @@ static void test_GetTempPath(void)
 
 static void test_GetLongPathNameA(void)
 {
-    DWORD length, templength, hostsize;
+    DWORD length, explength, hostsize;
     char tempfile[MAX_PATH];
     char longpath[MAX_PATH];
     char unc_prefix[MAX_PATH];
@@ -984,16 +984,16 @@ static void test_GetLongPathNameA(void)
     memset(temppath2, 0, MAX_PATH);
     lstrcpyA(temppath2, "\\\\?\\");
     lstrcatA(temppath2, tempfile);
-    templength = length;
+    explength = length + 4;
 
     length = pGetLongPathNameA(temppath2, NULL, 0);
-    ok(length == templength + 4, "Wrong length %d, expected %d\n", length, templength + 4);
+    ok(length == explength, "Wrong length %d, expected %d\n", length, explength);
 
     length = pGetLongPathNameA(temppath2, NULL, MAX_PATH);
-    ok(length == templength + 4, "Wrong length %d, expected %d\n", length, templength + 4);
+    ok(length == explength, "Wrong length %d, expected %d\n", length, explength);
 
     length = pGetLongPathNameA(temppath2, temppath, 4);
-    ok(length == templength + 4, "Wrong length %d, expected %d\n", length, templength + 4);
+    ok(length == explength, "Wrong length %d, expected %d\n", length, explength);
     ok(temppath[0] == 0, "Buffer should not have been touched\n");
 
     /* Now an UNC path with the computername */
@@ -1020,27 +1020,30 @@ static void test_GetLongPathNameA(void)
 
     /* NULL test */
     length = pGetLongPathNameA(unc_short, NULL, 0);
+    explength = lstrlenA(longpath) + 1;
     todo_wine
-    ok(length == lstrlenA(longpath) + 1, "Wrong length, expected %d\n", length);
+    ok(length == explength, "Wrong length %d, expected %d\n", length, explength);
 
     length = pGetLongPathNameA(unc_short, NULL, MAX_PATH);
     todo_wine
-    ok(length == lstrlenA(longpath) + 1, "Wrong length, expected %d\n", length);
+    ok(length == explength, "Wrong length %d, expected %d\n", length, explength);
 
     memset(unc_long, 0, MAX_PATH);
     length = pGetLongPathNameA(unc_short, unc_long, lstrlenA(unc_short));
     /* length will include terminating '0' on failure */
     todo_wine
-    ok(length == lstrlenA(longpath) + 1, "Wrong length, expected %d\n", length);
+    ok(length == explength, "Wrong length %d, expected %d\n", length, explength);
     ok(unc_long[0] == 0, "Buffer should not have been touched\n");
 
     memset(unc_long, 0, MAX_PATH);
-    templength = length;
     length = pGetLongPathNameA(unc_short, unc_long, length);
     /* length doesn't include terminating '0' on success */
-    ok(length == templength - 1, "Wrong length %d, expected %d\n", length, templength - 1);
+    explength--;
     todo_wine
+    {
+    ok(length == explength, "Wrong length %d, expected %d\n", length, explength);
     ok(!lstrcmpiA(unc_long, longpath), "Expected (%s), got (%s)\n", longpath, unc_long);
+    }
 
     DeleteFileA(tempfile);
 }
