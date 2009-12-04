@@ -47,14 +47,14 @@ C_SRCS = \
 	path.c \
 	pen.c \
 	printdrv.c \
-	printdrv16.c \
 	region.c
 
 C_SRCS16 = \
 	bidi16.c \
 	env.c \
 	gdi16.c \
-	metafile16.c
+	metafile16.c \
+	printdrv16.c
 
 RC_SRCS = version.rc
 RC_SRCS16 = version16.rc
