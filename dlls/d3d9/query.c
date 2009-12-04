@@ -70,24 +70,18 @@ static ULONG WINAPI IDirect3DQuery9Impl_Release(LPDIRECT3DQUERY9 iface) {
 }
 
 /* IDirect3DQuery9 Interface follow: */
-static HRESULT WINAPI IDirect3DQuery9Impl_GetDevice(LPDIRECT3DQUERY9 iface, IDirect3DDevice9** ppDevice) {
+static HRESULT WINAPI IDirect3DQuery9Impl_GetDevice(IDirect3DQuery9 *iface, IDirect3DDevice9 **device)
+{
     IDirect3DQuery9Impl *This = (IDirect3DQuery9Impl *)iface;
-    IWineD3DDevice* pDevice;
-    HRESULT hr;
 
-    TRACE("iface %p, device %p.\n", iface, ppDevice);
+    TRACE("iface %p, device %p.\n", iface, device);
 
-    wined3d_mutex_lock();
-    hr = IWineD3DQuery_GetDevice(This->wineD3DQuery, &pDevice);
-    if(hr != D3D_OK){
-        *ppDevice = NULL;
-    }else{
-        hr = IWineD3DDevice_GetParent(pDevice, (IUnknown **)ppDevice);
-        IWineD3DDevice_Release(pDevice);
-    }
-    wined3d_mutex_unlock();
+    *device = (IDirect3DDevice9 *)This->parentDevice;
+    IDirect3DDevice9_AddRef(*device);
 
-    return hr;
+    TRACE("Returning device %p.\n", *device);
+
+    return D3D_OK;
 }
 
 static D3DQUERYTYPE WINAPI IDirect3DQuery9Impl_GetType(LPDIRECT3DQUERY9 iface) {

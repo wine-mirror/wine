@@ -79,19 +79,17 @@ static ULONG WINAPI IDirect3DPixelShader9Impl_Release(LPDIRECT3DPIXELSHADER9 ifa
 }
 
 /* IDirect3DPixelShader9 Interface follow: */
-static HRESULT WINAPI IDirect3DPixelShader9Impl_GetDevice(LPDIRECT3DPIXELSHADER9 iface, IDirect3DDevice9** ppDevice) {
+static HRESULT WINAPI IDirect3DPixelShader9Impl_GetDevice(IDirect3DPixelShader9 *iface, IDirect3DDevice9 **device)
+{
     IDirect3DPixelShader9Impl *This = (IDirect3DPixelShader9Impl *)iface;
-    IWineD3DDevice *myDevice = NULL;
 
-    TRACE("iface %p, device %p.\n", iface, ppDevice);
+    TRACE("iface %p, device %p.\n", iface, device);
 
-    wined3d_mutex_lock();
-    IWineD3DPixelShader_GetDevice(This->wineD3DPixelShader, &myDevice);
-    IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
-    IWineD3DDevice_Release(myDevice);
-    wined3d_mutex_unlock();
+    *device = (IDirect3DDevice9 *)This->parentDevice;
+    IDirect3DDevice9_AddRef(*device);
 
-    TRACE("(%p) returning (%p)\n", This, *ppDevice);
+    TRACE("Returning device %p.\n", *device);
+
     return D3D_OK;
 }
 

@@ -81,23 +81,18 @@ static ULONG WINAPI IDirect3DVolumeTexture9Impl_Release(LPDIRECT3DVOLUMETEXTURE9
 }
 
 /* IDirect3DVolumeTexture9 IDirect3DResource9 Interface follow: */
-static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetDevice(LPDIRECT3DVOLUMETEXTURE9 iface, IDirect3DDevice9** ppDevice) {
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetDevice(IDirect3DVolumeTexture9 *iface, IDirect3DDevice9 **device)
+{
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
-    IWineD3DDevice *wined3d_device;
-    HRESULT hr;
 
-    TRACE("iface %p, device %p.\n", iface, ppDevice);
+    TRACE("iface %p, device %p.\n", iface, device);
 
-    wined3d_mutex_lock();
-    hr = IWineD3DStateBlock_GetDevice(This->wineD3DVolumeTexture, &wined3d_device);
-    if (SUCCEEDED(hr))
-    {
-        IWineD3DDevice_GetParent(wined3d_device, (IUnknown **)ppDevice);
-        IWineD3DDevice_Release(wined3d_device);
-    }
-    wined3d_mutex_unlock();
+    *device = (IDirect3DDevice9 *)This->parentDevice;
+    IDirect3DDevice9_AddRef(*device);
 
-    return hr;
+    TRACE("Returning device %p.\n", *device);
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DVolumeTexture9Impl_SetPrivateData(LPDIRECT3DVOLUMETEXTURE9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {

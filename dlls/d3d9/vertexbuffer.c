@@ -81,23 +81,18 @@ static ULONG WINAPI IDirect3DVertexBuffer9Impl_Release(LPDIRECT3DVERTEXBUFFER9 i
 }
 
 /* IDirect3DVertexBuffer9 IDirect3DResource9 Interface follow: */
-static HRESULT WINAPI IDirect3DVertexBuffer9Impl_GetDevice(LPDIRECT3DVERTEXBUFFER9 iface, IDirect3DDevice9** ppDevice) {
+static HRESULT WINAPI IDirect3DVertexBuffer9Impl_GetDevice(IDirect3DVertexBuffer9 *iface, IDirect3DDevice9 **device)
+{
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
-    IWineD3DDevice *wined3d_device;
-    HRESULT hr;
 
-    TRACE("iface %p, device %p.\n", iface, ppDevice);
+    TRACE("iface %p, device %p.\n", iface, device);
 
-    wined3d_mutex_lock();
-    hr = IWineD3DBuffer_GetDevice(This->wineD3DVertexBuffer, &wined3d_device);
-    if (SUCCEEDED(hr))
-    {
-        IWineD3DDevice_GetParent(wined3d_device, (IUnknown **)ppDevice);
-        IWineD3DDevice_Release(wined3d_device);
-    }
-    wined3d_mutex_unlock();
+    *device = (IDirect3DDevice9 *)This->parentDevice;
+    IDirect3DDevice9_AddRef(*device);
 
-    return hr;
+    TRACE("Returning device %p.\n", *device);
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DVertexBuffer9Impl_SetPrivateData(LPDIRECT3DVERTEXBUFFER9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {

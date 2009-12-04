@@ -263,22 +263,19 @@ static ULONG WINAPI IDirect3DVertexDeclaration9Impl_Release(LPDIRECT3DVERTEXDECL
 }
 
 /* IDirect3DVertexDeclaration9 Interface follow: */
-static HRESULT WINAPI IDirect3DVertexDeclaration9Impl_GetDevice(LPDIRECT3DVERTEXDECLARATION9 iface, IDirect3DDevice9** ppDevice) {
+static HRESULT WINAPI IDirect3DVertexDeclaration9Impl_GetDevice(IDirect3DVertexDeclaration9 *iface,
+        IDirect3DDevice9 **device)
+{
     IDirect3DVertexDeclaration9Impl *This = (IDirect3DVertexDeclaration9Impl *)iface;
-    IWineD3DDevice *myDevice = NULL;
-    HRESULT hr = D3D_OK;
 
-    TRACE("iface %p, device %p.\n", iface, ppDevice);
+    TRACE("iface %p, device %p.\n", iface, device);
 
-    wined3d_mutex_lock();
-    hr = IWineD3DVertexDeclaration_GetDevice(This->wineD3DVertexDeclaration, &myDevice);
-    if (hr == D3D_OK && myDevice != NULL) {
-        hr = IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
-        IWineD3DDevice_Release(myDevice);
-    }
-    wined3d_mutex_unlock();
+    *device = (IDirect3DDevice9 *)This->parentDevice;
+    IDirect3DDevice9_AddRef(*device);
 
-    return hr;
+    TRACE("Returning device %p.\n", *device);
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DVertexDeclaration9Impl_GetDeclaration(LPDIRECT3DVERTEXDECLARATION9 iface, D3DVERTEXELEMENT9* pDecl, UINT* pNumElements) {

@@ -154,22 +154,18 @@ static HRESULT WINAPI IDirect3DSwapChain9Impl_GetDisplayMode(LPDIRECT3DSWAPCHAIN
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DSwapChain9Impl_GetDevice(LPDIRECT3DSWAPCHAIN9 iface, IDirect3DDevice9** ppDevice) {
+static HRESULT WINAPI IDirect3DSwapChain9Impl_GetDevice(IDirect3DSwapChain9 *iface, IDirect3DDevice9 **device)
+{
     IDirect3DSwapChain9Impl *This = (IDirect3DSwapChain9Impl *)iface;
-    HRESULT hrc = D3D_OK;
-    IWineD3DDevice *device = NULL;
 
-    TRACE("iface %p, device %p.\n", iface, ppDevice);
+    TRACE("iface %p, device %p.\n", iface, device);
 
-    wined3d_mutex_lock();
-    hrc = IWineD3DSwapChain_GetDevice(This->wineD3DSwapChain, &device);
-    if (hrc == D3D_OK && NULL != device) {
-       IWineD3DDevice_GetParent(device, (IUnknown **)ppDevice);
-       IWineD3DDevice_Release(device);
-    }
-    wined3d_mutex_unlock();
+    *device = (IDirect3DDevice9 *)This->parentDevice;
+    IDirect3DDevice9_AddRef(*device);
 
-    return hrc;
+    TRACE("Returning device %p.\n", *device);
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DSwapChain9Impl_GetPresentParameters(LPDIRECT3DSWAPCHAIN9 iface, D3DPRESENT_PARAMETERS* pPresentationParameters) {

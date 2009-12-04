@@ -70,23 +70,18 @@ static ULONG WINAPI IDirect3DStateBlock9Impl_Release(LPDIRECT3DSTATEBLOCK9 iface
 }
 
 /* IDirect3DStateBlock9 Interface follow: */
-static HRESULT WINAPI IDirect3DStateBlock9Impl_GetDevice(LPDIRECT3DSTATEBLOCK9 iface, IDirect3DDevice9** ppDevice) {
+static HRESULT WINAPI IDirect3DStateBlock9Impl_GetDevice(IDirect3DStateBlock9 *iface, IDirect3DDevice9 **device)
+{
     IDirect3DStateBlock9Impl *This = (IDirect3DStateBlock9Impl *)iface;
-    IWineD3DDevice *wined3d_device;
-    HRESULT hr;
 
-    TRACE("iface %p, device %p.\n", iface, ppDevice);
+    TRACE("iface %p, device %p.\n", iface, device);
 
-    wined3d_mutex_lock();
-    hr = IWineD3DStateBlock_GetDevice(This->wineD3DStateBlock, &wined3d_device);
-    if (SUCCEEDED(hr))
-    {
-        IWineD3DDevice_GetParent(wined3d_device, (IUnknown **)ppDevice);
-        IWineD3DDevice_Release(wined3d_device);
-    }
-    wined3d_mutex_unlock();
+    *device = (IDirect3DDevice9 *)This->parentDevice;
+    IDirect3DDevice9_AddRef(*device);
 
-    return hr;
+    TRACE("Returning device %p.\n", *device);
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DStateBlock9Impl_Capture(LPDIRECT3DSTATEBLOCK9 iface) {
