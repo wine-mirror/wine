@@ -75,6 +75,23 @@ static void test_streamonhglobal(IStream *pStream)
     hr = IStream_SetSize(pStream, ull);
     ok_ole_success(hr, "IStream_SetSize");
 
+    /* ignores HighPart */
+    ll.u.HighPart = -1;
+    ll.u.LowPart = 0;
+    hr = IStream_Seek(pStream, ll, STREAM_SEEK_SET, &ull);
+    todo_wine
+    ok_ole_success(hr, "IStream_Seek");
+    ok(ull.u.LowPart == 0, "should have set LowPart to 0 instead of %d\n", ull.u.LowPart);
+    todo_wine
+    ok(ull.u.HighPart == 0, "should have set HighPart to 0 instead of %d\n", ull.u.HighPart);
+
+    /* ignores HighPart */
+    ll.u.HighPart = -1;
+    ll.u.LowPart = 0;
+    hr = IStream_Seek(pStream, ll, STREAM_SEEK_CUR, NULL);
+    todo_wine
+    ok_ole_success(hr, "IStream_Seek");
+
     hr = IStream_Commit(pStream, STGC_DEFAULT);
     ok_ole_success(hr, "IStream_Commit");
 
