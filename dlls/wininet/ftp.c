@@ -43,6 +43,9 @@
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif
+#ifdef HAVE_ARPA_INET_H
+# include <arpa/inet.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -2440,6 +2443,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     BOOL bSuccess = FALSE;
     ftp_session_t *lpwfs = NULL;
     HINTERNET handle = NULL;
+    char szaddr[INET_ADDRSTRLEN];
 
     TRACE("%p  Server(%s) Port(%d) User(%s) Paswd(%s)\n",
 	    hIC, debugstr_w(lpszServerName),
@@ -2544,15 +2548,17 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         goto lerror;
     }
 
-    SendAsyncCallback(&hIC->hdr, dwContext, INTERNET_STATUS_NAME_RESOLVED,
-        (LPWSTR) lpszServerName, strlenW(lpszServerName));
-
     if (socketAddr.sin_family != AF_INET)
     {
         WARN("unsupported address family %d\n", socketAddr.sin_family);
         INTERNET_SetLastError(ERROR_INTERNET_CANNOT_CONNECT);
         goto lerror;
     }
+
+    inet_ntop(socketAddr.sin_family, &socketAddr.sin_addr, szaddr, sizeof(szaddr));
+    SendAsyncCallback(&hIC->hdr, dwContext, INTERNET_STATUS_NAME_RESOLVED,
+                      szaddr, strlen(szaddr)+1);
+
     nsocket = socket(AF_INET,SOCK_STREAM,0);
     if (nsocket == -1)
     {
@@ -2561,7 +2567,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     }
 
     SendAsyncCallback(&hIC->hdr, dwContext, INTERNET_STATUS_CONNECTING_TO_SERVER,
-        &socketAddr, sock_namelen);
+                      szaddr, strlen(szaddr)+1);
 
     if (connect(nsocket, (struct sockaddr *)&socketAddr, sock_namelen) < 0)
     {
@@ -2574,7 +2580,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         TRACE("Connected to server\n");
 	lpwfs->sndSocket = nsocket;
         SendAsyncCallback(&hIC->hdr, dwContext, INTERNET_STATUS_CONNECTED_TO_SERVER,
-            &socketAddr, sock_namelen);
+                          szaddr, strlen(szaddr)+1);
 
 	sock_namelen = sizeof(lpwfs->socketAddress);
 	getsockname(nsocket, (struct sockaddr *) &lpwfs->socketAddress, &sock_namelen);
