@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wingdi.h"
+#include "winnls.h"
 
 #include "psdrv.h"
 #include "wine/debug.h"

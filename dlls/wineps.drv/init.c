@@ -38,8 +38,10 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "winnls.h"
 #include "psdrv.h"
 #include "winspool.h"
+#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
