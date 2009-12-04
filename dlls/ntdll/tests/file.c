@@ -199,7 +199,9 @@ static void open_file_test(void)
     nameW.Length += sizeof(WCHAR);
     status = pNtOpenFile( &handle, GENERIC_READ, &attr, &io,
                           FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE );
-    ok( status == STATUS_INVALID_PARAMETER || status == STATUS_OBJECT_PATH_SYNTAX_BAD,  /* nt4 */
+    ok( status == STATUS_INVALID_PARAMETER ||
+        status == STATUS_OBJECT_NAME_INVALID ||
+        status == STATUS_OBJECT_PATH_SYNTAX_BAD,
         "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
     if (!status) CloseHandle( handle );
 
@@ -228,8 +230,13 @@ static void open_file_test(void)
                                   FILE_SHARE_READ|FILE_SHARE_WRITE,
                                   FILE_OPEN_BY_FILE_ID |
                                   ((info->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? FILE_DIRECTORY_FILE : 0) );
-            ok( status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED,
+            ok( status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED || status == STATUS_NOT_IMPLEMENTED,
                 "open %s failed %x\n", wine_dbgstr_w(info->FileName), status );
+            if (status == STATUS_NOT_IMPLEMENTED)
+            {
+                win_skip( "FILE_OPEN_BY_FILE_ID not supported\n" );
+                break;
+            }
             if (!status)
             {
                 FILE_ALL_INFORMATION all_info;
