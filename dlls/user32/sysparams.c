@@ -699,7 +699,7 @@ static BOOL SYSPARAMS_Save( LPCWSTR lpRegKey, LPCWSTR lpValName, LPCWSTR lpValue
 
 /* Convenience function to save logical fonts */
 static BOOL SYSPARAMS_SaveLogFont( LPCWSTR lpRegKey, LPCWSTR lpValName,
-                                   const LPLOGFONTW plf, UINT fWinIni )
+                                   const LOGFONTW *plf, UINT fWinIni )
 {
     LOGFONTW lf = *plf;
     int len;
