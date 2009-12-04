@@ -699,10 +699,20 @@ static BOOL SYSPARAMS_Save( LPCWSTR lpRegKey, LPCWSTR lpValName, LPCWSTR lpValue
 
 /* Convenience function to save logical fonts */
 static BOOL SYSPARAMS_SaveLogFont( LPCWSTR lpRegKey, LPCWSTR lpValName,
-                                    LPLOGFONTW plf, UINT fWinIni )
+                                   const LPLOGFONTW plf, UINT fWinIni )
 {
-    return SYSPARAMS_SaveRaw( lpRegKey, lpValName, (const BYTE*)plf, 
-        sizeof( LOGFONTW), REG_BINARY, fWinIni );
+    LOGFONTW lf = *plf;
+    int len;
+
+    /* Zero pad the end of lfFaceName so we don't write uninitialised
+       data to the registry */
+    lf.lfFaceName[LF_FACESIZE-1] = 0;
+    len = strlenW(lf.lfFaceName);
+    if(len < LF_FACESIZE-1)
+        memset(lf.lfFaceName + len, 0, (LF_FACESIZE - 1 - len) * sizeof(WCHAR));
+
+    return SYSPARAMS_SaveRaw( lpRegKey, lpValName, (const BYTE*)&lf,
+                              sizeof(LOGFONTW), REG_BINARY, fWinIni );
 }
 
 
