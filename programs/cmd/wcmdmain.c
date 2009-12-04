@@ -1153,13 +1153,10 @@ void WCMD_run_program (WCHAR *command, int called) {
           WCMD_run_program(command, called);
           return;
         }
-        if (!status) {
-          WCMD_print_error ();
-          /* If a command fails to launch, it sets errorlevel 9009 - which
-             does not seem to have any associated constant definition     */
-          errorlevel = 9009;
-          return;
-        }
+
+        if (!status)
+          break;
+
         if (!assumeInternal && !console) errorlevel = 0;
         else
         {
