@@ -467,7 +467,10 @@ HRESULT to_int32(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, INT *ret)
     if(FAILED(hres))
         return hres;
 
-    *ret = V_VT(&num) == VT_I4 ? V_I4(&num) : (INT)V_R8(&num);
+    if(V_VT(&num) == VT_I4)
+        *ret = V_I4(&num);
+    else
+        *ret = isnan(V_R8(&num)) || isinf(V_R8(&num)) ? 0 : (INT)V_R8(&num);
     return S_OK;
 }
 
@@ -481,7 +484,10 @@ HRESULT to_uint32(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, DWORD *ret)
     if(FAILED(hres))
         return hres;
 
-    *ret = V_VT(&num) == VT_I4 ? V_I4(&num) : (DWORD)V_R8(&num);
+    if(V_VT(&num) == VT_I4)
+        *ret = V_I4(&num);
+    else
+        *ret = isnan(V_R8(&num)) || isinf(V_R8(&num)) ? 0 : (DWORD)V_R8(&num);
     return S_OK;
 }
 

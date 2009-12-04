@@ -346,6 +346,15 @@ tmp = -3.5 | 0;
 ok(tmp === -3, "-3.5 | 0 !== -3");
 ok(getVT(tmp) === "VT_I4", "getVT(3.5|0) = " + getVT(tmp));
 
+tmp = 0 | NaN;
+ok(tmp === 0, "0 | NaN = " + tmp);
+
+tmp = 0 | Infinity;
+ok(tmp === 0, "0 | NaN = " + tmp);
+
+tmp = 0 | (-Infinity);
+ok(tmp === 0, "0 | NaN = " + tmp);
+
 tmp = 10;
 ok((tmp |= 0x10) === 26, "tmp(10) |= 0x10 !== 26");
 ok(getVT(tmp) === "VT_I4", "getVT(tmp |= 10) = " + getVT(tmp));
@@ -379,6 +388,9 @@ ok(tmp === 2, "8 >> 2 = " + tmp);
 
 tmp = -64 >>> 4;
 ok(tmp === 0x0ffffffc, "-64 >>> 4 = " + tmp);
+
+tmp = 4 >>> NaN;
+ok(tmp === 4, "4 >>> NaN = " + tmp);
 
 tmp = 10;
 ok((tmp &= 8) === 8, "tmp(10) &= 8 !== 8");
