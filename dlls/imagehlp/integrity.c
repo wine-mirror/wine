@@ -285,6 +285,88 @@ static BOOL IMAGEHLP_GetCertificateOffset( HANDLE handle, DWORD num,
     return TRUE;
 }
 
+/***********************************************************************
+ * IMAGEHLP_RecalculateChecksum (INTERNAL)
+ *
+ * Update the NT header checksum for the specified file.
+ */
+static BOOL IMAGEHLP_RecalculateChecksum(HANDLE handle)
+{
+    DWORD FileLength, count, HeaderSum, pe_offset, nt_hdr_size;
+    IMAGE_NT_HEADERS32 nt_hdr32;
+    IMAGE_NT_HEADERS64 nt_hdr64;
+    LPVOID BaseAddress;
+    HANDLE hMapping;
+    DWORD *CheckSum;
+    void *nt_hdr;
+    int ret;
+    BOOL r;
+
+    TRACE("handle %p\n", handle);
+
+    ret = IMAGEHLP_GetNTHeaders(handle, &pe_offset, &nt_hdr32, &nt_hdr64);
+
+    if (ret == HDR_NT32)
+    {
+        CheckSum = &nt_hdr32.OptionalHeader.CheckSum;
+
+        nt_hdr = &nt_hdr32;
+        nt_hdr_size = sizeof(IMAGE_NT_HEADERS32);
+    }
+    else if (ret == HDR_NT64)
+    {
+        CheckSum = &nt_hdr64.OptionalHeader.CheckSum;
+
+        nt_hdr = &nt_hdr64;
+        nt_hdr_size = sizeof(IMAGE_NT_HEADERS64);
+    }
+    else
+        return FALSE;
+
+    hMapping = CreateFileMappingW(handle, NULL, PAGE_READONLY, 0, 0, NULL);
+
+    if (!hMapping)
+        return FALSE;
+
+    BaseAddress = MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
+
+    if (!BaseAddress)
+    {
+        CloseHandle(hMapping);
+        return FALSE;
+    }
+
+    FileLength = GetFileSize(handle, NULL);
+
+    *CheckSum = 0;
+    CheckSumMappedFile(BaseAddress, FileLength, &HeaderSum, CheckSum);
+
+    UnmapViewOfFile(BaseAddress);
+    CloseHandle(hMapping);
+
+    if (*CheckSum)
+    {
+        /* write the header back again */
+        count = SetFilePointer(handle, pe_offset, NULL, FILE_BEGIN);
+
+        if (count == INVALID_SET_FILE_POINTER)
+            return FALSE;
+
+        count = 0;
+
+        r = WriteFile(handle, nt_hdr, nt_hdr_size, &count, NULL);
+
+        if (!r)
+            return FALSE;
+
+        if (count != nt_hdr_size)
+            return FALSE;
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
 
 /***********************************************************************
  *		ImageAddCertificate (IMAGEHLP.@)
@@ -390,6 +472,9 @@ BOOL WINAPI ImageAddCertificate(
 
     /* Update the security directory offset and size */
     if (!IMAGEHLP_SetSecurityDirOffset(FileHandle, sd_VirtualAddr, size))
+        return FALSE;
+
+    if (!IMAGEHLP_RecalculateChecksum(FileHandle))
         return FALSE;
 
     return TRUE;
@@ -634,6 +719,9 @@ BOOL WINAPI ImageRemoveCertificate(HANDLE FileHandle, DWORD Index)
         r = IMAGEHLP_SetSecurityDirOffset(FileHandle, sd_VirtualAddr, size - cert_size_padded);
 
     if (!r)
+        return FALSE;
+
+    if (!IMAGEHLP_RecalculateChecksum(FileHandle))
         return FALSE;
 
     return TRUE;
