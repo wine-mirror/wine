@@ -986,7 +986,14 @@ static void test_GetLongPathNameA(void)
     lstrcatA(temppath2, tempfile);
     explength = length + 4;
 
+    SetLastError(0xdeadbeef);
     length = pGetLongPathNameA(temppath2, NULL, 0);
+    if (length == 0 && GetLastError() == ERROR_BAD_NET_NAME)
+    {
+        win_skip("UNC syntax tests don't work on Win98/WinMe\n");
+        DeleteFileA(tempfile);
+        return;
+    }
     ok(length == explength, "Wrong length %d, expected %d\n", length, explength);
 
     length = pGetLongPathNameA(temppath2, NULL, MAX_PATH);
