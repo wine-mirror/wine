@@ -1726,6 +1726,7 @@ typedef struct IWineD3DBaseTextureClass
 } IWineD3DBaseTextureClass;
 
 void surface_internal_preload(IWineD3DSurface *iface, enum WINED3DSRGB srgb) DECLSPEC_HIDDEN;
+BOOL surface_init_sysmem(IWineD3DSurface *iface) DECLSPEC_HIDDEN;
 
 typedef struct IWineD3DBaseTextureImpl
 {

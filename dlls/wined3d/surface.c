@@ -820,6 +820,30 @@ static void surface_remove_pbo(IWineD3DSurfaceImpl *This) {
     This->Flags &= ~SFLAG_PBO;
 }
 
+BOOL surface_init_sysmem(IWineD3DSurface *iface)
+{
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+
+    if(!This->resource.allocatedMemory)
+    {
+        This->resource.heapMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->resource.size + RESOURCE_ALIGNMENT);
+        if(!This->resource.heapMemory)
+        {
+            ERR("Out of memory\n");
+            return FALSE;
+        }
+        This->resource.allocatedMemory =
+            (BYTE *)(((ULONG_PTR) This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
+    }
+    else
+    {
+        memset(This->resource.allocatedMemory, 0, This->resource.size);
+    }
+
+    IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, TRUE);
+    return TRUE;
+}
+
 static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
     IWineD3DBaseTexture *texture = NULL;
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
@@ -836,18 +860,12 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
          * or depth stencil. The content may be destroyed, but we still have to tear down
          * opengl resources, so we cannot leave early.
          *
-         * Put the most up to date surface location into the drawable. D3D-wise this content
-         * is undefined, so it would be nowhere, but that would make the location management
-         * more complicated. The drawable is a sane location, because if we mark sysmem or
-         * texture up to date, drawPrim will copy the uninitialized texture or sysmem to the
-         * uninitialized drawable. That's pointless and we'd have to allocate the texture /
-         * sysmem copy here.
+         * Put the surfaces into sysmem, and reset the content. The D3D content is undefined,
+         * but we can't set the sysmem INDRAWABLE because when we're rendering the swapchain
+         * or the depth stencil into an FBO the texture or render buffer will be removed
+         * and all flags get lost
          */
-        if (This->resource.usage & WINED3DUSAGE_DEPTHSTENCIL) {
-            IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, TRUE);
-        } else {
-            IWineD3DSurface_ModifyLocation(iface, SFLAG_INDRAWABLE, TRUE);
-        }
+        surface_init_sysmem(iface);
     } else {
         /* Load the surface into system memory */
         IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);

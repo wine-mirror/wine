@@ -6514,7 +6514,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_EvictManagedResources(IWineD3DDevice*
     return WINED3D_OK;
 }
 
-static void updateSurfaceDesc(IWineD3DSurfaceImpl *surface, const WINED3DPRESENT_PARAMETERS* pPresentationParameters)
+static HRESULT updateSurfaceDesc(IWineD3DSurfaceImpl *surface, const WINED3DPRESENT_PARAMETERS* pPresentationParameters)
 {
     IWineD3DDeviceImpl *device = surface->resource.wineD3DDevice;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -6567,12 +6567,14 @@ static void updateSurfaceDesc(IWineD3DSurfaceImpl *surface, const WINED3DPRESENT
     surface->resource.allocatedMemory = NULL;
     surface->resource.heapMemory = NULL;
     surface->resource.size = IWineD3DSurface_GetPitch((IWineD3DSurface *) surface) * surface->pow2Width;
-    /* INDRAWABLE is a sane place for implicit targets after the reset, INSYSMEM is more appropriate for depth stencils. */
-    if (surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL) {
-        IWineD3DSurface_ModifyLocation((IWineD3DSurface *) surface, SFLAG_INSYSMEM, TRUE);
-    } else {
-        IWineD3DSurface_ModifyLocation((IWineD3DSurface *) surface, SFLAG_INDRAWABLE, TRUE);
+
+    /* Put all surfaces into sysmem - the drawable might disappear if the backbuffer was rendered
+     * to a FBO */
+    if(!surface_init_sysmem((IWineD3DSurface *) surface))
+    {
+        return E_OUTOFMEMORY;
     }
+    return WINED3D_OK;
 }
 
 static HRESULT WINAPI reset_unload_resources(IWineD3DResource *resource, void *data) {
@@ -6830,12 +6832,28 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         swapchain->presentParms.BackBufferWidth = pPresentationParameters->BackBufferWidth;
         swapchain->presentParms.BackBufferHeight = pPresentationParameters->BackBufferHeight;
 
-        updateSurfaceDesc((IWineD3DSurfaceImpl *)swapchain->frontBuffer, pPresentationParameters);
+        hr = updateSurfaceDesc((IWineD3DSurfaceImpl *)swapchain->frontBuffer, pPresentationParameters);
+        if(FAILED(hr))
+        {
+            IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+            return hr;
+        }
+
         for(i = 0; i < swapchain->presentParms.BackBufferCount; i++) {
-            updateSurfaceDesc((IWineD3DSurfaceImpl *)swapchain->backBuffer[i], pPresentationParameters);
+            hr = updateSurfaceDesc((IWineD3DSurfaceImpl *)swapchain->backBuffer[i], pPresentationParameters);
+            if(FAILED(hr))
+            {
+                IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+                return hr;
+            }
         }
         if(This->auto_depth_stencil_buffer) {
-            updateSurfaceDesc((IWineD3DSurfaceImpl *)This->auto_depth_stencil_buffer, pPresentationParameters);
+            hr = updateSurfaceDesc((IWineD3DSurfaceImpl *)This->auto_depth_stencil_buffer, pPresentationParameters);
+            if(FAILED(hr))
+            {
+                IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+                return hr;
+            }
         }
     }
 
