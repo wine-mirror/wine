@@ -1882,6 +1882,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
 
     switch(wined3d_settings.offscreen_rendering_mode) {
         case ORM_FBO:
+            This->offscreenBuffer = GL_COLOR_ATTACHMENT0;
+            break;
+
         case ORM_PBUFFER:
             This->offscreenBuffer = GL_BACK;
             break;
