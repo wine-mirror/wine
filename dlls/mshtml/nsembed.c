@@ -533,7 +533,7 @@ void nsfree(void *mem)
     nsIMemory_Free(nsmem, mem);
 }
 
-void nsACString_Init(nsACString *str, const char *data)
+static void nsACString_Init(nsACString *str, const char *data)
 {
     NS_CStringContainerInit(str);
     if(data)
@@ -550,7 +550,7 @@ PRUint32 nsACString_GetData(const nsACString *str, const char **data)
     return NS_CStringGetData(str, data, NULL);
 }
 
-void nsACString_Finish(nsACString *str)
+static void nsACString_Finish(nsACString *str)
 {
     NS_CStringContainerFinish(str);
 }
