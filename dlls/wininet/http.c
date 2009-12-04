@@ -1389,7 +1389,7 @@ static DWORD HTTP_ResolveName(http_request_t *lpwhr)
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_RESOLVING_NAME,
                           lpwhs->lpszServerName,
-                          strlenW(lpwhs->lpszServerName)+1);
+                          (strlenW(lpwhs->lpszServerName)+1) * sizeof(WCHAR));
 
     lpwhs->sa_len = sizeof(lpwhs->socketAddress);
     if (!GetAddress(lpwhs->lpszServerName, lpwhs->nServerPort,

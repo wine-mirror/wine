@@ -2535,7 +2535,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     }
         
     SendAsyncCallback(&hIC->hdr, dwContext, INTERNET_STATUS_RESOLVING_NAME,
-        (LPWSTR) lpszServerName, strlenW(lpszServerName));
+        (LPWSTR) lpszServerName, (strlenW(lpszServerName)+1) * sizeof(WCHAR));
 
     sock_namelen = sizeof(socketAddr);
     if (!GetAddress(lpszServerName, lpwfs->serverport, (struct sockaddr *)&socketAddr, &sock_namelen))
