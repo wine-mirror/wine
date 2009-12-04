@@ -335,7 +335,7 @@ typedef struct {
 } PSPEN;
 
 typedef struct {
-    HANDLE16		hJob;
+    DWORD		id;             /* Job id */
     LPSTR		output;		/* Output file/port */
     LPSTR               DocName;        /* Document Name */
     BOOL		banding;        /* Have we received a NEXTBAND */

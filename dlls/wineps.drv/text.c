@@ -47,7 +47,7 @@ BOOL CDECL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     TRACE("(x=%d, y=%d, flags=0x%08x, str=%s, count=%d, lpDx=%p)\n", x, y,
 	  flags, debugstr_wn(str, count), count, lpDx);
 
-    if(physDev->job.hJob == 0) return FALSE;
+    if(physDev->job.id == 0) return FALSE;
 
     /* write font if not already written */
     PSDRV_SetFont(physDev);
