@@ -829,14 +829,16 @@ static void init_current_directory( CURDIR *cur_dir )
 
     if (pwd)
     {
-        WCHAR *dirW;
-        int lenW = MultiByteToWideChar( CP_UNIXCP, 0, pwd, -1, NULL, 0 );
-        if ((dirW = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) )))
+        ANSI_STRING unix_name;
+        UNICODE_STRING nt_name;
+        RtlInitAnsiString( &unix_name, pwd );
+        if (!wine_unix_to_nt_file_name( &unix_name, &nt_name ))
         {
-            MultiByteToWideChar( CP_UNIXCP, 0, pwd, -1, dirW, lenW );
-            RtlInitUnicodeString( &dir_str, dirW );
-            RtlSetCurrentDirectory_U( &dir_str );
-            RtlFreeUnicodeString( &dir_str );
+            UNICODE_STRING dos_path;
+            /* skip the \??\ prefix, nt_name is 0 terminated */
+            RtlInitUnicodeString( &dos_path, nt_name.Buffer + 4 );
+            RtlSetCurrentDirectory_U( &dos_path );
+            RtlFreeUnicodeString( &nt_name );
         }
     }
 
