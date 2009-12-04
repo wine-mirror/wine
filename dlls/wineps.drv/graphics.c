@@ -129,7 +129,7 @@ BOOL CDECL PSDRV_Rectangle( PSDRV_PDEVICE *physDev, INT left, INT top, INT right
     if(physDev->job.in_passthrough && !physDev->job.had_passthrough_rect && GetROP2(physDev->hdc) == R2_NOP) {
       char buf[256];
       sprintf(buf, "N %d %d %d %d B\n", rect.right - rect.left, rect.bottom - rect.top, rect.left, rect.top);
-      WriteSpool16(physDev->job.hJob, buf, strlen(buf));
+      write_spool(physDev, buf, strlen(buf));
       physDev->job.had_passthrough_rect = TRUE;
       return TRUE;
     }

@@ -492,6 +492,8 @@ extern BOOL PSDRV_WriteDownloadGlyphShow(PSDRV_PDEVICE *physDev, WORD *glpyhs,
 					 UINT count);
 extern BOOL PSDRV_EmptyDownloadList(PSDRV_PDEVICE *physDev, BOOL write_undef);
 
+extern DWORD write_spool( PSDRV_PDEVICE *physDev, const void *data, DWORD num );
+
 #define MAX_G_NAME 31 /* max length of PS glyph name */
 extern void get_glyph_name(HDC hdc, WORD index, char *name);
 

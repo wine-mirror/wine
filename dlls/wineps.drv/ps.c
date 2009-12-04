@@ -196,7 +196,7 @@ DWORD PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPCSTR lpData, DWORD cch)
     }
 
     if(physDev->job.in_passthrough) { /* Was in PASSTHROUGH mode */
-        WriteSpool16( physDev->job.hJob, (LPSTR)psenddocument, sizeof(psenddocument)-1 );
+        write_spool( physDev, psenddocument, sizeof(psenddocument)-1 );
         physDev->job.in_passthrough = physDev->job.had_passthrough_rect = FALSE;
     }
 
@@ -207,7 +207,7 @@ DWORD PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPCSTR lpData, DWORD cch)
 
     do {
         num = min(num_left, 0x8000);
-        if(WriteSpool16( physDev->job.hJob, (LPSTR)lpData, num ) != num)
+        if(write_spool( physDev, lpData, num ) != num)
             return 0;
         lpData += num;
         num_left -= num;
@@ -217,19 +217,16 @@ DWORD PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPCSTR lpData, DWORD cch)
 }
 
 
-static INT PSDRV_WriteFeature(HANDLE16 hJob, LPCSTR feature, LPCSTR value, LPSTR invocation)
+static INT PSDRV_WriteFeature(PSDRV_PDEVICE *physDev, LPCSTR feature, LPCSTR value, LPCSTR invocation)
 {
 
     char *buf = HeapAlloc( PSDRV_Heap, 0, sizeof(psbeginfeature) +
                            strlen(feature) + strlen(value));
 
-
     sprintf(buf, psbeginfeature, feature, value);
-    WriteSpool16( hJob, buf, strlen(buf) );
-
-    WriteSpool16( hJob, invocation, strlen(invocation) );
-
-    WriteSpool16( hJob, (LPSTR)psendfeature, strlen(psendfeature) );
+    write_spool( physDev, buf, strlen(buf) );
+    write_spool( physDev, invocation, strlen(invocation) );
+    write_spool( physDev, psendfeature, strlen(psendfeature) );
 
     HeapFree( PSDRV_Heap, 0, buf );
     return 1;
@@ -321,30 +318,28 @@ INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
     sprintf(buf, psheader, escaped_title, llx, lly, urx, ury);
 
     HeapFree(GetProcessHeap(), 0, escaped_title);
-    if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) !=
-	                                             strlen(buf) ) {
+    if( write_spool( physDev, buf, strlen(buf) ) != strlen(buf) ) {
         WARN("WriteSpool error\n");
 	HeapFree( PSDRV_Heap, 0, buf );
 	return 0;
     }
     HeapFree( PSDRV_Heap, 0, buf );
 
-    WriteSpool16( physDev->job.hJob, (LPSTR)psbeginprolog, strlen(psbeginprolog) );
-    WriteSpool16( physDev->job.hJob, (LPSTR)psprolog, strlen(psprolog) );
-    WriteSpool16( physDev->job.hJob, (LPSTR)psendprolog, strlen(psendprolog) );
-
-    WriteSpool16( physDev->job.hJob, (LPSTR)psbeginsetup, strlen(psbeginsetup) );
+    write_spool( physDev, psbeginprolog, strlen(psbeginprolog) );
+    write_spool( physDev, psprolog, strlen(psprolog) );
+    write_spool( physDev, psendprolog, strlen(psendprolog) );
+    write_spool( physDev, psbeginsetup, strlen(psbeginsetup) );
 
     if(physDev->Devmode->dmPublic.u1.s1.dmCopies > 1) {
         char copies_buf[100];
         sprintf(copies_buf, "mark {\n << /NumCopies %d >> setpagedevice\n} stopped cleartomark\n", physDev->Devmode->dmPublic.u1.s1.dmCopies);
-        WriteSpool16(physDev->job.hJob, copies_buf, strlen(copies_buf));
+        write_spool(physDev, copies_buf, strlen(copies_buf));
     }
 
     for(slot = physDev->pi->ppd->InputSlots; slot; slot = slot->next) {
         if(slot->WinBin == physDev->Devmode->dmPublic.u1.s1.dmDefaultSource) {
 	    if(slot->InvocationString) {
-	        PSDRV_WriteFeature(physDev->job.hJob, "*InputSlot", slot->Name,
+	        PSDRV_WriteFeature(physDev, "*InputSlot", slot->Name,
 			     slot->InvocationString);
 		break;
 	    }
@@ -354,7 +349,7 @@ INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
     LIST_FOR_EACH_ENTRY(page, &physDev->pi->ppd->PageSizes, PAGESIZE, entry) {
         if(page->WinPage == physDev->Devmode->dmPublic.u1.s1.dmPaperSize) {
 	    if(page->InvocationString) {
-	        PSDRV_WriteFeature(physDev->job.hJob, "*PageSize", page->Name,
+	        PSDRV_WriteFeature(physDev, "*PageSize", page->Name,
 			     page->InvocationString);
 		break;
 	    }
@@ -366,14 +361,14 @@ INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
     for(duplex = physDev->pi->ppd->Duplexes; duplex; duplex = duplex->next) {
         if(duplex->WinDuplex == win_duplex) {
 	    if(duplex->InvocationString) {
-	        PSDRV_WriteFeature(physDev->job.hJob, "*Duplex", duplex->Name,
+	        PSDRV_WriteFeature(physDev, "*Duplex", duplex->Name,
 			     duplex->InvocationString);
 		break;
 	    }
 	}
     }
 
-    WriteSpool16( physDev->job.hJob, (LPSTR)psendsetup, strlen(psendsetup) );
+    write_spool( physDev, psendsetup, strlen(psendsetup) );
 
 
     return 1;
@@ -392,8 +387,7 @@ INT PSDRV_WriteFooter( PSDRV_PDEVICE *physDev )
 
     sprintf(buf, psfooter, physDev->job.PageNo);
 
-    if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) !=
-	                                             strlen(buf) ) {
+    if( write_spool( physDev, buf, strlen(buf) ) != strlen(buf) ) {
         WARN("WriteSpool error\n");
 	HeapFree( PSDRV_Heap, 0, buf );
 	return 0;
@@ -406,8 +400,7 @@ INT PSDRV_WriteFooter( PSDRV_PDEVICE *physDev )
 
 INT PSDRV_WriteEndPage( PSDRV_PDEVICE *physDev )
 {
-    if( WriteSpool16( physDev->job.hJob, (LPSTR)psendpage, sizeof(psendpage)-1 ) !=
-	                                             sizeof(psendpage)-1 ) {
+    if( write_spool( physDev, psendpage, sizeof(psendpage)-1 ) != sizeof(psendpage)-1 ) {
         WARN("WriteSpool error\n");
 	return 0;
     }
@@ -451,8 +444,7 @@ INT PSDRV_WriteNewPage( PSDRV_PDEVICE *physDev )
 	    physDev->logPixelsX, physDev->logPixelsY,
 	    xtrans, ytrans, rotation);
 
-    if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) !=
-	                                             strlen(buf) ) {
+    if( write_spool( physDev, buf, strlen(buf) ) != strlen(buf) ) {
         WARN("WriteSpool error\n");
 	HeapFree( PSDRV_Heap, 0, buf );
 	return 0;

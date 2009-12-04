@@ -33,6 +33,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 static const char psbegindocument[] =
 "%%BeginDocument: Wine passthrough\n";
 
+DWORD write_spool( PSDRV_PDEVICE *physDev, const void *data, DWORD num )
+{
+    return WriteSpool16( physDev->job.hJob, (LPSTR)data, num );
+}
+
 /**********************************************************************
  *           ExtEscape  (WINEPS.@)
  */
@@ -252,10 +257,10 @@ INT CDECL PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPC
              * in_data[0] instead.
              */
             if(!physDev->job.in_passthrough) {
-                WriteSpool16(physDev->job.hJob, (LPSTR)psbegindocument, sizeof(psbegindocument)-1);
+                write_spool(physDev, psbegindocument, sizeof(psbegindocument)-1);
                 physDev->job.in_passthrough = TRUE;
             }
-            return WriteSpool16(physDev->job.hJob,((char*)in_data)+2,*(const WORD*)in_data);
+            return write_spool(physDev,((char*)in_data)+2,*(const WORD*)in_data);
         }
 
     case POSTSCRIPT_IGNORE:
