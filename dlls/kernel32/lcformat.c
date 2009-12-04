@@ -52,7 +52,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
  *
  * Our cache takes the form of a singly linked list, whose node is below:
  */
-#define NLS_NUM_CACHED_STRINGS 45
+#define NLS_NUM_CACHED_STRINGS 57
 
 typedef struct _NLS_FORMAT_NODE
 {
@@ -72,14 +72,15 @@ typedef struct _NLS_FORMAT_NODE
 #define GetLongDate(fmt)  fmt->lppszStrings[1]
 #define GetShortDate(fmt) fmt->lppszStrings[2]
 #define GetTime(fmt)      fmt->lppszStrings[3]
-#define GetAM(fmt)        fmt->lppszStrings[42]
-#define GetPM(fmt)        fmt->lppszStrings[43]
-#define GetYearMonth(fmt) fmt->lppszStrings[44]
+#define GetAM(fmt)        fmt->lppszStrings[54]
+#define GetPM(fmt)        fmt->lppszStrings[55]
+#define GetYearMonth(fmt) fmt->lppszStrings[56]
 
-#define GetLongDay(fmt,day)    fmt->lppszStrings[4 + day]
-#define GetShortDay(fmt,day)   fmt->lppszStrings[11 + day]
-#define GetLongMonth(fmt,mth)  fmt->lppszStrings[18 + mth]
-#define GetShortMonth(fmt,mth) fmt->lppszStrings[30 + mth]
+#define GetLongDay(fmt,day)       fmt->lppszStrings[4 + day]
+#define GetShortDay(fmt,day)      fmt->lppszStrings[11 + day]
+#define GetLongMonth(fmt,mth)     fmt->lppszStrings[18 + mth]
+#define GetGenitiveMonth(fmt,mth) fmt->lppszStrings[30 + mth]
+#define GetShortMonth(fmt,mth)    fmt->lppszStrings[42 + mth]
 
 /* Write access to the cache is protected by this critical section */
 static CRITICAL_SECTION NLS_FormatsCS;
@@ -150,7 +151,7 @@ static WCHAR* NLS_GetLocaleString(LCID lcid, DWORD dwFlags)
 static const NLS_FORMAT_NODE *NLS_GetFormats(LCID lcid, DWORD dwFlags)
 {
   /* GetLocaleInfo() identifiers for cached formatting strings */
-  static const USHORT NLS_LocaleIndices[] = {
+  static const LCTYPE NLS_LocaleIndices[] = {
     LOCALE_SNEGATIVESIGN,
     LOCALE_SLONGDATE,   LOCALE_SSHORTDATE,
     LOCALE_STIMEFORMAT,
@@ -163,6 +164,18 @@ static const NLS_FORMAT_NODE *NLS_GetFormats(LCID lcid, DWORD dwFlags)
     LOCALE_SMONTHNAME4, LOCALE_SMONTHNAME5, LOCALE_SMONTHNAME6,
     LOCALE_SMONTHNAME7, LOCALE_SMONTHNAME8, LOCALE_SMONTHNAME9,
     LOCALE_SMONTHNAME10, LOCALE_SMONTHNAME11, LOCALE_SMONTHNAME12,
+    LOCALE_SMONTHNAME1  | LOCALE_RETURN_GENITIVE_NAMES,
+    LOCALE_SMONTHNAME2  | LOCALE_RETURN_GENITIVE_NAMES,
+    LOCALE_SMONTHNAME3  | LOCALE_RETURN_GENITIVE_NAMES,
+    LOCALE_SMONTHNAME4  | LOCALE_RETURN_GENITIVE_NAMES,
+    LOCALE_SMONTHNAME5  | LOCALE_RETURN_GENITIVE_NAMES,
+    LOCALE_SMONTHNAME6  | LOCALE_RETURN_GENITIVE_NAMES,
+    LOCALE_SMONTHNAME7  | LOCALE_RETURN_GENITIVE_NAMES,
+    LOCALE_SMONTHNAME8  | LOCALE_RETURN_GENITIVE_NAMES,
+    LOCALE_SMONTHNAME9  | LOCALE_RETURN_GENITIVE_NAMES,
+    LOCALE_SMONTHNAME10 | LOCALE_RETURN_GENITIVE_NAMES,
+    LOCALE_SMONTHNAME11 | LOCALE_RETURN_GENITIVE_NAMES,
+    LOCALE_SMONTHNAME12 | LOCALE_RETURN_GENITIVE_NAMES,
     LOCALE_SABBREVMONTHNAME1, LOCALE_SABBREVMONTHNAME2, LOCALE_SABBREVMONTHNAME3,
     LOCALE_SABBREVMONTHNAME4, LOCALE_SABBREVMONTHNAME5, LOCALE_SABBREVMONTHNAME6,
     LOCALE_SABBREVMONTHNAME7, LOCALE_SABBREVMONTHNAME8, LOCALE_SABBREVMONTHNAME9,
@@ -249,6 +262,16 @@ static const NLS_FORMAT_NODE *NLS_GetFormats(LCID lcid, DWORD dwFlags)
     {
       GET_LOCALE_STRING(new_node->lppszStrings[i], NLS_LocaleIndices[i]);
     }
+    /* Save some memory if month genitive name is the same or not present */
+    for (i = 0; i < 12; i++)
+    {
+      if (strcmpW(GetLongMonth(new_node, i), GetGenitiveMonth(new_node, i)) == 0)
+      {
+        HeapFree(GetProcessHeap(), 0, GetGenitiveMonth(new_node, i));
+        GetGenitiveMonth(new_node, i) = NULL;
+      }
+    }
+
     new_node->szShortAM[0] = GetAM(new_node)[0]; new_node->szShortAM[1] = '\0';
     new_node->szShortPM[0] = GetPM(new_node)[0]; new_node->szShortPM[1] = '\0';
 
@@ -352,6 +375,7 @@ static INT NLS_GetDateTimeFormatW(LCID lcid, DWORD dwFlags,
   INT cchWritten = 0;
   INT lastFormatPos = 0;
   BOOL bSkipping = FALSE; /* Skipping text around marker? */
+  BOOL d_dd_formatted = FALSE; /* previous formatted part was for d or dd */
 
   /* Verify our arguments */
   if ((cchOut && !lpStr) || !(node = NLS_GetFormats(lcid, dwFlags)))
@@ -485,6 +509,7 @@ static INT NLS_GetDateTimeFormatW(LCID lcid, DWORD dwFlags,
       }
       buff[0] = '\0';
 
+      if (fmtChar != 'M') d_dd_formatted = FALSE;
       switch(fmtChar)
       {
       case 'd':
@@ -496,12 +521,59 @@ static INT NLS_GetDateTimeFormatW(LCID lcid, DWORD dwFlags,
         {
           dwVal = lpTime->wDay;
           szAdd = buff;
+          d_dd_formatted = TRUE;
         }
         break;
 
       case 'M':
         if (count >= 4)
+        {
+          LPCWSTR genitive = GetGenitiveMonth(node, lpTime->wMonth - 1);
+          if (genitive)
+          {
+            if (d_dd_formatted)
+            {
+              szAdd = genitive;
+              break;
+            }
+            else
+            {
+              LPCWSTR format = lpFormat;
+              /* Look forward now, if next format pattern is for day genitive
+                 name should be used */
+              while (*format)
+              {
+                /* Skip parts within markers */
+                if (IsLiteralMarker(*format))
+                {
+                  ++format;
+                  while (*format)
+                  {
+                    if (IsLiteralMarker(*format))
+                    {
+                      ++format;
+                      if (!IsLiteralMarker(*format)) break;
+                    }
+                  }
+                }
+                if (*format != ' ') break;
+                ++format;
+              }
+              /* Only numeric day form matters */
+              if (*format && *format == 'd')
+              {
+                INT dcount = 1;
+                while (*++format == 'd') dcount++;
+                if (dcount < 3)
+                {
+                  szAdd = genitive;
+                  break;
+                }
+              }
+            }
+          }
           szAdd = GetLongMonth(node, lpTime->wMonth - 1);
+        }
         else if (count == 3)
           szAdd = GetShortMonth(node, lpTime->wMonth - 1);
         else
