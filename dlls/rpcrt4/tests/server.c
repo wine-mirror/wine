@@ -904,8 +904,11 @@ basic_tests(void)
   x = echo_ranged_int(100);
   ok(x == 100, "echo_ranged_int() returned %d instead of 100\n", x);
 
-  get_ranged_enum(&re);
-  ok(re == RE3, "get_ranged_enum() returned %d instead of RE3\n", re);
+  if (!old_windows_version)
+  {
+      get_ranged_enum(&re);
+      ok(re == RE3, "get_ranged_enum() returned %d instead of RE3\n", re);
+  }
 }
 
 static void
