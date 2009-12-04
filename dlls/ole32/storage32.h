@@ -248,6 +248,7 @@ struct StorageBaseImpl
 /* virtual methods for StorageBaseImpl objects */
 struct StorageBaseImplVtbl {
   void (*Destroy)(StorageBaseImpl*);
+  void (*Invalidate)(StorageBaseImpl*);
   HRESULT (*CreateDirEntry)(StorageBaseImpl*,const DirEntry*,DirRef*);
   HRESULT (*WriteDirEntry)(StorageBaseImpl*,DirRef,const DirEntry*);
   HRESULT (*ReadDirEntry)(StorageBaseImpl*,DirRef,DirEntry*);
@@ -260,6 +261,11 @@ struct StorageBaseImplVtbl {
 static inline void StorageBaseImpl_Destroy(StorageBaseImpl *This)
 {
   This->baseVtbl->Destroy(This);
+}
+
+static inline void StorageBaseImpl_Invalidate(StorageBaseImpl *This)
+{
+  This->baseVtbl->Invalidate(This);
 }
 
 static inline HRESULT StorageBaseImpl_CreateDirEntry(StorageBaseImpl *This,

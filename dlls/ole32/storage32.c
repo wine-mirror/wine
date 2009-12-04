@@ -91,6 +91,7 @@ typedef struct StorageInternalImpl StorageInternalImpl;
 static StorageInternalImpl* StorageInternalImpl_Construct(StorageBaseImpl* parentStorage,
                                                           DWORD openFlags, DirRef storageDirEntry);
 static void StorageImpl_Destroy(StorageBaseImpl* iface);
+static void StorageImpl_Invalidate(StorageBaseImpl* iface);
 static BOOL StorageImpl_ReadBigBlock(StorageImpl* This, ULONG blockIndex, void* buffer);
 static BOOL StorageImpl_WriteBigBlock(StorageImpl* This, ULONG blockIndex, const void* buffer);
 static void StorageImpl_SetNextBlockInChain(StorageImpl* This, ULONG blockIndex, ULONG nextBlock);
@@ -116,7 +117,6 @@ static BOOL StorageImpl_ReadDWordFromBigBlock( StorageImpl*  This,
 
 static BOOL StorageBaseImpl_IsStreamOpen(StorageBaseImpl * stg, DirRef streamEntry);
 static BOOL StorageBaseImpl_IsStorageOpen(StorageBaseImpl * stg, DirRef storageEntry);
-static void StorageInternalImpl_Invalidate( StorageInternalImpl *This );
 
 /* OLESTREAM memory structure to use for Get and Put Routines */
 /* Used for OleConvertIStorageToOLESTREAM and OleConvertOLESTREAMToIStorage */
@@ -1884,7 +1884,7 @@ static void StorageBaseImpl_DeleteAll(StorageBaseImpl * stg)
 
   LIST_FOR_EACH_SAFE(cur, cur2, &stg->storageHead) {
     childstg = LIST_ENTRY(cur,StorageInternalImpl,ParentListEntry);
-    StorageInternalImpl_Invalidate( childstg );
+    StorageBaseImpl_Invalidate( &childstg->base );
   }
 }
 
@@ -1913,7 +1913,7 @@ static HRESULT deleteStorageContents(
   {
     if (stg->base.storageDirEntry == indexToDelete)
     {
-      StorageInternalImpl_Invalidate(stg);
+      StorageBaseImpl_Invalidate(&stg->base);
     }
   }
 
@@ -2413,6 +2413,7 @@ static const IStorageVtbl Storage32Impl_Vtbl =
 static const StorageBaseImplVtbl StorageImpl_BaseVtbl =
 {
   StorageImpl_Destroy,
+  StorageImpl_Invalidate,
   StorageImpl_CreateDirEntry,
   StorageImpl_BaseWriteDirEntry,
   StorageImpl_BaseReadDirEntry,
@@ -2652,12 +2653,21 @@ end:
   return hr;
 }
 
+static void StorageImpl_Invalidate(StorageBaseImpl* iface)
+{
+  StorageImpl *This = (StorageImpl*) iface;
+
+  StorageBaseImpl_DeleteAll(&This->base);
+
+  This->base.reverted = 1;
+}
+
 static void StorageImpl_Destroy(StorageBaseImpl* iface)
 {
   StorageImpl *This = (StorageImpl*) iface;
   TRACE("(%p)\n", This);
 
-  StorageBaseImpl_DeleteAll(&This->base);
+  StorageImpl_Invalidate(iface);
 
   HeapFree(GetProcessHeap(), 0, This->pwcsName);
 
@@ -3812,8 +3822,10 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
     return SmallBlockChainStream_Construct(This, NULL, streamEntryRef);
 }
 
-static void StorageInternalImpl_Invalidate( StorageInternalImpl *This )
+static void StorageInternalImpl_Invalidate( StorageBaseImpl *base )
 {
+  StorageInternalImpl* This = (StorageInternalImpl*) base;
+
   if (!This->base.reverted)
   {
     TRACE("Storage invalidated (stg=%p)\n", This);
@@ -3832,7 +3844,7 @@ static void StorageInternalImpl_Destroy( StorageBaseImpl *iface)
 {
   StorageInternalImpl* This = (StorageInternalImpl*) iface;
 
-  StorageInternalImpl_Invalidate(This);
+  StorageInternalImpl_Invalidate(&This->base);
 
   HeapFree(GetProcessHeap(), 0, This);
 }
@@ -4343,6 +4355,7 @@ static const IStorageVtbl Storage32InternalImpl_Vtbl =
 static const StorageBaseImplVtbl StorageInternalImpl_BaseVtbl =
 {
   StorageInternalImpl_Destroy,
+  StorageInternalImpl_Invalidate,
   StorageInternalImpl_CreateDirEntry,
   StorageInternalImpl_WriteDirEntry,
   StorageInternalImpl_ReadDirEntry,
