@@ -530,9 +530,15 @@ static HRESULT WINAPI WebBrowser_GetProperty(IWebBrowser2 *iface, BSTR szPropert
 
 static HRESULT WINAPI WebBrowser_get_Name(IWebBrowser2 *iface, BSTR *Name)
 {
+    static const WCHAR sName[] = {'M','i','c','r','o','s','o','f','t',' ','W','e','b',\
+                                  ' ','B','r','o','w','s','e','r',' ','C','o','n','t','r','o','l',0};
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, Name);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, Name);
+
+    *Name = SysAllocString(sName);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_get_HWND(IWebBrowser2 *iface, LONG *pHWND)
