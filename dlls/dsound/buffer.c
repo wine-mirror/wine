@@ -28,10 +28,12 @@
 #include "winuser.h"
 #include "mmsystem.h"
 #include "winternl.h"
+#include "vfwmsgs.h"
 #include "wine/debug.h"
 #include "dsound.h"
 #include "dsdriver.h"
 #include "dsound_private.h"
+#include "dsconf.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
@@ -1535,6 +1537,191 @@ static HRESULT SecondaryBufferImpl_Destroy(
     TRACE("(%p)\n",pdsb);
 
     while (SecondaryBufferImpl_Release((LPDIRECTSOUNDBUFFER8)pdsb) > 0);
+
+    return S_OK;
+}
+
+/*******************************************************************************
+ *              IKsBufferPropertySet
+ */
+
+/* IUnknown methods */
+static HRESULT WINAPI IKsBufferPropertySetImpl_QueryInterface(
+    LPKSPROPERTYSET iface,
+    REFIID riid,
+    LPVOID *ppobj )
+{
+    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
+    TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
+
+    return IDirectSoundBuffer_QueryInterface((LPDIRECTSOUNDBUFFER8)This->dsb, riid, ppobj);
+}
+
+static ULONG WINAPI IKsBufferPropertySetImpl_AddRef(LPKSPROPERTYSET iface)
+{
+    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
+    ULONG ref = InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %d\n", This, ref - 1);
+    return ref;
+}
+
+static ULONG WINAPI IKsBufferPropertySetImpl_Release(LPKSPROPERTYSET iface)
+{
+    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
+    ULONG ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) ref was %d\n", This, ref + 1);
+
+    if (!ref) {
+    This->dsb->iks = 0;
+    IDirectSoundBuffer_Release((LPDIRECTSOUND3DBUFFER)This->dsb);
+    HeapFree(GetProcessHeap(), 0, This);
+    TRACE("(%p) released\n", This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI IKsBufferPropertySetImpl_Get(
+    LPKSPROPERTYSET iface,
+    REFGUID guidPropSet,
+    ULONG dwPropID,
+    LPVOID pInstanceData,
+    ULONG cbInstanceData,
+    LPVOID pPropData,
+    ULONG cbPropData,
+    PULONG pcbReturned )
+{
+    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
+    PIDSDRIVERPROPERTYSET ps;
+    TRACE("(iface=%p,guidPropSet=%s,dwPropID=%d,pInstanceData=%p,cbInstanceData=%d,pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
+    This,debugstr_guid(guidPropSet),dwPropID,pInstanceData,cbInstanceData,pPropData,cbPropData,pcbReturned);
+
+    if (This->dsb->hwbuf) {
+        IDsDriver_QueryInterface(This->dsb->hwbuf, &IID_IDsDriverPropertySet, (void **)&ps);
+
+        if (ps) {
+        DSPROPERTY prop;
+        HRESULT hres;
+
+        prop.s.Set = *guidPropSet;
+        prop.s.Id = dwPropID;
+        prop.s.Flags = 0;  /* unused */
+        prop.s.InstanceId = (ULONG)This->dsb->device;
+
+
+        hres = IDsDriverPropertySet_Get(ps, &prop, pInstanceData, cbInstanceData, pPropData, cbPropData, pcbReturned);
+
+        IDsDriverPropertySet_Release(ps);
+
+        return hres;
+        }
+    }
+
+    return E_PROP_ID_UNSUPPORTED;
+}
+
+static HRESULT WINAPI IKsBufferPropertySetImpl_Set(
+    LPKSPROPERTYSET iface,
+    REFGUID guidPropSet,
+    ULONG dwPropID,
+    LPVOID pInstanceData,
+    ULONG cbInstanceData,
+    LPVOID pPropData,
+    ULONG cbPropData )
+{
+    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
+    PIDSDRIVERPROPERTYSET ps;
+    TRACE("(%p,%s,%d,%p,%d,%p,%d)\n",This,debugstr_guid(guidPropSet),dwPropID,pInstanceData,cbInstanceData,pPropData,cbPropData);
+
+    if (This->dsb->hwbuf) {
+        IDsDriver_QueryInterface(This->dsb->hwbuf, &IID_IDsDriverPropertySet, (void **)&ps);
+
+        if (ps) {
+        DSPROPERTY prop;
+        HRESULT hres;
+
+        prop.s.Set = *guidPropSet;
+        prop.s.Id = dwPropID;
+        prop.s.Flags = 0;  /* unused */
+        prop.s.InstanceId = (ULONG)This->dsb->device;
+        hres = IDsDriverPropertySet_Set(ps,&prop,pInstanceData,cbInstanceData,pPropData,cbPropData);
+
+        IDsDriverPropertySet_Release(ps);
+
+        return hres;
+        }
+    }
+
+    return E_PROP_ID_UNSUPPORTED;
+}
+
+static HRESULT WINAPI IKsBufferPropertySetImpl_QuerySupport(
+    LPKSPROPERTYSET iface,
+    REFGUID guidPropSet,
+    ULONG dwPropID,
+    PULONG pTypeSupport )
+{
+    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
+    PIDSDRIVERPROPERTYSET ps;
+    TRACE("(%p,%s,%d,%p)\n",This,debugstr_guid(guidPropSet),dwPropID,pTypeSupport);
+
+    if (This->dsb->hwbuf) {
+        IDsDriver_QueryInterface(This->dsb->hwbuf, &IID_IDsDriverPropertySet, (void **)&ps);
+
+        if (ps) {
+            HRESULT hres;
+
+            hres = IDsDriverPropertySet_QuerySupport(ps,guidPropSet, dwPropID,pTypeSupport);
+
+            IDsDriverPropertySet_Release(ps);
+
+            return hres;
+        }
+    }
+
+    return E_PROP_ID_UNSUPPORTED;
+}
+
+static const IKsPropertySetVtbl iksbvt = {
+    IKsBufferPropertySetImpl_QueryInterface,
+    IKsBufferPropertySetImpl_AddRef,
+    IKsBufferPropertySetImpl_Release,
+    IKsBufferPropertySetImpl_Get,
+    IKsBufferPropertySetImpl_Set,
+    IKsBufferPropertySetImpl_QuerySupport
+};
+
+HRESULT IKsBufferPropertySetImpl_Create(
+    IDirectSoundBufferImpl *dsb,
+    IKsBufferPropertySetImpl **piks)
+{
+    IKsBufferPropertySetImpl *iks;
+    TRACE("(%p,%p)\n",dsb,piks);
+    *piks = NULL;
+
+    iks = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*iks));
+    if (iks == 0) {
+        WARN("out of memory\n");
+        *piks = NULL;
+        return DSERR_OUTOFMEMORY;
+    }
+
+    iks->ref = 0;
+    iks->dsb = dsb;
+    dsb->iks = iks;
+    iks->lpVtbl = &iksbvt;
+
+    IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)dsb);
+
+    *piks = iks;
+    return S_OK;
+}
+
+HRESULT IKsBufferPropertySetImpl_Destroy(
+    IKsBufferPropertySetImpl *piks)
+{
+    TRACE("(%p)\n",piks);
+
+    while (IKsBufferPropertySetImpl_Release((LPKSPROPERTYSET)piks) > 0);
 
     return S_OK;
 }
