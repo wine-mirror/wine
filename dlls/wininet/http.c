@@ -2953,7 +2953,7 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 	DWORD info = dwInfoLevel & HTTP_QUERY_HEADER_MASK;
 	DWORD i;
 
-	TRACE("(%p, 0x%08x)--> %d\n", hHttpRequest, dwInfoLevel, dwInfoLevel);
+	TRACE("(%p, 0x%08x)--> %d\n", hHttpRequest, dwInfoLevel, info);
 	TRACE("  Attribute:");
 	for (i = 0; i < (sizeof(query_flags) / sizeof(query_flags[0])); i++) {
 	    if (query_flags[i].val == info) {
