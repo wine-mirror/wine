@@ -14897,6 +14897,14 @@ dlls/fwpuclnt/Makefile: dlls/fwpuclnt/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/fwpuclnt/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/gdi.exe16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	gdi.exe16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/gdi.exe16/Makefile: dlls/gdi.exe16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/gdi.exe16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/gdi32/Makefile"
 test "x$enable_gdi32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	gdi32"
@@ -18947,6 +18955,7 @@ do
     "dlls/fusion/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/fusion/Makefile" ;;
     "dlls/fusion/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/fusion/tests/Makefile" ;;
     "dlls/fwpuclnt/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/fwpuclnt/Makefile" ;;
+    "dlls/gdi.exe16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdi.exe16/Makefile" ;;
     "dlls/gdi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdi32/Makefile" ;;
     "dlls/gdi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdi32/tests/Makefile" ;;
     "dlls/gdiplus/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdiplus/Makefile" ;;

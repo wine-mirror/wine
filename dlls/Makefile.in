@@ -18,7 +18,6 @@ DOCSUBDIRS     = $(DLLSUBDIRS)
 # 16-bit dlls
 
 WIN16_FILES = \
-	gdi.exe16 \
 	krnl386.exe16 \
 	user.exe16 \
 	wprocs.dll16
@@ -30,9 +29,6 @@ WIN16_FILES = \
 all: $(BUILDSUBDIRS) @WIN16_FILES@
 
 # Placeholders for 16-bit libraries
-
-gdi.exe16:
-	echo "gdi32.dll" >$@
 
 krnl386.exe16:
 	echo "kernel32.dll" >$@

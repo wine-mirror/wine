@@ -9,8 +9,6 @@ IMPORTS   = advapi32 kernel32 ntdll
 EXTRAINCL = @FREETYPEINCL@ @FONTCONFIGINCL@
 EXTRALIBS = @CARBONLIB@
 
-SPEC_SRCS16 = gdi.exe.spec
-
 C_SRCS = \
 	bidi.c \
 	bitblt.c \
@@ -49,28 +47,12 @@ C_SRCS = \
 	printdrv.c \
 	region.c
 
-C_SRCS16 = \
-	bidi16.c \
-	env.c \
-	gdi16.c \
-	metafile16.c \
-	printdrv16.c
-
 RC_SRCS = version.rc
-RC_SRCS16 = version16.rc
 
 EXTRASUBDIRS = \
 	enhmfdrv \
 	mfdrv
 
 @MAKE_DLL_RULES@
-
-# Special rules for 16-bit resource and spec files
-
-gdi.exe.spec.o: gdi.exe.spec version16.res
-	$(WINEBUILD) $(WINEBUILDFLAGS) --dll -o $@ --heap 65520 --main-module $(MODULE) --res version16.res --export $(SRCDIR)/gdi.exe.spec
-
-version16.res: version16.rc
-	$(LDPATH) $(RC16) $(RC16FLAGS) -fo$@ $(SRCDIR)/version16.rc
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

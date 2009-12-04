@@ -48,7 +48,6 @@
 #include "winreg.h"
 #include "wownt32.h"
 #include "wine/debug.h"
-#include "gdi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(print);
 
