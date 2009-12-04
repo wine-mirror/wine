@@ -231,6 +231,8 @@ tmp = "abc".charAt(-1);
 ok(tmp === "", "'abc',charAt(-1) = " + tmp);
 tmp = "abc".charAt(0,2);
 ok(tmp === "a", "'abc',charAt(0.2) = " + tmp);
+tmp = "abc".charAt(NaN);
+ok(tmp === "a", "'abc',charAt(NaN) = " + tmp);
 
 tmp = "abc".charCodeAt(0);
 ok(tmp === 0x61, "'abc'.charCodeAt(0) = " + tmp);
