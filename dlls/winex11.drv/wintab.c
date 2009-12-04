@@ -991,6 +991,10 @@ int CDECL X11DRV_AttachEventQueueToTablet(HWND hOwner)
         for (loop=0; loop < num_devices; loop ++)
             if (strcmp(devices[loop].name, cursorNameA) == 0)
                 target = &devices[loop];
+        if (!target) {
+            WARN("Cursor Name %s not found in list of targets.\n", cursorNameA);
+            continue;
+        }
 
         TRACE("Opening cursor %i id %i\n",cur_loop,(INT)target->id);
 
