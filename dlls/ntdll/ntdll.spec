@@ -408,6 +408,7 @@
 # @ stub RtlAddAuditAccessObjectAce
 # @ stub RtlAddCompoundAce
 # @ stub RtlAddRange
+@ cdecl -arch=x86_64 RtlAddFunctionTable(ptr long long)
 @ stdcall RtlAddRefActivationContext(ptr)
 # @ stub RtlAddRefMemoryStream
 @ stdcall RtlAddVectoredExceptionHandler(long ptr)
@@ -513,6 +514,7 @@
 @ stdcall RtlDeleteCriticalSection(ptr)
 @ stub RtlDeleteElementGenericTable
 @ stub RtlDeleteElementGenericTableAvl
+@ cdecl -arch=x86_64 RtlDeleteFunctionTable(ptr)
 @ stub RtlDeleteNoSplay
 @ stub RtlDeleteOwnersRanges
 @ stub RtlDeleteRange
