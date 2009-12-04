@@ -2194,7 +2194,6 @@ struct IWineD3DStateBlockImpl
     LONG                      ref;     /* Note: Ref counting not required */
 
     /* IWineD3DStateBlock information */
-    IUnknown                 *parent;
     IWineD3DDeviceImpl       *wineD3DDevice;
     WINED3DSTATEBLOCKTYPE     blockType;
 
@@ -2293,8 +2292,8 @@ struct IWineD3DStateBlockImpl
     unsigned int              num_contained_sampler_states;
 };
 
-HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *device,
-        WINED3DSTATEBLOCKTYPE type, IUnknown *parent) DECLSPEC_HIDDEN;
+HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock,
+        IWineD3DDeviceImpl *device, WINED3DSTATEBLOCKTYPE type) DECLSPEC_HIDDEN;
 void stateblock_init_contained_states(IWineD3DStateBlockImpl *object) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued state

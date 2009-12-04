@@ -535,13 +535,6 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
 /**********************************************************
  * IWineD3DStateBlockImpl parts follows
  **********************************************************/
-static HRESULT  WINAPI IWineD3DStateBlockImpl_GetParent(IWineD3DStateBlock *iface, IUnknown **pParent) {
-    IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
-    IUnknown_AddRef(This->parent);
-    *pParent = This->parent;
-    return WINED3D_OK;
-}
-
 static HRESULT  WINAPI IWineD3DStateBlockImpl_GetDevice(IWineD3DStateBlock *iface, IWineD3DDevice** ppDevice){
 
     IWineD3DStateBlockImpl *This   = (IWineD3DStateBlockImpl *)iface;
@@ -1328,22 +1321,19 @@ static const IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl =
     IWineD3DStateBlockImpl_AddRef,
     IWineD3DStateBlockImpl_Release,
     /* IWineD3DStateBlock */
-    IWineD3DStateBlockImpl_GetParent,
     IWineD3DStateBlockImpl_GetDevice,
     IWineD3DStateBlockImpl_Capture,
     IWineD3DStateBlockImpl_Apply,
     IWineD3DStateBlockImpl_InitStartupStateBlock
 };
 
-HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *device,
-        WINED3DSTATEBLOCKTYPE type, IUnknown *parent)
+HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *device, WINED3DSTATEBLOCKTYPE type)
 {
     unsigned int i;
     HRESULT hr;
 
     stateblock->lpVtbl = &IWineD3DStateBlock_Vtbl;
     stateblock->ref = 1;
-    stateblock->parent = parent;
     stateblock->wineD3DDevice = device;
     stateblock->blockType = type;
 

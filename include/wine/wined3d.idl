@@ -2724,7 +2724,7 @@ interface IWineD3DVertexDeclaration : IWineD3DBase
     local,
     uuid(83b073ce-6f30-11d9-c687-00046142c14f)
 ]
-interface IWineD3DStateBlock : IWineD3DBase
+interface IWineD3DStateBlock : IUnknown
 {
     HRESULT GetDevice(
         [out] IWineD3DDevice **device

@@ -605,7 +605,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice *iface,
         return E_OUTOFMEMORY;
     }
 
-    hr = stateblock_init(object, This, type, parent);
+    hr = stateblock_init(object, This, type);
     if (FAILED(hr))
     {
         WARN("Failed to initialize stateblock, hr %#x.\n", hr);
