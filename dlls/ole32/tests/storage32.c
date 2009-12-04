@@ -1348,7 +1348,7 @@ static void test_parent_free(void)
 
 static void test_nonroot_transacted(void)
 {
-    IStorage *stg = NULL, *stg2 = NULL;
+    IStorage *stg = NULL, *stg2 = NULL, *stg3 = NULL;
     HRESULT r;
     IStream *stm = NULL;
     static const WCHAR stgname[] = { 'P','E','R','M','S','T','G',0 };
@@ -1398,7 +1398,26 @@ static void test_nonroot_transacted(void)
         IStorage_Release(stg2);
     }
 
-    IStream_Release(stg);
+    /* create a read-only transacted substorage */
+    r = IStorage_OpenStorage(stg, stgname, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE | STGM_TRANSACTED, NULL, 0, &stg2);
+    ok(r==S_OK, "IStorage->OpenStorage failed, hr=%08x\n", r);
+
+    if (r == S_OK)
+    {
+        /* The storage can be modified. */
+        r = IStorage_CreateStorage(stg2, stgname, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stg3);
+        todo_wine ok(r==S_OK, "IStorage->CreateStorage failed, hr=%08x\n", r);
+        if (r == S_OK)
+            IStream_Release(stg3);
+
+        /* But changes cannot be committed. */
+        r = IStorage_Commit(stg2, 0);
+        todo_wine ok(r==STG_E_ACCESSDENIED, "IStorage->Commit should fail, hr=%08x\n", r);
+
+        IStorage_Release(stg2);
+    }
+
+    IStorage_Release(stg);
 
     /* create a non-transacted file */
     r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE |
