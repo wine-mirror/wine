@@ -376,7 +376,7 @@ static DWORD scmdatabase_create(struct scmdatabase **db)
     InitializeCriticalSection(&(*db)->cs);
 
     err = RegCreateKeyExW(HKEY_LOCAL_MACHINE, SZ_SERVICES_KEY, 0, NULL,
-                          REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL,
+                          REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL,
                           &(*db)->root_key, NULL);
     if (err != ERROR_SUCCESS)
         HeapFree(GetProcessHeap(), 0, *db);
@@ -417,7 +417,7 @@ static DWORD scmdatabase_load_services(struct scmdatabase *db)
             break;
 
         WINE_TRACE("Loading service %s\n", wine_dbgstr_w(szName));
-        err = RegOpenKeyExW(db->root_key, szName, 0, KEY_READ | KEY_WRITE, &hServiceKey);
+        err = RegOpenKeyExW(db->root_key, szName, 0, KEY_READ, &hServiceKey);
         if (err == ERROR_SUCCESS)
         {
             err = load_service_config(hServiceKey, entry);

@@ -84,6 +84,21 @@ struct sc_lock
     struct scmdatabase *db;
 };
 
+static void free_config_strings(QUERY_SERVICE_CONFIGW *old_cfg, QUERY_SERVICE_CONFIGW *new_cfg)
+{
+    if (old_cfg->lpBinaryPathName != new_cfg->lpBinaryPathName)
+        HeapFree(GetProcessHeap(), 0, old_cfg->lpBinaryPathName);
+
+    if (old_cfg->lpLoadOrderGroup != new_cfg->lpLoadOrderGroup)
+        HeapFree(GetProcessHeap(), 0, old_cfg->lpLoadOrderGroup);
+
+    if (old_cfg->lpServiceStartName != new_cfg->lpServiceStartName)
+        HeapFree(GetProcessHeap(), 0, old_cfg->lpServiceStartName);
+
+    if (old_cfg->lpDisplayName != new_cfg->lpDisplayName)
+        HeapFree(GetProcessHeap(), 0, old_cfg->lpDisplayName);
+}
+
 /* Check if the given handle is of the required type and allows the requested access. */
 static DWORD validate_context_handle(SC_RPC_HANDLE handle, DWORD type, DWORD needed_access, struct sc_handle **out_hdr)
 {
@@ -546,34 +561,28 @@ DWORD svcctl_ChangeServiceConfigW(
 
     /* configuration OK. The strings needs to be duplicated */
     if (lpBinaryPathName != NULL)
-    {
-        HeapFree(GetProcessHeap(), 0, service->service_entry->config.lpBinaryPathName);
         new_entry.config.lpBinaryPathName = strdupW(lpBinaryPathName);
-    }
 
     if (lpLoadOrderGroup != NULL)
-    {
-        HeapFree(GetProcessHeap(), 0, service->service_entry->config.lpLoadOrderGroup);
         new_entry.config.lpLoadOrderGroup = strdupW(lpLoadOrderGroup);
-    }
 
     if (lpServiceStartName != NULL)
-    {
-        HeapFree(GetProcessHeap(), 0, service->service_entry->config.lpServiceStartName);
         new_entry.config.lpServiceStartName = strdupW(lpServiceStartName);
-    }
 
     if (lpDisplayName != NULL)
-    {
-        HeapFree(GetProcessHeap(), 0, service->service_entry->config.lpDisplayName);
         new_entry.config.lpDisplayName = strdupW(lpDisplayName);
-    }
 
-    *service->service_entry = new_entry;
-    save_service_config(service->service_entry);
+    /* try to save to Registry, commit or rollback depending on success */
+    err = save_service_config(&new_entry);
+    if (ERROR_SUCCESS == err)
+    {
+        free_config_strings(&service->service_entry->config,&new_entry.config);
+        *service->service_entry = new_entry;
+    }
+    else free_config_strings(&new_entry.config,&service->service_entry->config);
     service_unlock(service->service_entry);
 
-    return ERROR_SUCCESS;
+    return err;
 }
 
 DWORD svcctl_SetServiceStatus(
