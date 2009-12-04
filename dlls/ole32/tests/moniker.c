@@ -1878,9 +1878,9 @@ static void test_save_load_filemoniker(void)
     int i;
 
     /* see FileMonikerImpl_Save docs */
-    zero_pos.u.LowPart = 0;
-    dead_pos.u.LowPart = sizeof(WORD) + sizeof(DWORD) + (lstrlenW(wszFileName1) + 1) + sizeof(WORD);
-    nulls_pos.u.LowPart = dead_pos.u.LowPart + sizeof(WORD);
+    zero_pos.QuadPart = 0;
+    dead_pos.QuadPart = sizeof(WORD) + sizeof(DWORD) + (lstrlenW(wszFileName1) + 1) + sizeof(WORD);
+    nulls_pos.QuadPart = dead_pos.QuadPart + sizeof(WORD);
 
     /* create the stream we're going to write to */
     hr = CreateStreamOnHGlobal(NULL, TRUE, &pStm);
