@@ -26,6 +26,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "objbase.h"
+#include "winnls.h"
 
 #include "dxgi.h"
 #ifdef DXGI_INIT_GUID
@@ -111,13 +112,13 @@ void dxgi_output_init(struct dxgi_output *output, struct dxgi_adapter *adapter) 
 struct dxgi_adapter
 {
     const struct IWineDXGIAdapterVtbl *vtbl;
-    IDXGIFactory *parent;
+    IWineDXGIFactory *parent;
     LONG refcount;
     UINT ordinal;
     IDXGIOutput *output;
 };
 
-HRESULT dxgi_adapter_init(struct dxgi_adapter *adapter, IDXGIFactory *parent, UINT ordinal) DECLSPEC_HIDDEN;
+HRESULT dxgi_adapter_init(struct dxgi_adapter *adapter, IWineDXGIFactory *parent, UINT ordinal) DECLSPEC_HIDDEN;
 
 /* IDXGISwapChain */
 extern const struct IDXGISwapChainVtbl dxgi_swapchain_vtbl DECLSPEC_HIDDEN;

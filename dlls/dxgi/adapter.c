@@ -104,7 +104,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetParent(IWineDXGIAdapter *iface,
 
     TRACE("iface %p, riid %s, parent %p\n", iface, debugstr_guid(riid), parent);
 
-    return IDXGIFactory_QueryInterface(This->parent, riid, parent);
+    return IWineDXGIFactory_QueryInterface(This->parent, riid, parent);
 }
 
 /* IDXGIAdapter methods */
@@ -132,9 +132,47 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_EnumOutputs(IWineDXGIAdapter *ifac
 
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc(IWineDXGIAdapter *iface, DXGI_ADAPTER_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct dxgi_adapter *This = (struct dxgi_adapter *)iface;
+    WINED3DADAPTER_IDENTIFIER adapter_id;
+    char description[128];
+    IWineD3D *wined3d;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    if (!desc) return E_INVALIDARG;
+
+    wined3d = IWineDXGIFactory_get_wined3d(This->parent);
+    adapter_id.driver_size = 0;
+    adapter_id.description = description;
+    adapter_id.description_size = sizeof(description);
+    adapter_id.device_name_size = 0;
+
+    EnterCriticalSection(&dxgi_cs);
+    hr = IWineD3D_GetAdapterIdentifier(wined3d, This->ordinal, 0, &adapter_id);
+    IWineD3D_Release(wined3d);
+    LeaveCriticalSection(&dxgi_cs);
+
+    if (SUCCEEDED(hr))
+    {
+        if (!MultiByteToWideChar(CP_ACP, 0, description, -1, desc->Description, 128))
+        {
+            DWORD err = GetLastError();
+            ERR("Failed to translate description %s (%#x).\n", debugstr_a(description), err);
+            hr = E_FAIL;
+        }
+
+        desc->VendorId = adapter_id.vendor_id;
+        desc->DeviceId = adapter_id.device_id;
+        desc->SubSysId = adapter_id.subsystem_id;
+        desc->Revision = adapter_id.revision;
+        desc->DedicatedVideoMemory = adapter_id.video_memory;
+        desc->DedicatedSystemMemory = 0; /* FIXME */
+        desc->SharedSystemMemory = 0; /* FIXME */
+        memcpy(&desc->AdapterLuid, &adapter_id.adapter_luid, sizeof(desc->AdapterLuid));
+    }
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_CheckInterfaceSupport(IWineDXGIAdapter *iface,
@@ -175,7 +213,7 @@ static const struct IWineDXGIAdapterVtbl dxgi_adapter_vtbl =
     dxgi_adapter_get_ordinal,
 };
 
-HRESULT dxgi_adapter_init(struct dxgi_adapter *adapter, IDXGIFactory *parent, UINT ordinal)
+HRESULT dxgi_adapter_init(struct dxgi_adapter *adapter, IWineDXGIFactory *parent, UINT ordinal)
 {
     struct dxgi_output *output;
 

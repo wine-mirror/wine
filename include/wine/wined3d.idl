@@ -1706,6 +1706,7 @@ typedef struct _WINED3DADAPTER_IDENTIFIER
     GUID device_identifier;
     DWORD whql_level;
     LUID adapter_luid;
+    SIZE_T video_memory;
 } WINED3DADAPTER_IDENTIFIER;
 
 typedef struct _WINED3DPRESENT_PARAMETERS

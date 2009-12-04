@@ -129,7 +129,7 @@ HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
             goto fail;
         }
 
-        hr = dxgi_adapter_init(adapter, (IDXGIFactory *)object, i);
+        hr = dxgi_adapter_init(adapter, (IWineDXGIFactory *)object, i);
         if (FAILED(hr))
         {
             UINT j;
