@@ -4797,7 +4797,7 @@ static INT HTTP_GetCustomHeaderIndex(http_request_t *lpwhr, LPCWSTR lpszField,
 {
     DWORD index;
 
-    TRACE("%s\n", debugstr_w(lpszField));
+    TRACE("%s, %d, %d\n", debugstr_w(lpszField), requested_index, request_only);
 
     for (index = 0; index < lpwhr->nCustHeaders; index++)
     {
