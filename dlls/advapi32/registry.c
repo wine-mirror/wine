@@ -137,7 +137,7 @@ static inline HKEY get_special_root_hkey( HKEY hkey )
     if ((hkey >= HKEY_SPECIAL_ROOT_FIRST) && (hkey <= HKEY_SPECIAL_ROOT_LAST))
     {
         if (!(ret = special_root_keys[(UINT_PTR)hkey - (UINT_PTR)HKEY_SPECIAL_ROOT_FIRST]))
-            ret = create_special_root_hkey( hkey, KEY_ALL_ACCESS );
+            ret = create_special_root_hkey( hkey, MAXIMUM_ALLOWED );
     }
     return ret;
 }
@@ -233,7 +233,7 @@ LSTATUS WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR cl
     if (reserved) return ERROR_INVALID_PARAMETER;
     if (!is_version_nt())
     {
-        access = KEY_ALL_ACCESS;  /* Win95 ignores the access mask */
+        access = MAXIMUM_ALLOWED;  /* Win95 ignores the access mask */
         if (name && *name == '\\') name++; /* win9x,ME ignores one (and only one) beginning backslash */
     }
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
@@ -279,7 +279,7 @@ LSTATUS WINAPI RegCreateKeyW( HKEY hkey, LPCWSTR lpSubKey, PHKEY phkResult )
     /* FIXME: previous implementation converted ERROR_INVALID_HANDLE to ERROR_BADKEY, */
     /* but at least my version of NT (4.0 SP5) doesn't do this.  -- AJ */
     return RegCreateKeyExW( hkey, lpSubKey, 0, NULL, REG_OPTION_NON_VOLATILE,
-                            KEY_ALL_ACCESS, NULL, phkResult, NULL );
+                            MAXIMUM_ALLOWED, NULL, phkResult, NULL );
 }
 
 
@@ -291,7 +291,7 @@ LSTATUS WINAPI RegCreateKeyW( HKEY hkey, LPCWSTR lpSubKey, PHKEY phkResult )
 LSTATUS WINAPI RegCreateKeyA( HKEY hkey, LPCSTR lpSubKey, PHKEY phkResult )
 {
     return RegCreateKeyExA( hkey, lpSubKey, 0, NULL, REG_OPTION_NON_VOLATILE,
-                            KEY_ALL_ACCESS, NULL, phkResult, NULL );
+                            MAXIMUM_ALLOWED, NULL, phkResult, NULL );
 }
 
 
@@ -348,7 +348,7 @@ LSTATUS WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM acc
     STRING nameA;
     NTSTATUS status;
 
-    if (!is_version_nt()) access = KEY_ALL_ACCESS;  /* Win95 ignores the access mask */
+    if (!is_version_nt()) access = MAXIMUM_ALLOWED;  /* Win95 ignores the access mask */
     else
     {
         /* NT+ allows beginning backslash for HKEY_CLASSES_ROOT */
@@ -389,7 +389,7 @@ LSTATUS WINAPI RegOpenKeyW( HKEY hkey, LPCWSTR name, PHKEY retkey )
         *retkey = hkey;
         return ERROR_SUCCESS;
     }
-    return RegOpenKeyExW( hkey, name, 0, KEY_ALL_ACCESS, retkey );
+    return RegOpenKeyExW( hkey, name, 0, MAXIMUM_ALLOWED, retkey );
 }
 
 
@@ -417,7 +417,7 @@ LSTATUS WINAPI RegOpenKeyA( HKEY hkey, LPCSTR name, PHKEY retkey )
         *retkey = hkey;
         return ERROR_SUCCESS;
     }
-    return RegOpenKeyExA( hkey, name, 0, KEY_ALL_ACCESS, retkey );
+    return RegOpenKeyExA( hkey, name, 0, MAXIMUM_ALLOWED, retkey );
 }
 
 
