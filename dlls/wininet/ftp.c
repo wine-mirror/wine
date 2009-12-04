@@ -1308,7 +1308,7 @@ static const object_vtbl_t FTPFILEVtbl = {
  *    NULL on failure
  *
  */
-HINTERNET FTP_FtpOpenFileW(ftp_session_t *lpwfs,
+static HINTERNET FTP_FtpOpenFileW(ftp_session_t *lpwfs,
 	LPCWSTR lpszFileName, DWORD fdwAccess, DWORD dwFlags,
 	DWORD_PTR dwContext)
 {
