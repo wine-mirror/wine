@@ -1026,7 +1026,15 @@ static void test_GetLongPathNameA(void)
     lstrcatA(longpath, strchr(temppath, '\\') + 1);
 
     /* NULL test */
+    SetLastError(0xdeadbeef);
     length = pGetLongPathNameA(unc_short, NULL, 0);
+    if (length == 0 && GetLastError() == ERROR_BAD_NETPATH)
+    {
+        /* Seen on Window XP Home */
+        win_skip("UNC with computername is not supported\n");
+        DeleteFileA(tempfile);
+        return;
+    }
     explength = lstrlenA(longpath) + 1;
     todo_wine
     ok(length == explength, "Wrong length %d, expected %d\n", length, explength);
