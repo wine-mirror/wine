@@ -1591,11 +1591,20 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                     return DISP_E_TYPEMISMATCH;
                 hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
-                hr = DispGetParam(pDispParams, 1, VT_I4, &varg1, puArgErr);
-                if (FAILED(hr))
+                if (pDispParams->cArgs == 2)
                 {
-                    VariantClear(&varg0);
-                    return hr;
+                    hr = DispGetParam(pDispParams, 1, VT_I4, &varg1, puArgErr);
+                    if (FAILED(hr))
+                    {
+                        VariantClear(&varg0);
+                        return hr;
+                    }
+                }
+                else
+                {
+                    VariantInit(&varg1);
+                    V_VT(&varg1) = VT_I4;
+                    V_I4(&varg1) = 0;
                 }
                 V_VT(pVarResult) = VT_DISPATCH;
                 if ((ret = MsiOpenPackageExW(V_BSTR(&varg0), V_I4(&varg1), &msiHandle)) == ERROR_SUCCESS)

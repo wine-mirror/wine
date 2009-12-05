@@ -721,7 +721,7 @@ static void test_dispatch(void)
     V_VT(&vararg[0]) = VT_BSTR;
     V_BSTR(&vararg[0]) = SysAllocString(szMsifile);
     hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
-    ok(hr == DISP_E_EXCEPTION, "IDispatch::Invoke returned 0x%08x\n", hr);
+    todo_wine ok(hr == DISP_E_EXCEPTION, "IDispatch::Invoke returned 0x%08x\n", hr);
     ok_exception(hr, szOpenPackageException);
     VariantClear(&vararg[0]);
 
@@ -733,7 +733,7 @@ static void test_dispatch(void)
     V_VT(&vararg[0]) = VT_BSTR;
     V_BSTR(&vararg[0]) = SysAllocString(path);
     hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
-    todo_wine ok(hr == S_OK, "IDispatch::Invoke returned 0x%08x\n", hr);
+    ok(hr == S_OK, "IDispatch::Invoke returned 0x%08x\n", hr);
     VariantClear(&vararg[0]);
     VariantClear(&varresult);
 
