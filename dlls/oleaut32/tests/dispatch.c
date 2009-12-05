@@ -103,11 +103,8 @@ void test_DispGetParam(void)
     INIT_DISPPARAMS(dispparams, NULL, NULL, 0, 0);
     err_index = 0xdeadbeef;
     hr = DispGetParam(&dispparams, 0, VT_I2, NULL, &err_index);
-    todo_wine
-    {
-        ok(hr == DISP_E_PARAMNOTFOUND,
-           "Expected DISP_E_PARAMNOTFOUND, got %08x\n", hr);
-    }
+    ok(hr == DISP_E_PARAMNOTFOUND,
+       "Expected DISP_E_PARAMNOTFOUND, got %08x\n", hr);
     ok(err_index == 0xdeadbeef,
        "Expected err_index to be unchanged, got %d\n", err_index);
 
@@ -128,10 +125,7 @@ void test_DispGetParam(void)
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
     ok(V_VT(&result) == VT_EMPTY,
        "Expected VT_EMPTY, got %08x\n", V_VT(&result));
-    todo_wine
-    {
-        ok(err_index == 0, "Expected 0, got %d\n", err_index);
-    }
+    ok(err_index == 0, "Expected 0, got %d\n", err_index);
 
     /* pdispparams.cNamedArgs is 1, yet pdispparams.rgdispidNamedArgs is NULL.
      *
@@ -195,10 +189,7 @@ void test_DispGetParam(void)
     err_index = 0xdeadbeef;
     hr = DispGetParam(&dispparams, 2, VT_I2, NULL, &err_index);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
-    todo_wine
-    {
-        ok(err_index == 0, "Expected 0, got %d\n", err_index);
-    }
+    ok(err_index == 0, "Expected 0, got %d\n", err_index);
 
     /* puArgErr is NULL. */
     INIT_DISPPARAMS(dispparams, vararg, NULL, 3, 0);
@@ -239,10 +230,7 @@ void test_DispGetParam(void)
     ok(hr == DISP_E_OVERFLOW, "Expected DISP_E_OVERFLOW, got %08x\n", hr);
     ok(V_VT(&result) == VT_EMPTY,
        "Expected VT_EMPTY, got %08x\n", V_VT(&result));
-    todo_wine
-    {
-        ok(err_index == 1, "Expected 1, got %d\n", err_index);
-    }
+    ok(err_index == 1, "Expected 1, got %d\n", err_index);
 
     /* Coerce the third (VT_BSTR) param to VT_I2. */
     INIT_DISPPARAMS(dispparams, vararg, NULL, 3, 0);
@@ -263,10 +251,7 @@ void test_DispGetParam(void)
     ok(hr == DISP_E_BADVARTYPE, "Expected DISP_E_BADVARTYPE, got %08x\n", hr);
     ok(V_VT(&result) == VT_EMPTY,
        "Expected VT_EMPTY, got %08x\n", V_VT(&result));
-    todo_wine
-    {
-        ok(err_index == 0, "Expected 0, got %d\n", err_index);
-    }
+    ok(err_index == 0, "Expected 0, got %d\n", err_index);
 
     CLEAR_VARARG(vararg);
 
