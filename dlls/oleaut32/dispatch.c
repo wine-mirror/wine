@@ -130,6 +130,13 @@ HRESULT WINAPI DispGetParam(
 
     TRACE("position=%d, cArgs=%d, cNamedArgs=%d\n",
           position, pdispparams->cArgs, pdispparams->cNamedArgs);
+
+    if (pdispparams->cArgs > 0 && !pdispparams->rgvarg)
+        return E_INVALIDARG;
+
+    if (!pvarResult)
+        return E_INVALIDARG;
+
     if (position < pdispparams->cArgs) {
       /* positional arg? */
       pos = pdispparams->cArgs - position - 1;
