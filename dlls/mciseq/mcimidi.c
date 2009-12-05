@@ -61,13 +61,13 @@ typedef struct tagWINE_MCIMIDI {
     UINT		wDevID;			/* the MCI one */
     HMIDI		hMidi;
     int			nUseCount;          	/* Incremented for each shared open          */
-    WORD		wPort;			/* the WINMM device unit */
-    WORD		wNotifyDeviceID;    	/* MCI device ID with a pending notification */
+    MCIDEVICEID         wNotifyDeviceID;    	/* MCI device ID with a pending notification */
     HANDLE 		hCallback;         	/* Callback handle for pending notification  */
     HMMIO		hFile;	            	/* mmio file handle open as Element          */
     LPWSTR		lpstrElementName;       /* Name of file (if any)                     */
     LPWSTR		lpstrCopyright;
     LPWSTR		lpstrName;
+    WORD		wPort;			/* the WINMM device unit */
     WORD		dwStatus;		/* one from MCI_MODE_xxxx */
     DWORD		dwMciTimeFormat;	/* One of the supported MCI_FORMAT_xxxx */
     WORD		wFormat;		/* Format of MIDI hFile (0, 1 or 2) */
@@ -205,6 +205,24 @@ static WINE_MCIMIDI*  MIDI_mciGetOpenDev(UINT wDevID)
 	return 0;
     }
     return wmm;
+}
+
+/**************************************************************************
+ *				MIDI_mciNotify			[internal]
+ *
+ * Notifications in MCI work like a 1-element queue.
+ * Each new notification request supersedes the previous one.
+ * This affects Play and Record; other commands are immediate.
+ */
+static void MIDI_mciNotify(DWORD_PTR hWndCallBack, WINE_MCIMIDI* wmm, UINT wStatus)
+{
+    /* We simply save one parameter by not passing the wDevID local
+     * to the command.  They are the same (via mciGetDriverData).
+     */
+    MCIDEVICEID wDevID = wmm->wNotifyDeviceID;
+    HANDLE old = InterlockedExchangePointer(&wmm->hCallback, NULL);
+    if (old) mciDriverNotify(old, wDevID, MCI_NOTIFY_SUPERSEDED);
+    mciDriverNotify(HWND_32(LOWORD(hWndCallBack)), wDevID, wStatus);
 }
 
 /**************************************************************************
@@ -753,7 +771,7 @@ static DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSW lpParms)
     wmm->lpstrCopyright = NULL;
     wmm->lpstrName = NULL;
 
-    wmm->wNotifyDeviceID = dwDeviceID;
+    wmm->wNotifyDeviceID = wDevID;
     wmm->dwStatus = MCI_MODE_NOT_READY;	/* while loading file contents */
     /* spec says it should be the default format from the MIDI file... */
     wmm->dwMciTimeFormat = MCI_FORMAT_MILLISECONDS;
@@ -798,11 +816,8 @@ static DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSW lpParms)
     } else {
 	wmm->dwPositionMS = 0;
 	wmm->dwStatus = MCI_MODE_STOP;
-	if (dwFlags & MCI_NOTIFY) {
-	    TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	    mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
-			    wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-        }
+	if (dwFlags & MCI_NOTIFY)
+	    MIDI_mciNotify(lpParms->dwCallback, wmm, MCI_NOTIFY_SUCCESSFUL);
     }
     return dwRet;
 }
@@ -812,6 +827,7 @@ static DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSW lpParms)
  */
 static DWORD MIDI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
+    DWORD		dwRet = 0;
     WINE_MCIMIDI*	wmm = MIDI_mciGetOpenDev(wDevID);
 
     TRACE("(%04X, %08X, %p);\n", wDevID, dwFlags, lpParms);
@@ -819,11 +835,16 @@ static DWORD MIDI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParm
     if (wmm == NULL)	return MCIERR_INVALID_DEVICE_ID;
 
     if (wmm->dwStatus != MCI_MODE_STOP) {
+	HANDLE old = InterlockedExchangePointer(&wmm->hCallback, NULL);
+	if (old) mciDriverNotify(old, wDevID, MCI_NOTIFY_ABORTED);
+    }
+
+    if (wmm->dwStatus != MCI_MODE_STOP) {
 	int	oldstat = wmm->dwStatus;
 
 	wmm->dwStatus = MCI_MODE_NOT_READY;
 	if (oldstat == MCI_MODE_PAUSE)
-	    midiOutReset((HMIDIOUT)wmm->hMidi);
+	    dwRet = midiOutReset((HMIDIOUT)wmm->hMidi);
 
 	while (wmm->dwStatus != MCI_MODE_STOP)
 	    Sleep(10);
@@ -832,14 +853,9 @@ static DWORD MIDI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParm
     /* sanity reset */
     wmm->dwStatus = MCI_MODE_STOP;
 
-    TRACE("wmm->dwStatus=%d\n", wmm->dwStatus);
-
-    if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
-			wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    }
-    return 0;
+    if ((dwFlags & MCI_NOTIFY) && lpParms && MMSYSERR_NOERROR==dwRet)
+	MIDI_mciNotify(lpParms->dwCallback, wmm, MCI_NOTIFY_SUCCESSFUL);
+    return dwRet;
 }
 
 /**************************************************************************
@@ -854,6 +870,7 @@ static DWORD MIDI_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
     if (wmm == NULL)	return MCIERR_INVALID_DEVICE_ID;
 
     if (wmm->dwStatus != MCI_MODE_STOP) {
+	/* mciStop handles MCI_NOTIFY_ABORTED */
 	MIDI_mciStop(wDevID, MCI_WAIT, lpParms);
     }
 
@@ -873,10 +890,8 @@ static DWORD MIDI_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
 	return MCIERR_INTERNAL;
     }
 
-    if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
-			wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+    if ((dwFlags & MCI_NOTIFY) && lpParms) {
+	MIDI_mciNotify(lpParms->dwCallback, wmm, MCI_NOTIFY_SUCCESSFUL);
     }
     return 0;
 }
@@ -915,6 +930,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     WORD		doPlay, nt;
     MCI_MIDITRACK*	mmt;
     DWORD		hiPulse;
+    HANDLE		oldcb;
     WINE_MCIMIDI*	wmm = MIDI_mciGetOpenDev(wDevID);
 
     TRACE("(%04X, %08X, %p);\n", wDevID, dwFlags, lpParms);
@@ -936,8 +952,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     }
 
     if (!(dwFlags & MCI_WAIT)) {
-	/** FIXME: I'm not 100% sure that wNotifyDeviceID is the right value in all cases ??? */
-	return MCI_SendCommandAsync(wmm->wNotifyDeviceID, MCI_PLAY, dwFlags, (DWORD_PTR)lpParms, sizeof(LPMCI_PLAY_PARMS));
+	return MCI_SendCommandAsync(wDevID, MCI_PLAY, dwFlags, (DWORD_PTR)lpParms, sizeof(LPMCI_PLAY_PARMS));
     }
 
     if (lpParms && (dwFlags & MCI_FROM)) {
@@ -953,6 +968,11 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     }
 
     TRACE("Playing from %u to %u\n", dwStartMS, dwEndMS);
+
+    oldcb = InterlockedExchangePointer(&wmm->hCallback,
+	(dwFlags & MCI_NOTIFY) ? HWND_32(LOWORD(lpParms->dwCallback)) : NULL);
+    if (oldcb) mciDriverNotify(oldcb, wDevID, MCI_NOTIFY_ABORTED);
+    oldcb = NULL;
 
     /* init tracks */
     for (nt = 0; nt < wmm->nTracks; nt++) {
@@ -1174,13 +1194,14 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     /* to restart playing at beginning when it's over */
     wmm->dwPositionMS = 0;
 
-    if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
-			wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    }
+    if (dwFlags & MCI_NOTIFY)
+	oldcb = InterlockedExchangePointer(&wmm->hCallback, NULL);
 
     wmm->dwStatus = MCI_MODE_STOP;
+
+    /* Let the potentially asynchronous commands support FAILURE notification. */
+    if (oldcb) mciDriverNotify(oldcb, wDevID,
+	dwRet ? MCI_NOTIFY_FAILURE : MCI_NOTIFY_SUCCESSFUL);
     return dwRet;
 }
 
@@ -1202,12 +1223,8 @@ static DWORD MIDI_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
 	    midiOutShortMsg((HMIDIOUT)(wmm->hMidi), 0x78B0 | chn);
 	wmm->dwStatus = MCI_MODE_PAUSE;
     }
-    if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
-			wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    }
-
+    if ((dwFlags & MCI_NOTIFY) && lpParms)
+	MIDI_mciNotify(lpParms->dwCallback, wmm, MCI_NOTIFY_SUCCESSFUL);
     return 0;
 }
 
@@ -1226,11 +1243,8 @@ static DWORD MIDI_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
 	wmm->wStartedPlaying = FALSE;
 	wmm->dwStatus = MCI_MODE_PLAY;
     }
-    if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
-			wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    }
+    if ((dwFlags & MCI_NOTIFY) && lpParms)
+	MIDI_mciNotify(lpParms->dwCallback, wmm, MCI_NOTIFY_SUCCESSFUL);
     return 0;
 }
 
@@ -1317,6 +1331,8 @@ static DWORD MIDI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SEQ_SET_PARMS lpParms
     }
     if (dwFlags & MCI_SEQ_SET_TEMPO)
 	TRACE("MCI_SEQ_SET_TEMPO !\n");
+    if (dwFlags & MCI_NOTIFY)
+	MIDI_mciNotify(lpParms->dwCallback, wmm, MCI_NOTIFY_SUCCESSFUL);
     return 0;
 }
 
@@ -1433,11 +1449,8 @@ static DWORD MIDI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 	WARN("No Status-Item!\n");
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
-    if (dwFlags & MCI_NOTIFY) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
-			wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    }
+    if ((dwFlags & MCI_NOTIFY) && HRESULT_CODE(ret)==0)
+	MIDI_mciNotify(lpParms->dwCallback, wmm, MCI_NOTIFY_SUCCESSFUL);
     return ret;
 }
 
@@ -1510,6 +1523,8 @@ static DWORD MIDI_mciGetDevCaps(UINT wDevID, DWORD dwFlags,
 	WARN("No GetDevCaps-Item !\n");
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
+    if ((dwFlags & MCI_NOTIFY) && HRESULT_CODE(ret)==0)
+	MIDI_mciNotify(lpParms->dwCallback, wmm, MCI_NOTIFY_SUCCESSFUL);
     return ret;
 }
 
@@ -1548,6 +1563,8 @@ static DWORD MIDI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW lpParms)
 	    lstrcpynW(lpParms->lpstrReturn, str ? str : &zero, lpParms->dwRetSize);
 	} else ret = MCIERR_PARAM_OVERFLOW;
     }
+    if (MMSYSERR_NOERROR==ret && (dwFlags & MCI_NOTIFY))
+	MIDI_mciNotify(lpParms->dwCallback, wmm, MCI_NOTIFY_SUCCESSFUL);
     return ret;
 }
 
