@@ -469,6 +469,7 @@ static void test_GetDateFormatA(void)
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
   LCID lcid_ru = MAKELCID(MAKELANGID(LANG_RUSSIAN, SUBLANG_NEUTRAL), SORT_DEFAULT);
   char buffer[BUFFER_SIZE], input[BUFFER_SIZE], Expected[BUFFER_SIZE];
+  char Broken[BUFFER_SIZE];
   char short_day[10], month[10], genitive_month[10];
 
   memset(&curtime, 2, sizeof(SYSTEMTIME)); /* Invalid time */
@@ -584,15 +585,21 @@ static void test_GetDateFormatA(void)
 
   STRINGSA("MMMMdd", "");
   sprintf(Expected, "%s04", genitive_month);
+  sprintf(Broken, "%s04", month);
   ret = GetDateFormat(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_EQA;
+  ok(strncmp(buffer, Expected, strlen(Expected)) == 0 ||
+     broken(strncmp(buffer, Broken, strlen(Broken)) == 0) /* nt4 */,
+     "Expected '%s', got '%s'\n", Expected, buffer);
 
   STRINGSA("MMMMdd ddd", "");
   sprintf(Expected, "%s04 %s", genitive_month, short_day);
+  sprintf(Broken, "%s04 %s", month, short_day);
   ret = GetDateFormat(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_EQA;
+  ok(strncmp(buffer, Expected, strlen(Expected)) == 0 ||
+     broken(strncmp(buffer, Broken, strlen(Broken)) == 0) /* nt4 */,
+     "Expected '%s', got '%s'\n", Expected, buffer);
 
   STRINGSA("dd dddMMMM", "");
   sprintf(Expected, "04 %s%s", short_day, month);
@@ -602,16 +609,22 @@ static void test_GetDateFormatA(void)
 
   STRINGSA("dd dddMMMM ddd MMMMdd", "");
   sprintf(Expected, "04 %s%s %s %s04", short_day, month, short_day, genitive_month);
+  sprintf(Broken, "04 %s%s %s %s04", short_day, month, short_day, month);
   ret = GetDateFormat(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_EQA;
+  ok(strncmp(buffer, Expected, strlen(Expected)) == 0 ||
+     broken(strncmp(buffer, Broken, strlen(Broken)) == 0) /* nt4 */,
+     "Expected '%s', got '%s'\n", Expected, buffer);
 
   /* with literal part */
   STRINGSA("ddd',' MMMM dd", "");
   sprintf(Expected, "%s, %s 04", short_day, genitive_month);
+  sprintf(Broken, "%s, %s 04", short_day, month);
   ret = GetDateFormat(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_EQA;
+  ok(strncmp(buffer, Expected, strlen(Expected)) == 0 ||
+     broken(strncmp(buffer, Broken, strlen(Broken)) == 0) /* nt4 */,
+     "Expected '%s', got '%s'\n", Expected, buffer);
 }
 
 static void test_GetDateFormatW(void)
