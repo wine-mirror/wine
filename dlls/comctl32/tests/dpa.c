@@ -347,6 +347,8 @@ static void test_dpa(void)
     pDPA_DeleteAllPtrs(dpa2);
     rc=CheckDPA(dpa2, 0, &dw2);
     ok(rc, "dw2=0x%x\n", dw2);
+
+    pDPA_Destroy(dpa);
     pDPA_Destroy(dpa2);
     pDPA_Destroy(dpa3);
 }
@@ -623,8 +625,10 @@ static void test_DPA_LoadStream(void)
     hRes = IStream_Seek(pStm, li, STREAM_SEEK_SET, NULL);
     expect(S_OK, hRes);
 
+    dpa = NULL;
     hRes = pDPA_LoadStream(&dpa, CB_Load, pStm, NULL);
     expect(S_OK, hRes);
+    DPA_Destroy(dpa);
 
     /* try with altered dwData2 field */
     header.dwSize = sizeof(header);
