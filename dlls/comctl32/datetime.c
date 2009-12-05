@@ -1360,6 +1360,9 @@ DATETIME_Destroy (DATETIME_INFO *infoPtr)
     if (infoPtr->hMonthCal) 
         DestroyWindow(infoPtr->hMonthCal);
     SetWindowLongPtrW( infoPtr->hwndSelf, 0, 0 ); /* clear infoPtr */
+    Free (infoPtr->buflen);
+    Free (infoPtr->fieldRect);
+    Free (infoPtr->fieldspec);
     Free (infoPtr);
     return 0;
 }
