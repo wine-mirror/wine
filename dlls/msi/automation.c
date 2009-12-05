@@ -1587,6 +1587,8 @@ static HRESULT WINAPI InstallerImpl_Invoke(
             {
                 if (pDispParams->cArgs == 0)
                     return DISP_E_TYPEMISMATCH;
+                if (V_VT(&pDispParams->rgvarg[pDispParams->cArgs - 1]) != VT_BSTR)
+                    return DISP_E_TYPEMISMATCH;
                 hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
                 hr = DispGetParam(pDispParams, 1, VT_I4, &varg1, puArgErr);
