@@ -641,6 +641,9 @@ static void test_linelinearblend(void)
     expectf(0.0, res_positions[0]);
     expectf(0.8, res_factors[1]);
     expectf(1.0, res_positions[1]);
+
+    status = GdipDeleteBrush((GpBrush*)brush);
+    expect(Ok, status);
 }
 
 START_TEST(brush)
