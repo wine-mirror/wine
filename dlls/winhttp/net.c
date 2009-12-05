@@ -115,7 +115,6 @@ MAKE_FUNCPTR( SSL_get_verify_result );
 MAKE_FUNCPTR( SSL_get_peer_certificate );
 MAKE_FUNCPTR( SSL_CTX_set_default_verify_paths );
 MAKE_FUNCPTR( SSL_CTX_set_verify );
-MAKE_FUNCPTR( X509_STORE_CTX_get_ex_data );
 
 MAKE_FUNCPTR( BIO_new_fp );
 MAKE_FUNCPTR( CRYPTO_num_locks );
@@ -123,6 +122,7 @@ MAKE_FUNCPTR( CRYPTO_set_id_callback );
 MAKE_FUNCPTR( CRYPTO_set_locking_callback );
 MAKE_FUNCPTR( ERR_get_error );
 MAKE_FUNCPTR( ERR_error_string );
+MAKE_FUNCPTR( X509_STORE_CTX_get_ex_data );
 MAKE_FUNCPTR( i2d_X509 );
 #undef MAKE_FUNCPTR
 
@@ -423,7 +423,6 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     LOAD_FUNCPTR( SSL_get_peer_certificate );
     LOAD_FUNCPTR( SSL_CTX_set_default_verify_paths );
     LOAD_FUNCPTR( SSL_CTX_set_verify );
-    LOAD_FUNCPTR( X509_STORE_CTX_get_ex_data );
 #undef LOAD_FUNCPTR
 
 #define LOAD_FUNCPTR(x) \
@@ -440,6 +439,7 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     LOAD_FUNCPTR( CRYPTO_set_locking_callback );
     LOAD_FUNCPTR( ERR_get_error );
     LOAD_FUNCPTR( ERR_error_string );
+    LOAD_FUNCPTR( X509_STORE_CTX_get_ex_data );
     LOAD_FUNCPTR( i2d_X509 );
 #undef LOAD_FUNCPTR
 
