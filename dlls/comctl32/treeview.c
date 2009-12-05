@@ -5064,7 +5064,11 @@ TREEVIEW_Destroy(TREEVIEW_INFO *infoPtr)
 {
     TRACE("\n");
 
+    /* free item data */
     TREEVIEW_RemoveTree(infoPtr);
+    /* root isn't freed with other items */
+    TREEVIEW_FreeItem(infoPtr, infoPtr->root);
+    DPA_Destroy(infoPtr->items);
 
     /* tool tip is automatically destroyed: we are its owner */
 
