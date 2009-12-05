@@ -1505,7 +1505,7 @@ static void test_nonroot_transacted(void)
     {
         /* The storage can be modified. */
         r = IStorage_CreateStorage(stg2, stgname, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stg3);
-        todo_wine ok(r==S_OK, "IStorage->CreateStorage failed, hr=%08x\n", r);
+        ok(r==S_OK, "IStorage->CreateStorage failed, hr=%08x\n", r);
         if (r == S_OK)
             IStream_Release(stg3);
 

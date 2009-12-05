@@ -864,15 +864,16 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
       (grfMode & STGM_TRANSACTED))
     return STG_E_INVALIDFUNCTION;
 
-  /* Can't create a stream on read-only storage */
-  if ( STGM_ACCESS_MODE( This->openFlags ) == STGM_READ )
-    return STG_E_ACCESSDENIED;
-
   /*
-   * Check that we're compatible with the parent's storage mode
-   * if not in transacted mode
+   * Don't worry about permissions in transacted mode, as we can always write
+   * changes; we just can't always commit them.
    */
   if(!(This->openFlags & STGM_TRANSACTED)) {
+    /* Can't create a stream on read-only storage */
+    if ( STGM_ACCESS_MODE( This->openFlags ) == STGM_READ )
+      return STG_E_ACCESSDENIED;
+
+    /* Can't create a stream with greater access than the parent. */
     if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( This->openFlags ) )
       return STG_E_ACCESSDENIED;
   }
@@ -898,11 +899,6 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
     }
     else
       return STG_E_FILEALREADYEXISTS;
-  }
-  else if (STGM_ACCESS_MODE(This->openFlags) == STGM_READ)
-  {
-    WARN("read-only storage\n");
-    return STG_E_ACCESSDENIED;
   }
 
   /*
@@ -1058,7 +1054,8 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
   /*
    * Check that we're compatible with the parent's storage mode
    */
-  if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( This->openFlags ) )
+  if ( !(This->openFlags & STGM_TRANSACTED) &&
+       STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( This->openFlags ) )
   {
     WARN("access denied\n");
     return STG_E_ACCESSDENIED;
@@ -1075,7 +1072,8 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
      * An element with this name already exists
      */
     if (STGM_CREATE_MODE(grfMode) == STGM_CREATE &&
-        STGM_ACCESS_MODE(This->openFlags) != STGM_READ)
+        ((This->openFlags & STGM_TRANSACTED) ||
+         STGM_ACCESS_MODE(This->openFlags) != STGM_READ))
     {
       hr = IStorage_DestroyElement(iface, pwcsName);
       if (FAILED(hr))
@@ -1087,7 +1085,8 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
       return STG_E_FILEALREADYEXISTS;
     }
   }
-  else if (STGM_ACCESS_MODE(This->openFlags) == STGM_READ)
+  else if (!(This->openFlags & STGM_TRANSACTED) &&
+           STGM_ACCESS_MODE(This->openFlags) == STGM_READ)
   {
     WARN("read-only storage\n");
     return STG_E_ACCESSDENIED;
@@ -1831,7 +1830,8 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
   if (This->reverted)
     return STG_E_REVERTED;
 
-  if ( STGM_ACCESS_MODE( This->openFlags ) == STGM_READ )
+  if ( !(This->openFlags & STGM_TRANSACTED) &&
+       STGM_ACCESS_MODE( This->openFlags ) == STGM_READ )
     return STG_E_ACCESSDENIED;
 
   entryToDeleteRef = findElement(
