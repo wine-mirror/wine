@@ -345,7 +345,7 @@ static void flushdisplaymodes(void)
 
 static HRESULT WINAPI enummodescallback(LPDDSURFACEDESC lpddsd, LPVOID lpContext)
 {
-    trace("Width = %i, Height = %i, Refresh Rate = %i, Pitch = %i, flags =%02X\r\n",
+    trace("Width = %i, Height = %i, Refresh Rate = %i, Pitch = %i, flags =%02X\n",
         lpddsd->dwWidth, lpddsd->dwHeight,
           U2(*lpddsd).dwRefreshRate, U1(*lpddsd).lPitch, lpddsd->dwFlags);
 
