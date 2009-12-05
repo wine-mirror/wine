@@ -43,6 +43,7 @@
 #include "wingdi.h"
 #include "winnls.h"
 #include "winerror.h"
+#include "wine/wingdi16.h"
 #include "gdi_private.h"
 #include "wine/debug.h"
 

@@ -22,7 +22,10 @@
 #define __WINE_GDI_PRIVATE_H
 
 #include <math.h>
-#include "wine/wingdi16.h"
+#include <stdarg.h>
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
 
 /* Metafile defines */
 #define META_EOF 0x0000

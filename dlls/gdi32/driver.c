@@ -29,6 +29,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "ddrawgdi.h"
+#include "wine/winbase16.h"
 
 #include "gdi_private.h"
 #include "wine/unicode.h"

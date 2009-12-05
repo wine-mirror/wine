@@ -18,9 +18,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "wine/wingdi16.h"
 #include "mfdrv/metafiledrv.h"
 #include "wine/debug.h"
 
