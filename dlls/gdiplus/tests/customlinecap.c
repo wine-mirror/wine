@@ -59,8 +59,10 @@ static void test_constructor_destructor(void)
     stat = GdipDeleteCustomLineCap(custom);
     expect(Ok, stat);
     /* it's strange but native returns NotImplemented on stroke == NULL */
+    custom = NULL;
     stat = GdipCreateCustomLineCap(path, NULL, LineCapFlat, 10.0, &custom);
     todo_wine expect(NotImplemented, stat);
+    todo_wine ok(custom == NULL, "Expected a failure on creation\n");
 
     GdipDeletePath(path2);
     GdipDeletePath(path);
