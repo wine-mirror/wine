@@ -1585,6 +1585,8 @@ static HRESULT WINAPI InstallerImpl_Invoke(
         case DISPID_INSTALLER_OPENPACKAGE:
             if (wFlags & DISPATCH_METHOD)
             {
+                if (pDispParams->cArgs == 0)
+                    return DISP_E_TYPEMISMATCH;
                 hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
                 hr = DispGetParam(pDispParams, 1, VT_I4, &varg1, puArgErr);
