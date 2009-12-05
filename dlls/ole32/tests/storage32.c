@@ -1195,7 +1195,6 @@ static void test_revert(void)
     r = IStorage_Revert(stg);
 
     /* all open objects become invalid */
-    todo_wine {
     r = IStream_Write(stm, "this shouldn't work\n", 20, NULL);
     ok(r==STG_E_REVERTED, "IStream_Write should fail %08x\n", r);
 
@@ -1207,7 +1206,6 @@ static void test_revert(void)
 
     r = IStorage_Stat(stg3, &statstg, STATFLAG_NONAME);
     ok(r==STG_E_REVERTED, "IStorage_Stat should fail %08x\n", r);
-    }
 
     IStream_Release(stm);
     IStream_Release(stm2);
@@ -1226,17 +1224,13 @@ static void test_revert(void)
     r = IStorage_OpenStorage(stg, stmname, NULL, STGM_TRANSACTED|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, NULL, 0, &stg2 );
     ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStream failed %08x\n", r);
 
-    todo_wine {
     r = IStorage_OpenStream(stg, stmname, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
     ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStream should fail %08x\n", r);
-    }
     if (r == S_OK)
         IStream_Release(stm);
 
-    todo_wine {
     r = IStorage_OpenStorage(stg, stgname2, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, NULL, 0, &stg2 );
     ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStorage should fail %08x\n", r);
-    }
     if (r == S_OK)
         IStorage_Release(stg2);
 
@@ -1258,7 +1252,7 @@ static void test_revert(void)
             IStorage_Release(stg3);
 
         r = IStorage_OpenStorage(stg2, stgname2, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, NULL, 0, &stg3 );
-        todo_wine ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStorage should fail %08x\n", r);
+        ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStorage should fail %08x\n", r);
         if (r == S_OK)
             IStorage_Release(stg3);
 
@@ -1398,7 +1392,7 @@ static void test_nonroot_transacted(void)
             IStream_Release(stm);
 
         r = IStorage_OpenStream(stg2, stmname2, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
-        todo_wine ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStream should fail %08x\n", r);
+        ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStream should fail %08x\n", r);
         if (r == S_OK)
             IStream_Release(stm);
 
@@ -1460,7 +1454,7 @@ static void test_nonroot_transacted(void)
             IStream_Release(stm);
 
         r = IStorage_OpenStream(stg2, stmname2, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
-        todo_wine ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStream should fail %08x\n", r);
+        ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStream should fail %08x\n", r);
         if (r == S_OK)
             IStream_Release(stm);
 

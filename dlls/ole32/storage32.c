@@ -4044,7 +4044,23 @@ static HRESULT WINAPI TransactedSnapshotImpl_Commit(
 static HRESULT WINAPI TransactedSnapshotImpl_Revert(
   IStorage*            iface)
 {
-  FIXME("(%p): stub\n", iface);
+  TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) iface;
+  StorageBaseImpl *newSnapshot;
+  HRESULT hr;
+
+  TRACE("(%p)\n", iface);
+
+  /* Create a new copy of the parent data. */
+  hr = CreateSnapshotFile(This->transactedParent, &newSnapshot);
+  if (FAILED(hr)) return hr;
+
+  /* Destroy the open objects. */
+  StorageBaseImpl_DeleteAll(&This->base);
+
+  /* Replace our current snapshot. */
+  IStorage_Release((IStorage*)This->snapshot);
+  This->snapshot = newSnapshot;
+
   return S_OK;
 }
 
