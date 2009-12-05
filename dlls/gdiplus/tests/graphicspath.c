@@ -415,6 +415,8 @@ static void test_worldbounds(void)
     expectf(-1274.8, bounds.Y);
     expectf(705.0, bounds.Width);
     expectf(945.0, bounds.Height);
+
+    GdipDeletePen(pen);
 }
 
 static path_test_t pathpath_path[] = {
