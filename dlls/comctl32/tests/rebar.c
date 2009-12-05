@@ -503,6 +503,7 @@ static void layout_test(void)
     check_sizes();
 
     DestroyWindow(hRebar);
+    ImageList_Destroy(himl);
 }
 
 #if 0       /* use this to generate more tests */
