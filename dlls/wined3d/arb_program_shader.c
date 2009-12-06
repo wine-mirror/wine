@@ -100,9 +100,9 @@ struct control_frame
     BOOL                            outer_loop;
     union
     {
-        unsigned int                loop_no;
-        unsigned int                ifc_no;
-    };
+        unsigned int                loop;
+        unsigned int                ifc;
+    } no;
     struct wined3d_shader_loop_control loop_control;
     BOOL                            had_else;
 };
@@ -156,13 +156,13 @@ struct arb_vs_compile_args
             char                    clipplane_mask;
         }                           boolclip;
         DWORD                       boolclip_compare;
-    };
+    } clip;
     DWORD                           ps_signature;
     union
     {
-        unsigned char               vertex_samplers[4];
-        DWORD                       vertex_samplers_compare;
-    };
+        unsigned char               samplers[4];
+        DWORD                       samplers_compare;
+    } vertex;
     unsigned char                   loop_ctrl[MAX_CONST_I][3];
 };
 
@@ -655,7 +655,7 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
             }
             else
             {
-                unsigned int mask = ctx->cur_vs_args->boolclip.clipplane_mask;
+                unsigned int mask = ctx->cur_vs_args->clip.boolclip.clipplane_mask;
                 clip_limit = min(count_bits(mask), 4);
             }
             *num_clipplanes = min(clip_limit, max_constantsF - highest_constf - 1);
@@ -1271,7 +1271,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
     /* Fragment samplers always have indentity mapping */
     if(sampler_idx >= MAX_FRAGMENT_SAMPLERS)
     {
-        sampler_idx = priv->cur_vs_args->vertex_samplers[sampler_idx - MAX_FRAGMENT_SAMPLERS];
+        sampler_idx = priv->cur_vs_args->vertex.samplers[sampler_idx - MAX_FRAGMENT_SAMPLERS];
     }
 
     if (flags & TEX_DERIV)
@@ -2620,8 +2620,8 @@ static void shader_hw_loop(const struct wined3d_shader_instruction *ins)
         if(priv->loop_depth > 1) shader_addline(buffer, "PUSHA aL;\n");
         /* The constant loader makes sure to load -1 into iX.w */
         shader_addline(buffer, "ARLC aL, %s.xywz;\n", src_name);
-        shader_addline(buffer, "BRA loop_%u_end (LE.x);\n", control_frame->loop_no);
-        shader_addline(buffer, "loop_%u_start:\n", control_frame->loop_no);
+        shader_addline(buffer, "BRA loop_%u_end (LE.x);\n", control_frame->no.loop);
+        shader_addline(buffer, "loop_%u_start:\n", control_frame->no.loop);
     }
     else
     {
@@ -2647,8 +2647,8 @@ static void shader_hw_rep(const struct wined3d_shader_instruction *ins)
         if(priv->loop_depth > 1) shader_addline(buffer, "PUSHA aL;\n");
 
         shader_addline(buffer, "ARLC aL, %s.xywz;\n", src_name);
-        shader_addline(buffer, "BRA loop_%u_end (LE.x);\n", control_frame->loop_no);
-        shader_addline(buffer, "loop_%u_start:\n", control_frame->loop_no);
+        shader_addline(buffer, "BRA loop_%u_end (LE.x);\n", control_frame->no.loop);
+        shader_addline(buffer, "loop_%u_start:\n", control_frame->no.loop);
     }
     else
     {
@@ -2668,8 +2668,8 @@ static void shader_hw_endloop(const struct wined3d_shader_instruction *ins)
         struct control_frame *control_frame = LIST_ENTRY(e, struct control_frame, entry);
 
         shader_addline(buffer, "ARAC aL.xy, aL;\n");
-        shader_addline(buffer, "BRA loop_%u_start (GT.x);\n", control_frame->loop_no);
-        shader_addline(buffer, "loop_%u_end:\n", control_frame->loop_no);
+        shader_addline(buffer, "BRA loop_%u_start (GT.x);\n", control_frame->no.loop);
+        shader_addline(buffer, "loop_%u_end:\n", control_frame->no.loop);
 
         if(priv->loop_depth > 1) shader_addline(buffer, "POPA aL;\n");
     }
@@ -2691,8 +2691,8 @@ static void shader_hw_endrep(const struct wined3d_shader_instruction *ins)
         struct control_frame *control_frame = LIST_ENTRY(e, struct control_frame, entry);
 
         shader_addline(buffer, "ARAC aL.xy, aL;\n");
-        shader_addline(buffer, "BRA loop_%u_start (GT.x);\n", control_frame->loop_no);
-        shader_addline(buffer, "loop_%u_end:\n", control_frame->loop_no);
+        shader_addline(buffer, "BRA loop_%u_start (GT.x);\n", control_frame->no.loop);
+        shader_addline(buffer, "loop_%u_end:\n", control_frame->no.loop);
 
         if(priv->loop_depth > 1) shader_addline(buffer, "POPA aL;\n");
     }
@@ -2722,7 +2722,7 @@ static void shader_hw_break(const struct wined3d_shader_instruction *ins)
 
     if(vshader)
     {
-        shader_addline(buffer, "BRA loop_%u_end;\n", control_frame->loop_no);
+        shader_addline(buffer, "BRA loop_%u_end;\n", control_frame->no.loop);
     }
     else
     {
@@ -2780,7 +2780,7 @@ static void shader_hw_breakc(const struct wined3d_shader_instruction *ins)
          * away the subtraction result
          */
         shader_addline(buffer, "SUBC TA, %s, %s;\n", src_name0, src_name1);
-        shader_addline(buffer, "BRA loop_%u_end (%s.x);\n", control_frame->loop_no, comp);
+        shader_addline(buffer, "BRA loop_%u_end (%s.x);\n", control_frame->no.loop, comp);
     }
     else
     {
@@ -2808,7 +2808,7 @@ static void shader_hw_ifc(const struct wined3d_shader_instruction *ins)
         /* Invert the flag. We jump to the else label if the condition is NOT true */
         comp = get_compare(invert_compare(ins->flags));
         shader_addline(buffer, "SUBC TA, %s, %s;\n", src_name0, src_name1);
-        shader_addline(buffer, "BRA ifc_%u_else (%s.x);\n", control_frame->ifc_no, comp);
+        shader_addline(buffer, "BRA ifc_%u_else (%s.x);\n", control_frame->no.ifc, comp);
     }
     else
     {
@@ -2828,8 +2828,8 @@ static void shader_hw_else(const struct wined3d_shader_instruction *ins)
 
     if(vshader)
     {
-        shader_addline(buffer, "BRA ifc_%u_endif;\n", control_frame->ifc_no);
-        shader_addline(buffer, "ifc_%u_else:\n", control_frame->ifc_no);
+        shader_addline(buffer, "BRA ifc_%u_endif;\n", control_frame->no.ifc);
+        shader_addline(buffer, "ifc_%u_else:\n", control_frame->no.ifc);
         control_frame->had_else = TRUE;
     }
     else
@@ -2850,12 +2850,12 @@ static void shader_hw_endif(const struct wined3d_shader_instruction *ins)
     {
         if(control_frame->had_else)
         {
-            shader_addline(buffer, "ifc_%u_endif:\n", control_frame->ifc_no);
+            shader_addline(buffer, "ifc_%u_endif:\n", control_frame->no.ifc);
         }
         else
         {
             shader_addline(buffer, "#No else branch. else is endif\n");
-            shader_addline(buffer, "ifc_%u_else:\n", control_frame->ifc_no);
+            shader_addline(buffer, "ifc_%u_else:\n", control_frame->no.ifc);
         }
     }
     else
@@ -2953,14 +2953,14 @@ static void vshader_add_footer(IWineD3DVertexShaderImpl *This, struct wined3d_sh
             }
         }
     }
-    else if(args->boolclip.clip_texcoord)
+    else if(args->clip.boolclip.clip_texcoord)
     {
         unsigned int cur_clip = 0;
         char component[4] = {'x', 'y', 'z', 'w'};
 
         for (i = 0; i < gl_info->limits.clipplanes; ++i)
         {
-            if(args->boolclip.clipplane_mask & (1 << i))
+            if(args->clip.boolclip.clipplane_mask & (1 << i))
             {
                 shader_addline(buffer, "DP4 TA.%c, TMP_OUT, state.clip[%u].plane;\n",
                                component[cur_clip++], i);
@@ -2982,7 +2982,7 @@ static void vshader_add_footer(IWineD3DVertexShaderImpl *This, struct wined3d_sh
                 break;
         }
         shader_addline(buffer, "MOV result.texcoord[%u], TA;\n",
-                       args->boolclip.clip_texcoord - 1);
+                       args->clip.boolclip.clip_texcoord - 1);
     }
 
     /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
@@ -4084,9 +4084,9 @@ static inline BOOL vs_args_equal(const struct arb_vs_compile_args *stored, const
     if((stored->super.swizzle_map & use_map) != new->super.swizzle_map) return FALSE;
     if(stored->super.clip_enabled != new->super.clip_enabled) return FALSE;
     if(stored->super.fog_src != new->super.fog_src) return FALSE;
-    if(stored->boolclip_compare != new->boolclip_compare) return FALSE;
+    if(stored->clip.boolclip_compare != new->clip.boolclip_compare) return FALSE;
     if(stored->ps_signature != new->ps_signature) return FALSE;
-    if(stored->vertex_samplers_compare != new->vertex_samplers_compare) return FALSE;
+    if(stored->vertex.samplers_compare != new->vertex.samplers_compare) return FALSE;
     if(skip_int) return TRUE;
 
     return memcmp(stored->loop_ctrl, new->loop_ctrl, sizeof(stored->loop_ctrl)) == 0;
@@ -4222,46 +4222,46 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
     const struct wined3d_gl_info *gl_info = &dev->adapter->gl_info;
     find_vs_compile_args(shader, stateblock, &args->super);
 
-    args->boolclip_compare = 0;
+    args->clip.boolclip_compare = 0;
     if(use_ps(stateblock))
     {
         IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) stateblock->pixelShader;
         struct arb_pshader_private *shader_priv = ps->baseShader.backend_data;
         args->ps_signature = shader_priv->input_signature_idx;
 
-        args->boolclip.clip_texcoord = shader_priv->clipplane_emulation + 1;
+        args->clip.boolclip.clip_texcoord = shader_priv->clipplane_emulation + 1;
     }
     else
     {
         args->ps_signature = ~0;
         if(!dev->vs_clipping)
         {
-            args->boolclip.clip_texcoord = ffp_clip_emul(stateblock) ? gl_info->limits.texture_stages : 0;
+            args->clip.boolclip.clip_texcoord = ffp_clip_emul(stateblock) ? gl_info->limits.texture_stages : 0;
         }
         /* Otherwise: Setting boolclip_compare set clip_texcoord to 0 */
     }
 
-    if(args->boolclip.clip_texcoord)
+    if(args->clip.boolclip.clip_texcoord)
     {
         if(stateblock->renderState[WINED3DRS_CLIPPING])
         {
-            args->boolclip.clipplane_mask = stateblock->renderState[WINED3DRS_CLIPPLANEENABLE];
+            args->clip.boolclip.clipplane_mask = stateblock->renderState[WINED3DRS_CLIPPLANEENABLE];
         }
         /* clipplane_mask was set to 0 by setting boolclip_compare to 0 */
     }
 
     /* This forces all local boolean constants to 1 to make them stateblock independent */
-    args->boolclip.bools = shader->baseShader.reg_maps.local_bool_consts;
+    args->clip.boolclip.bools = shader->baseShader.reg_maps.local_bool_consts;
     /* TODO: Figure out if it would be better to store bool constants as bitmasks in the stateblock */
     for(i = 0; i < MAX_CONST_B; i++)
     {
-        if(stateblock->vertexShaderConstantB[i]) args->boolclip.bools |= ( 1 << i);
+        if(stateblock->vertexShaderConstantB[i]) args->clip.boolclip.bools |= ( 1 << i);
     }
 
-    args->vertex_samplers[0] = dev->texUnitMap[MAX_FRAGMENT_SAMPLERS + 0];
-    args->vertex_samplers[1] = dev->texUnitMap[MAX_FRAGMENT_SAMPLERS + 1];
-    args->vertex_samplers[2] = dev->texUnitMap[MAX_FRAGMENT_SAMPLERS + 2];
-    args->vertex_samplers[3] = 0;
+    args->vertex.samplers[0] = dev->texUnitMap[MAX_FRAGMENT_SAMPLERS + 0];
+    args->vertex.samplers[1] = dev->texUnitMap[MAX_FRAGMENT_SAMPLERS + 1];
+    args->vertex.samplers[2] = dev->texUnitMap[MAX_FRAGMENT_SAMPLERS + 2];
+    args->vertex.samplers[3] = 0;
 
     /* Skip if unused or local */
     int_skip = ~shader->baseShader.reg_maps.integer_constants | shader->baseShader.reg_maps.local_int_consts;
@@ -4772,7 +4772,7 @@ static inline BOOL get_bool_const(const struct wined3d_shader_instruction *ins, 
     }
     else
     {
-        if(vshader) bools = priv->cur_vs_args->boolclip.bools;
+        if(vshader) bools = priv->cur_vs_args->clip.boolclip.bools;
         else bools = priv->cur_ps_args->bools;
         return bools & flag;
     }
@@ -4933,7 +4933,7 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
 
         if(priv->target_version >= NV2)
         {
-            control_frame->loop_no = priv->num_loops++;
+            control_frame->no.loop = priv->num_loops++;
             priv->loop_depth++;
         }
         else
@@ -5062,7 +5062,7 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
         /* IF(bool) and if_cond(a, b) use the same ELSE and ENDIF tokens */
         control_frame = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*control_frame));
         control_frame->type = IFC;
-        control_frame->ifc_no = priv->num_ifcs++;
+        control_frame->no.ifc = priv->num_ifcs++;
         list_add_head(&priv->control_frames, &control_frame->entry);
     }
     else if(ins->handler_idx == WINED3DSIH_ELSE)
