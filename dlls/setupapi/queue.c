@@ -722,8 +722,9 @@ BOOL WINAPI SetupQueueCopySectionW( HSPFILEQ queue, PCWSTR src_root, HINF hinf, 
 {
     SP_FILE_COPY_PARAMS_W params;
     INFCONTEXT context;
-    WCHAR dest[MAX_PATH], src[MAX_PATH];
+    WCHAR dest[MAX_PATH], src[MAX_PATH], *dest_dir;
     INT flags;
+    BOOL ret = FALSE;
 
     TRACE( "hinf=%p/%p section=%s root=%s\n",
            hinf, hlist, debugstr_w(section), debugstr_w(src_root) );
@@ -742,18 +743,21 @@ BOOL WINAPI SetupQueueCopySectionW( HSPFILEQ queue, PCWSTR src_root, HINF hinf, 
     if (!hlist) hlist = hinf;
     if (!hinf) hinf = hlist;
     if (!SetupFindFirstLineW( hlist, section, NULL, &context )) return FALSE;
-    if (!(params.TargetDirectory = get_destination_dir( hinf, section ))) return FALSE;
+    if (!(params.TargetDirectory = dest_dir = get_destination_dir( hinf, section ))) return FALSE;
     do
     {
         if (!SetupGetStringFieldW( &context, 1, dest, sizeof(dest)/sizeof(WCHAR), NULL ))
-            return FALSE;
+            goto end;
         if (!SetupGetStringFieldW( &context, 2, src, sizeof(src)/sizeof(WCHAR), NULL )) *src = 0;
         if (!SetupGetIntField( &context, 4, &flags )) flags = 0;  /* FIXME */
 
         params.SourceFilename = *src ? src : NULL;
-        if (!SetupQueueCopyIndirectW( &params )) return FALSE;
+        if (!SetupQueueCopyIndirectW( &params )) goto end;
     } while (SetupFindNextLine( &context, &context ));
-    return TRUE;
+    ret = TRUE;
+end:
+    HeapFree(GetProcessHeap(), 0, dest_dir);
+    return ret;
 }
 
 
