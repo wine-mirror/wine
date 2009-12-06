@@ -237,6 +237,8 @@ static void test_simpleroundtrip(const char *plaintext)
     ok(res != 0, "can't unprotect; last error %u\n", GetLastError());
     ok(output.cbData == strlen(plaintext), "output wrong length %d for input '%s', wanted %d\n", output.cbData, plaintext, strlen(plaintext));
     ok(!memcmp(plaintext, (char *)output.pbData, output.cbData), "output wrong contents for input '%s'\n", plaintext);
+    LocalFree(output.pbData);
+    LocalFree(encrypted.pbData);
 }
 
 START_TEST(protectdata)
