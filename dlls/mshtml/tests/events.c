@@ -342,7 +342,7 @@ static void _test_attached_event_args(unsigned line, DISPID id, WORD wFlags, DIS
     IHTMLEventObj_Release(event);
 }
 
-#define get_event_src(t) _get_event_src(__LINE__)
+#define get_event_src() _get_event_src(__LINE__)
 static IHTMLElement *_get_event_src(unsigned line)
 {
     IHTMLEventObj *event = _get_event_obj(line);
