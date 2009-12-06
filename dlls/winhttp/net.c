@@ -42,6 +42,8 @@
 #undef DSA
 #endif
 
+#define NONAMELESSUNION
+
 #include "wine/debug.h"
 #include "wine/library.h"
 
@@ -293,7 +295,7 @@ static BOOL netconn_verify_cert( PCCERT_CONTEXT cert, HCERTSTORE store,
             SSL_EXTRA_CERT_CHAIN_POLICY_PARA sslExtraPolicyPara;
             CERT_CHAIN_POLICY_STATUS policyStatus;
 
-            sslExtraPolicyPara.cbSize = sizeof(sslExtraPolicyPara);
+            sslExtraPolicyPara.u.cbSize = sizeof(sslExtraPolicyPara);
             sslExtraPolicyPara.dwAuthType = AUTHTYPE_SERVER;
             sslExtraPolicyPara.pwszServerName = server;
             policyPara.cbSize = sizeof(policyPara);
