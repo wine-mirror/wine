@@ -1065,6 +1065,7 @@ HRESULT set_event_handler(event_target_t **event_target, HTMLDocumentNode *doc, 
 
     default:
         FIXME("not supported vt=%d\n", V_VT(var));
+    case VT_EMPTY:
         return E_NOTIMPL;
     }
 

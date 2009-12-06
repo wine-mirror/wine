@@ -1082,6 +1082,10 @@ static void test_onclick(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_onclick failed: %08x\n", hres);
     ok(V_VT(&v) == VT_NULL, "V_VT(onclick) = %d\n", V_VT(&v));
 
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLElement_put_onclick(div, v);
+    ok(hres == E_NOTIMPL, "put_onclick failed: %08x\n", hres);
+
     V_VT(&v) = VT_DISPATCH;
     V_DISPATCH(&v) = (IDispatch*)&div_onclick_obj;
     hres = IHTMLElement_put_onclick(div, v);
