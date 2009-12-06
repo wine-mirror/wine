@@ -1778,7 +1778,7 @@ static inline void array_compute_and_size_conformance(
     break;
   case RPC_FC_C_CSTRING:
   case RPC_FC_C_WSTRING:
-    if (pFormat[0] == RPC_FC_C_CSTRING)
+    if (fc == RPC_FC_C_CSTRING)
     {
       TRACE("string=%s\n", debugstr_a((const char *)pMemory));
       pStubMsg->ActualCount = strlen((const char *)pMemory)+1;
@@ -1789,7 +1789,7 @@ static inline void array_compute_and_size_conformance(
       pStubMsg->ActualCount = strlenW((LPCWSTR)pMemory)+1;
     }
 
-    if (fc == RPC_FC_STRING_SIZED)
+    if (pFormat[1] == RPC_FC_STRING_SIZED)
       pFormat = ComputeConformance(pStubMsg, pMemory, pFormat + 2, 0);
     else
       pStubMsg->MaxCount = pStubMsg->ActualCount;
