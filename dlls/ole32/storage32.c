@@ -2280,9 +2280,7 @@ static HRESULT StorageImpl_Construct(
          goto end;
       }
       strcpyW(This->pwcsName, pwcsName);
-
-      memcpy(This->base.filename, pwcsName, DIRENTRY_NAME_BUFFER_LEN-1);
-      This->base.filename[DIRENTRY_NAME_BUFFER_LEN-1] = 0;
+      lstrcpynW(This->base.filename, pwcsName, DIRENTRY_NAME_BUFFER_LEN);
   }
 
   /*
