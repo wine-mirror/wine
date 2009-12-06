@@ -5676,7 +5676,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
     IWineD3DSwapChain *swapchain;
 
     swapchain = get_swapchain(surface);
-    if (swapchain) {
+    if (!surface_is_offscreen(surface)) {
         GLenum buffer;
 
         TRACE("Surface %p is onscreen\n", surface);
@@ -5699,7 +5699,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
 
     if (rect) {
         glEnable(GL_SCISSOR_TEST);
-        if(!swapchain) {
+        if(surface_is_offscreen(surface)) {
             glScissor(rect->x1, rect->y1, rect->x2 - rect->x1, rect->y2 - rect->y1);
         } else {
             glScissor(rect->x1, ((IWineD3DSurfaceImpl *)surface)->currentDesc.Height - rect->y2,
@@ -6088,7 +6088,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
 
     gl_info = context->gl_info;
 
-    if (src_swapchain) {
+    if (!surface_is_offscreen(src_surface)) {
         GLenum buffer = surface_get_gl_buffer(src_surface, src_swapchain);
 
         TRACE("Source surface %p is onscreen\n", src_surface);
@@ -6126,7 +6126,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     LEAVE_GL();
 
     /* Attach dst surface to dst fbo */
-    if (dst_swapchain) {
+    if (!surface_is_offscreen(dst_surface)) {
         GLenum buffer = surface_get_gl_buffer(dst_surface, dst_swapchain);
 
         TRACE("Destination surface %p is onscreen\n", dst_surface);

@@ -923,7 +923,6 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
 
 /* Read the framebuffer back into the surface */
 static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, void *dest, UINT pitch) {
-    IWineD3DSwapChainImpl *swapchain;
     IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
     struct wined3d_context *context;
     BYTE *mem;
@@ -959,22 +958,23 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
      * There is no need to keep track of the current read buffer or reset it, every part of the code
      * that reads sets the read buffer as desired.
      */
-    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *) This, &IID_IWineD3DSwapChain, (void **)&swapchain)))
+    if (surface_is_offscreen((IWineD3DSurface *) This))
     {
-        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *) This, (IWineD3DSwapChain *)swapchain);
-        TRACE("Locking %#x buffer\n", buffer);
-        glReadBuffer(buffer);
-        checkGLcall("glReadBuffer");
-
-        IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
-        srcIsUpsideDown = FALSE;
-    } else {
         /* Locking the primary render target which is not on a swapchain(=offscreen render target).
          * Read from the back buffer
          */
         TRACE("Locking offscreen render target\n");
         glReadBuffer(myDevice->offscreenBuffer);
         srcIsUpsideDown = TRUE;
+    }
+    else
+    {
+        /* Onscreen surfaces are always part of a swapchain */
+        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *) This, (IWineD3DSwapChain *) This->container);
+        TRACE("Locking %#x buffer\n", buffer);
+        glReadBuffer(buffer);
+        checkGLcall("glReadBuffer");
+        srcIsUpsideDown = FALSE;
     }
 
     /* TODO: Get rid of the extra rectangle comparison and construction of a full surface rectangle */
@@ -1770,7 +1770,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
         *internal = glDesc->glGammaInternal;
     }
     else if (This->resource.usage & WINED3DUSAGE_RENDERTARGET
-            && !(This->Flags & SFLAG_SWAPCHAIN))
+            && surface_is_offscreen((IWineD3DSurface *) This))
     {
         *internal = glDesc->rtInternal;
     } else {
@@ -3102,7 +3102,7 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     /* Bind the target texture */
     glBindTexture(This->texture_target, This->texture_name);
     checkGLcall("glBindTexture");
-    if(!swapchain) {
+    if(surface_is_offscreen(SrcSurface)) {
         TRACE("Reading from an offscreen target\n");
         upsidedown = !upsidedown;
         glReadBuffer(myDevice->offscreenBuffer);
@@ -3241,12 +3241,12 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
         Src->Flags &= ~SFLAG_INTEXTURE;
     }
 
-    if(swapchain) {
-        glReadBuffer(surface_get_gl_buffer(SrcSurface, (IWineD3DSwapChain *)swapchain));
-    } else {
+    if(surface_is_offscreen(SrcSurface)) {
         TRACE("Reading from an offscreen target\n");
         upsidedown = !upsidedown;
         glReadBuffer(myDevice->offscreenBuffer);
+    } else {
+        glReadBuffer(surface_get_gl_buffer(SrcSurface, (IWineD3DSwapChain *)swapchain));
     }
 
     /* TODO: Only back up the part that will be overwritten */
@@ -4562,12 +4562,14 @@ static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DW
           persistent ? "TRUE" : "FALSE");
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-        if (This->Flags & SFLAG_SWAPCHAIN)
+        if (surface_is_offscreen(iface))
         {
-            TRACE("Surface %p is an onscreen surface\n", iface);
-        } else {
             /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same for offscreen targets. */
             if (flag & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE)) flag |= (SFLAG_INTEXTURE | SFLAG_INDRAWABLE);
+        }
+        else
+        {
+            TRACE("Surface %p is an onscreen surface\n", iface);
         }
     }
 
@@ -4829,16 +4831,20 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
     int width, pitch, outpitch;
     BYTE *mem;
     BOOL drawable_read_ok = TRUE;
+    BOOL in_fbo = FALSE;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-        if (This->Flags & SFLAG_SWAPCHAIN)
+        if (surface_is_offscreen(iface))
         {
-            TRACE("Surface %p is an onscreen surface\n", iface);
-        } else {
             /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same for offscreen targets.
              * Prefer SFLAG_INTEXTURE. */
             if (flag == SFLAG_INDRAWABLE) flag = SFLAG_INTEXTURE;
             drawable_read_ok = FALSE;
+            in_fbo = TRUE;
+        }
+        else
+        {
+            TRACE("Surface %p is an onscreen surface\n", iface);
         }
     }
 
@@ -5063,8 +5069,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         This->Flags |= flag;
     }
 
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && !(This->Flags & SFLAG_SWAPCHAIN)
-            && (This->Flags & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE))) {
+    if (in_fbo && (This->Flags & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE))) {
         /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same for offscreen targets. */
         This->Flags |= (SFLAG_INTEXTURE | SFLAG_INDRAWABLE);
     }
@@ -5119,6 +5124,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_DrawOverlay(IWineD3DSurface *iface) {
     This->overlay_dest->Flags &= ~SFLAG_INOVERLAYDRAW;
 
     return hr;
+}
+
+BOOL surface_is_offscreen(IWineD3DSurface *iface)
+{
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+
+    return !(This->Flags & SFLAG_SWAPCHAIN);
 }
 
 const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
