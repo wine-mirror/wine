@@ -278,11 +278,18 @@ struct per_thread_data
     int pe_len;
 };
 
+/* internal: routing description information */
+struct route {
+    struct in_addr addr;
+    DWORD interface;
+    DWORD metric;
+};
+
 static INT num_startup;          /* reference counter */
 static FARPROC blocking_hook = (FARPROC)WSA_DefaultBlockingHook;
 
 /* function prototypes */
-static struct WS_hostent *WS_create_he(char *name, int aliases, int addresses);
+static struct WS_hostent *WS_create_he(char *name, int aliases, int addresses, int fill_addresses);
 static struct WS_hostent *WS_dup_he(const struct hostent* p_he);
 static struct WS_protoent *WS_dup_pe(const struct protoent* p_pe);
 static struct WS_servent *WS_dup_se(const struct servent* p_se);
@@ -3549,6 +3556,128 @@ struct WS_hostent* WINAPI WS_gethostbyaddr(const char *addr, int len, int type)
 }
 
 /***********************************************************************
+ *		WS_get_local_ips		(INTERNAL)
+ *
+ * Returns the list of local IP addresses by going through the network
+ * adapters and using the local routing table to sort the addresses
+ * from highest routing priority to lowest routing priority. This
+ * functionality is inferred from the description for obtaining local
+ * IP addresses given in the Knowledge Base Article Q160215.
+ *
+ * Please note that the returned hostent is only freed when the thread
+ * closes and is replaced if another hostent is requested.
+ */
+static struct WS_hostent* WS_get_local_ips( char *hostname )
+{
+    int last_metric, numroutes = 0, i, j;
+    PIP_ADAPTER_INFO adapters = NULL, k;
+    struct WS_hostent *hostlist = NULL;
+    PMIB_IPFORWARDTABLE routes = NULL;
+    struct route *route_addrs = NULL;
+    DWORD adap_size, route_size;
+
+    /* Obtain the size of the adapter list and routing table, also allocate memory */
+    if (GetAdaptersInfo(NULL, &adap_size) != ERROR_BUFFER_OVERFLOW)
+        return NULL;
+    if (GetIpForwardTable(NULL, &route_size, FALSE) != ERROR_INSUFFICIENT_BUFFER)
+        return NULL;
+    adapters = HeapAlloc(GetProcessHeap(), 0, adap_size);
+    routes = HeapAlloc(GetProcessHeap(), 0, route_size);
+    route_addrs = HeapAlloc(GetProcessHeap(), 0, 0); /* HeapReAlloc doesn't work on NULL */
+    if (adapters == NULL || routes == NULL || route_addrs == NULL)
+        goto cleanup;
+    /* Obtain the adapter list and the full routing table */
+    if (GetAdaptersInfo(adapters, &adap_size) != NO_ERROR)
+        goto cleanup;
+    if (GetIpForwardTable(routes, &route_size, FALSE) != NO_ERROR)
+        goto cleanup;
+    /* Store the interface associated with each route */
+    for (i = 0; i < routes->dwNumEntries; i++)
+    {
+        DWORD ifindex, ifmetric, exists = FALSE;
+
+        if (routes->table[i].dwForwardType != MIB_IPROUTE_TYPE_DIRECT)
+            continue;
+        ifindex = routes->table[i].dwForwardIfIndex;
+        ifmetric = routes->table[i].dwForwardMetric1;
+        /* Only store the lowest valued metric for an interface */
+        for (j = 0; j < numroutes; j++)
+        {
+            if (route_addrs[j].interface == ifindex)
+            {
+                if (route_addrs[j].metric > ifmetric)
+                    route_addrs[j].metric = ifmetric;
+                exists = TRUE;
+            }
+        }
+        if (exists)
+            continue;
+        route_addrs = HeapReAlloc(GetProcessHeap(), 0, route_addrs, (numroutes+1)*sizeof(struct route));
+        if (route_addrs == NULL)
+            goto cleanup; /* Memory allocation error, fail gracefully */
+        route_addrs[numroutes].interface = ifindex;
+        route_addrs[numroutes].metric = ifmetric;
+        /* If no IP is found in the next step (for whatever reason)
+         * then fall back to the magic loopback address.
+         */
+        memcpy(&(route_addrs[numroutes].addr.s_addr), magic_loopback_addr, 4);
+        numroutes++;
+    }
+   if (numroutes == 0)
+       goto cleanup; /* No routes, fall back to the Magic IP */
+    /* Find the IP address associated with each found interface */
+    for (i = 0; i < numroutes; i++)
+    {
+        for (k = adapters; k != NULL; k = k->Next)
+        {
+            char *ip = k->IpAddressList.IpAddress.String;
+
+            if (route_addrs[i].interface == k->Index)
+                route_addrs[i].addr.s_addr = (in_addr_t) inet_addr(ip);
+        }
+    }
+    /* Allocate a hostent and enough memory for all the IPs,
+     * including the NULL at the end of the list.
+     */
+    hostlist = WS_create_he(hostname, 0, numroutes, TRUE);
+    hostlist->h_addrtype = AF_INET;
+    hostlist->h_length = sizeof(struct in_addr); /* = 4 */
+    /* Reorder the entries when placing them in the host list, Windows expects
+     * the IP list in order from highest priority to lowest (the critical thing
+     * is that most applications expect the first IP to be the default route).
+     */
+    last_metric = -1;
+    for (i = 0; i < numroutes; i++)
+    {
+       struct in_addr addr;
+       int metric = 0xFFFF;
+
+       memcpy(&addr, magic_loopback_addr, 4);
+       for (j = 0; j < numroutes; j++)
+       {
+           int this_metric = route_addrs[j].metric;
+
+           if (this_metric > last_metric && this_metric < metric)
+           {
+               addr = route_addrs[j].addr;
+               metric = this_metric;
+           }
+       }
+       last_metric = metric;
+       (*(struct in_addr *) hostlist->h_addr_list[i]) = addr;
+    }
+
+    /* Cleanup all allocated memory except the address list,
+     * the address list is used by the calling app.
+     */
+cleanup:
+    HeapFree(GetProcessHeap(), 0, route_addrs);
+    HeapFree(GetProcessHeap(), 0, adapters);
+    HeapFree(GetProcessHeap(), 0, routes);
+    return hostlist;
+}
+
+/***********************************************************************
  *		gethostbyname		(WS2_32.52)
  */
 struct WS_hostent* WINAPI WS_gethostbyname(const char* name)
@@ -3561,35 +3690,44 @@ struct WS_hostent* WINAPI WS_gethostbyname(const char* name)
     struct hostent hostentry;
     int locerr = ENOBUFS;
 #endif
-    char buf[100];
+    char hostname[100];
+    if( gethostname( hostname, 100) == -1) {
+        SetLastError( WSAENOBUFS); /* appropriate ? */
+        return retval;
+    }
     if( !name || !name[0]) {
-        name = buf;
-        if( gethostname( buf, 100) == -1) {
-            SetLastError( WSAENOBUFS); /* appropriate ? */
-            return retval;
+        name = hostname;
+    }
+    /* If the hostname of the local machine is requested then return the
+     * complete list of local IP addresses */
+    if(strcmp(name, hostname) == 0)
+        retval = WS_get_local_ips(hostname);
+    /* If any other hostname was requested (or the routing table lookup failed)
+     * then return the IP found by the host OS */
+    if(retval == NULL)
+    {
+#ifdef  HAVE_LINUX_GETHOSTBYNAME_R_6
+        host = NULL;
+        extrabuf=HeapAlloc(GetProcessHeap(),0,ebufsize) ;
+        while(extrabuf) {
+            int res = gethostbyname_r(name, &hostentry, extrabuf, ebufsize, &host, &locerr);
+            if( res != ERANGE) break;
+            ebufsize *=2;
+            extrabuf=HeapReAlloc(GetProcessHeap(),0,extrabuf,ebufsize) ;
         }
-    }
-#ifdef  HAVE_LINUX_GETHOSTBYNAME_R_6
-    host = NULL;
-    extrabuf=HeapAlloc(GetProcessHeap(),0,ebufsize) ;
-    while(extrabuf) {
-        int res = gethostbyname_r(name, &hostentry, extrabuf, ebufsize, &host, &locerr);
-        if( res != ERANGE) break;
-        ebufsize *=2;
-        extrabuf=HeapReAlloc(GetProcessHeap(),0,extrabuf,ebufsize) ;
-    }
-    if (!host) SetLastError((locerr < 0) ? wsaErrno() : wsaHerrno(locerr));
+        if (!host) SetLastError((locerr < 0) ? wsaErrno() : wsaHerrno(locerr));
 #else
-    EnterCriticalSection( &csWSgetXXXbyYYY );
-    host = gethostbyname(name);
-    if (!host) SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno(h_errno));
+        EnterCriticalSection( &csWSgetXXXbyYYY );
+        host = gethostbyname(name);
+        if (!host) SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno(h_errno));
 #endif
-    if (host) retval = WS_dup_he(host);
+        if (host) retval = WS_dup_he(host);
 #ifdef  HAVE_LINUX_GETHOSTBYNAME_R_6
-    HeapFree(GetProcessHeap(),0,extrabuf);
+        HeapFree(GetProcessHeap(),0,extrabuf);
 #else
-    LeaveCriticalSection( &csWSgetXXXbyYYY );
+        LeaveCriticalSection( &csWSgetXXXbyYYY );
 #endif
+    }
     if (retval && retval->h_addr_list[0][0] == 127 &&
         strcmp(name, "localhost") != 0)
     {
@@ -4464,9 +4602,11 @@ static int list_dup(char** l_src, char** l_to, int item_size)
  *
  * Creates the entry with enough memory for the name, aliases
  * addresses, and the address pointers.  Also copies the name
- * and sets up all the pointers.
+ * and sets up all the pointers.  If "fill_address" is set then
+ * sufficient memory for the addresses is also allocated and the
+ * address pointers are set to this memory.
  */
-static struct WS_hostent *WS_create_he(char *name, int aliases, int addresses)
+static struct WS_hostent *WS_create_he(char *name, int aliases, int addresses, int fill_addresses)
 {
     struct WS_hostent *p_to;
     char *p;
@@ -4475,6 +4615,12 @@ static struct WS_hostent *WS_create_he(char *name, int aliases, int addresses)
                 strlen(name) + 1 +
                 sizeof(char *)*aliases +
                 sizeof(char *)*addresses);
+
+    /* Place addresses in the allocated memory, making sure to have enough
+     * room for the NULL at the end of the list.
+     */
+    if (fill_addresses)
+        size += sizeof(struct in_addr)*(addresses+1);
 
     if (!(p_to = check_buffer_he(size))) return NULL;
     memset(p_to, 0, size);
@@ -4494,6 +4640,16 @@ static struct WS_hostent *WS_create_he(char *name, int aliases, int addresses)
         p_to->h_addr_list = (char **)p;
         p += sizeof(char *)*addresses;
     }
+    if (fill_addresses)
+    {
+        int i;
+
+        /* Fill in the list of address pointers and NULL-terminate the list*/
+        for (i = 0; i < addresses; i++)
+            p_to->h_addr_list[i] = (p += sizeof(struct in_addr));
+        p_to->h_addr_list[i] = NULL;
+        p += sizeof(struct in_addr);
+    }
     return p_to;
 }
 
@@ -4507,7 +4663,7 @@ static struct WS_hostent *WS_dup_he(const struct hostent* p_he)
     int aliases = list_size(p_he->h_aliases, 0);
     struct WS_hostent *p_to;
 
-    p_to = WS_create_he(p_he->h_name, aliases, addresses);
+    p_to = WS_create_he(p_he->h_name, aliases, addresses, FALSE);
 
     if (!p_to) return NULL;
     p_to->h_addrtype = p_he->h_addrtype;
