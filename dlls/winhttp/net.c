@@ -359,6 +359,7 @@ static int netconn_secure_verify( int preverify_ok, X509_STORE_CTX *ctx )
                     CertFreeCertificateContext( context );
                 }
             }
+            if (!endCert) ret = FALSE;
             if (ret)
                 ret = netconn_verify_cert( endCert, store, server );
             CertFreeCertificateContext( endCert );
