@@ -1396,7 +1396,7 @@ HRESULT array_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags,
 
     TRACE("\n");
 
-    hres = expr_eval(ctx, expr->member_expr, EXPR_NEWREF, ei, &exprval);
+    hres = expr_eval(ctx, expr->member_expr, 0, ei, &exprval);
     if(FAILED(hres))
         return hres;
 

@@ -863,6 +863,13 @@ ok(("1" in obj) === false, "1 is in obj");
 obj = [1,2,3];
 ok((1 in obj) === true, "1 is not in obj");
 
+obj = new Object();
+try {
+    obj.prop["test"];
+    ok(false, "expected exception");
+}catch(e) {}
+ok(!("prop" in obj), "prop in obj");
+
 ok(isNaN(NaN) === true, "isNaN(NaN) !== true");
 ok(isNaN(0.5) === false, "isNaN(0.5) !== false");
 ok(isNaN(Infinity) === false, "isNaN(Infinity) !== false");
