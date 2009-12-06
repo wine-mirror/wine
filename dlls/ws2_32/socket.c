@@ -282,6 +282,7 @@ static INT num_startup;          /* reference counter */
 static FARPROC blocking_hook = (FARPROC)WSA_DefaultBlockingHook;
 
 /* function prototypes */
+static struct WS_hostent *WS_create_he(char *name, int aliases, int addresses);
 static struct WS_hostent *WS_dup_he(const struct hostent* p_he);
 static struct WS_protoent *WS_dup_pe(const struct protoent* p_pe);
 static struct WS_servent *WS_dup_se(const struct servent* p_se);
@@ -4459,33 +4460,60 @@ static int list_dup(char** l_src, char** l_to, int item_size)
 
 /* ----- hostent */
 
+/* create a hostent entry
+ *
+ * Creates the entry with enough memory for the name, aliases
+ * addresses, and the address pointers.  Also copies the name
+ * and sets up all the pointers.
+ */
+static struct WS_hostent *WS_create_he(char *name, int aliases, int addresses)
+{
+    struct WS_hostent *p_to;
+    char *p;
+
+    int size = (sizeof(struct WS_hostent) +
+                strlen(name) + 1 +
+                sizeof(char *)*aliases +
+                sizeof(char *)*addresses);
+
+    if (!(p_to = check_buffer_he(size))) return NULL;
+    memset(p_to, 0, size);
+
+    p = (char *)(p_to + 1);
+    p_to->h_name = p;
+    strcpy(p, name);
+    p += strlen(p) + 1;
+
+    if (aliases != 0)
+    {
+        p_to->h_aliases = (char **)p;
+        p += sizeof(char *)*aliases;
+    }
+    if (addresses != 0)
+    {
+        p_to->h_addr_list = (char **)p;
+        p += sizeof(char *)*addresses;
+    }
+    return p_to;
+}
+
 /* duplicate hostent entry
  * and handle all Win16/Win32 dependent things (struct size, ...) *correctly*.
  * Ditto for protoent and servent.
  */
 static struct WS_hostent *WS_dup_he(const struct hostent* p_he)
 {
-    char *p;
+    int addresses = list_size(p_he->h_addr_list, p_he->h_length);
+    int aliases = list_size(p_he->h_aliases, 0);
     struct WS_hostent *p_to;
 
-    int size = (sizeof(*p_he) +
-                strlen(p_he->h_name) + 1 +
-                list_size(p_he->h_aliases, 0) +
-                list_size(p_he->h_addr_list, p_he->h_length));
+    p_to = WS_create_he(p_he->h_name, aliases, addresses);
 
-    if (!(p_to = check_buffer_he(size))) return NULL;
+    if (!p_to) return NULL;
     p_to->h_addrtype = p_he->h_addrtype;
     p_to->h_length = p_he->h_length;
 
-    p = (char *)(p_to + 1);
-    p_to->h_name = p;
-    strcpy(p, p_he->h_name);
-    p += strlen(p) + 1;
-
-    p_to->h_aliases = (char **)p;
-    p += list_dup(p_he->h_aliases, p_to->h_aliases, 0);
-
-    p_to->h_addr_list = (char **)p;
+    list_dup(p_he->h_aliases, p_to->h_aliases, 0);
     list_dup(p_he->h_addr_list, p_to->h_addr_list, p_he->h_length);
     return p_to;
 }
