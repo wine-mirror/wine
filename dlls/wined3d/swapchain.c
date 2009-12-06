@@ -95,6 +95,116 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
     HeapFree(GetProcessHeap(), 0, This);
 }
 
+/* A GL context is provided by the caller */
+static inline void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *context)
+{
+    RECT window;
+    IWineD3DDeviceImpl *device = This->wineD3DDevice;
+    IWineD3DSurfaceImpl *backbuffer = ((IWineD3DSurfaceImpl *) This->backBuffer[0]);
+    UINT w = backbuffer->currentDesc.Width;
+    UINT h = backbuffer->currentDesc.Height;
+    GLenum gl_filter;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    GetClientRect(This->win_handle, &window);
+    if(w == window.right && h == window.bottom) gl_filter = GL_NEAREST;
+    else gl_filter = GL_LINEAR;
+
+    if(gl_info->supported[EXT_FRAMEBUFFER_BLIT])
+    {
+        ENTER_GL();
+        context_bind_fbo(context, GL_READ_FRAMEBUFFER, &context->src_fbo);
+        context_attach_surface_fbo(context, GL_READ_FRAMEBUFFER, 0, This->backBuffer[0]);
+        context_attach_depth_stencil_fbo(context, GL_READ_FRAMEBUFFER, NULL, FALSE);
+
+        context_bind_fbo(context, GL_DRAW_FRAMEBUFFER, NULL);
+        glDrawBuffer(GL_BACK);
+
+        glDisable(GL_SCISSOR_TEST);
+        IWineD3DDeviceImpl_MarkStateDirty(This->wineD3DDevice, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+
+        /* Note that the texture is upside down */
+        gl_info->fbo_ops.glBlitFramebuffer(0, 0, w, h,
+                                           window.left, window.bottom, window.right, window.top,
+                                           GL_COLOR_BUFFER_BIT, gl_filter);
+        checkGLcall("Swapchain present blit(EXT_framebuffer_blit)\n");
+        LEAVE_GL();
+    }
+    else
+    {
+        struct wined3d_context *context2;
+        float tex_left = 0;
+        float tex_top = 0;
+        float tex_right = w;
+        float tex_bottom = h;
+
+        context2 = context_acquire(This->wineD3DDevice, This->backBuffer[0], CTXUSAGE_BLIT);
+
+        if(backbuffer->Flags & SFLAG_NORMCOORD)
+        {
+            tex_left /= w;
+            tex_right /= w;
+            tex_top /= h;
+            tex_bottom /= h;
+        }
+
+        ENTER_GL();
+        context_bind_fbo(context2, GL_DRAW_FRAMEBUFFER, NULL);
+
+        /* Set up the texture. The surface is not in a IWineD3D*Texture container,
+         * so there are no d3d texture settings to dirtify
+         */
+        device->blitter->set_shader((IWineD3DDevice *) device, backbuffer->resource.format_desc,
+                                    backbuffer->texture_target, backbuffer->pow2Width,
+                                    backbuffer->pow2Height);
+        glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glDrawBuffer(GL_BACK);
+
+        /* Set the viewport to the destination rectandle, disable any projection
+         * transformation set up by CTXUSAGE_BLIT, and draw a (-1,-1)-(1,1) quad.
+         *
+         * Back up viewport and matrix to avoid breaking last_was_blit
+         *
+         * Note that CTXUSAGE_BLIT set up viewport and ortho to match the surface
+         * size - we want the GL drawable(=window) size.
+         */
+        glPushAttrib(GL_VIEWPORT_BIT);
+        glViewport(window.left, window.top, window.right, window.bottom);
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+
+        glBegin(GL_QUADS);
+            /* bottom left */
+            glTexCoord2f(tex_left, tex_bottom);
+            glVertex2i(-1, -1);
+
+            /* top left */
+            glTexCoord2f(tex_left, tex_top);
+            glVertex2i(-1, 1);
+
+            /* top right */
+            glTexCoord2f(tex_right, tex_top);
+            glVertex2i(1, 1);
+
+            /* bottom right */
+            glTexCoord2f(tex_right, tex_bottom);
+            glVertex2i(1, -1);
+        glEnd();
+
+        glPopMatrix();
+        glPopAttrib();
+
+        device->blitter->unset_shader((IWineD3DDevice *) device);
+        checkGLcall("Swapchain present blit(manual)\n");
+        LEAVE_GL();
+
+        context_release(context2);
+    }
+}
+
 static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion, DWORD dwFlags) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     struct wined3d_context *context;
@@ -158,6 +268,22 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     /* Don't call checkGLcall, as glGetError is not applicable here */
     if (hDestWindowOverride && This->win_handle != hDestWindowOverride) {
         IWineD3DSwapChain_SetDestWindowOverride(iface, hDestWindowOverride);
+    }
+
+    if(This->render_to_fbo)
+    {
+        /* This codepath should only be hit with the COPY swapeffect. Otherwise a backbuffer-
+         * window size mismatch is impossible(fullscreen) and src and dst rectangles are
+         * not allowed(they need the COPY swapeffect)
+         *
+         * The DISCARD swap effect is ok as well since any backbuffer content is allowed after
+         * the swap
+         */
+        if(This->presentParms.SwapEffect == WINED3DSWAPEFFECT_FLIP )
+        {
+            FIXME("Render-to-fbo with WINED3DSWAPEFFECT_FLIP\n");
+        }
+        swapchain_blit(This, context);
     }
 
     SwapBuffers(This->context[0]->hdc); /* TODO: cycle through the swapchain buffers */
@@ -239,9 +365,12 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
                 WINED3DCLEAR_TARGET, 0xff00ffff, 1.0f, 0);
     }
 
-    if(((IWineD3DSurfaceImpl *) This->frontBuffer)->Flags   & SFLAG_INSYSMEM ||
-       ((IWineD3DSurfaceImpl *) This->backBuffer[0])->Flags & SFLAG_INSYSMEM ) {
-        /* Both memory copies of the surfaces are ok, flip them around too instead of dirtifying */
+    if(!This->render_to_fbo &&
+       ( ((IWineD3DSurfaceImpl *) This->frontBuffer)->Flags   & SFLAG_INSYSMEM ||
+         ((IWineD3DSurfaceImpl *) This->backBuffer[0])->Flags & SFLAG_INSYSMEM ) ) {
+        /* Both memory copies of the surfaces are ok, flip them around too instead of dirtifying
+         * Doesn't work with render_to_fbo because we're not flipping
+         */
         IWineD3DSurfaceImpl *front = (IWineD3DSurfaceImpl *) This->frontBuffer;
         IWineD3DSurfaceImpl *back = (IWineD3DSurfaceImpl *) This->backBuffer[0];
 

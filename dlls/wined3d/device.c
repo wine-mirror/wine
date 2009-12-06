@@ -6683,6 +6683,7 @@ HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwapChain *
     }
     swapchain->context[0] = context_create(This, target, swapchain->win_handle, FALSE, &swapchain->presentParms);
     swapchain->num_contexts = 1;
+    swapchain->context[0]->render_offscreen = swapchain->render_to_fbo;
 
     create_dummy_textures(This);
 

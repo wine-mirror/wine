@@ -2413,6 +2413,7 @@ typedef struct IWineD3DSwapChainImpl
     DWORD                     orig_width, orig_height;
     WINED3DFORMAT             orig_fmt;
     WINED3DGAMMARAMP          orig_gamma;
+    BOOL                      render_to_fbo;
 
     long prev_time, frames;   /* Performance tracking */
     unsigned int vSyncCounter;

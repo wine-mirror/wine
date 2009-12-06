@@ -668,6 +668,10 @@ GLenum surface_get_gl_buffer(IWineD3DSurface *iface, IWineD3DSwapChain *swapchai
     TRACE("(%p) : swapchain %p\n", This, swapchain);
 
     if (swapchain_impl->backBuffer && swapchain_impl->backBuffer[0] == iface) {
+        if(swapchain_impl->render_to_fbo) {
+            TRACE("Returning GL_COLOR_ATTACHMENT0\n");
+            return GL_COLOR_ATTACHMENT0;
+        }
         TRACE("Returning GL_BACK\n");
         return GL_BACK;
     } else if (swapchain_impl->frontBuffer == iface) {
@@ -5129,8 +5133,17 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_DrawOverlay(IWineD3DSurface *iface) {
 BOOL surface_is_offscreen(IWineD3DSurface *iface)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *) This->container;
 
-    return !(This->Flags & SFLAG_SWAPCHAIN);
+    /* Not on a swapchain - must be offscreen */
+    if (!(This->Flags & SFLAG_SWAPCHAIN)) return TRUE;
+
+    /* The front buffer is always onscreen */
+    if(iface == swapchain->frontBuffer) return FALSE;
+
+    /* If the swapchain is rendered to an FBO, the backbuffer is
+     * offscreen, otherwise onscreen */
+    return swapchain->render_to_fbo;
 }
 
 const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
