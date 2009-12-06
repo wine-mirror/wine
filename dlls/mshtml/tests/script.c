@@ -115,6 +115,7 @@ DEFINE_EXPECT(funcDisp);
 DEFINE_EXPECT(script_divid_d);
 DEFINE_EXPECT(script_testprop_d);
 DEFINE_EXPECT(script_testprop_i);
+DEFINE_EXPECT(script_testprop2_d);
 DEFINE_EXPECT(AXQueryInterface_IActiveScript);
 DEFINE_EXPECT(AXQueryInterface_IObjectSafety);
 DEFINE_EXPECT(AXGetInterfaceSafetyOptions);
@@ -124,6 +125,7 @@ DEFINE_EXPECT(AXSetInterfaceSafetyOptions);
 #define TESTACTIVEX_CLSID "{178fc163-f585-4e24-9c13-4bb7faf80646}"
 
 #define DISPID_SCRIPT_TESTPROP   0x100000
+#define DISPID_SCRIPT_TESTPROP2  0x100001
 
 static const GUID CLSID_TestScript =
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x07,0x46}};
@@ -391,6 +393,13 @@ static HRESULT WINAPI scriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
         CHECK_EXPECT(script_testprop_d);
         ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
         *pid = DISPID_SCRIPT_TESTPROP;
+        return S_OK;
+    }
+
+    if(!strcmp_wa(bstrName, "testProp2")) {
+        CHECK_EXPECT(script_testprop2_d);
+        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        *pid = DISPID_SCRIPT_TESTPROP2;
         return S_OK;
     }
 
@@ -1211,6 +1220,16 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
     ok(V_VT(&var) == VT_NULL, "V_VT(var) = %d\n", V_VT(&var));
     CHECK_CALLED(GetScriptDispatch);
     CHECK_CALLED(script_testprop_i);
+
+    SET_EXPECT(GetScriptDispatch);
+    SET_EXPECT(script_testprop2_d);
+    tmp = a2bstr("testProp2");
+    hres = IDispatchEx_GetDispID(window_dispex, tmp, fdexNameCaseSensitive|fdexNameEnsure, &id);
+    ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
+    ok(id != DISPID_SCRIPT_TESTPROP2, "id == DISPID_SCRIPT_TESTPROP2\n");
+    CHECK_CALLED(GetScriptDispatch);
+    CHECK_CALLED(script_testprop2_d);
+    SysFreeString(tmp);
 
     test_global_id();
 
