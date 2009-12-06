@@ -1658,9 +1658,11 @@ static void test_SafeArrayChangeTypeEx(void)
   MKARRAY(0,1,VT_UI1);
   hres = VariantChangeTypeEx(&v2, &v, 0, 0, VT_NULL);
   ok(hres == DISP_E_TYPEMISMATCH, "CTE VT_ARRAY|VT_UI1 returned %x\n", hres);
+  VariantClear(&v);
   MKARRAY(0,1,VT_UI1);
   hres = VariantChangeTypeEx(&v2, &v, 0, 0, VT_EMPTY);
   ok(hres == DISP_E_TYPEMISMATCH, "CTE VT_ARRAY|VT_UI1 returned %x\n", hres);
+  VariantClear(&v);
 
 }
 
