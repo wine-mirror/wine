@@ -4162,11 +4162,12 @@ BOOL WINAPI RSAENH_CPSignHash(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwKeySpe
                               LPCWSTR sDescription, DWORD dwFlags, BYTE *pbSignature, 
                               DWORD *pdwSigLen)
 {
-    HCRYPTKEY hCryptKey;
+    HCRYPTKEY hCryptKey = (HCRYPTKEY)INVALID_HANDLE_VALUE;
     CRYPTKEY *pCryptKey;
     DWORD dwHashLen;
     BYTE abHashValue[RSAENH_MAX_HASH_SIZE];
     ALG_ID aiAlgid;
+    BOOL ret = FALSE;
 
     TRACE("(hProv=%08lx, hHash=%08lx, dwKeySpec=%08x, sDescription=%s, dwFlags=%08x, "
         "pbSignature=%p, pdwSigLen=%p)\n", hProv, hHash, dwKeySpec, debugstr_w(sDescription),
@@ -4183,18 +4184,19 @@ BOOL WINAPI RSAENH_CPSignHash(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwKeySpe
                        (OBJECTHDR**)&pCryptKey))
     {
         SetLastError(NTE_NO_KEY);
-        return FALSE;
+        goto out;
     }
 
     if (!pbSignature) {
         *pdwSigLen = pCryptKey->dwKeyLen;
-        return TRUE;
+        ret = TRUE;
+        goto out;
     }
     if (pCryptKey->dwKeyLen > *pdwSigLen)
     {
         SetLastError(ERROR_MORE_DATA);
         *pdwSigLen = pCryptKey->dwKeyLen;
-        return FALSE;
+        goto out;
     }
     *pdwSigLen = pCryptKey->dwKeyLen;
 
@@ -4202,22 +4204,25 @@ BOOL WINAPI RSAENH_CPSignHash(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwKeySpe
         if (!RSAENH_CPHashData(hProv, hHash, (CONST BYTE*)sDescription, 
                                 (DWORD)lstrlenW(sDescription)*sizeof(WCHAR), 0))
         {
-            return FALSE;
+            goto out;
         }
     }
     
     dwHashLen = sizeof(DWORD);
-    if (!RSAENH_CPGetHashParam(hProv, hHash, HP_ALGID, (BYTE*)&aiAlgid, &dwHashLen, 0)) return FALSE;
+    if (!RSAENH_CPGetHashParam(hProv, hHash, HP_ALGID, (BYTE*)&aiAlgid, &dwHashLen, 0)) goto out;
     
     dwHashLen = RSAENH_MAX_HASH_SIZE;
-    if (!RSAENH_CPGetHashParam(hProv, hHash, HP_HASHVAL, abHashValue, &dwHashLen, 0)) return FALSE;
+    if (!RSAENH_CPGetHashParam(hProv, hHash, HP_HASHVAL, abHashValue, &dwHashLen, 0)) goto out;
  
 
     if (!build_hash_signature(pbSignature, *pdwSigLen, aiAlgid, abHashValue, dwHashLen, dwFlags)) {
-        return FALSE;
+        goto out;
     }
 
-    return encrypt_block_impl(pCryptKey->aiAlgid, PK_PRIVATE, &pCryptKey->context, pbSignature, pbSignature, RSAENH_ENCRYPT);
+    ret = encrypt_block_impl(pCryptKey->aiAlgid, PK_PRIVATE, &pCryptKey->context, pbSignature, pbSignature, RSAENH_ENCRYPT);
+out:
+    RSAENH_CPDestroyKey(hProv, hCryptKey);
+    return ret;
 }
 
 /******************************************************************************
