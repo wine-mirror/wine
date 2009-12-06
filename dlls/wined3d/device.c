@@ -1043,6 +1043,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
     BOOL                    displaymode_set = FALSE;
     WINED3DDISPLAYMODE      Mode;
     const struct GlPixelFormatDesc *format_desc;
+    RECT                    client_rect;
 
     TRACE("(%p) : Created Additional Swap Chain\n", This);
 
@@ -1115,25 +1116,40 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
     object->orig_fmt = Mode.Format;
     format_desc = getFormatDescEntry(Mode.Format, &This->adapter->gl_info);
 
+    GetClientRect(object->win_handle, &client_rect);
     if (pPresentationParameters->Windowed &&
         ((pPresentationParameters->BackBufferWidth == 0) ||
          (pPresentationParameters->BackBufferHeight == 0) ||
          (pPresentationParameters->BackBufferFormat == WINED3DFMT_UNKNOWN))) {
 
-        RECT Rect;
-        GetClientRect(object->win_handle, &Rect);
-
         if (pPresentationParameters->BackBufferWidth == 0) {
-           pPresentationParameters->BackBufferWidth = Rect.right;
+           pPresentationParameters->BackBufferWidth = client_rect.right;
            TRACE("Updating width to %d\n", pPresentationParameters->BackBufferWidth);
         }
         if (pPresentationParameters->BackBufferHeight == 0) {
-           pPresentationParameters->BackBufferHeight = Rect.bottom;
+           pPresentationParameters->BackBufferHeight = client_rect.bottom;
            TRACE("Updating height to %d\n", pPresentationParameters->BackBufferHeight);
         }
         if (pPresentationParameters->BackBufferFormat == WINED3DFMT_UNKNOWN) {
            pPresentationParameters->BackBufferFormat = object->orig_fmt;
            TRACE("Updating format to %s\n", debug_d3dformat(object->orig_fmt));
+        }
+    }
+
+    if(wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    {
+        if(pPresentationParameters->BackBufferWidth != client_rect.right ||
+           pPresentationParameters->BackBufferHeight != client_rect.bottom)
+        {
+            TRACE("Rendering to FBO. Backbuffer %ux%u, window %ux%u\n",
+                pPresentationParameters->BackBufferWidth,
+                pPresentationParameters->BackBufferHeight,
+                client_rect.right, client_rect.bottom);
+            object->render_to_fbo = TRUE;
+        }
+        else
+        {
+            TRACE("Rendering directly to GL_BACK\n");
         }
     }
 
@@ -1210,6 +1226,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
             TRACE("Context created (HWND=%p, glContext=%p)\n",
                 object->win_handle, object->context[0]->glCtx);
         }
+        object->context[0]->render_offscreen = object->render_to_fbo;
     }
     else
     {
@@ -6909,6 +6926,27 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     hr = IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *) This->stateBlock);
     if(FAILED(hr)) {
         ERR("Resetting the stateblock failed with error 0x%08x\n", hr);
+    }
+
+    if(wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    {
+        RECT client_rect;
+        GetClientRect(swapchain->win_handle, &client_rect);
+
+        if(swapchain->presentParms.BackBufferWidth != client_rect.right ||
+           swapchain->presentParms.BackBufferHeight != client_rect.bottom)
+        {
+            TRACE("Rendering to FBO. Backbuffer %ux%u, window %ux%u\n",
+                    swapchain->presentParms.BackBufferWidth,
+                    swapchain->presentParms.BackBufferHeight,
+                    client_rect.right, client_rect.bottom);
+            swapchain->render_to_fbo = TRUE;
+        }
+        else
+        {
+            TRACE("Rendering directly to GL_BACK\n");
+            swapchain->render_to_fbo = FALSE;
+        }
     }
 
     hr = create_primary_opengl_context(iface, (IWineD3DSwapChain *) swapchain);
