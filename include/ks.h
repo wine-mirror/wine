@@ -19,6 +19,48 @@
 #ifndef _KS_
 #define _KS_
 
-/* FIXME dummy placeholder for now */
+typedef union tagKSIDENTIFIER
+{
+    struct
+    {
+        GUID Set;
+        ULONG Id;
+        ULONG Flags;
+    } DUMMYSTRUCTNAME;
+    LONGLONG Alignment;
+} KSIDENTIFIER;
+
+typedef KSIDENTIFIER KSPROPERTY, *PKSPROPERTY, KSMETHOD, *PKSMETHOD, KSEVENT, *PKSEVENT;
+
+typedef enum
+{
+    KSPIN_DATAFLOW_IN = 1,
+    KSPIN_DATAFLOW_OUT
+} KSPIN_DATAFLOW, *PKSPIN_DATAFLOW;
+
+#define KSDATAFORMAT_BIT_TEMPORAL_COMPRESSION 0
+#define KSDATAFORMAT_BIT_ATTRIBUTES 1
+#define KSDATAFORMAT_TEMPORAL_COMPRESSION (1 << 0)
+#define KSDATAFORMAT_ATTRIBUTES 1 (1 << 1)
+
+#define KSDATARANGE_BIT_ATTRIBUTES 1
+#define KSDATARANGE_BIT_REQUIRED_ATTRIBUTES 2
+#define KSDATARANGE_ATTRIBUTES (1 << 1)
+#define KSDATARANGE_REQUIRED_ATTRIBUTES (1 << 2)
+
+typedef union unionKSDATAFORMAT
+{
+    struct
+    {
+        ULONG FormatSize;
+        ULONG Flags;
+        ULONG SampleSize;
+        ULONG Reserved;
+        GUID MajorFormat;
+        GUID SubFormat;
+        GUID Specifier;
+    } DUMMYSTRUCTNAME;
+    LONGLONG Alignment;
+} KSDATAFORMAT, *PKSDATAFORMAT, KSDATARANGE, *PKSDATARANGE;
 
 #endif  /* _KS_ */
