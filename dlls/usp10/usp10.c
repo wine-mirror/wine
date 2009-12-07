@@ -923,7 +923,9 @@ HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa)
     TRACE("(%p)\n", pssa);
 
     if (!pssa || !(analysis = *pssa)) return E_INVALIDARG;
+
     invalid = analysis->invalid;
+    ScriptFreeCache((SCRIPT_CACHE *)&analysis->sc);
 
     for (i = 0; i < analysis->numItems; i++)
     {
