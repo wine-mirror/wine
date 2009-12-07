@@ -6948,7 +6948,15 @@ fi
 
 if test "$cross_compiling" = "no" -a "$LIBEXT" != "dll"
 then
-    for ac_prog in $host_cpu-pc-mingw32-gcc i586-mingw32msvc-gcc i386-mingw32msvc-gcc i686-mingw32-gcc i586-mingw32-gcc i486-mingw32-gcc i386-mingw32-gcc i686-pc-mingw32-gcc
+    case "$host_cpu" in
+  i[3456789]86*)
+    ac_prefix_list="i686-pc-mingw32-gcc i586-pc-mingw32-gcc i486-pc-mingw32-gcc i386-pc-mingw32-gcc i686-mingw32msvc-gcc i586-mingw32msvc-gcc i486-mingw32msvc-gcc i386-mingw32msvc-gcc i686-mingw32-gcc i586-mingw32-gcc i486-mingw32-gcc i386-mingw32-gcc " ;;
+  x86_64)
+    ac_prefix_list="x86_64-pc-mingw32-gcc x86_64-w64-mingw32-gcc " ;;
+  *)
+    ac_prefix_list="" ;;
+esac
+for ac_prog in $ac_prefix_list
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -6991,7 +6999,15 @@ fi
 done
 test -n "$CROSSCC" || CROSSCC="false"
 
-    for ac_prog in $host_cpu-pc-mingw32-dlltool i586-mingw32msvc-dlltool i386-mingw32msvc-dlltool i686-mingw32-dlltool i586-mingw32-dlltool i486-mingw32-dlltool i386-mingw32-dlltool i686-pc-mingw32-dlltool
+    case "$host_cpu" in
+  i[3456789]86*)
+    ac_prefix_list="i686-pc-mingw32-dlltool i586-pc-mingw32-dlltool i486-pc-mingw32-dlltool i386-pc-mingw32-dlltool i686-mingw32msvc-dlltool i586-mingw32msvc-dlltool i486-mingw32msvc-dlltool i386-mingw32msvc-dlltool i686-mingw32-dlltool i586-mingw32-dlltool i486-mingw32-dlltool i386-mingw32-dlltool " ;;
+  x86_64)
+    ac_prefix_list="x86_64-pc-mingw32-dlltool x86_64-w64-mingw32-dlltool " ;;
+  *)
+    ac_prefix_list="" ;;
+esac
+for ac_prog in $ac_prefix_list
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -7034,7 +7050,15 @@ fi
 done
 test -n "$DLLTOOL" || DLLTOOL="false"
 
-    for ac_prog in $host_cpu-pc-mingw32-ar i586-mingw32msvc-ar i386-mingw32msvc-ar i686-mingw32-ar i586-mingw32-ar i486-mingw32-ar i386-mingw32-ar i686-pc-mingw32-ar
+    case "$host_cpu" in
+  i[3456789]86*)
+    ac_prefix_list="i686-pc-mingw32-ar i586-pc-mingw32-ar i486-pc-mingw32-ar i386-pc-mingw32-ar i686-mingw32msvc-ar i586-mingw32msvc-ar i486-mingw32msvc-ar i386-mingw32msvc-ar i686-mingw32-ar i586-mingw32-ar i486-mingw32-ar i386-mingw32-ar " ;;
+  x86_64)
+    ac_prefix_list="x86_64-pc-mingw32-ar x86_64-w64-mingw32-ar " ;;
+  *)
+    ac_prefix_list="" ;;
+esac
+for ac_prog in $ac_prefix_list
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2

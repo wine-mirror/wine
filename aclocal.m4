@@ -140,11 +140,16 @@ dnl
 dnl Usage: WINE_CHECK_MINGW_PROG(variable,prog,[value-if-not-found],[path])
 dnl
 AC_DEFUN([WINE_CHECK_MINGW_PROG],
-[AC_CHECK_PROGS([$1],
-   m4_foreach([ac_wine_prefix],
-              [$host_cpu-pc-mingw32, i586-mingw32msvc, i386-mingw32msvc, i686-mingw32, i586-mingw32, i486-mingw32, i386-mingw32, i686-pc-mingw32],
-              [ac_wine_prefix-$2 ]),
-   [$3],[$4])])
+[case "$host_cpu" in
+  i[[3456789]]86*)
+    ac_prefix_list="m4_foreach([ac_wine_prefix],[pc-mingw32, mingw32msvc, mingw32],
+                        m4_foreach([ac_wine_cpu],[i686,i586,i486,i386],[ac_wine_cpu-ac_wine_prefix-$2 ]))" ;;
+  x86_64)
+    ac_prefix_list="m4_foreach([ac_wine_prefix],[pc-mingw32,w64-mingw32],[x86_64-ac_wine_prefix-$2 ])" ;;
+  *)
+    ac_prefix_list="" ;;
+esac
+AC_CHECK_PROGS([$1],[$ac_prefix_list],[$3],[$4])])
 
 
 dnl **** Create nonexistent directories from config.status ****
