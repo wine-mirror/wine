@@ -2549,6 +2549,62 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
 
 static IServiceProvider ServiceProvider = { &ServiceProviderVtbl };
 
+static HRESULT WINAPI AdviseSink_QueryInterface(IAdviseSink *iface,
+        REFIID riid, void **ppv)
+{
+    return QueryInterface(riid, ppv);
+}
+
+static ULONG WINAPI AdviseSink_AddRef(IAdviseSink *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI AdviseSink_Release(IAdviseSink *iface)
+{
+    return 1;
+}
+
+static void WINAPI AdviseSink_OnDataChange(IAdviseSink *iface,
+        FORMATETC *pFormatetc, STGMEDIUM *pStgmed)
+{
+    ok(0, "unexpected call\n");
+}
+
+static void WINAPI AdviseSink_OnViewChange(IAdviseSink *iface,
+        DWORD dwAspect, LONG lindex)
+{
+    ok(0, "unexpected call\n");
+}
+
+static void WINAPI AdviseSink_OnRename(IAdviseSink *iface, IMoniker *pmk)
+{
+    ok(0, "unexpected call\n");
+}
+
+static void WINAPI AdviseSink_OnSave(IAdviseSink *iface)
+{
+    ok(0, "unexpected call\n");
+}
+
+static void WINAPI AdviseSink_OnClose(IAdviseSink *iface)
+{
+    ok(0, "unexpected call\n");
+}
+
+static const IAdviseSinkVtbl AdviseSinkVtbl = {
+    AdviseSink_QueryInterface,
+    AdviseSink_AddRef,
+    AdviseSink_Release,
+    AdviseSink_OnDataChange,
+    AdviseSink_OnViewChange,
+    AdviseSink_OnRename,
+    AdviseSink_OnSave,
+    AdviseSink_OnClose
+};
+
+static IAdviseSink AdviseSink = { &AdviseSinkVtbl };
+
 DEFINE_GUID(IID_unk1, 0xD48A6EC6,0x6A4A,0x11CF,0x94,0xA7,0x44,0x45,0x53,0x54,0x00,0x00); /* HTMLWindow2 ? */
 DEFINE_GUID(IID_IThumbnailView, 0x7BB0B520,0xB1A7,0x11D2,0xBB,0x23,0x00,0xC0,0x4F,0x79,0xAB,0xCD);
 DEFINE_GUID(IID_IRenMailEditor, 0x000670BA,0x0000,0x0000,0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
@@ -3632,6 +3688,54 @@ static void test_Close(IUnknown *unk, BOOL set_client)
     IOleObject_Release(oleobj);
 }
 
+static void test_Advise(IUnknown *unk)
+{
+    IOleObject *oleobj = NULL;
+    IEnumSTATDATA *enum_advise = (void*)0xdeadbeef;
+    DWORD conn;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
+    ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IOleObject_Unadvise(oleobj, 0);
+    ok(hres == OLE_E_NOCONNECTION, "Unadvise returned: %08x\n", hres);
+
+    hres = IOleObject_EnumAdvise(oleobj, &enum_advise);
+    ok(hres == S_OK, "EnumAdvise returned: %08x\n", hres);
+    ok(enum_advise == NULL, "enum_advise != NULL\n");
+
+    conn = -1;
+    hres = IOleObject_Advise(oleobj, NULL, &conn);
+    /* Old IE returns S_OK and sets conn to 1 */
+    ok(hres == E_INVALIDARG || hres == S_OK, "Advise returned: %08x\n", hres);
+    ok(conn == 0 || conn == 1, "conn = %d\n", conn);
+
+    hres = IOleObject_Advise(oleobj, &AdviseSink, NULL);
+    ok(hres == E_INVALIDARG, "Advise returned: %08x\n", hres);
+
+    hres = IOleObject_Advise(oleobj, &AdviseSink, &conn);
+    ok(hres == S_OK, "Advise returned: %08x\n", hres);
+    ok(conn == 1, "conn = %d\n", conn);
+
+    hres = IOleObject_Advise(oleobj, &AdviseSink, &conn);
+    ok(hres == S_OK, "Advise returned: %08x\n", hres);
+    ok(conn == 2, "conn = %d\n", conn);
+
+    hres = IOleObject_Unadvise(oleobj, 1);
+    ok(hres == S_OK, "Unadvise returned: %08x\n", hres);
+
+    hres = IOleObject_Unadvise(oleobj, 1);
+    ok(hres == OLE_E_NOCONNECTION, "Unadvise returned: %08x\n", hres);
+
+    hres = IOleObject_Unadvise(oleobj, 2);
+    ok(hres == S_OK, "Unadvise returned: %08x\n", hres);
+
+    IOleObject_Release(oleobj);
+}
+
 static void test_OnFrameWindowActivate(IUnknown *unk)
 {
     IOleInPlaceActiveObject *inplaceact;
@@ -4046,6 +4150,7 @@ static void test_HTMLDocument(BOOL do_load)
     doc_unk = unk;
 
     test_QueryInterface(unk);
+    test_Advise(unk);
     test_IsDirty(unk, S_FALSE);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
     test_external(unk, FALSE);
