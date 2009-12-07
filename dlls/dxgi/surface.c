@@ -130,9 +130,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_GetPrivateData(IDXGISurface *iface
 
 static HRESULT STDMETHODCALLTYPE dxgi_surface_GetParent(IDXGISurface *iface, REFIID riid, void **parent)
 {
-    FIXME("iface %p, riid %s, parent %p stub!\n", iface, debugstr_guid(riid), parent);
+    struct dxgi_surface *This = (struct dxgi_surface *)iface;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, riid %s, parent %p.\n", iface, debugstr_guid(riid), parent);
+
+    return IDXGIDevice_QueryInterface(This->device, riid, parent);
 }
 
 /* IDXGIDeviceSubObject methods */

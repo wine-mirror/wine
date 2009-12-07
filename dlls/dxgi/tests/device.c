@@ -153,11 +153,28 @@ static void test_create_surface(IDXGIDevice *device)
 
 static void test_parents(IDXGIDevice *device)
 {
+    DXGI_SURFACE_DESC surface_desc;
+    IDXGISurface *surface;
     IDXGIFactory *factory;
     IDXGIAdapter *adapter;
     IDXGIOutput *output;
     IUnknown *parent;
     HRESULT hr;
+
+    surface_desc.Width = 512;
+    surface_desc.Height = 512;
+    surface_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    surface_desc.SampleDesc.Count = 1;
+    surface_desc.SampleDesc.Quality = 0;
+
+    hr = IDXGIDevice_CreateSurface(device, &surface_desc, 1, DXGI_USAGE_RENDER_TARGET_OUTPUT, NULL, &surface);
+    ok(SUCCEEDED(hr), "Failed to create a dxgi surface, hr %#x\n", hr);
+
+    hr = IDXGISurface_GetParent(surface, &IID_IDXGIDevice, (void **)&parent);
+    IDXGISurface_Release(surface);
+    ok(SUCCEEDED(hr), "GetParent failed, hr %#x.\n", hr);
+    ok(parent == (IUnknown *)device, "Got parent %p, expected %p.\n", parent, device);
+    IUnknown_Release(parent);
 
     hr = IDXGIDevice_GetAdapter(device, &adapter);
     ok(SUCCEEDED(hr), "GetAdapter failed, hr %#x.\n", hr);
