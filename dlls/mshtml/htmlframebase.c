@@ -443,16 +443,31 @@ void HTMLFrameBase_destructor(HTMLFrameBase *This)
     if(This->content_window)
         This->content_window->frame_element = NULL;
 
+    if(This->nsframe)
+        nsIDOMHTMLFrameElement_Release(This->nsframe);
+    if(This->nsiframe)
+        nsIDOMHTMLIFrameElement_Release(This->nsiframe);
+
     HTMLElement_destructor(&This->element.node);
 }
 
 void HTMLFrameBase_Init(HTMLFrameBase *This, HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
         dispex_static_data_t *dispex_data)
 {
+    nsresult nsres;
+
     This->lpIHTMLFrameBaseVtbl = &HTMLFrameBaseVtbl;
     This->lpIHTMLFrameBase2Vtbl = &HTMLFrameBase2Vtbl;
 
     HTMLElement_Init(&This->element, doc, nselem, dispex_data);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLFrameElement, (void**)&This->nsframe);
+    if(NS_FAILED(nsres)) {
+        nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLIFrameElement, (void**)&This->nsiframe);
+        if(NS_FAILED(nsres))
+            ERR("Could not get nsIDOMHTML[I]Frame interface\n");
+    }else
+        This->nsiframe = NULL;
 }
 
 typedef struct {
@@ -492,17 +507,11 @@ static HRESULT HTMLFrameElement_get_document(HTMLDOMNode *iface, IDispatch **p)
 static HRESULT HTMLFrameElement_bind_to_tree(HTMLDOMNode *iface)
 {
     HTMLFrameElement *This = HTMLFRAME_NODE_THIS(iface);
-    nsIDOMHTMLFrameElement *nsframe;
     nsIDOMDocument *nsdoc;
     nsresult nsres;
     HRESULT hres;
 
-    nsres = nsIDOMHTMLElement_QueryInterface(This->framebase.element.nselem, &IID_nsIDOMHTMLFrameElement, (void**)&nsframe);
-    if(NS_FAILED(nsres))
-        return E_FAIL;
-
-    nsres = nsIDOMHTMLFrameElement_GetContentDocument(nsframe, &nsdoc);
-    nsIDOMHTMLFrameElement_Release(nsframe);
+    nsres = nsIDOMHTMLFrameElement_GetContentDocument(This->framebase.nsframe, &nsdoc);
     if(NS_FAILED(nsres) || !nsdoc) {
         ERR("GetContentDocument failed: %08x\n", nsres);
         return E_FAIL;
@@ -531,17 +540,11 @@ static const NodeImplVtbl HTMLFrameElementImplVtbl = {
 
 HTMLElement *HTMLFrameElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
 {
-    nsIDOMHTMLFrameElement *nsframe;
     HTMLFrameElement *ret;
-    nsresult nsres;
 
     ret = heap_alloc_zero(sizeof(HTMLFrameElement));
 
     ret->framebase.element.node.vtbl = &HTMLFrameElementImplVtbl;
-
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLFrameElement, (void**)&nsframe);
-    if(NS_FAILED(nsres))
-        ERR("Could not get nsIDOMHTMLFrameElement iface: %08x\n", nsres);
 
     HTMLFrameBase_Init(&ret->framebase, doc, nselem, NULL);
 

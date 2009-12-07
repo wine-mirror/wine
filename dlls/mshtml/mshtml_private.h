@@ -504,6 +504,9 @@ struct HTMLFrameBase {
     const IHTMLFrameBase2Vtbl  *lpIHTMLFrameBase2Vtbl;
 
     HTMLWindow *content_window;
+
+    nsIDOMHTMLFrameElement *nsframe;
+    nsIDOMHTMLIFrameElement *nsiframe;
 };
 
 typedef struct _mutation_queue_t {

@@ -33,10 +33,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 typedef struct {
     HTMLFrameBase framebase;
-
-    LONG ref;
-
-    nsIDOMHTMLIFrameElement *nsiframe;
 } HTMLIFrame;
 
 #define HTMLIFRAME_NODE_THIS(iface) DEFINE_THIS2(HTMLIFrame, framebase.element.node, iface)
@@ -51,9 +47,6 @@ static HRESULT HTMLIFrame_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 static void HTMLIFrame_destructor(HTMLDOMNode *iface)
 {
     HTMLIFrame *This = HTMLIFRAME_NODE_THIS(iface);
-
-    if(This->nsiframe)
-        nsIDOMHTMLIFrameElement_Release(This->nsiframe);
 
     HTMLFrameBase_destructor(&This->framebase);
 }
@@ -86,7 +79,7 @@ static HRESULT HTMLIFrame_bind_to_tree(HTMLDOMNode *iface)
     nsresult nsres;
     HRESULT hres;
 
-    nsres = nsIDOMHTMLIFrameElement_GetContentDocument(This->nsiframe, &nsdoc);
+    nsres = nsIDOMHTMLIFrameElement_GetContentDocument(This->framebase.nsiframe, &nsdoc);
     if(NS_FAILED(nsres) || !nsdoc) {
         ERR("GetContentDocument failed: %08x\n", nsres);
         return E_FAIL;
@@ -134,15 +127,10 @@ static dispex_static_data_t HTMLIFrame_dispex = {
 HTMLElement *HTMLIFrame_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
 {
     HTMLIFrame *ret;
-    nsresult nsres;
 
     ret = heap_alloc_zero(sizeof(HTMLIFrame));
 
     ret->framebase.element.node.vtbl = &HTMLIFrameImplVtbl;
-
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLIFrameElement, (void**)&ret->nsiframe);
-    if(NS_FAILED(nsres))
-        ERR("Could not get nsIDOMHTMLIFrameElement iface: %08x\n", nsres);
 
     HTMLFrameBase_Init(&ret->framebase, doc, nselem, &HTMLIFrame_dispex);
 
