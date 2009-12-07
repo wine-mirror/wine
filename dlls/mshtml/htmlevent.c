@@ -94,6 +94,9 @@ static const WCHAR onpasteW[] = {'o','n','p','a','s','t','e',0};
 static const WCHAR readystatechangeW[] = {'r','e','a','d','y','s','t','a','t','e','c','h','a','n','g','e',0};
 static const WCHAR onreadystatechangeW[] = {'o','n','r','e','a','d','y','s','t','a','t','e','c','h','a','n','g','e',0};
 
+static const WCHAR resizeW[] = {'r','e','s','i','z','e',0};
+static const WCHAR onresizeW[] = {'o','n','r','e','s','i','z','e',0};
+
 static const WCHAR selectstartW[] = {'s','e','l','e','c','t','s','t','a','r','t',0};
 static const WCHAR onselectstartW[] = {'o','n','s','e','l','e','c','t','s','t','a','r','t',0};
 
@@ -162,6 +165,8 @@ static const event_info_t event_info[] = {
         0},
     {readystatechangeW,  onreadystatechangeW,  EVENTT_NONE,   DISPID_EVMETH_ONREADYSTATECHANGE,
         0},
+    {resizeW,            onresizeW,            EVENTT_NONE,   DISPID_EVMETH_ONRESIZE,
+        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {selectstartW,       onselectstartW,       EVENTT_MOUSE,  DISPID_EVMETH_ONSELECTSTART,
         0}
 };
