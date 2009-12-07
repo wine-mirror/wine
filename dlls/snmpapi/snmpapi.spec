@@ -11,7 +11,7 @@
 @ stub SnmpSvcGenerateTrap
 @ stub SnmpSvcGenerateWarmStartTrap
 @ stub SnmpSvcGetEnterpriseOID
-@ stub SnmpSvcGetUptime
+@ stdcall SnmpSvcGetUptime()
 @ stub SnmpSvcInitUptime
 @ stub SnmpSvcReleaseMessage
 @ stub SnmpSvcReportEvent
