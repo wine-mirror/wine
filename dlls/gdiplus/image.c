@@ -607,17 +607,73 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
 GpStatus WINGDIPAPI GdipCloneBitmapArea(REAL x, REAL y, REAL width, REAL height,
     PixelFormat format, GpBitmap* srcBitmap, GpBitmap** dstBitmap)
 {
-    FIXME("(%f,%f,%f,%f,%i,%p,%p): stub\n", x, y, width, height, format, srcBitmap, dstBitmap);
+    BitmapData lockeddata_src, lockeddata_dst;
+    int i;
+    UINT row_size;
+    Rect area;
+    GpStatus stat;
 
-    return NotImplemented;
+    TRACE("(%f,%f,%f,%f,%i,%p,%p)\n", x, y, width, height, format, srcBitmap, dstBitmap);
+
+    if (!srcBitmap || !dstBitmap || srcBitmap->image.type != ImageTypeBitmap ||
+        x < 0 || y < 0 ||
+        x + width > srcBitmap->width || y + height > srcBitmap->height)
+    {
+        TRACE("<-- InvalidParameter\n");
+        return InvalidParameter;
+    }
+
+    if (format == PixelFormatDontCare)
+        format = srcBitmap->format;
+
+    area.X = roundr(x);
+    area.Y = roundr(y);
+    area.Width = roundr(width);
+    area.Height = roundr(height);
+
+    stat = GdipBitmapLockBits(srcBitmap, &area, ImageLockModeRead, format,
+        &lockeddata_src);
+    if (stat != Ok) return stat;
+
+    stat = GdipCreateBitmapFromScan0(lockeddata_src.Width, lockeddata_src.Height,
+        0, lockeddata_src.PixelFormat, NULL, dstBitmap);
+    if (stat == Ok)
+    {
+        stat = GdipBitmapLockBits(*dstBitmap, NULL, ImageLockModeWrite,
+            lockeddata_src.PixelFormat, &lockeddata_dst);
+
+        if (stat == Ok)
+        {
+            /* copy the image data */
+            row_size = (lockeddata_src.Width * PIXELFORMATBPP(lockeddata_src.PixelFormat) +7)/8;
+            for (i=0; i<lockeddata_src.Height; i++)
+                memcpy((BYTE*)lockeddata_dst.Scan0+lockeddata_dst.Stride*i,
+                       (BYTE*)lockeddata_src.Scan0+lockeddata_src.Stride*i,
+                       row_size);
+
+            GdipBitmapUnlockBits(*dstBitmap, &lockeddata_dst);
+        }
+
+        if (stat != Ok)
+            GdipDisposeImage((GpImage*)*dstBitmap);
+    }
+
+    GdipBitmapUnlockBits(srcBitmap, &lockeddata_src);
+
+    if (stat != Ok)
+    {
+        *dstBitmap = NULL;
+    }
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipCloneBitmapAreaI(INT x, INT y, INT width, INT height,
     PixelFormat format, GpBitmap* srcBitmap, GpBitmap** dstBitmap)
 {
-    FIXME("(%i,%i,%i,%i,%i,%p,%p): stub\n", x, y, width, height, format, srcBitmap, dstBitmap);
+    TRACE("(%i,%i,%i,%i,%i,%p,%p)\n", x, y, width, height, format, srcBitmap, dstBitmap);
 
-    return NotImplemented;
+    return GdipCloneBitmapArea(x, y, width, height, format, srcBitmap, dstBitmap);
 }
 
 GpStatus WINGDIPAPI GdipCloneImage(GpImage *image, GpImage **cloneImage)
