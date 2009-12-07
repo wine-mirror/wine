@@ -1513,7 +1513,6 @@ struct IWineD3DDeviceImpl
 
     /* Internal use fields  */
     WINED3DDEVICE_CREATION_PARAMETERS createParms;
-    UINT                            adapterNo;
     WINED3DDEVTYPE                  devType;
 
     IWineD3DSwapChain     **swapchains;

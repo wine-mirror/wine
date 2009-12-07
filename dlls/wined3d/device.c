@@ -4419,7 +4419,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetBackBuffer(IWineD3DDevice *iface, UI
 static HRESULT WINAPI IWineD3DDeviceImpl_GetDeviceCaps(IWineD3DDevice *iface, WINED3DCAPS* pCaps) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     WARN("(%p) : stub, calling idirect3d for now\n", This);
-    return IWineD3D_GetDeviceCaps(This->wineD3D, This->adapterNo, This->devType, pCaps);
+    return IWineD3D_GetDeviceCaps(This->wineD3D, This->adapter->ordinal, This->devType, pCaps);
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, UINT iSwapChain, WINED3DDISPLAYMODE* pMode) {
@@ -7332,7 +7332,6 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
     device->createParms.hFocusWindow = focus_window;
     device->createParms.BehaviorFlags = flags;
 
-    device->adapterNo = adapter_idx;
     device->devType = device_type;
     for (i = 0; i < PATCHMAP_SIZE; ++i) list_init(&device->patches[i]);
 
