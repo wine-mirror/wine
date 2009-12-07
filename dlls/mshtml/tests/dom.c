@@ -65,8 +65,9 @@ static const char cond_comment_str[] =
     "<!--[if gte IE 4]> <br> <![endif]-->"
     "</body></html>";
 static const char frameset_str[] =
-    "<html><head><title>frameset test</title></head><frameset rows=\"28, *\">"
+    "<html><head><title>frameset test</title></head><frameset rows=\"25, 25, *\">"
     "<frame src=\"about:blank\" name=\"nm1\" id=\"fr1\"><frame src=\"about:blank\" name=\"nm2\" id=\"fr2\">"
+    "<frame src=\"about:blank\" id=\"fr3\">"
     "</frameset></html>";
 
 static WCHAR characterW[] = {'c','h','a','r','a','c','t','e','r',0};
@@ -5918,7 +5919,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     /* test result length */
     hres = IHTMLFramesCollection2_get_length(frames, &length);
     ok(hres == S_OK, "IHTMLFramesCollection2_get_length failed: 0x%08x\n", hres);
-    ok(length == 2, "IHTMLFramesCollection2_get_length should have been 2, was: %d\n", length);
+    ok(length == 3, "IHTMLFramesCollection2_get_length should have been 3, was: %d\n", length);
 
     /* test first frame */
     V_VT(&index_var) = VT_I4;
@@ -5941,8 +5942,8 @@ static void test_frameset(IHTMLDocument2 *doc)
     }
     VariantClear(&result_var);
 
-    /* fail on third frame */
-    V_I4(&index_var) = 2;
+    /* fail on next frame */
+    V_I4(&index_var) = 3;
     hres = IHTMLFramesCollection2_item(frames, &index_var, &result_var);
     ok(hres == DISP_E_MEMBERNOTFOUND, "IHTMLFramesCollection2_item should have"
            "failed with DISP_E_MEMBERNOTFOUND, instead: 0x%08x\n", hres);
@@ -5975,7 +5976,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     /* test result length */
     hres = IHTMLWindow2_get_length(window, &length);
     ok(hres == S_OK, "IHTMLWindow2_get_length failed: 0x%08x\n", hres);
-    ok(length == 2, "IHTMLWindow2_get_length should have been 2, was: %d\n", length);
+    ok(length == 3, "IHTMLWindow2_get_length should have been 3, was: %d\n", length);
 
     /* test first frame */
     V_VT(&index_var) = VT_I4;
@@ -5998,8 +5999,8 @@ static void test_frameset(IHTMLDocument2 *doc)
     }
     VariantClear(&result_var);
 
-    /* fail on third frame */
-    V_I4(&index_var) = 2;
+    /* fail on next frame */
+    V_I4(&index_var) = 3;
     hres = IHTMLWindow2_item(window, &index_var, &result_var);
     ok(hres == DISP_E_MEMBERNOTFOUND, "IHTMLWindow2_item should have"
            "failed with DISP_E_MEMBERNOTFOUND, instead: 0x%08x\n", hres);
@@ -6057,6 +6058,25 @@ static void test_frameset(IHTMLDocument2 *doc)
     hres = IHTMLFrameBase_get_scrolling(fbase, &str);
     ok(hres == S_OK, "IHTMLFrameBase_get_scrolling failed: 0x%08x\n", hres);
     ok(!strcmp_wa(str, "no"), "get_scrolling should have given 'no', gave: %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* get_name */
+    hres = IHTMLFrameBase_get_name(fbase, &str);
+    ok(hres == S_OK, "IHTMLFrameBase_get_name failed: 0x%08x\n", hres);
+    ok(!strcmp_wa(str, "nm1"), "get_name should have given 'nm1', gave: %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IHTMLFrameBase_Release(fbase);
+    IHTMLElement_Release(elem);
+
+    /* get_name with no name attr */
+    elem = get_doc_elem_by_id(doc, "fr3");
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLFrameBase, (void**)&fbase);
+    ok(hres == S_OK, "Could not get IHTMLFrameBase interface: 0x%08x\n", hres);
+
+    hres = IHTMLFrameBase_get_name(fbase, &str);
+    ok(hres == S_OK, "IHTMLFrameBase_get_name failed: 0x%08x\n", hres);
+    ok(str == NULL, "get_name should have given 'null', gave: %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     IHTMLFrameBase_Release(fbase);
