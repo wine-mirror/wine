@@ -145,6 +145,7 @@ static void test_create_env(void)
                 todo_wine expect_env(TRUE, r, common_vars[i].name);
             else
                 expect_env(TRUE, r, common_vars[i].name);
+            if (r) HeapFree(GetProcessHeap(), 0, st);
         }
     }
 
@@ -164,6 +165,7 @@ static void test_create_env(void)
                     todo_wine expect_env(TRUE, r, common_post_nt4_vars[i].name);
                 else
                     expect_env(TRUE, r, common_post_nt4_vars[i].name);
+                if (r) HeapFree(GetProcessHeap(), 0, st);
             }
         }
     }
@@ -178,17 +180,23 @@ static void test_create_env(void)
                 todo_wine expect_env(TRUE, r, htok_vars[i].name);
             else
                 expect_env(TRUE, r, htok_vars[i].name);
+            if (r) HeapFree(GetProcessHeap(), 0, st);
         }
     }
 
     r = get_env(env[0], "WINE_XYZZY", &st);
     expect(FALSE, r);
+
     r = get_env(env[1], "WINE_XYZZY", &st);
     expect(FALSE, r);
+
     r = get_env(env[2], "WINE_XYZZY", &st);
     expect(TRUE, r);
+    if (r) HeapFree(GetProcessHeap(), 0, st);
+
     r = get_env(env[3], "WINE_XYZZY", &st);
     expect(TRUE, r);
+    if (r) HeapFree(GetProcessHeap(), 0, st);
 }
 
 START_TEST(userenv)
