@@ -45,7 +45,7 @@ static void setStringValue(AsnAny *value, BYTE type, DWORD len, BYTE *str)
     strValue.asnType = type;
     strValue.asnValue.string.stream = str;
     strValue.asnValue.string.length = len;
-    strValue.asnValue.string.dynamic = TRUE;
+    strValue.asnValue.string.dynamic = FALSE;
     SnmpUtilAsnAnyCpy(value, &strValue);
 }
 
