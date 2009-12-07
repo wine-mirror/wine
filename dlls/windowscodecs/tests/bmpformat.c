@@ -225,6 +225,8 @@ static void test_decode_24bpp(void)
                 /* cannot querycapability twice */
                 hr = IWICBitmapDecoder_QueryCapability(decoder2, bmpstream, &capability);
                 ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, hr=%x\n", hr);
+
+                IWICBitmapDecoder_Release(decoder2);
             }
 
             IStream_Release(bmpstream);
@@ -373,6 +375,7 @@ static void test_decode_1bpp(void)
                 ok(hr == S_OK, "QueryCapability failed, hr=%x\n", hr);
                 ok(capability == (WICBitmapDecoderCapabilityCanDecodeAllImages),
                     "unexpected capabilities: %x\n", capability);
+                IWICBitmapDecoder_Release(decoder2);
             }
 
             IStream_Release(bmpstream);
@@ -531,6 +534,7 @@ static void test_decode_4bpp(void)
                 ok(hr == S_OK, "QueryCapability failed, hr=%x\n", hr);
                 ok(capability == (WICBitmapDecoderCapabilityCanDecodeAllImages),
                     "unexpected capabilities: %x\n", capability);
+                IWICBitmapDecoder_Release(decoder2);
             }
 
             IStream_Release(bmpstream);
@@ -710,6 +714,7 @@ static void test_decode_rle8(void)
                 ok(hr == S_OK, "QueryCapability failed, hr=%x\n", hr);
                 ok(capability == (WICBitmapDecoderCapabilityCanDecodeAllImages),
                     "unexpected capabilities: %x\n", capability);
+                IWICBitmapDecoder_Release(decoder2);
             }
 
             IStream_Release(bmpstream);
@@ -876,6 +881,7 @@ static void test_decode_rle4(void)
                 ok(hr == S_OK, "QueryCapability failed, hr=%x\n", hr);
                 ok(capability == (WICBitmapDecoderCapabilityCanDecodeAllImages),
                     "unexpected capabilities: %x\n", capability);
+                IWICBitmapDecoder_Release(decoder2);
             }
 
             IStream_Release(bmpstream);
