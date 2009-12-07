@@ -3638,6 +3638,9 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
 
         b = CreateUrlCacheEntryW(url, lpwhr->dwContentLength > 0 ? lpwhr->dwContentLength : 0, NULL, cacheFileName, 0);
         if(b) {
+            HeapFree(GetProcessHeap(), 0, lpwhr->lpszCacheFile);
+            CloseHandle(lpwhr->hCacheFile);
+
             lpwhr->lpszCacheFile = heap_strdupW(cacheFileName);
             lpwhr->hCacheFile = CreateFileW(lpwhr->lpszCacheFile, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
                       NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
