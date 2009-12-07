@@ -32,10 +32,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(inetmib1);
 /**
  * Utility functions
  */
-static void copyInt(AsnAny *value, void *src)
+static DWORD copyInt(AsnAny *value, void *src)
 {
     value->asnType = ASN_INTEGER;
     value->asnValue.number = *(DWORD *)src;
+    return SNMP_ERRORSTATUS_NOERROR;
 }
 
 static void setStringValue(AsnAny *value, BYTE type, DWORD len, BYTE *str)
@@ -49,14 +50,15 @@ static void setStringValue(AsnAny *value, BYTE type, DWORD len, BYTE *str)
     SnmpUtilAsnAnyCpy(value, &strValue);
 }
 
-static void copyLengthPrecededString(AsnAny *value, void *src)
+static DWORD copyLengthPrecededString(AsnAny *value, void *src)
 {
     DWORD len = *(DWORD *)src;
 
     setStringValue(value, ASN_OCTETSTRING, len, (BYTE *)src + sizeof(DWORD));
+    return SNMP_ERRORSTATUS_NOERROR;
 }
 
-typedef void (*copyValueFunc)(AsnAny *value, void *src);
+typedef DWORD (*copyValueFunc)(AsnAny *value, void *src);
 
 struct structToAsnValue
 {
@@ -75,13 +77,13 @@ static AsnInteger32 mapStructEntryToValue(struct structToAsnValue *map,
         return SNMP_ERRORSTATUS_NOSUCHNAME;
     if (!map[id].copy)
         return SNMP_ERRORSTATUS_NOSUCHNAME;
-    map[id].copy(&pVarBind->value, (BYTE *)record + map[id].offset);
-    return SNMP_ERRORSTATUS_NOERROR;
+    return map[id].copy(&pVarBind->value, (BYTE *)record + map[id].offset);
 }
 
-static void copyIpAddr(AsnAny *value, void *src)
+static DWORD copyIpAddr(AsnAny *value, void *src)
 {
     setStringValue(value, ASN_IPADDRESS, sizeof(DWORD), src);
+    return SNMP_ERRORSTATUS_NOERROR;
 }
 
 static UINT mib2[] = { 1,3,6,1,2,1 };
@@ -168,7 +170,7 @@ static BOOL mib2IfNumberQuery(BYTE bPduType, SnmpVarBind *pVarBind,
     return ret;
 }
 
-static void copyOperStatus(AsnAny *value, void *src)
+static DWORD copyOperStatus(AsnAny *value, void *src)
 {
     value->asnType = ASN_INTEGER;
     /* The IPHlpApi definition of operational status differs from the MIB2 one,
@@ -186,6 +188,7 @@ static void copyOperStatus(AsnAny *value, void *src)
     default:
         value->asnValue.number = MIB_IF_ADMIN_STATUS_DOWN;
     };
+    return SNMP_ERRORSTATUS_NOERROR;
 }
 
 /* Given an OID and a base OID that it must begin with, finds the item and
