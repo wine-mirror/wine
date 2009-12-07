@@ -230,7 +230,7 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
 /***********************************************************************
  *           VIRTUAL_Dump
  */
-#if WINE_VM_DEBUG
+#ifdef WINE_VM_DEBUG
 static void VIRTUAL_Dump(void)
 {
     sigset_t sigset;
