@@ -553,6 +553,22 @@ static INT setOidWithItemAndInteger(AsnObjectIdentifier *dst,
     return ret;
 }
 
+static DWORD copyIfRowDescr(AsnAny *value, void *src)
+{
+    PMIB_IFROW row = (PMIB_IFROW)((BYTE *)src -
+                                  FIELD_OFFSET(MIB_IFROW, dwDescrLen));
+    DWORD ret;
+
+    if (row->dwDescrLen)
+    {
+        setStringValue(value, ASN_OCTETSTRING, row->dwDescrLen, row->bDescr);
+        ret = SNMP_ERRORSTATUS_NOERROR;
+    }
+    else
+        ret = SNMP_ERRORSTATUS_NOSUCHNAME;
+    return ret;
+}
+
 static DWORD copyIfRowPhysAddr(AsnAny *value, void *src)
 {
     PMIB_IFROW row = (PMIB_IFROW)((BYTE *)src -
@@ -572,7 +588,7 @@ static DWORD copyIfRowPhysAddr(AsnAny *value, void *src)
 
 static struct structToAsnValue mib2IfEntryMap[] = {
     { FIELD_OFFSET(MIB_IFROW, dwIndex), copyInt },
-    { FIELD_OFFSET(MIB_IFROW, dwDescrLen), copyLengthPrecededString },
+    { FIELD_OFFSET(MIB_IFROW, dwDescrLen), copyIfRowDescr },
     { FIELD_OFFSET(MIB_IFROW, dwType), copyInt },
     { FIELD_OFFSET(MIB_IFROW, dwMtu), copyInt },
     { FIELD_OFFSET(MIB_IFROW, dwSpeed), copyInt },
