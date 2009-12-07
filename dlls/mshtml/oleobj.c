@@ -413,8 +413,13 @@ static HRESULT WINAPI OleObject_Unadvise(IOleObject *iface, DWORD dwConnection)
 static HRESULT WINAPI OleObject_EnumAdvise(IOleObject *iface, IEnumSTATDATA **ppenumAdvise)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, ppenumAdvise);
-    return E_NOTIMPL;
+
+    if(!This->advise_holder) {
+        *ppenumAdvise = NULL;
+        return S_OK;
+    }
+
+    return IOleAdviseHolder_EnumAdvise(This->advise_holder, ppenumAdvise);
 }
 
 static HRESULT WINAPI OleObject_GetMiscStatus(IOleObject *iface, DWORD dwAspect, DWORD *pdwStatus)
