@@ -379,6 +379,7 @@ struct HTMLDocumentObj {
     HWND hwnd;
     HWND tooltips_hwnd;
 
+    BOOL request_uiactivate;
     BOOL in_place_active;
     BOOL ui_active;
     BOOL window_active;

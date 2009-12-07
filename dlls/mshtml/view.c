@@ -342,6 +342,14 @@ static HRESULT activate_window(HTMLDocumentObj *This)
         IOleInPlaceFrame_Release(This->frame);
     This->frame = pIPFrame;
 
+    if(!This->request_uiactivate) {
+        hres = IOleInPlaceSite_QueryInterface(This->ipsite, &IID_IOleInPlaceSiteEx, (void**)&ipsiteex);
+        if(SUCCEEDED(hres)) {
+            IOleInPlaceSiteEx_RequestUIActivate(ipsiteex);
+            IOleInPlaceSiteEx_Release(ipsiteex);
+        }
+    }
+
     This->window_active = TRUE;
 
     return S_OK;
@@ -466,6 +474,7 @@ static HRESULT WINAPI OleDocumentView_SetInPlaceSite(IOleDocumentView *iface, IO
         IOleInPlaceSite_Release(This->doc_obj->ipsite);
 
     This->doc_obj->ipsite = pIPSite;
+    This->doc_obj->request_uiactivate = TRUE;
     return S_OK;
 }
 
@@ -557,6 +566,10 @@ static HRESULT WINAPI OleDocumentView_Show(IOleDocumentView *iface, BOOL fShow)
         ShowWindow(This->doc_obj->hwnd, SW_SHOW);
     }else {
         ShowWindow(This->doc_obj->hwnd, SW_HIDE);
+
+        if(This->doc_obj->in_place_active)
+            IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(This));
+
         if(This->doc_obj->ip_window) {
             IOleInPlaceUIWindow_Release(This->doc_obj->ip_window);
             This->doc_obj->ip_window = NULL;
@@ -574,8 +587,35 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
     TRACE("(%p)->(%x)\n", This, fUIActivate);
 
     if(!This->doc_obj->ipsite) {
-        FIXME("This->ipsite = NULL\n");
-        return E_FAIL;
+        IOleClientSite *cs = This->doc_obj->client;
+        IOleInPlaceSite *ips;
+
+        if(!cs) {
+            WARN("this->ipsite = NULL\n");
+            return E_UNEXPECTED;
+        }
+
+        hres = IOleClientSite_QueryInterface(cs, &IID_IOleInPlaceSiteWindowless, (void**)&ips);
+        if(SUCCEEDED(hres))
+            This->doc_obj->ipsite = ips;
+        else {
+            hres = IOleClientSite_QueryInterface(cs, &IID_IOleInPlaceSiteEx, (void**)&ips);
+            if(SUCCEEDED(hres))
+                This->doc_obj->ipsite = ips;
+            else {
+                hres = IOleClientSite_QueryInterface(cs, &IID_IOleInPlaceSite, (void**)&ips);
+                if(SUCCEEDED(hres))
+                    This->doc_obj->ipsite = ips;
+                else {
+                    WARN("this->ipsite = NULL\n");
+                    return E_NOINTERFACE;
+                }
+            }
+        }
+
+        IOleClientSite_AddRef(This->doc_obj->ipsite);
+        This->doc_obj->request_uiactivate = FALSE;
+        HTMLDocument_LockContainer(This->doc_obj, TRUE);
     }
 
     if(fUIActivate) {
