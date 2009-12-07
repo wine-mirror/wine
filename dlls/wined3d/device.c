@@ -1110,7 +1110,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
     }
 
     /* Get info on the current display setup */
-    IWineD3D_GetAdapterDisplayMode(This->wineD3D, This->adapter->num, &Mode);
+    IWineD3D_GetAdapterDisplayMode(This->wineD3D, This->adapter->ordinal, &Mode);
     object->orig_width = Mode.Width;
     object->orig_height = Mode.Height;
     object->orig_fmt = Mode.Format;
@@ -6615,10 +6615,10 @@ static BOOL is_display_mode_supported(IWineD3DDeviceImpl *This, const WINED3DPRE
     if(!pp->BackBufferWidth) return TRUE;
     if(!pp->BackBufferHeight) return TRUE;
 
-    count = IWineD3D_GetAdapterModeCount(This->wineD3D, This->adapter->num, WINED3DFMT_UNKNOWN);
+    count = IWineD3D_GetAdapterModeCount(This->wineD3D, This->adapter->ordinal, WINED3DFMT_UNKNOWN);
     for(i = 0; i < count; i++) {
         memset(&m, 0, sizeof(m));
-        hr = IWineD3D_EnumAdapterModes(This->wineD3D, This->adapter->num, WINED3DFMT_UNKNOWN, i, &m);
+        hr = IWineD3D_EnumAdapterModes(This->wineD3D, This->adapter->ordinal, WINED3DFMT_UNKNOWN, i, &m);
         if(FAILED(hr)) {
             ERR("EnumAdapterModes failed\n");
         }

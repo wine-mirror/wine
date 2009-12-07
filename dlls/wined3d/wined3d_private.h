@@ -1324,7 +1324,7 @@ struct wined3d_driver_info
 /* The adapter structure */
 struct wined3d_adapter
 {
-    UINT                    num;
+    UINT ordinal;
     BOOL                    opengl;
     POINT                   monitorPoint;
     struct wined3d_gl_info  gl_info;

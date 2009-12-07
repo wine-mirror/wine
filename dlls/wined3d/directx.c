@@ -4676,7 +4676,7 @@ BOOL InitAdapters(IWineD3DImpl *This)
         HDC hdc;
 
         TRACE("Initializing default adapter\n");
-        adapter->num = 0;
+        adapter->ordinal = 0;
         adapter->monitorPoint.x = -1;
         adapter->monitorPoint.y = -1;
 
@@ -4884,7 +4884,7 @@ BOOL InitAdapters(IWineD3DImpl *This)
 nogl_adapter:
     /* Initialize an adapter for ddraw-only memory counting */
     memset(This->adapters, 0, sizeof(This->adapters));
-    This->adapters[0].num = 0;
+    This->adapters[0].ordinal = 0;
     This->adapters[0].opengl = FALSE;
     This->adapters[0].monitorPoint.x = -1;
     This->adapters[0].monitorPoint.y = -1;
