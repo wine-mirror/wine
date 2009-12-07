@@ -181,7 +181,7 @@ interface IAudioVolumeDuckNotification : IUnknown
         [in] LPCWSTR sessionID,
         [in] UINT32 countCommunicationSessions
     );
-    HRESULT OnVolumeUndockNotification(
+    HRESULT OnVolumeUnduckNotification(
         [in] LPCWSTR sessionID
     );
 };
