@@ -239,7 +239,7 @@ struct StorageBaseImpl
   DWORD stateBits;
 
   /* If set, this overrides the root storage name returned by IStorage_Stat */
-  WCHAR            filename[DIRENTRY_NAME_BUFFER_LEN];
+  LPCWSTR          filename;
 
   BOOL             create;     /* Was the storage created or opened.
                                   The behaviour of STGM_SIMPLE depends on this */

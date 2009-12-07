@@ -2242,6 +2242,7 @@ static HRESULT StorageImpl_Construct(
   HRESULT     hr = S_OK;
   DirEntry currentEntry;
   DirRef      currentEntryRef;
+  WCHAR fullpath[MAX_PATH];
 
   if ( FAILED( validateSTGM(openFlags) ))
     return STG_E_INVALIDFLAG;
@@ -2272,15 +2273,19 @@ static HRESULT StorageImpl_Construct(
   This->hFile = hFile;
 
   if(pwcsName) {
+      if (!GetFullPathNameW(pwcsName, MAX_PATH, fullpath, NULL))
+      {
+        lstrcpynW(fullpath, pwcsName, MAX_PATH);
+      }
       This->pwcsName = HeapAlloc(GetProcessHeap(), 0,
-                                (lstrlenW(pwcsName)+1)*sizeof(WCHAR));
+                                (lstrlenW(fullpath)+1)*sizeof(WCHAR));
       if (!This->pwcsName)
       {
          hr = STG_E_INSUFFICIENTMEMORY;
          goto end;
       }
-      strcpyW(This->pwcsName, pwcsName);
-      lstrcpynW(This->base.filename, pwcsName, DIRENTRY_NAME_BUFFER_LEN);
+      strcpyW(This->pwcsName, fullpath);
+      This->base.filename = This->pwcsName;
   }
 
   /*
@@ -5857,7 +5862,6 @@ HRESULT WINAPI StgOpenStorage(
   HANDLE         hFile = 0;
   DWORD          shareMode;
   DWORD          accessMode;
-  WCHAR          fullname[MAX_PATH];
 
   TRACE("(%s, %p, %x, %p, %d, %p)\n",
 	debugstr_w(pwcsName), pstgPriority, grfMode,
@@ -6010,11 +6014,6 @@ HRESULT WINAPI StgOpenStorage(
 	hr = STG_E_FILEALREADYEXISTS;
     goto end;
   }
-
-  /* prepare the file name string given in lieu of the root property name */
-  GetFullPathNameW(pwcsName, MAX_PATH, fullname, NULL);
-  memcpy(newStorage->base.filename, fullname, DIRENTRY_NAME_BUFFER_LEN);
-  newStorage->base.filename[DIRENTRY_NAME_BUFFER_LEN-1] = '\0';
 
   /*
    * Get an "out" pointer for the caller.

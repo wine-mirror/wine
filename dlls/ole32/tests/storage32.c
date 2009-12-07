@@ -2466,6 +2466,76 @@ static void test_rename(void)
     ok( r == TRUE, "deleted file\n");
 }
 
+static void test_toplevel_stat(void)
+{
+    IStorage *stg = NULL;
+    HRESULT r;
+    STATSTG stat;
+    WCHAR prev_dir[MAX_PATH];
+    WCHAR temp[MAX_PATH];
+    WCHAR full_path[MAX_PATH];
+    LPWSTR rel_path;
+
+    DeleteFileA(filenameA);
+
+    r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE |
+                            STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
+    ok(r==S_OK, "StgCreateDocfile failed\n");
+
+    r = IStorage_Stat( stg, &stat, STATFLAG_DEFAULT );
+    ok(!lstrcmpW(stat.pwcsName, filename), "expected %s, got %s\n",
+        wine_dbgstr_w(filename), wine_dbgstr_w(stat.pwcsName));
+    CoTaskMemFree(stat.pwcsName);
+
+    IStorage_Release( stg );
+
+    r = StgOpenStorage( filename, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, NULL, 0, &stg);
+    ok(r==S_OK, "StgOpenStorage failed with error 0x%08x\n", r);
+
+    r = IStorage_Stat( stg, &stat, STATFLAG_DEFAULT );
+    ok(!lstrcmpW(stat.pwcsName, filename), "expected %s, got %s\n",
+        wine_dbgstr_w(filename), wine_dbgstr_w(stat.pwcsName));
+    CoTaskMemFree(stat.pwcsName);
+
+    IStorage_Release( stg );
+
+    DeleteFileA(filenameA);
+
+    /* Stat always returns the full path, even for files opened with a relative path. */
+    GetCurrentDirectoryW(MAX_PATH, prev_dir);
+
+    GetTempPathW(MAX_PATH, temp);
+
+    SetCurrentDirectoryW(temp);
+
+    GetFullPathNameW(filename, MAX_PATH, full_path, &rel_path);
+
+    r = StgCreateDocfile( rel_path, STGM_CREATE | STGM_SHARE_EXCLUSIVE |
+                            STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
+    ok(r==S_OK, "StgCreateDocfile failed\n");
+
+    r = IStorage_Stat( stg, &stat, STATFLAG_DEFAULT );
+    ok(!lstrcmpW(stat.pwcsName, filename), "expected %s, got %s\n",
+        wine_dbgstr_w(filename), wine_dbgstr_w(stat.pwcsName));
+    CoTaskMemFree(stat.pwcsName);
+
+    IStorage_Release( stg );
+
+    r = StgOpenStorage( rel_path, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, NULL, 0, &stg);
+    ok(r==S_OK, "StgOpenStorage failed with error 0x%08x\n", r);
+
+    r = IStorage_Stat( stg, &stat, STATFLAG_DEFAULT );
+    ok(!lstrcmpW(stat.pwcsName, filename), "expected %s, got %s\n",
+        wine_dbgstr_w(filename), wine_dbgstr_w(stat.pwcsName));
+    CoTaskMemFree(stat.pwcsName);
+
+    IStorage_Release( stg );
+
+    SetCurrentDirectoryW(prev_dir);
+
+    DeleteFileA(filenameA);
+}
+
 START_TEST(storage32)
 {
     CHAR temp[MAX_PATH];
@@ -2503,4 +2573,5 @@ START_TEST(storage32)
     test_copyto_iidexclusions_storage();
     test_copyto_iidexclusions_stream();
     test_rename();
+    test_toplevel_stat();
 }
