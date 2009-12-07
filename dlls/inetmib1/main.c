@@ -553,13 +553,30 @@ static INT setOidWithItemAndInteger(AsnObjectIdentifier *dst,
     return ret;
 }
 
+static DWORD copyIfRowPhysAddr(AsnAny *value, void *src)
+{
+    PMIB_IFROW row = (PMIB_IFROW)((BYTE *)src -
+                                  FIELD_OFFSET(MIB_IFROW, dwPhysAddrLen));
+    DWORD ret;
+
+    if (row->dwPhysAddrLen)
+    {
+        setStringValue(value, ASN_OCTETSTRING, row->dwPhysAddrLen,
+                       row->bPhysAddr);
+        ret = SNMP_ERRORSTATUS_NOERROR;
+    }
+    else
+        ret = SNMP_ERRORSTATUS_NOSUCHNAME;
+    return ret;
+}
+
 static struct structToAsnValue mib2IfEntryMap[] = {
     { FIELD_OFFSET(MIB_IFROW, dwIndex), copyInt },
     { FIELD_OFFSET(MIB_IFROW, dwDescrLen), copyLengthPrecededString },
     { FIELD_OFFSET(MIB_IFROW, dwType), copyInt },
     { FIELD_OFFSET(MIB_IFROW, dwMtu), copyInt },
     { FIELD_OFFSET(MIB_IFROW, dwSpeed), copyInt },
-    { FIELD_OFFSET(MIB_IFROW, dwPhysAddrLen), copyLengthPrecededString },
+    { FIELD_OFFSET(MIB_IFROW, dwPhysAddrLen), copyIfRowPhysAddr },
     { FIELD_OFFSET(MIB_IFROW, dwAdminStatus), copyInt },
     { FIELD_OFFSET(MIB_IFROW, dwOperStatus), copyOperStatus },
     { FIELD_OFFSET(MIB_IFROW, dwLastChange), copyInt },
