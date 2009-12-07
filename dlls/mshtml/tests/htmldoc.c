@@ -150,6 +150,7 @@ DEFINE_EXPECT(Frame_EnableModeless_TRUE);
 DEFINE_EXPECT(Frame_EnableModeless_FALSE);
 DEFINE_EXPECT(Frame_GetWindow);
 DEFINE_EXPECT(TranslateUrl);
+DEFINE_EXPECT(Advise_Close);
 
 static IUnknown *doc_unk;
 static IMoniker *doc_mon;
@@ -2589,7 +2590,7 @@ static void WINAPI AdviseSink_OnSave(IAdviseSink *iface)
 
 static void WINAPI AdviseSink_OnClose(IAdviseSink *iface)
 {
-    ok(0, "unexpected call\n");
+    CHECK_EXPECT(Advise_Close);
 }
 
 static const IAdviseSinkVtbl AdviseSinkVtbl = {
@@ -4395,6 +4396,7 @@ static void test_HTMLDocument_StreamLoad(void)
 {
     IOleObject *oleobj;
     IUnknown *unk;
+    DWORD conn;
     HRESULT hres;
     ULONG ref;
 
@@ -4410,6 +4412,9 @@ static void test_HTMLDocument_StreamLoad(void)
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "Could not get IOleObject: %08x\n", hres);
+
+    hres = IOleObject_Advise(oleobj, &AdviseSink, &conn);
+    ok(hres == S_OK, "Advise failed: %08x\n", hres);
 
     test_readyState(unk);
     test_IsDirty(unk, S_FALSE);
@@ -4427,7 +4432,9 @@ static void test_HTMLDocument_StreamLoad(void)
 
     test_UIDeactivate();
     test_InPlaceDeactivate(unk, TRUE);
+    SET_EXPECT(Advise_Close);
     test_Close(unk, FALSE);
+    CHECK_CALLED(Advise_Close);
     test_IsDirty(unk, S_FALSE);
 
     if(view) {
@@ -4444,6 +4451,7 @@ static void test_HTMLDocument_StreamInitNew(void)
 {
     IOleObject *oleobj;
     IUnknown *unk;
+    DWORD conn;
     HRESULT hres;
     ULONG ref;
 
@@ -4459,6 +4467,9 @@ static void test_HTMLDocument_StreamInitNew(void)
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "Could not get IOleObject: %08x\n", hres);
+
+    hres = IOleObject_Advise(oleobj, &AdviseSink, &conn);
+    ok(hres == S_OK, "Advise failed: %08x\n", hres);
 
     test_readyState(unk);
     test_IsDirty(unk, S_FALSE);
@@ -4476,7 +4487,9 @@ static void test_HTMLDocument_StreamInitNew(void)
 
     test_UIDeactivate();
     test_InPlaceDeactivate(unk, TRUE);
+    SET_EXPECT(Advise_Close);
     test_Close(unk, FALSE);
+    CHECK_CALLED(Advise_Close);
     test_IsDirty(unk, S_FALSE);
 
     if(view) {
@@ -4520,6 +4533,7 @@ static void test_editing_mode(BOOL do_load)
 {
     IUnknown *unk;
     IOleObject *oleobj;
+    DWORD conn;
     HRESULT hres;
     ULONG ref;
 
@@ -4535,6 +4549,9 @@ static void test_editing_mode(BOOL do_load)
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "Could not get IOleObject: %08x\n", hres);
+
+    hres = IOleObject_Advise(oleobj, &AdviseSink, &conn);
+    ok(hres == S_OK, "Advise failed: %08x\n", hres);
 
     test_readyState(unk);
     test_ConnectionPointContainer(unk);
@@ -4586,7 +4603,9 @@ static void test_editing_mode(BOOL do_load)
 
     test_UIDeactivate();
     test_InPlaceDeactivate(unk, TRUE);
+    SET_EXPECT(Advise_Close);
     test_Close(unk, FALSE);
+    CHECK_CALLED(Advise_Close);
 
     if(view) {
         IOleDocumentView_Release(view);

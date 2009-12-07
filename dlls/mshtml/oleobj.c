@@ -250,6 +250,9 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
         IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(This));
 
     HTMLDocument_LockContainer(This->doc_obj, FALSE);
+
+    if(This->advise_holder)
+        IOleAdviseHolder_SendOnClose(This->advise_holder);
     
     return S_OK;
 }
