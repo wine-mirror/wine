@@ -746,12 +746,14 @@ GpStatus WINGDIPAPI GdipCloneImage(GpImage *image, GpImage **cloneImage)
                 GdipBitmapUnlockBits((GpBitmap*)*cloneImage, &lockeddata_dst);
             }
 
-            GdipBitmapUnlockBits(bitmap, &lockeddata_src);
+            if (stat != Ok)
+                GdipDisposeImage(*cloneImage);
         }
+
+        GdipBitmapUnlockBits(bitmap, &lockeddata_src);
 
         if (stat != Ok)
         {
-            GdipDisposeImage(*cloneImage);
             *cloneImage = NULL;
         }
         else memcpy(&(*cloneImage)->format, &image->format, sizeof(GUID));
