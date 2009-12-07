@@ -224,7 +224,7 @@ static HRESULT register_d3d10core_layers(HMODULE d3d10core)
 }
 
 HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, IDXGIAdapter *adapter,
-        UINT flags, DWORD unknown0, void **device)
+        UINT flags, void *unknown0, void **device)
 {
     struct layer_get_size_args get_size_args;
     struct dxgi_device *dxgi_device;
@@ -233,7 +233,7 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
     DWORD count;
     HRESULT hr;
 
-    TRACE("d3d10core %p, factory %p, adapter %p, flags %#x, unknown0 %#x, device %p\n",
+    TRACE("d3d10core %p, factory %p, adapter %p, flags %#x, unknown0 %p, device %p.\n",
             d3d10core, factory, adapter, flags, unknown0, device);
 
     hr = register_d3d10core_layers(d3d10core);

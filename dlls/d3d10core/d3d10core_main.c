@@ -102,13 +102,13 @@ HRESULT WINAPI D3D10CoreRegisterLayers(void)
 }
 
 HRESULT WINAPI D3D10CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter,
-        UINT flags, DWORD unknown0, ID3D10Device **device)
+        UINT flags, void *unknown0, ID3D10Device **device)
 {
     IUnknown *dxgi_device;
     HMODULE d3d10core;
     HRESULT hr;
 
-    TRACE("factory %p, adapter %p, flags %#x, unknown0 %#x, device %p\n",
+    TRACE("factory %p, adapter %p, flags %#x, unknown0 %p, device %p.\n",
             factory, adapter, flags, unknown0, device);
 
     d3d10core = GetModuleHandleA("d3d10core.dll");

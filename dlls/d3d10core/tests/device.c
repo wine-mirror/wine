@@ -22,7 +22,7 @@
 #include "wine/test.h"
 
 HRESULT WINAPI D3D10CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter,
-        UINT flags, DWORD unknown0, ID3D10Device **device);
+        UINT flags, void *unknown0, ID3D10Device **device);
 
 static ID3D10Device *create_device(void)
 {
@@ -38,7 +38,7 @@ static ID3D10Device *create_device(void)
     ok(SUCCEEDED(hr), "EnumAdapters failed, hr %#x\n", hr);
     if (FAILED(hr)) goto cleanup;
 
-    hr = D3D10CoreCreateDevice(factory, adapter, 0, 0, &device);
+    hr = D3D10CoreCreateDevice(factory, adapter, 0, NULL, &device);
     if (FAILED(hr))
     {
         HMODULE d3d10ref;
@@ -59,7 +59,7 @@ static ID3D10Device *create_device(void)
         ok(SUCCEEDED(hr), "CreateSoftwareAdapter failed, hr %#x\n", hr);
         if (FAILED(hr)) goto cleanup;
 
-        hr = D3D10CoreCreateDevice(factory, adapter, 0, 0, &device);
+        hr = D3D10CoreCreateDevice(factory, adapter, 0, NULL, &device);
         ok(SUCCEEDED(hr), "Failed to create a REF device, hr %#x\n", hr);
         if (FAILED(hr)) goto cleanup;
     }

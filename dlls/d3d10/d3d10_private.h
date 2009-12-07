@@ -179,6 +179,6 @@ HRESULT d3d10_effect_parse(struct d3d10_effect *This, const void *data, SIZE_T d
 
 /* D3D10Core */
 HRESULT WINAPI D3D10CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter,
-        UINT flags, DWORD unknown0, ID3D10Device **device);
+        UINT flags, void *unknown0, ID3D10Device **device);
 
 #endif /* __WINE_D3D10_PRIVATE_H */
