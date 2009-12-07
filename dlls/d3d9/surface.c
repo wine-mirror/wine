@@ -108,6 +108,23 @@ static HRESULT WINAPI IDirect3DSurface9Impl_GetDevice(IDirect3DSurface9 *iface, 
 
     TRACE("iface %p, device %p.\n", iface, device);
 
+    if (This->forwardReference)
+    {
+        IDirect3DResource9 *resource;
+        HRESULT hr;
+
+        hr = IUnknown_QueryInterface(This->forwardReference, &IID_IDirect3DResource9, (void **)&resource);
+        if (SUCCEEDED(hr))
+        {
+            hr = IDirect3DResource9_GetDevice(resource, device);
+            IDirect3DResource9_Release(resource);
+
+            TRACE("Returning device %p.\n", *device);
+        }
+
+        return hr;
+    }
+
     *device = (IDirect3DDevice9 *)This->parentDevice;
     IDirect3DDevice9_AddRef(*device);
 
