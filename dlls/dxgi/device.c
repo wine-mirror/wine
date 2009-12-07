@@ -274,7 +274,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *ifa
         return E_OUTOFMEMORY;
     }
 
-    hr = dxgi_surface_init(object, outer);
+    hr = dxgi_surface_init(object, (IDXGIDevice *)iface, outer);
     if (FAILED(hr))
     {
         WARN("Failed to initialize surface, hr %#x.\n", hr);

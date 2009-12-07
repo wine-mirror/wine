@@ -72,6 +72,7 @@ static ULONG STDMETHODCALLTYPE dxgi_surface_inner_Release(IUnknown *iface)
 
     if (!refcount)
     {
+        IDXGIDevice_Release(This->device);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -138,9 +139,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_GetParent(IDXGISurface *iface, REF
 
 static HRESULT STDMETHODCALLTYPE dxgi_surface_GetDevice(IDXGISurface *iface, REFIID riid, void **device)
 {
-    FIXME("iface %p, riid %s, device %p stub!\n", iface, debugstr_guid(riid), device);
+    struct dxgi_surface *This = (struct dxgi_surface *)iface;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, riid %s, device %p.\n", iface, debugstr_guid(riid), device);
+
+    return IDXGIDevice_QueryInterface(This->device, riid, device);
 }
 
 /* IDXGISurface methods */
@@ -192,12 +195,14 @@ static const struct IUnknownVtbl dxgi_surface_inner_unknown_vtbl =
     dxgi_surface_inner_Release,
 };
 
-HRESULT dxgi_surface_init(struct dxgi_surface *surface, IUnknown *outer)
+HRESULT dxgi_surface_init(struct dxgi_surface *surface, IDXGIDevice *device, IUnknown *outer)
 {
     surface->vtbl = &dxgi_surface_vtbl;
     surface->inner_unknown_vtbl = &dxgi_surface_inner_unknown_vtbl;
     surface->refcount = 1;
     surface->outer_unknown = outer ? outer : (IUnknown *)&surface->inner_unknown_vtbl;
+    surface->device = device;
+    IDXGIDevice_AddRef(device);
 
     return S_OK;
 }
