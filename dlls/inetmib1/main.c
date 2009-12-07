@@ -50,14 +50,6 @@ static void setStringValue(AsnAny *value, BYTE type, DWORD len, BYTE *str)
     SnmpUtilAsnAnyCpy(value, &strValue);
 }
 
-static DWORD copyLengthPrecededString(AsnAny *value, void *src)
-{
-    DWORD len = *(DWORD *)src;
-
-    setStringValue(value, ASN_OCTETSTRING, len, (BYTE *)src + sizeof(DWORD));
-    return SNMP_ERRORSTATUS_NOERROR;
-}
-
 typedef DWORD (*copyValueFunc)(AsnAny *value, void *src);
 
 struct structToAsnValue
@@ -919,9 +911,18 @@ static BOOL mib2IpRouteQuery(BYTE bPduType, SnmpVarBind *pVarBind,
 static UINT mib2IpNet[] = { 1,3,6,1,2,1,4,22,1 };
 static PMIB_IPNETTABLE ipNetTable;
 
+static DWORD copyIpNetPhysAddr(AsnAny *value, void *src)
+{
+    PMIB_IPNETROW row = (PMIB_IPNETROW)((BYTE *)src - FIELD_OFFSET(MIB_IPNETROW,
+                                        dwPhysAddrLen));
+
+    setStringValue(value, ASN_OCTETSTRING, row->dwPhysAddrLen, row->bPhysAddr);
+    return SNMP_ERRORSTATUS_NOERROR;
+}
+
 static struct structToAsnValue mib2IpNetMap[] = {
     { FIELD_OFFSET(MIB_IPNETROW, dwIndex), copyInt },
-    { FIELD_OFFSET(MIB_IPNETROW, dwPhysAddrLen), copyLengthPrecededString },
+    { FIELD_OFFSET(MIB_IPNETROW, dwPhysAddrLen), copyIpNetPhysAddr },
     { FIELD_OFFSET(MIB_IPNETROW, dwAddr), copyIpAddr },
     { FIELD_OFFSET(MIB_IPNETROW, dwType), copyInt },
 };
