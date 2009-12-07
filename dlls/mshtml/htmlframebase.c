@@ -31,6 +31,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+static const WCHAR autoW[] = {'a','u','t','o',0};
+static const WCHAR yesW[] = {'y','e','s',0};
+static const WCHAR noW[] = {'n','o',0};
+
 HRESULT set_frame_doc(HTMLFrameBase *frame, nsIDOMDocument *nsdoc)
 {
     nsIDOMWindow *nswindow;
@@ -236,15 +240,70 @@ static HRESULT WINAPI HTMLFrameBase_get_noResize(IHTMLFrameBase *iface, VARIANT_
 static HRESULT WINAPI HTMLFrameBase_put_scrolling(IHTMLFrameBase *iface, BSTR v)
 {
     HTMLFrameBase *This = HTMLFRAMEBASE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    if(!(!strcmpiW(v, yesW) || !strcmpiW(v, noW) || !strcmpiW(v, autoW)))
+        return E_INVALIDARG;
+
+    if(This->nsframe) {
+        nsAString_Init(&nsstr, v);
+        nsres = nsIDOMHTMLFrameElement_SetScrolling(This->nsframe, &nsstr);
+    }else if(This->nsiframe) {
+        nsAString_Init(&nsstr, v);
+        nsres = nsIDOMHTMLIFrameElement_SetScrolling(This->nsiframe, &nsstr);
+    }else {
+        ERR("No attached ns frame object\n");
+        return E_UNEXPECTED;
+    }
+    nsAString_Finish(&nsstr);
+
+    if(NS_FAILED(nsres)) {
+        ERR("SetScrolling failed: 0x%08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLFrameBase_get_scrolling(IHTMLFrameBase *iface, BSTR *p)
 {
     HTMLFrameBase *This = HTMLFRAMEBASE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString nsstr;
+    const PRUnichar *strdata;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->nsframe) {
+        nsAString_Init(&nsstr, NULL);
+        nsres = nsIDOMHTMLFrameElement_GetScrolling(This->nsframe, &nsstr);
+    }else if(This->nsiframe) {
+        nsAString_Init(&nsstr, NULL);
+        nsres = nsIDOMHTMLIFrameElement_GetScrolling(This->nsiframe, &nsstr);
+    }else {
+        ERR("No attached ns frame object\n");
+        return E_UNEXPECTED;
+    }
+
+    if(NS_FAILED(nsres)) {
+        ERR("GetScrolling failed: 0x%08x\n", nsres);
+        nsAString_Finish(&nsstr);
+        return E_FAIL;
+    }
+
+    nsAString_GetData(&nsstr, &strdata);
+
+    if(*strdata)
+        *p = SysAllocString(strdata);
+    else
+        *p = SysAllocString(autoW);
+
+    nsAString_Finish(&nsstr);
+
+    return *p ? S_OK : E_OUTOFMEMORY;
 }
 
 static const IHTMLFrameBaseVtbl HTMLFrameBaseVtbl = {
