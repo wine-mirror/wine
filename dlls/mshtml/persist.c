@@ -40,6 +40,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+typedef struct {
+    task_t header;
+    HTMLDocumentObj *doc;
+    BOOL set_download;
+} download_proc_task_t;
+
 static BOOL use_gecko_script(LPCWSTR url)
 {
     static const WCHAR fileW[] = {'f','i','l','e',':'};
@@ -118,7 +124,8 @@ static void set_progress_proc(task_t *_task)
 
 static void set_downloading_proc(task_t *_task)
 {
-    HTMLDocumentObj *doc = ((docobj_task_t*)_task)->doc;
+    download_proc_task_t *task = (download_proc_task_t*)_task;
+    HTMLDocumentObj *doc = task->doc;
     IOleCommandTarget *olecmd;
     HRESULT hres;
 
@@ -130,16 +137,20 @@ static void set_downloading_proc(task_t *_task)
     if(!doc->client)
         return;
 
-    hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
-    if(SUCCEEDED(hres)) {
-        VARIANT var;
+    if(task->set_download) {
+        hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
+        if(SUCCEEDED(hres)) {
+            VARIANT var;
 
-        V_VT(&var) = VT_I4;
-        V_I4(&var) = 1;
+            V_VT(&var) = VT_I4;
+            V_I4(&var) = 1;
 
-        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETDOWNLOADSTATE, OLECMDEXECOPT_DONTPROMPTUSER,
-                               &var, NULL);
-        IOleCommandTarget_Release(olecmd);
+            IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETDOWNLOADSTATE,
+                    OLECMDEXECOPT_DONTPROMPTUSER, &var, NULL);
+            IOleCommandTarget_Release(olecmd);
+        }
+
+        doc->download_state = 1;
     }
 
     if(doc->hostui) {
@@ -153,11 +164,12 @@ static void set_downloading_proc(task_t *_task)
     }
 }
 
-static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc)
+static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BOOL set_download)
 {
     nsChannelBSC *bscallback;
     LPOLESTR url = NULL;
     docobj_task_t *task;
+    download_proc_task_t *download_task;
     HRESULT hres;
     nsresult nsres;
 
@@ -248,9 +260,10 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc)
         push_task(&task->header, set_progress_proc, This->doc_obj->basedoc.task_magic);
     }
 
-    task = heap_alloc(sizeof(docobj_task_t));
-    task->doc = This->doc_obj;
-    push_task(&task->header, set_downloading_proc, This->doc_obj->basedoc.task_magic);
+    download_task = heap_alloc(sizeof(download_proc_task_t));
+    download_task->doc = This->doc_obj;
+    download_task->set_download = set_download;
+    push_task(&download_task->header, set_downloading_proc, This->doc_obj->basedoc.task_magic);
 
     if(This->doc_obj->nscontainer) {
         This->doc_obj->nscontainer->bscallback = bscallback;
@@ -363,7 +376,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
 
     TRACE("(%p)->(%x %p %p %08x)\n", This, fFullyAvailable, pimkName, pibc, grfMode);
 
-    hres = set_moniker(This, pimkName, pibc);
+    hres = set_moniker(This, pimkName, pibc, TRUE);
     if(FAILED(hres))
         return hres;
 
@@ -624,7 +637,7 @@ static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, LPSTREAM
         return hres;
     }
 
-    hres = set_moniker(This, mon, NULL);
+    hres = set_moniker(This, mon, NULL, TRUE);
     IMoniker_Release(mon);
     if(FAILED(hres))
         return hres;
@@ -669,8 +682,45 @@ static HRESULT WINAPI PersistStreamInit_GetSizeMax(IPersistStreamInit *iface,
 static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
 {
     HTMLDocument *This = PERSTRINIT_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    IMoniker *mon;
+    HGLOBAL body;
+    LPSTREAM stream;
+    HRESULT hres;
+
+    static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
+    static const WCHAR html_bodyW[] = {'<','H','T','M','L','>','<','/','H','T','M','L','>',0};
+
+    TRACE("(%p)\n", This);
+
+    body = GlobalAlloc(0, sizeof(html_bodyW));
+    if(!body)
+        return E_OUTOFMEMORY;
+    memcpy(body, html_bodyW, sizeof(html_bodyW));
+
+    hres = CreateURLMoniker(NULL, about_blankW, &mon);
+    if(FAILED(hres)) {
+        WARN("CreateURLMoniker failed: %08x\n", hres);
+        GlobalFree(body);
+        return hres;
+    }
+
+    hres = set_moniker(This, mon, NULL, FALSE);
+    IMoniker_Release(mon);
+    if(FAILED(hres)) {
+        GlobalFree(body);
+        return hres;
+    }
+
+    hres = CreateStreamOnHGlobal(body, TRUE, &stream);
+    if(FAILED(hres)) {
+        GlobalFree(body);
+        return hres;
+    }
+
+    hres = channelbsc_load_stream(This->window->bscallback, stream);
+
+    IStream_Release(stream);
+    return hres;
 }
 
 #undef PERSTRINIT_THIS

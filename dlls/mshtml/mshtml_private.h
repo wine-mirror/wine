@@ -383,6 +383,7 @@ struct HTMLDocumentObj {
     BOOL has_key_path;
     BOOL container_locked;
     BOOL focus;
+    INT download_state;
 
     USERMODE usermode;
     LPWSTR mime;

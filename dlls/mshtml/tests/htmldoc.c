@@ -2255,6 +2255,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             ok(nCmdexecopt == 0, "nCmdexecopts=%08x\n", nCmdexecopt);
             ok(pvaOut == NULL, "pvaOut=%p\n", pvaOut);
             ok(pvaIn == NULL, "pvaIn=%p\n", pvaIn);
+            readystate_set_loading = FALSE;
+            readystate_set_interactive = FALSE;
             load_state = LD_COMPLETE;
             return S_OK;
         case OLECMDID_SETDOWNLOADSTATE:
@@ -2889,6 +2891,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
 #define DWL_CSS       0x0002
 #define DWL_TRYCSS    0x0004
 #define DWL_HTTP      0x0008
+#define DWL_EMPTY     0x0010
 
 static void test_download(DWORD flags)
 {
@@ -2905,7 +2908,8 @@ static void test_download(DWORD flags)
     if((flags & DWL_VERBDONE) && !load_from_stream)
         SET_EXPECT(GetHostInfo);
     SET_EXPECT(SetStatusText);
-    SET_EXPECT(Exec_SETDOWNLOADSTATE_1);
+    if(!(flags & DWL_EMPTY))
+        SET_EXPECT(Exec_SETDOWNLOADSTATE_1);
     SET_EXPECT(GetDropTarget);
     if(flags & DWL_TRYCSS)
         SET_EXPECT(Exec_ShellDocView_84);
@@ -2930,7 +2934,8 @@ static void test_download(DWORD flags)
     SET_EXPECT(OnChanged_1005);
     SET_EXPECT(OnChanged_READYSTATE);
     SET_EXPECT(Exec_SETPROGRESSPOS);
-    SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
+    if(!(flags & DWL_EMPTY))
+        SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
     SET_EXPECT(Exec_ShellDocView_103);
     SET_EXPECT(Exec_ShellDocView_105);
     SET_EXPECT(Exec_ShellDocView_140);
@@ -2951,7 +2956,8 @@ static void test_download(DWORD flags)
     if((flags & DWL_VERBDONE) && !load_from_stream)
         CHECK_CALLED(GetHostInfo);
     CHECK_CALLED(SetStatusText);
-    CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
+    if(!(flags & DWL_EMPTY))
+        CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
     CHECK_CALLED(GetDropTarget);
     if(flags & DWL_TRYCSS)
         SET_CALLED(Exec_ShellDocView_84);
@@ -2976,7 +2982,8 @@ static void test_download(DWORD flags)
     CHECK_CALLED(OnChanged_1005);
     CHECK_CALLED(OnChanged_READYSTATE);
     CHECK_CALLED(Exec_SETPROGRESSPOS);
-    CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
+    if(!(flags & DWL_EMPTY))
+        CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
     SET_CALLED(Exec_ShellDocView_103);
     SET_CALLED(Exec_ShellDocView_105);
     SET_CALLED(Exec_ShellDocView_140);
@@ -3940,6 +3947,36 @@ static void test_StreamLoad(IUnknown *unk)
     IPersistStreamInit_Release(init);
 }
 
+static void test_StreamInitNew(IUnknown *unk)
+{
+    IPersistStreamInit *init;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IPersistStreamInit, (void**)&init);
+    ok(hres == S_OK, "QueryInterface(IID_IPersistStreamInit) failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    SET_EXPECT(Invoke_AMBIENT_SILENT);
+    SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    SET_EXPECT(Exec_ShellDocView_37);
+    SET_EXPECT(OnChanged_READYSTATE);
+    readystate_set_loading = TRUE;
+
+    hres = IPersistStreamInit_InitNew(init);
+    ok(hres == S_OK, "Load failed: %08x\n", hres);
+
+    CHECK_CALLED(Invoke_AMBIENT_SILENT);
+    CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    CHECK_CALLED(Exec_ShellDocView_37);
+    CHECK_CALLED(OnChanged_READYSTATE);
+
+    test_timer(EXPECT_SETTITLE);
+    test_GetCurMoniker(unk, NULL, about_blank_url);
+
+    IPersistStreamInit_Release(init);
+}
+
 static void test_QueryInterface(IUnknown *unk)
 {
     IUnknown *qi;
@@ -4298,6 +4335,55 @@ static void test_HTMLDocument_StreamLoad(void)
     ok(ref == 0, "ref=%d, expected 0\n", ref);
 }
 
+static void test_HTMLDocument_StreamInitNew(void)
+{
+    IOleObject *oleobj;
+    IUnknown *unk;
+    HRESULT hres;
+    ULONG ref;
+
+    trace("Testing HTMLDocument (IPersistStreamInit)...\n");
+
+    init_test(LD_DOLOAD);
+    load_from_stream = TRUE;
+
+    hres = create_document(&unk);
+    if(FAILED(hres))
+        return;
+    doc_unk = unk;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
+    ok(hres == S_OK, "Could not get IOleObject: %08x\n", hres);
+
+    test_readyState(unk);
+    test_IsDirty(unk, S_FALSE);
+    test_ConnectionPointContainer(unk);
+    test_ClientSite(oleobj, CLIENTSITE_EXPECTPATH);
+    test_DoVerb(oleobj);
+    test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
+
+    IOleObject_Release(oleobj);
+
+    test_GetCurMoniker(unk, NULL, NULL);
+    test_StreamInitNew(unk);
+    test_download(DWL_VERBDONE|DWL_TRYCSS|DWL_EMPTY);
+    test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
+
+    test_UIDeactivate();
+    test_InPlaceDeactivate(unk, TRUE);
+    test_Close(unk, FALSE);
+    test_IsDirty(unk, S_FALSE);
+
+    if(view) {
+        IOleDocumentView_Release(view);
+        view = NULL;
+    }
+
+
+    ref = IUnknown_Release(unk);
+    ok(ref == 0, "ref=%d, expected 0\n", ref);
+}
+
 static void test_edit_uiactivate(IOleObject *oleobj)
 {
     IOleDocumentView *docview;
@@ -4479,6 +4565,7 @@ START_TEST(htmldoc)
         test_HTMLDocument(FALSE);
         test_HTMLDocument(TRUE);
         test_HTMLDocument_StreamLoad();
+        test_HTMLDocument_StreamInitNew();
         test_editing_mode(FALSE);
         test_editing_mode(TRUE);
         test_HTMLDocument_http();
