@@ -380,8 +380,23 @@ static HRESULT WINAPI OleObject_GetExtent(IOleObject *iface, DWORD dwDrawAspect,
 static HRESULT WINAPI OleObject_Advise(IOleObject *iface, IAdviseSink *pAdvSink, DWORD *pdwConnection)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
-    FIXME("(%p)->(%p %p)\n", This, pAdvSink, pdwConnection);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %p)\n", This, pAdvSink, pdwConnection);
+
+    if(!pdwConnection)
+        return E_INVALIDARG;
+
+    if(!pAdvSink) {
+        *pdwConnection = 0;
+        return E_INVALIDARG;
+    }
+
+    if(!This->advise_holder) {
+        CreateOleAdviseHolder(&This->advise_holder);
+        if(!This->advise_holder)
+            return E_OUTOFMEMORY;
+    }
+
+    return IOleAdviseHolder_Advise(This->advise_holder, pAdvSink, pdwConnection);
 }
 
 static HRESULT WINAPI OleObject_Unadvise(IOleObject *iface, DWORD dwConnection)

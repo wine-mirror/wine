@@ -1951,6 +1951,8 @@ static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
             This->basedoc.window->doc_obj = NULL;
             IHTMLWindow2_Release(HTMLWINDOW2(This->basedoc.window));
         }
+        if(This->basedoc.advise_holder)
+            IOleAdviseHolder_Release(This->basedoc.advise_holder);
 
         if(This->client)
             IOleObject_SetClientSite(OLEOBJ(&This->basedoc), NULL);

@@ -338,6 +338,8 @@ struct HTMLDocument {
     ConnectionPoint cp_htmldocevents;
     ConnectionPoint cp_htmldocevents2;
     ConnectionPoint cp_propnotif;
+
+    IOleAdviseHolder *advise_holder;
 };
 
 static inline HRESULT htmldoc_query_interface(HTMLDocument *This, REFIID riid, void **ppv)
