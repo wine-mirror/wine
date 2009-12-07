@@ -730,7 +730,7 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
 
     if (This->changed.vertexDecl && This->vertexDecl != targetStateBlock->vertexDecl
             && (This->blockType != WINED3DSBT_RECORDED
-                    || ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion != 9))
+            || ((IWineD3DImpl *)This->wineD3DDevice->wined3d)->dxVersion != 9))
     {
         TRACE("Updating vertex declaration from %p to %p.\n", This->vertexDecl, targetStateBlock->vertexDecl);
 

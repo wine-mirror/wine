@@ -139,7 +139,7 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *iface
     HRESULT hr;
 
     TRACE("(%p)->(%p): Calling GetAdapterDisplayMode\n", This, pMode);
-    hr = IWineD3D_GetAdapterDisplayMode(This->wineD3DDevice->wineD3D, This->wineD3DDevice->adapter->ordinal, pMode);
+    hr = IWineD3D_GetAdapterDisplayMode(This->wineD3DDevice->wined3d, This->wineD3DDevice->adapter->ordinal, pMode);
 
     TRACE("(%p) : returning w(%d) h(%d) rr(%d) fmt(%u,%s)\n", This, pMode->Width, pMode->Height, pMode->RefreshRate,
           pMode->Format, debug_d3dformat(pMode->Format));

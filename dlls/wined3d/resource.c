@@ -188,7 +188,8 @@ HRESULT resource_get_private_data(IWineD3DResource *iface, REFGUID refguid, void
 
     if (data->flags & WINED3DSPD_IUNKNOWN) {
         *(LPUNKNOWN *)pData = data->ptr.object;
-        if(((IWineD3DImpl *) This->resource.wineD3DDevice->wineD3D)->dxVersion != 7) {
+        if (((IWineD3DImpl *)This->resource.wineD3DDevice->wined3d)->dxVersion != 7)
+        {
             /* D3D8 and D3D9 addref the private data, DDraw does not. This can't be handled in
              * ddraw because it doesn't know if the pointer returned is an IUnknown * or just a
              * Blob

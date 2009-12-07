@@ -1459,7 +1459,7 @@ struct IWineD3DDeviceImpl
     /* WineD3D Information  */
     IUnknown               *parent;
     IWineD3DDeviceParent   *device_parent;
-    IWineD3D               *wineD3D;
+    IWineD3D *wined3d;
     struct wined3d_adapter *adapter;
 
     /* Window styles to restore when switching fullscreen mode */

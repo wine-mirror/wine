@@ -2002,7 +2002,7 @@ static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4]
 
     if (!pal)
     {
-        UINT dxVersion = ((IWineD3DImpl *)device->wineD3D)->dxVersion;
+        UINT dxVersion = ((IWineD3DImpl *)device->wined3d)->dxVersion;
 
         /* In DirectDraw the palette is a property of the surface, there are no such things as device palettes. */
         if (dxVersion <= 7)
