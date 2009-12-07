@@ -262,6 +262,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *ifa
         DXGI_USAGE usage, const DXGI_SHARED_RESOURCE *shared_resource, IUnknown *outer, void **surface)
 {
     struct dxgi_surface *object;
+    HRESULT hr;
 
     FIXME("iface %p, desc %p, usage %#x, shared_resource %p, outer %p, surface %p partial stub!\n",
             iface, desc, usage, shared_resource, outer, surface);
@@ -273,22 +274,16 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *ifa
         return E_OUTOFMEMORY;
     }
 
-    object->vtbl = &dxgi_surface_vtbl;
-    object->inner_unknown_vtbl = &dxgi_surface_inner_unknown_vtbl;
-    object->refcount = 1;
-
-    if (outer)
+    hr = dxgi_surface_init(object, outer);
+    if (FAILED(hr))
     {
-        object->outer_unknown = outer;
-        *surface = &object->inner_unknown_vtbl;
-    }
-    else
-    {
-        object->outer_unknown = (IUnknown *)&object->inner_unknown_vtbl;
-        *surface = object;
+        WARN("Failed to initialize surface, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
     }
 
     TRACE("Created IDXGISurface %p\n", object);
+    *surface = outer ? (void *)&object->inner_unknown_vtbl : object;
 
     return S_OK;
 }

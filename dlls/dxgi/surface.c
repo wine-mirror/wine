@@ -165,7 +165,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_Unmap(IDXGISurface *iface)
     return E_NOTIMPL;
 }
 
-const struct IDXGISurfaceVtbl dxgi_surface_vtbl =
+static const struct IDXGISurfaceVtbl dxgi_surface_vtbl =
 {
     /* IUnknown methods */
     dxgi_surface_QueryInterface,
@@ -184,10 +184,20 @@ const struct IDXGISurfaceVtbl dxgi_surface_vtbl =
     dxgi_surface_Unmap,
 };
 
-const struct IUnknownVtbl dxgi_surface_inner_unknown_vtbl =
+static const struct IUnknownVtbl dxgi_surface_inner_unknown_vtbl =
 {
     /* IUnknown methods */
     dxgi_surface_inner_QueryInterface,
     dxgi_surface_inner_AddRef,
     dxgi_surface_inner_Release,
 };
+
+HRESULT dxgi_surface_init(struct dxgi_surface *surface, IUnknown *outer)
+{
+    surface->vtbl = &dxgi_surface_vtbl;
+    surface->inner_unknown_vtbl = &dxgi_surface_inner_unknown_vtbl;
+    surface->refcount = 1;
+    surface->outer_unknown = outer ? outer : (IUnknown *)&surface->inner_unknown_vtbl;
+
+    return S_OK;
+}
