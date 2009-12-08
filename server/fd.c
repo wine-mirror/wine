@@ -1732,7 +1732,8 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
     int root_fd = -1;
     int rw_mode;
 
-    if ((options & FILE_DELETE_ON_CLOSE) && !(access & DELETE))
+    if (((options & FILE_DELETE_ON_CLOSE) && !(access & DELETE)) ||
+        ((options & FILE_DIRECTORY_FILE) && (flags & O_TRUNC)))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
@@ -1785,9 +1786,13 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
     if ((fd->unix_fd = open( name, rw_mode | (flags & ~O_TRUNC), *mode )) == -1)
     {
         /* if we tried to open a directory for write access, retry read-only */
-        if (errno != EISDIR ||
-            !(access & FILE_UNIX_WRITE_ACCESS) ||
-            (fd->unix_fd = open( name, O_RDONLY | (flags & ~(O_TRUNC | O_CREAT | O_EXCL)), *mode )) == -1)
+        if (errno == EISDIR)
+        {
+            if ((access & FILE_UNIX_WRITE_ACCESS) || (flags & O_CREAT))
+                fd->unix_fd = open( name, O_RDONLY | (flags & ~(O_TRUNC | O_CREAT | O_EXCL)), *mode );
+        }
+
+        if (fd->unix_fd == -1)
         {
             file_set_error();
             goto error;
@@ -1836,7 +1841,16 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
             return NULL;
         }
         strcpy( closed_fd->unlink, unlink_name );
-        if (flags & O_TRUNC) ftruncate( fd->unix_fd, 0 );
+        if (flags & O_TRUNC)
+        {
+            if (S_ISDIR(st.st_mode))
+            {
+                release_object( fd );
+                set_error( STATUS_OBJECT_NAME_COLLISION );
+                return NULL;
+            }
+            ftruncate( fd->unix_fd, 0 );
+        }
     }
     else  /* special file */
     {
