@@ -107,7 +107,6 @@ static char ProgramsDir[MAX_PATH];
 static char Group1Title[MAX_PATH]  = "Group1";
 static char Group2Title[MAX_PATH]  = "Group2";
 static char Group3Title[MAX_PATH]  = "Group3";
-static char Startup[MAX_PATH]      = "Startup";
 static char StartupTitle[MAX_PATH] = "Startup";
 
 static void init_strings(void)
@@ -137,7 +136,6 @@ static void init_strings(void)
         RegQueryValueExA(key, "Programs", NULL, NULL, (LPBYTE)&programs, &size);
         size = sizeof(startup);
         RegQueryValueExA(key, "Startup", NULL, NULL, (LPBYTE)&startup, &size);
-        lstrcpyA(Startup, (strrchr(startup, '\\') + 1));
         RegCloseKey(key);
 
         RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders", &key);
@@ -630,9 +628,9 @@ static int DdeTestProgman(DWORD instance, HCONV hConv)
     CreateGroupTest(instance, hConv, "[CreateGroup(Group1)]", DMLERR_NO_ERROR, "Group1", Group1Title, DDE_TEST_CREATEGROUP|testnum++);
 
     /* ShowGroup Tests */
-    ShowGroupTest(instance, hConv, "[ShowGroup(Group1)]", DMLERR_NOTPROCESSED, Startup, StartupTitle, TRUE, DDE_TEST_SHOWGROUP|testnum++);
+    ShowGroupTest(instance, hConv, "[ShowGroup(Group1)]", DMLERR_NOTPROCESSED, "Group1", Group1Title, TRUE, DDE_TEST_SHOWGROUP|testnum++);
     DeleteItemTest(instance, hConv, "[DeleteItem(f3g1Name)]", DMLERR_NO_ERROR, "f3g1Name.lnk", "Group1", DDE_TEST_DELETEITEM|testnum++);
-    ShowGroupTest(instance, hConv, "[ShowGroup(Startup,0)]", DMLERR_NO_ERROR, Startup, StartupTitle, TRUE, DDE_TEST_SHOWGROUP|testnum++);
+    ShowGroupTest(instance, hConv, "[ShowGroup(Startup,0)]", DMLERR_NO_ERROR, "Startup", StartupTitle, TRUE, DDE_TEST_SHOWGROUP|testnum++);
     ShowGroupTest(instance, hConv, "[ShowGroup(Group1,0)]", DMLERR_NO_ERROR, "Group1", Group1Title, FALSE, DDE_TEST_SHOWGROUP|testnum++);
 
     /* DeleteGroup Test - Note that Window is Open for this test */
