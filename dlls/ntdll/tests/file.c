@@ -43,7 +43,7 @@
 static BOOL     (WINAPI * pGetVolumePathNameW)(LPCWSTR, LPWSTR, DWORD);
 static UINT     (WINAPI *pGetSystemWow64DirectoryW)( LPWSTR, UINT );
 
-static NTSTATUS (WINAPI *pRtlFreeUnicodeString)( PUNICODE_STRING );
+static VOID     (WINAPI *pRtlFreeUnicodeString)( PUNICODE_STRING );
 static VOID     (WINAPI *pRtlInitUnicodeString)( PUNICODE_STRING, LPCWSTR );
 static BOOL     (WINAPI *pRtlDosPathNameToNtPathName_U)( LPCWSTR, PUNICODE_STRING, PWSTR*, CURDIR* );
 static NTSTATUS (WINAPI *pRtlWow64EnableFsRedirectionEx)( ULONG, ULONG * );
@@ -337,6 +337,7 @@ static void open_file_test(void)
     }
 
     CloseHandle( dir );
+    pRtlFreeUnicodeString( &nameW );
 }
 
 static void delete_file_test(void)
