@@ -99,6 +99,7 @@
 
 
 WINE_DEFAULT_DEBUG_CHANNEL(icmp);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 
 typedef struct {
@@ -153,7 +154,7 @@ HANDLE WINAPI IcmpCreateFile(VOID)
 
     int sid=socket(AF_INET,SOCK_RAW,IPPROTO_ICMP);
     if (sid < 0) {
-        MESSAGE("WARNING: Trying to use ICMP (network ping) will fail unless running as root\n");
+        ERR_(winediag)("Failed to use ICMP (network ping), this requires special permissions.\n");
         SetLastError(ERROR_ACCESS_DENIED);
         return INVALID_HANDLE_VALUE;
     }
