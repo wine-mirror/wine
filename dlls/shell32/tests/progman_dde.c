@@ -22,17 +22,8 @@
  * - Covers basic CreateGroup, ShowGroup, DeleteGroup, AddItem, and DeleteItem
  *   functionality
  * - Todo: Handle CommonGroupFlag
- *         Handle Difference between administrator and non-administrator calls
- *           as documented
  *         Better AddItem Tests (Lots of parameters to test)
  *         Tests for Invalid Characters in Names / Invalid Parameters
- * - Technically, calling as an administrator creates groups in the CSIDL_COMMON_PROGRAMS
- *   directory.  Win 9x and non-administrator calls us CSIDL_PROGRAMS directory.
- *   Original plans were to check that items/groups were created in appropriate
- *   places.  As of this writing and in order to simplify the test code, it now
- *   checks for existence in either place.  From web searches, it is not at all
- *   obvious or trivial to detect if the call is coming from an administrator or
- *   non-administrator. IsUserAnAdmin
  */
 
 #include <stdio.h>
@@ -82,8 +73,40 @@ static void init_function_pointers(void)
         pReadCabinetState = (void*)GetProcAddress(hmod, (LPSTR)651);
 }
 
-static char CommonPrograms[MAX_PATH];
-static char Programs[MAX_PATH];
+static BOOL use_common(void)
+{
+    HMODULE hmod;
+    static BOOL (WINAPI *pIsNTAdmin)(DWORD, LPDWORD);
+
+    /* IsNTAdmin() is available on all platforms. */
+    hmod = LoadLibraryA("advpack.dll");
+    pIsNTAdmin = (void*)GetProcAddress(hmod, "IsNTAdmin");
+
+    if (!pIsNTAdmin(0, NULL))
+    {
+        /* We are definitely not an administrator */
+        FreeLibrary(hmod);
+        return FALSE;
+    }
+    FreeLibrary(hmod);
+
+    /* If we end up here we are on NT4+ as Win9x and WinMe don't have the
+     * notion of administrators (as we need it).
+     */
+
+    /* As of Vista  we should always use the users directory. Tests with the
+     * real Administrator account on Windows 7 proved this.
+     *
+     * FIXME: We need a better way of identifying Vista+ as currently this check
+     * also covers Wine and we don't know yet which behavior we want to follow.
+     */
+    if (pSHGetLocalizedName)
+        return FALSE;
+
+    return TRUE;
+}
+
+static char ProgramsDir[MAX_PATH];
 
 static char Group1Title[MAX_PATH]  = "Group1";
 static char Group2Title[MAX_PATH]  = "Group2";
@@ -94,26 +117,16 @@ static char StartupTitle[MAX_PATH] = "Startup";
 static void init_strings(void)
 {
     char startup[MAX_PATH];
+    char commonprograms[MAX_PATH];
+    char programs[MAX_PATH];
+
     CABINETSTATE cs;
 
     if (pSHGetSpecialFolderPathA)
     {
-        pSHGetSpecialFolderPathA(NULL, Programs, CSIDL_PROGRAMS, FALSE);
-        if (!pSHGetSpecialFolderPathA(NULL, CommonPrograms, CSIDL_COMMON_PROGRAMS, FALSE))
-        {
-            /* Win9x */
-            lstrcpyA(CommonPrograms, Programs);
-        }
-        if (pSHGetLocalizedName)
-        {
-            /* Vista and higher use CSIDL_PROGRAMS for these tests.
-             * Wine doesn't have SHGetKnownFolderPath yet but should most likely follow
-             * this new ProgMan DDE behavior once implemented.
-             */
-            lstrcpyA(CommonPrograms, Programs);
-        }
+        pSHGetSpecialFolderPathA(NULL, programs, CSIDL_PROGRAMS, FALSE);
+        pSHGetSpecialFolderPathA(NULL, commonprograms, CSIDL_COMMON_PROGRAMS, FALSE);
         pSHGetSpecialFolderPathA(NULL, startup, CSIDL_STARTUP, FALSE);
-        lstrcpyA(Startup, (strrchr(startup, '\\') + 1));
     }
     else
     {
@@ -122,34 +135,39 @@ static void init_strings(void)
         LONG res;
 
         /* Older Win9x and NT4 */
+
         RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders", &key);
-        size = sizeof(Programs);
-        RegQueryValueExA(key, "Programs", NULL, NULL, (LPBYTE)&Programs, &size);
+        size = sizeof(programs);
+        RegQueryValueExA(key, "Programs", NULL, NULL, (LPBYTE)&programs, &size);
         size = sizeof(startup);
         RegQueryValueExA(key, "Startup", NULL, NULL, (LPBYTE)&startup, &size);
         lstrcpyA(Startup, (strrchr(startup, '\\') + 1));
         RegCloseKey(key);
 
         RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders", &key);
-        size = sizeof(CommonPrograms);
-        res = RegQueryValueExA(key, "Common Programs", NULL, NULL, (LPBYTE)&CommonPrograms, &size);
+        size = sizeof(commonprograms);
+        res = RegQueryValueExA(key, "Common Programs", NULL, NULL, (LPBYTE)&commonprograms, &size);
         RegCloseKey(key);
-        if (res != ERROR_SUCCESS)
-        {
-            /* Win9x */
-            lstrcpyA(CommonPrograms, Programs);
-        }
     }
+
+    /* ProgramsDir on Vista+ is always the users one (CSIDL_PROGRAMS). Before Vista
+     * it depends on whether the user is an administrator (CSIDL_COMMON_PROGRAMS) or
+     * not (CSIDL_PROGRAMS).
+     */
+    if (use_common())
+        lstrcpyA(ProgramsDir, commonprograms);
+    else
+        lstrcpyA(ProgramsDir, programs);
 
     memset(&cs, 0, sizeof(cs));
     pReadCabinetState(&cs, sizeof(cs));
     if (cs.fFullPathTitle == -1)
     {
-        lstrcpyA(Group1Title, CommonPrograms);
+        lstrcpyA(Group1Title, ProgramsDir);
         lstrcatA(Group1Title, "\\Group1");
-        lstrcpyA(Group2Title, CommonPrograms);
+        lstrcpyA(Group2Title, ProgramsDir);
         lstrcatA(Group2Title, "\\Group2");
-        lstrcpyA(Group3Title, CommonPrograms);
+        lstrcpyA(Group3Title, ProgramsDir);
         lstrcatA(Group3Title, "\\Group3");
 
         lstrcpyA(StartupTitle, startup);
@@ -355,10 +373,7 @@ static void CheckFileExistsInProgramGroups(const char *nameToCheck, int shouldEx
     DWORD attributes;
     int len;
 
-    if (testParams & DDE_TEST_COMMON)
-        lstrcpyA(path, CommonPrograms);
-    else
-        lstrcpyA(path, Programs);
+    lstrcpyA(path, ProgramsDir);
 
     len = strlen(path) + strlen(nameToCheck)+1;
     if (groupName != NULL)
