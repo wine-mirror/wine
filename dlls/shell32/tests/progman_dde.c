@@ -53,7 +53,6 @@
 
 /* Type of Test (Common, Individual) */
 #define DDE_TEST_COMMON            0x01000000
-#define DDE_TEST_INDIVIDUAL        0x02000000
 
 #define DDE_TEST_NUMMASK           0x0000ffff
 
