@@ -605,6 +605,31 @@ static void test_GetZoneAttributes(void)
     ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
 }
 
+static void test_InternetSecurityMarshalling(void)
+{
+    IInternetSecurityManager *secmgr = NULL;
+    IUnknown *unk;
+    IStream *stream;
+    HRESULT hres;
+
+    hres = CoInternetCreateSecurityManager(NULL, &secmgr, 0);
+    if(FAILED(hres))
+        return;
+
+    hres = IInternetSecurityManager_QueryInterface(secmgr, &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "QueryInterface returned: %08x\n", hres);
+
+    hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hres == S_OK, "CreateStreamOnHGlobal returned: %08x\n", hres);
+
+    hres = CoMarshalInterface(stream, &IID_IInternetSecurityManager, unk, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok(hres == S_OK, "CoMarshalInterface returned: %08x\n", hres);
+
+    IStream_Release(stream);
+    IUnknown_Release(unk);
+    IInternetSecurityManager_Release(secmgr);
+}
+
 
 START_TEST(sec_mgr)
 {
@@ -617,6 +642,7 @@ START_TEST(sec_mgr)
     test_GetZoneActionPolicy();
     test_GetZoneAt();
     test_GetZoneAttributes();
+    test_InternetSecurityMarshalling();
 
     OleUninitialize();
 }
