@@ -5288,6 +5288,11 @@ static BOOL move_files_wildcard(LPWSTR source, LPWSTR dest, int options)
         goto done;
     }
 
+    /* file->dest may be shorter after the reallocation, so add a NULL
+     * terminator.  This is needed for the call to strrchrW, as there will no
+     * longer be a NULL terminator within the bounds of the allocation in this case.
+     */
+    file->dest[size - 1] = '\0';
     lstrcpyW(strrchrW(file->dest, '\\') + 1, file->destname);
 
     while (!list_empty(&files.entry))
