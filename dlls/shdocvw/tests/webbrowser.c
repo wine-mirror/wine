@@ -1818,7 +1818,10 @@ static void test_ie_funcs(IUnknown *unk)
     /* Name */
     hres = IWebBrowser2_get_Name(wb, &sName);
     ok(hres == S_OK, "getName failed: %08x, expected S_OK\n", hres);
-    ok(!strcmp_wa(sName, "Microsoft Web Browser Control"), "got '%s', expected 'Microsoft Web Browser Control'\n", wine_dbgstr_w(sName));
+    if (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) == LANG_ENGLISH)
+        ok(!strcmp_wa(sName, "Microsoft Web Browser Control"), "got '%s', expected 'Microsoft Web Browser Control'\n", wine_dbgstr_w(sName));
+    else /* Non-English cannot be blank. */
+        ok(sName!=NULL, "get_Name return a NULL string.\n");
     SysFreeString(sName);
 
     /* Quit */
