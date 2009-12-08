@@ -301,6 +301,19 @@ ok(r[0] === "1", "r[0] = " + r[0]);
 ok(r[1] === "2", "r[1] = " + r[1]);
 ok(re.lastIndex === 5, "re.lastIndex = " + re.lastIndex);
 
+r = "1 12 \t3".split(re = /\s+/).join(";");
+ok(r === "1;12;3", "r = " + r);
+ok(re.lastIndex === 6, "re.lastIndex = " + re.lastIndex);
+
+r = "123".split(re = /\s+/).join(";");
+ok(r === "123", "r = " + r);
+ok(re.lastIndex === 0, "re.lastIndex = " + re.lastIndex);
+
+/* another standard violation */
+r = "1 12 \t3".split(re = /(\s)+/g).join(";");
+ok(r === "1;12;3", "r = " + r);
+ok(re.lastIndex === 6, "re.lastIndex = " + re.lastIndex);
+
 re = /,+/;
 re.lastIndex = 4;
 r = "1,,2,".split(re);

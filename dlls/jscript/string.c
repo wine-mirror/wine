@@ -1129,6 +1129,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     match_result_t *match_result = NULL;
     DWORD length, match_cnt, i, match_len = 0;
     const WCHAR *str, *ptr, *ptr2;
+    BOOL use_regexp = FALSE;
     VARIANT *arg, var;
     DispatchEx *array;
     BSTR val_str, match_str = NULL;
@@ -1153,6 +1154,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
         regexp = iface_to_jsdisp((IUnknown*)V_DISPATCH(arg));
         if(regexp) {
             if(is_class(regexp, JSCLASS_REGEXP)) {
+                use_regexp = TRUE;
                 hres = regexp_match(ctx, regexp, str, length, TRUE, &match_result, &match_cnt);
                 jsdisp_release(regexp);
                 if(FAILED(hres)) {
@@ -1183,7 +1185,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     if(SUCCEEDED(hres)) {
         ptr = str;
         for(i=0;; i++) {
-            if(match_result) {
+            if(use_regexp) {
                 if(i == match_cnt)
                     break;
                 ptr2 = match_result[i].str;
@@ -1209,7 +1211,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
             if(FAILED(hres))
                 break;
 
-            if(match_result)
+            if(use_regexp)
                 ptr = match_result[i].str + match_result[i].len;
             else if(match_str)
                 ptr = ptr2 + match_len;
@@ -1218,7 +1220,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
         }
     }
 
-    if(SUCCEEDED(hres) && (match_str || match_result)) {
+    if(SUCCEEDED(hres) && (match_str || use_regexp)) {
         DWORD len = (str+length) - ptr;
 
         if(len || match_str) {
