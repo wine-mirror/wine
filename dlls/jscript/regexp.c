@@ -3301,6 +3301,13 @@ static inline RegExpInstance *regexp_from_vdisp(vdisp_t *vdisp)
     return (RegExpInstance*)vdisp->u.jsdisp;
 }
 
+static void set_last_index(RegExpInstance *This, DWORD last_index)
+{
+    This->last_index = last_index;
+    VariantClear(&This->last_index_var);
+    num_set_val(&This->last_index_var, last_index);
+}
+
 static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, const WCHAR *str, DWORD len,
         const WCHAR **cp, match_result_t **parens, DWORD *parens_size, DWORD *parens_cnt, match_result_t *ret)
 {
@@ -3363,6 +3370,7 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, c
     *cp = result->cp;
     ret->str = result->cp-matchlen;
     ret->len = matchlen;
+    set_last_index(regexp, result->cp-str);
 
     return S_OK;
 }
@@ -3435,13 +3443,6 @@ HRESULT regexp_match(script_ctx_t *ctx, DispatchEx *dispex, const WCHAR *str, DW
     *match_result = ret;
     *result_cnt = i;
     return S_OK;
-}
-
-static void set_last_index(RegExpInstance *This, DWORD last_index)
-{
-    This->last_index = last_index;
-    VariantClear(&This->last_index_var);
-    num_set_val(&This->last_index_var, last_index);
 }
 
 static HRESULT RegExp_source(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
@@ -3657,7 +3658,6 @@ static HRESULT run_exec(script_ctx_t *ctx, vdisp_t *jsthis, VARIANT *arg, jsexce
     }
 
     if(hres == S_OK) {
-        set_last_index(regexp, cp-string);
         *ret = VARIANT_TRUE;
     }else {
         set_last_index(regexp, 0);
