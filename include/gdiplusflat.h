@@ -421,11 +421,27 @@ GpStatus WINGDIPAPI GdipSetPropertyItem(GpImage*,GDIPCONST PropertyItem*);
 /* ImageAttributes */
 GpStatus WINGDIPAPI GdipCreateImageAttributes(GpImageAttributes**);
 GpStatus WINGDIPAPI GdipDisposeImageAttributes(GpImageAttributes*);
+GpStatus WINGDIPAPI GdipSetImageAttributesCachedBackground(GpImageAttributes*,
+    BOOL);
 GpStatus WINGDIPAPI GdipSetImageAttributesColorKeys(GpImageAttributes*,
     ColorAdjustType,BOOL,ARGB,ARGB);
 GpStatus WINGDIPAPI GdipSetImageAttributesColorMatrix(GpImageAttributes*,
     ColorAdjustType,BOOL,GDIPCONST ColorMatrix*,GDIPCONST ColorMatrix*,
     ColorMatrixFlags);
+GpStatus WINGDIPAPI GdipSetImageAttributesGamma(GpImageAttributes*,
+    ColorAdjustType,BOOL,REAL);
+GpStatus WINGDIPAPI GdipSetImageAttributesNoOp(GpImageAttributes*,
+    ColorAdjustType,BOOL);
+GpStatus WINGDIPAPI GdipSetImageAttributesOutputChannel(GpImageAttributes*,
+    ColorAdjustType,BOOL,ColorChannelFlags);
+GpStatus WINGDIPAPI GdipSetImageAttributesOutputChannelColorProfile(
+    GpImageAttributes*,ColorAdjustType,BOOL,GDIPCONST WCHAR*);
+GpStatus WINGDIPAPI GdipSetImageAttributesRemapTable(GpImageAttributes*,
+    ColorAdjustType,BOOL,UINT,GDIPCONST ColorMap*);
+GpStatus WINGDIPAPI GdipSetImageAttributesThreshold(GpImageAttributes*,
+    ColorAdjustType,BOOL,REAL);
+GpStatus WINGDIPAPI GdipSetImageAttributesToIdentity(GpImageAttributes*,
+    ColorAdjustType);
 GpStatus WINGDIPAPI GdipSetImageAttributesWrapMode(GpImageAttributes*,WrapMode,
     ARGB,BOOL);
 
