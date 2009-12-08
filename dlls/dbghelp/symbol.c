@@ -1034,6 +1034,7 @@ static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
     regex_t             mod_regex, sym_regex;
 
     pair.pcs = process_find_by_handle(hProcess);
+    if (!pair.pcs) return FALSE;
     if (BaseOfDll == 0)
     {
         /* do local variables ? */
