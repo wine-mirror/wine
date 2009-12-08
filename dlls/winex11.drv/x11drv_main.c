@@ -56,6 +56,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 WINE_DECLARE_DEBUG_CHANNEL(synchronous);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static CRITICAL_SECTION X11DRV_CritSection;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -643,8 +644,7 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     if (!(data->display = XOpenDisplay(NULL)))
     {
         wine_tsx11_unlock();
-        MESSAGE( "x11drv: Can't open display: %s\n", XDisplayName(NULL) );
-        MESSAGE( "Please ensure that your X server is running and that $DISPLAY is set correctly.\n" );
+        ERR_(winediag)( "x11drv: Can't open display: %s. Please ensure that your X server is running and that $DISPLAY is set correctly.\n", XDisplayName(NULL));
         ExitProcess(1);
     }
 
