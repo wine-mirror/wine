@@ -468,7 +468,7 @@ static void test_RtlDuplicateUnicodeString(void)
 	    ok(memcmp(dest_str.Buffer, res_str.Buffer, dupl_ustr[test_num].res_buf_size) == 0,
 	       "(test %d): RtlDuplicateUnicodeString(%d, source, dest) has destination \"%s\" expected \"%s\"\n",
 	       test_num, dupl_ustr[test_num].add_nul, dest_ansi_str.Buffer, dupl_ustr[test_num].res_buf);
-            pRtlFreeUnicodeString(&dest_str);
+            if(result == STATUS_SUCCESS) pRtlFreeUnicodeString(&dest_str);
         } else {
 	    ok(dest_str.Buffer == NULL && dupl_ustr[test_num].res_buf == NULL,
 	       "(test %d): RtlDuplicateUnicodeString(%d, source, dest) has destination %p expected %p\n",
