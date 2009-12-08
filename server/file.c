@@ -560,7 +560,7 @@ static int file_set_sd( struct object *obj, const struct security_descriptor *sd
         mode = st.st_mode & (S_ISUID|S_ISGID|S_ISVTX|S_IRWXG);
         mode |= sd_to_mode( sd, owner );
 
-        if (st.st_mode != mode && fchmod( unix_fd, mode ) == -1)
+        if (((st.st_mode ^ mode) & (S_IRWXU|S_IRWXG|S_IRWXO)) && fchmod( unix_fd, mode ) == -1)
         {
             file_set_error();
             return 0;
