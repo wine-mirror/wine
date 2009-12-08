@@ -1042,17 +1042,22 @@ static UINT get_tablecolumns( MSIDATABASE *db,
 static void msi_update_table_columns( MSIDATABASE *db, LPCWSTR name )
 {
     MSITABLE *table;
+    LPWSTR tablename;
     UINT size, offset, old_count;
     UINT n;
 
-    table = find_cached_table( db, name );
+    /* We may free name in msi_free_colinfo. */
+    tablename = strdupW( name );
+
+    table = find_cached_table( db, tablename );
     old_count = table->col_count;
+    msi_free_colinfo( table->colinfo, table->col_count );
     msi_free( table->colinfo );
     table->colinfo = NULL;
 
-    table_get_column_info( db, name, &table->colinfo, &table->col_count );
+    table_get_column_info( db, tablename, &table->colinfo, &table->col_count );
     if (!table->col_count)
-        return;
+        goto done;
 
     size = msi_table_get_row_size( db, table->colinfo, table->col_count );
     offset = table->colinfo[table->col_count - 1].offset;
@@ -1063,6 +1068,9 @@ static void msi_update_table_columns( MSIDATABASE *db, LPCWSTR name )
         if (old_count < table->col_count)
             memset( &table->data[n][offset], 0, size - offset );
     }
+
+done:
+    msi_free(tablename);
 }
 
 /* try to find the table name in the _Tables table */
