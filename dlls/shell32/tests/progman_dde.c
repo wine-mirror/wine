@@ -51,9 +51,6 @@
 #define DDE_TEST_COMPOUND        0x00070000
 #define DDE_TEST_CALLMASK        0x00ff0000
 
-/* Type of Test (Common, Individual) */
-#define DDE_TEST_COMMON            0x01000000
-
 #define DDE_TEST_NUMMASK           0x0000ffff
 
 static HRESULT (WINAPI *pSHGetLocalizedName)(LPCWSTR, LPWSTR, UINT, int *);
@@ -620,21 +617,21 @@ static int DdeTestProgman(DWORD instance, HCONV hConv)
     GetTempFileNameA(temppath, "dde", 0, f2g3);
 
     /* CreateGroup Tests (including AddItem, DeleteItem) */
-    CreateGroupTest(instance, hConv, "[CreateGroup(Group1)]", DMLERR_NO_ERROR, "Group1", Group1Title, DDE_TEST_COMMON|DDE_TEST_CREATEGROUP|testnum++);
+    CreateGroupTest(instance, hConv, "[CreateGroup(Group1)]", DMLERR_NO_ERROR, "Group1", Group1Title, DDE_TEST_CREATEGROUP|testnum++);
     CreateAddItemText(itemtext, f1g1, "f1g1Name");
-    AddItemTest(instance, hConv, itemtext, DMLERR_NO_ERROR, "f1g1Name.lnk", "Group1", DDE_TEST_COMMON|DDE_TEST_ADDITEM|testnum++);
+    AddItemTest(instance, hConv, itemtext, DMLERR_NO_ERROR, "f1g1Name.lnk", "Group1", DDE_TEST_ADDITEM|testnum++);
     CreateAddItemText(itemtext, f2g1, "f2g1Name");
-    AddItemTest(instance, hConv, itemtext, DMLERR_NO_ERROR, "f2g1Name.lnk", "Group1", DDE_TEST_COMMON|DDE_TEST_ADDITEM|testnum++);
-    DeleteItemTest(instance, hConv, "[DeleteItem(f2g1Name)]", DMLERR_NO_ERROR, "f2g1Name.lnk", "Group1", DDE_TEST_COMMON|DDE_TEST_DELETEITEM|testnum++);
+    AddItemTest(instance, hConv, itemtext, DMLERR_NO_ERROR, "f2g1Name.lnk", "Group1", DDE_TEST_ADDITEM|testnum++);
+    DeleteItemTest(instance, hConv, "[DeleteItem(f2g1Name)]", DMLERR_NO_ERROR, "f2g1Name.lnk", "Group1", DDE_TEST_DELETEITEM|testnum++);
     CreateAddItemText(itemtext, f3g1, "f3g1Name");
-    AddItemTest(instance, hConv, itemtext, DMLERR_NO_ERROR, "f3g1Name.lnk", "Group1", DDE_TEST_COMMON|DDE_TEST_ADDITEM|testnum++);
-    CreateGroupTest(instance, hConv, "[CreateGroup(Group2)]", DMLERR_NO_ERROR, "Group2", Group2Title, DDE_TEST_COMMON|DDE_TEST_CREATEGROUP|testnum++);
+    AddItemTest(instance, hConv, itemtext, DMLERR_NO_ERROR, "f3g1Name.lnk", "Group1", DDE_TEST_ADDITEM|testnum++);
+    CreateGroupTest(instance, hConv, "[CreateGroup(Group2)]", DMLERR_NO_ERROR, "Group2", Group2Title, DDE_TEST_CREATEGROUP|testnum++);
     /* Create Group that already exists - same instance */
-    CreateGroupTest(instance, hConv, "[CreateGroup(Group1)]", DMLERR_NO_ERROR, "Group1", Group1Title, DDE_TEST_COMMON|DDE_TEST_CREATEGROUP|testnum++);
+    CreateGroupTest(instance, hConv, "[CreateGroup(Group1)]", DMLERR_NO_ERROR, "Group1", Group1Title, DDE_TEST_CREATEGROUP|testnum++);
 
     /* ShowGroup Tests */
     ShowGroupTest(instance, hConv, "[ShowGroup(Group1)]", DMLERR_NOTPROCESSED, Startup, StartupTitle, TRUE, DDE_TEST_SHOWGROUP|testnum++);
-    DeleteItemTest(instance, hConv, "[DeleteItem(f3g1Name)]", DMLERR_NO_ERROR, "f3g1Name.lnk", "Group1", DDE_TEST_COMMON|DDE_TEST_DELETEITEM|testnum++);
+    DeleteItemTest(instance, hConv, "[DeleteItem(f3g1Name)]", DMLERR_NO_ERROR, "f3g1Name.lnk", "Group1", DDE_TEST_DELETEITEM|testnum++);
     ShowGroupTest(instance, hConv, "[ShowGroup(Startup,0)]", DMLERR_NO_ERROR, Startup, StartupTitle, TRUE, DDE_TEST_SHOWGROUP|testnum++);
     ShowGroupTest(instance, hConv, "[ShowGroup(Group1,0)]", DMLERR_NO_ERROR, "Group1", Group1Title, FALSE, DDE_TEST_SHOWGROUP|testnum++);
 
@@ -647,7 +644,7 @@ static int DdeTestProgman(DWORD instance, HCONV hConv)
     lstrcatA(comptext, itemtext);
     CreateAddItemText(itemtext, f2g3, "f2g3Name");
     lstrcatA(comptext, itemtext);
-    CompoundCommandTest(instance, hConv, comptext, DMLERR_NO_ERROR, "Group3", Group3Title, "f1g3Name.lnk", "f2g3Name.lnk", DDE_TEST_COMMON|DDE_TEST_COMPOUND|testnum++);
+    CompoundCommandTest(instance, hConv, comptext, DMLERR_NO_ERROR, "Group3", Group3Title, "f1g3Name.lnk", "f2g3Name.lnk", DDE_TEST_COMPOUND|testnum++);
 
     DeleteGroupTest(instance, hConv, "[DeleteGroup(Group3)]", DMLERR_NO_ERROR, "Group3", DDE_TEST_DELETEGROUP|testnum++);
 
@@ -667,8 +664,8 @@ static int DdeTestProgman(DWORD instance, HCONV hConv)
 static void DdeTestProgman2(DWORD instance, HCONV hConv, int testnum)
 {
     /* Create Group that already exists on a separate connection */
-    CreateGroupTest(instance, hConv, "[CreateGroup(Group2)]", DMLERR_NO_ERROR, "Group2", Group2Title, DDE_TEST_COMMON|DDE_TEST_CREATEGROUP|testnum++);
-    DeleteGroupTest(instance, hConv, "[DeleteGroup(Group2)]", DMLERR_NO_ERROR, "Group2", DDE_TEST_COMMON|DDE_TEST_DELETEGROUP|testnum++);
+    CreateGroupTest(instance, hConv, "[CreateGroup(Group2)]", DMLERR_NO_ERROR, "Group2", Group2Title, DDE_TEST_CREATEGROUP|testnum++);
+    DeleteGroupTest(instance, hConv, "[DeleteGroup(Group2)]", DMLERR_NO_ERROR, "Group2", DDE_TEST_DELETEGROUP|testnum++);
 }
 
 START_TEST(progman_dde)
