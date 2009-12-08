@@ -156,6 +156,7 @@ include/mediaobj.h
 include/mimeinfo.h
 include/mimeole.h
 include/mlang.h
+include/mmdeviceapi.h
 include/mmstream.h
 include/mscoree.h
 include/msctf.h
