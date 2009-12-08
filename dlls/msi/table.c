@@ -1754,14 +1754,13 @@ static UINT TABLE_delete_row( struct tagMSIVIEW *view, UINT row )
         tv->columns[i].hash_table = NULL;
     }
 
-    if ( row == num_rows - 1 )
-        return ERROR_SUCCESS;
-
     for (i = row + 1; i < num_rows; i++)
     {
         memcpy(tv->table->data[i - 1], tv->table->data[i], tv->row_size);
         tv->table->data_persistent[i - 1] = tv->table->data_persistent[i];
     }
+
+    msi_free(tv->table->data[num_rows - 1]);
 
     return ERROR_SUCCESS;
 }
