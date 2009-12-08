@@ -712,7 +712,7 @@ static void test_readwrite(void)
     BOOL ret, sidavailable;
     BOOL on_vista = FALSE; /* Used to indicate Vista, W2K8 or Win7 */
     int i;
-    char *localcomputer;
+    char *localcomputer = NULL;
     DWORD size;
 
     if (pCreateWellKnownSid)
@@ -728,24 +728,6 @@ static void test_readwrite(void)
         win_skip("Skipping some SID related tests\n");
         sidavailable = FALSE;
         user = NULL;
-    }
-
-    if (pGetComputerNameExA)
-    {
-        size = 0;
-        SetLastError(0xdeadbeef);
-        pGetComputerNameExA(ComputerNameDnsFullyQualified, NULL, &size);
-        /* Cope with W2K (needed size is not set) */
-        if (size == 0 && GetLastError() == ERROR_MORE_DATA)
-            size = 1024;
-        localcomputer = HeapAlloc(GetProcessHeap(), 0, size);
-        pGetComputerNameExA(ComputerNameDnsFullyQualified, localcomputer, &size);
-    }
-    else
-    {
-        size = MAX_COMPUTERNAME_LENGTH + 1;
-        localcomputer = HeapAlloc(GetProcessHeap(), 0, size);
-        GetComputerNameA(localcomputer, &size);
     }
 
     /* Write an event with an incorrect event type. This will fail on Windows 7
@@ -877,6 +859,22 @@ static void test_readwrite(void)
     /* Report only once */
     if (on_vista)
         skip("There is no DWORD alignment enforced for UserSid on Vista, W2K8 or Win7\n");
+
+    if (on_vista && pGetComputerNameExA)
+    {
+        /* New Vista+ behavior */
+        size = 0;
+        SetLastError(0xdeadbeef);
+        pGetComputerNameExA(ComputerNameDnsFullyQualified, NULL, &size);
+        localcomputer = HeapAlloc(GetProcessHeap(), 0, size);
+        pGetComputerNameExA(ComputerNameDnsFullyQualified, localcomputer, &size);
+    }
+    else
+    {
+        size = MAX_COMPUTERNAME_LENGTH + 1;
+        localcomputer = HeapAlloc(GetProcessHeap(), 0, size);
+        GetComputerNameA(localcomputer, &size);
+    }
 
     /* Read all events from our created eventlog, one by one */
     handle = OpenEventLogA(NULL, eventlogname);
