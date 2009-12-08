@@ -66,6 +66,7 @@
 
 #define DDE_TEST_NUMMASK           0x0000ffff
 
+static HRESULT (WINAPI *pSHGetLocalizedName)(LPCWSTR, LPWSTR, UINT, int *);
 static BOOL (WINAPI *pSHGetSpecialFolderPathA)(HWND, LPSTR, int, BOOL);
 static BOOL (WINAPI *pReadCabinetState)(CABINETSTATE *, int);
 
@@ -74,6 +75,7 @@ static void init_function_pointers(void)
     HMODULE hmod;
 
     hmod = GetModuleHandleA("shell32.dll");
+    pSHGetLocalizedName = (void*)GetProcAddress(hmod, "SHGetLocalizedName");
     pSHGetSpecialFolderPathA = (void*)GetProcAddress(hmod, "SHGetSpecialFolderPathA");
     pReadCabinetState = (void*)GetProcAddress(hmod, "ReadCabinetState");
     if (!pReadCabinetState)
@@ -102,7 +104,7 @@ static void init_strings(void)
             /* Win9x */
             lstrcpyA(CommonPrograms, Programs);
         }
-        if (GetProcAddress(GetModuleHandleA("shell32.dll"), "SHGetKnownFolderPath"))
+        if (pSHGetLocalizedName)
         {
             /* Vista and higher use CSIDL_PROGRAMS for these tests.
              * Wine doesn't have SHGetKnownFolderPath yet but should most likely follow
@@ -154,7 +156,32 @@ static void init_strings(void)
     }
     else
     {
-        lstrcpyA(StartupTitle, Startup);
+        /* Vista has the nice habit of displaying the full path in English
+         * and the short one localized. CSIDL_STARTUP on Vista gives us the
+         * English version so we have to 'translate' this one.
+         *
+         * MSDN claims it should be used for files not folders but this one
+         * suits our purposes just fine.
+         */
+        if (pSHGetLocalizedName)
+        {
+            WCHAR startupW[MAX_PATH];
+            WCHAR module[MAX_PATH];
+            WCHAR module_expanded[MAX_PATH];
+            WCHAR localized[MAX_PATH];
+            int id;
+
+            MultiByteToWideChar(CP_ACP, 0, startup, -1, startupW, sizeof(startupW)/sizeof(WCHAR));
+            pSHGetLocalizedName(startupW, module, MAX_PATH, &id);
+            ExpandEnvironmentStringsW(module, module_expanded, MAX_PATH);
+            LoadStringW(GetModuleHandleW(module_expanded), id, localized, MAX_PATH);
+
+            WideCharToMultiByte(CP_ACP, 0, localized, -1, StartupTitle, sizeof(StartupTitle), NULL, NULL);
+        }
+        else
+        {
+            lstrcpyA(StartupTitle, (strrchr(startup, '\\') + 1));
+        }
     }
 }
 
