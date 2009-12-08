@@ -2355,9 +2355,9 @@ static void test_null_provider(void)
     CryptDestroyKey(key);
     result = CryptGetUserKey(prov, AT_KEYEXCHANGE, &key);
     ok(result, "CryptGetUserKey with AT_KEYEXCHANGE failed: %08x\n", GetLastError());
+    CryptDestroyKey(key);
     result = CryptGetUserKey(prov, AT_SIGNATURE, &key);
     ok(!result, "expected CryptGetUserKey to fail\n");
-    CryptDestroyKey(key);
     CryptReleaseContext(prov, 0);
 
     CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
