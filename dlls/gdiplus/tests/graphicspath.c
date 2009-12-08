@@ -410,6 +410,7 @@ static void test_worldbounds(void)
     status = GdipGetPathWorldBounds(path, &bounds, matrix, NULL);
     expect(Ok, status);
     GdipDeletePath(path);
+    GdipDeleteMatrix(matrix);
 
     expectf(-209.6, bounds.X);
     expectf(-1274.8, bounds.Y);
