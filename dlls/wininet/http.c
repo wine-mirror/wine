@@ -1967,6 +1967,7 @@ static DWORD read_gzip_data(http_request_t *req, BYTE *buf, int size, BOOL sync,
         zstream->avail_out = size-read;
         zres = inflate(zstream, Z_FULL_FLUSH);
         read = size - zstream->avail_out;
+        req->dwContentRead += req->read_size-zstream->avail_in;
         remove_data(req, req->read_size-zstream->avail_in);
         if(zres == Z_STREAM_END) {
             TRACE("end of data\n");
@@ -2086,9 +2087,9 @@ static DWORD HTTPREQ_Read(http_request_t *req, void *buffer, DWORD size, DWORD *
         }
 
         finished_reading = !bytes_read && req->dwContentRead == req->dwContentLength;
+        req->dwContentRead += bytes_read;
     }
 done:
-    req->dwContentRead += bytes_read;
     *read = bytes_read;
 
     TRACE( "retrieved %u bytes (%u/%u)\n", bytes_read, req->dwContentRead, req->dwContentLength );
