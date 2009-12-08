@@ -1000,9 +1000,16 @@ static void test_set_default_proxy_config(void)
     info.lpszProxy = normalString;
     SetLastError(0xdeadbeef);
     ret = WinHttpSetDefaultProxyConfiguration(&info);
-    ok(ret, "WinHttpSetDefaultProxyConfiguration failed: %d\n", GetLastError());
-
-    set_default_proxy_reg_value( saved_proxy_settings, len, type );
+    if (ret)
+    {
+        ok(ret, "always true\n");
+        set_default_proxy_reg_value( saved_proxy_settings, len, type );
+    }
+    else if (GetLastError() == ERROR_ACCESS_DENIED)
+        skip("couldn't set default proxy configuration: access denied\n");
+    else
+        ok(ret, "WinHttpSetDefaultProxyConfiguration failed: %d\n",
+           GetLastError());
 }
 
 START_TEST (winhttp)
