@@ -2412,7 +2412,8 @@ static void test_DEVMODE(const DEVMODE *dm, LONG dmSize, LPCSTR exp_prn_name)
        We skip the Tests on this Platform */
     if (dm->dmSpecVersion || dm->dmDriverVersion || dm->dmDriverExtra) {
     /* The 0-terminated Printername can be larger (MAX_PATH) than CCHDEVICENAME */
-        ok(!strncmp(exp_prn_name, (LPCSTR)dm->dmDeviceName, CCHDEVICENAME -1),
+        ok(!strncmp(exp_prn_name, (LPCSTR)dm->dmDeviceName, CCHDEVICENAME -1) ||
+           !strncmp(exp_prn_name, (LPCSTR)dm->dmDeviceName, CCHDEVICENAME -2), /* XP+ */
             "expected '%s', got '%s'\n", exp_prn_name, dm->dmDeviceName);
         ok(dm->dmSize + dm->dmDriverExtra == dmSize,
             "%u != %d\n", dm->dmSize + dm->dmDriverExtra, dmSize);
