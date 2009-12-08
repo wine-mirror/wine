@@ -3065,9 +3065,9 @@ BOOL WINAPI RSAENH_CPGenKey(HCRYPTPROV hProv, ALG_ID Algid, DWORD dwFlags, HCRYP
             if (pCryptKey) { 
                 new_key_impl(pCryptKey->aiAlgid, &pCryptKey->context, pCryptKey->dwKeyLen);
                 setup_key(pCryptKey);
-                RSAENH_CPDestroyKey(hProv, pKeyContainer->hSignatureKeyPair);
-                copy_handle(&handle_table, *phKey, RSAENH_MAGIC_KEY,
-                            &pKeyContainer->hSignatureKeyPair);
+                release_and_install_key(hProv, *phKey,
+                                        &pKeyContainer->hSignatureKeyPair,
+                                        FALSE);
             }
             break;
 
@@ -3077,9 +3077,9 @@ BOOL WINAPI RSAENH_CPGenKey(HCRYPTPROV hProv, ALG_ID Algid, DWORD dwFlags, HCRYP
             if (pCryptKey) { 
                 new_key_impl(pCryptKey->aiAlgid, &pCryptKey->context, pCryptKey->dwKeyLen);
                 setup_key(pCryptKey);
-                RSAENH_CPDestroyKey(hProv, pKeyContainer->hKeyExchangeKeyPair);
-                copy_handle(&handle_table, *phKey, RSAENH_MAGIC_KEY,
-                            &pKeyContainer->hKeyExchangeKeyPair);
+                release_and_install_key(hProv, *phKey,
+                                        &pKeyContainer->hKeyExchangeKeyPair,
+                                        FALSE);
             }
             break;
             
