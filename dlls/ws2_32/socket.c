@@ -166,6 +166,7 @@
 #endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 /* critical section to protect some non-reentrant net function */
 static CRITICAL_SECTION csWSgetXXXbyYYY;
@@ -4322,11 +4323,9 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
     if (GetLastError() == WSAEACCES) /* raw socket denied */
     {
         if (type == SOCK_RAW)
-            MESSAGE("WARNING: Trying to create a socket of type SOCK_RAW, this"
-                    " will fail unless you have special permissions.\n");
+            ERR_(winediag)("Failed to create a socket of type SOCK_RAW, this requires special permissions.\n");
         else
-            MESSAGE("WS_SOCKET: Failed to create socket, this requires"
-                    " special permissions.\n");
+            ERR_(winediag)("Failed to create socket, this requires special permissions.\n");
         SetLastError(WSAESOCKTNOSUPPORT);
     }
 
