@@ -1219,6 +1219,8 @@ static void destroy_key_container(OBJECTHDR *pObjectHdr)
         store_key_container_permissions(pKeyContainer);
         release_key_container_keys(pKeyContainer);
     }
+    else
+        release_key_container_keys(pKeyContainer);
     HeapFree( GetProcessHeap(), 0, pKeyContainer );
 }
 
