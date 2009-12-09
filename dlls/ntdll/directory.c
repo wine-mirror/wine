@@ -71,6 +71,7 @@
 #include "ntdll_misc.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
+#include "wine/list.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
@@ -246,6 +247,54 @@ static inline unsigned int dir_info_size( FILE_INFORMATION_CLASS class, unsigned
 static inline unsigned int max_dir_info_size( FILE_INFORMATION_CLASS class )
 {
     return dir_info_size( class, MAX_DIR_ENTRY_LEN );
+}
+
+
+/* support for a directory queue for filesystem searches */
+
+struct dir_name
+{
+    struct list entry;
+    char name[1];
+};
+
+static struct list dir_queue = LIST_INIT( dir_queue );
+
+static NTSTATUS add_dir_to_queue( const char *name )
+{
+    int len = strlen( name ) + 1;
+    struct dir_name *dir = RtlAllocateHeap( GetProcessHeap(), 0,
+                                            FIELD_OFFSET( struct dir_name, name[len] ));
+    if (!dir) return STATUS_NO_MEMORY;
+    strcpy( dir->name, name );
+    list_add_tail( &dir_queue, &dir->entry );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS next_dir_in_queue( char *name )
+{
+    struct list *head = list_head( &dir_queue );
+    if (head)
+    {
+        struct dir_name *dir = LIST_ENTRY( head, struct dir_name, entry );
+        strcpy( name, dir->name );
+        list_remove( &dir->entry );
+        RtlFreeHeap( GetProcessHeap(), 0, dir );
+        return STATUS_SUCCESS;
+    }
+    return STATUS_OBJECT_NAME_NOT_FOUND;
+}
+
+static void flush_dir_queue(void)
+{
+    struct list *head;
+
+    while ((head = list_head( &dir_queue )))
+    {
+        struct dir_name *dir = LIST_ENTRY( head, struct dir_name, entry );
+        list_remove( &dir->entry );
+        RtlFreeHeap( GetProcessHeap(), 0, dir );
+    }
 }
 
 
@@ -2218,81 +2267,134 @@ static inline int get_dos_prefix_len( const UNICODE_STRING *name )
 
 
 /******************************************************************************
+ *           find_file_id
+ *
+ * Recursively search directories from the dir queue for a given inode.
+ */
+static NTSTATUS find_file_id( ANSI_STRING *unix_name, ULONGLONG file_id, dev_t dev )
+{
+    unsigned int pos;
+    DIR *dir;
+    struct dirent *de;
+    NTSTATUS status;
+    struct stat st;
+
+    while (!(status = next_dir_in_queue( unix_name->Buffer )))
+    {
+        if (!(dir = opendir( unix_name->Buffer ))) continue;
+        TRACE( "searching %s for %s\n", unix_name->Buffer, wine_dbgstr_longlong(file_id) );
+        pos = strlen( unix_name->Buffer );
+        if (pos + MAX_DIR_ENTRY_LEN >= unix_name->MaximumLength/sizeof(WCHAR))
+        {
+            char *new = RtlReAllocateHeap( GetProcessHeap(), 0, unix_name->Buffer,
+                                           unix_name->MaximumLength * 2 );
+            if (!new)
+            {
+                closedir( dir );
+                return STATUS_NO_MEMORY;
+            }
+            unix_name->MaximumLength *= 2;
+            unix_name->Buffer = new;
+        }
+        unix_name->Buffer[pos++] = '/';
+        while ((de = readdir( dir )))
+        {
+            if (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." )) continue;
+            strcpy( unix_name->Buffer + pos, de->d_name );
+            if (lstat( unix_name->Buffer, &st ) == -1) continue;
+            if (st.st_dev != dev) continue;
+            if (st.st_ino == file_id)
+            {
+                closedir( dir );
+                return STATUS_SUCCESS;
+            }
+            if (!S_ISDIR( st.st_mode )) continue;
+            if ((status = add_dir_to_queue( unix_name->Buffer )) != STATUS_SUCCESS)
+            {
+                closedir( dir );
+                return status;
+            }
+        }
+        closedir( dir );
+    }
+    return status;
+}
+
+
+/******************************************************************************
  *           file_id_to_unix_file_name
  *
  * Lookup a file from its file id instead of its name.
  */
-NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *unix_name_ret )
+NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *unix_name )
 {
     enum server_fd_type type;
     int old_cwd, root_fd, needs_close;
-    char *unix_name;
-    int unix_len;
     NTSTATUS status;
     ULONGLONG file_id;
     struct stat st, root_st;
-    DIR *dir;
-    struct dirent *de;
 
     if (attr->ObjectName->Length != sizeof(ULONGLONG)) return STATUS_OBJECT_PATH_SYNTAX_BAD;
     if (!attr->RootDirectory) return STATUS_INVALID_PARAMETER;
     memcpy( &file_id, attr->ObjectName->Buffer, sizeof(file_id) );
 
-    unix_len = MAX_DIR_ENTRY_LEN + 1;
-    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
+    unix_name->MaximumLength = 2 * MAX_DIR_ENTRY_LEN + 4;
+    if (!(unix_name->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, unix_name->MaximumLength )))
         return STATUS_NO_MEMORY;
-    unix_name[0] = 0;
+    strcpy( unix_name->Buffer, "." );
 
-    if (!(status = server_get_unix_fd( attr->RootDirectory, FILE_READ_DATA, &root_fd,
-                                       &needs_close, &type, NULL )))
+    if ((status = server_get_unix_fd( attr->RootDirectory, 0, &root_fd, &needs_close, &type, NULL )))
+        goto done;
+
+    if (type != FD_TYPE_DIR)
     {
-        if (type != FD_TYPE_DIR)
+        status = STATUS_OBJECT_TYPE_MISMATCH;
+        goto done;
+    }
+
+    fstat( root_fd, &root_st );
+    if (root_st.st_ino == file_id)  /* shortcut for "." */
+    {
+        status = STATUS_SUCCESS;
+        goto done;
+    }
+
+    RtlEnterCriticalSection( &dir_section );
+    if ((old_cwd = open( ".", O_RDONLY )) != -1 && fchdir( root_fd ) != -1)
+    {
+        /* shortcut for ".." */
+        if (!stat( "..", &st ) && st.st_dev == root_st.st_dev && st.st_ino == file_id)
         {
-            if (needs_close) close( root_fd );
-            status = STATUS_OBJECT_TYPE_MISMATCH;
+            strcpy( unix_name->Buffer, ".." );
+            status = STATUS_SUCCESS;
         }
         else
         {
-            fstat( root_fd, &root_st );
-            RtlEnterCriticalSection( &dir_section );
-            if ((old_cwd = open( ".", O_RDONLY )) != -1 && fchdir( root_fd ) != -1)
-            {
-                if (!(dir = opendir( "." ))) status = FILE_GetNtStatus();
-                else
-                {
-                    while ((de = readdir( dir )))
-                    {
-                        if (stat( de->d_name, &st ) == -1) continue;
-                        if (st.st_dev == root_st.st_dev && st.st_ino == file_id)
-                        {
-                            strcpy( unix_name, de->d_name );
-                            break;
-                        }
-                    }
-                    closedir( dir );
-                    if (!unix_name[0]) status = STATUS_OBJECT_NAME_NOT_FOUND;
-                }
-                if (fchdir( old_cwd ) == -1) chdir( "/" );
-            }
-            else status = FILE_GetNtStatus();
-            RtlLeaveCriticalSection( &dir_section );
-            if (old_cwd != -1) close( old_cwd );
-            if (needs_close) close( root_fd );
+            status = add_dir_to_queue( "." );
+            if (!status)
+                status = find_file_id( unix_name, file_id, root_st.st_dev );
+            if (!status)  /* get rid of "./" prefix */
+                memmove( unix_name->Buffer, unix_name->Buffer + 2, strlen(unix_name->Buffer) - 1 );
+            flush_dir_queue();
         }
+        if (fchdir( old_cwd ) == -1) chdir( "/" );
     }
+    else status = FILE_GetNtStatus();
+    RtlLeaveCriticalSection( &dir_section );
+    if (old_cwd != -1) close( old_cwd );
 
+done:
     if (status == STATUS_SUCCESS)
     {
-        TRACE( "%s -> %s\n", wine_dbgstr_longlong(file_id), debugstr_a(unix_name) );
-        unix_name_ret->Buffer = unix_name;
-        unix_name_ret->Length = strlen(unix_name);
-        unix_name_ret->MaximumLength = unix_len;
+        TRACE( "%s -> %s\n", wine_dbgstr_longlong(file_id), debugstr_a(unix_name->Buffer) );
+        unix_name->Length = strlen( unix_name->Buffer );
     }
     else
     {
-        TRACE( "%s not found in %s\n", wine_dbgstr_longlong(file_id), unix_name );
-        RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+        TRACE( "%s not found in dir %p\n", wine_dbgstr_longlong(file_id), attr->RootDirectory );
+        RtlFreeHeap( GetProcessHeap(), 0, unix_name->Buffer );
     }
+    if (needs_close) close( root_fd );
     return status;
 }
 

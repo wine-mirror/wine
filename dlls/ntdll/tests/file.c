@@ -234,7 +234,7 @@ static void create_file_test(void)
 static void open_file_test(void)
 {
     NTSTATUS status;
-    HANDLE dir, handle;
+    HANDLE dir, root, handle;
     WCHAR path[MAX_PATH];
     BYTE data[8192];
     OBJECT_ATTRIBUTES attr;
@@ -252,6 +252,13 @@ static void open_file_test(void)
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
     status = pNtOpenFile( &dir, GENERIC_READ, &attr, &io,
+                          FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE );
+    ok( !status, "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
+    pRtlFreeUnicodeString( &nameW );
+
+    path[3] = 0;  /* root of the drive */
+    pRtlDosPathNameToNtPathName_U( path, &nameW, NULL, NULL );
+    status = pNtOpenFile( &root, GENERIC_READ, &attr, &io,
                           FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE );
     ok( !status, "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
     pRtlFreeUnicodeString( &nameW );
@@ -306,6 +313,7 @@ static void open_file_test(void)
             nameW.Buffer = (WCHAR *)&info->FileId;
             nameW.Length = sizeof(info->FileId);
             info->FileName[info->FileNameLength/sizeof(WCHAR)] = 0;
+            attr.RootDirectory = dir;
             status = pNtOpenFile( &handle, GENERIC_READ, &attr, &io,
                                   FILE_SHARE_READ|FILE_SHARE_WRITE,
                                   FILE_OPEN_BY_FILE_ID |
@@ -330,6 +338,16 @@ static void open_file_test(void)
                         "mismatched write time for %s\n", wine_dbgstr_w(info->FileName));
                 }
                 CloseHandle( handle );
+
+                /* try same thing from drive root */
+                attr.RootDirectory = root;
+                status = pNtOpenFile( &handle, GENERIC_READ, &attr, &io,
+                                      FILE_SHARE_READ|FILE_SHARE_WRITE,
+                                      FILE_OPEN_BY_FILE_ID |
+                                      ((info->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? FILE_DIRECTORY_FILE : 0) );
+                ok( status == STATUS_SUCCESS || status == STATUS_NOT_IMPLEMENTED,
+                    "open %s failed %x\n", wine_dbgstr_w(info->FileName), status );
+                if (!status) CloseHandle( handle );
             }
         next:
             if (!info->NextEntryOffset) break;
@@ -338,6 +356,7 @@ static void open_file_test(void)
     }
 
     CloseHandle( dir );
+    CloseHandle( root );
 }
 
 static void delete_file_test(void)
