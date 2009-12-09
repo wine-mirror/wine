@@ -594,6 +594,8 @@ GpStatus WINGDIPAPI GdipGetPenDashCount(GpPen*,INT*);
 GpStatus WINGDIPAPI GdipGetPenDashOffset(GpPen*,REAL*);
 GpStatus WINGDIPAPI GdipGetPenDashStyle(GpPen*,GpDashStyle*);
 GpStatus WINGDIPAPI GdipGetPenMode(GpPen*,GpPenAlignment*);
+GpStatus WINGDIPAPI GdipResetPenTransform(GpPen*);
+GpStatus WINGDIPAPI GdipScalePenTransform(GpPen*,REAL,REAL,GpMatrixOrder);
 GpStatus WINGDIPAPI GdipSetPenBrushFill(GpPen*,GpBrush*);
 GpStatus WINGDIPAPI GdipSetPenColor(GpPen*,ARGB);
 GpStatus WINGDIPAPI GdipSetPenCompoundArray(GpPen*,GDIPCONST REAL*,INT);
