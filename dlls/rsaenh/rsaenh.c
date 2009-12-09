@@ -1380,12 +1380,18 @@ static HCRYPTPROV read_key_container(PCHAR pszContainerName, DWORD dwFlags, cons
                            (OBJECTHDR**)&pKeyContainer))
             return (HCRYPTPROV)INVALID_HANDLE_VALUE;
     
+        /* read_key_value calls import_key, which calls import_private_key,
+         * which implicitly installs the key value into the appropriate key
+         * container key.  Thus the ref count is incremented twice, once for
+         * the output key value, and once for the implicit install, and needs
+         * to be decremented to balance the two.
+         */
         if (read_key_value(hKeyContainer, hKey, AT_KEYEXCHANGE,
             dwProtectFlags, &hCryptKey))
-            pKeyContainer->hKeyExchangeKeyPair = hCryptKey;
+            release_handle(&handle_table, hCryptKey, RSAENH_MAGIC_KEY);
         if (read_key_value(hKeyContainer, hKey, AT_SIGNATURE,
             dwProtectFlags, &hCryptKey))
-            pKeyContainer->hSignatureKeyPair = hCryptKey;
+            release_handle(&handle_table, hCryptKey, RSAENH_MAGIC_KEY);
     }
 
     return hKeyContainer;
