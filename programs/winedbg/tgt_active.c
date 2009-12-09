@@ -745,8 +745,8 @@ static	unsigned dbg_start_debuggee(LPSTR cmdLine)
     flags = DEBUG_PROCESS | CREATE_NEW_CONSOLE;
     if (!DBG_IVAR(AlsoDebugProcChild)) flags |= DEBUG_ONLY_THIS_PROCESS;
 
-    if (!CreateProcess(NULL, cmdLine, NULL, NULL, FALSE, flags,
-                       NULL, NULL, &startup, &info))
+    if (!CreateProcessA(NULL, cmdLine, NULL, NULL, FALSE, flags,
+                        NULL, NULL, &startup, &info))
     {
 	dbg_printf("Couldn't start process '%s'\n", cmdLine);
 	return FALSE;
@@ -950,8 +950,8 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
         {
             char        path[MAX_PATH];
 
-            GetTempPath(sizeof(path), path);
-            GetTempFileName(path, "WD", 0, tmp + 10);
+            GetTempPathA(sizeof(path), path);
+            GetTempFileNameA(path, "WD", 0, tmp + 10);
         }
         else strcpy(tmp + 10, file);
         strcat(tmp, "\"");

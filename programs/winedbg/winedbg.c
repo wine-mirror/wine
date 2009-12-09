@@ -201,8 +201,8 @@ static	unsigned dbg_load_internal_vars(void)
     {
         if (!dbg_internal_vars[i].pval) 
         {
-            if (!RegQueryValueEx(hkey, dbg_internal_vars[i].name, 0,
-                                 &type, (LPBYTE)&val, &count))
+            if (!RegQueryValueExA(hkey, dbg_internal_vars[i].name, 0,
+                                  &type, (LPBYTE)&val, &count))
                 dbg_internal_vars[i].val = val;
             dbg_internal_vars[i].pval = &dbg_internal_vars[i].val;
         }
@@ -229,9 +229,9 @@ static	unsigned dbg_save_internal_vars(void)
     {
         /* FIXME: type should be inferred from basic type -if any- of intvar */
         if (dbg_internal_vars[i].pval == &dbg_internal_vars[i].val)
-            RegSetValueEx(hkey, dbg_internal_vars[i].name, 0,
-                          REG_DWORD, (const void*)dbg_internal_vars[i].pval, 
-                          sizeof(*dbg_internal_vars[i].pval));
+            RegSetValueExA(hkey, dbg_internal_vars[i].name, 0,
+                           REG_DWORD, (const void*)dbg_internal_vars[i].pval, 
+                           sizeof(*dbg_internal_vars[i].pval));
     }
     RegCloseKey(hkey);
     return TRUE;
@@ -565,7 +565,7 @@ void dbg_init_console(void)
     SetConsoleCtrlHandler(ctrl_c_handler, TRUE);
 
     /* set our own title */
-    SetConsoleTitle("Wine Debugger");
+    SetConsoleTitleA("Wine Debugger");
 }
 
 static int dbg_winedbg_usage(BOOL advanced)

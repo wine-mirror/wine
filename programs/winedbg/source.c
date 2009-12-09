@@ -84,11 +84,11 @@ static  void*   source_map_file(const char* name, HANDLE* hMap, unsigned* size)
 {
     HANDLE              hFile;
 
-    hFile = CreateFile(name, GENERIC_READ, FILE_SHARE_READ, NULL,
-                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    hFile = CreateFileA(name, GENERIC_READ, FILE_SHARE_READ, NULL,
+                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE) return (void*)-1;
     if (size != NULL && (*size = GetFileSize(hFile, NULL)) == -1) return (void*)-1;
-    *hMap = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+    *hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
     CloseHandle(hFile);
     if (!*hMap) return (void*)-1;
     return MapViewOfFile(*hMap, FILE_MAP_READ, 0, 0, 0);
@@ -115,7 +115,7 @@ static BOOL     source_locate_file(const char* srcfile, char* path)
 {
     BOOL        found = FALSE;
 
-    if (GetFileAttributes(srcfile) != INVALID_FILE_ATTRIBUTES)
+    if (GetFileAttributesA(srcfile) != INVALID_FILE_ATTRIBUTES)
     {
         strcpy(path, srcfile);
         found = TRUE;
@@ -216,7 +216,7 @@ static int source_display(const char* sourcefile, int start, int end)
             }
             else tmppath[0] = '\0';
 
-            if (GetFileAttributes(tmppath) == INVALID_FILE_ATTRIBUTES)
+            if (GetFileAttributesA(tmppath) == INVALID_FILE_ATTRIBUTES)
             {
                 /*
                  * OK, I guess the user doesn't really want to see it

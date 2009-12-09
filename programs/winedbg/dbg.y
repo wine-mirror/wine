@@ -556,7 +556,7 @@ void	parser_handle(HANDLE input)
 
 static void parser(const char* filename)
 {
-    HANDLE h = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0L, 0);
+    HANDLE h = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0L, 0);
     if (h != INVALID_HANDLE_VALUE)
     {
         parser_handle(h);
@@ -577,8 +577,8 @@ HANDLE parser_generate_command_file(const char* pmt, ...)
     DWORD       w;
     const char* p;
 
-    GetTempPath(sizeof(path), path);
-    GetTempFileName(path, "WD", 0, file);
+    GetTempPathA(sizeof(path), path);
+    GetTempFileNameA(path, "WD", 0, file);
     hFile = CreateFileA(file, GENERIC_READ|GENERIC_WRITE|DELETE, FILE_SHARE_DELETE, 
                         NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, 0);
     if (hFile != INVALID_HANDLE_VALUE)

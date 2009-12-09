@@ -280,9 +280,9 @@ static void class_walker(HWND hWnd, struct class_walker* cw)
     ATOM	atom;
     HWND	child;
 
-    if (!GetClassName(hWnd, clsName, sizeof(clsName)))
+    if (!GetClassNameA(hWnd, clsName, sizeof(clsName)))
         return;
-    if ((atom = FindAtom(clsName)) == 0)
+    if ((atom = FindAtomA(clsName)) == 0)
         return;
 
     for (i = 0; i < cw->used; i++)
@@ -310,7 +310,7 @@ static void class_walker(HWND hWnd, struct class_walker* cw)
 void info_win32_class(HWND hWnd, const char* name)
 {
     WNDCLASSEXA	wca;
-    HINSTANCE   hInst = hWnd ? (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE) : 0;
+    HINSTANCE   hInst = hWnd ? (HINSTANCE)GetWindowLongPtrW(hWnd, GWLP_HINSTANCE) : 0;
 
     if (!name)
     {
@@ -323,7 +323,7 @@ void info_win32_class(HWND hWnd, const char* name)
         return;
     }
 
-    if (!GetClassInfoEx(hInst, name, &wca))
+    if (!GetClassInfoExA(hInst, name, &wca))
     {
         dbg_printf("Cannot find class '%s'\n", name);
         return;
@@ -366,15 +366,15 @@ static void info_window(HWND hWnd, int indent)
 
     do
     {
-        if (!GetClassName(hWnd, clsName, sizeof(clsName)))
+        if (!GetClassNameA(hWnd, clsName, sizeof(clsName)))
             strcpy(clsName, "-- Unknown --");
-        if (!GetWindowText(hWnd, wndName, sizeof(wndName)))
+        if (!GetWindowTextA(hWnd, wndName, sizeof(wndName)))
             strcpy(wndName, "-- Empty --");
 
         dbg_printf("%*s%08lx%*s %-17.17s %08x %08x %08x %.14s\n",
                    indent, "", (DWORD_PTR)hWnd, 12 - indent, "",
-                   clsName, GetWindowLong(hWnd, GWL_STYLE),
-                   GetWindowLongPtr(hWnd, GWLP_WNDPROC),
+                   clsName, GetWindowLongW(hWnd, GWL_STYLE),
+                   GetWindowLongPtrW(hWnd, GWLP_WNDPROC),
                    GetWindowThreadProcessId(hWnd, NULL), wndName);
 
         if ((child = GetWindow(hWnd, GW_CHILD)) != 0)
@@ -400,9 +400,9 @@ void info_win32_window(HWND hWnd, BOOL detailed)
         return;
     }
 
-    if (!GetClassName(hWnd, clsName, sizeof(clsName)))
+    if (!GetClassNameA(hWnd, clsName, sizeof(clsName)))
         strcpy(clsName, "-- Unknown --");
-    if (!GetWindowText(hWnd, wndName, sizeof(wndName)))
+    if (!GetWindowTextA(hWnd, wndName, sizeof(wndName)))
         strcpy(wndName, "-- Empty --");
     if (!GetClientRect(hWnd, &clientRect) || 
         !MapWindowPoints(hWnd, 0, (LPPOINT) &clientRect, 2))
@@ -420,23 +420,23 @@ void info_win32_window(HWND hWnd, BOOL detailed)
                GetParent(hWnd),
                GetWindow(hWnd, GW_OWNER),
                clsName,
-               (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE),
+               (HINSTANCE)GetWindowLongPtrW(hWnd, GWLP_HINSTANCE),
                GetLastActivePopup(hWnd),
-               GetWindowLongPtr(hWnd, GWLP_ID),
-               GetWindowLong(hWnd, GWL_STYLE),
-               GetWindowLong(hWnd, GWL_EXSTYLE),
-               GetWindowLongPtr(hWnd, GWLP_WNDPROC),
+               GetWindowLongPtrW(hWnd, GWLP_ID),
+               GetWindowLongW(hWnd, GWL_STYLE),
+               GetWindowLongW(hWnd, GWL_EXSTYLE),
+               GetWindowLongPtrW(hWnd, GWLP_WNDPROC),
                wndName,
                clientRect.left, clientRect.top, clientRect.right, clientRect.bottom,
                windowRect.left, windowRect.top, windowRect.right, windowRect.bottom,
                GetSystemMenu(hWnd, FALSE));
 
-    if (GetClassLong(hWnd, GCL_CBWNDEXTRA))
+    if (GetClassLongW(hWnd, GCL_CBWNDEXTRA))
     {
         UINT i;
 
         dbg_printf("Extra bytes:");
-        for (i = 0; i < GetClassLong(hWnd, GCL_CBWNDEXTRA) / 2; i++)
+        for (i = 0; i < GetClassLongW(hWnd, GCL_CBWNDEXTRA) / 2; i++)
         {
             w = GetWindowWord(hWnd, i * 2);
             /* FIXME: depends on i386 endian-ity */

@@ -1501,9 +1501,9 @@ static void packet_query_monitor_wnd_helper(struct gdb_context* gdbctx, HWND hWn
     HWND	child;
 
     do {
-       if (!GetClassName(hWnd, clsName, sizeof(clsName)))
+       if (!GetClassNameA(hWnd, clsName, sizeof(clsName)))
 	  strcpy(clsName, "-- Unknown --");
-       if (!GetWindowText(hWnd, wndName, sizeof(wndName)))
+       if (!GetWindowTextA(hWnd, wndName, sizeof(wndName)))
 	  strcpy(wndName, "-- Empty --");
 
        packet_reply_open(gdbctx);
@@ -1511,8 +1511,8 @@ static void packet_query_monitor_wnd_helper(struct gdb_context* gdbctx, HWND hWn
        snprintf(buffer, sizeof(buffer),
                 "%*s%04lx%*s%-17.17s %08x %08x %.14s\n",
                 indent, "", (ULONG_PTR)hWnd, 13 - indent, "",
-                clsName, GetWindowLong(hWnd, GWL_STYLE),
-                GetWindowLongPtr(hWnd, GWLP_WNDPROC), wndName);
+                clsName, GetWindowLongW(hWnd, GWL_STYLE),
+                GetWindowLongPtrW(hWnd, GWLP_WNDPROC), wndName);
        packet_reply_hex_to_str(gdbctx, buffer);
        packet_reply_close(gdbctx);
 

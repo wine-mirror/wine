@@ -160,7 +160,7 @@ struct dbg_breakpoint
 typedef struct tagTHREADNAME_INFO
 {
    DWORD   dwType;     /* Must be 0x1000 */
-   LPCTSTR szName;     /* Pointer to name - limited to 9 bytes (8 characters + terminator) */
+   LPCSTR  szName;     /* Pointer to name - limited to 9 bytes (8 characters + terminator) */
    DWORD   dwThreadID; /* Thread ID (-1 = caller thread) */
    DWORD   dwFlags;    /* Reserved for future use.  Must be zero. */
 } THREADNAME_INFO;
