@@ -26,6 +26,7 @@
 
 #include <stdarg.h>
 #include <math.h>
+#include <limits.h>
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #define COBJMACROS
