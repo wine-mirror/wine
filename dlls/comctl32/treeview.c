@@ -63,6 +63,8 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(treeview);
+
 /* internal structures */
 
 typedef struct _TREEITEM    /* HTREEITEM is a _TREEINFO *. */
@@ -153,10 +155,10 @@ typedef struct tagTREEVIEW_INFO
   int           stateImageWidth;
   HDPA          items;
 
-  DWORD lastKeyPressTimestamp; /* Added */
-  WPARAM charCode; /* Added */
-  INT nSearchParamLength; /* Added */
-  WCHAR szSearchParam[ MAX_PATH ]; /* Added */
+  DWORD lastKeyPressTimestamp;
+  WPARAM charCode;
+  INT nSearchParamLength;
+  WCHAR szSearchParam[ MAX_PATH ];
 } TREEVIEW_INFO;
 
 
@@ -176,14 +178,6 @@ typedef struct tagTREEVIEW_INFO
 
 #define TV_EDIT_TIMER    2
 #define TV_EDIT_TIMER_SET 2
-
-
-VOID TREEVIEW_Register (VOID);
-VOID TREEVIEW_Unregister (VOID);
-
-
-WINE_DEFAULT_DEBUG_CHANNEL(treeview);
-
 
 #define TEXT_CALLBACK_SIZE 260
 
@@ -213,8 +207,6 @@ static LRESULT TREEVIEW_RButtonUp(const TREEVIEW_INFO *, const POINT *);
 static LRESULT TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel);
 static VOID TREEVIEW_UpdateScrollBars(TREEVIEW_INFO *infoPtr);
 static LRESULT TREEVIEW_HScroll(TREEVIEW_INFO *, WPARAM);
-static INT TREEVIEW_NotifyFormat (TREEVIEW_INFO *infoPtr, HWND wParam, UINT lParam);
-
 
 /* Random Utilities *****************************************************/
 
@@ -842,6 +834,23 @@ TREEVIEW_HasChildren(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem)
     return wineItem->cChildren > 0;
 }
 
+static INT TREEVIEW_NotifyFormat (TREEVIEW_INFO *infoPtr, HWND hwndFrom, UINT nCommand)
+{
+    INT format;
+
+    TRACE("(hwndFrom=%p, nCommand=%d)\n", hwndFrom, nCommand);
+
+    if (nCommand != NF_REQUERY) return 0;
+
+    format = SendMessageW(hwndFrom, WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwnd, NF_QUERY);
+    TRACE("format=%d\n", format);
+
+    if (format != NFR_ANSI && format != NFR_UNICODE) return 0;
+
+    infoPtr->bNtfUnicode = (format == NFR_UNICODE);
+
+    return format;
+}
 
 /* Item Position ********************************************************/
 
@@ -5359,24 +5368,6 @@ TREEVIEW_Notify(const TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	return 0;
     }
     return DefWindowProcW(infoPtr->hwnd, WM_NOTIFY, wParam, lParam);
-}
-
-static INT TREEVIEW_NotifyFormat (TREEVIEW_INFO *infoPtr, HWND hwndFrom, UINT nCommand)
-{
-    INT format;
-
-    TRACE("(hwndFrom=%p, nCommand=%d)\n", hwndFrom, nCommand);
-
-    if (nCommand != NF_REQUERY) return 0;
-
-    format = SendMessageW(hwndFrom, WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwnd, NF_QUERY);
-    TRACE("format=%d\n", format);
-
-    if (format != NFR_ANSI && format != NFR_UNICODE) return 0;
-
-    infoPtr->bNtfUnicode = (format == NFR_UNICODE);
-
-    return format;
 }
 
 static LRESULT
