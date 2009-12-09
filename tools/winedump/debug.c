@@ -512,70 +512,72 @@ static const char *get_coff_name( const IMAGE_SYMBOL *coff_sym, const char *coff
    return nampnt;
 }
 
-void	dump_coff(unsigned long coffbase, unsigned long len, const void* pmt)
+static const char* storage_class(BYTE sc)
 {
-    const IMAGE_COFF_SYMBOLS_HEADER *coff = PRD(coffbase, len);
+    static char tmp[7];
+    switch (sc)
+    {
+    case IMAGE_SYM_CLASS_STATIC:        return "static";
+    case IMAGE_SYM_CLASS_EXTERNAL:      return "extrnl";
+    case IMAGE_SYM_CLASS_LABEL:         return "label ";
+    }
+    sprintf(tmp, "#%d", sc);
+    return tmp;
+}
+
+void    dump_coff_symbol_table(const IMAGE_SYMBOL *coff_symbols, unsigned num_sym,
+                               const IMAGE_SECTION_HEADER *sectHead)
+{
     const IMAGE_SYMBOL              *coff_sym;
-    const IMAGE_SYMBOL              *coff_symbols =
-                                        (const IMAGE_SYMBOL *) ((const char *)coff + coff->LvaToFirstSymbol);
-    const char                      *coff_strtab = (const char *) (coff_symbols + coff->NumberOfSymbols);
-    const IMAGE_SECTION_HEADER      *sectHead = pmt;
+    const char                      *coff_strtab = (const char *) (coff_symbols + num_sym);
     unsigned int                    i;
     const char                      *nampnt;
     int                             naux;
 
-    printf("\nDebug table: COFF format. modbase %p, coffbase %p\n", PRD(0, 0), coff);
-    printf("  ID  | seg:offs    [  abs   ] | symbol/function name\n");
-    for(i=0; i < coff->NumberOfSymbols; i++ )
+    printf("\nDebug table: COFF format.\n");
+    printf("  ID  | seg:offs    [  abs   ] |  Kind  | symbol/function name\n");
+    for (i=0; i < num_sym; i++)
     {
-      coff_sym = coff_symbols + i;
-      naux = coff_sym->NumberOfAuxSymbols;
+        coff_sym = coff_symbols + i;
+        naux = coff_sym->NumberOfAuxSymbols;
 
-      if( coff_sym->StorageClass == IMAGE_SYM_CLASS_FILE )
+        switch (coff_sym->StorageClass)
         {
-	  printf("file %s\n", (const char *) (coff_sym + 1));
-          i += naux;
-          continue;
+        case IMAGE_SYM_CLASS_FILE:
+            printf("file %s\n", (const char *) (coff_sym + 1));
+            break;
+        case IMAGE_SYM_CLASS_STATIC:
+        case IMAGE_SYM_CLASS_EXTERNAL:
+        case IMAGE_SYM_CLASS_LABEL:
+            if (coff_sym->SectionNumber > 0)
+            {
+                DWORD base = sectHead[coff_sym->SectionNumber - 1].VirtualAddress;
+                nampnt = get_coff_name( coff_sym, coff_strtab );
+
+                printf("%05d | %02d:%08x [%08x] | %s | %s\n",
+                       i, coff_sym->SectionNumber - 1, coff_sym->Value,
+                       base + coff_sym->Value,
+                       storage_class(coff_sym->StorageClass), nampnt);
+            }
+            break;
+        default:
+            printf("%05d | %s\n", i, storage_class(coff_sym->StorageClass));
         }
-
-      if(    (coff_sym->StorageClass == IMAGE_SYM_CLASS_STATIC)
-          && (naux == 0)
-          && (coff_sym->SectionNumber == 1) )
-        {
-          DWORD base = sectHead[coff_sym->SectionNumber - 1].VirtualAddress;
-          /*
-           * This is a normal static function when naux == 0.
-           * Just register it.  The current file is the correct
-           * one in this instance.
-           */
-          nampnt = get_coff_name( coff_sym, coff_strtab );
-
-          printf("%05d | %02d:%08x [%08x] | %s\n", i, coff_sym->SectionNumber - 1, coff_sym->Value - base, coff_sym->Value, nampnt);
-	  i += naux;
-	  continue;
-	}
-
-      if(    (coff_sym->StorageClass == IMAGE_SYM_CLASS_EXTERNAL)
-          && ISFCN(coff_sym->Type)
-          && (coff_sym->SectionNumber > 0) )
-        {
-          DWORD base = sectHead[coff_sym->SectionNumber - 1].VirtualAddress;
-
-          nampnt = get_coff_name( coff_sym, coff_strtab );
-
-	  /* FIXME: add code to find out the file this symbol belongs to,
-	   * see winedbg */
-          printf("%05d | %02d:%08x [%08x] | %s\n", i, coff_sym->SectionNumber - 1, coff_sym->Value - base, coff_sym->Value, nampnt);
-          i += naux;
-          continue;
-	}
-
-      /*
-       * For now, skip past the aux entries.
-       */
-      i += naux;
-
+        /*
+         * For now, skip past the aux entries.
+         */
+        i += naux;
     }
+}
+
+void	dump_coff(unsigned long coffbase, unsigned long len, const void* pmt)
+{
+    const IMAGE_COFF_SYMBOLS_HEADER *coff = PRD(coffbase, len);
+    const IMAGE_SYMBOL              *coff_symbols =
+                                        (const IMAGE_SYMBOL *) ((const char *)coff + coff->LvaToFirstSymbol);
+    const IMAGE_SECTION_HEADER      *sectHead = pmt;
+
+    dump_coff_symbol_table(coff_symbols, coff->NumberOfSymbols, sectHead);
 }
 
 void	dump_codeview(unsigned long base, unsigned long len)
