@@ -4091,7 +4091,8 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
                 InvalidateRect(infoPtr->hwnd, &tempItem->rect, TRUE);
 
                 /* refresh the selected item to return the filled background */
-                InvalidateRect(infoPtr->hwnd, &(infoPtr->selectedItem->rect), TRUE);
+                if (infoPtr->selectedItem)
+                    InvalidateRect(infoPtr->hwnd, &(infoPtr->selectedItem->rect), TRUE);
             }
 
 	    return 0;
