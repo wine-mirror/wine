@@ -5742,12 +5742,6 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
     glClear(GL_COLOR_BUFFER_BIT);
     checkGLcall("glClear");
 
-    if (swapchain && surface == ((IWineD3DSwapChainImpl *)swapchain)->frontBuffer
-            && ((IWineD3DSwapChainImpl *)swapchain)->backBuffer) {
-        glDrawBuffer(GL_BACK);
-        checkGLcall("glDrawBuffer()");
-    }
-
     LEAVE_GL();
     context_release(context);
 }
