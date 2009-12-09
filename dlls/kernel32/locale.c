@@ -2971,7 +2971,7 @@ void LOCALE_Init(void)
 
 #ifdef __APPLE__
     /* Override lcid_LC_MESSAGES with user_language if LC_MESSAGES is set to default */
-    if (lcid_LC_MESSAGES == lcid_LC_CTYPE && user_language_string_ref)
+    if (user_language_string_ref && !getenv("LC_ALL") && !getenv("LC_MESSAGES"))
     {
         struct locale_name locale_name;
         WCHAR buffer[128];
