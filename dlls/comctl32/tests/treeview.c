@@ -100,7 +100,7 @@ static const struct message focus_seq[] = {
     { 0 }
 };
 
-static const struct message TestGetSetBkColorSeq[] = {
+static const struct message test_get_set_bkcolor_seq[] = {
     { TVM_GETBKCOLOR, sent|wparam|lparam, 0, 0 },
     { TVM_SETBKCOLOR, sent|wparam|lparam, 0, 0 },
     { TVM_GETBKCOLOR, sent|wparam|lparam, 0, 0 },
@@ -110,13 +110,13 @@ static const struct message TestGetSetBkColorSeq[] = {
     { 0 }
 };
 
-static const struct message TestGetSetImageListSeq[] = {
+static const struct message test_get_set_imagelist_seq[] = {
     { TVM_SETIMAGELIST, sent|wparam|lparam, 0, 0 },
     { TVM_GETIMAGELIST, sent|wparam|lparam, 0, 0 },
     { 0 }
 };
 
-static const struct message TestGetSetIndentSeq[] = {
+static const struct message test_get_set_indent_seq[] = {
     { TVM_SETINDENT, sent|wparam|lparam, 0, 0 },
     { TVM_GETINDENT, sent|wparam|lparam, 0, 0 },
     /* The actual amount to indent is dependent on the system for this message */
@@ -125,13 +125,13 @@ static const struct message TestGetSetIndentSeq[] = {
     { 0 }
 };
 
-static const struct message TestGetSetInsertMarkColorSeq[] = {
+static const struct message test_get_set_insertmarkcolor_seq[] = {
     { TVM_SETINSERTMARKCOLOR, sent|wparam|lparam, 0, 0 },
     { TVM_GETINSERTMARKCOLOR, sent|wparam|lparam, 0, 0 },
     { 0 }
 };
 
-static const struct message TestGetSetItemSeq[] = {
+static const struct message test_get_set_item_seq[] = {
     { TVM_GETITEM, sent },
     { TVM_SETITEM, sent },
     { TVM_GETITEM, sent },
@@ -139,7 +139,7 @@ static const struct message TestGetSetItemSeq[] = {
     { 0 }
 };
 
-static const struct message TestGetSetItemHeightSeq[] = {
+static const struct message test_get_set_itemheight_seq[] = {
     { TVM_GETITEMHEIGHT, sent|wparam|lparam, 0, 0 },
     { TVM_SETITEMHEIGHT, sent|wparam|lparam, -1, 0 },
     { TVM_GETITEMHEIGHT, sent|wparam|lparam, 0, 0 },
@@ -150,13 +150,13 @@ static const struct message TestGetSetItemHeightSeq[] = {
     { 0 }
 };
 
-static const struct message TestGetSetScrollTimeSeq[] = {
+static const struct message test_get_set_scrolltime_seq[] = {
     { TVM_SETSCROLLTIME, sent|wparam|lparam, 20, 0 },
     { TVM_GETSCROLLTIME, sent|wparam|lparam, 0, 0 },
     { 0 }
 };
 
-static const struct message TestGetSetTextColorSeq[] = {
+static const struct message test_get_set_textcolor_seq[] = {
     { TVM_GETTEXTCOLOR, sent|wparam|lparam, 0, 0 },
     { TVM_SETTEXTCOLOR, sent|wparam|lparam, 0, 0 },
     { TVM_GETTEXTCOLOR, sent|wparam|lparam, 0, 0 },
@@ -166,7 +166,7 @@ static const struct message TestGetSetTextColorSeq[] = {
     { 0 }
 };
 
-static const struct message TestGetSetToolTipsSeq[] = {
+static const struct message test_get_set_tooltips_seq[] = {
     { WM_KILLFOCUS,    sent },
     { WM_IME_SETCONTEXT, sent|optional },
     { WM_IME_NOTIFY, sent|optional },
@@ -175,7 +175,7 @@ static const struct message TestGetSetToolTipsSeq[] = {
     { 0 }
 };
 
-static const struct message TestGetSetUnicodeFormatSeq[] = {
+static const struct message test_get_set_unicodeformat_seq[] = {
     { TVM_SETUNICODEFORMAT, sent|wparam|lparam, TRUE, 0 },
     { TVM_GETUNICODEFORMAT, sent|wparam|lparam, 0, 0 },
     { TVM_SETUNICODEFORMAT, sent|wparam|lparam, 0, 0 },
@@ -186,7 +186,6 @@ static const struct message TestGetSetUnicodeFormatSeq[] = {
 
 static HWND hMainWnd;
 
-static HWND hTree, hEdit;
 static HTREEITEM hRoot, hChild;
 
 static int pos = 0;
@@ -283,6 +282,7 @@ static void fill_tree(HWND hTree)
 static void test_fillroot(void)
 {
     TVITEM tvi;
+    HWND hTree;
 
     hTree = create_treeview_control();
 
@@ -318,6 +318,7 @@ static void test_callback(void)
     CHAR test_string[] = "Test_string";
     CHAR buf[128];
     LRESULT ret;
+    HWND hTree;
 
     hTree = create_treeview_control();
     fill_tree(hTree);
@@ -379,6 +380,7 @@ static void test_callback(void)
 static void test_select(void)
 {
     BOOL r;
+    HWND hTree;
 
     hTree = create_treeview_control();
     fill_tree(hTree);
@@ -429,6 +431,7 @@ static void test_getitemtext(void)
     TVINSERTSTRUCTA ins;
     HTREEITEM hChild;
     TVITEM tvi;
+    HWND hTree;
 
     CHAR szBuffer[80] = "Blah";
     int nBufferSize = sizeof(szBuffer)/sizeof(CHAR);
@@ -467,6 +470,8 @@ static void test_focus(void)
     static CHAR child1[]  = "Edit",
                 child2[]  = "A really long string";
     HTREEITEM hChild1, hChild2;
+    HWND hTree;
+    HWND hEdit;
 
     hTree = create_treeview_control();
     fill_tree(hTree);
@@ -500,9 +505,15 @@ static void test_focus(void)
     DestroyWindow(hTree);
 }
 
-static void TestGetSetBkColor(void)
+static void test_get_set_bkcolor(void)
 {
     COLORREF crColor = RGB(0,0,0);
+    HWND hTree;
+
+    hTree = create_treeview_control();
+    fill_tree(hTree);
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
 
     /* If the value is -1, the control is using the system color for the background color. */
     crColor = (COLORREF)SendMessage( hTree, TVM_GETBKCOLOR, 0, 0 );
@@ -520,11 +531,22 @@ static void TestGetSetBkColor(void)
 
     /* Reset the default background */
     SendMessage( hTree, TVM_SETBKCOLOR, 0, -1 );
+
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, test_get_set_bkcolor_seq,
+        "test get set bkcolor", FALSE);
+
+    DestroyWindow(hTree);
 }
 
-static void TestGetSetImageList(void)
+static void test_get_set_imagelist(void)
 {
     HIMAGELIST hImageList = NULL;
+    HWND hTree;
+
+    hTree = create_treeview_control();
+    fill_tree(hTree);
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
 
     /* Test a NULL HIMAGELIST */
     SendMessage( hTree, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)hImageList );
@@ -532,13 +554,24 @@ static void TestGetSetImageList(void)
     ok(hImageList == NULL, "NULL image list, reported as 0x%p, expected 0.\n", hImageList);
 
     /* TODO: Test an actual image list */
+
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, test_get_set_imagelist_seq,
+        "test get imagelist", FALSE);
+
+    DestroyWindow(hTree);
 }
 
-static void TestGetSetIndent(void)
+static void test_get_set_indent(void)
 {
     int ulIndent = -1;
     int ulMinIndent = -1;
     int ulMoreThanTwiceMin = -1;
+    HWND hTree;
+
+    hTree = create_treeview_control();
+    fill_tree(hTree);
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
 
     /* Finding the minimum indent */
     SendMessage( hTree, TVM_SETINDENT, 0, 0 );
@@ -549,21 +582,44 @@ static void TestGetSetIndent(void)
     SendMessage( hTree, TVM_SETINDENT, ulMoreThanTwiceMin, 0 );
     ulIndent = (DWORD)SendMessage( hTree, TVM_GETINDENT, 0, 0 );
     ok(ulIndent == ulMoreThanTwiceMin, "Indent reported as %d, expected %d\n", ulIndent, ulMoreThanTwiceMin);
+
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, test_get_set_indent_seq,
+        "test get set indent", FALSE);
+
+    DestroyWindow(hTree);
 }
 
-static void TestGetSetInsertMarkColor(void)
+static void test_get_set_insertmark(void)
 {
     COLORREF crColor = RGB(0,0,0);
+    HWND hTree;
+
+    hTree = create_treeview_control();
+    fill_tree(hTree);
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
+
     SendMessage( hTree, TVM_SETINSERTMARKCOLOR, 0, crColor );
     crColor = (COLORREF)SendMessage( hTree, TVM_GETINSERTMARKCOLOR, 0, 0 );
     ok(crColor == RGB(0,0,0), "Insert mark color reported as 0x%.8x, expected 0x00000000\n", crColor);
+
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, test_get_set_insertmarkcolor_seq,
+        "test get set insertmark color", FALSE);
+
+    DestroyWindow(hTree);
 }
 
-static void TestGetSetItem(void)
+static void test_get_set_item(void)
 {
     TVITEM tviRoot = {0};
     int nBufferSize = 80;
     char szBuffer[80] = {0};
+    HWND hTree;
+
+    hTree = create_treeview_control();
+    fill_tree(hTree);
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
 
     /* Test the root item */
     tviRoot.hItem = hRoot;
@@ -584,12 +640,23 @@ static void TestGetSetItem(void)
     memset(szBuffer, 0, nBufferSize);
     strncpy(szBuffer, "Root", nBufferSize);
     SendMessage( hTree, TVM_SETITEM, 0, (LPARAM)&tviRoot );
+
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, test_get_set_item_seq,
+        "test get set item", FALSE);
+
+    DestroyWindow(hTree);
 }
 
-static void TestGetSetItemHeight(void)
+static void test_get_set_itemheight(void)
 {
     int ulOldHeight = 0;
     int ulNewHeight = 0;
+    HWND hTree;
+
+    hTree = create_treeview_control();
+    fill_tree(hTree);
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
 
     /* Assuming default height to begin with */
     ulOldHeight = (int) SendMessage( hTree, TVM_GETITEMHEIGHT, 0, 0 );
@@ -608,21 +675,45 @@ static void TestGetSetItemHeight(void)
     SendMessage( hTree, TVM_SETITEMHEIGHT, 9, 0 );
     ulNewHeight = (int) SendMessage( hTree, TVM_GETITEMHEIGHT, 0, 0 );
     ok(ulNewHeight == 8, "Uneven height not set properly, reported %d, expected %d\n", ulNewHeight, 8);
+
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, test_get_set_itemheight_seq,
+        "test get set item height", FALSE);
+
+    DestroyWindow(hTree);
 }
 
-static void TestGetSetScrollTime(void)
+static void test_get_set_scrolltime(void)
 {
     int ulExpectedTime = 20;
     int ulTime = 0;
+    HWND hTree;
+
+    hTree = create_treeview_control();
+    fill_tree(hTree);
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
+
     SendMessage( hTree, TVM_SETSCROLLTIME, ulExpectedTime, 0 );
     ulTime = (int)SendMessage( hTree, TVM_GETSCROLLTIME, 0, 0 );
     ok(ulTime == ulExpectedTime, "Scroll time reported as %d, expected %d\n", ulTime, ulExpectedTime);
+
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, test_get_set_scrolltime_seq,
+        "test get set scroll time", FALSE);
+
+    DestroyWindow(hTree);
 }
 
-static void TestGetSetTextColor(void)
+static void test_get_set_textcolor(void)
 {
     /* If the value is -1, the control is using the system color for the text color. */
     COLORREF crColor = RGB(0,0,0);
+    HWND hTree;
+
+    hTree = create_treeview_control();
+    fill_tree(hTree);
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
+
     crColor = (COLORREF)SendMessage( hTree, TVM_GETTEXTCOLOR, 0, 0 );
     ok(crColor == -1, "Default text color reported as 0x%.8x\n", crColor);
 
@@ -638,12 +729,23 @@ static void TestGetSetTextColor(void)
 
     /* Reset the default text color */
     SendMessage( hTree, TVM_SETTEXTCOLOR, 0, -1 );
+
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, test_get_set_textcolor_seq,
+        "test get set text color", FALSE);
+
+    DestroyWindow(hTree);
 }
 
-static void TestGetSetToolTips(void)
+static void test_get_set_tooltips(void)
 {
     HWND hwndLastToolTip = NULL;
     HWND hPopupTreeView;
+    HWND hTree;
+
+    hTree = create_treeview_control();
+    fill_tree(hTree);
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
 
     /* show even WS_POPUP treeview don't send NM_TOOLTIPSCREATED */
     hPopupTreeView = CreateWindow(WC_TREEVIEW, NULL, WS_POPUP|WS_VISIBLE, 0, 0, 100, 100, hMainWnd, NULL, NULL, NULL);
@@ -654,13 +756,23 @@ static void TestGetSetToolTips(void)
     hwndLastToolTip = (HWND)SendMessage( hTree, TVM_GETTOOLTIPS, 0, 0 );
     ok(hwndLastToolTip == NULL, "NULL tool tip, reported as 0x%p, expected 0.\n", hwndLastToolTip);
 
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, test_get_set_tooltips_seq,
+        "test get set tooltips", TRUE);
+
     /* TODO: Add a test of an actual tooltip */
+    DestroyWindow(hTree);
 }
 
-static void TestGetSetUnicodeFormat(void)
+static void test_get_set_unicodeformat(void)
 {
     BOOL bPreviousSetting = 0;
     BOOL bNewSetting = 0;
+    HWND hTree;
+
+    hTree = create_treeview_control();
+    fill_tree(hTree);
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
 
     /* Set to Unicode */
     bPreviousSetting = (BOOL)SendMessage( hTree, TVM_SETUNICODEFORMAT, 1, 0 );
@@ -674,72 +786,9 @@ static void TestGetSetUnicodeFormat(void)
 
     /* Revert to original setting */
     SendMessage( hTree, TVM_SETUNICODEFORMAT, (LPARAM)bPreviousSetting, 0 );
-}
 
-static void test_getset(void)
-{
-    hTree = create_treeview_control();
-    fill_tree(hTree);
-
-    /* TVM_GETBKCOLOR and TVM_SETBKCOLOR */
-    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
-    TestGetSetBkColor();
-    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetBkColorSeq,
-        "TestGetSetBkColor", FALSE);
-
-    /* TVM_GETIMAGELIST and TVM_SETIMAGELIST */
-    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
-    TestGetSetImageList();
-    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetImageListSeq,
-        "TestGetImageList", FALSE);
-
-    /* TVM_SETINDENT and TVM_GETINDENT */
-    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
-    TestGetSetIndent();
-    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetIndentSeq,
-        "TestGetSetIndent", FALSE);
-
-    /* TVM_GETINSERTMARKCOLOR and TVM_GETINSERTMARKCOLOR */
-    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
-    TestGetSetInsertMarkColor();
-    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetInsertMarkColorSeq,
-        "TestGetSetInsertMarkColor", FALSE);
-
-    /* TVM_GETITEM and TVM_SETITEM */
-    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
-    TestGetSetItem();
-    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetItemSeq,
-        "TestGetSetItem", FALSE);
-
-    /* TVM_GETITEMHEIGHT and TVM_SETITEMHEIGHT */
-    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
-    TestGetSetItemHeight();
-    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetItemHeightSeq,
-        "TestGetSetItemHeight", FALSE);
-
-    /* TVM_GETSCROLLTIME and TVM_SETSCROLLTIME */
-    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
-    TestGetSetScrollTime();
-    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetScrollTimeSeq,
-        "TestGetSetScrollTime", FALSE);
-
-    /* TVM_GETTEXTCOLOR and TVM_SETTEXTCOLOR */
-    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
-    TestGetSetTextColor();
-    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetTextColorSeq,
-        "TestGetSetTextColor", FALSE);
-
-    /* TVM_GETTOOLTIPS and TVM_SETTOOLTIPS */
-    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
-    TestGetSetToolTips();
-    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetToolTipsSeq,
-        "TestGetSetToolTips", TRUE);
-
-    /* TVM_GETUNICODEFORMAT and TVM_SETUNICODEFORMAT */
-    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
-    TestGetSetUnicodeFormat();
-    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetUnicodeFormatSeq,
-        "TestGetSetUnicodeFormat", FALSE);
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, test_get_set_unicodeformat_seq,
+        "test get set unicode format", FALSE);
 
     DestroyWindow(hTree);
 }
@@ -796,6 +845,7 @@ static void test_expandinvisible(void)
     RECT dummyRect;
     BOOL nodeVisible;
     LRESULT ret;
+    HWND hTree;
 
     hTree = create_treeview_control();
 
@@ -868,6 +918,7 @@ static void test_itemedit(void)
     HWND edit;
     TVITEMA item;
     CHAR buff[2];
+    HWND hTree;
 
     hTree = create_treeview_control();
     fill_tree(hTree);
@@ -972,7 +1023,6 @@ START_TEST(treeview)
     wc.lpfnWndProc = MyWndProc;
     RegisterClassA(&wc);
 
-
     hMainWnd = CreateWindowExA(0, "MyTestWnd", "Blah", WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, CW_USEDEFAULT, 130, 105, NULL, NULL, GetModuleHandleA(NULL), 0);
 
@@ -983,7 +1033,16 @@ START_TEST(treeview)
     test_select();
     test_getitemtext();
     test_focus();
-    test_getset();
+    test_get_set_bkcolor();
+    test_get_set_imagelist();
+    test_get_set_indent();
+    test_get_set_insertmark();
+    test_get_set_item();
+    test_get_set_itemheight();
+    test_get_set_scrolltime();
+    test_get_set_textcolor();
+    test_get_set_tooltips();
+    test_get_set_unicodeformat();
     test_callback();
     test_expandinvisible();
     test_itemedit();
