@@ -187,7 +187,13 @@ static void do_dumpall(const char *arg)
 {
     globals.do_dumpheader = 1;
     globals.do_dump_rawdata = 1;
+    globals.do_symbol_table = 1;
     globals.dumpsect = "ALL";
+}
+
+static void do_symtable(const char* arg)
+{
+    globals.do_symbol_table = 1;
 }
 
 struct my_option
@@ -222,6 +228,7 @@ static const struct my_option option_table[] = {
   {"-f",    DUMP, 0, do_dumphead, "-f           Dumps file header information"},
   {"-G",    DUMP, 0, do_rawdebug, "-G           Dumps raw debug information"},
   {"-j",    DUMP, 1, do_dumpsect, "-j sect_name Dumps only the content of section sect_name (import, export, debug, resource, tls, clr)"},
+  {"-t",    DUMP, 0, do_symtable, "-t           Dumps symbol table"},
   {"-x",    DUMP, 0, do_dumpall,  "-x           Dumps everything"},
   {NULL,    NONE, 0, NULL,        NULL}
 };

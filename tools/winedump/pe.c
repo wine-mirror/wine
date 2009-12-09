@@ -1399,6 +1399,24 @@ static void dump_debug(void)
         dump_stabs(stabs, szstabs, stabstr, szstr);
 }
 
+static void dump_symbol_table(void)
+{
+    const IMAGE_SYMBOL* sym;
+    int                 numsym;
+    const char*         strtable;
+
+    numsym = PE_nt_headers->FileHeader.NumberOfSymbols;
+    if (!PE_nt_headers->FileHeader.PointerToSymbolTable || !numsym)
+        return;
+    sym = (const IMAGE_SYMBOL*)PRD(PE_nt_headers->FileHeader.PointerToSymbolTable,
+                                   sizeof(*sym) * numsym);
+    if (!sym) return;
+    /* FIXME: no way to get strtable size */
+    strtable = (const char*)&sym[numsym];
+
+    dump_coff_symbol_table(sym, numsym, IMAGE_FIRST_SECTION(PE_nt_headers));
+}
+
 enum FileSig get_kind_exec(void)
 {
     const WORD*                pw;
@@ -1468,6 +1486,8 @@ void pe_dump(void)
 	if (all || !strcmp(globals.dumpsect, "except"))
 	    dump_dir_exceptions();
     }
+    if (globals.do_symbol_table)
+        dump_symbol_table();
     if (globals.do_debug)
         dump_debug();
 }
