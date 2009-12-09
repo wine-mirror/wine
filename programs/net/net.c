@@ -30,7 +30,7 @@ static int output_string(int msg, ...)
     char msg_buffer[8192];
     va_list arguments;
 
-    LoadString(GetModuleHandle(NULL), msg, msg_buffer, sizeof(msg_buffer));
+    LoadStringA(GetModuleHandleW(NULL), msg, msg_buffer, sizeof(msg_buffer));
     va_start(arguments, msg);
     vprintf(msg_buffer, arguments);
     va_end(arguments);
@@ -92,24 +92,24 @@ static BOOL net_use(int argc, char *argv[])
 
 static BOOL StopService(SC_HANDLE SCManager, SC_HANDLE serviceHandle)
 {
-    LPENUM_SERVICE_STATUS dependencies = NULL;
+    LPENUM_SERVICE_STATUSW dependencies = NULL;
     DWORD buffer_size = 0;
     DWORD count = 0, counter;
     BOOL result;
     SC_HANDLE dependent_serviceHandle;
     SERVICE_STATUS_PROCESS ssp;
 
-    result = EnumDependentServices(serviceHandle, SERVICE_ACTIVE, dependencies, buffer_size, &buffer_size, &count);
+    result = EnumDependentServicesW(serviceHandle, SERVICE_ACTIVE, dependencies, buffer_size, &buffer_size, &count);
 
     if(!result && (GetLastError() == ERROR_MORE_DATA))
     {
         dependencies = HeapAlloc(GetProcessHeap(), 0, buffer_size);
-        if(EnumDependentServices(serviceHandle, SERVICE_ACTIVE, dependencies, buffer_size, &buffer_size, &count))
+        if(EnumDependentServicesW(serviceHandle, SERVICE_ACTIVE, dependencies, buffer_size, &buffer_size, &count))
         {
             for(counter = 0; counter < count; counter++)
             {
                 output_string(STRING_STOP_DEP, dependencies[counter].lpDisplayName);
-                dependent_serviceHandle = OpenService(SCManager, dependencies[counter].lpServiceName, SC_MANAGER_ALL_ACCESS);
+                dependent_serviceHandle = OpenServiceW(SCManager, dependencies[counter].lpServiceName, SC_MANAGER_ALL_ACCESS);
                 if(dependent_serviceHandle) result = StopService(SCManager, dependent_serviceHandle);
                 CloseServiceHandle(dependent_serviceHandle);
                 if(!result) output_string(STRING_CANT_STOP, dependencies[counter].lpDisplayName);
@@ -129,13 +129,13 @@ static BOOL net_service(int operation, char *service_name)
     char service_display_name[4096];
     DWORD buffer_size = sizeof(service_display_name);
 
-    SCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    SCManager = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if(!SCManager)
     {
         output_string(STRING_NO_SCM);
         return FALSE;
     }
-    serviceHandle = OpenService(SCManager, service_name, SC_MANAGER_ALL_ACCESS);
+    serviceHandle = OpenServiceA(SCManager, service_name, SC_MANAGER_ALL_ACCESS);
     if(!serviceHandle)
     {
         output_string(STRING_NO_SVCHANDLE);
@@ -144,14 +144,14 @@ static BOOL net_service(int operation, char *service_name)
     }
 
 
-    GetServiceDisplayName(SCManager, service_name, service_display_name, &buffer_size);
+    GetServiceDisplayNameA(SCManager, service_name, service_display_name, &buffer_size);
     if (!service_display_name[0]) strcpy(service_display_name, service_name);
 
     switch(operation)
     {
     case NET_START:
         output_string(STRING_START_SVC, service_display_name);
-        result = StartService(serviceHandle, 0, NULL);
+        result = StartServiceW(serviceHandle, 0, NULL);
 
         if(result) output_string(STRING_START_SVC_SUCCESS, service_display_name);
         else
