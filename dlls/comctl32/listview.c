@@ -2834,6 +2834,8 @@ static INT LISTVIEW_CalculateItemWidth(const LISTVIEW_INFO *infoPtr)
 	    nItemWidth += WIDTH_PADDING;
     }
 
+    TRACE("nItemWidth=%d\n", nItemWidth);
+
     return nItemWidth;
 }
 
@@ -7476,7 +7478,7 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
     TRACE(" inserting at %d, sorted=%d, count=%d, iItem=%d\n", nItem, is_sorted, infoPtr->nItemCount, lpLVItem->iItem);
     nItem = DPA_InsertPtr( infoPtr->hdpaItems, nItem, hdpaSubItems );
     if (nItem == -1) goto fail;
-    if (infoPtr->nItemCount++ == 0) LISTVIEW_UpdateItemSize(infoPtr);
+    if (++infoPtr->nItemCount > 0) LISTVIEW_UpdateItemSize(infoPtr);
 
     /* shift indices first so they don't get tangled */
     LISTVIEW_ShiftIndices(infoPtr, nItem, 1);
