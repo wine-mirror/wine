@@ -117,10 +117,54 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc(IDXGIOutput *iface, DXGI_OU
 static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *iface,
         DXGI_FORMAT format, UINT flags, UINT *mode_count, DXGI_MODE_DESC *desc)
 {
-    FIXME("iface %p, format %s, flags %#x, mode_count %p, desc %p stub!\n",
+    struct dxgi_output *This = (struct dxgi_output *)iface;
+    WINED3DFORMAT wined3d_format;
+    IWineD3D *wined3d;
+    UINT i;
+
+    TRACE("iface %p, format %s, flags %#x, mode_count %p, desc %p.\n",
             iface, debug_dxgi_format(format), flags, mode_count, desc);
 
-    return E_NOTIMPL;
+    wined3d = IWineDXGIFactory_get_wined3d(This->adapter->parent);
+    wined3d_format = wined3dformat_from_dxgi_format(format);
+
+    if (!desc)
+    {
+        EnterCriticalSection(&dxgi_cs);
+        *mode_count = IWineD3D_GetAdapterModeCount(wined3d, This->adapter->ordinal, wined3d_format);
+        IWineD3D_Release(wined3d);
+        LeaveCriticalSection(&dxgi_cs);
+
+        return S_OK;
+    }
+
+    EnterCriticalSection(&dxgi_cs);
+    for (i = 0; i < *mode_count; ++i)
+    {
+        WINED3DDISPLAYMODE mode;
+        HRESULT hr;
+
+        hr = IWineD3D_EnumAdapterModes(wined3d, This->adapter->ordinal, wined3d_format, i, &mode);
+        if (FAILED(hr))
+        {
+            WARN("EnumAdapterModes failed, hr %#x.\n", hr);
+            IWineD3D_Release(wined3d);
+            LeaveCriticalSection(&dxgi_cs);
+            return hr;
+        }
+
+        desc[i].Width = mode.Width;
+        desc[i].Height = mode.Height;
+        desc[i].RefreshRate.Numerator = mode.RefreshRate;
+        desc[i].RefreshRate.Denominator = 1;
+        desc[i].Format = format;
+        desc[i].ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED; /* FIXME */
+        desc[i].Scaling = DXGI_MODE_SCALING_UNSPECIFIED; /* FIXME */
+    }
+    IWineD3D_Release(wined3d);
+    LeaveCriticalSection(&dxgi_cs);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_output_FindClosestMatchingMode(IDXGIOutput *iface,
