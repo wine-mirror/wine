@@ -374,6 +374,16 @@ void WINAPI IoFreeIrp( IRP *irp )
 
 
 /***********************************************************************
+ *           IoAllocateErrorLogEntry  (NTOSKRNL.EXE.@)
+ */
+PVOID WINAPI IoAllocateErrorLogEntry( PVOID IoObject, UCHAR EntrySize )
+{
+    FIXME( "stub: %p, %u\n", IoObject, EntrySize );
+    return NULL;
+}
+
+
+/***********************************************************************
  *           IoAllocateMdl  (NTOSKRNL.EXE.@)
  */
 PMDL WINAPI IoAllocateMdl( PVOID VirtualAddress, ULONG Length, BOOLEAN SecondaryBuffer, BOOLEAN ChargeQuota, PIRP Irp )

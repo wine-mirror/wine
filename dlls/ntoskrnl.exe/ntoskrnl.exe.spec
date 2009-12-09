@@ -310,7 +310,7 @@
 @ stub IoAllocateAdapterChannel
 @ stub IoAllocateController
 @ stdcall IoAllocateDriverObjectExtension(ptr ptr long ptr)
-@ stub IoAllocateErrorLogEntry
+@ stdcall IoAllocateErrorLogEntry(ptr long)
 @ stdcall IoAllocateIrp(long long)
 @ stdcall IoAllocateMdl(ptr long long long ptr)
 @ stdcall IoAllocateWorkItem(ptr)
