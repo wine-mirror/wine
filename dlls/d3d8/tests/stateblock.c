@@ -1745,7 +1745,7 @@ static void resource_test_data_init(IDirect3DDevice8 *device,
 
 static void resource_poison_data_init(struct resource_test_data *data, const struct resource_test_arg *arg)
 {
-    DWORD poison = 0xdeadbeef;
+    DWORD_PTR poison = 0xdeadbeef;
     unsigned int i;
 
     data->vs = poison++;
