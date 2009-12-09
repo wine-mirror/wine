@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = cmd.exe
 APPMODE   = -mconsole -municode
-EXTRADEFS = -DUNICODE
+EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 IMPORTS   = shell32 user32 advapi32 kernel32
 
 C_SRCS = \

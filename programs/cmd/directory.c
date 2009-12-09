@@ -123,8 +123,8 @@ static WCHAR * WCMD_filesize64 (ULONGLONG n) {
  */
 static int WCMD_dir_sort (const void *a, const void *b)
 {
-  WIN32_FIND_DATA *filea = (WIN32_FIND_DATA *)a;
-  WIN32_FIND_DATA *fileb = (WIN32_FIND_DATA *)b;
+  WIN32_FIND_DATAW *filea = (WIN32_FIND_DATAW *)a;
+  WIN32_FIND_DATAW *fileb = (WIN32_FIND_DATAW *)b;
   int result = 0;
 
   /* If /OG or /O-G supplied, dirs go at the top or bottom, ignoring the
@@ -211,7 +211,7 @@ static void WCMD_getfileowner(WCHAR *filename, WCHAR *owner, int ownerlen) {
     *owner = 0x00;
 
     /* Find out how much space we need for the owner security descriptor */
-    GetFileSecurity(filename, OWNER_SECURITY_INFORMATION, 0, 0, &sizeNeeded);
+    GetFileSecurityW(filename, OWNER_SECURITY_INFORMATION, 0, 0, &sizeNeeded);
     rc = GetLastError();
 
     if(rc == ERROR_INSUFFICIENT_BUFFER && sizeNeeded > 0) {
@@ -227,7 +227,7 @@ static void WCMD_getfileowner(WCHAR *filename, WCHAR *owner, int ownerlen) {
         if(!secBuffer) return;
 
         /* Get the owners security descriptor */
-        if(!GetFileSecurity(filename, OWNER_SECURITY_INFORMATION, secBuffer,
+        if(!GetFileSecurityW(filename, OWNER_SECURITY_INFORMATION, secBuffer,
                             sizeNeeded, &sizeNeeded)) {
             HeapFree(GetProcessHeap(),0,secBuffer);
             return;
@@ -240,7 +240,7 @@ static void WCMD_getfileowner(WCHAR *filename, WCHAR *owner, int ownerlen) {
         }
 
         /* Convert to a username */
-        if (LookupAccountSid(NULL, pSID, name, &nameLen, domain, &domainLen, &nameuse)) {
+        if (LookupAccountSidW(NULL, pSID, name, &nameLen, domain, &domainLen, &nameuse)) {
             static const WCHAR fmt[]  = {'%','s','%','c','%','s','\0'};
             snprintfW(owner, ownerlen, fmt, domain, '\\', name);
         }
@@ -262,7 +262,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
 
   WCHAR string[1024], datestring[32], timestring[32];
   WCHAR real_path[MAX_PATH];
-  WIN32_FIND_DATA *fd;
+  WIN32_FIND_DATAW *fd;
   FILETIME ft;
   SYSTEMTIME st;
   HANDLE hff;
@@ -294,7 +294,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
      same directory. Note issuing a directory header with no contents
      mirrors what windows does                                            */
   parms = inputparms;
-  fd = HeapAlloc(GetProcessHeap(),0,sizeof(WIN32_FIND_DATA));
+  fd = HeapAlloc(GetProcessHeap(),0,sizeof(WIN32_FIND_DATAW));
   while (parms && strcmpW(inputparms->dirName, parms->dirName) == 0) {
     concurrentDirs++;
 
@@ -304,7 +304,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
 
     /* Load all files into an in memory structure */
     WINE_TRACE("Looking for matches to '%s'\n", wine_dbgstr_w(real_path));
-    hff = FindFirstFile (real_path, (fd+entry_count));
+    hff = FindFirstFileW(real_path, (fd+entry_count));
     if (hff != INVALID_HANDLE_VALUE) {
       do {
         /* Skip any which are filtered out by attribute */
@@ -319,14 +319,14 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
            if (tmpLen > widest) widest = tmpLen;
         }
 
-        fd = HeapReAlloc(GetProcessHeap(),0,fd,(entry_count+1)*sizeof(WIN32_FIND_DATA));
+        fd = HeapReAlloc(GetProcessHeap(),0,fd,(entry_count+1)*sizeof(WIN32_FIND_DATAW));
         if (fd == NULL) {
           FindClose (hff);
           WINE_ERR("Out of memory\n");
           errorlevel = 1;
           return parms->next;
         }
-      } while (FindNextFile(hff, (fd+entry_count)) != 0);
+      } while (FindNextFileW(hff, (fd+entry_count)) != 0);
       FindClose (hff);
     }
 
@@ -353,7 +353,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
   if (entry_count > 0) {
 
     /* Sort the list of files */
-    qsort (fd, entry_count, sizeof(WIN32_FIND_DATA), WCMD_dir_sort);
+    qsort (fd, entry_count, sizeof(WIN32_FIND_DATAW), WCMD_dir_sort);
 
     /* Work out the number of columns */
     WINE_TRACE("%d entries, maxwidth=%d, widest=%d\n", entry_count, max_width, widest);
@@ -402,9 +402,9 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
         FileTimeToLocalFileTime (&(fd+i)->ftCreationTime, &ft);
       }
       FileTimeToSystemTime (&ft, &st);
-      GetDateFormat (0, DATE_SHORTDATE, &st, NULL, datestring,
+      GetDateFormatW(0, DATE_SHORTDATE, &st, NULL, datestring,
 			sizeof(datestring)/sizeof(WCHAR));
-      GetTimeFormat (0, TIME_NOSECONDS, &st,
+      GetTimeFormatW(0, TIME_NOSECONDS, &st,
 			NULL, timestring, sizeof(timestring)/sizeof(WCHAR));
 
       if (wide) {
@@ -520,14 +520,14 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
   if (recurse) {
     DIRECTORY_STACK *dirStack = NULL;
     DIRECTORY_STACK *lastEntry = NULL;
-    WIN32_FIND_DATA finddata;
+    WIN32_FIND_DATAW finddata;
 
     /* Build path to search */
     strcpyW(string, inputparms->dirName);
     strcatW(string, starW);
 
     WINE_TRACE("Recursive, looking for '%s'\n", wine_dbgstr_w(string));
-    hff = FindFirstFile (string, &finddata);
+    hff = FindFirstFileW(string, &finddata);
     if (hff != INVALID_HANDLE_VALUE) {
       do {
         if ((finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
@@ -563,7 +563,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
             parms = parms->next;
           }
         }
-      } while (FindNextFile(hff, &finddata) != 0);
+      } while (FindNextFileW(hff, &finddata) != 0);
       FindClose (hff);
 
       while (dirStack != NULL) {
@@ -601,7 +601,7 @@ static void WCMD_dir_trailer(WCHAR drive) {
     WCHAR driveName[4] = {'c',':','\\','\0'};
 
     driveName[0] = drive;
-    status = GetDiskFreeSpaceEx (driveName, &avail, &total, &freebytes);
+    status = GetDiskFreeSpaceExW(driveName, &avail, &total, &freebytes);
     WINE_TRACE("Writing trailer for '%s' gave %d(%d)\n", wine_dbgstr_w(driveName),
                status, GetLastError());
 
@@ -654,7 +654,7 @@ void WCMD_directory (WCHAR *cmd) {
   errorlevel = 0;
 
   /* Prefill quals with (uppercased) DIRCMD env var */
-  if (GetEnvironmentVariable (dircmdW, string, sizeof(string)/sizeof(WCHAR))) {
+  if (GetEnvironmentVariableW(dircmdW, string, sizeof(string)/sizeof(WCHAR))) {
     p = string;
     while ( (*p = toupper(*p)) ) ++p;
     strcatW(string,quals);
@@ -833,7 +833,7 @@ void WCMD_directory (WCHAR *cmd) {
   argno         = 0;
   argsProcessed = 0;
   argN          = cmd;
-  GetCurrentDirectory (MAX_PATH, cwd);
+  GetCurrentDirectoryW(MAX_PATH, cwd);
   strcatW(cwd, slashW);
 
   /* Loop through all args, calculating full effective directory */
@@ -850,10 +850,10 @@ void WCMD_directory (WCHAR *cmd) {
       } else if (thisArg[1] == ':' && thisArg[2] != '\\') {
         WCHAR envvar[4];
         static const WCHAR envFmt[] = {'=','%','c',':','\0'};
-        wsprintf(envvar, envFmt, thisArg[0]);
-        if (!GetEnvironmentVariable(envvar, fullname, MAX_PATH)) {
+        wsprintfW(envvar, envFmt, thisArg[0]);
+        if (!GetEnvironmentVariableW(envvar, fullname, MAX_PATH)) {
           static const WCHAR noEnvFmt[] = {'%','c',':','\0'};
-          wsprintf(fullname, noEnvFmt, thisArg[0]);
+          wsprintfW(fullname, noEnvFmt, thisArg[0]);
         }
         strcatW(fullname, slashW);
         strcatW(fullname, &thisArg[2]);
@@ -866,7 +866,7 @@ void WCMD_directory (WCHAR *cmd) {
       }
       WINE_TRACE("Using location '%s'\n", wine_dbgstr_w(fullname));
 
-      status = GetFullPathName (fullname, sizeof(path)/sizeof(WCHAR), path, NULL);
+      status = GetFullPathNameW(fullname, sizeof(path)/sizeof(WCHAR), path, NULL);
 
       /*
        *  If the path supplied does not include a wildcard, and the endpoint of the
@@ -874,7 +874,7 @@ void WCMD_directory (WCHAR *cmd) {
        *  directory not the directory file itself.
        */
       if ((strchrW(path, '*') == NULL) && (strchrW(path, '%') == NULL)) {
-        status = GetFileAttributes (path);
+        status = GetFileAttributesW(path);
         if ((status != INVALID_FILE_ATTRIBUTES) && (status & FILE_ATTRIBUTE_DIRECTORY)) {
           if (path[strlenW(path)-1] == '\\') {
             strcatW (path, starW);

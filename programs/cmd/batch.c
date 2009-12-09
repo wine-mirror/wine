@@ -61,16 +61,16 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
     for(i=0; (i<sizeof(extension_batch)/(WCMD_BATCH_EXT_SIZE * sizeof(WCHAR))) &&
              (h == INVALID_HANDLE_VALUE); i++) {
       strcpyW (string, file);
-      CharLower (string);
+      CharLowerW (string);
       if (strstrW (string, extension_batch[i]) == NULL) strcatW (string, extension_batch[i]);
-      h = CreateFile (string, GENERIC_READ, FILE_SHARE_READ,
+      h = CreateFileW (string, GENERIC_READ, FILE_SHARE_READ,
                       NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     }
     if (h == INVALID_HANDLE_VALUE) {
       strcpyW (string, file);
-      CharLower (string);
+      CharLowerW (string);
       if (strstrW (string, extension_exe) == NULL) strcatW (string, extension_exe);
-      if (GetFileAttributes (string) != INVALID_FILE_ATTRIBUTES) {
+      if (GetFileAttributesW (string) != INVALID_FILE_ATTRIBUTES) {
         WCMD_run_program (command, 0);
       } else {
         SetLastError (ERROR_FILE_NOT_FOUND);
@@ -425,9 +425,8 @@ void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable, WCHAR *forValu
     env[(end-start)] = 0x00;
 
     /* If env var not found, return empty string */
-    if ((GetEnvironmentVariable(env, fullpath, MAX_PATH) == 0) ||
-        (SearchPath(fullpath, outputparam, NULL,
-                    MAX_PATH, outputparam, NULL) == 0)) {
+    if ((GetEnvironmentVariableW(env, fullpath, MAX_PATH) == 0) ||
+        (SearchPathW(fullpath, outputparam, NULL, MAX_PATH, outputparam, NULL) == 0)) {
       finaloutput[0] = 0x00;
       outputparam[0] = 0x00;
       skipFileParsing = TRUE;
@@ -437,7 +436,7 @@ void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable, WCHAR *forValu
   /* After this, we need full information on the file,
     which is valid not to exist.  */
   if (!skipFileParsing) {
-    if (GetFullPathName(outputparam, MAX_PATH, fullfilename, NULL) == 0)
+    if (GetFullPathNameW(outputparam, MAX_PATH, fullfilename, NULL) == 0)
       return;
 
     exists = GetFileAttributesExW(fullfilename, GetFileExInfoStandard,
@@ -480,11 +479,11 @@ void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable, WCHAR *forValu
 
       /* Format the time */
       FileTimeToSystemTime(&fileInfo.ftLastWriteTime, &systime);
-      GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &systime,
+      GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &systime,
                         NULL, thisoutput, MAX_PATH);
       strcatW(thisoutput, space);
       datelen = strlenW(thisoutput);
-      GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &systime,
+      GetTimeFormatW(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &systime,
                         NULL, (thisoutput+datelen), MAX_PATH-datelen);
       strcatW(finaloutput, thisoutput);
     }
@@ -499,7 +498,7 @@ void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable, WCHAR *forValu
 
       doneModifier = TRUE;
       if (finaloutput[0] != 0x00) strcatW(finaloutput, space);
-      wsprintf(thisoutput, fmt, fullsize);
+      wsprintfW(thisoutput, fmt, fullsize);
       strcatW(finaloutput, thisoutput);
     }
 
@@ -507,8 +506,7 @@ void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable, WCHAR *forValu
     if (memchrW(firstModifier, 's', modifierLen) != NULL) {
       if (finaloutput[0] != 0x00) strcatW(finaloutput, space);
       /* Don't flag as doneModifier - %~s on its own is processed later */
-      GetShortPathName(outputparam, outputparam,
-                       sizeof(outputparam)/sizeof(outputparam[0]));
+      GetShortPathNameW(outputparam, outputparam, sizeof(outputparam)/sizeof(outputparam[0]));
     }
 
     /* 5. Handle 'f' : Fully qualified path (File doesn't have to exist) */
