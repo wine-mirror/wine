@@ -15409,6 +15409,14 @@ dlls/mlang/tests/Makefile: dlls/mlang/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/mlang/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/mmdevapi/Makefile"
+test "x$enable_mmdevapi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	mmdevapi"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/mmdevapi/Makefile: dlls/mmdevapi/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/mmdevapi/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mmdevldr.vxd/Makefile"
 test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	mmdevldr.vxd"
@@ -19040,6 +19048,7 @@ do
     "dlls/midimap/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/midimap/Makefile" ;;
     "dlls/mlang/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mlang/Makefile" ;;
     "dlls/mlang/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mlang/tests/Makefile" ;;
+    "dlls/mmdevapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mmdevapi/Makefile" ;;
     "dlls/mmdevldr.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mmdevldr.vxd/Makefile" ;;
     "dlls/mmsystem.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mmsystem.dll16/Makefile" ;;
     "dlls/monodebg.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/monodebg.vxd/Makefile" ;;

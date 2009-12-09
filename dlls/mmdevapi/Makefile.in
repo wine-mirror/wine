@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = mmdevapi.dll
+IMPORTS   = ole32 user32 advapi32 kernel32 ntdll
+
+C_SRCS = \
+	main.c \
+	regsvr.c
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
