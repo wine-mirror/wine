@@ -368,7 +368,7 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
         /* In general indirect rendering on a local X11 server indicates a driver problem.
          * Detect a local X11 server by checking whether the X11 socket is a Unix socket.
          */
-        if(!getsockname(fd, &uaddr, &uaddrlen) && uaddr.sun_family == AF_UNIX)
+        if(!getsockname(fd, (struct sockaddr *)&uaddr, &uaddrlen) && uaddr.sun_family == AF_UNIX)
             ERR_(winediag)("Direct rendering is disabled, most likely your OpenGL drivers haven't been installed correctly\n");
     }
 
