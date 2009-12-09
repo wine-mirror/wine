@@ -2227,7 +2227,7 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) {
  *********************************************************************/
 BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4])
 {
-    const struct wined3d_gl_info *gl_info = &This->resource.wineD3DDevice->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &This->resource.device->adapter->gl_info;
     int x1 = Rect->left, x2 = Rect->right;
     int y1 = Rect->top, y2 = Rect->bottom;
     GLint maxSize = gl_info->limits.texture_size;
@@ -2386,7 +2386,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
     unsigned int i;
     DWORD ttff;
     DWORD cop, aop, carg0, carg1, carg2, aarg0, aarg1, aarg2;
-    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
+    IWineD3DDeviceImpl *device = stateblock->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     for (i = 0; i < gl_info->limits.texture_stages; ++i)
@@ -2703,7 +2703,7 @@ void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock
 void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     DWORD sampler = state - STATE_SAMPLER(0);
-    DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[sampler];
+    DWORD mapped_stage = stateblock->device->texUnitMap[sampler];
 
     /* No need to enable / disable anything here for unused samplers. The tex_colorop
     * handler takes care. Also no action is needed with pixel shaders, or if tex_colorop

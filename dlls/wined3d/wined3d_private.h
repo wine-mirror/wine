@@ -1631,7 +1631,7 @@ typedef struct IWineD3DResourceClass
     /* WineD3DResource Information */
     IUnknown               *parent;
     WINED3DRESOURCETYPE     resourceType;
-    IWineD3DDeviceImpl     *wineD3DDevice;
+    IWineD3DDeviceImpl *device;
     WINED3DPOOL             pool;
     UINT                    size;
     DWORD                   usage;
@@ -2133,7 +2133,7 @@ typedef struct IWineD3DVertexDeclarationImpl {
 
     IUnknown                *parent;
     const struct wined3d_parent_ops *parent_ops;
-    IWineD3DDeviceImpl      *wineD3DDevice;
+    IWineD3DDeviceImpl *device;
 
     struct wined3d_vertex_declaration_element *elements;
     UINT element_count;
@@ -2193,7 +2193,7 @@ struct IWineD3DStateBlockImpl
     LONG                      ref;     /* Note: Ref counting not required */
 
     /* IWineD3DStateBlock information */
-    IWineD3DDeviceImpl       *wineD3DDevice;
+    IWineD3DDeviceImpl *device;
     WINED3DSTATEBLOCKTYPE     blockType;
 
     /* Array indicating whether things have been set or changed */
@@ -2313,7 +2313,7 @@ typedef struct IWineD3DQueryImpl
     LONG                      ref;     /* Note: Ref counting not required */
 
     IUnknown                 *parent;
-    IWineD3DDeviceImpl       *wineD3DDevice;
+    IWineD3DDeviceImpl *device;
 
     /* IWineD3DQuery fields */
     enum query_state         state;
@@ -2401,7 +2401,7 @@ typedef struct IWineD3DSwapChainImpl
     LONG                      ref;     /* Note: Ref counting not required */
 
     IUnknown                 *parent;
-    IWineD3DDeviceImpl       *wineD3DDevice;
+    IWineD3DDeviceImpl *device;
 
     /* IWineD3DSwapChain fields */
     IWineD3DSurface         **backBuffer;
@@ -2790,7 +2790,7 @@ struct IWineD3DPaletteImpl {
     LONG                       ref;
 
     IUnknown                   *parent;
-    IWineD3DDeviceImpl         *wineD3DDevice;
+    IWineD3DDeviceImpl *device;
 
     /* IWineD3DPalette */
     HPALETTE                   hpal;
@@ -2866,13 +2866,12 @@ static inline BOOL use_vs(IWineD3DStateBlockImpl *stateblock)
      * style strided data. */
     return (stateblock->vertexShader
             && !((IWineD3DVertexDeclarationImpl *)stateblock->vertexDecl)->position_transformed
-            && stateblock->wineD3DDevice->vs_selected_mode != SHADER_NONE);
+            && stateblock->device->vs_selected_mode != SHADER_NONE);
 }
 
 static inline BOOL use_ps(IWineD3DStateBlockImpl *stateblock)
 {
-    return (stateblock->pixelShader
-            && stateblock->wineD3DDevice->ps_selected_mode != SHADER_NONE);
+    return (stateblock->pixelShader && stateblock->device->ps_selected_mode != SHADER_NONE);
 }
 
 void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface,

@@ -206,7 +206,7 @@ HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *declaration, IWine
     declaration->ref = 1;
     declaration->parent = parent;
     declaration->parent_ops = parent_ops;
-    declaration->wineD3DDevice = device;
+    declaration->device = device;
     declaration->elements = HeapAlloc(GetProcessHeap(), 0, sizeof(*declaration->elements) * element_count);
     if (!declaration->elements)
     {

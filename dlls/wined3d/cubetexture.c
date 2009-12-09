@@ -31,7 +31,7 @@ static void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3
 {
     /* Override the IWineD3DResource Preload method. */
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
-    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    IWineD3DDeviceImpl *device = This->resource.device;
     struct wined3d_context *context = NULL;
     unsigned int i, j;
     BOOL srgb_mode;

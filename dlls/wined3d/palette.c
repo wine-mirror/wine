@@ -151,7 +151,8 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_SetEntries(IWineD3DPalette *iface,
 
     /* If the palette is attached to the render target, update all render targets */
 
-    LIST_FOR_EACH_ENTRY(res, &This->wineD3DDevice->resources, IWineD3DResourceImpl, resource.resource_list_entry) {
+    LIST_FOR_EACH_ENTRY(res, &This->device->resources, IWineD3DResourceImpl, resource.resource_list_entry)
+    {
         if(IWineD3DResource_GetType((IWineD3DResource *) res) == WINED3DRTYPE_SURFACE) {
             IWineD3DSurfaceImpl *impl = (IWineD3DSurfaceImpl *) res;
             if(impl->palette == This)

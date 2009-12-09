@@ -117,7 +117,7 @@ static void context_destroy_fbo(struct wined3d_context *context, GLuint *fbo)
 static void context_apply_attachment_filter_states(IWineD3DSurface *surface, BOOL force_preload)
 {
     const IWineD3DSurfaceImpl *surface_impl = (IWineD3DSurfaceImpl *)surface;
-    IWineD3DDeviceImpl *device = surface_impl->resource.wineD3DDevice;
+    IWineD3DDeviceImpl *device = surface_impl->resource.device;
     IWineD3DBaseTextureImpl *texture_impl;
     BOOL update_minfilter = FALSE;
     BOOL update_magfilter = FALSE;
@@ -317,7 +317,7 @@ static void context_check_fbo_status(struct wined3d_context *context)
 
 static struct fbo_entry *context_create_fbo_entry(struct wined3d_context *context)
 {
-    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
+    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct fbo_entry *entry;
 
@@ -334,7 +334,7 @@ static struct fbo_entry *context_create_fbo_entry(struct wined3d_context *contex
 /* GL locking is done by the caller */
 static void context_reuse_fbo_entry(struct wined3d_context *context, struct fbo_entry *entry)
 {
-    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
+    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     context_bind_fbo(context, GL_FRAMEBUFFER, &entry->id);
@@ -363,7 +363,7 @@ static void context_destroy_fbo_entry(struct wined3d_context *context, struct fb
 /* GL locking is done by the caller */
 static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context)
 {
-    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
+    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct fbo_entry *entry;
 
@@ -399,7 +399,7 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context)
 /* GL locking is done by the caller */
 static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_entry *entry)
 {
-    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
+    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int i;
 
@@ -1869,7 +1869,7 @@ static inline struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWin
     {
         if (current_context
                 && current_context->current_rt
-                && ((IWineD3DSurfaceImpl *)current_context->surface)->resource.wineD3DDevice == This)
+                && ((IWineD3DSurfaceImpl *)current_context->surface)->resource.device == This)
         {
             target = current_context->current_rt;
         }
@@ -1952,7 +1952,7 @@ retry:
         {
             /* Stay with the currently active context. */
             if (current_context
-                    && ((IWineD3DSurfaceImpl *)current_context->surface)->resource.wineD3DDevice == This)
+                    && ((IWineD3DSurfaceImpl *)current_context->surface)->resource.device == This)
             {
                 context = current_context;
             }
@@ -2057,7 +2057,7 @@ static void context_apply_draw_buffer(struct wined3d_context *context, BOOL blit
     IWineD3DSwapChain *swapchain;
     IWineD3DDeviceImpl *device;
 
-    device = ((IWineD3DSurfaceImpl *)rt)->resource.wineD3DDevice;
+    device = ((IWineD3DSurfaceImpl *)rt)->resource.device;
     if (SUCCEEDED(IWineD3DSurface_GetContainer(rt, &IID_IWineD3DSwapChain, (void **)&swapchain)))
     {
         IWineD3DSwapChain_Release((IUnknown *)swapchain);

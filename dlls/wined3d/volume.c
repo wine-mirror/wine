@@ -25,12 +25,12 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
-#define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
+#define GLINFO_LOCATION This->resource.device->adapter->gl_info
 
 /* Context activation is done by the caller. */
 static void volume_bind_and_dirtify(IWineD3DVolume *iface) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    const struct wined3d_gl_info *gl_info = &This->resource.wineD3DDevice->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &This->resource.device->adapter->gl_info;
     IWineD3DVolumeTexture *texture;
     DWORD active_sampler;
 
@@ -51,14 +51,14 @@ static void volume_bind_and_dirtify(IWineD3DVolume *iface) {
         ENTER_GL();
         glGetIntegerv(GL_ACTIVE_TEXTURE, &active_texture);
         LEAVE_GL();
-        active_sampler = This->resource.wineD3DDevice->rev_tex_unit_map[active_texture - GL_TEXTURE0_ARB];
+        active_sampler = This->resource.device->rev_tex_unit_map[active_texture - GL_TEXTURE0_ARB];
     } else {
         active_sampler = 0;
     }
 
     if (active_sampler != WINED3D_UNMAPPED_STAGE)
     {
-        IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(active_sampler));
+        IWineD3DDeviceImpl_MarkStateDirty(This->resource.device, STATE_SAMPLER(active_sampler));
     }
 
     if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DVolumeTexture, (void **)&texture))) {

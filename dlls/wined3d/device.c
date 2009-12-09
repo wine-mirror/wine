@@ -881,7 +881,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
     object->lpVtbl = vtable;
     object->type = Type;
     object->state = QUERY_CREATED;
-    object->wineD3DDevice = This;
+    object->device = This;
     object->parent = parent;
     object->ref = 1;
 
@@ -1080,7 +1080,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
             HeapFree(GetProcessHeap(), 0, object);
             return WINED3DERR_INVALIDCALL;
     }
-    object->wineD3DDevice = This;
+    object->device = This;
     object->parent = parent;
     object->ref = 1;
 
@@ -1631,7 +1631,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DW
     object->ref = 1;
     object->Flags = Flags;
     object->parent = Parent;
-    object->wineD3DDevice = This;
+    object->device = This;
     object->palNumEntries = IWineD3DPaletteImpl_Size(Flags);
     object->hpal = CreatePalette((const LOGPALETTE*)&(object->palVersion));
 
@@ -6530,7 +6530,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_EvictManagedResources(IWineD3DDevice*
 
 static HRESULT updateSurfaceDesc(IWineD3DSurfaceImpl *surface, const WINED3DPRESENT_PARAMETERS* pPresentationParameters)
 {
-    IWineD3DDeviceImpl *device = surface->resource.wineD3DDevice;
+    IWineD3DDeviceImpl *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     /* Reallocate proper memory for the front and back buffer and adjust their sizes */
@@ -7380,7 +7380,7 @@ void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) {
 
 void get_drawable_size_pbuffer(struct wined3d_context *context, UINT *width, UINT *height)
 {
-    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->current_rt)->resource.wineD3DDevice;
+    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->current_rt)->resource.device;
     /* The drawable size of a pbuffer render target is the current pbuffer size. */
     *width = device->pbufferWidth;
     *height = device->pbufferHeight;

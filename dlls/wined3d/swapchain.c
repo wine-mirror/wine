@@ -33,7 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
-#define GLINFO_LOCATION This->wineD3DDevice->adapter->gl_info
+#define GLINFO_LOCATION This->device->adapter->gl_info
 
 /*IWineD3DSwapChain parts follow: */
 static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
@@ -76,7 +76,7 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
 
     for (i = 0; i < This->num_contexts; ++i)
     {
-        context_destroy(This->wineD3DDevice, This->context[i]);
+        context_destroy(This->device, This->context[i]);
     }
     /* Restore the screen resolution if we rendered in fullscreen
      * This will restore the screen resolution to what it was before creating the swapchain. In case of d3d8 and d3d9
@@ -88,7 +88,7 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
         mode.Height = This->orig_height;
         mode.RefreshRate = 0;
         mode.Format = This->orig_fmt;
-        IWineD3DDevice_SetDisplayMode((IWineD3DDevice *) This->wineD3DDevice, 0, &mode);
+        IWineD3DDevice_SetDisplayMode((IWineD3DDevice *)This->device, 0, &mode);
     }
     HeapFree(GetProcessHeap(), 0, This->context);
 
@@ -99,7 +99,7 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
 static inline void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *context)
 {
     RECT window;
-    IWineD3DDeviceImpl *device = This->wineD3DDevice;
+    IWineD3DDeviceImpl *device = This->device;
     IWineD3DSurfaceImpl *backbuffer = ((IWineD3DSurfaceImpl *) This->backBuffer[0]);
     UINT w = backbuffer->currentDesc.Width;
     UINT h = backbuffer->currentDesc.Height;
@@ -121,7 +121,7 @@ static inline void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_co
         glDrawBuffer(GL_BACK);
 
         glDisable(GL_SCISSOR_TEST);
-        IWineD3DDeviceImpl_MarkStateDirty(This->wineD3DDevice, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+        IWineD3DDeviceImpl_MarkStateDirty(This->device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
 
         /* Note that the texture is upside down */
         gl_info->fbo_ops.glBlitFramebuffer(0, 0, w, h,
@@ -138,7 +138,7 @@ static inline void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_co
         float tex_right = w;
         float tex_bottom = h;
 
-        context2 = context_acquire(This->wineD3DDevice, This->backBuffer[0], CTXUSAGE_BLIT);
+        context2 = context_acquire(This->device, This->backBuffer[0], CTXUSAGE_BLIT);
 
         if(backbuffer->Flags & SFLAG_NORMCOORD)
         {
@@ -211,15 +211,19 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     unsigned int sync;
     int retval;
 
-    context = context_acquire(This->wineD3DDevice, This->backBuffer[0], CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(This->device, This->backBuffer[0], CTXUSAGE_RESOURCELOAD);
 
     /* Render the cursor onto the back buffer, using our nifty directdraw blitting code :-) */
-    if(This->wineD3DDevice->bCursorVisible && This->wineD3DDevice->cursorTexture) {
+    if (This->device->bCursorVisible && This->device->cursorTexture)
+    {
         IWineD3DSurfaceImpl cursor;
-        RECT destRect = {This->wineD3DDevice->xScreenSpace - This->wineD3DDevice->xHotSpot,
-                         This->wineD3DDevice->yScreenSpace - This->wineD3DDevice->yHotSpot,
-                         This->wineD3DDevice->xScreenSpace + This->wineD3DDevice->cursorWidth - This->wineD3DDevice->xHotSpot,
-                         This->wineD3DDevice->yScreenSpace + This->wineD3DDevice->cursorHeight - This->wineD3DDevice->yHotSpot};
+        RECT destRect =
+        {
+            This->device->xScreenSpace - This->device->xHotSpot,
+            This->device->yScreenSpace - This->device->yHotSpot,
+            This->device->xScreenSpace + This->device->cursorWidth - This->device->xHotSpot,
+            This->device->yScreenSpace + This->device->cursorHeight - This->device->yHotSpot,
+        };
         TRACE("Rendering the cursor. Creating fake surface at %p\n", &cursor);
         /* Build a fake surface to call the Blitting code. It is not possible to use the interface passed by
          * the application because we are only supposed to copy the information out. Using a fake surface
@@ -228,16 +232,15 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         memset(&cursor, 0, sizeof(cursor));
         cursor.lpVtbl = &IWineD3DSurface_Vtbl;
         cursor.resource.ref = 1;
-        cursor.resource.wineD3DDevice = This->wineD3DDevice;
+        cursor.resource.device = This->device;
         cursor.resource.pool = WINED3DPOOL_SCRATCH;
-        cursor.resource.format_desc =
-                getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, &This->wineD3DDevice->adapter->gl_info);
+        cursor.resource.format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, context->gl_info);
         cursor.resource.resourceType = WINED3DRTYPE_SURFACE;
-        cursor.texture_name = This->wineD3DDevice->cursorTexture;
+        cursor.texture_name = This->device->cursorTexture;
         cursor.texture_target = GL_TEXTURE_2D;
         cursor.texture_level = 0;
-        cursor.currentDesc.Width = This->wineD3DDevice->cursorWidth;
-        cursor.currentDesc.Height = This->wineD3DDevice->cursorHeight;
+        cursor.currentDesc.Width = This->device->cursorWidth;
+        cursor.currentDesc.Height = This->device->cursorHeight;
         cursor.glRect.left = 0;
         cursor.glRect.top = 0;
         cursor.glRect.right = cursor.currentDesc.Width;
@@ -256,9 +259,11 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         IWineD3DSurface_Blt(This->backBuffer[0], &destRect, (IWineD3DSurface *)&cursor,
                 NULL, WINEDDBLT_KEYSRC, NULL, WINED3DTEXF_POINT);
     }
-    if(This->wineD3DDevice->logo_surface) {
-        /* Blit the logo into the upper left corner of the drawable */
-        IWineD3DSurface_BltFast(This->backBuffer[0], 0, 0, This->wineD3DDevice->logo_surface, NULL, WINEDDBLTFAST_SRCCOLORKEY);
+
+    if (This->device->logo_surface)
+    {
+        /* Blit the logo into the upper left corner of the drawable. */
+        IWineD3DSurface_BltFast(This->backBuffer[0], 0, 0, This->device->logo_surface, NULL, WINEDDBLTFAST_SRCCOLORKEY);
     }
 
     if (pSourceRect || pDestRect) FIXME("Unhandled present rects %s/%s\n", wine_dbgstr_rect(pSourceRect), wine_dbgstr_rect(pDestRect));
@@ -389,7 +394,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     if (FALSE && This->presentParms.SwapEffect == WINED3DSWAPEFFECT_DISCARD) {
         TRACE("Clearing the color buffer with cyan color\n");
 
-        IWineD3DDevice_Clear((IWineD3DDevice*)This->wineD3DDevice, 0, NULL,
+        IWineD3DDevice_Clear((IWineD3DDevice *)This->device, 0, NULL,
                 WINED3DCLEAR_TARGET, 0xff00ffff, 1.0f, 0);
     }
 
@@ -429,10 +434,12 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         }
     }
 
-    if (This->wineD3DDevice->stencilBufferTarget) {
+    if (This->device->stencilBufferTarget)
+    {
         if (This->presentParms.Flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
-                || ((IWineD3DSurfaceImpl *)This->wineD3DDevice->stencilBufferTarget)->Flags & SFLAG_DISCARD) {
-            surface_modify_ds_location(This->wineD3DDevice->stencilBufferTarget, SFLAG_DS_DISCARDED);
+                || ((IWineD3DSurfaceImpl *)This->device->stencilBufferTarget)->Flags & SFLAG_DISCARD)
+        {
+            surface_modify_ds_location(This->device->stencilBufferTarget, SFLAG_DS_DISCARDED);
         }
     }
 
@@ -493,16 +500,19 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_SetDestWindowOverride(IWineD3DSwapCh
     if(window == This->win_handle) return WINED3D_OK;
 
     TRACE("Performing dest override of swapchain %p from window %p to %p\n", This, This->win_handle, window);
-    if(This->context[0] == This->wineD3DDevice->contexts[0]) {
+    if (This->context[0] == This->device->contexts[0])
+    {
         /* The primary context 'owns' all the opengl resources. Destroying and recreating that context requires downloading
          * all opengl resources, deleting the gl resources, destroying all other contexts, then recreating all other contexts
          * and reload the resources
          */
-        delete_opengl_contexts((IWineD3DDevice *) This->wineD3DDevice, iface);
-        This->win_handle             = window;
-        create_primary_opengl_context((IWineD3DDevice *) This->wineD3DDevice, iface);
-    } else {
-        This->win_handle             = window;
+        delete_opengl_contexts((IWineD3DDevice *)This->device, iface);
+        This->win_handle = window;
+        create_primary_opengl_context((IWineD3DDevice *)This->device, iface);
+    }
+    else
+    {
+        This->win_handle = window;
 
         /* The old back buffer has to be copied over to the new back buffer. A lockrect - switchcontext - unlockrect
          * would suffice in theory, but it is rather nasty and may cause troubles with future changes of the locking code
@@ -513,8 +523,8 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_SetDestWindowOverride(IWineD3DSwapCh
         memcpy(mem, r.pBits, r.Pitch * ((IWineD3DSurfaceImpl *) This->backBuffer[0])->currentDesc.Height);
         IWineD3DSurface_UnlockRect(This->backBuffer[0]);
 
-        context_destroy(This->wineD3DDevice, This->context[0]);
-        This->context[0] = context_create(This->wineD3DDevice, (IWineD3DSurfaceImpl *)This->frontBuffer,
+        context_destroy(This->device, This->context[0]);
+        This->context[0] = context_create(This->device, (IWineD3DSurfaceImpl *)This->frontBuffer,
                 This->win_handle, FALSE /* pbuffer */, &This->presentParms);
         context_release(This->context[0]);
 
@@ -555,7 +565,7 @@ struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChain *i
 
     TRACE("Creating a new context for swapchain %p, thread %d\n", This, GetCurrentThreadId());
 
-    ctx = context_create(This->wineD3DDevice, (IWineD3DSurfaceImpl *) This->frontBuffer,
+    ctx = context_create(This->device, (IWineD3DSurfaceImpl *)This->frontBuffer,
             This->context[0]->win_handle, FALSE /* pbuffer */, &This->presentParms);
     if (!ctx)
     {
@@ -567,7 +577,7 @@ struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChain *i
     newArray = HeapAlloc(GetProcessHeap(), 0, sizeof(*newArray) * This->num_contexts + 1);
     if(!newArray) {
         ERR("Out of memory when trying to allocate a new context array\n");
-        context_destroy(This->wineD3DDevice, ctx);
+        context_destroy(This->device, ctx);
         return NULL;
     }
     memcpy(newArray, This->context, sizeof(*newArray) * This->num_contexts);

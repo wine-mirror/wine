@@ -30,7 +30,7 @@ static void volumetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINE
 {
     /* Override the IWineD3DResource Preload method. */
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    IWineD3DDeviceImpl *device = This->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_context *context = NULL;
     BOOL srgb_mode = This->baseTexture.is_srgb;

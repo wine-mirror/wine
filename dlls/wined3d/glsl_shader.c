@@ -630,7 +630,7 @@ static void shader_glsl_load_np2fixup_constants(
 static void shader_glsl_load_constants(const struct wined3d_context *context,
         char usePixelShader, char useVertexShader)
 {
-    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
+    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     IWineD3DStateBlockImpl* stateBlock = device->stateBlock;
     struct shader_glsl_priv *priv = device->shader_priv;
@@ -4315,7 +4315,7 @@ static GLhandleARB create_glsl_blt_shader(const struct wined3d_gl_info *gl_info,
 /* GL locking is done by the caller */
 static void shader_glsl_select(const struct wined3d_context *context, BOOL usePS, BOOL useVS)
 {
-    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
+    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_glsl_priv *priv = device->shader_priv;
     GLhandleARB program_id = 0;

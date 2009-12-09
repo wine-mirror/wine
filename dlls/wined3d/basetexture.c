@@ -81,7 +81,7 @@ static void gltexture_delete(struct gl_texture *tex)
 void basetexture_unload(IWineD3DBaseTexture *iface)
 {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    IWineD3DDeviceImpl *device = This->resource.device;
     struct wined3d_context *context = NULL;
 
     if (This->baseTexture.texture_rgb.name || This->baseTexture.texture_srgb.name)
@@ -124,7 +124,7 @@ DWORD basetexture_set_lod(IWineD3DBaseTexture *iface, DWORD LODNew)
         This->baseTexture.texture_rgb.states[WINED3DTEXSTA_MAXMIPLEVEL] = ~0U;
         This->baseTexture.texture_srgb.states[WINED3DTEXSTA_MAXMIPLEVEL] = ~0U;
         if(This->baseTexture.bindCount) {
-            IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(This->baseTexture.sampler));
+            IWineD3DDeviceImpl_MarkStateDirty(This->resource.device, STATE_SAMPLER(This->baseTexture.sampler));
         }
     }
 
@@ -152,7 +152,7 @@ DWORD basetexture_get_level_count(IWineD3DBaseTexture *iface)
 HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTexture *iface, WINED3DTEXTUREFILTERTYPE FilterType)
 {
   IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-  IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+  IWineD3DDeviceImpl *device = This->resource.device;
   UINT textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(iface);
 
   if (!(This->resource.usage & WINED3DUSAGE_AUTOGENMIPMAP)) {
@@ -477,7 +477,7 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
 
     if (gl_tex->states[WINED3DTEXSTA_MAXANISOTROPY] != aniso)
     {
-        IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+        IWineD3DDeviceImpl *device = This->resource.device;
         const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
         if (gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC])

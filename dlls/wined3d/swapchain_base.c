@@ -139,7 +139,7 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *iface
     HRESULT hr;
 
     TRACE("(%p)->(%p): Calling GetAdapterDisplayMode\n", This, pMode);
-    hr = IWineD3D_GetAdapterDisplayMode(This->wineD3DDevice->wined3d, This->wineD3DDevice->adapter->ordinal, pMode);
+    hr = IWineD3D_GetAdapterDisplayMode(This->device->wined3d, This->device->adapter->ordinal, pMode);
 
     TRACE("(%p) : returning w(%d) h(%d) rr(%d) fmt(%u,%s)\n", This, pMode->Width, pMode->Height, pMode->RefreshRate,
           pMode->Format, debug_d3dformat(pMode->Format));
@@ -149,7 +149,7 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *iface
 HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetDevice(IWineD3DSwapChain *iface, IWineD3DDevice**ppDevice) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
 
-    *ppDevice = (IWineD3DDevice *) This->wineD3DDevice;
+    *ppDevice = (IWineD3DDevice *)This->device;
 
     /* Note  Calling this method will increase the internal reference count
     on the IDirect3DDevice9 interface. */

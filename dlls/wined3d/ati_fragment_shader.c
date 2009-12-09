@@ -798,10 +798,10 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
 }
 #undef GLINFO_LOCATION
 
-#define GLINFO_LOCATION stateblock->wineD3DDevice->adapter->gl_info
+#define GLINFO_LOCATION stateblock->device->adapter->gl_info
 static void set_tex_op_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    IWineD3DDeviceImpl          *This = stateblock->wineD3DDevice;
+    IWineD3DDeviceImpl *This = stateblock->device;
     const struct atifs_ffp_desc *desc;
     struct ffp_frag_settings     settings;
     struct atifs_private_data   *priv = This->fragment_priv;
@@ -889,7 +889,7 @@ static void textransform(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
 
 static void atifs_apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
+    IWineD3DDeviceImpl *device = stateblock->device;
     BOOL use_vshader = use_vs(stateblock);
 
     context->last_was_pshader = use_ps(stateblock);

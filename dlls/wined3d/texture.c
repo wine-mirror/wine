@@ -31,7 +31,7 @@ static void texture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRG
 {
     /* Override the IWineD3DResource PreLoad method. */
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    IWineD3DDeviceImpl *device = This->resource.device;
     struct wined3d_context *context = NULL;
     unsigned int i;
     BOOL srgb_mode;

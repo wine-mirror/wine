@@ -537,7 +537,7 @@ static inline void shader_arb_vs_local_constants(IWineD3DDeviceImpl* deviceImpl)
 /* GL locking is done by the caller (state handler) */
 static void shader_arb_load_constants(const struct wined3d_context *context, char usePixelShader, char useVertexShader)
 {
-    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
+    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.device;
     IWineD3DStateBlockImpl* stateBlock = device->stateBlock;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -567,7 +567,7 @@ static void shader_arb_update_float_vertex_constants(IWineD3DDevice *iface, UINT
 
     /* We don't want shader constant dirtification to be an O(contexts), so just dirtify the active
      * context. On a context switch the old context will be fully dirtified */
-    if (!context || ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice != This) return;
+    if (!context || ((IWineD3DSurfaceImpl *)context->surface)->resource.device != This) return;
 
     memset(context->vshader_const_dirty + start, 1, sizeof(*context->vshader_const_dirty) * count);
     This->highest_dirty_vs_const = max(This->highest_dirty_vs_const, start + count);
@@ -580,7 +580,7 @@ static void shader_arb_update_float_pixel_constants(IWineD3DDevice *iface, UINT 
 
     /* We don't want shader constant dirtification to be an O(contexts), so just dirtify the active
      * context. On a context switch the old context will be fully dirtified */
-    if (!context || ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice != This) return;
+    if (!context || ((IWineD3DSurfaceImpl *)context->surface)->resource.device != This) return;
 
     memset(context->pshader_const_dirty + start, 1, sizeof(*context->pshader_const_dirty) * count);
     This->highest_dirty_ps_const = max(This->highest_dirty_ps_const, start + count);
@@ -4292,7 +4292,7 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
 /* GL locking is done by the caller */
 static void shader_arb_select(const struct wined3d_context *context, BOOL usePS, BOOL useVS)
 {
-    IWineD3DDeviceImpl *This = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
+    IWineD3DDeviceImpl *This = ((IWineD3DSurfaceImpl *)context->surface)->resource.device;
     struct shader_arb_priv *priv = This->shader_priv;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     int i;
@@ -5263,11 +5263,11 @@ static void arbfp_get_caps(WINED3DDEVTYPE devtype, const struct wined3d_gl_info 
 }
 #undef GLINFO_LOCATION
 
-#define GLINFO_LOCATION stateblock->wineD3DDevice->adapter->gl_info
+#define GLINFO_LOCATION stateblock->device->adapter->gl_info
 static void state_texfactor_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
+    IWineD3DDeviceImpl *device = stateblock->device;
     float col[4];
-    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
 
     /* Don't load the parameter if we're using an arbfp pixel shader, otherwise we'll overwrite
      * application provided constants
@@ -5287,8 +5287,8 @@ static void state_texfactor_arbfp(DWORD state, IWineD3DStateBlockImpl *statebloc
 
 static void state_arb_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
+    IWineD3DDeviceImpl *device = stateblock->device;
     float col[4];
-    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
 
     /* Don't load the parameter if we're using an arbfp pixel shader, otherwise we'll overwrite
      * application provided constants
@@ -5315,7 +5315,7 @@ static void state_arb_specularenable(DWORD state, IWineD3DStateBlockImpl *stateb
 static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
+    IWineD3DDeviceImpl *device = stateblock->device;
     float mat[2][2];
 
     if (use_ps(stateblock))
@@ -5352,7 +5352,7 @@ static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, s
 static void tex_bumpenvlum_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
+    IWineD3DDeviceImpl *device = stateblock->device;
     float param[4];
 
     if (use_ps(stateblock))
@@ -5873,7 +5873,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
 
 static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
+    IWineD3DDeviceImpl *device = stateblock->device;
     struct shader_arb_priv *priv = device->fragment_priv;
     BOOL use_pshader = use_ps(stateblock);
     BOOL use_vshader = use_vs(stateblock);

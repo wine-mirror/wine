@@ -28,7 +28,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
-#define GLINFO_LOCATION stateblock->wineD3DDevice->adapter->gl_info
+#define GLINFO_LOCATION stateblock->device->adapter->gl_info
 
 /* GL locking for state handlers is done by the caller. */
 
@@ -458,8 +458,8 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEX
 static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage];
-    BOOL tex_used = stateblock->wineD3DDevice->fixed_function_usage_map & (1 << stage);
+    BOOL tex_used = stateblock->device->fixed_function_usage_map & (1 << stage);
+    DWORD mapped_stage = stateblock->device->texUnitMap[stage];
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     TRACE("Setting color op for stage %d\n", stage);
@@ -533,7 +533,7 @@ static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
     }
 
     /* Set the texture combiners */
-    set_tex_op_nvrc((IWineD3DDevice *)stateblock->wineD3DDevice, FALSE, stage,
+    set_tex_op_nvrc((IWineD3DDevice *)stateblock->device, FALSE, stage,
                         stateblock->textureState[stage][WINED3DTSS_COLOROP],
                         stateblock->textureState[stage][WINED3DTSS_COLORARG1],
                         stateblock->textureState[stage][WINED3DTSS_COLORARG2],
@@ -562,7 +562,7 @@ static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
 static void nvts_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     DWORD sampler = state - STATE_SAMPLER(0);
-    DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[sampler];
+    DWORD mapped_stage = stateblock->device->texUnitMap[sampler];
 
     /* No need to enable / disable anything here for unused samplers. The tex_colorop
     * handler takes care. Also no action is needed with pixel shaders, or if tex_colorop
@@ -578,7 +578,7 @@ static void nvts_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
 static void nvts_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage + 1];
+    DWORD mapped_stage = stateblock->device->texUnitMap[stage + 1];
     float mat[2][2];
 
     /* Direct3D sets the matrix in the stage reading the perturbation map. The result is used to
