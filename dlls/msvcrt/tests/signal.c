@@ -24,16 +24,14 @@
 
 static int test_value = 0;
 
-typedef void (sighandler_type)(int);
-
-static void sighandler(int signum)
+static void __cdecl sighandler(int signum)
 {
     ++test_value;
 }
 
 static void test_signal(void)
 {
-    sighandler_type *old;
+    void (__cdecl *old)(int);
     int res;
 
     old = signal(SIGBREAK, sighandler);
