@@ -1653,7 +1653,6 @@ typedef struct IWineD3DResourceImpl
 
 void resource_cleanup(IWineD3DResource *iface) DECLSPEC_HIDDEN;
 HRESULT resource_free_private_data(IWineD3DResource *iface, REFGUID guid) DECLSPEC_HIDDEN;
-HRESULT resource_get_device(IWineD3DResource *iface, IWineD3DDevice **device) DECLSPEC_HIDDEN;
 HRESULT resource_get_parent(IWineD3DResource *iface, IUnknown **parent) DECLSPEC_HIDDEN;
 DWORD resource_get_priority(IWineD3DResource *iface) DECLSPEC_HIDDEN;
 HRESULT resource_get_private_data(IWineD3DResource *iface, REFGUID guid,
@@ -1974,7 +1973,6 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_QueryInterface(IWineD3DSurface *iface,
         REFIID riid, LPVOID *ppobj) DECLSPEC_HIDDEN;
 ULONG WINAPI IWineD3DBaseSurfaceImpl_AddRef(IWineD3DSurface *iface) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetParent(IWineD3DSurface *iface, IUnknown **pParent) DECLSPEC_HIDDEN;
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetDevice(IWineD3DSurface *iface, IWineD3DDevice** ppDevice) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPrivateData(IWineD3DSurface *iface,
         REFGUID refguid, const void *pData, DWORD SizeOfData, DWORD Flags) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetPrivateData(IWineD3DSurface *iface,

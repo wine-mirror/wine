@@ -2327,9 +2327,6 @@ interface IWineD3D : IWineD3DBase
 ]
 interface IWineD3DResource : IWineD3DBase
 {
-    HRESULT GetDevice(
-        [out] IWineD3DDevice **device
-    );
     HRESULT SetPrivateData(
         [in] REFGUID guid,
         [in] const void *data,
@@ -2715,9 +2712,6 @@ interface IWineD3DVolumeTexture : IWineD3DBaseTexture
 ]
 interface IWineD3DVertexDeclaration : IWineD3DBase
 {
-    HRESULT GetDevice(
-        [out] IWineD3DDevice **device
-    );
 }
 
 [
@@ -2727,9 +2721,6 @@ interface IWineD3DVertexDeclaration : IWineD3DBase
 ]
 interface IWineD3DStateBlock : IUnknown
 {
-    HRESULT GetDevice(
-        [out] IWineD3DDevice **device
-    );
     HRESULT Capture(
     );
     HRESULT Apply(
@@ -2745,9 +2736,6 @@ interface IWineD3DStateBlock : IUnknown
 ]
 interface IWineD3DQuery : IWineD3DBase
 {
-    HRESULT GetDevice(
-        [out] IWineD3DDevice **device
-    );
     HRESULT GetData(
         [out] void *data,
         [in] DWORD data_size,
@@ -2837,9 +2825,6 @@ interface IWineD3DBuffer : IWineD3DResource
 ]
 interface IWineD3DBaseShader : IWineD3DBase
 {
-    HRESULT GetDevice(
-        [out] IWineD3DDevice **device
-    );
     HRESULT GetFunction(
         [out] void *data,
         [in, out] UINT *data_size

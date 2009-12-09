@@ -138,10 +138,6 @@ static HRESULT WINAPI IWineD3DVolumeImpl_GetParent(IWineD3DVolume *iface, IUnkno
     return resource_get_parent((IWineD3DResource *)iface, pParent);
 }
 
-static HRESULT WINAPI IWineD3DVolumeImpl_GetDevice(IWineD3DVolume *iface, IWineD3DDevice** ppDevice) {
-    return resource_get_device((IWineD3DResource *)iface, ppDevice);
-}
-
 static HRESULT WINAPI IWineD3DVolumeImpl_SetPrivateData(IWineD3DVolume *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     return resource_set_private_data((IWineD3DResource *)iface, refguid, pData, SizeOfData, Flags);
 }
@@ -361,7 +357,6 @@ static const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
     IWineD3DVolumeImpl_Release,
     /* IWineD3DResource */
     IWineD3DVolumeImpl_GetParent,
-    IWineD3DVolumeImpl_GetDevice,
     IWineD3DVolumeImpl_SetPrivateData,
     IWineD3DVolumeImpl_GetPrivateData,
     IWineD3DVolumeImpl_FreePrivateData,

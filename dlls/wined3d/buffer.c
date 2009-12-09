@@ -657,11 +657,6 @@ static HRESULT STDMETHODCALLTYPE buffer_GetParent(IWineD3DBuffer *iface, IUnknow
 
 /* IWineD3DResource methods */
 
-static HRESULT STDMETHODCALLTYPE buffer_GetDevice(IWineD3DBuffer *iface, IWineD3DDevice **device)
-{
-    return resource_get_device((IWineD3DResource *)iface, device);
-}
-
 static HRESULT STDMETHODCALLTYPE buffer_SetPrivateData(IWineD3DBuffer *iface,
         REFGUID guid, const void *data, DWORD data_size, DWORD flags)
 {
@@ -1064,7 +1059,6 @@ static const struct IWineD3DBufferVtbl wined3d_buffer_vtbl =
     /* IWineD3DBase methods */
     buffer_GetParent,
     /* IWineD3DResource methods */
-    buffer_GetDevice,
     buffer_SetPrivateData,
     buffer_GetPrivateData,
     buffer_FreePrivateData,

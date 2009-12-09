@@ -105,15 +105,6 @@ void resource_cleanup(IWineD3DResource *iface)
     if (This->resource.wineD3DDevice) device_resource_released(This->resource.wineD3DDevice, iface);
 }
 
-HRESULT resource_get_device(IWineD3DResource *iface, IWineD3DDevice** ppDevice)
-{
-    IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
-    TRACE("(%p) : returning %p\n", This, This->resource.wineD3DDevice);
-    *ppDevice = (IWineD3DDevice *) This->resource.wineD3DDevice;
-    IWineD3DDevice_AddRef(*ppDevice);
-    return WINED3D_OK;
-}
-
 static PrivateData* resource_find_private_data(IWineD3DResourceImpl *This, REFGUID tag)
 {
     PrivateData *data;

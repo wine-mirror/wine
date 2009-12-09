@@ -139,10 +139,6 @@ static ULONG WINAPI IWineD3DVolumeTextureImpl_Release(IWineD3DVolumeTexture *ifa
 /* ****************************************************
    IWineD3DVolumeTexture IWineD3DResource parts follow
    **************************************************** */
-static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetDevice(IWineD3DVolumeTexture *iface, IWineD3DDevice** ppDevice) {
-    return resource_get_device((IWineD3DResource *)iface, ppDevice);
-}
-
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_SetPrivateData(IWineD3DVolumeTexture *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     return resource_set_private_data((IWineD3DResource *)iface, refguid, pData, SizeOfData, Flags);
 }
@@ -322,7 +318,6 @@ static const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
     IWineD3DVolumeTextureImpl_Release,
     /* resource */
     IWineD3DVolumeTextureImpl_GetParent,
-    IWineD3DVolumeTextureImpl_GetDevice,
     IWineD3DVolumeTextureImpl_SetPrivateData,
     IWineD3DVolumeTextureImpl_GetPrivateData,
     IWineD3DVolumeTextureImpl_FreePrivateData,

@@ -90,15 +90,6 @@ static HRESULT  WINAPI IWineD3DPixelShaderImpl_GetParent(IWineD3DPixelShader *if
     return WINED3D_OK;
 }
 
-static HRESULT  WINAPI IWineD3DPixelShaderImpl_GetDevice(IWineD3DPixelShader* iface, IWineD3DDevice **pDevice){
-    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
-    IWineD3DDevice_AddRef(This->baseShader.device);
-    *pDevice = This->baseShader.device;
-    TRACE("(%p) returning %p\n", This, *pDevice);
-    return WINED3D_OK;
-}
-
-
 static HRESULT  WINAPI IWineD3DPixelShaderImpl_GetFunction(IWineD3DPixelShader* impl, VOID* pData, UINT* pSizeOfData) {
   IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)impl;
   TRACE("(%p) : pData(%p), pSizeOfData(%p)\n", This, pData, pSizeOfData);
@@ -353,7 +344,6 @@ static const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =
     /*** IWineD3DBase methods ***/
     IWineD3DPixelShaderImpl_GetParent,
     /*** IWineD3DBaseShader methods ***/
-    IWineD3DPixelShaderImpl_GetDevice,
     IWineD3DPixelShaderImpl_GetFunction
     /*** IWineD3DPixelShader methods ***/
 };

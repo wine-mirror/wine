@@ -5154,7 +5154,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_Release,
     /* IWineD3DResource */
     IWineD3DBaseSurfaceImpl_GetParent,
-    IWineD3DBaseSurfaceImpl_GetDevice,
     IWineD3DBaseSurfaceImpl_SetPrivateData,
     IWineD3DBaseSurfaceImpl_GetPrivateData,
     IWineD3DBaseSurfaceImpl_FreePrivateData,

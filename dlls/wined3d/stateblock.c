@@ -535,16 +535,6 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
 /**********************************************************
  * IWineD3DStateBlockImpl parts follows
  **********************************************************/
-static HRESULT  WINAPI IWineD3DStateBlockImpl_GetDevice(IWineD3DStateBlock *iface, IWineD3DDevice** ppDevice){
-
-    IWineD3DStateBlockImpl *This   = (IWineD3DStateBlockImpl *)iface;
-
-    *ppDevice = (IWineD3DDevice*)This->wineD3DDevice;
-    IWineD3DDevice_AddRef(*ppDevice);
-    return WINED3D_OK;
-
-}
-
 static void record_lights(IWineD3DStateBlockImpl *This, const IWineD3DStateBlockImpl *targetStateBlock)
 {
     UINT i;
@@ -1321,7 +1311,6 @@ static const IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl =
     IWineD3DStateBlockImpl_AddRef,
     IWineD3DStateBlockImpl_Release,
     /* IWineD3DStateBlock */
-    IWineD3DStateBlockImpl_GetDevice,
     IWineD3DStateBlockImpl_Capture,
     IWineD3DStateBlockImpl_Apply,
     IWineD3DStateBlockImpl_InitStartupStateBlock

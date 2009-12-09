@@ -88,16 +88,6 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetParent(IWineD3DVertexDecl
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDevice(IWineD3DVertexDeclaration *iface, IWineD3DDevice** ppDevice) {
-    IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
-    TRACE("(%p) : returning %p\n", This, This->wineD3DDevice);
-
-    *ppDevice = (IWineD3DDevice *) This->wineD3DDevice;
-    IWineD3DDevice_AddRef(*ppDevice);
-
-    return WINED3D_OK;
-}
-
 static BOOL declaration_element_valid_ffp(const WINED3DVERTEXELEMENT *element)
 {
     switch(element->usage)
@@ -194,7 +184,6 @@ static const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl =
     IWineD3DVertexDeclarationImpl_Release,
     /* IWineD3DVertexDeclaration */
     IWineD3DVertexDeclarationImpl_GetParent,
-    IWineD3DVertexDeclarationImpl_GetDevice,
 };
 
 HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *declaration, IWineD3DDeviceImpl *device,

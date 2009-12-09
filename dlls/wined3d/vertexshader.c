@@ -194,14 +194,6 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_GetParent(IWineD3DVertexShader *i
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DVertexShaderImpl_GetDevice(IWineD3DVertexShader* iface, IWineD3DDevice **pDevice){
-    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
-    IWineD3DDevice_AddRef(This->baseShader.device);
-    *pDevice = This->baseShader.device;
-    TRACE("(%p) returning %p\n", This, *pDevice);
-    return WINED3D_OK;
-}
-
 static HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader* impl, VOID* pData, UINT* pSizeOfData) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)impl;
     TRACE("(%p) : pData(%p), pSizeOfData(%p)\n", This, pData, pSizeOfData);
@@ -348,7 +340,6 @@ static const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
     /*** IWineD3DBase methods ***/
     IWineD3DVertexShaderImpl_GetParent,
     /*** IWineD3DBaseShader methods ***/
-    IWineD3DVertexShaderImpl_GetDevice,
     IWineD3DVertexShaderImpl_GetFunction,
     /*** IWineD3DVertexShader methods ***/
     IWIneD3DVertexShaderImpl_SetLocalConstantsF

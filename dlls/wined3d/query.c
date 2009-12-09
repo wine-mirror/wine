@@ -98,15 +98,6 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetParent(IWineD3DQuery *iface, IUnknow
     return WINED3D_OK;
 }
 
-static HRESULT  WINAPI IWineD3DQueryImpl_GetDevice(IWineD3DQuery* iface, IWineD3DDevice **pDevice){
-    IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
-    IWineD3DDevice_AddRef((IWineD3DDevice *)This->wineD3DDevice);
-    *pDevice = (IWineD3DDevice *)This->wineD3DDevice;
-    TRACE("(%p) returning %p\n", This, *pDevice);
-    return WINED3D_OK;
-}
-
-
 static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pData, DWORD dwSize, DWORD dwGetDataFlags){
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
     HRESULT res = S_OK;
@@ -640,7 +631,6 @@ const IWineD3DQueryVtbl IWineD3DQuery_Vtbl =
     IWineD3DQueryImpl_Release,
      /*** IWineD3Dquery methods ***/
     IWineD3DQueryImpl_GetParent,
-    IWineD3DQueryImpl_GetDevice,
     IWineD3DQueryImpl_GetData,
     IWineD3DQueryImpl_GetDataSize,
     IWineD3DQueryImpl_GetType,
@@ -655,7 +645,6 @@ const IWineD3DQueryVtbl IWineD3DEventQuery_Vtbl =
     IWineD3DQueryImpl_Release,
     /*** IWineD3Dquery methods ***/
     IWineD3DQueryImpl_GetParent,
-    IWineD3DQueryImpl_GetDevice,
     IWineD3DEventQueryImpl_GetData,
     IWineD3DEventQueryImpl_GetDataSize,
     IWineD3DQueryImpl_GetType,
@@ -670,7 +659,6 @@ const IWineD3DQueryVtbl IWineD3DOcclusionQuery_Vtbl =
     IWineD3DQueryImpl_Release,
     /*** IWineD3Dquery methods ***/
     IWineD3DQueryImpl_GetParent,
-    IWineD3DQueryImpl_GetDevice,
     IWineD3DOcclusionQueryImpl_GetData,
     IWineD3DOcclusionQueryImpl_GetDataSize,
     IWineD3DQueryImpl_GetType,
