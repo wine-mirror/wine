@@ -354,10 +354,8 @@ static DWORD MCIQTZ_mciGetDevCaps(UINT wDevID, DWORD dwFlags, LPMCI_GETDEVCAPS_P
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
 
-    if (!(dwFlags & MCI_STATUS_ITEM)) {
-        WARN("No capability item specified\n");
-        return MCIERR_UNRECOGNIZED_COMMAND;
-    }
+    if (!(dwFlags & MCI_GETDEVCAPS_ITEM))
+        return MCIERR_MISSING_PARAMETER;
 
     switch (lpParms->dwItem) {
         case MCI_GETDEVCAPS_CAN_RECORD:
@@ -396,9 +394,44 @@ static DWORD MCIQTZ_mciGetDevCaps(UINT wDevID, DWORD dwFlags, LPMCI_GETDEVCAPS_P
             lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
             TRACE("MCI_GETDEVCAPS_CAN_SAVE = %08x\n", lpParms->dwReturn);
             break;
+        case MCI_DGV_GETDEVCAPS_CAN_REVERSE:
+            lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+            TRACE("MCI_DGV_GETDEVCAPS_CAN_REVERSE = %08x\n", lpParms->dwReturn);
+            break;
+        case MCI_DGV_GETDEVCAPS_CAN_STRETCH:
+            lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE); /* FIXME */
+            TRACE("MCI_DGV_GETDEVCAPS_CAN_STRETCH = %08x\n", lpParms->dwReturn);
+            break;
+        case MCI_DGV_GETDEVCAPS_CAN_LOCK:
+            lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+            TRACE("MCI_DGV_GETDEVCAPS_CAN_LOCK = %08x\n", lpParms->dwReturn);
+            break;
+        case MCI_DGV_GETDEVCAPS_CAN_FREEZE:
+            lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+            TRACE("MCI_DGV_GETDEVCAPS_CAN_FREEZE = %08x\n", lpParms->dwReturn);
+            break;
+        case MCI_DGV_GETDEVCAPS_CAN_STR_IN:
+            lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+            TRACE("MCI_DGV_GETDEVCAPS_CAN_STRETCH_INPUT = %08x\n", lpParms->dwReturn);
+            break;
+        case MCI_DGV_GETDEVCAPS_HAS_STILL:
+            lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+            TRACE("MCI_DGV_GETDEVCAPS_HAS_STILL = %08x\n", lpParms->dwReturn);
+            break;
+        case MCI_DGV_GETDEVCAPS_CAN_TEST:
+            lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE); /* FIXME */
+            TRACE("MCI_DGV_GETDEVCAPS_CAN_TEST = %08x\n", lpParms->dwReturn);
+            break;
+        case MCI_DGV_GETDEVCAPS_MAX_WINDOWS:
+            lpParms->dwReturn = 1;
+            TRACE("MCI_DGV_GETDEVCAPS_MAX_WINDOWS = %u\n", lpParms->dwReturn);
+            return 0;
         default:
-            ERR("Unknown capability %08x\n", lpParms->dwItem);
-            return MCIERR_UNRECOGNIZED_COMMAND;
+            WARN("Unknown capability %08x\n", lpParms->dwItem);
+            /* Fall through */
+        case MCI_DGV_GETDEVCAPS_MAXIMUM_RATE: /* unknown to w2k */
+        case MCI_DGV_GETDEVCAPS_MINIMUM_RATE: /* unknown to w2k */
+            return MCIERR_UNSUPPORTED_FUNCTION;
     }
 
     return MCI_RESOURCE_RETURNED;
