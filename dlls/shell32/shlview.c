@@ -1321,7 +1321,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
             break;
 
           case NM_RETURN:
-            TRACE("-- NM_DBLCLK %p\n",This);
+            TRACE("-- NM_RETURN %p\n",This);
             if (OnDefaultCommand(This) != S_OK) ShellView_OpenSelectedItems(This);
             break;
 
@@ -1441,7 +1441,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	      DWORD dwAttr = SFGAO_CANRENAME;
 	      pidl = (LPITEMIDLIST)lpdi->item.lParam;
 
-	      TRACE("-- LVN_BEGINLABELEDITA %p\n",This);
+	      TRACE("-- LVN_BEGINLABELEDITW %p\n",This);
 
 	      IShellFolder_GetAttributesOf(This->pSFParent, 1, (LPCITEMIDLIST*)&pidl, &dwAttr);
 	      if (SFGAO_CANRENAME & dwAttr)
