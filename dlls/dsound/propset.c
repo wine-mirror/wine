@@ -614,234 +614,89 @@ static HRESULT DSPROPERTY_DescriptionW(
     PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA ppd = pPropData;
     HRESULT err;
     GUID dev_guid;
+    ULONG wod, wid, wodn, widn;
+    DSDRIVERDESC desc;
+
     TRACE("pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
-	  pPropData,cbPropData,pcbReturned);
+          pPropData,cbPropData,pcbReturned);
 
     TRACE("DeviceId=%s\n",debugstr_guid(&ppd->DeviceId));
     if ( IsEqualGUID( &ppd->DeviceId , &GUID_NULL) ) {
-	/* default device of type specified by ppd->DataFlow */
-	if (ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE) {
-	    TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE\n");
-	} else if (ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER) {
-	    TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_RENDER\n");
-	} else {
-	    TRACE("DataFlow=Unknown(%d)\n", ppd->DataFlow);
-	}
-	FIXME("(pPropData=%p,cbPropData=%d,pcbReturned=%p) GUID_NULL not implemented!\n",
-	      pPropData,cbPropData,pcbReturned);
-	return E_PROP_ID_UNSUPPORTED;
+        /* default device of type specified by ppd->DataFlow */
+        if (ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE) {
+            TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE\n");
+            ppd->DeviceId = DSDEVID_DefaultCapture;
+        } else if (ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER) {
+            TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_RENDER\n");
+            ppd->DeviceId = DSDEVID_DefaultPlayback;
+        } else {
+            WARN("DataFlow=Unknown(%d)\n", ppd->DataFlow);
+            return E_PROP_ID_UNSUPPORTED;
+        }
     }
 
-    ppd->Type = DIRECTSOUNDDEVICE_TYPE_EMULATED;
     GetDeviceID(&ppd->DeviceId, &dev_guid);
 
-    if ( IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultPlayback) ||
-	 IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultVoicePlayback) ) {
-	ULONG wod;
-	unsigned int wodn;
-        if (IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultPlayback) )
-            TRACE("DSDEVID_DefaultPlayback\n");
-        else
-            TRACE("DSDEVID_DefaultVoicePlayback\n");
-	ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
-	wodn = waveOutGetNumDevs();
-	for (wod = 0; wod < wodn; wod++) {
-            if (IsEqualGUID( &dev_guid, &DSOUND_renderer_guids[wod] ) ) {
-                DSDRIVERDESC desc;
-                TRACE("DSOUND_renderer_guids[%d]\n", wod);
-                ppd->WaveDeviceId = wod;
-                err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
-                if (err == DS_OK) {
-                    PIDSDRIVER drv = NULL;
-                    /* FIXME: this is a memory leak */
-                    WCHAR * wDescription = HeapAlloc(GetProcessHeap(),0,0x200);
-                    WCHAR * wModule = HeapAlloc(GetProcessHeap(),0,0x200);
-                    WCHAR * wInterface = HeapAlloc(GetProcessHeap(),0,0x200);
-
-                    if (wDescription && wModule && wInterface) {
-                        MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, wDescription, 0x100  );
-                        MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1, wModule, 0x100 );
-                        MultiByteToWideChar( CP_ACP, 0, "Interface", -1, wInterface, 0x100 );
-
-                        ppd->Description = wDescription;
-                        ppd->Module = wModule;
-                        ppd->Interface = wInterface;
-                        err = mmErr(waveOutMessage(UlongToHandle(wod), DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
-                        if (err == DS_OK && drv)
-                            ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
-                        else
-                            WARN("waveOutMessage(DRV_QUERYDSOUNDIFACE) failed\n");
-                        break;
-		    } else {
-                        WARN("no memory\n");
-                        HeapFree(GetProcessHeap(), 0, wDescription);
-                        HeapFree(GetProcessHeap(), 0, wModule);
-                        HeapFree(GetProcessHeap(), 0, wInterface);
-                        return E_OUTOFMEMORY;
-		    }
-                } else {
-                    WARN("waveOutMessage(DRV_QUERYDSOUNDDESC) failed\n");
-                    return E_PROP_ID_UNSUPPORTED;
-		}
-            }
-	}
-    } else if (IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultCapture) ||
-	       IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultVoiceCapture) ) {
-	ULONG wid;
-	unsigned int widn;
-        if (IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultCapture))
-            TRACE("DSDEVID_DefaultCapture\n");
-        else
-            TRACE("DSDEVID_DefaultVoiceCapture\n");
-	ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
-	widn = waveInGetNumDevs();
-	for (wid = 0; wid < widn; wid++) {
-            if (IsEqualGUID( &dev_guid, &DSOUND_capture_guids[wid] ) ) {
-                DSDRIVERDESC desc;
-                ppd->WaveDeviceId = wid;
-                err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
-                if (err == DS_OK) {
-                    PIDSCDRIVER drv;
-                    /* FIXME: this is a memory leak */
-                    WCHAR * wDescription = HeapAlloc(GetProcessHeap(),0,0x200);
-                    WCHAR * wModule = HeapAlloc(GetProcessHeap(),0,0x200);
-                    WCHAR * wInterface = HeapAlloc(GetProcessHeap(),0,0x200);
-
-                    if (wDescription && wModule && wInterface) {
-                        MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, wDescription, 0x100  );
-                        MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1, wModule, 0x100 );
-                        MultiByteToWideChar( CP_ACP, 0, "Interface", -1, wInterface, 0x100 );
-
-                        ppd->Description = wDescription;
-                        ppd->Module = wModule;
-                        ppd->Interface = wInterface;
-                        err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDIFACE,(DWORD_PTR)&drv,0));
-                        if (err == DS_OK && drv)
-                            ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
-                        else
-                            WARN("waveInMessage(DRV_QUERYDSOUNDIFACE) failed\n");
-			break;
-		    } else {
-                        WARN("no memory\n");
-                        HeapFree(GetProcessHeap(), 0, wDescription);
-                        HeapFree(GetProcessHeap(), 0, wModule);
-                        HeapFree(GetProcessHeap(), 0, wInterface);
-                        return E_OUTOFMEMORY;
-		    }
-                } else {
-                    WARN("waveInMessage(DRV_QUERYDSOUNDDESC) failed\n");
-                    return E_PROP_ID_UNSUPPORTED;
-		}
-            }
-	}
-    } else {
-	BOOL found = FALSE;
-	ULONG wod;
-	unsigned int wodn;
-        TRACE("Checking renderer devices\n");
-	/* given specific device so try the render devices first */
-	wodn = waveOutGetNumDevs();
-	for (wod = 0; wod < wodn; wod++) {
-            if (IsEqualGUID( &ppd->DeviceId, &DSOUND_renderer_guids[wod] ) ) {
-                DSDRIVERDESC desc;
-                TRACE("DSOUND_renderer_guids[%d]\n", wod);
-                ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
-                ppd->WaveDeviceId = wod;
-                err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
-                if (err == DS_OK) {
-                    PIDSDRIVER drv = NULL;
-                    /* FIXME: this is a memory leak */
-                    WCHAR * wDescription = HeapAlloc(GetProcessHeap(),0,0x200);
-                    WCHAR * wModule = HeapAlloc(GetProcessHeap(),0,0x200);
-                    WCHAR * wInterface = HeapAlloc(GetProcessHeap(),0,0x200);
-
-                    if (wDescription && wModule && wInterface) {
-			MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, wDescription, 0x100  );
-			MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1, wModule, 0x100 );
-			MultiByteToWideChar( CP_ACP, 0, "Interface", -1, wInterface, 0x100 );
-
-			ppd->Description = wDescription;
-			ppd->Module = wModule;
-			ppd->Interface = wInterface;
-			err = mmErr(waveOutMessage(UlongToHandle(wod), DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
-			if (err == DS_OK && drv)
-                            ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
-                        else
-                            WARN("waveOutMessage(DRV_QUERYDSOUNDIFACE) failed\n");
-			found = TRUE;
-			break;
-		    } else {
-                        WARN("no memory\n");
-                        HeapFree(GetProcessHeap(), 0, wDescription);
-                        HeapFree(GetProcessHeap(), 0, wModule);
-                        HeapFree(GetProcessHeap(), 0, wInterface);
-                        return E_OUTOFMEMORY;
-		    }
-                } else {
-                    WARN("waveOutMessage(DRV_QUERYDSOUNDDESC) failed\n");
-                    return E_PROP_ID_UNSUPPORTED;
-		}
-            }
-        }
-
-        if (found == FALSE) {
-            ULONG wid;
-            unsigned int widn;
-            TRACE("Checking capture devices\n");
-            ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
-            widn = waveInGetNumDevs();
-            for (wid = 0; wid < widn; wid++) {
-                if (IsEqualGUID( &dev_guid, &DSOUND_capture_guids[wid] ) ) {
-                    DSDRIVERDESC desc;
-                    TRACE("DSOUND_capture_guids[%d]\n", wid);
-                    ppd->WaveDeviceId = wid;
-                    err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
-                    if (err == DS_OK) {
-                        PIDSCDRIVER drv;
-                        /* FIXME: this is a memory leak */
-                        WCHAR * wDescription = HeapAlloc(GetProcessHeap(),0,0x200);
-                        WCHAR * wModule = HeapAlloc(GetProcessHeap(),0,0x200);
-                        WCHAR * wInterface = HeapAlloc(GetProcessHeap(),0,0x200);
-
-                        if (wDescription && wModule && wInterface) {
-                            MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, wDescription, 0x100  );
-                            MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1, wModule, 0x100 );
-                            MultiByteToWideChar( CP_ACP, 0, "Interface", -1, wInterface, 0x100 );
-
-                            ppd->Description = wDescription;
-                            ppd->Module = wModule;
-                            ppd->Interface = wInterface;
-                            err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDIFACE,(DWORD_PTR)&drv,0));
-                            if (err == DS_OK && drv)
-                                ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
-                            else
-                                WARN("waveInMessage(DRV_QUERYDSOUNDIFACE) failed\n");
-                            found = TRUE;
-                            break;
-                        } else {
-                            WARN("no memory\n");
-                            HeapFree(GetProcessHeap(), 0, wDescription);
-                            HeapFree(GetProcessHeap(), 0, wModule);
-                            HeapFree(GetProcessHeap(), 0, wInterface);
-                            return E_OUTOFMEMORY;
-                        }
-                    } else {
-                        WARN("waveInMessage(DRV_QUERYDSOUNDDESC) failed\n");
-                        return E_PROP_ID_UNSUPPORTED;
-                    }
-                }
-            }
-        }
-
-	if (found == FALSE) {
-	    WARN("device not found\n");
-	    return E_PROP_ID_UNSUPPORTED;
-	}
+    wodn = waveOutGetNumDevs();
+    widn = waveInGetNumDevs();
+    wid = wod = dev_guid.Data4[7];
+    if (!memcmp(&dev_guid, &DSOUND_renderer_guids[0], sizeof(GUID)-1)
+        && wod < wodn)
+    {
+        ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
+        ppd->WaveDeviceId = wod;
+    }
+    else if (!memcmp(&dev_guid, &DSOUND_capture_guids[0], sizeof(GUID)-1)
+             && wid < widn)
+    {
+        ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
+        ppd->WaveDeviceId = wid;
+    }
+    else
+    {
+        WARN("Device not found\n");
+        return E_PROP_ID_UNSUPPORTED;
     }
 
+    if (ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER)
+        err = waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0);
+    else
+        err = waveInMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0);
+
+    if (err != MMSYSERR_NOERROR)
+    {
+        WARN("waveMessage(DRV_QUERYDSOUNDDESC) failed!\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
+    else
+    {
+        /* FIXME: Still a memory leak.. */
+        int desclen, modlen;
+        static WCHAR wInterface[] = { 'I','n','t','e','r','f','a','c','e',0 };
+
+        modlen = MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1, NULL, 0 );
+        desclen = MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, NULL, 0 );
+        ppd->Module = HeapAlloc(GetProcessHeap(),0,modlen*sizeof(WCHAR));
+        ppd->Description = HeapAlloc(GetProcessHeap(),0,desclen*sizeof(WCHAR));
+        ppd->Interface = wInterface;
+        if (!ppd->Description || !ppd->Module)
+        {
+            WARN("Out of memory\n");
+            HeapFree(GetProcessHeap(), 0, ppd->Description);
+            HeapFree(GetProcessHeap(), 0, ppd->Module);
+            ppd->Description = ppd->Module = NULL;
+            return E_OUTOFMEMORY;
+        }
+
+        MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1, ppd->Module, modlen );
+        MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, ppd->Description, desclen );
+    }
+
+    ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
+
     if (pcbReturned) {
-	*pcbReturned = cbPropData;
-	TRACE("*pcbReturned=%d\n", *pcbReturned);
+        *pcbReturned = sizeof(*ppd);
+        TRACE("*pcbReturned=%d\n", *pcbReturned);
     }
 
     return S_OK;
