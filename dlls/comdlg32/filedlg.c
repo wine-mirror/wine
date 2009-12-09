@@ -3258,6 +3258,7 @@ static int FILEDLG95_LOOKIN_SearchItem(HWND hwnd,WPARAM searchArg,int iSearchMet
 static void FILEDLG95_LOOKIN_Clean(HWND hwnd)
 {
     FileOpenDlgInfos *fodInfos = GetPropA(hwnd,FileOpenDlgInfosStr);
+    LookInInfos *liInfos = GetPropA(fodInfos->DlgInfos.hwndLookInCB,LookInInfosStr);
     int iPos;
     int iCount = CBGetCount(fodInfos->DlgInfos.hwndLookInCB);
 
@@ -3276,9 +3277,10 @@ static void FILEDLG95_LOOKIN_Clean(HWND hwnd)
     }
 
     /* LookInInfos structure */
+    MemFree(liInfos);
     RemovePropA(fodInfos->DlgInfos.hwndLookInCB,LookInInfosStr);
-
 }
+
 /***********************************************************************
  * FILEDLG95_FILENAME_FillFromSelection
  *
