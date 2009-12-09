@@ -2858,10 +2858,16 @@ TREEVIEW_Refresh(TREEVIEW_INFO *infoPtr, HDC hdc, const RECT *rc)
 	    TREEVIEW_SendCustomDrawNotify(infoPtr, CDDS_POSTPAINT, hdc, rect);
 }
 
+static inline void
+TREEVIEW_InvalidateItem(const TREEVIEW_INFO *infoPtr, const TREEVIEW_ITEM *item)
+{
+    if (item) InvalidateRect(infoPtr->hwnd, &item->rect, TRUE);
+}
+
 static void
 TREEVIEW_Invalidate(const TREEVIEW_INFO *infoPtr, const TREEVIEW_ITEM *item)
 {
-    if (item != NULL)
+    if (item)
 	InvalidateRect(infoPtr->hwnd, &item->rect, TRUE);
     else
         InvalidateRect(infoPtr->hwnd, NULL, TRUE);
@@ -4026,7 +4032,6 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     HWND hwnd = infoPtr->hwnd;
     TVHITTESTINFO ht;
     BOOL bTrack, bDoLabelEdit;
-    HTREEITEM tempItem;
 
     /* If Edit control is active - kill it and return.
      * The best way to do it is to set focus to itself.
@@ -4049,10 +4054,8 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     if(ht.hItem && (ht.flags & TVHT_ONITEM))
     {
         infoPtr->focusedItem = ht.hItem;
-        InvalidateRect(hwnd, &ht.hItem->rect, TRUE);
-
-        if(infoPtr->selectedItem)
-            InvalidateRect(hwnd, &(infoPtr->selectedItem->rect), TRUE);
+        TREEVIEW_InvalidateItem(infoPtr, infoPtr->focusedItem);
+        TREEVIEW_InvalidateItem(infoPtr, infoPtr->selectedItem);
     }
 
     bTrack = (ht.flags & TVHT_ONITEM)
@@ -4086,13 +4089,11 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
             if(infoPtr->focusedItem)
             {
                 /* refresh the item that was focused */
-                tempItem = infoPtr->focusedItem;
-                infoPtr->focusedItem = 0;
-                InvalidateRect(infoPtr->hwnd, &tempItem->rect, TRUE);
+                TREEVIEW_InvalidateItem(infoPtr, infoPtr->focusedItem);
+                infoPtr->focusedItem = NULL;
 
                 /* refresh the selected item to return the filled background */
-                if (infoPtr->selectedItem)
-                    InvalidateRect(infoPtr->hwnd, &(infoPtr->selectedItem->rect), TRUE);
+                TREEVIEW_InvalidateItem(infoPtr, infoPtr->selectedItem);
             }
 
 	    return 0;
@@ -4312,7 +4313,6 @@ TREEVIEW_DoSelectItem(TREEVIEW_INFO *infoPtr, INT action, HTREEITEM newSelect,
 		      INT cause)
 {
     TREEVIEW_ITEM *prevSelect;
-    RECT rcFocused;
 
     assert(newSelect == NULL || TREEVIEW_ValidItem(infoPtr, newSelect));
 
@@ -4322,12 +4322,8 @@ TREEVIEW_DoSelectItem(TREEVIEW_INFO *infoPtr, INT action, HTREEITEM newSelect,
 
     /* reset and redraw focusedItem if focusedItem was set so we don't */
     /* have to worry about the previously focused item when we set a new one */
-    if(infoPtr->focusedItem)
-    {
-        rcFocused = (infoPtr->focusedItem)->rect;
-        infoPtr->focusedItem = 0;
-        InvalidateRect(infoPtr->hwnd, &rcFocused, TRUE);
-    }
+    TREEVIEW_InvalidateItem(infoPtr, infoPtr->focusedItem);
+    infoPtr->focusedItem = NULL;
 
     switch (action)
     {
@@ -4356,10 +4352,8 @@ TREEVIEW_DoSelectItem(TREEVIEW_INFO *infoPtr, INT action, HTREEITEM newSelect,
 
 	TREEVIEW_EnsureVisible(infoPtr, infoPtr->selectedItem, FALSE);
 
-	if (prevSelect)
-	    TREEVIEW_Invalidate(infoPtr, prevSelect);
-	if (newSelect)
-	    TREEVIEW_Invalidate(infoPtr, newSelect);
+        TREEVIEW_InvalidateItem(infoPtr, prevSelect);
+        TREEVIEW_InvalidateItem(infoPtr, newSelect);
 
 	TREEVIEW_SendTreeviewNotify(infoPtr,
 				    TVN_SELCHANGEDW,
@@ -5257,12 +5251,10 @@ TREEVIEW_KeyDown(TREEVIEW_INFO *infoPtr, WPARAM wParam)
 static LRESULT
 TREEVIEW_MouseLeave (TREEVIEW_INFO * infoPtr)
 {
-    if (infoPtr->hotItem)
-    {
-        /* remove hot effect from item */
-        InvalidateRect(infoPtr->hwnd, &infoPtr->hotItem->rect, TRUE);
-        infoPtr->hotItem = NULL;
-    }
+    /* remove hot effect from item */
+    TREEVIEW_InvalidateItem(infoPtr, infoPtr->hotItem);
+    infoPtr->hotItem = NULL;
+
     return 0;
 }
 
@@ -5302,12 +5294,10 @@ TREEVIEW_MouseMove (TREEVIEW_INFO * infoPtr, LPARAM lParam)
     if (item != infoPtr->hotItem)
     {
         /* redraw old hot item */
-        if (infoPtr->hotItem)
-            InvalidateRect(infoPtr->hwnd, &infoPtr->hotItem->rect, TRUE);
+        TREEVIEW_InvalidateItem(infoPtr, infoPtr->hotItem);
         infoPtr->hotItem = item;
         /* redraw new hot item */
-        if (infoPtr->hotItem)
-            InvalidateRect(infoPtr->hwnd, &infoPtr->hotItem->rect, TRUE);
+        TREEVIEW_InvalidateItem(infoPtr, infoPtr->hotItem);
     }
 
     return 0;
