@@ -1191,22 +1191,20 @@ static void test_file_name_information(void)
             hr, STATUS_BUFFER_OVERFLOW);
     ok(U(io).Status == STATUS_BUFFER_OVERFLOW, "io.Status is %#x, expected %#x.\n",
             U(io).Status, STATUS_BUFFER_OVERFLOW);
-    ok(info->FileNameLength == lstrlenW( expected ) * sizeof(WCHAR), "info->FileNameLength is %u, expected %u.\n",
-            info->FileNameLength, lstrlenW( expected ) * sizeof(WCHAR));
+    ok(info->FileNameLength == lstrlenW( expected ) * sizeof(WCHAR), "info->FileNameLength is %u\n", info->FileNameLength);
     ok(info->FileName[2] == 0xcccc, "info->FileName[2] is %#x, expected 0xcccc.\n", info->FileName[2]);
     ok(CharLowerW((LPWSTR)(UINT_PTR)info->FileName[1]) == CharLowerW((LPWSTR)(UINT_PTR)expected[1]),
             "info->FileName[1] is %p, expected %p.\n",
             CharLowerW((LPWSTR)(UINT_PTR)info->FileName[1]), CharLowerW((LPWSTR)(UINT_PTR)expected[1]));
-    ok(io.Information == sizeof(*info), "io.Information is %lu, expected %u.\n", io.Information, sizeof(*info));
+    ok(io.Information == sizeof(*info), "io.Information is %lu\n", io.Information);
 
     memset( info, 0xcc, info_size );
     hr = pNtQueryInformationFile( h, &io, info, info_size, FileNameInformation );
     ok(hr == STATUS_SUCCESS, "NtQueryInformationFile returned %#x, expected %#x.\n", hr, STATUS_SUCCESS);
     ok(U(io).Status == STATUS_SUCCESS, "io.Status is %#x, expected %#x.\n", U(io).Status, STATUS_SUCCESS);
-    ok(info->FileNameLength == lstrlenW( expected ) * sizeof(WCHAR), "info->FileNameLength is %u, expected %u.\n",
-            info->FileNameLength, lstrlenW( expected ) * sizeof(WCHAR));
-    ok(info->FileName[info->FileNameLength / sizeof(WCHAR)] == 0xcccc, "info->FileName[%u] is %#x, expected 0xcccc.\n",
-            info->FileNameLength / sizeof(WCHAR), info->FileName[info->FileNameLength / sizeof(WCHAR)]);
+    ok(info->FileNameLength == lstrlenW( expected ) * sizeof(WCHAR), "info->FileNameLength is %u\n", info->FileNameLength);
+    ok(info->FileName[info->FileNameLength / sizeof(WCHAR)] == 0xcccc, "info->FileName[len] is %#x, expected 0xcccc.\n",
+       info->FileName[info->FileNameLength / sizeof(WCHAR)]);
     info->FileName[info->FileNameLength / sizeof(WCHAR)] = '\0';
     ok(!lstrcmpiW( info->FileName, expected ), "info->FileName is %s, expected %s.\n",
             wine_dbgstr_w( info->FileName ), wine_dbgstr_w( expected ));
@@ -1324,35 +1322,30 @@ static void test_file_all_name_information(void)
     ok(U(io).Status == STATUS_BUFFER_OVERFLOW, "io.Status is %#x, expected %#x.\n",
             U(io).Status, STATUS_BUFFER_OVERFLOW);
     ok(info->NameInformation.FileNameLength == lstrlenW( expected ) * sizeof(WCHAR),
-            "info->NameInformation.FileNameLength is %u, expected %u.\n",
-            info->NameInformation.FileNameLength, lstrlenW( expected ) * sizeof(WCHAR));
+       "info->NameInformation.FileNameLength is %u\n", info->NameInformation.FileNameLength );
     ok(info->NameInformation.FileName[2] == 0xcccc,
             "info->NameInformation.FileName[2] is %#x, expected 0xcccc.\n", info->NameInformation.FileName[2]);
     ok(CharLowerW((LPWSTR)(UINT_PTR)info->NameInformation.FileName[1]) == CharLowerW((LPWSTR)(UINT_PTR)expected[1]),
             "info->NameInformation.FileName[1] is %p, expected %p.\n",
             CharLowerW((LPWSTR)(UINT_PTR)info->NameInformation.FileName[1]), CharLowerW((LPWSTR)(UINT_PTR)expected[1]));
-    ok(io.Information == sizeof(*info), "io.Information is %lu, expected %u.\n", io.Information, sizeof(*info));
+    ok(io.Information == sizeof(*info), "io.Information is %lu\n", io.Information);
 
     memset( info, 0xcc, info_size );
     hr = pNtQueryInformationFile( h, &io, info, info_size, FileAllInformation );
     ok(hr == STATUS_SUCCESS, "NtQueryInformationFile returned %#x, expected %#x.\n", hr, STATUS_SUCCESS);
     ok(U(io).Status == STATUS_SUCCESS, "io.Status is %#x, expected %#x.\n", U(io).Status, STATUS_SUCCESS);
     ok(info->NameInformation.FileNameLength == lstrlenW( expected ) * sizeof(WCHAR),
-            "info->NameInformation.FileNameLength is %u, expected %u.\n",
-            info->NameInformation.FileNameLength, lstrlenW( expected ) * sizeof(WCHAR));
+       "info->NameInformation.FileNameLength is %u\n", info->NameInformation.FileNameLength );
     ok(info->NameInformation.FileName[info->NameInformation.FileNameLength / sizeof(WCHAR)] == 0xcccc,
-            "info->NameInformation.FileName[%u] is %#x, expected 0xcccc.\n",
-            info->NameInformation.FileNameLength / sizeof(WCHAR),
-            info->NameInformation.FileName[info->NameInformation.FileNameLength / sizeof(WCHAR)]);
+       "info->NameInformation.FileName[len] is %#x, expected 0xcccc.\n",
+       info->NameInformation.FileName[info->NameInformation.FileNameLength / sizeof(WCHAR)]);
     info->NameInformation.FileName[info->NameInformation.FileNameLength / sizeof(WCHAR)] = '\0';
     ok(!lstrcmpiW( info->NameInformation.FileName, expected ),
             "info->NameInformation.FileName is %s, expected %s.\n",
             wine_dbgstr_w( info->NameInformation.FileName ), wine_dbgstr_w( expected ));
     ok(io.Information == FIELD_OFFSET(FILE_ALL_INFORMATION, NameInformation.FileName)
             + info->NameInformation.FileNameLength,
-            "io.Information is %lu, expected %u.\n",
-            io.Information,
-            FIELD_OFFSET(FILE_ALL_INFORMATION, NameInformation.FileName) + info->NameInformation.FileNameLength);
+            "io.Information is %lu\n", io.Information );
 
     CloseHandle( h );
     HeapFree( GetProcessHeap(), 0, info );
