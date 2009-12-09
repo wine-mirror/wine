@@ -31,14 +31,6 @@
 #include "wine/test.h"
 
 #define TEST_URL "http://www.winehq.org/site/about#hi"
-#define TEST_URL_HOST "www.winehq.org"
-#define TEST_URL_PATH "/site/about"
-#define TEST_URL_HASH "#hi"
-#define TEST_URL2 "http://www.myserver.com/myscript.php?arg=1"
-#define TEST_URL2_SERVER "www.myserver.com"
-#define TEST_URL2_PATH "/myscript.php"
-#define TEST_URL2_PATHEXTRA "/myscript.php?arg=1"
-#define TEST_URL2_EXTRA "?arg=1"
 #define TEST_URL3 "file:///C:/Program%20Files/Atmel/AVR%20Tools/STK500/STK500.xml"
 
 #define CREATE_URL1 "http://username:password@www.winehq.org/site/about"
@@ -95,6 +87,100 @@ static void zero_compsA(
     SetLastError(0xfaceabad);
 }
 
+typedef struct {
+    const char *url;
+    int scheme_off;
+    int scheme_len;
+    INTERNET_SCHEME scheme;
+    int host_off;
+    int host_len;
+    INTERNET_PORT port;
+    int user_off;
+    int user_len;
+    int pass_off;
+    int pass_len;
+    int path_off;
+    int path_len;
+    int extra_off;
+    int extra_len;
+} crack_url_test_t;
+
+static const crack_url_test_t crack_url_tests[] = {
+    {"http://www.winehq.org/site/about#hi",
+        0, 4, INTERNET_SCHEME_HTTP, 7, 14, 80, -1, 0, -1, 0, 21, 11, 32, 3},
+    {"http://www.myserver.com/myscript.php?arg=1",
+        0, 4, INTERNET_SCHEME_HTTP, 7, 16, 80, -1, 0, -1, 0, 23, 13, 36, 6},
+    {"file:///C:/Program%20Files/Atmel/AVR%20Tools/STK500/STK500.xml",
+        0, 4, INTERNET_SCHEME_FILE, -1, 0, 0, -1, 0, -1, 0, 7, 55, -1, 0},
+    {"fide:///C:/Program%20Files/Atmel/AVR%20Tools/STK500/STK500.xml",
+        0, 4, INTERNET_SCHEME_UNKNOWN, 7, 0, 0, -1, 0, -1, 0, 7, 55, -1, 0},
+    {"file://C:/Program%20Files/Atmel/AVR%20Tools/STK500/STK500.xml",
+        0, 4, INTERNET_SCHEME_FILE, -1, 0, 0, -1, 0, -1, 0, 7, 54, -1, 0},
+};
+
+static void test_crack_url(const crack_url_test_t *test)
+{
+    URL_COMPONENTSA url;
+    BOOL b;
+
+    zero_compsA(&url, 1, 1, 1, 1, 1, 1);
+
+    b = InternetCrackUrlA(test->url, strlen(test->url), 0, &url);
+    ok(b, "InternetCrackUrl failed with error %d\n", GetLastError());
+
+    if(test->scheme_off == -1)
+        ok(!url.lpszScheme, "[%s] url.lpszScheme = %p, expected NULL\n", test->url, url.lpszScheme);
+    else
+        ok(url.lpszScheme == test->url+test->scheme_off, "[%s] url.lpszScheme = %p, expected %p\n",
+           test->url, url.lpszScheme, test->url+test->scheme_off);
+    ok(url.dwSchemeLength == test->scheme_len, "[%s] url.lpszSchemeLength = %d, expected %d\n",
+       test->url, url.dwSchemeLength, test->scheme_len);
+
+    ok(url.nScheme == test->scheme, "[%s] url.nScheme = %d, expected %d\n", test->url, url.nScheme, test->scheme);
+
+    if(test->host_off == -1)
+        ok(!url.lpszHostName, "[%s] url.lpszHostName = %p, expected NULL\n", test->url, url.lpszHostName);
+    else
+        ok(url.lpszHostName == test->url+test->host_off, "[%s] url.lpszHostName = %p, expected %p\n",
+           test->url, url.lpszHostName, test->url+test->host_off);
+    ok(url.dwHostNameLength == test->host_len, "[%s] url.lpszHostNameLength = %d, expected %d\n",
+       test->url, url.dwHostNameLength, test->host_len);
+
+    ok(url.nPort == test->port, "[%s] nPort = %d, expected %d\n", test->url, url.nPort, test->port);
+
+    if(test->user_off == -1)
+        ok(!url.lpszUserName, "[%s] url.lpszUserName = %p\n", test->url, url.lpszUserName);
+    else
+        ok(url.lpszUserName == test->url+test->user_off, "[%s] url.lpszUserName = %p, expected %p\n",
+           test->url, url.lpszUserName, test->url+test->user_off);
+    ok(url.dwUserNameLength == test->user_len, "[%s] url.lpszUserNameLength = %d, expected %d\n",
+       test->url, url.dwUserNameLength, test->user_len);
+
+    if(test->pass_off == -1)
+        ok(!url.lpszPassword, "[%s] url.lpszPassword = %p\n", test->url, url.lpszPassword);
+    else
+        ok(url.lpszPassword == test->url+test->pass_off, "[%s] url.lpszPassword = %p, expected %p\n",
+           test->url, url.lpszPassword, test->url+test->pass_off);
+    ok(url.dwPasswordLength == test->pass_len, "[%s] url.lpszPasswordLength = %d, expected %d\n",
+       test->url, url.dwPasswordLength, test->pass_len);
+
+    if(test->path_off == -1)
+        ok(!url.lpszUrlPath, "[%s] url.lpszPath = %p, expected NULL\n", test->url, url.lpszUrlPath);
+    else
+        ok(url.lpszUrlPath == test->url+test->path_off, "[%s] url.lpszPath = %p, expected %p\n",
+           test->url, url.lpszUrlPath, test->url+test->path_off);
+    ok(url.dwUrlPathLength == test->path_len, "[%s] url.lpszUrlPathLength = %d, expected %d\n",
+       test->url, url.dwUrlPathLength, test->path_len);
+
+    if(test->extra_off == -1)
+        ok(!url.lpszExtraInfo, "[%s] url.lpszExtraInfo = %p, expected NULL\n", test->url, url.lpszExtraInfo);
+    else
+        ok(url.lpszExtraInfo == test->url+test->extra_off, "[%s] url.lpszExtraInfo = %p, expected %p\n",
+           test->url, url.lpszExtraInfo, test->url+test->extra_off);
+    ok(url.dwExtraInfoLength == test->extra_len, "[%s] url.lpszExtraInfoLength = %d, expected %d\n",
+       test->url, url.dwExtraInfoLength, test->extra_len);
+}
+
 static void InternetCrackUrl_test(void)
 {
   URL_COMPONENTSA urlSrc, urlComponents;
@@ -111,51 +197,6 @@ static void InternetCrackUrl_test(void)
   urlSrc.lpszPassword = password;
   urlSrc.lpszUrlPath = path;
   urlSrc.lpszExtraInfo = extra;
-
-  copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 2048, 1024);
-  ret = InternetCrackUrl(TEST_URL, 0,0,&urlComponents);
-  ok( ret, "InternetCrackUrl failed, error %d\n",GetLastError());
-  ok((strcmp(TEST_URL_PATH,path) == 0),"path cracked wrong\n");
-
-  /* Bug 1805: Confirm the returned lengths are correct:                     */
-  /* 1. When extra info split out explicitly */
-  zero_compsA(&urlComponents, 0, 1, 0, 0, 1, 1);
-  ok(InternetCrackUrlA(TEST_URL2, 0, 0, &urlComponents),"InternetCrackUrl failed, error %d\n", GetLastError());
-  ok(urlComponents.dwUrlPathLength == strlen(TEST_URL2_PATH),".dwUrlPathLength should be %d, but is %d\n", (DWORD)strlen(TEST_URL2_PATH), urlComponents.dwUrlPathLength);
-  ok(!strncmp(urlComponents.lpszUrlPath,TEST_URL2_PATH,strlen(TEST_URL2_PATH)),"lpszUrlPath should be %s but is %s\n", TEST_URL2_PATH, urlComponents.lpszUrlPath);
-  ok(urlComponents.dwHostNameLength == strlen(TEST_URL2_SERVER),".dwHostNameLength should be %d, but is %d\n", (DWORD)strlen(TEST_URL2_SERVER), urlComponents.dwHostNameLength);
-  ok(!strncmp(urlComponents.lpszHostName,TEST_URL2_SERVER,strlen(TEST_URL2_SERVER)),"lpszHostName should be %s but is %s\n", TEST_URL2_SERVER, urlComponents.lpszHostName);
-  ok(urlComponents.dwExtraInfoLength == strlen(TEST_URL2_EXTRA),".dwExtraInfoLength should be %d, but is %d\n", (DWORD)strlen(TEST_URL2_EXTRA), urlComponents.dwExtraInfoLength);
-  ok(!strncmp(urlComponents.lpszExtraInfo,TEST_URL2_EXTRA,strlen(TEST_URL2_EXTRA)),"lpszExtraInfo should be %s but is %s\n", TEST_URL2_EXTRA, urlComponents.lpszHostName);
-
-  /* 2. When extra info is not split out explicitly and is in url path */
-  zero_compsA(&urlComponents, 0, 1, 0, 0, 1, 0);
-  ok(InternetCrackUrlA(TEST_URL2, 0, 0, &urlComponents),"InternetCrackUrl failed with GLE %d\n",GetLastError());
-  ok(urlComponents.dwUrlPathLength == strlen(TEST_URL2_PATHEXTRA),".dwUrlPathLength should be %d, but is %d\n", (DWORD)strlen(TEST_URL2_PATHEXTRA), urlComponents.dwUrlPathLength);
-  ok(!strncmp(urlComponents.lpszUrlPath,TEST_URL2_PATHEXTRA,strlen(TEST_URL2_PATHEXTRA)),"lpszUrlPath should be %s but is %s\n", TEST_URL2_PATHEXTRA, urlComponents.lpszUrlPath);
-  ok(urlComponents.dwHostNameLength == strlen(TEST_URL2_SERVER),".dwHostNameLength should be %d, but is %d\n", (DWORD)strlen(TEST_URL2_SERVER), urlComponents.dwHostNameLength);
-  ok(!strncmp(urlComponents.lpszHostName,TEST_URL2_SERVER,strlen(TEST_URL2_SERVER)),"lpszHostName should be %s but is %s\n", TEST_URL2_SERVER, urlComponents.lpszHostName);
-  ok(urlComponents.nPort == INTERNET_DEFAULT_HTTP_PORT,"urlComponents->nPort should have been 80 instead of %d\n", urlComponents.nPort);
-  ok(urlComponents.nScheme == INTERNET_SCHEME_HTTP,"urlComponents->nScheme should have been INTERNET_SCHEME_HTTP instead of %d\n", urlComponents.nScheme);
-
-  zero_compsA(&urlComponents, 1, 1, 1, 1, 1, 1);
-  ok(InternetCrackUrlA(TEST_URL, strlen(TEST_URL), 0, &urlComponents),"InternetCrackUrl failed with GLE %d\n",GetLastError());
-  ok(urlComponents.dwUrlPathLength == strlen(TEST_URL_PATH),".dwUrlPathLength should be %d, but is %d\n", lstrlenA(TEST_URL_PATH), urlComponents.dwUrlPathLength);
-  ok(!strncmp(urlComponents.lpszUrlPath,TEST_URL_PATH,strlen(TEST_URL_PATH)),"lpszUrlPath should be %s but is %s\n", TEST_URL_PATH, urlComponents.lpszUrlPath);
-  ok(urlComponents.dwHostNameLength == strlen(TEST_URL_HOST),".dwHostNameLength should be %d, but is %d\n", lstrlenA(TEST_URL_HOST), urlComponents.dwHostNameLength);
-  ok(!strncmp(urlComponents.lpszHostName,TEST_URL_HOST,strlen(TEST_URL_HOST)),"lpszHostName should be %s but is %s\n", TEST_URL_HOST, urlComponents.lpszHostName);
-  ok(urlComponents.nPort == INTERNET_DEFAULT_HTTP_PORT,"urlComponents->nPort should have been 80 instead of %d\n", urlComponents.nPort);
-  ok(urlComponents.nScheme == INTERNET_SCHEME_HTTP,"urlComponents->nScheme should have been INTERNET_SCHEME_HTTP instead of %d\n", urlComponents.nScheme);
-  ok(!urlComponents.lpszUserName, ".lpszUserName should have been set to NULL\n");
-  ok(!urlComponents.lpszPassword, ".lpszPassword should have been set to NULL\n");
-  ok(urlComponents.dwExtraInfoLength == strlen(TEST_URL_HASH),".dwExtraInfoLength should be %d, but is %d\n", lstrlenA(TEST_URL_HASH), urlComponents.dwExtraInfoLength);
-  ok(!strncmp(urlComponents.lpszExtraInfo,TEST_URL_HASH,strlen(TEST_URL_HASH)), ".lpszExtraInfo should be %s but is %s\n", TEST_URL_HASH, urlComponents.lpszExtraInfo);
-  ok(!urlComponents.dwUserNameLength,".dwUserNameLength should be 0, but is %d\n", urlComponents.dwUserNameLength);
-  ok(!urlComponents.dwPasswordLength,".dwPasswordLength should be 0, but is %d\n", urlComponents.dwPasswordLength);
-
-  /*3. Check for %20 */
-  copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 2048, 1024);
-  ok(InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents),"InternetCrackUrl failed with GLE %d\n",GetLastError());
 
   /* Tests for lpsz* members pointing to real strings while 
    * some corresponding length members are set to zero.
@@ -811,6 +852,11 @@ static void InternetCreateUrlA_test(void)
 
 START_TEST(url)
 {
+    int i;
+
+    for(i=0; i < sizeof(crack_url_tests)/sizeof(*crack_url_tests); i++)
+        test_crack_url(crack_url_tests+i);
+
     InternetCrackUrl_test();
     InternetCrackUrlW_test();
     InternetCreateUrlA_test();
