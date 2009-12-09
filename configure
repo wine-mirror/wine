@@ -610,6 +610,7 @@ LDPATH
 BUILTINFLAG
 EXTRACFLAGS
 LIBKSTAT
+LIBOPENAL
 LIBMPG123
 PNGINCL
 FONTCONFIGINCL
@@ -647,7 +648,7 @@ CROSSTARGET
 CROSSTEST
 CROSSCC
 CARBONLIB
-LIBOPENAL
+FRAMEWORK_OPENAL
 COREAUDIO
 DISKARBITRATIONLIB
 LDEXECFLAGS
@@ -6469,9 +6470,14 @@ done
     fi
     if test "$ac_cv_header_OpenAL_al_h" = "yes"
     then
-        LIBOPENAL="-framework OpenAL"
+        FRAMEWORK_OPENAL="-framework OpenAL"
 
-        ac_cv_lib_openal_alGetSource3i=yes
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_OPENAL 1
+_ACEOF
+
+        ac_cv_lib_openal=yes
     fi
     if test "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes"
     then
@@ -11379,14 +11385,14 @@ test "x$ac_cv_lib_mpg123_mpg123_feed" = xyes -o "x$ac_cv_func_AudioFileStreamOpe
 
 if test "$ac_cv_header_AL_al_h" = "yes"
 then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for alGetSource3i in -lopenal" >&5
-$as_echo_n "checking for alGetSource3i in -lopenal... " >&6; }
-if test "${ac_cv_lib_openal_alGetSource3i+set}" = set; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lopenal" >&5
+$as_echo_n "checking for -lopenal... " >&6; }
+if test "${ac_cv_lib_soname_openal+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  ac_check_lib_save_LIBS=$LIBS
+  ac_check_soname_save_LIBS=$LIBS
 LIBS="-lopenal  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 /* Override any GCC internal prototype to avoid an error.
@@ -11405,23 +11411,39 @@ return alGetSource3i ();
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_openal_alGetSource3i=yes
-else
-  ac_cv_lib_openal_alGetSource3i=no
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_openal=`$ac_cv_path_LDD conftest.exe | grep "openal" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_openal=`otool -L conftest$ac_exeext | grep "libopenal\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libopenal\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_openal=`$ac_cv_path_LDD conftest$ac_exeext | grep "libopenal\\.$LIBEXT" | sed -e "s/^.*\(libopenal\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
+  LIBS=$ac_check_soname_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_openal_alGetSource3i" >&5
-$as_echo "$ac_cv_lib_openal_alGetSource3i" >&6; }
-if test "x$ac_cv_lib_openal_alGetSource3i" = x""yes; then :
-  LIBOPENAL="-lopenal"
+if test "x$ac_cv_lib_soname_openal" = "x"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_openal" >&5
+$as_echo "$ac_cv_lib_soname_openal" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBOPENAL "$ac_cv_lib_soname_openal"
+_ACEOF
+
+       LIBOPENAL="-lopenal"
+
+                      ac_cv_lib_openal=yes
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_OPENAL 1
+_ACEOF
 
 fi
-
 fi
-if test "x$ac_cv_lib_openal_alGetSource3i" != xyes; then :
+if test "x$ac_cv_lib_openal" != xyes; then :
   case "x$with_openal" in
   x)   as_fn_append wine_notices "|libopenal ${notice_platform}development files not found (or too old), OpenAL won't be supported." ;;
   xno) ;;
@@ -11429,7 +11451,7 @@ if test "x$ac_cv_lib_openal_alGetSource3i" != xyes; then :
 This is an error since --with-openal was requested." "$LINENO" 5 ;;
 esac
 fi
-test "x$ac_cv_lib_openal_alGetSource3i" = xyes || enable_openal32=${enable_openal32:-no}
+test "x$ac_cv_lib_openal" = xyes || enable_openal32=${enable_openal32:-no}
 
 if test "$ac_cv_header_kstat_h" = "yes"
 then

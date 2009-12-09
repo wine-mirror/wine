@@ -662,8 +662,9 @@ case $host_os in
     fi
     if test "$ac_cv_header_OpenAL_al_h" = "yes"
     then
-        AC_SUBST(LIBOPENAL,"-framework OpenAL")
-        ac_cv_lib_openal_alGetSource3i=yes
+        AC_SUBST(FRAMEWORK_OPENAL,"-framework OpenAL")
+        AC_DEFINE_UNQUOTED(HAVE_OPENAL,1,[Define to 1 if OpenAL is available])
+        ac_cv_lib_openal=yes
     fi
     if test "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes"
     then
@@ -1483,11 +1484,13 @@ test "x$ac_cv_lib_mpg123_mpg123_feed" = xyes -o "x$ac_cv_func_AudioFileStreamOpe
 dnl **** Check for OpenAL 1.1 ****
 if test "$ac_cv_header_AL_al_h" = "yes"
 then
-    AC_CHECK_LIB(openal,alGetSource3i,[AC_SUBST(LIBOPENAL,"-lopenal")])
+    WINE_CHECK_SONAME(openal,alGetSource3i,[AC_SUBST(LIBOPENAL,"-lopenal")
+                      ac_cv_lib_openal=yes
+                      AC_DEFINE_UNQUOTED(HAVE_OPENAL,1,[Define to 1 if OpenAL is available])],,)
 fi
-WINE_NOTICE_WITH(openal,[test "x$ac_cv_lib_openal_alGetSource3i" != xyes],
+WINE_NOTICE_WITH(openal,[test "x$ac_cv_lib_openal" != xyes],
                  [libopenal ${notice_platform}development files not found (or too old), OpenAL won't be supported.])
-test "x$ac_cv_lib_openal_alGetSource3i" = xyes || enable_openal32=${enable_openal32:-no}
+test "x$ac_cv_lib_openal" = xyes || enable_openal32=${enable_openal32:-no}
 
 dnl **** Check for libkstat ****
 if test "$ac_cv_header_kstat_h" = "yes"

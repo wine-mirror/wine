@@ -574,6 +574,9 @@
 /* Define if mkdir takes only one argument */
 #undef HAVE_ONE_ARG_MKDIR
 
+/* Define to 1 if OpenAL is available */
+#undef HAVE_OPENAL
+
 /* Define to 1 if you have the <OpenAL/al.h> header file. */
 #undef HAVE_OPENAL_AL_H
 
@@ -1209,6 +1212,9 @@
 
 /* Define to the soname of the libodbc library. */
 #undef SONAME_LIBODBC
+
+/* Define to the soname of the libopenal library. */
+#undef SONAME_LIBOPENAL
 
 /* Define to the soname of the libpng library. */
 #undef SONAME_LIBPNG
