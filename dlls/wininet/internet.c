@@ -1603,7 +1603,7 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
      * <protocol>:[//<net_loc>][/path][;<params>][?<query>][#<fragment>]
      *                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      */
-    if (lpszcp != 0 && lpszcp - lpszUrl < dwUrlLength && (!lpszParam || lpszcp < lpszParam))
+    if (lpszcp != 0 && lpszcp - lpszUrl < dwUrlLength && (!lpszParam || lpszcp <= lpszParam))
     {
         INT len;
 

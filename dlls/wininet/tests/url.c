@@ -94,6 +94,7 @@ typedef struct {
     INTERNET_SCHEME scheme;
     int host_off;
     int host_len;
+    int host_skip_broken;
     INTERNET_PORT port;
     int user_off;
     int user_len;
@@ -107,15 +108,17 @@ typedef struct {
 
 static const crack_url_test_t crack_url_tests[] = {
     {"http://www.winehq.org/site/about#hi",
-        0, 4, INTERNET_SCHEME_HTTP, 7, 14, 80, -1, 0, -1, 0, 21, 11, 32, 3},
+        0, 4, INTERNET_SCHEME_HTTP, 7, 14, -1, 80, -1, 0, -1, 0, 21, 11, 32, 3},
     {"http://www.myserver.com/myscript.php?arg=1",
-        0, 4, INTERNET_SCHEME_HTTP, 7, 16, 80, -1, 0, -1, 0, 23, 13, 36, 6},
+        0, 4, INTERNET_SCHEME_HTTP, 7, 16, -1, 80, -1, 0, -1, 0, 23, 13, 36, 6},
+    {"http://www.winehq.org?test=123",
+        0, 4, INTERNET_SCHEME_HTTP, 7, 14, 23, 80, -1, 0, -1, 0, 21, 0, 21, 9},
     {"file:///C:/Program%20Files/Atmel/AVR%20Tools/STK500/STK500.xml",
-        0, 4, INTERNET_SCHEME_FILE, -1, 0, 0, -1, 0, -1, 0, 7, 55, -1, 0},
+        0, 4, INTERNET_SCHEME_FILE, -1, 0, -1, 0, -1, 0, -1, 0, 7, 55, -1, 0},
     {"fide:///C:/Program%20Files/Atmel/AVR%20Tools/STK500/STK500.xml",
-        0, 4, INTERNET_SCHEME_UNKNOWN, 7, 0, 0, -1, 0, -1, 0, 7, 55, -1, 0},
+        0, 4, INTERNET_SCHEME_UNKNOWN, 7, 0, -1, 0, -1, 0, -1, 0, 7, 55, -1, 0},
     {"file://C:/Program%20Files/Atmel/AVR%20Tools/STK500/STK500.xml",
-        0, 4, INTERNET_SCHEME_FILE, -1, 0, 0, -1, 0, -1, 0, 7, 54, -1, 0},
+        0, 4, INTERNET_SCHEME_FILE, -1, 0, -1, 0, -1, 0, -1, 0, 7, 54, -1, 0},
 };
 
 static void test_crack_url(const crack_url_test_t *test)
@@ -143,6 +146,10 @@ static void test_crack_url(const crack_url_test_t *test)
     else
         ok(url.lpszHostName == test->url+test->host_off, "[%s] url.lpszHostName = %p, expected %p\n",
            test->url, url.lpszHostName, test->url+test->host_off);
+    if(test->host_skip_broken != -1 && url.dwHostNameLength == test->host_skip_broken) {
+        win_skip("skipping broken dwHostNameLength result\n");
+        return;
+    }
     ok(url.dwHostNameLength == test->host_len, "[%s] url.lpszHostNameLength = %d, expected %d\n",
        test->url, url.dwHostNameLength, test->host_len);
 
