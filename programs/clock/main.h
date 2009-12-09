@@ -25,7 +25,7 @@
 
 typedef struct
 {
-  LOGFONT logfont;
+  LOGFONTW logfont;
   HFONT   hFont;
   HANDLE  hInstance;
   HWND    hMainWnd;
