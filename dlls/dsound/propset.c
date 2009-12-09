@@ -88,69 +88,6 @@ static ULONG WINAPI IKsPrivatePropertySetImpl_Release(LPKSPROPERTYSET iface)
     return ref;
 }
 
-static HRESULT DSPROPERTY_WaveDeviceMappingA(
-    LPVOID pPropData,
-    ULONG cbPropData,
-    PULONG pcbReturned )
-{
-    HRESULT hr = DSERR_INVALIDPARAM;
-    PDSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A_DATA ppd;
-    TRACE("(pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
-	  pPropData,cbPropData,pcbReturned);
-
-    ppd = pPropData;
-
-    if (!ppd) {
-	WARN("invalid parameter: pPropData\n");
-	return DSERR_INVALIDPARAM;
-    }
-
-    if (ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER) {
-        ULONG wod;
-        unsigned int wodn;
-        TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_RENDER\n");
-        wodn = waveOutGetNumDevs();
-        for (wod = 0; wod < wodn; wod++) {
-            WAVEOUTCAPSA capsA;
-            MMRESULT res;
-            res = waveOutGetDevCapsA(wod, &capsA, sizeof(capsA));
-            if (res == MMSYSERR_NOERROR) {
-                if (lstrcmpA(capsA.szPname, ppd->DeviceName) == 0) {
-                    ppd->DeviceId = DSOUND_renderer_guids[wod];
-                    hr = DS_OK;
-                    TRACE("found %s for %s\n", debugstr_guid(&ppd->DeviceId),
-                          ppd->DeviceName);
-                    break;
-                }
-            }
-        }
-    } else if (ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE) {
-        ULONG wid;
-        unsigned int widn;
-        TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE\n");
-        widn = waveInGetNumDevs();
-        for (wid = 0; wid < widn; wid++) {
-            WAVEINCAPSA capsA;
-            MMRESULT res;
-            res = waveInGetDevCapsA(wid, &capsA, sizeof(capsA));
-            if (res == MMSYSERR_NOERROR) {
-                if (lstrcmpA(capsA.szPname, ppd->DeviceName) == 0) {
-                    ppd->DeviceId = DSOUND_capture_guids[wid];
-                    TRACE("found %s for %s\n", debugstr_guid(&ppd->DeviceId),
-                          ppd->DeviceName);
-                    hr = DS_OK;
-                    break;
-                }
-            }
-        }
-    }
-
-    if (pcbReturned)
-	*pcbReturned = cbPropData;
-
-    return hr;
-}
-
 static HRESULT DSPROPERTY_WaveDeviceMappingW(
     LPVOID pPropData,
     ULONG cbPropData,
@@ -207,6 +144,41 @@ static HRESULT DSPROPERTY_WaveDeviceMappingW(
             }
         }
     }
+
+    if (pcbReturned)
+        *pcbReturned = cbPropData;
+
+    return hr;
+}
+
+static HRESULT DSPROPERTY_WaveDeviceMappingA(
+    LPVOID pPropData,
+    ULONG cbPropData,
+    PULONG pcbReturned )
+{
+    DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A_DATA *ppd = pPropData;
+    DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W_DATA data;
+    DWORD len;
+    HRESULT hr;
+
+    TRACE("(pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
+      pPropData,cbPropData,pcbReturned);
+
+    if (!ppd || !ppd->DeviceName) {
+        WARN("invalid parameter: ppd=%p\n", ppd);
+        return DSERR_INVALIDPARAM;
+    }
+
+    data.DataFlow = ppd->DataFlow;
+    len = MultiByteToWideChar(CP_ACP, 0, ppd->DeviceName, -1, NULL, 0);
+    data.DeviceName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!data.DeviceName)
+        return E_OUTOFMEMORY;
+    MultiByteToWideChar(CP_ACP, 0, ppd->DeviceName, -1, data.DeviceName, len);
+
+    hr = DSPROPERTY_WaveDeviceMappingW(&data, cbPropData, pcbReturned);
+    HeapFree(GetProcessHeap(), 0, data.DeviceName);
+    ppd->DeviceId = data.DeviceId;
 
     if (pcbReturned)
         *pcbReturned = cbPropData;
