@@ -254,6 +254,7 @@ static void open_file_test(void)
     status = pNtOpenFile( &dir, GENERIC_READ, &attr, &io,
                           FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE );
     ok( !status, "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
+    pRtlFreeUnicodeString( &nameW );
 
     /* test opening system dir with RootDirectory set to windows dir */
     GetSystemDirectoryW( path, MAX_PATH );
@@ -337,7 +338,6 @@ static void open_file_test(void)
     }
 
     CloseHandle( dir );
-    pRtlFreeUnicodeString( &nameW );
 }
 
 static void delete_file_test(void)
