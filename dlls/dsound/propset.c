@@ -784,116 +784,6 @@ static HRESULT DSPROPERTY_Enumerate1(
     return E_PROP_ID_UNSUPPORTED;
 }
 
-static HRESULT DSPROPERTY_EnumerateA(
-    LPVOID pPropData,
-    ULONG cbPropData,
-    PULONG pcbReturned )
-{
-    PDSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A_DATA ppd = pPropData;
-    HRESULT err;
-    TRACE("(pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
-          pPropData,cbPropData,pcbReturned);
-
-    if (ppd) {
-        if (ppd->Callback) {
-            unsigned devs, wod, wid;
-            DSDRIVERDESC desc;
-            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA data;
-
-            devs = waveOutGetNumDevs();
-            for (wod = 0; wod < devs; ++wod) {
-                err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
-                if (err == DS_OK) {
-                    DWORD size;
-                    err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDEVICEINTERFACESIZE,(DWORD_PTR)&size,0));
-                    if (err == DS_OK) {
-                        WCHAR * nameW = HeapAlloc(GetProcessHeap(),0,size);
-                        if (nameW) {
-                            err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDEVICEINTERFACE,(DWORD_PTR)nameW,size));
-                            if (err == DS_OK) {
-                                CHAR * szInterface = HeapAlloc(GetProcessHeap(),0,size/sizeof(WCHAR));
-                                if (szInterface) {
-                                    PIDSCDRIVER drv;
-                                    ZeroMemory(&data, sizeof(data));
-                                    data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
-                                    data.WaveDeviceId = wod;
-                                    data.DeviceId = DSOUND_renderer_guids[wod];
-                                    data.Description = desc.szDesc;
-                                    data.Module = desc.szDrvname;
-                                    WideCharToMultiByte( CP_ACP, 0, nameW, size/sizeof(WCHAR), szInterface, size/sizeof(WCHAR), NULL, NULL );
-                                    data.Interface = szInterface;
-
-                                    data.Type = DIRECTSOUNDDEVICE_TYPE_EMULATED;
-                                    err = mmErr(waveOutMessage(UlongToHandle(wod), DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
-                                    if (err == DS_OK && drv)
-                                        data.Type = DIRECTSOUNDDEVICE_TYPE_VXD;
-                                    else
-                                        WARN("waveOutMessage(DRV_QUERYDSOUNDIFACE) failed\n");
-
-                                    TRACE("calling Callback(%p,%p)\n", &data, ppd->Context);
-                                    (ppd->Callback)(&data, ppd->Context);
-                                }
-                                HeapFree(GetProcessHeap(),0,szInterface);
-                            }
-                        }
-                        HeapFree(GetProcessHeap(),0,nameW);
-                    }
-                }
-            }
-
-            devs = waveInGetNumDevs();
-            for (wid = 0; wid < devs; ++wid) {
-                err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
-                if (err == DS_OK) {
-                    DWORD size;
-                    err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDEVICEINTERFACESIZE,(DWORD_PTR)&size,0));
-                    if (err == DS_OK) {
-                        WCHAR * nameW = HeapAlloc(GetProcessHeap(),0,size);
-                        if (nameW) {
-                            err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDEVICEINTERFACE,(DWORD_PTR)nameW,size));
-                            if (err == DS_OK) {
-                                CHAR * szInterface = HeapAlloc(GetProcessHeap(),0,size/sizeof(WCHAR));
-                                if (szInterface) {
-                                    PIDSCDRIVER drv;
-                                    ZeroMemory(&data, sizeof(data));
-                                    data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
-                                    data.WaveDeviceId = wid;
-                                    data.DeviceId = DSOUND_capture_guids[wid];
-                                    data.Description = desc.szDesc;
-                                    data.Module = desc.szDrvname;
-                                    WideCharToMultiByte( CP_ACP, 0, nameW, size/sizeof(WCHAR), szInterface, size/sizeof(WCHAR), NULL, NULL );
-                                    data.Interface = szInterface;
-
-                                    data.Type = DIRECTSOUNDDEVICE_TYPE_EMULATED;
-                                    err = mmErr(waveInMessage(UlongToHandle(wid), DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
-                                    if (err == DS_OK && drv)
-                                        data.Type = DIRECTSOUNDDEVICE_TYPE_VXD;
-                                    else
-                                        WARN("waveInMessage(DRV_QUERYDSOUNDIFACE) failed\n");
-
-                                    TRACE("calling Callback(%p,%p)\n", &data, ppd->Context);
-                                    (ppd->Callback)(&data, ppd->Context);
-                                }
-                                HeapFree(GetProcessHeap(),0,szInterface);
-                            }
-                        }
-                        HeapFree(GetProcessHeap(),0,nameW);
-                    }
-                }
-            }
-
-            return S_OK;
-        }
-    }
-
-    if (pcbReturned) {
-        *pcbReturned = 0;
-        FIXME("*pcbReturned=%d\n", *pcbReturned);
-    }
-
-    return E_PROP_ID_UNSUPPORTED;
-}
-
 static HRESULT DSPROPERTY_EnumerateW(
     LPVOID pPropData,
     ULONG cbPropData,
@@ -954,6 +844,69 @@ static HRESULT DSPROPERTY_EnumerateW(
             return S_OK;
     }
     return S_OK;
+}
+
+static BOOL DSPROPERTY_descWtoA(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA *dataW,
+                                DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA *dataA)
+{
+    DWORD modlen, desclen;
+    static char Interface[] = "Interface";
+
+    modlen = WideCharToMultiByte(CP_ACP, 0, dataW->Module, -1, NULL, 0, NULL, NULL);
+    desclen = WideCharToMultiByte(CP_ACP, 0, dataW->Description, -1, NULL, 0, NULL, NULL);
+    dataA->Type = dataW->Type;
+    dataA->DataFlow = dataW->DataFlow;
+    dataA->DeviceId = dataW->DeviceId;
+    dataA->WaveDeviceId = dataW->WaveDeviceId;
+    dataA->Interface = Interface;
+    dataA->Module = HeapAlloc(GetProcessHeap(), 0, modlen);
+    dataA->Description = HeapAlloc(GetProcessHeap(), 0, desclen);
+    if (!dataA->Module || !dataA->Description)
+    {
+        HeapFree(GetProcessHeap(), 0, dataA->Module);
+        HeapFree(GetProcessHeap(), 0, dataA->Description);
+        dataA->Module = dataA->Description = NULL;
+        return FALSE;
+    }
+
+    WideCharToMultiByte(CP_ACP, 0, dataW->Module, -1, dataA->Module, modlen, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, dataW->Description, -1, dataA->Description, desclen, NULL, NULL);
+    return TRUE;
+}
+
+static BOOL CALLBACK DSPROPERTY_enumWtoA(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA *descW, void *data)
+{
+    DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA descA;
+    DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A_DATA *ppd = data;
+    BOOL ret;
+
+    ret = DSPROPERTY_descWtoA(descW, &descA);
+    if (!ret)
+        return FALSE;
+    ret = ppd->Callback(&descA, ppd->Context);
+    HeapFree(GetProcessHeap(), 0, descA.Module);
+    HeapFree(GetProcessHeap(), 0, descA.Description);
+    return ret;
+}
+
+static HRESULT DSPROPERTY_EnumerateA(
+    LPVOID pPropData,
+    ULONG cbPropData,
+    PULONG pcbReturned)
+{
+    DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A_DATA *ppd = pPropData;
+    DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W_DATA data;
+
+    if (!ppd || !ppd->Callback)
+    {
+        WARN("Invalid ppd %p\n", ppd);
+        return E_PROP_ID_UNSUPPORTED;
+    }
+
+    data.Callback = DSPROPERTY_enumWtoA;
+    data.Context = ppd;
+
+    return DSPROPERTY_EnumerateW(&data, cbPropData, pcbReturned);
 }
 
 static HRESULT WINAPI IKsPrivatePropertySetImpl_Get(
