@@ -1023,7 +1023,7 @@ static void test_ParseURL(void)
                parseda.pszSuffix, test->url+test->protocol_len+1);
             ok(parseda.cchSuffix == strlen(test->url+test->protocol_len+1),
                "parseda.pszSuffix = %d, expected %d\n",
-               parseda.cchSuffix, strlen(test->url+test->protocol_len+1));
+               parseda.cchSuffix, lstrlenA(test->url+test->protocol_len+1));
             ok(parseda.nScheme == test->scheme, "parseda.nScheme = %d, expected %d\n",
                parseda.nScheme, test->scheme);
         }else {
@@ -1046,7 +1046,7 @@ static void test_ParseURL(void)
                wine_dbgstr_w(parsedw.pszSuffix), wine_dbgstr_w(url+test->protocol_len+1));
             ok(parsedw.cchSuffix == strlen(test->url+test->protocol_len+1),
                "parsedw.pszSuffix = %d, expected %d\n",
-               parsedw.cchSuffix, strlen(test->url+test->protocol_len+1));
+               parsedw.cchSuffix, lstrlenA(test->url+test->protocol_len+1));
             ok(parsedw.nScheme == test->scheme, "parsedw.nScheme = %d, expected %d\n",
                parsedw.nScheme, test->scheme);
         }else {
