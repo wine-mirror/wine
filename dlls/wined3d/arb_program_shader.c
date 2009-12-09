@@ -5275,7 +5275,6 @@ static void state_texfactor_arbfp(DWORD state, IWineD3DStateBlockImpl *statebloc
     if(device->shader_backend == &arb_program_shader_backend) {
         if (use_ps(stateblock)) return;
 
-        device = stateblock->wineD3DDevice;
         context->pshader_const_dirty[ARB_FFP_CONST_TFACTOR] = 1;
         device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_TFACTOR + 1);
     }
@@ -5297,7 +5296,6 @@ static void state_arb_specularenable(DWORD state, IWineD3DStateBlockImpl *stateb
     if(device->shader_backend == &arb_program_shader_backend) {
         if (use_ps(stateblock)) return;
 
-        device = stateblock->wineD3DDevice;
         context->pshader_const_dirty[ARB_FFP_CONST_SPECULAR_ENABLE] = 1;
         device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_SPECULAR_ENABLE + 1);
     }
