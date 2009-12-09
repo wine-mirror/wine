@@ -95,7 +95,7 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, LPCWSTR url, DWORD requ
 
     memset(&url_comp, 0, sizeof(url_comp));
     url_comp.dwStructSize = sizeof(url_comp);
-    url_comp.dwSchemeLength = url_comp.dwHostNameLength = url_comp.dwUrlPathLength =
+    url_comp.dwSchemeLength = url_comp.dwHostNameLength = url_comp.dwUrlPathLength = url_comp.dwExtraInfoLength =
         url_comp.dwUserNameLength = url_comp.dwPasswordLength = 1;
     if (!InternetCrackUrlW(url, 0, 0, &url_comp))
         return MK_E_SYNTAX;
@@ -124,7 +124,12 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, LPCWSTR url, DWORD requ
     }
     accept_mimes[num] = 0;
 
-    path = heap_strndupW(url_comp.lpszUrlPath, url_comp.dwUrlPathLength);
+    path = heap_alloc((url_comp.dwUrlPathLength+url_comp.dwExtraInfoLength+1)*sizeof(WCHAR));
+    if(url_comp.dwUrlPathLength)
+        memcpy(path, url_comp.lpszUrlPath, url_comp.dwUrlPathLength*sizeof(WCHAR));
+    if(url_comp.dwExtraInfoLength)
+        memcpy(path+url_comp.dwUrlPathLength, url_comp.lpszExtraInfo, url_comp.dwExtraInfoLength*sizeof(WCHAR));
+    path[url_comp.dwUrlPathLength+url_comp.dwExtraInfoLength] = 0;
     if(This->https)
         request_flags |= INTERNET_FLAG_SECURE;
     This->base.request = HttpOpenRequestW(This->base.connection,
