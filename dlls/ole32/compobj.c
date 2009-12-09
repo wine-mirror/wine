@@ -2062,6 +2062,7 @@ HRESULT WINAPI CoRegisterClassObject(
     DWORD flags,
     LPDWORD lpdwRegister)
 {
+  static LONG next_cookie;
   RegisteredClass* newClass;
   LPUNKNOWN        foundObject;
   HRESULT          hr;
@@ -2115,11 +2116,8 @@ HRESULT WINAPI CoRegisterClassObject(
   newClass->pMarshaledData  = NULL;
   newClass->RpcRegistration = NULL;
 
-  /*
-   * Use the address of the chain node as the cookie since we are sure it's
-   * unique. FIXME: not on 64-bit platforms.
-   */
-  newClass->dwCookie        = (DWORD)newClass;
+  if (!(newClass->dwCookie = InterlockedIncrement( &next_cookie )))
+      newClass->dwCookie = InterlockedIncrement( &next_cookie );
 
   /*
    * Since we're making a copy of the object pointer, we have to increase its
