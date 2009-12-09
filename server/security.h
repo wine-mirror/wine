@@ -55,6 +55,7 @@ extern int token_check_privileges( struct token *token, int all_required,
 extern const ACL *token_get_default_dacl( struct token *token );
 extern const SID *token_get_user( struct token *token );
 extern const SID *token_get_primary_group( struct token *token );
+extern int token_sid_present( struct token *token, const SID *sid, int deny);
 
 static inline const ACE_HEADER *ace_next( const ACE_HEADER *ace )
 {

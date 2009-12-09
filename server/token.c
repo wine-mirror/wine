@@ -776,7 +776,7 @@ int token_check_privileges( struct token *token, int all_required,
         return (enabled_count > 0);
 }
 
-static int token_sid_present( struct token *token, const SID *sid, int deny )
+int token_sid_present( struct token *token, const SID *sid, int deny )
 {
     struct group *group;
 

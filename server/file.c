@@ -447,6 +447,7 @@ mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner )
     mode_t denied_mode = 0;
     int present;
     const ACL *dacl = sd_get_dacl( sd, &present );
+    const SID *user = token_get_user( current->process->token );
     if (present && dacl)
     {
         const ACE_HEADER *ace = (const ACE_HEADER *)(dacl + 1);
@@ -484,6 +485,17 @@ mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner )
                         if (access & FILE_EXECUTE)
                             denied_mode |= S_IXUSR;
                     }
+                    else if ((security_equal_sid( user, owner ) &&
+                              token_sid_present( current->process->token, sid, TRUE )))
+                    {
+                        unsigned int access = generic_file_map_access( ad_ace->Mask );
+                        if (access & FILE_READ_DATA)
+                            denied_mode |= S_IRUSR|S_IRGRP;
+                        if (access & FILE_WRITE_DATA)
+                            denied_mode |= S_IWUSR|S_IWGRP;
+                        if (access & FILE_EXECUTE)
+                            denied_mode |= S_IXUSR|S_IXGRP;
+                    }
                     break;
                 case ACCESS_ALLOWED_ACE_TYPE:
                     aa_ace = (const ACCESS_ALLOWED_ACE *)ace;
@@ -508,13 +520,24 @@ mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner )
                         if (access & FILE_EXECUTE)
                             new_mode |= S_IXUSR;
                     }
+                    else if ((security_equal_sid( user, owner ) &&
+                              token_sid_present( current->process->token, sid, FALSE )))
+                    {
+                        unsigned int access = generic_file_map_access( ad_ace->Mask );
+                        if (access & FILE_READ_DATA)
+                            new_mode |= S_IRUSR|S_IRGRP;
+                        if (access & FILE_WRITE_DATA)
+                            new_mode |= S_IWUSR|S_IWGRP;
+                        if (access & FILE_EXECUTE)
+                            new_mode |= S_IXUSR|S_IXGRP;
+                    }
                     break;
             }
         }
     }
     else
         /* no ACL means full access rights to anyone */
-        new_mode = S_IRWXU | S_IRWXO;
+        new_mode = S_IRWXU | S_IRWXG | S_IRWXO;
 
     return new_mode & ~denied_mode;
 }
@@ -557,7 +580,7 @@ static int file_set_sd( struct object *obj, const struct security_descriptor *sd
     if (set_info & DACL_SECURITY_INFORMATION)
     {
         /* keep the bits that we don't map to access rights in the ACL */
-        mode = st.st_mode & (S_ISUID|S_ISGID|S_ISVTX|S_IRWXG);
+        mode = st.st_mode & (S_ISUID|S_ISGID|S_ISVTX);
         mode |= sd_to_mode( sd, owner );
 
         if (((st.st_mode ^ mode) & (S_IRWXU|S_IRWXG|S_IRWXO)) && fchmod( unix_fd, mode ) == -1)
