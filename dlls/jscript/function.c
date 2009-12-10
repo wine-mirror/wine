@@ -661,11 +661,122 @@ HRESULT create_source_function(parser_ctx_t *ctx, parameter_t *parameters, sourc
     return S_OK;
 }
 
+static HRESULT construct_function(script_ctx_t *ctx, DISPPARAMS *dp, jsexcept_t *ei, IDispatch **ret)
+{
+    function_expression_t *expr;
+    WCHAR *str = NULL, *ptr;
+    DWORD argc, len = 0, l;
+    parser_ctx_t *parser;
+    DispatchEx *function;
+    BSTR *params = NULL;
+    int i, j=0;
+    HRESULT hres = S_OK;
+
+    static const WCHAR function_anonymousW[] = {'f','u','n','c','t','i','o','n',' ','a','n','o','n','y','m','o','u','s','('};
+    static const WCHAR function_beginW[] = {')',' ','{','\n'};
+    static const WCHAR function_endW[] = {'\n','}',0};
+
+    argc = arg_cnt(dp);
+    if(argc) {
+        params = heap_alloc(argc*sizeof(BSTR));
+        if(!params)
+            return E_OUTOFMEMORY;
+
+        if(argc > 2)
+            len = (argc-2)*2; /* separating commas */
+        for(i=0; i < argc; i++) {
+            hres = to_string(ctx, get_arg(dp,i), ei, params+i);
+            if(FAILED(hres))
+                break;
+            len += SysStringLen(params[i]);
+        }
+    }
+
+    if(SUCCEEDED(hres)) {
+        len += (sizeof(function_anonymousW) + sizeof(function_beginW) + sizeof(function_endW)) / sizeof(WCHAR);
+        str = heap_alloc(len*sizeof(WCHAR));
+        if(str) {
+            memcpy(str, function_anonymousW, sizeof(function_anonymousW));
+            ptr = str + sizeof(function_anonymousW)/sizeof(WCHAR);
+            if(argc > 1) {
+                while(1) {
+                    l = SysStringLen(params[j]);
+                    memcpy(ptr, params[j], l*sizeof(WCHAR));
+                    ptr += l;
+                    if(++j == argc-1)
+                        break;
+                    *ptr++ = ',';
+                    *ptr++ = ' ';
+                }
+            }
+            memcpy(ptr, function_beginW, sizeof(function_beginW));
+            ptr += sizeof(function_beginW)/sizeof(WCHAR);
+            if(argc) {
+                l = SysStringLen(params[argc-1]);
+                memcpy(ptr, params[argc-1], l*sizeof(WCHAR));
+                ptr += l;
+            }
+            memcpy(ptr, function_endW, sizeof(function_endW));
+
+            TRACE("%s\n", debugstr_w(str));
+        }else {
+            hres = E_OUTOFMEMORY;
+        }
+    }
+
+    while(--i >= 0)
+        SysFreeString(params[i]);
+    heap_free(params);
+    if(FAILED(hres))
+        return hres;
+
+    hres = script_parse(ctx, str, NULL, &parser);
+    heap_free(str);
+    if(FAILED(hres))
+        return hres;
+
+    if(!parser->source || !parser->source->functions || parser->source->functions->next || parser->source->variables) {
+        ERR("Invalid parser result!\n");
+        parser_release(parser);
+        return E_UNEXPECTED;
+    }
+    expr = parser->source->functions->expr;
+
+    hres = create_source_function(parser, expr->parameter_list, expr->source_elements, NULL, expr->src_str,
+            expr->src_len, &function);
+    parser_release(parser);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = (IDispatch*)_IDispatchEx_(function);
+    return S_OK;
+}
+
 static HRESULT FunctionConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    switch(flags) {
+    case DISPATCH_CONSTRUCT: {
+        IDispatch *ret;
+
+        hres = construct_function(ctx, dp, ei, &ret);
+        if(FAILED(hres))
+            return hres;
+
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = ret;
+        break;
+    }
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT FunctionProt_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
