@@ -2938,7 +2938,7 @@ static HRESULT SHLWAPI_InvokeByIID(
   while(IEnumConnections_Next(enumerator, 1, &rgcd, NULL)==S_OK)
   {
     IDispatch *dispIface;
-    if (SUCCEEDED(IUnknown_QueryInterface(rgcd.pUnk, iid, (LPVOID*)&dispIface)) ||
+    if ((iid && SUCCEEDED(IUnknown_QueryInterface(rgcd.pUnk, iid, (LPVOID*)&dispIface))) ||
         SUCCEEDED(IUnknown_QueryInterface(rgcd.pUnk, &IID_IDispatch, (LPVOID*)&dispIface)))
     {
       IDispatch_Invoke(dispIface, dispId, &IID_NULL, 0, DISPATCH_METHOD, dispParams, NULL, NULL, NULL);
@@ -2966,6 +2966,8 @@ HRESULT WINAPI IConnectionPoint_InvokeWithCancel( IConnectionPoint* iCP,
     result = IConnectionPoint_GetConnectionInterface(iCP, &iid);
     if (SUCCEEDED(result))
         result = SHLWAPI_InvokeByIID(iCP, &iid, dispId, dispParams);
+    else
+        result = SHLWAPI_InvokeByIID(iCP, NULL, dispId, dispParams);
 
     return result;
 }
@@ -2989,6 +2991,8 @@ HRESULT WINAPI IConnectionPoint_SimpleInvoke(
   result = IConnectionPoint_GetConnectionInterface(iCP, &iid);
   if (SUCCEEDED(result))
     result = SHLWAPI_InvokeByIID(iCP, &iid, dispId, dispParams);
+  else
+    result = SHLWAPI_InvokeByIID(iCP, NULL, dispId, dispParams);
 
   return result;
 }
