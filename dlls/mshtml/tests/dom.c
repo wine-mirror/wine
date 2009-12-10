@@ -657,6 +657,17 @@ static IHTMLAnchorElement *_get_anchor_iface(unsigned line, IUnknown *unk)
     return anchor;
 }
 
+#define get_text_iface(u) _get_text_iface(__LINE__,u)
+static IHTMLDOMTextNode *_get_text_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLDOMTextNode *text;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDOMTextNode, (void**)&text);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLDOMTextNode: %08x\n", hres);
+    return text;
+}
+
 #define test_node_name(u,n) _test_node_name(__LINE__,u,n)
 static void _test_node_name(unsigned line, IUnknown *unk, const char *exname)
 {
@@ -1736,6 +1747,19 @@ static void _test_select_get_disabled(unsigned line, IHTMLSelectElement *select,
     ok_(__FILE__,line) (disabled == exb, "disabled=%x, expected %x\n", disabled, exb);
 
     _test_elem3_get_disabled(line, (IUnknown*)select, exb);
+}
+
+#define test_text_length(u,l) _test_text_length(__LINE__,u,l)
+static void _test_text_length(unsigned line, IUnknown *unk, LONG l)
+{
+    IHTMLDOMTextNode *text = _get_text_iface(line, unk);
+    LONG length;
+    HRESULT hres;
+
+    hres = IHTMLDOMTextNode_get_length(text, &length);
+    ok_(__FILE__,line)(hres == S_OK, "get_length failed: %08x\n", hres);
+    ok_(__FILE__,line)(length == l, "length = %d, expected %d\n", length, l);
+    IHTMLDOMTextNode_Release(text);
 }
 
 #define test_select_set_disabled(i,b) _test_select_set_disabled(__LINE__,i,b)
@@ -5718,6 +5742,7 @@ static void test_create_elems(IHTMLDocument2 *doc)
     node = test_create_text(doc, "test");
     test_ifaces((IUnknown*)node, text_iids);
     test_disp((IUnknown*)node, &DIID_DispHTMLDOMTextNode, "[object]");
+    test_text_length((IUnknown*)node, 4);
 
     V_VT(&var) = VT_NULL;
     node2 = test_node_insertbefore((IUnknown*)body, node, &var);
