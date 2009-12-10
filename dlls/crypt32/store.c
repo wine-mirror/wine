@@ -899,7 +899,8 @@ BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
         if (existing)
         {
             CertContext_CopyProperties(existing, pCertContext);
-            *ppStoreContext = CertDuplicateCertificateContext(existing);
+            if (ppStoreContext)
+                *ppStoreContext = CertDuplicateCertificateContext(existing);
         }
         else
             toAdd = CertDuplicateCertificateContext(pCertContext);
