@@ -441,7 +441,6 @@ extern BOOL         elf_read_wine_loader_dbg_info(struct process* pcs);
 extern BOOL         elf_synchronize_module_list(struct process* pcs);
 struct elf_thunk_area;
 extern int          elf_is_in_thunk_area(unsigned long addr, const struct elf_thunk_area* thunks);
-extern DWORD WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS* addr);
 
 /* macho_module.c */
 #define MACHO_NO_MAP    ((const void*)-1)
