@@ -956,7 +956,7 @@ int main( int argc, char *argv[] )
     {
         switch(optc)
         {
-        case 'e': end_session = kill = 1; break;
+        case 'e': end_session = 1; break;
         case 'f': force = 1; break;
         case 'i': init = 1; break;
         case 'k': kill = 1; break;
