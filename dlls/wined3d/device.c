@@ -5696,18 +5696,17 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
     IWineD3DSwapChain *swapchain;
 
     swapchain = get_swapchain(surface);
-    if (!surface_is_offscreen(surface)) {
-        GLenum buffer;
-
+    if (!surface_is_offscreen(surface))
+    {
         TRACE("Surface %p is onscreen\n", surface);
 
         context = context_acquire(This, surface, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
         context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
-        buffer = surface_get_gl_buffer(surface, swapchain);
-        glDrawBuffer(buffer);
-        checkGLcall("glDrawBuffer()");
-    } else {
+        context_set_draw_buffer(context, surface_get_gl_buffer(surface, swapchain));
+    }
+    else
+    {
         TRACE("Surface %p is offscreen\n", surface);
 
         context = context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);

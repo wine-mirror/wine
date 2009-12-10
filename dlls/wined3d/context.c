@@ -2097,6 +2097,14 @@ static void context_apply_draw_buffer(struct wined3d_context *context, BOOL blit
     }
 }
 
+/* GL locking is done by the caller. */
+void context_set_draw_buffer(struct wined3d_context *context, GLenum buffer)
+{
+    glDrawBuffer(buffer);
+    checkGLcall("glDrawBuffer()");
+    context->draw_buffer_dirty = TRUE;
+}
+
 /*****************************************************************************
  * context_acquire
  *
