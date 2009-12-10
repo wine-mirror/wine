@@ -515,7 +515,6 @@ static void test_inffilelist(void)
     outsize = 0;
     SetLastError(0xdeadbeef);
     ret = pSetupGetInfFileListW(dir, INF_STYLE_WIN4, NULL, 0, &outsize);
-    todo_wine
     ok(!ret, "expected SetupGetInfFileListW to fail!\n");
 
     /* create a private directory, the temp directory may contain some
@@ -528,7 +527,7 @@ static void test_inffilelist(void)
     }
     if (!CreateDirectoryA(dirA, NULL ))
     {
-        win_skip("CreateDirectoryA failed with error %d\n", GetLastError());
+        win_skip("CreateDirectoryA(%s) failed with error %d\n", dirA, GetLastError());
         return;
     }
     if (!SetCurrentDirectoryA(dirA))
@@ -548,7 +547,6 @@ static void test_inffilelist(void)
     ret = pSetupGetInfFileListW(dir, INF_STYLE_WIN4, NULL, 0, &outsize);
     ok(ret, "expected SetupGetInfFileListW to succeed!\n");
     ok(outsize == 1, "expected required buffersize to be 1, got %d\n", outsize);
-    todo_wine
     ok(ERROR_PATH_NOT_FOUND == GetLastError(),
        "expected error ERROR_PATH_NOT_FOUND, got %d\n", GetLastError());
     
@@ -563,9 +561,7 @@ static void test_inffilelist(void)
     outsize = 0xffffffff;
     SetLastError(0xdeadbeef);
     ret = pSetupGetInfFileListW(dir, INF_STYLE_WIN4, NULL, 0, &outsize);
-    todo_wine
     ok(!ret, "expected SetupGetInfFileListW to fail!\n");
-    todo_wine
     ok(ERROR_DIRECTORY == GetLastError(),
        "expected error ERROR_DIRECTORY, got %d\n", GetLastError());
 
@@ -575,9 +571,7 @@ static void test_inffilelist(void)
     dir[lstrlenW(dir)] = '\\';
     SetLastError(0xdeadbeef);
     ret = pSetupGetInfFileListW(dir, INF_STYLE_WIN4, NULL, 0, &outsize);
-    todo_wine
     ok(!ret, "expected SetupGetInfFileListW to fail!\n");
-    todo_wine
     ok(ERROR_DIRECTORY == GetLastError(),
        "expected error ERROR_DIRECTORY, got %d\n", GetLastError());
 
@@ -587,7 +581,6 @@ static void test_inffilelist(void)
     expected = 3 + strlen(inffile) + strlen(inffile2);
     ret = pSetupGetInfFileListW(dir, INF_STYLE_WIN4, buffer, MAX_PATH, &outsize);
     ok(ret, "expected SetupGetInfFileListW to succeed!\n");
-    todo_wine
     ok(expected == outsize, "expected required buffersize to be %d, got %d\n",
          expected, outsize);
     for(p = buffer; lstrlenW(p) && (outsize > (p - buffer)); p+=lstrlenW(p) + 1)
@@ -599,7 +592,6 @@ static void test_inffilelist(void)
     create_inf_file(inffile2, inf2);
     ret = pSetupGetInfFileListW(dir, INF_STYLE_WIN4, buffer, MAX_PATH, &outsize);
     ok(ret, "expected SetupGetInfFileListW to succeed!\n");
-    todo_wine
     ok(expected == outsize, "expected required buffersize to be %d, got %d\n",
          expected, outsize);
     for(p = buffer; lstrlenW(p) && (outsize > (p - buffer)); p+=lstrlenW(p) + 1)
@@ -612,7 +604,6 @@ static void test_inffilelist(void)
     expected = 3 + strlen(inffile) + strlen(inffile2);
     ret = pSetupGetInfFileListW(dir, INF_STYLE_WIN4, buffer, MAX_PATH, &outsize);
     ok(ret, "expected SetupGetInfFileListW to succeed!\n");
-    todo_wine
     ok(expected == outsize, "expected required buffersize to be %d, got %d\n",
          expected, outsize);
     for(p = buffer; lstrlenW(p) && (outsize > (p - buffer)); p+=lstrlenW(p) + 1)
@@ -624,7 +615,6 @@ static void test_inffilelist(void)
     expected = 2 + strlen(invalid_inf);
     ret = pSetupGetInfFileListW(dir, INF_STYLE_OLDNT, buffer, MAX_PATH, &outsize);
     ok(ret, "expected SetupGetInfFileListW to succeed!\n");
-    todo_wine
     ok(expected == outsize, "expected required buffersize to be %d, got %d\n",
          expected, outsize);
     for(p = buffer; lstrlenW(p) && (outsize > (p - buffer)); p+=lstrlenW(p) + 1)
@@ -636,7 +626,6 @@ static void test_inffilelist(void)
     ret = pSetupGetInfFileListW(dir, INF_STYLE_OLDNT | INF_STYLE_WIN4, buffer,
                                 MAX_PATH, &outsize);
     ok(ret, "expected SetupGetInfFileListW to succeed!\n");
-    todo_wine
     ok(expected == outsize, "expected required buffersize to be %d, got %d\n",
          expected, outsize);
     for(p = buffer; lstrlenW(p) && (outsize > (p - buffer)); p+=lstrlenW(p) + 1)
