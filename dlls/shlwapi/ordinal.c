@@ -2930,10 +2930,16 @@ static HRESULT SHLWAPI_InvokeByIID(
 {
   IEnumConnections *enumerator;
   CONNECTDATA rgcd;
+  static DISPPARAMS empty = {NULL, NULL, 0, 0};
+  DISPPARAMS* params = dispParams;
 
   HRESULT result = IConnectionPoint_EnumConnections(iCP, &enumerator);
   if (FAILED(result))
     return result;
+
+  /* Invoke is never happening with an NULL dispParams */
+  if (!params)
+    params = &empty;
 
   while(IEnumConnections_Next(enumerator, 1, &rgcd, NULL)==S_OK)
   {
@@ -2941,7 +2947,7 @@ static HRESULT SHLWAPI_InvokeByIID(
     if ((iid && SUCCEEDED(IUnknown_QueryInterface(rgcd.pUnk, iid, (LPVOID*)&dispIface))) ||
         SUCCEEDED(IUnknown_QueryInterface(rgcd.pUnk, &IID_IDispatch, (LPVOID*)&dispIface)))
     {
-      IDispatch_Invoke(dispIface, dispId, &IID_NULL, 0, DISPATCH_METHOD, dispParams, NULL, NULL, NULL);
+      IDispatch_Invoke(dispIface, dispId, &IID_NULL, 0, DISPATCH_METHOD, params, NULL, NULL, NULL);
       IDispatch_Release(dispIface);
     }
   }
