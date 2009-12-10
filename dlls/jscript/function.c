@@ -555,20 +555,6 @@ static const builtin_info_t Function_info = {
     NULL
 };
 
-static HRESULT FunctionConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT FunctionProt_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
 static HRESULT create_function(script_ctx_t *ctx, const builtin_info_t *builtin_info, DWORD flags,
         BOOL funcprot, DispatchEx *prototype, FunctionInstance **ret)
 {
@@ -673,6 +659,20 @@ HRESULT create_source_function(parser_ctx_t *ctx, parameter_t *parameters, sourc
 
     *ret = &function->dispex;
     return S_OK;
+}
+
+static HRESULT FunctionConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT FunctionProt_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 HRESULT init_function_constr(script_ctx_t *ctx, DispatchEx *object_prototype)
