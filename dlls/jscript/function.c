@@ -669,7 +669,7 @@ static HRESULT construct_function(script_ctx_t *ctx, DISPPARAMS *dp, jsexcept_t 
     parser_ctx_t *parser;
     DispatchEx *function;
     BSTR *params = NULL;
-    int i, j=0;
+    int i=0, j=0;
     HRESULT hres = S_OK;
 
     static const WCHAR function_anonymousW[] = {'f','u','n','c','t','i','o','n',' ','a','n','o','n','y','m','o','u','s','('};
