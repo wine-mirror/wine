@@ -31,9 +31,10 @@
 
 #include "wine/test.h"
 
-static const char *msifile = "winetest.msi";
-static const char *msifile2 = "winetst2.msi";
-static const char *mstfile = "winetst.mst";
+static const char *msifile = "winetest-db.msi";
+static const char *msifile2 = "winetst2-db.msi";
+static const char *mstfile = "winetst-db.mst";
+static const WCHAR msifileW[] = {'w','i','n','e','t','e','s','t','-','d','b','.','m','s','i',0};
 
 static void test_msidatabase(void)
 {
@@ -5568,8 +5569,6 @@ static void test_defaultdatabase(void)
     HRESULT hr;
     MSIHANDLE hdb;
     IStorage *stg = NULL;
-
-    static const WCHAR msifileW[] = {'w','i','n','e','t','e','s','t','.','m','s','i',0};
 
     DeleteFile(msifile);
 

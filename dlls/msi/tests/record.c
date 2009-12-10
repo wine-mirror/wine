@@ -24,7 +24,7 @@
 
 #include "wine/test.h"
 
-static const char *msifile = "winetest.msi";
+static const char *msifile = "winetest-record.msi";
 
 static BOOL create_temp_file(char *name)
 {
