@@ -31,7 +31,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wineboot);
 
 #define MESSAGE_TIMEOUT     5000
-#define PROCQUIT_TIMEOUT    20000
 
 struct window_info
 {
@@ -278,12 +277,13 @@ static DWORD_PTR send_end_session_messages( struct window_info *win, UINT count,
         return 1;
     }
 
-    /* wait for app to quit on its own for a while */
-    ret = WaitForSingleObject( process_handle, PROCQUIT_TIMEOUT );
+    /* Check whether the app quit on its own */
+    ret = WaitForSingleObject( process_handle, 0 );
     CloseHandle( process_handle );
     if (ret == WAIT_TIMEOUT)
     {
-        /* it didn't quit by itself in time, so terminate it with extreme prejudice */
+        /* If not, it returned from all WM_ENDSESSION and is finished cleaning
+         * up, so we can safely kill the process. */
         HANDLE handle = OpenProcess( PROCESS_TERMINATE, FALSE, win[0].pid );
         if (handle)
         {
