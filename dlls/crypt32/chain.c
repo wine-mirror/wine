@@ -2641,6 +2641,8 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
         if (!pChain->TrustStatus.dwErrorStatus)
             CRYPT_VerifyChainRevocation(pChain, pTime, pChainPara, dwFlags);
         CRYPT_CheckUsages(pChain, pChainPara);
+        TRACE_(chain)("error status: %08x\n",
+         pChain->TrustStatus.dwErrorStatus);
         if (ppChainContext)
             *ppChainContext = pChain;
         else
