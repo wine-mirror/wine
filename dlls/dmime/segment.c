@@ -359,6 +359,12 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetParam (LP
     LIST_FOR_EACH (pEntry, &This->Tracks) {
       pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_SEGMENT_TRACK, entry);
 
+      hr = IDirectMusicTrack_QueryInterface(pIt->pTrack, &IID_IPersistStream, (void**) &pCLSIDStream);
+      if (FAILED(hr)) {
+	ERR("(%p): object %p don't implement IPersistStream Interface. Expect a crash (critical problem)\n", This, pIt->pTrack);
+	continue ;
+      }
+
       TRACE(" - %p -> 0x%x,%p\n", pIt, pIt->dwGroupBits, pIt->pTrack);
 
       if (0xFFFFFFFF != dwGroupBits && 0 == (pIt->dwGroupBits & dwGroupBits)) continue ;
