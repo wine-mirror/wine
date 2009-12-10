@@ -1014,8 +1014,8 @@ static void IWineD3DDeviceImpl_RestoreWindow(IWineD3DDevice *iface, HWND window)
      * Some applications change it before calling Reset() when switching between windowed and
      * fullscreen modes(HL2), some depend on the original style(Eve Online)
      */
-    if(style == fullscreen_style(This->style) &&
-       exStyle == fullscreen_style(This->exStyle)) {
+    if (style == fullscreen_style(This->style) && exStyle == fullscreen_exStyle(This->exStyle))
+    {
         SetWindowLongW(window, GWL_STYLE, This->style);
         SetWindowLongW(window, GWL_EXSTYLE, This->exStyle);
     }
