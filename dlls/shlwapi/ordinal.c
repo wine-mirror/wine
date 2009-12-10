@@ -2950,6 +2950,7 @@ static HRESULT SHLWAPI_InvokeByIID(
       IDispatch_Invoke(dispIface, dispId, &IID_NULL, 0, DISPATCH_METHOD, params, NULL, NULL, NULL);
       IDispatch_Release(dispIface);
     }
+    IUnknown_Release(rgcd.pUnk);
   }
 
   IEnumConnections_Release(enumerator);
