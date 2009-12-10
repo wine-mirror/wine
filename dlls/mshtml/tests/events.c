@@ -1801,7 +1801,6 @@ static void run_test(const char *str, testfunc_t test)
 {
     IHTMLDocument2 *doc;
     IHTMLElement *body = NULL;
-    ULONG ref;
     MSG msg;
     HRESULT hres;
 
@@ -1837,8 +1836,7 @@ static void run_test(const char *str, testfunc_t test)
     }
 
     set_client_site(doc, FALSE);
-    ref = IHTMLDocument2_Release(doc);
-    ok(!ref, "ref = %d\n", ref);
+    IHTMLDocument2_Release(doc);
 }
 
 static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
