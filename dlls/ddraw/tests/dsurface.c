@@ -3048,6 +3048,7 @@ static void GetDCFormatTest(void)
         const char *name;
         DDPIXELFORMAT fmt;
         BOOL getdc_capable;
+        HRESULT alt_result;
     } testdata[] = {
         {
             "D3DFMT_A8R8G8B8",
@@ -3071,7 +3072,8 @@ static void GetDCFormatTest(void)
                 sizeof(DDPIXELFORMAT), DDPF_RGB, 0,
                 {32}, {0x000000ff}, {0x0000ff00}, {0x00ff0000}, {0x00000000}
             },
-            TRUE
+            TRUE,
+            DDERR_CANTCREATEDC /* Vista+ */
         },
         {
             "D3DFMT_X8B8G8R8",
@@ -3079,7 +3081,8 @@ static void GetDCFormatTest(void)
                 sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
                        {32}, {0x000000ff}, {0x0000ff00}, {0x00ff0000}, {0xff000000}
             },
-            TRUE
+            TRUE,
+            DDERR_CANTCREATEDC /* Vista+ */
         },
         {
             "D3DFMT_A4R4G4B4",
@@ -3087,7 +3090,8 @@ static void GetDCFormatTest(void)
                 sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
                        {16}, {0x00000f00}, {0x000000f0}, {0x0000000f}, {0x0000f000}
             },
-            TRUE
+            TRUE,
+            DDERR_CANTCREATEDC /* Vista+ */
         },
         {
             "D3DFMT_X4R4G4B4",
@@ -3095,7 +3099,8 @@ static void GetDCFormatTest(void)
                 sizeof(DDPIXELFORMAT), DDPF_RGB, 0,
                        {16}, {0x00000f00}, {0x000000f0}, {0x0000000f}, {0x00000000}
             },
-            TRUE
+            TRUE,
+            DDERR_CANTCREATEDC /* Vista+ */
         },
         {
             "D3DFMT_R5G6B5",
@@ -3240,7 +3245,9 @@ static void GetDCFormatTest(void)
         hr = IDirectDrawSurface7_GetDC(surface, &dc);
         if(testdata[i].getdc_capable)
         {
-            ok(SUCCEEDED(hr), "GetDC on a %s surface failed(0x%08x), expected it to work\n",
+            ok(SUCCEEDED(hr) ||
+               (testdata[i].alt_result && hr == testdata[i].alt_result),
+               "GetDC on a %s surface failed(0x%08x), expected it to work\n",
                testdata[i].name, hr);
         }
         else
