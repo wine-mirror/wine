@@ -1431,6 +1431,51 @@ callTest3.apply(null);
 tmp = Number.prototype.toString.call(3);
 ok(tmp === "3", "Number.prototype.toString.call(3) = " + tmp);
 
+var func = new Function("return 3;");
+
+tmp = func();
+ok(tmp === 3, "func() = " + tmp);
+ok(func.call() === 3, "func.call() = " + tmp);
+ok(func.length === 0, "func.length = " + func.length);
+tmp = func.toString();
+ok(tmp === "function anonymous() {\nreturn 3;\n}", "func.toString() = " + tmp);
+
+func = new Function("x", "return x+2;");
+tmp = func(1);
+ok(tmp === 3, "func(1) = " + tmp);
+tmp = func.toString();
+ok(tmp === "function anonymous(x) {\nreturn x+2;\n}", "func.toString() = " + tmp);
+
+tmp = (new Function("x ", "return x+2;")).toString();
+ok(tmp === "function anonymous(x ) {\nreturn x+2;\n}", "func.toString() = " + tmp);
+
+func = new Function("x", "y", "return x+y");
+tmp = func(1,3);
+ok(tmp === 4, "func(1,3) = " + tmp);
+tmp = func.toString();
+ok(tmp === "function anonymous(x, y) {\nreturn x+y\n}", "func.toString() = " + tmp);
+
+func = new Function(" x, \ty", "\tz", "return x+y+z;");
+tmp = func(1,3,2);
+ok(tmp === 6, "func(1,3,2) = " + tmp);
+ok(func.length === 3, "func.length = " + func.length);
+tmp = func.toString();
+ok(tmp === "function anonymous( x, \ty, \tz) {\nreturn x+y+z;\n}", "func.toString() = " + tmp);
+
+func = new Function();
+tmp = func();
+ok(tmp === undefined, "func() = " + tmp);
+tmp = func.toString();
+ok(tmp == "function anonymous() {\n\n}", "func.toString() = " + tmp);
+
+func = (function() {
+        var tmp = 3;
+        return new Function("return tmp;");
+    })();
+tmp = 2;
+tmp = func();
+ok(tmp === 2, "func() = " + tmp);
+
 var date = new Date();
 
 date = new Date(100);
