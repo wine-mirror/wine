@@ -36,13 +36,24 @@ DEFINE_GUID( test_stg_cls, 0x88888888, 0x0425, 0x0000, 0,0,0,0,0,0,0,0);
 static CHAR filenameA[MAX_PATH];
 static WCHAR filename[MAX_PATH];
 
+static const char file1_nameA[] = {'c','o','p','y','t','e','s','t','A',0};
 static const WCHAR file1_name[] = {'c','o','p','y','t','e','s','t','A',0};
+static const char file2_nameA[] = {'c','o','p','y','t','e','s','t','B',0};
 static const WCHAR file2_name[] = {'c','o','p','y','t','e','s','t','B',0};
 static const WCHAR stgA_name[] = {'S','t','o','r','a','g','e','A',0};
 static const WCHAR stgB_name[] = {'S','t','o','r','a','g','e','B',0};
 static const WCHAR strmA_name[] = {'S','t','r','e','a','m','A',0};
 static const WCHAR strmB_name[] = {'S','t','r','e','a','m','B',0};
 static const WCHAR strmC_name[] = {'S','t','r','e','a','m','C',0};
+
+/* Win9x and WinMe don't have lstrcmpW */
+static int strcmp_ww(LPCWSTR strw1, LPCWSTR strw2)
+{
+    CHAR stra1[512], stra2[512];
+    WideCharToMultiByte(CP_ACP, 0, strw1, -1, stra1, sizeof(stra1), NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, strw2, -1, stra2, sizeof(stra2), NULL, NULL);
+    return lstrcmpA(stra1, stra2);
+}
 
 static void test_hglobal_storage_stat(void)
 {
@@ -1910,6 +1921,7 @@ static void test_fmtusertypestg(void)
     IStorage *stg;
     IEnumSTATSTG *stat;
     HRESULT hr;
+    static const char fileA[]  = {'f','m','t','t','e','s','t',0};
     static const WCHAR fileW[] = {'f','m','t','t','e','s','t',0};
     static WCHAR userTypeW[] = {'S','t','g','U','s','r','T','y','p','e',0};
     static WCHAR strmNameW[] = {1,'C','o','m','p','O','b','j',0};
@@ -1933,7 +1945,7 @@ static void test_fmtusertypestg(void)
             DWORD got;
             while ((hr = IEnumSTATSTG_Next(stat, 1, &statstg, &got)) == S_OK && got == 1)
             {
-                if (lstrcmpW(statstg.pwcsName, strmNameW) == 0)
+                if (strcmp_ww(statstg.pwcsName, strmNameW) == 0)
                     found = TRUE;
                 else
                     ok(0, "found unexpected stream or storage\n");
@@ -1956,7 +1968,7 @@ static void test_fmtusertypestg(void)
             DWORD got;
             while ((hr = IEnumSTATSTG_Next(stat, 1, &statstg, &got)) == S_OK && got == 1)
             {
-                if (lstrcmpW(statstg.pwcsName, strmNameW) == 0)
+                if (strcmp_ww(statstg.pwcsName, strmNameW) == 0)
                     found = TRUE;
                 else
                     ok(0, "found unexpected stream or storage\n");
@@ -1966,7 +1978,7 @@ static void test_fmtusertypestg(void)
         }
 
         IStorage_Release(stg);
-        DeleteFileW( fileW );
+        DeleteFileA( fileA );
     }
 }
 
@@ -2124,7 +2136,7 @@ static void test_copyto(void)
             hr = IStream_Read(strm_tmp, buf, sizeof(buf), NULL);
             ok(hr == S_OK, "Read failed: 0x%08x\n", hr);
             if(SUCCEEDED(hr))
-                ok(lstrcmpW(buf, strmA_name) == 0,
+                ok(strcmp_ww(buf, strmA_name) == 0,
                         "Expected %s to be read, got %s\n", wine_dbgstr_w(strmA_name), wine_dbgstr_w(buf));
 
             IStream_Release(strm_tmp);
@@ -2147,7 +2159,7 @@ static void test_copyto(void)
             hr = IStream_Read(strm_tmp, buf, sizeof(buf), NULL);
             ok(hr == S_OK, "Read failed: 0x%08x\n", hr);
             if(SUCCEEDED(hr))
-                ok(lstrcmpW(buf, strmB_name) == 0,
+                ok(strcmp_ww(buf, strmB_name) == 0,
                         "Expected %s to be read, got %s\n", wine_dbgstr_w(strmB_name), wine_dbgstr_w(buf));
 
             IStream_Release(strm_tmp);
@@ -2165,7 +2177,7 @@ static void test_copyto(void)
         hr = IStream_Read(strm_tmp, buf, sizeof(buf), NULL);
         ok(hr == S_OK, "Read failed: 0x%08x\n", hr);
         if(SUCCEEDED(hr))
-            ok(lstrcmpW(buf, strmC_name) == 0,
+            ok(strcmp_ww(buf, strmC_name) == 0,
                     "Expected %s to be read, got %s\n", wine_dbgstr_w(strmC_name), wine_dbgstr_w(buf));
 
         IStream_Release(strm_tmp);
@@ -2177,8 +2189,8 @@ cleanup:
     if(file2)
         IStorage_Release(file2);
 
-    DeleteFileW(file1_name);
-    DeleteFileW(file2_name);
+    DeleteFileA(file1_nameA);
+    DeleteFileA(file2_nameA);
 }
 
 static void test_copyto_snbexclusions(void)
@@ -2239,7 +2251,7 @@ static void test_copyto_snbexclusions(void)
             hr = IStream_Read(strm_tmp, buf, sizeof(buf), NULL);
             ok(hr == S_OK, "Read failed: 0x%08x\n", hr);
             if(SUCCEEDED(hr))
-                ok(lstrcmpW(buf, strmB_name) == 0,
+                ok(strcmp_ww(buf, strmB_name) == 0,
                         "Expected %s to be read, got %s\n", wine_dbgstr_w(strmB_name), wine_dbgstr_w(buf));
 
             IStream_Release(strm_tmp);
@@ -2260,8 +2272,8 @@ cleanup:
     if(file2)
         IStorage_Release(file2);
 
-    DeleteFileW(file1_name);
-    DeleteFileW(file2_name);
+    DeleteFileA(file1_nameA);
+    DeleteFileA(file2_nameA);
 }
 
 static void test_copyto_iidexclusions_storage(void)
@@ -2327,7 +2339,7 @@ static void test_copyto_iidexclusions_storage(void)
         hr = IStream_Read(strm_tmp, buf, sizeof(buf), NULL);
         ok(hr == S_OK, "Read failed: 0x%08x\n", hr);
         if(SUCCEEDED(hr))
-            ok(lstrcmpW(buf, strmC_name) == 0,
+            ok(strcmp_ww(buf, strmC_name) == 0,
                     "Expected %s to be read, got %s\n", wine_dbgstr_w(strmC_name), wine_dbgstr_w(buf));
 
         IStream_Release(strm_tmp);
@@ -2339,8 +2351,8 @@ cleanup:
     if(file2)
         IStorage_Release(file2);
 
-    DeleteFileW(file1_name);
-    DeleteFileW(file2_name);
+    DeleteFileA(file1_nameA);
+    DeleteFileA(file2_nameA);
 }
 
 static void test_copyto_iidexclusions_stream(void)
@@ -2412,8 +2424,8 @@ cleanup:
     if(file2)
         IStorage_Release(file2);
 
-    DeleteFileW(file1_name);
-    DeleteFileW(file2_name);
+    DeleteFileA(file1_nameA);
+    DeleteFileA(file2_nameA);
 }
 
 static void test_rename(void)
@@ -2490,10 +2502,11 @@ static void test_toplevel_stat(void)
     IStorage *stg = NULL;
     HRESULT r;
     STATSTG stat;
-    WCHAR prev_dir[MAX_PATH];
-    WCHAR temp[MAX_PATH];
-    WCHAR full_path[MAX_PATH];
-    LPWSTR rel_path;
+    char prev_dir[MAX_PATH];
+    char temp[MAX_PATH];
+    char full_path[MAX_PATH];
+    LPSTR rel_pathA;
+    WCHAR rel_path[MAX_PATH];
 
     DeleteFileA(filenameA);
 
@@ -2502,7 +2515,7 @@ static void test_toplevel_stat(void)
     ok(r==S_OK, "StgCreateDocfile failed\n");
 
     r = IStorage_Stat( stg, &stat, STATFLAG_DEFAULT );
-    ok(!lstrcmpW(stat.pwcsName, filename), "expected %s, got %s\n",
+    ok(!strcmp_ww(stat.pwcsName, filename), "expected %s, got %s\n",
         wine_dbgstr_w(filename), wine_dbgstr_w(stat.pwcsName));
     CoTaskMemFree(stat.pwcsName);
 
@@ -2512,7 +2525,7 @@ static void test_toplevel_stat(void)
     ok(r==S_OK, "StgOpenStorage failed with error 0x%08x\n", r);
 
     r = IStorage_Stat( stg, &stat, STATFLAG_DEFAULT );
-    ok(!lstrcmpW(stat.pwcsName, filename), "expected %s, got %s\n",
+    ok(!strcmp_ww(stat.pwcsName, filename), "expected %s, got %s\n",
         wine_dbgstr_w(filename), wine_dbgstr_w(stat.pwcsName));
     CoTaskMemFree(stat.pwcsName);
 
@@ -2521,20 +2534,21 @@ static void test_toplevel_stat(void)
     DeleteFileA(filenameA);
 
     /* Stat always returns the full path, even for files opened with a relative path. */
-    GetCurrentDirectoryW(MAX_PATH, prev_dir);
+    GetCurrentDirectoryA(MAX_PATH, prev_dir);
 
-    GetTempPathW(MAX_PATH, temp);
+    GetTempPathA(MAX_PATH, temp);
 
-    SetCurrentDirectoryW(temp);
+    SetCurrentDirectoryA(temp);
 
-    GetFullPathNameW(filename, MAX_PATH, full_path, &rel_path);
+    GetFullPathNameA(filenameA, MAX_PATH, full_path, &rel_pathA);
+    MultiByteToWideChar(CP_ACP, 0, rel_pathA, -1, rel_path, MAX_PATH);
 
     r = StgCreateDocfile( rel_path, STGM_CREATE | STGM_SHARE_EXCLUSIVE |
                             STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
     ok(r==S_OK, "StgCreateDocfile failed\n");
 
     r = IStorage_Stat( stg, &stat, STATFLAG_DEFAULT );
-    ok(!lstrcmpW(stat.pwcsName, filename), "expected %s, got %s\n",
+    ok(!strcmp_ww(stat.pwcsName, filename), "expected %s, got %s\n",
         wine_dbgstr_w(filename), wine_dbgstr_w(stat.pwcsName));
     CoTaskMemFree(stat.pwcsName);
 
@@ -2544,13 +2558,13 @@ static void test_toplevel_stat(void)
     ok(r==S_OK, "StgOpenStorage failed with error 0x%08x\n", r);
 
     r = IStorage_Stat( stg, &stat, STATFLAG_DEFAULT );
-    ok(!lstrcmpW(stat.pwcsName, filename), "expected %s, got %s\n",
+    ok(!strcmp_ww(stat.pwcsName, filename), "expected %s, got %s\n",
         wine_dbgstr_w(filename), wine_dbgstr_w(stat.pwcsName));
     CoTaskMemFree(stat.pwcsName);
 
     IStorage_Release( stg );
 
-    SetCurrentDirectoryW(prev_dir);
+    SetCurrentDirectoryA(prev_dir);
 
     DeleteFileA(filenameA);
 }
