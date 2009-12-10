@@ -602,6 +602,38 @@ void swapchain_setup_fullscreen_window(IWineD3DSwapChainImpl *swapchain, UINT w,
     SetWindowPos(window, HWND_TOP, 0, 0, w, h, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
 }
 
+void swapchain_restore_fullscreen_window(IWineD3DSwapChainImpl *swapchain)
+{
+    IWineD3DDeviceImpl *device = swapchain->device;
+    HWND window = swapchain->win_handle;
+    LONG style, exstyle;
+
+    if (!device->style && !device->exStyle) return;
+
+    TRACE("Restoring window style of window %p to %08x, %08x.\n",
+            window, device->style, device->exStyle);
+
+    style = GetWindowLongW(window, GWL_STYLE);
+    exstyle = GetWindowLongW(window, GWL_EXSTYLE);
+
+    /* Only restore the style if the application didn't modify it during the
+     * fullscreen phase. Some applications change it before calling Reset()
+     * when switching between windowed and fullscreen modes (HL2), some
+     * depend on the original style (Eve Online). */
+    if (style == fullscreen_style(device->style) && exstyle == fullscreen_exstyle(device->exStyle))
+    {
+        SetWindowLongW(window, GWL_STYLE, device->style);
+        SetWindowLongW(window, GWL_EXSTYLE, device->exStyle);
+    }
+
+    /* Delete the old values. */
+    device->style = 0;
+    device->exStyle = 0;
+
+    SetWindowPos(window, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
+}
+
+
 HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface_type,
         IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters, IUnknown *parent)
 {
