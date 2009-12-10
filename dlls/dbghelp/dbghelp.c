@@ -524,7 +524,7 @@ BOOL pcs_callback(const struct process* pcs, ULONG action, void* data)
         case CBA_DEFERRED_SYMBOL_LOAD_FAILURE:
         case CBA_DEFERRED_SYMBOL_LOAD_PARTIAL:
         case CBA_DEFERRED_SYMBOL_LOAD_START:
-            idslW = (IMAGEHLP_DEFERRED_SYMBOL_LOADW64*)(DWORD)data;
+            idslW = data;
             idsl.SizeOfStruct = sizeof(idsl);
             idsl.BaseOfImage = idslW->BaseOfImage;
             idsl.CheckSum = idslW->CheckSum;
