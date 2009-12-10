@@ -919,17 +919,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
     return WINED3D_OK;
 }
 
-/*****************************************************************************
- * IWineD3DDeviceImpl_SetupFullscreenWindow
- *
- * Helper function that modifies a HWND's Style and ExStyle for proper
- * fullscreen use.
- *
- * Params:
- *  iface: Pointer to the IWineD3DDevice interface
- *  window: Window to setup
- *
- *****************************************************************************/
 static LONG fullscreen_style(LONG orig_style) {
     LONG style = orig_style;
     style &= ~WS_CAPTION;
@@ -949,38 +938,6 @@ static LONG fullscreen_exStyle(LONG orig_exStyle) {
     exStyle &= ~WS_EX_CLIENTEDGE;
 
     return exStyle;
-}
-
-void IWineD3DDeviceImpl_SetupFullscreenWindow(IWineD3DDeviceImpl *This, HWND window, UINT w, UINT h)
-{
-    LONG style, exStyle;
-    /* Don't do anything if an original style is stored.
-     * That shouldn't happen
-     */
-    TRACE("(%p): Setting up window %p for exclusive mode\n", This, window);
-    if (This->style || This->exStyle) {
-        ERR("(%p): Want to change the window parameters of HWND %p, but "
-            "another style is stored for restoration afterwards\n", This, window);
-    }
-
-    /* Get the parameters and save them */
-    style = GetWindowLongW(window, GWL_STYLE);
-    exStyle = GetWindowLongW(window, GWL_EXSTYLE);
-    This->style = style;
-    This->exStyle = exStyle;
-
-    style = fullscreen_style(style);
-    exStyle = fullscreen_exStyle(exStyle);
-
-    TRACE("Old style was %08x,%08x, setting to %08x,%08x\n",
-          This->style, This->exStyle, style, exStyle);
-
-    SetWindowLongW(window, GWL_STYLE, style);
-    SetWindowLongW(window, GWL_EXSTYLE, exStyle);
-
-    /* Inform the window about the update. */
-    SetWindowPos(window, HWND_TOP, 0, 0,
-                 w, h, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
 }
 
 /*****************************************************************************
@@ -6601,8 +6558,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         if(swapchain->win_handle && !pPresentationParameters->Windowed) {
             if(swapchain->presentParms.Windowed) {
                 /* switch from windowed to fs */
-                IWineD3DDeviceImpl_SetupFullscreenWindow(This, swapchain->win_handle,
-                        pPresentationParameters->BackBufferWidth, pPresentationParameters->BackBufferHeight);
+                swapchain_setup_fullscreen_window(swapchain, pPresentationParameters->BackBufferWidth,
+                        pPresentationParameters->BackBufferHeight);
             } else {
                 /* Fullscreen -> fullscreen mode change */
                 MoveWindow(swapchain->win_handle, 0, 0,
@@ -6622,8 +6579,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
          */
         This->style = 0;
         This->exStyle = 0;
-        IWineD3DDeviceImpl_SetupFullscreenWindow(This, swapchain->win_handle,
-                pPresentationParameters->BackBufferWidth, pPresentationParameters->BackBufferHeight);
+        swapchain_setup_fullscreen_window(swapchain, pPresentationParameters->BackBufferWidth,
+                pPresentationParameters->BackBufferHeight);
         This->style = style;
         This->exStyle = exStyle;
     }

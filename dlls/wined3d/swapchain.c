@@ -557,6 +557,51 @@ static const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
     IWineD3DBaseSwapChainImpl_GetGammaRamp
 };
 
+static LONG fullscreen_style(LONG style)
+{
+    /* Make sure the window is managed, otherwise we won't get keyboard input. */
+    style |= WS_POPUP | WS_SYSMENU;
+    style &= ~(WS_CAPTION | WS_THICKFRAME);
+
+    return style;
+}
+
+static LONG fullscreen_exstyle(LONG exstyle)
+{
+    /* Filter out window decorations. */
+    exstyle &= ~(WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE);
+
+    return exstyle;
+}
+
+void swapchain_setup_fullscreen_window(IWineD3DSwapChainImpl *swapchain, UINT w, UINT h)
+{
+    IWineD3DDeviceImpl *device = swapchain->device;
+    HWND window = swapchain->win_handle;
+    LONG style, exstyle;
+
+    TRACE("Setting up window %p for fullscreen mode.\n", window);
+
+    if (device->style || device->exStyle)
+    {
+        ERR("Changing the window style for window %p, but another style (%08x, %08x) is already stored.\n",
+                window, device->style, device->exStyle);
+    }
+
+    device->style = GetWindowLongW(window, GWL_STYLE);
+    device->exStyle = GetWindowLongW(window, GWL_EXSTYLE);
+
+    style = fullscreen_style(device->style);
+    exstyle = fullscreen_exstyle(device->exStyle);
+
+    TRACE("Old style was %08x, %08x, setting to %08x, %08x.\n",
+            device->style, device->exStyle, style, exstyle);
+
+    SetWindowLongW(window, GWL_STYLE, style);
+    SetWindowLongW(window, GWL_EXSTYLE, exstyle);
+    SetWindowPos(window, HWND_TOP, 0, 0, w, h, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+}
+
 HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface_type,
         IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters, IUnknown *parent)
 {
@@ -606,7 +651,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
 
     if (!present_parameters->Windowed && window)
     {
-        IWineD3DDeviceImpl_SetupFullscreenWindow(device, window, present_parameters->BackBufferWidth,
+        swapchain_setup_fullscreen_window(swapchain, present_parameters->BackBufferWidth,
                 present_parameters->BackBufferHeight);
     }
 
