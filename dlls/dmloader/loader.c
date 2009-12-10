@@ -333,18 +333,14 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_GetObject (LPDIR
 		if (!pObjectEntry) {
 			pObjectEntry = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(WINE_LOADER_ENTRY));
 			DM_STRUCT_INIT(&pObjectEntry->Desc);
-			if (pObject) {
-				DMUSIC_CopyDescriptor (&pObjectEntry->Desc, &GotDesc);
-				pObjectEntry->pObject = pObject;
-				pObjectEntry->bInvalidDefaultDLS = FALSE;
-			}
+			DMUSIC_CopyDescriptor (&pObjectEntry->Desc, &GotDesc);
+			pObjectEntry->pObject = pObject;
+			pObjectEntry->bInvalidDefaultDLS = FALSE;
 			list_add_head (This->pObjects, &pObjectEntry->entry);
 		} else {
-			if (pObject) {
-				DMUSIC_CopyDescriptor (&pObjectEntry->Desc, &GotDesc);
-				pObjectEntry->pObject = pObject;
-				pObjectEntry->bInvalidDefaultDLS = FALSE;
-			}		
+			DMUSIC_CopyDescriptor (&pObjectEntry->Desc, &GotDesc);
+			pObjectEntry->pObject = pObject;
+			pObjectEntry->bInvalidDefaultDLS = FALSE;
 		}
 		TRACE(": filled in cache entry\n");
 	} else TRACE(": caching disabled\n");
