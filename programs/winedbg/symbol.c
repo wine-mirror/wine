@@ -65,13 +65,13 @@ static BOOL symbol_get_debug_start(const struct dbg_type* func, ULONG64* start)
     return FALSE;
 }
 
-static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG base,
+static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
                             struct dbg_lvalue* lvalue, char* buffer, size_t sz)
 {
     if (buffer) buffer[0] = '\0';
     if (sym->Flags & SYMFLAG_REGISTER)
     {
-        DWORD* pval;
+        DWORD_PTR* pval;
 
         if (!memory_get_register(sym->Register, &pval, buffer, sz))
             return FALSE;
@@ -80,7 +80,7 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG base,
     }
     else if (sym->Flags & SYMFLAG_REGREL)
     {
-        DWORD* pval;
+        DWORD_PTR* pval;
 
         if (!memory_get_register(sym->Register, &pval, buffer, sz))
             return FALSE;
@@ -408,7 +408,7 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
 
             il.SizeOfStruct = sizeof(il);
             SymGetLineFromAddr(dbg_curr_process->handle,
-                               (DWORD)memory_to_linear_addr(&sgv.syms[i].lvalue.addr),
+                               (DWORD_PTR)memory_to_linear_addr(&sgv.syms[i].lvalue.addr),
                                &disp, &il);
             do
             {
@@ -524,7 +524,7 @@ enum dbg_line_status symbol_get_function_line_status(const ADDRESS64* addr)
     IMAGEHLP_LINE       il;
     DWORD               disp;
     ULONG64             disp64, start;
-    DWORD               lin = (DWORD)memory_to_linear_addr(addr);
+    DWORD_PTR           lin = (DWORD_PTR)memory_to_linear_addr(addr);
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        sym = (SYMBOL_INFO*)buffer;
     struct dbg_type     func;
@@ -579,7 +579,7 @@ BOOL symbol_get_line(const char* filename, const char* name, IMAGEHLP_LINE* line
 {
     struct sgv_data     sgv;
     char                buffer[512];
-    DWORD               opt, disp, linear;
+    DWORD               opt, disp;
     unsigned            i, found = FALSE;
     IMAGEHLP_LINE       il;
 
@@ -616,7 +616,7 @@ BOOL symbol_get_line(const char* filename, const char* name, IMAGEHLP_LINE* line
 
     for (i = 0; i < sgv.num; i++)
     {
-        linear = (DWORD)memory_to_linear_addr(&sgv.syms[i].lvalue.addr);
+        DWORD_PTR linear = (DWORD_PTR)memory_to_linear_addr(&sgv.syms[i].lvalue.addr);
 
         il.SizeOfStruct = sizeof(il);
         if (!SymGetLineFromAddr(dbg_curr_process->handle, linear, &disp, &il))
@@ -647,8 +647,7 @@ BOOL symbol_get_line(const char* filename, const char* name, IMAGEHLP_LINE* line
  * <name>=<value> (local|pmt <where>)   in detailed form
  * Note <value> can be an error message in case of error
  */
-void symbol_print_local(const SYMBOL_INFO* sym, ULONG base, 
-                        BOOL detailed)
+void symbol_print_local(const SYMBOL_INFO* sym, ULONG_PTR base, BOOL detailed)
 {
     struct dbg_lvalue   lvalue;
     char                buffer[64];
@@ -682,7 +681,7 @@ static BOOL CALLBACK info_locals_cb(PSYMBOL_INFO sym, ULONG size, PVOID ctx)
     types_print_type(&type, FALSE);
 
     dbg_printf(" ");
-    symbol_print_local(sym, (ULONG)ctx, TRUE);
+    symbol_print_local(sym, (ULONG_PTR)ctx, TRUE);
     dbg_printf("\n");
 
     return TRUE;

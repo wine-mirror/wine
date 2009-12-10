@@ -676,12 +676,12 @@ static void dbg_resume_debuggee(DWORD cont)
         if (dbg_curr_thread)
         {
             if (!SetThreadContext(dbg_curr_thread->handle, &dbg_context))
-                dbg_printf("Cannot set ctx on %04x\n", dbg_curr_tid);
+                dbg_printf("Cannot set ctx on %04lx\n", dbg_curr_tid);
         }
     }
     dbg_interactiveP = FALSE;
     if (!ContinueDebugEvent(dbg_curr_pid, dbg_curr_tid, cont))
-        dbg_printf("Cannot continue on %04x (%08x)\n", dbg_curr_tid, cont);
+        dbg_printf("Cannot continue on %04lx (%08x)\n", dbg_curr_tid, cont);
 }
 
 static void wait_exception(void)
@@ -796,7 +796,7 @@ void	dbg_run_debuggee(const char* args)
     }
 }
 
-static BOOL     str2int(const char* str, DWORD* val)
+static BOOL str2int(const char* str, DWORD_PTR* val)
 {
     char*   ptr;
 
@@ -813,7 +813,7 @@ static BOOL     str2int(const char* str, DWORD* val)
  */
 enum dbg_start  dbg_active_attach(int argc, char* argv[])
 {
-    DWORD       pid, evt;
+    DWORD_PTR pid, evt;
 
     /* try the form <myself> pid */
     if (argc == 1 && str2int(argv[0], &pid) && pid != 0)
@@ -833,7 +833,7 @@ enum dbg_start  dbg_active_attach(int argc, char* argv[])
         }
         if (!SetEvent((HANDLE)evt))
         {
-            WINE_ERR("Invalid event handle: %x\n", evt);
+            WINE_ERR("Invalid event handle: %lx\n", evt);
             return start_error_init;
         }
         CloseHandle((HANDLE)evt);

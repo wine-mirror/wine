@@ -303,12 +303,12 @@ void	break_add_break_from_lineno(int lineno, BOOL swbp)
 
 
         DWORD           disp;
-        DWORD           linear = (DWORD)memory_to_linear_addr(&bkln.addr);
+        DWORD_PTR       linear = (DWORD_PTR)memory_to_linear_addr(&bkln.addr);
 
         il.SizeOfStruct = sizeof(il);
         if (!SymGetLineFromAddr(dbg_curr_process->handle, linear, &disp, &il))
         {
-            dbg_printf("Unable to add breakpoint (unknown address %x)\n", linear);
+            dbg_printf("Unable to add breakpoint (unknown address %lx)\n", linear);
             return;
         }
         bkln.addr.Offset = 0;
@@ -475,8 +475,8 @@ static inline BOOL module_is_container(const IMAGEHLP_MODULE* wmod_cntnr,
                                      const IMAGEHLP_MODULE* wmod_child)
 {
     return wmod_cntnr->BaseOfImage <= wmod_child->BaseOfImage &&
-        (DWORD)wmod_cntnr->BaseOfImage + wmod_cntnr->ImageSize >=
-        (DWORD)wmod_child->BaseOfImage + wmod_child->ImageSize;
+        wmod_cntnr->BaseOfImage + wmod_cntnr->ImageSize >=
+        wmod_child->BaseOfImage + wmod_child->ImageSize;
 }
 
 /******************************************************************
@@ -488,7 +488,7 @@ void break_delete_xpoints_from_module(unsigned long base)
 {
     IMAGEHLP_MODULE             im, im_elf;
     int                         i;
-    DWORD                       linear;
+    DWORD_PTR                   linear;
     struct dbg_breakpoint*      bp = dbg_curr_process->bp;
 
     /* FIXME: should do it also on the ELF sibbling if any */
@@ -499,12 +499,12 @@ void break_delete_xpoints_from_module(unsigned long base)
     /* try to get in fact the underlying ELF module (if any) */
     if (SymGetModuleInfo(dbg_curr_process->handle, im.BaseOfImage - 1, &im_elf) &&
         im_elf.BaseOfImage <= im.BaseOfImage &&
-        (DWORD)im_elf.BaseOfImage + im_elf.ImageSize >= (DWORD)im.BaseOfImage + im.ImageSize)
+        im_elf.BaseOfImage + im_elf.ImageSize >= im.BaseOfImage + im.ImageSize)
         im = im_elf;
 
     for (i = 0; i < dbg_curr_process->next_bp; i++)
     {
-        linear = (DWORD)memory_to_linear_addr(&bp[i].addr);
+        linear = (DWORD_PTR)memory_to_linear_addr(&bp[i].addr);
         if (bp[i].refcount && bp[i].enabled &&
             im.BaseOfImage <= linear && linear < im.BaseOfImage + im.ImageSize)
         {

@@ -1396,7 +1396,7 @@ static enum packet_return packet_write_memory(struct gdb_context* gdbctx)
     {
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
             fprintf(stderr, "Wrong sizes %u <> %u\n",
-                    ptr - gdbctx->in_packet + len * 2, gdbctx->in_packet_len);
+                    (int)(ptr - gdbctx->in_packet) + len * 2, gdbctx->in_packet_len);
         return packet_error;
     }
     if (gdbctx->trace & GDBPXY_TRC_COMMAND)
@@ -1468,13 +1468,14 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
     {
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
             fprintf(stderr, "Wrong sizes %u <> %u\n",
-                    ptr + 8 - gdbctx->in_packet, gdbctx->in_packet_len);
+                    (int)(ptr + 8 - gdbctx->in_packet), gdbctx->in_packet_len);
         return packet_error;
     }
     if (gdbctx->trace & GDBPXY_TRC_COMMAND)
-        fprintf(stderr, "Writing reg %u <= %*.*s\n",
-                reg, gdbctx->in_packet_len - (ptr - gdbctx->in_packet),
-                gdbctx->in_packet_len - (ptr - gdbctx->in_packet), ptr);
+    {
+        int len = gdbctx->in_packet_len - (ptr - gdbctx->in_packet);
+        fprintf(stderr, "Writing reg %u <= %*.*s\n", reg, len, len, ptr );
+    }
 
     if (dbg_curr_thread != gdbctx->other_thread && gdbctx->other_thread)
     {
@@ -1509,10 +1510,10 @@ static void packet_query_monitor_wnd_helper(struct gdb_context* gdbctx, HWND hWn
        packet_reply_open(gdbctx);
        packet_reply_catc(gdbctx, 'O');
        snprintf(buffer, sizeof(buffer),
-                "%*s%04lx%*s%-17.17s %08x %08x %.14s\n",
+                "%*s%04lx%*s%-17.17s %08x %08lx %.14s\n",
                 indent, "", (ULONG_PTR)hWnd, 13 - indent, "",
                 clsName, GetWindowLongW(hWnd, GWL_STYLE),
-                GetWindowLongPtrW(hWnd, GWLP_WNDPROC), wndName);
+                (ULONG_PTR)GetWindowLongPtrW(hWnd, GWLP_WNDPROC), wndName);
        packet_reply_hex_to_str(gdbctx, buffer);
        packet_reply_close(gdbctx);
 

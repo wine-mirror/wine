@@ -253,40 +253,40 @@ static void be_i386_print_segment_info(HANDLE hThread, const CONTEXT* ctx)
 
 static struct dbg_internal_var be_i386_ctx[] =
 {
-    {CV_REG_AL,         "AL",           (DWORD*)FIELD_OFFSET(CONTEXT, Eax),     dbg_itype_unsigned_char_int},
-    {CV_REG_CL,         "CL",           (DWORD*)FIELD_OFFSET(CONTEXT, Ecx),     dbg_itype_unsigned_char_int},
-    {CV_REG_DL,         "DL",           (DWORD*)FIELD_OFFSET(CONTEXT, Edx),     dbg_itype_unsigned_char_int},
-    {CV_REG_BL,         "BL",           (DWORD*)FIELD_OFFSET(CONTEXT, Ebx),     dbg_itype_unsigned_char_int},
-    {CV_REG_AH,         "AH",           (DWORD*)(FIELD_OFFSET(CONTEXT, Eax)+1), dbg_itype_unsigned_char_int},
-    {CV_REG_CH,         "CH",           (DWORD*)(FIELD_OFFSET(CONTEXT, Ecx)+1), dbg_itype_unsigned_char_int},
-    {CV_REG_DH,         "DH",           (DWORD*)(FIELD_OFFSET(CONTEXT, Edx)+1), dbg_itype_unsigned_char_int},
-    {CV_REG_BH,         "BH",           (DWORD*)(FIELD_OFFSET(CONTEXT, Ebx)+1), dbg_itype_unsigned_char_int},
-    {CV_REG_AX,         "AX",           (DWORD*)FIELD_OFFSET(CONTEXT, Eax),     dbg_itype_unsigned_short_int},
-    {CV_REG_CX,         "CX",           (DWORD*)FIELD_OFFSET(CONTEXT, Ecx),     dbg_itype_unsigned_short_int},
-    {CV_REG_DX,         "DX",           (DWORD*)FIELD_OFFSET(CONTEXT, Edx),     dbg_itype_unsigned_short_int},
-    {CV_REG_BX,         "BX",           (DWORD*)FIELD_OFFSET(CONTEXT, Ebx),     dbg_itype_unsigned_short_int},
-    {CV_REG_SP,         "SP",           (DWORD*)FIELD_OFFSET(CONTEXT, Esp),     dbg_itype_unsigned_short_int},
-    {CV_REG_BP,         "BP",           (DWORD*)FIELD_OFFSET(CONTEXT, Ebp),     dbg_itype_unsigned_short_int},
-    {CV_REG_SI,         "SI",           (DWORD*)FIELD_OFFSET(CONTEXT, Esi),     dbg_itype_unsigned_short_int},
-    {CV_REG_DI,         "DI",           (DWORD*)FIELD_OFFSET(CONTEXT, Edi),     dbg_itype_unsigned_short_int},
-    {CV_REG_EAX,        "EAX",          (DWORD*)FIELD_OFFSET(CONTEXT, Eax),     dbg_itype_unsigned_int},
-    {CV_REG_ECX,        "ECX",          (DWORD*)FIELD_OFFSET(CONTEXT, Ecx),     dbg_itype_unsigned_int},
-    {CV_REG_EDX,        "EDX",          (DWORD*)FIELD_OFFSET(CONTEXT, Edx),     dbg_itype_unsigned_int},
-    {CV_REG_EBX,        "EBX",          (DWORD*)FIELD_OFFSET(CONTEXT, Ebx),     dbg_itype_unsigned_int},
-    {CV_REG_ESP,        "ESP",          (DWORD*)FIELD_OFFSET(CONTEXT, Esp),     dbg_itype_unsigned_int},
-    {CV_REG_EBP,        "EBP",          (DWORD*)FIELD_OFFSET(CONTEXT, Ebp),     dbg_itype_unsigned_int},
-    {CV_REG_ESI,        "ESI",          (DWORD*)FIELD_OFFSET(CONTEXT, Esi),     dbg_itype_unsigned_int},
-    {CV_REG_EDI,        "EDI",          (DWORD*)FIELD_OFFSET(CONTEXT, Edi),     dbg_itype_unsigned_int},
-    {CV_REG_ES,         "ES",           (DWORD*)FIELD_OFFSET(CONTEXT, SegEs),   dbg_itype_unsigned_short_int},
-    {CV_REG_CS,         "CS",           (DWORD*)FIELD_OFFSET(CONTEXT, SegCs),   dbg_itype_unsigned_short_int},
-    {CV_REG_SS,         "SS",           (DWORD*)FIELD_OFFSET(CONTEXT, SegSs),   dbg_itype_unsigned_short_int},
-    {CV_REG_DS,         "DS",           (DWORD*)FIELD_OFFSET(CONTEXT, SegDs),   dbg_itype_unsigned_short_int},
-    {CV_REG_FS,         "FS",           (DWORD*)FIELD_OFFSET(CONTEXT, SegFs),   dbg_itype_unsigned_short_int},
-    {CV_REG_GS,         "GS",           (DWORD*)FIELD_OFFSET(CONTEXT, SegGs),   dbg_itype_unsigned_short_int},
-    {CV_REG_IP,         "IP",           (DWORD*)FIELD_OFFSET(CONTEXT, Eip),     dbg_itype_unsigned_short_int},
-    {CV_REG_FLAGS,      "FLAGS",        (DWORD*)FIELD_OFFSET(CONTEXT, EFlags),  dbg_itype_unsigned_short_int},
-    {CV_REG_EIP,        "EIP",          (DWORD*)FIELD_OFFSET(CONTEXT, Eip),     dbg_itype_unsigned_int},
-    {CV_REG_EFLAGS,     "EFLAGS",       (DWORD*)FIELD_OFFSET(CONTEXT, EFlags),  dbg_itype_unsigned_int},
+    {CV_REG_AL,         "AL",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Eax),     dbg_itype_unsigned_char_int},
+    {CV_REG_CL,         "CL",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Ecx),     dbg_itype_unsigned_char_int},
+    {CV_REG_DL,         "DL",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Edx),     dbg_itype_unsigned_char_int},
+    {CV_REG_BL,         "BL",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Ebx),     dbg_itype_unsigned_char_int},
+    {CV_REG_AH,         "AH",           (DWORD_PTR*)(FIELD_OFFSET(CONTEXT, Eax)+1), dbg_itype_unsigned_char_int},
+    {CV_REG_CH,         "CH",           (DWORD_PTR*)(FIELD_OFFSET(CONTEXT, Ecx)+1), dbg_itype_unsigned_char_int},
+    {CV_REG_DH,         "DH",           (DWORD_PTR*)(FIELD_OFFSET(CONTEXT, Edx)+1), dbg_itype_unsigned_char_int},
+    {CV_REG_BH,         "BH",           (DWORD_PTR*)(FIELD_OFFSET(CONTEXT, Ebx)+1), dbg_itype_unsigned_char_int},
+    {CV_REG_AX,         "AX",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Eax),     dbg_itype_unsigned_short_int},
+    {CV_REG_CX,         "CX",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Ecx),     dbg_itype_unsigned_short_int},
+    {CV_REG_DX,         "DX",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Edx),     dbg_itype_unsigned_short_int},
+    {CV_REG_BX,         "BX",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Ebx),     dbg_itype_unsigned_short_int},
+    {CV_REG_SP,         "SP",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Esp),     dbg_itype_unsigned_short_int},
+    {CV_REG_BP,         "BP",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Ebp),     dbg_itype_unsigned_short_int},
+    {CV_REG_SI,         "SI",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Esi),     dbg_itype_unsigned_short_int},
+    {CV_REG_DI,         "DI",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Edi),     dbg_itype_unsigned_short_int},
+    {CV_REG_EAX,        "EAX",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Eax),     dbg_itype_unsigned_int},
+    {CV_REG_ECX,        "ECX",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Ecx),     dbg_itype_unsigned_int},
+    {CV_REG_EDX,        "EDX",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Edx),     dbg_itype_unsigned_int},
+    {CV_REG_EBX,        "EBX",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Ebx),     dbg_itype_unsigned_int},
+    {CV_REG_ESP,        "ESP",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Esp),     dbg_itype_unsigned_int},
+    {CV_REG_EBP,        "EBP",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Ebp),     dbg_itype_unsigned_int},
+    {CV_REG_ESI,        "ESI",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Esi),     dbg_itype_unsigned_int},
+    {CV_REG_EDI,        "EDI",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Edi),     dbg_itype_unsigned_int},
+    {CV_REG_ES,         "ES",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, SegEs),   dbg_itype_unsigned_short_int},
+    {CV_REG_CS,         "CS",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, SegCs),   dbg_itype_unsigned_short_int},
+    {CV_REG_SS,         "SS",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, SegSs),   dbg_itype_unsigned_short_int},
+    {CV_REG_DS,         "DS",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, SegDs),   dbg_itype_unsigned_short_int},
+    {CV_REG_FS,         "FS",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, SegFs),   dbg_itype_unsigned_short_int},
+    {CV_REG_GS,         "GS",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, SegGs),   dbg_itype_unsigned_short_int},
+    {CV_REG_IP,         "IP",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Eip),     dbg_itype_unsigned_short_int},
+    {CV_REG_FLAGS,      "FLAGS",        (DWORD_PTR*)FIELD_OFFSET(CONTEXT, EFlags),  dbg_itype_unsigned_short_int},
+    {CV_REG_EIP,        "EIP",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Eip),     dbg_itype_unsigned_int},
+    {CV_REG_EFLAGS,     "EFLAGS",       (DWORD_PTR*)FIELD_OFFSET(CONTEXT, EFlags),  dbg_itype_unsigned_int},
     {0,                 NULL,           0,                                      dbg_itype_none}
 };
 
@@ -295,7 +295,7 @@ static const struct dbg_internal_var* be_i386_init_registers(CONTEXT* ctx)
     struct dbg_internal_var*    div;
 
     for (div = be_i386_ctx; div->name; div++) 
-        div->pval = (DWORD*)((char*)ctx + (DWORD)div->pval);
+        div->pval = (DWORD_PTR*)((char*)ctx + (DWORD)div->pval);
     return be_i386_ctx;
 }
 

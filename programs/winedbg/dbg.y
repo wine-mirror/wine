@@ -45,7 +45,7 @@ static void parser(const char*);
 {
     struct dbg_lvalue   lvalue;
     char*               string;
-    int                 integer;
+    INT_PTR             integer;
     IMAGEHLP_LINE       listing;
     struct expr*        expression;
     struct type_expr_t  type;

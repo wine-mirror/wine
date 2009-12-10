@@ -639,7 +639,7 @@ void memory_disassemble(const struct dbg_lvalue* xstart,
         memory_disasm_one_insn(&last);
 }
 
-BOOL memory_get_register(DWORD regno, DWORD** value, char* buffer, int len)
+BOOL memory_get_register(DWORD regno, DWORD_PTR** value, char* buffer, int len)
 {
     const struct dbg_internal_var*  div;
 

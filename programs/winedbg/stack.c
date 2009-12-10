@@ -96,7 +96,7 @@ BOOL stack_get_current_frame(IMAGEHLP_STACK_FRAME* ihsf)
     return stack_get_frame(dbg_curr_thread->curr_frame, ihsf);
 }
 
-BOOL stack_get_register_current_frame(unsigned regno, DWORD** pval)
+BOOL stack_get_register_current_frame(unsigned regno, DWORD_PTR** pval)
 {
     enum be_cpu_addr            kind;
 
@@ -194,11 +194,11 @@ unsigned stack_fetch_frames(void)
                                                    (nf + 1) * sizeof(dbg_curr_thread->frames[0]));
 
         dbg_curr_thread->frames[nf].addr_pc      = sf.AddrPC;
-        dbg_curr_thread->frames[nf].linear_pc    = (DWORD)memory_to_linear_addr(&sf.AddrPC);
+        dbg_curr_thread->frames[nf].linear_pc    = (DWORD_PTR)memory_to_linear_addr(&sf.AddrPC);
         dbg_curr_thread->frames[nf].addr_frame   = sf.AddrFrame;
-        dbg_curr_thread->frames[nf].linear_frame = (DWORD)memory_to_linear_addr(&sf.AddrFrame);
+        dbg_curr_thread->frames[nf].linear_frame = (DWORD_PTR)memory_to_linear_addr(&sf.AddrFrame);
         dbg_curr_thread->frames[nf].addr_stack   = sf.AddrStack;
-        dbg_curr_thread->frames[nf].linear_stack = (DWORD)memory_to_linear_addr(&sf.AddrStack);
+        dbg_curr_thread->frames[nf].linear_stack = (DWORD_PTR)memory_to_linear_addr(&sf.AddrStack);
         nf++;
         /* we've probably gotten ourselves into an infinite loop so bail */
         if (nf > 200) break;
@@ -211,7 +211,7 @@ unsigned stack_fetch_frames(void)
 
 struct sym_enum
 {
-    DWORD       frame;
+    DWORD_PTR   frame;
     BOOL        first;
 };
 
@@ -390,7 +390,7 @@ static void backtrace_all(void)
                 dbg_active_wait_for_first_exception();
             }
 
-            dbg_printf("\nBacktracing for thread %04x in process %04x (%s):\n",
+            dbg_printf("\nBacktracing for thread %04x in process %04lx (%s):\n",
                        entry.th32ThreadID, dbg_curr_pid,
                        dbg_W2A(dbg_curr_process->imageName, -1));
             backtrace_tid(dbg_curr_process, entry.th32ThreadID);

@@ -44,7 +44,7 @@ void source_show_path(void)
     {
         next = strchr(ptr, ';');
         if (next)
-            dbg_printf("\t%.*s\n", next++ - ptr, ptr);
+            dbg_printf("\t%.*s\n", (int)(next++ - ptr), ptr);
         else
             dbg_printf("\t%s\n", ptr);
     }

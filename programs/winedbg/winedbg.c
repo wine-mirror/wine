@@ -88,8 +88,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 struct dbg_process*	dbg_curr_process = NULL;
 struct dbg_thread*	dbg_curr_thread = NULL;
-DWORD		        dbg_curr_tid;
-DWORD		        dbg_curr_pid;
+DWORD_PTR	        dbg_curr_tid = 0;
+DWORD_PTR	        dbg_curr_pid = 0;
 CONTEXT                 dbg_context;
 BOOL    	        dbg_interactiveP = FALSE;
 
@@ -402,7 +402,7 @@ struct mod_loader_info
     IMAGEHLP_MODULE*    imh_mod;
 };
 
-static BOOL CALLBACK mod_loader_cb(PCSTR mod_name, ULONG base, PVOID ctx)
+static BOOL CALLBACK mod_loader_cb(PCSTR mod_name, DWORD64 base, PVOID ctx)
 {
     struct mod_loader_info*     mli = ctx;
 
@@ -429,13 +429,13 @@ BOOL dbg_get_debuggee_info(HANDLE hProcess, IMAGEHLP_MODULE* imh_mod)
      * enumeration
      */
     SymSetOptions((opt = SymGetOptions()) | 0x40000000);
-    SymEnumerateModules(hProcess, mod_loader_cb, (void*)&mli);
+    SymEnumerateModules64(hProcess, mod_loader_cb, (void*)&mli);
     SymSetOptions(opt);
 
     return imh_mod->BaseOfImage != 0;
 }
 
-BOOL dbg_load_module(HANDLE hProc, HANDLE hFile, const WCHAR* name, DWORD base, DWORD size)
+BOOL dbg_load_module(HANDLE hProc, HANDLE hFile, const WCHAR* name, DWORD_PTR base, DWORD size)
 {
     BOOL ret = SymLoadModuleExW(hProc, NULL, name, NULL, base, size, NULL, 0);
     if (ret)
@@ -594,7 +594,7 @@ void dbg_start_interactive(HANDLE hFile)
 {
     if (dbg_curr_process)
     {
-        dbg_printf("WineDbg starting on pid %04x\n", dbg_curr_pid);
+        dbg_printf("WineDbg starting on pid %04lx\n", dbg_curr_pid);
         if (dbg_curr_process->active_debuggee) dbg_active_wait_for_first_exception();
     }
 

@@ -149,8 +149,8 @@ STRING     \"[^\n"]+\"
 "["					{ return *yytext; }
 "]"					{ return *yytext; }
 
-"0x"{HEXDIGIT}+      			{ sscanf(yytext, "%x", &dbg_lval.integer); return tNUM; }
-{DIGIT}+             			{ sscanf(yytext, "%d", &dbg_lval.integer); return tNUM; }
+"0x"{HEXDIGIT}+      			{ sscanf(yytext, "%lx", &dbg_lval.integer); return tNUM; }
+{DIGIT}+             			{ sscanf(yytext, "%ld", &dbg_lval.integer); return tNUM; }
 
 <FORMAT_EXPECTED>"/"{DIGIT}+{FORMAT}	{ char* last;
                                           dbg_lval.integer = strtol(yytext+1, &last, 0) << 8;

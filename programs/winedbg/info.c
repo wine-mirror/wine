@@ -146,7 +146,7 @@ static const char* get_symtype_str(const IMAGEHLP_MODULE64* mi)
 struct info_module
 {
     IMAGEHLP_MODULE64*  mi;
-    DWORD               base;
+    DWORD_PTR           _base;
     unsigned            num_alloc;
     unsigned            num_used;
 };
@@ -371,10 +371,10 @@ static void info_window(HWND hWnd, int indent)
         if (!GetWindowTextA(hWnd, wndName, sizeof(wndName)))
             strcpy(wndName, "-- Empty --");
 
-        dbg_printf("%*s%08lx%*s %-17.17s %08x %08x %08x %.14s\n",
+        dbg_printf("%*s%08lx%*s %-17.17s %08x %08lx %08x %.14s\n",
                    indent, "", (DWORD_PTR)hWnd, 12 - indent, "",
                    clsName, GetWindowLongW(hWnd, GWL_STYLE),
-                   GetWindowLongPtrW(hWnd, GWLP_WNDPROC),
+                   (ULONG_PTR)GetWindowLongPtrW(hWnd, GWLP_WNDPROC),
                    GetWindowThreadProcessId(hWnd, NULL), wndName);
 
         if ((child = GetWindow(hWnd, GW_CHILD)) != 0)
@@ -412,8 +412,8 @@ void info_win32_window(HWND hWnd, BOOL detailed)
 
     /* FIXME missing fields: hmemTaskQ, hrgnUpdate, dce, flags, pProp, scroll */
     dbg_printf("next=%p  child=%p  parent=%p  owner=%p  class='%s'\n"
-               "inst=%p  active=%p  idmenu=%08x\n"
-               "style=0x%08x  exstyle=0x%08x  wndproc=0x%08x  text='%s'\n"
+               "inst=%p  active=%p  idmenu=%08lx\n"
+               "style=0x%08x  exstyle=0x%08x  wndproc=0x%08lx  text='%s'\n"
                "client=%d,%d-%d,%d  window=%d,%d-%d,%d sysmenu=%p\n",
                GetWindow(hWnd, GW_HWNDNEXT),
                GetWindow(hWnd, GW_CHILD),
@@ -422,10 +422,10 @@ void info_win32_window(HWND hWnd, BOOL detailed)
                clsName,
                (HINSTANCE)GetWindowLongPtrW(hWnd, GWLP_HINSTANCE),
                GetLastActivePopup(hWnd),
-               GetWindowLongPtrW(hWnd, GWLP_ID),
+               (ULONG_PTR)GetWindowLongPtrW(hWnd, GWLP_ID),
                GetWindowLongW(hWnd, GWL_STYLE),
                GetWindowLongW(hWnd, GWL_EXSTYLE),
-               GetWindowLongPtrW(hWnd, GWLP_WNDPROC),
+               (ULONG_PTR)GetWindowLongPtrW(hWnd, GWLP_WNDPROC),
                wndName,
                clientRect.left, clientRect.top, clientRect.right, clientRect.bottom,
                windowRect.left, windowRect.top, windowRect.right, windowRect.bottom,

@@ -186,9 +186,9 @@ struct dbg_thread
         ADDRESS64               addr_pc;
         ADDRESS64               addr_frame;
         ADDRESS64               addr_stack;
-        DWORD                   linear_pc;
-        DWORD                   linear_frame;
-        DWORD                   linear_stack;
+        DWORD_PTR               linear_pc;
+        DWORD_PTR               linear_frame;
+        DWORD_PTR               linear_stack;
     }*                          frames;
     int                         num_frames;
     int                         curr_frame;
@@ -243,17 +243,17 @@ struct be_process_io
 };
 
 extern	struct dbg_process*	dbg_curr_process;
-extern	DWORD		        dbg_curr_pid;
+extern	DWORD_PTR	        dbg_curr_pid;
 extern	struct dbg_thread*	dbg_curr_thread;
-extern	DWORD		        dbg_curr_tid;
+extern	DWORD_PTR	        dbg_curr_tid;
 extern  CONTEXT 	        dbg_context;
 extern  BOOL                    dbg_interactiveP;
 
 struct dbg_internal_var
 {
-    DWORD		        val;
+    DWORD_PTR		        val;
     const char*		        name;
-    LPDWORD		        pval;
+    DWORD_PTR		        *pval;
     unsigned long               typeid; /* always internal type */
 };
 
@@ -362,7 +362,7 @@ extern BOOL             memory_get_current_stack(ADDRESS64* address);
 extern BOOL             memory_get_current_frame(ADDRESS64* address);
 extern BOOL             memory_get_string(struct dbg_process* pcs, void* addr, BOOL in_debuggee, BOOL unicode, char* buffer, int size);
 extern BOOL             memory_get_string_indirect(struct dbg_process* pcs, void* addr, BOOL unicode, WCHAR* buffer, int size);
-extern BOOL             memory_get_register(DWORD regno, DWORD** value, char* buffer, int len);
+extern BOOL             memory_get_register(DWORD regno, DWORD_PTR** value, char* buffer, int len);
 extern void             memory_disassemble(const struct dbg_lvalue*, const struct dbg_lvalue*, int instruction_count);
 extern BOOL             memory_disasm_one_insn(ADDRESS64* addr);
 #define MAX_OFFSET_TO_STR_LEN 19
@@ -384,7 +384,7 @@ extern void             stack_info(void);
 extern void             stack_backtrace(DWORD threadID);
 extern BOOL             stack_set_frame(int newframe);
 extern BOOL             stack_get_current_frame(IMAGEHLP_STACK_FRAME* ihsf);
-extern BOOL             stack_get_register_current_frame(unsigned regno, DWORD** pval);
+extern BOOL             stack_get_register_current_frame(unsigned regno, DWORD_PTR** pval);
 extern unsigned         stack_fetch_frames(void);
 extern BOOL             stack_get_current_symbol(SYMBOL_INFO* sym);
 
@@ -394,7 +394,7 @@ extern void             symbol_read_symtable(const char* filename, unsigned long
 extern enum dbg_line_status symbol_get_function_line_status(const ADDRESS64* addr);
 extern BOOL             symbol_get_line(const char* filename, const char* func, IMAGEHLP_LINE* ret);
 extern void             symbol_info(const char* str);
-extern void             symbol_print_local(const SYMBOL_INFO* sym, ULONG base, BOOL detailed);
+extern void             symbol_print_local(const SYMBOL_INFO* sym, ULONG_PTR base, BOOL detailed);
 extern int              symbol_info_locals(void);
 extern BOOL             symbol_is_local(const char* name);
 struct sgv_data;
@@ -457,7 +457,7 @@ struct dbg_thread*	dbg_add_thread(struct dbg_process* p, DWORD tid, HANDLE h, vo
 extern struct dbg_thread* dbg_get_thread(struct dbg_process* p, DWORD tid);
 extern void             dbg_del_thread(struct dbg_thread* t);
 extern BOOL             dbg_init(HANDLE hProc, const WCHAR* in, BOOL invade);
-extern BOOL             dbg_load_module(HANDLE hProc, HANDLE hFile, const WCHAR* name, DWORD base, DWORD size);
+extern BOOL             dbg_load_module(HANDLE hProc, HANDLE hFile, const WCHAR* name, DWORD_PTR base, DWORD size);
 extern BOOL             dbg_get_debuggee_info(HANDLE hProcess, IMAGEHLP_MODULE* imh_mod);
 extern void             dbg_set_option(const char*, const char*);
 extern void             dbg_start_interactive(HANDLE hFile);
