@@ -19,12 +19,14 @@
 
 #include <stdio.h>
 
+#define COBJMACROS
 #include "wine/test.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winuser.h"
 #include "ole2.h"
 #include "oaidl.h"
+#include "ocidl.h"
 
 /* Function ptrs for ordinal calls */
 static HMODULE hShlwapi;
@@ -36,6 +38,9 @@ static LPVOID (WINAPI *pSHLockShared)(HANDLE,DWORD);
 static BOOL   (WINAPI *pSHUnlockShared)(LPVOID);
 static BOOL   (WINAPI *pSHFreeShared)(HANDLE,DWORD);
 static HRESULT(WINAPIV *pSHPackDispParams)(DISPPARAMS*,VARIANTARG*,UINT,...);
+static HRESULT(WINAPI *pIConnectionPoint_SimpleInvoke)(IConnectionPoint*,DISPID,DISPPARAMS*);
+static HRESULT(WINAPI *pIConnectionPoint_InvokeWithCancel)(IConnectionPoint*,DISPID,DISPPARAMS*,DWORD,DWORD);
+static HRESULT(WINAPI *pConnectToConnectionPoint)(IUnknown*,REFIID,BOOL,IUnknown*, LPDWORD,IConnectionPoint **);
 
 static void test_GetAcceptLanguagesA(void)
 {   HRESULT retval;
@@ -523,6 +528,683 @@ static void test_SHPackDispParams(void)
     ok(V_BSTR(vars+3) == (void*)0xdeadbeef, "V_BSTR(vars[3]) = %p\n", V_BSTR(vars+3));
 }
 
+typedef struct _disp
+{
+    const IDispatchVtbl *vtbl;
+    LONG   refCount;
+} Disp;
+
+typedef struct _contain
+{
+    const IConnectionPointContainerVtbl *vtbl;
+    LONG   refCount;
+
+    UINT  ptCount;
+    IConnectionPoint **pt;
+} Contain;
+
+typedef struct _cntptn
+{
+    const IConnectionPointVtbl *vtbl;
+    LONG refCount;
+
+    Contain *container;
+    GUID  id;
+    UINT  sinkCount;
+    IUnknown **sink;
+} ConPt;
+
+typedef struct _enum
+{
+    const IEnumConnectionsVtbl *vtbl;
+    LONG   refCount;
+
+    UINT idx;
+    ConPt *pt;
+} EnumCon;
+
+typedef struct _enumpt
+{
+    const IEnumConnectionPointsVtbl *vtbl;
+    LONG   refCount;
+
+    int idx;
+    Contain *container;
+} EnumPt;
+
+
+static HRESULT WINAPI Disp_QueryInterface(
+        IDispatch* This,
+        REFIID riid,
+        void **ppvObject)
+{
+    trace("\n");
+    *ppvObject = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDispatch))
+    {
+        *ppvObject = This;
+    }
+
+    if (*ppvObject)
+    {
+        IUnknown_AddRef(This);
+        return S_OK;
+    }
+
+    trace("no interface\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Disp_AddRef(IDispatch* This)
+{
+    Disp *iface = (Disp*)This;
+    return InterlockedIncrement(&iface->refCount);
+}
+
+static ULONG WINAPI Disp_Release(IDispatch* This)
+{
+    Disp *iface = (Disp*)This;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&iface->refCount);
+    if (ret == 0)
+        HeapFree(GetProcessHeap(),0,This);
+    return ret;
+}
+
+static HRESULT WINAPI Disp_GetTypeInfoCount(
+        IDispatch* This,
+        UINT *pctinfo)
+{
+    trace("\n");
+    return ERROR_SUCCESS;
+}
+
+static HRESULT WINAPI Disp_GetTypeInfo(
+        IDispatch* This,
+        UINT iTInfo,
+        LCID lcid,
+        ITypeInfo **ppTInfo)
+{
+    trace("\n");
+    return ERROR_SUCCESS;
+}
+
+static HRESULT WINAPI Disp_GetIDsOfNames(
+        IDispatch* This,
+        REFIID riid,
+        LPOLESTR *rgszNames,
+        UINT cNames,
+        LCID lcid,
+        DISPID *rgDispId)
+{
+    trace("\n");
+    return ERROR_SUCCESS;
+}
+
+static HRESULT WINAPI Disp_Invoke(
+        IDispatch* This,
+        DISPID dispIdMember,
+        REFIID riid,
+        LCID lcid,
+        WORD wFlags,
+        DISPPARAMS *pDispParams,
+        VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo,
+        UINT *puArgErr)
+{
+    trace("%p %x %p %x %x %p %p %p %p\n",This,dispIdMember,riid,lcid,wFlags,pDispParams,pVarResult,pExcepInfo,puArgErr);
+
+    ok(dispIdMember == 0xa0 || dispIdMember == 0xa1, "Unknown dispIdMember\n");
+    ok(pDispParams != NULL, "Invoked with NULL pDispParams\n");
+    ok(wFlags == DISPATCH_METHOD, "Wrong flags %x\n",wFlags);
+    ok(lcid == 0,"Wrong lcid %x\n",lcid);
+    if (dispIdMember == 0xa0)
+    {
+        ok(pDispParams->cArgs == 0, "params.cArgs = %d\n", pDispParams->cArgs);
+        ok(pDispParams->cNamedArgs == 0, "params.cNamedArgs = %d\n", pDispParams->cArgs);
+        ok(pDispParams->rgdispidNamedArgs == NULL, "params.rgdispidNamedArgs = %p\n", pDispParams->rgdispidNamedArgs);
+        ok(pDispParams->rgvarg == NULL, "params.rgvarg = %p\n", pDispParams->rgvarg);
+    }
+    else if (dispIdMember == 0xa1)
+    {
+        ok(pDispParams->cArgs == 2, "params.cArgs = %d\n", pDispParams->cArgs);
+        ok(pDispParams->cNamedArgs == 0, "params.cNamedArgs = %d\n", pDispParams->cArgs);
+        ok(pDispParams->rgdispidNamedArgs == NULL, "params.rgdispidNamedArgs = %p\n", pDispParams->rgdispidNamedArgs);
+        ok(V_VT(pDispParams->rgvarg) == VT_BSTR, "V_VT(var) = %d\n", V_VT(pDispParams->rgvarg));
+        ok(V_I4(pDispParams->rgvarg) == 0xdeadcafe , "failed %p\n", V_BSTR(pDispParams->rgvarg));
+        ok(V_VT(pDispParams->rgvarg+1) == VT_I4, "V_VT(var) = %d\n", V_VT(pDispParams->rgvarg+1));
+        ok(V_I4(pDispParams->rgvarg+1) == 0xdeadbeef, "failed %x\n", V_I4(pDispParams->rgvarg+1));
+    }
+
+    return ERROR_SUCCESS;
+}
+
+static const IDispatchVtbl disp_vtbl = {
+    Disp_QueryInterface,
+    Disp_AddRef,
+    Disp_Release,
+
+    Disp_GetTypeInfoCount,
+    Disp_GetTypeInfo,
+    Disp_GetIDsOfNames,
+    Disp_Invoke
+};
+
+static HRESULT WINAPI Enum_QueryInterface(
+        IEnumConnections* This,
+        REFIID riid,
+        void **ppvObject)
+{
+    trace("\n");
+    *ppvObject = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IEnumConnections))
+    {
+        *ppvObject = This;
+    }
+
+    if (*ppvObject)
+    {
+        IUnknown_AddRef(This);
+        return S_OK;
+    }
+
+    trace("no interface\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Enum_AddRef(IEnumConnections* This)
+{
+    EnumCon *iface = (EnumCon*)This;
+    return InterlockedIncrement(&iface->refCount);
+}
+
+static ULONG WINAPI Enum_Release(IEnumConnections* This)
+{
+    EnumCon *iface = (EnumCon*)This;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&iface->refCount);
+    if (ret == 0)
+        HeapFree(GetProcessHeap(),0,This);
+    return ret;
+}
+
+static HRESULT WINAPI Enum_Next(
+        IEnumConnections* This,
+        ULONG cConnections,
+        LPCONNECTDATA rgcd,
+        ULONG *pcFetched)
+{
+    EnumCon *iface = (EnumCon*)This;
+
+    trace("\n");
+    if (cConnections > 0 && iface->idx < iface->pt->sinkCount)
+    {
+        rgcd->pUnk = iface->pt->sink[iface->idx];
+        IUnknown_AddRef(iface->pt->sink[iface->idx]);
+        rgcd->dwCookie=0xff;
+        if (pcFetched)
+            *pcFetched = 1;
+        iface->idx++;
+        return S_OK;
+    }
+
+    return E_FAIL;
+}
+
+static HRESULT WINAPI Enum_Skip(
+        IEnumConnections* This,
+        ULONG cConnections)
+{
+    trace("\n");
+    return E_FAIL;
+}
+
+static HRESULT WINAPI Enum_Reset(
+        IEnumConnections* This)
+{
+    trace("\n");
+    return E_FAIL;
+}
+
+static HRESULT WINAPI Enum_Clone(
+        IEnumConnections* This,
+        IEnumConnections **ppEnum)
+{
+    trace("\n");
+    return E_FAIL;
+}
+
+static const IEnumConnectionsVtbl enum_vtbl = {
+
+    Enum_QueryInterface,
+    Enum_AddRef,
+    Enum_Release,
+    Enum_Next,
+    Enum_Skip,
+    Enum_Reset,
+    Enum_Clone
+};
+
+static HRESULT WINAPI ConPt_QueryInterface(
+        IConnectionPoint* This,
+        REFIID riid,
+        void **ppvObject)
+{
+    trace("\n");
+    *ppvObject = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IConnectionPoint))
+    {
+        *ppvObject = This;
+    }
+
+    if (*ppvObject)
+    {
+        IUnknown_AddRef(This);
+        return S_OK;
+    }
+
+    trace("no interface\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ConPt_AddRef(
+        IConnectionPoint* This)
+{
+    ConPt *iface = (ConPt*)This;
+    return InterlockedIncrement(&iface->refCount);
+}
+
+static ULONG WINAPI ConPt_Release(
+        IConnectionPoint* This)
+{
+    ConPt *iface = (ConPt*)This;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&iface->refCount);
+    if (ret == 0)
+    {
+        if (iface->sinkCount > 0)
+        {
+            int i;
+            for (i = 0; i < iface->sinkCount; i++)
+            {
+                if (iface->sink[i])
+                    IUnknown_Release(iface->sink[i]);
+            }
+            HeapFree(GetProcessHeap(),0,iface->sink);
+        }
+        HeapFree(GetProcessHeap(),0,This);
+    }
+    return ret;
+}
+
+static HRESULT WINAPI ConPt_GetConnectionInterface(
+        IConnectionPoint* This,
+        IID *pIID)
+{
+    static int i = 0;
+    ConPt *iface = (ConPt*)This;
+    trace("\n");
+    if (i==0)
+    {
+        i++;
+        return E_FAIL;
+    }
+    else
+        memcpy(pIID,&iface->id,sizeof(GUID));
+    return S_OK;
+}
+
+static HRESULT WINAPI ConPt_GetConnectionPointContainer(
+        IConnectionPoint* This,
+        IConnectionPointContainer **ppCPC)
+{
+    ConPt *iface = (ConPt*)This;
+    trace("\n");
+
+    *ppCPC = (IConnectionPointContainer*)iface->container;
+    return S_OK;
+}
+
+static HRESULT WINAPI ConPt_Advise(
+        IConnectionPoint* This,
+        IUnknown *pUnkSink,
+        DWORD *pdwCookie)
+{
+    ConPt *iface = (ConPt*)This;
+    trace("\n");
+
+    if (iface->sinkCount == 0)
+        iface->sink = HeapAlloc(GetProcessHeap(),0,sizeof(IUnknown*));
+    else
+        iface->sink = HeapReAlloc(GetProcessHeap(),0,iface->sink,sizeof(IUnknown*)*(iface->sinkCount+1));
+    iface->sink[iface->sinkCount] = pUnkSink;
+    IUnknown_AddRef(pUnkSink);
+    iface->sinkCount++;
+    *pdwCookie = iface->sinkCount;
+    return S_OK;
+}
+
+static HRESULT WINAPI ConPt_Unadvise(
+        IConnectionPoint* This,
+        DWORD dwCookie)
+{
+    ConPt *iface = (ConPt*)This;
+    trace("\n");
+
+    if (dwCookie > iface->sinkCount)
+        return E_FAIL;
+    else
+    {
+        IUnknown_Release(iface->sink[dwCookie-1]);
+        iface->sink[dwCookie-1] = NULL;
+    }
+    return S_OK;
+}
+
+static HRESULT WINAPI ConPt_EnumConnections(
+        IConnectionPoint* This,
+        IEnumConnections **ppEnum)
+{
+    EnumCon *ec;
+
+    trace("\n");
+    ec = HeapAlloc(GetProcessHeap(),0,sizeof(EnumCon));
+    ec->vtbl = &enum_vtbl;
+    ec->refCount = 1;
+    ec->pt = (ConPt*)This;
+    ec->idx = 0;
+    *ppEnum = (IEnumConnections*)ec;
+
+    return S_OK;
+}
+
+static const IConnectionPointVtbl point_vtbl = {
+    ConPt_QueryInterface,
+    ConPt_AddRef,
+    ConPt_Release,
+
+    ConPt_GetConnectionInterface,
+    ConPt_GetConnectionPointContainer,
+    ConPt_Advise,
+    ConPt_Unadvise,
+    ConPt_EnumConnections
+};
+
+static HRESULT WINAPI EnumPt_QueryInterface(
+        IEnumConnectionPoints* This,
+        REFIID riid,
+        void **ppvObject)
+{
+    trace("\n");
+    *ppvObject = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IEnumConnectionPoints))
+    {
+        *ppvObject = This;
+    }
+
+    if (*ppvObject)
+    {
+        IUnknown_AddRef(This);
+        return S_OK;
+    }
+
+    trace("no interface\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI EnumPt_AddRef(IEnumConnectionPoints* This)
+{
+    EnumPt *iface = (EnumPt*)This;
+    return InterlockedIncrement(&iface->refCount);
+}
+
+static ULONG WINAPI EnumPt_Release(IEnumConnectionPoints* This)
+{
+    EnumPt *iface = (EnumPt*)This;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&iface->refCount);
+    if (ret == 0)
+        HeapFree(GetProcessHeap(),0,This);
+    return ret;
+}
+
+static HRESULT WINAPI EnumPt_Next(
+        IEnumConnectionPoints* This,
+        ULONG cConnections,
+        IConnectionPoint **rgcd,
+        ULONG *pcFetched)
+{
+    EnumPt *iface = (EnumPt*)This;
+
+    trace("\n");
+    if (cConnections > 0 && iface->idx < iface->container->ptCount)
+    {
+        *rgcd = iface->container->pt[iface->idx];
+        IUnknown_AddRef(iface->container->pt[iface->idx]);
+        if (pcFetched)
+            *pcFetched = 1;
+        iface->idx++;
+        return S_OK;
+    }
+
+    return E_FAIL;
+}
+
+static HRESULT WINAPI EnumPt_Skip(
+        IEnumConnectionPoints* This,
+        ULONG cConnections)
+{
+    trace("\n");
+    return E_FAIL;
+}
+
+static HRESULT WINAPI EnumPt_Reset(
+        IEnumConnectionPoints* This)
+{
+    trace("\n");
+    return E_FAIL;
+}
+
+static HRESULT WINAPI EnumPt_Clone(
+        IEnumConnectionPoints* This,
+        IEnumConnectionPoints **ppEnumPt)
+{
+    trace("\n");
+    return E_FAIL;
+}
+
+static const IEnumConnectionPointsVtbl enumpt_vtbl = {
+
+    EnumPt_QueryInterface,
+    EnumPt_AddRef,
+    EnumPt_Release,
+    EnumPt_Next,
+    EnumPt_Skip,
+    EnumPt_Reset,
+    EnumPt_Clone
+};
+
+static HRESULT WINAPI Contain_QueryInterface(
+        IConnectionPointContainer* This,
+        REFIID riid,
+        void **ppvObject)
+{
+    trace("\n");
+    *ppvObject = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IConnectionPointContainer))
+    {
+        *ppvObject = This;
+    }
+
+    if (*ppvObject)
+    {
+        IUnknown_AddRef(This);
+        return S_OK;
+    }
+
+    trace("no interface\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Contain_AddRef(
+        IConnectionPointContainer* This)
+{
+    Contain *iface = (Contain*)This;
+    return InterlockedIncrement(&iface->refCount);
+}
+
+static ULONG WINAPI Contain_Release(
+        IConnectionPointContainer* This)
+{
+    Contain *iface = (Contain*)This;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&iface->refCount);
+    if (ret == 0)
+    {
+        if (iface->ptCount > 0)
+        {
+            int i;
+            for (i = 0; i < iface->ptCount; i++)
+                IUnknown_Release(iface->pt[i]);
+            HeapFree(GetProcessHeap(),0,iface->pt);
+        }
+        HeapFree(GetProcessHeap(),0,This);
+    }
+    return ret;
+}
+
+static HRESULT WINAPI Contain_EnumConnectionPoints(
+        IConnectionPointContainer* This,
+        IEnumConnectionPoints **ppEnum)
+{
+    EnumPt *ec;
+
+    trace("\n");
+    ec = HeapAlloc(GetProcessHeap(),0,sizeof(EnumPt));
+    ec->vtbl = &enumpt_vtbl;
+    ec->refCount = 1;
+    ec->idx= 0;
+    ec->container = (Contain*)This;
+    *ppEnum = (IEnumConnectionPoints*)ec;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI Contain_FindConnectionPoint(
+        IConnectionPointContainer* This,
+        REFIID riid,
+        IConnectionPoint **ppCP)
+{
+    Contain *iface = (Contain*)This;
+    ConPt *pt;
+    trace("\n");
+
+    if (!IsEqualIID(riid, &IID_NULL) || iface->ptCount ==0)
+    {
+        pt = HeapAlloc(GetProcessHeap(),0,sizeof(ConPt));
+        pt->vtbl = &point_vtbl;
+        pt->refCount = 1;
+        pt->sinkCount = 0;
+        pt->sink = NULL;
+        pt->container = iface;
+
+        if (iface->ptCount == 0)
+            iface->pt =HeapAlloc(GetProcessHeap(),0,sizeof(IUnknown*));
+        else
+            iface->pt = HeapReAlloc(GetProcessHeap(),0,iface->pt,sizeof(IUnknown*)*(iface->ptCount+1));
+        iface->pt[iface->ptCount] = (IConnectionPoint*)pt;
+        iface->ptCount++;
+
+        *ppCP = (IConnectionPoint*)pt;
+    }
+    else
+    {
+        *ppCP = iface->pt[0];
+        IUnknown_AddRef((IUnknown*)*ppCP);
+    }
+
+    return S_OK;
+}
+
+static const IConnectionPointContainerVtbl contain_vtbl = {
+    Contain_QueryInterface,
+    Contain_AddRef,
+    Contain_Release,
+
+    Contain_EnumConnectionPoints,
+    Contain_FindConnectionPoint
+};
+
+void test_IConnectionPoint(void)
+{
+    HRESULT rc;
+    ULONG ref;
+    IConnectionPoint *point;
+    Contain *container;
+    Disp *dispatch;
+    DWORD cookie = 0xffffffff;
+    DISPPARAMS params;
+    VARIANT vars[10];
+
+    if (!pIConnectionPoint_SimpleInvoke || !pConnectToConnectionPoint)
+    {
+        win_skip("IConnectionPoint Apis not present\n");
+        return;
+    }
+
+    container = HeapAlloc(GetProcessHeap(),0,sizeof(Contain));
+    container->vtbl = &contain_vtbl;
+    container->refCount = 1;
+    container->ptCount = 0;
+    container->pt = NULL;
+
+    dispatch = HeapAlloc(GetProcessHeap(),0,sizeof(Disp));
+    dispatch->vtbl = &disp_vtbl;
+    dispatch->refCount = 1;
+
+    rc = pConnectToConnectionPoint((IUnknown*)dispatch, &IID_NULL, TRUE, (IUnknown*)container, &cookie, &point);
+    ok(rc == S_OK, "pConnectToConnectionPoint failed with %x\n",rc);
+    ok(point != NULL, "returned ConnectionPoint is NULL\n");
+    ok(cookie != 0xffffffff, "invalid cookie returned\n");
+
+    rc = pIConnectionPoint_SimpleInvoke(point,0xa0,NULL);
+    ok(rc == S_OK, "pConnectToConnectionPoint failed with %x\n",rc);
+
+    if (pSHPackDispParams)
+    {
+        memset(&params, 0xc0, sizeof(params));
+        memset(vars, 0xc0, sizeof(vars));
+        rc = pSHPackDispParams(&params, vars, 2, VT_I4, 0xdeadbeef, VT_BSTR, 0xdeadcafe);
+        ok(rc == S_OK, "SHPackDispParams failed: %08x\n", rc);
+
+        rc = pIConnectionPoint_SimpleInvoke(point,0xa1,&params);
+        ok(rc == S_OK, "pConnectToConnectionPoint failed with %x\n",rc);
+    }
+    else
+        win_skip("pSHPackDispParams not present\n");
+
+    rc = pConnectToConnectionPoint(NULL, &IID_NULL, FALSE, (IUnknown*)container, &cookie, NULL);
+    ok(rc == S_OK, "pConnectToConnectionPoint failed with %x\n",rc);
+
+/* MSDN says this should be required but it crashs on XP
+    IUnknown_Release(point);
+*/
+    ref = IUnknown_Release((IUnknown*)container);
+    ok(ref == 0, "leftover IConnectionPointContainer reference %i\n",ref);
+    ref = IUnknown_Release((IUnknown*)dispatch);
+    ok(ref == 0, "leftover IDispatch reference %i\n",ref);
+}
+
 START_TEST(ordinal)
 {
   hShlwapi = GetModuleHandleA("shlwapi.dll");
@@ -534,6 +1216,9 @@ START_TEST(ordinal)
   pSHUnlockShared=(void*)GetProcAddress(hShlwapi,(char*)9);
   pSHFreeShared=(void*)GetProcAddress(hShlwapi,(char*)10);
   pSHPackDispParams=(void*)GetProcAddress(hShlwapi,(char*)282);
+  pIConnectionPoint_SimpleInvoke=(void*)GetProcAddress(hShlwapi,(char*)284);
+  pIConnectionPoint_InvokeWithCancel=(void*)GetProcAddress(hShlwapi,(char*)283);
+  pConnectToConnectionPoint=(void*)GetProcAddress(hShlwapi,(char*)168);
 
   test_GetAcceptLanguagesA();
   test_SHSearchMapInt();
@@ -541,4 +1226,5 @@ START_TEST(ordinal)
   test_fdsa();
   test_GetShellSecurityDescriptor();
   test_SHPackDispParams();
+  test_IConnectionPoint();
 }
