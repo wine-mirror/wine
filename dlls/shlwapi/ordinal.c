@@ -1128,7 +1128,7 @@ HWND WINAPI SHSetParentHwnd(HWND hWnd, HWND hWndParent)
  * PARAMS
  *  lpUnkSink   [I] Sink for the connection point advise call
  *  riid        [I] REFIID of connection point to advise
- *  bAdviseOnly [I] TRUE = Advise only, FALSE = Unadvise first
+ *  fConnect    [I] TRUE = Connection being establisted, FALSE = broken
  *  lpUnknown   [I] Object supporting the IConnectionPointContainer interface
  *  lpCookie    [O] Pointer to connection point cookie
  *  lppCP       [O] Destination for the IConnectionPoint found
@@ -1140,7 +1140,7 @@ HWND WINAPI SHSetParentHwnd(HWND hWnd, HWND hWndParent)
  *           E_NOINTERFACE, if lpUnknown isn't an IConnectionPointContainer,
  *           Or an HRESULT error code if any call fails.
  */
-HRESULT WINAPI ConnectToConnectionPoint(IUnknown* lpUnkSink, REFIID riid, BOOL bAdviseOnly,
+HRESULT WINAPI ConnectToConnectionPoint(IUnknown* lpUnkSink, REFIID riid, BOOL fConnect,
                            IUnknown* lpUnknown, LPDWORD lpCookie,
                            IConnectionPoint **lppCP)
 {
@@ -1148,7 +1148,7 @@ HRESULT WINAPI ConnectToConnectionPoint(IUnknown* lpUnkSink, REFIID riid, BOOL b
   IConnectionPointContainer* lpContainer;
   IConnectionPoint *lpCP;
 
-  if(!lpUnknown || (bAdviseOnly && !lpUnkSink))
+  if(!lpUnknown || (fConnect && !lpUnkSink))
     return E_FAIL;
 
   if(lppCP)
@@ -1162,9 +1162,10 @@ HRESULT WINAPI ConnectToConnectionPoint(IUnknown* lpUnkSink, REFIID riid, BOOL b
 
     if (SUCCEEDED(hRet))
     {
-      if(!bAdviseOnly)
+      if(!fConnect)
         hRet = IConnectionPoint_Unadvise(lpCP, *lpCookie);
-      hRet = IConnectionPoint_Advise(lpCP, lpUnkSink, lpCookie);
+      else
+        hRet = IConnectionPoint_Advise(lpCP, lpUnkSink, lpCookie);
 
       if (FAILED(hRet))
         *lpCookie = 0;
