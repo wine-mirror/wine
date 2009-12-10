@@ -121,12 +121,18 @@ static BOOL copy_dll_file(void)
 
 static DWORD get_file_size(void)
 {
-    WIN32_FILE_ATTRIBUTE_DATA info;
+    HANDLE file;
+    DWORD filesize = 0;
 
-    if (GetFileAttributesEx(test_dll_path, GetFileExInfoStandard, &info))
+    file = CreateFileA(test_dll_path, GENERIC_READ, FILE_SHARE_READ, NULL,
+                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE)
         return 0;
 
-    return info.nFileSizeLow;
+    filesize = GetFileSize(file, NULL);
+    CloseHandle(file);
+
+    return filesize;
 }
 
 static void test_add_certificate(char *cert_data, int len)
