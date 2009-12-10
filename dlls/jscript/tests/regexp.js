@@ -377,8 +377,11 @@ re.lastIndex = 3;
 re.lastIndex = "test";
 ok(re.lastIndex === "test", "re.lastIndex = " + re.lastIndex + " expected 'test'");
 m = re.exec(" a a ");
-ok(re.lastIndex === 2, "re.lastIndex = " + re.lastIndex + " expected 2");
-ok(m.index === 1, "m.index = " + m.index + " expected 1");
+ok(re.lastIndex === 2 || re.lastIndex === 0, "re.lastIndex = " + re.lastIndex + " expected 2 or 0");
+if(re.lastIndex != 0)
+    ok(m.index === 1, "m.index = " + m.index + " expected 1");
+else
+    ok(m === null, "m = " + m + " expected null");
 
 re.lastIndex = 0;
 re.lastIndex = 3.9;
