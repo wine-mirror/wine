@@ -951,9 +951,8 @@ static LONG fullscreen_exStyle(LONG orig_exStyle) {
     return exStyle;
 }
 
-static void IWineD3DDeviceImpl_SetupFullscreenWindow(IWineD3DDevice *iface, HWND window, UINT w, UINT h) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
+void IWineD3DDeviceImpl_SetupFullscreenWindow(IWineD3DDeviceImpl *This, HWND window, UINT w, UINT h)
+{
     LONG style, exStyle;
     /* Don't do anything if an original style is stored.
      * That shouldn't happen
@@ -1030,314 +1029,36 @@ static void IWineD3DDeviceImpl_RestoreWindow(IWineD3DDevice *iface, HWND window)
                  SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
 }
 
-/* example at http://www.fairyengine.com/articles/dxmultiviews.htm */
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
-        WINED3DPRESENT_PARAMETERS *pPresentationParameters, IWineD3DSwapChain **ppSwapChain,
+        WINED3DPRESENT_PARAMETERS *present_parameters, IWineD3DSwapChain **swapchain,
         IUnknown *parent, WINED3DSURFTYPE surface_type)
 {
-    IWineD3DDeviceImpl      *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DSwapChainImpl *object;
+    HRESULT hr;
 
-    HDC                     hDc;
-    IWineD3DSwapChainImpl  *object; /** NOTE: impl ref allowed since this is a create function **/
-    HRESULT                 hr;
-    BOOL                    displaymode_set = FALSE;
-    WINED3DDISPLAYMODE      Mode;
-    const struct GlPixelFormatDesc *format_desc;
-    RECT                    client_rect;
-
-    TRACE("(%p) : Created Additional Swap Chain\n", This);
-
-   /** FIXME: Test under windows to find out what the life cycle of a swap chain is,
-   * does a device hold a reference to a swap chain giving them a lifetime of the device
-   * or does the swap chain notify the device of its destruction.
-    *******************************/
-
-    /* Check the params */
-    if(pPresentationParameters->BackBufferCount > WINED3DPRESENT_BACK_BUFFER_MAX) {
-        ERR("App requested %d back buffers, this is not supported for now\n", pPresentationParameters->BackBufferCount);
-        return WINED3DERR_INVALIDCALL;
-    } else if (pPresentationParameters->BackBufferCount > 1) {
-        FIXME("The app requests more than one back buffer, this can't be supported properly. Please configure the application to use double buffering(=1 back buffer) if possible\n");
-    }
+    TRACE("iface %p, present_parameters %p, swapchain %p, parent %p, surface_type %#x.\n",
+            iface, present_parameters, swapchain, parent, surface_type);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if(!object)
+    if (!object)
     {
-        ERR("Out of memory\n");
-        *ppSwapChain = NULL;
-        return WINED3DERR_OUTOFVIDEOMEMORY;
+        ERR("Failed to allocate swapchain memory.\n");
+        return E_OUTOFMEMORY;
     }
 
-    switch(surface_type) {
-        case SURFACE_GDI:
-            object->lpVtbl = &IWineGDISwapChain_Vtbl;
-            break;
-        case SURFACE_OPENGL:
-            object->lpVtbl = &IWineD3DSwapChain_Vtbl;
-            break;
-        case SURFACE_UNKNOWN:
-            FIXME("Caller tried to create a SURFACE_UNKNOWN swapchain\n");
-            HeapFree(GetProcessHeap(), 0, object);
-            return WINED3DERR_INVALIDCALL;
-    }
-    object->device = This;
-    object->parent = parent;
-    object->ref = 1;
-
-    *ppSwapChain = (IWineD3DSwapChain *)object;
-
-    /*********************
-    * Lookup the window Handle and the relating X window handle
-    ********************/
-
-    /* Setup hwnd we are using, plus which display this equates to */
-    object->win_handle = pPresentationParameters->hDeviceWindow;
-    if (!object->win_handle) {
-        object->win_handle = This->createParms.hFocusWindow;
-    }
-    if(!pPresentationParameters->Windowed && object->win_handle) {
-        IWineD3DDeviceImpl_SetupFullscreenWindow(iface, object->win_handle,
-                                                 pPresentationParameters->BackBufferWidth,
-                                                 pPresentationParameters->BackBufferHeight);
-    }
-
-    hDc                = GetDC(object->win_handle);
-    TRACE("Using hDc %p\n", hDc);
-
-    if (NULL == hDc) {
-        WARN("Failed to get a HDc for Window %p\n", object->win_handle);
-        return WINED3DERR_NOTAVAILABLE;
-    }
-
-    /* Get info on the current display setup */
-    IWineD3D_GetAdapterDisplayMode(This->wined3d, This->adapter->ordinal, &Mode);
-    object->orig_width = Mode.Width;
-    object->orig_height = Mode.Height;
-    object->orig_fmt = Mode.Format;
-    format_desc = getFormatDescEntry(Mode.Format, &This->adapter->gl_info);
-
-    GetClientRect(object->win_handle, &client_rect);
-    if (pPresentationParameters->Windowed &&
-        ((pPresentationParameters->BackBufferWidth == 0) ||
-         (pPresentationParameters->BackBufferHeight == 0) ||
-         (pPresentationParameters->BackBufferFormat == WINED3DFMT_UNKNOWN))) {
-
-        if (pPresentationParameters->BackBufferWidth == 0) {
-           pPresentationParameters->BackBufferWidth = client_rect.right;
-           TRACE("Updating width to %d\n", pPresentationParameters->BackBufferWidth);
-        }
-        if (pPresentationParameters->BackBufferHeight == 0) {
-           pPresentationParameters->BackBufferHeight = client_rect.bottom;
-           TRACE("Updating height to %d\n", pPresentationParameters->BackBufferHeight);
-        }
-        if (pPresentationParameters->BackBufferFormat == WINED3DFMT_UNKNOWN) {
-           pPresentationParameters->BackBufferFormat = object->orig_fmt;
-           TRACE("Updating format to %s\n", debug_d3dformat(object->orig_fmt));
-        }
-    }
-
-    if(wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    hr = swapchain_init(object, surface_type, This, present_parameters, parent);
+    if (FAILED(hr))
     {
-        if(pPresentationParameters->BackBufferWidth != client_rect.right ||
-           pPresentationParameters->BackBufferHeight != client_rect.bottom)
-        {
-            TRACE("Rendering to FBO. Backbuffer %ux%u, window %ux%u\n",
-                pPresentationParameters->BackBufferWidth,
-                pPresentationParameters->BackBufferHeight,
-                client_rect.right, client_rect.bottom);
-            object->render_to_fbo = TRUE;
-        }
-        else
-        {
-            TRACE("Rendering directly to GL_BACK\n");
-        }
+        WARN("Failed to initialize swapchain, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
     }
 
-    /* Put the correct figures in the presentation parameters */
-    TRACE("Copying across presentation parameters\n");
-    object->presentParms = *pPresentationParameters;
+    TRACE("Created swapchain %p.\n", object);
+    *swapchain = (IWineD3DSwapChain *)object;
 
-    TRACE("calling rendertarget CB\n");
-    hr = IWineD3DDeviceParent_CreateRenderTarget(This->device_parent, parent,
-            object->presentParms.BackBufferWidth, object->presentParms.BackBufferHeight,
-            object->presentParms.BackBufferFormat, object->presentParms.MultiSampleType,
-            object->presentParms.MultiSampleQuality, TRUE /* Lockable */, &object->frontBuffer);
-    if (SUCCEEDED(hr)) {
-        IWineD3DSurface_SetContainer(object->frontBuffer, (IWineD3DBase *)object);
-        ((IWineD3DSurfaceImpl *)object->frontBuffer)->Flags |= SFLAG_SWAPCHAIN;
-        if(surface_type == SURFACE_OPENGL) {
-            IWineD3DSurface_ModifyLocation(object->frontBuffer, SFLAG_INDRAWABLE, TRUE);
-        }
-    } else {
-        ERR("Failed to create the front buffer\n");
-        goto error;
-    }
-
-   /*********************
-   * Windowed / Fullscreen
-   *******************/
-
-   /**
-   * TODO: MSDN says that we are only allowed one fullscreen swapchain per device,
-   * so we should really check to see if there is a fullscreen swapchain already
-   * I think Windows and X have different ideas about fullscreen, does a single head count as full screen?
-    **************************************/
-
-   if (!pPresentationParameters->Windowed) {
-        WINED3DDISPLAYMODE mode;
-
-
-        /* Change the display settings */
-        mode.Width = pPresentationParameters->BackBufferWidth;
-        mode.Height = pPresentationParameters->BackBufferHeight;
-        mode.Format = pPresentationParameters->BackBufferFormat;
-        mode.RefreshRate = pPresentationParameters->FullScreen_RefreshRateInHz;
-
-        IWineD3DDevice_SetDisplayMode(iface, 0, &mode);
-        displaymode_set = TRUE;
-    }
-
-        /**
-     * Create an opengl context for the display visual
-     *  NOTE: the visual is chosen as the window is created and the glcontext cannot
-     *     use different properties after that point in time. FIXME: How to handle when requested format
-     *     doesn't match actual visual? Cannot choose one here - code removed as it ONLY works if the one
-     *     it chooses is identical to the one already being used!
-         **********************************/
-    /** FIXME: Handle stencil appropriately via EnableAutoDepthStencil / AutoDepthStencilFormat **/
-
-    object->context = HeapAlloc(GetProcessHeap(), 0, sizeof(object->context));
-    if(!object->context) {
-        ERR("Failed to create the context array\n");
-        hr = E_OUTOFMEMORY;
-        goto error;
-    }
-    object->num_contexts = 1;
-
-    if (surface_type == SURFACE_OPENGL)
-    {
-        object->context[0] = context_create(This, (IWineD3DSurfaceImpl *)object->frontBuffer,
-                object->win_handle, FALSE /* pbuffer */, pPresentationParameters);
-        if (!object->context[0]) {
-            ERR("Failed to create a new context\n");
-            hr = WINED3DERR_NOTAVAILABLE;
-            goto error;
-        } else {
-            TRACE("Context created (HWND=%p, glContext=%p)\n",
-                object->win_handle, object->context[0]->glCtx);
-        }
-        object->context[0]->render_offscreen = object->render_to_fbo;
-    }
-    else
-    {
-        object->context[0] = NULL;
-    }
-
-   /*********************
-   * Create the back, front and stencil buffers
-   *******************/
-    if(object->presentParms.BackBufferCount > 0) {
-        UINT i;
-
-        object->backBuffer = HeapAlloc(GetProcessHeap(), 0, sizeof(IWineD3DSurface *) * object->presentParms.BackBufferCount);
-        if(!object->backBuffer) {
-            ERR("Out of memory\n");
-            hr = E_OUTOFMEMORY;
-            goto error;
-        }
-
-        for(i = 0; i < object->presentParms.BackBufferCount; i++) {
-            TRACE("calling rendertarget CB\n");
-            hr = IWineD3DDeviceParent_CreateRenderTarget(This->device_parent, parent,
-                    object->presentParms.BackBufferWidth, object->presentParms.BackBufferHeight,
-                    object->presentParms.BackBufferFormat, object->presentParms.MultiSampleType,
-                    object->presentParms.MultiSampleQuality, TRUE /* Lockable */, &object->backBuffer[i]);
-            if(SUCCEEDED(hr)) {
-                IWineD3DSurface_SetContainer(object->backBuffer[i], (IWineD3DBase *)object);
-                ((IWineD3DSurfaceImpl *)object->backBuffer[i])->Flags |= SFLAG_SWAPCHAIN;
-            } else {
-                ERR("Cannot create new back buffer\n");
-                goto error;
-            }
-            if(surface_type == SURFACE_OPENGL) {
-                ENTER_GL();
-                glDrawBuffer(GL_BACK);
-                checkGLcall("glDrawBuffer(GL_BACK)");
-                LEAVE_GL();
-            }
-        }
-    } else {
-        object->backBuffer = NULL;
-
-        /* Single buffering - draw to front buffer */
-        if(surface_type == SURFACE_OPENGL) {
-            ENTER_GL();
-            glDrawBuffer(GL_FRONT);
-            checkGLcall("glDrawBuffer(GL_FRONT)");
-            LEAVE_GL();
-        }
-    }
-
-    if (object->context[0]) context_release(object->context[0]);
-
-    /* Under directX swapchains share the depth stencil, so only create one depth-stencil */
-    if (pPresentationParameters->EnableAutoDepthStencil && surface_type == SURFACE_OPENGL) {
-        TRACE("Creating depth stencil buffer\n");
-        if (This->auto_depth_stencil_buffer == NULL ) {
-            hr = IWineD3DDeviceParent_CreateDepthStencilSurface(This->device_parent, parent,
-                    object->presentParms.BackBufferWidth, object->presentParms.BackBufferHeight,
-                    object->presentParms.AutoDepthStencilFormat, object->presentParms.MultiSampleType,
-                    object->presentParms.MultiSampleQuality, FALSE /* FIXME: Discard */,
-                    &This->auto_depth_stencil_buffer);
-            if (SUCCEEDED(hr)) {
-                IWineD3DSurface_SetContainer(This->auto_depth_stencil_buffer, 0);
-            } else {
-                ERR("Failed to create the auto depth stencil\n");
-                goto error;
-            }
-        }
-    }
-
-    IWineD3DSwapChain_GetGammaRamp((IWineD3DSwapChain *) object, &object->orig_gamma);
-
-    TRACE("Created swapchain %p\n", object);
-    TRACE("FrontBuf @ %p, BackBuf @ %p, DepthStencil %d\n",object->frontBuffer, object->backBuffer ? object->backBuffer[0] : NULL, pPresentationParameters->EnableAutoDepthStencil);
     return WINED3D_OK;
-
-error:
-    if (displaymode_set) {
-        DEVMODEW devmode;
-        RECT     clip_rc;
-
-        SetRect(&clip_rc, 0, 0, object->orig_width, object->orig_height);
-        ClipCursor(NULL);
-
-        /* Change the display settings */
-        memset(&devmode, 0, sizeof(devmode));
-        devmode.dmSize       = sizeof(devmode);
-        devmode.dmFields     = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-        devmode.dmBitsPerPel = format_desc->byte_count * 8;
-        devmode.dmPelsWidth  = object->orig_width;
-        devmode.dmPelsHeight = object->orig_height;
-        ChangeDisplaySettingsExW(This->adapter->DeviceName, &devmode, NULL, CDS_FULLSCREEN, NULL);
-    }
-
-    if (object->backBuffer) {
-        UINT i;
-        for(i = 0; i < object->presentParms.BackBufferCount; i++) {
-            if (object->backBuffer[i]) IWineD3DSurface_Release(object->backBuffer[i]);
-        }
-        HeapFree(GetProcessHeap(), 0, object->backBuffer);
-        object->backBuffer = NULL;
-    }
-    if(object->context && object->context[0])
-    {
-        context_release(object->context[0]);
-        context_destroy(This, object->context[0]);
-    }
-    if (object->frontBuffer) IWineD3DSurface_Release(object->frontBuffer);
-    HeapFree(GetProcessHeap(), 0, object);
-    return hr;
 }
 
 /** NOTE: These are ahead of the other getters and setters to save using a forward declaration **/
@@ -6880,9 +6601,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         if(swapchain->win_handle && !pPresentationParameters->Windowed) {
             if(swapchain->presentParms.Windowed) {
                 /* switch from windowed to fs */
-                IWineD3DDeviceImpl_SetupFullscreenWindow(iface, swapchain->win_handle,
-                                                         pPresentationParameters->BackBufferWidth,
-                                                         pPresentationParameters->BackBufferHeight);
+                IWineD3DDeviceImpl_SetupFullscreenWindow(This, swapchain->win_handle,
+                        pPresentationParameters->BackBufferWidth, pPresentationParameters->BackBufferHeight);
             } else {
                 /* Fullscreen -> fullscreen mode change */
                 MoveWindow(swapchain->win_handle, 0, 0,
@@ -6902,9 +6622,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
          */
         This->style = 0;
         This->exStyle = 0;
-        IWineD3DDeviceImpl_SetupFullscreenWindow(iface, swapchain->win_handle,
-                                                 pPresentationParameters->BackBufferWidth,
-                                                 pPresentationParameters->BackBufferHeight);
+        IWineD3DDeviceImpl_SetupFullscreenWindow(This, swapchain->win_handle,
+                pPresentationParameters->BackBufferWidth, pPresentationParameters->BackBufferHeight);
         This->style = style;
         This->exStyle = exStyle;
     }

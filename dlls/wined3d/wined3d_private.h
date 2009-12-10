@@ -1598,6 +1598,8 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
         const WINED3DRECT *pRects, DWORD Flags, WINED3DCOLOR Color, float Z, DWORD Stencil) DECLSPEC_HIDDEN;
 void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) DECLSPEC_HIDDEN;
 void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) DECLSPEC_HIDDEN;
+void IWineD3DDeviceImpl_SetupFullscreenWindow(IWineD3DDeviceImpl *This, HWND window, UINT w, UINT h) DECLSPEC_HIDDEN;
+
 static inline BOOL isStateDirty(struct wined3d_context *context, DWORD state)
 {
     DWORD idx = state >> 5;
@@ -2423,7 +2425,6 @@ typedef struct IWineD3DSwapChainImpl
     HWND                    win_handle;
 } IWineD3DSwapChainImpl;
 
-extern const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl DECLSPEC_HIDDEN;
 const IWineD3DSwapChainVtbl IWineGDISwapChain_Vtbl DECLSPEC_HIDDEN;
 void x11_copy_to_screen(IWineD3DSwapChainImpl *This, const RECT *rc) DECLSPEC_HIDDEN;
 
@@ -2450,6 +2451,8 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetGammaRamp(IWineD3DSwapChain *iface,
         WINED3DGAMMARAMP *pRamp) DECLSPEC_HIDDEN;
 
 struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChain *iface) DECLSPEC_HIDDEN;
+HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface_type,
+        IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters, IUnknown *parent) DECLSPEC_HIDDEN;
 
 #define DEFAULT_REFRESH_RATE 0
 

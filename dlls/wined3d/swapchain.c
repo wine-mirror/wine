@@ -536,7 +536,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_SetDestWindowOverride(IWineD3DSwapCh
     return WINED3D_OK;
 }
 
-const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
+static const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
 {
     /* IUnknown */
     IWineD3DBaseSwapChainImpl_QueryInterface,
@@ -556,6 +556,282 @@ const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
     IWineD3DBaseSwapChainImpl_SetGammaRamp,
     IWineD3DBaseSwapChainImpl_GetGammaRamp
 };
+
+HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface_type,
+        IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters, IUnknown *parent)
+{
+    const struct wined3d_adapter *adapter = device->adapter;
+    const struct GlPixelFormatDesc *format_desc;
+    BOOL displaymode_set = FALSE;
+    WINED3DDISPLAYMODE mode;
+    RECT client_rect;
+    HWND window;
+    HRESULT hr;
+    UINT i;
+
+    if (present_parameters->BackBufferCount > WINED3DPRESENT_BACK_BUFFER_MAX)
+    {
+        FIXME("The application requested %u back buffers, this is not supported.\n",
+                present_parameters->BackBufferCount);
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (present_parameters->BackBufferCount > 1)
+    {
+        FIXME("The application requested more than one back buffer, this is not properly supported.\n"
+                "Please configure the application to use double buffering (1 back buffer) if possible.\n");
+    }
+
+    switch (surface_type)
+    {
+        case SURFACE_GDI:
+            swapchain->lpVtbl = &IWineGDISwapChain_Vtbl;
+            break;
+
+        case SURFACE_OPENGL:
+            swapchain->lpVtbl = &IWineD3DSwapChain_Vtbl;
+            break;
+
+        case SURFACE_UNKNOWN:
+            FIXME("Caller tried to create a SURFACE_UNKNOWN swapchain.\n");
+            return WINED3DERR_INVALIDCALL;
+    }
+
+    window = present_parameters->hDeviceWindow ? present_parameters->hDeviceWindow : device->createParms.hFocusWindow;
+
+    swapchain->device = device;
+    swapchain->parent = parent;
+    swapchain->ref = 1;
+    swapchain->win_handle = window;
+
+    if (!present_parameters->Windowed && window)
+    {
+        IWineD3DDeviceImpl_SetupFullscreenWindow(device, window, present_parameters->BackBufferWidth,
+                present_parameters->BackBufferHeight);
+    }
+
+    IWineD3D_GetAdapterDisplayMode(device->wined3d, adapter->ordinal, &mode);
+    swapchain->orig_width = mode.Width;
+    swapchain->orig_height = mode.Height;
+    swapchain->orig_fmt = mode.Format;
+    format_desc = getFormatDescEntry(mode.Format, &adapter->gl_info);
+
+    GetClientRect(window, &client_rect);
+    if (present_parameters->Windowed
+            && (!present_parameters->BackBufferWidth || !present_parameters->BackBufferHeight
+            || present_parameters->BackBufferFormat == WINED3DFMT_UNKNOWN))
+    {
+
+        if (!present_parameters->BackBufferWidth)
+        {
+            present_parameters->BackBufferWidth = client_rect.right;
+            TRACE("Updating width to %u.\n", present_parameters->BackBufferWidth);
+        }
+
+        if (!present_parameters->BackBufferHeight)
+        {
+            present_parameters->BackBufferHeight = client_rect.bottom;
+            TRACE("Updating height to %u.\n", present_parameters->BackBufferHeight);
+        }
+
+        if (present_parameters->BackBufferFormat == WINED3DFMT_UNKNOWN)
+        {
+            present_parameters->BackBufferFormat = swapchain->orig_fmt;
+            TRACE("Updating format to %s.\n", debug_d3dformat(swapchain->orig_fmt));
+        }
+    }
+    swapchain->presentParms = *present_parameters;
+
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
+            && (present_parameters->BackBufferWidth != client_rect.right
+            || present_parameters->BackBufferHeight != client_rect.bottom))
+    {
+        TRACE("Rendering to FBO. Backbuffer %ux%u, window %ux%u.\n",
+                present_parameters->BackBufferWidth,
+                present_parameters->BackBufferHeight,
+                client_rect.right, client_rect.bottom);
+        swapchain->render_to_fbo = TRUE;
+    }
+
+    TRACE("Creating front buffer.\n");
+    hr = IWineD3DDeviceParent_CreateRenderTarget(device->device_parent, parent,
+            swapchain->presentParms.BackBufferWidth, swapchain->presentParms.BackBufferHeight,
+            swapchain->presentParms.BackBufferFormat, swapchain->presentParms.MultiSampleType,
+            swapchain->presentParms.MultiSampleQuality, TRUE /* Lockable */, &swapchain->frontBuffer);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create front buffer, hr %#x.\n", hr);
+        goto err;
+    }
+
+    IWineD3DSurface_SetContainer(swapchain->frontBuffer, (IWineD3DBase *)swapchain);
+    ((IWineD3DSurfaceImpl *)swapchain->frontBuffer)->Flags |= SFLAG_SWAPCHAIN;
+    if (surface_type == SURFACE_OPENGL)
+    {
+        IWineD3DSurface_ModifyLocation(swapchain->frontBuffer, SFLAG_INDRAWABLE, TRUE);
+    }
+
+    /* MSDN says we're only allowed a single fullscreen swapchain per device,
+     * so we should really check to see if there is a fullscreen swapchain
+     * already. Does a single head count as full screen? */
+
+    if (!present_parameters->Windowed)
+    {
+        WINED3DDISPLAYMODE mode;
+
+        /* Change the display settings */
+        mode.Width = present_parameters->BackBufferWidth;
+        mode.Height = present_parameters->BackBufferHeight;
+        mode.Format = present_parameters->BackBufferFormat;
+        mode.RefreshRate = present_parameters->FullScreen_RefreshRateInHz;
+
+        hr = IWineD3DDevice_SetDisplayMode((IWineD3DDevice *)device, 0, &mode);
+        if (FAILED(hr))
+        {
+            WARN("Failed to set display mode, hr %#x.\n", hr);
+            goto err;
+        }
+        displaymode_set = TRUE;
+    }
+
+    swapchain->context = HeapAlloc(GetProcessHeap(), 0, sizeof(swapchain->context));
+    if (!swapchain->context)
+    {
+        ERR("Failed to create the context array.\n");
+        hr = E_OUTOFMEMORY;
+        goto err;
+    }
+    swapchain->num_contexts = 1;
+
+    if (surface_type == SURFACE_OPENGL)
+    {
+        swapchain->context[0] = context_create(device, (IWineD3DSurfaceImpl *)swapchain->frontBuffer,
+                window, FALSE /* pbuffer */, present_parameters);
+        if (!swapchain->context[0])
+        {
+            WARN("Failed to create context.\n");
+            hr = WINED3DERR_NOTAVAILABLE;
+            goto err;
+        }
+
+        swapchain->context[0]->render_offscreen = swapchain->render_to_fbo;
+    }
+    else
+    {
+        swapchain->context[0] = NULL;
+    }
+
+    if (swapchain->presentParms.BackBufferCount > 0)
+    {
+        swapchain->backBuffer = HeapAlloc(GetProcessHeap(), 0,
+                sizeof(*swapchain->backBuffer) * swapchain->presentParms.BackBufferCount);
+        if (!swapchain->backBuffer)
+        {
+            ERR("Failed to allocate backbuffer array memory.\n");
+            hr = E_OUTOFMEMORY;
+            goto err;
+        }
+
+        for (i = 0; i < swapchain->presentParms.BackBufferCount; ++i)
+        {
+            TRACE("Creating back buffer %u.\n", i);
+            hr = IWineD3DDeviceParent_CreateRenderTarget(device->device_parent, parent,
+                    swapchain->presentParms.BackBufferWidth, swapchain->presentParms.BackBufferHeight,
+                    swapchain->presentParms.BackBufferFormat, swapchain->presentParms.MultiSampleType,
+                    swapchain->presentParms.MultiSampleQuality, TRUE /* Lockable */, &swapchain->backBuffer[i]);
+            if (FAILED(hr))
+            {
+                WARN("Failed to create back buffer %u, hr %#x.\n", i, hr);
+                goto err;
+            }
+
+            IWineD3DSurface_SetContainer(swapchain->backBuffer[i], (IWineD3DBase *)swapchain);
+            ((IWineD3DSurfaceImpl *)swapchain->backBuffer[i])->Flags |= SFLAG_SWAPCHAIN;
+
+            if (surface_type == SURFACE_OPENGL)
+            {
+                ENTER_GL();
+                glDrawBuffer(GL_BACK);
+                checkGLcall("glDrawBuffer(GL_BACK)");
+                LEAVE_GL();
+            }
+        }
+    }
+    else
+    {
+        /* Single buffering - draw to front buffer */
+        if (surface_type == SURFACE_OPENGL)
+        {
+            ENTER_GL();
+            glDrawBuffer(GL_FRONT);
+            checkGLcall("glDrawBuffer(GL_FRONT)");
+            LEAVE_GL();
+        }
+    }
+
+    if (swapchain->context[0]) context_release(swapchain->context[0]);
+
+    /* Swapchains share the depth/stencil buffer, so only create a single depthstencil surface. */
+    if (present_parameters->EnableAutoDepthStencil && surface_type == SURFACE_OPENGL)
+    {
+        TRACE("Creating depth/stencil buffer.\n");
+        if (!device->auto_depth_stencil_buffer)
+        {
+            hr = IWineD3DDeviceParent_CreateDepthStencilSurface(device->device_parent, parent,
+                    swapchain->presentParms.BackBufferWidth, swapchain->presentParms.BackBufferHeight,
+                    swapchain->presentParms.AutoDepthStencilFormat, swapchain->presentParms.MultiSampleType,
+                    swapchain->presentParms.MultiSampleQuality, FALSE /* FIXME: Discard */,
+                    &device->auto_depth_stencil_buffer);
+            if (FAILED(hr))
+            {
+                WARN("Failed to create the auto depth stencil, hr %#x.\n", hr);
+                goto err;
+            }
+
+            IWineD3DSurface_SetContainer(device->auto_depth_stencil_buffer, NULL);
+        }
+    }
+
+    IWineD3DSwapChain_GetGammaRamp((IWineD3DSwapChain *)swapchain, &swapchain->orig_gamma);
+
+    return WINED3D_OK;
+
+err:
+    if (displaymode_set)
+    {
+        DEVMODEW devmode;
+
+        ClipCursor(NULL);
+
+        /* Change the display settings */
+        memset(&devmode, 0, sizeof(devmode));
+        devmode.dmSize = sizeof(devmode);
+        devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+        devmode.dmBitsPerPel = format_desc->byte_count * 8;
+        devmode.dmPelsWidth = swapchain->orig_width;
+        devmode.dmPelsHeight = swapchain->orig_height;
+        ChangeDisplaySettingsExW(adapter->DeviceName, &devmode, NULL, CDS_FULLSCREEN, NULL);
+    }
+
+    if (swapchain->backBuffer)
+    {
+        for (i = 0; i < swapchain->presentParms.BackBufferCount; ++i)
+        {
+            if (swapchain->backBuffer[i]) IWineD3DSurface_Release(swapchain->backBuffer[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, swapchain->backBuffer);
+    }
+
+    if (swapchain->context && swapchain->context[0])
+    {
+        context_release(swapchain->context[0]);
+        context_destroy(device, swapchain->context[0]);
+    }
+
+    if (swapchain->frontBuffer) IWineD3DSurface_Release(swapchain->frontBuffer);
+
+    return hr;
+}
 
 struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChain *iface)
 {
