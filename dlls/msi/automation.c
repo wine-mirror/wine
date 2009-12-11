@@ -2209,6 +2209,86 @@ static HRESULT InstallerImpl_Products(WORD wFlags,
     return S_OK;
 }
 
+static HRESULT InstallerImpl_RelatedProducts(WORD wFlags,
+                                             DISPPARAMS* pDispParams,
+                                             VARIANT* pVarResult,
+                                             EXCEPINFO* pExcepInfo,
+                                             UINT* puArgErr)
+{
+    UINT ret;
+    ULONG idx;
+    HRESULT hr;
+    ListData *ldata;
+    VARIANTARG varg0;
+    IDispatch* dispatch;
+    WCHAR product[GUID_SIZE];
+
+    if (!(wFlags & DISPATCH_PROPERTYGET))
+        return DISP_E_MEMBERNOTFOUND;
+
+    VariantInit(&varg0);
+    hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+    if (FAILED(hr))
+        return hr;
+
+    /* Find number of related products. */
+    idx = 0;
+    do
+    {
+        ret = MsiEnumRelatedProductsW(V_BSTR(&varg0), 0, idx, product);
+        if (ret == ERROR_SUCCESS)
+            idx++;
+    } while (ret == ERROR_SUCCESS);
+
+    if (ret != ERROR_NO_MORE_ITEMS)
+    {
+        hr = DISP_E_EXCEPTION;
+        goto done;
+    }
+
+    V_VT(pVarResult) = VT_DISPATCH;
+
+    hr = create_automation_object(0, NULL, (LPVOID*)&dispatch,
+                                  &DIID_StringList, ListImpl_Invoke,
+                                  ListImpl_Free, sizeof(ListData));
+    if (FAILED(hr))
+        goto done;
+
+    V_DISPATCH(pVarResult) = dispatch;
+
+    /* Save product strings. */
+    ldata = private_data((AutomationObject *)dispatch);
+    ldata->pVars = msi_alloc(sizeof(VARIANT) * idx);
+    if (!ldata->pVars)
+    {
+        IDispatch_Release(dispatch);
+        hr = E_OUTOFMEMORY;
+        goto done;
+    }
+
+    ldata->ulCount = idx;
+    for (idx = 0; idx < ldata->ulCount; idx++)
+    {
+        ret = MsiEnumRelatedProductsW(V_BSTR(&varg0), 0, idx, product);
+        if (ret != ERROR_SUCCESS)
+        {
+            cleanup_products(dispatch, idx - 1);
+            hr = DISP_E_EXCEPTION;
+            goto done;
+        }
+
+        VariantInit(&ldata->pVars[idx]);
+        V_VT(&ldata->pVars[idx]) = VT_BSTR;
+        V_BSTR(&ldata->pVars[idx]) = SysAllocString(product);
+    }
+
+    hr = S_OK;
+
+done:
+    VariantClear(&varg0);
+    return hr;
+}
+
 static HRESULT WINAPI InstallerImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
@@ -2220,15 +2300,6 @@ static HRESULT WINAPI InstallerImpl_Invoke(
         EXCEPINFO* pExcepInfo,
         UINT* puArgErr)
 {
-    IDispatch *pDispatch = NULL;
-    UINT ret;
-    VARIANTARG varg0, varg1, varg2;
-    HRESULT hr;
-
-    VariantInit(&varg0);
-    VariantInit(&varg1);
-    VariantInit(&varg2);
-
     switch (dispIdMember)
     {
         case DISPID_INSTALLER_CREATERECORD:
@@ -2309,60 +2380,13 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                                           pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_RELATEDPRODUCTS:
-            if (wFlags & DISPATCH_PROPERTYGET)
-            {
-                ListData *ldata = NULL;
-                ULONG idx = 0;
-                WCHAR szProductBuf[GUID_SIZE];
+            return InstallerImpl_RelatedProducts(wFlags, pDispParams,
+                                                 pVarResult, pExcepInfo,
+                                                 puArgErr);
 
-                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
-                if (FAILED(hr)) return hr;
-
-                /* Find number of related products */
-                while ((ret = MsiEnumRelatedProductsW(V_BSTR(&varg0), 0, idx, szProductBuf)) == ERROR_SUCCESS) idx++;
-                if (ret != ERROR_NO_MORE_ITEMS)
-                {
-                    VariantClear(&varg0);
-                    ERR("MsiEnumRelatedProducts returned %d\n", ret);
-                    return DISP_E_EXCEPTION;
-                }
-
-                V_VT(pVarResult) = VT_DISPATCH;
-                if (SUCCEEDED(hr = create_automation_object(0, NULL, (LPVOID*)&pDispatch, &DIID_StringList, ListImpl_Invoke, ListImpl_Free, sizeof(ListData))))
-                {
-                    V_DISPATCH(pVarResult) = pDispatch;
-
-                    /* Save product strings */
-                    ldata = private_data((AutomationObject *)pDispatch);
-                    if (!(ldata->pVars = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(VARIANT)*idx)))
-                        ERR("Out of memory\n");
-                    else
-                    {
-                        ldata->ulCount = idx;
-                        for (idx = 0; idx < ldata->ulCount; idx++)
-                        {
-                            ret = MsiEnumRelatedProductsW(V_BSTR(&varg0), 0, idx, szProductBuf);
-                            VariantInit(&ldata->pVars[idx]);
-                            V_VT(&ldata->pVars[idx]) = VT_BSTR;
-                            V_BSTR(&ldata->pVars[idx]) = SysAllocString(szProductBuf);
-                        }
-                    }
-                }
-                else
-                    ERR("Failed to create StringList object, hresult 0x%08x\n", hr);
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
-
-         default:
+        default:
             return DISP_E_MEMBERNOTFOUND;
     }
-
-    VariantClear(&varg2);
-    VariantClear(&varg1);
-    VariantClear(&varg0);
-
-    return S_OK;
 }
 
 /* Wrapper around create_automation_object to create an installer object. */
