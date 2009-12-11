@@ -2051,6 +2051,31 @@ static HRESULT InstallerImpl_FileVersion(WORD wFlags,
     return S_OK;
 }
 
+static HRESULT InstallerImpl_ProductState(WORD wFlags,
+                                          DISPPARAMS* pDispParams,
+                                          VARIANT* pVarResult,
+                                          EXCEPINFO* pExcepInfo,
+                                          UINT* puArgErr)
+{
+    HRESULT hr;
+    VARIANTARG varg0;
+
+
+    if (!(wFlags & DISPATCH_PROPERTYGET))
+        return DISP_E_MEMBERNOTFOUND;
+
+    VariantInit(&varg0);
+    hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+    if (FAILED(hr))
+        return hr;
+
+    V_VT(pVarResult) = VT_I4;
+    V_I4(pVarResult) = MsiQueryProductStateW(V_BSTR(&varg0));
+
+    VariantClear(&varg0);
+    return S_OK;
+}
+
 static HRESULT WINAPI InstallerImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
@@ -2141,14 +2166,8 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                                              pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_PRODUCTSTATE:
-            if (wFlags & DISPATCH_PROPERTYGET) {
-                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
-                if (FAILED(hr)) return hr;
-                V_VT(pVarResult) = VT_I4;
-                V_I4(pVarResult) = MsiQueryProductStateW(V_BSTR(&varg0));
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_ProductState(wFlags, pDispParams,
+                                              pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_PRODUCTINFO:
             if (wFlags & DISPATCH_PROPERTYGET) {
