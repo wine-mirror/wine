@@ -2541,10 +2541,11 @@ static void CRYPT_CheckUsages(PCERT_CHAIN_CONTEXT chain,
              *  key usage extension be present and that a particular purpose
              *  be indicated in order for the certificate to be acceptable to
              *  that application."
-             * For now I'm being more conservative and disallowing it.
+             * Not all web sites include the extended key usage extension, so
+             * accept chains without it.
              */
-            WARN_(chain)("requested usage from a certificate with no usages\n");
-            validForUsage = FALSE;
+            TRACE_(chain)("requested usage from certificate with no usages\n");
+            validForUsage = TRUE;
         }
         if (!validForUsage)
         {
