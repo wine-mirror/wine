@@ -113,6 +113,24 @@ static BOOL CALLBACK draw_state_callback( HDC hdc, LPARAM lparam, WPARAM wparam,
     return LOWORD(ret);
 }
 
+/* This function is a copy of the one in objects/font.c */
+static void logfont_32_to_16( const LOGFONTA* font32, LPLOGFONT16 font16 )
+{
+    font16->lfHeight = font32->lfHeight;
+    font16->lfWidth = font32->lfWidth;
+    font16->lfEscapement = font32->lfEscapement;
+    font16->lfOrientation = font32->lfOrientation;
+    font16->lfWeight = font32->lfWeight;
+    font16->lfItalic = font32->lfItalic;
+    font16->lfUnderline = font32->lfUnderline;
+    font16->lfStrikeOut = font32->lfStrikeOut;
+    font16->lfCharSet = font32->lfCharSet;
+    font16->lfOutPrecision = font32->lfOutPrecision;
+    font16->lfClipPrecision = font32->lfClipPrecision;
+    font16->lfQuality = font32->lfQuality;
+    font16->lfPitchAndFamily = font32->lfPitchAndFamily;
+    lstrcpynA( font16->lfFaceName, font32->lfFaceName, LF_FACESIZE );
+}
 
 /**********************************************************************
  *		InitApp (USER.5)
@@ -1905,6 +1923,118 @@ SEGPTR WINAPI AnsiPrev16( LPCSTR start, SEGPTR current )
 INT16 WINAPI GetKeyboardLayoutName16( LPSTR name )
 {
     return GetKeyboardLayoutNameA( name );
+}
+
+
+/***********************************************************************
+ *		SystemParametersInfo (USER.483)
+ */
+BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
+                                      LPVOID lpvParam, UINT16 fuWinIni )
+{
+    BOOL16 ret;
+
+    TRACE("(%u, %u, %p, %u)\n", uAction, uParam, lpvParam, fuWinIni);
+
+    switch (uAction)
+    {
+    case SPI_GETBEEP:
+    case SPI_GETSCREENSAVEACTIVE:
+    case SPI_GETICONTITLEWRAP:
+    case SPI_GETMENUDROPALIGNMENT:
+    case SPI_GETFASTTASKSWITCH:
+    case SPI_GETDRAGFULLWINDOWS:
+    {
+	BOOL tmp;
+	ret = SystemParametersInfoA( uAction, uParam, lpvParam ? &tmp : NULL, fuWinIni );
+	if (ret && lpvParam) *(BOOL16 *)lpvParam = tmp;
+	break;
+    }
+
+    case SPI_GETBORDER:
+    case SPI_ICONHORIZONTALSPACING:
+    case SPI_GETSCREENSAVETIMEOUT:
+    case SPI_GETGRIDGRANULARITY:
+    case SPI_GETKEYBOARDDELAY:
+    case SPI_ICONVERTICALSPACING:
+    {
+	INT tmp;
+	ret = SystemParametersInfoA( uAction, uParam, lpvParam ? &tmp : NULL, fuWinIni );
+	if (ret && lpvParam) *(INT16 *)lpvParam = tmp;
+	break;
+    }
+
+    case SPI_GETKEYBOARDSPEED:
+    case SPI_GETMOUSEHOVERWIDTH:
+    case SPI_GETMOUSEHOVERHEIGHT:
+    case SPI_GETMOUSEHOVERTIME:
+    {
+	DWORD tmp;
+	ret = SystemParametersInfoA( uAction, uParam, lpvParam ? &tmp : NULL, fuWinIni );
+	if (ret && lpvParam) *(WORD *)lpvParam = tmp;
+	break;
+    }
+
+    case SPI_GETICONTITLELOGFONT:
+    {
+	LOGFONTA tmp;
+	ret = SystemParametersInfoA( uAction, uParam, lpvParam ? &tmp : NULL, fuWinIni );
+	if (ret && lpvParam) logfont_32_to_16( &tmp, (LPLOGFONT16)lpvParam );
+	break;
+    }
+
+    case SPI_GETNONCLIENTMETRICS:
+    {
+	NONCLIENTMETRICSA tmp;
+	LPNONCLIENTMETRICS16 lpnm16 = (LPNONCLIENTMETRICS16)lpvParam;
+	if (lpnm16 && lpnm16->cbSize == sizeof(NONCLIENTMETRICS16))
+	{
+	    tmp.cbSize = sizeof(NONCLIENTMETRICSA);
+	    ret = SystemParametersInfoA( uAction, uParam, &tmp, fuWinIni );
+	    if (ret)
+            {
+                lpnm16->iBorderWidth	 = tmp.iBorderWidth;
+                lpnm16->iScrollWidth	 = tmp.iScrollWidth;
+                lpnm16->iScrollHeight	 = tmp.iScrollHeight;
+                lpnm16->iCaptionWidth	 = tmp.iCaptionWidth;
+                lpnm16->iCaptionHeight	 = tmp.iCaptionHeight;
+                lpnm16->iSmCaptionWidth	 = tmp.iSmCaptionWidth;
+                lpnm16->iSmCaptionHeight = tmp.iSmCaptionHeight;
+                lpnm16->iMenuWidth       = tmp.iMenuWidth;
+                lpnm16->iMenuHeight      = tmp.iMenuHeight;
+                logfont_32_to_16( &tmp.lfCaptionFont,	&lpnm16->lfCaptionFont );
+                logfont_32_to_16( &tmp.lfSmCaptionFont,	&lpnm16->lfSmCaptionFont );
+                logfont_32_to_16( &tmp.lfMenuFont,	&lpnm16->lfMenuFont );
+                logfont_32_to_16( &tmp.lfStatusFont,	&lpnm16->lfStatusFont );
+                logfont_32_to_16( &tmp.lfMessageFont,	&lpnm16->lfMessageFont );
+            }
+	}
+	else /* winfile 95 sets cbSize to 340 */
+	    ret = SystemParametersInfoA( uAction, uParam, lpvParam, fuWinIni );
+	break;
+    }
+
+    case SPI_GETWORKAREA:
+    {
+	RECT tmp;
+	ret = SystemParametersInfoA( uAction, uParam, lpvParam ? &tmp : NULL, fuWinIni );
+	if (ret && lpvParam)
+        {
+            RECT16 *r16 = lpvParam;
+            r16->left   = tmp.left;
+            r16->top    = tmp.top;
+            r16->right  = tmp.right;
+            r16->bottom = tmp.bottom;
+        }
+	break;
+    }
+
+    default:
+	ret = SystemParametersInfoA( uAction, uParam, lpvParam, fuWinIni );
+        break;
+    }
+
+    return ret;
 }
 
 
