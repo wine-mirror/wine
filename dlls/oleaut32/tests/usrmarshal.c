@@ -205,7 +205,7 @@ static void init_user_marshal_cb(USER_MARSHAL_CB *umcb,
 
 static void test_marshal_LPSAFEARRAY(void)
 {
-    unsigned char *buffer, *p;
+    unsigned char *buffer, *next;
     ULONG size, expected;
     LPSAFEARRAY lpsa;
     LPSAFEARRAY lpsa2 = NULL;
@@ -240,7 +240,8 @@ static void test_marshal_LPSAFEARRAY(void)
        "size should be %u bytes, not %u\n", expected, size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-    LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
+    next = LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
+    ok(next - buffer == expected, "Marshaled %u bytes, expected %u\n", (ULONG) (next - buffer), expected);
 
     check_safearray(buffer, lpsa);
 
@@ -265,10 +266,12 @@ static void test_marshal_LPSAFEARRAY(void)
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     size = LPSAFEARRAY_UserSize(&umcb.Flags, 0, &lpsa);
-    ok(size == 4, "size should be 4 bytes, not %d\n", size);
+    expected = 4;
+    ok(size == expected, "size should be 4 bytes, not %d\n", size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-    LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
+    next = LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
+    ok(next - buffer == expected, "Marshaled %u bytes, expected %u\n", (ULONG) (next - buffer), expected);
     check_safearray(buffer, lpsa);
 
     if (LPSAFEARRAY_UNMARSHAL_WORKS)
@@ -302,7 +305,8 @@ static void test_marshal_LPSAFEARRAY(void)
        "size should be %u bytes, not %u\n", expected, size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-    LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
+    next = LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
+    ok(next - buffer == expected, "Marshaled %u bytes, expected %u\n", (ULONG) (next - buffer), expected);
 
     check_safearray(buffer, lpsa);
 
@@ -330,7 +334,8 @@ static void test_marshal_LPSAFEARRAY(void)
        "size should be %u bytes, not %u\n", expected, size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-    LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
+    next = LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
+    ok(next - buffer == expected, "Marshaled %u bytes, expected %u\n", (ULONG) (next - buffer), expected);
     check_safearray(buffer, lpsa);
     HeapFree(GetProcessHeap(), 0, buffer);
     SafeArrayDestroyData(lpsa);
@@ -361,19 +366,20 @@ static void test_marshal_LPSAFEARRAY(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     size = LPSAFEARRAY_UserSize(&umcb.Flags, 1, &lpsa);
     expected = 44 + (sab.cElements * sizeof(DWORD)) + expected_bstr_size;
-    if (sizeof(void *) == 8) /* win64 */
-        expected += 12;
     todo_wine
-    ok(size == (expected + sizeof(DWORD)), "size should be %u bytes, not %u\n", expected + (ULONG) sizeof(DWORD), size);
+    ok(size == expected + sizeof(DWORD) || size  == (expected + sizeof(DWORD) + 12 /* win64 */),
+            "size should be %u bytes, not %u\n", expected + (ULONG) sizeof(DWORD), size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     size = LPSAFEARRAY_UserSize(&umcb.Flags, 0, &lpsa);
     todo_wine
-    ok(size == expected, "size should be %u bytes, not %u\n", expected, size);
+    ok(size == expected || size  == (expected + 12 /* win64 */),
+        "size should be %u bytes, not %u\n", expected, size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     memset(buffer, 0xcc, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-    p = LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
-    trace("LPSAFEARRAY_UserMarshal processed %ld bytes\n", p ? (long) (p - buffer) : 0);
+    next = LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
+    todo_wine
+    ok(next - buffer == expected, "Marshaled %u bytes, expected %u\n", (ULONG) (next - buffer), expected);
 
     check_safearray(buffer, lpsa);
 
@@ -381,9 +387,10 @@ static void test_marshal_LPSAFEARRAY(void)
     if (LPSAFEARRAY_UNMARSHAL_WORKS)
     {
         init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-        p = LPSAFEARRAY_UserUnmarshal(&umcb.Flags, buffer, &lpsa2);
-        trace("LPSAFEARRAY_UserUnmarshal processed %ld bytes\n", p ? (long) (p - buffer) : 0);
-        ok(lpsa2 != NULL, "LPSAFEARRAY didn't unmarshal, result %p\n", p);
+        next = LPSAFEARRAY_UserUnmarshal(&umcb.Flags, buffer, &lpsa2);
+        todo_wine
+        ok(next - buffer == expected, "Marshaled %u bytes, expected %u\n", (ULONG) (next - buffer), expected);
+        ok(lpsa2 != NULL, "LPSAFEARRAY didn't unmarshal, result %p\n", next);
     }
 
     for (i = 0; i < sizeof(values) / sizeof(values[0]); i++)
@@ -436,7 +443,9 @@ static void test_marshal_LPSAFEARRAY(void)
        "size should be %u bytes, not %u\n", expected, size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-    LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
+    next = LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
+    todo_wine
+    ok(next - buffer == expected, "Marshaled %u bytes, expected %u\n", (ULONG) (next - buffer), expected);
     lpsa->cbElements = 16;  /* VARIANT wire size */
     check_safearray(buffer, lpsa);
     HeapFree(GetProcessHeap(), 0, buffer);
