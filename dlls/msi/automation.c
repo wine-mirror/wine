@@ -1567,6 +1567,65 @@ static HRESULT InstallerImpl_CreateRecord(WORD wFlags,
     return hr;
 }
 
+static HRESULT InstallerImpl_OpenPackage(AutomationObject* This,
+                                         WORD wFlags,
+                                         DISPPARAMS* pDispParams,
+                                         VARIANT* pVarResult,
+                                         EXCEPINFO* pExcepInfo,
+                                         UINT* puArgErr)
+{
+    UINT ret;
+    HRESULT hr;
+    MSIHANDLE hpkg;
+    IDispatch* dispatch;
+    VARIANTARG varg0, varg1;
+
+    if (!(wFlags & DISPATCH_METHOD))
+        return DISP_E_MEMBERNOTFOUND;
+
+    if (pDispParams->cArgs == 0)
+        return DISP_E_TYPEMISMATCH;
+
+    if (V_VT(&pDispParams->rgvarg[pDispParams->cArgs - 1]) != VT_BSTR)
+        return DISP_E_TYPEMISMATCH;
+
+    VariantInit(&varg0);
+    hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+    if (FAILED(hr))
+        return hr;
+
+    VariantInit(&varg1);
+    if (pDispParams->cArgs == 2)
+    {
+        hr = DispGetParam(pDispParams, 1, VT_I4, &varg1, puArgErr);
+        if (FAILED(hr))
+            goto done;
+    }
+    else
+    {
+        V_VT(&varg1) = VT_I4;
+        V_I4(&varg1) = 0;
+    }
+
+    V_VT(pVarResult) = VT_DISPATCH;
+
+    ret = MsiOpenPackageExW(V_BSTR(&varg0), V_I4(&varg1), &hpkg);
+    if (ret != ERROR_SUCCESS)
+    {
+        hr = DISP_E_EXCEPTION;
+        goto done;
+    }
+
+    hr = create_session(hpkg, (IDispatch *)This, &dispatch);
+    if (SUCCEEDED(hr))
+        V_DISPATCH(pVarResult) = dispatch;
+
+done:
+    VariantClear(&varg0);
+    VariantClear(&varg1);
+    return hr;
+}
+
 static HRESULT WINAPI InstallerImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
@@ -1598,46 +1657,8 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                                               pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_OPENPACKAGE:
-            if (wFlags & DISPATCH_METHOD)
-            {
-                if (pDispParams->cArgs == 0)
-                    return DISP_E_TYPEMISMATCH;
-                if (V_VT(&pDispParams->rgvarg[pDispParams->cArgs - 1]) != VT_BSTR)
-                    return DISP_E_TYPEMISMATCH;
-                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
-                if (FAILED(hr)) return hr;
-                if (pDispParams->cArgs == 2)
-                {
-                    hr = DispGetParam(pDispParams, 1, VT_I4, &varg1, puArgErr);
-                    if (FAILED(hr))
-                    {
-                        VariantClear(&varg0);
-                        return hr;
-                    }
-                }
-                else
-                {
-                    VariantInit(&varg1);
-                    V_VT(&varg1) = VT_I4;
-                    V_I4(&varg1) = 0;
-                }
-                V_VT(pVarResult) = VT_DISPATCH;
-                if ((ret = MsiOpenPackageExW(V_BSTR(&varg0), V_I4(&varg1), &msiHandle)) == ERROR_SUCCESS)
-                {
-                    if (SUCCEEDED(hr = create_session(msiHandle, (IDispatch *)This, &pDispatch)))
-                        V_DISPATCH(pVarResult) = pDispatch;
-                    else
-                        ERR("Failed to create Session object, hresult 0x%08x\n", hr);
-                }
-                else
-                {
-                    VariantClear(&varg0);
-                    ERR("MsiOpenPackageEx returned %d\n", ret);
-                    return DISP_E_EXCEPTION;
-                }
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_OpenPackage(This, wFlags, pDispParams,
+                                             pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_OPENPRODUCT:
             if (wFlags & DISPATCH_METHOD)
