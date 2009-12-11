@@ -441,10 +441,22 @@ static struct security_descriptor *file_get_sd( struct object *obj )
     return sd;
 }
 
+static mode_t file_access_to_mode( unsigned int access )
+{
+    mode_t mode = 0;
+
+    access = generic_file_map_access( access );
+    if (access & FILE_READ_DATA)  mode |= 4;
+    if (access & FILE_WRITE_DATA) mode |= 2;
+    if (access & FILE_EXECUTE)    mode |= 1;
+    return mode;
+}
+
 mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner )
 {
     mode_t new_mode = 0;
     mode_t denied_mode = 0;
+    mode_t mode;
     int present;
     const ACL *dacl = sd_get_dacl( sd, &present );
     const SID *user = token_get_user( current->process->token );
@@ -465,71 +477,37 @@ mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner )
                 case ACCESS_DENIED_ACE_TYPE:
                     ad_ace = (const ACCESS_DENIED_ACE *)ace;
                     sid = (const SID *)&ad_ace->SidStart;
+                    mode = file_access_to_mode( ad_ace->Mask );
                     if (security_equal_sid( sid, security_world_sid ))
                     {
-                        unsigned int access = generic_file_map_access( ad_ace->Mask );
-                        if (access & FILE_READ_DATA)
-                            denied_mode |= S_IRUSR|S_IRGRP|S_IROTH;
-                        if (access & FILE_WRITE_DATA)
-                            denied_mode |= S_IWUSR|S_IWGRP|S_IWOTH;
-                        if (access & FILE_EXECUTE)
-                            denied_mode |= S_IXUSR|S_IXGRP|S_IXOTH;
+                        denied_mode |= (mode << 6) | (mode << 3) | mode; /* all */
                     }
                     else if (security_equal_sid( sid, owner ))
                     {
-                        unsigned int access = generic_file_map_access( ad_ace->Mask );
-                        if (access & FILE_READ_DATA)
-                            denied_mode |= S_IRUSR;
-                        if (access & FILE_WRITE_DATA)
-                            denied_mode |= S_IWUSR;
-                        if (access & FILE_EXECUTE)
-                            denied_mode |= S_IXUSR;
+                        denied_mode |= (mode << 6);  /* user only */
                     }
                     else if ((security_equal_sid( user, owner ) &&
                               token_sid_present( current->process->token, sid, TRUE )))
                     {
-                        unsigned int access = generic_file_map_access( ad_ace->Mask );
-                        if (access & FILE_READ_DATA)
-                            denied_mode |= S_IRUSR|S_IRGRP;
-                        if (access & FILE_WRITE_DATA)
-                            denied_mode |= S_IWUSR|S_IWGRP;
-                        if (access & FILE_EXECUTE)
-                            denied_mode |= S_IXUSR|S_IXGRP;
+                        denied_mode |= (mode << 6) | (mode << 3);  /* user + group */
                     }
                     break;
                 case ACCESS_ALLOWED_ACE_TYPE:
                     aa_ace = (const ACCESS_ALLOWED_ACE *)ace;
                     sid = (const SID *)&aa_ace->SidStart;
+                    mode = file_access_to_mode( aa_ace->Mask );
                     if (security_equal_sid( sid, security_world_sid ))
                     {
-                        unsigned int access = generic_file_map_access( aa_ace->Mask );
-                        if (access & FILE_READ_DATA)
-                            new_mode |= S_IRUSR|S_IRGRP|S_IROTH;
-                        if (access & FILE_WRITE_DATA)
-                            new_mode |= S_IWUSR|S_IWGRP|S_IWOTH;
-                        if (access & FILE_EXECUTE)
-                            new_mode |= S_IXUSR|S_IXGRP|S_IXOTH;
+                        new_mode |= (mode << 6) | (mode << 3) | mode;  /* all */
                     }
                     else if (security_equal_sid( sid, owner ))
                     {
-                        unsigned int access = generic_file_map_access( aa_ace->Mask );
-                        if (access & FILE_READ_DATA)
-                            new_mode |= S_IRUSR;
-                        if (access & FILE_WRITE_DATA)
-                            new_mode |= S_IWUSR;
-                        if (access & FILE_EXECUTE)
-                            new_mode |= S_IXUSR;
+                        new_mode |= (mode << 6);  /* user only */
                     }
                     else if ((security_equal_sid( user, owner ) &&
                               token_sid_present( current->process->token, sid, FALSE )))
                     {
-                        unsigned int access = generic_file_map_access( ad_ace->Mask );
-                        if (access & FILE_READ_DATA)
-                            new_mode |= S_IRUSR|S_IRGRP;
-                        if (access & FILE_WRITE_DATA)
-                            new_mode |= S_IWUSR|S_IWGRP;
-                        if (access & FILE_EXECUTE)
-                            new_mode |= S_IXUSR|S_IXGRP;
+                        new_mode |= (mode << 6) | (mode << 3);  /* user + group */
                     }
                     break;
             }
