@@ -1134,6 +1134,44 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHICON(HICON hicon, GpBitmap** bitmap)
     return Ok;
 }
 
+static void generate_halftone_palette(ARGB *entries, UINT count)
+{
+    static const BYTE halftone_values[6]={0x00,0x33,0x66,0x99,0xcc,0xff};
+    UINT i;
+
+    for (i=0; i<8 && i<count; i++)
+    {
+        entries[i] = 0xff000000;
+        if (i&1) entries[i] |= 0x800000;
+        if (i&2) entries[i] |= 0x8000;
+        if (i&4) entries[i] |= 0x80;
+    }
+
+    if (8 < count)
+        entries[i] = 0xffc0c0c0;
+
+    for (i=9; i<16 && i<count; i++)
+    {
+        entries[i] = 0xff000000;
+        if (i&1) entries[i] |= 0xff0000;
+        if (i&2) entries[i] |= 0xff00;
+        if (i&4) entries[i] |= 0xff;
+    }
+
+    for (i=16; i<40 && i<count; i++)
+    {
+        entries[i] = 0;
+    }
+
+    for (i=40; i<256 && i<count; i++)
+    {
+        entries[i] = 0xff000000;
+        entries[i] |= halftone_values[(i-40)%6];
+        entries[i] |= halftone_values[((i-40)/6)%6] << 8;
+        entries[i] |= halftone_values[((i-40)/36)%6] << 16;
+    }
+}
+
 GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     PixelFormat format, BYTE* scan0, GpBitmap** bitmap)
 {
@@ -1213,6 +1251,36 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     (*bitmap)->hdc = NULL;
     (*bitmap)->bits = bits;
     (*bitmap)->stride = dib_stride;
+
+    if (format == PixelFormat1bppIndexed ||
+        format == PixelFormat4bppIndexed ||
+        format == PixelFormat8bppIndexed)
+    {
+        (*bitmap)->image.palette_size = (*bitmap)->image.palette_count = 1 << PIXELFORMATBPP(format);
+        (*bitmap)->image.palette_entries = GdipAlloc(sizeof(ARGB) * ((*bitmap)->image.palette_size));
+
+        if (!(*bitmap)->image.palette_entries)
+        {
+            GdipDisposeImage(&(*bitmap)->image);
+            *bitmap = NULL;
+            return OutOfMemory;
+        }
+
+        if (format == PixelFormat1bppIndexed)
+        {
+            (*bitmap)->image.palette_flags = PaletteFlagsGrayScale;
+            (*bitmap)->image.palette_entries[0] = 0xff000000;
+            (*bitmap)->image.palette_entries[1] = 0xffffffff;
+        }
+        else
+        {
+            if (format == PixelFormat8bppIndexed)
+                (*bitmap)->image.palette_flags = PaletteFlagsHalftone;
+
+            generate_halftone_palette((*bitmap)->image.palette_entries,
+                (*bitmap)->image.palette_count);
+        }
+    }
 
     return Ok;
 }
