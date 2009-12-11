@@ -1465,12 +1465,19 @@ GpStatus WINGDIPAPI GdipGetImageHorizontalResolution(GpImage *image, REAL *res)
 
 GpStatus WINGDIPAPI GdipGetImagePaletteSize(GpImage *image, INT *size)
 {
-    FIXME("%p %p\n", image, size);
+    TRACE("%p %p\n", image, size);
 
     if(!image || !size)
         return InvalidParameter;
 
-    return NotImplemented;
+    if (image->palette_count == 0)
+        *size = sizeof(ColorPalette);
+    else
+        *size = sizeof(UINT)*2 + sizeof(ARGB)*image->palette_count;
+
+    TRACE("<-- %u\n", *size);
+
+    return Ok;
 }
 
 /* FIXME: test this function for non-bitmap types */
