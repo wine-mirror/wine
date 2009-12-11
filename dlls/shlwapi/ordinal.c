@@ -4728,3 +4728,27 @@ INT WINAPI SHVerbExistsNA(LPSTR verb, PVOID pUnknown, PVOID pUnknown2, DWORD dwU
     FIXME("(%s, %p, %p, %i) STUB\n",verb, pUnknown, pUnknown2, dwUnknown3);
     return 0;
 }
+
+/*************************************************************************
+ *      @	[SHLWAPI.538]
+ *
+ *  Undocumented:  Implementation guessed at via Name and behavior
+ *
+ * PARAMS
+ *  lpUnknown [I] Object to get an IServiceProvider interface from
+ *  riid      [I] Function requested for QueryService call
+ *  lppOut    [O] Destination for the service interface pointer
+ *
+ * RETURNS
+ *  Success: S_OK. lppOut contains an object providing the requested service
+ *  Failure: An HRESULT error code
+ *
+ * NOTES
+ *  lpUnknown is expected to support the IServiceProvider interface.
+ */
+HRESULT WINAPI IUnknown_QueryServiceForWebBrowserApp(IUnknown* lpUnknown,
+        REFGUID riid, LPVOID *lppOut)
+{
+    FIXME("%p %s %p semi-STUB\n", lpUnknown, debugstr_guid(riid), lppOut);
+    return IUnknown_QueryService(lpUnknown,&IID_IWebBrowserApp,riid,lppOut);
+}

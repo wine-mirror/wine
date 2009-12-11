@@ -531,7 +531,7 @@
 535 stub -noname SHPropertyBag_Delete
 536 stub -noname IUnknown_QueryServicePropertyBag
 537 stub -noname SHBoolSystemParametersInfo
-538 stub -noname IUnknown_QueryServiceForWebBrowserApp
+538 stdcall -noname IUnknown_QueryServiceForWebBrowserApp(ptr ptr ptr)
 539 stub -noname IUnknown_ShowBrowserBar
 540 stub -noname SHInvokeCommandOnContextMenu
 541 stub -noname SHInvokeCommandsOnContextMen
