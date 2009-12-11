@@ -604,6 +604,7 @@ static void test_fieldzero(void)
     r = MsiRecordIsNull(rec, 0);
     ok(r == FALSE, "Expected FALSE, got %d\n", r);
 
+    MsiCloseHandle(rec);
     MsiCloseHandle(hdb);
     DeleteFileA(msifile);
 }
