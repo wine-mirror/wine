@@ -149,8 +149,6 @@ typedef struct
 	LPINT tabs;
 	LINEDEF *first_line_def;	/* linked list of (soft) linebreaks */
 	HLOCAL hloc32W;			/* our unicode local memory block */
-	HLOCAL16 hloc16;		/* alias for 16-bit control receiving EM_GETHANDLE16
-				   	   or EM_SETHANDLE16 */
 	HLOCAL hloc32A;			/* alias for ANSI control receiving EM_GETHANDLE
 				   	   or EM_SETHANDLE */
 	/*
@@ -1176,29 +1174,32 @@ static inline void text_buffer_changed(EDITSTATE *es)
     es->text_length = (UINT)-1;
 }
 
+#define GWW_HANDLE16 sizeof(EDITSTATE*)
+
 /*********************************************************************
  *	EDIT_LockBuffer16
  */
 static void EDIT_LockBuffer16(EDITSTATE *es)
 {
     STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
+    HLOCAL16 hloc16 = GetWindowWord( es->hwndSelf, GWW_HANDLE16 );
     HANDLE16 oldDS;
     HLOCAL hloc32;
     UINT size;
 
-    if (!es->hloc16) return;
+    if (!hloc16) return;
     if (!(hloc32 = es->hloc32A)) return;
 
     oldDS = stack16->ds;
     stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
-    size = LocalSize16(es->hloc16);
+    size = LocalSize16(hloc16);
     if (LocalReAlloc( hloc32, size, LMEM_MOVEABLE ))
     {
-        char *text = MapSL( LocalLock16( es->hloc16 ));
+        char *text = MapSL( LocalLock16( hloc16 ));
         char *dest = LocalLock( hloc32 );
         memcpy( dest, text, size );
         LocalUnlock( hloc32 );
-        LocalUnlock16( es->hloc16 );
+        LocalUnlock16( hloc16 );
     }
     stack16->ds = oldDS;
 
@@ -1211,23 +1212,24 @@ static void EDIT_LockBuffer16(EDITSTATE *es)
 static void EDIT_UnlockBuffer16(EDITSTATE *es)
 {
     STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
+    HLOCAL16 hloc16 = GetWindowWord( es->hwndSelf, GWW_HANDLE16 );
     HANDLE16 oldDS;
     HLOCAL hloc32;
     UINT size;
 
-    if (!es->hloc16) return;
+    if (!hloc16) return;
     if (!(hloc32 = es->hloc32A)) return;
     size = LocalSize( hloc32 );
 
     oldDS = stack16->ds;
     stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
-    if (LocalReAlloc16( es->hloc16, size, LMEM_MOVEABLE ))
+    if (LocalReAlloc16( hloc16, size, LMEM_MOVEABLE ))
     {
         char *text = LocalLock( hloc32 );
-        char *dest = MapSL( LocalLock16( es->hloc16 ));
+        char *dest = MapSL( LocalLock16( hloc16 ));
         memcpy( dest, text, size );
         LocalUnlock( hloc32 );
-        LocalUnlock16( es->hloc16 );
+        LocalUnlock16( hloc16 );
     }
     stack16->ds = oldDS;
 }
@@ -2472,8 +2474,9 @@ static HLOCAL16 EDIT_EM_GetHandle16(EDITSTATE *es)
         HLOCAL hloc;
 	STACK16FRAME* stack16;
 	HANDLE16 oldDS;
+        HLOCAL16 hloc16 = GetWindowWord( es->hwndSelf, GWW_HANDLE16 );
 
-	if (es->hloc16) return es->hloc16;
+	if (hloc16) return hloc16;
 
         if (!(hloc = EDIT_EM_GetHandle(es))) return 0;
         alloc_size = LocalSize( hloc );
@@ -2492,26 +2495,27 @@ static HLOCAL16 EDIT_EM_GetHandle16(EDITSTATE *es)
 	}
 
 	TRACE("Allocating 16-bit ANSI alias buffer\n");
-	if (!(es->hloc16 = LocalAlloc16(LMEM_MOVEABLE | LMEM_ZEROINIT, alloc_size))) {
+	if (!(hloc16 = LocalAlloc16(LMEM_MOVEABLE | LMEM_ZEROINIT, alloc_size))) {
 		ERR("could not allocate new 16 bit buffer\n");
 		goto done;
 	}
 
-	if (!(textA = MapSL(LocalLock16( es->hloc16)))) {
+	if (!(textA = MapSL(LocalLock16( hloc16)))) {
 		ERR("could not lock new 16 bit buffer\n");
-		LocalFree16(es->hloc16);
-		es->hloc16 = 0;
+		LocalFree16(hloc16);
+                hloc16 = 0;
 		goto done;
 	}
         memcpy( textA, LocalLock( hloc ), alloc_size );
         LocalUnlock( hloc );
-	LocalUnlock16(es->hloc16);
+	LocalUnlock16( hloc16 );
+        SetWindowWord( es->hwndSelf, GWW_HANDLE16, hloc16 );
 
-	TRACE("Returning %04X, LocalSize() = %d\n", es->hloc16, LocalSize16(es->hloc16));
+	TRACE("Returning %04X, LocalSize() = %d\n", hloc16, alloc_size);
 
 done:
 	stack16->ds = oldDS;
-	return es->hloc16;
+	return hloc16;
 }
 
 
@@ -2893,7 +2897,7 @@ static void EDIT_EM_SetHandle16(EDITSTATE *es, HLOCAL16 hloc16)
             memcpy( LocalLock(hloc32), text, count );
             LocalUnlock(hloc32);
             LocalUnlock16(hloc16);
-            es->hloc16 = hloc16;
+            SetWindowWord( es->hwndSelf, GWW_HANDLE16, hloc16 );
 	}
 	stack16->ds = oldDS;
 
@@ -4683,6 +4687,7 @@ static LRESULT EDIT_WM_Create(EDITSTATE *es, LPCWSTR name)
 static LRESULT EDIT_WM_NCDestroy(EDITSTATE *es)
 {
 	LINEDEF *pc, *pp;
+        HLOCAL16 hloc16 = GetWindowWord( es->hwndSelf, GWW_HANDLE16 );
 
 	if (es->hloc32W) {
 		LocalFree(es->hloc32W);
@@ -4690,14 +4695,15 @@ static LRESULT EDIT_WM_NCDestroy(EDITSTATE *es)
 	if (es->hloc32A) {
 		LocalFree(es->hloc32A);
 	}
-	if (es->hloc16) {
+	if (hloc16) {
 		STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
 		HANDLE16 oldDS = stack16->ds;
 
 		stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
-		while (LocalUnlock16(es->hloc16)) ;
-		LocalFree16(es->hloc16);
+		while (LocalUnlock16(hloc16)) ;
+		LocalFree16(hloc16);
 		stack16->ds = oldDS;
+                SetWindowWord( es->hwndSelf, GWW_HANDLE16, 0 );
 	}
 
 	pc = es->first_line_def;
@@ -5411,10 +5417,10 @@ const struct builtin_class_descr EDIT_builtin_class =
     CS_DBLCLKS | CS_PARENTDC,   /* style */
     EditWndProcA,         /* procA */
     EditWndProcW,         /* procW */
-#ifdef _WIN64
-    sizeof(EDITSTATE *),  /* extra */
+#ifdef __i386__
+    sizeof(EDITSTATE *) + sizeof(HLOCAL16), /* extra */
 #else
-    sizeof(EDITSTATE *) + sizeof(HANDLE16), /* extra */
+    sizeof(EDITSTATE *),  /* extra */
 #endif
     IDC_IBEAM,            /* cursor */
     0                     /* brush */
