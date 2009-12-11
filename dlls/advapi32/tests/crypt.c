@@ -234,6 +234,7 @@ static void test_incorrect_api_usage(void)
     result = pCryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash);
     ok (result, "%d\n", GetLastError());
     if (!result) return;
+    pCryptDestroyHash(hHash);
 
     result = pCryptGenKey(hProv, CALG_RC4, 0, &hKey);
     ok (result, "%d\n", GetLastError());
@@ -557,6 +558,7 @@ static void test_enum_providers(void)
 	    ok(!strcmp(pszProvName, provider), "expected %s, got %s\n", pszProvName, provider);
 	ok(cbName==providerLen, "expected %d, got %d\n", cbName, providerLen);
 
+	LocalFree(pszProvName);
 	LocalFree(provider);
 }
 
@@ -844,6 +846,7 @@ static void test_get_default_provider(void)
 	    ok(!strcmp(pszProvName, provName), "expected %s, got %s\n", pszProvName, provName);
 	ok(provNameSize==cbProvName, "expected %d, got %d\n", cbProvName, provNameSize);
 
+	LocalFree(pszProvName);
 	LocalFree(provName);
 }
 
