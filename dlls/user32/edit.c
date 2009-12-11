@@ -131,7 +131,6 @@ typedef struct
 					   and just line width for single line controls	*/
 	INT region_posx;		/* Position of cursor relative to region: */
 	INT region_posy;		/* -1: to left, 0: within, 1: to right */
-	EDITWORDBREAKPROC16 word_break_proc16;
 	void *word_break_proc;		/* 32-bit word break proc: ANSI or Unicode */
 	INT line_count;			/* number of lines */
 	INT y_offset;			/* scroll offset in number of lines */
@@ -252,6 +251,90 @@ static HBRUSH EDIT_NotifyCtlColor(EDITSTATE *es, HDC hdc)
 }
 
 
+/**********************************************************************
+ * Support for word break proc thunks
+ */
+
+#define MAX_THUNKS 32
+
+#include <pshpack1.h>
+static struct word_break_thunk
+{
+    BYTE                popl_eax;       /* popl  %eax (return address) */
+    BYTE                pushl_proc16;   /* pushl proc16 */
+    EDITWORDBREAKPROC16 proc16;
+    BYTE                pushl_eax;      /* pushl %eax */
+    BYTE                jmp;            /* ljmp call_word_break_proc16 */
+    DWORD               callback;
+} *word_break_thunks;
+#include <poppack.h>
+
+/**********************************************************************
+ *           call_word_break_proc16
+ */
+static INT16 CALLBACK call_word_break_proc16( SEGPTR proc16, LPSTR text, INT index, INT count, INT action )
+{
+    SEGPTR segptr;
+    WORD args[5];
+    DWORD result;
+
+    segptr = MapLS( text );
+    args[4] = SELECTOROF(segptr);
+    args[3] = OFFSETOF(segptr);
+    args[2] = index;
+    args[1] = count;
+    args[0] = action;
+    WOWCallback16Ex( proc16, WCB16_PASCAL, sizeof(args), args, &result );
+    UnMapLS( segptr );
+    return LOWORD(result);
+}
+
+/******************************************************************
+ *		add_word_break_thunk
+ */
+static struct word_break_thunk *add_word_break_thunk( EDITWORDBREAKPROC16 proc16 )
+{
+    struct word_break_thunk *thunk;
+
+    if (!word_break_thunks)
+    {
+        word_break_thunks = VirtualAlloc( NULL, MAX_THUNKS * sizeof(*thunk),
+                                          MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+        if (!word_break_thunks) return NULL;
+
+        for (thunk = word_break_thunks; thunk < &word_break_thunks[MAX_THUNKS]; thunk++)
+        {
+            thunk->popl_eax     = 0x58;   /* popl  %eax */
+            thunk->pushl_proc16 = 0x68;   /* pushl proc16 */
+            thunk->pushl_eax    = 0x50;   /* pushl %eax */
+            thunk->jmp          = 0xe9;   /* jmp call_word_break_proc16 */
+            thunk->callback     = (char *)call_word_break_proc16 - (char *)(&thunk->callback + 1);
+        }
+    }
+    for (thunk = word_break_thunks; thunk < &word_break_thunks[MAX_THUNKS]; thunk++)
+        if (thunk->proc16 == proc16) return thunk;
+
+    for (thunk = word_break_thunks; thunk < &word_break_thunks[MAX_THUNKS]; thunk++)
+    {
+        if (thunk->proc16) continue;
+        thunk->proc16 = proc16;
+        return thunk;
+    }
+    FIXME("Out of word break thunks\n");
+    return NULL;
+}
+
+/******************************************************************
+ *		get_word_break_thunk
+ */
+static EDITWORDBREAKPROC16 get_word_break_thunk( EDITWORDBREAKPROCA proc )
+{
+    struct word_break_thunk *thunk = (struct word_break_thunk *)proc;
+    if (word_break_thunks && thunk >= word_break_thunks && thunk < &word_break_thunks[MAX_THUNKS])
+        return thunk->proc16;
+    return NULL;
+}
+
 /*********************************************************************
  *
  *	EDIT_WordBreakProc
@@ -336,28 +419,7 @@ static INT EDIT_CallWordBreakProc(EDITSTATE *es, INT start, INT index, INT count
 {
 	INT ret;
 
-	if (es->word_break_proc16) {
-	    HGLOBAL16 hglob16;
-	    SEGPTR segptr;
-	    INT countA;
-            WORD args[5];
-            DWORD result;
-
-	    countA = WideCharToMultiByte(CP_ACP, 0, es->text + start, count, NULL, 0, NULL, NULL);
-	    hglob16 = GlobalAlloc16(GMEM_MOVEABLE | GMEM_ZEROINIT, countA);
-	    segptr = WOWGlobalLock16(hglob16);
-	    WideCharToMultiByte(CP_ACP, 0, es->text + start, count, MapSL(segptr), countA, NULL, NULL);
-            args[4] = SELECTOROF(segptr);
-            args[3] = OFFSETOF(segptr);
-            args[2] = index;
-            args[1] = countA;
-            args[0] = action;
-            WOWCallback16Ex((DWORD)es->word_break_proc16, WCB16_PASCAL, sizeof(args), args, &result);
-            ret = LOWORD(result);
-	    GlobalUnlock16(hglob16);
-	    GlobalFree16(hglob16);
-	}
-	else if (es->word_break_proc)
+        if (es->word_break_proc)
         {
 	    if(es->is_unicode)
 	    {
@@ -3091,7 +3153,6 @@ static void EDIT_EM_SetWordBreakProc(EDITSTATE *es, void *wbp)
 		return;
 
 	es->word_break_proc = wbp;
-	es->word_break_proc16 = NULL;
 
 	if ((es->style & ES_MULTILINE) && !(es->style & ES_AUTOHSCROLL)) {
 		EDIT_BuildLineDefs_ML(es, 0, get_text_length(es), 0, NULL);
@@ -3107,15 +3168,8 @@ static void EDIT_EM_SetWordBreakProc(EDITSTATE *es, void *wbp)
  */
 static void EDIT_EM_SetWordBreakProc16(EDITSTATE *es, EDITWORDBREAKPROC16 wbp)
 {
-	if (es->word_break_proc16 == wbp)
-		return;
-
-	es->word_break_proc = NULL;
-	es->word_break_proc16 = wbp;
-	if ((es->style & ES_MULTILINE) && !(es->style & ES_AUTOHSCROLL)) {
-		EDIT_BuildLineDefs_ML(es, 0, get_text_length(es), 0, NULL);
-		EDIT_UpdateText(es, NULL, TRUE);
-	}
+    struct word_break_thunk *thunk = add_word_break_thunk( wbp );
+    if (thunk) EDIT_EM_SetWordBreakProc( es, thunk );
 }
 
 
@@ -5048,7 +5102,7 @@ static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
 		break;
 
 	case EM_GETWORDBREAKPROC16:
-		result = (LRESULT)es->word_break_proc16;
+                result = (LRESULT)get_word_break_thunk( es->word_break_proc );
 		break;
 	case EM_GETWORDBREAKPROC:
 		result = (LRESULT)es->word_break_proc;
