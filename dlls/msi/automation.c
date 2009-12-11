@@ -2135,6 +2135,80 @@ done:
     return hr;
 }
 
+static void cleanup_products(IDispatch* dispatch, ULONG count)
+{
+    UINT i;
+    ListData* ldata = private_data((AutomationObject *)dispatch);
+
+    for (i = 0; i < count - 1; i++)
+        VariantClear(&ldata->pVars[i]);
+
+    ldata->ulCount = 0;
+    msi_free(ldata->pVars);
+
+    IDispatch_Release(dispatch);
+}
+
+static HRESULT InstallerImpl_Products(WORD wFlags,
+                                      DISPPARAMS* pDispParams,
+                                      VARIANT* pVarResult,
+                                      EXCEPINFO* pExcepInfo,
+                                      UINT* puArgErr)
+{
+    UINT ret;
+    HRESULT hr;
+    ULONG idx = 0;
+    ListData *ldata;
+    IDispatch *dispatch;
+    WCHAR product[GUID_SIZE];
+
+    if (!(wFlags & DISPATCH_PROPERTYGET))
+        return DISP_E_MEMBERNOTFOUND;
+
+    /* Find number of products. */
+    while ((ret = MsiEnumProductsW(idx, product)) == ERROR_SUCCESS)
+        idx++;
+
+    if (ret != ERROR_NO_MORE_ITEMS)
+        return DISP_E_EXCEPTION;
+
+    V_VT(pVarResult) = VT_DISPATCH;
+    hr = create_automation_object(0, NULL, (LPVOID*)&dispatch,
+                                  &DIID_StringList, ListImpl_Invoke,
+                                  ListImpl_Free, sizeof(ListData));
+    if (FAILED(hr))
+        return hr;
+
+    V_DISPATCH(pVarResult) = dispatch;
+
+    /* Save product strings. */
+    ldata = private_data((AutomationObject *)dispatch);
+    ldata->ulCount = 0;
+    ldata->pVars = msi_alloc_zero(sizeof(VARIANT) * idx);
+    if (!ldata->pVars)
+    {
+        IDispatch_Release(dispatch);
+        return E_OUTOFMEMORY;
+    }
+
+    ldata->ulCount = idx;
+    for (idx = 0; idx < ldata->ulCount; idx++)
+    {
+        ret = MsiEnumProductsW(idx, product);
+        if (ret != ERROR_SUCCESS)
+        {
+            cleanup_products(dispatch, idx - 1);
+            return DISP_E_EXCEPTION;
+        }
+
+        VariantInit(&ldata->pVars[idx]);
+        V_VT(&ldata->pVars[idx]) = VT_BSTR;
+        V_BSTR(&ldata->pVars[idx]) = SysAllocString(product);
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI InstallerImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
@@ -2231,46 +2305,8 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                                              pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_PRODUCTS:
-            if (wFlags & DISPATCH_PROPERTYGET)
-            {
-                ListData *ldata = NULL;
-                ULONG idx = 0;
-                WCHAR szProductBuf[GUID_SIZE];
-
-                /* Find number of products */
-                while ((ret = MsiEnumProductsW(idx, szProductBuf)) == ERROR_SUCCESS) idx++;
-                if (ret != ERROR_NO_MORE_ITEMS)
-                {
-                    ERR("MsiEnumProducts returned %d\n", ret);
-                    return DISP_E_EXCEPTION;
-                }
-
-                V_VT(pVarResult) = VT_DISPATCH;
-                if (SUCCEEDED(hr = create_automation_object(0, NULL, (LPVOID*)&pDispatch, &DIID_StringList, ListImpl_Invoke, ListImpl_Free, sizeof(ListData))))
-                {
-                    V_DISPATCH(pVarResult) = pDispatch;
-
-                    /* Save product strings */
-                    ldata = private_data((AutomationObject *)pDispatch);
-                    if (!(ldata->pVars = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(VARIANT)*idx)))
-                        ERR("Out of memory\n");
-                    else
-                    {
-                        ldata->ulCount = idx;
-                        for (idx = 0; idx < ldata->ulCount; idx++)
-                        {
-                            ret = MsiEnumProductsW(idx, szProductBuf);
-                            VariantInit(&ldata->pVars[idx]);
-                            V_VT(&ldata->pVars[idx]) = VT_BSTR;
-                            V_BSTR(&ldata->pVars[idx]) = SysAllocString(szProductBuf);
-                        }
-                    }
-                }
-                else
-                    ERR("Failed to create StringList object, hresult 0x%08x\n", hr);
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_Products(wFlags, pDispParams,
+                                          pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_RELATEDPRODUCTS:
             if (wFlags & DISPATCH_PROPERTYGET)
