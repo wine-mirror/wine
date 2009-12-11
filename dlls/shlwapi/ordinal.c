@@ -4709,3 +4709,22 @@ INT WINAPI ZoneCheckUrlExW(LPWSTR szURL, PVOID pUnknown, DWORD dwUnknown2,
 
     return 0;
 }
+
+/***********************************************************************
+ *             SHVerbExistsNA [SHLWAPI.196]
+ *
+ *
+ * PARAMS
+ *
+ *  verb [I] a string, often appears to be an extension.
+ *
+ *  Other parameters currently unknown.
+ *
+ * RETURNS
+ *  unknown
+ */
+INT WINAPI SHVerbExistsNA(LPSTR verb, PVOID pUnknown, PVOID pUnknown2, DWORD dwUnknown3)
+{
+    FIXME("(%s, %p, %p, %i) STUB\n",verb, pUnknown, pUnknown2, dwUnknown3);
+    return 0;
+}
