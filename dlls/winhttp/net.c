@@ -118,7 +118,6 @@ MAKE_FUNCPTR( SSL_get_peer_certificate );
 MAKE_FUNCPTR( SSL_CTX_set_default_verify_paths );
 MAKE_FUNCPTR( SSL_CTX_set_verify );
 
-MAKE_FUNCPTR( BIO_new_fp );
 MAKE_FUNCPTR( CRYPTO_num_locks );
 MAKE_FUNCPTR( CRYPTO_set_id_callback );
 MAKE_FUNCPTR( CRYPTO_set_locking_callback );
@@ -439,7 +438,6 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
         LeaveCriticalSection( &init_ssl_cs ); \
         return FALSE; \
     }
-    LOAD_FUNCPTR( BIO_new_fp );
     LOAD_FUNCPTR( CRYPTO_num_locks );
     LOAD_FUNCPTR( CRYPTO_set_id_callback );
     LOAD_FUNCPTR( CRYPTO_set_locking_callback );
@@ -454,7 +452,6 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
 
     pSSL_library_init();
     pSSL_load_error_strings();
-    pBIO_new_fp( stderr, BIO_NOCLOSE );
 
     method = pSSLv23_method();
     ctx = pSSL_CTX_new( method );
