@@ -160,9 +160,9 @@ static const struct message test_get_set_textcolor_seq[] = {
     { TVM_GETTEXTCOLOR, sent|wparam|lparam, 0, 0 },
     { TVM_SETTEXTCOLOR, sent|wparam|lparam, 0, 0 },
     { TVM_GETTEXTCOLOR, sent|wparam|lparam, 0, 0 },
-    { TVM_SETTEXTCOLOR, sent|wparam|lparam, 0, 0x00ffffff },
+    { TVM_SETTEXTCOLOR, sent|wparam|lparam, 0, RGB(255, 255, 255) },
     { TVM_GETTEXTCOLOR, sent|wparam|lparam, 0, 0 },
-    { TVM_SETTEXTCOLOR, sent|wparam|lparam, 0, -1 },
+    { TVM_SETTEXTCOLOR, sent|wparam|lparam, 0, CLR_NONE },
     { 0 }
 };
 
@@ -728,7 +728,7 @@ static void test_get_set_textcolor(void)
     ok(crColor == RGB(255,255,255), "White text color reported as 0x%.8x\n", crColor);
 
     /* Reset the default text color */
-    SendMessage( hTree, TVM_SETTEXTCOLOR, 0, -1 );
+    SendMessage( hTree, TVM_SETTEXTCOLOR, 0, CLR_NONE );
 
     ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, test_get_set_textcolor_seq,
         "test get set text color", FALSE);
@@ -990,6 +990,34 @@ static void test_treeview_classinfo(void)
     expect(0, cls.cbClsExtra);
 }
 
+static void test_get_linecolor(void)
+{
+    COLORREF clr;
+    HWND hTree;
+
+    hTree = create_treeview_control();
+
+    /* newly created control has default color */
+    clr = (COLORREF)SendMessage(hTree, TVM_GETLINECOLOR, 0, 0);
+    expect(CLR_DEFAULT, clr);
+
+    DestroyWindow(hTree);
+}
+
+static void test_get_insertmarkcolor(void)
+{
+    COLORREF clr;
+    HWND hTree;
+
+    hTree = create_treeview_control();
+
+    /* newly created control has default color */
+    clr = (COLORREF)SendMessage(hTree, TVM_GETINSERTMARKCOLOR, 0, 0);
+    expect(CLR_DEFAULT, clr);
+
+    DestroyWindow(hTree);
+}
+
 START_TEST(treeview)
 {
     HMODULE hComctl32;
@@ -1041,6 +1069,8 @@ START_TEST(treeview)
     test_get_set_itemheight();
     test_get_set_scrolltime();
     test_get_set_textcolor();
+    test_get_linecolor();
+    test_get_insertmarkcolor();
     test_get_set_tooltips();
     test_get_set_unicodeformat();
     test_callback();

@@ -191,6 +191,10 @@ typedef struct tagTREEVIEW_INFO
 #define OVERLAYIMAGEINDEX(x) (((x) >> 8) & 0x0f)
 #define ISVISIBLE(x)         ((x)->visibleOrder >= 0)
 
+#define GETLINECOLOR(x) ((x) == CLR_DEFAULT ? comctl32_color.clrGrayText   : (x))
+#define GETBKCOLOR(x)   ((x) == CLR_NONE    ? comctl32_color.clrWindow     : (x))
+#define GETTXTCOLOR(x)  ((x) == CLR_NONE    ? comctl32_color.clrWindowText : (x))
+#define GETINSCOLOR(x)  ((x) == CLR_DEFAULT ? comctl32_color.clrBtnText    : (x))
 
 static const WCHAR themeClass[] = { 'T','r','e','e','v','i','e','w',0 };
 
@@ -2322,8 +2326,7 @@ TREEVIEW_DrawItemLines(const TREEVIEW_INFO *infoPtr, HDC hdc, const TREEVIEW_ITE
 		 & (TVS_LINESATROOT|TVS_HASLINES|TVS_HASBUTTONS))
 		> TVS_LINESATROOT);
     HBRUSH hbr, hbrOld;
-    COLORREF clrBk = infoPtr->clrBk == -1 ? comctl32_color.clrWindow:
-                                            infoPtr->clrBk;
+    COLORREF clrBk = GETBKCOLOR(infoPtr->clrBk);
 
     if (!lar && item->iLevel == 0)
 	return;
@@ -2342,7 +2345,7 @@ TREEVIEW_DrawItemLines(const TREEVIEW_INFO *infoPtr, HDC hdc, const TREEVIEW_ITE
 
 	/* Get a dotted grey pen */
         lb.lbStyle = BS_SOLID;
-        lb.lbColor = infoPtr->clrLine;
+        lb.lbColor = GETLINECOLOR(infoPtr->clrLine);
         hNewPen = ExtCreatePen(PS_COSMETIC|PS_ALTERNATE, 1, &lb, 0, NULL);
 	hOldPen = SelectObject(hdc, hNewPen);
 
@@ -2412,7 +2415,7 @@ TREEVIEW_DrawItemLines(const TREEVIEW_INFO *infoPtr, HDC hdc, const TREEVIEW_ITE
                 /* plussize = ceil(rectsize * 3/4) */
                 LONG plussize = (rectsize + 1) * 3 / 4;
     
-                HPEN hNewPen  = CreatePen(PS_SOLID, 0, infoPtr->clrLine);
+                HPEN hNewPen  = CreatePen(PS_SOLID, 0, GETLINECOLOR(infoPtr->clrLine));
                 HPEN hOldPen  = SelectObject(hdc, hNewPen);
     
                 Rectangle(hdc, centerx - rectsize - 1, centery - rectsize - 1,
@@ -2482,22 +2485,16 @@ TREEVIEW_DrawItem(const TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *wineItem
 	else
 	{
 	    nmcdhdr.clrTextBk = comctl32_color.clrBtnFace;
-	    if (infoPtr->clrText == -1)
-		nmcdhdr.clrText = comctl32_color.clrWindowText;
-	    else
-		nmcdhdr.clrText = infoPtr->clrText;
+	    nmcdhdr.clrText   = GETTXTCOLOR(infoPtr->clrText);
 	}
     }
     else
     {
-	nmcdhdr.clrTextBk = infoPtr->clrBk == -1 ? comctl32_color.clrWindow:
-                                                   infoPtr->clrBk;
+	nmcdhdr.clrTextBk = GETBKCOLOR(infoPtr->clrBk);
 	if ((infoPtr->dwStyle & TVS_TRACKSELECT) && (wineItem == infoPtr->hotItem))
 	    nmcdhdr.clrText = comctl32_color.clrHighlight;
-	else if (infoPtr->clrText == -1)
-	    nmcdhdr.clrText = comctl32_color.clrWindowText;
 	else
-	    nmcdhdr.clrText = infoPtr->clrText;
+	    nmcdhdr.clrText = GETTXTCOLOR(infoPtr->clrText);
     }
 
     hOldFont = SelectObject(hdc, TREEVIEW_FontForItem(infoPtr, wineItem));
@@ -2629,7 +2626,7 @@ TREEVIEW_DrawItem(const TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *wineItem
 	int offset;
 	int left, right;
 
-	hNewPen = CreatePen(PS_SOLID, 2, infoPtr->clrInsertMark);
+	hNewPen = CreatePen(PS_SOLID, 2, GETINSCOLOR(infoPtr->clrInsertMark));
 	hOldPen = SelectObject(hdc, hNewPen);
 
 	if (infoPtr->insertBeforeorAfter)
@@ -2801,8 +2798,8 @@ static void
 TREEVIEW_FillBkgnd(const TREEVIEW_INFO *infoPtr, HDC hdc, const RECT *rc)
 {
     HBRUSH hBrush;
-    COLORREF clrBk = infoPtr->clrBk == -1 ? comctl32_color.clrWindow:
-                                            infoPtr->clrBk;
+    COLORREF clrBk = GETBKCOLOR(infoPtr->clrBk);
+
     hBrush =  CreateSolidBrush(clrBk);
     FillRect(hdc, rc, hBrush);
     DeleteObject(hBrush);
@@ -4998,10 +4995,10 @@ TREEVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
 
     infoPtr->scrollX = 0;
 
-    infoPtr->clrBk   = -1; /* use system color */
-    infoPtr->clrText = -1;	/* use system color */
-    infoPtr->clrLine = RGB(128, 128, 128);
-    infoPtr->clrInsertMark = comctl32_color.clrBtnText;
+    infoPtr->clrBk   = CLR_NONE; /* use system color */
+    infoPtr->clrText = CLR_NONE; /* use system color */
+    infoPtr->clrLine = CLR_DEFAULT;
+    infoPtr->clrInsertMark = CLR_DEFAULT;
 
     /* hwndToolTip */
 
