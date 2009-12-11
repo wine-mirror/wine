@@ -1842,6 +1842,155 @@ static HRESULT InstallerImpl_LastErrorRecord(WORD wFlags,
     return S_OK;
 }
 
+static HRESULT InstallerImpl_RegistryValue(WORD wFlags,
+                                           DISPPARAMS* pDispParams,
+                                           VARIANT* pVarResult,
+                                           EXCEPINFO* pExcepInfo,
+                                           UINT* puArgErr)
+{
+    UINT ret;
+    HKEY hkey = NULL;
+    HRESULT hr;
+    UINT posValue;
+    DWORD type, size;
+    LPWSTR szString = NULL;
+    VARIANTARG varg0, varg1, varg2;
+
+    if (!(wFlags & DISPATCH_METHOD))
+        return DISP_E_MEMBERNOTFOUND;
+
+    VariantInit(&varg0);
+    hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+    if (FAILED(hr))
+        return hr;
+
+    VariantInit(&varg1);
+    hr = DispGetParam(pDispParams, 1, VT_BSTR, &varg1, puArgErr);
+    if (FAILED(hr))
+        goto done;
+
+    /* Save valuePos so we can save puArgErr if we are unable to do our type
+     * conversions.
+     */
+    posValue = 2;
+    VariantInit(&varg2);
+    hr = DispGetParam_CopyOnly(pDispParams, &posValue, &varg2);
+    if (FAILED(hr))
+        goto done;
+
+    if (V_I4(&varg0) >= REG_INDEX_CLASSES_ROOT &&
+        V_I4(&varg0) <= REG_INDEX_DYN_DATA)
+    {
+        V_I4(&varg0) |= (UINT_PTR)HKEY_CLASSES_ROOT;
+    }
+
+    ret = RegOpenKeyW((HKEY)(UINT_PTR)V_I4(&varg0), V_BSTR(&varg1), &hkey);
+
+    /* Only VT_EMPTY case can do anything if the key doesn't exist. */
+    if (ret != ERROR_SUCCESS && V_VT(&varg2) != VT_EMPTY)
+    {
+        hr = DISP_E_BADINDEX;
+        goto done;
+    }
+
+    /* Third parameter can be VT_EMPTY, VT_I4, or VT_BSTR */
+    switch (V_VT(&varg2))
+    {
+        /* Return VT_BOOL clarifying whether registry key exists or not. */
+        case VT_EMPTY:
+            V_VT(pVarResult) = VT_BOOL;
+            V_BOOL(pVarResult) = (ret == ERROR_SUCCESS);
+            break;
+
+        /* Return the value of specified key if it exists. */
+        case VT_BSTR:
+            ret = RegQueryValueExW(hkey, V_BSTR(&varg2),
+                                   NULL, NULL, NULL, &size);
+            if (ret != ERROR_SUCCESS)
+            {
+                hr = DISP_E_BADINDEX;
+                goto done;
+            }
+
+            szString = msi_alloc(size);
+            if (!szString)
+            {
+                hr = E_OUTOFMEMORY;
+                goto done;
+            }
+
+            ret = RegQueryValueExW(hkey, V_BSTR(&varg2), NULL,
+                                   &type, (LPBYTE)szString, &size);
+            if (ret != ERROR_SUCCESS)
+            {
+                msi_free(szString);
+                hr = DISP_E_BADINDEX;
+                goto done;
+            }
+
+            variant_from_registry_value(pVarResult, type,
+                                        (LPBYTE)szString, size);
+            msi_free(szString);
+            break;
+
+        /* Try to make it into VT_I4, can use VariantChangeType for this. */
+        default:
+            hr = VariantChangeType(&varg2, &varg2, 0, VT_I4);
+            if (FAILED(hr))
+            {
+                if (hr == DISP_E_TYPEMISMATCH)
+                    *puArgErr = posValue;
+
+                goto done;
+            }
+
+            /* Retrieve class name or maximum value name or subkey name size. */
+            if (!V_I4(&varg2))
+                ret = RegQueryInfoKeyW(hkey, NULL, &size, NULL, NULL, NULL,
+                                       NULL, NULL, NULL, NULL, NULL, NULL);
+            else if (V_I4(&varg2) > 0)
+                ret = RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, NULL,
+                                       NULL, NULL, &size, NULL, NULL, NULL);
+            else /* V_I4(&varg2) < 0 */
+                ret = RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, &size,
+                                       NULL, NULL, NULL, NULL, NULL, NULL);
+
+            if (ret != ERROR_SUCCESS)
+                goto done;
+
+            szString = msi_alloc(++size * sizeof(WCHAR));
+            if (!szString)
+            {
+                hr = E_OUTOFMEMORY;
+                goto done;
+            }
+
+            if (!V_I4(&varg2))
+                ret = RegQueryInfoKeyW(hkey, szString, &size,NULL, NULL, NULL,
+                                       NULL, NULL, NULL, NULL, NULL, NULL);
+            else if (V_I4(&varg2) > 0)
+                ret = RegEnumValueW(hkey, V_I4(&varg2)-1, szString,
+                                    &size, 0, 0, NULL, NULL);
+            else /* V_I4(&varg2) < 0 */
+                ret = RegEnumKeyW(hkey, -1 - V_I4(&varg2), szString, size);
+
+            if (ret == ERROR_SUCCESS)
+            {
+                V_VT(pVarResult) = VT_BSTR;
+                V_BSTR(pVarResult) = SysAllocString(szString);
+            }
+
+            msi_free(szString);
+    }
+
+done:
+    VariantClear(&varg0);
+    VariantClear(&varg1);
+    VariantClear(&varg2);
+    RegCloseKey(hkey);
+    return hr;
+}
+
 static HRESULT InstallerImpl_Environment(WORD wFlags,
                                          DISPPARAMS* pDispParams,
                                          VARIANT* pVarResult,
@@ -1970,98 +2119,9 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                                                  puArgErr);
 
         case DISPID_INSTALLER_REGISTRYVALUE:
-            if (wFlags & DISPATCH_METHOD) {
-                HKEY hkey;
-                DWORD dwType;
-                UINT posValue = 2;    /* Save valuePos so we can save puArgErr if we are unable to do our type conversions */
-
-                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
-                if (FAILED(hr)) return hr;
-                hr = DispGetParam(pDispParams, 1, VT_BSTR, &varg1, puArgErr);
-                if (FAILED(hr)) return hr;
-                hr = DispGetParam_CopyOnly(pDispParams, &posValue, &varg2);
-                if (FAILED(hr))
-                {
-                    VariantClear(&varg1);
-                    return hr;
-                }
-
-                if (V_I4(&varg0) >= REG_INDEX_CLASSES_ROOT &&
-                    V_I4(&varg0) <= REG_INDEX_DYN_DATA)
-                    V_I4(&varg0) |= (UINT_PTR)HKEY_CLASSES_ROOT;
-
-                ret = RegOpenKeyW((HKEY)(UINT_PTR)V_I4(&varg0), V_BSTR(&varg1), &hkey);
-
-                /* Third parameter can be VT_EMPTY, VT_I4, or VT_BSTR */
-                switch (V_VT(&varg2))
-                {
-                    case VT_EMPTY:  /* Return VT_BOOL as to whether or not registry key exists */
-                        V_VT(pVarResult) = VT_BOOL;
-                        V_BOOL(pVarResult) = (ret == ERROR_SUCCESS);
-                        break;
-
-                    case VT_BSTR:   /* Return value of specified key if it exists */
-                        if (ret == ERROR_SUCCESS &&
-                            (ret = RegQueryValueExW(hkey, V_BSTR(&varg2), NULL, NULL, NULL, &dwSize)) == ERROR_SUCCESS)
-                        {
-                            if (!(szString = msi_alloc(dwSize)))
-                                ERR("Out of memory\n");
-                            else if ((ret = RegQueryValueExW(hkey, V_BSTR(&varg2), NULL, &dwType, (LPBYTE)szString, &dwSize)) == ERROR_SUCCESS)
-                                variant_from_registry_value(pVarResult, dwType, (LPBYTE)szString, dwSize);
-                        }
-
-                        if (ret != ERROR_SUCCESS)
-                        {
-                            msi_free(szString);
-                            VariantClear(&varg2);
-                            VariantClear(&varg1);
-                            return DISP_E_BADINDEX;
-                        }
-                        break;
-
-                    default:     /* Try to make it into VT_I4, can use VariantChangeType for this */
-                        hr = VariantChangeType(&varg2, &varg2, 0, VT_I4);
-                        if (SUCCEEDED(hr) && ret != ERROR_SUCCESS) hr = DISP_E_BADINDEX; /* Conversion fine, but couldn't find key */
-                        if (FAILED(hr))
-                        {
-                            if (hr == DISP_E_TYPEMISMATCH) *puArgErr = posValue;
-                            VariantClear(&varg2);   /* Unknown type, so let's clear it */
-                            VariantClear(&varg1);
-                            return hr;
-                        }
-
-                        /* Retrieve class name or maximum value name or subkey name size */
-                        if (!V_I4(&varg2))
-                            ret = RegQueryInfoKeyW(hkey, NULL, &dwSize, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-                        else if (V_I4(&varg2) > 0)
-                            ret = RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &dwSize, NULL, NULL, NULL);
-                        else /* V_I4(&varg2) < 0 */
-                            ret = RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, &dwSize, NULL, NULL, NULL, NULL, NULL, NULL);
-
-                        if (ret == ERROR_SUCCESS)
-                        {
-                            if (!(szString = msi_alloc(++dwSize * sizeof(WCHAR))))
-                                ERR("Out of memory\n");
-                            else if (!V_I4(&varg2))
-                                ret = RegQueryInfoKeyW(hkey, szString, &dwSize, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-                            else if (V_I4(&varg2) > 0)
-                                ret = RegEnumValueW(hkey, V_I4(&varg2)-1, szString, &dwSize, 0, 0, NULL, NULL);
-                            else /* V_I4(&varg2) < 0 */
-                                ret = RegEnumKeyW(hkey, -1 - V_I4(&varg2), szString, dwSize);
-
-                            if (szString && ret == ERROR_SUCCESS)
-                            {
-                                V_VT(pVarResult) = VT_BSTR;
-                                V_BSTR(pVarResult) = SysAllocString(szString);
-                            }
-                        }
-                }
-
-                msi_free(szString);
-                RegCloseKey(hkey);
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_RegistryValue(wFlags, pDispParams,
+                                               pVarResult, pExcepInfo,
+                                               puArgErr);
 
         case DISPID_INSTALLER_ENVIRONMENT:
             return InstallerImpl_Environment(wFlags, pDispParams,
