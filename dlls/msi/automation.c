@@ -2060,7 +2060,6 @@ static HRESULT InstallerImpl_ProductState(WORD wFlags,
     HRESULT hr;
     VARIANTARG varg0;
 
-
     if (!(wFlags & DISPATCH_PROPERTYGET))
         return DISP_E_MEMBERNOTFOUND;
 
@@ -2074,6 +2073,66 @@ static HRESULT InstallerImpl_ProductState(WORD wFlags,
 
     VariantClear(&varg0);
     return S_OK;
+}
+
+static HRESULT InstallerImpl_ProductInfo(WORD wFlags,
+                                         DISPPARAMS* pDispParams,
+                                         VARIANT* pVarResult,
+                                         EXCEPINFO* pExcepInfo,
+                                         UINT* puArgErr)
+{
+    UINT ret;
+    HRESULT hr;
+    DWORD size;
+    LPWSTR str;
+    VARIANTARG varg0, varg1;
+
+    if (!(wFlags & DISPATCH_PROPERTYGET))
+        return DISP_E_MEMBERNOTFOUND;
+
+    VariantInit(&varg0);
+    hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+    if (FAILED(hr))
+        return hr;
+
+    VariantInit(&varg1);
+    hr = DispGetParam(pDispParams, 1, VT_BSTR, &varg1, puArgErr);
+    if (FAILED(hr))
+        goto done;
+
+    V_VT(pVarResult) = VT_BSTR;
+    V_BSTR(pVarResult) = NULL;
+
+    ret = MsiGetProductInfoW(V_BSTR(&varg0), V_BSTR(&varg1), NULL, &size);
+    if (ret != ERROR_SUCCESS)
+    {
+        hr = DISP_E_EXCEPTION;
+        goto done;
+    }
+
+    str = msi_alloc(++size * sizeof(WCHAR));
+    if (!str)
+    {
+        hr = E_OUTOFMEMORY;
+        goto done;
+    }
+
+    ret = MsiGetProductInfoW(V_BSTR(&varg0), V_BSTR(&varg1), str, &size);
+    msi_free(str);
+
+    if (ret != ERROR_SUCCESS)
+    {
+        hr = DISP_E_EXCEPTION;
+        goto done;
+    }
+
+    V_BSTR(pVarResult) = SysAllocString(str);
+    hr = S_OK;
+
+done:
+    VariantClear(&varg0);
+    VariantClear(&varg1);
+    return hr;
 }
 
 static HRESULT WINAPI InstallerImpl_Invoke(
@@ -2091,8 +2150,6 @@ static HRESULT WINAPI InstallerImpl_Invoke(
     UINT ret;
     VARIANTARG varg0, varg1, varg2;
     HRESULT hr;
-    LPWSTR szString = NULL;
-    DWORD dwSize = 0;
 
     VariantInit(&varg0);
     VariantInit(&varg1);
@@ -2170,35 +2227,8 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                                               pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_PRODUCTINFO:
-            if (wFlags & DISPATCH_PROPERTYGET) {
-                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
-                if (FAILED(hr)) return hr;
-                hr = DispGetParam(pDispParams, 1, VT_BSTR, &varg1, puArgErr);
-                if (FAILED(hr))
-                {
-                    VariantClear(&varg0);
-                    return hr;
-                }
-                V_VT(pVarResult) = VT_BSTR;
-                V_BSTR(pVarResult) = NULL;
-                if ((ret = MsiGetProductInfoW(V_BSTR(&varg0), V_BSTR(&varg1), NULL, &dwSize)) == ERROR_SUCCESS)
-                {
-                    if (!(szString = msi_alloc((++dwSize)*sizeof(WCHAR))))
-                        ERR("Out of memory\n");
-                    else if ((ret = MsiGetProductInfoW(V_BSTR(&varg0), V_BSTR(&varg1), szString, &dwSize)) == ERROR_SUCCESS)
-                        V_BSTR(pVarResult) = SysAllocString(szString);
-                    msi_free(szString);
-                }
-                if (ret != ERROR_SUCCESS)
-                {
-                    ERR("MsiGetProductInfo returned %d\n", ret);
-                    VariantClear(&varg1);
-                    VariantClear(&varg0);
-                    return DISP_E_EXCEPTION;
-                }
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_ProductInfo(wFlags, pDispParams,
+                                             pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_PRODUCTS:
             if (wFlags & DISPATCH_PROPERTYGET)
