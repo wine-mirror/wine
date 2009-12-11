@@ -721,6 +721,8 @@ static void test_dispatch(void)
     todo_wine ok(hr == DISP_E_EXCEPTION, "IDispatch::Invoke returned 0x%08x\n", hr);
     ok_exception(hr, szOpenPackageException);
     VariantClear(&vararg[0]);
+    if (hr != DISP_E_EXCEPTION)
+        VariantClear(&varresult);
 
     /* Try one parameter, the required BSTR.  Second parameter is optional.
      * Proper installer package exists.  Path to the package is absolute.
