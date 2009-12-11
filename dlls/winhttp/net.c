@@ -122,6 +122,7 @@ MAKE_FUNCPTR( BIO_new_fp );
 MAKE_FUNCPTR( CRYPTO_num_locks );
 MAKE_FUNCPTR( CRYPTO_set_id_callback );
 MAKE_FUNCPTR( CRYPTO_set_locking_callback );
+MAKE_FUNCPTR( ERR_free_strings );
 MAKE_FUNCPTR( ERR_get_error );
 MAKE_FUNCPTR( ERR_error_string );
 MAKE_FUNCPTR( X509_STORE_CTX_get_ex_data );
@@ -442,6 +443,7 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     LOAD_FUNCPTR( CRYPTO_num_locks );
     LOAD_FUNCPTR( CRYPTO_set_id_callback );
     LOAD_FUNCPTR( CRYPTO_set_locking_callback );
+    LOAD_FUNCPTR( ERR_free_strings );
     LOAD_FUNCPTR( ERR_get_error );
     LOAD_FUNCPTR( ERR_error_string );
     LOAD_FUNCPTR( X509_STORE_CTX_get_ex_data );
@@ -499,6 +501,7 @@ void netconn_unload( void )
 #if defined(SONAME_LIBSSL) && defined(SONAME_LIBCRYPTO)
     if (libcrypto_handle)
     {
+        pERR_free_strings();
         wine_dlclose( libcrypto_handle, NULL, 0 );
     }
     if (libssl_handle)
