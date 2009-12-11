@@ -1201,6 +1201,10 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     (*bitmap)->image.type = ImageTypeBitmap;
     memcpy(&(*bitmap)->image.format, &ImageFormatMemoryBMP, sizeof(GUID));
     (*bitmap)->image.flags = ImageFlagsNone;
+    (*bitmap)->image.palette_flags = 0;
+    (*bitmap)->image.palette_count = 0;
+    (*bitmap)->image.palette_size = 0;
+    (*bitmap)->image.palette_entries = NULL;
     (*bitmap)->width = width;
     (*bitmap)->height = height;
     (*bitmap)->format = format;
@@ -1318,6 +1322,7 @@ GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
         GdipFree(((GpBitmap*)image)->bitmapbits);
         DeleteDC(((GpBitmap*)image)->hdc);
     }
+    GdipFree(image->palette_entries);
     GdipFree(image);
 
     return Ok;
@@ -1891,6 +1896,10 @@ static GpStatus decode_image_olepicture_metafile(IStream* stream, REFCLSID clsid
     (*image)->type = ImageTypeMetafile;
     (*image)->picture = pic;
     (*image)->flags   = ImageFlagsNone;
+    (*image)->palette_flags = 0;
+    (*image)->palette_count = 0;
+    (*image)->palette_size = 0;
+    (*image)->palette_entries = NULL;
 
     return Ok;
 }
@@ -2243,15 +2252,28 @@ GpStatus WINGDIPAPI GdipGetImagePalette(GpImage *image, ColorPalette *palette, I
 GpStatus WINGDIPAPI GdipSetImagePalette(GpImage *image,
     GDIPCONST ColorPalette *palette)
 {
-    static int calls;
+    TRACE("(%p,%p)\n", image, palette);
 
-    if(!image || !palette)
+    if(!image || !palette || palette->Count > 256)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (palette->Count > image->palette_size)
+    {
+        ARGB *new_palette;
 
-    return NotImplemented;
+        new_palette = GdipAlloc(sizeof(ARGB) * palette->Count);
+        if (!new_palette) return OutOfMemory;
+
+        GdipFree(image->palette_entries);
+        image->palette_entries = new_palette;
+        image->palette_size = palette->Count;
+    }
+
+    image->palette_flags = palette->Flags;
+    image->palette_count = palette->Count;
+    memcpy(image->palette_entries, palette->Entries, sizeof(ARGB)*palette->Count);
+
+    return Ok;
 }
 
 /*************************************************************************
