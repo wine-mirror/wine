@@ -4889,7 +4889,8 @@ static void test_VarBstrFromR4(void)
   }
 }
 
-#define BSTR_DATE(dt,str) SysFreeString(bstr); bstr = NULL; \
+#define BSTR_DATE(dt,str) \
+  bstr = NULL; \
   hres = pVarBstrFromDate(dt,lcid,LOCALE_NOUSEROVERRIDE,&bstr); \
   if (bstr) {WideCharToMultiByte(CP_ACP, 0, bstr, -1, buff, sizeof(buff), 0, 0); SysFreeString(bstr);} \
   else buff[0] = 0; \
@@ -4901,7 +4902,7 @@ static void test_VarBstrFromDate(void)
   char buff[256];
   LCID lcid;
   HRESULT hres;
-  BSTR bstr = NULL;
+  BSTR bstr;
 
   CHECKPTR(VarBstrFromDate);
   lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
