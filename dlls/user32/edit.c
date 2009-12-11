@@ -1177,6 +1177,62 @@ static inline void text_buffer_changed(EDITSTATE *es)
 }
 
 /*********************************************************************
+ *	EDIT_LockBuffer16
+ */
+static void EDIT_LockBuffer16(EDITSTATE *es)
+{
+    STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
+    HANDLE16 oldDS;
+    HLOCAL hloc32;
+    UINT size;
+
+    if (!es->hloc16) return;
+    if (!(hloc32 = es->hloc32A)) return;
+
+    oldDS = stack16->ds;
+    stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
+    size = LocalSize16(es->hloc16);
+    if (LocalReAlloc( hloc32, size, LMEM_MOVEABLE ))
+    {
+        char *text = MapSL( LocalLock16( es->hloc16 ));
+        char *dest = LocalLock( hloc32 );
+        memcpy( dest, text, size );
+        LocalUnlock( hloc32 );
+        LocalUnlock16( es->hloc16 );
+    }
+    stack16->ds = oldDS;
+
+}
+
+/*********************************************************************
+ *	EDIT_UnlockBuffer16
+ *
+ */
+static void EDIT_UnlockBuffer16(EDITSTATE *es)
+{
+    STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
+    HANDLE16 oldDS;
+    HLOCAL hloc32;
+    UINT size;
+
+    if (!es->hloc16) return;
+    if (!(hloc32 = es->hloc32A)) return;
+    size = LocalSize( hloc32 );
+
+    oldDS = stack16->ds;
+    stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
+    if (LocalReAlloc16( es->hloc16, size, LMEM_MOVEABLE ))
+    {
+        char *text = LocalLock( hloc32 );
+        char *dest = MapSL( LocalLock16( es->hloc16 ));
+        memcpy( dest, text, size );
+        LocalUnlock( hloc32 );
+        LocalUnlock16( es->hloc16 );
+    }
+    stack16->ds = oldDS;
+}
+
+/*********************************************************************
  *
  *	EDIT_LockBuffer
  *
@@ -1194,43 +1250,17 @@ static inline void text_buffer_changed(EDITSTATE *es)
  */
 static void EDIT_LockBuffer(EDITSTATE *es)
 {
-	STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
-	HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
-
 	if (!es->text) {
-	    CHAR *textA = NULL;
-	    UINT countA = 0;
-	    BOOL _16bit = FALSE;
 
-	    if(es->hloc32W)
-	    {
-		if(es->hloc32A)
-		{
-		    TRACE("Synchronizing with 32-bit ANSI buffer\n");
-		    textA = LocalLock(es->hloc32A);
-		    countA = strlen(textA) + 1;
-		}
-		else if(es->hloc16)
-		{
-		    HANDLE16 oldDS = stack16->ds;
-		    TRACE("Synchronizing with 16-bit ANSI buffer\n");
-		    stack16->ds = hInstance;
-		    textA = MapSL(LocalLock16(es->hloc16));
-		    stack16->ds = oldDS;
-		    countA = strlen(textA) + 1;
-		    _16bit = TRUE;
-		}
-	    }
-	    else {
-		ERR("no buffer ... please report\n");
-		return;
-	    }
+	    if(!es->hloc32W) return;
 
-	    if(textA)
-	    {
+            EDIT_LockBuffer16(es);
+
+            if(es->hloc32A)
+            {
+                CHAR *textA = LocalLock(es->hloc32A);
 		HLOCAL hloc32W_new;
-		UINT countW_new = MultiByteToWideChar(CP_ACP, 0, textA, countA, NULL, 0);
-		TRACE("%d bytes translated to %d WCHARs\n", countA, countW_new);
+		UINT countW_new = MultiByteToWideChar(CP_ACP, 0, textA, -1, NULL, 0);
 		if(countW_new > es->buffer_size + 1)
 		{
 		    UINT alloc_size = ROUND_TO_GROW(countW_new * sizeof(WCHAR));
@@ -1245,24 +1275,11 @@ static void EDIT_LockBuffer(EDITSTATE *es)
 		    else
 			WARN("FAILED! Will synchronize partially\n");
 		}
+                es->text = LocalLock(es->hloc32W);
+		MultiByteToWideChar(CP_ACP, 0, textA, -1, es->text, es->buffer_size + 1);
+                LocalUnlock(es->hloc32A);
 	    }
-
-	    /*TRACE("Locking 32-bit UNICODE buffer\n");*/
-	    es->text = LocalLock(es->hloc32W);
-
-	    if(textA)
-	    {
-		MultiByteToWideChar(CP_ACP, 0, textA, countA, es->text, es->buffer_size + 1);
-		if(_16bit)
-		{
-		    HANDLE16 oldDS = stack16->ds;
-		    stack16->ds = hInstance;
-		    LocalUnlock16(es->hloc16);
-		    stack16->ds = oldDS;
-		}
-		else
-		    LocalUnlock(es->hloc32A);
-	    }
+	    else es->text = LocalLock(es->hloc32W);
 	}
         if(es->flags & EF_APP_HAS_HANDLE) text_buffer_changed(es);
 	es->lock_count++;
@@ -1295,11 +1312,8 @@ static void EDIT_UnlockBuffer(EDITSTATE *es, BOOL force)
 
 	if (force || (es->lock_count == 1)) {
 	    if (es->hloc32W) {
-		CHAR *textA = NULL;
 		UINT countA = 0;
 		UINT countW = get_text_length(es) + 1;
-		STACK16FRAME* stack16 = NULL;
-	        HANDLE16 oldDS = 0;
 
 		if(es->hloc32A)
 		{
@@ -1322,50 +1336,14 @@ static void EDIT_UnlockBuffer(EDITSTATE *es, BOOL force)
 			else
 			    WARN("FAILED! Will synchronize partially\n");
 		    }
-		    textA = LocalLock(es->hloc32A);
-		}
-		else if(es->hloc16)
-		{
-		    UINT countA_new = WideCharToMultiByte(CP_ACP, 0, es->text, countW, NULL, 0, NULL, NULL);
-
-		    TRACE("Synchronizing with 16-bit ANSI buffer\n");
-		    TRACE("%d WCHARs translated to %d bytes\n", countW, countA_new);
-
-		    stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
-		    oldDS = stack16->ds;
-		    stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
-
-		    countA = LocalSize16(es->hloc16);
-		    if(countA_new > countA)
-		    {
-			HLOCAL16 hloc16_new;
-			UINT alloc_size = ROUND_TO_GROW(countA_new);
-			TRACE("Resizing 16-bit ANSI buffer from %d to %d bytes\n", countA, alloc_size);
-			hloc16_new = LocalReAlloc16(es->hloc16, alloc_size, LMEM_MOVEABLE | LMEM_ZEROINIT);
-			if(hloc16_new)
-			{
-			    es->hloc16 = hloc16_new;
-			    countA = LocalSize16(hloc16_new);
-			    TRACE("Real new size %d bytes\n", countA);
-			}
-			else
-			    WARN("FAILED! Will synchronize partially\n");
-		    }
-		    textA = MapSL(LocalLock16(es->hloc16));
+		    WideCharToMultiByte(CP_ACP, 0, es->text, countW,
+                                        LocalLock(es->hloc32A), countA, NULL, NULL);
+                    LocalUnlock(es->hloc32A);
 		}
 
-		if(textA)
-		{
-		    WideCharToMultiByte(CP_ACP, 0, es->text, countW, textA, countA, NULL, NULL);
-		    if(stack16)
-			LocalUnlock16(es->hloc16);
-		    else
-			LocalUnlock(es->hloc32A);
-		}
-
-		if (stack16) stack16->ds = oldDS;
 		LocalUnlock(es->hloc32W);
 		es->text = NULL;
+                EDIT_UnlockBuffer16(es);
 	    }
 	    else {
 		ERR("no buffer ... please report\n");
@@ -2490,15 +2468,15 @@ static HLOCAL EDIT_EM_GetHandle(EDITSTATE *es)
 static HLOCAL16 EDIT_EM_GetHandle16(EDITSTATE *es)
 {
 	CHAR *textA;
-	UINT countA, alloc_size;
+	UINT alloc_size;
+        HLOCAL hloc;
 	STACK16FRAME* stack16;
 	HANDLE16 oldDS;
 
-	if (!(es->style & ES_MULTILINE))
-		return 0;
+	if (es->hloc16) return es->hloc16;
 
-	if (es->hloc16)
-		return es->hloc16;
+        if (!(hloc = EDIT_EM_GetHandle(es))) return 0;
+        alloc_size = LocalSize( hloc );
 
 	stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
 	oldDS = stack16->ds;
@@ -2513,9 +2491,6 @@ static HLOCAL16 EDIT_EM_GetHandle16(EDITSTATE *es)
 		TRACE("local heap initialized\n");
 	}
 
-	countA = WideCharToMultiByte(CP_ACP, 0, es->text, -1, NULL, 0, NULL, NULL);
-	alloc_size = ROUND_TO_GROW(countA);
-
 	TRACE("Allocating 16-bit ANSI alias buffer\n");
 	if (!(es->hloc16 = LocalAlloc16(LMEM_MOVEABLE | LMEM_ZEROINIT, alloc_size))) {
 		ERR("could not allocate new 16 bit buffer\n");
@@ -2528,10 +2503,9 @@ static HLOCAL16 EDIT_EM_GetHandle16(EDITSTATE *es)
 		es->hloc16 = 0;
 		goto done;
 	}
-
-	WideCharToMultiByte(CP_ACP, 0, es->text, -1, textA, countA, NULL, NULL);
+        memcpy( textA, LocalLock( hloc ), alloc_size );
+        LocalUnlock( hloc );
 	LocalUnlock16(es->hloc16);
-        es->flags |= EF_APP_HAS_HANDLE;
 
 	TRACE("Returning %04X, LocalSize() = %d\n", es->hloc16, LocalSize16(es->hloc16));
 
@@ -2833,17 +2807,6 @@ static void EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc)
 
 	EDIT_UnlockBuffer(es, TRUE);
 
-	if(es->hloc16)
-	{
-	    STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
-	    HANDLE16 oldDS = stack16->ds;
-	
-	    stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
-	    LocalFree16(es->hloc16);
-	    stack16->ds = oldDS;
-	    es->hloc16 = 0;
-	}
-
 	if(es->is_unicode)
 	{
 	    if(es->hloc32A)
@@ -2905,68 +2868,37 @@ static void EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc)
  *	FIXME:	ES_LOWERCASE, ES_UPPERCASE, ES_OEMCONVERT, ES_NUMBER ???
  *
  */
-static void EDIT_EM_SetHandle16(EDITSTATE *es, HLOCAL16 hloc)
+static void EDIT_EM_SetHandle16(EDITSTATE *es, HLOCAL16 hloc16)
 {
 	STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
 	HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
 	HANDLE16 oldDS = stack16->ds;
-	INT countW, countA;
-	HLOCAL hloc32W_new;
-	WCHAR *textW;
-	CHAR *textA;
+	HLOCAL hloc32;
+	INT count;
+	CHAR *text;
 
 	if (!(es->style & ES_MULTILINE))
 		return;
 
-	if (!hloc) {
+	if (!hloc16) {
 		WARN("called with NULL handle\n");
 		return;
 	}
 
-	EDIT_UnlockBuffer(es, TRUE);
-
-	if(es->hloc32A)
-	{
-	    LocalFree(es->hloc32A);
-	    es->hloc32A = NULL;
-	}
-
 	stack16->ds = hInstance;
-	countA = LocalSize16(hloc);
-	textA = MapSL(LocalLock16(hloc));
-	countW = MultiByteToWideChar(CP_ACP, 0, textA, countA, NULL, 0);
-	if(!(hloc32W_new = LocalAlloc(LMEM_MOVEABLE | LMEM_ZEROINIT, countW * sizeof(WCHAR))))
+	count = LocalSize16(hloc16);
+	text = MapSL(LocalLock16(hloc16));
+	if ((hloc32 = LocalAlloc(LMEM_MOVEABLE, count)))
 	{
-	    ERR("Could not allocate new unicode buffer\n");
-	    return;
+            memcpy( LocalLock(hloc32), text, count );
+            LocalUnlock(hloc32);
+            LocalUnlock16(hloc16);
+            es->hloc16 = hloc16;
 	}
-	textW = LocalLock(hloc32W_new);
-	MultiByteToWideChar(CP_ACP, 0, textA, countA, textW, countW);
-	LocalUnlock(hloc32W_new);
-	LocalUnlock16(hloc);
 	stack16->ds = oldDS;
 
-	if(es->hloc32W)
-	    LocalFree(es->hloc32W);
-
-	es->hloc32W = hloc32W_new;
-	es->hloc16 = hloc;
-
-	es->buffer_size = LocalSize(es->hloc32W)/sizeof(WCHAR) - 1;
-
-        es->flags |= EF_APP_HAS_HANDLE;
-	EDIT_LockBuffer(es);
-
-	es->x_offset = es->y_offset = 0;
-	es->selection_start = es->selection_end = 0;
-	EDIT_EM_EmptyUndoBuffer(es);
-	es->flags &= ~EF_MODIFIED;
-	es->flags &= ~EF_UPDATE;
-	EDIT_BuildLineDefs_ML(es, 0, get_text_length(es), 0, NULL);
-	EDIT_UpdateText(es, NULL, TRUE);
-	EDIT_EM_ScrollCaret(es);
-	/* force scroll info update */
-	EDIT_UpdateScrollInfo(es);
+        if (hloc32) EDIT_EM_SetHandle(es, hloc32);
+        else ERR("Could not allocate new buffer\n");
 }
 
 
