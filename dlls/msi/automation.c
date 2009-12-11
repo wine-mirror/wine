@@ -1624,6 +1624,15 @@ static HRESULT WINAPI InstallerImpl_Invoke(
             else return DISP_E_MEMBERNOTFOUND;
             break;
 
+        case DISPID_INSTALLER_OPENPRODUCT:
+            if (wFlags & DISPATCH_METHOD)
+            {
+                VariantInit(pVarResult);
+                FIXME("Unhandled method: OpenProduct");
+            }
+            else return DISP_E_MEMBERNOTFOUND;
+            break;
+
         case DISPID_INSTALLER_OPENDATABASE:
             if (wFlags & DISPATCH_METHOD)
             {
@@ -1658,6 +1667,15 @@ static HRESULT WINAPI InstallerImpl_Invoke(
             else return DISP_E_MEMBERNOTFOUND;
             break;
 
+        case DISPID_INSTALLER_SUMMARYINFORMATION:
+            if (wFlags & DISPATCH_METHOD)
+            {
+                VariantInit(pVarResult);
+                FIXME("Unhandled method: SummaryInformation");
+            }
+            else return DISP_E_MEMBERNOTFOUND;
+            break;
+
         case DISPID_INSTALLER_UILEVEL:
             if (wFlags & DISPATCH_PROPERTYPUT)
             {
@@ -1679,6 +1697,15 @@ static HRESULT WINAPI InstallerImpl_Invoke(
 
                 V_VT(pVarResult) = VT_I4;
                 V_I4(pVarResult) = ui;
+            }
+            else return DISP_E_MEMBERNOTFOUND;
+            break;
+
+        case DISPID_INSTALLER_ENABLELOG:
+            if (wFlags & DISPATCH_METHOD)
+            {
+                VariantInit(pVarResult);
+                FIXME("Unhandled method: EnableLog");
             }
             else return DISP_E_MEMBERNOTFOUND;
             break;
@@ -1721,6 +1748,15 @@ static HRESULT WINAPI InstallerImpl_Invoke(
 
                 V_VT(pVarResult) = VT_BSTR;
                 V_BSTR(pVarResult) = SysAllocString(version);
+            }
+            else return DISP_E_MEMBERNOTFOUND;
+            break;
+
+        case DISPID_INSTALLER_LASTERRORRECORD:
+            if (wFlags & DISPATCH_METHOD)
+            {
+                VariantInit(pVarResult);
+                FIXME("Unhandled method: LastErrorRecord");
             }
             else return DISP_E_MEMBERNOTFOUND;
             break;
@@ -1815,6 +1851,42 @@ static HRESULT WINAPI InstallerImpl_Invoke(
 
                 msi_free(szString);
                 RegCloseKey(hkey);
+            }
+            else return DISP_E_MEMBERNOTFOUND;
+            break;
+
+        case DISPID_INSTALLER_ENVIRONMENT:
+            if (wFlags & DISPATCH_PROPERTYGET || wFlags & DISPATCH_PROPERTYPUT)
+            {
+                VariantInit(pVarResult);
+                FIXME("Unhandled property: Environment");
+            }
+            else return DISP_E_MEMBERNOTFOUND;
+            break;
+
+        case DISPID_INSTALLER_FILEATTRIBUTES:
+            if (wFlags & DISPATCH_METHOD)
+            {
+                VariantInit(pVarResult);
+                FIXME("Unhandled method: FileAttributes");
+            }
+            else return DISP_E_MEMBERNOTFOUND;
+            break;
+
+        case DISPID_INSTALLER_FILESIZE:
+            if (wFlags & DISPATCH_METHOD)
+            {
+                VariantInit(pVarResult);
+                FIXME("Unhandled method: FileSize");
+            }
+            else return DISP_E_MEMBERNOTFOUND;
+            break;
+
+        case DISPID_INSTALLER_FILEVERSION:
+            if (wFlags & DISPATCH_METHOD)
+            {
+                VariantInit(pVarResult);
+                FIXME("Unhandled method: FileVersion");
             }
             else return DISP_E_MEMBERNOTFOUND;
             break;
