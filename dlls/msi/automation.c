@@ -1626,6 +1626,76 @@ done:
     return hr;
 }
 
+static HRESULT InstallerImpl_OpenProduct(WORD wFlags,
+                                         DISPPARAMS* pDispParams,
+                                         VARIANT* pVarResult,
+                                         EXCEPINFO* pExcepInfo,
+                                         UINT* puArgErr)
+{
+    HRESULT hr;
+    VARIANTARG varg0;
+
+    if (!(wFlags & DISPATCH_METHOD))
+        return DISP_E_MEMBERNOTFOUND;
+
+    VariantInit(&varg0);
+    hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+    if (FAILED(hr))
+        return hr;
+
+    FIXME("%s\n", debugstr_w(V_BSTR(&varg0)));
+
+    VariantInit(pVarResult);
+
+    VariantClear(&varg0);
+    return S_OK;
+}
+
+static HRESULT InstallerImpl_OpenDatabase(WORD wFlags,
+                                          DISPPARAMS* pDispParams,
+                                          VARIANT* pVarResult,
+                                          EXCEPINFO* pExcepInfo,
+                                          UINT* puArgErr)
+{
+    UINT ret;
+    HRESULT hr;
+    MSIHANDLE hdb;
+    IDispatch* dispatch;
+    VARIANTARG varg0, varg1;
+
+    if (!(wFlags & DISPATCH_METHOD))
+        return DISP_E_MEMBERNOTFOUND;
+
+    VariantInit(&varg0);
+    hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+    if (FAILED(hr))
+        return hr;
+
+    VariantInit(&varg1);
+    hr = DispGetParam(pDispParams, 1, VT_BSTR, &varg1, puArgErr);
+    if (FAILED(hr))
+        goto done;
+
+    V_VT(pVarResult) = VT_DISPATCH;
+
+    ret = MsiOpenDatabaseW(V_BSTR(&varg0), V_BSTR(&varg1), &hdb);
+    if (ret != ERROR_SUCCESS)
+    {
+        hr = DISP_E_EXCEPTION;
+        goto done;
+    }
+
+    hr = create_automation_object(hdb, NULL, (LPVOID *)&dispatch,
+                                  &DIID_Database, DatabaseImpl_Invoke, NULL, 0);
+    if (SUCCEEDED(hr))
+        V_DISPATCH(pVarResult) = dispatch;
+
+done:
+    VariantClear(&varg0);
+    VariantClear(&varg1);
+    return hr;
+}
+
 static HRESULT WINAPI InstallerImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
@@ -1637,7 +1707,6 @@ static HRESULT WINAPI InstallerImpl_Invoke(
         EXCEPINFO* pExcepInfo,
         UINT* puArgErr)
 {
-    MSIHANDLE msiHandle;
     IDispatch *pDispatch = NULL;
     UINT ret;
     VARIANTARG varg0, varg1, varg2;
@@ -1661,47 +1730,12 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                                              pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_OPENPRODUCT:
-            if (wFlags & DISPATCH_METHOD)
-            {
-                VariantInit(pVarResult);
-                FIXME("Unhandled method: OpenProduct");
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_OpenProduct(wFlags, pDispParams,
+                                             pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_OPENDATABASE:
-            if (wFlags & DISPATCH_METHOD)
-            {
-                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
-                if (FAILED(hr)) return hr;
-
-                hr = DispGetParam(pDispParams, 1, VT_BSTR, &varg1, puArgErr);
-                if (FAILED(hr))
-                {
-                    VariantClear(&varg0);
-                    return hr;
-                }
-
-                V_VT(pVarResult) = VT_DISPATCH;
-                if ((ret = MsiOpenDatabaseW(V_BSTR(&varg0), V_BSTR(&varg1), &msiHandle)) == ERROR_SUCCESS)
-                {
-                    hr = create_automation_object(msiHandle, NULL, (LPVOID *)&pDispatch,
-                                                  &DIID_Database, DatabaseImpl_Invoke, NULL, 0);
-                    if (SUCCEEDED(hr))
-                        V_DISPATCH(pVarResult) = pDispatch;
-                    else
-                        ERR("Failed to create Database object: 0x%08x\n", hr);
-                }
-                else
-                {
-                    VariantClear(&varg0);
-                    VariantClear(&varg1);
-                    ERR("MsiOpenDatabase returned %d\n", ret);
-                    return DISP_E_EXCEPTION;
-                }
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_OpenDatabase(wFlags, pDispParams,
+                                              pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_SUMMARYINFORMATION:
             if (wFlags & DISPATCH_METHOD)
