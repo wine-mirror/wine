@@ -572,9 +572,6 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
     case STM_GETIMAGE:
         return (LRESULT)STATIC_GetImage( hwnd, wParam, full_style );
 
-    case STM_GETICON16:
-        return HICON_16(STATIC_GetImage( hwnd, IMAGE_ICON, full_style ));
-
     case STM_GETICON:
         return (LRESULT)STATIC_GetImage( hwnd, IMAGE_ICON, full_style );
 
@@ -597,9 +594,6 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
         STATIC_TryPaintFcn( hwnd, full_style );
 	break;
 
-    case STM_SETICON16:
-        wParam = (WPARAM)HICON_32( (HICON16)wParam );
-        /* fall through */
     case STM_SETICON:
         lResult = (LRESULT)STATIC_SetIcon( hwnd, (HICON)wParam, full_style );
         STATIC_TryPaintFcn( hwnd, full_style );
@@ -613,12 +607,29 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 }
 
 /***********************************************************************
+ *           StaticWndProc_wrapper16
+ */
+static LRESULT StaticWndProc_wrapper16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
+{
+    switch (msg)
+    {
+    case STM_SETICON16:
+        wParam = (WPARAM)HICON_32( (HICON16)wParam );
+        return StaticWndProc_common( hwnd, STM_SETICON, wParam, lParam, FALSE );
+    case STM_GETICON16:
+        return HICON_16( StaticWndProc_common( hwnd, STM_GETICON, wParam, lParam, FALSE ));
+    default:
+        return StaticWndProc_common( hwnd, msg, wParam, lParam, unicode );
+    }
+}
+
+/***********************************************************************
  *           StaticWndProcA
  */
 static LRESULT WINAPI StaticWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
     if (!IsWindow( hWnd )) return 0;
-    return StaticWndProc_common(hWnd, uMsg, wParam, lParam, FALSE);
+    return StaticWndProc_wrapper16(hWnd, uMsg, wParam, lParam, FALSE);
 }
 
 /***********************************************************************
@@ -627,7 +638,7 @@ static LRESULT WINAPI StaticWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 static LRESULT WINAPI StaticWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
     if (!IsWindow( hWnd )) return 0;
-    return StaticWndProc_common(hWnd, uMsg, wParam, lParam, TRUE);
+    return StaticWndProc_wrapper16(hWnd, uMsg, wParam, lParam, TRUE);
 }
 
 static void STATIC_PaintOwnerDrawfn( HWND hwnd, HDC hdc, DWORD style )
