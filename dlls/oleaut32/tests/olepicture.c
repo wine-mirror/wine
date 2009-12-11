@@ -357,6 +357,7 @@ static void test_empty_image(void) {
 	ok (hres == S_OK,"empty picture get handle failed with hres 0x%08x\n", hres);
 	ok (handle == 0, "empty picture get handle did not return 0, but 0x%08x\n", handle);
 	IPicture_Release (pic);
+	IStream_Release (stream);
 }
 
 static void test_empty_image_2(void) {
@@ -395,6 +396,7 @@ static void test_empty_image_2(void) {
 	ok (type == PICTYPE_NONE,"type is %d, but should be PICTYPE_NONE(0)\n", type);
 
 	IPicture_Release (pic);
+	IStream_Release (stream);
 }
 
 static void test_Invoke(void)
@@ -408,16 +410,17 @@ static void test_Invoke(void)
     HGLOBAL hglob;
     void *data;
 
-	hglob = GlobalAlloc (0, sizeof(gifimage));
-	data = GlobalLock(hglob);
-	memcpy(data, gifimage, sizeof(gifimage));
+    hglob = GlobalAlloc (0, sizeof(gifimage));
+    data = GlobalLock(hglob);
+    memcpy(data, gifimage, sizeof(gifimage));
     GlobalUnlock(hglob);
 
-	hr = CreateStreamOnHGlobal (hglob, FALSE, &stream);
+    hr = CreateStreamOnHGlobal (hglob, FALSE, &stream);
     ok_ole_success(hr, "CreateStreamOnHGlobal");
 
-	hr = pOleLoadPicture(stream, sizeof(gifimage), TRUE, &IID_IPictureDisp, (void **)&picdisp);
+    hr = pOleLoadPicture(stream, sizeof(gifimage), TRUE, &IID_IPictureDisp, (void **)&picdisp);
     IStream_Release(stream);
+    GlobalFree(hglob);
     ok_ole_success(hr, "OleLoadPicture");
 
     V_VT(&vararg) = VT_BOOL;
