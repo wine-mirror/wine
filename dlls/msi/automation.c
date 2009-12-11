@@ -1696,6 +1696,21 @@ done:
     return hr;
 }
 
+static HRESULT InstallerImpl_SummaryInformation(WORD wFlags,
+                                                DISPPARAMS* pDispParams,
+                                                VARIANT* pVarResult,
+                                                EXCEPINFO* pExcepInfo,
+                                                UINT* puArgErr)
+{
+    if (!(wFlags & DISPATCH_METHOD))
+        return DISP_E_MEMBERNOTFOUND;
+
+    FIXME("\n");
+
+    VariantInit(pVarResult);
+    return S_OK;
+}
+
 static HRESULT WINAPI InstallerImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
@@ -1738,13 +1753,9 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                                               pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_SUMMARYINFORMATION:
-            if (wFlags & DISPATCH_METHOD)
-            {
-                VariantInit(pVarResult);
-                FIXME("Unhandled method: SummaryInformation");
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_SummaryInformation(wFlags, pDispParams,
+                                                    pVarResult, pExcepInfo,
+                                                    puArgErr);
 
         case DISPID_INSTALLER_UILEVEL:
             if (wFlags & DISPATCH_PROPERTYPUT)
