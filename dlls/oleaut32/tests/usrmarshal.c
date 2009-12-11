@@ -396,7 +396,10 @@ static void test_marshal_LPSAFEARRAY(void)
             hr = SafeArrayGetElement(lpsa2, indices, &gotvalue);
             ok(hr == S_OK, "Failed to get bstr element at hres 0x%x\n", hr);
             if (hr == S_OK)
+            {
                 ok(VarBstrCmp(values[i], gotvalue, 0, 0) == VARCMP_EQ, "String %d does not match\n", i);
+                SysFreeString(gotvalue);
+            }
         }
 
         SysFreeString(values[i]);
