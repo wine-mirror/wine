@@ -2242,15 +2242,22 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
  */
 GpStatus WINGDIPAPI GdipGetImagePalette(GpImage *image, ColorPalette *palette, INT size)
 {
-    static int calls = 0;
+    TRACE("(%p,%p,%i)\n", image, palette, size);
 
-    if(!image)
+    if (!image || !palette)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (size < (sizeof(UINT)*2+sizeof(ARGB)*image->palette_count))
+    {
+        TRACE("<-- InsufficientBuffer\n");
+        return InsufficientBuffer;
+    }
 
-    return NotImplemented;
+    palette->Flags = image->palette_flags;
+    palette->Count = image->palette_count;
+    memcpy(palette->Entries, image->palette_entries, sizeof(ARGB)*image->palette_count);
+
+    return Ok;
 }
 
 /*****************************************************************************
