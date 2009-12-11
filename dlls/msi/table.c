@@ -1835,6 +1835,9 @@ static UINT msi_refresh_record( struct tagMSIVIEW *view, MSIRECORD *rec, UINT ro
     if (r != ERROR_SUCCESS)
         return r;
 
+    /* Close the original record */
+    MSI_CloseRecord(&rec->hdr);
+
     count = MSI_RecordGetFieldCount(rec);
     for (i = 0; i < count; i++)
         MSI_RecordCopyField(curr, i + 1, rec, i + 1);

@@ -698,6 +698,7 @@ extern UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine,
                                     BOOL preserve_case );
 
 /* record internals */
+extern void MSI_CloseRecord( MSIOBJECTHDR * );
 extern UINT MSI_RecordSetIStream( MSIRECORD *, UINT, IStream *);
 extern UINT MSI_RecordGetIStream( MSIRECORD *, UINT, IStream **);
 extern const WCHAR *MSI_RecordGetString( const MSIRECORD *, UINT );
