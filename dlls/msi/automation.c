@@ -1763,6 +1763,42 @@ static HRESULT InstallerImpl_EnableLog(WORD wFlags,
     return S_OK;
 }
 
+static HRESULT InstallerImpl_InstallProduct(WORD wFlags,
+                                            DISPPARAMS* pDispParams,
+                                            VARIANT* pVarResult,
+                                            EXCEPINFO* pExcepInfo,
+                                            UINT* puArgErr)
+{
+    UINT ret;
+    HRESULT hr;
+    VARIANTARG varg0, varg1;
+
+    if (!(wFlags & DISPATCH_METHOD))
+        return DISP_E_MEMBERNOTFOUND;
+
+    VariantInit(&varg0);
+    hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+    if (FAILED(hr))
+        return hr;
+
+    VariantInit(&varg1);
+    hr = DispGetParam(pDispParams, 1, VT_BSTR, &varg1, puArgErr);
+    if (FAILED(hr))
+        goto done;
+
+    ret = MsiInstallProductW(V_BSTR(&varg0), V_BSTR(&varg1));
+    if (ret != ERROR_SUCCESS)
+    {
+        hr = DISP_E_EXCEPTION;
+        goto done;
+    }
+
+done:
+    VariantClear(&varg0);
+    VariantClear(&varg1);
+    return hr;
+}
+
 static HRESULT InstallerImpl_LastErrorRecord(WORD wFlags,
                                              DISPPARAMS* pDispParams,
                                              VARIANT* pVarResult,
@@ -1892,26 +1928,9 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                                            pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_INSTALLPRODUCT:
-            if (wFlags & DISPATCH_METHOD)
-            {
-                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
-                if (FAILED(hr)) return hr;
-                hr = DispGetParam(pDispParams, 1, VT_BSTR, &varg1, puArgErr);
-                if (FAILED(hr))
-                {
-                    VariantClear(&varg0);
-                    return hr;
-                }
-                if ((ret = MsiInstallProductW(V_BSTR(&varg0), V_BSTR(&varg1))) != ERROR_SUCCESS)
-                {
-                    VariantClear(&varg1);
-                    VariantClear(&varg0);
-                    ERR("MsiInstallProduct returned %d\n", ret);
-                    return DISP_E_EXCEPTION;
-                }
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_InstallProduct(wFlags, pDispParams,
+                                                pVarResult, pExcepInfo,
+                                                puArgErr);
 
         case DISPID_INSTALLER_VERSION:
             if (wFlags & DISPATCH_PROPERTYGET) {
