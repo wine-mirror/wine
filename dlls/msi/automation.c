@@ -1534,6 +1534,39 @@ static void variant_from_registry_value(VARIANT *pVarResult, DWORD dwType, LPBYT
     }
 }
 
+static HRESULT InstallerImpl_CreateRecord(WORD wFlags,
+                                          DISPPARAMS* pDispParams,
+                                          VARIANT* pVarResult,
+                                          EXCEPINFO* pExcepInfo,
+                                          UINT* puArgErr)
+{
+    HRESULT hr;
+    VARIANTARG varg0;
+    MSIHANDLE hrec;
+    IDispatch* dispatch;
+
+    if (!(wFlags & DISPATCH_METHOD))
+        return DISP_E_MEMBERNOTFOUND;
+
+    VariantInit(&varg0);
+    hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+    if (FAILED(hr))
+        return hr;
+
+    V_VT(pVarResult) = VT_DISPATCH;
+
+    hrec = MsiCreateRecord(V_I4(&varg0));
+    if (!hrec)
+        return DISP_E_EXCEPTION;
+
+    hr = create_automation_object(hrec, NULL, (LPVOID*)&dispatch,
+                                  &DIID_Record, RecordImpl_Invoke, NULL, 0);
+    if (SUCCEEDED(hr))
+        V_DISPATCH(pVarResult) = dispatch;
+
+    return hr;
+}
+
 static HRESULT WINAPI InstallerImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
@@ -1561,26 +1594,8 @@ static HRESULT WINAPI InstallerImpl_Invoke(
     switch (dispIdMember)
     {
         case DISPID_INSTALLER_CREATERECORD:
-            if (wFlags & DISPATCH_METHOD)
-            {
-                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
-                if (FAILED(hr)) return hr;
-                V_VT(pVarResult) = VT_DISPATCH;
-                if ((msiHandle = MsiCreateRecord(V_I4(&varg0))))
-                {
-                    if (SUCCEEDED(hr = create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_Record, RecordImpl_Invoke, NULL, 0)))
-                        V_DISPATCH(pVarResult) = pDispatch;
-                    else
-                        ERR("Failed to create Record object, hresult 0x%08x\n", hr);
-                }
-                else
-                {
-                    ERR("MsiCreateRecord failed\n");
-                    return DISP_E_EXCEPTION;
-                }
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_CreateRecord(wFlags, pDispParams,
+                                              pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_OPENPACKAGE:
             if (wFlags & DISPATCH_METHOD)
