@@ -876,6 +876,179 @@ static void test_getsetpixel(void)
     expect(Ok, stat);
 }
 
+static void check_halftone_palette(ColorPalette *palette)
+{
+    static const BYTE halftone_values[6]={0x00,0x33,0x66,0x99,0xcc,0xff};
+    UINT i;
+
+    for (i=0; i<palette->Count; i++)
+    {
+        ARGB expected=0xff000000;
+        if (i<8)
+        {
+            if (i&1) expected |= 0x800000;
+            if (i&2) expected |= 0x8000;
+            if (i&4) expected |= 0x80;
+        }
+        else if (i == 8)
+        {
+            expected = 0xffc0c0c0;
+        }
+        else if (i < 16)
+        {
+            if (i&1) expected |= 0xff0000;
+            if (i&2) expected |= 0xff00;
+            if (i&4) expected |= 0xff;
+        }
+        else if (i < 40)
+        {
+            expected = 0x00000000;
+        }
+        else
+        {
+            expected |= halftone_values[(i-40)%6];
+            expected |= halftone_values[((i-40)/6)%6] << 8;
+            expected |= halftone_values[((i-40)/36)%6] << 16;
+        }
+        ok(expected == palette->Entries[i], "Expected %.8x, got %.8x, i=%u/%u\n",
+            expected, palette->Entries[i], i, palette->Count);
+    }
+}
+
+static void test_palette(void)
+{
+    GpStatus stat;
+    GpBitmap *bitmap;
+    INT size;
+    BYTE buffer[1040];
+    ColorPalette *palette=(ColorPalette*)buffer;
+
+    /* test initial palette from non-indexed bitmap */
+    stat = GdipCreateBitmapFromScan0(2, 2, 8, PixelFormat32bppRGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImagePaletteSize((GpImage*)bitmap, &size);
+    expect(Ok, stat);
+    expect(sizeof(UINT)*2+sizeof(ARGB), size);
+
+    stat = GdipGetImagePalette((GpImage*)bitmap, palette, size);
+    expect(Ok, stat);
+    expect(0, palette->Count);
+
+    /* test setting palette on not-indexed bitmap */
+    palette->Count = 3;
+
+    stat = GdipSetImagePalette((GpImage*)bitmap, palette);
+    expect(Ok, stat);
+
+    stat = GdipGetImagePaletteSize((GpImage*)bitmap, &size);
+    expect(Ok, stat);
+    expect(sizeof(UINT)*2+sizeof(ARGB)*3, size);
+
+    stat = GdipGetImagePalette((GpImage*)bitmap, palette, size);
+    expect(Ok, stat);
+    expect(3, palette->Count);
+
+    GdipDisposeImage((GpImage*)bitmap);
+
+    /* test initial palette on 1-bit bitmap */
+    stat = GdipCreateBitmapFromScan0(2, 2, 4, PixelFormat1bppIndexed, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImagePaletteSize((GpImage*)bitmap, &size);
+    expect(Ok, stat);
+    expect(sizeof(UINT)*2+sizeof(ARGB)*2, size);
+
+    stat = GdipGetImagePalette((GpImage*)bitmap, palette, size);
+    expect(Ok, stat);
+    expect(PaletteFlagsGrayScale, palette->Flags);
+    expect(2, palette->Count);
+
+    expect(0xff000000, palette->Entries[0]);
+    expect(0xffffffff, palette->Entries[1]);
+
+    GdipDisposeImage((GpImage*)bitmap);
+
+    /* test initial palette on 4-bit bitmap */
+    stat = GdipCreateBitmapFromScan0(2, 2, 4, PixelFormat4bppIndexed, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImagePaletteSize((GpImage*)bitmap, &size);
+    expect(Ok, stat);
+    expect(sizeof(UINT)*2+sizeof(ARGB)*16, size);
+
+    stat = GdipGetImagePalette((GpImage*)bitmap, palette, size);
+    expect(Ok, stat);
+    expect(0, palette->Flags);
+    expect(16, palette->Count);
+
+    check_halftone_palette(palette);
+
+    GdipDisposeImage((GpImage*)bitmap);
+
+    /* test initial palette on 8-bit bitmap */
+    stat = GdipCreateBitmapFromScan0(2, 2, 8, PixelFormat8bppIndexed, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImagePaletteSize((GpImage*)bitmap, &size);
+    expect(Ok, stat);
+    expect(sizeof(UINT)*2+sizeof(ARGB)*256, size);
+
+    stat = GdipGetImagePalette((GpImage*)bitmap, palette, size);
+    expect(Ok, stat);
+    expect(PaletteFlagsHalftone, palette->Flags);
+    expect(256, palette->Count);
+
+    check_halftone_palette(palette);
+
+    /* test setting/getting a different palette */
+    palette->Entries[1] = 0xffcccccc;
+
+    stat = GdipSetImagePalette((GpImage*)bitmap, palette);
+    expect(Ok, stat);
+
+    palette->Entries[1] = 0;
+
+    stat = GdipGetImagePaletteSize((GpImage*)bitmap, &size);
+    expect(Ok, stat);
+    expect(sizeof(UINT)*2+sizeof(ARGB)*256, size);
+
+    stat = GdipGetImagePalette((GpImage*)bitmap, palette, size);
+    expect(Ok, stat);
+    expect(PaletteFlagsHalftone, palette->Flags);
+    expect(256, palette->Count);
+    expect(0xffcccccc, palette->Entries[1]);
+
+    /* test count < 256 */
+    palette->Flags = 12345;
+    palette->Count = 3;
+
+    stat = GdipSetImagePalette((GpImage*)bitmap, palette);
+    expect(Ok, stat);
+
+    palette->Entries[1] = 0;
+    palette->Entries[3] = 0xdeadbeef;
+
+    stat = GdipGetImagePaletteSize((GpImage*)bitmap, &size);
+    expect(Ok, stat);
+    expect(sizeof(UINT)*2+sizeof(ARGB)*3, size);
+
+    stat = GdipGetImagePalette((GpImage*)bitmap, palette, size);
+    expect(Ok, stat);
+    expect(12345, palette->Flags);
+    expect(3, palette->Count);
+    expect(0xffcccccc, palette->Entries[1]);
+    expect(0xdeadbeef, palette->Entries[3]);
+
+    /* test count > 256 */
+    palette->Count = 257;
+
+    stat = GdipSetImagePalette((GpImage*)bitmap, palette);
+    expect(InvalidParameter, stat);
+
+    GdipDisposeImage((GpImage*)bitmap);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -903,6 +1076,7 @@ START_TEST(image)
     test_getrawformat();
     test_createhbitmap();
     test_getsetpixel();
+    test_palette();
 
     GdiplusShutdown(gdiplusToken);
 }
