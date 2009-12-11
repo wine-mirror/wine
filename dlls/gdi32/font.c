@@ -2908,34 +2908,40 @@ BOOL WINAPI GetCharABCWidthsFloatA( HDC hdc, UINT first, UINT last, LPABCFLOAT a
  * RETURNS
  *    Success: TRUE
  *    Failure: FALSE
- *
- * BUGS
- *    Only works with TrueType fonts. It also doesn't return real
- *    floats but converted integers because it's implemented on
- *    top of GetCharABCWidthsW.
  */
 BOOL WINAPI GetCharABCWidthsFloatW( HDC hdc, UINT first, UINT last, LPABCFLOAT abcf )
 {
-    ABC *abc, *abc_base;
-    unsigned int i, size = sizeof(ABC) * (last - first + 1);
-    BOOL ret;
+    UINT i;
+    BOOL ret = FALSE;
+    DC *dc = get_dc_ptr( hdc );
 
-    TRACE("%p, %d, %d, %p - partial stub\n", hdc, first, last, abcf);
+    TRACE("%p, %d, %d, %p\n", hdc, first, last, abcf);
 
-    abc = abc_base = HeapAlloc( GetProcessHeap(), 0, size );
-    if (!abc) return FALSE;
+    if (!dc) return FALSE;
 
-    ret = GetCharABCWidthsW( hdc, first, last, abc );
+    if (!abcf)
+    {
+        release_dc_ptr( dc );
+        return FALSE;
+    }
+
+    if (dc->gdiFont)
+        ret = WineEngGetCharABCWidthsFloat( dc->gdiFont, first, last, abcf );
+    else
+        FIXME("stub\n");
+
     if (ret)
     {
-        for (i = first; i <= last; i++, abc++, abcf++)
+        /* convert device units to logical */
+        for (i = first; i <= last; i++, abcf++)
         {
-            abcf->abcfA = abc->abcA;
-            abcf->abcfB = abc->abcB;
-            abcf->abcfC = abc->abcC;
+            abcf->abcfA = abcf->abcfA * dc->xformVport2World.eM11;
+            abcf->abcfB = abcf->abcfB * dc->xformVport2World.eM11;
+            abcf->abcfC = abcf->abcfC * dc->xformVport2World.eM11;
         }
     }
-    HeapFree( GetProcessHeap(), 0, abc_base );
+
+    release_dc_ptr( dc );
     return ret;
 }
 
