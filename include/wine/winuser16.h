@@ -401,9 +401,6 @@ typedef struct
 #define SBM_SETRANGE16           (WM_USER+2)
 #define SBM_GETRANGE16           (WM_USER+3)
 #define SBM_ENABLE_ARROWS16      (WM_USER+4)
-#define SBM_SETRANGEREDRAW16     WM_NULL  /* Not in Win16 */
-#define SBM_SETSCROLLINFO16      WM_NULL  /* Not in Win16 */
-#define SBM_GETSCROLLINFO16      WM_NULL  /* Not in Win16 */
 
   /* CBT hook structures */
 
@@ -449,9 +446,6 @@ typedef struct
 #define BM_GETSTATE16          (WM_USER+2)
 #define BM_SETSTATE16          (WM_USER+3)
 #define BM_SETSTYLE16          (WM_USER+4)
-#define BM_CLICK16             WM_NULL  /* Does not exist in Win16 */
-#define BM_GETIMAGE16          WM_NULL  /* Does not exist in Win16 */
-#define BM_SETIMAGE16          WM_NULL  /* Does not exist in Win16 */
 
 /* Static Control Messages */
 #define STM_SETICON16       (WM_USER+0)
@@ -489,15 +483,6 @@ typedef struct
 #define EM_SETWORDBREAKPROC16      (WM_USER+32)
 #define EM_GETWORDBREAKPROC16      (WM_USER+33)
 #define EM_GETPASSWORDCHAR16       (WM_USER+34)
-/*
-  not in win16:
-    EM_SETMARGINS16            WM_NULL
-    EM_GETMARGINS16            WM_NULL
-    EM_GETLIMITTEXT16          WM_NULL
-    EM_POSFROMCHAR16           WM_NULL
-    EM_CHARFROMPOS16           WM_NULL
-    EM_SETLIMITTEXT16          WM_NULL - no name change in win16
-*/
 
 typedef struct
 {
