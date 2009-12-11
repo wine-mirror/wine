@@ -5280,7 +5280,6 @@ TREEVIEW_MouseMove (TREEVIEW_INFO * infoPtr, LPARAM lParam)
     trackinfo.cbSize = sizeof(TRACKMOUSEEVENT);
     trackinfo.dwFlags = TME_QUERY;
     trackinfo.hwndTrack = infoPtr->hwnd;
-    trackinfo.dwHoverTime = HOVER_DEFAULT;
 
     /* call _TrackMouseEvent to see if we are currently tracking for this hwnd */
     _TrackMouseEvent(&trackinfo);
@@ -5289,6 +5288,9 @@ TREEVIEW_MouseMove (TREEVIEW_INFO * infoPtr, LPARAM lParam)
     if(!(trackinfo.dwFlags & TME_LEAVE))
     {
         trackinfo.dwFlags = TME_LEAVE; /* notify upon leaving */
+        trackinfo.hwndTrack = infoPtr->hwnd;
+        /* do it as fast as possible, minimal systimer latency will be used */
+        trackinfo.dwHoverTime = 1;
 
         /* call TRACKMOUSEEVENT so we receive a WM_MOUSELEAVE message */
         /* and can properly deactivate the hot item */
