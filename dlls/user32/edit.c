@@ -2467,23 +2467,23 @@ static HLOCAL EDIT_EM_GetHandle(EDITSTATE *es)
  *
  *	In this function we'll try to switch to local heap.
  */
-static HLOCAL16 EDIT_EM_GetHandle16(EDITSTATE *es)
+static HLOCAL16 EDIT_EM_GetHandle16( HWND hwnd )
 {
 	CHAR *textA;
 	UINT alloc_size;
         HLOCAL hloc;
 	STACK16FRAME* stack16;
 	HANDLE16 oldDS;
-        HLOCAL16 hloc16 = GetWindowWord( es->hwndSelf, GWW_HANDLE16 );
+        HLOCAL16 hloc16 = GetWindowWord( hwnd, GWW_HANDLE16 );
 
 	if (hloc16) return hloc16;
 
-        if (!(hloc = EDIT_EM_GetHandle(es))) return 0;
+        if (!(hloc = (HLOCAL)SendMessageA( hwnd, EM_GETHANDLE, 0, 0 ))) return 0;
         alloc_size = LocalSize( hloc );
 
 	stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
 	oldDS = stack16->ds;
-	stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
+	stack16->ds = GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
 
 	if (!LocalHeapSize16()) {
 
@@ -2509,7 +2509,7 @@ static HLOCAL16 EDIT_EM_GetHandle16(EDITSTATE *es)
         memcpy( textA, LocalLock( hloc ), alloc_size );
         LocalUnlock( hloc );
 	LocalUnlock16( hloc16 );
-        SetWindowWord( es->hwndSelf, GWW_HANDLE16, hloc16 );
+        SetWindowWord( hwnd, GWW_HANDLE16, hloc16 );
 
 	TRACE("Returning %04X, LocalSize() = %d\n", hloc16, alloc_size);
 
@@ -2872,17 +2872,16 @@ static void EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc)
  *	FIXME:	ES_LOWERCASE, ES_UPPERCASE, ES_OEMCONVERT, ES_NUMBER ???
  *
  */
-static void EDIT_EM_SetHandle16(EDITSTATE *es, HLOCAL16 hloc16)
+static void EDIT_EM_SetHandle16( HWND hwnd, HLOCAL16 hloc16 )
 {
 	STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
-	HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
+	HINSTANCE16 hInstance = GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
 	HANDLE16 oldDS = stack16->ds;
 	HLOCAL hloc32;
 	INT count;
 	CHAR *text;
 
-	if (!(es->style & ES_MULTILINE))
-		return;
+	if (!(GetWindowLongW( hwnd, GWL_STYLE ) & ES_MULTILINE)) return;
 
 	if (!hloc16) {
 		WARN("called with NULL handle\n");
@@ -2897,11 +2896,11 @@ static void EDIT_EM_SetHandle16(EDITSTATE *es, HLOCAL16 hloc16)
             memcpy( LocalLock(hloc32), text, count );
             LocalUnlock(hloc32);
             LocalUnlock16(hloc16);
-            SetWindowWord( es->hwndSelf, GWW_HANDLE16, hloc16 );
+            SetWindowWord( hwnd, GWW_HANDLE16, hloc16 );
 	}
 	stack16->ds = oldDS;
 
-        if (hloc32) EDIT_EM_SetHandle(es, hloc32);
+        if (hloc32) SendMessageA( hwnd, EM_SETHANDLE, (WPARAM)hloc32, 0 );
         else ERR("Could not allocate new buffer\n");
 }
 
@@ -3057,29 +3056,6 @@ static BOOL EDIT_EM_SetTabStops(EDITSTATE *es, INT count, const INT *tabs)
 
 /*********************************************************************
  *
- *	EM_SETTABSTOPS16
- *
- */
-static BOOL EDIT_EM_SetTabStops16(EDITSTATE *es, INT count, const INT16 *tabs)
-{
-	if (!(es->style & ES_MULTILINE))
-		return FALSE;
-        HeapFree(GetProcessHeap(), 0, es->tabs);
-	es->tabs_count = count;
-	if (!count)
-		es->tabs = NULL;
-	else {
-		INT i;
-		es->tabs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(INT));
-		for (i = 0 ; i < count ; i++)
-			es->tabs[i] = *tabs++;
-	}
-	return TRUE;
-}
-
-
-/*********************************************************************
- *
  *	EM_SETWORDBREAKPROC
  *
  */
@@ -3094,18 +3070,6 @@ static void EDIT_EM_SetWordBreakProc(EDITSTATE *es, void *wbp)
 		EDIT_BuildLineDefs_ML(es, 0, get_text_length(es), 0, NULL);
 		EDIT_UpdateText(es, NULL, TRUE);
 	}
-}
-
-
-/*********************************************************************
- *
- *	EM_SETWORDBREAKPROC16
- *
- */
-static void EDIT_EM_SetWordBreakProc16(EDITSTATE *es, EDITWORDBREAKPROC16 wbp)
-{
-    struct word_break_thunk *thunk = add_word_break_thunk( wbp );
-    if (thunk) EDIT_EM_SetWordBreakProc( es, thunk );
 }
 
 
@@ -4736,12 +4700,6 @@ static inline LRESULT DefWindowProcT(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
  *
  *	The messages are in the order of the actual integer values
  *	(which can be found in include/windows.h)
- *	Wherever possible the 16 bit versions are converted to
- *	the 32 bit ones, so that we can 'fall through' to the
- *	helper functions.  These are mostly 32 bit (with a few
- *	exceptions, clearly indicated by a '16' extension to their
- *	names).
- *
  */
 static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
                                    WPARAM wParam, LPARAM lParam, BOOL unicode )
@@ -4757,56 +4715,21 @@ static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
 	if (es && (msg != WM_NCDESTROY)) EDIT_LockBuffer(es);
 
 	switch (msg) {
-	case EM_GETSEL16:
-		wParam = 0;
-		lParam = 0;
-		/* fall through */
 	case EM_GETSEL:
 		result = EDIT_EM_GetSel(es, (PUINT)wParam, (PUINT)lParam);
 		break;
 
-	case EM_SETSEL16:
-		if ((short)LOWORD(lParam) == -1)
-			EDIT_EM_SetSel(es, (UINT)-1, 0, FALSE);
-		else
-			EDIT_EM_SetSel(es, LOWORD(lParam), HIWORD(lParam), FALSE);
-		if (!wParam)
-			EDIT_EM_ScrollCaret(es);
-		result = 1;
-		break;
 	case EM_SETSEL:
 		EDIT_EM_SetSel(es, wParam, lParam, FALSE);
 		EDIT_EM_ScrollCaret(es);
 		result = 1;
 		break;
 
-	case EM_GETRECT16:
-		if (lParam)
-                {
-                    RECT16 *r16 = MapSL(lParam);
-                    r16->left   = es->format_rect.left;
-                    r16->top    = es->format_rect.top;
-                    r16->right  = es->format_rect.right;
-                    r16->bottom = es->format_rect.bottom;
-                }
-		break;
 	case EM_GETRECT:
 		if (lParam)
 			CopyRect((LPRECT)lParam, &es->format_rect);
 		break;
 
-	case EM_SETRECT16:
-		if ((es->style & ES_MULTILINE) && lParam) {
-			RECT rc;
-			RECT16 *r16 = MapSL(lParam);
-			rc.left   = r16->left;
-			rc.top    = r16->top;
-			rc.right  = r16->right;
-			rc.bottom = r16->bottom;
-			EDIT_SetRectNP(es, &rc);
-			EDIT_UpdateText(es, NULL, TRUE);
-		}
-		break;
 	case EM_SETRECT:
 		if ((es->style & ES_MULTILINE) && lParam) {
 			EDIT_SetRectNP(es, (LPRECT)lParam);
@@ -4814,47 +4737,28 @@ static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
 		}
 		break;
 
-	case EM_SETRECTNP16:
-		if ((es->style & ES_MULTILINE) && lParam) {
-			RECT rc;
-			RECT16 *r16 = MapSL(lParam);
-			rc.left   = r16->left;
-			rc.top    = r16->top;
-			rc.right  = r16->right;
-			rc.bottom = r16->bottom;
-			EDIT_SetRectNP(es, &rc);
-		}
-		break;
 	case EM_SETRECTNP:
 		if ((es->style & ES_MULTILINE) && lParam)
 			EDIT_SetRectNP(es, (LPRECT)lParam);
 		break;
 
-	case EM_SCROLL16:
 	case EM_SCROLL:
 		result = EDIT_EM_Scroll(es, (INT)wParam);
                 break;
 
-	case EM_LINESCROLL16:
-		wParam = (WPARAM)(INT)(SHORT)HIWORD(lParam);
-		lParam = (LPARAM)(INT)(SHORT)LOWORD(lParam);
-		/* fall through */
 	case EM_LINESCROLL:
 		result = (LRESULT)EDIT_EM_LineScroll(es, (INT)wParam, (INT)lParam);
 		break;
 
-	case EM_SCROLLCARET16:
 	case EM_SCROLLCARET:
 		EDIT_EM_ScrollCaret(es);
 		result = 1;
 		break;
 
-	case EM_GETMODIFY16:
 	case EM_GETMODIFY:
 		result = ((es->flags & EF_MODIFIED) != 0);
 		break;
 
-	case EM_SETMODIFY16:
 	case EM_SETMODIFY:
 		if (wParam)
 			es->flags |= EF_MODIFIED;
@@ -4862,60 +4766,39 @@ static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
                         es->flags &= ~(EF_MODIFIED | EF_UPDATE);  /* reset pending updates */
 		break;
 
-	case EM_GETLINECOUNT16:
 	case EM_GETLINECOUNT:
 		result = (es->style & ES_MULTILINE) ? es->line_count : 1;
 		break;
 
-	case EM_LINEINDEX16:
-		if ((INT16)wParam == -1)
-			wParam = (WPARAM)-1;
-		/* fall through */
 	case EM_LINEINDEX:
 		result = (LRESULT)EDIT_EM_LineIndex(es, (INT)wParam);
 		break;
 
-	case EM_SETHANDLE16:
-		EDIT_EM_SetHandle16(es, (HLOCAL16)wParam);
-		break;
 	case EM_SETHANDLE:
 		EDIT_EM_SetHandle(es, (HLOCAL)wParam);
 		break;
 
-	case EM_GETHANDLE16:
-		result = (LRESULT)EDIT_EM_GetHandle16(es);
-		break;
 	case EM_GETHANDLE:
 		result = (LRESULT)EDIT_EM_GetHandle(es);
 		break;
 
-	case EM_GETTHUMB16:
 	case EM_GETTHUMB:
 		result = EDIT_EM_GetThumb(es);
 		break;
 
 	/* these messages missing from specs */
-	case WM_USER+15:
 	case 0x00bf:
-	case WM_USER+16:
 	case 0x00c0:
-	case WM_USER+19:
 	case 0x00c3:
-	case WM_USER+26:
 	case 0x00ca:
 		FIXME("undocumented message 0x%x, please report\n", msg);
 		result = DefWindowProcW(hwnd, msg, wParam, lParam);
 		break;
 
-	case EM_LINELENGTH16:
 	case EM_LINELENGTH:
 		result = (LRESULT)EDIT_EM_LineLength(es, (INT)wParam);
 		break;
 
-	case EM_REPLACESEL16:
-		lParam = (LPARAM)MapSL(lParam);
-		unicode = FALSE;  /* 16-bit message is always ascii */
-		/* fall through */
 	case EM_REPLACESEL:
 	{
 		LPWSTR textW;
@@ -4938,50 +4821,35 @@ static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
 		break;
 	}
 
-	case EM_GETLINE16:
-		lParam = (LPARAM)MapSL(lParam);
-		unicode = FALSE;  /* 16-bit message is always ascii */
-		/* fall through */
 	case EM_GETLINE:
 		result = (LRESULT)EDIT_EM_GetLine(es, (INT)wParam, (LPWSTR)lParam, unicode);
 		break;
 
-	case EM_LIMITTEXT16:
 	case EM_SETLIMITTEXT:
 		EDIT_EM_SetLimitText(es, wParam);
 		break;
 
-	case EM_CANUNDO16:
 	case EM_CANUNDO:
 		result = (LRESULT)EDIT_EM_CanUndo(es);
 		break;
 
-	case EM_UNDO16:
 	case EM_UNDO:
 	case WM_UNDO:
 		result = (LRESULT)EDIT_EM_Undo(es);
 		break;
 
-	case EM_FMTLINES16:
 	case EM_FMTLINES:
 		result = (LRESULT)EDIT_EM_FmtLines(es, (BOOL)wParam);
 		break;
 
-	case EM_LINEFROMCHAR16:
 	case EM_LINEFROMCHAR:
 		result = (LRESULT)EDIT_EM_LineFromChar(es, (INT)wParam);
 		break;
 
-	case EM_SETTABSTOPS16:
-		result = (LRESULT)EDIT_EM_SetTabStops16(es, (INT)wParam, MapSL(lParam));
-		break;
 	case EM_SETTABSTOPS:
 		result = (LRESULT)EDIT_EM_SetTabStops(es, (INT)wParam, (LPINT)lParam);
 		break;
 
-	case EM_SETPASSWORDCHAR16:
-		unicode = FALSE;  /* 16-bit message is always ascii */
-		/* fall through */
 	case EM_SETPASSWORDCHAR:
 	{
 		WCHAR charW = 0;
@@ -4998,19 +4866,14 @@ static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
 		break;
 	}
 
-	case EM_EMPTYUNDOBUFFER16:
 	case EM_EMPTYUNDOBUFFER:
 		EDIT_EM_EmptyUndoBuffer(es);
 		break;
 
-	case EM_GETFIRSTVISIBLELINE16:
-		result = es->y_offset;
-		break;
 	case EM_GETFIRSTVISIBLELINE:
 		result = (es->style & ES_MULTILINE) ? es->y_offset : es->x_offset;
 		break;
 
-	case EM_SETREADONLY16:
 	case EM_SETREADONLY:
 	{
 		DWORD old_style = es->style;
@@ -5032,23 +4895,14 @@ static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
 		break;
 	}
 
-	case EM_SETWORDBREAKPROC16:
-		EDIT_EM_SetWordBreakProc16(es, (EDITWORDBREAKPROC16)lParam);
-		break;
 	case EM_SETWORDBREAKPROC:
 		EDIT_EM_SetWordBreakProc(es, (void *)lParam);
 		break;
 
-	case EM_GETWORDBREAKPROC16:
-                result = (LRESULT)get_word_break_thunk( es->word_break_proc );
-		break;
 	case EM_GETWORDBREAKPROC:
 		result = (LRESULT)es->word_break_proc;
 		break;
 
-	case EM_GETPASSWORDCHAR16:
-		unicode = FALSE;  /* 16-bit message is always ascii */
-		/* fall through */
 	case EM_GETPASSWORDCHAR:
 	{
 		if(unicode)
@@ -5062,8 +4916,6 @@ static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
 		}
 		break;
 	}
-
-	/* The following EM_xxx are new to win95 and don't exist for 16 bit */
 
 	case EM_SETMARGINS:
 		EDIT_EM_SetMargins(es, (INT)wParam, LOWORD(lParam), HIWORD(lParam), TRUE);
@@ -5389,13 +5241,141 @@ static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
 	return result;
 }
 
+
+/*********************************************************************
+ *	EditWndProc_wrapper16
+ */
+static LRESULT EditWndProc_wrapper16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
+{
+    static const UINT msg16_offset = EM_GETSEL16 - EM_GETSEL;
+    LRESULT result;
+
+    switch (msg)
+    {
+    case EM_SCROLL16:
+    case EM_SCROLLCARET16:
+    case EM_GETMODIFY16:
+    case EM_SETMODIFY16:
+    case EM_GETLINECOUNT16:
+    case EM_GETTHUMB16:
+    case EM_LINELENGTH16:
+    case EM_LIMITTEXT16:
+    case EM_CANUNDO16:
+    case EM_UNDO16:
+    case EM_FMTLINES16:
+    case EM_LINEFROMCHAR16:
+    case EM_SETPASSWORDCHAR16:
+    case EM_EMPTYUNDOBUFFER16:
+    case EM_SETREADONLY16:
+    case EM_GETPASSWORDCHAR16:
+	/* these messages missing from specs */
+    case WM_USER+15:
+    case WM_USER+16:
+    case WM_USER+19:
+    case WM_USER+26:
+        msg -= msg16_offset;
+        break;
+    case EM_GETSEL16:
+        wParam = 0;
+        lParam = 0;
+        msg -= msg16_offset;
+        break;
+    case EM_REPLACESEL16:
+    case EM_GETLINE16:
+        lParam = (LPARAM)MapSL(lParam);
+        msg -= msg16_offset;
+        break;
+    case EM_LINESCROLL16:
+        wParam = (INT)(SHORT)HIWORD(lParam);
+        lParam = (INT)(SHORT)LOWORD(lParam);
+        msg -= msg16_offset;
+        break;
+    case EM_LINEINDEX16:
+        if ((INT16)wParam == -1) wParam = (WPARAM)-1;
+        msg -= msg16_offset;
+        break;
+    case EM_SETSEL16:
+        if ((short)LOWORD(lParam) == -1)
+        {
+            wParam = -1;
+            lParam = 0;
+        }
+        else
+        {
+            wParam = LOWORD(lParam);
+            lParam = HIWORD(lParam);
+        }
+        msg -= msg16_offset;
+        break;
+    case EM_GETRECT16:
+        if (lParam)
+        {
+            RECT rect;
+            RECT16 *r16 = MapSL(lParam);
+            EditWndProc_common( hwnd, msg - msg16_offset, wParam, (LPARAM)&rect, FALSE );
+            r16->left   = rect.left;
+            r16->top    = rect.top;
+            r16->right  = rect.right;
+            r16->bottom = rect.bottom;
+        }
+        return 0;
+    case EM_SETRECT16:
+    case EM_SETRECTNP16:
+        if (lParam)
+        {
+            RECT rect;
+            RECT16 *r16 = MapSL(lParam);
+            rect.left   = r16->left;
+            rect.top    = r16->top;
+            rect.right  = r16->right;
+            rect.bottom = r16->bottom;
+            EditWndProc_common( hwnd, msg - msg16_offset, wParam, (LPARAM)&rect, FALSE );
+        }
+        return 0;
+    case EM_SETHANDLE16:
+        EDIT_EM_SetHandle16( hwnd, (HLOCAL16)wParam );
+        break;
+    case EM_GETHANDLE16:
+        result = EDIT_EM_GetHandle16( hwnd );
+        break;
+    case EM_SETTABSTOPS16:
+    {
+        INT16 *tabs16 = MapSL(lParam);
+        INT i, count = wParam, *tabs = NULL;
+        if (count > 0)
+        {
+            if (!(tabs = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*tabs) ))) return 0;
+            for (i = 0; i < count; i++) tabs[i] = tabs16[i];
+        }
+        result = EditWndProc_common( hwnd, msg - msg16_offset, count, (LPARAM)tabs, FALSE );
+        HeapFree( GetProcessHeap(), 0, tabs );
+        return result;
+    }
+    case EM_GETFIRSTVISIBLELINE16:
+        if (!(GetWindowLongW( hwnd, GWL_STYLE ) & ES_MULTILINE)) return 0;
+        msg -= msg16_offset;
+        break;
+    case EM_SETWORDBREAKPROC16:
+    {
+        struct word_break_thunk *thunk = add_word_break_thunk( (EDITWORDBREAKPROC16)lParam );
+        return EditWndProc_common( hwnd, EM_SETWORDBREAKPROC, wParam, (LPARAM)thunk, FALSE );
+    }
+    case EM_GETWORDBREAKPROC16:
+        result = EditWndProc_common( hwnd, EM_GETWORDBREAKPROC, wParam, lParam, FALSE );
+        return (LRESULT)get_word_break_thunk( (EDITWORDBREAKPROCA)result );
+    default:
+        return EditWndProc_common( hwnd, msg, wParam, lParam, unicode );
+    }
+    return EditWndProc_common( hwnd, msg, wParam, lParam, FALSE );
+}
+
 /*********************************************************************
  *
  *	EditWndProc   (USER32.@)
  */
 LRESULT WINAPI EditWndProcA(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    return EditWndProc_common(hWnd, uMsg, wParam, lParam, FALSE);
+    return EditWndProc_wrapper16(hWnd, uMsg, wParam, lParam, FALSE);
 }
 
 /*********************************************************************
@@ -5404,7 +5384,7 @@ LRESULT WINAPI EditWndProcA(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT WINAPI EditWndProcW(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    return EditWndProc_common(hWnd, uMsg, wParam, lParam, TRUE);
+    return EditWndProc_wrapper16(hWnd, uMsg, wParam, lParam, TRUE);
 }
 
 /*********************************************************************
