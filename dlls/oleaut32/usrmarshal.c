@@ -763,6 +763,26 @@ static inline SF_TYPE SAFEARRAY_GetUnionType(SAFEARRAY *psa)
     }
 }
 
+static DWORD elem_wire_size(LPSAFEARRAY lpsa, SF_TYPE sftype)
+{
+    if (sftype == SF_BSTR)
+        return sizeof(DWORD);
+    else if (sftype == SF_VARIANT)
+        return sizeof(variant_wire_t) - sizeof(DWORD);
+    else
+        return lpsa->cbElements;
+}
+
+static DWORD elem_mem_size(wireSAFEARRAY wiresa, SF_TYPE sftype)
+{
+    if (sftype == SF_BSTR)
+        return sizeof(BSTR);
+    else if (sftype == SF_VARIANT)
+        return sizeof(VARIANT);
+    else
+        return wiresa->cbElements;
+}
+
 ULONG WINAPI LPSAFEARRAY_UserSize(ULONG *pFlags, ULONG StartingSize, LPSAFEARRAY *ppsa)
 {
     ULONG size = StartingSize;
@@ -868,13 +888,15 @@ unsigned char * WINAPI LPSAFEARRAY_UserMarshal(ULONG *pFlags, unsigned char *Buf
         SF_TYPE sftype;
         GUID guid;
 
+        sftype = SAFEARRAY_GetUnionType(psa);
+
         *(ULONG *)Buffer = psa->cDims;
         Buffer += sizeof(ULONG);
         *(USHORT *)Buffer = psa->cDims;
         Buffer += sizeof(USHORT);
         *(USHORT *)Buffer = psa->fFeatures;
         Buffer += sizeof(USHORT);
-        *(ULONG *)Buffer = psa->cbElements;
+        *(ULONG *)Buffer = elem_wire_size(psa, sftype);
         Buffer += sizeof(ULONG);
 
         hr = SafeArrayGetVartype(psa, &vt);
@@ -883,7 +905,6 @@ unsigned char * WINAPI LPSAFEARRAY_UserMarshal(ULONG *pFlags, unsigned char *Buf
         *(ULONG *)Buffer = (USHORT)psa->cLocks | (vt << 16);
         Buffer += sizeof(ULONG);
 
-        sftype = SAFEARRAY_GetUnionType(psa);
         *(ULONG *)Buffer = sftype;
         Buffer += sizeof(ULONG);
 
@@ -1043,7 +1064,7 @@ unsigned char * WINAPI LPSAFEARRAY_UserUnmarshal(ULONG *pFlags, unsigned char *B
     (*ppsa)->fFeatures &= FADF_AUTOSETFLAGS;
     (*ppsa)->fFeatures |= (wiresa->fFeatures & ~(FADF_AUTOSETFLAGS));
     /* FIXME: there should be a limit on how large wiresa->cbElements can be */
-    (*ppsa)->cbElements = wiresa->cbElements;
+    (*ppsa)->cbElements = elem_mem_size(wiresa, sftype);
     (*ppsa)->cLocks = LOWORD(wiresa->cLocks);
 
     /* SafeArrayCreateEx allocates the data for us, but
