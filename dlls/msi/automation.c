@@ -1799,6 +1799,34 @@ done:
     return hr;
 }
 
+static HRESULT InstallerImpl_Version(WORD wFlags,
+                                     VARIANT* pVarResult,
+                                     EXCEPINFO* pExcepInfo,
+                                     UINT* puArgErr)
+{
+    HRESULT hr;
+    DLLVERSIONINFO verinfo;
+    WCHAR version[MAX_PATH];
+
+    static const WCHAR format[] = {
+        '%','d','.','%','d','.','%','d','.','%','d',0};
+
+    if (!(wFlags & DISPATCH_PROPERTYGET))
+        return DISP_E_MEMBERNOTFOUND;
+
+    verinfo.cbSize = sizeof(DLLVERSIONINFO);
+    hr = DllGetVersion(&verinfo);
+    if (FAILED(hr))
+        return hr;
+
+    sprintfW(version, format, verinfo.dwMajorVersion, verinfo.dwMinorVersion,
+             verinfo.dwBuildNumber, verinfo.dwPlatformID);
+
+    V_VT(pVarResult) = VT_BSTR;
+    V_BSTR(pVarResult) = SysAllocString(version);
+    return S_OK;
+}
+
 static HRESULT InstallerImpl_LastErrorRecord(WORD wFlags,
                                              DISPPARAMS* pDispParams,
                                              VARIANT* pVarResult,
@@ -1933,24 +1961,8 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                                                 puArgErr);
 
         case DISPID_INSTALLER_VERSION:
-            if (wFlags & DISPATCH_PROPERTYGET) {
-                DLLVERSIONINFO verinfo;
-                WCHAR version[MAX_PATH];
-
-                static const WCHAR format[] = {'%','d','.','%','d','.','%','d','.','%','d',0};
-
-                verinfo.cbSize = sizeof(DLLVERSIONINFO);
-                hr = DllGetVersion(&verinfo);
-                if (FAILED(hr)) return hr;
-
-                sprintfW(version, format, verinfo.dwMajorVersion, verinfo.dwMinorVersion,
-                         verinfo.dwBuildNumber, verinfo.dwPlatformID);
-
-                V_VT(pVarResult) = VT_BSTR;
-                V_BSTR(pVarResult) = SysAllocString(version);
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_Version(wFlags, pVarResult,
+                                         pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_LASTERRORRECORD:
             return InstallerImpl_LastErrorRecord(wFlags, pDispParams,
