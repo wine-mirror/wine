@@ -498,6 +498,7 @@ static HRESULT DXDiag_InitDXDiagDisplayContainer(IDxDiagContainer* pSubCont)
     hr = IDxDiagContainerImpl_AddChildContainer( pSubCont, szAdapterID, pDisplayAdapterSubCont );
     if (FAILED( hr )) return hr;
 
+    disp_dev.cb = sizeof(disp_dev);
     if (EnumDisplayDevicesW( NULL, 0, &disp_dev, 0 ))
     {
         add_prop_str( pDisplayAdapterSubCont, szDeviceName, disp_dev.DeviceName );
