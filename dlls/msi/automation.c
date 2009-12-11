@@ -1711,6 +1711,43 @@ static HRESULT InstallerImpl_SummaryInformation(WORD wFlags,
     return S_OK;
 }
 
+static HRESULT InstallerImpl_UILevel(WORD wFlags,
+                                     DISPPARAMS* pDispParams,
+                                     VARIANT* pVarResult,
+                                     EXCEPINFO* pExcepInfo,
+                                     UINT* puArgErr)
+{
+    HRESULT hr;
+    VARIANTARG varg0;
+    INSTALLUILEVEL ui;
+
+    if (!(wFlags & DISPATCH_PROPERTYPUT) && !(wFlags & DISPATCH_PROPERTYGET))
+        return DISP_E_MEMBERNOTFOUND;
+
+    if (wFlags & DISPATCH_PROPERTYPUT)
+    {
+        VariantInit(&varg0);
+        hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+        if (FAILED(hr))
+            return hr;
+
+        ui = MsiSetInternalUI(V_I4(&varg0), NULL);
+        if (ui == INSTALLUILEVEL_NOCHANGE)
+            return DISP_E_EXCEPTION;
+    }
+    else if (wFlags & DISPATCH_PROPERTYGET)
+    {
+        ui = MsiSetInternalUI(INSTALLUILEVEL_NOCHANGE, NULL);
+        if (ui == INSTALLUILEVEL_NOCHANGE)
+            return DISP_E_EXCEPTION;
+
+        V_VT(pVarResult) = VT_I4;
+        V_I4(pVarResult) = ui;
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI InstallerImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
@@ -1728,7 +1765,6 @@ static HRESULT WINAPI InstallerImpl_Invoke(
     HRESULT hr;
     LPWSTR szString = NULL;
     DWORD dwSize = 0;
-    INSTALLUILEVEL ui;
 
     VariantInit(&varg0);
     VariantInit(&varg1);
@@ -1758,29 +1794,8 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                                                     puArgErr);
 
         case DISPID_INSTALLER_UILEVEL:
-            if (wFlags & DISPATCH_PROPERTYPUT)
-            {
-                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
-                if (FAILED(hr)) return hr;
-                if ((ui = MsiSetInternalUI(V_I4(&varg0), NULL) == INSTALLUILEVEL_NOCHANGE))
-                {
-                    ERR("MsiSetInternalUI failed\n");
-                    return DISP_E_EXCEPTION;
-                }
-            }
-            else if (wFlags & DISPATCH_PROPERTYGET)
-            {
-                if ((ui = MsiSetInternalUI(INSTALLUILEVEL_NOCHANGE, NULL) == INSTALLUILEVEL_NOCHANGE))
-                {
-                    ERR("MsiSetInternalUI failed\n");
-                    return DISP_E_EXCEPTION;
-                }
-
-                V_VT(pVarResult) = VT_I4;
-                V_I4(pVarResult) = ui;
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_UILevel(wFlags, pDispParams,
+                                         pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_ENABLELOG:
             if (wFlags & DISPATCH_METHOD)
