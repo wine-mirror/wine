@@ -1748,6 +1748,96 @@ static HRESULT InstallerImpl_UILevel(WORD wFlags,
     return S_OK;
 }
 
+static HRESULT InstallerImpl_EnableLog(WORD wFlags,
+                                       DISPPARAMS* pDispParams,
+                                       VARIANT* pVarResult,
+                                       EXCEPINFO* pExcepInfo,
+                                       UINT* puArgErr)
+{
+    if (!(wFlags & DISPATCH_METHOD))
+        return DISP_E_MEMBERNOTFOUND;
+
+    FIXME("\n");
+
+    VariantInit(pVarResult);
+    return S_OK;
+}
+
+static HRESULT InstallerImpl_LastErrorRecord(WORD wFlags,
+                                             DISPPARAMS* pDispParams,
+                                             VARIANT* pVarResult,
+                                             EXCEPINFO* pExcepInfo,
+                                             UINT* puArgErr)
+{
+    if (!(wFlags & DISPATCH_METHOD))
+        return DISP_E_MEMBERNOTFOUND;
+
+    FIXME("\n");
+
+    VariantInit(pVarResult);
+    return S_OK;
+}
+
+static HRESULT InstallerImpl_Environment(WORD wFlags,
+                                         DISPPARAMS* pDispParams,
+                                         VARIANT* pVarResult,
+                                         EXCEPINFO* pExcepInfo,
+                                         UINT* puArgErr)
+{
+    if (!(wFlags & DISPATCH_METHOD))
+        return DISP_E_MEMBERNOTFOUND;
+
+    FIXME("\n");
+
+    VariantInit(pVarResult);
+    return S_OK;
+}
+
+static HRESULT InstallerImpl_FileAttributes(WORD wFlags,
+                                            DISPPARAMS* pDispParams,
+                                            VARIANT* pVarResult,
+                                            EXCEPINFO* pExcepInfo,
+                                            UINT* puArgErr)
+{
+    if (!(wFlags & DISPATCH_METHOD))
+        return DISP_E_MEMBERNOTFOUND;
+
+    FIXME("\n");
+
+    VariantInit(pVarResult);
+    return S_OK;
+}
+
+static HRESULT InstallerImpl_FileSize(WORD wFlags,
+                                      DISPPARAMS* pDispParams,
+                                      VARIANT* pVarResult,
+                                      EXCEPINFO* pExcepInfo,
+                                      UINT* puArgErr)
+{
+    if (!(wFlags & DISPATCH_METHOD))
+        return DISP_E_MEMBERNOTFOUND;
+
+    FIXME("\n");
+
+    VariantInit(pVarResult);
+    return S_OK;
+}
+
+static HRESULT InstallerImpl_FileVersion(WORD wFlags,
+                                         DISPPARAMS* pDispParams,
+                                         VARIANT* pVarResult,
+                                         EXCEPINFO* pExcepInfo,
+                                         UINT* puArgErr)
+{
+    if (!(wFlags & DISPATCH_METHOD))
+        return DISP_E_MEMBERNOTFOUND;
+
+    FIXME("\n");
+
+    VariantInit(pVarResult);
+    return S_OK;
+}
+
 static HRESULT WINAPI InstallerImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
@@ -1798,13 +1888,8 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                                          pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_ENABLELOG:
-            if (wFlags & DISPATCH_METHOD)
-            {
-                VariantInit(pVarResult);
-                FIXME("Unhandled method: EnableLog");
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_EnableLog(wFlags, pDispParams,
+                                           pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_INSTALLPRODUCT:
             if (wFlags & DISPATCH_METHOD)
@@ -1849,13 +1934,9 @@ static HRESULT WINAPI InstallerImpl_Invoke(
             break;
 
         case DISPID_INSTALLER_LASTERRORRECORD:
-            if (wFlags & DISPATCH_METHOD)
-            {
-                VariantInit(pVarResult);
-                FIXME("Unhandled method: LastErrorRecord");
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_LastErrorRecord(wFlags, pDispParams,
+                                                 pVarResult, pExcepInfo,
+                                                 puArgErr);
 
         case DISPID_INSTALLER_REGISTRYVALUE:
             if (wFlags & DISPATCH_METHOD) {
@@ -1952,40 +2033,21 @@ static HRESULT WINAPI InstallerImpl_Invoke(
             break;
 
         case DISPID_INSTALLER_ENVIRONMENT:
-            if (wFlags & DISPATCH_PROPERTYGET || wFlags & DISPATCH_PROPERTYPUT)
-            {
-                VariantInit(pVarResult);
-                FIXME("Unhandled property: Environment");
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_Environment(wFlags, pDispParams,
+                                             pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_FILEATTRIBUTES:
-            if (wFlags & DISPATCH_METHOD)
-            {
-                VariantInit(pVarResult);
-                FIXME("Unhandled method: FileAttributes");
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_FileAttributes(wFlags, pDispParams,
+                                                pVarResult, pExcepInfo,
+                                                puArgErr);
 
         case DISPID_INSTALLER_FILESIZE:
-            if (wFlags & DISPATCH_METHOD)
-            {
-                VariantInit(pVarResult);
-                FIXME("Unhandled method: FileSize");
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_FileSize(wFlags, pDispParams,
+                                          pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_FILEVERSION:
-            if (wFlags & DISPATCH_METHOD)
-            {
-                VariantInit(pVarResult);
-                FIXME("Unhandled method: FileVersion");
-            }
-            else return DISP_E_MEMBERNOTFOUND;
-            break;
+            return InstallerImpl_FileVersion(wFlags, pDispParams,
+                                             pVarResult, pExcepInfo, puArgErr);
 
         case DISPID_INSTALLER_PRODUCTSTATE:
             if (wFlags & DISPATCH_PROPERTYGET) {
