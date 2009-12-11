@@ -461,7 +461,6 @@ static LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg,
         InvalidateRect( hWnd, NULL, FALSE );
         break;
 
-    case BM_SETSTYLE16:
     case BM_SETSTYLE:
         if ((wParam & 0x0f) >= MAX_BTN_TYPE) break;
         btn_type = wParam & 0x0f;
@@ -499,11 +498,9 @@ static LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg,
     case BM_GETIMAGE:
         return GetWindowLongPtrW( hWnd, HIMAGE_GWL_OFFSET );
 
-    case BM_GETCHECK16:
     case BM_GETCHECK:
         return get_button_state( hWnd ) & 3;
 
-    case BM_SETCHECK16:
     case BM_SETCHECK:
         if (wParam > maxCheckState[btn_type]) wParam = maxCheckState[btn_type];
         state = get_button_state( hWnd );
@@ -522,11 +519,9 @@ static LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg,
             BUTTON_CheckAutoRadioButton( hWnd );
         break;
 
-    case BM_GETSTATE16:
     case BM_GETSTATE:
         return get_button_state( hWnd );
 
-    case BM_SETSTATE16:
     case BM_SETSTATE:
         state = get_button_state( hWnd );
         if (wParam)
@@ -553,15 +548,32 @@ static LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg,
 }
 
 /***********************************************************************
+ *           ButtonWndProc_wrapper16
+ */
+static LRESULT ButtonWndProc_wrapper16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
+{
+    static const UINT msg16_offset = BM_GETCHECK16 - BM_GETCHECK;
+
+    switch (msg)
+    {
+    case BM_GETCHECK16:
+    case BM_SETCHECK16:
+    case BM_GETSTATE16:
+    case BM_SETSTATE16:
+    case BM_SETSTYLE16:
+        return ButtonWndProc_common( hwnd, msg - msg16_offset, wParam, lParam, FALSE );
+    default:
+        return ButtonWndProc_common( hwnd, msg, wParam, lParam, unicode );
+    }
+}
+
+/***********************************************************************
  *           ButtonWndProcW
- * The button window procedure. This is just a wrapper which locks
- * the passed HWND and calls the real window procedure (with a WND*
- * pointer pointing to the locked windowstructure).
  */
 static LRESULT WINAPI ButtonWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
     if (!IsWindow( hWnd )) return 0;
-    return ButtonWndProc_common( hWnd, uMsg, wParam, lParam, TRUE );
+    return ButtonWndProc_wrapper16( hWnd, uMsg, wParam, lParam, TRUE );
 }
 
 
@@ -571,7 +583,7 @@ static LRESULT WINAPI ButtonWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 static LRESULT WINAPI ButtonWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
     if (!IsWindow( hWnd )) return 0;
-    return ButtonWndProc_common( hWnd, uMsg, wParam, lParam, FALSE );
+    return ButtonWndProc_wrapper16( hWnd, uMsg, wParam, lParam, FALSE );
 }
 
 
