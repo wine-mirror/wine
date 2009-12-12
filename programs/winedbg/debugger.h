@@ -94,7 +94,7 @@ enum dbg_internal_types
 struct dbg_type
 {
     unsigned long       id;
-    DWORD               module;
+    DWORD_PTR           module;
 };
 
 struct dbg_lvalue       /* structure to hold left-values... */
