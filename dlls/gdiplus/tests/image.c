@@ -465,6 +465,7 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     const REAL HEIGHT2 = 20;
     HDC hdc;
     BITMAPINFO bmi;
+    BYTE *bits;
 
     stat = GdipCreateBitmapFromHBITMAP(NULL, NULL, NULL);
     expect(InvalidParameter, stat);
@@ -504,8 +505,10 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     bmi.bmiHeader.biPlanes = 1;
     bmi.bmiHeader.biCompression = BI_RGB;
 
-    hbm = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, NULL, NULL, 0);
+    hbm = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(hbm != NULL, "CreateDIBSection failed\n");
+
+    bits[0] = 0;
 
     stat = GdipCreateBitmapFromHBITMAP(hbm, NULL, &gpbm);
     expect(Ok, stat);
@@ -513,7 +516,15 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     expectf(WIDTH1,  width);
     expectf(HEIGHT1, height);
     if (stat == Ok)
+    {
+        /* test whether writing to the bitmap affects the original */
+        stat = GdipBitmapSetPixel(gpbm, 0, 0, 0xffffffff);
+        expect(Ok, stat);
+
+        expect(0, bits[0]);
+
         GdipDisposeImage((GpImage*)gpbm);
+    }
 
     LogPal = GdipAlloc(sizeof(LOGPALETTE));
     ok(LogPal != NULL, "unable to allocate LOGPALETTE\n");

@@ -2659,7 +2659,8 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
     BITMAP bm;
     GpStatus retval;
     PixelFormat format;
-    BYTE* bits;
+    BitmapData lockeddata;
+    INT y;
 
     TRACE("%p %p %p\n", hbm, hpal, bitmap);
 
@@ -2700,16 +2701,32 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
             return InvalidParameter;
     }
 
-    if (bm.bmBits)
-        bits = (BYTE*)bm.bmBits + (bm.bmHeight - 1) * bm.bmWidthBytes;
-    else
-    {
-        FIXME("can only get image data from DIB sections\n");
-        bits = NULL;
-    }
+    retval = GdipCreateBitmapFromScan0(bm.bmWidth, bm.bmHeight, 0,
+        format, NULL, bitmap);
 
-    retval = GdipCreateBitmapFromScan0(bm.bmWidth, bm.bmHeight, -bm.bmWidthBytes,
-        format, bits, bitmap);
+    if (retval == Ok)
+    {
+        retval = GdipBitmapLockBits(*bitmap, NULL, ImageLockModeWrite,
+            format, &lockeddata);
+        if (retval == Ok)
+        {
+            if (bm.bmBits)
+            {
+                for (y=0; y<bm.bmHeight; y++)
+                {
+                    memcpy((BYTE*)lockeddata.Scan0+lockeddata.Stride*y,
+                           (BYTE*)bm.bmBits+bm.bmWidthBytes*(bm.bmHeight-1-y),
+                           bm.bmWidthBytes);
+                }
+            }
+            else
+            {
+                FIXME("can only get image data from DIB sections\n");
+            }
+
+            GdipBitmapUnlockBits(*bitmap, &lockeddata);
+        }
+    }
 
     return retval;
 }
