@@ -152,9 +152,9 @@ struct info_module
 
 static void module_print_info(const IMAGEHLP_MODULE64* mi, BOOL is_embedded)
 {
-    dbg_printf("%8s-%8s\t%-16s%s\n",
-               wine_dbgstr_longlong(mi->BaseOfImage),
-               wine_dbgstr_longlong(mi->BaseOfImage + mi->ImageSize),
+    dbg_printf("%*.*s-%*.*s\t%-16s%s\n",
+               ADDRWIDTH, ADDRWIDTH, wine_dbgstr_longlong(mi->BaseOfImage),
+               ADDRWIDTH, ADDRWIDTH, wine_dbgstr_longlong(mi->BaseOfImage + mi->ImageSize),
                is_embedded ? "\\" : get_symtype_str(mi), mi->ModuleName);
 }
 
@@ -221,7 +221,8 @@ void info_win32_module(DWORD64 base)
 
     qsort(im.mi, im.num_used, sizeof(im.mi[0]), module_compare);
 
-    dbg_printf("Module\tAddress\t\t\tDebug info\tName (%d modules)\n", im.num_used);
+    dbg_printf("Module\tAddress\t\t\t%sDebug info\tName (%d modules)\n",
+	       ADDRWIDTH == 16 ? "\t\t" : "", im.num_used);
 
     for (i = 0; i < im.num_used; i++)
     {
@@ -370,10 +371,10 @@ static void info_window(HWND hWnd, int indent)
         if (!GetWindowTextA(hWnd, wndName, sizeof(wndName)))
             strcpy(wndName, "-- Empty --");
 
-        dbg_printf("%*s%08lx%*s %-17.17s %08x %08lx %08x %.14s\n",
+        dbg_printf("%*s%08lx%*s %-17.17s %08x %0*lx %08x %.14s\n",
                    indent, "", (DWORD_PTR)hWnd, 12 - indent, "",
                    clsName, GetWindowLongW(hWnd, GWL_STYLE),
-                   (ULONG_PTR)GetWindowLongPtrW(hWnd, GWLP_WNDPROC),
+                   ADDRWIDTH, (ULONG_PTR)GetWindowLongPtrW(hWnd, GWLP_WNDPROC),
                    GetWindowThreadProcessId(hWnd, NULL), wndName);
 
         if ((child = GetWindow(hWnd, GW_CHILD)) != 0)
@@ -393,8 +394,9 @@ void info_win32_window(HWND hWnd, BOOL detailed)
 
     if (!detailed)
     {
-        dbg_printf("%-20.20s %-17.17s %-8.8s %-8.8s %-8.8s %s\n",
-                   "Window handle", "Class Name", "Style", "WndProc", "Thread", "Text");
+        dbg_printf("%-20.20s %-17.17s %-8.8s %-*.*s %-8.8s %s\n",
+                   "Window handle", "Class Name", "Style",
+		   ADDRWIDTH, ADDRWIDTH, "WndProc", "Thread", "Text");
         info_window(hWnd, 0);
         return;
     }
@@ -412,7 +414,7 @@ void info_win32_window(HWND hWnd, BOOL detailed)
     /* FIXME missing fields: hmemTaskQ, hrgnUpdate, dce, flags, pProp, scroll */
     dbg_printf("next=%p  child=%p  parent=%p  owner=%p  class='%s'\n"
                "inst=%p  active=%p  idmenu=%08lx\n"
-               "style=0x%08x  exstyle=0x%08x  wndproc=0x%08lx  text='%s'\n"
+               "style=0x%08x  exstyle=0x%08x  wndproc=%p  text='%s'\n"
                "client=%d,%d-%d,%d  window=%d,%d-%d,%d sysmenu=%p\n",
                GetWindow(hWnd, GW_HWNDNEXT),
                GetWindow(hWnd, GW_CHILD),
@@ -424,7 +426,7 @@ void info_win32_window(HWND hWnd, BOOL detailed)
                (ULONG_PTR)GetWindowLongPtrW(hWnd, GWLP_ID),
                GetWindowLongW(hWnd, GWL_STYLE),
                GetWindowLongW(hWnd, GWL_EXSTYLE),
-               (ULONG_PTR)GetWindowLongPtrW(hWnd, GWLP_WNDPROC),
+               (void*)GetWindowLongPtrW(hWnd, GWLP_WNDPROC),
                wndName,
                clientRect.left, clientRect.top, clientRect.right, clientRect.bottom,
                windowRect.left, windowRect.top, windowRect.right, windowRect.bottom,

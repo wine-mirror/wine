@@ -1510,10 +1510,11 @@ static void packet_query_monitor_wnd_helper(struct gdb_context* gdbctx, HWND hWn
        packet_reply_open(gdbctx);
        packet_reply_catc(gdbctx, 'O');
        snprintf(buffer, sizeof(buffer),
-                "%*s%04lx%*s%-17.17s %08x %08lx %.14s\n",
+                "%*s%04lx%*s%-17.17s %08x %0*lx %.14s\n",
                 indent, "", (ULONG_PTR)hWnd, 13 - indent, "",
                 clsName, GetWindowLongW(hWnd, GWL_STYLE),
-                (ULONG_PTR)GetWindowLongPtrW(hWnd, GWLP_WNDPROC), wndName);
+                ADDRWIDTH, (ULONG_PTR)GetWindowLongPtrW(hWnd, GWLP_WNDPROC),
+                wndName);
        packet_reply_hex_to_str(gdbctx, buffer);
        packet_reply_close(gdbctx);
 
