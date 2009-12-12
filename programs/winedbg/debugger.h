@@ -291,7 +291,7 @@ extern void             break_add_watch_from_lvalue(const struct dbg_lvalue* lva
 extern void             break_add_watch_from_id(const char* name);
 extern void             break_check_delayed_bp(void);
 extern void             break_delete_xpoint(int num);
-extern void             break_delete_xpoints_from_module(unsigned long base);
+extern void             break_delete_xpoints_from_module(DWORD64 base);
 extern void             break_enable_xpoint(int num, BOOL enable);
 extern void             break_info(void);
 extern void             break_adjust_pc(ADDRESS64* addr, DWORD code, BOOL first_chance, BOOL* is_break);

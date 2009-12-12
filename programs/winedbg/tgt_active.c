@@ -626,9 +626,8 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
         WINE_TRACE("%04x:%04x: unload DLL @%p\n",
                    de->dwProcessId, de->dwThreadId,
                    de->u.UnloadDll.lpBaseOfDll);
-        break_delete_xpoints_from_module((unsigned long)de->u.UnloadDll.lpBaseOfDll);
-        SymUnloadModule(dbg_curr_process->handle, 
-                        (unsigned long)de->u.UnloadDll.lpBaseOfDll);
+        break_delete_xpoints_from_module((DWORD_PTR)de->u.UnloadDll.lpBaseOfDll);
+        SymUnloadModule64(dbg_curr_process->handle, (DWORD_PTR)de->u.UnloadDll.lpBaseOfDll);
         break;
 
     case OUTPUT_DEBUG_STRING_EVENT:

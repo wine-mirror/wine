@@ -484,9 +484,9 @@ static inline BOOL module_is_container(const IMAGEHLP_MODULE* wmod_cntnr,
  *
  * Remove all Xpoints from module which base is 'base'
  */
-void break_delete_xpoints_from_module(unsigned long base)
+void break_delete_xpoints_from_module(DWORD64 base)
 {
-    IMAGEHLP_MODULE             im, im_elf;
+    IMAGEHLP_MODULE64           im, im_elf;
     int                         i;
     DWORD_PTR                   linear;
     struct dbg_breakpoint*      bp = dbg_curr_process->bp;
@@ -494,10 +494,10 @@ void break_delete_xpoints_from_module(unsigned long base)
     /* FIXME: should do it also on the ELF sibbling if any */
     im.SizeOfStruct = sizeof(im);
     im_elf.SizeOfStruct = sizeof(im_elf);
-    if (!SymGetModuleInfo(dbg_curr_process->handle, base, &im)) return;
+    if (!SymGetModuleInfo64(dbg_curr_process->handle, base, &im)) return;
 
     /* try to get in fact the underlying ELF module (if any) */
-    if (SymGetModuleInfo(dbg_curr_process->handle, im.BaseOfImage - 1, &im_elf) &&
+    if (SymGetModuleInfo64(dbg_curr_process->handle, im.BaseOfImage - 1, &im_elf) &&
         im_elf.BaseOfImage <= im.BaseOfImage &&
         im_elf.BaseOfImage + im_elf.ImageSize >= im.BaseOfImage + im.ImageSize)
         im = im_elf;
