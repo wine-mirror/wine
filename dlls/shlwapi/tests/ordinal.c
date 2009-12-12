@@ -1145,7 +1145,7 @@ static const IConnectionPointContainerVtbl contain_vtbl = {
     Contain_FindConnectionPoint
 };
 
-void test_IConnectionPoint(void)
+static void test_IConnectionPoint(void)
 {
     HRESULT rc;
     ULONG ref;
