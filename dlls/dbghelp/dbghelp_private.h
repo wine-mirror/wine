@@ -361,8 +361,9 @@ struct process
     struct process*             next;
     HANDLE                      handle;
     WCHAR*                      search_path;
-    
+
     PSYMBOL_REGISTERED_CALLBACK64       reg_cb;
+    PSYMBOL_REGISTERED_CALLBACK reg_cb32;
     BOOL                        reg_is_unicode;
     DWORD64                     reg_user;
 
