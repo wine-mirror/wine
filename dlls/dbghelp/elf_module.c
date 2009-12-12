@@ -77,7 +77,7 @@
 
 struct elf_module_info
 {
-    unsigned long               elf_addr;
+    DWORD_PTR                   elf_addr;
     unsigned short	        elf_mark : 1,
                                 elf_loader : 1;
 };
@@ -93,22 +93,36 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 struct elf_info
 {
     unsigned                    flags;          /* IN  one (or several) of the ELF_INFO constants */
-    unsigned long               dbg_hdr_addr;   /* OUT address of debug header (if ELF_INFO_DEBUG_HEADER is set) */
+    DWORD_PTR                   dbg_hdr_addr;   /* OUT address of debug header (if ELF_INFO_DEBUG_HEADER is set) */
     struct module*              module;         /* OUT loaded module (if ELF_INFO_MODULE is set) */
     const WCHAR*                module_name;    /* OUT found module name (if ELF_INFO_NAME is set) */
 };
+
+#ifdef _WIN64
+#define         Elf_Ehdr        Elf64_Ehdr
+#define         Elf_Shdr        Elf64_Shdr
+#define         Elf_Phdr        Elf64_Phdr
+#define         Elf_Dyn         Elf64_Dyn
+#define         Elf_Sym         Elf64_Sym
+#else
+#define         Elf_Ehdr        Elf32_Ehdr
+#define         Elf_Shdr        Elf32_Shdr
+#define         Elf_Phdr        Elf32_Phdr
+#define         Elf_Dyn         Elf32_Dyn
+#define         Elf_Sym         Elf32_Sym
+#endif
 
 /* structure holding information while handling an ELF image
  * allows one by one section mapping for memory savings
  */
 struct elf_file_map
 {
-    Elf32_Ehdr                  elfhdr;
+    Elf_Ehdr                    elfhdr;
     size_t                      elf_size;
     size_t                      elf_start;
     struct
     {
-        Elf32_Shdr                      shdr;
+        Elf_Shdr                        shdr;
         const char*                     mapped;
     }*                          sect;
     int                         fd;
@@ -125,7 +139,7 @@ struct elf_section_map
 struct symtab_elt
 {
     struct hash_table_elt       ht_elt;
-    const Elf32_Sym*            symp;
+    const Elf_Sym*              symp;
     struct symt_compiland*      compiland;
     unsigned                    used;
 };
@@ -254,7 +268,7 @@ static BOOL elf_map_file(const WCHAR* filenameW, struct elf_file_map* fmap)
     static const BYTE   elf_signature[4] = { ELFMAG0, ELFMAG1, ELFMAG2, ELFMAG3 };
     struct stat	        statbuf;
     int                 i;
-    Elf32_Phdr          phdr;
+    Elf_Phdr            phdr;
     unsigned            tmp, page_mask = getpagesize() - 1;
     char*               filename;
     unsigned            len;
@@ -279,7 +293,12 @@ static BOOL elf_map_file(const WCHAR* filenameW, struct elf_file_map* fmap)
     /* and check for an ELF header */
     if (memcmp(fmap->elfhdr.e_ident, 
                elf_signature, sizeof(elf_signature))) goto done;
-
+    /* and check 32 vs 64 size according to current machine */
+#ifdef _WIN64
+    if (fmap->elfhdr.e_ident[EI_CLASS] != ELFCLASS64) goto done;
+#else
+    if (fmap->elfhdr.e_ident[EI_CLASS] != ELFCLASS32) goto done;
+#endif
     fmap->sect = HeapAlloc(GetProcessHeap(), 0,
                            fmap->elfhdr.e_shnum * sizeof(fmap->sect[0]));
     if (!fmap->sect) goto done;
@@ -372,13 +391,13 @@ static void elf_hash_symtab(struct module* module, struct pool* pool,
     const char*                 symname;
     struct symt_compiland*      compiland = NULL;
     const char*                 ptr;
-    const Elf32_Sym*            symp;
+    const Elf_Sym*              symp;
     struct symtab_elt*          ste;
     struct elf_section_map      esm, esm_str;
 
     if (!elf_find_section(fmap, ".symtab", SHT_SYMTAB, &esm) &&
         !elf_find_section(fmap, ".dynsym", SHT_DYNSYM, &esm)) return;
-    if ((symp = (const Elf32_Sym*)elf_map_section(&esm)) == ELF_NO_MAP) return;
+    if ((symp = (const Elf_Sym*)elf_map_section(&esm)) == ELF_NO_MAP) return;
     esm_str.fmap = fmap;
     esm_str.sidx = fmap->sect[esm.sidx].shdr.sh_link;
     if ((strp = elf_map_section(&esm_str)) == ELF_NO_MAP) return;
@@ -471,7 +490,7 @@ static void elf_hash_symtab(struct module* module, struct pool* pool,
  *
  * lookup a symbol by name in our internal hash table for the symtab
  */
-static const Elf32_Sym* elf_lookup_symtab(const struct module* module,        
+static const Elf_Sym* elf_lookup_symtab(const struct module* module,
                                           const struct hash_table* ht_symtab,
                                           const char* name, const struct symt* compiland)
 {
@@ -547,7 +566,7 @@ static void elf_finish_stabs_info(struct module* module, const struct hash_table
     struct hash_table_iter      hti;
     void*                       ptr;
     struct symt_ht*             sym;
-    const Elf32_Sym*            symp;
+    const Elf_Sym*              symp;
 
     hash_table_iter_init(&module->ht_symbols, &hti, NULL);
     while ((ptr = hash_table_iter_up(&hti)))
@@ -629,7 +648,7 @@ static int elf_new_wine_thunks(struct module* module, const struct hash_table* h
     int		                j;
     struct hash_table_iter      hti;
     struct symtab_elt*          ste;
-    DWORD                       addr;
+    DWORD_PTR                   addr;
     struct symt_ht*             symt;
 
     hash_table_iter_init(ht_symtab, &hti, NULL);
@@ -698,7 +717,7 @@ static int elf_new_wine_thunks(struct module* module, const struct hash_table* h
                  */
                 if ((xsize || ste->symp->st_size) &&
                     (kind == (ELF32_ST_BIND(ste->symp->st_info) == STB_LOCAL) ? DataIsFileStatic : DataIsGlobal))
-                    FIXME("Duplicate in %s: %s<%08x-%08x> %s<%s-%s>\n",
+                    FIXME("Duplicate in %s: %s<%08lx-%08x> %s<%s-%s>\n",
                           debugstr_w(module->module.ModuleName),
                           ste->ht_elt.name, addr, (unsigned int)ste->symp->st_size,
                           symt->hash_elt.name,
@@ -1085,7 +1104,7 @@ static BOOL elf_load_file(struct process* pcs, const WCHAR* filename,
 
         if (elf_find_section(&fmap, ".dynamic", SHT_DYNAMIC, &esm))
         {
-            Elf32_Dyn       dyn;
+            Elf_Dyn         dyn;
             char*           ptr = (char*)fmap.sect[esm.sidx].shdr.sh_addr;
             unsigned long   len;
 
