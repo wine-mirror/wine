@@ -4732,7 +4732,7 @@ static void test_editing_mode(BOOL do_load)
     ok(ref == 0, "ref=%d, expected 0\n", ref);
 }
 
-void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
+static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
 {
     IUnknown *unk;
     IOleObject *oleobj;
