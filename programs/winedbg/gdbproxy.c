@@ -2186,7 +2186,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
     struct sockaddr_in  s_addrs;
     unsigned int        s_len = sizeof(s_addrs);
     struct pollfd       pollfd;
-    IMAGEHLP_MODULE     imh_mod;
+    IMAGEHLP_MODULE64   imh_mod;
 
     /* step 1: create socket for gdb connection request */
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)

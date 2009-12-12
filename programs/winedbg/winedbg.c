@@ -399,7 +399,7 @@ BOOL dbg_init(HANDLE hProc, const WCHAR* in, BOOL invade)
 struct mod_loader_info
 {
     HANDLE              handle;
-    IMAGEHLP_MODULE*    imh_mod;
+    IMAGEHLP_MODULE64*  imh_mod;
 };
 
 static BOOL CALLBACK mod_loader_cb(PCSTR mod_name, DWORD64 base, PVOID ctx)
@@ -408,13 +408,13 @@ static BOOL CALLBACK mod_loader_cb(PCSTR mod_name, DWORD64 base, PVOID ctx)
 
     if (!strcmp(mod_name, "<wine-loader>"))
     {
-        if (SymGetModuleInfo(mli->handle, base, mli->imh_mod))
+        if (SymGetModuleInfo64(mli->handle, base, mli->imh_mod))
             return FALSE; /* stop enum */
     }
     return TRUE;
 }
 
-BOOL dbg_get_debuggee_info(HANDLE hProcess, IMAGEHLP_MODULE* imh_mod)
+BOOL dbg_get_debuggee_info(HANDLE hProcess, IMAGEHLP_MODULE64* imh_mod)
 {
     struct mod_loader_info  mli;
     DWORD                   opt;

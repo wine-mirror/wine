@@ -146,7 +146,6 @@ static const char* get_symtype_str(const IMAGEHLP_MODULE64* mi)
 struct info_module
 {
     IMAGEHLP_MODULE64*  mi;
-    DWORD_PTR           _base;
     unsigned            num_alloc;
     unsigned            num_used;
 };
