@@ -588,11 +588,11 @@ void print_address(const ADDRESS64* addr, BOOLEAN with_line)
     if (disp64) dbg_printf("+0x%lx", (DWORD_PTR)disp64);
     if (with_line)
     {
-        IMAGEHLP_LINE               il;
+        IMAGEHLP_LINE64             il;
         IMAGEHLP_MODULE             im;
 
         il.SizeOfStruct = sizeof(il);
-        if (SymGetLineFromAddr(dbg_curr_process->handle, (DWORD_PTR)lin, &disp, &il))
+        if (SymGetLineFromAddr64(dbg_curr_process->handle, (DWORD_PTR)lin, &disp, &il))
             dbg_printf(" [%s:%u]", il.FileName, il.LineNumber);
         im.SizeOfStruct = sizeof(im);
         if (SymGetModuleInfo(dbg_curr_process->handle, (DWORD_PTR)lin, &im))

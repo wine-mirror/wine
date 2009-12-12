@@ -46,7 +46,7 @@ static void parser(const char*);
     struct dbg_lvalue   lvalue;
     char*               string;
     INT_PTR             integer;
-    IMAGEHLP_LINE       listing;
+    IMAGEHLP_LINE64     listing;
     struct expr*        expression;
     struct type_expr_t  type;
 }
@@ -184,7 +184,7 @@ list_arg:
     | pathname ':' identifier   { symbol_get_line($1, $3, &$$); }
     | '*' expr_lvalue	        { DWORD disp; ADDRESS64 addr; $$.SizeOfStruct = sizeof($$);
                                   types_extract_as_address(&$2, &addr);
-                                  SymGetLineFromAddr(dbg_curr_process->handle, (unsigned long)memory_to_linear_addr(& addr), &disp, & $$); }
+                                  SymGetLineFromAddr64(dbg_curr_process->handle, (unsigned long)memory_to_linear_addr(& addr), &disp, & $$); }
     ;
 
 run_command:

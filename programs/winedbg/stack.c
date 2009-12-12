@@ -232,7 +232,7 @@ static void stack_print_addr_and_args(int nf)
     char                        buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*                si = (SYMBOL_INFO*)buffer;
     IMAGEHLP_STACK_FRAME        ihsf;
-    IMAGEHLP_LINE               il;
+    IMAGEHLP_LINE64             il;
     IMAGEHLP_MODULE             im;
     DWORD64                     disp64;
 
@@ -263,8 +263,8 @@ static void stack_print_addr_and_args(int nf)
         dbg_printf(")");
 
         il.SizeOfStruct = sizeof(il);
-        if (SymGetLineFromAddr(dbg_curr_process->handle, ihsf.InstructionOffset,
-                               &disp, &il))
+        if (SymGetLineFromAddr64(dbg_curr_process->handle,
+				 ihsf.InstructionOffset, &disp, &il))
             dbg_printf(" [%s:%u]", il.FileName, il.LineNumber);
         dbg_printf(" in %s", im.ModuleName);
     }

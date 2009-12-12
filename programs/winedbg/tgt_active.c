@@ -196,14 +196,14 @@ static unsigned dbg_exception_prolog(BOOL is_debug, BOOL first_chance, const EXC
         SYMBOL_INFO*        si = (SYMBOL_INFO*)buffer;
         void*               lin = memory_to_linear_addr(&addr);
         DWORD64             disp64;
-        IMAGEHLP_LINE       il;
+        IMAGEHLP_LINE64     il;
         DWORD               disp;
 
         si->SizeOfStruct = sizeof(*si);
         si->MaxNameLen   = 256;
         il.SizeOfStruct = sizeof(il);
         if (SymFromAddr(dbg_curr_process->handle, (DWORD_PTR)lin, &disp64, si) &&
-            SymGetLineFromAddr(dbg_curr_process->handle, (DWORD_PTR)lin, &disp, &il))
+            SymGetLineFromAddr64(dbg_curr_process->handle, (DWORD_PTR)lin, &disp, &il))
         {
             if ((!last_name || strcmp(last_name, si->Name)) ||
                 (!last_file || strcmp(last_file, il.FileName)))

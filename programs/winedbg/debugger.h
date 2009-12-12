@@ -375,7 +375,7 @@ extern void             print_address(const ADDRESS64* addr, BOOLEAN with_line);
 extern void             print_basic(const struct dbg_lvalue* value, char format);
 
   /* source.c */
-extern void             source_list(IMAGEHLP_LINE* src1, IMAGEHLP_LINE* src2, int delta);
+extern void             source_list(IMAGEHLP_LINE64* src1, IMAGEHLP_LINE64* src2, int delta);
 extern void             source_list_from_addr(const ADDRESS64* addr, int nlines);
 extern void             source_show_path(void);
 extern void             source_add_path(const char* path);
@@ -395,7 +395,7 @@ extern BOOL             stack_get_current_symbol(SYMBOL_INFO* sym);
 extern enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno, struct dbg_lvalue* addr, BOOL bp_disp);
 extern void             symbol_read_symtable(const char* filename, unsigned long offset);
 extern enum dbg_line_status symbol_get_function_line_status(const ADDRESS64* addr);
-extern BOOL             symbol_get_line(const char* filename, const char* func, IMAGEHLP_LINE* ret);
+extern BOOL             symbol_get_line(const char* filename, const char* func, IMAGEHLP_LINE64* ret);
 extern void             symbol_info(const char* str);
 extern void             symbol_print_local(const SYMBOL_INFO* sym, ULONG_PTR base, BOOL detailed);
 extern int              symbol_info_locals(void);

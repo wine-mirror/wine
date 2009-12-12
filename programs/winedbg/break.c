@@ -299,14 +299,14 @@ void	break_add_break_from_lineno(int lineno, BOOL swbp)
 
     if (lineno != -1)
     {
-        IMAGEHLP_LINE   il;
+        IMAGEHLP_LINE64 il;
 
 
         DWORD           disp;
         DWORD_PTR       linear = (DWORD_PTR)memory_to_linear_addr(&bkln.addr);
 
         il.SizeOfStruct = sizeof(il);
-        if (!SymGetLineFromAddr(dbg_curr_process->handle, linear, &disp, &il))
+        if (!SymGetLineFromAddr64(dbg_curr_process->handle, linear, &disp, &il))
         {
             dbg_printf("Unable to add breakpoint (unknown address %lx)\n", linear);
             return;

@@ -403,13 +403,13 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
         else
         {
             DWORD               disp;
-            IMAGEHLP_LINE       il;
+            IMAGEHLP_LINE64     il;
             BOOL                found = FALSE;
 
             il.SizeOfStruct = sizeof(il);
-            SymGetLineFromAddr(dbg_curr_process->handle,
-                               (DWORD_PTR)memory_to_linear_addr(&sgv.syms[i].lvalue.addr),
-                               &disp, &il);
+            SymGetLineFromAddr64(dbg_curr_process->handle,
+                                 (DWORD_PTR)memory_to_linear_addr(&sgv.syms[i].lvalue.addr),
+				 &disp, &il);
             do
             {
                 if (lineno == il.LineNumber)
@@ -418,7 +418,7 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
                     found = TRUE;
                     break;
                 }
-            } while (SymGetLineNext(dbg_curr_process->handle, &il));
+            } while (SymGetLineNext64(dbg_curr_process->handle, &il));
             if (!found)
                 WINE_FIXME("No line (%d) found for %s (setting to symbol start)\n",
                            lineno, name);
@@ -521,7 +521,7 @@ void symbol_read_symtable(const char* filename, unsigned long offset)
  */
 enum dbg_line_status symbol_get_function_line_status(const ADDRESS64* addr)
 {
-    IMAGEHLP_LINE       il;
+    IMAGEHLP_LINE64     il;
     DWORD               disp;
     ULONG64             disp64, start;
     DWORD_PTR           lin = (DWORD_PTR)memory_to_linear_addr(addr);
@@ -552,7 +552,7 @@ enum dbg_line_status symbol_get_function_line_status(const ADDRESS64* addr)
         return dbg_no_line_info;
     }
     /* we should have a function now */
-    if (!SymGetLineFromAddr(dbg_curr_process->handle, lin, &disp, &il))
+    if (!SymGetLineFromAddr64(dbg_curr_process->handle, lin, &disp, &il))
         return dbg_no_line_info;
 
     func.module = sym->ModBase;
@@ -575,13 +575,14 @@ enum dbg_line_status symbol_get_function_line_status(const ADDRESS64* addr)
  * Returns sourcefile name and line number in a format that the listing
  * handler can deal with.
  */
-BOOL symbol_get_line(const char* filename, const char* name, IMAGEHLP_LINE* line)
+BOOL symbol_get_line(const char* filename, const char* name,
+		     IMAGEHLP_LINE64* line)
 {
     struct sgv_data     sgv;
     char                buffer[512];
     DWORD               opt, disp;
     unsigned            i, found = FALSE;
-    IMAGEHLP_LINE       il;
+    IMAGEHLP_LINE64     il;
 
     sgv.num        = 0;
     sgv.num_thunks = 0;
@@ -619,7 +620,7 @@ BOOL symbol_get_line(const char* filename, const char* name, IMAGEHLP_LINE* line
         DWORD_PTR linear = (DWORD_PTR)memory_to_linear_addr(&sgv.syms[i].lvalue.addr);
 
         il.SizeOfStruct = sizeof(il);
-        if (!SymGetLineFromAddr(dbg_curr_process->handle, linear, &disp, &il))
+        if (!SymGetLineFromAddr64(dbg_curr_process->handle, linear, &disp, &il))
             continue;
         if (filename && strcmp(il.FileName, filename)) continue;
         if (found)

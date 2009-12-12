@@ -286,7 +286,7 @@ static int source_display(const char* sourcefile, int start, int end)
     return rtn;
 }
 
-void source_list(IMAGEHLP_LINE* src1, IMAGEHLP_LINE* src2, int delta)
+void source_list(IMAGEHLP_LINE64* src1, IMAGEHLP_LINE64* src2, int delta)
 {
     int         end;
     int         start;
@@ -344,7 +344,7 @@ void source_list(IMAGEHLP_LINE* src1, IMAGEHLP_LINE* src2, int delta)
 
 void source_list_from_addr(const ADDRESS64* addr, int nlines)
 {
-    IMAGEHLP_LINE       il;
+    IMAGEHLP_LINE64     il;
     ADDRESS64           la;
     DWORD               disp;
 
@@ -355,9 +355,9 @@ void source_list_from_addr(const ADDRESS64* addr, int nlines)
     }
 
     il.SizeOfStruct = sizeof(il);
-    if (SymGetLineFromAddr(dbg_curr_process->handle,
-                           (unsigned long)memory_to_linear_addr(addr),
-                           &disp, &il))
+    if (SymGetLineFromAddr64(dbg_curr_process->handle,
+                             (DWORD_PTR)memory_to_linear_addr(addr),
+			     &disp, &il))
         source_list(&il, NULL, nlines);
 }
 
