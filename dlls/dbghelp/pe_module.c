@@ -432,13 +432,13 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
  *		pe_load_nt_header
  *
  */
-BOOL pe_load_nt_header(HANDLE hProc, DWORD base, IMAGE_NT_HEADERS* nth)
+BOOL pe_load_nt_header(HANDLE hProc, DWORD64 base, IMAGE_NT_HEADERS* nth)
 {
     IMAGE_DOS_HEADER    dos;
 
-    return ReadProcessMemory(hProc, (char*)base, &dos, sizeof(dos), NULL) &&
+    return ReadProcessMemory(hProc, (char*)(DWORD_PTR)base, &dos, sizeof(dos), NULL) &&
         dos.e_magic == IMAGE_DOS_SIGNATURE &&
-        ReadProcessMemory(hProc, (char*)(base + dos.e_lfanew), 
+        ReadProcessMemory(hProc, (char*)(DWORD_PTR)(base + dos.e_lfanew),
                           nth, sizeof(*nth), NULL) &&
         nth->Signature == IMAGE_NT_SIGNATURE;
 }

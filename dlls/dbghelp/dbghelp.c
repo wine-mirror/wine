@@ -479,7 +479,7 @@ static BOOL CALLBACK reg_cb64to32(HANDLE hProcess, ULONG action, ULONG64 data, U
     case CBA_DEFERRED_SYMBOL_LOAD_FAILURE:
     case CBA_DEFERRED_SYMBOL_LOAD_PARTIAL:
     case CBA_DEFERRED_SYMBOL_LOAD_START:
-        idsl64 = (IMAGEHLP_DEFERRED_SYMBOL_LOAD64*)(DWORD)data;
+        idsl64 = (IMAGEHLP_DEFERRED_SYMBOL_LOAD64*)(DWORD_PTR)data;
         if (!validate_addr64(idsl64->BaseOfImage))
             return FALSE;
         idsl.SizeOfStruct = sizeof(idsl);

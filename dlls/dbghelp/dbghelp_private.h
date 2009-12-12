@@ -498,7 +498,7 @@ extern BOOL         path_find_symbol_file(const struct process* pcs, PCSTR full_
                                           BOOL* is_unmatched);
 
 /* pe_module.c */
-extern BOOL         pe_load_nt_header(HANDLE hProc, DWORD base, IMAGE_NT_HEADERS* nth);
+extern BOOL         pe_load_nt_header(HANDLE hProc, DWORD64 base, IMAGE_NT_HEADERS* nth);
 extern struct module*
                     pe_load_native_module(struct process* pcs, const WCHAR* name,
                                           HANDLE hFile, DWORD base, DWORD size);

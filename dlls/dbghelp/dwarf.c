@@ -654,7 +654,7 @@ static enum location_error
 compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
                  HANDLE hproc, const struct location* frame)
 {
-    unsigned long stack[64];
+    DWORD_PTR stack[64];
     unsigned stk;
     unsigned char op;
     BOOL piece_found = FALSE;
@@ -767,12 +767,12 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
             }
             if (hproc)
             {
-                DWORD   addr = stack[stk--];
-                DWORD   deref;
+                DWORD_PTR addr = stack[stk--];
+                DWORD_PTR deref;
 
                 if (!ReadProcessMemory(hproc, (void*)addr, &deref, sizeof(deref), NULL))
                 {
-                    WARN("Couldn't read memory at %x\n", addr);
+                    WARN("Couldn't read memory at %lx\n", addr);
                     return loc_err_cant_read;
                 }
                 stack[++stk] = deref;

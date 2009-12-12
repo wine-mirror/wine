@@ -261,7 +261,7 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
                     WARN("Bad stack frame 0x%08x\n", p);
                     goto done_err;
                 }
-                curr_switch = (DWORD)frame16.frame32;
+                curr_switch = (DWORD_PTR)frame16.frame32;
 
                 if (!sw_read_mem(cb, curr_switch, &ch, sizeof(ch)))
                     curr_switch = 0xFFFFFFFF;
@@ -327,7 +327,7 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
                     WARN("Bad stack frame 0x%08x\n", p);
                     goto done_err;
                 }
-                curr_switch = (DWORD)frame16.frame32;
+                curr_switch = (DWORD_PTR)frame16.frame32;
                 curr_mode = stm_32bit;
                 if (!sw_read_mem(cb, curr_switch, &ch, sizeof(ch)))
                     curr_switch = 0;

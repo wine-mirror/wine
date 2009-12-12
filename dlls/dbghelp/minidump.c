@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 struct dump_memory
 {
-    ULONG                               base;
+    ULONG64                             base;
     ULONG                               size;
     ULONG                               rva;
 };
@@ -42,7 +42,7 @@ struct dump_memory
 struct dump_module
 {
     unsigned                            is_elf;
-    ULONG                               base;
+    ULONG64                             base;
     ULONG                               size;
     DWORD                               timestamp;
     DWORD                               checksum;
@@ -251,7 +251,7 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
  * Add a module to a dump context
  */
 static BOOL add_module(struct dump_context* dc, const WCHAR* name,
-                       DWORD base, DWORD size, DWORD timestamp, DWORD checksum,
+                       DWORD64 base, DWORD size, DWORD timestamp, DWORD checksum,
                        BOOL is_elf)
 {
     if (!dc->modules)
@@ -272,7 +272,7 @@ static BOOL add_module(struct dump_context* dc, const WCHAR* name,
         return FALSE;
     }
     if (is_elf ||
-        !GetModuleFileNameExW(dc->hProcess, (HMODULE)base,
+        !GetModuleFileNameExW(dc->hProcess, (HMODULE)(DWORD_PTR)base,
                               dc->modules[dc->num_modules].name,
                               sizeof(dc->modules[dc->num_modules].name) / sizeof(WCHAR)))
         lstrcpynW(dc->modules[dc->num_modules].name, name,
@@ -834,7 +834,7 @@ static unsigned         dump_memory_info(struct dump_context* dc)
         {
             len = min(dc->mem[i].size - pos, sizeof(tmp));
             if (ReadProcessMemory(dc->hProcess, 
-                                  (void*)(dc->mem[i].base + pos),
+                                  (void*)(DWORD_PTR)(dc->mem[i].base + pos),
                                   tmp, len, NULL))
                 WriteFile(dc->hFile, tmp, len, &written, NULL);
         }
