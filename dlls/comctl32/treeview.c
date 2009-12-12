@@ -28,7 +28,7 @@
  *      We use callbackMask to keep track of fields to be updated.
  *
  * TODO:
- *   missing notifications: NM_SETCURSOR, TVN_GETINFOTIP, TVN_KEYDOWN,
+ *   missing notifications: TVN_GETINFOTIP, TVN_KEYDOWN,
  *      TVN_SETDISPINFO, TVN_SINGLEEXPAND
  *
  *   missing styles: TVS_FULLROWSELECT, TVS_INFOTIP, TVS_RTLREADING,
@@ -5449,13 +5449,27 @@ TREEVIEW_SetCursor(const TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     POINT pt;
     TREEVIEW_ITEM * item;
+    NMMOUSE nmmouse;
 
     GetCursorPos(&pt);
     ScreenToClient(infoPtr->hwnd, &pt);
 
     item = TREEVIEW_HitTestPoint(infoPtr, pt);
 
-    /* FIXME: send NM_SETCURSOR */
+    memset(&nmmouse, 0, sizeof(nmmouse));
+    nmmouse.hdr.hwndFrom = infoPtr->hwnd;
+    nmmouse.hdr.idFrom = GetWindowLongPtrW(infoPtr->hwnd, GWLP_ID);
+    nmmouse.hdr.code = NM_SETCURSOR;
+    if (item)
+    {
+        nmmouse.dwItemSpec = (DWORD_PTR)item;
+        nmmouse.dwItemData = item->lParam;
+    }
+    nmmouse.pt.x = 0;
+    nmmouse.pt.y = 0;
+    nmmouse.dwHitInfo = lParam;
+    if (TREEVIEW_SendRealNotify(infoPtr, nmmouse.hdr.idFrom, (LPARAM)&nmmouse))
+        return 0;
 
     if (item && (infoPtr->dwStyle & TVS_TRACKSELECT))
     {
