@@ -217,7 +217,7 @@ static unsigned char dwarf2_parse_byte(dwarf2_traverse_context_t* ctx)
 
 static unsigned short dwarf2_get_u2(const unsigned char* ptr)
 {
-    return *(const unsigned short*)ptr;
+    return *(const UINT16*)ptr;
 }
 
 static unsigned short dwarf2_parse_u2(dwarf2_traverse_context_t* ctx)
@@ -229,7 +229,7 @@ static unsigned short dwarf2_parse_u2(dwarf2_traverse_context_t* ctx)
 
 static unsigned long dwarf2_get_u4(const unsigned char* ptr)
 {
-    return *(const unsigned long*)ptr;
+    return *(const UINT32*)ptr;
 }
 
 static unsigned long dwarf2_parse_u4(dwarf2_traverse_context_t* ctx)
@@ -237,6 +237,11 @@ static unsigned long dwarf2_parse_u4(dwarf2_traverse_context_t* ctx)
     unsigned long uvalue = dwarf2_get_u4(ctx->data);
     ctx->data += 4;
     return uvalue;
+}
+
+static DWORD64 dwarf2_get_u8(const unsigned char* ptr)
+{
+    return *(const UINT64*)ptr;
 }
 
 static unsigned long dwarf2_get_leb128_as_unsigned(const unsigned char* ptr, const unsigned char** end)
@@ -309,6 +314,13 @@ static unsigned dwarf2_leb128_length(const dwarf2_traverse_context_t* ctx)
     return ret + 1;
 }
 
+/******************************************************************
+ *		dwarf2_get_addr
+ *
+ * Returns an address.
+ * We assume that in all cases word size from Dwarf matches the size of
+ * addresses in platform where the exec is compiled.
+ */
 static unsigned long dwarf2_get_addr(const unsigned char* ptr, unsigned word_size)
 {
     unsigned long ret;
@@ -318,6 +330,9 @@ static unsigned long dwarf2_get_addr(const unsigned char* ptr, unsigned word_siz
     case 4:
         ret = dwarf2_get_u4(ptr);
         break;
+    case 8:
+        ret = dwarf2_get_u8(ptr);
+	break;
     default:
         FIXME("Unsupported Word Size %u\n", word_size);
         ret = 0;
@@ -2033,7 +2048,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     cu_ctx.word_size = dwarf2_parse_byte(&cu_ctx);
 
     TRACE("Compilation Unit Header found at 0x%x:\n",
-          comp_unit_start - sections[section_debug].address);
+          (int)(comp_unit_start - sections[section_debug].address));
     TRACE("- length:        %lu\n", cu_length);
     TRACE("- version:       %u\n",  cu_version);
     TRACE("- abbrev_offset: %lu\n", cu_abbrev_offset);
