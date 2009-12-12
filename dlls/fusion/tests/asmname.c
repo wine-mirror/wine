@@ -787,6 +787,7 @@ static void test_CreateAssemblyNameObject(void)
            "Expected FUSION_E_INVALID_NAME, got %08x\n", hr);
         ok(name == (IAssemblyName *)0xdeadbeef, "Expected 0xdeadbeef, got %p\n", name);
     }
+    if(SUCCEEDED(hr)) IAssemblyName_Release(name);
 
     /* no '=' */
     to_widechar(namestr, "wine, PublicKeyToken");
