@@ -122,7 +122,7 @@ static const char*      get_module_type(enum module_type type, BOOL virtual)
  */
 struct module* module_new(struct process* pcs, const WCHAR* name,
                           enum module_type type, BOOL virtual,
-                          unsigned long mod_addr, unsigned long size,
+                          DWORD64 mod_addr, DWORD64 size,
                           unsigned long stamp, unsigned long checksum)
 {
     struct module*      module;
@@ -134,8 +134,9 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     module->next = pcs->lmodules;
     pcs->lmodules = module;
 
-    TRACE("=> %s %08lx-%08lx %s\n",
-          get_module_type(type, virtual), mod_addr, mod_addr + size,
+    TRACE("=> %s %s-%s %s\n",
+          get_module_type(type, virtual),
+	  wine_dbgstr_longlong(mod_addr), wine_dbgstr_longlong(mod_addr + size),
           debugstr_w(name));
 
     pool_init(&module->pool, 65536);
@@ -373,7 +374,7 @@ struct module* module_find_by_addr(const struct process* pcs, unsigned long addr
  * already loaded
  */
 static BOOL module_is_container_loaded(const struct process* pcs,
-                                       const WCHAR* ImageName, DWORD base)
+                                       const WCHAR* ImageName, DWORD64 base)
 {
     size_t              len;
     struct module*      module;
@@ -536,7 +537,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     {
         if (!wImageName) return FALSE;
         module = module_new(pcs, wImageName, module_get_type_by_name(wImageName),
-                            TRUE, (DWORD)BaseOfDll, SizeOfDll, 0, 0);
+                            TRUE, BaseOfDll, SizeOfDll, 0, 0);
         if (!module) return FALSE;
         if (wModuleName) module_set_module(module, wModuleName);
         module->module.SymType = SymVirtual;

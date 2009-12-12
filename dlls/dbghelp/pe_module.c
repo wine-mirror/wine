@@ -448,7 +448,7 @@ BOOL pe_load_nt_header(HANDLE hProc, DWORD64 base, IMAGE_NT_HEADERS* nth)
  *
  */
 struct module* pe_load_builtin_module(struct process* pcs, const WCHAR* name,
-                                      DWORD base, DWORD size)
+                                      DWORD64 base, DWORD64 size)
 {
     struct module*      module = NULL;
 

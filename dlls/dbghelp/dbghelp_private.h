@@ -473,7 +473,7 @@ extern BOOL         module_get_debug(struct module_pair*);
 extern struct module*
                     module_new(struct process* pcs, const WCHAR* name,
                                enum module_type type, BOOL virtual,
-                               unsigned long addr, unsigned long size,
+                               DWORD64 addr, DWORD64 size,
                                unsigned long stamp, unsigned long checksum);
 extern struct module*
                     module_get_containee(const struct process* pcs,
@@ -505,7 +505,7 @@ extern struct module*
                                           HANDLE hFile, DWORD base, DWORD size);
 extern struct module*
                     pe_load_builtin_module(struct process* pcs, const WCHAR* name,
-                                           DWORD base, DWORD size);
+                                           DWORD64 base, DWORD64 size);
 extern BOOL         pe_load_debug_info(const struct process* pcs,
                                        struct module* module);
 /* source.c */
