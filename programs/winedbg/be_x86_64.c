@@ -226,10 +226,24 @@ static int be_x86_64_adjust_pc_for_break(CONTEXT* ctx, BOOL way)
 }
 
 static int be_x86_64_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
-                                  unsigned ext_sign, LONGLONG* ret)
+				   unsigned ext_sign, LONGLONG* ret)
 {
-    dbg_printf("not done fetch_integer\n");
-    return FALSE;
+    if (size != 1 && size != 2 && size != 4 && size != 8 && size != 16)
+        return FALSE;
+
+    memset(ret, 0, sizeof(*ret)); /* clear unread bytes */
+    /* FIXME: this assumes that debuggee and debugger use the same
+     * integral representation
+     */
+    if (!memory_read_value(lvalue, size, ret)) return FALSE;
+
+    /* propagate sign information */
+    if (ext_sign && size < 16 && (*ret >> (size * 8 - 1)) != 0)
+    {
+        ULONGLONG neg = -1;
+        *ret |= neg << (size * 8);
+    }
+    return TRUE;
 }
 
 static int be_x86_64_fetch_float(const struct dbg_lvalue* lvalue, unsigned size, 
