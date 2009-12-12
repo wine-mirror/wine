@@ -264,6 +264,7 @@ void test_DispGetParam(void)
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(V_VT(&result) == VT_BSTR, "Expected VT_BSTR, got %08x\n", V_VT(&result));
     ok(err_index == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", err_index);
+    VariantClear(&result);
 }
 
 START_TEST(dispatch)
