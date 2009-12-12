@@ -219,6 +219,7 @@ IACListVtbl TestACL_ACListVtbl =
     ole_ok(obj->lpVtbl->Next(obj, 1, &wstr, &i)); \
     ok(i == 1, "Expected i == 1, got %d\n", i); \
     ok(str[0] == wstr[0], "String mismatch\n"); \
+    CoTaskMemFree(wstr); \
 }
 
 #define expect_end(obj) \
@@ -280,9 +281,13 @@ static void test_ACLMulti(void)
 
     ole_ok(obj->lpVtbl->Next(obj, 15, wstrtab, &i));
     ok(i == 1, "Expected i == 1, got %d\n", i);
+    CoTaskMemFree(wstrtab[0]);
     ole_ok(obj->lpVtbl->Next(obj, 15, wstrtab, &i));
+    CoTaskMemFree(wstrtab[0]);
     ole_ok(obj->lpVtbl->Next(obj, 15, wstrtab, &i));
+    CoTaskMemFree(wstrtab[0]);
     ole_ok(obj->lpVtbl->Next(obj, 15, wstrtab, &i));
+    CoTaskMemFree(wstrtab[0]);
     ole_ok(acl->lpVtbl->Expand(acl, exp));
     ok(acl1->expcount == 2, "expcount - expected 1, got %d\n", acl1->expcount);
     ok(acl2->expcount == 0 /* XP */ || acl2->expcount == 2 /* Vista */,
