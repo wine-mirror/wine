@@ -211,16 +211,16 @@ BOOL WINAPI SymGetSearchPath(HANDLE hProcess, PSTR szSearchPath,
  * SymInitialize helper: loads in dbghelp all known (and loaded modules)
  * this assumes that hProcess is a handle on a valid process
  */
-static BOOL WINAPI process_invade_cb(PCSTR name, ULONG base, ULONG size, PVOID user)
+static BOOL WINAPI process_invade_cb(PCWSTR name, ULONG64 base, ULONG size, PVOID user)
 {
-    char        tmp[MAX_PATH];
+    WCHAR       tmp[MAX_PATH];
     HANDLE      hProcess = user;
 
-    if (!GetModuleFileNameExA(hProcess, (HMODULE)base, 
-                              tmp, sizeof(tmp)))
-        lstrcpynA(tmp, name, sizeof(tmp));
+    if (!GetModuleFileNameExW(hProcess, (HMODULE)(DWORD_PTR)base,
+			      tmp, sizeof(tmp) / sizeof(WCHAR)))
+        lstrcpynW(tmp, name, sizeof(tmp) / sizeof(WCHAR));
 
-    SymLoadModule(hProcess, 0, tmp, name, base, size);
+    SymLoadModuleExW(hProcess, 0, tmp, name, base, size, NULL, 0);
     return TRUE;
 }
 
@@ -326,7 +326,7 @@ BOOL WINAPI SymInitializeW(HANDLE hProcess, PCWSTR UserSearchPath, BOOL fInvadeP
     if (check_live_target(pcs))
     {
         if (fInvadeProcess)
-            EnumerateLoadedModules(hProcess, process_invade_cb, hProcess);
+            EnumerateLoadedModulesW64(hProcess, process_invade_cb, hProcess);
         elf_synchronize_module_list(pcs);
         macho_synchronize_module_list(pcs);
     }
