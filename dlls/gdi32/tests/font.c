@@ -2982,7 +2982,7 @@ static void test_CreateFontIndirect(void)
     LOGFONTA lf, getobj_lf;
     int ret, i;
     HFONT hfont;
-    char TestName[][16] = {"Arial", "Arial Bold", "Arial Italic"};
+    char TestName[][16] = {"Arial", "Arial Bold", "Arial Italic", "Arial Baltic"};
 
     memset(&lf, 0, sizeof(lf));
     lf.lfCharSet = ANSI_CHARSET;
