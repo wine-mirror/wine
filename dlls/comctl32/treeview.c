@@ -2333,7 +2333,7 @@ TREEVIEW_DrawItemLines(const TREEVIEW_INFO *infoPtr, HDC hdc, const TREEVIEW_ITE
 
     hbr    = CreateSolidBrush(clrBk);
     hbrOld = SelectObject(hdc, hbr);
-    
+
     centerx = (item->linesOffset + item->stateOffset) / 2;
     centery = (item->rect.top + item->rect.bottom) / 2;
 
@@ -2414,16 +2414,20 @@ TREEVIEW_DrawItemLines(const TREEVIEW_INFO *infoPtr, HDC hdc, const TREEVIEW_ITE
                 LONG rectsize = min(height, width) / 4;
                 /* plussize = ceil(rectsize * 3/4) */
                 LONG plussize = (rectsize + 1) * 3 / 4;
-    
-                HPEN hNewPen  = CreatePen(PS_SOLID, 0, GETLINECOLOR(infoPtr->clrLine));
-                HPEN hOldPen  = SelectObject(hdc, hNewPen);
-    
+
+                HPEN new_pen  = CreatePen(PS_SOLID, 0, GETLINECOLOR(infoPtr->clrLine));
+                HPEN old_pen  = SelectObject(hdc, new_pen);
+
                 Rectangle(hdc, centerx - rectsize - 1, centery - rectsize - 1,
                           centerx + rectsize + 2, centery + rectsize + 2);
-    
-                SelectObject(hdc, hOldPen);
-                DeleteObject(hNewPen);
-    
+
+                SelectObject(hdc, old_pen);
+                DeleteObject(new_pen);
+
+                /* draw +/- signs with current text color */
+                new_pen = CreatePen(PS_SOLID, 0, GETTXTCOLOR(infoPtr->clrText));
+                old_pen = SelectObject(hdc, new_pen);
+
                 if (height < 18 || width < 18)
                 {
                     MoveToEx(hdc, centerx - plussize + 1, centery, NULL);
@@ -2448,6 +2452,9 @@ TREEVIEW_DrawItemLines(const TREEVIEW_INFO *infoPtr, HDC hdc, const TREEVIEW_ITE
                         SetPixel(hdc, centerx + 1, centery, clrBk);
                     }
                 }
+
+                SelectObject(hdc, old_pen);
+                DeleteObject(new_pen);
             }
 	}
     }
