@@ -63,7 +63,7 @@ static CHAR temp_str[MAX_PATH];
   VariantClear(&vararg[1]); \
   VariantClear(&vararg[2]);
 
-void test_DispGetParam(void)
+static void test_DispGetParam(void)
 {
     HRESULT hr;
     DISPPARAMS dispparams;
