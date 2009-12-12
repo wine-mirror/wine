@@ -106,7 +106,7 @@ struct process*    process_find_by_handle(HANDLE hProcess)
  */
 BOOL validate_addr64(DWORD64 addr)
 {
-    if (addr >> 32)
+    if (sizeof(void*) == sizeof(int) && (addr >> 32))
     {
         FIXME("Unsupported address %s\n", wine_dbgstr_longlong(addr));
         SetLastError(ERROR_INVALID_PARAMETER);
