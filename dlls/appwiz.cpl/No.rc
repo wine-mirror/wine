@@ -41,7 +41,7 @@ STRINGTABLE
    IDS_INSTALL_FILTER, "Installasjonsprogrammer\0*instal*.exe;*setup*.exe;*.msi\0Programmer (*.exe)\0*.exe\0Alle filer (*.*)\0*.*\0\0"
 
    IDS_REMOVE, "Fje&rn..."
-   IDS_MODIFY_REMOVE, "&Modify/Remove..."
+   IDS_MODIFY_REMOVE, "&Endre/Fjern ..."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
@@ -53,10 +53,10 @@ FONT 8, "MS Shell Dlg"
  CONTROL "&Installer...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
  CONTROL "", -1, "STATIC", SS_LEFT | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 7, 46, 303, 1
  CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
- CONTROL "Følgende programmer kan fjernes automatisk. Merk et program og trykk «Legg til/Fjern» for å fjerne det eller endre installerte komponenter", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
+ CONTROL "Følgende programmer kan fjernes automatisk. Merk et program og trykk Endre/Fjern for å fjerne det eller endre installerte komponenter", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
  CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
  CONTROL "&Støtteinformasjon...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 98, 198, 70, 14
- CONTROL "&Modify...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
+ CONTROL "&Endre...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
  CONTROL "Fje&rn...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 244, 198, 68, 14
  CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
 }
