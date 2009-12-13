@@ -50,5 +50,8 @@ RPC_STATUS RPCRT4_ClientConnectionAuth(RpcConnection* conn, BYTE *challenge, ULO
 RPC_STATUS RPCRT4_ServerConnectionAuth(RpcConnection* conn, BOOL start, RpcAuthVerifier *auth_data_in, ULONG auth_length_in, unsigned char **auth_data_out, ULONG *auth_length_out);
 RPC_STATUS RPCRT4_AuthorizeConnection(RpcConnection* conn, BYTE *challenge, ULONG count);
 RPC_STATUS RPCRT4_ServerGetRegisteredAuthInfo(USHORT auth_type, CredHandle *cred, TimeStamp *exp, ULONG *max_token);
+RPC_STATUS RPCRT4_default_authorize(RpcConnection *conn, BOOL first_time, unsigned char *in_buffer, unsigned int in_size, unsigned char *out_buffer, unsigned int *out_size);
+BOOL RPCRT4_default_is_authorized(RpcConnection *Connection);
+RPC_STATUS RPCRT4_default_secure_packet(RpcConnection *Connection, enum secure_packet_direction dir, RpcPktHdr *hdr, unsigned int hdr_size, unsigned char *stub_data, unsigned int stub_data_size, RpcAuthVerifier *auth_hdr, unsigned char *auth_value, unsigned int auth_value_size);
 
 #endif

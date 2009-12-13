@@ -27,6 +27,12 @@
 #include "rpc_defs.h"
 
 
+enum secure_packet_direction
+{
+  SECURE_PACKET_SEND,
+  SECURE_PACKET_RECEIVE
+};
+
 typedef struct _RpcAuthInfo
 {
   LONG refs;
@@ -100,6 +106,9 @@ struct connection_ops {
   size_t (*get_top_of_tower)(unsigned char *tower_data, const char *networkaddr, const char *endpoint);
   RPC_STATUS (*parse_top_of_tower)(const unsigned char *tower_data, size_t tower_size, char **networkaddr, char **endpoint);
   RPC_STATUS (*receive_fragment)(RpcConnection *conn, RpcPktHdr **Header, void **Payload);
+  BOOL (*is_authorized)(RpcConnection *conn);
+  RPC_STATUS (*authorize)(RpcConnection *conn, BOOL first_time, unsigned char *in_buffer, unsigned int in_len, unsigned char *out_buffer, unsigned int *out_len);
+  RPC_STATUS (*secure_packet)(RpcConnection *Connection, enum secure_packet_direction dir, RpcPktHdr *hdr, unsigned int hdr_size, unsigned char *stub_data, unsigned int stub_data_size, RpcAuthVerifier *auth_hdr, unsigned char *auth_value, unsigned int auth_value_size);
 };
 
 /* don't know what MS's structure looks like */
@@ -184,6 +193,27 @@ static inline void rpcrt4_conn_cancel_call(RpcConnection *Connection)
 static inline RPC_STATUS rpcrt4_conn_handoff(RpcConnection *old_conn, RpcConnection *new_conn)
 {
   return old_conn->ops->handoff(old_conn, new_conn);
+}
+
+static inline BOOL rpcrt4_conn_is_authorized(RpcConnection *Connection)
+{
+    return Connection->ops->is_authorized(Connection);
+}
+
+static inline RPC_STATUS rpcrt4_conn_authorize(
+    RpcConnection *conn, BOOL first_time, unsigned char *in_buffer,
+    unsigned int in_len, unsigned char *out_buffer, unsigned int *out_len)
+{
+    return conn->ops->authorize(conn, first_time, in_buffer, in_len, out_buffer, out_len);
+}
+
+static inline RPC_STATUS rpcrt4_conn_secure_packet(
+    RpcConnection *conn, enum secure_packet_direction dir,
+    RpcPktHdr *hdr, unsigned int hdr_size, unsigned char *stub_data,
+    unsigned int stub_data_size, RpcAuthVerifier *auth_hdr,
+    unsigned char *auth_value, unsigned int auth_value_size)
+{
+    return conn->ops->secure_packet(conn, dir, hdr, hdr_size, stub_data, stub_data_size, auth_hdr, auth_value, auth_value_size);
 }
 
 /* floors 3 and up */
