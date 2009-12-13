@@ -2307,55 +2307,6 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
 
 
 /**********************************************************************
- *		GetWindowLong (USER.135)
- */
-LONG WINAPI GetWindowLong16( HWND16 hwnd, INT16 offset )
-{
-    WND *wndPtr;
-    LONG_PTR retvalue;
-    BOOL is_winproc = (offset == GWLP_WNDPROC);
-
-    if (offset >= 0)
-    {
-        if (!(wndPtr = WIN_GetPtr( WIN_Handle32(hwnd) )))
-        {
-            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-            return 0;
-        }
-        if (wndPtr != WND_OTHER_PROCESS && wndPtr != WND_DESKTOP)
-        {
-            if (offset > (int)(wndPtr->cbWndExtra - sizeof(LONG)))
-            {
-                /*
-                 * Some programs try to access last element from 16 bit
-                 * code using illegal offset value. Hopefully this is
-                 * what those programs really expect.
-                 */
-                if (wndPtr->cbWndExtra >= 4 && offset == wndPtr->cbWndExtra - sizeof(WORD))
-                {
-                    INT offset2 = wndPtr->cbWndExtra - sizeof(LONG);
-                    ERR( "- replaced invalid offset %d with %d\n", offset, offset2 );
-                    offset = offset2;
-                }
-                else
-                {
-                    WARN("Invalid offset %d\n", offset );
-                    WIN_ReleasePtr( wndPtr );
-                    SetLastError( ERROR_INVALID_INDEX );
-                    return 0;
-                }
-            }
-            is_winproc = ((offset == DWLP_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG));
-            WIN_ReleasePtr( wndPtr );
-        }
-    }
-    retvalue = GetWindowLongA( WIN_Handle32(hwnd), offset );
-    if (is_winproc) retvalue = (LONG_PTR)WINPROC_GetProc16( (WNDPROC)retvalue, FALSE );
-    return retvalue;
-}
-
-
-/**********************************************************************
  *		GetWindowWord (USER32.@)
  */
 WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
@@ -2394,39 +2345,6 @@ LONG WINAPI GetWindowLongA( HWND hwnd, INT offset )
 LONG WINAPI GetWindowLongW( HWND hwnd, INT offset )
 {
     return WIN_GetWindowLong( hwnd, offset, sizeof(LONG), TRUE );
-}
-
-
-/**********************************************************************
- *		SetWindowLong (USER.136)
- */
-LONG WINAPI SetWindowLong16( HWND16 hwnd, INT16 offset, LONG newval )
-{
-    WND *wndPtr;
-    BOOL is_winproc = (offset == GWLP_WNDPROC);
-
-    if (offset == DWLP_DLGPROC)
-    {
-        if (!(wndPtr = WIN_GetPtr( WIN_Handle32(hwnd) )))
-        {
-            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-            return 0;
-        }
-        if (wndPtr != WND_OTHER_PROCESS && wndPtr != WND_DESKTOP)
-        {
-            is_winproc = ((wndPtr->cbWndExtra - sizeof(LONG_PTR) >= DWLP_DLGPROC) &&
-                          (wndPtr->flags & WIN_ISDIALOG));
-            WIN_ReleasePtr( wndPtr );
-        }
-    }
-
-    if (is_winproc)
-    {
-        WNDPROC new_proc = WINPROC_AllocProc16( (WNDPROC16)newval );
-        WNDPROC old_proc = (WNDPROC)SetWindowLongPtrA( WIN_Handle32(hwnd), offset, (LONG_PTR)new_proc );
-        return (LONG)WINPROC_GetProc16( old_proc, FALSE );
-    }
-    else return SetWindowLongA( WIN_Handle32(hwnd), offset, newval );
 }
 
 

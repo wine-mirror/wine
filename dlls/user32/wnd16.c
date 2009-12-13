@@ -719,6 +719,85 @@ WORD WINAPI SetWindowWord16( HWND16 hwnd, INT16 offset, WORD newval )
 }
 
 
+/**********************************************************************
+ *		GetWindowLong (USER.135)
+ */
+LONG WINAPI GetWindowLong16( HWND16 hwnd, INT16 offset )
+{
+    WND *wndPtr;
+    LONG_PTR retvalue;
+    BOOL is_winproc = (offset == GWLP_WNDPROC);
+
+    if (offset >= 0)
+    {
+        if (!(wndPtr = WIN_GetPtr( WIN_Handle32(hwnd) )))
+        {
+            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+            return 0;
+        }
+        if (wndPtr != WND_OTHER_PROCESS && wndPtr != WND_DESKTOP)
+        {
+            if (offset > (int)(wndPtr->cbWndExtra - sizeof(LONG)))
+            {
+                /*
+                 * Some programs try to access last element from 16 bit
+                 * code using illegal offset value. Hopefully this is
+                 * what those programs really expect.
+                 */
+                if (wndPtr->cbWndExtra >= 4 && offset == wndPtr->cbWndExtra - sizeof(WORD))
+                {
+                    offset = wndPtr->cbWndExtra - sizeof(LONG);
+                }
+                else
+                {
+                    WIN_ReleasePtr( wndPtr );
+                    SetLastError( ERROR_INVALID_INDEX );
+                    return 0;
+                }
+            }
+            is_winproc = ((offset == DWLP_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG));
+            WIN_ReleasePtr( wndPtr );
+        }
+    }
+    retvalue = GetWindowLongA( WIN_Handle32(hwnd), offset );
+    if (is_winproc) retvalue = (LONG_PTR)WINPROC_GetProc16( (WNDPROC)retvalue, FALSE );
+    return retvalue;
+}
+
+
+/**********************************************************************
+ *		SetWindowLong (USER.136)
+ */
+LONG WINAPI SetWindowLong16( HWND16 hwnd, INT16 offset, LONG newval )
+{
+    WND *wndPtr;
+    BOOL is_winproc = (offset == GWLP_WNDPROC);
+
+    if (offset == DWLP_DLGPROC)
+    {
+        if (!(wndPtr = WIN_GetPtr( WIN_Handle32(hwnd) )))
+        {
+            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+            return 0;
+        }
+        if (wndPtr != WND_OTHER_PROCESS && wndPtr != WND_DESKTOP)
+        {
+            is_winproc = ((wndPtr->cbWndExtra - sizeof(LONG_PTR) >= DWLP_DLGPROC) &&
+                          (wndPtr->flags & WIN_ISDIALOG));
+            WIN_ReleasePtr( wndPtr );
+        }
+    }
+
+    if (is_winproc)
+    {
+        WNDPROC new_proc = WINPROC_AllocProc16( (WNDPROC16)newval );
+        WNDPROC old_proc = (WNDPROC)SetWindowLongPtrA( WIN_Handle32(hwnd), offset, (LONG_PTR)new_proc );
+        return (LONG)WINPROC_GetProc16( old_proc, FALSE );
+    }
+    else return SetWindowLongA( WIN_Handle32(hwnd), offset, newval );
+}
+
+
 /**************************************************************************
  *              OpenClipboard   (USER.137)
  */
