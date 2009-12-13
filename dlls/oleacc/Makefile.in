@@ -16,6 +16,7 @@ RC_SRCS = \
 	oleacc_Ko.rc \
 	oleacc_Lt.rc \
 	oleacc_Nl.rc \
+	oleacc_No.rc \
 	oleacc_Pl.rc \
 	oleacc_Pt.rc \
 	oleacc_Ro.rc
