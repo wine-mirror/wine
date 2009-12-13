@@ -3320,7 +3320,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     glTexParameteri(texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
-    glDrawBuffer(drawBuffer);
+    context_set_draw_buffer(context, drawBuffer);
     glReadBuffer(drawBuffer);
 
     glBegin(GL_QUADS);
@@ -3397,9 +3397,6 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
             glTexCoord2f((float) fbwidth / (float) Src->pow2Width, (float) fbheight / (float) Src->pow2Height);
             glVertex2i(fbwidth, 0);
         glEnd();
-    } else {
-        /* Restore the old draw buffer */
-        glDrawBuffer(GL_BACK);
     }
     glDisable(texture_target);
     checkGLcall("glDisable(texture_target)");
