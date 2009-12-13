@@ -1,8 +1,8 @@
 /*
  * WineCfg resources
- * Norwegian Bokmål Language Support
+ * Norwegian BokmÃ¥l Language Support
  *
- * Copyright 2005-2008 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2005-2009 Alexander N. SÃ¸rnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,9 @@
 #include "config.h"   /* Needed for the PACKAGE_STRING definition */
 #include "resource.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
 IDR_WINECFG MENU DISCARDABLE
@@ -40,7 +43,7 @@ BEGIN
     LTEXT           PACKAGE_STRING,IDC_STATIC,119,17,120,8
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
-    LTEXT           "Dette biblioteket er fri programvarer; det kan redistribueres i henhold til vilkårene i GNU Lesser General Public License utgitt av «the Free Software Foundation», enten versjon 2.1 av denne Lisensen, eller (hvis du ønsker det) en nyere versjon.",
+    LTEXT           "Dette biblioteket er fri programvarer; det kan redistribueres i henhold til vilkÃ¥rene i GNU Lesser General Public License utgitt av Â«the Free Software FoundationÂ», enten versjon 2.1 av denne Lisensen, eller (hvis du Ã¸nsker det) en nyere versjon.",
                     IDC_STATIC,119,44,124,72
     GROUPBOX        " Brukerinformasjon ", IDC_STATIC, 15, 110, 230, 55
     LTEXT           "Eier:", IDC_STATIC, 22, 126, 40, 20
@@ -54,7 +57,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Programminnstillinger ",IDC_STATIC, 8,4,244,240
-    LTEXT           "Wine kan etterligne forskjellige Windows-versjoner for hvert program. Denne fanen er koblet med bibliotek- og grafikkfanene, sånn at du kan endre innstillinger for hele systemet eller enkelte programmer der også.",
+    LTEXT           "Wine kan etterligne forskjellige Windows-versjoner for hvert program. Denne fanen er koblet med bibliotek- og grafikkfanene, sÃ¥nn at du kan endre innstillinger for hele systemet eller enkelte programmer der ogsÃ¥.",
                     IDC_STATIC,15,20,227,30
     CONTROL         "Programmer",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,50,230,150
@@ -69,12 +72,12 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX    " Vinduinnstillinger ",IDC_STATIC,8,4,244,84
-    CONTROL     "Tillat DirectX-programmer å hindre musen fra å forlate vinduet",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
-    CONTROL     "Tillat vindusbehandleren å &dekorere vinduer",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
-    CONTROL     "Tillat vindusbehandleren å kontrollere vinduene",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "Tillat DirectX-programmer Ã¥ hindre musen fra Ã¥ forlate vinduet",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "Tillat vindusbehandleren Ã¥ &dekorere vinduer",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "Tillat vindusbehandleren Ã¥ kontrollere vinduene",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
     CONTROL     "Vis et virtuelt skrivebord",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
-    LTEXT       "Størrelse:",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
+    LTEXT       "StÃ¸rrelse:",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
     LTEXT       "X",IDC_DESKTOP_BY,109,70,8,8,WS_DISABLED
     EDITTEXT    IDC_DESKTOP_WIDTH,64,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     EDITTEXT    IDC_DESKTOP_HEIGHT,117,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
@@ -82,13 +85,13 @@ BEGIN
     GROUPBOX    " Direct3D ",IDC_STATIC,8,95,244,49
     LTEXT       "Verteks-skyggelegging: ",IDC_STATIC,15,110,80,32
     COMBOBOX    IDC_D3D_VSHADER_MODE,100,108,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL     "Tillat piksel-skyggelegger (hvis maskinvaren støtter det)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
+    CONTROL     "Tillat piksel-skyggelegger (hvis maskinvaren stÃ¸tter det)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
-    GROUPBOX    " Skjermoppløsning (styrer skriftstørrelse) ",IDC_STATIC,8,151,244,93
+    GROUPBOX    " SkjermopplÃ¸sning (styrer skriftstÃ¸rrelse) ",IDC_STATIC,8,151,244,93
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
     EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT       "dpi",IDC_STATIC,235,163,10,8
-    LTEXT       "Forhåndsvisning av tekst med 10 punkters Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,55
+    LTEXT       "ForhÃ¥ndsvisning av tekst med 10 punkters Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,55
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -96,7 +99,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " DLL-overstyring ",IDC_STATIC,8,4,244,240
-    LTEXT           "Dynamisk koblede biblioteker kan oppgis individuelt til å være enten innebygget (fra Wine) eller innfødt (tatt fra Windows eller gitt av et program)."
+    LTEXT           "Dynamisk koblede biblioteker kan oppgis individuelt til Ã¥ vÃ¦re enten innebygget (fra Wine) eller innfÃ¸dt (tatt fra Windows eller gitt av et program)."
                     ,IDC_STATIC,16,16,220,32
     LTEXT           "Ny overstyring for bibliotek:",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
@@ -112,14 +115,24 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Rediger overstyring"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Lastingsrekkefølge ",IDC_STATIC,8,4,94,66
+    GROUPBOX        " LastingsrekkefÃ¸lge ",IDC_STATIC,8,4,94,66
     CONTROL         "Inne&bygget (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
-    CONTROL         "I&nnfødt (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
-    CONTROL         "&Innebygget så innfødt",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
-    CONTROL         "Innfdø&dt så innebygget",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
+    CONTROL         "I&nnfÃ¸dt (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
+    CONTROL         "&Innebygget sÃ¥ innfÃ¸dt",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
+    CONTROL         "InnfdÃ¸&dt sÃ¥ innebygget",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
     CONTROL         "&Deaktiver",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
     DEFPUSHBUTTON   "OK",IDOK,8,74,45,14,WS_GROUP
     PUSHBUTTON      "Avbryt",IDCANCEL,57,74,45,14,WS_GROUP
+END
+
+IDD_DRIVECHOOSE DIALOG DISCARDABLE  60, 70, 170, 60
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Velg stasjonsbokstav"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    COMBOBOX IDC_DRIVESA2Z,15,10,75,230,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,105,10,45,14,WS_GROUP
+    PUSHBUTTON      "Avbryt",IDCANCEL,105,30,45,14,WS_GROUP
 END
 
 IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -165,7 +178,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Valg av driver ",IDC_STATIC,8,4,244,210
-    LTEXT           "Velg en lyddriver ved å krysse av i boksen ved siden av den du vil bruke. Deaktiver lyd ved å ikke velge noen. Det anbefales ikke å velge flere drivere. Driverens oppsett kan endres ved å høyreklikke på den.",IDC_STATIC,15,20,227,30
+    LTEXT           "Velg en lyddriver ved Ã¥ krysse av i boksen ved siden av den du vil bruke. Deaktiver lyd ved Ã¥ ikke velge noen. Det anbefales ikke Ã¥ velge flere drivere. Driverens oppsett kan endres ved Ã¥ hÃ¸yreklikke pÃ¥ den.",IDC_STATIC,15,20,227,30
     CONTROL         "Enheter",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,155
     PUSHBUTTON      "&Test",IDC_AUDIO_TEST,170,50,59,14
     PUSHBUTTON	    "Kontrollpanel",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
@@ -174,7 +187,7 @@ BEGIN
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,228,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Std. samplingsrate:",IDC_STATIC,15,247,70,8
     COMBOBOX        IDC_DSOUND_RATES,90,245,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Std. biter per prøve:",IDC_STATIC,137,247,80,8
+    LTEXT           "Std. biter per prÃ¸ve:",IDC_STATIC,137,247,80,8
     COMBOBOX        IDC_DSOUND_BITS,220,245,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
@@ -188,13 +201,13 @@ BEGIN
     PUSHBUTTON      "Installer tema...",IDC_THEME_INSTALL,152,23,93,14
     LTEXT           "Farge:",IDC_THEME_COLORTEXT,15,40,112,8
     COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Størrelse:",IDC_THEME_SIZETEXT,135,40,110,8
+    LTEXT           "StÃ¸rrelse:",IDC_THEME_SIZETEXT,135,40,110,8
     COMBOBOX        IDC_THEME_SIZECOMBO,135,48,110,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Element:",IDC_STATIC,15,64,112,8
     COMBOBOX        IDC_SYSPARAM_COMBO,15,74,112,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
     LTEXT           "Farge:",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
     PUSHBUTTON      "",IDC_SYSPARAM_COLOR,135,74,25,13,WS_DISABLED | BS_OWNERDRAW
-    LTEXT           "Størrelse:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
+    LTEXT           "StÃ¸rrelse:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
     EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
     CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
     PUSHBUTTON      "Skrift",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
@@ -211,7 +224,7 @@ BEGIN
     IDS_TAB_APPLICATIONS    "Programmer"
     IDS_TAB_DLLS            "Biblioteker"
     IDS_TAB_DRIVES          "Stasjoner"
-    IDS_CHOOSE_PATH         "Velg Unix-målkatalogen."
+    IDS_CHOOSE_PATH         "Velg Unix-mÃ¥lkatalogen."
     IDS_HIDE_ADVANCED       "Enkel visning"
     IDS_SHOW_ADVANCED       "Avansert visning"
     IDS_NOTHEME             "(Intet tema)"
@@ -220,23 +233,23 @@ BEGIN
     IDS_TAB_AUDIO           "Lyd"
     IDS_TAB_ABOUT           "Om"
     IDS_WINECFG_TITLE       "Oppsett av Wine"
-    IDS_WINECFG_TITLE_APP   "Oppsett av Wine for «%s»"
+    IDS_WINECFG_TITLE_APP   "Oppsett av Wine for Â«%sÂ»"
     IDS_THEMEFILE           "Temafiler (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Velg en temafil"
-    IDS_AUDIO_MISSING       "Ingen lyddriver er oppgitt i registeret.\n\nEn anbefalt driver er valgt for deg;\nbruk den eller velg en annen,\n\nog trykk «Bruk» for at endringene skal tre i kraft."
+    IDS_AUDIO_MISSING       "Ingen lyddriver er oppgitt i registeret.\n\nEn anbefalt driver er valgt for deg;\nbruk den eller velg en annen,\n\nog trykk Â«BrukÂ» for at endringene skal tre i kraft."
     IDS_SHELL_FOLDER        "Mappe"
     IDS_LINKS_TO            "Peker til"
 END
     
     STRINGTABLE DISCARDABLE
     BEGIN
-    IDS_DLL_WARNING         "Endring av lastingsrekkefølgen for dette biblioteket anbefales ikke.\nEr du sikker på at du vil gjøre det?"
+    IDS_DLL_WARNING         "Endring av lastingsrekkefÃ¸lgen for dette biblioteket anbefales ikke.\nEr du sikker pÃ¥ at du vil gjÃ¸re det?"
     IDS_DLL_WARNING_CAPTION "Advarsel: systembibliotek"
-    IDS_DLL_NATIVE          "innfødt"
+    IDS_DLL_NATIVE          "innfÃ¸dt"
     IDS_DLL_BUILTIN         "innebygget"
-    IDS_DLL_NATIVE_BUILTIN  "innfødt, innebygget"
-    IDS_DLL_BUILTIN_NATIVE  "innebygget, innfødt"
-    IDS_DLL_DISABLED        "slått av"
+    IDS_DLL_NATIVE_BUILTIN  "innfÃ¸dt, innebygget"
+    IDS_DLL_BUILTIN_NATIVE  "innebygget, innfÃ¸dt"
+    IDS_DLL_DISABLED        "slÃ¥tt av"
     IDS_DEFAULT_SETTINGS    "Globale innstillinger"
     IDS_EXECUTABLE_FILTER   "Wine-programmer (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
     IDS_USE_GLOBAL_SETTINGS "Bruk globale innstillinger"
@@ -256,12 +269,12 @@ BEGIN
     IDS_DRIVE_REMOTE            "Nettverksressurs"
     IDS_DRIVE_REMOVABLE         "Diskett"
     IDS_DRIVE_CDROM             "CD-ROM"
-    IDS_DRIVE_LETTERS_EXCEEDED  "Du kan ikke legge til flere stasjoner.\n\nHver stasjon må ha en bokstav fra A til Z, så 26 stasjoner er det meste"
+    IDS_DRIVE_LETTERS_EXCEEDED  "Du kan ikke legge til flere stasjoner.\n\nHver stasjon mÃ¥ ha en bokstav fra A til Z, sÃ¥ 26 stasjoner er det meste"
     IDS_SYSTEM_DRIVE_LABEL      "Systemstasjon"
-    IDS_CONFIRM_DELETE_C        "Vil du virkelig fjerne stasjon C?\n\nDe fleste Windows-programmer forventer at C finnes, og lager bråk hvis den ikke er der. Husk å lage den på nytt hvis du fortsetter."
+    IDS_CONFIRM_DELETE_C        "Vil du virkelig fjerne stasjon C?\n\nDe fleste Windows-programmer forventer at C finnes, og lager brÃ¥k hvis den ikke er der. Husk Ã¥ lage den pÃ¥ nytt hvis du fortsetter."
     IDS_COL_DRIVELETTER         "Bokstav"
     IDS_COL_DRIVEMAPPING        "Peker til"
-    IDS_NO_DRIVE_C              "Du har ikke en C-stasjon. Det er ikke så bra..\n\nHusk å trykke «Legg til» i stasjonsfanen for å lage en.\n"
+    IDS_NO_DRIVE_C              "Du har ikke en C-stasjon. Det er ikke sÃ¥ bra..\n\nHusk Ã¥ trykke Â«Legg tilÂ» i stasjonsfanen for Ã¥ lage en.\n"
 END
 
 STRINGTABLE DISCARDABLE
@@ -277,7 +290,7 @@ BEGIN
     IDS_DRIVER_NAS              "NAS-driver"
     IDS_DRIVER_AUDIOIO          "Audio IO (Solaris)-driver"
     IDS_DRIVER_COREAUDIO        "CoreAudio-driver"
-    IDS_OPEN_DRIVER_ERROR       "Klarte ikke åpne %s."
+    IDS_OPEN_DRIVER_ERROR       "Klarte ikke Ã¥pne %s."
     IDS_SOUNDDRIVERS            "Lyddrivere"
     IDS_DEVICES_WAVEOUT         "Lyd ut-enheter"
     IDS_DEVICES_WAVEIN          "Lyd inn-enheter"
@@ -285,7 +298,7 @@ BEGIN
     IDS_DEVICES_MIDIIN          "MIDI inn-enheter"
     IDS_DEVICES_AUX             "Aux-enheter"
     IDS_DEVICES_MIXER           "Mikserenheter"
-    IDS_UNAVAILABLE_DRIVER      "Fant driver i registeret som ikke er tilgjengelig.\n\nFjerne «%s» fra registeret?"
+    IDS_UNAVAILABLE_DRIVER      "Fant driver i registeret som ikke er tilgjengelig.\n\nFjerne Â«%sÂ» fra registeret?"
     IDS_WARNING                 "Advarsel"
 END
 
@@ -299,8 +312,8 @@ BEGIN
     IDC_SYSPARAMS_SCROLLBAR         "Rullefelt"
     IDC_SYSPARAMS_SELECTION         "Bakgrunn for merking"
     IDC_SYSPARAMS_SELECTION_TEXT    "Merket tekst"
-    IDC_SYSPARAMS_TOOLTIP           "Bakgrunn for verktøytips"
-    IDC_SYSPARAMS_TOOLTIP_TEXT      "Tekst i verktøytips"
+    IDC_SYSPARAMS_TOOLTIP           "Bakgrunn for verktÃ¸ytips"
+    IDC_SYSPARAMS_TOOLTIP_TEXT      "Tekst i verktÃ¸ytips"
     IDC_SYSPARAMS_WINDOW            "Vindubakgrunn"
     IDC_SYSPARAMS_WINDOW_TEXT       "Vinduteksts"
     IDC_SYSPARAMS_ACTIVE_TITLE      "Aktiv tittellinje"
@@ -308,14 +321,14 @@ BEGIN
     IDC_SYSPARAMS_INACTIVE_TITLE    "Inaktiv tittellinje"
     IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Inaktiv titteltekst"
     IDC_SYSPARAMS_MSGBOX_TEXT       "Meldingsvindutekst"
-    IDC_SYSPARAMS_APPWORKSPACE      "Arbeidsområde i program"
+    IDC_SYSPARAMS_APPWORKSPACE      "ArbeidsomrÃ¥de i program"
     IDC_SYSPARAMS_WINDOW_FRAME      "Visrusramme"
     IDC_SYSPARAMS_ACTIVE_BORDER     "Aktiv kant"
     IDC_SYSPARAMS_INACTIVE_BORDER   "Inaktiv kant"
     IDC_SYSPARAMS_BUTTON_SHADOW     "Kontrollerskygge"
-    IDC_SYSPARAMS_GRAY_TEXT         "Grå tekst"
+    IDC_SYSPARAMS_GRAY_TEXT         "GrÃ¥ tekst"
     IDC_SYSPARAMS_BUTTON_HILIGHT    "Merket kontroller"
-    IDC_SYSPARAMS_BUTTON_DARK_SHADOW "Mørk skygge i kontroller"
+    IDC_SYSPARAMS_BUTTON_DARK_SHADOW "MÃ¸rk skygge i kontroller"
     IDC_SYSPARAMS_BUTTON_LIGHT      "Kontrollerlys"
     IDC_SYSPARAMS_BUTTON_ALTERNATE  "Bakgrunn for skiftende kontroller"
     IDC_SYSPARAMS_HOT_TRACKING      "Merket element"
