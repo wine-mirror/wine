@@ -273,9 +273,9 @@ static RPC_STATUS RpcAssoc_BindConnection(const RpcAssoc *assoc, RpcConnection *
                 case RESULT_ACCEPT:
                     /* respond to authorization request */
                     if (auth_length > sizeof(RpcAuthVerifier))
-                        status = RPCRT4_AuthorizeConnection(conn,
-                                                            auth_data + sizeof(RpcAuthVerifier),
-                                                            auth_length);
+                        status = RPCRT4_ClientConnectionAuth(conn,
+                                                             auth_data + sizeof(RpcAuthVerifier),
+                                                             auth_length);
                     if (status == RPC_S_OK)
                     {
                         conn->assoc_group_id = response_hdr->bind_ack.assoc_gid;

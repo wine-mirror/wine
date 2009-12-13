@@ -52,6 +52,8 @@ typedef struct _RpcPacket
   struct _RpcConnection* conn;
   RpcPktHdr* hdr;
   RPC_MESSAGE* msg;
+  unsigned char *auth_data;
+  ULONG auth_length;
 } RpcPacket;
 
 typedef struct _RpcObjTypeMap
@@ -168,13 +170,50 @@ static void RPCRT4_release_server_interface(RpcServerInterface *sif)
   }
 }
 
-static RPC_STATUS process_bind_packet(RpcConnection *conn, RpcPktBindHdr *hdr, RPC_MESSAGE *msg)
+static RpcPktHdr *handle_bind_error(RpcConnection *conn, RPC_STATUS error)
+{
+    unsigned int reject_reason;
+    switch (error)
+    {
+    case RPC_S_SERVER_TOO_BUSY:
+        reject_reason = REJECT_TEMPORARY_CONGESTION;
+        break;
+    case ERROR_OUTOFMEMORY:
+    case RPC_S_OUT_OF_RESOURCES:
+        reject_reason = REJECT_LOCAL_LIMIT_EXCEEDED;
+        break;
+    case RPC_S_PROTOCOL_ERROR:
+        reject_reason = REJECT_PROTOCOL_VERSION_NOT_SUPPORTED;
+        break;
+    case RPC_S_UNKNOWN_AUTHN_SERVICE:
+        reject_reason = REJECT_UNKNOWN_AUTHN_SERVICE;
+        break;
+    case ERROR_ACCESS_DENIED:
+        reject_reason = REJECT_INVALID_CHECKSUM;
+        break;
+    default:
+        FIXME("unexpected status value %d\n", error);
+        /* fall through */
+    case RPC_S_INVALID_BOUND:
+        reject_reason = REJECT_REASON_NOT_SPECIFIED;
+        break;
+    }
+    return RPCRT4_BuildBindNackHeader(NDR_LOCAL_DATA_REPRESENTATION,
+                                      RPC_VER_MAJOR, RPC_VER_MINOR,
+                                      reject_reason);
+}
+
+static RPC_STATUS process_bind_packet_no_send(
+    RpcConnection *conn, RpcPktBindHdr *hdr, RPC_MESSAGE *msg,
+    unsigned char *auth_data, ULONG auth_length, RpcPktHdr **ack_response,
+    unsigned char **auth_data_out, ULONG *auth_length_out)
 {
   RPC_STATUS status;
-  RpcPktHdr *response;
   RpcContextElement *ctxt_elem;
   unsigned int i;
+  RpcResult *results;
 
+  /* validate data */
   for (i = 0, ctxt_elem = msg->Buffer;
        i < hdr->num_elements;
        i++, ctxt_elem = (RpcContextElement *)&ctxt_elem->transfer_syntaxes[ctxt_elem->num_syntaxes])
@@ -184,11 +223,7 @@ static RPC_STATUS process_bind_packet(RpcConnection *conn, RpcPktBindHdr *hdr, R
       {
           ERR("inconsistent data in packet - packet length %d, num elements %d\n",
               msg->BufferLength, hdr->num_elements);
-          /* Report failure to client. */
-          response = RPCRT4_BuildBindNackHeader(NDR_LOCAL_DATA_REPRESENTATION,
-                                                RPC_VER_MAJOR, RPC_VER_MINOR,
-                                                REJECT_REASON_NOT_SPECIFIED);
-          goto send;
+          return RPC_S_INVALID_BOUND;
       }
   }
 
@@ -198,108 +233,133 @@ static RPC_STATUS process_bind_packet(RpcConnection *conn, RpcPktBindHdr *hdr, R
   {
     TRACE("packet size less than min size, or active interface syntax guid non-null\n");
 
-    /* Report failure to client. */
-    response = RPCRT4_BuildBindNackHeader(NDR_LOCAL_DATA_REPRESENTATION,
-                                          RPC_VER_MAJOR, RPC_VER_MINOR,
-                                          REJECT_REASON_NOT_SPECIFIED);
+    return RPC_S_INVALID_BOUND;
   }
-  else
+
+  results = HeapAlloc(GetProcessHeap(), 0,
+                      hdr->num_elements * sizeof(*results));
+  if (!results)
+    return RPC_S_OUT_OF_RESOURCES;
+
+  for (i = 0, ctxt_elem = (RpcContextElement *)msg->Buffer;
+       i < hdr->num_elements;
+       i++, ctxt_elem = (RpcContextElement *)&ctxt_elem->transfer_syntaxes[ctxt_elem->num_syntaxes])
   {
-    RpcResult *results = HeapAlloc(GetProcessHeap(), 0,
-                                   hdr->num_elements * sizeof(*results));
-    if (!results)
-    {
-        /* Report failure to client. */
-        response = RPCRT4_BuildBindNackHeader(NDR_LOCAL_DATA_REPRESENTATION,
-                                              RPC_VER_MAJOR, RPC_VER_MINOR,
-                                              REJECT_LOCAL_LIMIT_EXCEEDED);
-        goto send;
-    }
+      RpcServerInterface* sif = NULL;
+      unsigned int j;
 
-    for (i = 0, ctxt_elem = (RpcContextElement *)msg->Buffer;
-         i < hdr->num_elements;
-         i++, ctxt_elem = (RpcContextElement *)&ctxt_elem->transfer_syntaxes[ctxt_elem->num_syntaxes])
-    {
-        RpcServerInterface* sif = NULL;
-        unsigned int j;
+      for (j = 0; !sif && j < ctxt_elem->num_syntaxes; j++)
+      {
+          sif = RPCRT4_find_interface(NULL, &ctxt_elem->abstract_syntax,
+                                      &ctxt_elem->transfer_syntaxes[j], FALSE);
+          if (sif)
+              break;
+      }
+      if (sif)
+      {
+          RPCRT4_release_server_interface(sif);
+          TRACE("accepting bind request on connection %p for %s\n", conn,
+                debugstr_guid(&ctxt_elem->abstract_syntax.SyntaxGUID));
+          results[i].result = RESULT_ACCEPT;
+          results[i].reason = REASON_NONE;
+          results[i].transfer_syntax = ctxt_elem->transfer_syntaxes[j];
 
-        for (j = 0; !sif && j < ctxt_elem->num_syntaxes; j++)
-        {
-            sif = RPCRT4_find_interface(NULL, &ctxt_elem->abstract_syntax,
-                                        &ctxt_elem->transfer_syntaxes[j], FALSE);
-            if (sif)
-                break;
-        }
-
-        if (sif)
-        {
-            RPCRT4_release_server_interface(sif);
-            TRACE("accepting bind request on connection %p for %s\n", conn,
-                  debugstr_guid(&ctxt_elem->abstract_syntax.SyntaxGUID));
-            results[i].result = RESULT_ACCEPT;
-            results[i].reason = REASON_NONE;
-            results[i].transfer_syntax = ctxt_elem->transfer_syntaxes[j];
-
-            /* save the interface for later use */
-            /* FIXME: save linked list */
-            conn->ActiveInterface = ctxt_elem->abstract_syntax;
-        }
-        else if ((sif = RPCRT4_find_interface(NULL, &ctxt_elem->abstract_syntax,
-                                              NULL, FALSE)) != NULL)
-        {
-            RPCRT4_release_server_interface(sif);
-            TRACE("not accepting bind request on connection %p for %s - no transfer syntaxes supported\n",
-                  conn, debugstr_guid(&ctxt_elem->abstract_syntax.SyntaxGUID));
-            results[i].result = RESULT_PROVIDER_REJECTION;
-            results[i].reason = REASON_TRANSFER_SYNTAXES_NOT_SUPPORTED;
-            memset(&results[i].transfer_syntax, 0, sizeof(results[i].transfer_syntax));
-        }
-        else
-        {
-            TRACE("not accepting bind request on connection %p for %s - abstract syntax not supported\n",
-                  conn, debugstr_guid(&ctxt_elem->abstract_syntax.SyntaxGUID));
-            results[i].result = RESULT_PROVIDER_REJECTION;
-            results[i].reason = REASON_ABSTRACT_SYNTAX_NOT_SUPPORTED;
-            memset(&results[i].transfer_syntax, 0, sizeof(results[i].transfer_syntax));
-        }
-    }
-
-    /* create temporary binding */
-    if (RPCRT4_MakeBinding(&conn->server_binding, conn) == RPC_S_OK &&
-        RpcServerAssoc_GetAssociation(rpcrt4_conn_get_name(conn),
-                                      conn->NetworkAddr, conn->Endpoint,
-                                      conn->NetworkOptions,
-                                      hdr->assoc_gid,
-                                      &conn->server_binding->Assoc) == RPC_S_OK)
-    {
-        response = RPCRT4_BuildBindAckHeader(NDR_LOCAL_DATA_REPRESENTATION,
-                                             RPC_MAX_PACKET_SIZE,
-                                             RPC_MAX_PACKET_SIZE,
-                                             conn->server_binding->Assoc->assoc_group_id,
-                                             conn->Endpoint, hdr->num_elements,
-                                             results);
-
-        conn->MaxTransmissionSize = hdr->max_tsize;
-    }
-    else
-    {
-        /* Report failure to client. */
-        response = RPCRT4_BuildBindNackHeader(NDR_LOCAL_DATA_REPRESENTATION,
-                                              RPC_VER_MAJOR, RPC_VER_MINOR,
-                                              REJECT_LOCAL_LIMIT_EXCEEDED);
-    }
-    HeapFree(GetProcessHeap(), 0, results);
+          /* save the interface for later use */
+          /* FIXME: save linked list */
+          conn->ActiveInterface = ctxt_elem->abstract_syntax;
+      }
+      else if ((sif = RPCRT4_find_interface(NULL, &ctxt_elem->abstract_syntax,
+                                            NULL, FALSE)) != NULL)
+      {
+          RPCRT4_release_server_interface(sif);
+          TRACE("not accepting bind request on connection %p for %s - no transfer syntaxes supported\n",
+                conn, debugstr_guid(&ctxt_elem->abstract_syntax.SyntaxGUID));
+          results[i].result = RESULT_PROVIDER_REJECTION;
+          results[i].reason = REASON_TRANSFER_SYNTAXES_NOT_SUPPORTED;
+          memset(&results[i].transfer_syntax, 0, sizeof(results[i].transfer_syntax));
+      }
+      else
+      {
+          TRACE("not accepting bind request on connection %p for %s - abstract syntax not supported\n",
+                conn, debugstr_guid(&ctxt_elem->abstract_syntax.SyntaxGUID));
+          results[i].result = RESULT_PROVIDER_REJECTION;
+          results[i].reason = REASON_ABSTRACT_SYNTAX_NOT_SUPPORTED;
+          memset(&results[i].transfer_syntax, 0, sizeof(results[i].transfer_syntax));
+      }
   }
 
-send:
-  if (response)
-    status = RPCRT4_Send(conn, response, NULL, 0);
+  /* create temporary binding */
+  status = RPCRT4_MakeBinding(&conn->server_binding, conn);
+  if (status != RPC_S_OK)
+  {
+      HeapFree(GetProcessHeap(), 0, results);
+      return status;
+  }
+
+  status = RpcServerAssoc_GetAssociation(rpcrt4_conn_get_name(conn),
+                                         conn->NetworkAddr, conn->Endpoint,
+                                         conn->NetworkOptions,
+                                         hdr->assoc_gid,
+                                         &conn->server_binding->Assoc);
+  if (status != RPC_S_OK)
+  {
+      HeapFree(GetProcessHeap(), 0, results);
+      return status;
+  }
+
+  if (auth_length)
+  {
+      status = RPCRT4_ServerConnectionAuth(conn, TRUE,
+                                           (RpcAuthVerifier *)auth_data,
+                                           auth_length, auth_data_out,
+                                           auth_length_out);
+      if (status != RPC_S_OK)
+      {
+          HeapFree(GetProcessHeap(), 0, results);
+          return status;
+      }
+  }
+
+  *ack_response = RPCRT4_BuildBindAckHeader(NDR_LOCAL_DATA_REPRESENTATION,
+                                            RPC_MAX_PACKET_SIZE,
+                                            RPC_MAX_PACKET_SIZE,
+                                            conn->server_binding->Assoc->assoc_group_id,
+                                            conn->Endpoint, hdr->num_elements,
+                                            results);
+  HeapFree(GetProcessHeap(), 0, results);
+
+  if (*ack_response)
+      conn->MaxTransmissionSize = hdr->max_tsize;
   else
-    status = ERROR_OUTOFMEMORY;
-  RPCRT4_FreeHeader(response);
+      status = RPC_S_OUT_OF_RESOURCES;
 
   return status;
 }
+
+static RPC_STATUS process_bind_packet(RpcConnection *conn, RpcPktBindHdr *hdr,
+                                      RPC_MESSAGE *msg,
+                                      unsigned char *auth_data,
+                                      ULONG auth_length)
+{
+    RPC_STATUS status;
+    RpcPktHdr *response = NULL;
+    unsigned char *auth_data_out = NULL;
+    ULONG auth_length_out = 0;
+
+    status = process_bind_packet_no_send(conn, hdr, msg, auth_data, auth_length,
+                                         &response, &auth_data_out,
+                                         &auth_length_out);
+    if (status != RPC_S_OK)
+        response = handle_bind_error(conn, status);
+    if (response)
+        status = RPCRT4_SendWithAuth(conn, response, NULL, 0, auth_data_out, auth_length_out);
+    else
+        status = ERROR_OUTOFMEMORY;
+    RPCRT4_FreeHeader(response);
+
+    return status;
+}
+
 
 static RPC_STATUS process_request_packet(RpcConnection *conn, RpcPktRequestHdr *hdr, RPC_MESSAGE *msg)
 {
@@ -414,7 +474,34 @@ static RPC_STATUS process_request_packet(RpcConnection *conn, RpcPktRequestHdr *
   return status;
 }
 
-static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSAGE* msg)
+static RPC_STATUS process_auth3_packet(RpcConnection *conn,
+                                       RpcPktCommonHdr *hdr,
+                                       RPC_MESSAGE *msg,
+                                       unsigned char *auth_data,
+                                       ULONG auth_length)
+{
+    RPC_STATUS status;
+
+    if (UuidIsNil(&conn->ActiveInterface.SyntaxGUID, &status) ||
+        !auth_length || msg->BufferLength != 0)
+        status = RPC_S_PROTOCOL_ERROR;
+    else
+    {
+        status = RPCRT4_ServerConnectionAuth(conn, FALSE,
+                                             (RpcAuthVerifier *)auth_data,
+                                             auth_length, NULL, NULL);
+    }
+
+    /* FIXME: client doesn't expect a response to this message so must store
+     * status in connection so that fault packet can be returned when next
+     * packet is received */
+
+    return RPC_S_OK;
+}
+
+static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr,
+                                  RPC_MESSAGE* msg, unsigned char *auth_data,
+                                  ULONG auth_length)
 {
   RPC_STATUS status;
 
@@ -424,7 +511,8 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
     case PKT_BIND:
       TRACE("got bind packet\n");
 
-      status = process_bind_packet(conn, &hdr->bind, msg);
+      status = process_bind_packet(conn, &hdr->bind, msg, auth_data,
+                                   auth_length);
       break;
 
     case PKT_REQUEST:
@@ -433,6 +521,12 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
       status = process_request_packet(conn, &hdr->request, msg);
       break;
 
+    case PKT_AUTH3:
+      TRACE("got auth3 packet\n");
+
+      status = process_auth3_packet(conn, &hdr->common, msg, auth_data,
+                                    auth_length);
+      break;
     default:
       FIXME("unhandled packet type %u\n", hdr->common.ptype);
       break;
@@ -442,12 +536,14 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
   I_RpcFree(msg->Buffer);
   RPCRT4_FreeHeader(hdr);
   HeapFree(GetProcessHeap(), 0, msg);
+  HeapFree(GetProcessHeap(), 0, auth_data);
 }
 
 static DWORD CALLBACK RPCRT4_worker_thread(LPVOID the_arg)
 {
   RpcPacket *pkt = the_arg;
-  RPCRT4_process_packet(pkt->conn, pkt->hdr, pkt->msg);
+  RPCRT4_process_packet(pkt->conn, pkt->hdr, pkt->msg, pkt->auth_data,
+                        pkt->auth_length);
   HeapFree(GetProcessHeap(), 0, pkt);
   return 0;
 }
@@ -459,13 +555,15 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
   RPC_MESSAGE *msg;
   RPC_STATUS status;
   RpcPacket *packet;
+  unsigned char *auth_data;
+  ULONG auth_length;
 
   TRACE("(%p)\n", conn);
 
   for (;;) {
     msg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RPC_MESSAGE));
 
-    status = RPCRT4_Receive(conn, &hdr, msg);
+    status = RPCRT4_ReceiveWithAuth(conn, &hdr, msg, &auth_data, &auth_length);
     if (status != RPC_S_OK) {
       WARN("receive failed with error %x\n", status);
       HeapFree(GetProcessHeap(), 0, msg);
@@ -482,12 +580,15 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
     packet->conn = conn;
     packet->hdr = hdr;
     packet->msg = msg;
+    packet->auth_data = auth_data;
+    packet->auth_length = auth_length;
     if (!QueueUserWorkItem(RPCRT4_worker_thread, packet, WT_EXECUTELONGFUNCTION)) {
       ERR("couldn't queue work item for worker thread, error was %d\n", GetLastError());
       I_RpcFree(msg->Buffer);
       RPCRT4_FreeHeader(hdr);
       HeapFree(GetProcessHeap(), 0, msg);
       HeapFree(GetProcessHeap(), 0, packet);
+      HeapFree(GetProcessHeap(), 0, auth_data);
       break;
     }
 

@@ -132,6 +132,7 @@ void RPCRT4_strfree(LPSTR src);
 #define RPCRT4_strdupA(x) RPCRT4_strndupA((x),-1)
 #define RPCRT4_strdupW(x) RPCRT4_strndupW((x),-1)
 
+RPC_STATUS RpcAuthInfo_Create(ULONG AuthnLevel, ULONG AuthnSvc, CredHandle cred, TimeStamp exp, ULONG cbMaxToken, RPC_AUTH_IDENTITY_HANDLE identity, RpcAuthInfo **ret);
 ULONG RpcAuthInfo_AddRef(RpcAuthInfo *AuthInfo);
 ULONG RpcAuthInfo_Release(RpcAuthInfo *AuthInfo);
 BOOL RpcAuthInfo_IsEqual(const RpcAuthInfo *AuthInfo1, const RpcAuthInfo *AuthInfo2);

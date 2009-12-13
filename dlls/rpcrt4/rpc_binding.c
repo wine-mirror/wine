@@ -1094,11 +1094,11 @@ static inline BOOL has_nt_auth_identity(ULONG AuthnLevel)
     }
 }
 
-static RPC_STATUS RpcAuthInfo_Create(ULONG AuthnLevel, ULONG AuthnSvc,
-                                     CredHandle cred, TimeStamp exp,
-                                     ULONG cbMaxToken,
-                                     RPC_AUTH_IDENTITY_HANDLE identity,
-                                     RpcAuthInfo **ret)
+RPC_STATUS RpcAuthInfo_Create(ULONG AuthnLevel, ULONG AuthnSvc,
+                              CredHandle cred, TimeStamp exp,
+                              ULONG cbMaxToken,
+                              RPC_AUTH_IDENTITY_HANDLE identity,
+                              RpcAuthInfo **ret)
 {
     RpcAuthInfo *AuthInfo = HeapAlloc(GetProcessHeap(), 0, sizeof(*AuthInfo));
     if (!AuthInfo)
