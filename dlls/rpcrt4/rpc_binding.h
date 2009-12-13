@@ -109,6 +109,8 @@ struct connection_ops {
   BOOL (*is_authorized)(RpcConnection *conn);
   RPC_STATUS (*authorize)(RpcConnection *conn, BOOL first_time, unsigned char *in_buffer, unsigned int in_len, unsigned char *out_buffer, unsigned int *out_len);
   RPC_STATUS (*secure_packet)(RpcConnection *Connection, enum secure_packet_direction dir, RpcPktHdr *hdr, unsigned int hdr_size, unsigned char *stub_data, unsigned int stub_data_size, RpcAuthVerifier *auth_hdr, unsigned char *auth_value, unsigned int auth_value_size);
+  RPC_STATUS (*impersonate_client)(RpcConnection *conn);
+  RPC_STATUS (*revert_to_self)(RpcConnection *conn);
 };
 
 /* don't know what MS's structure looks like */
@@ -214,6 +216,18 @@ static inline RPC_STATUS rpcrt4_conn_secure_packet(
     unsigned char *auth_value, unsigned int auth_value_size)
 {
     return conn->ops->secure_packet(conn, dir, hdr, hdr_size, stub_data, stub_data_size, auth_hdr, auth_value, auth_value_size);
+}
+
+static inline RPC_STATUS rpcrt4_conn_impersonate_client(
+    RpcConnection *conn)
+{
+    return conn->ops->impersonate_client(conn);
+}
+
+static inline RPC_STATUS rpcrt4_conn_revert_to_self(
+    RpcConnection *conn)
+{
+    return conn->ops->revert_to_self(conn);
 }
 
 /* floors 3 and up */

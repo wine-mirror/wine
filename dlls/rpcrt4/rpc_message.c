@@ -1121,6 +1121,62 @@ BOOL RPCRT4_default_is_authorized(RpcConnection *Connection)
 }
 
 /***********************************************************************
+ *           RPCRT4_default_impersonate_client (internal)
+ *
+ */
+RPC_STATUS RPCRT4_default_impersonate_client(RpcConnection *conn)
+{
+    SECURITY_STATUS sec_status;
+
+    TRACE("(%p)\n", conn);
+
+    if (!conn->AuthInfo || !SecIsValidHandle(&conn->ctx))
+        return RPC_S_NO_CONTEXT_AVAILABLE;
+    sec_status = ImpersonateSecurityContext(&conn->ctx);
+    if (sec_status != SEC_E_OK)
+        WARN("ImpersonateSecurityContext returned 0x%08x\n", sec_status);
+    switch (sec_status)
+    {
+    case SEC_E_UNSUPPORTED_FUNCTION:
+        return RPC_S_CANNOT_SUPPORT;
+    case SEC_E_NO_IMPERSONATION:
+        return RPC_S_NO_CONTEXT_AVAILABLE;
+    case SEC_E_OK:
+        return RPC_S_OK;
+    default:
+        return RPC_S_SEC_PKG_ERROR;
+    }
+}
+
+/***********************************************************************
+ *           RPCRT4_default_revert_to_self (internal)
+ *
+ */
+RPC_STATUS RPCRT4_default_revert_to_self(RpcConnection *conn)
+{
+    SECURITY_STATUS sec_status;
+
+    TRACE("(%p)\n", conn);
+
+    if (!conn->AuthInfo || !SecIsValidHandle(&conn->ctx))
+        return RPC_S_NO_CONTEXT_AVAILABLE;
+    sec_status = RevertSecurityContext(&conn->ctx);
+    if (sec_status != SEC_E_OK)
+        WARN("RevertSecurityContext returned 0x%08x\n", sec_status);
+    switch (sec_status)
+    {
+    case SEC_E_UNSUPPORTED_FUNCTION:
+        return RPC_S_CANNOT_SUPPORT;
+    case SEC_E_NO_IMPERSONATION:
+        return RPC_S_NO_CONTEXT_AVAILABLE;
+    case SEC_E_OK:
+        return RPC_S_OK;
+    default:
+        return RPC_S_SEC_PKG_ERROR;
+    }
+}
+
+/***********************************************************************
  *           RPCRT4_Send (internal)
  * 
  * Transmit a packet over connection in acceptable fragments.

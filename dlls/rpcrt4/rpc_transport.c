@@ -586,6 +586,48 @@ static RPC_STATUS rpcrt4_ncacn_np_parse_top_of_tower(const unsigned char *tower_
     return RPC_S_OK;
 }
 
+static RPC_STATUS rpcrt4_conn_np_impersonate_client(RpcConnection *conn)
+{
+    RpcConnection_np *npc = (RpcConnection_np *)conn;
+    BOOL ret;
+
+    TRACE("(%p)\n", conn);
+
+    if (conn->AuthInfo && SecIsValidHandle(&conn->ctx))
+        return RPCRT4_default_impersonate_client(conn);
+
+    ret = ImpersonateNamedPipeClient(npc->pipe);
+    if (!ret)
+    {
+        DWORD error = GetLastError();
+        WARN("ImpersonateNamedPipeClient failed with error %u\n", error);
+        switch (error)
+        {
+        case ERROR_CANNOT_IMPERSONATE:
+            return RPC_S_NO_CONTEXT_AVAILABLE;
+        }
+    }
+    return RPC_S_OK;
+}
+
+static RPC_STATUS rpcrt4_conn_np_revert_to_self(RpcConnection *conn)
+{
+    BOOL ret;
+
+    TRACE("(%p)\n", conn);
+
+    if (conn->AuthInfo && SecIsValidHandle(&conn->ctx))
+        return RPCRT4_default_revert_to_self(conn);
+
+    ret = RevertToSelf();
+    if (!ret)
+    {
+        WARN("RevertToSelf failed with error %u\n", GetLastError());
+        return RPC_S_NO_CONTEXT_AVAILABLE;
+    }
+    return RPC_S_OK;
+}
+
 typedef struct _RpcServerProtseq_np
 {
     RpcServerProtseq common;
@@ -2709,6 +2751,8 @@ static const struct connection_ops conn_protseq_list[] = {
     RPCRT4_default_is_authorized,
     RPCRT4_default_authorize,
     RPCRT4_default_secure_packet,
+    rpcrt4_conn_np_impersonate_client,
+    rpcrt4_conn_np_revert_to_self,
   },
   { "ncalrpc",
     { EPM_PROTOCOL_NCALRPC, EPM_PROTOCOL_PIPE },
@@ -2726,6 +2770,8 @@ static const struct connection_ops conn_protseq_list[] = {
     rpcrt4_ncalrpc_is_authorized,
     rpcrt4_ncalrpc_authorize,
     rpcrt4_ncalrpc_secure_packet,
+    rpcrt4_conn_np_impersonate_client,
+    rpcrt4_conn_np_revert_to_self,
   },
   { "ncacn_ip_tcp",
     { EPM_PROTOCOL_NCACN, EPM_PROTOCOL_TCP },
@@ -2743,6 +2789,8 @@ static const struct connection_ops conn_protseq_list[] = {
     RPCRT4_default_is_authorized,
     RPCRT4_default_authorize,
     RPCRT4_default_secure_packet,
+    RPCRT4_default_impersonate_client,
+    RPCRT4_default_revert_to_self,
   },
   { "ncacn_http",
     { EPM_PROTOCOL_NCACN, EPM_PROTOCOL_HTTP },
@@ -2760,6 +2808,8 @@ static const struct connection_ops conn_protseq_list[] = {
     RPCRT4_default_is_authorized,
     RPCRT4_default_authorize,
     RPCRT4_default_secure_packet,
+    RPCRT4_default_impersonate_client,
+    RPCRT4_default_revert_to_self,
   },
 };
 

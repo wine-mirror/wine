@@ -1052,9 +1052,17 @@ RPC_STATUS RPC_ENTRY RpcBindingReset(RPC_BINDING_HANDLE Binding)
  */
 RPC_STATUS WINAPI RpcImpersonateClient(RPC_BINDING_HANDLE BindingHandle)
 {
-    FIXME("(%p): stub\n", BindingHandle);
-    ImpersonateSelf(SecurityImpersonation);
-    return RPC_S_OK;
+    RpcBinding *bind;
+
+    TRACE("(%p)\n", BindingHandle);
+
+    if (!BindingHandle) BindingHandle = I_RpcGetCurrentCallHandle();
+    if (!BindingHandle) return RPC_S_INVALID_BINDING;
+
+    bind = BindingHandle;
+    if (bind->FromConn)
+        return rpcrt4_conn_impersonate_client(bind->FromConn);
+    return RPC_S_WRONG_KIND_OF_BINDING;
 }
 
 /***********************************************************************
@@ -1077,8 +1085,17 @@ RPC_STATUS WINAPI RpcImpersonateClient(RPC_BINDING_HANDLE BindingHandle)
  */
 RPC_STATUS WINAPI RpcRevertToSelfEx(RPC_BINDING_HANDLE BindingHandle)
 {
-    FIXME("(%p): stub\n", BindingHandle);
-    return RPC_S_OK;
+    RpcBinding *bind;
+
+    TRACE("(%p)\n", BindingHandle);
+
+    if (!BindingHandle) BindingHandle = I_RpcGetCurrentCallHandle();
+    if (!BindingHandle) return RPC_S_INVALID_BINDING;
+
+    bind = BindingHandle;
+    if (bind->FromConn)
+        return rpcrt4_conn_revert_to_self(bind->FromConn);
+    return RPC_S_WRONG_KIND_OF_BINDING;
 }
 
 static inline BOOL has_nt_auth_identity(ULONG AuthnLevel)
@@ -1431,9 +1448,8 @@ BOOL RpcQualityOfService_IsEqual(const RpcQualityOfService *qos1, const RpcQuali
  */
 RPC_STATUS WINAPI RpcRevertToSelf(void)
 {
-    FIXME("stub\n");
-    RevertToSelf();
-    return RPC_S_OK;
+    TRACE("\n");
+    return RpcRevertToSelfEx(NULL);
 }
 
 /***********************************************************************
