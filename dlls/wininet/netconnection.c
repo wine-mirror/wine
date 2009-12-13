@@ -132,12 +132,16 @@ MAKE_FUNCPTR(SSL_write);
 MAKE_FUNCPTR(SSL_read);
 MAKE_FUNCPTR(SSL_pending);
 MAKE_FUNCPTR(SSL_get_ex_new_index);
+MAKE_FUNCPTR(SSL_get_ex_data);
 MAKE_FUNCPTR(SSL_set_ex_data);
+MAKE_FUNCPTR(SSL_get_ex_data_X509_STORE_CTX_idx);
 MAKE_FUNCPTR(SSL_get_verify_result);
 MAKE_FUNCPTR(SSL_get_peer_certificate);
 MAKE_FUNCPTR(SSL_CTX_get_timeout);
 MAKE_FUNCPTR(SSL_CTX_set_timeout);
 MAKE_FUNCPTR(SSL_CTX_set_default_verify_paths);
+MAKE_FUNCPTR(SSL_CTX_set_verify);
+MAKE_FUNCPTR(X509_STORE_CTX_get_ex_data);
 
 /* OpenSSL's libcrypto functions that we use */
 MAKE_FUNCPTR(BIO_new_fp);
@@ -163,6 +167,18 @@ static void ssl_lock_callback(int mode, int type, const char *file, int line)
         EnterCriticalSection(&ssl_locks[type]);
     else
         LeaveCriticalSection(&ssl_locks[type]);
+}
+
+static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
+{
+    SSL *ssl;
+    WCHAR *server;
+
+    ssl = pX509_STORE_CTX_get_ex_data(ctx,
+        pSSL_get_ex_data_X509_STORE_CTX_idx());
+    server = pSSL_get_ex_data(ssl, hostname_idx);
+    FIXME("verify %s\n", debugstr_w(server));
+    return preverify_ok;
 }
 
 #endif
@@ -224,12 +240,16 @@ DWORD NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	DYNSSL(SSL_read);
 	DYNSSL(SSL_pending);
 	DYNSSL(SSL_get_ex_new_index);
+	DYNSSL(SSL_get_ex_data);
 	DYNSSL(SSL_set_ex_data);
+	DYNSSL(SSL_get_ex_data_X509_STORE_CTX_idx);
 	DYNSSL(SSL_get_verify_result);
 	DYNSSL(SSL_get_peer_certificate);
 	DYNSSL(SSL_CTX_get_timeout);
 	DYNSSL(SSL_CTX_set_timeout);
 	DYNSSL(SSL_CTX_set_default_verify_paths);
+	DYNSSL(SSL_CTX_set_verify);
+	DYNSSL(X509_STORE_CTX_get_ex_data);
 #undef DYNSSL
 
 #define DYNCRYPTO(x) \
@@ -265,6 +285,14 @@ DWORD NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
         }
         hostname_idx = pSSL_get_ex_new_index(0, (void *)"hostname index",
                 NULL, NULL, NULL);
+        if (hostname_idx == -1)
+        {
+            ERR("SSL_get_ex_new_index failed; %s\n",
+                pERR_error_string(pERR_get_error(), 0));
+            LeaveCriticalSection(&init_ssl_cs);
+            return ERROR_OUTOFMEMORY;
+        }
+        pSSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, netconn_secure_verify);
 
         pCRYPTO_set_id_callback(ssl_thread_id);
         ssl_locks = HeapAlloc(GetProcessHeap(), 0,
