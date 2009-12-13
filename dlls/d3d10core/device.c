@@ -1036,9 +1036,30 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device *i
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateQuery(ID3D10Device *iface,
         const D3D10_QUERY_DESC *desc, ID3D10Query **query)
 {
-    FIXME("iface %p, desc %p, query %p stub!\n", iface, desc, query);
+    struct d3d10_query *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p, query %p.\n", iface, desc, query);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate D3D10 query object memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = d3d10_query_init(object);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize query, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created query %p.\n", object);
+    *query = (ID3D10Query *)object;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePredicate(ID3D10Device *iface,

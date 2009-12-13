@@ -7,6 +7,7 @@ IMPORTLIB = d3d10core
 IMPORTS   = dxguid uuid dxgi kernel32
 
 C_SRCS = \
+	async.c \
 	buffer.c \
 	d3d10core_main.c \
 	device.c \
