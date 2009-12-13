@@ -118,7 +118,7 @@ static inline void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_co
         context_attach_depth_stencil_fbo(context, GL_READ_FRAMEBUFFER, NULL, FALSE);
 
         context_bind_fbo(context, GL_DRAW_FRAMEBUFFER, NULL);
-        glDrawBuffer(GL_BACK);
+        context_set_draw_buffer(context, GL_BACK);
 
         glDisable(GL_SCISSOR_TEST);
         IWineD3DDeviceImpl_MarkStateDirty(This->device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
@@ -160,7 +160,7 @@ static inline void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_co
         glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        glDrawBuffer(GL_BACK);
+        context_set_draw_buffer(context, GL_BACK);
 
         /* Set the viewport to the destination rectandle, disable any projection
          * transformation set up by CTXUSAGE_BLIT, and draw a (-1,-1)-(1,1) quad.
