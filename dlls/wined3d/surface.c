@@ -1435,16 +1435,15 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
 
     if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)This, &IID_IWineD3DSwapChain, (void **)&swapchain))) {
         GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *) This, (IWineD3DSwapChain *)swapchain);
-        TRACE("Unlocking %#x buffer\n", buffer);
-        glDrawBuffer(buffer);
-        checkGLcall("glDrawBuffer");
-
         IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
-    } else {
+        TRACE("Unlocking %#x buffer.\n", buffer);
+        context_set_draw_buffer(context, buffer);
+    }
+    else
+    {
         /* Primary offscreen render target */
-        TRACE("Offscreen render target\n");
-        glDrawBuffer(myDevice->offscreenBuffer);
-        checkGLcall("glDrawBuffer(myDevice->offscreenBuffer)");
+        TRACE("Offscreen render target.\n");
+        context_set_draw_buffer(context, myDevice->offscreenBuffer);
     }
 
     glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
@@ -1511,20 +1510,8 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
     glPixelStorei(GL_UNPACK_ROW_LENGTH, skipBytes);
     checkGLcall("glPixelStorei(GL_UNPACK_ROW_LENGTH)");
 
-    if(!swapchain) {
-        glDrawBuffer(myDevice->offscreenBuffer);
-        checkGLcall("glDrawBuffer(myDevice->offscreenBuffer)");
-    } else if(swapchain->backBuffer) {
-        glDrawBuffer(GL_BACK);
-        checkGLcall("glDrawBuffer(GL_BACK)");
-    } else {
-        glDrawBuffer(GL_FRONT);
-        checkGLcall("glDrawBuffer(GL_FRONT)");
-    }
     LEAVE_GL();
     context_release(context);
-
-    return;
 }
 
 static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
