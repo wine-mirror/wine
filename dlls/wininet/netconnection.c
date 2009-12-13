@@ -422,7 +422,7 @@ DWORD NETCON_close(WININET_NETCONNECTION *connection)
     return ERROR_SUCCESS;
 }
 #ifdef SONAME_LIBSSL
-static BOOL check_hostname(X509 *cert, char *hostname)
+static BOOL check_hostname(X509 *cert, LPCWSTR hostname)
 {
     /* FIXME: implement */
     return TRUE;
@@ -438,8 +438,6 @@ DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPCWSTR hostname)
 #ifdef SONAME_LIBSSL
     long verify_res;
     X509 *cert;
-    int len;
-    char *hostname_unix;
 
     /* can't connect if we are already connected */
     if (connection->useSSL)
@@ -488,23 +486,12 @@ DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPCWSTR hostname)
          * the moment */
     }
 
-    len = WideCharToMultiByte(CP_UNIXCP, 0, hostname, -1, NULL, 0, NULL, NULL);
-    hostname_unix = HeapAlloc(GetProcessHeap(), 0, len);
-    if (!hostname_unix)
+    if (!check_hostname(cert, hostname))
     {
-        res = ERROR_OUTOFMEMORY;
-        goto fail;
-    }
-    WideCharToMultiByte(CP_UNIXCP, 0, hostname, -1, hostname_unix, len, NULL, NULL);
-
-    if (!check_hostname(cert, hostname_unix))
-    {
-        HeapFree(GetProcessHeap(), 0, hostname_unix);
         res = ERROR_INTERNET_SEC_CERT_CN_INVALID;
         goto fail;
     }
 
-    HeapFree(GetProcessHeap(), 0, hostname_unix);
     connection->useSSL = TRUE;
     return ERROR_SUCCESS;
 
