@@ -1345,7 +1345,7 @@ static int rpcrt4_conn_tcp_read(RpcConnection *Connection,
 {
   RpcConnection_tcp *tcpc = (RpcConnection_tcp *) Connection;
   int bytes_read = 0;
-  do
+  while (bytes_read != count)
   {
     int r = recv(tcpc->sock, (char *)buffer + bytes_read, count - bytes_read, 0);
     if (!r)
@@ -1362,7 +1362,7 @@ static int rpcrt4_conn_tcp_read(RpcConnection *Connection,
       if (!rpcrt4_sock_wait_for_recv(tcpc))
         return -1;
     }
-  } while (bytes_read != count);
+  }
   TRACE("%d %p %u -> %d\n", tcpc->sock, buffer, count, bytes_read);
   return bytes_read;
 }
@@ -1372,7 +1372,7 @@ static int rpcrt4_conn_tcp_write(RpcConnection *Connection,
 {
   RpcConnection_tcp *tcpc = (RpcConnection_tcp *) Connection;
   int bytes_written = 0;
-  do
+  while (bytes_written != count)
   {
     int r = send(tcpc->sock, (const char *)buffer + bytes_written, count - bytes_written, 0);
     if (r >= 0)
@@ -1384,7 +1384,7 @@ static int rpcrt4_conn_tcp_write(RpcConnection *Connection,
       if (!rpcrt4_sock_wait_for_send(tcpc))
         return -1;
     }
-  } while (bytes_written != count);
+  }
   TRACE("%d %p %u -> %d\n", tcpc->sock, buffer, count, bytes_written);
   return bytes_written;
 }
