@@ -141,6 +141,7 @@ MAKE_FUNCPTR(BIO_new_fp);
 MAKE_FUNCPTR(CRYPTO_num_locks);
 MAKE_FUNCPTR(CRYPTO_set_id_callback);
 MAKE_FUNCPTR(CRYPTO_set_locking_callback);
+MAKE_FUNCPTR(ERR_free_strings);
 MAKE_FUNCPTR(ERR_get_error);
 MAKE_FUNCPTR(ERR_error_string);
 MAKE_FUNCPTR(i2d_X509);
@@ -238,6 +239,7 @@ DWORD NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	DYNCRYPTO(CRYPTO_num_locks);
 	DYNCRYPTO(CRYPTO_set_id_callback);
 	DYNCRYPTO(CRYPTO_set_locking_callback);
+	DYNCRYPTO(ERR_free_strings);
 	DYNCRYPTO(ERR_get_error);
 	DYNCRYPTO(ERR_error_string);
 	DYNCRYPTO(i2d_X509);
@@ -282,6 +284,7 @@ void NETCON_unload(void)
 #if defined(SONAME_LIBSSL) && defined(SONAME_LIBCRYPTO)
     if (OpenSSL_crypto_handle)
     {
+        pERR_free_strings();
         wine_dlclose(OpenSSL_crypto_handle, NULL, 0);
     }
     if (OpenSSL_ssl_handle)
