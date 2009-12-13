@@ -49,7 +49,7 @@ static const char elem_test_str[] =
     "<table id=\"tbl\"><tbody><tr></tr><tr id=\"row2\"><td>td1 text</td><td>td2 text</td></tr></tbody></table>"
     "<script id=\"sc\" type=\"text/javascript\"><!--\nfunction Testing() {}\n// -->\n</script>"
     "<test />"
-    "<img id=\"imgid\"/>"
+    "<img id=\"imgid\" name=\"WineImg\"/>"
     "<iframe src=\"about:blank\" id=\"ifr\"></iframe>"
     "<form id=\"frm\"></form>"
     "</body></html>";
@@ -1926,6 +1926,20 @@ static void _test_img_set_alt(unsigned line, IUnknown *unk, const char *alt)
 
     _test_img_alt(line, unk, alt);
 }
+
+#define test_img_name(u, c) _test_img_name(__LINE__,u, c)
+static void _test_img_name(unsigned line, IUnknown *unk, const char *pValue)
+{
+    IHTMLImgElement *img = _get_img_iface(line, unk);
+    BSTR sName;
+    HRESULT hres;
+
+    hres = IHTMLImgElement_get_name(img, &sName);
+    ok_(__FILE__,line) (hres == S_OK, "get_Name failed: %08x\n", hres);
+    ok_(__FILE__,line) (!strcmp_wa (sName, pValue), "expected '%s' got '%s'\n", pValue, wine_dbgstr_w(sName));
+    SysFreeString(sName);
+}
+
 
 #define test_input_get_disabled(i,b) _test_input_get_disabled(__LINE__,i,b)
 static void _test_input_get_disabled(unsigned line, IHTMLInputElement *input, VARIANT_BOOL exb)
@@ -5526,6 +5540,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_img_set_src((IUnknown*)elem, "about:blank");
         test_img_alt((IUnknown*)elem, NULL);
         test_img_set_alt((IUnknown*)elem, "alt test");
+        test_img_name((IUnknown*)elem, "WineImg");
         IHTMLElement_Release(elem);
     }
 
