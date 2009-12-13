@@ -1721,6 +1721,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(
         HeapFree(GetProcessHeap(), 0, ntlm_cred->password);
         HeapFree(GetProcessHeap(), 0, ntlm_cred->username_arg);
         HeapFree(GetProcessHeap(), 0, ntlm_cred->domain_arg);
+        HeapFree(GetProcessHeap(), 0, ntlm_cred);
         ret = SEC_E_OK;
     }
     else
