@@ -80,5 +80,6 @@ void RPCRT4_new_client(RpcConnection* conn);
 const struct protseq_ops *rpcrt4_get_protseq_ops(const char *protseq);
 
 void RPCRT4_destroy_all_protseqs(void);
+void RPCRT4_ServerFreeAllRegisteredAuthInfo(void);
 
 #endif  /* __WINE_RPC_SERVER_H */
