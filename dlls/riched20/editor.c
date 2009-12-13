@@ -3283,6 +3283,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       wszText = lParam ? ME_ToUnicode(bUnicode, (void *)lParam) : NULL;
       len = wszText ? lstrlenW(wszText) : 0;
       ME_InsertTextFromCursor(editor, 0, wszText, len, style);
+      ME_EndToUnicode(bUnicode, wszText);
     }
 
     if (bSelection) {
