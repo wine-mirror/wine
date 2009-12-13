@@ -5775,16 +5775,16 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
 
         ENTER_GL();
         context_bind_fbo(context, GL_DRAW_FRAMEBUFFER, NULL);
-        glDrawBuffer(buffer);
-        checkGLcall("glDrawBuffer()");
-    } else {
+        context_set_draw_buffer(context, buffer);
+    }
+    else
+    {
         TRACE("Destination surface %p is offscreen\n", dst_surface);
 
         ENTER_GL();
         context_bind_fbo(context, GL_DRAW_FRAMEBUFFER, &context->dst_fbo);
         context_attach_surface_fbo(context, GL_DRAW_FRAMEBUFFER, 0, dst_surface);
-        glDrawBuffer(GL_COLOR_ATTACHMENT0);
-        checkGLcall("glDrawBuffer()");
+        context_set_draw_buffer(context, GL_COLOR_ATTACHMENT0);
         context_attach_depth_stencil_fbo(context, GL_DRAW_FRAMEBUFFER, NULL, FALSE);
     }
     glDisable(GL_SCISSOR_TEST);
@@ -5800,17 +5800,10 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         checkGLcall("glBlitFramebuffer()");
     }
 
-    IWineD3DSurface_ModifyLocation(dst_surface, SFLAG_INDRAWABLE, TRUE);
-
-    /* If we switched from GL_BACK to GL_FRONT above, we need to switch back here */
-    if (dst_swapchain && dst_surface == ((IWineD3DSwapChainImpl *)dst_swapchain)->frontBuffer
-            && ((IWineD3DSwapChainImpl *)dst_swapchain)->backBuffer) {
-        glDrawBuffer(GL_BACK);
-        checkGLcall("glDrawBuffer()");
-    }
     LEAVE_GL();
-
     context_release(context);
+
+    IWineD3DSurface_ModifyLocation(dst_surface, SFLAG_INDRAWABLE, TRUE);
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, DWORD RenderTargetIndex, IWineD3DSurface *pRenderTarget,
