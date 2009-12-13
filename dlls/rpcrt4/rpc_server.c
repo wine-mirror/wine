@@ -562,6 +562,7 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
 
   for (;;) {
     msg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RPC_MESSAGE));
+    if (!msg) break;
 
     status = RPCRT4_ReceiveWithAuth(conn, &hdr, msg, &auth_data, &auth_length);
     if (status != RPC_S_OK) {
@@ -570,30 +571,61 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
       break;
     }
 
-    packet = HeapAlloc(GetProcessHeap(), 0, sizeof(RpcPacket));
-    if (!packet) {
-      I_RpcFree(msg->Buffer);
-      RPCRT4_FreeHeader(hdr);
-      HeapFree(GetProcessHeap(), 0, msg);
+    switch (hdr->common.ptype) {
+    case PKT_BIND:
+      TRACE("got bind packet\n");
+
+      status = process_bind_packet(conn, &hdr->bind, msg, auth_data,
+                                   auth_length);
       break;
-    }
-    packet->conn = conn;
-    packet->hdr = hdr;
-    packet->msg = msg;
-    packet->auth_data = auth_data;
-    packet->auth_length = auth_length;
-    if (!QueueUserWorkItem(RPCRT4_worker_thread, packet, WT_EXECUTELONGFUNCTION)) {
-      ERR("couldn't queue work item for worker thread, error was %d\n", GetLastError());
-      I_RpcFree(msg->Buffer);
-      RPCRT4_FreeHeader(hdr);
-      HeapFree(GetProcessHeap(), 0, msg);
-      HeapFree(GetProcessHeap(), 0, packet);
-      HeapFree(GetProcessHeap(), 0, auth_data);
+
+    case PKT_REQUEST:
+      TRACE("got request packet\n");
+
+      packet = HeapAlloc(GetProcessHeap(), 0, sizeof(RpcPacket));
+      if (!packet) {
+        I_RpcFree(msg->Buffer);
+        RPCRT4_FreeHeader(hdr);
+        HeapFree(GetProcessHeap(), 0, msg);
+        HeapFree(GetProcessHeap(), 0, auth_data);
+        goto exit;
+      }
+      packet->conn = conn;
+      packet->hdr = hdr;
+      packet->msg = msg;
+      packet->auth_data = auth_data;
+      packet->auth_length = auth_length;
+      if (!QueueUserWorkItem(RPCRT4_worker_thread, packet, WT_EXECUTELONGFUNCTION)) {
+        ERR("couldn't queue work item for worker thread, error was %d\n", GetLastError());
+        HeapFree(GetProcessHeap(), 0, packet);
+        status = RPC_S_OUT_OF_RESOURCES;
+      } else {
+        continue;
+      }
+      break;
+
+    case PKT_AUTH3:
+      TRACE("got auth3 packet\n");
+
+      status = process_auth3_packet(conn, &hdr->common, msg, auth_data,
+                                    auth_length);
+      break;
+    default:
+      FIXME("unhandled packet type %u\n", hdr->common.ptype);
       break;
     }
 
-    msg = NULL;
+    I_RpcFree(msg->Buffer);
+    RPCRT4_FreeHeader(hdr);
+    HeapFree(GetProcessHeap(), 0, msg);
+    HeapFree(GetProcessHeap(), 0, auth_data);
+
+    if (status != RPC_S_OK) {
+      WARN("processing packet failed with error %u\n", status);
+      break;
+    }
   }
+exit:
   RPCRT4_DestroyConnection(conn);
   return 0;
 }
