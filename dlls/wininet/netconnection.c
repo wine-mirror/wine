@@ -113,6 +113,7 @@ static void *OpenSSL_crypto_handle;
 
 static SSL_METHOD *meth;
 static SSL_CTX *ctx;
+static int hostname_idx;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 
@@ -130,6 +131,8 @@ MAKE_FUNCPTR(SSL_shutdown);
 MAKE_FUNCPTR(SSL_write);
 MAKE_FUNCPTR(SSL_read);
 MAKE_FUNCPTR(SSL_pending);
+MAKE_FUNCPTR(SSL_get_ex_new_index);
+MAKE_FUNCPTR(SSL_set_ex_data);
 MAKE_FUNCPTR(SSL_get_verify_result);
 MAKE_FUNCPTR(SSL_get_peer_certificate);
 MAKE_FUNCPTR(SSL_CTX_get_timeout);
@@ -220,6 +223,8 @@ DWORD NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	DYNSSL(SSL_write);
 	DYNSSL(SSL_read);
 	DYNSSL(SSL_pending);
+	DYNSSL(SSL_get_ex_new_index);
+	DYNSSL(SSL_set_ex_data);
 	DYNSSL(SSL_get_verify_result);
 	DYNSSL(SSL_get_peer_certificate);
 	DYNSSL(SSL_CTX_get_timeout);
@@ -258,6 +263,8 @@ DWORD NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
             LeaveCriticalSection(&init_ssl_cs);
             return ERROR_OUTOFMEMORY;
         }
+        hostname_idx = pSSL_get_ex_new_index(0, (void *)"hostname index",
+                NULL, NULL, NULL);
 
         pCRYPTO_set_id_callback(ssl_thread_id);
         ssl_locks = HeapAlloc(GetProcessHeap(), 0,
@@ -435,7 +442,7 @@ static BOOL check_hostname(X509 *cert, LPCWSTR hostname)
  * NETCON_secure_connect
  * Initiates a secure connection over an existing plaintext connection.
  */
-DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPCWSTR hostname)
+DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPWSTR hostname)
 {
     DWORD res = ERROR_NOT_SUPPORTED;
 #ifdef SONAME_LIBSSL
@@ -473,6 +480,7 @@ DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPCWSTR hostname)
         res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
         goto fail;
     }
+    pSSL_set_ex_data(connection->ssl_s, hostname_idx, hostname);
     cert = pSSL_get_peer_certificate(connection->ssl_s);
     if (!cert)
     {
