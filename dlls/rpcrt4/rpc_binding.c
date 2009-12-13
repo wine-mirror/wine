@@ -1594,8 +1594,8 @@ RpcBindingInqAuthClientExA( RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE *
     if (status == RPC_S_OK && ServerPrincName)
     {
         *ServerPrincName = (RPC_CSTR)RPCRT4_strdupWtoA(principal);
+        if (!*ServerPrincName && principal) status = ERROR_OUTOFMEMORY;
         RpcStringFreeW(&principal);
-        if (!*ServerPrincName) return ERROR_OUTOFMEMORY;
     }
 
     return status;

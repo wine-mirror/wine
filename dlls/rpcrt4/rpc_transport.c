@@ -840,6 +840,36 @@ static RPC_STATUS rpcrt4_ncalrpc_secure_packet(RpcConnection *conn,
     return RPC_S_OK;
 }
 
+static RPC_STATUS rpcrt4_ncalrpc_inquire_auth_client(
+    RpcConnection *conn, RPC_AUTHZ_HANDLE *privs, RPC_WSTR *server_princ_name,
+    ULONG *authn_level, ULONG *authn_svc, ULONG *authz_svc, ULONG flags)
+{
+    TRACE("(%p, %p, %p, %p, %p, %p, 0x%x)\n", conn, privs,
+          server_princ_name, authn_level, authn_svc, authz_svc, flags);
+
+    if (privs)
+    {
+        FIXME("privs not implemented\n");
+        *privs = NULL;
+    }
+    if (server_princ_name)
+    {
+        FIXME("server_princ_name not implemented\n");
+        *server_princ_name = NULL;
+    }
+    if (authn_level) *authn_level = RPC_C_AUTHN_LEVEL_PKT_PRIVACY;
+    if (authn_svc) *authn_svc = RPC_C_AUTHN_WINNT;
+    if (authz_svc)
+    {
+        FIXME("authorization service not implemented\n");
+        *authz_svc = RPC_C_AUTHZ_NONE;
+    }
+    if (flags)
+        FIXME("flags 0x%x not implemented\n", flags);
+
+    return RPC_S_OK;
+}
+
 /**** ncacn_ip_tcp support ****/
 
 static size_t rpcrt4_ip_tcp_get_top_of_tower(unsigned char *tower_data,
@@ -2773,7 +2803,7 @@ static const struct connection_ops conn_protseq_list[] = {
     rpcrt4_ncalrpc_secure_packet,
     rpcrt4_conn_np_impersonate_client,
     rpcrt4_conn_np_revert_to_self,
-    RPCRT4_default_inquire_auth_client,
+    rpcrt4_ncalrpc_inquire_auth_client,
   },
   { "ncacn_ip_tcp",
     { EPM_PROTOCOL_NCACN, EPM_PROTOCOL_TCP },
