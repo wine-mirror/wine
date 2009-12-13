@@ -1614,25 +1614,11 @@ RpcBindingInqAuthClientExW( RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE *
     TRACE("%p %p %p %p %p %p 0x%x\n", ClientBinding, Privs, ServerPrincName, AuthnLevel,
           AuthnSvc, AuthzSvc, Flags);
 
-    if (!bind->AuthInfo) return RPC_S_BINDING_HAS_NO_AUTH;
+    if (!bind->FromConn) return RPC_S_INVALID_BINDING;
 
-    if (Privs) *Privs = (RPC_AUTHZ_HANDLE)bind->AuthInfo->identity;
-    if (ServerPrincName)
-    {
-        *ServerPrincName = RPCRT4_strdupW(bind->AuthInfo->server_principal_name);
-        if (!*ServerPrincName) return ERROR_OUTOFMEMORY;
-    }
-    if (AuthnLevel) *AuthnLevel = bind->AuthInfo->AuthnLevel;
-    if (AuthnSvc) *AuthnSvc = bind->AuthInfo->AuthnSvc;
-    if (AuthzSvc)
-    {
-        FIXME("authorization service not implemented\n");
-        *AuthzSvc = RPC_C_AUTHZ_NONE;
-    }
-    if (Flags)
-        FIXME("flags 0x%x not implemented\n", Flags);
-
-    return RPC_S_OK;
+    return rpcrt4_conn_inquire_auth_client(bind->FromConn, Privs,
+                                           ServerPrincName, AuthnLevel,
+                                           AuthnSvc, AuthzSvc, Flags);
 }
 
 /***********************************************************************

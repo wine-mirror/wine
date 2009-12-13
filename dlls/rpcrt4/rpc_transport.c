@@ -2753,6 +2753,7 @@ static const struct connection_ops conn_protseq_list[] = {
     RPCRT4_default_secure_packet,
     rpcrt4_conn_np_impersonate_client,
     rpcrt4_conn_np_revert_to_self,
+    RPCRT4_default_inquire_auth_client,
   },
   { "ncalrpc",
     { EPM_PROTOCOL_NCALRPC, EPM_PROTOCOL_PIPE },
@@ -2772,6 +2773,7 @@ static const struct connection_ops conn_protseq_list[] = {
     rpcrt4_ncalrpc_secure_packet,
     rpcrt4_conn_np_impersonate_client,
     rpcrt4_conn_np_revert_to_self,
+    RPCRT4_default_inquire_auth_client,
   },
   { "ncacn_ip_tcp",
     { EPM_PROTOCOL_NCACN, EPM_PROTOCOL_TCP },
@@ -2791,6 +2793,7 @@ static const struct connection_ops conn_protseq_list[] = {
     RPCRT4_default_secure_packet,
     RPCRT4_default_impersonate_client,
     RPCRT4_default_revert_to_self,
+    RPCRT4_default_inquire_auth_client,
   },
   { "ncacn_http",
     { EPM_PROTOCOL_NCACN, EPM_PROTOCOL_HTTP },
@@ -2810,6 +2813,7 @@ static const struct connection_ops conn_protseq_list[] = {
     RPCRT4_default_secure_packet,
     RPCRT4_default_impersonate_client,
     RPCRT4_default_revert_to_self,
+    RPCRT4_default_inquire_auth_client,
   },
 };
 

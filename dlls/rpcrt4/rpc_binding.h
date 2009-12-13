@@ -111,6 +111,7 @@ struct connection_ops {
   RPC_STATUS (*secure_packet)(RpcConnection *Connection, enum secure_packet_direction dir, RpcPktHdr *hdr, unsigned int hdr_size, unsigned char *stub_data, unsigned int stub_data_size, RpcAuthVerifier *auth_hdr, unsigned char *auth_value, unsigned int auth_value_size);
   RPC_STATUS (*impersonate_client)(RpcConnection *conn);
   RPC_STATUS (*revert_to_self)(RpcConnection *conn);
+  RPC_STATUS (*inquire_auth_client)(RpcConnection *, RPC_AUTHZ_HANDLE *, RPC_WSTR *, ULONG *, ULONG *, ULONG *, ULONG);
 };
 
 /* don't know what MS's structure looks like */
@@ -228,6 +229,13 @@ static inline RPC_STATUS rpcrt4_conn_revert_to_self(
     RpcConnection *conn)
 {
     return conn->ops->revert_to_self(conn);
+}
+
+static inline RPC_STATUS rpcrt4_conn_inquire_auth_client(
+    RpcConnection *conn, RPC_AUTHZ_HANDLE *privs, RPC_WSTR *server_princ_name,
+    ULONG *authn_level, ULONG *authn_svc, ULONG *authz_svc, ULONG flags)
+{
+    return conn->ops->inquire_auth_client(conn, privs, server_princ_name, authn_level, authn_svc, authz_svc, flags);
 }
 
 /* floors 3 and up */

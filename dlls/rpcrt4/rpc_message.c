@@ -1177,6 +1177,41 @@ RPC_STATUS RPCRT4_default_revert_to_self(RpcConnection *conn)
 }
 
 /***********************************************************************
+ *           RPCRT4_default_inquire_auth_client (internal)
+ *
+ * Default function to retrieve the authentication details that the client
+ * is using to call the server.
+ */
+RPC_STATUS RPCRT4_default_inquire_auth_client(
+    RpcConnection *conn, RPC_AUTHZ_HANDLE *privs, RPC_WSTR *server_princ_name,
+    ULONG *authn_level, ULONG *authn_svc, ULONG *authz_svc, ULONG flags)
+{
+    if (!conn->AuthInfo) return RPC_S_BINDING_HAS_NO_AUTH;
+
+    if (privs)
+    {
+        FIXME("privs not implemented\n");
+        *privs = NULL;
+    }
+    if (server_princ_name)
+    {
+        *server_princ_name = RPCRT4_strdupW(conn->AuthInfo->server_principal_name);
+        if (!*server_princ_name) return ERROR_OUTOFMEMORY;
+    }
+    if (authn_level) *authn_level = conn->AuthInfo->AuthnLevel;
+    if (authn_svc) *authn_svc = conn->AuthInfo->AuthnSvc;
+    if (authz_svc)
+    {
+        FIXME("authorization service not implemented\n");
+        *authz_svc = RPC_C_AUTHZ_NONE;
+    }
+    if (flags)
+        FIXME("flags 0x%x not implemented\n", flags);
+
+    return RPC_S_OK;
+}
+
+/***********************************************************************
  *           RPCRT4_Send (internal)
  * 
  * Transmit a packet over connection in acceptable fragments.
