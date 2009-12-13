@@ -770,6 +770,8 @@ static void test_CreateStub(IPSFactoryBuffer *ppsf)
     /* 0xdeadbeef returned from create_stub_test_QI */
     ok(cstd_stub->pvServerObject == (void*)0xdeadbeef, "pvServerObject %p\n", cstd_stub->pvServerObject);
     ok(cstd_stub->pPSFactory != NULL, "pPSFactory was NULL\n");
+    cstd_stub->pvServerObject = NULL;
+    IRpcStubBuffer_Release(pstub);
 
     vtbl = &create_stub_test_fail_vtbl;
     pstub = create_stub(ppsf, &IID_if1, obj, E_NOINTERFACE);
@@ -908,6 +910,7 @@ static void test_Disconnect(IPSFactoryBuffer *ppsf)
     IRpcStubBuffer_Disconnect(pstub);
     ok(connect_test_orig_release_called == 1, "release called %d\n", connect_test_orig_release_called);
     ok(cstd_stub->pvServerObject == NULL, "pvServerObject %p\n", cstd_stub->pvServerObject);
+    IRpcStubBuffer_Release(pstub);
 }
 
 
