@@ -39,6 +39,7 @@
 
 #include "ndr_misc.h"
 #include "rpcndr.h"
+#include "ndrtypes.h"
 
 #include "wine/unicode.h"
 #include "wine/rpcfc.h"
@@ -112,6 +113,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 #define NDR_POINTER_ID(pStubMsg) (NDR_POINTER_ID_BASE + ((pStubMsg)->UniquePtrCount++) * 4)
 #define NDR_TABLE_SIZE 128
 #define NDR_TABLE_MASK 127
+
+#define NDRSContextFromValue(user_context) (NDR_SCONTEXT)((char *)(user_context) - (char *)NDRSContextValue((NDR_SCONTEXT)NULL))
 
 static unsigned char *WINAPI NdrBaseTypeMarshall(PMIDL_STUB_MESSAGE, unsigned char *, PFORMAT_STRING);
 static unsigned char *WINAPI NdrBaseTypeUnmarshall(PMIDL_STUB_MESSAGE, unsigned char **, PFORMAT_STRING, unsigned char);
@@ -6687,10 +6690,19 @@ static unsigned char *WINAPI NdrContextHandleMarshall(
     }
     TRACE("flags: 0x%02x\n", pFormat[1]);
 
-    if (pFormat[1] & 0x80)
-        NdrClientContextMarshall(pStubMsg, *(NDR_CCONTEXT **)pMemory, FALSE);
+    if (pStubMsg->IsClient)
+    {
+        if (pFormat[1] & HANDLE_PARAM_IS_VIA_PTR)
+            NdrClientContextMarshall(pStubMsg, *(NDR_CCONTEXT **)pMemory, FALSE);
+        else
+            NdrClientContextMarshall(pStubMsg, pMemory, FALSE);
+    }
     else
-        NdrClientContextMarshall(pStubMsg, pMemory, FALSE);
+    {
+        NDR_SCONTEXT ctxt = NDRSContextFromValue(pMemory);
+        NDR_RUNDOWN rundown = pStubMsg->StubDesc->apfnNdrRundownRoutines[pFormat[2]];
+        NdrServerContextNewMarshall(pStubMsg, ctxt, rundown, pFormat);
+    }
 
     return NULL;
 }
@@ -6714,10 +6726,22 @@ static unsigned char *WINAPI NdrContextHandleUnmarshall(
     }
     TRACE("flags: 0x%02x\n", pFormat[1]);
 
-    /* [out]-only or [ret] param */
-    if ((pFormat[1] & 0x60) == 0x20)
-        **(NDR_CCONTEXT **)ppMemory = NULL;
-    NdrClientContextUnmarshall(pStubMsg, *(NDR_CCONTEXT **)ppMemory, pStubMsg->RpcMsg->Handle);
+    if (pStubMsg->IsClient)
+    {
+        /* [out]-only or [ret] param */
+        if ((pFormat[1] & (HANDLE_PARAM_IS_IN|HANDLE_PARAM_IS_OUT)) == HANDLE_PARAM_IS_OUT)
+            **(NDR_CCONTEXT **)ppMemory = NULL;
+        NdrClientContextUnmarshall(pStubMsg, *(NDR_CCONTEXT **)ppMemory, pStubMsg->RpcMsg->Handle);
+    }
+    else
+    {
+        NDR_SCONTEXT ctxt;
+        ctxt = NdrServerContextNewUnmarshall(pStubMsg, pFormat);
+        if (pFormat[1] & HANDLE_PARAM_IS_VIA_PTR)
+            *(void **)ppMemory = NDRSContextValue(ctxt);
+        else
+            *(void **)ppMemory = *NDRSContextValue(ctxt);
+    }
 
     return NULL;
 }

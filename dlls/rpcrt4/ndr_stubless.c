@@ -1128,7 +1128,8 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
                         !pParam->param_attributes.IsByValue &&
                         !pParam->param_attributes.ServerAllocSize)
                     {
-                        pStubMsg->pfnFree(*(void **)pArg);
+                        if (*pTypeFormat != RPC_FC_BIND_CONTEXT)
+                            pStubMsg->pfnFree(*(void **)pArg);
                     }
 
                     if (pParam->param_attributes.ServerAllocSize)
@@ -1140,12 +1141,21 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
                              !pParam->param_attributes.ServerAllocSize &&
                              !pParam->param_attributes.IsByValue)
                     {
-                        DWORD size = calc_arg_size(pStubMsg, pTypeFormat);
-
-                        if(size)
+                        if (*pTypeFormat == RPC_FC_BIND_CONTEXT)
                         {
-                            *(void **)pArg = NdrAllocate(pStubMsg, size);
-                            memset(*(void **)pArg, 0, size);
+                            NDR_SCONTEXT ctxt = NdrContextHandleInitialize(
+                                pStubMsg, pTypeFormat);
+                            *(void **)pArg = NDRSContextValue(ctxt);
+                        }
+                        else
+                        {
+                            DWORD size = calc_arg_size(pStubMsg, pTypeFormat);
+
+                            if(size)
+                            {
+                                *(void **)pArg = NdrAllocate(pStubMsg, size);
+                                memset(*(void **)pArg, 0, size);
+                            }
                         }
                     }
                     break;
