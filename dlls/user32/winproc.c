@@ -593,14 +593,6 @@ static LRESULT call_window_proc_AtoW( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
                                  arg, WMCHAR_MAP_CALLWINDOWPROC );
 }
 
-/* helper callback for 16->32W conversion */
-static LRESULT call_dialog_proc_AtoW( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
-                                      LRESULT *result, void *arg )
-{
-    return WINPROC_CallProcAtoW( call_dialog_proc, hwnd, msg, wp, lp, result,
-                                 arg, WMCHAR_MAP_CALLWINDOWPROC );
-}
-
 
 /**********************************************************************
  *	     WINPROC_GetProc16
@@ -2326,41 +2318,6 @@ LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg,
     else
         WINPROC_CallProcWtoA( call_window_proc_Ato16, hwnd, msg, wParam, lParam, &result, proc->proc16 );
     return result;
-}
-
-
-/**********************************************************************
- *		WINPROC_CallDlgProc16
- */
-INT_PTR WINPROC_CallDlgProc16( DLGPROC16 func, HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam )
-{
-    WINDOWPROC *proc;
-    LRESULT result;
-    INT_PTR ret;
-
-    if (!func) return 0;
-
-    if (!(proc = handle16_to_proc( (WNDPROC16)func )))
-    {
-        ret = call_dialog_proc16( hwnd, msg, wParam, lParam, &result, func );
-    }
-    else if (proc->procA)
-    {
-        ret = WINPROC_CallProc16To32A( call_dialog_proc, hwnd, msg, wParam, lParam,
-                                       &result, proc->procA );
-        SetWindowLongPtrW( WIN_Handle32(hwnd), DWLP_MSGRESULT, result );
-    }
-    else if (proc->procW)
-    {
-        ret = WINPROC_CallProc16To32A( call_dialog_proc_AtoW, hwnd, msg, wParam, lParam,
-                                       &result, proc->procW );
-        SetWindowLongPtrW( WIN_Handle32(hwnd), DWLP_MSGRESULT, result );
-    }
-    else
-    {
-        ret = call_dialog_proc16( hwnd, msg, wParam, lParam, &result, proc->proc16 );
-    }
-    return ret;
 }
 
 
