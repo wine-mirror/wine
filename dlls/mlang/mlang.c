@@ -2501,7 +2501,7 @@ static HRESULT EnumRfc1766_create(LANGID LangId, IEnumRfc1766 **ppEnum)
     if (!data.info)
     {
         HeapFree(GetProcessHeap(), 0, rfc);
-        return S_FALSE;
+        return E_OUTOFMEMORY;
     }
 
     TlsSetValue(MLANG_tls_index, &data);
@@ -2514,7 +2514,7 @@ static HRESULT EnumRfc1766_create(LANGID LangId, IEnumRfc1766 **ppEnum)
     {
         HeapFree(GetProcessHeap(), 0, data.info);
         HeapFree(GetProcessHeap(), 0, rfc);
-        return FALSE;
+        return E_FAIL;
     }
 
     rfc->info = data.info;
