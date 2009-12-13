@@ -769,6 +769,35 @@ static RPC_STATUS rpcrt4_ncalrpc_parse_top_of_tower(const unsigned char *tower_d
     return RPC_S_OK;
 }
 
+static BOOL rpcrt4_ncalrpc_is_authorized(RpcConnection *conn)
+{
+    return FALSE;
+}
+
+static RPC_STATUS rpcrt4_ncalrpc_authorize(RpcConnection *conn, BOOL first_time,
+                                           unsigned char *in_buffer,
+                                           unsigned int in_size,
+                                           unsigned char *out_buffer,
+                                           unsigned int *out_size)
+{
+    /* since this protocol is local to the machine there is no need to
+     * authenticate the caller */
+    *out_size = 0;
+    return RPC_S_OK;
+}
+
+static RPC_STATUS rpcrt4_ncalrpc_secure_packet(RpcConnection *conn,
+    enum secure_packet_direction dir,
+    RpcPktHdr *hdr, unsigned int hdr_size,
+    unsigned char *stub_data, unsigned int stub_data_size,
+    RpcAuthVerifier *auth_hdr,
+    unsigned char *auth_value, unsigned int auth_value_size)
+{
+    /* since this protocol is local to the machine there is no need to secure
+     * the packet */
+    return RPC_S_OK;
+}
+
 /**** ncacn_ip_tcp support ****/
 
 static size_t rpcrt4_ip_tcp_get_top_of_tower(unsigned char *tower_data,
@@ -2694,9 +2723,9 @@ static const struct connection_ops conn_protseq_list[] = {
     rpcrt4_ncalrpc_get_top_of_tower,
     rpcrt4_ncalrpc_parse_top_of_tower,
     NULL,
-    RPCRT4_default_is_authorized,
-    RPCRT4_default_authorize,
-    RPCRT4_default_secure_packet,
+    rpcrt4_ncalrpc_is_authorized,
+    rpcrt4_ncalrpc_authorize,
+    rpcrt4_ncalrpc_secure_packet,
   },
   { "ncacn_ip_tcp",
     { EPM_PROTOCOL_NCACN, EPM_PROTOCOL_TCP },
