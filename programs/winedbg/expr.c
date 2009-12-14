@@ -37,12 +37,12 @@ struct expr
     {
         struct
         {
-            int                 value;
+            long int            value;
         } s_const;
 
         struct
         {
-            unsigned int        value;
+            long unsigned int   value;
         } u_const;
 
         struct
@@ -165,7 +165,7 @@ struct expr* expr_alloc_symbol(const char* name)
     return ex;
 }
 
-struct expr* expr_alloc_sconstant(int value)
+struct expr* expr_alloc_sconstant(long int value)
 {
     struct expr*        ex;
 
@@ -176,7 +176,7 @@ struct expr* expr_alloc_sconstant(int value)
     return ex;
 }
 
-struct expr* expr_alloc_uconstant(unsigned int value)
+struct expr* expr_alloc_uconstant(long unsigned int value)
 {
     struct expr*        ex;
 
@@ -350,13 +350,13 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         break;
     case EXPR_TYPE_U_CONST:
         rtn.cookie      = DLV_HOST;
-        rtn.type.id     = dbg_itype_unsigned_int;
+        rtn.type.id     = dbg_itype_unsigned_long_int;
         rtn.type.module = 0;
         rtn.addr.Offset = (ULONG_PTR)&exp->un.u_const.value;
         break;
     case EXPR_TYPE_S_CONST:
         rtn.cookie      = DLV_HOST;
-        rtn.type.id     = dbg_itype_signed_int;
+        rtn.type.id     = dbg_itype_signed_long_int;
         rtn.type.module = 0;
         rtn.addr.Offset = (ULONG_PTR)&exp->un.s_const.value;
         break;
@@ -690,10 +690,10 @@ int expr_print(const struct expr* exp)
         dbg_printf("$%s", exp->un.intvar.name);
         break;
     case EXPR_TYPE_U_CONST:
-        dbg_printf("%u", exp->un.u_const.value);
+        dbg_printf("%lu", exp->un.u_const.value);
         break;
     case EXPR_TYPE_S_CONST:
-        dbg_printf("%d", exp->un.s_const.value);
+        dbg_printf("%ld", exp->un.s_const.value);
         break;
     case EXPR_TYPE_STRING:
         dbg_printf("\"%s\"", exp->un.string.str);
