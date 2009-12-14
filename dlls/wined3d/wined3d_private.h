@@ -2417,6 +2417,7 @@ struct IWineD3DSwapChainImpl
     WINED3DFORMAT             orig_fmt;
     WINED3DGAMMARAMP          orig_gamma;
     BOOL                      render_to_fbo;
+    BOOL filter_messages;
 
     long prev_time, frames;   /* Performance tracking */
     unsigned int vSyncCounter;

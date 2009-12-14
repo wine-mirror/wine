@@ -580,6 +580,7 @@ void swapchain_setup_fullscreen_window(IWineD3DSwapChainImpl *swapchain, UINT w,
 {
     IWineD3DDeviceImpl *device = swapchain->device;
     HWND window = swapchain->win_handle;
+    BOOL filter_messages;
     LONG style, exstyle;
 
     TRACE("Setting up window %p for fullscreen mode.\n", window);
@@ -599,15 +600,21 @@ void swapchain_setup_fullscreen_window(IWineD3DSwapChainImpl *swapchain, UINT w,
     TRACE("Old style was %08x, %08x, setting to %08x, %08x.\n",
             device->style, device->exStyle, style, exstyle);
 
+    filter_messages = swapchain->filter_messages;
+    swapchain->filter_messages = TRUE;
+
     SetWindowLongW(window, GWL_STYLE, style);
     SetWindowLongW(window, GWL_EXSTYLE, exstyle);
     SetWindowPos(window, HWND_TOP, 0, 0, w, h, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+
+    swapchain->filter_messages = filter_messages;
 }
 
 void swapchain_restore_fullscreen_window(IWineD3DSwapChainImpl *swapchain)
 {
     IWineD3DDeviceImpl *device = swapchain->device;
     HWND window = swapchain->win_handle;
+    BOOL filter_messages;
     LONG style, exstyle;
 
     if (!device->style && !device->exStyle) return;
@@ -618,6 +625,9 @@ void swapchain_restore_fullscreen_window(IWineD3DSwapChainImpl *swapchain)
     style = GetWindowLongW(window, GWL_STYLE);
     exstyle = GetWindowLongW(window, GWL_EXSTYLE);
 
+    filter_messages = swapchain->filter_messages;
+    swapchain->filter_messages = TRUE;
+
     /* Only restore the style if the application didn't modify it during the
      * fullscreen phase. Some applications change it before calling Reset()
      * when switching between windowed and fullscreen modes (HL2), some
@@ -627,12 +637,13 @@ void swapchain_restore_fullscreen_window(IWineD3DSwapChainImpl *swapchain)
         SetWindowLongW(window, GWL_STYLE, device->style);
         SetWindowLongW(window, GWL_EXSTYLE, device->exStyle);
     }
+    SetWindowPos(window, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
+
+    swapchain->filter_messages = filter_messages;
 
     /* Delete the old values. */
     device->style = 0;
     device->exStyle = 0;
-
-    SetWindowPos(window, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
 }
 
 
@@ -965,6 +976,13 @@ void get_drawable_size_swapchain(struct wined3d_context *context, UINT *width, U
 LRESULT swapchain_process_message(IWineD3DSwapChainImpl *swapchain, HWND window,
         UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc)
 {
+    if (swapchain->filter_messages)
+    {
+        TRACE("Filtering message: window %p, message %#x, wparam %#lx, lparam %#lx.\n",
+                window, message, wparam, lparam);
+        return DefWindowProcW(window, message, wparam, lparam);
+    }
+
     if (message == WM_DESTROY)
     {
         TRACE("unregister window %p.\n", window);
