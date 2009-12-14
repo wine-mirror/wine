@@ -1656,12 +1656,12 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
     }
 
     if ( skip )
-      continue;
+      goto cleanup;
 
     if (curElement.type == STGTY_STORAGE)
     {
       if(skip_storage)
-        continue;
+        goto cleanup;
 
       /*
        * open child source storage
@@ -1671,7 +1671,7 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
 				 NULL, 0, &pstgChild );
 
       if (hr != S_OK)
-        break;
+        goto cleanup;
 
       /*
        * Check if destination storage is not a child of the source
@@ -1679,9 +1679,8 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
        */
       if (pstgChild == pstgDest)
       {
-	IEnumSTATSTG_Release(elements);
-
-	return STG_E_ACCESSDENIED;
+        hr = STG_E_ACCESSDENIED;
+        goto cleanup;
       }
 
       /*
@@ -1702,7 +1701,7 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
       }
 
       if (hr != S_OK)
-        break;
+        goto cleanup;
 
 
       /*
@@ -1717,7 +1716,7 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
     else if (curElement.type == STGTY_STREAM)
     {
       if(skip_stream)
-        continue;
+        goto cleanup;
 
       /*
        * create a new stream in destination storage. If the stream already
@@ -1728,7 +1727,7 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
                                   0, 0, &pstrTmp );
 
       if (hr != S_OK)
-        break;
+        goto cleanup;
 
       /*
        * open child stream storage
@@ -1738,7 +1737,7 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
 				0, &pstrChild );
 
       if (hr != S_OK)
-        break;
+        goto cleanup;
 
       /*
        * Get the size of the source stream
@@ -1764,6 +1763,8 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
       WARN("unknown element type: %d\n", curElement.type);
     }
 
+cleanup:
+    CoTaskMemFree(curElement.pwcsName);
   } while (hr == S_OK);
 
   /*
