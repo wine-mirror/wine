@@ -210,7 +210,7 @@ static PCCERT_CONTEXT X509_to_cert_context(X509 *cert)
     return ret;
 }
 
-static BOOL netconn_verify_cert(PCCERT_CONTEXT cert, HCERTSTORE store,
+static DWORD netconn_verify_cert(PCCERT_CONTEXT cert, HCERTSTORE store,
     WCHAR *server)
 {
     BOOL ret;
@@ -218,7 +218,7 @@ static BOOL netconn_verify_cert(PCCERT_CONTEXT cert, HCERTSTORE store,
     PCCERT_CHAIN_CONTEXT chain;
     char oid_server_auth[] = szOID_PKIX_KP_SERVER_AUTH;
     char *server_auth[] = { oid_server_auth };
-    DWORD err;
+    DWORD err = ERROR_SUCCESS;
 
     TRACE("verifying %s\n", debugstr_w(server));
     chainPara.RequestedUsage.Usage.cUsageIdentifier = 1;
@@ -245,8 +245,6 @@ static BOOL netconn_verify_cert(PCCERT_CONTEXT cert, HCERTSTORE store,
                 err = ERROR_INTERNET_SEC_INVALID_CERT;
             else
                 err = ERROR_INTERNET_SEC_INVALID_CERT;
-            INTERNET_SetLastError(err);
-            ret = FALSE;
         }
         else
         {
@@ -271,14 +269,12 @@ static BOOL netconn_verify_cert(PCCERT_CONTEXT cert, HCERTSTORE store,
                     err = ERROR_INTERNET_SEC_CERT_CN_INVALID;
                 else
                     err = ERROR_INTERNET_SEC_INVALID_CERT;
-                INTERNET_SetLastError(err);
-                ret = FALSE;
             }
         }
         CertFreeCertificateChain(chain);
     }
-    TRACE("returning %d\n", ret);
-    return ret;
+    TRACE("returning %08x\n", err);
+    return err;
 }
 
 static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
@@ -320,7 +316,15 @@ static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
             }
             if (!endCert) ret = FALSE;
             if (ret)
-                ret = netconn_verify_cert(endCert, store, server);
+            {
+                DWORD err = netconn_verify_cert(endCert, store, server);
+
+                if (err)
+                {
+                    INTERNET_SetLastError(err);
+                    ret = FALSE;
+                }
+            }
             CertFreeCertificateContext(endCert);
             CertCloseStore(store, 0);
         }
