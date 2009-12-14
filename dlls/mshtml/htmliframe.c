@@ -65,6 +65,30 @@ static HRESULT HTMLIFrame_get_document(HTMLDOMNode *iface, IDispatch **p)
     return S_OK;
 }
 
+static HRESULT HTMLIFrame_get_dispid(HTMLDOMNode *iface, BSTR name,
+        DWORD grfdex, DISPID *pid)
+{
+    HTMLIFrame *This = HTMLIFRAME_NODE_THIS(iface);
+
+    if(!This->framebase.content_window)
+        return DISP_E_UNKNOWNNAME;
+
+    return search_window_props(This->framebase.content_window, name, grfdex, pid);
+}
+
+static HRESULT HTMLIFrame_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid,
+        WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    HTMLIFrame *This = HTMLIFRAME_NODE_THIS(iface);
+
+    if(!This->framebase.content_window) {
+        ERR("no content window to invoke on\n");
+        return E_FAIL;
+    }
+
+    return IDispatchEx_InvokeEx(DISPATCHEX(This->framebase.content_window), id, lcid, flags, params, res, ei, caller);
+}
+
 static HRESULT HTMLIFrame_get_readystate(HTMLDOMNode *iface, BSTR *p)
 {
     HTMLIFrame *This = HTMLIFRAME_NODE_THIS(iface);
@@ -101,8 +125,8 @@ static const NodeImplVtbl HTMLIFrameImplVtbl = {
     NULL,
     HTMLIFrame_get_document,
     HTMLIFrame_get_readystate,
-    NULL,
-    NULL,
+    HTMLIFrame_get_dispid,
+    HTMLIFrame_invoke,
     HTMLIFrame_bind_to_tree
 };
 
