@@ -41,6 +41,7 @@ static HRESULT(WINAPIV *pSHPackDispParams)(DISPPARAMS*,VARIANTARG*,UINT,...);
 static HRESULT(WINAPI *pIConnectionPoint_SimpleInvoke)(IConnectionPoint*,DISPID,DISPPARAMS*);
 static HRESULT(WINAPI *pIConnectionPoint_InvokeWithCancel)(IConnectionPoint*,DISPID,DISPPARAMS*,DWORD,DWORD);
 static HRESULT(WINAPI *pConnectToConnectionPoint)(IUnknown*,REFIID,BOOL,IUnknown*, LPDWORD,IConnectionPoint **);
+static HRESULT(WINAPI *pSHPropertyBag_ReadLONG)(IPropertyBag *,LPCWSTR,LPLONG);
 
 static void test_GetAcceptLanguagesA(void)
 {   HRESULT retval;
@@ -1205,6 +1206,118 @@ static void test_IConnectionPoint(void)
     ok(ref == 0, "leftover IDispatch reference %i\n",ref);
 }
 
+typedef struct _propbag
+{
+    const IPropertyBagVtbl *vtbl;
+    LONG   refCount;
+
+} PropBag;
+
+
+static HRESULT WINAPI Prop_QueryInterface(
+        IPropertyBag* This,
+        REFIID riid,
+        void **ppvObject)
+{
+    trace("\n");
+    *ppvObject = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IPropertyBag))
+    {
+        *ppvObject = This;
+    }
+
+    if (*ppvObject)
+    {
+        IUnknown_AddRef(This);
+        return S_OK;
+    }
+
+    trace("no interface\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Prop_AddRef(
+        IPropertyBag* This)
+{
+    PropBag *iface = (PropBag*)This;
+    return InterlockedIncrement(&iface->refCount);
+}
+
+static ULONG WINAPI Prop_Release(
+        IPropertyBag* This)
+{
+    PropBag *iface = (PropBag*)This;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&iface->refCount);
+    if (ret == 0)
+        HeapFree(GetProcessHeap(),0,This);
+    return ret;
+}
+
+static HRESULT WINAPI Prop_Read(
+        IPropertyBag* This,
+        LPCOLESTR pszPropName,
+        VARIANT *pVar,
+        IErrorLog *pErrorLog)
+{
+    V_VT(pVar) = VT_BLOB|VT_BYREF;
+    V_BYREF(pVar) = (LPVOID)0xdeadcafe;
+    return S_OK;
+}
+
+static HRESULT WINAPI Prop_Write(
+        IPropertyBag* This,
+        LPCOLESTR pszPropName,
+        VARIANT *pVar)
+{
+    return S_OK;
+}
+
+
+static const IPropertyBagVtbl prop_vtbl = {
+    Prop_QueryInterface,
+    Prop_AddRef,
+    Prop_Release,
+
+    Prop_Read,
+    Prop_Write
+};
+
+static void test_SHPropertyBag_ReadLONG(void)
+{
+    PropBag *pb;
+    HRESULT rc;
+    LONG out;
+    static const WCHAR szName1[] = {'n','a','m','e','1',0};
+
+    if (!pSHPropertyBag_ReadLONG)
+    {
+        win_skip("SHPropertyBag_ReadLONG not present\n");
+        return;
+    }
+
+    pb = HeapAlloc(GetProcessHeap(),0,sizeof(PropBag));
+    pb->refCount = 1;
+    pb->vtbl = &prop_vtbl;
+
+    out = 0xfeedface;
+    rc = pSHPropertyBag_ReadLONG(NULL, szName1, &out);
+    ok(rc == E_INVALIDARG || broken(rc == 0), "incorrect return %x\n",rc);
+    ok(out == 0xfeedface, "value should not have changed\n");
+    rc = pSHPropertyBag_ReadLONG((IPropertyBag*)pb, NULL, &out);
+    ok(rc == E_INVALIDARG || broken(rc == 0) || broken(rc == 1), "incorrect return %x\n",rc);
+    ok(out == 0xfeedface, "value should not have changed\n");
+    rc = pSHPropertyBag_ReadLONG((IPropertyBag*)pb, szName1, NULL);
+    ok(rc == E_INVALIDARG || broken(rc == 0) || broken(rc == 1), "incorrect return %x\n",rc);
+    ok(out == 0xfeedface, "value should not have changed\n");
+    rc = pSHPropertyBag_ReadLONG((IPropertyBag*)pb, szName1, &out);
+    ok(rc == DISP_E_BADVARTYPE || broken(rc == 0) || broken(rc == 1), "incorrect return %x\n",rc);
+    ok(out == 0xfeedface  || broken(out == 0xfeedfa00), "value should not have changed %x\n",out);
+    IUnknown_Release((IUnknown*)pb);
+}
+
 START_TEST(ordinal)
 {
   hShlwapi = GetModuleHandleA("shlwapi.dll");
@@ -1219,6 +1332,7 @@ START_TEST(ordinal)
   pIConnectionPoint_SimpleInvoke=(void*)GetProcAddress(hShlwapi,(char*)284);
   pIConnectionPoint_InvokeWithCancel=(void*)GetProcAddress(hShlwapi,(char*)283);
   pConnectToConnectionPoint=(void*)GetProcAddress(hShlwapi,(char*)168);
+  pSHPropertyBag_ReadLONG=(void*)GetProcAddress(hShlwapi,(char*)496);
 
   test_GetAcceptLanguagesA();
   test_SHSearchMapInt();
@@ -1227,4 +1341,5 @@ START_TEST(ordinal)
   test_GetShellSecurityDescriptor();
   test_SHPackDispParams();
   test_IConnectionPoint();
+  test_SHPropertyBag_ReadLONG();
 }

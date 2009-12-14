@@ -493,7 +493,7 @@
 493 stub -noname SHPropertyBag_ReadType
 494 stub -noname SHPropertyBag_ReadStr
 495 stub -noname SHPropertyBag_WriteStr
-496 stub -noname SHPropertyBag_ReadLONG
+496 stdcall -noname SHPropertyBag_ReadLONG(ptr wstr ptr)
 497 stub -noname SHPropertyBag_WriteLONG
 498 stub -noname SHPropertyBag_ReadBOOLOld
 499 stub -noname SHPropertyBag_WriteBOOL

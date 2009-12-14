@@ -4752,3 +4752,35 @@ HRESULT WINAPI IUnknown_QueryServiceForWebBrowserApp(IUnknown* lpUnknown,
     FIXME("%p %s %p semi-STUB\n", lpUnknown, debugstr_guid(riid), lppOut);
     return IUnknown_QueryService(lpUnknown,&IID_IWebBrowserApp,riid,lppOut);
 }
+
+/**************************************************************************
+ *  SHPropertyBag_ReadLONG (SHLWAPI.496)
+ *
+ * This function asks a property bag to read a named property as a LONG.
+ *
+ * PARAMS
+ *  ppb: a IPropertyBag interface
+ *  pszPropName:  Unicode string that names the property
+ *  pValue: address to receive the property value as a 32-bit signed integer
+ *
+ * RETURNS
+ *  0 for Success
+ */
+BOOL WINAPI SHPropertyBag_ReadLONG(IPropertyBag *ppb, LPCWSTR pszPropName, LPLONG pValue)
+{
+    VARIANT var;
+    HRESULT hr;
+    TRACE("%p %s %p\n", ppb,debugstr_w(pszPropName),pValue);
+    if (!pszPropName || !ppb || !pValue)
+        return E_INVALIDARG;
+    V_VT(&var) = VT_I4;
+    hr = IPropertyBag_Read(ppb, pszPropName, &var, NULL);
+    if (SUCCEEDED(hr))
+    {
+        if (V_VT(&var) == VT_I4)
+            *pValue = V_I4(&var);
+        else
+            hr = DISP_E_BADVARTYPE;
+    }
+    return hr;
+}
