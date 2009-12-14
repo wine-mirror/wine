@@ -1559,6 +1559,8 @@ static void test_ITEMIDLIST_format(void) {
 
         pILFree(pidlFile);
     }
+
+    IShellFolder_Release(psfPersonal);
 }
 
 static void testSHGetFolderPathAndSubDirA(void)
