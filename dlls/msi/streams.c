@@ -402,6 +402,7 @@ static UINT STREAMS_delete(struct tagMSIVIEW *view)
     {
         if (sv->streams[i] && sv->streams[i]->stream)
             IStream_Release(sv->streams[i]->stream);
+        msi_free(sv->streams[i]->name);
         msi_free(sv->streams[i]);
     }
 
