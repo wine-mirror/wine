@@ -32,6 +32,33 @@ static int get_refcount(IUnknown *object)
     return IUnknown_Release( object );
 }
 
+static IDirect3DDevice9 *create_device(IDirect3D9 *d3d9, HWND window)
+{
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    IDirect3DDevice9 *device;
+
+    present_parameters.Windowed = FALSE;
+    present_parameters.hDeviceWindow = window;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    if (SUCCEEDED(IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device))) return device;
+
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D16;
+    if (SUCCEEDED(IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device))) return device;
+
+    if (SUCCEEDED(IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device))) return device;
+
+    return NULL;
+}
+
 #define CHECK_CALL(r,c,d,rc) \
     if (SUCCEEDED(r)) {\
         int tmp1 = get_refcount( (IUnknown *)d ); \
@@ -2379,6 +2406,88 @@ fail:
     if (hwnd2) DestroyWindow(hwnd2);
 }
 
+static BOOL filter_messages;
+
+static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
+{
+    if (filter_messages)
+    {
+        ok(message == WM_DISPLAYCHANGE, "Received unexpected message %#x.\n", message);
+    }
+
+    return DefWindowProcA(hwnd, message, wparam, lparam);
+}
+
+static void test_wndproc(void)
+{
+    IDirect3DDevice9 *device;
+    WNDCLASSA wc = {0};
+    IDirect3D9 *d3d9;
+    LONG_PTR proc;
+    HWND window;
+    ULONG ref;
+
+    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D9 object, skipping tests.\n");
+        return;
+    }
+
+    wc.lpfnWndProc = test_proc;
+    wc.lpszClassName = "d3d9_test_wndproc_wc";
+    ok(RegisterClassA(&wc), "Failed to register window class.\n");
+
+    window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
+    filter_messages = TRUE;
+
+    proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
+    ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+
+    device = create_device(d3d9, window);
+    if (!device)
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
+    ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+
+    ref = IDirect3DDevice9_Release(device);
+    ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
+
+    proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
+    ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+
+    device = create_device(d3d9, window);
+    if (!device)
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    proc = SetWindowLongPtrA(window, GWLP_WNDPROC, (LONG_PTR)DefWindowProcA);
+    ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+
+    ref = IDirect3DDevice9_Release(device);
+    ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
+
+    proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
+    ok(proc == (LONG_PTR)DefWindowProcA, "Expected wndproc %#lx, got %#lx.\n",
+            (LONG_PTR)DefWindowProcA, proc);
+
+done:
+    filter_messages = FALSE;
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+    UnregisterClassA("d3d9_test_wndproc_wc", GetModuleHandleA(NULL));
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -2418,5 +2527,6 @@ START_TEST(device)
         test_lights();
         test_set_stream_source();
         test_scissor_size();
+        test_wndproc();
     }
 }
