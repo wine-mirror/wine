@@ -1690,17 +1690,17 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
                                    NULL, 0, &pstgTmp );
       }
 
-      if (hr != S_OK)
-        goto cleanup;
+      if (hr == S_OK)
+      {
+        /*
+         * do the copy recursively
+         */
+        hr = IStorage_CopyTo( pstgChild, ciidExclude, rgiidExclude,
+                                 NULL, pstgTmp );
 
+        IStorage_Release( pstgTmp );
+      }
 
-      /*
-       * do the copy recursively
-       */
-      hr = IStorage_CopyTo( pstgChild, ciidExclude, rgiidExclude,
-                               NULL, pstgTmp );
-
-      IStorage_Release( pstgTmp );
       IStorage_Release( pstgChild );
     }
     else if (curElement.type == STGTY_STREAM)
@@ -1726,27 +1726,28 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
 				STGM_READ|STGM_SHARE_EXCLUSIVE,
 				0, &pstrChild );
 
-      if (hr != S_OK)
-        goto cleanup;
+      if (hr == S_OK)
+      {
+        /*
+         * Get the size of the source stream
+         */
+        IStream_Stat( pstrChild, &strStat, STATFLAG_NONAME );
 
-      /*
-       * Get the size of the source stream
-       */
-      IStream_Stat( pstrChild, &strStat, STATFLAG_NONAME );
+        /*
+         * Set the size of the destination stream.
+         */
+        IStream_SetSize(pstrTmp, strStat.cbSize);
 
-      /*
-       * Set the size of the destination stream.
-       */
-      IStream_SetSize(pstrTmp, strStat.cbSize);
+        /*
+         * do the copy
+         */
+        hr = IStream_CopyTo( pstrChild, pstrTmp, strStat.cbSize,
+                             NULL, NULL );
 
-      /*
-       * do the copy
-       */
-      hr = IStream_CopyTo( pstrChild, pstrTmp, strStat.cbSize,
-                           NULL, NULL );
+        IStream_Release( pstrChild );
+      }
 
       IStream_Release( pstrTmp );
-      IStream_Release( pstrChild );
     }
     else
     {
