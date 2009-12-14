@@ -395,6 +395,7 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
         {
             if (coff_files.files[j].entries != NULL)
             {
+                symt_cmp_addr_module = msc_dbg->module;
                 qsort(coff_files.files[j].entries, coff_files.files[j].neps,
                       sizeof(struct symt*), symt_cmp_addr);
             }
@@ -419,7 +420,7 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
                     for (;;)
                     {
                         if (l+1 >= coff_files.files[j].neps) break;
-                        symt_get_info(coff_files.files[j].entries[l+1], TI_GET_ADDRESS, &addr);
+                        symt_get_info(msc_dbg->module, coff_files.files[j].entries[l+1], TI_GET_ADDRESS, &addr);
                         if (((msc_dbg->module->module.BaseOfImage + linepnt->Type.VirtualAddress) < addr))
                             break;
                         l++;
@@ -432,7 +433,7 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
                          * start of the function, so we need to subtract that offset
                          * first.
                          */
-                        symt_get_info(coff_files.files[j].entries[l+1], TI_GET_ADDRESS, &addr);
+                        symt_get_info(msc_dbg->module, coff_files.files[j].entries[l+1], TI_GET_ADDRESS, &addr);
                         symt_add_func_line(msc_dbg->module, (struct symt_function*)coff_files.files[j].entries[l+1], 
                                            coff_files.files[j].compiland->source, linepnt->Linenumber,
                                            msc_dbg->module->module.BaseOfImage + linepnt->Type.VirtualAddress - addr);

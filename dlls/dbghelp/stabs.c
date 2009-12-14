@@ -666,7 +666,7 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
                  * As we don't use much the size of members in structs, this may not
                  * be much of a problem
                  */
-                symt_get_info(adt, TI_GET_LENGTH, &size);
+                symt_get_info(ptd->module, adt, TI_GET_LENGTH, &size);
                 symt_add_udt_element(ptd->module, sdt, tmp, adt, ofs, (DWORD)size * 8);
             }
             PTS_ABORTIF(ptd, *ptd->ptr++ != ';');

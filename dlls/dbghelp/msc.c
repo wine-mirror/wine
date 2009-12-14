@@ -667,7 +667,7 @@ static void codeview_add_udt_element(struct codeview_type_parse* ctp,
     if (subtype)
     {
         DWORD64 elem_size = 0;
-        symt_get_info(subtype, TI_GET_LENGTH, &elem_size);
+        symt_get_info(ctp->module, subtype, TI_GET_LENGTH, &elem_size);
         symt_add_udt_element(ctp->module, symt, name, subtype,
                              value << 3, (DWORD)elem_size << 3);
     }

@@ -669,7 +669,7 @@ static int elf_new_wine_thunks(struct module* module, const struct hash_table* h
             ULONG64     ref_addr;
 
             symt = symt_find_nearest(module, addr);
-            if (symt && !symt_get_info(&symt->symt, TI_GET_ADDRESS, &ref_addr))
+            if (symt && !symt_get_info(module, &symt->symt, TI_GET_ADDRESS, &ref_addr))
                 ref_addr = addr;
             if (!symt || addr != ref_addr)
             {
@@ -706,9 +706,9 @@ static int elf_new_wine_thunks(struct module* module, const struct hash_table* h
                 ULONG64 xaddr = 0, xsize = 0;
                 DWORD   kind = -1;
 
-                symt_get_info(&symt->symt, TI_GET_ADDRESS,  &xaddr);
-                symt_get_info(&symt->symt, TI_GET_LENGTH,   &xsize);
-                symt_get_info(&symt->symt, TI_GET_DATAKIND, &kind);
+                symt_get_info(module, &symt->symt, TI_GET_ADDRESS,  &xaddr);
+                symt_get_info(module, &symt->symt, TI_GET_LENGTH,   &xsize);
+                symt_get_info(module, &symt->symt, TI_GET_DATAKIND, &kind);
 
                 /* If none of symbols has a correct size, we consider they are both markers
                  * Hence, we can silence this warning

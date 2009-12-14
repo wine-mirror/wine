@@ -48,13 +48,15 @@ static inline int cmp_addr(ULONG64 a1, ULONG64 a2)
     return 0;
 }
 
-static inline int cmp_sorttab_addr(const struct module* module, int idx, ULONG64 addr)
+static inline int cmp_sorttab_addr(struct module* module, int idx, ULONG64 addr)
 {
     ULONG64     ref;
 
-    symt_get_info(&module->addr_sorttab[idx]->symt, TI_GET_ADDRESS, &ref);
+    symt_get_info(module, &module->addr_sorttab[idx]->symt, TI_GET_ADDRESS, &ref);
     return cmp_addr(ref, addr);
 }
+
+struct module*  symt_cmp_addr_module = NULL;
 
 int symt_cmp_addr(const void* p1, const void* p2)
 {
@@ -62,8 +64,8 @@ int symt_cmp_addr(const void* p1, const void* p2)
     const struct symt*  sym2 = *(const struct symt* const *)p2;
     ULONG64     a1, a2;
 
-    symt_get_info(sym1, TI_GET_ADDRESS, &a1);
-    symt_get_info(sym2, TI_GET_ADDRESS, &a2);
+    symt_get_info(symt_cmp_addr_module, sym1, TI_GET_ADDRESS, &a1);
+    symt_get_info(symt_cmp_addr_module, sym2, TI_GET_ADDRESS, &a2);
     return cmp_addr(a1, a2);
 }
 
@@ -98,7 +100,7 @@ static void symt_add_module_ht(struct module* module, struct symt_ht* ht)
     /* Don't store in sorttab a symbol without address, they are of
      * no use here (e.g. constant values)
      */
-    if (symt_get_info(&ht->symt, TI_GET_ADDRESS, &addr) &&
+    if (symt_get_info(module, &ht->symt, TI_GET_ADDRESS, &addr) &&
         symt_grow_sorttab(module, module->num_symbols + 1))
     {
         module->addr_sorttab[module->num_symbols++] = ht;
@@ -321,7 +323,7 @@ struct symt_data* symt_new_global_variable(struct module* module,
         sym->container     = compiland ? &compiland->symt : NULL;
         sym->type          = type;
         sym->u.var.offset  = addr;
-        if (type && size && symt_get_info(type, TI_GET_LENGTH, &tsz))
+        if (type && size && symt_get_info(module, type, TI_GET_LENGTH, &tsz))
         {
             if (tsz != size)
                 FIXME("Size mismatch for %s.%s between type (%s) and src (%lu)\n",
@@ -627,20 +629,21 @@ struct symt_hierarchy_point* symt_new_label(struct module* module,
 }
 
 /* expect sym_info->MaxNameLen to be set before being called */
-static void symt_fill_sym_info(const struct module_pair* pair,
+static void symt_fill_sym_info(struct module_pair* pair,
                                const struct symt_function* func,
                                const struct symt* sym, SYMBOL_INFO* sym_info)
 {
     const char* name;
     DWORD64 size;
 
-    if (!symt_get_info(sym, TI_GET_TYPE, &sym_info->TypeIndex))
+    if (!symt_get_info(pair->effective, sym, TI_GET_TYPE, &sym_info->TypeIndex))
         sym_info->TypeIndex = 0;
-    sym_info->info = (DWORD)sym;
+    sym_info->info = symt_ptr2index(pair->effective, sym);
     sym_info->Reserved[0] = sym_info->Reserved[1] = 0;
-    if (!symt_get_info(sym, TI_GET_LENGTH, &size) &&
+    if (!symt_get_info(pair->effective, sym, TI_GET_LENGTH, &size) &&
         (!sym_info->TypeIndex ||
-         !symt_get_info((struct symt*)sym_info->TypeIndex, TI_GET_LENGTH, &size)))
+         !symt_get_info(pair->effective, symt_index2ptr(pair->effective, sym_info->TypeIndex),
+                         TI_GET_LENGTH, &size)))
         size = 0;
     sym_info->Size = (DWORD)size;
     sym_info->ModBase = pair->requested->module.BaseOfImage;
@@ -689,7 +692,7 @@ static void symt_fill_sym_info(const struct module_pair* pair,
                 break;
             case DataIsGlobal:
             case DataIsFileStatic:
-                symt_get_info(sym, TI_GET_ADDRESS, &sym_info->Address);
+                symt_get_info(pair->effective, sym, TI_GET_ADDRESS, &sym_info->Address);
                 sym_info->Register = 0;
                 break;
             case DataIsConstant:
@@ -717,18 +720,18 @@ static void symt_fill_sym_info(const struct module_pair* pair,
         break;
     case SymTagPublicSymbol:
         sym_info->Flags |= SYMFLAG_EXPORT;
-        symt_get_info(sym, TI_GET_ADDRESS, &sym_info->Address);
+        symt_get_info(pair->effective, sym, TI_GET_ADDRESS, &sym_info->Address);
         break;
     case SymTagFunction:
         sym_info->Flags |= SYMFLAG_FUNCTION;
-        symt_get_info(sym, TI_GET_ADDRESS, &sym_info->Address);
+        symt_get_info(pair->effective, sym, TI_GET_ADDRESS, &sym_info->Address);
         break;
     case SymTagThunk:
         sym_info->Flags |= SYMFLAG_THUNK;
-        symt_get_info(sym, TI_GET_ADDRESS, &sym_info->Address);
+        symt_get_info(pair->effective, sym, TI_GET_ADDRESS, &sym_info->Address);
         break;
     default:
-        symt_get_info(sym, TI_GET_ADDRESS, &sym_info->Address);
+        symt_get_info(pair->effective, sym, TI_GET_ADDRESS, &sym_info->Address);
         sym_info->Register = 0;
         break;
     }
@@ -762,7 +765,7 @@ struct sym_enum
     char                                buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
 };
 
-static BOOL send_symbol(const struct sym_enum* se, const struct module_pair* pair,
+static BOOL send_symbol(const struct sym_enum* se, struct module_pair* pair,
                         const struct symt_function* func, const struct symt* sym)
 {
     symt_fill_sym_info(pair, func, sym, se->sym_info);
@@ -772,7 +775,7 @@ static BOOL send_symbol(const struct sym_enum* se, const struct module_pair* pai
     return !se->cb(se->sym_info, se->sym_info->Size, se->user);
 }
 
-static BOOL symt_enum_module(const struct module_pair* pair, const regex_t* regex,
+static BOOL symt_enum_module(struct module_pair* pair, const regex_t* regex,
                              const struct sym_enum* se)
 {
     void*                       ptr;
@@ -793,13 +796,13 @@ static BOOL symt_enum_module(const struct module_pair* pair, const regex_t* rege
     return FALSE;
 }
 
-static inline unsigned where_to_insert(const struct module* module, unsigned high, const struct symt_ht* elt)
+static inline unsigned where_to_insert(struct module* module, unsigned high, const struct symt_ht* elt)
 {
     unsigned    low = 0, mid = high / 2;
     ULONG64     addr;
 
     if (!high) return 0;
-    symt_get_info(&elt->symt, TI_GET_ADDRESS, &addr);
+    symt_get_info(module, &elt->symt, TI_GET_ADDRESS, &addr);
     do
     {
         switch (cmp_sorttab_addr(module, mid, addr))
@@ -831,6 +834,7 @@ static BOOL resort_symbols(struct module* module)
 
         delta = module->num_symbols - module->num_sorttab;
         memcpy(tmp, &module->addr_sorttab[module->num_sorttab], delta * sizeof(struct symt_ht*));
+        symt_cmp_addr_module = module;
         qsort(tmp, delta, sizeof(struct symt_ht*), symt_cmp_addr);
 
         for (i = delta - 1; i >= 0; i--)
@@ -844,20 +848,23 @@ static BOOL resort_symbols(struct module* module)
         }
     }
     else
+    {
+        symt_cmp_addr_module = module;
         qsort(module->addr_sorttab, module->num_symbols, sizeof(struct symt_ht*), symt_cmp_addr);
+    }
     module->num_sorttab = module->num_symbols;
     return module->sortlist_valid = TRUE;
 }
 
-static void symt_get_length(const struct symt* symt, ULONG64* size)
+static void symt_get_length(struct module* module, const struct symt* symt, ULONG64* size)
 {
     DWORD       type_index;
 
-    if (symt_get_info(symt, TI_GET_LENGTH, size) && *size)
+    if (symt_get_info(module,  symt, TI_GET_LENGTH, size) && *size)
         return;
 
-    if (symt_get_info(symt, TI_GET_TYPE, &type_index) &&
-        symt_get_info((struct symt*)type_index, TI_GET_LENGTH, size)) return;
+    if (symt_get_info(module, symt, TI_GET_TYPE, &type_index) &&
+        symt_get_info(module, symt_index2ptr(module, type_index), TI_GET_LENGTH, size)) return;
     *size = 0x1000; /* arbitrary value */
 }
 
@@ -878,12 +885,12 @@ struct symt_ht* symt_find_nearest(struct module* module, DWORD addr)
     low = 0;
     high = module->num_sorttab;
 
-    symt_get_info(&module->addr_sorttab[0]->symt, TI_GET_ADDRESS, &ref_addr);
+    symt_get_info(module, &module->addr_sorttab[0]->symt, TI_GET_ADDRESS, &ref_addr);
     if (addr < ref_addr) return NULL;
     if (high)
     {
-        symt_get_info(&module->addr_sorttab[high - 1]->symt, TI_GET_ADDRESS, &ref_addr);
-        symt_get_length(&module->addr_sorttab[high - 1]->symt, &ref_size);
+        symt_get_info(module, &module->addr_sorttab[high - 1]->symt, TI_GET_ADDRESS, &ref_addr);
+        symt_get_length(module, &module->addr_sorttab[high - 1]->symt, &ref_size);
         if (addr >= ref_addr + ref_size) return NULL;
     }
     
@@ -904,7 +911,7 @@ struct symt_ht* symt_find_nearest(struct module* module, DWORD addr)
      */
     if (module->addr_sorttab[low]->symt.tag == SymTagPublicSymbol)
     {   
-        symt_get_info(&module->addr_sorttab[low]->symt, TI_GET_ADDRESS, &ref_addr);
+        symt_get_info(module, &module->addr_sorttab[low]->symt, TI_GET_ADDRESS, &ref_addr);
         if (low > 0 &&
             module->addr_sorttab[low - 1]->symt.tag != SymTagPublicSymbol &&
             !cmp_sorttab_addr(module, low - 1, ref_addr))
@@ -915,9 +922,9 @@ struct symt_ht* symt_find_nearest(struct module* module, DWORD addr)
             low++;
     }
     /* finally check that we fit into the found symbol */
-    symt_get_info(&module->addr_sorttab[low]->symt, TI_GET_ADDRESS, &ref_addr);
+    symt_get_info(module, &module->addr_sorttab[low]->symt, TI_GET_ADDRESS, &ref_addr);
     if (addr < ref_addr) return NULL;
-    symt_get_length(&module->addr_sorttab[low]->symt, &ref_size);
+    symt_get_length(module, &module->addr_sorttab[low]->symt, &ref_size);
     if (addr >= ref_addr + ref_size) return NULL;
 
     return module->addr_sorttab[low];

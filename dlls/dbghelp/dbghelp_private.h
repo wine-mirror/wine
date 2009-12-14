@@ -418,6 +418,16 @@ struct pdb_lookup
     } u;
 };
 
+static inline DWORD             symt_ptr2index(struct module* module, const struct symt* sym)
+{
+    return (DWORD)sym;
+}
+
+static inline struct symt*      symt_index2ptr(struct module* module, DWORD id)
+{
+    return (struct symt*)id;
+}
+
 /* dbghelp.c */
 extern struct process* process_find_by_handle(HANDLE hProcess);
 extern HANDLE hMsvcrt;
@@ -533,6 +543,7 @@ extern BOOL         dwarf2_parse(struct module* module, unsigned long load_offse
 
 /* symbol.c */
 extern const char*  symt_get_name(const struct symt* sym);
+extern struct module* symt_cmp_addr_module;
 extern int          symt_cmp_addr(const void* p1, const void* p2);
 extern void         copy_symbolW(SYMBOL_INFOW* siw, const SYMBOL_INFO* si);
 extern struct symt_ht*
@@ -606,7 +617,7 @@ extern struct symt_hierarchy_point*
 
 /* type.c */
 extern void         symt_init_basic(struct module* module);
-extern BOOL         symt_get_info(const struct symt* type,
+extern BOOL         symt_get_info(struct module* module, const struct symt* type,
                                   IMAGEHLP_SYMBOL_TYPE_INFO req, void* pInfo);
 extern struct symt_basic*
                     symt_new_basic(struct module* module, enum BasicType, 
