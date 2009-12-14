@@ -3390,6 +3390,7 @@ static void test_current_style(IHTMLCurrentStyle *current_style)
 
 static void test_style2(IHTMLStyle2 *style2)
 {
+    VARIANT v;
     BSTR str;
     HRESULT hres;
 
@@ -3408,6 +3409,27 @@ static void test_style2(IHTMLStyle2 *style2)
     ok(hres == S_OK, "get_position failed: %08x\n", hres);
     ok(!strcmp_wa(str, "absolute"), "get_position returned %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
+
+    /* Test right */
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle2_get_right(style2, &v);
+    ok(hres == S_OK, "get_top failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(right)=%d\n", V_VT(&v));
+    ok(!V_BSTR(&v), "V_BSTR(right) != NULL\n");
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("3px");
+    hres = IHTMLStyle2_put_right(style2, v);
+    ok(hres == S_OK, "put_right failed: %08x\n", hres);
+    VariantClear(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle2_get_right(style2, &v);
+    ok(hres == S_OK, "get_right failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "3px"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
 }
 
 static void test_style3(IHTMLStyle3 *style3)
