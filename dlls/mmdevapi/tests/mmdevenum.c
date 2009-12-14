@@ -41,6 +41,11 @@ static void test_collection(IMMDeviceEnumerator *mme, IMMDeviceCollection *col)
     UINT numdev;
     IMMDevice *dev;
 
+    /* collection doesn't keep a ref on parent */
+    IUnknown_AddRef(mme);
+    ref = IUnknown_Release(mme);
+    ok(ref == 2, "Reference count on parent is %u\n", ref);
+
     ref = IUnknown_AddRef(col);
     IUnknown_Release(col);
     ok(ref == 2, "Invalid reference count %u on collection\n", ref);
