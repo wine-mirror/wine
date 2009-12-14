@@ -1451,6 +1451,7 @@ static UINT msi_get_query_types(MSIQUERY *query, LPWSTR **types, DWORD *numtypes
         goto end;
     }
 
+    *numtypes = count;
     for (i=1; i<=count; i++ )
     {
         (*types)[i-1] = strdupW(MSI_RecordGetString(prec, i));
@@ -1477,32 +1478,36 @@ static void merge_free_rows(MERGETABLE *table)
 
 static void free_merge_table(MERGETABLE *table)
 {
-        UINT i;
+    UINT i;
 
-        if (table->labels != NULL)
-        {
-            for (i = 0; i < table->numlabels; i++)
-                msi_free(table->labels[i]);
-            msi_free(table->labels);
-        }
+    if (table->labels != NULL)
+    {
+        for (i = 0; i < table->numlabels; i++)
+            msi_free(table->labels[i]);
 
-        if (table->columns != NULL)
-        {
-            for (i = 0; i < table->numcolumns; i++)
-                msi_free(table->columns[i]);
-            msi_free(table->columns);
-        }
+        msi_free(table->labels);
+    }
 
-        if (table->types != NULL)
-        {
-            for (i = 0; i < table->numtypes; i++)
-                msi_free(table->types[i]);
-            msi_free(table->types);
-        }
-        msi_free(table->name);
-        merge_free_rows(table);
+    if (table->columns != NULL)
+    {
+        for (i = 0; i < table->numcolumns; i++)
+            msi_free(table->columns[i]);
 
-        msi_free(table);
+        msi_free(table->columns);
+    }
+
+    if (table->types != NULL)
+    {
+        for (i = 0; i < table->numtypes; i++)
+            msi_free(table->types[i]);
+
+        msi_free(table->types);
+    }
+
+    msi_free(table->name);
+    merge_free_rows(table);
+
+    msi_free(table);
 }
 
 static UINT msi_get_merge_table (MSIDATABASE *db, LPCWSTR name, MERGETABLE **ptable)
@@ -1753,7 +1758,6 @@ UINT WINAPI MsiDatabaseMergeW(MSIHANDLE hDatabase, MSIHANDLE hDatabaseMerge,
     LIST_FOR_EACH_SAFE(item, cursor, &tabledata)
     {
         MERGETABLE *table = LIST_ENTRY(item, MERGETABLE, entry);
-
         list_remove(&table->entry);
         free_merge_table(table);
     }
