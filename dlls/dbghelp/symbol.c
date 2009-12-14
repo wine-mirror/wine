@@ -1486,7 +1486,7 @@ BOOL WINAPI SymGetSymFromName(HANDLE hProcess, PCSTR Name, PIMAGEHLP_SYMBOL Symb
  * fills information about a file
  */
 BOOL symt_fill_func_line_info(const struct module* module, const struct symt_function* func,
-                              DWORD addr, IMAGEHLP_LINE* line)
+                              DWORD64 addr, IMAGEHLP_LINE64* line)
 {
     struct line_info*   dli = NULL;
     BOOL                found = FALSE;
@@ -1562,16 +1562,74 @@ BOOL WINAPI SymGetSymPrev(HANDLE hProcess, PIMAGEHLP_SYMBOL Symbol)
 }
 
 /******************************************************************
+ *		copy_line_64_from_32 (internal)
+ *
+ */
+static void copy_line_64_from_32(IMAGEHLP_LINE64* l64, const IMAGEHLP_LINE* l32)
+
+{
+    l64->Key = l32->Key;
+    l64->LineNumber = l32->LineNumber;
+    l64->FileName = l32->FileName;
+    l64->Address = l32->Address;
+}
+
+/******************************************************************
+ *		copy_line_W64_from_32 (internal)
+ *
+ */
+static void copy_line_W64_from_64(struct process* pcs, IMAGEHLP_LINEW64* l64w, const IMAGEHLP_LINE64* l64)
+{
+    unsigned len;
+
+    l64w->Key = l64->Key;
+    l64w->LineNumber = l64->LineNumber;
+    len = MultiByteToWideChar(CP_ACP, 0, l64->FileName, -1, NULL, 0);
+    if ((l64w->FileName = fetch_buffer(pcs, len * sizeof(WCHAR))))
+        MultiByteToWideChar(CP_ACP, 0, l64->FileName, -1, l64w->FileName, len);
+    l64w->Address = l64->Address;
+}
+
+/******************************************************************
+ *		copy_line_32_from_64 (internal)
+ *
+ */
+static void copy_line_32_from_64(IMAGEHLP_LINE* l32, const IMAGEHLP_LINE64* l64)
+
+{
+    l32->Key = l64->Key;
+    l32->LineNumber = l64->LineNumber;
+    l32->FileName = l64->FileName;
+    l32->Address = l64->Address;
+}
+
+/******************************************************************
  *		SymGetLineFromAddr (DBGHELP.@)
  *
  */
-BOOL WINAPI SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr, 
+BOOL WINAPI SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr,
                                PDWORD pdwDisplacement, PIMAGEHLP_LINE Line)
+{
+    IMAGEHLP_LINE64     il64;
+
+    il64.SizeOfStruct = sizeof(il64);
+    if (!SymGetLineFromAddr64(hProcess, dwAddr, pdwDisplacement, &il64))
+        return FALSE;
+    copy_line_32_from_64(Line, &il64);
+    return TRUE;
+}
+
+/******************************************************************
+ *		SymGetLineFromAddr64 (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymGetLineFromAddr64(HANDLE hProcess, DWORD64 dwAddr, 
+                                 PDWORD pdwDisplacement, PIMAGEHLP_LINE64 Line)
 {
     struct module_pair  pair;
     struct symt_ht*     symt;
 
-    TRACE("%p %08x %p %p\n", hProcess, dwAddr, pdwDisplacement, Line);
+    TRACE("%p %s %p %p\n", hProcess, wine_dbgstr_longlong(dwAddr), pdwDisplacement, Line);
 
     if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
 
@@ -1589,90 +1647,26 @@ BOOL WINAPI SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr,
 }
 
 /******************************************************************
- *		copy_line_64_from_32 (internal)
- *
- */
-static void copy_line_64_from_32(IMAGEHLP_LINE64* l64, const IMAGEHLP_LINE* l32)
-
-{
-    l64->Key = l32->Key;
-    l64->LineNumber = l32->LineNumber;
-    l64->FileName = l32->FileName;
-    l64->Address = l32->Address;
-}
-
-/******************************************************************
- *		copy_line_W64_from_32 (internal)
- *
- */
-static void copy_line_W64_from_32(struct process* pcs, IMAGEHLP_LINEW64* l64, const IMAGEHLP_LINE* l32)
-{
-    unsigned len;
-
-    l64->Key = l32->Key;
-    l64->LineNumber = l32->LineNumber;
-    len = MultiByteToWideChar(CP_ACP, 0, l32->FileName, -1, NULL, 0);
-    if ((l64->FileName = fetch_buffer(pcs, len * sizeof(WCHAR))))
-        MultiByteToWideChar(CP_ACP, 0, l32->FileName, -1, l64->FileName, len);
-    l64->Address = l32->Address;
-}
-
-/******************************************************************
- *		copy_line_32_from_64 (internal)
- *
- */
-static void copy_line_32_from_64(IMAGEHLP_LINE* l32, const IMAGEHLP_LINE64* l64)
-
-{
-    l32->Key = l64->Key;
-    l32->LineNumber = l64->LineNumber;
-    l32->FileName = l64->FileName;
-    l32->Address = l64->Address;
-}
-
-/******************************************************************
- *		SymGetLineFromAddr64 (DBGHELP.@)
- *
- */
-BOOL WINAPI SymGetLineFromAddr64(HANDLE hProcess, DWORD64 dwAddr, 
-                                 PDWORD pdwDisplacement, PIMAGEHLP_LINE64 Line)
-{
-    IMAGEHLP_LINE       line32;
-
-    if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
-    if (!validate_addr64(dwAddr)) return FALSE;
-    line32.SizeOfStruct = sizeof(line32);
-    if (!SymGetLineFromAddr(hProcess, (DWORD)dwAddr, pdwDisplacement, &line32))
-        return FALSE;
-    copy_line_64_from_32(Line, &line32);
-    return TRUE;
-}
-
-/******************************************************************
  *		SymGetLineFromAddrW64 (DBGHELP.@)
  *
  */
 BOOL WINAPI SymGetLineFromAddrW64(HANDLE hProcess, DWORD64 dwAddr, 
                                   PDWORD pdwDisplacement, PIMAGEHLP_LINEW64 Line)
 {
-    struct process*     pcs = process_find_by_handle(hProcess);
-    IMAGEHLP_LINE       line32;
+    IMAGEHLP_LINE64     il64;
 
-    if (!pcs) return FALSE;
-    if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
-    if (!validate_addr64(dwAddr)) return FALSE;
-    line32.SizeOfStruct = sizeof(line32);
-    if (!SymGetLineFromAddr(hProcess, (DWORD)dwAddr, pdwDisplacement, &line32))
+    il64.SizeOfStruct = sizeof(il64);
+    if (!SymGetLineFromAddr64(hProcess, dwAddr, pdwDisplacement, &il64))
         return FALSE;
-    copy_line_W64_from_32(pcs, Line, &line32);
+    copy_line_W64_from_64(process_find_by_handle(hProcess), Line, &il64);
     return TRUE;
 }
 
 /******************************************************************
- *		SymGetLinePrev (DBGHELP.@)
+ *		SymGetLinePrev64 (DBGHELP.@)
  *
  */
-BOOL WINAPI SymGetLinePrev(HANDLE hProcess, PIMAGEHLP_LINE Line)
+BOOL WINAPI SymGetLinePrev64(HANDLE hProcess, PIMAGEHLP_LINE64 Line)
 {
     struct module_pair  pair;
     struct line_info*   li;
@@ -1719,21 +1713,21 @@ BOOL WINAPI SymGetLinePrev(HANDLE hProcess, PIMAGEHLP_LINE Line)
 }
 
 /******************************************************************
- *		SymGetLinePrev64 (DBGHELP.@)
+ *		SymGetLinePrev (DBGHELP.@)
  *
  */
-BOOL WINAPI SymGetLinePrev64(HANDLE hProcess, PIMAGEHLP_LINE64 Line)
+BOOL WINAPI SymGetLinePrev(HANDLE hProcess, PIMAGEHLP_LINE Line)
 {
-    IMAGEHLP_LINE       line32;
+    IMAGEHLP_LINE64     line64;
 
-    line32.SizeOfStruct = sizeof(line32);
-    copy_line_32_from_64(&line32, Line);
-    if (!SymGetLinePrev(hProcess, &line32)) return FALSE;
-    copy_line_64_from_32(Line, &line32);
+    line64.SizeOfStruct = sizeof(line64);
+    copy_line_64_from_32(&line64, Line);
+    if (!SymGetLinePrev64(hProcess, &line64)) return FALSE;
+    copy_line_32_from_64(Line, &line64);
     return TRUE;
 }
-    
-BOOL symt_get_func_line_next(const struct module* module, PIMAGEHLP_LINE line)
+
+BOOL symt_get_func_line_next(const struct module* module, PIMAGEHLP_LINE64 line)
 {
     struct line_info*   li;
 
@@ -1755,10 +1749,10 @@ BOOL symt_get_func_line_next(const struct module* module, PIMAGEHLP_LINE line)
 }
 
 /******************************************************************
- *		SymGetLineNext (DBGHELP.@)
+ *		SymGetLineNext64 (DBGHELP.@)
  *
  */
-BOOL WINAPI SymGetLineNext(HANDLE hProcess, PIMAGEHLP_LINE Line)
+BOOL WINAPI SymGetLineNext64(HANDLE hProcess, PIMAGEHLP_LINE64 Line)
 {
     struct module_pair  pair;
 
@@ -1776,20 +1770,20 @@ BOOL WINAPI SymGetLineNext(HANDLE hProcess, PIMAGEHLP_LINE Line)
 }
 
 /******************************************************************
- *		SymGetLineNext64 (DBGHELP.@)
+ *		SymGetLineNext (DBGHELP.@)
  *
  */
-BOOL WINAPI SymGetLineNext64(HANDLE hProcess, PIMAGEHLP_LINE64 Line)
+BOOL WINAPI SymGetLineNext(HANDLE hProcess, PIMAGEHLP_LINE Line)
 {
-    IMAGEHLP_LINE       line32;
+    IMAGEHLP_LINE64     line64;
 
-    line32.SizeOfStruct = sizeof(line32);
-    copy_line_32_from_64(&line32, Line);
-    if (!SymGetLineNext(hProcess, &line32)) return FALSE;
-    copy_line_64_from_32(Line, &line32);
+    line64.SizeOfStruct = sizeof(line64);
+    copy_line_64_from_32(&line64, Line);
+    if (!SymGetLineNext64(hProcess, &line64)) return FALSE;
+    copy_line_32_from_64(Line, &line64);
     return TRUE;
 }
-    
+
 /***********************************************************************
  *		SymFunctionTableAccess (DBGHELP.@)
  */

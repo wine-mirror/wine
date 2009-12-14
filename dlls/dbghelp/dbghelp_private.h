@@ -589,8 +589,8 @@ extern struct symt_hierarchy_point*
                                             const char* name);
 extern BOOL         symt_fill_func_line_info(const struct module* module,
                                              const struct symt_function* func,
-                                             DWORD addr, IMAGEHLP_LINE* line);
-extern BOOL         symt_get_func_line_next(const struct module* module, PIMAGEHLP_LINE line);
+                                             DWORD64 addr, IMAGEHLP_LINE64* line);
+extern BOOL         symt_get_func_line_next(const struct module* module, PIMAGEHLP_LINE64 line);
 extern struct symt_thunk*
                     symt_new_thunk(struct module* module, 
                                    struct symt_compiland* parent,

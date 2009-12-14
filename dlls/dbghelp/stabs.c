@@ -1235,7 +1235,7 @@ static void pending_flush(struct pending_list* pending, struct module* module,
 static void stabs_finalize_function(struct module* module, struct symt_function* func,
                                     unsigned long size)
 {
-    IMAGEHLP_LINE       il;
+    IMAGEHLP_LINE64     il;
     struct location     loc;
 
     if (!func) return;
