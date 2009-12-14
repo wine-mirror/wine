@@ -60,13 +60,24 @@ static inline BOOL msvcrt_free_tls(void)
   return TRUE;
 }
 
+static inline void msvcrt_free_tls_mem(void)
+{
+  thread_data_t *tls = TlsGetValue(msvcrt_tls_index);
+  if (tls)
+  {
+    HeapFree(GetProcessHeap(),0,tls->efcvt_buffer);
+    HeapFree(GetProcessHeap(),0,tls->asctime_buffer);
+    HeapFree(GetProcessHeap(),0,tls->wasctime_buffer);
+    HeapFree(GetProcessHeap(),0,tls->strerror_buffer);
+  }
+  HeapFree(GetProcessHeap(), 0, tls);
+}
+
 /*********************************************************************
  *                  Init
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-  thread_data_t *tls;
-
   TRACE("(%p, %s, %p) pid(%x), tid(%x), tls(%u)\n",
         hinstDLL, msvcrt_get_reason(fdwReason), lpvReserved,
         GetCurrentProcessId(), GetCurrentThreadId(),
@@ -94,21 +105,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     msvcrt_free_console();
     msvcrt_free_args();
     msvcrt_free_signals();
+    msvcrt_free_tls_mem();
     if (!msvcrt_free_tls())
       return FALSE;
     TRACE("finished process free\n");
     break;
   case DLL_THREAD_DETACH:
-    /* Free TLS */
-    tls = TlsGetValue(msvcrt_tls_index);
-    if (tls)
-    {
-	HeapFree(GetProcessHeap(),0,tls->efcvt_buffer);
-	HeapFree(GetProcessHeap(),0,tls->asctime_buffer);
-	HeapFree(GetProcessHeap(),0,tls->wasctime_buffer);
-	HeapFree(GetProcessHeap(),0,tls->strerror_buffer);
-    }
-    HeapFree(GetProcessHeap(), 0, tls);
+    msvcrt_free_tls_mem();
     TRACE("finished thread free\n");
     break;
   }
