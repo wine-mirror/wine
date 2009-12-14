@@ -622,6 +622,7 @@ static UINT msi_add_records_to_table(MSIDATABASE *db, LPWSTR *columns, LPWSTR *t
     while (MSI_ViewFetch(view, &rec) != ERROR_NO_MORE_ITEMS)
     {
         r = MSI_ViewModify(view, MSIMODIFY_DELETE, rec);
+        msiobj_release(&rec->hdr);
         if (r != ERROR_SUCCESS)
             goto done;
     }
