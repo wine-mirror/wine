@@ -335,6 +335,7 @@ struct module
     struct pool                 pool;
 
     /* symbols & symbol tables */
+    struct vector               vsymt;
     int                         sortlist_valid;
     unsigned                    num_sorttab;    /* number of symbols with addresses */
     unsigned                    num_symbols;
@@ -417,16 +418,6 @@ struct pdb_lookup
         } ds;
     } u;
 };
-
-static inline DWORD             symt_ptr2index(struct module* module, const struct symt* sym)
-{
-    return (DWORD)sym;
-}
-
-static inline struct symt*      symt_index2ptr(struct module* module, DWORD id)
-{
-    return (struct symt*)id;
-}
 
 /* dbghelp.c */
 extern struct process* process_find_by_handle(HANDLE hProcess);
@@ -614,6 +605,8 @@ extern struct symt_hierarchy_point*
                     symt_new_label(struct module* module,
                                    struct symt_compiland* compiland,
                                    const char* name, unsigned long address);
+extern struct symt* symt_index2ptr(struct module* module, DWORD id);
+extern DWORD        symt_ptr2index(struct module* module, const struct symt* sym);
 
 /* type.c */
 extern void         symt_init_basic(struct module* module);

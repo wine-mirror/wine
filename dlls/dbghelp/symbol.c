@@ -69,6 +69,37 @@ int symt_cmp_addr(const void* p1, const void* p2)
     return cmp_addr(a1, a2);
 }
 
+DWORD             symt_ptr2index(struct module* module, const struct symt* sym)
+{
+#ifdef _WIN64
+    const struct symt** c;
+    int                 len = vector_length(&module->vsymt), i;
+
+    /* FIXME: this is inefficient */
+    for (i = 0; i < len; i++)
+    {
+        if (*(struct symt**)vector_at(&module->vsymt, i) == sym)
+            return i + 1;
+    }
+    /* not found */
+    c = vector_add(&module->vsymt, &module->pool);
+    if (c) *c = sym;
+    return len + 1;
+#else
+    return (DWORD)sym;
+#endif
+}
+
+struct symt*      symt_index2ptr(struct module* module, DWORD id)
+{
+#ifdef _WIN64
+    if (!id-- || id >= vector_length(&module->vsymt)) return NULL;
+    return *(struct symt**)vector_at(&module->vsymt, id);
+#else
+    return (struct symt*)id;
+#endif
+}
+
 static BOOL symt_grow_sorttab(struct module* module, unsigned sz)
 {
     struct symt_ht**    new;
