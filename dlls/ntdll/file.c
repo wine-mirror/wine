@@ -69,6 +69,9 @@
 #ifdef HAVE_SYS_STATFS_H
 # include <sys/statfs.h>
 #endif
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+# include <valgrind/memcheck.h>
+#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -1257,6 +1260,30 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
     return status;
 }
 
+/* Tell Valgrind to ignore any holes in structs we will be passing to the
+ * server */
+static void ignore_server_ioctl_struct_holes (ULONG code, const void *in_buffer,
+                                              ULONG in_size)
+{
+#ifdef VALGRIND_MAKE_MEM_DEFINED
+# define IGNORE_STRUCT_HOLE(buf, size, t, f1, f2) \
+    do { \
+        if ((size) >= FIELD_OFFSET(t, f2) && \
+            FIELD_OFFSET(t, f1) + sizeof(((t *)0)->f1) < FIELD_OFFSET(t, f2)) \
+            VALGRIND_MAKE_MEM_DEFINED( \
+                (const char *)(buf) + FIELD_OFFSET(t, f1) + sizeof(((t *)0)->f1), \
+                FIELD_OFFSET(t, f2) - FIELD_OFFSET(t, f1) + sizeof(((t *)0)->f1)); \
+    } while (0)
+
+    switch (code)
+    {
+    case FSCTL_PIPE_WAIT:
+        IGNORE_STRUCT_HOLE(in_buffer, in_size, FILE_PIPE_WAIT_FOR_BUFFER, TimeoutSpecified, Name);
+        break;
+    }
+#endif
+}
+
 
 /**************************************************************************
  *		NtDeviceIoControlFile			[NTDLL.@]
@@ -1355,6 +1382,8 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
           in_buffer, in_size, out_buffer, out_size);
 
     if (!io) return STATUS_INVALID_PARAMETER;
+
+    ignore_server_ioctl_struct_holes( code, in_buffer, in_size );
 
     switch(code)
     {
