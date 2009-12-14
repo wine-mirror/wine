@@ -1674,16 +1674,6 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
         goto cleanup;
 
       /*
-       * Check if destination storage is not a child of the source
-       * storage, which will cause an infinite loop
-       */
-      if (pstgChild == pstgDest)
-      {
-        hr = STG_E_ACCESSDENIED;
-        goto cleanup;
-      }
-
-      /*
        * create a new storage in destination storage
        */
       hr = IStorage_CreateStorage( pstgDest, curElement.pwcsName,
