@@ -3802,6 +3802,24 @@ static void test_default_style(IHTMLStyle *style)
     hres = IHTMLStyle_put_margin(style, NULL);
     ok(hres == S_OK, "put_margin failed: %08x\n", hres);
 
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle_get_marginTop(style, &v);
+    ok(hres == S_OK, "get_marginTop failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(marginTop) = %d\n", V_VT(&v));
+    ok(!V_BSTR(&v), "V_BSTR(marginTop) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("6px");
+    hres = IHTMLStyle_put_marginTop(style, v);
+    SysFreeString(V_BSTR(&v));
+    ok(hres == S_OK, "put_marginTop failed: %08x\n", hres);
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle_get_marginTop(style, &v);
+    ok(hres == S_OK, "get_marginTop failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(marginTop) = %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "6px"), "V_BSTR(marginTop) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
     str = NULL;
     hres = IHTMLStyle_get_border(style, &str);
     ok(hres == S_OK, "get_border failed: %08x\n", hres);
