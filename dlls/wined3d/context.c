@@ -2054,15 +2054,13 @@ static void context_apply_draw_buffer(struct wined3d_context *context, BOOL blit
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     IWineD3DSurface *rt = context->current_rt;
-    IWineD3DSwapChain *swapchain;
     IWineD3DDeviceImpl *device;
 
     device = ((IWineD3DSurfaceImpl *)rt)->resource.device;
-    if (SUCCEEDED(IWineD3DSurface_GetContainer(rt, &IID_IWineD3DSwapChain, (void **)&swapchain)))
+    if (!surface_is_offscreen(rt))
     {
-        IWineD3DSwapChain_Release((IUnknown *)swapchain);
         ENTER_GL();
-        glDrawBuffer(surface_get_gl_buffer(rt, swapchain));
+        glDrawBuffer(surface_get_gl_buffer(rt, (IWineD3DSwapChain *)((IWineD3DSurfaceImpl *)rt)->container));
         checkGLcall("glDrawBuffers()");
         LEAVE_GL();
     }
