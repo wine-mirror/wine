@@ -407,6 +407,7 @@ static UINT STREAMS_delete(struct tagMSIVIEW *view)
     }
 
     msi_free(sv->streams);
+    msi_free(sv);
 
     return ERROR_SUCCESS;
 }

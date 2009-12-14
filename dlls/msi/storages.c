@@ -443,6 +443,7 @@ static UINT STORAGES_delete(struct tagMSIVIEW *view)
 
     msi_free(sv->storages);
     sv->storages = NULL;
+    msi_free(sv);
 
     return ERROR_SUCCESS;
 }
