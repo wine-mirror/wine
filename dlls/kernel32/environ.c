@@ -364,8 +364,8 @@ DWORD WINAPI ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR dst, DWORD len )
     RtlInitUnicodeString(&us_src, src);
 
     /* make sure we don't overflow the maximum UNICODE_STRING size */
-    if (len > 0x7fff)
-        len = 0x7fff;
+    if (len > UNICODE_STRING_MAX_CHARS)
+        len = UNICODE_STRING_MAX_CHARS;
 
     us_dst.Length = 0;
     us_dst.MaximumLength = len * sizeof(WCHAR);

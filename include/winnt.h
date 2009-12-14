@@ -617,6 +617,8 @@ typedef struct _MEMORY_BASIC_INFORMATION
 #define MAXWORD       0xffff
 #define MAXDWORD      0xffffffff
 
+#define UNICODE_STRING_MAX_CHARS 32767
+
 #define FIELD_OFFSET(type, field) \
   ((LONG)(INT_PTR)&(((type *)0)->field))
 
