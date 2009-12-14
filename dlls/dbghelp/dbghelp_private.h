@@ -538,7 +538,7 @@ extern struct module* symt_cmp_addr_module;
 extern int          symt_cmp_addr(const void* p1, const void* p2);
 extern void         copy_symbolW(SYMBOL_INFOW* siw, const SYMBOL_INFO* si);
 extern struct symt_ht*
-                    symt_find_nearest(struct module* module, DWORD addr);
+                    symt_find_nearest(struct module* module, DWORD_PTR addr);
 extern struct symt_compiland*
                     symt_new_compiland(struct module* module, unsigned long address,
                                        unsigned src_idx);

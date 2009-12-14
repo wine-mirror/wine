@@ -900,7 +900,7 @@ static void symt_get_length(struct module* module, const struct symt* symt, ULON
 }
 
 /* assume addr is in module */
-struct symt_ht* symt_find_nearest(struct module* module, DWORD addr)
+struct symt_ht* symt_find_nearest(struct module* module, DWORD_PTR addr)
 {
     int         mid, high, low;
     ULONG64     ref_addr, ref_size;
