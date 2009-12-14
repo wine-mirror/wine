@@ -90,8 +90,10 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
         mode.Format = This->orig_fmt;
         IWineD3DDevice_SetDisplayMode((IWineD3DDevice *)This->device, 0, &mode);
     }
-    HeapFree(GetProcessHeap(), 0, This->context);
 
+    wined3d_unregister_window(This->win_handle);
+
+    HeapFree(GetProcessHeap(), 0, This->context);
     HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -676,6 +678,12 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
 
     window = present_parameters->hDeviceWindow ? present_parameters->hDeviceWindow : device->createParms.hFocusWindow;
 
+    if (!wined3d_register_window(window, swapchain))
+    {
+        ERR("Failed to register window %p.\n", window);
+        return E_FAIL;
+    }
+
     swapchain->device = device;
     swapchain->parent = parent;
     swapchain->ref = 1;
@@ -907,6 +915,8 @@ err:
 
     if (swapchain->frontBuffer) IWineD3DSurface_Release(swapchain->frontBuffer);
 
+    wined3d_unregister_window(window);
+
     return hr;
 }
 
@@ -950,4 +960,16 @@ void get_drawable_size_swapchain(struct wined3d_context *context, UINT *width, U
      * (Actually: The window size, but the surface is created in window size) */
     *width = surface->currentDesc.Width;
     *height = surface->currentDesc.Height;
+}
+
+LRESULT swapchain_process_message(IWineD3DSwapChainImpl *swapchain, HWND window,
+        UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc)
+{
+    if (message == WM_DESTROY)
+    {
+        TRACE("unregister window %p.\n", window);
+        wined3d_unregister_window(window);
+    }
+
+    return CallWindowProcW(proc, window, message, wparam, lparam);
 }

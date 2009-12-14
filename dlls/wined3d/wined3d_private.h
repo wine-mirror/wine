@@ -816,6 +816,7 @@ typedef struct IWineD3DStateBlockImpl IWineD3DStateBlockImpl;
 typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 typedef struct IWineD3DPaletteImpl    IWineD3DPaletteImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
+typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
 
 /* Global variables */
 extern const float identity[16] DECLSPEC_HIDDEN;
@@ -1439,6 +1440,8 @@ typedef struct IWineD3DImpl
 
 extern const IWineD3DVtbl IWineD3D_Vtbl DECLSPEC_HIDDEN;
 
+BOOL wined3d_register_window(HWND window, struct IWineD3DSwapChainImpl *swapchain) DECLSPEC_HIDDEN;
+void wined3d_unregister_window(HWND window) DECLSPEC_HIDDEN;
 BOOL InitAdapters(IWineD3DImpl *This) DECLSPEC_HIDDEN;
 
 /* A helper function that dumps a resource list */
@@ -2397,7 +2400,7 @@ extern const IWineD3DRendertargetViewVtbl wined3d_rendertarget_view_vtbl DECLSPE
  * IWineD3DSwapChainImpl implementation structure (extends IUnknown)
  */
 
-typedef struct IWineD3DSwapChainImpl
+struct IWineD3DSwapChainImpl
 {
     /*IUnknown part*/
     const IWineD3DSwapChainVtbl *lpVtbl;
@@ -2422,7 +2425,7 @@ typedef struct IWineD3DSwapChainImpl
     unsigned int            num_contexts;
 
     HWND                    win_handle;
-} IWineD3DSwapChainImpl;
+};
 
 const IWineD3DSwapChainVtbl IWineGDISwapChain_Vtbl DECLSPEC_HIDDEN;
 void x11_copy_to_screen(IWineD3DSwapChainImpl *This, const RECT *rc) DECLSPEC_HIDDEN;
@@ -2452,8 +2455,10 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetGammaRamp(IWineD3DSwapChain *iface,
 struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChain *iface) DECLSPEC_HIDDEN;
 HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface_type,
         IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters, IUnknown *parent) DECLSPEC_HIDDEN;
-void swapchain_setup_fullscreen_window(IWineD3DSwapChainImpl *swapchain, UINT w, UINT h) DECLSPEC_HIDDEN;
+LRESULT swapchain_process_message(IWineD3DSwapChainImpl *device, HWND window,
+        UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc) DECLSPEC_HIDDEN;
 void swapchain_restore_fullscreen_window(IWineD3DSwapChainImpl *swapchain) DECLSPEC_HIDDEN;
+void swapchain_setup_fullscreen_window(IWineD3DSwapChainImpl *swapchain, UINT w, UINT h) DECLSPEC_HIDDEN;
 
 #define DEFAULT_REFRESH_RATE 0
 
