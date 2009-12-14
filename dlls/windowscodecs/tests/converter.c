@@ -413,6 +413,8 @@ static void test_encoder(const struct bitmap_data *src, const CLSID* clsid_encod
 
             IStream_Release(stream);
         }
+
+        IWICBitmapEncoder_Release(encoder);
     }
 
     DeleteTestBitmap(src_bitmap);
