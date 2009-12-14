@@ -45,6 +45,9 @@ static void test_collection(IMMDeviceEnumerator *mme, IMMDeviceCollection *col)
     IUnknown_Release(col);
     ok(ref == 2, "Invalid reference count %u on collection\n", ref);
 
+    hr = IUnknown_QueryInterface(col, &IID_IUnknown, NULL);
+    ok(hr == E_POINTER, "Null ppv returns %08x\n", hr);
+
     hr = IUnknown_QueryInterface(col, &IID_IUnknown, (void**)&unk);
     ok(hr == S_OK, "Cannot query for IID_IUnknown: 0x%08x\n", hr);
     if (hr == S_OK)
@@ -137,7 +140,7 @@ START_TEST(mmdevenum)
     ok(hr == E_POINTER, "Invalid pointer returned: 0x%08x\n", hr);
 
     hr = IMMDeviceEnumerator_EnumAudioEndpoints(mme, eAll, DEVICE_STATEMASK_ALL, &col);
-    todo_wine ok(hr == S_OK, "Valid EnumAudioEndpoints returned 0x%08x\n", hr);
+    ok(hr == S_OK, "Valid EnumAudioEndpoints returned 0x%08x\n", hr);
     if (hr == S_OK)
     {
         ok(!!col, "Returned null pointer\n");
