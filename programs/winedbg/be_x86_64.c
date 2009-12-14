@@ -2,6 +2,7 @@
  * Debugger x86_64 specific functions
  *
  * Copyright 2004 Vincent Béron
+ * Copyright 2009 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,6 +20,9 @@
  */
 
 #include "debugger.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 #if defined(__x86_64__)
 
@@ -187,31 +191,148 @@ static void be_x86_64_disasm_one_insn(ADDRESS64* addr, int display)
     dbg_printf("Disasm NIY\n");
 }
 
+#define DR7_CONTROL_SHIFT	16
+#define DR7_CONTROL_SIZE 	4
+
+#define DR7_RW_EXECUTE 		(0x0)
+#define DR7_RW_WRITE		(0x1)
+#define DR7_RW_READ		(0x3)
+
+#define DR7_LEN_1		(0x0)
+#define DR7_LEN_2		(0x4)
+#define DR7_LEN_4		(0xC)
+
+#define DR7_LOCAL_ENABLE_SHIFT	0
+#define DR7_GLOBAL_ENABLE_SHIFT 1
+#define DR7_ENABLE_SIZE 	2
+
+#define DR7_LOCAL_ENABLE_MASK	(0x55)
+#define DR7_GLOBAL_ENABLE_MASK	(0xAA)
+
+#define DR7_CONTROL_RESERVED	(0xFC00)
+#define DR7_LOCAL_SLOWDOWN	(0x100)
+#define DR7_GLOBAL_SLOWDOWN	(0x200)
+
+#define	DR7_ENABLE_MASK(dr)	(1<<(DR7_LOCAL_ENABLE_SHIFT+DR7_ENABLE_SIZE*(dr)))
+#define	IS_DR7_SET(ctrl,dr) 	((ctrl)&DR7_ENABLE_MASK(dr))
+
+static inline int be_x86_64_get_unused_DR(CONTEXT* ctx, DWORD64** r)
+{
+    if (!IS_DR7_SET(ctx->Dr7, 0))
+    {
+        *r = &ctx->Dr0;
+        return 0;
+    }
+    if (!IS_DR7_SET(ctx->Dr7, 1))
+    {
+        *r = &ctx->Dr1;
+        return 1;
+    }
+    if (!IS_DR7_SET(ctx->Dr7, 2))
+    {
+        *r = &ctx->Dr2;
+        return 2;
+    }
+    if (!IS_DR7_SET(ctx->Dr7, 3))
+    {
+        *r = &ctx->Dr3;
+        return 3;
+    }
+    dbg_printf("All hardware registers have been used\n");
+
+    return -1;
+}
+
 static unsigned be_x86_64_insert_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
                                        CONTEXT* ctx, enum be_xpoint_type type,
                                        void* addr, unsigned long* val, unsigned size)
 {
-    dbg_printf("not done insert_Xpoint\n");
-    return 0;
+    unsigned char       ch;
+    SIZE_T              sz;
+    DWORD64            *pr;
+    int                 reg;
+    unsigned long       bits;
+
+    switch (type)
+    {
+    case be_xpoint_break:
+        if (size != 0) return 0;
+        if (!pio->read(hProcess, addr, &ch, 1, &sz) || sz != 1) return 0;
+        *val = ch;
+        ch = 0xcc;
+        if (!pio->write(hProcess, addr, &ch, 1, &sz) || sz != 1) return 0;
+        break;
+    case be_xpoint_watch_exec:
+        bits = DR7_RW_EXECUTE;
+        goto hw_bp;
+    case be_xpoint_watch_read:
+        bits = DR7_RW_READ;
+        goto hw_bp;
+    case be_xpoint_watch_write:
+        bits = DR7_RW_WRITE;
+    hw_bp:
+        if ((reg = be_x86_64_get_unused_DR(ctx, &pr)) == -1) return 0;
+        *pr = (DWORD64)addr;
+        if (type != be_xpoint_watch_exec) switch (size)
+        {
+        case 4: bits |= DR7_LEN_4; break;
+        case 2: bits |= DR7_LEN_2; break;
+        case 1: bits |= DR7_LEN_1; break;
+        default: return 0;
+        }
+        *val = reg;
+        /* clear old values */
+        ctx->Dr7 &= ~(0x0F << (DR7_CONTROL_SHIFT + DR7_CONTROL_SIZE * reg));
+        /* set the correct ones */
+        ctx->Dr7 |= bits << (DR7_CONTROL_SHIFT + DR7_CONTROL_SIZE * reg);
+	ctx->Dr7 |= DR7_ENABLE_MASK(reg) | DR7_LOCAL_SLOWDOWN;
+        break;
+    default:
+        dbg_printf("Unknown bp type %c\n", type);
+        return 0;
+    }
+    return 1;
 }
 
 static unsigned be_x86_64_remove_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
                                        CONTEXT* ctx, enum be_xpoint_type type, 
                                        void* addr, unsigned long val, unsigned size)
 {
-    dbg_printf("not done remove_Xpoint\n");
-    return FALSE;
+    SIZE_T              sz;
+    unsigned char       ch;
+
+    switch (type)
+    {
+    case be_xpoint_break:
+        if (size != 0) return 0;
+        if (!pio->read(hProcess, addr, &ch, 1, &sz) || sz != 1) return 0;
+        if (ch != (unsigned char)0xCC)
+            WINE_FIXME("Cannot get back %02x instead of 0xCC at %08lx\n",
+                       ch, (unsigned long)addr);
+        ch = (unsigned char)val;
+        if (!pio->write(hProcess, addr, &ch, 1, &sz) || sz != 1) return 0;
+        break;
+    case be_xpoint_watch_exec:
+    case be_xpoint_watch_read:
+    case be_xpoint_watch_write:
+        /* simply disable the entry */
+        ctx->Dr7 &= ~DR7_ENABLE_MASK(val);
+        break;
+    default:
+        dbg_printf("Unknown bp type %c\n", type);
+        return 0;
+    }
+    return 1;
 }
 
 static unsigned be_x86_64_is_watchpoint_set(const CONTEXT* ctx, unsigned idx)
 {
-    dbg_printf("not done is_watchpoint_set\n");
-    return FALSE;
+    return ctx->Dr6 & (1 << idx);
 }
 
 static void be_x86_64_clear_watchpoint(CONTEXT* ctx, unsigned idx)
 {
-    dbg_printf("not done clear_watchpoint\n");
+    ctx->Dr6 &= ~(1 << idx);
 }
 
 static int be_x86_64_adjust_pc_for_break(CONTEXT* ctx, BOOL way)
