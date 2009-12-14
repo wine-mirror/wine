@@ -5540,6 +5540,8 @@ static void enum_stream_names(IStorage *stg)
         ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
         ok(stm != NULL, "Expected non-NULL stream\n");
 
+        CoTaskMemFree(stat.pwcsName);
+
         sz = MAX_PATH;
         memset(data, 'a', MAX_PATH);
         hr = IStream_Read(stm, data, sz, &count);
