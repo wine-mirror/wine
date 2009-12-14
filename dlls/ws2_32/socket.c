@@ -3639,7 +3639,11 @@ static struct WS_hostent* WS_get_local_ips( char *hostname )
     /* Allocate a hostent and enough memory for all the IPs,
      * including the NULL at the end of the list.
      */
-    hostlist = WS_create_he(hostname, 0, numroutes, TRUE);
+    hostlist = WS_create_he(hostname, 1, numroutes+1, TRUE);
+    if (hostlist == NULL)
+        goto cleanup; /* Failed to allocate a hostent for the list of IPs */
+    hostlist->h_addr_list[numroutes] = NULL; /* NULL-terminate the address list */
+    hostlist->h_aliases[0] = NULL; /* NULL-terminate the alias list */
     hostlist->h_addrtype = AF_INET;
     hostlist->h_length = sizeof(struct in_addr); /* = 4 */
     /* Reorder the entries when placing them in the host list, Windows expects
@@ -4602,9 +4606,14 @@ static int list_dup(char** l_src, char** l_to, int item_size)
  *
  * Creates the entry with enough memory for the name, aliases
  * addresses, and the address pointers.  Also copies the name
- * and sets up all the pointers.  If "fill_address" is set then
+ * and sets up all the pointers.  If "fill_addresses" is set then
  * sufficient memory for the addresses is also allocated and the
  * address pointers are set to this memory.
+ *
+ * NOTE: The alias and address lists must be allocated with room
+ * for the NULL item terminating the list.  This is true even if
+ * the list has no items ("aliases" and "addresses" must be
+ * at least "1", a truly empty list is invalid).
  */
 static struct WS_hostent *WS_create_he(char *name, int aliases, int addresses, int fill_addresses)
 {
@@ -4616,11 +4625,9 @@ static struct WS_hostent *WS_create_he(char *name, int aliases, int addresses, i
                 sizeof(char *)*aliases +
                 sizeof(char *)*addresses);
 
-    /* Place addresses in the allocated memory, making sure to have enough
-     * room for the NULL at the end of the list.
-     */
+    /* Allocate enough memory for the addresses */
     if (fill_addresses)
-        size += sizeof(struct in_addr)*(addresses+1);
+        size += sizeof(struct in_addr)*addresses;
 
     if (!(p_to = check_buffer_he(size))) return NULL;
     memset(p_to, 0, size);
@@ -4630,24 +4637,21 @@ static struct WS_hostent *WS_create_he(char *name, int aliases, int addresses, i
     strcpy(p, name);
     p += strlen(p) + 1;
 
-    if (aliases != 0)
-    {
-        p_to->h_aliases = (char **)p;
-        p += sizeof(char *)*aliases;
-    }
-    if (addresses != 0)
-    {
-        p_to->h_addr_list = (char **)p;
-        p += sizeof(char *)*addresses;
-    }
+    p_to->h_aliases = (char **)p;
+    p += sizeof(char *)*aliases;
+    p_to->h_addr_list = (char **)p;
+    p += sizeof(char *)*addresses;
     if (fill_addresses)
     {
         int i;
 
-        /* Fill in the list of address pointers and NULL-terminate the list*/
+        /* NOTE: h_aliases must be filled in manually, leave these
+         * pointers NULL (already set to NULL by memset earlier).
+         */
+
+        /* Fill in the list of address pointers */
         for (i = 0; i < addresses; i++)
             p_to->h_addr_list[i] = (p += sizeof(struct in_addr));
-        p_to->h_addr_list[i] = NULL;
         p += sizeof(struct in_addr);
     }
     return p_to;
